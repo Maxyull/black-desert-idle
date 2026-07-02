@@ -3094,8 +3094,9 @@ async function checkForUpdate() {
   } catch (e) {}
 }
 $a('btnReloadUpdate').onclick = () => location.reload();
-setInterval(checkForUpdate, 5 * 60 * 1000); // toutes les 5 min
+setInterval(checkForUpdate, 60 * 1000); // toutes les 60s (déploiement GitHub Pages ~1-2 min)
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
+window.addEventListener('focus', checkForUpdate);
 setTimeout(checkForUpdate, 15000); // premier check peu après le chargement
 
 // ============================================================
