@@ -57,6 +57,20 @@
   #invFullBanner.show { display:block; }
   @keyframes invFullPulse { 0%,100% { opacity:1; } 50% { opacity:.65; } }
 
+  #updateToast {
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:var(--panel-2); border:1px solid var(--gold); color:var(--ink);
+    padding:12px 16px; display:none; align-items:center; gap:14px;
+    box-shadow:0 8px 28px rgba(0,0,0,.6); z-index:200; font-size:13px;
+    opacity:0; transition:opacity .25s ease, transform .25s ease;
+  }
+  #updateToast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
+  #updateToast button {
+    background:var(--gold); color:#1a1712; border:none; font-weight:bold;
+    padding:7px 14px; letter-spacing:.5px; cursor:pointer; font-family:inherit; font-size:12.5px;
+  }
+  #updateToast button:hover { background:#e0bc72; }
+
   #aiState {
     position:absolute; top:10px; left:50%; transform:translateX(-50%);
     font-size:10px; letter-spacing:3px; text-transform:uppercase;
@@ -474,6 +488,11 @@
     <button id="btnSignUp" class="ghost" data-i18n="btnSignUp">Créer un compte</button>
     <div id="authStatus"></div>
   </div>
+</div>
+
+<div id="updateToast">
+  <span data-i18n="updateAvailableMsg">🔄 Une nouvelle version du jeu est disponible.</span>
+  <button id="btnReloadUpdate" data-i18n="btnReloadUpdate">Recharger</button>
 </div>
 
 <div id="topBar">
@@ -2840,6 +2859,8 @@ const I18N = {
   btnEquipBest: { fr:'⚡ Équiper le meilleur (socle)', en:'⚡ Equip best (base stats)' },
   btnSellWorse: { fr:'🗑️ Vendre les objets inférieurs', en:'🗑️ Sell items worse than equipped' },
   invFullBanner: { fr:'⚠ Sac plein — les objets restent au sol', en:'⚠ Bag full — items stay on the ground' },
+  updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
+  btnReloadUpdate: { fr:'Recharger', en:'Reload' },
   cardInv: { fr:'Inventaire', en:'Inventory' },
   btnSellTrash: { fr:'Vendre trash', en:'Sell trash' },
   btnSellMats: { fr:'Vendre mat.', en:'Sell mats' },
@@ -2877,6 +2898,11 @@ $a('btnLang').onclick = () => {
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V18', fr:[
+      {t:'new', tx:'Notification de mise à jour : un bandeau apparaît avec un bouton "Recharger" dès qu\'une nouvelle version du jeu est déployée, sans avoir à vider le cache manuellement'},
+    ], en:[
+      {t:'new', tx:'Update notification: a banner with a "Reload" button appears as soon as a new game version is deployed, no manual cache clearing needed'},
+    ] },
   { v:'V17', fr:[
       {t:'new',     tx:'Zone Admin (🛠️ Admin) réservée au compte maxime.lacoste@icloud.com : silver farmé par heure, ressources les plus farmées, répartition des richesses entre joueurs'},
       {t:'new',     tx:'Journal de farm côté serveur : chaque objet ramassé par chaque joueur est enregistré (envoi par lots toutes les 25s) pour alimenter les stats admin'},
@@ -3048,6 +3074,29 @@ const PATCH_NOTES = [
       {t:'new', tx:'First playable prototype: automatic movement, combat, basic loot'},
     ] },
 ];
+
+// ============================================================
+// DÉTECTION DE NOUVELLE VERSION — prévient le joueur qu'une maj a été déployée
+// (on refetch périodiquement index.html et on compare la première version du tableau)
+// ============================================================
+const CURRENT_VERSION = PATCH_NOTES[0].v;
+let updateToastShown = false;
+async function checkForUpdate() {
+  if (updateToastShown) return;
+  try {
+    const res = await fetch('./index.html?_=' + Date.now(), { cache: 'no-store' });
+    const text = await res.text();
+    const m = text.match(/const PATCH_NOTES = \[\s*\{\s*v:\s*'([^']+)'/);
+    if (m && m[1] !== CURRENT_VERSION) {
+      updateToastShown = true;
+      $a('updateToast').classList.add('show');
+    }
+  } catch (e) {}
+}
+$a('btnReloadUpdate').onclick = () => location.reload();
+setInterval(checkForUpdate, 5 * 60 * 1000); // toutes les 5 min
+document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
+setTimeout(checkForUpdate, 15000); // premier check peu après le chargement
 
 // ============================================================
 // WIKI — règles maison qui diffèrent du vrai BDO
