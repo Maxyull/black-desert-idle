@@ -310,17 +310,28 @@
   #authError { color:var(--danger); font-size:11.5px; min-height:14px; margin:6px 0; }
   #authStatus { color:var(--ink-dim); font-size:11px; margin-top:10px; }
 
-  #userBar {
-    position:fixed; top:8px; right:12px; z-index:40; display:none;
-    align-items:center; gap:10px; background:rgba(10,9,12,.8); border:1px solid #2c2a33;
-    padding:5px 10px; font-size:11px; color:var(--ink-dim);
+  /* ===== menu latéral (fusion topBar + userBar en une colonne) ===== */
+  #sideMenu {
+    position:fixed; top:14px; left:14px; z-index:40;
+    display:flex; flex-direction:column; gap:10px; width:210px;
   }
+  #topBar, #userBar {
+    display:flex; flex-direction:column; gap:7px;
+    background:rgba(10,9,12,.88); border:1px solid #2c2a33; padding:10px;
+  }
+  #userBar { display:none; }
   #userBar.show { display:flex; }
-  #userBar button { width:auto; margin:0; padding:4px 9px; font-size:10.5px; }
-  #saveStatus { font-size:10px; color:#7aa35e; }
+  #topBar button, #userBar button {
+    width:100%; margin:0; padding:11px 14px; font-size:13.5px; text-align:left;
+  }
+  #userBarTop { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-dim); padding:0 2px; }
+  #userEmail { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* dernier élément du flux : son texte variable (vide / "✓ sauvegardé" / ...) ne fait
+     donc jamais bouger les boutons au-dessus, seule la hauteur du panneau varie légèrement */
+  #saveStatus { font-size:10.5px; color:#7aa35e; padding:0 2px; min-height:12px; }
   #demoTag {
     background:var(--danger); color:#fff; font-size:9px; font-weight:bold;
-    letter-spacing:1px; padding:2px 6px; border-radius:2px;
+    letter-spacing:1px; padding:2px 6px; border-radius:2px; flex-shrink:0;
   }
   #btnResetDemo { border-color:var(--danger) !important; color:#e8a89f; }
   #btnResetDemo:hover { background:rgba(192,85,69,.15); }
@@ -383,17 +394,27 @@
   #sellMsg { font-size:11.5px; margin-top:8px; min-height:14px; }
   #sellMsg.ok { color:#8fc98a; } #sellMsg.fail { color:var(--danger); }
 
-  /* ===== barre du haut (lang / wiki / patch notes) ===== */
-  #topBar {
-    position:fixed; top:8px; left:12px; z-index:40; display:flex; gap:6px;
-  }
-  #topBar button {
-    width:auto; margin:0; padding:5px 10px; font-size:10.5px;
-    background:rgba(10,9,12,.8); border:1px solid #2c2a33;
-  }
-  #btnLang { font-weight:bold; letter-spacing:1px; min-width:34px; }
-  #btnLang:hover, #topBar button:hover { border-color:var(--gold); }
+  #topBar button { background:rgba(10,9,12,.6); border:1px solid #2c2a33; }
+  #topBar button:hover { border-color:var(--gold); }
   #btnPatch { position:relative; }
+
+  /* slider FR/EN */
+  #langToggle {
+    position:relative; display:flex; width:100%; height:38px;
+    background:rgba(10,9,12,.6); border:1px solid #2c2a33; cursor:pointer; user-select:none;
+  }
+  #langToggle:hover { border-color:var(--gold); }
+  .langOpt {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:bold; letter-spacing:.5px; color:var(--ink-dim); z-index:2;
+    transition:color .2s ease;
+  }
+  .langOpt.active { color:#1a1712; }
+  #langThumb {
+    position:absolute; top:2px; left:2px; width:calc(50% - 2px); height:calc(100% - 4px);
+    background:var(--gold); transition:left .2s ease;
+  }
+  #langThumb.en { left:calc(50% + 0px); }
   #btnPatch.hasNew { border-color:var(--gold); animation:patchHalo 1.6s infinite; }
   @keyframes patchHalo {
     0%,100% { box-shadow:0 0 0 0 rgba(201,165,90,.55); }
@@ -448,12 +469,19 @@
   #infoBody .patchEntry.latest::before { background:var(--gold); }
   #infoBody .patchEntryHead { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
   #infoBody .patchVer { color:var(--gold); font-weight:bold; font-size:14px; letter-spacing:.5px; }
+  #infoBody .patchName { font-size:12px; font-style:italic; color:var(--ink-dim); }
   #infoBody .patchEntry li {
     display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; line-height:1.5;
   }
+  #infoBody .patchEntry li.patchLineRemoved { opacity:.55; text-decoration:line-through; }
   #infoBody .patchCat {
     flex-shrink:0; font-size:9px; font-weight:bold; letter-spacing:.3px;
     border:1px solid; border-radius:3px; padding:1.5px 6px; white-space:nowrap; margin-top:1px;
+  }
+  #infoBody .patchRemoved {
+    flex-shrink:0; font-size:9px; font-weight:bold; letter-spacing:.3px; text-decoration:none;
+    color:var(--danger); border:1px solid var(--danger); border-radius:3px; padding:1.5px 6px;
+    white-space:nowrap; margin-left:auto;
   }
 
   /* ===== tableau de bord admin ===== */
@@ -495,20 +523,29 @@
   <button id="btnReloadUpdate" data-i18n="btnReloadUpdate">Recharger</button>
 </div>
 
-<div id="topBar">
-  <button id="btnLang">EN</button>
-  <button id="btnWiki" data-i18n="btnWiki">Wiki</button>
-  <button id="btnPatch"><span data-i18n="btnPatch">Notes de version</span><span id="patchBadge"></span></button>
-</div>
+<div id="sideMenu">
+  <div id="topBar">
+    <div id="langToggle">
+      <span class="langOpt" data-lang="fr">FR</span>
+      <span class="langOpt" data-lang="en">EN</span>
+      <div id="langThumb"></div>
+    </div>
+    <button id="btnWiki" data-i18n="btnWiki">Wiki</button>
+    <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
+    <button id="btnPatch"><span data-i18n="btnPatch">Notes de version</span><span id="patchBadge"></span></button>
+  </div>
 
-<div id="userBar">
-  <span id="demoTag" data-i18n="demoTag">DÉMO</span>
-  <span id="userEmail"></span>
-  <button id="btnMarket" data-i18n="btnMarketLbl">🏛️ Marché</button>
-  <button id="btnResetDemo" data-i18n="btnResetDemo" style="display:none">🔄 Réinitialiser</button>
-  <button id="btnAdmin" data-i18n="btnAdmin" style="display:none">🛠️ Admin</button>
-  <button id="btnLogout" data-i18n="btnLogout">Déconnexion</button>
-  <span id="saveStatus"></span>
+  <div id="userBar">
+    <div id="userBarTop">
+      <span id="demoTag" data-i18n="demoTag">DÉMO</span>
+      <span id="userEmail"></span>
+    </div>
+    <button id="btnMarket" data-i18n="btnMarketLbl">🏛️ Marché</button>
+    <button id="btnResetDemo" data-i18n="btnResetDemo" style="display:none">🔄 Réinitialiser</button>
+    <button id="btnAdmin" data-i18n="btnAdmin" style="display:none">🛠️ Admin</button>
+    <button id="btnLogout" data-i18n="btnLogout">Déconnexion</button>
+    <span id="saveStatus"></span>
+  </div>
 </div>
 
 <div id="siteFooter">
@@ -569,7 +606,7 @@
       <div id="potSlot">🧪<div id="potCd"></div></div>
     </div>
     <div id="skillBar"></div>
-    <div id="psTag">PS <b id="psVal">21</b><br><span style="font-size:10px;color:var(--ink-dim)">Niv. <span id="lvl">1</span></span></div>
+    <div id="psTag">GS <b id="gsVal">21</b><br><span style="font-size:10px;color:var(--ink-dim)">Niv. <span id="lvl">1</span></span></div>
   </div>
 
   <div id="itemPop"></div>
@@ -578,7 +615,7 @@
   <div id="panel">
     <div class="card">
       <h3 data-i18n="cardStats">Statistiques</h3>
-      <div class="row"><span data-i18n="lblPS">Power Score</span><span class="v" id="stPS">21</span></div>
+      <div class="row"><span data-i18n="lblPS">Gearscore</span><span class="v" id="stPS">21</span></div>
       <div class="row"><span data-i18n="lblPA">PA effective</span><span class="v" id="stPA">14</span></div>
       <div class="row"><span data-i18n="lblPD">PD</span><span class="v" id="stDP">10</span></div>
       <div class="row"><span data-i18n="lblApZone">PA requis (zone)</span><span class="v" id="stApZone">14 / 20</span></div>
@@ -765,6 +802,7 @@ const S = {
   castMult: 1, hpMax: 100, lootRadius: 26,
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
+  maxZoneIdx: 0, playtimeSec: 0,
 };
 
 // ==================== INVENTAIRE (192 slots) & ÉQUIPEMENT ====================
@@ -873,7 +911,7 @@ function armorBonusAvg() {
 }
 const apEff = () => (S.pa + weaponAP() + equipAP());
 const totalDP = () => S.dp + equipDP();
-const PS = () => apEff() + totalDP() * 0.5 + S.lvl * 2; // gardé pour l'affichage global, plus utilisé pour le scaling
+const GS = () => (apEff() + totalDP()) / 2; // Gearscore affiché au joueur — n'est plus utilisé pour le scaling
 const apRatio = (z) => apEff() / (z || Z()).reqAP;
 const dpRatio = (z) => totalDP() / (z || Z()).reqDP;
 const bottleneck = (z) => Math.min(apRatio(z), dpRatio(z));
@@ -1831,6 +1869,7 @@ function buildZoneList() {
 }
 function travelTo(i) {
   zoneIdx = i;
+  if (i > S.maxZoneIdx) S.maxZoneIdx = i;
   resetWorld();
   $('ztName').textContent = tr(Z().name);
   $('ztTier').textContent = Z().tier;
@@ -1846,8 +1885,8 @@ function refreshStatsOnly() {
   const apR = apRatio(), dpR = dpRatio(), z = Z();
   $('silver').textContent = fmt(S.silver);
   $('lvl').textContent = S.lvl;
-  $('psVal').textContent = Math.round(PS());
-  $('stPS').textContent = Math.round(PS());
+  $('gsVal').textContent = Math.round(GS());
+  $('stPS').textContent = Math.round(GS());
   $('stPA').textContent = Math.round(apEff()*10)/10;
   $('stDP').textContent = Math.round(totalDP()*10)/10;
   const apEl = $('stApZone');
@@ -2464,6 +2503,7 @@ function applySaveState(data) {
   Object.keys(EQUIP).forEach(k => EQUIP[k] = data.EQUIP[k] ?? null);
   for (let i = 0; i < INV_SIZE; i++) INV[i] = data.INV[i] ?? null;
   zoneIdx = data.zoneIdx || 0;
+  S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   resetWorld(); // recrée les packs de la zone chargée
   if (data.playerPos) { P.x = data.playerPos.x; P.y = data.playerPos.y; }
   hud();
@@ -2492,6 +2532,7 @@ window.importSaveFromFile = importSaveFromFile;
 
 hud();
 setInterval(hud, 1000);
+setInterval(() => { if (!document.hidden) S.playtimeSec++; }, 1000); // temps de jeu cumulé (onglet actif uniquement)
 setTimeout(()=>{ S.silver += 80; hud(); }, 1200);
 // sauvegarde automatique locale (fallback hors-ligne, coexiste avec Supabase)
 setInterval(() => { try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {} }, 15000);
@@ -2595,6 +2636,27 @@ async function saveToCloud() {
   const { error } = await sb.from('game_saves').upsert({ user_id: currentUser.id, save_data: getSaveState() });
   $a('saveStatus').textContent = error ? '✗ échec sauvegarde' : '✓ sauvegardé';
   setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 2000);
+  syncPlayerStats();
+}
+
+// ---------- classement : snapshot périodique des stats publiques dans player_stats ----------
+async function syncPlayerStats() {
+  if (!sb || !currentUser) return;
+  const mins = (performance.now() - S.startTime) / 60000;
+  const silverPerHour = mins > .1 ? Math.round(S.silverEarned / (mins/60)) : 0;
+  try {
+    await sb.from('player_stats').upsert({
+      user_id: currentUser.id,
+      display_name: (currentUser.email||'?').split('@')[0],
+      silver: Math.round(S.silver),
+      gearscore: Math.round(GS()),
+      best_zone_index: S.maxZoneIdx,
+      best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
+      silver_per_hour: silverPerHour,
+      playtime_sec: Math.round(S.playtimeSec),
+      updated_at: new Date().toISOString(),
+    });
+  } catch(e) { /* pas grave, prochaine synchro rattrapera */ }
 }
 
 // ---------- réinitialisation de la démo (réservée à l'admin, à tout moment) ----------
@@ -2614,11 +2676,17 @@ $a('btnResetDemo').onclick = resetDemo;
 // ---------- zone admin : stats serveur (réservé au compte admin, via RLS côté base) ----------
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
-  const [{data: byHour}, {data: byItem}, {data: wealth}] = await Promise.all([
+  const [{data: byHour}, {data: byItem}, {data: wealth}, {data: stats}] = await Promise.all([
     sb.from('admin_farm_by_hour').select('*'),
     sb.from('admin_farm_by_item').select('*').limit(20),
     sb.from('admin_wealth').select('*'),
+    sb.from('player_stats').select('user_id, playtime_sec'),
   ]);
+  const playtimeByUser = new Map((stats||[]).map(r => [r.user_id, Number(r.playtime_sec||0)]));
+  const fmtPlaytime = sec => {
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+    return `${h}h${String(m).padStart(2,'0')}`;
+  };
 
   // agrège le silver par heure, toutes ressources confondues
   const hourMap = new Map();
@@ -2642,8 +2710,8 @@ async function openAdminPanel() {
   const avgSilver = silvers.length ? Math.round(totalSilver/silvers.length) : 0;
   const medSilver = silvers.length ? silvers[Math.floor(silvers.length/2)] : 0;
   const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
-    <tr><td>#${i+1}</td><td>${(r.user_id||'').slice(0,8)}…</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td></tr>
-  `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+    <tr><td>#${i+1}</td><td>${(r.user_id||'').slice(0,8)}…</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
+  `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 
   const html = `
     <h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
@@ -2663,13 +2731,49 @@ async function openAdminPanel() {
       ${LANG==='fr'?'Joueurs':'Players'} : <b>${silvers.length}</b>
     </div>
     <table class="admTable">
-      <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th></tr></thead>
+      <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
       <tbody>${wealthHtml}</tbody>
     </table>
   `;
   openInfo(LANG==='fr' ? '🛠️ Zone Admin — statistiques serveur' : '🛠️ Admin Zone — server stats', html);
 }
 $a('btnAdmin').onclick = openAdminPanel;
+
+// ---------- classement public (silver, gearscore, meilleure zone, silver/h) ----------
+function rankRows(rows, valueFn, fmtFn) {
+  const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
+  return sorted.map((r,i) => `
+    <tr class="${r.user_id===currentUser?.id ? 'admTop' : ''}">
+      <td>#${i+1}</td><td>${r.display_name||'?'}</td><td>${fmtFn(r)}</td>
+    </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+}
+async function openLeaderboard() {
+  if (!marketRequireAuth()) return;
+  const { data, error } = await sb.from('player_stats').select('*').limit(500);
+  const rows = data || [];
+
+  const bySilver = rankRows(rows, r => Number(r.silver||0), r => fmt(r.silver||0));
+  const byGS = rankRows(rows, r => Number(r.gearscore||0), r => Math.round(r.gearscore||0));
+  const byZone = rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—'));
+  const bySH = rankRows(rows, r => Number(r.silver_per_hour||0),
+    r => `${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}`);
+
+  const html = `
+    <h3>${LANG==='fr'?'💰 Silver':'💰 Silver'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th></tr></thead><tbody>${bySilver}</tbody></table>
+
+    <h3>${LANG==='fr'?'⚔️ Gearscore':'⚔️ Gearscore'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>GS</th></tr></thead><tbody>${byGS}</tbody></table>
+
+    <h3>${LANG==='fr'?'🗺️ Meilleure zone atteinte':'🗺️ Best zone reached'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Zone':'Zone'}</th></tr></thead><tbody>${byZone}</tbody></table>
+
+    <h3>${LANG==='fr'?'⏱️ Silver/heure':'⏱️ Silver/hour'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Taux (zone)':'Rate (zone)'}</th></tr></thead><tbody>${bySH}</tbody></table>
+  `;
+  openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
+}
+$a('btnLeaderboard').onclick = openLeaderboard;
 
 let cloudSaveInterval = null;
 function startAutoCloudSave() {
@@ -2842,7 +2946,7 @@ const I18N = {
   priceInputPh: { fr:'Prix en silver', en:'Price in silver' },
   btnListItem: { fr:'Mettre en vente', en:'List for sale' },
   cardStats: { fr:'Statistiques', en:'Stats' },
-  lblPS: { fr:'Power Score', en:'Power Score' },
+  lblPS: { fr:'Gearscore', en:'Gearscore' },
   lblPA: { fr:'PA effective', en:'Effective AP' },
   lblPD: { fr:'PD', en:'DP' },
   lblApZone: { fr:'PA requis (zone)', en:'AP required (zone)' },
@@ -2861,6 +2965,7 @@ const I18N = {
   invFullBanner: { fr:'⚠ Sac plein — les objets restent au sol', en:'⚠ Bag full — items stay on the ground' },
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
   btnReloadUpdate: { fr:'Recharger', en:'Reload' },
+  btnLeaderboard: { fr:'🏆 Classement', en:'🏆 Leaderboard' },
   cardInv: { fr:'Inventaire', en:'Inventory' },
   btnSellTrash: { fr:'Vendre trash', en:'Sell trash' },
   btnSellMats: { fr:'Vendre mat.', en:'Sell mats' },
@@ -2880,12 +2985,13 @@ function applyI18n() {
     const key = el.getAttribute('data-i18n-ph');
     if (I18N[key]) el.setAttribute('placeholder', I18N[key][LANG]);
   });
-  $a('btnLang').textContent = LANG === 'fr' ? 'EN' : 'FR';
+  $a('langThumb').classList.toggle('en', LANG === 'en');
+  document.querySelectorAll('.langOpt').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
   document.documentElement.lang = LANG;
   refreshInvUI(); // redessine loot table / stats mode / badges avec les noms traduits
   hudFast();
 }
-$a('btnLang').onclick = () => {
+$a('langToggle').onclick = () => {
   LANG = LANG === 'fr' ? 'en' : 'fr';
   try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
   applyI18n();
@@ -2898,12 +3004,32 @@ $a('btnLang').onclick = () => {
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V18', fr:[
+  { v:'V20', name:{fr:'Refonte du menu', en:'Menu redesign'}, fr:[
+      {t:'new',    tx:'Les notes de version ont maintenant un nom par version, et les lignes qui décrivent une mécanique retirée du jeu affichent un tag "🗑 Supprimé"'},
+      {t:'change', tx:'Sélecteur de langue transformé en slider FR/EN qui indique clairement la langue active'},
+      {t:'change', tx:'Menu latéral : les boutons (Wiki, Classement, Marché, Admin...) sont regroupés dans un menu vertical sur le côté gauche avec des icônes agrandies'},
+      {t:'fix',    tx:'Le message "✓ sauvegardé" ne fait plus bouger les autres boutons du menu quand il apparaît/disparaît'},
+    ], en:[
+      {t:'new',    tx:'Patch notes now have a name per version, and lines describing a mechanic that no longer exists show a "🗑 Removed" tag'},
+      {t:'change', tx:'Language selector turned into a FR/EN slider that clearly shows the active language'},
+      {t:'change', tx:'Side menu: buttons (Wiki, Leaderboard, Marketplace, Admin...) are now grouped into a vertical menu on the left with bigger icons'},
+      {t:'fix',    tx:'The "✓ saved" message no longer shifts the other menu buttons when it appears/disappears'},
+    ] },
+  { v:'V19', name:{fr:'Classement & Gearscore', en:'Leaderboard & Gearscore'}, fr:[
+      {t:'change',  tx:'"Power Score" renommé en Gearscore, calculé simplement : (PA + PD) / 2'},
+      {t:'new',     tx:'Nouvel onglet 🏆 Classement : silver, gearscore, meilleure zone atteinte et silver/heure (avec zone), top 20 pour chaque catégorie'},
+      {t:'new',     tx:'Zone Admin : ajout du temps de jeu cumulé par joueur'},
+    ], en:[
+      {t:'change',  tx:'"Power Score" renamed to Gearscore, now simply computed as (AP + DP) / 2'},
+      {t:'new',     tx:'New 🏆 Leaderboard tab: silver, gearscore, best zone reached and silver/hour (with zone), top 20 per category'},
+      {t:'new',     tx:'Admin Zone: added cumulative playtime per player'},
+    ] },
+  { v:'V18', name:{fr:'Notification de mise à jour', en:'Update notification'}, fr:[
       {t:'new', tx:'Notification de mise à jour : un bandeau apparaît avec un bouton "Recharger" dès qu\'une nouvelle version du jeu est déployée, sans avoir à vider le cache manuellement'},
     ], en:[
       {t:'new', tx:'Update notification: a banner with a "Reload" button appears as soon as a new game version is deployed, no manual cache clearing needed'},
     ] },
-  { v:'V17', fr:[
+  { v:'V17', name:{fr:'Zone Admin', en:'Admin Zone'}, fr:[
       {t:'new',     tx:'Zone Admin (🛠️ Admin) réservée au compte maxime.lacoste@icloud.com : silver farmé par heure, ressources les plus farmées, répartition des richesses entre joueurs'},
       {t:'new',     tx:'Journal de farm côté serveur : chaque objet ramassé par chaque joueur est enregistré (envoi par lots toutes les 25s) pour alimenter les stats admin'},
       {t:'exploit', tx:'Accès admin protégé par une règle de sécurité côté base de données (RLS) — même en trafiquant le code du navigateur, personne d\'autre que ce compte ne peut lire ces données'},
@@ -2914,7 +3040,7 @@ const PATCH_NOTES = [
       {t:'exploit', tx:'Admin access protected by a database-level security rule (RLS) — even by tampering with browser code, no one else can read this data'},
       {t:'change',  tx:'The Reset button is now only visible to the admin (previously accessible to all testers)'},
     ] },
-  { v:'V16', fr:[
+  { v:'V16', name:{fr:'Failstack par objet', en:'Per-item failstack'}, fr:[
       {t:'new',    tx:'Failstack PAR objet et PAR palier : chaque échec augmente ta chance sur CE niveau précis pour CET objet précis, et c\'est acquis pour toujours — barre à deux tons (or = base, bleu = bonus du failstack)'},
       {t:'fix',    tx:'L\'Arme d\'Éveil et l\'Arme secondaire ne comptaient jamais dans tes vraies stats de combat — seule l\'arme principale était lue. Corrigé.'},
       {t:'new',    tx:'Les bijoux (bagues/boucles/collier/ceinture) sont désormais optimisables comme le reste de l\'équipement'},
@@ -2931,7 +3057,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'Trash/silver is now always picked up even with a full bag — only materials/jewelry/gear/craft stay on the ground when it overflows'},
       {t:'change', tx:'Weight now actually matters: going over your LT limit slows you down (up to -65% speed)'},
     ] },
-  { v:'V15', fr:[
+  { v:'V15', name:{fr:'Optimisation simplifiée', en:'Simplified enhancement'}, fr:[
       {t:'new',   tx:'Notes de version repensées : badge "NEW" par patch non lu, halo sur le bouton, compteur, catégories'},
       {t:'fix',   tx:'Le sac plein bloquait silencieusement le loot sans aucun message — bandeau d\'alerte ajouté'},
       {t:'change',tx:'Zones dangereuses beaucoup plus punitives (jusqu\'à 4,5× les dégâts reçus au lieu de 3×)'},
@@ -2944,21 +3070,21 @@ const PATCH_NOTES = [
       {t:'change',tx:'Simplified enhancement system: removed failstack and Naderr\'s Band, replaced with clean FIXED odds'},
       {t:'fix',   tx:'Accessory categorization (ring/earring/necklace/belt) was broken due to French keyword matching'},
     ] },
-  { v:'V14b', fr:[
+  { v:'V14b', name:{fr:'Équiper le meilleur', en:'Equip best'}, fr:[
       {t:'new', tx:'Nouveau bouton "Équiper le meilleur" — compare les STATS DE BASE (enchantement ignoré) et équipe automatiquement le meilleur socle, même s\'il faut redescendre à +0 un objet à fort potentiel'},
       {t:'fix', tx:'Les accessoires étaient tous mal classés comme "bague" à cause d\'une reconnaissance de mots-clés en français sur des noms d\'objets anglais'},
     ], en:[
       {t:'new', tx:'New "Equip Best" button — compares BASE stats (enhancement ignored) and auto-equips the best foundation, even if it means dropping a high-potential piece back to +0'},
       {t:'fix', tx:'Accessories were all miscategorized as "ring" due to French keyword matching on English item names'},
     ] },
-  { v:'V14', fr:[
+  { v:'V14', name:{fr:'Correctif de performance', en:'Performance fix'}, fr:[
       {t:'fix', tx:'Correctif de performance important : les tentatives d\'optimisation ne reconstruisent plus tout l\'inventaire (192 cases) et la liste des zones à chaque clic'},
       {t:'fix', tx:'Fini les ralentissements/plantages en enchaînant les tentatives d\'optimisation rapidement'},
     ], en:[
       {t:'fix', tx:'Major performance fix: enhancement attempts no longer rebuild the entire inventory (192 slots) and zone list on every click'},
       {t:'fix', tx:'No more slowdowns/freezes when spamming enhancement attempts quickly'},
     ] },
-  { v:'V13', fr:[
+  { v:'V13', name:{fr:'Enchantement étendu (+15)', en:'Extended enhancement (+15)'}, fr:[
       {t:'change', tx:'Échelle d\'optimisation étendue à +15 avant les paliers PRI/DUO/TRI/TET/PEN'},
       {t:'change', tx:'À partir de PRI, un échec ne fait plus jamais rétrograder — seul le matériau est perdu'},
       {t:'change', tx:'+8 à +15 restent probabilistes et peuvent rétrograder, mais jamais sous +7'},
@@ -2967,20 +3093,20 @@ const PATCH_NOTES = [
       {t:'change', tx:'From PRI onward, a failure never downgrades your level anymore — only the material is lost'},
       {t:'change', tx:'+8 to +15 remain probabilistic and can downgrade, but never below +7'},
     ] },
-  { v:'V12', fr:[
+  { v:'V12', name:{fr:'Éveil, failstack & Naderr', en:'Awakening, failstack & Naderr'}, fr:[
       {t:'change', tx:'Packs de monstres de plus en plus grands en avançant dans les zones (2-4 loups en early, jusqu\'à 9 en endgame)'},
       {t:'new',    tx:'Ajout de l\'Arme d\'Éveil et l\'Arme secondaire au loot (Dandelion, Nouver — vrais noms BDO)'},
-      {t:'new',    tx:'Système de failstack façon Garmoth.com : chance de base + failstack, soft cap à 70%, plafond 90%'},
-      {t:'new',    tx:'Bandeau de Naderr : 5 crans de failstack gratuits en montant de niveau, 5 autres réservés à une future boutique'},
+      {t:'new',    tx:'Système de failstack façon Garmoth.com : chance de base + failstack, soft cap à 70%, plafond 90%', removed:true},
+      {t:'new',    tx:'Bandeau de Naderr : 5 crans de failstack gratuits en montant de niveau, 5 autres réservés à une future boutique', removed:true},
       {t:'change', tx:'Rééquilibrage complet des stats d\'équipement lootable selon le rôle de chaque pièce'},
     ], en:[
       {t:'change', tx:'Monster packs grow larger deeper into the zones (2-4 wolves early, up to 9 at endgame)'},
       {t:'new',    tx:'Added Awakening Weapon and Secondary Weapon to loot (Dandelion, Nouver — real BDO names)'},
-      {t:'new',    tx:'Garmoth.com-style failstack system: base chance + failstack, soft cap at 70%, 90% ceiling'},
-      {t:'new',    tx:'Naderr\'s Band: 5 free failstack slots unlocked by leveling up, 5 more reserved for a future shop'},
+      {t:'new',    tx:'Garmoth.com-style failstack system: base chance + failstack, soft cap at 70%, 90% ceiling', removed:true},
+      {t:'new',    tx:'Naderr\'s Band: 5 free failstack slots unlocked by leveling up, 5 more reserved for a future shop', removed:true},
       {t:'change', tx:'Full rebalance of lootable gear stats based on each piece\'s role'},
     ] },
-  { v:'V11', fr:[
+  { v:'V11', name:{fr:'Système PA/PD', en:'AP/DP system'}, fr:[
       {t:'change', tx:'Remplacement du "Power Score" abstrait par un vrai système PA/PD affiché par zone (comme le vrai jeu)'},
       {t:'change', tx:'Pas assez de PD = tu encaisses plus de dégâts · pas assez de PA = tu en infliges moins'},
       {t:'fix',    tx:'Le PD de l\'équipement ne comptait pas dans la réduction de dégâts — oubli corrigé'},
@@ -2991,28 +3117,28 @@ const PATCH_NOTES = [
       {t:'fix',    tx:'Equipped DP wasn\'t counting toward damage reduction — fixed an oversight'},
       {t:'new',    tx:'The zone list now shows required AP/DP directly with ✓/✗ color coding'},
     ] },
-  { v:'V10', fr:[
+  { v:'V10', name:{fr:'Wiki & traduction', en:'Wiki & translation'}, fr:[
       {t:'new', tx:'Ajout du wiki et des notes de version'},
       {t:'new', tx:'Bouton EN/FR pour traduire l\'interface'},
     ], en:[
       {t:'new', tx:'Added wiki and patch notes'},
       {t:'new', tx:'EN/FR toggle to translate the UI'},
     ] },
-  { v:'V9', fr:[
+  { v:'V9', name:{fr:'Hôtel des ventes', en:'Marketplace'}, fr:[
       {t:'new',     tx:'Hôtel des ventes : acheter/vendre/annuler des annonces entre joueurs'},
       {t:'exploit', tx:'Transactions traitées par fonctions serveur sécurisées — impossible de tricher côté client'},
     ], en:[
       {t:'new',     tx:'Marketplace: buy/sell/cancel listings between players'},
       {t:'exploit', tx:'Transactions handled by secure server-side functions — no client-side cheating possible'},
     ] },
-  { v:'V8', fr:[
+  { v:'V8', name:{fr:'Comptes joueurs & cloud save', en:'Player accounts & cloud save'}, fr:[
       {t:'new', tx:'Comptes joueurs avec connexion par email/mot de passe'},
       {t:'new', tx:'Sauvegarde automatique dans le cloud (Supabase) toutes les 30s'},
     ], en:[
       {t:'new', tx:'Player accounts with email/password login'},
       {t:'new', tx:'Automatic cloud save (Supabase) every 30s'},
     ] },
-  { v:'V7', fr:[
+  { v:'V7', name:{fr:'Objets réels BDO', en:'Real BDO items'}, fr:[
       {t:'change', tx:'Vrais noms d\'objets et de zones tirés de Black Desert Online'},
       {t:'change', tx:'Taux de loot progressifs : généreux en zone 1, rares en fin de jeu'},
       {t:'new',    tx:'Cadre d\'optimisation avec sélection de la pièce à améliorer + suggestions'},
@@ -3025,14 +3151,14 @@ const PATCH_NOTES = [
       {t:'new',    tx:'Weapons and armor added to loot tables'},
       {t:'new',    tx:'Hover = tooltip, double-click = equip, right-click = menu (drop, sell, enhance)'},
     ] },
-  { v:'V6', fr:[
+  { v:'V6', name:{fr:'Panneau permanent', en:'Permanent panel'}, fr:[
       {t:'change', tx:'Panneau permanent (équipement + inventaire toujours visibles)'},
       {t:'change', tx:'Optimisation possible uniquement via le loot (plus d\'achat au silver)'},
     ], en:[
       {t:'change', tx:'Permanent panel (equipment + inventory always visible)'},
       {t:'change', tx:'Enhancement now loot-driven only (no more silver-bought upgrades)'},
     ] },
-  { v:'V5', fr:[
+  { v:'V5', name:{fr:'Inventaire & équipement', en:'Inventory & equipment'}, fr:[
       {t:'new', tx:'Inventaire 192 emplacements façon BDO'},
       {t:'new', tx:'Équipement circulaire (arme, armure, accessoires)'},
       {t:'new', tx:'Équiper/déséquiper/vendre depuis le sac'},
@@ -3041,16 +3167,16 @@ const PATCH_NOTES = [
       {t:'new', tx:'Circular equipment paperdoll (weapon, armor, accessories)'},
       {t:'new', tx:'Equip/unequip/sell directly from the bag'},
     ] },
-  { v:'V4', fr:[
-      {t:'new', tx:'Power Score et ratio de puissance par zone'},
+  { v:'V4', name:{fr:'Power Score & zones', en:'Power Score & zones'}, fr:[
+      {t:'new', tx:'Power Score et ratio de puissance par zone', removed:true},
       {t:'new', tx:'Scaling des dégâts, du loot et du risque de mort selon le gear'},
       {t:'new', tx:'12 zones avec tables de loot à 4 couches'},
     ], en:[
-      {t:'new', tx:'Power Score and per-zone power ratio'},
+      {t:'new', tx:'Power Score and per-zone power ratio', removed:true},
       {t:'new', tx:'Damage, loot and death-risk scaling based on gear'},
       {t:'new', tx:'12 zones with 4-layer loot tables'},
     ] },
-  { v:'V3', fr:[
+  { v:'V3', name:{fr:'Vue isométrique', en:'Isometric view'}, fr:[
       {t:'change', tx:'Passage en vue isométrique'},
       {t:'change', tx:'Monde 2D libre (fini le couloir)'},
       {t:'change', tx:'Loot dispersé au sol, ramassé au contact, disparaît après 40s'},
@@ -3059,7 +3185,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'Free 2D world (no more corridor)'},
       {t:'change', tx:'Loot scattered on the ground, picked up on contact, despawns after 40s'},
     ] },
-  { v:'V2', fr:[
+  { v:'V2', name:{fr:'IA de combat complète', en:'Full combat AI'}, fr:[
       {t:'new', tx:'IA complète façon joueur BDO (recherche, déplacement, regroupement, combat, kite, soin, loot)'},
       {t:'new', tx:'Rotation de 10 sorts de Witch avec priorités'},
       {t:'new', tx:'Les monstres ripostent avec attaques télégraphiées'},
@@ -3068,7 +3194,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'10-skill Witch rotation with priorities'},
       {t:'new', tx:'Monsters now fight back with telegraphed attacks'},
     ] },
-  { v:'V1', fr:[
+  { v:'V1', name:{fr:'Premier prototype', en:'First prototype'}, fr:[
       {t:'new', tx:'Premier prototype jouable : déplacement automatique, combat, loot basique'},
     ], en:[
       {t:'new', tx:'First playable prototype: automatic movement, combat, basic loot'},
@@ -3198,11 +3324,13 @@ $a('btnPatch').onclick = () => {
     <div class="patchEntry ${i===0?'latest':''}" data-ver="${p.v}">
       <div class="patchEntryHead">
         <span class="patchVer">${p.v}</span>
+        ${p.name ? `<span class="patchName">${p.name[LANG]}</span>` : ''}
         ${isNew ? '<span class="patchNewTag">NEW</span>' : ''}
       </div>
       <ul>${p[LANG].map(line => {
         const cat = PATCH_CATS[line.t] || PATCH_CATS.change;
-        return `<li><span class="patchCat" style="color:${cat.color};border-color:${cat.color}">${cat.icon} ${cat[LANG]}</span>${line.tx}</li>`;
+        const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
+        return `<li class="${line.removed?'patchLineRemoved':''}"><span class="patchCat" style="color:${cat.color};border-color:${cat.color}">${cat.icon} ${cat[LANG]}</span>${line.tx}${removedTag}</li>`;
       }).join('')}</ul>
     </div>`;
   }).join('');
