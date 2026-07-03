@@ -226,13 +226,6 @@
   .invFoot .bar.wbar > div.over { background:linear-gradient(90deg,#8a3a30,var(--danger)); }
   #wTxt.bad { color:var(--danger); font-weight:bold; }
   .invFoot .money { display:flex; align-items:center; gap:6px; color:var(--gold); margin-top:6px; }
-  /* niveau + % d'XP façon BDO (peu de décimales visibles = friction énorme aux hauts niveaux) */
-  #lvlXpRow {
-    display:flex; align-items:baseline; gap:6px; font-size:11.5px; color:var(--ink-dim);
-    margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #2c2a33;
-  }
-  #lvlXpRow b { color:var(--ink); font-size:13px; }
-  #invXpPct { margin-left:auto; color:var(--gold); font-variant-numeric:tabular-nums; }
 
   /* tooltip / actions contextuelles */
   #itemPop {
@@ -872,7 +865,6 @@
 
     <div class="card" id="invCard">
       <h3><span data-i18n="cardInv">Inventaire</span> <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
-      <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
       <div class="invTools">
         <button id="sellTrash" data-i18n="btnSellTrash">Vendre trash</button>
         <button id="sellMats" data-i18n="btnSellMats">Vendre mat.</button>
@@ -1016,7 +1008,7 @@ const Z = () => ZONES[zoneIdx];
 
 // ==================== ÉTAT GLOBAL ====================
 const S = {
-  silver: 0, kills: 0, lootCount: 0, lvl: 1, xp: 0, xpNext: 1, // xpNext = LEVEL_XP_TABLE[lvl] (voir gainXp)
+  silver: 0, kills: 0, lootCount: 0, lvl: 1, xp: 0, xpNext: 40,
   pa: 4, dp: 10,   // PA innée (le gros vient de l'arme équipée ci-dessous)
   castMult: 1, hpMax: 100, lootRadius: 26,
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
@@ -1981,33 +1973,11 @@ function lootLine(item, val, cls) {
   while (t.children.length > 6) t.removeChild(t.lastChild);
 }
 
-// table d'XP requise par niveau du vrai jeu (BDO) — indice = niveau actuel, valeur = XP pour
-// passer au niveau suivant. Les niveaux 0-4 ne coûtent presque rien (quasi instantané), puis ça
-// explose jusqu'à des quantités astronomiques (~1.29 quadrillion à partir du niveau 71, où la
-// courbe plafonne dans le jeu original) — d'où le format d'affichage en % à 3 décimales : passé
-// un certain niveau, un monstre ne fait plus gagner que quelques 0.001% de la barre.
-const LEVEL_XP_TABLE = [
-  1,1,1,1,1,161,472,1181,2626,5319,10005,17721,29865,48273,75300,113911,167777,241381,340127,
-  470464,640005,857666,1133804,1480364,1911035,2441411,3089163,3874210,4818908,5948238,7290005,
-  8875042,10737423,12914685,15448049,18382661,21767828,25657269,30109369,35187443,40960005,
-  47501047,54890322,63213635,72563144,83037661,94742974,118571374,158997683,207619316,415238632,
-  830477264,1245715896,1868573844,2802860766,8408582298,21021455745,52553639363,105107278725,
-  210214557450,630643672350,1261287344700,2522574689400,5045149378800,10090298757600,
-  20180597515200,40361195000000,80722390000000,161444780000000,322889560000000,645779120000000,
-  1291558200000000,
-];
-function xpNeededFor(lvl) { return LEVEL_XP_TABLE[Math.min(lvl, LEVEL_XP_TABLE.length-1)]; }
-// affichage façon BDO : pourcentage à 3 décimales, toujours 2 chiffres avant la virgule (00.000%)
-function fmtXpPct(pct) {
-  pct = Math.max(0, Math.min(99.999, pct));
-  const [intPart, decPart] = pct.toFixed(3).split('.');
-  return intPart.padStart(2,'0') + '.' + decPart + '%';
-}
 function gainXp(n) {
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;
-    S.xpNext = xpNeededFor(S.lvl);
+    S.xpNext = Math.floor(S.xpNext*1.35);
     S.hpMax += 8; P.hp = S.hpMax;
     floatTxt(P.x,P.y,115,'NIVEAU '+S.lvl,{lvl:true});
   }
@@ -2485,8 +2455,6 @@ function refreshStatsOnly() {
   const apR = apRatio(), dpR = dpRatio(), z = Z();
   $('silver').textContent = fmt(S.silver);
   $('lvl').textContent = S.lvl;
-  $('invLvl').textContent = S.lvl;
-  $('invXpPct').textContent = fmtXpPct(S.xp / S.xpNext * 100);
   $('gsVal').textContent = Math.round(GS());
   $('stPS').textContent = Math.round(GS());
   $('stPA').textContent = Math.round(apEff()*10)/10;
@@ -3169,7 +3137,6 @@ function applySaveState(data) {
   for (let i = 0; i < INV_SIZE; i++) INV[i] = data.INV[i] ?? null;
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
-  S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
   resetWorld(); // recrée les packs de la zone chargée
   if (data.playerPos) { P.x = data.playerPos.x; P.y = data.playerPos.y; }
   hud();
@@ -3991,7 +3958,6 @@ const I18N = {
   menuSideLeft: { fr:'◀ Gauche', en:'◀ Left' },
   menuSideRight: { fr:'Droite ▶', en:'Right ▶' },
   cardInv: { fr:'Inventaire', en:'Inventory' },
-  lblLevel: { fr:'Niv.', en:'Lvl' },
   btnSellTrash: { fr:'Vendre trash', en:'Sell trash' },
   btnSellMats: { fr:'Vendre mat.', en:'Sell mats' },
   btnSort: { fr:'Trier', en:'Sort' },
@@ -4044,13 +4010,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V41', name:{fr:'Courbe d\'XP et niveaux façon vrai jeu', en:'Real-game XP and level curve'}, fr:[
-      {t:'new', tx:'En haut de l\'inventaire : niveau + pourcentage d\'XP à 3 décimales (00.000%), comme dans le vrai jeu'},
-      {t:'change', tx:'La courbe de montée de niveau utilise désormais les vrais paliers d\'XP du jeu original : quasi instantané niveaux 0-4, puis ça explose fortement — au-delà d\'un certain niveau, un monstre ne fera plus gagner que quelques 0,001% de la barre. D\'autres bonus viendront plus tard pour augmenter fortement les gains d\'XP'},
-    ], en:[
-      {t:'new', tx:'At the top of the inventory: level + XP percentage with 3 decimals (00.000%), like the original game'},
-      {t:'change', tx:'The leveling curve now uses the real XP thresholds from the original game: near-instant for levels 0-4, then it ramps up massively — past a certain level, a single monster only grants a few 0.001% of the bar. More bonuses will come later to greatly boost XP gains'},
-    ] },
   { v:'V40', name:{fr:'Reset admin des quêtes', en:'Admin quest reset'}, fr:[
       {t:'new', tx:'Zone admin : bouton "Réinitialiser mes quêtes" (local, instantané) et bouton "Réinitialiser les quêtes de tous" (remet à zéro les quêtes journalières/hebdo de tous les joueurs, action serveur irréversible)'},
     ], en:[
