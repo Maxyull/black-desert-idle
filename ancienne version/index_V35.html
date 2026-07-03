@@ -633,26 +633,6 @@
   .achToastTitle { font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--gold); }
   .achToastName { font-size:12px; font-weight:bold; color:var(--ink); }
   .achToastReward { font-size:11px; color:var(--gold); }
-  .questSectionTitle {
-    font-size:9.5px; letter-spacing:2px; text-transform:uppercase; color:var(--gold);
-    font-weight:normal; margin:10px 0 4px; border-bottom:1px solid #2c2a33; padding-bottom:4px;
-  }
-  .questSectionTitle:first-child { margin-top:0; }
-
-  #questWidget {
-    position:fixed; bottom:14px; right:14px; z-index:300;
-    background:#1c1a22; border:1px solid var(--gold-dim); border-radius:6px;
-    padding:8px 10px; font-size:11px; min-width:150px;
-    box-shadow:0 4px 14px rgba(0,0,0,.5);
-  }
-  #questWidget:empty { display:none; }
-  .qwRow { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:2px 0; }
-  .qwLbl { color:var(--ink-dim); }
-  .qwTimer { color:var(--gold); font-variant-numeric:tabular-nums; }
-  .qwNext { display:flex; align-items:center; gap:7px; margin-top:6px; padding-top:6px; border-top:1px solid #2c2a33; }
-  .qwNextIcon { font-size:16px; }
-  .qwNextInfo { flex:1; min-width:0; }
-  .qwNextName { font-size:10.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 </style>
 </head>
 <body>
@@ -675,7 +655,6 @@
 </div>
 
 <div id="achToastStack"></div>
-<div id="questWidget"></div>
 
 <div id="updateToast">
   <span><span data-i18n="updateAvailableMsg">🔄 Une nouvelle version du jeu est disponible.</span> <span class="updVer" id="updToastVer"></span></span>
@@ -987,8 +966,8 @@ const S = {
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
-  enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
-  achUnlocked: {}, dq: null, wq: null,
+  enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0,
+  achUnlocked: {}, dq: null,
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -1211,8 +1190,8 @@ function openAchievements() { openInfo(LANG==='fr'?'🏅 Succès':'🏅 Achievem
 // pool de quêtes journalières : 3 tirées au hasard chaque jour parmi ces familles, avec une
 // difficulté (variante) elle aussi randomisée — le compteur de progression réutilise les stats
 // globales déjà suivies (kills/lootCount/silverEarned/enhAttempts/playtimeSec/travelCount) via
-// une simple soustraction par rapport à leur valeur au début de la période (voir base ci-dessous)
-const QUEST_KINDS_DAILY = {
+// une simple soustraction par rapport à leur valeur au début du jour (voir S.dq.base)
+const QUEST_KINDS = {
   kills:    { icon:'⚔️', name:{fr:'Terrasser des monstres',    en:'Defeat monsters'},  unit:{fr:'monstres',en:'monsters'}, variants:[{target:100,reward:2000},{target:250,reward:5000},{target:500,reward:9000}] },
   loot:     { icon:'🎒', name:{fr:'Ramasser du butin',         en:'Loot items'},       unit:{fr:'objets',en:'items'},       variants:[{target:80,reward:1800},{target:200,reward:4500},{target:400,reward:8000}] },
   silver:   { icon:'🪙', name:{fr:'Gagner du silver',          en:'Earn silver'},      unit:{fr:'silver',en:'silver'},      variants:[{target:5000,reward:1500},{target:15000,reward:4000},{target:40000,reward:9000}] },
@@ -1220,78 +1199,45 @@ const QUEST_KINDS_DAILY = {
   playtime: { icon:'⏱️', name:{fr:'Jouer',                     en:'Play time'},        unit:{fr:'min',en:'min'},            variants:[{target:600,reward:1500},{target:1800,reward:4000},{target:3600,reward:8000}], displayDiv:60 },
   travel:   { icon:'🗺️', name:{fr:'Changer de zone',           en:'Change zone'},      unit:{fr:'fois',en:'times'},         variants:[{target:1,reward:1000}] },
 };
-// pool distinct pour les quêtes hebdomadaires : familles différentes (butin rare, réussites
-// d'enchantement, plus grosses cibles) pour que ça ne ressemble pas juste à une version "plus
-// longue" des quotidiennes — l'état (S.wq) et le tirage sont totalement indépendants de S.dq
-const QUEST_KINDS_WEEKLY = {
-  killsBig:    { icon:'💀', name:{fr:'Grand massacre',           en:'Great slaughter'},   unit:{fr:'monstres',en:'monsters'}, variants:[{target:1500,reward:15000},{target:3000,reward:30000},{target:6000,reward:55000}] },
-  silverBig:   { icon:'💰', name:{fr:'Grosse récolte de silver', en:'Big silver haul'},   unit:{fr:'silver',en:'silver'},      variants:[{target:50000,reward:10000},{target:150000,reward:25000},{target:400000,reward:60000}] },
-  jackpot:     { icon:'💎', name:{fr:'Bijoux rares',             en:'Rare jewelry'},      unit:{fr:'bijoux',en:'jewels'},      variants:[{target:1,reward:8000},{target:3,reward:20000},{target:6,reward:45000}] },
-  gear:        { icon:'⚙️', name:{fr:'Équipement trouvé',        en:'Gear found'},        unit:{fr:'pièces',en:'pieces'},      variants:[{target:2,reward:6000},{target:5,reward:15000},{target:10,reward:35000}] },
-  enhSuccess:  { icon:'🌟', name:{fr:'Optimisations réussies',   en:'Successful enhancements'}, unit:{fr:'réussites',en:'successes'}, variants:[{target:10,reward:8000},{target:25,reward:20000},{target:50,reward:45000}] },
-  playtimeBig: { icon:'⏱️', name:{fr:'Assiduité',               en:'Dedication'},        unit:{fr:'h',en:'h'},                variants:[{target:7200,reward:8000},{target:18000,reward:20000},{target:36000,reward:45000}], displayDiv:3600 },
-};
-const QUEST_SCOPES = {
-  daily:  { stateKey:'dq', kinds:QUEST_KINDS_DAILY,  count:3, keyFn:d => d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate() },
-  weekly: { stateKey:'wq', kinds:QUEST_KINDS_WEEKLY, count:3, keyFn:d => { const m = mondayOf(d); return m.getFullYear()+'-'+(m.getMonth()+1)+'-'+m.getDate(); } },
-};
-function mondayOf(d) { const day = (d.getDay()+6)%7; return new Date(d.getFullYear(), d.getMonth(), d.getDate()-day); }
-function questStatValue(kind) {
-  switch (kind) {
-    case 'kills': case 'killsBig': return S.kills;
-    case 'loot': return S.lootCount;
-    case 'silver': case 'silverBig': return S.silverEarned;
-    case 'enh': return S.enhAttempts;
-    case 'enhSuccess': return S.enhSuccess||0;
-    case 'playtime': case 'playtimeBig': return S.playtimeSec;
-    case 'travel': return S.travelCount;
-    case 'jackpot': return S.jackpotCount||0;
-    case 'gear': return S.gearDropCount||0;
-  }
-  return 0;
-}
-function ensureQuests(scope) {
-  const cfg = QUEST_SCOPES[scope];
-  const key = cfg.keyFn(new Date());
-  if (S[cfg.stateKey] && S[cfg.stateKey].date === key) return;
-  const kinds = Object.keys(cfg.kinds);
+function dailyKey(d) { return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function ensureDailyQuests() {
+  const key = dailyKey(new Date());
+  if (S.dq && S.dq.date === key) return;
+  const kinds = Object.keys(QUEST_KINDS);
   for (let i = kinds.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [kinds[i],kinds[j]] = [kinds[j],kinds[i]]; }
-  const quests = kinds.slice(0,cfg.count).map(k => {
-    const variants = cfg.kinds[k].variants;
+  const quests = kinds.slice(0,3).map(k => {
+    const variants = QUEST_KINDS[k].variants;
     const v = variants[Math.floor(Math.random()*variants.length)];
     return { kind:k, target:v.target, reward:v.reward, claimed:false };
   });
-  const base = {};
-  for (const k of Object.keys(cfg.kinds)) base[k] = questStatValue(k);
-  S[cfg.stateKey] = { date:key, quests, base };
+  S.dq = { date:key, quests,
+    base: { kills:S.kills, loot:S.lootCount, silver:S.silverEarned, enh:S.enhAttempts, playtime:S.playtimeSec, travel:S.travelCount } };
 }
-function questProgress(scope, q) {
-  const st = S[QUEST_SCOPES[scope].stateKey];
-  return Math.max(0, questStatValue(q.kind) - st.base[q.kind]);
+function questProgress(q) {
+  const b = S.dq.base;
+  const cur = q.kind==='kills' ? S.kills : q.kind==='loot' ? S.lootCount : q.kind==='silver' ? S.silverEarned
+    : q.kind==='enh' ? S.enhAttempts : q.kind==='playtime' ? S.playtimeSec : S.travelCount;
+  const base = q.kind==='kills' ? b.kills : q.kind==='loot' ? b.loot : q.kind==='silver' ? b.silver
+    : q.kind==='enh' ? b.enh : q.kind==='playtime' ? b.playtime : b.travel;
+  return Math.max(0, cur - base);
 }
-function claimQuest(scope, i) {
-  ensureQuests(scope);
-  const st = S[QUEST_SCOPES[scope].stateKey];
-  const q = st.quests[i]; if (!q || q.claimed || questProgress(scope,q) < q.target) return;
+function claimDailyQuest(i) {
+  ensureDailyQuests();
+  const q = S.dq.quests[i]; if (!q || q.claimed || questProgress(q) < q.target) return;
   q.claimed = true; S.silver += q.reward; S.silverEarned += q.reward;
   refreshStatsOnly(); updateQuestBadge();
 }
 function updateQuestBadge() {
-  ensureQuests('daily'); ensureQuests('weekly');
-  let n = 0;
-  for (const scope of ['daily','weekly']) {
-    const st = S[QUEST_SCOPES[scope].stateKey];
-    n += st.quests.filter(q => !q.claimed && questProgress(scope,q) >= q.target).length;
-  }
+  ensureDailyQuests();
+  const n = S.dq.quests.filter(q => !q.claimed && questProgress(q) >= q.target).length;
   const badge = $('questBadge');
   if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
 }
-function renderQuestSectionHtml(scope) {
-  ensureQuests(scope);
-  const cfg = QUEST_SCOPES[scope], st = S[cfg.stateKey];
-  return st.quests.map((q,i) => {
-    const def = cfg.kinds[q.kind];
-    const val = Math.min(questProgress(scope,q), q.target);
+function renderDailyQuestsHtml() {
+  ensureDailyQuests();
+  const rows = S.dq.quests.map((q,i) => {
+    const def = QUEST_KINDS[q.kind];
+    const val = Math.min(questProgress(q), q.target);
     const pct = Math.round(val/q.target*100);
     const dv = def.displayDiv||1;
     const doneNotClaimed = val >= q.target && !q.claimed;
@@ -1301,62 +1247,18 @@ function renderQuestSectionHtml(scope) {
       `<div class="achDesc">${fmt(Math.floor(val/dv))} / ${fmt(Math.floor(q.target/dv))} ${def.unit[LANG]}</div>` +
       `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div>` +
       (q.claimed ? `<div class="achReward">${LANG==='fr'?'Réclamé ✓':'Claimed ✓'}</div>`
-        : doneNotClaimed ? `<button class="questClaimBtn" data-scope="${scope}" data-i="${i}">${LANG==='fr'?'Réclamer':'Claim'} +${fmt(q.reward)}🪙</button>`
+        : doneNotClaimed ? `<button class="questClaimBtn" data-i="${i}">${LANG==='fr'?'Réclamer':'Claim'} +${fmt(q.reward)}🪙</button>`
         : `<div class="achReward">+${fmt(q.reward)} 🪙</div>`) +
       `</div>`;
   }).join('');
-}
-function renderDailyQuestsHtml() {
-  const dailyNote = LANG==='fr' ? 'Se réinitialise chaque jour à minuit (heure locale)' : 'Resets every day at midnight (local time)';
-  const weeklyNote = LANG==='fr' ? 'Se réinitialise chaque lundi à minuit (heure locale)' : 'Resets every Monday at midnight (local time)';
-  return `<h3 class="questSectionTitle">${LANG==='fr'?'📅 Journalières':'📅 Daily'}</h3>` + renderQuestSectionHtml('daily') + `<div class="admSummary">${dailyNote}</div>` +
-    `<h3 class="questSectionTitle">${LANG==='fr'?'🗓️ Hebdomadaires':'🗓️ Weekly'}</h3>` + renderQuestSectionHtml('weekly') + `<div class="admSummary">${weeklyNote}</div>`;
+  const resetNote = LANG==='fr' ? 'Se réinitialise chaque jour à minuit (heure locale)' : 'Resets every day at midnight (local time)';
+  return rows + `<div class="admSummary">${resetNote}</div>`;
 }
 function openDailyQuests() {
-  openInfo(LANG==='fr'?'🗒️ Quêtes':'🗒️ Quests', renderDailyQuestsHtml());
+  openInfo(LANG==='fr'?'🗒️ Quêtes journalières':'🗒️ Daily quests', renderDailyQuestsHtml());
   $a('infoBody').querySelectorAll('.questClaimBtn').forEach(btn => {
-    btn.onclick = () => { claimQuest(btn.dataset.scope, parseInt(btn.dataset.i,10)); openDailyQuests(); };
+    btn.onclick = () => { claimDailyQuest(parseInt(btn.dataset.i,10)); openDailyQuests(); };
   });
-}
-// prochain succès le plus proche d'être débloqué (plus haut % de progression parmi les non-débloqués)
-function nextAchievement() {
-  let best = null, bestPct = -1;
-  for (const a of ACHIEVEMENTS) {
-    if (S.achUnlocked[a.id]) continue;
-    const pct = Math.max(0, Math.min(99, (a.statFn(S)/a.target)*100));
-    if (pct > bestPct) { bestPct = pct; best = { a, pct }; }
-  }
-  return best;
-}
-function fmtDuration(ms) {
-  let s = Math.max(0, Math.floor(ms/1000));
-  const days = Math.floor(s/86400); s -= days*86400;
-  const h = Math.floor(s/3600); s -= h*3600;
-  const m = Math.floor(s/60); s -= m*60;
-  const pad = n => String(n).padStart(2,'0');
-  return (days>0 ? days+(LANG==='fr'?'j ':'d ') : '') + pad(h)+':'+pad(m)+':'+pad(s);
-}
-function msToNextDailyReset() {
-  const now = new Date();
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0,0,0,0) - now;
-}
-function msToNextWeeklyReset() {
-  const now = new Date();
-  const day = (now.getDay()+6)%7; // 0=lundi..6=dimanche
-  const daysUntil = 7 - day;
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate()+daysUntil, 0,0,0,0) - now;
-}
-// petit encart persistant en bas à droite de l'écran : timers de reset + prochain succès à débloquer
-function renderQuestWidget() {
-  const el = $('questWidget'); if (!el) return;
-  ensureQuests('daily'); ensureQuests('weekly');
-  const next = nextAchievement();
-  el.innerHTML =
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'🗒️ Journ.':'🗒️ Daily'}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly'}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
-    (next ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
-      `<div class="qwNextName">${next.a.name[LANG]}</div>` +
-      `<div class="achBarWrap"><div class="achBar" style="width:${Math.round(next.pct)}%"></div></div></div></div>` : '');
 }
 
 // dégâts infligés : dépend UNIQUEMENT de la PA face à la PA requise de la zone
@@ -2386,11 +2288,9 @@ function hud() {
   if (zSig !== lastZoneSig) { lastZoneSig = zSig; buildZoneList(); }
   const iSig = invSignature();
   if (iSig !== lastInvSig) { lastInvSig = iSig; refreshInvUI(); }
-  ensureQuests('daily');
-  ensureQuests('weekly');
+  ensureDailyQuests();
   checkAchievements();
   updateQuestBadge();
-  renderQuestWidget();
 }
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
@@ -2864,7 +2764,6 @@ $('btnOpt').onclick = () => {
   const r = $('optResult');
   if (Math.random() < chance) {
     target.enhLv = lvl+1;
-    S.enhSuccess = (S.enhSuccess||0) + 1;
     // le failstack déjà acquis sur les AUTRES paliers reste acquis (rien n'est effacé) — seul le
     // palier qu'on vient de passer n'a plus besoin d'être suivi, il reste stocké mais inutilisé
     r.textContent = (LANG==='fr'?'✦ SUCCÈS — ':'✦ SUCCESS — ') + ENH_NAMES[target.enhLv]; r.className = 'ok';
@@ -3859,13 +3758,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V36', name:{fr:'Quêtes hebdomadaires & encart de suivi', en:'Weekly quests & tracker widget'}, fr:[
-      {t:'new', tx:'Quêtes hebdomadaires : 3 quêtes tirées au hasard chaque semaine (butin rare, équipement trouvé, optimisations réussies, grosses cibles de kills/silver/temps de jeu), avec des récompenses plus élevées — se réinitialisent chaque lundi, indépendamment des quêtes journalières'},
-      {t:'new', tx:'Nouvel encart permanent en bas à droite de l\'écran : compte à rebours avant la prochaine réinitialisation (journalière et hebdomadaire) et le prochain succès le plus proche d\'être débloqué'},
-    ], en:[
-      {t:'new', tx:'Weekly quests: 3 randomly picked each week (rare jewelry, gear found, successful enhancements, big kill/silver/playtime targets), with higher rewards — reset every Monday, independently from daily quests'},
-      {t:'new', tx:'New persistent widget at the bottom-right of the screen: countdown to the next reset (daily and weekly) and the achievement closest to being unlocked'},
-    ] },
   { v:'V35', name:{fr:'Succès & quêtes journalières', en:'Achievements & daily quests'}, fr:[
       {t:'new', tx:'Nouveau bouton "🏅 Succès" : 22 succès permanents (kills, butin, silver, zones, gearscore, enchantement, temps de jeu...) qui rapportent du silver dès qu\'ils sont débloqués — d\'autres seront ajoutés à chaque future mise à jour selon le nouveau contenu'},
       {t:'new', tx:'Nouveau bouton "🗒️ Quêtes" : 3 quêtes journalières tirées au hasard chaque jour, à réclamer pour du silver une fois complétées — se réinitialisent chaque jour à minuit'},
