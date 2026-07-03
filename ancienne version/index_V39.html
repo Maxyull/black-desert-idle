@@ -351,8 +351,8 @@
     background:var(--danger); color:#fff; font-size:9px; font-weight:bold;
     letter-spacing:1px; padding:2px 6px; border-radius:2px; flex-shrink:0;
   }
-  #btnResetDemo, #btnResetAllQuests { border-color:var(--danger) !important; color:#e8a89f; }
-  #btnResetDemo:hover, #btnResetAllQuests:hover { background:rgba(192,85,69,.15); }
+  #btnResetDemo { border-color:var(--danger) !important; color:#e8a89f; }
+  #btnResetDemo:hover { background:rgba(192,85,69,.15); }
 
   /* encadré séparé pour les actions admin — prêt à accueillir de futures options */
   #adminBox {
@@ -743,8 +743,6 @@
       <div id="adminBoxTitle" data-i18n="adminBoxTitle">🛠️ Admin</div>
       <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
       <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
-      <button id="btnResetMyQuests" data-i18n="btnResetMyQuests">🔄 Réinitialiser mes quêtes</button>
-      <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
       <button id="btnResetDemo" data-i18n="btnResetDemo">🔄 Réinitialiser</button>
     </div>
   </div>
@@ -3408,39 +3406,6 @@ async function resetDemo() {
 }
 $a('btnResetDemo').onclick = resetDemo;
 
-// ---------- reset des quêtes (admin) : juste pour soi, ou pour tout le monde ----------
-// "pour soi" ne touche que l'état local + sa propre sauvegarde cloud (aucun risque).
-function resetMyQuests() {
-  if (!isAdmin()) return;
-  S.dq = null; S.wq = null;
-  ensureQuests('daily'); ensureQuests('weekly');
-  hud();
-  if ($a('infoOverlay').classList.contains('open')) openDailyQuests();
-  if (sb && currentUser) saveToCloud();
-  try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {}
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes réinitialisées' : 'Quests reset', { gold:true });
-}
-$a('btnResetMyQuests').onclick = resetMyQuests;
-// "pour tout le monde" appelle une fonction SECURITY DEFINER côté Supabase qui remet à null
-// dq/wq dans TOUTES les sauvegardes cloud — celle-ci vérifie elle-même l'email admin côté
-// serveur (voir supabase-quest-reset-schema.sql), le bouton masqué côté client n'étant
-// qu'une protection de confort, pas la vraie barrière de sécurité.
-async function resetAllQuests() {
-  if (!isAdmin() || !sb) return;
-  const msg = LANG === 'fr'
-    ? "Réinitialiser les quêtes de TOUS les joueurs ? Chacun se verra retirer sa progression de quêtes en cours (journalières et hebdomadaires) et de nouvelles seront tirées à leur prochaine connexion. Action irréversible."
-    : "Reset quests for ALL players? Everyone's in-progress quests (daily and weekly) will be cleared and new ones drawn on their next login. This action is irreversible.";
-  if (!confirm(msg)) return;
-  const { error } = await sb.rpc('admin_reset_all_quests');
-  if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
-    return;
-  }
-  resetMyQuests(); // applique aussi l'effet immédiatement à l'admin lui-même
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes de tous les joueurs réinitialisées ✓' : "All players' quests reset ✓", { gold:true });
-}
-$a('btnResetAllQuests').onclick = resetAllQuests;
-
 // ---------- zone admin : stats serveur (réservé au compte admin, via RLS côté base) ----------
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
@@ -3913,8 +3878,6 @@ const I18N = {
   demoNoteAuth: { fr:'🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.', en:'🎮 This is a test demo — your progress can be reset at any time.' },
   demoTag: { fr:'DÉMO', en:'DEMO' },
   btnResetDemo: { fr:'🔄 Réinitialiser', en:'🔄 Reset' },
-  btnResetMyQuests: { fr:'🔄 Réinitialiser mes quêtes', en:'🔄 Reset my quests' },
-  btnResetAllQuests: { fr:'⚠️ Réinitialiser les quêtes de tous', en:'⚠️ Reset everyone\'s quests' },
   btnAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   btnReevalMarket: { fr:'🔄 Réévaluer le marché', en:'🔄 Reevaluate market' },
@@ -4010,11 +3973,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V40', name:{fr:'Reset admin des quêtes', en:'Admin quest reset'}, fr:[
-      {t:'new', tx:'Zone admin : bouton "Réinitialiser mes quêtes" (local, instantané) et bouton "Réinitialiser les quêtes de tous" (remet à zéro les quêtes journalières/hebdo de tous les joueurs, action serveur irréversible)'},
-    ], en:[
-      {t:'new', tx:'Admin zone: "Reset my quests" button (local, instant) and "Reset everyone\'s quests" button (clears daily/weekly quests for all players, irreversible server action)'},
-    ] },
   { v:'V39', name:{fr:'Encarts repliables & suivi des quêtes', en:'Collapsible widgets & quest tracking'}, fr:[
       {t:'new', tx:'Nouveau bouton "🔖 Suivre les quêtes restantes" dans le panneau Quêtes : affiche un encart en haut à droite listant toutes les quêtes journalières et hebdomadaires pas encore réclamées, avec leur progression'},
       {t:'change', tx:'L\'encart de suivi (timers de reset journalier/hebdo + prochain succès) est déplacé en haut à droite, et peut être replié via son propre bouton ▾/▸'},
