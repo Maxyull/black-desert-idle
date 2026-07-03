@@ -121,7 +121,6 @@
     border:1px solid var(--gold-dim); vertical-align:middle;
   }
   .cell.catHidden { display:none; }
-  .invCatEmpty { grid-column:1/-1; text-align:center; color:var(--ink-dim); font-style:italic; font-size:11px; padding:14px 0; }
   .row { display:flex; justify-content:space-between; align-items:center; margin:2.5px 0; font-size:11.5px; }
   .row .v { color:var(--gold); } .row .v.blue { color:#9cc9e8; }
   .row .v.ok { color:#8fc98a; } .row .v.bad { color:var(--danger); }
@@ -822,11 +821,11 @@
   .bossDayCount { margin-left:auto; font-size:10px; color:var(--ink-dim); background:#2c2a33; border-radius:8px; padding:1px 7px; }
 
   /* ===== salle de boss plein écran ===== */
-  /* le boss est DANS le flux du jeu, juste sous le header (qui reste donc toujours visible),
-     et remplit le reste de la hauteur de l'écran — pas sur les côtés, dans la colonne du jeu */
+  /* le boss occupe TOUTE la hauteur mais reste dans la colonne centrée du jeu (pas sur les côtés) */
   #bossRoom {
-    display:none; width:100%; background:#141018; border:1px solid #2c2a31;
-    flex-direction:column; height:calc(100vh - 62px); min-height:440px;
+    display:none; position:fixed; top:0; bottom:0; left:50%; transform:translateX(-50%);
+    width:min(100vw, 1240px); z-index:500; background:#141018;
+    flex-direction:column;
   }
   #bossRoom.open { display:flex; }
   #bossLobby { display:none; flex-direction:column; height:100%; overflow-y:auto; }
@@ -977,6 +976,27 @@
   </div>
 </div>
 
+<div id="bossRoom">
+  <div id="bossLobby">
+    <div id="bossLobbyHead">
+      <h2>🐍 <span data-i18n="bossPageTitle">World Boss</span></h2>
+      <button id="bossLobbyClose">✕</button>
+    </div>
+    <div id="bossLobbyBody"></div>
+  </div>
+  <div id="bossArena">
+    <div id="bossTopBar">
+      <div id="bossName"></div>
+      <div id="bossHpBarWrap"><div id="bossHpBar"></div><span id="bossHpTxt"></span></div>
+      <div id="bossTimer"></div>
+      <button id="bossLeaveBtn">✕</button>
+    </div>
+    <canvas id="bossCv" width="1280" height="720"></canvas>
+    <div id="bossPlayerHpWrap"><div id="bossPlayerHp"></div><span id="bossPlayerHpTxt"></span></div>
+    <div id="bossResult"></div>
+  </div>
+</div>
+
 <div id="marketOverlay">
   <div id="marketBox">
     <div id="marketHead">
@@ -1019,28 +1039,6 @@
     <div id="activityTabs"></div>
     <span id="nextBossMini"></span>
   </div>
-
-  <div id="bossRoom">
-    <div id="bossLobby">
-      <div id="bossLobbyHead">
-        <h2>🐍 <span data-i18n="bossPageTitle">World Boss</span></h2>
-        <button id="bossLobbyClose">✕</button>
-      </div>
-      <div id="bossLobbyBody"></div>
-    </div>
-    <div id="bossArena">
-      <div id="bossTopBar">
-        <div id="bossName"></div>
-        <div id="bossHpBarWrap"><div id="bossHpBar"></div><span id="bossHpTxt"></span></div>
-        <div id="bossTimer"></div>
-        <button id="bossLeaveBtn">✕</button>
-      </div>
-      <canvas id="bossCv" width="1280" height="720"></canvas>
-      <div id="bossPlayerHpWrap"><div id="bossPlayerHp"></div><span id="bossPlayerHpTxt"></span></div>
-      <div id="bossResult"></div>
-    </div>
-  </div>
-
   <div id="gameFrame">
     <canvas id="cv" width="1240" height="440"></canvas>
     <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Forêt aux Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span></div>
@@ -1658,22 +1656,13 @@ function renderActivityTabs() {
     btn.onclick = () => showActivityPage(btn.dataset.id);
   });
 }
-// affiche/masque la vue "farm" (canvas + panneaux) — le header (barre d'activités) n'est
-// JAMAIS masqué : le boss s'insère juste en dessous, dans le flux du jeu
-function setFarmViewVisible(v) {
-  ['gameFrame','panel','itemPop','itemTooltip'].forEach(id => {
-    const el = $(id); if (el) el.style.display = v ? '' : 'none';
-  });
-}
 function showActivityPage(id) {
   if (id === 'boss') {
     currentActivity = 'boss';
-    setFarmViewVisible(false);
     if (!bossState.active) openBossLobby();
   } else { // zone = retour au farm
     currentActivity = 'zone';
     if (!bossState.active) $('bossRoom').classList.remove('open');
-    setFarmViewVisible(true);
   }
   renderActivityTabs();
 }
@@ -1759,7 +1748,6 @@ function startBossFight(bossId) {
     playerHp: S.hpMax, playerHpMax: S.hpMax, hits:[], last:performance.now(), potCd:0,
   });
   currentActivity = 'boss'; renderActivityTabs();
-  setFarmViewVisible(false);
   $('bossRoom').classList.remove('lobby'); $('bossRoom').classList.add('open', 'fight');
   $('bossResult').classList.remove('show');
   $('bossName').textContent = b.name[LANG];
@@ -3403,18 +3391,14 @@ function drawWitchOn(x, cx, cy, sc) {
 // ---------- grille d'inventaire : scindée en catégories filtrables (même tableau 192 cases
 // en interne — seul l'affichage est filtré, pour ne pas casser tous les index déjà utilisés
 // par l'équipement/la vente/les tooltips) ----------
-// 4 inventaires distincts : chaque objet va dans le sien selon son type (plus de "Tout").
-//  - Normal : équipement + bijoux
-//  - Optimisation : matériaux d'enchantement + composants de craft endgame
-//  - Consommable : consommables (potions, etc.)
-//  - RNG : coffres/box aléatoires (vide pour l'instant — du contenu viendra)
 const INV_CATEGORIES = [
+  { id:'all',        icon:'📦', label:{fr:'Tout',en:'All'},         kinds:null },
   { id:'normal',      icon:'⚔️', label:{fr:'Normal',en:'Normal'},    kinds:['gear','jackpot'] },
-  { id:'opt',         icon:'✦',  label:{fr:'Optimisation',en:'Enhancement'}, kinds:['material','craft'] },
+  { id:'opt',         icon:'✦',  label:{fr:'Optimisation',en:'Enhancement'}, kinds:['material'] },
   { id:'consumable',  icon:'🧪', label:{fr:'Consommable',en:'Consumable'},   kinds:['consumable'] },
-  { id:'rng',         icon:'🎲', label:{fr:'RNG',en:'RNG'},          kinds:['rngbox'] },
+  { id:'rng',         icon:'🎲', label:{fr:'Butin rare',en:'Rare loot'},     kinds:['craft'] },
 ];
-let invCategory = 'normal';
+let invCategory = 'all';
 function renderInvCatTabs() {
   const el = $('invCatTabs'); if (!el) return;
   el.innerHTML = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCategory?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
@@ -3452,16 +3436,6 @@ function renderInventory() {
       cell.oncontextmenu = ev => { ev.preventDefault(); ev.stopPropagation(); hideItemTooltip(); showItemMenu(ev.clientX, ev.clientY, { invIndex:i, ...s }); };
     }
     grid.appendChild(cell);
-  }
-  // message quand la catégorie active ne contient encore aucun objet (ex: RNG, Consommable)
-  const anyVisible = INV.some(s => s && cat.kinds.includes(s.kind));
-  if (!anyVisible) {
-    const empty = document.createElement('div');
-    empty.className = 'invCatEmpty';
-    empty.textContent = cat.id === 'rng'
-      ? (LANG==='fr'?'Aucun coffre RNG pour l\'instant':'No RNG box yet')
-      : (LANG==='fr'?'Vide':'Empty');
-    grid.appendChild(empty);
   }
   // la grille vient d'être reconstruite : le DOM survolé a été détruit sans mouseleave —
   // on rafraîchit le tooltip avec l'état actuel (ou on le ferme si la case est vide/hors zone)
@@ -4974,15 +4948,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V51', name:{fr:'Inventaire à 4 catégories & header toujours visible', en:'4-category inventory & always-visible header'}, fr:[
-      {t:'change', tx:'Inventaire réorganisé en 4 catégories distinctes (plus de "Tout") : Normal, Optimisation, Consommable, RNG. Chaque objet se range automatiquement dans la bonne'},
-      {t:'change', tx:'La catégorie "Butin rare" devient "RNG" et est vidée — elle accueillera bientôt des coffres RNG (les composants de craft passent dans Optimisation)'},
-      {t:'change', tx:'Le header (Zone / Boss / activités) reste maintenant toujours visible : ouvrir la page Boss ne cache plus la barre du haut, elle s\'affiche juste en dessous'},
-    ], en:[
-      {t:'change', tx:'Inventory reorganized into 4 distinct categories (no more "All"): Normal, Enhancement, Consumable, RNG. Each item is auto-sorted into the right one'},
-      {t:'change', tx:'The "Rare loot" category becomes "RNG" and is emptied — it will soon hold RNG boxes (crafting components moved to Enhancement)'},
-      {t:'change', tx:'The header (Zone / Boss / activities) now always stays visible: opening the Boss page no longer hides the top bar, it shows right below it'},
-    ] },
   { v:'V50', name:{fr:'Page World Boss, chat amélioré, quêtes affinées', en:'World Boss page, improved chat, refined quests'}, fr:[
       {t:'change', tx:'Le header au-dessus du jeu est maintenant une liste de pages : ⚔️ Zone, 🐍 Boss, + activités verrouillées. La page Boss occupe toute la hauteur de l\'écran, dans le style de la zone de farm (sol iso, héros, boss au centre)'},
       {t:'change', tx:'Chat : affiche le pseudo (jamais l\'email), badge ADMIN/MOD à côté du pseudo, bouton de suppression de message pour le staff. Le chat est aussi agrandi'},
