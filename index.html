@@ -2072,7 +2072,11 @@ let last = performance.now();
 function loop(now) {
   const dt = Math.min(.05,(now-last)/1000); last = now;
   if (packs.filter(p=>!p.dead).length < 6) spawnPackNear();
-  packs = packs.filter(p=>!p.dead || dist(P.x,P.y,p.x,p.y)<900);
+  // les packs morts ne sont plus jamais dessinés (voir render()) ni utilisés ailleurs —
+  // avant ce correctif ils restaient dans le tableau tant que le joueur ne s'éloignait pas
+  // de 900 unités, ce qui faisait grossir `packs` indéfiniment sur une session de farm
+  // prolongée dans la même zone et ralentissait le jeu de plus en plus au fil du temps.
+  packs = packs.filter(p=>!p.dead);
   corpses.forEach(c=>c.life-=dt); corpses = corpses.filter(c=>c.life>0);
   floats.forEach(f=>f.life-=dt); floats = floats.filter(f=>f.life>0);
 
@@ -3374,6 +3378,11 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V26', name:{fr:'Correctif de ralentissement', en:'Slowdown fix'}, fr:[
+      {t:'fix', tx:'Correctif de performance important : les packs de monstres vaincus restaient en mémoire tant que le joueur ne s\'éloignait pas de 900 unités, ce qui ralentissait progressivement le jeu (et parfois le PC) sur une session de farm prolongée dans la même zone'},
+    ], en:[
+      {t:'fix', tx:'Major performance fix: defeated monster packs stayed in memory as long as the player didn\'t move 900 units away, progressively slowing down the game (and sometimes the PC) during long farming sessions in the same zone'},
+    ] },
   { v:'V25', name:{fr:'Joueurs en ligne & parrainage', en:'Online players & referrals'}, fr:[
       {t:'new', tx:'Compteur "joueurs en ligne" en haut de l\'écran (invités inclus, mis à jour toutes les 20s)'},
       {t:'new', tx:'Nouveau panneau "👤 Mon compte" (comptes vérifiés) : code de parrainage à partager, champ pour entrer celui d\'un autre joueur, compteur et liste détaillée de tes filleuls (niveau, gearscore, silver) — pas de récompense pour l\'instant, uniquement du suivi'},
