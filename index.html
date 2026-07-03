@@ -367,6 +367,10 @@
     text-decoration:none; text-align:left; font-family:inherit;
   }
   #btnDiscord:hover { background:rgba(88,101,242,.32); }
+  .discordBtn {
+    background:rgba(88,101,242,.18) !important; border:1px solid #5865F2 !important; color:#c9cdff !important;
+  }
+  .discordBtn:hover { background:rgba(88,101,242,.32) !important; }
 
   /* slider position du menu (gauche/droite) */
   #menuSideToggle {
@@ -475,6 +479,12 @@
   }
   #refMsg { font-size:11.5px; margin-top:8px; min-height:14px; }
   #refMsg.ok { color:#8fc98a; } #refMsg.fail { color:var(--danger); }
+  #pseudoInput {
+    width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
+    font-family:inherit; font-size:12px; padding:8px 9px; margin-bottom:8px;
+  }
+  #pseudoMsg { font-size:11.5px; margin-top:4px; margin-bottom:8px; min-height:14px; }
+  #pseudoMsg.ok { color:#8fc98a; } #pseudoMsg.fail { color:var(--danger); }
   .refRules { list-style:none; margin:12px 0 0; padding:0; font-size:10.5px; color:var(--ink-dim); }
   .refRules li { padding-left:14px; position:relative; margin-bottom:4px; line-height:1.4; }
   .refRules li::before { content:'—'; position:absolute; left:0; color:var(--gold-dim); }
@@ -601,6 +611,7 @@
     <div id="authError"></div>
     <button id="btnSignIn" data-i18n="btnSignIn">Se connecter</button>
     <button id="btnSignUp" class="ghost" data-i18n="btnSignUp">Créer un compte</button>
+    <button id="btnSignInDiscord" class="discordBtn" data-i18n="btnSignInDiscord">🎮 Se connecter avec Discord</button>
     <div id="authStatus"></div>
   </div>
 </div>
@@ -2700,6 +2711,14 @@ try {
   }
 } catch (e) { console.warn('Supabase non initialisé :', e); }
 
+// ---------- API interne du bot Discord (ajout auto au serveur après connexion OAuth) ----------
+// 🔧 À REMPLIR : URL publique du service Render + même valeur que INTERNAL_API_SECRET côté bot.
+// Comme ce fichier est public sur GitHub, BOT_API_SECRET n'est PAS un vrai secret — c'est
+// juste un filtre anti-spam basique, la vraie protection vient de Discord (voir bot README).
+const BOT_API_URL = 'https://black-desert-idle-discord-bot.onrender.com';
+const BOT_API_SECRET = 'TON-SECRET-PARTAGE';
+let myPseudo = null; // pseudo effectif du joueur courant, mis en cache après connexion
+
 // ---------- admin (accès réservé à ce compte précis) ----------
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
 function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
@@ -2770,14 +2789,76 @@ async function doLogout() {
   await startGuestOrShowAuth(); // jamais de mur bloquant : on repart direct sur une session invité
 }
 
+// connexion (ou liaison, si déjà invité/connecté) via Discord — demande le scope
+// guilds.join pour pouvoir ajouter automatiquement le joueur au serveur Discord ensuite
+async function doSignInDiscord() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({
+    provider: 'discord',
+    options: { scopes: 'identify guilds.join', redirectTo: location.href },
+  });
+}
+// lie Discord à un compte email déjà existant (depuis le panneau "Mon compte"), sans
+// perdre la session courante — nécessite "Manual Linking" activé côté Supabase
+async function linkDiscordAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({
+    provider: 'discord',
+    options: { scopes: 'identify guilds.join', redirectTo: location.href },
+  });
+  if (error) alert('Erreur : ' + error.message);
+}
+
+function discordIdentity(user) {
+  return user?.identities?.find(i => i.provider === 'discord') || null;
+}
+function discordUsername(user) {
+  const id = discordIdentity(user);
+  const d = id?.identity_data || {};
+  return d.custom_claims?.global_name || d.full_name || d.name || d.user_name || null;
+}
+
+// ajoute automatiquement le joueur au serveur Discord communautaire via le bot, en
+// utilisant le token OAuth (scope guilds.join) obtenu à l'instant de la connexion —
+// ce token n'est disponible qu'à ce moment précis, jamais après un rechargement de page
+async function joinDiscordGuild(providerToken, user) {
+  const id = discordIdentity(user);
+  if (!providerToken || !id || !BOT_API_URL || BOT_API_URL.includes('TON-')) return;
+  try {
+    await fetch(BOT_API_URL + '/join-guild', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': BOT_API_SECRET },
+      body: JSON.stringify({ discordUserId: id.id, accessToken: providerToken }),
+    });
+  } catch (e) { /* pas grave, le joueur peut toujours rejoindre via le bouton Discord du menu */ }
+}
+if (sb) {
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' && session?.provider_token) {
+      joinDiscordGuild(session.provider_token, session.user);
+    }
+  });
+}
+
 async function onAuthed(user) {
   currentUser = user;
   showAuthOverlay(false);
   updateUserBar();
+  await refreshMyPseudo();
   await loadCloudSave();
   startAutoCloudSave();
   heartbeatPresence();
   refreshOnlineCounter();
+}
+
+// détermine le pseudo effectif : pseudo choisi > pseudo Discord > partie locale de l'email
+async function refreshMyPseudo() {
+  myPseudo = null;
+  if (!sb || !currentUser || isGuest()) return;
+  try {
+    const { data } = await sb.from('profiles').select('pseudo').eq('user_id', currentUser.id).maybeSingle();
+    myPseudo = data?.pseudo || discordUsername(currentUser) || (currentUser.email || '?').split('@')[0];
+  } catch (e) { myPseudo = discordUsername(currentUser) || (currentUser.email || '?').split('@')[0]; }
 }
 
 // point d'entrée unique au chargement (et après déconnexion) : tente une session invité automatique.
@@ -2824,7 +2905,7 @@ async function syncPlayerStats() {
   try {
     await sb.from('player_stats').upsert({
       user_id: currentUser.id,
-      display_name: (currentUser.email||'?').split('@')[0],
+      display_name: myPseudo || (currentUser.email||'?').split('@')[0],
       silver: Math.round(S.silver),
       gearscore: Math.round(GS()),
       lvl: S.lvl,
@@ -3023,8 +3104,24 @@ async function openAccountPanel() {
     'No reward for now — this is just a tracker of who you\'ve referred.',
   ];
 
+  const hasDiscord = !!discordIdentity(currentUser);
+
   const html = `
-    <div class="admSummary">${LANG==='fr'?'Compte':'Account'} : <b>${currentUser.email}</b></div>
+    <div class="admSummary">${LANG==='fr'?'Compte':'Account'} : <b>${currentUser.email || '—'}</b></div>
+
+    <h3>${LANG==='fr'?'📛 Pseudo':'📛 Nickname'}</h3>
+    <p class="mHint">${LANG==='fr'
+      ? 'Visible partout dans le classement. Le changer met à jour la même ligne, ça n\'en recrée jamais une nouvelle.'
+      : 'Shown everywhere in the leaderboard. Changing it updates the same row, it never creates a new one.'}</p>
+    <input type="text" id="pseudoInput" value="${myPseudo || ''}" maxlength="20">
+    <button id="btnSavePseudo">${LANG==='fr'?'Enregistrer':'Save'}</button>
+    <div id="pseudoMsg"></div>
+
+    <h3>💬 Discord</h3>
+    ${hasDiscord
+      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Discord connecté.':'✅ Discord account connected.'}</p>`
+      : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${LANG==='fr'?'Connecter Discord':'Connect Discord'}</button>`}
+
     <h3>${LANG==='fr'?'🎁 Parrainage':'🎁 Referrals'}</h3>
     <div id="refCodeBox">${code}</div>
     <button id="btnCopyRefCode">${LANG==='fr'?'📋 Copier le code':'📋 Copy code'}</button>
@@ -3048,6 +3145,16 @@ async function openAccountPanel() {
     <div id="linkCodeBox" style="display:none"></div>
   `;
   openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', html);
+  $a('btnSavePseudo').onclick = async () => {
+    const val = $a('pseudoInput').value.trim();
+    const msg = $a('pseudoMsg');
+    const { error } = await sb.rpc('set_pseudo', { p_pseudo: val });
+    if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
+    myPseudo = val;
+    msg.textContent = LANG==='fr'?'Pseudo enregistré !':'Nickname saved!'; msg.className = 'ok';
+    syncPlayerStats(); // propage immédiatement au classement, sans attendre la prochaine synchro
+  };
+  if (!hasDiscord) $a('btnLinkDiscord').onclick = linkDiscordAccount;
   $a('btnCopyRefCode').onclick = async () => {
     try { await navigator.clipboard.writeText(code); } catch(e) {}
     $a('btnCopyRefCode').textContent = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
@@ -3079,6 +3186,7 @@ function startAutoCloudSave() {
 
 $a('btnSignIn').onclick = doSignIn;
 $a('btnSignUp').onclick = doSignUp;
+$a('btnSignInDiscord').onclick = doSignInDiscord;
 $a('btnLogout').onclick = doLogout;
 $a('btnLinkAccount').onclick = () => {
   // précise que "Se connecter" reprend un compte EXISTANT (contrairement à "Créer un
@@ -3312,6 +3420,7 @@ const I18N = {
   authPassPh: { fr:'Mot de passe', en:'Password' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
+  btnSignInDiscord: { fr:'🎮 Se connecter avec Discord', en:'🎮 Sign in with Discord' },
   marketTitle: { fr:'🏛️ Hôtel des ventes', en:'🏛️ Marketplace' },
   tabBuy: { fr:'Acheter', en:'Buy' },
   tabSell: { fr:'Vendre', en:'Sell' },
@@ -3397,6 +3506,17 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V30', name:{fr:'Connexion Discord & pseudo', en:'Discord login & nickname'}, fr:[
+      {t:'new',    tx:'Bouton "🎮 Se connecter avec Discord" — connexion directe, et ajout automatique au serveur Discord communautaire'},
+      {t:'new',    tx:'Panneau "Mon compte" : les comptes email peuvent aussi connecter Discord (sans perdre leur compte existant)'},
+      {t:'new',    tx:'Pseudo personnalisable dans "Mon compte" — par défaut ton pseudo Discord si tu t\'es connecté ainsi, sinon la partie avant @ de ton email'},
+      {t:'change', tx:'Changer de pseudo met à jour la même entrée partout dans le classement (silver, gearscore, filleuls...), impossible d\'en recréer une nouvelle'},
+    ], en:[
+      {t:'new',    tx:'"🎮 Sign in with Discord" button — direct login, and automatic join to the community Discord server'},
+      {t:'new',    tx:'"My account" panel: email accounts can now also connect Discord (without losing their existing account)'},
+      {t:'new',    tx:'Customizable nickname in "My account" — defaults to your Discord name if you signed in that way, otherwise the part of your email before @'},
+      {t:'change', tx:'Changing your nickname updates the same entry everywhere in the leaderboard (silver, gearscore, referrals...), it can never create a new one'},
+    ] },
   { v:'V29', name:{fr:'Menu & clarté connexion', en:'Menu & login clarity'}, fr:[
       {t:'change', tx:'Le compteur "joueurs en ligne" est déplacé dans le menu latéral au lieu de flotter en haut de l\'écran'},
       {t:'fix',    tx:'Clarifie qu\'après une déconnexion (mode invité automatique), le bouton "🔗 Lier un compte" permet aussi de se reconnecter à un compte EXISTANT via "Se connecter" (et pas seulement d\'en créer un nouveau)'},
