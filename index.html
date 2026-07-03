@@ -68,9 +68,8 @@
   #updateToast .updVer { color:var(--gold); font-weight:bold; }
 
   #onlineCounter {
-    position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:30;
-    background:rgba(10,9,12,.8); border:1px solid #2c2a33; padding:6px 14px;
-    font-size:11px; color:var(--ink-dim); letter-spacing:.3px;
+    background:rgba(10,9,12,.6); border:1px solid #2c2a33; padding:8px 14px;
+    font-size:11px; color:var(--ink-dim); letter-spacing:.3px; text-align:center;
   }
   #onlineCounter b { color:#8fc98a; }
   #onlineGuests { color:var(--ink-dim); }
@@ -595,7 +594,7 @@
     <button id="closeAuth">✕</button>
     <span id="demoBadge">DEMO</span>
     <h1>⚔️ VELIA IDLE</h1>
-    <p class="authSub" data-i18n="authSub">Connecte-toi avec un vrai compte pour accéder au Marché et au Classement</p>
+    <p class="authSub" id="authSub" data-i18n="authSub">Connecte-toi avec un vrai compte pour accéder au Marché et au Classement</p>
     <p class="demoNote" data-i18n="demoNoteAuth">🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.</p>
     <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
     <input type="password" id="authPass" placeholder="Mot de passe" autocomplete="current-password" data-i18n-ph="authPassPh">
@@ -611,10 +610,9 @@
   <button id="btnReloadUpdate" data-i18n="btnReloadUpdate">Recharger</button>
 </div>
 
-<div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
-
 <div id="sideMenu">
   <div id="topBar">
+    <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
     <div id="langToggle">
       <span class="langOpt" data-lang="fr">🇫🇷 FR</span>
       <span class="langOpt" data-lang="en">🇬🇧 EN</span>
@@ -3082,7 +3080,14 @@ function startAutoCloudSave() {
 $a('btnSignIn').onclick = doSignIn;
 $a('btnSignUp').onclick = doSignUp;
 $a('btnLogout').onclick = doLogout;
-$a('btnLinkAccount').onclick = () => showAuthOverlay(true);
+$a('btnLinkAccount').onclick = () => {
+  // précise que "Se connecter" reprend un compte EXISTANT (contrairement à "Créer un
+  // compte" qui démarre une nouvelle progression) — source de confusion signalée en test
+  $a('authSub').textContent = LANG==='fr'
+    ? 'Compte existant ? clique "Se connecter". Sinon "Créer un compte" (remplace ta progression invité).'
+    : 'Existing account? click "Sign in". Otherwise "Create account" (replaces your guest progress).';
+  showAuthOverlay(true);
+};
 $a('closeAuth').onclick = () => showAuthOverlay(false);
 $a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOverlay' && currentUser) showAuthOverlay(false); });
 $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
@@ -3392,6 +3397,13 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V29', name:{fr:'Menu & clarté connexion', en:'Menu & login clarity'}, fr:[
+      {t:'change', tx:'Le compteur "joueurs en ligne" est déplacé dans le menu latéral au lieu de flotter en haut de l\'écran'},
+      {t:'fix',    tx:'Clarifie qu\'après une déconnexion (mode invité automatique), le bouton "🔗 Lier un compte" permet aussi de se reconnecter à un compte EXISTANT via "Se connecter" (et pas seulement d\'en créer un nouveau)'},
+    ], en:[
+      {t:'change', tx:'The "players online" counter now lives in the side menu instead of floating at the top of the screen'},
+      {t:'fix',    tx:'Clarifies that after logging out (automatic guest mode), the "🔗 Link account" button can also sign back into an EXISTING account via "Sign in" (not just create a new one)'},
+    ] },
   { v:'V28', name:{fr:'Liaison Discord', en:'Discord linking'}, fr:[
       {t:'new', tx:'Panneau "Mon compte" : bouton pour générer un code et lier ton compte Discord au jeu (commande /lier sur le serveur Discord)'},
     ], en:[
