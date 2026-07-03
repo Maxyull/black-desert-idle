@@ -640,16 +640,10 @@
   .achProgress { font-size:10px; color:var(--ink-dim); margin-top:2px; }
   .achReward { flex-shrink:0; font-size:11px; color:var(--gold); font-weight:bold; white-space:nowrap; }
   .questClaimBtn {
-    flex-shrink:0; width:auto; margin:0; background:var(--gold); color:#1a1712; border:none; border-radius:3px;
-    padding:3px 8px; font-size:9.5px; font-weight:bold; cursor:pointer; white-space:nowrap;
+    flex-shrink:0; background:var(--gold); color:#1a1712; border:none; border-radius:4px;
+    padding:6px 10px; font-size:10.5px; font-weight:bold; cursor:pointer; white-space:nowrap;
   }
   .questClaimBtn:hover { background:#e0bc72; }
-  /* petit bouton claim compact dans l'encart de suivi */
-  .qwClaimBtn {
-    flex-shrink:0; width:auto; margin:0; background:var(--gold); color:#1a1712; border:none; border-radius:3px;
-    padding:2px 6px; font-size:9px; font-weight:bold; cursor:pointer; white-space:nowrap;
-  }
-  .qwClaimBtn:hover { background:#e0bc72; }
 
   /* toasts en haut à GAUCHE : l'encart de suivi (timers/succès/quêtes suivies) occupe désormais
      tout le haut-à-droite en permanence, on évite qu'ils se chevauchent */
@@ -718,43 +712,33 @@
   .qwTrackInfo { flex:1; min-width:0; }
   .qwTrackName { font-size:12px; font-weight:bold; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .qwTrackNum { font-size:11px; color:var(--gold); margin:2px 0 3px; font-variant-numeric:tabular-nums; }
-  .qwScopeLbl { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin:8px 0 2px; }
-  .qwScopeLbl:first-child { margin-top:0; }
   .qwEmpty { font-size:10.5px; color:var(--ink-dim); font-style:italic; margin-top:4px; }
   #btnToggleTracker { margin-bottom:8px; }
 
   /* ===== chat (mondial/trade/annonce) — bas à droite, thème sombre/or comme le reste ===== */
   #chatWidget {
-    position:fixed; bottom:14px; right:14px; z-index:300; width:330px;
+    position:fixed; bottom:14px; right:14px; z-index:300; width:260px;
     background:#1c1a22; border:1px solid var(--gold-dim); border-radius:6px;
-    padding:9px 11px; font-size:12px; box-shadow:0 4px 14px rgba(0,0,0,.5);
+    padding:8px 10px; font-size:11px; box-shadow:0 4px 14px rgba(0,0,0,.5);
   }
   #chatWidget .catTabs { margin-bottom:6px; gap:4px; }
-  #chatWidget .catTab { padding:4px 9px; font-size:10.5px; }
+  #chatWidget .catTab { padding:4px 8px; font-size:10px; }
   .catTab.chan-mondial.active { border-color:#9cc9e8; color:#9cc9e8; }
   .catTab.chan-trade.active { border-color:#8fc98a; color:#8fc98a; }
   .catTab.chan-annonce.active { border-color:var(--gold); color:var(--gold); }
   #chatMessages {
-    height:230px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;
+    height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;
     padding-right:2px; margin-bottom:6px;
   }
   #chatMessages::-webkit-scrollbar { width:5px; }
   #chatMessages::-webkit-scrollbar-thumb { background:#3a3742; }
-  .chatMsg { font-size:12px; line-height:1.4; word-break:break-word; position:relative; padding-right:16px; }
+  .chatMsg { font-size:11px; line-height:1.35; word-break:break-word; }
   .chatMsg .chatPseudo { font-weight:bold; }
   .chatMsg.chan-mondial .chatPseudo { color:#9cc9e8; }
   .chatMsg.chan-trade .chatPseudo { color:#8fc98a; }
   .chatMsg.chan-annonce .chatPseudo { color:var(--gold); }
   .chatMsg .chatText { color:var(--ink); }
-  .chatBadge { font-size:8px; font-weight:bold; letter-spacing:.5px; padding:1px 4px; border-radius:3px; margin:0 3px; vertical-align:middle; }
-  .chatBadge.admin { background:var(--gold); color:#1a1712; }
-  .chatBadge.mod { background:#3a6ea8; color:#fff; }
-  .chatDelBtn {
-    position:absolute; top:0; right:0; width:auto; margin:0; padding:0 3px; font-size:11px;
-    line-height:1.2; background:none; border:none; color:var(--ink-dim); cursor:pointer; opacity:.5;
-  }
-  .chatDelBtn:hover { opacity:1; color:var(--danger); }
-  .chatEmpty { font-size:11px; color:var(--ink-dim); font-style:italic; }
+  .chatEmpty { font-size:10.5px; color:var(--ink-dim); font-style:italic; }
   #chatInputRow { display:flex; gap:5px; }
   #chatInput {
     flex:1; background:#0d0c11; border:1px solid #333; color:var(--ink); padding:5px 7px;
@@ -769,15 +753,8 @@
     display:flex; align-items:center; gap:12px; margin-bottom:8px; padding:7px 10px;
     background:var(--panel); border:1px solid #2c2a31; border-bottom:1px solid var(--gold-dim);
   }
-  /* liste de pages dans le header : Zone / Boss / activités verrouillées */
-  #activityTabs { display:flex; flex-wrap:wrap; gap:5px; flex:1; }
-  .actTab {
-    width:auto; margin:0; padding:5px 11px; font-size:11.5px; font-weight:bold;
-    background:transparent; border:1px solid #3a3742;
-  }
-  .actTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
-  .actTab.locked { opacity:.4; cursor:not-allowed; }
-  #nextBossMini { font-size:11px; color:var(--ink-dim); flex-shrink:0; }
+  #btnActivities { width:auto; margin:0; padding:6px 16px; font-size:12px; font-weight:bold; }
+  #nextBossMini { font-size:11px; color:var(--ink-dim); }
   #nextBossMini b { color:var(--gold); }
   #nextBossMini .live { color:var(--danger); font-weight:bold; animation:patchNewFade 1.2s infinite; }
 
@@ -821,25 +798,11 @@
   .bossDayCount { margin-left:auto; font-size:10px; color:var(--ink-dim); background:#2c2a33; border-radius:8px; padding:1px 7px; }
 
   /* ===== salle de boss plein écran ===== */
-  /* le boss occupe TOUTE la hauteur mais reste dans la colonne centrée du jeu (pas sur les côtés) */
   #bossRoom {
-    display:none; position:fixed; top:0; bottom:0; left:50%; transform:translateX(-50%);
-    width:min(100vw, 1240px); z-index:500; background:#141018;
+    display:none; position:fixed; inset:0; z-index:500; background:#0a0910;
     flex-direction:column;
   }
   #bossRoom.open { display:flex; }
-  #bossLobby { display:none; flex-direction:column; height:100%; overflow-y:auto; }
-  #bossRoom.lobby #bossLobby { display:flex; }
-  #bossRoom.lobby #bossArena { display:none; }
-  #bossRoom.fight #bossLobby { display:none; }
-  #bossArena { display:flex; flex-direction:column; height:100%; }
-  #bossLobbyHead {
-    display:flex; align-items:center; justify-content:space-between; padding:12px 18px;
-    background:linear-gradient(180deg,#26313a,#1b232a); border-bottom:1px solid var(--gold-dim);
-  }
-  #bossLobbyHead h2 { font-size:16px; margin:0; }
-  #bossLobbyClose { width:auto; margin:0; padding:4px 10px; font-size:16px; background:none; border:none; color:var(--ink-dim); }
-  #bossLobbyBody { padding:16px 18px; }
   #bossTopBar {
     display:flex; align-items:center; gap:12px; padding:10px 16px; background:rgba(0,0,0,.5);
     border-bottom:1px solid var(--gold-dim);
@@ -977,24 +940,15 @@
 </div>
 
 <div id="bossRoom">
-  <div id="bossLobby">
-    <div id="bossLobbyHead">
-      <h2>🐍 <span data-i18n="bossPageTitle">World Boss</span></h2>
-      <button id="bossLobbyClose">✕</button>
-    </div>
-    <div id="bossLobbyBody"></div>
+  <div id="bossTopBar">
+    <div id="bossName"></div>
+    <div id="bossHpBarWrap"><div id="bossHpBar"></div><span id="bossHpTxt"></span></div>
+    <div id="bossTimer"></div>
+    <button id="bossLeaveBtn">✕</button>
   </div>
-  <div id="bossArena">
-    <div id="bossTopBar">
-      <div id="bossName"></div>
-      <div id="bossHpBarWrap"><div id="bossHpBar"></div><span id="bossHpTxt"></span></div>
-      <div id="bossTimer"></div>
-      <button id="bossLeaveBtn">✕</button>
-    </div>
-    <canvas id="bossCv" width="1280" height="720"></canvas>
-    <div id="bossPlayerHpWrap"><div id="bossPlayerHp"></div><span id="bossPlayerHpTxt"></span></div>
-    <div id="bossResult"></div>
-  </div>
+  <canvas id="bossCv" width="1280" height="720"></canvas>
+  <div id="bossPlayerHpWrap"><div id="bossPlayerHp"></div><span id="bossPlayerHpTxt"></span></div>
+  <div id="bossResult"></div>
 </div>
 
 <div id="marketOverlay">
@@ -1036,7 +990,7 @@
 
 <div id="wrap">
   <div id="activitiesBar">
-    <div id="activityTabs"></div>
+    <button id="btnActivities">🧭 <span data-i18n="btnActivities">Activités</span></button>
     <span id="nextBossMini"></span>
   </div>
   <div id="gameFrame">
@@ -1635,45 +1589,30 @@ function updateNextBossMini() {
   }
 }
 
-// liste des "pages" affichée en header au-dessus du jeu (demande utilisateur) : Zone / Boss +
-// activités verrouillées en teaser. Cliquer une page bascule la vue du jeu.
-const ACTIVITY_TABS = [
-  { id:'zone', icon:'⚔️', name:{fr:'Zone',en:'Zone'},       locked:false },
-  { id:'boss', icon:'🐍', name:{fr:'Boss',en:'Boss'},       locked:false },
-  { id:'fish', icon:'🎣', name:{fr:'Pêche',en:'Fishing'},   locked:true },
-  { id:'mine', icon:'⛏️', name:{fr:'Mine',en:'Mining'},     locked:true },
-  { id:'forest', icon:'🌲', name:{fr:'Forêt',en:'Forest'},  locked:true },
-  { id:'field', icon:'🌾', name:{fr:'Champs',en:'Fields'},  locked:true },
-  { id:'ranch', icon:'🐑', name:{fr:'Bergerie',en:'Ranch'}, locked:true },
-];
-let currentActivity = 'zone';
-function renderActivityTabs() {
-  const el = $('activityTabs'); if (!el) return;
-  el.innerHTML = ACTIVITY_TABS.map(t =>
-    `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" data-id="${t.id}"${t.locked?' disabled':''}>${t.icon} ${t.name[LANG]}${t.locked?' 🔒':''}</button>`).join('');
-  el.querySelectorAll('.actTab').forEach(btn => {
-    if (btn.classList.contains('locked')) return;
-    btn.onclick = () => showActivityPage(btn.dataset.id);
+function openActivities() {
+  const tiles = [
+    { id:'zone',   icon:'⚔️', name:{fr:'Zone de farm',en:'Farming zone'}, sub:{fr:'Active',en:'Active'}, locked:false, act:() => $a('infoOverlay').classList.remove('open') },
+    { id:'boss',   icon:'🐍', name:{fr:'World Boss',en:'World Boss'},     sub:{fr:'Disponible',en:'Available'}, locked:false, act:openBossPanel },
+    { id:'fish',   icon:'🎣', name:{fr:'Pêche',en:'Fishing'},            sub:{fr:'Bientôt',en:'Soon'}, locked:true },
+    { id:'mine',   icon:'⛏️', name:{fr:'Mine',en:'Mining'},              sub:{fr:'Bientôt',en:'Soon'}, locked:true },
+    { id:'forest', icon:'🌲', name:{fr:'Forêt',en:'Forest'},             sub:{fr:'Bientôt',en:'Soon'}, locked:true },
+    { id:'field',  icon:'🌾', name:{fr:'Champs',en:'Fields'},            sub:{fr:'Bientôt',en:'Soon'}, locked:true },
+    { id:'ranch',  icon:'🐑', name:{fr:'Bergerie',en:'Ranch'},           sub:{fr:'Bientôt',en:'Soon'}, locked:true },
+  ];
+  const html = `<div class="actGrid">${tiles.map(t =>
+    `<div class="actTile${t.locked?' locked':''}" data-id="${t.id}">` +
+      `<div class="actTileIcon">${t.icon}</div>` +
+      `<div class="actTileName">${t.name[LANG]}</div>` +
+      `<div class="actTileSub">${t.locked?'🔒 ':''}${t.sub[LANG]}</div>` +
+    `</div>`).join('')}</div>`;
+  openInfo(LANG==='fr'?'🧭 Activités':'🧭 Activities', html);
+  $a('infoBody').querySelectorAll('.actTile').forEach(el => {
+    const t = tiles.find(x => x.id === el.dataset.id);
+    if (t && !t.locked && t.act) el.onclick = t.act;
   });
 }
-function showActivityPage(id) {
-  if (id === 'boss') {
-    currentActivity = 'boss';
-    if (!bossState.active) openBossLobby();
-  } else { // zone = retour au farm
-    currentActivity = 'zone';
-    if (!bossState.active) $('bossRoom').classList.remove('open');
-  }
-  renderActivityTabs();
-}
 
-// affiche la page Boss (lobby) : prochain boss + calendrier, dans la colonne du jeu, pleine hauteur
-function openBossLobby() {
-  $('bossRoom').classList.remove('fight'); $('bossRoom').classList.add('lobby', 'open');
-  $('bossLobbyBody').innerHTML = renderBossLobbyHtml();
-  wireBossLobby();
-}
-function renderBossLobbyHtml() {
+function openBossPanel() {
   const occ = nextBossOccurrence();
   const now = Date.now();
   let nextHtml = `<div class="admEmpty">${LANG==='fr'?'Aucun boss programmé':'No boss scheduled'}</div>`;
@@ -1717,15 +1656,13 @@ function renderBossLobbyHtml() {
     }).join('');
     return `<details class="bossDay"${open}><summary class="bossDaySummary">${key===todayKey?'📍 ':''}${dayName} <span class="bossDayCount">${list.length}${hasLive?' 🔴':''}</span></summary>${rows}</details>`;
   }).join('');
-  return `${nextHtml}
+  const html = `${nextHtml}
     <h3>${LANG==='fr'?'📅 Cette semaine':'📅 This week'}</h3>
     ${schedHtml || `<div class="admEmpty">${LANG==='fr'?'Rien de programmé':'Nothing scheduled'}</div>`}
     <div class="admSummary">${LANG==='fr'?'Horaires calqués sur le vrai BDO −15 min. Seuls les boss déjà présents dans le jeu sont affichés. Clique sur un jour pour le replier/déplier.':'Times mirror real BDO −15 min. Only bosses already in the game are shown. Click a day to collapse/expand.'}</div>`;
-}
-function wireBossLobby() {
+  openInfo(LANG==='fr'?'🐍 World Boss':'🐍 World Boss', html);
   const btn = $a('bossFightBtn');
-  const occ = nextBossOccurrence();
-  if (btn && !btn.disabled && occ) btn.onclick = () => startBossFight(occ.boss);
+  if (btn && !btn.disabled) btn.onclick = () => { $a('infoOverlay').classList.remove('open'); startBossFight(occ.boss); };
 }
 
 // ---- combat de boss : plein écran, canvas dédié, boucle rAF indépendante du farm ----
@@ -1747,8 +1684,7 @@ function startBossFight(bossId) {
     active:true, ended:false, boss:b, hp:b.hp, maxHp:b.hp, duration, elapsed:0,
     playerHp: S.hpMax, playerHpMax: S.hpMax, hits:[], last:performance.now(), potCd:0,
   });
-  currentActivity = 'boss'; renderActivityTabs();
-  $('bossRoom').classList.remove('lobby'); $('bossRoom').classList.add('open', 'fight');
+  $('bossRoom').classList.add('open');
   $('bossResult').classList.remove('show');
   $('bossName').textContent = b.name[LANG];
   resizeBossCanvas();
@@ -1778,8 +1714,7 @@ function endBossFight(win) {
     rewardsHtml +
     `<button id="bossCloseBtn">${LANG==='fr'?'Retour':'Back'}</button>`;
   $('bossResult').classList.add('show');
-  // au retour, on revient au lobby Boss (pas au farm) pour rester cohérent avec la nav par pages
-  $a('bossCloseBtn').onclick = () => { $('bossResult').classList.remove('show'); openBossLobby(); };
+  $a('bossCloseBtn').onclick = () => $('bossRoom').classList.remove('open');
 }
 function bossLoop(now) {
   if (!bossState.active) return;
@@ -1815,58 +1750,40 @@ function bossLoop(now) {
   if (bossState.hp <= 0) { endBossFight(true); return; }
   bossState.raf = requestAnimationFrame(bossLoop);
 }
-// arène de boss dessinée dans le MÊME style que la zone de farm : sol en losanges iso verts,
-// petit héros en bas, boss (grande créature) au centre-haut
 function drawBossRoom(t) {
   const cx = bossCtx, cv = $('bossCv'), W = cv.width, H = cv.height;
+  // sol / arène sombre
+  const g = cx.createRadialGradient(W/2, H*0.45, 40, W/2, H*0.45, Math.max(W,H)*0.7);
+  g.addColorStop(0, '#241830'); g.addColorStop(1, '#0a0910');
+  cx.fillStyle = g; cx.fillRect(0,0,W,H);
   const b = bossState.boss;
-  const TILE = 46;
-  const ox = W/2, oy = H*0.30; // origine iso
-  const bIso = (gx, gy) => ({ x: ox + (gx-gy)*TILE, y: oy + (gx+gy)*TILE*0.5 });
-  // fond
-  cx.fillStyle = '#36452e'; cx.fillRect(0,0,W,H);
-  // sol en losanges (palette Balenos, comme la zone de départ)
-  const A = '#3a4a31', Bc = '#36452e', DRY = '#414f33';
-  for (let gx=-9; gx<=9; gx++) for (let gy=-9; gy<=9; gy++) {
-    const p = bIso(gx,gy);
-    if (p.x<-TILE*2||p.x>W+TILE*2||p.y<-TILE*2||p.y>H+TILE*2) continue;
-    const h = Math.abs(Math.sin((gx*12.9898+gy*78.233))*43758.5453 % 1);
-    cx.fillStyle = (gx+gy)%2===0 ? A : Bc; if (h > .93) cx.fillStyle = DRY;
-    const p2=bIso(gx+1,gy), p3=bIso(gx+1,gy+1), p4=bIso(gx,gy+1);
-    cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(p2.x,p2.y); cx.lineTo(p3.x,p3.y); cx.lineTo(p4.x,p4.y); cx.closePath(); cx.fill();
-  }
-  // ombre du boss au sol
-  const bp = bIso(0.5,0.5), pulse = 1 + Math.sin(t*2)*0.04;
-  const r = Math.min(W,H)*0.15*pulse;
-  cx.fillStyle = 'rgba(0,0,0,.35)';
-  cx.beginPath(); cx.ellipse(bp.x, bp.y+r*0.55, r*0.9, r*0.3, 0, 0, 7); cx.fill();
-  // corps du boss (grande forme dentelée) + lueur
+  // boss : grande forme menaçante qui pulse
+  const bx = W/2, by = H*0.42, pulse = 1 + Math.sin(t*2)*0.04;
+  const r = Math.min(W,H)*0.16*pulse;
   cx.save();
-  cx.shadowColor = b.color; cx.shadowBlur = 35;
+  cx.shadowColor = b.color; cx.shadowBlur = 40;
   cx.fillStyle = b.color;
   cx.beginPath();
-  for (let i = 0; i < 10; i++) {
-    const a = i/10*Math.PI*2 + t*0.25;
-    const rr = r*(i%2?0.72:1.1);
-    cx[i?'lineTo':'moveTo'](bp.x+Math.cos(a)*rr, bp.y-r*0.5+Math.sin(a)*rr);
+  for (let i = 0; i < 8; i++) {
+    const a = i/8*Math.PI*2 + t*0.3;
+    const rr = r*(i%2?0.72:1.12);
+    cx[i?'lineTo':'moveTo'](bx+Math.cos(a)*rr, by+Math.sin(a)*rr);
   }
   cx.closePath(); cx.fill();
   cx.restore();
+  // "yeux"
   cx.fillStyle = '#ffcf4a';
-  cx.beginPath(); cx.arc(bp.x-r*0.32, bp.y-r*0.6, r*0.12, 0, 7); cx.fill();
-  cx.beginPath(); cx.arc(bp.x+r*0.32, bp.y-r*0.6, r*0.12, 0, 7); cx.fill();
-  cx.font = `${Math.round(r*0.85)}px serif`; cx.textAlign='center'; cx.textBaseline='middle';
-  cx.fillText(b.icon, bp.x, bp.y-r*0.5);
-  // héros (petit sorcier bleu, même esprit que le farm)
-  const pp = bIso(-2.2,-2.2);
-  cx.fillStyle='rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(pp.x, pp.y+2, 13, 5, 0, 0, 7); cx.fill();
-  cx.fillStyle = '#3b6ea8'; // robe
-  cx.beginPath(); cx.moveTo(pp.x, pp.y-38); cx.lineTo(pp.x-11, pp.y); cx.lineTo(pp.x+11, pp.y); cx.closePath(); cx.fill();
-  cx.fillStyle = '#e8d0a0'; cx.beginPath(); cx.arc(pp.x, pp.y-40, 6, 0, 7); cx.fill(); // tête
-  cx.fillStyle = '#2a4a7a'; cx.beginPath(); cx.moveTo(pp.x-8, pp.y-40); cx.lineTo(pp.x+8, pp.y-40); cx.lineTo(pp.x, pp.y-54); cx.closePath(); cx.fill(); // chapeau
-  // impacts / dégâts flottants sur le boss
+  cx.beginPath(); cx.arc(bx-r*0.35, by-r*0.1, r*0.13, 0, 7); cx.fill();
+  cx.beginPath(); cx.arc(bx+r*0.35, by-r*0.1, r*0.13, 0, 7); cx.fill();
+  // icône emoji au centre
+  cx.font = `${Math.round(r*0.9)}px serif`; cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText(b.icon, bx, by);
+  // joueur (petit héros en bas)
+  const px = W/2, py = H*0.82;
+  cx.font = '46px serif'; cx.fillText('🧙', px, py);
+  // impacts / dégâts flottants
   for (const h of bossState.hits) {
-    const hx = bp.x + (h.x-.5)*r*2, hy = bp.y-r*0.5 + (h.y-.5)*r*2 - (1-h.life)*40;
+    const hx = bx + (h.x-.5)*r*2, hy = by + (h.y-.5)*r*2 - (1-h.life)*40;
     cx.globalAlpha = Math.max(0,h.life);
     cx.font = h.crit?'bold 26px Georgia':'20px Georgia';
     cx.fillStyle = h.crit?'#ffbe78':'#fff';
@@ -2124,36 +2041,24 @@ function renderQuestTrackerWidget() {
     `<button class="qwFoldBtn" onclick="toggleTrackerFold()">${trackerWidgetFolded?'▸':'▾'}</button></div>`;
   if (trackerWidgetFolded) { el.innerHTML = header; return; }
   ensureQuests('daily'); ensureQuests('weekly');
-  let body = '';
+  const rows = [];
   for (const scope of ['daily','weekly']) {
     const cfg = QUEST_SCOPES[scope], st = S[cfg.stateKey];
-    const rows = [];
-    st.quests.forEach((q,i) => {
+    st.quests.forEach(q => {
       if (q.claimed) return;
       const def = cfg.kinds[q.kind];
       const val = Math.min(questProgress(scope,q), q.target);
       const pct = Math.round(val/q.target*100);
       const dv = def.displayDiv||1;
-      const done = val >= q.target;
-      // bouton "Réclamer" directement dans l'encart de suivi quand la quête est terminée
-      const right = done
-        ? `<button class="qwClaimBtn" data-scope="${scope}" data-i="${i}">+${fmt(q.reward)}🪙</button>`
-        : '';
       rows.push(`<div class="qwTrackRow"><span class="qwTrackIcon">${def.icon}</span>` +
         `<div class="qwTrackInfo"><div class="qwTrackName">${def.name[LANG]}</div>` +
         `<div class="qwTrackNum">${fmt(Math.floor(val/dv))} / ${fmt(Math.floor(q.target/dv))} ${def.unit[LANG]}</div>` +
-        `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div>${right}</div>`);
+        `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div></div>`);
     });
-    if (rows.length) {
-      body += `<div class="qwScopeLbl">${scope==='daily'?(LANG==='fr'?'📅 Journalières':'📅 Daily'):(LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly')}</div>` + rows.join('');
-    }
   }
   el.innerHTML = header + `<div class="qwBody">` +
-    (body || `<div class="qwEmpty">${LANG==='fr'?'Tout est réclamé !':'Everything is claimed!'}</div>`) +
+    (rows.length ? rows.join('') : `<div class="qwEmpty">${LANG==='fr'?'Tout est réclamé !':'Everything is claimed!'}</div>`) +
     `</div>`;
-  el.querySelectorAll('.qwClaimBtn').forEach(btn => {
-    btn.onclick = () => { claimQuest(btn.dataset.scope, parseInt(btn.dataset.i,10)); renderQuestTrackerWidget(); };
-  });
 }
 
 // dégâts infligés : dépend UNIQUEMENT de la PA face à la PA requise de la zone
@@ -4411,28 +4316,14 @@ function escapeHtml(s) {
 }
 function renderChatMessages(msgs) {
   const el = $a('chatMessages'); if (!el) return;
-  const canDelete = isAdmin(); // plus tard : aussi les modérateurs (table chat_mods)
-  el.innerHTML = msgs.length ? msgs.map(m => {
-    // badge de rôle : ADMIN (or) / MOD (bleu) affiché à côté du pseudo
-    const badge = m.role === 'admin' ? '<span class="chatBadge admin">ADMIN</span>'
-      : m.role === 'mod' ? '<span class="chatBadge mod">MOD</span>' : '';
-    const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
-    return `<div class="chatMsg chan-${chatChannel}">${del}` +
-      `<span class="chatPseudo">${escapeHtml(m.pseudo)}</span>${badge} <span class="chatText">${escapeHtml(m.message)}</span></div>`;
-  }).join('')
+  el.innerHTML = msgs.length ? msgs.map(m => `<div class="chatMsg chan-${chatChannel}">` +
+    `<span class="chatPseudo">${escapeHtml(m.pseudo)}</span> <span class="chatText">${escapeHtml(m.message)}</span></div>`).join('')
     : `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`;
   el.scrollTop = el.scrollHeight;
-  el.querySelectorAll('.chatDelBtn').forEach(btn => {
-    btn.onclick = async () => {
-      if (!sb) return;
-      await sb.rpc('delete_chat_message', { p_id: parseInt(btn.dataset.id,10) }).catch(()=>{});
-      fetchChatMessages();
-    };
-  });
 }
 async function fetchChatMessages() {
   if (!sb || chatFolded) return;
-  const { data, error } = await sb.from('chat_messages').select('id, pseudo, message, role, created_at')
+  const { data, error } = await sb.from('chat_messages').select('pseudo, message, created_at')
     .eq('channel', chatChannel).order('created_at', { ascending:false }).limit(50);
   if (error) return;
   renderChatMessages((data||[]).slice().reverse());
@@ -4483,10 +4374,8 @@ $a('btnAchievements').onclick = openAchievements;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 $a('btnLifeskillToggle').onclick = openLifeskillPanel;
-renderActivityTabs();
-// quitter un combat en cours → retour au lobby Boss ; fermer le lobby → retour à la Zone (farm)
-$a('bossLeaveBtn').onclick = () => { if (bossState.active) endBossFight(false); else openBossLobby(); };
-$a('bossLobbyClose').onclick = () => showActivityPage('zone');
+$a('btnActivities').onclick = openActivities;
+$a('bossLeaveBtn').onclick = () => { if (bossState.active) endBossFight(false); else $a('bossRoom').classList.remove('open'); };
 window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); });
 updateNextBossMini();
 setInterval(updateNextBossMini, 1000);
@@ -4891,7 +4780,6 @@ const I18N = {
   btnDailyQuests: { fr:'🗒️ Quêtes', en:'🗒️ Quests' },
   btnMailbox: { fr:'📬 Courrier', en:'📬 Mailbox' },
   btnActivities: { fr:'Activités', en:'Activities' },
-  bossPageTitle: { fr:'World Boss', en:'World Boss' },
   menuSideLeft: { fr:'◀ Gauche', en:'◀ Left' },
   menuSideRight: { fr:'Droite ▶', en:'Right ▶' },
   cardInv: { fr:'Inventaire', en:'Inventory' },
@@ -4948,15 +4836,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V50', name:{fr:'Page World Boss, chat amélioré, quêtes affinées', en:'World Boss page, improved chat, refined quests'}, fr:[
-      {t:'change', tx:'Le header au-dessus du jeu est maintenant une liste de pages : ⚔️ Zone, 🐍 Boss, + activités verrouillées. La page Boss occupe toute la hauteur de l\'écran, dans le style de la zone de farm (sol iso, héros, boss au centre)'},
-      {t:'change', tx:'Chat : affiche le pseudo (jamais l\'email), badge ADMIN/MOD à côté du pseudo, bouton de suppression de message pour le staff. Le chat est aussi agrandi'},
-      {t:'change', tx:'Quêtes : bouton "Réclamer" plus petit ; l\'encart de suivi affiche désormais Journalières/Hebdo séparément et permet de réclamer directement les quêtes terminées'},
-    ], en:[
-      {t:'change', tx:'The header above the game is now a page list: ⚔️ Zone, 🐍 Boss, + locked activities. The Boss page takes the full screen height, in the farming-zone style (iso ground, hero, boss in the center)'},
-      {t:'change', tx:'Chat: shows the nickname (never the email), ADMIN/MOD badge next to the nickname, message-delete button for staff. The chat is also enlarged'},
-      {t:'change', tx:'Quests: smaller "Claim" button; the tracker widget now shows Daily/Weekly separately and lets you claim completed quests directly'},
-    ] },
   { v:'V49', name:{fr:'Potions payantes, header Activités, calendrier boss par jour', en:'Paid potions, Activities header, per-day boss calendar'}, fr:[
       {t:'new', tx:'Les potions de vie coûtent désormais du silver à chaque utilisation (200 silver). Sans silver, pas de soin — le joueur encaisse. Une "potion infinie" gratuite sera débloquable plus tard'},
       {t:'change', tx:'La barre "🧭 Activités" est maintenant un header directement au-dessus de la zone de farm'},
