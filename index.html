@@ -58,13 +58,22 @@
   @keyframes invFullPulse { 0%,100% { opacity:1; } 50% { opacity:.65; } }
 
   #updateToast {
-    position:fixed; bottom:18px; left:50%; transform:translateX(-50%) translateY(20px);
+    position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-20px);
     background:var(--panel-2); border:1px solid var(--gold); color:var(--ink);
     padding:12px 16px; display:none; align-items:center; gap:14px;
     box-shadow:0 8px 28px rgba(0,0,0,.6); z-index:200; font-size:13px;
     opacity:0; transition:opacity .25s ease, transform .25s ease;
   }
   #updateToast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
+  #updateToast .updVer { color:var(--gold); font-weight:bold; }
+
+  #onlineCounter {
+    position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:30;
+    background:rgba(10,9,12,.8); border:1px solid #2c2a33; padding:6px 14px;
+    font-size:11px; color:var(--ink-dim); letter-spacing:.3px;
+  }
+  #onlineCounter b { color:#8fc98a; }
+  #onlineGuests { color:var(--ink-dim); }
   #updateToast button {
     background:var(--gold); color:#1a1712; border:none; font-weight:bold;
     padding:7px 14px; letter-spacing:.5px; cursor:pointer; font-family:inherit; font-size:12.5px;
@@ -132,15 +141,19 @@
   #zoneList::-webkit-scrollbar { width:6px; } 
   #zoneList::-webkit-scrollbar-thumb { background:#3a3742; }
   .zRow {
-    display:flex; align-items:center; gap:6px; padding:3.5px 3px;
-    border-bottom:1px solid #232128; font-size:11px; cursor:pointer;
+    display:flex; flex-direction:column; gap:3px; padding:5px 4px;
+    border-bottom:1px solid #232128; font-size:11px;
   }
   .zRow:hover { background:#232028; }
   .zRow.current { background:#26232e; border-left:2px solid var(--gold); }
-  .zRow .zname { flex:1; }
-  .zRow .zpr { color:var(--ink-dim); font-size:10.5px; width:52px; }
-  .zRow .zreq { font-size:10px; color:var(--ink-dim); width:100px; text-align:right; }
+  .zRowTop { display:flex; align-items:center; gap:6px; }
+  .zRowTop .zname { flex:1; }
+  .zRowBottom { display:flex; align-items:center; gap:6px; }
+  /* largeur fixe = colonne PA/PD toujours alignée d'une ligne à l'autre, quelle que soit la longueur du nom de zone */
+  .zRow .zreq { font-size:10px; color:var(--ink-dim); width:88px; flex-shrink:0; }
   .zRow .zreq .ok { color:#8fc98a; } .zRow .zreq .bad { color:var(--danger); }
+  .zActions { display:flex; gap:4px; flex:1; }
+  .zActions button { width:auto; margin:0; padding:3px 8px; font-size:9.5px; flex:1; }
   .zBadge { font-size:9px; letter-spacing:.5px; padding:1px 6px; border:1px solid; white-space:nowrap; }
   .b-red { color:var(--r-red); border-color:var(--r-red); }
   .b-orange { color:var(--r-orange); border-color:var(--r-orange); }
@@ -287,8 +300,12 @@
   }
   #authOverlay.hidden { display:none; }
   #authBox {
-    width:320px; background:var(--panel); border:1px solid var(--gold-dim);
+    position:relative; width:320px; background:var(--panel); border:1px solid var(--gold-dim);
     padding:28px 26px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.7);
+  }
+  #closeAuth {
+    position:absolute; top:8px; right:8px; width:auto; margin:0; padding:4px 9px;
+    background:none; border:none; font-size:16px; color:var(--ink-dim);
   }
   #authBox h1 { font-size:20px; letter-spacing:2px; color:var(--gold); margin-bottom:4px; }
   .authSub { font-size:11.5px; color:var(--ink-dim); margin-bottom:8px; }
@@ -336,6 +353,46 @@
   #btnResetDemo { border-color:var(--danger) !important; color:#e8a89f; }
   #btnResetDemo:hover { background:rgba(192,85,69,.15); }
 
+  /* encadré séparé pour les actions admin — prêt à accueillir de futures options */
+  #adminBox {
+    display:flex; flex-direction:column; gap:7px; margin-top:2px;
+    border:1px solid #6a5230; background:rgba(201,165,90,.07); padding:9px;
+  }
+  #adminBoxTitle { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); }
+
+  #sideMenu.onRight { left:auto; right:14px; }
+
+  #btnDiscord {
+    display:block; width:100%; box-sizing:border-box; padding:11px 14px; font-size:13.5px;
+    background:rgba(88,101,242,.18); border:1px solid #5865F2; color:#c9cdff;
+    text-decoration:none; text-align:left; font-family:inherit;
+  }
+  #btnDiscord:hover { background:rgba(88,101,242,.32); }
+
+  /* slider position du menu (gauche/droite) */
+  #menuSideToggle {
+    position:relative; display:flex; width:100%; height:34px;
+    background:rgba(10,9,12,.6); border:1px solid #2c2a33; cursor:pointer; user-select:none;
+  }
+  #menuSideToggle:hover { border-color:var(--gold); }
+  .menuSideOpt {
+    flex:1; display:flex; align-items:center; justify-content:center;
+    font-size:10px; font-weight:bold; letter-spacing:.3px; color:var(--ink-dim); z-index:2;
+    transition:color .2s ease;
+  }
+  .menuSideOpt.active { color:#1a1712; }
+  #menuSideThumb {
+    position:absolute; top:2px; left:2px; width:calc(50% - 2px); height:calc(100% - 4px);
+    background:var(--gold); transition:left .2s ease;
+  }
+  #menuSideThumb.right { left:calc(50% + 0px); }
+
+  #clientVersion {
+    font-size:10px; color:var(--ink-dim); text-align:center; padding:6px 0 0;
+    letter-spacing:.3px;
+  }
+  #clientVersionNum { color:var(--gold); font-weight:bold; }
+
   /* ===== footer légal ===== */
   #siteFooter {
     position:fixed; bottom:0; left:0; right:0; z-index:35;
@@ -382,6 +439,19 @@
   .mRow button { width:auto; margin:0; padding:6px 12px; font-size:11.5px; }
   .mEmpty { color:var(--ink-dim); font-size:12px; text-align:center; padding:30px 0; }
 
+  /* ===== marché commun (matériaux, prix flottant) ===== */
+  #marketCommonList { display:flex; flex-direction:column; gap:6px; }
+  .cmRow { display:flex; align-items:center; gap:10px; padding:8px 10px;
+    background:var(--panel-2); border:1px solid #2c2a31; font-size:12.5px; }
+  .cmInfo { flex:1; min-width:0; }
+  .cmInfo .cmOwned { color:var(--ink-dim); font-size:10.5px; }
+  .cmPrice { font-size:13px; white-space:nowrap; text-align:right; width:80px; }
+  .cmPrice.low { color:#8fc98a; } .cmPrice.mid { color:var(--gold); } .cmPrice.high { color:var(--danger); }
+  .cmActions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
+  .cmQty { width:44px; background:#191720; color:var(--ink); border:1px solid #3a3742;
+    font-family:inherit; font-size:11.5px; padding:5px 4px; text-align:center; }
+  .cmActions button { width:auto; margin:0; padding:6px 10px; font-size:11px; }
+
   .mHint { color:var(--ink-dim); font-size:11.5px; margin-bottom:10px; }
   #sellItemSelect {
     width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
@@ -393,6 +463,22 @@
   }
   #sellMsg { font-size:11.5px; margin-top:8px; min-height:14px; }
   #sellMsg.ok { color:#8fc98a; } #sellMsg.fail { color:var(--danger); }
+
+  /* ===== panneau Mon compte / parrainage ===== */
+  #refCodeBox {
+    background:#191720; border:1px dashed var(--gold-dim); color:var(--gold);
+    font-size:16px; font-weight:bold; letter-spacing:3px; text-align:center;
+    padding:10px; margin-bottom:8px;
+  }
+  #refCodeInput {
+    width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
+    font-family:inherit; font-size:12px; padding:8px 9px; margin:8px 0; text-transform:uppercase;
+  }
+  #refMsg { font-size:11.5px; margin-top:8px; min-height:14px; }
+  #refMsg.ok { color:#8fc98a; } #refMsg.fail { color:var(--danger); }
+  .refRules { list-style:none; margin:12px 0 0; padding:0; font-size:10.5px; color:var(--ink-dim); }
+  .refRules li { padding-left:14px; position:relative; margin-bottom:4px; line-height:1.4; }
+  .refRules li::before { content:'—'; position:absolute; left:0; color:var(--gold-dim); }
 
   #topBar button { background:rgba(10,9,12,.6); border:1px solid #2c2a33; }
   #topBar button:hover { border-color:var(--gold); }
@@ -499,15 +585,17 @@
   .admEmpty { color:var(--ink-dim); font-style:italic; text-align:center; padding:10px 0; }
   .admSummary { font-size:11px; color:var(--ink-dim); margin-bottom:8px; }
   .admSummary b { color:var(--gold); }
+  .staleTag { font-size:10px; cursor:help; }
 </style>
 </head>
 <body>
 
-<div id="authOverlay">
+<div id="authOverlay" class="hidden">
   <div id="authBox">
+    <button id="closeAuth">✕</button>
     <span id="demoBadge">DEMO</span>
     <h1>⚔️ VELIA IDLE</h1>
-    <p class="authSub" data-i18n="authSub">Connecte-toi pour retrouver ta sauvegarde</p>
+    <p class="authSub" data-i18n="authSub">Connecte-toi avec un vrai compte pour accéder au Marché et au Classement</p>
     <p class="demoNote" data-i18n="demoNoteAuth">🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.</p>
     <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
     <input type="password" id="authPass" placeholder="Mot de passe" autocomplete="current-password" data-i18n-ph="authPassPh">
@@ -519,20 +607,28 @@
 </div>
 
 <div id="updateToast">
-  <span data-i18n="updateAvailableMsg">🔄 Une nouvelle version du jeu est disponible.</span>
+  <span><span data-i18n="updateAvailableMsg">🔄 Une nouvelle version du jeu est disponible.</span> <span class="updVer" id="updToastVer"></span></span>
   <button id="btnReloadUpdate" data-i18n="btnReloadUpdate">Recharger</button>
 </div>
+
+<div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
 
 <div id="sideMenu">
   <div id="topBar">
     <div id="langToggle">
-      <span class="langOpt" data-lang="fr">FR</span>
-      <span class="langOpt" data-lang="en">EN</span>
+      <span class="langOpt" data-lang="fr">🇫🇷 FR</span>
+      <span class="langOpt" data-lang="en">🇬🇧 EN</span>
       <div id="langThumb"></div>
     </div>
-    <button id="btnWiki" data-i18n="btnWiki">Wiki</button>
+    <button id="btnWiki" data-i18n="btnWiki">📖 Wiki</button>
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
-    <button id="btnPatch"><span data-i18n="btnPatch">Notes de version</span><span id="patchBadge"></span></button>
+    <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge"></span></button>
+    <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
+    <div id="menuSideToggle">
+      <span class="menuSideOpt" data-side="left" data-i18n="menuSideLeft">◀ Gauche</span>
+      <span class="menuSideOpt" data-side="right" data-i18n="menuSideRight">Droite ▶</span>
+      <div id="menuSideThumb"></div>
+    </div>
   </div>
 
   <div id="userBar">
@@ -541,11 +637,20 @@
       <span id="userEmail"></span>
     </div>
     <button id="btnMarket" data-i18n="btnMarketLbl">🏛️ Marché</button>
-    <button id="btnResetDemo" data-i18n="btnResetDemo" style="display:none">🔄 Réinitialiser</button>
-    <button id="btnAdmin" data-i18n="btnAdmin" style="display:none">🛠️ Admin</button>
-    <button id="btnLogout" data-i18n="btnLogout">Déconnexion</button>
+    <button id="btnAccount" data-i18n="btnAccount">👤 Mon compte</button>
+    <button id="btnLinkAccount" data-i18n="btnLinkAccount" style="display:none">🔗 Lier un compte</button>
+    <button id="btnLogout" data-i18n="btnLogout">🚪 Déconnexion</button>
     <span id="saveStatus"></span>
+
+    <div id="adminBox" style="display:none">
+      <div id="adminBoxTitle" data-i18n="adminBoxTitle">🛠️ Admin</div>
+      <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
+      <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
+      <button id="btnResetDemo" data-i18n="btnResetDemo">🔄 Réinitialiser</button>
+    </div>
   </div>
+
+  <div id="clientVersion">Velia Idle — <span id="clientVersionNum"></span></div>
 </div>
 
 <div id="siteFooter">
@@ -570,6 +675,7 @@
         <button class="mtab active" data-tab="browse" data-i18n="tabBuy">Acheter</button>
         <button class="mtab" data-tab="sell" data-i18n="tabSell">Vendre</button>
         <button class="mtab" data-tab="mine" data-i18n="tabMine">Mes annonces</button>
+        <button class="mtab" data-tab="common" data-i18n="tabCommon">Marché commun</button>
       </div>
       <button id="closeMarket">✕</button>
     </div>
@@ -588,6 +694,12 @@
 
     <div id="marketMine" class="marketPane" style="display:none">
       <div id="marketMineList"></div>
+    </div>
+
+    <div id="marketCommon" class="marketPane" style="display:none">
+      <p class="mHint" data-i18n="commonHint">Matériaux échangés au prix commun du marché — ce prix flotte dans le temps selon l'offre et la demande.</p>
+      <div id="marketCommonList"></div>
+      <div id="commonMsg"></div>
     </div>
   </div>
 </div>
@@ -802,8 +914,16 @@ const S = {
   castMult: 1, hpMax: 100, lootRadius: 26,
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
-  maxZoneIdx: 0, playtimeSec: 0,
+  maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
 };
+
+// suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
+function trackLoot(name) { S.lootByItem[name] = (S.lootByItem[name]||0) + 1; }
+function bestFarmedItem() {
+  let best = null, bestN = 0;
+  for (const name in S.lootByItem) if (S.lootByItem[name] > bestN) { best = name; bestN = S.lootByItem[name]; }
+  return best ? { name: best, count: bestN } : null;
+}
 
 // ==================== INVENTAIRE (192 slots) & ÉQUIPEMENT ====================
 const INV_SIZE = 192;
@@ -828,7 +948,9 @@ function invWeight() {
   for (const s of INV) if (s) w += (s.weight||0.1) * s.qty;
   return w;
 }
-const MAX_WEIGHT = () => 220; // LT — au-delà, le joueur est ralenti (voir speedMult())
+// LT de base — mesuré empiriquement à ~6.8 LT/min en farm continu zone 1 (personnage neuf),
+// calibré pour ~2h de farm avant ralentissement. Augmentable plus tard via une boutique.
+const MAX_WEIGHT = () => 800;
 function invUsed() { return INV.filter(s => s).length; }
 
 // ajoute un objet à l'inventaire (stack si possible). retourne false si plein.
@@ -857,6 +979,12 @@ const SAFE_IDX = 8; // à partir de cet index (+8), l'enchantement cesse d'être
 const ENH_STEP = [0, .08,.08,.08,.08,.08,.08,.08,  .05,.05,.05,.05,.05,.05,.05,.05,  .08,.10,.13,.18,.25];
 function enhBonus(lvl) { let b = 0; for (let i = 1; i <= (lvl||0); i++) b += ENH_STEP[i]; return b; }
 function itemMult(item) { return item && item.optimizable ? (1 + enhBonus(item.enhLv||0)) : 1; }
+// PA/PD réels d'un objet une fois son bonus d'enchantement appliqué (affichage tooltip/popup —
+// avant ce correctif, ces deux endroits affichaient la stat de BASE même sur un objet enchanté +15)
+function effectiveApDp(item) {
+  const mult = itemMult(item);
+  return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult) };
+}
 
 // ---------- chances d'optimisation : base FIXE + failstack PERSONNEL À CHAQUE OBJET ----------
 // le failstack est attaché à l'objet ET au niveau précis qu'il a raté — jamais perdu, même après un succès ailleurs
@@ -1363,13 +1491,15 @@ function dropsTick(dt) {
         floatTxt(l.x,l.y,40,it.name,{silver:true});
         particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
         queueFarmEvent(it.kind, it.name, 1, l.silver);
+        trackLoot(it.name);
         continue;
       }
 
       // construit l'objet inventaire (matériau/bijou/gear/craft — ceux-là prennent une place)
       const isOptimizable = it.kind === 'gear' || it.kind === 'jackpot';
       const obj = {
-        key: it.key, name: it.name, kind: it.kind, icon: it.icon, color: it.color,
+        key: it.key, name: it.name, kind: it.kind,
+        icon: it.kind === 'jackpot' ? JACKPOT_ICON[accSlotFor(it)] : it.icon, color: it.color,
         qty: 1, stackable: it.stackable, weight: it.weight,
         val: l.silver, ap: it.ap||0, dp: it.dp||0, enhLv: it.enhLv||0,
         optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
@@ -1383,6 +1513,7 @@ function dropsTick(dt) {
       l.taken = true;
       S.lootCount++;
       queueFarmEvent(it.kind, it.name, 1, l.silver);
+      trackLoot(it.name);
       if (it.kind === 'jackpot') {
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'★ '+it.name,{lvl:true});
@@ -1403,6 +1534,8 @@ function dropsTick(dt) {
   drops = drops.filter(l => !l.taken && l.age < DESPAWN);
 }
 
+// icône réelle par type de bijou (au lieu du 💍 générique appliqué à tout jackpot avant ce correctif)
+const JACKPOT_ICON = { ring:'💍', earring:'👂', necklace:'📿', belt:'🥋' };
 // attribue un slot d'accessoire probable selon le nom
 function accSlotFor(it) {
   const n = it.name.toLowerCase();
@@ -1860,10 +1993,19 @@ function buildZoneList() {
     const apOk = apRatio(z) >= 1, dpOk = dpRatio(z) >= 1;
     const row = document.createElement('div');
     row.className = 'zRow' + (i===zoneIdx?' current':'');
-    row.innerHTML = `<span class="zname">${tr(z.name)}</span>` +
-      `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
-      `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>`;
-    row.onclick = () => { if (i !== zoneIdx) travelTo(i); };
+    row.innerHTML = `<div class="zRowTop">` +
+        `<span class="zname">${tr(z.name)}</span>` +
+        `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
+      `</div>` +
+      `<div class="zRowBottom">` +
+        `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
+        `<div class="zActions">` +
+          `<button class="zBtnView">${LANG==='fr'?'👁 Voir':'👁 View'}</button>` +
+          `<button class="zBtnFarm">${LANG==='fr'?'⚔ Farmer':'⚔ Farm'}</button>` +
+        `</div>` +
+      `</div>`;
+    row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
+    row.querySelector('.zBtnFarm').onclick = e => { e.stopPropagation(); if (i !== zoneIdx) travelTo(i); };
     list.appendChild(row);
   });
 }
@@ -1958,8 +2100,8 @@ const SLOT_LABEL = { weapon:'Arme princ.', awakening:'Éveil', secondary:'Arme s
   helmet:'Casque', armor:'Armure', gloves:'Gants', boots:'Bottes',
   necklace:'Collier', earring1:'B. oreille', earring2:'B. oreille', ring1:'Bague', ring2:'Bague', belt:'Ceinture' };
 const SLOT_ICON = { weapon:'🪄', awakening:'🔱', secondary:'🗡️', book:'📖',
-  helmet:'🪖', armor:'🥋', gloves:'🧤', boots:'🥾',
-  necklace:'📿', earring1:'💧', earring2:'💧', ring1:'💍', ring2:'💍', belt:'🎗️' };
+  helmet:'🪖', armor:'🛡️', gloves:'🧤', boots:'🥾',
+  necklace:'📿', earring1:'👂', earring2:'👂', ring1:'💍', ring2:'💍', belt:'🥋' };
 
 function renderEquipment() {
   drawPreviewChar();
@@ -2088,8 +2230,8 @@ function showItemMenu(px, py, data) {
   const desc = [];
   if (data.kind === 'trash') desc.push('Butin de vente. Valeur unitaire ~'+fmt(data.val)+' silver.');
   if (data.kind === 'material') desc.push('Matériau d\'optimisation. Utilisé automatiquement par le cadre Optimisation.');
-  if (data.kind === 'jackpot') desc.push('Accessoire — '+(data.ap?('+'+data.ap+' PA'):'')+(data.dp?(' +'+data.dp+' PD'):''));
-  if (data.kind === 'gear') desc.push((data.slot==='weapon'?'Arme':'Armure')+' — '+(data.ap?('+'+data.ap+' PA '):'')+(data.dp?('+'+data.dp+' PD'):'')+(data.optimizable?' · optimisable':''));
+  if (data.kind === 'jackpot') { const {ap,dp} = effectiveApDp(data); desc.push('Accessoire — '+(ap?('+'+ap+' PA'):'')+(dp?(' +'+dp+' PD'):'')); }
+  if (data.kind === 'gear') { const {ap,dp} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+' — '+(ap?('+'+ap+' PA '):'')+(dp?('+'+dp+' PD'):'')+(data.optimizable?' · optimisable':'')); }
   if (data.kind === 'craft') desc.push('Composant de craft endgame. À conserver.');
   if (data.equipped) desc.push('Actuellement équipé' + (data.optimizable ? ' — niveau ' + ENH_NAMES[data.enhLv||0] : '') + '.');
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
@@ -2131,8 +2273,9 @@ function itemTooltipHtml(data) {
   const desc = [];
   if (data.kind === 'trash') desc.push('Vente ~'+fmt(data.val)+' silver');
   if (data.kind === 'material') desc.push('Matériau d\'optimisation');
-  if (data.kind === 'jackpot') desc.push('Accessoire'+(data.ap?(' · +'+data.ap+' PA'):'')+(data.dp?(' · +'+data.dp+' PD'):''));
-  if (data.kind === 'gear') desc.push((data.slot==='weapon'?'Arme':'Armure')+(data.ap?(' · +'+data.ap+' PA'):'')+(data.dp?(' · +'+data.dp+' PD'):''));
+  if (data.kind === 'jackpot') { const {ap,dp} = effectiveApDp(data); desc.push('Accessoire'+(ap?(' · +'+ap+' PA'):'')+(dp?(' · +'+dp+' PD'):'')); }
+  if (data.kind === 'gear') { const {ap,dp} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+(ap?(' · +'+ap+' PA'):'')+(dp?(' · +'+dp+' PD'):'')); }
+  if ((data.kind === 'gear' || data.kind === 'jackpot') && data.optimizable && data.enhLv) desc.push('enchant '+ENH_NAMES[data.enhLv]);
   if (data.kind === 'craft') desc.push('Composant de craft endgame');
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
   return `<div class="ipName ${data.kind||''}">${tr(data.name)}</div><div class="ipDesc">${desc.join(' · ')}</div>`;
@@ -2417,13 +2560,16 @@ function renderOptSuggestions() {
   }
 }
 
-// ---------- table de loot de la zone active, avec % réels ----------
+// ---------- table de loot de la zone active (ou en aperçu via le bouton "Voir"), avec % réels ----------
 const LOOT_ICONS = { trash:'▬', material:'◈', jackpot:'💍', craft:'✦', gear:'⚔️' };
-function renderLootTable() {
-  const z = Z(), L = z.loot;
-  const gearCh = GEAR_CHANCE[zoneIdx] ?? .002;
-  const setName = zoneIdx < 3 ? 'Grunil / Yuria' : 'Boss (Kzarka, Bheg, Urugon…)';
-  $('lootZoneName').textContent = tr(z.mob);
+function renderLootTable(previewIdx) {
+  const idx = previewIdx != null ? previewIdx : zoneIdx;
+  const z = ZONES[idx], L = z.loot;
+  const gearCh = GEAR_CHANCE[idx] ?? .002;
+  const setName = idx < 3 ? 'Grunil / Yuria' : 'Boss (Kzarka, Bheg, Urugon…)';
+  const previewTag = previewIdx != null && previewIdx !== zoneIdx
+    ? (LANG==='fr' ? '👁 Aperçu — ' : '👁 Preview — ') : '';
+  $('lootZoneName').textContent = previewTag + tr(z.mob);
   const equippedWord = LANG === 'fr' ? 'PA équipé' : 'AP equipped';
   const rows = [
     { kind:'trash',    it:L.trash,   note:'revenu de base' },
@@ -2555,15 +2701,18 @@ try {
 // ---------- admin (accès réservé à ce compte précis) ----------
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
 function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
+// invité = session anonyme Supabase (pas d'email/mot de passe) — jeu jouable et sauvegardé,
+// mais aucun accès au marché/classement (surfaces les plus exposées à la triche multi-comptes)
+function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 
 // ---------- journal de farm (pour les stats admin) : queue légère, envoyée par lots ----------
 let farmEventQueue = [];
 function queueFarmEvent(kind, name, qty, silverVal) {
-  if (!sb || !currentUser) return; // pas de compte → pas de journalisation (mode local uniquement)
+  if (!sb || !currentUser || isGuest()) return; // pas de compte vérifié → pas de journalisation
   farmEventQueue.push({ user_id: currentUser.id, item_name: name, item_kind: kind, qty, silver_value: silverVal, zone_name: Z().name });
 }
 async function flushFarmEvents() {
-  if (!sb || !currentUser || farmEventQueue.length === 0) return;
+  if (!sb || !currentUser || isGuest() || farmEventQueue.length === 0) return;
   const batch = farmEventQueue.splice(0, farmEventQueue.length);
   try { await sb.from('farm_events').insert(batch); } catch(e) { /* pas grave, prochain lot rattrapera */ }
 }
@@ -2576,16 +2725,29 @@ function authShow(msg, isError) {
   $a('authError').textContent = isError ? msg : '';
   $a('authStatus').textContent = isError ? '' : (msg || '');
 }
-function showAuthOverlay(show) {
-  $a('authOverlay').classList.toggle('hidden', !show);
-  $a('userBar').classList.toggle('show', !show);
+function showAuthOverlay(show) { $a('authOverlay').classList.toggle('hidden', !show); }
+function updateUserBar() {
+  $a('userBar').classList.toggle('show', !!currentUser);
+  $a('userEmail').textContent = isGuest() ? (LANG==='fr'?'🎭 Invité':'🎭 Guest') : (currentUser ? currentUser.email : '');
+  $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
+  $a('btnLogout').style.display = isGuest() ? 'none' : '';
+  $a('adminBox').style.display = isAdmin() ? '' : 'none';
 }
 
+// upgrade d'une session invité en compte réel (garde le même user_id → la sauvegarde suit),
+// ou création classique si jamais aucune session n'existe encore
 async function doSignUp() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
   if (!email || pass.length < 6) { authShow('Email requis + mot de passe 6 caractères min.', true); return; }
   authShow('Création du compte...');
+  if (isGuest()) {
+    const { data, error } = await sb.auth.updateUser({ email, password: pass });
+    if (error) { authShow(error.message, true); return; }
+    onAuthed(data.user);
+    authShow('Compte lié ! Ta progression est conservée.');
+    return;
+  }
   const { data, error } = await sb.auth.signUp({ email, password: pass });
   if (error) { authShow(error.message, true); return; }
   if (data.session) { onAuthed(data.session.user); }
@@ -2603,19 +2765,31 @@ async function doSignIn() {
 async function doLogout() {
   if (sb) await sb.auth.signOut();
   currentUser = null;
-  showAuthOverlay(true);
-  $a('authEmail').value = ''; $a('authPass').value = '';
-  authShow('');
+  await startGuestOrShowAuth(); // jamais de mur bloquant : on repart direct sur une session invité
 }
 
 async function onAuthed(user) {
   currentUser = user;
-  $a('userEmail').textContent = user.email;
   showAuthOverlay(false);
-  $a('btnResetDemo').style.display = isAdmin() ? '' : 'none';
-  $a('btnAdmin').style.display = isAdmin() ? '' : 'none';
+  updateUserBar();
   await loadCloudSave();
   startAutoCloudSave();
+  heartbeatPresence();
+  refreshOnlineCounter();
+}
+
+// point d'entrée unique au chargement (et après déconnexion) : tente une session invité automatique.
+// si l'anonymat n'est pas activé côté Supabase (ou hors-ligne), on retombe sur le formulaire classique.
+async function startGuestOrShowAuth() {
+  if (!sb) { showAuthOverlay(false); updateUserBar(); return; }
+  try {
+    const { data, error } = await sb.auth.signInAnonymously();
+    if (error) throw error;
+    onAuthed(data.user);
+  } catch (e) {
+    showAuthOverlay(true);
+    authShow('');
+  }
 }
 
 async function loadCloudSave() {
@@ -2641,19 +2815,23 @@ async function saveToCloud() {
 
 // ---------- classement : snapshot périodique des stats publiques dans player_stats ----------
 async function syncPlayerStats() {
-  if (!sb || !currentUser) return;
+  if (!sb || !currentUser || isGuest()) return; // classement réservé aux comptes vérifiés
   const mins = (performance.now() - S.startTime) / 60000;
   const silverPerHour = mins > .1 ? Math.round(S.silverEarned / (mins/60)) : 0;
+  const best = bestFarmedItem();
   try {
     await sb.from('player_stats').upsert({
       user_id: currentUser.id,
       display_name: (currentUser.email||'?').split('@')[0],
       silver: Math.round(S.silver),
       gearscore: Math.round(GS()),
+      lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
       silver_per_hour: silverPerHour,
       playtime_sec: Math.round(S.playtimeSec),
+      best_item_name: best ? best.name : '',
+      best_item_count: best ? best.count : 0,
       updated_at: new Date().toISOString(),
     });
   } catch(e) { /* pas grave, prochaine synchro rattrapera */ }
@@ -2738,13 +2916,23 @@ async function openAdminPanel() {
   openInfo(LANG==='fr' ? '🛠️ Zone Admin — statistiques serveur' : '🛠️ Admin Zone — server stats', html);
 }
 $a('btnAdmin').onclick = openAdminPanel;
+$a('btnReevalMarket').onclick = async () => {
+  if (!isAdmin() || !sb) return;
+  const { error } = await sb.rpc('reevaluate_market', { p_min_interval_minutes: 0 }); // 0 = force, ignore le throttle
+  floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec réévaluation':'Reevaluation failed') : (LANG==='fr'?'Marché réévalué ✓':'Market reevaluated ✓'), { gold: !error, hurt: !!error });
+};
 
-// ---------- classement public (silver, gearscore, meilleure zone, silver/h) ----------
+// ---------- classement public (silver, gearscore, meilleure zone, silver/h, meilleur objet) ----------
+const STALE_MS = 10 * 60 * 1000; // au-delà de 10 min sans synchro, le stuff du joueur a pu changer entre-temps
+function isStale(r) { return !r.updated_at || (Date.now() - new Date(r.updated_at).getTime()) > STALE_MS; }
+function staleTag(r) {
+  return isStale(r) ? `<span class="staleTag" title="${LANG==='fr'?'Peut-être obsolète — pas de synchro récente (équipement possiblement changé depuis)':'Possibly outdated — no recent sync (gear may have changed since)'}">⚠️</span>` : '';
+}
 function rankRows(rows, valueFn, fmtFn) {
   const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
   return sorted.map((r,i) => `
     <tr class="${r.user_id===currentUser?.id ? 'admTop' : ''}">
-      <td>#${i+1}</td><td>${r.display_name||'?'}</td><td>${fmtFn(r)}</td>
+      <td>#${i+1}</td><td>${r.display_name||'?'} ${staleTag(r)}</td><td>${fmtFn(r)}</td>
     </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 }
 async function openLeaderboard() {
@@ -2757,6 +2945,8 @@ async function openLeaderboard() {
   const byZone = rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—'));
   const bySH = rankRows(rows, r => Number(r.silver_per_hour||0),
     r => `${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}`);
+  const byItem = rankRows(rows.filter(r => r.best_item_name), r => Number(r.best_item_count||0),
+    r => `${tr(r.best_item_name)} (${fmt(r.best_item_count||0)})`);
 
   const html = `
     <h3>${LANG==='fr'?'💰 Silver':'💰 Silver'}</h3>
@@ -2770,10 +2960,99 @@ async function openLeaderboard() {
 
     <h3>${LANG==='fr'?'⏱️ Silver/heure':'⏱️ Silver/hour'}</h3>
     <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Taux (zone)':'Rate (zone)'}</th></tr></thead><tbody>${bySH}</tbody></table>
+
+    <h3>${LANG==='fr'?'🎯 Objet le plus farmé':'🎯 Most farmed item'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Objet (qté)':'Item (qty)'}</th></tr></thead><tbody>${byItem}</tbody></table>
+    <div class="admSummary">${LANG==='fr'?'⚠️ = pas de synchro depuis plus de 10 min, ces stats peuvent être obsolètes (équipement changé depuis)':'⚠️ = no sync for over 10 min, these stats may be outdated (gear may have changed since)'}</div>
   `;
   openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
 }
 $a('btnLeaderboard').onclick = openLeaderboard;
+
+// ---------- présence : compteur "joueurs en ligne" (invités inclus) ----------
+async function heartbeatPresence() {
+  if (!sb || !currentUser) return;
+  try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest() }); } catch(e) {}
+}
+async function refreshOnlineCounter() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.rpc('get_online_counts', { p_window_seconds: 90 });
+    if (error || !data || !data[0]) return;
+    const { total, guests } = data[0];
+    $a('onlineTotal').textContent = total;
+    $a('onlineGuests').textContent = guests > 0 ? ` (${guests} ${LANG==='fr'?'invités':'guests'})` : '';
+  } catch(e) {}
+}
+setInterval(heartbeatPresence, 20000);
+setInterval(refreshOnlineCounter, 20000);
+
+// ---------- panneau "Mon compte" : identité + parrainage (comptes vérifiés uniquement) ----------
+async function openAccountPanel() {
+  if (!sb || !currentUser) return;
+  if (isGuest()) {
+    openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', `
+      <p>${LANG==='fr'
+        ? 'Tu joues en mode invité. Lie un compte vérifié (bouton "🔗 Lier un compte") pour accéder au parrainage, au marché et au classement — ta progression actuelle sera conservée.'
+        : 'You\'re playing as a guest. Link a verified account (the "🔗 Link account" button) to access referrals, the market and the leaderboard — your current progress will be kept.'}</p>
+    `);
+    return;
+  }
+  let code = '', count = 0, referrals = [];
+  try { const { data } = await sb.rpc('ensure_referral_code'); code = data || ''; } catch(e) {}
+  try { const { data } = await sb.rpc('get_referral_count'); count = data || 0; } catch(e) {}
+  try { const { data } = await sb.rpc('get_my_referrals'); referrals = data || []; } catch(e) {}
+
+  const refRows = referrals.map(r => `
+    <tr><td>${r.display_name}</td><td>${r.lvl}</td><td>${fmt(r.gearscore)}</td><td>${fmt(r.silver)}</td></tr>
+  `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun filleul pour l\'instant':'No referrals yet'}</td></tr>`;
+
+  const rules = LANG==='fr' ? [
+    'Un compte ne peut être parrainé qu\'une seule fois.',
+    'Le parrainage doit se faire dans les 3 jours suivant la création du compte du filleul — impossible passé ce délai.',
+    'Impossible d\'utiliser ton propre code.',
+    'Impossible de parrainer ton propre parrain.',
+    'Pas de récompense pour l\'instant — juste un suivi de qui tu as parrainé.',
+  ] : [
+    'An account can only be referred once.',
+    'Referring must happen within 3 days of the referred account\'s creation — impossible afterward.',
+    'You cannot use your own code.',
+    'You cannot refer your own referrer.',
+    'No reward for now — this is just a tracker of who you\'ve referred.',
+  ];
+
+  const html = `
+    <div class="admSummary">${LANG==='fr'?'Compte':'Account'} : <b>${currentUser.email}</b></div>
+    <h3>${LANG==='fr'?'🎁 Parrainage':'🎁 Referrals'}</h3>
+    <div id="refCodeBox">${code}</div>
+    <button id="btnCopyRefCode">${LANG==='fr'?'📋 Copier le code':'📋 Copy code'}</button>
+    <div class="admSummary" style="margin-top:14px">${LANG==='fr'?'Tu as un code d\'un autre joueur ?':'Got someone else\'s code?'}</div>
+    <input type="text" id="refCodeInput" placeholder="${LANG==='fr'?'Code de parrainage':'Referral code'}" maxlength="12">
+    <button id="btnApplyRefCode">${LANG==='fr'?'Valider':'Apply'}</button>
+    <div id="refMsg"></div>
+    <ul class="refRules">${rules.map(r => `<li>${r}</li>`).join('')}</ul>
+
+    <h3>${LANG==='fr'?'👥 Tes filleuls':'👥 Your referrals'} (<span style="color:var(--gold)">${count}</span>)</h3>
+    <table class="admTable">
+      <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Niv.':'Lvl'}</th><th>GS</th><th>Silver</th></tr></thead>
+      <tbody>${refRows}</tbody>
+    </table>
+  `;
+  openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', html);
+  $a('btnCopyRefCode').onclick = async () => {
+    try { await navigator.clipboard.writeText(code); } catch(e) {}
+    $a('btnCopyRefCode').textContent = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
+  };
+  $a('btnApplyRefCode').onclick = async () => {
+    const val = $a('refCodeInput').value.trim();
+    const msg = $a('refMsg');
+    if (!val) { msg.textContent = LANG==='fr'?'Entre un code.':'Enter a code.'; msg.className = 'fail'; return; }
+    const { error } = await sb.rpc('apply_referral_code', { p_code: val });
+    if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
+    msg.textContent = LANG==='fr'?'Code appliqué !':'Code applied!'; msg.className = 'ok';
+  };
+}
+$a('btnAccount').onclick = openAccountPanel;
 
 let cloudSaveInterval = null;
 function startAutoCloudSave() {
@@ -2785,14 +3064,17 @@ function startAutoCloudSave() {
 $a('btnSignIn').onclick = doSignIn;
 $a('btnSignUp').onclick = doSignUp;
 $a('btnLogout').onclick = doLogout;
+$a('btnLinkAccount').onclick = () => showAuthOverlay(true);
+$a('closeAuth').onclick = () => showAuthOverlay(false);
+$a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOverlay' && currentUser) showAuthOverlay(false); });
 $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
 
-// au chargement : session déjà active ?
+// au chargement : session déjà active ? sinon on démarre en invité (jamais de mur bloquant)
 (async () => {
-  if (!sb) { showAuthOverlay(false); authShow(''); return; } // Supabase pas configuré → jeu jouable directement (mode local)
+  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); return; } // Supabase pas configuré → jeu jouable directement (mode local)
   const { data } = await sb.auth.getSession();
   if (data.session) onAuthed(data.session.user);
-  else showAuthOverlay(true);
+  else await startGuestOrShowAuth();
 })();
 
 // ============================================================
@@ -2800,6 +3082,12 @@ $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignI
 // ============================================================
 function marketRequireAuth() {
   if (!sb || !currentUser) { alert('Connecte-toi pour accéder au marché.'); return false; }
+  if (isGuest()) {
+    alert(LANG==='fr'
+      ? 'Le Marché et le Classement sont réservés aux comptes vérifiés (protection anti-triche). Clique sur "🔗 Lier un compte" pour en créer un — ta progression actuelle sera conservée.'
+      : 'The Market and Leaderboard are restricted to verified accounts (anti-cheat protection). Click "🔗 Link account" to create one — your current progress will be kept.');
+    return false;
+  }
   return true;
 }
 
@@ -2817,10 +3105,11 @@ document.querySelectorAll('.mtab').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('.mtab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    ['browse','sell','mine'].forEach(t => { $a('market'+t[0].toUpperCase()+t.slice(1)).style.display = (t===btn.dataset.tab) ? 'block' : 'none'; });
+    ['browse','sell','mine','common'].forEach(t => { $a('market'+t[0].toUpperCase()+t.slice(1)).style.display = (t===btn.dataset.tab) ? 'block' : 'none'; });
     if (btn.dataset.tab === 'browse') refreshMarketBrowse();
     if (btn.dataset.tab === 'sell') refreshSellTab();
     if (btn.dataset.tab === 'mine') refreshMarketMine();
+    if (btn.dataset.tab === 'common') refreshCommonMarket();
   };
 });
 
@@ -2921,19 +3210,81 @@ async function cancelListing(id) {
 }
 
 // ============================================================
+// MARCHÉ COMMUN — matériaux à prix flottant (borné min/max), pas de mise en vente :
+// achat/vente instantanés au prix courant, comme le vrai marché commun de BDO.
+// ============================================================
+async function refreshCommonMarket() {
+  const box = $a('marketCommonList');
+  box.innerHTML = '<div class="mEmpty">Chargement...</div>';
+  try { await sb.rpc('reevaluate_market', { p_min_interval_minutes: 15 }); } catch(e) {} // no-op si trop tôt
+  const { data, error } = await sb.from('market_prices').select('*').order('display_name');
+  if (error) { box.innerHTML = '<div class="mEmpty">Erreur de chargement</div>'; return; }
+  if (!data || !data.length) { box.innerHTML = '<div class="mEmpty">Marché commun non configuré</div>'; return; }
+  box.innerHTML = '';
+  for (const p of data) {
+    const owned = INV.filter(s => s && s.kind === 'material' && s.name === p.display_name)
+      .reduce((n,s) => n + s.qty, 0);
+    const pct = (p.current_price - p.min_price) / Math.max(1e-6, p.max_price - p.min_price);
+    const priceCls = pct < .33 ? 'low' : pct > .66 ? 'high' : 'mid';
+    const row = document.createElement('div');
+    row.className = 'cmRow';
+    row.innerHTML = `
+      <div class="mIcon" style="color:#8fb0c9">◈</div>
+      <div class="cmInfo"><div class="mName">${tr(p.display_name)}</div><div class="cmOwned">${LANG==='fr'?'Possédé':'Owned'} : ${fmt(owned)}</div></div>
+      <div class="cmPrice ${priceCls}">${fmt(Math.round(p.current_price))} 🪙</div>
+      <div class="cmActions">
+        <input type="number" class="cmQty" value="1" min="1">
+        <button class="cmBuy">${LANG==='fr'?'Acheter':'Buy'}</button>
+        <button class="cmSell" ${owned<=0?'disabled':''}>${LANG==='fr'?'Vendre':'Sell'}</button>
+      </div>`;
+    const qtyEl = row.querySelector('.cmQty');
+    row.querySelector('.cmBuy').onclick = () => commonMarketBuy(p.item_key, qtyEl.value);
+    row.querySelector('.cmSell').onclick = () => commonMarketSell(p.display_name, qtyEl.value);
+    box.appendChild(row);
+  }
+}
+async function commonMarketBuy(itemKey, qtyStr) {
+  const qty = parseInt(qtyStr, 10);
+  const msg = $a('commonMsg');
+  if (!qty || qty <= 0) { msg.textContent = LANG==='fr'?'Quantité invalide.':'Invalid quantity.'; msg.className = 'fail'; return; }
+  const { error } = await sb.rpc('market_buy_material', { p_item_key: itemKey, p_qty: qty });
+  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
+  msg.textContent = LANG==='fr'?'Achat effectué !':'Purchase complete!'; msg.className = 'ok';
+  await loadCloudSave();
+  refreshCommonMarket();
+}
+async function commonMarketSell(displayName, qtyStr) {
+  const qty = parseInt(qtyStr, 10);
+  const msg = $a('commonMsg');
+  if (!qty || qty <= 0) { msg.textContent = LANG==='fr'?'Quantité invalide.':'Invalid quantity.'; msg.className = 'fail'; return; }
+  const idx = INV.findIndex(s => s && s.kind === 'material' && s.name === displayName);
+  if (idx === -1) { msg.textContent = LANG==='fr'?'Tu n\'en as pas.':'You don\'t have any.'; msg.className = 'fail'; return; }
+  const { error } = await sb.rpc('market_sell_material', { p_inv_index: idx, p_qty: qty });
+  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
+  msg.textContent = LANG==='fr'?'Vente effectuée !':'Sale complete!'; msg.className = 'ok';
+  await loadCloudSave();
+  refreshCommonMarket();
+}
+
+// ============================================================
 // I18N — EN / FR (LANG, NAME_EN, tr déplacés en haut du script — voir début du fichier)
 // ============================================================
 // dictionnaire des textes statiques de l'UI (clé data-i18n → {fr, en})
 const I18N = {
-  btnWiki: { fr:'Wiki', en:'Wiki' },
-  btnPatch: { fr:'Notes de version', en:'Patch Notes' },
+  btnWiki: { fr:'📖 Wiki', en:'📖 Wiki' },
+  btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },
   btnMarketLbl: { fr:'🏛️ Marché', en:'🏛️ Market' },
-  btnLogout: { fr:'Déconnexion', en:'Log out' },
-  authSub: { fr:'Connecte-toi pour retrouver ta sauvegarde', en:'Sign in to load your save' },
+  btnLogout: { fr:'🚪 Déconnexion', en:'🚪 Log out' },
+  authSub: { fr:'Connecte-toi avec un vrai compte pour accéder au Marché et au Classement', en:'Sign in with a real account to access the Market and Leaderboard' },
+  btnLinkAccount: { fr:'🔗 Lier un compte', en:'🔗 Link account' },
+  btnAccount: { fr:'👤 Mon compte', en:'👤 My account' },
+  onlineLbl: { fr:'en ligne', en:'online' },
   demoNoteAuth: { fr:'🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.', en:'🎮 This is a test demo — your progress can be reset at any time.' },
   demoTag: { fr:'DÉMO', en:'DEMO' },
   btnResetDemo: { fr:'🔄 Réinitialiser', en:'🔄 Reset' },
   btnAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
+  adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
+  btnReevalMarket: { fr:'🔄 Réévaluer le marché', en:'🔄 Reevaluate market' },
   footerText: { fr:"Fan-site non officiel, sans lien avec Pearl Abyss ni Black Desert Online. Tous les noms et concepts liés à Black Desert Online sont la propriété de Pearl Abyss Corp. — utilisés ici à titre non commercial, pour l'ambiance uniquement.", en:'Unofficial fan site, not affiliated with Pearl Abyss or Black Desert Online. All Black Desert Online names and concepts are property of Pearl Abyss Corp. — used here non-commercially, for atmosphere only.' },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
@@ -2943,6 +3294,8 @@ const I18N = {
   tabSell: { fr:'Vendre', en:'Sell' },
   tabMine: { fr:'Mes annonces', en:'My listings' },
   sellHint: { fr:'Choisis un objet de ton sac (non équipé) et fixe un prix.', en:'Pick an item from your bag (not equipped) and set a price.' },
+  tabCommon: { fr:'Marché commun', en:'Common Market' },
+  commonHint: { fr:'Matériaux échangés au prix commun du marché — ce prix flotte dans le temps selon l\'offre et la demande.', en:'Materials traded at the common market price — this price floats over time based on supply and demand.' },
   priceInputPh: { fr:'Prix en silver', en:'Price in silver' },
   btnListItem: { fr:'Mettre en vente', en:'List for sale' },
   cardStats: { fr:'Statistiques', en:'Stats' },
@@ -2966,6 +3319,8 @@ const I18N = {
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
   btnReloadUpdate: { fr:'Recharger', en:'Reload' },
   btnLeaderboard: { fr:'🏆 Classement', en:'🏆 Leaderboard' },
+  menuSideLeft: { fr:'◀ Gauche', en:'◀ Left' },
+  menuSideRight: { fr:'Droite ▶', en:'Right ▶' },
   cardInv: { fr:'Inventaire', en:'Inventory' },
   btnSellTrash: { fr:'Vendre trash', en:'Sell trash' },
   btnSellMats: { fr:'Vendre mat.', en:'Sell mats' },
@@ -2997,6 +3352,21 @@ $a('langToggle').onclick = () => {
   applyI18n();
 };
 
+// ---------- position du menu latéral (gauche/droite), persistée ----------
+let menuSide = 'left';
+try { menuSide = localStorage.getItem('velia-idle-menuside') || 'left'; } catch(e) {}
+function applyMenuSide() {
+  $a('sideMenu').classList.toggle('onRight', menuSide === 'right');
+  $a('menuSideThumb').classList.toggle('right', menuSide === 'right');
+  document.querySelectorAll('.menuSideOpt').forEach(el => el.classList.toggle('active', el.dataset.side === menuSide));
+}
+$a('menuSideToggle').onclick = () => {
+  menuSide = menuSide === 'left' ? 'right' : 'left';
+  try { localStorage.setItem('velia-idle-menuside', menuSide); } catch(e) {}
+  applyMenuSide();
+};
+applyMenuSide();
+
 // (NAME_EN et tr() sont maintenant déclarés en haut du script)
 
 // ============================================================
@@ -3004,6 +3374,63 @@ $a('langToggle').onclick = () => {
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V25', name:{fr:'Joueurs en ligne & parrainage', en:'Online players & referrals'}, fr:[
+      {t:'new', tx:'Compteur "joueurs en ligne" en haut de l\'écran (invités inclus, mis à jour toutes les 20s)'},
+      {t:'new', tx:'Nouveau panneau "👤 Mon compte" (comptes vérifiés) : code de parrainage à partager, champ pour entrer celui d\'un autre joueur, compteur et liste détaillée de tes filleuls (niveau, gearscore, silver) — pas de récompense pour l\'instant, uniquement du suivi'},
+      {t:'change', tx:'Règles de parrainage : un compte ne peut être parrainé qu\'une fois, uniquement dans les 3 jours suivant sa création, jamais avec son propre code ni celui de son propre parrain'},
+    ], en:[
+      {t:'new', tx:'"Players online" counter at the top of the screen (guests included, refreshed every 20s)'},
+      {t:'new', tx:'New "👤 My account" panel (verified accounts): referral code to share, a field to enter someone else\'s, a counter and detailed list of your referrals (level, gearscore, silver) — no reward for now, tracking only'},
+      {t:'change', tx:'Referral rules: an account can only be referred once, only within 3 days of its creation, never with your own code or your own referrer\'s'},
+    ] },
+  { v:'V24', name:{fr:'Fini le mur de connexion', en:'No more login wall'}, fr:[
+      {t:'change',  tx:'Le jeu se lance directement en mode invité (session anonyme sauvegardée sur le serveur, sans email ni pseudo) — plus besoin de créer un compte pour jouer et être sauvegardé dans le cloud'},
+      {t:'new',     tx:'Bouton "🔗 Lier un compte" pour transformer une session invité en compte vérifié à tout moment — la progression est conservée intégralement'},
+      {t:'exploit', tx:'Marché, Marché commun et Classement réservés aux comptes vérifiés (invités exclus) pour limiter la triche par comptes jetables — vérifié à la fois côté client et côté serveur'},
+    ], en:[
+      {t:'change',  tx:'The game now launches directly in guest mode (anonymous session saved server-side, no email or username needed) — no more account required to play and get cloud saves'},
+      {t:'new',     tx:'"🔗 Link account" button to upgrade a guest session into a verified account at any time — progress is fully kept'},
+      {t:'exploit', tx:'Market, Common Market and Leaderboard restricted to verified accounts (guests excluded) to limit throwaway-account abuse — enforced both client-side and server-side'},
+    ] },
+  { v:'V23', name:{fr:'Marché commun', en:'Common Market'}, fr:[
+      {t:'new', tx:'Nouvel onglet "Marché commun" dans l\'Hôtel des ventes : achète/vends tes matériaux d\'optimisation à un prix commun flottant (borné par un min/max, façon vrai marché de BDO) — pas besoin de créer une annonce, transaction instantanée'},
+      {t:'new', tx:'Le prix de chaque matériau varie dans le temps selon l\'offre et la demande (inflation/déflation), avec un code couleur (vert = proche du minimum, rouge = proche du maximum)'},
+      {t:'new', tx:'Admin : bouton pour forcer une réévaluation immédiate du marché commun'},
+      {t:'change', tx:'Le gear et les bijoux restent sur l\'Hôtel des ventes classique (annonces à prix libre) — chaque pièce a ses propres stats aléatoires, incompatible avec un prix commun'},
+    ], en:[
+      {t:'new', tx:'New "Common Market" tab in the Marketplace: buy/sell your enhancement materials at a floating common price (bounded by a min/max, like BDO\'s real central market) — no listing needed, instant transaction'},
+      {t:'new', tx:'Each material\'s price drifts over time based on supply and demand (inflation/deflation), color-coded (green = near minimum, red = near maximum)'},
+      {t:'new', tx:'Admin: button to force an immediate common market reevaluation'},
+      {t:'change', tx:'Gear and jewelry stay on the classic Marketplace (free-price listings) — each piece has its own randomized stats, incompatible with a shared price'},
+    ] },
+  { v:'V22', name:{fr:'Encadré admin, zones & classement enrichi', en:'Admin box, zones & richer leaderboard'}, fr:[
+      {t:'new',    tx:'Encadré Admin séparé dans le menu (Admin + Réinitialiser), prêt à accueillir de futures options réservées à l\'admin'},
+      {t:'new',    tx:'Icônes réalistes pour les bijoux (bague, oreille, collier, ceinture) — avant, tous les bijoux affichaient la même icône bague'},
+      {t:'fix',    tx:'Liste des zones : la colonne PA/PD est maintenant toujours alignée, et le badge de danger n\'est plus coupé'},
+      {t:'new',    tx:'Chaque zone a maintenant un bouton Voir (aperçu du loot sans voyager) et un bouton Farmer (voyage direct)'},
+      {t:'new',    tx:'Classement : ajout d\'un tableau "Objet le plus farmé" par joueur, et d\'un repère ⚠️ si les stats d\'un joueur n\'ont pas été synchronisées depuis plus de 10 minutes'},
+    ], en:[
+      {t:'new',    tx:'Separate Admin box in the menu (Admin + Reset), ready for future admin-only options'},
+      {t:'new',    tx:'Realistic jewelry icons (ring, earring, necklace, belt) — previously every jewelry piece showed the same ring icon'},
+      {t:'fix',    tx:'Zone list: the AP/DP column is now always aligned, and the danger badge no longer gets cut off'},
+      {t:'new',    tx:'Each zone now has a View button (loot preview without traveling) and a Farm button (direct travel)'},
+      {t:'new',    tx:'Leaderboard: added a "Most farmed item" table per player, and a ⚠️ marker if a player\'s stats haven\'t synced in over 10 minutes'},
+    ] },
+  { v:'V21', name:{fr:'Discord, menu réglable & correctifs', en:'Discord, adjustable menu & fixes'}, fr:[
+      {t:'new',    tx:'Lien Discord ajouté dans le menu latéral'},
+      {t:'new',    tx:'Slider Gauche/Droite pour choisir le côté d\'affichage du menu latéral'},
+      {t:'new',    tx:'La version du client est affichée en bas du menu, et la fenêtre de mise à jour indique désormais le numéro de la nouvelle version — fenêtre déplacée en haut de l\'écran'},
+      {t:'fix',    tx:'Correctif important : le tooltip et le menu clic-droit des objets affichaient les PA/PD DE BASE d\'une pièce d\'équipement au lieu de sa vraie valeur une fois enchantée (ex : une arme +10 affichait la stat d\'une arme +0)'},
+      {t:'change', tx:'Poids de base (LT) recalibré pour tenir ~2h de farm continu avant ralentissement (contre ~30min avant) — augmentable plus tard via une boutique'},
+      {t:'new',    tx:'Emoji ajoutés sur Wiki, Notes de version, Déconnexion et le sélecteur de langue'},
+    ], en:[
+      {t:'new',    tx:'Discord link added to the side menu'},
+      {t:'new',    tx:'Left/Right slider to choose which side the side menu is displayed on'},
+      {t:'new',    tx:'Client version shown at the bottom of the menu, and the update window now shows the new version number — window moved to the top of the screen'},
+      {t:'fix',    tx:'Important fix: the tooltip and right-click menu for items showed a gear piece\'s BASE AP/DP instead of its real value once enhanced (e.g. a +10 weapon showed the same stat as a +0 one)'},
+      {t:'change', tx:'Base weight limit (LT) recalibrated for ~2h of continuous farming before slowdown (was ~30min) — increasable later via a shop'},
+      {t:'new',    tx:'Added emoji to Wiki, Patch Notes, Logout and the language selector'},
+    ] },
   { v:'V20', name:{fr:'Refonte du menu', en:'Menu redesign'}, fr:[
       {t:'new',    tx:'Les notes de version ont maintenant un nom par version, et les lignes qui décrivent une mécanique retirée du jeu affichent un tag "🗑 Supprimé"'},
       {t:'change', tx:'Sélecteur de langue transformé en slider FR/EN qui indique clairement la langue active'},
@@ -3206,6 +3633,7 @@ const PATCH_NOTES = [
 // (on refetch périodiquement index.html et on compare la première version du tableau)
 // ============================================================
 const CURRENT_VERSION = PATCH_NOTES[0].v;
+$a('clientVersionNum').textContent = CURRENT_VERSION;
 let updateToastShown = false;
 async function checkForUpdate() {
   if (updateToastShown) return;
@@ -3215,6 +3643,7 @@ async function checkForUpdate() {
     const m = text.match(/const PATCH_NOTES = \[\s*\{\s*v:\s*'([^']+)'/);
     if (m && m[1] !== CURRENT_VERSION) {
       updateToastShown = true;
+      $a('updToastVer').textContent = '(' + m[1] + ')';
       $a('updateToast').classList.add('show');
     }
   } catch (e) {}
