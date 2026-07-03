@@ -176,23 +176,17 @@
   .pdCenter { flex:1; display:flex; align-items:center; justify-content:center; min-width:0; }
   .pdCenter canvas { width:70px; height:auto; }
   .pdSlot {
-    width:46px; height:46px; border:1px solid #3a3742; background:rgba(20,19,26,.9);
-    display:flex; align-items:center; justify-content:center; font-size:20px;
+    width:38px; height:38px; border:1px solid #3a3742; background:rgba(20,19,26,.9);
+    display:flex; align-items:center; justify-content:center; font-size:16px;
     cursor:pointer; position:relative;
   }
   .pdSlot:hover { border-color:var(--gold); }
   .pdSlot.filled { border-color:var(--gold-dim); background:#231f16; }
   .pdSlot.empty { opacity:.42; filter:grayscale(1); }
-  /* niveau d'optimisation affiché EN GROS sur l'image, façon BDO : pastille en haut à gauche */
-  .pdSlot .enh {
-    position:absolute; top:-4px; left:-4px; min-width:16px; text-align:center;
-    font-size:11px; font-weight:bold; line-height:1.35; padding:0 3px; border-radius:3px;
-    background:#1a2a14; color:#8fe07a; border:1px solid #4a7a38; box-shadow:0 1px 3px rgba(0,0,0,.6);
-  }
-  .pdSlot .enh.pri { background:#2a1a14; color:#e6cf7a; border-color:#8a6a3a; } /* PRI+ en doré */
-  .gicon { width:1.55em; height:1.55em; vertical-align:middle; flex-shrink:0; }
+  .pdSlot .enh { position:absolute; bottom:-2px; right:1px; font-size:7px; color:var(--gold); text-shadow:0 0 2px #000,0 0 2px #000; }
+  .gicon { width:1.35em; height:1.35em; vertical-align:middle; flex-shrink:0; }
   #pdWeapons { display:flex; justify-content:center; gap:6px; padding:6px 0; border-top:1px solid #2c2a33; border-bottom:1px solid #2c2a33; margin-bottom:2px; }
-  #pdWeapons .pdSlot { width:48px; height:48px; }
+  #pdWeapons .pdSlot { width:40px; height:40px; }
   #pdWeapons .pdGroupLbl { position:absolute; top:-12px; left:0; right:0; text-align:center; font-size:7px; letter-spacing:.5px; color:var(--ink-dim); }
   #pdBook { display:flex; justify-content:center; padding:5px 0 7px; }
   .lsGrid { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
@@ -277,11 +271,6 @@
   /* ===== loot de la zone ===== */
   .lootRow { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid #232128; font-size:12px; }
   .lootRow:last-child { border-bottom:none; }
-  /* petit historique de silver (sparkline) sous la table de loot */
-  #silverHistWrap { margin-top:9px; padding-top:8px; border-top:1px solid #2c2a33; }
-  #silverHistTop { display:flex; justify-content:space-between; align-items:baseline; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:4px; }
-  #silverHistRate { color:var(--gold); text-transform:none; letter-spacing:0; font-size:11px; font-variant-numeric:tabular-nums; }
-  #silverHistChart { width:100%; height:34px; display:block; }
   .lootIcon { width:26px; height:26px; display:flex; align-items:center; justify-content:center;
     background:rgba(20,19,26,.8); border:1px solid #2c2a33; font-size:13px; flex-shrink:0; }
   .lootIcon.k-trash { color:#a08464; } .lootIcon.k-material { color:#8fb0c9; }
@@ -1095,10 +1084,6 @@
     <div class="card" id="lootCard">
       <h3><span data-i18n="cardLoot">Loot de cette zone</span> <span id="lootZoneName" style="float:right;color:var(--ink-dim);font-size:10px;letter-spacing:0"></span></h3>
       <div id="lootTable"></div>
-      <div id="silverHistWrap">
-        <div id="silverHistTop"><span data-i18n="silverHistLbl">💰 Historique silver</span> <span id="silverHistRate"></span></div>
-        <svg id="silverHistChart" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline id="silverHistLine" fill="none" stroke="var(--gold)" stroke-width="1"/></svg>
-      </div>
     </div>
 
     <div class="card" id="equipCard">
@@ -1295,68 +1280,20 @@ function bestFarmedItem() {
   return best ? { name: best, count: bestN } : null;
 }
 
-// icônes SVG originales (dessinées pour ce projet, aucun asset BDO réel) — plus détaillées :
-// base + reflets + ombres pour un rendu plus joli, remplissant davantage la case
+// icônes SVG originales (dessinées pour ce projet, aucun asset BDO réel) — voir svgIcon()
 function svgIcon(inner) { return `<svg class="gicon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`; }
-// arme principale : bâton magique à orbe bleu lumineux
-const ICO_WEAPON = svgIcon(
-  '<rect x="10.6" y="7" width="2.8" height="15" rx="1.4" fill="#5a3f22"/><rect x="11" y="7" width="1" height="15" fill="#9a7a45"/>' +
-  '<circle cx="12" cy="6" r="5" fill="#2f5c8a"/><circle cx="12" cy="6" r="5" fill="none" stroke="#8cc8ff" stroke-width="1.1"/>' +
-  '<circle cx="12" cy="6" r="2.4" fill="#bfe4ff"/><circle cx="10.6" cy="4.6" r="1" fill="#fff"/>');
-// arme d\'éveil : grande épée dorée
-const ICO_AWAKENING = svgIcon(
-  '<path d="M12 1l2 3-2 12-2-12z" fill="#e6cf7a"/><path d="M12 1l2 3-2 12z" fill="#c9a55a"/>' +
-  '<rect x="7.5" y="16" width="9" height="2.4" rx="1.2" fill="#8a6a3a"/>' +
-  '<rect x="10.8" y="18" width="2.4" height="4" rx="1.2" fill="#5a3f22"/><circle cx="12" cy="22.4" r="1.3" fill="#e6cf7a"/>');
-// arme secondaire : dague
-const ICO_SECONDARY = svgIcon(
-  '<path d="M12 2l1.8 9h-3.6z" fill="#d8dde3"/><path d="M12 2l1.8 9H12z" fill="#aeb6bf"/>' +
-  '<rect x="8" y="11" width="8" height="2.2" rx="1.1" fill="#8a6a3a"/>' +
-  '<rect x="11" y="13" width="2" height="7" rx="1" fill="#3a2f22"/><circle cx="12" cy="20.5" r="1.4" fill="#c9a55a"/>');
-// livre (compétences de vie) : couverture bleue + tranche + pages
-const ICO_BOOK = svgIcon(
-  '<path d="M4 4.5c3-1.2 5.5-1 8 .5v15c-2.5-1.5-5-1.7-8-.5z" fill="#3a6ea8"/>' +
-  '<path d="M20 4.5c-3-1.2-5.5-1-8 .5v15c2.5-1.5 5-1.7 8-.5z" fill="#5a8fc8"/>' +
-  '<path d="M12 5v15" stroke="#274a6e" stroke-width="1.4"/><path d="M14 8h4M14 11h4M6 8h4M6 11h4" stroke="#dfeaf5" stroke-width="0.9"/>');
-// casque : dôme + visière + cimier doré
-const ICO_HELMET = svgIcon(
-  '<path d="M4 15a8 8 0 0116 0v1H4z" fill="#8f9aa6"/><path d="M4 15a8 8 0 0116 0h-4a4 4 0 00-8 0z" fill="#aab4bf"/>' +
-  '<rect x="3" y="16" width="18" height="2.6" rx="1.2" fill="#5f6873"/>' +
-  '<path d="M11 4h2l-.4 7h-1.2z" fill="#e6cf7a"/><path d="M12 4h1l-.4 7H12z" fill="#c9a55a"/>');
-// armure : plastron
-const ICO_ARMOR = svgIcon(
-  '<path d="M12 2l7 3.2v5.3C19 17 15.5 20.5 12 22.5 8.5 20.5 5 17 5 10.5V5.2z" fill="#6f7d8a"/>' +
-  '<path d="M12 2l7 3.2v5.3C19 17 15.5 20.5 12 22.5z" fill="#586773"/>' +
-  '<path d="M12 6v13" stroke="#3f4b55" stroke-width="1.2"/><path d="M8 9l4 2 4-2" fill="none" stroke="#9aa7b3" stroke-width="1"/>');
-// gants : gantelet
-const ICO_GLOVES = svgIcon(
-  '<path d="M6 22V10.5a2.5 2.5 0 015 0V12a2.5 2.5 0 015 0v10z" fill="#7a5a30"/>' +
-  '<path d="M6 22V10.5a2.5 2.5 0 015 0V22z" fill="#9a7a45"/>' +
-  '<rect x="5" y="19.5" width="14" height="3" rx="1.2" fill="#5a3f22"/>');
-// bottes
-const ICO_BOOTS = svgIcon(
-  '<path d="M8.5 2h4.5v11l6 4.5v3H4v-4.5l4.5-2.5z" fill="#7a5a30"/>' +
-  '<path d="M8.5 2h4.5v11l6 4.5v3h-6z" fill="#5a3f22"/>' +
-  '<rect x="4" y="20" width="16" height="2.2" rx="1" fill="#332412"/>');
-// collier : chaîne + pendentif
-const ICO_NECKLACE = svgIcon(
-  '<path d="M4 5c0 6.5 4 10 8 10s8-3.5 8-10" fill="none" stroke="#c9a55a" stroke-width="1.8"/>' +
-  '<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="#e6cf7a" stroke-width="1.8"/>' +
-  '<path d="M12 15l3 4-3 3-3-3z" fill="#3a6ea8"/><path d="M12 15l3 4-3 3z" fill="#274a6e"/>');
-// boucle d\'oreille
-const ICO_EARRING = svgIcon(
-  '<circle cx="12" cy="7" r="3.4" fill="none" stroke="#e6cf7a" stroke-width="1.8"/>' +
-  '<path d="M12 11l3 4.5-3 4.5-3-4.5z" fill="#3a6ea8"/><path d="M12 11l3 4.5-3 4.5z" fill="#274a6e"/>');
-// bague
-const ICO_RING = svgIcon(
-  '<circle cx="12" cy="15" r="6.5" fill="none" stroke="#c9a55a" stroke-width="2.6"/>' +
-  '<circle cx="12" cy="15" r="6.5" fill="none" stroke="#e6cf7a" stroke-width="1"/>' +
-  '<path d="M12 3l3.2 4.5L12 11 8.8 7.5z" fill="#3a6ea8"/><path d="M12 3l3.2 4.5L12 11z" fill="#274a6e"/>');
-// ceinture : sangle + boucle
-const ICO_BELT = svgIcon(
-  '<rect x="1.5" y="9.5" width="21" height="5" rx="1.4" fill="#5a3f22"/><rect x="1.5" y="9.5" width="21" height="2" rx="1" fill="#8a6a3a"/>' +
-  '<rect x="8.5" y="7.5" width="7" height="9" rx="1.6" fill="none" stroke="#e6cf7a" stroke-width="2"/>' +
-  '<rect x="11" y="9.5" width="2" height="5" rx="1" fill="#c9a55a"/>');
+const ICO_WEAPON    = svgIcon('<rect x="10.5" y="6" width="3" height="16" rx="1" fill="#8a6a3a"/><path d="M12 2l3 5-3 3-3-3z" fill="#8cc8ff"/>');
+const ICO_AWAKENING = svgIcon('<rect x="10.5" y="9" width="3" height="13" rx="1" fill="#8a6a3a"/><path d="M7 3l2 7h1.2L11 4h2l.8 6H15l2-7-1 10H8z" fill="#c9a55a"/>');
+const ICO_SECONDARY = svgIcon('<path d="M12 2l2 8h-4z" fill="#c9c9c9"/><rect x="11" y="10" width="2" height="8" fill="#c9c9c9"/><rect x="8" y="17" width="8" height="2" rx="1" fill="#8a6a3a"/><rect x="11" y="19" width="2" height="3" rx="1" fill="#3a2f22"/>');
+const ICO_BOOK      = svgIcon('<path d="M4 4h7v16H4z" fill="#6ea3c9"/><path d="M13 4h7v16h-7z" fill="#8cc8ff"/><rect x="10.5" y="4" width="3" height="16" fill="#3a566e"/>');
+const ICO_HELMET    = svgIcon('<path d="M4 14a8 8 0 0116 0v2H4z" fill="#9aa5b1"/><rect x="3" y="16" width="18" height="2.4" rx="1" fill="#6b7480"/><rect x="10.5" y="6" width="3" height="5" fill="#c9a55a"/>');
+const ICO_ARMOR     = svgIcon('<path d="M12 3l6 3v5c0 5-3 8-6 10-3-2-6-5-6-10V6z" fill="#7a8896"/><path d="M12 3l6 3v5c0 5-3 8-6 10z" fill="#5c6874"/>');
+const ICO_GLOVES    = svgIcon('<path d="M6 21V10a3 3 0 016 0v1a3 3 0 016 0v10z" fill="#8a6a3a"/><rect x="5" y="19" width="14" height="3" rx="1" fill="#6b4f28"/>');
+const ICO_BOOTS     = svgIcon('<path d="M8 3h5v10l6 4v2H4v-4l4-2z" fill="#6b4f28"/><rect x="4" y="19" width="16" height="2" rx="1" fill="#3a2f1c"/>');
+const ICO_NECKLACE  = svgIcon('<path d="M4 5c0 6 4 9 8 9s8-3 8-9" fill="none" stroke="#c9a55a" stroke-width="1.6"/><circle cx="12" cy="15" r="3" fill="#8cc8ff"/>');
+const ICO_EARRING   = svgIcon('<circle cx="12" cy="8" r="3" fill="none" stroke="#c9a55a" stroke-width="1.6"/><circle cx="12" cy="16" r="3" fill="#8cc8ff"/>');
+const ICO_RING      = svgIcon('<circle cx="12" cy="15" r="6" fill="none" stroke="#c9a55a" stroke-width="2.2"/><path d="M9 9l3-4 3 4-3 2z" fill="#8cc8ff"/>');
+const ICO_BELT      = svgIcon('<rect x="2" y="10" width="20" height="4" rx="1" fill="#6b4f28"/><rect x="9" y="8" width="6" height="8" rx="1.4" fill="none" stroke="#c9a55a" stroke-width="1.6"/>');
 
 // ==================== INVENTAIRE (192 slots) & ÉQUIPEMENT ====================
 const INV_SIZE = 192;
@@ -3313,30 +3250,6 @@ function hud() {
   renderQuestTrackerWidget();
   ensureLoyaltyGrant();
   updateMailBadge();
-  updateSilverHistory();
-}
-// petit historique de silver : échantillonné chaque seconde (voir hud), affiché en sparkline
-// sous la table de loot, avec le taux estimé sur la fenêtre glissante (~60 s)
-const silverHist = [];
-function updateSilverHistory() {
-  const line = $('silverHistLine'); if (!line) return;
-  silverHist.push({ t: performance.now(), v: S.silver });
-  while (silverHist.length > 60) silverHist.shift();
-  const n = silverHist.length;
-  const vals = silverHist.map(p => p.v);
-  const min = Math.min(...vals), max = Math.max(...vals), range = Math.max(1, max-min);
-  const pts = silverHist.map((p,i) => {
-    const x = n<=1 ? 0 : (i/(n-1)*100);
-    const y = 28 - (p.v-min)/range*26;
-    return x.toFixed(1)+','+y.toFixed(1);
-  }).join(' ');
-  line.setAttribute('points', pts);
-  const rateEl = $('silverHistRate');
-  if (rateEl && n >= 2) {
-    const dt = (silverHist[n-1].t - silverHist[0].t)/1000;
-    const perH = dt > 0 ? (silverHist[n-1].v - silverHist[0].v)/dt*3600 : 0;
-    rateEl.textContent = (perH>=0?'+':'') + fmt(Math.round(perH)) + '/h';
-  }
 }
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
@@ -3409,22 +3322,11 @@ function renderEquipment() {
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
 }
-// libellé court du niveau d'optimisation : "+N" jusqu'à +15, puis chiffres romains I..V pour PRI..PEN
-function enhShortLabel(lvl) {
-  if (lvl < PRI_IDX) return '+' + lvl;
-  return ['I','II','III','IV','V'][lvl - PRI_IDX] || '+' + lvl;
-}
 function pdSlotInnerHtml(id) {
   const e = EQUIP[id];
-  const icon = (e ? (e.icon || SLOT_ICON[id]) : SLOT_ICON[id]);
-  let badge = '';
-  if (e && e.optimizable) {
-    const lvl = e.enhLv || 0;
-    badge = `<span class="enh${lvl>=PRI_IDX?' pri':''}">${enhShortLabel(lvl)}</span>`;
-  } else if (e && e.ap) {
-    badge = `<span class="enh">+${e.ap}</span>`;
-  }
-  return icon + badge;
+  return (e ? (e.icon || SLOT_ICON[id]) : SLOT_ICON[id]) +
+    (e && e.optimizable ? `<span class="enh">${ENH_NAMES[e.enhLv||0].replace(/\s.*/,'')}</span>`
+     : (e && e.ap ? `<span class="enh">+${e.ap}</span>` : ''));
 }
 function fillPdCol(colId, ids) {
   const col = $(colId);
@@ -3796,12 +3698,11 @@ function enhanceWithMaterial(i) {
     floatTxt(P.x,P.y,100,'✦ '+ENH_NAMES[target.enhLv],{gold:true});
   } else {
     addItemFailstack(target, lvl+1);
-    if (lvl >= SAFE_IDX && lvl < PRI_IDX) { // +8 à +15 : peut rétrograder, jamais sous +7
+    if (lvl >= SAFE_IDX && lvl < PRI_IDX) { // +8 à +15 seulement : peut rétrograder, jamais sous +7
       target.enhLv = Math.max(SAFE_IDX-1, lvl-1);
       floatTxt(P.x,P.y,100,'✖ rétrogradé — '+ENH_NAMES[target.enhLv],{hurt:true});
-    } else if (lvl >= PRI_IDX) { // PRI et plus : rétrograde d'un palier à chaque échec, mais jamais sous PRI (pas de retour à +15)
-      target.enhLv = Math.max(PRI_IDX, lvl-1);
-      floatTxt(P.x,P.y,100,'✖ rétrogradé — '+ENH_NAMES[target.enhLv],{hurt:true});
+    } else if (lvl >= PRI_IDX) { // PRI et plus : jamais de rétrogradation, juste le matériau perdu
+      floatTxt(P.x,P.y,100,'✖ échec (matériau perdu)',{hurt:true});
     } else floatTxt(P.x,P.y,100,'✖ échec',{hurt:true});
   }
   renderEquipment(); refreshStatsOnly(); renderOptimization();
@@ -3882,9 +3783,8 @@ $('btnOpt').onclick = () => {
     if (lvl >= SAFE_IDX && lvl < PRI_IDX) { // +8 à +15 : peut rétrograder, jamais sous +7
       target.enhLv = Math.max(SAFE_IDX-1, lvl-1);
       r.textContent = (LANG==='fr'?'✖ ÉCHEC — rétrogradé à ':'✖ FAIL — downgraded to ') + ENH_NAMES[target.enhLv];
-    } else if (lvl >= PRI_IDX) { // PRI et plus : rétrograde d'un palier, mais jamais sous PRI (pas de retour à +15)
-      target.enhLv = Math.max(PRI_IDX, lvl-1);
-      r.textContent = (LANG==='fr'?'✖ ÉCHEC — rétrogradé à ':'✖ FAIL — downgraded to ') + ENH_NAMES[target.enhLv];
+    } else if (lvl >= PRI_IDX) { // PRI et plus : plus jamais de rétrogradation
+      r.textContent = (LANG==='fr'?'✖ ÉCHEC — niveau conservé':'✖ FAIL — level kept');
     } else {
       r.textContent = LANG==='fr' ? '✖ ÉCHEC — matériau perdu' : '✖ FAIL — material lost';
     }
@@ -4092,15 +3992,6 @@ try {
 const BOT_API_URL = 'https://black-desert-idle-discord-bot.onrender.com';
 const BOT_API_SECRET = 'TON-SECRET-PARTAGE';
 let myPseudo = null; // pseudo effectif du joueur courant, mis en cache après connexion
-let myIsMod = false; // le joueur courant est-il modérateur (table chat_mods) ? — pour afficher les ✕ de suppression
-async function refreshMyModStatus() {
-  myIsMod = false;
-  if (!sb || !currentUser || isGuest()) return;
-  try {
-    const { data } = await sb.from('chat_mods').select('user_id').eq('user_id', currentUser.id).maybeSingle();
-    myIsMod = !!data;
-  } catch (e) {}
-}
 
 // ---------- admin (accès réservé à ce compte précis) ----------
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
@@ -4237,7 +4128,6 @@ async function onAuthed(user) {
   showAuthOverlay(false);
   updateUserBar();
   await refreshMyPseudo();
-  refreshMyModStatus();
   await loadCloudSave();
   startAutoCloudSave();
   heartbeatPresence();
@@ -4547,25 +4437,21 @@ function escapeHtml(s) {
 }
 function renderChatMessages(msgs) {
   const el = $a('chatMessages'); if (!el) return;
-  const canDelete = isAdmin() || myIsMod; // admin ET modérateurs peuvent supprimer
+  const canDelete = isAdmin(); // plus tard : aussi les modérateurs (table chat_mods)
   el.innerHTML = msgs.length ? msgs.map(m => {
-    // badge de rôle DEVANT le pseudo : ADMIN (or) / MOD (bleu). Le pseudo affiché vient du
-    // serveur (profiles.pseudo, jamais l'email) — voir post_chat_message
-    const badge = m.role === 'admin' ? '<span class="chatBadge admin">ADMIN</span> '
-      : m.role === 'mod' ? '<span class="chatBadge mod">MOD</span> ' : '';
+    // badge de rôle : ADMIN (or) / MOD (bleu) affiché à côté du pseudo
+    const badge = m.role === 'admin' ? '<span class="chatBadge admin">ADMIN</span>'
+      : m.role === 'mod' ? '<span class="chatBadge mod">MOD</span>' : '';
     const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
     return `<div class="chatMsg chan-${chatChannel}">${del}` +
-      `${badge}<span class="chatPseudo">${escapeHtml(m.pseudo)}</span> <span class="chatText">${escapeHtml(m.message)}</span></div>`;
+      `<span class="chatPseudo">${escapeHtml(m.pseudo)}</span>${badge} <span class="chatText">${escapeHtml(m.message)}</span></div>`;
   }).join('')
     : `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`;
   el.scrollTop = el.scrollHeight;
   el.querySelectorAll('.chatDelBtn').forEach(btn => {
     btn.onclick = async () => {
       if (!sb) return;
-      const { error } = await sb.rpc('delete_chat_message', { p_id: parseInt(btn.dataset.id,10) });
-      // remonte l'erreur au lieu de l'avaler silencieusement (aide à diagnostiquer, ex: schéma
-      // SQL pas encore exécuté → "function ... does not exist")
-      if (error) { $a('chatNote').textContent = (LANG==='fr'?'Suppression échouée : ':'Delete failed: ') + error.message; return; }
+      await sb.rpc('delete_chat_message', { p_id: parseInt(btn.dataset.id,10) }).catch(()=>{});
       fetchChatMessages();
     };
   });
@@ -5020,7 +4906,6 @@ const I18N = {
   lblLootCount: { fr:'Objets ramassés', en:'Items looted' },
   cardZones: { fr:'Zones de farm', en:'Farming zones' },
   cardLoot: { fr:'Loot de cette zone', en:'Loot in this zone' },
-  silverHistLbl: { fr:'💰 Historique silver', en:'💰 Silver history' },
   cardEquip: { fr:'Équipement', en:'Equipment' },
   btnEquipBest: { fr:'⚡ Équiper le meilleur (socle)', en:'⚡ Equip best (base stats)' },
   btnSellWorse: { fr:'🗑️ Vendre les objets inférieurs ou égaux', en:'🗑️ Sell items worse than or equal to equipped' },
@@ -5089,17 +4974,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V52', name:{fr:'Icônes détaillées, optimisation PRI+, chat & historique silver', en:'Detailed icons, PRI+ enhancement, chat & silver history'}, fr:[
-      {t:'change', tx:'Icônes d\'équipement redessinées, plus jolies et plus grosses, avec le niveau d\'optimisation affiché en gros sur l\'icône (+N, puis I à V pour PRI→PEN)'},
-      {t:'change', tx:'Optimisation : à partir de PRI, un échec fait rétrograder d\'un palier (PRI→PEN), mais jamais en dessous de PRI — on ne retombe plus à +15'},
-      {t:'change', tx:'Chat : le rôle (ADMIN/MOD) s\'affiche devant le pseudo, jamais l\'email. Les modérateurs peuvent aussi supprimer des messages ; en cas d\'échec de suppression, la raison est affichée'},
-      {t:'new', tx:'Petit historique de silver (courbe) sous le loot, avec le taux estimé sur la dernière minute'},
-    ], en:[
-      {t:'change', tx:'Equipment icons redrawn, prettier and bigger, with the enhancement level shown large on the icon (+N, then I to V for PRI→PEN)'},
-      {t:'change', tx:'Enhancement: from PRI, a failure downgrades one tier (PRI→PEN), but never below PRI — you no longer drop back to +15'},
-      {t:'change', tx:'Chat: the role (ADMIN/MOD) shows in front of the nickname, never the email. Moderators can also delete messages; if a deletion fails, the reason is shown'},
-      {t:'new', tx:'Small silver history (line chart) below the loot, with the estimated rate over the last minute'},
-    ] },
   { v:'V51', name:{fr:'Inventaire à 4 catégories & header toujours visible', en:'4-category inventory & always-visible header'}, fr:[
       {t:'change', tx:'Inventaire réorganisé en 4 catégories distinctes (plus de "Tout") : Normal, Optimisation, Consommable, RNG. Chaque objet se range automatiquement dans la bonne'},
       {t:'change', tx:'La catégorie "Butin rare" devient "RNG" et est vidée — elle accueillera bientôt des coffres RNG (les composants de craft passent dans Optimisation)'},
