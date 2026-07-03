@@ -2059,10 +2059,24 @@ function refreshStatsOnly() {
 }
 // version complète : chiffres + reconstruction du DOM (192 cases d'inventaire, liste des 12 zones, paperdoll...)
 // coûteuse — appelée automatiquement chaque seconde, et sur les actions peu fréquentes (loot, équiper, changer de zone)
+// signatures bon marché pour éviter de reconstruire le DOM (192 cases + poupée + liste
+// de zones) chaque seconde quand rien n'a réellement changé — avant ce correctif, hud()
+// refaisait tout ce travail en continu, pour toujours, même quand le joueur ne looter/
+// n'équipait/ne voyageait pas cette seconde-là précise
+let lastInvSig = '', lastZoneSig = '';
+function invSignature() {
+  let s = '';
+  for (let i = 0; i < INV_SIZE; i++) { const it = INV[i]; s += it ? (it.key+','+it.qty+','+(it.enhLv||0)) : '_'; s += '|'; }
+  return s;
+}
+function zoneSignature() { return zoneIdx + ':' + Math.round(apEff()) + ':' + Math.round(totalDP()); }
+
 function hud() {
   refreshStatsOnly();
-  buildZoneList();
-  refreshInvUI();
+  const zSig = zoneSignature();
+  if (zSig !== lastZoneSig) { lastZoneSig = zSig; buildZoneList(); }
+  const iSig = invSignature();
+  if (iSig !== lastInvSig) { lastInvSig = iSig; refreshInvUI(); }
 }
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
@@ -3525,6 +3539,11 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V33', name:{fr:'Fix charge CPU continue', en:'Continuous CPU load fix'}, fr:[
+      {t:'fix', tx:'Correctif de performance important : la mise à jour automatique (chaque seconde) reconstruisait tout le sac (192 cases), la poupée d\'équipement et la liste des zones même quand rien n\'avait changé — ne le fait désormais que si l\'inventaire ou la zone a réellement changé'},
+    ], en:[
+      {t:'fix', tx:'Major performance fix: the automatic per-second refresh rebuilt the entire bag (192 slots), equipment paperdoll and zone list even when nothing had changed — now only does so when the inventory or zone actually changed'},
+    ] },
   { v:'V32', name:{fr:'Nettoyage & fix latence optimisation', en:'Cleanup & enhancement lag fix'}, fr:[
       {t:'change', tx:'Retiré le système de code à générer pour lier Discord dans "Mon compte" (remplacé par le bouton "Connecter Discord" en un clic)'},
       {t:'fix',    tx:'Correctif de performance important : chaque tentative d\'optimisation reconstruisait toute la poupée d\'équipement et redessinait le portrait, causant une latence perceptible en spammant le bouton — ne met désormais à jour que la pièce concernée'},
