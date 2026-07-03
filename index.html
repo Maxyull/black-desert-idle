@@ -2702,9 +2702,17 @@ try {
   }
 } catch (e) { console.warn('Supabase non initialisé :', e); }
 
-// ---------- admin (accès réservé à ce compte précis) ----------
-const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
-function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
+// ---------- admin ----------
+// le compte admin n'est PLUS comparé en clair ici (le code source est public sur GitHub) —
+// la vérification se fait côté serveur via la fonction am_i_admin(), résultat mis en cache
+// après connexion. isAdmin() reste synchrone pour ne pas toucher tous ses appelants.
+let adminCached = false;
+function isAdmin() { return adminCached; }
+async function refreshAdminStatus() {
+  adminCached = false;
+  if (!sb || !currentUser || isGuest()) return;
+  try { const { data } = await sb.rpc('am_i_admin'); adminCached = !!data; } catch(e) {}
+}
 // invité = session anonyme Supabase (pas d'email/mot de passe) — jeu jouable et sauvegardé,
 // mais aucun accès au marché/classement (surfaces les plus exposées à la triche multi-comptes)
 function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
@@ -2775,6 +2783,7 @@ async function doLogout() {
 async function onAuthed(user) {
   currentUser = user;
   showAuthOverlay(false);
+  await refreshAdminStatus();
   updateUserBar();
   await loadCloudSave();
   startAutoCloudSave();
@@ -3378,6 +3387,11 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V27', name:{fr:'Confidentialité admin', en:'Admin privacy'}, fr:[
+      {t:'exploit', tx:'L\'email du compte admin n\'apparaît plus en clair dans le code source (public sur GitHub) — la vérification se fait désormais entièrement côté serveur'},
+    ], en:[
+      {t:'exploit', tx:'The admin account\'s email no longer appears in plain text in the source code (public on GitHub) — verification now happens entirely server-side'},
+    ] },
   { v:'V26', name:{fr:'Correctif de ralentissement', en:'Slowdown fix'}, fr:[
       {t:'fix', tx:'Correctif de performance important : les packs de monstres vaincus restaient en mémoire tant que le joueur ne s\'éloignait pas de 900 unités, ce qui ralentissait progressivement le jeu (et parfois le PC) sur une session de farm prolongée dans la même zone'},
     ], en:[
@@ -3466,12 +3480,12 @@ const PATCH_NOTES = [
       {t:'new', tx:'Update notification: a banner with a "Reload" button appears as soon as a new game version is deployed, no manual cache clearing needed'},
     ] },
   { v:'V17', name:{fr:'Zone Admin', en:'Admin Zone'}, fr:[
-      {t:'new',     tx:'Zone Admin (🛠️ Admin) réservée au compte maxime.lacoste@icloud.com : silver farmé par heure, ressources les plus farmées, répartition des richesses entre joueurs'},
+      {t:'new',     tx:'Zone Admin (🛠️ Admin) réservée au compte administrateur : silver farmé par heure, ressources les plus farmées, répartition des richesses entre joueurs'},
       {t:'new',     tx:'Journal de farm côté serveur : chaque objet ramassé par chaque joueur est enregistré (envoi par lots toutes les 25s) pour alimenter les stats admin'},
       {t:'exploit', tx:'Accès admin protégé par une règle de sécurité côté base de données (RLS) — même en trafiquant le code du navigateur, personne d\'autre que ce compte ne peut lire ces données'},
       {t:'change',  tx:'Le bouton Réinitialiser n\'est plus visible que pour l\'admin (avant : accessible à tous les testeurs)'},
     ], en:[
-      {t:'new',     tx:'Admin Zone (🛠️ Admin) restricted to maxime.lacoste@icloud.com: silver farmed per hour, most-farmed resources, wealth distribution across players'},
+      {t:'new',     tx:'Admin Zone (🛠️ Admin) restricted to the admin account: silver farmed per hour, most-farmed resources, wealth distribution across players'},
       {t:'new',     tx:'Server-side farm log: every item picked up by every player is recorded (batched every 25s) to feed the admin stats'},
       {t:'exploit', tx:'Admin access protected by a database-level security rule (RLS) — even by tampering with browser code, no one else can read this data'},
       {t:'change',  tx:'The Reset button is now only visible to the admin (previously accessible to all testers)'},
