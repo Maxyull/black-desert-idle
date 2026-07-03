@@ -378,9 +378,6 @@
   #adminBox { margin-top:2px; }
   .admActions { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; }
   .admActions button { width:auto; flex:1; min-width:140px; margin:0; }
-  .admBossSpawn { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; font-size:12px; }
-  .admBossSpawn select { background:#0d0c11; border:1px solid #333; color:var(--ink); padding:5px 7px; font-family:inherit; font-size:12px; border-radius:3px; }
-  .admBossSpawn button { width:auto; margin:0; padding:6px 14px; }
 
   #sideMenu.onRight { left:auto; right:14px; }
 
@@ -4171,19 +4168,11 @@ async function openAdminPanel() {
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
-  // sélecteur de World Boss : fait apparaître immédiatement le boss choisi (combat local de test),
-  // sans toucher au planning horaire normal — réservé à l'admin
-  const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
   const actionsHtml = `<div class="admActions">
     <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
     <button id="btnResetMyQuests" data-i18n="btnResetMyQuests">🔄 Réinitialiser mes quêtes</button>
     <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
     <button id="btnResetDemo" data-i18n="btnResetDemo">🔄 Réinitialiser la démo</button>
-  </div>
-  <div class="admBossSpawn">
-    <span>${LANG==='fr'?'🐍 Faire apparaître un World Boss :':'🐍 Spawn a World Boss:'}</span>
-    <select id="admBossSelect">${bossOptions}</select>
-    <button id="btnAdmSpawnBoss">${LANG==='fr'?'⚔️ Combattre maintenant':'⚔️ Fight now'}</button>
   </div>`;
   openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
   applyI18n();
@@ -4192,12 +4181,6 @@ async function openAdminPanel() {
   $a('btnResetMyQuests').onclick = resetMyQuests;
   $a('btnResetAllQuests').onclick = resetAllQuests;
   $a('btnResetDemo').onclick = resetDemo;
-  $a('btnAdmSpawnBoss').onclick = () => {
-    if (!isAdmin()) return;
-    const id = $a('admBossSelect').value;
-    $a('infoOverlay').classList.remove('open');
-    startBossFight(id);
-  };
 }
 $a('btnAdmin').onclick = openAdminPanel;
 
@@ -4794,11 +4777,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V48', name:{fr:'Invocation de World Boss (admin)', en:'World Boss spawn (admin)'}, fr:[
-      {t:'new', tx:'Zone Admin : sélecteur pour faire apparaître immédiatement le World Boss de ton choix (combat de test), sans toucher au planning horaire normal'},
-    ], en:[
-      {t:'new', tx:'Admin Zone: selector to immediately spawn the World Boss of your choice (test fight), without affecting the normal schedule'},
-    ] },
   { v:'V47', name:{fr:'World Boss (Kzarka) & activités', en:'World Boss (Kzarka) & activities'}, fr:[
       {t:'new', tx:'Nouveau bouton "🧭 Activités" au-dessus du farm : accès à la zone, au World Boss, et des activités à venir en avant-goût (pêche, mine, forêt, champs, bergerie — verrouillées)'},
       {t:'new', tx:'Premier World Boss : Kzarka ! Encadré "prochain boss" avec compte à rebours, calendrier de la semaine (seuls les boss déjà en jeu s\'affichent). Horaires calqués sur le vrai BDO −15 min'},
