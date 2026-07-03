@@ -4753,9 +4753,7 @@ async function sendChatMessage() {
   const val = input.value.trim();
   if (!val || !sb) return;
   input.value = '';
-  // on transmet le pseudo affiché dans l'UI (myPseudo) pour que le nom dans le chat corresponde
-  // exactement — utile pour les comptes Discord sans pseudo perso défini
-  const { error } = await sb.rpc('post_chat_message', { p_channel: chatChannel, p_message: val, p_pseudo: myPseudo || null });
+  const { error } = await sb.rpc('post_chat_message', { p_channel: chatChannel, p_message: val });
   if (error) { $a('chatNote').textContent = error.message; return; }
   fetchChatMessages();
 }
@@ -5262,11 +5260,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V56', d:'04/07/2026 01:58', name:{fr:'Pseudo affiché dans le chat', en:'Nickname shown in chat'}, fr:[
-      {t:'fix', tx:'Le chat affiche désormais bien ton pseudo (celui vu dans l\'interface, y compris ton nom Discord si tu n\'as pas de pseudo perso), jamais l\'email ni "Joueur"'},
-    ], en:[
-      {t:'fix', tx:'Chat now correctly shows your nickname (the one seen in the UI, including your Discord name if you have no custom nickname), never the email nor "Player"'},
-    ] },
   { v:'V55', d:'04/07/2026 01:48', name:{fr:'Salle de boss à piliers & mécanique d\'AoE', en:'Pillar boss room & AoE mechanic'}, fr:[
       {t:'new', tx:'Le World Boss se déroule maintenant dans une salle de pierre à 4 piliers, entièrement dessinée pour le jeu (art original)'},
       {t:'new', tx:'Le boss devient le "Grand Seigneur de guerre de la corruption" — grande créature originale et imposante'},

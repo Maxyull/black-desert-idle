@@ -37,7 +37,10 @@ alter table public.chat_messages enable row level security;
 drop policy if exists "chat_messages_select_all" on public.chat_messages;
 create policy "chat_messages_select_all" on public.chat_messages for select using (auth.uid() is not null);
 
-create or replace function public.post_chat_message(p_channel text, p_message text)
+-- p_pseudo (optionnel) : le pseudo AFFICHÉ côté client (peut venir du pseudo perso OU du nom
+-- Discord). On l'utilise en priorité pour que le nom dans le chat = le nom vu dans l'UI. Le rôle
+-- (badge ADMIN/MOD) reste lui déterminé côté serveur → un pseudo usurpé n'obtient jamais le badge.
+create or replace function public.post_chat_message(p_channel text, p_message text, p_pseudo text default null)
 returns void
 language plpgsql security definer
 as $$
@@ -68,9 +71,14 @@ begin
     raise exception 'Trop rapide — attends un instant avant de reposter';
   end if;
 
-  -- pseudo : uniquement celui du profil (jamais l'email). À défaut, un libellé générique.
-  select pseudo into v_pseudo from public.profiles where user_id = v_uid;
+  -- pseudo : priorité au pseudo envoyé par le client (borné à 24 car.), sinon celui du profil,
+  -- sinon un libellé générique. Jamais l'email.
+  v_pseudo := nullif(trim(coalesce(p_pseudo, '')), '');
+  if v_pseudo is null then
+    select pseudo into v_pseudo from public.profiles where user_id = v_uid;
+  end if;
   if v_pseudo is null or trim(v_pseudo) = '' then v_pseudo := 'Joueur'; end if;
+  v_pseudo := left(v_pseudo, 24);
 
   -- rôle pour le badge : admin (email admin), mod (table chat_mods), sinon user
   if coalesce(auth.jwt()->>'email', '') = 'maxime.lacoste@icloud.com' then
@@ -84,7 +92,7 @@ begin
 end;
 $$;
 
-grant execute on function public.post_chat_message(text, text) to authenticated;
+grant execute on function public.post_chat_message(text, text, text) to authenticated;
 
 -- suppression d'un message : réservée à l'admin (email) et aux modérateurs (table chat_mods),
 -- vérifiée côté serveur — le bouton de suppression côté client n'est qu'un confort d'UI
