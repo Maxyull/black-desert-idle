@@ -748,10 +748,9 @@
   #chatNote { font-size:10px; color:var(--ink-dim); font-style:italic; margin-top:4px; }
 
   /* ===== barre d'activités (au-dessus du farm) ===== */
-  /* header au-dessus de la zone de farm */
   #activitiesBar {
-    display:flex; align-items:center; gap:12px; margin-bottom:8px; padding:7px 10px;
-    background:var(--panel); border:1px solid #2c2a31; border-bottom:1px solid var(--gold-dim);
+    display:flex; align-items:center; gap:12px; margin-top:8px; padding:6px 8px;
+    background:var(--panel); border:1px solid #2c2a31; border-top:1px solid var(--gold-dim);
   }
   #btnActivities { width:auto; margin:0; padding:6px 16px; font-size:12px; font-weight:bold; }
   #nextBossMini { font-size:11px; color:var(--ink-dim); }
@@ -785,17 +784,11 @@
   .bossNextCountdown.live { color:var(--danger); animation:patchNewFade 1.2s infinite; }
   .bossFightBtn { margin-top:0; }
   .bossFightBtn:disabled { opacity:.4; cursor:not-allowed; }
-  .bossSchedRow { display:flex; align-items:center; gap:8px; padding:5px 10px; border-bottom:1px solid #232128; font-size:11.5px; }
+  .bossSchedRow { display:flex; align-items:center; gap:8px; padding:5px 4px; border-bottom:1px solid #232128; font-size:11.5px; }
   .bossSchedRow.soon { background:rgba(201,165,90,.08); }
+  .bossSchedDay { width:70px; color:var(--ink-dim); flex-shrink:0; }
   .bossSchedName { flex:1; }
   .bossSchedTime { color:var(--gold); font-variant-numeric:tabular-nums; }
-  .bossDay { border-bottom:1px solid #2c2a33; }
-  .bossDaySummary {
-    cursor:pointer; user-select:none; padding:7px 4px; font-size:12px; color:var(--ink);
-    text-transform:capitalize; display:flex; align-items:center; gap:8px;
-  }
-  .bossDaySummary::-webkit-details-marker { color:var(--gold); }
-  .bossDayCount { margin-left:auto; font-size:10px; color:var(--ink-dim); background:#2c2a33; border-radius:8px; padding:1px 7px; }
 
   /* ===== salle de boss plein écran ===== */
   #bossRoom {
@@ -989,10 +982,6 @@
 </div>
 
 <div id="wrap">
-  <div id="activitiesBar">
-    <button id="btnActivities">🧭 <span data-i18n="btnActivities">Activités</span></button>
-    <span id="nextBossMini"></span>
-  </div>
   <div id="gameFrame">
     <canvas id="cv" width="1240" height="440"></canvas>
     <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Forêt aux Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span></div>
@@ -1003,7 +992,7 @@
     <div id="invFullBanner" data-i18n="invFullBanner">⚠ Sac plein — les objets restent au sol</div>
     <div id="hpPotWrap">
       <div id="hpBar"><div id="hpFill"></div></div>
-      <div id="potSlot"><span id="potIcon">🧪</span><div id="potCd"></div></div>
+      <div id="potSlot">🧪<div id="potCd"></div></div>
     </div>
     <div id="skillBar"></div>
     <div id="psTag">GS <b id="gsVal">21</b><br><span style="font-size:10px;color:var(--ink-dim)">Niv. <span id="lvl">1</span></span></div>
@@ -1011,6 +1000,11 @@
 
   <div id="itemPop"></div>
   <div id="itemTooltip"></div>
+
+  <div id="activitiesBar">
+    <button id="btnActivities">🧭 <span data-i18n="btnActivities">Activités</span></button>
+    <span id="nextBossMini"></span>
+  </div>
 
   <div id="panel">
     <div class="card">
@@ -1221,7 +1215,6 @@ const S = {
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
   loyalty: 0, lastLoyaltyDate: null, mailbox: [],
-  potionType: 'basic', // 'basic' = potion payante ; 'infinite' = gratuite (débloquée plus tard)
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -1632,34 +1625,18 @@ function openBossPanel() {
     </div>
     <button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?(LANG==='fr'?'⚔️ Combattre':'⚔️ Fight'):(LANG==='fr'?'⏳ Pas encore apparu':'⏳ Not spawned yet')}</button>`;
   }
-  // calendrier hebdo replié PAR JOUR : chaque jour est un <details> qu'on ouvre/ferme —
-  // seuls les boss déjà implémentés (BOSS_ROSTER) apparaissent
-  const occs = bossOccurrences(new Date()).filter(o => o.time < now + 7*24*3600*1000);
-  const byDay = new Map();
-  for (const o of occs) {
-    const d = new Date(o.time);
-    const key = d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate();
-    if (!byDay.has(key)) byDay.set(key, []);
-    byDay.get(key).push(o);
-  }
-  const todayKey = (() => { const d = new Date(); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); })();
-  const nextKey = occ ? (() => { const d = new Date(occ.time); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); })() : todayKey;
-  const schedHtml = [...byDay.entries()].map(([key, list]) => {
-    const d = new Date(list[0].time);
-    const dayName = d.toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', day:'2-digit', month:'2-digit' });
-    const hasLive = list.some(o => o.live);
-    const open = (key === nextKey || hasLive) ? ' open' : ''; // le jour du prochain boss est déplié
-    const rows = list.map(o => {
-      const b = BOSS_ROSTER[o.boss];
-      const time = new Date(o.time).toLocaleTimeString(LANG==='fr'?'fr-FR':'en-US', { hour:'2-digit', minute:'2-digit' });
-      return `<div class="bossSchedRow${o.live?' soon':''}"><span class="bossSchedName">${b.icon} ${b.short[LANG]}</span><span class="bossSchedTime">${o.live?(LANG==='fr'?'EN COURS':'LIVE'):time}</span></div>`;
-    }).join('');
-    return `<details class="bossDay"${open}><summary class="bossDaySummary">${key===todayKey?'📍 ':''}${dayName} <span class="bossDayCount">${list.length}${hasLive?' 🔴':''}</span></summary>${rows}</details>`;
+  // calendrier hebdo — uniquement les boss implémentés (BOSS_ROSTER)
+  const occs = bossOccurrences(new Date()).slice(0, 14);
+  const schedHtml = occs.map(o => {
+    const b = BOSS_ROSTER[o.boss];
+    const day = new Date(o.time).toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { weekday:'short' });
+    const time = new Date(o.time).toLocaleTimeString(LANG==='fr'?'fr-FR':'en-US', { hour:'2-digit', minute:'2-digit' });
+    return `<div class="bossSchedRow${o.live?' soon':''}"><span class="bossSchedDay">${day}</span><span class="bossSchedName">${b.icon} ${b.short[LANG]}</span><span class="bossSchedTime">${o.live?(LANG==='fr'?'EN COURS':'LIVE'):time}</span></div>`;
   }).join('');
   const html = `${nextHtml}
     <h3>${LANG==='fr'?'📅 Cette semaine':'📅 This week'}</h3>
     ${schedHtml || `<div class="admEmpty">${LANG==='fr'?'Rien de programmé':'Nothing scheduled'}</div>`}
-    <div class="admSummary">${LANG==='fr'?'Horaires calqués sur le vrai BDO −15 min. Seuls les boss déjà présents dans le jeu sont affichés. Clique sur un jour pour le replier/déplier.':'Times mirror real BDO −15 min. Only bosses already in the game are shown. Click a day to collapse/expand.'}</div>`;
+    <div class="admSummary">${LANG==='fr'?'Horaires calqués sur le vrai BDO −15 min. Seuls les boss déjà présents dans le jeu sont affichés.':'Times mirror real BDO −15 min. Only bosses already in the game are shown.'}</div>`;
   openInfo(LANG==='fr'?'🐍 World Boss':'🐍 World Boss', html);
   const btn = $a('bossFightBtn');
   if (btn && !btn.disabled) btn.onclick = () => { $a('infoOverlay').classList.remove('open'); startBossFight(occ.boss); };
@@ -2215,22 +2192,9 @@ function doTeleport(dirX, dirY) {
   particles.push({ type:'tpTrail', x1:P.x, y1:P.y, x2:nx, y2:ny, life:.4, max:.4 });
   P.x = nx; P.y = ny; P.tpFlash = 1;
 }
-// potions de vie : la basique coûte du silver à chaque utilisation (timer de 4.2s). Une potion
-// "infinie" gratuite sera débloquable plus tard (cost:0). Si le joueur n'a pas assez de silver,
-// la potion ne se déclenche pas — il continue à encaisser les dégâts (vrai sink économique).
-const POTIONS = {
-  basic:    { name:{fr:'Potion de vie',en:'HP Potion'},        icon:'🧪', cost:200, heal:0.4 },
-  infinite: { name:{fr:'Potion infinie',en:'Infinite Potion'}, icon:'♾️', cost:0,   heal:0.4 },
-};
 function usePotion() {
-  const pot = POTIONS[S.potionType] || POTIONS.basic;
-  if (pot.cost > 0) {
-    if (S.silver < pot.cost) { P.potCd = 1; return; } // pas assez de silver : réessaie vite, aucun soin
-    S.silver -= pot.cost;
-    floatTxt(P.x,P.y,80,'-'+fmt(pot.cost)+'🪙',{hurt:true});
-  }
   P.potCd = 4.2;
-  P.hp = Math.min(S.hpMax, P.hp + S.hpMax*pot.heal);
+  P.hp = Math.min(S.hpMax, P.hp + S.hpMax*.4);
   floatTxt(P.x,P.y,90,'+PV',{green:true});
 }
 
@@ -3148,12 +3112,6 @@ function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
   $('hpFill').style.width = Math.max(0,P.hp/S.hpMax*100)+'%';
   $('potCd').style.height = (P.potCd/4.2*100)+'%';
-  const pot = POTIONS[S.potionType] || POTIONS.basic;
-  const potIcon = $('potIcon');
-  if (potIcon && potIcon.textContent !== pot.icon) {
-    potIcon.textContent = pot.icon;
-    $('potSlot').title = pot.name[LANG] + (pot.cost>0 ? ` — ${fmt(pot.cost)} silver/${LANG==='fr'?'usage':'use'}` : (LANG==='fr'?' — gratuite':' — free'));
-  }
   for (const s of SKILLS) {
     const el = skEls[s.id];
     el.querySelector('.cd').style.height = (cds[s.id]/s.cd*100)+'%';
@@ -4836,15 +4794,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V49', name:{fr:'Potions payantes, header Activités, calendrier boss par jour', en:'Paid potions, Activities header, per-day boss calendar'}, fr:[
-      {t:'new', tx:'Les potions de vie coûtent désormais du silver à chaque utilisation (200 silver). Sans silver, pas de soin — le joueur encaisse. Une "potion infinie" gratuite sera débloquable plus tard'},
-      {t:'change', tx:'La barre "🧭 Activités" est maintenant un header directement au-dessus de la zone de farm'},
-      {t:'change', tx:'Le calendrier des World Boss de la semaine est désormais organisé par jour, chaque jour se replie/déplie (le jour du prochain boss est ouvert par défaut)'},
-    ], en:[
-      {t:'new', tx:'HP potions now cost silver each use (200 silver). Without silver, no heal — you take the hits. A free "infinite potion" will be unlockable later'},
-      {t:'change', tx:'The "🧭 Activities" bar is now a header directly above the farming zone'},
-      {t:'change', tx:'The weekly World Boss calendar is now organized by day, each day collapses/expands (the next boss\'s day is open by default)'},
-    ] },
   { v:'V48', name:{fr:'Invocation de World Boss (admin)', en:'World Boss spawn (admin)'}, fr:[
       {t:'new', tx:'Zone Admin : sélecteur pour faire apparaître immédiatement le World Boss de ton choix (combat de test), sans toucher au planning horaire normal'},
     ], en:[
