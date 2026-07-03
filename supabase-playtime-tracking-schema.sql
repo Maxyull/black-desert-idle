@@ -33,10 +33,13 @@ $$;
 
 grant execute on function public.log_playtime_ping() to authenticated;
 
--- vue admin : temps de jeu cumulé (tous joueurs confondus) par tranche d'heure, sur les 48
--- dernières heures — chaque ping vaut ~60s (intervalle d'envoi côté client)
+-- vue admin : par tranche d'heure, sur les 48 dernières heures —
+--  * players     = nombre de joueurs DISTINCTS actifs pendant cette heure (ex: 3 = trois joueurs)
+--  * playtime_sec = temps de jeu cumulé de tous ces joueurs (chaque ping vaut ~60s)
 create or replace view public.admin_playtime_by_hour as
-select date_trunc('hour', pinged_at) as hour, count(*) * 60 as total_playtime_sec
+select date_trunc('hour', pinged_at) as hour,
+       count(distinct user_id) as players,
+       count(*) * 60 as playtime_sec
 from public.playtime_pings
 where pinged_at > now() - interval '48 hours'
 group by 1
