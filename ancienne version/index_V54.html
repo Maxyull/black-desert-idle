@@ -1671,8 +1671,8 @@ function openLifeskillPanel() {
 // rester simples, et le boss "in-game" se combat en 2 à 9 minutes selon ton stuff (voir startBossFight).
 const BOSS_ROSTER = {
   kzarka: {
-    name:{fr:'Grand Seigneur de guerre de la corruption',en:'Great Warlord of Corruption'},
-    short:{fr:'Seigneur de guerre',en:'Warlord'}, icon:'👹', color:'#7a2d33',
+    name:{fr:'Kzarka, Seigneur de la corruption',en:'Kzarka, Lord of Corruption'},
+    short:{fr:'Kzarka',en:'Kzarka'}, icon:'🐍', color:'#7a3aa0',
     hp: 400000,          // calibré pour ~5 min à PA "adaptée" (~250), clampé à [2,9] min
     reward: 250000,      // silver de victoire
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:'◈', matQty:[8,20],
@@ -1831,11 +1831,7 @@ function wireBossLobby() {
 }
 
 // ---- combat de boss : plein écran, canvas dédié, boucle rAF indépendante du farm ----
-const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:0, playerHp:0, playerHpMax:0, hits:[], last:0, raf:0, potCd:0, ended:false,
-  px:0.5, py:0.85, pillars:[], aoePhase:'idle', aoeT:0, aoeInterval:9, blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[] };
-// 4 piliers de la salle (coords normalisées 0..1) — on se cache DERRIÈRE (en dessous) pour éviter l'AoE
-const BOSS_PILLARS = [{x:.28,y:.44},{x:.72,y:.44},{x:.28,y:.72},{x:.72,y:.72}];
-const BOSS_ATTACK_POS = {x:0.5, y:0.60}; // position où le héros frappe le boss entre deux AoE
+const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:0, playerHp:0, playerHpMax:0, hits:[], last:0, raf:0, potCd:0, ended:false };
 const bossCtx = document.getElementById('bossCv').getContext('2d');
 // DPS nominal ≈ PA effective × somme(dmg/cd des sorts) ; sert à calculer une durée dans [2,9] min.
 // SKILLS étant déclaré plus bas dans le fichier, la somme est calculée paresseusement (au 1er appel)
@@ -1852,8 +1848,6 @@ function startBossFight(bossId) {
   Object.assign(bossState, {
     active:true, ended:false, boss:b, hp:b.hp, maxHp:b.hp, duration, elapsed:0,
     playerHp: S.hpMax, playerHpMax: S.hpMax, hits:[], last:performance.now(), potCd:0,
-    px:0.5, py:0.85, pillars:BOSS_PILLARS.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
-    blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
   });
   currentActivity = 'boss'; renderActivityTabs();
   setFarmViewVisible(false);
@@ -1902,42 +1896,10 @@ function bossLoop(now) {
     const crit = Math.random() < .2;
     bossState.hits.push({ x:.5+(Math.random()-.5)*.3, y:.4+(Math.random()-.5)*.15, life:1, dmg:dps*(crit?1.6:.7), crit });
   }
-  // dégâts continus légers du boss (attaques de base) ; potion auto
+  // le boss frappe ; dégâts atténués par ta PD ; potion auto ; PV clampés (teaser toujours gagnable)
   bossState.potCd = Math.max(0, bossState.potCd - dt);
-  const incoming = (bossState.playerHpMax * 0.04) * dmgTakenMult(dpRatio()) * dt;
+  const incoming = (bossState.playerHpMax * 0.06) * dmgTakenMult(dpRatio()) * dt;
   bossState.playerHp -= incoming;
-
-  // ---- mécanique d'AoE : le boss charge une attaque de zone, il faut se cacher DERRIÈRE un pilier ----
-  bossState.aoeT += dt;
-  const bs = bossState, dodging = (bs.aoePhase==='telegraph'||bs.aoePhase==='blast');
-  // cible de déplacement du héros : abri (pilier le plus proche, on se place en dessous) ou position d'attaque
-  let tx, ty;
-  if (dodging) {
-    let best=bs.pillars[0], bd=1e9;
-    for (const p of bs.pillars) { const d=Math.hypot(p.x-bs.px, p.y-bs.py); if(d<bd){bd=d;best=p;} }
-    tx = best.x; ty = best.y + 0.07; // juste derrière (sous) le pilier, loin du boss placé en haut
-  } else { tx = BOSS_ATTACK_POS.x; ty = BOSS_ATTACK_POS.y; }
-  const spd = 0.9*dt, mdx = tx-bs.px, mdy = ty-bs.py, md = Math.hypot(mdx,mdy);
-  if (md>0.002) { bs.px += mdx/md*Math.min(spd,md); bs.py += mdy/md*Math.min(spd,md); }
-  // machine à états de l'AoE
-  if (bs.aoePhase==='idle' && bs.aoeT >= bs.aoeInterval) { bs.aoePhase='telegraph'; bs.aoeT=0; }
-  else if (bs.aoePhase==='telegraph' && bs.aoeT >= 2.2) {
-    bs.aoePhase='blast'; bs.aoeT=0;
-    // à l'explosion : es-tu à couvert ? (proche d'un pilier ET en dessous de lui)
-    const safe = bs.pillars.some(p => Math.hypot(p.x-bs.px, p.y-bs.py) < 0.10 && bs.py > p.y);
-    bs.blocked = safe;
-    if (safe) { bs.blockFlash = 0.6; bs.floatMsgs.push({txt:LANG==='fr'?'PARÉ !':'BLOCKED!', life:1, color:'#8cc8ff'}); }
-    else {
-      bs.playerHp -= bs.playerHpMax*0.30; bs.hurtFlash = 0.6;
-      bs.floatMsgs.push({txt:'AoE !', life:1, color:'#e05050'});
-    }
-  }
-  else if (bs.aoePhase==='blast' && bs.aoeT >= 0.45) { bs.aoePhase='idle'; bs.aoeT=0; bs.aoeInterval = 7 + Math.random()*4; }
-  bs.blockFlash = Math.max(0, bs.blockFlash - dt);
-  bs.hurtFlash = Math.max(0, bs.hurtFlash - dt);
-  bs.floatMsgs.forEach(m => m.life -= dt*0.8);
-  bs.floatMsgs = bs.floatMsgs.filter(m => m.life > 0);
-
   if (bossState.playerHp < bossState.playerHpMax*0.35 && bossState.potCd <= 0) {
     bossState.playerHp = Math.min(bossState.playerHpMax, bossState.playerHp + bossState.playerHpMax*0.5);
     bossState.potCd = 4.2;
@@ -1956,130 +1918,62 @@ function bossLoop(now) {
   if (bossState.hp <= 0) { endBossFight(true); return; }
   bossState.raf = requestAnimationFrame(bossLoop);
 }
-// ===== salle de boss ORIGINALE (art dessiné, aucun asset réel) : salle de pierre à 4 piliers,
-// grand seigneur de guerre de la corruption au fond, mécanique d'AoE dont on se protège en se
-// plaçant derrière un pilier. Vue de dessus légèrement inclinée. =====
-function bossProj(nx, ny) { const cv = $('bossCv'); return { x: cv.width*0.5 + (nx-0.5)*cv.width*0.86, y: cv.height*0.10 + ny*cv.height*0.78 }; }
-function drawStonePillar(cx, sx, sy, scale) {
-  const w = 34*scale, h = 120*scale;
-  cx.fillStyle = 'rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(sx, sy, w*0.75, w*0.28, 0, 0, 7); cx.fill(); // ombre
-  // fût (dégradé pierre)
-  const g = cx.createLinearGradient(sx-w/2, 0, sx+w/2, 0);
-  g.addColorStop(0,'#2c3238'); g.addColorStop(.45,'#5a636c'); g.addColorStop(.6,'#6d7681'); g.addColorStop(1,'#333940');
-  cx.fillStyle = g; cx.fillRect(sx-w/2, sy-h, w, h);
-  // chapiteau + base
-  cx.fillStyle = '#4b535c'; cx.fillRect(sx-w*0.62, sy-h-8*scale, w*1.24, 10*scale);
-  cx.fillRect(sx-w*0.62, sy-6*scale, w*1.24, 8*scale);
-  // rainures
-  cx.strokeStyle = 'rgba(0,0,0,.25)'; cx.lineWidth = 1;
-  for (let i=1;i<4;i++){ const lx=sx-w/2+w*i/4; cx.beginPath(); cx.moveTo(lx,sy-h+6*scale); cx.lineTo(lx,sy-4*scale); cx.stroke(); }
-}
-function drawWarlord(cx, sx, sy, r, t) {
-  cx.save();
-  // ombre au sol
-  cx.fillStyle='rgba(0,0,0,.45)'; cx.beginPath(); cx.ellipse(sx, sy+r*0.15, r*1.15, r*0.34, 0, 0, 7); cx.fill();
-  const glow = 0.5+0.5*Math.sin(t*2);
-  // corps massif (carapace corrompue)
-  const body = cx.createLinearGradient(sx, sy-r*1.6, sx, sy+r*0.2);
-  body.addColorStop(0,'#7a2d33'); body.addColorStop(.5,'#5a2028'); body.addColorStop(1,'#33121a');
-  cx.fillStyle = body;
-  cx.beginPath();
-  cx.moveTo(sx-r*1.1, sy+r*0.1);
-  cx.quadraticCurveTo(sx-r*1.35, sy-r*0.9, sx-r*0.5, sy-r*1.15);
-  cx.quadraticCurveTo(sx, sy-r*1.5, sx+r*0.5, sy-r*1.15);
-  cx.quadraticCurveTo(sx+r*1.35, sy-r*0.9, sx+r*1.1, sy+r*0.1);
-  cx.closePath(); cx.fill();
-  // pointes de carapace sur le dos
-  cx.fillStyle = '#3a161c';
-  for (let i=-3;i<=3;i++){ const bx=sx+i*r*0.28, by=sy-r*1.1-Math.abs(i)*r*0.02;
-    cx.beginPath(); cx.moveTo(bx-r*0.09,by); cx.lineTo(bx+r*0.09,by); cx.lineTo(bx, by-r*0.4); cx.closePath(); cx.fill(); }
-  // fissures de corruption lumineuses
-  cx.strokeStyle = `rgba(255,90,70,${0.55+0.35*glow})`; cx.lineWidth = 2; cx.shadowColor='#ff5a46'; cx.shadowBlur=12;
-  cx.beginPath();
-  cx.moveTo(sx-r*0.5,sy-r*0.9); cx.lineTo(sx-r*0.2,sy-r*0.4); cx.lineTo(sx-r*0.35,sy-r*0.1);
-  cx.moveTo(sx+r*0.5,sy-r*0.8); cx.lineTo(sx+r*0.25,sy-r*0.35); cx.lineTo(sx+r*0.4,sy);
-  cx.stroke(); cx.shadowBlur=0;
-  // bras/griffes
-  cx.fillStyle = '#4a1a20';
-  cx.beginPath(); cx.moveTo(sx-r*1.0,sy-r*0.5); cx.lineTo(sx-r*1.5,sy-r*0.1); cx.lineTo(sx-r*1.25,sy-r*0.05); cx.lineTo(sx-r*0.9,sy-r*0.3); cx.closePath(); cx.fill();
-  cx.beginPath(); cx.moveTo(sx+r*1.0,sy-r*0.5); cx.lineTo(sx+r*1.5,sy-r*0.1); cx.lineTo(sx+r*1.25,sy-r*0.05); cx.lineTo(sx+r*0.9,sy-r*0.3); cx.closePath(); cx.fill();
-  // tête casquée
-  const hy = sy-r*1.05;
-  cx.fillStyle = '#43191f'; cx.beginPath(); cx.arc(sx, hy, r*0.42, 0, 7); cx.fill();
-  // cornes
-  cx.strokeStyle = '#c9b48a'; cx.lineWidth = r*0.16; cx.lineCap='round';
-  cx.beginPath(); cx.moveTo(sx-r*0.3, hy-r*0.2); cx.quadraticCurveTo(sx-r*0.75, hy-r*0.7, sx-r*0.55, hy-r*1.0); cx.stroke();
-  cx.beginPath(); cx.moveTo(sx+r*0.3, hy-r*0.2); cx.quadraticCurveTo(sx+r*0.75, hy-r*0.7, sx+r*0.55, hy-r*1.0); cx.stroke();
-  cx.lineCap='butt';
-  // yeux ardents
-  cx.fillStyle = `rgba(255,${120+100*glow|0},60,1)`; cx.shadowColor='#ffae3a'; cx.shadowBlur=14;
-  cx.beginPath(); cx.arc(sx-r*0.16, hy, r*0.09, 0, 7); cx.fill();
-  cx.beginPath(); cx.arc(sx+r*0.16, hy, r*0.09, 0, 7); cx.fill();
-  cx.shadowBlur=0;
-  cx.restore();
-}
+// arène de boss dessinée dans le MÊME style que la zone de farm : sol en losanges iso verts,
+// petit héros en bas, boss (grande créature) au centre-haut
 function drawBossRoom(t) {
-  const cx = bossCtx, cv = $('bossCv'), W = cv.width, H = cv.height, bs = bossState;
-  // fond : grande salle brumeuse bleu-gris
-  const bg = cx.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#1a2830'); bg.addColorStop(.55,'#223038'); bg.addColorStop(1,'#10171c');
-  cx.fillStyle = bg; cx.fillRect(0,0,W,H);
-  // dalles de pierre au sol (bandes qui s'élargissent vers le bas = légère perspective)
-  cx.strokeStyle = 'rgba(0,0,0,.28)'; cx.lineWidth = 1;
-  for (let i=0;i<=10;i++){ const p=bossProj(0,i/10); cx.beginPath(); cx.moveTo(0,p.y); cx.lineTo(W,p.y); cx.stroke(); }
-  for (let i=0;i<=8;i++){ const top=bossProj(i/8,0), bot=bossProj(i/8,1); cx.beginPath(); cx.moveTo(top.x,top.y); cx.lineTo(bot.x,bot.y); cx.stroke(); }
-  // boss au fond
-  const bpos = bossProj(0.5, 0.12); const r = Math.min(W,H)*0.14;
-  drawWarlord(cx, bpos.x, bpos.y, r, t);
-  // impacts de dégâts sur le boss
-  for (const h of bs.hits) {
-    const hy = bpos.y - (1-h.life)*40;
+  const cx = bossCtx, cv = $('bossCv'), W = cv.width, H = cv.height;
+  const b = bossState.boss;
+  const TILE = 46;
+  const ox = W/2, oy = H*0.30; // origine iso
+  const bIso = (gx, gy) => ({ x: ox + (gx-gy)*TILE, y: oy + (gx+gy)*TILE*0.5 });
+  // fond
+  cx.fillStyle = '#36452e'; cx.fillRect(0,0,W,H);
+  // sol en losanges (palette Balenos, comme la zone de départ)
+  const A = '#3a4a31', Bc = '#36452e', DRY = '#414f33';
+  for (let gx=-9; gx<=9; gx++) for (let gy=-9; gy<=9; gy++) {
+    const p = bIso(gx,gy);
+    if (p.x<-TILE*2||p.x>W+TILE*2||p.y<-TILE*2||p.y>H+TILE*2) continue;
+    const h = Math.abs(Math.sin((gx*12.9898+gy*78.233))*43758.5453 % 1);
+    cx.fillStyle = (gx+gy)%2===0 ? A : Bc; if (h > .93) cx.fillStyle = DRY;
+    const p2=bIso(gx+1,gy), p3=bIso(gx+1,gy+1), p4=bIso(gx,gy+1);
+    cx.beginPath(); cx.moveTo(p.x,p.y); cx.lineTo(p2.x,p2.y); cx.lineTo(p3.x,p3.y); cx.lineTo(p4.x,p4.y); cx.closePath(); cx.fill();
+  }
+  // ombre du boss au sol
+  const bp = bIso(0.5,0.5), pulse = 1 + Math.sin(t*2)*0.04;
+  const r = Math.min(W,H)*0.15*pulse;
+  cx.fillStyle = 'rgba(0,0,0,.35)';
+  cx.beginPath(); cx.ellipse(bp.x, bp.y+r*0.55, r*0.9, r*0.3, 0, 0, 7); cx.fill();
+  // corps du boss (grande forme dentelée) + lueur
+  cx.save();
+  cx.shadowColor = b.color; cx.shadowBlur = 35;
+  cx.fillStyle = b.color;
+  cx.beginPath();
+  for (let i = 0; i < 10; i++) {
+    const a = i/10*Math.PI*2 + t*0.25;
+    const rr = r*(i%2?0.72:1.1);
+    cx[i?'lineTo':'moveTo'](bp.x+Math.cos(a)*rr, bp.y-r*0.5+Math.sin(a)*rr);
+  }
+  cx.closePath(); cx.fill();
+  cx.restore();
+  cx.fillStyle = '#ffcf4a';
+  cx.beginPath(); cx.arc(bp.x-r*0.32, bp.y-r*0.6, r*0.12, 0, 7); cx.fill();
+  cx.beginPath(); cx.arc(bp.x+r*0.32, bp.y-r*0.6, r*0.12, 0, 7); cx.fill();
+  cx.font = `${Math.round(r*0.85)}px serif`; cx.textAlign='center'; cx.textBaseline='middle';
+  cx.fillText(b.icon, bp.x, bp.y-r*0.5);
+  // héros (petit sorcier bleu, même esprit que le farm)
+  const pp = bIso(-2.2,-2.2);
+  cx.fillStyle='rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(pp.x, pp.y+2, 13, 5, 0, 0, 7); cx.fill();
+  cx.fillStyle = '#3b6ea8'; // robe
+  cx.beginPath(); cx.moveTo(pp.x, pp.y-38); cx.lineTo(pp.x-11, pp.y); cx.lineTo(pp.x+11, pp.y); cx.closePath(); cx.fill();
+  cx.fillStyle = '#e8d0a0'; cx.beginPath(); cx.arc(pp.x, pp.y-40, 6, 0, 7); cx.fill(); // tête
+  cx.fillStyle = '#2a4a7a'; cx.beginPath(); cx.moveTo(pp.x-8, pp.y-40); cx.lineTo(pp.x+8, pp.y-40); cx.lineTo(pp.x, pp.y-54); cx.closePath(); cx.fill(); // chapeau
+  // impacts / dégâts flottants sur le boss
+  for (const h of bossState.hits) {
+    const hx = bp.x + (h.x-.5)*r*2, hy = bp.y-r*0.5 + (h.y-.5)*r*2 - (1-h.life)*40;
     cx.globalAlpha = Math.max(0,h.life);
-    cx.font = h.crit?'bold 24px Georgia':'18px Georgia'; cx.textAlign='center';
+    cx.font = h.crit?'bold 26px Georgia':'20px Georgia';
     cx.fillStyle = h.crit?'#ffbe78':'#fff';
-    cx.fillText('-'+fmt(Math.ceil(h.dmg))+(h.crit?'!':''), bpos.x+(h.x-.5)*r*2.4, hy);
-    cx.globalAlpha = 1;
-  }
-  cx.textAlign='left';
-  // ---- AoE au sol : cercle rouge qui grandit (telegraph) puis explosion, sauf derrière les piliers
-  if (bs.aoePhase==='telegraph' || bs.aoePhase==='blast') {
-    const c = bossProj(0.5, 0.6);
-    const rad = Math.min(W,H)*0.55;
-    if (bs.aoePhase==='telegraph') {
-      const prog = Math.min(1, bs.aoeT/2.2);
-      cx.fillStyle = `rgba(224,70,60,${0.10+0.14*prog})`;
-      cx.beginPath(); cx.ellipse(c.x, c.y, rad, rad*0.55, 0, 0, 7); cx.fill();
-      cx.strokeStyle = `rgba(255,80,60,${0.5+0.4*Math.sin(t*10)})`; cx.lineWidth = 3;
-      cx.beginPath(); cx.ellipse(c.x, c.y, rad*prog, rad*0.55*prog, 0, 0, 7); cx.stroke();
-    } else {
-      const a = 1-Math.min(1,bs.aoeT/0.45);
-      cx.fillStyle = `rgba(255,90,60,${0.55*a})`;
-      cx.beginPath(); cx.ellipse(c.x, c.y, rad, rad*0.55, 0, 0, 7); cx.fill();
-    }
-    // zones sûres derrière chaque pilier (petite ombre bleutée = "à couvert")
-    for (const p of bs.pillars) { const s = bossProj(p.x, p.y+0.05);
-      cx.fillStyle = 'rgba(120,180,255,.16)'; cx.beginPath(); cx.ellipse(s.x, s.y, 40, 16, 0, 0, 7); cx.fill(); }
-  }
-  // ---- éléments au sol triés par profondeur (piliers + héros) pour un rendu cohérent
-  const drawables = bs.pillars.map(p => ({ ny:p.y, fn:()=>{ const s=bossProj(p.x,p.y); drawStonePillar(cx, s.x, s.y, Math.min(W,H)/500*1.6); } }));
-  drawables.push({ ny:bs.py, fn:()=>{
-    const s = bossProj(bs.px, bs.py);
-    cx.fillStyle='rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(s.x, s.y, 12, 5, 0, 0, 7); cx.fill();
-    // bouclier si paré
-    if (bs.blockFlash>0) { cx.strokeStyle=`rgba(140,200,255,${bs.blockFlash})`; cx.lineWidth=3; cx.beginPath(); cx.arc(s.x, s.y-18, 20, 0, 7); cx.stroke(); }
-    const hurt = bs.hurtFlash>0;
-    cx.fillStyle = hurt ? '#c0554533' : '#3b6ea8';
-    cx.beginPath(); cx.moveTo(s.x, s.y-36); cx.lineTo(s.x-10, s.y); cx.lineTo(s.x+10, s.y); cx.closePath(); cx.fill();
-    cx.fillStyle = hurt ? '#e0a0a0' : '#e8d0a0'; cx.beginPath(); cx.arc(s.x, s.y-38, 5.5, 0, 7); cx.fill();
-    cx.fillStyle = '#2a4a7a'; cx.beginPath(); cx.moveTo(s.x-7,s.y-38); cx.lineTo(s.x+7,s.y-38); cx.lineTo(s.x,s.y-50); cx.closePath(); cx.fill();
-  }});
-  drawables.sort((a,b)=>a.ny-b.ny).forEach(d => d.fn());
-  // messages flottants (PARÉ / AoE) au-dessus du héros
-  for (const m of bs.floatMsgs) {
-    const s = bossProj(bs.px, bs.py);
-    cx.globalAlpha = Math.max(0, Math.min(1, m.life));
-    cx.font = 'bold 18px Georgia'; cx.textAlign='center'; cx.fillStyle = m.color;
-    cx.fillText(m.txt, s.x, s.y-56-(1-m.life)*24);
+    cx.fillText('-'+fmt(Math.ceil(h.dmg))+(h.crit?'!':''), hx, hy);
     cx.globalAlpha = 1;
   }
   cx.textAlign='left'; cx.textBaseline='alphabetic';
@@ -5260,15 +5154,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V55', d:'04/07/2026 01:48', name:{fr:'Salle de boss à piliers & mécanique d\'AoE', en:'Pillar boss room & AoE mechanic'}, fr:[
-      {t:'new', tx:'Le World Boss se déroule maintenant dans une salle de pierre à 4 piliers, entièrement dessinée pour le jeu (art original)'},
-      {t:'new', tx:'Le boss devient le "Grand Seigneur de guerre de la corruption" — grande créature originale et imposante'},
-      {t:'new', tx:'Nouvelle mécanique : le boss charge une attaque de zone (AoE). Le héros court se cacher derrière un pilier pour la parer — s\'il est à découvert, il encaisse un gros coup ("PARÉ !" / "AoE !")'},
-    ], en:[
-      {t:'new', tx:'The World Boss now takes place in a stone room with 4 pillars, entirely drawn for the game (original art)'},
-      {t:'new', tx:'The boss is now the "Great Warlord of Corruption" — a large, imposing original creature'},
-      {t:'new', tx:'New mechanic: the boss charges an area attack (AoE). The hero runs to hide behind a pillar to block it — if caught in the open, they take a big hit ("BLOCKED!" / "AoE!")'},
-    ] },
   { v:'V54', d:'04/07/2026 01:38', name:{fr:'Correctif double-réclamation & anti-triche', en:'Double-claim fix & anti-cheat'}, fr:[
       {t:'exploit', tx:'Faille corrigée : une quête terminée ne peut plus être réclamée deux fois (une fois dans l\'encart de suivi, une fois dans le panneau). Réclamer met désormais à jour instantanément les deux affichages, aucun bouton "Réclamer" périmé ne subsiste'},
       {t:'fix', tx:'Fermer le panneau Quêtes en cliquant à côté ne laisse plus l\'état incohérent'},
