@@ -116,11 +116,6 @@
   .card { background:var(--panel-2); border:1px solid #2c2a31; padding:7px 10px; }
   .card h3 { font-size:9.5px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold);
     font-weight:normal; margin-bottom:5px; border-bottom:1px solid #2c2a31; padding-bottom:4px; }
-  #btnLifeskillToggle {
-    width:auto; margin:0 0 0 6px; padding:1px 6px; font-size:12px; background:transparent;
-    border:1px solid var(--gold-dim); vertical-align:middle;
-  }
-  .cell.catHidden { display:none; }
   .row { display:flex; justify-content:space-between; align-items:center; margin:2.5px 0; font-size:11.5px; }
   .row .v { color:var(--gold); } .row .v.blue { color:#9cc9e8; }
   .row .v.ok { color:#8fc98a; } .row .v.bad { color:var(--danger); }
@@ -188,13 +183,6 @@
   #pdWeapons .pdSlot { width:40px; height:40px; }
   #pdWeapons .pdGroupLbl { position:absolute; top:-12px; left:0; right:0; text-align:center; font-size:7px; letter-spacing:.5px; color:var(--ink-dim); }
   #pdBook { display:flex; justify-content:center; padding:5px 0 7px; }
-  .lsGrid { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
-  .lsSlot {
-    width:40px; height:40px; border:1px solid #3a3742; background:rgba(20,19,26,.9);
-    display:flex; align-items:center; justify-content:center; font-size:18px;
-  }
-  .lsSlot.filled { border-color:var(--gold-dim); background:#231f16; }
-  .lsSlot.empty { opacity:.42; filter:grayscale(1); }
   #pdBook .pdSlot { width:34px; height:34px; font-size:14px; }
   #btnEquipBest, #btnSellWorse { margin-top:8px; font-size:11px; }
   #equipBestMsg { font-size:10.5px; text-align:center; margin-top:4px; min-height:14px; color:var(--ink-dim); }
@@ -535,13 +523,13 @@
     0%,100% { box-shadow:0 0 0 0 rgba(201,165,90,.55); }
     50% { box-shadow:0 0 8px 3px rgba(201,165,90,.55); }
   }
-  #patchBadge, #questBadge, #mailBadge {
+  #patchBadge, #questBadge {
     display:none; align-items:center; justify-content:center;
     min-width:15px; height:15px; padding:0 3px; margin-left:5px;
     background:var(--danger); color:#fff; font-size:9px; font-weight:bold;
     border-radius:8px; vertical-align:middle;
   }
-  #patchBadge.show, #questBadge.show, #mailBadge.show { display:inline-flex; }
+  #patchBadge.show, #questBadge.show { display:inline-flex; }
   .patchNewTag {
     display:inline-block; background:var(--danger); color:#fff; font-size:8.5px; font-weight:bold;
     letter-spacing:.5px; padding:2px 6px; border-radius:2px; vertical-align:middle;
@@ -795,7 +783,6 @@
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
     <button id="btnAchievements" data-i18n="btnAchievements">🏅 Succès</button>
     <button id="btnDailyQuests"><span data-i18n="btnDailyQuests">🗒️ Quêtes</span><span id="questBadge"></span></button>
-    <button id="btnMailbox"><span data-i18n="btnMailbox">📬 Courrier</span><span id="mailBadge"></span></button>
     <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge"></span></button>
     <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
     <div id="menuSideToggle">
@@ -937,11 +924,8 @@
     </div>
 
     <div class="card" id="invCard">
-      <h3><span data-i18n="cardInv">Inventaire</span>
-        <button id="btnLifeskillToggle" title="Lifeskill">⛏️</button>
-        <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
+      <h3><span data-i18n="cardInv">Inventaire</span> <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
       <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
-      <div class="catTabs" id="invCatTabs"></div>
       <div class="invTools">
         <button id="sellTrash" data-i18n="btnSellTrash">Vendre trash</button>
         <button id="sellMats" data-i18n="btnSellMats">Vendre mat.</button>
@@ -1104,7 +1088,6 @@ const S = {
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
-  loyalty: 0, lastLoyaltyDate: null, mailbox: [],
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -1147,29 +1130,6 @@ const ACC_SLOTS = ['ring1','ring2','necklace','earring1','earring2','belt'];
 const WEAPON_SLOTS = ['weapon','awakening','secondary'];
 // tout ce qui peut être optimisé — armes, armure ET bijoux
 const OPTIMIZABLE_SLOTS = [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...ACC_SLOTS];
-
-// ---- 2e équipement : outils de lifeskill (icônes SVG originales, même style que ICO_*) ----
-// pas encore de système de récolte/pêche en jeu — ces emplacements sont préparés à l'avance,
-// vides pour l'instant, en attendant du contenu (voir demande utilisateur du 2026-07-04)
-const ICO_SKINNING = svgIcon('<path d="M4 18l11-11 3 3-11 11z" fill="#c9c9c9"/><path d="M15 7l3 3-2 2-3-3z" fill="#8a6a3a"/>');
-const ICO_PICKAXE  = svgIcon('<path d="M4 8c4-4 12-4 16 0l-3 3C14 8 10 8 7 11z" fill="#9aa5b1"/><rect x="10.5" y="9" width="3" height="13" rx="1" fill="#8a6a3a"/>');
-const ICO_AXE      = svgIcon('<path d="M6 4c4 0 7 3 7 7l-4 4C5 15 3 11 3 7z" fill="#9aa5b1"/><rect x="11" y="9" width="3" height="13" rx="1" fill="#8a6a3a"/>');
-const ICO_FLUID    = svgIcon('<rect x="9" y="3" width="6" height="6" rx="1" fill="#8cc8ff"/><rect x="10.5" y="8" width="3" height="12" rx="1" fill="#c9c9c9"/><rect x="8" y="19" width="8" height="2.5" rx="1" fill="#6b7480"/>');
-const ICO_HOE      = svgIcon('<rect x="10.5" y="4" width="3" height="14" rx="1" fill="#8a6a3a"/><rect x="5" y="17" width="14" height="3" rx="1" fill="#9aa5b1"/>');
-const ICO_TANNING  = svgIcon('<path d="M4 18l11-11 3 3-11 11z" fill="#e0bc72"/><path d="M15 7l3 3-2 2-3-3z" fill="#6b4f28"/>');
-const ICO_FLOAT    = svgIcon('<ellipse cx="12" cy="10" rx="5" ry="6" fill="#e05a4e"/><ellipse cx="12" cy="15" rx="5" ry="5" fill="#f4efe0"/>');
-const ICO_ROD      = svgIcon('<path d="M4 20l14-16" stroke="#8a6a3a" stroke-width="2" fill="none"/><path d="M18 4c1.5 1.5 1.5 4 0 5" stroke="#c9c9c9" stroke-width="1.2" fill="none"/>');
-const LIFESKILL_LABEL = {
-  skinning:{fr:'Couteau à dépecer',en:'Skinning Knife'}, pickaxe:{fr:'Pioche',en:'Pickaxe'},
-  axe:{fr:'Hache',en:'Axe'}, fluid:{fr:'Seringue (collecteur de fluide)',en:'Fluid Collector'},
-  hoe:{fr:'Houe',en:'Hoe'}, tanning:{fr:'Couteau de tanneur',en:'Tanning Knife'},
-  float:{fr:'Flotteur',en:'Float'}, rod:{fr:'Canne à pêche',en:'Fishing Rod'},
-};
-const LIFESKILL_ICON = { skinning:ICO_SKINNING, pickaxe:ICO_PICKAXE, axe:ICO_AXE, fluid:ICO_FLUID,
-  hoe:ICO_HOE, tanning:ICO_TANNING, float:ICO_FLOAT, rod:ICO_ROD };
-const LIFESKILL_TOOL_SLOTS = ['skinning','pickaxe','axe','fluid','hoe','tanning'];
-const LIFESKILL_FISHING_SLOTS = ['float','rod'];
-const LIFESKILL_EQUIP = { skinning:null, pickaxe:null, axe:null, fluid:null, hoe:null, tanning:null, float:null, rod:null };
 
 function invWeight() {
   let w = 0;
@@ -1330,83 +1290,6 @@ function showAchToast(a) {
   stack.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4500);
-}
-// ---------- courrier (mailbox) : stockage permanent, jamais plein, jamais perdu ----------
-// contrairement au sac (192 cases, peut être plein), tout ce qui arrive ici s'empile sans
-// limite — pensé pour des dons automatiques comme la fidélité journalière (voir plus bas)
-function mailboxAdd(key, name, icon, qty) {
-  const existing = S.mailbox.find(m => m.key === key);
-  if (existing) existing.qty += qty;
-  else S.mailbox.push({ key, name, icon, qty });
-}
-function showMailToast(icon, name, qty) {
-  const stack = $('achToastStack'); if (!stack) return;
-  const el = document.createElement('div');
-  el.className = 'achToast';
-  el.innerHTML = `<div class="achToastIcon">${icon}</div>` +
-    `<div><div class="achToastTitle">${LANG==='fr'?'📬 Nouveau courrier':'📬 New mail'}</div>` +
-    `<div class="achToastName">${name}</div>` +
-    `<div class="achToastReward">+${fmt(qty)}</div></div>`;
-  stack.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4500);
-}
-// 200 points de fidélité par jour, livrés dans le courrier — appelé depuis hud() (cheap check)
-function ensureLoyaltyGrant() {
-  const now = new Date();
-  const key = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
-  if (S.lastLoyaltyDate === key) return;
-  S.lastLoyaltyDate = key;
-  S.loyalty = (S.loyalty||0) + 200;
-  const name = LANG==='fr' ? 'Point de fidélité' : 'Loyalty Point';
-  mailboxAdd('loyalty', name, '🏅', 200);
-  showMailToast('🏅', name, 200);
-  updateMailBadge();
-}
-function updateMailBadge() {
-  const badge = $('mailBadge'); if (!badge) return;
-  const n = S.mailbox.reduce((sum,m) => sum + m.qty, 0);
-  badge.textContent = fmt(n);
-  badge.classList.toggle('show', n > 0);
-}
-function renderMailboxHtml() {
-  if (!S.mailbox.length) return `<div class="admEmpty">${LANG==='fr'?'Ton courrier est vide':'Your mailbox is empty'}</div>`;
-  return S.mailbox.map(m => `<div class="achRow">` +
-    `<div class="achIcon">${m.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${m.name}</div></div>` +
-    `<div class="achReward">×${fmt(m.qty)}</div></div>`).join('') +
-    `<div class="admSummary">${LANG==='fr'?'Ces objets restent ici en permanence — ils ne se perdent jamais et s\'empilent sans limite.':'These items stay here permanently — they never get lost and stack without limit.'}</div>`;
-}
-function openMailbox() {
-  openInfo(LANG==='fr' ? '📬 Courrier' : '📬 Mailbox', renderMailboxHtml());
-}
-
-// ---------- 2e équipement : lifeskill (outils de collecte + pêche) ----------
-// pas de source en jeu pour l'instant (aucune récolte/pêche implémentée) — ces emplacements
-// sont préparés à l'avance ; les accessoires de combat sont juste rappelés ici en lecture
-// seule (dans le vrai jeu ce sont les MÊMES bagues/boucles/collier/ceinture qui comptent
-// pour le lifeskill, il n'y a pas de second jeu d'accessoires séparé)
-function renderLifeskillSlot(icon, label, item) {
-  return `<div class="lsSlot${item?' filled':' empty'}" title="${item ? tr(item.name) : label}">${item ? item.icon : icon}</div>`;
-}
-function renderLifeskillPanelHtml() {
-  const toolsHtml = LIFESKILL_TOOL_SLOTS.map(k => renderLifeskillSlot(LIFESKILL_ICON[k], LIFESKILL_LABEL[k][LANG], LIFESKILL_EQUIP[k])).join('');
-  const accHtml = ACC_SLOTS.map(k => renderLifeskillSlot(SLOT_ICON[k], SLOT_LABEL[k], EQUIP[k])).join('');
-  const fishHtml = LIFESKILL_FISHING_SLOTS.map(k => renderLifeskillSlot(LIFESKILL_ICON[k], LIFESKILL_LABEL[k][LANG], LIFESKILL_EQUIP[k])).join('');
-  return `
-    <h3>${LANG==='fr'?'🛠️ Outils de collecte':'🛠️ Gathering tools'}</h3>
-    <div class="lsGrid">${toolsHtml}</div>
-    <h3>${LANG==='fr'?'💍 Accessoires équipés':'💍 Equipped accessories'}</h3>
-    <div class="lsGrid">${accHtml}</div>
-    <h3>${LANG==='fr'?'🎣 Pêche':'🎣 Fishing'}</h3>
-    <div class="lsGrid">${fishHtml}</div>
-    <div class="admSummary">${LANG==='fr'
-      ? 'Aucun outil de lifeskill ne se trouve encore en jeu — ces emplacements sont prêts pour une future mise à jour (récolte, pêche...).'
-      : 'No lifeskill tools can be found in-game yet — these slots are ready for a future update (gathering, fishing...).'}</div>
-  `;
-}
-function openLifeskillPanel() {
-  openInfo(LANG==='fr' ? '⛏️ Équipement Lifeskill' : '⛏️ Lifeskill Gear', renderLifeskillPanelHtml());
 }
 function renderAchievementsHtml() {
   const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
@@ -2717,8 +2600,6 @@ function hud() {
   updateQuestBadge();
   renderQuestWidget();
   renderQuestTrackerWidget();
-  ensureLoyaltyGrant();
-  updateMailBadge();
 }
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
@@ -2860,43 +2741,16 @@ function drawWitchOn(x, cx, cy, sc) {
   x.restore();
 }
 
-// ---------- grille d'inventaire : scindée en catégories filtrables (même tableau 192 cases
-// en interne — seul l'affichage est filtré, pour ne pas casser tous les index déjà utilisés
-// par l'équipement/la vente/les tooltips) ----------
-const INV_CATEGORIES = [
-  { id:'all',        icon:'📦', label:{fr:'Tout',en:'All'},         kinds:null },
-  { id:'normal',      icon:'⚔️', label:{fr:'Normal',en:'Normal'},    kinds:['gear','jackpot'] },
-  { id:'opt',         icon:'✦',  label:{fr:'Optimisation',en:'Enhancement'}, kinds:['material'] },
-  { id:'consumable',  icon:'🧪', label:{fr:'Consommable',en:'Consumable'},   kinds:['consumable'] },
-  { id:'rng',         icon:'🎲', label:{fr:'Butin rare',en:'Rare loot'},     kinds:['craft'] },
-];
-let invCategory = 'all';
-function renderInvCatTabs() {
-  const el = $('invCatTabs'); if (!el) return;
-  el.innerHTML = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCategory?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
-  el.querySelectorAll('.catTab').forEach(btn => {
-    btn.onclick = () => {
-      invCategory = btn.dataset.cat;
-      el.querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderInventory();
-    };
-  });
-}
-
+// ---------- grille d'inventaire ----------
 let hoverInvIndex = -1;
 let lastMouseX = 0, lastMouseY = 0;
 function renderInventory() {
   const grid = $('invGrid');
   grid.innerHTML = '';
-  const cat = INV_CATEGORIES.find(c => c.id === invCategory) || INV_CATEGORIES[0];
   for (let i = 0; i < INV_SIZE; i++) {
     const s = INV[i];
     const cell = document.createElement('div');
-    // en vue filtrée (pas "Tout"), les cases vides ET les objets d'une autre catégorie sont
-    // masqués — sinon un onglet avec 3 objets ressemblerait à 189 cases vides pour rien
-    const visible = cat.kinds === null || (s && cat.kinds.includes(s.kind));
-    cell.className = 'cell' + (s ? ' has k-'+s.kind : '') + (visible ? '' : ' catHidden');
+    cell.className = 'cell' + (s ? ' has k-'+s.kind : '');
     if (s) {
       cell.innerHTML = `<span style="color:${s.color}">${s.icon}</span>` +
         (s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : '') +
@@ -3408,7 +3262,6 @@ window.applySaveState = applySaveState;
 window.exportSaveToFile = exportSaveToFile;
 window.importSaveFromFile = importSaveFromFile;
 
-renderInvCatTabs();
 hud();
 setInterval(hud, 1000);
 setInterval(() => { if (!document.hidden) S.playtimeSec++; }, 1000); // temps de jeu cumulé (onglet actif uniquement)
@@ -3922,8 +3775,6 @@ async function openLeaderboard() {
 $a('btnLeaderboard').onclick = openLeaderboard;
 $a('btnAchievements').onclick = openAchievements;
 $a('btnDailyQuests').onclick = openDailyQuests;
-$a('btnMailbox').onclick = openMailbox;
-$a('btnLifeskillToggle').onclick = openLifeskillPanel;
 
 // ---------- présence : compteur "joueurs en ligne" (invités inclus) ----------
 async function heartbeatPresence() {
@@ -4323,7 +4174,6 @@ const I18N = {
   btnLeaderboard: { fr:'🏆 Classement', en:'🏆 Leaderboard' },
   btnAchievements: { fr:'🏅 Succès', en:'🏅 Achievements' },
   btnDailyQuests: { fr:'🗒️ Quêtes', en:'🗒️ Quests' },
-  btnMailbox: { fr:'📬 Courrier', en:'📬 Mailbox' },
   menuSideLeft: { fr:'◀ Gauche', en:'◀ Left' },
   menuSideRight: { fr:'Droite ▶', en:'Right ▶' },
   cardInv: { fr:'Inventaire', en:'Inventory' },
@@ -4380,15 +4230,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V46', name:{fr:'Courrier & fidélité, inventaire par catégories, équipement lifeskill', en:'Mailbox & loyalty, inventory categories, lifeskill gear'}, fr:[
-      {t:'new', tx:'Nouveau "📬 Courrier" : 200 points de fidélité offerts chaque jour, stockés en permanence (jamais perdus, s\'empilent sans limite) — base posée pour de futures récompenses'},
-      {t:'new', tx:'L\'inventaire se divise maintenant en catégories cliquables : Tout, Normal (équipement), Optimisation (matériaux), Consommable, et Butin rare (composants de craft endgame)'},
-      {t:'new', tx:'Nouvelle icône ⛏️ à côté de l\'inventaire : ouvre un 2e équipement dédié au lifeskill (couteau à dépecer, pioche, hache, seringue, houe, couteau de tanneur, flotteur, canne à pêche) — les accessoires de combat y sont rappelés en lecture seule. Ces emplacements sont prêts mais vides : aucune récolte/pêche n\'existe encore en jeu'},
-    ], en:[
-      {t:'new', tx:'New "📬 Mailbox": 200 Loyalty Points granted every day, stored permanently (never lost, stacks without limit) — groundwork for future rewards'},
-      {t:'new', tx:'The inventory now splits into clickable categories: All, Normal (gear), Enhancement (materials), Consumable, and Rare loot (endgame crafting components)'},
-      {t:'new', tx:'New ⛏️ icon next to the inventory: opens a 2nd equipment panel dedicated to lifeskill (skinning knife, pickaxe, axe, fluid collector, hoe, tanning knife, float, fishing rod) — combat accessories are mirrored there read-only. These slots are ready but empty: no gathering/fishing exists in-game yet'},
-    ] },
   { v:'V45', name:{fr:'Chat en jeu', en:'In-game chat'}, fr:[
       {t:'new', tx:'Nouveau chat en bas à droite avec 3 canaux : 🌍 Mondial, 💱 Trade, 📢 Annonce (réservé au staff en écriture) — repliable, couleurs distinctes par canal, réservé aux comptes vérifiés pour écrire (lecture libre)'},
       {t:'new', tx:'Le canal "Guilde" est préparé côté serveur mais reste caché en attendant un vrai système de guildes'},
