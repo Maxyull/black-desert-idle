@@ -11,7 +11,7 @@
 -- ============================================================
 
 create table if not exists public.market_prices (
-  item_key text primary key,       -- ex: 'material:Ancient Spirit Dust'
+  item_key text primary key,       -- ex: 'material:Pierre de Caphras'
   display_name text not null,
   base_price numeric not null,
   min_price numeric not null,
@@ -20,13 +20,13 @@ create table if not exists public.market_prices (
   last_reeval timestamptz not null default now()
 );
 
+-- noms alignés sur ceux du jeu (index.html) — Black Stone (Arme) et (Armure) ont été fusionnés
+-- en un seul "Pierre noire" (comme dans le vrai jeu), et tous les noms sont en français
 insert into public.market_prices (item_key, display_name, base_price, min_price, max_price, current_price) values
-  ('material:Black Stone (Arme)',        'Black Stone (Arme)',        5,   3,   9,   5),
-  ('material:Black Stone (Armure)',      'Black Stone (Armure)',      8,   5,   13,  8),
-  ('material:Sharp Black Crystal Shard', 'Sharp Black Crystal Shard', 8,   5,   13,  8),
-  ('material:Hard Black Crystal Shard',  'Hard Black Crystal Shard',  35,  20,  55,  35),
-  ('material:Ancient Spirit Dust',       'Ancient Spirit Dust',       35,  20,  55,  35),
-  ('material:Caphras Stone',             'Caphras Stone',             120, 70,  190, 120)
+  ('material:Pierre noire',                       'Pierre noire',                       5,   3,   9,   5),
+  ('material:Éclat de cristal noir tranchant',    'Éclat de cristal noir tranchant',    8,   5,   13,  8),
+  ('material:Éclat de cristal noir dur',          'Éclat de cristal noir dur',          35,  20,  55,  35),
+  ('material:Pierre de Caphras',                  'Pierre de Caphras',                  120, 70,  190, 120)
 on conflict (item_key) do nothing;
 
 alter table public.market_prices enable row level security;
