@@ -177,6 +177,7 @@
   .pdSlot.filled { border-color:var(--gold-dim); background:#231f16; }
   .pdSlot.empty { opacity:.42; filter:grayscale(1); }
   .pdSlot .enh { position:absolute; bottom:-2px; right:1px; font-size:7px; color:var(--gold); text-shadow:0 0 2px #000,0 0 2px #000; }
+  .gicon { width:1.35em; height:1.35em; vertical-align:middle; flex-shrink:0; }
   #pdWeapons { display:flex; justify-content:center; gap:6px; padding:6px 0; border-top:1px solid #2c2a33; border-bottom:1px solid #2c2a33; margin-bottom:2px; }
   #pdWeapons .pdSlot { width:40px; height:40px; }
   #pdWeapons .pdGroupLbl { position:absolute; top:-12px; left:0; right:0; text-align:center; font-size:7px; letter-spacing:.5px; color:var(--ink-dim); }
@@ -934,6 +935,21 @@ function bestFarmedItem() {
   return best ? { name: best, count: bestN } : null;
 }
 
+// icônes SVG originales (dessinées pour ce projet, aucun asset BDO réel) — voir svgIcon()
+function svgIcon(inner) { return `<svg class="gicon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`; }
+const ICO_WEAPON    = svgIcon('<rect x="10.5" y="6" width="3" height="16" rx="1" fill="#8a6a3a"/><path d="M12 2l3 5-3 3-3-3z" fill="#8cc8ff"/>');
+const ICO_AWAKENING = svgIcon('<rect x="10.5" y="9" width="3" height="13" rx="1" fill="#8a6a3a"/><path d="M7 3l2 7h1.2L11 4h2l.8 6H15l2-7-1 10H8z" fill="#c9a55a"/>');
+const ICO_SECONDARY = svgIcon('<path d="M12 2l2 8h-4z" fill="#c9c9c9"/><rect x="11" y="10" width="2" height="8" fill="#c9c9c9"/><rect x="8" y="17" width="8" height="2" rx="1" fill="#8a6a3a"/><rect x="11" y="19" width="2" height="3" rx="1" fill="#3a2f22"/>');
+const ICO_BOOK      = svgIcon('<path d="M4 4h7v16H4z" fill="#6ea3c9"/><path d="M13 4h7v16h-7z" fill="#8cc8ff"/><rect x="10.5" y="4" width="3" height="16" fill="#3a566e"/>');
+const ICO_HELMET    = svgIcon('<path d="M4 14a8 8 0 0116 0v2H4z" fill="#9aa5b1"/><rect x="3" y="16" width="18" height="2.4" rx="1" fill="#6b7480"/><rect x="10.5" y="6" width="3" height="5" fill="#c9a55a"/>');
+const ICO_ARMOR     = svgIcon('<path d="M12 3l6 3v5c0 5-3 8-6 10-3-2-6-5-6-10V6z" fill="#7a8896"/><path d="M12 3l6 3v5c0 5-3 8-6 10z" fill="#5c6874"/>');
+const ICO_GLOVES    = svgIcon('<path d="M6 21V10a3 3 0 016 0v1a3 3 0 016 0v10z" fill="#8a6a3a"/><rect x="5" y="19" width="14" height="3" rx="1" fill="#6b4f28"/>');
+const ICO_BOOTS     = svgIcon('<path d="M8 3h5v10l6 4v2H4v-4l4-2z" fill="#6b4f28"/><rect x="4" y="19" width="16" height="2" rx="1" fill="#3a2f1c"/>');
+const ICO_NECKLACE  = svgIcon('<path d="M4 5c0 6 4 9 8 9s8-3 8-9" fill="none" stroke="#c9a55a" stroke-width="1.6"/><circle cx="12" cy="15" r="3" fill="#8cc8ff"/>');
+const ICO_EARRING   = svgIcon('<circle cx="12" cy="8" r="3" fill="none" stroke="#c9a55a" stroke-width="1.6"/><circle cx="12" cy="16" r="3" fill="#8cc8ff"/>');
+const ICO_RING      = svgIcon('<circle cx="12" cy="15" r="6" fill="none" stroke="#c9a55a" stroke-width="2.2"/><path d="M9 9l3-4 3 4-3 2z" fill="#8cc8ff"/>');
+const ICO_BELT      = svgIcon('<rect x="2" y="10" width="20" height="4" rx="1" fill="#6b4f28"/><rect x="9" y="8" width="6" height="8" rx="1.4" fill="none" stroke="#c9a55a" stroke-width="1.6"/>');
+
 // ==================== INVENTAIRE (192 slots) & ÉQUIPEMENT ====================
 const INV_SIZE = 192;
 const INV = new Array(INV_SIZE).fill(null);   // chaque slot : null | { key, name, kind, icon, color, qty, unit, val, weight, ap, dp }
@@ -941,7 +957,7 @@ const MAX_STACK = 9999;
 
 // slots d'équipement type BDO — chaque pièce optimisable porte son PROPRE niveau d'enchant (enhLv)
 const EQUIP = {
-  weapon: { name:'Bâton de Grunil', kind:'gear', slot:'weapon', ap:10, dp:0, enhLv:0, optimizable:true, fsByLevel:{}, icon:'🪄' },
+  weapon: { name:'Bâton de Grunil', kind:'gear', slot:'weapon', ap:10, dp:0, enhLv:0, optimizable:true, fsByLevel:{}, icon:ICO_WEAPON },
   awakening: null, secondary: null, book: null,
   helmet: null, armor: null, gloves: null, boots: null,
   ring1: null, ring2: null, necklace: null, earring1: null, earring2: null, belt: null,
@@ -1544,7 +1560,7 @@ function dropsTick(dt) {
 }
 
 // icône réelle par type de bijou (au lieu du 💍 générique appliqué à tout jackpot avant ce correctif)
-const JACKPOT_ICON = { ring:'💍', earring:'👂', necklace:'📿', belt:'🥋' };
+const JACKPOT_ICON = { ring:ICO_RING, earring:ICO_EARRING, necklace:ICO_NECKLACE, belt:ICO_BELT };
 // attribue un slot d'accessoire probable selon le nom
 function accSlotFor(it) {
   const n = it.name.toLowerCase();
@@ -2126,9 +2142,9 @@ const PD_BOTTOM = ['weapon','awakening','secondary'];
 const SLOT_LABEL = { weapon:'Arme princ.', awakening:'Éveil', secondary:'Arme secondaire', book:'Livre (vie)',
   helmet:'Casque', armor:'Armure', gloves:'Gants', boots:'Bottes',
   necklace:'Collier', earring1:'B. oreille', earring2:'B. oreille', ring1:'Bague', ring2:'Bague', belt:'Ceinture' };
-const SLOT_ICON = { weapon:'🪄', awakening:'🔱', secondary:'🗡️', book:'📖',
-  helmet:'🪖', armor:'🛡️', gloves:'🧤', boots:'🥾',
-  necklace:'📿', earring1:'👂', earring2:'👂', ring1:'💍', ring2:'💍', belt:'🥋' };
+const SLOT_ICON = { weapon:ICO_WEAPON, awakening:ICO_AWAKENING, secondary:ICO_SECONDARY, book:ICO_BOOK,
+  helmet:ICO_HELMET, armor:ICO_ARMOR, gloves:ICO_GLOVES, boots:ICO_BOOTS,
+  necklace:ICO_NECKLACE, earring1:ICO_EARRING, earring2:ICO_EARRING, ring1:ICO_RING, ring2:ICO_RING, belt:ICO_BELT };
 
 function renderEquipment() {
   drawPreviewChar();
@@ -3539,6 +3555,11 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V34', name:{fr:'Icônes équipement originales', en:'Original equipment icons'}, fr:[
+      {t:'change', tx:'Les icônes d\'équipement et de bijoux (arme, armure, anneaux, boucles d\'oreilles, collier, ceinture...) sont désormais des icônes SVG dessinées spécialement pour ce projet, à la place des emojis génériques'},
+    ], en:[
+      {t:'change', tx:'Equipment and jewelry icons (weapon, armor, rings, earrings, necklace, belt...) are now original SVG icons drawn specifically for this project, replacing the generic emojis'},
+    ] },
   { v:'V33', name:{fr:'Fix charge CPU continue', en:'Continuous CPU load fix'}, fr:[
       {t:'fix', tx:'Correctif de performance important : la mise à jour automatique (chaque seconde) reconstruisait tout le sac (192 cases), la poupée d\'équipement et la liste des zones même quand rien n\'avait changé — ne le fait désormais que si l\'inventaire ou la zone a réellement changé'},
     ], en:[
