@@ -633,15 +633,11 @@
   .achToastTitle { font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--gold); }
   .achToastName { font-size:12px; font-weight:bold; color:var(--ink); }
   .achToastReward { font-size:11px; color:var(--gold); }
-  .questSection { margin-bottom:4px; }
   .questSectionTitle {
     font-size:9.5px; letter-spacing:2px; text-transform:uppercase; color:var(--gold);
     font-weight:normal; margin:10px 0 4px; border-bottom:1px solid #2c2a33; padding-bottom:4px;
-    cursor:pointer; user-select:none;
   }
-  .questSection:first-child .questSectionTitle { margin-top:0; }
-  .achRow.inactive { opacity:.4; }
-  .achRow.inactive .achReward { font-size:9.5px; color:var(--ink-dim); font-weight:normal; }
+  .questSectionTitle:first-child { margin-top:0; }
 
   #questWidget {
     position:fixed; bottom:14px; right:14px; z-index:300;
@@ -1290,30 +1286,14 @@ function updateQuestBadge() {
   const badge = $('questBadge');
   if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
 }
-// affiche TOUS les types de quêtes du pool (pas seulement les 3 tirées ce cycle) — celles non
-// tirées ce cycle-ci restent visibles en grisé avec leur objectif possible, pour que le joueur
-// voie l'étendue complète du pool plutôt que seulement le tirage du jour/de la semaine
 function renderQuestSectionHtml(scope) {
   ensureQuests(scope);
   const cfg = QUEST_SCOPES[scope], st = S[cfg.stateKey];
-  return Object.keys(cfg.kinds).map(kind => {
-    const def = cfg.kinds[kind];
-    const dv = def.displayDiv||1;
-    const i = st.quests.findIndex(q => q.kind === kind);
-    if (i === -1) {
-      const minV = def.variants[0], maxV = def.variants[def.variants.length-1];
-      const rangeTxt = def.variants.length > 1
-        ? `${fmt(Math.floor(minV.target/dv))}–${fmt(Math.floor(maxV.target/dv))} ${def.unit[LANG]}`
-        : `${fmt(Math.floor(minV.target/dv))} ${def.unit[LANG]}`;
-      return `<div class="achRow inactive">` +
-        `<div class="achIcon">${def.icon}</div>` +
-        `<div class="achInfo"><div class="achName">${def.name[LANG]}</div><div class="achDesc">${rangeTxt}</div></div>` +
-        `<div class="achReward">${LANG==='fr'?'Pas tirée ce cycle':'Not active this cycle'}</div>` +
-      `</div>`;
-    }
-    const q = st.quests[i];
+  return st.quests.map((q,i) => {
+    const def = cfg.kinds[q.kind];
     const val = Math.min(questProgress(scope,q), q.target);
     const pct = Math.round(val/q.target*100);
+    const dv = def.displayDiv||1;
     const doneNotClaimed = val >= q.target && !q.claimed;
     return `<div class="achRow${q.claimed?' done':''}">` +
       `<div class="achIcon">${def.icon}</div>` +
@@ -1329,10 +1309,8 @@ function renderQuestSectionHtml(scope) {
 function renderDailyQuestsHtml() {
   const dailyNote = LANG==='fr' ? 'Se réinitialise chaque jour à minuit (heure locale)' : 'Resets every day at midnight (local time)';
   const weeklyNote = LANG==='fr' ? 'Se réinitialise chaque lundi à minuit (heure locale)' : 'Resets every Monday at midnight (local time)';
-  return `<details class="questSection" open><summary class="questSectionTitle">${LANG==='fr'?'📅 Journalières':'📅 Daily'}</summary>` +
-      renderQuestSectionHtml('daily') + `<div class="admSummary">${dailyNote}</div></details>` +
-    `<details class="questSection" open><summary class="questSectionTitle">${LANG==='fr'?'🗓️ Hebdomadaires':'🗓️ Weekly'}</summary>` +
-      renderQuestSectionHtml('weekly') + `<div class="admSummary">${weeklyNote}</div></details>`;
+  return `<h3 class="questSectionTitle">${LANG==='fr'?'📅 Journalières':'📅 Daily'}</h3>` + renderQuestSectionHtml('daily') + `<div class="admSummary">${dailyNote}</div>` +
+    `<h3 class="questSectionTitle">${LANG==='fr'?'🗓️ Hebdomadaires':'🗓️ Weekly'}</h3>` + renderQuestSectionHtml('weekly') + `<div class="admSummary">${weeklyNote}</div>`;
 }
 function openDailyQuests() {
   openInfo(LANG==='fr'?'🗒️ Quêtes':'🗒️ Quests', renderDailyQuestsHtml());
@@ -3881,13 +3859,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V37', name:{fr:'Aperçu complet des quêtes & panneau repliable', en:'Full quest overview & collapsible panel'}, fr:[
-      {t:'change', tx:'Le panneau "🗒️ Quêtes" affiche désormais tous les objectifs possibles de chaque pool (journalier et hebdomadaire), pas seulement les 3 tirées ce cycle — celles non actives restent visibles en grisé avec leur objectif'},
-      {t:'new', tx:'Les sections Journalières et Hebdomadaires peuvent être repliées/dépliées en cliquant sur leur titre'},
-    ], en:[
-      {t:'change', tx:'The "🗒️ Quests" panel now shows every possible objective in each pool (daily and weekly), not just the 3 picked this cycle — inactive ones stay visible dimmed out with their objective'},
-      {t:'new', tx:'The Daily and Weekly sections can be collapsed/expanded by clicking their title'},
-    ] },
   { v:'V36', name:{fr:'Quêtes hebdomadaires & encart de suivi', en:'Weekly quests & tracker widget'}, fr:[
       {t:'new', tx:'Quêtes hebdomadaires : 3 quêtes tirées au hasard chaque semaine (butin rare, équipement trouvé, optimisations réussies, grosses cibles de kills/silver/temps de jeu), avec des récompenses plus élevées — se réinitialisent chaque lundi, indépendamment des quêtes journalières'},
       {t:'new', tx:'Nouvel encart permanent en bas à droite de l\'écran : compte à rebours avant la prochaine réinitialisation (journalière et hebdomadaire) et le prochain succès le plus proche d\'être débloqué'},
