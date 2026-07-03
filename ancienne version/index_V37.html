@@ -140,21 +140,20 @@
   #zoneList::-webkit-scrollbar { width:6px; } 
   #zoneList::-webkit-scrollbar-thumb { background:#3a3742; }
   .zRow {
-    display:flex; align-items:center; gap:6px; padding:4px 5px;
-    border-bottom:1px solid #232128; font-size:10.5px; cursor:pointer;
+    display:flex; flex-direction:column; gap:3px; padding:5px 4px;
+    border-bottom:1px solid #232128; font-size:11px;
   }
   .zRow:hover { background:#232028; }
   .zRow.current { background:#26232e; border-left:2px solid var(--gold); }
-  .zRow .zname { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .zRowTop { display:flex; align-items:center; gap:6px; }
+  .zRowTop .zname { flex:1; }
+  .zRowBottom { display:flex; align-items:center; gap:6px; }
   /* largeur fixe = colonne PA/PD toujours alignée d'une ligne à l'autre, quelle que soit la longueur du nom de zone */
-  .zRow .zreq { font-size:9.5px; color:var(--ink-dim); width:78px; flex-shrink:0; white-space:nowrap; }
+  .zRow .zreq { font-size:10px; color:var(--ink-dim); width:88px; flex-shrink:0; }
   .zRow .zreq .ok { color:#8fc98a; } .zRow .zreq .bad { color:var(--danger); }
-  .zBtnView {
-    flex-shrink:0; width:auto; margin:0; padding:2px 7px; font-size:12px; line-height:1.4;
-    background:transparent; border:1px solid var(--gold-dim);
-  }
-  .zBtnView.active { border-color:var(--gold); box-shadow:0 0 6px 2px rgba(201,165,90,.55); }
-  .zBadge { font-size:9px; letter-spacing:.5px; padding:1px 6px; border:1px solid; white-space:nowrap; flex-shrink:0; }
+  .zActions { display:flex; gap:4px; flex:1; }
+  .zActions button { width:auto; margin:0; padding:3px 8px; font-size:9.5px; flex:1; }
+  .zBadge { font-size:9px; letter-spacing:.5px; padding:1px 6px; border:1px solid; white-space:nowrap; }
   .b-red { color:var(--r-red); border-color:var(--r-red); }
   .b-orange { color:var(--r-orange); border-color:var(--r-orange); }
   .b-green { color:var(--r-green); border-color:var(--r-green); }
@@ -619,10 +618,8 @@
   }
   .questClaimBtn:hover { background:#e0bc72; }
 
-  /* toasts en haut à GAUCHE : l'encart de suivi (timers/succès/quêtes suivies) occupe désormais
-     tout le haut-à-droite en permanence, on évite qu'ils se chevauchent */
   #achToastStack {
-    position:fixed; top:14px; left:14px; z-index:400;
+    position:fixed; top:14px; right:14px; z-index:400;
     display:flex; flex-direction:column; gap:6px; pointer-events:none;
   }
   .achToast {
@@ -646,22 +643,13 @@
   .achRow.inactive { opacity:.4; }
   .achRow.inactive .achReward { font-size:9.5px; color:var(--ink-dim); font-weight:normal; }
 
-  #rightWidgets {
-    position:fixed; top:14px; right:14px; z-index:300;
-    display:flex; flex-direction:column; gap:8px; align-items:flex-end; max-width:230px;
+  #questWidget {
+    position:fixed; bottom:14px; right:14px; z-index:300;
+    background:#1c1a22; border:1px solid var(--gold-dim); border-radius:6px;
+    padding:8px 10px; font-size:11px; min-width:150px;
+    box-shadow:0 4px 14px rgba(0,0,0,.5);
   }
-  .floatWidget {
-    width:100%; background:#1c1a22; border:1px solid var(--gold-dim); border-radius:6px;
-    padding:8px 10px; font-size:11px; box-shadow:0 4px 14px rgba(0,0,0,.5);
-  }
-  .floatWidget:empty { display:none; }
-  .qwHeaderRow { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-  .qwHeaderRow .qwTitle { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); }
-  .qwFoldBtn {
-    width:auto; margin:0; padding:0 5px; font-size:10px; line-height:1.6; background:transparent;
-    border:1px solid var(--gold-dim); flex-shrink:0;
-  }
-  .qwBody { margin-top:6px; }
+  #questWidget:empty { display:none; }
   .qwRow { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:2px 0; }
   .qwLbl { color:var(--ink-dim); }
   .qwTimer { color:var(--gold); font-variant-numeric:tabular-nums; }
@@ -669,12 +657,6 @@
   .qwNextIcon { font-size:16px; }
   .qwNextInfo { flex:1; min-width:0; }
   .qwNextName { font-size:10.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .qwTrackRow { display:flex; align-items:center; gap:7px; margin:5px 0; }
-  .qwTrackIcon { font-size:15px; flex-shrink:0; }
-  .qwTrackInfo { flex:1; min-width:0; }
-  .qwTrackName { font-size:10.5px; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .qwEmpty { font-size:10.5px; color:var(--ink-dim); font-style:italic; margin-top:4px; }
-  #btnToggleTracker { margin-bottom:8px; }
 </style>
 </head>
 <body>
@@ -697,10 +679,7 @@
 </div>
 
 <div id="achToastStack"></div>
-<div id="rightWidgets">
-  <div id="questWidget" class="floatWidget"></div>
-  <div id="questTrackerWidget" class="floatWidget" style="display:none"></div>
-</div>
+<div id="questWidget"></div>
 
 <div id="updateToast">
   <span><span data-i18n="updateAvailableMsg">🔄 Une nouvelle version du jeu est disponible.</span> <span class="updVer" id="updToastVer"></span></span>
@@ -1013,7 +992,7 @@ const S = {
   startTime: performance.now(), silverEarned: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
-  achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
+  achUnlocked: {}, dq: null, wq: null,
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -1350,11 +1329,7 @@ function renderQuestSectionHtml(scope) {
 function renderDailyQuestsHtml() {
   const dailyNote = LANG==='fr' ? 'Se réinitialise chaque jour à minuit (heure locale)' : 'Resets every day at midnight (local time)';
   const weeklyNote = LANG==='fr' ? 'Se réinitialise chaque lundi à minuit (heure locale)' : 'Resets every Monday at midnight (local time)';
-  const trackLabel = S.questTrackerOn
-    ? (LANG==='fr'?'🔖 Ne plus suivre':'🔖 Stop tracking')
-    : (LANG==='fr'?'🔖 Suivre les quêtes restantes':'🔖 Track remaining quests');
-  return `<button id="btnToggleTracker" onclick="toggleQuestTracker()">${trackLabel}</button>` +
-    `<details class="questSection" open><summary class="questSectionTitle">${LANG==='fr'?'📅 Journalières':'📅 Daily'}</summary>` +
+  return `<details class="questSection" open><summary class="questSectionTitle">${LANG==='fr'?'📅 Journalières':'📅 Daily'}</summary>` +
       renderQuestSectionHtml('daily') + `<div class="admSummary">${dailyNote}</div></details>` +
     `<details class="questSection" open><summary class="questSectionTitle">${LANG==='fr'?'🗓️ Hebdomadaires':'🗓️ Weekly'}</summary>` +
       renderQuestSectionHtml('weekly') + `<div class="admSummary">${weeklyNote}</div></details>`;
@@ -1364,13 +1339,6 @@ function openDailyQuests() {
   $a('infoBody').querySelectorAll('.questClaimBtn').forEach(btn => {
     btn.onclick = () => { claimQuest(btn.dataset.scope, parseInt(btn.dataset.i,10)); openDailyQuests(); };
   });
-}
-// active/désactive la liste de suivi des quêtes restantes (encart en haut à droite) — le bouton
-// "Suivre" vit dans le panneau Quêtes, mais l'affichage lui-même est un encart permanent séparé
-function toggleQuestTracker() {
-  S.questTrackerOn = !S.questTrackerOn;
-  renderQuestTrackerWidget();
-  if ($a('infoOverlay').classList.contains('open')) openDailyQuests();
 }
 // prochain succès le plus proche d'être débloqué (plus haut % de progression parmi les non-débloqués)
 function nextAchievement() {
@@ -1400,61 +1368,17 @@ function msToNextWeeklyReset() {
   const daysUntil = 7 - day;
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()+daysUntil, 0,0,0,0) - now;
 }
-function fmtHours(sec) {
-  sec = Math.max(0, Math.floor(sec));
-  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
-  return h > 0 ? `${h}h${String(m).padStart(2,'0')}` : `${m}min`;
-}
-// les deux encarts en haut à droite se replient indépendamment (état non persisté, repart déplié
-// à chaque rechargement — suffisant pour un simple confort visuel en session)
-let resetWidgetFolded = false, trackerWidgetFolded = false;
-function toggleResetFold() { resetWidgetFolded = !resetWidgetFolded; renderQuestWidget(); }
-function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; renderQuestTrackerWidget(); }
-// encart permanent en haut à droite : timers de reset, prochain succès à débloquer, temps de jeu
+// petit encart persistant en bas à droite de l'écran : timers de reset + prochain succès à débloquer
 function renderQuestWidget() {
   const el = $('questWidget'); if (!el) return;
   ensureQuests('daily'); ensureQuests('weekly');
-  const header = `<div class="qwHeaderRow"><span class="qwTitle">${LANG==='fr'?'🗒️ Suivi':'🗒️ Tracker'}</span>` +
-    `<button class="qwFoldBtn" onclick="toggleResetFold()">${resetWidgetFolded?'▸':'▾'}</button></div>`;
-  if (resetWidgetFolded) { el.innerHTML = header; return; }
   const next = nextAchievement();
-  const todayPlaytime = S.playtimeSec - (S.dq && S.dq.base ? S.dq.base.playtime : 0);
-  el.innerHTML = header + `<div class="qwBody">` +
+  el.innerHTML =
     `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'🗒️ Journ.':'🗒️ Daily'}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
     `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly'}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'⏱️ Total':'⏱️ Total'}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'📅 Aujourd\'hui':'📅 Today'}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
     (next ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
       `<div class="qwNextName">${next.a.name[LANG]}</div>` +
-      `<div class="achBarWrap"><div class="achBar" style="width:${Math.round(next.pct)}%"></div></div></div></div>` : '') +
-    `</div>`;
-}
-// encart de suivi des quêtes restantes (activé via le bouton "Suivre" du panneau Quêtes) —
-// liste toutes les quêtes actives ce cycle (journalières + hebdo) pas encore réclamées
-function renderQuestTrackerWidget() {
-  const el = $('questTrackerWidget'); if (!el) return;
-  if (!S.questTrackerOn) { el.style.display = 'none'; el.innerHTML = ''; return; }
-  el.style.display = '';
-  const header = `<div class="qwHeaderRow"><span class="qwTitle">${LANG==='fr'?'🔖 Quêtes suivies':'🔖 Tracked quests'}</span>` +
-    `<button class="qwFoldBtn" onclick="toggleTrackerFold()">${trackerWidgetFolded?'▸':'▾'}</button></div>`;
-  if (trackerWidgetFolded) { el.innerHTML = header; return; }
-  ensureQuests('daily'); ensureQuests('weekly');
-  const rows = [];
-  for (const scope of ['daily','weekly']) {
-    const cfg = QUEST_SCOPES[scope], st = S[cfg.stateKey];
-    st.quests.forEach(q => {
-      if (q.claimed) return;
-      const def = cfg.kinds[q.kind];
-      const val = Math.min(questProgress(scope,q), q.target);
-      const pct = Math.round(val/q.target*100);
-      rows.push(`<div class="qwTrackRow"><span class="qwTrackIcon">${def.icon}</span>` +
-        `<div class="qwTrackInfo"><div class="qwTrackName">${def.name[LANG]}</div>` +
-        `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div></div>`);
-    });
-  }
-  el.innerHTML = header + `<div class="qwBody">` +
-    (rows.length ? rows.join('') : `<div class="qwEmpty">${LANG==='fr'?'Tout est réclamé !':'Everything is claimed!'}</div>`) +
-    `</div>`;
+      `<div class="achBarWrap"><div class="achBar" style="width:${Math.round(next.pct)}%"></div></div></div></div>` : '');
 }
 
 // dégâts infligés : dépend UNIQUEMENT de la PA face à la PA requise de la zone
@@ -2400,36 +2324,28 @@ for (const s of SKILLS) {
 }
 
 // liste des zones
-// une seule ligne par zone : cliquer la ligne = partir farmer cette zone (l'ancien bouton
-// "Farmer" a été retiré), le bouton 👁 en bout de ligne prévisualise juste le loot sans y aller.
-// Le halo doré sur le 👁 marque la zone actuellement PRÉVISUALISÉE (voir lootPreviewIdx) — utile
-// pour ne pas confondre la zone dont on regarde le loot avec celle qu'on est en train de farmer.
-let lootPreviewIdx = null; // null = suit la zone qu'on farm ; sinon index de la zone prévisualisée via 👁
 function buildZoneList() {
   const list = $('zoneList');
   list.innerHTML = '';
   ZONES.forEach((z,i) => {
     const b = badgeOf(bottleneck(z));
     const apOk = apRatio(z) >= 1, dpOk = dpRatio(z) >= 1;
-    const previewed = lootPreviewIdx==null ? i===zoneIdx : i===lootPreviewIdx;
     const row = document.createElement('div');
     row.className = 'zRow' + (i===zoneIdx?' current':'');
-    row.title = tr(z.name);
-    row.innerHTML =
-      `<span class="zname">${tr(z.name)}</span>` +
-      `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
-      `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
-      `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
+    row.innerHTML = `<div class="zRowTop">` +
+        `<span class="zname">${tr(z.name)}</span>` +
+        `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
+      `</div>` +
+      `<div class="zRowBottom">` +
+        `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
+        `<div class="zActions">` +
+          `<button class="zBtnView">${LANG==='fr'?'👁 Voir':'👁 View'}</button>` +
+          `<button class="zBtnFarm">${LANG==='fr'?'⚔ Farmer':'⚔ Farm'}</button>` +
+        `</div>` +
+      `</div>`;
     row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
-    row.onclick = () => { if (i !== zoneIdx) travelTo(i); };
+    row.querySelector('.zBtnFarm').onclick = e => { e.stopPropagation(); if (i !== zoneIdx) travelTo(i); };
     list.appendChild(row);
-  });
-}
-// rafraîchit juste le halo du 👁 sans reconstruire toute la liste (appelé à chaque aperçu de loot)
-function updateZoneViewHalo() {
-  document.querySelectorAll('#zoneList .zRow').forEach((row,i) => {
-    const previewed = lootPreviewIdx==null ? i===zoneIdx : i===lootPreviewIdx;
-    row.querySelector('.zBtnView').classList.toggle('active', previewed);
   });
 }
 function travelTo(i) {
@@ -2439,8 +2355,6 @@ function travelTo(i) {
   resetWorld();
   $('ztName').textContent = tr(Z().name);
   $('ztTier').textContent = Z().tier;
-  lootPreviewIdx = null; // farmer une nouvelle zone fait à nouveau suivre son loot par défaut
-  renderLootTable();
   hud();
   buildZoneList();
 }
@@ -2499,7 +2413,6 @@ function hud() {
   checkAchievements();
   updateQuestBadge();
   renderQuestWidget();
-  renderQuestTrackerWidget();
 }
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
@@ -3044,8 +2957,6 @@ function renderOptSuggestions() {
 const LOOT_ICONS = { trash:'▬', material:'◈', jackpot:'💍', craft:'✦', gear:'⚔️' };
 function renderLootTable(previewIdx) {
   const idx = previewIdx != null ? previewIdx : zoneIdx;
-  lootPreviewIdx = previewIdx != null ? previewIdx : null;
-  updateZoneViewHalo();
   const z = ZONES[idx], L = z.loot;
   const gearCh = GEAR_CHANCE[idx] ?? .002;
   const setName = idx < 3 ? 'Grunil / Yuria' : 'Boss (Kzarka, Bheg, Urugon…)';
@@ -3109,10 +3020,7 @@ $('sortInv').onclick = () => {
   refreshInvUI();
 };
 
-// passe lootPreviewIdx explicitement : un simple renderLootTable() remettrait le loot affiché
-// sur la zone qu'on farm à CHAQUE rafraîchissement auto (dès qu'un objet est ramassé), écrasant
-// l'aperçu manuel choisi via le 👁 quasi instantanément
-function refreshInvUI() { renderEquipment(); renderInventory(); renderOptimization(); renderLootTable(lootPreviewIdx); }
+function refreshInvUI() { renderEquipment(); renderInventory(); renderOptimization(); renderLootTable(); }
 
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
@@ -3973,24 +3881,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V39', name:{fr:'Encarts repliables & suivi des quêtes', en:'Collapsible widgets & quest tracking'}, fr:[
-      {t:'new', tx:'Nouveau bouton "🔖 Suivre les quêtes restantes" dans le panneau Quêtes : affiche un encart en haut à droite listant toutes les quêtes journalières et hebdomadaires pas encore réclamées, avec leur progression'},
-      {t:'change', tx:'L\'encart de suivi (timers de reset journalier/hebdo + prochain succès) est déplacé en haut à droite, et peut être replié via son propre bouton ▾/▸'},
-      {t:'new', tx:'Ajout du temps de jeu total et du temps de jeu du jour dans l\'encart de suivi'},
-    ], en:[
-      {t:'new', tx:'New "🔖 Track remaining quests" button in the Quests panel: shows a widget at the top-right listing every daily and weekly quest not yet claimed, with its progress'},
-      {t:'change', tx:'The tracker widget (daily/weekly reset timers + next achievement) moved to the top-right, and can be collapsed via its own ▾/▸ button'},
-      {t:'new', tx:'Added total playtime and today\'s playtime to the tracker widget'},
-    ] },
-  { v:'V38', name:{fr:'Refonte de la liste des zones de farm', en:'Farming zone list redesign'}, fr:[
-      {t:'change', tx:'Chaque zone tient maintenant sur une seule ligne (nom, difficulté, PA/PD requis, 👁) — on voit plus de zones sans défiler'},
-      {t:'change', tx:'Retiré le bouton "Farmer" : cliquer directement sur une zone permet désormais de partir la farmer ; le bouton 👁 ne fait plus que prévisualiser son loot sans y aller'},
-      {t:'new', tx:'Le 👁 de la zone actuellement prévisualisée reste entouré d\'un halo doré en permanence, pour ne pas la confondre avec la zone qu\'on farm réellement'},
-    ], en:[
-      {t:'change', tx:'Each zone now fits on a single line (name, difficulty, required AP/DP, 👁) — see more zones without scrolling'},
-      {t:'change', tx:'Removed the "Farm" button: clicking a zone directly now travels there to farm it; the 👁 button now only previews its loot without traveling'},
-      {t:'new', tx:'The 👁 of the currently previewed zone keeps a permanent gold halo, so it\'s never confused with the zone you\'re actually farming'},
-    ] },
   { v:'V37', name:{fr:'Aperçu complet des quêtes & panneau repliable', en:'Full quest overview & collapsible panel'}, fr:[
       {t:'change', tx:'Le panneau "🗒️ Quêtes" affiche désormais tous les objectifs possibles de chaque pool (journalier et hebdomadaire), pas seulement les 3 tirées ce cycle — celles non actives restent visibles en grisé avec leur objectif'},
       {t:'new', tx:'Les sections Journalières et Hebdomadaires peuvent être repliées/dépliées en cliquant sur leur titre'},
