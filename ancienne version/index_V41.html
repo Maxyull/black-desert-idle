@@ -600,11 +600,6 @@
     letter-spacing:.5px; text-transform:uppercase; padding:4px 6px; border-bottom:1px solid #2c2a33; }
   .admTable td { padding:4px 6px; border-bottom:1px solid #201f26; color:var(--ink); }
   .admTable tr.admTop td { color:var(--gold); font-weight:bold; }
-  .admTable tr.isYou td { color:var(--gold); font-weight:bold; position:relative; }
-  .admTable tr.isYou { box-shadow:inset 0 0 0 1px var(--gold), 0 0 8px 1px rgba(201,165,90,.45); }
-  .catTabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
-  .catTab { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; }
-  .catTab.active { border-color:var(--gold); color:var(--gold); }
   .admEmpty { color:var(--ink-dim); font-style:italic; text-align:center; padding:10px 0; }
   .admSummary { font-size:11px; color:var(--ink-dim); margin-bottom:8px; }
   .admSummary b { color:var(--gold); }
@@ -3519,30 +3514,29 @@ async function openAdminPanel() {
     <tr><td>#${i+1}</td><td>${(r.user_id||'').slice(0,8)}…</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
   `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 
-  const cats = [
-    { id:'hourly', icon:'💰', label:{fr:'Silver/heure (48h)',en:'Silver/hour (48h)'},
-      body: `<div class="admBars">${hourHtml}</div>` },
-    { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'},
-      body: `<table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Type':'Kind'}</th><th>${LANG==='fr'?'Ramassages':'Pickups'}</th><th>Qté</th><th>Silver</th></tr></thead>
-        <tbody>${itemHtml}</tbody>
-      </table>` },
-    { id:'wealth', icon:'👑', label:{fr:'Richesses',en:'Wealth'},
-      body: `<div class="admSummary">
-        ${LANG==='fr'?'Total en jeu':'Total in game'} : <b>${fmt(totalSilver)}</b> ·
-        ${LANG==='fr'?'Moyenne':'Average'} : <b>${fmt(avgSilver)}</b> ·
-        ${LANG==='fr'?'Médiane':'Median'} : <b>${fmt(medSilver)}</b> ·
-        ${LANG==='fr'?'Joueurs':'Players'} : <b>${silvers.length}</b>
-      </div>
-      <table class="admTable">
-        <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
-        <tbody>${wealthHtml}</tbody>
-      </table>` },
-  ];
-  const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
-  const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
-  openInfo(LANG==='fr' ? '🛠️ Zone Admin — statistiques serveur' : '🛠️ Admin Zone — server stats', `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
-  wireCatTabs();
+  const html = `
+    <h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
+    <div class="admBars">${hourHtml}</div>
+
+    <h3>${LANG==='fr'?'📦 Ressources les plus farmées':'📦 Most farmed resources'}</h3>
+    <table class="admTable">
+      <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Type':'Kind'}</th><th>${LANG==='fr'?'Ramassages':'Pickups'}</th><th>Qté</th><th>Silver</th></tr></thead>
+      <tbody>${itemHtml}</tbody>
+    </table>
+
+    <h3>${LANG==='fr'?'👑 Répartition des richesses':'👑 Wealth distribution'}</h3>
+    <div class="admSummary">
+      ${LANG==='fr'?'Total en jeu':'Total in game'} : <b>${fmt(totalSilver)}</b> ·
+      ${LANG==='fr'?'Moyenne':'Average'} : <b>${fmt(avgSilver)}</b> ·
+      ${LANG==='fr'?'Médiane':'Median'} : <b>${fmt(medSilver)}</b> ·
+      ${LANG==='fr'?'Joueurs':'Players'} : <b>${silvers.length}</b>
+    </div>
+    <table class="admTable">
+      <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
+      <tbody>${wealthHtml}</tbody>
+    </table>
+  `;
+  openInfo(LANG==='fr' ? '🛠️ Zone Admin — statistiques serveur' : '🛠️ Admin Zone — server stats', html);
 }
 $a('btnAdmin').onclick = openAdminPanel;
 $a('btnReevalMarket').onclick = async () => {
@@ -3560,47 +3554,41 @@ function staleTag(r) {
 function rankRows(rows, valueFn, fmtFn) {
   const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
   return sorted.map((r,i) => `
-    <tr class="${r.user_id===currentUser?.id ? 'isYou' : ''}">
+    <tr class="${r.user_id===currentUser?.id ? 'admTop' : ''}">
       <td>#${i+1}</td><td>${r.display_name||'?'} ${staleTag(r)}</td><td>${fmtFn(r)}</td>
     </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-}
-// bascule entre onglets de catégorie repliés dans un même panneau (openInfo) — n'affiche
-// qu'une seule catégorie à la fois, les autres restent en mémoire (display:none)
-function wireCatTabs() {
-  $a('infoBody').querySelectorAll('.catTab').forEach(btn => {
-    btn.onclick = () => {
-      $a('infoBody').querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      $a('infoBody').querySelectorAll('.catPane').forEach(p => p.style.display = p.dataset.cat === btn.dataset.cat ? '' : 'none');
-    };
-  });
 }
 async function openLeaderboard() {
   if (!marketRequireAuth()) return;
   const { data, error } = await sb.from('player_stats').select('*').limit(500);
   const rows = data || [];
 
-  const cats = [
-    { id:'silver', icon:'💰', label:{fr:'Silver',en:'Silver'}, col:{fr:'Silver',en:'Silver'},
-      rows: rankRows(rows, r => Number(r.silver||0), r => fmt(r.silver||0)) },
-    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'GS',en:'GS'},
-      rows: rankRows(rows, r => Number(r.gearscore||0), r => Math.round(r.gearscore||0)) },
-    { id:'zone', icon:'🗺️', label:{fr:'Meilleure zone',en:'Best zone'}, col:{fr:'Zone',en:'Zone'},
-      rows: rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—')) },
-    { id:'sh', icon:'⏱️', label:{fr:'Silver/heure',en:'Silver/hour'}, col:{fr:'Taux (zone)',en:'Rate (zone)'},
-      rows: rankRows(rows, r => Number(r.silver_per_hour||0), r => `${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}`) },
-    { id:'item', icon:'🎯', label:{fr:'Meilleur objet',en:'Best item'}, col:{fr:'Objet (qté)',en:'Item (qty)'},
-      rows: rankRows(rows.filter(r => r.best_item_name), r => Number(r.best_item_count||0), r => `${tr(r.best_item_name)} (${fmt(r.best_item_count||0)})`) },
-  ];
-  const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
-  const panesHtml = cats.map((c,i) => `
-    <div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>
-      <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${c.col[LANG]}</th></tr></thead><tbody>${c.rows}</tbody></table>
-    </div>`).join('');
-  const html = `<div class="catTabs">${tabsHtml}</div>${panesHtml}` +
-    `<div class="admSummary">${LANG==='fr'?'⚠️ = pas de synchro depuis plus de 10 min, ces stats peuvent être obsolètes (équipement changé depuis)':'⚠️ = no sync for over 10 min, these stats may be outdated (gear may have changed since)'}</div>`;
+  const bySilver = rankRows(rows, r => Number(r.silver||0), r => fmt(r.silver||0));
+  const byGS = rankRows(rows, r => Number(r.gearscore||0), r => Math.round(r.gearscore||0));
+  const byZone = rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—'));
+  const bySH = rankRows(rows, r => Number(r.silver_per_hour||0),
+    r => `${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}`);
+  const byItem = rankRows(rows.filter(r => r.best_item_name), r => Number(r.best_item_count||0),
+    r => `${tr(r.best_item_name)} (${fmt(r.best_item_count||0)})`);
+
+  const html = `
+    <h3>${LANG==='fr'?'💰 Silver':'💰 Silver'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th></tr></thead><tbody>${bySilver}</tbody></table>
+
+    <h3>${LANG==='fr'?'⚔️ Gearscore':'⚔️ Gearscore'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>GS</th></tr></thead><tbody>${byGS}</tbody></table>
+
+    <h3>${LANG==='fr'?'🗺️ Meilleure zone atteinte':'🗺️ Best zone reached'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Zone':'Zone'}</th></tr></thead><tbody>${byZone}</tbody></table>
+
+    <h3>${LANG==='fr'?'⏱️ Silver/heure':'⏱️ Silver/hour'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Taux (zone)':'Rate (zone)'}</th></tr></thead><tbody>${bySH}</tbody></table>
+
+    <h3>${LANG==='fr'?'🎯 Objet le plus farmé':'🎯 Most farmed item'}</h3>
+    <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Objet (qté)':'Item (qty)'}</th></tr></thead><tbody>${byItem}</tbody></table>
+    <div class="admSummary">${LANG==='fr'?'⚠️ = pas de synchro depuis plus de 10 min, ces stats peuvent être obsolètes (équipement changé depuis)':'⚠️ = no sync for over 10 min, these stats may be outdated (gear may have changed since)'}</div>
+  `;
   openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
-  wireCatTabs();
 }
 $a('btnLeaderboard').onclick = openLeaderboard;
 $a('btnAchievements').onclick = openAchievements;
@@ -4056,13 +4044,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V42', name:{fr:'Onglets par catégorie sur Classement & Admin', en:'Category tabs on Leaderboard & Admin'}, fr:[
-      {t:'change', tx:'Classement et Zone Admin : chaque catégorie (Silver, Gearscore, meilleure zone, etc.) est maintenant un onglet cliquable, une seule catégorie affichée à la fois au lieu de tout empiler'},
-      {t:'new', tx:'Ta propre ligne dans le Classement est mise en valeur par un petit halo doré'},
-    ], en:[
-      {t:'change', tx:'Leaderboard and Admin Zone: each category (Silver, Gearscore, best zone, etc.) is now a clickable tab, showing one category at a time instead of stacking everything'},
-      {t:'new', tx:'Your own row in the Leaderboard is highlighted with a small gold halo'},
-    ] },
   { v:'V41', name:{fr:'Courbe d\'XP et niveaux façon vrai jeu', en:'Real-game XP and level curve'}, fr:[
       {t:'new', tx:'En haut de l\'inventaire : niveau + pourcentage d\'XP à 3 décimales (00.000%), comme dans le vrai jeu'},
       {t:'change', tx:'La courbe de montée de niveau utilise désormais les vrais paliers d\'XP du jeu original : quasi instantané niveaux 0-4, puis ça explose fortement — au-delà d\'un certain niveau, un monstre ne fera plus gagner que quelques 0,001% de la barre. D\'autres bonus viendront plus tard pour augmenter fortement les gains d\'XP'},
