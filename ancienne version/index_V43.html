@@ -358,14 +358,15 @@
     background:var(--danger); color:#fff; font-size:9px; font-weight:bold;
     letter-spacing:1px; padding:2px 6px; border-radius:2px; flex-shrink:0;
   }
-  #userPseudo { color:var(--gold); font-weight:bold; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #btnResetDemo, #btnResetAllQuests { border-color:var(--danger) !important; color:#e8a89f; }
   #btnResetDemo:hover, #btnResetAllQuests:hover { background:rgba(192,85,69,.15); }
 
-  /* juste le bouton qui ouvre le panneau Admin — les actions vivent maintenant dedans (voir .admActions) */
-  #adminBox { margin-top:2px; }
-  .admActions { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; }
-  .admActions button { width:auto; flex:1; min-width:140px; margin:0; }
+  /* encadré séparé pour les actions admin — prêt à accueillir de futures options */
+  #adminBox {
+    display:flex; flex-direction:column; gap:7px; margin-top:2px;
+    border:1px solid #6a5230; background:rgba(201,165,90,.07); padding:9px;
+  }
+  #adminBoxTitle { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); }
 
   #sideMenu.onRight { left:auto; right:14px; }
 
@@ -747,7 +748,6 @@
   <div id="userBar">
     <div id="userBarTop">
       <span id="demoTag" data-i18n="demoTag">DÉMO</span>
-      <span id="userPseudo"></span>
       <span id="userEmail"></span>
     </div>
     <button id="btnMarket" data-i18n="btnMarketLbl">🏛️ Marché</button>
@@ -757,7 +757,12 @@
     <span id="saveStatus"></span>
 
     <div id="adminBox" style="display:none">
+      <div id="adminBoxTitle" data-i18n="adminBoxTitle">🛠️ Admin</div>
       <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
+      <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
+      <button id="btnResetMyQuests" data-i18n="btnResetMyQuests">🔄 Réinitialiser mes quêtes</button>
+      <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
+      <button id="btnResetDemo" data-i18n="btnResetDemo">🔄 Réinitialiser</button>
     </div>
   </div>
 
@@ -3278,14 +3283,6 @@ function updateUserBar() {
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
   $a('btnLogout').style.display = isGuest() ? 'none' : '';
   $a('adminBox').style.display = isAdmin() ? '' : 'none';
-  updatePseudoDisplay();
-}
-// affiche le pseudo à côté du tag DÉMO — vide pour les invités (pas de pseudo tant qu'ils
-// n'ont pas lié un compte vérifié), mis à jour dès que refreshMyPseudo() a résolu
-function updatePseudoDisplay() {
-  const el = $a('userPseudo');
-  if (!el) return;
-  el.textContent = (currentUser && !isGuest() && myPseudo) ? myPseudo : '';
 }
 
 // upgrade d'une session invité en compte réel (garde le même user_id → la sauvegarde suit),
@@ -3392,7 +3389,6 @@ async function refreshMyPseudo() {
     const { data } = await sb.from('profiles').select('pseudo').eq('user_id', currentUser.id).maybeSingle();
     myPseudo = data?.pseudo || discordUsername(currentUser) || (currentUser.email || '?').split('@')[0];
   } catch (e) { myPseudo = discordUsername(currentUser) || (currentUser.email || '?').split('@')[0]; }
-  updatePseudoDisplay();
 }
 
 // point d'entrée unique au chargement (et après déconnexion) : tente une session invité automatique.
@@ -3466,6 +3462,7 @@ async function resetDemo() {
   try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {}
   floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Démo réinitialisée' : 'Demo reset', { gold:true });
 }
+$a('btnResetDemo').onclick = resetDemo;
 
 // ---------- reset des quêtes (admin) : juste pour soi, ou pour tout le monde ----------
 // "pour soi" ne touche que l'état local + sa propre sauvegarde cloud (aucun risque).
@@ -3479,6 +3476,7 @@ function resetMyQuests() {
   try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {}
   floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes réinitialisées' : 'Quests reset', { gold:true });
 }
+$a('btnResetMyQuests').onclick = resetMyQuests;
 // "pour tout le monde" appelle une fonction SECURITY DEFINER côté Supabase qui remet à null
 // dq/wq dans TOUTES les sauvegardes cloud — celle-ci vérifie elle-même l'email admin côté
 // serveur (voir supabase-quest-reset-schema.sql), le bouton masqué côté client n'étant
@@ -3497,23 +3495,16 @@ async function resetAllQuests() {
   resetMyQuests(); // applique aussi l'effet immédiatement à l'admin lui-même
   floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes de tous les joueurs réinitialisées ✓' : "All players' quests reset ✓", { gold:true });
 }
-async function reevalMarket() {
-  if (!isAdmin() || !sb) return;
-  const { error } = await sb.rpc('reevaluate_market', { p_min_interval_minutes: 0 }); // 0 = force, ignore le throttle
-  floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec réévaluation':'Reevaluation failed') : (LANG==='fr'?'Marché réévalué ✓':'Market reevaluated ✓'), { gold: !error, hurt: !!error });
-}
+$a('btnResetAllQuests').onclick = resetAllQuests;
 
 // ---------- zone admin : stats serveur (réservé au compte admin, via RLS côté base) ----------
-// tout tient désormais dans UN SEUL panneau (déclenché par le bouton "🛠️ Admin") : les actions
-// (réévaluer marché, resets) en haut, puis les statistiques par catégorie sous forme d'onglets
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
-  const [{data: byHour}, {data: byItem}, {data: wealth}, {data: stats}, {data: playtimeByHour}] = await Promise.all([
+  const [{data: byHour}, {data: byItem}, {data: wealth}, {data: stats}] = await Promise.all([
     sb.from('admin_farm_by_hour').select('*'),
     sb.from('admin_farm_by_item').select('*').limit(20),
     sb.from('admin_wealth').select('*'),
     sb.from('player_stats').select('user_id, playtime_sec'),
-    sb.from('admin_playtime_by_hour').select('*'),
   ]);
   const playtimeByUser = new Map((stats||[]).map(r => [r.user_id, Number(r.playtime_sec||0)]));
   const fmtPlaytime = sec => {
@@ -3532,16 +3523,6 @@ async function openAdminPanel() {
     return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${fmt(v)}</span></div>`;
   }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
 
-  // temps de jeu cumulé de TOUS les joueurs, par tranche d'heure (voir admin_playtime_by_hour)
-  const ptMap = new Map((playtimeByHour||[]).map(r => [r.hour, Number(r.total_playtime_sec||0)]));
-  const ptHours = [...ptMap.entries()].sort((a,b) => new Date(b[0]) - new Date(a[0])).slice(0,24);
-  const maxPt = Math.max(1, ...ptHours.map(h => h[1]));
-  const ptHourHtml = ptHours.map(([h,v]) => {
-    const label = new Date(h).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { hour:'2-digit', day:'2-digit', month:'2-digit' });
-    const pct = Math.round(v/maxPt*100);
-    return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${fmtPlaytime(v)}</span></div>`;
-  }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
-
   const itemHtml = (byItem||[]).map((r,i) => `
     <tr class="${i===0?'admTop':''}">
       <td>${i===0?'🔥 ':''}${tr(r.item_name)}</td><td>${r.item_kind}</td>
@@ -3557,11 +3538,8 @@ async function openAdminPanel() {
   `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 
   const cats = [
-    { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'},
-      body: `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
-      <div class="admBars">${hourHtml}</div>
-      <h3>${LANG==='fr'?'⏱️ Temps de jeu total, tous joueurs (48h)':'⏱️ Total playtime, all players (48h)'}</h3>
-      <div class="admBars">${ptHourHtml}</div>` },
+    { id:'hourly', icon:'💰', label:{fr:'Silver/heure (48h)',en:'Silver/hour (48h)'},
+      body: `<div class="admBars">${hourHtml}</div>` },
     { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'},
       body: `<table class="admTable">
         <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Type':'Kind'}</th><th>${LANG==='fr'?'Ramassages':'Pickups'}</th><th>Qté</th><th>Silver</th></tr></thead>
@@ -3581,21 +3559,15 @@ async function openAdminPanel() {
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
-  const actionsHtml = `<div class="admActions">
-    <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
-    <button id="btnResetMyQuests" data-i18n="btnResetMyQuests">🔄 Réinitialiser mes quêtes</button>
-    <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
-    <button id="btnResetDemo" data-i18n="btnResetDemo">🔄 Réinitialiser la démo</button>
-  </div>`;
-  openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
-  applyI18n();
+  openInfo(LANG==='fr' ? '🛠️ Zone Admin — statistiques serveur' : '🛠️ Admin Zone — server stats', `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
   wireCatTabs();
-  $a('btnReevalMarket').onclick = reevalMarket;
-  $a('btnResetMyQuests').onclick = resetMyQuests;
-  $a('btnResetAllQuests').onclick = resetAllQuests;
-  $a('btnResetDemo').onclick = resetDemo;
 }
 $a('btnAdmin').onclick = openAdminPanel;
+$a('btnReevalMarket').onclick = async () => {
+  if (!isAdmin() || !sb) return;
+  const { error } = await sb.rpc('reevaluate_market', { p_min_interval_minutes: 0 }); // 0 = force, ignore le throttle
+  floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec réévaluation':'Reevaluation failed') : (LANG==='fr'?'Marché réévalué ✓':'Market reevaluated ✓'), { gold: !error, hurt: !!error });
+};
 
 // ---------- classement public (silver, gearscore, meilleure zone, silver/h, meilleur objet) ----------
 const STALE_MS = 10 * 60 * 1000; // au-delà de 10 min sans synchro, le stuff du joueur a pu changer entre-temps
@@ -3745,7 +3717,6 @@ async function openAccountPanel() {
     const { error } = await sb.rpc('set_pseudo', { p_pseudo: val });
     if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
     myPseudo = val;
-    updatePseudoDisplay();
     msg.textContent = LANG==='fr'?'Pseudo enregistré !':'Nickname saved!'; msg.className = 'ok';
     syncPlayerStats(); // propage immédiatement au classement, sans attendre la prochaine synchro
   };
@@ -3771,9 +3742,6 @@ function startAutoCloudSave() {
   cloudSaveInterval = setInterval(saveToCloud, 30000);
   window.addEventListener('beforeunload', saveToCloud);
 }
-// ping toutes les 60s pendant qu'un onglet actif est ouvert — sert uniquement à alimenter le
-// graphique "temps de jeu par heure" de la Zone Admin (voir admin_playtime_by_hour)
-setInterval(() => { if (sb && currentUser && !document.hidden) sb.rpc('log_playtime_ping').catch(()=>{}); }, 60000);
 
 $a('btnSignIn').onclick = doSignIn;
 $a('btnSignUp').onclick = doSignUp;
@@ -4106,15 +4074,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V44', name:{fr:'Panneau Admin consolidé & pseudo affiché', en:'Consolidated Admin panel & displayed nickname'}, fr:[
-      {t:'change', tx:'Le bouton "🛠️ Admin" ouvre maintenant un seul panneau contenant les actions (réévaluer le marché, réinitialiser les quêtes ou la démo) et les statistiques par onglets, au lieu de boutons séparés dans la barre latérale'},
-      {t:'new', tx:'Nouvel onglet "Silver & temps de jeu / heure" : temps de jeu cumulé de tous les joueurs par tranche d\'heure, à côté du silver farmé'},
-      {t:'new', tx:'Le pseudo du joueur s\'affiche maintenant à côté du tag DÉMO'},
-    ], en:[
-      {t:'change', tx:'The "🛠️ Admin" button now opens a single panel containing the actions (reevaluate market, reset quests or demo) and the tabbed stats, instead of separate sidebar buttons'},
-      {t:'new', tx:'New "Silver & playtime / hour" tab: total playtime across all players per hour bracket, next to silver farmed'},
-      {t:'new', tx:'The player\'s nickname is now shown next to the DEMO tag'},
-    ] },
   { v:'V43', name:{fr:'Traductions FR, correctifs objets & suivi amélioré', en:'French translations, item fixes & better tracking'}, fr:[
       {t:'change', tx:'Tous les matériaux et bijoux qui restaient affichés en anglais (Pierre noire, Éclats de cristal noir, Pierre de Caphras, Poussière d\'esprit ancien, Fragment de mémoire, Marbre du Dieu déchu, et les 12 bijoux rares) sont désormais traduits en français'},
       {t:'change', tx:'Black Stone (Arme) et Black Stone (Armure) fusionnés en un seul objet "Pierre noire", comme dans le vrai jeu'},
