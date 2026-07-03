@@ -691,38 +691,6 @@
   .qwTrackNum { font-size:11px; color:var(--gold); margin:2px 0 3px; font-variant-numeric:tabular-nums; }
   .qwEmpty { font-size:10.5px; color:var(--ink-dim); font-style:italic; margin-top:4px; }
   #btnToggleTracker { margin-bottom:8px; }
-
-  /* ===== chat (mondial/trade/annonce) — bas à droite, thème sombre/or comme le reste ===== */
-  #chatWidget {
-    position:fixed; bottom:14px; right:14px; z-index:300; width:260px;
-    background:#1c1a22; border:1px solid var(--gold-dim); border-radius:6px;
-    padding:8px 10px; font-size:11px; box-shadow:0 4px 14px rgba(0,0,0,.5);
-  }
-  #chatWidget .catTabs { margin-bottom:6px; gap:4px; }
-  #chatWidget .catTab { padding:4px 8px; font-size:10px; }
-  .catTab.chan-mondial.active { border-color:#9cc9e8; color:#9cc9e8; }
-  .catTab.chan-trade.active { border-color:#8fc98a; color:#8fc98a; }
-  .catTab.chan-annonce.active { border-color:var(--gold); color:var(--gold); }
-  #chatMessages {
-    height:150px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;
-    padding-right:2px; margin-bottom:6px;
-  }
-  #chatMessages::-webkit-scrollbar { width:5px; }
-  #chatMessages::-webkit-scrollbar-thumb { background:#3a3742; }
-  .chatMsg { font-size:11px; line-height:1.35; word-break:break-word; }
-  .chatMsg .chatPseudo { font-weight:bold; }
-  .chatMsg.chan-mondial .chatPseudo { color:#9cc9e8; }
-  .chatMsg.chan-trade .chatPseudo { color:#8fc98a; }
-  .chatMsg.chan-annonce .chatPseudo { color:var(--gold); }
-  .chatMsg .chatText { color:var(--ink); }
-  .chatEmpty { font-size:10.5px; color:var(--ink-dim); font-style:italic; }
-  #chatInputRow { display:flex; gap:5px; }
-  #chatInput {
-    flex:1; background:#0d0c11; border:1px solid #333; color:var(--ink); padding:5px 7px;
-    font-size:11px; font-family:inherit; border-radius:3px;
-  }
-  #chatSendBtn { width:auto; margin:0; padding:5px 10px; flex-shrink:0; }
-  #chatNote { font-size:10px; color:var(--ink-dim); font-style:italic; margin-top:4px; }
 </style>
 </head>
 <body>
@@ -748,22 +716,6 @@
 <div id="rightWidgets">
   <div id="questWidget" class="floatWidget"></div>
   <div id="questTrackerWidget" class="floatWidget" style="display:none"></div>
-</div>
-
-<div id="chatWidget" class="floatWidget">
-  <div class="qwHeaderRow">
-    <span class="qwTitle">💬 Chat</span>
-    <button class="qwFoldBtn" onclick="toggleChatFold()" id="chatFoldBtn">▾</button>
-  </div>
-  <div id="chatBody">
-    <div class="catTabs" id="chatTabs"></div>
-    <div id="chatMessages"></div>
-    <div id="chatInputRow">
-      <input type="text" id="chatInput" maxlength="300" placeholder="…">
-      <button id="chatSendBtn">➤</button>
-    </div>
-    <div id="chatNote"></div>
-  </div>
 </div>
 
 <div id="updateToast">
@@ -3327,7 +3279,6 @@ function updateUserBar() {
   $a('btnLogout').style.display = isGuest() ? 'none' : '';
   $a('adminBox').style.display = isAdmin() ? '' : 'none';
   updatePseudoDisplay();
-  if (typeof updateChatInputVisibility === 'function') { updateChatInputVisibility(); fetchChatMessages(); }
 }
 // affiche le pseudo à côté du tag DÉMO — vide pour les invités (pas de pseudo tant qu'ils
 // n'ont pas lié un compte vérifié), mis à jour dès que refreshMyPseudo() a résolu
@@ -3670,81 +3621,6 @@ function wireCatTabs() {
     };
   });
 }
-
-// ---------- chat (mondial/trade/annonce) — encart bas-droite, polling toutes les 5s ----------
-// "guilde" est volontairement absent : pas encore de système de guilde en jeu, l'onglet sera
-// ajouté quand cette fonctionnalité existera (le canal existe déjà côté base, prêt à l'usage)
-const CHAT_CHANNELS = [
-  { id:'mondial', icon:'🌍', label:{fr:'Mondial',en:'World'} },
-  { id:'trade',   icon:'💱', label:{fr:'Trade',en:'Trade'} },
-  { id:'annonce', icon:'📢', label:{fr:'Annonce',en:'Announcement'} },
-];
-let chatChannel = 'mondial', chatFolded = false, chatPollTimer = null;
-function renderChatTabs() {
-  const el = $a('chatTabs'); if (!el) return;
-  el.innerHTML = CHAT_CHANNELS.map(c => `<button class="catTab chan-${c.id}${c.id===chatChannel?' active':''}" data-chan="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
-  el.querySelectorAll('.catTab').forEach(btn => {
-    btn.onclick = () => {
-      chatChannel = btn.dataset.chan;
-      el.querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      updateChatInputVisibility();
-      fetchChatMessages();
-    };
-  });
-}
-function toggleChatFold() {
-  chatFolded = !chatFolded;
-  $a('chatBody').style.display = chatFolded ? 'none' : '';
-  $a('chatFoldBtn').textContent = chatFolded ? '▸' : '▾';
-  if (!chatFolded) fetchChatMessages();
-}
-function updateChatInputVisibility() {
-  const row = $a('chatInputRow'), note = $a('chatNote');
-  if (!currentUser || isGuest()) {
-    row.style.display = 'none';
-    note.textContent = LANG==='fr' ? '🔒 Connecte-toi avec un compte vérifié pour discuter' : '🔒 Sign in with a verified account to chat';
-  } else if (chatChannel === 'annonce' && !isAdmin()) {
-    row.style.display = 'none';
-    note.textContent = LANG==='fr' ? 'Seul le staff peut poster ici' : 'Only staff can post here';
-  } else {
-    row.style.display = '';
-    note.textContent = '';
-  }
-}
-// échappe pseudo/message avant insertion via innerHTML — ce sont des chaînes saisies par
-// d'autres joueurs, jamais dignes de confiance (évite une injection XSS stockée dans le chat)
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function renderChatMessages(msgs) {
-  const el = $a('chatMessages'); if (!el) return;
-  el.innerHTML = msgs.length ? msgs.map(m => `<div class="chatMsg chan-${chatChannel}">` +
-    `<span class="chatPseudo">${escapeHtml(m.pseudo)}</span> <span class="chatText">${escapeHtml(m.message)}</span></div>`).join('')
-    : `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`;
-  el.scrollTop = el.scrollHeight;
-}
-async function fetchChatMessages() {
-  if (!sb || chatFolded) return;
-  const { data, error } = await sb.from('chat_messages').select('pseudo, message, created_at')
-    .eq('channel', chatChannel).order('created_at', { ascending:false }).limit(50);
-  if (error) return;
-  renderChatMessages((data||[]).slice().reverse());
-}
-async function sendChatMessage() {
-  const input = $a('chatInput');
-  const val = input.value.trim();
-  if (!val || !sb) return;
-  input.value = '';
-  const { error } = await sb.rpc('post_chat_message', { p_channel: chatChannel, p_message: val });
-  if (error) { $a('chatNote').textContent = error.message; return; }
-  fetchChatMessages();
-}
-$a('chatSendBtn').onclick = sendChatMessage;
-$a('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMessage(); });
-renderChatTabs();
-updateChatInputVisibility();
-setInterval(fetchChatMessages, 5000);
 async function openLeaderboard() {
   if (!marketRequireAuth()) return;
   const { data, error } = await sb.from('player_stats').select('*').limit(500);
@@ -4230,13 +4106,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V45', name:{fr:'Chat en jeu', en:'In-game chat'}, fr:[
-      {t:'new', tx:'Nouveau chat en bas à droite avec 3 canaux : 🌍 Mondial, 💱 Trade, 📢 Annonce (réservé au staff en écriture) — repliable, couleurs distinctes par canal, réservé aux comptes vérifiés pour écrire (lecture libre)'},
-      {t:'new', tx:'Le canal "Guilde" est préparé côté serveur mais reste caché en attendant un vrai système de guildes'},
-    ], en:[
-      {t:'new', tx:'New chat at the bottom-right with 3 channels: 🌍 World, 💱 Trade, 📢 Announcement (staff-only posting) — collapsible, distinct colors per channel, posting restricted to verified accounts (reading is open)'},
-      {t:'new', tx:'The "Guild" channel is prepared server-side but stays hidden until a real guild system exists'},
-    ] },
   { v:'V44', name:{fr:'Panneau Admin consolidé & pseudo affiché', en:'Consolidated Admin panel & displayed nickname'}, fr:[
       {t:'change', tx:'Le bouton "🛠️ Admin" ouvre maintenant un seul panneau contenant les actions (réévaluer le marché, réinitialiser les quêtes ou la démo) et les statistiques par onglets, au lieu de boutons séparés dans la barre latérale'},
       {t:'new', tx:'Nouvel onglet "Silver & temps de jeu / heure" : temps de jeu cumulé de tous les joueurs par tranche d\'heure, à côté du silver farmé'},
