@@ -3041,6 +3041,13 @@ async function openAccountPanel() {
       <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Niv.':'Lvl'}</th><th>GS</th><th>Silver</th></tr></thead>
       <tbody>${refRows}</tbody>
     </table>
+
+    <h3>💬 Discord</h3>
+    <p class="mHint">${LANG==='fr'
+      ? 'Génère un code, puis tape <code>/lier CODE</code> dans le salon Discord pour lier ton compte (code valable 10 min).'
+      : 'Generate a code, then type <code>/lier CODE</code> in the Discord server to link your account (code valid 10 min).'}</p>
+    <button id="btnGenLinkCode">${LANG==='fr'?'🔗 Générer un code':'🔗 Generate a code'}</button>
+    <div id="linkCodeBox" style="display:none"></div>
   `;
   openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', html);
   $a('btnCopyRefCode').onclick = async () => {
@@ -3054,6 +3061,13 @@ async function openAccountPanel() {
     const { error } = await sb.rpc('apply_referral_code', { p_code: val });
     if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
     msg.textContent = LANG==='fr'?'Code appliqué !':'Code applied!'; msg.className = 'ok';
+  };
+  $a('btnGenLinkCode').onclick = async () => {
+    const { data, error } = await sb.rpc('ensure_link_code');
+    const box = $a('linkCodeBox');
+    box.style.display = '';
+    if (error) { box.textContent = error.message; return; }
+    box.innerHTML = `<div id="refCodeBox">${data}</div>`;
   };
 }
 $a('btnAccount').onclick = openAccountPanel;
@@ -3378,6 +3392,11 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V28', name:{fr:'Liaison Discord', en:'Discord linking'}, fr:[
+      {t:'new', tx:'Panneau "Mon compte" : bouton pour générer un code et lier ton compte Discord au jeu (commande /lier sur le serveur Discord)'},
+    ], en:[
+      {t:'new', tx:'"My account" panel: button to generate a code and link your Discord account to the game (/lier command on the Discord server)'},
+    ] },
   { v:'V26', name:{fr:'Correctif de ralentissement', en:'Slowdown fix'}, fr:[
       {t:'fix', tx:'Correctif de performance important : les packs de monstres vaincus restaient en mémoire tant que le joueur ne s\'éloignait pas de 900 unités, ce qui ralentissait progressivement le jeu (et parfois le PC) sur une session de farm prolongée dans la même zone'},
     ], en:[
