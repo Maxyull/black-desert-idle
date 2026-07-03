@@ -516,13 +516,13 @@
     0%,100% { box-shadow:0 0 0 0 rgba(201,165,90,.55); }
     50% { box-shadow:0 0 8px 3px rgba(201,165,90,.55); }
   }
-  #patchBadge {
+  #patchBadge, #questBadge {
     display:none; align-items:center; justify-content:center;
     min-width:15px; height:15px; padding:0 3px; margin-left:5px;
     background:var(--danger); color:#fff; font-size:9px; font-weight:bold;
     border-radius:8px; vertical-align:middle;
   }
-  #patchBadge.show { display:inline-flex; }
+  #patchBadge.show, #questBadge.show { display:inline-flex; }
   .patchNewTag {
     display:inline-block; background:var(--danger); color:#fff; font-size:8.5px; font-weight:bold;
     letter-spacing:.5px; padding:2px 6px; border-radius:2px; vertical-align:middle;
@@ -596,6 +596,43 @@
   .admSummary { font-size:11px; color:var(--ink-dim); margin-bottom:8px; }
   .admSummary b { color:var(--gold); }
   .staleTag { font-size:10px; cursor:help; }
+
+  /* ===== succès & quêtes journalières ===== */
+  .achSummary { font-size:12px; color:var(--gold); font-weight:bold; margin-bottom:8px; }
+  .achRow {
+    display:flex; align-items:center; gap:10px; padding:8px 6px;
+    border-bottom:1px solid #201f26; opacity:.72;
+  }
+  .achRow.done { opacity:1; }
+  .achIcon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
+  .achInfo { flex:1; min-width:0; }
+  .achName { font-weight:bold; color:var(--ink); font-size:12px; }
+  .achDesc { font-size:10.5px; color:var(--ink-dim); margin:1px 0 4px; }
+  .achBarWrap { height:5px; background:#201f26; border-radius:3px; overflow:hidden; }
+  .achBar { height:100%; background:linear-gradient(90deg,#8a7038,#c9a55a); }
+  .achProgress { font-size:10px; color:var(--ink-dim); margin-top:2px; }
+  .achReward { flex-shrink:0; font-size:11px; color:var(--gold); font-weight:bold; white-space:nowrap; }
+  .questClaimBtn {
+    flex-shrink:0; background:var(--gold); color:#1a1712; border:none; border-radius:4px;
+    padding:6px 10px; font-size:10.5px; font-weight:bold; cursor:pointer; white-space:nowrap;
+  }
+  .questClaimBtn:hover { background:#e0bc72; }
+
+  #achToastStack {
+    position:fixed; top:14px; right:14px; z-index:400;
+    display:flex; flex-direction:column; gap:6px; pointer-events:none;
+  }
+  .achToast {
+    display:flex; align-items:center; gap:8px; background:#1c1a22; border:1px solid var(--gold-dim);
+    border-radius:6px; padding:8px 12px; box-shadow:0 4px 14px rgba(0,0,0,.5);
+    opacity:0; transform:translateX(20px); transition:opacity .3s ease, transform .3s ease;
+    max-width:260px;
+  }
+  .achToast.show { opacity:1; transform:translateX(0); }
+  .achToastIcon { font-size:22px; }
+  .achToastTitle { font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--gold); }
+  .achToastName { font-size:12px; font-weight:bold; color:var(--ink); }
+  .achToastReward { font-size:11px; color:var(--gold); }
 </style>
 </head>
 <body>
@@ -617,6 +654,8 @@
   </div>
 </div>
 
+<div id="achToastStack"></div>
+
 <div id="updateToast">
   <span><span data-i18n="updateAvailableMsg">🔄 Une nouvelle version du jeu est disponible.</span> <span class="updVer" id="updToastVer"></span></span>
   <button id="btnReloadUpdate" data-i18n="btnReloadUpdate">Recharger</button>
@@ -632,6 +671,8 @@
     </div>
     <button id="btnWiki" data-i18n="btnWiki">📖 Wiki</button>
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
+    <button id="btnAchievements" data-i18n="btnAchievements">🏅 Succès</button>
+    <button id="btnDailyQuests"><span data-i18n="btnDailyQuests">🗒️ Quêtes</span><span id="questBadge"></span></button>
     <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge"></span></button>
     <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
     <div id="menuSideToggle">
@@ -925,6 +966,8 @@ const S = {
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
+  enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0,
+  achUnlocked: {}, dq: null,
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -1068,6 +1111,155 @@ const GS = () => (apEff() + totalDP()) / 2; // Gearscore affiché au joueur — 
 const apRatio = (z) => apEff() / (z || Z()).reqAP;
 const dpRatio = (z) => totalDP() / (z || Z()).reqDP;
 const bottleneck = (z) => Math.min(apRatio(z), dpRatio(z));
+
+// ==================== SUCCÈS (permanents) & QUÊTES JOURNALIÈRES ====================
+// tous les objectifs ne reposent que sur des stats atteignables en solo (kills, loot, silver,
+// zones, gearscore, enchantement, temps de jeu) — jamais sur le marché/classement/Discord,
+// qui nécessitent un compte vérifié : ainsi tout succès/quête reste faisable par n'importe quel joueur.
+function maxEnhLv() {
+  let m = 0;
+  for (const k of OPTIMIZABLE_SLOTS) { const e = EQUIP[k]; if (e && (e.enhLv||0) > m) m = e.enhLv||0; }
+  return m;
+}
+const ACHIEVEMENTS = [
+  { id:'first_kill',   icon:'🗡️', name:{fr:'Premier sang',        en:'First blood'},        desc:{fr:'Terrasse ton premier monstre',              en:'Defeat your first monster'},               statFn:S=>S.kills,               target:1,               reward:300 },
+  { id:'kills_100',    icon:'⚔️', name:{fr:'Chasseur',            en:'Hunter'},              desc:{fr:'Terrasse 100 monstres',                     en:'Defeat 100 monsters'},                     statFn:S=>S.kills,               target:100,             reward:1500 },
+  { id:'kills_1000',   icon:'⚔️', name:{fr:'Exterminateur',       en:'Exterminator'},        desc:{fr:'Terrasse 1 000 monstres',                   en:'Defeat 1,000 monsters'},                   statFn:S=>S.kills,               target:1000,            reward:8000 },
+  { id:'kills_10000',  icon:'💀', name:{fr:'Faucheur',            en:'Reaper'},              desc:{fr:'Terrasse 10 000 monstres',                  en:'Defeat 10,000 monsters'},                  statFn:S=>S.kills,               target:10000,           reward:40000 },
+  { id:'loot_1',       icon:'🎒', name:{fr:'Premier butin',       en:'First loot'},          desc:{fr:'Ramasse ton premier objet',                 en:'Pick up your first item'},                 statFn:S=>S.lootCount,           target:1,               reward:200 },
+  { id:'loot_500',     icon:'🎒', name:{fr:'Collectionneur',      en:'Collector'},           desc:{fr:'Ramasse 500 objets',                        en:'Loot 500 items'},                          statFn:S=>S.lootCount,           target:500,             reward:4000 },
+  { id:'loot_5000',    icon:'🎒', name:{fr:'Accumulateur',        en:'Hoarder'},             desc:{fr:'Ramasse 5 000 objets',                      en:'Loot 5,000 items'},                        statFn:S=>S.lootCount,           target:5000,            reward:25000 },
+  { id:'silver_10k',   icon:'🪙', name:{fr:'Petite fortune',      en:'Small fortune'},       desc:{fr:'Gagne 10 000 silver au total',              en:'Earn a total of 10,000 silver'},           statFn:S=>S.silverEarned,        target:10000,           reward:1000 },
+  { id:'silver_100k',  icon:'🪙', name:{fr:'Marchand',            en:'Merchant'},            desc:{fr:'Gagne 100 000 silver au total',             en:'Earn a total of 100,000 silver'},          statFn:S=>S.silverEarned,        target:100000,          reward:5000 },
+  { id:'silver_1m',    icon:'💰', name:{fr:'Riche marchand',      en:'Wealthy merchant'},    desc:{fr:'Gagne 1 000 000 silver au total',           en:'Earn a total of 1,000,000 silver'},        statFn:S=>S.silverEarned,        target:1000000,         reward:20000 },
+  { id:'silver_10m',   icon:'💰', name:{fr:'Magnat',              en:'Tycoon'},              desc:{fr:'Gagne 10 000 000 silver au total',          en:'Earn a total of 10,000,000 silver'},       statFn:S=>S.silverEarned,        target:10000000,        reward:100000 },
+  { id:'zone_2',       icon:'🗺️', name:{fr:'Explorateur',         en:'Explorer'},            desc:{fr:'Atteins la 2e zone de farm',                en:'Reach the 2nd farming zone'},              statFn:S=>S.maxZoneIdx+1,        target:2,               reward:1500 },
+  { id:'zone_6',       icon:'🗺️', name:{fr:'Aventurier',          en:'Adventurer'},          desc:{fr:'Atteins la 6e zone de farm',                en:'Reach the 6th farming zone'},              statFn:S=>S.maxZoneIdx+1,        target:6,               reward:15000 },
+  { id:'zone_last',    icon:'🏔️', name:{fr:'Conquérant de Velia', en:'Conqueror of Velia'},  desc:{fr:'Atteins la dernière zone de farm',          en:'Reach the final farming zone'},            statFn:S=>S.maxZoneIdx+1,        target:ZONES.length,    reward:120000 },
+  { id:'gs_50',        icon:'🛡️', name:{fr:'Bien équipé',         en:'Well equipped'},       desc:{fr:'Atteins 50 de Gearscore',                   en:'Reach 50 Gearscore'},                      statFn:()=>GS(),                 target:50,              reward:5000 },
+  { id:'gs_150',       icon:'🛡️', name:{fr:'Vétéran équipé',      en:'Veteran gear'},        desc:{fr:'Atteins 150 de Gearscore',                  en:'Reach 150 Gearscore'},                     statFn:()=>GS(),                 target:150,             reward:25000 },
+  { id:'gs_300',       icon:'🛡️', name:{fr:'Légende vivante',     en:'Living legend'},       desc:{fr:'Atteins 300 de Gearscore',                  en:'Reach 300 Gearscore'},                     statFn:()=>GS(),                 target:300,             reward:90000 },
+  { id:'enh_pri',      icon:'✨', name:{fr:'Étincelle divine',    en:'Divine spark'},        desc:{fr:'Amène une pièce d\'équipement au niveau PRI',en:'Bring one piece of gear to PRI level'},    statFn:()=>maxEnhLv(),           target:PRI_IDX,         reward:20000 },
+  { id:'enh_max',      icon:'🌟', name:{fr:'Perfection',          en:'Perfection'},          desc:{fr:'Amène une pièce d\'équipement au niveau PEN (max)', en:'Bring one piece of gear to PEN (max) level'}, statFn:()=>maxEnhLv(), target:ENH_NAMES.length-1, reward:150000 },
+  { id:'jackpot_1',    icon:'💎', name:{fr:'Coup de chance',      en:'Lucky strike'},        desc:{fr:'Trouve ton premier bijou rare',             en:'Find your first rare jewelry drop'},       statFn:S=>S.jackpotCount||0,     target:1,               reward:2000 },
+  { id:'gear_1',       icon:'⚙️', name:{fr:'Nouvel équipement',   en:'New gear'},            desc:{fr:'Trouve ta première pièce d\'équipement',    en:'Find your first piece of gear'},           statFn:S=>S.gearDropCount||0,    target:1,               reward:800 },
+  { id:'playtime_1h',  icon:'⏱️', name:{fr:'Habitué',             en:'Regular'},             desc:{fr:'Joue pendant 1 heure au total',             en:'Play for a total of 1 hour'},              statFn:S=>S.playtimeSec,         target:3600,            reward:1500 },
+  { id:'playtime_10h', icon:'⏱️', name:{fr:'Dévoué',              en:'Dedicated'},           desc:{fr:'Joue pendant 10 heures au total',           en:'Play for a total of 10 hours'},            statFn:S=>S.playtimeSec,         target:36000,           reward:12000 },
+];
+function checkAchievements() {
+  let unlocked = false;
+  for (const a of ACHIEVEMENTS) {
+    if (S.achUnlocked[a.id]) continue;
+    if (a.statFn(S) >= a.target) {
+      S.achUnlocked[a.id] = Date.now();
+      S.silver += a.reward; S.silverEarned += a.reward;
+      showAchToast(a);
+      unlocked = true;
+    }
+  }
+  if (unlocked) refreshStatsOnly();
+}
+function showAchToast(a) {
+  const stack = $('achToastStack'); if (!stack) return;
+  const el = document.createElement('div');
+  el.className = 'achToast';
+  el.innerHTML = `<div class="achToastIcon">${a.icon}</div>` +
+    `<div><div class="achToastTitle">${LANG==='fr'?'🏅 Succès débloqué':'🏅 Achievement unlocked'}</div>` +
+    `<div class="achToastName">${a.name[LANG]}</div>` +
+    `<div class="achToastReward">+${fmt(a.reward)} 🪙</div></div>`;
+  stack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4500);
+}
+function renderAchievementsHtml() {
+  const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
+  const rows = ACHIEVEMENTS.map(a => {
+    const val = a.statFn(S), done = !!S.achUnlocked[a.id];
+    const pct = Math.max(0, Math.min(100, Math.round((val/a.target)*100)));
+    return `<div class="achRow${done?' done':''}">` +
+      `<div class="achIcon">${a.icon}</div>` +
+      `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${a.desc[LANG]}</div>` +
+      `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div>` +
+      `<div class="achProgress">${done ? (LANG==='fr'?'Terminé ✓':'Completed ✓') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
+      `<div class="achReward">+${fmt(a.reward)} 🪙</div></div>`;
+  }).join('');
+  return `<div class="achSummary">${doneCount} / ${ACHIEVEMENTS.length}</div>` + rows;
+}
+function openAchievements() { openInfo(LANG==='fr'?'🏅 Succès':'🏅 Achievements', renderAchievementsHtml()); }
+
+// pool de quêtes journalières : 3 tirées au hasard chaque jour parmi ces familles, avec une
+// difficulté (variante) elle aussi randomisée — le compteur de progression réutilise les stats
+// globales déjà suivies (kills/lootCount/silverEarned/enhAttempts/playtimeSec/travelCount) via
+// une simple soustraction par rapport à leur valeur au début du jour (voir S.dq.base)
+const QUEST_KINDS = {
+  kills:    { icon:'⚔️', name:{fr:'Terrasser des monstres',    en:'Defeat monsters'},  unit:{fr:'monstres',en:'monsters'}, variants:[{target:100,reward:2000},{target:250,reward:5000},{target:500,reward:9000}] },
+  loot:     { icon:'🎒', name:{fr:'Ramasser du butin',         en:'Loot items'},       unit:{fr:'objets',en:'items'},       variants:[{target:80,reward:1800},{target:200,reward:4500},{target:400,reward:8000}] },
+  silver:   { icon:'🪙', name:{fr:'Gagner du silver',          en:'Earn silver'},      unit:{fr:'silver',en:'silver'},      variants:[{target:5000,reward:1500},{target:15000,reward:4000},{target:40000,reward:9000}] },
+  enh:      { icon:'✦',  name:{fr:'Tenter des optimisations',  en:'Attempt enhancements'}, unit:{fr:'tentatives',en:'attempts'}, variants:[{target:5,reward:1500},{target:15,reward:4000},{target:30,reward:8000}] },
+  playtime: { icon:'⏱️', name:{fr:'Jouer',                     en:'Play time'},        unit:{fr:'min',en:'min'},            variants:[{target:600,reward:1500},{target:1800,reward:4000},{target:3600,reward:8000}], displayDiv:60 },
+  travel:   { icon:'🗺️', name:{fr:'Changer de zone',           en:'Change zone'},      unit:{fr:'fois',en:'times'},         variants:[{target:1,reward:1000}] },
+};
+function dailyKey(d) { return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate(); }
+function ensureDailyQuests() {
+  const key = dailyKey(new Date());
+  if (S.dq && S.dq.date === key) return;
+  const kinds = Object.keys(QUEST_KINDS);
+  for (let i = kinds.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [kinds[i],kinds[j]] = [kinds[j],kinds[i]]; }
+  const quests = kinds.slice(0,3).map(k => {
+    const variants = QUEST_KINDS[k].variants;
+    const v = variants[Math.floor(Math.random()*variants.length)];
+    return { kind:k, target:v.target, reward:v.reward, claimed:false };
+  });
+  S.dq = { date:key, quests,
+    base: { kills:S.kills, loot:S.lootCount, silver:S.silverEarned, enh:S.enhAttempts, playtime:S.playtimeSec, travel:S.travelCount } };
+}
+function questProgress(q) {
+  const b = S.dq.base;
+  const cur = q.kind==='kills' ? S.kills : q.kind==='loot' ? S.lootCount : q.kind==='silver' ? S.silverEarned
+    : q.kind==='enh' ? S.enhAttempts : q.kind==='playtime' ? S.playtimeSec : S.travelCount;
+  const base = q.kind==='kills' ? b.kills : q.kind==='loot' ? b.loot : q.kind==='silver' ? b.silver
+    : q.kind==='enh' ? b.enh : q.kind==='playtime' ? b.playtime : b.travel;
+  return Math.max(0, cur - base);
+}
+function claimDailyQuest(i) {
+  ensureDailyQuests();
+  const q = S.dq.quests[i]; if (!q || q.claimed || questProgress(q) < q.target) return;
+  q.claimed = true; S.silver += q.reward; S.silverEarned += q.reward;
+  refreshStatsOnly(); updateQuestBadge();
+}
+function updateQuestBadge() {
+  ensureDailyQuests();
+  const n = S.dq.quests.filter(q => !q.claimed && questProgress(q) >= q.target).length;
+  const badge = $('questBadge');
+  if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
+}
+function renderDailyQuestsHtml() {
+  ensureDailyQuests();
+  const rows = S.dq.quests.map((q,i) => {
+    const def = QUEST_KINDS[q.kind];
+    const val = Math.min(questProgress(q), q.target);
+    const pct = Math.round(val/q.target*100);
+    const dv = def.displayDiv||1;
+    const doneNotClaimed = val >= q.target && !q.claimed;
+    return `<div class="achRow${q.claimed?' done':''}">` +
+      `<div class="achIcon">${def.icon}</div>` +
+      `<div class="achInfo"><div class="achName">${def.name[LANG]}</div>` +
+      `<div class="achDesc">${fmt(Math.floor(val/dv))} / ${fmt(Math.floor(q.target/dv))} ${def.unit[LANG]}</div>` +
+      `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div>` +
+      (q.claimed ? `<div class="achReward">${LANG==='fr'?'Réclamé ✓':'Claimed ✓'}</div>`
+        : doneNotClaimed ? `<button class="questClaimBtn" data-i="${i}">${LANG==='fr'?'Réclamer':'Claim'} +${fmt(q.reward)}🪙</button>`
+        : `<div class="achReward">+${fmt(q.reward)} 🪙</div>`) +
+      `</div>`;
+  }).join('');
+  const resetNote = LANG==='fr' ? 'Se réinitialise chaque jour à minuit (heure locale)' : 'Resets every day at midnight (local time)';
+  return rows + `<div class="admSummary">${resetNote}</div>`;
+}
+function openDailyQuests() {
+  openInfo(LANG==='fr'?'🗒️ Quêtes journalières':'🗒️ Daily quests', renderDailyQuestsHtml());
+  $a('infoBody').querySelectorAll('.questClaimBtn').forEach(btn => {
+    btn.onclick = () => { claimDailyQuest(parseInt(btn.dataset.i,10)); openDailyQuests(); };
+  });
+}
 
 // dégâts infligés : dépend UNIQUEMENT de la PA face à la PA requise de la zone
 function dmgMult(apR) {
@@ -1540,9 +1732,11 @@ function dropsTick(dt) {
       queueFarmEvent(it.kind, it.name, 1, l.silver);
       trackLoot(it.name);
       if (it.kind === 'jackpot') {
+        S.jackpotCount = (S.jackpotCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'★ '+it.name,{lvl:true});
       } else if (it.kind === 'gear') {
+        S.gearDropCount = (S.gearDropCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'⚔ '+it.name,{lvl:true});
       } else if (it.kind === 'craft') {
@@ -2037,6 +2231,7 @@ function buildZoneList() {
 function travelTo(i) {
   zoneIdx = i;
   if (i > S.maxZoneIdx) S.maxZoneIdx = i;
+  S.travelCount = (S.travelCount||0) + 1;
   resetWorld();
   $('ztName').textContent = tr(Z().name);
   $('ztTier').textContent = Z().tier;
@@ -2093,6 +2288,9 @@ function hud() {
   if (zSig !== lastZoneSig) { lastZoneSig = zSig; buildZoneList(); }
   const iSig = invSignature();
   if (iSig !== lastInvSig) { lastInvSig = iSig; refreshInvUI(); }
+  ensureDailyQuests();
+  checkAchievements();
+  updateQuestBadge();
 }
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
@@ -2560,6 +2758,7 @@ $('btnOpt').onclick = () => {
   const idx = findEnhanceMaterial();
   if (!target || idx === -1 || (target.enhLv||0) >= ENH_NAMES.length-1) return;
   invRemoveAt(idx, 1);
+  S.enhAttempts = (S.enhAttempts||0) + 1;
   const lvl = target.enhLv||0;
   const chance = enhChance(lvl+1, target);
   const r = $('optResult');
@@ -3109,6 +3308,8 @@ async function openLeaderboard() {
   openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
 }
 $a('btnLeaderboard').onclick = openLeaderboard;
+$a('btnAchievements').onclick = openAchievements;
+$a('btnDailyQuests').onclick = openDailyQuests;
 
 // ---------- présence : compteur "joueurs en ligne" (invités inclus) ----------
 async function heartbeatPresence() {
@@ -3500,6 +3701,8 @@ const I18N = {
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
   btnReloadUpdate: { fr:'Recharger', en:'Reload' },
   btnLeaderboard: { fr:'🏆 Classement', en:'🏆 Leaderboard' },
+  btnAchievements: { fr:'🏅 Succès', en:'🏅 Achievements' },
+  btnDailyQuests: { fr:'🗒️ Quêtes', en:'🗒️ Quests' },
   menuSideLeft: { fr:'◀ Gauche', en:'◀ Left' },
   menuSideRight: { fr:'Droite ▶', en:'Right ▶' },
   cardInv: { fr:'Inventaire', en:'Inventory' },
@@ -3555,6 +3758,13 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V35', name:{fr:'Succès & quêtes journalières', en:'Achievements & daily quests'}, fr:[
+      {t:'new', tx:'Nouveau bouton "🏅 Succès" : 22 succès permanents (kills, butin, silver, zones, gearscore, enchantement, temps de jeu...) qui rapportent du silver dès qu\'ils sont débloqués — d\'autres seront ajoutés à chaque future mise à jour selon le nouveau contenu'},
+      {t:'new', tx:'Nouveau bouton "🗒️ Quêtes" : 3 quêtes journalières tirées au hasard chaque jour, à réclamer pour du silver une fois complétées — se réinitialisent chaque jour à minuit'},
+    ], en:[
+      {t:'new', tx:'New "🏅 Achievements" button: 22 permanent achievements (kills, loot, silver, zones, gearscore, enhancement, playtime...) that grant silver as soon as they\'re unlocked — more will be added with each future update based on new content'},
+      {t:'new', tx:'New "🗒️ Quests" button: 3 daily quests randomly picked each day, claimable for silver once completed — reset every day at midnight'},
+    ] },
   { v:'V34', name:{fr:'Icônes équipement originales', en:'Original equipment icons'}, fr:[
       {t:'change', tx:'Les icônes d\'équipement et de bijoux (arme, armure, anneaux, boucles d\'oreilles, collier, ceinture...) sont désormais des icônes SVG dessinées spécialement pour ce projet, à la place des emojis génériques'},
     ], en:[
