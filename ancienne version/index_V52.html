@@ -600,7 +600,6 @@
   #infoBody .patchEntryHead { display:flex; align-items:center; gap:8px; margin-bottom:7px; }
   #infoBody .patchVer { color:var(--gold); font-weight:bold; font-size:14px; letter-spacing:.5px; }
   #infoBody .patchName { font-size:12px; font-style:italic; color:var(--ink-dim); }
-  #infoBody .patchDate { margin-left:auto; font-size:10.5px; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
   #infoBody .patchEntry li {
     display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; line-height:1.5;
   }
@@ -639,15 +638,6 @@
 
   /* ===== succès & quêtes journalières ===== */
   .achSummary { font-size:12px; color:var(--gold); font-weight:bold; margin-bottom:8px; }
-  .achCatTab { display:inline-flex; align-items:center; gap:5px; }
-  .achFilterBtn { width:auto; margin:0 0 8px; padding:4px 10px; font-size:10.5px; background:transparent; border:1px solid #3a3742; }
-  .achFilterBtn.on { border-color:var(--gold); color:var(--gold); }
-  .qwAllDone { color:var(--gold); font-size:11px; font-weight:bold; text-align:center; }
-  .codexRow { display:flex; align-items:center; gap:10px; padding:6px 4px; border-bottom:1px solid #201f26; }
-  .codexIcon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
-  .codexName { font-size:12px; font-weight:bold; color:var(--ink); }
-  .codexDesc { font-size:10.5px; color:var(--ink-dim); }
-  .wikiTab { display:inline-flex; align-items:center; gap:4px; }
   .achRow {
     display:flex; align-items:center; gap:10px; padding:8px 6px;
     border-bottom:1px solid #201f26; opacity:.72;
@@ -1544,24 +1534,6 @@ const ACHIEVEMENTS = [
   { id:'playtime_1h',  icon:'⏱️', name:{fr:'Habitué',             en:'Regular'},             desc:{fr:'Joue pendant 1 heure au total',             en:'Play for a total of 1 hour'},              statFn:S=>S.playtimeSec,         target:3600,            reward:1500 },
   { id:'playtime_10h', icon:'⏱️', name:{fr:'Dévoué',              en:'Dedicated'},           desc:{fr:'Joue pendant 10 heures au total',           en:'Play for a total of 10 hours'},            statFn:S=>S.playtimeSec,         target:36000,           reward:12000 },
 ];
-// catégories de succès (demande utilisateur : silver, butin, temps de jeu, exploration,
-// équipement — + combat pour les kills)
-const ACH_CATS = {
-  combat:      { icon:'⚔️', label:{fr:'Combat',en:'Combat'} },
-  butin:       { icon:'🎒', label:{fr:'Butin',en:'Loot'} },
-  silver:      { icon:'🪙', label:{fr:'Silver',en:'Silver'} },
-  playtime:    { icon:'⏱️', label:{fr:'Temps de jeu',en:'Playtime'} },
-  exploration: { icon:'🗺️', label:{fr:'Exploration',en:'Exploration'} },
-  equipment:   { icon:'🛡️', label:{fr:'Équipement',en:'Equipment'} },
-};
-function achCat(id) {
-  if (id === 'first_kill' || id.startsWith('kills')) return 'combat';
-  if (id.startsWith('loot')) return 'butin';
-  if (id.startsWith('silver')) return 'silver';
-  if (id.startsWith('playtime')) return 'playtime';
-  if (id.startsWith('zone')) return 'exploration';
-  return 'equipment'; // gs_*, enh_*, jackpot_1, gear_1
-}
 function checkAchievements() {
   let unlocked = false;
   for (const a of ACHIEVEMENTS) {
@@ -1979,45 +1951,21 @@ function drawBossRoom(t) {
   cx.textAlign='left'; cx.textBaseline='alphabetic';
 }
 
-let achPanelCat = 'all';       // catégorie affichée dans le panneau Succès
-let achOnlyUnfinished = false; // filtre "pas fini"
-function achRowHtml(a) {
-  const val = a.statFn(S), done = !!S.achUnlocked[a.id];
-  const pct = Math.max(0, Math.min(100, Math.round((val/a.target)*100)));
-  return `<div class="achRow${done?' done':''}">` +
-    `<div class="achIcon">${a.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${a.desc[LANG]}</div>` +
-    `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div>` +
-    `<div class="achProgress">${done ? (LANG==='fr'?'Terminé ✓':'Completed ✓') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
-    `<div class="achReward">+${fmt(a.reward)} 🪙</div></div>`;
-}
 function renderAchievementsHtml() {
   const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
-  // onglets : Tout + une catégorie par famille (avec compteur restant en badge)
-  const cats = [['all', {icon:'🏅', label:{fr:'Tout',en:'All'}}], ...Object.entries(ACH_CATS)];
-  const tabsHtml = cats.map(([id, meta]) => {
-    const list = id==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===id);
-    const remaining = list.filter(a => !S.achUnlocked[a.id]).length;
-    const badge = remaining>0 ? `<span class="qCountBadge">${remaining}</span>` : `<span class="qCountBadge done">✓</span>`;
-    return `<button class="catTab achCatTab${id===achPanelCat?' active':''}" data-cat="${id}">${meta.icon} ${meta.label[LANG]} ${badge}</button>`;
+  const rows = ACHIEVEMENTS.map(a => {
+    const val = a.statFn(S), done = !!S.achUnlocked[a.id];
+    const pct = Math.max(0, Math.min(100, Math.round((val/a.target)*100)));
+    return `<div class="achRow${done?' done':''}">` +
+      `<div class="achIcon">${a.icon}</div>` +
+      `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${a.desc[LANG]}</div>` +
+      `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div>` +
+      `<div class="achProgress">${done ? (LANG==='fr'?'Terminé ✓':'Completed ✓') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
+      `<div class="achReward">+${fmt(a.reward)} 🪙</div></div>`;
   }).join('');
-  // filtre "pas fini"
-  const filterBtn = `<button id="achUnfinishedBtn" class="achFilterBtn${achOnlyUnfinished?' on':''}">${achOnlyUnfinished?(LANG==='fr'?'☑ Pas fini':'☑ Unfinished'):(LANG==='fr'?'☐ Pas fini':'☐ Unfinished')}</button>`;
-  let list = achPanelCat==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===achPanelCat);
-  if (achOnlyUnfinished) list = list.filter(a => !S.achUnlocked[a.id]);
-  const rows = list.length ? list.map(achRowHtml).join('')
-    : `<div class="admEmpty">${LANG==='fr'?'Rien à afficher ici':'Nothing to show here'}</div>`;
-  return `<div class="achSummary">${doneCount} / ${ACHIEVEMENTS.length}</div>` +
-    `<div class="catTabs">${tabsHtml}</div>${filterBtn}${rows}`;
+  return `<div class="achSummary">${doneCount} / ${ACHIEVEMENTS.length}</div>` + rows;
 }
-function openAchievements() {
-  openInfo(LANG==='fr'?'🏅 Succès':'🏅 Achievements', renderAchievementsHtml());
-  $a('infoBody').querySelectorAll('.achCatTab').forEach(btn => {
-    btn.onclick = () => { achPanelCat = btn.dataset.cat; openAchievements(); };
-  });
-  const fb = $a('achUnfinishedBtn');
-  if (fb) fb.onclick = () => { achOnlyUnfinished = !achOnlyUnfinished; openAchievements(); };
-}
+function openAchievements() { openInfo(LANG==='fr'?'🏅 Succès':'🏅 Achievements', renderAchievementsHtml()); }
 
 // pool de quêtes journalières : 3 tirées au hasard chaque jour parmi ces familles, avec une
 // difficulté (variante) elle aussi randomisée — le compteur de progression réutilise les stats
@@ -2236,11 +2184,9 @@ function renderQuestWidget() {
     `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly'}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
     `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'⏱️ Total':'⏱️ Total'}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
     `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'📅 Aujourd\'hui':'📅 Today'}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
-    (next
-      ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
-        `<div class="qwNextName">${next.a.name[LANG]}</div>` +
-        `<div class="achBarWrap"><div class="achBar" style="width:${Math.round(next.pct)}%"></div></div></div></div>`
-      : `<div class="qwNext qwAllDone">${LANG==='fr'?'🏅 Vous avez fini les succès !':'🏅 You\'ve finished all achievements!'}</div>`) +
+    (next ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
+      `<div class="qwNextName">${next.a.name[LANG]}</div>` +
+      `<div class="achBarWrap"><div class="achBar" style="width:${Math.round(next.pct)}%"></div></div></div></div>` : '') +
     `</div>`;
 }
 // encart de suivi des quêtes restantes (activé via le bouton "Suivre" du panneau Quêtes) —
@@ -5143,17 +5089,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V53', d:'04/07/2026 01:30', name:{fr:'Succès par catégorie, wiki + codex, dates patchnotes', en:'Categorized achievements, wiki + codex, patchnote dates'}, fr:[
-      {t:'new', tx:'Chaque note de version affiche désormais sa date et son heure (JJ/MM/AAAA HH:MM)'},
-      {t:'change', tx:'Succès réorganisés en catégories (Combat, Butin, Silver, Temps de jeu, Exploration, Équipement) avec un filtre "Pas fini" pour ne voir que ceux qui restent'},
-      {t:'change', tx:'L\'encart de suivi affiche "🏅 Vous avez fini les succès !" une fois tous les succès débloqués'},
-      {t:'change', tx:'Wiki réorganisé en catégories cliquables, et nouveau 📚 Codex des objets listant tous les objets du jeu (bijoux, matériaux, composants, butin)'},
-    ], en:[
-      {t:'new', tx:'Each patch note now shows its date and time (DD/MM/YYYY HH:MM)'},
-      {t:'change', tx:'Achievements reorganized into categories (Combat, Loot, Silver, Playtime, Exploration, Equipment) with an "Unfinished" filter to show only what\'s left'},
-      {t:'change', tx:'The tracker widget shows "🏅 You\'ve finished all achievements!" once every achievement is unlocked'},
-      {t:'change', tx:'Wiki reorganized into clickable categories, plus a new 📚 Item Codex listing every item in the game (jewelry, materials, components, loot)'},
-    ] },
   { v:'V52', name:{fr:'Icônes détaillées, optimisation PRI+, chat & historique silver', en:'Detailed icons, PRI+ enhancement, chat & silver history'}, fr:[
       {t:'change', tx:'Icônes d\'équipement redessinées, plus jolies et plus grosses, avec le niveau d\'optimisation affiché en gros sur l\'icône (+N, puis I à V pour PRI→PEN)'},
       {t:'change', tx:'Optimisation : à partir de PRI, un échec fait rétrograder d\'un palier (PRI→PEN), mais jamais en dessous de PRI — on ne retombe plus à +15'},
@@ -5641,102 +5576,48 @@ setTimeout(checkForUpdate, 15000); // premier check peu après le chargement
 // ============================================================
 // WIKI — règles maison qui diffèrent du vrai BDO
 // ============================================================
-// Wiki organisé en catégories (comme Admin / Classement / Quêtes) — chaque section a son onglet
-const WIKI_SECTIONS = [
-  { id:'combat', icon:'⚔️', label:{fr:'Combat & Zones',en:'Combat & Zones'},
-    fr:`<h3>PA / PD par zone (comme dans le vrai jeu)</h3>
-      <p>Chaque zone a un <b>PA requis</b> et un <b>PD requis</b> affichés directement. Les deux stats jouent des rôles séparés :</p>
-      <ul>
-        <li><b>Pas assez de PA</b> → tes sorts infligent moins de dégâts (jusqu'à -75% si très sous-PA)</li>
-        <li><b>Pas assez de PD</b> → tu encaisses beaucoup plus de dégâts (jusqu'à 4,5×), risque de K.O. élevé</li>
-        <li>Au-dessus des deux → dégâts et réduction bonus, plafonnés pour éviter le farm abusif</li>
-        <li>Le loot suit le pire des deux ratios</li>
-      </ul>
-      <h3>Loot progressif</h3>
-      <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>`,
-    en:`<h3>AP / DP per zone (like the real game)</h3>
-      <p>Every zone has a <b>required AP</b> and <b>required DP</b>. The two stats play separate roles:</p>
-      <ul>
-        <li><b>Not enough AP</b> → your spells deal less damage (up to -75%)</li>
-        <li><b>Not enough DP</b> → you take a lot more damage (up to 4.5×), high KO risk</li>
-        <li>Above both → bonus damage and reduction, capped to prevent overfarming</li>
-        <li>Loot follows the worse of the two ratios</li>
-      </ul>
-      <h3>Progressive loot</h3>
-      <p>Drop rates are <b>intentionally decreasing</b> zone by zone: very generous early (up to 55%), very rare at endgame (under 3%).</p>` },
-  { id:'enh', icon:'✦', label:{fr:'Optimisation',en:'Enhancement'},
-    fr:`<h3>Enchantement</h3>
-      <p>+1 à +7 toujours réussi. <b>+8 à +15</b> sont probabilistes (45% → 5%) et peuvent rétrograder en cas d'échec, mais jamais sous +7.</p>
-      <p>Puis <b>PRI/DUO/TRI/TET/PEN</b> suivent des chances fixes (12%/9%/6%/3%/1,2%). À partir de PRI, un échec fait <b>rétrograder d'un palier</b> (ex : DUO → PRI) — mais <b>jamais sous PRI</b> : tu ne retombes plus jamais à +15.</p>
-      <p>Pas de failstack caché : ce que tu vois à l'écran est la chance réelle. Chaque pièce a son propre niveau, indépendant.</p>
-      <p>La <b>Poussière d'esprit ancien</b> ne sert pas à optimiser directement : c'est un composant pour fabriquer des Pierres de Caphras.</p>`,
-    en:`<h3>Enhancement</h3>
-      <p>+1 to +7 always succeed. <b>+8 to +15</b> are probabilistic (45% → 5%) and can downgrade on failure, but never below +7.</p>
-      <p>Then <b>PRI/DUO/TRI/TET/PEN</b> follow fixed chances (12%/9%/6%/3%/1.2%). From PRI, a failure <b>downgrades one tier</b> (e.g. DUO → PRI) — but <b>never below PRI</b>: you never drop back to +15.</p>
-      <p>No hidden failstack: what you see is the real chance. Each piece has its own independent level.</p>
-      <p><b>Ancient Spirit Dust</b> isn't used to enhance directly: it's a component to craft Caphras Stones.</p>` },
-  { id:'market', icon:'🏛️', label:{fr:'Marché',en:'Market'},
-    fr:`<h3>Hôtel des ventes</h3>
-      <p>Prix fixes fixés par le vendeur, pas d'enchères ni de délai. <b>Aucune taxe de vente</b> (le vrai BDO prend ~30%).</p>
-      <h3>Marché commun</h3>
-      <p>Les matériaux se vendent à un prix commun flottant, borné par un min/max, qui varie avec l'offre et la demande.</p>`,
-    en:`<h3>Marketplace</h3>
-      <p>Fixed prices set by the seller, no auctions or delay. <b>No sales tax</b> (real BDO takes ~30%).</p>
-      <h3>Common market</h3>
-      <p>Materials sell at a common floating price, bounded by a min/max, varying with supply and demand.</p>` },
-  { id:'account', icon:'💾', label:{fr:'Compte & Sauvegarde',en:'Account & Save'},
-    fr:`<h3>Sauvegarde</h3>
-      <p>Sauvegarde cloud automatique toutes les 30 s, plus une sauvegarde locale de secours. En cas de déconnexion brutale, jusqu'à 30 s de progression peuvent être perdues.</p>
-      <h3>Fidélité & Courrier</h3>
-      <p>Tu reçois 200 points de fidélité par jour dans ton 📬 Courrier — ils s'y empilent en permanence et ne se perdent jamais.</p>`,
-    en:`<h3>Save system</h3>
-      <p>Automatic cloud save every 30 s, plus a local backup. On an abrupt disconnect, up to 30 s of progress may be lost.</p>
-      <h3>Loyalty & Mailbox</h3>
-      <p>You get 200 loyalty points per day in your 📬 Mailbox — they stack there permanently and never get lost.</p>` },
-  { id:'about', icon:'ℹ️', label:{fr:'À propos',en:'About'},
-    fr:`<h3>Noms & identité visuelle</h3>
-      <p>Les noms de zones, monstres et objets sont inspirés de Black Desert Online pour l'ambiance. Les icônes sont des créations originales (aucun asset réel du jeu). Fan-site non officiel, sans lien avec Pearl Abyss.</p>`,
-    en:`<h3>Names & visual identity</h3>
-      <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere. Icons are original creations (no real game assets). Unofficial fan site, not affiliated with Pearl Abyss.</p>` },
-  { id:'codex', icon:'📚', label:{fr:'Codex des objets',en:'Item Codex'}, codex:true },
-];
-// génère le codex des objets à partir des données du jeu (matériaux, bijoux, trash, sets)
-function renderCodexHtml() {
-  const seen = new Set();
-  const section = (title, items) => {
-    if (!items.length) return '';
-    return `<h3>${title}</h3>` + items.map(it =>
-      `<div class="codexRow"><div class="codexIcon">${it.icon}</div>` +
-      `<div class="codexInfo"><div class="codexName">${it.name}</div>` +
-      `<div class="codexDesc">${it.desc}</div></div></div>`).join('');
-  };
-  // bijoux rares (jackpot)
-  const jewels = ZONES.map((z,i) => ({ icon:JACKPOT_ICON[accSlotFor(z.loot.jackpot)]||'💎', name:tr(z.loot.jackpot.name),
-    desc:`+${z.loot.jackpot.ap} PA · ${LANG==='fr'?'zone':'zone'} ${i+1} (${tr(z.name)})` }));
-  // matériaux d'optimisation
-  const matSet = new Map();
-  ZONES.forEach(z => { const m = z.loot.mat; if (!matSet.has(m.name)) matSet.set(m.name, m); });
-  const mats = [...matSet.values()].map(m => ({ icon:'◈', name:tr(m.name), desc:LANG==='fr'?'Matériau d\'optimisation':'Enhancement material' }));
-  // composants de craft
-  const craftSet = new Map();
-  ZONES.forEach(z => { const c = z.loot.craft; if (!craftSet.has(c.name)) craftSet.set(c.name, c); });
-  const crafts = [...craftSet.values()].map(c => ({ icon:'✦', name:tr(c.name), desc:LANG==='fr'?'Composant de craft endgame':'Endgame crafting component' }));
-  // butin de base (trash → silver)
-  const trash = ZONES.map((z,i) => ({ icon:'▬', name:tr(z.loot.trash.name), desc:`${fmt(z.loot.trash.val)} silver · ${tr(z.mob)}` }));
-  return `<div class="admSummary">${LANG==='fr'?'Tous les objets actuellement présents dans le jeu.':'All items currently in the game.'}</div>` +
-    section(LANG==='fr'?'💎 Bijoux rares':'💎 Rare jewelry', jewels) +
-    section(LANG==='fr'?'◈ Matériaux d\'optimisation':'◈ Enhancement materials', mats) +
-    section(LANG==='fr'?'✦ Composants de craft':'✦ Crafting components', crafts) +
-    section(LANG==='fr'?'▬ Butin de base':'▬ Base loot', trash);
-}
-let wikiSection = 'combat';
-function renderWikiHtml() {
-  const tabsHtml = WIKI_SECTIONS.map(s =>
-    `<button class="catTab wikiTab${s.id===wikiSection?' active':''}" data-sec="${s.id}">${s.icon} ${s.label[LANG]}</button>`).join('');
-  const sec = WIKI_SECTIONS.find(s => s.id === wikiSection) || WIKI_SECTIONS[0];
-  const body = sec.codex ? renderCodexHtml() : sec[LANG];
-  return `<div class="catTabs">${tabsHtml}</div><div class="wikiBody">${body}</div>`;
-}
+const WIKI_CONTENT = {
+  fr: `
+    <h3>PA / PD par zone (comme dans le vrai jeu)</h3>
+    <p>Chaque zone a un <b>PA requis</b> et un <b>PD requis</b> affichés directement (sous le nom de zone, dans la carte Statistiques, et dans la liste des zones) — comme les vraies fiches de spots de farm BDO. Les deux stats jouent des rôles séparés :</p>
+    <ul>
+      <li><b>Pas assez de PA</b> → tes sorts infligent moins de dégâts (jusqu'à -75% si très sous-PA), tu mets du temps à tuer</li>
+      <li><b>Pas assez de PD</b> → tu encaisses beaucoup plus de dégâts (jusqu'à 4,5× si très sous-PD), risque de K.O. élevé — une vraie « zone dangereuse » doit faire mal</li>
+      <li>Être au-dessus des deux → dégâts et réduction de dégâts bonus, plafonnés pour éviter le farm abusif</li>
+      <li>Le loot suit le pire des deux ratios : être solide en PA mais faible en PD (ou l'inverse) pénalise quand même le rendement, comme en vrai jeu</li>
+    </ul>
+    <h3>Loot progressif</h3>
+    <p>Contrairement au vrai jeu, les taux de drop ici sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55% de chance de matériau), très rares en endgame (moins de 3%). Objectif : rendre la progression lisible, pas une simulation fidèle des vraies tables BDO.</p>
+    <h3>Enchantement</h3>
+    <p>+1 à +7 toujours réussi. <b>+8 à +15</b> sont probabilistes (45% → 5%, chances FIXES) et peuvent rétrograder en cas d'échec, mais jamais sous +7. Puis PRI/DUO/TRI/TET/PEN suivent des chances fixes elles aussi (12%/9%/6%/3%/1,2%) — <b>et à partir de PRI, un échec ne fait plus jamais rétrograder</b> : tu perds juste le matériau, ton niveau est acquis pour de bon. Pas de failstack à gérer, pas de calcul compliqué : ce que tu vois à l'écran est la chance réelle, à chaque tentative. Chaque pièce d'équipement a son propre niveau, indépendant des autres.</p>
+    <h3>Hôtel des ventes</h3>
+    <p>Prix fixes fixés par le vendeur, pas d'enchères ni de délai. <b>Aucune taxe de vente</b> n'est prélevée (le vrai BDO prend ~30%) — tout le prix va au vendeur.</p>
+    <h3>Sauvegarde</h3>
+    <p>Sauvegarde cloud automatique toutes les 30 secondes, plus une sauvegarde locale de secours. En cas de déconnexion brutale, jusqu'à 30 secondes de progression peuvent être perdues.</p>
+    <h3>Noms & identité visuelle</h3>
+    <p>Les noms de zones, monstres et objets sont inspirés de Black Desert Online pour l'ambiance, mais l'attribution exacte (quel objet drop où) est une approximation créative, pas une reproduction fidèle des tables de loot réelles du jeu.</p>
+  `,
+  en: `
+    <h3>AP / DP per zone (like the real game)</h3>
+    <p>Every zone has a <b>required AP</b> and a <b>required DP</b> shown directly (under the zone name, in the Stats card, and in the zone list) — like real BDO grind spot sheets. The two stats play separate roles:</p>
+    <ul>
+      <li><b>Not enough AP</b> → your spells deal less damage (up to -75% if heavily under-AP), kills take longer</li>
+      <li><b>Not enough DP</b> → you take a lot more damage (up to 4.5× if heavily under-DP), high risk of being knocked out — a real "dangerous zone" should actually hurt</li>
+      <li>Being above both → bonus damage and damage reduction, capped to prevent overfarming</li>
+      <li>Loot follows the worse of the two ratios: being strong in AP but weak in DP (or vice versa) still hurts yield, just like the real game</li>
+    </ul>
+    <h3>Progressive loot</h3>
+    <p>Unlike the real game, drop rates here are <b>intentionally decreasing</b> zone by zone: very generous early on (up to 55% material chance), very rare at endgame (under 3%). Goal: readable progression, not a faithful simulation of real BDO tables.</p>
+    <h3>Enhancement</h3>
+    <p>+1 to +7 always succeed. <b>+8 to +15</b> are probabilistic (45% → 5%, FIXED chances) and can downgrade on failure, but never below +7. Then PRI/DUO/TRI/TET/PEN also follow fixed chances (12%/9%/6%/3%/1.2%) — <b>and from PRI onward, a failure never downgrades your level again</b>: you just lose the material, your level is permanent. No failstack to manage, no hidden math: what you see on screen is the real chance, every single attempt. Each equipped piece has its own independent level.</p>
+    <h3>Marketplace</h3>
+    <p>Fixed prices set by the seller, no auctions or delay. <b>No sales tax</b> is taken (the real BDO takes ~30%) — the full price goes to the seller.</p>
+    <h3>Save system</h3>
+    <p>Automatic cloud save every 30 seconds, plus a local backup save. On an abrupt disconnect, up to 30 seconds of progress may be lost.</p>
+    <h3>Names & visual identity</h3>
+    <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere, but the exact assignment (which item drops where) is a creative approximation, not a faithful reproduction of the game's real loot tables.</p>
+  `,
+};
 
 // ============================================================
 // Ouverture des modals Wiki / Patch Notes
@@ -5755,10 +5636,7 @@ $a('infoOverlay').addEventListener('mousedown', e => { infoMouseDownOnBackdrop =
 $a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) $a('infoOverlay').classList.remove('open'); });
 
 $a('btnWiki').onclick = () => {
-  openInfo(LANG === 'fr' ? '📖 Wiki' : '📖 Wiki', renderWikiHtml());
-  $a('infoBody').querySelectorAll('.wikiTab').forEach(btn => {
-    btn.onclick = () => { wikiSection = btn.dataset.sec; $a('btnWiki').onclick(); };
-  });
+  openInfo(LANG === 'fr' ? '📖 Wiki — règles du jeu' : '📖 Wiki — game rules', WIKI_CONTENT[LANG]);
 };
 
 // ---------- suivi des patch notes lus ----------
@@ -5801,7 +5679,6 @@ $a('btnPatch').onclick = () => {
         <span class="patchVer">${p.v}</span>
         ${p.name ? `<span class="patchName">${p.name[LANG]}</span>` : ''}
         ${isNew ? '<span class="patchNewTag">NEW</span>' : ''}
-        ${p.d ? `<span class="patchDate">${p.d}</span>` : ''}
       </div>
       <ul>${p[LANG].map(line => {
         const cat = PATCH_CATS[line.t] || PATCH_CATS.change;
