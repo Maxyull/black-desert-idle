@@ -2083,16 +2083,9 @@ function questProgress(scope, q) {
 function claimQuest(scope, i) {
   ensureQuests(scope);
   const st = S[QUEST_SCOPES[scope].stateKey];
-  const q = st.quests[i];
-  // triple garde : quête existante, PAS déjà réclamée, et objectif réellement atteint. Le flag
-  // q.claimed rend la réclamation idempotente → impossible de toucher 2× la récompense même en
-  // cliquant dans le suivi ET dans le panneau (exploit signalé).
-  if (!q || q.claimed || questProgress(scope,q) < q.target) return;
+  const q = st.quests[i]; if (!q || q.claimed || questProgress(scope,q) < q.target) return;
   q.claimed = true; S.silver += q.reward; S.silverEarned += q.reward;
   refreshStatsOnly(); updateQuestBadge();
-  // rafraîchit IMMÉDIATEMENT les deux UI pour qu'aucun bouton "Réclamer" périmé ne subsiste
-  renderQuestTrackerWidget();
-  if (questsPanelOpen) openDailyQuests();
 }
 function updateQuestBadge() {
   ensureQuests('daily'); ensureQuests('weekly');
@@ -2175,16 +2168,13 @@ function renderDailyQuestsHtml() {
     `</div>` +
     `<div id="questScopeBody">${renderQuestSectionHtml(questPanelScope)}<div class="admSummary">${note}</div></div>`;
 }
-let questsPanelOpen = false; // le panneau Quêtes est-il ouvert ? (pour re-rendre après une réclamation)
 function openDailyQuests() {
   openInfo(LANG==='fr'?'🗒️ Quêtes':'🗒️ Quests', renderDailyQuestsHtml());
-  questsPanelOpen = true; // openInfo l'a remis à false ; on le repasse à true APRÈS
   $a('infoBody').querySelectorAll('.qScopeTab').forEach(btn => {
     btn.onclick = () => { questPanelScope = btn.dataset.scope; openDailyQuests(); };
   });
   $a('infoBody').querySelectorAll('.questClaimBtn').forEach(btn => {
-    // claimQuest se charge lui-même de rafraîchir le panneau ET l'encart de suivi (voir claimQuest)
-    btn.onclick = () => claimQuest(btn.dataset.scope, parseInt(btn.dataset.i,10));
+    btn.onclick = () => { claimQuest(btn.dataset.scope, parseInt(btn.dataset.i,10)); openDailyQuests(); };
   });
 }
 // active/désactive la liste de suivi des quêtes restantes (encart en haut à droite) — le bouton
@@ -2291,8 +2281,7 @@ function renderQuestTrackerWidget() {
     (body || `<div class="qwEmpty">${LANG==='fr'?'Tout est réclamé !':'Everything is claimed!'}</div>`) +
     `</div>`;
   el.querySelectorAll('.qwClaimBtn').forEach(btn => {
-    // claimQuest rafraîchit lui-même le suivi ET le panneau — pas de double appel
-    btn.onclick = () => claimQuest(btn.dataset.scope, parseInt(btn.dataset.i,10));
+    btn.onclick = () => { claimQuest(btn.dataset.scope, parseInt(btn.dataset.i,10)); renderQuestTrackerWidget(); };
   });
 }
 
@@ -5154,15 +5143,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V54', d:'04/07/2026 01:38', name:{fr:'Correctif double-réclamation & anti-triche', en:'Double-claim fix & anti-cheat'}, fr:[
-      {t:'exploit', tx:'Faille corrigée : une quête terminée ne peut plus être réclamée deux fois (une fois dans l\'encart de suivi, une fois dans le panneau). Réclamer met désormais à jour instantanément les deux affichages, aucun bouton "Réclamer" périmé ne subsiste'},
-      {t:'fix', tx:'Fermer le panneau Quêtes en cliquant à côté ne laisse plus l\'état incohérent'},
-      {t:'change', tx:'Anti-triche côté serveur : le classement borne les valeurs manifestement impossibles (silver/gearscore/niveau/temps de jeu) pour rester crédible. Note : le jeu reste calculé côté navigateur, une triche subtile de sa propre ligne reste techniquement possible'},
-    ], en:[
-      {t:'exploit', tx:'Exploit fixed: a completed quest can no longer be claimed twice (once in the tracker widget, once in the panel). Claiming now instantly updates both displays, no stale "Claim" button remains'},
-      {t:'fix', tx:'Closing the Quests panel by clicking outside no longer leaves an inconsistent state'},
-      {t:'change', tx:'Server-side anti-cheat: the leaderboard clamps clearly impossible values (silver/gearscore/level/playtime) to stay credible. Note: the game is still computed in the browser, so subtle tampering of one\'s own row remains technically possible'},
-    ] },
   { v:'V53', d:'04/07/2026 01:30', name:{fr:'Succès par catégorie, wiki + codex, dates patchnotes', en:'Categorized achievements, wiki + codex, patchnote dates'}, fr:[
       {t:'new', tx:'Chaque note de version affiche désormais sa date et son heure (JJ/MM/AAAA HH:MM)'},
       {t:'change', tx:'Succès réorganisés en catégories (Combat, Butin, Silver, Temps de jeu, Exploration, Équipement) avec un filtre "Pas fini" pour ne voir que ceux qui restent'},
@@ -5762,18 +5742,17 @@ function renderWikiHtml() {
 // Ouverture des modals Wiki / Patch Notes
 // ============================================================
 function openInfo(title, bodyHtml) {
-  questsPanelOpen = false; // tout ouverture de panneau réinitialise le flag ; openDailyQuests le remet
   $a('infoTitle').textContent = title;
   $a('infoBody').innerHTML = bodyHtml;
   $a('infoOverlay').classList.add('open');
 }
-$a('closeInfo').onclick = () => { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); };
+$a('closeInfo').onclick = () => $a('infoOverlay').classList.remove('open');
 // ferme seulement si le clic ET l'appui initial (mousedown) sont bien sur le fond noir —
 // sinon, sélectionner du texte dans un champ (ex: le pseudo) et relâcher la souris un peu
 // hors du champ pouvait faire remonter le clic jusqu'au fond et fermer tout le panneau
 let infoMouseDownOnBackdrop = false;
 $a('infoOverlay').addEventListener('mousedown', e => { infoMouseDownOnBackdrop = (e.target.id === 'infoOverlay'); });
-$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); } });
+$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) $a('infoOverlay').classList.remove('open'); });
 
 $a('btnWiki').onclick = () => {
   openInfo(LANG === 'fr' ? '📖 Wiki' : '📖 Wiki', renderWikiHtml());
