@@ -3197,7 +3197,9 @@ $a('btnLinkAccount').onclick = () => {
   showAuthOverlay(true);
 };
 $a('closeAuth').onclick = () => showAuthOverlay(false);
-$a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOverlay' && currentUser) showAuthOverlay(false); });
+let authMouseDownOnBackdrop = false;
+$a('authOverlay').addEventListener('mousedown', e => { authMouseDownOnBackdrop = (e.target.id === 'authOverlay'); });
+$a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOverlay' && authMouseDownOnBackdrop && currentUser) showAuthOverlay(false); });
 $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
 
 // au chargement : session déjà active ? sinon on démarre en invité (jamais de mur bloquant)
@@ -3230,7 +3232,9 @@ $a('btnMarket').onclick = () => {
   refreshMarketMine();
 };
 $a('closeMarket').onclick = () => $a('marketOverlay').classList.remove('open');
-$a('marketOverlay').addEventListener('click', e => { if (e.target.id === 'marketOverlay') $a('marketOverlay').classList.remove('open'); });
+let marketMouseDownOnBackdrop = false;
+$a('marketOverlay').addEventListener('mousedown', e => { marketMouseDownOnBackdrop = (e.target.id === 'marketOverlay'); });
+$a('marketOverlay').addEventListener('click', e => { if (e.target.id === 'marketOverlay' && marketMouseDownOnBackdrop) $a('marketOverlay').classList.remove('open'); });
 
 document.querySelectorAll('.mtab').forEach(btn => {
   btn.onclick = () => {
@@ -3506,6 +3510,11 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V31', name:{fr:'Correctif fermeture accidentelle', en:'Accidental close fix'}, fr:[
+      {t:'fix', tx:'Sélectionner du texte dans un champ (ex: le pseudo) puis relâcher la souris juste en dehors ne ferme plus tout le panneau par erreur (Mon compte, Marché, connexion)'},
+    ], en:[
+      {t:'fix', tx:'Selecting text in a field (e.g. nickname) and releasing the mouse just outside no longer closes the whole panel by mistake (My account, Market, login)'},
+    ] },
   { v:'V30', name:{fr:'Connexion Discord & pseudo', en:'Discord login & nickname'}, fr:[
       {t:'new',    tx:'Bouton "🎮 Se connecter avec Discord" — connexion directe, et ajout automatique au serveur Discord communautaire'},
       {t:'new',    tx:'Panneau "Mon compte" : les comptes email peuvent aussi connecter Discord (sans perdre leur compte existant)'},
@@ -3869,7 +3878,12 @@ function openInfo(title, bodyHtml) {
   $a('infoOverlay').classList.add('open');
 }
 $a('closeInfo').onclick = () => $a('infoOverlay').classList.remove('open');
-$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay') $a('infoOverlay').classList.remove('open'); });
+// ferme seulement si le clic ET l'appui initial (mousedown) sont bien sur le fond noir —
+// sinon, sélectionner du texte dans un champ (ex: le pseudo) et relâcher la souris un peu
+// hors du champ pouvait faire remonter le clic jusqu'au fond et fermer tout le panneau
+let infoMouseDownOnBackdrop = false;
+$a('infoOverlay').addEventListener('mousedown', e => { infoMouseDownOnBackdrop = (e.target.id === 'infoOverlay'); });
+$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) $a('infoOverlay').classList.remove('open'); });
 
 $a('btnWiki').onclick = () => {
   openInfo(LANG === 'fr' ? '📖 Wiki — règles du jeu' : '📖 Wiki — game rules', WIKI_CONTENT[LANG]);
