@@ -2126,6 +2126,12 @@ function renderEquipment() {
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
 }
+function pdSlotInnerHtml(id) {
+  const e = EQUIP[id];
+  return (e ? (e.icon || SLOT_ICON[id]) : SLOT_ICON[id]) +
+    (e && e.optimizable ? `<span class="enh">${ENH_NAMES[e.enhLv||0].replace(/\s.*/,'')}</span>`
+     : (e && e.ap ? `<span class="enh">+${e.ap}</span>` : ''));
+}
 function fillPdCol(colId, ids) {
   const col = $(colId);
   col.innerHTML = '';
@@ -2133,10 +2139,9 @@ function fillPdCol(colId, ids) {
     const e = EQUIP[id];
     const div = document.createElement('div');
     div.className = 'pdSlot ' + (e ? 'filled' : 'empty');
+    div.dataset.slot = id;
     div.title = SLOT_LABEL[id] + (e ? ' — ' + e.name : ' (vide)');
-    div.innerHTML = (e ? (e.icon || SLOT_ICON[id]) : SLOT_ICON[id]) +
-      (e && e.optimizable ? `<span class="enh">${ENH_NAMES[e.enhLv||0].replace(/\s.*/,'')}</span>`
-       : (e && e.ap ? `<span class="enh">+${e.ap}</span>` : ''));
+    div.innerHTML = pdSlotInnerHtml(id);
     div.onclick = ev => {
       ev.stopPropagation();
       if (e) showItemMenu(ev.clientX, ev.clientY, { equipped:true, slotId:id, ...e });
@@ -2145,6 +2150,18 @@ function fillPdCol(colId, ids) {
     div.ondblclick = ev => { ev.stopPropagation(); hideItemPop(); if (e) unequip(id); };
     col.appendChild(div);
   }
+}
+// mise à jour ciblée d'UNE seule case de la poupée d'équipement (icône/badge d'enchant),
+// sans reconstruire les ~13 cases + leurs gestionnaires d'événements ni redessiner le
+// canvas — utilisée après une tentative d'optimisation pour rester fluide même en
+// enchaînant les clics rapidement (avant ce correctif, chaque clic reconstruisait tout)
+function refreshEquipSlot(slotId) {
+  const div = document.querySelector('.pdSlot[data-slot="'+slotId+'"]');
+  if (!div) return;
+  const e = EQUIP[slotId];
+  div.className = 'pdSlot ' + (e ? 'filled' : 'empty');
+  div.title = SLOT_LABEL[slotId] + (e ? ' — ' + e.name : ' (vide)');
+  div.innerHTML = pdSlotInnerHtml(slotId);
 }
 
 function drawPreviewChar() {
@@ -2533,9 +2550,20 @@ $('btnOpt').onclick = () => {
       r.textContent = LANG==='fr' ? '✖ ÉCHEC — matériau perdu' : '✖ FAIL — material lost';
     }
     r.className = 'fail';
-    const card = $('optCard'); card.classList.remove('optShake'); void card.offsetWidth; card.classList.add('optShake');
+    // redémarre l'animation sans lecture forcée de layout (offsetWidth) — un simple retrait/ajout
+    // de classe suffit puisque le navigateur applique déjà les deux changements sur des frames
+    // séparées ; l'ancienne version forçait un reflow synchrone à CHAQUE tentative, ce qui devenait
+    // sensible en enchaînant les clics rapidement
+    const card = $('optCard'); card.classList.remove('optShake');
+    requestAnimationFrame(() => card.classList.add('optShake'));
   }
-  renderEquipment(); refreshStatsOnly(); renderOptimization();
+  // mise à jour ciblée (voir refreshEquipSlot) au lieu de tout reconstruire (poupée + canvas) à
+  // chaque tentative — gardait le jeu fluide même en spammant le bouton d'optimisation
+  refreshEquipSlot(optTargetSlot);
+  if (optTargetSlot === 'weapon') drawPreviewChar(); // seule la lueur du bâton en dépend visuellement
+  $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
+  $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
+  refreshStatsOnly(); renderOptimization();
 };
 
 // suggestion : quelle pièce optimiser en priorité pour atteindre la zone suivante
@@ -3137,12 +3165,6 @@ async function openAccountPanel() {
       <tbody>${refRows}</tbody>
     </table>
 
-    <h3>💬 Discord</h3>
-    <p class="mHint">${LANG==='fr'
-      ? 'Génère un code, puis tape <code>/lier CODE</code> dans le salon Discord pour lier ton compte (code valable 10 min).'
-      : 'Generate a code, then type <code>/lier CODE</code> in the Discord server to link your account (code valid 10 min).'}</p>
-    <button id="btnGenLinkCode">${LANG==='fr'?'🔗 Générer un code':'🔗 Generate a code'}</button>
-    <div id="linkCodeBox" style="display:none"></div>
   `;
   openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', html);
   $a('btnSavePseudo').onclick = async () => {
@@ -3166,13 +3188,6 @@ async function openAccountPanel() {
     const { error } = await sb.rpc('apply_referral_code', { p_code: val });
     if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
     msg.textContent = LANG==='fr'?'Code appliqué !':'Code applied!'; msg.className = 'ok';
-  };
-  $a('btnGenLinkCode').onclick = async () => {
-    const { data, error } = await sb.rpc('ensure_link_code');
-    const box = $a('linkCodeBox');
-    box.style.display = '';
-    if (error) { box.textContent = error.message; return; }
-    box.innerHTML = `<div id="refCodeBox">${data}</div>`;
   };
 }
 $a('btnAccount').onclick = openAccountPanel;
@@ -3510,6 +3525,13 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
+  { v:'V32', name:{fr:'Nettoyage & fix latence optimisation', en:'Cleanup & enhancement lag fix'}, fr:[
+      {t:'change', tx:'Retiré le système de code à générer pour lier Discord dans "Mon compte" (remplacé par le bouton "Connecter Discord" en un clic)'},
+      {t:'fix',    tx:'Correctif de performance important : chaque tentative d\'optimisation reconstruisait toute la poupée d\'équipement et redessinait le portrait, causant une latence perceptible en spammant le bouton — ne met désormais à jour que la pièce concernée'},
+    ], en:[
+      {t:'change', tx:'Removed the code-generation system for linking Discord in "My account" (replaced by the one-click "Connect Discord" button)'},
+      {t:'fix',    tx:'Major performance fix: every enhancement attempt rebuilt the entire equipment paperdoll and redrew the character portrait, causing noticeable lag when spamming the button — now only updates the affected piece'},
+    ] },
   { v:'V31', name:{fr:'Correctif fermeture accidentelle', en:'Accidental close fix'}, fr:[
       {t:'fix', tx:'Sélectionner du texte dans un champ (ex: le pseudo) puis relâcher la souris juste en dehors ne ferme plus tout le panneau par erreur (Mon compte, Marché, connexion)'},
     ], en:[
