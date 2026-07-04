@@ -92,6 +92,14 @@ begin
   new.best_item_count := least(greatest(coalesce(new.best_item_count,0), 0), 100000000);
   if v_before is distinct from new.best_item_count then perform public.notify_cheat_discord(new.user_id, 'best_item_count', v_before, new.best_item_count); end if;
 
+  -- Trésor de Velia : la chance la plus haute des 5 morceaux est 0.01% (voir VELIA_TREASURE côté
+  -- client) — même en jouant sans interruption pendant des mois, quelques dizaines de milliers de
+  -- morceaux cumulés est déjà extrême ; borne large pour laisser de la marge sans autoriser un
+  -- compteur absurde
+  v_before := coalesce(new.treasure_count,0);
+  new.treasure_count := least(greatest(coalesce(new.treasure_count,0), 0), 1000000);
+  if v_before is distinct from new.treasure_count then perform public.notify_cheat_discord(new.user_id, 'treasure_count', v_before, new.treasure_count); end if;
+
   -- le temps de jeu ne peut pas dépasser le temps écoulé depuis la création du compte (+ marge)
   begin
     select created_at into v_created from auth.users where id = new.user_id;

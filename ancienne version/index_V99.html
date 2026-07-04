@@ -1592,15 +1592,6 @@ const S = {
   castMult: 1, hpMax: 100, lootRadius: 26,
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
-  // baseline (silverEarned/kills au début de LA SESSION EN COURS), pour calculer un vrai "silver/h"
-  // et "kills/min" de session — S.silverEarned et S.kills sont des compteurs À VIE (achievements
-  // "gagne X silver au total" etc.) et ne doivent jamais être réinitialisés au chargement d'une
-  // sauvegarde. C'est S.startTime qui posait problème : restauré tel quel depuis le cloud, il ne
-  // correspond plus au performance.now() de la NOUVELLE page, ce qui pouvait diviser un
-  // silverEarned à vie énorme par un temps quasi nul → chiffre astronomique (faux positif
-  // anti-triche confirmé le 2026-07-06). Corrigé en réinitialisant startTime + ces baselines à
-  // chaque chargement (voir applySaveState).
-  silverEarnedAtLoad: 0, killsAtLoad: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
@@ -1884,8 +1875,6 @@ const ACHIEVEMENTS = [
   { id:'gear_1',       icon:'⚙️', name:{fr:'Nouvel équipement',   en:'New gear'},            desc:{fr:'Trouve ta première pièce d\'équipement',    en:'Find your first piece of gear'},           statFn:S=>S.gearDropCount||0,    target:1,               reward:800 },
   { id:'playtime_1h',  icon:'⏱️', name:{fr:'Habitué',             en:'Regular'},             desc:{fr:'Joue pendant 1 heure au total',             en:'Play for a total of 1 hour'},              statFn:S=>S.playtimeSec,         target:3600,            reward:1500 },
   { id:'playtime_10h', icon:'⏱️', name:{fr:'Dévoué',              en:'Dedicated'},           desc:{fr:'Joue pendant 10 heures au total',           en:'Play for a total of 10 hours'},            statFn:S=>S.playtimeSec,         target:36000,           reward:12000 },
-  { id:'treasure_1',   icon:'🗺️', name:{fr:'Chercheur de trésor', en:'Treasure seeker'},     desc:{fr:'Trouve ton premier morceau du Trésor de Velia', en:'Find your first Velia Treasure piece'},  statFn:S=>treasureTotal(S),      target:1,               reward:5000 },
-  { id:'treasure_10',  icon:'🗺️', name:{fr:'Chasseur de trésor',  en:'Treasure hunter'},     desc:{fr:'Trouve 10 morceaux du Trésor de Velia (tous types)', en:'Find 10 Velia Treasure pieces (any type)'}, statFn:S=>treasureTotal(S), target:10,              reward:30000 },
 ];
 // catégories de succès (demande utilisateur : silver, butin, temps de jeu, exploration,
 // équipement — + combat pour les kills)
@@ -1896,14 +1885,12 @@ const ACH_CATS = {
   playtime:    { icon:'⏱️', label:{fr:'Temps de jeu',en:'Playtime'} },
   exploration: { icon:'🗺️', label:{fr:'Exploration',en:'Exploration'} },
   equipment:   { icon:'🛡️', label:{fr:'Équipement',en:'Equipment'} },
-  treasure:    { icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'} },
 };
 function achCat(id) {
   if (id === 'first_kill' || id.startsWith('kills')) return 'combat';
   if (id.startsWith('loot')) return 'butin';
   if (id.startsWith('silver')) return 'silver';
   if (id.startsWith('playtime')) return 'playtime';
-  if (id.startsWith('treasure')) return 'treasure';
   if (id.startsWith('zone')) return 'exploration';
   return 'equipment'; // gs_*, enh_*, jackpot_1, gear_1
 }
@@ -3557,39 +3544,13 @@ function rollGearDrop(zone, alpha) {
 // Trésor de Velia — catégorie EXPÉRIMENTALE ("TEST"), identique dans TOUTES les zones de Velia
 // (pas de scaling par zone/palier), demande explicite du 2026-07-06. Pas encore de recette/usage :
 // juste des collectibles pour l'instant, d'où le badge "TEST" dans la table de loot.
-// chances RE-précisées en % explicite le 2026-07-06 (0.01% = 0.0001, pas 0.01 = 1% comme
-// interprété la première fois) : 100× plus rares qu'à l'origine
 const VELIA_TREASURE = [
-  { name:'Bout du trésor de Velia 1', ch:.0001,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
-  { name:'Bout du trésor de Velia 1', ch:.00001,  icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
-  { name:'Trésor de Velia 1',         ch:.00001,  icon:'🗺️', color:'#e8c96a', key:'treasure_velia1' },
-  { name:'Trésor de Velia 2',         ch:.000001, icon:'🗺️', color:'#e8c96a', key:'treasure_velia2' },
-  { name:'Trésor de Velia 3',         ch:.0000001,icon:'🗺️', color:'#e8c96a', key:'treasure_velia3' },
+  { name:'Bout du trésor de Velia 1', ch:.01,    icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
+  { name:'Bout du trésor de Velia 1', ch:.001,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
+  { name:'Trésor de Velia 1',         ch:.001,   icon:'🗺️', color:'#e8c96a', key:'treasure_velia1' },
+  { name:'Trésor de Velia 2',         ch:.0001,  icon:'🗺️', color:'#e8c96a', key:'treasure_velia2' },
+  { name:'Trésor de Velia 3',         ch:.00001, icon:'🗺️', color:'#e8c96a', key:'treasure_velia3' },
 ];
-// total de morceaux du Trésor de Velia ramassés À VIE (lifetime, via S.lootByItem) — utilisé par
-// les succès et le classement dédié
-function treasureTotal(S) {
-  let total = 0;
-  for (const t of new Set(VELIA_TREASURE.map(x => x.name))) total += S.lootByItem[t] || 0;
-  return total;
-}
-// affiche un % avec juste assez de décimales pour rester lisible même sur des chances minuscules
-// (ex: 0.00001%) — toFixed(1) fixe habituel afficherait juste "0.0%"
-function fmtTinyPct(ch) {
-  const pct = ch * 100;
-  if (pct <= 0) return '0%';
-  const decimals = Math.min(8, Math.max(1, Math.ceil(-Math.log10(pct)) + 1));
-  return pct.toFixed(decimals) + '%';
-}
-// rythme de kills/min de référence pour évaluer le temps moyen d'obtention des trésors côté admin
-// (voir panneau admin > Trésor de Velia) — comparable au "Kills/min" affiché en jeu (stKpm)
-const ADMIN_TREASURE_KPM_REF = 15;
-function fmtDurationMin(min) {
-  if (min < 60) return Math.round(min) + ' min';
-  const hours = min / 60;
-  if (hours < 24) return hours.toFixed(1) + ' h';
-  return (hours/24).toFixed(1) + ' j';
-}
 function rollDrops(wp, alpha, lm) {
   const zone = Z(), L = zone.loot;
   const zk = zoneIdx; // pour rendre les clés uniques par zone
@@ -4385,8 +4346,8 @@ function refreshStatsOnly() {
   $('stKills').textContent = S.kills;
   $('stLoot').textContent = S.lootCount;
   const mins = (performance.now()-S.startTime)/60000;
-  $('stKpm').textContent = mins>.1 ? ((S.kills-(S.killsAtLoad||0))/mins).toFixed(1) : '—';
-  $('shRate').textContent = mins>.1 ? fmt((S.silverEarned-(S.silverEarnedAtLoad||0))/(mins/60))+' silver/h' : '— silver/h';
+  $('stKpm').textContent = mins>.1 ? (S.kills/mins).toFixed(1) : '—';
+  $('shRate').textContent = mins>.1 ? fmt(S.silverEarned/(mins/60))+' silver/h' : '— silver/h';
   const zb = $('zoneBadge');
   if (atVelia) {
     zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
@@ -5293,7 +5254,7 @@ function renderLootTable(previewIdx) {
     <div class="lootRow">
       <div class="lootIcon k-treasure" style="color:${t.color};border-color:${t.color}">${t.icon}</div>
       <div class="lootInfo"><div class="ln" style="color:${t.color}">${tr(t.name)}</div></div>
-      <div class="lootPct">${fmtTinyPct(t.ch)}</div>
+      <div class="lootPct">${(t.ch*100).toFixed(t.ch < .01 ? 4 : 1)}%</div>
     </div>`).join('');
   $('lootTable').innerHTML = mainRowsHtml +
     `<div class="lootCatHead">🧪 TEST</div>` + testRowsHtml;
@@ -5373,12 +5334,6 @@ function getSaveState() {
 function applySaveState(data) {
   if (!data || data.version !== 1) return false;
   Object.assign(S, data.S);
-  // repart sur une base FRAÎCHE pour les stats de SESSION (silver/h, kills/min) — voir le
-  // commentaire sur silverEarnedAtLoad/killsAtLoad plus haut ; corrige le faux positif anti-triche
-  // du 2026-07-06 (silver_per_hour astronomique juste après le chargement d'une sauvegarde)
-  S.startTime = performance.now();
-  S.silverEarnedAtLoad = S.silverEarned || 0;
-  S.killsAtLoad = S.kills || 0;
   Object.keys(EQUIP).forEach(k => EQUIP[k] = data.EQUIP[k] ?? null);
   for (let i = 0; i < INV_SIZE; i++) INV[i] = data.INV[i] ?? null;
   zoneIdx = data.zoneIdx || 0;
@@ -5672,10 +5627,8 @@ async function saveToCloud() {
 async function syncPlayerStats() {
   if (!sb || !currentUser || isGuest()) return; // classement réservé aux comptes vérifiés
   const mins = (performance.now() - S.startTime) / 60000;
-  const silverPerHour = mins > .1 ? Math.round((S.silverEarned-(S.silverEarnedAtLoad||0)) / (mins/60)) : 0;
+  const silverPerHour = mins > .1 ? Math.round(S.silverEarned / (mins/60)) : 0;
   const best = bestFarmedItem();
-  // total de morceaux du "Trésor de Velia" ramassés À VIE — sert au classement dédié "🗺️ Trésors"
-  const treasureCount = treasureTotal(S);
   try {
     await sb.from('player_stats').upsert({
       user_id: currentUser.id,
@@ -5689,7 +5642,6 @@ async function syncPlayerStats() {
       playtime_sec: Math.round(S.playtimeSec),
       best_item_name: best ? best.name : '',
       best_item_count: best ? best.count : 0,
-      treasure_count: treasureCount,
       updated_at: new Date().toISOString(),
     });
   } catch(e) { /* pas grave, prochaine synchro rattrapera */ }
@@ -5860,22 +5812,6 @@ async function openAdminPanel() {
       <table class="admTable">
         <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
         <tbody>${wealthHtml}</tbody>
-      </table>` },
-    { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'},
-      // nombre moyen de monstres à tuer pour chaque morceau (1/chance) + estimation de temps à un
-      // rythme de référence — demande explicite du 2026-07-06, pour évaluer la rareté en pratique
-      body: `<div class="admSummary">${LANG==='fr'
-        ? `Estimation à ${ADMIN_TREASURE_KPM_REF} kills/min (compare à ton propre "Kills/min" affiché en jeu)`
-        : `Estimate at ${ADMIN_TREASURE_KPM_REF} kills/min (compare to your own in-game "Kills/min")`}</div>
-      <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Chance/kill':'Chance/kill'}</th>
-          <th>${LANG==='fr'?'Kills en moyenne':'Avg kills'}</th><th>${LANG==='fr'?'Temps estimé':'Est. time'}</th></tr></thead>
-        <tbody>${VELIA_TREASURE.map(t => {
-          const avgKills = Math.round(1/t.ch);
-          const avgMin = avgKills / ADMIN_TREASURE_KPM_REF;
-          return `<tr><td><span style="color:${t.color}">${t.icon}</span> ${tr(t.name)}</td><td>${fmtTinyPct(t.ch)}</td>` +
-            `<td>${fmt(avgKills)}</td><td>${fmtDurationMin(avgMin)}</td></tr>`;
-        }).join('')}</tbody>
       </table>` },
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
@@ -6102,7 +6038,7 @@ function rankRows(rows, valueFn, fmtFn) {
   const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
   return sorted.map((r,i) => `
     <tr class="${r.user_id===currentUser?.id ? 'isYou' : ''}">
-      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}</span> ${staleTag(r)}</td><td>${fmtFn(r)}</td>
+      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${r.display_name||'?'}</span> ${staleTag(r)}</td><td>${fmtFn(r)}</td>
     </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 }
 // clic sur un pseudo du classement : ouvre son stuff en lecture seule (demande explicite — voir
@@ -6377,8 +6313,6 @@ async function openLeaderboard() {
       rows: rankRows(rows, r => Number(r.silver_per_hour||0), r => `${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}`) },
     { id:'item', icon:'🎯', label:{fr:'Meilleur objet',en:'Best item'}, col:{fr:'Objet (qté)',en:'Item (qty)'},
       rows: rankRows(rows.filter(r => r.best_item_name), r => Number(r.best_item_count||0), r => `${tr(r.best_item_name)} (${fmt(r.best_item_count||0)})`) },
-    { id:'treasure', icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, col:{fr:'Morceaux',en:'Pieces'},
-      rows: rankRows(rows, r => Number(r.treasure_count||0), r => fmt(r.treasure_count||0)) },
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `
@@ -6460,7 +6394,7 @@ async function openAccountPanel() {
   try { const { data } = await sb.rpc('get_my_referrals'); referrals = data || []; } catch(e) {}
 
   const refRows = referrals.map(r => `
-    <tr><td>${escapeHtml(r.display_name||'?')}</td><td>${r.lvl}</td><td>${fmt(r.gearscore)}</td><td>${fmt(r.silver)}</td></tr>
+    <tr><td>${r.display_name}</td><td>${r.lvl}</td><td>${fmt(r.gearscore)}</td><td>${fmt(r.silver)}</td></tr>
   `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun filleul pour l\'instant':'No referrals yet'}</td></tr>`;
 
   const rules = LANG==='fr' ? [
@@ -6921,23 +6855,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V100', d:'06/07/2026 16:00', name:{fr:'Corrections, sécurité & classement Trésors', en:'Fixes, security & Treasure leaderboard'}, fr:[
-      {t:'fix',     tx:'Corrigé le faux positif anti-triche "silver_per_hour astronomique" juste après le chargement d\'une sauvegarde (le calcul utilisait un compteur à vie divisé par un temps de session erroné)'},
-      {t:'fix',     tx:'Les chances du Trésor de Velia étaient 100× trop généreuses (0.01 interprété comme 1% au lieu de 0.01%) — corrigées'},
-      {t:'exploit', tx:'Corrigé 2 failles XSS trouvées en audit : le pseudo affiché dans le Classement et dans la liste de filleuls n\'était pas échappé (un pseudo malveillant pouvait exécuter du code chez les autres joueurs qui le consultaient)'},
-      {t:'new',     tx:'Nouveau classement "🗺️ Trésors" (nombre de morceaux du Trésor de Velia ramassés à vie)'},
-      {t:'new',     tx:'2 nouveaux succès "Chercheur/Chasseur de trésor"'},
-      {t:'new',     tx:'Panneau admin : estimation du nombre moyen de monstres à tuer (et du temps) pour chaque morceau du Trésor de Velia'},
-      {t:'change',  tx:'Wiki, codex et succès mis à jour pour refléter le Trésor de Velia, les zones groupées par palier et le boss Kzarka partagé'},
-    ], en:[
-      {t:'fix',     tx:'Fixed the "astronomical silver_per_hour" anti-cheat false positive right after loading a save (the calculation used a lifetime counter divided by a broken session time)'},
-      {t:'fix',     tx:'Velia Treasure chances were 100× too generous (0.01 read as 1% instead of 0.01%) — corrected'},
-      {t:'exploit', tx:'Fixed 2 XSS flaws found in an audit: the displayed pseudo in the Leaderboard and referral list wasn\'t escaped (a malicious pseudo could run code for other players viewing it)'},
-      {t:'new',     tx:'New "🗺️ Treasures" leaderboard (lifetime Velia Treasure pieces collected)'},
-      {t:'new',     tx:'2 new "Treasure seeker/hunter" achievements'},
-      {t:'new',     tx:'Admin panel: average number of monsters to kill (and time) for each Velia Treasure piece'},
-      {t:'change',  tx:'Wiki, codex and achievements updated to reflect the Velia Treasure, tier-grouped zones and the shared Kzarka boss'},
-    ] },
   { v:'V99', d:'06/07/2026 14:00', name:{fr:'Nouvel inventaire "Trésors"', en:'New "Treasures" inventory'}, fr:[
       {t:'new', tx:'Nouvel onglet d\'inventaire dédié "🗺️ Trésors" pour ranger les objets du Trésor de Velia séparément du reste'},
     ], en:[
@@ -7814,13 +7731,7 @@ const WIKI_SECTIONS = [
         <li>Le loot suit le pire des deux ratios</li>
       </ul>
       <h3>Loot progressif</h3>
-      <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>
-      <h3>Zones groupées par palier de stuff</h3>
-      <p>Les 11 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
-      <h3>Trésor de Velia (catégorie TEST)</h3>
-      <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 5 objets collectibles très rares (0,01% à 0,00001% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
-      <h3>Boss mondial partagé</h3>
-      <p>Le Kzarka du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a désormais des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène.</p>`,
+      <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>`,
     en:`<h3>AP / DP per zone (like the real game)</h3>
       <p>Every zone has a <b>required AP</b> and <b>required DP</b>. The two stats play separate roles:</p>
       <ul>
@@ -7830,13 +7741,7 @@ const WIKI_SECTIONS = [
         <li>Loot follows the worse of the two ratios</li>
       </ul>
       <h3>Progressive loot</h3>
-      <p>Drop rates are <b>intentionally decreasing</b> zone by zone: very generous early (up to 55%), very rare at endgame (under 3%).</p>
-      <h3>Zones grouped by gear tier</h3>
-      <p>The 11 Velia zones are grouped by gear tier (Naru/grey, Tuvala/white, Yuria/green, Grunil/blue) — the header and border color match the gear color found there, same as in the inventory.</p>
-      <h3>Velia Treasure (TEST category)</h3>
-      <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 5 very rare collectibles (0.01% to 0.00001% per kill), stored in their own 🗺️ inventory tab. Still experimental: no recipe or use yet.</p>
-      <h3>Shared world boss</h3>
-      <p>The scheduled Kzarka (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) now has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena.</p>` },
+      <p>Drop rates are <b>intentionally decreasing</b> zone by zone: very generous early (up to 55%), very rare at endgame (under 3%).</p>` },
   { id:'enh', icon:'✦', label:{fr:'Optimisation',en:'Enhancement'},
     fr:`<h3>Enchantement</h3>
       <p>+1 à +7 toujours réussi. <b>+8 à +15</b> sont probabilistes (45% → 5%) et peuvent rétrograder en cas d'échec, mais jamais sous +7.</p>
@@ -7901,22 +7806,10 @@ function renderCodexHtml() {
   const crafts = [...craftSet.values()].map(c => ({ icon:'✦', name:tr(c.name), desc:LANG==='fr'?'Composant de craft endgame':'Endgame crafting component' }));
   // butin de base (trash → silver)
   const trash = ZONES.map((z,i) => ({ icon:'▬', name:tr(z.loot.trash.name), desc:`${fmt(z.loot.trash.val)} silver · ${tr(z.mob)}` }));
-  // Trésor de Velia (catégorie TEST) : dédoublonne les 2 lignes "Bout du trésor de Velia 1" en
-  // affichant leurs 2 chances côte à côte plutôt que 2 lignes identiques
-  const treasureByName = new Map();
-  VELIA_TREASURE.forEach(t => {
-    if (!treasureByName.has(t.name)) treasureByName.set(t.name, []);
-    treasureByName.get(t.name).push(t.ch);
-  });
-  const treasures = [...treasureByName.entries()].map(([name, chs]) => {
-    const t = VELIA_TREASURE.find(x => x.name === name);
-    return { icon:t.icon, name:tr(name), desc:`${LANG==='fr'?'TEST — toutes zones de Velia':'TEST — all Velia zones'} · ${chs.map(fmtTinyPct).join(' / ')}` };
-  });
   return `<div class="admSummary">${LANG==='fr'?'Tous les objets actuellement présents dans le jeu.':'All items currently in the game.'}</div>` +
     section(LANG==='fr'?'💎 Bijoux rares':'💎 Rare jewelry', jewels) +
     section(LANG==='fr'?'◈ Matériaux d\'optimisation':'◈ Enhancement materials', mats) +
     section(LANG==='fr'?'✦ Composants de craft':'✦ Crafting components', crafts) +
-    section(LANG==='fr'?'🗺️ Trésor de Velia (test)':'🗺️ Velia Treasure (test)', treasures) +
     section(LANG==='fr'?'▬ Butin de base':'▬ Base loot', trash);
 }
 // page Wiki "Tutoriel" : résumé + bouton pour relancer le tutoriel d'arrivée à Velia à tout moment

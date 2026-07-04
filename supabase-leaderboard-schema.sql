@@ -18,6 +18,7 @@ create table if not exists player_stats (
   best_item_name text not null default '',
   best_item_count bigint not null default 0,
   lvl int not null default 1,
+  treasure_count bigint not null default 0,
   updated_at timestamptz not null default now()
 );
 
@@ -25,6 +26,8 @@ create table if not exists player_stats (
 alter table player_stats add column if not exists best_item_name text not null default '';
 alter table player_stats add column if not exists best_item_count bigint not null default 0;
 alter table player_stats add column if not exists lvl int not null default 1;
+-- total de morceaux du "Trésor de Velia" ramassés à vie (classement dédié) — demande du 2026-07-06
+alter table player_stats add column if not exists treasure_count bigint not null default 0;
 
 alter table player_stats enable row level security;
 
