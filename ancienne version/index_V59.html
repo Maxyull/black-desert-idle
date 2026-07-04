@@ -383,9 +383,6 @@
     letter-spacing:1px; padding:2px 6px; border-radius:2px; flex-shrink:0;
   }
   #userPseudo { color:var(--gold); font-weight:bold; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  #uuidRow { display:flex; align-items:center; gap:5px; font-size:9.5px; color:var(--ink-dim); margin-top:2px; }
-  #uuidRow code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; color:var(--ink); }
-  #btnCopyUuid { width:auto; margin:0; padding:1px 5px; font-size:11px; flex-shrink:0; }
   #btnResetDemo, #btnResetAllQuests { border-color:var(--danger) !important; color:#e8a89f; }
   #btnResetDemo:hover, #btnResetAllQuests:hover { background:rgba(192,85,69,.15); }
 
@@ -396,10 +393,6 @@
   .admSection .admActions { border-bottom:none; padding-bottom:0; margin-bottom:8px; }
   .admSection .admBossSpawn { border-bottom:none; padding-bottom:0; margin-bottom:0; }
   .admHint { font-size:10px; color:var(--danger); font-style:italic; }
-  .modRow { display:flex; align-items:center; gap:8px; padding:4px 2px; border-bottom:1px solid #232128; font-size:11px; }
-  .modPseudo { color:var(--gold); font-weight:bold; flex-shrink:0; }
-  .modUuid { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; font-size:9.5px; color:var(--ink-dim); }
-  .modRemBtn { width:auto; margin:0; padding:2px 8px; font-size:10px; flex-shrink:0; border-color:var(--danger); color:#e8a89f; }
   .admActions { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; }
   .admActions button { width:auto; flex:1; min-width:140px; margin:0; }
   .admBossSpawn { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; font-size:12px; }
@@ -1001,12 +994,6 @@
     <button id="btnLinkAccount" data-i18n="btnLinkAccount" style="display:none">🔗 Lier un compte</button>
     <button id="btnLogout" data-i18n="btnLogout">🚪 Déconnexion</button>
     <span id="saveStatus"></span>
-
-    <div id="uuidRow" style="display:none">
-      <span id="uuidLabel">UUID</span>
-      <code id="uuidValue"></code>
-      <button id="btnCopyUuid" title="Copier">📋</button>
-    </div>
 
     <div id="adminBox" style="display:none">
       <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
@@ -4369,12 +4356,6 @@ function updateUserBar() {
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
   $a('btnLogout').style.display = isGuest() ? 'none' : '';
   $a('adminBox').style.display = isAdmin() ? '' : 'none';
-  // UUID copiable (utile pour l'ajout de modérateurs) — affiché pour tout compte connecté
-  const uuidRow = $a('uuidRow');
-  if (uuidRow) {
-    uuidRow.style.display = currentUser ? 'flex' : 'none';
-    if (currentUser) $a('uuidValue').textContent = currentUser.id;
-  }
   updatePseudoDisplay();
   if (typeof updateChatInputVisibility === 'function') { updateChatInputVisibility(); fetchChatMessages(); }
 }
@@ -4716,19 +4697,10 @@ async function openAdminPanel() {
         <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (15 min)':'Launch (15 min)'}</button>
       </div>
       <div class="admHint">${LANG==='fr'?'⚠️ Ces actions affectent TOUS les joueurs.':'⚠️ These actions affect ALL players.'}</div>
-    </div>
-    <div class="admSection">
-      <div class="admSectionTitle">🛡️ ${LANG==='fr'?'Modérateurs (chat)':'Moderators (chat)'}</div>
-      <div class="admBossSpawn">
-        <input type="text" id="admModUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
-        <button id="btnAddMod">${LANG==='fr'?'➕ Ajouter MOD':'➕ Add MOD'}</button>
-      </div>
-      <div id="admModList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
     </div>`;
   openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
   applyI18n();
   wireCatTabs();
-  refreshModList();
   // --- pour moi ---
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; S.silver += 1000000; S.silverEarned += 1000000; refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
   $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; S.loyalty=(S.loyalty||0)+200; mailboxAdd('loyalty', LANG==='fr'?'Point de fidélité':'Loyalty Point', '🏅', 200); updateMailBadge(); };
@@ -4752,33 +4724,6 @@ async function openAdminPanel() {
       : (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓'), { gold:!error, hurt:!!error });
     if (!error) refreshLiveBoss();
   };
-  // --- modérateurs ---
-  $a('btnAddMod').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    const uuid = $a('admModUuid').value.trim();
-    if (!uuid) return;
-    const { error } = await sb.rpc('admin_add_mod', { p_user_id: uuid });
-    if (error) { $a('admModList').insertAdjacentHTML('afterbegin', `<div class="admHint">${error.message}</div>`); return; }
-    $a('admModUuid').value = '';
-    refreshModList();
-  };
-}
-// liste les modérateurs actuels avec un bouton "Retirer" pour chacun
-async function refreshModList() {
-  const el = $a('admModList'); if (!el || !sb) return;
-  const { data, error } = await sb.rpc('admin_list_mods');
-  if (error) { el.innerHTML = `<div class="admHint">${error.message}</div>`; return; }
-  if (!data || !data.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun modérateur':'No moderators'}</div>`; return; }
-  el.innerHTML = data.map(m =>
-    `<div class="modRow"><span class="modPseudo">${escapeHtml(m.pseudo || (LANG==='fr'?'(sans pseudo)':'(no nickname)'))}</span>` +
-    `<code class="modUuid">${m.user_id}</code>` +
-    `<button class="modRemBtn" data-uuid="${m.user_id}">${LANG==='fr'?'Retirer':'Remove'}</button></div>`).join('');
-  el.querySelectorAll('.modRemBtn').forEach(btn => {
-    btn.onclick = async () => {
-      const { error } = await sb.rpc('admin_remove_mod', { p_user_id: btn.dataset.uuid });
-      if (!error) refreshModList();
-    };
-  });
 }
 $a('btnAdmin').onclick = openAdminPanel;
 
@@ -5069,11 +5014,6 @@ $a('btnSignIn').onclick = doSignIn;
 $a('btnSignUp').onclick = doSignUp;
 $a('btnSignInDiscord').onclick = doSignInDiscord;
 $a('btnLogout').onclick = doLogout;
-$a('btnCopyUuid').onclick = async () => {
-  if (!currentUser) return;
-  try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
-  const b = $a('btnCopyUuid'); b.textContent = '✓'; setTimeout(() => b.textContent = '📋', 1200);
-};
 $a('btnLinkAccount').onclick = () => {
   // précise que "Se connecter" reprend un compte EXISTANT (contrairement à "Créer un
   // compte" qui démarre une nouvelle progression) — source de confusion signalée en test
@@ -5405,13 +5345,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V60', d:'04/07/2026 02:19', name:{fr:'UUID copiable & gestion des modérateurs', en:'Copyable UUID & moderator management'}, fr:[
-      {t:'new', tx:'Ton UUID de joueur s\'affiche sous les infos de connexion, avec un bouton 📋 pour le copier'},
-      {t:'new', tx:'Zone Admin : section Modérateurs — ajouter un MOD par UUID, voir la liste des modérateurs et en retirer un à tout moment'},
-    ], en:[
-      {t:'new', tx:'Your player UUID is shown below the connection info, with a 📋 button to copy it'},
-      {t:'new', tx:'Admin Zone: Moderators section — add a MOD by UUID, see the moderator list and remove one at any time'},
-    ] },
   { v:'V59', d:'04/07/2026 02:13', name:{fr:'Boutons équiper/vendre déplacés dans l\'inventaire', en:'Equip/sell buttons moved into inventory'}, fr:[
       {t:'change', tx:'Les boutons "⚡ Équiper le meilleur (socle)" et "🗑️ Vendre les objets inférieurs ou égaux" sont déplacés dans la carte Inventaire (avec les outils) — plus besoin de faire défiler jusqu\'à l\'équipement'},
     ], en:[

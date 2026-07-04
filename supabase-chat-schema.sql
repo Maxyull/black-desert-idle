@@ -112,3 +112,33 @@ end;
 $$;
 
 grant execute on function public.delete_chat_message(bigint) to authenticated;
+
+-- ============================================================
+-- Gestion des modérateurs (admin) : ajouter/retirer un MOD par UUID, lister les MODs.
+-- Toutes vérifient l'email admin côté serveur.
+-- ============================================================
+create or replace function public.admin_add_mod(p_user_id uuid)
+returns void language plpgsql security definer as $$
+begin
+  if coalesce(auth.jwt()->>'email','') is distinct from 'maxime.lacoste@icloud.com' then raise exception 'Réservé au staff'; end if;
+  if not exists (select 1 from auth.users where id = p_user_id) then raise exception 'UUID inconnu'; end if;
+  insert into public.chat_mods (user_id) values (p_user_id) on conflict (user_id) do nothing;
+end; $$;
+grant execute on function public.admin_add_mod(uuid) to authenticated;
+
+create or replace function public.admin_remove_mod(p_user_id uuid)
+returns void language plpgsql security definer as $$
+begin
+  if coalesce(auth.jwt()->>'email','') is distinct from 'maxime.lacoste@icloud.com' then raise exception 'Réservé au staff'; end if;
+  delete from public.chat_mods where user_id = p_user_id;
+end; $$;
+grant execute on function public.admin_remove_mod(uuid) to authenticated;
+
+create or replace function public.admin_list_mods()
+returns table(user_id uuid, pseudo text) language plpgsql security definer as $$
+begin
+  if coalesce(auth.jwt()->>'email','') is distinct from 'maxime.lacoste@icloud.com' then raise exception 'Réservé au staff'; end if;
+  return query select m.user_id, p.pseudo from public.chat_mods m
+    left join public.profiles p on p.user_id = m.user_id order by p.pseudo nulls last;
+end; $$;
+grant execute on function public.admin_list_mods() to authenticated;
