@@ -1827,7 +1827,6 @@ const S = {
   // anti-triche confirmé le 2026-07-06). Corrigé en réinitialisant startTime + ces baselines à
   // chaque chargement (voir applySaveState).
   silverEarnedAtLoad: 0, killsAtLoad: 0,
-  bestKpm: 0, // record personnel de kills/min À VIE (voir refreshStatsOnly) — sert au classement "🏹 Record kills/min"
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
@@ -4884,12 +4883,7 @@ function refreshStatsOnly() {
   $('stKills').textContent = S.kills;
   $('stLoot').textContent = S.lootCount;
   const mins = (performance.now()-S.startTime)/60000;
-  const kpmNow = mins>.1 ? (S.kills-(S.killsAtLoad||0))/mins : 0;
-  $('stKpm').textContent = mins>.1 ? kpmNow.toFixed(1) : '—';
-  // record kills/min : on exige au moins 2 min de session pour éviter qu'un petit échantillon
-  // bruité (ex: 3 kills en 5 secondes juste après un chargement) ne fausse le record à vie —
-  // même précaution que le faux positif silver_per_hour corrigé le 2026-07-06
-  if (mins > 2 && kpmNow > (S.bestKpm||0)) S.bestKpm = kpmNow;
+  $('stKpm').textContent = mins>.1 ? ((S.kills-(S.killsAtLoad||0))/mins).toFixed(1) : '—';
   $('shRate').textContent = mins>.1 ? fmt((S.silverEarned-(S.silverEarnedAtLoad||0))/(mins/60))+' silver/h' : '— silver/h';
   const zb = $('zoneBadge');
   if (atVelia) {
@@ -6242,7 +6236,6 @@ async function syncPlayerStats() {
       best_item_count: best ? best.count : 0,
       treasure_count: treasureCount,
       loyalty: Math.round(S.loyalty||0),
-      best_kpm: Math.round((S.bestKpm||0)*10)/10,
       updated_at: new Date().toISOString(),
     });
   } catch(e) { /* pas grave, prochaine synchro rattrapera */ }
@@ -6468,16 +6461,15 @@ async function openAdminPanel() {
     <tr>
       <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
       <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td><td>${p.lvl||1}</td>
-      <td title="${LANG==='fr'?'Record personnel de kills/min (à vie)':'Personal kills/min record (lifetime)'}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
       <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
-      <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${LANG==='fr'?'Ouvre l\'équipement porté et le sac complet (192 cases) de ce joueur, en lecture seule, dans une nouvelle fenêtre':'Opens this player\'s equipped gear and full bag (192 slots), read-only, in a new window'}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
-    </tr>`).join('') || `<tr><td colspan="8" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+      <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
+    </tr>`).join('') || `<tr><td colspan="7" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
   const loadingHtml = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   const cats = [
     { id:'players', icon:'👥', label:{fr:'Joueurs',en:'Players'},
       body: `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered`}</div>
       <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
+        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th></th><th></th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>` },
     { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'}, body: loadingHtml },
@@ -7109,8 +7101,6 @@ async function openLeaderboard() {
       rows: rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—')) },
     { id:'sh', icon:'⏱️', label:{fr:'Silver/heure',en:'Silver/hour'}, col:{fr:'Taux (zone)',en:'Rate (zone)'},
       rows: rankRows(rows, r => Number(r.silver_per_hour||0), r => `${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}`) },
-    { id:'kpm', icon:'🏹', label:{fr:'Record kills/min',en:'Kills/min record'}, col:{fr:'Kills/min',en:'Kills/min'},
-      rows: rankRows(rows, r => Number(r.best_kpm||0), r => `${(r.best_kpm||0).toFixed(1)}/min · ${tr(r.best_zone_name||'—')}`) },
     { id:'item', icon:'🎯', label:{fr:'Meilleur objet',en:'Best item'}, col:{fr:'Objet (qté)',en:'Item (qty)'},
       rows: rankRows(rows.filter(r => r.best_item_name), r => Number(r.best_item_count||0), r => `${tr(r.best_item_name)} (${fmt(r.best_item_count||0)})`) },
     { id:'treasure', icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, col:{fr:'Morceaux',en:'Pieces'},
@@ -7936,13 +7926,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V118', d:'07/07/2026 20:00', name:{fr:'Record kills/min (classement + admin), tooltip inventaire', en:'Kills/min record (leaderboard + admin), inventory tooltip'}, fr:[
-      {t:'new', tx:'Nouveau record personnel "🏹 Kills/min" (à vie) : visible dans un nouveau classement dédié ET dans la liste des joueurs du panneau admin. Le record ne se met à jour qu\'après 2 min de session pour éviter qu\'un petit échantillon bruité ne le fausse'},
-      {t:'change', tx:'Ajout d\'une infobulle sur le bouton "🎒 Inventaire" du panneau admin, expliquant ce qu\'il ouvre (équipement + sac complet en lecture seule, dans une nouvelle fenêtre)'},
-    ], en:[
-      {t:'new', tx:'New personal "🏹 Kills/min" (lifetime) record: shown in a new dedicated leaderboard AND in the admin panel\'s player list. The record only updates after 2 min of session to avoid a noisy small sample skewing it'},
-      {t:'change', tx:'Added a tooltip on the admin panel\'s "🎒 Inventory" button, explaining what it opens (gear + full bag, read-only, in a new window)'},
-    ] },
   { v:'V117', d:'07/07/2026 19:00', name:{fr:'Refonte panneau Admin : rôles fusionnés, suivi du silver', en:'Admin panel refresh: merged roles, silver tracking'}, fr:[
       {t:'fix', tx:'Corrigé le rendu disgracieux du bouton "↩️ Racheter" superposé sur "Vendre" (bordures qui se chevauchaient) : le groupe entier porte maintenant une seule bordure/dégradé, les 2 boutons à l\'intérieur sont transparents avec un simple séparateur'},
       {t:'change', tx:'Section admin "Rembourser un clic Vendre mat" retirée : "Vendre mat." est verrouillé 🔒 (pas encore en jeu), ce bouton n\'avait donc plus lieu d\'être'},

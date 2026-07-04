@@ -28,6 +28,11 @@ alter table player_stats add column if not exists best_item_count bigint not nul
 alter table player_stats add column if not exists lvl int not null default 1;
 -- total de morceaux du "Trésor de Velia" ramassés à vie (classement dédié) — demande du 2026-07-06
 alter table player_stats add column if not exists treasure_count bigint not null default 0;
+-- points de fidélité "Loyalties" (voir S.loyalty) — ajouté le 2026-07-07, colonne manquante de ce
+-- schéma de référence (créée directement en base lors d'une session précédente)
+alter table player_stats add column if not exists loyalty bigint not null default 0;
+-- record personnel de kills/min à vie (classement "Record kills/min" + onglet admin) — 2026-07-07
+alter table player_stats add column if not exists best_kpm numeric not null default 0;
 
 alter table player_stats enable row level security;
 
