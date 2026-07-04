@@ -134,9 +134,6 @@
   #potSelect .psName { color:var(--ink); }
   #potSelect .psHeal { color:#8fc98a; font-size:10px; }
   #potSelect .psCost { color:var(--gold); font-variant-numeric:tabular-nums; flex-shrink:0; font-size:10.5px; }
-  #potThreshRow { display:flex; align-items:center; gap:7px; padding:4px 5px 8px; border-bottom:1px solid #2c2a33; margin-bottom:4px; font-size:10.5px; color:var(--ink-dim); }
-  #potThreshRow input[type=range] { flex:1; accent-color:var(--gold); }
-  #potThreshVal { color:var(--gold); font-variant-numeric:tabular-nums; width:32px; text-align:right; flex-shrink:0; }
   #psTag { position:absolute; bottom:14px; right:14px; font-size:12px; color:#9cc9e8; text-shadow:0 1px 2px #000; text-align:right; }
 
   #panel {
@@ -1481,7 +1478,6 @@ const S = {
   loyalty: 0, lastLoyaltyDate: null, mailbox: [],
   potionType: 'medium', // 'small'/'medium'/'large'/'mega' = potions payantes ; 'infinite' = gratuite (débloquée plus tard)
   farmMode: 'loot', // 'loot' = ramasse tout avant le pack suivant ; 'xp' = enchaîne les packs sans se soucier du loot
-  potionThreshold: 0.5, // % de PV en dessous duquel l'IA boit une potion automatiquement (réglable via le slider)
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -2977,11 +2973,7 @@ function usePotion() {
 // combat — le soin affiché (en PV) dépend de ses PV max actuels, mis à jour à chaque ouverture
 function renderPotSelect() {
   const el = $('potSelect'); if (!el) return;
-  const threshPct = Math.round((S.potionThreshold ?? 0.5) * 100);
-  const threshRow = `<div id="potThreshRow"><span>${LANG==='fr'?'Boire sous':'Drink under'}</span>` +
-    `<input type="range" id="potThreshSlider" min="5" max="95" step="5" value="${threshPct}">` +
-    `<span id="potThreshVal">${threshPct}%</span></div>`;
-  const rows = POTION_ORDER.map(key => {
+  el.innerHTML = POTION_ORDER.map(key => {
     const p = POTIONS[key];
     const healHp = Math.round(effHpMax()*p.heal);
     return `<div class="psRow${S.potionType===key?' sel':''}" data-pot="${key}">` +
@@ -2989,13 +2981,9 @@ function renderPotSelect() {
       `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${fmt(healHp)} PV (${Math.round(p.heal*100)}%)</span></span>` +
       `<span class="psCost">${fmt(p.cost)} 🪙</span></div>`;
   }).join('');
-  el.innerHTML = threshRow + rows;
   el.querySelectorAll('.psRow').forEach(row => {
     row.onclick = e => { e.stopPropagation(); S.potionType = row.dataset.pot; el.classList.remove('show'); };
   });
-  const slider = $('potThreshSlider');
-  slider.oninput = e => { e.stopPropagation(); S.potionThreshold = Number(slider.value)/100; $('potThreshVal').textContent = slider.value+'%'; };
-  slider.onclick = e => e.stopPropagation();
 }
 function togglePotSelect(e) {
   e.stopPropagation();
@@ -3015,7 +3003,7 @@ function fsm(dt) {
 
   P.potCd = Math.max(0, P.potCd-dt);
   const tier = hpTier();
-  if ((P.hp/effHpMax()) <= (S.potionThreshold ?? 0.5) && P.potCd <= 0) usePotion();
+  if ((tier==='prudent'||tier==='urgence') && P.potCd <= 0) usePotion();
   if (tier==='urgence' && teleportCd <= 0 && target && !target.dead) {
     doTeleport(P.x-target.x, P.y-target.y);
     teleportCd = 0; doTeleport(P.x-target.x, P.y-target.y);
@@ -6029,11 +6017,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V74', d:'04/07/2026 13:15', name:{fr:'Seuil de potion réglable', en:'Adjustable potion threshold'}, fr:[
-      {t:'new', tx:'Nouveau curseur dans le sélecteur de potion : règle le % de PV en dessous duquel une potion est bue automatiquement (5% à 95%)'},
-    ], en:[
-      {t:'new', tx:'New slider in the potion selector: sets the HP % below which a potion is drunk automatically (5% to 95%)'},
-    ] },
   { v:'V73', d:'04/07/2026 12:30', name:{fr:'PV/potions en %, confirmation de vente, remboursement admin', en:'HP/potion %, sell confirmation, admin refund'}, fr:[
       {t:'new', tx:'La barre de vie du personnage affiche maintenant le % de PV, et le sélecteur de potion affiche le % de soin en plus du chiffre'},
       {t:'new', tx:'Une confirmation est désormais demandée avant toute vente (objet, tas, tout le rebut, tous les matériaux)'},
