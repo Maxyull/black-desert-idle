@@ -878,18 +878,6 @@
   .catTab.chan-mondial.active { border-color:#9cc9e8; color:#9cc9e8; }
   .catTab.chan-trade.active { border-color:#8fc98a; color:#8fc98a; }
   .catTab.chan-annonce.active { border-color:var(--gold); color:var(--gold); }
-  /* halo "non lu" sur l'onglet d'un canal qu'on ne regarde pas actuellement */
-  #chatWidget .catTab.unread { border-color:#e0a840; animation:chatTabHalo 1.3s ease-in-out infinite; }
-  @keyframes chatTabHalo {
-    0%,100% { box-shadow:0 0 4px 1px rgba(224,168,64,.5); }
-    50% { box-shadow:0 0 9px 3px rgba(224,168,64,.9); }
-  }
-  /* halo temporaire sur un message tout juste arrivé (pas encore "digéré" par le prochain fetch) */
-  .chatMsg.newMsg { animation:chatMsgHalo 1.3s ease-in-out infinite; border-radius:3px; }
-  @keyframes chatMsgHalo {
-    0%,100% { box-shadow:0 0 3px 1px rgba(224,168,64,.35); }
-    50% { box-shadow:0 0 8px 2px rgba(224,168,64,.8); }
-  }
   #chatMessages {
     height:400px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;
     padding-right:2px; margin-bottom:6px;
@@ -5735,21 +5723,17 @@ const CHAT_CHANNELS = [
   { id:'modéré',  icon:'🛡️', label:{fr:'Modéré',en:'Moderated'}, staff:true }, // journal des messages supprimés (admin/mods)
 ];
 let chatChannel = 'mondial', chatFolded = false, chatPollTimer = null;
-let chatLastRead = {}; // channel -> ISO du dernier message vu (sert au halo "non lu")
-let chatUnread = {};   // channel -> true si des messages sont arrivés depuis qu'on ne le regarde plus
 function chatVisibleChannels() { return CHAT_CHANNELS.filter(c => !c.staff || isAdmin() || myIsMod); }
 function renderChatTabs() {
   const el = $a('chatTabs'); if (!el) return;
   const chans = chatVisibleChannels();
   if (!chans.some(c => c.id === chatChannel)) chatChannel = 'mondial'; // canal caché → repli
-  el.innerHTML = chans.map(c => `<button class="catTab chan-${c.id==='modéré'?'annonce':c.id}${c.id===chatChannel?' active':''}${chatUnread[c.id]?' unread':''}" data-chan="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
+  el.innerHTML = chans.map(c => `<button class="catTab chan-${c.id==='modéré'?'annonce':c.id}${c.id===chatChannel?' active':''}" data-chan="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   el.querySelectorAll('.catTab').forEach(btn => {
     btn.onclick = () => {
       chatChannel = btn.dataset.chan;
-      chatUnread[chatChannel] = false;
       el.querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      btn.classList.remove('unread');
       updateChatInputVisibility();
       fetchChatMessages();
     };
@@ -5790,7 +5774,7 @@ function fmtChatTimestamp(iso) {
   const sameDay = d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
   return sameDay ? hhmm : (d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+' '+hhmm);
 }
-function renderChatMessages(msgs, sinceTs) {
+function renderChatMessages(msgs) {
   const el = $a('chatMessages'); if (!el) return;
   const canDelete = isAdmin() || myIsMod; // admin ET modérateurs peuvent supprimer
   el.innerHTML = msgs.length ? msgs.map(m => {
@@ -5802,10 +5786,7 @@ function renderChatMessages(msgs, sinceTs) {
     // canal Annonce : seulement le rôle (badge), pas de pseudo — juste le message en rouge
     const pseudoHtml = chatChannel === 'annonce' ? '' :
       `<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':(LANG==='fr'?'Joueur':'Player')))}</span> `;
-    // halo temporaire sur les messages arrivés depuis la dernière lecture de CE canal —
-    // demande explicite : "un halo sur le message que tu n'as pas encore lu"
-    const isNew = sinceTs && new Date(m.created_at) > new Date(sinceTs);
-    return `<div class="chatMsg chan-${chatChannel}${isNew?' newMsg':''}">${del}` +
+    return `<div class="chatMsg chan-${chatChannel}">${del}` +
       `${badge}${pseudoHtml}<span class="chatText">${escapeHtml(m.message)}</span>` +
       `<span class="chatTime">${fmtChatTimestamp(m.created_at)}</span></div>`;
   }).join('')
@@ -5828,30 +5809,7 @@ async function fetchChatMessages() {
   const { data, error } = await sb.from('chat_messages').select('id, pseudo, message, role, created_at')
     .eq('channel', chatChannel).order('created_at', { ascending:false }).limit(50);
   if (error) return;
-  const msgs = (data||[]).slice().reverse();
-  const prevLastRead = chatLastRead[chatChannel]; // avant mise à jour : sert à souligner les nouveaux messages
-  renderChatMessages(msgs, prevLastRead);
-  if (msgs.length) chatLastRead[chatChannel] = msgs[msgs.length-1].created_at;
-  if (chatUnread[chatChannel]) { chatUnread[chatChannel] = false; renderChatTabs(); }
-}
-// vérifie s'il y a des messages non lus dans les canaux qu'on ne regarde PAS actuellement (ou
-// si le chat est replié) : halo sur l'onglet du canal — demande explicite "montrer qu'un message
-// n'a pas été lu dans un channel où tu n'es pas"
-async function pollChatUnread() {
-  if (!sb || !currentUser || isGuest()) return;
-  for (const c of chatVisibleChannels()) {
-    if (c.id === 'modéré') continue; // pas de notion de "non lu" pour le journal modéré
-    if (c.id === chatChannel && !chatFolded) continue; // canal actif et déplié : déjà tenu à jour par fetchChatMessages
-    try {
-      const { data } = await sb.from('chat_messages').select('created_at')
-        .eq('channel', c.id).order('created_at', { ascending:false }).limit(1);
-      const last = data && data[0] && data[0].created_at;
-      if (!last) continue;
-      if (!chatLastRead[c.id]) { chatLastRead[c.id] = last; continue; } // 1ère fois : juste une base, pas un "non lu"
-      if (new Date(last) > new Date(chatLastRead[c.id])) chatUnread[c.id] = true;
-    } catch (e) {}
-  }
-  renderChatTabs();
+  renderChatMessages((data||[]).slice().reverse());
 }
 // journal "modéré" : messages supprimés (staff uniquement) — on affiche le pseudo, l'UUID de
 // l'auteur, le message d'origine et le canal, pour tracer la modération
@@ -5895,8 +5853,6 @@ $a('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendCh
 renderChatTabs();
 updateChatInputVisibility();
 setInterval(fetchChatMessages, 5000);
-setInterval(pollChatUnread, 5000);
-pollChatUnread();
 async function openLeaderboard() {
   if (!marketRequireAuth()) return;
   const { data, error } = await sb.from('player_stats').select('*').limit(500);
@@ -6429,13 +6385,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V86', d:'05/07/2026 01:00', name:{fr:'Chat : halo messages non lus', en:'Chat: unread message halo'}, fr:[
-      {t:'new', tx:'Halo sur l\'onglet d\'un canal de chat où un nouveau message est arrivé pendant que tu ne le regardais pas'},
-      {t:'new', tx:'Halo temporaire sur les messages tout juste arrivés quand tu ouvres/regardes le canal'},
-    ], en:[
-      {t:'new', tx:'Halo on a chat channel tab when a new message arrives while you\'re not viewing it'},
-      {t:'new', tx:'Temporary halo on messages that just arrived when you open/view the channel'},
-    ] },
   { v:'V85', d:'05/07/2026 00:00', name:{fr:'Canal Annonce : rôle seul + message en rouge', en:'Announcement channel: role only + red message'}, fr:[
       {t:'change', tx:'Dans le canal Annonce, le pseudo n\'est plus affiché : seul le badge de rôle (ADMIN) apparaît, et le message est en rouge'},
     ], en:[
