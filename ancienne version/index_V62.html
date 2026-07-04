@@ -384,14 +384,8 @@
   }
   #userPseudo { color:var(--gold); font-weight:bold; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #uuidRow { display:flex; align-items:center; gap:5px; font-size:9.5px; color:var(--ink-dim); margin-top:2px; }
-  #uuidLabel { flex-shrink:0; }
-  /* toute la case UUID est un bouton "copier" cliquable */
-  #btnCopyUuid {
-    display:flex; align-items:center; gap:6px; flex:1; min-width:0; width:auto; margin:0;
-    padding:3px 7px; font-size:10px; text-align:left; cursor:pointer;
-  }
-  #btnCopyUuid code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; color:var(--ink); }
-  #uuidCopyHint { flex-shrink:0; color:var(--gold); font-weight:bold; white-space:nowrap; }
+  #uuidRow code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; color:var(--ink); }
+  #btnCopyUuid { width:auto; margin:0; padding:1px 5px; font-size:11px; flex-shrink:0; }
   #btnResetDemo, #btnResetAllQuests { border-color:var(--danger) !important; color:#e8a89f; }
   #btnResetDemo:hover, #btnResetAllQuests:hover { background:rgba(192,85,69,.15); }
 
@@ -930,19 +924,6 @@
   #bossResult .brTitle.win { color:var(--gold); }
   #bossResult .brRewards { font-size:14px; color:var(--ink); }
   #bossResult button { width:auto; padding:8px 24px; font-size:13px; }
-  /* classement de contribution du world boss partagé (top 10 en direct) */
-  #bossTopPanel {
-    display:none; position:absolute; top:52px; right:10px; width:200px; max-height:60%;
-    background:rgba(10,8,14,.82); border:1px solid var(--gold-dim); border-radius:6px;
-    padding:8px; overflow-y:auto; z-index:5;
-  }
-  #bossTopPanel.show { display:block; }
-  #bossTopPanel h4 { margin:0 0 6px; font-size:11px; color:var(--gold); letter-spacing:.5px; }
-  #bossTopPanel .btpRow { display:flex; align-items:center; gap:6px; font-size:10.5px; padding:2px 0; }
-  #bossTopPanel .btpRow.me { color:var(--gold); font-weight:bold; }
-  #bossTopPanel .btpRank { flex-shrink:0; width:16px; color:var(--ink-dim); }
-  #bossTopPanel .btpPseudo { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  #bossTopPanel .btpDmg { flex-shrink:0; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
 </style>
 </head>
 <body>
@@ -1027,13 +1008,9 @@
 
     <div id="uuidRow" style="display:none">
       <span id="uuidLabel">UUID</span>
-      <button id="btnCopyUuid" title="Cliquer pour copier">
-        <code id="uuidValue"></code>
-        <span id="uuidCopyHint">📋 <span data-i18n="copyLabel">Copier</span></span>
-      </button>
+      <code id="uuidValue"></code>
+      <button id="btnCopyUuid" title="Copier">📋</button>
     </div>
-
-    <button id="btnTester" style="display:none">🧪 <span data-i18n="btnTester">Tester</span></button>
 
     <div id="adminBox" style="display:none">
       <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
@@ -1116,7 +1093,6 @@
         <button id="bossLeaveBtn">✕</button>
       </div>
       <canvas id="bossCv" width="1280" height="720"></canvas>
-      <div id="bossTopPanel"><h4 data-i18n="bossTopTitle">🏆 Top contributeurs</h4><div id="bossTopList"></div></div>
       <div id="bossPlayerHpWrap"><div id="bossPlayerHp"></div><span id="bossPlayerHpTxt"></span></div>
       <div id="bossResult"></div>
     </div>
@@ -1774,10 +1750,9 @@ async function refreshLiveBoss() {
   if (!sb) return;
   const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
   try {
-    const { data } = await sb.from('live_boss').select('boss_id, spawned_at, expires_at, hp, max_hp').eq('id', 1).maybeSingle();
+    const { data } = await sb.from('live_boss').select('boss_id, spawned_at, expires_at').eq('id', 1).maybeSingle();
     if (data && data.boss_id && BOSS_ROSTER[data.boss_id] && new Date(data.expires_at).getTime() > Date.now()) {
-      liveBoss = { boss: data.boss_id, time: new Date(data.spawned_at).getTime(), expires: new Date(data.expires_at).getTime(),
-                   hp: Number(data.hp||0), maxHp: Number(data.max_hp||0) };
+      liveBoss = { boss: data.boss_id, time: new Date(data.spawned_at).getTime(), expires: new Date(data.expires_at).getTime() };
     } else liveBoss = null;
   } catch (e) {}
   updateNextBossMini();
@@ -1792,7 +1767,7 @@ async function refreshLiveBoss() {
 }
 function nextBossOccurrence() {
   // un spawn global admin encore valide passe avant tout
-  if (liveBoss && liveBoss.expires > Date.now()) return { boss: liveBoss.boss, time: liveBoss.time, live: true, sharedHp: true };
+  if (liveBoss && liveBoss.expires > Date.now()) return { boss: liveBoss.boss, time: liveBoss.time, live: true };
   const occ = bossOccurrences(new Date());
   return occ.find(o => o.live) || occ[0] || null;
 }
@@ -1930,14 +1905,12 @@ function renderBossLobbyHtml() {
 function wireBossLobby() {
   const btn = $a('bossFightBtn');
   const occ = nextBossOccurrence();
-  if (btn && !btn.disabled && occ) btn.onclick = () => startBossFight(occ.boss, !!occ.sharedHp);
+  if (btn && !btn.disabled && occ) btn.onclick = () => startBossFight(occ.boss);
 }
 
 // ---- combat de boss : plein écran, canvas dédié, boucle rAF indépendante du farm ----
 const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:0, playerHp:0, playerHpMax:0, hits:[], last:0, raf:0, potCd:0, ended:false,
-  px:0.5, py:0.85, pillars:[], aoePhase:'idle', aoeT:0, aoeInterval:9, blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
-  // ---- world boss PARTAGÉ (spawn admin) : PV communs à tous, contribution reportée au serveur ----
-  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0 };
+  px:0.5, py:0.85, pillars:[], aoePhase:'idle', aoeT:0, aoeInterval:9, blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[] };
 // 4 piliers de la salle (coords normalisées 0..1) — on se cache DERRIÈRE (en dessous) pour éviter l'AoE
 const BOSS_PILLARS = [{x:.28,y:.44},{x:.72,y:.44},{x:.28,y:.72},{x:.72,y:.72}];
 const BOSS_ATTACK_POS = {x:0.5, y:0.60}; // position où le héros frappe le boss entre deux AoE
@@ -1950,62 +1923,30 @@ function playerBossDps() {
   if (!_skillDpsSum) _skillDpsSum = SKILLS.filter(s => s.dmg).reduce((a,s) => a + s.dmg/s.cd, 0);
   return Math.max(1, apEff() * _skillDpsSum);
 }
-function startBossFight(bossId, isShared) {
+function startBossFight(bossId) {
   const b = BOSS_ROSTER[bossId];
-  // boss PARTAGÉ (spawn admin, PV communs) : les PV/durée viennent du serveur (liveBoss), pas du stuff perso
-  const shared = !!isShared && liveBoss && liveBoss.expires > Date.now();
-  const hp = shared ? liveBoss.hp : b.hp;
-  const maxHp = shared ? liveBoss.maxHp : b.hp;
-  const rawDur = b.hp / playerBossDps();           // durée "naturelle" selon ton stuff (boss solo uniquement)
+  const rawDur = b.hp / playerBossDps();           // durée "naturelle" selon ton stuff
   const duration = Math.max(120, Math.min(540, rawDur)); // clampée à [2 min, 9 min]
   Object.assign(bossState, {
-    active:true, ended:false, boss:b, hp, maxHp, duration, elapsed:0,
+    active:true, ended:false, boss:b, hp:b.hp, maxHp:b.hp, duration, elapsed:0,
     playerHp: S.hpMax, playerHpMax: S.hpMax, hits:[], last:performance.now(), potCd:0,
     px:0.5, py:0.85, pillars:BOSS_PILLARS.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
-    shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0,
   });
   currentActivity = 'boss'; renderActivityTabs();
   setFarmViewVisible(false);
   $('bossRoom').classList.remove('lobby'); $('bossRoom').classList.add('open', 'fight');
   $('bossResult').classList.remove('show');
-  $('bossName').textContent = b.name[LANG] + (shared ? ' 🌐' : '');
-  $('bossTopPanel').classList.toggle('show', shared);
-  if (shared) refreshBossTop();
+  $('bossName').textContent = b.name[LANG];
   resizeBossCanvas();
   bossState.raf = requestAnimationFrame(bossLoop);
-}
-// classement de contribution en direct (top 10 affiché + rang du joueur s'il est hors classement)
-async function refreshBossTop() {
-  if (!sb || !bossState.shared) return;
-  try {
-    const { data } = await sb.rpc('boss_top');
-    bossState.topList = data || [];
-    renderBossTop();
-  } catch (e) {}
-}
-function renderBossTop() {
-  const el = $('bossTopList'); if (!el) return;
-  const list = bossState.topList.slice(0, 10);
-  if (!list.length) { el.innerHTML = `<div class="btpRow">${LANG==='fr'?'Sois le premier !':'Be the first!'}</div>`; return; }
-  el.innerHTML = list.map((r,i) =>
-    `<div class="btpRow${currentUser && r.user_id===currentUser.id?' me':''}"><span class="btpRank">#${i+1}</span>` +
-    `<span class="btpPseudo">${escapeHtml(r.pseudo||'?')}</span><span class="btpDmg">${fmt(Math.round(r.damage))}</span></div>`).join('');
 }
 function resizeBossCanvas() {
   const cv = $('bossCv');
   cv.width = cv.clientWidth || 1280;
   cv.height = cv.clientHeight || 600;
 }
-// multiplicateur de récompense selon le RANG de contribution (boss partagé) : plus haut dans le
-// top, plus la récompense est intéressante — cf demande "plus t'es haut plus la recompense est interessante"
-function bossRankMultiplier(rank) {
-  if (rank === 1) return 3;
-  if (rank <= 3) return 2;
-  if (rank <= 10) return 1.4;
-  return 1; // hors du top 10 : récompense de base pour avoir participé
-}
-async function endBossFight(win) {
+function endBossFight(win) {
   if (bossState.ended) return;
   bossState.ended = true;
   bossState.active = false;
@@ -2013,20 +1954,10 @@ async function endBossFight(win) {
   const b = bossState.boss;
   let rewardsHtml = '';
   if (win) {
-    let mult = 1, rank = null;
-    if (bossState.shared && sb) {
-      try {
-        const { data } = await sb.rpc('boss_claim');
-        rank = (typeof data === 'number' && data > 0) ? data : null;
-        if (rank) mult = bossRankMultiplier(rank);
-      } catch (e) {}
-    }
-    const reward = Math.round(b.reward * mult);
-    S.silver += reward; S.silverEarned += reward;
-    const qty = Math.max(1, Math.round((b.matQty[0] + Math.floor(Math.random()*(b.matQty[1]-b.matQty[0]+1))) * mult));
+    S.silver += b.reward; S.silverEarned += b.reward;
+    const qty = b.matQty[0] + Math.floor(Math.random()*(b.matQty[1]-b.matQty[0]+1));
     invAdd({ key:b.matKey, name:b.matName, kind:'material', icon:b.matIcon, color:'#c9c9c9', qty, stackable:true, weight:0.1, val:5 });
-    const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
-    rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${qty} × ${b.matName}</div>`;
+    rewardsHtml = `<div class="brRewards">+${fmt(b.reward)} 🪙<br>+${qty} × ${b.matName}</div>`;
     refreshStatsOnly(); hud();
   }
   $('bossResult').innerHTML =
@@ -2041,24 +1972,10 @@ function bossLoop(now) {
   if (!bossState.active) return;
   const dt = Math.min(.05, (now - bossState.last)/1000); bossState.last = now;
   bossState.elapsed += dt;
-  // dégâts au boss : boss solo → linéaires sur la durée choisie ; boss PARTAGÉ → DPS réel du joueur,
-  // reporté périodiquement au serveur qui tient les PV communs à tous les joueurs
-  const dps = bossState.shared ? playerBossDps() : (bossState.maxHp / bossState.duration);
+  // dégâts au boss : linéaires sur la durée choisie (barre qui descend régulièrement), avec de
+  // légers à-coups visuels via des "hits" ponctuels
+  const dps = bossState.maxHp / bossState.duration;
   bossState.hp = Math.max(0, bossState.hp - dps*dt);
-  if (bossState.shared) {
-    bossState.contribAccum += dps*dt; bossState.myDmg += dps*dt;
-    bossState.contribCd -= dt; bossState.topCd -= dt;
-    if (bossState.contribCd <= 0 && bossState.contribAccum > 0) {
-      bossState.contribCd = 1.2;
-      const dmg = bossState.contribAccum; bossState.contribAccum = 0;
-      sb.rpc('boss_contribute', { p_damage: dmg, p_pseudo: myPseudo || null }).then(({ data, error }) => {
-        if (error || !data || !data.length) return;
-        // état AUTORITAIRE renvoyé par le serveur (inclut les dégâts de tous les autres joueurs)
-        bossState.hp = Number(data[0].hp); bossState.maxHp = Number(data[0].max_hp) || bossState.maxHp;
-      }).catch(()=>{});
-    }
-    if (bossState.topCd <= 0) { bossState.topCd = 4; refreshBossTop(); }
-  }
   if (Math.random() < dt*4) { // ~4 impacts/s
     const crit = Math.random() < .2;
     bossState.hits.push({ x:.5+(Math.random()-.5)*.3, y:.4+(Math.random()-.5)*.15, life:1, dmg:dps*(crit?1.6:.7), crit });
@@ -2111,11 +2028,10 @@ function bossLoop(now) {
   const hpPct = bossState.hp/bossState.maxHp*100;
   $('bossHpBar').style.width = hpPct+'%';
   $('bossHpTxt').textContent = fmt(Math.ceil(bossState.hp))+' / '+fmt(bossState.maxHp);
-  $('bossTimer').textContent = bossState.shared ? fmtBossCountdown(bossState.expiresAt - Date.now()) : fmtBossCountdown((bossState.duration - bossState.elapsed)*1000);
+  $('bossTimer').textContent = fmtBossCountdown((bossState.duration - bossState.elapsed)*1000);
   $('bossPlayerHp').style.width = (bossState.playerHp/bossState.playerHpMax*100)+'%';
   $('bossPlayerHpTxt').textContent = Math.ceil(bossState.playerHp)+' / '+bossState.playerHpMax+' PV';
   if (bossState.hp <= 0) { endBossFight(true); return; }
-  if (bossState.shared && Date.now() > bossState.expiresAt) { endBossFight(false); return; }
   bossState.raf = requestAnimationFrame(bossLoop);
 }
 // ===== salle de boss ORIGINALE (art dessiné, aucun asset réel) : salle de pierre à 4 piliers,
@@ -4426,14 +4342,6 @@ const BOT_API_URL = 'https://black-desert-idle-discord-bot.onrender.com';
 const BOT_API_SECRET = 'TON-SECRET-PARTAGE';
 let myPseudo = null; // pseudo effectif du joueur courant, mis en cache après connexion
 let myIsMod = false; // le joueur courant est-il modérateur (table chat_mods) ? — pour afficher les ✕ de suppression
-let myIsTester = false; // le joueur courant est-il testeur (table testers) ? — accès au panneau Tester
-async function refreshMyTesterStatus() {
-  myIsTester = false;
-  if (sb && currentUser && !isGuest()) {
-    try { const { data } = await sb.from('testers').select('user_id').eq('user_id', currentUser.id).maybeSingle(); myIsTester = !!data; } catch (e) {}
-  }
-  const b = $a('btnTester'); if (b) b.style.display = myIsTester ? '' : 'none';
-}
 async function refreshMyModStatus() {
   myIsMod = false;
   if (!sb || !currentUser || isGuest()) { if (typeof renderChatTabs==='function') renderChatTabs(); return; }
@@ -4587,7 +4495,6 @@ async function onAuthed(user) {
   updateUserBar();
   await refreshMyPseudo();
   refreshMyModStatus();
-  refreshMyTesterStatus();
   await loadCloudSave();
   startAutoCloudSave();
   heartbeatPresence();
@@ -4836,27 +4743,11 @@ async function openAdminPanel() {
         <button id="btnAddMod">${LANG==='fr'?'➕ Ajouter MOD':'➕ Add MOD'}</button>
       </div>
       <div id="admModList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
-    </div>
-    <div class="admSection">
-      <div class="admSectionTitle">🧪 ${LANG==='fr'?'Testeurs (avant-première)':'Testers (early access)'}</div>
-      <div class="admBossSpawn">
-        <input type="text" id="admTesterUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
-        <button id="btnAddTester">${LANG==='fr'?'➕ Ajouter Testeur':'➕ Add Tester'}</button>
-      </div>
-      <div id="admTesterList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
     </div>`;
   openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
   applyI18n();
   wireCatTabs();
   refreshModList();
-  refreshTesterList();
-  $a('btnAddTester').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    const uuid = $a('admTesterUuid').value.trim(); if (!uuid) return;
-    const { error } = await sb.rpc('admin_add_tester', { p_user_id: uuid });
-    if (error) { $a('admTesterList').insertAdjacentHTML('afterbegin', `<div class="admHint">${error.message}</div>`); return; }
-    $a('admTesterUuid').value = ''; refreshTesterList();
-  };
   // --- pour moi ---
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; S.silver += 1000000; S.silverEarned += 1000000; refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
   $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; S.loyalty=(S.loyalty||0)+200; mailboxAdd('loyalty', LANG==='fr'?'Point de fidélité':'Loyalty Point', '🏅', 200); updateMailBadge(); };
@@ -4875,9 +4766,7 @@ async function openAdminPanel() {
   $a('btnAdmSpawnGlobal').onclick = async () => {
     if (!isAdmin() || !sb) return;
     const id = $a('admGlobalBossSelect').value;
-    // PV partagés = PV de base du boss × un multiplicateur (beaucoup de joueurs tapent dessus)
-    const sharedHp = (BOSS_ROSTER[id].hp || 400000) * 30;
-    const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 15, p_hp: sharedHp });
+    const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 15 });
     floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec — '+error.message:'Failed — '+error.message)
       : (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓'), { gold:!error, hurt:!!error });
     if (!error) refreshLiveBoss();
@@ -4910,44 +4799,7 @@ async function refreshModList() {
     };
   });
 }
-async function refreshTesterList() {
-  const el = $a('admTesterList'); if (!el || !sb) return;
-  const { data, error } = await sb.rpc('admin_list_testers');
-  if (error) { el.innerHTML = `<div class="admHint">${error.message}</div>`; return; }
-  if (!data || !data.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun testeur':'No testers'}</div>`; return; }
-  el.innerHTML = data.map(m =>
-    `<div class="modRow"><span class="modPseudo">${escapeHtml(m.pseudo || (LANG==='fr'?'(sans pseudo)':'(no nickname)'))}</span>` +
-    `<code class="modUuid">${m.user_id}</code>` +
-    `<button class="modRemBtn testerRemBtn" data-uuid="${m.user_id}">${LANG==='fr'?'Retirer':'Remove'}</button></div>`).join('');
-  el.querySelectorAll('.testerRemBtn').forEach(btn => {
-    btn.onclick = async () => {
-      const { error } = await sb.rpc('admin_remove_tester', { p_user_id: btn.dataset.uuid });
-      if (!error) refreshTesterList();
-    };
-  });
-}
 $a('btnAdmin').onclick = openAdminPanel;
-// panneau Testeur : accès aux fonctionnalités en avant-première, sans aucun avantage de jeu.
-// Pour l'instant, contenu limité (pêche/mine/etc. pas encore développés) — le panneau existe et
-// se remplira au fur et à mesure des nouveautés à tester.
-function openTesterPanel() {
-  if (!myIsTester) return;
-  const upcoming = [
-    { icon:'🎣', name:{fr:'Pêche',en:'Fishing'} },
-    { icon:'⛏️', name:{fr:'Mine',en:'Mining'} },
-    { icon:'🌲', name:{fr:'Forêt',en:'Forest'} },
-    { icon:'🌾', name:{fr:'Champs',en:'Fields'} },
-    { icon:'🐑', name:{fr:'Bergerie',en:'Ranch'} },
-  ];
-  const list = upcoming.map(a => `<div class="achRow inactive"><div class="achIcon">${a.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${LANG==='fr'?'En développement — bientôt en test':'In development — testable soon'}</div></div></div>`).join('');
-  openInfo(LANG==='fr'?'🧪 Panneau Testeur':'🧪 Tester Panel',
-    `<div class="admSummary">${LANG==='fr'
-      ? 'Merci de tester Velia Idle ! Ce panneau te donnera accès aux nouveautés en avant-première (sans aucun avantage en jeu — c\'est du test pur). Rien à tester pour l\'instant, mais voici ce qui arrive :'
-      : 'Thanks for testing Velia Idle! This panel gives you early access to new features (no in-game advantage — pure testing). Nothing to test yet, but here\'s what\'s coming:'}</div>` +
-    list);
-}
-$a('btnTester').onclick = openTesterPanel;
 
 // ---------- classement public (silver, gearscore, meilleure zone, silver/h, meilleur objet) ----------
 const STALE_MS = 10 * 60 * 1000; // au-delà de 10 min sans synchro, le stuff du joueur a pu changer entre-temps
@@ -5262,9 +5114,7 @@ $a('btnLogout').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {
   if (!currentUser) return;
   try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
-  const hint = $a('uuidCopyHint'); if (!hint) return;
-  hint.innerHTML = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
-  setTimeout(() => { hint.innerHTML = '📋 ' + (LANG==='fr'?'Copier':'Copy'); }, 1200);
+  const b = $a('btnCopyUuid'); b.textContent = '✓'; setTimeout(() => b.textContent = '📋', 1200);
 };
 $a('btnLinkAccount').onclick = () => {
   // précise que "Se connecter" reprend un compte EXISTANT (contrairement à "Créer un
@@ -5540,8 +5390,6 @@ const I18N = {
   btnDailyQuests: { fr:'🗒️ Quêtes', en:'🗒️ Quests' },
   btnMailbox: { fr:'📬 Courrier', en:'📬 Mailbox' },
   btnActivities: { fr:'Activités', en:'Activities' },
-  copyLabel: { fr:'Copier', en:'Copy' },
-  bossTopTitle: { fr:'🏆 Top contributeurs', en:'🏆 Top contributors' },
   bossPageTitle: { fr:'World Boss', en:'World Boss' },
   menuSideLeft: { fr:'◀ Gauche', en:'◀ Left' },
   menuSideRight: { fr:'Droite ▶', en:'Right ▶' },
@@ -5599,19 +5447,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V63', d:'04/07/2026 03:15', name:{fr:'World Boss partagé, rôle Testeur & bouton copier', en:'Shared World Boss, Tester role & copy button'}, fr:[
-      {t:'new', tx:'World Boss global : quand l\'admin lance un boss pour tous, les PV sont désormais PARTAGÉS entre tous les joueurs qui se battent — chaque coup porté par n\'importe qui fait baisser la même barre de vie'},
-      {t:'new', tx:'Classement de contribution en direct (top 10) affiché pendant le combat, avec le pseudo de chaque joueur et ses dégâts infligés'},
-      {t:'new', tx:'À la mort du boss, la récompense dépend de ton rang de contribution : plus tu es haut dans le classement, plus la récompense en argent et matériaux est intéressante (jusqu\'à ×3 pour le rang #1)'},
-      {t:'new', tx:'Nouveau rôle "Testeur" : accès à un panneau 🧪 Testeur listant les futures fonctionnalités (pêche, mine, forêt...) — aucun avantage de jeu, uniquement de la prévisualisation. Géré par l\'admin comme les modérateurs'},
-      {t:'change', tx:'La case UUID est maintenant un vrai bouton cliquable avec un indice "📋 Copier" bien visible (devient "✓ Copié !" après le clic)'},
-    ], en:[
-      {t:'new', tx:'Global World Boss: when the admin spawns a boss for everyone, HP is now SHARED among all fighting players — every hit from anyone drains the same health bar'},
-      {t:'new', tx:'Live contribution leaderboard (top 10) shown during the fight, with each player\'s nickname and damage dealt'},
-      {t:'new', tx:'When the boss dies, your reward depends on your contribution rank: the higher you rank, the better the silver and material reward (up to ×3 for rank #1)'},
-      {t:'new', tx:'New "Tester" role: access to a 🧪 Tester panel listing upcoming features (fishing, mining, forest...) — no gameplay advantage, preview only. Managed by the admin like moderators'},
-      {t:'change', tx:'The UUID field is now a real clickable button with a clear "📋 Copy" hint (turns into "✓ Copied!" after clicking)'},
-    ] },
   { v:'V62', d:'04/07/2026 02:34', name:{fr:'Canal Modéré : journal des messages supprimés', en:'Moderated channel: deleted-message log'}, fr:[
       {t:'new', tx:'Nouveau canal de chat "🛡️ Modéré" visible seulement par l\'admin et les modérateurs : journal de tous les messages supprimés, avec le pseudo de l\'auteur, son UUID, le canal d\'origine et le message'},
       {t:'change', tx:'Le badge MOD s\'affiche devant le pseudo des modérateurs, et les modérateurs peuvent supprimer des messages dans le chat (le message supprimé est archivé dans le canal Modéré)'},
