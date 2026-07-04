@@ -653,20 +653,10 @@
   .cmInfo .cmOwned { color:var(--ink-dim); font-size:10.5px; }
   .cmPrice { font-size:13px; white-space:nowrap; text-align:right; width:80px; }
   .cmPrice.low { color:#8fc98a; } .cmPrice.mid { color:var(--gold); } .cmPrice.high { color:var(--danger); }
-  /* carnet d'ordres v2 (2026-07-07) : résumé meilleur achat/vente à côté de chaque objet */
-  .cmBook { font-size:10.5px; text-align:right; white-space:nowrap; flex-shrink:0; line-height:1.5; }
-  .cmBid { color:#8fc98a; } .cmAsk { color:#e8a89f; }
   .cmActions { display:flex; align-items:center; gap:4px; flex-shrink:0; }
   .cmQty { width:44px; background:#191720; color:var(--ink); border:1px solid #3a3742;
     font-family:inherit; font-size:11.5px; padding:5px 4px; text-align:center; }
-  .cmPriceInput { width:64px; background:#191720; color:var(--ink); border:1px solid #3a3742;
-    font-family:inherit; font-size:11.5px; padding:5px 4px; text-align:center; }
   .cmActions button { width:auto; margin:0; padding:6px 10px; font-size:11px; }
-  #cmMyOrders { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
-  #cmSellItemSelect { width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
-    font-family:inherit; font-size:12px; padding:8px 9px; margin-bottom:8px; }
-  #cmSellPriceInput { width:100%; background:#191720; color:var(--ink); border:1px solid #3a3742;
-    font-family:inherit; font-size:12px; padding:8px 9px; margin-bottom:8px; }
 
   .mHint { color:var(--ink-dim); font-size:11.5px; margin-bottom:10px; }
   #sellItemSelect {
@@ -1378,15 +1368,9 @@
     </div>
 
     <div id="marketCommon" class="marketPane" style="display:none">
-      <p class="mHint" data-i18n="commonHint">Vrai carnet d'ordres entre joueurs : pose un prix d'achat ou de vente, l'argent/l'objet reste bloqué tant que l'ordre n'est pas exécuté ou annulé. Si ton prix correspond au meilleur ordre opposé, l'échange se fait automatiquement (égalité de prix = tirage au sort).</p>
+      <p class="mHint" data-i18n="commonHint">Matériaux échangés au prix commun du marché — ce prix flotte dans le temps selon l'offre et la demande.</p>
       <div id="marketCommonList"></div>
       <div id="commonMsg"></div>
-      <h3 style="margin-top:14px" data-i18n="cmSellSectionTitle">🎒 Vendre un objet de mon sac</h3>
-      <select id="cmSellItemSelect"></select>
-      <input type="number" id="cmSellPriceInput" placeholder="Prix en silver" min="1" data-i18n-ph="priceInputPh">
-      <button id="btnCmListItem" data-i18n="btnCmListItem">Mettre en vente</button>
-      <h3 style="margin-top:14px" data-i18n="cmMyOrdersTitle">📋 Mes ordres</h3>
-      <div id="cmMyOrders"></div>
     </div>
   </div>
 </div>
@@ -1593,72 +1577,62 @@ function tr(s) { if (LANG !== 'en' || !s) return s; return NAME_EN[s] || s; }
 // : passer de la dernière sous-zone d'un palier à la première du suivant nécessite d'être un minimum
 // optimisé sur le stuff du palier précédent, sinon les monstres de la nouvelle zone font mal (via le
 // malus de dégâts subis/dégâts infligés déjà existant quand le ratio PA/PD réel < requis).
-//
-// Économie retravaillée le 2026-07-07 (demande explicite : "économie progressive selon les zones") :
-// trash/mat/jackpot de CHAQUE zone réduits proportionnellement pour que le silver/h moyen (à un
-// rythme de référence de 15 kills/min, stuff adapté à la zone) progresse de ~3 000/h (zone 1) à
-// 100 000/h max (zone 11, Ruines de Kratuga, avec un stuff bien optimisé) — c'est le plafond haut de
-// la région Velia dans la nouvelle courbe économique à 5 régions :
-//   Velia 0→100k/h · Heidel 100k→1M/h · Calpheon 1M→100M/h · Valencia 100M→1B/h · Edana 1B→10B/h
-// (voir zones-roadmap.md pour le détail des paliers futurs). Le "selon l'optimisation" vient
-// naturellement de la mécanique existante (un stuff mieux enchanté = plus de dps = plus de
-// kills/min = plus haut dans la fourchette de la zone), sans formule additionnelle nécessaire.
 const ZONES = [
   { name:'Camp des Loups', tier:'Balenos — Early', reqAP:15, reqDP:14, mob:'Loup',
     hpPer:23, dmg:3, xp:8,
     tint:{ a:'#3a4a31', b:'#36452e', dry:'#414f33' }, tones:['#6b5f52','#5a5248','#75685a'], alphaTone:'#3d3a45',
-    loot:{ trash:{name:'Viande de loup',val:1,ch:1}, mat:{name:'Pierre noire',val:1,ch:.55},
-      jackpot:{name:'Anneau Naru',val:290,ch:.006,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.03} } },
+    loot:{ trash:{name:'Viande de loup',val:12,ch:1}, mat:{name:'Pierre noire',val:5,ch:.55},
+      jackpot:{name:'Anneau Naru',val:2600,ch:.006,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.03} } },
   { name:'Ruines de Protty', tier:'Balenos — Early', reqAP:20, reqDP:19, mob:'Esprit de Protty',
     hpPer:26, dmg:3, xp:12,
     tint:{ a:'#4a4231', b:'#453e2e', dry:'#4f4833' }, tones:['#a5543c','#8f4a38','#b06045'], alphaTone:'#6e2f24',
-    loot:{ trash:{name:'Lame rouillée d\'Imp',val:3,ch:1}, mat:{name:'Pierre noire',val:1,ch:.48},
-      jackpot:{name:'Collier Naru',val:550,ch:.005,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.026} } },
+    loot:{ trash:{name:'Lame rouillée d\'Imp',val:26,ch:1}, mat:{name:'Pierre noire',val:5,ch:.48},
+      jackpot:{name:'Collier Naru',val:5600,ch:.005,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.026} } },
   { name:'Repaire des Pirates', tier:'Balenos — Early', reqAP:25, reqDP:23, mob:'Pirate',
     hpPer:31, dmg:4, xp:18,
     tint:{ a:'#4a4232', b:'#443c2d', dry:'#524936' }, tones:['#7a6248','#6b563e','#8a7055'], alphaTone:'#4a3a28',
-    loot:{ trash:{name:'Insigne de Sausan',val:5,ch:1}, mat:{name:'Pierre noire',val:1,ch:.4},
-      jackpot:{name:'Ceinture Naru',val:1025,ch:.0038,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
+    loot:{ trash:{name:'Insigne de Sausan',val:48,ch:1}, mat:{name:'Pierre noire',val:8,ch:.4},
+      jackpot:{name:'Ceinture Naru',val:10500,ch:.0038,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
   { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:38, reqDP:35, mob:'Guerrier Rhutum',
     hpPer:48, dmg:6, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
-    loot:{ trash:{name:'Bourse de pirate',val:9,ch:1}, mat:{name:'Pierre noire',val:1,ch:.32},
-      jackpot:{name:'Anneau Tuvala',val:1960,ch:.0028,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
+    loot:{ trash:{name:'Bourse de pirate',val:85,ch:1}, mat:{name:'Pierre noire',val:5,ch:.32},
+      jackpot:{name:'Anneau Tuvala',val:19000,ch:.0028,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
   { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:48, reqDP:44, mob:'Garde Shultz',
     hpPer:66, dmg:8, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
-    loot:{ trash:{name:'Croc de Naga',val:15,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:1,ch:.26},
-      jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:5}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
+    loot:{ trash:{name:'Croc de Naga',val:140,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:8,ch:.26},
+      jackpot:{name:'Collier Tuvala',val:31000,ch:.002,ap:5}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
   { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:60, reqDP:55, mob:'Combattant Sausan',
     hpPer:93, dmg:12, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
-    loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
-      jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
+    loot:{ trash:{name:'Oreille de Fogan',val:230,ch:1}, mat:{name:'Éclat de cristal noir dur',val:35,ch:.2},
+      jackpot:{name:'Ceinture Tuvala',val:52000,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
   { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:85, reqDP:78, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
     tint:{ a:'#403238', b:'#3b2e33', dry:'#48383e' }, tones:['#8a4a52','#7a4048','#985560'], alphaTone:'#5a2830',
-    loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
-      jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
+    loot:{ trash:{name:'Fer rouillé',val:420,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.15},
+      jackpot:{name:'Anneau Asula',val:95000,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
   { name:'Poste Helm', tier:'Serendia — Late', reqAP:105, reqDP:96, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
-    loot:{ trash:{name:'Fourrure de Biraghi',val:56,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.11},
-      jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:8}, craft:{name:'Fragment de mémoire',ch:.007} } },
+    loot:{ trash:{name:'Fourrure de Biraghi',val:640,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.11},
+      jackpot:{name:'Collier Asula',val:148000,ch:.0007,ap:8}, craft:{name:'Fragment de mémoire',ch:.007} } },
   { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:130, reqDP:119, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
-    loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
-      jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:9}, craft:{name:'Fragment de mémoire',ch:.005} } },
+    loot:{ trash:{name:'Défense d\'orc',val:950,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.08},
+      jackpot:{name:'Ceinture Asula',val:230000,ch:.0005,ap:9}, craft:{name:'Fragment de mémoire',ch:.005} } },
   { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:175, reqDP:160, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
-    loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.06},
-      jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
+    loot:{ trash:{name:'Éclat de relique ancienne',val:1450,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.06},
+      jackpot:{name:'Anneau de Cadry',val:390000,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
   { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:209, reqDP:190, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
-    loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.045},
-      jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:12}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
+    loot:{ trash:{name:'Relique d\'Hystria',val:2200,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.045},
+      jackpot:{name:'Serap\'s Necklace',val:620000,ch:.0002,ap:12}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
 ];
 let zoneIdx = 0;
 let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
@@ -5925,6 +5899,12 @@ async function resetAllAccounts() {
   await saveToCloud();
   showResetNotice('🔄', title_fr, body_fr);
 }
+async function reevalMarket() {
+  if (!isAdmin() || !sb) return;
+  const { error } = await sb.rpc('reevaluate_market', { p_min_interval_minutes: 0 }); // 0 = force, ignore le throttle
+  if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a forcé la réévaluation du marché`, 0x9cc9e8);
+  floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec réévaluation':'Reevaluation failed') : (LANG==='fr'?'Marché réévalué ✓':'Market reevaluated ✓'), { gold: !error, hurt: !!error });
+}
 
 // ---------- zone admin : stats serveur (réservé au compte admin, via RLS côté base) ----------
 // tout tient désormais dans UN SEUL panneau (déclenché par le bouton "🛠️ Admin") : les actions
@@ -6109,6 +6089,7 @@ async function openAdminPanel() {
       <div class="admSectionTitle">🌍 ${LANG==='fr'?'Pour les joueurs — actions serveur':'For players — server-wide'}</div>
       <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
       <div class="admActions">
+        <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
         <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
         <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Réinitialiser TOUS les comptes':'Reset ALL accounts'}</button>
       </div>
@@ -6224,6 +6205,7 @@ async function openAdminPanel() {
     startBossFight(id, true); // true = rejoint le boss PARTAGÉ qu'on vient de lancer (PV communs, top10...)
   };
   // --- pour les joueurs ---
+  $a('btnReevalMarket').onclick = reevalMarket;
   $a('btnResetAllQuests').onclick = resetAllQuests;
   $a('btnResetAllAccounts').onclick = resetAllAccounts;
   $a('btnAdmSpawnGlobal').onclick = async () => {
@@ -6961,114 +6943,60 @@ async function cancelListing(id) {
 }
 
 // ============================================================
-// MARCHÉ COMMUN v2 — vrai carnet d'ordres entre joueurs (achat ET vente), matériaux + équipement/
-// bijoux. Chaque ordre bloque le silver (achat) ou l'objet (vente) jusqu'à exécution/annulation.
-// Demande explicite du 2026-07-07.
+// MARCHÉ COMMUN — matériaux à prix flottant (borné min/max), pas de mise en vente :
+// achat/vente instantanés au prix courant, comme le vrai marché commun de BDO.
 // ============================================================
-// catalogue des matériaux échangeables (clé stable = 'material:<nom>')
-const MARKET_MATERIALS = [
-  { name:'Pierre de Novice',   icon:ICO_MAT_NOVICE,     color:'#b8b8b8' },
-  { name:'Pierre du Temps',    icon:ICO_MAT_TEMPS,      color:'#cfd8dc' },
-  { name:'Pierre Noire',       icon:ICO_MAT_NOIRE,      color:'#3a3742' },
-  { name:'Pierre concentrée',  icon:ICO_MAT_CONCENTREE, color:'#6ea3c9' },
-  { name:'Pierre de Caphras',  icon:ICO_MAT_CAPHRAS,    color:'#c9a55a' },
-];
-// clé de marché pour l'équipement/bijoux : regroupée par nom + niveau d'enchantement (comme le
-// vrai marché BDO), puisque chaque pièce a par ailleurs des PA/PD quasi identiques pour un même nom
-function marketKeyForGear(it) { return 'gear:' + it.name + '+' + (it.enhLv || 0); }
-
 async function refreshCommonMarket() {
   const box = $a('marketCommonList');
   box.innerHTML = '<div class="mEmpty">Chargement...</div>';
-  const rows = await Promise.all(MARKET_MATERIALS.map(async m => {
-    const key = 'material:' + m.name;
-    const { data } = await sb.rpc('market_order_book', { p_item_key: key });
-    return { m, key, book: data || [] };
-  }));
+  try { await sb.rpc('reevaluate_market', { p_min_interval_minutes: 15 }); } catch(e) {} // no-op si trop tôt
+  const { data, error } = await sb.from('market_prices').select('*').order('display_name');
+  if (error) { box.innerHTML = '<div class="mEmpty">Erreur de chargement</div>'; return; }
+  if (!data || !data.length) { box.innerHTML = '<div class="mEmpty">Marché commun non configuré</div>'; return; }
   box.innerHTML = '';
-  for (const { m, key, book } of rows) {
-    const owned = INV.filter(s => s && s.kind === 'material' && s.name === m.name).reduce((n,s) => n + s.qty, 0);
-    const buys = book.filter(b => b.side === 'buy').sort((a,b) => b.price - a.price);
-    const sells = book.filter(b => b.side === 'sell').sort((a,b) => a.price - b.price);
-    const bestBuy = buys[0], bestSell = sells[0];
+  for (const p of data) {
+    const owned = INV.filter(s => s && s.kind === 'material' && s.name === p.display_name)
+      .reduce((n,s) => n + s.qty, 0);
+    const pct = (p.current_price - p.min_price) / Math.max(1e-6, p.max_price - p.min_price);
+    const priceCls = pct < .33 ? 'low' : pct > .66 ? 'high' : 'mid';
     const row = document.createElement('div');
     row.className = 'cmRow';
     row.innerHTML = `
-      <div class="mIcon" style="color:${m.color}">${m.icon}</div>
-      <div class="cmInfo"><div class="mName">${tr(m.name)}</div><div class="cmOwned">${LANG==='fr'?'Possédé':'Owned'} : ${fmt(owned)}</div></div>
-      <div class="cmBook">
-        <div class="cmBid">${LANG==='fr'?'Meilleur achat':'Best buy'} : ${bestBuy?fmt(bestBuy.price)+' 🪙 (×'+fmt(bestBuy.qty)+')':'—'}</div>
-        <div class="cmAsk">${LANG==='fr'?'Meilleure vente':'Best sell'} : ${bestSell?fmt(bestSell.price)+' 🪙 (×'+fmt(bestSell.qty)+')':'—'}</div>
-      </div>
+      <div class="mIcon" style="color:#8fb0c9">◈</div>
+      <div class="cmInfo"><div class="mName">${tr(p.display_name)}</div><div class="cmOwned">${LANG==='fr'?'Possédé':'Owned'} : ${fmt(owned)}</div></div>
+      <div class="cmPrice ${priceCls}">${fmt(Math.round(p.current_price))} 🪙</div>
       <div class="cmActions">
-        <input type="number" class="cmQty" value="1" min="1" title="${LANG==='fr'?'Quantité':'Quantity'}">
-        <input type="number" class="cmPriceInput" placeholder="${LANG==='fr'?'Prix':'Price'}" min="1">
-        <button class="cmBuy">${LANG==='fr'?'Ordre d\'achat':'Buy order'}</button>
-        <button class="cmSell" ${owned<=0?'disabled':''}>${LANG==='fr'?'Ordre de vente':'Sell order'}</button>
+        <input type="number" class="cmQty" value="1" min="1">
+        <button class="cmBuy">${LANG==='fr'?'Acheter':'Buy'}</button>
+        <button class="cmSell" ${owned<=0?'disabled':''}>${LANG==='fr'?'Vendre':'Sell'}</button>
       </div>`;
-    const qtyEl = row.querySelector('.cmQty'), priceEl = row.querySelector('.cmPriceInput');
-    row.querySelector('.cmBuy').onclick = () => placeMarketOrder('buy', key, m.name, 'material', priceEl.value, qtyEl.value);
-    row.querySelector('.cmSell').onclick = () => placeMarketOrder('sell', key, m.name, 'material', priceEl.value, qtyEl.value);
+    const qtyEl = row.querySelector('.cmQty');
+    row.querySelector('.cmBuy').onclick = () => commonMarketBuy(p.item_key, qtyEl.value);
+    row.querySelector('.cmSell').onclick = () => commonMarketSell(p.display_name, qtyEl.value);
     box.appendChild(row);
   }
-  refreshCmSellPicker();
-  refreshMyMarketOrders();
 }
-// pose un ordre d'achat ou de vente ; p_inv_index n'est nécessaire QUE pour une vente (matériau =
-// trouvé automatiquement par nom puisqu'il tient en un seul emplacement empilé ; équipement/bijou =
-// passé explicitement par le picker "Vendre un objet de mon sac")
-async function placeMarketOrder(side, key, name, kind, priceStr, qtyStr, invIndex) {
+async function commonMarketBuy(itemKey, qtyStr) {
+  const qty = parseInt(qtyStr, 10);
   const msg = $a('commonMsg');
-  const price = Number(priceStr), qty = parseInt(qtyStr, 10) || 1;
-  if (!price || price <= 0) { msg.textContent = LANG==='fr'?'Prix invalide.':'Invalid price.'; msg.className = 'fail'; return; }
-  if (side === 'sell' && invIndex == null) {
-    invIndex = INV.findIndex(s => s && s.kind === kind && s.name === name);
-    if (invIndex === -1) { msg.textContent = LANG==='fr'?'Tu n\'en as pas.':'You don\'t have any.'; msg.className = 'fail'; return; }
-  }
-  const { error } = await sb.rpc('market_place_order', {
-    p_side: side, p_item_key: key, p_item_name: name, p_item_kind: kind,
-    p_price: price, p_qty: kind === 'material' ? qty : 1, p_inv_index: side==='sell' ? invIndex : null,
-  });
+  if (!qty || qty <= 0) { msg.textContent = LANG==='fr'?'Quantité invalide.':'Invalid quantity.'; msg.className = 'fail'; return; }
+  const { error } = await sb.rpc('market_buy_material', { p_item_key: itemKey, p_qty: qty });
   if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
-  msg.textContent = LANG==='fr'?'Ordre posé ✓ (exécuté immédiatement si un ordre opposé compatible existait)':'Order placed ✓ (filled immediately if a compatible opposite order existed)';
-  msg.className = 'ok';
+  msg.textContent = LANG==='fr'?'Achat effectué !':'Purchase complete!'; msg.className = 'ok';
   await loadCloudSave();
   refreshCommonMarket();
 }
-// picker "vendre un objet de mon sac" : équipement/bijoux NON équipés uniquement (les matériaux se
-// vendent depuis la ligne du catalogue ci-dessus, pas ici)
-function refreshCmSellPicker() {
-  const sel = $a('cmSellItemSelect'); if (!sel) return;
-  const items = INV.map((s,i) => ({ s, i })).filter(x => x.s && (x.s.kind === 'gear' || x.s.kind === 'jackpot') && !x.s.equipped);
-  sel.innerHTML = items.length
-    ? items.map(x => `<option value="${x.i}">${tr(x.s.name)}${x.s.enhLv?' '+ENH_NAMES[x.s.enhLv]:''}</option>`).join('')
-    : `<option value="">${LANG==='fr'?'(Rien à vendre)':'(Nothing to sell)'}</option>`;
-}
-$a('btnCmListItem').onclick = () => {
-  const sel = $a('cmSellItemSelect');
-  const idx = Number(sel.value);
-  if (Number.isNaN(idx) || sel.value === '') return;
-  const it = INV[idx]; if (!it) return;
-  const price = $a('cmSellPriceInput').value;
-  placeMarketOrder('sell', marketKeyForGear(it), it.name, it.kind, price, 1, idx);
-};
-// mes ordres ouverts (achat + vente), avec bouton annuler qui rend le silver/objet bloqué
-async function refreshMyMarketOrders() {
-  const box = $a('cmMyOrders'); if (!box) return;
-  const { data, error } = await sb.rpc('market_my_orders');
-  if (error || !data || !data.length) { box.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Aucun ordre':'No orders'}</div>`; return; }
-  box.innerHTML = data.map(o => `
-    <div class="cmRow">
-      <div class="cmInfo"><div class="mName">${o.side==='buy'?'🛒':'🏷️'} ${tr(o.item_name)}</div>
-        <div class="cmOwned">${o.side==='buy'?(LANG==='fr'?'Achat':'Buy'):(LANG==='fr'?'Vente':'Sell')} · ${fmt(o.price)} 🪙 × ${fmt(o.qty)}/${fmt(o.qty_original)} · ${o.status==='open'?(LANG==='fr'?'ouvert':'open'):(LANG==='fr'?'terminé':'done')}</div></div>
-      ${o.status==='open' ? `<button class="cmCancelOrder" data-id="${o.id}">${LANG==='fr'?'Annuler':'Cancel'}</button>` : ''}
-    </div>`).join('');
-  box.querySelectorAll('.cmCancelOrder').forEach(btn => {
-    btn.onclick = async () => {
-      const { error } = await sb.rpc('market_cancel_order', { p_order_id: Number(btn.dataset.id) });
-      if (!error) { await loadCloudSave(); refreshCommonMarket(); }
-    };
-  });
+async function commonMarketSell(displayName, qtyStr) {
+  const qty = parseInt(qtyStr, 10);
+  const msg = $a('commonMsg');
+  if (!qty || qty <= 0) { msg.textContent = LANG==='fr'?'Quantité invalide.':'Invalid quantity.'; msg.className = 'fail'; return; }
+  const idx = INV.findIndex(s => s && s.kind === 'material' && s.name === displayName);
+  if (idx === -1) { msg.textContent = LANG==='fr'?'Tu n\'en as pas.':'You don\'t have any.'; msg.className = 'fail'; return; }
+  const { error } = await sb.rpc('market_sell_material', { p_inv_index: idx, p_qty: qty });
+  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
+  msg.textContent = LANG==='fr'?'Vente effectuée !':'Sale complete!'; msg.className = 'ok';
+  await loadCloudSave();
+  refreshCommonMarket();
 }
 
 // ============================================================
@@ -7093,6 +7021,7 @@ const I18N = {
   btnResetAllQuests: { fr:'⚠️ Réinitialiser les quêtes de tous', en:'⚠️ Reset everyone\'s quests' },
   btnAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
+  btnReevalMarket: { fr:'🔄 Réévaluer le marché', en:'🔄 Reevaluate market' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
@@ -7105,12 +7034,8 @@ const I18N = {
   tabMine: { fr:'Mes annonces', en:'My listings' },
   sellHint: { fr:'Choisis un objet de ton sac (non équipé) et fixe un prix.', en:'Pick an item from your bag (not equipped) and set a price.' },
   tabCommon: { fr:'Marché commun', en:'Common Market' },
-  commonHint: { fr:'Vrai carnet d\'ordres entre joueurs : pose un prix d\'achat ou de vente, l\'argent/l\'objet reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé. Si ton prix correspond au meilleur ordre opposé, l\'échange se fait automatiquement (égalité de prix = tirage au sort).',
-    en:'Real order book between players: set a buy or sell price, the money/item stays locked until the order is filled or cancelled. If your price matches the best opposite order, the trade happens automatically (tied prices = random draw).' },
+  commonHint: { fr:'Matériaux échangés au prix commun du marché — ce prix flotte dans le temps selon l\'offre et la demande.', en:'Materials traded at the common market price — this price floats over time based on supply and demand.' },
   priceInputPh: { fr:'Prix en silver', en:'Price in silver' },
-  cmSellSectionTitle: { fr:'🎒 Vendre un objet de mon sac', en:'🎒 Sell an item from my bag' },
-  btnCmListItem: { fr:'Mettre en vente', en:'List for sale' },
-  cmMyOrdersTitle: { fr:'📋 Mes ordres', en:'📋 My orders' },
   btnListItem: { fr:'Mettre en vente', en:'List for sale' },
   cardStats: { fr:'Statistiques', en:'Stats' },
   cardZoneStats: { fr:'Stats de la zone de farm', en:'Farming zone stats' },
@@ -7217,19 +7142,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V107', d:'07/07/2026 04:30', name:{fr:'Économie retravaillée & vrai marché à ordres', en:'Reworked economy & real order-book market'}, fr:[
-      {t:'change', tx:'Économie de Velia entièrement retravaillée : le silver/h moyen progresse maintenant de ~3 000/h (zone 1) à 100 000/h max (zone 11, stuff optimisé) au lieu de plusieurs millions/h — ce plafond correspond au bas de la nouvelle courbe à 5 régions (Velia 0-100k/h, Heidel 100k-1M/h, Calpheon 1M-100M/h, Valencia 100M-1B/h, Edana 1B-10B/h, voir zones-roadmap.md)'},
-      {t:'new',    tx:'Marché commun entièrement refait : vrai carnet d\'ordres entre joueurs (achat ET vente), au lieu d\'un prix flottant avec achat/vente instantanés. Chacun pose le prix qu\'il veut ; ton silver (achat) ou ton objet (vente) reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé'},
-      {t:'new',    tx:'L\'exécution est automatique dès qu\'un ordre d\'achat et un ordre de vente compatibles existent (prix d\'achat ≥ prix de vente) ; en cas d\'égalité de prix entre plusieurs ordres, un tirage au sort désigne qui est servi'},
-      {t:'new',    tx:'Le marché commun accepte maintenant aussi l\'équipement et les bijoux trouvés en jeu (pas seulement les matériaux), regroupés par nom + niveau d\'enchantement'},
-      {t:'new',    tx:'Nouvel onglet "Mes ordres" dans le marché commun pour suivre et annuler ses ordres en cours'},
-    ], en:[
-      {t:'change', tx:'Velia\'s economy fully reworked: average silver/h now progresses from ~3,000/h (zone 1) to 100,000/h max (zone 11, optimized gear) instead of several million/h — this cap matches the bottom of the new 5-region curve (Velia 0-100k/h, Heidel 100k-1M/h, Calpheon 1M-100M/h, Valencia 100M-1B/h, Edana 1B-10B/h, see zones-roadmap.md)'},
-      {t:'new',    tx:'Common market fully rebuilt: a real order book between players (buy AND sell), instead of a floating price with instant buy/sell. Everyone sets their own price; your silver (buy) or item (sell) stays locked until the order is filled or cancelled'},
-      {t:'new',    tx:'Execution is automatic as soon as a compatible buy and sell order exist (buy price ≥ sell price); tied prices are settled by a random draw'},
-      {t:'new',    tx:'The common market now also accepts gear and jewelry found in-game (not just materials), grouped by name + enhancement level'},
-      {t:'new',    tx:'New "My orders" tab in the common market to track and cancel your open orders'},
-    ] },
   { v:'V106', d:'07/07/2026 02:00', name:{fr:'Loot ticker, reset admin réparé, couleurs du stuff', en:'Loot ticker, fixed admin reset, gear colors'}, fr:[
       {t:'fix', tx:'Corrigé le sens d\'arrivée du loot ticker : les nouvelles entrées apparaissaient en haut (déjà estompées) et les anciennes en bas (bien visibles juste avant d\'être supprimées) — l\'inverse de l\'effet voulu, désormais les nouvelles entrées arrivent nettes en bas et remontent en s\'estompant'},
       {t:'fix', tx:'Trouvé pourquoi "Réinitialiser TOUS les comptes" ne fonctionnait pas : Supabase bloque les UPDATE/DELETE sans clause WHERE (confirmé dans les logs), même pour un reset global volontaire — corrigé'},
