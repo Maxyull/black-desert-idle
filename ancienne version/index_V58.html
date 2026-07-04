@@ -1139,6 +1139,9 @@
       </div>
       <div id="pdWeapons"></div>
       <div id="pdBook"></div>
+      <button id="btnEquipBest" data-i18n="btnEquipBest">⚡ Équiper le meilleur (socle)</button>
+      <button id="btnSellWorse" data-i18n="btnSellWorse">🗑️ Vendre les objets inférieurs ou égaux</button>
+      <div id="equipBestMsg"></div>
     </div>
 
     <div class="card" id="invCard">
@@ -1147,11 +1150,6 @@
         <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
       <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
       <div class="catTabs" id="invCatTabs"></div>
-      <div class="invTools">
-        <button id="btnEquipBest" data-i18n="btnEquipBest">⚡ Équiper le meilleur (socle)</button>
-        <button id="btnSellWorse" data-i18n="btnSellWorse">🗑️ Vendre les objets inférieurs ou égaux</button>
-      </div>
-      <div id="equipBestMsg"></div>
       <div class="invTools">
         <button id="sellTrash" data-i18n="btnSellTrash">Vendre trash</button>
         <button id="sellMats" data-i18n="btnSellMats">Vendre mat.</button>
@@ -5345,11 +5343,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V59', d:'04/07/2026 02:13', name:{fr:'Boutons équiper/vendre déplacés dans l\'inventaire', en:'Equip/sell buttons moved into inventory'}, fr:[
-      {t:'change', tx:'Les boutons "⚡ Équiper le meilleur (socle)" et "🗑️ Vendre les objets inférieurs ou égaux" sont déplacés dans la carte Inventaire (avec les outils) — plus besoin de faire défiler jusqu\'à l\'équipement'},
-    ], en:[
-      {t:'change', tx:'The "⚡ Equip best (base)" and "🗑️ Sell items worse than or equal" buttons moved into the Inventory card (with the tools) — no more scrolling down to the Equipment card'},
-    ] },
   { v:'V58', d:'04/07/2026 02:11', name:{fr:'Lancer un World Boss pour tous les joueurs', en:'Launch a World Boss for all players'}, fr:[
       {t:'new', tx:'L\'admin peut lancer un World Boss pour TOUS les joueurs à la demande (15 min) : il apparaît instantanément "EN COURS" pour tout le monde et devient combattable, indépendamment du planning horaire'},
     ], en:[
