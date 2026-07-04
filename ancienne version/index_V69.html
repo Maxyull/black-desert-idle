@@ -952,14 +952,13 @@
   #tutorialHighlight {
     position:fixed; z-index:901; border-radius:6px; pointer-events:none;
     box-shadow:0 0 0 9999px rgba(8,7,10,.72), 0 0 0 3px var(--gold), 0 0 18px 3px rgba(201,165,90,.6);
-    /* pas de transition : la position est recalculée à chaque frame (voir tutorialTrackLoop) pour
-       un suivi pixel perfect de la cible, y compris pendant un scroll — une transition CSS créerait
-       un décalage/lag visible pendant le scroll */
+    transition:top .25s ease, left .25s ease, width .25s ease, height .25s ease;
   }
   #tutorialHighlight.center { box-shadow:0 0 0 9999px rgba(8,7,10,.72); }
   #tutorialBox {
     position:fixed; z-index:902; width:280px; background:#1c1a22; border:1px solid var(--gold);
     border-radius:8px; padding:14px 16px; box-shadow:0 6px 24px rgba(0,0,0,.6);
+    transition:top .25s ease, left .25s ease;
   }
   #tutorialBox .tutStep { font-size:9.5px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
   #tutorialBox h4 { margin:0 0 8px; font-size:14px; color:var(--gold); }
@@ -5729,13 +5728,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V70', d:'04/07/2026 08:15', name:{fr:'Tutoriel : suivi pixel perfect + démo du suivi de quêtes', en:'Tutorial: pixel-perfect tracking + quest tracker demo'}, fr:[
-      {t:'fix', tx:'Le halo/encadré du tutoriel suit maintenant la cible au pixel près en permanence (recalcul à chaque frame), y compris pendant un scroll'},
-      {t:'change', tx:'L\'étape "Quêtes" ouvre maintenant le panneau Quêtes tout seul et montre directement le bouton "Suivre" à l\'intérieur, avant de le refermer et de montrer où s\'affiche le suivi'},
-    ], en:[
-      {t:'fix', tx:'The tutorial\'s halo/box now tracks the target pixel-perfectly at all times (recalculated every frame), including while scrolling'},
-      {t:'change', tx:'The "Quests" step now opens the Quests panel on its own and points directly at the "Track" button inside it, before closing it and showing where the tracker appears'},
-    ] },
   { v:'V69', d:'04/07/2026 07:45', name:{fr:'Tutoriel complet + BETA sur le marché', en:'Full tutorial tour + market BETA tag'}, fr:[
       {t:'new', tx:'Le tutoriel de bienvenue couvre maintenant tout le jeu en 19 étapes : pages, zones, sorts automatiques, statistiques, optimisation, inventaire (et ses boutons), butin en direct, quêtes (+ où trouver leur suivi), classement, succès, courrier, notes de version, marché, chat, déconnexion et UUID (utile si le staff doit t\'ajouter un rôle)'},
       {t:'change', tx:'Ajout d\'un badge "BETA" sur le bouton Marché et sur l\'Hôtel des ventes'},
@@ -6515,14 +6507,7 @@ const TUTORIAL_STEPS = [
     text:{fr:'Ce que ton personnage ramasse défile ici, à droite de la zone de jeu, en temps réel.', en:'What your character loots scrolls here, on the right of the game view, in real time.'} },
   { target:'#btnDailyQuests', placement:'bottom',
     title:{fr:'Quêtes journalières & hebdo',en:'Daily & weekly quests'},
-    text:{fr:'Clique ici pour voir tes quêtes. Des objectifs se renouvellent chaque jour et chaque semaine, avec des récompenses en silver à la clé.', en:'Click here to see your quests. Objectives refresh every day and every week, with silver rewards waiting for you.'} },
-  { target:'#btnToggleTracker', placement:'bottom',
-    title:{fr:'Suis tes quêtes',en:'Track your quests'},
-    text:{fr:'Ce bouton ouvre le suivi des quêtes restantes : elles s\'affichent alors en permanence à l\'écran, avec leur progression en direct.', en:'This button opens the remaining quests tracker: they then show permanently on screen, with live progress.'},
-    // ouvre le panneau Quêtes tout seul en arrivant sur ce step (pour montrer le bouton "Suivre"
-    // DANS le menu qui s'ouvre), puis le referme en le quittant
-    before: () => { openDailyQuests(); },
-    after: () => { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); } },
+    text:{fr:'Clique ici pour voir tes quêtes. Des objectifs se renouvellent chaque jour et chaque semaine, avec des récompenses en silver — et tu peux cliquer "Suivre" sur une quête pour l\'épingler à l\'écran.', en:'Click here to see your quests. Objectives refresh every day and every week, with silver rewards — and you can click "Track" on a quest to pin it on screen.'} },
   { target:'#questTrackerWidget', placement:'left',
     title:{fr:'Le suivi de quête',en:'The quest tracker'},
     text:{fr:'Voici où apparaissent les quêtes que tu suis, avec leur progression en direct — pratique pour ne rien oublier.', en:'This is where the quests you track appear, with live progress — handy so you never forget them.'},
@@ -6611,22 +6596,12 @@ function leaveTutorialStep() {
   const step = TUTORIAL_STEPS[tutorialStepIdx];
   if (step && step.after) step.after();
 }
-// suivi pixel perfect de la cible à CHAQUE frame (donc y compris pendant un scroll, quelle que
-// soit sa source : molette, glisser la scrollbar, scroll d'un conteneur interne...) — plus fiable
-// qu'un event "scroll" (qui ne remonte pas depuis les conteneurs internes) ou qu'un debounce
-let tutorialRafId = 0;
-function tutorialTrackLoop() {
-  if (tutorialStepIdx < 0) { tutorialRafId = 0; return; }
-  positionTutorialStep();
-  tutorialRafId = requestAnimationFrame(tutorialTrackLoop);
-}
 function startTutorial() {
   questsPanelOpen = false; $a('infoOverlay').classList.remove('open');
   currentActivity = 'zone'; showActivityPage('zone');
   tutorialStepIdx = 0;
   $a('tutorialOverlay').classList.add('open');
   showTutorialStep();
-  if (!tutorialRafId) tutorialRafId = requestAnimationFrame(tutorialTrackLoop);
 }
 function endTutorial() {
   leaveTutorialStep();
@@ -6640,6 +6615,9 @@ $a('tutNextBtn').onclick = () => {
   tutorialStepIdx++; showTutorialStep();
 };
 $a('tutSkipBtn').onclick = endTutorial;
+window.addEventListener('resize', () => { if (tutorialStepIdx >= 0) positionTutorialStep(); });
+// PAS de recalage sur scroll (volontaire) : le halo/encadré est en position:fixed, donc déjà
+// figé à l'écran par nature — on ne veut surtout pas qu'il "coure après" la cible au scroll.
 
 // ---------- suivi des patch notes lus ----------
 // principe demandé : le tag NEW reste visible pendant TOUTE la session en cours (même après
