@@ -1328,7 +1328,7 @@
 
   <div id="gameFrame">
     <canvas id="cv" width="1240" height="440"></canvas>
-    <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Camp des Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span></div>
+    <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Forêt aux Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span></div>
     <div id="aiState">IA : <span id="stateName">SearchPack</span> · <span id="aiSkill">—</span></div>
     <div id="farmModeBtn" title="Change le comportement de l'IA"></div>
     <div id="silverBox"><span class="coin"></span><span id="silver">0</span></div>
@@ -1453,14 +1453,15 @@ try { LANG = localStorage.getItem('velia-idle-lang') || 'fr'; } catch(e) {}
 // traduction des noms dynamiques (zones, mobs, objets) — clé = texte FR d'origine
 const NAME_EN = {
   // zones
-  'Camp des Loups':'Wolf Camp', 'Ruines de Protty':'Protty Ruins', 'Repaire des Pirates':'Pirate Den',
-  'Camp Rhutum':'Rhutum Camp', 'Ferme Shultz':'Shultz Farm', 'Colonie Sausan':'Sausan Colony',
-  'Mine de Fer Abandonnée':'Abandoned Iron Mine', 'Poste Helm':'Helm Post',
-  'Repaire Bandits Gahaz':'Gahaz Bandit Lair', 'Sanctuaire Elric':'Elric Shrine', 'Ruines de Kratuga':'Kratuga Ruins',
+  'Forêt aux Loups':'Wolf Forest', 'Repaire des Imps':'Imp Lair', 'Garnison des Sausans':'Sausan Garrison',
+  'Île des Pirates (Lema)':'Pirate Island (Lema)', 'Temple des Nagas du Désert':'Desert Naga Temple',
+  'Vallée de Titium':'Titium Valley', 'Poste de la Garde du Croissant':'Crescent Guard Post',
+  'Repaire de Biraghi':'Biraghi Den', 'Forêt de Manshaum':'Manshaum Forest', 'Temple d\'Aakman':'Aakman Temple',
+  'Ruines d\'Hystria':'Hystria Ruins', 'Temple de Gyfin Rhasia':'Gyfin Rhasia Temple',
   // mobs
-  'Loup':'Wolf', 'Esprit de Protty':'Protty Spirit', 'Pirate':'Pirate', 'Guerrier Rhutum':'Rhutum Warrior',
-  'Garde Shultz':'Shultz Guard', 'Combattant Sausan':'Sausan Fighter', 'Mineur corrompu':'Corrupted Miner',
-  'Soldat Helm':'Helm Soldier', 'Bandit Gahaz':'Gahaz Bandit', 'Sectateur d\'Elric':'Elric Cultist', 'Uluan':'Uluan',
+  'Loup':'Wolf', 'Imp':'Imp', 'Sausan':'Sausan', 'Pirate':'Pirate', 'Naga':'Naga', 'Fogan':'Fogan',
+  'Gardien du Croissant':'Crescent Guardian', 'Biraghi':'Biraghi', 'Orc de Manshaum':'Manshaum Orc',
+  'Gardien d\'Aakman':'Aakman Guardian', 'Barbare d\'Hystria':'Hystria Barbarian', 'Prêtre de Rhasia':'Rhasia Priest',
   // trash loot
   'Viande de loup':'Wolf Meat', "Lame rouillée d'Imp":"Rusty Imp Blade", 'Insigne de Sausan':'Sausan Badge',
   'Bourse de pirate':'Pirate Purse', 'Croc de Naga':'Naga Fang', 'Oreille de Fogan':'Fogan Ear',
@@ -1495,61 +1496,66 @@ function tr(s) { if (LANG !== 'en' || !s) return s; return NAME_EN[s] || s; }
 // PR = power recommandé · hpPer/dmg/xp = stats des mobs (FIXES par zone, jamais scalées au joueur)
 // loot : 4 couches — trash (revenu), material, jackpot (accessoire équipable), craft (endgame)
 const ZONES = [
-  { name:'Camp des Loups', tier:'Balenos — Early', reqAP:20, reqDP:20, mob:'Loup',
+  { name:'Forêt aux Loups', tier:'Balenos — Early', reqAP:20, reqDP:20, mob:'Loup',
     hpPer:30, dmg:4, xp:8,
     tint:{ a:'#3a4a31', b:'#36452e', dry:'#414f33' }, tones:['#6b5f52','#5a5248','#75685a'], alphaTone:'#3d3a45',
     loot:{ trash:{name:'Viande de loup',val:12,ch:1}, mat:{name:'Pierre noire',val:5,ch:.55},
       jackpot:{name:'Boucle d\'oreille de sorcière',val:2600,ch:.006,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.03} } },
-  { name:'Ruines de Protty', tier:'Balenos — Early', reqAP:35, reqDP:30, mob:'Esprit de Protty',
+  { name:'Repaire des Imps', tier:'Balenos — Early', reqAP:35, reqDP:30, mob:'Imp',
     hpPer:45, dmg:6, xp:12,
     tint:{ a:'#4a4231', b:'#453e2e', dry:'#4f4833' }, tones:['#a5543c','#8f4a38','#b06045'], alphaTone:'#6e2f24',
     loot:{ trash:{name:'Lame rouillée d\'Imp',val:26,ch:1}, mat:{name:'Pierre noire',val:5,ch:.48},
       jackpot:{name:'Anneau du novice',val:5600,ch:.005,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.026} } },
-  { name:'Repaire des Pirates', tier:'Balenos — Early', reqAP:55, reqDP:45, mob:'Pirate',
+  { name:'Garnison des Sausans', tier:'Serendia — Early', reqAP:55, reqDP:45, mob:'Sausan',
     hpPer:68, dmg:9, xp:18,
     tint:{ a:'#4a4232', b:'#443c2d', dry:'#524936' }, tones:['#7a6248','#6b563e','#8a7055'], alphaTone:'#4a3a28',
     loot:{ trash:{name:'Insigne de Sausan',val:48,ch:1}, mat:{name:'Pierre noire',val:8,ch:.4},
       jackpot:{name:'Ceinture de Tungrad',val:10500,ch:.0038,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
-  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:80, reqDP:70, mob:'Guerrier Rhutum',
+  { name:'Île des Pirates (Lema)', tier:'Serendia — Mid', reqAP:80, reqDP:70, mob:'Pirate',
     hpPer:100, dmg:13, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
     loot:{ trash:{name:'Bourse de pirate',val:85,ch:1}, mat:{name:'Pierre noire',val:5,ch:.32},
       jackpot:{name:'Boucle d\'oreille de Tungrad',val:19000,ch:.0028,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
-  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:110, reqDP:100, mob:'Garde Shultz',
+  { name:'Temple des Nagas du Désert', tier:'Valencia — Mid', reqAP:110, reqDP:100, mob:'Naga',
     hpPer:150, dmg:19, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:140,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:8,ch:.26},
       jackpot:{name:'Anneau de Tungrad',val:31000,ch:.002,ap:5}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
-  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:145, reqDP:135, mob:'Combattant Sausan',
+  { name:'Vallée de Titium', tier:'Valencia — Mid', reqAP:145, reqDP:135, mob:'Fogan',
     hpPer:225, dmg:28, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:230,ch:1}, mat:{name:'Éclat de cristal noir dur',val:35,ch:.2},
       jackpot:{name:'Collier de Tungrad',val:52000,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
-  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:185, reqDP:175, mob:'Mineur corrompu',
+  { name:'Poste de la Garde du Croissant', tier:'Kamasylvia — Late', reqAP:185, reqDP:175, mob:'Gardien du Croissant',
     hpPer:340, dmg:42, xp:90,
     tint:{ a:'#403238', b:'#3b2e33', dry:'#48383e' }, tones:['#8a4a52','#7a4048','#985560'], alphaTone:'#5a2830',
     loot:{ trash:{name:'Fer rouillé',val:420,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.15},
       jackpot:{name:'Anneau du Gardien du Croissant',val:95000,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
-  { name:'Poste Helm', tier:'Serendia — Late', reqAP:230, reqDP:220, mob:'Soldat Helm',
+  { name:'Repaire de Biraghi', tier:'Kamasylvia — Late', reqAP:230, reqDP:220, mob:'Biraghi',
     hpPer:510, dmg:63, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:640,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.11},
       jackpot:{name:'Ceinture du basilic',val:148000,ch:.0007,ap:8}, craft:{name:'Fragment de mémoire',ch:.007} } },
-  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:280, reqDP:270, mob:'Bandit Gahaz',
+  { name:'Forêt de Manshaum', tier:'Serendia — Late', reqAP:280, reqDP:270, mob:'Orc de Manshaum',
     hpPer:760, dmg:94, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:950,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.08},
       jackpot:{name:'Œil de chat doré',val:230000,ch:.0005,ap:9}, craft:{name:'Fragment de mémoire',ch:.005} } },
-  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:335, reqDP:320, mob:'Sectateur d\'Elric',
+  { name:'Temple d\'Aakman', tier:'Valencia — Endgame', reqAP:335, reqDP:320, mob:'Gardien d\'Aakman',
     hpPer:1140, dmg:140, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
     loot:{ trash:{name:'Éclat de relique ancienne',val:1450,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.06},
       jackpot:{name:'Boucle d\'oreille Manos',val:390000,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
-  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:400, reqDP:380, mob:'Uluan',
+  { name:'Ruines d\'Hystria', tier:'Valencia — Endgame', reqAP:400, reqDP:380, mob:'Barbare d\'Hystria',
     hpPer:1710, dmg:210, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:2200,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.045},
       jackpot:{name:'Anneau Deboreah',val:620000,ch:.0002,ap:12}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
+  { name:'Temple de Gyfin Rhasia', tier:'Drieghan — Endgame', reqAP:470, reqDP:450, mob:'Prêtre de Rhasia',
+    hpPer:2560, dmg:315, xp:675,
+    tint:{ a:'#2a2530', b:'#26212c', dry:'#322c38' }, tones:['#3a3345','#332c3e','#443c50'], alphaTone:'#1e1826',
+    loot:{ trash:{name:'Icône de Rhasia',val:3400,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.03},
+      jackpot:{name:'Collier du Dieu déchu',val:1050000,ch:.00012,ap:15}, craft:{name:'Marbre du Dieu déchu',ch:.0018} } },
 ];
 let zoneIdx = 0;
 let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
@@ -3435,7 +3441,7 @@ const GEAR_TIERS = [
     sets:{ weapon:'Lame Yuria', awakening:'Éveil Yuria', secondary:'Dague Yuria',
            helmet:'Casque Yuria', armor:'Plastron Yuria', gloves:'Gants Yuria', boots:'Bottes Yuria' },
     material:{ name:'Pierre Noire', icon:'◆', color:'#3a3742' }, dropChance:0.02 },
-  { grade:'blue', color:'#6ea3c9', zones:[9,10], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
+  { grade:'blue', color:'#6ea3c9', zones:[9,10,11], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
     sets:{ weapon:'Dague Grunil', awakening:'Éveil Grunil', secondary:'Épée Grunil',
            helmet:'Casque Grunil', armor:'Plastron Grunil', gloves:'Gants Grunil', boots:'Bottes Grunil' },
     material:{ name:'Pierre Noire', icon:'◆', color:'#3a3742' }, dropChance:0.02 },
@@ -6669,13 +6675,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V94', d:'05/07/2026 09:00', name:{fr:'Vraies zones de Velia (11 zones remplacent les anciennes)', en:'Real Velia zones (11 zones replace the old ones)'}, fr:[
-      {t:'change', tx:'Les 12 anciennes zones fictives sont remplacées par les 11 vraies zones de Velia : Camp des Loups, Ruines de Protty, Repaire des Pirates, Camp Rhutum, Ferme Shultz, Colonie Sausan, Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Sanctuaire Elric, Ruines de Kratuga'},
-      {t:'change', tx:'Progression PA/PD/loot inchangée (juste les noms de zones et de monstres qui changent) ; le palier Grunil couvre désormais 2 zones au lieu de 3 (11 zones au total)'},
-    ], en:[
-      {t:'change', tx:'The 12 old fictional zones are replaced by the 11 real Velia zones: Wolf Camp, Protty Ruins, Pirate Den, Rhutum Camp, Shultz Farm, Sausan Colony, Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Elric Shrine, Kratuga Ruins'},
-      {t:'change', tx:'AP/DP/loot progression unchanged (only zone and monster names change); the Grunil tier now covers 2 zones instead of 3 (11 zones total)'},
-    ] },
   { v:'V93', d:'05/07/2026 08:00', name:{fr:'Onglets de région : juste le nom + pastille de couleur', en:'Region tabs: name only + color dot'}, fr:[
       {t:'change', tx:'Les onglets affichent juste le nom de la région (Velia/Heidel/Capheon/Valencia/Edana) sans préfixe Early/Mid/End, avec une pastille de couleur : vert, bleu, jaune, orange, rouge'},
     ], en:[
