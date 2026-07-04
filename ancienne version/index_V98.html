@@ -4629,8 +4629,6 @@ const INV_CATEGORIES = [
   { id:'opt',         icon:'✦',  label:{fr:'Optimisation',en:'Enhancement'}, kinds:['material','craft'] },
   { id:'consumable',  icon:'🧪', label:{fr:'Consommable',en:'Consumable'},   kinds:['consumable'], locked:true },
   { id:'rng',         icon:'🎲', label:{fr:'RNG',en:'RNG'},          kinds:['rngbox'], locked:true },
-  // inventaire dédié au "Trésor de Velia" (catégorie TEST) — demande explicite du 2026-07-06
-  { id:'treasure',    icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, kinds:['treasure'] },
 ];
 let invCategory = 'normal';
 function renderInvCatTabs() {
@@ -6855,11 +6853,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V99', d:'06/07/2026 14:00', name:{fr:'Nouvel inventaire "Trésors"', en:'New "Treasures" inventory'}, fr:[
-      {t:'new', tx:'Nouvel onglet d\'inventaire dédié "🗺️ Trésors" pour ranger les objets du Trésor de Velia séparément du reste'},
-    ], en:[
-      {t:'new', tx:'New dedicated "🗺️ Treasures" inventory tab to store Velia Treasure items separately from the rest'},
-    ] },
   { v:'V98', d:'06/07/2026 13:00', name:{fr:'Trésor de Velia (catégorie TEST)', en:'Velia Treasure (TEST category)'}, fr:[
       {t:'new', tx:'Toutes les zones de Velia peuvent désormais looter le "Trésor de Velia" : 5 objets collectibles (Bout du trésor de Velia 1 ×2 chances, Trésor de Velia 1/2/3), identiques dans toutes les zones'},
       {t:'new', tx:'Nouvelle catégorie "🧪 TEST" en bas de la table de loot de chaque zone pour ces objets expérimentaux (pas encore de recette/usage)'},
