@@ -765,9 +765,9 @@
 
   /* ===== chat (mondial/trade/annonce) — bas à droite, thème sombre/or comme le reste ===== */
   #chatWidget {
-    position:fixed; bottom:14px; right:14px; z-index:300; width:440px;
+    position:fixed; bottom:14px; right:14px; z-index:300; width:330px;
     background:#1c1a22; border:1px solid var(--gold-dim); border-radius:6px;
-    padding:10px 13px; font-size:12px; box-shadow:0 4px 14px rgba(0,0,0,.5);
+    padding:9px 11px; font-size:12px; box-shadow:0 4px 14px rgba(0,0,0,.5);
   }
   #chatWidget .catTabs { margin-bottom:6px; gap:4px; }
   #chatWidget .catTab { padding:4px 9px; font-size:10.5px; }
@@ -775,18 +775,17 @@
   .catTab.chan-trade.active { border-color:#8fc98a; color:#8fc98a; }
   .catTab.chan-annonce.active { border-color:var(--gold); color:var(--gold); }
   #chatMessages {
-    height:400px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;
+    height:230px; overflow-y:auto; display:flex; flex-direction:column; gap:4px;
     padding-right:2px; margin-bottom:6px;
   }
   #chatMessages::-webkit-scrollbar { width:5px; }
   #chatMessages::-webkit-scrollbar-thumb { background:#3a3742; }
-  .chatMsg { font-size:12.5px; line-height:1.4; word-break:break-word; position:relative; padding-right:16px; }
+  .chatMsg { font-size:12px; line-height:1.4; word-break:break-word; position:relative; padding-right:16px; }
   .chatMsg .chatPseudo { font-weight:bold; }
   .chatMsg.chan-mondial .chatPseudo { color:#9cc9e8; }
   .chatMsg.chan-trade .chatPseudo { color:#8fc98a; }
   .chatMsg.chan-annonce .chatPseudo { color:var(--gold); }
   .chatMsg .chatText { color:var(--ink); }
-  .chatMsg .chatTime { font-size:9.5px; color:var(--ink-dim); margin-left:5px; }
   .chatBadge { font-size:8px; font-weight:bold; letter-spacing:.5px; padding:1px 4px; border-radius:3px; margin:0 3px; vertical-align:middle; }
   .chatBadge.admin { background:var(--gold); color:#1a1712; }
   .chatBadge.mod { background:#3a6ea8; color:#fff; }
@@ -796,15 +795,9 @@
   }
   .chatDelBtn:hover { opacity:1; color:var(--danger); }
   .modMsg { padding-right:0; border-bottom:1px solid #2c2a33; padding-bottom:5px; }
-  .modTop { display:flex; align-items:baseline; gap:6px; justify-content:space-between; }
+  .modTop { display:flex; align-items:baseline; gap:6px; }
   .modChan { font-size:9px; color:var(--ink-dim); }
   .modUuidLine { display:block; font-family:monospace; font-size:9px; color:var(--ink-dim); margin:1px 0 2px; word-break:break-all; }
-  .modRestoreBtn {
-    width:auto; margin:0; padding:2px 7px; font-size:9.5px; flex-shrink:0;
-    background:none; border:1px solid var(--gold-dim); color:var(--gold);
-  }
-  .modRestoreBtn:hover { background:rgba(201,165,90,.12); }
-  .modDeletedAt { font-size:9px; color:var(--ink-dim); }
   .chatEmpty { font-size:11px; color:var(--ink-dim); font-style:italic; }
   #chatInputRow { display:flex; gap:5px; }
   #chatInput {
@@ -1944,9 +1937,7 @@ function wireBossLobby() {
 const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:0, playerHp:0, playerHpMax:0, hits:[], last:0, raf:0, potCd:0, ended:false,
   px:0.5, py:0.85, pillars:[], aoePhase:'idle', aoeT:0, aoeInterval:9, blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
   // ---- world boss PARTAGÉ (spawn admin) : PV communs à tous, contribution reportée au serveur ----
-  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0,
-  // ---- effet de profondeur/immersion ("4D") : tremblement d'écran + braises de corruption en parallaxe ----
-  shakeT:0, embers:[] };
+  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0 };
 // 4 piliers de la salle (coords normalisées 0..1) — on se cache DERRIÈRE (en dessous) pour éviter l'AoE
 const BOSS_PILLARS = [{x:.28,y:.44},{x:.72,y:.44},{x:.28,y:.72},{x:.72,y:.72}];
 const BOSS_ATTACK_POS = {x:0.5, y:0.60}; // position où le héros frappe le boss entre deux AoE
@@ -1973,7 +1964,6 @@ function startBossFight(bossId, isShared) {
     px:0.5, py:0.85, pillars:BOSS_PILLARS.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
     shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0,
-    shakeT:0, embers:[],
   });
   currentActivity = 'boss'; renderActivityTabs();
   setFarmViewVisible(false);
@@ -2072,16 +2062,7 @@ function bossLoop(now) {
   if (Math.random() < dt*4) { // ~4 impacts/s
     const crit = Math.random() < .2;
     bossState.hits.push({ x:.5+(Math.random()-.5)*.3, y:.4+(Math.random()-.5)*.15, life:1, dmg:dps*(crit?1.6:.7), crit });
-    if (crit) bossState.shakeT = Math.max(bossState.shakeT, 6); // petit tremblement d'écran sur un coup critique
   }
-  // ---- braises de corruption en parallaxe (profondeur/immersion) : plusieurs couches de
-  // particules qui montent à des vitesses différentes selon leur "profondeur" simulée ----
-  bossState.shakeT = Math.max(0, bossState.shakeT - dt*26);
-  if (Math.random() < dt*3) {
-    bossState.embers.push({ x:Math.random(), y:0.55+Math.random()*0.4, depth:0.25+Math.random()*0.85, life:1, sway:Math.random()*6.28 });
-  }
-  bossState.embers.forEach(e => { e.y -= dt*0.10*(0.4+e.depth); e.sway += dt*2; e.life -= dt*0.16; });
-  bossState.embers = bossState.embers.filter(e => e.life > 0 && e.y > -0.05);
   // dégâts continus légers du boss (attaques de base) ; potion auto
   bossState.potCd = Math.max(0, bossState.potCd - dt);
   const incoming = (bossState.playerHpMax * 0.04) * dmgTakenMult(dpRatio()) * dt;
@@ -2106,9 +2087,9 @@ function bossLoop(now) {
     // à l'explosion : es-tu à couvert ? (proche d'un pilier ET en dessous de lui)
     const safe = bs.pillars.some(p => Math.hypot(p.x-bs.px, p.y-bs.py) < 0.10 && bs.py > p.y);
     bs.blocked = safe;
-    if (safe) { bs.blockFlash = 0.6; bs.shakeT = 6; bs.floatMsgs.push({txt:LANG==='fr'?'PARÉ !':'BLOCKED!', life:1, color:'#8cc8ff'}); }
+    if (safe) { bs.blockFlash = 0.6; bs.floatMsgs.push({txt:LANG==='fr'?'PARÉ !':'BLOCKED!', life:1, color:'#8cc8ff'}); }
     else {
-      bs.playerHp -= bs.playerHpMax*0.30; bs.hurtFlash = 0.6; bs.shakeT = 20;
+      bs.playerHp -= bs.playerHpMax*0.30; bs.hurtFlash = 0.6;
       bs.floatMsgs.push({txt:'AoE !', life:1, color:'#e05050'});
     }
   }
@@ -2201,10 +2182,6 @@ function drawWarlord(cx, sx, sy, r, t) {
 }
 function drawBossRoom(t) {
   const cx = bossCtx, cv = $('bossCv'), W = cv.width, H = cv.height, bs = bossState;
-  cx.save();
-  // tremblement d'écran (crit / AoE non paré) : léger décalage aléatoire de toute la scène,
-  // renforce la sensation d'impact et de profondeur ("4D")
-  if (bs.shakeT > 0) cx.translate((Math.random()-0.5)*bs.shakeT, (Math.random()-0.5)*bs.shakeT);
   // fond : grande salle brumeuse bleu-gris
   const bg = cx.createLinearGradient(0,0,0,H);
   bg.addColorStop(0,'#1a2830'); bg.addColorStop(.55,'#223038'); bg.addColorStop(1,'#10171c');
@@ -2213,29 +2190,9 @@ function drawBossRoom(t) {
   cx.strokeStyle = 'rgba(0,0,0,.28)'; cx.lineWidth = 1;
   for (let i=0;i<=10;i++){ const p=bossProj(0,i/10); cx.beginPath(); cx.moveTo(0,p.y); cx.lineTo(W,p.y); cx.stroke(); }
   for (let i=0;i<=8;i++){ const top=bossProj(i/8,0), bot=bossProj(i/8,1); cx.beginPath(); cx.moveTo(top.x,top.y); cx.lineTo(bot.x,bot.y); cx.stroke(); }
-  // braises de corruption en arrière-plan (profondeur : plus loin = plus petit/lent/transparent)
-  for (const e of bs.embers) {
-    if (e.depth > 0.6) continue; // couche lointaine, DERRIÈRE le boss
-    const ex = (e.x + Math.sin(e.sway)*0.01)*W, ey = e.y*H;
-    cx.globalAlpha = e.life*0.35*e.depth; cx.fillStyle = '#ff8a4a'; cx.shadowColor='#ff5a2a'; cx.shadowBlur = 6;
-    cx.beginPath(); cx.arc(ex, ey, 1+1.5*e.depth, 0, 7); cx.fill();
-  }
-  cx.globalAlpha = 1; cx.shadowBlur = 0;
-  // boss au fond : légère oscillation de volume (skew) pour donner une impression de masse en 3D
+  // boss au fond
   const bpos = bossProj(0.5, 0.12); const r = Math.min(W,H)*0.14;
-  cx.save();
-  cx.translate(bpos.x, bpos.y);
-  cx.transform(1, 0, 0.05*Math.sin(t*0.6), 1+0.015*Math.sin(t*1.3), 0, 0);
-  drawWarlord(cx, 0, 0, r, t);
-  cx.restore();
-  // braises au premier plan (devant le boss, plus grosses/rapides/opaques)
-  for (const e of bs.embers) {
-    if (e.depth <= 0.6) continue;
-    const ex = (e.x + Math.sin(e.sway)*0.015)*W, ey = e.y*H;
-    cx.globalAlpha = e.life*0.55*e.depth; cx.fillStyle = '#ffb066'; cx.shadowColor='#ff5a2a'; cx.shadowBlur = 8;
-    cx.beginPath(); cx.arc(ex, ey, 1.5+2*e.depth, 0, 7); cx.fill();
-  }
-  cx.globalAlpha = 1; cx.shadowBlur = 0;
+  drawWarlord(cx, bpos.x, bpos.y, r, t);
   // impacts de dégâts sur le boss
   for (const h of bs.hits) {
     const hy = bpos.y - (1-h.life)*40;
@@ -2288,7 +2245,6 @@ function drawBossRoom(t) {
     cx.globalAlpha = 1;
   }
   cx.textAlign='left'; cx.textBaseline='alphabetic';
-  cx.restore(); // referme le cx.save() du tremblement d'écran en tout début de fonction
 }
 
 let achPanelCat = 'all';       // catégorie affichée dans le panneau Succès
@@ -5071,14 +5027,6 @@ function updateChatInputVisibility() {
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-// formatte l'horodatage d'un message : HH:MM si aujourd'hui, sinon JJ/MM HH:MM
-function fmtChatTimestamp(iso) {
-  if (!iso) return '';
-  const d = new Date(iso), now = new Date();
-  const hhmm = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
-  const sameDay = d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
-  return sameDay ? hhmm : (d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+' '+hhmm);
-}
 function renderChatMessages(msgs) {
   const el = $a('chatMessages'); if (!el) return;
   const canDelete = isAdmin() || myIsMod; // admin ET modérateurs peuvent supprimer
@@ -5089,8 +5037,7 @@ function renderChatMessages(msgs) {
       : m.role === 'mod' ? '<span class="chatBadge mod">MOD</span> ' : '';
     const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
     return `<div class="chatMsg chan-${chatChannel}">${del}` +
-      `${badge}<span class="chatPseudo">${escapeHtml(m.pseudo)}</span> <span class="chatText">${escapeHtml(m.message)}</span>` +
-      `<span class="chatTime">${fmtChatTimestamp(m.created_at)}</span></div>`;
+      `${badge}<span class="chatPseudo">${escapeHtml(m.pseudo)}</span> <span class="chatText">${escapeHtml(m.message)}</span></div>`;
   }).join('')
     : `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`;
   el.scrollTop = el.scrollHeight;
@@ -5117,27 +5064,16 @@ async function fetchChatMessages() {
 // l'auteur, le message d'origine et le canal, pour tracer la modération
 async function fetchModeratedLog() {
   const el = $a('chatMessages'); if (!el) return;
-  const { data, error } = await sb.from('chat_deleted').select('id, channel, author_id, author_pseudo, message, deleted_at')
+  const { data, error } = await sb.from('chat_deleted').select('channel, author_id, author_pseudo, message, deleted_at')
     .order('deleted_at', { ascending:false }).limit(50);
   if (error) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Accès refusé ou schéma non exécuté':'Access denied or schema not run'}</div>`; return; }
   if (!data || !data.length) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Aucun message supprimé':'No deleted messages'}</div>`; return; }
   el.innerHTML = data.map(m =>
     `<div class="chatMsg chan-annonce modMsg">` +
-    `<div class="modTop"><span><span class="chatPseudo">${escapeHtml(m.author_pseudo||'?')}</span> <span class="modChan">[${escapeHtml(m.channel||'')}]</span></span>` +
-    `<button class="modRestoreBtn" data-id="${m.id}" title="${LANG==='fr'?'Renvoyer ce message dans son canal':'Repost this message to its channel'}">${LANG==='fr'?'↩ Renvoyer':'↩ Restore'}</button></div>` +
+    `<div class="modTop"><span class="chatPseudo">${escapeHtml(m.author_pseudo||'?')}</span> <span class="modChan">[${escapeHtml(m.channel||'')}]</span></div>` +
     `<code class="modUuidLine">${m.author_id||''}</code>` +
-    `<div class="chatText">${escapeHtml(m.message||'')}</div>` +
-    `<div class="modDeletedAt">${LANG==='fr'?'Supprimé le':'Deleted on'} ${fmtChatTimestamp(m.deleted_at)}</div></div>`).join('');
+    `<div class="chatText">${escapeHtml(m.message||'')}</div></div>`).join('');
   el.scrollTop = 0;
-  el.querySelectorAll('.modRestoreBtn').forEach(btn => {
-    btn.onclick = async () => {
-      if (!sb) return;
-      btn.disabled = true;
-      const { error } = await sb.rpc('restore_chat_message', { p_deleted_id: parseInt(btn.dataset.id,10) });
-      if (error) { $a('chatNote').textContent = (LANG==='fr'?'Renvoi échoué : ':'Restore failed: ') + error.message; btn.disabled = false; return; }
-      fetchModeratedLog();
-    };
-  });
 }
 async function sendChatMessage() {
   const input = $a('chatInput');
@@ -5663,17 +5599,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V64', d:'04/07/2026 04:10', name:{fr:'Renvoi de message, horodatage du chat & boss plus immersif', en:'Message restore, chat timestamps & more immersive boss'}, fr:[
-      {t:'new', tx:'Onglet 🛡️ Modéré : bouton "↩ Renvoyer" pour republier un message supprimé à tort dans son canal d\'origine'},
-      {t:'new', tx:'Chaque message des canaux Mondial/Trade/Annonce affiche désormais l\'heure (et la date s\'il ne date pas d\'aujourd\'hui)'},
-      {t:'change', tx:'Le encart de chat est agrandi (plus large, plus de messages visibles) pour un meilleur confort de lecture'},
-      {t:'new', tx:'Salle du World Boss Kzarka : effets de profondeur et d\'immersion — braises de corruption en parallaxe, tremblement d\'écran sur les coups critiques et les attaques de zone, légère oscillation de volume sur le boss'},
-    ], en:[
-      {t:'new', tx:'🛡️ Moderated tab: "↩ Restore" button to repost a wrongly-deleted message back to its original channel'},
-      {t:'new', tx:'Every message in the World/Trade/Announcement channels now shows the time (and date if not from today)'},
-      {t:'change', tx:'The chat box is bigger (wider, more visible messages) for a more comfortable read'},
-      {t:'new', tx:'Kzarka World Boss room: depth/immersion effects — parallax corruption embers, screen shake on crits and AoE hits, subtle volumetric wobble on the boss'},
-    ] },
   { v:'V63', d:'04/07/2026 03:15', name:{fr:'World Boss partagé, rôle Testeur & bouton copier', en:'Shared World Boss, Tester role & copy button'}, fr:[
       {t:'new', tx:'World Boss global : quand l\'admin lance un boss pour tous, les PV sont désormais PARTAGÉS entre tous les joueurs qui se battent — chaque coup porté par n\'importe qui fait baisser la même barre de vie'},
       {t:'new', tx:'Classement de contribution en direct (top 10) affiché pendant le combat, avec le pseudo de chaque joueur et ses dégâts infligés'},
