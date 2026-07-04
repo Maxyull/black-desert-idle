@@ -31,8 +31,11 @@ create table if not exists public.boss_contributions (
   user_id uuid not null references auth.users(id) on delete cascade,
   pseudo text,
   damage numeric not null default 0,
+  last_hit_at timestamptz not null default now(),  -- dernier coup porté : sert à savoir qui combat "en direct"
   primary key (boss_key, user_id)
 );
+-- migration si la table existait déjà sans last_hit_at
+alter table public.boss_contributions add column if not exists last_hit_at timestamptz not null default now();
 create index if not exists boss_contrib_key_dmg_idx on public.boss_contributions(boss_key, damage desc);
 alter table public.boss_contributions enable row level security;
 drop policy if exists "boss_contrib_select_all" on public.boss_contributions;
@@ -85,28 +88,55 @@ begin
   -- dégâts bornés (anti-triche grossière : pas plus de 5% des PV max par appel)
   p_damage := greatest(0, least(p_damage, v_lb.max_hp * 0.05));
   update public.live_boss set hp = greatest(0, hp - p_damage) where id = 1 returning hp, max_hp into hp, max_hp;
-  insert into public.boss_contributions (boss_key, user_id, pseudo, damage)
-    values (v_key, v_uid, v_pseudo, p_damage)
-    on conflict (boss_key, user_id) do update set damage = public.boss_contributions.damage + excluded.damage, pseudo = excluded.pseudo;
+  insert into public.boss_contributions (boss_key, user_id, pseudo, damage, last_hit_at)
+    values (v_key, v_uid, v_pseudo, p_damage, now())
+    on conflict (boss_key, user_id) do update set damage = public.boss_contributions.damage + excluded.damage,
+      pseudo = excluded.pseudo, last_hit_at = now();
   return next;
 end;
 $$;
 grant execute on function public.boss_contribute(numeric, text) to authenticated;
 
--- top 15 des contributeurs de l'instance courante (pseudo + dégâts) + le tien
-create or replace function public.boss_top()
-returns table(user_id uuid, pseudo text, damage numeric)
+-- top 15 des contributeurs de l'instance courante (pseudo + dégâts + % du total + actif "en direct"
+-- si le joueur a tapé dans les 10 dernières secondes) — sert au classement live ET à montrer qui
+-- combat en ce moment (demande : "les joueurs doivent se voir")
+drop function if exists public.boss_top();
+create function public.boss_top()
+returns table(user_id uuid, pseudo text, damage numeric, pct numeric, active boolean)
 language plpgsql security definer
 as $$
-declare v_key timestamptz;
+declare v_key timestamptz; v_total numeric;
 begin
   select spawned_at into v_key from public.live_boss where id = 1;
   if v_key is null then return; end if;
-  return query select c.user_id, c.pseudo, c.damage from public.boss_contributions c
-    where c.boss_key = v_key order by c.damage desc limit 15;
+  select coalesce(sum(c.damage), 0) into v_total from public.boss_contributions c where c.boss_key = v_key;
+  return query
+    select c.user_id, c.pseudo, c.damage,
+      case when v_total > 0 then round(c.damage / v_total * 100, 1) else 0 end as pct,
+      (c.last_hit_at > now() - interval '10 seconds') as active
+    from public.boss_contributions c
+    where c.boss_key = v_key
+    order by c.damage desc limit 15;
 end;
 $$;
 grant execute on function public.boss_top() to authenticated;
+
+-- nombre de joueurs actuellement en train de combattre le boss partagé (coup dans les 10s) : sert
+-- à afficher un compteur "X joueurs combattent en direct" dans la salle du boss
+create or replace function public.boss_active_count()
+returns int
+language plpgsql security definer
+as $$
+declare v_key timestamptz; v_cnt int;
+begin
+  select spawned_at into v_key from public.live_boss where id = 1;
+  if v_key is null then return 0; end if;
+  select count(*) into v_cnt from public.boss_contributions
+    where boss_key = v_key and last_hit_at > now() - interval '10 seconds';
+  return coalesce(v_cnt, 0);
+end;
+$$;
+grant execute on function public.boss_active_count() to authenticated;
 
 -- réclamation de récompense à la mort du boss : renvoie le rang du joueur (1 = meilleur), ou
 -- -1 si non éligible (pas de contribution, boss pas mort, ou déjà réclamé). Marque comme réclamé.
