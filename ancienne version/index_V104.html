@@ -1546,11 +1546,13 @@ const NAME_EN = {
   'Pierre noire':'Black Stone', 'Éclat de cristal noir tranchant':'Sharp Black Crystal Shard',
   'Éclat de cristal noir dur':'Hard Black Crystal Shard', 'Poussière d\'esprit ancien':'Ancient Spirit Dust',
   'Pierre de Caphras':'Caphras Stone', 'Fragment de mémoire':'Memory Fragment', 'Marbre du Dieu déchu':'Fallen God\'s Marble',
-  // bijoux (jackpot) — noms alignés sur les vrais objets BDO par palier de stuff le 2026-07-06
-  'Anneau Naru':'Naru Ring', 'Collier Naru':'Naru Necklace', 'Ceinture Naru':'Naru Belt',
-  'Anneau Tuvala':'Tuvala Ring', 'Collier Tuvala':'Tuvala Necklace', 'Ceinture Tuvala':'Tuvala Belt',
-  'Anneau Asula':'Asula Ring', 'Collier Asula':'Asula Necklace', 'Ceinture Asula':'Asula Belt',
-  'Anneau de Cadry':'Cadry Ring', 'Collier du Dieu déchu':'Fallen God\'s Necklace',
+  // bijoux (jackpot)
+  'Boucle d\'oreille de sorcière':'Witch\'s Earring', 'Anneau du novice':'Ring of Novice',
+  'Ceinture de Tungrad':'Tungrad Belt', 'Boucle d\'oreille de Tungrad':'Tungrad Earring',
+  'Anneau de Tungrad':'Tungrad Ring', 'Collier de Tungrad':'Tungrad Necklace',
+  'Anneau du Gardien du Croissant':'Ring of Crescent Guardian', 'Ceinture du basilic':'Basilisk\'s Belt',
+  'Œil de chat doré':'Golden Cat\'s Eye', 'Boucle d\'oreille Manos':'Manos Earring',
+  'Anneau Deboreah':'Deboreah Ring', 'Collier du Dieu déchu':'Fallen God\'s Necklace',
   // gear sets
   'Grunil / Yuria':'Grunil / Yuria', 'Boss (Kzarka, Bheg, Urugon…)':'Boss (Kzarka, Bheg, Urugon…)',
   // badges de zone
@@ -1577,57 +1579,57 @@ const ZONES = [
     hpPer:23, dmg:3, xp:8,
     tint:{ a:'#3a4a31', b:'#36452e', dry:'#414f33' }, tones:['#6b5f52','#5a5248','#75685a'], alphaTone:'#3d3a45',
     loot:{ trash:{name:'Viande de loup',val:12,ch:1}, mat:{name:'Pierre noire',val:5,ch:.55},
-      jackpot:{name:'Anneau Naru',val:2600,ch:.006,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.03} } },
+      jackpot:{name:'Boucle d\'oreille de sorcière',val:2600,ch:.006,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.03} } },
   { name:'Ruines de Protty', tier:'Balenos — Early', reqAP:20, reqDP:19, mob:'Esprit de Protty',
     hpPer:26, dmg:3, xp:12,
     tint:{ a:'#4a4231', b:'#453e2e', dry:'#4f4833' }, tones:['#a5543c','#8f4a38','#b06045'], alphaTone:'#6e2f24',
     loot:{ trash:{name:'Lame rouillée d\'Imp',val:26,ch:1}, mat:{name:'Pierre noire',val:5,ch:.48},
-      jackpot:{name:'Collier Naru',val:5600,ch:.005,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.026} } },
+      jackpot:{name:'Anneau du novice',val:5600,ch:.005,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.026} } },
   { name:'Repaire des Pirates', tier:'Balenos — Early', reqAP:25, reqDP:23, mob:'Pirate',
     hpPer:31, dmg:4, xp:18,
     tint:{ a:'#4a4232', b:'#443c2d', dry:'#524936' }, tones:['#7a6248','#6b563e','#8a7055'], alphaTone:'#4a3a28',
     loot:{ trash:{name:'Insigne de Sausan',val:48,ch:1}, mat:{name:'Pierre noire',val:8,ch:.4},
-      jackpot:{name:'Ceinture Naru',val:10500,ch:.0038,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
+      jackpot:{name:'Ceinture de Tungrad',val:10500,ch:.0038,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
   { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:38, reqDP:35, mob:'Guerrier Rhutum',
     hpPer:48, dmg:6, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
     loot:{ trash:{name:'Bourse de pirate',val:85,ch:1}, mat:{name:'Pierre noire',val:5,ch:.32},
-      jackpot:{name:'Anneau Tuvala',val:19000,ch:.0028,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
+      jackpot:{name:'Boucle d\'oreille de Tungrad',val:19000,ch:.0028,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
   { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:48, reqDP:44, mob:'Garde Shultz',
     hpPer:66, dmg:8, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:140,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:8,ch:.26},
-      jackpot:{name:'Collier Tuvala',val:31000,ch:.002,ap:5}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
+      jackpot:{name:'Anneau de Tungrad',val:31000,ch:.002,ap:5}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
   { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:60, reqDP:55, mob:'Combattant Sausan',
     hpPer:93, dmg:12, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:230,ch:1}, mat:{name:'Éclat de cristal noir dur',val:35,ch:.2},
-      jackpot:{name:'Ceinture Tuvala',val:52000,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
+      jackpot:{name:'Collier de Tungrad',val:52000,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
   { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:85, reqDP:78, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
     tint:{ a:'#403238', b:'#3b2e33', dry:'#48383e' }, tones:['#8a4a52','#7a4048','#985560'], alphaTone:'#5a2830',
     loot:{ trash:{name:'Fer rouillé',val:420,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.15},
-      jackpot:{name:'Anneau Asula',val:95000,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
+      jackpot:{name:'Anneau du Gardien du Croissant',val:95000,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
   { name:'Poste Helm', tier:'Serendia — Late', reqAP:105, reqDP:96, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:640,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.11},
-      jackpot:{name:'Collier Asula',val:148000,ch:.0007,ap:8}, craft:{name:'Fragment de mémoire',ch:.007} } },
+      jackpot:{name:'Ceinture du basilic',val:148000,ch:.0007,ap:8}, craft:{name:'Fragment de mémoire',ch:.007} } },
   { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:130, reqDP:119, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:950,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.08},
-      jackpot:{name:'Ceinture Asula',val:230000,ch:.0005,ap:9}, craft:{name:'Fragment de mémoire',ch:.005} } },
+      jackpot:{name:'Œil de chat doré',val:230000,ch:.0005,ap:9}, craft:{name:'Fragment de mémoire',ch:.005} } },
   { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:175, reqDP:160, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
     loot:{ trash:{name:'Éclat de relique ancienne',val:1450,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.06},
-      jackpot:{name:'Anneau de Cadry',val:390000,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
+      jackpot:{name:'Boucle d\'oreille Manos',val:390000,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
   { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:209, reqDP:190, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:2200,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.045},
-      jackpot:{name:'Serap\'s Necklace',val:620000,ch:.0002,ap:12}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
+      jackpot:{name:'Anneau Deboreah',val:620000,ch:.0002,ap:12}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
 ];
 let zoneIdx = 0;
 let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
@@ -3791,7 +3793,7 @@ function accSlotFor(it) {
   if (n.includes('necklace') || n.includes('collier')) return 'necklace';
   if (n.includes('belt') || n.includes('ceinture')) return 'belt';
   if (n.includes('ring') || n.includes('bague') || n.includes('anneau')) return 'ring';
-  return 'ring'; // repli si aucun mot-clé ne matche
+  return 'ring'; // repli (ex. Œil de chat doré, sans mot-clé explicite — c'est bien une bague dans le vrai jeu)
 }
 
 // regroupe les drops IDENTIQUES consécutifs en une seule ligne "xN" au lieu de spammer une
@@ -7128,11 +7130,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V105', d:'07/07/2026 00:30', name:{fr:'Bijoux alignés sur les vrais paliers BDO', en:'Jewelry aligned with real BDO tiers'}, fr:[
-      {t:'change', tx:'Les bijoux rares (jackpot) des 11 zones de Velia utilisent maintenant les vrais noms BDO alignés sur le palier de stuff de la zone : Naru (gris), Tuvala (blanc), Asula (vert), Cadry/Serap (bleu) — un anneau, un collier et une ceinture par palier'},
-    ], en:[
-      {t:'change', tx:'Rare jewelry (jackpot) drops across the 11 Velia zones now use real BDO names matching the zone\'s gear tier: Naru (grey), Tuvala (white), Asula (green), Cadry/Serap (blue) — one ring, one necklace and one belt per tier'},
-    ] },
   { v:'V104', d:'06/07/2026 23:00', name:{fr:'Reset complet des comptes & annonce dédiée', en:'Full account reset & dedicated announcement'}, fr:[
       {t:'new',    tx:'Nouveau bouton admin "💥 Réinitialiser TOUS les comptes" : efface silver/équipement/niveau/sac de tout le monde, et affiche une bannière colorée d\'explication (+ une entrée dans les notifications) à chaque joueur à sa prochaine connexion'},
       {t:'change', tx:'Le centre de notifications ne garde plus que les infos importantes (succès, boss vaincu, niveau supérieur) — les trouvailles de loot (bijoux/équipement rares) restent visibles dans le loot ticker mais ne polluent plus plus les notifications'},

@@ -56,3 +56,24 @@ Voir `ZONES` dans `index.html`. Paliers de stuff : Naru / Tuvala / Yuria / Gruni
 - Château Nymphamare
 - Tenebraum
 - Château Zephyros (Zephyrus Shadow Knights)
+
+## Bijoux (jackpot) par palier de stuff — référence complète (2026-07-06)
+Noms réels BDO, à utiliser pour les jackpot des zones quand chaque palier sera construit.
+Actuellement en jeu (Velia) : Gris/Blanc/Vert/Bleu seulement (voir ZONES dans index.html,
+1 anneau/collier/ceinture attribué par zone selon son palier de stuff).
+
+| Palier | Anneau | Collier | Ceinture |
+|---|---|---|---|
+| Gris (Naru) | Anneau Naru | Collier Naru | Ceinture Naru |
+| Blanc (Tuvala) | Anneau Tuvala / Anneau Capotia | Collier Tuvala / Collier Capotia | Ceinture Tuvala / Ceinture Capotia |
+| Vert (Yuria) | Anneau Asula / Forest Ronaros Ring | Collier Asula / Sicil's Necklace | Ceinture Asula / Valtarra's Eclipsed Belt |
+| Bleu (Grunil) | Anneau de Cadry / Anneau du Gardien du Croissant | Serap's Necklace / Laytenn's Power Stone | Orkinrad's Belt / Centaurus Belt |
+| Jaune (Mid — Heidel) | Anneau Tungrad / Eye of the Ruins Ring / Anneau Ominous | Collier Tungrad / Ogre Ring | Ceinture Tungrad / Basilisk's Belt |
+| Orange (End — Capheon) | Anneau Deboreka | Collier Deboreka / Revived River Necklace / Revived Lunar Necklace | Ceinture Deboreka / Turo's Belt |
+| Rouge (End+/++ — Valencia/Edana) | Anneau Kharazad | Collier Kharazad | Ceinture Kharazad |
+
+Armes par palier (déjà utilisées pour Gris→Bleu, à réutiliser telles quelles pour la suite) :
+- Gris : Naru · Blanc : Tuvala · Vert : Yuria · Bleu : Grunil
+- Jaune : Liverto, Kzarka (tueur de dragon), Kutum, Dandelion
+- Orange : Blackstar, Godr-Ayed
+- Rouge : Armes Sovereign
