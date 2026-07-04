@@ -339,18 +339,11 @@
      bouton séparé mais une icône superposée sur le coin droit de "Vendre" (15% de sa largeur),
      pour bien montrer qu'il agit SUR la dernière vente plutôt qu'à côté d'elle. */
   .invToolsMain > button, .invToolsMain > .sellWorseGroup { flex:0 0 50%; min-width:0; }
-  /* le groupe entier porte LE bouton visuel (bordure + dégradé) — les 2 boutons à l'intérieur
-     sont transparents et sans bordure propre, sinon leurs bordures individuelles se chevauchent
-     de façon disgracieuse (retour utilisateur du 2026-07-07) */
-  .sellWorseGroup { position:relative; display:flex; margin-top:4px; border:1px solid var(--gold-dim);
-    background:linear-gradient(180deg,#26232b,#191720); transition:border-color .12s; }
-  .sellWorseGroup:hover { border-color:var(--gold); }
-  .sellWorseGroup button { border:none; background:transparent; margin:0; transform:none !important; }
-  .sellWorseGroup #btnSellWorse { flex:1 1 85%; width:auto; font-size:9.5px; padding:5px 3px; min-width:0;
+  .sellWorseGroup { position:relative; display:block; }
+  .sellWorseGroup #btnSellWorse { width:100%; margin:0; font-size:9.5px; padding:5px 3px; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .sellWorseGroup #btnBuyBackWorse { flex:0 0 15%; width:auto; padding:0; font-size:11px;
-    border-left:1px solid #3a3742; }
-  .sellWorseGroup #btnBuyBackWorse:hover:not(:disabled) { background:rgba(201,165,90,.12); }
+  .sellWorseGroup #btnBuyBackWorse { position:absolute; top:0; right:0; bottom:0; width:15%;
+    margin:0; padding:0; font-size:11px; border-left:1px solid #3a3742; }
   #invGrid, .admInvGrid {
     display:grid; grid-template-columns:repeat(8, 1fr); gap:3px;
     overflow-y:auto; max-height:188px; align-content:start; padding-right:2px;
@@ -553,21 +546,14 @@
 
   /* juste le bouton qui ouvre le panneau Admin — les actions vivent maintenant dedans (voir .admActions) */
   #adminBox { margin-top:2px; }
-  /* rafraîchi le 2026-07-07 : cartes avec ombre légère + léger survol, pour bien séparer visuellement
-     chaque bloc d'action dans un panneau qui contient désormais beaucoup de sections */
-  .admSection { margin-bottom:16px; padding:11px 12px 11px 13px; border:1px solid #2c2a33; border-left-width:3px;
-    border-radius:6px; background:rgba(255,255,255,.025); box-shadow:0 2px 6px rgba(0,0,0,.22); transition:background .15s; }
-  .admSection:hover { background:rgba(255,255,255,.04); }
+  .admSection { margin-bottom:14px; padding:10px 10px 10px 12px; border:1px solid #2c2a33; border-left-width:3px; border-radius:4px; background:rgba(255,255,255,.02); }
   /* code couleur par niveau de risque, pour repérer d'un coup d'oeil ce qui est réversible/perso
      vs ce qui touche TOUS les joueurs — demande explicite du 2026-07-06 (panneau "plus compréhensible") */
   .admSection.riskSafe { border-left-color:#5a8fc8; }
   .admSection.riskGlobal { border-left-color:var(--danger); }
   .admSection.riskMgmt { border-left-color:#7aa35e; }
-  .admRiskLegend { display:flex; flex-wrap:wrap; gap:14px; font-size:10.5px; color:var(--ink-dim); margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #2c2a33; }
-  .admRiskLegend span { display:flex; align-items:center; gap:5px; }
-  .admRiskLegend i { display:inline-block; width:8px; height:8px; border-radius:50%; }
-  .admSectionTitle { font-size:12px; font-weight:bold; letter-spacing:.5px; color:var(--gold); margin-bottom:3px; }
-  .admSectionSub { font-size:10.5px; color:var(--ink-dim); margin-bottom:9px; line-height:1.4; }
+  .admSectionTitle { font-size:11px; font-weight:bold; letter-spacing:.5px; color:var(--gold); margin-bottom:2px; }
+  .admSectionSub { font-size:10px; color:var(--ink-dim); margin-bottom:8px; }
   .admSection .admActions { border-bottom:none; padding-bottom:0; margin-bottom:8px; }
   .admSection .admBossSpawn { border-bottom:none; padding-bottom:0; margin-bottom:0; }
   .admHint { font-size:10px; color:var(--ink-dim); font-style:italic; }
@@ -576,7 +562,6 @@
   .modPseudo { color:var(--gold); font-weight:bold; flex-shrink:0; }
   .modUuid { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; font-size:9.5px; color:var(--ink-dim); }
   .modRemBtn { width:auto; margin:0; padding:2px 8px; font-size:10px; flex-shrink:0; border-color:var(--danger); color:#e8a89f; }
-  .roleBadges { flex-shrink:0; font-size:10.5px; white-space:nowrap; }
   .admActions { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; }
   .admActions button { width:auto; flex:1; min-width:140px; margin:0; }
   .admBossSpawn { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; font-size:12px; }
@@ -936,14 +921,6 @@
   .admHistBar .ahbCount { font-size:10px; color:var(--gold); margin-bottom:2px; }
   .admHistBar .ahbLbl { font-size:9px; color:var(--ink-dim); margin-top:4px; text-align:center; }
   .staleTag { font-size:10px; cursor:help; }
-  /* barre "où partent les silver" (onglet Silver, façon Loyalties) : stocké vs dépensé */
-  .admSilverFlow { margin-bottom:10px; }
-  .asfBar { display:flex; height:16px; border-radius:8px; overflow:hidden; border:1px solid #3a3742; }
-  .asfStored { background:linear-gradient(180deg,#8fc98a,#5a9a56); }
-  .asfSpent { background:linear-gradient(180deg,#e08a6e,#a85a42); }
-  .asfLegend { display:flex; gap:16px; margin-top:6px; font-size:11px; color:var(--ink-dim); }
-  .asfLegend i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:middle; }
-  .asfDotStored { background:#8fc98a; } .asfDotSpent { background:#e08a6e; }
 
   /* ===== succès & quêtes journalières ===== */
   .achSummary { font-size:12px; color:var(--gold); font-weight:bold; margin-bottom:8px; }
@@ -6361,13 +6338,6 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
   const totalSilver = silvers.reduce((a,b) => a+b, 0);
   const avgSilver = silvers.length ? Math.round(totalSilver/silvers.length) : 0;
   const medSilver = silvers.length ? silvers[Math.floor(silvers.length/2)] : 0;
-  // "où partent les silver" (demande explicite du 2026-07-07, sur le même principe que l'onglet
-  // Loyalties) : silver_earned est un compteur À VIE jamais décrémenté (sauf annulation d'une
-  // vente via "Racheter", qui décrémente les deux en même temps) — la SEULE opération qui baisse
-  // "silver" sans baisser "silver_earned" est le coût d'optimisation. Donc earned-stocké ≈ dépensé.
-  const totalEarned = (wealth||[]).reduce((a,r) => a + Number(r.silver_earned||0), 0);
-  const totalSpent = Math.max(0, totalEarned - totalSilver);
-  const spentPct = totalEarned > 0 ? Math.round(totalSpent/totalEarned*100) : 0;
   const WEALTH_BRACKETS = [
     { max:10000,      label:'< 10k' },
     { max:100000,     label:'10k-100k' },
@@ -6411,22 +6381,6 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
         <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
         <tbody>${wealthHtml}</tbody>
       </table>`,
-    // onglet "Silver" façon Loyalties : voir d'un coup d'œil ce qui est STOCKÉ (chez les joueurs)
-    // vs DÉPENSÉ (sorti du jeu) — demande explicite du 2026-07-07
-    silver: `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🏦 Stocké (chez les joueurs)':'🏦 Stored (with players)'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📈 Gagné à vie (tous joueurs)':'📈 Lifetime earned (all players)'}</div><div class="astVal">${fmt(totalEarned)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🔻 Dépensé (sorti du jeu)':'🔻 Spent (sunk)'}</div><div class="astVal">${fmt(totalSpent)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne stockée / joueur':'📊 Average stored / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
-      </div>
-      <h3>${LANG==='fr'?'🔍 Où partent les silver ?':'🔍 Where does the silver go?'}</h3>
-      <div class="admSilverFlow">
-        <div class="asfBar"><div class="asfStored" style="width:${100-spentPct}%"></div><div class="asfSpent" style="width:${spentPct}%"></div></div>
-        <div class="asfLegend"><span><i class="asfDotStored"></i>${LANG==='fr'?'Stocké':'Stored'} (${100-spentPct}%)</span><span><i class="asfDotSpent"></i>${LANG==='fr'?'Dépensé':'Spent'} (${spentPct}%)</span></div>
-      </div>
-      <div class="admHint">${LANG==='fr'
-        ? 'Le silver "dépensé" sort du jeu presque exclusivement via les coûts d\'optimisation (enchantement) — le Marché Central n\'est PAS un sink, c\'est un simple transfert de silver entre joueurs (ce qu\'un vendeur reçoit, un acheteur l\'a payé). Pas encore de détail par catégorie de sink, cette vue sert à surveiller la tendance globale (le silver total dépensé devrait progressivement augmenter avec l\'optimisation).'
-        : 'Silver "spent" leaves the game almost exclusively via enhancement costs — the Central Market is NOT a sink, it\'s a plain transfer of silver between players (what a seller receives, a buyer paid). No per-category sink breakdown yet, this view tracks the overall trend (total spent silver should gradually grow as players enhance gear).'}</div>`,
   };
 }
 async function openAdminPanel() {
@@ -6473,7 +6427,6 @@ async function openAdminPanel() {
         <tbody>${playersHtml}</tbody>
       </table>` },
     { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'}, body: loadingHtml },
-    { id:'silver', icon:'🏦', label:{fr:'Silver',en:'Silver'}, body: loadingHtml },
     { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'}, body: loadingHtml },
     { id:'wealth', icon:'👑', label:{fr:'Richesses',en:'Wealth'}, body: loadingHtml },
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'},
@@ -6515,11 +6468,9 @@ async function openAdminPanel() {
     const hourlyPane = body.querySelector('.catPane[data-cat="hourly"]');
     const itemsPane = body.querySelector('.catPane[data-cat="items"]');
     const wealthPane = body.querySelector('.catPane[data-cat="wealth"]');
-    const silverPane = body.querySelector('.catPane[data-cat="silver"]');
     if (hourlyPane) hourlyPane.innerHTML = html.hourly;
     if (itemsPane) itemsPane.innerHTML = html.items;
     if (wealthPane) wealthPane.innerHTML = html.wealth;
-    if (silverPane) silverPane.innerHTML = html.silver;
   }).catch(()=>{});
   // sélecteur de World Boss : fait apparaître immédiatement le boss choisi (combat local de test),
   // sans toucher au planning horaire normal — réservé à l'admin
@@ -6527,11 +6478,6 @@ async function openAdminPanel() {
   // panneau admin scindé en 2 : "Pour moi" (test sur mon propre compte, purement local) et
   // "Pour les joueurs" (actions serveur qui touchent tout le monde)
   const actionsHtml = `
-    <div class="admRiskLegend">
-      <span><i style="background:#5a8fc8"></i>${LANG==='fr'?'Bleu = sans risque, perso':'Blue = safe, personal'}</span>
-      <span><i style="background:var(--danger)"></i>${LANG==='fr'?'Rouge = touche TOUS les joueurs':'Red = affects ALL players'}</span>
-      <span><i style="background:#7aa35e"></i>${LANG==='fr'?'Vert = gestion (rôles, boutons verrouillés)':'Green = management (roles, locked buttons)'}</span>
-    </div>
     <div class="admSection riskSafe">
       <div class="admSectionTitle">👤 ${LANG==='fr'?'Pour moi — test sur mon compte':'For me — test on my account'}</div>
       <div class="admSectionSub">${LANG==='fr'?'Sans danger : ça ne touche que TON propre personnage.':'Safe: only affects YOUR own character.'}</div>
@@ -6569,23 +6515,37 @@ async function openAdminPanel() {
       <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels). Le boss disparaît de toute façon au bout de 9 minutes.':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation). The boss despawns after 9 minutes regardless.'}</div>
     </div>
     <div class="admSection riskMgmt">
-      <div class="admSectionTitle">🎭 ${LANG==='fr'?'Rôles (Modérateur / Testeur)':'Roles (Moderator / Tester)'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'🛡️ Modérateur : peut supprimer des messages de chat. 🧪 Testeur : accès en avant-première aux fonctionnalités pas encore publiques. Un joueur peut cumuler les deux.':'🛡️ Moderator: can delete chat messages. 🧪 Tester: early access to not-yet-public features. A player can hold both roles.'}</div>
+      <div class="admSectionTitle">🛡️ ${LANG==='fr'?'Modérateurs (chat)':'Moderators (chat)'}</div>
+      <div class="admSectionSub">${LANG==='fr'?'Un modérateur peut supprimer des messages de chat, pas plus.':'A moderator can delete chat messages, nothing more.'}</div>
       <div class="admBossSpawn">
-        <input type="text" id="admRoleUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
-        <select id="admRoleSelect" style="flex:0 0 auto;width:auto;">
-          <option value="mod">🛡️ ${LANG==='fr'?'Modérateur':'Moderator'}</option>
-          <option value="tester">🧪 ${LANG==='fr'?'Testeur':'Tester'}</option>
-        </select>
-        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${LANG==='fr'?'➕ Ajouter':'➕ Add'}</button>
+        <input type="text" id="admModUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
+        <button id="btnAddMod">${LANG==='fr'?'➕ Ajouter MOD':'➕ Add MOD'}</button>
       </div>
-      <div id="admRoleList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div id="admModList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
     </div>
-`;
+    <div class="admSection riskMgmt">
+      <div class="admSectionTitle">🧪 ${LANG==='fr'?'Testeurs (avant-première)':'Testers (early access)'}</div>
+      <div class="admSectionSub">${LANG==='fr'?'Donne accès aux fonctionnalités pas encore publiques à un UUID précis.':'Grants access to not-yet-public features to a specific UUID.'}</div>
+      <div class="admBossSpawn">
+        <input type="text" id="admTesterUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
+        <button id="btnAddTester">${LANG==='fr'?'➕ Ajouter Testeur':'➕ Add Tester'}</button>
+      </div>
+      <div id="admTesterList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+    </div>
+    <div class="admSection riskMgmt">
+      <div class="admSectionTitle">🔄 ${LANG==='fr'?'Rembourser un clic "Vendre mat"':'Refund a "Sell mats" click'}</div>
+      <div class="admSectionSub">${LANG==='fr'?'Redonne les matériaux du dernier clic accidentel sur "Vendre" pour ce pseudo.':'Gives back the materials from the last accidental "Sell" click for that pseudo.'}</div>
+      <div class="admBossSpawn">
+        <input type="text" id="admRefundPseudo" placeholder="${LANG==='fr'?'Pseudo du joueur':'Player pseudo'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-size:11px;border-radius:3px;">
+        <button id="btnRefundSellMats">${LANG==='fr'?'🔄 Rembourser dernier':'🔄 Refund last'}</button>
+      </div>
+      <div id="admRefundResult" class="admHint"></div>
+    </div>`;
   openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
   applyI18n();
   wireCatTabs();
-  refreshRoleList();
+  refreshModList();
+  refreshTesterList();
   // bouton dédié "UUID" (onglet Joueurs) : copie l'UUID dans le presse-papiers
   $a('infoBody').querySelectorAll('.admUuidBtn').forEach(btn => {
     btn.onclick = async e => {
@@ -6600,6 +6560,29 @@ async function openAdminPanel() {
   $a('infoBody').querySelectorAll('.admInvBtn').forEach(btn => {
     btn.onclick = e => { e.stopPropagation(); showPlayerInventoryWindow(btn.dataset.uuid, btn.dataset.name); };
   });
+  $a('btnAddTester').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    const uuid = $a('admTesterUuid').value.trim(); if (!uuid) return;
+    const { error } = await sb.rpc('admin_add_tester', { p_user_id: uuid });
+    if (error) { $a('admTesterList').insertAdjacentHTML('afterbegin', `<div class="admHint">${error.message}</div>`); return; }
+    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté un testeur : \`${uuid}\``, 0x9cc9e8);
+    $a('admTesterUuid').value = ''; refreshTesterList();
+  };
+  $a('btnRefundSellMats').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    const pseudo = $a('admRefundPseudo').value.trim(); if (!pseudo) return;
+    const resEl = $a('admRefundResult');
+    resEl.textContent = LANG==='fr' ? 'Traitement…' : 'Processing…';
+    const { data, error } = await sb.rpc('admin_refund_last_sell_mats', { p_pseudo: pseudo });
+    if (error) { resEl.textContent = error.message; return; }
+    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a remboursé le dernier "Vendre mat" de **${escapeHtml(pseudo)}** — résultat : ${data}`, 0x9cc9e8);
+    const MSG = {
+      user_not_found: LANG==='fr' ? 'Aucun joueur avec ce pseudo.' : 'No player with that pseudo.',
+      no_entry: LANG==='fr' ? "Aucun clic \"Vendre mat\" non remboursé trouvé pour ce joueur." : 'No un-refunded "Sell mats" click found for this player.',
+      no_save: LANG==='fr' ? 'Sauvegarde introuvable pour ce joueur.' : "No save found for this player.",
+    };
+    resEl.textContent = MSG[data] || (LANG==='fr' ? 'Résultat : ' : 'Result: ') + data;
+  };
   // --- pour moi ---
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; S.silver += 1000000; S.silverEarned += 1000000; refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
   $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; S.loyalty=(S.loyalty||0)+200; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); };
@@ -6649,43 +6632,47 @@ async function openAdminPanel() {
     floatTxt(P.x, P.y, 100, !error ? (LANG==='fr'?'Boss disparu ✓':'Boss despawned ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
   };
   // --- modérateurs ---
-  $a('btnAddRole').onclick = async () => {
+  $a('btnAddMod').onclick = async () => {
     if (!isAdmin() || !sb) return;
-    const uuid = $a('admRoleUuid').value.trim(); if (!uuid) return;
-    const role = $a('admRoleSelect').value;
-    const rpc = role === 'mod' ? 'admin_add_mod' : 'admin_add_tester';
-    const { error } = await sb.rpc(rpc, { p_user_id: uuid });
-    if (error) { $a('admRoleList').insertAdjacentHTML('afterbegin', `<div class="admHint">${error.message}</div>`); return; }
-    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté le rôle ${role==='mod'?'Modérateur':'Testeur'} à \`${uuid}\``, 0x9cc9e8);
-    $a('admRoleUuid').value = ''; refreshRoleList();
+    const uuid = $a('admModUuid').value.trim();
+    if (!uuid) return;
+    const { error } = await sb.rpc('admin_add_mod', { p_user_id: uuid });
+    if (error) { $a('admModList').insertAdjacentHTML('afterbegin', `<div class="admHint">${error.message}</div>`); return; }
+    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté un modérateur : \`${uuid}\``, 0x9cc9e8);
+    $a('admModUuid').value = '';
+    refreshModList();
   };
 }
-// panneau unique "Rôles" : fusionne les listes Modérateur et Testeur (2 tables distinctes côté
-// serveur, chat_mods et testers) pour que l'admin ajoute/retire les deux rôles au même endroit,
-// sur une seule ligne par joueur — demande explicite du 2026-07-07 ("lie les 2 systèmes")
-async function refreshRoleList() {
-  const el = $a('admRoleList'); if (!el || !sb) return;
-  const [{ data: mods, error: modErr }, { data: testers, error: testErr }] = await Promise.all([
-    sb.rpc('admin_list_mods'), sb.rpc('admin_list_testers'),
-  ]);
-  if (modErr || testErr) { el.innerHTML = `<div class="admHint">${(modErr||testErr).message}</div>`; return; }
-  const byUser = new Map();
-  (mods || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, mod:true }));
-  (testers || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, tester:true }));
-  const rows = [...byUser.values()];
-  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun rôle attribué':'No roles assigned'}</div>`; return; }
-  el.innerHTML = rows.map(r => `<div class="modRow">` +
-    `<span class="modPseudo">${escapeHtml(r.pseudo || (LANG==='fr'?'(sans pseudo)':'(no nickname)'))}</span>` +
-    `<code class="modUuid">${r.user_id}</code>` +
-    `<span class="roleBadges">${r.mod?'🛡️ MOD':''}${r.mod&&r.tester?' · ':''}${r.tester?'🧪 Testeur':''}</span>` +
-    `${r.mod?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="mod">${LANG==='fr'?'Retirer MOD':'Remove MOD'}</button>`:''}` +
-    `${r.tester?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="tester">${LANG==='fr'?'Retirer Testeur':'Remove Tester'}</button>`:''}` +
-    `</div>`).join('');
+// liste les modérateurs actuels avec un bouton "Retirer" pour chacun
+async function refreshModList() {
+  const el = $a('admModList'); if (!el || !sb) return;
+  const { data, error } = await sb.rpc('admin_list_mods');
+  if (error) { el.innerHTML = `<div class="admHint">${error.message}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun modérateur':'No moderators'}</div>`; return; }
+  el.innerHTML = data.map(m =>
+    `<div class="modRow"><span class="modPseudo">${escapeHtml(m.pseudo || (LANG==='fr'?'(sans pseudo)':'(no nickname)'))}</span>` +
+    `<code class="modUuid">${m.user_id}</code>` +
+    `<button class="modRemBtn" data-uuid="${m.user_id}">${LANG==='fr'?'Retirer':'Remove'}</button></div>`).join('');
   el.querySelectorAll('.modRemBtn').forEach(btn => {
     btn.onclick = async () => {
-      const rpc = btn.dataset.role === 'mod' ? 'admin_remove_mod' : 'admin_remove_tester';
-      const { error } = await sb.rpc(rpc, { p_user_id: btn.dataset.uuid });
-      if (!error) refreshRoleList();
+      const { error } = await sb.rpc('admin_remove_mod', { p_user_id: btn.dataset.uuid });
+      if (!error) refreshModList();
+    };
+  });
+}
+async function refreshTesterList() {
+  const el = $a('admTesterList'); if (!el || !sb) return;
+  const { data, error } = await sb.rpc('admin_list_testers');
+  if (error) { el.innerHTML = `<div class="admHint">${error.message}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun testeur':'No testers'}</div>`; return; }
+  el.innerHTML = data.map(m =>
+    `<div class="modRow"><span class="modPseudo">${escapeHtml(m.pseudo || (LANG==='fr'?'(sans pseudo)':'(no nickname)'))}</span>` +
+    `<code class="modUuid">${m.user_id}</code>` +
+    `<button class="modRemBtn testerRemBtn" data-uuid="${m.user_id}">${LANG==='fr'?'Retirer':'Remove'}</button></div>`).join('');
+  el.querySelectorAll('.testerRemBtn').forEach(btn => {
+    btn.onclick = async () => {
+      const { error } = await sb.rpc('admin_remove_tester', { p_user_id: btn.dataset.uuid });
+      if (!error) refreshTesterList();
     };
   });
 }
@@ -7926,19 +7913,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V117', d:'07/07/2026 19:00', name:{fr:'Refonte panneau Admin : rôles fusionnés, suivi du silver', en:'Admin panel refresh: merged roles, silver tracking'}, fr:[
-      {t:'fix', tx:'Corrigé le rendu disgracieux du bouton "↩️ Racheter" superposé sur "Vendre" (bordures qui se chevauchaient) : le groupe entier porte maintenant une seule bordure/dégradé, les 2 boutons à l\'intérieur sont transparents avec un simple séparateur'},
-      {t:'change', tx:'Section admin "Rembourser un clic Vendre mat" retirée : "Vendre mat." est verrouillé 🔒 (pas encore en jeu), ce bouton n\'avait donc plus lieu d\'être'},
-      {t:'change', tx:'Les sections "Modérateurs" et "Testeurs" du panneau admin sont fusionnées en une seule section "Rôles" : un seul champ UUID + un menu déroulant pour choisir le rôle, une seule liste combinée (un joueur peut cumuler les deux rôles)'},
-      {t:'new', tx:'Nouvel onglet "🏦 Silver" dans le panneau admin, sur le même principe que l\'onglet Loyalties : voir d\'un coup d\'œil le silver stocké chez les joueurs, le total gagné à vie, et le total dépensé (sorti du jeu via l\'optimisation), avec une barre de répartition visuelle'},
-      {t:'change', tx:'Petit rafraîchissement visuel du panneau admin : cartes de section avec ombre légère et survol, + une légende de code couleur (bleu/rouge/vert) affichée en haut pour comprendre le niveau de risque de chaque section d\'un coup d\'œil'},
-    ], en:[
-      {t:'fix', tx:'Fixed the ugly rendering of the "↩️ Buy back" button overlapping "Sell" (overlapping borders): the whole group now carries a single border/gradient, with the 2 inner buttons transparent and a simple divider'},
-      {t:'change', tx:'Removed the admin "Refund a Sell mats click" section: "Sell mats" is locked 🔒 (not in game yet), so this button no longer served a purpose'},
-      {t:'change', tx:'The admin panel\'s "Moderators" and "Testers" sections are now merged into one "Roles" section: a single UUID field + a role dropdown, one combined list (a player can hold both roles)'},
-      {t:'new', tx:'New "🏦 Silver" tab in the admin panel, on the same principle as the Loyalties tab: see at a glance the silver stored with players, total lifetime earned, and total spent (sunk via enhancement), with a visual breakdown bar'},
-      {t:'change', tx:'Small visual refresh of the admin panel: section cards now have a light shadow and hover effect, plus a color-code legend (blue/red/green) shown at the top to understand each section\'s risk level at a glance'},
-    ] },
   { v:'V116', d:'07/07/2026 18:00', name:{fr:'Inventaire admin complet, boutons 50/50', en:'Full admin inventory, 50/50 buttons'}, fr:[
       {t:'fix', tx:'La fenêtre popup "Inventaire" du panneau admin n\'affichait qu\'une grille brute — elle montre maintenant l\'équipement porté (comme le paperdoll normal) ET les 5 onglets de catégorie (Normal/Optimisation/Consommable/RNG/Trésors), comme dans l\'inventaire du joueur'},
       {t:'change', tx:'Boutons "Équiper meilleur" / "Vendre" : répartition stricte 50%/50% au lieu de 66%/34%. Le bouton "↩️ Racheter" n\'est plus un 3e bouton séparé : il se superpose désormais sur le coin droit de "Vendre" (15% de sa largeur) pour bien montrer qu\'il annule sa dernière action. Les 3 boutons ont chacun une infobulle expliquant leur fonctionnement au survol'},
