@@ -4092,11 +4092,11 @@ let zoneTier = 'early';
 // seul "Early / Velia" est en jeu pour l'instant, les autres sont verrouillés en attendant
 // d'être construits (demande explicite du 2026-07-05)
 const ZONE_TIERS = [
-  { id:'early', icon:'🟢', label:{fr:'Velia',en:'Velia'},       locked:false },
-  { id:'mid',   icon:'🔵', label:{fr:'Heidel',en:'Heidel'},     locked:true },
-  { id:'end',   icon:'🟡', label:{fr:'Capheon',en:'Capheon'},   locked:true },
-  { id:'end2',  icon:'🟠', label:{fr:'Valencia',en:'Valencia'}, locked:true },
-  { id:'end3',  icon:'🔴', label:{fr:'Edana',en:'Edana'},       locked:true },
+  { id:'early', icon:'🟢', label:{fr:'Early — Velia',en:'Early — Velia'},       locked:false },
+  { id:'mid',   icon:'🟡', label:{fr:'Mid — Heidel',en:'Mid — Heidel'},         locked:true },
+  { id:'end',   icon:'🟠', label:{fr:'End — Capheon',en:'End — Capheon'},       locked:true },
+  { id:'end2',  icon:'🔴', label:{fr:'End+ — Valencia',en:'End+ — Valencia'},   locked:true },
+  { id:'end3',  icon:'🟣', label:{fr:'End++ — Edana',en:'End++ — Edana'},       locked:true },
 ];
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
@@ -6675,11 +6675,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V93', d:'05/07/2026 08:00', name:{fr:'Onglets de région : juste le nom + pastille de couleur', en:'Region tabs: name only + color dot'}, fr:[
-      {t:'change', tx:'Les onglets affichent juste le nom de la région (Velia/Heidel/Capheon/Valencia/Edana) sans préfixe Early/Mid/End, avec une pastille de couleur : vert, bleu, jaune, orange, rouge'},
-    ], en:[
-      {t:'change', tx:'Tabs now show just the region name (Velia/Heidel/Capheon/Valencia/Edana) without the Early/Mid/End prefix, with a color dot: green, blue, yellow, orange, red'},
-    ] },
   { v:'V92', d:'05/07/2026 07:00', name:{fr:'5 régions planifiées : Velia/Heidel/Capheon/Valencia/Edana', en:'5 regions planned: Velia/Heidel/Capheon/Valencia/Edana'}, fr:[
       {t:'change', tx:'Les onglets de zones passent de 3 à 5 paliers : Early (Velia, en jeu), Mid (Heidel), End (Capheon), End+ (Valencia), End++ (Edana) — les 4 derniers restent verrouillés 🔒 en attendant leur construction'},
     ], en:[
