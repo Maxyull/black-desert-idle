@@ -440,15 +440,8 @@
   #authBox input:focus { outline:none; border-color:var(--gold); }
   #authBox button { margin-top:4px; }
   #authBox button.ghost { background:transparent; border:1px solid #3a3742; }
-  #btnForgotPass { font-size:11px; padding:6px 10px; color:var(--ink-dim); }
   #authError { color:var(--danger); font-size:11.5px; min-height:14px; margin:6px 0; }
   #authStatus { color:var(--ink-dim); font-size:11px; margin-top:10px; }
-  #authLangRow { display:flex; justify-content:center; gap:6px; margin-bottom:12px; }
-  .authLangBtn {
-    width:auto; margin:0; padding:4px 10px; font-size:11px; background:transparent;
-    border:1px solid #3a3742; color:var(--ink-dim);
-  }
-  .authLangBtn.active { border-color:var(--gold); color:var(--gold); }
 
   /* ===== menu latéral (fusion topBar + userBar en une colonne) ===== */
   #sideMenu {
@@ -503,12 +496,6 @@
   .admBossSpawn button { width:auto; margin:0; padding:6px 14px; }
 
   #sideMenu.onRight { left:auto; right:14px; }
-  #btnCollapseMenu {
-    width:auto; align-self:flex-start; margin:0; padding:6px 10px; font-size:13px;
-    background:rgba(10,9,12,.88); border:1px solid #2c2a33; color:var(--ink-dim);
-  }
-  #btnCollapseMenu:hover { border-color:var(--gold); color:var(--gold); }
-  #sideMenu.collapsed #topBar, #sideMenu.collapsed #userBar { display:none; }
 
   #btnDiscord {
     display:block; width:100%; box-sizing:border-box; padding:11px 14px; font-size:13.5px;
@@ -1153,10 +1140,6 @@
   <div id="authBox">
     <button id="closeAuth">✕</button>
     <span id="demoBadge">DEMO</span>
-    <div id="authLangRow">
-      <button class="authLangBtn" data-lang="fr">🇫🇷 FR</button>
-      <button class="authLangBtn" data-lang="en">🇬🇧 EN</button>
-    </div>
     <h1>⚔️ VELIA IDLE</h1>
     <p class="authSub" id="authSub" data-i18n="authSub">Connecte-toi avec un vrai compte pour accéder au Marché et au Classement</p>
     <p class="demoNote" data-i18n="demoNoteAuth">🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.</p>
@@ -1165,7 +1148,6 @@
     <div id="authError"></div>
     <button id="btnSignIn" data-i18n="btnSignIn">Se connecter</button>
     <button id="btnSignUp" class="ghost" data-i18n="btnSignUp">Créer un compte</button>
-    <button id="btnForgotPass" class="ghost" data-i18n="btnForgotPass">Mot de passe oublié ?</button>
     <button id="btnSignInDiscord" class="discordBtn" data-i18n="btnSignInDiscord">🎮 Se connecter avec Discord</button>
     <div id="authStatus"></div>
   </div>
@@ -1199,7 +1181,6 @@
 </div>
 
 <div id="sideMenu">
-  <button id="btnCollapseMenu" title="Replier/déplier le menu">◀</button>
   <div id="topBar">
     <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
     <div id="langToggle">
@@ -5359,16 +5340,6 @@ async function doSignIn() {
   if (error) { authShow(error.message, true); return; }
   onAuthed(data.user);
 }
-// envoie un email de réinitialisation de mot de passe — demande explicite du 2026-07-05
-async function doForgotPassword() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  const email = $a('authEmail').value.trim();
-  if (!email) { authShow(LANG==='fr' ? 'Entre ton email d\'abord, puis clique à nouveau.' : 'Enter your email first, then click again.', true); return; }
-  authShow(LANG==='fr' ? 'Envoi en cours…' : 'Sending…');
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href });
-  if (error) { authShow(error.message, true); return; }
-  authShow(LANG==='fr' ? 'Email envoyé — vérifie ta boîte mail pour réinitialiser ton mot de passe.' : 'Email sent — check your inbox to reset your password.');
-}
 async function doLogout() {
   if (sb) await sb.auth.signOut();
   currentUser = null;
@@ -6351,14 +6322,6 @@ setInterval(() => { if (sb && currentUser && !document.hidden) sb.rpc('log_playt
 
 $a('btnSignIn').onclick = doSignIn;
 $a('btnSignUp').onclick = doSignUp;
-$a('btnForgotPass').onclick = doForgotPassword;
-document.querySelectorAll('.authLangBtn').forEach(b => {
-  b.onclick = () => {
-    LANG = b.dataset.lang;
-    try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
-    applyI18n();
-  };
-});
 $a('btnSignInDiscord').onclick = doSignInDiscord;
 $a('btnLogout').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {
@@ -6608,7 +6571,6 @@ const I18N = {
   authPassPh: { fr:'Mot de passe', en:'Password' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
-  btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
   btnSignInDiscord: { fr:'🎮 Se connecter avec Discord', en:'🎮 Sign in with Discord' },
   marketTitle: { fr:'🏛️ Hôtel des ventes', en:'🏛️ Marketplace' },
   tabBuy: { fr:'Acheter', en:'Buy' },
@@ -6675,7 +6637,6 @@ function applyI18n() {
   });
   $a('langThumb').classList.toggle('en', LANG === 'en');
   document.querySelectorAll('.langOpt').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
-  document.querySelectorAll('.authLangBtn').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
   document.documentElement.lang = LANG;
   refreshInvUI(); // redessine loot table / stats mode / badges avec les noms traduits
   hudFast();
@@ -6701,20 +6662,6 @@ $a('menuSideToggle').onclick = () => {
 };
 applyMenuSide();
 
-// ---------- replier/déplier le menu latéral, persisté ----------
-let sideMenuCollapsed = false;
-try { sideMenuCollapsed = localStorage.getItem('velia-idle-menu-collapsed') === '1'; } catch(e) {}
-function applyMenuCollapse() {
-  $a('sideMenu').classList.toggle('collapsed', sideMenuCollapsed);
-  $a('btnCollapseMenu').textContent = sideMenuCollapsed ? '▶' : '◀';
-}
-$a('btnCollapseMenu').onclick = () => {
-  sideMenuCollapsed = !sideMenuCollapsed;
-  try { localStorage.setItem('velia-idle-menu-collapsed', sideMenuCollapsed ? '1' : '0'); } catch(e) {}
-  applyMenuCollapse();
-};
-applyMenuCollapse();
-
 // (NAME_EN et tr() sont maintenant déclarés en haut du script)
 
 // ============================================================
@@ -6722,15 +6669,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V95', d:'05/07/2026 10:00', name:{fr:'Menu repliable, mot de passe oublié, langue à la connexion', en:'Collapsible menu, forgot password, language at login'}, fr:[
-      {t:'new', tx:'Bouton pour replier/déplier le menu latéral (état mémorisé)'},
-      {t:'new', tx:'Bouton "Mot de passe oublié ?" sur l\'écran de connexion (envoie un email de réinitialisation)'},
-      {t:'new', tx:'Choix de la langue (FR/EN) directement sur l\'écran de connexion/création de compte'},
-    ], en:[
-      {t:'new', tx:'Button to collapse/expand the side menu (state remembered)'},
-      {t:'new', tx:'"Forgot password?" button on the login screen (sends a reset email)'},
-      {t:'new', tx:'Language choice (FR/EN) directly on the login/signup screen'},
-    ] },
   { v:'V94', d:'05/07/2026 09:00', name:{fr:'Vraies zones de Velia (11 zones remplacent les anciennes)', en:'Real Velia zones (11 zones replace the old ones)'}, fr:[
       {t:'change', tx:'Les 12 anciennes zones fictives sont remplacées par les 11 vraies zones de Velia : Camp des Loups, Ruines de Protty, Repaire des Pirates, Camp Rhutum, Ferme Shultz, Colonie Sausan, Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Sanctuaire Elric, Ruines de Kratuga'},
       {t:'change', tx:'Progression PA/PD/loot inchangée (juste les noms de zones et de monstres qui changent) ; le palier Grunil couvre désormais 2 zones au lieu de 3 (11 zones au total)'},
