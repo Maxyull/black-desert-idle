@@ -41,26 +41,12 @@
     box-shadow:0 0 4px rgba(201,165,90,.6); }
   #shRate { position:absolute; top:44px; right:14px; font-size:11px; color:var(--ink-dim); text-shadow:0 1px 2px #000; }
   #lootTicker {
-    position:absolute; bottom:14px; right:14px; text-align:right;
-    font-size:11px; color:var(--ink-dim); max-height:250px; overflow:hidden;
+    position:absolute; top:64px; right:14px; text-align:right;
+    font-size:11px; color:var(--ink-dim); max-height:100px; overflow:hidden;
     text-shadow:0 1px 2px #000; line-height:1.5;
-    display:flex; flex-direction:column-reverse; /* nouvelles entrées en bas, la liste grandit vers le haut */
   }
   #lootTicker .rare { color:#b48ce8; } #lootTicker .coinTx { color:var(--gold); }
   #lootTicker .jackpot { color:#e8b84a; font-weight:bold; }
-  /* effet visuel pour le butin rare et au-delà (rare/jackpot) : flash doré à l'apparition + lueur
-     douce en continu, pour que ces lignes sautent vraiment aux yeux dans le flux de loot */
-  #lootTicker .rare, #lootTicker .jackpot { animation:lootRarePop .5s ease-out, lootRareGlow 1.8s ease-in-out .5s infinite; }
-  @keyframes lootRarePop { 0% { transform:scale(1.35); opacity:0; } 100% { transform:scale(1); opacity:1; } }
-  @keyframes lootRareGlow {
-    0%,100% { text-shadow:0 1px 2px #000, 0 0 6px rgba(180,140,232,.5); }
-    50% { text-shadow:0 1px 2px #000, 0 0 12px rgba(180,140,232,.95); }
-  }
-  #lootTicker .jackpot { animation-name:lootRarePop, lootJackpotGlow; }
-  @keyframes lootJackpotGlow {
-    0%,100% { text-shadow:0 1px 2px #000, 0 0 6px rgba(232,184,74,.6); }
-    50% { text-shadow:0 1px 2px #000, 0 0 14px rgba(232,184,74,1); }
-  }
 
   #invFullBanner {
     position:absolute; top:10px; left:50%; transform:translateX(-50%);
@@ -151,6 +137,7 @@
   #potThreshRow { display:flex; align-items:center; gap:7px; padding:4px 5px 8px; border-bottom:1px solid #2c2a33; margin-bottom:4px; font-size:10.5px; color:var(--ink-dim); }
   #potThreshRow input[type=range] { flex:1; accent-color:var(--gold); }
   #potThreshVal { color:var(--gold); font-variant-numeric:tabular-nums; width:32px; text-align:right; flex-shrink:0; }
+  #psTag { position:absolute; bottom:14px; right:14px; font-size:12px; color:#9cc9e8; text-shadow:0 1px 2px #000; text-align:right; }
 
   #panel {
     margin-top:8px; background:var(--panel);
@@ -712,7 +699,6 @@
   .catTabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
   .catTab { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; }
   .catTab.active { border-color:var(--gold); color:var(--gold); }
-  .catTab.locked { opacity:.45; cursor:not-allowed; }
   .admEmpty { color:var(--ink-dim); font-style:italic; text-align:center; padding:10px 0; }
   .admSummary { font-size:11px; color:var(--ink-dim); margin-bottom:8px; }
   .admSummary b { color:var(--gold); }
@@ -1283,6 +1269,7 @@
       <div id="potSelect"></div>
     </div>
     <div id="skillBar"></div>
+    <div id="psTag">GS <b id="gsVal">21</b><br><span style="font-size:10px;color:var(--ink-dim)">Niv. <span id="lvl">1</span></span></div>
   </div>
 
   <div id="itemPop"></div>
@@ -1332,7 +1319,7 @@
 
     <div class="card" id="invCard">
       <h3><span data-i18n="cardInv">Inventaire</span>
-        <button id="btnLifeskillToggle" disabled title="Lifeskill — bientôt disponible">🔒 ⛏️</button>
+        <button id="btnLifeskillToggle" title="Lifeskill">⛏️</button>
         <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
       <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
       <div class="catTabs" id="invCatTabs"></div>
@@ -3409,8 +3396,8 @@ function lootLine(item, val, cls) {
   if (cls) div.className = cls;
   div.textContent = val > 0 ? `${item.name} (+${fmt(val)})` : item.name;
   const t = $('lootTicker');
-  t.appendChild(div); // + flex-direction:column-reverse en CSS → apparaît en bas, pousse vers le haut
-  while (t.children.length > 15) t.removeChild(t.firstChild);
+  t.prepend(div);
+  while (t.children.length > 6) t.removeChild(t.lastChild);
 }
 
 // table d'XP requise par niveau du vrai jeu (BDO) — indice = niveau actuel, valeur = XP pour
@@ -3929,8 +3916,10 @@ function refreshStatsOnly() {
   if (invFullEl) invFullEl.classList.toggle('show', invUsed() >= INV_SIZE);
   const apR = apRatio(), dpR = dpRatio(), z = Z();
   $('silver').textContent = fmt(S.silver);
+  $('lvl').textContent = S.lvl;
   $('invLvl').textContent = S.lvl;
   $('invXpPct').textContent = fmtXpPct(S.xp / S.xpNext * 100);
+  $('gsVal').textContent = Math.round(GS());
   $('stPS').textContent = Math.round(GS());
   $('stPA').textContent = Math.round(apEff()*10)/10;
   $('stDP').textContent = Math.round(totalDP()*10)/10;
@@ -4190,15 +4179,14 @@ function drawWitchOn(x, cx, cy, sc) {
 const INV_CATEGORIES = [
   { id:'normal',      icon:'⚔️', label:{fr:'Normal',en:'Normal'},    kinds:['gear','jackpot'] },
   { id:'opt',         icon:'✦',  label:{fr:'Optimisation',en:'Enhancement'}, kinds:['material','craft'] },
-  { id:'consumable',  icon:'🧪', label:{fr:'Consommable',en:'Consumable'},   kinds:['consumable'], locked:true },
-  { id:'rng',         icon:'🎲', label:{fr:'RNG',en:'RNG'},          kinds:['rngbox'], locked:true },
+  { id:'consumable',  icon:'🧪', label:{fr:'Consommable',en:'Consumable'},   kinds:['consumable'] },
+  { id:'rng',         icon:'🎲', label:{fr:'RNG',en:'RNG'},          kinds:['rngbox'] },
 ];
 let invCategory = 'normal';
 function renderInvCatTabs() {
   const el = $('invCatTabs'); if (!el) return;
-  el.innerHTML = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCategory?' active':''}${c.locked?' locked':''}"` +
-    `${c.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-cat="${c.id}">${c.locked?'🔒 ':''}${c.icon} ${c.label[LANG]}</button>`).join('');
-  el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
+  el.innerHTML = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCategory?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
+  el.querySelectorAll('.catTab').forEach(btn => {
     btn.onclick = () => {
       invCategory = btn.dataset.cat;
       el.querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
@@ -6123,17 +6111,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V78', d:'04/07/2026 17:00', name:{fr:'Loot en bas à droite (15 entrées + effets), RNG/Consommable/Lifeskill verrouillés', en:'Bottom-right loot (15 entries + effects), locked RNG/Consumable/Lifeskill'}, fr:[
-      {t:'change', tx:'Le butin en direct (loot ticker) passe en bas à droite du jeu (à la place de l\'ancien GS/Niveau, déjà visibles dans le panneau Statistiques et l\'inventaire) : il affiche maintenant 15 entrées, les nouvelles apparaissent en bas et poussent les anciennes vers le haut'},
-      {t:'new', tx:'Effet visuel (flash + lueur pulsante) sur les entrées de butin rare et jackpot dans le loot ticker'},
-      {t:'change', tx:'Les onglets d\'inventaire "Consommable" et "RNG" sont verrouillés 🔒 (contenu prévu pour une future mise à jour)'},
-      {t:'change', tx:'Le bouton lifeskill (⛏️) est verrouillé 🔒 mais reste visible pour rappeler qu\'un futur système de lifeskill est prévu'},
-    ], en:[
-      {t:'change', tx:'The live loot ticker moves to the bottom-right of the game (replacing the old GS/Level display, already visible in the Stats panel and inventory): it now shows 15 entries, new ones appear at the bottom and push older ones up'},
-      {t:'new', tx:'Visual effect (flash + pulsing glow) on rare and jackpot loot entries in the ticker'},
-      {t:'change', tx:'The "Consumable" and "RNG" inventory tabs are locked 🔒 (content planned for a future update)'},
-      {t:'change', tx:'The lifeskill button (⛏️) is locked 🔒 but stays visible as a reminder that a future lifeskill system is planned'},
-    ] },
   { v:'V77', d:'04/07/2026 16:00', name:{fr:'Bannière en développement, stats sur le stuff, voir le stuff des autres', en:'In-development banner, gear stats, view others\' gear'}, fr:[
       {t:'fix', tx:'Chat : les messages d\'annonce sans pseudo affichaient "null" au lieu d\'un nom — corrigé avec un repli propre'},
       {t:'new', tx:'Bannière "🚧 Jeu en développement 🚧" ajoutée en bas de page'},
