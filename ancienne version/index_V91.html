@@ -4088,15 +4088,10 @@ let lootPreviewIdx = null; // null = suit la zone qu'on farm ; sinon index de la
 // paliers de zones : pour l'instant tout ZONES[] est "Early" (jusqu'au niveau ~31) — Mid et End
 // arriveront dans une future mise à jour, d'où le verrou 🔒 (demande explicite du 2026-07-05)
 let zoneTier = 'early';
-// 5 paliers de régions (voir zones-roadmap.md pour le détail des zones prévues par palier) —
-// seul "Early / Velia" est en jeu pour l'instant, les autres sont verrouillés en attendant
-// d'être construits (demande explicite du 2026-07-05)
 const ZONE_TIERS = [
-  { id:'early', icon:'🟢', label:{fr:'Early — Velia',en:'Early — Velia'},       locked:false },
-  { id:'mid',   icon:'🟡', label:{fr:'Mid — Heidel',en:'Mid — Heidel'},         locked:true },
-  { id:'end',   icon:'🟠', label:{fr:'End — Capheon',en:'End — Capheon'},       locked:true },
-  { id:'end2',  icon:'🔴', label:{fr:'End+ — Valencia',en:'End+ — Valencia'},   locked:true },
-  { id:'end3',  icon:'🟣', label:{fr:'End++ — Edana',en:'End++ — Edana'},       locked:true },
+  { id:'early', icon:'🟢', label:{fr:'Early',en:'Early'}, locked:false },
+  { id:'mid',   icon:'🟡', label:{fr:'Mid',en:'Mid'},     locked:true },
+  { id:'end',   icon:'🔴', label:{fr:'End',en:'End'},     locked:true },
 ];
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
@@ -6675,11 +6670,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V92', d:'05/07/2026 07:00', name:{fr:'5 régions planifiées : Velia/Heidel/Capheon/Valencia/Edana', en:'5 regions planned: Velia/Heidel/Capheon/Valencia/Edana'}, fr:[
-      {t:'change', tx:'Les onglets de zones passent de 3 à 5 paliers : Early (Velia, en jeu), Mid (Heidel), End (Capheon), End+ (Valencia), End++ (Edana) — les 4 derniers restent verrouillés 🔒 en attendant leur construction'},
-    ], en:[
-      {t:'change', tx:'Zone tabs go from 3 to 5 tiers: Early (Velia, live), Mid (Heidel), End (Capheon), End+ (Valencia), End++ (Edana) — the last 4 remain locked 🔒 pending construction'},
-    ] },
   { v:'V91', d:'05/07/2026 06:00', name:{fr:'Refonte du stuff Early : 4 paliers Naru/Tuvala/Yuria/Grunil + onglets Early/Mid/End', en:'Early gear overhaul: 4 tiers Naru/Tuvala/Yuria/Grunil + Early/Mid/End tabs'}, fr:[
       {t:'new', tx:'Onglets "Early / Mid / End" au-dessus de la liste des zones — Mid et End sont verrouillés 🔒 pour l\'instant, ils arriveront dans une future mise à jour'},
       {t:'new', tx:'Le stuff Early est réparti en 4 paliers (3 zones chacun) : ⬜ Naru (zones 1-3), ⬜ Tuvala (zones 4-6), 🟩 Yuria et 🟦 Grunil (zones 7-12)'},
