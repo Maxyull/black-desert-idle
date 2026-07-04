@@ -228,12 +228,6 @@
   @media (max-width:860px){ #panel{grid-template-columns:1fr 1fr;} }
 
   /* ===== paperdoll équipement (permanent) ===== */
-  #equipSummary {
-    display:flex; justify-content:space-between; align-items:center;
-    border:1px solid var(--gold-dim); border-radius:4px; padding:5px 10px; margin-bottom:2px;
-    font-size:12px; color:var(--gold); font-weight:bold; background:rgba(201,165,90,.05);
-  }
-  #eqSumGs { text-align:center; font-size:10px; color:#9cc9e8; margin-bottom:4px; }
   #paperdoll { display:flex; align-items:center; justify-content:space-between; gap:2px; margin-bottom:6px; }
   .pdCol { display:flex; flex-direction:column; gap:5px; }
   .pdCenter { flex:1; display:flex; align-items:center; justify-content:center; min-width:0; }
@@ -253,12 +247,6 @@
     background:#1a2a14; color:#8fe07a; border:1px solid #4a7a38; box-shadow:0 1px 3px rgba(0,0,0,.6);
   }
   .pdSlot .enh.pri { background:#2a1a14; color:#e6cf7a; border-color:#8a6a3a; } /* PRI+ en doré */
-  .pdSlot .pdAp, .pdSlot .pdDp {
-    position:absolute; bottom:-3px; font-size:8.5px; font-weight:bold; padding:0 2px; border-radius:2px;
-    background:rgba(10,9,12,.85); text-shadow:none;
-  }
-  .pdSlot .pdAp { left:-3px; color:#e0a86e; }
-  .pdSlot .pdDp { right:-3px; color:#8fc9c9; }
   .gicon { width:1.55em; height:1.55em; vertical-align:middle; flex-shrink:0; }
   #pdWeapons { display:flex; justify-content:center; gap:6px; padding:6px 0; border-top:1px solid #2c2a33; border-bottom:1px solid #2c2a33; margin-bottom:2px; }
   #pdWeapons .pdSlot { width:48px; height:48px; }
@@ -337,7 +325,6 @@
   #itemPop .statGain { color:#8fc98a; margin-right:6px; }
   #itemPop .statLoss { color:var(--danger); margin-right:6px; }
   #itemPop button { margin:4px 0 0; font-size:11px; padding:5px; }
-  #itemPop button .psIcon { margin-right:2px; }
 
   #itemTooltip {
     position:fixed; z-index:65; display:none; min-width:140px; max-width:210px;
@@ -1350,8 +1337,6 @@
 
     <div class="card" id="equipCard">
       <h3 data-i18n="cardEquip">Équipement</h3>
-      <div id="equipSummary"><span id="eqSumAp">PA —</span><span id="eqSumDp">PD —</span></div>
-      <div id="eqSumGs">GS —</div>
       <div id="paperdoll">
         <div class="pdCol" id="pdLeft"></div>
         <div class="pdCenter"><canvas id="charPrev" width="120" height="200"></canvas></div>
@@ -4206,10 +4191,6 @@ function renderEquipment() {
   // les stats vont dans la carte Statistiques (pas de doublon)
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
-  // résumé PA/PD/GS directement sur la carte Équipement — demande explicite
-  $('eqSumAp').textContent = 'PA ' + (Math.round(apEff()*10)/10);
-  $('eqSumDp').textContent = 'PD ' + (Math.round(totalDP()*10)/10);
-  $('eqSumGs').textContent = 'GS ' + Math.round(GS());
 }
 // libellé court du niveau d'optimisation : "+N" jusqu'à +15, puis chiffres romains I..V pour PRI..PEN
 function enhShortLabel(lvl) {
@@ -4225,14 +4206,7 @@ function pdSlotInnerHtmlFor(id, e) {
   } else if (e && e.ap) {
     badge = `<span class="enh">+${e.ap}</span>`;
   }
-  // PA/PD directement sur la pièce équipée (bas-gauche/bas-droite) — demande explicite
-  let apDpBadge = '';
-  if (e) {
-    const { ap, dp } = effectiveApDp(e);
-    if (ap) apDpBadge += `<span class="pdAp">${ap}</span>`;
-    if (dp) apDpBadge += `<span class="pdDp">${dp}</span>`;
-  }
-  return icon + badge + apDpBadge;
+  return icon + badge;
 }
 function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
 // texte "+X PA +Y PD +Z PV" affiché dans le tooltip d'une pièce de la poupée d'équipement —
@@ -4277,8 +4251,8 @@ function showEquipSlotMenu(cell, slotId) {
     if (e.optimizable) addPopBtn(pop, LANG==='fr'?'Mettre en optimisation':'Load into enhancement', () => { optTargetSlot = slotId; });
   }
   candidates.forEach(c => {
-    const html = `<span class="psIcon">${c.it.icon || SLOT_ICON[slotId] || '⚔️'}</span> ${escapeHtml(c.it.name)}${escapeHtml(statDeltaShortText(c.it))}`;
-    addPopBtnHtml(pop, html, () => equipItem(c.i));
+    const label = c.it.name + statDeltaShortText(c.it);
+    addPopBtn(pop, label, () => equipItem(c.i));
   });
   if (!candidates.length) {
     const none = document.createElement('div');
@@ -4546,14 +4520,6 @@ function showItemMenuAtCell(cell, data) {
 function addPopBtn(pop, label, fn) {
   const b = document.createElement('button');
   b.textContent = label;
-  b.onclick = e => { e.stopPropagation(); fn(); hideItemPop(); refreshInvUI(); };
-  pop.appendChild(b);
-}
-// variante avec du HTML (icône + texte) au lieu d'un simple texte — utilisée pour les candidats
-// d'équipement (icône de l'objet + gain/perte de stats), demande explicite
-function addPopBtnHtml(pop, html, fn) {
-  const b = document.createElement('button');
-  b.innerHTML = html;
   b.onclick = e => { e.stopPropagation(); fn(); hideItemPop(); refreshInvUI(); };
   pop.appendChild(b);
 }
@@ -6355,15 +6321,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V82', d:'04/07/2026 21:00', name:{fr:'PA/PD/GS sur la carte Équipement, icônes dans le menu d\'équipement', en:'AP/DP/GS on the Equipment card, icons in the equip menu'}, fr:[
-      {t:'new', tx:'La carte Équipement affiche désormais PA/PD (en haut) et GS (au-dessus du personnage)'},
-      {t:'new', tx:'Chaque pièce équipée affiche son PA (bas-gauche) et son PD (bas-droite) directement sur son icône'},
-      {t:'new', tx:'Le menu d\'équipement (clic sur une pièce) affiche maintenant l\'icône de chaque objet candidat, pas juste son nom'},
-    ], en:[
-      {t:'new', tx:'The Equipment card now shows AP/DP (top) and GS (above the character)'},
-      {t:'new', tx:'Each equipped piece shows its AP (bottom-left) and DP (bottom-right) directly on its icon'},
-      {t:'new', tx:'The equip-slot menu (click a piece) now shows each candidate item\'s icon, not just its name'},
-    ] },
   { v:'V81', d:'04/07/2026 20:00', name:{fr:'World Boss vraiment multijoueur, mort → Velia, loot stylisé', en:'World Boss truly multiplayer, death → Velia, styled loot'}, fr:[
       {t:'new', tx:'World Boss partagé : les autres joueurs sont maintenant VISIBLES en direct dans l\'arène (silhouette + pseudo), pas juste dans un classement textuel'},
       {t:'change', tx:'Mourir au combat renvoie désormais à Velia (zone paisible) avec un message d\'avertissement, au lieu de simplement récupérer 50% des PV sur place'},
