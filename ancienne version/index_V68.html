@@ -579,10 +579,6 @@
     border-radius:8px; vertical-align:middle;
   }
   #patchBadge.show, #questBadge.show, #mailBadge.show { display:inline-flex; }
-  .betaTag {
-    display:inline-block; background:#3a6ea8; color:#fff; font-size:8px; font-weight:bold;
-    letter-spacing:.5px; padding:1px 5px; margin-left:5px; border-radius:8px; vertical-align:middle;
-  }
   .patchNewTag {
     display:inline-block; background:var(--danger); color:#fff; font-size:8.5px; font-weight:bold;
     letter-spacing:.5px; padding:2px 6px; border-radius:2px; vertical-align:middle;
@@ -1060,7 +1056,7 @@
       <span id="userPseudo"></span>
       <span id="userEmail"></span>
     </div>
-    <button id="btnMarket"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
+    <button id="btnMarket" data-i18n="btnMarketLbl">🏛️ Marché</button>
     <button id="btnAccount" data-i18n="btnAccount">👤 Mon compte</button>
     <button id="btnLinkAccount" data-i18n="btnLinkAccount" style="display:none">🔗 Lier un compte</button>
     <button id="btnLogout" data-i18n="btnLogout">🚪 Déconnexion</button>
@@ -1115,7 +1111,7 @@
 <div id="marketOverlay">
   <div id="marketBox">
     <div id="marketHead">
-      <h2><span data-i18n="marketTitle">🏛️ Hôtel des ventes</span> <span class="betaTag">BETA</span></h2>
+      <h2 data-i18n="marketTitle">🏛️ Hôtel des ventes</h2>
       <div id="marketTabs">
         <button class="mtab active" data-tab="browse" data-i18n="tabBuy">Acheter</button>
         <button class="mtab" data-tab="sell" data-i18n="tabSell">Vendre</button>
@@ -5728,13 +5724,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V69', d:'04/07/2026 07:45', name:{fr:'Tutoriel complet + BETA sur le marché', en:'Full tutorial tour + market BETA tag'}, fr:[
-      {t:'new', tx:'Le tutoriel de bienvenue couvre maintenant tout le jeu en 19 étapes : pages, zones, sorts automatiques, statistiques, optimisation, inventaire (et ses boutons), butin en direct, quêtes (+ où trouver leur suivi), classement, succès, courrier, notes de version, marché, chat, déconnexion et UUID (utile si le staff doit t\'ajouter un rôle)'},
-      {t:'change', tx:'Ajout d\'un badge "BETA" sur le bouton Marché et sur l\'Hôtel des ventes'},
-    ], en:[
-      {t:'new', tx:'The welcome tutorial now covers the whole game in 19 steps: pages, zones, automatic skills, stats, enhancement, inventory (and its buttons), live loot, quests (+ where to find their tracker), leaderboard, achievements, mailbox, patch notes, market, chat, logout and UUID (useful if staff needs to grant you a role)'},
-      {t:'change', tx:'Added a "BETA" badge on the Market button and on the Marketplace'},
-    ] },
   { v:'V68', d:'04/07/2026 07:00', name:{fr:'Correctif : halo du tutoriel figé au scroll', en:'Fix: tutorial halo stays static on scroll'}, fr:[
       {t:'fix', tx:'Le halo/encadré du tutoriel de bienvenue reste maintenant totalement statique à l\'écran, même en cas de scroll — il ne se recale plus (et ne bouge donc plus) pendant que tu défiles la page'},
     ], en:[
@@ -6478,9 +6467,6 @@ $a('btnWiki').onclick = () => {
 // automatiquement à la création d'un compte (aucune sauvegarde cloud trouvée, voir loadCloudSave),
 // et peut être relancé à tout moment depuis 🏘️ Velia (haut de la liste des zones) ou le 📖 Wiki.
 // ============================================================
-// petit état pour le hook before/after du step "suivi de quêtes" (voir plus bas) — permet de
-// montrer l'encart même s'il est actuellement masqué, puis de restaurer l'état d'origine en sortant
-let tutTrackerWasOn = false, tutTrackerForced = false;
 const TUTORIAL_STEPS = [
   { title:{fr:'Bienvenue à Velia !',en:'Welcome to Velia!'},
     text:{fr:'Velia est une ville paisible : aucun monstre n\'y rôde. C\'est le meilleur endroit pour découvrir les bases avant de partir à l\'aventure.', en:'Velia is a peaceful town: no monsters roam here. It\'s the best place to learn the basics before heading out to adventure.'} },
@@ -6496,47 +6482,12 @@ const TUTORIAL_STEPS = [
   { target:'#panel .card', placement:'left',
     title:{fr:'Tes statistiques',en:'Your stats'},
     text:{fr:'Gearscore, PA/PD et progression : tout ce qu\'il faut pour savoir si tu es prêt pour la zone suivante.', en:'Gearscore, AP/DP and progress: everything you need to know if you\'re ready for the next zone.'} },
-  { target:'#optCard', placement:'left',
-    title:{fr:'Système d\'optimisation',en:'Enhancement system'},
-    text:{fr:'Charge un matériau depuis ton sac pour tenter d\'améliorer une pièce d\'équipement. Plus le niveau visé est haut, plus le risque d\'échec est grand.', en:'Load a material from your bag to try enhancing a gear piece. The higher the target level, the higher the risk of failure.'} },
-  { target:'#invCard', placement:'left',
-    title:{fr:'Ton inventaire',en:'Your inventory'},
-    text:{fr:'Tout ce que tu ramasses atterrit ici. Les boutons au-dessus t\'aident à équiper le meilleur stuff, vendre le surplus (trash, matériaux, objets inférieurs) ou trier le sac en un clic.', en:'Everything you loot lands here. The buttons above help you equip your best gear, sell the surplus (trash, materials, lower items) or sort your bag in one click.'} },
-  { target:'#lootTicker', placement:'left',
-    title:{fr:'Le butin en direct',en:'Live loot'},
-    text:{fr:'Ce que ton personnage ramasse défile ici, à droite de la zone de jeu, en temps réel.', en:'What your character loots scrolls here, on the right of the game view, in real time.'} },
-  { target:'#btnDailyQuests', placement:'bottom',
-    title:{fr:'Quêtes journalières & hebdo',en:'Daily & weekly quests'},
-    text:{fr:'Clique ici pour voir tes quêtes. Des objectifs se renouvellent chaque jour et chaque semaine, avec des récompenses en silver — et tu peux cliquer "Suivre" sur une quête pour l\'épingler à l\'écran.', en:'Click here to see your quests. Objectives refresh every day and every week, with silver rewards — and you can click "Track" on a quest to pin it on screen.'} },
   { target:'#questTrackerWidget', placement:'left',
-    title:{fr:'Le suivi de quête',en:'The quest tracker'},
-    text:{fr:'Voici où apparaissent les quêtes que tu suis, avec leur progression en direct — pratique pour ne rien oublier.', en:'This is where the quests you track appear, with live progress — handy so you never forget them.'},
-    before: () => { tutTrackerWasOn = S.questTrackerOn; if (!S.questTrackerOn) { S.questTrackerOn = true; tutTrackerForced = true; renderQuestTrackerWidget(); } },
-    after: () => { if (tutTrackerForced) { S.questTrackerOn = tutTrackerWasOn; tutTrackerForced = false; renderQuestTrackerWidget(); } } },
-  { target:'#btnLeaderboard', placement:'bottom',
-    title:{fr:'Le classement',en:'The leaderboard'},
-    text:{fr:'Compare ton silver, ton gearscore et ta meilleure zone atteinte à celles des autres joueurs.', en:'Compare your silver, gearscore and best zone reached to other players.'} },
-  { target:'#btnAchievements', placement:'bottom',
-    title:{fr:'Les succès',en:'Achievements'},
-    text:{fr:'Des objectifs à long terme avec des récompenses en silver à débloquer au fil de ta progression.', en:'Long-term goals with silver rewards to unlock as you progress.'} },
-  { target:'#btnMailbox', placement:'bottom',
-    title:{fr:'Le courrier',en:'The mailbox'},
-    text:{fr:'200 points de fidélité t\'y attendent chaque jour — ils s\'y empilent en permanence et ne se perdent jamais.', en:'200 loyalty points wait for you here every day — they stack up permanently and never get lost.'} },
-  { target:'#btnPatch', placement:'bottom',
-    title:{fr:'Les notes de version',en:'Patch notes'},
-    text:{fr:'Retrouve ici tout ce qui change à chaque mise à jour du jeu.', en:'Find everything that changes with each game update here.'} },
-  { target:'#btnMarket', placement:'bottom',
-    title:{fr:'Le marché (BETA)',en:'The market (BETA)'},
-    text:{fr:'Achète et vends du gear et des matériaux avec les autres joueurs. Cette fonctionnalité est encore en BETA, des ajustements sont à prévoir.', en:'Buy and sell gear and materials with other players. This feature is still in BETA, adjustments are to be expected.'} },
+    title:{fr:'Quêtes journalières & hebdo',en:'Daily & weekly quests'},
+    text:{fr:'Des objectifs se renouvellent chaque jour et chaque semaine, avec des récompenses en silver à la clé.', en:'Objectives refresh every day and every week, with silver rewards waiting for you.'} },
   { target:'#chatWidget', placement:'left',
     title:{fr:'Discute avec les autres joueurs',en:'Chat with other players'},
     text:{fr:'Mondial, Trade, Annonces... échange avec la communauté directement depuis le jeu.', en:'World, Trade, Announcements... chat with the community right from the game.'} },
-  { target:'#btnLogout', placement:'bottom',
-    title:{fr:'La déconnexion',en:'Logging out'},
-    text:{fr:'Ta progression est sauvegardée automatiquement dans le cloud — tu peux te déconnecter puis te reconnecter sans rien perdre.', en:'Your progress is saved automatically in the cloud — you can log out and log back in without losing anything.'} },
-  { target:'#uuidRow', placement:'bottom',
-    title:{fr:'Ton UUID',en:'Your UUID'},
-    text:{fr:'Cet identifiant unique te sera demandé si le staff doit t\'ajouter un rôle (modérateur, testeur...). Clique dessus pour le copier.', en:'This unique ID will be asked from you if the staff needs to grant you a role (moderator, tester...). Click it to copy it.'} },
   { target:'#btnWiki', placement:'bottom', final:true,
     title:{fr:'Besoin d\'aide plus tard ?',en:'Need help later?'},
     text:{fr:'Tu peux relancer ce tutoriel à tout moment depuis le 📖 Wiki (onglet 🔰 Tutoriel), ou en cliquant sur 🏘️ Velia en haut de la liste des zones.', en:'You can replay this tutorial anytime from the 📖 Wiki (🔰 Tutorial tab), or by clicking 🏘️ Velia at the top of the zone list.'} },
@@ -6585,16 +6536,7 @@ function showTutorialStep() {
   $a('tutText').textContent = step.text[LANG];
   $a('tutSkipBtn').textContent = LANG==='fr'?'Passer':'Skip';
   $a('tutNextBtn').textContent = step.final ? (LANG==='fr'?'Terminer':'Finish') : (LANG==='fr'?'Suivant →':'Next →');
-  // certains steps ont besoin de forcer temporairement un état pour être visibles (ex: le suivi de
-  // quêtes) — voir tutTrackerForced. Le nettoyage correspondant (after) est appelé en quittant le step.
-  if (step.before) step.before();
   positionTutorialStep();
-}
-// referme proprement le step courant avant d'en changer (ou de terminer) : appelle son "after" s'il
-// en a un (idempotent par design, voir tutTrackerForced — donc sans risque si appelé deux fois)
-function leaveTutorialStep() {
-  const step = TUTORIAL_STEPS[tutorialStepIdx];
-  if (step && step.after) step.after();
 }
 function startTutorial() {
   questsPanelOpen = false; $a('infoOverlay').classList.remove('open');
@@ -6604,13 +6546,11 @@ function startTutorial() {
   showTutorialStep();
 }
 function endTutorial() {
-  leaveTutorialStep();
   tutorialStepIdx = -1;
   $a('tutorialOverlay').classList.remove('open');
 }
 $a('tutNextBtn').onclick = () => {
   const step = TUTORIAL_STEPS[tutorialStepIdx];
-  leaveTutorialStep();
   if (step.final) { endTutorial(); return; }
   tutorialStepIdx++; showTutorialStep();
 };
