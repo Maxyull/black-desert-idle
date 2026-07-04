@@ -56,7 +56,9 @@ alter table public.boss_claims enable row level security;
 -- mauvaise (le boss admin ne repartait alors jamais avec des PV frais) — bug confirmé et corrigé
 -- le 2026-07-06. Ce drop empêche que ça se reproduise si ce fichier est ré-exécuté tel quel.
 drop function if exists public.admin_spawn_boss(text, int);
-create or replace function public.admin_spawn_boss(p_boss_id text, p_minutes int default 15, p_hp numeric default 1000000)
+-- durée par défaut ramenée à 9 minutes (au lieu de 15) — un world boss disparaît au bout de
+-- 9 minutes, demande explicite du 2026-07-06
+create or replace function public.admin_spawn_boss(p_boss_id text, p_minutes int default 9, p_hp numeric default 1000000)
 returns void
 language plpgsql security definer
 as $$
@@ -73,6 +75,20 @@ begin
 end;
 $$;
 grant execute on function public.admin_spawn_boss(text, int, numeric) to authenticated;
+
+-- fait disparaître le boss mondial pour tout le monde (admin) — demande explicite du 2026-07-06
+create or replace function public.admin_despawn_boss()
+returns void
+language plpgsql security definer
+as $$
+begin
+  if coalesce(auth.jwt()->>'email','') is distinct from 'maxime.lacoste@icloud.com' then
+    raise exception 'Réservé au staff';
+  end if;
+  update public.live_boss set boss_id = null, spawned_at = null, expires_at = null, hp = 0, max_hp = 0 where id = 1;
+end;
+$$;
+grant execute on function public.admin_despawn_boss() to authenticated;
 
 -- Rend le boss mondial du PLANNING (Kzarka aux horaires fixes) réellement partagé entre tous les
 -- joueurs : PV communs (live_boss) et présence visible dans l'arène, exactement comme un spawn
@@ -104,7 +120,7 @@ begin
   loop
     if v_entry.day <> -1 and v_entry.day <> v_dow then continue; end if;
     v_spawn := (v_paris_date::text || ' ' || lpad(v_entry.h::text,2,'0') || ':' || lpad(v_entry.m::text,2,'0') || ':00')::timestamp at time zone 'Europe/Paris';
-    v_expires := v_spawn + interval '15 minutes';
+    v_expires := v_spawn + interval '9 minutes'; -- ramené de 15 à 9 min le 2026-07-06
     if v_now >= v_spawn and v_now < v_expires then
       select * into v_lb from public.live_boss where id = 1;
       if v_lb.boss_id is null or v_lb.expires_at <= now() or v_lb.spawned_at is distinct from v_spawn then
@@ -120,11 +136,21 @@ $$;
 grant execute on function public.ensure_scheduled_boss() to authenticated;
 
 -- un joueur inflige des dégâts au boss partagé + enregistre sa contribution. Renvoie hp/max_hp.
+-- ⚠️ BUG CRITIQUE corrigé le 2026-07-06 (confirmé par test réel + reproduction isolée) : cette
+-- fonction a TOUJOURS échoué silencieusement à chaque appel depuis sa création. Cause : les
+-- paramètres de sortie de "returns table(hp numeric, max_hp numeric)" portent EXACTEMENT les
+-- mêmes noms que les colonnes de live_boss qu'on met à jour → "update ... set hp = ... returning
+-- hp, max_hp into hp, max_hp" lève "column reference \"hp\" is ambiguous" à chaque exécution,
+-- attrapé silencieusement côté client (.catch(()=>{})). Résultat : PV jamais partagés, table
+-- boss_contributions toujours vide, classement de contribution toujours vide. Corrigé en
+-- qualifiant la table dans l'UPDATE et en utilisant des variables locales distinctes.
 create or replace function public.boss_contribute(p_damage numeric, p_pseudo text default null)
 returns table(hp numeric, max_hp numeric)
 language plpgsql security definer
 as $$
-declare v_uid uuid := auth.uid(); v_lb record; v_key timestamptz; v_pseudo text;
+declare
+  v_uid uuid := auth.uid(); v_lb record; v_key timestamptz; v_pseudo text;
+  v_new_hp numeric; v_new_max_hp numeric;
 begin
   if v_uid is null then raise exception 'Non authentifié'; end if;
   select * into v_lb from public.live_boss where id = 1;
@@ -138,11 +164,13 @@ begin
   if v_pseudo is null then v_pseudo := 'Joueur'; end if;
   -- dégâts bornés (anti-triche grossière : pas plus de 5% des PV max par appel)
   p_damage := greatest(0, least(p_damage, v_lb.max_hp * 0.05));
-  update public.live_boss set hp = greatest(0, hp - p_damage) where id = 1 returning hp, max_hp into hp, max_hp;
+  update public.live_boss lb set hp = greatest(0, lb.hp - p_damage) where lb.id = 1
+    returning lb.hp, lb.max_hp into v_new_hp, v_new_max_hp;
   insert into public.boss_contributions (boss_key, user_id, pseudo, damage, last_hit_at)
     values (v_key, v_uid, v_pseudo, p_damage, now())
     on conflict (boss_key, user_id) do update set damage = public.boss_contributions.damage + excluded.damage,
       pseudo = excluded.pseudo, last_hit_at = now();
+  hp := v_new_hp; max_hp := v_new_max_hp;
   return next;
 end;
 $$;
