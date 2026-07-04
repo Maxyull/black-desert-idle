@@ -4264,7 +4264,7 @@ function drawEntities(t) {
     if (p.dead) return;
     p.wolves.forEach(w => {
       const wp = wolfPos(p,w);
-      items.push({ depth:wp.x+wp.y, fn:()=>drawMonsterIso(wp.x,wp.y,w,t) });
+      items.push({ depth:wp.x+wp.y, fn:()=>drawWolfIso(wp.x,wp.y,w,t) });
     });
     items.push({ depth:p.x+p.y+60, fn:()=>drawPackBar(p) });
   });
@@ -4408,51 +4408,6 @@ function drawWolfIso(wx,wy,w,t) {
   ctx.fillStyle = w.lunge>.3 ? '#e05540' : '#e8c25a';
   ctx.beginPath(); ctx.arc(17.5,-18+trot*.2,1.2,0,7); ctx.fill();
   ctx.restore();
-}
-// Esprit de Protty (zone "Ruines de Protty") — créature ORIGINALE inspirée d'un mollusque/poisson
-// fantomatique flottant (dôme façon coquille, frange de nageoires, silhouette évasive), demande
-// explicite du 2026-07-07 ("modélise les Protty") — aucun asset réel repris, juste l'ambiance.
-function drawProttyIso(wx,wy,w,t) {
-  const c = toScreen(wx,wy);
-  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
-  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
-  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
-  const bob = Math.sin(t*2+w.phase)*2.2; // flotte doucement (créature évasive, pas de trot au sol)
-  ctx.fillStyle='rgba(0,0,0,.22)';
-  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,13*w.scale,5,0,0,7); ctx.fill();
-  ctx.save();
-  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3+bob);
-  if (!facingRight) ctx.scale(-1,1);
-  ctx.scale(w.scale,w.scale);
-  if (w.lunge > .3) { ctx.strokeStyle='rgba(120,210,180,.55)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.ellipse(0,-13,17,11,0,0,7); ctx.stroke(); }
-  const tone = w.tone;
-  // dôme/coquille (moitié supérieure d'une ellipse)
-  ctx.fillStyle = tone;
-  ctx.beginPath(); ctx.ellipse(0,-14,14,13,0,Math.PI,0,true); ctx.fill();
-  // sous-ventre pâle, translucide
-  ctx.fillStyle='rgba(216,205,184,.92)';
-  ctx.beginPath(); ctx.ellipse(0,-6,10.5,7,0,0,Math.PI); ctx.fill();
-  // frange de nageoires ondulantes sur le sommet du dôme
-  ctx.fillStyle='#c9d86a';
-  [[-9,0],[-3,1],[3,1],[9,0]].forEach(([dx,ph],i) => {
-    const sway = Math.sin(t*3+w.phase+ph)*1.6;
-    ctx.beginPath(); ctx.moveTo(dx,-22); ctx.lineTo(dx+sway,-28-Math.abs(sway)*.3); ctx.lineTo(dx+3.2,-21.5); ctx.closePath(); ctx.fill();
-  });
-  // nageoires latérales (façon poisson)
-  ctx.fillStyle = tone;
-  ctx.beginPath(); ctx.moveTo(-13,-13); ctx.lineTo(-21,-9+Math.sin(t*4+w.phase)*2); ctx.lineTo(-12,-6); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(13,-13); ctx.lineTo(21,-9-Math.sin(t*4+w.phase)*2); ctx.lineTo(12,-6); ctx.closePath(); ctx.fill();
-  // petit oeil sombre
-  ctx.fillStyle = w.lunge>.3 ? '#e05540' : '#2a2420';
-  ctx.beginPath(); ctx.arc(4.5,-11,1.5,0,7); ctx.fill();
-  ctx.restore();
-}
-// dispatcher : chaque zone peut avoir sa propre silhouette de monstre — pour l'instant seule
-// "Ruines de Protty" (zone 2) a la sienne, les autres gardent la silhouette générique
-function drawMonsterIso(wx,wy,w,t) {
-  if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
-  return drawWolfIso(wx,wy,w,t);
 }
 
 function drawPackBar(p) {
@@ -4879,10 +4834,7 @@ function loop(now) {
   // pendant un combat de boss (plein écran), on met le farm en pause : la salle de boss couvre
   // tout l'écran, inutile de continuer à simuler/dessiner la zone de farm derrière
   if (bossState.active) { requestAnimationFrame(loop); return; }
-  // BUG trouvé le 2026-07-07 : cette respawn continue n'était jamais gardée par atVelia — Velia
-  // partait bien à 0 pack (resetWorld), mais dès la frame suivante ce respawn en ajoutait jusqu'à
-  // en avoir 6, remplissant en boucle la "zone paisible" de monstres. Confirmé par le joueur.
-  if (!atVelia && packs.filter(p=>!p.dead).length < 6) spawnPackNear();
+  if (packs.filter(p=>!p.dead).length < 6) spawnPackNear();
   // les packs morts ne sont plus jamais dessinés (voir render()) ni utilisés ailleurs —
   // avant ce correctif ils restaient dans le tableau tant que le joueur ne s'éloignait pas
   // de 900 unités, ce qui faisait grossir `packs` indéfiniment sur une session de farm
@@ -7813,13 +7765,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V114', d:'07/07/2026 16:00', name:{fr:'Vrai correctif Velia, silhouette des Esprits de Protty', en:'Real Velia fix, Protty Spirit silhouette'}, fr:[
-      {t:'fix', tx:'Trouvé la vraie cause des monstres qui revenaient dans Velia (zone paisible) : la boucle de jeu re-générait des packs dès que leur nombre passait sous 6, SANS vérifier qu\'on était à Velia — ça remplissait la zone en boucle juste après le "aucun monstre" du chargement. Corrigé : à Velia, le joueur reste maintenant immobile et rien ne se passe, comme prévu'},
-      {t:'new', tx:'Nouvelle silhouette originale pour l\'Esprit de Protty (Ruines de Protty) : créature flottante façon mollusque/poisson fantomatique (dôme, frange de nageoires ondulantes), au lieu de la silhouette générique partagée par toutes les zones'},
-    ], en:[
-      {t:'fix', tx:'Found the real cause of monsters reappearing in Velia (peaceful zone): the game loop kept respawning packs whenever their count dropped below 6, WITHOUT checking if we were in Velia — it kept refilling the zone right after the "no monsters" load. Fixed: in Velia the player now stays still and nothing happens, as intended'},
-      {t:'new', tx:'New original silhouette for the Protty Spirit (Protty Ruins): a floating ghostly mollusk/fish-like creature (dome, wavy fin fringe), instead of the generic silhouette shared by all zones'},
-    ] },
   { v:'V113', d:'07/07/2026 14:15', name:{fr:'Boutons inventaire raccourcis (robuste à toute largeur)', en:'Shortened inventory buttons (robust at any width)'}, fr:[
       {t:'fix', tx:'"Équiper le meilleur (socle)" et "Vendre l\'inférieur" se tronquaient encore en pleine largeur de fenêtre plus étroite ("soc e", "Ven...") — raccourcis en "Équiper meilleur" et "Vendre", le sens complet reste visible au survol'},
     ], en:[
