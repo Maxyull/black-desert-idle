@@ -1843,20 +1843,6 @@ function pushNotif(icon, title, text) {
   notifUnread++;
   updateNotifBadge();
 }
-// relaie un événement vers le salon Discord "log général" via l'Edge Function discord-log —
-// le webhook lui-même reste côté serveur, jamais dans ce code client (voir supabase-discord-log)
-async function logToDiscord(title, description, color) {
-  if (!sb) return;
-  try {
-    const { data } = await sb.auth.getSession();
-    const token = (data && data.session && data.session.access_token) || SUPABASE_ANON_KEY;
-    await fetch(SUPABASE_URL + '/functions/v1/discord-log', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-      body: JSON.stringify({ title, description, color }),
-    });
-  } catch (e) {}
-}
 function updateNotifBadge() {
   const badge = $a('notifBadge'); if (!badge) return;
   badge.textContent = notifUnread > 9 ? '9+' : notifUnread;
@@ -1887,7 +1873,6 @@ function checkAchievements() {
       S.silver += a.reward; S.silverEarned += a.reward;
       showAchToast(a);
       pushNotif('🏅', LANG==='fr'?'Succès débloqué':'Achievement unlocked', a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)');
-      logToDiscord('🏅 Succès débloqué', `**${myPseudo||'Joueur'}** — ${a.name.fr} (+${fmt(a.reward)} 🪙)`, 0xc9a55a);
       unlocked = true;
     }
   }
@@ -2334,7 +2319,6 @@ async function endBossFight(win) {
     const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
     rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${qty} × ${b.matName}</div>`;
     pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙');
-    logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
     refreshStatsOnly(); hud();
   }
   $('bossResult').innerHTML =
@@ -3534,13 +3518,11 @@ function dropsTick(dt) {
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'★ '+it.name,{lvl:true});
         pushNotif('💍', LANG==='fr'?'Bijou rare':'Rare jewel', it.name);
-        logToDiscord('💍 Bijou rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'gear') {
         S.gearDropCount = (S.gearDropCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'⚔ '+it.name,{lvl:true});
         pushNotif('⚔️', LANG==='fr'?'Équipement trouvé':'Gear found', it.name);
-        logToDiscord('⚔️ Équipement rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,40,it.name,{blue:true});
@@ -5377,7 +5359,6 @@ async function resetAllQuests() {
     : "Reset quests for ALL players? Everyone's in-progress quests (daily and weekly) will be cleared and new ones drawn on their next login. This action is irreversible.";
   if (!confirm(msg)) return;
   const { error } = await sb.rpc('admin_reset_all_quests');
-  if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé les quêtes de tous les joueurs`, 0x9cc9e8);
   if (error) {
     floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
     return;
@@ -5388,7 +5369,6 @@ async function resetAllQuests() {
 async function reevalMarket() {
   if (!isAdmin() || !sb) return;
   const { error } = await sb.rpc('reevaluate_market', { p_min_interval_minutes: 0 }); // 0 = force, ignore le throttle
-  if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a forcé la réévaluation du marché`, 0x9cc9e8);
   floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec réévaluation':'Reevaluation failed') : (LANG==='fr'?'Marché réévalué ✓':'Market reevaluated ✓'), { gold: !error, hurt: !!error });
 }
 
@@ -5591,7 +5571,6 @@ async function openAdminPanel() {
     const uuid = $a('admTesterUuid').value.trim(); if (!uuid) return;
     const { error } = await sb.rpc('admin_add_tester', { p_user_id: uuid });
     if (error) { $a('admTesterList').insertAdjacentHTML('afterbegin', `<div class="admHint">${error.message}</div>`); return; }
-    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté un testeur : \`${uuid}\``, 0x9cc9e8);
     $a('admTesterUuid').value = ''; refreshTesterList();
   };
   $a('btnRefundSellMats').onclick = async () => {
@@ -5601,7 +5580,6 @@ async function openAdminPanel() {
     resEl.textContent = LANG==='fr' ? 'Traitement…' : 'Processing…';
     const { data, error } = await sb.rpc('admin_refund_last_sell_mats', { p_pseudo: pseudo });
     if (error) { resEl.textContent = error.message; return; }
-    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a remboursé le dernier "Vendre mat" de **${escapeHtml(pseudo)}** — résultat : ${data}`, 0x9cc9e8);
     const MSG = {
       user_not_found: LANG==='fr' ? 'Aucun joueur avec ce pseudo.' : 'No player with that pseudo.',
       no_entry: LANG==='fr' ? "Aucun clic \"Vendre mat\" non remboursé trouvé pour ce joueur." : 'No un-refunded "Sell mats" click found for this player.',
@@ -5647,7 +5625,6 @@ async function openAdminPanel() {
     const id = $a('admGlobalBossSelect').value;
     const targetMin = Number($a('admBossDurationSelect').value) || 4;
     const ok = await adminSpawnSharedBoss(id, targetMin);
-    if (ok) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a lancé ${BOSS_ROSTER[id].name.fr} pour tous (~${targetMin} min)`, 0x9cc9e8);
     floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓') : (LANG==='fr'?'Échec du lancement':'Failed to launch'), { gold:ok, hurt:!ok });
   };
   // --- modérateurs ---
@@ -5657,7 +5634,6 @@ async function openAdminPanel() {
     if (!uuid) return;
     const { error } = await sb.rpc('admin_add_mod', { p_user_id: uuid });
     if (error) { $a('admModList').insertAdjacentHTML('afterbegin', `<div class="admHint">${error.message}</div>`); return; }
-    logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté un modérateur : \`${uuid}\``, 0x9cc9e8);
     $a('admModUuid').value = '';
     refreshModList();
   };
@@ -6492,13 +6468,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V89', d:'05/07/2026 04:00', name:{fr:'Log Discord (jeu + alertes triche)', en:'Discord logging (game + cheat alerts)'}, fr:[
-      {t:'admin', tx:'Salon Discord "log général" : succès débloqués, boss vaincus, bijoux/équipement rares trouvés, et actions admin (mod/testeur, remboursement, boss global, reset quêtes, réévaluation marché) y sont désormais relayés automatiquement'},
-      {t:'admin', tx:'Salon Discord "triche" séparé : alerte automatique quand l\'anti-triche serveur doit borner une valeur impossible (silver, gearscore, niveau, temps de jeu), avec le joueur et les valeurs concernées'},
-    ], en:[
-      {t:'admin', tx:'"General log" Discord channel: unlocked achievements, boss kills, rare gear/jewelry finds, and admin actions (mod/tester, refund, global boss, quest reset, market reevaluation) are now automatically relayed there'},
-      {t:'admin', tx:'Separate "cheat" Discord channel: automatic alert when the server-side anti-cheat has to clamp an impossible value (silver, gearscore, level, playtime), with the player and the values involved'},
-    ] },
   { v:'V88', d:'05/07/2026 03:00', name:{fr:'Admin : liste des joueurs + copie UUID', en:'Admin: player list + UUID copy'}, fr:[
       {t:'admin', tx:'Nouvel onglet "👥 Joueurs" dans le panneau Admin : liste de tous les joueurs inscrits avec statut en ligne, silver, GS, niveau — clique une ligne pour copier son UUID'},
       {t:'admin', tx:'Depuis le classement, le stuff d\'un joueur consulté par l\'admin propose désormais un bouton "📋 Copier UUID"'},
