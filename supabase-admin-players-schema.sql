@@ -24,3 +24,20 @@ begin
 end;
 $$;
 grant execute on function public.admin_list_players() to authenticated;
+
+-- inventaire complet (192 cases) d'un joueur, réservé au staff — pour investiguer un signalement
+-- ou une triche suspectée sans devoir demander au joueur de faire des captures d'écran
+create or replace function public.admin_get_player_inventory(p_user_id uuid)
+returns jsonb
+language plpgsql security definer
+as $$
+declare v_inv jsonb;
+begin
+  if coalesce(auth.jwt()->>'email','') is distinct from 'maxime.lacoste@icloud.com' then
+    raise exception 'Réservé au staff';
+  end if;
+  select save_data->'INV' into v_inv from public.game_saves where user_id = p_user_id;
+  return coalesce(v_inv, '[]'::jsonb);
+end;
+$$;
+grant execute on function public.admin_get_player_inventory(uuid) to authenticated;

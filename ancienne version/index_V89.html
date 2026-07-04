@@ -45,12 +45,10 @@
     font-size:11px; color:var(--ink-dim); max-height:250px; overflow:hidden;
     text-shadow:0 1px 2px #000; line-height:1.5;
     display:flex; flex-direction:column-reverse; /* nouvelles entrées en bas, la liste grandit vers le haut */
-    -webkit-mask-image:linear-gradient(to bottom, transparent, rgba(0,0,0,.15) 25%, black 65%);
-    mask-image:linear-gradient(to bottom, transparent, rgba(0,0,0,.15) 25%, black 65%); /* fondu plus prononcé des anciennes entrées vers le haut */
+    -webkit-mask-image:linear-gradient(to bottom, transparent, black 30%);
+    mask-image:linear-gradient(to bottom, transparent, black 30%); /* fondu des anciennes entrées vers le haut */
   }
-  #lootTicker .trashLoot { color:#fff; }
-  #lootTicker .matLoot { color:#6ea3c9; }
-  #lootTicker .rare { color:#b48ce8; }
+  #lootTicker .rare { color:#b48ce8; } #lootTicker .trashLoot { color:#fff; }
   #lootTicker .jackpot { color:#e8b84a; font-weight:bold; }
   /* effet visuel pour le butin rare et au-delà (rare/jackpot) : flash doré à l'apparition + lueur
      douce en continu, pour que ces lignes sautent vraiment aux yeux dans le flux de loot */
@@ -290,11 +288,10 @@
   /* ===== inventaire (permanent) ===== */
   .invTools { display:flex; gap:5px; margin-bottom:7px; }
   .invTools button { margin:0; font-size:10.5px; padding:5px 4px; flex:1; }
-  #invGrid, .admInvGrid {
+  #invGrid {
     display:grid; grid-template-columns:repeat(8, 1fr); gap:3px;
     overflow-y:auto; max-height:188px; align-content:start; padding-right:2px;
   }
-  .admInvGrid { max-height:none; }
   #invGrid::-webkit-scrollbar { width:7px; }
   #invGrid::-webkit-scrollbar-thumb { background:#3a3742; }
   .cell {
@@ -387,10 +384,6 @@
   #optResult { font-size:11.5px; min-height:15px; margin-top:5px; letter-spacing:.5px; }
   #optResult.ok { color:#8fc98a; } #optResult.fail { color:var(--danger); }
   .optShake { animation:shake .35s; }
-  #optAutoRow { display:flex; gap:6px; margin-top:6px; }
-  #optAutoRow select { flex:1; background:#191720; color:var(--ink); border:1px solid var(--gold-dim); padding:5px; font-family:inherit; font-size:11px; }
-  #optAutoRow button { width:auto; margin:0; font-size:11px; padding:5px 10px; white-space:nowrap; }
-  #btnOptAuto.running { border-color:var(--danger); color:#e8a89f; }
   #optTarget {
     width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
     font-family:inherit; font-size:11px; padding:5px 6px;
@@ -1422,10 +1415,6 @@
         <div id="optChanceTxt" data-i18n="optChanceEmpty">Chargez un matériau depuis le sac</div>
       </div>
       <button id="btnOpt" disabled data-i18n="btnOptTry">Tenter l'optimisation</button>
-      <div id="optAutoRow">
-        <select id="optAutoTarget"></select>
-        <button id="btnOptAuto" data-i18n="btnOptAuto">▶ Auto jusqu'à</button>
-      </div>
       <div id="optResult"></div>
       <div id="optSuggest"></div>
     </div>
@@ -1551,7 +1540,6 @@ const ZONES = [
 ];
 let zoneIdx = 0;
 let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
-let autoOptTimer = null, autoOptTargetLvl = null; // optimisation automatique jusqu'à un palier choisi (voir startAutoOpt)
 let lastLootEntry = null; // dernière ligne du loot ticker, pour fusionner les drops identiques consécutifs
 const Z = () => ZONES[zoneIdx];
 
@@ -3557,7 +3545,7 @@ function dropsTick(dt) {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,40,it.name,{blue:true});
       } else {
-        lootLine(it, l.silver, it.kind === 'material' ? 'matLoot' : '');
+        lootLine(it, l.silver, '');
         floatTxt(l.x,l.y,40,it.name,{silver:true});
       }
       particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
@@ -4863,16 +4851,13 @@ function renderOptimization() {
   $('optChanceFill').style.width = (parts.base*100)+'%';
   $('optChanceFillFS').style.width = (parts.bonus*100)+'%';
   renderOptSuggestions();
-  if (!autoOptTimer) renderOptAutoTargetSelect(); // pas touché pendant une auto en cours (garde le palier choisi)
 }
-$('optTarget').onchange = e => { optTargetSlot = e.target.value; stopAutoOpt(); renderOptimization(); };
+$('optTarget').onchange = e => { optTargetSlot = e.target.value; renderOptimization(); };
 
-// une tentative d'optimisation (succès/échec/rétrogradation) — factorisée pour être appelée
-// aussi bien par le bouton manuel que par la boucle "Auto jusqu'à" (voir plus bas)
-function attemptEnhance() {
+$('btnOpt').onclick = () => {
   const target = EQUIP[optTargetSlot];
   const idx = findEnhanceMaterial();
-  if (!target || idx === -1 || (target.enhLv||0) >= ENH_NAMES.length-1) return false;
+  if (!target || idx === -1 || (target.enhLv||0) >= ENH_NAMES.length-1) return;
   invRemoveAt(idx, 1);
   S.enhAttempts = (S.enhAttempts||0) + 1;
   const lvl = target.enhLv||0;
@@ -4911,52 +4896,7 @@ function attemptEnhance() {
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
   refreshStatsOnly(); renderOptimization();
-  return true;
-}
-$('btnOpt').onclick = attemptEnhance;
-
-// ---------- optimisation automatique jusqu'à un palier choisi ----------
-// tente automatiquement (toutes les ~200 ms, pour rester visible) jusqu'à atteindre le palier
-// choisi OU tomber à court de matériau — s'arrête aussi si l'objet redescend sous le palier visé
-// à cause d'une rétrogradation (pour ne pas vider tout le sac dans un mur de malchance)
-function renderOptAutoTargetSelect() {
-  const sel = $('optAutoTarget'); if (!sel) return;
-  const target = EQUIP[optTargetSlot];
-  const curLvl = target ? (target.enhLv||0) : 0;
-  const options = ENH_NAMES.map((name,i) => i).filter(i => i > curLvl);
-  sel.innerHTML = options.map(i => `<option value="${i}">${ENH_NAMES[i]}</option>`).join('')
-    || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
-  sel.disabled = !options.length;
-}
-function stopAutoOpt() {
-  if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; }
-  autoOptTargetLvl = null;
-  const btn = $('btnOptAuto'); if (!btn) return;
-  btn.classList.remove('running');
-  btn.textContent = LANG==='fr' ? "▶ Auto jusqu'à" : '▶ Auto to';
-  $('optAutoTarget').disabled = false;
-}
-function startAutoOpt() {
-  const sel = $('optAutoTarget');
-  const lvl = parseInt(sel.value, 10);
-  if (!Number.isInteger(lvl)) return;
-  autoOptTargetLvl = lvl;
-  sel.disabled = true;
-  const btn = $('btnOptAuto');
-  btn.classList.add('running');
-  btn.textContent = LANG==='fr' ? '⏸ Arrêter' : '⏸ Stop';
-  autoOptTimer = setInterval(() => {
-    const target = EQUIP[optTargetSlot];
-    if (!target || (target.enhLv||0) >= autoOptTargetLvl) { stopAutoOpt(); return; }
-    if (findEnhanceMaterial() === -1) {
-      $('optResult').textContent = LANG==='fr' ? 'Auto arrêté — plus de matériau' : 'Auto stopped — out of material';
-      stopAutoOpt();
-      return;
-    }
-    attemptEnhance();
-  }, 220);
-}
-$('btnOptAuto').onclick = () => { if (autoOptTimer) stopAutoOpt(); else startAutoOpt(); };
+};
 
 // suggestion : quelle pièce optimiser en priorité pour atteindre la zone suivante
 function renderOptSuggestions() {
@@ -5530,17 +5470,16 @@ async function openAdminPanel() {
   // liste des joueurs connectés/inscrits (admin uniquement) : pseudo, GS, silver, statut en
   // ligne, et l'UUID copiable en un clic — demande explicite du 2026-07-05
   const playersHtml = (playersList||[]).map(p => `
-    <tr class="admPlayerRow" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${LANG==='fr'?'Cliquer pour copier l\'UUID':'Click to copy UUID'}">
+    <tr class="admPlayerRow" data-uuid="${p.user_id}" title="${LANG==='fr'?'Cliquer pour copier l\'UUID':'Click to copy UUID'}">
       <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
       <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td><td>${p.lvl||1}</td>
       <td><code>${(p.user_id||'').slice(0,8)}…</code></td>
-      <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}">🎒</button></td>
-    </tr>`).join('') || `<tr><td colspan="7" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="6" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
   const cats = [
     { id:'players', icon:'👥', label:{fr:'Joueurs',en:'Players'},
-      body: `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits — clique une ligne pour copier son UUID, ou 🎒 pour voir son inventaire`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered — click a row to copy its UUID, or 🎒 to view its inventory`}</div>
+      body: `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits — clique une ligne pour copier son UUID`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered — click a row to copy its UUID`}</div>
       <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th>UUID</th><th></th></tr></thead>
+        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th>UUID</th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>` },
     { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'},
@@ -5646,9 +5585,6 @@ async function openAdminPanel() {
       floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
       setTimeout(() => { row.style.background = original; }, 600);
     };
-  });
-  $a('infoBody').querySelectorAll('.admInvBtn').forEach(btn => {
-    btn.onclick = e => { e.stopPropagation(); showPlayerInventory(btn.dataset.uuid, btn.dataset.name); };
   });
   $a('btnAddTester').onclick = async () => {
     if (!isAdmin() || !sb) return;
@@ -5839,33 +5775,6 @@ async function showPlayerGear(userId, displayName) {
       floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
     };
   }
-}
-// inventaire complet (192 cases) d'un joueur, en lecture seule — réservé au staff, demande
-// explicite du 2026-07-05 (voir bouton 🎒 dans l'onglet Joueurs du panneau Admin)
-async function showPlayerInventory(userId, displayName) {
-  if (!isAdmin() || !sb) return;
-  openInfo((LANG==='fr'?'🎒 Inventaire de ':'🎒 Inventory of ')+displayName,
-    `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`);
-  const { data, error } = await sb.rpc('admin_get_player_inventory', { p_user_id: userId });
-  if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${error.message}</div>`; return; }
-  const inv = Array.isArray(data) ? data : [];
-  const used = inv.filter(Boolean).length;
-  const cellsHtml = inv.map(s => {
-    if (!s) return `<div class="cell"></div>`;
-    const apDp = (s.kind === 'gear' || s.kind === 'jackpot') ? effectiveApDp(s) : null;
-    const bits = [tr(s.name)];
-    if (s.qty > 1) bits.push('×'+s.qty);
-    if (apDp && apDp.ap) bits.push('+'+apDp.ap+' PA');
-    if (apDp && apDp.dp) bits.push('+'+apDp.dp+' PD');
-    if (apDp && apDp.hp) bits.push('+'+apDp.hp+' PV');
-    if (s.enhLv) bits.push(ENH_NAMES[s.enhLv]);
-    return `<div class="cell has k-${s.kind}" title="${escapeHtml(bits.join(' · '))}">` +
-      `<span style="color:${s.color}">${s.icon}</span>` +
-      `${s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : ''}</div>`;
-  }).join('');
-  $a('infoBody').innerHTML =
-    `<div class="admSummary">${used} / ${inv.length || INV_SIZE} ${LANG==='fr'?'cases utilisées':'slots used'}</div>` +
-    `<div class="admInvGrid">${cellsHtml}</div>`;
 }
 // bascule entre onglets de catégorie repliés dans un même panneau (openInfo) — n'affiche
 // qu'une seule catégorie à la fois, les autres restent en mémoire (display:none)
@@ -6538,7 +6447,6 @@ const I18N = {
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
   optChanceEmpty: { fr:'Chargez un matériau depuis le sac', en:'Load a material from your bag' },
   btnOptTry: { fr:"Tenter l'optimisation", en:'Attempt enhancement' },
-  btnOptAuto: { fr:"▶ Auto jusqu'à", en:'▶ Auto to' },
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
 };
 function applyI18n() {
@@ -6584,15 +6492,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V90', d:'05/07/2026 05:00', name:{fr:'Optimisation auto, inventaire des joueurs (admin), loot ticker amélioré', en:'Auto-enhance, player inventory (admin), improved loot ticker'}, fr:[
-      {t:'new', tx:'Optimisation : bouton "▶ Auto jusqu\'à" avec un palier au choix — tente automatiquement (et gère les rétrogradations) jusqu\'à atteindre ce palier ou tomber à court de matériau'},
-      {t:'admin', tx:'Panneau Admin : bouton 🎒 dans l\'onglet Joueurs pour voir l\'inventaire complet (192 cases) de n\'importe quel joueur, en lecture seule'},
-      {t:'change', tx:'Loot en direct : fondu des anciennes entrées plus prononcé, et les matériaux ont désormais leur propre couleur (bleu) au lieu du gris par défaut'},
-    ], en:[
-      {t:'new', tx:'Enhancement: "▶ Auto to" button with a chosen tier — automatically retries (handling downgrades) until reaching that tier or running out of material'},
-      {t:'admin', tx:'Admin panel: 🎒 button in the Players tab to view any player\'s full inventory (192 slots), read-only'},
-      {t:'change', tx:'Live loot: stronger fade on older entries, and materials now have their own color (blue) instead of the default gray'},
-    ] },
   { v:'V89', d:'05/07/2026 04:00', name:{fr:'Log Discord (jeu + alertes triche)', en:'Discord logging (game + cheat alerts)'}, fr:[
       {t:'admin', tx:'Salon Discord "log général" : succès débloqués, boss vaincus, bijoux/équipement rares trouvés, et actions admin (mod/testeur, remboursement, boss global, reset quêtes, réévaluation marché) y sont désormais relayés automatiquement'},
       {t:'admin', tx:'Salon Discord "triche" séparé : alerte automatique quand l\'anti-triche serveur doit borner une valeur impossible (silver, gearscore, niveau, temps de jeu), avec le joueur et les valeurs concernées'},
