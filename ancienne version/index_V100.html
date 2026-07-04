@@ -496,18 +496,11 @@
 
   /* juste le bouton qui ouvre le panneau Admin — les actions vivent maintenant dedans (voir .admActions) */
   #adminBox { margin-top:2px; }
-  .admSection { margin-bottom:14px; padding:10px 10px 10px 12px; border:1px solid #2c2a33; border-left-width:3px; border-radius:4px; background:rgba(255,255,255,.02); }
-  /* code couleur par niveau de risque, pour repérer d'un coup d'oeil ce qui est réversible/perso
-     vs ce qui touche TOUS les joueurs — demande explicite du 2026-07-06 (panneau "plus compréhensible") */
-  .admSection.riskSafe { border-left-color:#5a8fc8; }
-  .admSection.riskGlobal { border-left-color:var(--danger); }
-  .admSection.riskMgmt { border-left-color:#7aa35e; }
-  .admSectionTitle { font-size:11px; font-weight:bold; letter-spacing:.5px; color:var(--gold); margin-bottom:2px; }
-  .admSectionSub { font-size:10px; color:var(--ink-dim); margin-bottom:8px; }
+  .admSection { margin-bottom:14px; padding:10px; border:1px solid #2c2a33; border-radius:4px; background:rgba(255,255,255,.02); }
+  .admSectionTitle { font-size:11px; font-weight:bold; letter-spacing:.5px; color:var(--gold); margin-bottom:8px; }
   .admSection .admActions { border-bottom:none; padding-bottom:0; margin-bottom:8px; }
   .admSection .admBossSpawn { border-bottom:none; padding-bottom:0; margin-bottom:0; }
-  .admHint { font-size:10px; color:var(--ink-dim); font-style:italic; }
-  .admHint.warn { color:var(--danger); }
+  .admHint { font-size:10px; color:var(--danger); font-style:italic; }
   .modRow { display:flex; align-items:center; gap:8px; padding:4px 2px; border-bottom:1px solid #232128; font-size:11px; }
   .modPseudo { color:var(--gold); font-weight:bold; flex-shrink:0; }
   .modUuid { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; font-size:9.5px; color:var(--ink-dim); }
@@ -1706,11 +1699,6 @@ const ICO_MAT_NOIRE = svgIcon(
 const ICO_MAT_CAPHRAS = svgIcon(
   '<path d="M12 2l5.6 4.6-1.6 9.4-4 6-4-6-1.6-9.4z" fill="#c9a55a"/><path d="M12 2l5.6 4.6-1.6 9.4-4 6z" fill="#a3803c"/>' +
   '<path d="M12 2l-2 8 4 1.1z" fill="#e8d29c"/><circle cx="12" cy="13.5" r="1.6" fill="#ffe9a8" opacity=".7"/>');
-// Pierre concentrée (palier Grunil/bleu, distincte de la Pierre Noire de Yuria depuis le
-// 2026-07-06) : cristal bleu foncé dense, cœur cyan concentré
-const ICO_MAT_CONCENTREE = svgIcon(
-  '<path d="M12 2l5.8 4.8-1.8 9.6-4 5.6-4-5.6-1.8-9.6z" fill="#2e3a52"/><path d="M12 2l5.8 4.8-1.8 9.6-4 5.6z" fill="#1c2438"/>' +
-  '<path d="M12 2l-2 7.4 4 1.2z" fill="#4a5c7a"/><circle cx="12" cy="13" r="2.3" fill="#5ec9e8" opacity=".65"/>');
 
 // ==================== INVENTAIRE (192 slots) & ÉQUIPEMENT ====================
 const INV_SIZE = 192;
@@ -2091,7 +2079,7 @@ const BOSS_SCHEDULE = [
   { boss:'kzarka', day:0,       h:15, m:45 },
   { boss:'kzarka', day:6,       h:15, m:45 },
 ];
-const BOSS_WINDOW_MS = 9 * 60 * 1000; // fenêtre pendant laquelle le boss reste combattable après spawn (demande du 2026-07-06)
+const BOSS_WINDOW_MS = 15 * 60 * 1000; // fenêtre pendant laquelle le boss reste combattable après spawn
 
 // prochaine occurrence (ou occurrence en cours) de chaque entrée du planning, sur 7 jours glissants
 function bossOccurrences(fromDate) {
@@ -3523,9 +3511,7 @@ const GEAR_TIERS = [
   { grade:'blue', color:'#6ea3c9', zones:[9,10], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
     sets:{ weapon:'Dague Grunil', awakening:'Éveil Grunil', secondary:'Épée Grunil',
            helmet:'Casque Grunil', armor:'Plastron Grunil', gloves:'Gants Grunil', boots:'Bottes Grunil' },
-    // Pierre concentrée dédiée à Grunil depuis le 2026-07-06 (avant : partageait la Pierre Noire
-    // de Yuria, ce qui mélangeait les 2 paliers) — Yuria (vert) garde la Pierre Noire
-    material:{ name:'Pierre concentrée', icon:ICO_MAT_CONCENTREE, color:'#6ea3c9' }, dropChance:0.02 },
+    material:{ name:'Pierre Noire', icon:ICO_MAT_NOIRE, color:'#3a3742' }, dropChance:0.02 },
 ];
 function gearTierForZone(zi) { return GEAR_TIERS.find(t => t.zones.includes(zi)) || GEAR_TIERS[GEAR_TIERS.length-1]; }
 // chance de drop d'une pièce d'équipement, décroissante zone par zone — utilisée par Naru/Tuvala
@@ -5836,20 +5822,19 @@ async function openAdminPanel() {
   `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 
   // liste des joueurs connectés/inscrits (admin uniquement) : pseudo, GS, silver, statut en
-  // ligne, et 2 boutons dédiés (UUID / Inventaire) au lieu du clic-sur-la-ligne — demande explicite
-  // du 2026-07-06 (plus clair que "cliquer la ligne copie l'UUID, cliquer l'icône ouvre l'inventaire")
+  // ligne, et l'UUID copiable en un clic — demande explicite du 2026-07-05
   const playersHtml = (playersList||[]).map(p => `
-    <tr>
+    <tr class="admPlayerRow" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${LANG==='fr'?'Cliquer pour copier l\'UUID':'Click to copy UUID'}">
       <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
       <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td><td>${p.lvl||1}</td>
-      <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
-      <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
+      <td><code>${(p.user_id||'').slice(0,8)}…</code></td>
+      <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}">🎒</button></td>
     </tr>`).join('') || `<tr><td colspan="7" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
   const cats = [
     { id:'players', icon:'👥', label:{fr:'Joueurs',en:'Players'},
-      body: `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered`}</div>
+      body: `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits — clique une ligne pour copier son UUID, ou 🎒 pour voir son inventaire`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered — click a row to copy its UUID, or 🎒 to view its inventory`}</div>
       <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th></th><th></th></tr></thead>
+        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th>UUID</th><th></th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>` },
     { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'},
@@ -5901,9 +5886,8 @@ async function openAdminPanel() {
   // panneau admin scindé en 2 : "Pour moi" (test sur mon propre compte, purement local) et
   // "Pour les joueurs" (actions serveur qui touchent tout le monde)
   const actionsHtml = `
-    <div class="admSection riskSafe">
+    <div class="admSection">
       <div class="admSectionTitle">👤 ${LANG==='fr'?'Pour moi — test sur mon compte':'For me — test on my account'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Sans danger : ça ne touche que TON propre personnage.':'Safe: only affects YOUR own character.'}</div>
       <div class="admActions">
         <button id="btnTestSilver">💰 +1M silver</button>
         <button id="btnTestLoyalty">📬 +200 fidélité</button>
@@ -5916,11 +5900,9 @@ async function openAdminPanel() {
         <select id="admBossSelect">${bossOptions}</select>
         <button id="btnAdmSpawnBoss">${LANG==='fr'?'Combattre maintenant':'Fight now'}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Lance un vrai boss partagé (PV communs) rien que pour toi, pour tester sans attendre le planning ni prévenir personne.':'Spawns a real shared boss (common HP) just for you, to test without waiting for the schedule or notifying anyone.'}</div>
     </div>
-    <div class="admSection riskGlobal">
+    <div class="admSection">
       <div class="admSectionTitle">🌍 ${LANG==='fr'?'Pour les joueurs — actions serveur':'For players — server-wide'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
       <div class="admActions">
         <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
         <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
@@ -5931,32 +5913,29 @@ async function openAdminPanel() {
         <select id="admBossDurationSelect">
           ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${LANG==='fr'?`~${m} min à tuer`:`~${m} min to kill`}</option>`).join('')}
         </select>
-        <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (9 min)':'Launch (9 min)'}</button>
-        <button id="btnAdmDespawnBoss">🛑 ${LANG==='fr'?'Faire disparaître':'Despawn'}</button>
+        <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (15 min)':'Launch (15 min)'}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels). Le boss disparaît de toute façon au bout de 9 minutes.':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation). The boss despawns after 9 minutes regardless.'}</div>
+      <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels).':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation).'}</div>
+      <div class="admHint">${LANG==='fr'?'⚠️ Ces actions affectent TOUS les joueurs.':'⚠️ These actions affect ALL players.'}</div>
     </div>
-    <div class="admSection riskMgmt">
+    <div class="admSection">
       <div class="admSectionTitle">🛡️ ${LANG==='fr'?'Modérateurs (chat)':'Moderators (chat)'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Un modérateur peut supprimer des messages de chat, pas plus.':'A moderator can delete chat messages, nothing more.'}</div>
       <div class="admBossSpawn">
         <input type="text" id="admModUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
         <button id="btnAddMod">${LANG==='fr'?'➕ Ajouter MOD':'➕ Add MOD'}</button>
       </div>
       <div id="admModList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
     </div>
-    <div class="admSection riskMgmt">
+    <div class="admSection">
       <div class="admSectionTitle">🧪 ${LANG==='fr'?'Testeurs (avant-première)':'Testers (early access)'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Donne accès aux fonctionnalités pas encore publiques à un UUID précis.':'Grants access to not-yet-public features to a specific UUID.'}</div>
       <div class="admBossSpawn">
         <input type="text" id="admTesterUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
         <button id="btnAddTester">${LANG==='fr'?'➕ Ajouter Testeur':'➕ Add Tester'}</button>
       </div>
       <div id="admTesterList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
     </div>
-    <div class="admSection riskMgmt">
+    <div class="admSection">
       <div class="admSectionTitle">🔄 ${LANG==='fr'?'Rembourser un clic "Vendre mat"':'Refund a "Sell mats" click'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Redonne les matériaux du dernier clic accidentel sur "Vendre" pour ce pseudo.':'Gives back the materials from the last accidental "Sell" click for that pseudo.'}</div>
       <div class="admBossSpawn">
         <input type="text" id="admRefundPseudo" placeholder="${LANG==='fr'?'Pseudo du joueur':'Player pseudo'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-size:11px;border-radius:3px;">
         <button id="btnRefundSellMats">${LANG==='fr'?'🔄 Rembourser dernier':'🔄 Refund last'}</button>
@@ -5968,19 +5947,18 @@ async function openAdminPanel() {
   wireCatTabs();
   refreshModList();
   refreshTesterList();
-  // bouton dédié "UUID" (onglet Joueurs) : copie l'UUID dans le presse-papiers
-  $a('infoBody').querySelectorAll('.admUuidBtn').forEach(btn => {
-    btn.onclick = async e => {
-      e.stopPropagation();
-      try { await navigator.clipboard.writeText(btn.dataset.uuid); } catch(e) {}
+  // clic sur une ligne joueur (onglet Joueurs) : copie son UUID dans le presse-papiers
+  $a('infoBody').querySelectorAll('.admPlayerRow').forEach(row => {
+    row.onclick = async () => {
+      try { await navigator.clipboard.writeText(row.dataset.uuid); } catch(e) {}
+      const original = row.style.background;
+      row.style.background = 'rgba(201,165,90,.25)';
       floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
+      setTimeout(() => { row.style.background = original; }, 600);
     };
   });
-  // bouton dédié "Inventaire" : ouvre l'inventaire dans une NOUVELLE FENÊTRE (pas dans le panneau
-  // admin lui-même) et revient automatiquement sur le panneau admin quand cette fenêtre se ferme —
-  // demande explicite du 2026-07-06
   $a('infoBody').querySelectorAll('.admInvBtn').forEach(btn => {
-    btn.onclick = e => { e.stopPropagation(); showPlayerInventoryWindow(btn.dataset.uuid, btn.dataset.name); };
+    btn.onclick = e => { e.stopPropagation(); showPlayerInventory(btn.dataset.uuid, btn.dataset.name); };
   });
   $a('btnAddTester').onclick = async () => {
     if (!isAdmin() || !sb) return;
@@ -6023,7 +6001,7 @@ async function openAdminPanel() {
     } catch (e) {}
     const expectedFighters = Math.max(1, Math.round(onlineTotal * 0.4));
     const sharedHp = Math.round(BOSS_REF_DPS * expectedFighters * targetMin * 60);
-    const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 9, p_hp: sharedHp });
+    const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 15, p_hp: sharedHp });
     if (!error) await refreshLiveBoss();
     return !error;
   }
@@ -6045,13 +6023,6 @@ async function openAdminPanel() {
     const ok = await adminSpawnSharedBoss(id, targetMin);
     if (ok) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a lancé ${BOSS_ROSTER[id].name.fr} pour tous (~${targetMin} min)`, 0x9cc9e8);
     floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓') : (LANG==='fr'?'Échec du lancement':'Failed to launch'), { gold:ok, hurt:!ok });
-  };
-  $a('btnAdmDespawnBoss').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    if (!confirm(LANG==='fr'?'Faire disparaître le boss mondial pour TOUS les joueurs ?':'Despawn the world boss for ALL players?')) return;
-    const { error } = await sb.rpc('admin_despawn_boss');
-    if (!error) { await refreshLiveBoss(); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a fait disparaître le boss mondial`, 0x9cc9e8); }
-    floatTxt(P.x, P.y, 100, !error ? (LANG==='fr'?'Boss disparu ✓':'Boss despawned ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
   };
   // --- modérateurs ---
   $a('btnAddMod').onclick = async () => {
@@ -6179,34 +6150,14 @@ async function showPlayerGear(userId, displayName) {
     };
   }
 }
-// inventaire complet (192 cases) d'un joueur, en lecture seule — réservé au staff. Ouvre dans une
-// VRAIE fenêtre séparée du navigateur (pas dans le panneau admin) et revient automatiquement sur
-// le panneau admin (dans la fenêtre principale) quand cette fenêtre popup se ferme — demande
-// explicite du 2026-07-06
-async function showPlayerInventoryWindow(userId, displayName) {
+// inventaire complet (192 cases) d'un joueur, en lecture seule — réservé au staff, demande
+// explicite du 2026-07-05 (voir bouton 🎒 dans l'onglet Joueurs du panneau Admin)
+async function showPlayerInventory(userId, displayName) {
   if (!isAdmin() || !sb) return;
-  const win = window.open('', '_blank', 'width=560,height=680');
-  if (!win) { floatTxt(P.x, P.y, 100, LANG==='fr'?'Popup bloquée par le navigateur':'Popup blocked by browser', { hurt:true }); return; }
-  const safeName = escapeHtml(displayName || '?');
-  win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>🎒 ${safeName}</title><style>
-    body{background:#141319;color:#e8e3d8;font-family:Georgia,serif;padding:14px;margin:0;}
-    h2{font-size:15px;margin:0 0 10px;}
-    .admSummary{font-size:11px;color:#a89f8c;margin-bottom:10px;}
-    .admEmpty{color:#a89f8c;font-size:12px;}
-    .admInvGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
-    .cell{aspect-ratio:1;background:#1c1a22;border:1px solid #2c2a33;position:relative;font-size:14px;
-      display:flex;align-items:center;justify-content:center;border-radius:3px;}
-    .qty{position:absolute;bottom:1px;right:2px;font-size:8.5px;color:#cfc8ba;}
-  </style></head><body><h2>🎒 ${safeName}</h2><div id="body"><div class="admEmpty">Chargement…</div></div></body></html>`);
-  win.document.close();
-  // à la fermeture de cette fenêtre popup, on revient sur le panneau admin dans la fenêtre principale
-  const checkClosed = setInterval(() => {
-    if (win.closed) { clearInterval(checkClosed); openAdminPanel(); }
-  }, 400);
+  openInfo((LANG==='fr'?'🎒 Inventaire de ':'🎒 Inventory of ')+displayName,
+    `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`);
   const { data, error } = await sb.rpc('admin_get_player_inventory', { p_user_id: userId });
-  if (win.closed) return;
-  const bodyEl = win.document.getElementById('body');
-  if (error) { bodyEl.innerHTML = `<div class="admEmpty">${escapeHtml(error.message)}</div>`; return; }
+  if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${error.message}</div>`; return; }
   const inv = Array.isArray(data) ? data : [];
   const used = inv.filter(Boolean).length;
   const cellsHtml = inv.map(s => {
@@ -6218,11 +6169,11 @@ async function showPlayerInventoryWindow(userId, displayName) {
     if (apDp && apDp.dp) bits.push('+'+apDp.dp+' PD');
     if (apDp && apDp.hp) bits.push('+'+apDp.hp+' PV');
     if (s.enhLv) bits.push(ENH_NAMES[s.enhLv]);
-    return `<div class="cell" title="${escapeHtml(bits.join(' · '))}">` +
+    return `<div class="cell has k-${s.kind}" title="${escapeHtml(bits.join(' · '))}">` +
       `<span style="color:${s.color}">${s.icon}</span>` +
       `${s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : ''}</div>`;
   }).join('');
-  bodyEl.innerHTML =
+  $a('infoBody').innerHTML =
     `<div class="admSummary">${used} / ${inv.length || INV_SIZE} ${LANG==='fr'?'cases utilisées':'slots used'}</div>` +
     `<div class="admInvGrid">${cellsHtml}</div>`;
 }
@@ -6970,21 +6921,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V101', d:'06/07/2026 18:00', name:{fr:'Boss partagé enfin réparé, panneau admin retravaillé', en:'Shared boss finally fixed, reworked admin panel'}, fr:[
-      {t:'fix',    tx:'Trouvé et corrigé LE bug qui empêchait le boss mondial d\'être partagé depuis le début : une erreur SQL silencieuse ("column reference ambiguous") faisait échouer chaque tentative d\'infliger des dégâts au boss partagé — les PV n\'ont donc jamais bougé, le classement de contribution est resté vide, confirmé par test réel et reproduction isolée du bug'},
-      {t:'new',    tx:'Bouton admin pour faire disparaître le World Boss pour tout le monde à tout moment'},
-      {t:'change', tx:'Un World Boss disparaît désormais au bout de 9 minutes (au lieu de 15)'},
-      {t:'change', tx:'Onglet Joueurs (panneau admin) : 2 boutons dédiés "UUID" et "Inventaire" au lieu du clic-sur-la-ligne ; l\'inventaire s\'ouvre maintenant dans une vraie fenêtre séparée et revient sur le panneau admin à sa fermeture'},
-      {t:'change', tx:'Panneau admin retravaillé : bordure colorée par niveau de risque (bleu = sans danger sur ton compte, rouge = touche tous les joueurs, vert = gestion staff) + description sous chaque section'},
-      {t:'change', tx:'Le palier Grunil (bleu) a maintenant son propre matériau "Pierre concentrée" — la Pierre Noire est désormais réservée au palier Yuria (vert)'},
-    ], en:[
-      {t:'fix',    tx:'Found and fixed THE bug that had prevented the world boss from ever being shared: a silent SQL error ("column reference ambiguous") made every attempt to damage the shared boss fail — HP never moved, the contribution leaderboard stayed empty, confirmed via real testing and an isolated bug reproduction'},
-      {t:'new',    tx:'Admin button to despawn the World Boss for everyone at any time'},
-      {t:'change', tx:'A World Boss now despawns after 9 minutes (instead of 15)'},
-      {t:'change', tx:'Players tab (admin panel): 2 dedicated buttons "UUID" and "Inventory" instead of click-the-row; inventory now opens in a real separate window and returns to the admin panel when closed'},
-      {t:'change', tx:'Reworked admin panel: color-coded border by risk level (blue = safe on your own account, red = affects all players, green = staff management) + a short description under each section'},
-      {t:'change', tx:'The Grunil (blue) tier now has its own "Concentrated Stone" material — Black Stone is now reserved for the Yuria (green) tier'},
-    ] },
   { v:'V100', d:'06/07/2026 16:00', name:{fr:'Corrections, sécurité & classement Trésors', en:'Fixes, security & Treasure leaderboard'}, fr:[
       {t:'fix',     tx:'Corrigé le faux positif anti-triche "silver_per_hour astronomique" juste après le chargement d\'une sauvegarde (le calcul utilisait un compteur à vie divisé par un temps de session erroné)'},
       {t:'fix',     tx:'Les chances du Trésor de Velia étaient 100× trop généreuses (0.01 interprété comme 1% au lieu de 0.01%) — corrigées'},
@@ -7957,8 +7893,7 @@ function renderCodexHtml() {
   const matSet = new Map();
   ZONES.forEach(z => { const m = z.loot.mat; if (!matSet.has(m.name)) matSet.set(m.name, m); });
   const MAT_ICON_BY_NAME = { 'Pierre de Novice':ICO_MAT_NOVICE, 'Pierre du Temps':ICO_MAT_TEMPS,
-    'Pierre Noire':ICO_MAT_NOIRE, 'Pierre noire':ICO_MAT_NOIRE, 'Pierre concentrée':ICO_MAT_CONCENTREE,
-    'Pierre de Caphras':ICO_MAT_CAPHRAS };
+    'Pierre Noire':ICO_MAT_NOIRE, 'Pierre noire':ICO_MAT_NOIRE, 'Pierre de Caphras':ICO_MAT_CAPHRAS };
   const mats = [...matSet.values()].map(m => ({ icon:MAT_ICON_BY_NAME[m.name]||ICO_MAT_NOVICE, name:tr(m.name), desc:LANG==='fr'?'Matériau d\'optimisation':'Enhancement material' }));
   // composants de craft
   const craftSet = new Map();
