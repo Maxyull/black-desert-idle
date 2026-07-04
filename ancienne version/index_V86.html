@@ -852,7 +852,6 @@
   .qwBody { margin-top:6px; }
   .qwRow { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:2px 0; }
   .qwLbl { color:var(--ink-dim); }
-  .qwSep { margin:6px 0 3px; padding-top:5px; border-top:1px solid #2c2a33; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); }
   .qwTimer { color:var(--gold); font-variant-numeric:tabular-nums; }
   .qwNext { display:flex; align-items:center; gap:7px; margin-top:6px; padding-top:6px; border-top:1px solid #2c2a33; }
   .qwNextIcon { font-size:16px; }
@@ -2873,14 +2872,11 @@ function renderQuestWidget() {
   if (resetWidgetFolded) { el.innerHTML = header; return; }
   const next = nextAchievement();
   const todayPlaytime = S.playtimeSec - (S.dq && S.dq.base ? S.dq.base.playtime : 0);
-  const dailyTip = LANG==='fr' ? 'Temps restant avant la remise à zéro des quêtes journalières' : 'Time left before daily quests reset';
-  const weeklyTip = LANG==='fr' ? 'Temps restant avant la remise à zéro des quêtes hebdomadaires' : 'Time left before weekly quests reset';
   el.innerHTML = header + `<div class="qwBody">` +
-    `<div class="qwRow" title="${dailyTip}"><span class="qwLbl">${LANG==='fr'?'🗒️ Journ.':'🗒️ Daily'}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
-    `<div class="qwRow" title="${weeklyTip}"><span class="qwLbl">${LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly'}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
-    `<div class="qwSep">${LANG==='fr'?'⏱️ Temps de jeu':'⏱️ Playtime'}</div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'Total':'Total'}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'Aujourd\'hui':'Today'}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
+    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'🗒️ Journ.':'🗒️ Daily'}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
+    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly'}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
+    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'⏱️ Total':'⏱️ Total'}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
+    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'📅 Aujourd\'hui':'📅 Today'}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
     (next
       ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
         `<div class="qwNextName">${next.a.name[LANG]}</div>` +
@@ -6433,11 +6429,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V87', d:'05/07/2026 02:00', name:{fr:'Widget Suivi : explications sur les timers et le temps de jeu', en:'Tracker widget: timer and playtime clarifications'}, fr:[
-      {t:'change', tx:'Le widget de suivi explique désormais (au survol) que "Journ." et "Hebdo" sont le temps avant la remise à zéro des quêtes, et sépare visuellement la section "Temps de jeu" (Total/Aujourd\'hui)'},
-    ], en:[
-      {t:'change', tx:'The tracker widget now explains (on hover) that "Daily" and "Weekly" are the time before quests reset, and visually separates the "Playtime" section (Total/Today)'},
-    ] },
   { v:'V86', d:'05/07/2026 01:00', name:{fr:'Chat : halo messages non lus', en:'Chat: unread message halo'}, fr:[
       {t:'new', tx:'Halo sur l\'onglet d\'un canal de chat où un nouveau message est arrivé pendant que tu ne le regardais pas'},
       {t:'new', tx:'Halo temporaire sur les messages tout juste arrivés quand tu ouvres/regardes le canal'},
