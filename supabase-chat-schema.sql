@@ -94,20 +94,46 @@ $$;
 
 grant execute on function public.post_chat_message(text, text, text) to authenticated;
 
+-- journal des messages supprimés (canal "modéré") : consultable uniquement par le staff
+-- (admin + modérateurs). On y garde le message d'origine, son auteur (pseudo + UUID), le canal
+-- et qui a supprimé, pour tracer la modération.
+create table if not exists public.chat_deleted (
+  id bigserial primary key,
+  orig_id bigint,
+  channel text,
+  author_id uuid,
+  author_pseudo text,
+  message text,
+  deleted_by uuid,
+  deleted_at timestamptz not null default now()
+);
+create index if not exists chat_deleted_deleted_at_idx on public.chat_deleted(deleted_at desc);
+alter table public.chat_deleted enable row level security;
+drop policy if exists "chat_deleted_select_staff" on public.chat_deleted;
+create policy "chat_deleted_select_staff" on public.chat_deleted for select using (
+  coalesce(auth.jwt()->>'email','') = 'maxime.lacoste@icloud.com'
+  or exists (select 1 from public.chat_mods where user_id = auth.uid())
+);
+
 -- suppression d'un message : réservée à l'admin (email) et aux modérateurs (table chat_mods),
--- vérifiée côté serveur — le bouton de suppression côté client n'est qu'un confort d'UI
+-- vérifiée côté serveur. Avant de supprimer, le message est ARCHIVÉ dans chat_deleted.
 create or replace function public.delete_chat_message(p_id bigint)
 returns void
 language plpgsql security definer
 as $$
-declare v_uid uuid := auth.uid();
+declare v_uid uuid := auth.uid(); v_m record;
 begin
   if v_uid is null then raise exception 'Non authentifié'; end if;
   if coalesce(auth.jwt()->>'email', '') is distinct from 'maxime.lacoste@icloud.com'
      and not exists (select 1 from public.chat_mods where user_id = v_uid) then
     raise exception 'Réservé au staff';
   end if;
-  delete from public.chat_messages where id = p_id;
+  select * into v_m from public.chat_messages where id = p_id;
+  if v_m.id is not null then
+    insert into public.chat_deleted (orig_id, channel, author_id, author_pseudo, message, deleted_by)
+      values (v_m.id, v_m.channel, v_m.user_id, v_m.pseudo, v_m.message, v_uid);
+    delete from public.chat_messages where id = p_id;
+  end if;
 end;
 $$;
 
