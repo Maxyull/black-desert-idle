@@ -493,12 +493,6 @@
     padding:6px 14px; text-align:center; font-size:9.5px; color:var(--ink-dim);
     line-height:1.4;
   }
-  #devBanner {
-    background-image:repeating-linear-gradient(45deg,#3a2f0f,#3a2f0f 10px,#241c0a 10px,#241c0a 20px);
-    color:var(--gold); font-weight:bold; font-size:10.5px; letter-spacing:.5px;
-    padding:4px 14px; text-align:center; border-bottom:1px solid var(--gold-dim);
-    margin:-6px -14px 6px; /* annule le padding de #siteFooter pour border-to-border */
-  }
 
   /* ===== hôtel des ventes ===== */
   #marketOverlay {
@@ -693,8 +687,6 @@
   .admTable td { padding:4px 6px; border-bottom:1px solid #201f26; color:var(--ink); }
   .admTable tr.admTop td { color:var(--gold); font-weight:bold; }
   .admTable tr.isYou td { color:var(--gold); font-weight:bold; position:relative; }
-  .plNameLink { cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
-  .plNameLink:hover { color:var(--gold); }
   .admTable tr.isYou { box-shadow:inset 0 0 0 1px var(--gold), 0 0 8px 1px rgba(201,165,90,.45); }
   .catTabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
   .catTab { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; }
@@ -1160,7 +1152,6 @@
 </div>
 
 <div id="siteFooter">
-  <div id="devBanner">🚧 <span data-i18n="devBannerText">Jeu en développement — du contenu et des ajustements arrivent régulièrement</span> 🚧</div>
   <span data-i18n="footerText">Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</span>
 </div>
 
@@ -4074,7 +4065,8 @@ function enhShortLabel(lvl) {
   if (lvl < PRI_IDX) return '+' + lvl;
   return ['I','II','III','IV','V'][lvl - PRI_IDX] || '+' + lvl;
 }
-function pdSlotInnerHtmlFor(id, e) {
+function pdSlotInnerHtml(id) {
+  const e = EQUIP[id];
   const icon = (e ? (e.icon || SLOT_ICON[id]) : SLOT_ICON[id]);
   let badge = '';
   if (e && e.optimizable) {
@@ -4085,17 +4077,6 @@ function pdSlotInnerHtmlFor(id, e) {
   }
   return icon + badge;
 }
-function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
-// texte "+X PA +Y PD +Z PV" affiché dans le tooltip d'une pièce de la poupée d'équipement —
-// demande explicite : voir ce que le stuff donne comme PA/PD directement sur l'équipement
-function pdStatSuffix(e) {
-  const { ap, dp, hp } = effectiveApDp(e);
-  const parts = [];
-  if (ap) parts.push('+'+ap+' PA');
-  if (dp) parts.push('+'+dp+' PD');
-  if (hp) parts.push('+'+hp+' PV');
-  return parts.length ? ' (' + parts.join(' ') + ')' : '';
-}
 function fillPdCol(colId, ids) {
   const col = $(colId);
   col.innerHTML = '';
@@ -4104,7 +4085,7 @@ function fillPdCol(colId, ids) {
     const div = document.createElement('div');
     div.className = 'pdSlot ' + (e ? 'filled' : 'empty');
     div.dataset.slot = id;
-    div.title = SLOT_LABEL[id] + (e ? ' — ' + e.name + pdStatSuffix(e) : ' (vide)');
+    div.title = SLOT_LABEL[id] + (e ? ' — ' + e.name : ' (vide)');
     div.innerHTML = pdSlotInnerHtml(id);
     div.onclick = ev => {
       ev.stopPropagation();
@@ -4124,7 +4105,7 @@ function refreshEquipSlot(slotId) {
   if (!div) return;
   const e = EQUIP[slotId];
   div.className = 'pdSlot ' + (e ? 'filled' : 'empty');
-  div.title = SLOT_LABEL[slotId] + (e ? ' — ' + e.name + pdStatSuffix(e) : ' (vide)');
+  div.title = SLOT_LABEL[slotId] + (e ? ' — ' + e.name : ' (vide)');
   div.innerHTML = pdSlotInnerHtml(slotId);
 }
 
@@ -5406,32 +5387,8 @@ function rankRows(rows, valueFn, fmtFn) {
   const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
   return sorted.map((r,i) => `
     <tr class="${r.user_id===currentUser?.id ? 'isYou' : ''}">
-      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${r.display_name||'?'}</span> ${staleTag(r)}</td><td>${fmtFn(r)}</td>
+      <td>#${i+1}</td><td>${r.display_name||'?'} ${staleTag(r)}</td><td>${fmtFn(r)}</td>
     </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-}
-// clic sur un pseudo du classement : ouvre son stuff en lecture seule (demande explicite — voir
-// get_player_gear côté serveur, n'expose QUE l'équipement, jamais le silver/inventaire complet)
-function wirePlayerNameLinks() {
-  $a('infoBody').querySelectorAll('.plNameLink').forEach(el => {
-    el.onclick = e => { e.stopPropagation(); showPlayerGear(el.dataset.uid, el.dataset.name); };
-  });
-}
-function readonlyPdSlotsHtml(equip, ids) {
-  return ids.map(id => {
-    const e = equip ? equip[id] : null;
-    return `<div class="pdSlot ${e?'filled':'empty'}" title="${escapeHtml(SLOT_LABEL[id]||'')}${e ? ' — '+escapeHtml(e.name||'')+pdStatSuffix(e) : ' ('+(LANG==='fr'?'vide':'empty')+')'}">${pdSlotInnerHtmlFor(id, e)}</div>`;
-  }).join('');
-}
-async function showPlayerGear(userId, displayName) {
-  if (!sb) return;
-  openInfo((LANG==='fr'?'⚔️ Stuff de ':'⚔️ Gear of ')+displayName,
-    `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`);
-  const { data, error } = await sb.rpc('get_player_gear', { p_user_id: userId });
-  if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${error.message}</div>`; return; }
-  $a('infoBody').innerHTML =
-    `<div id="pdWeapons">${readonlyPdSlotsHtml(data, PD_BOTTOM)}</div>` +
-    `<div id="paperdoll"><div class="pdCol">${readonlyPdSlotsHtml(data, PD_LEFT)}</div>` +
-    `<div class="pdCenter"></div><div class="pdCol">${readonlyPdSlotsHtml(data, PD_RIGHT)}</div></div>`;
 }
 // bascule entre onglets de catégorie repliés dans un même panneau (openInfo) — n'affiche
 // qu'une seule catégorie à la fois, les autres restent en mémoire (display:none)
@@ -5516,7 +5473,7 @@ function renderChatMessages(msgs) {
       : m.role === 'mod' ? '<span class="chatBadge mod">MOD</span> ' : '';
     const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
     return `<div class="chatMsg chan-${chatChannel}">${del}` +
-      `${badge}<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':(LANG==='fr'?'Joueur':'Player')))}</span> <span class="chatText">${escapeHtml(m.message)}</span>` +
+      `${badge}<span class="chatPseudo">${escapeHtml(m.pseudo)}</span> <span class="chatText">${escapeHtml(m.message)}</span>` +
       `<span class="chatTime">${fmtChatTimestamp(m.created_at)}</span></div>`;
   }).join('')
     : `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`;
@@ -5608,7 +5565,6 @@ async function openLeaderboard() {
     `<div class="admSummary">${LANG==='fr'?'⚠️ = pas de synchro depuis plus de 10 min, ces stats peuvent être obsolètes (équipement changé depuis)':'⚠️ = no sync for over 10 min, these stats may be outdated (gear may have changed since)'}</div>`;
   openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
   wireCatTabs();
-  wirePlayerNameLinks();
 }
 $a('btnLeaderboard').onclick = openLeaderboard;
 $a('btnAchievements').onclick = openAchievements;
@@ -6004,7 +5960,6 @@ const I18N = {
   onlineLbl: { fr:'en ligne', en:'online' },
   demoNoteAuth: { fr:'🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.', en:'🎮 This is a test demo — your progress can be reset at any time.' },
   demoTag: { fr:'DÉMO', en:'DEMO' },
-  devBannerText: { fr:'Jeu en développement — du contenu et des ajustements arrivent régulièrement', en:'Game in development — content and adjustments arrive regularly' },
   btnResetDemo: { fr:'🔄 Réinitialiser', en:'🔄 Reset' },
   btnResetMyQuests: { fr:'🔄 Réinitialiser mes quêtes', en:'🔄 Reset my quests' },
   btnResetAllQuests: { fr:'⚠️ Réinitialiser les quêtes de tous', en:'⚠️ Reset everyone\'s quests' },
@@ -6111,17 +6066,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V77', d:'04/07/2026 16:00', name:{fr:'Bannière en développement, stats sur le stuff, voir le stuff des autres', en:'In-development banner, gear stats, view others\' gear'}, fr:[
-      {t:'fix', tx:'Chat : les messages d\'annonce sans pseudo affichaient "null" au lieu d\'un nom — corrigé avec un repli propre'},
-      {t:'new', tx:'Bannière "🚧 Jeu en développement 🚧" ajoutée en bas de page'},
-      {t:'new', tx:'La poupée d\'équipement affiche maintenant le PA/PD/PV donné par chaque pièce au survol'},
-      {t:'new', tx:'Classement : clique sur le pseudo d\'un joueur pour voir son stuff équipé (lecture seule)'},
-    ], en:[
-      {t:'fix', tx:'Chat: announcement messages without a pseudo showed "null" instead of a name — fixed with a proper fallback'},
-      {t:'new', tx:'"🚧 Game in development 🚧" banner added at the bottom of the page'},
-      {t:'new', tx:'The equipment doll now shows the AP/DP/HP granted by each piece on hover'},
-      {t:'new', tx:'Leaderboard: click a player\'s name to view their equipped gear (read-only)'},
-    ] },
   { v:'V76', d:'04/07/2026 15:00', name:{fr:'Tutoriel amélioré, UUID privé, inventaire au clic gauche', en:'Improved tutorial, private UUID, left-click inventory'}, fr:[
       {t:'fix', tx:'L\'étape "Potions de vie" du tutoriel ne recouvre plus la case qu\'elle doit montrer (placement corrigé)'},
       {t:'new', tx:'Bouton "← Précédent" dans le tutoriel pour revenir à l\'étape d\'avant'},
