@@ -1175,7 +1175,7 @@
 
 <div id="siteFooter">
   <div id="devBanner">🚧 <span data-i18n="devBannerText">Jeu en développement — du contenu et des ajustements arrivent régulièrement</span> 🚧</div>
-  <span data-i18n="footerText">Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Certains noms, styles de jeu et mécaniques de Velia Idle s'en inspirent et restent, le cas échéant, la propriété de Pearl Abyss ; les visuels de Velia Idle, eux, ne font que s'en inspirer visuellement — ce sont des créations originales de style fan, pas les mêmes assets. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</span>
+  <span data-i18n="footerText">Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</span>
 </div>
 
 <div id="tutorialOverlay">
@@ -4107,51 +4107,6 @@ function pdStatSuffix(e) {
   if (hp) parts.push('+'+hp+' PV');
   return parts.length ? ' (' + parts.join(' ') + ')' : '';
 }
-// base de comparaison ("ring"/"earring"/"necklace"/"belt") pour un slot précis de la poupée —
-// les paires (ring1/ring2, earring1/earring2) partagent le même bassin de candidats
-function accBaseSlot(slotId) {
-  if (slotId==='ring1'||slotId==='ring2') return 'ring';
-  if (slotId==='earring1'||slotId==='earring2') return 'earring';
-  return slotId;
-}
-// jusqu'à 5 objets du sac équipables dans ce slot précis, triés du meilleur socle au pire —
-// demande explicite : clic sur une pièce d'équipement → menu des objets associés qu'on peut équiper
-function candidatesForSlot(slotId) {
-  const isGear = ARMOR_SLOTS.includes(slotId) || WEAPON_SLOTS.includes(slotId);
-  const base = accBaseSlot(slotId);
-  const list = [];
-  for (let i = 0; i < INV_SIZE; i++) {
-    const it = INV[i]; if (!it) continue;
-    if (isGear && it.kind === 'gear' && it.slot === slotId) list.push({ i, it });
-    else if (!isGear && it.kind === 'jackpot' && accSlotFor(it) === base) list.push({ i, it });
-  }
-  return list.sort((a,b) => itemScore(b.it) - itemScore(a.it)).slice(0,5);
-}
-function showEquipSlotMenu(cell, slotId) {
-  const e = EQUIP[slotId];
-  const candidates = candidatesForSlot(slotId);
-  const pop = $('itemPop');
-  let html = `<div class="ipName gear">${SLOT_LABEL[slotId] || slotId}</div>`;
-  html += `<div class="ipDesc">${e ? ((LANG==='fr'?'Équipé : ':'Equipped: ')+escapeHtml(e.name)+pdStatSuffix(e)) : (LANG==='fr'?'Rien d\'équipé':'Nothing equipped')}</div>`;
-  pop.innerHTML = html;
-  if (e) addPopBtn(pop, LANG==='fr'?'Déséquiper':'Unequip', () => unequip(slotId));
-  candidates.forEach(c => {
-    const label = c.it.name + statDeltaShortText(c.it);
-    addPopBtn(pop, label, () => equipItem(c.i));
-  });
-  if (!candidates.length) {
-    const none = document.createElement('div');
-    none.className = 'ipDesc';
-    none.style.marginTop = '4px';
-    none.textContent = LANG==='fr' ? 'Aucun autre objet pour ce slot dans le sac' : 'No other item for this slot in the bag';
-    pop.appendChild(none);
-  }
-  pop.style.display = 'block';
-  const r = cell.getBoundingClientRect();
-  const pr = pop.getBoundingClientRect();
-  pop.style.left = Math.min(r.right + 8, window.innerWidth - pr.width - 10) + 'px';
-  pop.style.top = Math.min(r.top, window.innerHeight - pr.height - 10) + 'px';
-}
 function fillPdCol(colId, ids) {
   const col = $(colId);
   col.innerHTML = '';
@@ -4162,7 +4117,11 @@ function fillPdCol(colId, ids) {
     div.dataset.slot = id;
     div.title = SLOT_LABEL[id] + (e ? ' — ' + e.name + pdStatSuffix(e) : ' (vide)');
     div.innerHTML = pdSlotInnerHtml(id);
-    div.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showEquipSlotMenu(div, id); };
+    div.onclick = ev => {
+      ev.stopPropagation();
+      if (e) showItemMenu(ev.clientX, ev.clientY, { equipped:true, slotId:id, ...e });
+      else hideItemPop();
+    };
     div.ondblclick = ev => { ev.stopPropagation(); hideItemPop(); if (e) unequip(id); };
     col.appendChild(div);
   }
@@ -4339,16 +4298,6 @@ function statDeltaHtml(item) {
   d('PA', cur.ap, refStats.ap); d('PD', cur.dp, refStats.dp); d('PV', cur.hp, refStats.hp);
   if (!parts.length) return '';
   return `<div class="ipDelta">${ref ? (LANG==='fr'?'vs équipé : ':'vs equipped: ') : (LANG==='fr'?'rien d\'équipé — ':'nothing equipped — ')}${parts.join(' ')}</div>`;
-}
-// version texte brut (sans HTML) du delta — utilisée dans les libellés de bouton (textContent)
-function statDeltaShortText(item) {
-  const ref = equippedRefForItem(item);
-  const cur = effectiveApDp(item);
-  const refStats = ref ? effectiveApDp(ref) : { ap:0, dp:0, hp:0 };
-  const parts = [];
-  const d = (label, a, b) => { const v = Math.round(a-b); if (v) parts.push((v>0?'+':'')+v+' '+label); };
-  d('PA', cur.ap, refStats.ap); d('PD', cur.dp, refStats.dp); d('PV', cur.hp, refStats.hp);
-  return parts.length ? ' (' + parts.join(' ') + ')' : '';
 }
 
 // ---------- popup d'objet + actions ----------
@@ -5365,29 +5314,11 @@ async function openAdminPanel() {
   $a('btnTestAch').onclick = () => { if(!isAdmin())return; ACHIEVEMENTS.forEach(a => { if(!S.achUnlocked[a.id]){ S.achUnlocked[a.id]=Date.now(); S.silver+=a.reward; S.silverEarned+=a.reward; } }); refreshStatsOnly(); openAdminPanel(); };
   $a('btnResetMyQuests').onclick = resetMyQuests;
   $a('btnResetDemo').onclick = resetDemo;
-  // spawn un VRAI boss partagé (PV communs, top10, contribution %, joueurs en direct) — utilisé à la
-  // fois par le test perso admin et par le lancement pour tous, pour que le test admin ressemble
-  // exactement au vrai boss multijoueurs (demande explicite : "pas un boss solo")
-  async function adminSpawnSharedBoss(id, targetMin) {
-    if (!sb) return false;
-    let onlineTotal = 1;
-    try {
-      const { data } = await sb.rpc('get_online_counts', { p_window_seconds: 90 });
-      if (data && data[0]) onlineTotal = Math.max(1, data[0].total || 1);
-    } catch (e) {}
-    const expectedFighters = Math.max(1, Math.round(onlineTotal * 0.4));
-    const sharedHp = Math.round(BOSS_REF_DPS * expectedFighters * targetMin * 60);
-    const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 15, p_hp: sharedHp });
-    if (!error) await refreshLiveBoss();
-    return !error;
-  }
-  $a('btnAdmSpawnBoss').onclick = async () => {
-    if (!isAdmin() || !sb) return;
+  $a('btnAdmSpawnBoss').onclick = () => {
+    if (!isAdmin()) return;
     const id = $a('admBossSelect').value;
-    const ok = await adminSpawnSharedBoss(id, 4);
-    if (!ok) { floatTxt(P.x, P.y, 100, LANG==='fr'?'Échec du lancement':'Failed to launch', { hurt:true }); return; }
     $a('infoOverlay').classList.remove('open');
-    startBossFight(id, true); // true = rejoint le boss PARTAGÉ qu'on vient de lancer (PV communs, top10...)
+    startBossFight(id);
   };
   // --- pour les joueurs ---
   $a('btnReevalMarket').onclick = reevalMarket;
@@ -5396,8 +5327,19 @@ async function openAdminPanel() {
     if (!isAdmin() || !sb) return;
     const id = $a('admGlobalBossSelect').value;
     const targetMin = Number($a('admBossDurationSelect').value) || 4;
-    const ok = await adminSpawnSharedBoss(id, targetMin);
-    floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓') : (LANG==='fr'?'Échec du lancement':'Failed to launch'), { gold:ok, hurt:!ok });
+    // PV partagés = DPS de référence (~PA 250) × joueurs attendus (≈40% des joueurs en ligne, mini 1)
+    // × durée cible, pour viser une mort en [2,7] min réelles selon le stuff et le nombre de participants
+    let onlineTotal = 1;
+    try {
+      const { data } = await sb.rpc('get_online_counts', { p_window_seconds: 90 });
+      if (data && data[0]) onlineTotal = Math.max(1, data[0].total || 1);
+    } catch (e) {}
+    const expectedFighters = Math.max(1, Math.round(onlineTotal * 0.4));
+    const sharedHp = Math.round(BOSS_REF_DPS * expectedFighters * targetMin * 60);
+    const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 15, p_hp: sharedHp });
+    floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec — '+error.message:'Failed — '+error.message)
+      : (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓'), { gold:!error, hurt:!!error });
+    if (!error) refreshLiveBoss();
   };
   // --- modérateurs ---
   $a('btnAddMod').onclick = async () => {
@@ -5492,18 +5434,6 @@ function readonlyPdSlotsHtml(equip, ids) {
     return `<div class="pdSlot ${e?'filled':'empty'}" title="${escapeHtml(SLOT_LABEL[id]||'')}${e ? ' — '+escapeHtml(e.name||'')+pdStatSuffix(e) : ' ('+(LANG==='fr'?'vide':'empty')+')'}">${pdSlotInnerHtmlFor(id, e)}</div>`;
   }).join('');
 }
-// liste TEXTE (nom + PA/PD/PV) de chaque pièce équipée — demande explicite : voir le nom de
-// l'objet et son PA/PD directement quand on regarde le stuff d'un autre joueur, pas juste au survol
-function readonlyGearListHtml(equip) {
-  const allSlots = [...PD_BOTTOM, ...PD_LEFT, ...PD_RIGHT];
-  const rows = allSlots.map(id => {
-    const e = equip ? equip[id] : null;
-    if (!e) return '';
-    return `<tr><td>${escapeHtml(SLOT_LABEL[id]||id)}</td><td>${escapeHtml(e.name||'?')}</td><td>${pdStatSuffix(e).replace(/^ \(|\)$/g,'') || '—'}</td></tr>`;
-  }).filter(Boolean).join('');
-  if (!rows) return `<div class="admEmpty">${LANG==='fr'?'Aucun équipement':'No gear equipped'}</div>`;
-  return `<table class="admTable"><thead><tr><th>${LANG==='fr'?'Emplacement':'Slot'}</th><th>${LANG==='fr'?'Objet':'Item'}</th><th>PA/PD/PV</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
 async function showPlayerGear(userId, displayName) {
   if (!sb) return;
   openInfo((LANG==='fr'?'⚔️ Stuff de ':'⚔️ Gear of ')+displayName,
@@ -5513,8 +5443,7 @@ async function showPlayerGear(userId, displayName) {
   $a('infoBody').innerHTML =
     `<div id="pdWeapons">${readonlyPdSlotsHtml(data, PD_BOTTOM)}</div>` +
     `<div id="paperdoll"><div class="pdCol">${readonlyPdSlotsHtml(data, PD_LEFT)}</div>` +
-    `<div class="pdCenter"></div><div class="pdCol">${readonlyPdSlotsHtml(data, PD_RIGHT)}</div></div>` +
-    readonlyGearListHtml(data);
+    `<div class="pdCenter"></div><div class="pdCol">${readonlyPdSlotsHtml(data, PD_RIGHT)}</div></div>`;
 }
 // bascule entre onglets de catégorie repliés dans un même panneau (openInfo) — n'affiche
 // qu'une seule catégorie à la fois, les autres restent en mémoire (display:none)
@@ -6094,7 +6023,7 @@ const I18N = {
   btnAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   btnReevalMarket: { fr:'🔄 Réévaluer le marché', en:'🔄 Reevaluate market' },
-  footerText: { fr:"Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Certains noms, styles de jeu et mécaniques de Velia Idle s'en inspirent et restent, le cas échéant, la propriété de Pearl Abyss ; les visuels de Velia Idle, eux, ne font que s'en inspirer visuellement — ce sont des créations originales de style fan, pas les mêmes assets. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.", en:"Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Some names, game styles and mechanics in Velia Idle are inspired by it and remain, where applicable, the property of Pearl Abyss; Velia Idle's visuals are only stylistically inspired by it — they are original fan-style creations, not the same assets. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss." },
+  footerText: { fr:"Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.", en:'Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss.' },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
@@ -6194,17 +6123,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V79', d:'04/07/2026 18:00', name:{fr:'Menu d\'équipement (5 objets), boss admin partagé, stuff des joueurs détaillé', en:'Equip-slot menu (5 items), shared admin boss, detailed player gear'}, fr:[
-      {t:'new', tx:'Clic sur une pièce d\'équipement : affiche jusqu\'à 5 objets du sac équipables dans ce slot (avec le gain/perte de PA/PD/PV), en plus du bouton Déséquiper'},
-      {t:'fix', tx:'Le test de boss "Pour moi" dans le panneau Admin lance maintenant un VRAI boss partagé (PV communs, top 10, contribution %, joueurs en direct) au lieu d\'un combat solo'},
-      {t:'new', tx:'Le stuff d\'un joueur consulté depuis le classement affiche maintenant le nom de chaque objet et son PA/PD/PV en clair, pas seulement au survol'},
-      {t:'change', tx:'Mention légale précisée : certains noms/styles de jeu/mécaniques s\'inspirent de Black Desert et restent la propriété de Pearl Abyss le cas échéant, mais les visuels de Velia Idle sont des créations originales de style fan, pas les mêmes assets'},
-    ], en:[
-      {t:'new', tx:'Click a gear slot: shows up to 5 bag items equippable in that slot (with AP/DP/HP gain or loss), alongside the Unequip button'},
-      {t:'fix', tx:'The "For me" boss test in the Admin panel now launches a REAL shared boss (common HP, top 10, contribution %, live fighters) instead of a solo fight'},
-      {t:'new', tx:'A player\'s gear viewed from the leaderboard now shows each item\'s name and AP/DP/HP as plain text, not just on hover'},
-      {t:'change', tx:'Legal notice clarified: some names/game styles/mechanics are inspired by Black Desert and remain Pearl Abyss\'s property where applicable, but Velia Idle\'s visuals are original fan-style creations, not the same assets'},
-    ] },
   { v:'V78', d:'04/07/2026 17:00', name:{fr:'Loot en bas à droite (15 entrées + effets), RNG/Consommable/Lifeskill verrouillés', en:'Bottom-right loot (15 entries + effects), locked RNG/Consumable/Lifeskill'}, fr:[
       {t:'change', tx:'Le butin en direct (loot ticker) passe en bas à droite du jeu (à la place de l\'ancien GS/Niveau, déjà visibles dans le panneau Statistiques et l\'inventaire) : il affiche maintenant 15 entrées, les nouvelles apparaissent en bas et poussent les anciennes vers le haut'},
       {t:'new', tx:'Effet visuel (flash + lueur pulsante) sur les entrées de butin rare et jackpot dans le loot ticker'},
@@ -6962,10 +6880,10 @@ const WIKI_SECTIONS = [
       <p>You get 200 loyalty points per day in your 📬 Mailbox — they stack there permanently and never get lost.</p>` },
   { id:'about', icon:'ℹ️', label:{fr:'À propos',en:'About'},
     fr:`<h3>Noms & identité visuelle</h3>
-      <p>Les noms de zones, monstres et objets sont inspirés de Black Desert Online pour l'ambiance, tout comme certains styles de jeu et mécaniques — ils restent, le cas échéant, la propriété de Pearl Abyss. Les icônes et visuels, eux, sont des créations originales de style fan : ils s'inspirent visuellement du jeu mais ne réutilisent aucun asset réel.</p>
+      <p>Les noms de zones, monstres et objets sont inspirés de Black Desert Online pour l'ambiance. Les icônes sont des créations originales (aucun asset réel du jeu).</p>
       <p>Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</p>`,
     en:`<h3>Names & visual identity</h3>
-      <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere, as are some game styles and mechanics — these remain, where applicable, the property of Pearl Abyss. Icons and visuals, on the other hand, are original fan-style creations: visually inspired by the game but reusing no real assets.</p>
+      <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere. Icons are original creations (no real game assets).</p>
       <p>Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss.</p>` },
   { id:'codex', icon:'📚', label:{fr:'Codex des objets',en:'Item Codex'}, codex:true },
   { id:'tuto', icon:'🔰', label:{fr:'Tutoriel',en:'Tutorial'}, tuto:true },
