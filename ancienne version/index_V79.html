@@ -286,8 +286,6 @@
     text-shadow:0 0 3px #000,0 0 3px #000; font-family:Arial;
   }
   .cell .eqd { position:absolute; top:1px; left:2px; font-size:8px; color:#7aa35e; }
-  .cell .cellAp { position:absolute; bottom:-1px; left:2px; font-size:8px; color:#e0a86e; text-shadow:0 0 3px #000,0 0 3px #000; }
-  .cell .cellDp { position:absolute; bottom:-1px; right:2px; font-size:8px; color:#8fc9c9; text-shadow:0 0 3px #000,0 0 3px #000; }
   .invFoot { margin-top:8px; padding-top:7px; border-top:1px solid #2c2a33; font-size:12px; }
   .invFoot .frow { display:flex; align-items:center; gap:8px; margin:4px 0; }
   .invFoot .bar { flex:1; height:8px; background:#0d0c11; border:1px solid #333; overflow:hidden; }
@@ -1177,7 +1175,7 @@
 
 <div id="siteFooter">
   <div id="devBanner">🚧 <span data-i18n="devBannerText">Jeu en développement — du contenu et des ajustements arrivent régulièrement</span> 🚧</div>
-  <span data-i18n="footerText">Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.</span>
+  <span data-i18n="footerText">Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Certains noms, styles de jeu et mécaniques de Velia Idle s'en inspirent et restent, le cas échéant, la propriété de Pearl Abyss ; les visuels de Velia Idle, eux, ne font que s'en inspirer visuellement — ce sont des créations originales de style fan, pas les mêmes assets. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</span>
 </div>
 
 <div id="tutorialOverlay">
@@ -4136,10 +4134,7 @@ function showEquipSlotMenu(cell, slotId) {
   let html = `<div class="ipName gear">${SLOT_LABEL[slotId] || slotId}</div>`;
   html += `<div class="ipDesc">${e ? ((LANG==='fr'?'Équipé : ':'Equipped: ')+escapeHtml(e.name)+pdStatSuffix(e)) : (LANG==='fr'?'Rien d\'équipé':'Nothing equipped')}</div>`;
   pop.innerHTML = html;
-  if (e) {
-    addPopBtn(pop, LANG==='fr'?'Déséquiper':'Unequip', () => unequip(slotId));
-    if (e.optimizable) addPopBtn(pop, LANG==='fr'?'Mettre en optimisation':'Load into enhancement', () => { optTargetSlot = slotId; });
-  }
+  if (e) addPopBtn(pop, LANG==='fr'?'Déséquiper':'Unequip', () => unequip(slotId));
   candidates.forEach(c => {
     const label = c.it.name + statDeltaShortText(c.it);
     addPopBtn(pop, label, () => equipItem(c.i));
@@ -4268,12 +4263,9 @@ function renderInventory() {
     const visible = cat.kinds === null || (s && cat.kinds.includes(s.kind));
     cell.className = 'cell' + (s ? ' has k-'+s.kind : '') + (visible ? '' : ' catHidden');
     if (s) {
-      const cellApDp = (s.kind === 'gear' || s.kind === 'jackpot') ? effectiveApDp(s) : null;
       cell.innerHTML = `<span style="color:${s.color}">${s.icon}</span>` +
         (s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : '') +
-        (s.equipped ? `<span class="eqd">E</span>` : '') +
-        (cellApDp && cellApDp.ap ? `<span class="cellAp">${cellApDp.ap}</span>` : '') +
-        (cellApDp && cellApDp.dp ? `<span class="cellDp">${cellApDp.dp}</span>` : '');
+        (s.equipped ? `<span class="eqd">E</span>` : '');
       cell.onmouseenter = ev => { hoverInvIndex = i; lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, { invIndex:i, ...s }); };
       cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
       cell.onmouseleave = () => { if (hoverInvIndex === i) hoverInvIndex = -1; hideItemTooltip(); };
@@ -4382,13 +4374,9 @@ function showItemMenu(px, py, data) {
         confirmSell1:n=>'Sell 1 item for '+n+' silver?', confirmSellAll:n=>'Sell the whole stack for '+n+' silver?' };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
-    if (data.kind === 'gear' || data.kind === 'jackpot') addPopBtn(pop, L.toOpt, () => { optTargetSlot = data.slotId; });
   } else if (data.invIndex != null) {
     const s = INV[data.invIndex];
-    if (s.kind === 'jackpot' || s.kind === 'gear') {
-      addPopBtn(pop, L.equip, () => { equipItem(data.invIndex); });
-      addPopBtn(pop, L.toOpt, () => { const slotId = resolveEquipSlot(s); equipItem(data.invIndex); optTargetSlot = slotId; });
-    }
+    if (s.kind === 'jackpot' || s.kind === 'gear') addPopBtn(pop, L.equip, () => { equipItem(data.invIndex); });
     if (s.kind === 'material') addPopBtn(pop, L.toOpt, () => { forcedMatKey = s.key; });
     if (s.kind === 'trash' || s.kind === 'material' || s.kind === 'gear')
       addPopBtn(pop, L.sell1(fmt(s.val)), () => { if (confirm(L.confirmSell1(fmt(s.val)))) sellOne(data.invIndex); });
@@ -4445,21 +4433,17 @@ function moveItemTooltip(px, py) {
 function hideItemTooltip() { $('itemTooltip').style.display = 'none'; }
 
 // ---------- actions ----------
-// détermine dans quel slot précis une pièce (arme/armure/accessoire) doit s'équiper
-function resolveEquipSlot(item) {
-  if (item.kind === 'gear') return item.slot; // 'weapon' | 'helmet' | 'armor' | 'gloves' | 'boots' — correspondance directe
-  if (item.kind === 'jackpot') {
-    return item.slot === 'ring' ? (EQUIP.ring1 ? (EQUIP.ring2 ? 'ring1' : 'ring2') : 'ring1')
-         : item.slot === 'earring' ? (EQUIP.earring1 ? (EQUIP.earring2 ? 'earring1' : 'earring2') : 'earring1')
-         : item.slot === 'necklace' ? 'necklace' : item.slot === 'belt' ? 'belt' : 'ring1';
-  }
-  return null;
-}
 // équipe n'importe quelle pièce (arme/armure/accessoire) dans le bon slot
 function equipItem(i) {
   const item = INV[i]; if (!item) return;
-  const slotId = resolveEquipSlot(item);
-  if (!slotId) return;
+  let slotId;
+  if (item.kind === 'gear') {
+    slotId = item.slot; // 'weapon' | 'helmet' | 'armor' | 'gloves' | 'boots' — correspondance directe
+  } else if (item.kind === 'jackpot') {
+    slotId = item.slot === 'ring' ? (EQUIP.ring1 ? (EQUIP.ring2 ? 'ring1' : 'ring2') : 'ring1')
+           : item.slot === 'earring' ? (EQUIP.earring1 ? (EQUIP.earring2 ? 'earring1' : 'earring2') : 'earring1')
+           : item.slot === 'necklace' ? 'necklace' : item.slot === 'belt' ? 'belt' : 'ring1';
+  } else return;
   // renvoie l'ancienne pièce dans le sac
   if (EQUIP[slotId]) {
     const old = EQUIP[slotId];
@@ -6110,7 +6094,7 @@ const I18N = {
   btnAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   btnReevalMarket: { fr:'🔄 Réévaluer le marché', en:'🔄 Reevaluate market' },
-  footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
+  footerText: { fr:"Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Certains noms, styles de jeu et mécaniques de Velia Idle s'en inspirent et restent, le cas échéant, la propriété de Pearl Abyss ; les visuels de Velia Idle, eux, ne font que s'en inspirer visuellement — ce sont des créations originales de style fan, pas les mêmes assets. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.", en:"Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Some names, game styles and mechanics in Velia Idle are inspired by it and remain, where applicable, the property of Pearl Abyss; Velia Idle's visuals are only stylistically inspired by it — they are original fan-style creations, not the same assets. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
@@ -6210,15 +6194,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V80', d:'04/07/2026 19:00', name:{fr:'PA/PD sur les cases du sac, optimisation en un clic, footer raccourci', en:'AP/DP on bag slots, one-click enhancement, shortened footer'}, fr:[
-      {t:'new', tx:'Les cases d\'équipement/bijoux du sac affichent maintenant le PA (bas-gauche) et le PD (bas-droite) directement sur l\'icône'},
-      {t:'new', tx:'Le menu au clic sur un objet (sac ou équipement) propose désormais aussi "Mettre en optimisation" pour l\'armure/les bijoux, pas seulement les matériaux'},
-      {t:'change', tx:'Footer raccourci : mention légale condensée + clause "fourni tel quel, sans garantie ni responsabilité, utilisation à tes risques"'},
-    ], en:[
-      {t:'new', tx:'Gear/jewelry slots in the bag now show AP (bottom-left) and DP (bottom-right) directly on the icon'},
-      {t:'new', tx:'The click menu on an item (bag or equipped) now also offers "Load into enhancement" for armor/jewelry, not just materials'},
-      {t:'change', tx:'Shortened footer: condensed legal notice + "provided as-is, no warranty or liability, use at your own risk" clause'},
-    ] },
   { v:'V79', d:'04/07/2026 18:00', name:{fr:'Menu d\'équipement (5 objets), boss admin partagé, stuff des joueurs détaillé', en:'Equip-slot menu (5 items), shared admin boss, detailed player gear'}, fr:[
       {t:'new', tx:'Clic sur une pièce d\'équipement : affiche jusqu\'à 5 objets du sac équipables dans ce slot (avec le gain/perte de PA/PD/PV), en plus du bouton Déséquiper'},
       {t:'fix', tx:'Le test de boss "Pour moi" dans le panneau Admin lance maintenant un VRAI boss partagé (PV communs, top 10, contribution %, joueurs en direct) au lieu d\'un combat solo'},
