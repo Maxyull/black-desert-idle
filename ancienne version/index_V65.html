@@ -160,10 +160,6 @@
     background:transparent; border:1px solid var(--gold-dim);
   }
   .zBtnView.active { border-color:var(--gold); box-shadow:0 0 6px 2px rgba(201,165,90,.55); }
-  /* Velia : ville paisible épinglée en haut de la liste des zones — pas de farm, juste le tutoriel */
-  .zRow.veliaRow { background:rgba(140,201,138,.07); border-left:2px solid #8fc98a; }
-  .zRow.veliaRow:hover { background:rgba(140,201,138,.14); }
-  .zRow.veliaRow .zBadge { color:#8fc98a; border-color:#8fc98a; }
   .zBadge { font-size:9px; letter-spacing:.5px; padding:1px 6px; border:1px solid; white-space:nowrap; flex-shrink:0; }
   .b-red { color:var(--r-red); border-color:var(--r-red); }
   .b-orange { color:var(--r-orange); border-color:var(--r-orange); }
@@ -941,32 +937,6 @@
   #bossResult .brTitle.win { color:var(--gold); }
   #bossResult .brRewards { font-size:14px; color:var(--ink); }
   #bossResult button { width:auto; padding:8px 24px; font-size:13px; }
-
-  /* ===== tutoriel d'arrivée (Velia) : encadré + flèche pointant vers l'élément expliqué ===== */
-  #tutorialOverlay { display:none; position:fixed; inset:0; z-index:900; }
-  #tutorialOverlay.open { display:block; }
-  #tutorialHighlight {
-    position:fixed; z-index:901; border-radius:6px; pointer-events:none;
-    box-shadow:0 0 0 9999px rgba(8,7,10,.72), 0 0 0 3px var(--gold), 0 0 18px 3px rgba(201,165,90,.6);
-    transition:top .25s ease, left .25s ease, width .25s ease, height .25s ease;
-  }
-  #tutorialHighlight.center { box-shadow:0 0 0 9999px rgba(8,7,10,.72); }
-  #tutorialBox {
-    position:fixed; z-index:902; width:280px; background:#1c1a22; border:1px solid var(--gold);
-    border-radius:8px; padding:14px 16px; box-shadow:0 6px 24px rgba(0,0,0,.6);
-    transition:top .25s ease, left .25s ease;
-  }
-  #tutorialBox .tutStep { font-size:9.5px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
-  #tutorialBox h4 { margin:0 0 8px; font-size:14px; color:var(--gold); }
-  #tutorialBox p { margin:0 0 12px; font-size:12px; line-height:1.5; color:var(--ink); }
-  #tutorialBox .tutBtns { display:flex; justify-content:space-between; gap:8px; }
-  #tutorialBox .tutSkip { width:auto; margin:0; padding:6px 10px; font-size:11px; background:none; border:none; color:var(--ink-dim); }
-  #tutorialBox .tutNext { width:auto; margin:0; padding:6px 16px; font-size:12px; font-weight:bold; }
-  #tutorialArrow { position:fixed; z-index:902; width:0; height:0; pointer-events:none; }
-  #tutorialArrow.top    { border-left:9px solid transparent; border-right:9px solid transparent; border-bottom:11px solid var(--gold); }
-  #tutorialArrow.bottom { border-left:9px solid transparent; border-right:9px solid transparent; border-top:11px solid var(--gold); }
-  #tutorialArrow.left   { border-top:9px solid transparent; border-bottom:9px solid transparent; border-right:11px solid var(--gold); }
-  #tutorialArrow.right  { border-top:9px solid transparent; border-bottom:9px solid transparent; border-left:11px solid var(--gold); }
   /* classement de contribution du world boss partagé (top 10 en direct) */
   #bossTopPanel {
     display:none; position:absolute; top:52px; right:10px; width:200px; max-height:60%;
@@ -1082,20 +1052,6 @@
 
 <div id="siteFooter">
   <span data-i18n="footerText">Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</span>
-</div>
-
-<div id="tutorialOverlay">
-  <div id="tutorialHighlight"></div>
-  <div id="tutorialArrow"></div>
-  <div id="tutorialBox">
-    <div class="tutStep" id="tutStepLbl"></div>
-    <h4 id="tutTitle"></h4>
-    <p id="tutText"></p>
-    <div class="tutBtns">
-      <button class="tutSkip" id="tutSkipBtn"></button>
-      <button class="tutNext" id="tutNextBtn"></button>
-    </div>
-  </div>
 </div>
 
 <div id="infoOverlay">
@@ -3638,17 +3594,6 @@ let lootPreviewIdx = null; // null = suit la zone qu'on farm ; sinon index de la
 function buildZoneList() {
   const list = $('zoneList');
   list.innerHTML = '';
-  // Velia, la ville paisible : épinglée en haut, aucun monstre, aucun farm — juste un accès
-  // rapide pour revoir le tutoriel de bienvenue à tout moment
-  const veliaRow = document.createElement('div');
-  veliaRow.className = 'zRow veliaRow';
-  veliaRow.title = LANG==='fr' ? 'Velia — zone paisible' : 'Velia — peaceful zone';
-  veliaRow.innerHTML =
-    `<span class="zname">🏘️ Velia</span>` +
-    `<span class="zBadge">${LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE'}</span>` +
-    `<span class="zreq" style="width:auto">${LANG==='fr'?'Aucun monstre':'No monsters'}</span>`;
-  veliaRow.onclick = () => startTutorial();
-  list.appendChild(veliaRow);
   ZONES.forEach((z,i) => {
     const b = badgeOf(bottleneck(z));
     const apOk = apRatio(z) >= 1, dpOk = dpRatio(z) >= 1;
@@ -3668,9 +3613,7 @@ function buildZoneList() {
 }
 // rafraîchit juste le halo du 👁 sans reconstruire toute la liste (appelé à chaque aperçu de loot)
 function updateZoneViewHalo() {
-  // :not(.veliaRow) — la ligne Velia (ville paisible épinglée en haut) n'a pas de bouton 👁 et ne
-  // doit pas décaler les index par rapport à ZONES
-  document.querySelectorAll('#zoneList .zRow:not(.veliaRow)').forEach((row,i) => {
+  document.querySelectorAll('#zoneList .zRow').forEach((row,i) => {
     const previewed = lootPreviewIdx==null ? i===zoneIdx : i===lootPreviewIdx;
     row.querySelector('.zBtnView').classList.toggle('active', previewed);
   });
@@ -4721,7 +4664,6 @@ async function startGuestOrShowAuth() {
   }
 }
 
-let tutorialAutoShown = false; // évite de relancer le tuto auto plusieurs fois si loadCloudSave est rappelé
 async function loadCloudSave() {
   if (!sb || !currentUser) return;
   $a('saveStatus').textContent = 'Chargement...';
@@ -4731,9 +4673,6 @@ async function loadCloudSave() {
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
   } else {
     $a('saveStatus').textContent = 'Nouveau personnage';
-    // aucune sauvegarde cloud trouvée = personnage tout juste créé : on l'accueille à Velia et on
-    // lance le tutoriel (petite pause pour laisser l'UI/le HUD finir de s'initialiser)
-    if (!tutorialAutoShown) { tutorialAutoShown = true; setTimeout(startTutorial, 500); }
   }
   setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 3000);
 }
@@ -5724,15 +5663,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V66', d:'04/07/2026 06:00', name:{fr:'Tutoriel de bienvenue à Velia', en:'Velia welcome tutorial'}, fr:[
-      {t:'new', tx:'Nouvelle zone paisible 🏘️ Velia, épinglée en haut de la liste des zones — aucun monstre, juste un point de repère pour revoir le tutoriel'},
-      {t:'new', tx:'Un petit tutoriel se lance automatiquement pour tout nouveau compte : des encadrés et des flèches expliquent les pages du jeu, les zones, les sorts automatiques, les statistiques, les quêtes et le chat'},
-      {t:'new', tx:'Le tutoriel peut être relancé à tout moment depuis le 📖 Wiki (onglet 🔰 Tutoriel) ou en cliquant sur 🏘️ Velia'},
-    ], en:[
-      {t:'new', tx:'New peaceful zone 🏘️ Velia, pinned at the top of the zone list — no monsters, just a landmark to replay the tutorial'},
-      {t:'new', tx:'A short tutorial now launches automatically for every new account: highlighted boxes and arrows explain the game pages, zones, automatic skills, stats, quests and chat'},
-      {t:'new', tx:'The tutorial can be replayed anytime from the 📖 Wiki (🔰 Tutorial tab) or by clicking 🏘️ Velia'},
-    ] },
   { v:'V65', d:'04/07/2026 05:00', name:{fr:'Mise à jour de la clause de non-affiliation', en:'Updated copyright disclaimer'}, fr:[
       {t:'change', tx:'Mention légale mise à jour en bas de page et dans le Wiki (À propos) : Black Desert et toutes les images/illustrations/icônes/noms/données du jeu sont la propriété de Pearl Abyss — projet de fan non officiel et gratuit, sans affiliation ni partenariat avec Pearl Abyss'},
     ], en:[
@@ -6379,7 +6309,6 @@ const WIKI_SECTIONS = [
       <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere. Icons are original creations (no real game assets).</p>
       <p>Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss.</p>` },
   { id:'codex', icon:'📚', label:{fr:'Codex des objets',en:'Item Codex'}, codex:true },
-  { id:'tuto', icon:'🔰', label:{fr:'Tutoriel',en:'Tutorial'}, tuto:true },
 ];
 // génère le codex des objets à partir des données du jeu (matériaux, bijoux, trash, sets)
 function renderCodexHtml() {
@@ -6410,19 +6339,12 @@ function renderCodexHtml() {
     section(LANG==='fr'?'✦ Composants de craft':'✦ Crafting components', crafts) +
     section(LANG==='fr'?'▬ Butin de base':'▬ Base loot', trash);
 }
-// page Wiki "Tutoriel" : résumé + bouton pour relancer le tutoriel d'arrivée à Velia à tout moment
-function renderTutoPageHtml() {
-  return `<div class="admSummary">${LANG==='fr'
-    ? 'Le tutoriel te fait visiter Velia, la ville paisible, et t\'explique les bases du jeu (zones, sorts automatiques, statistiques, quêtes, chat). Tu peux le relancer ici quand tu veux.'
-    : 'The tutorial walks you through Velia, the peaceful town, and explains the basics of the game (zones, automatic skills, stats, quests, chat). You can replay it here anytime.'}</div>
-    <button id="btnStartTutoWiki" style="width:auto;margin-top:10px;padding:8px 18px;">${LANG==='fr'?'▶ Relancer le tutoriel':'▶ Replay the tutorial'}</button>`;
-}
 let wikiSection = 'combat';
 function renderWikiHtml() {
   const tabsHtml = WIKI_SECTIONS.map(s =>
     `<button class="catTab wikiTab${s.id===wikiSection?' active':''}" data-sec="${s.id}">${s.icon} ${s.label[LANG]}</button>`).join('');
   const sec = WIKI_SECTIONS.find(s => s.id === wikiSection) || WIKI_SECTIONS[0];
-  const body = sec.codex ? renderCodexHtml() : sec.tuto ? renderTutoPageHtml() : sec[LANG];
+  const body = sec.codex ? renderCodexHtml() : sec[LANG];
   return `<div class="catTabs">${tabsHtml}</div><div class="wikiBody">${body}</div>`;
 }
 
@@ -6448,104 +6370,7 @@ $a('btnWiki').onclick = () => {
   $a('infoBody').querySelectorAll('.wikiTab').forEach(btn => {
     btn.onclick = () => { wikiSection = btn.dataset.sec; $a('btnWiki').onclick(); };
   });
-  const tutoBtn = $a('btnStartTutoWiki');
-  if (tutoBtn) tutoBtn.onclick = () => { $a('infoOverlay').classList.remove('open'); startTutorial(); };
 };
-
-// ============================================================
-// Tutoriel d'arrivée à Velia — encadrés + flèche pointant vers l'élément expliqué. Se lance
-// automatiquement à la création d'un compte (aucune sauvegarde cloud trouvée, voir loadCloudSave),
-// et peut être relancé à tout moment depuis 🏘️ Velia (haut de la liste des zones) ou le 📖 Wiki.
-// ============================================================
-const TUTORIAL_STEPS = [
-  { title:{fr:'Bienvenue à Velia !',en:'Welcome to Velia!'},
-    text:{fr:'Velia est une ville paisible : aucun monstre n\'y rôde. C\'est le meilleur endroit pour découvrir les bases avant de partir à l\'aventure.', en:'Velia is a peaceful town: no monsters roam here. It\'s the best place to learn the basics before heading out to adventure.'} },
-  { target:'#activityTabs', placement:'bottom',
-    title:{fr:'Les pages du jeu',en:'Game pages'},
-    text:{fr:'Cette barre te permet de basculer entre les activités : la Zone (farm) et le Boss mondial. D\'autres activités arriveront plus tard.', en:'This bar lets you switch between activities: the Zone (farming) and the World Boss. More activities will arrive later.'} },
-  { target:'#zoneList', placement:'left',
-    title:{fr:'Choisis ta zone de farm',en:'Pick your farming zone'},
-    text:{fr:'Clique une zone pour t\'y rendre. Ton personnage combat AUTOMATIQUEMENT — pas besoin de cliquer pour attaquer !', en:'Click a zone to travel there. Your character fights AUTOMATICALLY — no need to click to attack!'} },
-  { target:'#skillBar', placement:'top',
-    title:{fr:'Sorts automatiques',en:'Automatic skills'},
-    text:{fr:'Tes sorts se lancent tout seuls selon une IA de combat. Optimise ton équipement pour qu\'ils tapent plus fort.', en:'Your skills cast themselves based on a combat AI. Improve your gear so they hit harder.'} },
-  { target:'#panel .card', placement:'left',
-    title:{fr:'Tes statistiques',en:'Your stats'},
-    text:{fr:'Gearscore, PA/PD et progression : tout ce qu\'il faut pour savoir si tu es prêt pour la zone suivante.', en:'Gearscore, AP/DP and progress: everything you need to know if you\'re ready for the next zone.'} },
-  { target:'#questTrackerWidget', placement:'left',
-    title:{fr:'Quêtes journalières & hebdo',en:'Daily & weekly quests'},
-    text:{fr:'Des objectifs se renouvellent chaque jour et chaque semaine, avec des récompenses en silver à la clé.', en:'Objectives refresh every day and every week, with silver rewards waiting for you.'} },
-  { target:'#chatWidget', placement:'left',
-    title:{fr:'Discute avec les autres joueurs',en:'Chat with other players'},
-    text:{fr:'Mondial, Trade, Annonces... échange avec la communauté directement depuis le jeu.', en:'World, Trade, Announcements... chat with the community right from the game.'} },
-  { target:'#btnWiki', placement:'bottom', final:true,
-    title:{fr:'Besoin d\'aide plus tard ?',en:'Need help later?'},
-    text:{fr:'Tu peux relancer ce tutoriel à tout moment depuis le 📖 Wiki (onglet 🔰 Tutoriel), ou en cliquant sur 🏘️ Velia en haut de la liste des zones.', en:'You can replay this tutorial anytime from the 📖 Wiki (🔰 Tutorial tab), or by clicking 🏘️ Velia at the top of the zone list.'} },
-];
-let tutorialStepIdx = -1;
-function positionTutorialStep() {
-  const step = TUTORIAL_STEPS[tutorialStepIdx];
-  const hi = $a('tutorialHighlight'), box = $a('tutorialBox'), arrow = $a('tutorialArrow');
-  const target = step.target ? document.querySelector(step.target) : null;
-  if (!target) {
-    // pas de cible précise (ex: message de bienvenue) : encadré centré, pas de spotlight ni flèche
-    hi.classList.add('center'); hi.style.top='0'; hi.style.left='0'; hi.style.width='0'; hi.style.height='0';
-    arrow.style.display = 'none';
-    box.style.top = '50%'; box.style.left = '50%'; box.style.transform = 'translate(-50%,-50%)';
-  } else {
-    const r = target.getBoundingClientRect();
-    const pad = 6;
-    hi.classList.remove('center');
-    hi.style.top = (r.top-pad)+'px'; hi.style.left = (r.left-pad)+'px';
-    hi.style.width = (r.width+pad*2)+'px'; hi.style.height = (r.height+pad*2)+'px';
-    box.style.transform = 'none';
-    const boxW = 280, gap = 16, arrowSize = 11;
-    let bx, by, arrowCls;
-    if (step.placement === 'bottom') { bx = r.left+r.width/2-boxW/2; by = r.bottom+pad+gap; arrowCls='top'; }
-    else if (step.placement === 'top') { bx = r.left+r.width/2-boxW/2; by = r.top-pad-gap-140; arrowCls='bottom'; }
-    else if (step.placement === 'right') { bx = r.right+pad+gap; by = r.top+r.height/2-70; arrowCls='left'; }
-    else { bx = r.left-pad-gap-boxW; by = r.top+r.height/2-70; arrowCls='right'; } // 'left' par défaut
-    bx = Math.max(10, Math.min(window.innerWidth-boxW-10, bx));
-    by = Math.max(10, Math.min(window.innerHeight-160, by));
-    box.style.left = bx+'px'; box.style.top = by+'px';
-    arrow.style.display = '';
-    arrow.className = arrowCls;
-    if (arrowCls==='top' || arrowCls==='bottom') {
-      arrow.style.left = (r.left+r.width/2-9)+'px';
-      arrow.style.top = arrowCls==='top' ? (r.bottom+pad+2)+'px' : (r.top-pad-13)+'px';
-    } else {
-      arrow.style.top = (r.top+r.height/2-9)+'px';
-      arrow.style.left = arrowCls==='left' ? (r.right+pad+2)+'px' : (r.left-pad-13)+'px';
-    }
-  }
-}
-function showTutorialStep() {
-  const step = TUTORIAL_STEPS[tutorialStepIdx];
-  $a('tutStepLbl').textContent = `${LANG==='fr'?'Étape':'Step'} ${tutorialStepIdx+1} / ${TUTORIAL_STEPS.length}`;
-  $a('tutTitle').textContent = step.title[LANG];
-  $a('tutText').textContent = step.text[LANG];
-  $a('tutSkipBtn').textContent = LANG==='fr'?'Passer':'Skip';
-  $a('tutNextBtn').textContent = step.final ? (LANG==='fr'?'Terminer':'Finish') : (LANG==='fr'?'Suivant →':'Next →');
-  positionTutorialStep();
-}
-function startTutorial() {
-  questsPanelOpen = false; $a('infoOverlay').classList.remove('open');
-  currentActivity = 'zone'; showActivityPage('zone');
-  tutorialStepIdx = 0;
-  $a('tutorialOverlay').classList.add('open');
-  showTutorialStep();
-}
-function endTutorial() {
-  tutorialStepIdx = -1;
-  $a('tutorialOverlay').classList.remove('open');
-}
-$a('tutNextBtn').onclick = () => {
-  const step = TUTORIAL_STEPS[tutorialStepIdx];
-  if (step.final) { endTutorial(); return; }
-  tutorialStepIdx++; showTutorialStep();
-};
-$a('tutSkipBtn').onclick = endTutorial;
-window.addEventListener('resize', () => { if (tutorialStepIdx >= 0) positionTutorialStep(); });
 
 // ---------- suivi des patch notes lus ----------
 // principe demandé : le tag NEW reste visible pendant TOUTE la session en cours (même après
