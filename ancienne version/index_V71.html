@@ -86,13 +86,6 @@
     padding:4px 14px; white-space:nowrap;
   }
   #aiSkill { color:var(--gold); }
-  #farmModeBtn {
-    position:absolute; top:10px; left:calc(50% + 165px);
-    font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
-    color:var(--gold); background:rgba(10,9,12,.6); border:1px solid var(--gold-dim);
-    padding:4px 10px; white-space:nowrap; border-radius:3px;
-  }
-  #farmModeBtn:hover { background:rgba(201,165,90,.15); }
 
   #skillBar { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
   .sk {
@@ -111,25 +104,8 @@
   #hpBar { width:170px; height:13px; background:rgba(0,0,0,.65); border:1px solid #444; }
   #hpFill { height:100%; width:100%; background:linear-gradient(90deg,#a33d34,#c05545); transition:width .15s; }
   #potSlot { width:34px; height:34px; position:relative; border:1px solid var(--gold-dim);
-    background:#191720; display:flex; align-items:center; justify-content:center; font-size:15px; overflow:hidden; cursor:pointer; }
-  #potSlot:hover { border-color:var(--gold); }
+    background:#191720; display:flex; align-items:center; justify-content:center; font-size:15px; overflow:hidden; }
   #potCd { position:absolute; left:0; bottom:0; width:100%; background:rgba(0,0,0,.75); }
-  #potSelect {
-    display:none; position:absolute; bottom:52px; left:14px; z-index:30; width:210px;
-    background:rgba(12,10,15,.95); border:1px solid var(--gold-dim); border-radius:6px; padding:6px;
-    box-shadow:0 8px 24px rgba(0,0,0,.6);
-  }
-  #potSelect.show { display:block; }
-  #potSelect .psRow {
-    display:flex; align-items:center; gap:8px; padding:6px 5px; cursor:pointer; border-radius:4px; font-size:11px;
-  }
-  #potSelect .psRow:hover { background:rgba(201,165,90,.12); }
-  #potSelect .psRow.sel { background:rgba(201,165,90,.18); border:1px solid var(--gold-dim); }
-  #potSelect .psIcon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
-  #potSelect .psInfo { flex:1; min-width:0; }
-  #potSelect .psName { color:var(--ink); }
-  #potSelect .psHeal { color:#8fc98a; font-size:10px; }
-  #potSelect .psCost { color:var(--gold); font-variant-numeric:tabular-nums; flex-shrink:0; font-size:10.5px; }
   #psTag { position:absolute; bottom:14px; right:14px; font-size:12px; color:#9cc9e8; text-shadow:0 1px 2px #000; text-align:right; }
 
   #panel {
@@ -685,16 +661,6 @@
   .admEmpty { color:var(--ink-dim); font-style:italic; text-align:center; padding:10px 0; }
   .admSummary { font-size:11px; color:var(--ink-dim); margin-bottom:8px; }
   .admSummary b { color:var(--gold); }
-  /* graphique économie (moyenne/total de silver) côté admin */
-  .admStatTiles { display:flex; gap:10px; margin-bottom:12px; }
-  .admStatTile { flex:1; background:rgba(201,165,90,.06); border:1px solid var(--gold-dim); border-radius:5px; padding:9px 12px; }
-  .admStatTile .astLbl { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:3px; }
-  .admStatTile .astVal { font-size:17px; color:var(--gold); font-weight:bold; }
-  .admHistBars { display:flex; align-items:flex-end; gap:6px; height:110px; margin-bottom:6px; padding-top:6px; }
-  .admHistBar { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
-  .admHistBar .ahbFill { width:100%; background:linear-gradient(180deg,#c9a55a,#8a7038); border-radius:2px 2px 0 0; min-height:2px; }
-  .admHistBar .ahbCount { font-size:10px; color:var(--gold); margin-bottom:2px; }
-  .admHistBar .ahbLbl { font-size:9px; color:var(--ink-dim); margin-top:4px; text-align:center; }
   .staleTag { font-size:10px; cursor:help; }
 
   /* ===== succès & quêtes journalières ===== */
@@ -953,32 +919,14 @@
   }
   #bossName { font-size:16px; font-weight:bold; color:var(--danger); letter-spacing:1px; flex-shrink:0; }
   #bossHpBarWrap {
-    flex:1; height:22px; background:#1a0d0d; border:1px solid #5a2020; border-radius:4px;
-    position:relative; overflow:hidden; box-shadow:inset 0 2px 5px rgba(0,0,0,.6), 0 0 10px rgba(224,64,64,.15);
+    flex:1; height:20px; background:#1a0d0d; border:1px solid #5a2020; border-radius:3px;
+    position:relative; overflow:hidden;
   }
-  #bossHpBar {
-    height:100%; width:100%; background:linear-gradient(90deg,#6e1616,#e04040 55%,#ff7a5a);
-    transition:width .2s linear, box-shadow .3s ease; position:relative;
-    box-shadow:0 0 10px rgba(224,64,64,.6) inset;
-  }
-  #bossHpBar.low { animation:bossHpLowPulse 1.1s ease-in-out infinite; }
-  @keyframes bossHpLowPulse {
-    0%,100% { filter:brightness(1); box-shadow:0 0 10px rgba(255,60,40,.7) inset; }
-    50% { filter:brightness(1.35); box-shadow:0 0 20px rgba(255,90,40,.95) inset; }
-  }
-  #bossHpBar::after {
-    content:''; position:absolute; inset:0;
-    background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0) 45%);
-  }
-  #bossHpTicks { position:absolute; inset:0; display:flex; pointer-events:none; }
-  #bossHpTicks span { flex:1; border-right:1px solid rgba(0,0,0,.35); }
-  #bossHpTicks span:last-child { border-right:none; }
+  #bossHpBar { height:100%; width:100%; background:linear-gradient(90deg,#8a2020,#e04040); transition:width .2s linear; }
   #bossHpTxt {
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:6px;
-    font-size:11px; font-weight:bold; color:#fff; text-shadow:0 1px 3px #000; font-variant-numeric:tabular-nums;
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:bold; color:#fff; text-shadow:0 1px 2px #000; font-variant-numeric:tabular-nums;
   }
-  #bossHpTxt .bhpPct { font-size:13px; color:#ffd9c8; }
-  #bossHpTxt .bhpNum { color:rgba(255,255,255,.75); font-size:9.5px; }
   #bossTimer { font-size:15px; font-weight:bold; color:var(--gold); font-variant-numeric:tabular-nums; flex-shrink:0; }
   #bossLeaveBtn { width:auto; margin:0; padding:4px 10px; font-size:15px; flex-shrink:0; background:none; border:none; color:var(--ink-dim); }
   #bossCv { flex:1; width:100%; min-height:0; display:block; }
@@ -1224,7 +1172,7 @@
     <div id="bossArena">
       <div id="bossTopBar">
         <div id="bossName"></div>
-        <div id="bossHpBarWrap"><div id="bossHpBar"></div><div id="bossHpTicks"><span></span><span></span><span></span><span></span></div><span id="bossHpTxt"></span></div>
+        <div id="bossHpBarWrap"><div id="bossHpBar"></div><span id="bossHpTxt"></span></div>
         <div id="bossTimer"></div>
         <button id="bossLeaveBtn">✕</button>
       </div>
@@ -1239,7 +1187,6 @@
     <canvas id="cv" width="1240" height="440"></canvas>
     <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Forêt aux Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span></div>
     <div id="aiState">IA : <span id="stateName">SearchPack</span> · <span id="aiSkill">—</span></div>
-    <div id="farmModeBtn" title="Change le comportement de l'IA"></div>
     <div id="silverBox"><span class="coin"></span><span id="silver">0</span></div>
     <div id="shRate">— silver/h</div>
     <div id="lootTicker"></div>
@@ -1247,7 +1194,6 @@
     <div id="hpPotWrap">
       <div id="hpBar"><div id="hpFill"></div></div>
       <div id="potSlot"><span id="potIcon">🧪</span><div id="potCd"></div></div>
-      <div id="potSelect"></div>
     </div>
     <div id="skillBar"></div>
     <div id="psTag">GS <b id="gsVal">21</b><br><span style="font-size:10px;color:var(--ink-dim)">Niv. <span id="lvl">1</span></span></div>
@@ -1262,7 +1208,6 @@
       <div class="row"><span data-i18n="lblPS">Gearscore</span><span class="v" id="stPS">21</span></div>
       <div class="row"><span data-i18n="lblPA">PA effective</span><span class="v" id="stPA">14</span></div>
       <div class="row"><span data-i18n="lblPD">PD</span><span class="v" id="stDP">10</span></div>
-      <div class="row"><span data-i18n="lblHpMax">PV max</span><span class="v" id="stHpMax">100</span></div>
       <div class="row"><span data-i18n="lblApZone">PA requis (zone)</span><span class="v" id="stApZone">14 / 20</span></div>
       <div class="row"><span data-i18n="lblDpZone">PD requis (zone)</span><span class="v" id="stDpZone">10 / 20</span></div>
       <div class="row"><span data-i18n="lblWeaponBonus">Bonus arme</span><span class="v" id="stWeaponBonus">+0%</span></div>
@@ -1472,8 +1417,7 @@ const S = {
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
   loyalty: 0, lastLoyaltyDate: null, mailbox: [],
-  potionType: 'medium', // 'small'/'medium'/'large'/'mega' = potions payantes ; 'infinite' = gratuite (débloquée plus tard)
-  farmMode: 'loot', // 'loot' = ramasse tout avant le pack suivant ; 'xp' = enchaîne les packs sans se soucier du loot
+  potionType: 'basic', // 'basic' = potion payante ; 'infinite' = gratuite (débloquée plus tard)
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -1628,7 +1572,7 @@ function itemMult(item) { return item && item.optimizable ? (1 + enhBonus(item.e
 // avant ce correctif, ces deux endroits affichaient la stat de BASE même sur un objet enchanté +15)
 function effectiveApDp(item) {
   const mult = itemMult(item);
-  return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult), hp: Math.round((item.hp||0) * mult) };
+  return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult) };
 }
 
 // ---------- chances d'optimisation : base FIXE + failstack PERSONNEL À CHAQUE OBJET ----------
@@ -1677,15 +1621,6 @@ function equipDP() {
   for (const k of [...ARMOR_SLOTS, ...ACC_SLOTS]) { const e = EQUIP[k]; if (e) d += (e.dp||0) * itemMult(e); }
   return d;
 }
-// PV apportés par l'armure (casque/plastron/gants/bottes) — demande : "ajoute au stuff des PV pour
-// que les joueurs ne se fassent pas one-shot". S.hpMax reste la valeur de BASE (progression par
-// niveau) ; effHpMax() = base + bonus d'armure, utilisée partout où "les PV max actuels" comptent.
-function equipHP() {
-  let h = 0;
-  for (const k of ARMOR_SLOTS) { const e = EQUIP[k]; if (e) h += (e.hp||0) * itemMult(e); }
-  return h;
-}
-const effHpMax = () => S.hpMax + equipHP();
 function armorBonusAvg() {
   const pieces = ARMOR_SLOTS.map(k => EQUIP[k]).filter(Boolean);
   if (!pieces.length) return 0;
@@ -2091,7 +2026,7 @@ function startBossFight(bossId, isShared) {
   const duration = Math.max(120, Math.min(420, rawDur)); // clampée à [2 min, 7 min]
   Object.assign(bossState, {
     active:true, ended:false, boss:b, hp, maxHp, duration, elapsed:0,
-    playerHp: effHpMax(), playerHpMax: effHpMax(), hits:[], last:performance.now(), potCd:0,
+    playerHp: S.hpMax, playerHpMax: S.hpMax, hits:[], last:performance.now(), potCd:0,
     px:0.5, py:0.85, pillars:BOSS_PILLARS.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
     shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
@@ -2264,8 +2199,7 @@ function bossLoop(now) {
   // HUD
   const hpPct = bossState.hp/bossState.maxHp*100;
   $('bossHpBar').style.width = hpPct+'%';
-  $('bossHpBar').classList.toggle('low', hpPct <= 20);
-  $('bossHpTxt').innerHTML = `<span class="bhpPct">${hpPct.toFixed(1)}%</span><span class="bhpNum">(${fmt(Math.ceil(bossState.hp))} / ${fmt(bossState.maxHp)})</span>`;
+  $('bossHpTxt').textContent = fmt(Math.ceil(bossState.hp))+' / '+fmt(bossState.maxHp);
   $('bossTimer').textContent = bossState.shared ? fmtBossCountdown(bossState.expiresAt - Date.now()) : fmtBossCountdown((bossState.duration - bossState.elapsed)*1000);
   $('bossPlayerHp').style.width = (bossState.playerHp/bossState.playerHpMax*100)+'%';
   $('bossPlayerHpTxt').textContent = Math.ceil(bossState.playerHp)+' / '+bossState.playerHpMax+' PV';
@@ -2349,12 +2283,6 @@ function drawBossRoom(t) {
   cx.strokeStyle = 'rgba(0,0,0,.28)'; cx.lineWidth = 1;
   for (let i=0;i<=10;i++){ const p=bossProj(0,i/10); cx.beginPath(); cx.moveTo(0,p.y); cx.lineTo(W,p.y); cx.stroke(); }
   for (let i=0;i<=8;i++){ const top=bossProj(i/8,0), bot=bossProj(i/8,1); cx.beginPath(); cx.moveTo(top.x,top.y); cx.lineTo(bot.x,bot.y); cx.stroke(); }
-  // brume de fond en parallaxe : dérive LENTE et indépendante du tremblement d'écran — donne au
-  // donjon une vraie impression de profondeur/volume ("4D") au-delà du simple décor plat
-  const fogDrift = Math.sin(t*0.15)*16;
-  const fog = cx.createRadialGradient(W/2+fogDrift, H*0.32, W*0.08, W/2+fogDrift, H*0.32, W*0.8);
-  fog.addColorStop(0,'rgba(255,255,255,0)'); fog.addColorStop(1,'rgba(0,0,0,.4)');
-  cx.fillStyle = fog; cx.fillRect(0,0,W,H);
   // braises de corruption en arrière-plan (profondeur : plus loin = plus petit/lent/transparent)
   for (const e of bs.embers) {
     if (e.depth > 0.6) continue; // couche lointaine, DERRIÈRE le boss
@@ -2430,14 +2358,6 @@ function drawBossRoom(t) {
     cx.globalAlpha = 1;
   }
   cx.textAlign='left'; cx.textBaseline='alphabetic';
-  // vignette réactive aux PV du boss : le donjon "respire" la corruption à mesure qu'il faiblit —
-  // renforce encore l'immersion "4D" en réagissant à l'état réel du combat, pas juste au décor
-  const hpFrac = bs.maxHp > 0 ? Math.max(0, bs.hp/bs.maxHp) : 1;
-  const breathe = 1 + Math.sin(t*2.2)*(hpFrac<0.3?0.18:0.05);
-  const vigStrength = (0.14 + (1-hpFrac)*0.36) * breathe;
-  const vig = cx.createRadialGradient(W/2,H/2,H*0.25,W/2,H/2,H*0.78);
-  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,`rgba(140,20,20,${Math.min(0.6,vigStrength)})`);
-  cx.fillStyle = vig; cx.fillRect(0,0,W,H);
   cx.restore(); // referme le cx.save() du tremblement d'écran en tout début de fonction
 }
 
@@ -2789,27 +2709,6 @@ function aiMode() {
   if (r >= 0.85) return 'équilibré';
   return 'défensif';
 }
-// mode de farm choisi par le joueur : "Loot" ramasse tout avant de passer au pack suivant (voir
-// killPack + case 'loot' du fsm), "XP" ignore le loot au sol et enchaîne les packs pour maximiser
-// les kills/xp par minute (demande : 2 IA différentes, une full-loot, une full-XP)
-const FARM_MODES = {
-  loot: { icon:'🎒', name:{fr:'Loot', en:'Loot'} },
-  xp:   { icon:'⚡', name:{fr:'XP',   en:'XP'} },
-};
-function renderFarmModeBtn() {
-  const el = $('farmModeBtn'); if (!el) return;
-  const m = FARM_MODES[S.farmMode] || FARM_MODES.loot;
-  el.textContent = m.icon + ' ' + m.name[LANG];
-  el.title = LANG==='fr'
-    ? (S.farmMode==='loot' ? 'IA "Loot" : ramasse tout le butin avant de passer au pack suivant (clique pour passer en XP)'
-                            : 'IA "XP" : enchaîne les packs sans ramasser le butin au sol (clique pour passer en Loot)')
-    : (S.farmMode==='loot' ? 'Loot AI: picks up all drops before moving to the next pack (click to switch to XP)'
-                            : 'XP AI: chains packs without picking up ground loot (click to switch to Loot)');
-}
-function toggleFarmMode() {
-  S.farmMode = S.farmMode === 'loot' ? 'xp' : 'loot';
-  renderFarmModeBtn();
-}
 
 // ==================== COMPÉTENCES ====================
 const SKILLS = [
@@ -2837,12 +2736,6 @@ function toScreen(x, y, z = 0) {
     sy: H/2 + 30 + isoY(x,y) - isoY(cam.x,cam.y) - z,
   };
 }
-// inverse de toScreen (z=0, au niveau du sol) : sert au clic sur le loot au sol
-function screenToWorld(sx, sy) {
-  const a = sx - W/2 + isoX(cam.x,cam.y);
-  const b = 2*(sy - H/2 - 30) + isoY(cam.x,cam.y)*2;
-  return { x: (a+b)/2, y: (b-a)/2 };
-}
 
 // ==================== JOUEUR ====================
 const P = {
@@ -2850,8 +2743,7 @@ const P = {
   state: 'search', stateT: 0,
   castTimer: 0, castingSkill: null, castProgress: 0,
   bob: 0, faceX: 1, orbitDir: 1, orbitAng: 0,
-  potCd: 0, faint: 0, tpFlash: 0, lootTarget: null, lootClusterX: 0, lootClusterY: 0,
-  manualTarget: null, manualMoveT: 0,
+  potCd: 0, faint: 0, tpFlash: 0, lootTarget: null,
 };
 const BASE_SPEED = 92;
 
@@ -2897,9 +2789,9 @@ function spawnPackNear() {
 
 function resetWorld() {
   packs = []; drops = []; corpses = []; particles = []; floats = [];
-  target = null; P.lootTarget = null; P.manualTarget = null;
-  P.x = 0; P.y = 0; cam.x = 0; cam.y = 0; P.lootClusterX = 0; P.lootClusterY = 0;
-  P.state = 'search'; P.hp = effHpMax();
+  target = null; P.lootTarget = null;
+  P.x = 0; P.y = 0; cam.x = 0; cam.y = 0;
+  P.state = 'search'; P.hp = S.hpMax;
   for (let i = 0; i < 6; i++) spawnPackNear();
 }
 resetWorld();
@@ -2909,7 +2801,7 @@ let DEFAULT_SAVE = JSON.parse(JSON.stringify(getSaveState()));
 
 // ==================== FSM ====================
 function hpTier() {
-  const p = P.hp / effHpMax();
+  const p = P.hp / S.hpMax;
   if (p > .8) return 'agressif';
   if (p > .5) return 'normal';
   if (p > .25) return 'prudent';
@@ -2940,60 +2832,30 @@ function doTeleport(dirX, dirY) {
   particles.push({ type:'tpTrail', x1:P.x, y1:P.y, x2:nx, y2:ny, life:.4, max:.4 });
   P.x = nx; P.y = ny; P.tpFlash = 1;
 }
-// potions de vie : 4 tailles au choix du joueur, prix FIXE différent pour chacune, payées à
-// CHAQUE utilisation (vrai sink économique — sans silver, pas de soin, le joueur encaisse).
-// Calibrage : le coût au %PV soigné augmente légèrement avec la taille (les grosses potions
-// restent un luxe) et le temps de recharge grandit avec le soin apporté, pour qu'aucune taille
-// ne soit "abusable" (spam en boucle) ni trop faible pour être utile. Une potion "infinie"
-// gratuite reste prévue pour un futur déblocage (cost:0, non proposée dans le sélecteur pour l'instant).
+// potions de vie : la basique coûte du silver à chaque utilisation (timer de 4.2s). Une potion
+// "infinie" gratuite sera débloquable plus tard (cost:0). Si le joueur n'a pas assez de silver,
+// la potion ne se déclenche pas — il continue à encaisser les dégâts (vrai sink économique).
 const POTIONS = {
-  small:    { name:{fr:'Petite potion de vie',  en:'Small HP Potion'},  icon:'🧪', cost:80,  heal:0.20, cd:2.6 },
-  medium:   { name:{fr:'Potion de vie',         en:'HP Potion'},        icon:'🧴', cost:150, heal:0.35, cd:4.0 },
-  large:    { name:{fr:'Grande potion de vie',  en:'Large HP Potion'},  icon:'⚗️', cost:260, heal:0.55, cd:5.6 },
-  mega:     { name:{fr:'Potion de vie majeure', en:'Major HP Potion'},  icon:'🍾', cost:420, heal:0.80, cd:7.5 },
-  infinite: { name:{fr:'Potion infinie',        en:'Infinite Potion'},  icon:'♾️', cost:0,   heal:0.4,  cd:4.2 },
+  basic:    { name:{fr:'Potion de vie',en:'HP Potion'},        icon:'🧪', cost:200, heal:0.4 },
+  infinite: { name:{fr:'Potion infinie',en:'Infinite Potion'}, icon:'♾️', cost:0,   heal:0.4 },
 };
-const POTION_ORDER = ['small','medium','large','mega']; // ordre d'affichage du sélecteur (infinite pas encore débloquable)
 function usePotion() {
-  const pot = POTIONS[S.potionType] || POTIONS.medium;
+  const pot = POTIONS[S.potionType] || POTIONS.basic;
   if (pot.cost > 0) {
     if (S.silver < pot.cost) { P.potCd = 1; return; } // pas assez de silver : réessaie vite, aucun soin
     S.silver -= pot.cost;
     floatTxt(P.x,P.y,80,'-'+fmt(pot.cost)+'🪙',{hurt:true});
   }
-  P.potCd = pot.cd;
-  P.hp = Math.min(effHpMax(), P.hp + effHpMax()*pot.heal);
+  P.potCd = 4.2;
+  P.hp = Math.min(S.hpMax, P.hp + S.hpMax*pot.heal);
   floatTxt(P.x,P.y,90,'+PV',{green:true});
-}
-// sélecteur de potion : le joueur choisit laquelle des 4 tailles utiliser automatiquement en
-// combat — le soin affiché (en PV) dépend de ses PV max actuels, mis à jour à chaque ouverture
-function renderPotSelect() {
-  const el = $('potSelect'); if (!el) return;
-  el.innerHTML = POTION_ORDER.map(key => {
-    const p = POTIONS[key];
-    const healHp = Math.round(effHpMax()*p.heal);
-    return `<div class="psRow${S.potionType===key?' sel':''}" data-pot="${key}">` +
-      `<span class="psIcon">${p.icon}</span>` +
-      `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${fmt(healHp)} PV</span></span>` +
-      `<span class="psCost">${fmt(p.cost)} 🪙</span></div>`;
-  }).join('');
-  el.querySelectorAll('.psRow').forEach(row => {
-    row.onclick = e => { e.stopPropagation(); S.potionType = row.dataset.pot; el.classList.remove('show'); };
-  });
-}
-function togglePotSelect(e) {
-  e.stopPropagation();
-  const el = $('potSelect');
-  const willShow = !el.classList.contains('show');
-  if (willShow) renderPotSelect();
-  el.classList.toggle('show', willShow);
 }
 
 function fsm(dt) {
   P.stateT += dt;
   if (P.faint > 0) {
     P.faint -= dt;
-    if (P.faint <= 0) { P.hp = effHpMax()*.5; setState('search'); }
+    if (P.faint <= 0) { P.hp = S.hpMax*.5; setState('search'); }
     return;
   }
 
@@ -3003,20 +2865,6 @@ function fsm(dt) {
   if (tier==='urgence' && teleportCd <= 0 && target && !target.dead) {
     doTeleport(P.x-target.x, P.y-target.y);
     teleportCd = 0; doTeleport(P.x-target.x, P.y-target.y);
-  }
-
-  // déplacement manuel (clic joueur sur du loot au sol) : prioritaire sur l'IA. Tant que le perso
-  // n'est pas arrivé, on ne repasse PAS par le switch d'état ci-dessous ("pas de retour" demandé) —
-  // l'IA reprend exactement où elle en était (état inchangé) une fois la destination atteinte.
-  if (P.manualTarget) {
-    const d = moveToward(P.manualTarget.x, P.manualTarget.y, BASE_SPEED*(buffTimer>0?1.25:1), dt);
-    if (d < 14) P.manualTarget = null;
-    for (const k in cds) cds[k] = Math.max(0, cds[k]-dt);
-    buffTimer = Math.max(0,buffTimer-dt);
-    teleportCd = Math.max(0,teleportCd-dt);
-    evasionCd = Math.max(0,evasionCd-dt);
-    P.tpFlash = Math.max(0,P.tpFlash-dt*3);
-    return;
   }
 
   switch (P.state) {
@@ -3042,12 +2890,12 @@ function fsm(dt) {
       break;
     }
     case 'combat': {
-      if (!target || target.dead) { setState(S.farmMode==='xp'?'search':'loot'); break; }
+      if (!target || target.dead) { setState('loot'); break; }
       combatTick(dt);
       break;
     }
     case 'kite': {
-      if (!target || target.dead) { setState(S.farmMode==='xp'?'search':'loot'); break; }
+      if (!target || target.dead) { setState('loot'); break; }
       P.orbitAng += dt*1.9*P.orbitDir;
       const r = 125 + Math.sin(P.stateT*3)*14;
       moveToward(target.x+Math.cos(P.orbitAng)*r, target.y+Math.sin(P.orbitAng)*r, BASE_SPEED*.95, dt);
@@ -3059,11 +2907,8 @@ function fsm(dt) {
     }
     case 'loot': {
       P.bob += dt*7;
-      // rayon FIXE autour du lieu de mise à mort (pas de la position courante du joueur) : garantit
-      // que l'IA "Loot" ramasse VRAIMENT tout le loot du pack avant de repartir, même les drops
-      // tombés plus loin que sa position une fois qu'elle a commencé à se déplacer pour looter
       if (!P.lootTarget || P.lootTarget.taken) {
-        P.lootTarget = drops.filter(l=>!l.taken && dist(P.lootClusterX,P.lootClusterY,l.x,l.y)<320)
+        P.lootTarget = drops.filter(l=>!l.taken && dist(P.x,P.y,l.x,l.y)<190)
                             .sort((a,b)=>dist(P.x,P.y,a.x,a.y)-dist(P.x,P.y,b.x,b.y))[0]||null;
       }
       if (P.lootTarget) moveToward(P.lootTarget.x,P.lootTarget.y,BASE_SPEED*.9,dt);
@@ -3194,12 +3039,7 @@ function killPack(p) {
   }
   $('aiSkill').textContent = '—';
   P.lootTarget = null;
-  if (S.farmMode === 'xp') {
-    setState('search'); // mode XP : ignore le loot au sol, enchaîne directement vers le pack suivant
-  } else {
-    P.lootClusterX = p.x; P.lootClusterY = p.y; // centre de la zone de loot à nettoyer avant de repartir
-    setState('loot');
-  }
+  setState('loot');
   hud();
 }
 
@@ -3215,21 +3055,15 @@ const GEAR_CHANCE = [.16,.12,.09,.065,.046,.032,.021,.014,.009,.0055,.0032,.0018
 const GEAR_SLOTS = ['weapon','awakening','secondary','helmet','armor','gloves','boots'];
 // part du PA/PD requis de zone que chaque pièce peut apporter, selon son rôle
 // (l'éveil est l'arme la plus forte en PA dans le vrai jeu, la secondaire un peu moins que l'arme principale)
-// hpShare : part du bonus de PV que chaque pièce d'armure apporte (le plastron/casque protègent
-// le plus de vitals, gants/bottes un peu moins) — somme = 1.0 sur les 4 pièces d'armure
 const GEAR_ROLE = {
-  weapon:     { apShare:0.42, dpShare:0,    hpShare:0 },
-  awakening:  { apShare:0.55, dpShare:0,    hpShare:0 },
-  secondary:  { apShare:0.30, dpShare:0,    hpShare:0 },
-  helmet:     { apShare:0.05, dpShare:0.24, hpShare:0.30 },
-  armor:      { apShare:0.05, dpShare:0.24, hpShare:0.40 },
-  gloves:     { apShare:0.04, dpShare:0.18, hpShare:0.15 },
-  boots:      { apShare:0.04, dpShare:0.18, hpShare:0.15 },
+  weapon:     { apShare:0.42, dpShare:0 },
+  awakening:  { apShare:0.55, dpShare:0 },
+  secondary:  { apShare:0.30, dpShare:0 },
+  helmet:     { apShare:0.05, dpShare:0.24 },
+  armor:      { apShare:0.05, dpShare:0.24 },
+  gloves:     { apShare:0.04, dpShare:0.18 },
+  boots:      { apShare:0.04, dpShare:0.18 },
 };
-// facteur d'échelle des PV d'armure par rapport au PD requis de zone (calibré pour qu'un stuff
-// d'armure complet et adapté à la zone évite un one-shot même en subissant la pénalité de PD
-// insuffisante, cf dmgTakenMult qui monte jusqu'à ×4,5)
-const HP_GEAR_SCALE = 9;
 function rollGearDrop(zone, alpha) {
   const chance = GEAR_CHANCE[zoneIdx] ?? .002;
   if (Math.random() > chance * (alpha ? 1.6 : 1)) return null;
@@ -3239,12 +3073,11 @@ function rollGearDrop(zone, alpha) {
   const scale = 0.85 + Math.random()*.3;
   const ap = Math.round(zone.reqAP * role.apShare * scale);
   const dp = Math.round(zone.reqDP * role.dpShare * scale);
-  const hp = Math.round(zone.reqDP * role.hpShare * scale * HP_GEAR_SCALE);
   return {
-    name: set[slot], kind:'gear', slot, ap, dp, hp, enhLv:0, optimizable:true, fsByLevel:{},
+    name: set[slot], kind:'gear', slot, ap, dp, enhLv:0, optimizable:true, fsByLevel:{},
     key:'gear_'+set[slot]+'_'+Math.random().toString(36).slice(2,7),
     icon: SLOT_ICON ? SLOT_ICON[slot] : '⚔️', color:'#c9a55a', stackable:false, weight:1.2,
-    val: Math.round((ap*2 + dp + hp*0.5) * 22),
+    val: Math.round((ap*2 + dp) * 22),
   };
 }
 
@@ -3315,7 +3148,7 @@ function dropsTick(dt) {
         key: it.key, name: it.name, kind: it.kind,
         icon: it.kind === 'jackpot' ? JACKPOT_ICON[accSlotFor(it)] : it.icon, color: it.color,
         qty: 1, stackable: it.stackable, weight: it.weight,
-        val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, enhLv: it.enhLv||0,
+        val: l.silver, ap: it.ap||0, dp: it.dp||0, enhLv: it.enhLv||0,
         optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
         slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
       };
@@ -3399,7 +3232,7 @@ function gainXp(n) {
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;
     S.xpNext = xpNeededFor(S.lvl);
-    S.hpMax += 8; P.hp = effHpMax();
+    S.hpMax += 8; P.hp = S.hpMax;
     floatTxt(P.x,P.y,115,'NIVEAU '+S.lvl,{lvl:true});
   }
 }
@@ -3667,7 +3500,7 @@ function drawWitchIso(t) {
     ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(c.sx-24,c.sy-78,48,4);
     ctx.fillStyle='#9cc9e8'; ctx.fillRect(c.sx-24,c.sy-78,48*Math.min(1,P.castProgress),4);
   }
-  const hpPct = P.hp/effHpMax();
+  const hpPct = P.hp/S.hpMax;
   ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(c.sx-20,c.sy-70,40,4);
   ctx.fillStyle = hpPct>.5?'#7aa35e':hpPct>.25?'#c9a55a':'#c05545';
   ctx.fillRect(c.sx-20,c.sy-70,40*hpPct,4);
@@ -3895,7 +3728,6 @@ function refreshStatsOnly() {
   $('stPS').textContent = Math.round(GS());
   $('stPA').textContent = Math.round(apEff()*10)/10;
   $('stDP').textContent = Math.round(totalDP()*10)/10;
-  $('stHpMax').textContent = fmt(Math.round(effHpMax()));
   const apEl = $('stApZone');
   apEl.textContent = Math.round(apEff()) + ' / ' + z.reqAP;
   apEl.className = 'v ' + (apR >= 1 ? 'ok' : 'bad');
@@ -3929,7 +3761,6 @@ function zoneSignature() { return zoneIdx + ':' + Math.round(apEff()) + ':' + Ma
 
 function hud() {
   refreshStatsOnly();
-  renderFarmModeBtn();
   const zSig = zoneSignature();
   if (zSig !== lastZoneSig) { lastZoneSig = zSig; buildZoneList(); }
   const iSig = invSignature();
@@ -3969,14 +3800,13 @@ function updateSilverHistory() {
 }
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
-  if (P.hp > effHpMax()) P.hp = effHpMax(); // déséquiper une pièce peut faire baisser le max courant
-  $('hpFill').style.width = Math.max(0,P.hp/effHpMax()*100)+'%';
-  const pot = POTIONS[S.potionType] || POTIONS.medium;
-  $('potCd').style.height = (P.potCd/pot.cd*100)+'%';
+  $('hpFill').style.width = Math.max(0,P.hp/S.hpMax*100)+'%';
+  $('potCd').style.height = (P.potCd/4.2*100)+'%';
+  const pot = POTIONS[S.potionType] || POTIONS.basic;
   const potIcon = $('potIcon');
   if (potIcon && potIcon.textContent !== pot.icon) {
     potIcon.textContent = pot.icon;
-    $('potSlot').title = pot.name[LANG] + (pot.cost>0 ? ` — ${fmt(pot.cost)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV)` : (LANG==='fr'?' — gratuite':' — free'));
+    $('potSlot').title = pot.name[LANG] + (pot.cost>0 ? ` — ${fmt(pot.cost)} silver/${LANG==='fr'?'usage':'use'}` : (LANG==='fr'?' — gratuite':' — free'));
   }
   for (const s of SKILLS) {
     const el = skEls[s.id];
@@ -4226,7 +4056,7 @@ function showItemMenu(px, py, data) {
   if (data.kind === 'trash') desc.push('Butin de vente. Valeur unitaire ~'+fmt(data.val)+' silver.');
   if (data.kind === 'material') desc.push('Matériau d\'optimisation. Utilisé automatiquement par le cadre Optimisation.');
   if (data.kind === 'jackpot') { const {ap,dp} = effectiveApDp(data); desc.push('Accessoire — '+(ap?('+'+ap+' PA'):'')+(dp?(' +'+dp+' PD'):'')); }
-  if (data.kind === 'gear') { const {ap,dp,hp} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+' — '+(ap?('+'+ap+' PA '):'')+(dp?('+'+dp+' PD '):'')+(hp?('+'+hp+' PV'):'')+(data.optimizable?' · optimisable':'')); }
+  if (data.kind === 'gear') { const {ap,dp} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+' — '+(ap?('+'+ap+' PA '):'')+(dp?('+'+dp+' PD'):'')+(data.optimizable?' · optimisable':'')); }
   if (data.kind === 'craft') desc.push('Composant de craft endgame. À conserver.');
   if (data.equipped) desc.push('Actuellement équipé' + (data.optimizable ? ' — niveau ' + ENH_NAMES[data.enhLv||0] : '') + '.');
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
@@ -4260,7 +4090,7 @@ function addPopBtn(pop, label, fn) {
   pop.appendChild(b);
 }
 function hideItemPop() { $('itemPop').style.display = 'none'; }
-document.addEventListener('click', () => { hideItemPop(); const ps = $('potSelect'); if (ps) ps.classList.remove('show'); });
+document.addEventListener('click', () => hideItemPop());
 document.addEventListener('contextmenu', ev => { if (!ev.target.closest('.cell')) hideItemPop(); });
 
 // ---------- infobulle au survol (lecture seule) ----------
@@ -4269,7 +4099,7 @@ function itemTooltipHtml(data) {
   if (data.kind === 'trash') desc.push('Vente ~'+fmt(data.val)+' silver');
   if (data.kind === 'material') desc.push('Matériau d\'optimisation');
   if (data.kind === 'jackpot') { const {ap,dp} = effectiveApDp(data); desc.push('Accessoire'+(ap?(' · +'+ap+' PA'):'')+(dp?(' · +'+dp+' PD'):'')); }
-  if (data.kind === 'gear') { const {ap,dp,hp} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+(ap?(' · +'+ap+' PA'):'')+(dp?(' · +'+dp+' PD'):'')+(hp?(' · +'+hp+' PV'):'')); }
+  if (data.kind === 'gear') { const {ap,dp} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+(ap?(' · +'+ap+' PA'):'')+(dp?(' · +'+dp+' PD'):'')); }
   if ((data.kind === 'gear' || data.kind === 'jackpot') && data.optimizable && data.enhLv) desc.push('enchant '+ENH_NAMES[data.enhLv]);
   if (data.kind === 'craft') desc.push('Composant de craft endgame');
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
@@ -4666,7 +4496,6 @@ function applySaveState(data) {
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
-  if (!POTIONS[S.potionType]) S.potionType = 'medium'; // migre l'ancienne potion unique 'basic' vers les 4 tailles
   resetWorld(); // recrée les packs de la zone chargée
   if (data.playerPos) { P.x = data.playerPos.x; P.y = data.playerPos.y; }
   hud();
@@ -5067,25 +4896,6 @@ async function openAdminPanel() {
   const totalSilver = silvers.reduce((a,b) => a+b, 0);
   const avgSilver = silvers.length ? Math.round(totalSilver/silvers.length) : 0;
   const medSilver = silvers.length ? silvers[Math.floor(silvers.length/2)] : 0;
-  // histogramme : répartition des joueurs par tranche de richesse — donne une vraie lecture visuelle
-  // de la moyenne/total demandée, au-delà des simples chiffres bruts
-  const WEALTH_BRACKETS = [
-    { max:10000,      label:'< 10k' },
-    { max:100000,     label:'10k-100k' },
-    { max:1000000,    label:'100k-1M' },
-    { max:10000000,   label:'1M-10M' },
-    { max:Infinity,   label:'10M+' },
-  ];
-  const bracketCounts = WEALTH_BRACKETS.map(b => 0);
-  for (const v of silvers) {
-    const idx = WEALTH_BRACKETS.findIndex(b => v < b.max);
-    bracketCounts[idx >= 0 ? idx : WEALTH_BRACKETS.length-1]++;
-  }
-  const maxBracketCount = Math.max(1, ...bracketCounts);
-  const histHtml = WEALTH_BRACKETS.map((b,i) => {
-    const pct = Math.max(2, Math.round(bracketCounts[i]/maxBracketCount*100));
-    return `<div class="admHistBar"><span class="ahbCount">${bracketCounts[i]}</span><div class="ahbFill" style="height:${pct}%"></div><span class="ahbLbl">${b.label}</span></div>`;
-  }).join('');
   const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
     <tr><td>#${i+1}</td><td>${(r.user_id||'').slice(0,8)}…</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
   `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
@@ -5103,14 +4913,12 @@ async function openAdminPanel() {
         <tbody>${itemHtml}</tbody>
       </table>` },
     { id:'wealth', icon:'👑', label:{fr:'Richesses',en:'Wealth'},
-      body: `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'💰 Total en jeu':'💰 Total in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📍 Médiane':'📍 Median'}</div><div class="astVal">${fmt(medSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${silvers.length}</div></div>
+      body: `<div class="admSummary">
+        ${LANG==='fr'?'Total en jeu':'Total in game'} : <b>${fmt(totalSilver)}</b> ·
+        ${LANG==='fr'?'Moyenne':'Average'} : <b>${fmt(avgSilver)}</b> ·
+        ${LANG==='fr'?'Médiane':'Median'} : <b>${fmt(medSilver)}</b> ·
+        ${LANG==='fr'?'Joueurs':'Players'} : <b>${silvers.length}</b>
       </div>
-      <h3>${LANG==='fr'?'📈 Répartition des joueurs par richesse':'📈 Players by wealth bracket'}</h3>
-      <div class="admHistBars">${histHtml}</div>
       <table class="admTable">
         <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
         <tbody>${wealthHtml}</tbody>
@@ -5481,24 +5289,6 @@ $a('btnLifeskillToggle').onclick = openLifeskillPanel;
 renderActivityTabs();
 // quitter un combat en cours → retour au lobby Boss ; fermer le lobby → retour à la Zone (farm)
 $a('bossLeaveBtn').onclick = () => { if (bossState.active) endBossFight(false); else openBossLobby(); };
-$a('potSlot').onclick = togglePotSelect;
-$a('farmModeBtn').onclick = toggleFarmMode;
-renderFarmModeBtn();
-
-// clic sur un objet au sol : déplace le perso jusque là. Prioritaire sur l'IA — tant qu'il n'est
-// pas arrivé à l'endroit cliqué, l'IA ne reprend pas la main (voir P.manualTarget dans fsm())
-cv.addEventListener('click', e => {
-  const rect = cv.getBoundingClientRect();
-  const sx = (e.clientX - rect.left) * (W / rect.width);
-  const sy = (e.clientY - rect.top) * (H / rect.height);
-  const candidates = drops.filter(l => !l.taken).map(l => {
-    const s = toScreen(l.x, l.y);
-    return { l, d: Math.hypot(sx - s.sx, sy - s.sy) };
-  }).sort((a, b) => a.d - b.d);
-  if (candidates.length && candidates[0].d < 34) {
-    P.manualTarget = { x: candidates[0].l.x, y: candidates[0].l.y };
-  }
-});
 $a('bossLobbyClose').onclick = () => showActivityPage('zone');
 window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); });
 updateNextBossMini();
@@ -5891,7 +5681,6 @@ const I18N = {
   lblPS: { fr:'Gearscore', en:'Gearscore' },
   lblPA: { fr:'PA effective', en:'Effective AP' },
   lblPD: { fr:'PD', en:'DP' },
-  lblHpMax: { fr:'PV max', en:'Max HP' },
   lblApZone: { fr:'PA requis (zone)', en:'AP required (zone)' },
   lblDpZone: { fr:'PD requis (zone)', en:'DP required (zone)' },
   lblWeaponBonus: { fr:'Bonus arme', en:'Weapon bonus' },
@@ -5973,23 +5762,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V72', d:'04/07/2026 11:00', name:{fr:'Potions à 4 tailles, IA Loot/XP, clic sur le loot, PV du stuff, boss stylisé', en:'4 potion sizes, Loot/XP AI, click-to-loot, gear HP, styled boss'}, fr:[
-      {t:'new', tx:'Les potions de vie proposent maintenant 4 tailles au choix (petite/moyenne/grande/majeure), chacune avec un prix fixe et un soin différents (recharge adaptée à la taille pour rester équilibrée) — clique sur l\'icône de potion en jeu pour choisir'},
-      {t:'new', tx:'Nouveau bouton de mode d\'IA à côté de l\'état : "🎒 Loot" ramasse tout le butin d\'un pack avant de passer au suivant (corrigé pour ne plus rien laisser au sol), "⚡ XP" enchaîne les packs sans se soucier du loot pour maximiser les kills/xp par minute'},
-      {t:'new', tx:'Clic sur un objet au sol : le perso s\'y déplace directement, prioritaire sur l\'IA jusqu\'à l\'arrivée'},
-      {t:'new', tx:'L\'armure (casque/plastron/gants/bottes) apporte désormais des PV en plus de la PA/PD, pour éviter les one-shot en zone difficile — affiché dans les stats et sur les objets'},
-      {t:'new', tx:'Panneau Admin : graphique de répartition des joueurs par tranche de richesse + tuiles Total/Moyenne/Médiane en jeu'},
-      {t:'change', tx:'Barre de vie du World Boss restylée : pourcentage bien visible, repères 25/50/75%, halo qui pulse en dessous de 20% PV'},
-      {t:'change', tx:'Salle du World Boss encore plus "4D" : brume de fond en parallaxe (dérive indépendante du tremblement d\'écran) et vignette de corruption qui s\'intensifie à mesure que le boss perd des PV'},
-    ], en:[
-      {t:'new', tx:'HP potions now come in 4 selectable sizes (small/medium/large/major), each with a different fixed price and heal (cooldown scaled to size to stay balanced) — click the potion icon in-game to choose'},
-      {t:'new', tx:'New AI mode button next to the state display: "🎒 Loot" clears all of a pack\'s drops before moving on (fixed to no longer leave loot behind), "⚡ XP" chains packs without caring about loot to maximize kills/xp per minute'},
-      {t:'new', tx:'Click a ground item: the character walks straight to it, taking priority over the AI until it arrives'},
-      {t:'new', tx:'Armor (helmet/chest/gloves/boots) now grants HP in addition to AP/DP, to avoid one-shots in harder zones — shown in stats and on items'},
-      {t:'new', tx:'Admin panel: player wealth-bracket distribution chart + Total/Average/Median in-game tiles'},
-      {t:'change', tx:'World Boss HP bar restyled: clear percentage, 25/50/75% tick marks, pulsing glow under 20% HP'},
-      {t:'change', tx:'World Boss room even more "4D": parallax background fog (drifts independently from screen shake) and a corruption vignette that intensifies as the boss loses HP'},
-    ] },
   { v:'V71', d:'04/07/2026 09:30', name:{fr:'World Boss : combattants en direct + % de dégâts', en:'World Boss: live fighters + damage %'}, fr:[
       {t:'new', tx:'Le panneau de classement du World Boss partagé affiche maintenant un compteur "X joueurs combattent en direct" et un point vert à côté des pseudos qui tapent en ce moment'},
       {t:'change', tx:'Le classement affiche désormais le % de dégâts de chacun (calculé sur le total réel de tous les participants) en plus du nombre brut'},
