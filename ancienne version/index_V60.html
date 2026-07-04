@@ -1744,7 +1744,6 @@ function bossOccurrences(fromDate) {
 let liveBoss = null; // { boss, time, expires } quand un spawn global est en cours
 async function refreshLiveBoss() {
   if (!sb) return;
-  const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
   try {
     const { data } = await sb.from('live_boss').select('boss_id, spawned_at, expires_at').eq('id', 1).maybeSingle();
     if (data && data.boss_id && BOSS_ROSTER[data.boss_id] && new Date(data.expires_at).getTime() > Date.now()) {
@@ -1752,14 +1751,6 @@ async function refreshLiveBoss() {
     } else liveBoss = null;
   } catch (e) {}
   updateNextBossMini();
-  // si le statut "en cours" a changé pendant qu'un joueur regarde le lobby (sans être en plein
-  // combat), on re-render le lobby pour que le bouton "Combattre" apparaisse/disparaisse tout seul
-  const nowLive = !!(liveBoss && liveBoss.expires > Date.now());
-  const room = $('bossRoom');
-  if (nowLive !== wasLive && room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active) {
-    $('bossLobbyBody').innerHTML = renderBossLobbyHtml();
-    wireBossLobby();
-  }
 }
 function nextBossOccurrence() {
   // un spawn global admin encore valide passe avant tout
@@ -1829,11 +1820,8 @@ function showActivityPage(id) {
 }
 
 // affiche la page Boss (lobby) : prochain boss + calendrier, dans la colonne du jeu, pleine hauteur
-async function openBossLobby() {
+function openBossLobby() {
   $('bossRoom').classList.remove('fight'); $('bossRoom').classList.add('lobby', 'open');
-  // rafraîchit d'abord l'état du boss global (spawn admin) pour que la page reflète tout de suite
-  // ce que voit le serveur, sans attendre le prochain tick de polling (20 s)
-  await refreshLiveBoss();
   $('bossLobbyBody').innerHTML = renderBossLobbyHtml();
   wireBossLobby();
 }
@@ -4493,7 +4481,6 @@ async function onAuthed(user) {
   startAutoCloudSave();
   heartbeatPresence();
   refreshOnlineCounter();
-  refreshLiveBoss(); // affiche tout de suite un éventuel boss global déjà en cours
 }
 
 // détermine le pseudo effectif : pseudo choisi > pseudo Discord > partie locale de l'email
@@ -5418,11 +5405,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V61', d:'04/07/2026 02:27', name:{fr:'Correctif : rejoindre le World Boss global', en:'Fix: joining the global World Boss'}, fr:[
-      {t:'fix', tx:'Quand l\'admin lance un boss pour tous, il apparaît maintenant instantanément pour chaque joueur : l\'état est rafraîchi à l\'ouverture de la page Boss et au démarrage, et le bouton "Combattre" apparaît tout seul si tu es déjà sur la page — tout le monde peut rejoindre'},
-    ], en:[
-      {t:'fix', tx:'When the admin launches a boss for all, it now appears instantly for every player: the state is refreshed when opening the Boss page and at startup, and the "Fight" button shows up on its own if you\'re already on the page — everyone can join'},
-    ] },
   { v:'V60', d:'04/07/2026 02:19', name:{fr:'UUID copiable & gestion des modérateurs', en:'Copyable UUID & moderator management'}, fr:[
       {t:'new', tx:'Ton UUID de joueur s\'affiche sous les infos de connexion, avec un bouton 📋 pour le copier'},
       {t:'new', tx:'Zone Admin : section Modérateurs — ajouter un MOD par UUID, voir la liste des modérateurs et en retirer un à tout moment'},
