@@ -1723,23 +1723,7 @@ function bossOccurrences(fromDate) {
   }
   return list.sort((a,b) => a.time - b.time);
 }
-// boss "global" déclenché par l'admin pour TOUS les joueurs (état partagé via Supabase, table
-// live_boss). Prioritaire sur le planning horaire : s'il est actif, il apparaît comme "EN COURS"
-// pour tout le monde. Rafraîchi périodiquement (voir refreshLiveBoss).
-let liveBoss = null; // { boss, time, expires } quand un spawn global est en cours
-async function refreshLiveBoss() {
-  if (!sb) return;
-  try {
-    const { data } = await sb.from('live_boss').select('boss_id, spawned_at, expires_at').eq('id', 1).maybeSingle();
-    if (data && data.boss_id && BOSS_ROSTER[data.boss_id] && new Date(data.expires_at).getTime() > Date.now()) {
-      liveBoss = { boss: data.boss_id, time: new Date(data.spawned_at).getTime(), expires: new Date(data.expires_at).getTime() };
-    } else liveBoss = null;
-  } catch (e) {}
-  updateNextBossMini();
-}
 function nextBossOccurrence() {
-  // un spawn global admin encore valide passe avant tout
-  if (liveBoss && liveBoss.expires > Date.now()) return { boss: liveBoss.boss, time: liveBoss.time, live: true };
   const occ = bossOccurrences(new Date());
   return occ.find(o => o.live) || occ[0] || null;
 }
@@ -4689,11 +4673,6 @@ async function openAdminPanel() {
         <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
         <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
       </div>
-      <div class="admBossSpawn">
-        <span>${LANG==='fr'?'🌍 Lancer un boss pour TOUS :':'🌍 Launch a boss for ALL:'}</span>
-        <select id="admGlobalBossSelect">${bossOptions}</select>
-        <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (15 min)':'Launch (15 min)'}</button>
-      </div>
       <div class="admHint">${LANG==='fr'?'⚠️ Ces actions affectent TOUS les joueurs.':'⚠️ These actions affect ALL players.'}</div>
     </div>`;
   openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
@@ -4714,14 +4693,6 @@ async function openAdminPanel() {
   // --- pour les joueurs ---
   $a('btnReevalMarket').onclick = reevalMarket;
   $a('btnResetAllQuests').onclick = resetAllQuests;
-  $a('btnAdmSpawnGlobal').onclick = async () => {
-    if (!isAdmin() || !sb) return;
-    const id = $a('admGlobalBossSelect').value;
-    const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 15 });
-    floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec — '+error.message:'Failed — '+error.message)
-      : (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓'), { gold:!error, hurt:!!error });
-    if (!error) refreshLiveBoss();
-  };
 }
 $a('btnAdmin').onclick = openAdminPanel;
 
@@ -4901,7 +4872,6 @@ async function refreshOnlineCounter() {
 }
 setInterval(heartbeatPresence, 20000);
 setInterval(refreshOnlineCounter, 20000);
-setInterval(refreshLiveBoss, 20000);
 
 // ---------- panneau "Mon compte" : identité + parrainage (comptes vérifiés uniquement) ----------
 async function openAccountPanel() {
@@ -5343,11 +5313,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V58', d:'04/07/2026 02:11', name:{fr:'Lancer un World Boss pour tous les joueurs', en:'Launch a World Boss for all players'}, fr:[
-      {t:'new', tx:'L\'admin peut lancer un World Boss pour TOUS les joueurs à la demande (15 min) : il apparaît instantanément "EN COURS" pour tout le monde et devient combattable, indépendamment du planning horaire'},
-    ], en:[
-      {t:'new', tx:'The admin can launch a World Boss for ALL players on demand (15 min): it instantly shows "LIVE" for everyone and becomes fightable, independently of the schedule'},
-    ] },
   { v:'V57', d:'04/07/2026 02:04', name:{fr:'Panneau admin en 2 parties & vrai calendrier boss', en:'Two-part admin panel & real boss calendar'}, fr:[
       {t:'change', tx:'Zone Admin scindée en deux : "👤 Pour moi" (tests sur mon propre compte : +silver, +fidélité, débloquer les succès, réinitialiser mes quêtes/démo, combattre un boss) et "🌍 Pour les joueurs" (actions serveur qui touchent tout le monde)'},
       {t:'change', tx:'Le calendrier des World Boss est maintenant une vraie grille hebdomadaire : jours en colonnes, heures de spawn en lignes, avec le nom du boss dans chaque case et une légende'},
