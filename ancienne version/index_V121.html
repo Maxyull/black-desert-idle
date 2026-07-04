@@ -1785,10 +1785,7 @@ const ZONES = [
       jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
   { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:85, reqDP:78, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
-    // sol terre rouge/brune de carrière (retexturé le 2026-07-07 d'après les captures de référence :
-    // canyon ocre, crevasses, chariots) — tones = capuches/tuniques poussiéreuses des mineurs,
-    // alphaTone = armure de fer bleuté du boss de pack (voir drawMineurIso)
-    tint:{ a:'#4a3226', b:'#443023', dry:'#583c2c' }, tones:['#8a7a68','#7a6c5a','#988676'], alphaTone:'#5a6068',
+    tint:{ a:'#403238', b:'#3b2e33', dry:'#48383e' }, tones:['#8a4a52','#7a4048','#985560'], alphaTone:'#5a2830',
     loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
       jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
   { name:'Poste Helm', tier:'Serendia — Late', reqAP:105, reqDP:96, mob:'Soldat Helm',
@@ -3541,10 +3538,7 @@ function dist(ax,ay,bx,by){ return Math.hypot(ax-bx,ay-by); }
 function spawnPackNear() {
   packSerial++;
   const z = Z();
-  // Mine de Fer Abandonnée (zone 6) : 1 pack sur 2 est mené par un boss (contremaître blindé, plus
-  // gros, qui loot plus — les multiplicateurs alpha ×1.5/1.6 s'appliquent déjà) — demande explicite
-  // du 2026-07-07. Les autres zones gardent le rythme habituel d'1 pack alpha sur 5.
-  const alpha = zoneIdx === 6 ? packSerial % 2 === 0 : packSerial % 5 === 0;
+  const alpha = packSerial % 5 === 0;
   let x, y, tries = 0;
   do {
     const a = Math.random()*Math.PI*2, d = 320 + Math.random()*360;
@@ -3564,7 +3558,6 @@ function spawnPackNear() {
       scale: alpha ? 1.5 : .85 + Math.random()*.25,
       phase: Math.random()*6.28,
       tone: alpha ? z.alphaTone : z.tones[i % z.tones.length],
-      alpha, // les silhouettes par zone peuvent dessiner une variante "boss" (voir drawMineurIso)
       atkT: 1 + Math.random()*2, lunge: 0,
     });
   }
@@ -4237,12 +4230,7 @@ function particlesTick(dt) {
 }
 
 // ==================== RENDU ====================
-// BUG trouvé le 2026-07-07 : le mélange final utilisait un décalage ARITHMÉTIQUE (h>>16), dont le
-// bit de signe recopié annulait systématiquement le bit 31 dans le XOR (signe ^ signe = 0) — la
-// fonction ne pouvait donc JAMAIS dépasser 0.5. Conséquence silencieuse depuis toujours : aucun
-// seuil de décor (rochers .965, buissons .90, touffes .78, cases "dry" .93) n'était jamais atteint,
-// les zones de combat n'avaient AUCUN décor. Corrigé avec un décalage non signé (h>>>16).
-function hash2(ix,iy){ let h=ix*374761393+iy*668265263; h=(h^(h>>13))*1274126177; return ((h^(h>>>16))>>>0)/4294967295; }
+function hash2(ix,iy){ let h=ix*374761393+iy*668265263; h=(h^(h>>13))*1274126177; return ((h^(h>>16))>>>0)/4294967295; }
 
 // Velia (zone paisible) a son propre décor chaleureux de village — pas de réutilisation du
 // thème de la dernière zone de combat farmée, demande explicite du 2026-07-05
@@ -4277,20 +4265,6 @@ function sceneryAt(ix,iy) {
   return null;
 }
 
-// décor propre à la Mine de Fer Abandonnée (zone 6) : carrière ocre inspirée des captures de
-// référence du 2026-07-07 — tours de guet en bois, pitons rocheux (petites montagnes), chariots de
-// minerai cassés, crevasses dans la terre. Pas de buissons verts : terrain aride, éboulis partout.
-function mineSceneryAt(ix,iy) {
-  const h = hash2(ix*7+3, iy*7+11);
-  if (h > .988) return { kind:'tower',    x:ix*46+23, y:iy*46+23 };
-  if (h > .975) return { kind:'spire',    x:ix*46+23, y:iy*46+23 };
-  if (h > .962) return { kind:'cart',     x:ix*46+23, y:iy*46+23 };
-  if (h > .935) return { kind:'crevasse', x:ix*46+23, y:iy*46+23 };
-  if (h > .86)  return { kind:'rock',     x:ix*46+23, y:iy*46+23 };
-  if (h > .76)  return { kind:'pebbles',  x:ix*46+23, y:iy*46+23 };
-  return null;
-}
-
 // décor du village de Velia (zone paisible) : maisons/puits/lampadaires disposés sur une grille
 // régulière plutôt que le placement aléatoire des zones de combat, pour un vrai ressenti de village
 function veliaSceneryAt(ix,iy) {
@@ -4311,10 +4285,8 @@ function drawEntities(t) {
   const cy0 = Math.floor((cam.y-700)/TILE), cy1 = Math.ceil((cam.y+700)/TILE);
   for (let ix=cx0; ix<=cx1; ix++)
     for (let iy=cy0; iy<=cy1; iy++) {
-      const sc = atVelia ? veliaSceneryAt(ix,iy) : (zoneIdx === 6 ? mineSceneryAt(ix,iy) : sceneryAt(ix,iy));
-      // les crevasses sont des marques PLATES dans le sol : dessinées tout de suite après le
-      // terrain (profondeur minimale), jamais par-dessus un monstre ou le personnage
-      if (sc) items.push({ depth: sc.kind==='crevasse' ? -1e9 : sc.x+sc.y, fn:()=>drawScenery(sc) });
+      const sc = atVelia ? veliaSceneryAt(ix,iy) : sceneryAt(ix,iy);
+      if (sc) items.push({ depth:sc.x+sc.y, fn:()=>drawScenery(sc) });
     }
   corpses.forEach(c => items.push({ depth:c.x+c.y-1, fn:()=>drawCorpse(c) }));
   drops.forEach(l => { if (!l.taken) items.push({ depth:l.x+l.y-1, fn:()=>drawDrop(l,t) }); });
@@ -4382,79 +4354,6 @@ function drawScenery(sc) {
     ctx.beginPath(); ctx.arc(c.sx,c.sy-22,3.4,0,7); ctx.fill();
     ctx.fillStyle='rgba(230,201,106,.25)';
     ctx.beginPath(); ctx.arc(c.sx,c.sy-22,7,0,7); ctx.fill();
-  } else if (sc.kind==='tower') {
-    // tour de guet en bois (Mine de Fer) : 4 pieds croisés + plateforme + toit pointu à débord
-    ctx.fillStyle='rgba(0,0,0,.3)';
-    ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,16,6,0,0,7); ctx.fill();
-    ctx.strokeStyle='#4a3a28'; ctx.lineWidth=2.2;
-    ctx.beginPath();
-    ctx.moveTo(c.sx-11,c.sy); ctx.lineTo(c.sx-6,c.sy-34);
-    ctx.moveTo(c.sx+11,c.sy); ctx.lineTo(c.sx+6,c.sy-34);
-    ctx.moveTo(c.sx-10,c.sy-8); ctx.lineTo(c.sx+10,c.sy-16); // croisillons
-    ctx.moveTo(c.sx+10,c.sy-8); ctx.lineTo(c.sx-10,c.sy-16);
-    ctx.stroke();
-    ctx.fillStyle='#6a4a2e'; // plateforme
-    ctx.fillRect(c.sx-10,c.sy-37,20,4);
-    ctx.fillStyle='#5a3e26'; // garde-corps
-    ctx.fillRect(c.sx-10,c.sy-43,2,6); ctx.fillRect(c.sx+8,c.sy-43,2,6);
-    ctx.fillStyle='#3e4a38'; // toit pointu à débord (feuillage/chaume sombre)
-    ctx.beginPath(); ctx.moveTo(c.sx-14,c.sy-43); ctx.lineTo(c.sx,c.sy-54); ctx.lineTo(c.sx+14,c.sy-43); ctx.closePath(); ctx.fill();
-  } else if (sc.kind==='spire') {
-    // piton rocheux / petite montagne ocre à strates
-    ctx.fillStyle='rgba(0,0,0,.3)';
-    ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,20,7,0,0,7); ctx.fill();
-    ctx.fillStyle='#6e4a34';
-    ctx.beginPath();
-    ctx.moveTo(c.sx-18,c.sy); ctx.lineTo(c.sx-10,c.sy-22); ctx.lineTo(c.sx-4,c.sy-40);
-    ctx.lineTo(c.sx+3,c.sy-31); ctx.lineTo(c.sx+12,c.sy-18); ctx.lineTo(c.sx+18,c.sy); ctx.closePath(); ctx.fill();
-    ctx.fillStyle='#845a40'; // face éclairée
-    ctx.beginPath();
-    ctx.moveTo(c.sx-4,c.sy-40); ctx.lineTo(c.sx+3,c.sy-31); ctx.lineTo(c.sx+12,c.sy-18); ctx.lineTo(c.sx+6,c.sy); ctx.lineTo(c.sx-1,c.sy); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='rgba(40,24,16,.4)'; ctx.lineWidth=1; // strates
-    ctx.beginPath();
-    ctx.moveTo(c.sx-13,c.sy-12); ctx.lineTo(c.sx+14,c.sy-10);
-    ctx.moveTo(c.sx-9,c.sy-22); ctx.lineTo(c.sx+10,c.sy-20);
-    ctx.stroke();
-  } else if (sc.kind==='cart') {
-    // chariot de minerai cassé : caisse penchée, roue à rayons détachée, planches au sol
-    ctx.fillStyle='rgba(0,0,0,.25)';
-    ctx.beginPath(); ctx.ellipse(c.sx,c.sy+2,15,5,0,0,7); ctx.fill();
-    ctx.save(); ctx.translate(c.sx,c.sy); ctx.rotate(-0.12); // caisse penchée (essieu cassé)
-    ctx.fillStyle='#5a4430'; ctx.fillRect(-11,-13,20,9);
-    ctx.fillStyle='#6e563c'; ctx.fillRect(-11,-13,20,3);
-    ctx.strokeStyle='#3e2f20'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.moveTo(-5,-13); ctx.lineTo(-5,-4); ctx.moveTo(2,-13); ctx.lineTo(2,-4); ctx.stroke();
-    ctx.fillStyle='#4e5258'; // tas de minerai qui déborde
-    ctx.beginPath(); ctx.arc(-4,-14,3,0,7); ctx.arc(1,-15,2.6,0,7); ctx.arc(5,-13.6,2.4,0,7); ctx.fill();
-    ctx.restore();
-    // roue à rayons détachée, posée contre la caisse
-    ctx.strokeStyle='#4a3a28'; ctx.lineWidth=1.8;
-    ctx.beginPath(); ctx.ellipse(c.sx+13,c.sy-5,4.8,6,0.25,0,7); ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(c.sx+9.5,c.sy-8.5); ctx.lineTo(c.sx+16.5,c.sy-1.5);
-    ctx.moveTo(c.sx+16,c.sy-9); ctx.lineTo(c.sx+10,c.sy-1);
-    ctx.stroke();
-    ctx.strokeStyle='#5a4430'; ctx.lineWidth=1.6; // planche cassée au sol
-    ctx.beginPath(); ctx.moveTo(c.sx-16,c.sy+1); ctx.lineTo(c.sx-7,c.sy+4); ctx.stroke();
-  } else if (sc.kind==='crevasse') {
-    // crevasse : fissure sombre PLATE dans la terre (dessinée juste après le sol, voir drawEntities)
-    ctx.save(); ctx.translate(c.sx,c.sy); ctx.rotate(hash2(sc.x,sc.y)*Math.PI);
-    ctx.scale(1,.5); // écrasée pour suivre la perspective iso du sol
-    ctx.fillStyle='rgba(18,10,7,.75)';
-    ctx.beginPath();
-    ctx.moveTo(-24,0); ctx.quadraticCurveTo(-10,-5, 2,-2); ctx.quadraticCurveTo(14,1, 24,-1);
-    ctx.quadraticCurveTo(12,5, -2,3); ctx.quadraticCurveTo(-14,1, -24,0); ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='rgba(90,54,36,.5)'; ctx.lineWidth=1.2; // lèvre éclairée de la fissure
-    ctx.beginPath(); ctx.moveTo(-22,-1); ctx.quadraticCurveTo(-8,-6, 4,-3); ctx.stroke();
-    ctx.restore();
-  } else if (sc.kind==='pebbles') {
-    // éboulis : quelques cailloux ocre
-    ctx.fillStyle='#6e5540';
-    ctx.beginPath(); ctx.arc(c.sx-4,c.sy,2.2,0,7); ctx.fill();
-    ctx.fillStyle='#7e6450';
-    ctx.beginPath(); ctx.arc(c.sx+3,c.sy-1,1.7,0,7); ctx.fill();
-    ctx.fillStyle='#5e4836';
-    ctx.beginPath(); ctx.arc(c.sx,c.sy+3,1.4,0,7); ctx.fill();
   } else {
     ctx.strokeStyle='#57683c'; ctx.lineWidth=1.4;
     ctx.beginPath();
@@ -4798,105 +4697,6 @@ function drawSausanIso(wx,wy,w,t) {
   ctx.beginPath(); ctx.moveTo(0,-37.5); ctx.lineTo(-1.6,-34); ctx.lineTo(1.6,-34); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
-// Mineur corrompu (zone "Mine de Fer Abandonnée", juste après la Colonie Sausan) — créatures
-// ORIGINALES, demande explicite du 2026-07-07 avec captures de référence (carrière ocre, mineurs
-// encapuchonnés, brutes blindées à pointes près des chariots) — aucun asset réel repris :
-//  - mob normal : mineur voûté encapuchonné, tunique poussiéreuse, pioche à l'épaule
-//  - boss de pack (w.alpha, 1 pack sur 2 dans cette zone) : contremaître massif en armure de fer
-//    bardée de pointes, épaulières rondes cloutées, masse énorme — silhouette bien plus large
-function drawMineurIso(wx,wy,w,t) {
-  const c = toScreen(wx,wy);
-  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
-  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
-  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
-  ctx.fillStyle='rgba(0,0,0,.3)';
-  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,(w.alpha?14:10.5)*w.scale,(w.alpha?5.5:4.5),0,0,7); ctx.fill();
-  ctx.save();
-  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
-  if (!facingRight) ctx.scale(-1,1);
-  ctx.scale(w.scale,w.scale);
-  const trot = Math.sin(t*(w.alpha?4.5:6)+w.phase)*(w.alpha?1.1:1.4);
-  if (w.lunge > .3) { ctx.strokeStyle='rgba(200,120,80,.55)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.ellipse(0,-16,w.alpha?17:14,w.alpha?12:10,0,0,7); ctx.stroke(); }
-  const tone = w.tone;
-  if (w.alpha) {
-    // ---- contremaître blindé (boss de pack) ----
-    // jambes blindées écartées
-    ctx.strokeStyle='#2e3238'; ctx.lineWidth=5; ctx.lineCap='round';
-    ctx.beginPath();
-    ctx.moveTo(-5,-8); ctx.lineTo(-6.5,3+trot*.4);
-    ctx.moveTo(5,-8); ctx.lineTo(6.5,3-trot*.4);
-    ctx.stroke();
-    // corps rond massif en fer (dos voûté vers l'avant)
-    ctx.fillStyle = tone;
-    ctx.beginPath(); ctx.ellipse(0,-17,10.5,9.5,0,0,7); ctx.fill();
-    // reflets de plaques
-    ctx.strokeStyle='rgba(220,228,240,.22)'; ctx.lineWidth=1.4;
-    ctx.beginPath(); ctx.ellipse(0,-17,7.5,6.5,0,Math.PI*1.15,Math.PI*1.85); ctx.stroke();
-    // pointes sur le dos et les épaules (comme la brute des captures)
-    ctx.fillStyle='#3a3e44';
-    for (const [px,py,ang] of [[-8,-23,-2.3],[-3,-26,-1.85],[3,-26,-1.3],[8,-23,-0.85]]) {
-      ctx.save(); ctx.translate(px,py); ctx.rotate(ang);
-      ctx.beginPath(); ctx.moveTo(-1.6,0); ctx.lineTo(0,-5.5); ctx.lineTo(1.6,0); ctx.closePath(); ctx.fill();
-      ctx.restore();
-    }
-    // épaulière ronde cloutée côté arme
-    ctx.fillStyle='#4a5058';
-    ctx.beginPath(); ctx.arc(9,-22,4.6,0,7); ctx.fill();
-    ctx.fillStyle='#22262c';
-    ctx.beginPath(); ctx.arc(9,-22,1.6,0,7); ctx.fill();
-    // bras + masse énorme (s'abat lors de l'attaque)
-    ctx.strokeStyle='#2e3238'; ctx.lineWidth=4.4; ctx.lineCap='round';
-    ctx.beginPath(); ctx.moveTo(10,-20); ctx.lineTo(15+lungeAmt*.5,-12); ctx.stroke();
-    ctx.strokeStyle='#5a4a38'; ctx.lineWidth=2.6;
-    ctx.beginPath(); ctx.moveTo(15+lungeAmt*.5,-12); ctx.lineTo(21+lungeAmt*.7,-22); ctx.stroke();
-    ctx.fillStyle='#6a7078';
-    ctx.beginPath(); ctx.ellipse(21+lungeAmt*.7,-24,3.6,4.6,0.3,0,7); ctx.fill();
-    ctx.fillStyle='#3a3e44';
-    for (const ang of [-1.2,0,1.2]) {
-      ctx.save(); ctx.translate(21+lungeAmt*.7,-24); ctx.rotate(ang+0.3);
-      ctx.beginPath(); ctx.moveTo(-1.2,-4); ctx.lineTo(0,-7.5); ctx.lineTo(1.2,-4); ctx.closePath(); ctx.fill();
-      ctx.restore();
-    }
-    // petite tête casquée enfoncée dans les épaules
-    ctx.fillStyle='#4a5058';
-    ctx.beginPath(); ctx.arc(2,-27,3.6,0,7); ctx.fill();
-    ctx.fillStyle='rgba(10,8,6,.85)';
-    ctx.beginPath(); ctx.arc(2.8,-26.4,1.7,0,7); ctx.fill(); // fente d'ombre du casque
-  } else {
-    // ---- mineur corrompu (mob normal, voûté) ----
-    // jambes
-    ctx.strokeStyle='#3a332a'; ctx.lineWidth=3.2; ctx.lineCap='round';
-    ctx.beginPath();
-    ctx.moveTo(-3,-7); ctx.lineTo(-4,3+trot*.5);
-    ctx.moveTo(3,-7); ctx.lineTo(4,3-trot*.5);
-    ctx.stroke();
-    // tunique poussiéreuse, dos voûté (penché vers l'avant)
-    ctx.fillStyle = tone;
-    ctx.beginPath();
-    ctx.moveTo(-6,-7); ctx.quadraticCurveTo(-8,-18, -2,-23);
-    ctx.lineTo(4,-22); ctx.quadraticCurveTo(7,-14, 6,-7); ctx.closePath(); ctx.fill();
-    // bras qui tient la pioche à l'épaule (la pioche pique en avant à l'attaque)
-    ctx.strokeStyle = tone; ctx.lineWidth=2.8;
-    ctx.beginPath(); ctx.moveTo(4,-19); ctx.lineTo(9+lungeAmt*.4,-13); ctx.stroke();
-    ctx.strokeStyle='#5a4a38'; ctx.lineWidth=1.8; // manche
-    ctx.beginPath(); ctx.moveTo(9+lungeAmt*.4,-13); ctx.lineTo(13+lungeAmt*.6,-24); ctx.stroke();
-    ctx.strokeStyle='#8a8f96'; ctx.lineWidth=2.2; // fer de pioche
-    ctx.beginPath(); ctx.moveTo(10+lungeAmt*.6,-26); ctx.quadraticCurveTo(13+lungeAmt*.6,-27.5, 16+lungeAmt*.6,-25); ctx.stroke();
-    // tête encapuchonnée penchée (capuche tombante, visage dans l'ombre)
-    ctx.fillStyle = tone;
-    ctx.beginPath();
-    ctx.moveTo(-4,-21); ctx.quadraticCurveTo(-3,-28.5, 2,-28);
-    ctx.quadraticCurveTo(6,-27, 5,-21.5); ctx.quadraticCurveTo(0,-24, -4,-21); ctx.closePath(); ctx.fill();
-    // ombre du visage sous la capuche + yeux corrompus rougeoyants
-    ctx.fillStyle='rgba(12,8,6,.9)';
-    ctx.beginPath(); ctx.ellipse(1.5,-22.5,2.8,2.2,-0.3,0,7); ctx.fill();
-    ctx.fillStyle = w.lunge>.3 ? '#ff6a4a' : '#c8503a';
-    ctx.beginPath(); ctx.arc(0.8,-22.8,0.7,0,7); ctx.fill();
-    ctx.beginPath(); ctx.arc(2.8,-22.4,0.7,0,7); ctx.fill();
-  }
-  ctx.restore();
-}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -4966,16 +4766,6 @@ function drawZoneMobIcon() {
     ctx2.quadraticCurveTo(8,-11, 7,-1);
     ctx2.quadraticCurveTo(0,-5, -7,-1); ctx2.closePath(); ctx2.fill();
     ctx2.beginPath(); ctx2.moveTo(0,-15); ctx2.lineTo(-2.4,-10); ctx2.lineTo(2.4,-10); ctx2.closePath(); ctx2.fill();
-  } else if (zi === 6) { // Mineur corrompu (capuche tombante + yeux rougeoyants)
-    ctx2.fillStyle=tone;
-    ctx2.beginPath();
-    ctx2.moveTo(-7,3); ctx2.quadraticCurveTo(-7.5,-9, 0,-11);
-    ctx2.quadraticCurveTo(7.5,-9, 7,3); ctx2.closePath(); ctx2.fill();
-    ctx2.fillStyle='rgba(12,8,6,.92)';
-    ctx2.beginPath(); ctx2.ellipse(0,-2,4.4,3.6,0,0,7); ctx2.fill();
-    ctx2.fillStyle='#c8503a';
-    ctx2.beginPath(); ctx2.arc(-1.8,-2.4,1,0,7); ctx2.fill();
-    ctx2.beginPath(); ctx2.arc(1.8,-2.4,1,0,7); ctx2.fill();
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -4986,16 +4776,14 @@ function drawZoneMobIcon() {
 }
 // dispatcher : chaque zone peut avoir sa propre silhouette de monstre — pour l'instant "Ruines de
 // Protty" (zone index 1), "Repaire des Pirates" (zone index 2), "Camp Rhutum" (zone index 3),
-// "Ferme Shultz" (zone index 4), "Colonie Sausan" (zone index 5) et "Mine de Fer Abandonnée"
-// (zone index 6, avec sa variante boss blindée) ont la leur, les autres zones gardent la
-// silhouette générique
+// "Ferme Shultz" (zone index 4) et "Colonie Sausan" (zone index 5) ont la leur, les autres zones
+// gardent la silhouette générique
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
   if (zoneIdx === 2) return drawPirateIso(wx,wy,w,t);
   if (zoneIdx === 3) return drawRhutumIso(wx,wy,w,t);
   if (zoneIdx === 4) return drawShultzIso(wx,wy,w,t);
   if (zoneIdx === 5) return drawSausanIso(wx,wy,w,t);
-  if (zoneIdx === 6) return drawMineurIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
@@ -8429,15 +8217,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V122', d:'08/07/2026 00:00', name:{fr:'Mine de Fer Abandonnée : mineurs, boss de pack, décor de carrière', en:'Abandoned Iron Mine: miners, pack bosses, quarry scenery'}, fr:[
-      {t:'new', tx:'Nouvelles silhouettes originales pour la Mine de Fer Abandonnée : le Mineur corrompu (voûté, capuche tombante, yeux rougeoyants, pioche à l\'épaule) et son contremaître blindé — 1 pack sur 2 est mené par ce boss massif bardé de pointes, plus gros et qui loot plus (bonus élite ×1.5-1.6 déjà en place)'},
-      {t:'new', tx:'Décor de carrière dédié à la Mine de Fer : terre rouge/ocre, tours de guet en bois, pitons rocheux, chariots de minerai cassés, crevasses et éboulis — fini le décor générique'},
-      {t:'fix', tx:'Trouvé un bug silencieux présent depuis toujours : la fonction de bruit du décor ne pouvait mathématiquement jamais dépasser 0.5 (bit de signe annulé dans le mélange final), donc AUCUN rocher/buisson/touffe n\'apparaissait dans les zones de combat. Corrigé : toutes les zones retrouvent leur végétation et leurs rochers'},
-    ], en:[
-      {t:'new', tx:'New original silhouettes for the Abandoned Iron Mine: the Corrupted Miner (hunched, drooping hood, glowing eyes, pickaxe on the shoulder) and its armored foreman — every other pack is led by this massive spiked boss, bigger and with better loot (the ×1.5-1.6 elite bonuses already in place)'},
-      {t:'new', tx:'Dedicated quarry scenery for the Iron Mine: red/ochre earth, wooden watchtowers, rock spires, broken ore carts, crevasses and scree — no more generic scenery'},
-      {t:'fix', tx:'Found a silent bug present since forever: the scenery noise function could mathematically never exceed 0.5 (sign bit self-cancelled in the final mix), so NO rocks/bushes/tufts ever appeared in combat zones. Fixed: every zone gets its vegetation and rocks back'},
-    ] },
   { v:'V121', d:'07/07/2026 23:00', name:{fr:'Silhouette du Combattant Sausan', en:'Sausan Fighter silhouette'}, fr:[
       {t:'new', tx:'Nouvelle silhouette originale pour le Combattant Sausan (Colonie Sausan, juste après la Ferme Shultz) : guerrier des sables en cotte de mailles, capuche pointue rabattue, voile de tissu masquant le bas du visage et cimeterre courbe — au lieu de la silhouette générique. Son icône apparaît aussi en haut à gauche'},
     ], en:[
