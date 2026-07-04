@@ -4240,8 +4240,10 @@ function showItemMenu(px, py, data) {
 
   // actions (libellés bilingues)
   const L = LANG === 'fr'
-    ? { unequip:'Déséquiper', equip:'Équiper', toOpt:'Mettre en optimisation', sell1:n=>'Vendre 1 ('+n+')', sellAll:n=>'Vendre tout ('+n+')', drop:'Jeter' }
-    : { unequip:'Unequip', equip:'Equip', toOpt:'Load into enhancement', sell1:n=>'Sell 1 ('+n+')', sellAll:n=>'Sell all ('+n+')', drop:'Drop' };
+    ? { unequip:'Déséquiper', equip:'Équiper', toOpt:'Mettre en optimisation', sell1:n=>'Vendre 1 ('+n+')', sellAll:n=>'Vendre tout ('+n+')', drop:'Jeter',
+        confirmSell1:n=>'Vendre 1 objet pour '+n+' silver ?', confirmSellAll:n=>'Vendre tout le tas pour '+n+' silver ?' }
+    : { unequip:'Unequip', equip:'Equip', toOpt:'Load into enhancement', sell1:n=>'Sell 1 ('+n+')', sellAll:n=>'Sell all ('+n+')', drop:'Drop',
+        confirmSell1:n=>'Sell 1 item for '+n+' silver?', confirmSellAll:n=>'Sell the whole stack for '+n+' silver?' };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
   } else if (data.invIndex != null) {
@@ -4249,9 +4251,9 @@ function showItemMenu(px, py, data) {
     if (s.kind === 'jackpot' || s.kind === 'gear') addPopBtn(pop, L.equip, () => { equipItem(data.invIndex); });
     if (s.kind === 'material') addPopBtn(pop, L.toOpt, () => { forcedMatKey = s.key; });
     if (s.kind === 'trash' || s.kind === 'material' || s.kind === 'gear')
-      addPopBtn(pop, L.sell1(fmt(s.val)), () => { sellOne(data.invIndex); });
+      addPopBtn(pop, L.sell1(fmt(s.val)), () => { if (confirm(L.confirmSell1(fmt(s.val)))) sellOne(data.invIndex); });
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
-      addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { sellStack(data.invIndex); });
+      addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
   }
   pop.style.display = 'block';
@@ -4627,15 +4629,29 @@ function sellStack(i) {
 }
 function sellAllOfKind(kind) {
   let total = 0;
+  const soldItems = [];
   for (let i = 0; i < INV_SIZE; i++) {
     const s = INV[i];
-    if (s && s.kind === kind) { total += s.val * s.qty; INV[i] = null; }
+    if (s && s.kind === kind) { total += s.val * s.qty; soldItems.push({ ...s }); INV[i] = null; }
   }
   S.silver += total; S.silverEarned += total;
+  if (kind === 'material' && soldItems.length) logSellMats(soldItems, total);
   hud();
 }
-$('sellTrash').onclick = () => { sellAllOfKind('trash'); refreshInvUI(); };
-$('sellMats').onclick = () => { sellAllOfKind('material'); refreshInvUI(); };
+// journal des ventes groupées de matériaux : permet à l'admin de rembourser un clic accidentel
+// sur "Vendre mat" (voir panneau admin) — best-effort, ne bloque jamais la vente si ça échoue
+async function logSellMats(items, total) {
+  if (!sb || !currentUser) return;
+  try { await sb.rpc('log_sell_mats', { p_items: items, p_total: total, p_pseudo: myPseudo || null }); } catch (e) {}
+}
+$('sellTrash').onclick = () => {
+  if (!confirm(LANG==='fr' ? 'Vendre tout le rebut ?' : 'Sell all trash?')) return;
+  sellAllOfKind('trash'); refreshInvUI();
+};
+$('sellMats').onclick = () => {
+  if (!confirm(LANG==='fr' ? 'Vendre tous les matériaux ?' : 'Sell all materials?')) return;
+  sellAllOfKind('material'); refreshInvUI();
+};
 $('sortInv').onclick = () => {
   const items = INV.filter(s => s).sort((a,b) => {
     const order = { jackpot:0, craft:1, material:2, trash:3 };
@@ -5177,6 +5193,14 @@ async function openAdminPanel() {
         <button id="btnAddTester">${LANG==='fr'?'➕ Ajouter Testeur':'➕ Add Tester'}</button>
       </div>
       <div id="admTesterList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+    </div>
+    <div class="admSection">
+      <div class="admSectionTitle">🔄 ${LANG==='fr'?'Rembourser un clic "Vendre mat"':'Refund a "Sell mats" click'}</div>
+      <div class="admBossSpawn">
+        <input type="text" id="admRefundPseudo" placeholder="${LANG==='fr'?'Pseudo du joueur':'Player pseudo'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-size:11px;border-radius:3px;">
+        <button id="btnRefundSellMats">${LANG==='fr'?'🔄 Rembourser dernier':'🔄 Refund last'}</button>
+      </div>
+      <div id="admRefundResult" class="admHint"></div>
     </div>`;
   openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
   applyI18n();
@@ -5189,6 +5213,20 @@ async function openAdminPanel() {
     const { error } = await sb.rpc('admin_add_tester', { p_user_id: uuid });
     if (error) { $a('admTesterList').insertAdjacentHTML('afterbegin', `<div class="admHint">${error.message}</div>`); return; }
     $a('admTesterUuid').value = ''; refreshTesterList();
+  };
+  $a('btnRefundSellMats').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    const pseudo = $a('admRefundPseudo').value.trim(); if (!pseudo) return;
+    const resEl = $a('admRefundResult');
+    resEl.textContent = LANG==='fr' ? 'Traitement…' : 'Processing…';
+    const { data, error } = await sb.rpc('admin_refund_last_sell_mats', { p_pseudo: pseudo });
+    if (error) { resEl.textContent = error.message; return; }
+    const MSG = {
+      user_not_found: LANG==='fr' ? 'Aucun joueur avec ce pseudo.' : 'No player with that pseudo.',
+      no_entry: LANG==='fr' ? "Aucun clic \"Vendre mat\" non remboursé trouvé pour ce joueur." : 'No un-refunded "Sell mats" click found for this player.',
+      no_save: LANG==='fr' ? 'Sauvegarde introuvable pour ce joueur.' : "No save found for this player.",
+    };
+    resEl.textContent = MSG[data] || (LANG==='fr' ? 'Résultat : ' : 'Result: ') + data;
   };
   // --- pour moi ---
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; S.silver += 1000000; S.silverEarned += 1000000; refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
