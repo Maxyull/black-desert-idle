@@ -278,9 +278,6 @@
   #eqSumGs { text-align:center; font-size:10px; color:#9cc9e8; margin-bottom:4px; }
   #paperdoll { display:flex; align-items:center; justify-content:space-between; gap:2px; margin-bottom:6px; }
   .pdCol { display:flex; flex-direction:column; gap:5px; }
-  /* pdRight est passé de 6 à 9 emplacements (2 artéfacts + 1 pierre, demande du 2026-07-07) —
-     wrap en colonnes de 3 pour rester compact plutôt qu'une seule colonne trop haute */
-  #pdRight { flex-direction:column; flex-wrap:wrap; max-height:153px; gap:5px; }
   .pdCenter { flex:1; display:flex; align-items:center; justify-content:center; min-width:0; }
   .pdCenter canvas { width:70px; height:auto; }
   .pdSlot {
@@ -328,13 +325,7 @@
 
   /* ===== inventaire (permanent) ===== */
   .invTools { display:flex; gap:5px; margin-bottom:7px; }
-  .invTools > button { margin:0; font-size:10.5px; padding:5px 4px; flex:1; }
-  /* "Vendre l'inférieur" + "Racheter" (icône seule) regroupés à droite sur 1/5 de la largeur —
-     demande explicite du 2026-07-07 : avant, "Racheter" était un gros bouton séparé */
-  .sellWorseGroup { flex:0 0 20%; display:flex; gap:3px; min-width:0; }
-  .sellWorseGroup #btnSellWorse { flex:1; margin:0; font-size:9.5px; padding:5px 3px; min-width:0;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .sellWorseGroup #btnBuyBackWorse { flex:0 0 22px; margin:0; padding:5px 0; font-size:11px; }
+  .invTools button { margin:0; font-size:10.5px; padding:5px 4px; flex:1; }
   #invGrid, .admInvGrid {
     display:grid; grid-template-columns:repeat(8, 1fr); gap:3px;
     overflow-y:auto; max-height:188px; align-content:start; padding-right:2px;
@@ -1499,9 +1490,8 @@
       <div class="catTabs" id="invCatTabs"></div>
       <div class="invTools">
         <button id="btnEquipBest" data-i18n="btnEquipBest">⚡ Équiper le meilleur (socle)</button>
-        <span class="sellWorseGroup">
-          <button id="btnSellWorse" data-i18n="btnSellWorse">🗑️ Vendre l'inférieur</button><button id="btnBuyBackWorse" disabled title="Rachète la dernière vente d'objets inférieurs">↩️</button>
-        </span>
+        <button id="btnSellWorse" data-i18n="btnSellWorse">🗑️ Vendre l'inférieur</button>
+        <button id="btnBuyBackWorse" data-i18n="btnBuyBackWorse" disabled title="Rachète la dernière vente d'objets inférieurs">↩️ Racheter</button>
       </div>
       <div id="equipBestMsg"></div>
       <div class="invTools">
@@ -1752,39 +1742,6 @@ const ICO_BOOTS = svgIcon(
   '<path d="M8.5 2h4.5v11l6 4.5v3H4v-4.5l4.5-2.5z" fill="#7a5a30"/>' +
   '<path d="M8.5 2h4.5v11l6 4.5v3h-6z" fill="#5a3f22"/>' +
   '<rect x="4" y="20" width="16" height="2.2" rx="1" fill="#332412"/>');
-// éclaircit/assombrit une couleur hex (amt en [-255,255]) — sert à générer les tons d'ombre/lumière
-// des icônes teintées par palier de stuff ci-dessous
-function shadeHex(hex, amt) {
-  const h = hex.replace('#','');
-  const num = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
-  let r = (num>>16) + amt, g = ((num>>8)&0xff) + amt, b = (num&0xff) + amt;
-  r = Math.max(0,Math.min(255,r)); g = Math.max(0,Math.min(255,g)); b = Math.max(0,Math.min(255,b));
-  return '#' + ((1<<24) + (r<<16) + (g<<8) + b).toString(16).slice(1);
-}
-// armure/gants/bottes teintés par la vraie couleur du palier de stuff (gris/blanc/vert/bleu...) —
-// remplace ICO_ARMOR/ICO_GLOVES/ICO_BOOTS (couleurs fixes) au moment du drop, demande explicite du
-// 2026-07-07 : chaque catégorie garde sa forme mais prend la couleur de la zone où elle se loot
-function armorIconForColor(color) {
-  const dark = shadeHex(color, -70), line = shadeHex(color, -100), light = shadeHex(color, 60);
-  return svgIcon(
-    `<path d="M12 2l7 3.2v5.3C19 17 15.5 20.5 12 22.5 8.5 20.5 5 17 5 10.5V5.2z" fill="${color}"/>` +
-    `<path d="M12 2l7 3.2v5.3C19 17 15.5 20.5 12 22.5z" fill="${dark}"/>` +
-    `<path d="M12 6v13" stroke="${line}" stroke-width="1.2"/><path d="M8 9l4 2 4-2" fill="none" stroke="${light}" stroke-width="1"/>`);
-}
-function glovesIconForColor(color) {
-  const dark = shadeHex(color, -70);
-  return svgIcon(
-    `<path d="M6 22V10.5a2.5 2.5 0 015 0V12a2.5 2.5 0 015 0v10z" fill="${color}"/>` +
-    `<path d="M6 22V10.5a2.5 2.5 0 015 0V22z" fill="${dark}"/>` +
-    `<rect x="5" y="19.5" width="14" height="3" rx="1.2" fill="#5a3f22"/>`);
-}
-function bootsIconForColor(color) {
-  const dark = shadeHex(color, -70);
-  return svgIcon(
-    `<path d="M8.5 2h4.5v11l6 4.5v3H4v-4.5l4.5-2.5z" fill="${color}"/>` +
-    `<path d="M8.5 2h4.5v11l6 4.5v3h-6z" fill="${dark}"/>` +
-    `<rect x="4" y="20" width="16" height="2.2" rx="1" fill="#332412"/>`);
-}
 // collier : chaîne + pendentif
 const ICO_NECKLACE = svgIcon(
   '<path d="M4 5c0 6.5 4 10 8 10s8-3.5 8-10" fill="none" stroke="#c9a55a" stroke-width="1.8"/>' +
@@ -1804,63 +1761,6 @@ const ICO_BELT = svgIcon(
   '<rect x="1.5" y="9.5" width="21" height="5" rx="1.4" fill="#5a3f22"/><rect x="1.5" y="9.5" width="21" height="2" rx="1" fill="#8a6a3a"/>' +
   '<rect x="8.5" y="7.5" width="7" height="9" rx="1.6" fill="none" stroke="#e6cf7a" stroke-width="2"/>' +
   '<rect x="11" y="9.5" width="2" height="5" rx="1" fill="#c9a55a"/>');
-// artéfact : tablette runique ancienne, bronze/ambre avec une rune lumineuse gravée — nouveaux
-// emplacements dédiés (2 slots, ex: Vell/Khan), demande explicite du 2026-07-07
-const ICO_ARTIFACT = svgIcon(
-  '<path d="M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V5a2 2 0 012-2z" fill="#6e4a2a"/>' +
-  '<path d="M6 3h12a2 2 0 012 2v14a2 2 0 01-2 2H12V3z" fill="#8a6038"/>' +
-  '<circle cx="12" cy="11" r="3.4" fill="none" stroke="#e6cf7a" stroke-width="1.3"/>' +
-  '<path d="M12 8.4l1.2 2.4-1.2 2.4-1.2-2.4z" fill="#ffe9a8"/>' +
-  '<rect x="8" y="16.5" width="8" height="1.4" rx=".7" fill="#e6cf7a" opacity=".8"/>');
-// pierre d'équipement (emplacement unique) : orbe sombre sertie dans une monture dorée, lueur
-// intérieure — demande explicite du 2026-07-07
-const ICO_EQSTONE = svgIcon(
-  '<path d="M12 2.5c-4 3-7 4-7 9a7 7 0 0014 0c0-5-3-6-7-9z" fill="#7a5a2a"/>' +
-  '<circle cx="12" cy="13" r="6" fill="#211c2c"/><circle cx="12" cy="13" r="6" fill="none" stroke="#c9a55a" stroke-width="1.3"/>' +
-  '<circle cx="12" cy="13" r="3" fill="#8a54c9" opacity=".7"/><circle cx="10.4" cy="11.2" r="1.1" fill="#fff" opacity=".8"/>');
-
-// ---- bijoux (jackpot) : progression visuelle par palier de stuff — demande explicite du
-// 2026-07-07 : "les premiers bijoux auront des simples anneaux, puis des diamants, puis plusieurs
-// diamants arrivé au stuff ultime orné de diamants et de couleur". tierIdx : 0=gris/blanc (anneau
-// nu), 1=vert (un diamant), 2=bleu (plusieurs diamants + couleur du palier), 3=palier ultime
-// (jaune/orange/rouge, pas encore en jeu — orné, plus gros, couleur dominante).
-function jewelGemCluster(tierIdx, color, cx, cy) {
-  if (tierIdx <= 0) return '';
-  if (tierIdx === 1) return `<path d="M${cx} ${cy-3.5}l2 3-2 3-2-3z" fill="#bfe4ff"/><path d="M${cx} ${cy-3.5}l2 3-2 3z" fill="#8cc8ff"/>`;
-  if (tierIdx === 2) return `<path d="M${cx} ${cy-4}l2.1 3.2-2.1 3.2-2.1-3.2z" fill="#eaf6ff"/><path d="M${cx} ${cy-4}l2.1 3.2-2.1 3.2z" fill="${color}"/>` +
-      `<path d="M${cx-3.4} ${cy-1.2}l1.1 1.7-1.1 1.7-1.1-1.7z" fill="${color}" opacity=".85"/>` +
-      `<path d="M${cx+3.4} ${cy-1.2}l1.1 1.7-1.1 1.7-1.1-1.7z" fill="${color}" opacity=".85"/>`;
-  // palier ultime : encore plus gros, halo de couleur
-  return `<circle cx="${cx}" cy="${cy}" r="6" fill="${color}" opacity=".22"/>` +
-      `<path d="M${cx} ${cy-4.6}l2.4 3.6-2.4 3.6-2.4-3.6z" fill="#fff" opacity=".95"/><path d="M${cx} ${cy-4.6}l2.4 3.6-2.4 3.6z" fill="${color}"/>` +
-      `<path d="M${cx-4} ${cy-1.4}l1.3 2-1.3 2-1.3-2z" fill="${color}"/><path d="M${cx+4} ${cy-1.4}l1.3 2-1.3 2-1.3-2z" fill="${color}"/>`;
-}
-function ringIconForTier(tierIdx, color) {
-  return svgIcon(
-    '<circle cx="12" cy="15" r="6.5" fill="none" stroke="#c9a55a" stroke-width="2.6"/>' +
-    '<circle cx="12" cy="15" r="6.5" fill="none" stroke="#e6cf7a" stroke-width="1"/>' +
-    jewelGemCluster(tierIdx, color, 12, 7));
-}
-function necklaceIconForTier(tierIdx, color) {
-  return svgIcon(
-    '<path d="M4 5c0 6.5 4 10 8 10s8-3.5 8-10" fill="none" stroke="#c9a55a" stroke-width="1.8"/>' +
-    '<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="#e6cf7a" stroke-width="1.8"/>' +
-    (tierIdx <= 0 ? '<circle cx="12" cy="16.5" r="1.3" fill="#e6cf7a"/>' : jewelGemCluster(tierIdx, color, 12, 18)));
-}
-function earringIconForTier(tierIdx, color) {
-  return svgIcon(
-    '<circle cx="12" cy="7" r="3.4" fill="none" stroke="#e6cf7a" stroke-width="1.8"/>' +
-    (tierIdx <= 0 ? '<circle cx="12" cy="15.5" r="1.3" fill="#e6cf7a"/>' : jewelGemCluster(tierIdx, color, 12, 15.5)));
-}
-function beltIconForTier(tierIdx, color) {
-  return svgIcon(
-    '<rect x="1.5" y="9.5" width="21" height="5" rx="1.4" fill="#5a3f22"/><rect x="1.5" y="9.5" width="21" height="2" rx="1" fill="#8a6a3a"/>' +
-    '<rect x="8.5" y="7.5" width="7" height="9" rx="1.6" fill="none" stroke="#e6cf7a" stroke-width="2"/>' +
-    (tierIdx <= 0 ? '<rect x="11" y="9.5" width="2" height="5" rx="1" fill="#c9a55a"/>' : jewelGemCluster(tierIdx, color, 12, 12)));
-}
-// convertit un grade GEAR_TIERS ('grey'/'white'/'green'/'blue') en tierIdx de richesse visuelle
-// (gris+blanc = "simples anneaux", même palier visuel — voir demande utilisateur)
-const JEWEL_TIER_IDX = { grey:0, white:0, green:1, blue:2 };
 
 // pierres d'optimisation — création originale inspirée du style "pierre à facettes" de Black
 // Desert, sans reprendre d'assets réels (demande du 2026-07-05)
@@ -1897,12 +1797,9 @@ const EQUIP = {
   awakening: null, secondary: null, book: null,
   helmet: null, armor: null, gloves: null, boots: null,
   ring1: null, ring2: null, necklace: null, earring1: null, earring2: null, belt: null,
-  // 2 emplacements Artéfact (ex: Vell, Khan) + 1 emplacement Pierre — pas encore de source de
-  // drop en jeu, prêts à l'usage pour une future mise à jour (demande explicite du 2026-07-07)
-  artifact1: null, artifact2: null, eqStone: null,
 };
 const ARMOR_SLOTS = ['helmet','armor','gloves','boots'];
-const ACC_SLOTS = ['ring1','ring2','necklace','earring1','earring2','belt','artifact1','artifact2','eqStone'];
+const ACC_SLOTS = ['ring1','ring2','necklace','earring1','earring2','belt'];
 const WEAPON_SLOTS = ['weapon','awakening','secondary'];
 // tout ce qui peut être optimisé — armes, armure ET bijoux
 const OPTIMIZABLE_SLOTS = [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...ACC_SLOTS];
@@ -2380,7 +2277,6 @@ const ACTIVITY_TABS = [
   { id:'forest', icon:'🌲', name:{fr:'Forêt',en:'Forest'},  locked:true },
   { id:'field', icon:'🌾', name:{fr:'Champs',en:'Fields'},  locked:true },
   { id:'ranch', icon:'🐑', name:{fr:'Bergerie',en:'Ranch'}, locked:true },
-  { id:'workshop', icon:'🏛️', name:{fr:'Atelier royal',en:'Royal Workshop'}, locked:true },
 ];
 let currentActivity = 'zone';
 function renderActivityTabs() {
@@ -3759,14 +3655,10 @@ function rollGearDrop(zone, alpha) {
   const ap = Math.round(zone.reqAP * role.apShare * scale);
   const dp = Math.round(zone.reqDP * role.dpShare * scale);
   const hp = Math.round(zone.reqDP * role.hpShare * scale * HP_GEAR_SCALE);
-  // armure/gants/bottes prennent la couleur du palier (icône générée à la volée) — les autres
-  // slots gardent leur icône générique fixe — demande explicite du 2026-07-07
-  const TIER_COLORED_ICON = { armor: armorIconForColor, gloves: glovesIconForColor, boots: bootsIconForColor };
-  const icon = TIER_COLORED_ICON[slot] ? TIER_COLORED_ICON[slot](tier.color) : (SLOT_ICON ? SLOT_ICON[slot] : '⚔️');
   return {
     name: tier.sets[slot], kind:'gear', slot, ap, dp, hp, enhLv:0, optimizable:true, fsByLevel:{},
     key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
-    icon, color:tier.color, stackable:false, weight:1.2,
+    icon: SLOT_ICON ? SLOT_ICON[slot] : '⚔️', color:tier.color, stackable:false, weight:1.2,
     matName: tier.material.name, // matériau requis pour optimiser CETTE pièce (voir findEnhanceMaterial)
     val: Math.round((ap*2 + dp + hp*0.5) * 22),
   };
@@ -3814,18 +3706,11 @@ function rollDrops(wp, alpha, lm) {
   const mults = alpha ? 1.5 : 1;
   // le matériau d'optimisation dépend désormais du PALIER de stuff (Naru/Tuvala/Yuria/Grunil),
   // pas de la zone — on garde juste la valeur/chance d'origine de la zone (économie inchangée)
-  const tier = gearTierForZone(zoneIdx);
-  const tierMat = tier.material;
-  // bijou (jackpot) : icône générée selon le palier — anneau nu (gris/blanc) → un diamant (vert) →
-  // plusieurs diamants + couleur du palier (bleu) — demande explicite du 2026-07-07
-  const jSlot = accSlotFor(L.jackpot);
-  const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
-  const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
-  const jackpotIcon = (JEWEL_ICON_FOR_SLOT[jSlot] || ringIconForTier)(jTierIdx, tier.color);
+  const tierMat = gearTierForZone(zoneIdx).material;
   const table = [
     { ...L.trash,   kind:'trash',    color:'#a08464', key:'trash_'+zk,   icon:'▬', stackable:true,  weight:0.3 },
     { name:tierMat.name, val:L.mat.val, ch:L.mat.ch, kind:'material', color:tierMat.color, key:'mat_'+tierMat.name, icon:tierMat.icon, stackable:true, weight:0.1 },
-    { ...L.jackpot, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5 },
+    { ...L.jackpot, kind:'jackpot',  color:'#e8b84a', key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:'💍', stackable:false, weight:0.5 },
     { ...L.craft,   kind:'craft',    color:'#b48ce8', key:'craft_'+L.craft.name, icon:'✦', stackable:true, weight:0.2, val:0 },
     ...VELIA_TREASURE.map(t => ({ name:t.name, val:0, ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05 })),
   ];
@@ -3883,9 +3768,8 @@ function dropsTick(dt) {
       // construit l'objet inventaire (matériau/bijou/gear/craft — ceux-là prennent une place)
       const isOptimizable = it.kind === 'gear' || it.kind === 'jackpot';
       const obj = {
-        // le bijou porte déjà sa propre icône (générée selon son palier au moment du drop, voir
-        // rollDrops) — ne plus l'écraser par l'ancienne icône générique JACKPOT_ICON
-        key: it.key, name: it.name, kind: it.kind, icon: it.icon, color: it.color,
+        key: it.key, name: it.name, kind: it.kind,
+        icon: it.kind === 'jackpot' ? JACKPOT_ICON[accSlotFor(it)] : it.icon, color: it.color,
         qty: 1, stackable: it.stackable, weight: it.weight,
         val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, enhLv: it.enhLv||0,
         optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
@@ -3928,6 +3812,8 @@ function dropsTick(dt) {
   drops = drops.filter(l => !l.taken && l.age < DESPAWN);
 }
 
+// icône réelle par type de bijou (au lieu du 💍 générique appliqué à tout jackpot avant ce correctif)
+const JACKPOT_ICON = { ring:ICO_RING, earring:ICO_EARRING, necklace:ICO_NECKLACE, belt:ICO_BELT };
 // attribue un slot d'accessoire probable selon le nom
 function accSlotFor(it) {
   const n = it.name.toLowerCase();
@@ -4707,16 +4593,14 @@ const invPanelOpen = true; // panneau toujours affiché
 
 // ---------- équipement (paperdoll permanent) ----------
 const PD_LEFT  = ['helmet','armor','gloves','boots'];
-const PD_RIGHT = ['necklace','earring1','earring2','ring1','ring2','belt','artifact1','artifact2','eqStone'];
+const PD_RIGHT = ['necklace','earring1','earring2','ring1','ring2','belt'];
 const PD_BOTTOM = ['weapon','awakening','secondary'];
 const SLOT_LABEL = { weapon:'Arme princ.', awakening:'Éveil', secondary:'Arme secondaire', book:'Livre (vie)',
   helmet:'Casque', armor:'Armure', gloves:'Gants', boots:'Bottes',
-  necklace:'Collier', earring1:'B. oreille', earring2:'B. oreille', ring1:'Bague', ring2:'Bague', belt:'Ceinture',
-  artifact1:'Artéfact', artifact2:'Artéfact', eqStone:'Pierre' };
+  necklace:'Collier', earring1:'B. oreille', earring2:'B. oreille', ring1:'Bague', ring2:'Bague', belt:'Ceinture' };
 const SLOT_ICON = { weapon:ICO_WEAPON, awakening:ICO_AWAKENING, secondary:ICO_SECONDARY, book:ICO_BOOK,
   helmet:ICO_HELMET, armor:ICO_ARMOR, gloves:ICO_GLOVES, boots:ICO_BOOTS,
-  necklace:ICO_NECKLACE, earring1:ICO_EARRING, earring2:ICO_EARRING, ring1:ICO_RING, ring2:ICO_RING, belt:ICO_BELT,
-  artifact1:ICO_ARTIFACT, artifact2:ICO_ARTIFACT, eqStone:ICO_EQSTONE };
+  necklace:ICO_NECKLACE, earring1:ICO_EARRING, earring2:ICO_EARRING, ring1:ICO_RING, ring2:ICO_RING, belt:ICO_BELT };
 
 function renderEquipment() {
   drawPreviewChar();
@@ -7247,6 +7131,7 @@ const I18N = {
   cardEquip: { fr:'Équipement', en:'Equipment' },
   btnEquipBest: { fr:'⚡ Équiper le meilleur (socle)', en:'⚡ Equip best (base stats)' },
   btnSellWorse: { fr:'🗑️ Vendre l\'inférieur', en:'🗑️ Sell the worse' },
+  btnBuyBackWorse: { fr:'↩️ Racheter', en:'↩️ Buy back' },
   resetNoticeClose: { fr:'OK, compris !', en:'OK, got it!' },
   invFullBanner: { fr:'⚠ Sac plein — les objets restent au sol', en:'⚠ Bag full — items stay on the ground' },
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
@@ -7332,19 +7217,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V108', d:'07/07/2026 06:00', name:{fr:'Nouveaux emplacements, icônes teintées par palier', en:'New slots, tier-tinted icons'}, fr:[
-      {t:'new',    tx:'Atelier royal ajouté dans le header (verrouillé, bientôt disponible)'},
-      {t:'new',    tx:'3 nouveaux emplacements d\'équipement : 2 Artéfacts (ex: Vell, Khan) + 1 Pierre — pas encore de source de drop en jeu, prêts pour une future mise à jour'},
-      {t:'change', tx:'Bouton "↩️ Racheter" réduit à une icône compacte, regroupé juste à côté de "Vendre l\'inférieur" (1/5 de la largeur) au lieu d\'un gros bouton séparé'},
-      {t:'change', tx:'Nouvelles icônes pour l\'armure, les gants et les bottes : chaque pièce prend maintenant la vraie couleur de son palier (gris/blanc/vert/bleu) au lieu d\'une couleur fixe'},
-      {t:'change', tx:'Nouvelles icônes de bijoux progressives selon le palier : anneau nu (gris/blanc) → un diamant (vert) → plusieurs diamants et couleur du palier (bleu)'},
-    ], en:[
-      {t:'new',    tx:'Royal Workshop added to the header (locked, coming soon)'},
-      {t:'new',    tx:'3 new equipment slots: 2 Artifacts (e.g. Vell, Khan) + 1 Stone — no drop source yet, ready for a future update'},
-      {t:'change', tx:'"↩️ Buy back" button shrunk to a compact icon, grouped right next to "Sell the worse" (1/5 of the width) instead of a big separate button'},
-      {t:'change', tx:'New icons for armor, gloves and boots: each piece now takes the real color of its tier (grey/white/green/blue) instead of a fixed color'},
-      {t:'change', tx:'New progressive jewelry icons by tier: bare ring (grey/white) → one diamond (green) → several diamonds and tier color (blue)'},
-    ] },
   { v:'V107', d:'07/07/2026 04:30', name:{fr:'Économie retravaillée & vrai marché à ordres', en:'Reworked economy & real order-book market'}, fr:[
       {t:'change', tx:'Économie de Velia entièrement retravaillée : le silver/h moyen progresse maintenant de ~3 000/h (zone 1) à 100 000/h max (zone 11, stuff optimisé) au lieu de plusieurs millions/h — ce plafond correspond au bas de la nouvelle courbe à 5 régions (Velia 0-100k/h, Heidel 100k-1M/h, Calpheon 1M-100M/h, Valencia 100M-1B/h, Edana 1B-10B/h, voir zones-roadmap.md)'},
       {t:'new',    tx:'Marché commun entièrement refait : vrai carnet d\'ordres entre joueurs (achat ET vente), au lieu d\'un prix flottant avec achat/vente instantanés. Chacun pose le prix qu\'il veut ; ton silver (achat) ou ton objet (vente) reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé'},
@@ -8373,13 +8245,9 @@ function renderCodexHtml() {
       `<div class="codexInfo"><div class="codexName">${it.name}</div>` +
       `<div class="codexDesc">${it.desc}</div></div></div>`).join('');
   };
-  // bijoux rares (jackpot) — icône selon le palier de stuff de la zone (voir jewelGemCluster)
-  const jewels = ZONES.map((z,i) => {
-    const t = gearTierForZone(i), slot = accSlotFor(z.loot.jackpot), tIdx = JEWEL_TIER_IDX[t.grade] ?? 0;
-    const iconFn = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier }[slot] || ringIconForTier;
-    return { icon: iconFn(tIdx, t.color), name:tr(z.loot.jackpot.name),
-      desc:`+${z.loot.jackpot.ap} PA · ${LANG==='fr'?'zone':'zone'} ${i+1} (${tr(z.name)})` };
-  });
+  // bijoux rares (jackpot)
+  const jewels = ZONES.map((z,i) => ({ icon:JACKPOT_ICON[accSlotFor(z.loot.jackpot)]||'💎', name:tr(z.loot.jackpot.name),
+    desc:`+${z.loot.jackpot.ap} PA · ${LANG==='fr'?'zone':'zone'} ${i+1} (${tr(z.name)})` }));
   // matériaux d'optimisation
   const matSet = new Map();
   ZONES.forEach(z => { const m = z.loot.mat; if (!matSet.has(m.name)) matSet.set(m.name, m); });
