@@ -67,6 +67,12 @@ grant execute on function public.claim_pending_notice() to authenticated;
 -- personnage, voir loadCloudSave), et efface les stats publiques du classement (recréées au
 -- prochain login/sync de chaque joueur). Combine le wipe + la diffusion du message d'explication
 -- en un seul appel pour ne jamais oublier l'un des deux.
+-- ⚠️ BUG corrigé le 2026-07-07 (confirmé via les logs Postgres : "UPDATE requires a WHERE clause") :
+-- Supabase protège le rôle propriétaire des fonctions contre les UPDATE/DELETE sans WHERE (pour
+-- éviter les mises à jour de table entière par accident) — même à l'intérieur d'une fonction
+-- SECURITY DEFINER, qui exécute avec les privilèges du propriétaire. "where true" satisfait la
+-- vérification tout en gardant le comportement voulu (toutes les lignes sont bien concernées) :
+-- c'est ce qui empêchait le bouton "Réinitialiser TOUS les comptes" de fonctionner.
 create or replace function public.admin_reset_all_accounts(
   p_title_fr text, p_title_en text, p_body_fr text, p_body_en text
 )
@@ -78,9 +84,9 @@ begin
   if coalesce(auth.jwt()->>'email','') is distinct from 'maxime.lacoste@icloud.com' then
     raise exception 'Réservé au staff';
   end if;
-  update public.game_saves set save_data = '{}'::jsonb;
+  update public.game_saves set save_data = '{}'::jsonb where true;
   get diagnostics v_count = row_count;
-  delete from public.player_stats;
+  delete from public.player_stats where true;
   perform public.admin_broadcast_notice('account_reset', '🔄', p_title_fr, p_title_en, p_body_fr, p_body_en);
   return v_count;
 end;

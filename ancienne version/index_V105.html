@@ -44,14 +44,9 @@
     position:absolute; bottom:14px; right:14px; text-align:right;
     font-size:11px; color:var(--ink-dim); max-height:250px; overflow:hidden;
     text-shadow:0 1px 2px #000; line-height:1.5;
-    /* corrigé le 2026-07-07 : column-reverse faisait en réalité apparaître les NOUVELLES entrées
-       en haut (déjà fondues par le masque) et les anciennes en bas (bien visibles juste avant
-       d'être supprimées) — l'inverse de ce qui était voulu. "column" simple + appendChild place
-       chaque nouvelle entrée tout en bas (nette), qui pousse les précédentes vers le haut où elles
-       s'estompent avant d'être retirées. */
-    display:flex; flex-direction:column;
+    display:flex; flex-direction:column-reverse; /* nouvelles entrées en bas, la liste grandit vers le haut */
     -webkit-mask-image:linear-gradient(to bottom, transparent, rgba(0,0,0,.15) 25%, black 65%);
-    mask-image:linear-gradient(to bottom, transparent, rgba(0,0,0,.15) 25%, black 65%);
+    mask-image:linear-gradient(to bottom, transparent, rgba(0,0,0,.15) 25%, black 65%); /* fondu plus prononcé des anciennes entrées vers le haut */
   }
   #lootTicker .trashLoot { color:#fff; }
   #lootTicker .matLoot { color:#6ea3c9; }
@@ -3812,7 +3807,7 @@ function lootLine(item, val, cls) {
   const div = document.createElement('div');
   if (cls) div.className = cls;
   div.textContent = val > 0 ? `${item.name} (+${fmt(val)})` : item.name;
-  t.appendChild(div); // + flex-direction:column en CSS → apparaît en bas, pousse les anciennes vers le haut
+  t.appendChild(div); // + flex-direction:column-reverse en CSS → apparaît en bas, pousse vers le haut
   while (t.children.length > 15) t.removeChild(t.firstChild);
   lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div };
 }
@@ -4786,15 +4781,6 @@ function renderInventory() {
     cell.className = 'cell' + (s ? ' has k-'+s.kind : '') + (visible ? '' : ' catHidden');
     if (s) {
       const cellApDp = (s.kind === 'gear' || s.kind === 'jackpot') ? effectiveApDp(s) : null;
-      // les icônes SVG (équipement, matériaux) ont leurs couleurs FIGÉES dans le tracé — le style
-      // "color" posé sur le <span> n'a donc aucun effet sur elles (une SVG ignore le color CSS du
-      // parent sauf si elle utilise currentColor). Résultat : tout le stuff gris/blanc/vert/bleu se
-      // ressemblait dans le sac. Corrigé en teintant la BORDURE de la case avec la vraie couleur du
-      // palier/matériau — demande explicite du 2026-07-07.
-      if (s.color && (s.kind === 'gear' || s.kind === 'material')) {
-        cell.style.borderColor = s.color;
-        cell.style.boxShadow = `inset 0 0 6px ${s.color}55`;
-      }
       cell.innerHTML = `<span style="color:${s.color}">${s.icon}</span>` +
         (s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : '') +
         (s.equipped ? `<span class="eqd">E</span>` : '') +
@@ -7142,15 +7128,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V106', d:'07/07/2026 02:00', name:{fr:'Loot ticker, reset admin réparé, couleurs du stuff', en:'Loot ticker, fixed admin reset, gear colors'}, fr:[
-      {t:'fix', tx:'Corrigé le sens d\'arrivée du loot ticker : les nouvelles entrées apparaissaient en haut (déjà estompées) et les anciennes en bas (bien visibles juste avant d\'être supprimées) — l\'inverse de l\'effet voulu, désormais les nouvelles entrées arrivent nettes en bas et remontent en s\'estompant'},
-      {t:'fix', tx:'Trouvé pourquoi "Réinitialiser TOUS les comptes" ne fonctionnait pas : Supabase bloque les UPDATE/DELETE sans clause WHERE (confirmé dans les logs), même pour un reset global volontaire — corrigé'},
-      {t:'fix', tx:'Le stuff (équipement ET matériaux d\'optimisation) se ressemblait dans le sac quel que soit son palier : les icônes SVG ont leurs couleurs figées dans le tracé, le style posé par-dessus n\'avait donc aucun effet. Corrigé en teintant la bordure de chaque case avec la vraie couleur du palier (gris/blanc/vert/bleu) ou du matériau'},
-    ], en:[
-      {t:'fix', tx:'Fixed the loot ticker\'s arrival direction: new entries appeared at the top (already faded) and old ones at the bottom (fully visible right before removal) — the opposite of the intended effect; new entries now arrive crisp at the bottom and fade as they move up'},
-      {t:'fix', tx:'Found why "Reset ALL accounts" didn\'t work: Supabase blocks UPDATE/DELETE without a WHERE clause (confirmed in the logs), even for an intentional global reset — fixed'},
-      {t:'fix', tx:'Gear and enhancement materials all looked alike in the bag regardless of tier: SVG icons have their colors baked into the artwork, so the color style layered on top had no effect. Fixed by tinting each cell\'s border with the real tier color (grey/white/green/blue) or material color'},
-    ] },
   { v:'V105', d:'07/07/2026 00:30', name:{fr:'Bijoux alignés sur les vrais paliers BDO', en:'Jewelry aligned with real BDO tiers'}, fr:[
       {t:'change', tx:'Les bijoux rares (jackpot) des 11 zones de Velia utilisent maintenant les vrais noms BDO alignés sur le palier de stuff de la zone : Naru (gris), Tuvala (blanc), Asula (vert), Cadry/Serap (bleu) — un anneau, un collier et une ceinture par palier'},
     ], en:[
