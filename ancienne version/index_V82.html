@@ -176,10 +176,6 @@
   .cell.catHidden { display:none; }
   .invCatEmpty { grid-column:1/-1; text-align:center; color:var(--ink-dim); font-style:italic; font-size:11px; padding:14px 0; }
   .row { display:flex; justify-content:space-between; align-items:center; margin:2.5px 0; font-size:11.5px; }
-  .statSep {
-    margin:8px 0 5px; padding-top:6px; border-top:1px solid #2c2a33;
-    font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold);
-  }
   .row .v { color:var(--gold); } .row .v.blue { color:#9cc9e8; }
   .row .v.ok { color:#8fc98a; } .row .v.bad { color:var(--danger); }
   button {
@@ -356,6 +352,11 @@
   /* ===== loot de la zone ===== */
   .lootRow { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid #232128; font-size:12px; }
   .lootRow:last-child { border-bottom:none; }
+  /* petit historique de silver (sparkline) sous la table de loot */
+  #silverHistWrap { margin-top:9px; padding-top:8px; border-top:1px solid #2c2a33; }
+  #silverHistTop { display:flex; justify-content:space-between; align-items:baseline; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:4px; }
+  #silverHistRate { color:var(--gold); text-transform:none; letter-spacing:0; font-size:11px; font-variant-numeric:tabular-nums; }
+  #silverHistChart { width:100%; height:34px; display:block; }
   .lootIcon { width:26px; height:26px; display:flex; align-items:center; justify-content:center;
     background:rgba(20,19,26,.8); border:1px solid #2c2a33; font-size:13px; flex-shrink:0; }
   .lootIcon.k-trash { color:#a08464; } .lootIcon.k-material { color:#8fb0c9; }
@@ -1325,7 +1326,10 @@
       <div class="row"><span data-i18n="lblKpm">Kills / min</span><span class="v" id="stKpm">—</span></div>
       <div class="row"><span data-i18n="lblKills">Loups abattus</span><span class="v" id="stKills">0</span></div>
       <div class="row"><span data-i18n="lblLootCount">Objets ramassés</span><span class="v" id="stLoot">0</span></div>
-      <div class="statSep" data-i18n="cardZoneStats">Stats de la zone de farm</div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="cardZoneStats">Stats de la zone de farm</h3>
       <div class="row"><span data-i18n="lblApZone">PA requis (zone)</span><span class="v" id="stApZone">14 / 20</span></div>
       <div class="row"><span data-i18n="lblDpZone">PD requis (zone)</span><span class="v" id="stDpZone">10 / 20</span></div>
     </div>
@@ -1338,6 +1342,10 @@
     <div class="card" id="lootCard">
       <h3><span data-i18n="cardLoot">Loot de cette zone</span> <span id="lootZoneName" style="float:right;color:var(--ink-dim);font-size:10px;letter-spacing:0"></span></h3>
       <div id="lootTable"></div>
+      <div id="silverHistWrap">
+        <div id="silverHistTop"><span data-i18n="silverHistLbl">💰 Historique silver</span> <span id="silverHistRate"></span></div>
+        <svg id="silverHistChart" viewBox="0 0 100 30" preserveAspectRatio="none"><polyline id="silverHistLine" fill="none" stroke="var(--gold)" stroke-width="1"/></svg>
+      </div>
     </div>
 
     <div class="card" id="equipCard">
@@ -4100,6 +4108,30 @@ function hud() {
   renderQuestTrackerWidget();
   ensureLoyaltyGrant();
   updateMailBadge();
+  updateSilverHistory();
+}
+// petit historique de silver : échantillonné chaque seconde (voir hud), affiché en sparkline
+// sous la table de loot, avec le taux estimé sur la fenêtre glissante (~60 s)
+const silverHist = [];
+function updateSilverHistory() {
+  const line = $('silverHistLine'); if (!line) return;
+  silverHist.push({ t: performance.now(), v: S.silver });
+  while (silverHist.length > 60) silverHist.shift();
+  const n = silverHist.length;
+  const vals = silverHist.map(p => p.v);
+  const min = Math.min(...vals), max = Math.max(...vals), range = Math.max(1, max-min);
+  const pts = silverHist.map((p,i) => {
+    const x = n<=1 ? 0 : (i/(n-1)*100);
+    const y = 28 - (p.v-min)/range*26;
+    return x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  line.setAttribute('points', pts);
+  const rateEl = $('silverHistRate');
+  if (rateEl && n >= 2) {
+    const dt = (silverHist[n-1].t - silverHist[0].t)/1000;
+    const perH = dt > 0 ? (silverHist[n-1].v - silverHist[0].v)/dt*3600 : 0;
+    rateEl.textContent = (perH>=0?'+':'') + fmt(Math.round(perH)) + '/h';
+  }
 }
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
@@ -6252,6 +6284,7 @@ const I18N = {
   lblLootCount: { fr:'Objets ramassés', en:'Items looted' },
   cardZones: { fr:'Zones de farm', en:'Farming zones' },
   cardLoot: { fr:'Loot de cette zone', en:'Loot in this zone' },
+  silverHistLbl: { fr:'💰 Historique silver', en:'💰 Silver history' },
   cardEquip: { fr:'Équipement', en:'Equipment' },
   btnEquipBest: { fr:'⚡ Équiper le meilleur (socle)', en:'⚡ Equip best (base stats)' },
   btnSellWorse: { fr:'🗑️ Vendre l\'inférieur', en:'🗑️ Sell the worse' },
@@ -6322,13 +6355,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V83', d:'04/07/2026 22:00', name:{fr:'Statistiques réunies en une carte, retrait de l\'historique silver', en:'Stats merged into one card, silver history removed'}, fr:[
-      {t:'change', tx:'Les stats perso et les stats de la zone de farm sont réunies dans une seule carte "Statistiques" (séparées par une ligne), au lieu de deux cartes côte à côte'},
-      {t:'change', tx:'Retrait de l\'historique silver sous la table de loot pour l\'instant — une autre idée viendra à sa place plus tard'},
-    ], en:[
-      {t:'change', tx:'Personal stats and farming zone stats are now merged into a single "Stats" card (separated by a divider), instead of two side-by-side cards'},
-      {t:'change', tx:'Removed the silver history under the loot table for now — something else will take its place later'},
-    ] },
   { v:'V82', d:'04/07/2026 21:00', name:{fr:'PA/PD/GS sur la carte Équipement, icônes dans le menu d\'équipement', en:'AP/DP/GS on the Equipment card, icons in the equip menu'}, fr:[
       {t:'new', tx:'La carte Équipement affiche désormais PA/PD (en haut) et GS (au-dessus du personnage)'},
       {t:'new', tx:'Chaque pièce équipée affiche son PA (bas-gauche) et son PD (bas-droite) directement sur son icône'},
