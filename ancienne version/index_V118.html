@@ -4521,68 +4521,12 @@ function drawPirateIso(wx,wy,w,t) {
   ctx.beginPath(); ctx.moveTo(3.6,-29); ctx.lineTo(7,-27); ctx.lineTo(3.2,-26.4); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
-// Guerrier Rhutum (zone "Camp Rhutum", juste après le Repaire des Pirates) — créature ORIGINALE :
-// humanoïde massif à peau verte, crâne rasé à crête de plumes/piquants, bouc tressé, torse épais et
-// bras noueux. Demande explicite du 2026-07-07 ("camp de ruthum... avec ce que je t'envoie comme
-// screen") — inspiré de l'ambiance des images de référence (guerrier/archer orc), aucun asset réel repris.
-function drawRhutumIso(wx,wy,w,t) {
-  const c = toScreen(wx,wy);
-  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
-  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
-  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
-  ctx.fillStyle='rgba(0,0,0,.3)';
-  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,12.5*w.scale,5,0,0,7); ctx.fill();
-  ctx.save();
-  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
-  if (!facingRight) ctx.scale(-1,1);
-  ctx.scale(w.scale,w.scale);
-  const trot = Math.sin(t*5.5+w.phase)*1.6; // démarche lourde
-  if (w.lunge > .3) { ctx.strokeStyle='rgba(120,200,110,.5)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.ellipse(0,-17,15,11,0,0,7); ctx.stroke(); }
-  const strap = w.tone; // teinte des sangles/pagne en cuir, variété par zone (comme les autres monstres)
-  const skin = '#7a9a52';
-  // jambes épaisses
-  ctx.strokeStyle='#3e3226'; ctx.lineWidth=4.4; ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.moveTo(-4,-9); ctx.lineTo(-5,3+trot*.5);
-  ctx.moveTo(4,-9); ctx.lineTo(5,3-trot*.5);
-  ctx.stroke();
-  // torse massif (peau)
-  ctx.fillStyle = skin;
-  ctx.beginPath(); ctx.moveTo(-9,-9); ctx.lineTo(-8,-26); ctx.lineTo(8,-26); ctx.lineTo(9,-9); ctx.closePath(); ctx.fill();
-  // sangle/pagne en cuir sur le torse (teinte de zone)
-  ctx.strokeStyle = strap; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.moveTo(-7,-24); ctx.lineTo(6,-11); ctx.stroke();
-  // bras noueux + arme (avance en cas d'attaque)
-  ctx.strokeStyle = skin; ctx.lineWidth=4.2; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(8,-23); ctx.lineTo(13+lungeAmt*.45,-13); ctx.stroke();
-  ctx.strokeStyle='#8a8378'; ctx.lineWidth=2.4;
-  ctx.beginPath(); ctx.moveTo(13+lungeAmt*.45,-13); ctx.lineTo(20+lungeAmt*.7,-19); ctx.stroke();
-  // tête (peau verte)
-  ctx.fillStyle = skin;
-  ctx.beginPath(); ctx.arc(0,-30,5,0,7); ctx.fill();
-  // mâchoire proéminente + bouc tressé
-  ctx.fillStyle='#241d16';
-  ctx.beginPath(); ctx.arc(0,-27,3.4,0.1,Math.PI-0.1); ctx.fill();
-  // défenses
-  ctx.fillStyle='#e8e2d0';
-  ctx.beginPath(); ctx.moveTo(-2.6,-26.5); ctx.lineTo(-3.2,-24); ctx.lineTo(-1.6,-25); ctx.closePath(); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(2.6,-26.5); ctx.lineTo(3.2,-24); ctx.lineTo(1.6,-25); ctx.closePath(); ctx.fill();
-  // crête de plumes/piquants sur le crâne (rouge, comme les images de référence)
-  ctx.fillStyle = w.lunge>.3 ? '#c8503a' : '#a8402c';
-  for (let i=-1; i<=1; i++) {
-    ctx.beginPath();
-    ctx.moveTo(i*2.4,-34); ctx.lineTo(i*2.4-0.9,-40-Math.abs(i)*2); ctx.lineTo(i*2.4+0.9,-34); ctx.closePath(); ctx.fill();
-  }
-  ctx.restore();
-}
 // dispatcher : chaque zone peut avoir sa propre silhouette de monstre — pour l'instant "Ruines de
-// Protty" (zone index 1), "Repaire des Pirates" (zone index 2) et "Camp Rhutum" (zone index 3) ont
-// la leur, les autres zones gardent la silhouette générique
+// Protty" (zone index 1) et "Repaire des Pirates" (zone index 2) ont la leur, les autres zones
+// gardent la silhouette générique
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
   if (zoneIdx === 2) return drawPirateIso(wx,wy,w,t);
-  if (zoneIdx === 3) return drawRhutumIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
@@ -6394,7 +6338,7 @@ function fmtAdmPlaytime(sec) {
 // construit le HTML des 3 onglets "lourds" (agrégations sur farm_events/game_saves) une fois que
 // leurs données sont arrivées — séparé de openAdminPanel() pour pouvoir les patcher en arrière-plan
 // sans bloquer l'ouverture du panneau (voir plus bas, correctif de lenteur du 2026-07-06)
-function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser) {
+function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour) {
   const hourMap = new Map();
   (byHour||[]).forEach(r => hourMap.set(r.hour, (hourMap.get(r.hour)||0) + Number(r.total_silver||0)));
   const hours = [...hourMap.entries()].sort((a,b) => new Date(b[0]) - new Date(a[0])).slice(0,24);
@@ -6449,22 +6393,8 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
     return `<div class="admHistBar"><span class="ahbCount">${bracketCounts[i]}</span><div class="ahbFill" style="height:${pct}%"></div><span class="ahbLbl">${b.label}</span></div>`;
   }).join('');
   const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
-    <tr><td>#${i+1}</td><td>${escapeHtml((nameByUser&&nameByUser.get(r.user_id)) || (r.user_id||'').slice(0,8)+'…')}</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtAdmPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
+    <tr><td>#${i+1}</td><td>${(r.user_id||'').slice(0,8)}…</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtAdmPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
   `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-  // "qui a gagné combien en combien de temps" (demande explicite du 2026-07-07) : taux de gain
-  // moyen À VIE (silver_earned / temps de jeu total), pour repérer d'un coup d'œil qui monte vite
-  // et qui stagne — nécessite au moins 3 min de jeu cumulées pour éviter un taux gonflé par un
-  // tout petit échantillon (même précaution que le record kills/min)
-  const rateRows = (wealth||[]).map(r => {
-    const sec = playtimeByUser.get(r.user_id) || 0;
-    const earned = Number(r.silver_earned||0);
-    const hrs = sec / 3600;
-    return { user_id:r.user_id, earned, sec, rate: hrs > 0.05 ? earned/hrs : 0 };
-  }).filter(r => r.sec > 180).sort((a,b) => b.rate - a.rate).slice(0,15);
-  const rateHtml = rateRows.map((r,i) => `
-    <tr class="${i===0?'admTop':''}"><td>#${i+1}</td><td>${escapeHtml((nameByUser&&nameByUser.get(r.user_id)) || (r.user_id||'').slice(0,8)+'…')}</td>
-      <td>${fmt(r.earned)}</td><td>${fmtAdmPlaytime(r.sec)}</td><td>${fmt(Math.round(r.rate))}/h</td></tr>
-  `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données (au moins 3 min de jeu requises)':'No data yet (at least 3 min playtime required)'}</td></tr>`;
 
   return {
     hourly: `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
@@ -6503,13 +6433,7 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
       </div>
       <div class="admHint">${LANG==='fr'
         ? 'Le silver "dépensé" sort du jeu presque exclusivement via les coûts d\'optimisation (enchantement) — le Marché Central n\'est PAS un sink, c\'est un simple transfert de silver entre joueurs (ce qu\'un vendeur reçoit, un acheteur l\'a payé). Pas encore de détail par catégorie de sink, cette vue sert à surveiller la tendance globale (le silver total dépensé devrait progressivement augmenter avec l\'optimisation).'
-        : 'Silver "spent" leaves the game almost exclusively via enhancement costs — the Central Market is NOT a sink, it\'s a plain transfer of silver between players (what a seller receives, a buyer paid). No per-category sink breakdown yet, this view tracks the overall trend (total spent silver should gradually grow as players enhance gear).'}</div>
-      <h3>${LANG==='fr'?'🏆 Qui gagne le plus vite ? (taux à vie)':'🏆 Who earns fastest? (lifetime rate)'}</h3>
-      <div class="admSummary">${LANG==='fr'?'Silver gagné à vie ÷ temps de jeu total — classé par taux, pas par montant. Au moins 3 min de jeu requises.':'Lifetime silver earned ÷ total playtime — ranked by rate, not by amount. At least 3 min playtime required.'}</div>
-      <table class="admTable">
-        <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Gagné à vie':'Lifetime earned'}</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
-        <tbody>${rateHtml}</tbody>
-      </table>`,
+        : 'Silver "spent" leaves the game almost exclusively via enhancement costs — the Central Market is NOT a sink, it\'s a plain transfer of silver between players (what a seller receives, a buyer paid). No per-category sink breakdown yet, this view tracks the overall trend (total spent silver should gradually grow as players enhance gear).'}</div>`,
   };
 }
 async function openAdminPanel() {
@@ -6530,9 +6454,6 @@ async function openAdminPanel() {
     sb.rpc('admin_list_players'),
   ]);
   const playtimeByUser = new Map((stats||[]).map(r => [r.user_id, Number(r.playtime_sec||0)]));
-  // pseudo par joueur (déjà renvoyé par admin_list_players), utilisé pour afficher un nom plutôt
-  // qu'un UUID tronqué dans les tableaux Richesses/Silver — demande explicite du 2026-07-07
-  const nameByUser = new Map((playersList||[]).map(p => [p.user_id, p.display_name||'?']));
   // Loyalties (ex-"points de fidélité", renommé le 2026-07-07) : total en jeu + moyenne par joueur,
   // demande explicite du 2026-07-07 — pas encore de boutique où les dépenser, donc "utilisées pour"
   // reste à 0 pour l'instant (voir onglet dédié plus bas)
@@ -6597,7 +6518,7 @@ async function openAdminPanel() {
   // dès que les 3 agrégations lourdes arrivent, on remplace juste le contenu "Chargement…" de leurs
   // onglets — sans jamais avoir bloqué l'affichage initial du panneau ci-dessus
   analyticsPromise.then(([{data: byHour}, {data: byItem}, {data: wealth}, {data: playtimeByHour}]) => {
-    const html = buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser);
+    const html = buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour);
     const body = $a('infoBody'); if (!body) return; // panneau déjà refermé entre-temps
     const hourlyPane = body.querySelector('.catPane[data-cat="hourly"]');
     const itemsPane = body.querySelector('.catPane[data-cat="items"]');
@@ -8015,15 +7936,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V119', d:'07/07/2026 21:00', name:{fr:'Silhouette du Guerrier Rhutum, taux de gain silver (admin)', en:'Rhutum Warrior silhouette, silver earn rate (admin)'}, fr:[
-      {t:'new', tx:'Nouvelle silhouette originale pour le Guerrier Rhutum (Camp Rhutum, juste après le Repaire des Pirates) : humanoïde massif à peau verte, crâne à crête de plumes, bouc tressé et défenses — au lieu de la silhouette générique'},
-      {t:'new', tx:'Onglet admin "Silver" : nouveau tableau "Qui gagne le plus vite ?" — classe les joueurs par taux de gain à vie (silver gagné ÷ temps de jeu), pour voir d\'un coup d\'œil qui progresse vite et en combien de temps, pas juste qui a le plus gros total'},
-      {t:'change', tx:'Les tableaux "Richesses" et "Silver" du panneau admin affichent désormais le pseudo du joueur au lieu d\'un UUID tronqué illisible'},
-    ], en:[
-      {t:'new', tx:'New original silhouette for the Rhutum Warrior (Rhutum Camp, right after the Pirate Hideout): a massive green-skinned humanoid with a feathered crest, braided goatee and tusks — instead of the generic silhouette'},
-      {t:'new', tx:'Admin "Silver" tab: new "Who earns fastest?" table — ranks players by lifetime earn rate (silver earned ÷ playtime), to see at a glance who\'s progressing fast and in how much time, not just who has the biggest total'},
-      {t:'change', tx:'The admin panel\'s "Wealth" and "Silver" tables now show the player\'s pseudo instead of an unreadable truncated UUID'},
-    ] },
   { v:'V118', d:'07/07/2026 20:00', name:{fr:'Record kills/min (classement + admin), tooltip inventaire', en:'Kills/min record (leaderboard + admin), inventory tooltip'}, fr:[
       {t:'new', tx:'Nouveau record personnel "🏹 Kills/min" (à vie) : visible dans un nouveau classement dédié ET dans la liste des joueurs du panneau admin. Le record ne se met à jour qu\'après 2 min de session pour éviter qu\'un petit échantillon bruité ne le fausse'},
       {t:'change', tx:'Ajout d\'une infobulle sur le bouton "🎒 Inventaire" du panneau admin, expliquant ce qu\'il ouvre (équipement + sac complet en lecture seule, dans une nouvelle fenêtre)'},
