@@ -788,10 +788,6 @@
     line-height:1.2; background:none; border:none; color:var(--ink-dim); cursor:pointer; opacity:.5;
   }
   .chatDelBtn:hover { opacity:1; color:var(--danger); }
-  .modMsg { padding-right:0; border-bottom:1px solid #2c2a33; padding-bottom:5px; }
-  .modTop { display:flex; align-items:baseline; gap:6px; }
-  .modChan { font-size:9px; color:var(--ink-dim); }
-  .modUuidLine { display:block; font-family:monospace; font-size:9px; color:var(--ink-dim); margin:1px 0 2px; word-break:break-all; }
   .chatEmpty { font-size:11px; color:var(--ink-dim); font-style:italic; }
   #chatInputRow { display:flex; gap:5px; }
   #chatInput {
@@ -4344,13 +4340,11 @@ let myPseudo = null; // pseudo effectif du joueur courant, mis en cache après c
 let myIsMod = false; // le joueur courant est-il modérateur (table chat_mods) ? — pour afficher les ✕ de suppression
 async function refreshMyModStatus() {
   myIsMod = false;
-  if (!sb || !currentUser || isGuest()) { if (typeof renderChatTabs==='function') renderChatTabs(); return; }
+  if (!sb || !currentUser || isGuest()) return;
   try {
     const { data } = await sb.from('chat_mods').select('user_id').eq('user_id', currentUser.id).maybeSingle();
     myIsMod = !!data;
   } catch (e) {}
-  // le statut mod peut débloquer le canal "modéré" → on re-render les onglets du chat
-  if (typeof renderChatTabs === 'function') renderChatTabs();
 }
 
 // ---------- admin (accès réservé à ce compte précis) ----------
@@ -4833,15 +4827,11 @@ const CHAT_CHANNELS = [
   { id:'mondial', icon:'🌍', label:{fr:'Mondial',en:'World'} },
   { id:'trade',   icon:'💱', label:{fr:'Trade',en:'Trade'} },
   { id:'annonce', icon:'📢', label:{fr:'Annonce',en:'Announcement'} },
-  { id:'modéré',  icon:'🛡️', label:{fr:'Modéré',en:'Moderated'}, staff:true }, // journal des messages supprimés (admin/mods)
 ];
 let chatChannel = 'mondial', chatFolded = false, chatPollTimer = null;
-function chatVisibleChannels() { return CHAT_CHANNELS.filter(c => !c.staff || isAdmin() || myIsMod); }
 function renderChatTabs() {
   const el = $a('chatTabs'); if (!el) return;
-  const chans = chatVisibleChannels();
-  if (!chans.some(c => c.id === chatChannel)) chatChannel = 'mondial'; // canal caché → repli
-  el.innerHTML = chans.map(c => `<button class="catTab chan-${c.id==='modéré'?'annonce':c.id}${c.id===chatChannel?' active':''}" data-chan="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
+  el.innerHTML = CHAT_CHANNELS.map(c => `<button class="catTab chan-${c.id}${c.id===chatChannel?' active':''}" data-chan="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   el.querySelectorAll('.catTab').forEach(btn => {
     btn.onclick = () => {
       chatChannel = btn.dataset.chan;
@@ -4860,10 +4850,7 @@ function toggleChatFold() {
 }
 function updateChatInputVisibility() {
   const row = $a('chatInputRow'), note = $a('chatNote');
-  if (chatChannel === 'modéré') {
-    row.style.display = 'none';
-    note.textContent = LANG==='fr' ? '🛡️ Journal des messages supprimés (staff)' : '🛡️ Deleted-message log (staff)';
-  } else if (!currentUser || isGuest()) {
+  if (!currentUser || isGuest()) {
     row.style.display = 'none';
     note.textContent = LANG==='fr' ? '🔒 Connecte-toi avec un compte vérifié pour discuter' : '🔒 Sign in with a verified account to chat';
   } else if (chatChannel === 'annonce' && !isAdmin()) {
@@ -4906,26 +4893,10 @@ function renderChatMessages(msgs) {
 }
 async function fetchChatMessages() {
   if (!sb || chatFolded) return;
-  if (chatChannel === 'modéré') { fetchModeratedLog(); return; }
   const { data, error } = await sb.from('chat_messages').select('id, pseudo, message, role, created_at')
     .eq('channel', chatChannel).order('created_at', { ascending:false }).limit(50);
   if (error) return;
   renderChatMessages((data||[]).slice().reverse());
-}
-// journal "modéré" : messages supprimés (staff uniquement) — on affiche le pseudo, l'UUID de
-// l'auteur, le message d'origine et le canal, pour tracer la modération
-async function fetchModeratedLog() {
-  const el = $a('chatMessages'); if (!el) return;
-  const { data, error } = await sb.from('chat_deleted').select('channel, author_id, author_pseudo, message, deleted_at')
-    .order('deleted_at', { ascending:false }).limit(50);
-  if (error) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Accès refusé ou schéma non exécuté':'Access denied or schema not run'}</div>`; return; }
-  if (!data || !data.length) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Aucun message supprimé':'No deleted messages'}</div>`; return; }
-  el.innerHTML = data.map(m =>
-    `<div class="chatMsg chan-annonce modMsg">` +
-    `<div class="modTop"><span class="chatPseudo">${escapeHtml(m.author_pseudo||'?')}</span> <span class="modChan">[${escapeHtml(m.channel||'')}]</span></div>` +
-    `<code class="modUuidLine">${m.author_id||''}</code>` +
-    `<div class="chatText">${escapeHtml(m.message||'')}</div></div>`).join('');
-  el.scrollTop = 0;
 }
 async function sendChatMessage() {
   const input = $a('chatInput');
@@ -5447,13 +5418,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V62', d:'04/07/2026 02:34', name:{fr:'Canal Modéré : journal des messages supprimés', en:'Moderated channel: deleted-message log'}, fr:[
-      {t:'new', tx:'Nouveau canal de chat "🛡️ Modéré" visible seulement par l\'admin et les modérateurs : journal de tous les messages supprimés, avec le pseudo de l\'auteur, son UUID, le canal d\'origine et le message'},
-      {t:'change', tx:'Le badge MOD s\'affiche devant le pseudo des modérateurs, et les modérateurs peuvent supprimer des messages dans le chat (le message supprimé est archivé dans le canal Modéré)'},
-    ], en:[
-      {t:'new', tx:'New "🛡️ Moderated" chat channel visible only to admin and moderators: a log of all deleted messages, with the author\'s nickname, their UUID, the original channel and the message'},
-      {t:'change', tx:'The MOD badge shows in front of moderators\' nicknames, and moderators can delete chat messages (the deleted message is archived in the Moderated channel)'},
-    ] },
   { v:'V61', d:'04/07/2026 02:27', name:{fr:'Correctif : rejoindre le World Boss global', en:'Fix: joining the global World Boss'}, fr:[
       {t:'fix', tx:'Quand l\'admin lance un boss pour tous, il apparaît maintenant instantanément pour chaque joueur : l\'état est rafraîchi à l\'ouverture de la page Boss et au démarrage, et le bouton "Combattre" apparaît tout seul si tu es déjà sur la page — tout le monde peut rejoindre'},
     ], en:[
