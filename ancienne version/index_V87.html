@@ -736,8 +736,6 @@
     letter-spacing:.5px; text-transform:uppercase; padding:4px 6px; border-bottom:1px solid #2c2a33; }
   .admTable td { padding:4px 6px; border-bottom:1px solid #201f26; color:var(--ink); }
   .admTable tr.admTop td { color:var(--gold); font-weight:bold; }
-  .admTable tr.admPlayerRow { cursor:pointer; transition:background .15s; }
-  .admTable tr.admPlayerRow:hover { background:rgba(201,165,90,.1); }
   .admTable tr.isYou td { color:var(--gold); font-weight:bold; position:relative; }
   .plNameLink { cursor:pointer; text-decoration:underline dotted; text-underline-offset:2px; }
   .plNameLink:hover { color:var(--gold); }
@@ -5377,13 +5375,12 @@ async function reevalMarket() {
 // (réévaluer marché, resets) en haut, puis les statistiques par catégorie sous forme d'onglets
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
-  const [{data: byHour}, {data: byItem}, {data: wealth}, {data: stats}, {data: playtimeByHour}, {data: playersList}] = await Promise.all([
+  const [{data: byHour}, {data: byItem}, {data: wealth}, {data: stats}, {data: playtimeByHour}] = await Promise.all([
     sb.from('admin_farm_by_hour').select('*'),
     sb.from('admin_farm_by_item').select('*').limit(20),
     sb.from('admin_wealth').select('*'),
     sb.from('player_stats').select('user_id, playtime_sec'),
     sb.from('admin_playtime_by_hour').select('*'),
-    sb.rpc('admin_list_players'),
   ]);
   const playtimeByUser = new Map((stats||[]).map(r => [r.user_id, Number(r.playtime_sec||0)]));
   const fmtPlaytime = sec => {
@@ -5447,21 +5444,7 @@ async function openAdminPanel() {
     <tr><td>#${i+1}</td><td>${(r.user_id||'').slice(0,8)}…</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
   `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 
-  // liste des joueurs connectés/inscrits (admin uniquement) : pseudo, GS, silver, statut en
-  // ligne, et l'UUID copiable en un clic — demande explicite du 2026-07-05
-  const playersHtml = (playersList||[]).map(p => `
-    <tr class="admPlayerRow" data-uuid="${p.user_id}" title="${LANG==='fr'?'Cliquer pour copier l\'UUID':'Click to copy UUID'}">
-      <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
-      <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td><td>${p.lvl||1}</td>
-      <td><code>${(p.user_id||'').slice(0,8)}…</code></td>
-    </tr>`).join('') || `<tr><td colspan="6" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
   const cats = [
-    { id:'players', icon:'👥', label:{fr:'Joueurs',en:'Players'},
-      body: `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits — clique une ligne pour copier son UUID`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered — click a row to copy its UUID`}</div>
-      <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th>UUID</th></tr></thead>
-        <tbody>${playersHtml}</tbody>
-      </table>` },
     { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'},
       body: `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
       <div class="admBars">${hourHtml}</div>
@@ -5556,16 +5539,6 @@ async function openAdminPanel() {
   wireCatTabs();
   refreshModList();
   refreshTesterList();
-  // clic sur une ligne joueur (onglet Joueurs) : copie son UUID dans le presse-papiers
-  $a('infoBody').querySelectorAll('.admPlayerRow').forEach(row => {
-    row.onclick = async () => {
-      try { await navigator.clipboard.writeText(row.dataset.uuid); } catch(e) {}
-      const original = row.style.background;
-      row.style.background = 'rgba(201,165,90,.25)';
-      floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
-      setTimeout(() => { row.style.background = original; }, 600);
-    };
-  });
   $a('btnAddTester').onclick = async () => {
     if (!isAdmin() || !sb) return;
     const uuid = $a('admTesterUuid').value.trim(); if (!uuid) return;
@@ -5738,19 +5711,11 @@ async function showPlayerGear(userId, displayName) {
     `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`);
   const { data, error } = await sb.rpc('get_player_gear', { p_user_id: userId });
   if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${error.message}</div>`; return; }
-  // bouton "Copier UUID" réservé à l'admin — demande explicite du 2026-07-05
-  const copyBtn = isAdmin() ? `<button id="btnCopyGearUuid" style="margin-bottom:8px">📋 ${LANG==='fr'?'Copier UUID':'Copy UUID'}</button>` : '';
-  $a('infoBody').innerHTML = copyBtn +
+  $a('infoBody').innerHTML =
     `<div id="pdWeapons">${readonlyPdSlotsHtml(data, PD_BOTTOM)}</div>` +
     `<div id="paperdoll"><div class="pdCol">${readonlyPdSlotsHtml(data, PD_LEFT)}</div>` +
     `<div class="pdCenter"></div><div class="pdCol">${readonlyPdSlotsHtml(data, PD_RIGHT)}</div></div>` +
     readonlyGearListHtml(data);
-  if (isAdmin()) {
-    $a('btnCopyGearUuid').onclick = async () => {
-      try { await navigator.clipboard.writeText(userId); } catch(e) {}
-      floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
-    };
-  }
 }
 // bascule entre onglets de catégorie repliés dans un même panneau (openInfo) — n'affiche
 // qu'une seule catégorie à la fois, les autres restent en mémoire (display:none)
@@ -6468,13 +6433,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V88', d:'05/07/2026 03:00', name:{fr:'Admin : liste des joueurs + copie UUID', en:'Admin: player list + UUID copy'}, fr:[
-      {t:'admin', tx:'Nouvel onglet "👥 Joueurs" dans le panneau Admin : liste de tous les joueurs inscrits avec statut en ligne, silver, GS, niveau — clique une ligne pour copier son UUID'},
-      {t:'admin', tx:'Depuis le classement, le stuff d\'un joueur consulté par l\'admin propose désormais un bouton "📋 Copier UUID"'},
-    ], en:[
-      {t:'admin', tx:'New "👥 Players" tab in the Admin panel: list of all registered players with online status, silver, GS, level — click a row to copy its UUID'},
-      {t:'admin', tx:'From the leaderboard, a player\'s gear viewed by the admin now offers a "📋 Copy UUID" button'},
-    ] },
   { v:'V87', d:'05/07/2026 02:00', name:{fr:'Widget Suivi : explications sur les timers et le temps de jeu', en:'Tracker widget: timer and playtime clarifications'}, fr:[
       {t:'change', tx:'Le widget de suivi explique désormais (au survol) que "Journ." et "Hebdo" sont le temps avant la remise à zéro des quêtes, et sépare visuellement la section "Temps de jeu" (Total/Aujourd\'hui)'},
     ], en:[
