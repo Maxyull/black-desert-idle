@@ -1051,7 +1051,7 @@
 </div>
 
 <div id="siteFooter">
-  <span data-i18n="footerText">Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</span>
+  <span data-i18n="footerText">Fan-site non officiel, sans lien avec Pearl Abyss ni Black Desert Online. Tous les noms et concepts liés à Black Desert Online sont la propriété de Pearl Abyss Corp. — utilisés ici à titre non commercial, pour l'ambiance uniquement.</span>
 </div>
 
 <div id="infoOverlay">
@@ -5564,7 +5564,7 @@ const I18N = {
   btnAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   btnReevalMarket: { fr:'🔄 Réévaluer le marché', en:'🔄 Reevaluate market' },
-  footerText: { fr:"Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.", en:'Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss.' },
+  footerText: { fr:"Fan-site non officiel, sans lien avec Pearl Abyss ni Black Desert Online. Tous les noms et concepts liés à Black Desert Online sont la propriété de Pearl Abyss Corp. — utilisés ici à titre non commercial, pour l'ambiance uniquement.", en:'Unofficial fan site, not affiliated with Pearl Abyss or Black Desert Online. All Black Desert Online names and concepts are property of Pearl Abyss Corp. — used here non-commercially, for atmosphere only.' },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
@@ -5663,11 +5663,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V65', d:'04/07/2026 05:00', name:{fr:'Mise à jour de la clause de non-affiliation', en:'Updated copyright disclaimer'}, fr:[
-      {t:'change', tx:'Mention légale mise à jour en bas de page et dans le Wiki (À propos) : Black Desert et toutes les images/illustrations/icônes/noms/données du jeu sont la propriété de Pearl Abyss — projet de fan non officiel et gratuit, sans affiliation ni partenariat avec Pearl Abyss'},
-    ], en:[
-      {t:'change', tx:'Updated legal notice at the bottom of the page and in the Wiki (About): Black Desert and all in-game images/illustrations/icons/names/data are property of Pearl Abyss — unofficial, free fan project, no affiliation or partnership with Pearl Abyss'},
-    ] },
   { v:'V64', d:'04/07/2026 04:10', name:{fr:'Renvoi de message, horodatage du chat & boss plus immersif', en:'Message restore, chat timestamps & more immersive boss'}, fr:[
       {t:'new', tx:'Onglet 🛡️ Modéré : bouton "↩ Renvoyer" pour republier un message supprimé à tort dans son canal d\'origine'},
       {t:'new', tx:'Chaque message des canaux Mondial/Trade/Annonce affiche désormais l\'heure (et la date s\'il ne date pas d\'aujourd\'hui)'},
@@ -6303,11 +6298,9 @@ const WIKI_SECTIONS = [
       <p>You get 200 loyalty points per day in your 📬 Mailbox — they stack there permanently and never get lost.</p>` },
   { id:'about', icon:'ℹ️', label:{fr:'À propos',en:'About'},
     fr:`<h3>Noms & identité visuelle</h3>
-      <p>Les noms de zones, monstres et objets sont inspirés de Black Desert Online pour l'ambiance. Les icônes sont des créations originales (aucun asset réel du jeu).</p>
-      <p>Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</p>`,
+      <p>Les noms de zones, monstres et objets sont inspirés de Black Desert Online pour l'ambiance. Les icônes sont des créations originales (aucun asset réel du jeu). Fan-site non officiel, sans lien avec Pearl Abyss.</p>`,
     en:`<h3>Names & visual identity</h3>
-      <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere. Icons are original creations (no real game assets).</p>
-      <p>Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss.</p>` },
+      <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere. Icons are original creations (no real game assets). Unofficial fan site, not affiliated with Pearl Abyss.</p>` },
   { id:'codex', icon:'📚', label:{fr:'Codex des objets',en:'Item Codex'}, codex:true },
 ];
 // génère le codex des objets à partir des données du jeu (matériaux, bijoux, trash, sets)
