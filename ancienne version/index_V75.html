@@ -297,9 +297,6 @@
   #itemPop .ipName { font-size:13px; margin-bottom:4px; }
   #itemPop .ipName.jackpot, #itemPop .ipName.gear { color:var(--gold); } #itemPop .ipName.craft { color:#b48ce8; }
   #itemPop .ipDesc { color:var(--ink-dim); margin-bottom:8px; line-height:1.4; }
-  #itemPop .ipDelta { font-size:11px; margin:-4px 0 8px; line-height:1.5; }
-  #itemPop .statGain { color:#8fc98a; margin-right:6px; }
-  #itemPop .statLoss { color:var(--danger); margin-right:6px; }
   #itemPop button { margin:4px 0 0; font-size:11px; padding:5px; }
 
   #itemTooltip {
@@ -422,12 +419,13 @@
   }
   #userPseudo { color:var(--gold); font-weight:bold; font-size:11.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #uuidRow { display:flex; align-items:center; gap:5px; font-size:9.5px; color:var(--ink-dim); margin-top:2px; }
-  /* toute la case UUID est un bouton "copier" cliquable — l'UUID lui-même n'est plus affiché,
-     seul le clic copie sa valeur réelle dans le presse-papiers (voir btnCopyUuid.onclick) */
+  #uuidLabel { flex-shrink:0; }
+  /* toute la case UUID est un bouton "copier" cliquable */
   #btnCopyUuid {
-    display:flex; align-items:center; justify-content:center; gap:6px; flex:1; min-width:0; width:auto; margin:0;
-    padding:5px 7px; font-size:10.5px; text-align:center; cursor:pointer;
+    display:flex; align-items:center; gap:6px; flex:1; min-width:0; width:auto; margin:0;
+    padding:3px 7px; font-size:10px; text-align:left; cursor:pointer;
   }
+  #btnCopyUuid code { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; color:var(--ink); }
   #uuidCopyHint { flex-shrink:0; color:var(--gold); font-weight:bold; white-space:nowrap; }
   #btnResetDemo, #btnResetAllQuests { border-color:var(--danger) !important; color:#e8a89f; }
   #btnResetDemo:hover, #btnResetAllQuests:hover { background:rgba(192,85,69,.15); }
@@ -1027,8 +1025,6 @@
   #tutorialBox p { margin:0 0 12px; font-size:12px; line-height:1.5; color:var(--ink); }
   #tutorialBox .tutBtns { display:flex; justify-content:space-between; gap:8px; }
   #tutorialBox .tutSkip { width:auto; margin:0; padding:6px 10px; font-size:11px; background:none; border:none; color:var(--ink-dim); }
-  #tutorialBox .tutPrev { width:auto; margin:0; padding:6px 10px; font-size:11px; background:none; border:1px solid var(--gold-dim); color:var(--ink-dim); }
-  #tutorialBox .tutPrev:disabled { opacity:.3; }
   #tutorialBox .tutNext { width:auto; margin:0; padding:6px 16px; font-size:12px; font-weight:bold; }
   #tutorialArrow { position:fixed; z-index:902; width:0; height:0; pointer-events:none; }
   #tutorialArrow.top    { border-left:9px solid transparent; border-right:9px solid transparent; border-bottom:11px solid var(--gold); }
@@ -1136,8 +1132,10 @@
     <span id="saveStatus"></span>
 
     <div id="uuidRow" style="display:none">
-      <button id="btnCopyUuid" title="Cliquer pour copier ton UUID">
-        <span id="uuidCopyHint">📋 <span data-i18n="copyLabel">Copier</span> UUID</span>
+      <span id="uuidLabel">UUID</span>
+      <button id="btnCopyUuid" title="Cliquer pour copier">
+        <code id="uuidValue"></code>
+        <span id="uuidCopyHint">📋 <span data-i18n="copyLabel">Copier</span></span>
       </button>
     </div>
 
@@ -1164,7 +1162,6 @@
     <p id="tutText"></p>
     <div class="tutBtns">
       <button class="tutSkip" id="tutSkipBtn"></button>
-      <button class="tutPrev" id="tutPrevBtn"></button>
       <button class="tutNext" id="tutNextBtn"></button>
     </div>
   </div>
@@ -1316,12 +1313,12 @@
       <div class="catTabs" id="invCatTabs"></div>
       <div class="invTools">
         <button id="btnEquipBest" data-i18n="btnEquipBest">⚡ Équiper le meilleur (socle)</button>
-        <button id="btnSellWorse" data-i18n="btnSellWorse">🗑️ Vendre l'inférieur</button>
+        <button id="btnSellWorse" data-i18n="btnSellWorse">🗑️ Vendre les objets inférieurs ou égaux</button>
       </div>
       <div id="equipBestMsg"></div>
       <div class="invTools">
-        <button id="sellTrash" data-i18n="btnSellTrash" disabled title="Bientôt disponible">🔒 Vendre trash</button>
-        <button id="sellMats" data-i18n="btnSellMats" disabled title="Bientôt disponible">🔒 Vendre mat.</button>
+        <button id="sellTrash" data-i18n="btnSellTrash">Vendre trash</button>
+        <button id="sellMats" data-i18n="btnSellMats">Vendre mat.</button>
         <button id="sortInv" data-i18n="btnSort">Trier</button>
       </div>
       <div id="invGrid"></div>
@@ -4197,7 +4194,6 @@ function renderInventory() {
       cell.onmouseenter = ev => { hoverInvIndex = i; lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, { invIndex:i, ...s }); };
       cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
       cell.onmouseleave = () => { if (hoverInvIndex === i) hoverInvIndex = -1; hideItemTooltip(); };
-      cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showItemMenuAtCell(cell, { invIndex:i, ...s }); };
       cell.ondblclick = ev => { ev.stopPropagation(); hideItemTooltip(); quickAction(i); };
       cell.oncontextmenu = ev => { ev.preventDefault(); ev.stopPropagation(); hideItemTooltip(); showItemMenu(ev.clientX, ev.clientY, { invIndex:i, ...s }); };
     }
@@ -4240,35 +4236,6 @@ function quickAction(i) {
   refreshInvUI();
 }
 
-// stat de référence déjà équipée pour comparer un objet du sac (pour les paires anneaux/boucles,
-// on compare à la pièce la plus faible des deux — celle qui serait remplacée en premier)
-function equippedRefForItem(item) {
-  if (item.kind === 'gear') return EQUIP[item.slot];
-  if (item.kind === 'jackpot') {
-    const accSlot = accSlotFor(item);
-    if (accSlot === 'ring') return itemScore(EQUIP.ring1) <= itemScore(EQUIP.ring2) ? EQUIP.ring1 : EQUIP.ring2;
-    if (accSlot === 'earring') return itemScore(EQUIP.earring1) <= itemScore(EQUIP.earring2) ? EQUIP.earring1 : EQUIP.earring2;
-    return EQUIP[accSlot];
-  }
-  return null;
-}
-// texte de gain/perte de stats (PA/PD/PV) par rapport à ce qui est déjà équipé dans le slot —
-// affiché dans le menu au clic gauche pour décider d'équiper sans avoir à comparer soi-même
-function statDeltaHtml(item) {
-  const ref = equippedRefForItem(item);
-  const cur = effectiveApDp(item);
-  const refStats = ref ? effectiveApDp(ref) : { ap:0, dp:0, hp:0 };
-  const parts = [];
-  const d = (label, a, b) => {
-    const delta = Math.round(a - b);
-    if (!delta) return;
-    parts.push(`<span class="${delta>0?'statGain':'statLoss'}">${delta>0?'+':''}${delta} ${label}</span>`);
-  };
-  d('PA', cur.ap, refStats.ap); d('PD', cur.dp, refStats.dp); d('PV', cur.hp, refStats.hp);
-  if (!parts.length) return '';
-  return `<div class="ipDelta">${ref ? (LANG==='fr'?'vs équipé : ':'vs equipped: ') : (LANG==='fr'?'rien d\'équipé — ':'nothing equipped — ')}${parts.join(' ')}</div>`;
-}
-
 // ---------- popup d'objet + actions ----------
 function showItemMenu(px, py, data) {
   const pop = $('itemPop');
@@ -4281,8 +4248,7 @@ function showItemMenu(px, py, data) {
   if (data.kind === 'craft') desc.push('Composant de craft endgame. À conserver.');
   if (data.equipped) desc.push('Actuellement équipé' + (data.optimizable ? ' — niveau ' + ENH_NAMES[data.enhLv||0] : '') + '.');
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
-  const delta = (!data.equipped && (data.kind === 'gear' || data.kind === 'jackpot')) ? statDeltaHtml(data) : '';
-  pop.innerHTML = html + `<div class="ipDesc">${desc.join('<br>')}</div>` + delta;
+  pop.innerHTML = html + `<div class="ipDesc">${desc.join('<br>')}</div>`;
 
   // actions (libellés bilingues)
   const L = LANG === 'fr'
@@ -4306,12 +4272,6 @@ function showItemMenu(px, py, data) {
   const r = pop.getBoundingClientRect();
   pop.style.left = Math.min(px, window.innerWidth - r.width - 10) + 'px';
   pop.style.top = Math.min(py, window.innerHeight - r.height - 10) + 'px';
-}
-// clic gauche sur une case du sac : ouvre le même menu, mais ANCRÉ à la case (juste en dessous)
-// plutôt qu'au curseur — demande explicite "collé à la case"
-function showItemMenuAtCell(cell, data) {
-  const r = cell.getBoundingClientRect();
-  showItemMenu(r.left, r.bottom + 4, data);
 }
 function addPopBtn(pop, label, fn) {
   const b = document.createElement('button');
@@ -4853,7 +4813,10 @@ function updateUserBar() {
   $a('adminBox').style.display = isAdmin() ? '' : 'none';
   // UUID copiable (utile pour l'ajout de modérateurs) — affiché pour tout compte connecté
   const uuidRow = $a('uuidRow');
-  if (uuidRow) uuidRow.style.display = currentUser ? 'flex' : 'none';
+  if (uuidRow) {
+    uuidRow.style.display = currentUser ? 'flex' : 'none';
+    if (currentUser) $a('uuidValue').textContent = currentUser.id;
+  }
   updatePseudoDisplay();
   if (typeof updateChatInputVisibility === 'function') { updateChatInputVisibility(); fetchChatMessages(); }
 }
@@ -5729,8 +5692,8 @@ $a('btnCopyUuid').onclick = async () => {
   if (!currentUser) return;
   try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
   const hint = $a('uuidCopyHint'); if (!hint) return;
-  hint.innerHTML = LANG==='fr' ? '✓ UUID copié !' : '✓ UUID copied!';
-  setTimeout(() => { hint.innerHTML = '📋 ' + (LANG==='fr'?'Copier':'Copy') + ' UUID'; }, 1200);
+  hint.innerHTML = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
+  setTimeout(() => { hint.innerHTML = '📋 ' + (LANG==='fr'?'Copier':'Copy'); }, 1200);
 };
 $a('btnLinkAccount').onclick = () => {
   // précise que "Se connecter" reprend un compte EXISTANT (contrairement à "Créer un
@@ -5998,7 +5961,7 @@ const I18N = {
   silverHistLbl: { fr:'💰 Historique silver', en:'💰 Silver history' },
   cardEquip: { fr:'Équipement', en:'Equipment' },
   btnEquipBest: { fr:'⚡ Équiper le meilleur (socle)', en:'⚡ Equip best (base stats)' },
-  btnSellWorse: { fr:'🗑️ Vendre l\'inférieur', en:'🗑️ Sell the worse' },
+  btnSellWorse: { fr:'🗑️ Vendre les objets inférieurs ou égaux', en:'🗑️ Sell items worse than or equal to equipped' },
   invFullBanner: { fr:'⚠ Sac plein — les objets restent au sol', en:'⚠ Bag full — items stay on the ground' },
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
   btnReloadUpdate: { fr:'Recharger', en:'Reload' },
@@ -6014,8 +5977,8 @@ const I18N = {
   menuSideRight: { fr:'Droite ▶', en:'Right ▶' },
   cardInv: { fr:'Inventaire', en:'Inventory' },
   lblLevel: { fr:'Niv.', en:'Lvl' },
-  btnSellTrash: { fr:'🔒 Vendre trash', en:'🔒 Sell trash' },
-  btnSellMats: { fr:'🔒 Vendre mat.', en:'🔒 Sell mats' },
+  btnSellTrash: { fr:'Vendre trash', en:'Sell trash' },
+  btnSellMats: { fr:'Vendre mat.', en:'Sell mats' },
   btnSort: { fr:'Trier', en:'Sort' },
   lblWeight: { fr:'Poids', en:'Weight' },
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
@@ -6066,23 +6029,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V76', d:'04/07/2026 15:00', name:{fr:'Tutoriel amélioré, UUID privé, inventaire au clic gauche', en:'Improved tutorial, private UUID, left-click inventory'}, fr:[
-      {t:'fix', tx:'L\'étape "Potions de vie" du tutoriel ne recouvre plus la case qu\'elle doit montrer (placement corrigé)'},
-      {t:'new', tx:'Bouton "← Précédent" dans le tutoriel pour revenir à l\'étape d\'avant'},
-      {t:'new', tx:'Nouvelle étape de tutoriel sur "Équiper le meilleur" : explique qu\'il compare toujours le SOCLE des objets, donc une pièce de plus haut niveau reste préférée même moins forte à l\'instant T (ton futur BiS)'},
-      {t:'change', tx:'L\'UUID n\'est plus affiché en clair : le bouton affiche juste "📋 Copier UUID" et copie la valeur réelle au clic'},
-      {t:'new', tx:'Clic gauche sur une case du sac : ouvre un menu collé à la case (Équiper/Optimiser/Vendre/Jeter) qui affiche en plus le gain ou la perte de PA/PD/PV par rapport à ce qui est déjà équipé'},
-      {t:'change', tx:'Bouton "Vendre les objets inférieurs ou égaux" renommé en "Vendre l\'inférieur"'},
-      {t:'change', tx:'"Vendre trash" et "Vendre mat." sont temporairement verrouillés 🔒 (reviendront avec une utilité dédiée plus tard)'},
-    ], en:[
-      {t:'fix', tx:'The tutorial\'s "HP Potions" step no longer covers the slot it\'s supposed to point at (placement fixed)'},
-      {t:'new', tx:'"← Back" button in the tutorial to return to the previous step'},
-      {t:'new', tx:'New tutorial step on "Equip best": explains it always compares items\' BASE stats, so a higher-tier piece stays preferred even if weaker right now (your future BiS)'},
-      {t:'change', tx:'The UUID is no longer shown in plain text: the button just reads "📋 Copy UUID" and copies the real value on click'},
-      {t:'new', tx:'Left-click on a bag slot: opens a menu attached to the slot (Equip/Enhance/Sell/Drop) that also shows the AP/DP/HP gain or loss versus what\'s currently equipped'},
-      {t:'change', tx:'"Sell items worse than or equal to equipped" button renamed to "Sell the worse"'},
-      {t:'change', tx:'"Sell trash" and "Sell mats" are temporarily locked 🔒 (will return with a dedicated purpose later)'},
-    ] },
   { v:'V75', d:'04/07/2026 14:00', name:{fr:'Tutoriel : étape sur les potions', en:'Tutorial: potion step'}, fr:[
       {t:'new', tx:'Nouvelle étape du tutoriel sur les potions de vie : présente le choix de la taille et le curseur "Boire sous X%"'},
     ], en:[
@@ -6901,7 +6847,7 @@ const TUTORIAL_STEPS = [
   { target:'#skillBar', placement:'top',
     title:{fr:'Sorts automatiques',en:'Automatic skills'},
     text:{fr:'Tes sorts se lancent tout seuls selon une IA de combat. Optimise ton équipement pour qu\'ils tapent plus fort.', en:'Your skills cast themselves based on a combat AI. Improve your gear so they hit harder.'} },
-  { target:'#potSlot', placement:'right',
+  { target:'#potSlot', placement:'top',
     title:{fr:'Potions de vie',en:'HP potions'},
     text:{fr:'Clique ici pour choisir la taille de potion bue automatiquement (prix fixe et soin différents selon la taille), et régler le curseur "Boire sous X%" qui fixe le seuil de PV déclenchant le soin.', en:'Click here to choose the potion size drunk automatically (fixed price and heal that differ by size), and set the "Drink under X%" slider that sets the HP threshold triggering the heal.'},
     before: () => { tutPotWasOpen = $a('potSelect').classList.contains('show'); renderPotSelect(); $a('potSelect').classList.add('show'); },
@@ -6915,9 +6861,6 @@ const TUTORIAL_STEPS = [
   { target:'#invCard', placement:'left',
     title:{fr:'Ton inventaire',en:'Your inventory'},
     text:{fr:'Tout ce que tu ramasses atterrit ici. Les boutons au-dessus t\'aident à équiper le meilleur stuff, vendre le surplus (trash, matériaux, objets inférieurs) ou trier le sac en un clic.', en:'Everything you loot lands here. The buttons above help you equip your best gear, sell the surplus (trash, materials, lower items) or sort your bag in one click.'} },
-  { target:'#btnEquipBest', placement:'bottom',
-    title:{fr:'"Équiper le meilleur" = toujours le meilleur SOCLE',en:'"Equip best" = always the best BASE gear'},
-    text:{fr:'Ce bouton compare le socle (stats de base) de chaque objet, pas ses stats actuelles à l\'écran. Une pièce de plus haut niveau reste donc TOUJOURS préférée à une pièce plus faible même très enchantée : c\'est ton futur BiS (Best in Slot), et l\'enchanter la rendra encore plus forte.', en:'This button compares each item\'s BASE stats, not what\'s currently shown on screen. A higher-tier piece is therefore ALWAYS preferred over a weaker one even if heavily enhanced: it\'s your future BiS (Best in Slot), and enhancing it will make it even stronger.'} },
   { target:'#lootTicker', placement:'left',
     title:{fr:'Le butin en direct',en:'Live loot'},
     text:{fr:'Ce que ton personnage ramasse défile ici, à droite de la zone de jeu, en temps réel.', en:'What your character loots scrolls here, on the right of the game view, in real time.'} },
@@ -6959,7 +6902,7 @@ const TUTORIAL_STEPS = [
     text:{fr:'Ta progression est sauvegardée automatiquement dans le cloud — tu peux te déconnecter puis te reconnecter sans rien perdre.', en:'Your progress is saved automatically in the cloud — you can log out and log back in without losing anything.'} },
   { target:'#uuidRow', placement:'bottom',
     title:{fr:'Ton UUID',en:'Your UUID'},
-    text:{fr:'Cet identifiant unique te sera demandé si le staff doit t\'ajouter un rôle (modérateur, testeur...). Il n\'est pas affiché à l\'écran pour rester privé : clique sur ce bouton pour le copier directement.', en:'This unique ID will be asked from you if the staff needs to grant you a role (moderator, tester...). It isn\'t shown on screen to stay private: click this button to copy it directly.'} },
+    text:{fr:'Cet identifiant unique te sera demandé si le staff doit t\'ajouter un rôle (modérateur, testeur...). Clique dessus pour le copier.', en:'This unique ID will be asked from you if the staff needs to grant you a role (moderator, tester...). Click it to copy it.'} },
   { target:'#btnWiki', placement:'bottom', final:true,
     title:{fr:'Besoin d\'aide plus tard ?',en:'Need help later?'},
     text:{fr:'Tu peux relancer ce tutoriel à tout moment depuis le 📖 Wiki (onglet 🔰 Tutoriel), ou en cliquant sur 🏘️ Velia en haut de la liste des zones.', en:'You can replay this tutorial anytime from the 📖 Wiki (🔰 Tutorial tab), or by clicking 🏘️ Velia at the top of the zone list.'} },
@@ -7007,8 +6950,6 @@ function showTutorialStep() {
   $a('tutTitle').textContent = step.title[LANG];
   $a('tutText').textContent = step.text[LANG];
   $a('tutSkipBtn').textContent = LANG==='fr'?'Passer':'Skip';
-  $a('tutPrevBtn').textContent = LANG==='fr'?'← Précédent':'← Back';
-  $a('tutPrevBtn').disabled = tutorialStepIdx <= 0;
   $a('tutNextBtn').textContent = step.final ? (LANG==='fr'?'Terminer':'Finish') : (LANG==='fr'?'Suivant →':'Next →');
   // certains steps ont besoin de forcer temporairement un état pour être visibles (ex: le suivi de
   // quêtes) — voir tutTrackerForced. Le nettoyage correspondant (after) est appelé en quittant le step.
@@ -7050,11 +6991,6 @@ $a('tutNextBtn').onclick = () => {
   tutorialStepIdx++; showTutorialStep();
 };
 $a('tutSkipBtn').onclick = endTutorial;
-$a('tutPrevBtn').onclick = () => {
-  if (tutorialStepIdx <= 0) return;
-  leaveTutorialStep();
-  tutorialStepIdx--; showTutorialStep();
-};
 
 // ---------- suivi des patch notes lus ----------
 // principe demandé : le tag NEW reste visible pendant TOUTE la session en cours (même après
