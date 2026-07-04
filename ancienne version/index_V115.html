@@ -334,16 +334,14 @@
   /* ===== inventaire (permanent) ===== */
   .invTools { display:flex; gap:5px; margin-bottom:7px; }
   .invTools > button { margin:0; font-size:10.5px; padding:5px 4px; flex:1; }
-  /* Rangée "Équiper meilleur" / "Vendre" : 50/50 strict (demande explicite du 2026-07-07,
-     après plusieurs itérations sur la répartition 20%/34%). "Racheter" (↩️) n'est plus un 3e
-     bouton séparé mais une icône superposée sur le coin droit de "Vendre" (15% de sa largeur),
-     pour bien montrer qu'il agit SUR la dernière vente plutôt qu'à côté d'elle. */
-  .invToolsMain > button, .invToolsMain > .sellWorseGroup { flex:0 0 50%; min-width:0; }
-  .sellWorseGroup { position:relative; display:block; }
-  .sellWorseGroup #btnSellWorse { width:100%; margin:0; font-size:9.5px; padding:5px 3px; min-width:0;
+  /* "Vendre l'inférieur" + "Racheter" (icône seule) regroupés à droite — demande explicite du
+     2026-07-07 : avant, "Racheter" était un gros bouton séparé. Élargi de 20% à 34% le même jour
+     (retour utilisateur) : à 20% le texte "Vendre l'inférieur" était tronqué en "Ven..." illisible
+     — "Équiper le meilleur" a largement la place de rétrécir pour compenser. */
+  .sellWorseGroup { flex:0 0 34%; display:flex; gap:3px; min-width:0; }
+  .sellWorseGroup #btnSellWorse { flex:1; margin:0; font-size:9.5px; padding:5px 3px; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .sellWorseGroup #btnBuyBackWorse { position:absolute; top:0; right:0; bottom:0; width:15%;
-    margin:0; padding:0; font-size:11px; border-left:1px solid #3a3742; }
+  .sellWorseGroup #btnBuyBackWorse { flex:0 0 22px; margin:0; padding:5px 0; font-size:11px; }
   #invGrid, .admInvGrid {
     display:grid; grid-template-columns:repeat(8, 1fr); gap:3px;
     overflow-y:auto; max-height:188px; align-content:start; padding-right:2px;
@@ -1609,10 +1607,10 @@
         <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
       <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
       <div class="catTabs" id="invCatTabs"></div>
-      <div class="invTools invToolsMain">
-        <button id="btnEquipBest" data-i18n="btnEquipBest" title="Équipe automatiquement, sur chaque emplacement, la meilleure pièce de ton sac (comparée sur ses stats de base)">⚡ Équiper meilleur</button>
+      <div class="invTools">
+        <button id="btnEquipBest" data-i18n="btnEquipBest" title="Équipe automatiquement, sur chaque emplacement, la meilleure pièce de ton sac (comparée sur ses stats de base)">⚡ Équiper le meilleur (socle)</button>
         <span class="sellWorseGroup">
-          <button id="btnSellWorse" data-i18n="btnSellWorse" title="Vendre : vend tout objet strictement moins bon que ce qui est déjà équipé (garde toujours la meilleure pièce de chaque emplacement)">🗑️ Vendre</button><button id="btnBuyBackWorse" disabled title="Racheter : annule la dernière vente faite via le bouton Vendre (restaure les objets et le silver dépensé)">↩️</button>
+          <button id="btnSellWorse" data-i18n="btnSellWorse" title="Vendre l'inférieur : vend tout objet strictement moins bon que ce qui est déjà équipé">🗑️ Vendre l'inférieur</button><button id="btnBuyBackWorse" disabled title="Rachète la dernière vente d'objets inférieurs">↩️</button>
         </span>
       </div>
       <div id="equipBestMsg"></div>
@@ -6763,55 +6761,31 @@ async function showPlayerGear(userId, displayName) {
 // explicite du 2026-07-06
 async function showPlayerInventoryWindow(userId, displayName) {
   if (!isAdmin() || !sb) return;
-  const win = window.open('', '_blank', 'width=620,height=760');
+  const win = window.open('', '_blank', 'width=560,height=680');
   if (!win) { floatTxt(P.x, P.y, 100, LANG==='fr'?'Popup bloquée par le navigateur':'Popup blocked by browser', { hurt:true }); return; }
   const safeName = escapeHtml(displayName || '?');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>🎒 ${safeName}</title><style>
     body{background:#141319;color:#e8e3d8;font-family:Georgia,serif;padding:14px;margin:0;}
     h2{font-size:15px;margin:0 0 10px;}
-    h3{font-size:12px;margin:14px 0 6px;color:#c9a55a;font-weight:normal;letter-spacing:.5px;}
     .admSummary{font-size:11px;color:#a89f8c;margin-bottom:10px;}
-    .admEmpty{color:#a89f8c;font-size:12px;font-style:italic;text-align:center;padding:10px 0;}
+    .admEmpty{color:#a89f8c;font-size:12px;}
     .admInvGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:3px;}
     .cell{aspect-ratio:1;background:#1c1a22;border:1px solid #2c2a33;position:relative;font-size:14px;
       display:flex;align-items:center;justify-content:center;border-radius:3px;}
-    .cell.catHidden{display:none;}
     .qty{position:absolute;bottom:1px;right:2px;font-size:8.5px;color:#cfc8ba;}
-    .paperdollBox{display:flex;justify-content:center;gap:22px;margin-bottom:8px;}
-    .pdCol{display:flex;flex-direction:column;gap:5px;}
-    #pdRight{flex-direction:column;flex-wrap:wrap;max-height:153px;gap:5px;}
-    .pdSlot{width:42px;height:42px;border:1px solid #3a3742;background:rgba(20,19,26,.9);
-      display:flex;align-items:center;justify-content:center;font-size:18px;position:relative;border-radius:3px;}
-    .pdSlot.filled{border-color:#c9a55a88;background:#231f16;}
-    .pdSlot.empty{opacity:.42;filter:grayscale(1);}
-    .gicon{width:1.5em;height:1.5em;vertical-align:middle;flex-shrink:0;}
-    #pdWeapons{display:flex;justify-content:center;gap:6px;padding:6px 0 10px;border-bottom:1px solid #2c2a33;margin-bottom:8px;}
-    #pdWeapons .pdSlot{width:46px;height:46px;}
-    .admTable{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:4px;}
-    .admTable th{text-align:left;color:#a89f8c;font-weight:normal;font-size:9.5px;padding:2px 6px;}
-    .admTable td{padding:4px 6px;border-bottom:1px solid #201f26;color:#e8e3d8;}
-    .catTabs{display:flex;gap:5px;flex-wrap:wrap;margin:0 0 8px;}
-    .catTab{width:auto;margin:0;padding:5px 9px;font-size:10.5px;background:transparent;color:#e8e3d8;
-      border:1px solid #3a3742;border-radius:3px;cursor:pointer;font-family:inherit;}
-    .catTab.active{border-color:#c9a55a;color:#c9a55a;}
-    .catTab.locked{opacity:.45;cursor:not-allowed;}
-    button{font-family:inherit;}
   </style></head><body><h2>🎒 ${safeName}</h2><div id="body"><div class="admEmpty">Chargement…</div></div></body></html>`);
   win.document.close();
   // à la fermeture de cette fenêtre popup, on revient sur le panneau admin dans la fenêtre principale
   const checkClosed = setInterval(() => {
     if (win.closed) { clearInterval(checkClosed); openAdminPanel(); }
   }, 400);
-  const [{ data: gear, error: gearErr }, { data: inv0, error: invErr }] = await Promise.all([
-    sb.rpc('get_player_gear', { p_user_id: userId }),
-    sb.rpc('admin_get_player_inventory', { p_user_id: userId }),
-  ]);
+  const { data, error } = await sb.rpc('admin_get_player_inventory', { p_user_id: userId });
   if (win.closed) return;
   const bodyEl = win.document.getElementById('body');
-  if (gearErr || invErr) { bodyEl.innerHTML = `<div class="admEmpty">${escapeHtml((gearErr||invErr).message)}</div>`; return; }
-  const inv = Array.isArray(inv0) ? inv0 : [];
+  if (error) { bodyEl.innerHTML = `<div class="admEmpty">${escapeHtml(error.message)}</div>`; return; }
+  const inv = Array.isArray(data) ? data : [];
   const used = inv.filter(Boolean).length;
-  function cellHtml(s, visible) {
+  const cellsHtml = inv.map(s => {
     if (!s) return `<div class="cell"></div>`;
     const apDp = (s.kind === 'gear' || s.kind === 'jackpot') ? effectiveApDp(s) : null;
     const bits = [tr(s.name)];
@@ -6820,38 +6794,13 @@ async function showPlayerInventoryWindow(userId, displayName) {
     if (apDp && apDp.dp) bits.push('+'+apDp.dp+' PD');
     if (apDp && apDp.hp) bits.push('+'+apDp.hp+' PV');
     if (s.enhLv) bits.push(ENH_NAMES[s.enhLv]);
-    return `<div class="cell${visible?'':' catHidden'}" title="${escapeHtml(bits.join(' · '))}">` +
+    return `<div class="cell" title="${escapeHtml(bits.join(' · '))}">` +
       `<span style="color:${s.color}">${s.icon}</span>` +
       `${s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : ''}</div>`;
-  }
-  let invCat = 'normal';
-  function renderInvPane() {
-    const cat = INV_CATEGORIES.find(c => c.id === invCat) || INV_CATEGORIES[0];
-    const gridEl = win.document.getElementById('admGrid');
-    if (!gridEl) return;
-    gridEl.innerHTML = inv.map(s => cellHtml(s, !s || cat.kinds.includes(s.kind))).join('');
-  }
-  const tabsHtml = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCat?' active':''}${c.locked?' locked':''}"` +
-    `${c.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-cat="${c.id}">${c.locked?'🔒 ':''}${c.icon} ${c.label[LANG]}</button>`).join('');
+  }).join('');
   bodyEl.innerHTML =
-    `<h3>${LANG==='fr'?'Équipement':'Gear'}</h3>` +
-    `<div id="pdWeapons">${readonlyPdSlotsHtml(gear, PD_BOTTOM)}</div>` +
-    `<div class="paperdollBox"><div class="pdCol">${readonlyPdSlotsHtml(gear, PD_LEFT)}</div>` +
-    `<div class="pdCol" id="pdRight">${readonlyPdSlotsHtml(gear, PD_RIGHT)}</div></div>` +
-    readonlyGearListHtml(gear) +
-    `<h3>${LANG==='fr'?'Sac':'Bag'}</h3>` +
     `<div class="admSummary">${used} / ${inv.length || INV_SIZE} ${LANG==='fr'?'cases utilisées':'slots used'}</div>` +
-    `<div class="catTabs">${tabsHtml}</div>` +
-    `<div class="admInvGrid" id="admGrid"></div>`;
-  win.document.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
-    btn.onclick = () => {
-      invCat = btn.dataset.cat;
-      win.document.querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      renderInvPane();
-    };
-  });
-  renderInvPane();
+    `<div class="admInvGrid">${cellsHtml}</div>`;
 }
 // bascule entre onglets de catégorie repliés dans un même panneau (openInfo) — n'affiche
 // qu'une seule catégorie à la fois, les autres restent en mémoire (display:none)
@@ -7913,13 +7862,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V116', d:'07/07/2026 18:00', name:{fr:'Inventaire admin complet, boutons 50/50', en:'Full admin inventory, 50/50 buttons'}, fr:[
-      {t:'fix', tx:'La fenêtre popup "Inventaire" du panneau admin n\'affichait qu\'une grille brute — elle montre maintenant l\'équipement porté (comme le paperdoll normal) ET les 5 onglets de catégorie (Normal/Optimisation/Consommable/RNG/Trésors), comme dans l\'inventaire du joueur'},
-      {t:'change', tx:'Boutons "Équiper meilleur" / "Vendre" : répartition stricte 50%/50% au lieu de 66%/34%. Le bouton "↩️ Racheter" n\'est plus un 3e bouton séparé : il se superpose désormais sur le coin droit de "Vendre" (15% de sa largeur) pour bien montrer qu\'il annule sa dernière action. Les 3 boutons ont chacun une infobulle expliquant leur fonctionnement au survol'},
-    ], en:[
-      {t:'fix', tx:'The admin panel\'s "Inventory" popup window only showed a raw grid — it now also shows the equipped gear (like the normal paperdoll) AND the 5 category tabs (Normal/Enhancement/Consumable/RNG/Treasures), matching the player\'s own inventory view'},
-      {t:'change', tx:'"Equip best" / "Sell" buttons: strict 50%/50% split instead of 66%/34%. The "↩️ Buy back" button is no longer a separate 3rd button: it now overlaps the right edge of "Sell" (15% of its width) to make clear it undoes that specific action. All 3 buttons now have a hover tooltip explaining what they do'},
-    ] },
   { v:'V115', d:'07/07/2026 17:00', name:{fr:'Silhouette originale du Pirate (Repaire des Pirates)', en:'Original Pirate silhouette (Pirate Hideout)'}, fr:[
       {t:'new', tx:'Nouvelle silhouette originale pour le Pirate (Repaire des Pirates, juste après Ruines de Protty) : humanoïde barbu au bandana rouge, torse entrouvert, lame à la main qui s\'étend lors de l\'attaque — au lieu de la silhouette générique partagée par les autres zones'},
     ], en:[
