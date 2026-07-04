@@ -146,6 +146,15 @@ begin
 end;
 $$;
 
+-- ⚠️ FAILLE corrigée le 2026-07-07 (audit anti-triche) : pour un ordre de VENTE, item_snapshot
+-- était bien re-dérivé du VRAI objet en inventaire (l'acheteur reçoit toujours le bon objet), mais
+-- item_key/item_name/item_kind (utilisés pour l'AFFICHAGE de l'annonce et la correspondance)
+-- venaient directement des paramètres du CLIENT, jamais vérifiés contre l'objet réel. Un vendeur
+-- malveillant pouvait mettre en vente un objet sans valeur en étiquetant l'annonce comme un objet
+-- de grande valeur (arnaque à l'appât), ou casser la livraison en mentant sur item_kind. Corrigé :
+-- pour une vente, ces 3 champs sont désormais TOUJOURS recalculés depuis l'objet réel de
+-- l'inventaire, jamais depuis les paramètres du client (qui ne servent plus que pour un achat, où
+-- il n'y a pas d'objet à mal étiqueter).
 create or replace function public.market_place_order(
   p_side text, p_item_key text, p_item_name text, p_item_kind text,
   p_price numeric, p_qty int, p_inv_index int default null, p_item_snapshot jsonb default null
@@ -162,6 +171,9 @@ declare
   v_item jsonb;
   v_have int;
   v_order_id bigint;
+  v_real_name text;
+  v_real_kind text;
+  v_real_key text;
 begin
   if v_uid is null then raise exception 'Non authentifié'; end if;
   if coalesce((auth.jwt()->>'is_anonymous')::boolean, true) then
@@ -170,7 +182,6 @@ begin
   if p_side not in ('buy','sell') then raise exception 'Côté invalide'; end if;
   if p_price is null or p_price <= 0 then raise exception 'Prix invalide'; end if;
   if p_qty is null or p_qty <= 0 then raise exception 'Quantité invalide'; end if;
-  if p_item_kind <> 'material' and p_qty <> 1 then raise exception 'Quantité doit être 1 pour l''équipement/bijoux'; end if;
 
   select pseudo into v_pseudo from public.profiles where user_id = v_uid;
 
@@ -178,19 +189,25 @@ begin
   if v_save is null then raise exception 'Sauvegarde introuvable'; end if;
 
   if p_side = 'buy' then
+    if p_item_kind <> 'material' and p_qty <> 1 then raise exception 'Quantité doit être 1 pour l''équipement/bijoux'; end if;
     v_cost := ceil(p_price * p_qty);
     v_silver := coalesce((v_save->'S'->>'silver')::bigint, 0);
     if v_silver < v_cost then raise exception 'Silver insuffisant'; end if;
     v_save := jsonb_set(v_save, array['S','silver'], to_jsonb(v_silver - v_cost::bigint));
     update public.game_saves set save_data = v_save where user_id = v_uid;
+    v_real_name := p_item_name; v_real_kind := p_item_kind; v_real_key := p_item_key;
   else
     if p_inv_index is null then raise exception 'Emplacement d''inventaire requis pour vendre'; end if;
     v_item := v_save->'INV'->p_inv_index;
     if v_item is null or v_item = 'null'::jsonb then raise exception 'Emplacement vide'; end if;
-    if p_item_kind = 'material' then
+    v_real_name := v_item->>'name';
+    v_real_kind := v_item->>'kind';
+    if p_qty <> 1 and v_real_kind <> 'material' then raise exception 'Quantité doit être 1 pour l''équipement/bijoux'; end if;
+    if v_real_kind = 'material' then
       v_have := coalesce((v_item->>'qty')::int, 0);
       if v_have < p_qty then raise exception 'Quantité insuffisante'; end if;
       p_item_snapshot := (v_item - 'qty') || jsonb_build_object('qty', 1);
+      v_real_key := 'material:' || v_real_name;
       if v_have = p_qty then
         v_save := jsonb_set(v_save, array['INV', p_inv_index::text], 'null'::jsonb);
       else
@@ -198,16 +215,17 @@ begin
       end if;
     else
       p_item_snapshot := v_item;
+      v_real_key := 'gear:' || v_real_name || '+' || coalesce((v_item->>'enhLv')::int, 0);
       v_save := jsonb_set(v_save, array['INV', p_inv_index::text], 'null'::jsonb);
     end if;
     update public.game_saves set save_data = v_save where user_id = v_uid;
   end if;
 
   insert into public.market_orders (user_id, pseudo, item_key, item_name, item_kind, item_snapshot, side, price, qty, qty_original)
-    values (v_uid, coalesce(v_pseudo, 'Joueur'), p_item_key, p_item_name, p_item_kind, p_item_snapshot, p_side, p_price, p_qty, p_qty)
+    values (v_uid, coalesce(v_pseudo, 'Joueur'), v_real_key, v_real_name, v_real_kind, p_item_snapshot, p_side, p_price, p_qty, p_qty)
     returning id into v_order_id;
 
-  perform public.market_match_item(p_item_key);
+  perform public.market_match_item(v_real_key);
   return v_order_id;
 end;
 $$;

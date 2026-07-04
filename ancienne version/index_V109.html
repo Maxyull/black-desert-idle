@@ -790,23 +790,12 @@
     border-radius:8px; vertical-align:middle;
   }
   #patchBadge.show, #questBadge.show, #mailBadge.show, #notifBadge.show { display:inline-flex; }
-  /* centre de notifications — refait proprement le 2026-07-07 : sections par importance
-     (Important/Réussites/Activité) au lieu d'une liste plate, avec un accent de couleur par
-     catégorie pour distinguer d'un coup d'oeil ce qui compte vraiment */
-  .notifSummary { font-size:10.5px; color:var(--ink-dim); margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #2c2a33; }
-  .notifSectionTitle { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim);
-    margin:12px 0 4px; display:flex; align-items:center; gap:6px; }
-  .notifSectionTitle:first-of-type { margin-top:0; }
-  .notifSectionCount { background:#232128; color:var(--ink-dim); font-size:9px; padding:1px 6px; border-radius:8px; }
-  .notifRow { display:flex; align-items:flex-start; gap:9px; padding:8px 8px; margin-bottom:4px;
-    border-left:3px solid #3a3742; background:rgba(255,255,255,.015); }
-  .notifRow.important { border-left-color:var(--danger); background:rgba(192,85,69,.06); }
-  .notifRow.success { border-left-color:var(--gold); background:rgba(201,165,90,.05); }
-  .notifRow.info { border-left-color:#5a8fc8; }
+  /* centre de notifications */
+  .notifRow { display:flex; align-items:flex-start; gap:9px; padding:8px 0; border-bottom:1px solid #232128; }
+  .notifRow:last-child { border-bottom:none; }
   .notifIcon { font-size:18px; flex-shrink:0; width:24px; text-align:center; }
   .notifBody { flex:1; min-width:0; }
   .notifTitle { font-size:11px; color:var(--gold); font-weight:bold; }
-  .notifRow.important .notifTitle { color:#e8a89f; }
   .notifText { font-size:11.5px; color:var(--ink); }
   .notifTime { font-size:9.5px; color:var(--ink-dim); flex-shrink:0; white-space:nowrap; }
   .betaTag {
@@ -2186,12 +2175,8 @@ function achCat(id) {
 // niveau, butin rare, victoire de boss...), en plus des toasts éphémères déjà existants ----------
 let NOTIF_LOG = [];
 let notifUnread = 0;
-// cat : 'important' (nécessite l'attention du joueur, ex: reset de compte) | 'success' (réussite/
-// progression positive) | 'info' (routine) — sert à trier/distinguer visuellement dans le centre
-// de notifications refait le 2026-07-07 ("qu'on y comprenne quelque chose avec ce qui est
-// important ou non")
-function pushNotif(icon, title, text, cat) {
-  NOTIF_LOG.unshift({ icon, title, text, t: Date.now(), cat: cat || 'info' });
+function pushNotif(icon, title, text) {
+  NOTIF_LOG.unshift({ icon, title, text, t: Date.now() });
   if (NOTIF_LOG.length > 40) NOTIF_LOG.length = 40;
   notifUnread++;
   updateNotifBadge();
@@ -2228,7 +2213,7 @@ function showResetNotice(icon, title, body) {
   $('resetNoticeTitle').textContent = title;
   $('resetNoticeBody').innerHTML = body;
   $('resetNoticeOverlay').classList.add('show');
-  pushNotif(icon || '🔔', title, body.replace(/<[^>]+>/g, ''), 'important');
+  pushNotif(icon || '🔔', title, body.replace(/<[^>]+>/g, ''));
 }
 $('resetNoticeClose').onclick = () => $('resetNoticeOverlay').classList.remove('show');
 // réclame une éventuelle notice en attente à la connexion (livrée une seule fois, voir
@@ -2243,41 +2228,14 @@ async function checkPendingNotice() {
     }
   } catch (e) {}
 }
-// centre de notifications refait proprement le 2026-07-07 : sépare ce qui est IMPORTANT (nécessite
-// l'attention, ex: reset de compte) du reste (succès/progression), au lieu d'une simple liste plate
-const NOTIF_CAT_META = {
-  important: { fr:'⚠️ Important', en:'⚠️ Important' },
-  success:   { fr:'🏆 Réussites', en:'🏆 Achievements' },
-  info:      { fr:'📰 Activité',  en:'📰 Activity' },
-};
-function notifRowHtml(n) {
-  return `<div class="notifRow ${n.cat}">
-    <div class="notifIcon">${n.icon}</div>
-    <div class="notifBody"><div class="notifTitle">${escapeHtml(n.title)}</div><div class="notifText">${escapeHtml(n.text)}</div></div>
-    <div class="notifTime">${fmtNotifTime(n.t)}</div>
-  </div>`;
-}
 function openNotifCenter() {
   notifUnread = 0;
   updateNotifBadge();
-  if (!NOTIF_LOG.length) {
-    openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications',
-      `<div class="admEmpty">${LANG==='fr'?'Aucune notification pour l\'instant':'No notifications yet'}</div>`);
-    return;
-  }
-  // 3 sections claires, dans l'ordre de priorité : Important (nécessite l'attention) → Réussites
-  // (succès/boss/niveau) → Activité — chacune n'apparaît que si elle contient quelque chose
-  const important = NOTIF_LOG.filter(n => n.cat === 'important');
-  const success = NOTIF_LOG.filter(n => n.cat === 'success');
-  const info = NOTIF_LOG.filter(n => n.cat === 'info');
-  const section = (cat, items) => !items.length ? '' :
-    `<div class="notifSectionTitle">${NOTIF_CAT_META[cat][LANG]} <span class="notifSectionCount">${items.length}</span></div>` +
-    items.map(notifRowHtml).join('');
-  const html = section('important', important) + section('success', success) + section('info', info);
-  const summary = `<div class="notifSummary">${LANG==='fr'
-    ? `${NOTIF_LOG.length} au total${important.length ? ` · ${important.length} important${important.length>1?'s':''}` : ''}`
-    : `${NOTIF_LOG.length} total${important.length ? ` · ${important.length} important` : ''}`}</div>`;
-  openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications', summary + html);
+  const rows = NOTIF_LOG.map(n => `<div class="notifRow"><div class="notifIcon">${n.icon}</div>` +
+    `<div class="notifBody"><div class="notifTitle">${escapeHtml(n.title)}</div><div class="notifText">${escapeHtml(n.text)}</div></div>` +
+    `<div class="notifTime">${fmtNotifTime(n.t)}</div></div>`).join('');
+  openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications',
+    rows || `<div class="admEmpty">${LANG==='fr'?'Aucune notification pour l\'instant':'No notifications yet'}</div>`);
 }
 
 function checkAchievements() {
@@ -2288,7 +2246,7 @@ function checkAchievements() {
       S.achUnlocked[a.id] = Date.now();
       S.silver += a.reward; S.silverEarned += a.reward;
       showAchToast(a);
-      pushNotif('🏅', LANG==='fr'?'Succès débloqué':'Achievement unlocked', a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)', 'success');
+      pushNotif('🏅', LANG==='fr'?'Succès débloqué':'Achievement unlocked', a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)');
       logToDiscord('🏅 Succès débloqué', `**${myPseudo||'Joueur'}** — ${a.name.fr} (+${fmt(a.reward)} 🪙)`, 0xc9a55a);
       unlocked = true;
     }
@@ -2749,7 +2707,7 @@ async function endBossFight(win) {
     invAdd({ key:b.matKey, name:b.matName, kind:'material', icon:b.matIcon, color:'#c9c9c9', qty, stackable:true, weight:0.1, val:5 });
     const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
     rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${qty} × ${b.matName}</div>`;
-    pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
+    pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙');
     logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
     refreshStatsOnly(); hud();
   }
@@ -2846,9 +2804,7 @@ function bossLoop(now) {
   bossState.hits = bossState.hits.filter(h => h.life > 0);
   drawBossRoom(now/1000);
   // HUD
-  // maxHp peut être 0 (ex: boss despawn par l'admin pendant qu'on est encore dans l'arène) —
-  // sans ce garde-fou, hp/0*100 = NaN et affiche "NaN%" — bug trouvé le 2026-07-07
-  const hpPct = bossState.maxHp > 0 ? bossState.hp/bossState.maxHp*100 : 0;
+  const hpPct = bossState.hp/bossState.maxHp*100;
   $('bossHpBar').style.width = hpPct+'%';
   $('bossHpBar').classList.toggle('low', hpPct <= 20);
   $('bossHpTxt').innerHTML = `<span class="bhpPct">${hpPct.toFixed(1)}%</span><span class="bhpNum">(${fmt(Math.ceil(bossState.hp))} / ${fmt(bossState.maxHp)})</span>`;
@@ -4105,7 +4061,7 @@ function gainXp(n) {
     S.xpNext = xpNeededFor(S.lvl);
     S.hpMax += 8; P.hp = effHpMax();
     floatTxt(P.x,P.y,115,'NIVEAU '+S.lvl,{lvl:true});
-    pushNotif('⭐', LANG==='fr'?'Niveau supérieur':'Level up', (LANG==='fr'?'Niveau ':'Level ')+S.lvl, 'info');
+    pushNotif('⭐', LANG==='fr'?'Niveau supérieur':'Level up', (LANG==='fr'?'Niveau ':'Level ')+S.lvl);
   }
 }
 
@@ -7599,15 +7555,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V110', d:'07/07/2026 09:30', name:{fr:'Audit anti-triche & notifications refaites', en:'Anti-cheat audit & reworked notifications'}, fr:[
-      {t:'fix',     tx:'Corrigé un "NaN%" possible sur la barre de vie du boss (division par zéro si les PV max valent 0, ex: juste après un despawn)'},
-      {t:'exploit', tx:'Faille trouvée en audit : sur le marché, un vendeur pouvait mettre en vente un objet sans valeur en étiquetant l\'annonce comme un objet précieux (arnaque à l\'appât) — le nom/type de l\'annonce est désormais TOUJOURS recalculé depuis l\'objet réellement en vente, jamais depuis ce que le client prétend'},
-      {t:'change',  tx:'Centre de notifications entièrement refait : regroupé en 3 sections claires (⚠️ Important, 🏆 Réussites, 📰 Activité) avec un code couleur par catégorie, au lieu d\'une simple liste plate'},
-    ], en:[
-      {t:'fix',     tx:'Fixed a possible "NaN%" on the boss HP bar (division by zero if max HP is 0, e.g. right after a despawn)'},
-      {t:'exploit', tx:'Flaw found in audit: on the market, a seller could list a worthless item while labeling it as a valuable one (bait-and-switch scam) — the listing\'s name/type is now ALWAYS recalculated from the item actually being sold, never from what the client claims'},
-      {t:'change',  tx:'Notification center fully reworked: grouped into 3 clear sections (⚠️ Important, 🏆 Achievements, 📰 Activity) with a color code per category, instead of a flat list'},
-    ] },
   { v:'V109', d:'07/07/2026 08:00', name:{fr:'Marché en vitrine & correctif zones de farm', en:'Marketplace browse view & farm zones fix'}, fr:[
       {t:'new',    tx:'Marché commun repensé en vitrine (inspirée d\'une référence fournie) : parcours les objets en vente sous forme de cartes (icône, vendeur, temps, prix), avec filtre par catégorie, recherche, tri, et un panneau de détail complet avec comparaison face à ton équipement actuel'},
       {t:'new',    tx:'Achat en un clic depuis la vitrine : pose automatiquement un ordre d\'achat au prix exact de l\'annonce (exécution immédiate garantie)'},
