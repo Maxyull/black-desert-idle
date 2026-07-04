@@ -50,6 +50,12 @@ create table if not exists public.boss_claims (
 alter table public.boss_claims enable row level security;
 
 -- l'admin lance le boss avec des PV partagés (p_hp)
+-- ⚠️ une ancienne version à 2 arguments (sans p_hp) avait été laissée en base par une exécution
+-- précédente de ce fichier (avant l'ajout de p_hp) : "create or replace" ne remplace QUE la
+-- signature identique, donc les deux versions coexistaient et PostgREST pouvait choisir la
+-- mauvaise (le boss admin ne repartait alors jamais avec des PV frais) — bug confirmé et corrigé
+-- le 2026-07-06. Ce drop empêche que ça se reproduise si ce fichier est ré-exécuté tel quel.
+drop function if exists public.admin_spawn_boss(text, int);
 create or replace function public.admin_spawn_boss(p_boss_id text, p_minutes int default 15, p_hp numeric default 1000000)
 returns void
 language plpgsql security definer
