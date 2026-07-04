@@ -206,12 +206,8 @@
   #zoneList::-webkit-scrollbar-thumb { background:#3a3742; }
   .zRow {
     display:flex; align-items:center; gap:6px; padding:4px 5px;
-    border-bottom:1px solid #232128; border-left:2px solid transparent; font-size:10.5px; cursor:pointer;
+    border-bottom:1px solid #232128; font-size:10.5px; cursor:pointer;
   }
-  /* en-tête de groupe de zones par palier de stuff (couleur = couleur du stuff dans l'inventaire) */
-  .zTierHead { display:flex; align-items:center; gap:5px; padding:6px 5px 2px; font-size:9.5px;
-    letter-spacing:.5px; text-transform:uppercase; color:var(--ink-dim); }
-  .zTierDot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
   .zRow:hover { background:#232028; }
   .zRow.current { background:#26232e; border-left:2px solid var(--gold); }
   .zRow .zname { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -2086,20 +2082,7 @@ async function refreshLiveBoss() {
   if (!sb) return;
   const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
   try {
-    // ensure_scheduled_boss vérifie CÔTÉ SERVEUR si une occurrence du planning (Kzarka) doit être
-    // en cours maintenant et, si oui, s'assure que live_boss la reflète (sans écraser un spawn admin
-    // déjà actif) — rend le boss du planning RÉELLEMENT partagé (PV communs, tout le monde se voit
-    // dans l'arène) au lieu d'une instance solo par joueur. Demande explicite du 2026-07-06.
-    // Retombe sur une simple lecture si l'appel échoue, pour ne jamais bloquer l'affichage du lobby.
-    let data = null;
-    try {
-      const r = await sb.rpc('ensure_scheduled_boss');
-      data = Array.isArray(r.data) ? r.data[0] : r.data;
-    } catch (e) {}
-    if (!data) {
-      const r = await sb.from('live_boss').select('boss_id, spawned_at, expires_at, hp, max_hp').eq('id', 1).maybeSingle();
-      data = r.data;
-    }
+    const { data } = await sb.from('live_boss').select('boss_id, spawned_at, expires_at, hp, max_hp').eq('id', 1).maybeSingle();
     if (data && data.boss_id && BOSS_ROSTER[data.boss_id] && new Date(data.expires_at).getTime() > Date.now()) {
       liveBoss = { boss: data.boss_id, time: new Date(data.spawned_at).getTime(), expires: new Date(data.expires_at).getTime(),
                    hp: Number(data.hp||0), maxHp: Number(data.max_hp||0) };
@@ -4221,27 +4204,13 @@ function buildZoneList() {
     `<span class="zreq" style="width:auto">${LANG==='fr'?'Aucun monstre':'No monsters'}</span>`;
   veliaRow.onclick = () => { if (!atVelia) goToVelia(); };
   list.appendChild(veliaRow);
-  // zones regroupées par palier de stuff (armure + bijou) — demande explicite du 2026-07-06 :
-  // un en-tête coloré (pastille = couleur du palier) sépare les groupes de zones au lieu d'une
-  // liste plate, pour bien voir quel stuff on farm dans quelle zone
-  let lastTier = null;
   ZONES.forEach((z,i) => {
-    const tier = gearTierForZone(i);
-    if (tier !== lastTier) {
-      lastTier = tier;
-      const head = document.createElement('div');
-      head.className = 'zTierHead';
-      head.innerHTML = `<span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}`;
-      list.appendChild(head);
-    }
     const b = badgeOf(bottleneck(z));
     const apOk = apRatio(z) >= 1, dpOk = dpRatio(z) >= 1;
     const previewed = lootPreviewIdx==null ? i===zoneIdx : i===lootPreviewIdx;
     const row = document.createElement('div');
-    const isCurrent = !atVelia && i===zoneIdx;
-    row.className = 'zRow' + (isCurrent?' current':'');
+    row.className = 'zRow' + (!atVelia && i===zoneIdx?' current':'');
     row.title = tr(z.name);
-    if (!isCurrent) row.style.borderLeftColor = tier.color;
     row.innerHTML =
       `<span class="zname">${tr(z.name)}</span>` +
       `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
@@ -5217,16 +5186,12 @@ function renderLootTable(previewIdx) {
     { kind:'jackpot',  it:L.jackpot, note:'+'+L.jackpot.ap+' '+equippedWord },
     { kind:'craft',    it:L.craft,   note:'craft endgame' },
   ];
-  // les couleurs des rangées "armure" et "matériau" reprennent celles du stuff dans l'inventaire
-  // (gris/blanc/vert/bleu selon le palier) au lieu d'un violet/or générique — demande du 2026-07-06
-  const rowColor = { gear: tier.color, material: tier.material.color };
   $('lootTable').innerHTML = rows.map(r => {
     const ch = r.ch ?? r.it.ch;
-    const col = rowColor[r.kind];
     return `
     <div class="lootRow">
-      <div class="lootIcon k-${r.kind}"${col?` style="color:${col};border-color:${col}"`:''}>${LOOT_ICONS[r.kind]}</div>
-      <div class="lootInfo"><div class="ln"${col?` style="color:${col}"`:''}>${tr(r.it.name)}</div><div class="lv">${tr(r.note)}</div></div>
+      <div class="lootIcon k-${r.kind}">${LOOT_ICONS[r.kind]}</div>
+      <div class="lootInfo"><div class="ln">${tr(r.it.name)}</div><div class="lv">${tr(r.note)}</div></div>
       <div class="lootPct">${(ch*100).toFixed(ch < .01 ? 3 : 1)}%</div>
     </div>`;
   }).join('');
@@ -6827,15 +6792,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V97', d:'06/07/2026 12:00', name:{fr:'Zones groupées par palier, boss Kzarka vraiment partagé', en:'Zones grouped by tier, truly shared Kzarka boss'}, fr:[
-      {t:'new', tx:'La liste des zones de Velia est désormais groupée par palier de stuff (Naru/Tuvala/Yuria/Grunil), avec un en-tête coloré par groupe'},
-      {t:'change', tx:'Dans la table de loot, les lignes "armure" et "matériau" reprennent la couleur du stuff correspondant dans l\'inventaire (gris/blanc/vert/bleu) au lieu d\'une couleur générique'},
-      {t:'fix', tx:'Le Kzarka du planning horaire (pas seulement celui lancé par l\'admin) a maintenant des PV réellement partagés entre tous les joueurs, et tout le monde se voit dans l\'arène'},
-    ], en:[
-      {t:'new', tx:'The Velia zone list is now grouped by gear tier (Naru/Tuvala/Yuria/Grunil), with a colored header per group'},
-      {t:'change', tx:'In the loot table, "armor" and "material" rows now use the matching gear color from the inventory (grey/white/green/blue) instead of a generic color'},
-      {t:'fix', tx:'The scheduled Kzarka boss (not just the admin-spawned one) now has truly shared HP across all players, and everyone is visible in the arena'},
-    ] },
   { v:'V96', d:'04/07/2026 11:00', name:{fr:'Village de Velia & pierres d\'optimisation en SVG', en:'Velia village & SVG optimization stones'}, fr:[
       {t:'new', tx:'Velia a désormais son propre décor de village paisible (maisons, puits, lampadaires, teinte chaleureuse) au lieu de réutiliser le terrain de la dernière zone de combat farmée'},
       {t:'new', tx:'Nouvelles icônes SVG originales (style pierre à facettes) pour les pierres d\'optimisation : Pierre de Novice, Pierre du Temps, Pierre Noire et Pierre de Caphras'},

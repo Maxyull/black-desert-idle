@@ -68,6 +68,51 @@ end;
 $$;
 grant execute on function public.admin_spawn_boss(text, int, numeric) to authenticated;
 
+-- Rend le boss mondial du PLANNING (Kzarka aux horaires fixes) réellement partagé entre tous les
+-- joueurs : PV communs (live_boss) et présence visible dans l'arène, exactement comme un spawn
+-- admin. Avant ce correctif, seul un spawn admin utilisait live_boss ; le Kzarka du planning
+-- hebdomadaire restait une instance SOLO calculée par joueur. Demande explicite du 2026-07-06.
+-- Le planning (BOSS_SCHEDULE côté client) est dupliqué ici en heure Europe/Paris, vérifié
+-- CÔTÉ SERVEUR : n'importe quel joueur connecté peut appeler cette fonction (idempotente, ne fait
+-- rien si aucune fenêtre n'est active) ; le premier appel pendant la fenêtre "réclame" le boss pour
+-- tout le monde, sans jamais écraser un spawn admin déjà en cours.
+create or replace function public.ensure_scheduled_boss()
+returns table(boss_id text, spawned_at timestamptz, expires_at timestamptz, hp numeric, max_hp numeric)
+language plpgsql security definer
+as $$
+declare
+  v_now timestamptz := now();
+  v_paris_date date := (v_now at time zone 'Europe/Paris')::date;
+  v_dow int := extract(dow from (v_now at time zone 'Europe/Paris'))::int; -- 0=dimanche..6=samedi
+  v_entry record;
+  v_spawn timestamptz;
+  v_expires timestamptz;
+  v_lb record;
+  v_hp numeric := 400000; -- doit rester égal à BOSS_ROSTER.kzarka.hp côté client
+begin
+  if auth.uid() is null then raise exception 'Non authentifié'; end if;
+  for v_entry in
+    select * from (values
+      (-1, 12, 45), (-1, 19, 45), (-1, 23, 45), (0, 15, 45), (6, 15, 45)
+    ) as t(day, h, m)
+  loop
+    if v_entry.day <> -1 and v_entry.day <> v_dow then continue; end if;
+    v_spawn := (v_paris_date::text || ' ' || lpad(v_entry.h::text,2,'0') || ':' || lpad(v_entry.m::text,2,'0') || ':00')::timestamp at time zone 'Europe/Paris';
+    v_expires := v_spawn + interval '15 minutes';
+    if v_now >= v_spawn and v_now < v_expires then
+      select * into v_lb from public.live_boss where id = 1;
+      if v_lb.boss_id is null or v_lb.expires_at <= now() or v_lb.spawned_at is distinct from v_spawn then
+        update public.live_boss set boss_id = 'kzarka', spawned_at = v_spawn, expires_at = v_expires,
+          max_hp = v_hp, hp = v_hp where id = 1;
+      end if;
+      exit;
+    end if;
+  end loop;
+  return query select l.boss_id, l.spawned_at, l.expires_at, l.hp, l.max_hp from public.live_boss l where l.id = 1;
+end;
+$$;
+grant execute on function public.ensure_scheduled_boss() to authenticated;
+
 -- un joueur inflige des dégâts au boss partagé + enregistre sa contribution. Renvoie hp/max_hp.
 create or replace function public.boss_contribute(p_damage numeric, p_pseudo text default null)
 returns table(hp numeric, max_hp numeric)
