@@ -313,7 +313,6 @@
   .cell.k-jackpot.has { background:#252012; border-color:var(--gold-dim); }
   .cell.k-craft.has { background:#221c2a; border-color:#4a3a5a; }
   .cell.k-gear.has { background:#26200f; border-color:var(--gold-dim); }
-  .cell.k-treasure.has { background:#221c14; border-color:#4a3a28; }
   .cell .qty {
     position:absolute; bottom:-1px; right:2px; font-size:9px; color:var(--ink);
     text-shadow:0 0 3px #000,0 0 3px #000; font-family:Arial;
@@ -369,10 +368,6 @@
   .lootIcon.k-trash { color:#a08464; } .lootIcon.k-material { color:#8fb0c9; }
   .lootIcon.k-jackpot { color:#e8b84a; border-color:var(--gold-dim); } .lootIcon.k-craft { color:#b48ce8; }
   .lootIcon.k-gear { color:#c9a55a; border-color:var(--gold-dim); }
-  .lootIcon.k-treasure { color:#e8c96a; }
-  /* en-tête de catégorie EXPÉRIMENTALE dans la table de loot (ex: "Trésor de Velia") */
-  .lootCatHead { font-size:9.5px; letter-spacing:.6px; text-transform:uppercase; color:#e8975a;
-    border:1px dashed #4a3a28; padding:3px 6px; margin:8px 0 4px; text-align:center; }
   .lootInfo { flex:1; min-width:0; }
   .lootInfo .ln { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lootInfo .lv { color:var(--ink-dim); font-size:10.5px; }
@@ -3541,16 +3536,6 @@ function rollGearDrop(zone, alpha) {
   };
 }
 
-// Trésor de Velia — catégorie EXPÉRIMENTALE ("TEST"), identique dans TOUTES les zones de Velia
-// (pas de scaling par zone/palier), demande explicite du 2026-07-06. Pas encore de recette/usage :
-// juste des collectibles pour l'instant, d'où le badge "TEST" dans la table de loot.
-const VELIA_TREASURE = [
-  { name:'Bout du trésor de Velia 1', ch:.01,    icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
-  { name:'Bout du trésor de Velia 1', ch:.001,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
-  { name:'Trésor de Velia 1',         ch:.001,   icon:'🗺️', color:'#e8c96a', key:'treasure_velia1' },
-  { name:'Trésor de Velia 2',         ch:.0001,  icon:'🗺️', color:'#e8c96a', key:'treasure_velia2' },
-  { name:'Trésor de Velia 3',         ch:.00001, icon:'🗺️', color:'#e8c96a', key:'treasure_velia3' },
-];
 function rollDrops(wp, alpha, lm) {
   const zone = Z(), L = zone.loot;
   const zk = zoneIdx; // pour rendre les clés uniques par zone
@@ -3563,7 +3548,6 @@ function rollDrops(wp, alpha, lm) {
     { name:tierMat.name, val:L.mat.val, ch:L.mat.ch, kind:'material', color:tierMat.color, key:'mat_'+tierMat.name, icon:tierMat.icon, stackable:true, weight:0.1 },
     { ...L.jackpot, kind:'jackpot',  color:'#e8b84a', key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:'💍', stackable:false, weight:0.5 },
     { ...L.craft,   kind:'craft',    color:'#b48ce8', key:'craft_'+L.craft.name, icon:'✦', stackable:true, weight:0.2, val:0 },
-    ...VELIA_TREASURE.map(t => ({ name:t.name, val:0, ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05 })),
   ];
   for (const item of table) {
     if (Math.random() > item.ch * mults) continue;
@@ -5236,7 +5220,7 @@ function renderLootTable(previewIdx) {
   // les couleurs des rangées "armure" et "matériau" reprennent celles du stuff dans l'inventaire
   // (gris/blanc/vert/bleu selon le palier) au lieu d'un violet/or générique — demande du 2026-07-06
   const rowColor = { gear: tier.color, material: tier.material.color };
-  const mainRowsHtml = rows.map(r => {
+  $('lootTable').innerHTML = rows.map(r => {
     const ch = r.ch ?? r.it.ch;
     const col = rowColor[r.kind];
     return `
@@ -5246,16 +5230,6 @@ function renderLootTable(previewIdx) {
       <div class="lootPct">${(ch*100).toFixed(ch < .01 ? 3 : 1)}%</div>
     </div>`;
   }).join('');
-  // catégorie EXPÉRIMENTALE "Trésor de Velia" : identique dans toutes les zones de Velia, marquée
-  // TEST en attendant une vraie recette/usage — demande explicite du 2026-07-06
-  const testRowsHtml = VELIA_TREASURE.map(t => `
-    <div class="lootRow">
-      <div class="lootIcon k-treasure" style="color:${t.color};border-color:${t.color}">${t.icon}</div>
-      <div class="lootInfo"><div class="ln" style="color:${t.color}">${tr(t.name)}</div></div>
-      <div class="lootPct">${(t.ch*100).toFixed(t.ch < .01 ? 4 : 1)}%</div>
-    </div>`).join('');
-  $('lootTable').innerHTML = mainRowsHtml +
-    `<div class="lootCatHead">🧪 TEST</div>` + testRowsHtml;
 }
 function dropItem(i) {
   const s = INV[i]; if (!s) return;
@@ -6853,13 +6827,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V98', d:'06/07/2026 13:00', name:{fr:'Trésor de Velia (catégorie TEST)', en:'Velia Treasure (TEST category)'}, fr:[
-      {t:'new', tx:'Toutes les zones de Velia peuvent désormais looter le "Trésor de Velia" : 5 objets collectibles (Bout du trésor de Velia 1 ×2 chances, Trésor de Velia 1/2/3), identiques dans toutes les zones'},
-      {t:'new', tx:'Nouvelle catégorie "🧪 TEST" en bas de la table de loot de chaque zone pour ces objets expérimentaux (pas encore de recette/usage)'},
-    ], en:[
-      {t:'new', tx:'All Velia zones can now loot the "Velia Treasure": 5 collectible items (Velia Treasure Piece 1 ×2 chances, Velia Treasure 1/2/3), identical across every zone'},
-      {t:'new', tx:'New "🧪 TEST" category at the bottom of each zone\'s loot table for these experimental items (no recipe/use yet)'},
-    ] },
   { v:'V97', d:'06/07/2026 12:00', name:{fr:'Zones groupées par palier, boss Kzarka vraiment partagé', en:'Zones grouped by tier, truly shared Kzarka boss'}, fr:[
       {t:'new', tx:'La liste des zones de Velia est désormais groupée par palier de stuff (Naru/Tuvala/Yuria/Grunil), avec un en-tête coloré par groupe'},
       {t:'change', tx:'Dans la table de loot, les lignes "armure" et "matériau" reprennent la couleur du stuff correspondant dans l\'inventaire (gris/blanc/vert/bleu) au lieu d\'une couleur générique'},
