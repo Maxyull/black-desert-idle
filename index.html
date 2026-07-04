@@ -6037,18 +6037,18 @@ const PATCH_NOTES = [
   { v:'V73', d:'04/07/2026 12:30', name:{fr:'PV/potions en %, confirmation de vente, remboursement admin', en:'HP/potion %, sell confirmation, admin refund'}, fr:[
       {t:'new', tx:'La barre de vie du personnage affiche maintenant le % de PV, et le sélecteur de potion affiche le % de soin en plus du chiffre'},
       {t:'new', tx:'Une confirmation est désormais demandée avant toute vente (objet, tas, tout le rebut, tous les matériaux)'},
-      {t:'new', tx:'Panneau Admin : bouton pour rembourser le dernier clic "Vendre mat" d\'un joueur (par pseudo), à partir d\'un nouveau journal des ventes groupées'},
+      {t:'admin', tx:'Panneau Admin : bouton pour rembourser le dernier clic "Vendre mat" d\'un joueur (par pseudo), à partir d\'un nouveau journal des ventes groupées'},
     ], en:[
       {t:'new', tx:'The character HP bar now shows the HP %, and the potion selector shows the heal % alongside the number'},
       {t:'new', tx:'A confirmation is now required before any sale (single item, stack, all trash, all materials)'},
-      {t:'new', tx:'Admin panel: button to refund a player\'s last "Sell mats" click (by pseudo), from a new bulk-sale log'},
+      {t:'admin', tx:'Admin panel: button to refund a player\'s last "Sell mats" click (by pseudo), from a new bulk-sale log'},
     ] },
   { v:'V72', d:'04/07/2026 11:00', name:{fr:'Potions à 4 tailles, IA Loot/XP, clic sur le loot, PV du stuff, boss stylisé', en:'4 potion sizes, Loot/XP AI, click-to-loot, gear HP, styled boss'}, fr:[
       {t:'new', tx:'Les potions de vie proposent maintenant 4 tailles au choix (petite/moyenne/grande/majeure), chacune avec un prix fixe et un soin différents (recharge adaptée à la taille pour rester équilibrée) — clique sur l\'icône de potion en jeu pour choisir'},
       {t:'new', tx:'Nouveau bouton de mode d\'IA à côté de l\'état : "🎒 Loot" ramasse tout le butin d\'un pack avant de passer au suivant (corrigé pour ne plus rien laisser au sol), "⚡ XP" enchaîne les packs sans se soucier du loot pour maximiser les kills/xp par minute'},
       {t:'new', tx:'Clic sur un objet au sol : le perso s\'y déplace directement, prioritaire sur l\'IA jusqu\'à l\'arrivée'},
       {t:'new', tx:'L\'armure (casque/plastron/gants/bottes) apporte désormais des PV en plus de la PA/PD, pour éviter les one-shot en zone difficile — affiché dans les stats et sur les objets'},
-      {t:'new', tx:'Panneau Admin : graphique de répartition des joueurs par tranche de richesse + tuiles Total/Moyenne/Médiane en jeu'},
+      {t:'admin', tx:'Panneau Admin : graphique de répartition des joueurs par tranche de richesse + tuiles Total/Moyenne/Médiane en jeu'},
       {t:'change', tx:'Barre de vie du World Boss restylée : pourcentage bien visible, repères 25/50/75%, halo qui pulse en dessous de 20% PV'},
       {t:'change', tx:'Salle du World Boss encore plus "4D" : brume de fond en parallaxe (dérive indépendante du tremblement d\'écran) et vignette de corruption qui s\'intensifie à mesure que le boss perd des PV'},
     ], en:[
@@ -6056,7 +6056,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'New AI mode button next to the state display: "🎒 Loot" clears all of a pack\'s drops before moving on (fixed to no longer leave loot behind), "⚡ XP" chains packs without caring about loot to maximize kills/xp per minute'},
       {t:'new', tx:'Click a ground item: the character walks straight to it, taking priority over the AI until it arrives'},
       {t:'new', tx:'Armor (helmet/chest/gloves/boots) now grants HP in addition to AP/DP, to avoid one-shots in harder zones — shown in stats and on items'},
-      {t:'new', tx:'Admin panel: player wealth-bracket distribution chart + Total/Average/Median in-game tiles'},
+      {t:'admin', tx:'Admin panel: player wealth-bracket distribution chart + Total/Average/Median in-game tiles'},
       {t:'change', tx:'World Boss HP bar restyled: clear percentage, 25/50/75% tick marks, pulsing glow under 20% HP'},
       {t:'change', tx:'World Boss room even more "4D": parallax background fog (drifts independently from screen shake) and a corruption vignette that intensifies as the boss loses HP'},
     ] },
@@ -7009,6 +7009,7 @@ const PATCH_CATS = {
   change:  { fr:'Modification', en:'Change',   icon:'⚙', color:'#9cc9e8' },
   fix:     { fr:'Correction',   en:'Fix',      icon:'🛠', color:'#e8b84a' },
   exploit: { fr:'Faille',       en:'Security', icon:'🛡', color:'#b48ce8' },
+  admin:   { fr:'Admin',        en:'Admin',    icon:'🛠️', color:'#c9a55a' },
 };
 
 let patchObserver = null;
