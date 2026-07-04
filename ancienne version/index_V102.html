@@ -5803,14 +5803,23 @@ async function reevalMarket() {
 // ---------- zone admin : stats serveur (réservé au compte admin, via RLS côté base) ----------
 // tout tient désormais dans UN SEUL panneau (déclenché par le bouton "🛠️ Admin") : les actions
 // (réévaluer marché, resets) en haut, puis les statistiques par catégorie sous forme d'onglets
-function fmtAdmPlaytime(sec) {
-  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
-  return `${h}h${String(m).padStart(2,'0')}`;
-}
-// construit le HTML des 3 onglets "lourds" (agrégations sur farm_events/game_saves) une fois que
-// leurs données sont arrivées — séparé de openAdminPanel() pour pouvoir les patcher en arrière-plan
-// sans bloquer l'ouverture du panneau (voir plus bas, correctif de lenteur du 2026-07-06)
-function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour) {
+async function openAdminPanel() {
+  if (!isAdmin() || !sb) return;
+  const [{data: byHour}, {data: byItem}, {data: wealth}, {data: stats}, {data: playtimeByHour}, {data: playersList}] = await Promise.all([
+    sb.from('admin_farm_by_hour').select('*'),
+    sb.from('admin_farm_by_item').select('*').limit(20),
+    sb.from('admin_wealth').select('*'),
+    sb.from('player_stats').select('user_id, playtime_sec'),
+    sb.from('admin_playtime_by_hour').select('*'),
+    sb.rpc('admin_list_players'),
+  ]);
+  const playtimeByUser = new Map((stats||[]).map(r => [r.user_id, Number(r.playtime_sec||0)]));
+  const fmtPlaytime = sec => {
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+    return `${h}h${String(m).padStart(2,'0')}`;
+  };
+
+  // agrège le silver par heure, toutes ressources confondues
   const hourMap = new Map();
   (byHour||[]).forEach(r => hourMap.set(r.hour, (hourMap.get(r.hour)||0) + Number(r.total_silver||0)));
   const hours = [...hourMap.entries()].sort((a,b) => new Date(b[0]) - new Date(a[0])).slice(0,24);
@@ -5821,13 +5830,16 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
     return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${fmt(v)}</span></div>`;
   }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
 
+  // nombre de joueurs DISTINCTS actifs par tranche d'heure (voir admin_playtime_by_hour) —
+  // "3" = trois joueurs ont joué pendant cette heure. Le temps de jeu cumulé est affiché en
+  // libellé secondaire à côté (ex: "3 · 2h45").
   const ptRows = (playtimeByHour||[]).map(r => ({ hour:r.hour, players:Number(r.players||0), sec:Number(r.playtime_sec||0) }))
     .sort((a,b) => new Date(b.hour) - new Date(a.hour)).slice(0,24);
   const maxPlayers = Math.max(1, ...ptRows.map(r => r.players));
   const ptHourHtml = ptRows.map(r => {
     const label = new Date(r.hour).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { hour:'2-digit', day:'2-digit', month:'2-digit' });
     const pct = Math.round(r.players/maxPlayers*100);
-    return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${r.players} · ${fmtAdmPlaytime(r.sec)}</span></div>`;
+    return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${r.players} · ${fmtPlaytime(r.sec)}</span></div>`;
   }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
 
   const itemHtml = (byItem||[]).map((r,i) => `
@@ -5840,6 +5852,8 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
   const totalSilver = silvers.reduce((a,b) => a+b, 0);
   const avgSilver = silvers.length ? Math.round(totalSilver/silvers.length) : 0;
   const medSilver = silvers.length ? silvers[Math.floor(silvers.length/2)] : 0;
+  // histogramme : répartition des joueurs par tranche de richesse — donne une vraie lecture visuelle
+  // de la moyenne/total demandée, au-delà des simples chiffres bruts
   const WEALTH_BRACKETS = [
     { max:10000,      label:'< 10k' },
     { max:100000,     label:'10k-100k' },
@@ -5858,51 +5872,8 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
     return `<div class="admHistBar"><span class="ahbCount">${bracketCounts[i]}</span><div class="ahbFill" style="height:${pct}%"></div><span class="ahbLbl">${b.label}</span></div>`;
   }).join('');
   const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
-    <tr><td>#${i+1}</td><td>${(r.user_id||'').slice(0,8)}…</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtAdmPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
+    <tr><td>#${i+1}</td><td>${(r.user_id||'').slice(0,8)}…</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
   `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-
-  return {
-    hourly: `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
-      <div class="admBars">${hourHtml}</div>
-      <h3>${LANG==='fr'?'👥 Joueurs actifs par heure (48h)':'👥 Active players per hour (48h)'}</h3>
-      <div class="admSummary">${LANG==='fr'?'Nombre de joueurs distincts · temps de jeu cumulé':'Distinct player count · total playtime'}</div>
-      <div class="admBars">${ptHourHtml}</div>`,
-    items: `<table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Type':'Kind'}</th><th>${LANG==='fr'?'Ramassages':'Pickups'}</th><th>Qté</th><th>Silver</th></tr></thead>
-        <tbody>${itemHtml}</tbody>
-      </table>`,
-    wealth: `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'💰 Total en jeu':'💰 Total in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📍 Médiane':'📍 Median'}</div><div class="astVal">${fmt(medSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${silvers.length}</div></div>
-      </div>
-      <h3>${LANG==='fr'?'📈 Répartition des joueurs par richesse':'📈 Players by wealth bracket'}</h3>
-      <div class="admHistBars">${histHtml}</div>
-      <table class="admTable">
-        <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
-        <tbody>${wealthHtml}</tbody>
-      </table>`,
-  };
-}
-async function openAdminPanel() {
-  if (!isAdmin() || !sb) return;
-  // Le panneau s'ouvre désormais dès que la liste des joueurs (rapide, tables minuscules) est prête,
-  // SANS attendre les 3 requêtes d'agrégation les plus lourdes (silver/heure, ressources farmées sur
-  // farm_events qui grossit à chaque ramassage, richesses) — avant ce correctif, TOUT devait finir de
-  // charger avant que quoi que ce soit ne s'affiche, d'où la lenteur perçue au clic sur "Zone Admin"
-  // (2026-07-06). Ces 3 onglets affichent un "Chargement…" et se remplissent dès que prêts.
-  const analyticsPromise = Promise.all([
-    sb.from('admin_farm_by_hour').select('*'),
-    sb.from('admin_farm_by_item').select('*').limit(20),
-    sb.from('admin_wealth').select('*'),
-    sb.from('admin_playtime_by_hour').select('*'),
-  ]);
-  const [{data: stats}, {data: playersList}] = await Promise.all([
-    sb.from('player_stats').select('user_id, playtime_sec'),
-    sb.rpc('admin_list_players'),
-  ]);
-  const playtimeByUser = new Map((stats||[]).map(r => [r.user_id, Number(r.playtime_sec||0)]));
 
   // liste des joueurs connectés/inscrits (admin uniquement) : pseudo, GS, silver, statut en
   // ligne, et 2 boutons dédiés (UUID / Inventaire) au lieu du clic-sur-la-ligne — demande explicite
@@ -5914,7 +5885,6 @@ async function openAdminPanel() {
       <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
       <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
     </tr>`).join('') || `<tr><td colspan="7" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-  const loadingHtml = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   const cats = [
     { id:'players', icon:'👥', label:{fr:'Joueurs',en:'Players'},
       body: `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered`}</div>
@@ -5922,9 +5892,30 @@ async function openAdminPanel() {
         <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th></th><th></th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>` },
-    { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'}, body: loadingHtml },
-    { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'}, body: loadingHtml },
-    { id:'wealth', icon:'👑', label:{fr:'Richesses',en:'Wealth'}, body: loadingHtml },
+    { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'},
+      body: `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
+      <div class="admBars">${hourHtml}</div>
+      <h3>${LANG==='fr'?'👥 Joueurs actifs par heure (48h)':'👥 Active players per hour (48h)'}</h3>
+      <div class="admSummary">${LANG==='fr'?'Nombre de joueurs distincts · temps de jeu cumulé':'Distinct player count · total playtime'}</div>
+      <div class="admBars">${ptHourHtml}</div>` },
+    { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'},
+      body: `<table class="admTable">
+        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Type':'Kind'}</th><th>${LANG==='fr'?'Ramassages':'Pickups'}</th><th>Qté</th><th>Silver</th></tr></thead>
+        <tbody>${itemHtml}</tbody>
+      </table>` },
+    { id:'wealth', icon:'👑', label:{fr:'Richesses',en:'Wealth'},
+      body: `<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'💰 Total en jeu':'💰 Total in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📍 Médiane':'📍 Median'}</div><div class="astVal">${fmt(medSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${silvers.length}</div></div>
+      </div>
+      <h3>${LANG==='fr'?'📈 Répartition des joueurs par richesse':'📈 Players by wealth bracket'}</h3>
+      <div class="admHistBars">${histHtml}</div>
+      <table class="admTable">
+        <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
+        <tbody>${wealthHtml}</tbody>
+      </table>` },
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'},
       // nombre moyen de monstres à tuer pour chaque morceau (1/chance) + estimation de temps à un
       // rythme de référence — demande explicite du 2026-07-06, pour évaluer la rareté en pratique
@@ -5944,18 +5935,6 @@ async function openAdminPanel() {
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
-  // dès que les 3 agrégations lourdes arrivent, on remplace juste le contenu "Chargement…" de leurs
-  // onglets — sans jamais avoir bloqué l'affichage initial du panneau ci-dessus
-  analyticsPromise.then(([{data: byHour}, {data: byItem}, {data: wealth}, {data: playtimeByHour}]) => {
-    const html = buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour);
-    const body = $a('infoBody'); if (!body) return; // panneau déjà refermé entre-temps
-    const hourlyPane = body.querySelector('.catPane[data-cat="hourly"]');
-    const itemsPane = body.querySelector('.catPane[data-cat="items"]');
-    const wealthPane = body.querySelector('.catPane[data-cat="wealth"]');
-    if (hourlyPane) hourlyPane.innerHTML = html.hourly;
-    if (itemsPane) itemsPane.innerHTML = html.items;
-    if (wealthPane) wealthPane.innerHTML = html.wealth;
-  }).catch(()=>{});
   // sélecteur de World Boss : fait apparaître immédiatement le boss choisi (combat local de test),
   // sans toucher au planning horaire normal — réservé à l'admin
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
@@ -7032,13 +7011,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V103', d:'06/07/2026 21:30', name:{fr:'Panneau admin bien plus rapide à l\'ouverture', en:'Admin panel opens much faster'}, fr:[
-      {t:'fix', tx:'Trouvé la cause de la lenteur au clic sur "Zone Admin" : une vue serveur ("Ressources farmées") scannait TOUTE la table des ramassages (79 000+ lignes et ça grandit à chaque objet ramassé par tous les joueurs, depuis le début) sans aucune limite de temps — corrigée pour se limiter aux 30 derniers jours'},
-      {t:'change', tx:'Le panneau admin s\'ouvre maintenant dès que la liste des joueurs est prête, sans attendre les 3 statistiques les plus lourdes (silver/heure, ressources farmées, richesses) qui se chargent maintenant en arrière-plan et remplissent leur onglet dès qu\'elles sont prêtes'},
-    ], en:[
-      {t:'fix', tx:'Found the cause of the "Admin Zone" click being slow: a server view ("Farmed resources") scanned the ENTIRE pickup log table (79,000+ rows and growing with every item picked up by every player, since the start) with no time limit at all — fixed to only look at the last 30 days'},
-      {t:'change', tx:'The admin panel now opens as soon as the player list is ready, without waiting for the 3 heaviest stats (silver/hour, farmed resources, wealth) which now load in the background and fill in their tab once ready'},
-    ] },
   { v:'V102', d:'06/07/2026 20:00', name:{fr:'Difficulté retravaillée, bouton "Racheter"', en:'Reworked difficulty, "Buy back" button'}, fr:[
       {t:'change', tx:'Difficulté de toute la région de Velia retravaillée : PA requis plafonné à 209 (au lieu de 400) sur la dernière zone, avec un saut plus marqué à chaque transition de palier de stuff (gris→blanc, blanc→vert, vert→bleu) — il faut être un minimum optimisé sur le palier précédent avant d\'attaquer le suivant'},
       {t:'new',    tx:'Bouton "↩️ Racheter" à côté de "Vendre l\'inférieur" : annule la dernière vente automatique (restaure les objets et le silver) en cas de clic accidentel'},
