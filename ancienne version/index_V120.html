@@ -4635,68 +4635,6 @@ function drawShultzIso(wx,wy,w,t) {
   ctx.beginPath(); ctx.moveTo(-1.4,-35); ctx.lineTo(0,-43); ctx.lineTo(1.4,-35); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
-// Combattant Sausan (zone "Colonie Sausan", juste après la Ferme Shultz) — créature ORIGINALE :
-// guerrier des sables en cotte de mailles, capuche pointue rabattue et voile de tissu masquant le
-// bas du visage, longue tunique/pan qui flotte. Demande explicite du 2026-07-07 ("Fais moi les
-// sausans") — inspiré de l'ambiance des captures (soldats encapuchonnés en mailles, désert), aucun
-// asset réel repris. Volontairement distinct du Garde Shultz (plaques + casque à cimier) : ici,
-// mailles souples + capuche + voile.
-function drawSausanIso(wx,wy,w,t) {
-  const c = toScreen(wx,wy);
-  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
-  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
-  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
-  ctx.fillStyle='rgba(0,0,0,.28)';
-  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,11*w.scale,4.5,0,0,7); ctx.fill();
-  ctx.save();
-  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
-  if (!facingRight) ctx.scale(-1,1);
-  ctx.scale(w.scale,w.scale);
-  const trot = Math.sin(t*5.5+w.phase)*1.3;
-  const sway = Math.sin(t*3+w.phase)*1.1; // le pan de tunique flotte
-  if (w.lunge > .3) { ctx.strokeStyle='rgba(210,190,140,.5)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.ellipse(0,-16,14,10,0,0,7); ctx.stroke(); }
-  const cloth = w.tone; // teinte de la tunique/mailles, variété par zone (comme les autres monstres)
-  // jambes
-  ctx.strokeStyle='#3a352c'; ctx.lineWidth=3.4; ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.moveTo(-3,-8); ctx.lineTo(-4,3+trot*.5);
-  ctx.moveTo(3,-8); ctx.lineTo(4,3-trot*.5);
-  ctx.stroke();
-  // longue tunique en cotte de mailles (s'évase vers le bas, avec un pan qui flotte)
-  ctx.fillStyle = cloth;
-  ctx.beginPath();
-  ctx.moveTo(-7,-9); ctx.lineTo(-6,-24); ctx.lineTo(6,-24); ctx.lineTo(7,-9);
-  ctx.lineTo(5+sway,-2); ctx.lineTo(-5+sway,-2); ctx.closePath(); ctx.fill();
-  // texture de mailles (petits reflets)
-  ctx.strokeStyle='rgba(230,230,240,.18)'; ctx.lineWidth=1;
-  ctx.beginPath(); ctx.moveTo(-5,-20); ctx.lineTo(5,-20); ctx.moveTo(-5,-15); ctx.lineTo(5,-15); ctx.moveTo(-5,-10); ctx.lineTo(5,-10); ctx.stroke();
-  // ceinture
-  ctx.strokeStyle='#5a4632'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(-6,-12); ctx.lineTo(6,-12); ctx.stroke();
-  // bras armé + lame courbe (cimeterre) qui avance en attaque
-  ctx.strokeStyle = cloth; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.moveTo(6,-21); ctx.lineTo(11+lungeAmt*.4,-15); ctx.stroke();
-  ctx.strokeStyle='#c9ccd2'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(11+lungeAmt*.4,-15); ctx.quadraticCurveTo(17+lungeAmt*.6,-18, 16+lungeAmt*.6,-24); ctx.stroke();
-  // tête voilée (bas du visage en tissu)
-  ctx.fillStyle='#b8a382';
-  ctx.beginPath(); ctx.arc(0,-28,4.2,0,7); ctx.fill();
-  ctx.fillStyle = cloth; // voile de tissu sur le bas du visage
-  ctx.beginPath(); ctx.arc(0,-26.5,3.9,0.1,Math.PI-0.1); ctx.fill();
-  // fente des yeux (ombre)
-  ctx.strokeStyle='rgba(20,16,10,.8)'; ctx.lineWidth=1.2;
-  ctx.beginPath(); ctx.moveTo(-2.4,-29); ctx.lineTo(2.4,-29); ctx.stroke();
-  // capuche pointue rabattue par-dessus la tête
-  ctx.fillStyle = cloth;
-  ctx.beginPath();
-  ctx.moveTo(-5,-28); ctx.quadraticCurveTo(-5.5,-35, 0,-37.5);
-  ctx.quadraticCurveTo(5.5,-35, 5,-28);
-  ctx.quadraticCurveTo(0,-31, -5,-28); ctx.closePath(); ctx.fill();
-  // pointe de la capuche
-  ctx.beginPath(); ctx.moveTo(0,-37.5); ctx.lineTo(-1.6,-34); ctx.lineTo(1.6,-34); ctx.closePath(); ctx.fill();
-  ctx.restore();
-}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -4753,19 +4691,6 @@ function drawZoneMobIcon() {
     ctx2.beginPath(); ctx2.arc(0,-2,7.6,Math.PI,0); ctx2.fill();
     ctx2.fillStyle='#a8402c';
     ctx2.beginPath(); ctx2.moveTo(-1.6,-8); ctx2.lineTo(0,-14); ctx2.lineTo(1.6,-8); ctx2.closePath(); ctx2.fill();
-  } else if (zi === 5) { // Combattant Sausan (capuche pointue + voile)
-    ctx2.fillStyle='#b8a382';
-    ctx2.beginPath(); ctx2.arc(0,1,6.4,0,7); ctx2.fill();
-    ctx2.fillStyle=tone; // voile de tissu sur le bas du visage
-    ctx2.beginPath(); ctx2.arc(0,4,5,0.1,Math.PI-0.1); ctx2.fill();
-    ctx2.strokeStyle='rgba(20,16,10,.8)'; ctx2.lineWidth=1.4; // fente des yeux
-    ctx2.beginPath(); ctx2.moveTo(-3,-1); ctx2.lineTo(3,-1); ctx2.stroke();
-    ctx2.fillStyle=tone; // capuche pointue rabattue
-    ctx2.beginPath();
-    ctx2.moveTo(-7,-1); ctx2.quadraticCurveTo(-8,-11, 0,-15);
-    ctx2.quadraticCurveTo(8,-11, 7,-1);
-    ctx2.quadraticCurveTo(0,-5, -7,-1); ctx2.closePath(); ctx2.fill();
-    ctx2.beginPath(); ctx2.moveTo(0,-15); ctx2.lineTo(-2.4,-10); ctx2.lineTo(2.4,-10); ctx2.closePath(); ctx2.fill();
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -4775,15 +4700,13 @@ function drawZoneMobIcon() {
   ctx2.restore();
 }
 // dispatcher : chaque zone peut avoir sa propre silhouette de monstre — pour l'instant "Ruines de
-// Protty" (zone index 1), "Repaire des Pirates" (zone index 2), "Camp Rhutum" (zone index 3),
-// "Ferme Shultz" (zone index 4) et "Colonie Sausan" (zone index 5) ont la leur, les autres zones
-// gardent la silhouette générique
+// Protty" (zone index 1), "Repaire des Pirates" (zone index 2), "Camp Rhutum" (zone index 3) et
+// "Ferme Shultz" (zone index 4) ont la leur, les autres zones gardent la silhouette générique
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
   if (zoneIdx === 2) return drawPirateIso(wx,wy,w,t);
   if (zoneIdx === 3) return drawRhutumIso(wx,wy,w,t);
   if (zoneIdx === 4) return drawShultzIso(wx,wy,w,t);
-  if (zoneIdx === 5) return drawSausanIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
@@ -8217,11 +8140,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V121', d:'07/07/2026 23:00', name:{fr:'Silhouette du Combattant Sausan', en:'Sausan Fighter silhouette'}, fr:[
-      {t:'new', tx:'Nouvelle silhouette originale pour le Combattant Sausan (Colonie Sausan, juste après la Ferme Shultz) : guerrier des sables en cotte de mailles, capuche pointue rabattue, voile de tissu masquant le bas du visage et cimeterre courbe — au lieu de la silhouette générique. Son icône apparaît aussi en haut à gauche'},
-    ], en:[
-      {t:'new', tx:'New original silhouette for the Sausan Fighter (Sausan Colony, right after Shultz Farm): a desert warrior in chainmail with a pointed hood, a cloth veil over the lower face and a curved scimitar — instead of the generic silhouette. Its icon also appears in the top-left'},
-    ] },
   { v:'V120', d:'07/07/2026 22:00', name:{fr:'Icône du monstre de zone, silhouette Garde Shultz', en:'Zone monster icon, Shultz Guard silhouette'}, fr:[
       {t:'new', tx:'Petite icône du monstre de la zone en cours affichée en haut à gauche de l\'écran de jeu (buste simplifié, une par zone déjà modélisée, feuillage doré pour Velia la zone paisible)'},
       {t:'new', tx:'Nouvelle silhouette originale pour le Garde Shultz (Ferme Shultz, juste après le Camp Rhutum) : garde humain lourdement blindé, casque à cimier empanaché, épaulières massives, moustache/bouc blanc et arme lourde brandie au-dessus de la tête'},
