@@ -1608,7 +1608,7 @@
       <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
       <div class="catTabs" id="invCatTabs"></div>
       <div class="invTools">
-        <button id="btnEquipBest" data-i18n="btnEquipBest" title="Équipe automatiquement, sur chaque emplacement, la meilleure pièce de ton sac (comparée sur ses stats de base)">⚡ Équiper le meilleur (socle)</button>
+        <button id="btnEquipBest" data-i18n="btnEquipBest">⚡ Équiper le meilleur (socle)</button>
         <span class="sellWorseGroup">
           <button id="btnSellWorse" data-i18n="btnSellWorse" title="Vendre l'inférieur : vend tout objet strictement moins bon que ce qui est déjà équipé">🗑️ Vendre l'inférieur</button><button id="btnBuyBackWorse" disabled title="Rachète la dernière vente d'objets inférieurs">↩️</button>
         </span>
@@ -7675,11 +7675,8 @@ const I18N = {
   cardZones: { fr:'Zones de farm', en:'Farming zones' },
   cardLoot: { fr:'Loot de cette zone', en:'Loot in this zone' },
   cardEquip: { fr:'Équipement', en:'Equipment' },
-  // libellés raccourcis le 2026-07-07 (retour utilisateur, capture à l'appui) : les versions
-  // longues se tronquaient en plein milieu d'un mot ("soc e", "Ven...") sur des fenêtres pas assez
-  // larges — le sens complet reste dans l'attribut title de chaque bouton
-  btnEquipBest: { fr:'⚡ Équiper meilleur', en:'⚡ Equip best' },
-  btnSellWorse: { fr:'🗑️ Vendre', en:'🗑️ Sell worse' },
+  btnEquipBest: { fr:'⚡ Équiper le meilleur (socle)', en:'⚡ Equip best (base stats)' },
+  btnSellWorse: { fr:'🗑️ Vendre l\'inférieur', en:'🗑️ Sell the worse' },
   resetNoticeClose: { fr:'OK, compris !', en:'OK, got it!' },
   invFullBanner: { fr:'⚠ Sac plein — les objets restent au sol', en:'⚠ Bag full — items stay on the ground' },
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
@@ -7765,11 +7762,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V113', d:'07/07/2026 14:15', name:{fr:'Boutons inventaire raccourcis (robuste à toute largeur)', en:'Shortened inventory buttons (robust at any width)'}, fr:[
-      {t:'fix', tx:'"Équiper le meilleur (socle)" et "Vendre l\'inférieur" se tronquaient encore en pleine largeur de fenêtre plus étroite ("soc e", "Ven...") — raccourcis en "Équiper meilleur" et "Vendre", le sens complet reste visible au survol'},
-    ], en:[
-      {t:'fix', tx:'"Equip best (base stats)" and "Sell the worse" still got cut off on narrower windows ("bas...", "Sel...") — shortened to "Equip best" and "Sell worse", full meaning still shown on hover'},
-    ] },
   { v:'V112', d:'07/07/2026 13:30', name:{fr:'Correctifs : reset des Loyalties, bouton tronqué', en:'Fixes: Loyalties reset, truncated button'}, fr:[
       {t:'fix', tx:'Corrigé : les Loyalties n\'étaient jamais vraiment remises à 0 après un reset — le rafraîchissement de l\'affichage juste après regrantait aussitôt les 200 du jour, masquant la remise à zéro réelle'},
       {t:'fix', tx:'Le bouton "Vendre l\'inférieur" s\'affichait tronqué ("Ven...") — élargi pour afficher le texte en entier'},
