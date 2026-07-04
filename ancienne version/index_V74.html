@@ -6029,11 +6029,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V75', d:'04/07/2026 14:00', name:{fr:'Tutoriel : étape sur les potions', en:'Tutorial: potion step'}, fr:[
-      {t:'new', tx:'Nouvelle étape du tutoriel sur les potions de vie : présente le choix de la taille et le curseur "Boire sous X%"'},
-    ], en:[
-      {t:'new', tx:'New tutorial step on HP potions: introduces the size selector and the "Drink under X%" slider'},
-    ] },
   { v:'V74', d:'04/07/2026 13:15', name:{fr:'Seuil de potion réglable', en:'Adjustable potion threshold'}, fr:[
       {t:'new', tx:'Nouveau curseur dans le sélecteur de potion : règle le % de PV en dessous duquel une potion est bue automatiquement (5% à 95%)'},
     ], en:[
@@ -6834,7 +6829,6 @@ $a('btnWiki').onclick = () => {
 // petit état pour le hook before/after du step "suivi de quêtes" (voir plus bas) — permet de
 // montrer l'encart même s'il est actuellement masqué, puis de restaurer l'état d'origine en sortant
 let tutTrackerWasOn = false, tutTrackerForced = false;
-let tutPotWasOpen = false;
 const TUTORIAL_STEPS = [
   { title:{fr:'Bienvenue à Velia !',en:'Welcome to Velia!'},
     text:{fr:'Velia est une ville paisible : aucun monstre n\'y rôde. C\'est le meilleur endroit pour découvrir les bases avant de partir à l\'aventure.', en:'Velia is a peaceful town: no monsters roam here. It\'s the best place to learn the basics before heading out to adventure.'} },
@@ -6847,11 +6841,6 @@ const TUTORIAL_STEPS = [
   { target:'#skillBar', placement:'top',
     title:{fr:'Sorts automatiques',en:'Automatic skills'},
     text:{fr:'Tes sorts se lancent tout seuls selon une IA de combat. Optimise ton équipement pour qu\'ils tapent plus fort.', en:'Your skills cast themselves based on a combat AI. Improve your gear so they hit harder.'} },
-  { target:'#potSlot', placement:'top',
-    title:{fr:'Potions de vie',en:'HP potions'},
-    text:{fr:'Clique ici pour choisir la taille de potion bue automatiquement (prix fixe et soin différents selon la taille), et régler le curseur "Boire sous X%" qui fixe le seuil de PV déclenchant le soin.', en:'Click here to choose the potion size drunk automatically (fixed price and heal that differ by size), and set the "Drink under X%" slider that sets the HP threshold triggering the heal.'},
-    before: () => { tutPotWasOpen = $a('potSelect').classList.contains('show'); renderPotSelect(); $a('potSelect').classList.add('show'); },
-    after: () => { if (!tutPotWasOpen) $a('potSelect').classList.remove('show'); } },
   { target:'#panel .card', placement:'left',
     title:{fr:'Tes statistiques',en:'Your stats'},
     text:{fr:'Gearscore, PA/PD et progression : tout ce qu\'il faut pour savoir si tu es prêt pour la zone suivante.', en:'Gearscore, AP/DP and progress: everything you need to know if you\'re ready for the next zone.'} },
