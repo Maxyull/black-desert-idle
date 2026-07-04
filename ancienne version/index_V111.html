@@ -334,11 +334,9 @@
   /* ===== inventaire (permanent) ===== */
   .invTools { display:flex; gap:5px; margin-bottom:7px; }
   .invTools > button { margin:0; font-size:10.5px; padding:5px 4px; flex:1; }
-  /* "Vendre l'inférieur" + "Racheter" (icône seule) regroupés à droite — demande explicite du
-     2026-07-07 : avant, "Racheter" était un gros bouton séparé. Élargi de 20% à 34% le même jour
-     (retour utilisateur) : à 20% le texte "Vendre l'inférieur" était tronqué en "Ven..." illisible
-     — "Équiper le meilleur" a largement la place de rétrécir pour compenser. */
-  .sellWorseGroup { flex:0 0 34%; display:flex; gap:3px; min-width:0; }
+  /* "Vendre l'inférieur" + "Racheter" (icône seule) regroupés à droite sur 1/5 de la largeur —
+     demande explicite du 2026-07-07 : avant, "Racheter" était un gros bouton séparé */
+  .sellWorseGroup { flex:0 0 20%; display:flex; gap:3px; min-width:0; }
   .sellWorseGroup #btnSellWorse { flex:1; margin:0; font-size:9.5px; padding:5px 3px; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .sellWorseGroup #btnBuyBackWorse { flex:0 0 22px; margin:0; padding:5px 0; font-size:11px; }
@@ -1610,7 +1608,7 @@
       <div class="invTools">
         <button id="btnEquipBest" data-i18n="btnEquipBest">⚡ Équiper le meilleur (socle)</button>
         <span class="sellWorseGroup">
-          <button id="btnSellWorse" data-i18n="btnSellWorse" title="Vendre l'inférieur : vend tout objet strictement moins bon que ce qui est déjà équipé">🗑️ Vendre l'inférieur</button><button id="btnBuyBackWorse" disabled title="Rachète la dernière vente d'objets inférieurs">↩️</button>
+          <button id="btnSellWorse" data-i18n="btnSellWorse">🗑️ Vendre l'inférieur</button><button id="btnBuyBackWorse" disabled title="Rachète la dernière vente d'objets inférieurs">↩️</button>
         </span>
       </div>
       <div id="equipBestMsg"></div>
@@ -2363,16 +2361,6 @@ function ensureLoyaltyGrant() {
   mailboxAdd('loyalty', name, '🏅', 200);
   showMailToast('🏅', name, 200);
   updateMailBadge();
-}
-// après une réinitialisation complète, on veut un VRAI 0 immédiat — sans ça, le hud() appelé en
-// fin d'applySaveState() redéclenche aussitôt ensureLoyaltyGrant() (lastLoyaltyDate remis à null
-// par le reset) et regrante 200 Loyalties à l'instant, masquant le fait que ça a bien été remis à
-// zéro. Bug confirmé le 2026-07-07 : "les Loyalties ne sont jamais remis à 0 même après un reset".
-// Le prochain octroi journalier reprendra normalement dès demain.
-function suppressLoyaltyGrantForToday() {
-  const now = new Date();
-  S.lastLoyaltyDate = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
-  S.loyalty = 0;
 }
 function updateMailBadge() {
   const badge = $('mailBadge'); if (!badge) return;
@@ -6127,7 +6115,6 @@ async function resetDemo() {
     : "Reset the demo? All your progress (silver, gear, level, bag) will be lost and set back to zero. This action is irreversible.";
   if (!confirm(msg)) return;
   applySaveState(JSON.parse(JSON.stringify(DEFAULT_SAVE)));
-  suppressLoyaltyGrantForToday();
   if (sb && currentUser) await saveToCloud(); // écrase aussi la sauvegarde cloud avec l'état neuf
   try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {}
   floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Démo réinitialisée' : 'Demo reset', { gold:true });
@@ -6194,7 +6181,6 @@ async function resetAllAccounts() {
   floatTxt(P.x, P.y, 100, LANG==='fr' ? `${data} comptes réinitialisés ✓` : `${data} accounts reset ✓`, { gold:true });
   // applique aussi l'effet immédiatement à l'admin lui-même + montre la même bannière que les joueurs
   applySaveState(JSON.parse(JSON.stringify(DEFAULT_SAVE)));
-  suppressLoyaltyGrantForToday();
   await saveToCloud();
   showResetNotice('🔄', title_fr, body_fr);
 }
@@ -7762,13 +7748,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V112', d:'07/07/2026 13:30', name:{fr:'Correctifs : reset des Loyalties, bouton tronqué', en:'Fixes: Loyalties reset, truncated button'}, fr:[
-      {t:'fix', tx:'Corrigé : les Loyalties n\'étaient jamais vraiment remises à 0 après un reset — le rafraîchissement de l\'affichage juste après regrantait aussitôt les 200 du jour, masquant la remise à zéro réelle'},
-      {t:'fix', tx:'Le bouton "Vendre l\'inférieur" s\'affichait tronqué ("Ven...") — élargi pour afficher le texte en entier'},
-    ], en:[
-      {t:'fix', tx:'Fixed: Loyalties were never actually reset to 0 after a reset — the display refresh right after immediately re-granted the day\'s 200, masking the real reset'},
-      {t:'fix', tx:'The "Sell the worse" button displayed truncated ("Sel...") — widened to show the full text'},
-    ] },
   { v:'V111', d:'07/07/2026 12:00', name:{fr:'Marché Central façon BDO, chat par jour, Loyalties', en:'BDO-style Central Market, daily chat, Loyalties'}, fr:[
       {t:'new',    tx:'Marché commun repensé façon Marché Central de BDO (inspiré d\'une référence fournie) : solde bien visible, arbre de catégories (Arme principale/secondaire/éveil, Armure, Accessoires, Artéfact/Pierre, Matériaux), objets groupés par nom avec tiroir détaillé par niveau d\'enchantement (+13/+14/.../PRI/DUO...)'},
       {t:'new',    tx:'Chat : chaque jour est séparé par une barre dorée ; les jours précédents sont repliés par défaut (dépliables en un clic pour relire), seul le jour en cours reste toujours ouvert'},
