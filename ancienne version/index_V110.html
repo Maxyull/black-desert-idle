@@ -687,24 +687,14 @@
   .cmSubTabs { display:flex; gap:6px; margin-bottom:10px; border-bottom:1px solid #2c2a33; padding-bottom:8px; }
   .cmSubTab { width:auto; margin:0; padding:6px 12px; font-size:11.5px; background:transparent; border:1px solid #3a3742; }
   .cmSubTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
-  /* solde bien visible en haut de la vitrine (façon référence BDO), et arbre de catégories façon
-     Marché Central au lieu de simples pastilles — demande explicite du 2026-07-07 */
-  .cmWalletBar { display:flex; align-items:center; justify-content:space-between; gap:8px;
-    background:rgba(201,165,90,.06); border:1px solid var(--gold-dim); border-radius:4px;
-    padding:8px 12px; margin-bottom:10px; }
-  .cmWalletLbl { font-size:11px; color:var(--ink-dim); }
-  .cmWalletVal { font-size:15px; color:var(--gold); font-weight:bold; }
   .cmFilterBar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  .cmKindPills { display:flex; gap:5px; }
+  .cmKindPill { width:auto; margin:0; padding:5px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; border-radius:14px; }
+  .cmKindPill.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.1); }
   #cmSearch { flex:1; min-width:120px; background:#191720; color:var(--ink); border:1px solid #3a3742;
     font-family:inherit; font-size:11.5px; padding:6px 9px; }
   #cmSort { background:#191720; color:var(--ink); border:1px solid #3a3742; font-family:inherit; font-size:11.5px; padding:6px 8px; }
   .cmBrowseLayout { display:flex; gap:10px; align-items:flex-start; }
-  .cmCategoryTree { flex:0 0 130px; display:flex; flex-direction:column; gap:2px; max-height:420px; overflow-y:auto; }
-  .cmCatBtn { width:100%; text-align:left; margin:0; padding:7px 9px; font-size:11px; background:transparent;
-    border:1px solid transparent; border-left:3px solid transparent; color:var(--ink-dim); border-radius:0; }
-  .cmCatBtn:hover { background:rgba(255,255,255,.03); color:var(--ink); }
-  .cmCatBtn.active { border-left-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
-  .cmBackBtn { width:auto; margin-bottom:8px; padding:5px 12px; font-size:11px; }
   .cmListingsList { flex:1.4; min-width:0; display:flex; flex-direction:column; gap:6px; max-height:420px; overflow-y:auto; }
   .cmDetailPanel { flex:1; min-width:0; position:sticky; top:0; background:var(--panel-2);
     border:1px solid #2c2a31; padding:12px; max-height:420px; overflow-y:auto; }
@@ -1083,14 +1073,6 @@
   .modRestoreBtn:hover { background:rgba(201,165,90,.12); }
   .modDeletedAt { font-size:9px; color:var(--ink-dim); }
   .chatEmpty { font-size:11px; color:var(--ink-dim); font-style:italic; }
-  /* barre dorée de séparation entre les jours du chat — demande explicite du 2026-07-07 */
-  .chatDaySep { display:flex; align-items:center; gap:8px; margin:6px 0 4px; cursor:pointer; user-select:none; }
-  .chatDaySep.current { cursor:default; }
-  .chatDaySepLine { flex:1; height:1px; background:linear-gradient(90deg, transparent, var(--gold-dim), transparent); }
-  .chatDaySep.current .chatDaySepLine { background:linear-gradient(90deg, transparent, var(--gold), transparent); }
-  .chatDaySepLabel { font-size:9.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--gold);
-    white-space:nowrap; flex-shrink:0; }
-  .chatDaySep:not(.current):hover .chatDaySepLabel { color:#e6cf7a; }
   #chatInputRow { display:flex; gap:5px; }
   #chatInput {
     flex:1; background:#0d0c11; border:1px solid #333; color:var(--ink); padding:5px 7px;
@@ -1471,11 +1453,8 @@
       <div id="commonMsg"></div>
 
       <div id="cmPaneBrowse" class="cmSubPane">
-        <div class="cmWalletBar">
-          <div class="cmWalletLbl" data-i18n="cmWalletLbl">💰 Ton solde</div>
-          <div class="cmWalletVal" id="cmWalletVal">0</div>
-        </div>
         <div class="cmFilterBar">
+          <div class="cmKindPills" id="cmKindPills"></div>
           <input type="text" id="cmSearch" placeholder="🔎 Rechercher un objet...">
           <select id="cmSort">
             <option value="price_asc">Prix ↑</option>
@@ -1484,7 +1463,6 @@
           </select>
         </div>
         <div class="cmBrowseLayout">
-          <div id="cmCategoryTree" class="cmCategoryTree"></div>
           <div id="cmListingsList" class="cmListingsList"></div>
           <div id="cmDetailPanel" class="cmDetailPanel">
             <div class="mEmpty" data-i18n="cmSelectItemHint">Clique un objet pour voir le détail</div>
@@ -2237,12 +2215,11 @@ function updateNotifBadge() {
   badge.textContent = notifUnread > 9 ? '9+' : notifUnread;
   badge.classList.toggle('show', notifUnread > 0);
 }
-// affiche TOUJOURS la date (pas seulement l'heure pour aujourd'hui) — demande explicite du
-// 2026-07-07, pour pouvoir resituer une notification dans le temps sans ambiguïté
 function fmtNotifTime(ts) {
-  const d = new Date(ts);
+  const d = new Date(ts), now = new Date();
   const hhmm = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
-  return d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+' '+hhmm;
+  const sameDay = d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
+  return sameDay ? hhmm : (d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+' '+hhmm);
 }
 // bannière colorée d'annonce importante (ex: reset complet des comptes) + entrée correspondante
 // dans le centre de notifications — demande explicite du 2026-07-06
@@ -2357,7 +2334,7 @@ function ensureLoyaltyGrant() {
   if (S.lastLoyaltyDate === key) return;
   S.lastLoyaltyDate = key;
   S.loyalty = (S.loyalty||0) + 200;
-  const name = 'Loyalties'; // renommé le 2026-07-07 (demande explicite), même nom dans les 2 langues
+  const name = LANG==='fr' ? 'Point de fidélité' : 'Loyalty Point';
   mailboxAdd('loyalty', name, '🏅', 200);
   showMailToast('🏅', name, 200);
   updateMailBadge();
@@ -6101,7 +6078,6 @@ async function syncPlayerStats() {
       best_item_name: best ? best.name : '',
       best_item_count: best ? best.count : 0,
       treasure_count: treasureCount,
-      loyalty: Math.round(S.loyalty||0),
       updated_at: new Date().toISOString(),
     });
   } catch(e) { /* pas grave, prochaine synchro rattrapera */ }
@@ -6284,16 +6260,10 @@ async function openAdminPanel() {
     sb.from('admin_playtime_by_hour').select('*'),
   ]);
   const [{data: stats}, {data: playersList}] = await Promise.all([
-    sb.from('player_stats').select('user_id, playtime_sec, loyalty'),
+    sb.from('player_stats').select('user_id, playtime_sec'),
     sb.rpc('admin_list_players'),
   ]);
   const playtimeByUser = new Map((stats||[]).map(r => [r.user_id, Number(r.playtime_sec||0)]));
-  // Loyalties (ex-"points de fidélité", renommé le 2026-07-07) : total en jeu + moyenne par joueur,
-  // demande explicite du 2026-07-07 — pas encore de boutique où les dépenser, donc "utilisées pour"
-  // reste à 0 pour l'instant (voir onglet dédié plus bas)
-  const loyaltyVals = (stats||[]).map(r => Number(r.loyalty||0));
-  const loyaltyTotal = loyaltyVals.reduce((a,b) => a+b, 0);
-  const loyaltyAvg = loyaltyVals.length ? Math.round(loyaltyTotal/loyaltyVals.length) : 0;
 
   // liste des joueurs connectés/inscrits (admin uniquement) : pseudo, GS, silver, statut en
   // ligne, et 2 boutons dédiés (UUID / Inventaire) au lieu du clic-sur-la-ligne — demande explicite
@@ -6332,18 +6302,6 @@ async function openAdminPanel() {
             `<td>${fmt(avgKills)}</td><td>${fmtDurationMin(avgMin)}</td></tr>`;
         }).join('')}</tbody>
       </table>` },
-    { id:'loyalty', icon:'🏅', label:{fr:'Loyalties',en:'Loyalties'},
-      // stats de la monnaie "Loyalties" (ex-points de fidélité, renommée le 2026-07-07) : total en
-      // jeu, moyenne par joueur, et "utilisées pour" — demande explicite du 2026-07-07
-      body: `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🏅 Total en jeu':'🏅 Total in game'}</div><div class="astVal">${fmt(loyaltyTotal)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(loyaltyAvg)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${loyaltyVals.length}</div></div>
-      </div>
-      <h3>${LANG==='fr'?'🛍️ Utilisées pour':'🛍️ Used to buy'}</h3>
-      <div class="admEmpty">${LANG==='fr'
-        ? 'Aucune boutique Loyalties en jeu pour l\'instant — rien à dépenser, ces stats servent à suivre l\'accumulation avant d\'ouvrir une boutique.'
-        : 'No Loyalties shop in game yet — nothing to spend it on, these stats track accumulation ahead of opening a shop.'}</div>` },
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
@@ -6370,7 +6328,7 @@ async function openAdminPanel() {
       <div class="admSectionSub">${LANG==='fr'?'Sans danger : ça ne touche que TON propre personnage.':'Safe: only affects YOUR own character.'}</div>
       <div class="admActions">
         <button id="btnTestSilver">💰 +1M silver</button>
-        <button id="btnTestLoyalty">📬 +200 Loyalties</button>
+        <button id="btnTestLoyalty">📬 +200 fidélité</button>
         <button id="btnTestAch">🏅 ${LANG==='fr'?'Débloquer tous les succès':'Unlock all achievements'}</button>
         <button id="btnResetMyQuests" data-i18n="btnResetMyQuests">🔄 Réinitialiser mes quêtes</button>
         <button id="btnResetDemo" data-i18n="btnResetDemo">🔄 Réinitialiser la démo</button>
@@ -6472,7 +6430,7 @@ async function openAdminPanel() {
   };
   // --- pour moi ---
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; S.silver += 1000000; S.silverEarned += 1000000; refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
-  $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; S.loyalty=(S.loyalty||0)+200; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); };
+  $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; S.loyalty=(S.loyalty||0)+200; mailboxAdd('loyalty', LANG==='fr'?'Point de fidélité':'Loyalty Point', '🏅', 200); updateMailBadge(); };
   $a('btnTestAch').onclick = () => { if(!isAdmin())return; ACHIEVEMENTS.forEach(a => { if(!S.achUnlocked[a.id]){ S.achUnlocked[a.id]=Date.now(); S.silver+=a.reward; S.silverEarned+=a.reward; } }); refreshStatsOnly(); openAdminPanel(); };
   $a('btnResetMyQuests').onclick = resetMyQuests;
   $a('btnResetDemo').onclick = resetDemo;
@@ -6768,63 +6726,26 @@ function fmtChatTimestamp(iso) {
   const sameDay = d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
   return sameDay ? hhmm : (d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+' '+hhmm);
 }
-// jours passés explicitement dépliés par le joueur pour relire — le jour le plus récent reste
-// toujours déplié par défaut. Barre dorée de séparation entre chaque jour — demande explicite du
-// 2026-07-07 : "chaque nouveau jour est séparé d'une jolie barre dorée puis le jour précédent est
-// replié, dépliable pour relire le chat"
-let chatExpandedDays = new Set();
-function dayKeyOf(iso) { const d = new Date(iso); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
-function fmtDaySeparator(iso) {
-  const d = new Date(iso), now = new Date(), yest = new Date(now); yest.setDate(yest.getDate()-1);
-  if (dayKeyOf(iso) === dayKeyOf(now.toISOString())) return LANG==='fr' ? "Aujourd'hui" : 'Today';
-  if (dayKeyOf(iso) === dayKeyOf(yest.toISOString())) return LANG==='fr' ? 'Hier' : 'Yesterday';
-  return d.toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', day:'numeric', month:'long' });
-}
 function renderChatMessages(msgs, sinceTs) {
   const el = $a('chatMessages'); if (!el) return;
   const canDelete = isAdmin() || myIsMod; // admin ET modérateurs peuvent supprimer
-  if (!msgs.length) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`; return; }
-  // regroupe les messages par jour, dans l'ordre chronologique — seul le DERNIER groupe (le plus
-  // récent) est déplié par défaut, les précédents sont repliés sous leur barre dorée
-  const dayGroups = [];
-  for (const m of msgs) {
-    const key = dayKeyOf(m.created_at);
-    let g = dayGroups[dayGroups.length-1];
-    if (!g || g.key !== key) { g = { key, msgs: [] }; dayGroups.push(g); }
-    g.msgs.push(m);
-  }
-  const lastKey = dayGroups[dayGroups.length-1].key;
-  el.innerHTML = dayGroups.map(g => {
-    const isLast = g.key === lastKey;
-    const expanded = isLast || chatExpandedDays.has(g.key);
-    const bar = `<div class="chatDaySep${isLast?' current':''}" data-day="${g.key}">` +
-      `<span class="chatDaySepLine"></span><span class="chatDaySepLabel">${fmtDaySeparator(g.msgs[0].created_at)}` +
-      `${isLast?'':` (${g.msgs.length}) ${expanded?'▾':'▸'}`}</span><span class="chatDaySepLine"></span></div>`;
-    const rows = !expanded ? '' : g.msgs.map(m => {
-      // badge de rôle DEVANT le pseudo : ADMIN (or) / MOD (bleu). Le pseudo affiché vient du
-      // serveur (profiles.pseudo, jamais l'email) — voir post_chat_message
-      const badge = m.role === 'admin' ? '<span class="chatBadge admin">ADMIN</span> '
-        : m.role === 'mod' ? '<span class="chatBadge mod">MOD</span> ' : '';
-      const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
-      // canal Annonce : seulement le rôle (badge), pas de pseudo — juste le message en rouge
-      const pseudoHtml = chatChannel === 'annonce' ? '' :
-        `<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':(LANG==='fr'?'Joueur':'Player')))}</span> `;
-      // halo temporaire sur les messages arrivés depuis la dernière lecture de CE canal —
-      // demande explicite : "un halo sur le message que tu n'as pas encore lu"
-      const isNew = sinceTs && new Date(m.created_at) > new Date(sinceTs);
-      return `<div class="chatMsg chan-${chatChannel}${isNew?' newMsg':''}">${del}` +
-        `${badge}${pseudoHtml}<span class="chatText">${escapeHtml(m.message)}</span>` +
-        `<span class="chatTime">${fmtChatTimestamp(m.created_at)}</span></div>`;
-    }).join('');
-    return bar + rows;
-  }).join('');
-  el.querySelectorAll('.chatDaySep:not(.current)').forEach(bar => {
-    bar.onclick = () => {
-      const key = bar.dataset.day;
-      if (chatExpandedDays.has(key)) chatExpandedDays.delete(key); else chatExpandedDays.add(key);
-      renderChatMessages(msgs, sinceTs);
-    };
-  });
+  el.innerHTML = msgs.length ? msgs.map(m => {
+    // badge de rôle DEVANT le pseudo : ADMIN (or) / MOD (bleu). Le pseudo affiché vient du
+    // serveur (profiles.pseudo, jamais l'email) — voir post_chat_message
+    const badge = m.role === 'admin' ? '<span class="chatBadge admin">ADMIN</span> '
+      : m.role === 'mod' ? '<span class="chatBadge mod">MOD</span> ' : '';
+    const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
+    // canal Annonce : seulement le rôle (badge), pas de pseudo — juste le message en rouge
+    const pseudoHtml = chatChannel === 'annonce' ? '' :
+      `<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':(LANG==='fr'?'Joueur':'Player')))}</span> `;
+    // halo temporaire sur les messages arrivés depuis la dernière lecture de CE canal —
+    // demande explicite : "un halo sur le message que tu n'as pas encore lu"
+    const isNew = sinceTs && new Date(m.created_at) > new Date(sinceTs);
+    return `<div class="chatMsg chan-${chatChannel}${isNew?' newMsg':''}">${del}` +
+      `${badge}${pseudoHtml}<span class="chatText">${escapeHtml(m.message)}</span>` +
+      `<span class="chatTime">${fmtChatTimestamp(m.created_at)}</span></div>`;
+  }).join('')
+    : `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`;
   el.scrollTop = el.scrollHeight;
   el.querySelectorAll('.chatDelBtn').forEach(btn => {
     btn.onclick = async () => {
@@ -7346,38 +7267,28 @@ async function refreshCmMaterialList() {
   }
 }
 
-// ---------- vitrine "Parcourir" : arbre de catégories, cartes groupées par objet avec tirage par
-// niveau d'enchantement, panneau de détail avec comparaison — inspirée d'une référence visuelle du
-// Marché Central de BDO fournie par l'utilisateur le 2026-07-07 ----------
-const CM_CATEGORIES = [
-  { id:'all',       label:{fr:'★ Tout',en:'★ All'},                          kind:null,      slots:null },
-  { id:'weapon',    label:{fr:'⚔️ Arme principale',en:'⚔️ Main weapon'},      kind:'gear',    slots:['weapon'] },
-  { id:'secondary', label:{fr:'🗡️ Arme secondaire',en:'🗡️ Secondary weapon'}, kind:'gear',    slots:['secondary'] },
-  { id:'awakening', label:{fr:'✨ Arme d\'éveil',en:'✨ Awakening weapon'},     kind:'gear',    slots:['awakening'] },
-  { id:'armor',     label:{fr:'🛡️ Armure',en:'🛡️ Armor'},                    kind:'gear',    slots:['helmet','armor','gloves','boots'] },
-  { id:'accessory', label:{fr:'💍 Accessoires',en:'💍 Accessories'},          kind:'jackpot', slots:null },
-  { id:'artifact',  label:{fr:'🔮 Artéfact / Pierre',en:'🔮 Artifact / Stone'}, kind:'gear',   slots:['artifact1','artifact2','eqStone'] },
-  { id:'material',  label:{fr:'◈ Matériaux',en:'◈ Materials'},               kind:'material', slots:null },
+// ---------- vitrine "Parcourir" : cartes d'objets en vente + panneau de détail avec comparaison
+// (inspirée d'une référence visuelle fournie par l'utilisateur le 2026-07-07) ----------
+const CM_KIND_PILLS = [
+  { id:'all', label:{fr:'★ Tout',en:'★ All'} },
+  { id:'gear', label:{fr:'⚔️ Équipement',en:'⚔️ Gear'} },
+  { id:'jackpot', label:{fr:'💍 Bijoux',en:'💍 Jewelry'} },
+  { id:'material', label:{fr:'◈ Matériaux',en:'◈ Materials'} },
 ];
-let cmActiveCat = 'all', cmListings = [], cmSelectedId = null, cmDrilldownName = null;
-function renderCmCategoryTree() {
-  const el = $a('cmCategoryTree'); if (!el) return;
-  el.innerHTML = CM_CATEGORIES.map(c => `<button class="cmCatBtn${c.id===cmActiveCat?' active':''}" data-cat="${c.id}">${c.label[LANG]}</button>`).join('');
-  el.querySelectorAll('.cmCatBtn').forEach(btn => {
-    btn.onclick = () => { cmActiveCat = btn.dataset.cat; cmDrilldownName = null; cmSelectedId = null; refreshCmBrowse(); };
+let cmActiveKind = 'all', cmListings = [], cmSelectedId = null;
+function renderCmKindPills() {
+  const el = $a('cmKindPills'); if (!el) return;
+  el.innerHTML = CM_KIND_PILLS.map(k => `<button class="cmKindPill${k.id===cmActiveKind?' active':''}" data-kind="${k.id}">${k.label[LANG]}</button>`).join('');
+  el.querySelectorAll('.cmKindPill').forEach(btn => {
+    btn.onclick = () => { cmActiveKind = btn.dataset.kind; refreshCmBrowse(); };
   });
 }
-function updateCmWallet() { const el = $a('cmWalletVal'); if (el) el.textContent = fmt(Math.round(S.silver)) + ' 🪙'; }
 async function refreshCmBrowse() {
-  renderCmCategoryTree();
-  updateCmWallet();
+  renderCmKindPills();
   const list = $a('cmListingsList'); if (!list) return;
   list.innerHTML = '<div class="mEmpty">Chargement...</div>';
-  const cat = CM_CATEGORIES.find(c => c.id === cmActiveCat) || CM_CATEGORIES[0];
-  const { data, error } = await sb.rpc('market_listings', { p_kind: cat.kind });
-  let rows = data || [];
-  if (cat.slots) rows = rows.filter(l => l.item_snapshot && cat.slots.includes(l.item_snapshot.slot));
-  cmListings = rows;
+  const { data, error } = await sb.rpc('market_listings', { p_kind: cmActiveKind === 'all' ? null : cmActiveKind });
+  cmListings = data || [];
   if (error) { list.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Erreur de chargement':'Loading error'}</div>`; return; }
   renderCmListingsList();
 }
@@ -7395,87 +7306,29 @@ function cmTimeAgo(iso) {
   if (sec < 86400) return Math.round(sec/3600) + 'h';
   return Math.round(sec/86400) + 'j';
 }
-// applique recherche + tri à un tableau d'annonces (utilisé pour les 2 niveaux : vue groupée et
-// vue détaillée par niveau d'enchantement)
-function cmApplySearchSort(items, priceOf, timeOf) {
-  const search = ($a('cmSearch').value || '').toLowerCase().trim();
-  const sort = $a('cmSort').value;
-  let rows = items.filter(x => !search || tr(x.name || x.item_name).toLowerCase().includes(search));
-  if (sort === 'price_asc') rows.sort((a,b) => priceOf(a) - priceOf(b));
-  else if (sort === 'price_desc') rows.sort((a,b) => priceOf(b) - priceOf(a));
-  else rows.sort((a,b) => new Date(timeOf(b)) - new Date(timeOf(a)));
-  return rows;
-}
 function renderCmListingsList() {
   const list = $a('cmListingsList'); if (!list) return;
-  if (cmDrilldownName) { renderCmDrilldown(); return; }
-  // vue groupée par NOM d'objet (comme le Marché Central de BDO) : une ligne par objet, prix le
-  // plus bas / stock total ; si plusieurs niveaux d'enchantement existent, clic = tiroir détaillé
-  const groups = new Map();
-  for (const l of cmListings) {
-    if (!groups.has(l.item_name)) groups.set(l.item_name, { name: l.item_name, kind: l.item_kind, items: [] });
-    groups.get(l.item_name).items.push(l);
-  }
-  let rows = [...groups.values()].map(g => {
-    const best = g.items.reduce((a,b) => a.price < b.price ? a : b);
-    const stock = g.items.reduce((n,x) => n + (x.item_kind === 'material' ? x.qty : 1), 0);
-    const enhLvs = new Set(g.items.map(x => (x.item_snapshot && x.item_snapshot.enhLv) || 0));
-    return { ...g, best, stock, drilldown: enhLvs.size > 1, latest: g.items.reduce((a,b) => new Date(a.created_at)>new Date(b.created_at)?a:b).created_at };
-  });
-  rows = cmApplySearchSort(rows, r => r.best.price, r => r.latest);
+  const search = ($a('cmSearch').value || '').toLowerCase().trim();
+  const sort = $a('cmSort').value;
+  let rows = cmListings.filter(l => !search || tr(l.item_name).toLowerCase().includes(search));
+  if (sort === 'price_asc') rows.sort((a,b) => a.price - b.price);
+  else if (sort === 'price_desc') rows.sort((a,b) => b.price - a.price);
+  else rows.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
   if (!rows.length) { list.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Aucune vente en cours':'No listings right now'}</div>`; return; }
-  list.innerHTML = rows.map(g => {
-    const color = cmListingColor(g.best);
-    return `<div class="cmListCard" data-name="${escapeHtml(g.name)}">
-      <div class="cmListIcon" style="color:${color}">${cmListingIcon(g.best)}</div>
+  list.innerHTML = rows.map(l => {
+    const color = cmListingColor(l);
+    const enh = l.item_snapshot && l.item_snapshot.enhLv ? ' ' + ENH_NAMES[l.item_snapshot.enhLv] : '';
+    return `<div class="cmListCard${l.id===cmSelectedId?' selected':''}" style="border-left-color:${color}" data-id="${l.id}">
+      <div class="cmListIcon" style="color:${color}">${cmListingIcon(l)}</div>
       <div class="cmListInfo">
-        <div class="cmListName" style="color:${color}">${tr(g.name)}</div>
-        <div class="cmListSub">${LANG==='fr'?'En stock':'In stock'} : ${fmt(g.stock)}${g.drilldown?` · ${g.items.length} ${LANG==='fr'?'niveaux':'levels'}`:''}</div>
+        <div class="cmListName" style="color:${color}">${tr(l.item_name)}${enh}</div>
+        <div class="cmListSub">${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}${l.item_kind==='material'?' · ×'+fmt(l.qty):''}</div>
       </div>
-      <div class="cmListPrice"><div class="price">${LANG==='fr'?'dès':'from'} ${fmt(g.best.price)} 🪙</div></div>
+      <div class="cmListPrice"><div class="price">${fmt(l.price)} 🪙</div></div>
     </div>`;
   }).join('');
   list.querySelectorAll('.cmListCard').forEach(card => {
-    const g = rows.find(r => r.name === card.dataset.name);
-    card.onclick = () => {
-      if (g.drilldown) { cmDrilldownName = g.name; renderCmListingsList(); }
-      else { cmSelectedId = g.best.id; renderCmDetailPanel(); }
-    };
-  });
-}
-// tiroir détaillé par niveau d'enchantement (façon "+13/+14/+15/PRI/DUO..." du vrai marché BDO) —
-// une ligne par niveau présent, avec son propre prix le plus bas et son stock
-function renderCmDrilldown() {
-  const list = $a('cmListingsList'); if (!list) return;
-  const items = cmListings.filter(l => l.item_name === cmDrilldownName);
-  const byLv = new Map();
-  for (const l of items) {
-    const lv = (l.item_snapshot && l.item_snapshot.enhLv) || 0;
-    if (!byLv.has(lv)) byLv.set(lv, []);
-    byLv.get(lv).push(l);
-  }
-  let rows = [...byLv.entries()].map(([lv, arr]) => ({
-    lv, best: arr.reduce((a,b) => a.price < b.price ? a : b), stock: arr.length,
-    latest: arr.reduce((a,b) => new Date(a.created_at)>new Date(b.created_at)?a:b).created_at,
-  }));
-  rows.sort((a,b) => a.lv - b.lv);
-  rows = cmApplySearchSort(rows.map(r => ({...r, name:cmDrilldownName})), r => r.best.price, r => r.latest);
-  const backBtn = `<button class="cmBackBtn" id="cmBackBtn">← ${LANG==='fr'?'Retour':'Back'}</button>`;
-  list.innerHTML = backBtn + rows.map(r => {
-    const color = cmListingColor(r.best);
-    return `<div class="cmListCard" data-lv="${r.lv}">
-      <div class="cmListIcon" style="color:${color}">${cmListingIcon(r.best)}</div>
-      <div class="cmListInfo">
-        <div class="cmListName" style="color:${color}">${ENH_NAMES[r.lv]} ${tr(cmDrilldownName)}</div>
-        <div class="cmListSub">${LANG==='fr'?'En stock':'In stock'} : ${fmt(r.stock)}</div>
-      </div>
-      <div class="cmListPrice"><div class="price">${LANG==='fr'?'dès':'from'} ${fmt(r.best.price)} 🪙</div></div>
-    </div>`;
-  }).join('');
-  $a('cmBackBtn').onclick = () => { cmDrilldownName = null; renderCmListingsList(); };
-  list.querySelectorAll('.cmListCard').forEach(card => {
-    const r = rows.find(x => x.lv === Number(card.dataset.lv));
-    card.onclick = () => { cmSelectedId = r.best.id; renderCmDetailPanel(); };
+    card.onclick = () => { cmSelectedId = Number(card.dataset.id); renderCmListingsList(); renderCmDetailPanel(); };
   });
 }
 // panneau de détail : stats complètes + comparaison face à l'équipement actuel (si gear/bijou)
@@ -7534,7 +7387,6 @@ async function buyCmListing(l) {
   if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
   msg.textContent = LANG==='fr'?'Achat effectué ✓':'Purchase complete ✓'; msg.className = 'ok';
   await loadCloudSave();
-  updateCmWallet();
   refreshCmBrowse();
   refreshMyMarketOrders();
 }
@@ -7642,7 +7494,6 @@ const I18N = {
   cmTabOrders: { fr:'📋 Mes ordres', en:'📋 My orders' },
   cmMaterialSectionTitle: { fr:'◈ Vendre / acheter des matériaux', en:'◈ Sell / buy materials' },
   cmSelectItemHint: { fr:'Clique un objet pour voir le détail', en:'Click an item to see the detail' },
-  cmWalletLbl: { fr:'💰 Ton solde', en:'💰 Your balance' },
   btnListItem: { fr:'Mettre en vente', en:'List for sale' },
   cardStats: { fr:'Statistiques', en:'Stats' },
   cardZoneStats: { fr:'Stats de la zone de farm', en:'Farming zone stats' },
@@ -7748,19 +7599,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V111', d:'07/07/2026 12:00', name:{fr:'Marché Central façon BDO, chat par jour, Loyalties', en:'BDO-style Central Market, daily chat, Loyalties'}, fr:[
-      {t:'new',    tx:'Marché commun repensé façon Marché Central de BDO (inspiré d\'une référence fournie) : solde bien visible, arbre de catégories (Arme principale/secondaire/éveil, Armure, Accessoires, Artéfact/Pierre, Matériaux), objets groupés par nom avec tiroir détaillé par niveau d\'enchantement (+13/+14/.../PRI/DUO...)'},
-      {t:'new',    tx:'Chat : chaque jour est séparé par une barre dorée ; les jours précédents sont repliés par défaut (dépliables en un clic pour relire), seul le jour en cours reste toujours ouvert'},
-      {t:'change',  tx:'Les notifications affichent maintenant toujours la date complète, pas seulement l\'heure'},
-      {t:'change',  tx:'Renommé "Points de fidélité" en "Loyalties" (déjà stackables chaque jour et récupérables à tout moment, 200/jour, dans le Courrier)'},
-      {t:'new',    tx:'Nouvel onglet "🏅 Loyalties" dans le panneau admin : total en jeu, moyenne par joueur (pas encore de boutique où les dépenser)'},
-    ], en:[
-      {t:'new',    tx:'Common market redesigned in the style of BDO\'s Central Market (inspired by a provided reference): balance clearly visible, category tree (Main/Secondary/Awakening weapon, Armor, Accessories, Artifact/Stone, Materials), items grouped by name with a detailed drawer per enhancement level (+13/+14/.../PRI/DUO...)'},
-      {t:'new',    tx:'Chat: each day is separated by a golden bar; previous days are collapsed by default (expandable with one click to reread), only the current day stays always open'},
-      {t:'change',  tx:'Notifications now always show the full date, not just the time'},
-      {t:'change',  tx:'Renamed "Loyalty Points" to "Loyalties" (already stackable daily and claimable anytime, 200/day, in the Mailbox)'},
-      {t:'new',    tx:'New "🏅 Loyalties" tab in the admin panel: total in game, average per player (no shop to spend it on yet)'},
-    ] },
   { v:'V110', d:'07/07/2026 09:30', name:{fr:'Audit anti-triche & notifications refaites', en:'Anti-cheat audit & reworked notifications'}, fr:[
       {t:'fix',     tx:'Corrigé un "NaN%" possible sur la barre de vie du boss (division par zéro si les PV max valent 0, ex: juste après un despawn)'},
       {t:'exploit', tx:'Faille trouvée en audit : sur le marché, un vendeur pouvait mettre en vente un objet sans valeur en étiquetant l\'annonce comme un objet précieux (arnaque à l\'appât) — le nom/type de l\'annonce est désormais TOUJOURS recalculé depuis l\'objet réellement en vente, jamais depuis ce que le client prétend'},
@@ -8794,12 +8632,12 @@ const WIKI_SECTIONS = [
   { id:'account', icon:'💾', label:{fr:'Compte & Sauvegarde',en:'Account & Save'},
     fr:`<h3>Sauvegarde</h3>
       <p>Sauvegarde cloud automatique toutes les 30 s, plus une sauvegarde locale de secours. En cas de déconnexion brutale, jusqu'à 30 s de progression peuvent être perdues.</p>
-      <h3>Loyalties & Courrier</h3>
-      <p>Tu reçois 200 Loyalties par jour dans ton 📬 Courrier — elles s'y empilent en permanence et ne se perdent jamais.</p>`,
+      <h3>Fidélité & Courrier</h3>
+      <p>Tu reçois 200 points de fidélité par jour dans ton 📬 Courrier — ils s'y empilent en permanence et ne se perdent jamais.</p>`,
     en:`<h3>Save system</h3>
       <p>Automatic cloud save every 30 s, plus a local backup. On an abrupt disconnect, up to 30 s of progress may be lost.</p>
-      <h3>Loyalties & Mailbox</h3>
-      <p>You get 200 Loyalties per day in your 📬 Mailbox — they stack there permanently and never get lost.</p>` },
+      <h3>Loyalty & Mailbox</h3>
+      <p>You get 200 loyalty points per day in your 📬 Mailbox — they stack there permanently and never get lost.</p>` },
   { id:'about', icon:'ℹ️', label:{fr:'À propos',en:'About'},
     fr:`<h3>Noms & identité visuelle</h3>
       <p>Les noms de zones, monstres et objets sont inspirés de Black Desert Online pour l'ambiance, tout comme certains styles de jeu et mécaniques — ils restent, le cas échéant, la propriété de Pearl Abyss. Les icônes et visuels, eux, sont des créations originales de style fan : ils s'inspirent visuellement du jeu mais ne réutilisent aucun asset réel.</p>
@@ -8964,7 +8802,7 @@ const TUTORIAL_STEPS = [
     text:{fr:'Des objectifs à long terme avec des récompenses en silver à débloquer au fil de ta progression.', en:'Long-term goals with silver rewards to unlock as you progress.'} },
   { target:'#btnMailbox', placement:'bottom',
     title:{fr:'Le courrier',en:'The mailbox'},
-    text:{fr:'200 Loyalties t\'y attendent chaque jour — elles s\'y empilent en permanence et ne se perdent jamais.', en:'200 Loyalties wait for you here every day — they stack up permanently and never get lost.'} },
+    text:{fr:'200 points de fidélité t\'y attendent chaque jour — ils s\'y empilent en permanence et ne se perdent jamais.', en:'200 loyalty points wait for you here every day — they stack up permanently and never get lost.'} },
   { target:'#btnPatch', placement:'bottom',
     title:{fr:'Les notes de version',en:'Patch notes'},
     text:{fr:'Retrouve ici tout ce qui change à chaque mise à jour du jeu.', en:'Find everything that changes with each game update here.'} },
