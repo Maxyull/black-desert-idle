@@ -104,9 +104,12 @@ create table if not exists public.chat_deleted (
   author_id uuid,
   author_pseudo text,
   message text,
+  role text default 'user',
   deleted_by uuid,
   deleted_at timestamptz not null default now()
 );
+-- migration si la table existait déjà sans la colonne role (nécessaire pour restaurer le bon badge)
+alter table public.chat_deleted add column if not exists role text default 'user';
 create index if not exists chat_deleted_deleted_at_idx on public.chat_deleted(deleted_at desc);
 alter table public.chat_deleted enable row level security;
 drop policy if exists "chat_deleted_select_staff" on public.chat_deleted;
@@ -130,14 +133,37 @@ begin
   end if;
   select * into v_m from public.chat_messages where id = p_id;
   if v_m.id is not null then
-    insert into public.chat_deleted (orig_id, channel, author_id, author_pseudo, message, deleted_by)
-      values (v_m.id, v_m.channel, v_m.user_id, v_m.pseudo, v_m.message, v_uid);
+    insert into public.chat_deleted (orig_id, channel, author_id, author_pseudo, message, role, deleted_by)
+      values (v_m.id, v_m.channel, v_m.user_id, v_m.pseudo, v_m.message, v_m.role, v_uid);
     delete from public.chat_messages where id = p_id;
   end if;
 end;
 $$;
 
 grant execute on function public.delete_chat_message(bigint) to authenticated;
+
+-- renvoi d'un message modéré à tort : réservé au staff (admin + modérateurs), comme la suppression.
+-- Reposte le message dans son canal d'origine (avec le rôle/badge qu'il avait au moment de la
+-- suppression) puis retire l'entrée du journal "modéré" (le message n'est plus "supprimé").
+create or replace function public.restore_chat_message(p_deleted_id bigint)
+returns void
+language plpgsql security definer
+as $$
+declare v_uid uuid := auth.uid(); v_d record;
+begin
+  if v_uid is null then raise exception 'Non authentifié'; end if;
+  if coalesce(auth.jwt()->>'email', '') is distinct from 'maxime.lacoste@icloud.com'
+     and not exists (select 1 from public.chat_mods where user_id = v_uid) then
+    raise exception 'Réservé au staff';
+  end if;
+  select * into v_d from public.chat_deleted where id = p_deleted_id;
+  if v_d.id is null then raise exception 'Entrée introuvable'; end if;
+  insert into public.chat_messages (channel, user_id, pseudo, message, role)
+    values (v_d.channel, v_d.author_id, coalesce(v_d.author_pseudo,'Joueur'), v_d.message, coalesce(v_d.role,'user'));
+  delete from public.chat_deleted where id = p_deleted_id;
+end;
+$$;
+grant execute on function public.restore_chat_message(bigint) to authenticated;
 
 -- ============================================================
 -- Gestion des modérateurs (admin) : ajouter/retirer un MOD par UUID, lister les MODs.
