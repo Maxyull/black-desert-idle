@@ -6017,15 +6017,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V73', d:'04/07/2026 12:30', name:{fr:'PV/potions en %, confirmation de vente, remboursement admin', en:'HP/potion %, sell confirmation, admin refund'}, fr:[
-      {t:'new', tx:'La barre de vie du personnage affiche maintenant le % de PV, et le sélecteur de potion affiche le % de soin en plus du chiffre'},
-      {t:'new', tx:'Une confirmation est désormais demandée avant toute vente (objet, tas, tout le rebut, tous les matériaux)'},
-      {t:'new', tx:'Panneau Admin : bouton pour rembourser le dernier clic "Vendre mat" d\'un joueur (par pseudo), à partir d\'un nouveau journal des ventes groupées'},
-    ], en:[
-      {t:'new', tx:'The character HP bar now shows the HP %, and the potion selector shows the heal % alongside the number'},
-      {t:'new', tx:'A confirmation is now required before any sale (single item, stack, all trash, all materials)'},
-      {t:'new', tx:'Admin panel: button to refund a player\'s last "Sell mats" click (by pseudo), from a new bulk-sale log'},
-    ] },
   { v:'V72', d:'04/07/2026 11:00', name:{fr:'Potions à 4 tailles, IA Loot/XP, clic sur le loot, PV du stuff, boss stylisé', en:'4 potion sizes, Loot/XP AI, click-to-loot, gear HP, styled boss'}, fr:[
       {t:'new', tx:'Les potions de vie proposent maintenant 4 tailles au choix (petite/moyenne/grande/majeure), chacune avec un prix fixe et un soin différents (recharge adaptée à la taille pour rester équilibrée) — clique sur l\'icône de potion en jeu pour choisir'},
       {t:'new', tx:'Nouveau bouton de mode d\'IA à côté de l\'état : "🎒 Loot" ramasse tout le butin d\'un pack avant de passer au suivant (corrigé pour ne plus rien laisser au sol), "⚡ XP" enchaîne les packs sans se soucier du loot pour maximiser les kills/xp par minute'},
