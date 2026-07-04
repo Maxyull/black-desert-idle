@@ -5724,11 +5724,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V68', d:'04/07/2026 07:00', name:{fr:'Correctif : halo du tutoriel figé au scroll', en:'Fix: tutorial halo stays static on scroll'}, fr:[
-      {t:'fix', tx:'Le halo/encadré du tutoriel de bienvenue reste maintenant totalement statique à l\'écran, même en cas de scroll — il ne se recale plus (et ne bouge donc plus) pendant que tu défiles la page'},
-    ], en:[
-      {t:'fix', tx:'The welcome tutorial\'s halo/box now stays completely static on screen even when scrolling — it no longer repositions (and therefore no longer moves) while you scroll the page'},
-    ] },
   { v:'V67', d:'04/07/2026 06:30', name:{fr:'Correctif : tutoriel désaligné au scroll', en:'Fix: tutorial misaligned on scroll'}, fr:[
       {t:'fix', tx:'L\'encadré et la flèche du tutoriel de bienvenue restent maintenant correctement collés à l\'élément expliqué même si on scroll la page pendant le tutoriel'},
     ], en:[
@@ -6556,8 +6551,10 @@ $a('tutNextBtn').onclick = () => {
 };
 $a('tutSkipBtn').onclick = endTutorial;
 window.addEventListener('resize', () => { if (tutorialStepIdx >= 0) positionTutorialStep(); });
-// PAS de recalage sur scroll (volontaire) : le halo/encadré est en position:fixed, donc déjà
-// figé à l'écran par nature — on ne veut surtout pas qu'il "coure après" la cible au scroll.
+// recalage sur scroll (fenêtre ET conteneurs internes comme #zoneList/#panel, qui ont leur propre
+// scroll) — capture:true car les évènements "scroll" des conteneurs internes ne remontent pas (pas
+// de bubbling), il faut donc écouter en phase de capture pour les intercepter depuis window
+window.addEventListener('scroll', () => { if (tutorialStepIdx >= 0) positionTutorialStep(); }, true);
 
 // ---------- suivi des patch notes lus ----------
 // principe demandé : le tag NEW reste visible pendant TOUTE la session en cours (même après
