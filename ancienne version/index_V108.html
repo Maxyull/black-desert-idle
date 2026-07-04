@@ -233,12 +233,7 @@
   @keyframes shake { 25%{transform:translateX(-4px);} 50%{transform:translateX(4px);} 75%{transform:translateX(-2px);} }
 
   /* liste des zones */
-  /* la grille #panel étire toutes les cartes d'une même rangée à la hauteur de la plus haute
-     (comportement par défaut de CSS grid) — avant ce correctif, #zoneList gardait une hauteur
-     FIXE (262px) et laissait un grand vide sous la liste quand la carte était étirée plus haut.
-     Corrigé en faisant grandir la liste jusqu'en bas de la carte — demande explicite du 2026-07-07 */
-  #zonesCard { display:flex; flex-direction:column; }
-  #zoneList { flex:1; min-height:150px; max-height:none; overflow-y:auto; }
+  #zoneList { max-height:262px; overflow-y:auto; }
   #zoneList::-webkit-scrollbar { width:6px; } 
   #zoneList::-webkit-scrollbar-thumb { background:#3a3742; }
   .zRow {
@@ -681,47 +676,6 @@
     font-family:inherit; font-size:12px; padding:8px 9px; margin-bottom:8px; }
   #cmSellPriceInput { width:100%; background:#191720; color:var(--ink); border:1px solid #3a3742;
     font-family:inherit; font-size:12px; padding:8px 9px; margin-bottom:8px; }
-
-  /* ===== marché commun v2 : vitrine "parcourir" (inspirée d'une référence visuelle fournie par
-     l'utilisateur le 2026-07-07) — cartes d'objets en vente + panneau de détail avec comparaison ===== */
-  .cmSubTabs { display:flex; gap:6px; margin-bottom:10px; border-bottom:1px solid #2c2a33; padding-bottom:8px; }
-  .cmSubTab { width:auto; margin:0; padding:6px 12px; font-size:11.5px; background:transparent; border:1px solid #3a3742; }
-  .cmSubTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
-  .cmFilterBar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
-  .cmKindPills { display:flex; gap:5px; }
-  .cmKindPill { width:auto; margin:0; padding:5px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; border-radius:14px; }
-  .cmKindPill.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.1); }
-  #cmSearch { flex:1; min-width:120px; background:#191720; color:var(--ink); border:1px solid #3a3742;
-    font-family:inherit; font-size:11.5px; padding:6px 9px; }
-  #cmSort { background:#191720; color:var(--ink); border:1px solid #3a3742; font-family:inherit; font-size:11.5px; padding:6px 8px; }
-  .cmBrowseLayout { display:flex; gap:10px; align-items:flex-start; }
-  .cmListingsList { flex:1.4; min-width:0; display:flex; flex-direction:column; gap:6px; max-height:420px; overflow-y:auto; }
-  .cmDetailPanel { flex:1; min-width:0; position:sticky; top:0; background:var(--panel-2);
-    border:1px solid #2c2a31; padding:12px; max-height:420px; overflow-y:auto; }
-  .cmListCard { display:flex; align-items:center; gap:9px; padding:8px 10px; background:var(--panel-2);
-    border:1px solid #2c2a31; border-left-width:3px; cursor:pointer; font-size:12px; }
-  .cmListCard:hover { background:#232028; }
-  .cmListCard.selected { border-color:var(--gold); background:rgba(201,165,90,.06); }
-  .cmListIcon { width:32px; height:32px; display:flex; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.3); border:1px solid #2c2a31; flex-shrink:0; }
-  .cmListInfo { flex:1; min-width:0; }
-  .cmListName { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .cmListSub { color:var(--ink-dim); font-size:10px; }
-  .cmListPrice { text-align:right; flex-shrink:0; }
-  .cmListPrice .price { color:var(--gold); font-size:12.5px; white-space:nowrap; }
-  .cmListPrice button { width:auto; margin:3px 0 0; padding:3px 10px; font-size:10.5px; }
-  .cmDetailTitle { font-size:13px; margin-bottom:2px; }
-  .cmDetailSub { color:var(--ink-dim); font-size:10.5px; margin-bottom:10px; }
-  .cmDetailIcon { width:64px; height:64px; margin:0 auto 10px; display:flex; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.3); border:2px solid #2c2a31; border-radius:6px; }
-  .cmDetailIcon svg { width:40px; height:40px; }
-  .cmDetailStats { margin-bottom:10px; }
-  .cmDetailStats .srow { display:flex; justify-content:space-between; font-size:11.5px; margin:3px 0; }
-  .cmCompareTable { width:100%; border-collapse:collapse; font-size:10.5px; margin-top:6px; }
-  .cmCompareTable th { text-align:left; color:var(--ink-dim); font-weight:normal; padding:3px 4px; border-bottom:1px solid #2c2a31; }
-  .cmCompareTable td { padding:3px 4px; border-bottom:1px solid #232128; }
-  .cmDelta.up { color:#8fc98a; } .cmDelta.down { color:var(--danger); }
-  #cmDetailPanel .btnBuyListing { width:100%; margin-top:8px; padding:9px; font-size:12px; }
 
   .mHint { color:var(--ink-dim); font-size:11.5px; margin-bottom:10px; }
   #sellItemSelect {
@@ -1434,43 +1388,14 @@
 
     <div id="marketCommon" class="marketPane" style="display:none">
       <p class="mHint" data-i18n="commonHint">Vrai carnet d'ordres entre joueurs : pose un prix d'achat ou de vente, l'argent/l'objet reste bloqué tant que l'ordre n'est pas exécuté ou annulé. Si ton prix correspond au meilleur ordre opposé, l'échange se fait automatiquement (égalité de prix = tirage au sort).</p>
-      <div class="cmSubTabs">
-        <button class="cmSubTab active" data-cmtab="browse" data-i18n="cmTabBrowse">🛒 Parcourir</button>
-        <button class="cmSubTab" data-cmtab="sell" data-i18n="cmTabSell">🏷️ Vendre</button>
-        <button class="cmSubTab" data-cmtab="orders" data-i18n="cmTabOrders">📋 Mes ordres</button>
-      </div>
+      <div id="marketCommonList"></div>
       <div id="commonMsg"></div>
-
-      <div id="cmPaneBrowse" class="cmSubPane">
-        <div class="cmFilterBar">
-          <div class="cmKindPills" id="cmKindPills"></div>
-          <input type="text" id="cmSearch" placeholder="🔎 Rechercher un objet...">
-          <select id="cmSort">
-            <option value="price_asc">Prix ↑</option>
-            <option value="price_desc">Prix ↓</option>
-            <option value="recent">Plus récents</option>
-          </select>
-        </div>
-        <div class="cmBrowseLayout">
-          <div id="cmListingsList" class="cmListingsList"></div>
-          <div id="cmDetailPanel" class="cmDetailPanel">
-            <div class="mEmpty" data-i18n="cmSelectItemHint">Clique un objet pour voir le détail</div>
-          </div>
-        </div>
-      </div>
-
-      <div id="cmPaneSell" class="cmSubPane" style="display:none">
-        <h3 style="margin-top:0" data-i18n="cmSellSectionTitle">🎒 Vendre un objet de mon sac</h3>
-        <select id="cmSellItemSelect"></select>
-        <input type="number" id="cmSellPriceInput" placeholder="Prix en silver" min="1" data-i18n-ph="priceInputPh">
-        <button id="btnCmListItem" data-i18n="btnCmListItem">Mettre en vente</button>
-        <h3 style="margin-top:14px" data-i18n="cmMaterialSectionTitle">◈ Vendre / acheter des matériaux</h3>
-        <div id="marketCommonList"></div>
-      </div>
-
-      <div id="cmPaneOrders" class="cmSubPane" style="display:none">
-        <div id="cmMyOrders"></div>
-      </div>
+      <h3 style="margin-top:14px" data-i18n="cmSellSectionTitle">🎒 Vendre un objet de mon sac</h3>
+      <select id="cmSellItemSelect"></select>
+      <input type="number" id="cmSellPriceInput" placeholder="Prix en silver" min="1" data-i18n-ph="priceInputPh">
+      <button id="btnCmListItem" data-i18n="btnCmListItem">Mettre en vente</button>
+      <h3 style="margin-top:14px" data-i18n="cmMyOrdersTitle">📋 Mes ordres</h3>
+      <div id="cmMyOrders"></div>
     </div>
   </div>
 </div>
@@ -1542,7 +1467,7 @@
       <div class="row"><span data-i18n="lblDpZone">PD requis (zone)</span><span class="v" id="stDpZone">10 / 20</span></div>
     </div>
 
-    <div class="card" id="zonesCard">
+    <div class="card">
       <h3 data-i18n="cardZones">Zones de farm</h3>
       <div class="catTabs" id="zoneTierTabs"></div>
       <div id="zoneList"></div>
@@ -7169,25 +7094,6 @@ const MARKET_MATERIALS = [
 function marketKeyForGear(it) { return 'gear:' + it.name + '+' + (it.enhLv || 0); }
 
 async function refreshCommonMarket() {
-  wireCmSubTabs();
-  refreshCmBrowse();
-  refreshCmMaterialList();
-  refreshCmSellPicker();
-  refreshMyMarketOrders();
-}
-// sous-onglets du marché commun : Parcourir (vitrine, façon référence fournie le 2026-07-07) /
-// Vendre / Mes ordres
-const CM_TAB_PANES = { browse:'cmPaneBrowse', sell:'cmPaneSell', orders:'cmPaneOrders' };
-function wireCmSubTabs() {
-  document.querySelectorAll('.cmSubTab').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.cmSubTab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      Object.entries(CM_TAB_PANES).forEach(([tab, paneId]) => { $a(paneId).style.display = (tab === btn.dataset.cmtab) ? '' : 'none'; });
-    };
-  });
-}
-async function refreshCmMaterialList() {
   const box = $a('marketCommonList');
   box.innerHTML = '<div class="mEmpty">Chargement...</div>';
   const rows = await Promise.all(MARKET_MATERIALS.map(async m => {
@@ -7221,133 +7127,9 @@ async function refreshCmMaterialList() {
     row.querySelector('.cmSell').onclick = () => placeMarketOrder('sell', key, m.name, 'material', priceEl.value, qtyEl.value);
     box.appendChild(row);
   }
-}
-
-// ---------- vitrine "Parcourir" : cartes d'objets en vente + panneau de détail avec comparaison
-// (inspirée d'une référence visuelle fournie par l'utilisateur le 2026-07-07) ----------
-const CM_KIND_PILLS = [
-  { id:'all', label:{fr:'★ Tout',en:'★ All'} },
-  { id:'gear', label:{fr:'⚔️ Équipement',en:'⚔️ Gear'} },
-  { id:'jackpot', label:{fr:'💍 Bijoux',en:'💍 Jewelry'} },
-  { id:'material', label:{fr:'◈ Matériaux',en:'◈ Materials'} },
-];
-let cmActiveKind = 'all', cmListings = [], cmSelectedId = null;
-function renderCmKindPills() {
-  const el = $a('cmKindPills'); if (!el) return;
-  el.innerHTML = CM_KIND_PILLS.map(k => `<button class="cmKindPill${k.id===cmActiveKind?' active':''}" data-kind="${k.id}">${k.label[LANG]}</button>`).join('');
-  el.querySelectorAll('.cmKindPill').forEach(btn => {
-    btn.onclick = () => { cmActiveKind = btn.dataset.kind; refreshCmBrowse(); };
-  });
-}
-async function refreshCmBrowse() {
-  renderCmKindPills();
-  const list = $a('cmListingsList'); if (!list) return;
-  list.innerHTML = '<div class="mEmpty">Chargement...</div>';
-  const { data, error } = await sb.rpc('market_listings', { p_kind: cmActiveKind === 'all' ? null : cmActiveKind });
-  cmListings = data || [];
-  if (error) { list.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Erreur de chargement':'Loading error'}</div>`; return; }
-  renderCmListingsList();
-}
-function cmListingIcon(l) {
-  if (l.item_kind === 'material') { const m = MARKET_MATERIALS.find(x => x.name === l.item_name); return m ? m.icon : '◈'; }
-  return l.item_snapshot ? l.item_snapshot.icon : '📦';
-}
-function cmListingColor(l) {
-  if (l.item_kind === 'material') { const m = MARKET_MATERIALS.find(x => x.name === l.item_name); return m ? m.color : '#8fb0c9'; }
-  return l.item_snapshot ? l.item_snapshot.color : '#c9a55a';
-}
-function cmTimeAgo(iso) {
-  const sec = Math.max(0, (Date.now() - new Date(iso).getTime())/1000);
-  if (sec < 3600) return Math.round(sec/60) + 'm';
-  if (sec < 86400) return Math.round(sec/3600) + 'h';
-  return Math.round(sec/86400) + 'j';
-}
-function renderCmListingsList() {
-  const list = $a('cmListingsList'); if (!list) return;
-  const search = ($a('cmSearch').value || '').toLowerCase().trim();
-  const sort = $a('cmSort').value;
-  let rows = cmListings.filter(l => !search || tr(l.item_name).toLowerCase().includes(search));
-  if (sort === 'price_asc') rows.sort((a,b) => a.price - b.price);
-  else if (sort === 'price_desc') rows.sort((a,b) => b.price - a.price);
-  else rows.sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
-  if (!rows.length) { list.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Aucune vente en cours':'No listings right now'}</div>`; return; }
-  list.innerHTML = rows.map(l => {
-    const color = cmListingColor(l);
-    const enh = l.item_snapshot && l.item_snapshot.enhLv ? ' ' + ENH_NAMES[l.item_snapshot.enhLv] : '';
-    return `<div class="cmListCard${l.id===cmSelectedId?' selected':''}" style="border-left-color:${color}" data-id="${l.id}">
-      <div class="cmListIcon" style="color:${color}">${cmListingIcon(l)}</div>
-      <div class="cmListInfo">
-        <div class="cmListName" style="color:${color}">${tr(l.item_name)}${enh}</div>
-        <div class="cmListSub">${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}${l.item_kind==='material'?' · ×'+fmt(l.qty):''}</div>
-      </div>
-      <div class="cmListPrice"><div class="price">${fmt(l.price)} 🪙</div></div>
-    </div>`;
-  }).join('');
-  list.querySelectorAll('.cmListCard').forEach(card => {
-    card.onclick = () => { cmSelectedId = Number(card.dataset.id); renderCmListingsList(); renderCmDetailPanel(); };
-  });
-}
-// panneau de détail : stats complètes + comparaison face à l'équipement actuel (si gear/bijou)
-function renderCmDetailPanel() {
-  const panel = $a('cmDetailPanel'); if (!panel) return;
-  const l = cmListings.find(x => x.id === cmSelectedId);
-  if (!l) { panel.innerHTML = `<div class="mEmpty" data-i18n="cmSelectItemHint">${LANG==='fr'?'Clique un objet pour voir le détail':'Click an item to see the detail'}</div>`; return; }
-  const color = cmListingColor(l);
-  let statsHtml = '', compareHtml = '';
-  if (l.item_kind === 'gear' || l.item_kind === 'jackpot') {
-    const snap = l.item_snapshot || {};
-    const eff = effectiveApDp(snap);
-    const rows = [];
-    if (eff.ap) rows.push(['PA', '+'+eff.ap]);
-    if (eff.dp) rows.push(['PD', '+'+eff.dp]);
-    if (eff.hp) rows.push(['PV', '+'+eff.hp]);
-    if (snap.enhLv) rows.push([LANG==='fr'?'Niveau':'Level', ENH_NAMES[snap.enhLv]]);
-    statsHtml = `<div class="cmDetailStats">${rows.map(([k,v]) => `<div class="srow"><span>${k}</span><b>${v}</b></div>`).join('')}</div>`;
-    // comparaison face à ce qui est déjà équipé dans ce slot (ou la meilleure des 2 bagues/boucles)
-    const slotId = l.item_kind === 'jackpot' ? accSlotFor(snap) : snap.slot;
-    const accSlot = l.item_kind === 'jackpot' ? accSlotFor(snap) : null;
-    let equipped = slotId ? EQUIP[slotId] : null;
-    if (accSlot === 'ring') equipped = itemScore(EQUIP.ring1) <= itemScore(EQUIP.ring2) ? EQUIP.ring1 : EQUIP.ring2;
-    if (accSlot === 'earring') equipped = itemScore(EQUIP.earring1) <= itemScore(EQUIP.earring2) ? EQUIP.earring1 : EQUIP.earring2;
-    if (equipped) {
-      const effEq = effectiveApDp(equipped);
-      const cmpRows = [['PA', effEq.ap||0, eff.ap||0], ['PD', effEq.dp||0, eff.dp||0], ['PV', effEq.hp||0, eff.hp||0]]
-        .filter(([,a,b]) => a || b);
-      compareHtml = `<div class="cmDetailSub">${LANG==='fr'?'Face à':'Vs'} <b style="color:${equipped.color||'#c9a55a'}">${tr(equipped.name)}</b></div>
-        <table class="cmCompareTable"><thead><tr><th></th><th>${LANG==='fr'?'Équipé':'Equipped'}</th><th>${LANG==='fr'?'Celui-ci':'This one'}</th><th>Δ</th></tr></thead>
-        <tbody>${cmpRows.map(([k,a,b]) => {
-          const delta = b - a; const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : '';
-          return `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td class="cmDelta ${cls}">${delta>0?'+':''}${delta}</td></tr>`;
-        }).join('')}</tbody></table>`;
-    }
-  } else {
-    statsHtml = `<div class="cmDetailStats"><div class="srow"><span>${LANG==='fr'?'Quantité disponible':'Available qty'}</span><b>${fmt(l.qty)}</b></div></div>`;
-  }
-  panel.innerHTML = `
-    <div class="cmDetailIcon" style="border-color:${color};color:${color}">${cmListingIcon(l)}</div>
-    <div class="cmDetailTitle" style="color:${color}">${tr(l.item_name)}</div>
-    <div class="cmDetailSub">${LANG==='fr'?'Vendu par':'Sold by'} ${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}</div>
-    ${statsHtml}${compareHtml}
-    <div class="cmDetailSub" style="margin-top:8px">${fmt(l.price)} 🪙${l.item_kind==='material'?(' × '+fmt(l.qty)):''}</div>
-    <button class="btnBuyListing">${LANG==='fr'?'Acheter':'Buy'}</button>`;
-  panel.querySelector('.btnBuyListing').onclick = () => buyCmListing(l);
-}
-// achat en un clic : pose un ordre d'achat EXACTEMENT au prix/quantité de l'annonce → correspond
-// forcément (le vendeur a déjà posé son ordre à ce prix), donc exécution immédiate garantie
-async function buyCmListing(l) {
-  const msg = $a('commonMsg');
-  const { error } = await sb.rpc('market_place_order', {
-    p_side: 'buy', p_item_key: l.item_key, p_item_name: l.item_name, p_item_kind: l.item_kind,
-    p_price: l.price, p_qty: l.item_kind === 'material' ? l.qty : 1, p_inv_index: null,
-  });
-  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
-  msg.textContent = LANG==='fr'?'Achat effectué ✓':'Purchase complete ✓'; msg.className = 'ok';
-  await loadCloudSave();
-  refreshCmBrowse();
+  refreshCmSellPicker();
   refreshMyMarketOrders();
 }
-$a('cmSearch').oninput = () => renderCmListingsList();
-$a('cmSort').onchange = () => renderCmListingsList();
 // pose un ordre d'achat ou de vente ; p_inv_index n'est nécessaire QUE pour une vente (matériau =
 // trouvé automatiquement par nom puisqu'il tient en un seul emplacement empilé ; équipement/bijou =
 // passé explicitement par le picker "Vendre un objet de mon sac")
@@ -7445,11 +7227,6 @@ const I18N = {
   cmSellSectionTitle: { fr:'🎒 Vendre un objet de mon sac', en:'🎒 Sell an item from my bag' },
   btnCmListItem: { fr:'Mettre en vente', en:'List for sale' },
   cmMyOrdersTitle: { fr:'📋 Mes ordres', en:'📋 My orders' },
-  cmTabBrowse: { fr:'🛒 Parcourir', en:'🛒 Browse' },
-  cmTabSell: { fr:'🏷️ Vendre', en:'🏷️ Sell' },
-  cmTabOrders: { fr:'📋 Mes ordres', en:'📋 My orders' },
-  cmMaterialSectionTitle: { fr:'◈ Vendre / acheter des matériaux', en:'◈ Sell / buy materials' },
-  cmSelectItemHint: { fr:'Clique un objet pour voir le détail', en:'Click an item to see the detail' },
   btnListItem: { fr:'Mettre en vente', en:'List for sale' },
   cardStats: { fr:'Statistiques', en:'Stats' },
   cardZoneStats: { fr:'Stats de la zone de farm', en:'Farming zone stats' },
@@ -7555,15 +7332,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V109', d:'07/07/2026 08:00', name:{fr:'Marché en vitrine & correctif zones de farm', en:'Marketplace browse view & farm zones fix'}, fr:[
-      {t:'new',    tx:'Marché commun repensé en vitrine (inspirée d\'une référence fournie) : parcours les objets en vente sous forme de cartes (icône, vendeur, temps, prix), avec filtre par catégorie, recherche, tri, et un panneau de détail complet avec comparaison face à ton équipement actuel'},
-      {t:'new',    tx:'Achat en un clic depuis la vitrine : pose automatiquement un ordre d\'achat au prix exact de l\'annonce (exécution immédiate garantie)'},
-      {t:'fix',    tx:'La liste des zones de farm laissait un grand vide en bas de sa carte (la grille étire toutes les cartes d\'une rangée à la même hauteur) — la liste remplit maintenant tout l\'espace disponible, de haut en bas'},
-    ], en:[
-      {t:'new',    tx:'Common market redesigned as a browsable storefront (inspired by a provided reference): browse listings as cards (icon, seller, time, price), with category filter, search, sort, and a full detail panel comparing against your currently equipped gear'},
-      {t:'new',    tx:'One-click buy from the storefront: automatically places a buy order at the listing\'s exact price (guaranteed instant execution)'},
-      {t:'fix',    tx:'The farm zone list left a large empty gap at the bottom of its card (the grid stretches every card in a row to the same height) — the list now fills all available space, top to bottom'},
-    ] },
   { v:'V108', d:'07/07/2026 06:00', name:{fr:'Nouveaux emplacements, icônes teintées par palier', en:'New slots, tier-tinted icons'}, fr:[
       {t:'new',    tx:'Atelier royal ajouté dans le header (verrouillé, bientôt disponible)'},
       {t:'new',    tx:'3 nouveaux emplacements d\'équipement : 2 Artéfacts (ex: Vell, Khan) + 1 Pierre — pas encore de source de drop en jeu, prêts pour une future mise à jour'},

@@ -293,6 +293,23 @@ grant execute on function public.market_order_book(text) to authenticated;
 grant execute on function public.market_place_order(text, text, text, text, numeric, int, int, jsonb) to authenticated;
 grant execute on function public.market_cancel_order(bigint) to authenticated;
 
+-- Navigation "vitrine" (inspirée d'une référence visuelle fournie par l'utilisateur le 2026-07-07) :
+-- liste les ordres de VENTE ouverts avec pseudo + objet complet (snapshot) + date, pour des cartes
+-- d'objets à acheter en un clic avec comparaison face à l'équipement du joueur. Les ordres d'ACHAT
+-- restent privés (jamais exposés ici) — seule la vente publique est normale à montrer.
+create or replace function public.market_listings(p_kind text default null)
+returns table(id bigint, pseudo text, item_key text, item_name text, item_kind text,
+  item_snapshot jsonb, price numeric, qty int, created_at timestamptz)
+language sql security definer
+as $$
+  select o.id, o.pseudo, o.item_key, o.item_name, o.item_kind, o.item_snapshot, o.price, o.qty, o.created_at
+  from public.market_orders o
+  where o.side = 'sell' and o.status = 'open' and (p_kind is null or o.item_kind = p_kind)
+  order by o.price asc, o.created_at asc
+  limit 200;
+$$;
+grant execute on function public.market_listings(text) to authenticated;
+
 -- TODO futur : un cron (pg_cron ou appel client périodique) pourrait, toutes les 15 min (puis
 -- jusqu'à 6h avec le temps, demande explicite), publier un indicateur "prix moyen des derniers
 -- échanges" par objet à partir de market_trades, pour afficher une tendance de marché — pas encore
