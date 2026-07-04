@@ -647,21 +647,13 @@
     0%,100% { box-shadow:0 0 0 0 rgba(201,165,90,.55); }
     50% { box-shadow:0 0 8px 3px rgba(201,165,90,.55); }
   }
-  #patchBadge, #questBadge, #mailBadge, #notifBadge {
+  #patchBadge, #questBadge, #mailBadge {
     display:none; align-items:center; justify-content:center;
     min-width:15px; height:15px; padding:0 3px; margin-left:5px;
     background:var(--danger); color:#fff; font-size:9px; font-weight:bold;
     border-radius:8px; vertical-align:middle;
   }
-  #patchBadge.show, #questBadge.show, #mailBadge.show, #notifBadge.show { display:inline-flex; }
-  /* centre de notifications */
-  .notifRow { display:flex; align-items:flex-start; gap:9px; padding:8px 0; border-bottom:1px solid #232128; }
-  .notifRow:last-child { border-bottom:none; }
-  .notifIcon { font-size:18px; flex-shrink:0; width:24px; text-align:center; }
-  .notifBody { flex:1; min-width:0; }
-  .notifTitle { font-size:11px; color:var(--gold); font-weight:bold; }
-  .notifText { font-size:11.5px; color:var(--ink); }
-  .notifTime { font-size:9.5px; color:var(--ink-dim); flex-shrink:0; white-space:nowrap; }
+  #patchBadge.show, #questBadge.show, #mailBadge.show { display:inline-flex; }
   .betaTag {
     display:inline-block; background:#3a6ea8; color:#fff; font-size:8px; font-weight:bold;
     letter-spacing:.5px; padding:1px 5px; margin-left:5px; border-radius:8px; vertical-align:middle;
@@ -1162,7 +1154,6 @@
       <span class="langOpt" data-lang="en">🇬🇧 EN</span>
       <div id="langThumb"></div>
     </div>
-    <button id="btnNotifCenter"><span data-i18n="btnNotifCenter">🔔 Notifications</span><span id="notifBadge"></span></button>
     <button id="btnWiki" data-i18n="btnWiki">📖 Wiki</button>
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
     <button id="btnAchievements" data-i18n="btnAchievements">🏅 Succès</button>
@@ -1524,7 +1515,6 @@ const ZONES = [
 ];
 let zoneIdx = 0;
 let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
-let lastLootEntry = null; // dernière ligne du loot ticker, pour fusionner les drops identiques consécutifs
 const Z = () => ZONES[zoneIdx];
 
 // ==================== ÉTAT GLOBAL ====================
@@ -1817,37 +1807,6 @@ function achCat(id) {
   if (id.startsWith('zone')) return 'exploration';
   return 'equipment'; // gs_*, enh_*, jackpot_1, gear_1
 }
-// ---------- centre de notifications : journal persistant des événements marquants (succès,
-// niveau, butin rare, victoire de boss...), en plus des toasts éphémères déjà existants ----------
-let NOTIF_LOG = [];
-let notifUnread = 0;
-function pushNotif(icon, title, text) {
-  NOTIF_LOG.unshift({ icon, title, text, t: Date.now() });
-  if (NOTIF_LOG.length > 40) NOTIF_LOG.length = 40;
-  notifUnread++;
-  updateNotifBadge();
-}
-function updateNotifBadge() {
-  const badge = $a('notifBadge'); if (!badge) return;
-  badge.textContent = notifUnread > 9 ? '9+' : notifUnread;
-  badge.classList.toggle('show', notifUnread > 0);
-}
-function fmtNotifTime(ts) {
-  const d = new Date(ts), now = new Date();
-  const hhmm = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
-  const sameDay = d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
-  return sameDay ? hhmm : (d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+' '+hhmm);
-}
-function openNotifCenter() {
-  notifUnread = 0;
-  updateNotifBadge();
-  const rows = NOTIF_LOG.map(n => `<div class="notifRow"><div class="notifIcon">${n.icon}</div>` +
-    `<div class="notifBody"><div class="notifTitle">${escapeHtml(n.title)}</div><div class="notifText">${escapeHtml(n.text)}</div></div>` +
-    `<div class="notifTime">${fmtNotifTime(n.t)}</div></div>`).join('');
-  openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications',
-    rows || `<div class="admEmpty">${LANG==='fr'?'Aucune notification pour l\'instant':'No notifications yet'}</div>`);
-}
-
 function checkAchievements() {
   let unlocked = false;
   for (const a of ACHIEVEMENTS) {
@@ -1856,7 +1815,6 @@ function checkAchievements() {
       S.achUnlocked[a.id] = Date.now();
       S.silver += a.reward; S.silverEarned += a.reward;
       showAchToast(a);
-      pushNotif('🏅', LANG==='fr'?'Succès débloqué':'Achievement unlocked', a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)');
       unlocked = true;
     }
   }
@@ -2302,7 +2260,6 @@ async function endBossFight(win) {
     invAdd({ key:b.matKey, name:b.matName, kind:'material', icon:b.matIcon, color:'#c9c9c9', qty, stackable:true, weight:0.1, val:5 });
     const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
     rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${qty} × ${b.matName}</div>`;
-    pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙');
     refreshStatsOnly(); hud();
   }
   $('bossResult').innerHTML =
@@ -3056,7 +3013,6 @@ function resetWorld() {
   target = null; P.lootTarget = null; P.manualTarget = null;
   P.x = 0; P.y = 0; cam.x = 0; cam.y = 0; P.lootClusterX = 0; P.lootClusterY = 0;
   P.state = 'search'; P.hp = effHpMax();
-  lastLootEntry = null; // évite de fusionner le loot d'une nouvelle zone avec celui d'avant
   if (atVelia) return; // Velia = zone paisible, aucun monstre n'y est jamais généré
   for (let i = 0; i < 6; i++) spawnPackNear();
 }
@@ -3498,12 +3454,10 @@ function dropsTick(dt) {
         S.jackpotCount = (S.jackpotCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'★ '+it.name,{lvl:true});
-        pushNotif('💍', LANG==='fr'?'Bijou rare':'Rare jewel', it.name);
       } else if (it.kind === 'gear') {
         S.gearDropCount = (S.gearDropCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'⚔ '+it.name,{lvl:true});
-        pushNotif('⚔️', LANG==='fr'?'Équipement trouvé':'Gear found', it.name);
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,40,it.name,{blue:true});
@@ -3531,22 +3485,13 @@ function accSlotFor(it) {
   return 'ring'; // repli (ex. Œil de chat doré, sans mot-clé explicite — c'est bien une bague dans le vrai jeu)
 }
 
-// regroupe les drops IDENTIQUES consécutifs en une seule ligne "xN" au lieu de spammer une
-// ligne par ramassage — demande explicite du 2026-07-05
 function lootLine(item, val, cls) {
-  const t = $('lootTicker');
-  if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.el.isConnected) {
-    lastLootEntry.count++;
-    lastLootEntry.val += val;
-    lastLootEntry.el.textContent = (lastLootEntry.val > 0 ? `${item.name} (+${fmt(lastLootEntry.val)})` : item.name) + ` ×${lastLootEntry.count}`;
-    return;
-  }
   const div = document.createElement('div');
   if (cls) div.className = cls;
   div.textContent = val > 0 ? `${item.name} (+${fmt(val)})` : item.name;
+  const t = $('lootTicker');
   t.appendChild(div); // + flex-direction:column-reverse en CSS → apparaît en bas, pousse vers le haut
   while (t.children.length > 15) t.removeChild(t.firstChild);
-  lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div };
 }
 
 // table d'XP requise par niveau du vrai jeu (BDO) — indice = niveau actuel, valeur = XP pour
@@ -3578,7 +3523,6 @@ function gainXp(n) {
     S.xpNext = xpNeededFor(S.lvl);
     S.hpMax += 8; P.hp = effHpMax();
     floatTxt(P.x,P.y,115,'NIVEAU '+S.lvl,{lvl:true});
-    pushNotif('⭐', LANG==='fr'?'Niveau supérieur':'Level up', (LANG==='fr'?'Niveau ':'Level ')+S.lvl);
   }
 }
 
@@ -5878,8 +5822,6 @@ async function openLeaderboard() {
   wirePlayerNameLinks();
 }
 $a('btnLeaderboard').onclick = openLeaderboard;
-$a('btnNotifCenter').onclick = openNotifCenter;
-updateNotifBadge();
 $a('btnAchievements').onclick = openAchievements;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
@@ -6264,7 +6206,6 @@ async function commonMarketSell(displayName, qtyStr) {
 // dictionnaire des textes statiques de l'UI (clé data-i18n → {fr, en})
 const I18N = {
   btnWiki: { fr:'📖 Wiki', en:'📖 Wiki' },
-  btnNotifCenter: { fr:'🔔 Notifications', en:'🔔 Notifications' },
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },
   btnMarketLbl: { fr:'🏛️ Marché', en:'🏛️ Market' },
   btnLogout: { fr:'🚪 Déconnexion', en:'🚪 Log out' },
@@ -6381,13 +6322,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V84', d:'04/07/2026 23:00', name:{fr:'Centre de notifications, loot groupé', en:'Notification center, grouped loot'}, fr:[
-      {t:'new', tx:'Nouveau bouton "🔔 Notifications" : journal des événements marquants (succès débloqués, niveaux gagnés, équipement/bijoux rares trouvés, boss vaincus)'},
-      {t:'change', tx:'Le loot en direct regroupe désormais les objets identiques ramassés d\'affilée en une seule ligne "×N" au lieu de spammer une ligne par ramassage'},
-    ], en:[
-      {t:'new', tx:'New "🔔 Notifications" button: a log of key events (achievements unlocked, levels gained, rare gear/jewelry found, bosses defeated)'},
-      {t:'change', tx:'Live loot now groups identical items picked up back-to-back into a single "×N" line instead of spamming one line per pickup'},
-    ] },
   { v:'V83', d:'04/07/2026 22:00', name:{fr:'Statistiques réunies en une carte, retrait de l\'historique silver', en:'Stats merged into one card, silver history removed'}, fr:[
       {t:'change', tx:'Les stats perso et les stats de la zone de farm sont réunies dans une seule carte "Statistiques" (séparées par une ligne), au lieu de deux cartes côte à côte'},
       {t:'change', tx:'Retrait de l\'historique silver sous la table de loot pour l\'instant — une autre idée viendra à sa place plus tard'},
