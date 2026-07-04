@@ -391,9 +391,6 @@
   #optAutoRow select { flex:1; background:#191720; color:var(--ink); border:1px solid var(--gold-dim); padding:5px; font-family:inherit; font-size:11px; }
   #optAutoRow button { width:auto; margin:0; font-size:11px; padding:5px 10px; white-space:nowrap; }
   #btnOptAuto.running { border-color:var(--danger); color:#e8a89f; }
-  #capConvertRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid #2c2a33; }
-  #capConvertLbl { font-size:10.5px; color:var(--ink-dim); }
-  #capConvertRow button { width:auto; margin:0; font-size:10.5px; padding:5px 9px; white-space:nowrap; }
   #optTarget {
     width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
     font-family:inherit; font-size:11px; padding:5px 6px;
@@ -1367,7 +1364,6 @@
 
     <div class="card">
       <h3 data-i18n="cardZones">Zones de farm</h3>
-      <div class="catTabs" id="zoneTierTabs"></div>
       <div id="zoneList"></div>
     </div>
 
@@ -1432,10 +1428,6 @@
       </div>
       <div id="optResult"></div>
       <div id="optSuggest"></div>
-      <div id="capConvertRow">
-        <span id="capConvertLbl"></span>
-        <button id="btnConvertCaphras">♻️ <span data-i18n="btnConvertCaphras">Convertir (5:1)</span></button>
-      </div>
     </div>
   </div>
 </div>
@@ -3424,31 +3416,14 @@ function killPack(p) {
   hud();
 }
 
-// équipement lootable : 4 paliers de stuff EARLY (demande du 2026-07-05), 3 zones chacun.
-// Naru/Tuvala gardent la courbe de drop décroissante par zone ; Yuria/Grunil ont une chance de
-// drop FIXE (2%) quelle que soit la zone parmi les leurs — chaque palier a son propre matériau
-// d'optimisation (remplace l'ancien matériau générique par zone).
-const GEAR_TIERS = [
-  { grade:'grey', color:'#b8b8b8', zones:[0,1,2], label:{fr:'Gris — Naru',en:'Grey — Naru'},
-    sets:{ weapon:'Épée Naru', awakening:'Éveil Naru', secondary:'Dague Naru',
-           helmet:'Casque Naru', armor:'Armure Naru', gloves:'Gants Naru', boots:'Bottes Naru' },
-    material:{ name:'Pierre de Novice', icon:'◈', color:'#b8b8b8' }, dropChance:null },
-  { grade:'white', color:'#e8e8e8', zones:[3,4,5], label:{fr:'Blanc — Tuvala',en:'White — Tuvala'},
-    sets:{ weapon:'Lame Tuvala', awakening:'Éveil Tuvala', secondary:'Dague Tuvala',
-           helmet:'Casque Tuvala', armor:'Armure Tuvala', gloves:'Gants Tuvala', boots:'Bottes Tuvala' },
-    material:{ name:'Pierre du Temps', icon:'◈', color:'#cfd8dc' }, dropChance:null },
-  { grade:'green', color:'#7aa35e', zones:[6,7,8], label:{fr:'Vert — Yuria',en:'Green — Yuria'},
-    sets:{ weapon:'Lame Yuria', awakening:'Éveil Yuria', secondary:'Dague Yuria',
-           helmet:'Casque Yuria', armor:'Plastron Yuria', gloves:'Gants Yuria', boots:'Bottes Yuria' },
-    material:{ name:'Pierre Noire', icon:'◆', color:'#3a3742' }, dropChance:0.02 },
-  { grade:'blue', color:'#6ea3c9', zones:[9,10,11], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
-    sets:{ weapon:'Dague Grunil', awakening:'Éveil Grunil', secondary:'Épée Grunil',
-           helmet:'Casque Grunil', armor:'Plastron Grunil', gloves:'Gants Grunil', boots:'Bottes Grunil' },
-    material:{ name:'Pierre Noire', icon:'◆', color:'#3a3742' }, dropChance:0.02 },
-];
-function gearTierForZone(zi) { return GEAR_TIERS.find(t => t.zones.includes(zi)) || GEAR_TIERS[GEAR_TIERS.length-1]; }
-// chance de drop d'une pièce d'équipement, décroissante zone par zone — utilisée par Naru/Tuvala
-// (dropChance:null) ; Yuria/Grunil utilisent leur taux fixe défini ci-dessus à la place
+// équipement lootable : sets réels BDO, chance très généreuse en zone 1, quasi nulle en zone 12
+const GEAR_SETS = {
+  early: { weapon:'Yuria\'s Weapon', awakening:'Yuria\'s Awakening', secondary:'Yuria\'s Secondary',
+           helmet:'Grunil Helmet', armor:'Grunil Armor', gloves:'Grunil Gauntlet', boots:'Grunil Greave' },
+  boss:  { weapon:'Kzarka\'s Weapon', awakening:'Dandelion\'s Weapon', secondary:'Nouver\'s Weapon',
+           helmet:'Urugon\'s Helmet', armor:'Red Nose\'s Armor', gloves:'Bheg\'s Gloves', boots:'Muskan\'s Shoes' },
+};
+// chance de drop d'une pièce d'équipement, décroissante zone par zone (progressive comme demandé)
 const GEAR_CHANCE = [.16,.12,.09,.065,.046,.032,.021,.014,.009,.0055,.0032,.0018];
 const GEAR_SLOTS = ['weapon','awakening','secondary','helmet','armor','gloves','boots'];
 // part du PA/PD requis de zone que chaque pièce peut apporter, selon son rôle
@@ -3469,20 +3444,19 @@ const GEAR_ROLE = {
 // insuffisante, cf dmgTakenMult qui monte jusqu'à ×4,5)
 const HP_GEAR_SCALE = 9;
 function rollGearDrop(zone, alpha) {
-  const tier = gearTierForZone(zoneIdx);
-  const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
+  const chance = GEAR_CHANCE[zoneIdx] ?? .002;
   if (Math.random() > chance * (alpha ? 1.6 : 1)) return null;
   const slot = GEAR_SLOTS[Math.floor(Math.random()*GEAR_SLOTS.length)];
+  const set = zoneIdx < 3 ? GEAR_SETS.early : GEAR_SETS.boss;
   const role = GEAR_ROLE[slot];
   const scale = 0.85 + Math.random()*.3;
   const ap = Math.round(zone.reqAP * role.apShare * scale);
   const dp = Math.round(zone.reqDP * role.dpShare * scale);
   const hp = Math.round(zone.reqDP * role.hpShare * scale * HP_GEAR_SCALE);
   return {
-    name: tier.sets[slot], kind:'gear', slot, ap, dp, hp, enhLv:0, optimizable:true, fsByLevel:{},
-    key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
-    icon: SLOT_ICON ? SLOT_ICON[slot] : '⚔️', color:tier.color, stackable:false, weight:1.2,
-    matName: tier.material.name, // matériau requis pour optimiser CETTE pièce (voir findEnhanceMaterial)
+    name: set[slot], kind:'gear', slot, ap, dp, hp, enhLv:0, optimizable:true, fsByLevel:{},
+    key:'gear_'+set[slot]+'_'+Math.random().toString(36).slice(2,7),
+    icon: SLOT_ICON ? SLOT_ICON[slot] : '⚔️', color:'#c9a55a', stackable:false, weight:1.2,
     val: Math.round((ap*2 + dp + hp*0.5) * 22),
   };
 }
@@ -3491,12 +3465,9 @@ function rollDrops(wp, alpha, lm) {
   const zone = Z(), L = zone.loot;
   const zk = zoneIdx; // pour rendre les clés uniques par zone
   const mults = alpha ? 1.5 : 1;
-  // le matériau d'optimisation dépend désormais du PALIER de stuff (Naru/Tuvala/Yuria/Grunil),
-  // pas de la zone — on garde juste la valeur/chance d'origine de la zone (économie inchangée)
-  const tierMat = gearTierForZone(zoneIdx).material;
   const table = [
     { ...L.trash,   kind:'trash',    color:'#a08464', key:'trash_'+zk,   icon:'▬', stackable:true,  weight:0.3 },
-    { name:tierMat.name, val:L.mat.val, ch:L.mat.ch, kind:'material', color:tierMat.color, key:'mat_'+tierMat.name, icon:tierMat.icon, stackable:true, weight:0.1 },
+    { ...L.mat,     kind:'material', color:'#8fb0c9', key:'mat_'+L.mat.name, icon:'◈', stackable:true, weight:0.1 },
     { ...L.jackpot, kind:'jackpot',  color:'#e8b84a', key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:'💍', stackable:false, weight:0.5 },
     { ...L.craft,   kind:'craft',    color:'#b48ce8', key:'craft_'+L.craft.name, icon:'✦', stackable:true, weight:0.2, val:0 },
   ];
@@ -3560,7 +3531,6 @@ function dropsTick(dt) {
         val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, enhLv: it.enhLv||0,
         optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
         slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
-        matName: it.matName, // palier de stuff (Naru/Tuvala/Yuria/Grunil) → quel matériau l'optimise
       };
       const ok = invAdd(obj);
       if (!ok) { // inventaire plein → l'objet reste au sol (le joueur continue de farmer normalement)
@@ -4085,24 +4055,7 @@ for (const s of SKILLS) {
 // Le halo doré sur le 👁 marque la zone actuellement PRÉVISUALISÉE (voir lootPreviewIdx) — utile
 // pour ne pas confondre la zone dont on regarde le loot avec celle qu'on est en train de farmer.
 let lootPreviewIdx = null; // null = suit la zone qu'on farm ; sinon index de la zone prévisualisée via 👁
-// paliers de zones : pour l'instant tout ZONES[] est "Early" (jusqu'au niveau ~31) — Mid et End
-// arriveront dans une future mise à jour, d'où le verrou 🔒 (demande explicite du 2026-07-05)
-let zoneTier = 'early';
-const ZONE_TIERS = [
-  { id:'early', icon:'🟢', label:{fr:'Early',en:'Early'}, locked:false },
-  { id:'mid',   icon:'🟡', label:{fr:'Mid',en:'Mid'},     locked:true },
-  { id:'end',   icon:'🔴', label:{fr:'End',en:'End'},     locked:true },
-];
-function renderZoneTierTabs() {
-  const el = $('zoneTierTabs'); if (!el) return;
-  el.innerHTML = ZONE_TIERS.map(t => `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
-    `${t.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-tier="${t.id}">${t.locked?'🔒 ':''}${t.icon} ${t.label[LANG]}</button>`).join('');
-  el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
-    btn.onclick = () => { zoneTier = btn.dataset.tier; buildZoneList(); };
-  });
-}
 function buildZoneList() {
-  renderZoneTierTabs();
   const list = $('zoneList');
   list.innerHTML = '';
   // Velia, la ville paisible : épinglée en haut, aucun monstre, aucun farm — juste un accès
@@ -4870,11 +4823,9 @@ function findEnhanceMaterial() {
     if (idx !== -1) return idx;
     forcedMatKey = null; // épuisé, retombe sur la recherche automatique
   }
-  // priorité : le matériau du PALIER de la pièce ciblée (Naru/Tuvala/Yuria/Grunil — voir
-  // rollGearDrop/matName), sinon celui de la zone actuelle, sinon n'importe quel matériau en stock
-  const target = EQUIP[optTargetSlot];
-  const wantedName = (target && target.matName) || Z().loot.mat.name;
-  let idx = INV.findIndex(s => s && s.kind === 'material' && s.name === wantedName);
+  // priorité : matériau de la zone actuelle, sinon n'importe quel matériau en stock
+  const zoneMatName = Z().loot.mat.name;
+  let idx = INV.findIndex(s => s && s.kind === 'material' && s.name === zoneMatName);
   if (idx === -1) idx = INV.findIndex(s => s && s.kind === 'material');
   return idx;
 }
@@ -4913,7 +4864,6 @@ function renderOptimization() {
   $('optChanceFillFS').style.width = (parts.bonus*100)+'%';
   renderOptSuggestions();
   if (!autoOptTimer) renderOptAutoTargetSelect(); // pas touché pendant une auto en cours (garde le palier choisi)
-  renderCapConvertRow();
 }
 $('optTarget').onchange = e => { optTargetSlot = e.target.value; stopAutoOpt(); renderOptimization(); };
 
@@ -5008,40 +4958,6 @@ function startAutoOpt() {
 }
 $('btnOptAuto').onclick = () => { if (autoOptTimer) stopAutoOpt(); else startAutoOpt(); };
 
-// ---------- conversion "Poussière d'esprit ancien" → "Pierre de Caphras" (5:1) ----------
-// demande explicite du 2026-07-05 : la Pierre de Caphras n'est plus dropée directement en zone
-// (remplacée par le matériau de palier Naru/Tuvala/Yuria/Grunil), elle s'obtient désormais via
-// cette conversion de la poussière ramassée en zones 1 à 6.
-const POUSSIERE_NAME = 'Poussière d\'esprit ancien';
-const CAPHRAS_NAME = 'Pierre de Caphras';
-function poussiereCount() {
-  const s = INV.find(x => x && x.kind === 'craft' && x.name === POUSSIERE_NAME);
-  return s ? s.qty : 0;
-}
-function renderCapConvertRow() {
-  const lbl = $('capConvertLbl'), btn = $('btnConvertCaphras'); if (!lbl || !btn) return;
-  const n = poussiereCount();
-  lbl.textContent = (LANG==='fr' ? `${fmt(n)} poussière → ${Math.floor(n/5)} pierre de Caphras` : `${fmt(n)} dust → ${Math.floor(n/5)} Caphras stone`);
-  btn.disabled = n < 5;
-}
-function convertPoussiereToCaphras() {
-  const idx = INV.findIndex(s => s && s.kind === 'craft' && s.name === POUSSIERE_NAME);
-  if (idx === -1 || INV[idx].qty < 5) return;
-  INV[idx].qty -= 5;
-  if (INV[idx].qty <= 0) INV[idx] = null;
-  const ok = invAdd({ key:'mat_'+CAPHRAS_NAME, name:CAPHRAS_NAME, kind:'material', icon:'◈', color:'#c9a55a', qty:1, stackable:true, weight:0.1, val:120 });
-  if (!ok) {
-    // sac plein : annule le prélèvement de poussière
-    const s = INV[idx];
-    if (s) s.qty += 5; else INV[idx] = { key:'craft_'+POUSSIERE_NAME, name:POUSSIERE_NAME, kind:'craft', icon:'✦', color:'#b48ce8', qty:5, stackable:true, weight:0.2, val:0 };
-    floatTxt(P.x, P.y, 100, LANG==='fr'?'Sac plein':'Bag full', { hurt:true });
-    return;
-  }
-  floatTxt(P.x, P.y, 100, '+1 '+CAPHRAS_NAME, { gold:true });
-  hud();
-}
-$('btnConvertCaphras').onclick = convertPoussiereToCaphras;
-
 // suggestion : quelle pièce optimiser en priorité pour atteindre la zone suivante
 function renderOptSuggestions() {
   const nextZone = ZONES[zoneIdx+1];
@@ -5084,17 +5000,16 @@ function renderLootTable(previewIdx) {
   lootPreviewIdx = previewIdx != null ? previewIdx : null;
   updateZoneViewHalo();
   const z = ZONES[idx], L = z.loot;
-  const tier = gearTierForZone(idx);
-  const gearCh = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[idx] ?? .002);
-  const setName = tier.label[LANG];
+  const gearCh = GEAR_CHANCE[idx] ?? .002;
+  const setName = idx < 3 ? 'Grunil / Yuria' : 'Boss (Kzarka, Bheg, Urugon…)';
   const previewTag = previewIdx != null && previewIdx !== zoneIdx
     ? (LANG==='fr' ? '👁 Aperçu — ' : '👁 Preview — ') : '';
   $('lootZoneName').textContent = previewTag + tr(z.mob);
   const equippedWord = LANG === 'fr' ? 'PA équipé' : 'AP equipped';
   const rows = [
     { kind:'trash',    it:L.trash,   note:'revenu de base' },
-    { kind:'material', it:{name:tier.material.name}, ch:L.mat.ch, note:'optimisation' },
-    { kind:'gear',     it:{name:setName}, ch:gearCh, note:'arme/armure (7 pièces)' },
+    { kind:'material', it:L.mat,     note:'optimisation' },
+    { kind:'gear',     it:{name:setName}, ch:gearCh, note:'arme/armure (5 pièces)' },
     { kind:'jackpot',  it:L.jackpot, note:'+'+L.jackpot.ap+' '+equippedWord },
     { kind:'craft',    it:L.craft,   note:'craft endgame' },
   ];
@@ -6624,7 +6539,6 @@ const I18N = {
   optChanceEmpty: { fr:'Chargez un matériau depuis le sac', en:'Load a material from your bag' },
   btnOptTry: { fr:"Tenter l'optimisation", en:'Attempt enhancement' },
   btnOptAuto: { fr:"▶ Auto jusqu'à", en:'▶ Auto to' },
-  btnConvertCaphras: { fr:'Convertir (5:1)', en:'Convert (5:1)' },
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
 };
 function applyI18n() {
@@ -6670,17 +6584,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V91', d:'05/07/2026 06:00', name:{fr:'Refonte du stuff Early : 4 paliers Naru/Tuvala/Yuria/Grunil + onglets Early/Mid/End', en:'Early gear overhaul: 4 tiers Naru/Tuvala/Yuria/Grunil + Early/Mid/End tabs'}, fr:[
-      {t:'new', tx:'Onglets "Early / Mid / End" au-dessus de la liste des zones — Mid et End sont verrouillés 🔒 pour l\'instant, ils arriveront dans une future mise à jour'},
-      {t:'new', tx:'Le stuff Early est réparti en 4 paliers (3 zones chacun) : ⬜ Naru (zones 1-3), ⬜ Tuvala (zones 4-6), 🟩 Yuria et 🟦 Grunil (zones 7-12)'},
-      {t:'change', tx:'Chaque palier a désormais son propre matériau d\'optimisation (Pierre de Novice, Pierre du Temps, Pierre Noire) au lieu d\'un matériau générique par zone ; Yuria/Grunil ont une chance de drop fixe de 2% quelle que soit la zone'},
-      {t:'new', tx:'Nouvelle conversion : 5 Poussière d\'esprit ancien → 1 Pierre de Caphras (bouton dans le cadre Optimisation) — la Pierre de Caphras ne se ramasse plus directement en zone'},
-    ], en:[
-      {t:'new', tx:'"Early / Mid / End" tabs above the zone list — Mid and End are locked 🔒 for now, coming in a future update'},
-      {t:'new', tx:'Early gear is now split into 4 tiers (3 zones each): ⬜ Naru (zones 1-3), ⬜ Tuvala (zones 4-6), 🟩 Yuria and 🟦 Grunil (zones 7-12)'},
-      {t:'change', tx:'Each tier now has its own enhancement material (Novice Stone, Time-worn Stone, Black Stone) instead of one generic material per zone; Yuria/Grunil have a fixed 2% drop chance regardless of zone'},
-      {t:'new', tx:'New conversion: 5 Ancient Spirit Dust → 1 Caphras Stone (button in the Enhancement panel) — Caphras Stones no longer drop directly in zones'},
-    ] },
   { v:'V90', d:'05/07/2026 05:00', name:{fr:'Optimisation auto, inventaire des joueurs (admin), loot ticker amélioré', en:'Auto-enhance, player inventory (admin), improved loot ticker'}, fr:[
       {t:'new', tx:'Optimisation : bouton "▶ Auto jusqu\'à" avec un palier au choix — tente automatiquement (et gère les rétrogradations) jusqu\'à atteindre ce palier ou tomber à court de matériau'},
       {t:'admin', tx:'Panneau Admin : bouton 🎒 dans l\'onglet Joueurs pour voir l\'inventaire complet (192 cases) de n\'importe quel joueur, en lecture seule'},
