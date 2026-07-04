@@ -889,7 +889,6 @@
   .chatMsg.chan-mondial .chatPseudo { color:#9cc9e8; }
   .chatMsg.chan-trade .chatPseudo { color:#8fc98a; }
   .chatMsg.chan-annonce .chatPseudo { color:var(--gold); }
-  .chatMsg.chan-annonce .chatText { color:var(--danger); font-weight:bold; }
   .chatMsg .chatText { color:var(--ink); }
   .chatMsg .chatTime { font-size:9.5px; color:var(--ink-dim); margin-left:5px; }
   .chatBadge { font-size:8px; font-weight:bold; letter-spacing:.5px; padding:1px 4px; border-radius:3px; margin:0 3px; vertical-align:middle; }
@@ -5783,11 +5782,8 @@ function renderChatMessages(msgs) {
     const badge = m.role === 'admin' ? '<span class="chatBadge admin">ADMIN</span> '
       : m.role === 'mod' ? '<span class="chatBadge mod">MOD</span> ' : '';
     const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
-    // canal Annonce : seulement le rôle (badge), pas de pseudo — juste le message en rouge
-    const pseudoHtml = chatChannel === 'annonce' ? '' :
-      `<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':(LANG==='fr'?'Joueur':'Player')))}</span> `;
     return `<div class="chatMsg chan-${chatChannel}">${del}` +
-      `${badge}${pseudoHtml}<span class="chatText">${escapeHtml(m.message)}</span>` +
+      `${badge}<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':(LANG==='fr'?'Joueur':'Player')))}</span> <span class="chatText">${escapeHtml(m.message)}</span>` +
       `<span class="chatTime">${fmtChatTimestamp(m.created_at)}</span></div>`;
   }).join('')
     : `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`;
@@ -6385,11 +6381,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V85', d:'05/07/2026 00:00', name:{fr:'Canal Annonce : rôle seul + message en rouge', en:'Announcement channel: role only + red message'}, fr:[
-      {t:'change', tx:'Dans le canal Annonce, le pseudo n\'est plus affiché : seul le badge de rôle (ADMIN) apparaît, et le message est en rouge'},
-    ], en:[
-      {t:'change', tx:'In the Announcement channel, the pseudo is no longer shown: only the role badge (ADMIN) appears, and the message is in red'},
-    ] },
   { v:'V84', d:'04/07/2026 23:00', name:{fr:'Centre de notifications, loot groupé', en:'Notification center, grouped loot'}, fr:[
       {t:'new', tx:'Nouveau bouton "🔔 Notifications" : journal des événements marquants (succès débloqués, niveaux gagnés, équipement/bijoux rares trouvés, boss vaincus)'},
       {t:'change', tx:'Le loot en direct regroupe désormais les objets identiques ramassés d\'affilée en une seule ligne "×N" au lieu de spammer une ligne par ramassage'},
