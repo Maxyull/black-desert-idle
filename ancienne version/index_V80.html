@@ -45,10 +45,8 @@
     font-size:11px; color:var(--ink-dim); max-height:250px; overflow:hidden;
     text-shadow:0 1px 2px #000; line-height:1.5;
     display:flex; flex-direction:column-reverse; /* nouvelles entrées en bas, la liste grandit vers le haut */
-    -webkit-mask-image:linear-gradient(to bottom, transparent, black 30%);
-    mask-image:linear-gradient(to bottom, transparent, black 30%); /* fondu des anciennes entrées vers le haut */
   }
-  #lootTicker .rare { color:#b48ce8; } #lootTicker .trashLoot { color:#fff; }
+  #lootTicker .rare { color:#b48ce8; } #lootTicker .coinTx { color:var(--gold); }
   #lootTicker .jackpot { color:#e8b84a; font-weight:bold; }
   /* effet visuel pour le butin rare et au-delà (rare/jackpot) : flash doré à l'apparition + lueur
      douce en continu, pour que ces lignes sautent vraiment aux yeux dans le flux de loot */
@@ -72,13 +70,6 @@
   }
   #invFullBanner.show { display:block; }
   @keyframes invFullPulse { 0%,100% { opacity:1; } 50% { opacity:.65; } }
-  #deathBanner {
-    position:absolute; top:44px; left:50%; transform:translateX(-50%);
-    background:rgba(20,10,10,.94); border:1px solid var(--danger); color:#e8a89f; font-size:12px; font-weight:bold;
-    padding:8px 18px; letter-spacing:.3px; display:none; z-index:21; text-align:center; max-width:80%;
-    box-shadow:0 4px 14px rgba(0,0,0,.6);
-  }
-  #deathBanner.show { display:block; }
 
   #updateToast {
     position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-20px);
@@ -1288,7 +1279,6 @@
     <div id="shRate">— silver/h</div>
     <div id="lootTicker"></div>
     <div id="invFullBanner" data-i18n="invFullBanner">⚠ Sac plein — les objets restent au sol</div>
-    <div id="deathBanner"></div>
     <div id="hpPotWrap">
       <div id="hpBar"><div id="hpFill"></div><span id="hpPct"></span></div>
       <div id="potSlot"><span id="potIcon">🧪</span><div id="potCd"></div></div>
@@ -1307,18 +1297,14 @@
       <div class="row"><span data-i18n="lblPA">PA effective</span><span class="v" id="stPA">14</span></div>
       <div class="row"><span data-i18n="lblPD">PD</span><span class="v" id="stDP">10</span></div>
       <div class="row"><span data-i18n="lblHpMax">PV max</span><span class="v" id="stHpMax">100</span></div>
+      <div class="row"><span data-i18n="lblApZone">PA requis (zone)</span><span class="v" id="stApZone">14 / 20</span></div>
+      <div class="row"><span data-i18n="lblDpZone">PD requis (zone)</span><span class="v" id="stDpZone">10 / 20</span></div>
       <div class="row"><span data-i18n="lblWeaponBonus">Bonus arme</span><span class="v" id="stWeaponBonus">+0%</span></div>
       <div class="row"><span data-i18n="lblArmorBonus">Bonus armure (moy.)</span><span class="v" id="stArmorBonus">+0%</span></div>
       <div class="row"><span data-i18n="lblAiMode">Mode IA</span><span class="v blue" id="stMode">équilibré</span></div>
       <div class="row"><span data-i18n="lblKpm">Kills / min</span><span class="v" id="stKpm">—</span></div>
       <div class="row"><span data-i18n="lblKills">Loups abattus</span><span class="v" id="stKills">0</span></div>
       <div class="row"><span data-i18n="lblLootCount">Objets ramassés</span><span class="v" id="stLoot">0</span></div>
-    </div>
-
-    <div class="card">
-      <h3 data-i18n="cardZoneStats">Stats de la zone de farm</h3>
-      <div class="row"><span data-i18n="lblApZone">PA requis (zone)</span><span class="v" id="stApZone">14 / 20</span></div>
-      <div class="row"><span data-i18n="lblDpZone">PD requis (zone)</span><span class="v" id="stDpZone">10 / 20</span></div>
     </div>
 
     <div class="card">
@@ -1507,7 +1493,6 @@ const ZONES = [
       jackpot:{name:'Collier du Dieu déchu',val:1050000,ch:.00012,ap:15}, craft:{name:'Marbre du Dieu déchu',ch:.0018} } },
 ];
 let zoneIdx = 0;
-let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
 const Z = () => ZONES[zoneIdx];
 
 // ==================== ÉTAT GLOBAL ====================
@@ -2113,39 +2098,9 @@ function wireBossLobby() {
 const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:0, playerHp:0, playerHpMax:0, hits:[], last:0, raf:0, potCd:0, ended:false,
   px:0.5, py:0.85, pillars:[], aoePhase:'idle', aoeT:0, aoeInterval:9, blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
   // ---- world boss PARTAGÉ (spawn admin) : PV communs à tous, contribution reportée au serveur ----
-  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0, presenceCd:0,
+  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
   // ---- effet de profondeur/immersion ("4D") : tremblement d'écran + braises de corruption en parallaxe ----
   shakeT:0, embers:[] };
-// ---- présence en direct des autres joueurs dans la salle de boss PARTAGÉ (Supabase Realtime,
-// pas de table nécessaire) : chaque joueur diffuse sa position normalisée dans l'arène, on
-// affiche les autres comme de petites silhouettes + pseudo — demande explicite : "tous les
-// joueurs doivent se voir dans la zone du boss", pas juste un classement textuel
-let bossChannel = null;
-let otherFighters = {}; // uid -> { pseudo, px, py }
-function joinBossChannel(bossKey) {
-  leaveBossChannel();
-  if (!sb || !currentUser) return;
-  const myUid = currentUser.id;
-  bossChannel = sb.channel('boss_'+bossKey, { config: { presence: { key: myUid } } });
-  bossChannel.on('presence', { event: 'sync' }, () => {
-    const state = bossChannel.presenceState();
-    const next = {};
-    for (const uid in state) {
-      if (uid === myUid) continue;
-      const entry = state[uid] && state[uid][0];
-      if (entry) next[uid] = entry;
-    }
-    otherFighters = next;
-  });
-  bossChannel.subscribe(status => {
-    if (status === 'SUBSCRIBED') bossChannel.track({ pseudo: myPseudo || 'Joueur', px: bossState.px, py: bossState.py });
-  });
-}
-function leaveBossChannel() {
-  if (bossChannel && sb) { try { sb.removeChannel(bossChannel); } catch(e) {} }
-  bossChannel = null;
-  otherFighters = {};
-}
 // 4 piliers de la salle (coords normalisées 0..1) — on se cache DERRIÈRE (en dessous) pour éviter l'AoE
 const BOSS_PILLARS = [{x:.28,y:.44},{x:.72,y:.44},{x:.28,y:.72},{x:.72,y:.72}];
 const BOSS_ATTACK_POS = {x:0.5, y:0.60}; // position où le héros frappe le boss entre deux AoE
@@ -2183,7 +2138,7 @@ function startBossFight(bossId, isShared) {
   $('bossResult').classList.remove('show');
   $('bossName').textContent = b.name[LANG] + (shared ? ' 🌐' : '');
   $('bossTopPanel').classList.toggle('show', shared);
-  if (shared) { refreshBossTop(); joinBossChannel(liveBoss.time); } else { leaveBossChannel(); }
+  if (shared) refreshBossTop();
   resizeBossCanvas();
   bossState.raf = requestAnimationFrame(bossLoop);
 }
@@ -2235,7 +2190,6 @@ async function endBossFight(win) {
   bossState.ended = true;
   bossState.active = false;
   cancelAnimationFrame(bossState.raf);
-  leaveBossChannel();
   const b = bossState.boss;
   let rewardsHtml = '';
   if (win) {
@@ -2284,11 +2238,6 @@ function bossLoop(now) {
       }).catch(()=>{});
     }
     if (bossState.topCd <= 0) { bossState.topCd = 4; refreshBossTop(); }
-    bossState.presenceCd -= dt;
-    if (bossState.presenceCd <= 0 && bossChannel) {
-      bossState.presenceCd = 0.35;
-      bossChannel.track({ pseudo: myPseudo || 'Joueur', px: bossState.px, py: bossState.py });
-    }
   }
   if (Math.random() < dt*4) { // ~4 impacts/s
     const crit = Math.random() < .2;
@@ -2506,26 +2455,6 @@ function drawBossRoom(t) {
     cx.fillStyle = hurt ? '#e0a0a0' : '#e8d0a0'; cx.beginPath(); cx.arc(s.x, s.y-38, 5.5, 0, 7); cx.fill();
     cx.fillStyle = '#2a4a7a'; cx.beginPath(); cx.moveTo(s.x-7,s.y-38); cx.lineTo(s.x+7,s.y-38); cx.lineTo(s.x,s.y-50); cx.closePath(); cx.fill();
   }});
-  // ---- les AUTRES joueurs du boss partagé, en direct via Supabase Realtime presence (voir
-  // joinBossChannel) : silhouette simplifiée + pseudo, à leur position réelle dans l'arène —
-  // demande explicite : "tous les joueurs doivent se voir dans la zone du boss"
-  if (bs.shared) {
-    for (const uid in otherFighters) {
-      const f = otherFighters[uid];
-      if (!f || typeof f.px !== 'number' || typeof f.py !== 'number') continue;
-      drawables.push({ ny:f.py, fn:()=>{
-        const s = bossProj(f.px, f.py);
-        cx.fillStyle='rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(s.x, s.y, 10, 4, 0, 0, 7); cx.fill();
-        cx.fillStyle = '#5a8a4a';
-        cx.beginPath(); cx.moveTo(s.x, s.y-30); cx.lineTo(s.x-8, s.y); cx.lineTo(s.x+8, s.y); cx.closePath(); cx.fill();
-        cx.fillStyle = '#d8c89a'; cx.beginPath(); cx.arc(s.x, s.y-32, 4.5, 0, 7); cx.fill();
-        cx.font = '10px Georgia'; cx.textAlign = 'center'; cx.fillStyle = '#cde8c0';
-        cx.shadowColor = '#000'; cx.shadowBlur = 3;
-        cx.fillText((f.pseudo||'?').slice(0,14), s.x, s.y-40);
-        cx.shadowBlur = 0;
-      }});
-    }
-  }
   drawables.sort((a,b)=>a.ny-b.ny).forEach(d => d.fn());
   // messages flottants (PARÉ / AoE) au-dessus du héros
   for (const m of bs.floatMsgs) {
@@ -3006,7 +2935,6 @@ function resetWorld() {
   target = null; P.lootTarget = null; P.manualTarget = null;
   P.x = 0; P.y = 0; cam.x = 0; cam.y = 0; P.lootClusterX = 0; P.lootClusterY = 0;
   P.state = 'search'; P.hp = effHpMax();
-  if (atVelia) return; // Velia = zone paisible, aucun monstre n'y est jamais généré
   for (let i = 0; i < 6; i++) spawnPackNear();
 }
 resetWorld();
@@ -3108,7 +3036,7 @@ function fsm(dt) {
   P.stateT += dt;
   if (P.faint > 0) {
     P.faint -= dt;
-    if (P.faint <= 0) { die(); }
+    if (P.faint <= 0) { P.hp = effHpMax()*.5; setState('search'); }
     return;
   }
 
@@ -3416,7 +3344,7 @@ function dropsTick(dt) {
       if (it.kind === 'trash') {
         S.silver += l.silver; S.silverEarned += l.silver;
         l.taken = true; S.lootCount++;
-        lootLine(it, l.silver, 'trashLoot');
+        lootLine(it, l.silver, 'coinTx');
         floatTxt(l.x,l.y,40,it.name,{silver:true});
         particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
         queueFarmEvent(it.kind, it.name, 1, l.silver);
@@ -3949,20 +3877,20 @@ function buildZoneList() {
   // Velia, la ville paisible : épinglée en haut, aucun monstre, aucun farm — juste un accès
   // rapide pour revoir le tutoriel de bienvenue à tout moment
   const veliaRow = document.createElement('div');
-  veliaRow.className = 'zRow veliaRow' + (atVelia ? ' current' : '');
+  veliaRow.className = 'zRow veliaRow';
   veliaRow.title = LANG==='fr' ? 'Velia — zone paisible' : 'Velia — peaceful zone';
   veliaRow.innerHTML =
     `<span class="zname">🏘️ Velia</span>` +
     `<span class="zBadge">${LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE'}</span>` +
     `<span class="zreq" style="width:auto">${LANG==='fr'?'Aucun monstre':'No monsters'}</span>`;
-  veliaRow.onclick = () => { if (!atVelia) goToVelia(); };
+  veliaRow.onclick = () => startTutorial();
   list.appendChild(veliaRow);
   ZONES.forEach((z,i) => {
     const b = badgeOf(bottleneck(z));
     const apOk = apRatio(z) >= 1, dpOk = dpRatio(z) >= 1;
     const previewed = lootPreviewIdx==null ? i===zoneIdx : i===lootPreviewIdx;
     const row = document.createElement('div');
-    row.className = 'zRow' + (!atVelia && i===zoneIdx?' current':'');
+    row.className = 'zRow' + (i===zoneIdx?' current':'');
     row.title = tr(z.name);
     row.innerHTML =
       `<span class="zname">${tr(z.name)}</span>` +
@@ -3970,7 +3898,7 @@ function buildZoneList() {
       `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
       `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
     row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
-    row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
+    row.onclick = () => { if (i !== zoneIdx) travelTo(i); };
     list.appendChild(row);
   });
 }
@@ -3984,7 +3912,6 @@ function updateZoneViewHalo() {
   });
 }
 function travelTo(i) {
-  atVelia = false;
   zoneIdx = i;
   if (i > S.maxZoneIdx) S.maxZoneIdx = i;
   S.travelCount = (S.travelCount||0) + 1;
@@ -3995,33 +3922,6 @@ function travelTo(i) {
   renderLootTable();
   hud();
   buildZoneList();
-}
-// Velia : zone paisible, aucun monstre — ne lance plus le tutoriel automatiquement (voir
-// demande du 2026-07-04), juste un endroit calme où se rendre (à la main ou après une mort)
-function goToVelia() {
-  atVelia = true;
-  resetWorld();
-  $('ztName').textContent = LANG==='fr' ? 'Velia' : 'Velia';
-  $('ztTier').textContent = LANG==='fr' ? 'Zone paisible' : 'Peaceful zone';
-  lootPreviewIdx = null;
-  renderLootTable();
-  hud();
-  buildZoneList();
-}
-// mort au combat (PV à 0) : renvoie à Velia (zone paisible) avec un message d'avertissement —
-// demande explicite du 2026-07-05, remplace l'ancien "faint" qui soignait sur place
-function die() {
-  goToVelia();
-  P.hp = effHpMax()*.5;
-  const banner = $('deathBanner');
-  if (banner) {
-    banner.textContent = LANG==='fr'
-      ? '⚠ Les monstres t\'ont tué ! Choisis une zone plus adaptée à ton niveau ou améliore ton stuff.'
-      : '⚠ The monsters killed you! Pick a zone better suited to your level or improve your gear.';
-    banner.classList.add('show');
-    clearTimeout(die._t);
-    die._t = setTimeout(() => banner.classList.remove('show'), 6000);
-  }
 }
 
 // mise à jour légère des chiffres uniquement (aucune reconstruction de DOM lourde) —
@@ -4038,31 +3938,21 @@ function refreshStatsOnly() {
   $('stDP').textContent = Math.round(totalDP()*10)/10;
   $('stHpMax').textContent = fmt(Math.round(effHpMax()));
   const apEl = $('stApZone');
+  apEl.textContent = Math.round(apEff()) + ' / ' + z.reqAP;
+  apEl.className = 'v ' + (apR >= 1 ? 'ok' : 'bad');
   const dpEl = $('stDpZone');
-  if (atVelia) {
-    apEl.textContent = LANG==='fr' ? '—' : '—'; apEl.className = 'v';
-    dpEl.textContent = '—'; dpEl.className = 'v';
-  } else {
-    apEl.textContent = Math.round(apEff()) + ' / ' + z.reqAP;
-    apEl.className = 'v ' + (apR >= 1 ? 'ok' : 'bad');
-    dpEl.textContent = Math.round(totalDP()) + ' / ' + z.reqDP;
-    dpEl.className = 'v ' + (dpR >= 1 ? 'ok' : 'bad');
-  }
+  dpEl.textContent = Math.round(totalDP()) + ' / ' + z.reqDP;
+  dpEl.className = 'v ' + (dpR >= 1 ? 'ok' : 'bad');
   $('stMode').textContent = tr(aiMode());
   $('stKills').textContent = S.kills;
   $('stLoot').textContent = S.lootCount;
   const mins = (performance.now()-S.startTime)/60000;
   $('stKpm').textContent = mins>.1 ? (S.kills/mins).toFixed(1) : '—';
   $('shRate').textContent = mins>.1 ? fmt(S.silverEarned/(mins/60))+' silver/h' : '— silver/h';
+  const b = badgeOf(bottleneck());
   const zb = $('zoneBadge');
-  if (atVelia) {
-    zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
-    $('ztReq').textContent = LANG==='fr' ? 'Aucun monstre' : 'No monsters';
-  } else {
-    const b = badgeOf(bottleneck());
-    zb.className = b.cls; zb.textContent = tr(b.txt);
-    $('ztReq').innerHTML = `<span class="${apR>=1?'ok':'bad'}">${Math.round(apEff())}/${z.reqAP} PA</span> · <span class="${dpR>=1?'ok':'bad'}">${Math.round(totalDP())}/${z.reqDP} PD</span>`;
-  }
+  zb.className = b.cls; zb.textContent = tr(b.txt);
+  $('ztReq').innerHTML = `<span class="${apR>=1?'ok':'bad'}">${Math.round(apEff())}/${z.reqAP} PA</span> · <span class="${dpR>=1?'ok':'bad'}">${Math.round(totalDP())}/${z.reqDP} PD</span>`;
 }
 // version complète : chiffres + reconstruction du DOM (192 cases d'inventaire, liste des 12 zones, paperdoll...)
 // coûteuse — appelée automatiquement chaque seconde, et sur les actions peu fréquentes (loot, équiper, changer de zone)
@@ -4076,7 +3966,7 @@ function invSignature() {
   for (let i = 0; i < INV_SIZE; i++) { const it = INV[i]; s += it ? (it.key+','+it.qty+','+(it.enhLv||0)) : '_'; s += '|'; }
   return s;
 }
-function zoneSignature() { return zoneIdx + ':' + atVelia + ':' + Math.round(apEff()) + ':' + Math.round(totalDP()); }
+function zoneSignature() { return zoneIdx + ':' + Math.round(apEff()) + ':' + Math.round(totalDP()); }
 
 function hud() {
   refreshStatsOnly();
@@ -6235,7 +6125,6 @@ const I18N = {
   priceInputPh: { fr:'Prix en silver', en:'Price in silver' },
   btnListItem: { fr:'Mettre en vente', en:'List for sale' },
   cardStats: { fr:'Statistiques', en:'Stats' },
-  cardZoneStats: { fr:'Stats de la zone de farm', en:'Farming zone stats' },
   lblPS: { fr:'Gearscore', en:'Gearscore' },
   lblPA: { fr:'PA effective', en:'Effective AP' },
   lblPD: { fr:'PD', en:'DP' },
@@ -6321,19 +6210,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V81', d:'04/07/2026 20:00', name:{fr:'World Boss vraiment multijoueur, mort → Velia, loot stylisé', en:'World Boss truly multiplayer, death → Velia, styled loot'}, fr:[
-      {t:'new', tx:'World Boss partagé : les autres joueurs sont maintenant VISIBLES en direct dans l\'arène (silhouette + pseudo), pas juste dans un classement textuel'},
-      {t:'change', tx:'Mourir au combat renvoie désormais à Velia (zone paisible) avec un message d\'avertissement, au lieu de simplement récupérer 50% des PV sur place'},
-      {t:'change', tx:'Cliquer sur "Velia" dans la liste des zones n\'ouvre plus automatiquement le tutoriel : ça t\'y emmène juste, en zone paisible sans monstre (le tutoriel reste accessible depuis le Wiki)'},
-      {t:'change', tx:'Le loot en direct (bas à droite) : le rebut (trash) est maintenant blanc, un fondu estompe les entrées les plus anciennes vers le haut'},
-      {t:'change', tx:'Le panneau Statistiques est scindé en deux : stats personnelles en haut, stats de la zone de farm juste en dessous'},
-    ], en:[
-      {t:'new', tx:'Shared World Boss: other players are now VISIBLE live in the arena (silhouette + pseudo), not just in a text leaderboard'},
-      {t:'change', tx:'Dying in combat now sends you back to Velia (peaceful zone) with a warning message, instead of just recovering 50% HP on the spot'},
-      {t:'change', tx:'Clicking "Velia" in the zone list no longer auto-launches the tutorial: it just takes you there, a peaceful zone with no monsters (tutorial still available from the Wiki)'},
-      {t:'change', tx:'Live loot (bottom-right): trash is now white, older entries fade out toward the top'},
-      {t:'change', tx:'The Stats panel is split in two: personal stats on top, farming zone stats right below'},
-    ] },
   { v:'V80', d:'04/07/2026 19:00', name:{fr:'PA/PD sur les cases du sac, optimisation en un clic, footer raccourci', en:'AP/DP on bag slots, one-click enhancement, shortened footer'}, fr:[
       {t:'new', tx:'Les cases d\'équipement/bijoux du sac affichent maintenant le PA (bas-gauche) et le PD (bas-droite) directement sur l\'icône'},
       {t:'new', tx:'Le menu au clic sur un objet (sac ou équipement) propose désormais aussi "Mettre en optimisation" pour l\'armure/les bijoux, pas seulement les matériaux'},
