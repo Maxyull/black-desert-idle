@@ -1433,7 +1433,6 @@
       <div class="invTools">
         <button id="btnEquipBest" data-i18n="btnEquipBest">⚡ Équiper le meilleur (socle)</button>
         <button id="btnSellWorse" data-i18n="btnSellWorse">🗑️ Vendre l'inférieur</button>
-        <button id="btnBuyBackWorse" data-i18n="btnBuyBackWorse" disabled title="Rachète la dernière vente d'objets inférieurs">↩️ Racheter</button>
       </div>
       <div id="equipBestMsg"></div>
       <div class="invTools">
@@ -1530,66 +1529,59 @@ function tr(s) { if (LANG !== 'en' || !s) return s; return NAME_EN[s] || s; }
 // ==================== DONNÉES DES ZONES ====================
 // PR = power recommandé · hpPer/dmg/xp = stats des mobs (FIXES par zone, jamais scalées au joueur)
 // loot : 4 couches — trash (revenu), material, jackpot (accessoire équipable), craft (endgame)
-// Difficulté entièrement retravaillée le 2026-07-06 : reqAP plafonné à 209 max (zone 10, contre 400
-// avant) sur toute la région de Velia. hpPer/dmg de chaque zone réduits dans la même proportion que
-// reqAP pour garder la difficulté relative identique. Un saut de reqAP nettement plus marqué a été
-// placé à CHAQUE transition de palier de stuff (zone 2→3 gris→blanc, 5→6 blanc→vert, 8→9 vert→bleu)
-// : passer de la dernière sous-zone d'un palier à la première du suivant nécessite d'être un minimum
-// optimisé sur le stuff du palier précédent, sinon les monstres de la nouvelle zone font mal (via le
-// malus de dégâts subis/dégâts infligés déjà existant quand le ratio PA/PD réel < requis).
 const ZONES = [
-  { name:'Camp des Loups', tier:'Balenos — Early', reqAP:15, reqDP:14, mob:'Loup',
-    hpPer:23, dmg:3, xp:8,
+  { name:'Camp des Loups', tier:'Balenos — Early', reqAP:20, reqDP:20, mob:'Loup',
+    hpPer:30, dmg:4, xp:8,
     tint:{ a:'#3a4a31', b:'#36452e', dry:'#414f33' }, tones:['#6b5f52','#5a5248','#75685a'], alphaTone:'#3d3a45',
     loot:{ trash:{name:'Viande de loup',val:12,ch:1}, mat:{name:'Pierre noire',val:5,ch:.55},
       jackpot:{name:'Boucle d\'oreille de sorcière',val:2600,ch:.006,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.03} } },
-  { name:'Ruines de Protty', tier:'Balenos — Early', reqAP:20, reqDP:19, mob:'Esprit de Protty',
-    hpPer:26, dmg:3, xp:12,
+  { name:'Ruines de Protty', tier:'Balenos — Early', reqAP:35, reqDP:30, mob:'Esprit de Protty',
+    hpPer:45, dmg:6, xp:12,
     tint:{ a:'#4a4231', b:'#453e2e', dry:'#4f4833' }, tones:['#a5543c','#8f4a38','#b06045'], alphaTone:'#6e2f24',
     loot:{ trash:{name:'Lame rouillée d\'Imp',val:26,ch:1}, mat:{name:'Pierre noire',val:5,ch:.48},
       jackpot:{name:'Anneau du novice',val:5600,ch:.005,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.026} } },
-  { name:'Repaire des Pirates', tier:'Balenos — Early', reqAP:25, reqDP:23, mob:'Pirate',
-    hpPer:31, dmg:4, xp:18,
+  { name:'Repaire des Pirates', tier:'Balenos — Early', reqAP:55, reqDP:45, mob:'Pirate',
+    hpPer:68, dmg:9, xp:18,
     tint:{ a:'#4a4232', b:'#443c2d', dry:'#524936' }, tones:['#7a6248','#6b563e','#8a7055'], alphaTone:'#4a3a28',
     loot:{ trash:{name:'Insigne de Sausan',val:48,ch:1}, mat:{name:'Pierre noire',val:8,ch:.4},
       jackpot:{name:'Ceinture de Tungrad',val:10500,ch:.0038,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
-  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:38, reqDP:35, mob:'Guerrier Rhutum',
-    hpPer:48, dmg:6, xp:27,
+  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:80, reqDP:70, mob:'Guerrier Rhutum',
+    hpPer:100, dmg:13, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
     loot:{ trash:{name:'Bourse de pirate',val:85,ch:1}, mat:{name:'Pierre noire',val:5,ch:.32},
       jackpot:{name:'Boucle d\'oreille de Tungrad',val:19000,ch:.0028,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
-  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:48, reqDP:44, mob:'Garde Shultz',
-    hpPer:66, dmg:8, xp:40,
+  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:110, reqDP:100, mob:'Garde Shultz',
+    hpPer:150, dmg:19, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:140,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:8,ch:.26},
       jackpot:{name:'Anneau de Tungrad',val:31000,ch:.002,ap:5}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
-  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:60, reqDP:55, mob:'Combattant Sausan',
-    hpPer:93, dmg:12, xp:60,
+  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:145, reqDP:135, mob:'Combattant Sausan',
+    hpPer:225, dmg:28, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:230,ch:1}, mat:{name:'Éclat de cristal noir dur',val:35,ch:.2},
       jackpot:{name:'Collier de Tungrad',val:52000,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
-  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:85, reqDP:78, mob:'Mineur corrompu',
-    hpPer:156, dmg:19, xp:90,
+  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:185, reqDP:175, mob:'Mineur corrompu',
+    hpPer:340, dmg:42, xp:90,
     tint:{ a:'#403238', b:'#3b2e33', dry:'#48383e' }, tones:['#8a4a52','#7a4048','#985560'], alphaTone:'#5a2830',
     loot:{ trash:{name:'Fer rouillé',val:420,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.15},
       jackpot:{name:'Anneau du Gardien du Croissant',val:95000,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
-  { name:'Poste Helm', tier:'Serendia — Late', reqAP:105, reqDP:96, mob:'Soldat Helm',
-    hpPer:233, dmg:29, xp:135,
+  { name:'Poste Helm', tier:'Serendia — Late', reqAP:230, reqDP:220, mob:'Soldat Helm',
+    hpPer:510, dmg:63, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:640,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.11},
       jackpot:{name:'Ceinture du basilic',val:148000,ch:.0007,ap:8}, craft:{name:'Fragment de mémoire',ch:.007} } },
-  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:130, reqDP:119, mob:'Bandit Gahaz',
-    hpPer:353, dmg:44, xp:200,
+  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:280, reqDP:270, mob:'Bandit Gahaz',
+    hpPer:760, dmg:94, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:950,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.08},
       jackpot:{name:'Œil de chat doré',val:230000,ch:.0005,ap:9}, craft:{name:'Fragment de mémoire',ch:.005} } },
-  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:175, reqDP:160, mob:'Sectateur d\'Elric',
-    hpPer:596, dmg:73, xp:300,
+  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:335, reqDP:320, mob:'Sectateur d\'Elric',
+    hpPer:1140, dmg:140, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
     loot:{ trash:{name:'Éclat de relique ancienne',val:1450,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.06},
       jackpot:{name:'Boucle d\'oreille Manos',val:390000,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
-  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:209, reqDP:190, mob:'Uluan',
-    hpPer:894, dmg:110, xp:450,
+  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:400, reqDP:380, mob:'Uluan',
+    hpPer:1710, dmg:210, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:2200,ch:1}, mat:{name:'Pierre de Caphras',val:120,ch:.045},
       jackpot:{name:'Anneau Deboreah',val:620000,ch:.0002,ap:12}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
@@ -5008,13 +5000,8 @@ function refScoreForSlot(slotId, accSlot) {
   if (accSlot === 'earring') return Math.min(itemScore(EQUIP.earring1), itemScore(EQUIP.earring2));
   return itemScore(EQUIP[slotId]);
 }
-// dernière vente "Vendre l'inférieur" (snapshot des objets vendus) — sert au bouton "↩️ Racheter"
-// pour annuler un clic accidentel, demande explicite du 2026-07-06 ; annulable une seule fois,
-// non persisté (perdu au rechargement, ce n'est qu'un filet de sécurité immédiat)
-let lastWorseSaleSold = null;
 function sellWorseThanEquipped() {
   let count = 0, total = 0;
-  const sold = [];
   for (let i = 0; i < INV_SIZE; i++) {
     const it = INV[i]; if (!it) continue;
     if (it.kind !== 'gear' && it.kind !== 'jackpot') continue;
@@ -5022,46 +5009,19 @@ function sellWorseThanEquipped() {
     const accSlot = it.kind === 'jackpot' ? accSlotFor(it) : null;
     const ref = refScoreForSlot(slotId, accSlot);
     if (ref < 0) continue; // rien d'équipé pour comparer → on ne touche pas (pourrait être la 1ère pièce du slot)
-    if (itemScore(it) <= ref) { total += it.val * it.qty; sold.push({ ...it }); INV[i] = null; count++; }
+    if (itemScore(it) <= ref) { total += it.val * it.qty; INV[i] = null; count++; }
   }
-  if (count > 0) { S.silver += total; S.silverEarned += total; lastWorseSaleSold = sold; hud(); }
+  if (count > 0) { S.silver += total; S.silverEarned += total; hud(); }
   return { count, total };
-}
-// annule la dernière "Vendre l'inférieur" : reverse le silver gagné et restaure les objets vendus
-// (tout ou rien — n'annule rien si le sac n'a pas assez de place ou si le silver a depuis baissé
-// sous le montant à rendre)
-function buyBackLastWorseSale() {
-  if (!lastWorseSaleSold || !lastWorseSaleSold.length) return false;
-  const total = lastWorseSaleSold.reduce((a,it) => a + it.val*it.qty, 0);
-  const freeSlots = INV.filter(s => s === null).length;
-  if (freeSlots < lastWorseSaleSold.length || S.silver < total) return false;
-  S.silver -= total; S.silverEarned -= total;
-  lastWorseSaleSold.forEach(it => invAdd({ ...it }));
-  lastWorseSaleSold = null;
-  hud();
-  return true;
 }
 $('btnSellWorse').onclick = () => {
   const { count, total } = sellWorseThanEquipped();
-  $('btnBuyBackWorse').disabled = count === 0;
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = count > 0
       ? (LANG==='fr' ? `${count} objet${count>1?'s':''} vendu${count>1?'s':''} (+${fmt(total)} silver)` : `${count} item${count>1?'s':''} sold (+${fmt(total)} silver)`)
       : (LANG==='fr' ? 'Rien à vendre — tout est déjà au-dessus de l\'équipé' : 'Nothing to sell — everything already beats what\'s equipped');
     msg.className = count > 0 ? 'ok' : '';
-    setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
-  }
-};
-$('btnBuyBackWorse').onclick = () => {
-  const ok = buyBackLastWorseSale();
-  $('btnBuyBackWorse').disabled = true;
-  const msg = $('equipBestMsg');
-  if (msg) {
-    msg.textContent = ok
-      ? (LANG==='fr' ? 'Objets rachetés ✓' : 'Items bought back ✓')
-      : (LANG==='fr' ? 'Rien à racheter (ou sac plein / silver insuffisant)' : 'Nothing to buy back (or bag full / not enough silver)');
-    msg.className = ok ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
 };
@@ -6926,7 +6886,6 @@ const I18N = {
   cardEquip: { fr:'Équipement', en:'Equipment' },
   btnEquipBest: { fr:'⚡ Équiper le meilleur (socle)', en:'⚡ Equip best (base stats)' },
   btnSellWorse: { fr:'🗑️ Vendre l\'inférieur', en:'🗑️ Sell the worse' },
-  btnBuyBackWorse: { fr:'↩️ Racheter', en:'↩️ Buy back' },
   invFullBanner: { fr:'⚠ Sac plein — les objets restent au sol', en:'⚠ Bag full — items stay on the ground' },
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
   btnReloadUpdate: { fr:'Recharger', en:'Reload' },
@@ -7011,13 +6970,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V102', d:'06/07/2026 20:00', name:{fr:'Difficulté retravaillée, bouton "Racheter"', en:'Reworked difficulty, "Buy back" button'}, fr:[
-      {t:'change', tx:'Difficulté de toute la région de Velia retravaillée : PA requis plafonné à 209 (au lieu de 400) sur la dernière zone, avec un saut plus marqué à chaque transition de palier de stuff (gris→blanc, blanc→vert, vert→bleu) — il faut être un minimum optimisé sur le palier précédent avant d\'attaquer le suivant'},
-      {t:'new',    tx:'Bouton "↩️ Racheter" à côté de "Vendre l\'inférieur" : annule la dernière vente automatique (restaure les objets et le silver) en cas de clic accidentel'},
-    ], en:[
-      {t:'change', tx:'Reworked the difficulty of the whole Velia region: required AP capped at 209 (down from 400) on the last zone, with a sharper jump at every gear-tier transition (grey→white, white→green, green→blue) — you need to be at least somewhat enhanced on the previous tier before tackling the next one'},
-      {t:'new',    tx:'"↩️ Buy back" button next to "Sell the worse": undoes the last automatic sale (restores items and silver) after an accidental click'},
-    ] },
   { v:'V101', d:'06/07/2026 18:00', name:{fr:'Boss partagé enfin réparé, panneau admin retravaillé', en:'Shared boss finally fixed, reworked admin panel'}, fr:[
       {t:'fix',    tx:'Trouvé et corrigé LE bug qui empêchait le boss mondial d\'être partagé depuis le début : une erreur SQL silencieuse ("column reference ambiguous") faisait échouer chaque tentative d\'infliger des dégâts au boss partagé — les PV n\'ont donc jamais bougé, le classement de contribution est resté vide, confirmé par test réel et reproduction isolée du bug'},
       {t:'new',    tx:'Bouton admin pour faire disparaître le World Boss pour tout le monde à tout moment'},
