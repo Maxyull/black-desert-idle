@@ -57,6 +57,24 @@ Voir `ZONES` dans `index.html`. Paliers de stuff : Naru / Tuvala / Yuria / Gruni
 - Tenebraum
 - Château Zephyros (Zephyrus Shadow Knights)
 
+## Économie progressive par région (2026-07-07)
+Silver/h moyen visé (à un rythme de référence de 15 kills/min, stuff adapté à la zone, plafond
+haut = zone la plus difficile de la région avec un stuff bien optimisé) :
+
+| Région | Fourchette silver/h |
+|---|---|
+| Velia (en jeu) | 0 → 100 000/h |
+| Heidel (Mid) | 100 000/h → 1 000 000/h |
+| Calpheon (End) | 1 000 000/h → 100 000 000/h |
+| Valencia (End+) | 100 000 000/h → 1 000 000 000/h |
+| Edana (End++) | 1 000 000 000/h → 10 000 000 000/h |
+
+Pour Velia (11 zones), la fourchette est répartie progressivement zone par zone (voir le
+commentaire au-dessus de `const ZONES` dans index.html) : ~3 000/h en zone 1 jusqu'à 100 000/h en
+zone 11 (Ruines de Kratuga). Quand Heidel/Calpheon/Valencia/Edana seront construites, reprendre la
+même logique : répartir progressivement la fourchette de la région sur ses zones, avec le même
+principe de saut plus marqué aux transitions de palier de stuff.
+
 ## Bijoux (jackpot) par palier de stuff — référence complète (2026-07-06)
 Noms réels BDO, à utiliser pour les jackpot des zones quand chaque palier sera construit.
 Actuellement en jeu (Velia) : Gris/Blanc/Vert/Bleu seulement (voir ZONES dans index.html,
