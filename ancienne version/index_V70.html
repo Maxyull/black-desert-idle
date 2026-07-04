@@ -980,15 +980,10 @@
   }
   #bossTopPanel.show { display:block; }
   #bossTopPanel h4 { margin:0 0 6px; font-size:11px; color:var(--gold); letter-spacing:.5px; }
-  #bossTopPanel .btpLive { display:flex; align-items:center; gap:5px; font-size:10px; color:#8fc98a; margin-bottom:6px; }
-  #bossTopPanel .btpLiveDot { width:6px; height:6px; border-radius:50%; background:#8fc98a; box-shadow:0 0 5px #8fc98a; animation:btpPulse 1.4s infinite; }
-  @keyframes btpPulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
   #bossTopPanel .btpRow { display:flex; align-items:center; gap:6px; font-size:10.5px; padding:2px 0; }
   #bossTopPanel .btpRow.me { color:var(--gold); font-weight:bold; }
   #bossTopPanel .btpRank { flex-shrink:0; width:16px; color:var(--ink-dim); }
-  #bossTopPanel .btpPseudo { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:flex; align-items:center; gap:4px; }
-  #bossTopPanel .btpActiveDot { width:5px; height:5px; border-radius:50%; background:#8fc98a; flex-shrink:0; box-shadow:0 0 4px #8fc98a; }
-  #bossTopPanel .btpPct { flex-shrink:0; color:var(--gold); font-variant-numeric:tabular-nums; width:38px; text-align:right; }
+  #bossTopPanel .btpPseudo { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   #bossTopPanel .btpDmg { flex-shrink:0; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
 </style>
 </head>
@@ -1177,7 +1172,7 @@
         <button id="bossLeaveBtn">✕</button>
       </div>
       <canvas id="bossCv" width="1280" height="720"></canvas>
-      <div id="bossTopPanel"><h4 data-i18n="bossTopTitle">🏆 Top contributeurs</h4><div class="btpLive"><span class="btpLiveDot"></span><span id="btpLiveCount"></span></div><div id="bossTopList"></div></div>
+      <div id="bossTopPanel"><h4 data-i18n="bossTopTitle">🏆 Top contributeurs</h4><div id="bossTopList"></div></div>
       <div id="bossPlayerHpWrap"><div id="bossPlayerHp"></div><span id="bossPlayerHpTxt"></span></div>
       <div id="bossResult"></div>
     </div>
@@ -1791,12 +1786,12 @@ function openLifeskillPanel() {
 // ==================== WORLD BOSS ====================
 // Bosses implémentés dans le jeu (pour l'instant : Kzarka). Les horaires suivent ceux du vrai
 // BDO MOINS 15 minutes (demande utilisateur) ; ils sont exprimés en heure LOCALE du joueur pour
-// rester simples, et le boss "in-game" se combat en 2 à 7 minutes selon ton stuff (voir startBossFight).
+// rester simples, et le boss "in-game" se combat en 2 à 9 minutes selon ton stuff (voir startBossFight).
 const BOSS_ROSTER = {
   kzarka: {
     name:{fr:'Grand Seigneur de guerre de la corruption',en:'Great Warlord of Corruption'},
     short:{fr:'Seigneur de guerre',en:'Warlord'}, icon:'👹', color:'#7a2d33',
-    hp: 400000,          // calibré pour ~5 min à PA "adaptée" (~250), clampé à [2,7] min
+    hp: 400000,          // calibré pour ~5 min à PA "adaptée" (~250), clampé à [2,9] min
     reward: 250000,      // silver de victoire
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:'◈', matQty:[8,20],
   },
@@ -1998,7 +1993,7 @@ function wireBossLobby() {
 const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:0, playerHp:0, playerHpMax:0, hits:[], last:0, raf:0, potCd:0, ended:false,
   px:0.5, py:0.85, pillars:[], aoePhase:'idle', aoeT:0, aoeInterval:9, blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
   // ---- world boss PARTAGÉ (spawn admin) : PV communs à tous, contribution reportée au serveur ----
-  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
+  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0,
   // ---- effet de profondeur/immersion ("4D") : tremblement d'écran + braises de corruption en parallaxe ----
   shakeT:0, embers:[] };
 // 4 piliers de la salle (coords normalisées 0..1) — on se cache DERRIÈRE (en dessous) pour éviter l'AoE
@@ -2009,9 +2004,6 @@ const bossCtx = document.getElementById('bossCv').getContext('2d');
 // SKILLS étant déclaré plus bas dans le fichier, la somme est calculée paresseusement (au 1er appel)
 // pour éviter une erreur TDZ au chargement.
 let _skillDpsSum = 0;
-// DPS de référence pour un joueur à PA "adaptée" (~250) : sert à calibrer les PV du boss partagé
-// (400000 PV / 300s = ~5 min pour ce stuff, cf commentaire du roster) sans dépendre du stuff de l'admin
-const BOSS_REF_DPS = 1333;
 function playerBossDps() {
   if (!_skillDpsSum) _skillDpsSum = SKILLS.filter(s => s.dmg).reduce((a,s) => a + s.dmg/s.cd, 0);
   return Math.max(1, apEff() * _skillDpsSum);
@@ -2023,13 +2015,13 @@ function startBossFight(bossId, isShared) {
   const hp = shared ? liveBoss.hp : b.hp;
   const maxHp = shared ? liveBoss.maxHp : b.hp;
   const rawDur = b.hp / playerBossDps();           // durée "naturelle" selon ton stuff (boss solo uniquement)
-  const duration = Math.max(120, Math.min(420, rawDur)); // clampée à [2 min, 7 min]
+  const duration = Math.max(120, Math.min(540, rawDur)); // clampée à [2 min, 9 min]
   Object.assign(bossState, {
     active:true, ended:false, boss:b, hp, maxHp, duration, elapsed:0,
     playerHp: S.hpMax, playerHpMax: S.hpMax, hits:[], last:performance.now(), potCd:0,
     px:0.5, py:0.85, pillars:BOSS_PILLARS.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
-    shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
+    shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0,
     shakeT:0, embers:[],
   });
   currentActivity = 'boss'; renderActivityTabs();
@@ -2042,35 +2034,22 @@ function startBossFight(bossId, isShared) {
   resizeBossCanvas();
   bossState.raf = requestAnimationFrame(bossLoop);
 }
-// classement de contribution en direct (top 10 affiché en %, avec un point vert pour les joueurs
-// actuellement en train de taper) + compteur "X joueurs combattent en direct" — demande explicite :
-// "les joueurs doivent se voir et voir le top 10 de degats en % en direct"
+// classement de contribution en direct (top 10 affiché + rang du joueur s'il est hors classement)
 async function refreshBossTop() {
   if (!sb || !bossState.shared) return;
   try {
-    const [{ data }, { data: activeCount }] = await Promise.all([
-      sb.rpc('boss_top'), sb.rpc('boss_active_count'),
-    ]);
+    const { data } = await sb.rpc('boss_top');
     bossState.topList = data || [];
-    bossState.activeFighters = typeof activeCount === 'number' ? activeCount : 0;
     renderBossTop();
   } catch (e) {}
 }
 function renderBossTop() {
   const el = $('bossTopList'); if (!el) return;
-  const liveEl = $('btpLiveCount');
-  if (liveEl) {
-    const n = bossState.activeFighters || 0;
-    liveEl.textContent = n > 0
-      ? (LANG==='fr' ? `${n} joueur${n>1?'s':''} combattent` : `${n} player${n>1?'s':''} fighting`)
-      : (LANG==='fr' ? 'En attente de combattants' : 'Waiting for fighters');
-  }
   const list = bossState.topList.slice(0, 10);
   if (!list.length) { el.innerHTML = `<div class="btpRow">${LANG==='fr'?'Sois le premier !':'Be the first!'}</div>`; return; }
   el.innerHTML = list.map((r,i) =>
     `<div class="btpRow${currentUser && r.user_id===currentUser.id?' me':''}"><span class="btpRank">#${i+1}</span>` +
-    `<span class="btpPseudo">${r.active?'<span class="btpActiveDot"></span>':''}${escapeHtml(r.pseudo||'?')}</span>` +
-    `<span class="btpPct">${(r.pct!=null?r.pct:0)}%</span><span class="btpDmg">${fmt(Math.round(r.damage))}</span></div>`).join('');
+    `<span class="btpPseudo">${escapeHtml(r.pseudo||'?')}</span><span class="btpDmg">${fmt(Math.round(r.damage))}</span></div>`).join('');
 }
 function resizeBossCanvas() {
   const cv = $('bossCv');
@@ -4956,12 +4935,8 @@ async function openAdminPanel() {
       <div class="admBossSpawn">
         <span>${LANG==='fr'?'🌍 Lancer un boss pour TOUS :':'🌍 Launch a boss for ALL:'}</span>
         <select id="admGlobalBossSelect">${bossOptions}</select>
-        <select id="admBossDurationSelect">
-          ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${LANG==='fr'?`~${m} min à tuer`:`~${m} min to kill`}</option>`).join('')}
-        </select>
         <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (15 min)':'Launch (15 min)'}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels).':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation).'}</div>
       <div class="admHint">${LANG==='fr'?'⚠️ Ces actions affectent TOUS les joueurs.':'⚠️ These actions affect ALL players.'}</div>
     </div>
     <div class="admSection">
@@ -5010,16 +4985,8 @@ async function openAdminPanel() {
   $a('btnAdmSpawnGlobal').onclick = async () => {
     if (!isAdmin() || !sb) return;
     const id = $a('admGlobalBossSelect').value;
-    const targetMin = Number($a('admBossDurationSelect').value) || 4;
-    // PV partagés = DPS de référence (~PA 250) × joueurs attendus (≈40% des joueurs en ligne, mini 1)
-    // × durée cible, pour viser une mort en [2,7] min réelles selon le stuff et le nombre de participants
-    let onlineTotal = 1;
-    try {
-      const { data } = await sb.rpc('get_online_counts', { p_window_seconds: 90 });
-      if (data && data[0]) onlineTotal = Math.max(1, data[0].total || 1);
-    } catch (e) {}
-    const expectedFighters = Math.max(1, Math.round(onlineTotal * 0.4));
-    const sharedHp = Math.round(BOSS_REF_DPS * expectedFighters * targetMin * 60);
+    // PV partagés = PV de base du boss × un multiplicateur (beaucoup de joueurs tapent dessus)
+    const sharedHp = (BOSS_ROSTER[id].hp || 400000) * 30;
     const { error } = await sb.rpc('admin_spawn_boss', { p_boss_id: id, p_minutes: 15, p_hp: sharedHp });
     floatTxt(P.x, P.y, 100, error ? (LANG==='fr'?'Échec — '+error.message:'Failed — '+error.message)
       : (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓'), { gold:!error, hurt:!!error });
@@ -5762,15 +5729,6 @@ applyMenuSide();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V71', d:'04/07/2026 09:30', name:{fr:'World Boss : combattants en direct + % de dégâts', en:'World Boss: live fighters + damage %'}, fr:[
-      {t:'new', tx:'Le panneau de classement du World Boss partagé affiche maintenant un compteur "X joueurs combattent en direct" et un point vert à côté des pseudos qui tapent en ce moment'},
-      {t:'change', tx:'Le classement affiche désormais le % de dégâts de chacun (calculé sur le total réel de tous les participants) en plus du nombre brut'},
-      {t:'change', tx:'Les PV du World Boss lancé pour tous sont désormais calculés selon le nombre de joueurs en ligne, pour viser une mort en 2 à 7 minutes réelles selon le stuff et le nombre de participants'},
-    ], en:[
-      {t:'new', tx:'The shared World Boss leaderboard now shows a "X players fighting" live counter and a green dot next to pseudos currently hitting the boss'},
-      {t:'change', tx:'The leaderboard now shows each player\'s damage % (computed on the real total across all participants) alongside the raw number'},
-      {t:'change', tx:'HP for the globally-launched World Boss is now computed from the current online player count, targeting a real kill time of 2 to 7 minutes depending on gear and participation'},
-    ] },
   { v:'V70', d:'04/07/2026 08:15', name:{fr:'Tutoriel : suivi pixel perfect + démo du suivi de quêtes', en:'Tutorial: pixel-perfect tracking + quest tracker demo'}, fr:[
       {t:'fix', tx:'Le halo/encadré du tutoriel suit maintenant la cible au pixel près en permanence (recalcul à chaque frame), y compris pendant un scroll'},
       {t:'change', tx:'L\'étape "Quêtes" ouvre maintenant le panneau Quêtes tout seul et montre directement le bouton "Suivre" à l\'intérieur, avant de le refermer et de montrer où s\'affiche le suivi'},
