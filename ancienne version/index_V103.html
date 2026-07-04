@@ -82,33 +82,6 @@
   }
   #deathBanner.show { display:block; }
 
-  /* bannière d'annonce importante (ex: reset complet des comptes) — demande explicite du
-     2026-07-06 : "restylise le bien avec de la couleur" */
-  .resetNoticeOverlay {
-    position:fixed; inset:0; background:rgba(8,7,10,.85); backdrop-filter:blur(3px);
-    display:none; align-items:center; justify-content:center; z-index:900;
-  }
-  .resetNoticeOverlay.show { display:flex; }
-  .resetNoticeCard {
-    max-width:480px; margin:20px; padding:26px 24px; border-radius:12px;
-    background:linear-gradient(160deg, #2a2440 0%, #1a1f38 55%, #241a2e 100%);
-    border:1px solid var(--gold-dim); box-shadow:0 0 50px rgba(201,165,90,.25), 0 12px 40px rgba(0,0,0,.6);
-    text-align:center; animation:resetNoticeIn .35s ease;
-  }
-  @keyframes resetNoticeIn { from{opacity:0; transform:scale(.92) translateY(10px);} to{opacity:1; transform:scale(1) translateY(0);} }
-  .resetNoticeIcon { font-size:40px; margin-bottom:10px; filter:drop-shadow(0 0 10px rgba(201,165,90,.5)); }
-  .resetNoticeTitle {
-    font-size:17px; font-weight:bold; margin-bottom:14px; line-height:1.3;
-    background:linear-gradient(90deg,#e8c96a,#8cc8ff); -webkit-background-clip:text; background-clip:text; color:transparent;
-  }
-  .resetNoticeBody { font-size:13px; line-height:1.6; color:var(--ink); text-align:left; margin-bottom:20px; }
-  .resetNoticeBody b { color:var(--gold); }
-  #resetNoticeClose {
-    width:auto; padding:10px 28px; background:linear-gradient(90deg,#c9a55a,#8cc8ff);
-    border:none; color:#141319; font-weight:bold; border-radius:6px; font-size:13px;
-  }
-  #resetNoticeClose:hover { filter:brightness(1.08); }
-
   #updateToast {
     position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-20px);
     background:var(--panel-2); border:1px solid var(--gold); color:var(--ink);
@@ -1215,16 +1188,6 @@
 </div>
 
 <div id="achToastStack"></div>
-<!-- bannière d'annonce importante (ex: reset complet des comptes), livrée une seule fois via
-     claim_pending_notice() à la connexion — demande explicite du 2026-07-06 -->
-<div id="resetNoticeOverlay" class="resetNoticeOverlay">
-  <div class="resetNoticeCard">
-    <div class="resetNoticeIcon" id="resetNoticeIcon">🔄</div>
-    <div class="resetNoticeTitle" id="resetNoticeTitle"></div>
-    <div class="resetNoticeBody" id="resetNoticeBody"></div>
-    <button id="resetNoticeClose" data-i18n="resetNoticeClose">OK, compris !</button>
-  </div>
-</div>
 <div id="rightWidgets">
   <div id="questWidget" class="floatWidget"></div>
   <div id="questTrackerWidget" class="floatWidget" style="display:none"></div>
@@ -1998,28 +1961,6 @@ function fmtNotifTime(ts) {
   const hhmm = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
   const sameDay = d.getFullYear()===now.getFullYear() && d.getMonth()===now.getMonth() && d.getDate()===now.getDate();
   return sameDay ? hhmm : (d.getDate().toString().padStart(2,'0')+'/'+(d.getMonth()+1).toString().padStart(2,'0')+' '+hhmm);
-}
-// bannière colorée d'annonce importante (ex: reset complet des comptes) + entrée correspondante
-// dans le centre de notifications — demande explicite du 2026-07-06
-function showResetNotice(icon, title, body) {
-  $('resetNoticeIcon').textContent = icon || '🔔';
-  $('resetNoticeTitle').textContent = title;
-  $('resetNoticeBody').innerHTML = body;
-  $('resetNoticeOverlay').classList.add('show');
-  pushNotif(icon || '🔔', title, body.replace(/<[^>]+>/g, ''));
-}
-$('resetNoticeClose').onclick = () => $('resetNoticeOverlay').classList.remove('show');
-// réclame une éventuelle notice en attente à la connexion (livrée une seule fois, voir
-// claim_pending_notice côté serveur) — appelé après le chargement de la sauvegarde cloud
-async function checkPendingNotice() {
-  if (!sb || !currentUser) return;
-  try {
-    const { data } = await sb.rpc('claim_pending_notice');
-    const n = Array.isArray(data) ? data[0] : data;
-    if (n && n.notice_key) {
-      showResetNotice(n.icon, LANG==='fr' ? n.title_fr : n.title_en, LANG==='fr' ? n.body_fr : n.body_en);
-    }
-  } catch (e) {}
 }
 function openNotifCenter() {
   notifUnread = 0;
@@ -3760,14 +3701,13 @@ function dropsTick(dt) {
         S.jackpotCount = (S.jackpotCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'★ '+it.name,{lvl:true});
-        // le centre de notifications ne garde que les infos importantes (succès, boss, niveau) —
-        // les trouvailles de loot restent visibles dans le loot ticker, pas besoin de les dupliquer
-        // ici (demande explicite du 2026-07-06)
+        pushNotif('💍', LANG==='fr'?'Bijou rare':'Rare jewel', it.name);
         logToDiscord('💍 Bijou rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'gear') {
         S.gearDropCount = (S.gearDropCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
         floatTxt(l.x,l.y,55,'⚔ '+it.name,{lvl:true});
+        pushNotif('⚔️', LANG==='fr'?'Équipement trouvé':'Gear found', it.name);
         logToDiscord('⚔️ Équipement rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
@@ -5772,7 +5712,6 @@ async function loadCloudSave() {
     if (!tutorialAutoShown) { tutorialAutoShown = true; setTimeout(startTutorial, 500); }
   }
   setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 3000);
-  checkPendingNotice(); // annonce importante en attente (ex: reset de compte) — livrée une seule fois
 }
 
 async function saveToCloud() {
@@ -5853,39 +5792,6 @@ async function resetAllQuests() {
   }
   resetMyQuests(); // applique aussi l'effet immédiatement à l'admin lui-même
   floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes de tous les joueurs réinitialisées ✓' : "All players' quests reset ✓", { gold:true });
-}
-// remise à zéro COMPLÈTE de TOUS les comptes (silver/équipement/niveau/sac), avec diffusion d'un
-// message d'explication livré à chaque joueur (bannière stylée + notification) à sa prochaine
-// connexion — demande explicite du 2026-07-06, deux confirmations vu la gravité de l'action
-async function resetAllAccounts() {
-  if (!isAdmin() || !sb) return;
-  const msg1 = LANG === 'fr'
-    ? '💥 Réinitialiser TOUS les comptes de TOUS les joueurs (silver, équipement, niveau, sac) ? Un message d\'explication leur sera montré à leur prochaine connexion. Action IRRÉVERSIBLE.'
-    : '💥 Reset ALL accounts of ALL players (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.';
-  if (!confirm(msg1)) return;
-  const msg2 = LANG === 'fr'
-    ? 'Es-tu VRAIMENT sûr ? Il n\'y a aucun moyen de récupérer la progression perdue.'
-    : 'Are you REALLY sure? There is no way to recover the lost progress.';
-  if (!confirm(msg2)) return;
-  const title_fr = '🔄 Remise à zéro de tous les comptes';
-  const title_en = '🔄 All accounts have been reset';
-  const body_fr = 'Merci beaucoup pour votre aide pendant la phase de test précédente ! 🙏<br><br>' +
-    'Suite à un <b>gros changement d\'économie, de stuff et d\'équilibrage</b>, nous avons dû remettre TOUS les comptes à zéro pour repartir sur des tests propres et mieux calibrer le jeu.<br><br>' +
-    'Pour info : le jeu est en <b>développement constant</b>, d\'autres resets peuvent survenir à tout moment tant qu\'on est en phase de test.';
-  const body_en = 'Thank you so much for your help during the previous testing phase! 🙏<br><br>' +
-    'Following a <b>major economy, gear and balance overhaul</b>, we had to reset ALL accounts to zero to start fresh testing and better calibrate the game.<br><br>' +
-    'Note: the game is in <b>constant development</b>, more resets may happen at any time while we\'re in testing.';
-  const { data, error } = await sb.rpc('admin_reset_all_accounts', { p_title_fr: title_fr, p_title_en: title_en, p_body_fr: body_fr, p_body_en: body_en });
-  if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
-    return;
-  }
-  logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé TOUS les comptes (${data} comptes)`, 0xc05545);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? `${data} comptes réinitialisés ✓` : `${data} accounts reset ✓`, { gold:true });
-  // applique aussi l'effet immédiatement à l'admin lui-même + montre la même bannière que les joueurs
-  applySaveState(JSON.parse(JSON.stringify(DEFAULT_SAVE)));
-  await saveToCloud();
-  showResetNotice('🔄', title_fr, body_fr);
 }
 async function reevalMarket() {
   if (!isAdmin() || !sb) return;
@@ -6079,9 +5985,7 @@ async function openAdminPanel() {
       <div class="admActions">
         <button id="btnReevalMarket" data-i18n="btnReevalMarket">🔄 Réévaluer le marché</button>
         <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
-        <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Réinitialiser TOUS les comptes':'Reset ALL accounts'}</button>
       </div>
-      <div class="admHint warn">${LANG==='fr'?'"Réinitialiser TOUS les comptes" efface silver/équipement/niveau/sac de TOUT LE MONDE et affiche un message d\'explication à chaque joueur à sa prochaine connexion. Irréversible.':'"Reset ALL accounts" wipes silver/gear/level/bag for EVERYONE and shows an explanation message to each player on their next login. Irreversible.'}</div>
       <div class="admBossSpawn">
         <span>${LANG==='fr'?'🌍 Lancer un boss pour TOUS :':'🌍 Launch a boss for ALL:'}</span>
         <select id="admGlobalBossSelect">${bossOptions}</select>
@@ -6195,7 +6099,6 @@ async function openAdminPanel() {
   // --- pour les joueurs ---
   $a('btnReevalMarket').onclick = reevalMarket;
   $a('btnResetAllQuests').onclick = resetAllQuests;
-  $a('btnResetAllAccounts').onclick = resetAllAccounts;
   $a('btnAdmSpawnGlobal').onclick = async () => {
     if (!isAdmin() || !sb) return;
     const id = $a('admGlobalBossSelect').value;
@@ -7045,7 +6948,6 @@ const I18N = {
   btnEquipBest: { fr:'⚡ Équiper le meilleur (socle)', en:'⚡ Equip best (base stats)' },
   btnSellWorse: { fr:'🗑️ Vendre l\'inférieur', en:'🗑️ Sell the worse' },
   btnBuyBackWorse: { fr:'↩️ Racheter', en:'↩️ Buy back' },
-  resetNoticeClose: { fr:'OK, compris !', en:'OK, got it!' },
   invFullBanner: { fr:'⚠ Sac plein — les objets restent au sol', en:'⚠ Bag full — items stay on the ground' },
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
   btnReloadUpdate: { fr:'Recharger', en:'Reload' },
@@ -7130,13 +7032,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V104', d:'06/07/2026 23:00', name:{fr:'Reset complet des comptes & annonce dédiée', en:'Full account reset & dedicated announcement'}, fr:[
-      {t:'new',    tx:'Nouveau bouton admin "💥 Réinitialiser TOUS les comptes" : efface silver/équipement/niveau/sac de tout le monde, et affiche une bannière colorée d\'explication (+ une entrée dans les notifications) à chaque joueur à sa prochaine connexion'},
-      {t:'change', tx:'Le centre de notifications ne garde plus que les infos importantes (succès, boss vaincu, niveau supérieur) — les trouvailles de loot (bijoux/équipement rares) restent visibles dans le loot ticker mais ne polluent plus plus les notifications'},
-    ], en:[
-      {t:'new',    tx:'New admin button "💥 Reset ALL accounts": wipes silver/gear/level/bag for everyone, and shows a colorful explanation banner (+ a notification entry) to each player on their next login'},
-      {t:'change', tx:'The notification center now only keeps important info (achievements, boss defeated, level up) — rare loot finds (jewelry/gear) stay visible in the loot ticker but no longer clutter notifications'},
-    ] },
   { v:'V103', d:'06/07/2026 21:30', name:{fr:'Panneau admin bien plus rapide à l\'ouverture', en:'Admin panel opens much faster'}, fr:[
       {t:'fix', tx:'Trouvé la cause de la lenteur au clic sur "Zone Admin" : une vue serveur ("Ressources farmées") scannait TOUTE la table des ramassages (79 000+ lignes et ça grandit à chaque objet ramassé par tous les joueurs, depuis le début) sans aucune limite de temps — corrigée pour se limiter aux 30 derniers jours'},
       {t:'change', tx:'Le panneau admin s\'ouvre maintenant dès que la liste des joueurs est prête, sans attendre les 3 statistiques les plus lourdes (silver/heure, ressources farmées, richesses) qui se chargent maintenant en arrière-plan et remplissent leur onglet dès qu\'elles sont prêtes'},
