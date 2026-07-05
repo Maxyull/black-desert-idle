@@ -1261,7 +1261,13 @@ async function openAccountPanel() {
       <p>${LANG==='fr'
         ? 'Tu joues en mode invité. Lie un compte vérifié (bouton "🔗 Lier un compte") pour accéder au parrainage, au marché et au classement — ta progression actuelle sera conservée.'
         : 'You\'re playing as a guest. Link a verified account (the "🔗 Link account" button) to access referrals, the market and the leaderboard — your current progress will be kept.'}</p>
+      <h3>🧹 ${LANG==='fr'?'Cache du jeu':'Game cache'}</h3>
+      <p class="mHint">${LANG==='fr'
+        ? 'En cas d\'affichage étrange après une mise à jour, ce bouton vide le cache du navigateur pour les fichiers du jeu puis recharge la page. Ta progression n\'est jamais touchée.'
+        : 'If something looks wrong after an update, this button clears the browser\'s cache for the game\'s files then reloads the page. Your progress is never affected.'}</p>
+      <button id="btnClearCache">🧹 ${LANG==='fr'?'Vider le cache et recharger':'Clear cache and reload'}</button>
     `);
+    $a('btnClearCache').onclick = clearGameCache;
     return;
   }
   let code = '', count = 0, referrals = [];
@@ -1320,8 +1326,15 @@ async function openAccountPanel() {
       <tbody>${refRows}</tbody>
     </table>
 
+    <h3>🧹 ${LANG==='fr'?'Cache du jeu':'Game cache'}</h3>
+    <p class="mHint">${LANG==='fr'
+      ? 'En cas d\'affichage étrange après une mise à jour, ce bouton vide le cache du navigateur pour les fichiers du jeu puis recharge la page. Ta progression n\'est jamais touchée.'
+      : 'If something looks wrong after an update, this button clears the browser\'s cache for the game\'s files then reloads the page. Your progress is never affected.'}</p>
+    <button id="btnClearCache">🧹 ${LANG==='fr'?'Vider le cache et recharger':'Clear cache and reload'}</button>
+
   `;
   openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', html);
+  $a('btnClearCache').onclick = clearGameCache;
   $a('btnSavePseudo').onclick = async () => {
     const val = $a('pseudoInput').value.trim();
     const msg = $a('pseudoMsg');
@@ -3391,6 +3404,21 @@ async function checkForUpdate() {
   } catch (e) {}
 }
 $a('btnReloadUpdate').onclick = () => location.reload();
+// vide le cache du navigateur pour les fichiers du jeu (utile si une maj ne s'affiche pas
+// correctement) -- ne touche jamais la sauvegarde (Supabase ni le fallback localStorage)
+async function clearGameCache() {
+  try {
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map(k => caches.delete(k)));
+    }
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(r => r.unregister()));
+    }
+  } catch (e) {}
+  location.href = location.pathname + '?nocache=' + Date.now();
+}
 setInterval(checkForUpdate, 60 * 1000); // toutes les 60s (déploiement GitHub Pages ~1-2 min)
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
 window.addEventListener('focus', checkForUpdate);
