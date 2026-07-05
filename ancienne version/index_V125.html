@@ -33,9 +33,6 @@
   #zoneTitle small { display:block; font-size:10px; letter-spacing:3px; color:var(--gold); text-transform:uppercase; }
   #zoneBadge { display:inline-block; font-size:10px; letter-spacing:1px; padding:1px 8px; border:1px solid; margin-top:3px; }
   #ztReq { display:block; font-size:10.5px; letter-spacing:.5px; margin-top:4px; color:var(--ink-dim); text-transform:none; }
-  /* état du Compendium affiché dans la zone de farm — demande explicite du 2026-07-08 */
-  #ztCompendium { display:inline-block; font-size:9.5px; letter-spacing:.5px; margin-top:3px; color:var(--ink-dim); text-transform:none; cursor:pointer; }
-  #ztCompendium.complete { color:var(--gold); font-weight:bold; }
   #ztReq .ok { color:#8fc98a; } #ztReq .bad { color:var(--danger); }
   #silverBox {
     position:absolute; top:10px; right:14px; background:rgba(10,9,12,.72);
@@ -192,9 +189,6 @@
   }
   #potSelect .psRow:hover { background:rgba(201,165,90,.12); }
   #potSelect .psRow.sel { background:rgba(201,165,90,.18); border:1px solid var(--gold-dim); }
-  #potSelect .psRow.locked { opacity:.45; cursor:not-allowed; }
-  #potSelect .psRow.locked:hover { background:transparent; }
-  #potSelect .psRow.locked .psCost { color:var(--ink-dim); }
   #potSelect .psIcon { font-size:16px; width:20px; text-align:center; flex-shrink:0; }
   #potSelect .psInfo { flex:1; min-width:0; }
   #potSelect .psName { color:var(--ink); }
@@ -367,13 +361,6 @@
   .admInvGrid { max-height:none; }
   #invGrid::-webkit-scrollbar { width:7px; }
   #invGrid::-webkit-scrollbar-thumb { background:#3a3742; }
-  /* panneau de craft du Trésor de Velia (onglet "Trésors" uniquement) — demande explicite du 2026-07-08 */
-  .craftPanelTitle { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:4px; }
-  .craftRecipes { display:flex; flex-direction:column; gap:4px; margin-bottom:8px; }
-  .craftRecipeBtn { width:100%; margin:0; padding:6px 8px; font-size:10.5px; text-align:left;
-    border-color:#3a3742; color:var(--ink-dim); }
-  .craftRecipeBtn.ready { border-color:var(--gold); color:var(--ink); }
-  .craftRecipeBtn.ready:hover { background:rgba(201,165,90,.12); }
   .cell {
     aspect-ratio:1; background:rgba(20,19,26,.6); border:1px solid #262430;
     position:relative; display:flex; align-items:center; justify-content:center;
@@ -835,23 +822,16 @@
     border-radius:8px; vertical-align:middle;
   }
   #patchBadge.show, #questBadge.show, #mailBadge.show, #notifBadge.show { display:inline-flex; }
-  #btnNotifCenter.hasNew { border-color:var(--gold); animation:patchHalo 1.6s infinite; }
   /* centre de notifications — refait proprement le 2026-07-07 : sections par importance
      (Important/Réussites/Activité) au lieu d'une liste plate, avec un accent de couleur par
-     catégorie pour distinguer d'un coup d'oeil ce qui compte vraiment. Rafraîchi le 2026-07-08 :
-     liste défilante (20 dernières entrées, persistantes 7 jours) + bouton de suppression par ligne. */
+     catégorie pour distinguer d'un coup d'oeil ce qui compte vraiment */
   .notifSummary { font-size:10.5px; color:var(--ink-dim); margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #2c2a33; }
-  .notifScroll { max-height:420px; overflow-y:auto; padding-right:2px; }
-  .notifScroll::-webkit-scrollbar { width:7px; }
-  .notifScroll::-webkit-scrollbar-thumb { background:#3a3742; border-radius:4px; }
   .notifSectionTitle { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim);
     margin:12px 0 4px; display:flex; align-items:center; gap:6px; }
   .notifSectionTitle:first-of-type { margin-top:0; }
   .notifSectionCount { background:#232128; color:var(--ink-dim); font-size:9px; padding:1px 6px; border-radius:8px; }
   .notifRow { display:flex; align-items:flex-start; gap:9px; padding:8px 8px; margin-bottom:4px;
-    border-left:3px solid #3a3742; border-radius:0 5px 5px 0; background:rgba(255,255,255,.015);
-    transition:background .15s; }
-  .notifRow:hover { background:rgba(255,255,255,.045); }
+    border-left:3px solid #3a3742; background:rgba(255,255,255,.015); }
   .notifRow.important { border-left-color:var(--danger); background:rgba(192,85,69,.06); }
   .notifRow.success { border-left-color:var(--gold); background:rgba(201,165,90,.05); }
   .notifRow.info { border-left-color:#5a8fc8; }
@@ -860,11 +840,7 @@
   .notifTitle { font-size:11px; color:var(--gold); font-weight:bold; }
   .notifRow.important .notifTitle { color:#e8a89f; }
   .notifText { font-size:11.5px; color:var(--ink); }
-  .notifTime { font-size:9.5px; color:var(--ink-dim); flex-shrink:0; white-space:nowrap; margin-top:1px; }
-  .notifDelBtn { width:auto; flex-shrink:0; margin:0; padding:2px 6px; font-size:10px; align-self:center;
-    background:transparent; border:1px solid transparent; color:var(--ink-dim); opacity:0; transition:opacity .15s; }
-  .notifRow:hover .notifDelBtn { opacity:1; }
-  .notifDelBtn:hover { border-color:var(--danger); color:#e8a89f; }
+  .notifTime { font-size:9.5px; color:var(--ink-dim); flex-shrink:0; white-space:nowrap; }
   .betaTag {
     display:inline-block; background:#3a6ea8; color:#fff; font-size:8px; font-weight:bold;
     letter-spacing:.5px; padding:1px 5px; margin-left:5px; border-radius:8px; vertical-align:middle;
@@ -1598,7 +1574,7 @@
   <div id="gameFrame">
     <canvas id="cv" width="1240" height="440"></canvas>
     <canvas id="zoneMobIcon" width="34" height="34"></canvas>
-    <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Camp des Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span><br><span id="ztCompendium"></span></div>
+    <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Camp des Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span></div>
     <div id="aiState">IA : <span id="stateName">SearchPack</span> · <span id="aiSkill">—</span></div>
     <div id="farmModeBtn" title="Change le comportement de l'IA"></div>
     <div id="silverBox"><span class="coin"></span><span id="silver">0</span></div>
@@ -1679,7 +1655,6 @@
         <button id="sellMats" data-i18n="btnSellMats" disabled title="Bientôt disponible">🔒 Vendre mat.</button>
         <button id="sortInv" data-i18n="btnSort">Trier</button>
       </div>
-      <div id="treasureCraftPanel"></div>
       <div id="invGrid"></div>
       <div class="invFoot">
         <div class="frow"><span data-i18n="lblWeight">Poids</span> <div class="bar wbar"><div id="wBar"></div></div> <span id="wTxt">0 LT</span></div>
@@ -1882,7 +1857,6 @@ const S = {
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
   loyalty: 0, lastLoyaltyDate: null, mailbox: [],
-  notifLog: [], // centre de notifications (2026-07-08) : persisté (survit au reload/reconnexion), auto-purgé après 7 jours (voir pruneNotifLog)
   potionType: 'medium', // 'small'/'medium'/'large'/'mega' = potions payantes ; 'infinite' = gratuite (débloquée plus tard)
   farmMode: 'loot', // 'loot' = ramasse tout avant le pack suivant ; 'xp' = enchaîne les packs sans se soucier du loot
   potionThreshold: 0.5, // % de PV en dessous duquel l'IA boit une potion automatiquement (réglable via le slider)
@@ -2250,8 +2224,6 @@ function markZoneCollected(zi) {
   if (S.zonesCollected[zi]) return;
   S.zonesCollected[zi] = true;
   floatTxt(P.x, P.y, 96, '📖 Compendium — '+tr(ZONES[zi].name), { gold:true });
-  const zc = compendiumZoneCount();
-  logToDiscord('📖 Compendium', `**${myPseudo||'Joueur'}** débloque le bonus de **${tr(ZONES[zi].name)}** (${zc}/${ZONES.length} zones${zc>=ZONES.length?' — COMPENDIUM COMPLET ✓':''})`, 0xc9a55a);
 }
 function compendiumZoneCount() { return Object.keys(S.zonesCollected||{}).length; }
 function compendiumPct() { return compendiumZoneCount() * 1; } // points de %, 1 par zone
@@ -2331,31 +2303,19 @@ function achCat(id) {
   if (id.startsWith('zone')) return 'exploration';
   return 'equipment'; // gs_*, enh_*, jackpot_1, gear_1
 }
-// ---------- centre de notifications : journal PERSISTANT (survit au reload/reconnexion, stocké
-// dans S.notifLog comme le reste de la sauvegarde) des événements marquants (succès, niveau, butin
-// rare, victoire de boss...), en plus des toasts éphémères déjà existants ----------
+// ---------- centre de notifications : journal persistant des événements marquants (succès,
+// niveau, butin rare, victoire de boss...), en plus des toasts éphémères déjà existants ----------
+let NOTIF_LOG = [];
 let notifUnread = 0;
-let notifSerial = 0; // id local incrémental (unique le temps d'une session, suffisant pour les boutons "supprimer")
 // cat : 'important' (nécessite l'attention du joueur, ex: reset de compte) | 'success' (réussite/
 // progression positive) | 'info' (routine) — sert à trier/distinguer visuellement dans le centre
 // de notifications refait le 2026-07-07 ("qu'on y comprenne quelque chose avec ce qui est
 // important ou non")
-const NOTIF_MAX_AGE_MS = 7 * 24 * 3600 * 1000; // auto-purge après 7 jours — demande explicite du 2026-07-08
-const NOTIF_SHOW_LIMIT = 20; // "affiche les 20 dernières entrées" — demande explicite du 2026-07-08
-function pruneNotifLog() {
-  const cutoff = Date.now() - NOTIF_MAX_AGE_MS;
-  S.notifLog = (S.notifLog||[]).filter(n => n.t >= cutoff);
-}
 function pushNotif(icon, title, text, cat) {
-  pruneNotifLog();
-  S.notifLog.unshift({ id: ++notifSerial + '_' + Date.now(), icon, title, text, t: Date.now(), cat: cat || 'info' });
-  if (S.notifLog.length > 200) S.notifLog.length = 200; // garde-fou dur, bien au-delà des 20 affichées
+  NOTIF_LOG.unshift({ icon, title, text, t: Date.now(), cat: cat || 'info' });
+  if (NOTIF_LOG.length > 40) NOTIF_LOG.length = 40;
   notifUnread++;
   updateNotifBadge();
-}
-function deleteNotif(id) {
-  S.notifLog = (S.notifLog||[]).filter(n => n.id !== id);
-  openNotifCenter(); // re-render immédiat, le joueur voit la ligne disparaître
 }
 // relaie un événement vers le salon Discord "log général" via l'Edge Function discord-log —
 // le webhook lui-même reste côté serveur, jamais dans ce code client (voir supabase-discord-log)
@@ -2375,9 +2335,6 @@ function updateNotifBadge() {
   const badge = $a('notifBadge'); if (!badge) return;
   badge.textContent = notifUnread > 9 ? '9+' : notifUnread;
   badge.classList.toggle('show', notifUnread > 0);
-  // halo doré autour du bouton cloche (même animation que "notes de version non lues") — demande
-  // explicite du 2026-07-08 : "montre où se trouve des notifications avec halo"
-  const btn = $a('btnNotifCenter'); if (btn) btn.classList.toggle('hasNew', notifUnread > 0);
 }
 // affiche TOUJOURS la date (pas seulement l'heure pour aujourd'hui) — demande explicite du
 // 2026-07-07, pour pouvoir resituer une notification dans le temps sans ambiguïté
@@ -2420,38 +2377,29 @@ function notifRowHtml(n) {
     <div class="notifIcon">${n.icon}</div>
     <div class="notifBody"><div class="notifTitle">${escapeHtml(n.title)}</div><div class="notifText">${escapeHtml(n.text)}</div></div>
     <div class="notifTime">${fmtNotifTime(n.t)}</div>
-    <button class="notifDelBtn" data-id="${n.id}" title="${LANG==='fr'?'Supprimer':'Delete'}">✕</button>
   </div>`;
 }
 function openNotifCenter() {
   notifUnread = 0;
   updateNotifBadge();
-  pruneNotifLog(); // purge les entrées de plus de 7 jours avant d'afficher
-  const log = S.notifLog||[];
-  if (!log.length) {
+  if (!NOTIF_LOG.length) {
     openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications',
       `<div class="admEmpty">${LANG==='fr'?'Aucune notification pour l\'instant':'No notifications yet'}</div>`);
     return;
   }
-  // "affiche les 20 dernières entrées" (demande explicite du 2026-07-08) : on ne garde QUE les 20
-  // plus récentes tous types confondus pour l'affichage (le stockage garde jusqu'à 200, purgées au
-  // bout de 7 jours) — réparties ensuite dans les 3 sections par importance, avec défilement si
-  // jamais une section est longue (voir .notifScroll)
-  const shown = log.slice(0, NOTIF_SHOW_LIMIT);
-  const important = shown.filter(n => n.cat === 'important');
-  const success = shown.filter(n => n.cat === 'success');
-  const info = shown.filter(n => n.cat === 'info');
+  // 3 sections claires, dans l'ordre de priorité : Important (nécessite l'attention) → Réussites
+  // (succès/boss/niveau) → Activité — chacune n'apparaît que si elle contient quelque chose
+  const important = NOTIF_LOG.filter(n => n.cat === 'important');
+  const success = NOTIF_LOG.filter(n => n.cat === 'success');
+  const info = NOTIF_LOG.filter(n => n.cat === 'info');
   const section = (cat, items) => !items.length ? '' :
     `<div class="notifSectionTitle">${NOTIF_CAT_META[cat][LANG]} <span class="notifSectionCount">${items.length}</span></div>` +
     items.map(notifRowHtml).join('');
   const html = section('important', important) + section('success', success) + section('info', info);
   const summary = `<div class="notifSummary">${LANG==='fr'
-    ? `${shown.length} affichée${shown.length>1?'s':''} (sur ${log.length}) · auto-supprimées après 7 jours${important.length ? ` · ${important.length} important${important.length>1?'s':''}` : ''}`
-    : `${shown.length} shown (of ${log.length}) · auto-deleted after 7 days${important.length ? ` · ${important.length} important` : ''}`}</div>`;
-  openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications', summary + `<div class="notifScroll">${html}</div>`);
-  $a('infoBody').querySelectorAll('.notifDelBtn').forEach(btn => {
-    btn.onclick = e => { e.stopPropagation(); deleteNotif(btn.dataset.id); };
-  });
+    ? `${NOTIF_LOG.length} au total${important.length ? ` · ${important.length} important${important.length>1?'s':''}` : ''}`
+    : `${NOTIF_LOG.length} total${important.length ? ` · ${important.length} important` : ''}`}</div>`;
+  openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications', summary + html);
 }
 
 function checkAchievements() {
@@ -3855,21 +3803,16 @@ function doTeleport(dirX, dirY) {
 // CHAQUE utilisation (vrai sink économique — sans silver, pas de soin, le joueur encaisse).
 // Calibrage : le coût au %PV soigné augmente légèrement avec la taille (les grosses potions
 // restent un luxe) et le temps de recharge grandit avec le soin apporté, pour qu'aucune taille
-// ne soit "abusable" (spam en boucle) ni trop faible pour être utile.
-// Recalibré le 2026-07-08 par rapport à la courbe de gains des zones de Velia (~3 000 silver/h en
-// zone 1 jusqu'à ~100 000 silver/h en zone 11, voir zones-roadmap.md) : même utilisée en continu à
-// son propre CD, la potion la plus chère (mega) ne dépasse jamais ~15% du revenu horaire d'une
-// zone adaptée à son coût — un vrai sink sans jamais casser l'économie du joueur qui progresse.
-// "Potion de vie" (infinite, cost:0) : verrouillée 🔒 en bas du sélecteur, réservée à un futur
-// déblocage (récompense/boutique) — visible dès maintenant pour montrer où elle mènera.
+// ne soit "abusable" (spam en boucle) ni trop faible pour être utile. Une potion "infinie"
+// gratuite reste prévue pour un futur déblocage (cost:0, non proposée dans le sélecteur pour l'instant).
 const POTIONS = {
-  small:    { name:{fr:'Petite potion de vie',  en:'Small HP Potion'},  icon:'🧪', cost:70,  heal:0.20, cd:2.4 },
-  medium:   { name:{fr:'Potion de vie',         en:'HP Potion'},        icon:'🧴', cost:140, heal:0.35, cd:3.6 },
-  large:    { name:{fr:'Grande potion de vie',  en:'Large HP Potion'},  icon:'⚗️', cost:240, heal:0.55, cd:5.0 },
-  mega:     { name:{fr:'Potion de vie majeure', en:'Major HP Potion'},  icon:'🍾', cost:380, heal:0.80, cd:6.8 },
-  infinite: { name:{fr:'Potion de vie infinie', en:'Infinite HP Potion'}, icon:'♾️', cost:0, heal:0.40, cd:4.2, locked:true },
+  small:    { name:{fr:'Petite potion de vie',  en:'Small HP Potion'},  icon:'🧪', cost:80,  heal:0.20, cd:2.6 },
+  medium:   { name:{fr:'Potion de vie',         en:'HP Potion'},        icon:'🧴', cost:150, heal:0.35, cd:4.0 },
+  large:    { name:{fr:'Grande potion de vie',  en:'Large HP Potion'},  icon:'⚗️', cost:260, heal:0.55, cd:5.6 },
+  mega:     { name:{fr:'Potion de vie majeure', en:'Major HP Potion'},  icon:'🍾', cost:420, heal:0.80, cd:7.5 },
+  infinite: { name:{fr:'Potion infinie',        en:'Infinite Potion'},  icon:'♾️', cost:0,   heal:0.4,  cd:4.2 },
 };
-const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite" toujours en dernier, verrouillée (voir p.locked)
+const POTION_ORDER = ['small','medium','large','mega']; // ordre d'affichage du sélecteur (infinite pas encore débloquable)
 function usePotion() {
   const pot = POTIONS[S.potionType] || POTIONS.medium;
   if (pot.cost > 0) {
@@ -3892,19 +3835,13 @@ function renderPotSelect() {
   const rows = POTION_ORDER.map(key => {
     const p = POTIONS[key];
     const healHp = Math.round(effHpMax()*p.heal);
-    if (p.locked) {
-      return `<div class="psRow locked" title="${LANG==='fr'?'Bientôt disponible':'Coming soon'}">` +
-        `<span class="psIcon">🔒</span>` +
-        `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${Math.round(p.heal*100)}% PV · CD ${p.cd}s</span></span>` +
-        `<span class="psCost">${LANG==='fr'?'Gratuite':'Free'}</span></div>`;
-    }
     return `<div class="psRow${S.potionType===key?' sel':''}" data-pot="${key}">` +
       `<span class="psIcon">${p.icon}</span>` +
-      `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${fmt(healHp)} PV (${Math.round(p.heal*100)}%) · CD ${p.cd}s</span></span>` +
+      `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${fmt(healHp)} PV (${Math.round(p.heal*100)}%)</span></span>` +
       `<span class="psCost">${fmt(p.cost)} 🪙</span></div>`;
   }).join('');
   el.innerHTML = threshRow + rows;
-  el.querySelectorAll('.psRow:not(.locked)').forEach(row => {
+  el.querySelectorAll('.psRow').forEach(row => {
     row.onclick = e => { e.stopPropagation(); S.potionType = row.dataset.pot; el.classList.remove('show'); };
   });
   const slider = $('potThreshSlider');
@@ -4121,13 +4058,7 @@ function wolvesTick(dt) {
 function killPack(p) {
   p.dead = true;
   const z = Z(), lm = lootMult(bottleneck());
-  const killsBefore = S.kills;
   S.kills += p.wolves.length;
-  // palier de kills "pour le fun" (demande explicite du 2026-07-08) — comparaison par tranche de
-  // 1000 pour ne jamais rater le seuil quand un pack entier (plusieurs loups) le franchit d'un coup
-  if (Math.floor(S.kills/1000) > Math.floor(killsBefore/1000)) {
-    logToDiscord('💀 Palier de kills', `**${myPseudo||'Joueur'}** vient d'atteindre **${fmt(Math.floor(S.kills/1000)*1000)}** monstres tués à vie`, 0x7a2d33);
-  }
   gainXp(p.wolves.length * z.xp * (p.alpha?3:1));
   for (const w of p.wolves) {
     const wp = wolfPos(p,w);
@@ -4227,11 +4158,8 @@ function rollGearDrop(zone, alpha) {
 // chances RE-précisées en % explicite le 2026-07-06 (0.01% = 0.0001, pas 0.01 = 1% comme
 // interprété la première fois) : 100× plus rares qu'à l'origine
 const VELIA_TREASURE = [
-  // correctif du 2026-07-08 : les 2 lignes portaient le même nom "...Velia 1" alors que ce sont 2
-  // morceaux DIFFÉRENTS (chances distinctes) — la 2e (la plus rare, 0.001%) est en fait le morceau
-  // du "Velia 2", pas un doublon du "Velia 1"
   { name:'Bout du trésor de Velia 1', ch:.0001,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
-  { name:'Bout du trésor de Velia 2', ch:.00001,  icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia2' },
+  { name:'Bout du trésor de Velia 1', ch:.00001,  icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
   { name:'Trésor de Velia 1',         ch:.00001,  icon:'🗺️', color:'#e8c96a', key:'treasure_velia1' },
   { name:'Trésor de Velia 2',         ch:.000001, icon:'🗺️', color:'#e8c96a', key:'treasure_velia2' },
   { name:'Trésor de Velia 3',         ch:.0000001,icon:'🗺️', color:'#e8c96a', key:'treasure_velia3' },
@@ -4242,74 +4170,6 @@ function treasureTotal(S) {
   let total = 0;
   for (const t of new Set(VELIA_TREASURE.map(x => x.name))) total += S.lootByItem[t] || 0;
   return total;
-}
-
-// ---------- conversions du Trésor de Velia (craft) — demande explicite du 2026-07-08 ----------
-// 100 "Bout du trésor de Velia N" → 1 "Trésor de Velia N" (même numéro) ; 3 Trésors de Velia AU
-// TOTAL (n'importe lesquels/mélangés) → 1 "Objet inconnu" (récompense mystère, contenu réel encore
-// à définir — catégorie toujours "TEST", comme le reste du Trésor de Velia).
-const TREASURE_PIECE_RECIPES = [
-  { needKey:'treasure_bout_velia1', needQty:100, giveName:'Trésor de Velia 1', giveKey:'treasure_velia1' },
-  { needKey:'treasure_bout_velia2', needQty:100, giveName:'Trésor de Velia 2', giveKey:'treasure_velia2' },
-];
-const MYSTERY_ITEM = { name:'Objet inconnu', icon:'❓', color:'#8878aa', key:'treasure_objet_inconnu' };
-const MYSTERY_NEED_QTY = 3;
-const MYSTERY_SOURCE_KEYS = ['treasure_velia1','treasure_velia2','treasure_velia3'];
-function invSlotByKey(key) { return INV.findIndex(s => s && s.key === key); }
-function invQtyByKey(key) { const i = invSlotByKey(key); return i===-1 ? 0 : INV[i].qty; }
-// une place est déjà garantie si l'objet résultant a déjà un stack existant (il fusionne dedans) —
-// sinon il faut une case vide, comme n'importe quel nouvel objet
-function invHasRoomFor(key) { return invSlotByKey(key) !== -1 || invUsed() < INV_SIZE; }
-function craftTreasurePiece(recipe) {
-  if (invQtyByKey(recipe.needKey) < recipe.needQty) return false;
-  if (!invHasRoomFor(recipe.giveKey)) { floatTxt(P.x,P.y,90,LANG==='fr'?'Sac plein !':'Bag full!',{hurt:true}); return false; }
-  invRemoveAt(invSlotByKey(recipe.needKey), recipe.needQty);
-  invAdd({ name:recipe.giveName, kind:'treasure', icon:'🗺️', color:'#e8c96a', key:recipe.giveKey, qty:1, stackable:true, weight:0.05, val:0, ap:0, dp:0, hp:0, dodge:0 });
-  trackLoot(recipe.giveName);
-  floatTxt(P.x,P.y,90,'🗺️ '+recipe.giveName,{gold:true});
-  logToDiscord('🔧 Craft', `**${myPseudo||'Joueur'}** combine ${recipe.needQty} morceaux en 1 ${recipe.giveName}`, 0xe8c96a);
-  renderInventory();
-  return true;
-}
-function craftMysteryItem() {
-  const total = MYSTERY_SOURCE_KEYS.reduce((s,k) => s + invQtyByKey(k), 0);
-  if (total < MYSTERY_NEED_QTY) return false;
-  if (!invHasRoomFor(MYSTERY_ITEM.key)) { floatTxt(P.x,P.y,90,LANG==='fr'?'Sac plein !':'Bag full!',{hurt:true}); return false; }
-  let remaining = MYSTERY_NEED_QTY;
-  for (const k of MYSTERY_SOURCE_KEYS) {
-    if (remaining <= 0) break;
-    const idx = invSlotByKey(k); if (idx === -1) continue;
-    const take = Math.min(INV[idx].qty, remaining);
-    invRemoveAt(idx, take); remaining -= take;
-  }
-  invAdd({ name:MYSTERY_ITEM.name, kind:'treasure', icon:MYSTERY_ITEM.icon, color:MYSTERY_ITEM.color, key:MYSTERY_ITEM.key, qty:1, stackable:true, weight:0.05, val:0, ap:0, dp:0, hp:0, dodge:0 });
-  trackLoot(MYSTERY_ITEM.name);
-  floatTxt(P.x,P.y,95,'❓ '+MYSTERY_ITEM.name,{lvl:true});
-  logToDiscord('❓ Objet mystère', `**${myPseudo||'Joueur'}** combine 3 Trésors de Velia en 1 Objet inconnu... quel mystère !`, 0x8878aa);
-  renderInventory();
-  return true;
-}
-// panneau de craft affiché SEULEMENT dans l'onglet "Trésors" de l'inventaire (voir renderInventory)
-function renderTreasureCraftPanel() {
-  const el = $('treasureCraftPanel'); if (!el) return;
-  if (invCategory !== 'treasure') { el.innerHTML = ''; return; }
-  const pieceRows = TREASURE_PIECE_RECIPES.map(r => {
-    const have = invQtyByKey(r.needKey);
-    const ok = have >= r.needQty;
-    return `<button class="craftRecipeBtn${ok?' ready':''}" data-kind="piece" data-key="${r.needKey}" ${ok?'':'disabled'}>` +
-      `🧩 ${have}/${r.needQty} → 🗺️ ${escapeHtml(r.giveName)}</button>`;
-  }).join('');
-  const mysteryHave = MYSTERY_SOURCE_KEYS.reduce((s,k) => s + invQtyByKey(k), 0);
-  const mysteryOk = mysteryHave >= MYSTERY_NEED_QTY;
-  const mysteryRow = `<button class="craftRecipeBtn${mysteryOk?' ready':''}" data-kind="mystery" ${mysteryOk?'':'disabled'}>` +
-    `🗺️ ${mysteryHave}/${MYSTERY_NEED_QTY} → ❓ ${LANG==='fr'?'Objet inconnu':'Unknown Item'}</button>`;
-  el.innerHTML = `<div class="craftPanelTitle">${LANG==='fr'?'🔧 Combiner':'🔧 Combine'}</div>` +
-    `<div class="craftRecipes">${pieceRows}${mysteryRow}</div>`;
-  el.querySelectorAll('.craftRecipeBtn[data-kind="piece"]').forEach(btn => {
-    btn.onclick = () => { const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === btn.dataset.key); if (r) craftTreasurePiece(r); renderTreasureCraftPanel(); };
-  });
-  const mb = el.querySelector('.craftRecipeBtn[data-kind="mystery"]');
-  if (mb) mb.onclick = () => { craftMysteryItem(); renderTreasureCraftPanel(); };
 }
 // affiche un % avec juste assez de décimales pour rester lisible même sur des chances minuscules
 // (ex: 0.00001%) — toFixed(1) fixe habituel afficherait juste "0.0%"
@@ -4439,11 +4299,6 @@ function dropsTick(dt) {
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,40,it.name,{blue:true});
-      } else if (it.kind === 'treasure') {
-        lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,50,'🗺️ '+it.name,{lvl:true});
-        // les trésors sont TRÈS rares (jusqu'à 0.00001% de chance) — vaut bien un log "pour le fun"
-        logToDiscord('🗺️ Trésor de Velia', `**${myPseudo||'Joueur'}** trouve ${it.name} (${fmtTinyPct(it.ch)} de chance)`, 0xe8c96a);
       } else {
         lootLine(it, l.silver, it.kind === 'material' ? 'matLoot' : '');
         floatTxt(l.x,l.y,40,it.name,{silver:true});
@@ -4514,8 +4369,6 @@ function gainXp(n) {
     S.hpMax += 8; P.hp = effHpMax();
     floatTxt(P.x,P.y,115,'NIVEAU '+S.lvl,{lvl:true});
     pushNotif('⭐', LANG==='fr'?'Niveau supérieur':'Level up', (LANG==='fr'?'Niveau ':'Level ')+S.lvl, 'info');
-    // log "pour le fun" (demande explicite du 2026-07-08 : "spam le channel, fais toi plaisir")
-    logToDiscord('⭐ Niveau supérieur', `**${myPseudo||'Joueur'}** passe niveau **${S.lvl}** (SPD +${Math.round(levelSpdPct())}%)`, 0x9cc9e8);
   }
 }
 
@@ -5555,7 +5408,7 @@ let zoneTier = 'early';
 const ZONE_TIERS = [
   { id:'early', icon:'🟢', label:{fr:'Velia',en:'Velia'},       locked:false },
   { id:'mid',   icon:'🔵', label:{fr:'Heidel',en:'Heidel'},     locked:true },
-  { id:'end',   icon:'🟡', label:{fr:'Calpheon',en:'Calpheon'}, locked:true },
+  { id:'end',   icon:'🟡', label:{fr:'Capheon',en:'Capheon'},   locked:true },
   { id:'end2',  icon:'🟠', label:{fr:'Valencia',en:'Valencia'}, locked:true },
   { id:'end3',  icon:'🔴', label:{fr:'Edana',en:'Edana'},       locked:true },
 ];
@@ -5624,8 +5477,6 @@ function updateZoneViewHalo() {
 }
 function travelTo(i) {
   atVelia = false;
-  // "pour le fun" (demande du 2026-07-08) : log Discord la 1ère fois qu'une zone est atteinte
-  if (i > S.maxZoneIdx) logToDiscord('🗺️ Nouvelle zone', `**${myPseudo||'Joueur'}** atteint **${tr(ZONES[i].name)}** (${ZONES[i].tier}) pour la première fois`, 0x8fc98a);
   zoneIdx = i;
   if (i > S.maxZoneIdx) S.maxZoneIdx = i;
   S.travelCount = (S.travelCount||0) + 1;
@@ -5680,13 +5531,6 @@ function refreshStatsOnly() {
   $('stHpMax').textContent = fmt(Math.round(effHpMax()));
   $('stSpd').textContent = '+' + Math.round(totalSpdPct()) + '%';
   $('stDodge').textContent = Math.round(totalDodgePct(dpR)*10)/10 + '%';
-  // affiche l'état du Compendium directement dans la zone de farm — demande explicite du 2026-07-08
-  const ztComp = $('ztCompendium');
-  if (ztComp) {
-    const zc = compendiumZoneCount(), complete = zc >= ZONES.length;
-    ztComp.textContent = (complete ? '📖✓ ' : '📖 ') + zc + '/' + ZONES.length;
-    ztComp.className = complete ? 'complete' : '';
-  }
   const apEl = $('stApZone');
   const dpEl = $('stDpZone');
   if (atVelia) {
@@ -5707,11 +5551,7 @@ function refreshStatsOnly() {
   // record kills/min : on exige au moins 2 min de session pour éviter qu'un petit échantillon
   // bruité (ex: 3 kills en 5 secondes juste après un chargement) ne fausse le record à vie —
   // même précaution que le faux positif silver_per_hour corrigé le 2026-07-06
-  if (mins > 2 && kpmNow > (S.bestKpm||0)) {
-    // "pour le fun" (demande du 2026-07-08) : seuil de +0.5 kills/min pour ne pas spammer sur du bruit
-    if (kpmNow - (S.bestKpm||0) > 0.5) logToDiscord('🏹 Record kills/min', `**${myPseudo||'Joueur'}** bat son record perso : **${kpmNow.toFixed(1)}** kills/min (${tr(Z().name)})`, 0xc9a55a);
-    S.bestKpm = kpmNow;
-  }
+  if (mins > 2 && kpmNow > (S.bestKpm||0)) S.bestKpm = kpmNow;
   $('shRate').textContent = mins>.1 ? fmt((S.silverEarned-(S.silverEarnedAtLoad||0))/(mins/60))+' silver/h' : '— silver/h';
   const zb = $('zoneBadge');
   if (atVelia) {
@@ -5765,7 +5605,7 @@ function hudFast() {
   const potIcon = $('potIcon');
   if (potIcon && potIcon.textContent !== pot.icon) {
     potIcon.textContent = pot.icon;
-    $('potSlot').title = pot.name[LANG] + (pot.cost>0 ? ` — ${fmt(pot.cost)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : (LANG==='fr'?` — gratuite (CD ${pot.cd}s)`:` — free (CD ${pot.cd}s)`));
+    $('potSlot').title = pot.name[LANG] + (pot.cost>0 ? ` — ${fmt(pot.cost)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%)` : (LANG==='fr'?' — gratuite':' — free'));
   }
   for (const s of SKILLS) {
     const el = skEls[s.id];
@@ -6024,7 +5864,6 @@ let lastMouseX = 0, lastMouseY = 0;
 function renderInventory() {
   const grid = $('invGrid');
   grid.innerHTML = '';
-  renderTreasureCraftPanel();
   const cat = INV_CATEGORIES.find(c => c.id === invCategory) || INV_CATEGORIES[0];
   for (let i = 0; i < INV_SIZE; i++) {
     const s = INV[i];
@@ -7989,7 +7828,6 @@ $a('btnNotifCenter').onclick = openNotifCenter;
 updateNotifBadge();
 $a('btnAchievements').onclick = openAchievements;
 $a('btnCompendium').onclick = openCompendium;
-$a('ztCompendium').onclick = openCompendium;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 $a('btnLifeskillToggle').onclick = openLifeskillPanel;
@@ -8798,25 +8636,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V126', d:'08/07/2026 04:00', name:{fr:'Craft du Trésor, notifications repensées, potions, + de logs Discord', en:'Treasure crafting, revamped notifications, potions, more Discord logs'}, fr:[
-      {t:'new', tx:'Craft du Trésor de Velia : 100 "Bout du trésor" → 1 "Trésor de Velia" (même numéro), et 3 Trésors (mélangés) → 1 "Objet inconnu" mystère. Panneau dédié dans l\'onglet Trésors de l\'inventaire'},
-      {t:'fix', tx:'Corrigé un doublon de nom : la 2e ligne "Bout du trésor de Velia 1" (la plus rare) est en fait le morceau du "Velia 2" — renommée en conséquence'},
-      {t:'new', tx:'État du Compendium affiché directement dans la zone de farm (📖 X/11, doré quand complet)'},
-      {t:'change', tx:'Centre de notifications repensé : persistant (survit au reload), affiche les 20 dernières entrées avec défilement, bouton supprimer par ligne, auto-suppression après 7 jours, et un halo doré sur la cloche quand il y a du nouveau'},
-      {t:'new', tx:'Nouvelle "Potion de vie infinie" (coût 0) ajoutée en bas du sélecteur, verrouillée 🔒 en attendant un futur déblocage'},
-      {t:'change', tx:'Potions recalibrées par rapport à la courbe de gains des zones (~3 000 à 100 000 silver/h) ; le temps de recharge (CD) est maintenant affiché à côté du prix pour chacune'},
-      {t:'change', tx:'"Capheon" corrigé en "Calpheon" dans les onglets de zones'},
-      {t:'new', tx:'Plein de nouveaux logs Discord "pour le fun" : montée de niveau, nouvelle zone atteinte, bonus de Compendium débloqué, trésor trouvé, objets craftés, paliers de kills (tous les 1000), record de kills/min battu'},
-    ], en:[
-      {t:'new', tx:'Velia Treasure crafting: 100 "Treasure pieces" → 1 "Velia Treasure" (matching number), and 3 Treasures (mixed) → 1 mystery "Unknown Item". Dedicated panel in the inventory\'s Treasures tab'},
-      {t:'fix', tx:'Fixed a duplicate name: the 2nd "Velia Treasure piece 1" row (the rarer one) was actually the piece for "Velia 2" — renamed accordingly'},
-      {t:'new', tx:'Compendium status now shown directly in the farm zone (📖 X/11, gold when complete)'},
-      {t:'change', tx:'Notification center reworked: persistent (survives reload), shows the last 20 entries with scrolling, per-row delete button, auto-deletion after 7 days, and a gold halo on the bell when there\'s something new'},
-      {t:'new', tx:'New "Infinite HP Potion" (cost 0) added at the bottom of the selector, locked 🔒 pending a future unlock'},
-      {t:'change', tx:'Potions recalibrated against the zone earnings curve (~3,000 to 100,000 silver/h); cooldown (CD) is now shown next to the price for each one'},
-      {t:'change', tx:'"Capheon" fixed to "Calpheon" in the zone tabs'},
-      {t:'new', tx:'Lots of new "for fun" Discord logs: level up, new zone reached, Compendium bonus unlocked, treasure found, items crafted, kill milestones (every 1000), kills/min record broken'},
-    ] },
   { v:'V125', d:'08/07/2026 03:00', name:{fr:'Compendium, Vitesse (SPD) et Esquive', en:'Compendium, Speed (SPD) and Dodge'}, fr:[
       {t:'new', tx:'Nouveau 📖 Compendium : ramasse au moins 1 objet dans chaque zone pour débloquer son bonus permanent — +1% Vitesse, +1% Dégâts, +1% Esquive PAR zone (additif, jamais un multiplicateur : les 11 zones donnent +11% de chaque, pas +100%)'},
       {t:'new', tx:'Nouvelle stat Vitesse (SPD) : augmente avec le niveau, de +0% au niveau 1 jusqu\'à +75% au niveau 61 (plafonné), en plus du bonus de Compendium'},

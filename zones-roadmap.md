@@ -21,7 +21,7 @@ Voir `ZONES` dans `index.html`. Paliers de stuff : Naru / Tuvala / Yuria / Gruni
 - Mine de Soufre Roud (Lava Devourer)
 - Plaine de Taphtar (Centaure Chef)
 
-## End — Capheon (verrouillé, à venir)
+## End — Calpheon (verrouillé, à venir)
 - Colline de Quint (Géants de Quint)
 - Poste des Géants Primitifs (Géant Ancien)
 - Sanctuaire d'Hexe (Spectre d'Hexe)
@@ -87,7 +87,7 @@ Actuellement en jeu (Velia) : Gris/Blanc/Vert/Bleu seulement (voir ZONES dans in
 | Vert (Yuria) | Anneau Asula / Forest Ronaros Ring | Collier Asula / Sicil's Necklace | Ceinture Asula / Valtarra's Eclipsed Belt |
 | Bleu (Grunil) | Anneau de Cadry / Anneau du Gardien du Croissant | Serap's Necklace / Laytenn's Power Stone | Orkinrad's Belt / Centaurus Belt |
 | Jaune (Mid — Heidel) | Anneau Tungrad / Eye of the Ruins Ring / Anneau Ominous | Collier Tungrad / Ogre Ring | Ceinture Tungrad / Basilisk's Belt |
-| Orange (End — Capheon) | Anneau Deboreka | Collier Deboreka / Revived River Necklace / Revived Lunar Necklace | Ceinture Deboreka / Turo's Belt |
+| Orange (End — Calpheon) | Anneau Deboreka | Collier Deboreka / Revived River Necklace / Revived Lunar Necklace | Ceinture Deboreka / Turo's Belt |
 | Rouge (End+/++ — Valencia/Edana) | Anneau Kharazad | Collier Kharazad | Ceinture Kharazad |
 
 Armes par palier (déjà utilisées pour Gris→Bleu, à réutiliser telles quelles pour la suite) :
