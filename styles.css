@@ -84,6 +84,15 @@
     box-shadow:0 4px 14px rgba(0,0,0,.6);
   }
   #deathBanner.show { display:block; }
+  /* alerte de zone dangereuse (2026-07-05, demande explicite) : rappelle en permanence que le
+     ralenti/l'accélération des monstres est en cours -- s'empile sous invFullBanner/deathBanner */
+  #dangerBanner {
+    position:absolute; top:78px; left:50%; transform:translateX(-50%);
+    background:rgba(192,85,69,.92); color:#fff; font-size:11.5px; font-weight:bold;
+    padding:5px 14px; letter-spacing:.3px; display:none; z-index:19; text-align:center; max-width:85%;
+    box-shadow:0 4px 14px rgba(0,0,0,.5); animation:invFullPulse 1.4s infinite;
+  }
+  #dangerBanner.show { display:block; }
 
   /* bannière d'annonce importante (ex: reset complet des comptes) — demande explicite du
      2026-07-06 : "restylise le bien avec de la couleur" */
@@ -156,6 +165,25 @@
   #farmModeBtn:hover { background:rgba(201,165,90,.15); }
 
   #skillBar { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
+  /* barre d'incantation (2026-07-05, demande explicite : "----------o----------", la matière se
+     retire des 2 côtés vers le centre, le sort part quand elle a disparu) -- juste au-dessus de
+     la barre de sorts, cachée hors incantation (voir renderCastBar()) */
+  #castBar {
+    display:none; position:absolute; bottom:58px; left:50%; transform:translateX(-50%);
+    align-items:center; width:220px; height:8px;
+  }
+  #castBar.show { display:flex; }
+  #castBarLeft, #castBarRight { flex:1; height:2px; background:var(--gold); }
+  #castBarLeft { transform-origin:right center; }
+  #castBarRight { transform-origin:left center; }
+  #castBarCenter {
+    width:7px; height:7px; border-radius:50%; background:var(--gold); flex-shrink:0;
+    box-shadow:0 0 6px rgba(201,165,90,.85); margin:0 -1px; z-index:1;
+  }
+  #castBarLabel {
+    position:absolute; top:-13px; left:50%; transform:translateX(-50%);
+    font-size:9px; color:var(--gold); white-space:nowrap; letter-spacing:.3px;
+  }
   /* bouton de repli de la barre de sorts — invisible sur ordinateur (voir media query mobile),
      n'a de sens que sur petit écran où la place manque (2026-07-05, demande explicite) */
   #skillBarToggle { display:none; }
@@ -172,16 +200,24 @@
   .sk.buffed { border-color:var(--gold); box-shadow:0 0 8px rgba(201,165,90,.5); }
 
   #hpPotWrap { position:absolute; bottom:12px; left:14px; display:flex; align-items:center; gap:8px; }
-  #hpBar { width:170px; height:13px; background:rgba(0,0,0,.65); border:1px solid #444; position:relative; }
+  /* PV au-dessus de la mana, potion de PV au-dessus de la potion de mana (2026-07-05,
+     demande explicite) -- 2 colonnes plutôt qu'une rangée qui déborderait sur mobile */
+  #hpMpStack, #potStack { display:flex; flex-direction:column; gap:4px; }
+  #hpBar, #mpBar { width:170px; height:13px; background:rgba(0,0,0,.65); border:1px solid #444; position:relative; }
   #hpFill { height:100%; width:100%; background:linear-gradient(90deg,#a33d34,#c05545); transition:width .15s; }
-  #hpPct {
+  /* barre de mana (2026-07-05, demande explicite) : même gabarit que la barre de PV, juste en dessous */
+  #mpBar { width:170px; height:10px; }
+  #mpFill { height:100%; width:100%; background:linear-gradient(90deg,#2f5c8a,#4a8fc8); transition:width .15s; }
+  #hpPct, #mpPct {
     position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     font-size:9.5px; font-weight:bold; color:#fff; text-shadow:0 1px 2px #000; font-variant-numeric:tabular-nums;
   }
-  #potSlot { width:34px; height:34px; position:relative; border:1px solid var(--gold-dim);
+  #mpPct { font-size:8.5px; }
+  #potSlot, #manaPotSlot { width:34px; height:34px; position:relative; border:1px solid var(--gold-dim);
     background:#191720; display:flex; align-items:center; justify-content:center; font-size:15px; overflow:hidden; cursor:pointer; }
+  #manaPotSlot { border-color:#3a6ea8; cursor:default; }
   #potSlot:hover { border-color:var(--gold); }
-  #potCd { position:absolute; left:0; bottom:0; width:100%; background:rgba(0,0,0,.75); }
+  #potCd, #manaPotCd { position:absolute; left:0; bottom:0; width:100%; background:rgba(0,0,0,.75); }
   #potSelect {
     display:none; position:absolute; bottom:52px; left:14px; z-index:30; width:210px;
     background:rgba(12,10,15,.95); border:1px solid var(--gold-dim); border-radius:6px; padding:6px;
@@ -1605,18 +1641,27 @@
        mobile/tablette (demande explicite) : agrandie, halo doré, au lieu d'être réduite comme le
        reste du HUD. La barre de vie reste lisible (le % exact suffit, le détail est de toute façon
        dans la carte Statistiques en dessous) */
-    #hpBar { width:100px; }
+    #hpBar, #mpBar { width:100px; }
+    #mpBar { height:8px; }
     #potSlot {
       width:46px; height:46px; border-color:var(--gold); border-width:2px;
       box-shadow:0 0 10px rgba(201,165,90,.5); font-size:20px;
     }
     #potSlot #potIcon { font-size:20px; }
-    /* #invFullBanner ("Sac plein") et #deathBanner sont centrés en haut, à la même hauteur que
-       #zoneTitle (aligné à gauche, 2-3 lignes) — ils se recouvraient sur un cadre de jeu aussi bas
-       (confirmé sur un vrai téléphone : la bannière rouge cachait le nom de zone ET les PA/PD).
-       Repoussés sous #zoneTitle, avec un texte plus compact pour tenir sur la largeur réduite. */
+    /* potion de mana (2026-07-05) : reste discrète sur mobile, contrairement à la potion de PV
+       mise en avant ci-dessus -- pas assez de place pour agrandir les 2 pareillement */
+    #manaPotSlot { width:26px; height:26px; font-size:11px; }
+    /* #invFullBanner ("Sac plein"), #deathBanner et #dangerBanner sont centrés en haut, à la même
+       hauteur que #zoneTitle (aligné à gauche, 2-3 lignes) — ils se recouvraient sur un cadre de
+       jeu aussi bas (confirmé sur un vrai téléphone : la bannière rouge cachait le nom de zone ET
+       les PA/PD). Repoussés sous #zoneTitle, avec un texte plus compact pour tenir sur la largeur
+       réduite. */
     #invFullBanner { top:112px; font-size:10px; padding:4px 10px; max-width:calc(100% - 20px); }
     #deathBanner { top:112px; font-size:10px; padding:5px 12px; }
+    #dangerBanner { top:146px; font-size:9.5px; padding:4px 10px; max-width:calc(100% - 20px); }
+    /* barre d'incantation : au-dessus du bouton replié de la barre de sorts plutôt que de la
+       barre déployée (qui est masquée par défaut sur mobile, voir #skillBar.expanded) */
+    #castBar { bottom:46px; width:160px; }
     /* silverBox/shRate (haut-droite) et lootTicker (bas-droite) se marchent aussi dessus sur un
        cadre aussi bas — lootTicker moins haut et un peu plus petit pour laisser plus de respiration
        au silver/taux au-dessus */

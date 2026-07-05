@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=178">
+<link rel="stylesheet" href="styles.css?v=179">
 </head>
 <body>
 
@@ -303,10 +303,25 @@
     <div id="lootTicker"></div>
     <div id="invFullBanner" data-i18n="invFullBanner">⚠ Sac plein — les objets restent au sol</div>
     <div id="deathBanner"></div>
+    <div id="dangerBanner" data-i18n="dangerBanner">⚠️ Zone dangereuse — montez votre stuff ou passez par une zone plus facile</div>
     <div id="hpPotWrap">
-      <div id="hpBar"><div id="hpFill"></div><span id="hpPct"></span></div>
-      <div id="potSlot"><span id="potIcon">🧪</span><div id="potCd"></div></div>
+      <div id="hpMpStack">
+        <div id="hpBar"><div id="hpFill"></div><span id="hpPct"></span></div>
+        <div id="mpBar"><div id="mpFill"></div><span id="mpPct"></span></div>
+      </div>
+      <div id="potStack">
+        <div id="potSlot"><span id="potIcon">🧪</span><div id="potCd"></div></div>
+        <div id="manaPotSlot" title="Potion de mana (auto)"><span id="manaPotIcon">🔷</span><div id="manaPotCd"></div></div>
+      </div>
       <div id="potSelect"></div>
+    </div>
+    <!-- barre d'incantation (2026-07-05, demande explicite) : la matière se retire des 2 côtés
+         vers le centre, le sort se lance quand elle a entièrement disparu -- voir renderCastBar() -->
+    <div id="castBar">
+      <div id="castBarLeft"></div>
+      <div id="castBarCenter"></div>
+      <div id="castBarRight"></div>
+      <span id="castBarLabel"></span>
     </div>
     <button id="skillBarToggle" title="Afficher/masquer la barre de sorts">⚡</button>
     <div id="skillBar"></div>
@@ -322,6 +337,7 @@
       <div class="row"><span data-i18n="lblPA">PA effective</span><span class="v" id="stPA">14</span></div>
       <div class="row"><span data-i18n="lblPD">PD</span><span class="v" id="stDP">10</span></div>
       <div class="row"><span data-i18n="lblHpMax">PV max</span><span class="v" id="stHpMax">100</span></div>
+      <div class="row"><span data-i18n="lblMpMax">Mana max</span><span class="v" id="stMpMax">100</span></div>
       <div class="row"><span data-i18n="lblSpd">Vitesse (SPD)</span><span class="v" id="stSpd">+0%</span></div>
       <div class="row"><span data-i18n="lblDodge">Esquive</span><span class="v" id="stDodge">0%</span></div>
       <div class="row"><span data-i18n="lblWeaponBonus">Bonus arme</span><span class="v" id="stWeaponBonus">+0%</span></div>
@@ -416,7 +432,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=178"></script>
-<script src="game-supabase.js?v=178"></script>
+<script src="game-core.js?v=179"></script>
+<script src="game-supabase.js?v=179"></script>
 </body>
 </html>

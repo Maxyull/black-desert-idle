@@ -2110,6 +2110,7 @@ const I18N = {
   lblPA: { fr:'PA effective', en:'Effective AP' },
   lblPD: { fr:'PD', en:'DP' },
   lblHpMax: { fr:'PV max', en:'Max HP' },
+  lblMpMax: { fr:'Mana max', en:'Max Mana' },
   lblSpd: { fr:'Vitesse (SPD)', en:'Speed (SPD)' },
   lblDodge: { fr:'Esquive', en:'Dodge' },
   lblApZone: { fr:'PA requis (zone)', en:'AP required (zone)' },
@@ -2130,6 +2131,7 @@ const I18N = {
   btnSellWorse: { fr:'🗑️ Vendre', en:'🗑️ Sell worse' },
   resetNoticeClose: { fr:'OK, compris !', en:'OK, got it!' },
   invFullBanner: { fr:'⚠ Sac plein — les objets restent au sol', en:'⚠ Bag full — items stay on the ground' },
+  dangerBanner: { fr:'⚠️ Zone dangereuse — montez votre stuff ou passez par une zone plus facile', en:'⚠️ Dangerous zone — upgrade your gear or move to an easier zone' },
   updateAvailableMsg: { fr:'🔄 Une nouvelle version du jeu est disponible.', en:'🔄 A new version of the game is available.' },
   btnReloadUpdate: { fr:'Recharger', en:'Reload' },
   btnLeaderboard: { fr:'🏆 Classement', en:'🏆 Leaderboard' },
@@ -2221,6 +2223,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V179', d:'05/07/2026 21:00', name:{fr:'Système de mana, barre d\'incantation repensée, zone dangereuse durcie', en:'Mana system, redesigned cast bar, harsher dangerous zone'}, fr:[
+      {t:'new', sub:'competences', tx:'Ajout de la mana : chaque sort a désormais un coût, une régénération passive, et une potion de mana (auto-bue sous 30%) vient compléter la potion de PV'},
+      {t:'improve', sub:'interface', tx:'Barre d\'incantation repensée : affichée près de la barre de sorts (plus au-dessus du personnage), la matière se retire des 2 côtés vers le centre — le sort part quand elle a entièrement disparu'},
+      {t:'change', sub:'interface', tx:'Barre de PV retirée d\'au-dessus du personnage, ne reste plus qu\'en bas à gauche (où une barre de mana l\'accompagne désormais)'},
+      {t:'change', sub:'pve', severity:'major', tx:'Zone dangereuse : le ralenti du joueur et l\'accélération des monstres sont durcis (×0,5 et ×1,7 au lieu de ×0,7/×1,35), et un message d\'avertissement s\'affiche tant qu\'on y reste'},
+    ], en:[
+      {t:'new', sub:'competences', tx:'Added mana: every skill now has a cost and passive regeneration, and a mana potion (auto-drunk under 30%) joins the HP potion'},
+      {t:'improve', sub:'interface', tx:'Redesigned cast bar: now shown near the skill bar (no longer above the character), material recedes from both sides toward the center — the spell fires once it has fully disappeared'},
+      {t:'change', sub:'interface', tx:'HP bar removed from above the character, only remains bottom-left (now joined by a mana bar)'},
+      {t:'change', sub:'pve', severity:'major', tx:'Dangerous zone: player slowdown and monster speedup are harsher (×0.5 and ×1.7 instead of ×0.7/×1.35), and a warning message shows while you stay there'},
+    ] },
   { v:'V178', d:'05/07/2026 20:30', name:{fr:'Liste des zones plafonnée avec défilement', en:'Zone list capped with scrolling'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'La liste des zones de farm (16 depuis l\'ajout des boucles d\'oreille) débordait largement sous les cartes voisines au lieu de s\'arrêter et défiler — plafonnée avec un défilement interne'},
     ], en:[
@@ -3727,6 +3740,8 @@ const WIKI_SECTIONS = [
         <li>Le loot suit le pire des deux ratios</li>
         <li><b>ZONE DANGEREUSE</b> (très sous-PA/PD) → tu es ralenti, et les monstres qui t'ont repéré deviennent plus rapides pour te rattraper</li>
       </ul>
+      <h3>Mana</h3>
+      <p>Chaque sort coûte de la mana, qui se régénère passivement même hors combat. Une potion de mana (auto-bue sous 30%) complète la potion de PV si tu es à court.</p>
       <h3>Loot progressif</h3>
       <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>
       <h3>Zones groupées par palier de stuff</h3>
@@ -3744,6 +3759,8 @@ const WIKI_SECTIONS = [
         <li>Loot follows the worse of the two ratios</li>
         <li><b>DANGEROUS ZONE</b> (very under-AP/DP) → you are slowed down, and monsters that spotted you become faster to catch up</li>
       </ul>
+      <h3>Mana</h3>
+      <p>Every skill costs mana, which regenerates passively even out of combat. A mana potion (auto-drunk under 30%) joins the HP potion if you run low.</p>
       <h3>Progressive loot</h3>
       <p>Drop rates are <b>intentionally decreasing</b> zone by zone: very generous early (up to 55%), very rare at endgame (under 3%).</p>
       <h3>Zones grouped by gear tier</h3>
