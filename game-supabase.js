@@ -2062,6 +2062,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V172', d:'05/07/2026 18:15', name:{fr:'Pastilles de gravité + infobulles sur les notes de version', en:'Severity dots + tooltips on patch notes'}, fr:[
+      {t:'improve', sub:'interface', severity:'minor', tx:'Chaque ligne des notes de version peut désormais porter une pastille de couleur indiquant sa gravité (Critique/Important/Mineur/Info), indépendante de sa catégorie — une correction peut être Critique ou Mineure selon son impact réel'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'Toutes les pastilles/badges (catégorie, gravité, sous-catégorie, plateforme, nature) affichent désormais une explication au survol de la souris'},
+    ], en:[
+      {t:'improve', sub:'interface', severity:'minor', tx:'Each patch note line can now carry a colored severity dot (Critical/Major/Minor/Info), independent of its category — a fix can be Critical or Minor depending on its actual impact'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'All pastilles/badges (category, severity, subcategory, platform, nature) now show an explanation on mouse hover'},
+    ] },
   { v:'V171', d:'05/07/2026 18:00', name:{fr:'Bouton optimiser sur l\'équipement + refonte du menu de gauche', en:'Enhance button on gear + left menu overhaul'}, fr:[
       {t:'improve', sub:'equipements', tx:'Petit bouton 🔧 directement sur chaque pièce équipée optimisable — charge instantanément CETTE pièce dans le panneau d\'optimisation, sans passer par le menu au clic. Mentionné dans le tutoriel et le Wiki (section Optimisation)'},
       {t:'improve', sub:'interface', tx:'Le Codex des objets sort du Wiki pour devenir sa propre section, directement accessible depuis le menu de gauche (📚 Codex)'},
@@ -3932,29 +3939,55 @@ function updatePatchBadge() {
 // taxonomie standard adaptée à Velia Idle (les catégories sans équivalent dans ce jeu, ex.
 // "Boutique"/devise premium, "Classes"/"Montures", ne sont pas utilisées ici)
 const PATCH_CATS = {
-  new:     { fr:'Nouveautés',           en:'New',            icon:'🆕', color:'#8fc98a' },
-  change:  { fr:'Équilibrage',          en:'Balancing',      icon:'⚖️', color:'#9cc9e8' },
-  improve: { fr:'Améliorations',        en:'Improvements',   icon:'✨', color:'#7ec9c2' },
-  fix:     { fr:'Corrections de bugs',  en:'Bug fixes',      icon:'🐛', color:'#e8b84a' },
-  exploit: { fr:'Sécurité',             en:'Security',       icon:'🔒', color:'#b48ce8' },
-  admin:   { fr:'Serveur',              en:'Server',         icon:'🌐', color:'#c9a55a' },
-  event:   { fr:'Événements',           en:'Events',         icon:'🎉', color:'#e89fc4' },
-  info:    { fr:'Informations',         en:'Information',    icon:'📢', color:'#9aa8c9' },
+  new:     { fr:'Nouveautés',           en:'New',            icon:'🆕', color:'#8fc98a',
+    desc:{fr:'Nouveau contenu ajouté au jeu', en:'New content added to the game'} },
+  change:  { fr:'Équilibrage',          en:'Balancing',      icon:'⚖️', color:'#9cc9e8',
+    desc:{fr:'Ajustement de valeurs existantes (stats, taux, difficulté...)', en:'Adjustment of existing values (stats, rates, difficulty...)'} },
+  improve: { fr:'Améliorations',        en:'Improvements',   icon:'✨', color:'#7ec9c2',
+    desc:{fr:'Amélioration de l\'existant sans changer son fonctionnement de base', en:'Improvement of something existing without changing its core behavior'} },
+  fix:     { fr:'Corrections de bugs',  en:'Bug fixes',      icon:'🐛', color:'#e8b84a',
+    desc:{fr:'Correction d\'un bug ou d\'un comportement incorrect', en:'Fix for a bug or incorrect behavior'} },
+  exploit: { fr:'Sécurité',             en:'Security',       icon:'🔒', color:'#b48ce8',
+    desc:{fr:'Faille de sécurité corrigée', en:'Security vulnerability fixed'} },
+  admin:   { fr:'Serveur',              en:'Server',         icon:'🌐', color:'#c9a55a',
+    desc:{fr:'Changement côté serveur/infrastructure', en:'Server-side/infrastructure change'} },
+  event:   { fr:'Événements',           en:'Events',         icon:'🎉', color:'#e89fc4',
+    desc:{fr:'Contenu ou bonus temporaire', en:'Temporary content or bonus'} },
+  info:    { fr:'Informations',         en:'Information',    icon:'📢', color:'#9aa8c9',
+    desc:{fr:'Annonce ou information, sans changement de jeu', en:'Announcement or information, no gameplay change'} },
 };
 // tag de plateforme (2026-07-05, demande explicite) : en plus de la catégorie, précise quand
 // une ligne ne concerne QUE tablette/téléphone — sert à repérer d'un coup d'œil les changements
 // qui ne touchent pas la version ordinateur. Optionnel (line.plat) : absent = toutes plateformes.
 const PATCH_PLATFORMS = {
-  mobile: { fr:'Tab/Mobile', en:'Tab/Mobile', icon:'📱', color:'#e0a840' },
+  mobile: { fr:'Tab/Mobile', en:'Tab/Mobile', icon:'📱', color:'#e0a840',
+    desc:{fr:'Concerne uniquement tablette/téléphone', en:'Only concerns tablet/phone'} },
 };
 // tag de nature (2026-07-05, demande explicite) : précise si une ligne relève d'une optimisation
 // "sous le capot" (code, performance, structure des données) plutôt que du contenu de jeu direct.
 // Optionnel (line.nature) : absent = non concerné.
 const PATCH_NATURE = {
-  opticode:     { fr:'Optim. code',   en:'Code opti',   icon:'🧹', color:'#7aa8c9' },
-  optimisation: { fr:'Optimisation',  en:'Optimization', icon:'⚡', color:'#c9a55a' },
-  inventaire:   { fr:'Inventaire',    en:'Inventory',   icon:'🎒', color:'#8fc98a' },
-  backend:      { fr:'Backend',       en:'Backend',     icon:'🗄️', color:'#b48ce8' },
+  opticode:     { fr:'Optim. code',   en:'Code opti',   icon:'🧹', color:'#7aa8c9',
+    desc:{fr:'Nettoyage/restructuration du code, sans impact visible', en:'Code cleanup/restructuring, no visible impact'} },
+  optimisation: { fr:'Optimisation',  en:'Optimization', icon:'⚡', color:'#c9a55a',
+    desc:{fr:'Optimisation de performance ou d\'algorithme', en:'Performance or algorithm optimization'} },
+  inventaire:   { fr:'Inventaire',    en:'Inventory',   icon:'🎒', color:'#8fc98a',
+    desc:{fr:'Concerne le stockage/la structure des données de sauvegarde', en:'Concerns storage/structure of save data'} },
+  backend:      { fr:'Backend',       en:'Backend',     icon:'🗄️', color:'#b48ce8',
+    desc:{fr:'Changement côté serveur (Supabase, base de données...)', en:'Server-side change (Supabase, database...)'} },
+};
+// gravité du changement (2026-07-05, demande explicite) : pastille de couleur indiquant l'impact
+// du changement, indépendamment de sa catégorie. Optionnel (line.severity) : absent = pas de
+// gravité précisée (la plupart des lignes mineures n'ont pas besoin d'en avoir une).
+const PATCH_SEVERITY = {
+  critical: { fr:'Critique', en:'Critical', color:'#e85a5a',
+    desc:{fr:'Impact majeur : sécurité, perte de données, ou jeu bloqué', en:'Major impact: security, data loss, or game-blocking issue'} },
+  major:    { fr:'Important', en:'Major', color:'#e8a840',
+    desc:{fr:'Changement notable qui affecte l\'expérience de jeu', en:'Notable change affecting the gameplay experience'} },
+  minor:    { fr:'Mineur', en:'Minor', color:'#e8d840',
+    desc:{fr:'Petit ajustement, impact limité', en:'Small adjustment, limited impact'} },
+  info:     { fr:'Info', en:'Info', color:'#9aa8c9',
+    desc:{fr:'Purement informatif, aucun impact sur le jeu', en:'Purely informational, no impact on the game'} },
 };
 // sous-catégorie libre (2026-07-05, demande explicite) : précise le domaine exact touché à
 // l'intérieur d'une catégorie principale (ex: "Boss" dans Nouveautés OU dans Équilibrage) --
@@ -4025,18 +4058,22 @@ $a('btnPatch').onclick = () => {
           const subMap = LANG === 'fr' ? PATCH_SUBCATS : PATCH_SUBCATS_EN;
           return `
           <div class="patchGroup">
-            <div class="patchGroupHead" style="color:${cat.color}">${cat.icon} ${cat[LANG]}</div>
+            <div class="patchGroupHead" style="color:${cat.color}" title="${escapeHtml(cat.desc[LANG])}">${cat.icon} ${cat[LANG]}</div>
             <ul>${g.lines.map(line => {
+              const sev = line.severity ? PATCH_SEVERITY[line.severity] : null;
               const plat = line.plat ? PATCH_PLATFORMS[line.plat] : null;
               const nature = line.nature ? PATCH_NATURE[line.nature] : null;
               const sub = line.sub ? subMap[line.sub] : null;
-              const platTag = plat ? `<span class="patchCat" style="color:${plat.color};border-color:${plat.color}">${plat.icon} ${plat[LANG]}</span>` : '';
-              const natureTag = nature ? `<span class="patchCat" style="color:${nature.color};border-color:${nature.color}">${nature.icon} ${nature[LANG]}</span>` : '';
-              const subTag = sub ? `<span class="patchSub">${sub}</span>` : '';
+              // pastille de gravité (2026-07-05, demande explicite) : petit point coloré, infobulle
+              // au survol -- indépendante de la catégorie (une "Correction" peut être Critique ou Mineure)
+              const sevDot = sev ? `<span class="patchSevDot" style="background:${sev.color}" title="${escapeHtml(sev[LANG])+' — '+escapeHtml(sev.desc[LANG])}"></span>` : '';
+              const platTag = plat ? `<span class="patchCat" style="color:${plat.color};border-color:${plat.color}" title="${escapeHtml(plat.desc[LANG])}">${plat.icon} ${plat[LANG]}</span>` : '';
+              const natureTag = nature ? `<span class="patchCat" style="color:${nature.color};border-color:${nature.color}" title="${escapeHtml(nature.desc[LANG])}">${nature.icon} ${nature[LANG]}</span>` : '';
+              const subTag = sub ? `<span class="patchSub" title="${LANG==='fr'?'Sous-catégorie':'Subcategory'} : ${escapeHtml(sub)}">${sub}</span>` : '';
               const extraTags = subTag + platTag + natureTag;
               const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
               return `<li class="${line.removed?'patchLineRemoved':''}">
-                <div class="patchLineMain"><span class="patchLineText">${line.tx}${removedTag}</span></div>
+                <div class="patchLineMain">${sevDot}<span class="patchLineText">${line.tx}${removedTag}</span></div>
                 ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
               </li>`;
             }).join('')}</ul>
