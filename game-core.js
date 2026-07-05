@@ -15,6 +15,11 @@ function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth
 // petit écran (voir les media queries ci-dessus) — un simple seuil de largeur de viewport suffit
 // (pas besoin de sniffer le user-agent, le responsive suit déjà la taille réelle de la fenêtre)
 function isMobileViewport() { return window.innerWidth <= 1024; }
+// échappe pseudo/message avant insertion via innerHTML — ce sont des chaînes saisies par
+// d'autres joueurs, jamais dignes de confiance (évite une injection XSS stockée dans le chat)
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 
 // ==================== I18N (déclaré tôt : utilisé dès les premiers rendus) ====================
 let LANG = 'fr';

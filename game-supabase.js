@@ -1004,11 +1004,6 @@ function updateChatInputVisibility() {
     note.textContent = '';
   }
 }
-// échappe pseudo/message avant insertion via innerHTML — ce sont des chaînes saisies par
-// d'autres joueurs, jamais dignes de confiance (évite une injection XSS stockée dans le chat)
-function escapeHtml(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
 // formatte l'horodatage d'un message : HH:MM si aujourd'hui, sinon JJ/MM HH:MM
 function fmtChatTimestamp(iso) {
   if (!iso) return '';
