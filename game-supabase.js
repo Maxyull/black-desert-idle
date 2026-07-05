@@ -183,14 +183,28 @@ if (sb) {
     // après une redirection OAuth (Discord) ou un lien de confirmation d'email, le SDK peut
     // établir la session APRÈS notre vérification initiale (sb.auth.getSession() au chargement,
     // voir plus bas) -- sans ce relais, l'écran de connexion restait affiché malgré une connexion
-    // réussie (bug remonté en jeu le 2026-07-05 : "on se connecte mais la page reste au premier plan")
-    if (event === 'SIGNED_IN' && session?.user && (!currentUser || currentUser.id !== session.user.id)) {
+    // réussie (bug remonté en jeu le 2026-07-05 : "on se connecte mais la page reste au premier plan").
+    // Exclu les sessions anonymes : signInAnonymously() déclenche aussi 'SIGNED_IN', mais ce cas
+    // est déjà géré de façon synchrone par startGuestOrShowAuth() -- appeler onAuthed() une 2e fois
+    // en parallèle dédoublait certains effets (ex: +80 silver de bienvenue compté deux fois)
+    if (event === 'SIGNED_IN' && session?.user && !session.user.is_anonymous
+        && (!currentUser || currentUser.id !== session.user.id)) {
       onAuthed(session.user);
     }
   });
 }
 
+let onAuthedRunning = false;
 async function onAuthed(user) {
+  if (onAuthedRunning) return; // évite un double appel concurrent (course entre le flux normal et le relais onAuthStateChange ci-dessus)
+  onAuthedRunning = true;
+  try {
+    await onAuthedInner(user);
+  } finally {
+    onAuthedRunning = false;
+  }
+}
+async function onAuthedInner(user) {
   currentUser = user;
   showAuthOverlay(false);
   updateUserBar();
@@ -2046,6 +2060,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V168', d:'05/07/2026 16:30', name:{fr:'Correction : jeu bloqué au chargement pour les invités', en:'Fix: game stuck loading for guests'}, fr:[
+      {t:'fix', nature:'backend', tx:'Le correctif de la version précédente (page de connexion bloquée) déclenchait aussi un 2e chargement en parallèle de la sauvegarde pour une session invité, provoquant des effets en double (ex: bonus de bienvenue compté deux fois) et pouvait bloquer le jeu au chargement — sessions invité désormais exclues de ce relais, et un verrou empêche tout double appel'},
+    ], en:[
+      {t:'fix', nature:'backend', tx:'The previous version\'s fix (login screen stuck) also triggered a 2nd, parallel save load for guest sessions, causing duplicated effects (e.g. the welcome bonus counted twice) and could get the game stuck loading — guest sessions are now excluded from that relay, and a lock prevents any double call'},
+    ] },
   { v:'V167', d:'05/07/2026 16:15', name:{fr:'Bouton "Vider le cache" sur l\'écran de connexion', en:'"Clear cache" button on the login screen'}, fr:[
       {t:'new', tx:'Le bouton "🧹 Vider le cache du jeu" est maintenant aussi accessible directement sur l\'écran de connexion (en plus du panneau "Mon compte"), pour les cas où un joueur reste bloqué dessus'},
     ], en:[
