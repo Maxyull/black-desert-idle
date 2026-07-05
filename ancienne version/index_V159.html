@@ -7518,48 +7518,6 @@ $('sortInv').onclick = () => {
 // l'aperçu manuel choisi via le 👁 quasi instantanément
 function refreshInvUI() { renderEquipment(); renderInventory(); renderOptimization(); renderLootTable(lootPreviewIdx); }
 
-// migration RÉTROACTIVE du rééquilibrage PA/PD des armes/armures/bijoux (V158, 2026-07-05, demande
-// explicite : "le stuff est rétroactif, modifie celui déjà existant") — sans elle, tout objet
-// DÉJÀ tombé chez un joueur garderait ses anciennes stats (bien plus hautes pour les armes),
-// coexistant avec les nouveaux drops rééquilibrés, ce qui n'était pas voulu.
-//
-// Pour l'armure/les armes : l'ancien PA/PD de base = reqAP/reqDP de la zone × ANCIENNE part × un
-// facteur aléatoire tiré au drop (jamais stocké sur l'objet). Comme ce facteur est le MÊME des deux
-// côtés de l'équation, le nouveau PA/PD = ancien × (nouvelle part / ancienne part) — pas besoin de
-// connaître la zone d'origine exacte de l'objet, le ratio suffit.
-//
-// Pour les bijoux (jackpot) : les valeurs n'ont jamais été une formule, juste des nombres choisis à
-// la main par objet — remplacés directement par la nouvelle valeur, identifiée par leur NOM.
-const GEAR_RESCALE_RATIO_AP = {
-  weapon: 0.0896/0.42, awakening: 0.1173/0.55, secondary: 0.0640/0.30,
-  helmet: 0.0204/0.05, armor: 0.0204/0.05, gloves: 0.0163/0.04, boots: 0.0163/0.04,
-};
-const GEAR_RESCALE_RATIO_DP = {
-  helmet: 0.1272/0.24, armor: 0.1272/0.24, gloves: 0.0954/0.18, boots: 0.0954/0.18,
-};
-const JEWELRY_NEW_AP = {
-  'Anneau Naru':1, 'Collier Naru':1, 'Ceinture Naru':1,
-  'Anneau Tuvala':2, 'Collier Tuvala':3, 'Ceinture Tuvala':4,
-  'Anneau Asula':4, 'Collier Asula':7, 'Ceinture Asula':10,
-  'Anneau de Cadry':8, "Serap's Necklace":13,
-};
-function migrateGearRebalanceV158() {
-  const rescaleOne = it => {
-    if (!it) return;
-    if (it.kind === 'gear' && it.slot) {
-      const rAp = GEAR_RESCALE_RATIO_AP[it.slot];
-      if (rAp != null) it.ap = Math.round((it.ap||0) * rAp);
-      const rDp = GEAR_RESCALE_RATIO_DP[it.slot];
-      if (rDp != null) it.dp = Math.round((it.dp||0) * rDp);
-      // hp/dodge inchangés : leurs parts (hpShare/dodgeShare) n'ont pas été modifiées par V158
-    } else if (it.kind === 'jackpot' && JEWELRY_NEW_AP[it.name] != null) {
-      it.ap = JEWELRY_NEW_AP[it.name];
-    }
-  };
-  Object.values(EQUIP).forEach(rescaleOne);
-  INV.forEach(rescaleOne);
-  COMPENDIUM_BAG.forEach(rescaleOne);
-}
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
 // C'est CE bloc qui doit être envoyé/lu depuis la table Supabase "game_saves".
@@ -7589,7 +7547,6 @@ function applySaveState(data) {
   // sac "Compendium" (2026-07-08) : absent des sauvegardes antérieures à cette version, ?? null
   // migre proprement les anciennes sauvegardes (toutes les cases restent vides, rien à perdre)
   for (let i = 0; i < INV_SIZE; i++) COMPENDIUM_BAG[i] = data.COMPENDIUM_BAG?.[i] ?? null;
-  if (!S.migratedGearRebalanceV158) { migrateGearRebalanceV158(); S.migratedGearRebalanceV158 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
@@ -9664,11 +9621,6 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
-  { v:'V160', d:'05/07/2026 13:00', name:{fr:'Rééquilibrage PA/PD appliqué rétroactivement au stuff déjà possédé', en:'AP/DP rebalance applied retroactively to owned gear'}, fr:[
-      {t:'fix', tx:'Le rééquilibrage des PA/PD (armes/armures/bijoux, voir version précédente) ne s\'appliquait qu\'aux nouveaux objets trouvés — tout le stuff déjà en possession (équipé ou dans le sac) gardait ses anciennes valeurs, bien plus hautes pour les armes. Recalculé une bonne fois pour toutes au prochain chargement, sans rien perdre (les PV/l\'Esquive, non concernés par le rééquilibrage, restent inchangés)'},
-    ], en:[
-      {t:'fix', tx:'The AP/DP rebalance (weapons/armor/jewelry, see previous version) only applied to newly found items — all gear already owned (equipped or in the bag) kept its old values, much higher for weapons. Recalculated once and for all on next load, without losing anything (HP/Dodge, untouched by the rebalance, stay the same)'},
-    ] },
   { v:'V159', d:'05/07/2026 12:30', name:{fr:'Notes de version : badge Tablette/Mobile', en:'Patch notes: Tablet/Mobile badge'}, fr:[
       {t:'new', tx:'Chaque ligne des notes de version peut maintenant porter un 2e badge "📱 Tab/Mobile" en plus du type (Nouveauté/Modification/Correction/Faille), pour repérer d\'un coup d\'œil les changements qui ne concernent QUE la tablette/le téléphone. Appliqué rétroactivement aux notes V152 à V157 (adaptation mobile)'},
     ], en:[
