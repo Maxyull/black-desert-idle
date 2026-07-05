@@ -9388,11 +9388,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V146', d:'08/07/2026 23:30', name:{fr:'Correctif serveur : logs Discord bloqués par CORS', en:'Server fix: Discord logs blocked by CORS'}, fr:[
-      {t:'fix', tx:'La fonction serveur qui relaie les événements vers Discord (boss vaincu, succès, loot rare, etc.) ne répondait pas correctement aux requêtes CORS depuis le site déployé — le navigateur bloquait l\'appel avant même qu\'il n\'atteigne le webhook, donc plus aucun log Discord ne partait. Corrigé côté serveur (Edge Function) ; vérifié par un appel de test réel depuis l\'extérieur, reçu avec succès'},
-    ], en:[
-      {t:'fix', tx:'The server function that relays events to Discord (boss defeated, achievements, rare loot, etc.) wasn\'t responding correctly to CORS requests from the deployed site — the browser blocked the call before it ever reached the webhook, so no Discord logs were going out anymore. Fixed server-side (Edge Function); verified with a real external test call, received successfully'},
-    ] },
   { v:'V145', d:'08/07/2026 23:00', name:{fr:'Correctif : présence des joueurs en World Boss', en:'Fix: player presence in World Boss'}, fr:[
       {t:'fix', tx:'Grâce aux logs [BossPresence] : le canal de présence Realtime se fermait parfois tout seul (coupure réseau) pendant un combat de World Boss partagé, sans jamais se rétablir — les joueurs devenaient invisibles les uns aux autres pour le reste du combat. Le canal se reconnecte désormais automatiquement tant que le combat partagé est en cours'},
       {t:'fix', tx:'Corrigé un plantage JS toutes les 60s (ping de temps de jeu) qui pouvait perturber la page en arrière-plan : "sb.rpc(...).catch is not a function"'},
