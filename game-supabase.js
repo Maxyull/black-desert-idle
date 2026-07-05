@@ -2328,6 +2328,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V189', d:'06/07/2026 04:00', name:{fr:'Cartes alignées sur Statistiques, loot normal si overstuff, niveau sur la ligne PA/PD/GS', en:'Cards aligned to Stats, normal loot when overgeared, level on the AP/DP/GS line'}, fr:[
+      {t:'fix', sub:'interface', tx:'"Zones de farm" et "Loot de cette zone" font désormais exactement la même hauteur que "Statistiques" (au lieu d\'un plafond fixe de 60% d\'écran sans rapport) — le surplus de contenu défile toujours en interne'},
+      {t:'change', sub:'pve', severity:'major', tx:'Loot : plus de bonus (+10%) ni de malus anti-overfarm au-delà du 100% adapté à la zone — un stuff insuffisant reste pénalisé (jusqu\'à -70%), mais un stuff adapté OU largement overstuff donne désormais toujours un loot normal'},
+      {t:'improve', sub:'interface', tx:'Niveau et % d\'XP ajoutés sur la même ligne que PA/PD/GS dans la carte Équipement'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'"Farming zones" and "Loot in this zone" now match "Statistics" height exactly (instead of a fixed 60% screen cap unrelated to it) — extra content still scrolls internally'},
+      {t:'change', sub:'pve', severity:'major', tx:'Loot: no more +10% bonus nor anti-overfarm penalty beyond the 100% adapted-to-zone baseline — insufficient gear still gets penalized (up to -70%), but adapted OR heavily overgeared now always gives normal loot'},
+      {t:'improve', sub:'interface', tx:'Level and XP % added to the same line as AP/DP/GS in the Equipment card'},
+    ] },
   { v:'V188', d:'06/07/2026 03:30', name:{fr:'Plafond de dégâts par coup, screenshot admin, alignement joueurs par zone', en:'Per-hit damage cap, admin player screenshot, zone player count alignment'}, fr:[
       {t:'fix', sub:'pve', severity:'major', tx:'En zone très dangereuse, un coup pouvait carrément one-shot (vérifié : 544 dégâts pour 478 PV max) — les dégâts par coup sont désormais plafonnés à 30% des PV max, garantissant au moins ~3-4 coups pour mourir depuis la vie pleine, même dans le pire des cas'},
       {t:'new', sub:'comptes', tx:'Admin : bouton "📸 Screenshot" à côté du champ UUID — affiche l\'équipement et l\'inventaire d\'un joueur en lecture seule (aucune modification), en plus du reset ciblé déjà existant'},
@@ -3903,7 +3912,7 @@ const WIKI_SECTIONS = [
         <li><b>Pas assez de PA</b> → tes sorts infligent moins de dégâts (jusqu'à -75% si très sous-PA)</li>
         <li><b>Pas assez de PD</b> → tu encaisses beaucoup plus de dégâts (jusqu'à 4,5×), risque de K.O. élevé</li>
         <li>Au-dessus des deux → dégâts et réduction bonus, plafonnés pour éviter le farm abusif</li>
-        <li>Le loot suit le pire des deux ratios : ton bonus de loot est calculé sur <b>le plus faible</b> de tes 2 ratios (PA effectif / PA requis, PD effectif / PD requis), jamais la moyenne ni le meilleur. Exemple : un PA parfait (ratio 1.5) mais un PD à moitié du requis (ratio 0.5) → ton loot est pénalisé <b>comme si tu étais à 0.5 partout</b>, le PA excédentaire ne compense rien</li>
+        <li>Le loot suit le pire des deux ratios : ta pénalité de loot est calculée sur <b>le plus faible</b> de tes 2 ratios (PA effectif / PA requis, PD effectif / PD requis), jamais la moyenne ni le meilleur. Exemple : un PA parfait (ratio 1.5) mais un PD à moitié du requis (ratio 0.5) → ton loot est pénalisé <b>comme si tu étais à 0.5 partout</b>, le PA excédentaire ne compense rien. Pas assez de stuff → loot réduit (jusqu'à -70%) ; stuff adapté OU overstuff → loot toujours normal (100%), plus aucun bonus ni malus au-delà</li>
         <li><b>ZONE DANGEREUSE</b> (très sous-PA/PD) → tu es ralenti, et les monstres qui t'ont repéré deviennent plus rapides pour te rattraper</li>
       </ul>
       <h3>Mana</h3>
@@ -3926,7 +3935,7 @@ const WIKI_SECTIONS = [
         <li><b>Not enough AP</b> → your spells deal less damage (up to -75%)</li>
         <li><b>Not enough DP</b> → you take a lot more damage (up to 4.5×), high KO risk</li>
         <li>Above both → bonus damage and reduction, capped to prevent overfarming</li>
-        <li>Loot follows the worse of the two ratios: your loot bonus is calculated on <b>whichever is lowest</b> of your 2 ratios (effective AP / required AP, effective DP / required DP), never the average or the best one. Example: perfect AP (ratio 1.5) but DP at half the requirement (ratio 0.5) → your loot is penalized <b>as if you were at 0.5 everywhere</b>, the excess AP compensates for nothing</li>
+        <li>Loot follows the worse of the two ratios: your loot penalty is calculated on <b>whichever is lowest</b> of your 2 ratios (effective AP / required AP, effective DP / required DP), never the average or the best one. Example: perfect AP (ratio 1.5) but DP at half the requirement (ratio 0.5) → your loot is penalized <b>as if you were at 0.5 everywhere</b>, the excess AP compensates for nothing. Not enough gear → reduced loot (up to -70%); adequate gear OR overgeared → loot always normal (100%), no bonus or penalty beyond that</li>
         <li><b>DANGEROUS ZONE</b> (very under-AP/DP) → you are slowed down, and monsters that spotted you become faster to catch up</li>
       </ul>
       <h3>Mana</h3>

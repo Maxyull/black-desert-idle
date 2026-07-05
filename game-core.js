@@ -2545,11 +2545,14 @@ function dmgTakenMult(dpR) {
   return Math.max(0.4, 1 - (dpR - 1) * 0.35);
 }
 // le loot suit le "goulot d'étranglement" : être sous-PA OU sous-PD pénalise pareil (comme en vrai jeu)
+// pas assez de stuff -> loot pénalisé (comme dans le vrai jeu) ; stuff adapté OU overstuff -> loot
+// normal, plus jamais de bonus ni de malus au-delà de 1.0 (demande explicite du 2026-07-06 :
+// "il faut looter moins bien si tu as pas le stuff nécessaire c'est tout mais si tu es overstuff
+// tu auras un loot normal") -- supprime l'ancien bonus +10% (1.0-1.3x) et l'ancien malus
+// anti-overfarm qui redescendait jusqu'à 0.25x au-delà de 1.8x
 function lootMult(r) {
-  if (r < 0.9)  return Math.max(0.3, r * 0.85);
-  if (r <= 1.3) return 1.0;
-  if (r <= 1.8) return 1.1;
-  return Math.max(0.25, 1.1 - (r - 1.8) * 0.45);
+  if (r < 0.9) return Math.max(0.3, r * 0.85);
+  return 1.0;
 }
 function badgeOf(r) {
   if (r < 0.6)  return { cls:'b-red',    txt:'ZONE DANGEREUSE' };
@@ -4690,6 +4693,11 @@ function refreshStatsOnly() {
   $('silver').textContent = fmt(S.silver);
   $('invLvl').textContent = S.lvl;
   $('invXpPct').textContent = fmtXpPct(S.xp / S.xpNext * 100);
+  // niveau/XP fusionnés sur la même ligne que PA/PD/GS de l'équipement (demande explicite du
+  // 2026-07-06) — mêmes valeurs que le HUD au-dessus de la vie, juste un 2e affichage
+  const eqSumLvlEl = $('eqSumLvl'), eqSumXpEl = $('eqSumXp');
+  if (eqSumLvlEl) eqSumLvlEl.textContent = (LANG==='fr'?'Niv. ':'Lvl ') + S.lvl;
+  if (eqSumXpEl) eqSumXpEl.textContent = fmtXpPct(S.xp / S.xpNext * 100);
   $('stPS').textContent = Math.round(GS());
   $('stPA').textContent = Math.round(apEff()*10)/10;
   $('stDP').textContent = Math.round(totalDP()*10)/10;
@@ -4775,7 +4783,29 @@ function hud() {
   renderQuestTrackerWidget();
   ensureLoyaltyGrant();
   updateMailBadge();
+  syncFarmCardHeights();
 }
+// aligne la hauteur des cartes "Zones de farm" et "Loot de cette zone" sur celle de la carte
+// Statistiques (demande explicite du 2026-07-06 : "fait en sorte que les carte zone de farm et
+// loot de cette zone fasse la meme taille que statistique") -- #statsCard a un contenu fixe (13
+// lignes), donc une hauteur assez stable ; les 2 autres ont un contenu variable (nb de zones/objets)
+// plafonné jusqu'ici par un max-height:60vh fixe, sans rapport avec la hauteur réelle de
+// Statistiques -- d'où l'écart visible. Mesure la hauteur RÉELLE de Statistiques et l'applique en
+// max-height sur les listes internes (le défilement absorbe le surplus de contenu).
+function syncFarmCardHeights() {
+  const statsCard = $('statsCard');
+  if (!statsCard) return;
+  const targetH = statsCard.getBoundingClientRect().height;
+  if (targetH < 50) return; // pas encore mis en page (ex: juste après le chargement)
+  [['zonesCard','zoneList'], ['lootCard','lootTable']].forEach(([cardId, listId]) => {
+    const card = $(cardId), list = $(listId);
+    if (!card || !list) return;
+    const overhead = card.getBoundingClientRect().height - list.getBoundingClientRect().height; // en-tête/onglets/marges
+    const newListH = Math.max(80, Math.round(targetH - overhead));
+    list.style.maxHeight = newListH + 'px';
+  });
+}
+window.addEventListener('resize', () => { if (typeof syncFarmCardHeights === 'function') syncFarmCardHeights(); });
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
   if (P.hp > effHpMax()) P.hp = effHpMax(); // déséquiper une pièce peut faire baisser le max courant

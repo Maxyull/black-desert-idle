@@ -348,12 +348,16 @@
   @media (max-width:860px){ #panel{grid-template-columns:1fr 1fr;} }
 
   /* ===== paperdoll équipement (permanent) ===== */
+  /* niveau/XP fusionnés sur la même ligne que PA/PD/GS (demande explicite du 2026-07-06) --
+     flex-wrap en secours si la carte est trop étroite (mobile) pour les 5 sur une seule ligne */
   #equipSummary {
-    display:flex; justify-content:space-between; align-items:center;
-    border:1px solid var(--gold-dim); border-radius:4px; padding:5px 10px; margin-bottom:2px;
-    font-size:12px; color:var(--gold); font-weight:bold; background:rgba(201,165,90,.05);
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:2px 8px;
+    border:1px solid var(--gold-dim); border-radius:4px; padding:5px 10px; margin-bottom:6px;
+    font-size:11px; color:var(--gold); font-weight:bold; background:rgba(201,165,90,.05);
   }
-  #eqSumGs { text-align:center; font-size:10px; color:#9cc9e8; margin-bottom:4px; }
+  #eqSumLvl { color:#fff; }
+  #eqSumXp { color:var(--gold); }
+  #eqSumGs { color:#9cc9e8; }
   #paperdoll { display:flex; align-items:center; justify-content:space-between; gap:2px; margin-bottom:6px; }
   .pdCol { display:flex; flex-direction:column; gap:5px; }
   /* pdRight est passé de 6 à 9 emplacements (2 artéfacts + 1 pierre, demande du 2026-07-07) —
