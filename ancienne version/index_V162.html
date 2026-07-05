@@ -1388,27 +1388,6 @@
   #tutorialArrow.bottom { border-left:9px solid transparent; border-right:9px solid transparent; border-top:11px solid var(--gold); }
   #tutorialArrow.left   { border-top:9px solid transparent; border-bottom:9px solid transparent; border-right:11px solid var(--gold); }
   #tutorialArrow.right  { border-top:9px solid transparent; border-bottom:9px solid transparent; border-left:11px solid var(--gold); }
-  /* indice "il faut défiler" (2026-07-05, demande explicite) : caché par défaut, affiché par
-     positionTutorialStep() SEULEMENT quand la cible de l'étape en cours est hors du champ visible
-     (au-dessus ou en-dessous de l'écran). Icône souris/molette sur ordinateur, doigt sur mobile/
-     tablette (même seuil que isMobileViewport(), 1024px) — jamais les deux en même temps. */
-  #tutorialScrollHint {
-    display:none; position:fixed; z-index:903; left:50%; transform:translateX(-50%);
-    flex-direction:column; align-items:center; gap:2px; pointer-events:none;
-    font-size:26px; text-shadow:0 2px 6px rgba(0,0,0,.7);
-    animation:tutHintBounce 1.1s ease-in-out infinite;
-  }
-  #tutorialScrollHint.show { display:flex; }
-  #tutorialScrollHint.up { animation-name:tutHintBounceUp; }
-  #tutorialScrollHint .tutHintArrow { font-size:20px; color:var(--gold); }
-  #tutorialScrollHint.up .tutHintArrow { transform:rotate(180deg); }
-  #tutorialScrollHint .tutHintFinger { display:none; }
-  @media (max-width:1024px) {
-    #tutorialScrollHint .tutHintMouse { display:none; }
-    #tutorialScrollHint .tutHintFinger { display:inline; }
-  }
-  @keyframes tutHintBounce { 0%,100% { transform:translateX(-50%) translateY(0); } 50% { transform:translateX(-50%) translateY(8px); } }
-  @keyframes tutHintBounceUp { 0%,100% { transform:translateX(-50%) translateY(0); } 50% { transform:translateX(-50%) translateY(-8px); } }
   /* classement de contribution du world boss partagé (top 10 en direct) */
   #bossTopPanel {
     /* repoussé plus bas (52px → 78px) pour ne plus jamais chevaucher la croix "✕" de sortie du
@@ -1648,14 +1627,6 @@
 <div id="tutorialOverlay">
   <div id="tutorialHighlight"></div>
   <div id="tutorialArrow"></div>
-  <!-- indice de défilement (2026-07-05, demande explicite) : affiché quand l'élément mis en avant
-       par l'étape en cours est hors du champ visible, pour indiquer qu'il faut faire défiler la
-       page pour le voir. Icône différente selon la plateforme (souris/molette sur ordinateur,
-       doigt qui glisse sur mobile/tablette) — voir positionTutorialStep() -->
-  <div id="tutorialScrollHint">
-    <span class="tutHintMouse">🖱️</span><span class="tutHintFinger">👆</span>
-    <span class="tutHintArrow">⌄</span>
-  </div>
   <div id="tutorialBox">
     <div class="tutStep" id="tutStepLbl"></div>
     <h4 id="tutTitle"></h4>
@@ -9719,11 +9690,6 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
-  { v:'V163', d:'05/07/2026 14:30', name:{fr:'Tutoriel : indice de défilement quand la cible est hors champ', en:'Tutorial: scroll hint when the target is off-screen'}, fr:[
-      {t:'new', tx:'Pendant le tutoriel de début, si l\'élément mis en avant par l\'étape en cours est hors du champ visible, une icône apparaît pour indiquer qu\'il faut défiler — 🖱️ souris sur ordinateur, 👆 doigt sur mobile/tablette. Disparaît dès que l\'élément redevient visible'},
-    ], en:[
-      {t:'new', tx:'During the opening tutorial, if the element highlighted by the current step is off-screen, an icon appears to indicate you need to scroll — 🖱️ mouse on desktop, 👆 finger on mobile/tablet. Disappears as soon as the element becomes visible again'},
-    ] },
   { v:'V162', d:'05/07/2026 14:00', name:{fr:'Nouvelle zone : Planque des Mânes (3e zone bleue)', en:'New zone: Manes\' Hideout (3rd blue zone)'}, fr:[
       {t:'new', tx:'Nouvelle zone "Planque des Mânes" (Esprit des Mânes), 3e zone du palier bleu (Grunil) — complète la rotation d\'une arme garantie par zone et apporte la ceinture manquante (Orkinrad\'s Belt). Ses PA/PD requis sont volontairement identiques à Ruines de Kratuga : le plafond de stat du palier bleu au PEN ne change pas (~294 PA / ~247 PD stuff complet)'},
     ], en:[
@@ -11375,21 +11341,6 @@ let tutorialStepIdx = -1;
 // générique pour pouvoir aussi jouer d'autres listes d'étapes (ex: COMPENDIUM_TUTORIAL_STEPS) avec
 // le même overlay/spotlight — activeTutorialSteps pointe vers la liste actuellement jouée
 let activeTutorialSteps = TUTORIAL_STEPS;
-// affiche/masque l'indice "il faut défiler" (2026-07-05, demande explicite) : si le RECTANGLE de la
-// cible est entièrement au-dessus ou en-dessous de la fenêtre visible, montre une icône souris
-// (ordinateur) ou doigt (mobile/tablette, voir la media query CSS) qui rebondit vers le haut/bas,
-// à l'opposé du bord hors champ. Se cache dès que la cible redevient visible (ex: le joueur a
-// scrollé) — recalculé à chaque frame par tutorialTrackLoop, comme le reste du positionnement.
-function updateTutorialScrollHint(r) {
-  const hint = $a('tutorialScrollHint');
-  if (!r) { hint.classList.remove('show'); return; }
-  const below = r.top >= window.innerHeight;
-  const above = r.bottom <= 0;
-  if (!below && !above) { hint.classList.remove('show'); return; }
-  hint.classList.add('show');
-  hint.classList.toggle('up', above);
-  hint.style.top = above ? '18px' : (window.innerHeight-56)+'px';
-}
 function positionTutorialStep() {
   const step = activeTutorialSteps[tutorialStepIdx];
   const hi = $a('tutorialHighlight'), box = $a('tutorialBox'), arrow = $a('tutorialArrow');
@@ -11399,10 +11350,8 @@ function positionTutorialStep() {
     hi.classList.add('center'); hi.style.top='0'; hi.style.left='0'; hi.style.width='0'; hi.style.height='0';
     arrow.style.display = 'none';
     box.style.top = '50%'; box.style.left = '50%'; box.style.transform = 'translate(-50%,-50%)';
-    updateTutorialScrollHint(null);
   } else {
     const r = target.getBoundingClientRect();
-    updateTutorialScrollHint(r);
     const pad = 6;
     hi.classList.remove('center');
     hi.style.top = (r.top-pad)+'px'; hi.style.left = (r.left-pad)+'px';
