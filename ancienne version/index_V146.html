@@ -3156,11 +3156,13 @@ async function endBossFight(win) {
       try {
         const { data } = await sb.rpc('boss_claim');
         if (typeof data === 'number' && data > 0) { rank = data; mult = bossRankMultiplier(rank); }
-        // -1 : déjà réclamé, aucune contribution, ou boss pas encore à 0 PV. L'alerte Discord pour
-        // le vrai cas de double réclamation part désormais depuis boss_claim() lui-même, côté
-        // serveur, directement sur le salon "cheat" (déplacé le 2026-07-08 : elle partait avant sur
-        // le salon général, côté client) — plus fiable, ne peut pas être usurpé
-        else alreadyClaimed = true;
+        else {
+          alreadyClaimed = true; // -1 : déjà réclamé, aucune contribution, ou boss pas encore à 0 PV
+          // alerte Discord (2026-07-08, demande explicite) : chaque tentative de re-réclamer un
+          // boss déjà payé (ex. re-rentrer dans l'arène après une victoire) est désormais visible
+          // côté staff, alors qu'avant le blocage était totalement silencieux
+          logToDiscord('🚫 Tentative de double réclamation', `**${myPseudo||'Joueur'}** a tenté de réclamer à nouveau la récompense de ${b.name.fr} (déjà payée) — bloqué.`, 0xed4245);
+        }
       } catch (e) { alreadyClaimed = true; } // en cas de doute (erreur réseau), ne JAMAIS accorder par défaut
     }
     if (alreadyClaimed) {
@@ -9386,11 +9388,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V147', d:'08/07/2026 23:45', name:{fr:'Alerte double réclamation déplacée sur le salon cheat', en:'Double-claim alert moved to the cheat channel'}, fr:[
-      {t:'change', tx:'L\'alerte "Tentative de double réclamation" part désormais sur le salon Discord "cheat" (comme les bornages anti-triche) au lieu du salon général — déplacée côté serveur directement dans boss_claim(), plus fiable et impossible à contourner côté client'},
-    ], en:[
-      {t:'change', tx:'The "Double-claim attempt" alert now goes to the "cheat" Discord channel (like anti-cheat clamps) instead of the general channel — moved server-side directly into boss_claim(), more reliable and impossible to bypass client-side'},
-    ] },
   { v:'V146', d:'08/07/2026 23:30', name:{fr:'Correctif serveur : logs Discord bloqués par CORS', en:'Server fix: Discord logs blocked by CORS'}, fr:[
       {t:'fix', tx:'La fonction serveur qui relaie les événements vers Discord (boss vaincu, succès, loot rare, etc.) ne répondait pas correctement aux requêtes CORS depuis le site déployé — le navigateur bloquait l\'appel avant même qu\'il n\'atteigne le webhook, donc plus aucun log Discord ne partait. Corrigé côté serveur (Edge Function) ; vérifié par un appel de test réel depuis l\'extérieur, reçu avec succès'},
     ], en:[
