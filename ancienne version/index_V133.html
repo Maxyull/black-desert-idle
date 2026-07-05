@@ -3279,69 +3279,57 @@ function drawWarlord(cx, sx, sy, r, t) {
   cx.shadowBlur=0;
   cx.restore();
 }
-// Vell — grand poisson/serpent des mers ORIGINAL. Silhouette redessinée le 2026-07-08 (demande
-// explicite : "change la forme, pas comme Kzarka") pour être franchement différente de la
-// silhouette humanoïde de Kzarka (buste vertical + épaules + bras) : ici un corps massif HORIZONTAL
-// façon baleine/anguille qui déferle en diagonale hors de l'eau, tête émoussée penchée en avant
-// (mâchoire sur le dessous, pas au centre), et une GRAPPE de longs tentacules/barbillons qui
-// pendent sous la tête — aucune paire de bras/griffes, aucun buste dressé. Pas de reprise d'asset réel.
+// Vell — grand poisson/serpent des mers ORIGINAL, silhouette provisoire (demande explicite du
+// 2026-07-08, une vraie photo de référence doit encore arriver pour l'affiner). Corps serpentin
+// écailleux qui ondule, nageoires latérales, grande gueule ouverte avec crocs, nageoire dorsale en
+// crête — pas de reprise d'asset réel.
 function drawVell(cx, sx, sy, r, t) {
   cx.save();
-  cx.translate(sx, sy);
-  cx.rotate(-0.16); // déferle en diagonale, comme dans les captures de référence
+  cx.fillStyle='rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(sx, sy+r*0.15, r*1.3, r*0.3, 0, 0, 7); cx.fill();
   const glow = 0.5+0.5*Math.sin(t*2);
-  const undulate = Math.sin(t*1.3)*r*0.05;
-  cx.fillStyle='rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(0, r*0.55, r*1.7, r*0.3, 0.16, 0, 7); cx.fill();
-  // corps massif ALLONGÉ à l'horizontale (la tête est à gauche, la queue s'amincit à droite) —
-  // silhouette en "goutte" basse et longue, pas un buste vertical
-  const body = cx.createLinearGradient(0, -r*0.9, 0, r*0.3);
-  body.addColorStop(0,'#3a7a8a'); body.addColorStop(.55,'#1f5468'); body.addColorStop(1,'#0f2e3a');
+  const undulate = Math.sin(t*1.4)*r*0.08;
+  // corps serpentin (dégradé bleu-vert profond)
+  const body = cx.createLinearGradient(sx, sy-r*1.5, sx, sy+r*0.2);
+  body.addColorStop(0,'#3a7a8a'); body.addColorStop(.5,'#1f5468'); body.addColorStop(1,'#0f2e3a');
   cx.fillStyle = body;
   cx.beginPath();
-  cx.moveTo(-r*1.7, -r*0.05+undulate);
-  cx.quadraticCurveTo(-r*1.5,-r*0.75, -r*0.7,-r*0.85);
-  cx.quadraticCurveTo(r*0.1,-r*0.9, r*0.9,-r*0.5);
-  cx.quadraticCurveTo(r*1.5,-r*0.25, r*1.8,r*0.05-undulate);
-  cx.quadraticCurveTo(r*0.9,r*0.28, 0,r*0.22);
-  cx.quadraticCurveTo(-r*0.9,r*0.15, -r*1.7,-r*0.05+undulate);
+  cx.moveTo(sx-r*1.5, sy-r*0.1);
+  cx.quadraticCurveTo(sx-r*1.1+undulate, sy-r*1.0, sx-r*0.35, sy-r*1.05);
+  cx.quadraticCurveTo(sx+r*0.1, sy-r*1.3, sx+r*0.55, sy-r*1.1);
+  cx.quadraticCurveTo(sx+r*1.05-undulate, sy-r*0.75, sx+r*1.15, sy-r*0.15);
+  cx.quadraticCurveTo(sx+r*0.5, sy-r*0.05, sx-r*0.2, sy-r*0.15);
+  cx.quadraticCurveTo(sx-r*0.9, sy-r*0.05, sx-r*1.5, sy-r*0.1);
   cx.closePath(); cx.fill();
-  // bosses/nodules de peau irrégulières (au lieu des arcs d'écailles réguliers) — texture plus
-  // organique et distincte de la carapace lisse de Kzarka
-  cx.fillStyle='rgba(10,30,38,.35)';
-  for (let i=-4;i<=3;i++) { const bx=i*r*0.32+undulate*0.4, by=-r*0.55-Math.abs(i)*r*0.03;
-    cx.beginPath(); cx.ellipse(bx,by,r*0.16,r*0.1,0.2,0,7); cx.fill(); }
-  // nageoire dorsale basse, courant tout le long du dos (pas une crête pointue centrale)
+  // écailles (arcs concentriques légers)
+  cx.strokeStyle='rgba(160,220,230,.16)'; cx.lineWidth=1.4;
+  for (let i=-2;i<=2;i++) { cx.beginPath(); cx.arc(sx+i*r*0.32, sy-r*0.55, r*0.22, Math.PI*0.15, Math.PI*0.85); cx.stroke(); }
+  // nageoire dorsale en crête, le long du dos
   cx.fillStyle='#164452';
-  cx.beginPath();
-  cx.moveTo(-r*1.1,-r*0.8); cx.quadraticCurveTo(-r*0.6,-r*1.15,-r*0.1,-r*1.05);
-  cx.quadraticCurveTo(r*0.35,-r*0.95, r*0.6,-r*0.7);
-  cx.quadraticCurveTo(r*0.1,-r*0.78, -r*0.5,-r*0.78);
-  cx.quadraticCurveTo(-r*0.85,-r*0.78,-r*1.1,-r*0.8);
-  cx.closePath(); cx.fill();
-  // grappe de longs tentacules/barbillons qui pendent SOUS la tête (côté gauche), ondulants —
-  // remplace les 2 nageoires latérales + les 2 barbillons : bien plus distinctif que Kzarka
-  cx.strokeStyle='#1f5468'; cx.lineCap='round';
-  for (let i=0;i<6;i++) {
-    const baseX = -r*1.25+i*r*0.14, wig = Math.sin(t*2.5+i*1.3)*r*0.14;
-    cx.lineWidth = r*0.05*(1-i*0.06);
-    cx.beginPath();
-    cx.moveTo(baseX,-r*0.15);
-    cx.quadraticCurveTo(baseX+wig, r*0.45, baseX+wig*1.4, r*0.95+i*r*0.03);
-    cx.stroke();
+  for (let i=-2;i<=1;i++) {
+    const bx = sx+i*r*0.35+undulate*0.5, by = sy-r*1.05-Math.abs(i)*r*0.03;
+    cx.beginPath(); cx.moveTo(bx-r*0.1,by); cx.lineTo(bx+r*0.16,by); cx.lineTo(bx+r*0.02, by-r*0.32); cx.closePath(); cx.fill();
   }
-  // grande tête émoussée penchée en avant, mâchoire sur le DESSOUS (pas au centre du corps)
-  const hx = -r*1.35, hy = -r*0.25;
-  cx.fillStyle = body;
-  cx.beginPath(); cx.ellipse(hx,hy,r*0.5,r*0.4,-0.2,0,7); cx.fill();
-  // mâchoire ouverte, crocs
-  cx.fillStyle='#0a1c22'; cx.beginPath(); cx.ellipse(hx+r*0.1,hy+r*0.32,r*0.32,r*0.2,0.1,0,Math.PI); cx.fill();
+  // nageoires latérales (larges, translucides)
+  cx.fillStyle='rgba(80,170,190,.5)';
+  cx.beginPath(); cx.moveTo(sx-r*0.85,sy-r*0.45); cx.quadraticCurveTo(sx-r*1.4,sy-r*0.2, sx-r*1.15,sy+r*0.08); cx.quadraticCurveTo(sx-r*0.9,sy-r*0.05, sx-r*0.7,sy-r*0.3); cx.closePath(); cx.fill();
+  cx.beginPath(); cx.moveTo(sx+r*0.85,sy-r*0.45); cx.quadraticCurveTo(sx+r*1.4,sy-r*0.2, sx+r*1.15,sy+r*0.08); cx.quadraticCurveTo(sx+r*0.9,sy-r*0.05, sx+r*0.7,sy-r*0.3); cx.closePath(); cx.fill();
+  // barbillons/tentacules autour de la gueule, ondulants
+  cx.strokeStyle='#1f5468'; cx.lineWidth=r*0.05; cx.lineCap='round';
+  for (const side of [-1,1]) {
+    const wig = Math.sin(t*3+side)*r*0.08;
+    cx.beginPath(); cx.moveTo(sx+side*r*0.3, sy-r*1.02); cx.quadraticCurveTo(sx+side*r*0.5+wig, sy-r*0.75, sx+side*r*0.42, sy-r*0.55); cx.stroke();
+  }
+  cx.lineCap='butt';
+  // grande gueule ouverte avec crocs
+  const hy = sy-r*1.05;
+  cx.fillStyle='#0a1c22'; cx.beginPath(); cx.ellipse(sx, hy+r*0.12, r*0.4, r*0.22, 0, 0, Math.PI); cx.fill();
   cx.fillStyle='#e8e2d0';
-  for (let i=-2;i<=2;i++) { const tx=hx+r*0.1+i*r*0.11;
-    cx.beginPath(); cx.moveTo(tx-r*0.035,hy+r*0.28); cx.lineTo(tx,hy+r*0.4); cx.lineTo(tx+r*0.035,hy+r*0.28); cx.closePath(); cx.fill(); }
-  // yeux luminescents, au-dessus de la mâchoire
+  for (let i=-2;i<=2;i++) { const tx=sx+i*r*0.14;
+    cx.beginPath(); cx.moveTo(tx-r*0.04,hy+r*0.1); cx.lineTo(tx,hy+r*0.22); cx.lineTo(tx+r*0.04,hy+r*0.1); cx.closePath(); cx.fill(); }
+  // yeux luminescents
   cx.fillStyle = `rgba(120,${200+40*glow|0},255,1)`; cx.shadowColor='#5ad0ff'; cx.shadowBlur=14;
-  cx.beginPath(); cx.arc(hx-r*0.12,hy-r*0.14,r*0.075,0,7); cx.fill();
-  cx.beginPath(); cx.arc(hx+r*0.2,hy-r*0.18,r*0.075,0,7); cx.fill();
+  cx.beginPath(); cx.arc(sx-r*0.16, hy-r*0.05, r*0.08, 0, 7); cx.fill();
+  cx.beginPath(); cx.arc(sx+r*0.16, hy-r*0.05, r*0.08, 0, 7); cx.fill();
   cx.shadowBlur=0;
   cx.restore();
 }
@@ -9252,11 +9240,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V134', d:'08/07/2026 12:00', name:{fr:'Silhouette de Vell redessinée (forme distincte de Kzarka)', en:'Vell\'s silhouette redesigned (shape distinct from Kzarka)'}, fr:[
-      {t:'change', tx:'Silhouette de Vell entièrement redessinée pour ne plus ressembler à Kzarka en composition : corps massif HORIZONTAL façon baleine qui déferle en diagonale (au lieu d\'un buste vertical), tête émoussée penchée en avant avec la mâchoire sur le dessous, et une grappe de 6 longs tentacules ondulants sous la tête — plus aucune paire de bras/griffes'},
-    ], en:[
-      {t:'change', tx:'Vell\'s silhouette fully redesigned to stop resembling Kzarka in composition: a massive HORIZONTAL whale-like body surging diagonally (instead of a vertical torso), a blunt head tilted forward with the jaw underneath, and a cluster of 6 long swaying tentacles under the head — no more arm/claw pair'},
-    ] },
   { v:'V133', d:'08/07/2026 11:00', name:{fr:'Sac "Compendium" : protège les objets jamais montés en PEN', en:'"Compendium" bag: protects items never brought to PEN'}, fr:[
       {t:'new', tx:'Nouveau sac dédié "📖 Compendium" (192 cases, comme le sac principal) : quand "Vendre" s\'apprête à vendre une pièce d\'équipement ou un bijou dont ce TYPE n\'a jamais atteint PEN, le 1er exemplaire trouvé est protégé ici au lieu d\'être vendu — les exemplaires suivants du même type continuent d\'être vendus normalement'},
       {t:'new', tx:'Nouvel onglet "🎒 Sac protégé" dans le Compendium pour consulter ce sac et renvoyer un objet au sac principal en un clic'},
