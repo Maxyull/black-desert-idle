@@ -1429,13 +1429,6 @@
     #panel { grid-template-columns:1fr !important; }
     #wrap { padding:0 2px; }
     body { padding:8px 4px 20px; }
-    /* #activitiesBar met les 8 onglets (#activityTabs, flex:1) ET le texte "Prochain boss : ..."
-       (#nextBossMini, assez long) côte à côte sur UNE seule ligne — sur téléphone ce texte écrase
-       toute la largeur dispo pour les onglets, qui se retrouvent forcés à 1 seul par ligne (8 lignes
-       de haut, confirmé sur un vrai téléphone). Empilés à la place : les onglets ont toute la
-       largeur pour se répartir sur 3-4 par ligne, le texte passe en dessous. */
-    #activitiesBar { flex-direction:column; align-items:stretch; gap:6px; }
-    #nextBossMini { text-align:center; }
   }
 </style>
 </head>
@@ -9497,11 +9490,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V154', d:'05/07/2026 10:00', name:{fr:'Correctif mobile : barre d\'onglets empilée sur 8 lignes', en:'Mobile fix: tab bar stacked into 8 rows'}, fr:[
-      {t:'fix', tx:'Sur téléphone, les 8 onglets (Zone/Boss/Pêche/Mine/Forêt/Champs/Bergerie/Atelier royal) et le texte "Prochain boss" se partageaient une seule ligne — le texte, assez long, écrasait la largeur dispo pour les onglets, forcés à 1 seul par ligne (8 lignes de haut, confirmé sur un vrai téléphone). Empilés l\'un sous l\'autre à la place : les onglets se répartissent maintenant sur 3-4 par ligne'},
-    ], en:[
-      {t:'fix', tx:'On phone, the 8 tabs (Zone/Boss/Fishing/Mining/Forest/Fields/Ranch/Royal Workshop) and the "Next boss" text shared a single row — the fairly long text crushed the space left for the tabs, forcing them to 1 per row (8 rows tall, confirmed on a real phone). Stacked on top of each other instead: tabs now spread across 3-4 per row'},
-    ] },
   { v:'V153', d:'05/07/2026 09:30', name:{fr:'Correctifs mobile : menu scrollable, version bien rangée', en:'Mobile fixes: scrollable menu, version properly placed'}, fr:[
       {t:'fix', tx:'Le numéro de version (tout en bas du menu de gauche) n\'était pas masqué quand le menu était replié — il flottait tout seul par-dessus le jeu. Il est maintenant bien rangé dans le menu, visible seulement quand celui-ci est déplié'},
       {t:'fix', tx:'Sur un petit écran, le menu de gauche déplié pouvait être plus haut que l\'écran lui-même, rendant certains boutons (Discord, Admin...) impossibles à atteindre. Le menu défile maintenant lui-même si besoin, plutôt que de déborder hors de l\'écran'},
