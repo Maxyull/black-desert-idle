@@ -2956,10 +2956,9 @@ function joinBossChannel(bossKey) {
   const myUid = currentUser.id;
   const topic = 'boss_'+bossKey;
   console.debug('[BossPresence] join', { topic, myUid });
-  const ch = sb.channel(topic, { config: { presence: { key: myUid } } });
-  bossChannel = ch;
-  ch.on('presence', { event: 'sync' }, () => {
-    const state = ch.presenceState();
+  bossChannel = sb.channel(topic, { config: { presence: { key: myUid } } });
+  bossChannel.on('presence', { event: 'sync' }, () => {
+    const state = bossChannel.presenceState();
     console.debug('[BossPresence] sync', { topic, keys: Object.keys(state) });
     const next = {};
     for (const uid in state) {
@@ -2969,18 +2968,9 @@ function joinBossChannel(bossKey) {
     }
     otherFighters = next;
   });
-  ch.subscribe(status => {
+  bossChannel.subscribe(status => {
     console.debug('[BossPresence] status', { topic, status });
-    if (status === 'SUBSCRIBED') { ch.track({ pseudo: myPseudo || 'Joueur', px: bossState.px, py: bossState.py }); return; }
-    // reconnexion automatique (2026-07-08, bug confirmé en prod : le canal passe parfois à CLOSED
-    // tout seul — coupure réseau/Realtime — sans qu'aucun code du jeu ne l'ait fermé, et rien ne le
-    // rétablissait ensuite, laissant les joueurs invisibles les uns aux autres pour le reste du
-    // combat) : si CE canal est toujours celui en cours d'utilisation et que le combat partagé est
-    // toujours actif, on retente un rejoin après un court délai
-    if ((status === 'CLOSED' || status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') && bossChannel === ch) {
-      console.debug('[BossPresence] reconnexion programmée', { topic, status });
-      setTimeout(() => { if (bossChannel === ch && bossState.active && bossState.shared) joinBossChannel(bossKey); }, 1500);
-    }
+    if (status === 'SUBSCRIBED') bossChannel.track({ pseudo: myPseudo || 'Joueur', px: bossState.px, py: bossState.py });
   });
 }
 function leaveBossChannel() {
@@ -8726,10 +8716,7 @@ function startAutoCloudSave() {
 }
 // ping toutes les 60s pendant qu'un onglet actif est ouvert — sert uniquement à alimenter le
 // graphique "temps de jeu par heure" de la Zone Admin (voir admin_playtime_by_hour)
-// bug confirmé en prod (2026-07-08) : sb.rpc(...) ne renvoie pas toujours un objet exposant
-// .catch() directement (thenable, pas une vraie Promise) — l'appeler plantait ("sb.rpc(...).catch
-// is not a function"), une exception non interceptée toutes les 60s
-setInterval(async () => { if (sb && currentUser && !document.hidden) { try { await sb.rpc('log_playtime_ping'); } catch(e) {} } }, 60000);
+setInterval(() => { if (sb && currentUser && !document.hidden) sb.rpc('log_playtime_ping').catch(()=>{}); }, 60000);
 
 $a('btnSignIn').onclick = doSignIn;
 $a('btnSignUp').onclick = doSignUp;
@@ -9388,13 +9375,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V145', d:'08/07/2026 23:00', name:{fr:'Correctif : présence des joueurs en World Boss', en:'Fix: player presence in World Boss'}, fr:[
-      {t:'fix', tx:'Grâce aux logs [BossPresence] : le canal de présence Realtime se fermait parfois tout seul (coupure réseau) pendant un combat de World Boss partagé, sans jamais se rétablir — les joueurs devenaient invisibles les uns aux autres pour le reste du combat. Le canal se reconnecte désormais automatiquement tant que le combat partagé est en cours'},
-      {t:'fix', tx:'Corrigé un plantage JS toutes les 60s (ping de temps de jeu) qui pouvait perturber la page en arrière-plan : "sb.rpc(...).catch is not a function"'},
-    ], en:[
-      {t:'fix', tx:'Thanks to the [BossPresence] logs: the Realtime presence channel sometimes closed on its own (network hiccup) during a shared World Boss fight and never recovered — players became invisible to each other for the rest of the fight. The channel now automatically reconnects as long as the shared fight is ongoing'},
-      {t:'fix', tx:'Fixed a JS crash every 60s (playtime ping) that could disrupt the page in the background: "sb.rpc(...).catch is not a function"'},
-    ] },
   { v:'V144', d:'08/07/2026 22:00', name:{fr:'Diagnostic : présence des joueurs en World Boss', en:'Diagnostics: player presence in World Boss'}, fr:[
       {t:'fix', tx:'Le partage des PV/top 10 fonctionne bien en World Boss (confirmé par test à 2 comptes), mais les silhouettes des autres joueurs restent invisibles dans l\'arène — traces de diagnostic ajoutées (console, préfixe [BossPresence]) pour identifier précisément la cause au prochain test'},
     ], en:[
