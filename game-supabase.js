@@ -2221,6 +2221,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V177', d:'05/07/2026 20:15', name:{fr:'Zone dangereuse : toi plus lent, les monstres plus rapides', en:'Dangerous zone: you slower, monsters faster'}, fr:[
+      {t:'change', sub:'pve', severity:'major', tx:'En ZONE DANGEREUSE (PA/PD très insuffisants), tu es maintenant ralenti (×0,7) et les monstres qui t\'ont repéré deviennent plus rapides (×1,35) pour te rattraper — rend le danger concret plutôt qu\'une simple pénalité de dégâts/loot invisible'},
+    ], en:[
+      {t:'change', sub:'pve', severity:'major', tx:'In a DANGEROUS ZONE (very insufficient AP/DP), you are now slowed down (×0.7) and monsters that spotted you become faster (×1.35) to catch up — makes the danger tangible instead of just an invisible damage/loot penalty'},
+    ] },
   { v:'V176', d:'05/07/2026 20:00', name:{fr:'Menu d\'optimisation détaillé, navigation clavier dans le chat, alerte de mention en continu', en:'Detailed enhance menu, chat keyboard navigation, continuous mention alert'}, fr:[
       {t:'improve', sub:'equipements', severity:'minor', tx:'Le menu déroulant "Auto jusqu\'à" affiche maintenant le gain de stats pour CHAQUE palier proposé, pas seulement celui sélectionné'},
       {t:'improve', sub:'interface', severity:'minor', tx:'Chat : les flèches ↑/↓ du clavier permettent de choisir un joueur dans la liste de suggestions de mention @'},
@@ -3715,6 +3720,7 @@ const WIKI_SECTIONS = [
         <li><b>Pas assez de PD</b> → tu encaisses beaucoup plus de dégâts (jusqu'à 4,5×), risque de K.O. élevé</li>
         <li>Au-dessus des deux → dégâts et réduction bonus, plafonnés pour éviter le farm abusif</li>
         <li>Le loot suit le pire des deux ratios</li>
+        <li><b>ZONE DANGEREUSE</b> (très sous-PA/PD) → tu es ralenti, et les monstres qui t'ont repéré deviennent plus rapides pour te rattraper</li>
       </ul>
       <h3>Loot progressif</h3>
       <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>
@@ -3731,6 +3737,7 @@ const WIKI_SECTIONS = [
         <li><b>Not enough DP</b> → you take a lot more damage (up to 4.5×), high KO risk</li>
         <li>Above both → bonus damage and reduction, capped to prevent overfarming</li>
         <li>Loot follows the worse of the two ratios</li>
+        <li><b>DANGEROUS ZONE</b> (very under-AP/DP) → you are slowed down, and monsters that spotted you become faster to catch up</li>
       </ul>
       <h3>Progressive loot</h3>
       <p>Drop rates are <b>intentionally decreasing</b> zone by zone: very generous early (up to 55%), very rare at endgame (under 3%).</p>
