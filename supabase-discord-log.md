@@ -22,3 +22,12 @@ Deux salons Discord reçoivent des logs automatiques du jeu :
 
 Pour ajouter un ping @mention sur les alertes triche (ex: ping le dev), fournir l'ID utilisateur
 Discord à ajouter dans `notify_cheat_discord` (format `<@ID>` dans le contenu du message).
+
+## Correctif CORS (2026-07-08)
+
+L'Edge Function `discord-log` ne répondait à aucune requête CORS (pas de gestion d'`OPTIONS`, pas
+d'en-tête `Access-Control-Allow-Origin`) — le navigateur bloquait l'appel depuis le site déployé
+(`https://maxyull.github.io`) avant même qu'il n'atteigne le webhook Discord, donc plus aucun log
+général ne partait. La fonction répond désormais à `OPTIONS` avec les en-têtes CORS nécessaires
+(`Access-Control-Allow-Origin: *`) et les ajoute aussi sur toutes ses réponses réelles. Vérifié par
+un appel de test réel cross-origin (200, `{"ok":true}`, message bien reçu sur Discord).
