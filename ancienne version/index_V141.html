@@ -4055,14 +4055,11 @@ function fmtHours(sec) {
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
   return h > 0 ? `${h}h${String(m).padStart(2,'0')}` : `${m}min`;
 }
-// les deux encarts en haut à droite (suivi temps de jeu/reset hebdo, quêtes suivies) se replient
-// indépendamment ; état persisté en localStorage (2026-07-08, demande explicite) pour survivre à
-// un rechargement de page, comme le menu de gauche (voir sideMenuCollapsed)
+// les deux encarts en haut à droite se replient indépendamment (état non persisté, repart déplié
+// à chaque rechargement — suffisant pour un simple confort visuel en session)
 let resetWidgetFolded = false, trackerWidgetFolded = false;
-try { resetWidgetFolded = localStorage.getItem('velia-idle-resetwidget-folded') === '1'; } catch(e) {}
-try { trackerWidgetFolded = localStorage.getItem('velia-idle-trackerwidget-folded') === '1'; } catch(e) {}
-function toggleResetFold() { resetWidgetFolded = !resetWidgetFolded; try { localStorage.setItem('velia-idle-resetwidget-folded', resetWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestWidget(); }
-function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; try { localStorage.setItem('velia-idle-trackerwidget-folded', trackerWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestTrackerWidget(); }
+function toggleResetFold() { resetWidgetFolded = !resetWidgetFolded; renderQuestWidget(); }
+function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; renderQuestTrackerWidget(); }
 // encart permanent en haut à droite : timers de reset, prochain succès à débloquer, temps de jeu
 function renderQuestWidget() {
   const el = $('questWidget'); if (!el) return;
@@ -8308,11 +8305,7 @@ const CHAT_CHANNELS = [
   { id:'annonce', icon:'📢', label:{fr:'Annonce',en:'Announcement'} },
   { id:'modéré',  icon:'🛡️', label:{fr:'Modéré',en:'Moderated'}, staff:true }, // journal des messages supprimés (admin/mods)
 ];
-// persistance (2026-07-08, demande explicite) : canal choisi + replié/déplié survivent à un
-// rechargement de page, comme le menu de gauche (voir sideMenuCollapsed)
 let chatChannel = 'mondial', chatFolded = false, chatPollTimer = null;
-try { chatChannel = localStorage.getItem('velia-idle-chat-channel') || 'mondial'; } catch(e) {}
-try { chatFolded = localStorage.getItem('velia-idle-chat-folded') === '1'; } catch(e) {}
 let chatLastRead = {}; // channel -> ISO du dernier message vu (sert au halo "non lu")
 let chatUnread = {};   // channel -> true si des messages sont arrivés depuis qu'on ne le regarde plus
 function chatVisibleChannels() { return CHAT_CHANNELS.filter(c => !c.staff || isAdmin() || myIsMod); }
@@ -8324,7 +8317,6 @@ function renderChatTabs() {
   el.querySelectorAll('.catTab').forEach(btn => {
     btn.onclick = () => {
       chatChannel = btn.dataset.chan;
-      try { localStorage.setItem('velia-idle-chat-channel', chatChannel); } catch(e) {}
       chatUnread[chatChannel] = false;
       el.querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
@@ -8336,7 +8328,6 @@ function renderChatTabs() {
 }
 function toggleChatFold() {
   chatFolded = !chatFolded;
-  try { localStorage.setItem('velia-idle-chat-folded', chatFolded ? '1' : '0'); } catch(e) {}
   $a('chatBody').style.display = chatFolded ? 'none' : '';
   $a('chatFoldBtn').textContent = chatFolded ? '▸' : '▾';
   if (!chatFolded) fetchChatMessages();
@@ -8511,9 +8502,6 @@ $a('chatSendBtn').onclick = sendChatMessage;
 $a('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMessage(); });
 renderChatTabs();
 updateChatInputVisibility();
-// applique l'état replié/déplié restauré depuis localStorage (voir déclaration de chatFolded)
-$a('chatBody').style.display = chatFolded ? 'none' : '';
-$a('chatFoldBtn').textContent = chatFolded ? '▸' : '▾';
 setInterval(fetchChatMessages, 5000);
 setInterval(pollChatUnread, 5000);
 pollChatUnread();
@@ -9365,13 +9353,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V142', d:'08/07/2026 20:00', name:{fr:'Persistance : chat, encarts de suivi', en:'Persistence: chat, tracker widgets'}, fr:[
-      {t:'change', tx:'Le canal de chat choisi et l\'état replié/déplié du chat survivent maintenant à un rechargement de la page (comme le menu de gauche, déjà persisté)'},
-      {t:'change', tx:'Les encarts "🗒️ Suivi" (temps de jeu, reset quotidien/hebdo) et "🔖 Quêtes suivies" gardent leur état replié/déplié après un rechargement au lieu de toujours repartir dépliés'},
-    ], en:[
-      {t:'change', tx:'The chosen chat channel and the chat\'s folded/unfolded state now survive a page reload (like the left menu, already persisted)'},
-      {t:'change', tx:'The "🗒️ Tracker" (playtime, daily/weekly reset) and "🔖 Tracked quests" widgets keep their folded/unfolded state after a reload instead of always starting unfolded'},
-    ] },
   { v:'V141', d:'08/07/2026 19:00', name:{fr:'10 spots fixes par World Boss, Vell sur les pontons', en:'10 fixed spots per World Boss, Vell on the boat decks'}, fr:[
       {t:'change', tx:'Chaque joueur arrive désormais sur l\'un de 10 spots fixes tirés au hasard dans l\'arène du boss (au lieu de se superposer exactement au même point que tout le monde), et y revient entre deux AoE — les joueurs se voient enfin répartis dans la zone pendant la strat'},
       {t:'change', tx:'Sur Vell, ces 10 spots sont répartis sur les pontons des 2 bateaux (5 chacun) au lieu d\'un point unique en pleine mer'},
