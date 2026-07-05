@@ -2037,6 +2037,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V165', d:'05/07/2026 15:30', name:{fr:'Bouton "Vider le cache" et notes de version plus lisibles', en:'"Clear cache" button and more readable patch notes'}, fr:[
+      {t:'new', tx:'Panneau "Mon compte" : bouton "🧹 Vider le cache et recharger" pour les cas où une mise à jour ne s\'affiche pas correctement (fichiers du jeu mis en cache par le navigateur) — ne touche jamais à la sauvegarde'},
+      {t:'change', nature:'opticode', tx:'Refonte visuelle des notes de version : chaque entrée devient une carte avec un fond légèrement teinté et des séparateurs entre les lignes, badges arrondis en forme de pilule, entrée la plus récente mise en valeur'},
+      {t:'fix', nature:'backend', tx:'La détection de nouvelle version déployée (bandeau "Recharger") avait cessé de fonctionner depuis la séparation du code en plusieurs fichiers — elle cherchait les notes de version dans le mauvais fichier'},
+    ], en:[
+      {t:'new', tx:'"My account" panel: "🧹 Clear cache and reload" button for cases where an update doesn\'t display correctly (game files cached by the browser) — never touches your save'},
+      {t:'change', nature:'opticode', tx:'Visual redesign of the patch notes: each entry is now a card with a lightly tinted background and separators between lines, rounded pill-shaped badges, most recent entry highlighted'},
+      {t:'fix', nature:'backend', tx:'Detection of a newly deployed version (the "Reload" banner) had stopped working since the code was split into multiple files — it was looking for the patch notes in the wrong file'},
+    ] },
   { v:'V164', d:'05/07/2026 15:00', name:{fr:'Notes de version : tag "nature" (optim. code, backend...)', en:'Patch notes: "nature" tag (code opti, backend...)'}, fr:[
       {t:'new', tx:'Chaque ligne des notes de version peut désormais porter un tag "nature" en plus du type et de la plateforme — Optim. code, Optimisation, Inventaire ou Backend — pour repérer d\'un coup d\'œil les changements sous le capot qui ne touchent pas directement le contenu de jeu. Ce 2e badge (nature ou Tab/Mobile) s\'affiche maintenant sur sa propre ligne, sous le badge principal, plutôt qu\'à côté'},
       {t:'change', nature:'opticode', tx:'Le code du jeu (un seul fichier HTML de plus de 11 500 lignes) a été séparé en plusieurs fichiers — structure HTML, CSS et JavaScript (coupé en 2 fichiers) chacun à part — pour être plus simple à maintenir sur la durée. Aucun changement de gameplay, tout fonctionne à l\'identique'},
