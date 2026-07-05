@@ -374,13 +374,6 @@
     border-color:#3a3742; color:var(--ink-dim); }
   .craftRecipeBtn.ready { border-color:var(--gold); color:var(--ink); }
   .craftRecipeBtn.ready:hover { background:rgba(201,165,90,.12); }
-  /* Compendium (2026-07-08) : objets cliquables (halo sur les zones qui les lootent) */
-  .compItem { cursor:pointer; }
-  .compItem:hover { text-decoration:underline; color:var(--gold); }
-  .compZoneRow.compHalo { border-left-color:var(--gold); background:rgba(201,165,90,.14);
-    box-shadow:0 0 10px 1px rgba(201,165,90,.35); animation:patchHalo 1.6s infinite; }
-  .compZonePicker { font-size:11px; color:var(--ink-dim); margin-bottom:8px; min-height:14px; }
-  .compGoZoneBtn { width:auto; display:inline-block; margin:2px 4px 2px 0; padding:3px 9px; font-size:10.5px; }
   .cell {
     aspect-ratio:1; background:rgba(20,19,26,.6); border:1px solid #262430;
     position:relative; display:flex; align-items:center; justify-content:center;
@@ -1305,14 +1298,6 @@
   #bossResult .brTitle.win { color:var(--gold); }
   #bossResult .brRewards { font-size:14px; color:var(--ink); }
   #bossResult button { width:auto; padding:8px 24px; font-size:13px; }
-  /* roue de récompense rare (2026-07-08) : tourne toute seule en fin de combat, révèle le lot déjà tiré */
-  .bossWheelWrap { position:relative; width:180px; height:180px; margin:4px auto; }
-  .bossWheelPointer { position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:20px; color:var(--gold); z-index:2; }
-  .bossWheel { width:100%; height:100%; border-radius:50%; border:4px solid var(--gold-dim);
-    box-shadow:0 0 16px rgba(0,0,0,.5); position:relative; transition:transform 3.5s cubic-bezier(.12,.65,.16,1); }
-  .bwIcon { position:absolute; top:50%; left:50%; width:26px; height:26px; margin:-13px; font-size:19px;
-    display:flex; align-items:center; justify-content:center; }
-  .bossWheelResult { font-size:12.5px; color:var(--ink-dim); min-height:18px; }
 
   /* ===== tutoriel d'arrivée (Velia) : encadré + flèche pointant vers l'élément expliqué ===== */
   #tutorialOverlay { display:none; position:fixed; inset:0; z-index:900; }
@@ -1881,7 +1866,6 @@ const S = {
   pa: 4, dp: 10,   // PA innée (le gros vient de l'arme équipée ci-dessous)
   castMult: 1, hpMax: 100, lootRadius: 26,
   zonesCollected: {}, // Compendium (2026-07-08) : { [zoneIdx]: true } dès qu'un objet a été ramassé au moins une fois dans cette zone — sert au bonus de collection (voir compendiumZoneCount)
-  bossesKilled: {}, // Compendium World Boss (2026-07-08) : { [bossId]: true } dès qu'un World Boss a été vaincu au moins une fois (voir compendiumBossCount)
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
   // baseline (silverEarned/kills au début de LA SESSION EN COURS), pour calculer un vrai "silver/h"
@@ -1899,7 +1883,6 @@ const S = {
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
   loyalty: 0, lastLoyaltyDate: null, mailbox: [],
   notifLog: [], // centre de notifications (2026-07-08) : persisté (survit au reload/reconnexion), auto-purgé après 7 jours (voir pruneNotifLog)
-  lastDeathAt: 0, // horodatage de la dernière mort — 0 = jamais mort (voir endBossFight, bonus "certifié sans mort")
   potionType: 'medium', // 'small'/'medium'/'large'/'mega' = potions payantes ; 'infinite' = gratuite (débloquée plus tard)
   farmMode: 'loot', // 'loot' = ramasse tout avant le pack suivant ; 'xp' = enchaîne les packs sans se soucier du loot
   potionThreshold: 0.5, // % de PV en dessous duquel l'IA boit une potion automatiquement (réglable via le slider)
@@ -2098,11 +2081,6 @@ const ICO_CRON_STONE = svgIcon(
   '<path d="M8 5.5h8l-4 5.5z" fill="#e8c96a"/><path d="M8 17.5h8l-4-5.5z" fill="#e8c96a" opacity=".7"/>' +
   '<circle cx="12" cy="12" r="1.3" fill="#fff2c0"/>');
 const CRON_STONE = { name:'Pierre de Cron', key:'mat_cron_stone', icon:ICO_CRON_STONE, color:'#c9a55a' };
-// Coeur de Vell : cœur stylisé bleu abyssal, lueur cyan pulsante — récompense rare du boss Vell
-const ICO_COEUR_VELL = svgIcon(
-  '<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0112 6.5 5.5 5.5 0 0121.5 12c-2.5 4.5-9.5 9-9.5 9z" fill="#2a5a78"/>' +
-  '<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0112 6.5z" fill="#1c4058"/>' +
-  '<circle cx="12" cy="13" r="2.6" fill="#5ec9e8" opacity=".8"/>');
 
 // ==================== INVENTAIRE (192 slots) & ÉQUIPEMENT ====================
 const INV_SIZE = 192;
@@ -2284,20 +2262,8 @@ function markZoneCollected(zi) {
   const zc = compendiumZoneCount();
   logToDiscord('📖 Compendium', `**${myPseudo||'Joueur'}** débloque le bonus de **${tr(ZONES[zi].name)}** (${zc}/${ZONES.length} zones${zc>=ZONES.length?' — COMPENDIUM COMPLET ✓':''})`, 0xc9a55a);
 }
-// World Boss (ajouté au Compendium le 2026-07-08, demande explicite) : vaincre un boss AU MOINS
-// une fois débloque le même bonus qu'une zone (+1% SPD/DMG/Esquive), voir endBossFight
-function markBossDefeated(bossId) {
-  if (S.bossesKilled[bossId]) return;
-  S.bossesKilled[bossId] = true;
-  const b = BOSS_ROSTER[bossId];
-  floatTxt(P.x, P.y, 96, '📖 Compendium — '+b.name[LANG], { gold:true });
-  logToDiscord('📖 Compendium', `**${myPseudo||'Joueur'}** débloque le bonus de **${b.name.fr}** (World Boss)`, 0xc9a55a);
-}
 function compendiumZoneCount() { return Object.keys(S.zonesCollected||{}).length; }
-function compendiumBossCount() { return Object.keys(S.bossesKilled||{}).length; }
-function compendiumTotalCount() { return compendiumZoneCount() + compendiumBossCount(); }
-function compendiumTotalMax() { return ZONES.length + Object.keys(BOSS_ROSTER).length; }
-function compendiumPct() { return compendiumTotalCount() * 1; } // points de %, 1 par zone OU par boss
+function compendiumPct() { return compendiumZoneCount() * 1; } // points de %, 1 par zone
 
 // Vitesse de déplacement (2026-07-08) : progression par NIVEAU (0% au niv.1, jusqu'à +75% au
 // niveau 61, plafonné ensuite) + bonus de Compendium (points de % additifs entre eux).
@@ -2635,9 +2601,6 @@ const BOSS_ROSTER = {
     hp: 550000,
     reward: 400000,
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[12,28],
-    // Coeur de Vell (2026-07-08) : 5% de chance à la victoire — visible sur la roue de récompense
-    // en fin de combat (voir endBossFight/renderBossRewardWheel), qu'on l'obtienne ou non.
-    rareLoot: { name:'Coeur de Vell', icon:ICO_COEUR_VELL, color:'#5ec9e8', ch:0.05 },
   },
 };
 // horaires hebdomadaires (heure locale, déjà "-15 min") — day: 0=dimanche..6=samedi, ou 'daily'
@@ -2912,7 +2875,7 @@ function startBossFight(bossId, isShared) {
   const rawDur = b.hp / playerBossDps();           // durée "naturelle" selon ton stuff (boss solo uniquement)
   const duration = Math.max(120, Math.min(420, rawDur)); // clampée à [2 min, 7 min]
   Object.assign(bossState, {
-    active:true, ended:false, boss:b, bossId, hp, maxHp, duration, elapsed:0,
+    active:true, ended:false, boss:b, hp, maxHp, duration, elapsed:0,
     playerHp: effHpMax(), playerHpMax: effHpMax(), hits:[], last:performance.now(), potCd:0,
     px:0.5, py:0.85, pillars:BOSS_PILLARS.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
@@ -2972,40 +2935,6 @@ function bossRankMultiplier(rank) {
   if (rank <= 10) return 1.4;
   return 1; // hors du top 10 : récompense de base pour avoir participé
 }
-// roue de récompense rare (2026-07-08, demande explicite) : affichée en fin de combat quand le
-// boss a une table "rareLoot" définie (Vell → Coeur de Vell, 5%) — tourne toute seule et s'arrête
-// sur le lot RÉELLEMENT obtenu (déjà tiré au sort avant l'animation, la roue ne fait que le révéler).
-function renderBossRewardWheel(rareLoot, won) {
-  const N = 12; // segments (1 rare + 11 "rien") — purement visuel, ne reflète pas le vrai % (5%)
-  const segDeg = 360/N;
-  const commonIcon = '🌊';
-  let iconsHtml = '';
-  for (let i = 0; i < N; i++) {
-    const centerDeg = i*segDeg + segDeg/2;
-    const isRare = i === 0;
-    iconsHtml += `<span class="bwIcon" style="transform:rotate(${centerDeg}deg) translate(0,-70px) rotate(${-centerDeg}deg)">${isRare?rareLoot.icon:commonIcon}</span>`;
-  }
-  const wheelHtml = `<div class="bossWheelWrap"><div class="bossWheelPointer">▼</div>` +
-    `<div class="bossWheel" id="bossWheelEl" style="background:conic-gradient(${rareLoot.color} 0deg ${segDeg}deg, #232128 ${segDeg}deg 360deg)">${iconsHtml}</div></div>` +
-    `<div class="bossWheelResult" id="bossWheelResultEl">${LANG==='fr'?'🎡 Récompense rare...':'🎡 Rare reward...'}</div>`;
-  // lance l'animation juste après l'insertion dans le DOM (voir appel dans endBossFight)
-  setTimeout(() => {
-    const wheel = $a('bossWheelEl'); if (!wheel) return;
-    const spins = 5;
-    // atterrit au CENTRE du segment rare (15°) si gagné, sinon un point sûr dans la zone "rien"
-    // (60°-330°, loin des bords pour ne jamais sembler tomber sur le rare par erreur visuelle)
-    const targetDeg = won ? segDeg/2 : (60 + Math.random()*270);
-    const finalRotation = spins*360 - targetDeg;
-    wheel.style.transform = `rotate(${finalRotation}deg)`;
-    setTimeout(() => {
-      const res = $a('bossWheelResultEl'); if (!res) return;
-      res.innerHTML = won
-        ? `<span style="color:${rareLoot.color}">${rareLoot.icon} ${LANG==='fr'?'Obtenu' : 'Obtained'} : ${rareLoot.name} !</span>`
-        : (LANG==='fr' ? `Pas cette fois — ${rareLoot.icon} ${rareLoot.name} attend toujours` : `Not this time — ${rareLoot.icon} ${rareLoot.name} still awaits`);
-    }, 3600);
-  }, 50);
-  return wheelHtml;
-}
 async function endBossFight(win) {
   if (bossState.ended) return;
   bossState.ended = true;
@@ -3014,7 +2943,6 @@ async function endBossFight(win) {
   leaveBossChannel();
   const b = bossState.boss;
   let rewardsHtml = '';
-  let wheelHtml = '';
   if (win) {
     let mult = 1, rank = null;
     if (bossState.shared && sb) {
@@ -3024,40 +2952,19 @@ async function endBossFight(win) {
         if (rank) mult = bossRankMultiplier(rank);
       } catch (e) {}
     }
-    // Le loot des World Boss dépend de la MEILLEURE zone découverte, mais seulement si le joueur
-    // n'est pas mort depuis au moins 3 minutes ("certifié sans mort") — demande explicite du
-    // 2026-07-08. Sans ce certificat, la récompense reste la valeur de base (aucun bonus de zone).
-    const deathFreeMs = Date.now() - (S.lastDeathAt || 0);
-    const deathFreeOk = deathFreeMs >= 3*60*1000;
-    const zoneMult = deathFreeOk ? 1 + (S.maxZoneIdx/(ZONES.length-1))*1.5 : 1;
-    const reward = Math.round(b.reward * mult * zoneMult);
+    const reward = Math.round(b.reward * mult);
     S.silver += reward; S.silverEarned += reward;
-    const qty = Math.max(1, Math.round((b.matQty[0] + Math.floor(Math.random()*(b.matQty[1]-b.matQty[0]+1))) * mult * zoneMult));
+    const qty = Math.max(1, Math.round((b.matQty[0] + Math.floor(Math.random()*(b.matQty[1]-b.matQty[0]+1))) * mult));
     invAdd({ key:b.matKey, name:b.matName, kind:'material', icon:b.matIcon, color:'#c9c9c9', qty, stackable:true, weight:0.1, val:5 });
     const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
-    const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
-      ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
-      : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
-    rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${qty} × ${b.matName}</div>` + zoneHtml;
+    rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${qty} × ${b.matName}</div>`;
     pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
     logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
-    if (bossState.bossId) markBossDefeated(bossState.bossId); // Compendium (2026-07-08)
-    // roue de récompense rare (Coeur de Vell, etc.) : le tirage a lieu MAINTENANT, la roue ne fait
-    // que révéler ce qui a déjà été décidé
-    if (b.rareLoot) {
-      const won = Math.random() < b.rareLoot.ch;
-      if (won) {
-        invAdd({ name:b.rareLoot.name, kind:'craft', icon:b.rareLoot.icon, color:b.rareLoot.color, key:'craft_'+b.rareLoot.name, qty:1, stackable:true, weight:0.3, val:0 });
-        trackLoot(b.rareLoot.name);
-        logToDiscord('❤️‍🔥 Loot rarissime', `**${myPseudo||'Joueur'}** obtient ${b.rareLoot.name} sur ${b.name.fr} ! (${Math.round(b.rareLoot.ch*100)}% de chance)`, 0x5ec9e8);
-      }
-      wheelHtml = renderBossRewardWheel(b.rareLoot, won);
-    }
     refreshStatsOnly(); hud();
   }
   $('bossResult').innerHTML =
     `<div class="brTitle ${win?'win':''}">${win?(LANG==='fr'?'🏆 VICTOIRE':'🏆 VICTORY'):(LANG==='fr'?'Combat quitté':'Fight left')}</div>` +
-    rewardsHtml + wheelHtml +
+    rewardsHtml +
     `<button id="bossCloseBtn">${LANG==='fr'?'Retour':'Back'}</button>`;
   $('bossResult').classList.add('show');
   // au retour, on revient au lobby Boss (pas au farm) pour rester cohérent avec la nav par pages
@@ -3124,18 +3031,13 @@ function bossLoop(now) {
   if (bs.aoePhase==='idle' && bs.aoeT >= bs.aoeInterval) { bs.aoePhase='telegraph'; bs.aoeT=0; }
   else if (bs.aoePhase==='telegraph' && bs.aoeT >= 2.2) {
     bs.aoePhase='blast'; bs.aoeT=0;
-    // à l'explosion : es-tu à couvert ? (proche d'un pilier/bouée ET en dessous)
+    // à l'explosion : es-tu à couvert ? (proche d'un pilier ET en dessous de lui)
     const safe = bs.pillars.some(p => Math.hypot(p.x-bs.px, p.y-bs.py) < 0.10 && bs.py > p.y);
     bs.blocked = safe;
-    // Vell (2026-07-08) : reskin "plonge sous l'eau" au lieu de "cache-toi derrière un pilier" —
-    // même mécanique sûr/pas-sûr, juste le texte/la couleur qui changent
-    const isVell = bs.boss === BOSS_ROSTER.vell;
-    if (safe) {
-      bs.blockFlash = 0.6; bs.shakeT = 6;
-      bs.floatMsgs.push({txt: isVell ? (LANG==='fr'?'PLONGÉ !':'DIVED!') : (LANG==='fr'?'PARÉ !':'BLOCKED!'), life:1, color:'#8cc8ff'});
-    } else {
+    if (safe) { bs.blockFlash = 0.6; bs.shakeT = 6; bs.floatMsgs.push({txt:LANG==='fr'?'PARÉ !':'BLOCKED!', life:1, color:'#8cc8ff'}); }
+    else {
       bs.playerHp -= bs.playerHpMax*0.30; bs.hurtFlash = 0.6; bs.shakeT = 20;
-      bs.floatMsgs.push({txt: isVell ? (LANG==='fr'?'VAGUE !':'WAVE!') : 'AoE !', life:1, color:'#e05050'});
+      bs.floatMsgs.push({txt:'AoE !', life:1, color:'#e05050'});
     }
   }
   else if (bs.aoePhase==='blast' && bs.aoeT >= 0.45) { bs.aoePhase='idle'; bs.aoeT=0; bs.aoeInterval = 7 + Math.random()*4; }
@@ -3288,65 +3190,26 @@ function drawBossCreature(bossId, cx, sx, sy, r, t) {
   if (bossId === 'vell') return drawVell(cx, sx, sy, r, t);
   return drawWarlord(cx, sx, sy, r, t);
 }
-// bateaux + tirs de canon (2026-07-08, demande explicite : "les joueurs sont autour en bateau et
-// lancent des boulets dessus") — dessinés SEULEMENT pour Vell. Réutilise le tableau bs.hits déjà
-// généré ~4×/s par bossLoop (chaque hit = un boulet, h.life 1→0 sert de progression de vol).
-const VELL_BOATS = [ {x:0.10, y:0.74}, {x:0.90, y:0.74} ];
-function drawVellBoat(cx, sx, sy, scale, facingRight) {
-  cx.save(); cx.translate(sx,sy); if (!facingRight) cx.scale(-1,1); cx.scale(scale,scale);
-  cx.fillStyle='rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(0,4,26,7,0,0,7); cx.fill();
-  cx.fillStyle='#3a2c1e'; // coque
-  cx.beginPath(); cx.moveTo(-22,0); cx.quadraticCurveTo(-24,8,-14,9); cx.lineTo(20,9); cx.quadraticCurveTo(26,4,20,0); cx.closePath(); cx.fill();
-  cx.strokeStyle='#241a10'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(-20,3); cx.lineTo(18,3); cx.stroke();
-  cx.strokeStyle='#5a4630'; cx.lineWidth=1.6; cx.beginPath(); cx.moveTo(-4,0); cx.lineTo(-4,-26); cx.stroke(); // mât
-  cx.fillStyle='#c9c2a8'; cx.beginPath(); cx.moveTo(-4,-25); cx.lineTo(12,-16); cx.lineTo(-4,-9); cx.closePath(); cx.fill(); // voile
-  cx.restore();
-}
 function drawBossRoom(t) {
   const cx = bossCtx, cv = $('bossCv'), W = cv.width, H = cv.height, bs = bossState;
-  const isVell = bs.boss === BOSS_ROSTER.vell;
   cx.save();
   // tremblement d'écran (crit / AoE non paré) : léger décalage aléatoire de toute la scène,
   // renforce la sensation d'impact et de profondeur ("4D")
   if (bs.shakeT > 0) cx.translate((Math.random()-0.5)*bs.shakeT, (Math.random()-0.5)*bs.shakeT);
-  if (isVell) {
-    // Vell : en pleine mer, ciel pâle au loin qui s'assombrit vers l'eau (demande explicite,
-    // d'après les captures de référence) — pas de dalles de pierre, juste des rides d'eau
-    const sky = cx.createLinearGradient(0,0,0,H);
-    sky.addColorStop(0,'#8fb8c9'); sky.addColorStop(.42,'#4a7a8f'); sky.addColorStop(.55,'#1c4a5e'); sky.addColorStop(1,'#0a2430');
-    cx.fillStyle = sky; cx.fillRect(0,0,W,H);
-    // pitons rocheux lointains à l'horizon (silhouette sombre, comme les captures)
-    cx.fillStyle = 'rgba(10,20,26,.55)';
-    cx.beginPath(); cx.moveTo(0,H*.42);
-    for (let i=0;i<=10;i++) { const x=i/10*W; cx.lineTo(x, H*.42 - Math.abs(Math.sin(i*1.7+7))*H*.1); }
-    cx.lineTo(W,H*.42); cx.closePath(); cx.fill();
-    // rides d'eau horizontales, ondulantes
-    cx.strokeStyle='rgba(255,255,255,.10)'; cx.lineWidth=1;
-    for (let i=0;i<9;i++) { const y = H*.5 + i*(H*.5/9);
-      cx.beginPath();
-      for (let x=0;x<=W;x+=24) cx.lineTo(x, y+Math.sin(x*0.03+t*1.2+i)*3);
-      cx.stroke();
-    }
-  } else {
-    // fond : grande salle brumeuse bleu-gris
-    const bg = cx.createLinearGradient(0,0,0,H);
-    bg.addColorStop(0,'#1a2830'); bg.addColorStop(.55,'#223038'); bg.addColorStop(1,'#10171c');
-    cx.fillStyle = bg; cx.fillRect(0,0,W,H);
-    // dalles de pierre au sol (bandes qui s'élargissent vers le bas = légère perspective)
-    cx.strokeStyle = 'rgba(0,0,0,.28)'; cx.lineWidth = 1;
-    for (let i=0;i<=10;i++){ const p=bossProj(0,i/10); cx.beginPath(); cx.moveTo(0,p.y); cx.lineTo(W,p.y); cx.stroke(); }
-    for (let i=0;i<=8;i++){ const top=bossProj(i/8,0), bot=bossProj(i/8,1); cx.beginPath(); cx.moveTo(top.x,top.y); cx.lineTo(bot.x,bot.y); cx.stroke(); }
-  }
+  // fond : grande salle brumeuse bleu-gris
+  const bg = cx.createLinearGradient(0,0,0,H);
+  bg.addColorStop(0,'#1a2830'); bg.addColorStop(.55,'#223038'); bg.addColorStop(1,'#10171c');
+  cx.fillStyle = bg; cx.fillRect(0,0,W,H);
+  // dalles de pierre au sol (bandes qui s'élargissent vers le bas = légère perspective)
+  cx.strokeStyle = 'rgba(0,0,0,.28)'; cx.lineWidth = 1;
+  for (let i=0;i<=10;i++){ const p=bossProj(0,i/10); cx.beginPath(); cx.moveTo(0,p.y); cx.lineTo(W,p.y); cx.stroke(); }
+  for (let i=0;i<=8;i++){ const top=bossProj(i/8,0), bot=bossProj(i/8,1); cx.beginPath(); cx.moveTo(top.x,top.y); cx.lineTo(bot.x,bot.y); cx.stroke(); }
   // brume de fond en parallaxe : dérive LENTE et indépendante du tremblement d'écran — donne au
   // donjon une vraie impression de profondeur/volume ("4D") au-delà du simple décor plat
   const fogDrift = Math.sin(t*0.15)*16;
   const fog = cx.createRadialGradient(W/2+fogDrift, H*0.32, W*0.08, W/2+fogDrift, H*0.32, W*0.8);
-  fog.addColorStop(0,'rgba(255,255,255,0)'); fog.addColorStop(1,`rgba(0,0,0,${isVell?.22:.4})`);
+  fog.addColorStop(0,'rgba(255,255,255,0)'); fog.addColorStop(1,'rgba(0,0,0,.4)');
   cx.fillStyle = fog; cx.fillRect(0,0,W,H);
-  if (isVell) { // bateaux des joueurs, de part et d'autre — demande explicite du 2026-07-08
-    drawVellBoat(cx, W*VELL_BOATS[0].x, H*VELL_BOATS[0].y, 1.3, true);
-    drawVellBoat(cx, W*VELL_BOATS[1].x, H*VELL_BOATS[1].y, 1.3, false);
-  }
   // braises de corruption en arrière-plan (profondeur : plus loin = plus petit/lent/transparent)
   for (const e of bs.embers) {
     if (e.depth > 0.6) continue; // couche lointaine, DERRIÈRE le boss
@@ -3370,22 +3233,6 @@ function drawBossRoom(t) {
     cx.beginPath(); cx.arc(ex, ey, 1.5+2*e.depth, 0, 7); cx.fill();
   }
   cx.globalAlpha = 1; cx.shadowBlur = 0;
-  // boulets de canon tirés des bateaux (Vell uniquement) : chaque hit = 1 boulet, h.life 1→0 sert de
-  // progression de vol (le bateau tire du côté le plus proche de x du hit) — demande explicite :
-  // "affiche ça, l'animation de boulet ... avec un tic à chaque boulet"
-  if (isVell) {
-    for (const h of bs.hits) {
-      const boat = VELL_BOATS[h.x < 0.5 ? 0 : 1];
-      const bx = W*boat.x, by = H*boat.y - 20;
-      const prog = 1-h.life; // 0 au départ du bateau, 1 à l'impact
-      const px = bx + (bpos.x-bx)*prog;
-      const py = by + (bpos.y-by)*prog - Math.sin(prog*Math.PI)*70; // arc parabolique
-      cx.fillStyle = '#1a1a1a';
-      cx.beginPath(); cx.arc(px, py, 4.5, 0, 7); cx.fill();
-      cx.strokeStyle = 'rgba(200,200,200,.4)'; cx.lineWidth = 1.5;
-      cx.beginPath(); cx.moveTo(px,py); cx.lineTo(px-(bpos.x-bx)*0.05, py-(bpos.y-by)*0.05+8); cx.stroke();
-    }
-  }
   // impacts de dégâts sur le boss
   for (const h of bs.hits) {
     const hy = bpos.y - (1-h.life)*40;
@@ -3396,39 +3243,27 @@ function drawBossRoom(t) {
     cx.globalAlpha = 1;
   }
   cx.textAlign='left';
-  // ---- AoE au sol : cercle qui grandit (telegraph) puis explosion, sauf derrière les piliers —
-  // pour Vell (2026-07-08), reskin "vague" bleu/écume : le joueur doit PLONGER au lieu de se cacher
-  // derrière un pilier, mais le mécanisme sûr/pas-sûr sous-jacent reste identique
-  const aoeCol = isVell ? [90,180,220] : [224,70,60];
+  // ---- AoE au sol : cercle rouge qui grandit (telegraph) puis explosion, sauf derrière les piliers
   if (bs.aoePhase==='telegraph' || bs.aoePhase==='blast') {
     const c = bossProj(0.5, 0.6);
     const rad = Math.min(W,H)*0.55;
     if (bs.aoePhase==='telegraph') {
       const prog = Math.min(1, bs.aoeT/2.2);
-      cx.fillStyle = `rgba(${aoeCol[0]},${aoeCol[1]},${aoeCol[2]},${0.10+0.14*prog})`;
+      cx.fillStyle = `rgba(224,70,60,${0.10+0.14*prog})`;
       cx.beginPath(); cx.ellipse(c.x, c.y, rad, rad*0.55, 0, 0, 7); cx.fill();
-      cx.strokeStyle = `rgba(${isVell?'160,220,255':'255,80,60'},${0.5+0.4*Math.sin(t*10)})`; cx.lineWidth = 3;
+      cx.strokeStyle = `rgba(255,80,60,${0.5+0.4*Math.sin(t*10)})`; cx.lineWidth = 3;
       cx.beginPath(); cx.ellipse(c.x, c.y, rad*prog, rad*0.55*prog, 0, 0, 7); cx.stroke();
     } else {
       const a = 1-Math.min(1,bs.aoeT/0.45);
-      cx.fillStyle = `rgba(${isVell?'160,220,255':'255,90,60'},${0.55*a})`;
+      cx.fillStyle = `rgba(255,90,60,${0.55*a})`;
       cx.beginPath(); cx.ellipse(c.x, c.y, rad, rad*0.55, 0, 0, 7); cx.fill();
     }
-    // zones sûres (pilier en pierre, ou bouée de plongée pour Vell) — petite ombre bleutée = "à couvert"
+    // zones sûres derrière chaque pilier (petite ombre bleutée = "à couvert")
     for (const p of bs.pillars) { const s = bossProj(p.x, p.y+0.05);
       cx.fillStyle = 'rgba(120,180,255,.16)'; cx.beginPath(); cx.ellipse(s.x, s.y, 40, 16, 0, 0, 7); cx.fill(); }
   }
-  // ---- éléments au sol triés par profondeur (piliers/bouées + héros) pour un rendu cohérent
-  const drawables = bs.pillars.map(p => ({ ny:p.y, fn:()=>{
-    const s = bossProj(p.x,p.y);
-    if (isVell) { // bouée de plongée : simple flotteur rond + drapeau, au lieu d'un pilier de pierre
-      cx.fillStyle='rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(s.x,s.y+2,14,5,0,0,7); cx.fill();
-      cx.fillStyle='#c94a3a'; cx.beginPath(); cx.arc(s.x,s.y-4,9,0,7); cx.fill();
-      cx.fillStyle='#fff'; cx.beginPath(); cx.arc(s.x,s.y-4,9,0,Math.PI); cx.fill();
-      cx.strokeStyle='#5a4630'; cx.lineWidth=1.4; cx.beginPath(); cx.moveTo(s.x,s.y-13); cx.lineTo(s.x,s.y-30); cx.stroke();
-      cx.fillStyle='#e8c96a'; cx.beginPath(); cx.moveTo(s.x,s.y-30); cx.lineTo(s.x+10,s.y-26); cx.lineTo(s.x,s.y-22); cx.closePath(); cx.fill();
-    } else drawStonePillar(cx, s.x, s.y, Math.min(W,H)/500*1.6);
-  } }));
+  // ---- éléments au sol triés par profondeur (piliers + héros) pour un rendu cohérent
+  const drawables = bs.pillars.map(p => ({ ny:p.y, fn:()=>{ const s=bossProj(p.x,p.y); drawStonePillar(cx, s.x, s.y, Math.min(W,H)/500*1.6); } }));
   drawables.push({ ny:bs.py, fn:()=>{
     const s = bossProj(bs.px, bs.py);
     cx.fillStyle='rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(s.x, s.y, 12, 5, 0, 0, 7); cx.fill();
@@ -3526,84 +3361,33 @@ function openAchievements() {
 // chaque zone (voir markZoneCollected/compendiumZoneCount). Le détail par objet ci-dessous (trash/
 // matériau/bijou/craft) est juste informatif, pour savoir ce qu'on a déjà croisé dans chaque zone.
 function compendiumItemDone(name) { return (S.lootByItem[name]||0) > 0; }
-// clic sur un objet du Compendium : montre (halo doré) TOUTES les zones qui le lootent, et propose
-// d'y aller directement — demande explicite du 2026-07-08 ("je clique sur Ceinture de Naru j'ai un
-// halo qui me montre toutes les zones qui loot ça et je choisis laquelle je veux")
-function compendiumHighlightItem(name) {
-  document.querySelectorAll('.compZoneRow').forEach(r => r.classList.remove('compHalo'));
-  const matches = [];
-  ZONES.forEach((z,zi) => {
-    const tier = gearTierForZone(zi);
-    const names = [tr(z.loot.trash.name), tr(tier.material.name), tr(z.loot.jackpot.name), tr(z.loot.craft.name)];
-    if (names.includes(name)) matches.push(zi);
-  });
-  matches.forEach(zi => { const row = document.querySelector(`.compZoneRow[data-zi="${zi}"]`); if (row) row.classList.add('compHalo'); });
-  const picker = $a('compZonePicker'); if (!picker) return;
-  picker.innerHTML = matches.length
-    ? `<b>${escapeHtml(name)}</b> ${LANG==='fr'?'— farme ici :':'— farm here:'} ` +
-      matches.map(zi => `<button class="compGoZoneBtn" data-zi="${zi}">${tr(ZONES[zi].name)}</button>`).join('')
-    : `<span class="admEmpty">${LANG==='fr'?'Aucune zone trouvée pour cet objet':'No zone found for this item'}</span>`;
-  picker.querySelectorAll('.compGoZoneBtn').forEach(btn => {
-    btn.onclick = () => {
-      const zi = parseInt(btn.dataset.zi,10);
-      if (atVelia || zi !== zoneIdx) travelTo(zi);
-      $a('infoOverlay').classList.remove('open');
-    };
-  });
-}
-let compendiumTab = 'zones'; // 'zones' | 'bosses' — demande explicite du 2026-07-08 ("refais moi le compendium pour qu'il ressemble a quelque chose de lisible")
 function renderCompendiumHtml() {
-  const zc = compendiumZoneCount(), bc = compendiumBossCount();
-  const total = compendiumTotalCount(), max = compendiumTotalMax(), pct = compendiumPct();
-  const bossCountMax = Object.keys(BOSS_ROSTER).length;
-  const summaryCard = `<div class="admStatTiles">
-      <div class="admStatTile"><div class="astLbl">📖 ${LANG==='fr'?'Progression':'Progress'}</div><div class="astVal">${total} / ${max}</div></div>
-      <div class="admStatTile"><div class="astLbl">🏃 SPD</div><div class="astVal">+${pct}%</div></div>
-      <div class="admStatTile"><div class="astLbl">⚔️ ${LANG==='fr'?'Dégâts':'DMG'}</div><div class="astVal">+${pct}%</div></div>
-      <div class="admStatTile"><div class="astLbl">🛡️ ${LANG==='fr'?'Esquive':'Dodge'}</div><div class="astVal">+${pct}%</div></div>
-    </div>
-    <div class="admSummary">${LANG==='fr'?`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Boss`:`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Bosses`}</div>
-    <div class="admHint">${LANG==='fr'
-      ? 'Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif, jamais un multiplicateur). Clique sur un objet ci-dessous pour voir dans quelles zones le farmer.'
-      : 'Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive, never a multiplier). Click an item below to see which zones farm it.'}</div>
-    <div id="compZonePicker" class="compZonePicker"></div>
-    <div class="catTabs">
-      <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${LANG==='fr'?'Zones':'Zones'} (${zc}/${ZONES.length})</button>
-      <button class="catTab compTab${compendiumTab==='bosses'?' active':''}" data-tab="bosses">🐋 World Bosses (${bc}/${bossCountMax})</button>
-    </div>`;
-  let bodyHtml;
-  if (compendiumTab === 'bosses') {
-    bodyHtml = Object.entries(BOSS_ROSTER).map(([id,b]) => {
-      const unlocked = !!S.bossesKilled[id];
-      return `<div class="achRow${unlocked?' done':''}">` +
-        `<div class="achIcon">${b.icon}</div>` +
-        `<div class="achInfo"><div class="achName">${b.name[LANG]}</div>` +
-        `<div class="achDesc">${unlocked?(LANG==='fr'?'Vaincu au moins une fois':'Defeated at least once'):(LANG==='fr'?'Pas encore vaincu':'Not defeated yet')}</div></div>` +
-        `<div class="achReward">${unlocked?'+1% ✓':'🔒'}</div></div>`;
-    }).join('');
-  } else {
-    bodyHtml = ZONES.map((z,zi) => {
-      const tier = gearTierForZone(zi);
-      const items = [ tr(z.loot.trash.name), tr(tier.material.name), tr(z.loot.jackpot.name), tr(z.loot.craft.name) ];
-      const unlocked = !!S.zonesCollected[zi];
-      const itemsHtml = items.map(name => `<span class="compItem${compendiumItemDone(name)?' done':''}" data-item="${escapeHtml(name)}">${compendiumItemDone(name)?'✓':'○'} ${escapeHtml(name)}</span>`).join('');
-      return `<div class="achRow compZoneRow${unlocked?' done':''}" data-zi="${zi}">` +
-        `<div class="achIcon">${unlocked?'📖':'🔒'}</div>` +
-        `<div class="achInfo"><div class="achName">${tr(z.name)}</div>` +
-        `<div class="achDesc compItems">${itemsHtml}</div></div>` +
-        `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Non visitée':'Not visited')}</div></div>`;
-    }).join('');
-  }
-  return summaryCard + bodyHtml;
+  const zoneCount = compendiumZoneCount();
+  const pct = compendiumPct();
+  const rowsHtml = ZONES.map((z,zi) => {
+    const tier = gearTierForZone(zi);
+    const items = [
+      { label: tr(z.loot.trash.name) },
+      { label: tr(tier.material.name) },
+      { label: tr(z.loot.jackpot.name) },
+      { label: tr(z.loot.craft.name) },
+    ];
+    const unlocked = !!S.zonesCollected[zi];
+    const itemsHtml = items.map(it => `<span class="compItem${compendiumItemDone(it.label)?' done':''}">${compendiumItemDone(it.label)?'✓':'○'} ${escapeHtml(it.label)}</span>`).join('');
+    return `<div class="achRow${unlocked?' done':''}">` +
+      `<div class="achIcon">${unlocked?'📖':'🔒'}</div>` +
+      `<div class="achInfo"><div class="achName">${tr(z.name)}</div>` +
+      `<div class="achDesc compItems">${itemsHtml}</div></div>` +
+      `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Non visitée':'Not visited')}</div></div>`;
+  }).join('');
+  return `<div class="achSummary">${zoneCount} / ${ZONES.length} ${LANG==='fr'?'zones':'zones'} — +${pct}% SPD · +${pct}% ${LANG==='fr'?'Dégâts':'DMG'} · +${pct}% ${LANG==='fr'?'Esquive':'Dodge'}</div>` +
+    `<div class="admHint">${LANG==='fr'
+      ? 'Ramasse au moins 1 objet dans chaque zone pour débloquer son bonus permanent : +1% Vitesse, +1% Dégâts, +1% Esquive PAR zone (additif, jamais un multiplicateur — les 11 zones donnent donc +11% de chaque, pas +100%).'
+      : 'Loot at least 1 item in each zone to unlock its permanent bonus: +1% Speed, +1% Damage, +1% Dodge PER zone (additive, never a multiplier — all 11 zones give +11% each, not +100%).'}</div>` +
+    rowsHtml;
 }
 function openCompendium() {
   openInfo(LANG==='fr'?'📖 Compendium':'📖 Compendium', renderCompendiumHtml());
-  $a('infoBody').querySelectorAll('.compTab').forEach(btn => {
-    btn.onclick = () => { compendiumTab = btn.dataset.tab; openCompendium(); };
-  });
-  $a('infoBody').querySelectorAll('.compItem').forEach(el => {
-    el.onclick = () => compendiumHighlightItem(el.dataset.item);
-  });
 }
 
 // pool de quêtes journalières : 3 tirées au hasard chaque jour parmi ces familles, avec une
@@ -5883,7 +5667,6 @@ function goToVelia() {
 function die() {
   goToVelia();
   P.hp = effHpMax()*.5;
-  S.lastDeathAt = Date.now(); // sert au bonus de zone des World Boss ("certifié sans mort 3 min", voir endBossFight)
   const banner = $('deathBanner');
   if (banner) {
     banner.textContent = LANG==='fr'
@@ -9067,17 +8850,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V128', d:'08/07/2026 06:00', name:{fr:'Vell en mer, Coeur de Vell, bonus de zone, Compendium refait', en:'Vell at sea, Heart of Vell, zone bonus, reworked Compendium'}, fr:[
-      {t:'new', tx:'Combat de Vell entièrement repensé d\'après les captures fournies : arène en pleine mer (ciel, pitons rocheux au loin, rides d\'eau), 2 bateaux qui tirent des boulets de canon animés sur le monstre (avec un tic de dégâts à chaque impact), et sa charge périodique devient "PLONGE !" — il faut se réfugier près d\'une bouée au lieu de se cacher derrière un pilier'},
-      {t:'new', tx:'Vell a 5% de chance de looter le Coeur de Vell à sa mort — une roue de récompense qui tourne toute seule s\'affiche en fin de combat, révélant si tu l\'as obtenu (visible même quand tu ne l\'as pas)'},
-      {t:'new', tx:'La récompense de silver/matériau des World Boss dépend maintenant de ta meilleure zone découverte, mais SEULEMENT si tu es "certifié sans mort" depuis au moins 3 minutes — sinon aucun bonus de zone'},
-      {t:'new', tx:'Le Compendium suit maintenant aussi les World Boss vaincus (même bonus +1% qu\'une zone) et a été entièrement refait : carte de progression claire (SPD/Dégâts/Esquive), onglets Zones/World Boss, et un clic sur un objet montre en halo doré toutes les zones qui le lootent avec un bouton pour y aller directement'},
-    ], en:[
-      {t:'new', tx:'Vell\'s fight fully reworked from the provided reference images: an open-sea arena (sky, distant rock spires, water ripples), 2 boats firing animated cannonballs at the creature (with a damage tick on each impact), and its periodic charge becomes "DIVE!" — you must take shelter near a buoy instead of hiding behind a pillar'},
-      {t:'new', tx:'Vell has a 5% chance to drop the Heart of Vell on death — a reward wheel spins on its own at the end of the fight, revealing whether you got it (shown even when you didn\'t)'},
-      {t:'new', tx:'World Boss silver/material rewards now scale with your best discovered zone, but ONLY if you\'ve been "death-free certified" for at least 3 minutes — otherwise no zone bonus'},
-      {t:'new', tx:'The Compendium now also tracks defeated World Bosses (same +1% bonus as a zone) and was completely reworked: a clear progress card (SPD/Damage/Dodge), Zones/World Boss tabs, and clicking an item shows a gold halo on every zone that drops it with a button to travel there directly'},
-    ] },
   { v:'V127', d:'08/07/2026 05:00', name:{fr:'Loot Velia, Pierre de Cron, Pierre Noire recolorée', en:'Velia loot, Cron Stone, Black Stone recolored'}, fr:[
       {t:'fix', tx:'Velia (zone paisible) affichait par erreur les stats de la dernière zone farmée dans le cadre "Butin" — affiche maintenant un message clair ("aucun monstre, aucun loot possible ici") suivi d\'un récapitulatif du loot de TOUTES les zones de Velia, zone par zone'},
       {t:'change', tx:'La Pierre Noire (palier Yuria/vert) est recolorée en vert (icône + couleur), au lieu du noir/violet d\'origine — cohérent avec le palier qu\'elle sert à optimiser'},
