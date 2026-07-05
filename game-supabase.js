@@ -2328,6 +2328,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V190', d:'06/07/2026 04:45', name:{fr:'Badge NEW sur contenu modifié, carré unique en ligne/inscrits, niveau à côté de la vie', en:'NEW badge on updated content, single online/registered box, level next to HP'}, fr:[
+      {t:'new', sub:'interface', tx:'Badge "NEW" clignotant pendant 24h sur Wiki/Compendium/Codex/Succès après une modification de contenu, visible pour tout le monde (pas besoin de l\'avoir déjà vu ou pas)'},
+      {t:'change', sub:'interface', severity:'minor', tx:'"En ligne" et "Inscrits" fusionnés dans un seul carré (au lieu de 2 boîtes empilées séparément)'},
+      {t:'change', sub:'interface', tx:'Niveau et % d\'XP réalignés à côté de la barre de vie (au lieu d\'au-dessus)'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Blinking "NEW" badge for 24h on Wiki/Compendium/Codex/Achievements after a content update, visible to everyone (no need to have seen it or not)'},
+      {t:'change', sub:'interface', severity:'minor', tx:'"Online" and "Registered" merged into a single box (instead of 2 separately stacked boxes)'},
+      {t:'change', sub:'interface', tx:'Level and XP % realigned next to the HP bar (instead of above it)'},
+    ] },
   { v:'V189', d:'06/07/2026 04:00', name:{fr:'Cartes alignées sur Statistiques, loot normal si overstuff, niveau sur la ligne PA/PD/GS', en:'Cards aligned to Stats, normal loot when overgeared, level on the AP/DP/GS line'}, fr:[
       {t:'fix', sub:'interface', tx:'"Zones de farm" et "Loot de cette zone" font désormais exactement la même hauteur que "Statistiques" (au lieu d\'un plafond fixe de 60% d\'écran sans rapport) — le surplus de contenu défile toujours en interne'},
       {t:'change', sub:'pve', severity:'major', tx:'Loot : plus de bonus (+10%) ni de malus anti-overfarm au-delà du 100% adapté à la zone — un stuff insuffisant reste pénalisé (jusqu\'à -70%), mais un stuff adapté OU largement overstuff donne désormais toujours un loot normal'},

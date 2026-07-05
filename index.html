@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=189">
+<link rel="stylesheet" href="styles.css?v=190">
 </head>
 <body>
 
@@ -81,9 +81,9 @@
   <div id="gameBar">
     <button id="btnDailyQuests"><span data-i18n="btnDailyQuests">🗒️ Quêtes</span><span id="questBadge"></span></button>
     <button id="btnMailbox"><span data-i18n="btnMailbox">📬 Courrier</span><span id="mailBadge"></span></button>
-    <button id="btnCompendium" data-i18n="btnCompendium">📖 Compendium</button>
-    <button id="btnCodex" data-i18n="btnCodex">📚 Codex</button>
-    <button id="btnAchievements" data-i18n="btnAchievements">🏅 Succès</button>
+    <button id="btnCompendium"><span data-i18n="btnCompendium">📖 Compendium</span><span class="contentNewBadge" id="newBadgeCompendium">NEW</span></button>
+    <button id="btnCodex"><span data-i18n="btnCodex">📚 Codex</span><span class="contentNewBadge" id="newBadgeCodex">NEW</span></button>
+    <button id="btnAchievements"><span data-i18n="btnAchievements">🏅 Succès</span><span class="contentNewBadge" id="newBadgeAchievements">NEW</span></button>
     <button id="btnMarket" title="BETA — en construction, encore peu fonctionnel"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
   </div>
@@ -102,15 +102,17 @@
 
   <!-- infos moins utiles au quotidien, reléguées en bas (2026-07-05, demande explicite) -->
   <div id="metaBar">
-    <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
-    <div id="registeredCounter">👤 <b id="registeredTotal">—</b> <span data-i18n="registeredLbl">inscrits</span></div>
+    <div id="onlineStatsBox">
+      <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
+      <div id="registeredCounter">👤 <b id="registeredTotal">—</b> <span data-i18n="registeredLbl">inscrits</span></div>
+    </div>
     <div id="langToggle">
       <span class="langOpt" data-lang="fr">🇫🇷 FR</span>
       <span class="langOpt" data-lang="en">🇬🇧 EN</span>
       <div id="langThumb"></div>
     </div>
     <button id="btnNotifCenter"><span data-i18n="btnNotifCenter">🔔 Notifications</span><span id="notifBadge"></span></button>
-    <button id="btnWiki" data-i18n="btnWiki">📖 Wiki</button>
+    <button id="btnWiki"><span data-i18n="btnWiki">📖 Wiki</span><span class="contentNewBadge" id="newBadgeWiki">NEW</span></button>
     <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge"></span></button>
     <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
     <div id="menuSideToggle">
@@ -443,7 +445,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=189"></script>
-<script src="game-supabase.js?v=189"></script>
+<script src="game-core.js?v=190"></script>
+<script src="game-supabase.js?v=190"></script>
 </body>
 </html>

@@ -4767,6 +4767,29 @@ function invSignature() {
 }
 function zoneSignature() { return zoneIdx + ':' + atVelia + ':' + Math.round(apEff()) + ':' + Math.round(totalDP()); }
 
+// badge "NEW" pendant 24h sur Wiki/Compendium/Codex/Succès après une modification de contenu
+// (demande explicite du 2026-07-06 : "affiche NEW pendant 24h sur les modifications du wiki,
+// compendium, succes, codex modif de text etc") -- fenêtre GLOBALE (pas par joueur) : visible pour
+// tout le monde pendant 24h à partir de la date ci-dessous, PAS liée à si CE joueur l'a déjà vu.
+// RÈGLE À SUIVRE DÉSORMAIS : mettre à jour la date correspondante à chaque fois qu'une modification
+// de contenu (texte, entrée, catégorie...) est faite dans un de ces 4 panneaux.
+const CONTENT_UPDATE_TIMESTAMPS = {
+  wiki:         '2026-07-06T04:30:00Z',
+  compendium:   '2026-07-06T04:30:00Z',
+  codex:        '2026-07-06T04:30:00Z',
+  achievements: '2026-07-06T04:30:00Z',
+};
+const CONTENT_NEW_WINDOW_MS = 24 * 3600 * 1000;
+function refreshContentNewBadges() {
+  const now = Date.now();
+  const map = { wiki:'newBadgeWiki', compendium:'newBadgeCompendium', codex:'newBadgeCodex', achievements:'newBadgeAchievements' };
+  for (const key in map) {
+    const el = $(map[key]); if (!el) continue;
+    const ts = new Date(CONTENT_UPDATE_TIMESTAMPS[key]).getTime();
+    el.classList.toggle('show', !isNaN(ts) && (now - ts) < CONTENT_NEW_WINDOW_MS);
+  }
+}
+
 function hud() {
   refreshStatsOnly();
   drawZoneMobIcon();
@@ -4784,6 +4807,7 @@ function hud() {
   ensureLoyaltyGrant();
   updateMailBadge();
   syncFarmCardHeights();
+  refreshContentNewBadges();
 }
 // aligne la hauteur des cartes "Zones de farm" et "Loot de cette zone" sur celle de la carte
 // Statistiques (demande explicite du 2026-07-06 : "fait en sorte que les carte zone de farm et

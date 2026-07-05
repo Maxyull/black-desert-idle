@@ -131,17 +131,16 @@
   #updateToast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
   #updateToast .updVer { color:var(--gold); font-weight:bold; }
 
-  #onlineCounter {
+  /* un seul carré pour "en ligne" + "inscrits" (demande explicite du 2026-07-06 : "fais un seul
+     carré avec en ligne et inscrit juste en dessous") -- avant, 2 boîtes distinctes empilées */
+  #onlineStatsBox {
     background:rgba(10,9,12,.6); border:1px solid #2c2a33; padding:8px 14px;
-    font-size:11px; color:var(--ink-dim); letter-spacing:.3px; text-align:center;
+    text-align:center; display:flex; flex-direction:column; gap:3px;
   }
+  #onlineCounter { font-size:11px; color:var(--ink-dim); letter-spacing:.3px; }
   #onlineCounter b { color:#8fc98a; }
   #onlineGuests { color:var(--ink-dim); }
-  /* nombre total d'inscrits, sous le compteur "en ligne" (2026-07-05, demande explicite) */
-  #registeredCounter {
-    background:rgba(10,9,12,.6); border:1px solid #2c2a33; padding:6px 14px;
-    font-size:10.5px; color:var(--ink-dim); letter-spacing:.3px; text-align:center;
-  }
+  #registeredCounter { font-size:10.5px; color:var(--ink-dim); letter-spacing:.3px; }
   #registeredCounter b { color:#9cc9e8; }
   #updateToast button {
     background:var(--gold); color:#1a1712; border:none; font-weight:bold;
@@ -203,13 +202,13 @@
   /* PV au-dessus de la mana, potion de PV au-dessus de la potion de mana (2026-07-05,
      demande explicite) -- 2 colonnes plutôt qu'une rangée qui déborderait sur mobile */
   #hpMpStack, #potStack { display:flex; flex-direction:column; gap:4px; }
-  /* niveau + % d'XP déplacés au-dessus de la barre de PV, plus dans l'inventaire (2026-07-06,
-     demande explicite) -- même largeur que les barres pour rester bien alignés. Agrandi façon BDO
-     le 2026-07-06 (demande explicite, capture à l'appui) : le niveau est LA info qu'on veut lire
-     d'un coup d'œil, en gros et gras, le % d'XP reste petit juste en dessous. */
-  #lvlHpCol { display:flex; flex-direction:column; gap:2px; }
+  /* niveau + % d'XP déplacés à côté de la barre de PV, plus dans l'inventaire (2026-07-06,
+     demande explicite : "aligne le niveau et le % a coté de la barre de vie" -- remplace l'ancien
+     empilement au-dessus). Agrandi façon BDO (capture à l'appui) : niveau et % aussi gros l'un que
+     l'autre, empilés dans leur propre colonne étroite, juste à gauche des barres PV/mana. */
+  #lvlHpCol { display:flex; flex-direction:row; align-items:center; gap:8px; }
   #lvlHpCol #lvlXpRow {
-    display:flex; flex-direction:column; width:170px; margin:0; padding:0; border:none;
+    display:flex; flex-direction:column; width:auto; margin:0; padding:0; border:none;
   }
   #lvlXpTop { display:flex; align-items:baseline; gap:5px; text-shadow:0 1px 3px #000; }
   #lvlXpLbl { font-size:12px; color:var(--ink-dim); font-weight:normal; }
@@ -500,13 +499,6 @@
   .invFoot .bar.wbar > div.over { background:linear-gradient(90deg,#8a3a30,var(--danger)); }
   #wTxt.bad { color:var(--danger); font-weight:bold; }
   .invFoot .money { display:flex; align-items:center; gap:6px; color:var(--gold); margin-top:6px; }
-  /* niveau + % d'XP façon BDO (peu de décimales visibles = friction énorme aux hauts niveaux) */
-  #lvlXpRow {
-    display:flex; align-items:baseline; gap:6px; font-size:11.5px; color:var(--ink-dim);
-    margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid #2c2a33;
-  }
-  #lvlXpRow b { color:var(--ink); font-size:13px; }
-  #invXpPct { margin-left:auto; color:var(--gold); font-variant-numeric:tabular-nums; }
 
   /* tooltip / actions contextuelles */
   #itemPop {
@@ -1015,6 +1007,15 @@
     animation:patchNewFade 1.6s infinite;
   }
   @keyframes patchNewFade { 0%,100% { opacity:1; } 50% { opacity:.55; } }
+  /* badge "NEW" pendant 24h sur Wiki/Compendium/Codex/Succès après une modif de contenu (demande
+     explicite du 2026-07-06) -- même style que .patchNewTag, masqué par défaut (voir
+     refreshContentNewBadges dans game-core.js) */
+  .contentNewBadge {
+    display:none; background:var(--danger); color:#fff; font-size:8px; font-weight:bold;
+    letter-spacing:.5px; padding:1px 5px; margin-left:5px; border-radius:2px; vertical-align:middle;
+    animation:patchNewFade 1.6s infinite;
+  }
+  .contentNewBadge.show { display:inline-block; }
 
   /* ===== modal générique (wiki / patch notes) ===== */
   #infoOverlay {
@@ -1687,7 +1688,6 @@
        dans la carte Statistiques en dessous) */
     #hpBar, #mpBar { width:100px; }
     #mpBar { height:8px; }
-    #lvlHpCol #lvlXpRow { width:100px; }
     #lvlXpLbl { font-size:10px; }
     #lvlHpCol #lvlXpRow b { font-size:16px; }
     #lvlHpCol #invXpPct { font-size:16px; }
