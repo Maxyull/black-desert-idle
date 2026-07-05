@@ -3016,7 +3016,15 @@ function wolvesTick(dt) {
             if (Math.random() < dodgeChance) {
               floatTxt(P.x,P.y,80,LANG==='fr'?'Esquivé !':'Dodged!',{blue:true});
             } else {
-              const dmg = p.dmg*(0.8+Math.random()*.4)*mitig;
+              const dmgRaw = p.dmg*(0.8+Math.random()*.4)*mitig;
+              // plafond à 30% des PV max par coup (demande explicite du 2026-07-06 : "les monstres
+              // ... te tue en 3 coups dans tous les cas") -- sans ça, un très gros écart de PD (le
+              // multiplicateur dmgTakenMult monte jusqu'à ×4.5) combiné aux dégâts bruts élevés des
+              // zones avancées pouvait carrément one-shot (vérifié : 544 dégâts pour 478 PV max en
+              // zone Grunil avec un stuff Naru) -- garantit désormais AU MOINS ~4 coups pour mourir
+              // depuis la vie pleine, même dans le pire des cas, sans adoucir la vraie punition pour
+              // un stuff juste un peu sous le seuil (le plafond ne s'applique alors jamais).
+              const dmg = Math.min(dmgRaw, effHpMax()*0.3);
               P.hp -= dmg;
               floatTxt(P.x,P.y,80,'-'+Math.ceil(dmg),{hurt:true});
               if (P.hp <= 0) {
@@ -4597,7 +4605,7 @@ function buildZoneList() {
         `<span class="zname">${tr(z.name)}</span>` +
         `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
         `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
-        `<span class="zPlayerCount"${pCount?'':' style="display:none"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span>` +
+        `<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span>` +
         `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
       row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
       row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
@@ -4613,7 +4621,7 @@ function updateZonePlayerCountBadges() {
     const el = row.querySelector('.zPlayerCount'); if (!el) return;
     const n = (zonePlayerCounts && zonePlayerCounts[i]) || 0;
     el.textContent = `👥 ${n}`;
-    el.style.display = n ? '' : 'none';
+    el.style.visibility = n ? '' : 'hidden';
   });
 }
 // rafraîchit juste le halo du 👁 sans reconstruire toute la liste (appelé à chaque aperçu de loot)

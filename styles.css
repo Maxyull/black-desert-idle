@@ -334,7 +334,10 @@
   .zRow.veliaRow .zBadge { color:#8fc98a; border-color:#8fc98a; }
   .zBadge { font-size:9px; letter-spacing:.5px; padding:1px 6px; border:1px solid; white-space:nowrap; flex-shrink:0; }
   /* nombre de joueurs actuellement sur cette zone (2026-07-06, demande explicite) */
-  .zPlayerCount { font-size:9px; color:var(--ink-dim); white-space:nowrap; flex-shrink:0; }
+  /* largeur fixe + visibility (jamais display:none) : le bouton 👁 reste TOUJOURS aligné à la même
+     position d'une ligne à l'autre, que la zone ait des joueurs ou non (demande explicite du
+     2026-07-06 : "en aucun cas le compteur de joueurs dois faire bouger le texte") */
+  .zPlayerCount { font-size:9px; color:var(--ink-dim); white-space:nowrap; flex-shrink:0; width:26px; text-align:right; }
   .b-red { color:var(--r-red); border-color:var(--r-red); }
   .b-orange { color:var(--r-orange); border-color:var(--r-orange); }
   .b-green { color:var(--r-green); border-color:var(--r-green); }
