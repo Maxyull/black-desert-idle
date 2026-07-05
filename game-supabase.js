@@ -2223,6 +2223,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V180', d:'05/07/2026 21:30', name:{fr:'Carte de loot plafonnée avec défilement', en:'Loot card capped with scrolling'}, fr:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'La carte "Loot dans cette zone" (notamment la vue condensée de toutes les zones à Velia) pouvait déborder largement sous les cartes voisines — plafonnée avec un défilement interne, comme la liste des zones (V178)'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'The "Loot in this zone" card (especially the condensed all-zones view at Velia) could overflow well below the neighboring cards — capped with internal scrolling, like the zone list (V178)'},
+    ] },
   { v:'V179', d:'05/07/2026 21:00', name:{fr:'Système de mana, barre d\'incantation repensée, zone dangereuse durcie', en:'Mana system, redesigned cast bar, harsher dangerous zone'}, fr:[
       {t:'new', sub:'competences', tx:'Ajout de la mana : chaque sort a désormais un coût, une régénération passive, et une potion de mana (auto-bue sous 30%) vient compléter la potion de PV'},
       {t:'improve', sub:'interface', tx:'Barre d\'incantation repensée : affichée près de la barre de sorts (plus au-dessus du personnage), la matière se retire des 2 côtés vers le centre — le sort part quand elle a entièrement disparu'},
