@@ -2960,8 +2960,7 @@ const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:
 // affiche les autres comme de petites silhouettes + pseudo — demande explicite : "tous les
 // joueurs doivent se voir dans la zone du boss", pas juste un classement textuel
 let bossChannel = null;
-let otherFighters = {}; // uid -> { pseudo, px, py } — dernière position BRUTE reçue via Presence
-let otherFightersPos = {}; // uid -> { x, y } — position lissée affichée à l'écran (voir bossLoop)
+let otherFighters = {}; // uid -> { pseudo, px, py }
 // traces de diagnostic (2026-07-08, demande explicite : "les joueurs ne se voient pas en world
 // boss") : le partage des PV/top10 fonctionne (confirmé), donc le souci se situe précisément dans
 // ce canal de présence Realtime — ces logs préfixés [BossPresence] permettent de vérifier, la
@@ -3005,7 +3004,6 @@ function leaveBossChannel() {
   if (bossChannel && sb) { try { sb.removeChannel(bossChannel); } catch(e) {} }
   bossChannel = null;
   otherFighters = {};
-  otherFightersPos = {};
 }
 // 4 piliers de la salle (coords normalisées 0..1) — on se cache DERRIÈRE (en dessous) pour éviter l'AoE
 const BOSS_PILLARS = [{x:.28,y:.44},{x:.72,y:.44},{x:.28,y:.72},{x:.72,y:.72}];
@@ -3252,20 +3250,6 @@ function bossLoop(now) {
       bossState.presenceCd = 0.35;
       bossChannel.track({ pseudo: myPseudo || 'Joueur', px: bossState.px, py: bossState.py });
     }
-    // interpolation des AUTRES joueurs (2026-07-08, demande explicite : "les animations des joueurs
-    // en World Boss doivent être en temps réel") : leur position ne nous parvient que toutes les
-    // ~0.35s via Presence (bossChannel.track ci-dessus), donc les afficher directement à la position
-    // brute reçue les faisait "sauter" au lieu de bouger fluidement — on lisse chaque frame vers la
-    // dernière position connue, à la même vitesse que le déplacement du héros local
-    for (const uid in otherFighters) {
-      const f = otherFighters[uid];
-      if (!f || typeof f.px !== 'number' || typeof f.py !== 'number') continue;
-      let p = otherFightersPos[uid];
-      if (!p) { p = otherFightersPos[uid] = { x:f.px, y:f.py }; } // 1ère fois : apparaît directement à sa position
-      const mdx = f.px-p.x, mdy = f.py-p.y, md = Math.hypot(mdx,mdy);
-      if (md > 0.0015) { const spd = 1.1*dt; p.x += mdx/md*Math.min(spd,md); p.y += mdy/md*Math.min(spd,md); }
-    }
-    for (const uid in otherFightersPos) { if (!otherFighters[uid]) delete otherFightersPos[uid]; } // joueur parti
   }
   if (Math.random() < dt*4) { // ~4 impacts/s
     const crit = Math.random() < .2;
@@ -3705,9 +3689,8 @@ function drawBossRoom(t) {
     for (const uid in otherFighters) {
       const f = otherFighters[uid];
       if (!f || typeof f.px !== 'number' || typeof f.py !== 'number') continue;
-      const p = otherFightersPos[uid] || { x:f.px, y:f.py }; // position lissée (voir bossLoop), repli sur la brute si pas encore initialisée
-      drawables.push({ ny:p.y, fn:()=>{
-        const s = bossProj(p.x, p.y);
+      drawables.push({ ny:f.py, fn:()=>{
+        const s = bossProj(f.px, f.py);
         cx.fillStyle='rgba(0,0,0,.3)'; cx.beginPath(); cx.ellipse(s.x, s.y, 10, 4, 0, 0, 7); cx.fill();
         cx.fillStyle = '#5a8a4a';
         cx.beginPath(); cx.moveTo(s.x, s.y-30); cx.lineTo(s.x-8, s.y); cx.lineTo(s.x+8, s.y); cx.closePath(); cx.fill();
@@ -9431,99 +9414,90 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V151', d:'05/07/2026 08:15', name:{fr:'Dates des notes de version, tutoriel Compendium, joueurs fluides', en:'Patch note dates, Compendium tutorial, smooth players'}, fr:[
-      {t:'fix', tx:'Les notes de version affichaient une date/heure de publication erronée (jusqu\'à plusieurs jours dans le futur) — corrigé pour les versions V91 à V150 avec l\'horodatage réel'},
-      {t:'fix', tx:'Dans le tutoriel du Compendium, les étapes 4 et 6 (une zone/le sac protégé) affichaient l\'encadré par-dessus l\'élément mis en avant au lieu d\'au-dessus — une hauteur de boîte codée en dur ne correspondait pas au texte plus long de ces étapes ; corrigé pour mesurer la vraie hauteur'},
-      {t:'change', tx:'Les autres joueurs dans l\'arène d\'un World Boss partagé bougent maintenant de façon fluide (interpolés à chaque image) au lieu de sauter d\'une position à l\'autre toutes les ~0.35s'},
-    ], en:[
-      {t:'fix', tx:'Patch notes showed a wrong publish date/time (up to several days in the future) — fixed for versions V91 through V150 with the real timestamp'},
-      {t:'fix', tx:'In the Compendium tutorial, steps 4 and 6 (a zone / the protected bag) showed the box overlapping the highlighted element instead of sitting above it — a hardcoded box height didn\'t match these steps\' longer text; fixed to measure the real height'},
-      {t:'change', tx:'Other players in a shared World Boss arena now move smoothly (interpolated every frame) instead of jumping from position to position every ~0.35s'},
-    ] },
-  { v:'V150', d:'05/07/2026 07:41', name:{fr:'Compendium : bonus de zone = TOUS les objets obtenus', en:'Compendium: zone bonus = ALL items obtained'}, fr:[
+  { v:'V150', d:'09/07/2026 01:00', name:{fr:'Compendium : bonus de zone = TOUS les objets obtenus', en:'Compendium: zone bonus = ALL items obtained'}, fr:[
       {t:'change', tx:'Le bonus +1% d\'une zone n\'est désormais actif que si ses 4 objets (trash, matériau, bijou jackpot, objet craft) ont TOUS déjà été obtenus au moins une fois — avant, un seul suffisait. Une zone incomplète affiche "Objet manquant" au lieu de "Non visitée". Entièrement recalculé à partir de tes objets déjà possédés : aucune perte de progression, le changement s\'applique rétroactivement dès le rechargement'},
     ], en:[
       {t:'change', tx:'A zone\'s +1% bonus is now only active if ALL 4 of its items (trash, material, jackpot jewel, craft item) have been obtained at least once — previously just one was enough. An incomplete zone now shows "Missing item" instead of "Not visited". Fully recomputed from items you already own: no progress lost, the change applies retroactively as soon as you reload'},
     ] },
-  { v:'V149', d:'05/07/2026 07:35', name:{fr:'Tutoriel du Compendium', en:'Compendium tutorial'}, fr:[
+  { v:'V149', d:'09/07/2026 00:30', name:{fr:'Tutoriel du Compendium', en:'Compendium tutorial'}, fr:[
       {t:'new', tx:'Nouveau bouton "?" en haut à droite du Compendium : lance un mini-tutoriel expliquant la progression globale, les 4 onglets, comment lire une zone, la Maîtrise PEN et le Sac protégé. Se lance automatiquement à la toute première ouverture du panneau, et peut être relancé à tout moment avec ce bouton'},
     ], en:[
       {t:'new', tx:'New "?" button at the top-right of the Compendium: launches a mini-tutorial explaining overall progress, the 4 tabs, how to read a zone, PEN Mastery and the Protected bag. Launches automatically the very first time the panel is opened, and can be replayed anytime with this button'},
     ] },
-  { v:'V148', d:'05/07/2026 07:29', name:{fr:'Correctif Compendium : zones marquées "Non visitée" à tort', en:'Compendium fix: zones wrongly shown "Not visited"'}, fr:[
+  { v:'V148', d:'09/07/2026 00:00', name:{fr:'Correctif Compendium : zones marquées "Non visitée" à tort', en:'Compendium fix: zones wrongly shown "Not visited"'}, fr:[
       {t:'fix', tx:'Une zone pouvait afficher "Non visitée" dans le Compendium alors que ses objets étaient déjà cochés ✓ — le suivi des zones visitées n\'existait pas encore quand ces objets avaient été ramassés. Rattrapage rétroactif au chargement : si tu possèdes déjà l\'objet unique de la zone, elle est maintenant marquée visitée (et le bonus +1% associé accordé)'},
     ], en:[
       {t:'fix', tx:'A zone could show "Not visited" in the Compendium even though its items were already checked ✓ — zone-visited tracking didn\'t exist yet when those items were first picked up. Retroactively backfilled on load: if you already own the zone\'s unique item, it\'s now marked visited (and the associated +1% bonus granted)'},
     ] },
-  { v:'V147', d:'05/07/2026 07:18', name:{fr:'Alerte double réclamation déplacée sur le salon cheat', en:'Double-claim alert moved to the cheat channel'}, fr:[
+  { v:'V147', d:'08/07/2026 23:45', name:{fr:'Alerte double réclamation déplacée sur le salon cheat', en:'Double-claim alert moved to the cheat channel'}, fr:[
       {t:'change', tx:'L\'alerte "Tentative de double réclamation" part désormais sur le salon Discord "cheat" (comme les bornages anti-triche) au lieu du salon général — déplacée côté serveur directement dans boss_claim(), plus fiable et impossible à contourner côté client'},
     ], en:[
       {t:'change', tx:'The "Double-claim attempt" alert now goes to the "cheat" Discord channel (like anti-cheat clamps) instead of the general channel — moved server-side directly into boss_claim(), more reliable and impossible to bypass client-side'},
     ] },
-  { v:'V146', d:'05/07/2026 07:06', name:{fr:'Correctif serveur : logs Discord bloqués par CORS', en:'Server fix: Discord logs blocked by CORS'}, fr:[
+  { v:'V146', d:'08/07/2026 23:30', name:{fr:'Correctif serveur : logs Discord bloqués par CORS', en:'Server fix: Discord logs blocked by CORS'}, fr:[
       {t:'fix', tx:'La fonction serveur qui relaie les événements vers Discord (boss vaincu, succès, loot rare, etc.) ne répondait pas correctement aux requêtes CORS depuis le site déployé — le navigateur bloquait l\'appel avant même qu\'il n\'atteigne le webhook, donc plus aucun log Discord ne partait. Corrigé côté serveur (Edge Function) ; vérifié par un appel de test réel depuis l\'extérieur, reçu avec succès'},
     ], en:[
       {t:'fix', tx:'The server function that relays events to Discord (boss defeated, achievements, rare loot, etc.) wasn\'t responding correctly to CORS requests from the deployed site — the browser blocked the call before it ever reached the webhook, so no Discord logs were going out anymore. Fixed server-side (Edge Function); verified with a real external test call, received successfully'},
     ] },
-  { v:'V145', d:'05/07/2026 07:02', name:{fr:'Correctif : présence des joueurs en World Boss', en:'Fix: player presence in World Boss'}, fr:[
+  { v:'V145', d:'08/07/2026 23:00', name:{fr:'Correctif : présence des joueurs en World Boss', en:'Fix: player presence in World Boss'}, fr:[
       {t:'fix', tx:'Grâce aux logs [BossPresence] : le canal de présence Realtime se fermait parfois tout seul (coupure réseau) pendant un combat de World Boss partagé, sans jamais se rétablir — les joueurs devenaient invisibles les uns aux autres pour le reste du combat. Le canal se reconnecte désormais automatiquement tant que le combat partagé est en cours'},
       {t:'fix', tx:'Corrigé un plantage JS toutes les 60s (ping de temps de jeu) qui pouvait perturber la page en arrière-plan : "sb.rpc(...).catch is not a function"'},
     ], en:[
       {t:'fix', tx:'Thanks to the [BossPresence] logs: the Realtime presence channel sometimes closed on its own (network hiccup) during a shared World Boss fight and never recovered — players became invisible to each other for the rest of the fight. The channel now automatically reconnects as long as the shared fight is ongoing'},
       {t:'fix', tx:'Fixed a JS crash every 60s (playtime ping) that could disrupt the page in the background: "sb.rpc(...).catch is not a function"'},
     ] },
-  { v:'V144', d:'05/07/2026 06:56', name:{fr:'Diagnostic : présence des joueurs en World Boss', en:'Diagnostics: player presence in World Boss'}, fr:[
+  { v:'V144', d:'08/07/2026 22:00', name:{fr:'Diagnostic : présence des joueurs en World Boss', en:'Diagnostics: player presence in World Boss'}, fr:[
       {t:'fix', tx:'Le partage des PV/top 10 fonctionne bien en World Boss (confirmé par test à 2 comptes), mais les silhouettes des autres joueurs restent invisibles dans l\'arène — traces de diagnostic ajoutées (console, préfixe [BossPresence]) pour identifier précisément la cause au prochain test'},
     ], en:[
       {t:'fix', tx:'HP/top 10 sharing works correctly in World Boss (confirmed via 2-account test), but other players\' silhouettes remain invisible in the arena — diagnostic logging added (console, [BossPresence] prefix) to pinpoint the exact cause on the next test'},
     ] },
-  { v:'V143', d:'05/07/2026 06:42', name:{fr:'Correctif serveur : Vell planifié était toujours en solo', en:'Server fix: scheduled Vell was always solo'}, fr:[
+  { v:'V143', d:'08/07/2026 21:00', name:{fr:'Correctif serveur : Vell planifié était toujours en solo', en:'Server fix: scheduled Vell was always solo'}, fr:[
       {t:'fix', tx:'Les apparitions programmées de Vell (jeudi 12h00, dimanche 16h45) ne créaient jamais d\'instance PARTAGÉE côté serveur — chaque joueur combattait Vell tout seul, sans jamais voir les autres joueurs ni PV communs, contrairement à Kzarka qui fonctionnait déjà correctement. Corrigé côté Supabase ; un spawn Vell déclenché par le planning est désormais bien partagé entre tous les joueurs, exactement comme un spawn admin'},
       {t:'fix', tx:'Correctif complémentaire : un spawn admin en cours (ex: Vell lancé manuellement) pouvait être écrasé par erreur si un créneau planifié de Kzarka devenait actif entre-temps — n\'importe quel spawn valide (admin ou planifié) est désormais protégé jusqu\'à son expiration'},
     ], en:[
       {t:'fix', tx:'Vell\'s scheduled appearances (Thursday 12:00, Sunday 16:45) never created a SHARED instance server-side — each player fought Vell completely alone, never seeing other players or shared HP, unlike Kzarka which already worked correctly. Fixed server-side; a scheduled Vell spawn is now properly shared among all players, exactly like an admin spawn'},
       {t:'fix', tx:'Additional fix: an ongoing admin spawn (e.g. Vell triggered manually) could be wrongly overwritten if a scheduled Kzarka slot became active in the meantime — any valid spawn (admin or scheduled) is now protected until it expires'},
     ] },
-  { v:'V142', d:'05/07/2026 06:33', name:{fr:'Persistance : chat, encarts de suivi', en:'Persistence: chat, tracker widgets'}, fr:[
+  { v:'V142', d:'08/07/2026 20:00', name:{fr:'Persistance : chat, encarts de suivi', en:'Persistence: chat, tracker widgets'}, fr:[
       {t:'change', tx:'Le canal de chat choisi et l\'état replié/déplié du chat survivent maintenant à un rechargement de la page (comme le menu de gauche, déjà persisté)'},
       {t:'change', tx:'Les encarts "🗒️ Suivi" (temps de jeu, reset quotidien/hebdo) et "🔖 Quêtes suivies" gardent leur état replié/déplié après un rechargement au lieu de toujours repartir dépliés'},
     ], en:[
       {t:'change', tx:'The chosen chat channel and the chat\'s folded/unfolded state now survive a page reload (like the left menu, already persisted)'},
       {t:'change', tx:'The "🗒️ Tracker" (playtime, daily/weekly reset) and "🔖 Tracked quests" widgets keep their folded/unfolded state after a reload instead of always starting unfolded'},
     ] },
-  { v:'V141', d:'05/07/2026 06:25', name:{fr:'10 spots fixes par World Boss, Vell sur les pontons', en:'10 fixed spots per World Boss, Vell on the boat decks'}, fr:[
+  { v:'V141', d:'08/07/2026 19:00', name:{fr:'10 spots fixes par World Boss, Vell sur les pontons', en:'10 fixed spots per World Boss, Vell on the boat decks'}, fr:[
       {t:'change', tx:'Chaque joueur arrive désormais sur l\'un de 10 spots fixes tirés au hasard dans l\'arène du boss (au lieu de se superposer exactement au même point que tout le monde), et y revient entre deux AoE — les joueurs se voient enfin répartis dans la zone pendant la strat'},
       {t:'change', tx:'Sur Vell, ces 10 spots sont répartis sur les pontons des 2 bateaux (5 chacun) au lieu d\'un point unique en pleine mer'},
     ], en:[
       {t:'change', tx:'Each player now spawns on one of 10 fixed spots picked at random in the boss arena (instead of stacking exactly on the same point as everyone else), and returns there between AoEs — players are finally spread out visibly during the strat'},
       {t:'change', tx:'On Vell, these 10 spots are spread across the 2 boats\' decks (5 each) instead of a single point out in open water'},
     ] },
-  { v:'V140', d:'05/07/2026 05:23', name:{fr:'Planning des World Boss ancré sur l\'heure française', en:'World Boss schedule anchored to French time'}, fr:[
+  { v:'V140', d:'08/07/2026 18:00', name:{fr:'Planning des World Boss ancré sur l\'heure française', en:'World Boss schedule anchored to French time'}, fr:[
       {t:'fix', tx:'Les horaires de Vell/Kzarka (repris de garmoth.com) sont ceux de l\'heure française (Europe/Paris) — mais le planning était calculé avec l\'heure LOCALE du navigateur, donc un joueur situé hors de France voyait un planning décalé de son propre fuseau. Le calcul est maintenant toujours ancré sur l\'heure de Paris (été/hiver géré automatiquement), quel que soit le fuseau du joueur'},
     ], en:[
       {t:'fix', tx:'Vell/Kzarka\'s schedule (sourced from garmoth.com) is in French time (Europe/Paris) — but it was computed using the browser\'s LOCAL time, so a player outside France saw a schedule shifted by their own timezone. The schedule is now always anchored to Paris time (summer/winter handled automatically), regardless of the player\'s timezone'},
     ] },
-  { v:'V139', d:'05/07/2026 04:53', name:{fr:'Alerte Discord sur tentative de double réclamation', en:'Discord alert on double-claim attempt'}, fr:[
+  { v:'V139', d:'08/07/2026 17:00', name:{fr:'Alerte Discord sur tentative de double réclamation', en:'Discord alert on double-claim attempt'}, fr:[
       {t:'new', tx:'Le blocage anti-double-réclamation d\'un World Boss (voir V135) était totalement silencieux — chaque tentative de re-réclamer une récompense déjà payée envoie désormais une alerte sur Discord (pseudo du joueur, boss concerné), pour repérer les abus'},
     ], en:[
       {t:'new', tx:'The World Boss anti-double-claim block (see V135) was completely silent — every attempt to re-claim an already-paid reward now sends a Discord alert (player name, boss involved), to spot abuse'},
     ] },
-  { v:'V138', d:'05/07/2026 04:52', name:{fr:'Correctif : Vell affichait en fait Kzarka', en:'Fix: Vell was actually showing Kzarka'}, fr:[
+  { v:'V138', d:'08/07/2026 16:00', name:{fr:'Correctif : Vell affichait en fait Kzarka', en:'Fix: Vell was actually showing Kzarka'}, fr:[
       {t:'fix', tx:'Bug de longue date : le combat de Vell affichait en réalité toujours la silhouette de Kzarka (rouge/brun) — la fonction qui choisit le dessin comparait le mauvais identifiant et ne reconnaissait jamais Vell. Toutes les silhouettes de Vell dessinées depuis plusieurs versions (bateaux, ailes-vasque...) n\'étaient donc jamais visibles en jeu ; elles s\'affichent enfin correctement maintenant'},
     ], en:[
       {t:'fix', tx:'Long-standing bug: Vell\'s fight actually always displayed Kzarka\'s silhouette (red/brown) — the function choosing which creature to draw was comparing the wrong identifier and never recognized Vell. Every Vell silhouette drawn over the last several versions (boats, wing-bowl...) was therefore never actually visible in-game; it now renders correctly'},
     ] },
-  { v:'V137', d:'05/07/2026 04:47', name:{fr:'Vell : ailes-vasque (angles supplémentaires de la sculpture)', en:'Vell: wing-bowl shape (extra sculpture angles)'}, fr:[
+  { v:'V137', d:'08/07/2026 15:00', name:{fr:'Vell : ailes-vasque (angles supplémentaires de la sculpture)', en:'Vell: wing-bowl shape (extra sculpture angles)'}, fr:[
       {t:'change', tx:'Silhouette de Vell affinée d\'après 5 angles de la sculpture 3D de référence : ce que l\'on prenait pour des cornes/socle séparé sont en fait les 2 AILES du dragon, si immenses qu\'elles s\'enroulent vers l\'intérieur et se rejoignent en bas pour former une grande vasque — le corps du dragon (petit, crête de pointes, museau fin, longue queue en lame recourbée) est perché tout en haut, pattes agrippées au rebord'},
     ], en:[
       {t:'change', tx:'Vell\'s silhouette refined from 5 angles of the reference 3D sculpture: what looked like separate horns/a base are actually the dragon\'s 2 WINGS, so huge they curl inward and meet at the bottom to form a large bowl — the dragon\'s body (small, spiked crest, slender snout, long curved blade-tipped tail) perches at the top, claws gripping the rim'},
     ] },
-  { v:'V136', d:'05/07/2026 04:44', name:{fr:'Vell : nouvelle silhouette (cornes enroulées, socle drapé)', en:'Vell: new silhouette (curled horns, draped base)'}, fr:[
+  { v:'V136', d:'08/07/2026 14:00', name:{fr:'Vell : nouvelle silhouette (cornes enroulées, socle drapé)', en:'Vell: new silhouette (curled horns, draped base)'}, fr:[
       {t:'change', tx:'Silhouette de Vell redessinée une 3e fois d\'après une sculpture 3D de référence : deux immenses cornes/ailes enroulées en "C" qui encadrent la tête, une crête de pointes sur la nuque, un museau fin aux crocs visibles, des bras griffus repliés devant, une longue queue fine et courbe, le tout émergeant d\'un socle drapé façon vague/tissu enroulé'},
     ], en:[
       {t:'change', tx:'Vell\'s silhouette redesigned a 3rd time from a reference 3D sculpture: two huge horns/wings curled into a "C" shape framing the head, a spiked ridge along the neck, a slender snout with visible fangs, clawed arms folded in front, a long thin curved tail, all emerging from a draped wave/cloth-like base'},
     ] },
-  { v:'V135', d:'05/07/2026 04:29', name:{fr:'Correctif exploit World Boss, Vell dragon, notifications par onglets', en:'World Boss exploit fix, Vell dragon redesign, tabbed notifications'}, fr:[
+  { v:'V135', d:'08/07/2026 13:00', name:{fr:'Correctif exploit World Boss, Vell dragon, notifications par onglets', en:'World Boss exploit fix, Vell dragon redesign, tabbed notifications'}, fr:[
       {t:'exploit', tx:'Corrigé un exploit sérieux : sur un boss partagé déjà mort, rentrer dans l\'arène redéclenchait la victoire et payait silver/matériau/loot rare une DEUXIÈME fois, alors que le serveur refusait déjà la réclamation en silence — le client accordait la récompense sans jamais vérifier si la réclamation avait réussi. Chaque victoire ne peut désormais être payée qu\'une seule fois'},
       {t:'change', tx:'Vell entièrement redessiné d\'après la vraie photo de référence : couronne de cornes/pointes asymétriques, grande gueule ouverte pleine de crocs, ailes membraneuses déployées, plastron clair/orangé, pattes griffues — une silhouette de dragon des mers, plus rien à voir avec le poisson/serpent précédent ni avec Kzarka'},
       {t:'change', tx:'Centre de notifications : les catégories (Important/Réussites/Activité) sont maintenant des onglets FIXES en haut du panneau au lieu de simples titres perdus dans le défilement'},
@@ -9534,12 +9508,12 @@ const PATCH_NOTES = [
       {t:'change', tx:'Notification center: categories (Important/Achievements/Activity) are now FIXED tabs at the top of the panel instead of plain headers lost in the scroll'},
       {t:'fix', tx:'A shared boss\'s "Top contributors" panel is pushed further down so it never overlaps the "✕" exit cross again'},
     ] },
-  { v:'V134', d:'05/07/2026 04:09', name:{fr:'Silhouette de Vell redessinée (forme distincte de Kzarka)', en:'Vell\'s silhouette redesigned (shape distinct from Kzarka)'}, fr:[
+  { v:'V134', d:'08/07/2026 12:00', name:{fr:'Silhouette de Vell redessinée (forme distincte de Kzarka)', en:'Vell\'s silhouette redesigned (shape distinct from Kzarka)'}, fr:[
       {t:'change', tx:'Silhouette de Vell entièrement redessinée pour ne plus ressembler à Kzarka en composition : corps massif HORIZONTAL façon baleine qui déferle en diagonale (au lieu d\'un buste vertical), tête émoussée penchée en avant avec la mâchoire sur le dessous, et une grappe de 6 longs tentacules ondulants sous la tête — plus aucune paire de bras/griffes'},
     ], en:[
       {t:'change', tx:'Vell\'s silhouette fully redesigned to stop resembling Kzarka in composition: a massive HORIZONTAL whale-like body surging diagonally (instead of a vertical torso), a blunt head tilted forward with the jaw underneath, and a cluster of 6 long swaying tentacles under the head — no more arm/claw pair'},
     ] },
-  { v:'V133', d:'05/07/2026 04:01', name:{fr:'Sac "Compendium" : protège les objets jamais montés en PEN', en:'"Compendium" bag: protects items never brought to PEN'}, fr:[
+  { v:'V133', d:'08/07/2026 11:00', name:{fr:'Sac "Compendium" : protège les objets jamais montés en PEN', en:'"Compendium" bag: protects items never brought to PEN'}, fr:[
       {t:'new', tx:'Nouveau sac dédié "📖 Compendium" (192 cases, comme le sac principal) : quand "Vendre" s\'apprête à vendre une pièce d\'équipement ou un bijou dont ce TYPE n\'a jamais atteint PEN, le 1er exemplaire trouvé est protégé ici au lieu d\'être vendu — les exemplaires suivants du même type continuent d\'être vendus normalement'},
       {t:'new', tx:'Nouvel onglet "🎒 Sac protégé" dans le Compendium pour consulter ce sac et renvoyer un objet au sac principal en un clic'},
       {t:'change', tx:'Le message de "Vendre" précise maintenant combien d\'objets ont été vendus VS protégés dans le sac Compendium ; "Racheter" ne redevient actif que s\'il y a vraiment quelque chose à racheter (les objets protégés n\'ont jamais quitté ta possession)'},
@@ -9548,14 +9522,14 @@ const PATCH_NOTES = [
       {t:'new', tx:'New "🎒 Protected bag" tab in the Compendium to browse this bag and send an item back to your main bag in one click'},
       {t:'change', tx:'The "Sell" message now shows how many items were sold VS protected in the Compendium bag; "Buy back" only becomes active if there\'s actually something to buy back (protected items never left your possession)'},
     ] },
-  { v:'V132', d:'05/07/2026 03:52', name:{fr:'Vell : ancres des bateaux, montagnes et entrée unique', en:'Vell: ship anchors, mountains and single entrance'}, fr:[
+  { v:'V132', d:'08/07/2026 10:00', name:{fr:'Vell : ancres des bateaux, montagnes et entrée unique', en:'Vell: ship anchors, mountains and single entrance'}, fr:[
       {t:'change', tx:'Les abris de la charge de Vell sont désormais les ancres des 2 bateaux (chaîne qui descend du pont) au lieu des anciens piliers de pierre de Kzarka — cohérent avec le fait que les joueurs sont sur les bateaux'},
       {t:'new', tx:'Vell est maintenant cerné de montagnes de tous les côtés, avec une seule entrée étroite au centre pour l\'apercevoir depuis les bateaux, d\'après la capture de référence ("Barrier Rock")'},
     ], en:[
       {t:'change', tx:'Vell\'s charge shelters are now the 2 boats\' anchors (chain hanging from the deck) instead of Kzarka\'s old stone pillars — consistent with players being on the boats'},
       {t:'new', tx:'Vell is now surrounded by mountains on every side, with a single narrow entrance in the middle to glimpse him from the boats, based on the reference capture ("Barrier Rock")'},
     ] },
-  { v:'V131', d:'05/07/2026 03:49', name:{fr:'Optimisation & Craft fusionnés, craft toujours visible', en:'Enhancement & Crafting merged, craft always visible'}, fr:[
+  { v:'V131', d:'08/07/2026 09:00', name:{fr:'Optimisation & Craft fusionnés, craft toujours visible', en:'Enhancement & Crafting merged, craft always visible'}, fr:[
       {t:'change', tx:'Les cartes "Conseil de stuff & Craft" et "Optimisation" sont fusionnées en une seule carte, avec l\'Optimisation en tête'},
       {t:'fix', tx:'Le panneau de craft du Trésor de Velia ne s\'affichait QUE quand l\'onglet "Trésors" de l\'inventaire était ouvert (reste de l\'époque où il vivait dans la carte Inventaire) — il reste maintenant visible en permanence dans la carte Optimisation'},
       {t:'change', tx:'Le Compendium précise maintenant clairement qu\'un clic sur une zone lance le farm directement (téléportation immédiate, sans confirmation), pas juste un aperçu'},
@@ -9564,14 +9538,14 @@ const PATCH_NOTES = [
       {t:'fix', tx:'The Velia Treasure crafting panel only showed when the inventory\'s "Treasures" tab was open (a leftover from when it lived in the Inventory card) — it now stays visible at all times in the Enhancement card'},
       {t:'change', tx:'The Compendium now clearly states that clicking a zone starts farming there directly (instant teleport, no confirmation), not just a preview'},
     ] },
-  { v:'V130', d:'05/07/2026 03:38', name:{fr:'Bateaux de Vell 10× plus gros, le héros plonge vraiment', en:'Vell\'s boats 10× bigger, hero really dives'}, fr:[
+  { v:'V130', d:'08/07/2026 08:00', name:{fr:'Bateaux de Vell 10× plus gros, le héros plonge vraiment', en:'Vell\'s boats 10× bigger, hero really dives'}, fr:[
       {t:'change', tx:'Les 2 bateaux du combat de Vell sont désormais 10× plus gros, repoussés dans les coins bas de l\'écran pour rester au premier plan sans recouvrir tout le combat'},
       {t:'new', tx:'Le héros plonge VRAIMENT sous l\'eau quand il s\'abrite près d\'une bouée pendant la charge de Vell : il disparaît, remplacé par des ridules et des bulles qui remontent, au lieu de rester debout avec juste un bouclier bleu'},
     ], en:[
       {t:'change', tx:'Vell\'s 2 boats are now 10× bigger, pushed into the bottom corners of the screen to stay in the foreground without covering the whole fight'},
       {t:'new', tx:'The hero now REALLY dives underwater when taking shelter near a buoy during Vell\'s charge: they vanish, replaced by ripples and rising bubbles, instead of just standing there with a blue shield'},
     ] },
-  { v:'V129', d:'05/07/2026 03:29', name:{fr:'Conseil de stuff & Craft regroupés, loot Velia condensé, Maîtrise PEN', en:'Grouped gear advice & Crafting, condensed Velia loot, PEN Mastery'}, fr:[
+  { v:'V129', d:'08/07/2026 07:00', name:{fr:'Conseil de stuff & Craft regroupés, loot Velia condensé, Maîtrise PEN', en:'Grouped gear advice & Crafting, condensed Velia loot, PEN Mastery'}, fr:[
       {t:'change', tx:'Nouvelle carte "Conseil de stuff & Craft" en bas à droite, juste au-dessus de l\'Optimisation : regroupe le conseil de progression et TOUS les crafts (Trésor de Velia + conversion Poussière→Caphras), qui étaient auparavant éparpillés dans l\'Inventaire et l\'Optimisation'},
       {t:'fix', tx:'Le récapitulatif de loot "toutes zones" affiché à Velia est maintenant CONDENSÉ (1 ligne par zone, dépliable au clic) au lieu d\'afficher les 6 lignes de chaque zone d\'un coup — fini le scroll interminable'},
       {t:'change', tx:'La ligne "Pierre de Cron" dans la table de loot précise maintenant "1 à 3 unités" en plus du taux de drop'},
@@ -9586,7 +9560,7 @@ const PATCH_NOTES = [
       {t:'fix', tx:'"Equip best" and "Sell" buttons are now exactly the same size ("Buy back" now overlaps a corner instead of eating into "Sell"\'s width)'},
       {t:'new', tx:'New special "🌟 PEN Mastery" Compendium: lists all 39 optimizable items in the game (7 pieces × 4 tiers + 1 jewel per zone) and tracks which ones have reached PEN at least once — a pure completion tracker, no stat bonus'},
     ] },
-  { v:'V128', d:'05/07/2026 03:18', name:{fr:'Vell en mer, Coeur de Vell, bonus de zone, Compendium refait', en:'Vell at sea, Heart of Vell, zone bonus, reworked Compendium'}, fr:[
+  { v:'V128', d:'08/07/2026 06:00', name:{fr:'Vell en mer, Coeur de Vell, bonus de zone, Compendium refait', en:'Vell at sea, Heart of Vell, zone bonus, reworked Compendium'}, fr:[
       {t:'new', tx:'Combat de Vell entièrement repensé d\'après les captures fournies : arène en pleine mer (ciel, pitons rocheux au loin, rides d\'eau), 2 bateaux qui tirent des boulets de canon animés sur le monstre (avec un tic de dégâts à chaque impact), et sa charge périodique devient "PLONGE !" — il faut se réfugier près d\'une bouée au lieu de se cacher derrière un pilier'},
       {t:'new', tx:'Vell a 5% de chance de looter le Coeur de Vell à sa mort — une roue de récompense qui tourne toute seule s\'affiche en fin de combat, révélant si tu l\'as obtenu (visible même quand tu ne l\'as pas)'},
       {t:'new', tx:'La récompense de silver/matériau des World Boss dépend maintenant de ta meilleure zone découverte, mais SEULEMENT si tu es "certifié sans mort" depuis au moins 3 minutes — sinon aucun bonus de zone'},
@@ -9597,7 +9571,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'World Boss silver/material rewards now scale with your best discovered zone, but ONLY if you\'ve been "death-free certified" for at least 3 minutes — otherwise no zone bonus'},
       {t:'new', tx:'The Compendium now also tracks defeated World Bosses (same +1% bonus as a zone) and was completely reworked: a clear progress card (SPD/Damage/Dodge), Zones/World Boss tabs, and clicking an item shows a gold halo on every zone that drops it with a button to travel there directly'},
     ] },
-  { v:'V127', d:'05/07/2026 03:05', name:{fr:'Loot Velia, Pierre de Cron, Pierre Noire recolorée', en:'Velia loot, Cron Stone, Black Stone recolored'}, fr:[
+  { v:'V127', d:'08/07/2026 05:00', name:{fr:'Loot Velia, Pierre de Cron, Pierre Noire recolorée', en:'Velia loot, Cron Stone, Black Stone recolored'}, fr:[
       {t:'fix', tx:'Velia (zone paisible) affichait par erreur les stats de la dernière zone farmée dans le cadre "Butin" — affiche maintenant un message clair ("aucun monstre, aucun loot possible ici") suivi d\'un récapitulatif du loot de TOUTES les zones de Velia, zone par zone'},
       {t:'change', tx:'La Pierre Noire (palier Yuria/vert) est recolorée en vert (icône + couleur), au lieu du noir/violet d\'origine — cohérent avec le palier qu\'elle sert à optimiser'},
       {t:'new', tx:'Nouvelle Pierre de Cron : dropée dans TOUTES les zones du jeu à un taux fixe de 0.1% (1 à 3 unités), protège automatiquement un enchantement d\'une rétrogradation en cas d\'échec (consommée seulement quand elle sert vraiment)'},
@@ -9606,7 +9580,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'The Black Stone (Yuria/green tier) is now green (icon + color), instead of the original black/purple — consistent with the tier it enhances'},
       {t:'new', tx:'New Cron Stone: drops in EVERY zone in the game at a fixed 0.1% rate (1 to 3 units), automatically protects an enhancement from downgrading on failure (only consumed when it actually matters)'},
     ] },
-  { v:'V126', d:'05/07/2026 02:54', name:{fr:'Craft du Trésor, notifications repensées, potions, + de logs Discord', en:'Treasure crafting, revamped notifications, potions, more Discord logs'}, fr:[
+  { v:'V126', d:'08/07/2026 04:00', name:{fr:'Craft du Trésor, notifications repensées, potions, + de logs Discord', en:'Treasure crafting, revamped notifications, potions, more Discord logs'}, fr:[
       {t:'new', tx:'Craft du Trésor de Velia : 100 "Bout du trésor" → 1 "Trésor de Velia" (même numéro), et 3 Trésors (mélangés) → 1 "Objet inconnu" mystère. Panneau dédié dans l\'onglet Trésors de l\'inventaire'},
       {t:'fix', tx:'Corrigé un doublon de nom : la 2e ligne "Bout du trésor de Velia 1" (la plus rare) est en fait le morceau du "Velia 2" — renommée en conséquence'},
       {t:'new', tx:'État du Compendium affiché directement dans la zone de farm (📖 X/11, doré quand complet)'},
@@ -9625,7 +9599,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'"Capheon" fixed to "Calpheon" in the zone tabs'},
       {t:'new', tx:'Lots of new "for fun" Discord logs: level up, new zone reached, Compendium bonus unlocked, treasure found, items crafted, kill milestones (every 1000), kills/min record broken'},
     ] },
-  { v:'V125', d:'05/07/2026 02:38', name:{fr:'Compendium, Vitesse (SPD) et Esquive', en:'Compendium, Speed (SPD) and Dodge'}, fr:[
+  { v:'V125', d:'08/07/2026 03:00', name:{fr:'Compendium, Vitesse (SPD) et Esquive', en:'Compendium, Speed (SPD) and Dodge'}, fr:[
       {t:'new', tx:'Nouveau 📖 Compendium : ramasse au moins 1 objet dans chaque zone pour débloquer son bonus permanent — +1% Vitesse, +1% Dégâts, +1% Esquive PAR zone (additif, jamais un multiplicateur : les 11 zones donnent +11% de chaque, pas +100%)'},
       {t:'new', tx:'Nouvelle stat Vitesse (SPD) : augmente avec le niveau, de +0% au niveau 1 jusqu\'à +75% au niveau 61 (plafonné), en plus du bonus de Compendium'},
       {t:'new', tx:'Nouvelle stat Esquive, qui se trouve UNIQUEMENT sur les 4 pièces d\'armure : évite complètement un coup en cas de succès. Son efficacité dépend de ton niveau de PD face à la zone — inutile face à un monstre bien trop fort pour toi, mais très puissante (jusqu\'à zéro dégât) dans une zone où tu es largement au-dessus du niveau requis'},
@@ -9636,7 +9610,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'New Dodge stat, found ONLY on the 4 armor pieces: fully avoids a hit on success. Its effectiveness depends on your DP level relative to the zone — useless against a monster far too strong for you, but very powerful (up to zero damage) in a zone you\'ve far outgrown'},
       {t:'change', tx:'Refined game goal: a good Speed and Dodge rate lets you never die and farm faster — item tooltips, gear comparison and "Equip best" now account for Dodge'},
     ] },
-  { v:'V124', d:'05/07/2026 02:24', name:{fr:'Enchantement ralenti, zones recalibrées, World Boss Vell', en:'Slower enhancement, recalibrated zones, Vell World Boss'}, fr:[
+  { v:'V124', d:'08/07/2026 02:00', name:{fr:'Enchantement ralenti, zones recalibrées, World Boss Vell', en:'Slower enhancement, recalibrated zones, Vell World Boss'}, fr:[
       {t:'change', tx:'Ralenti le gain de PA/PD des paliers +1 à +15 (divisé par ~1.6) : un stuff complet à +0 ne suffit plus à franchir la zone de couleur suivante, il faut réellement pousser jusqu\'à PRI+ pour progresser — les paliers PRI/DUO/TRI/TET/PEN représentent maintenant plus de la moitié du gain total à PEN'},
       {t:'change', tx:'PA/PD requis relevés d\'environ 30% sur les zones Camp Rhutum, Mine de Fer Abandonnée et Sanctuaire Elric (premières zones de chaque nouveau palier de couleur), et les zones suivantes de chaque palier réajustées en proportion pour garder une progression lisse'},
       {t:'change', tx:'% de drop de la Pierre concentrée doublé sur Sanctuaire Elric et Ruines de Kratuga (les 2 dernières zones, seule source de ce matériau) pour compenser l\'enchantement plus lent sur le stuff bleu'},
@@ -9647,14 +9621,14 @@ const PATCH_NOTES = [
       {t:'change', tx:'Concentrated Stone drop rate doubled on Elric Sanctuary and Kratuga Ruins (the last 2 zones, the only source of this material) to offset the slower enhancement on blue-tier gear'},
       {t:'new', tx:'New weekly World Boss: Vell, Terror of the Tides (a giant sea creature) — a provisional original silhouette pending a reference photo. Appears Thursday and Sunday, at real Black Desert times minus 15 minutes'},
     ] },
-  { v:'V123', d:'05/07/2026 02:07', name:{fr:'PA/PD affichés à côté du Gearscore (classement + admin)', en:'AP/DP shown next to Gearscore (leaderboard + admin)'}, fr:[
+  { v:'V123', d:'08/07/2026 01:00', name:{fr:'PA/PD affichés à côté du Gearscore (classement + admin)', en:'AP/DP shown next to Gearscore (leaderboard + admin)'}, fr:[
       {t:'new', tx:'Le classement "Gearscore" affiche maintenant le détail PA/PD de chaque joueur entre parenthèses, pas juste le score global'},
       {t:'new', tx:'Le tableau "Joueurs" du panneau admin a 2 nouvelles colonnes PA et PD, à côté du Gearscore'},
     ], en:[
       {t:'new', tx:'The "Gearscore" leaderboard now shows each player\'s AP/DP breakdown in parentheses, not just the overall score'},
       {t:'new', tx:'The admin panel\'s "Players" table has 2 new AP and DP columns, next to Gearscore'},
     ] },
-  { v:'V122', d:'05/07/2026 01:54', name:{fr:'Mine de Fer Abandonnée : mineurs, boss de pack, décor de carrière', en:'Abandoned Iron Mine: miners, pack bosses, quarry scenery'}, fr:[
+  { v:'V122', d:'08/07/2026 00:00', name:{fr:'Mine de Fer Abandonnée : mineurs, boss de pack, décor de carrière', en:'Abandoned Iron Mine: miners, pack bosses, quarry scenery'}, fr:[
       {t:'new', tx:'Nouvelles silhouettes originales pour la Mine de Fer Abandonnée : le Mineur corrompu (voûté, capuche tombante, yeux rougeoyants, pioche à l\'épaule) et son contremaître blindé — 1 pack sur 2 est mené par ce boss massif bardé de pointes, plus gros et qui loot plus (bonus élite ×1.5-1.6 déjà en place)'},
       {t:'new', tx:'Décor de carrière dédié à la Mine de Fer : terre rouge/ocre, tours de guet en bois, pitons rocheux, chariots de minerai cassés, crevasses et éboulis — fini le décor générique'},
       {t:'fix', tx:'Trouvé un bug silencieux présent depuis toujours : la fonction de bruit du décor ne pouvait mathématiquement jamais dépasser 0.5 (bit de signe annulé dans le mélange final), donc AUCUN rocher/buisson/touffe n\'apparaissait dans les zones de combat. Corrigé : toutes les zones retrouvent leur végétation et leurs rochers'},
@@ -9663,19 +9637,19 @@ const PATCH_NOTES = [
       {t:'new', tx:'Dedicated quarry scenery for the Iron Mine: red/ochre earth, wooden watchtowers, rock spires, broken ore carts, crevasses and scree — no more generic scenery'},
       {t:'fix', tx:'Found a silent bug present since forever: the scenery noise function could mathematically never exceed 0.5 (sign bit self-cancelled in the final mix), so NO rocks/bushes/tufts ever appeared in combat zones. Fixed: every zone gets its vegetation and rocks back'},
     ] },
-  { v:'V121', d:'05/07/2026 01:41', name:{fr:'Silhouette du Combattant Sausan', en:'Sausan Fighter silhouette'}, fr:[
+  { v:'V121', d:'07/07/2026 23:00', name:{fr:'Silhouette du Combattant Sausan', en:'Sausan Fighter silhouette'}, fr:[
       {t:'new', tx:'Nouvelle silhouette originale pour le Combattant Sausan (Colonie Sausan, juste après la Ferme Shultz) : guerrier des sables en cotte de mailles, capuche pointue rabattue, voile de tissu masquant le bas du visage et cimeterre courbe — au lieu de la silhouette générique. Son icône apparaît aussi en haut à gauche'},
     ], en:[
       {t:'new', tx:'New original silhouette for the Sausan Fighter (Sausan Colony, right after Shultz Farm): a desert warrior in chainmail with a pointed hood, a cloth veil over the lower face and a curved scimitar — instead of the generic silhouette. Its icon also appears in the top-left'},
     ] },
-  { v:'V120', d:'05/07/2026 01:35', name:{fr:'Icône du monstre de zone, silhouette Garde Shultz', en:'Zone monster icon, Shultz Guard silhouette'}, fr:[
+  { v:'V120', d:'07/07/2026 22:00', name:{fr:'Icône du monstre de zone, silhouette Garde Shultz', en:'Zone monster icon, Shultz Guard silhouette'}, fr:[
       {t:'new', tx:'Petite icône du monstre de la zone en cours affichée en haut à gauche de l\'écran de jeu (buste simplifié, une par zone déjà modélisée, feuillage doré pour Velia la zone paisible)'},
       {t:'new', tx:'Nouvelle silhouette originale pour le Garde Shultz (Ferme Shultz, juste après le Camp Rhutum) : garde humain lourdement blindé, casque à cimier empanaché, épaulières massives, moustache/bouc blanc et arme lourde brandie au-dessus de la tête'},
     ], en:[
       {t:'new', tx:'Small icon of the current zone\'s monster shown in the top-left of the game screen (simplified bust, one per already-modeled zone, golden foliage for Velia the peaceful zone)'},
       {t:'new', tx:'New original silhouette for the Shultz Guard (Shultz Farm, right after Rhutum Camp): a heavily armored human guard with a plumed helmet, massive pauldrons, white mustache/goatee, and a heavy weapon raised overhead'},
     ] },
-  { v:'V119', d:'05/07/2026 01:24', name:{fr:'Silhouette du Guerrier Rhutum, taux de gain silver (admin)', en:'Rhutum Warrior silhouette, silver earn rate (admin)'}, fr:[
+  { v:'V119', d:'07/07/2026 21:00', name:{fr:'Silhouette du Guerrier Rhutum, taux de gain silver (admin)', en:'Rhutum Warrior silhouette, silver earn rate (admin)'}, fr:[
       {t:'new', tx:'Nouvelle silhouette originale pour le Guerrier Rhutum (Camp Rhutum, juste après le Repaire des Pirates) : humanoïde massif à peau verte, crâne à crête de plumes, bouc tressé et défenses — au lieu de la silhouette générique'},
       {t:'new', tx:'Onglet admin "Silver" : nouveau tableau "Qui gagne le plus vite ?" — classe les joueurs par taux de gain à vie (silver gagné ÷ temps de jeu), pour voir d\'un coup d\'œil qui progresse vite et en combien de temps, pas juste qui a le plus gros total'},
       {t:'change', tx:'Les tableaux "Richesses" et "Silver" du panneau admin affichent désormais le pseudo du joueur au lieu d\'un UUID tronqué illisible'},
@@ -9684,14 +9658,14 @@ const PATCH_NOTES = [
       {t:'new', tx:'Admin "Silver" tab: new "Who earns fastest?" table — ranks players by lifetime earn rate (silver earned ÷ playtime), to see at a glance who\'s progressing fast and in how much time, not just who has the biggest total'},
       {t:'change', tx:'The admin panel\'s "Wealth" and "Silver" tables now show the player\'s pseudo instead of an unreadable truncated UUID'},
     ] },
-  { v:'V118', d:'05/07/2026 01:17', name:{fr:'Record kills/min (classement + admin), tooltip inventaire', en:'Kills/min record (leaderboard + admin), inventory tooltip'}, fr:[
+  { v:'V118', d:'07/07/2026 20:00', name:{fr:'Record kills/min (classement + admin), tooltip inventaire', en:'Kills/min record (leaderboard + admin), inventory tooltip'}, fr:[
       {t:'new', tx:'Nouveau record personnel "🏹 Kills/min" (à vie) : visible dans un nouveau classement dédié ET dans la liste des joueurs du panneau admin. Le record ne se met à jour qu\'après 2 min de session pour éviter qu\'un petit échantillon bruité ne le fausse'},
       {t:'change', tx:'Ajout d\'une infobulle sur le bouton "🎒 Inventaire" du panneau admin, expliquant ce qu\'il ouvre (équipement + sac complet en lecture seule, dans une nouvelle fenêtre)'},
     ], en:[
       {t:'new', tx:'New personal "🏹 Kills/min" (lifetime) record: shown in a new dedicated leaderboard AND in the admin panel\'s player list. The record only updates after 2 min of session to avoid a noisy small sample skewing it'},
       {t:'change', tx:'Added a tooltip on the admin panel\'s "🎒 Inventory" button, explaining what it opens (gear + full bag, read-only, in a new window)'},
     ] },
-  { v:'V117', d:'05/07/2026 01:06', name:{fr:'Refonte panneau Admin : rôles fusionnés, suivi du silver', en:'Admin panel refresh: merged roles, silver tracking'}, fr:[
+  { v:'V117', d:'07/07/2026 19:00', name:{fr:'Refonte panneau Admin : rôles fusionnés, suivi du silver', en:'Admin panel refresh: merged roles, silver tracking'}, fr:[
       {t:'fix', tx:'Corrigé le rendu disgracieux du bouton "↩️ Racheter" superposé sur "Vendre" (bordures qui se chevauchaient) : le groupe entier porte maintenant une seule bordure/dégradé, les 2 boutons à l\'intérieur sont transparents avec un simple séparateur'},
       {t:'change', tx:'Section admin "Rembourser un clic Vendre mat" retirée : "Vendre mat." est verrouillé 🔒 (pas encore en jeu), ce bouton n\'avait donc plus lieu d\'être'},
       {t:'change', tx:'Les sections "Modérateurs" et "Testeurs" du panneau admin sont fusionnées en une seule section "Rôles" : un seul champ UUID + un menu déroulant pour choisir le rôle, une seule liste combinée (un joueur peut cumuler les deux rôles)'},
@@ -9704,38 +9678,38 @@ const PATCH_NOTES = [
       {t:'new', tx:'New "🏦 Silver" tab in the admin panel, on the same principle as the Loyalties tab: see at a glance the silver stored with players, total lifetime earned, and total spent (sunk via enhancement), with a visual breakdown bar'},
       {t:'change', tx:'Small visual refresh of the admin panel: section cards now have a light shadow and hover effect, plus a color-code legend (blue/red/green) shown at the top to understand each section\'s risk level at a glance'},
     ] },
-  { v:'V116', d:'05/07/2026 00:52', name:{fr:'Inventaire admin complet, boutons 50/50', en:'Full admin inventory, 50/50 buttons'}, fr:[
+  { v:'V116', d:'07/07/2026 18:00', name:{fr:'Inventaire admin complet, boutons 50/50', en:'Full admin inventory, 50/50 buttons'}, fr:[
       {t:'fix', tx:'La fenêtre popup "Inventaire" du panneau admin n\'affichait qu\'une grille brute — elle montre maintenant l\'équipement porté (comme le paperdoll normal) ET les 5 onglets de catégorie (Normal/Optimisation/Consommable/RNG/Trésors), comme dans l\'inventaire du joueur'},
       {t:'change', tx:'Boutons "Équiper meilleur" / "Vendre" : répartition stricte 50%/50% au lieu de 66%/34%. Le bouton "↩️ Racheter" n\'est plus un 3e bouton séparé : il se superpose désormais sur le coin droit de "Vendre" (15% de sa largeur) pour bien montrer qu\'il annule sa dernière action. Les 3 boutons ont chacun une infobulle expliquant leur fonctionnement au survol'},
     ], en:[
       {t:'fix', tx:'The admin panel\'s "Inventory" popup window only showed a raw grid — it now also shows the equipped gear (like the normal paperdoll) AND the 5 category tabs (Normal/Enhancement/Consumable/RNG/Treasures), matching the player\'s own inventory view'},
       {t:'change', tx:'"Equip best" / "Sell" buttons: strict 50%/50% split instead of 66%/34%. The "↩️ Buy back" button is no longer a separate 3rd button: it now overlaps the right edge of "Sell" (15% of its width) to make clear it undoes that specific action. All 3 buttons now have a hover tooltip explaining what they do'},
     ] },
-  { v:'V115', d:'05/07/2026 00:38', name:{fr:'Silhouette originale du Pirate (Repaire des Pirates)', en:'Original Pirate silhouette (Pirate Hideout)'}, fr:[
+  { v:'V115', d:'07/07/2026 17:00', name:{fr:'Silhouette originale du Pirate (Repaire des Pirates)', en:'Original Pirate silhouette (Pirate Hideout)'}, fr:[
       {t:'new', tx:'Nouvelle silhouette originale pour le Pirate (Repaire des Pirates, juste après Ruines de Protty) : humanoïde barbu au bandana rouge, torse entrouvert, lame à la main qui s\'étend lors de l\'attaque — au lieu de la silhouette générique partagée par les autres zones'},
     ], en:[
       {t:'new', tx:'New original silhouette for the Pirate (Pirate Hideout, right after Protty Ruins): a bearded humanoid with a red bandana, open vest, and a blade that extends on attack — instead of the generic silhouette shared by other zones'},
     ] },
-  { v:'V114', d:'05/07/2026 00:29', name:{fr:'Vrai correctif Velia, silhouette des Esprits de Protty', en:'Real Velia fix, Protty Spirit silhouette'}, fr:[
+  { v:'V114', d:'07/07/2026 16:00', name:{fr:'Vrai correctif Velia, silhouette des Esprits de Protty', en:'Real Velia fix, Protty Spirit silhouette'}, fr:[
       {t:'fix', tx:'Trouvé la vraie cause des monstres qui revenaient dans Velia (zone paisible) : la boucle de jeu re-générait des packs dès que leur nombre passait sous 6, SANS vérifier qu\'on était à Velia — ça remplissait la zone en boucle juste après le "aucun monstre" du chargement. Corrigé : à Velia, le joueur reste maintenant immobile et rien ne se passe, comme prévu'},
       {t:'new', tx:'Nouvelle silhouette originale pour l\'Esprit de Protty (Ruines de Protty) : créature flottante façon mollusque/poisson fantomatique (dôme, frange de nageoires ondulantes), au lieu de la silhouette générique partagée par toutes les zones'},
     ], en:[
       {t:'fix', tx:'Found the real cause of monsters reappearing in Velia (peaceful zone): the game loop kept respawning packs whenever their count dropped below 6, WITHOUT checking if we were in Velia — it kept refilling the zone right after the "no monsters" load. Fixed: in Velia the player now stays still and nothing happens, as intended'},
       {t:'new', tx:'New original silhouette for the Protty Spirit (Protty Ruins): a floating ghostly mollusk/fish-like creature (dome, wavy fin fringe), instead of the generic silhouette shared by all zones'},
     ] },
-  { v:'V113', d:'05/07/2026 00:23', name:{fr:'Boutons inventaire raccourcis (robuste à toute largeur)', en:'Shortened inventory buttons (robust at any width)'}, fr:[
+  { v:'V113', d:'07/07/2026 14:15', name:{fr:'Boutons inventaire raccourcis (robuste à toute largeur)', en:'Shortened inventory buttons (robust at any width)'}, fr:[
       {t:'fix', tx:'"Équiper le meilleur (socle)" et "Vendre l\'inférieur" se tronquaient encore en pleine largeur de fenêtre plus étroite ("soc e", "Ven...") — raccourcis en "Équiper meilleur" et "Vendre", le sens complet reste visible au survol'},
     ], en:[
       {t:'fix', tx:'"Equip best (base stats)" and "Sell the worse" still got cut off on narrower windows ("bas...", "Sel...") — shortened to "Equip best" and "Sell worse", full meaning still shown on hover'},
     ] },
-  { v:'V112', d:'05/07/2026 00:18', name:{fr:'Correctifs : reset des Loyalties, bouton tronqué', en:'Fixes: Loyalties reset, truncated button'}, fr:[
+  { v:'V112', d:'07/07/2026 13:30', name:{fr:'Correctifs : reset des Loyalties, bouton tronqué', en:'Fixes: Loyalties reset, truncated button'}, fr:[
       {t:'fix', tx:'Corrigé : les Loyalties n\'étaient jamais vraiment remises à 0 après un reset — le rafraîchissement de l\'affichage juste après regrantait aussitôt les 200 du jour, masquant la remise à zéro réelle'},
       {t:'fix', tx:'Le bouton "Vendre l\'inférieur" s\'affichait tronqué ("Ven...") — élargi pour afficher le texte en entier'},
     ], en:[
       {t:'fix', tx:'Fixed: Loyalties were never actually reset to 0 after a reset — the display refresh right after immediately re-granted the day\'s 200, masking the real reset'},
       {t:'fix', tx:'The "Sell the worse" button displayed truncated ("Sel...") — widened to show the full text'},
     ] },
-  { v:'V111', d:'04/07/2026 23:47', name:{fr:'Marché Central façon BDO, chat par jour, Loyalties', en:'BDO-style Central Market, daily chat, Loyalties'}, fr:[
+  { v:'V111', d:'07/07/2026 12:00', name:{fr:'Marché Central façon BDO, chat par jour, Loyalties', en:'BDO-style Central Market, daily chat, Loyalties'}, fr:[
       {t:'new',    tx:'Marché commun repensé façon Marché Central de BDO (inspiré d\'une référence fournie) : solde bien visible, arbre de catégories (Arme principale/secondaire/éveil, Armure, Accessoires, Artéfact/Pierre, Matériaux), objets groupés par nom avec tiroir détaillé par niveau d\'enchantement (+13/+14/.../PRI/DUO...)'},
       {t:'new',    tx:'Chat : chaque jour est séparé par une barre dorée ; les jours précédents sont repliés par défaut (dépliables en un clic pour relire), seul le jour en cours reste toujours ouvert'},
       {t:'change',  tx:'Les notifications affichent maintenant toujours la date complète, pas seulement l\'heure'},
@@ -9748,7 +9722,7 @@ const PATCH_NOTES = [
       {t:'change',  tx:'Renamed "Loyalty Points" to "Loyalties" (already stackable daily and claimable anytime, 200/day, in the Mailbox)'},
       {t:'new',    tx:'New "🏅 Loyalties" tab in the admin panel: total in game, average per player (no shop to spend it on yet)'},
     ] },
-  { v:'V110', d:'04/07/2026 23:14', name:{fr:'Audit anti-triche & notifications refaites', en:'Anti-cheat audit & reworked notifications'}, fr:[
+  { v:'V110', d:'07/07/2026 09:30', name:{fr:'Audit anti-triche & notifications refaites', en:'Anti-cheat audit & reworked notifications'}, fr:[
       {t:'fix',     tx:'Corrigé un "NaN%" possible sur la barre de vie du boss (division par zéro si les PV max valent 0, ex: juste après un despawn)'},
       {t:'exploit', tx:'Faille trouvée en audit : sur le marché, un vendeur pouvait mettre en vente un objet sans valeur en étiquetant l\'annonce comme un objet précieux (arnaque à l\'appât) — le nom/type de l\'annonce est désormais TOUJOURS recalculé depuis l\'objet réellement en vente, jamais depuis ce que le client prétend'},
       {t:'change',  tx:'Centre de notifications entièrement refait : regroupé en 3 sections claires (⚠️ Important, 🏆 Réussites, 📰 Activité) avec un code couleur par catégorie, au lieu d\'une simple liste plate'},
@@ -9757,7 +9731,7 @@ const PATCH_NOTES = [
       {t:'exploit', tx:'Flaw found in audit: on the market, a seller could list a worthless item while labeling it as a valuable one (bait-and-switch scam) — the listing\'s name/type is now ALWAYS recalculated from the item actually being sold, never from what the client claims'},
       {t:'change',  tx:'Notification center fully reworked: grouped into 3 clear sections (⚠️ Important, 🏆 Achievements, 📰 Activity) with a color code per category, instead of a flat list'},
     ] },
-  { v:'V109', d:'04/07/2026 17:00', name:{fr:'Marché en vitrine & correctif zones de farm', en:'Marketplace browse view & farm zones fix'}, fr:[
+  { v:'V109', d:'07/07/2026 08:00', name:{fr:'Marché en vitrine & correctif zones de farm', en:'Marketplace browse view & farm zones fix'}, fr:[
       {t:'new',    tx:'Marché commun repensé en vitrine (inspirée d\'une référence fournie) : parcours les objets en vente sous forme de cartes (icône, vendeur, temps, prix), avec filtre par catégorie, recherche, tri, et un panneau de détail complet avec comparaison face à ton équipement actuel'},
       {t:'new',    tx:'Achat en un clic depuis la vitrine : pose automatiquement un ordre d\'achat au prix exact de l\'annonce (exécution immédiate garantie)'},
       {t:'fix',    tx:'La liste des zones de farm laissait un grand vide en bas de sa carte (la grille étire toutes les cartes d\'une rangée à la même hauteur) — la liste remplit maintenant tout l\'espace disponible, de haut en bas'},
@@ -9766,7 +9740,7 @@ const PATCH_NOTES = [
       {t:'new',    tx:'One-click buy from the storefront: automatically places a buy order at the listing\'s exact price (guaranteed instant execution)'},
       {t:'fix',    tx:'The farm zone list left a large empty gap at the bottom of its card (the grid stretches every card in a row to the same height) — the list now fills all available space, top to bottom'},
     ] },
-  { v:'V108', d:'04/07/2026 16:49', name:{fr:'Nouveaux emplacements, icônes teintées par palier', en:'New slots, tier-tinted icons'}, fr:[
+  { v:'V108', d:'07/07/2026 06:00', name:{fr:'Nouveaux emplacements, icônes teintées par palier', en:'New slots, tier-tinted icons'}, fr:[
       {t:'new',    tx:'Atelier royal ajouté dans le header (verrouillé, bientôt disponible)'},
       {t:'new',    tx:'3 nouveaux emplacements d\'équipement : 2 Artéfacts (ex: Vell, Khan) + 1 Pierre — pas encore de source de drop en jeu, prêts pour une future mise à jour'},
       {t:'change', tx:'Bouton "↩️ Racheter" réduit à une icône compacte, regroupé juste à côté de "Vendre l\'inférieur" (1/5 de la largeur) au lieu d\'un gros bouton séparé'},
@@ -9779,7 +9753,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'New icons for armor, gloves and boots: each piece now takes the real color of its tier (grey/white/green/blue) instead of a fixed color'},
       {t:'change', tx:'New progressive jewelry icons by tier: bare ring (grey/white) → one diamond (green) → several diamonds and tier color (blue)'},
     ] },
-  { v:'V107', d:'04/07/2026 16:38', name:{fr:'Économie retravaillée & vrai marché à ordres', en:'Reworked economy & real order-book market'}, fr:[
+  { v:'V107', d:'07/07/2026 04:30', name:{fr:'Économie retravaillée & vrai marché à ordres', en:'Reworked economy & real order-book market'}, fr:[
       {t:'change', tx:'Économie de Velia entièrement retravaillée : le silver/h moyen progresse maintenant de ~3 000/h (zone 1) à 100 000/h max (zone 11, stuff optimisé) au lieu de plusieurs millions/h — ce plafond correspond au bas de la nouvelle courbe à 5 régions (Velia 0-100k/h, Heidel 100k-1M/h, Calpheon 1M-100M/h, Valencia 100M-1B/h, Edana 1B-10B/h, voir zones-roadmap.md)'},
       {t:'new',    tx:'Marché commun entièrement refait : vrai carnet d\'ordres entre joueurs (achat ET vente), au lieu d\'un prix flottant avec achat/vente instantanés. Chacun pose le prix qu\'il veut ; ton silver (achat) ou ton objet (vente) reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé'},
       {t:'new',    tx:'L\'exécution est automatique dès qu\'un ordre d\'achat et un ordre de vente compatibles existent (prix d\'achat ≥ prix de vente) ; en cas d\'égalité de prix entre plusieurs ordres, un tirage au sort désigne qui est servi'},
@@ -9792,7 +9766,7 @@ const PATCH_NOTES = [
       {t:'new',    tx:'The common market now also accepts gear and jewelry found in-game (not just materials), grouped by name + enhancement level'},
       {t:'new',    tx:'New "My orders" tab in the common market to track and cancel your open orders'},
     ] },
-  { v:'V106', d:'04/07/2026 16:08', name:{fr:'Loot ticker, reset admin réparé, couleurs du stuff', en:'Loot ticker, fixed admin reset, gear colors'}, fr:[
+  { v:'V106', d:'07/07/2026 02:00', name:{fr:'Loot ticker, reset admin réparé, couleurs du stuff', en:'Loot ticker, fixed admin reset, gear colors'}, fr:[
       {t:'fix', tx:'Corrigé le sens d\'arrivée du loot ticker : les nouvelles entrées apparaissaient en haut (déjà estompées) et les anciennes en bas (bien visibles juste avant d\'être supprimées) — l\'inverse de l\'effet voulu, désormais les nouvelles entrées arrivent nettes en bas et remontent en s\'estompant'},
       {t:'fix', tx:'Trouvé pourquoi "Réinitialiser TOUS les comptes" ne fonctionnait pas : Supabase bloque les UPDATE/DELETE sans clause WHERE (confirmé dans les logs), même pour un reset global volontaire — corrigé'},
       {t:'fix', tx:'Le stuff (équipement ET matériaux d\'optimisation) se ressemblait dans le sac quel que soit son palier : les icônes SVG ont leurs couleurs figées dans le tracé, le style posé par-dessus n\'avait donc aucun effet. Corrigé en teintant la bordure de chaque case avec la vraie couleur du palier (gris/blanc/vert/bleu) ou du matériau'},
@@ -9801,33 +9775,33 @@ const PATCH_NOTES = [
       {t:'fix', tx:'Found why "Reset ALL accounts" didn\'t work: Supabase blocks UPDATE/DELETE without a WHERE clause (confirmed in the logs), even for an intentional global reset — fixed'},
       {t:'fix', tx:'Gear and enhancement materials all looked alike in the bag regardless of tier: SVG icons have their colors baked into the artwork, so the color style layered on top had no effect. Fixed by tinting each cell\'s border with the real tier color (grey/white/green/blue) or material color'},
     ] },
-  { v:'V105', d:'04/07/2026 15:55', name:{fr:'Bijoux alignés sur les vrais paliers BDO', en:'Jewelry aligned with real BDO tiers'}, fr:[
+  { v:'V105', d:'07/07/2026 00:30', name:{fr:'Bijoux alignés sur les vrais paliers BDO', en:'Jewelry aligned with real BDO tiers'}, fr:[
       {t:'change', tx:'Les bijoux rares (jackpot) des 11 zones de Velia utilisent maintenant les vrais noms BDO alignés sur le palier de stuff de la zone : Naru (gris), Tuvala (blanc), Asula (vert), Cadry/Serap (bleu) — un anneau, un collier et une ceinture par palier'},
     ], en:[
       {t:'change', tx:'Rare jewelry (jackpot) drops across the 11 Velia zones now use real BDO names matching the zone\'s gear tier: Naru (grey), Tuvala (white), Asula (green), Cadry/Serap (blue) — one ring, one necklace and one belt per tier'},
     ] },
-  { v:'V104', d:'04/07/2026 15:19', name:{fr:'Reset complet des comptes & annonce dédiée', en:'Full account reset & dedicated announcement'}, fr:[
+  { v:'V104', d:'06/07/2026 23:00', name:{fr:'Reset complet des comptes & annonce dédiée', en:'Full account reset & dedicated announcement'}, fr:[
       {t:'new',    tx:'Nouveau bouton admin "💥 Réinitialiser TOUS les comptes" : efface silver/équipement/niveau/sac de tout le monde, et affiche une bannière colorée d\'explication (+ une entrée dans les notifications) à chaque joueur à sa prochaine connexion'},
       {t:'change', tx:'Le centre de notifications ne garde plus que les infos importantes (succès, boss vaincu, niveau supérieur) — les trouvailles de loot (bijoux/équipement rares) restent visibles dans le loot ticker mais ne polluent plus plus les notifications'},
     ], en:[
       {t:'new',    tx:'New admin button "💥 Reset ALL accounts": wipes silver/gear/level/bag for everyone, and shows a colorful explanation banner (+ a notification entry) to each player on their next login'},
       {t:'change', tx:'The notification center now only keeps important info (achievements, boss defeated, level up) — rare loot finds (jewelry/gear) stay visible in the loot ticker but no longer clutter notifications'},
     ] },
-  { v:'V103', d:'04/07/2026 15:08', name:{fr:'Panneau admin bien plus rapide à l\'ouverture', en:'Admin panel opens much faster'}, fr:[
+  { v:'V103', d:'06/07/2026 21:30', name:{fr:'Panneau admin bien plus rapide à l\'ouverture', en:'Admin panel opens much faster'}, fr:[
       {t:'fix', tx:'Trouvé la cause de la lenteur au clic sur "Zone Admin" : une vue serveur ("Ressources farmées") scannait TOUTE la table des ramassages (79 000+ lignes et ça grandit à chaque objet ramassé par tous les joueurs, depuis le début) sans aucune limite de temps — corrigée pour se limiter aux 30 derniers jours'},
       {t:'change', tx:'Le panneau admin s\'ouvre maintenant dès que la liste des joueurs est prête, sans attendre les 3 statistiques les plus lourdes (silver/heure, ressources farmées, richesses) qui se chargent maintenant en arrière-plan et remplissent leur onglet dès qu\'elles sont prêtes'},
     ], en:[
       {t:'fix', tx:'Found the cause of the "Admin Zone" click being slow: a server view ("Farmed resources") scanned the ENTIRE pickup log table (79,000+ rows and growing with every item picked up by every player, since the start) with no time limit at all — fixed to only look at the last 30 days'},
       {t:'change', tx:'The admin panel now opens as soon as the player list is ready, without waiting for the 3 heaviest stats (silver/hour, farmed resources, wealth) which now load in the background and fill in their tab once ready'},
     ] },
-  { v:'V102', d:'04/07/2026 15:00', name:{fr:'Difficulté retravaillée, bouton "Racheter"', en:'Reworked difficulty, "Buy back" button'}, fr:[
+  { v:'V102', d:'06/07/2026 20:00', name:{fr:'Difficulté retravaillée, bouton "Racheter"', en:'Reworked difficulty, "Buy back" button'}, fr:[
       {t:'change', tx:'Difficulté de toute la région de Velia retravaillée : PA requis plafonné à 209 (au lieu de 400) sur la dernière zone, avec un saut plus marqué à chaque transition de palier de stuff (gris→blanc, blanc→vert, vert→bleu) — il faut être un minimum optimisé sur le palier précédent avant d\'attaquer le suivant'},
       {t:'new',    tx:'Bouton "↩️ Racheter" à côté de "Vendre l\'inférieur" : annule la dernière vente automatique (restaure les objets et le silver) en cas de clic accidentel'},
     ], en:[
       {t:'change', tx:'Reworked the difficulty of the whole Velia region: required AP capped at 209 (down from 400) on the last zone, with a sharper jump at every gear-tier transition (grey→white, white→green, green→blue) — you need to be at least somewhat enhanced on the previous tier before tackling the next one'},
       {t:'new',    tx:'"↩️ Buy back" button next to "Sell the worse": undoes the last automatic sale (restores items and silver) after an accidental click'},
     ] },
-  { v:'V101', d:'04/07/2026 12:41', name:{fr:'Boss partagé enfin réparé, panneau admin retravaillé', en:'Shared boss finally fixed, reworked admin panel'}, fr:[
+  { v:'V101', d:'06/07/2026 18:00', name:{fr:'Boss partagé enfin réparé, panneau admin retravaillé', en:'Shared boss finally fixed, reworked admin panel'}, fr:[
       {t:'fix',    tx:'Trouvé et corrigé LE bug qui empêchait le boss mondial d\'être partagé depuis le début : une erreur SQL silencieuse ("column reference ambiguous") faisait échouer chaque tentative d\'infliger des dégâts au boss partagé — les PV n\'ont donc jamais bougé, le classement de contribution est resté vide, confirmé par test réel et reproduction isolée du bug'},
       {t:'new',    tx:'Bouton admin pour faire disparaître le World Boss pour tout le monde à tout moment'},
       {t:'change', tx:'Un World Boss disparaît désormais au bout de 9 minutes (au lieu de 15)'},
@@ -9842,7 +9816,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'Reworked admin panel: color-coded border by risk level (blue = safe on your own account, red = affects all players, green = staff management) + a short description under each section'},
       {t:'change', tx:'The Grunil (blue) tier now has its own "Concentrated Stone" material — Black Stone is now reserved for the Yuria (green) tier'},
     ] },
-  { v:'V100', d:'04/07/2026 12:22', name:{fr:'Corrections, sécurité & classement Trésors', en:'Fixes, security & Treasure leaderboard'}, fr:[
+  { v:'V100', d:'06/07/2026 16:00', name:{fr:'Corrections, sécurité & classement Trésors', en:'Fixes, security & Treasure leaderboard'}, fr:[
       {t:'fix',     tx:'Corrigé le faux positif anti-triche "silver_per_hour astronomique" juste après le chargement d\'une sauvegarde (le calcul utilisait un compteur à vie divisé par un temps de session erroné)'},
       {t:'fix',     tx:'Les chances du Trésor de Velia étaient 100× trop généreuses (0.01 interprété comme 1% au lieu de 0.01%) — corrigées'},
       {t:'exploit', tx:'Corrigé 2 failles XSS trouvées en audit : le pseudo affiché dans le Classement et dans la liste de filleuls n\'était pas échappé (un pseudo malveillant pouvait exécuter du code chez les autres joueurs qui le consultaient)'},
@@ -9859,19 +9833,19 @@ const PATCH_NOTES = [
       {t:'new',     tx:'Admin panel: average number of monsters to kill (and time) for each Velia Treasure piece'},
       {t:'change',  tx:'Wiki, codex and achievements updated to reflect the Velia Treasure, tier-grouped zones and the shared Kzarka boss'},
     ] },
-  { v:'V99', d:'04/07/2026 12:04', name:{fr:'Nouvel inventaire "Trésors"', en:'New "Treasures" inventory'}, fr:[
+  { v:'V99', d:'06/07/2026 14:00', name:{fr:'Nouvel inventaire "Trésors"', en:'New "Treasures" inventory'}, fr:[
       {t:'new', tx:'Nouvel onglet d\'inventaire dédié "🗺️ Trésors" pour ranger les objets du Trésor de Velia séparément du reste'},
     ], en:[
       {t:'new', tx:'New dedicated "🗺️ Treasures" inventory tab to store Velia Treasure items separately from the rest'},
     ] },
-  { v:'V98', d:'04/07/2026 12:03', name:{fr:'Trésor de Velia (catégorie TEST)', en:'Velia Treasure (TEST category)'}, fr:[
+  { v:'V98', d:'06/07/2026 13:00', name:{fr:'Trésor de Velia (catégorie TEST)', en:'Velia Treasure (TEST category)'}, fr:[
       {t:'new', tx:'Toutes les zones de Velia peuvent désormais looter le "Trésor de Velia" : 5 objets collectibles (Bout du trésor de Velia 1 ×2 chances, Trésor de Velia 1/2/3), identiques dans toutes les zones'},
       {t:'new', tx:'Nouvelle catégorie "🧪 TEST" en bas de la table de loot de chaque zone pour ces objets expérimentaux (pas encore de recette/usage)'},
     ], en:[
       {t:'new', tx:'All Velia zones can now loot the "Velia Treasure": 5 collectible items (Velia Treasure Piece 1 ×2 chances, Velia Treasure 1/2/3), identical across every zone'},
       {t:'new', tx:'New "🧪 TEST" category at the bottom of each zone\'s loot table for these experimental items (no recipe/use yet)'},
     ] },
-  { v:'V97', d:'04/07/2026 11:52', name:{fr:'Zones groupées par palier, boss Kzarka vraiment partagé', en:'Zones grouped by tier, truly shared Kzarka boss'}, fr:[
+  { v:'V97', d:'06/07/2026 12:00', name:{fr:'Zones groupées par palier, boss Kzarka vraiment partagé', en:'Zones grouped by tier, truly shared Kzarka boss'}, fr:[
       {t:'new', tx:'La liste des zones de Velia est désormais groupée par palier de stuff (Naru/Tuvala/Yuria/Grunil), avec un en-tête coloré par groupe'},
       {t:'change', tx:'Dans la table de loot, les lignes "armure" et "matériau" reprennent la couleur du stuff correspondant dans l\'inventaire (gris/blanc/vert/bleu) au lieu d\'une couleur générique'},
       {t:'fix', tx:'Le Kzarka du planning horaire (pas seulement celui lancé par l\'admin) a maintenant des PV réellement partagés entre tous les joueurs, et tout le monde se voit dans l\'arène'},
@@ -9880,14 +9854,14 @@ const PATCH_NOTES = [
       {t:'change', tx:'In the loot table, "armor" and "material" rows now use the matching gear color from the inventory (grey/white/green/blue) instead of a generic color'},
       {t:'fix', tx:'The scheduled Kzarka boss (not just the admin-spawned one) now has truly shared HP across all players, and everyone is visible in the arena'},
     ] },
-  { v:'V96', d:'04/07/2026 11:44', name:{fr:'Village de Velia & pierres d\'optimisation en SVG', en:'Velia village & SVG optimization stones'}, fr:[
+  { v:'V96', d:'04/07/2026 11:00', name:{fr:'Village de Velia & pierres d\'optimisation en SVG', en:'Velia village & SVG optimization stones'}, fr:[
       {t:'new', tx:'Velia a désormais son propre décor de village paisible (maisons, puits, lampadaires, teinte chaleureuse) au lieu de réutiliser le terrain de la dernière zone de combat farmée'},
       {t:'new', tx:'Nouvelles icônes SVG originales (style pierre à facettes) pour les pierres d\'optimisation : Pierre de Novice, Pierre du Temps, Pierre Noire et Pierre de Caphras'},
     ], en:[
       {t:'new', tx:'Velia now has its own peaceful village scenery (houses, well, lamp posts, warm tint) instead of reusing the last farmed combat zone\'s terrain'},
       {t:'new', tx:'New original SVG icons (faceted stone style) for the optimization materials: Novice Stone, Time Stone, Black Stone and Caphras Stone'},
     ] },
-  { v:'V95', d:'04/07/2026 10:56', name:{fr:'Menu repliable, mot de passe oublié, langue à la connexion', en:'Collapsible menu, forgot password, language at login'}, fr:[
+  { v:'V95', d:'05/07/2026 10:00', name:{fr:'Menu repliable, mot de passe oublié, langue à la connexion', en:'Collapsible menu, forgot password, language at login'}, fr:[
       {t:'new', tx:'Bouton pour replier/déplier le menu latéral (état mémorisé)'},
       {t:'new', tx:'Bouton "Mot de passe oublié ?" sur l\'écran de connexion (envoie un email de réinitialisation)'},
       {t:'new', tx:'Choix de la langue (FR/EN) directement sur l\'écran de connexion/création de compte'},
@@ -9896,24 +9870,24 @@ const PATCH_NOTES = [
       {t:'new', tx:'"Forgot password?" button on the login screen (sends a reset email)'},
       {t:'new', tx:'Language choice (FR/EN) directly on the login/signup screen'},
     ] },
-  { v:'V94', d:'04/07/2026 10:45', name:{fr:'Vraies zones de Velia (11 zones remplacent les anciennes)', en:'Real Velia zones (11 zones replace the old ones)'}, fr:[
+  { v:'V94', d:'05/07/2026 09:00', name:{fr:'Vraies zones de Velia (11 zones remplacent les anciennes)', en:'Real Velia zones (11 zones replace the old ones)'}, fr:[
       {t:'change', tx:'Les 12 anciennes zones fictives sont remplacées par les 11 vraies zones de Velia : Camp des Loups, Ruines de Protty, Repaire des Pirates, Camp Rhutum, Ferme Shultz, Colonie Sausan, Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Sanctuaire Elric, Ruines de Kratuga'},
       {t:'change', tx:'Progression PA/PD/loot inchangée (juste les noms de zones et de monstres qui changent) ; le palier Grunil couvre désormais 2 zones au lieu de 3 (11 zones au total)'},
     ], en:[
       {t:'change', tx:'The 12 old fictional zones are replaced by the 11 real Velia zones: Wolf Camp, Protty Ruins, Pirate Den, Rhutum Camp, Shultz Farm, Sausan Colony, Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Elric Shrine, Kratuga Ruins'},
       {t:'change', tx:'AP/DP/loot progression unchanged (only zone and monster names change); the Grunil tier now covers 2 zones instead of 3 (11 zones total)'},
     ] },
-  { v:'V93', d:'04/07/2026 10:39', name:{fr:'Onglets de région : juste le nom + pastille de couleur', en:'Region tabs: name only + color dot'}, fr:[
+  { v:'V93', d:'05/07/2026 08:00', name:{fr:'Onglets de région : juste le nom + pastille de couleur', en:'Region tabs: name only + color dot'}, fr:[
       {t:'change', tx:'Les onglets affichent juste le nom de la région (Velia/Heidel/Capheon/Valencia/Edana) sans préfixe Early/Mid/End, avec une pastille de couleur : vert, bleu, jaune, orange, rouge'},
     ], en:[
       {t:'change', tx:'Tabs now show just the region name (Velia/Heidel/Capheon/Valencia/Edana) without the Early/Mid/End prefix, with a color dot: green, blue, yellow, orange, red'},
     ] },
-  { v:'V92', d:'04/07/2026 10:36', name:{fr:'5 régions planifiées : Velia/Heidel/Capheon/Valencia/Edana', en:'5 regions planned: Velia/Heidel/Capheon/Valencia/Edana'}, fr:[
+  { v:'V92', d:'05/07/2026 07:00', name:{fr:'5 régions planifiées : Velia/Heidel/Capheon/Valencia/Edana', en:'5 regions planned: Velia/Heidel/Capheon/Valencia/Edana'}, fr:[
       {t:'change', tx:'Les onglets de zones passent de 3 à 5 paliers : Early (Velia, en jeu), Mid (Heidel), End (Capheon), End+ (Valencia), End++ (Edana) — les 4 derniers restent verrouillés 🔒 en attendant leur construction'},
     ], en:[
       {t:'change', tx:'Zone tabs go from 3 to 5 tiers: Early (Velia, live), Mid (Heidel), End (Capheon), End+ (Valencia), End++ (Edana) — the last 4 remain locked 🔒 pending construction'},
     ] },
-  { v:'V91', d:'04/07/2026 10:31', name:{fr:'Refonte du stuff Early : 4 paliers Naru/Tuvala/Yuria/Grunil + onglets Early/Mid/End', en:'Early gear overhaul: 4 tiers Naru/Tuvala/Yuria/Grunil + Early/Mid/End tabs'}, fr:[
+  { v:'V91', d:'05/07/2026 06:00', name:{fr:'Refonte du stuff Early : 4 paliers Naru/Tuvala/Yuria/Grunil + onglets Early/Mid/End', en:'Early gear overhaul: 4 tiers Naru/Tuvala/Yuria/Grunil + Early/Mid/End tabs'}, fr:[
       {t:'new', tx:'Onglets "Early / Mid / End" au-dessus de la liste des zones — Mid et End sont verrouillés 🔒 pour l\'instant, ils arriveront dans une future mise à jour'},
       {t:'new', tx:'Le stuff Early est réparti en 4 paliers (3 zones chacun) : ⬜ Naru (zones 1-3), ⬜ Tuvala (zones 4-6), 🟩 Yuria et 🟦 Grunil (zones 7-12)'},
       {t:'change', tx:'Chaque palier a désormais son propre matériau d\'optimisation (Pierre de Novice, Pierre du Temps, Pierre Noire) au lieu d\'un matériau générique par zone ; Yuria/Grunil ont une chance de drop fixe de 2% quelle que soit la zone'},
@@ -11030,10 +11004,7 @@ function positionTutorialStep() {
     const boxW = 280, gap = 16, arrowSize = 11;
     let bx, by, arrowCls;
     if (step.placement === 'bottom') { bx = r.left+r.width/2-boxW/2; by = r.bottom+pad+gap; arrowCls='top'; }
-    // hauteur RÉELLE de la boîte (2026-07-08, bug corrigé) : une hauteur fixe de 140 supposait un
-    // texte court — un step avec un texte plus long (ex: tutoriel du Compendium) rendait une boîte
-    // bien plus haute, qui débordait alors SUR l'élément ciblé au lieu de rester au-dessus
-    else if (step.placement === 'top') { bx = r.left+r.width/2-boxW/2; by = r.top-pad-gap-box.offsetHeight; arrowCls='bottom'; }
+    else if (step.placement === 'top') { bx = r.left+r.width/2-boxW/2; by = r.top-pad-gap-140; arrowCls='bottom'; }
     else if (step.placement === 'right') { bx = r.right+pad+gap; by = r.top+r.height/2-70; arrowCls='left'; }
     else { bx = r.left-pad-gap-boxW; by = r.top+r.height/2-70; arrowCls='right'; } // 'left' par défaut
     bx = Math.max(10, Math.min(window.innerWidth-boxW-10, bx));
