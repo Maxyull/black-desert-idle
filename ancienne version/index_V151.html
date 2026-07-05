@@ -518,7 +518,7 @@
   }
   #authOverlay.hidden { display:none; }
   #authBox {
-    position:relative; width:320px; max-width:92vw; background:var(--panel); border:1px solid var(--gold-dim);
+    position:relative; width:320px; background:var(--panel); border:1px solid var(--gold-dim);
     padding:28px 26px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.7);
   }
   #closeAuth {
@@ -626,11 +626,6 @@
   }
   #btnCollapseMenu:hover { border-color:var(--gold); color:var(--gold); }
   #sideMenu.collapsed #topBar, #sideMenu.collapsed #userBar { display:none; }
-  /* replié : la largeur fixe de 210px ne se réduisait jamais (seuls les ENFANTS étaient masqués),
-     donc le menu "replié" gardait la même emprise qu'ouvert — sans conséquence sur grand écran
-     (assez de place), mais ça faisait chevaucher les encarts de droite sur mobile/tablette une fois
-     réduit (2026-07-05, adaptation mobile) */
-  #sideMenu.collapsed { width:auto; }
 
   #btnDiscord {
     display:block; width:100%; box-sizing:border-box; padding:11px 14px; font-size:13.5px;
@@ -1389,40 +1384,6 @@
   #bossTopPanel .btpActiveDot { width:5px; height:5px; border-radius:50%; background:#8fc98a; flex-shrink:0; box-shadow:0 0 4px #8fc98a; }
   #bossTopPanel .btpPct { flex-shrink:0; color:var(--gold); font-variant-numeric:tabular-nums; width:38px; text-align:right; }
   #bossTopPanel .btpDmg { flex-shrink:0; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
-
-  /* ===== Adaptation tablette/téléphone (2026-07-05, demande explicite) =====
-     Le layout desktop suppose un écran large : #sideMenu (haut-gauche), #rightWidgets (haut-droite)
-     et #chatWidget (bas-droite) flottent en position:fixed au-dessus du contenu, avec assez de marge
-     de chaque côté du bloc de jeu centré (#wrap, 1240px) pour ne jamais le recouvrir. Sous 1024px de
-     large (couvre aussi l'iPad en paysage, 1024×768, où le menu déplié touchait déjà le bord du
-     canvas de jeu), cette marge disparaît et ces 3 panneaux flottants finissent par se chevaucher
-     entre eux ET par recouvrir le jeu — confirmé en testant à 390×844 (iPhone) et 1024×768 (iPad
-     paysage) avant ce correctif. Rien n'est changé au-dessus de 1024px : la version ordinateur/
-     laptop reste identique à l'existant. Placé en toute fin de
-     feuille de style pour être sûr de l'emporter sur les règles non-conditionnelles définies plus
-     haut (même sélecteur + media query active = priorité à l'ordre d'apparition, pas au media). */
-  @media (max-width:1024px) {
-    /* le menu de gauche et les encarts de droite passent en repli par défaut sur mobile (voir le
-       JS d'initialisation isMobileViewport()) ; ces règles gèrent le cas où l'un des deux est quand
-       même ouvert, pour qu'il reste lisible sans déborder de l'écran ni écraser l'autre */
-    #sideMenu { max-width:calc(100vw - 20px) !important; }
-    /* le menu peut être basculé à droite (préférence perso, voir menuSide) — sur mobile ça le fait
-       entrer en collision avec les encarts de suivi (aussi à droite) une fois les deux repliés en
-       petites pastilles compactes ; forcé à gauche sur petit écran pour éviter ce chevauchement,
-       la préférence "droite" reste respectée telle quelle au-dessus de 1024px */
-    #sideMenu.onRight { left:14px !important; right:auto !important; }
-    #topBar, #userBar { width:min(210px, calc(100vw - 20px)); }
-    #rightWidgets { max-width:min(260px, calc(100vw - 20px)) !important; }
-    /* le chat gardait une largeur fixe de 440px, bien plus large que n'importe quel téléphone */
-    #chatWidget { width:min(400px, calc(100vw - 20px)) !important; }
-  }
-  @media (max-width:600px) {
-    /* sur téléphone, 1 seule colonne pour les cartes (stats/inventaire/optimisation/etc.), plus
-       lisible qu'une grille à 2 colonnes trop étroites pour leur contenu (tableaux, boutons) */
-    #panel { grid-template-columns:1fr !important; }
-    #wrap { padding:0 2px; }
-    body { padding:8px 4px 20px; }
-  }
 </style>
 </head>
 <body>
@@ -4158,11 +4119,9 @@ function fmtHours(sec) {
 // les deux encarts en haut à droite (suivi temps de jeu/reset hebdo, quêtes suivies) se replient
 // indépendamment ; état persisté en localStorage (2026-07-08, demande explicite) pour survivre à
 // un rechargement de page, comme le menu de gauche (voir sideMenuCollapsed)
-// repliés par défaut sur mobile (voir isMobileViewport, adaptation mobile du 2026-07-05) — sinon
-// remplacé par la préférence explicite du joueur si elle existe déjà en localStorage
-let resetWidgetFolded = isMobileViewport(), trackerWidgetFolded = isMobileViewport();
-try { const v = localStorage.getItem('velia-idle-resetwidget-folded'); if (v !== null) resetWidgetFolded = v === '1'; } catch(e) {}
-try { const v = localStorage.getItem('velia-idle-trackerwidget-folded'); if (v !== null) trackerWidgetFolded = v === '1'; } catch(e) {}
+let resetWidgetFolded = false, trackerWidgetFolded = false;
+try { resetWidgetFolded = localStorage.getItem('velia-idle-resetwidget-folded') === '1'; } catch(e) {}
+try { trackerWidgetFolded = localStorage.getItem('velia-idle-trackerwidget-folded') === '1'; } catch(e) {}
 function toggleResetFold() { resetWidgetFolded = !resetWidgetFolded; try { localStorage.setItem('velia-idle-resetwidget-folded', resetWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestWidget(); }
 function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; try { localStorage.setItem('velia-idle-trackerwidget-folded', trackerWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestTrackerWidget(); }
 // encart permanent en haut à droite : timers de reset, prochain succès à débloquer, temps de jeu
@@ -8414,11 +8373,9 @@ const CHAT_CHANNELS = [
 ];
 // persistance (2026-07-08, demande explicite) : canal choisi + replié/déplié survivent à un
 // rechargement de page, comme le menu de gauche (voir sideMenuCollapsed)
-// replié par défaut sur mobile (voir isMobileViewport, adaptation mobile du 2026-07-05) — le chat
-// en 440px de large flottant en bas à droite recouvrirait sinon une bonne partie de l'écran
-let chatChannel = 'mondial', chatFolded = isMobileViewport(), chatPollTimer = null;
+let chatChannel = 'mondial', chatFolded = false, chatPollTimer = null;
 try { chatChannel = localStorage.getItem('velia-idle-chat-channel') || 'mondial'; } catch(e) {}
-try { const v = localStorage.getItem('velia-idle-chat-folded'); if (v !== null) chatFolded = v === '1'; } catch(e) {}
+try { chatFolded = localStorage.getItem('velia-idle-chat-folded') === '1'; } catch(e) {}
 let chatLastRead = {}; // channel -> ISO du dernier message vu (sert au halo "non lu")
 let chatUnread = {};   // channel -> true si des messages sont arrivés depuis qu'on ne le regarde plus
 function chatVisibleChannels() { return CHAT_CHANNELS.filter(c => !c.staff || isAdmin() || myIsMod); }
@@ -9453,18 +9410,9 @@ $a('menuSideToggle').onclick = () => {
 };
 applyMenuSide();
 
-// détecte un client mobile/tablette (2026-07-05, adaptation mobile) : sert à choisir un état
-// replié par DÉFAUT pour les panneaux flottants (menu, chat, suivi) qui se chevauchent sinon sur un
-// petit écran (voir les media queries ci-dessus) — un simple seuil de largeur de viewport suffit
-// (pas besoin de sniffer le user-agent, le responsive suit déjà la taille réelle de la fenêtre)
-function isMobileViewport() { return window.innerWidth <= 1024; }
-
 // ---------- replier/déplier le menu latéral, persisté ----------
-let sideMenuCollapsed = isMobileViewport();
-try {
-  const saved = localStorage.getItem('velia-idle-menu-collapsed');
-  if (saved !== null) sideMenuCollapsed = saved === '1'; // préférence explicite du joueur > défaut auto
-} catch(e) {}
+let sideMenuCollapsed = false;
+try { sideMenuCollapsed = localStorage.getItem('velia-idle-menu-collapsed') === '1'; } catch(e) {}
 function applyMenuCollapse() {
   $a('sideMenu').classList.toggle('collapsed', sideMenuCollapsed);
   $a('btnCollapseMenu').textContent = sideMenuCollapsed ? '▶' : '◀';
@@ -9483,11 +9431,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V152', d:'05/07/2026 09:00', name:{fr:'Adaptation tablette/téléphone', en:'Tablet/phone optimization'}, fr:[
-      {t:'new', tx:'Sur tablette/téléphone (≤1024px de large, couvre les tailles standards du marché — iPhone SE à iPad en paysage), le menu de gauche, le suivi de quêtes et le chat se replient désormais automatiquement par défaut pour ne plus recouvrir le jeu ni se chevaucher entre eux ; toujours dépliables en un tap. Aucun changement sur la version ordinateur (>1024px), testée et inchangée'},
-    ], en:[
-      {t:'new', tx:'On tablet/phone (≤1024px wide, covers standard market sizes — iPhone SE to iPad landscape), the left menu, quest tracker and chat now auto-fold by default so they no longer cover the game or overlap each other; still one tap away to expand. No change to the desktop version (>1024px), tested and unaffected'},
-    ] },
   { v:'V151', d:'05/07/2026 08:15', name:{fr:'Dates des notes de version, tutoriel Compendium, joueurs fluides', en:'Patch note dates, Compendium tutorial, smooth players'}, fr:[
       {t:'fix', tx:'Les notes de version affichaient une date/heure de publication erronée (jusqu\'à plusieurs jours dans le futur) — corrigé pour les versions V91 à V150 avec l\'horodatage réel'},
       {t:'fix', tx:'Dans le tutoriel du Compendium, les étapes 4 et 6 (une zone/le sac protégé) affichaient l\'encadré par-dessus l\'élément mis en avant au lieu d\'au-dessus — une hauteur de boîte codée en dur ne correspondait pas au texte plus long de ces étapes ; corrigé pour mesurer la vraie hauteur'},
