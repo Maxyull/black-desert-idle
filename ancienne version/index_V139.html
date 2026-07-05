@@ -2720,31 +2720,15 @@ const BOSS_SCHEDULE = [
 ];
 const BOSS_WINDOW_MS = 9 * 60 * 1000; // fenêtre pendant laquelle le boss reste combattable après spawn (demande du 2026-07-06)
 
-// décalage UTC actuel de Paris, en minutes (ex: +60 en hiver/CET, +120 en été/CEST) — calculé via
-// Intl plutôt que codé en dur pour suivre automatiquement les changements d'heure
-function parisOffsetMinutes(date) {
-  const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone:'Europe/Paris',
-    hour12:false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit'
-  }).formatToParts(date).map(p => [p.type, p.value]));
-  const asUTC = Date.UTC(+parts.year, +parts.month-1, +parts.day, parts.hour==='24'?0:+parts.hour, +parts.minute, +parts.second);
-  return Math.round((asUTC - date.getTime()) / 60000);
-}
 // prochaine occurrence (ou occurrence en cours) de chaque entrée du planning, sur 7 jours glissants
-// — les horaires de BOSS_SCHEDULE sont ceux de garmoth.com, donc de l'heure FRANÇAISE (Europe/Paris),
-// pas l'heure locale du navigateur du joueur (2026-07-08 : bug corrigé, un joueur hors de France
-// voyait un planning décalé de son propre fuseau)
 function bossOccurrences(fromDate) {
   const now = fromDate.getTime();
-  const offsetMin = parisOffsetMinutes(fromDate);
-  const parisParts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone:'Europe/Paris',
-    year:'numeric', month:'2-digit', day:'2-digit' }).formatToParts(fromDate).map(p => [p.type, p.value]));
-  const baseY = +parisParts.year, baseM = +parisParts.month-1, baseD = +parisParts.day;
   const list = [];
   for (const entry of BOSS_SCHEDULE) {
     for (let d = -1; d <= 7; d++) {
-      const dow = new Date(Date.UTC(baseY, baseM, baseD+d)).getUTCDay(); // jour de la semaine à Paris
-      if (entry.day !== 'daily' && dow !== entry.day) continue;
-      const t = Date.UTC(baseY, baseM, baseD+d, entry.h, entry.m, 0, 0) - offsetMin*60000;
+      const base = new Date(fromDate.getFullYear(), fromDate.getMonth(), fromDate.getDate()+d, entry.h, entry.m, 0, 0);
+      if (entry.day !== 'daily' && base.getDay() !== entry.day) continue;
+      const t = base.getTime();
       if (t + BOSS_WINDOW_MS < now) continue; // déjà terminé
       list.push({ boss:entry.boss, time:t, live: t <= now && now < t + BOSS_WINDOW_MS });
     }
@@ -9331,11 +9315,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V140', d:'08/07/2026 18:00', name:{fr:'Planning des World Boss ancré sur l\'heure française', en:'World Boss schedule anchored to French time'}, fr:[
-      {t:'fix', tx:'Les horaires de Vell/Kzarka (repris de garmoth.com) sont ceux de l\'heure française (Europe/Paris) — mais le planning était calculé avec l\'heure LOCALE du navigateur, donc un joueur situé hors de France voyait un planning décalé de son propre fuseau. Le calcul est maintenant toujours ancré sur l\'heure de Paris (été/hiver géré automatiquement), quel que soit le fuseau du joueur'},
-    ], en:[
-      {t:'fix', tx:'Vell/Kzarka\'s schedule (sourced from garmoth.com) is in French time (Europe/Paris) — but it was computed using the browser\'s LOCAL time, so a player outside France saw a schedule shifted by their own timezone. The schedule is now always anchored to Paris time (summer/winter handled automatically), regardless of the player\'s timezone'},
-    ] },
   { v:'V139', d:'08/07/2026 17:00', name:{fr:'Alerte Discord sur tentative de double réclamation', en:'Discord alert on double-claim attempt'}, fr:[
       {t:'new', tx:'Le blocage anti-double-réclamation d\'un World Boss (voir V135) était totalement silencieux — chaque tentative de re-réclamer une récompense déjà payée envoie désormais une alerte sur Discord (pseudo du joueur, boss concerné), pour repérer les abus'},
     ], en:[
