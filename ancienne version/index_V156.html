@@ -1439,11 +1439,6 @@
        largeur pour se répartir sur 3-4 par ligne, le texte passe en dessous. */
     #activitiesBar { flex-direction:column; align-items:stretch; gap:6px; }
     #nextBossMini { text-align:center; }
-    /* #sideMenu replié (icône ◀/▶ seule) est en position:fixed tout en haut à gauche de l'écran,
-       PAR-DESSUS le contenu de #wrap qui démarre au même endroit — sur téléphone, le premier onglet
-       de #activitiesBar se retrouvait donc caché sous ce bouton (confirmé sur un vrai téléphone).
-       Le contenu est repoussé sous l'emprise du bouton replié pour ne plus jamais le chevaucher. */
-    #wrap { margin-top:46px; }
     /* La zone de jeu (canvas) est déjà responsive (width:100%), mais toute sa surcouche HTML
        (textes/icônes positionnés en absolu par-dessus) est calibrée en pixels fixes pour un canvas
        ~1240px de large — une fois le canvas réduit à la largeur d'un téléphone (~360-380px), ces
@@ -1480,18 +1475,6 @@
       box-shadow:0 0 10px rgba(201,165,90,.5); font-size:20px;
     }
     #potSlot #potIcon { font-size:20px; }
-    /* #invFullBanner ("Sac plein") et #deathBanner sont centrés en haut, à la même hauteur que
-       #zoneTitle (aligné à gauche, 2-3 lignes) — ils se recouvraient sur un cadre de jeu aussi bas
-       (confirmé sur un vrai téléphone : la bannière rouge cachait le nom de zone ET les PA/PD).
-       Repoussés sous #zoneTitle, avec un texte plus compact pour tenir sur la largeur réduite. */
-    #invFullBanner { top:112px; font-size:10px; padding:4px 10px; max-width:calc(100% - 20px); }
-    #deathBanner { top:112px; font-size:10px; padding:5px 12px; }
-    /* silverBox/shRate (haut-droite) et lootTicker (bas-droite) se marchent aussi dessus sur un
-       cadre aussi bas — lootTicker moins haut et un peu plus petit pour laisser plus de respiration
-       au silver/taux au-dessus */
-    #silverBox { font-size:12px; padding:4px 9px; }
-    #shRate { font-size:9.5px; }
-    #lootTicker { font-size:9.5px; max-height:70px; }
   }
 </style>
 </head>
@@ -1872,13 +1855,6 @@ const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
 const $ = id => document.getElementById(id);
-// le canvas a une résolution interne FIXE (1240×440, voir <canvas>) que le CSS (width:100%) réduit
-// pour tenir dans un téléphone — tout texte dessiné dessus (floatTxt : gains de loot/XP, dégâts...)
-// rétrécit donc dans les mêmes proportions et devient minuscule sur mobile (2026-07-05, demande
-// explicite : "met en valeur le changement de XP/LOOT"). uiTextScale() compense en agrandissant les
-// polices dans le repère du canvas d'autant que l'affichage réel a rétréci, pour une taille visuelle
-// ~constante à l'écran quelle que soit la largeur ; plafonné pour rester lisible sans être absurde.
-function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth || 1240))); }
 
 // ==================== I18N (déclaré tôt : utilisé dès les premiers rendus) ====================
 let LANG = 'fr';
@@ -6160,12 +6136,10 @@ function drawParticle(q) {
 }
 
 function drawFloats() {
-  const s = uiTextScale();
   for (const f of floats) {
     const c = toScreen(f.x,f.y,f.z+(1-f.life)*36);
     ctx.globalAlpha = Math.max(0,Math.min(1,f.life));
-    const base = f.lvl?15:f.crit?14:12;
-    ctx.font = (f.lvl?'bold ':f.crit?'bold ':'')+(base*s)+'px Georgia';
+    ctx.font = f.lvl?'bold 15px Georgia':f.crit?'bold 14px Georgia':'12px Georgia';
     ctx.fillStyle = f.silver||f.gold?'#c9a55a':f.lvl||f.blue?'#9cc9e8':f.green?'#8fc98a':f.hurt?'#e06050':f.crit?'#ffbe78':'#e88';
     ctx.textAlign='center'; ctx.fillText(f.txt,c.sx,c.sy); ctx.textAlign='left';
     ctx.globalAlpha=1;
@@ -9571,17 +9545,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V157', d:'05/07/2026 11:30', name:{fr:'Mobile : header dégagé, gains XP/Loot lisibles, moins de chevauchement', en:'Mobile: cleared header, readable XP/Loot gains, less overlap'}, fr:[
-      {t:'fix', tx:'Le bouton replié du menu de gauche (position fixe, en haut à gauche) cachait le premier onglet de la barre d\'activités sur téléphone — le contenu est repoussé sous ce bouton pour ne plus jamais le chevaucher'},
-      {t:'fix', tx:'Les bannières "Sac plein" et "Tu es mort" recouvraient le nom de la zone sur téléphone (cadre de jeu très bas) — repoussées en dessous'},
-      {t:'change', tx:'Les nombres flottants de gains (loot, XP, dégâts) sont dessinés sur un canvas à résolution fixe, réduit à la taille de l\'écran — sur téléphone ils devenaient minuscules, quasi illisibles. Leur taille compense maintenant la réduction de l\'écran pour rester lisible, quelle que soit la largeur'},
-      {t:'change', tx:'Silver, taux/h et butin en direct légèrement resserrés sur téléphone pour laisser plus de place à cet ensemble sur un cadre de jeu réduit'},
-    ], en:[
-      {t:'fix', tx:'The left menu\'s folded button (fixed position, top-left) hid the first tab of the activity bar on phone — content is now pushed below this button so it\'s never covered again'},
-      {t:'fix', tx:'The "Bag full" and "You died" banners covered the zone name on phone (very short game frame) — pushed further down'},
-      {t:'change', tx:'Floating gain numbers (loot, XP, damage) are drawn on a fixed-resolution canvas that shrinks to fit the screen — on phone they became tiny, barely readable. Their size now compensates for the screen shrink to stay legible at any width'},
-      {t:'change', tx:'Silver, rate/h and live loot slightly tightened on phone to leave more room for this group on a shrunk game frame'},
-    ] },
   { v:'V156', d:'05/07/2026 11:00', name:{fr:'Mobile : barre de sorts repliable, potion mise en avant', en:'Mobile: collapsible skill bar, potion put forward'}, fr:[
       {t:'change', tx:'Sur mobile/tablette, la barre de sorts est maintenant repliée par défaut (purement indicative, aucun clic requis, le combat reste automatique) — un bouton ⚡ la déplie/replie à la demande, libérant de la place dans le cadre de jeu'},
       {t:'change', tx:'La potion (soin automatique), ce qui compte vraiment à surveiller en jeu, est mise en avant sur mobile/tablette : agrandie avec un halo doré au lieu d\'être réduite comme le reste du HUD'},
