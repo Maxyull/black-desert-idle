@@ -529,15 +529,6 @@
     background:none; border:none; font-size:16px; color:var(--ink-dim);
   }
   #authBox h1 { font-size:20px; letter-spacing:2px; color:var(--gold); margin-bottom:4px; }
-  /* badge "compatible mobile/tablette" sur l'écran de connexion/création de compte (2026-07-05,
-     demande explicite) — annonce la nouvelle adaptation mobile (V152-V157) dès l'arrivée sur le
-     jeu, avant même de se connecter, avec le même style pulsant que le tag "NEW" des notes de
-     version pour attirer l'œil sans être une simple étiquette statique */
-  #authMobileBadge {
-    display:inline-block; background:rgba(201,165,90,.12); color:var(--gold); border:1px solid var(--gold-dim);
-    font-size:10px; font-weight:bold; letter-spacing:.5px; padding:3px 10px; border-radius:10px;
-    margin-bottom:10px; animation:patchNewFade 1.6s infinite;
-  }
   .authSub { font-size:11.5px; color:var(--ink-dim); margin-bottom:8px; }
   #demoBadge {
     display:inline-block; background:var(--danger); color:#fff; font-size:10px; font-weight:bold;
@@ -1515,7 +1506,6 @@
       <button class="authLangBtn" data-lang="en">🇬🇧 EN</button>
     </div>
     <h1>⚔️ VELIA IDLE</h1>
-    <div id="authMobileBadge" data-i18n="authMobileBadge">📱 BETA — Compatible mobile &amp; tablette</div>
     <p class="authSub" id="authSub" data-i18n="authSub">Connecte-toi avec un vrai compte pour accéder au Marché et au Classement</p>
     <p class="demoNote" data-i18n="demoNoteAuth">🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.</p>
     <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
@@ -9514,7 +9504,6 @@ const I18N = {
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },
   btnMarketLbl: { fr:'🏛️ Marché', en:'🏛️ Market' },
   btnLogout: { fr:'🚪 Déconnexion', en:'🚪 Log out' },
-  authMobileBadge: { fr:'📱 BETA — Compatible mobile & tablette', en:'📱 BETA — Mobile & tablet compatible' },
   authSub: { fr:'Connecte-toi avec un vrai compte pour accéder au Marché et au Classement', en:'Sign in with a real account to access the Market and Leaderboard' },
   btnLinkAccount: { fr:'🔗 Lier un compte', en:'🔗 Link account' },
   btnAccount: { fr:'👤 Mon compte', en:'👤 My account' },
@@ -9675,11 +9664,6 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
-  { v:'V161', d:'05/07/2026 13:30', name:{fr:'Badge "Compatible mobile/tablette" à la connexion', en:'"Mobile/tablet compatible" badge at login'}, fr:[
-      {t:'new', plat:'mobile', tx:'Un badge "📱 BETA — Compatible mobile & tablette" s\'affiche désormais sur l\'écran de connexion/création de compte, pour annoncer l\'adaptation mobile dès l\'arrivée sur le jeu'},
-    ], en:[
-      {t:'new', plat:'mobile', tx:'A "📱 BETA — Mobile & tablet compatible" badge now shows on the login/account creation screen, announcing the mobile adaptation right from arrival on the game'},
-    ] },
   { v:'V160', d:'05/07/2026 13:00', name:{fr:'Rééquilibrage PA/PD appliqué rétroactivement au stuff déjà possédé', en:'AP/DP rebalance applied retroactively to owned gear'}, fr:[
       {t:'fix', tx:'Le rééquilibrage des PA/PD (armes/armures/bijoux, voir version précédente) ne s\'appliquait qu\'aux nouveaux objets trouvés — tout le stuff déjà en possession (équipé ou dans le sac) gardait ses anciennes valeurs, bien plus hautes pour les armes. Recalculé une bonne fois pour toutes au prochain chargement, sans rien perdre (les PV/l\'Esquive, non concernés par le rééquilibrage, restent inchangés)'},
     ], en:[
