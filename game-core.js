@@ -545,7 +545,17 @@ const SAFE_IDX = 8; // à partir de cet index (+8), l'enchantement cesse d'être
 // plus de la moitié du gain total à PEN (0.74 sur 1.33, contre 0.74 sur 1.70 avant) — atteindre au
 // moins PRI devient un vrai palier de progression, pas un bonus optionnel. Les zones ont aussi été
 // recalibrées en conséquence (voir reqAP/reqDP des zones 3, 6 et 9 dans ZONES).
-const ENH_STEP = [0, .05,.05,.05,.05,.05,.05,.05,  .03,.03,.03,.03,.03,.03,.03,.03,  .08,.10,.13,.18,.25];
+// Palier PRI relevé le 2026-07-06 (demande explicite : "en moyenne on doit être en PRI" pour
+// passer au palier de couleur suivant) : simulation d'un stuff complet moyen-PRI (scale=1, farmé
+// dans la meilleure zone du palier précédent) donnait un ratio PA/PD de seulement 0.58-0.70 face à
+// la 1ère zone du palier suivant (zones 3/6/9) — encore sous le seuil de 0.6 qui bascule en ZONE
+// DANGEREUSE pour le pire cas (gris→blanc). Plutôt que gonfler GEAR_ROLE (casserait l'équilibre
+// déjà bon sur SA PROPRE zone, ratio ~0.9-1.0, en le faisant grimper à "ZONE DÉPASSÉE"), seul le
+// palier PRI lui-même est relevé (+0.08 → +0.20) : ne change RIEN pour +0 à +15 (donc aucun impact
+// sur l'équilibre intra-zone), et comme enhBonus() est recalculé à la volée depuis enhLv à chaque
+// affichage (jamais figé sur l'objet), c'est rétroactif AUTOMATIQUEMENT sur tout le stuff déjà
+// équipé/en sac de tous les joueurs, sans script de migration — exactement l'automatisme demandé.
+const ENH_STEP = [0, .05,.05,.05,.05,.05,.05,.05,  .03,.03,.03,.03,.03,.03,.03,.03,  .20,.10,.13,.18,.25];
 function enhBonus(lvl) { let b = 0; for (let i = 1; i <= (lvl||0); i++) b += ENH_STEP[i]; return b; }
 function itemMult(item) { return item && item.optimizable ? (1 + enhBonus(item.enhLv||0)) : 1; }
 // PA/PD réels d'un objet une fois son bonus d'enchantement appliqué (affichage tooltip/popup —

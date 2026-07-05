@@ -2273,6 +2273,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V183', d:'06/07/2026 01:30', name:{fr:'Palier PRI relevé pour sortir de zone dangereuse au changement de couleur', en:'PRI tier raised to escape dangerous zone at color-tier change'}, fr:[
+      {t:'change', sub:'equipements', severity:'minor', tx:'Bonus du palier PRI relevé (+8% → +20%) : un stuff complet moyen-PRI (mix PEN/+10 possible) sort désormais de ZONE DANGEREUSE sur la 1ère zone du palier de couleur suivant, au lieu d\'y rester bloqué. Ne change rien pour +0 à +15 ni pour l\'équilibre sur sa propre zone (déjà bon) — rétroactif automatiquement sur tout le stuff déjà équipé/en sac, aucune migration nécessaire'},
+    ], en:[
+      {t:'change', sub:'equipements', severity:'minor', tx:'PRI tier bonus raised (+8% → +20%): a full average-PRI set (mixing PEN/+10 is fine) now escapes DANGEROUS ZONE on the next color tier\'s first zone, instead of staying stuck there. Nothing changes for +0 to +15 or for balance on its own zone (already fine) — automatically retroactive on all already-equipped/bagged gear, no migration needed'},
+    ] },
   { v:'V182', d:'06/07/2026 01:00', name:{fr:'Chat anglais, reset admin par UUID, Marché marqué "en construction"', en:'English chat, admin reset by UUID, Market flagged "under construction"'}, fr:[
       {t:'new', sub:'interface', tx:'Nouveau canal de chat 🇬🇧 Anglais, séparé du canal Mondial'},
       {t:'new', sub:'comptes', tx:'Admin : nouvelle action pour réinitialiser le compte d\'UN joueur précis par UUID (silver/équipement/niveau/sac), sans toucher aux autres — même message d\'explication que le reset global, mais montré uniquement à ce joueur'},
@@ -3808,7 +3813,7 @@ const WIKI_SECTIONS = [
         <li><b>Pas assez de PA</b> → tes sorts infligent moins de dégâts (jusqu'à -75% si très sous-PA)</li>
         <li><b>Pas assez de PD</b> → tu encaisses beaucoup plus de dégâts (jusqu'à 4,5×), risque de K.O. élevé</li>
         <li>Au-dessus des deux → dégâts et réduction bonus, plafonnés pour éviter le farm abusif</li>
-        <li>Le loot suit le pire des deux ratios</li>
+        <li>Le loot suit le pire des deux ratios : ton bonus de loot est calculé sur <b>le plus faible</b> de tes 2 ratios (PA effectif / PA requis, PD effectif / PD requis), jamais la moyenne ni le meilleur. Exemple : un PA parfait (ratio 1.5) mais un PD à moitié du requis (ratio 0.5) → ton loot est pénalisé <b>comme si tu étais à 0.5 partout</b>, le PA excédentaire ne compense rien</li>
         <li><b>ZONE DANGEREUSE</b> (très sous-PA/PD) → tu es ralenti, et les monstres qui t'ont repéré deviennent plus rapides pour te rattraper</li>
       </ul>
       <h3>Mana</h3>
@@ -3831,7 +3836,7 @@ const WIKI_SECTIONS = [
         <li><b>Not enough AP</b> → your spells deal less damage (up to -75%)</li>
         <li><b>Not enough DP</b> → you take a lot more damage (up to 4.5×), high KO risk</li>
         <li>Above both → bonus damage and reduction, capped to prevent overfarming</li>
-        <li>Loot follows the worse of the two ratios</li>
+        <li>Loot follows the worse of the two ratios: your loot bonus is calculated on <b>whichever is lowest</b> of your 2 ratios (effective AP / required AP, effective DP / required DP), never the average or the best one. Example: perfect AP (ratio 1.5) but DP at half the requirement (ratio 0.5) → your loot is penalized <b>as if you were at 0.5 everywhere</b>, the excess AP compensates for nothing</li>
         <li><b>DANGEROUS ZONE</b> (very under-AP/DP) → you are slowed down, and monsters that spotted you become faster to catch up</li>
       </ul>
       <h3>Mana</h3>
