@@ -3098,13 +3098,7 @@ async function endBossFight(win) {
       try {
         const { data } = await sb.rpc('boss_claim');
         if (typeof data === 'number' && data > 0) { rank = data; mult = bossRankMultiplier(rank); }
-        else {
-          alreadyClaimed = true; // -1 : déjà réclamé, aucune contribution, ou boss pas encore à 0 PV
-          // alerte Discord (2026-07-08, demande explicite) : chaque tentative de re-réclamer un
-          // boss déjà payé (ex. re-rentrer dans l'arène après une victoire) est désormais visible
-          // côté staff, alors qu'avant le blocage était totalement silencieux
-          logToDiscord('🚫 Tentative de double réclamation', `**${myPseudo||'Joueur'}** a tenté de réclamer à nouveau la récompense de ${b.name.fr} (déjà payée) — bloqué.`, 0xed4245);
-        }
+        else alreadyClaimed = true; // -1 : déjà réclamé, aucune contribution, ou boss pas encore à 0 PV
       } catch (e) { alreadyClaimed = true; } // en cas de doute (erreur réseau), ne JAMAIS accorder par défaut
     }
     if (alreadyClaimed) {
@@ -9315,11 +9309,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V139', d:'08/07/2026 17:00', name:{fr:'Alerte Discord sur tentative de double réclamation', en:'Discord alert on double-claim attempt'}, fr:[
-      {t:'new', tx:'Le blocage anti-double-réclamation d\'un World Boss (voir V135) était totalement silencieux — chaque tentative de re-réclamer une récompense déjà payée envoie désormais une alerte sur Discord (pseudo du joueur, boss concerné), pour repérer les abus'},
-    ], en:[
-      {t:'new', tx:'The World Boss anti-double-claim block (see V135) was completely silent — every attempt to re-claim an already-paid reward now sends a Discord alert (player name, boss involved), to spot abuse'},
-    ] },
   { v:'V138', d:'08/07/2026 16:00', name:{fr:'Correctif : Vell affichait en fait Kzarka', en:'Fix: Vell was actually showing Kzarka'}, fr:[
       {t:'fix', tx:'Bug de longue date : le combat de Vell affichait en réalité toujours la silhouette de Kzarka (rouge/brun) — la fonction qui choisit le dessin comparait le mauvais identifiant et ne reconnaissait jamais Vell. Toutes les silhouettes de Vell dessinées depuis plusieurs versions (bateaux, ailes-vasque...) n\'étaient donc jamais visibles en jeu ; elles s\'affichent enfin correctement maintenant'},
     ], en:[
