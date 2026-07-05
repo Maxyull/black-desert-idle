@@ -2046,6 +2046,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V167', d:'05/07/2026 16:15', name:{fr:'Bouton "Vider le cache" sur l\'écran de connexion', en:'"Clear cache" button on the login screen'}, fr:[
+      {t:'new', tx:'Le bouton "🧹 Vider le cache du jeu" est maintenant aussi accessible directement sur l\'écran de connexion (en plus du panneau "Mon compte"), pour les cas où un joueur reste bloqué dessus'},
+    ], en:[
+      {t:'new', tx:'The "🧹 Clear game cache" button is now also available directly on the login screen (in addition to the "My account" panel), for cases where a player gets stuck on it'},
+    ] },
   { v:'V166', d:'05/07/2026 16:00', name:{fr:'Correction : page de connexion bloquée après une connexion réussie', en:'Fix: login screen stuck after a successful sign-in'}, fr:[
       {t:'fix', nature:'backend', tx:'Après une connexion via Discord (ou un lien de confirmation d\'email), l\'écran de connexion pouvait rester affiché malgré une connexion réussie, y compris après un rechargement de la page — la session était bien établie mais le jeu ne le détectait pas toujours à temps'},
     ], en:[
