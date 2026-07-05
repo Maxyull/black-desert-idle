@@ -381,12 +381,6 @@
   .compPenItem { cursor:default; font-size:11px; }
   .compPenItem:hover { text-decoration:none; color:inherit; }
   .compPenItem.done { color:#8fc98a; }
-  /* sac "Compendium" (2026-07-08) : grille identique au sac principal, avec un bouton "renvoyer" par case */
-  .compBagGrid { max-height:260px; margin-top:8px; }
-  .compBagCell { font-size:15px; }
-  .compBagReturnBtn { position:absolute; bottom:1px; right:1px; width:auto; margin:0; padding:0 2px;
-    font-size:9px; line-height:1.4; border:none; background:rgba(10,9,14,.85); }
-  .compBagReturnBtn:hover { background:rgba(201,165,90,.3); }
   .cell {
     aspect-ratio:1; background:rgba(20,19,26,.6); border:1px solid #262430;
     position:relative; display:flex; align-items:center; justify-content:center;
@@ -2124,19 +2118,6 @@ const ICO_COEUR_VELL = svgIcon(
 const INV_SIZE = 192;
 const INV = new Array(INV_SIZE).fill(null);   // chaque slot : null | { key, name, kind, icon, color, qty, unit, val, weight, ap, dp }
 const MAX_STACK = 9999;
-// Sac "Compendium" (2026-07-08, demande explicite) : même taille que le sac principal (192 cases).
-// Quand "Vendre" s'apprête à vendre une pièce d'équipement/bijou dont ce TYPE n'a JAMAIS atteint
-// PEN (voir S.penMastery), le PREMIER exemplaire trouvé est déposé ici au lieu d'être vendu — pour
-// ne jamais perdre la chance de le monter en PEN plus tard. Les exemplaires suivants du même type
-// continuent d'être vendus normalement (pas la peine d'en garder plusieurs).
-const COMPENDIUM_BAG = new Array(INV_SIZE).fill(null);
-function compendiumBagHasName(name) { return COMPENDIUM_BAG.some(s => s && s.name === name); }
-function compendiumBagAdd(obj) {
-  const idx = COMPENDIUM_BAG.findIndex(s => s === null);
-  if (idx === -1) return false;
-  COMPENDIUM_BAG[idx] = { ...obj };
-  return true;
-}
 
 // slots d'équipement type BDO — chaque pièce optimisable porte son PROPRE niveau d'enchant (enhLv)
 const EQUIP = {
@@ -3667,23 +3648,9 @@ function renderCompendiumHtml() {
       <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${LANG==='fr'?'Zones':'Zones'} (${zc}/${ZONES.length})</button>
       <button class="catTab compTab${compendiumTab==='bosses'?' active':''}" data-tab="bosses">🐋 World Bosses (${bc}/${bossCountMax})</button>
       <button class="catTab compTab${compendiumTab==='pen'?' active':''}" data-tab="pen">🌟 ${LANG==='fr'?'Maîtrise PEN':'PEN Mastery'} (${penDone}/${penItems.length})</button>
-      <button class="catTab compTab${compendiumTab==='bag'?' active':''}" data-tab="bag">🎒 ${LANG==='fr'?'Sac protégé':'Protected bag'} (${COMPENDIUM_BAG.filter(Boolean).length}/${INV_SIZE})</button>
     </div>`;
   let bodyHtml;
-  if (compendiumTab === 'bag') {
-    const used = COMPENDIUM_BAG.filter(Boolean).length;
-    const cellsHtml = COMPENDIUM_BAG.map((s,i) => {
-      if (!s) return `<div class="cell compBagCell"></div>`;
-      return `<div class="cell compBagCell has" title="${escapeHtml(tr(s.name))}">` +
-        `<span style="color:${s.color}">${s.icon}</span>` +
-        `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button></div>`;
-    }).join('');
-    bodyHtml = `<div class="admHint">${LANG==='fr'
-        ? '"Vendre" protège ici le 1er exemplaire de chaque type d\'équipement/bijou jamais monté en PEN, au lieu de le vendre. Renvoie-le au sac principal pour t\'en servir (il continuera à être protégé si tu le revends).'
-        : '"Sell" protects here the 1st copy of each gear/jewelry type never brought to PEN, instead of selling it. Send it back to your main bag to use it (it\'ll stay protected if you sell it again).'}</div>` +
-      `<div class="admSummary">${used} / ${INV_SIZE}</div>` +
-      `<div class="admInvGrid compBagGrid">${cellsHtml}</div>`;
-  } else if (compendiumTab === 'bosses') {
+  if (compendiumTab === 'bosses') {
     bodyHtml = Object.entries(BOSS_ROSTER).map(([id,b]) => {
       const unlocked = !!S.bossesKilled[id];
       return `<div class="achRow${unlocked?' done':''}">` +
@@ -3722,15 +3689,6 @@ function openCompendium() {
   });
   $a('infoBody').querySelectorAll('.compItem[data-item]').forEach(el => {
     el.onclick = () => compendiumHighlightItem(el.dataset.item);
-  });
-  $a('infoBody').querySelectorAll('.compBagReturnBtn').forEach(btn => {
-    btn.onclick = e => {
-      e.stopPropagation();
-      const i = parseInt(btn.dataset.i,10);
-      const it = COMPENDIUM_BAG[i]; if (!it) return;
-      if (invAdd({ ...it })) { COMPENDIUM_BAG[i] = null; openCompendium(); }
-      else floatTxt(P.x,P.y,90,LANG==='fr'?'Sac principal plein':'Main bag full',{hurt:true});
-    };
   });
 }
 
@@ -6697,7 +6655,7 @@ function refScoreForSlot(slotId, accSlot) {
 // non persisté (perdu au rechargement, ce n'est qu'un filet de sécurité immédiat)
 let lastWorseSaleSold = null;
 function sellWorseThanEquipped() {
-  let count = 0, total = 0, divertedCount = 0;
+  let count = 0, total = 0;
   const sold = [];
   for (let i = 0; i < INV_SIZE; i++) {
     const it = INV[i]; if (!it) continue;
@@ -6706,19 +6664,10 @@ function sellWorseThanEquipped() {
     const accSlot = it.kind === 'jackpot' ? accSlotFor(it) : null;
     const ref = refScoreForSlot(slotId, accSlot);
     if (ref < 0) continue; // rien d'équipé pour comparer → on ne touche pas (pourrait être la 1ère pièce du slot)
-    if (itemScore(it) <= ref) {
-      // sac "Compendium" (2026-07-08, demande explicite) : le PREMIER exemplaire d'un type jamais
-      // monté en PEN est protégé dans ce sac dédié au lieu d'être vendu — les suivants du même type
-      // (déjà un exemplaire en sécurité) continuent d'être vendus normalement
-      if (!S.penMastery[it.name] && !compendiumBagHasName(it.name) && compendiumBagAdd(it)) {
-        divertedCount++; INV[i] = null; count++;
-      } else {
-        total += it.val * it.qty; sold.push({ ...it }); INV[i] = null; count++;
-      }
-    }
+    if (itemScore(it) <= ref) { total += it.val * it.qty; sold.push({ ...it }); INV[i] = null; count++; }
   }
   if (count > 0) { S.silver += total; S.silverEarned += total; lastWorseSaleSold = sold; hud(); }
-  return { count, total, divertedCount };
+  return { count, total };
 }
 // annule la dernière "Vendre l'inférieur" : reverse le silver gagné et restaure les objets vendus
 // (tout ou rien — n'annule rien si le sac n'a pas assez de place ou si le silver a depuis baissé
@@ -6735,18 +6684,12 @@ function buyBackLastWorseSale() {
   return true;
 }
 $('btnSellWorse').onclick = () => {
-  const { count, total, divertedCount } = sellWorseThanEquipped();
-  // "Racheter" ne peut annuler que les objets réellement VENDUS (silver) — pas ceux protégés dans
-  // le sac Compendium, qui n'ont jamais quitté ta possession et sont récupérables depuis là-bas
-  $('btnBuyBackWorse').disabled = !lastWorseSaleSold || !lastWorseSaleSold.length;
+  const { count, total } = sellWorseThanEquipped();
+  $('btnBuyBackWorse').disabled = count === 0;
   const msg = $('equipBestMsg');
   if (msg) {
-    const soldCount = count - divertedCount;
-    const divertedTxt = divertedCount > 0
-      ? (LANG==='fr' ? ` · +${divertedCount} protégé${divertedCount>1?'s':''} dans le sac 📖 Compendium` : ` · +${divertedCount} protected in the 📖 Compendium bag`)
-      : '';
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `${soldCount} objet${soldCount>1?'s':''} vendu${soldCount>1?'s':''} (+${fmt(total)} silver)${divertedTxt}` : `${soldCount} item${soldCount>1?'s':''} sold (+${fmt(total)} silver)${divertedTxt}`)
+      ? (LANG==='fr' ? `${count} objet${count>1?'s':''} vendu${count>1?'s':''} (+${fmt(total)} silver)` : `${count} item${count>1?'s':''} sold (+${fmt(total)} silver)`)
       : (LANG==='fr' ? 'Rien à vendre — tout est déjà au-dessus de l\'équipé' : 'Nothing to sell — everything already beats what\'s equipped');
     msg.className = count > 0 ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
@@ -7179,7 +7122,6 @@ function getSaveState() {
     S: { ...S },
     EQUIP: JSON.parse(JSON.stringify(EQUIP)),
     INV: JSON.parse(JSON.stringify(INV)),
-    COMPENDIUM_BAG: JSON.parse(JSON.stringify(COMPENDIUM_BAG)),
     zoneIdx,
     playerPos: { x: P.x, y: P.y },
     savedAt: new Date().toISOString(),
@@ -7196,9 +7138,6 @@ function applySaveState(data) {
   S.killsAtLoad = S.kills || 0;
   Object.keys(EQUIP).forEach(k => EQUIP[k] = data.EQUIP[k] ?? null);
   for (let i = 0; i < INV_SIZE; i++) INV[i] = data.INV[i] ?? null;
-  // sac "Compendium" (2026-07-08) : absent des sauvegardes antérieures à cette version, ?? null
-  // migre proprement les anciennes sauvegardes (toutes les cases restent vides, rien à perdre)
-  for (let i = 0; i < INV_SIZE; i++) COMPENDIUM_BAG[i] = data.COMPENDIUM_BAG?.[i] ?? null;
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
@@ -9240,15 +9179,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V133', d:'08/07/2026 11:00', name:{fr:'Sac "Compendium" : protège les objets jamais montés en PEN', en:'"Compendium" bag: protects items never brought to PEN'}, fr:[
-      {t:'new', tx:'Nouveau sac dédié "📖 Compendium" (192 cases, comme le sac principal) : quand "Vendre" s\'apprête à vendre une pièce d\'équipement ou un bijou dont ce TYPE n\'a jamais atteint PEN, le 1er exemplaire trouvé est protégé ici au lieu d\'être vendu — les exemplaires suivants du même type continuent d\'être vendus normalement'},
-      {t:'new', tx:'Nouvel onglet "🎒 Sac protégé" dans le Compendium pour consulter ce sac et renvoyer un objet au sac principal en un clic'},
-      {t:'change', tx:'Le message de "Vendre" précise maintenant combien d\'objets ont été vendus VS protégés dans le sac Compendium ; "Racheter" ne redevient actif que s\'il y a vraiment quelque chose à racheter (les objets protégés n\'ont jamais quitté ta possession)'},
-    ], en:[
-      {t:'new', tx:'New dedicated "📖 Compendium" bag (192 slots, like the main bag): when "Sell" is about to sell a gear piece or jewel whose TYPE has never reached PEN, the 1st copy found is protected here instead of being sold — further copies of the same type keep being sold normally'},
-      {t:'new', tx:'New "🎒 Protected bag" tab in the Compendium to browse this bag and send an item back to your main bag in one click'},
-      {t:'change', tx:'The "Sell" message now shows how many items were sold VS protected in the Compendium bag; "Buy back" only becomes active if there\'s actually something to buy back (protected items never left your possession)'},
-    ] },
   { v:'V132', d:'08/07/2026 10:00', name:{fr:'Vell : ancres des bateaux, montagnes et entrée unique', en:'Vell: ship anchors, mountains and single entrance'}, fr:[
       {t:'change', tx:'Les abris de la charge de Vell sont désormais les ancres des 2 bateaux (chaîne qui descend du pont) au lieu des anciens piliers de pierre de Kzarka — cohérent avec le fait que les joueurs sont sur les bateaux'},
       {t:'new', tx:'Vell est maintenant cerné de montagnes de tous les côtés, avec une seule entrée étroite au centre pour l\'apercevoir depuis les bateaux, d\'après la capture de référence ("Barrier Rock")'},
