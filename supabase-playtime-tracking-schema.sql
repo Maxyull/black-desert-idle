@@ -34,15 +34,22 @@ $$;
 grant execute on function public.log_playtime_ping() to authenticated;
 
 -- vue admin : par tranche d'heure, sur les 48 dernières heures —
---  * players     = nombre de joueurs DISTINCTS actifs pendant cette heure (ex: 3 = trois joueurs)
---  * playtime_sec = temps de jeu cumulé de tous ces joueurs (chaque ping vaut ~60s)
-create or replace view public.admin_playtime_by_hour as
+--  * playtime_sec = temps de jeu cumulé de tous les joueurs sur cette heure (chaque ping vaut ~60s)
+--
+-- FAILLE CORRIGÉE le 2026-07-05 (audit des avertissements Supabase, voir
+-- supabase/migrations/20260705080000_fix_admin_views_security.sql) : cette vue SECURITY DEFINER
+-- était lisible par N'IMPORTE QUEL compte connecté ou anonyme via l'API REST. La clause WHERE
+-- ci-dessous ne renvoie des lignes que pour l'email admin ; ne JAMAIS retirer ce filtre si ce
+-- fichier est ré-exécuté.
+create or replace view public.admin_playtime_by_hour
+with (security_invoker = false) as
 select date_trunc('hour', pinged_at) as hour,
-       count(distinct user_id) as players,
-       count(*) * 60 as playtime_sec
+       count(*) * 60 as total_playtime_sec
 from public.playtime_pings
 where pinged_at > now() - interval '48 hours'
+  and coalesce((select auth.jwt()->>'email'), '') = 'maxime.lacoste@icloud.com'
 group by 1
 order by 1 desc;
 
+revoke all on public.admin_playtime_by_hour from anon, authenticated;
 grant select on public.admin_playtime_by_hour to authenticated;

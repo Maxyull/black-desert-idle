@@ -12,11 +12,22 @@
 -- comportement s'améliore avec le temps à mesure que l'historique dépasse 30 jours.
 --
 -- Supabase > SQL Editor > New query > Run
+--
+-- FAILLE CORRIGÉE le 2026-07-05 (audit des avertissements Supabase, voir
+-- supabase/migrations/20260705080000_fix_admin_views_security.sql) : cette vue SECURITY DEFINER
+-- était lisible par N'IMPORTE QUEL compte connecté ou anonyme via l'API REST. La clause WHERE
+-- ci-dessous ne renvoie des lignes que pour l'email admin ; ne JAMAIS retirer ce filtre si ce
+-- fichier est ré-exécuté.
 -- ============================================================
 
-create or replace view public.admin_farm_by_item as
+create or replace view public.admin_farm_by_item
+with (security_invoker = false) as
 select item_name, item_kind, count(*) as pickups, sum(qty) as total_qty, sum(silver_value) as total_silver
 from public.farm_events
 where created_at > now() - interval '30 days'
+  and coalesce((select auth.jwt()->>'email'), '') = 'maxime.lacoste@icloud.com'
 group by item_name, item_kind
 order by sum(qty) desc;
+
+revoke all on public.admin_farm_by_item from anon, authenticated;
+grant select on public.admin_farm_by_item to authenticated;
