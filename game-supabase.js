@@ -2288,6 +2288,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V187', d:'06/07/2026 03:00', name:{fr:'Nombre de joueurs déplacé à côté de l\'œil de loot', en:'Player count moved next to the loot eye'}, fr:[
+      {t:'change', sub:'interface', severity:'minor', tx:'Le badge 👥 (joueurs sur la zone) est maintenant affiché juste à gauche du bouton 👁 (voir le loot), au lieu de juste après le badge de difficulté'},
+    ], en:[
+      {t:'change', sub:'interface', severity:'minor', tx:'The 👥 badge (players on the zone) now shows just left of the 👁 (view loot) button, instead of right after the difficulty badge'},
+    ] },
   { v:'V186', d:'06/07/2026 02:45', name:{fr:'% d\'XP aussi gros que le niveau', en:'XP % as big as the level'}, fr:[
       {t:'improve', sub:'interface', severity:'minor', tx:'Le % d\'XP au-dessus de la barre de vie est maintenant aussi gros que le niveau (au lieu de petit en dessous)'},
     ], en:[
