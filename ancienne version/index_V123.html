@@ -1768,28 +1768,22 @@ const ZONES = [
     tint:{ a:'#4a4232', b:'#443c2d', dry:'#524936' }, tones:['#7a6248','#6b563e','#8a7055'], alphaTone:'#4a3a28',
     loot:{ trash:{name:'Insigne de Sausan',val:5,ch:1}, mat:{name:'Pierre noire',val:1,ch:.4},
       jackpot:{name:'Ceinture Naru',val:1025,ch:.0038,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
-  // reqAP/reqDP des zones 3, 6 et 9 (première zone de chaque nouveau palier de couleur) relevées
-  // le 2026-07-08 (+~30%, avec les zones suivantes du même palier réajustées en proportion pour
-  // garder une progression lisse) : avec le ralentissement de l'enchantement +1→+15 (voir
-  // ENH_STEP), un stuff complet du palier précédent à +0 ne suffit plus à franchir la zone
-  // suivante — il faut réellement pousser au moins jusqu'à PRI. Demande explicite de l'utilisateur,
-  // qui a autorisé à dépasser largement l'ancien seuil ("on ajustera les zones après").
-  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:50, reqDP:46, mob:'Guerrier Rhutum',
+  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:38, reqDP:35, mob:'Guerrier Rhutum',
     hpPer:48, dmg:6, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
     loot:{ trash:{name:'Bourse de pirate',val:9,ch:1}, mat:{name:'Pierre noire',val:1,ch:.32},
       jackpot:{name:'Anneau Tuvala',val:1960,ch:.0028,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
-  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:62, reqDP:57, mob:'Garde Shultz',
+  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:48, reqDP:44, mob:'Garde Shultz',
     hpPer:66, dmg:8, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:15,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:1,ch:.26},
       jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:5}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
-  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:78, reqDP:71, mob:'Combattant Sausan',
+  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:60, reqDP:55, mob:'Combattant Sausan',
     hpPer:93, dmg:12, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
       jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
-  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:111, reqDP:101, mob:'Mineur corrompu',
+  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:85, reqDP:78, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
     // sol terre rouge/brune de carrière (retexturé le 2026-07-07 d'après les captures de référence :
     // canyon ocre, crevasses, chariots) — tones = capuches/tuniques poussiéreuses des mineurs,
@@ -1797,29 +1791,25 @@ const ZONES = [
     tint:{ a:'#4a3226', b:'#443023', dry:'#583c2c' }, tones:['#8a7a68','#7a6c5a','#988676'], alphaTone:'#5a6068',
     loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
       jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
-  { name:'Poste Helm', tier:'Serendia — Late', reqAP:137, reqDP:125, mob:'Soldat Helm',
+  { name:'Poste Helm', tier:'Serendia — Late', reqAP:105, reqDP:96, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:56,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.11},
       jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:8}, craft:{name:'Fragment de mémoire',ch:.007} } },
-  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:169, reqDP:155, mob:'Bandit Gahaz',
+  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:130, reqDP:119, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
       jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:9}, craft:{name:'Fragment de mémoire',ch:.005} } },
-  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:221, reqDP:202, mob:'Sectateur d\'Elric',
+  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:175, reqDP:160, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
-    // % de la "Pierre concentrée" (matériau réel dropé ici, voir tierMat dans rollDrops — le nom
-    // 'Pierre de Caphras' ci-dessous n'est qu'un label hérité, jamais affiché) doublé le 2026-07-08 :
-    // avec l'enchantement ralenti, ces 2 dernières zones sont désormais LA seule source de matériau
-    // bleu, il en faut beaucoup plus pour pousser du stuff Grunil jusqu'à PRI+
-    loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.12},
+    loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.06},
       jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
-  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:263, reqDP:239, mob:'Uluan',
+  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:209, reqDP:190, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
-    loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
+    loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.045},
       jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:12}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
 ];
 let zoneIdx = 0;
@@ -2116,14 +2106,7 @@ const ENH_NAMES = ['+0','+1','+2','+3','+4','+5','+6','+7','+8','+9','+10','+11'
   'PRI (I)','DUO (II)','TRI (III)','TET (IV)','PEN (V)'];
 const PRI_IDX = 16; // index du premier palier "PRI" — sert de frontière pour la règle anti-rétrogradation
 const SAFE_IDX = 8; // à partir de cet index (+8), l'enchantement cesse d'être garanti à 100%
-// Ralenti le 2026-07-08 (demande explicite) : +1 à +15 donnaient déjà +96% cumulé à eux seuls
-// (0.56 jusqu'à +7, +0.40 jusqu'à +15) — largement suffisant pour franchir la zone suivante sans
-// jamais avoir besoin de PRI+, qui perdait tout son intérêt. Les paliers +1→+15 sont divisés par
-// ~1.6 (cumul +15 : 0.59 au lieu de 0.96) ; PRI→PEN restent inchangés et représentent maintenant
-// plus de la moitié du gain total à PEN (0.74 sur 1.33, contre 0.74 sur 1.70 avant) — atteindre au
-// moins PRI devient un vrai palier de progression, pas un bonus optionnel. Les zones ont aussi été
-// recalibrées en conséquence (voir reqAP/reqDP des zones 3, 6 et 9 dans ZONES).
-const ENH_STEP = [0, .05,.05,.05,.05,.05,.05,.05,  .03,.03,.03,.03,.03,.03,.03,.03,  .08,.10,.13,.18,.25];
+const ENH_STEP = [0, .08,.08,.08,.08,.08,.08,.08,  .05,.05,.05,.05,.05,.05,.05,.05,  .08,.10,.13,.18,.25];
 function enhBonus(lvl) { let b = 0; for (let i = 1; i <= (lvl||0); i++) b += ENH_STEP[i]; return b; }
 function itemMult(item) { return item && item.optimizable ? (1 + enhBonus(item.enhLv||0)) : 1; }
 // PA/PD réels d'un objet une fois son bonus d'enchantement appliqué (affichage tooltip/popup —
@@ -2471,10 +2454,9 @@ function openLifeskillPanel() {
 }
 
 // ==================== WORLD BOSS ====================
-// Bosses implémentés dans le jeu : Kzarka (quotidien) et Vell (hebdomadaire, ajouté le 2026-07-08).
-// Les horaires suivent ceux du vrai BDO MOINS 15 minutes (demande utilisateur) ; ils sont exprimés
-// en heure LOCALE du joueur pour rester simples, et le boss "in-game" se combat en 2 à 7 minutes
-// selon ton stuff (voir startBossFight).
+// Bosses implémentés dans le jeu (pour l'instant : Kzarka). Les horaires suivent ceux du vrai
+// BDO MOINS 15 minutes (demande utilisateur) ; ils sont exprimés en heure LOCALE du joueur pour
+// rester simples, et le boss "in-game" se combat en 2 à 7 minutes selon ton stuff (voir startBossFight).
 const BOSS_ROSTER = {
   kzarka: {
     name:{fr:'Grand Seigneur de guerre de la corruption',en:'Great Warlord of Corruption'},
@@ -2483,30 +2465,15 @@ const BOSS_ROSTER = {
     reward: 250000,      // silver de victoire
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[8,20],
   },
-  // Vell : grand poisson/serpent des mers, boss hebdomadaire (bien plus rare que Kzarka dans le
-  // vrai jeu) — silhouette originale provisoire en attendant la photo de référence promise par
-  // l'utilisateur (sera affinée ensuite, voir drawVell). Plus coriace et plus payant que Kzarka
-  // pour refléter sa rareté hebdomadaire.
-  vell: {
-    name:{fr:'Vell, la Terreur des Flots',en:'Vell, Terror of the Tides'},
-    short:{fr:'Vell',en:'Vell'}, icon:'🐋', color:'#2a5a78',
-    hp: 550000,
-    reward: 400000,
-    matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[12,28],
-  },
 };
 // horaires hebdomadaires (heure locale, déjà "-15 min") — day: 0=dimanche..6=samedi, ou 'daily'
-// (Kzarka apparaît plusieurs fois par jour dans le vrai jeu ; sélection resserrée ici).
-// Vell (2026-07-08) : hebdomadaire seulement, jeudi + dimanche d'après le planning cité par
-// l'utilisateur (garmoth.com) — jeudi 12h15 → 12h00, dimanche 17h00 → 16h45 une fois le "-15min" appliqué.
+// (Kzarka apparaît plusieurs fois par jour dans le vrai jeu ; sélection resserrée ici)
 const BOSS_SCHEDULE = [
   { boss:'kzarka', day:'daily', h:12, m:45 },
   { boss:'kzarka', day:'daily', h:19, m:45 },
   { boss:'kzarka', day:'daily', h:23, m:45 },
   { boss:'kzarka', day:0,       h:15, m:45 },
   { boss:'kzarka', day:6,       h:15, m:45 },
-  { boss:'vell',   day:4,       h:12, m:0  },
-  { boss:'vell',   day:0,       h:16, m:45 },
 ];
 const BOSS_WINDOW_MS = 9 * 60 * 1000; // fenêtre pendant laquelle le boss reste combattable après spawn (demande du 2026-07-06)
 
@@ -3022,66 +2989,6 @@ function drawWarlord(cx, sx, sy, r, t) {
   cx.shadowBlur=0;
   cx.restore();
 }
-// Vell — grand poisson/serpent des mers ORIGINAL, silhouette provisoire (demande explicite du
-// 2026-07-08, une vraie photo de référence doit encore arriver pour l'affiner). Corps serpentin
-// écailleux qui ondule, nageoires latérales, grande gueule ouverte avec crocs, nageoire dorsale en
-// crête — pas de reprise d'asset réel.
-function drawVell(cx, sx, sy, r, t) {
-  cx.save();
-  cx.fillStyle='rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(sx, sy+r*0.15, r*1.3, r*0.3, 0, 0, 7); cx.fill();
-  const glow = 0.5+0.5*Math.sin(t*2);
-  const undulate = Math.sin(t*1.4)*r*0.08;
-  // corps serpentin (dégradé bleu-vert profond)
-  const body = cx.createLinearGradient(sx, sy-r*1.5, sx, sy+r*0.2);
-  body.addColorStop(0,'#3a7a8a'); body.addColorStop(.5,'#1f5468'); body.addColorStop(1,'#0f2e3a');
-  cx.fillStyle = body;
-  cx.beginPath();
-  cx.moveTo(sx-r*1.5, sy-r*0.1);
-  cx.quadraticCurveTo(sx-r*1.1+undulate, sy-r*1.0, sx-r*0.35, sy-r*1.05);
-  cx.quadraticCurveTo(sx+r*0.1, sy-r*1.3, sx+r*0.55, sy-r*1.1);
-  cx.quadraticCurveTo(sx+r*1.05-undulate, sy-r*0.75, sx+r*1.15, sy-r*0.15);
-  cx.quadraticCurveTo(sx+r*0.5, sy-r*0.05, sx-r*0.2, sy-r*0.15);
-  cx.quadraticCurveTo(sx-r*0.9, sy-r*0.05, sx-r*1.5, sy-r*0.1);
-  cx.closePath(); cx.fill();
-  // écailles (arcs concentriques légers)
-  cx.strokeStyle='rgba(160,220,230,.16)'; cx.lineWidth=1.4;
-  for (let i=-2;i<=2;i++) { cx.beginPath(); cx.arc(sx+i*r*0.32, sy-r*0.55, r*0.22, Math.PI*0.15, Math.PI*0.85); cx.stroke(); }
-  // nageoire dorsale en crête, le long du dos
-  cx.fillStyle='#164452';
-  for (let i=-2;i<=1;i++) {
-    const bx = sx+i*r*0.35+undulate*0.5, by = sy-r*1.05-Math.abs(i)*r*0.03;
-    cx.beginPath(); cx.moveTo(bx-r*0.1,by); cx.lineTo(bx+r*0.16,by); cx.lineTo(bx+r*0.02, by-r*0.32); cx.closePath(); cx.fill();
-  }
-  // nageoires latérales (larges, translucides)
-  cx.fillStyle='rgba(80,170,190,.5)';
-  cx.beginPath(); cx.moveTo(sx-r*0.85,sy-r*0.45); cx.quadraticCurveTo(sx-r*1.4,sy-r*0.2, sx-r*1.15,sy+r*0.08); cx.quadraticCurveTo(sx-r*0.9,sy-r*0.05, sx-r*0.7,sy-r*0.3); cx.closePath(); cx.fill();
-  cx.beginPath(); cx.moveTo(sx+r*0.85,sy-r*0.45); cx.quadraticCurveTo(sx+r*1.4,sy-r*0.2, sx+r*1.15,sy+r*0.08); cx.quadraticCurveTo(sx+r*0.9,sy-r*0.05, sx+r*0.7,sy-r*0.3); cx.closePath(); cx.fill();
-  // barbillons/tentacules autour de la gueule, ondulants
-  cx.strokeStyle='#1f5468'; cx.lineWidth=r*0.05; cx.lineCap='round';
-  for (const side of [-1,1]) {
-    const wig = Math.sin(t*3+side)*r*0.08;
-    cx.beginPath(); cx.moveTo(sx+side*r*0.3, sy-r*1.02); cx.quadraticCurveTo(sx+side*r*0.5+wig, sy-r*0.75, sx+side*r*0.42, sy-r*0.55); cx.stroke();
-  }
-  cx.lineCap='butt';
-  // grande gueule ouverte avec crocs
-  const hy = sy-r*1.05;
-  cx.fillStyle='#0a1c22'; cx.beginPath(); cx.ellipse(sx, hy+r*0.12, r*0.4, r*0.22, 0, 0, Math.PI); cx.fill();
-  cx.fillStyle='#e8e2d0';
-  for (let i=-2;i<=2;i++) { const tx=sx+i*r*0.14;
-    cx.beginPath(); cx.moveTo(tx-r*0.04,hy+r*0.1); cx.lineTo(tx,hy+r*0.22); cx.lineTo(tx+r*0.04,hy+r*0.1); cx.closePath(); cx.fill(); }
-  // yeux luminescents
-  cx.fillStyle = `rgba(120,${200+40*glow|0},255,1)`; cx.shadowColor='#5ad0ff'; cx.shadowBlur=14;
-  cx.beginPath(); cx.arc(sx-r*0.16, hy-r*0.05, r*0.08, 0, 7); cx.fill();
-  cx.beginPath(); cx.arc(sx+r*0.16, hy-r*0.05, r*0.08, 0, 7); cx.fill();
-  cx.shadowBlur=0;
-  cx.restore();
-}
-// dispatcher : chaque boss du roster a sa propre silhouette dans l'arène — pour l'instant Kzarka
-// (Grand Seigneur de guerre) et Vell (grand poisson des mers) ont la leur
-function drawBossCreature(bossId, cx, sx, sy, r, t) {
-  if (bossId === 'vell') return drawVell(cx, sx, sy, r, t);
-  return drawWarlord(cx, sx, sy, r, t);
-}
 function drawBossRoom(t) {
   const cx = bossCtx, cv = $('bossCv'), W = cv.width, H = cv.height, bs = bossState;
   cx.save();
@@ -3115,7 +3022,7 @@ function drawBossRoom(t) {
   cx.save();
   cx.translate(bpos.x, bpos.y);
   cx.transform(1, 0, 0.05*Math.sin(t*0.6), 1+0.015*Math.sin(t*1.3), 0, 0);
-  drawBossCreature(bs.boss, cx, 0, 0, r, t);
+  drawWarlord(cx, 0, 0, r, t);
   cx.restore();
   // braises au premier plan (devant le boss, plus grosses/rapides/opaques)
   for (const e of bs.embers) {
@@ -8527,17 +8434,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V124', d:'08/07/2026 02:00', name:{fr:'Enchantement ralenti, zones recalibrées, World Boss Vell', en:'Slower enhancement, recalibrated zones, Vell World Boss'}, fr:[
-      {t:'change', tx:'Ralenti le gain de PA/PD des paliers +1 à +15 (divisé par ~1.6) : un stuff complet à +0 ne suffit plus à franchir la zone de couleur suivante, il faut réellement pousser jusqu\'à PRI+ pour progresser — les paliers PRI/DUO/TRI/TET/PEN représentent maintenant plus de la moitié du gain total à PEN'},
-      {t:'change', tx:'PA/PD requis relevés d\'environ 30% sur les zones Camp Rhutum, Mine de Fer Abandonnée et Sanctuaire Elric (premières zones de chaque nouveau palier de couleur), et les zones suivantes de chaque palier réajustées en proportion pour garder une progression lisse'},
-      {t:'change', tx:'% de drop de la Pierre concentrée doublé sur Sanctuaire Elric et Ruines de Kratuga (les 2 dernières zones, seule source de ce matériau) pour compenser l\'enchantement plus lent sur le stuff bleu'},
-      {t:'new', tx:'Nouveau World Boss hebdomadaire : Vell, la Terreur des Flots (grand poisson des mers) — silhouette originale provisoire en attendant une photo de référence. Apparaît jeudi et dimanche, aux horaires du vrai Black Desert moins 15 minutes'},
-    ], en:[
-      {t:'change', tx:'Slowed AP/DP gains from +1 to +15 (cut by ~1.6): a full +0 gear set no longer clears the next color zone by itself — you now need to genuinely push to PRI+ to progress. The PRI/DUO/TRI/TET/PEN tiers now account for more than half the total gain at PEN'},
-      {t:'change', tx:'Required AP/DP raised by roughly 30% on Rhutum Camp, Abandoned Iron Mine and Elric Sanctuary (the first zone of each new color tier), with the following zones of each tier scaled proportionally for a smooth curve'},
-      {t:'change', tx:'Concentrated Stone drop rate doubled on Elric Sanctuary and Kratuga Ruins (the last 2 zones, the only source of this material) to offset the slower enhancement on blue-tier gear'},
-      {t:'new', tx:'New weekly World Boss: Vell, Terror of the Tides (a giant sea creature) — a provisional original silhouette pending a reference photo. Appears Thursday and Sunday, at real Black Desert times minus 15 minutes'},
-    ] },
   { v:'V123', d:'08/07/2026 01:00', name:{fr:'PA/PD affichés à côté du Gearscore (classement + admin)', en:'AP/DP shown next to Gearscore (leaderboard + admin)'}, fr:[
       {t:'new', tx:'Le classement "Gearscore" affiche maintenant le détail PA/PD de chaque joueur entre parenthèses, pas juste le score global'},
       {t:'new', tx:'Le tableau "Joueurs" du panneau admin a 2 nouvelles colonnes PA et PD, à côté du Gearscore'},
