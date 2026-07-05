@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=173">
+<link rel="stylesheet" href="styles.css?v=174">
 </head>
 <body>
 
@@ -23,6 +23,7 @@
     <p class="demoNote" data-i18n="demoNoteAuth">🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.</p>
     <input type="email" id="authEmail" placeholder="Email" autocomplete="email">
     <input type="password" id="authPass" placeholder="Mot de passe" autocomplete="current-password" data-i18n-ph="authPassPh">
+    <input type="text" id="authPseudo" placeholder="Pseudo (pour la création de compte)" data-i18n-ph="authPseudoPh" maxlength="20" autocomplete="nickname">
     <div id="authError"></div>
     <button id="btnSignIn" data-i18n="btnSignIn">Se connecter</button>
     <button id="btnSignUp" class="ghost" data-i18n="btnSignUp">Créer un compte</button>
@@ -58,6 +59,8 @@
     <div class="catTabs" id="chatTabs"></div>
     <div id="chatMessages"></div>
     <div id="chatInputRow">
+      <!-- liste de suggestions pour les mentions @joueur (2026-07-05, demande explicite) -->
+      <div id="chatMentionList"></div>
       <input type="text" id="chatInput" maxlength="300" placeholder="…">
       <button id="chatSendBtn">➤</button>
     </div>
@@ -100,6 +103,7 @@
   <!-- infos moins utiles au quotidien, reléguées en bas (2026-07-05, demande explicite) -->
   <div id="metaBar">
     <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
+    <div id="registeredCounter">👤 <b id="registeredTotal">—</b> <span data-i18n="registeredLbl">inscrits</span></div>
     <div id="langToggle">
       <span class="langOpt" data-lang="fr">🇫🇷 FR</span>
       <span class="langOpt" data-lang="en">🇬🇧 EN</span>
@@ -412,7 +416,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=173"></script>
-<script src="game-supabase.js?v=173"></script>
+<script src="game-core.js?v=174"></script>
+<script src="game-supabase.js?v=174"></script>
 </body>
 </html>
