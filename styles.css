@@ -1298,7 +1298,9 @@
   /* attention sur le widget replié quand on est mentionné (2026-07-05, demande explicite :
      "couleur/vibration/agrandissement du chat pour faire ouvrir") -- se retire toute seule après
      quelques secondes ou dès que le joueur déplie/interagit avec le chat */
-  #chatWidget.pinged { animation:chatPingAttention 2.4s ease-in-out 3; }
+  /* infinie (2026-07-05, demande explicite : "doit s'illuminer et bouger en permanence tant qu'on
+     n'a pas lu") -- retirée par JS dès que le joueur déplie le chat, voir toggleChatFold() */
+  #chatWidget.pinged { animation:chatPingAttention 2.4s ease-in-out infinite; }
   @keyframes chatPingAttention {
     0%,100% { transform:scale(1); border-color:var(--gold-dim); box-shadow:0 4px 14px rgba(0,0,0,.5); }
     50% { transform:scale(1.035); border-color:var(--gold); box-shadow:0 0 22px 4px rgba(224,168,64,.75); }

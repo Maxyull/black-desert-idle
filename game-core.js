@@ -5501,13 +5501,30 @@ $('btnOpt').onclick = attemptEnhance;
 // tente automatiquement (toutes les ~200 ms, pour rester visible) jusqu'à atteindre le palier
 // choisi OU tomber à court de matériau — s'arrête aussi si l'objet redescend sous le palier visé
 // à cause d'une rétrogradation (pour ne pas vider tout le sac dans un mur de malchance)
+// calcule le gain de stats (PA/PD/PV/Esquive) entre l'état actuel de la pièce et un palier visé —
+// réutilisé à la fois pour chaque option du menu déroulant et le résumé sous celui-ci
+function optAutoGainParts(target, targetLvl) {
+  if (!target || !Number.isInteger(targetLvl)) return [];
+  const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
+  const parts = [];
+  if (proj.ap > cur.ap) parts.push('+' + (proj.ap-cur.ap) + ' PA');
+  if (proj.dp > cur.dp) parts.push('+' + (proj.dp-cur.dp) + ' PD');
+  if (proj.hp > cur.hp) parts.push('+' + (proj.hp-cur.hp) + ' PV');
+  if (proj.dodge > cur.dodge) parts.push('+' + (proj.dodge-cur.dodge).toFixed(2) + '% ' + (LANG==='fr'?'Esq.':'Dodge'));
+  return parts;
+}
 function renderOptAutoTargetSelect() {
   const sel = $('optAutoTarget'); if (!sel) return;
   const target = EQUIP[optTargetSlot];
   const curLvl = target ? (target.enhLv||0) : 0;
   const options = ENH_NAMES.map((name,i) => i).filter(i => i > curLvl);
-  sel.innerHTML = options.map(i => `<option value="${i}">${ENH_NAMES[i]}</option>`).join('')
-    || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
+  // affiche le gain directement dans chaque option du menu déroulant (demande explicite du
+  // 2026-07-05), pas seulement pour le palier actuellement sélectionné
+  sel.innerHTML = options.map(i => {
+    const parts = optAutoGainParts(target, i);
+    const gainTxt = parts.length ? ` (${parts.join(' · ')})` : '';
+    return `<option value="${i}">${ENH_NAMES[i]}${gainTxt}</option>`;
+  }).join('') || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
   sel.disabled = !options.length;
   renderOptAutoGain();
 }
@@ -5517,13 +5534,7 @@ function renderOptAutoGain() {
   const target = EQUIP[optTargetSlot];
   const sel = $('optAutoTarget');
   const targetLvl = sel ? parseInt(sel.value, 10) : NaN;
-  if (!target || !Number.isInteger(targetLvl)) { el.textContent = ''; return; }
-  const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
-  const parts = [];
-  if (proj.ap > cur.ap) parts.push('+' + (proj.ap-cur.ap) + ' PA');
-  if (proj.dp > cur.dp) parts.push('+' + (proj.dp-cur.dp) + ' PD');
-  if (proj.hp > cur.hp) parts.push('+' + (proj.hp-cur.hp) + ' PV');
-  if (proj.dodge > cur.dodge) parts.push('+' + (proj.dodge-cur.dodge).toFixed(2) + '% ' + (LANG==='fr'?'Esq.':'Dodge'));
+  const parts = optAutoGainParts(target, targetLvl);
   el.textContent = parts.length
     ? (LANG==='fr' ? `À ${ENH_NAMES[targetLvl]} : ` : `At ${ENH_NAMES[targetLvl]}: `) + parts.join(' · ')
     : '';

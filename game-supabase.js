@@ -1026,7 +1026,8 @@ function toggleChatFold() {
   try { localStorage.setItem('velia-idle-chat-folded', chatFolded ? '1' : '0'); } catch(e) {}
   $a('chatBody').style.display = chatFolded ? 'none' : '';
   $a('chatFoldBtn').textContent = chatFolded ? '▸' : '▾';
-  if (!chatFolded) fetchChatMessages();
+  // déplier = on considère la mention "lue", l'alerte (couleur/mouvement en boucle) s'arrête
+  if (!chatFolded) { fetchChatMessages(); $a('chatWidget').classList.remove('pinged'); }
 }
 function updateChatInputVisibility() {
   const row = $a('chatInputRow'), note = $a('chatNote');
@@ -1255,11 +1256,26 @@ function applyChatMention(pseudo) {
   $a('chatMentionList').classList.remove('show');
   chatMentionActive = false;
 }
+// déplace la surbrillance ↑/↓ dans la liste de suggestions (demande explicite du 2026-07-05)
+function moveChatMentionActive(delta) {
+  const items = Array.from($a('chatMentionList').querySelectorAll('.chatMentionItem'));
+  if (!items.length) return;
+  let idx = items.findIndex(el => el.classList.contains('active'));
+  items[idx]?.classList.remove('active');
+  idx = (idx + delta + items.length) % items.length;
+  items[idx].classList.add('active');
+  items[idx].scrollIntoView({ block:'nearest' });
+}
 $a('chatInput').addEventListener('input', updateChatMentionDropdown);
 $a('chatInput').addEventListener('keydown', e => {
+  if (chatMentionActive && (e.key === 'ArrowDown' || e.key === 'ArrowUp')) {
+    e.preventDefault();
+    moveChatMentionActive(e.key === 'ArrowDown' ? 1 : -1);
+    return;
+  }
   if (chatMentionActive && (e.key === 'Enter' || e.key === 'Tab')) {
     e.preventDefault();
-    const active = $a('chatMentionList').querySelector('.chatMentionItem');
+    const active = $a('chatMentionList').querySelector('.chatMentionItem.active') || $a('chatMentionList').querySelector('.chatMentionItem');
     if (active) applyChatMention(active.dataset.p);
     return;
   }
@@ -1270,14 +1286,27 @@ $a('chatInput').addEventListener('keydown', e => {
 // les pseudos les plus longs d'abord pour ne pas couper un pseudo qui en contient un plus court
 // (ex: "Metal" ne doit pas amputer "@Metal Gear")
 function highlightMentions(escapedText) {
-  if (!onlinePlayersCache.length) return escapedText;
-  const sorted = [...onlinePlayersCache].sort((a,b) => b.length - a.length);
+  // 1) pseudos multi-mots CONNUS (ex: "Maxyull Test") en priorité -- extraits vers des jetons
+  // temporaires (pas encore du HTML) pour que la passe générique ci-dessous ne les retraite pas
+  // une 2e fois (ce qui produisait un <span> imbriqué en double)
+  const placeholders = [];
   let result = escapedText;
-  for (const name of sorted) {
+  const multiWord = onlinePlayersCache.filter(n => /\s/.test(n)).sort((a,b) => b.length - a.length);
+  for (const name of multiWord) {
     const esc = escapeHtml(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     if (!esc) continue;
-    result = result.replace(new RegExp('@' + esc + '(?!\\S)', 'gi'), m => `<span class="chatMention">${m}</span>`);
+    result = result.replace(new RegExp('@' + esc + '(?!\\S)', 'gi'), m => {
+      placeholders.push(`<span class="chatMention">${m}</span>`);
+      return ` \x00${placeholders.length-1}\x00 `;
+    });
   }
+  // 2) toute mention @mot restante (2026-07-05, demande explicite : "affiche coloré pour tout
+  // ceux qui le voient, pas uniquement l'envoyeur et le receveur") -- volontairement PAS limité
+  // aux joueurs actuellement en ligne (onlinePlayersCache), pour rester visible même si la
+  // personne mentionnée s'est déconnectée depuis, ou juste après le chargement de la page
+  result = result.replace(/@(\S+)/g, (m, word) => `<span class="chatMention">@${word}</span>`);
+  // 3) réinjecte les mentions multi-mots à leur place
+  result = result.replace(/ ?\x00(\d+)\x00 ?/g, (m, i) => placeholders[+i]);
   return result;
 }
 // alerte visuelle quand JE suis mentionné et que le chat est replié (demande explicite du
@@ -2192,6 +2221,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V176', d:'05/07/2026 20:00', name:{fr:'Menu d\'optimisation détaillé, navigation clavier dans le chat, alerte de mention en continu', en:'Detailed enhance menu, chat keyboard navigation, continuous mention alert'}, fr:[
+      {t:'improve', sub:'equipements', severity:'minor', tx:'Le menu déroulant "Auto jusqu\'à" affiche maintenant le gain de stats pour CHAQUE palier proposé, pas seulement celui sélectionné'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'Chat : les flèches ↑/↓ du clavier permettent de choisir un joueur dans la liste de suggestions de mention @'},
+      {t:'improve', sub:'interface', tx:'L\'alerte de mention (couleur + vibration + agrandissement du chat replié) tourne maintenant en continu tant que le chat n\'est pas ouvert, au lieu de s\'arrêter après 3 répétitions'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'Une mention @joueur s\'affiche désormais en couleur pour TOUT le monde dans le chat, même si la personne mentionnée n\'est plus en ligne au moment où le message est affiché'},
+    ], en:[
+      {t:'improve', sub:'equipements', severity:'minor', tx:'The "Auto to" dropdown now shows the stat gain for EVERY tier offered, not just the selected one'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'Chat: keyboard ↑/↓ arrows let you pick a player from the @ mention suggestion list'},
+      {t:'improve', sub:'interface', tx:'The mention alert (color + vibration + enlargement of the collapsed chat) now runs continuously until the chat is opened, instead of stopping after 3 repeats'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'An @player mention now shows in color for EVERYONE in chat, even if the mentioned person is no longer online when the message is displayed'},
+    ] },
   { v:'V175', d:'05/07/2026 19:30', name:{fr:'4e zone par palier + boucles d\'oreille', en:'4th zone per tier + earrings'}, fr:[
       {t:'new', sub:'zones', tx:'1 zone supplémentaire par palier de stuff (Ruines de Trent, Île d\'Iliya, Base de Bashim, Forêt de Polly) — chaque palier passe de 3 à 4 zones. PA/PD requis volontairement identiques à la dernière zone déjà existante du palier : aucun changement du plafond de difficulté'},
       {t:'new', sub:'equipements', tx:'Ajout de la boucle d\'oreille, seul type de bijou qui manquait à chaque palier (les emplacements existaient déjà mais rien ne les alimentait). Le PA total des bijoux d\'un palier reste identique : redistribué sur 4 pièces au lieu de 3, avec une migration automatique du stuff déjà possédé'},
