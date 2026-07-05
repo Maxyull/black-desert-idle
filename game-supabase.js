@@ -397,6 +397,41 @@ async function resetAllAccounts() {
   await saveToCloud();
   showResetNotice('🔄', title_fr, body_fr);
 }
+// remise à zéro CIBLÉE d'UN SEUL joueur par UUID (demande explicite du 2026-07-06 : "ajoute côté
+// admin de pouvoir réinitialiser un joueur spécifique par uuid") — même mécanique que
+// resetAllAccounts (silver/équipement/niveau/sac effacés + bannière d'explication à la prochaine
+// connexion), mais admin_reset_account_by_uuid() ne touche QUE la ligne de CE user_id, et la
+// notification n'est insérée que pour lui (pas un broadcast à tout le monde).
+async function resetAccountByUuid() {
+  if (!isAdmin() || !sb) return;
+  const input = $a('admResetUuidInput');
+  const uuid = (input.value || '').trim();
+  if (!uuid) return;
+  const msg = LANG === 'fr'
+    ? `🔄 Réinitialiser le compte du joueur ${uuid} (silver, équipement, niveau, sac) ? Un message d'explication lui sera montré à sa prochaine connexion. Action IRRÉVERSIBLE.`
+    : `🔄 Reset player ${uuid}'s account (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.`;
+  if (!confirm(msg)) return;
+  const title_fr = '🔄 Ton compte a été réinitialisé';
+  const title_en = '🔄 Your account has been reset';
+  const body_fr = 'Un membre du staff a réinitialisé ton compte (silver, équipement, niveau, sac).<br><br>' +
+    'Si tu penses qu\'il s\'agit d\'une erreur, contacte-nous sur Discord.';
+  const body_en = 'A staff member has reset your account (silver, gear, level, bag).<br><br>' +
+    'If you believe this is a mistake, please reach out to us on Discord.';
+  const { data, error } = await sb.rpc('admin_reset_account_by_uuid', {
+    p_user_id: uuid, p_title_fr: title_fr, p_title_en: title_en, p_body_fr: body_fr, p_body_en: body_en
+  });
+  if (error) {
+    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    return;
+  }
+  if (!data) {
+    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Aucun joueur trouvé avec cet UUID' : 'No player found with that UUID', { hurt:true });
+    return;
+  }
+  logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé le compte du joueur \`${uuid}\``, 0xc05545);
+  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Compte réinitialisé ✓' : 'Account reset ✓', { gold:true });
+  input.value = '';
+}
 
 // ---------- zone admin : stats serveur (réservé au compte admin, via RLS côté base) ----------
 // tout tient désormais dans UN SEUL panneau (déclenché par le bouton "🛠️ Admin") : les actions
@@ -653,6 +688,15 @@ async function openAdminPanel() {
       </div>
       <div class="admHint">${LANG==='fr'?'Lance un vrai boss partagé (PV communs) rien que pour toi, pour tester sans attendre le planning ni prévenir personne.':'Spawns a real shared boss (common HP) just for you, to test without waiting for the schedule or notifying anyone.'}</div>
     </div>
+    <div class="admSection riskSingle">
+      <div class="admSectionTitle">🎯 ${LANG==='fr'?'Un joueur précis — par UUID':'A specific player — by UUID'}</div>
+      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Efface silver/équipement/niveau/sac de CE joueur uniquement.':'Wipes silver/gear/level/bag for THAT player only.'}</div>
+      <div class="admActions">
+        <input type="text" id="admResetUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
+        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${LANG==='fr'?'Réinitialiser ce joueur':'Reset this player'}</button>
+      </div>
+      <div class="admHint">${LANG==='fr'?'Trouve l\'UUID d\'un joueur via le Classement ou ses messages en jeu (bouton "Copier UUID" dans son propre menu). Même message d\'explication que le reset global, mais montré UNIQUEMENT à ce joueur.':'Find a player\'s UUID via the Leaderboard or their in-game messages (the "Copy UUID" button in their own menu). Same explanation message as the global reset, but shown ONLY to that player.'}</div>
+    </div>
     <div class="admSection riskGlobal">
       <div class="admSectionTitle">🌍 ${LANG==='fr'?'Pour les joueurs — actions serveur':'For players — server-wide'}</div>
       <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
@@ -734,6 +778,8 @@ async function openAdminPanel() {
     $a('infoOverlay').classList.remove('open');
     startBossFight(id, true); // true = rejoint le boss PARTAGÉ qu'on vient de lancer (PV communs, top10...)
   };
+  // --- pour un joueur précis ---
+  $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
   // --- pour les joueurs ---
   $a('btnResetAllQuests').onclick = resetAllQuests;
   $a('btnResetAllAccounts').onclick = resetAllAccounts;
@@ -989,6 +1035,9 @@ function wireCatTabs() {
 const CHAT_CHANNELS = [
   { id:'mondial', icon:'🌍', label:{fr:'Mondial',en:'World'} },
   { id:'trade',   icon:'💱', label:{fr:'Trade',en:'Trade'} },
+  // canal dédié à l'anglais (2026-07-06, demande explicite : "ajoute un chat anglais") -- même
+  // mécanique que les autres canaux publics, juste séparé pour ne pas noyer "Mondial" (surtout FR)
+  { id:'english', icon:'🇬🇧', label:{fr:'Anglais',en:'English'} },
   { id:'annonce', icon:'📢', label:{fr:'Annonce',en:'Announcement'} },
   { id:'modéré',  icon:'🛡️', label:{fr:'Modéré',en:'Moderated'}, staff:true }, // journal des messages supprimés (admin/mods)
 ];
@@ -2061,6 +2110,7 @@ const I18N = {
   btnNotifCenter: { fr:'🔔 Notifications', en:'🔔 Notifications' },
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },
   btnMarketLbl: { fr:'🏛️ Marché', en:'🏛️ Market' },
+  marketConstructionBanner: { fr:'🚧 BETA — Marché en construction, encore peu fonctionnel : bugs et changements à prévoir', en:'🚧 BETA — Market under construction, still not very functional: expect bugs and changes' },
   btnLogout: { fr:'🚪 Déconnexion', en:'🚪 Log out' },
   authMobileBadge: { fr:'📱 BETA — Compatible mobile & tablette', en:'📱 BETA — Mobile & tablet compatible' },
   authSub: { fr:'Connecte-toi avec un vrai compte pour accéder au Marché et au Classement', en:'Sign in with a real account to access the Market and Leaderboard' },
@@ -2223,6 +2273,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V182', d:'06/07/2026 01:00', name:{fr:'Chat anglais, reset admin par UUID, Marché marqué "en construction"', en:'English chat, admin reset by UUID, Market flagged "under construction"'}, fr:[
+      {t:'new', sub:'interface', tx:'Nouveau canal de chat 🇬🇧 Anglais, séparé du canal Mondial'},
+      {t:'new', sub:'comptes', tx:'Admin : nouvelle action pour réinitialiser le compte d\'UN joueur précis par UUID (silver/équipement/niveau/sac), sans toucher aux autres — même message d\'explication que le reset global, mais montré uniquement à ce joueur'},
+      {t:'change', sub:'interface', tx:'Marché : bandeau "en construction, encore peu fonctionnel" ajouté dans le panneau et le Wiki, pour que ce ne soit pas pris pour une fonctionnalité stable'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'New 🇬🇧 English chat channel, separate from the World channel'},
+      {t:'new', sub:'comptes', tx:'Admin: new action to reset ONE specific player\'s account by UUID (silver/gear/level/bag), without touching anyone else — same explanation message as the global reset, but shown only to that player'},
+      {t:'change', sub:'interface', tx:'Market: "under construction, still not very functional" banner added to the panel and the Wiki, so it isn\'t mistaken for a stable feature'},
+    ] },
   { v:'V181', d:'06/07/2026 00:30', name:{fr:'Halo "où farmer" sur socle vide, niveau/XP déplacé au-dessus de la vie', en:'"Where to farm" halo on empty slots, level/XP moved above HP'}, fr:[
       {t:'new', sub:'equipements', tx:'Clique un socle d\'équipement vide : la ou les zones qui lootent cet objet s\'illuminent d\'un halo doré dans la liste des zones (+ bouton téléportation directe). Une zone dangereuse pour ton stuff actuel n\'est proposée que s\'il n\'existe vraiment aucune alternative plus sûre'},
       {t:'change', sub:'interface', tx:'Niveau et % d\'XP déplacés au-dessus de la barre de vie (en bas à gauche), retirés de la carte Inventaire'},
@@ -3756,6 +3815,8 @@ const WIKI_SECTIONS = [
       <p>Chaque sort coûte de la mana, qui se régénère passivement même hors combat. Une potion de mana (auto-bue sous 30%) complète la potion de PV si tu es à court.</p>
       <h3>Loot progressif</h3>
       <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>
+      <h3>Sac plein (192/192)</h3>
+      <p>Le silver n'occupe jamais de place (toujours ramassé). Un matériau/bijou déjà en stack dans ton sac continue lui aussi d'être ramassé tant que ce stack n'est pas à son maximum, même sac plein. Seuls les <b>nouveaux</b> objets qui auraient besoin d'une case libre restent au sol — un bandeau rouge ⚠ t'en avertit, sans jamais t'empêcher de continuer à farmer.</p>
       <h3>Zones groupées par palier de stuff</h3>
       <p>Les 16 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu — 4 zones chacun) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
       <h3>Trésor de Velia (catégorie TEST)</h3>
@@ -3777,6 +3838,8 @@ const WIKI_SECTIONS = [
       <p>Every skill costs mana, which regenerates passively even out of combat. A mana potion (auto-drunk under 30%) joins the HP potion if you run low.</p>
       <h3>Progressive loot</h3>
       <p>Drop rates are <b>intentionally decreasing</b> zone by zone: very generous early (up to 55%), very rare at endgame (under 3%).</p>
+      <h3>Full bag (192/192)</h3>
+      <p>Silver never takes up space (always picked up). A material/jewelry already stacked in your bag keeps getting picked up as long as that stack isn't full, even with a full bag. Only <b>new</b> items that would need a free slot stay on the ground — a red ⚠ banner warns you, without ever stopping you from farming.</p>
       <h3>Zones grouped by gear tier</h3>
       <p>The 16 Velia zones are grouped by gear tier (Naru/grey, Tuvala/white, Yuria/green, Grunil/blue — 4 zones each) — the header and border color match the gear color found there, same as in the inventory.</p>
       <h3>Velia Treasure (TEST category)</h3>
@@ -3799,11 +3862,15 @@ const WIKI_SECTIONS = [
       <p><b>Ancient Spirit Dust</b> isn't used to enhance directly: it's a component to craft Caphras Stones.</p>
       <p>Tip: click the small 🔧 on an equipped piece to load THAT piece directly into the enhancement panel.</p>` },
   { id:'market', icon:'🏛️', label:{fr:'Marché',en:'Market'},
-    fr:`<h3>Hôtel des ventes</h3>
+    fr:`<h3>🚧 BETA — en construction</h3>
+      <p>Le Marché est encore <b>peu fonctionnel</b> : attends-toi à des bugs, des changements et des remises à zéro pendant son développement. Ne t'y fie pas encore pour ta progression.</p>
+      <h3>Hôtel des ventes</h3>
       <p>Prix fixes fixés par le vendeur, pas d'enchères ni de délai. <b>Aucune taxe de vente</b> (le vrai BDO prend ~30%).</p>
       <h3>Marché commun</h3>
       <p>Les matériaux se vendent à un prix commun flottant, borné par un min/max, qui varie avec l'offre et la demande.</p>`,
-    en:`<h3>Marketplace</h3>
+    en:`<h3>🚧 BETA — under construction</h3>
+      <p>The Market is still <b>not very functional</b>: expect bugs, changes and resets while it's being developed. Don't rely on it for your progress yet.</p>
+      <h3>Marketplace</h3>
       <p>Fixed prices set by the seller, no auctions or delay. <b>No sales tax</b> (real BDO takes ~30%).</p>
       <h3>Common market</h3>
       <p>Materials sell at a common floating price, bounded by a min/max, varying with supply and demand.</p>` },

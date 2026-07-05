@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=181">
+<link rel="stylesheet" href="styles.css?v=182">
 </head>
 <body>
 
@@ -84,7 +84,7 @@
     <button id="btnCompendium" data-i18n="btnCompendium">📖 Compendium</button>
     <button id="btnCodex" data-i18n="btnCodex">📚 Codex</button>
     <button id="btnAchievements" data-i18n="btnAchievements">🏅 Succès</button>
-    <button id="btnMarket"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
+    <button id="btnMarket" title="BETA — en construction, encore peu fonctionnel"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
   </div>
 
@@ -200,6 +200,7 @@
       </div>
       <button id="closeMarket">✕</button>
     </div>
+    <div id="marketConstructionBanner" data-i18n="marketConstructionBanner">🚧 BETA — Marché en construction, encore peu fonctionnel : bugs et changements à prévoir</div>
 
     <div id="marketBrowse" class="marketPane">
       <div id="marketList"></div>
@@ -434,7 +435,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=181"></script>
-<script src="game-supabase.js?v=181"></script>
+<script src="game-core.js?v=182"></script>
+<script src="game-supabase.js?v=182"></script>
 </body>
 </html>

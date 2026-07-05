@@ -701,6 +701,11 @@
   .roleBadges { flex-shrink:0; font-size:10.5px; white-space:nowrap; }
   .admActions { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; }
   .admActions button { width:auto; flex:1; min-width:140px; margin:0; }
+  .admActions input[type=text] {
+    flex:1; min-width:140px; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
+    font-family:inherit; font-size:12px; padding:0 9px; margin:0;
+  }
+  .admSection.riskSingle { border-left-color:#c9955a; }
   .admBossSpawn { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; font-size:12px; }
   .admBossSpawn select { background:#0d0c11; border:1px solid #333; color:var(--ink); padding:5px 7px; font-family:inherit; font-size:12px; border-radius:3px; }
   .admBossSpawn button { width:auto; margin:0; padding:6px 14px; }
@@ -789,6 +794,13 @@
     background:linear-gradient(180deg,#26313a,#1b232a); border-bottom:1px solid var(--gold-dim);
   }
   #marketHead h2 { font-size:15px; letter-spacing:1px; margin:0; }
+  /* rappel clair "en construction" dans le panneau lui-même (2026-07-06, demande explicite :
+     "faut que les gens comprennent que c'est peu fonctionnel et en construction") */
+  #marketConstructionBanner {
+    background-image:repeating-linear-gradient(45deg,#3a2f0f,#3a2f0f 10px,#241c0a 10px,#241c0a 20px);
+    color:var(--gold); font-weight:bold; font-size:10.5px; letter-spacing:.3px;
+    padding:5px 16px; text-align:center; border-bottom:1px solid var(--gold-dim);
+  }
   #marketTabs { display:flex; gap:6px; flex:1; }
   .mtab {
     width:auto; margin:0; padding:6px 12px; font-size:11.5px;
@@ -1281,6 +1293,7 @@
   #chatWidget .catTab { padding:4px 9px; font-size:10.5px; }
   .catTab.chan-mondial.active { border-color:#9cc9e8; color:#9cc9e8; }
   .catTab.chan-trade.active { border-color:#8fc98a; color:#8fc98a; }
+  .catTab.chan-english.active { border-color:#c9a0e8; color:#c9a0e8; }
   .catTab.chan-annonce.active { border-color:var(--gold); color:var(--gold); }
   /* halo "non lu" sur l'onglet d'un canal qu'on ne regarde pas actuellement */
   #chatWidget .catTab.unread { border-color:#e0a840; animation:chatTabHalo 1.3s ease-in-out infinite; }
@@ -1304,6 +1317,7 @@
   .chatMsg .chatPseudo { font-weight:bold; }
   .chatMsg.chan-mondial .chatPseudo { color:#9cc9e8; }
   .chatMsg.chan-trade .chatPseudo { color:#8fc98a; }
+  .chatMsg.chan-english .chatPseudo { color:#c9a0e8; }
   .chatMsg.chan-annonce .chatPseudo { color:var(--gold); }
   .chatMsg.chan-annonce .chatText { color:var(--danger); font-weight:bold; }
   .chatMsg .chatText { color:var(--ink); }
