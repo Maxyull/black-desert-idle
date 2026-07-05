@@ -2024,6 +2024,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V164', d:'05/07/2026 15:00', name:{fr:'Notes de version : tag "nature" (optim. code, backend...)', en:'Patch notes: "nature" tag (code opti, backend...)'}, fr:[
+      {t:'new', tx:'Chaque ligne des notes de version peut désormais porter un tag "nature" en plus du type et de la plateforme — Optim. code, Optimisation, Inventaire ou Backend — pour repérer d\'un coup d\'œil les changements sous le capot qui ne touchent pas directement le contenu de jeu. Ce 2e badge (nature ou Tab/Mobile) s\'affiche maintenant sur sa propre ligne, sous le badge principal, plutôt qu\'à côté'},
+      {t:'change', nature:'opticode', tx:'Le code du jeu (un seul fichier HTML de plus de 11 500 lignes) a été séparé en plusieurs fichiers — structure HTML, CSS et JavaScript (coupé en 2 fichiers) chacun à part — pour être plus simple à maintenir sur la durée. Aucun changement de gameplay, tout fonctionne à l\'identique'},
+    ], en:[
+      {t:'new', tx:'Each patch note line can now carry a "nature" tag in addition to its type and platform — Code opti, Optimization, Inventory or Backend — to spot at a glance under-the-hood changes that don\'t directly touch game content. This 2nd badge (nature or Tab/Mobile) now shows on its own line, below the main badge, instead of next to it'},
+      {t:'change', nature:'opticode', tx:'The game\'s code (a single 11,500+ line HTML file) has been split into several files — HTML structure, CSS and JavaScript (split into 2 files) each on their own — to be easier to maintain long-term. No gameplay change, everything works identically'},
+    ] },
   { v:'V163', d:'05/07/2026 14:30', name:{fr:'Tutoriel : indice de défilement quand la cible est hors champ', en:'Tutorial: scroll hint when the target is off-screen'}, fr:[
       {t:'new', tx:'Pendant le tutoriel de début, si l\'élément mis en avant par l\'étape en cours est hors du champ visible, une icône apparaît pour indiquer qu\'il faut défiler — 🖱️ souris sur ordinateur, 👆 doigt sur mobile/tablette. Disparaît dès que l\'élément redevient visible'},
     ], en:[
@@ -3831,6 +3838,16 @@ const PATCH_CATS = {
 const PATCH_PLATFORMS = {
   mobile: { fr:'Tab/Mobile', en:'Tab/Mobile', icon:'📱', color:'#e0a840' },
 };
+// tag de nature (2026-07-05, demande explicite) : précise, en plus du type et de la plateforme,
+// si une ligne relève d'une optimisation plutôt que d'un contenu de jeu classique — sert à repérer
+// les changements "sous le capot" (code, performance, structure des données) qui n'affectent pas
+// directement le gameplay. Optionnel (line.nature) : absent = non concerné.
+const PATCH_NATURE = {
+  opticode:     { fr:'Optim. code',   en:'Code opti',   icon:'🧹', color:'#7aa8c9' },
+  optimisation: { fr:'Optimisation',  en:'Optimization', icon:'⚡', color:'#c9a55a' },
+  inventaire:   { fr:'Inventaire',    en:'Inventory',   icon:'🎒', color:'#8fc98a' },
+  backend:      { fr:'Backend',       en:'Backend',     icon:'🗄️', color:'#b48ce8' },
+};
 
 let patchObserver = null;
 $a('btnPatch').onclick = () => {
@@ -3847,9 +3864,15 @@ $a('btnPatch').onclick = () => {
       <ul>${p[LANG].map(line => {
         const cat = PATCH_CATS[line.t] || PATCH_CATS.change;
         const plat = line.plat ? PATCH_PLATFORMS[line.plat] : null;
+        const nature = line.nature ? PATCH_NATURE[line.nature] : null;
         const platTag = plat ? `<span class="patchCat" style="color:${plat.color};border-color:${plat.color}">${plat.icon} ${plat[LANG]}</span>` : '';
+        const natureTag = nature ? `<span class="patchCat" style="color:${nature.color};border-color:${nature.color}">${nature.icon} ${nature[LANG]}</span>` : '';
+        const extraTags = platTag + natureTag;
         const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
-        return `<li class="${line.removed?'patchLineRemoved':''}"><span class="patchCat" style="color:${cat.color};border-color:${cat.color}">${cat.icon} ${cat[LANG]}</span>${platTag}${line.tx}${removedTag}</li>`;
+        return `<li class="${line.removed?'patchLineRemoved':''}">
+          <div class="patchLineMain"><span class="patchCat" style="color:${cat.color};border-color:${cat.color}">${cat.icon} ${cat[LANG]}</span><span class="patchLineText">${line.tx}${removedTag}</span></div>
+          ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
+        </li>`;
       }).join('')}</ul>
     </div>`;
   }).join('');

@@ -950,9 +950,12 @@
   #infoBody .patchName { font-size:12px; font-style:italic; color:var(--ink-dim); }
   #infoBody .patchDate { margin-left:auto; font-size:10.5px; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
   #infoBody .patchEntry li {
-    display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; line-height:1.5;
+    display:flex; flex-direction:column; gap:4px; margin-bottom:6px; line-height:1.5;
   }
   #infoBody .patchEntry li.patchLineRemoved { opacity:.55; text-decoration:line-through; }
+  #infoBody .patchLineMain { display:flex; align-items:flex-start; gap:8px; }
+  #infoBody .patchLineText { flex:1; }
+  #infoBody .patchLineExtra { display:flex; flex-wrap:wrap; gap:6px; margin-left:0; }
   #infoBody .patchCat {
     flex-shrink:0; font-size:9px; font-weight:bold; letter-spacing:.3px;
     border:1px solid; border-radius:3px; padding:1.5px 6px; white-space:nowrap; margin-top:1px;
