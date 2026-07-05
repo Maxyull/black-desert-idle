@@ -972,10 +972,6 @@
   .achBar { height:100%; background:linear-gradient(90deg,#8a7038,#c9a55a); }
   .achProgress { font-size:10px; color:var(--ink-dim); margin-top:2px; }
   .achReward { flex-shrink:0; font-size:11px; color:var(--gold); font-weight:bold; white-space:nowrap; }
-  /* Compendium (2026-07-08) : petites puces d'objets par zone, dans une carte .achRow réutilisée */
-  .compItems { display:flex; flex-wrap:wrap; gap:4px 8px; }
-  .compItem { font-size:9.5px; color:var(--ink-dim); }
-  .compItem.done { color:#8fc98a; }
   .questClaimBtn {
     flex-shrink:0; width:auto; margin:0; background:var(--gold); color:#1a1712; border:none; border-radius:3px;
     padding:3px 8px; font-size:9.5px; font-weight:bold; cursor:pointer; white-space:nowrap;
@@ -1397,7 +1393,6 @@
     <button id="btnWiki" data-i18n="btnWiki">📖 Wiki</button>
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
     <button id="btnAchievements" data-i18n="btnAchievements">🏅 Succès</button>
-    <button id="btnCompendium" data-i18n="btnCompendium">📖 Compendium</button>
     <button id="btnDailyQuests"><span data-i18n="btnDailyQuests">🗒️ Quêtes</span><span id="questBadge"></span></button>
     <button id="btnMailbox"><span data-i18n="btnMailbox">📬 Courrier</span><span id="mailBadge"></span></button>
     <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge"></span></button>
@@ -1600,8 +1595,6 @@
       <div class="row"><span data-i18n="lblPA">PA effective</span><span class="v" id="stPA">14</span></div>
       <div class="row"><span data-i18n="lblPD">PD</span><span class="v" id="stDP">10</span></div>
       <div class="row"><span data-i18n="lblHpMax">PV max</span><span class="v" id="stHpMax">100</span></div>
-      <div class="row"><span data-i18n="lblSpd">Vitesse (SPD)</span><span class="v" id="stSpd">+0%</span></div>
-      <div class="row"><span data-i18n="lblDodge">Esquive</span><span class="v" id="stDodge">0%</span></div>
       <div class="row"><span data-i18n="lblWeaponBonus">Bonus arme</span><span class="v" id="stWeaponBonus">+0%</span></div>
       <div class="row"><span data-i18n="lblArmorBonus">Bonus armure (moy.)</span><span class="v" id="stArmorBonus">+0%</span></div>
       <div class="row"><span data-i18n="lblAiMode">Mode IA</span><span class="v blue" id="stMode">équilibré</span></div>
@@ -1840,7 +1833,6 @@ const S = {
   silver: 0, kills: 0, lootCount: 0, lvl: 1, xp: 0, xpNext: 1, // xpNext = LEVEL_XP_TABLE[lvl] (voir gainXp)
   pa: 4, dp: 10,   // PA innée (le gros vient de l'arme équipée ci-dessous)
   castMult: 1, hpMax: 100, lootRadius: 26,
-  zonesCollected: {}, // Compendium (2026-07-08) : { [zoneIdx]: true } dès qu'un objet a été ramassé au moins une fois dans cette zone — sert au bonus de collection (voir compendiumZoneCount)
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
   // baseline (silverEarned/kills au début de LA SESSION EN COURS), pour calculer un vrai "silver/h"
@@ -2138,8 +2130,7 @@ function itemMult(item) { return item && item.optimizable ? (1 + enhBonus(item.e
 // avant ce correctif, ces deux endroits affichaient la stat de BASE même sur un objet enchanté +15)
 function effectiveApDp(item) {
   const mult = itemMult(item);
-  return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult), hp: Math.round((item.hp||0) * mult),
-    dodge: Math.round((item.dodge||0) * mult * 100) / 100 };
+  return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult), hp: Math.round((item.hp||0) * mult) };
 }
 
 // ---------- chances d'optimisation : base FIXE + failstack PERSONNEL À CHAQUE OBJET ----------
@@ -2197,13 +2188,6 @@ function equipHP() {
   return h;
 }
 const effHpMax = () => S.hpMax + equipHP();
-// Esquive (2026-07-08) : stat de % dropée UNIQUEMENT sur les 4 pièces d'armure (voir GEAR_ROLE),
-// enchantée comme AP/DP/PV (itemMult). Chaque point de % réduit la chance de subir un coup.
-function equipDodge() {
-  let d = 0;
-  for (const k of ARMOR_SLOTS) { const e = EQUIP[k]; if (e) d += (e.dodge||0) * itemMult(e); }
-  return d;
-}
 function armorBonusAvg() {
   const pieces = ARMOR_SLOTS.map(k => EQUIP[k]).filter(Boolean);
   if (!pieces.length) return 0;
@@ -2215,37 +2199,6 @@ const GS = () => (apEff() + totalDP()) / 2; // Gearscore affiché au joueur — 
 const apRatio = (z) => apEff() / (z || Z()).reqAP;
 const dpRatio = (z) => totalDP() / (z || Z()).reqDP;
 const bottleneck = (z) => Math.min(apRatio(z), dpRatio(z));
-
-// ==================== COMPENDIUM (bonus de collection) ====================
-// demande explicite du 2026-07-08 : avoir ramassé AU MOINS 1 objet de chaque zone donne +1% SPD,
-// +1% DMG, +1% Esquive PAR zone — additif, jamais un multiplicateur (ex: les 11 zones de Velia
-// donnent +11% de chaque, pas +100%/×2). Persisté via S.zonesCollected (voir dropsTick).
-function markZoneCollected(zi) {
-  if (S.zonesCollected[zi]) return;
-  S.zonesCollected[zi] = true;
-  floatTxt(P.x, P.y, 96, '📖 Compendium — '+tr(ZONES[zi].name), { gold:true });
-}
-function compendiumZoneCount() { return Object.keys(S.zonesCollected||{}).length; }
-function compendiumPct() { return compendiumZoneCount() * 1; } // points de %, 1 par zone
-
-// Vitesse de déplacement (2026-07-08) : progression par NIVEAU (0% au niv.1, jusqu'à +75% au
-// niveau 61, plafonné ensuite) + bonus de Compendium (points de % additifs entre eux).
-function levelSpdPct() { return Math.max(0, Math.min(S.lvl,61)-1) / 60 * 75; }
-function totalSpdPct() { return levelSpdPct() + compendiumPct(); }
-function totalDmgPct() { return compendiumPct(); } // le DMG ne monte qu'avec le Compendium, pas le niveau
-
-// Esquive : dépend du niveau du monstre RELATIF au joueur (via dpRatio, comme le reste du combat).
-// Sous-géré pour la zone (dpRatio < 0.5) → l'esquive perd tout son intérêt (jusqu'à 0% d'effet) ;
-// à niveau ou au-dessus (dpRatio >= 1) → pleinement efficace. Dans une zone basse largement
-// dépassée, un bon total d'esquive peut donc éviter presque tous les dégâts.
-function dodgeEffectiveness(dpR) {
-  if (dpR >= 1) return 1;
-  return Math.max(0, (dpR - 0.5) / 0.5);
-}
-function totalDodgePct(dpR) {
-  const raw = equipDodge() + compendiumPct();
-  return Math.min(60, raw * dodgeEffectiveness(dpR ?? dpRatio())); // plafond 60% pour ne jamais rendre invincible
-}
 
 // ==================== SUCCÈS (permanents) & QUÊTES JOURNALIÈRES ====================
 // tous les objectifs ne reposent que sur des stats atteignables en solo (kills, loot, silver,
@@ -3295,40 +3248,6 @@ function openAchievements() {
   if (fb) fb.onclick = () => { achOnlyUnfinished = !achOnlyUnfinished; openAchievements(); };
 }
 
-// ---------- Compendium (bonus de collection par zone) — demande explicite du 2026-07-08 ----------
-// pas un vrai "dex" objet par objet : le bonus ne dépend que d'avoir ramassé AU MOINS 1 objet dans
-// chaque zone (voir markZoneCollected/compendiumZoneCount). Le détail par objet ci-dessous (trash/
-// matériau/bijou/craft) est juste informatif, pour savoir ce qu'on a déjà croisé dans chaque zone.
-function compendiumItemDone(name) { return (S.lootByItem[name]||0) > 0; }
-function renderCompendiumHtml() {
-  const zoneCount = compendiumZoneCount();
-  const pct = compendiumPct();
-  const rowsHtml = ZONES.map((z,zi) => {
-    const tier = gearTierForZone(zi);
-    const items = [
-      { label: tr(z.loot.trash.name) },
-      { label: tr(tier.material.name) },
-      { label: tr(z.loot.jackpot.name) },
-      { label: tr(z.loot.craft.name) },
-    ];
-    const unlocked = !!S.zonesCollected[zi];
-    const itemsHtml = items.map(it => `<span class="compItem${compendiumItemDone(it.label)?' done':''}">${compendiumItemDone(it.label)?'✓':'○'} ${escapeHtml(it.label)}</span>`).join('');
-    return `<div class="achRow${unlocked?' done':''}">` +
-      `<div class="achIcon">${unlocked?'📖':'🔒'}</div>` +
-      `<div class="achInfo"><div class="achName">${tr(z.name)}</div>` +
-      `<div class="achDesc compItems">${itemsHtml}</div></div>` +
-      `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Non visitée':'Not visited')}</div></div>`;
-  }).join('');
-  return `<div class="achSummary">${zoneCount} / ${ZONES.length} ${LANG==='fr'?'zones':'zones'} — +${pct}% SPD · +${pct}% ${LANG==='fr'?'Dégâts':'DMG'} · +${pct}% ${LANG==='fr'?'Esquive':'Dodge'}</div>` +
-    `<div class="admHint">${LANG==='fr'
-      ? 'Ramasse au moins 1 objet dans chaque zone pour débloquer son bonus permanent : +1% Vitesse, +1% Dégâts, +1% Esquive PAR zone (additif, jamais un multiplicateur — les 11 zones donnent donc +11% de chaque, pas +100%).'
-      : 'Loot at least 1 item in each zone to unlock its permanent bonus: +1% Speed, +1% Damage, +1% Dodge PER zone (additive, never a multiplier — all 11 zones give +11% each, not +100%).'}</div>` +
-    rowsHtml;
-}
-function openCompendium() {
-  openInfo(LANG==='fr'?'📖 Compendium':'📖 Compendium', renderCompendiumHtml());
-}
-
 // pool de quêtes journalières : 3 tirées au hasard chaque jour parmi ces familles, avec une
 // difficulté (variante) elle aussi randomisée — le compteur de progression réutilise les stats
 // globales déjà suivies (kills/lootCount/silverEarned/enhAttempts/playtimeSec/travelCount) via
@@ -3775,12 +3694,10 @@ function hpTier() {
 function setState(st){ P.state = st; P.stateT = 0; }
 
 // vitesse réduite si le poids dépasse la limite LT — 1.0 en dessous, jusqu'à 0.35× très surchargé
-// (2026-07-08 : + bonus SPD niveau/Compendium, voir totalSpdPct — s'applique APRÈS la pénalité de
-// poids, un perso surchargé mais bien nivelé/complété reste quand même plus rapide qu'à niveau 1)
 function speedMult() {
   const w = invWeight(), mw = MAX_WEIGHT();
-  const weightMult = w <= mw ? 1 : Math.max(0.35, 1 - (w - mw) / mw * 0.7);
-  return weightMult * (1 + totalSpdPct()/100);
+  if (w <= mw) return 1;
+  return Math.max(0.35, 1 - (w - mw) / mw * 0.7);
 }
 function moveToward(tx, ty, speed, dt) {
   const d = dist(P.x,P.y,tx,ty);
@@ -4002,7 +3919,7 @@ function resolveSkill(sk) {
   if (!target || target.dead) return;
   const crit = Math.random() < .15;
   // >>> scaling par la PA face à la PA requise de la zone <<<
-  const dmg = apEff() * sk.dmg * dmgMult(apRatio()) * (1+totalDmgPct()/100)
+  const dmg = apEff() * sk.dmg * dmgMult(apRatio())
             * (0.9+Math.random()*.25) * (crit?2:1) * (buffTimer>0?1.12:1);
   target.hp -= dmg;
   spawnVfx(sk,target);
@@ -4019,9 +3936,7 @@ function wolfPos(p,w){
 }
 function wolvesTick(dt) {
   // atténuation des dégâts reçus : dépend de TA PD (base + équipement) face à la PD requise de cette zone
-  const dpR = dpRatio();
-  const mitig = dmgTakenMult(dpR);
-  const dodgeChance = totalDodgePct(dpR) / 100; // voir dodgeEffectiveness : quasi nulle si trop sous-géré
+  const mitig = dmgTakenMult(dpRatio());
   for (const p of packs) {
     if (p.dead || !p.aggro) continue;
     const d = dist(P.x,P.y,p.x,p.y);
@@ -4032,17 +3947,13 @@ function wolvesTick(dt) {
         if (w.lunge <= 0) {
           const wp = wolfPos(p,w);
           if (dist(P.x,P.y,wp.x,wp.y) < 95) {
-            if (Math.random() < dodgeChance) {
-              floatTxt(P.x,P.y,80,LANG==='fr'?'Esquivé !':'Dodged!',{blue:true});
-            } else {
-              const dmg = p.dmg*(0.8+Math.random()*.4)*mitig;
-              P.hp -= dmg;
-              floatTxt(P.x,P.y,80,'-'+Math.ceil(dmg),{hurt:true});
-              if (P.hp <= 0) {
-                P.hp = 0; P.faint = 6;
-                floatTxt(P.x,P.y,105,'K.O.',{hurt:true});
-                S.xp = Math.max(0, S.xp - S.xpNext*.01); // -1 % XP
-              }
+            const dmg = p.dmg*(0.8+Math.random()*.4)*mitig;
+            P.hp -= dmg;
+            floatTxt(P.x,P.y,80,'-'+Math.ceil(dmg),{hurt:true});
+            if (P.hp <= 0) {
+              P.hp = 0; P.faint = 6;
+              floatTxt(P.x,P.y,105,'K.O.',{hurt:true});
+              S.xp = Math.max(0, S.xp - S.xpNext*.01); // -1 % XP
             }
           }
         }
@@ -4109,25 +4020,19 @@ const GEAR_SLOTS = ['weapon','awakening','secondary','helmet','armor','gloves','
 // (l'éveil est l'arme la plus forte en PA dans le vrai jeu, la secondaire un peu moins que l'arme principale)
 // hpShare : part du bonus de PV que chaque pièce d'armure apporte (le plastron/casque protègent
 // le plus de vitals, gants/bottes un peu moins) — somme = 1.0 sur les 4 pièces d'armure
-// dodgeShare (2026-07-08) : l'Esquive ne vient QUE de l'armure (jamais des armes), répartie à
-// parts égales sur les 4 pièces — voir DODGE_GEAR_SCALE pour la conversion en % réel
 const GEAR_ROLE = {
-  weapon:     { apShare:0.42, dpShare:0,    hpShare:0,    dodgeShare:0 },
-  awakening:  { apShare:0.55, dpShare:0,    hpShare:0,    dodgeShare:0 },
-  secondary:  { apShare:0.30, dpShare:0,    hpShare:0,    dodgeShare:0 },
-  helmet:     { apShare:0.05, dpShare:0.24, hpShare:0.30, dodgeShare:0.25 },
-  armor:      { apShare:0.05, dpShare:0.24, hpShare:0.40, dodgeShare:0.25 },
-  gloves:     { apShare:0.04, dpShare:0.18, hpShare:0.15, dodgeShare:0.25 },
-  boots:      { apShare:0.04, dpShare:0.18, hpShare:0.15, dodgeShare:0.25 },
+  weapon:     { apShare:0.42, dpShare:0,    hpShare:0 },
+  awakening:  { apShare:0.55, dpShare:0,    hpShare:0 },
+  secondary:  { apShare:0.30, dpShare:0,    hpShare:0 },
+  helmet:     { apShare:0.05, dpShare:0.24, hpShare:0.30 },
+  armor:      { apShare:0.05, dpShare:0.24, hpShare:0.40 },
+  gloves:     { apShare:0.04, dpShare:0.18, hpShare:0.15 },
+  boots:      { apShare:0.04, dpShare:0.18, hpShare:0.15 },
 };
 // facteur d'échelle des PV d'armure par rapport au PD requis de zone (calibré pour qu'un stuff
 // d'armure complet et adapté à la zone évite un one-shot même en subissant la pénalité de PD
 // insuffisante, cf dmgTakenMult qui monte jusqu'à ×4,5)
 const HP_GEAR_SCALE = 9;
-// facteur d'échelle de l'Esquive (en points de %) par rapport au PD requis de zone — volontairement
-// beaucoup plus petit que HP_GEAR_SCALE : à endgame (zone 10, reqDP~239), un stuff complet adapté
-// donne environ 19% d'esquive brute, avant le facteur d'efficacité (voir dodgeEffectiveness)
-const DODGE_GEAR_SCALE = 0.08;
 function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
@@ -4138,13 +4043,12 @@ function rollGearDrop(zone, alpha) {
   const ap = Math.round(zone.reqAP * role.apShare * scale);
   const dp = Math.round(zone.reqDP * role.dpShare * scale);
   const hp = Math.round(zone.reqDP * role.hpShare * scale * HP_GEAR_SCALE);
-  const dodge = Math.round(zone.reqDP * (role.dodgeShare||0) * scale * DODGE_GEAR_SCALE * 100) / 100;
   // armure/gants/bottes prennent la couleur du palier (icône générée à la volée) — les autres
   // slots gardent leur icône générique fixe — demande explicite du 2026-07-07
   const TIER_COLORED_ICON = { armor: armorIconForColor, gloves: glovesIconForColor, boots: bootsIconForColor };
   const icon = TIER_COLORED_ICON[slot] ? TIER_COLORED_ICON[slot](tier.color) : (SLOT_ICON ? SLOT_ICON[slot] : '⚔️');
   return {
-    name: tier.sets[slot], kind:'gear', slot, ap, dp, hp, dodge, enhLv:0, optimizable:true, fsByLevel:{},
+    name: tier.sets[slot], kind:'gear', slot, ap, dp, hp, enhLv:0, optimizable:true, fsByLevel:{},
     key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
     icon, color:tier.color, stackable:false, weight:1.2,
     matName: tier.material.name, // matériau requis pour optimiser CETTE pièce (voir findEnhanceMaterial)
@@ -4257,7 +4161,6 @@ function dropsTick(dt) {
         particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
         queueFarmEvent(it.kind, it.name, 1, l.silver);
         trackLoot(it.name);
-        markZoneCollected(zoneIdx); // Compendium : 1er objet ramassé dans cette zone
         continue;
       }
 
@@ -4268,7 +4171,7 @@ function dropsTick(dt) {
         // rollDrops) — ne plus l'écraser par l'ancienne icône générique JACKPOT_ICON
         key: it.key, name: it.name, kind: it.kind, icon: it.icon, color: it.color,
         qty: 1, stackable: it.stackable, weight: it.weight,
-        val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, dodge: it.dodge||0, enhLv: it.enhLv||0,
+        val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, enhLv: it.enhLv||0,
         optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
         slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
         matName: it.matName, // palier de stuff (Naru/Tuvala/Yuria/Grunil) → quel matériau l'optimise
@@ -4282,7 +4185,6 @@ function dropsTick(dt) {
       S.lootCount++;
       queueFarmEvent(it.kind, it.name, 1, l.silver);
       trackLoot(it.name);
-      markZoneCollected(zoneIdx); // Compendium : 1er objet ramassé dans cette zone
       if (it.kind === 'jackpot') {
         S.jackpotCount = (S.jackpotCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
@@ -5529,8 +5431,6 @@ function refreshStatsOnly() {
   $('stPA').textContent = Math.round(apEff()*10)/10;
   $('stDP').textContent = Math.round(totalDP()*10)/10;
   $('stHpMax').textContent = fmt(Math.round(effHpMax()));
-  $('stSpd').textContent = '+' + Math.round(totalSpdPct()) + '%';
-  $('stDodge').textContent = Math.round(totalDodgePct(dpR)*10)/10 + '%';
   const apEl = $('stApZone');
   const dpEl = $('stDpZone');
   if (atVelia) {
@@ -5704,12 +5604,11 @@ function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
 // texte "+X PA +Y PD +Z PV" affiché dans le tooltip d'une pièce de la poupée d'équipement —
 // demande explicite : voir ce que le stuff donne comme PA/PD directement sur l'équipement
 function pdStatSuffix(e) {
-  const { ap, dp, hp, dodge } = effectiveApDp(e);
+  const { ap, dp, hp } = effectiveApDp(e);
   const parts = [];
   if (ap) parts.push('+'+ap+' PA');
   if (dp) parts.push('+'+dp+' PD');
   if (hp) parts.push('+'+hp+' PV');
-  if (dodge) parts.push('+'+dodge+'% Esq.');
   return parts.length ? ' (' + parts.join(' ') + ')' : '';
 }
 // base de comparaison ("ring"/"earring"/"necklace"/"belt") pour un slot précis de la poupée —
@@ -5951,15 +5850,14 @@ function equippedRefForItem(item) {
 function statDeltaHtml(item) {
   const ref = equippedRefForItem(item);
   const cur = effectiveApDp(item);
-  const refStats = ref ? effectiveApDp(ref) : { ap:0, dp:0, hp:0, dodge:0 };
+  const refStats = ref ? effectiveApDp(ref) : { ap:0, dp:0, hp:0 };
   const parts = [];
-  const d = (label, a, b, dec) => {
-    const delta = dec ? Math.round((a - b)*10)/10 : Math.round(a - b);
+  const d = (label, a, b) => {
+    const delta = Math.round(a - b);
     if (!delta) return;
     parts.push(`<span class="${delta>0?'statGain':'statLoss'}">${delta>0?'+':''}${delta} ${label}</span>`);
   };
   d('PA', cur.ap, refStats.ap); d('PD', cur.dp, refStats.dp); d('PV', cur.hp, refStats.hp);
-  d('% Esq.', cur.dodge, refStats.dodge, true);
   if (!parts.length) return '';
   return `<div class="ipDelta">${ref ? (LANG==='fr'?'vs équipé : ':'vs equipped: ') : (LANG==='fr'?'rien d\'équipé — ':'nothing equipped — ')}${parts.join(' ')}</div>`;
 }
@@ -5967,11 +5865,10 @@ function statDeltaHtml(item) {
 function statDeltaShortText(item) {
   const ref = equippedRefForItem(item);
   const cur = effectiveApDp(item);
-  const refStats = ref ? effectiveApDp(ref) : { ap:0, dp:0, hp:0, dodge:0 };
+  const refStats = ref ? effectiveApDp(ref) : { ap:0, dp:0, hp:0 };
   const parts = [];
-  const d = (label, a, b, dec) => { const v = dec ? Math.round((a-b)*10)/10 : Math.round(a-b); if (v) parts.push((v>0?'+':'')+v+' '+label); };
+  const d = (label, a, b) => { const v = Math.round(a-b); if (v) parts.push((v>0?'+':'')+v+' '+label); };
   d('PA', cur.ap, refStats.ap); d('PD', cur.dp, refStats.dp); d('PV', cur.hp, refStats.hp);
-  d('% Esq.', cur.dodge, refStats.dodge, true);
   return parts.length ? ' (' + parts.join(' ') + ')' : '';
 }
 
@@ -5983,7 +5880,7 @@ function showItemMenu(px, py, data) {
   if (data.kind === 'trash') desc.push('Butin de vente. Valeur unitaire ~'+fmt(data.val)+' silver.');
   if (data.kind === 'material') desc.push('Matériau d\'optimisation. Utilisé automatiquement par le cadre Optimisation.');
   if (data.kind === 'jackpot') { const {ap,dp} = effectiveApDp(data); desc.push('Accessoire — '+(ap?('+'+ap+' PA'):'')+(dp?(' +'+dp+' PD'):'')); }
-  if (data.kind === 'gear') { const {ap,dp,hp,dodge} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+' — '+(ap?('+'+ap+' PA '):'')+(dp?('+'+dp+' PD '):'')+(hp?('+'+hp+' PV '):'')+(dodge?('+'+dodge+'% Esq.'):'')+(data.optimizable?' · optimisable':'')); }
+  if (data.kind === 'gear') { const {ap,dp,hp} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+' — '+(ap?('+'+ap+' PA '):'')+(dp?('+'+dp+' PD '):'')+(hp?('+'+hp+' PV'):'')+(data.optimizable?' · optimisable':'')); }
   if (data.kind === 'craft') desc.push('Composant de craft endgame. À conserver.');
   if (data.equipped) desc.push('Actuellement équipé' + (data.optimizable ? ' — niveau ' + ENH_NAMES[data.enhLv||0] : '') + '.');
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
@@ -6047,7 +5944,7 @@ function itemTooltipHtml(data) {
   if (data.kind === 'trash') desc.push('Vente ~'+fmt(data.val)+' silver');
   if (data.kind === 'material') desc.push('Matériau d\'optimisation');
   if (data.kind === 'jackpot') { const {ap,dp} = effectiveApDp(data); desc.push('Accessoire'+(ap?(' · +'+ap+' PA'):'')+(dp?(' · +'+dp+' PD'):'')); }
-  if (data.kind === 'gear') { const {ap,dp,hp,dodge} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+(ap?(' · +'+ap+' PA'):'')+(dp?(' · +'+dp+' PD'):'')+(hp?(' · +'+hp+' PV'):'')+(dodge?(' · +'+dodge+'% Esq.'):'')); }
+  if (data.kind === 'gear') { const {ap,dp,hp} = effectiveApDp(data); desc.push((data.slot==='weapon'?'Arme':'Armure')+(ap?(' · +'+ap+' PA'):'')+(dp?(' · +'+dp+' PD'):'')+(hp?(' · +'+hp+' PV'):'')); }
   if ((data.kind === 'gear' || data.kind === 'jackpot') && data.optimizable && data.enhLv) desc.push('enchant '+ENH_NAMES[data.enhLv]);
   if (data.kind === 'craft') desc.push('Composant de craft endgame');
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
@@ -6101,8 +5998,7 @@ function unequip(slotId) {
 // ---------- "Équiper le meilleur" : comparaison sur les stats DE BASE uniquement ----------
 // (volontairement SANS le bonus d'enchantement : un objet +0 avec un meilleur socle vaut mieux
 //  à terme qu'un objet déjà monté mais avec un socle plus faible — c'est lui qu'il faut remonter)
-// dodge (2026-07-08) : poids ×3 pour compter comme un vrai critère secondaire sans dominer PA/PD
-function itemScore(it) { return it ? (it.ap||0) + (it.dp||0)*0.5 + (it.dodge||0)*3 : -1; }
+function itemScore(it) { return it ? (it.ap||0) + (it.dp||0)*0.5 : -1; }
 
 function equipBestSingle(slotId, kind) {
   const current = EQUIP[slotId];
@@ -7535,7 +7431,6 @@ async function showPlayerInventoryWindow(userId, displayName) {
     if (apDp && apDp.ap) bits.push('+'+apDp.ap+' PA');
     if (apDp && apDp.dp) bits.push('+'+apDp.dp+' PD');
     if (apDp && apDp.hp) bits.push('+'+apDp.hp+' PV');
-    if (apDp && apDp.dodge) bits.push('+'+apDp.dodge+'% Esq.');
     if (s.enhLv) bits.push(ENH_NAMES[s.enhLv]);
     return `<div class="cell${visible?'':' catHidden'}" title="${escapeHtml(bits.join(' · '))}">` +
       `<span style="color:${s.color}">${s.icon}</span>` +
@@ -7827,7 +7722,6 @@ $a('btnLeaderboard').onclick = openLeaderboard;
 $a('btnNotifCenter').onclick = openNotifCenter;
 updateNotifBadge();
 $a('btnAchievements').onclick = openAchievements;
-$a('btnCompendium').onclick = openCompendium;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 $a('btnLifeskillToggle').onclick = openLifeskillPanel;
@@ -8532,8 +8426,6 @@ const I18N = {
   lblPA: { fr:'PA effective', en:'Effective AP' },
   lblPD: { fr:'PD', en:'DP' },
   lblHpMax: { fr:'PV max', en:'Max HP' },
-  lblSpd: { fr:'Vitesse (SPD)', en:'Speed (SPD)' },
-  lblDodge: { fr:'Esquive', en:'Dodge' },
   lblApZone: { fr:'PA requis (zone)', en:'AP required (zone)' },
   lblDpZone: { fr:'PD requis (zone)', en:'DP required (zone)' },
   lblWeaponBonus: { fr:'Bonus arme', en:'Weapon bonus' },
@@ -8556,7 +8448,6 @@ const I18N = {
   btnReloadUpdate: { fr:'Recharger', en:'Reload' },
   btnLeaderboard: { fr:'🏆 Classement', en:'🏆 Leaderboard' },
   btnAchievements: { fr:'🏅 Succès', en:'🏅 Achievements' },
-  btnCompendium: { fr:'📖 Compendium', en:'📖 Compendium' },
   btnDailyQuests: { fr:'🗒️ Quêtes', en:'🗒️ Quests' },
   btnMailbox: { fr:'📬 Courrier', en:'📬 Mailbox' },
   btnActivities: { fr:'Activités', en:'Activities' },
@@ -8636,17 +8527,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V125', d:'08/07/2026 03:00', name:{fr:'Compendium, Vitesse (SPD) et Esquive', en:'Compendium, Speed (SPD) and Dodge'}, fr:[
-      {t:'new', tx:'Nouveau 📖 Compendium : ramasse au moins 1 objet dans chaque zone pour débloquer son bonus permanent — +1% Vitesse, +1% Dégâts, +1% Esquive PAR zone (additif, jamais un multiplicateur : les 11 zones donnent +11% de chaque, pas +100%)'},
-      {t:'new', tx:'Nouvelle stat Vitesse (SPD) : augmente avec le niveau, de +0% au niveau 1 jusqu\'à +75% au niveau 61 (plafonné), en plus du bonus de Compendium'},
-      {t:'new', tx:'Nouvelle stat Esquive, qui se trouve UNIQUEMENT sur les 4 pièces d\'armure : évite complètement un coup en cas de succès. Son efficacité dépend de ton niveau de PD face à la zone — inutile face à un monstre bien trop fort pour toi, mais très puissante (jusqu\'à zéro dégât) dans une zone où tu es largement au-dessus du niveau requis'},
-      {t:'change', tx:'But du jeu affiné : un bon taux de Vitesse et d\'Esquive permet de ne jamais mourir et de farmer plus vite — les tooltips d\'objets, la comparaison d\'équipement et "Équiper le meilleur" prennent maintenant l\'Esquive en compte'},
-    ], en:[
-      {t:'new', tx:'New 📖 Compendium: loot at least 1 item in each zone to unlock its permanent bonus — +1% Speed, +1% Damage, +1% Dodge PER zone (additive, never a multiplier: all 11 zones give +11% each, not +100%)'},
-      {t:'new', tx:'New Speed (SPD) stat: increases with level, from +0% at level 1 up to +75% at level 61 (capped), on top of the Compendium bonus'},
-      {t:'new', tx:'New Dodge stat, found ONLY on the 4 armor pieces: fully avoids a hit on success. Its effectiveness depends on your DP level relative to the zone — useless against a monster far too strong for you, but very powerful (up to zero damage) in a zone you\'ve far outgrown'},
-      {t:'change', tx:'Refined game goal: a good Speed and Dodge rate lets you never die and farm faster — item tooltips, gear comparison and "Equip best" now account for Dodge'},
-    ] },
   { v:'V124', d:'08/07/2026 02:00', name:{fr:'Enchantement ralenti, zones recalibrées, World Boss Vell', en:'Slower enhancement, recalibrated zones, Vell World Boss'}, fr:[
       {t:'change', tx:'Ralenti le gain de PA/PD des paliers +1 à +15 (divisé par ~1.6) : un stuff complet à +0 ne suffit plus à franchir la zone de couleur suivante, il faut réellement pousser jusqu\'à PRI+ pour progresser — les paliers PRI/DUO/TRI/TET/PEN représentent maintenant plus de la moitié du gain total à PEN'},
       {t:'change', tx:'PA/PD requis relevés d\'environ 30% sur les zones Camp Rhutum, Mine de Fer Abandonnée et Sanctuaire Elric (premières zones de chaque nouveau palier de couleur), et les zones suivantes de chaque palier réajustées en proportion pour garder une progression lisse'},
