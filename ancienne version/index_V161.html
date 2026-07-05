@@ -1900,18 +1900,15 @@ const NAME_EN = {
   'Camp Rhutum':'Rhutum Camp', 'Ferme Shultz':'Shultz Farm', 'Colonie Sausan':'Sausan Colony',
   'Mine de Fer Abandonnée':'Abandoned Iron Mine', 'Poste Helm':'Helm Post',
   'Repaire Bandits Gahaz':'Gahaz Bandit Lair', 'Sanctuaire Elric':'Elric Shrine', 'Ruines de Kratuga':'Kratuga Ruins',
-  'Planque des Mânes':'Manes\' Hideout',
   // mobs
   'Loup':'Wolf', 'Esprit de Protty':'Protty Spirit', 'Pirate':'Pirate', 'Guerrier Rhutum':'Rhutum Warrior',
   'Garde Shultz':'Shultz Guard', 'Combattant Sausan':'Sausan Fighter', 'Mineur corrompu':'Corrupted Miner',
   'Soldat Helm':'Helm Soldier', 'Bandit Gahaz':'Gahaz Bandit', 'Sectateur d\'Elric':'Elric Cultist', 'Uluan':'Uluan',
-  'Esprit des Mânes':'Manes Spirit',
   // trash loot
   'Viande de loup':'Wolf Meat', "Lame rouillée d'Imp":"Rusty Imp Blade", 'Insigne de Sausan':'Sausan Badge',
   'Bourse de pirate':'Pirate Purse', 'Croc de Naga':'Naga Fang', 'Oreille de Fogan':'Fogan Ear',
   'Fer rouillé':'Rusted Iron', 'Fourrure de Biraghi':'Biraghi Fur', "Défense d'orc":'Orc Tusk',
   'Éclat de relique ancienne':'Ancient Relic Shard', "Relique d'Hystria":'Hystria Relic', 'Icône de Rhasia':'Rhasia Icon',
-  'Larme de Mâne':'Manes\' Tear',
   // notes de la table de loot
   'revenu de base':'base income', 'optimisation':'enhancement', 'arme/armure (5 pièces)':'weapon/armor (5 pieces)',
   'craft endgame':'endgame crafting',
@@ -2024,17 +2021,6 @@ const ZONES = [
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
       jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:13}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
-  // 3e zone Grunil (2026-07-05, demande explicite : "ajoute Planque des Mânes dernière zone SANS
-  // TOUCHER AU MAXIMUM") — reqAP/reqDP volontairement IDENTIQUES à Ruines de Kratuga (263/239),
-  // pas une nouvelle escalade : le plafond du palier bleu (~301 PA / ~248 PD au PEN, voir GEAR_ROLE)
-  // reste donc EXACTEMENT le même, aucune valeur de zone9/10 ni aucune part de GEAR_ROLE n'a besoin
-  // de changer. Complète juste la rotation d'arme (weapon/secondary/awakening, une par zone du
-  // palier — voir ZONE_WEAPON_SLOTS) et apporte la ceinture manquante (Orkinrad's Belt).
-  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:263, reqDP:239, mob:'Esprit des Mânes',
-    hpPer:1000, dmg:125, xp:500,
-    tint:{ a:'#3a3f4a', b:'#343943', dry:'#40454f' }, tones:['#8a9ab0','#7c8ca2','#98a8c0'], alphaTone:'#4a5568',
-    loot:{ trash:{name:'Larme de Mâne',val:120,ch:1}, mat:{name:'Pierre de Caphras',val:5,ch:.07},
-      jackpot:{name:'Orkinrad\'s Belt',val:35000,ch:.00015,ap:15}, craft:{name:'Marbre du Dieu déchu',ch:.0018} } },
 ];
 let zoneIdx = 0;
 let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
@@ -4835,7 +4821,7 @@ const GEAR_TIERS = [
     sets:{ weapon:'Lame Yuria', awakening:'Éveil Yuria', secondary:'Dague Yuria',
            helmet:'Casque Yuria', armor:'Plastron Yuria', gloves:'Gants Yuria', boots:'Bottes Yuria' },
     material:{ name:'Pierre Noire', icon:ICO_MAT_NOIRE, color:'#7aa35e' }, dropChance:0.02 }, // même vert EXACT que le stuff Yuria (demande explicite du 2026-07-08)
-  { grade:'blue', color:'#6ea3c9', zones:[9,10,11], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
+  { grade:'blue', color:'#6ea3c9', zones:[9,10], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
     sets:{ weapon:'Dague Grunil', awakening:'Éveil Grunil', secondary:'Épée Grunil',
            helmet:'Casque Grunil', armor:'Plastron Grunil', gloves:'Gants Grunil', boots:'Bottes Grunil' },
     // Pierre concentrée dédiée à Grunil depuis le 2026-07-06 (avant : partageait la Pierre Noire
@@ -4852,15 +4838,14 @@ const GEAR_CHANCE = [.16,.12,.09,.065,.046,.032,.021,.014,.009,.0055,.0032,.0018
 // pièces d'armure, tirées au hasard entre elles comme avant.
 const GEAR_SLOTS = ['helmet','armor','gloves','boots'];
 // quel(s) type(s) d'arme chaque zone garantit (2026-07-05, demande explicite : "1 arme dans chaque
-// zone") — cycle weapon→secondary→awakening sur les 3 zones de chaque palier. Le palier bleu a
-// désormais lui aussi 3 zones (Planque des Mânes ajoutée le 2026-07-05) : la rotation complète
-// remplace le compromis provisoire "2 armes sur la dernière zone" utilisé tant qu'il n'y avait que
-// 2 zones bleues.
+// zone") — cycle weapon→secondary→awakening sur les 3 zones de chaque palier ; le palier bleu n'a
+// que 2 zones pour l'instant (pas de 3e zone Grunil), donc sa 2e zone (Ruines de Kratuga) garantit
+// les 2 types d'arme restants ("met 2 armes dernière zone pour l'instant")
 const ZONE_WEAPON_SLOTS = [
   ['weapon'], ['secondary'], ['awakening'],       // grey : zones 0,1,2
   ['weapon'], ['secondary'], ['awakening'],       // white : zones 3,4,5
   ['weapon'], ['secondary'], ['awakening'],       // green : zones 6,7,8
-  ['weapon'], ['secondary'], ['awakening'],       // blue : zones 9,10,11
+  ['weapon'], ['secondary','awakening'],          // blue : zones 9,10 (2 zones seulement)
 ];
 // part du PA/PD requis de zone que chaque pièce peut apporter, selon son rôle
 // (l'éveil est l'arme la plus forte en PA dans le vrai jeu, la secondaire un peu moins que l'arme principale)
@@ -9690,11 +9675,6 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
-  { v:'V162', d:'05/07/2026 14:00', name:{fr:'Nouvelle zone : Planque des Mânes (3e zone bleue)', en:'New zone: Manes\' Hideout (3rd blue zone)'}, fr:[
-      {t:'new', tx:'Nouvelle zone "Planque des Mânes" (Esprit des Mânes), 3e zone du palier bleu (Grunil) — complète la rotation d\'une arme garantie par zone et apporte la ceinture manquante (Orkinrad\'s Belt). Ses PA/PD requis sont volontairement identiques à Ruines de Kratuga : le plafond de stat du palier bleu au PEN ne change pas (~294 PA / ~247 PD stuff complet)'},
-    ], en:[
-      {t:'new', tx:'New "Manes\' Hideout" zone (Manes Spirit), 3rd zone of the blue tier (Grunil) — completes the one-guaranteed-weapon-per-zone rotation and brings the missing belt (Orkinrad\'s Belt). Its AP/DP requirements are deliberately identical to Kratuga Ruins: the blue tier\'s stat ceiling at PEN doesn\'t change (~294 AP / ~247 DP full set)'},
-    ] },
   { v:'V161', d:'05/07/2026 13:30', name:{fr:'Badge "Compatible mobile/tablette" à la connexion', en:'"Mobile/tablet compatible" badge at login'}, fr:[
       {t:'new', plat:'mobile', tx:'Un badge "📱 BETA — Compatible mobile & tablette" s\'affiche désormais sur l\'écran de connexion/création de compte, pour annoncer l\'adaptation mobile dès l\'arrivée sur le jeu'},
     ], en:[
@@ -11067,7 +11047,7 @@ const WIKI_SECTIONS = [
       <h3>Loot progressif</h3>
       <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>
       <h3>Zones groupées par palier de stuff</h3>
-      <p>Les 12 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
+      <p>Les 11 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
       <h3>Trésor de Velia (catégorie TEST)</h3>
       <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 5 objets collectibles très rares (0,01% à 0,00001% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
       <h3>Boss mondial partagé</h3>
