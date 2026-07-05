@@ -1,3 +1,9 @@
+-- FAILLE CORRIGÉE le 2026-07-05 (issue GitHub #2) : ce fichier contenait le webhook Discord
+-- "cheat" en clair (v_webhook ci-dessous) -- retiré retroactivement de ce fichier (le webhook
+-- a été révoqué côté Discord et remplacé). La définition à jour de boss_claim() vit désormais
+-- dans 20260705190100_boss_claim_via_edge_function.sql (appelle l'Edge Function
+-- discord-cheat-log, qui lit le webhook depuis un secret Supabase).
+--
 -- Demande explicite du 2026-07-08 : l'alerte "tentative de double réclamation" (ajoutée en V139,
 -- côté CLIENT via logToDiscord) partait sur le salon Discord GÉNÉRAL — elle doit aller sur le
 -- salon "cheat" (celui déjà utilisé par notify_cheat_discord pour les bornages anti-triche).
@@ -16,7 +22,6 @@ declare
   v_hp numeric;
   v_boss_id text;
   v_rank int;
-  v_webhook text := 'https://discord.com/api/webhooks/1522867574340059266/yEOAKFa9wdbwxXR78BK_bhddTYgB0nB5u-BVK6VLgR-E7OM8jG9LDiDYltnpEnYRN9g9';
   v_pseudo text;
 begin
   if v_uid is null then raise exception 'Non authentifié'; end if;
@@ -30,7 +35,7 @@ begin
       left join public.profiles pr on pr.user_id = u.user_id
       left join public.player_stats ps on ps.user_id = u.user_id;
       perform net.http_post(
-        url := v_webhook,
+        url := 'https://mkwwvzbjtyawpcyrnybk.supabase.co/functions/v1/discord-cheat-log', -- voir 20260705190100
         headers := '{"Content-Type": "application/json"}'::jsonb,
         body := jsonb_build_object(
           'embeds', jsonb_build_array(jsonb_build_object(
