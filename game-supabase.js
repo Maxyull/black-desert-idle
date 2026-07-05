@@ -180,6 +180,13 @@ if (sb) {
     if (event === 'SIGNED_IN' && session?.provider_token) {
       joinDiscordGuild(session.provider_token, session.user);
     }
+    // après une redirection OAuth (Discord) ou un lien de confirmation d'email, le SDK peut
+    // établir la session APRÈS notre vérification initiale (sb.auth.getSession() au chargement,
+    // voir plus bas) -- sans ce relais, l'écran de connexion restait affiché malgré une connexion
+    // réussie (bug remonté en jeu le 2026-07-05 : "on se connecte mais la page reste au premier plan")
+    if (event === 'SIGNED_IN' && session?.user && (!currentUser || currentUser.id !== session.user.id)) {
+      onAuthed(session.user);
+    }
   });
 }
 
