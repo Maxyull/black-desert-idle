@@ -158,9 +158,6 @@
   #farmModeBtn:hover { background:rgba(201,165,90,.15); }
 
   #skillBar { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
-  /* bouton de repli de la barre de sorts — invisible sur ordinateur (voir media query mobile),
-     n'a de sens que sur petit écran où la place manque (2026-07-05, demande explicite) */
-  #skillBarToggle { display:none; }
   .sk {
     width:42px; height:42px; position:relative;
     background:linear-gradient(180deg,#22202a,#161419);
@@ -1451,30 +1448,17 @@
        chevauchement. #aiState n'est qu'un indicatif ("IA : SearchPack · Bolide"), pas essentiel au
        jeu (le combat reste automatique) — masqué sur téléphone plutôt que de le caser de force */
     #aiState { display:none; }
-    /* barre de sorts repliée par défaut sur mobile/tablette (demande explicite du 2026-07-05) :
-       purement indicative (aucun clic requis, le combat est automatique), donc pas indispensable
-       en permanence — le bouton ⚡ la déplie/replie à la demande, sans jamais gêner la vue */
-    #skillBar { display:none; gap:3px; }
-    #skillBar.expanded { display:flex; }
+    #skillBar { gap:3px; }
     #skillBar .sk { width:30px; height:30px; }
     #skillBar .sk .ic { font-size:11px; }
     #skillBar .sk .nm { font-size:5.5px; margin-top:1px; }
-    #skillBarToggle {
-      display:flex; align-items:center; justify-content:center; position:absolute;
-      bottom:10px; left:50%; transform:translateX(-50%); width:30px; height:30px;
-      margin:0; padding:0; border-radius:50%; font-size:14px; z-index:2;
-    }
-    #skillBarToggle.expanded { border-color:var(--gold); color:var(--gold); }
-    /* la potion (soin auto) est ce qui compte vraiment à surveiller en jeu — mise en avant sur
-       mobile/tablette (demande explicite) : agrandie, halo doré, au lieu d'être réduite comme le
-       reste du HUD. La barre de vie reste lisible (le % exact suffit, le détail est de toute façon
-       dans la carte Statistiques en dessous) */
-    #hpBar { width:100px; }
-    #potSlot {
-      width:46px; height:46px; border-color:var(--gold); border-width:2px;
-      box-shadow:0 0 10px rgba(201,165,90,.5); font-size:20px;
-    }
-    #potSlot #potIcon { font-size:20px; }
+    /* la barre de vie/potion (bas-gauche) et la barre de sorts (bas-centre) se marchent encore un
+       peu dessus à cette largeur — la barre de vie réduite laisse un peu plus de respiration (le
+       % exact reste lisible dans la barre, et le détail est de toute façon dans la carte
+       Statistiques en dessous) ; un vrai découpage sans aucun chevauchement demanderait de revoir
+       aussi #zoneTitle (2-3 lignes), pas fait dans cette passe */
+    #hpBar { width:110px; }
+    #potSlot { width:28px; height:28px; }
   }
 </style>
 </head>
@@ -1742,7 +1726,6 @@
       <div id="potSlot"><span id="potIcon">🧪</span><div id="potCd"></div></div>
       <div id="potSelect"></div>
     </div>
-    <button id="skillBarToggle" title="Afficher/masquer la barre de sorts">⚡</button>
     <div id="skillBar"></div>
   </div>
 
@@ -8722,14 +8705,6 @@ renderActivityTabs();
 // quitter un combat en cours → retour au lobby Boss ; fermer le lobby → retour à la Zone (farm)
 $a('bossLeaveBtn').onclick = () => { if (bossState.active) endBossFight(false); else openBossLobby(); };
 $a('potSlot').onclick = togglePotSelect;
-// repli de la barre de sorts sur mobile/tablette (2026-07-05, demande explicite) : purement
-// indicative (aucun clic requis en jeu, le combat est automatique), repliée par défaut pour ne
-// jamais gêner la vue — le bouton ⚡ la déplie/replie à la demande (non persisté : repart repliée
-// à chaque rechargement, cohérent avec "toujours replié par défaut sur petit écran")
-$a('skillBarToggle').onclick = () => {
-  $a('skillBar').classList.toggle('expanded');
-  $a('skillBarToggle').classList.toggle('expanded');
-};
 $a('farmModeBtn').onclick = toggleFarmMode;
 renderFarmModeBtn();
 
@@ -9545,13 +9520,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V156', d:'05/07/2026 11:00', name:{fr:'Mobile : barre de sorts repliable, potion mise en avant', en:'Mobile: collapsible skill bar, potion put forward'}, fr:[
-      {t:'change', tx:'Sur mobile/tablette, la barre de sorts est maintenant repliée par défaut (purement indicative, aucun clic requis, le combat reste automatique) — un bouton ⚡ la déplie/replie à la demande, libérant de la place dans le cadre de jeu'},
-      {t:'change', tx:'La potion (soin automatique), ce qui compte vraiment à surveiller en jeu, est mise en avant sur mobile/tablette : agrandie avec un halo doré au lieu d\'être réduite comme le reste du HUD'},
-    ], en:[
-      {t:'change', tx:'On mobile/tablet, the skill bar is now collapsed by default (purely informational, no click required, combat stays automatic) — a ⚡ button expands/collapses it on demand, freeing up space in the game frame'},
-      {t:'change', tx:'The potion (auto-heal), the thing that actually matters to watch during play, is put forward on mobile/tablet: enlarged with a gold glow instead of being shrunk like the rest of the HUD'},
-    ] },
   { v:'V155', d:'05/07/2026 10:30', name:{fr:'Correctifs mobile : barre de sorts coupée, IA superposée', en:'Mobile fixes: cropped skill bar, overlapping AI status'}, fr:[
       {t:'fix', tx:'Sur téléphone, la barre de 9 sorts (calibrée pour ~418px de large) dépassait des 2 côtés du cadre de jeu réduit (~360-380px), coupant les icônes de bord (ex: "Speed" et "Voltaic" à moitié visibles). Icônes réduites pour tenir entièrement dans le cadre'},
       {t:'fix', tx:'Le texte "IA : ..." se superposait au nom de la zone — le cadre de jeu devient très bas sur téléphone (son ratio suit la largeur), pas assez de place pour empiler proprement les deux. Masqué sur téléphone (indicatif seulement, le combat reste automatique)'},
