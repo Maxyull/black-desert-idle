@@ -128,6 +128,12 @@
   }
   #onlineCounter b { color:#8fc98a; }
   #onlineGuests { color:var(--ink-dim); }
+  /* nombre total d'inscrits, sous le compteur "en ligne" (2026-07-05, demande explicite) */
+  #registeredCounter {
+    background:rgba(10,9,12,.6); border:1px solid #2c2a33; padding:6px 14px;
+    font-size:10.5px; color:var(--ink-dim); letter-spacing:.3px; text-align:center;
+  }
+  #registeredCounter b { color:#9cc9e8; }
   #updateToast button {
     background:var(--gold); color:#1a1712; border:none; font-weight:bold;
     padding:7px 14px; letter-spacing:.5px; cursor:pointer; font-family:inherit; font-size:12.5px;
@@ -1000,11 +1006,12 @@
   #infoBody .patchEntry li:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
   #infoBody .patchEntry li.patchLineRemoved { opacity:.5; text-decoration:line-through; }
   #infoBody .patchLineMain { display:flex; align-items:flex-start; gap:9px; }
-  /* pastille de gravité (2026-07-05, demande explicite) : petit point coloré avant le texte,
-     infobulle (title) au survol expliquant le niveau -- indépendant de la catégorie/couleur du texte */
+  /* pastille de gravité (2026-07-05, demande explicite) : déplacée dans la ligne d'infos du bas
+     (comme les autres badges) pour ne plus décaler le texte de la ligne -- petit point coloré
+     inline devant son libellé, à l'intérieur du badge .patchCat */
   #infoBody .patchSevDot {
-    flex-shrink:0; width:8px; height:8px; border-radius:50%; margin-top:5px;
-    box-shadow:0 0 4px rgba(0,0,0,.5); cursor:help;
+    display:inline-block; width:6px; height:6px; border-radius:50%; margin-right:4px;
+    vertical-align:middle; box-shadow:0 0 3px rgba(0,0,0,.5);
   }
   #infoBody .patchLineText { flex:1; color:var(--ink); }
   /* bouton avant/après (2026-07-05, demande explicite) : petite icône image, inline avec le texte */
@@ -1267,13 +1274,35 @@
   .chatDaySepLabel { font-size:9.5px; letter-spacing:.8px; text-transform:uppercase; color:var(--gold);
     white-space:nowrap; flex-shrink:0; }
   .chatDaySep:not(.current):hover .chatDaySepLabel { color:#e6cf7a; }
-  #chatInputRow { display:flex; gap:5px; }
+  #chatInputRow { display:flex; gap:5px; position:relative; }
   #chatInput {
     flex:1; background:#0d0c11; border:1px solid #333; color:var(--ink); padding:5px 7px;
     font-size:11px; font-family:inherit; border-radius:3px;
   }
   #chatSendBtn { width:auto; margin:0; padding:5px 10px; flex-shrink:0; }
   #chatNote { font-size:10px; color:var(--ink-dim); font-style:italic; margin-top:4px; }
+
+  /* mentions @joueur (2026-07-05, demande explicite) : liste de suggestions au-dessus du champ */
+  #chatMentionList {
+    display:none; position:absolute; left:0; right:0; bottom:100%; margin-bottom:4px;
+    background:#1c1a22; border:1px solid var(--gold-dim); border-radius:4px; max-height:160px;
+    overflow-y:auto; box-shadow:0 -4px 14px rgba(0,0,0,.5); z-index:10;
+  }
+  #chatMentionList.show { display:block; }
+  .chatMentionItem { padding:5px 9px; font-size:11px; cursor:pointer; color:var(--ink); }
+  .chatMentionItem:hover, .chatMentionItem.active { background:rgba(201,165,90,.15); color:var(--gold); }
+  /* mention @joueur en couleur dans un message envoyé/reçu */
+  .chatMention { color:var(--gold); font-weight:bold; }
+  /* message qui ME mentionne : fond distinct pour bien le repérer dans le flux */
+  .chatMsg.pingedMe { background:rgba(224,168,64,.14); border-radius:4px; padding-left:4px; }
+  /* attention sur le widget replié quand on est mentionné (2026-07-05, demande explicite :
+     "couleur/vibration/agrandissement du chat pour faire ouvrir") -- se retire toute seule après
+     quelques secondes ou dès que le joueur déplie/interagit avec le chat */
+  #chatWidget.pinged { animation:chatPingAttention 2.4s ease-in-out 3; }
+  @keyframes chatPingAttention {
+    0%,100% { transform:scale(1); border-color:var(--gold-dim); box-shadow:0 4px 14px rgba(0,0,0,.5); }
+    50% { transform:scale(1.035); border-color:var(--gold); box-shadow:0 0 22px 4px rgba(224,168,64,.75); }
+  }
 
   /* ===== barre d'activités (au-dessus du farm) ===== */
   /* header au-dessus de la zone de farm */

@@ -90,11 +90,17 @@ function updatePseudoDisplay() {
 
 // upgrade d'une session invité en compte réel (garde le même user_id → la sauvegarde suit),
 // ou création classique si jamais aucune session n'existe encore
+// clé locale : mémorise le pseudo choisi à la création de compte le temps de confirmer l'email
+// (aucune session active à ce moment-là pour appeler set_pseudo tout de suite) -- appliqué au
+// prochain onAuthed() réussi, voir refreshMyPseudo()
+const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
 async function doSignUp() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
+  const pseudo = $a('authPseudo').value.trim();
   if (!email || pass.length < 6) { authShow('Email requis + mot de passe 6 caractères min.', true); return; }
   authShow('Création du compte...');
+  if (pseudo) { try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {} }
   if (isGuest()) {
     const { data, error } = await sb.auth.updateUser({ email, password: pass });
     if (error) { authShow(error.message, true); return; }
@@ -226,6 +232,17 @@ async function refreshMyPseudo() {
     const { data } = await sb.from('profiles').select('pseudo').eq('user_id', currentUser.id).maybeSingle();
     myPseudo = data?.pseudo || discordUsername(currentUser) || (currentUser.email || '?').split('@')[0];
   } catch (e) { myPseudo = discordUsername(currentUser) || (currentUser.email || '?').split('@')[0]; }
+  // applique le pseudo choisi à la création de compte (demande explicite du 2026-07-05), en
+  // attente depuis doSignUp() faute de session active à ce moment-là -- appliqué une seule fois
+  let pending = null;
+  try { pending = localStorage.getItem(PENDING_PSEUDO_KEY); } catch(e) {}
+  if (pending) {
+    try { localStorage.removeItem(PENDING_PSEUDO_KEY); } catch(e) {}
+    try {
+      const { error } = await sb.rpc('set_pseudo', { p_pseudo: pending });
+      if (!error) myPseudo = pending;
+    } catch (e) {}
+  }
   updatePseudoDisplay();
 }
 
@@ -984,6 +1001,7 @@ try { chatChannel = localStorage.getItem('velia-idle-chat-channel') || 'mondial'
 try { const v = localStorage.getItem('velia-idle-chat-folded'); if (v !== null) chatFolded = v === '1'; } catch(e) {}
 let chatLastRead = {}; // channel -> ISO du dernier message vu (sert au halo "non lu")
 let chatUnread = {};   // channel -> true si des messages sont arrivés depuis qu'on ne le regarde plus
+let chatLastPingedAt = {}; // channel -> ISO du dernier mention @moi déjà signalée (évite de répéter l'alerte à chaque sondage)
 function chatVisibleChannels() { return CHAT_CHANNELS.filter(c => !c.staff || isAdmin() || myIsMod); }
 function renderChatTabs() {
   const el = $a('chatTabs'); if (!el) return;
@@ -1078,8 +1096,13 @@ function renderChatMessages(msgs, sinceTs) {
       // halo temporaire sur les messages arrivés depuis la dernière lecture de CE canal —
       // demande explicite : "un halo sur le message que tu n'as pas encore lu"
       const isNew = sinceTs && new Date(m.created_at) > new Date(sinceTs);
-      return `<div class="chatMsg chan-${chatChannel}${isNew?' newMsg':''}">${del}` +
-        `${badge}${pseudoHtml}<span class="chatText">${escapeHtml(m.message)}</span>` +
+      // mention @moi (2026-07-05, demande explicite) : fond distinct + alerte si le message vient
+      // d'arriver pendant que je regarde déjà ce canal (le cas "chat replié" est géré ailleurs, voir
+      // pollChatUnread/triggerChatPingAttention, car cette fonction ne tourne pas chat replié)
+      const pingedMe = myPseudo && m.message.toLowerCase().includes('@'+myPseudo.toLowerCase());
+      if (pingedMe && isNew) triggerChatPingAttention();
+      return `<div class="chatMsg chan-${chatChannel}${isNew?' newMsg':''}${pingedMe?' pingedMe':''}">${del}` +
+        `${badge}${pseudoHtml}<span class="chatText">${highlightMentions(escapeHtml(m.message))}</span>` +
         `<span class="chatTime">${fmtChatTimestamp(m.created_at)}</span></div>`;
     }).join('');
     return bar + rows;
@@ -1124,12 +1147,24 @@ async function pollChatUnread() {
     if (c.id === 'modéré') continue; // pas de notion de "non lu" pour le journal modéré
     if (c.id === chatChannel && !chatFolded) continue; // canal actif et déplié : déjà tenu à jour par fetchChatMessages
     try {
-      const { data } = await sb.from('chat_messages').select('created_at')
+      const { data } = await sb.from('chat_messages').select('message, created_at')
         .eq('channel', c.id).order('created_at', { ascending:false }).limit(1);
-      const last = data && data[0] && data[0].created_at;
+      const row = data && data[0];
+      const last = row && row.created_at;
       if (!last) continue;
       if (!chatLastRead[c.id]) { chatLastRead[c.id] = last; continue; } // 1ère fois : juste une base, pas un "non lu"
-      if (new Date(last) > new Date(chatLastRead[c.id])) chatUnread[c.id] = true;
+      if (new Date(last) > new Date(chatLastRead[c.id])) {
+        chatUnread[c.id] = true;
+        // mention @moi arrivée alors que ce canal n'est pas activement suivi (chat replié, ou
+        // canal différent) -- demande explicite du 2026-07-05 : alerte visuelle/vibration.
+        // chatLastPingedAt évite de rejouer l'alerte à chaque sondage (5s) tant que le joueur
+        // n'a pas rouvert le chat (chatLastRead ne bouge pas pendant qu'il reste replié)
+        if (myPseudo && row.message && row.message.toLowerCase().includes('@'+myPseudo.toLowerCase())
+            && new Date(last) > new Date(chatLastPingedAt[c.id] || 0)) {
+          chatLastPingedAt[c.id] = last;
+          triggerChatPingAttention();
+        }
+      }
     } catch (e) {}
   }
   renderChatTabs();
@@ -1172,7 +1207,88 @@ async function sendChatMessage() {
   fetchChatMessages();
 }
 $a('chatSendBtn').onclick = sendChatMessage;
-$a('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendChatMessage(); });
+
+// ---------- mentions @joueur dans le chat (2026-07-05, demande explicite) ----------
+// liste des joueurs en ligne, rafraîchie périodiquement — sert à suggérer des mentions et à
+// repérer/colorer celles déjà tapées dans un message (voir highlightMentions)
+let onlinePlayersCache = [];
+async function refreshOnlinePlayersCache() {
+  if (!sb || !currentUser || isGuest()) return;
+  try {
+    const { data } = await sb.rpc('get_online_players');
+    onlinePlayersCache = (data||[]).map(r => r.pseudo).filter(Boolean);
+  } catch(e) {}
+}
+setInterval(refreshOnlinePlayersCache, 20000);
+refreshOnlinePlayersCache();
+
+let chatMentionActive = false, chatMentionStart = -1;
+function updateChatMentionDropdown() {
+  const input = $a('chatInput'), list = $a('chatMentionList');
+  const val = input.value, pos = input.selectionStart;
+  const before = val.slice(0, pos);
+  const at = before.lastIndexOf('@');
+  // le "@" doit être le début d'un mot (début de message ou précédé d'un espace), et rien entre
+  // lui et le curseur ne doit contenir d'espace (sinon on n'est plus en train de taper la mention)
+  if (at === -1 || (at > 0 && !/\s/.test(before[at-1])) || /\s/.test(before.slice(at+1))) {
+    list.classList.remove('show'); chatMentionActive = false; return;
+  }
+  const partial = before.slice(at+1).toLowerCase();
+  const matches = onlinePlayersCache
+    .filter(p => p.toLowerCase() !== (myPseudo||'').toLowerCase() && p.toLowerCase().includes(partial))
+    .slice(0, 8);
+  if (!matches.length) { list.classList.remove('show'); chatMentionActive = false; return; }
+  chatMentionActive = true; chatMentionStart = at;
+  list.innerHTML = matches.map((p,i) => `<div class="chatMentionItem${i===0?' active':''}" data-p="${escapeHtml(p)}">${escapeHtml(p)}</div>`).join('');
+  list.classList.add('show');
+  list.querySelectorAll('.chatMentionItem').forEach(el => { el.onclick = () => applyChatMention(el.dataset.p); });
+}
+function applyChatMention(pseudo) {
+  const input = $a('chatInput');
+  const val = input.value, pos = input.selectionStart;
+  const before = val.slice(0, chatMentionStart), after = val.slice(pos);
+  const inserted = '@' + pseudo + ' ';
+  input.value = before + inserted + after;
+  const newPos = (before + inserted).length;
+  input.focus();
+  input.setSelectionRange(newPos, newPos);
+  $a('chatMentionList').classList.remove('show');
+  chatMentionActive = false;
+}
+$a('chatInput').addEventListener('input', updateChatMentionDropdown);
+$a('chatInput').addEventListener('keydown', e => {
+  if (chatMentionActive && (e.key === 'Enter' || e.key === 'Tab')) {
+    e.preventDefault();
+    const active = $a('chatMentionList').querySelector('.chatMentionItem');
+    if (active) applyChatMention(active.dataset.p);
+    return;
+  }
+  if (chatMentionActive && e.key === 'Escape') { $a('chatMentionList').classList.remove('show'); chatMentionActive = false; return; }
+  if (e.key === 'Enter') sendChatMessage();
+});
+// colore les mentions @pseudo déjà présentes dans un message (envoyé ou reçu) -- fait correspondre
+// les pseudos les plus longs d'abord pour ne pas couper un pseudo qui en contient un plus court
+// (ex: "Metal" ne doit pas amputer "@Metal Gear")
+function highlightMentions(escapedText) {
+  if (!onlinePlayersCache.length) return escapedText;
+  const sorted = [...onlinePlayersCache].sort((a,b) => b.length - a.length);
+  let result = escapedText;
+  for (const name of sorted) {
+    const esc = escapeHtml(name).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (!esc) continue;
+    result = result.replace(new RegExp('@' + esc + '(?!\\S)', 'gi'), m => `<span class="chatMention">${m}</span>`);
+  }
+  return result;
+}
+// alerte visuelle quand JE suis mentionné et que le chat est replié (demande explicite du
+// 2026-07-05 : "couleur/vibration/agrandissement du chat pour faire ouvrir") -- se rejoue à
+// chaque nouvelle mention détectée, s'arrête toute seule (voir @keyframes chatPingAttention)
+function triggerChatPingAttention() {
+  const w = $a('chatWidget'); if (!w) return;
+  w.classList.remove('pinged'); void w.offsetWidth; // relance l'animation même si déjà en cours
+  w.classList.add('pinged');
+  if (navigator.vibrate) { try { navigator.vibrate([120,60,120]); } catch(e) {} }
+}
 renderChatTabs();
 updateChatInputVisibility();
 // applique l'état replié/déplié restauré depuis localStorage (voir déclaration de chatFolded)
@@ -1271,9 +1387,21 @@ async function refreshOnlineCounter() {
     $a('onlineGuests').textContent = guests > 0 ? ` (${guests} ${LANG==='fr'?'invités':'guests'})` : '';
   } catch(e) {}
 }
+// nombre total de comptes inscrits (2026-07-05, demande explicite) : change rarement, pas besoin
+// de le rafraîchir aussi souvent que le compteur "en ligne"
+async function refreshRegisteredCounter() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.rpc('get_registered_count');
+    if (error || data == null) return;
+    $a('registeredTotal').textContent = data;
+  } catch(e) {}
+}
 setInterval(heartbeatPresence, 20000);
 setInterval(refreshOnlineCounter, 20000);
 setInterval(refreshLiveBoss, 20000);
+refreshRegisteredCounter();
+setInterval(refreshRegisteredCounter, 5 * 60000);
 
 // ---------- panneau "Mon compte" : identité + parrainage (comptes vérifiés uniquement) ----------
 async function openAccountPanel() {
@@ -1910,6 +2038,7 @@ const I18N = {
   btnLinkAccount: { fr:'🔗 Lier un compte', en:'🔗 Link account' },
   btnAccount: { fr:'👤 Mon compte', en:'👤 My account' },
   onlineLbl: { fr:'en ligne', en:'online' },
+  registeredLbl: { fr:'inscrits', en:'registered' },
   demoNoteAuth: { fr:'🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.', en:'🎮 This is a test demo — your progress can be reset at any time.' },
   demoTag: { fr:'DÉMO', en:'DEMO' },
   devBannerText: { fr:'Jeu en développement — du contenu et des ajustements arrivent régulièrement', en:'Game in development — content and adjustments arrive regularly' },
@@ -1920,6 +2049,7 @@ const I18N = {
   adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
+  authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
@@ -2062,6 +2192,21 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V174', d:'05/07/2026 19:00', name:{fr:'Pseudo à l\'inscription, mentions @joueur dans le chat, nombre d\'inscrits', en:'Nickname at signup, @player mentions in chat, registered count'}, fr:[
+      {t:'new', sub:'comptes', tx:'Champ pseudo sur l\'écran de création de compte — plus besoin de le changer après coup dans "Mon compte"'},
+      {t:'new', sub:'interface', tx:'Nombre total de joueurs inscrits affiché sous le compteur "en ligne"'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'La pastille de gravité ne décale plus le texte des lignes de notes de version — déplacée dans la ligne d\'infos du bas, avec les autres badges'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'Les sous-catégories des notes de version reprennent désormais la couleur de leur catégorie principale, pour mieux montrer le lien de parenté'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'La pastille de notification sur "Notes de version" se vide maintenant dès l\'ouverture du panneau, plutôt qu\'à la fermeture de l\'onglet'},
+      {t:'new', sub:'interface', tx:'Chat : taper "@" affiche la liste des joueurs en ligne (filtrable en tapant les premières lettres) pour les mentionner — un message qui te mentionne s\'affiche en surbrillance, et si ton chat est replié, il s\'anime (couleur + vibration + agrandissement) pour t\'inviter à l\'ouvrir'},
+    ], en:[
+      {t:'new', sub:'comptes', tx:'Nickname field on the account creation screen — no need to change it afterward in "My account"'},
+      {t:'new', sub:'interface', tx:'Total number of registered players shown below the "online" counter'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'The severity dot no longer shifts patch note line text — moved to the bottom info row, with the other badges'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'Patch note subcategories now take on their parent category\'s color, to better show the relationship'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'The notification badge on "Patch Notes" now clears as soon as the panel is opened, instead of on tab close'},
+      {t:'new', sub:'interface', tx:'Chat: typing "@" shows the list of online players (filterable by typing letters) to mention them — a message mentioning you is highlighted, and if your chat is collapsed, it animates (color + vibration + enlargement) to prompt you to open it'},
+    ] },
   { v:'V173', d:'05/07/2026 18:30', name:{fr:'Alignement des boutons d\'inventaire + comparateur avant/après', en:'Inventory button alignment + before/after viewer'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'Les boutons "⚡ Équiper meilleur" et "🗑️ Vendre" (+ "↩️ Racheter") n\'étaient pas parfaitement alignés (marge et taille de police différentes) — corrigé pour un alignement pixel-perfect'},
       {t:'improve', sub:'interface', severity:'minor', tx:'Les notes de version peuvent désormais inclure un bouton 🖼️ "Voir avant/après" sur une ligne, ouvrant un comparateur avec 2 captures d\'écran côte à côte'},
@@ -3934,7 +4079,12 @@ function commitPatchRead() { // appelé à la fermeture de l'onglet
 window.addEventListener('beforeunload', commitPatchRead);
 window.addEventListener('pagehide', commitPatchRead); // filet de sécurité (mobile / onglets fermés brutalement)
 
-function unreadPatchCount() { return PATCH_NOTES.filter(p => !readPatches.has(p.v)).length; }
+// le badge (pastille numérique sur le bouton) compte ce qui n'a été vu ni lors d'une session
+// précédente NI pendant la session en cours -- se vide dès l'ouverture du panneau (demande
+// explicite du 2026-07-05 : "la notification s'enlève une fois visité"). Le tag "NEW" sur chaque
+// entrée, lui, reste basé UNIQUEMENT sur les sessions précédentes (readPatches) : il continue
+// d'indiquer "nouveau depuis ta dernière visite" pendant toute la session, comme prévu à l'origine.
+function unreadPatchCount() { return PATCH_NOTES.filter(p => !readPatches.has(p.v) && !seenThisSession.has(p.v)).length; }
 function updatePatchBadge() {
   const n = unreadPatchCount();
   const badge = $a('patchBadge');
@@ -4071,19 +4221,23 @@ $a('btnPatch').onclick = () => {
               const plat = line.plat ? PATCH_PLATFORMS[line.plat] : null;
               const nature = line.nature ? PATCH_NATURE[line.nature] : null;
               const sub = line.sub ? subMap[line.sub] : null;
-              // pastille de gravité (2026-07-05, demande explicite) : petit point coloré, infobulle
-              // au survol -- indépendante de la catégorie (une "Correction" peut être Critique ou Mineure)
-              const sevDot = sev ? `<span class="patchSevDot" style="background:${sev.color}" title="${escapeHtml(sev[LANG])+' — '+escapeHtml(sev.desc[LANG])}"></span>` : '';
+              // pastille de gravité (2026-07-05, demande explicite) : déplacée dans la ligne d'infos
+              // du bas (comme les autres badges) pour ne plus décaler le texte de la ligne -- garde
+              // un petit point coloré devant son libellé, infobulle au survol
+              const sevTag = sev ? `<span class="patchCat" style="color:${sev.color};border-color:${sev.color}" title="${escapeHtml(sev.desc[LANG])}"><span class="patchSevDot" style="background:${sev.color}"></span>${sev[LANG]}</span>` : '';
               const platTag = plat ? `<span class="patchCat" style="color:${plat.color};border-color:${plat.color}" title="${escapeHtml(plat.desc[LANG])}">${plat.icon} ${plat[LANG]}</span>` : '';
               const natureTag = nature ? `<span class="patchCat" style="color:${nature.color};border-color:${nature.color}" title="${escapeHtml(nature.desc[LANG])}">${nature.icon} ${nature[LANG]}</span>` : '';
-              const subTag = sub ? `<span class="patchSub" title="${LANG==='fr'?'Sous-catégorie':'Subcategory'} : ${escapeHtml(sub)}">${sub}</span>` : '';
-              const extraTags = subTag + platTag + natureTag;
+              // sous-catégorie (2026-07-05, demande explicite : "marquer chaque grosse catégorie ET
+              // sous-catégorie mais plus finement") -- reprend la couleur de la catégorie parente au
+              // lieu d'un gris neutre, pour bien montrer le lien de parenté tout en restant plus discret
+              const subTag = sub ? `<span class="patchSub" style="color:${cat.color};border-color:${cat.color}55" title="${LANG==='fr'?'Sous-catégorie':'Subcategory'} : ${escapeHtml(sub)}">${sub}</span>` : '';
+              const extraTags = sevTag + subTag + platTag + natureTag;
               const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
               // bouton avant/après (2026-07-05, demande explicite) : ouvre un comparateur d'images
               // quand la ligne référence des captures d'écran (voir line.img.before/after)
               const imgBtn = line.img ? `<button class="patchImgBtn" data-before="${escapeHtml(line.img.before)}" data-after="${escapeHtml(line.img.after)}" title="${LANG==='fr'?'Voir avant/après':'See before/after'}">🖼️</button>` : '';
               return `<li class="${line.removed?'patchLineRemoved':''}">
-                <div class="patchLineMain">${sevDot}<span class="patchLineText">${line.tx}${removedTag}</span>${imgBtn}</div>
+                <div class="patchLineMain"><span class="patchLineText">${line.tx}${removedTag}</span>${imgBtn}</div>
                 ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
               </li>`;
             }).join('')}</ul>
@@ -4093,6 +4247,11 @@ $a('btnPatch').onclick = () => {
     </div>`;
   }).join('');
   openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', html);
+
+  // la pastille de notification se vide dès l'ouverture du panneau (demande explicite du
+  // 2026-07-05) -- le tag "NEW" par entrée, lui, reste affiché toute la session (voir plus haut)
+  PATCH_NOTES.forEach(p => seenThisSession.add(p.v));
+  updatePatchBadge();
 
   // suit ce qui défile dans la fenêtre pour savoir quoi marquer lu à la fermeture de la page
   // (le tag NEW, lui, reste affiché pendant toute la session — voir commitPatchRead)
