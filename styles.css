@@ -966,6 +966,17 @@
   #infoBody .patchLineMain { display:flex; align-items:flex-start; gap:9px; }
   #infoBody .patchLineText { flex:1; color:var(--ink); }
   #infoBody .patchLineExtra { display:flex; flex-wrap:wrap; gap:6px; margin-left:0; padding-left:2px; opacity:.9; }
+  /* groupe de lignes par catégorie (2026-07-05, demande explicite) : liseré DORÉ constant entre
+     chaque sous-catégorie, quelle que soit sa couleur de texte -- toutes les lignes d'un groupe
+     s'alignent à la même hauteur, sous l'en-tête, plutôt qu'un badge répété par ligne */
+  #infoBody .patchGroup { margin-bottom:14px; }
+  #infoBody .patchGroup + .patchGroup { padding-top:10px; border-top:2px solid var(--gold-dim); }
+  #infoBody .patchGroup:last-child { margin-bottom:0; }
+  #infoBody .patchGroupHead { font-size:11px; font-weight:bold; letter-spacing:.4px; margin-bottom:8px; }
+  #infoBody .patchSub {
+    flex-shrink:0; font-size:9px; letter-spacing:.2px; color:var(--ink-dim);
+    border:1px solid rgba(255,255,255,.14); border-radius:10px; padding:1.5px 8px; white-space:nowrap;
+  }
   #infoBody .patchCat {
     flex-shrink:0; font-size:9px; font-weight:bold; letter-spacing:.3px;
     border:1px solid; border-radius:10px; padding:2px 8px; white-space:nowrap; margin-top:1px;

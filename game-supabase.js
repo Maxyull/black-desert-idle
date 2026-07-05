@@ -259,6 +259,7 @@ async function loadCloudSave() {
   }
   setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 3000);
   checkPendingNotice(); // annonce importante en attente (ex: reset de compte) — livrée une seule fois
+  saveReady = true; // la vraie sauvegarde (ou l'absence confirmée de sauvegarde) est connue désormais
 }
 
 async function saveToCloud() {
@@ -1431,7 +1432,7 @@ $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignI
 
 // au chargement : session déjà active ? sinon on démarre en invité (jamais de mur bloquant)
 (async () => {
-  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); return; } // Supabase pas configuré → jeu jouable directement (mode local)
+  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; return; } // Supabase pas configuré → jeu jouable directement (mode local)
   const { data } = await sb.auth.getSession();
   if (data.session) onAuthed(data.session.user);
   else await startGuestOrShowAuth();
@@ -2060,6 +2061,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V169', d:'05/07/2026 17:00', name:{fr:'Refonte des notes de version + correction du cadeau de fidélité', en:'Patch notes overhaul + loyalty gift fix'}, fr:[
+      {t:'improve', sub:'interface', tx:'Nouvelle taxonomie des notes de version (Nouveautés, Équilibrage, Améliorations, Corrections de bugs, Sécurité, Serveur, Événements, Informations) — les lignes d\'une même version sont désormais groupées par catégorie, chaque groupe séparé par un liseré doré, avec un alignement cohérent au lieu d\'un badge répété sur chaque ligne'},
+      {t:'fix', sub:'connexion', tx:'Le cadeau de fidélité journalier (et son message flottant "Nouveau courrier") pouvait s\'afficher à tort à CHAQUE connexion, même si déjà réclamé aujourd\'hui — la vérification se faisait avant que la vraie sauvegarde cloud ait fini de charger. Corrigé : le jeu attend maintenant que la sauvegarde soit chargée avant de vérifier'},
+    ], en:[
+      {t:'improve', sub:'interface', tx:'New patch notes taxonomy (New, Balancing, Improvements, Bug fixes, Security, Server, Events, Information) — lines within a version are now grouped by category, each group separated by a gold divider, with consistent alignment instead of a repeated badge on every line'},
+      {t:'fix', sub:'connexion', tx:'The daily loyalty gift (and its floating "New mail" toast) could wrongly show up on EVERY connection, even if already claimed today — the check ran before the real cloud save had finished loading. Fixed: the game now waits for the save to load before checking'},
+    ] },
   { v:'V168', d:'05/07/2026 16:30', name:{fr:'Correction : jeu bloqué au chargement pour les invités', en:'Fix: game stuck loading for guests'}, fr:[
       {t:'fix', nature:'backend', tx:'Le correctif de la version précédente (page de connexion bloquée) déclenchait aussi un 2e chargement en parallèle de la sauvegarde pour une session invité, provoquant des effets en double (ex: bonus de bienvenue compté deux fois) et pouvait bloquer le jeu au chargement — sessions invité désormais exclues de ce relais, et un verrou empêche tout double appel'},
     ], en:[
@@ -3899,29 +3907,73 @@ function updatePatchBadge() {
   $a('btnPatch').classList.toggle('hasNew', n > 0);
 }
 
+// catégories principales des notes de version (refonte du 2026-07-05, demande explicite) --
+// taxonomie standard adaptée à Velia Idle (les catégories sans équivalent dans ce jeu, ex.
+// "Boutique"/devise premium, "Classes"/"Montures", ne sont pas utilisées ici)
 const PATCH_CATS = {
-  new:     { fr:'Nouveauté',    en:'New',      icon:'✦', color:'#8fc98a' },
-  change:  { fr:'Modification', en:'Change',   icon:'⚙', color:'#9cc9e8' },
-  fix:     { fr:'Correction',   en:'Fix',      icon:'🛠', color:'#e8b84a' },
-  exploit: { fr:'Faille',       en:'Security', icon:'🛡', color:'#b48ce8' },
-  admin:   { fr:'Admin',        en:'Admin',    icon:'🛠️', color:'#c9a55a' },
+  new:     { fr:'Nouveautés',           en:'New',            icon:'🆕', color:'#8fc98a' },
+  change:  { fr:'Équilibrage',          en:'Balancing',      icon:'⚖️', color:'#9cc9e8' },
+  improve: { fr:'Améliorations',        en:'Improvements',   icon:'✨', color:'#7ec9c2' },
+  fix:     { fr:'Corrections de bugs',  en:'Bug fixes',      icon:'🐛', color:'#e8b84a' },
+  exploit: { fr:'Sécurité',             en:'Security',       icon:'🔒', color:'#b48ce8' },
+  admin:   { fr:'Serveur',              en:'Server',         icon:'🌐', color:'#c9a55a' },
+  event:   { fr:'Événements',           en:'Events',         icon:'🎉', color:'#e89fc4' },
+  info:    { fr:'Informations',         en:'Information',    icon:'📢', color:'#9aa8c9' },
 };
-// tag de plateforme (2026-07-05, demande explicite) : en plus du type (Nouveauté/Modification/
-// Correction/Faille), précise quand une ligne ne concerne QUE tablette/téléphone — sert à repérer
-// d'un coup d'œil les changements qui ne touchent pas la version ordinateur. Optionnel (line.plat) :
-// absent = concerne toutes les plateformes, pas besoin de le préciser à chaque ligne.
+// tag de plateforme (2026-07-05, demande explicite) : en plus de la catégorie, précise quand
+// une ligne ne concerne QUE tablette/téléphone — sert à repérer d'un coup d'œil les changements
+// qui ne touchent pas la version ordinateur. Optionnel (line.plat) : absent = toutes plateformes.
 const PATCH_PLATFORMS = {
   mobile: { fr:'Tab/Mobile', en:'Tab/Mobile', icon:'📱', color:'#e0a840' },
 };
-// tag de nature (2026-07-05, demande explicite) : précise, en plus du type et de la plateforme,
-// si une ligne relève d'une optimisation plutôt que d'un contenu de jeu classique — sert à repérer
-// les changements "sous le capot" (code, performance, structure des données) qui n'affectent pas
-// directement le gameplay. Optionnel (line.nature) : absent = non concerné.
+// tag de nature (2026-07-05, demande explicite) : précise si une ligne relève d'une optimisation
+// "sous le capot" (code, performance, structure des données) plutôt que du contenu de jeu direct.
+// Optionnel (line.nature) : absent = non concerné.
 const PATCH_NATURE = {
   opticode:     { fr:'Optim. code',   en:'Code opti',   icon:'🧹', color:'#7aa8c9' },
   optimisation: { fr:'Optimisation',  en:'Optimization', icon:'⚡', color:'#c9a55a' },
   inventaire:   { fr:'Inventaire',    en:'Inventory',   icon:'🎒', color:'#8fc98a' },
   backend:      { fr:'Backend',       en:'Backend',     icon:'🗄️', color:'#b48ce8' },
+};
+// sous-catégorie libre (2026-07-05, demande explicite) : précise le domaine exact touché à
+// l'intérieur d'une catégorie principale (ex: "Boss" dans Nouveautés OU dans Équilibrage) --
+// simple étiquette informative, pas de code couleur dédié (contrairement aux tags ci-dessus).
+// Optionnel (line.sub) : absent = pas de sous-catégorie précisée.
+const PATCH_SUBCATS = {
+  boss:'Boss', monstres:'Monstres', zones:'Zones', quetes:'Quêtes', pnj:'PNJ', objets:'Objets',
+  equipements:'Équipements', competences:'Compétences', systeme:'Système de jeu',
+  pve:'PvE', loot:'Loot', economie:'Économie', craft:'Craft', xp:'Expérience (XP)',
+  interface:'Interface (UI)', ux:'Expérience utilisateur (UX)', perf:'Performances',
+  optimisation:'Optimisation', graphismes:'Graphismes', audio:'Audio', animations:'Animations',
+  accessibilite:'Accessibilité', chargement:'Temps de chargement',
+  gameplay:'Gameplay', combat:'Combat', inventaire:'Inventaire', reseau:'Réseau',
+  sauvegarde:'Sauvegarde', connexion:'Connexion',
+  anticheat:'Anti-triche', authentification:'Authentification', comptes:'Comptes',
+  serveur:'Serveur', securite:'Correctifs de sécurité',
+  maintenance:'Maintenance', infrastructure:'Infrastructure', bdd:'Base de données',
+  synchro:'Synchronisation',
+  eventTemp:'Événements temporaires', bonusXp:'Bonus XP', bonusDrop:'Bonus Drop',
+  cadeaux:'Cadeaux', calendrier:'Calendrier',
+  annonces:'Annonces', roadmap:'Feuille de route', prochaines:'Prochaines mises à jour',
+  connus:'Problèmes connus',
+};
+const PATCH_SUBCATS_EN = {
+  boss:'Boss', monstres:'Monsters', zones:'Zones', quetes:'Quests', pnj:'NPC', objets:'Items',
+  equipements:'Gear', competences:'Skills', systeme:'Game systems',
+  pve:'PvE', loot:'Loot', economie:'Economy', craft:'Crafting', xp:'Experience (XP)',
+  interface:'Interface (UI)', ux:'User experience (UX)', perf:'Performance',
+  optimisation:'Optimization', graphismes:'Graphics', audio:'Audio', animations:'Animations',
+  accessibilite:'Accessibility', chargement:'Loading times',
+  gameplay:'Gameplay', combat:'Combat', inventaire:'Inventory', reseau:'Network',
+  sauvegarde:'Save', connexion:'Login',
+  anticheat:'Anti-cheat', authentification:'Authentication', comptes:'Accounts',
+  serveur:'Server', securite:'Security fixes',
+  maintenance:'Maintenance', infrastructure:'Infrastructure', bdd:'Database',
+  synchro:'Synchronization',
+  eventTemp:'Time-limited events', bonusXp:'XP bonus', bonusDrop:'Drop bonus',
+  cadeaux:'Gifts', calendrier:'Calendar',
+  annonces:'Announcements', roadmap:'Roadmap', prochaines:'Upcoming updates',
+  connus:'Known issues',
 };
 
 let patchObserver = null;
@@ -3936,19 +3988,40 @@ $a('btnPatch').onclick = () => {
         ${isNew ? '<span class="patchNewTag">NEW</span>' : ''}
         ${p.d ? `<span class="patchDate">${p.d}</span>` : ''}
       </div>
-      <ul>${p[LANG].map(line => {
-        const cat = PATCH_CATS[line.t] || PATCH_CATS.change;
-        const plat = line.plat ? PATCH_PLATFORMS[line.plat] : null;
-        const nature = line.nature ? PATCH_NATURE[line.nature] : null;
-        const platTag = plat ? `<span class="patchCat" style="color:${plat.color};border-color:${plat.color}">${plat.icon} ${plat[LANG]}</span>` : '';
-        const natureTag = nature ? `<span class="patchCat" style="color:${nature.color};border-color:${nature.color}">${nature.icon} ${nature[LANG]}</span>` : '';
-        const extraTags = platTag + natureTag;
-        const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
-        return `<li class="${line.removed?'patchLineRemoved':''}">
-          <div class="patchLineMain"><span class="patchCat" style="color:${cat.color};border-color:${cat.color}">${cat.icon} ${cat[LANG]}</span><span class="patchLineText">${line.tx}${removedTag}</span></div>
-          ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
-        </li>`;
-      }).join('')}</ul>
+      ${(() => {
+        // groupe les lignes par catégorie principale (2026-07-05, demande explicite) : chaque
+        // groupe démarre par un en-tête bordé d'un liseré doré, et toutes les lignes d'un même
+        // groupe s'alignent à la même hauteur -- au lieu d'un badge répété sur chaque ligne
+        const groups = [];
+        for (const line of p[LANG]) {
+          const key = line.t || 'change';
+          let g = groups.find(g => g.key === key);
+          if (!g) { g = { key, lines: [] }; groups.push(g); }
+          g.lines.push(line);
+        }
+        return groups.map(g => {
+          const cat = PATCH_CATS[g.key] || PATCH_CATS.change;
+          const subMap = LANG === 'fr' ? PATCH_SUBCATS : PATCH_SUBCATS_EN;
+          return `
+          <div class="patchGroup">
+            <div class="patchGroupHead" style="color:${cat.color}">${cat.icon} ${cat[LANG]}</div>
+            <ul>${g.lines.map(line => {
+              const plat = line.plat ? PATCH_PLATFORMS[line.plat] : null;
+              const nature = line.nature ? PATCH_NATURE[line.nature] : null;
+              const sub = line.sub ? subMap[line.sub] : null;
+              const platTag = plat ? `<span class="patchCat" style="color:${plat.color};border-color:${plat.color}">${plat.icon} ${plat[LANG]}</span>` : '';
+              const natureTag = nature ? `<span class="patchCat" style="color:${nature.color};border-color:${nature.color}">${nature.icon} ${nature[LANG]}</span>` : '';
+              const subTag = sub ? `<span class="patchSub">${sub}</span>` : '';
+              const extraTags = subTag + platTag + natureTag;
+              const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
+              return `<li class="${line.removed?'patchLineRemoved':''}">
+                <div class="patchLineMain"><span class="patchLineText">${line.tx}${removedTag}</span></div>
+                ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
+              </li>`;
+            }).join('')}</ul>
+          </div>`;
+        }).join('');
+      })()}
     </div>`;
   }).join('');
   openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', html);

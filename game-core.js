@@ -168,6 +168,11 @@ const ZONES = [
       jackpot:{name:'Orkinrad\'s Belt',val:35000,ch:.00015,ap:15}, craft:{name:'Marbre du Dieu déchu',ch:.0018} } },
 ];
 let zoneIdx = 0;
+// devient true une fois la vraie sauvegarde cloud chargée (ou d'emblée si Supabase n'est pas
+// configuré) -- avant ça, S contient encore les valeurs par défaut (ex: lastLoyaltyDate vide),
+// ce qui déclenchait à tort le cadeau de fidélité (et son toast) à CHAQUE connexion, avant même
+// que la vraie sauvegarde n'arrive (bug remonté en jeu le 2026-07-05)
+let saveReady = false;
 let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
 let autoOptTimer = null, autoOptTargetLvl = null; // optimisation automatique jusqu'à un palier choisi (voir startAutoOpt)
 let lastLootEntry = null; // dernière ligne du loot ticker, pour fusionner les drops identiques consécutifs
@@ -899,6 +904,7 @@ function showMailToast(icon, name, qty) {
 }
 // 200 points de fidélité par jour, livrés dans le courrier — appelé depuis hud() (cheap check)
 function ensureLoyaltyGrant() {
+  if (!saveReady) return; // attend la vraie sauvegarde -- voir la déclaration de saveReady
   const now = new Date();
   const key = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
   if (S.lastLoyaltyDate === key) return;
