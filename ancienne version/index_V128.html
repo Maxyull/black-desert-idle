@@ -343,18 +343,23 @@
   /* ===== inventaire (permanent) ===== */
   .invTools { display:flex; gap:5px; margin-bottom:7px; }
   .invTools > button { margin:0; font-size:10.5px; padding:5px 4px; flex:1; }
-  /* Rangée "Équiper meilleur" / "Vendre" : 50/50 STRICT, les 2 boutons doivent faire exactement la
-     même taille (demande explicite du 2026-07-08, après plusieurs itérations). "Racheter" (↩️) est
-     une icône superposée en ABSOLU sur le coin droit de "Vendre" (ne mange plus sur sa largeur —
-     sinon "Vendre" paraissait plus étroit qu'"Équiper meilleur" alors que le groupe fait bien 50%). */
+  /* Rangée "Équiper meilleur" / "Vendre" : 50/50 strict (demande explicite du 2026-07-07,
+     après plusieurs itérations sur la répartition 20%/34%). "Racheter" (↩️) n'est plus un 3e
+     bouton séparé mais une icône superposée sur le coin droit de "Vendre" (15% de sa largeur),
+     pour bien montrer qu'il agit SUR la dernière vente plutôt qu'à côté d'elle. */
   .invToolsMain > button, .invToolsMain > .sellWorseGroup { flex:0 0 50%; min-width:0; }
-  .sellWorseGroup { position:relative; display:block; margin-top:4px; }
-  .sellWorseGroup #btnSellWorse { width:100%; margin:0; font-size:9.5px; padding:5px 3px; min-width:0;
+  /* le groupe entier porte LE bouton visuel (bordure + dégradé) — les 2 boutons à l'intérieur
+     sont transparents et sans bordure propre, sinon leurs bordures individuelles se chevauchent
+     de façon disgracieuse (retour utilisateur du 2026-07-07) */
+  .sellWorseGroup { position:relative; display:flex; margin-top:4px; border:1px solid var(--gold-dim);
+    background:linear-gradient(180deg,#26232b,#191720); transition:border-color .12s; }
+  .sellWorseGroup:hover { border-color:var(--gold); }
+  .sellWorseGroup button { border:none; background:transparent; margin:0; transform:none !important; }
+  .sellWorseGroup #btnSellWorse { flex:1 1 85%; width:auto; font-size:9.5px; padding:5px 3px; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .sellWorseGroup #btnBuyBackWorse { position:absolute; top:0; right:0; bottom:0; width:15%;
-    margin:0; padding:0; font-size:10px; border:1px solid var(--gold-dim); border-left:none;
-    background:rgba(20,19,26,.9); }
-  .sellWorseGroup #btnBuyBackWorse:hover:not(:disabled) { border-color:var(--gold); background:rgba(201,165,90,.12); }
+  .sellWorseGroup #btnBuyBackWorse { flex:0 0 15%; width:auto; padding:0; font-size:11px;
+    border-left:1px solid #3a3742; }
+  .sellWorseGroup #btnBuyBackWorse:hover:not(:disabled) { background:rgba(201,165,90,.12); }
   #invGrid, .admInvGrid {
     display:grid; grid-template-columns:repeat(8, 1fr); gap:3px;
     overflow-y:auto; max-height:188px; align-content:start; padding-right:2px;
@@ -376,11 +381,6 @@
     box-shadow:0 0 10px 1px rgba(201,165,90,.35); animation:patchHalo 1.6s infinite; }
   .compZonePicker { font-size:11px; color:var(--ink-dim); margin-bottom:8px; min-height:14px; }
   .compGoZoneBtn { width:auto; display:inline-block; margin:2px 4px 2px 0; padding:3px 9px; font-size:10.5px; }
-  /* Compendium spécial "Maîtrise PEN" (2026-07-08) : grille compacte, pas de halo/clic ici (pur suivi) */
-  .compPenGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px 10px; padding-top:6px; }
-  .compPenItem { cursor:default; font-size:11px; }
-  .compPenItem:hover { text-decoration:none; color:inherit; }
-  .compPenItem.done { color:#8fc98a; }
   .cell {
     aspect-ratio:1; background:rgba(20,19,26,.6); border:1px solid #262430;
     position:relative; display:flex; align-items:center; justify-content:center;
@@ -456,13 +456,6 @@
   .lootInfo { flex:1; min-width:0; }
   .lootInfo .ln { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .lootInfo .lv { color:var(--ink-dim); font-size:10.5px; }
-  /* récapitulatif condensé de Velia (2026-07-08) : 1 ligne/zone repliée, dépliable au clic */
-  .lootZoneCompact { cursor:pointer; }
-  .lootZoneCompact:hover { background:rgba(255,255,255,.03); }
-  .lootExpandHint { color:var(--ink-dim); margin-left:2px; display:inline-block; transition:transform .15s; }
-  .lootZoneCompact.expanded .lootExpandHint { transform:rotate(180deg); }
-  .lootZoneDetail { padding:0 0 6px 8px; border-bottom:1px solid #232128; }
-  .lootZoneDetail .lootRow:last-child { border-bottom:none; }
   .lootPct { color:var(--gold); font-size:12px; text-align:right; min-width:48px; }
 
   /* ===== optimisation (enchantement) ===== */
@@ -1701,21 +1694,11 @@
         <button id="sellMats" data-i18n="btnSellMats" disabled title="Bientôt disponible">🔒 Vendre mat.</button>
         <button id="sortInv" data-i18n="btnSort">Trier</button>
       </div>
+      <div id="treasureCraftPanel"></div>
       <div id="invGrid"></div>
       <div class="invFoot">
         <div class="frow"><span data-i18n="lblWeight">Poids</span> <div class="bar wbar"><div id="wBar"></div></div> <span id="wTxt">0 LT</span></div>
         <div class="money"><span class="coin" style="width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fdf3d0,#c9a55a 60%,#8a7038)"></span> <span id="invSilver">0</span> silver</div>
-      </div>
-    </div>
-
-    <div class="card" id="adviceCraftCard">
-      <h3 data-i18n="cardAdviceCraft">Conseil de stuff &amp; Craft</h3>
-      <div id="optSuggest"></div>
-      <div class="statSep">🔧 <span data-i18n="cardCraft">Craft</span></div>
-      <div id="treasureCraftPanel"></div>
-      <div id="capConvertRow">
-        <span id="capConvertLbl"></span>
-        <button id="btnConvertCaphras">♻️ <span data-i18n="btnConvertCaphras">Convertir (5:1)</span></button>
       </div>
     </div>
 
@@ -1738,6 +1721,11 @@
         <button id="btnOptAuto" data-i18n="btnOptAuto">▶ Auto jusqu'à</button>
       </div>
       <div id="optResult"></div>
+      <div id="optSuggest"></div>
+      <div id="capConvertRow">
+        <span id="capConvertLbl"></span>
+        <button id="btnConvertCaphras">♻️ <span data-i18n="btnConvertCaphras">Convertir (5:1)</span></button>
+      </div>
     </div>
   </div>
 </div>
@@ -1894,7 +1882,6 @@ const S = {
   castMult: 1, hpMax: 100, lootRadius: 26,
   zonesCollected: {}, // Compendium (2026-07-08) : { [zoneIdx]: true } dès qu'un objet a été ramassé au moins une fois dans cette zone — sert au bonus de collection (voir compendiumZoneCount)
   bossesKilled: {}, // Compendium World Boss (2026-07-08) : { [bossId]: true } dès qu'un World Boss a été vaincu au moins une fois (voir compendiumBossCount)
-  penMastery: {}, // Compendium spécial "Maîtrise PEN" (2026-07-08) : { [itemName]: true } dès que cet objet a atteint PEN au moins une fois (voir markPenMastery)
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
   // baseline (silverEarned/kills au début de LA SESSION EN COURS), pour calculer un vrai "silver/h"
@@ -2093,7 +2080,7 @@ const ICO_MAT_TEMPS = svgIcon(
 // demande explicite — cohérent avec le palier Yuria/vert qu'elle sert à optimiser)
 const ICO_MAT_NOIRE = svgIcon(
   '<path d="M12 1l6 6-3 9-3 7-3-7-3-9z" fill="#1e3d24"/><path d="M12 1l6 6-3 9-3 7z" fill="#142b19"/>' +
-  '<path d="M12 1l-3 7.2 3 1.4 3-1.4z" fill="#7aa35e"/><circle cx="12" cy="12" r="2.1" fill="#7aa35e" opacity=".65"/>');
+  '<path d="M12 1l-3 7.2 3 1.4 3-1.4z" fill="#3a6b3f"/><circle cx="12" cy="12" r="2.1" fill="#5fc964" opacity=".55"/>');
 // Pierre de Caphras : relique ambrée fissurée, lueur dorée
 const ICO_MAT_CAPHRAS = svgIcon(
   '<path d="M12 2l5.6 4.6-1.6 9.4-4 6-4-6-1.6-9.4z" fill="#c9a55a"/><path d="M12 2l5.6 4.6-1.6 9.4-4 6z" fill="#a3803c"/>' +
@@ -2311,25 +2298,6 @@ function compendiumBossCount() { return Object.keys(S.bossesKilled||{}).length; 
 function compendiumTotalCount() { return compendiumZoneCount() + compendiumBossCount(); }
 function compendiumTotalMax() { return ZONES.length + Object.keys(BOSS_ROSTER).length; }
 function compendiumPct() { return compendiumTotalCount() * 1; } // points de %, 1 par zone OU par boss
-
-// ---- Compendium spécial "Maîtrise PEN" (2026-07-08, demande explicite) : liste TOUS les objets
-// optimisables du jeu (7 pièces × 4 paliers de stuff + 1 bijou par zone) et suit lesquels ont déjà
-// atteint PEN (niveau max) AU MOINS UNE FOIS — purement un suivi de complétion, sans bonus de
-// stats (contrairement au Compendium zones/World Boss). Persisté via S.penMastery.
-function penMasteryItemList() {
-  const names = [];
-  for (const tier of GEAR_TIERS) for (const slot of GEAR_SLOTS) names.push(tier.sets[slot]);
-  for (const z of ZONES) names.push(z.loot.jackpot.name);
-  return names; // 4×7 + 11 = 39 entrées, dans l'ordre gris→blanc→vert→bleu puis zone 1→11
-}
-function markPenMastery(name) {
-  if (S.penMastery[name]) return;
-  S.penMastery[name] = true;
-  const done = compendiumPenCount(), max = penMasteryItemList().length;
-  floatTxt(P.x, P.y, 96, '🌟 PEN — '+tr(name), { gold:true });
-  logToDiscord('🌟 Maîtrise PEN', `**${myPseudo||'Joueur'}** amène ${name} à PEN pour la première fois (${done}/${max}${done>=max?' — MAÎTRISE COMPLÈTE ✓':''})`, 0xffe9a8);
-}
-function compendiumPenCount() { return Object.keys(S.penMastery||{}).length; }
 
 // Vitesse de déplacement (2026-07-08) : progression par NIVEAU (0% au niv.1, jusqu'à +75% au
 // niveau 61, plafonné ensuite) + bonus de Compendium (points de % additifs entre eux).
@@ -3583,19 +3551,18 @@ function compendiumHighlightItem(name) {
     };
   });
 }
-let compendiumTab = 'zones'; // 'zones' | 'bosses' | 'pen' — demande explicite du 2026-07-08 ("refais moi le compendium pour qu'il ressemble a quelque chose de lisible")
+let compendiumTab = 'zones'; // 'zones' | 'bosses' — demande explicite du 2026-07-08 ("refais moi le compendium pour qu'il ressemble a quelque chose de lisible")
 function renderCompendiumHtml() {
   const zc = compendiumZoneCount(), bc = compendiumBossCount();
   const total = compendiumTotalCount(), max = compendiumTotalMax(), pct = compendiumPct();
   const bossCountMax = Object.keys(BOSS_ROSTER).length;
-  const penItems = penMasteryItemList(), penDone = compendiumPenCount();
   const summaryCard = `<div class="admStatTiles">
       <div class="admStatTile"><div class="astLbl">📖 ${LANG==='fr'?'Progression':'Progress'}</div><div class="astVal">${total} / ${max}</div></div>
       <div class="admStatTile"><div class="astLbl">🏃 SPD</div><div class="astVal">+${pct}%</div></div>
       <div class="admStatTile"><div class="astLbl">⚔️ ${LANG==='fr'?'Dégâts':'DMG'}</div><div class="astVal">+${pct}%</div></div>
       <div class="admStatTile"><div class="astLbl">🛡️ ${LANG==='fr'?'Esquive':'Dodge'}</div><div class="astVal">+${pct}%</div></div>
     </div>
-    <div class="admSummary">${LANG==='fr'?`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Boss · ${penDone}/${penItems.length} PEN`:`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Bosses · ${penDone}/${penItems.length} PEN`}</div>
+    <div class="admSummary">${LANG==='fr'?`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Boss`:`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Bosses`}</div>
     <div class="admHint">${LANG==='fr'
       ? 'Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif, jamais un multiplicateur). Clique sur un objet ci-dessous pour voir dans quelles zones le farmer.'
       : 'Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive, never a multiplier). Click an item below to see which zones farm it.'}</div>
@@ -3603,7 +3570,6 @@ function renderCompendiumHtml() {
     <div class="catTabs">
       <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${LANG==='fr'?'Zones':'Zones'} (${zc}/${ZONES.length})</button>
       <button class="catTab compTab${compendiumTab==='bosses'?' active':''}" data-tab="bosses">🐋 World Bosses (${bc}/${bossCountMax})</button>
-      <button class="catTab compTab${compendiumTab==='pen'?' active':''}" data-tab="pen">🌟 ${LANG==='fr'?'Maîtrise PEN':'PEN Mastery'} (${penDone}/${penItems.length})</button>
     </div>`;
   let bodyHtml;
   if (compendiumTab === 'bosses') {
@@ -3615,14 +3581,6 @@ function renderCompendiumHtml() {
         `<div class="achDesc">${unlocked?(LANG==='fr'?'Vaincu au moins une fois':'Defeated at least once'):(LANG==='fr'?'Pas encore vaincu':'Not defeated yet')}</div></div>` +
         `<div class="achReward">${unlocked?'+1% ✓':'🔒'}</div></div>`;
     }).join('');
-  } else if (compendiumTab === 'pen') {
-    bodyHtml = `<div class="admHint">${LANG==='fr'
-        ? 'Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.'
-        : 'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.'}</div>` +
-      `<div class="compItems compPenGrid">` + penItems.map(name => {
-        const done = !!S.penMastery[name];
-        return `<span class="compItem compPenItem${done?' done':''}">${done?'✓':'○'} ${escapeHtml(tr(name))}</span>`;
-      }).join('') + `</div>`;
   } else {
     bodyHtml = ZONES.map((z,zi) => {
       const tier = gearTierForZone(zi);
@@ -3643,7 +3601,7 @@ function openCompendium() {
   $a('infoBody').querySelectorAll('.compTab').forEach(btn => {
     btn.onclick = () => { compendiumTab = btn.dataset.tab; openCompendium(); };
   });
-  $a('infoBody').querySelectorAll('.compItem[data-item]').forEach(el => {
+  $a('infoBody').querySelectorAll('.compItem').forEach(el => {
     el.onclick = () => compendiumHighlightItem(el.dataset.item);
   });
 }
@@ -4428,7 +4386,7 @@ const GEAR_TIERS = [
   { grade:'green', color:'#7aa35e', zones:[6,7,8], label:{fr:'Vert — Yuria',en:'Green — Yuria'},
     sets:{ weapon:'Lame Yuria', awakening:'Éveil Yuria', secondary:'Dague Yuria',
            helmet:'Casque Yuria', armor:'Plastron Yuria', gloves:'Gants Yuria', boots:'Bottes Yuria' },
-    material:{ name:'Pierre Noire', icon:ICO_MAT_NOIRE, color:'#7aa35e' }, dropChance:0.02 }, // même vert EXACT que le stuff Yuria (demande explicite du 2026-07-08)
+    material:{ name:'Pierre Noire', icon:ICO_MAT_NOIRE, color:'#4a8a4f' }, dropChance:0.02 },
   { grade:'blue', color:'#6ea3c9', zones:[9,10], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
     sets:{ weapon:'Dague Grunil', awakening:'Éveil Grunil', secondary:'Épée Grunil',
            helmet:'Casque Grunil', armor:'Plastron Grunil', gloves:'Gants Grunil', boots:'Bottes Grunil' },
@@ -6764,8 +6722,6 @@ function attemptEnhance() {
     // palier qu'on vient de passer n'a plus besoin d'être suivi, il reste stocké mais inutilisé
     r.textContent = (LANG==='fr'?'✦ SUCCÈS — ':'✦ SUCCESS — ') + ENH_NAMES[target.enhLv]; r.className = 'ok';
     floatTxt(P.x,P.y,100,'✦ '+ENH_NAMES[target.enhLv],{gold:true});
-    // Compendium PEN (2026-07-08) : marque CE type d'objet comme "atteint PEN au moins 1 fois"
-    if (target.enhLv >= ENH_NAMES.length-1) markPenMastery(target.name);
   } else {
     addItemFailstack(target, lvl+1); // le failstack de CE palier, pour CET objet, progresse et reste acquis
     // Pierre de Cron (2026-07-08) : consommée AUTOMATIQUEMENT s'il y en a une disponible, UNIQUEMENT
@@ -6934,7 +6890,7 @@ function zoneLootRowsHtml(idx) {
     { kind:'jackpot',  it:L.jackpot, note:'+'+L.jackpot.ap+' '+equippedWord },
     { kind:'craft',    it:L.craft,   note:'craft endgame' },
     // Pierre de Cron : taux fixe, identique dans TOUTES les zones — demande explicite du 2026-07-08
-    { kind:'material', it:{name:CRON_STONE.name}, ch:0.001, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
+    { kind:'material', it:{name:CRON_STONE.name}, ch:0.001, note:'protège un enchantement d\'une rétrogradation' },
   ];
   // les couleurs des rangées "armure" et "matériau" reprennent celles du stuff dans l'inventaire
   // (gris/blanc/vert/bleu selon le palier) au lieu d'un violet/or générique — demande du 2026-07-06
@@ -6952,42 +6908,22 @@ function zoneLootRowsHtml(idx) {
     </div>`;
   }).join('');
 }
-// ligne CONDENSÉE (1 par zone, repliée par défaut) pour le récapitulatif "toutes zones" de Velia —
-// demande explicite du 2026-07-08 ("faut scroll à la mort") : affiche juste le bijou (l'objet le
-// plus recherché de la zone), un clic déplie le détail complet via zoneLootRowsHtml
-function zoneLootCompactRowHtml(idx) {
-  const z = ZONES[idx], tier = gearTierForZone(idx);
-  return `<div class="lootRow lootZoneCompact" data-zi="${idx}">
-    <div class="lootIcon k-jackpot" style="color:${tier.color};border-color:${tier.color}">💍</div>
-    <div class="lootInfo"><div class="ln" style="color:${tier.color}">${tr(z.name)}</div><div class="lv">${tr(z.mob)} · ${tr(z.loot.jackpot.name)}</div></div>
-    <div class="lootPct">${fmtTinyPct(z.loot.jackpot.ch)} <span class="lootExpandHint">▾</span></div>
-  </div>`;
-}
 function renderLootTable(previewIdx) {
   // Velia (zone paisible) : aucun monstre, donc aucun loot possible ICI — message explicite au lieu
   // d'afficher par erreur les stats de la dernière zone farmée. On affiche à la place, à titre
-  // informatif, le récapitulatif CONDENSÉ (1 ligne/zone, dépliable) du loot de TOUTES les zones de
-  // Velia — demande explicite du 2026-07-08 (la version dépliée à 100% pour les 11 zones obligeait
-  // à un scroll interminable).
+  // informatif, le récapitulatif du loot de TOUTES les zones de Velia confondues (demande explicite
+  // du 2026-07-08), regroupé zone par zone.
   if (atVelia && previewIdx == null) {
     lootPreviewIdx = null;
     updateZoneViewHalo();
     $('lootZoneName').textContent = LANG==='fr' ? 'Velia — zone paisible' : 'Velia — peaceful zone';
     const banner = `<div class="admHint">${LANG==='fr'
-      ? '🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :'
-      : '🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:'}</div>`;
+      ? '🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu de tout ce que les zones de Velia peuvent looter, zone par zone :'
+      : '🕊️ Peaceful zone: no monsters, no loot possible here. Preview of everything Velia\'s zones can loot, zone by zone:'}</div>`;
     const allZonesHtml = ZONES.map((z,zi) =>
-      `${zoneLootCompactRowHtml(zi)}<div class="lootZoneDetail" id="lootDetail${zi}" style="display:none">${zoneLootRowsHtml(zi)}</div>`
+      `<div class="lootCatHead">${tr(z.name)} — ${tr(z.mob)}</div>${zoneLootRowsHtml(zi)}`
     ).join('');
     $('lootTable').innerHTML = banner + allZonesHtml;
-    $('lootTable').querySelectorAll('.lootZoneCompact').forEach(row => {
-      row.onclick = () => {
-        const detail = $a('lootDetail'+row.dataset.zi);
-        const willOpen = detail.style.display === 'none';
-        detail.style.display = willOpen ? '' : 'none';
-        row.classList.toggle('expanded', willOpen);
-      };
-    });
     return;
   }
   const idx = previewIdx != null ? previewIdx : zoneIdx;
@@ -8660,7 +8596,7 @@ async function cancelListing(id) {
 const MARKET_MATERIALS = [
   { name:'Pierre de Novice',   icon:ICO_MAT_NOVICE,     color:'#b8b8b8' },
   { name:'Pierre du Temps',    icon:ICO_MAT_TEMPS,      color:'#cfd8dc' },
-  { name:'Pierre Noire',       icon:ICO_MAT_NOIRE,      color:'#7aa35e' },
+  { name:'Pierre Noire',       icon:ICO_MAT_NOIRE,      color:'#4a8a4f' },
   { name:'Pierre concentrée',  icon:ICO_MAT_CONCENTREE, color:'#6ea3c9' },
   { name:'Pierre de Caphras',  icon:ICO_MAT_CAPHRAS,    color:'#c9a55a' },
 ];
@@ -9066,8 +9002,6 @@ const I18N = {
   btnSellMats: { fr:'🔒 Vendre mat.', en:'🔒 Sell mats' },
   btnSort: { fr:'Trier', en:'Sort' },
   lblWeight: { fr:'Poids', en:'Weight' },
-  cardAdviceCraft: { fr:'Conseil de stuff & Craft', en:'Gear advice & Crafting' },
-  cardCraft: { fr:'Craft', en:'Crafting' },
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
   optChanceEmpty: { fr:'Chargez un matériau depuis le sac', en:'Load a material from your bag' },
   btnOptTry: { fr:"Tenter l'optimisation", en:'Attempt enhancement' },
@@ -9133,21 +9067,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V129', d:'08/07/2026 07:00', name:{fr:'Conseil de stuff & Craft regroupés, loot Velia condensé, Maîtrise PEN', en:'Grouped gear advice & Crafting, condensed Velia loot, PEN Mastery'}, fr:[
-      {t:'change', tx:'Nouvelle carte "Conseil de stuff & Craft" en bas à droite, juste au-dessus de l\'Optimisation : regroupe le conseil de progression et TOUS les crafts (Trésor de Velia + conversion Poussière→Caphras), qui étaient auparavant éparpillés dans l\'Inventaire et l\'Optimisation'},
-      {t:'fix', tx:'Le récapitulatif de loot "toutes zones" affiché à Velia est maintenant CONDENSÉ (1 ligne par zone, dépliable au clic) au lieu d\'afficher les 6 lignes de chaque zone d\'un coup — fini le scroll interminable'},
-      {t:'change', tx:'La ligne "Pierre de Cron" dans la table de loot précise maintenant "1 à 3 unités" en plus du taux de drop'},
-      {t:'fix', tx:'La Pierre Noire a désormais exactement la même couleur que le stuff Yuria (vert)'},
-      {t:'fix', tx:'Les boutons "Équiper meilleur" et "Vendre" font maintenant exactement la même taille (le bouton "Racheter" se superpose en coin sans plus grignoter la largeur de "Vendre")'},
-      {t:'new', tx:'Nouveau Compendium spécial "🌟 Maîtrise PEN" : liste les 39 objets optimisables du jeu (7 pièces × 4 paliers + 1 bijou par zone) et suit lesquels ont atteint PEN au moins une fois — un pur suivi de complétion, sans bonus de stats'},
-    ], en:[
-      {t:'change', tx:'New "Gear advice & Crafting" card in the bottom right, right above Enhancement: groups the progression advice and ALL crafting (Velia Treasure + Dust→Caphras conversion), previously scattered across Inventory and Enhancement'},
-      {t:'fix', tx:'The "all zones" loot summary shown at Velia is now CONDENSED (1 line per zone, expandable on click) instead of showing all 6 lines per zone at once — no more endless scrolling'},
-      {t:'change', tx:'The "Cron Stone" row in the loot table now shows "1 to 3 units" alongside the drop rate'},
-      {t:'fix', tx:'The Black Stone now has the exact same color as Yuria (green) gear'},
-      {t:'fix', tx:'"Equip best" and "Sell" buttons are now exactly the same size ("Buy back" now overlaps a corner instead of eating into "Sell"\'s width)'},
-      {t:'new', tx:'New special "🌟 PEN Mastery" Compendium: lists all 39 optimizable items in the game (7 pieces × 4 tiers + 1 jewel per zone) and tracks which ones have reached PEN at least once — a pure completion tracker, no stat bonus'},
-    ] },
   { v:'V128', d:'08/07/2026 06:00', name:{fr:'Vell en mer, Coeur de Vell, bonus de zone, Compendium refait', en:'Vell at sea, Heart of Vell, zone bonus, reworked Compendium'}, fr:[
       {t:'new', tx:'Combat de Vell entièrement repensé d\'après les captures fournies : arène en pleine mer (ciel, pitons rocheux au loin, rides d\'eau), 2 bateaux qui tirent des boulets de canon animés sur le monstre (avec un tic de dégâts à chaque impact), et sa charge périodique devient "PLONGE !" — il faut se réfugier près d\'une bouée au lieu de se cacher derrière un pilier'},
       {t:'new', tx:'Vell a 5% de chance de looter le Coeur de Vell à sa mort — une roue de récompense qui tourne toute seule s\'affiche en fin de combat, révélant si tu l\'as obtenu (visible même quand tu ne l\'as pas)'},
