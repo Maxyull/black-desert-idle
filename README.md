@@ -1,97 +1,77 @@
-# Feuille de route des zones — Velia Idle
+# ⚔️ Velia Idle
 
-Notation : `Nom de zone (Monstre, ...)` — si plusieurs monstres listés : un gros mob + un petit mob ;
-si 3 : un boss + un petit + un gros.
+Un jeu idle/incrémental dans le navigateur, inspiré de **Black Desert Online** — combat automatique,
+progression par zones, enchantement d'équipement, et une vraie couche multijoueur (comptes, sauvegarde
+cloud, marché, chat, classement, boss mondial).
 
-## Early — Velia (déjà en jeu, 12 zones, jusqu'au niveau ~31)
-Voir `ZONES` dans `index.html`. Paliers de stuff : Naru / Tuvala / Yuria / Grunil (voir V91).
+🎮 **Jouer :** https://maxyull.github.io/black-desert-idle/
+💬 **Discord :** https://discord.gg/fEubtqMjtP
 
-## Mid — Heidel (verrouillé, à venir)
-- Ruines de Tshira (Grove/Leaf/Vine Keeper)
-- Colonie des Loups Sanglants (Kagtum Exécuteur)
-- Repaire des Waragons (Waragon Géant)
-- Prison de Pila Ku (Iron Warder)
-- Ruines d'Hystria (Gardien Hystria)
-- Ruines de Cadry (Commandant Cadry)
-- Garde du Croissant (Gardiens du Croissant)
-- Repaire des Basilics (Basilic Ancien)
-- Temple d'Aakman (Golem Aakman)
-- Vallée de Titium (Gardien Titium)
-- Désert des Fogans (Chef Fogan)
-- Mine de Soufre Roud (Lava Devourer)
-- Plaine de Taphtar (Centaure Chef)
+> Projet de fan gratuit, non officiel, sans aucune affiliation ni partenariat avec Pearl Abyss. Les
+> noms/styles s'inspirent de Black Desert Online pour l'ambiance ; tous les visuels (icônes, sprites)
+> sont des créations 100% originales, aucun asset réel du jeu n'est réutilisé.
 
-## End — Calpheon (verrouillé, à venir)
-- Colline de Quint (Géants de Quint)
-- Poste des Géants Primitifs (Géant Ancien)
-- Sanctuaire d'Hexe (Spectre d'Hexe)
-- Repaire des Cyclopes (Cyclope Ancien)
-- Camp Orc (Chef Orc)
-- Monastère Sanglant (Muskan)
-- Marais aux Nagas (Naga Chef)
-- Repaire Biraghi (Chef Biraghi)
-- Château Ruçine (Seigneur Ruçine)
-- Autel d'Ifrit (Ifrit Ancien)
-- Nécropole de Sherekhan (Garud, Belcadas)
+## Qu'est-ce que c'est ?
 
-## End+ — Valencia (verrouillé, à venir)
-- Temple de Gyfin Rhasia
-- Ruines de Mirumok (Mirumok Watchers)
-- Forêt des Cendres
-- Forêt Arbrépine (Gardien Épine)
-- Orzeka
-- Vallée d'Olun
-- Yzrahid
-- Ruines Tungrad (Visionnaire, Dread-Stricken)
-- Repaire des Disciples des Ténèbres
-- Cité des Morts (Liche)
+Tu choisis une zone adaptée à ton équipement (PA/PD requis, comme dans le vrai BDO), ton personnage
+combat **automatiquement**, ramasse du loot et gagne du silver. Ce silver et ce loot servent à
+enchanter ton équipement (de +1 jusqu'à PEN) pour accéder à des zones plus difficiles et plus
+rentables — la boucle centrale du jeu.
 
-## End++ — Edana (verrouillé, à venir)
-- Base Honglim (Bandits Honglim)
-- Forêt de Dokkebi (Duoksini)
-- Grotte du Cochon Doré (Golden Pig King)
-- Domaine de Jordine
-- Château Aetherion
-- Château Orbita
-- Château Nymphamare
-- Tenebraum
-- Château Zephyros (Zephyrus Shadow Knights)
+## Fonctionnalités principales
 
-## Économie progressive par région (2026-07-07)
-Silver/h moyen visé (à un rythme de référence de 15 kills/min, stuff adapté à la zone, plafond
-haut = zone la plus difficile de la région avec un stuff bien optimisé) :
+- **Combat automatique** — pas de clic à répétition, l'IA de combat gère les sorts et le déplacement.
+- **12+ zones de farm** groupées par palier d'équipement (Naru/Tuvala/Yuria/Grunil), chacune avec sa
+  propre table de loot (butin de base, matériau, bijou rare, composant de craft).
+- **Système d'enchantement fidèle à BDO** : +1 à +15 puis PRI/DUO/TRI/TET/PEN, avec risque de
+  rétrogradation, failstack et protection par Pierre de Cron.
+- **Comptes joueurs + sauvegarde cloud** (Supabase) — jouable aussi en invité, sans compte.
+- **Hôtel des ventes** entre joueurs, **classement**, **chat** (mondial/trade/annonces, mentions @joueur).
+- **Boss mondial partagé** à horaires fixes, avec classement de contribution.
+- **Quêtes journalières/hebdomadaires**, **succès**, **Compendium** de progression, **Codex** des objets.
+- **Compatible mobile et tablette** (adaptatif, sans rien perdre de la version ordinateur).
+- **Notes de version en jeu**, changelog transparent à chaque mise à jour.
 
-| Région | Fourchette silver/h |
-|---|---|
-| Velia (en jeu) | 0 → 100 000/h |
-| Heidel (Mid) | 100 000/h → 1 000 000/h |
-| Calpheon (End) | 1 000 000/h → 100 000 000/h |
-| Valencia (End+) | 100 000 000/h → 1 000 000 000/h |
-| Edana (End++) | 1 000 000 000/h → 10 000 000 000/h |
+## Stack technique
 
-Pour Velia (11 zones), la fourchette est répartie progressivement zone par zone (voir le
-commentaire au-dessus de `const ZONES` dans index.html) : ~3 000/h en zone 1 jusqu'à 100 000/h en
-zone 11 (Ruines de Kratuga). Quand Heidel/Calpheon/Valencia/Edana seront construites, reprendre la
-même logique : répartir progressivement la fourchette de la région sur ses zones, avec le même
-principe de saut plus marqué aux transitions de palier de stuff.
+Aucune dépendance, aucun build : HTML/CSS/JS vanilla + Canvas 2D, déployé tel quel sur GitHub Pages.
 
-## Bijoux (jackpot) par palier de stuff — référence complète (2026-07-06)
-Noms réels BDO, à utiliser pour les jackpot des zones quand chaque palier sera construit.
-Actuellement en jeu (Velia) : Gris/Blanc/Vert/Bleu seulement (voir ZONES dans index.html,
-1 anneau/collier/ceinture attribué par zone selon son palier de stuff).
+- `index.html` — structure de la page
+- `styles.css` — toute la mise en forme
+- `game-core.js` — zones, combat, inventaire, boucle de jeu, rendu
+- `game-supabase.js` — comptes, sauvegarde cloud, marché, chat, notes de version
+- Backend [Supabase](https://supabase.com) (Postgres + Auth + Edge Functions) pour tout ce qui est
+  multijoueur ; migrations SQL suivies dans `supabase/migrations/`.
 
-| Palier | Anneau | Collier | Ceinture |
-|---|---|---|---|
-| Gris (Naru) | Anneau Naru | Collier Naru | Ceinture Naru |
-| Blanc (Tuvala) | Anneau Tuvala / Anneau Capotia | Collier Tuvala / Collier Capotia | Ceinture Tuvala / Ceinture Capotia |
-| Vert (Yuria) | Anneau Asula / Forest Ronaros Ring | Collier Asula / Sicil's Necklace | Ceinture Asula / Valtarra's Eclipsed Belt |
-| Bleu (Grunil) | Anneau de Cadry / Anneau du Gardien du Croissant | Serap's Necklace / Laytenn's Power Stone | Orkinrad's Belt / Centaurus Belt |
-| Jaune (Mid — Heidel) | Anneau Tungrad / Eye of the Ruins Ring / Anneau Ominous | Collier Tungrad / Ogre Ring | Ceinture Tungrad / Basilisk's Belt |
-| Orange (End — Calpheon) | Anneau Deboreka | Collier Deboreka / Revived River Necklace / Revived Lunar Necklace | Ceinture Deboreka / Turo's Belt |
-| Rouge (End+/++ — Valencia/Edana) | Anneau Kharazad | Collier Kharazad | Ceinture Kharazad |
+## Roadmap & philosophie de développement
 
-Armes par palier (déjà utilisées pour Gris→Bleu, à réutiliser telles quelles pour la suite) :
-- Gris : Naru · Blanc : Tuvala · Vert : Yuria · Bleu : Grunil
-- Jaune : Liverto, Kzarka (tueur de dragon), Kutum, Dandelion
-- Orange : Blackstar, Godr-Ayed
-- Rouge : Armes Sovereign
+Ce projet est en développement actif, en **bêta publique** — le contenu et l'équilibrage évoluent
+régulièrement, et une remise à zéro des comptes reste possible tant que le jeu n'est pas stabilisé.
+
+Quelques convictions qui guident les choix :
+
+- **Fidélité à l'esprit BDO** avant tout : les mécaniques (PA/PD par zone, enchantement, paliers de
+  stuff) suivent d'aussi près que possible la vraie logique du jeu, plutôt que d'inventer un système
+  simplifié « idle générique ».
+- **La communauté a la priorité sur le plan initial.** Les retours du Discord et les rapports de bug
+  passent avant la feuille de route — si un choix ne convient pas, il est ajusté, quitte à revenir sur
+  une fonctionnalité déjà livrée.
+- **Aucun asset réel** de Black Desert Online n'est utilisé : tout ce qui se voit à l'écran est une
+  création originale, inspirée mais jamais copiée.
+- **Progression transparente** : chaque changement, même mineur, est documenté dans les notes de
+  version en jeu (catégorisées : nouveautés, équilibrage, corrections, sécurité...).
+
+### Ce qui arrive
+
+- Extension du contenu vers les régions suivantes (Heidel → Calpheon → Valencia → Edana), voir le
+  détail zone par zone et l'économie visée dans [`zones-roadmap.md`](zones-roadmap.md).
+- Poursuite de l'équilibrage PA/PD/loot au fil des retours joueurs.
+- Amélioration continue de l'expérience mobile/tablette.
+- Refonte progressive de la structure du code pour rester lisible et maintenable à mesure que le jeu
+  grossit (sans jamais casser la version en ligne).
+
+## Contribuer / signaler un bug
+
+Le plus efficace : passer par le [Discord](https://discord.gg/fEubtqMjtP) ou ouvrir une
+[issue GitHub](https://github.com/Maxyull/black-desert-idle/issues). Tout retour est lu — bug,
+suggestion d'équilibrage, idée de fonctionnalité.
