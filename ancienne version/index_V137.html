@@ -3498,7 +3498,7 @@ function drawBossRoom(t) {
   cx.save();
   cx.translate(bpos.x, bpos.y);
   cx.transform(1, 0, 0.05*Math.sin(t*0.6), 1+0.015*Math.sin(t*1.3), 0, 0);
-  drawBossCreature(bs.bossId, cx, 0, 0, r, t);
+  drawBossCreature(bs.boss, cx, 0, 0, r, t);
   cx.restore();
   // braises au premier plan (devant le boss, plus grosses/rapides/opaques)
   for (const e of bs.embers) {
@@ -9309,11 +9309,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V138', d:'08/07/2026 16:00', name:{fr:'Correctif : Vell affichait en fait Kzarka', en:'Fix: Vell was actually showing Kzarka'}, fr:[
-      {t:'fix', tx:'Bug de longue date : le combat de Vell affichait en réalité toujours la silhouette de Kzarka (rouge/brun) — la fonction qui choisit le dessin comparait le mauvais identifiant et ne reconnaissait jamais Vell. Toutes les silhouettes de Vell dessinées depuis plusieurs versions (bateaux, ailes-vasque...) n\'étaient donc jamais visibles en jeu ; elles s\'affichent enfin correctement maintenant'},
-    ], en:[
-      {t:'fix', tx:'Long-standing bug: Vell\'s fight actually always displayed Kzarka\'s silhouette (red/brown) — the function choosing which creature to draw was comparing the wrong identifier and never recognized Vell. Every Vell silhouette drawn over the last several versions (boats, wing-bowl...) was therefore never actually visible in-game; it now renders correctly'},
-    ] },
   { v:'V137', d:'08/07/2026 15:00', name:{fr:'Vell : ailes-vasque (angles supplémentaires de la sculpture)', en:'Vell: wing-bowl shape (extra sculpture angles)'}, fr:[
       {t:'change', tx:'Silhouette de Vell affinée d\'après 5 angles de la sculpture 3D de référence : ce que l\'on prenait pour des cornes/socle séparé sont en fait les 2 AILES du dragon, si immenses qu\'elles s\'enroulent vers l\'intérieur et se rejoignent en bas pour former une grande vasque — le corps du dragon (petit, crête de pointes, museau fin, longue queue en lame recourbée) est perché tout en haut, pattes agrippées au rebord'},
     ], en:[
