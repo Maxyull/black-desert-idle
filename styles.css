@@ -389,6 +389,8 @@
   }
   .cell.has { cursor:pointer; }
   .cell.has:hover { border-color:var(--gold); }
+  .cell:not(.has) { cursor:pointer; }
+  .cell:not(.has):hover { border-color:#3a3742; }
   .cell.k-trash.has { background:#20201c; }
   .cell.k-material.has { background:#1a2028; }
   .cell.k-jackpot.has { background:#252012; border-color:var(--gold-dim); }
@@ -487,6 +489,7 @@
   #optAutoRow { display:flex; gap:6px; margin-top:6px; }
   #optAutoRow select { flex:1; background:#191720; color:var(--ink); border:1px solid var(--gold-dim); padding:5px; font-family:inherit; font-size:11px; }
   #optAutoRow button { width:auto; margin:0; font-size:11px; padding:5px 10px; white-space:nowrap; }
+  #optAutoGainTxt { font-size:10.5px; color:var(--gold-dim); margin-top:3px; letter-spacing:.3px; min-height:13px; }
   #btnOptAuto.running { border-color:var(--danger); color:#e8a89f; }
   #capConvertRow { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-top:8px; padding-top:8px; border-top:1px solid #2c2a33; }
   #capConvertLbl { font-size:10.5px; color:var(--ink-dim); }

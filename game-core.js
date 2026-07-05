@@ -514,6 +514,14 @@ function effectiveApDp(item) {
   return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult), hp: Math.round((item.hp||0) * mult),
     dodge: Math.round((item.dodge||0) * mult * 100) / 100 };
 }
+// stats projetées SI l'objet atteignait targetLvl -- sert à afficher le gain avant de lancer
+// l'optimisation auto (demande explicite du 2026-07-05 : "il est écrit ce que tu gagnes si tu
+// passes à ce palier")
+function projectedApDp(item, targetLvl) {
+  const mult = 1 + enhBonus(targetLvl);
+  return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult), hp: Math.round((item.hp||0) * mult),
+    dodge: Math.round((item.dodge||0) * mult * 100) / 100 };
+}
 
 // ---------- chances d'optimisation : base FIXE + failstack PERSONNEL À CHAQUE OBJET ----------
 // le failstack est attaché à l'objet ET au niveau précis qu'il a raté — jamais perdu, même après un succès ailleurs
@@ -4925,6 +4933,10 @@ function renderInventory() {
       cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showItemMenuAtCell(cell, { invIndex:i, ...s }); };
       cell.ondblclick = ev => { ev.stopPropagation(); hideItemTooltip(); quickAction(i); };
       cell.oncontextmenu = ev => { ev.preventDefault(); ev.stopPropagation(); hideItemTooltip(); showItemMenu(ev.clientX, ev.clientY, { invIndex:i, ...s }); };
+    } else {
+      // case vide : clic = guide de farm (2026-07-05, demande explicite) -- où aller farmer,
+      // hors zones trop dangereuses pour le stuff actuel
+      cell.onclick = ev => { ev.stopPropagation(); showFarmGuide(); };
     }
     grid.appendChild(cell);
   }
@@ -5430,7 +5442,26 @@ function renderOptAutoTargetSelect() {
   sel.innerHTML = options.map(i => `<option value="${i}">${ENH_NAMES[i]}</option>`).join('')
     || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
   sel.disabled = !options.length;
+  renderOptAutoGain();
 }
+// affiche le gain de stats si on atteint le palier choisi dans #optAutoTarget (ex: "+18 PA")
+function renderOptAutoGain() {
+  const el = $('optAutoGainTxt'); if (!el) return;
+  const target = EQUIP[optTargetSlot];
+  const sel = $('optAutoTarget');
+  const targetLvl = sel ? parseInt(sel.value, 10) : NaN;
+  if (!target || !Number.isInteger(targetLvl)) { el.textContent = ''; return; }
+  const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
+  const parts = [];
+  if (proj.ap > cur.ap) parts.push('+' + (proj.ap-cur.ap) + ' PA');
+  if (proj.dp > cur.dp) parts.push('+' + (proj.dp-cur.dp) + ' PD');
+  if (proj.hp > cur.hp) parts.push('+' + (proj.hp-cur.hp) + ' PV');
+  if (proj.dodge > cur.dodge) parts.push('+' + (proj.dodge-cur.dodge).toFixed(2) + '% ' + (LANG==='fr'?'Esq.':'Dodge'));
+  el.textContent = parts.length
+    ? (LANG==='fr' ? `À ${ENH_NAMES[targetLvl]} : ` : `At ${ENH_NAMES[targetLvl]}: `) + parts.join(' · ')
+    : '';
+}
+$('optAutoTarget').onchange = renderOptAutoGain;
 function stopAutoOpt() {
   if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; }
   autoOptTargetLvl = null;
@@ -5575,6 +5606,31 @@ function zoneLootCompactRowHtml(idx) {
     <div class="lootInfo"><div class="ln" style="color:${tier.color}">${tr(z.name)}</div><div class="lv">${tr(z.mob)} · ${tr(z.loot.jackpot.name)}</div></div>
     <div class="lootPct">${fmtTinyPct(z.loot.jackpot.ch)} <span class="lootExpandHint">▾</span></div>
   </div>`;
+}
+// guide de farm (2026-07-05, demande explicite) : clic sur un emplacement de sac VIDE -- affiche
+// où farmer, dans toutes les zones disponibles (débloquées), EN EXCLUANT les zones actuellement
+// trop dangereuses pour le joueur (badge "ZONE DANGEREUSE", voir badgeOf/bottleneck). Réutilise le
+// même récapitulatif condensé/dépliable que la vue Velia (zoneLootCompactRowHtml/zoneLootRowsHtml).
+function showFarmGuide() {
+  const rows = ZONES.map((z,zi) => ({ zi, dangerous: badgeOf(bottleneck(z)).txt === 'ZONE DANGEREUSE' }))
+    .filter(r => r.zi <= S.maxZoneIdx && !r.dangerous);
+  const html = rows.length ? rows.map(r =>
+    `${zoneLootCompactRowHtml(r.zi)}<div class="lootZoneDetail" id="farmGuideDetail${r.zi}" style="display:none">${zoneLootRowsHtml(r.zi)}</div>`
+  ).join('') : `<div class="admHint">${LANG==='fr'
+    ? 'Aucune zone débloquée n\'est actuellement sûre pour toi — améliore ton stuff ou explore prudemment.'
+    : 'No unlocked zone is currently safe for you — improve your gear or explore carefully.'}</div>`;
+  const banner = `<div class="admHint">${LANG==='fr'
+    ? '🗺️ Où farmer ? Zones débloquées, hors zones trop dangereuses pour ton stuff actuel — clique une zone pour voir le détail complet :'
+    : '🗺️ Where to farm? Unlocked zones, excluding ones currently too dangerous for your gear — click a zone to see the full detail:'}</div>`;
+  openInfo(LANG==='fr' ? '🗺️ Où farmer ?' : '🗺️ Where to farm?', banner + html);
+  $a('infoBody').querySelectorAll('.lootZoneCompact').forEach(row => {
+    row.onclick = () => {
+      const detail = $a('farmGuideDetail'+row.dataset.zi);
+      const willOpen = detail.style.display === 'none';
+      detail.style.display = willOpen ? '' : 'none';
+      row.classList.toggle('expanded', willOpen);
+    };
+  });
 }
 function renderLootTable(previewIdx) {
   // Velia (zone paisible) : aucun monstre, donc aucun loot possible ICI — message explicite au lieu
