@@ -2192,6 +2192,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V175', d:'05/07/2026 19:30', name:{fr:'4e zone par palier + boucles d\'oreille', en:'4th zone per tier + earrings'}, fr:[
+      {t:'new', sub:'zones', tx:'1 zone supplémentaire par palier de stuff (Ruines de Trent, Île d\'Iliya, Base de Bashim, Forêt de Polly) — chaque palier passe de 3 à 4 zones. PA/PD requis volontairement identiques à la dernière zone déjà existante du palier : aucun changement du plafond de difficulté'},
+      {t:'new', sub:'equipements', tx:'Ajout de la boucle d\'oreille, seul type de bijou qui manquait à chaque palier (les emplacements existaient déjà mais rien ne les alimentait). Le PA total des bijoux d\'un palier reste identique : redistribué sur 4 pièces au lieu de 3, avec une migration automatique du stuff déjà possédé'},
+    ], en:[
+      {t:'new', sub:'zones', tx:'1 extra zone per gear tier (Trent Ruins, Iliya Island, Bashim Base, Polly Forest) — each tier goes from 3 to 4 zones. Required AP/DP deliberately identical to the tier\'s existing last zone: no change to the difficulty ceiling'},
+      {t:'new', sub:'equipements', tx:'Added the earring, the only jewelry type missing from every tier (the slots already existed but nothing dropped there). A tier\'s total jewelry AP stays the same: redistributed across 4 pieces instead of 3, with an automatic migration of gear you already own'},
+    ] },
   { v:'V174', d:'05/07/2026 19:00', name:{fr:'Pseudo à l\'inscription, mentions @joueur dans le chat, nombre d\'inscrits', en:'Nickname at signup, @player mentions in chat, registered count'}, fr:[
       {t:'new', sub:'comptes', tx:'Champ pseudo sur l\'écran de création de compte — plus besoin de le changer après coup dans "Mon compte"'},
       {t:'new', sub:'interface', tx:'Nombre total de joueurs inscrits affiché sous le compteur "en ligne"'},
@@ -3672,7 +3679,7 @@ const WIKI_SECTIONS = [
       <h3>Loot progressif</h3>
       <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>
       <h3>Zones groupées par palier de stuff</h3>
-      <p>Les 12 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
+      <p>Les 16 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu — 4 zones chacun) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
       <h3>Trésor de Velia (catégorie TEST)</h3>
       <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 5 objets collectibles très rares (0,01% à 0,00001% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
       <h3>Boss mondial partagé</h3>
@@ -3688,7 +3695,7 @@ const WIKI_SECTIONS = [
       <h3>Progressive loot</h3>
       <p>Drop rates are <b>intentionally decreasing</b> zone by zone: very generous early (up to 55%), very rare at endgame (under 3%).</p>
       <h3>Zones grouped by gear tier</h3>
-      <p>The 11 Velia zones are grouped by gear tier (Naru/grey, Tuvala/white, Yuria/green, Grunil/blue) — the header and border color match the gear color found there, same as in the inventory.</p>
+      <p>The 16 Velia zones are grouped by gear tier (Naru/grey, Tuvala/white, Yuria/green, Grunil/blue — 4 zones each) — the header and border color match the gear color found there, same as in the inventory.</p>
       <h3>Velia Treasure (TEST category)</h3>
       <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 5 very rare collectibles (0.01% to 0.00001% per kill), stored in their own 🗺️ inventory tab. Still experimental: no recipe or use yet.</p>
       <h3>Shared world boss</h3>
