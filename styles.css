@@ -313,6 +313,14 @@
   }
   .pdSlot .pdAp { left:-3px; color:#e0a86e; }
   .pdSlot .pdDp { right:-3px; color:#8fc9c9; }
+  /* raccourci "optimiser" directement sur la pièce équipée (2026-07-05, demande explicite :
+     "petit mais visible") -- coin haut-droit, seul coin encore libre de la case */
+  .pdSlot .pdOptBtn {
+    position:absolute; top:-4px; right:-4px; width:15px; height:15px; line-height:14px;
+    text-align:center; font-size:9px; border-radius:50%; background:#1a1822;
+    border:1px solid var(--gold-dim); box-shadow:0 1px 3px rgba(0,0,0,.6); cursor:pointer;
+  }
+  .pdSlot .pdOptBtn:hover { background:#2a2416; border-color:var(--gold); transform:scale(1.15); }
   .gicon { width:1.55em; height:1.55em; vertical-align:middle; flex-shrink:0; }
   #pdWeapons { display:flex; justify-content:center; gap:6px; padding:6px 0; border-top:1px solid #2c2a33; border-bottom:1px solid #2c2a33; margin-bottom:2px; }
   #pdWeapons .pdSlot { width:48px; height:48px; }
@@ -564,13 +572,13 @@
     position:fixed; top:14px; left:14px; z-index:40;
     display:flex; flex-direction:column; gap:10px; width:210px;
   }
-  #topBar, #userBar {
+  #gameBar, #userBar, #metaBar {
     display:flex; flex-direction:column; gap:7px;
     background:rgba(10,9,12,.88); border:1px solid #2c2a33; padding:10px;
   }
   #userBar { display:none; }
   #userBar.show { display:flex; }
-  #topBar button, #userBar button {
+  #gameBar button, #userBar button, #metaBar button {
     width:100%; margin:0; padding:11px 14px; font-size:13.5px; text-align:left;
   }
   #userBarTop { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-dim); padding:0 2px; }
@@ -635,7 +643,7 @@
   /* corrigé le 2026-07-05 (adaptation mobile) : #clientVersion (numéro de version, tout en bas du
      menu) n'était PAS masqué par le repli — seuls #topBar/#userBar l'étaient — donc replier le menu
      laissait ce texte flotter tout seul, hors de tout cadre, chevauchant le contenu du dessous */
-  #sideMenu.collapsed #topBar, #sideMenu.collapsed #userBar, #sideMenu.collapsed #clientVersion { display:none; }
+  #sideMenu.collapsed #gameBar, #sideMenu.collapsed #userBar, #sideMenu.collapsed #metaBar, #sideMenu.collapsed #clientVersion { display:none; }
   /* replié : la largeur fixe de 210px ne se réduisait jamais (seuls les ENFANTS étaient masqués),
      donc le menu "replié" gardait la même emprise qu'ouvert — sans conséquence sur grand écran
      (assez de place), mais ça faisait chevaucher les encarts de droite sur mobile/tablette une fois
@@ -841,8 +849,8 @@
   .refRules li { padding-left:14px; position:relative; margin-bottom:4px; line-height:1.4; }
   .refRules li::before { content:'—'; position:absolute; left:0; color:var(--gold-dim); }
 
-  #topBar button { background:rgba(10,9,12,.6); border:1px solid #2c2a33; }
-  #topBar button:hover { border-color:var(--gold); }
+  #gameBar button, #metaBar button { background:rgba(10,9,12,.6); border:1px solid #2c2a33; }
+  #gameBar button:hover, #metaBar button:hover { border-color:var(--gold); }
   #btnPatch { position:relative; }
 
   /* slider FR/EN */
@@ -1471,7 +1479,7 @@
        petites pastilles compactes ; forcé à gauche sur petit écran pour éviter ce chevauchement,
        la préférence "droite" reste respectée telle quelle au-dessus de 1024px */
     #sideMenu.onRight { left:14px !important; right:auto !important; }
-    #topBar, #userBar { width:min(210px, calc(100vw - 20px)); }
+    #gameBar, #userBar, #metaBar { width:min(210px, calc(100vw - 20px)); }
     #rightWidgets { max-width:min(260px, calc(100vw - 20px)) !important; }
     /* le chat gardait une largeur fixe de 440px, bien plus large que n'importe quel téléphone */
     #chatWidget { width:min(400px, calc(100vw - 20px)) !important; }

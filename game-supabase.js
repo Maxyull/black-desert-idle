@@ -1925,6 +1925,7 @@ const I18N = {
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
   btnSignInDiscord: { fr:'🎮 Se connecter avec Discord', en:'🎮 Sign in with Discord' },
   btnClearCacheAuth: { fr:'🧹 Vider le cache du jeu', en:'🧹 Clear game cache' },
+  btnCodex: { fr:'📚 Codex', en:'📚 Codex' },
   marketTitle: { fr:'🏛️ Hôtel des ventes', en:'🏛️ Marketplace' },
   tabBuy: { fr:'Acheter', en:'Buy' },
   tabSell: { fr:'Vendre', en:'Sell' },
@@ -2061,6 +2062,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V171', d:'05/07/2026 18:00', name:{fr:'Bouton optimiser sur l\'équipement + refonte du menu de gauche', en:'Enhance button on gear + left menu overhaul'}, fr:[
+      {t:'improve', sub:'equipements', tx:'Petit bouton 🔧 directement sur chaque pièce équipée optimisable — charge instantanément CETTE pièce dans le panneau d\'optimisation, sans passer par le menu au clic. Mentionné dans le tutoriel et le Wiki (section Optimisation)'},
+      {t:'improve', sub:'interface', tx:'Le Codex des objets sort du Wiki pour devenir sa propre section, directement accessible depuis le menu de gauche (📚 Codex)'},
+      {t:'improve', sub:'interface', tx:'Refonte du menu de gauche : le vrai jeu (Quêtes, Courrier, Compendium, Codex, Succès, Marché, Classement) remonte en haut ; les infos moins utilisées au quotidien (Wiki, Notes de version, Discord, langue, compteur en ligne...) redescendent en bas'},
+    ], en:[
+      {t:'improve', sub:'equipements', tx:'Small 🔧 button directly on each optimizable equipped piece — instantly loads THAT piece into the enhancement panel, without going through the click menu. Mentioned in the tutorial and the Wiki (Enhancement section)'},
+      {t:'improve', sub:'interface', tx:'The Item Codex moves out of the Wiki into its own section, directly accessible from the left menu (📚 Codex)'},
+      {t:'improve', sub:'interface', tx:'Left menu overhaul: the actual game (Quests, Mailbox, Compendium, Codex, Achievements, Market, Leaderboard) moves to the top; info used less often day-to-day (Wiki, Patch notes, Discord, language, online counter...) moves to the bottom'},
+    ] },
   { v:'V170', d:'05/07/2026 17:30', name:{fr:'Gain d\'optimisation auto affiché + guide de farm', en:'Auto-enhance gain preview + farm guide'}, fr:[
       {t:'improve', sub:'equipements', tx:'L\'optimisation automatique ("Auto jusqu\'à") affiche désormais le gain de stats (PA/PD/PV/Esquive) que rapporterait le palier choisi, avant même de lancer l\'auto'},
       {t:'new', sub:'objets', tx:'Clique sur un emplacement de sac VIDE pour ouvrir un guide "Où farmer ?" listant les zones débloquées et ce qu\'elles rapportent — les zones actuellement trop dangereuses pour ton stuff sont exclues'},
@@ -3529,12 +3539,14 @@ const WIKI_SECTIONS = [
       <p>+1 à +7 toujours réussi. <b>+8 à +15</b> sont probabilistes (45% → 5%) et peuvent rétrograder en cas d'échec, mais jamais sous +7.</p>
       <p>Puis <b>PRI/DUO/TRI/TET/PEN</b> suivent des chances fixes (12%/9%/6%/3%/1,2%). À partir de PRI, un échec fait <b>rétrograder d'un palier</b> (ex : DUO → PRI) — mais <b>jamais sous PRI</b> : tu ne retombes plus jamais à +15.</p>
       <p>Pas de failstack caché : ce que tu vois à l'écran est la chance réelle. Chaque pièce a son propre niveau, indépendant.</p>
-      <p>La <b>Poussière d'esprit ancien</b> ne sert pas à optimiser directement : c'est un composant pour fabriquer des Pierres de Caphras.</p>`,
+      <p>La <b>Poussière d'esprit ancien</b> ne sert pas à optimiser directement : c'est un composant pour fabriquer des Pierres de Caphras.</p>
+      <p>Astuce : clique le petit 🔧 sur une pièce équipée pour charger directement CETTE pièce dans le panneau d'optimisation.</p>`,
     en:`<h3>Enhancement</h3>
       <p>+1 to +7 always succeed. <b>+8 to +15</b> are probabilistic (45% → 5%) and can downgrade on failure, but never below +7.</p>
       <p>Then <b>PRI/DUO/TRI/TET/PEN</b> follow fixed chances (12%/9%/6%/3%/1.2%). From PRI, a failure <b>downgrades one tier</b> (e.g. DUO → PRI) — but <b>never below PRI</b>: you never drop back to +15.</p>
       <p>No hidden failstack: what you see is the real chance. Each piece has its own independent level.</p>
-      <p><b>Ancient Spirit Dust</b> isn't used to enhance directly: it's a component to craft Caphras Stones.</p>` },
+      <p><b>Ancient Spirit Dust</b> isn't used to enhance directly: it's a component to craft Caphras Stones.</p>
+      <p>Tip: click the small 🔧 on an equipped piece to load THAT piece directly into the enhancement panel.</p>` },
   { id:'market', icon:'🏛️', label:{fr:'Marché',en:'Market'},
     fr:`<h3>Hôtel des ventes</h3>
       <p>Prix fixes fixés par le vendeur, pas d'enchères ni de délai. <b>Aucune taxe de vente</b> (le vrai BDO prend ~30%).</p>
@@ -3560,7 +3572,6 @@ const WIKI_SECTIONS = [
     en:`<h3>Names & visual identity</h3>
       <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere, as are some game styles and mechanics — these remain, where applicable, the property of Pearl Abyss. Icons and visuals, on the other hand, are original fan-style creations: visually inspired by the game but reusing no real assets.</p>
       <p>Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss.</p>` },
-  { id:'codex', icon:'📚', label:{fr:'Codex des objets',en:'Item Codex'}, codex:true },
   { id:'tuto', icon:'🔰', label:{fr:'Tutoriel',en:'Tutorial'}, tuto:true },
 ];
 // génère le codex des objets à partir des données du jeu (matériaux, bijoux, trash, sets)
@@ -3644,6 +3655,9 @@ let infoMouseDownOnBackdrop = false;
 $a('infoOverlay').addEventListener('mousedown', e => { infoMouseDownOnBackdrop = (e.target.id === 'infoOverlay'); });
 $a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); } });
 
+// Codex des objets (2026-07-05, demande explicite) : sorti du Wiki pour sa propre section,
+// plus visible, directement accessible depuis le menu de gauche
+$a('btnCodex').onclick = () => openInfo(LANG === 'fr' ? '📚 Codex des objets' : '📚 Item Codex', renderCodexHtml());
 $a('btnWiki').onclick = () => {
   openInfo(LANG === 'fr' ? '📖 Wiki' : '📖 Wiki', renderWikiHtml());
   $a('infoBody').querySelectorAll('.wikiTab').forEach(btn => {
@@ -3684,7 +3698,7 @@ const TUTORIAL_STEPS = [
     text:{fr:'Gearscore, PA/PD et progression : tout ce qu\'il faut pour savoir si tu es prêt pour la zone suivante.', en:'Gearscore, AP/DP and progress: everything you need to know if you\'re ready for the next zone.'} },
   { target:'#optCard', placement:'left',
     title:{fr:'Système d\'optimisation',en:'Enhancement system'},
-    text:{fr:'Charge un matériau depuis ton sac pour tenter d\'améliorer une pièce d\'équipement. Plus le niveau visé est haut, plus le risque d\'échec est grand.', en:'Load a material from your bag to try enhancing a gear piece. The higher the target level, the higher the risk of failure.'} },
+    text:{fr:'Charge un matériau depuis ton sac pour tenter d\'améliorer une pièce d\'équipement. Plus le niveau visé est haut, plus le risque d\'échec est grand. Astuce : le petit 🔧 sur une pièce équipée t\'amène directement ici pour CETTE pièce.', en:'Load a material from your bag to try enhancing a gear piece. The higher the target level, the higher the risk of failure. Tip: the small 🔧 on an equipped piece brings you straight here for THAT piece.'} },
   { target:'#invCard', placement:'left',
     title:{fr:'Ton inventaire',en:'Your inventory'},
     text:{fr:'Tout ce que tu ramasses atterrit ici. Les boutons au-dessus t\'aident à équiper le meilleur stuff, vendre le surplus (trash, matériaux, objets inférieurs) ou trier le sac en un clic.', en:'Everything you loot lands here. The buttons above help you equip your best gear, sell the surplus (trash, materials, lower items) or sort your bag in one click.'} },
