@@ -2221,6 +2221,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V178', d:'05/07/2026 20:30', name:{fr:'Liste des zones plafonnée avec défilement', en:'Zone list capped with scrolling'}, fr:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'La liste des zones de farm (16 depuis l\'ajout des boucles d\'oreille) débordait largement sous les cartes voisines au lieu de s\'arrêter et défiler — plafonnée avec un défilement interne'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'The farming zone list (16 since the earring update) overflowed well below the neighboring cards instead of stopping and scrolling — capped with internal scrolling'},
+    ] },
   { v:'V177', d:'05/07/2026 20:15', name:{fr:'Zone dangereuse : toi plus lent, les monstres plus rapides', en:'Dangerous zone: you slower, monsters faster'}, fr:[
       {t:'change', sub:'pve', severity:'major', tx:'En ZONE DANGEREUSE (PA/PD très insuffisants), tu es maintenant ralenti (×0,7) et les monstres qui t\'ont repéré deviennent plus rapides (×1,35) pour te rattraper — rend le danger concret plutôt qu\'une simple pénalité de dégâts/loot invisible'},
     ], en:[

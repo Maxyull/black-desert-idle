@@ -248,7 +248,12 @@
      FIXE (262px) et laissait un grand vide sous la liste quand la carte était étirée plus haut.
      Corrigé en faisant grandir la liste jusqu'en bas de la carte — demande explicite du 2026-07-07 */
   #zonesCard { display:flex; flex-direction:column; }
-  #zoneList { flex:1; min-height:150px; max-height:none; overflow-y:auto; }
+  /* corrigé le 2026-07-05 : avec 16 zones (contre 12 avant), la liste dépassait largement la
+     hauteur des cartes voisines au lieu de s'arrêter et défiler -- max-height:none n'imposait
+     aucune limite, seul le flex:1 du 2026-07-07 (qui s'appuie sur la hauteur de ligne de la grille,
+     elle-même étirée par le contenu le plus haut) la contraignait, ce qui ne suffit plus avec
+     autant de zones. Plafond dur en plus du flex:1, pour toujours garder un scroll interne. */
+  #zoneList { flex:1; min-height:150px; max-height:60vh; overflow-y:auto; }
   #zoneList::-webkit-scrollbar { width:6px; } 
   #zoneList::-webkit-scrollbar-thumb { background:#3a3742; }
   .zRow {
