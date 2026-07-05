@@ -2758,10 +2758,21 @@ const POTIONS = {
   infinite: { name:{fr:'Potion de vie infinie', en:'Infinite HP Potion'}, icon:'♾️', cost:0, heal:0.40, cd:4.2, locked:true },
 };
 const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite" toujours en dernier, verrouillée (voir p.locked)
+// avertissement "pas assez de silver pour la potion" -- avant ce correctif (2026-07-06, remonté en
+// jeu : "les potions ne fonctionnent pas") l'échec était TOTALEMENT silencieux (juste un retry
+// rapide sans soin), ce qui passait pour un bug, surtout en zone dangereuse où les dégâts encaissés
+// sont énormes ET le silver s'épuise vite. 1 toast/3s max pour ne pas spammer vu le retry à 1s.
+let lastPotionSilverWarn = 0;
+function warnPotionNoSilver() {
+  const now = performance.now();
+  if (now - lastPotionSilverWarn < 3000) return;
+  lastPotionSilverWarn = now;
+  floatTxt(P.x, P.y-15, 75, LANG==='fr' ? 'Pas assez de silver pour la potion !' : 'Not enough silver for a potion!', {hurt:true});
+}
 function usePotion() {
   const pot = POTIONS[S.potionType] || POTIONS.medium;
   if (pot.cost > 0) {
-    if (S.silver < pot.cost) { P.potCd = 1; return; } // pas assez de silver : réessaie vite, aucun soin
+    if (S.silver < pot.cost) { P.potCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite, aucun soin
     S.silver -= pot.cost;
     floatTxt(P.x,P.y,80,'-'+fmt(pot.cost)+'🪙',{hurt:true});
   }
@@ -2772,7 +2783,7 @@ function usePotion() {
 // potion de mana (2026-07-05, demande explicite : "ajoute ... une potion de mana") -- un seul
 // palier pour l'instant (pas de choix de taille comme les potions de PV), même mécanique
 function usePotionMana() {
-  if (S.silver < MANA_POTION.cost) { P.manaPotCd = 1; return; } // pas assez de silver : réessaie vite
+  if (S.silver < MANA_POTION.cost) { P.manaPotCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite
   S.silver -= MANA_POTION.cost;
   floatTxt(P.x,P.y,80,'-'+fmt(MANA_POTION.cost)+'🪙',{hurt:true});
   P.manaPotCd = MANA_POTION.cd;
@@ -4578,15 +4589,31 @@ function buildZoneList() {
       row.dataset.zi = i; // affichées dans l'ordre des PALIERS, pas l'ordre physique de ZONES — voir updateZoneViewHalo
       row.title = tr(z.name);
       if (!isCurrent) row.style.borderLeftColor = tier.color;
+      // nombre de joueurs actuellement dans cette zone (demande explicite du 2026-07-06) — voir
+      // zonePlayerCounts/refreshZonePlayerCounts (game-supabase.js), alimenté par le heartbeat de
+      // présence toutes les 20s ; masqué (pas de case vide) tant que personne n'y est
+      const pCount = (typeof zonePlayerCounts !== 'undefined' && zonePlayerCounts[i]) || 0;
       row.innerHTML =
         `<span class="zname">${tr(z.name)}</span>` +
         `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
+        `<span class="zPlayerCount"${pCount?'':' style="display:none"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span>` +
         `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
         `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
       row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
       row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
       list.appendChild(row);
     });
+  });
+}
+// rafraîchit juste les compteurs "👥 N joueurs" (appelé toutes les 20s par refreshZonePlayerCounts,
+// game-supabase.js), sans reconstruire toute la liste — même logique dataset.zi que le halo du 👁
+function updateZonePlayerCountBadges() {
+  document.querySelectorAll('#zoneList .zRow:not(.veliaRow)').forEach(row => {
+    const i = parseInt(row.dataset.zi, 10);
+    const el = row.querySelector('.zPlayerCount'); if (!el) return;
+    const n = (zonePlayerCounts && zonePlayerCounts[i]) || 0;
+    el.textContent = `👥 ${n}`;
+    el.style.display = n ? '' : 'none';
   });
 }
 // rafraîchit juste le halo du 👁 sans reconstruire toute la liste (appelé à chaque aperçu de loot)
