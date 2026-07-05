@@ -972,15 +972,6 @@
   .admEmpty { color:var(--ink-dim); font-style:italic; text-align:center; padding:10px 0; }
   .admSummary { font-size:11px; color:var(--ink-dim); margin-bottom:8px; }
   .admSummary b { color:var(--gold); }
-  /* bouton "?" du tutoriel Compendium (2026-07-08) : en haut à droite du panneau, toujours visible
-     quel que soit l'onglet actif — #infoBody passe en position:relative pour lui servir d'ancre */
-  #infoBody { position:relative; }
-  .compTutoBtn {
-    position:absolute; top:0; right:0; width:22px; height:22px; padding:0; margin:0;
-    border-radius:50%; border:1px solid var(--gold-dim); background:rgba(201,165,90,.1);
-    color:var(--gold); font-size:12px; font-weight:bold; line-height:20px; text-align:center;
-  }
-  .compTutoBtn:hover { background:rgba(201,165,90,.22); }
   /* graphique économie (moyenne/total de silver) côté admin */
   .admStatTiles { display:flex; gap:10px; margin-bottom:12px; }
   .admStatTile { flex:1; background:rgba(201,165,90,.06); border:1px solid var(--gold-dim); border-radius:5px; padding:9px 12px; }
@@ -3792,8 +3783,7 @@ function renderCompendiumHtml() {
   const total = compendiumTotalCount(), max = compendiumTotalMax(), pct = compendiumPct();
   const bossCountMax = Object.keys(BOSS_ROSTER).length;
   const penItems = penMasteryItemList(), penDone = compendiumPenCount();
-  const summaryCard = `<button id="compTutoBtn" class="compTutoBtn" title="${LANG==='fr'?'Lancer le tutoriel du Compendium':'Start the Compendium tutorial'}">?</button>
-    <div class="admStatTiles">
+  const summaryCard = `<div class="admStatTiles">
       <div class="admStatTile"><div class="astLbl">📖 ${LANG==='fr'?'Progression':'Progress'}</div><div class="astVal">${total} / ${max}</div></div>
       <div class="admStatTile"><div class="astLbl">🏃 SPD</div><div class="astVal">+${pct}%</div></div>
       <div class="admStatTile"><div class="astLbl">⚔️ ${LANG==='fr'?'Dégâts':'DMG'}</div><div class="astVal">+${pct}%</div></div>
@@ -3856,19 +3846,8 @@ function renderCompendiumHtml() {
   }
   return summaryCard + bodyHtml;
 }
-// tutoriel auto-lancé à la toute première ouverture du Compendium (2026-07-08, demande explicite) —
-// persisté en localStorage pour ne se déclencher qu'une seule fois, jamais aux ouvertures suivantes
-let compTutoSeen = false;
-try { compTutoSeen = localStorage.getItem('velia-idle-comp-tuto-seen') === '1'; } catch(e) {}
 function openCompendium() {
   openInfo(LANG==='fr'?'📖 Compendium':'📖 Compendium', renderCompendiumHtml());
-  const tutoBtn = $a('compTutoBtn');
-  if (tutoBtn) tutoBtn.onclick = () => startCompendiumTutorial();
-  if (!compTutoSeen) {
-    compTutoSeen = true;
-    try { localStorage.setItem('velia-idle-comp-tuto-seen', '1'); } catch(e) {}
-    setTimeout(startCompendiumTutorial, 400);
-  }
   $a('infoBody').querySelectorAll('.compTab').forEach(btn => {
     btn.onclick = () => { compendiumTab = btn.dataset.tab; openCompendium(); };
   });
@@ -9413,11 +9392,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V149', d:'09/07/2026 00:30', name:{fr:'Tutoriel du Compendium', en:'Compendium tutorial'}, fr:[
-      {t:'new', tx:'Nouveau bouton "?" en haut à droite du Compendium : lance un mini-tutoriel expliquant la progression globale, les 4 onglets, comment lire une zone, la Maîtrise PEN et le Sac protégé. Se lance automatiquement à la toute première ouverture du panneau, et peut être relancé à tout moment avec ce bouton'},
-    ], en:[
-      {t:'new', tx:'New "?" button at the top-right of the Compendium: launches a mini-tutorial explaining overall progress, the 4 tabs, how to read a zone, PEN Mastery and the Protected bag. Launches automatically the very first time the panel is opened, and can be replayed anytime with this button'},
-    ] },
   { v:'V148', d:'09/07/2026 00:00', name:{fr:'Correctif Compendium : zones marquées "Non visitée" à tort', en:'Compendium fix: zones wrongly shown "Not visited"'}, fr:[
       {t:'fix', tx:'Une zone pouvait afficher "Non visitée" dans le Compendium alors que ses objets étaient déjà cochés ✓ — le suivi des zones visitées n\'existait pas encore quand ces objets avaient été ramassés. Rattrapage rétroactif au chargement : si tu possèdes déjà l\'objet unique de la zone, elle est maintenant marquée visitée (et le bonus +1% associé accordé)'},
     ], en:[
@@ -10939,48 +10913,9 @@ const TUTORIAL_STEPS = [
     title:{fr:'Besoin d\'aide plus tard ?',en:'Need help later?'},
     text:{fr:'Tu peux relancer ce tutoriel à tout moment depuis le 📖 Wiki (onglet 🔰 Tutoriel), ou en cliquant sur 🏘️ Velia en haut de la liste des zones.', en:'You can replay this tutorial anytime from the 📖 Wiki (🔰 Tutorial tab), or by clicking 🏘️ Velia at the top of the zone list.'} },
 ];
-// ============================================================
-// Tutoriel du Compendium (2026-07-08, demande explicite) — se lance automatiquement à la toute
-// première ouverture du panneau (voir openCompendium/compTutoSeen), et peut être relancé à tout
-// moment via le bouton "?" en haut à droite du panneau. Réutilise le même moteur/overlay que le
-// tutoriel d'arrivée (voir activeTutorialSteps), avec resetView:false pour laisser le Compendium
-// affiché derrière le spotlight au lieu de le fermer.
-let tutCompTabSaved = 'zones'; // onglet à restaurer en quittant le tutoriel (celui d'avant son lancement)
-const COMPENDIUM_TUTORIAL_STEPS = [
-  { title:{fr:'Le Compendium',en:'The Compendium'},
-    text:{fr:'Une collection à vie : chaque zone visitée et chaque World Boss vaincu (au moins une fois) t\'accorde un bonus PERMANENT et ADDITIF (jamais un multiplicateur).', en:'A lifetime collection: every zone visited and every World Boss defeated (at least once) grants you a PERMANENT, ADDITIVE bonus (never a multiplier).'} },
-  { target:'#infoBody .admStatTiles', placement:'bottom',
-    title:{fr:'Ta progression globale',en:'Your overall progress'},
-    text:{fr:'+1% Vitesse, +1% Dégâts et +1% Esquive pour chaque zone visitée ou boss vaincu — visible ici en un coup d\'œil.', en:'+1% Speed, +1% Damage and +1% Dodge for every zone visited or boss defeated — visible here at a glance.'} },
-  { target:'#infoBody .catTabs', placement:'bottom',
-    title:{fr:'4 onglets à explorer',en:'4 tabs to explore'},
-    text:{fr:'Zones (farm), World Bosses, Maîtrise PEN (suivi pur, sans bonus) et le Sac protégé — chacun a sa propre logique, voir les étapes suivantes.', en:'Zones (farming), World Bosses, PEN Mastery (pure tracking, no bonus) and the Protected bag — each has its own logic, see the next steps.'},
-    before: () => { tutCompTabSaved = compendiumTab; compendiumTab = 'zones'; openCompendium(); } },
-  { target:'#infoBody .compZoneRow', placement:'top',
-    title:{fr:'Une zone, ses objets',en:'A zone, its items'},
-    text:{fr:'✓ = objet déjà obtenu au moins une fois. Clique sur un objet pour voir quelles zones le font dropper, puis clique une zone pour y lancer le farm directement (téléportation immédiate, sans confirmation).', en:'✓ = item already obtained at least once. Click an item to see which zones drop it, then click a zone to start farming there right away (instant teleport, no confirmation).'},
-    before: () => { compendiumTab = 'zones'; openCompendium(); } },
-  { target:'#infoBody .compPenGrid', placement:'top',
-    title:{fr:'Maîtrise PEN',en:'PEN Mastery'},
-    text:{fr:'Suivi de complétion pur (aucun bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.', en:'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.'},
-    before: () => { compendiumTab = 'pen'; openCompendium(); } },
-  { target:'#infoBody .compBagGrid', placement:'top', final:true,
-    title:{fr:'Le sac protégé',en:'The protected bag'},
-    text:{fr:'Quand "Vendre" s\'apprête à vendre un objet dont ce TYPE n\'a jamais atteint PEN, le 1er exemplaire est protégé ici au lieu d\'être vendu. Tu peux relancer ce tutoriel à tout moment avec le bouton "?" en haut du panneau.', en:'When "Sell" is about to sell an item whose TYPE has never reached PEN, the 1st copy is protected here instead of being sold. You can replay this tutorial anytime with the "?" button at the top of the panel.'},
-    before: () => { compendiumTab = 'bag'; openCompendium(); },
-    after: () => { compendiumTab = tutCompTabSaved; openCompendium(); } },
-];
-function startCompendiumTutorial() {
-  tutCompTabSaved = compendiumTab;
-  startTutorial(COMPENDIUM_TUTORIAL_STEPS, { resetView:false });
-}
 let tutorialStepIdx = -1;
-// moteur générique (2026-07-08) : au départ figé sur TUTORIAL_STEPS (le tutoriel d'arrivée), rendu
-// générique pour pouvoir aussi jouer d'autres listes d'étapes (ex: COMPENDIUM_TUTORIAL_STEPS) avec
-// le même overlay/spotlight — activeTutorialSteps pointe vers la liste actuellement jouée
-let activeTutorialSteps = TUTORIAL_STEPS;
 function positionTutorialStep() {
-  const step = activeTutorialSteps[tutorialStepIdx];
+  const step = TUTORIAL_STEPS[tutorialStepIdx];
   const hi = $a('tutorialHighlight'), box = $a('tutorialBox'), arrow = $a('tutorialArrow');
   const target = step.target ? document.querySelector(step.target) : null;
   if (!target) {
@@ -11016,8 +10951,8 @@ function positionTutorialStep() {
   }
 }
 function showTutorialStep() {
-  const step = activeTutorialSteps[tutorialStepIdx];
-  $a('tutStepLbl').textContent = `${LANG==='fr'?'Étape':'Step'} ${tutorialStepIdx+1} / ${activeTutorialSteps.length}`;
+  const step = TUTORIAL_STEPS[tutorialStepIdx];
+  $a('tutStepLbl').textContent = `${LANG==='fr'?'Étape':'Step'} ${tutorialStepIdx+1} / ${TUTORIAL_STEPS.length}`;
   $a('tutTitle').textContent = step.title[LANG];
   $a('tutText').textContent = step.text[LANG];
   $a('tutSkipBtn').textContent = LANG==='fr'?'Passer':'Skip';
@@ -11032,7 +10967,7 @@ function showTutorialStep() {
 // referme proprement le step courant avant d'en changer (ou de terminer) : appelle son "after" s'il
 // en a un (idempotent par design, voir tutTrackerForced — donc sans risque si appelé deux fois)
 function leaveTutorialStep() {
-  const step = activeTutorialSteps[tutorialStepIdx];
+  const step = TUTORIAL_STEPS[tutorialStepIdx];
   if (step && step.after) step.after();
 }
 // suivi pixel perfect de la cible à CHAQUE frame (donc y compris pendant un scroll, quelle que
@@ -11044,12 +10979,9 @@ function tutorialTrackLoop() {
   positionTutorialStep();
   tutorialRafId = requestAnimationFrame(tutorialTrackLoop);
 }
-// steps : liste d'étapes à jouer (par défaut le tutoriel d'arrivée) ; resetView : si true (défaut),
-// ferme les panneaux ouverts et repart sur la vue Zone — mis à false pour le tutoriel du Compendium
-// qui doit au contraire rester affiché derrière le spotlight pour pouvoir en montrer les éléments
-function startTutorial(steps = TUTORIAL_STEPS, { resetView = true } = {}) {
-  activeTutorialSteps = steps;
-  if (resetView) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); currentActivity = 'zone'; showActivityPage('zone'); }
+function startTutorial() {
+  questsPanelOpen = false; $a('infoOverlay').classList.remove('open');
+  currentActivity = 'zone'; showActivityPage('zone');
   tutorialStepIdx = 0;
   $a('tutorialOverlay').classList.add('open');
   showTutorialStep();
@@ -11061,7 +10993,7 @@ function endTutorial() {
   $a('tutorialOverlay').classList.remove('open');
 }
 $a('tutNextBtn').onclick = () => {
-  const step = activeTutorialSteps[tutorialStepIdx];
+  const step = TUTORIAL_STEPS[tutorialStepIdx];
   leaveTutorialStep();
   if (step.final) { endTutorial(); return; }
   tutorialStepIdx++; showTutorialStep();
