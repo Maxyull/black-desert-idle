@@ -2061,6 +2061,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V170', d:'05/07/2026 17:30', name:{fr:'Gain d\'optimisation auto affiché + guide de farm', en:'Auto-enhance gain preview + farm guide'}, fr:[
+      {t:'improve', sub:'equipements', tx:'L\'optimisation automatique ("Auto jusqu\'à") affiche désormais le gain de stats (PA/PD/PV/Esquive) que rapporterait le palier choisi, avant même de lancer l\'auto'},
+      {t:'new', sub:'objets', tx:'Clique sur un emplacement de sac VIDE pour ouvrir un guide "Où farmer ?" listant les zones débloquées et ce qu\'elles rapportent — les zones actuellement trop dangereuses pour ton stuff sont exclues'},
+    ], en:[
+      {t:'improve', sub:'equipements', tx:'Auto-enhance ("Auto to") now shows the stat gain (AP/DP/HP/Dodge) the chosen tier would bring, before even starting the auto run'},
+      {t:'new', sub:'objets', tx:'Click an EMPTY bag slot to open a "Where to farm?" guide listing unlocked zones and what they drop — zones currently too dangerous for your gear are excluded'},
+    ] },
   { v:'V169', d:'05/07/2026 17:00', name:{fr:'Refonte des notes de version + correction du cadeau de fidélité', en:'Patch notes overhaul + loyalty gift fix'}, fr:[
       {t:'improve', sub:'interface', tx:'Nouvelle taxonomie des notes de version (Nouveautés, Équilibrage, Améliorations, Corrections de bugs, Sécurité, Serveur, Événements, Informations) — les lignes d\'une même version sont désormais groupées par catégorie, chaque groupe séparé par un liseré doré, avec un alignement cohérent au lieu d\'un badge répété sur chaque ligne'},
       {t:'fix', sub:'connexion', tx:'Le cadeau de fidélité journalier (et son message flottant "Nouveau courrier") pouvait s\'afficher à tort à CHAQUE connexion, même si déjà réclamé aujourd\'hui — la vérification se faisait avant que la vraie sauvegarde cloud ait fini de charger. Corrigé : le jeu attend maintenant que la sauvegarde soit chargée avant de vérifier'},
