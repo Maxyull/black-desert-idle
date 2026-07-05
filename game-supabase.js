@@ -1453,7 +1453,21 @@ setInterval(updateNextBossMini, 1000);
 // ---------- présence : compteur "joueurs en ligne" (invités inclus) ----------
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
-  try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest() }); } catch(e) {}
+  try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? null : zoneIdx }); } catch(e) {}
+}
+// combien de joueurs sont actuellement dans chaque zone de farm (demande explicite du 2026-07-06)
+// -- affiché dans #zoneList (voir buildZoneList dans game-core.js), rafraîchi au même rythme que
+// le heartbeat pour rester à jour sans spammer le serveur
+let zonePlayerCounts = {};
+async function refreshZonePlayerCounts() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.rpc('get_zone_player_counts', { p_window_seconds: 90 });
+    if (error || !data) return;
+    zonePlayerCounts = {};
+    data.forEach(r => { zonePlayerCounts[r.zone_idx] = r.cnt; });
+    if (typeof updateZonePlayerCountBadges === 'function') updateZonePlayerCountBadges();
+  } catch(e) {}
 }
 async function refreshOnlineCounter() {
   if (!sb) return;
@@ -1477,6 +1491,7 @@ async function refreshRegisteredCounter() {
 }
 setInterval(heartbeatPresence, 20000);
 setInterval(refreshOnlineCounter, 20000);
+setInterval(refreshZonePlayerCounts, 20000);
 setInterval(refreshLiveBoss, 20000);
 refreshRegisteredCounter();
 setInterval(refreshRegisteredCounter, 5 * 60000);
@@ -2273,6 +2288,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V184', d:'06/07/2026 02:00', name:{fr:'Joueurs par zone, niveau agrandi façon BDO, cartes sans espace vide, fix potion silencieuse', en:'Players per zone, BDO-style bigger level, no-empty-space cards, silent potion fix'}, fr:[
+      {t:'new', sub:'interface', tx:'Nombre de joueurs actuellement présents affiché (👥 N) sur chaque zone de la liste de farm, masqué si personne n\'y est'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'Les cartes "Zones de farm" et "Loot de cette zone" s\'étiraient pour matcher la hauteur de leurs voisines de rangée, laissant un grand vide sous une liste courte — elles suivent maintenant leur propre contenu (toujours plafonnées avec défilement au-delà)'},
+      {t:'fix', sub:'combat', severity:'major', tx:'Une potion (PV ou mana) sans assez de silver pour la payer échouait totalement en silence (aucun soin, aucun message) — un avertissement "Pas assez de silver pour la potion !" s\'affiche désormais, remarqué en zone dangereuse où ça pouvait ressembler à une potion cassée'},
+      {t:'improve', sub:'interface', tx:'Niveau agrandi façon BDO au-dessus de la barre de vie (gros chiffre blanc), le % d\'XP reste petit juste en dessous'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Number of players currently in each zone shown (👥 N) in the farming zone list, hidden if nobody is there'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'The "Farming zones" and "Loot in this zone" cards stretched to match their row neighbors\' height, leaving a big empty gap under a short list — they now follow their own content instead (still capped with scrolling beyond that)'},
+      {t:'fix', sub:'combat', severity:'major', tx:'A potion (HP or mana) without enough silver to pay for it used to fail completely silently (no heal, no message) — a "Not enough silver for a potion!" warning now shows, especially noticeable in dangerous zones where it could look like a broken potion'},
+      {t:'improve', sub:'interface', tx:'BDO-style bigger level shown above the HP bar (large white number), XP % stays small right below'},
+    ] },
   { v:'V183', d:'06/07/2026 01:30', name:{fr:'Palier PRI relevé pour sortir de zone dangereuse au changement de couleur', en:'PRI tier raised to escape dangerous zone at color-tier change'}, fr:[
       {t:'change', sub:'equipements', severity:'minor', tx:'Bonus du palier PRI relevé (+8% → +20%) : un stuff complet moyen-PRI (mix PEN/+10 possible) sort désormais de ZONE DANGEREUSE sur la 1ère zone du palier de couleur suivant, au lieu d\'y rester bloqué. Ne change rien pour +0 à +15 ni pour l\'équilibre sur sa propre zone (déjà bon) — rétroactif automatiquement sur tout le stuff déjà équipé/en sac, aucune migration nécessaire'},
     ], en:[

@@ -204,14 +204,17 @@
      demande explicite) -- 2 colonnes plutôt qu'une rangée qui déborderait sur mobile */
   #hpMpStack, #potStack { display:flex; flex-direction:column; gap:4px; }
   /* niveau + % d'XP déplacés au-dessus de la barre de PV, plus dans l'inventaire (2026-07-06,
-     demande explicite) -- même largeur que les barres pour rester bien alignés */
-  #lvlHpCol { display:flex; flex-direction:column; gap:3px; }
+     demande explicite) -- même largeur que les barres pour rester bien alignés. Agrandi façon BDO
+     le 2026-07-06 (demande explicite, capture à l'appui) : le niveau est LA info qu'on veut lire
+     d'un coup d'œil, en gros et gras, le % d'XP reste petit juste en dessous. */
+  #lvlHpCol { display:flex; flex-direction:column; gap:2px; }
   #lvlHpCol #lvlXpRow {
-    display:flex; align-items:baseline; gap:5px; font-size:10.5px; color:var(--ink-dim);
-    width:170px; margin:0; padding:0; border:none; text-shadow:0 1px 2px #000;
+    display:flex; flex-direction:column; width:170px; margin:0; padding:0; border:none;
   }
-  #lvlHpCol #lvlXpRow b { color:var(--ink); font-size:11.5px; }
-  #lvlHpCol #invXpPct { margin-left:auto; color:var(--gold); font-variant-numeric:tabular-nums; }
+  #lvlXpTop { display:flex; align-items:baseline; gap:5px; text-shadow:0 1px 3px #000; }
+  #lvlXpLbl { font-size:12px; color:var(--ink-dim); font-weight:normal; }
+  #lvlHpCol #lvlXpRow b { color:#fff; font-size:22px; font-weight:bold; line-height:1; }
+  #lvlHpCol #invXpPct { color:var(--gold); font-variant-numeric:tabular-nums; font-size:11px; text-shadow:0 1px 2px #000; }
   #hpBar, #mpBar { width:170px; height:13px; background:rgba(0,0,0,.65); border:1px solid #444; position:relative; }
   #hpFill { height:100%; width:100%; background:linear-gradient(90deg,#a33d34,#c05545); transition:width .15s; }
   /* barre de mana (2026-07-05, demande explicite) : même gabarit que la barre de PV, juste en dessous */
@@ -288,24 +291,22 @@
   @keyframes shake { 25%{transform:translateX(-4px);} 50%{transform:translateX(4px);} 75%{transform:translateX(-2px);} }
 
   /* liste des zones */
-  /* la grille #panel étire toutes les cartes d'une même rangée à la hauteur de la plus haute
-     (comportement par défaut de CSS grid) — avant ce correctif, #zoneList gardait une hauteur
-     FIXE (262px) et laissait un grand vide sous la liste quand la carte était étirée plus haut.
-     Corrigé en faisant grandir la liste jusqu'en bas de la carte — demande explicite du 2026-07-07 */
-  #zonesCard { display:flex; flex-direction:column; }
+  /* la grille #panel étire par défaut toutes les cartes d'une même rangée à la hauteur de la plus
+     haute (CSS grid, align-items:stretch) — ça créait un grand vide sous une liste plus courte que
+     sa voisine de rangée. Corrigé le 2026-07-06 (demande explicite : "pas que ça laisse des zones
+     vides") avec align-self:start : ces 2 cartes ne s'étirent plus pour matcher leurs voisines,
+     leur hauteur suit leur PROPRE contenu (plafonnée par max-height, avec défilement au-delà). */
+  #zonesCard, #lootCard { display:flex; flex-direction:column; align-self:start; }
   /* corrigé le 2026-07-05 : avec 16 zones (contre 12 avant), la liste dépassait largement la
-     hauteur des cartes voisines au lieu de s'arrêter et défiler -- max-height:none n'imposait
-     aucune limite, seul le flex:1 du 2026-07-07 (qui s'appuie sur la hauteur de ligne de la grille,
-     elle-même étirée par le contenu le plus haut) la contraignait, ce qui ne suffit plus avec
-     autant de zones. Plafond dur en plus du flex:1, pour toujours garder un scroll interne. */
-  #zoneList { flex:1; min-height:150px; max-height:60vh; overflow-y:auto; }
+     hauteur des cartes voisines au lieu de s'arrêter et défiler -- plafond dur pour toujours
+     garder un défilement interne au-delà d'une hauteur raisonnable */
+  #zoneList { min-height:150px; max-height:60vh; overflow-y:auto; }
   #zoneList::-webkit-scrollbar { width:6px; }
   #zoneList::-webkit-scrollbar-thumb { background:#3a3742; }
   /* même traitement pour la carte Loot (2026-07-05, demande explicite : "refais la découpe de
      carte et rajoute le scroll") -- la table de loot peut aussi devenir longue (Trésor de Velia,
      vue condensée de toutes les zones à Velia...) sans plafond ni défilement jusqu'ici */
-  #lootCard { display:flex; flex-direction:column; }
-  #lootTable { flex:1; min-height:150px; max-height:60vh; overflow-y:auto; padding-right:2px; }
+  #lootTable { min-height:150px; max-height:60vh; overflow-y:auto; padding-right:2px; }
   #lootTable::-webkit-scrollbar { width:6px; }
   #lootTable::-webkit-scrollbar-thumb { background:#3a3742; }
   .zRow {
@@ -332,6 +333,8 @@
   .zRow.veliaRow:hover { background:rgba(140,201,138,.14); }
   .zRow.veliaRow .zBadge { color:#8fc98a; border-color:#8fc98a; }
   .zBadge { font-size:9px; letter-spacing:.5px; padding:1px 6px; border:1px solid; white-space:nowrap; flex-shrink:0; }
+  /* nombre de joueurs actuellement sur cette zone (2026-07-06, demande explicite) */
+  .zPlayerCount { font-size:9px; color:var(--ink-dim); white-space:nowrap; flex-shrink:0; }
   .b-red { color:var(--r-red); border-color:var(--r-red); }
   .b-orange { color:var(--r-orange); border-color:var(--r-orange); }
   .b-green { color:var(--r-green); border-color:var(--r-green); }
@@ -1677,8 +1680,10 @@
        dans la carte Statistiques en dessous) */
     #hpBar, #mpBar { width:100px; }
     #mpBar { height:8px; }
-    #lvlHpCol #lvlXpRow { width:100px; font-size:9px; }
-    #lvlHpCol #lvlXpRow b { font-size:10px; }
+    #lvlHpCol #lvlXpRow { width:100px; }
+    #lvlXpLbl { font-size:10px; }
+    #lvlHpCol #lvlXpRow b { font-size:16px; }
+    #lvlHpCol #invXpPct { font-size:9px; }
     #potSlot {
       width:46px; height:46px; border-color:var(--gold); border-width:2px;
       box-shadow:0 0 10px rgba(201,165,90,.5); font-size:20px;

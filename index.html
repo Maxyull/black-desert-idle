@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=183">
+<link rel="stylesheet" href="styles.css?v=184">
 </head>
 <body>
 
@@ -307,7 +307,10 @@
     <div id="dangerBanner" data-i18n="dangerBanner">⚠️ Zone dangereuse — montez votre stuff ou passez par une zone plus facile</div>
     <div id="hpPotWrap">
       <div id="lvlHpCol">
-        <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
+        <div id="lvlXpRow">
+          <div id="lvlXpTop"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b></div>
+          <span id="invXpPct">00.000%</span>
+        </div>
         <div id="hpMpStack">
           <div id="hpBar"><div id="hpFill"></div><span id="hpPct"></span></div>
           <div id="mpBar"><div id="mpFill"></div><span id="mpPct"></span></div>
@@ -435,7 +438,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=183"></script>
-<script src="game-supabase.js?v=183"></script>
+<script src="game-core.js?v=184"></script>
+<script src="game-supabase.js?v=184"></script>
 </body>
 </html>
