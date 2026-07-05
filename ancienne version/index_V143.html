@@ -2945,21 +2945,13 @@ const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:
 // joueurs doivent se voir dans la zone du boss", pas juste un classement textuel
 let bossChannel = null;
 let otherFighters = {}; // uid -> { pseudo, px, py }
-// traces de diagnostic (2026-07-08, demande explicite : "les joueurs ne se voient pas en world
-// boss") : le partage des PV/top10 fonctionne (confirmé), donc le souci se situe précisément dans
-// ce canal de présence Realtime — ces logs préfixés [BossPresence] permettent de vérifier, la
-// prochaine fois que ça se reproduit, si les 2 joueurs rejoignent bien le MÊME topic, si le
-// statut passe à SUBSCRIBED, et si l'event 'sync' renvoie bien l'autre joueur
 function joinBossChannel(bossKey) {
   leaveBossChannel();
-  if (!sb || !currentUser) { console.debug('[BossPresence] abandon (pas de sb ou pas connecté)'); return; }
+  if (!sb || !currentUser) return;
   const myUid = currentUser.id;
-  const topic = 'boss_'+bossKey;
-  console.debug('[BossPresence] join', { topic, myUid });
-  bossChannel = sb.channel(topic, { config: { presence: { key: myUid } } });
+  bossChannel = sb.channel('boss_'+bossKey, { config: { presence: { key: myUid } } });
   bossChannel.on('presence', { event: 'sync' }, () => {
     const state = bossChannel.presenceState();
-    console.debug('[BossPresence] sync', { topic, keys: Object.keys(state) });
     const next = {};
     for (const uid in state) {
       if (uid === myUid) continue;
@@ -2969,12 +2961,10 @@ function joinBossChannel(bossKey) {
     otherFighters = next;
   });
   bossChannel.subscribe(status => {
-    console.debug('[BossPresence] status', { topic, status });
     if (status === 'SUBSCRIBED') bossChannel.track({ pseudo: myPseudo || 'Joueur', px: bossState.px, py: bossState.py });
   });
 }
 function leaveBossChannel() {
-  if (bossChannel) console.debug('[BossPresence] leave', { topic: bossChannel.topic });
   if (bossChannel && sb) { try { sb.removeChannel(bossChannel); } catch(e) {} }
   bossChannel = null;
   otherFighters = {};
@@ -9375,11 +9365,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V144', d:'08/07/2026 22:00', name:{fr:'Diagnostic : présence des joueurs en World Boss', en:'Diagnostics: player presence in World Boss'}, fr:[
-      {t:'fix', tx:'Le partage des PV/top 10 fonctionne bien en World Boss (confirmé par test à 2 comptes), mais les silhouettes des autres joueurs restent invisibles dans l\'arène — traces de diagnostic ajoutées (console, préfixe [BossPresence]) pour identifier précisément la cause au prochain test'},
-    ], en:[
-      {t:'fix', tx:'HP/top 10 sharing works correctly in World Boss (confirmed via 2-account test), but other players\' silhouettes remain invisible in the arena — diagnostic logging added (console, [BossPresence] prefix) to pinpoint the exact cause on the next test'},
-    ] },
   { v:'V143', d:'08/07/2026 21:00', name:{fr:'Correctif serveur : Vell planifié était toujours en solo', en:'Server fix: scheduled Vell was always solo'}, fr:[
       {t:'fix', tx:'Les apparitions programmées de Vell (jeudi 12h00, dimanche 16h45) ne créaient jamais d\'instance PARTAGÉE côté serveur — chaque joueur combattait Vell tout seul, sans jamais voir les autres joueurs ni PV communs, contrairement à Kzarka qui fonctionnait déjà correctement. Corrigé côté Supabase ; un spawn Vell déclenché par le planning est désormais bien partagé entre tous les joueurs, exactement comme un spawn admin'},
       {t:'fix', tx:'Correctif complémentaire : un spawn admin en cours (ex: Vell lancé manuellement) pouvait être écrasé par erreur si un créneau planifié de Kzarka devenait actif entre-temps — n\'importe quel spawn valide (admin ou planifié) est désormais protégé jusqu\'à son expiration'},
