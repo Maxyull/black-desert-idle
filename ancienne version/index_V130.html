@@ -1708,6 +1708,17 @@
       </div>
     </div>
 
+    <div class="card" id="adviceCraftCard">
+      <h3 data-i18n="cardAdviceCraft">Conseil de stuff &amp; Craft</h3>
+      <div id="optSuggest"></div>
+      <div class="statSep">🔧 <span data-i18n="cardCraft">Craft</span></div>
+      <div id="treasureCraftPanel"></div>
+      <div id="capConvertRow">
+        <span id="capConvertLbl"></span>
+        <button id="btnConvertCaphras">♻️ <span data-i18n="btnConvertCaphras">Convertir (5:1)</span></button>
+      </div>
+    </div>
+
     <div class="card" id="optCard">
       <h3 data-i18n="cardOpt">Optimisation</h3>
       <select id="optTarget"></select>
@@ -1727,14 +1738,6 @@
         <button id="btnOptAuto" data-i18n="btnOptAuto">▶ Auto jusqu'à</button>
       </div>
       <div id="optResult"></div>
-      <div class="statSep">🔥 <span data-i18n="cardAdvice">Conseil de stuff</span></div>
-      <div id="optSuggest"></div>
-      <div class="statSep">🔧 <span data-i18n="cardCraft">Craft</span></div>
-      <div id="treasureCraftPanel"></div>
-      <div id="capConvertRow">
-        <span id="capConvertLbl"></span>
-        <button id="btnConvertCaphras">♻️ <span data-i18n="btnConvertCaphras">Convertir (5:1)</span></button>
-      </div>
     </div>
   </div>
 </div>
@@ -3589,8 +3592,8 @@ function compendiumHighlightItem(name) {
   matches.forEach(zi => { const row = document.querySelector(`.compZoneRow[data-zi="${zi}"]`); if (row) row.classList.add('compHalo'); });
   const picker = $a('compZonePicker'); if (!picker) return;
   picker.innerHTML = matches.length
-    ? `<b>${escapeHtml(name)}</b> ${LANG==='fr'?'— clique une zone pour y farmer directement :':'— click a zone to go farm there directly:'} ` +
-      matches.map(zi => `<button class="compGoZoneBtn" data-zi="${zi}" title="${LANG==='fr'?'Lance le farm dans cette zone immédiatement':'Starts farming in this zone immediately'}">${tr(ZONES[zi].name)}</button>`).join('')
+    ? `<b>${escapeHtml(name)}</b> ${LANG==='fr'?'— farme ici :':'— farm here:'} ` +
+      matches.map(zi => `<button class="compGoZoneBtn" data-zi="${zi}">${tr(ZONES[zi].name)}</button>`).join('')
     : `<span class="admEmpty">${LANG==='fr'?'Aucune zone trouvée pour cet objet':'No zone found for this item'}</span>`;
   picker.querySelectorAll('.compGoZoneBtn').forEach(btn => {
     btn.onclick = () => {
@@ -3614,8 +3617,8 @@ function renderCompendiumHtml() {
     </div>
     <div class="admSummary">${LANG==='fr'?`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Boss · ${penDone}/${penItems.length} PEN`:`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Bosses · ${penDone}/${penItems.length} PEN`}</div>
     <div class="admHint">${LANG==='fr'
-      ? 'Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif, jamais un multiplicateur). Clique sur un objet ci-dessous pour voir dans quelles zones le farmer, puis clique une zone pour y lancer le farm directement (aucune confirmation, tu y es téléporté aussitôt).'
-      : 'Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive, never a multiplier). Click an item below to see which zones farm it, then click a zone to start farming there right away (no confirmation, you\'re sent there instantly).'}</div>
+      ? 'Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif, jamais un multiplicateur). Clique sur un objet ci-dessous pour voir dans quelles zones le farmer.'
+      : 'Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive, never a multiplier). Click an item below to see which zones farm it.'}</div>
     <div id="compZonePicker" class="compZonePicker"></div>
     <div class="catTabs">
       <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${LANG==='fr'?'Zones':'Zones'} (${zc}/${ZONES.length})</button>
@@ -4575,10 +4578,8 @@ function craftMysteryItem() {
 }
 // panneau de craft affiché SEULEMENT dans l'onglet "Trésors" de l'inventaire (voir renderInventory)
 function renderTreasureCraftPanel() {
-  // affiché en permanence dans la carte "Optimisation & Craft" (2026-07-08) — avant ce correctif,
-  // ce panneau ne s'affichait QUE quand l'onglet "Trésors" de l'inventaire était ouvert, un reste
-  // de l'époque où il vivait DANS la carte Inventaire ; il restait donc invisible la plupart du temps
   const el = $('treasureCraftPanel'); if (!el) return;
+  if (invCategory !== 'treasure') { el.innerHTML = ''; return; }
   const pieceRows = TREASURE_PIECE_RECIPES.map(r => {
     const have = invQtyByKey(r.needKey);
     const ok = have >= r.needQty;
@@ -9085,7 +9086,7 @@ const I18N = {
   btnSellMats: { fr:'🔒 Vendre mat.', en:'🔒 Sell mats' },
   btnSort: { fr:'Trier', en:'Sort' },
   lblWeight: { fr:'Poids', en:'Weight' },
-  cardAdvice: { fr:'Conseil de stuff', en:'Gear advice' },
+  cardAdviceCraft: { fr:'Conseil de stuff & Craft', en:'Gear advice & Crafting' },
   cardCraft: { fr:'Craft', en:'Crafting' },
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
   optChanceEmpty: { fr:'Chargez un matériau depuis le sac', en:'Load a material from your bag' },
@@ -9152,15 +9153,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V131', d:'08/07/2026 09:00', name:{fr:'Optimisation & Craft fusionnés, craft toujours visible', en:'Enhancement & Crafting merged, craft always visible'}, fr:[
-      {t:'change', tx:'Les cartes "Conseil de stuff & Craft" et "Optimisation" sont fusionnées en une seule carte, avec l\'Optimisation en tête'},
-      {t:'fix', tx:'Le panneau de craft du Trésor de Velia ne s\'affichait QUE quand l\'onglet "Trésors" de l\'inventaire était ouvert (reste de l\'époque où il vivait dans la carte Inventaire) — il reste maintenant visible en permanence dans la carte Optimisation'},
-      {t:'change', tx:'Le Compendium précise maintenant clairement qu\'un clic sur une zone lance le farm directement (téléportation immédiate, sans confirmation), pas juste un aperçu'},
-    ], en:[
-      {t:'change', tx:'The "Gear advice & Crafting" and "Enhancement" cards are merged into one card, with Enhancement at the top'},
-      {t:'fix', tx:'The Velia Treasure crafting panel only showed when the inventory\'s "Treasures" tab was open (a leftover from when it lived in the Inventory card) — it now stays visible at all times in the Enhancement card'},
-      {t:'change', tx:'The Compendium now clearly states that clicking a zone starts farming there directly (instant teleport, no confirmation), not just a preview'},
-    ] },
   { v:'V130', d:'08/07/2026 08:00', name:{fr:'Bateaux de Vell 10× plus gros, le héros plonge vraiment', en:'Vell\'s boats 10× bigger, hero really dives'}, fr:[
       {t:'change', tx:'Les 2 bateaux du combat de Vell sont désormais 10× plus gros, repoussés dans les coins bas de l\'écran pour rester au premier plan sans recouvrir tout le combat'},
       {t:'new', tx:'Le héros plonge VRAIMENT sous l\'eau quand il s\'abrite près d\'une bouée pendant la charge de Vell : il disparaît, remplacé par des ridules et des bulles qui remontent, au lieu de rester debout avec juste un bouclier bleu'},
