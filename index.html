@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=180">
+<link rel="stylesheet" href="styles.css?v=181">
 </head>
 <body>
 
@@ -305,9 +305,12 @@
     <div id="deathBanner"></div>
     <div id="dangerBanner" data-i18n="dangerBanner">⚠️ Zone dangereuse — montez votre stuff ou passez par une zone plus facile</div>
     <div id="hpPotWrap">
-      <div id="hpMpStack">
-        <div id="hpBar"><div id="hpFill"></div><span id="hpPct"></span></div>
-        <div id="mpBar"><div id="mpFill"></div><span id="mpPct"></span></div>
+      <div id="lvlHpCol">
+        <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
+        <div id="hpMpStack">
+          <div id="hpBar"><div id="hpFill"></div><span id="hpPct"></span></div>
+          <div id="mpBar"><div id="mpFill"></div><span id="mpPct"></span></div>
+        </div>
       </div>
       <div id="potStack">
         <div id="potSlot"><span id="potIcon">🧪</span><div id="potCd"></div></div>
@@ -379,7 +382,6 @@
       <h3><span data-i18n="cardInv">Inventaire</span>
         <button id="btnLifeskillToggle" disabled title="Lifeskill — bientôt disponible">🔒 ⛏️</button>
         <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
-      <div id="lvlXpRow"><span id="lvlXpLbl" data-i18n="lblLevel">Niv.</span> <b id="invLvl">1</b><span id="invXpPct">00.000%</span></div>
       <div class="catTabs" id="invCatTabs"></div>
       <div class="invTools invToolsMain">
         <button id="btnEquipBest" data-i18n="btnEquipBest" title="Équipe automatiquement, sur chaque emplacement, la meilleure pièce de ton sac (comparée sur ses stats de base)">⚡ Équiper meilleur</button>
@@ -432,7 +434,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=180"></script>
-<script src="game-supabase.js?v=180"></script>
+<script src="game-core.js?v=181"></script>
+<script src="game-supabase.js?v=181"></script>
 </body>
 </html>

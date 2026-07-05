@@ -4891,6 +4891,36 @@ function candidatesForSlot(slotId) {
   }
   return list.sort((a,b) => itemScore(b.it) - itemScore(a.it)).slice(0,5);
 }
+// zones où farmer l'objet manquant d'un socle VIDE — demande explicite : "un socle d'équipement
+// vide, lorsque tu cliques dessus, te montre où farm l'item... halo bien visible, tout sauf zone
+// dangereuse". Se base sur le palier de la zone actuellement farmée (zoneIdx) : armes → zones qui
+// garantissent ce type d'arme (ZONE_WEAPON_SLOTS) ; armures → les 4 zones du palier (n'importe
+// laquelle peut looter n'importe quelle pièce d'armure, voir GEAR_SLOTS) ; bijoux → la zone UNIQUE
+// du palier dont le jackpot correspond à ce type (ring/necklace/belt/earring, voir accSlotFor).
+// artifact1/artifact2/eqStone n'ont encore aucune source en jeu (voir renderLifeskillPanelHtml) →
+// jamais de résultat pour ces 3 slots.
+function zonesForEmptySlot(slotId) {
+  const tier = gearTierForZone(zoneIdx);
+  let zones;
+  if (WEAPON_SLOTS.includes(slotId)) {
+    zones = tier.zones.filter(zi => (ZONE_WEAPON_SLOTS[zi]||[]).includes(slotId));
+  } else if (ARMOR_SLOTS.includes(slotId)) {
+    zones = tier.zones.slice();
+  } else if (['ring1','ring2','necklace','earring1','earring2','belt'].includes(slotId)) {
+    const base = accBaseSlot(slotId);
+    zones = tier.zones.filter(zi => accSlotFor(ZONES[zi].loot.jackpot) === base);
+  } else {
+    zones = [];
+  }
+  // ne recommande une zone DANGEREUSE que s'il n'existe vraiment aucune alternative plus sûre
+  const safe = zones.filter(zi => bottleneck(ZONES[zi]) >= 0.6);
+  return safe.length ? safe : zones;
+}
+// applique/retire le halo dans #zoneList pour les zones qui lootent l'objet manquant d'un socle vide
+function highlightFarmZones(zones) {
+  document.querySelectorAll('#zoneList .zRow').forEach(r => r.classList.remove('eqFarmHalo'));
+  zones.forEach(zi => { const row = document.querySelector(`#zoneList .zRow[data-zi="${zi}"]`); if (row) row.classList.add('eqFarmHalo'); });
+}
 function showEquipSlotMenu(cell, slotId) {
   const e = EQUIP[slotId];
   const candidates = candidatesForSlot(slotId);
@@ -4913,6 +4943,27 @@ function showEquipSlotMenu(cell, slotId) {
     none.textContent = LANG==='fr' ? 'Aucun autre objet pour ce slot dans le sac' : 'No other item for this slot in the bag';
     pop.appendChild(none);
   }
+  let farmZones = [];
+  if (!e) {
+    farmZones = zonesForEmptySlot(slotId);
+    if (farmZones.length) {
+      const box = document.createElement('div');
+      box.className = 'ipDesc';
+      box.style.marginTop = '6px';
+      box.innerHTML = (LANG==='fr' ? '📍 Où farmer : ' : '📍 Where to farm: ') +
+        farmZones.map(zi => `<button class="eqFarmZoneBtn" data-zi="${zi}">${tr(ZONES[zi].name)}</button>`).join(' ');
+      pop.appendChild(box);
+      box.querySelectorAll('.eqFarmZoneBtn').forEach(btn => {
+        btn.onclick = ev => {
+          ev.stopPropagation();
+          const zi = parseInt(btn.dataset.zi, 10);
+          if (atVelia || zi !== zoneIdx) travelTo(zi);
+          hideItemPop();
+        };
+      });
+    }
+  }
+  highlightFarmZones(farmZones);
   pop.style.display = 'block';
   const r = cell.getBoundingClientRect();
   const pr = pop.getBoundingClientRect();
@@ -5207,7 +5258,7 @@ function addPopBtnHtml(pop, html, fn) {
   b.onclick = e => { e.stopPropagation(); fn(); hideItemPop(); refreshInvUI(); };
   pop.appendChild(b);
 }
-function hideItemPop() { $('itemPop').style.display = 'none'; }
+function hideItemPop() { $('itemPop').style.display = 'none'; document.querySelectorAll('#zoneList .zRow').forEach(r => r.classList.remove('eqFarmHalo')); }
 document.addEventListener('click', () => { hideItemPop(); const ps = $('potSelect'); if (ps) ps.classList.remove('show'); });
 document.addEventListener('contextmenu', ev => { if (!ev.target.closest('.cell')) hideItemPop(); });
 

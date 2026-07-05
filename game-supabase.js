@@ -2223,6 +2223,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V181', d:'06/07/2026 00:30', name:{fr:'Halo "où farmer" sur socle vide, niveau/XP déplacé au-dessus de la vie', en:'"Where to farm" halo on empty slots, level/XP moved above HP'}, fr:[
+      {t:'new', sub:'equipements', tx:'Clique un socle d\'équipement vide : la ou les zones qui lootent cet objet s\'illuminent d\'un halo doré dans la liste des zones (+ bouton téléportation directe). Une zone dangereuse pour ton stuff actuel n\'est proposée que s\'il n\'existe vraiment aucune alternative plus sûre'},
+      {t:'change', sub:'interface', tx:'Niveau et % d\'XP déplacés au-dessus de la barre de vie (en bas à gauche), retirés de la carte Inventaire'},
+    ], en:[
+      {t:'new', sub:'equipements', tx:'Click an empty equipment slot: the zone(s) that drop that item light up with a gold halo in the zone list (+ a direct teleport button). A zone too dangerous for your current gear is only suggested if there\'s truly no safer alternative'},
+      {t:'change', sub:'interface', tx:'Level and XP % moved above the HP bar (bottom-left), removed from the Inventory card'},
+    ] },
   { v:'V180', d:'05/07/2026 21:30', name:{fr:'Carte de loot plafonnée avec défilement', en:'Loot card capped with scrolling'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'La carte "Loot dans cette zone" (notamment la vue condensée de toutes les zones à Velia) pouvait déborder largement sous les cartes voisines — plafonnée avec un défilement interne, comme la liste des zones (V178)'},
     ], en:[
@@ -3754,7 +3761,9 @@ const WIKI_SECTIONS = [
       <h3>Trésor de Velia (catégorie TEST)</h3>
       <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 5 objets collectibles très rares (0,01% à 0,00001% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
       <h3>Boss mondial partagé</h3>
-      <p>Le Kzarka du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a désormais des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène.</p>`,
+      <p>Le Kzarka du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a désormais des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène.</p>
+      <h3>Où farmer un socle vide ?</h3>
+      <p>Clique un socle d'équipement <b>vide</b> sur la poupée : la ou les zones qui lootent cet objet s'illuminent d'un halo doré dans la liste des zones, et un bouton te téléporte directement dessus. Une zone dangereuse pour ton stuff actuel n'est jamais proposée tant qu'une alternative plus sûre existe.</p>`,
     en:`<h3>AP / DP per zone (like the real game)</h3>
       <p>Every zone has a <b>required AP</b> and <b>required DP</b>. The two stats play separate roles:</p>
       <ul>
@@ -3773,7 +3782,9 @@ const WIKI_SECTIONS = [
       <h3>Velia Treasure (TEST category)</h3>
       <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 5 very rare collectibles (0.01% to 0.00001% per kill), stored in their own 🗺️ inventory tab. Still experimental: no recipe or use yet.</p>
       <h3>Shared world boss</h3>
-      <p>The scheduled Kzarka (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) now has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena.</p>` },
+      <p>The scheduled Kzarka (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) now has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena.</p>
+      <h3>Where to farm an empty slot?</h3>
+      <p>Click an <b>empty</b> equipment slot on the paperdoll: the zone(s) that drop that item light up with a gold halo in the zone list, plus a button teleports you there directly. A zone too dangerous for your current gear is never suggested while a safer alternative exists.</p>` },
   { id:'enh', icon:'✦', label:{fr:'Optimisation',en:'Enhancement'},
     fr:`<h3>Enchantement</h3>
       <p>+1 à +7 toujours réussi. <b>+8 à +15</b> sont probabilistes (45% → 5%) et peuvent rétrograder en cas d'échec, mais jamais sous +7.</p>
