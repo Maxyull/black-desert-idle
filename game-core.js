@@ -32,17 +32,23 @@ const NAME_EN = {
   'Mine de Fer Abandonnée':'Abandoned Iron Mine', 'Poste Helm':'Helm Post',
   'Repaire Bandits Gahaz':'Gahaz Bandit Lair', 'Sanctuaire Elric':'Elric Shrine', 'Ruines de Kratuga':'Kratuga Ruins',
   'Planque des Mânes':'Manes\' Hideout',
+  // 4e zone de chaque palier (2026-07-05, demande explicite) : complète la rotation avec la
+  // boucle d'oreille manquante — reqAP/reqDP volontairement identiques à la dernière zone du
+  // palier (voir le commentaire sur Planque des Mânes), aucun changement du plafond de stat
+  'Ruines de Trent':'Trent Ruins', 'Île d\'Iliya':'Iliya Island', 'Base de Bashim':'Bashim Base', 'Forêt de Polly':'Polly Forest',
   // mobs
   'Loup':'Wolf', 'Esprit de Protty':'Protty Spirit', 'Pirate':'Pirate', 'Guerrier Rhutum':'Rhutum Warrior',
   'Garde Shultz':'Shultz Guard', 'Combattant Sausan':'Sausan Fighter', 'Mineur corrompu':'Corrupted Miner',
   'Soldat Helm':'Helm Soldier', 'Bandit Gahaz':'Gahaz Bandit', 'Sectateur d\'Elric':'Elric Cultist', 'Uluan':'Uluan',
   'Esprit des Mânes':'Manes Spirit',
+  'Troll des Ruines':'Ruins Troll', 'Pirate d\'Iliya':'Iliya Pirate', 'Soldat de Bashim':'Bashim Soldier', 'Troll de Polly':'Polly Troll',
   // trash loot
   'Viande de loup':'Wolf Meat', "Lame rouillée d'Imp":"Rusty Imp Blade", 'Insigne de Sausan':'Sausan Badge',
   'Bourse de pirate':'Pirate Purse', 'Croc de Naga':'Naga Fang', 'Oreille de Fogan':'Fogan Ear',
   'Fer rouillé':'Rusted Iron', 'Fourrure de Biraghi':'Biraghi Fur', "Défense d'orc":'Orc Tusk',
   'Éclat de relique ancienne':'Ancient Relic Shard', "Relique d'Hystria":'Hystria Relic', 'Icône de Rhasia':'Rhasia Icon',
   'Larme de Mâne':'Manes\' Tear',
+  'Pierre de Trent':'Trent Stone', 'Perle d\'Iliya':'Iliya Pearl', 'Insigne de Bashim':'Bashim Badge', 'Mousse de Polly':'Polly Moss',
   // notes de la table de loot
   'revenu de base':'base income', 'optimisation':'enhancement', 'arme/armure (5 pièces)':'weapon/armor (5 pieces)',
   'craft endgame':'endgame crafting',
@@ -55,6 +61,9 @@ const NAME_EN = {
   'Anneau Tuvala':'Tuvala Ring', 'Collier Tuvala':'Tuvala Necklace', 'Ceinture Tuvala':'Tuvala Belt',
   'Anneau Asula':'Asula Ring', 'Collier Asula':'Asula Necklace', 'Ceinture Asula':'Asula Belt',
   'Anneau de Cadry':'Cadry Ring', 'Collier du Dieu déchu':'Fallen God\'s Necklace',
+  // boucles d'oreille (2026-07-05) : complètent la rotation de bijoux de chaque palier (il ne
+  // manquait que ce slot — voir ACC_SLOTS earring1/earring2, jusque-là jamais alimenté en jeu)
+  'Boucle Naru':'Naru Earring', 'Boucle Tuvala':'Tuvala Earring', 'Boucle Asula':'Asula Earring', "Tungrad's Earring":"Tungrad's Earring",
   // gear sets
   'Grunil / Yuria':'Grunil / Yuria', 'Boss (Kzarka, Bheg, Urugon…)':'Boss (Kzarka, Bheg, Urugon…)',
   // badges de zone
@@ -112,17 +121,17 @@ const ZONES = [
     hpPer:48, dmg:6, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
     loot:{ trash:{name:'Bourse de pirate',val:9,ch:1}, mat:{name:'Pierre noire',val:1,ch:.32},
-      jackpot:{name:'Anneau Tuvala',val:1960,ch:.0028,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
+      jackpot:{name:'Anneau Tuvala',val:1960,ch:.0028,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
   { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:62, reqDP:57, mob:'Garde Shultz',
     hpPer:66, dmg:8, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:15,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:1,ch:.26},
-      jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
+      jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
   { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:78, reqDP:71, mob:'Combattant Sausan',
     hpPer:93, dmg:12, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
-      jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
+      jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
   { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:111, reqDP:101, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
     // sol terre rouge/brune de carrière (retexturé le 2026-07-07 d'après les captures de référence :
@@ -130,17 +139,17 @@ const ZONES = [
     // alphaTone = armure de fer bleuté du boss de pack (voir drawMineurIso)
     tint:{ a:'#4a3226', b:'#443023', dry:'#583c2c' }, tones:['#8a7a68','#7a6c5a','#988676'], alphaTone:'#5a6068',
     loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
-      jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:4}, craft:{name:'Fragment de mémoire',ch:.009} } },
+      jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:2}, craft:{name:'Fragment de mémoire',ch:.009} } },
   { name:'Poste Helm', tier:'Serendia — Late', reqAP:137, reqDP:125, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:56,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.11},
-      jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:7}, craft:{name:'Fragment de mémoire',ch:.007} } },
+      jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:4}, craft:{name:'Fragment de mémoire',ch:.007} } },
   { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:169, reqDP:155, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
-      jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:10}, craft:{name:'Fragment de mémoire',ch:.005} } },
+      jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:6}, craft:{name:'Fragment de mémoire',ch:.005} } },
   { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:221, reqDP:202, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
@@ -149,12 +158,12 @@ const ZONES = [
     // avec l'enchantement ralenti, ces 2 dernières zones sont désormais LA seule source de matériau
     // bleu, il en faut beaucoup plus pour pousser du stuff Grunil jusqu'à PRI+
     loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.12},
-      jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:8}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
+      jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:6}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
   { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:263, reqDP:239, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
-      jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:13}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
+      jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:9}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
   // 3e zone Grunil (2026-07-05, demande explicite : "ajoute Planque des Mânes dernière zone SANS
   // TOUCHER AU MAXIMUM") — reqAP/reqDP volontairement IDENTIQUES à Ruines de Kratuga (263/239),
   // pas une nouvelle escalade : le plafond du palier bleu (~301 PA / ~248 PD au PEN, voir GEAR_ROLE)
@@ -165,7 +174,39 @@ const ZONES = [
     hpPer:1000, dmg:125, xp:500,
     tint:{ a:'#3a3f4a', b:'#343943', dry:'#40454f' }, tones:['#8a9ab0','#7c8ca2','#98a8c0'], alphaTone:'#4a5568',
     loot:{ trash:{name:'Larme de Mâne',val:120,ch:1}, mat:{name:'Pierre de Caphras',val:5,ch:.07},
-      jackpot:{name:'Orkinrad\'s Belt',val:35000,ch:.00015,ap:15}, craft:{name:'Marbre du Dieu déchu',ch:.0018} } },
+      jackpot:{name:'Orkinrad\'s Belt',val:35000,ch:.00015,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0018} } },
+  // 4e zone de CHAQUE palier (2026-07-05, demande explicite : "1 sous-zone pour en avoir 4 au
+  // maximum et ajouter les boucles d'oreille") -- complète le seul type de bijou qui manquait
+  // partout (ACC_SLOTS a bien earring1/earring2, mais aucune zone n'en droppait jusqu'ici).
+  // AJOUTÉES EN FIN DE TABLEAU (jamais insérées entre des zones existantes) pour ne décaler
+  // AUCUN index de zone déjà utilisé par les sauvegardes existantes (S.maxZoneIdx, zoneIdx,
+  // Compendium par zone...) — voir GEAR_TIERS.zones et ZONE_WEAPON_SLOTS plus bas, mis à jour
+  // en conséquence avec ces nouveaux index (12,13,14,15).
+  // reqAP/reqDP volontairement IDENTIQUES à la dernière zone déjà existante de chaque palier
+  // (aucun changement du plafond de difficulté). Le total de PA des bijoux d'un palier (avant
+  // réparti sur 3 pièces) a été redistribué sur 4 (voir les ap ci-dessus, réduits en conséquence)
+  // pour que le total PA du palier reste EXACTEMENT le même malgré ce nouveau 4e bijou -- migration
+  // rétroactive du stuff déjà possédé, voir migrateEarringRebalanceV175().
+  { name:'Ruines de Trent', tier:'Balenos — Early', reqAP:25, reqDP:23, mob:'Troll des Ruines',
+    hpPer:35, dmg:4, xp:20,
+    tint:{ a:'#3d4238', b:'#383d33', dry:'#454a3e' }, tones:['#6a7a5e','#5c6c50','#788a6c'], alphaTone:'#455038',
+    loot:{ trash:{name:'Pierre de Trent',val:7,ch:1}, mat:{name:'Pierre noire',val:1,ch:.34},
+      jackpot:{name:'Boucle Naru',val:1300,ch:.0032,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.019} } },
+  { name:'Île d\'Iliya', tier:'Serendia — Mid', reqAP:78, reqDP:71, mob:'Pirate d\'Iliya',
+    hpPer:104, dmg:13, xp:67,
+    tint:{ a:'#2e4a4a', b:'#2a4444', dry:'#355656' }, tones:['#4a9a9a', '#3f8888', '#5aacac'], alphaTone:'#2c5a5a',
+    loot:{ trash:{name:'Perle d\'Iliya',val:38,ch:1}, mat:{name:'Éclat de cristal noir dur',val:5,ch:.14},
+      jackpot:{name:'Boucle Tuvala',val:6900,ch:.0011,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.009} } },
+  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:169, reqDP:155, mob:'Soldat de Bashim',
+    hpPer:395, dmg:49, xp:224,
+    tint:{ a:'#3c3c34', b:'#36362f', dry:'#44443a' }, tones:['#8a8a68', '#78785a', '#9a9a78'], alphaTone:'#565640',
+    loot:{ trash:{name:'Insigne de Bashim',val:92,ch:1}, mat:{name:'Pierre de Caphras',val:8,ch:.058},
+      jackpot:{name:'Boucle Asula',val:22300,ch:.00035,ap:9}, craft:{name:'Fragment de mémoire',ch:.003} } },
+  { name:'Forêt de Polly', tier:'Mediah — Early', reqAP:263, reqDP:239, mob:'Troll de Polly',
+    hpPer:1120, dmg:140, xp:560,
+    tint:{ a:'#25382c', b:'#213228', dry:'#2c4034' }, tones:['#3f6e50', '#356045', '#4a805c'], alphaTone:'#274a34',
+    loot:{ trash:{name:'Mousse de Polly',val:135,ch:1}, mat:{name:'Pierre de Caphras',val:4,ch:.055},
+      jackpot:{name:'Tungrad\'s Earring',val:38500,ch:.00011,ap:11}, craft:{name:'Marbre du Dieu déchu',ch:.0013} } },
 ];
 let zoneIdx = 0;
 // devient true une fois la vraie sauvegarde cloud chargée (ou d'emblée si Supabase n'est pas
@@ -2968,19 +3009,22 @@ function killPack(p) {
 // drop FIXE (2%) quelle que soit la zone parmi les leurs — chaque palier a son propre matériau
 // d'optimisation (remplace l'ancien matériau générique par zone).
 const GEAR_TIERS = [
-  { grade:'grey', color:'#b8b8b8', zones:[0,1,2], label:{fr:'Gris — Naru',en:'Grey — Naru'},
+  // zones étendues à 4 par palier le 2026-07-05 (voir commentaire sur les nouvelles zones dans
+  // ZONES) -- les 4e zones (12,13,14,15) sont ajoutées à la fin du tableau, jamais insérées, donc
+  // aucun index existant ne bouge
+  { grade:'grey', color:'#b8b8b8', zones:[0,1,2,12], label:{fr:'Gris — Naru',en:'Grey — Naru'},
     sets:{ weapon:'Épée Naru', awakening:'Éveil Naru', secondary:'Dague Naru',
            helmet:'Casque Naru', armor:'Armure Naru', gloves:'Gants Naru', boots:'Bottes Naru' },
     material:{ name:'Pierre de Novice', icon:ICO_MAT_NOVICE, color:'#b8b8b8' }, dropChance:null },
-  { grade:'white', color:'#e8e8e8', zones:[3,4,5], label:{fr:'Blanc — Tuvala',en:'White — Tuvala'},
+  { grade:'white', color:'#e8e8e8', zones:[3,4,5,13], label:{fr:'Blanc — Tuvala',en:'White — Tuvala'},
     sets:{ weapon:'Lame Tuvala', awakening:'Éveil Tuvala', secondary:'Dague Tuvala',
            helmet:'Casque Tuvala', armor:'Armure Tuvala', gloves:'Gants Tuvala', boots:'Bottes Tuvala' },
     material:{ name:'Pierre du Temps', icon:ICO_MAT_TEMPS, color:'#cfd8dc' }, dropChance:null },
-  { grade:'green', color:'#7aa35e', zones:[6,7,8], label:{fr:'Vert — Yuria',en:'Green — Yuria'},
+  { grade:'green', color:'#7aa35e', zones:[6,7,8,14], label:{fr:'Vert — Yuria',en:'Green — Yuria'},
     sets:{ weapon:'Lame Yuria', awakening:'Éveil Yuria', secondary:'Dague Yuria',
            helmet:'Casque Yuria', armor:'Plastron Yuria', gloves:'Gants Yuria', boots:'Bottes Yuria' },
     material:{ name:'Pierre Noire', icon:ICO_MAT_NOIRE, color:'#7aa35e' }, dropChance:0.02 }, // même vert EXACT que le stuff Yuria (demande explicite du 2026-07-08)
-  { grade:'blue', color:'#6ea3c9', zones:[9,10,11], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
+  { grade:'blue', color:'#6ea3c9', zones:[9,10,11,15], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
     sets:{ weapon:'Dague Grunil', awakening:'Éveil Grunil', secondary:'Épée Grunil',
            helmet:'Casque Grunil', armor:'Plastron Grunil', gloves:'Gants Grunil', boots:'Bottes Grunil' },
     // Pierre concentrée dédiée à Grunil depuis le 2026-07-06 (avant : partageait la Pierre Noire
@@ -2989,8 +3033,10 @@ const GEAR_TIERS = [
 ];
 function gearTierForZone(zi) { return GEAR_TIERS.find(t => t.zones.includes(zi)) || GEAR_TIERS[GEAR_TIERS.length-1]; }
 // chance de drop d'une pièce d'équipement, décroissante zone par zone — utilisée par Naru/Tuvala
-// (dropChance:null) ; Yuria/Grunil utilisent leur taux fixe défini ci-dessus à la place
-const GEAR_CHANCE = [.16,.12,.09,.065,.046,.032,.021,.014,.009,.0055,.0032,.0018];
+// (dropChance:null) ; Yuria/Grunil utilisent leur taux fixe défini ci-dessus à la place.
+// indices 12/13 (4e zone grey/white, 2026-07-05) continuent la même décroissance locale ; 14/15
+// ne sont jamais lus (green/blue ont un dropChance fixe), gardés pour la cohérence du tableau.
+const GEAR_CHANCE = [.16,.12,.09,.065,.046,.032,.021,.014,.009,.0055,.0032,.0018,.065,.022,.0014,.0014];
 // rééquilibrage du 2026-07-05 (demande explicite) : les armes (weapon/awakening/secondary) ne
 // tirent plus au hasard le même emplacement que l'armure — chaque zone garantit désormais un type
 // d'arme précis (voir ZONE_WEAPON_SLOTS/rollWeaponDrop), donc GEAR_SLOTS ne couvre plus QUE les 4
@@ -3006,6 +3052,13 @@ const ZONE_WEAPON_SLOTS = [
   ['weapon'], ['secondary'], ['awakening'],       // white : zones 3,4,5
   ['weapon'], ['secondary'], ['awakening'],       // green : zones 6,7,8
   ['weapon'], ['secondary'], ['awakening'],       // blue : zones 9,10,11
+  // 4e zone de chaque palier (2026-07-05) : seulement 3 types d'arme pour 4 zones désormais,
+  // 'weapon' se répète donc une 2e fois par palier -- sans impact (juste une 2e zone qui peut
+  // dropper ce type), voir le commentaire sur les nouvelles zones dans ZONES
+  ['weapon'],                                     // grey : zone 12 (Ruines de Trent)
+  ['weapon'],                                     // white : zone 13 (Île d'Iliya)
+  ['weapon'],                                     // green : zone 14 (Base de Bashim)
+  ['weapon'],                                     // blue : zone 15 (Forêt de Polly)
 ];
 // part du PA/PD requis de zone que chaque pièce peut apporter, selon son rôle
 // (l'éveil est l'arme la plus forte en PA dans le vrai jeu, la secondaire un peu moins que l'arme principale)
@@ -4461,40 +4514,45 @@ function buildZoneList() {
   list.appendChild(veliaRow);
   // zones regroupées par palier de stuff (armure + bijou) — demande explicite du 2026-07-06 :
   // un en-tête coloré (pastille = couleur du palier) sépare les groupes de zones au lieu d'une
-  // liste plate, pour bien voir quel stuff on farm dans quelle zone
-  let lastTier = null;
-  ZONES.forEach((z,i) => {
-    const tier = gearTierForZone(i);
-    if (tier !== lastTier) {
-      lastTier = tier;
-      const head = document.createElement('div');
-      head.className = 'zTierHead';
-      head.innerHTML = `<span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}`;
-      list.appendChild(head);
-    }
-    const b = badgeOf(bottleneck(z));
-    const apOk = apRatio(z) >= 1, dpOk = dpRatio(z) >= 1;
-    const previewed = lootPreviewIdx==null ? i===zoneIdx : i===lootPreviewIdx;
-    const row = document.createElement('div');
-    const isCurrent = !atVelia && i===zoneIdx;
-    row.className = 'zRow' + (isCurrent?' current':'');
-    row.title = tr(z.name);
-    if (!isCurrent) row.style.borderLeftColor = tier.color;
-    row.innerHTML =
-      `<span class="zname">${tr(z.name)}</span>` +
-      `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
-      `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
-      `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
-    row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
-    row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
-    list.appendChild(row);
+  // liste plate, pour bien voir quel stuff on farm dans quelle zone.
+  // Parcourt GEAR_TIERS.zones (ordre LOGIQUE des paliers) plutôt que ZONES dans son ordre PHYSIQUE
+  // (2026-07-05, bug corrigé) : les 4e zones de chaque palier ont été ajoutées en FIN de tableau
+  // (voir ZONES) pour ne jamais décaler les index existants — les parcourir dans l'ordre physique
+  // dédoublait les en-têtes de palier (grey/white/green/blue une 2e fois pour ces 4 zones-là).
+  GEAR_TIERS.forEach(tier => {
+    const head = document.createElement('div');
+    head.className = 'zTierHead';
+    head.innerHTML = `<span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}`;
+    list.appendChild(head);
+    tier.zones.forEach(i => {
+      const z = ZONES[i];
+      const b = badgeOf(bottleneck(z));
+      const apOk = apRatio(z) >= 1, dpOk = dpRatio(z) >= 1;
+      const previewed = lootPreviewIdx==null ? i===zoneIdx : i===lootPreviewIdx;
+      const row = document.createElement('div');
+      const isCurrent = !atVelia && i===zoneIdx;
+      row.className = 'zRow' + (isCurrent?' current':'');
+      row.dataset.zi = i; // affichées dans l'ordre des PALIERS, pas l'ordre physique de ZONES — voir updateZoneViewHalo
+      row.title = tr(z.name);
+      if (!isCurrent) row.style.borderLeftColor = tier.color;
+      row.innerHTML =
+        `<span class="zname">${tr(z.name)}</span>` +
+        `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
+        `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
+        `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
+      row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
+      row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
+      list.appendChild(row);
+    });
   });
 }
 // rafraîchit juste le halo du 👁 sans reconstruire toute la liste (appelé à chaque aperçu de loot)
 function updateZoneViewHalo() {
-  // :not(.veliaRow) — la ligne Velia (ville paisible épinglée en haut) n'a pas de bouton 👁 et ne
-  // doit pas décaler les index par rapport à ZONES
-  document.querySelectorAll('#zoneList .zRow:not(.veliaRow)').forEach((row,i) => {
+  // se base sur data-zi (index réel de la zone), pas la position dans le DOM -- depuis que les
+  // zones sont affichées groupées par PALIER (voir buildZoneList), l'ordre d'affichage ne
+  // correspond plus à l'ordre physique 0..N de ZONES (2026-07-05, bug corrigé)
+  document.querySelectorAll('#zoneList .zRow:not(.veliaRow)').forEach(row => {
+    const i = parseInt(row.dataset.zi, 10);
     const previewed = lootPreviewIdx==null ? i===zoneIdx : i===lootPreviewIdx;
     row.querySelector('.zBtnView').classList.toggle('active', previewed);
   });
@@ -5787,6 +5845,21 @@ function migrateGearRebalanceV158() {
   INV.forEach(rescaleOne);
   COMPENDIUM_BAG.forEach(rescaleOne);
 }
+// ajout des boucles d'oreille (2026-07-05, demande explicite) : le PA des bijoux déjà existants
+// (anneau/collier/ceinture, sauf le palier gris resté à 1) est redistribué pour laisser de la
+// place à la boucle d'oreille sans changer le total PA du palier -- voir le commentaire sur les
+// nouvelles zones dans ZONES pour le détail du calcul
+const JEWELRY_NEW_AP_V175 = {
+  'Anneau Tuvala':1, 'Collier Tuvala':2, 'Ceinture Tuvala':3,
+  'Anneau Asula':2, 'Collier Asula':4, 'Ceinture Asula':6,
+  'Anneau de Cadry':6, "Serap's Necklace":9, "Orkinrad's Belt":10,
+};
+function migrateEarringRebalanceV175() {
+  const rescaleOne = it => { if (it && it.kind === 'jackpot' && JEWELRY_NEW_AP_V175[it.name] != null) it.ap = JEWELRY_NEW_AP_V175[it.name]; };
+  Object.values(EQUIP).forEach(rescaleOne);
+  INV.forEach(rescaleOne);
+  COMPENDIUM_BAG.forEach(rescaleOne);
+}
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
 // C'est CE bloc qui doit être envoyé/lu depuis la table Supabase "game_saves".
@@ -5817,6 +5890,7 @@ function applySaveState(data) {
   // migre proprement les anciennes sauvegardes (toutes les cases restent vides, rien à perdre)
   for (let i = 0; i < INV_SIZE; i++) COMPENDIUM_BAG[i] = data.COMPENDIUM_BAG?.[i] ?? null;
   if (!S.migratedGearRebalanceV158) { migrateGearRebalanceV158(); S.migratedGearRebalanceV158 = true; }
+  if (!S.migratedEarringRebalanceV175) { migrateEarringRebalanceV175(); S.migratedEarringRebalanceV175 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
