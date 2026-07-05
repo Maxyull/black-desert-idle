@@ -2062,6 +2062,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V173', d:'05/07/2026 18:30', name:{fr:'Alignement des boutons d\'inventaire + comparateur avant/après', en:'Inventory button alignment + before/after viewer'}, fr:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'Les boutons "⚡ Équiper meilleur" et "🗑️ Vendre" (+ "↩️ Racheter") n\'étaient pas parfaitement alignés (marge et taille de police différentes) — corrigé pour un alignement pixel-perfect'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'Les notes de version peuvent désormais inclure un bouton 🖼️ "Voir avant/après" sur une ligne, ouvrant un comparateur avec 2 captures d\'écran côte à côte'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'The "⚡ Equip best" and "🗑️ Sell" (+ "↩️ Buy back") buttons weren\'t perfectly aligned (different margin and font size) — fixed for pixel-perfect alignment'},
+      {t:'improve', sub:'interface', severity:'minor', tx:'Patch notes can now include a 🖼️ "See before/after" button on a line, opening a comparer with 2 side-by-side screenshots'},
+    ] },
   { v:'V172', d:'05/07/2026 18:15', name:{fr:'Pastilles de gravité + infobulles sur les notes de version', en:'Severity dots + tooltips on patch notes'}, fr:[
       {t:'improve', sub:'interface', severity:'minor', tx:'Chaque ligne des notes de version peut désormais porter une pastille de couleur indiquant sa gravité (Critique/Important/Mineur/Info), indépendante de sa catégorie — une correction peut être Critique ou Mineure selon son impact réel'},
       {t:'improve', sub:'interface', severity:'minor', tx:'Toutes les pastilles/badges (catégorie, gravité, sous-catégorie, plateforme, nature) affichent désormais une explication au survol de la souris'},
@@ -4072,8 +4079,11 @@ $a('btnPatch').onclick = () => {
               const subTag = sub ? `<span class="patchSub" title="${LANG==='fr'?'Sous-catégorie':'Subcategory'} : ${escapeHtml(sub)}">${sub}</span>` : '';
               const extraTags = subTag + platTag + natureTag;
               const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
+              // bouton avant/après (2026-07-05, demande explicite) : ouvre un comparateur d'images
+              // quand la ligne référence des captures d'écran (voir line.img.before/after)
+              const imgBtn = line.img ? `<button class="patchImgBtn" data-before="${escapeHtml(line.img.before)}" data-after="${escapeHtml(line.img.after)}" title="${LANG==='fr'?'Voir avant/après':'See before/after'}">🖼️</button>` : '';
               return `<li class="${line.removed?'patchLineRemoved':''}">
-                <div class="patchLineMain">${sevDot}<span class="patchLineText">${line.tx}${removedTag}</span></div>
+                <div class="patchLineMain">${sevDot}<span class="patchLineText">${line.tx}${removedTag}</span>${imgBtn}</div>
                 ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
               </li>`;
             }).join('')}</ul>
@@ -4091,7 +4101,23 @@ $a('btnPatch').onclick = () => {
     for (const entry of entries) if (entry.isIntersecting) seenThisSession.add(entry.target.dataset.ver);
   }, { root: $a('infoBody'), threshold: 0.6 });
   document.querySelectorAll('.patchEntry').forEach(el => patchObserver.observe(el));
+
+  // comparateur avant/après (2026-07-05, demande explicite) : câblé après insertion du HTML
+  $a('infoBody').querySelectorAll('.patchImgBtn').forEach(btn => {
+    btn.onclick = () => openPatchImgCompare(btn.dataset.before, btn.dataset.after);
+  });
 };
+function openPatchImgCompare(before, after) {
+  $a('patchImgLblBefore').textContent = LANG==='fr' ? 'Avant' : 'Before';
+  $a('patchImgLblAfter').textContent = LANG==='fr' ? 'Après' : 'After';
+  $a('patchImgBefore').src = before;
+  $a('patchImgAfter').src = after;
+  $a('patchImgOverlay').classList.add('open');
+}
+$a('closePatchImg').onclick = () => $a('patchImgOverlay').classList.remove('open');
+let patchImgMouseDownOnBackdrop = false;
+$a('patchImgOverlay').addEventListener('mousedown', e => { patchImgMouseDownOnBackdrop = (e.target.id === 'patchImgOverlay'); });
+$a('patchImgOverlay').addEventListener('click', e => { if (e.target.id === 'patchImgOverlay' && patchImgMouseDownOnBackdrop) $a('patchImgOverlay').classList.remove('open'); });
 
 updatePatchBadge();
 applyI18n();

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=172">
+<link rel="stylesheet" href="styles.css?v=173">
 </head>
 <body>
 
@@ -166,6 +166,21 @@
       <button id="closeInfo">✕</button>
     </div>
     <div id="infoBody"></div>
+  </div>
+</div>
+
+<!-- comparateur avant/après pour les notes de version (2026-07-05, demande explicite) : s'ouvre
+     PAR-DESSUS le panneau des notes de version (voir patchImgBtn/PATCH_NOTES[].img) -->
+<div id="patchImgOverlay">
+  <div id="patchImgBox">
+    <div id="infoHead">
+      <h2 id="patchImgTitle">📸 Avant / Après</h2>
+      <button id="closePatchImg">✕</button>
+    </div>
+    <div id="patchImgBody">
+      <div class="patchImgCol"><div class="patchImgLbl" id="patchImgLblBefore">Avant</div><img id="patchImgBefore"></div>
+      <div class="patchImgCol"><div class="patchImgLbl" id="patchImgLblAfter">Après</div><img id="patchImgAfter"></div>
+    </div>
   </div>
 </div>
 
@@ -397,7 +412,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=172"></script>
-<script src="game-supabase.js?v=172"></script>
+<script src="game-core.js?v=173"></script>
+<script src="game-supabase.js?v=173"></script>
 </body>
 </html>

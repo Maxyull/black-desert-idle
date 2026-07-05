@@ -351,12 +351,16 @@
      une icône superposée en ABSOLU sur le coin droit de "Vendre" (ne mange plus sur sa largeur —
      sinon "Vendre" paraissait plus étroit qu'"Équiper meilleur" alors que le groupe fait bien 50%). */
   .invToolsMain > button, .invToolsMain > .sellWorseGroup { flex:0 0 50%; min-width:0; }
-  .sellWorseGroup { position:relative; display:block; margin-top:4px; }
-  .sellWorseGroup #btnSellWorse { width:100%; margin:0; font-size:9.5px; padding:5px 3px; min-width:0;
+  /* corrigé le 2026-07-05 (demande explicite : "les deux boutons droits") : .sellWorseGroup avait
+     un margin-top DIFFÉRENT (4px) de celui de #btnEquipBest (8px), et #btnSellWorse un font-size/
+     padding différents de #btnEquipBest -- 2 causes cumulées d'un décalage vertical visible entre
+     les 2 boutons de la rangée. Uniformisé pour un alignement pixel-perfect. */
+  .sellWorseGroup { position:relative; display:block; margin-top:8px; }
+  .sellWorseGroup #btnSellWorse { width:100%; margin:0; font-size:11px; padding:5px 4px; min-width:0;
     overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .sellWorseGroup #btnBuyBackWorse { position:absolute; top:0; right:0; bottom:0; width:15%;
     margin:0; padding:0; font-size:10px; border:1px solid var(--gold-dim); border-left:none;
-    background:rgba(20,19,26,.9); }
+    background:rgba(20,19,26,.9); display:flex; align-items:center; justify-content:center; }
   .sellWorseGroup #btnBuyBackWorse:hover:not(:disabled) { border-color:var(--gold); background:rgba(201,165,90,.12); }
   #invGrid, .admInvGrid {
     display:grid; grid-template-columns:repeat(8, 1fr); gap:3px;
@@ -941,6 +945,27 @@
   #closeInfo { width:auto; margin:0; padding:4px 9px; background:none; border:none; font-size:16px; color:var(--ink-dim); }
   #infoBody { padding:16px 18px; overflow-y:auto; font-size:12.5px; line-height:1.6; color:var(--ink); }
   #infoBody h3 { color:var(--gold); font-size:13px; letter-spacing:.5px; margin:16px 0 6px; }
+
+  /* comparateur avant/après des notes de version (2026-07-05, demande explicite) : s'affiche
+     PAR-DESSUS le panneau des notes de version -- z-index supérieur, même famille visuelle */
+  #patchImgOverlay {
+    position:fixed; inset:0; background:rgba(6,5,9,.88); z-index:105;
+    display:none; align-items:center; justify-content:center;
+  }
+  #patchImgOverlay.open { display:flex; }
+  #patchImgBox {
+    width:900px; max-width:96vw; max-height:92vh; display:flex; flex-direction:column;
+    background:var(--panel); border:1px solid var(--gold-dim); box-shadow:0 20px 60px rgba(0,0,0,.7);
+  }
+  #closePatchImg { width:auto; margin:0; padding:4px 9px; background:none; border:none; font-size:16px; color:var(--ink-dim); }
+  #patchImgBody { display:flex; gap:12px; padding:16px; overflow:auto; }
+  .patchImgCol { flex:1; min-width:0; display:flex; flex-direction:column; gap:8px; }
+  .patchImgLbl {
+    text-align:center; font-size:11px; font-weight:bold; letter-spacing:1px; text-transform:uppercase;
+    color:var(--gold); padding:4px; border:1px solid var(--gold-dim); border-radius:4px;
+  }
+  .patchImgCol img { width:100%; height:auto; border:1px solid #2c2a33; border-radius:4px; background:#0d0c11; }
+  @media (max-width:700px) { #patchImgBody { flex-direction:column; } }
   #infoBody h3:first-child { margin-top:0; }
   #infoBody p { color:var(--ink-dim); margin-bottom:6px; }
   #infoBody ul { margin:4px 0 10px 18px; color:var(--ink-dim); }
@@ -982,6 +1007,12 @@
     box-shadow:0 0 4px rgba(0,0,0,.5); cursor:help;
   }
   #infoBody .patchLineText { flex:1; color:var(--ink); }
+  /* bouton avant/après (2026-07-05, demande explicite) : petite icône image, inline avec le texte */
+  #infoBody .patchImgBtn {
+    flex-shrink:0; width:auto; margin:0; padding:1px 6px; font-size:11px; line-height:1.4;
+    background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.14); border-radius:4px;
+  }
+  #infoBody .patchImgBtn:hover { border-color:var(--gold); background:rgba(201,165,90,.12); }
   #infoBody .patchLineExtra { display:flex; flex-wrap:wrap; gap:6px; margin-left:0; padding-left:2px; opacity:.9; }
   /* groupe de lignes par catégorie (2026-07-05, demande explicite) : liseré DORÉ constant entre
      chaque sous-catégorie, quelle que soit sa couleur de texte -- toutes les lignes d'un groupe
