@@ -96,7 +96,7 @@
   /* bannière d'annonce importante (ex: reset complet des comptes) — demande explicite du
      2026-07-06 : "restylise le bien avec de la couleur" */
   .resetNoticeOverlay {
-    position:fixed; inset:0; background:rgba(8,7,10,.85); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px);
+    position:fixed; inset:0; background:rgba(8,7,10,.85); backdrop-filter:blur(3px);
     display:none; align-items:center; justify-content:center; z-index:900;
   }
   .resetNoticeOverlay.show { display:flex; }
@@ -1947,17 +1947,17 @@ const ZONES = [
     hpPer:23, dmg:3, xp:8,
     tint:{ a:'#3a4a31', b:'#36452e', dry:'#414f33' }, tones:['#6b5f52','#5a5248','#75685a'], alphaTone:'#3d3a45',
     loot:{ trash:{name:'Viande de loup',val:1,ch:1}, mat:{name:'Pierre noire',val:1,ch:.55},
-      jackpot:{name:'Anneau Naru',val:290,ch:.006,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.03} } },
+      jackpot:{name:'Anneau Naru',val:290,ch:.006,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.03} } },
   { name:'Ruines de Protty', tier:'Balenos — Early', reqAP:20, reqDP:19, mob:'Esprit de Protty',
     hpPer:26, dmg:3, xp:12,
     tint:{ a:'#4a4231', b:'#453e2e', dry:'#4f4833' }, tones:['#a5543c','#8f4a38','#b06045'], alphaTone:'#6e2f24',
     loot:{ trash:{name:'Lame rouillée d\'Imp',val:3,ch:1}, mat:{name:'Pierre noire',val:1,ch:.48},
-      jackpot:{name:'Collier Naru',val:550,ch:.005,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.026} } },
+      jackpot:{name:'Collier Naru',val:550,ch:.005,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.026} } },
   { name:'Repaire des Pirates', tier:'Balenos — Early', reqAP:25, reqDP:23, mob:'Pirate',
     hpPer:31, dmg:4, xp:18,
     tint:{ a:'#4a4232', b:'#443c2d', dry:'#524936' }, tones:['#7a6248','#6b563e','#8a7055'], alphaTone:'#4a3a28',
     loot:{ trash:{name:'Insigne de Sausan',val:5,ch:1}, mat:{name:'Pierre noire',val:1,ch:.4},
-      jackpot:{name:'Ceinture Naru',val:1025,ch:.0038,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
+      jackpot:{name:'Ceinture Naru',val:1025,ch:.0038,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
   // reqAP/reqDP des zones 3, 6 et 9 (première zone de chaque nouveau palier de couleur) relevées
   // le 2026-07-08 (+~30%, avec les zones suivantes du même palier réajustées en proportion pour
   // garder une progression lisse) : avec le ralentissement de l'enchantement +1→+15 (voir
@@ -1968,17 +1968,17 @@ const ZONES = [
     hpPer:48, dmg:6, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
     loot:{ trash:{name:'Bourse de pirate',val:9,ch:1}, mat:{name:'Pierre noire',val:1,ch:.32},
-      jackpot:{name:'Anneau Tuvala',val:1960,ch:.0028,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
+      jackpot:{name:'Anneau Tuvala',val:1960,ch:.0028,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
   { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:62, reqDP:57, mob:'Garde Shultz',
     hpPer:66, dmg:8, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:15,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:1,ch:.26},
-      jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
+      jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:5}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
   { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:78, reqDP:71, mob:'Combattant Sausan',
     hpPer:93, dmg:12, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
-      jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:4}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
+      jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:6}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
   { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:111, reqDP:101, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
     // sol terre rouge/brune de carrière (retexturé le 2026-07-07 d'après les captures de référence :
@@ -1986,17 +1986,17 @@ const ZONES = [
     // alphaTone = armure de fer bleuté du boss de pack (voir drawMineurIso)
     tint:{ a:'#4a3226', b:'#443023', dry:'#583c2c' }, tones:['#8a7a68','#7a6c5a','#988676'], alphaTone:'#5a6068',
     loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
-      jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:4}, craft:{name:'Fragment de mémoire',ch:.009} } },
+      jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:6}, craft:{name:'Fragment de mémoire',ch:.009} } },
   { name:'Poste Helm', tier:'Serendia — Late', reqAP:137, reqDP:125, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:56,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.11},
-      jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:7}, craft:{name:'Fragment de mémoire',ch:.007} } },
+      jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:8}, craft:{name:'Fragment de mémoire',ch:.007} } },
   { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:169, reqDP:155, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
-      jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:10}, craft:{name:'Fragment de mémoire',ch:.005} } },
+      jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:9}, craft:{name:'Fragment de mémoire',ch:.005} } },
   { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:221, reqDP:202, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
@@ -2005,12 +2005,12 @@ const ZONES = [
     // avec l'enchantement ralenti, ces 2 dernières zones sont désormais LA seule source de matériau
     // bleu, il en faut beaucoup plus pour pousser du stuff Grunil jusqu'à PRI+
     loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.12},
-      jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:8}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
+      jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
   { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:263, reqDP:239, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
-      jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:13}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
+      jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:12}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
 ];
 let zoneIdx = 0;
 let atVelia = false; // true quand le perso est à Velia (zone paisible, aucun monstre — voir goToVelia)
@@ -4822,40 +4822,21 @@ function gearTierForZone(zi) { return GEAR_TIERS.find(t => t.zones.includes(zi))
 // chance de drop d'une pièce d'équipement, décroissante zone par zone — utilisée par Naru/Tuvala
 // (dropChance:null) ; Yuria/Grunil utilisent leur taux fixe défini ci-dessus à la place
 const GEAR_CHANCE = [.16,.12,.09,.065,.046,.032,.021,.014,.009,.0055,.0032,.0018];
-// rééquilibrage du 2026-07-05 (demande explicite) : les armes (weapon/awakening/secondary) ne
-// tirent plus au hasard le même emplacement que l'armure — chaque zone garantit désormais un type
-// d'arme précis (voir ZONE_WEAPON_SLOTS/rollWeaponDrop), donc GEAR_SLOTS ne couvre plus QUE les 4
-// pièces d'armure, tirées au hasard entre elles comme avant.
-const GEAR_SLOTS = ['helmet','armor','gloves','boots'];
-// quel(s) type(s) d'arme chaque zone garantit (2026-07-05, demande explicite : "1 arme dans chaque
-// zone") — cycle weapon→secondary→awakening sur les 3 zones de chaque palier ; le palier bleu n'a
-// que 2 zones pour l'instant (pas de 3e zone Grunil), donc sa 2e zone (Ruines de Kratuga) garantit
-// les 2 types d'arme restants ("met 2 armes dernière zone pour l'instant")
-const ZONE_WEAPON_SLOTS = [
-  ['weapon'], ['secondary'], ['awakening'],       // grey : zones 0,1,2
-  ['weapon'], ['secondary'], ['awakening'],       // white : zones 3,4,5
-  ['weapon'], ['secondary'], ['awakening'],       // green : zones 6,7,8
-  ['weapon'], ['secondary','awakening'],          // blue : zones 9,10 (2 zones seulement)
-];
+const GEAR_SLOTS = ['weapon','awakening','secondary','helmet','armor','gloves','boots'];
 // part du PA/PD requis de zone que chaque pièce peut apporter, selon son rôle
 // (l'éveil est l'arme la plus forte en PA dans le vrai jeu, la secondaire un peu moins que l'arme principale)
 // hpShare : part du bonus de PV que chaque pièce d'armure apporte (le plastron/casque protègent
 // le plus de vitals, gants/bottes un peu moins) — somme = 1.0 sur les 4 pièces d'armure
 // dodgeShare (2026-07-08) : l'Esquive ne vient QUE de l'armure (jamais des armes), répartie à
 // parts égales sur les 4 pièces — voir DODGE_GEAR_SCALE pour la conversion en % réel
-// RÉÉQUILIBRAGE du 2026-07-05 (demande explicite) : les armes donnaient bien trop de PA (à elles
-// 3, ~750 PA au PEN en bleu, contre ~460 PD total) — apShare/dpShare recalculés pour qu'un stuff
-// COMPLET du palier bleu (3 armes + 4 armures + bijoux) totalise ~301 PA / ~248 PD au PEN (×2.33,
-// voir enhBonus(20)), chaque palier plus bas donnant proportionnellement moins (la formule suit le
-// PA/PD requis de zone, qui grandit à chaque palier) — voir README.md pour le détail du calcul.
 const GEAR_ROLE = {
-  weapon:     { apShare:0.0896, dpShare:0,      hpShare:0,    dodgeShare:0 },
-  awakening:  { apShare:0.1173, dpShare:0,      hpShare:0,    dodgeShare:0 },
-  secondary:  { apShare:0.0640, dpShare:0,      hpShare:0,    dodgeShare:0 },
-  helmet:     { apShare:0.0204, dpShare:0.1272, hpShare:0.30, dodgeShare:0.25 },
-  armor:      { apShare:0.0204, dpShare:0.1272, hpShare:0.40, dodgeShare:0.25 },
-  gloves:     { apShare:0.0163, dpShare:0.0954, hpShare:0.15, dodgeShare:0.25 },
-  boots:      { apShare:0.0163, dpShare:0.0954, hpShare:0.15, dodgeShare:0.25 },
+  weapon:     { apShare:0.42, dpShare:0,    hpShare:0,    dodgeShare:0 },
+  awakening:  { apShare:0.55, dpShare:0,    hpShare:0,    dodgeShare:0 },
+  secondary:  { apShare:0.30, dpShare:0,    hpShare:0,    dodgeShare:0 },
+  helmet:     { apShare:0.05, dpShare:0.24, hpShare:0.30, dodgeShare:0.25 },
+  armor:      { apShare:0.05, dpShare:0.24, hpShare:0.40, dodgeShare:0.25 },
+  gloves:     { apShare:0.04, dpShare:0.18, hpShare:0.15, dodgeShare:0.25 },
+  boots:      { apShare:0.04, dpShare:0.18, hpShare:0.15, dodgeShare:0.25 },
 };
 // facteur d'échelle des PV d'armure par rapport au PD requis de zone (calibré pour qu'un stuff
 // d'armure complet et adapté à la zone évite un one-shot même en subissant la pénalité de PD
@@ -4887,30 +4868,6 @@ function rollGearDrop(zone, alpha) {
     matName: tier.material.name, // matériau requis pour optimiser CETTE pièce (voir findEnhanceMaterial)
     val: Math.round((ap*2 + dp + hp*0.5) * 22),
   };
-}
-// arme(s) garantie(s) de la zone (2026-07-05, demande explicite : "1 arme dans chaque zone") —
-// remplace l'ancien tirage au hasard partagé avec l'armure : chaque zone a un jet INDÉPENDANT (même
-// taux que l'armure) pour son ou ses types d'arme désignés (voir ZONE_WEAPON_SLOTS). Renvoie un
-// tableau (0, 1 ou 2 armes selon la zone et la chance).
-function rollWeaponDrop(zone, alpha) {
-  const tier = gearTierForZone(zoneIdx);
-  const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
-  const slots = ZONE_WEAPON_SLOTS[zoneIdx] || ['weapon'];
-  const out = [];
-  for (const slot of slots) {
-    if (Math.random() > chance * (alpha ? 1.6 : 1)) continue;
-    const role = GEAR_ROLE[slot];
-    const scale = 0.85 + Math.random()*.3;
-    const ap = Math.round(zone.reqAP * role.apShare * scale);
-    out.push({
-      name: tier.sets[slot], kind:'gear', slot, ap, dp:0, hp:0, dodge:0, enhLv:0, optimizable:true, fsByLevel:{},
-      key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
-      icon: SLOT_ICON ? SLOT_ICON[slot] : '⚔️', color:tier.color, stackable:false, weight:1.2,
-      matName: tier.material.name,
-      val: Math.round(ap*2 * 22),
-    });
-  }
-  return out;
 }
 
 // Trésor de Velia — catégorie EXPÉRIMENTALE ("TEST"), identique dans TOUTES les zones de Velia
@@ -5062,11 +5019,6 @@ function rollDrops(wp, alpha, lm) {
   if (gear) {
     const a = Math.random()*Math.PI*2, r = 14+Math.random()*46;
     drops.push({ x: wp.x+Math.cos(a)*r, y: wp.y+Math.sin(a)*r, item: gear, taken:false, silver: gear.val, age:0, pop:.35 });
-  }
-  // arme(s) garantie(s) de la zone (2026-07-05) — voir rollWeaponDrop/ZONE_WEAPON_SLOTS
-  for (const weapon of rollWeaponDrop(zone, alpha)) {
-    const a = Math.random()*Math.PI*2, r = 14+Math.random()*46;
-    drops.push({ x: wp.x+Math.cos(a)*r, y: wp.y+Math.sin(a)*r, item: weapon, taken:false, silver: weapon.val, age:0, pop:.35 });
   }
 }
 
@@ -9619,13 +9571,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V158', d:'05/07/2026 12:00', name:{fr:'1 arme garantie par zone, PA des armes fortement réduit', en:'1 guaranteed weapon per zone, weapon AP greatly reduced'}, fr:[
-      {t:'change', tx:'Chaque zone garantit désormais un type d\'arme précis (épée/dague/éveil, en rotation par palier) au lieu de tirer au hasard le même emplacement que l\'armure — la zone bleue (2 zones seulement pour l\'instant) fait exception : sa 2e zone garantit 2 types d\'arme'},
-      {t:'change', tx:'Les armes donnaient bien trop de PA (à elles 3, environ 750 PA au PEN sur un stuff bleu complet, contre ~460 PD total) — rééquilibrées pour qu\'un stuff bleu complet (3 armes + 4 armures + bijoux) totalise environ 301 PA et 248 PD au PEN, chaque palier plus bas donnant proportionnellement moins'},
-    ], en:[
-      {t:'change', tx:'Each zone now guarantees a specific weapon type (sword/dagger/awakening, rotating by tier) instead of randomly rolling the same slot as armor — the blue tier (only 2 zones for now) is an exception: its 2nd zone guarantees 2 weapon types'},
-      {t:'change', tx:'Weapons gave far too much AP (the 3 of them alone reached ~750 AP at PEN on a full blue set, vs ~460 total DP) — rebalanced so a full blue set (3 weapons + 4 armor + jewelry) totals around 301 AP and 248 DP at PEN, with each lower tier giving proportionally less'},
-    ] },
   { v:'V157', d:'05/07/2026 11:30', name:{fr:'Mobile : header dégagé, gains XP/Loot lisibles, moins de chevauchement', en:'Mobile: cleared header, readable XP/Loot gains, less overlap'}, fr:[
       {t:'fix', tx:'Le bouton replié du menu de gauche (position fixe, en haut à gauche) cachait le premier onglet de la barre d\'activités sur téléphone — le contenu est repoussé sous ce bouton pour ne plus jamais le chevaucher'},
       {t:'fix', tx:'Les bannières "Sac plein" et "Tu es mort" recouvraient le nom de la zone sur téléphone (cadre de jeu très bas) — repoussées en dessous'},
