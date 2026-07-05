@@ -3311,104 +3311,93 @@ function drawWarlord(cx, sx, sy, r, t) {
   cx.shadowBlur=0;
   cx.restore();
 }
-// Vell — grand dragon des mers ORIGINAL. Silhouette redessinée le 2026-07-08 (3e version) d'après
-// une sculpture 3D de référence fournie par l'utilisateur : deux immenses cornes/ailes enroulées en
-// "C" qui encadrent la tête, une crête de petites pointes sur la nuque, un museau fin aux crocs
-// visibles, des bras griffus repliés devant, une longue queue fine et courbe sur un côté, le tout
-// émergeant d'une masse drapée/enroulée façon vague ou tissu qui sert de socle. Franchement
-// différent de Kzarka (humanoïde compact, 2 cornes droites, gueule fermée). Pas de reprise d'asset
-// réel, juste l'ambiance/la composition.
+// Vell — grand dragon des mers ORIGINAL. Silhouette redessinée le 2026-07-08 d'après la vraie
+// photo de référence fournie (tête à couronne de cornes/pointes façon mane, gueule grande ouverte
+// pleine de crocs, grandes ailes membraneuses déployées, torse à plaques claires/orangées, pattes
+// griffues) — franchement différente de Kzarka (humanoïde compact, 2 cornes, gueule fermée) :
+// ici une silhouette LARGE (ailes déployées) surmontée d'une couronne de pointes asymétriques et
+// d'une gueule grande ouverte. Pas de reprise d'asset réel, juste l'ambiance/la pose.
 function drawVell(cx, sx, sy, r, t) {
   cx.save();
   const glow = 0.5+0.5*Math.sin(t*2);
-  const sway = Math.sin(t*0.9)*r*0.02;
-  cx.fillStyle='rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(sx, sy+r*0.55, r*1.1, r*0.26, 0, 0, 7); cx.fill();
-  // socle drapé : grande masse enroulée façon vague/tissu d'où émerge la créature
-  const drapeG = cx.createLinearGradient(sx, sy-r*0.1, sx, sy+r*0.5);
-  drapeG.addColorStop(0,'#204450'); drapeG.addColorStop(1,'#0d222a');
-  cx.fillStyle = drapeG;
-  cx.beginPath();
-  cx.moveTo(sx-r*0.95, sy+r*0.15);
-  cx.quadraticCurveTo(sx-r*1.05, sy+r*0.4, sx-r*0.6, sy+r*0.5);
-  cx.quadraticCurveTo(sx-r*0.2, sy+r*0.62, sx+r*0.1, sy+r*0.48);
-  cx.quadraticCurveTo(sx+r*0.5, sy+r*0.34, sx+r*0.85, sy+r*0.48);
-  cx.quadraticCurveTo(sx+r*1.05, sy+r*0.56, sx+r*0.9, sy+r*0.2);
-  cx.quadraticCurveTo(sx+r*0.5, sy, sx, sy+r*0.08);
-  cx.quadraticCurveTo(sx-r*0.5, sy, sx-r*0.95, sy+r*0.15);
-  cx.closePath(); cx.fill();
-  // plis du drapé
-  cx.strokeStyle='rgba(150,210,220,.18)'; cx.lineWidth=r*0.02;
-  cx.beginPath(); cx.moveTo(sx-r*0.7,sy+r*0.25); cx.quadraticCurveTo(sx-r*0.3,sy+r*0.42,sx+r*0.05,sy+r*0.3); cx.stroke();
-  cx.beginPath(); cx.moveTo(sx+r*0.15,sy+r*0.32); cx.quadraticCurveTo(sx+r*0.5,sy+r*0.48,sx+r*0.75,sy+r*0.35); cx.stroke();
-  // queue fine et courbe partant vers la gauche, en dessous du drapé
-  cx.strokeStyle='#0e1c24'; cx.lineCap='round';
-  cx.beginPath(); cx.lineWidth=r*0.13;
-  cx.moveTo(sx-r*0.55,sy+r*0.1);
-  cx.quadraticCurveTo(sx-r*1.1,sy+r*0.05+sway, sx-r*1.35,sy-r*0.28);
-  cx.stroke();
-  cx.lineWidth=r*0.05;
-  cx.beginPath(); cx.moveTo(sx-r*1.2,sy-r*0.1); cx.quadraticCurveTo(sx-r*1.4,sy-r*0.25+sway, sx-r*1.5,sy-r*0.42); cx.stroke();
-  cx.lineCap='butt';
-  // torse : dos sombre écaillé émergeant du drapé
-  const body = cx.createLinearGradient(sx, sy-r*1.3, sx, sy+r*0.15);
+  const breathe = Math.sin(t*1.1)*r*0.02;
+  cx.fillStyle='rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(sx, sy+r*0.15, r*1.35, r*0.32, 0, 0, 7); cx.fill();
+  // grandes ailes membraneuses déployées de part et d'autre — silhouette large, jamais confondue
+  // avec le buste compact et les petits bras de Kzarka
+  const wing = (side) => {
+    cx.save(); cx.translate(sx,sy-r*0.5); cx.scale(side,1);
+    const wg = cx.createLinearGradient(0,-r*0.3,r*1.7,0);
+    wg.addColorStop(0,'#1c3a4a'); wg.addColorStop(1,'#0a1c26');
+    cx.fillStyle = wg;
+    cx.beginPath();
+    cx.moveTo(r*0.15,-r*0.25);
+    cx.quadraticCurveTo(r*0.9,-r*0.85, r*1.7,-r*0.55+breathe);
+    cx.quadraticCurveTo(r*1.35,-r*0.15, r*1.45,r*0.15);
+    cx.quadraticCurveTo(r*0.95,r*0.05, r*0.65,r*0.3);
+    cx.quadraticCurveTo(r*0.35,r*0.15, r*0.15,r*0.35);
+    cx.closePath(); cx.fill();
+    // nervures de l'aile
+    cx.strokeStyle='rgba(160,220,230,.2)'; cx.lineWidth=r*0.02;
+    cx.beginPath(); cx.moveTo(r*0.15,-r*0.25); cx.lineTo(r*1.6,-r*0.5+breathe); cx.stroke();
+    cx.beginPath(); cx.moveTo(r*0.15,-r*0.25); cx.lineTo(r*1.3,r*0.05); cx.stroke();
+    cx.restore();
+  };
+  wing(-1); wing(1);
+  // corps/torse : dos sombre écaillé, plastron clair orangé façon plaques ventrales
+  const body = cx.createLinearGradient(sx, sy-r*1.5, sx, sy+r*0.2);
   body.addColorStop(0,'#1c3a4a'); body.addColorStop(.6,'#12222c'); body.addColorStop(1,'#0a1620');
   cx.fillStyle = body;
   cx.beginPath();
-  cx.moveTo(sx-r*0.42,sy+r*0.12); cx.quadraticCurveTo(sx-r*0.5,sy-r*0.7, sx-r*0.2,sy-r*0.95);
-  cx.quadraticCurveTo(sx,sy-r*1.05, sx+r*0.2,sy-r*0.95);
-  cx.quadraticCurveTo(sx+r*0.5,sy-r*0.7, sx+r*0.42,sy+r*0.12);
-  cx.quadraticCurveTo(sx,sy+r*0.24, sx-r*0.42,sy+r*0.12);
+  cx.moveTo(sx-r*0.62,sy+r*0.12); cx.quadraticCurveTo(sx-r*0.7,sy-r*0.85, sx-r*0.28,sy-r*1.15);
+  cx.quadraticCurveTo(sx,sy-r*1.28, sx+r*0.28,sy-r*1.15);
+  cx.quadraticCurveTo(sx+r*0.7,sy-r*0.85, sx+r*0.62,sy+r*0.12);
+  cx.quadraticCurveTo(sx,sy+r*0.28, sx-r*0.62,sy+r*0.12);
   cx.closePath(); cx.fill();
-  // deux immenses cornes/ailes enroulées en "C" encadrant la tête — l'élément signature de cette
-  // version, remplace les ailes membraneuses déployées de la précédente
-  const hornC = (side) => {
-    cx.save(); cx.translate(sx,sy-r*0.85); cx.scale(side,1);
-    const hg = cx.createLinearGradient(0,-r*1.2,r*0.9,0);
-    hg.addColorStop(0,'#1c3a4a'); hg.addColorStop(1,'#0a1c26');
-    cx.fillStyle = hg;
-    cx.beginPath();
-    cx.moveTo(r*0.1,r*0.15);
-    cx.quadraticCurveTo(r*0.55,-r*0.05, r*0.68,-r*0.5);
-    cx.quadraticCurveTo(r*0.78,-r*0.95, r*0.45,-r*1.2+sway);
-    cx.quadraticCurveTo(r*0.5,-r*0.85, r*0.36,-r*0.55);
-    cx.quadraticCurveTo(r*0.24,-r*0.2, r*-0.05,-r*0.05);
-    cx.closePath(); cx.fill();
-    cx.strokeStyle='rgba(160,220,230,.2)'; cx.lineWidth=r*0.018;
-    cx.beginPath(); cx.moveTo(r*0.15,r*0.05); cx.quadraticCurveTo(r*0.6,-r*0.15, r*0.5,-r*1.05+sway); cx.stroke();
-    cx.restore();
-  };
-  hornC(-1); hornC(1);
-  // crête de petites pointes le long de la nuque/tête
-  cx.fillStyle = '#0e1c24';
-  const ridge = [[-0.32,-1.02,0.7],[-0.14,-1.14,0.9],[0.06,-1.18,0.95],[0.26,-1.1,0.8],[0.42,-0.94,0.6]];
-  for (const [dx,dy,len] of ridge) {
-    const bx=sx+dx*r*0.5, by=sy+dy*r*0.5;
-    cx.beginPath();
-    cx.moveTo(bx-r*0.05,by); cx.lineTo(bx+dx*r*0.3*len, by+dy*r*0.4*len); cx.lineTo(bx+r*0.05,by);
-    cx.closePath(); cx.fill();
-  }
-  // bras griffus repliés devant le torse, agrippant
+  // plastron clair orangé (plaques ventrales), au centre du torse
+  const chest = cx.createLinearGradient(sx,sy-r*0.9,sx,sy+r*0.1);
+  chest.addColorStop(0,'#d8a878'); chest.addColorStop(1,'#a87850');
+  cx.fillStyle = chest;
+  cx.beginPath();
+  cx.moveTo(sx-r*0.2,sy-r*0.95); cx.quadraticCurveTo(sx,sy-r*1.0, sx+r*0.2,sy-r*0.95);
+  cx.quadraticCurveTo(sx+r*0.28,sy-r*0.4, sx+r*0.16,sy+r*0.05);
+  cx.lineTo(sx-r*0.16,sy+r*0.05);
+  cx.quadraticCurveTo(sx-r*0.28,sy-r*0.4, sx-r*0.2,sy-r*0.95);
+  cx.closePath(); cx.fill();
+  cx.strokeStyle='rgba(90,60,36,.5)'; cx.lineWidth=r*0.015;
+  for (let i=1;i<=3;i++) { const py=sy-r*0.9+i*r*0.28;
+    cx.beginPath(); cx.moveTo(sx-r*0.22+i*r*0.02,py); cx.lineTo(sx+r*0.22-i*r*0.02,py); cx.stroke(); }
+  // pattes griffues courtes de part et d'autre du bas du torse
   cx.fillStyle = '#12222c';
   for (const side of [-1,1]) {
-    cx.beginPath(); cx.ellipse(sx+side*r*0.3,sy+r*0.02,r*0.13,r*0.22,side*0.35,0,7); cx.fill();
+    cx.beginPath(); cx.ellipse(sx+side*r*0.45,sy+r*0.15,r*0.14,r*0.2,side*0.2,0,7); cx.fill();
     cx.strokeStyle='#e8e2d0'; cx.lineWidth=r*0.025; cx.lineCap='round';
-    for (let c=-1;c<=1;c++) { cx.beginPath(); cx.moveTo(sx+side*r*0.28+c*r*0.05,sy+r*0.12); cx.lineTo(sx+side*r*0.24+c*r*0.06,sy+r*0.24); cx.stroke(); }
+    for (let c=-1;c<=1;c++) { cx.beginPath(); cx.moveTo(sx+side*r*0.45+c*r*0.05,sy+r*0.3); cx.lineTo(sx+side*r*0.45+c*r*0.06,sy+r*0.4); cx.stroke(); }
     cx.lineCap='butt';
   }
-  // tête : museau fin, gueule aux crocs visibles
-  const hy = sy-r*0.98;
+  // tête : gueule grande ouverte pleine de crocs, surmontée d'une COURONNE de pointes/cornes
+  // asymétriques (façon mane) — la signature visuelle qui distingue Vell de tout le reste
+  const hy = sy-r*1.05;
   cx.fillStyle = '#12222c';
-  cx.beginPath(); cx.ellipse(sx,hy,r*0.28,r*0.24,0,0,7); cx.fill();
-  cx.beginPath(); cx.ellipse(sx,hy+r*0.2,r*0.16,r*0.14,0,0,7); cx.fill();
-  // gueule, crocs, gorge sombre
-  cx.fillStyle='#4a0e0e'; cx.beginPath(); cx.ellipse(sx,hy+r*0.24,r*0.18,r*0.13,0,0,Math.PI); cx.fill();
+  cx.beginPath(); cx.ellipse(sx,hy,r*0.4,r*0.32,0,0,7); cx.fill();
+  // couronne de pointes (5, tailles/angles variés, asymétrique)
+  cx.fillStyle = '#0e1c24';
+  const spikes = [[-0.55,-0.55,1.0],[-0.28,-0.9,1.3],[0,-1.05,0.85],[0.3,-0.92,1.15],[0.58,-0.5,0.95]];
+  for (const [dx,dy,len] of spikes) {
+    const bx=sx+dx*r*0.55, by=hy+dy*r*0.55;
+    cx.beginPath();
+    cx.moveTo(bx-r*0.06,by); cx.lineTo(bx+dx*r*0.35*len, by+dy*r*0.55*len); cx.lineTo(bx+r*0.06,by);
+    cx.closePath(); cx.fill();
+  }
+  // gueule grande ouverte, crocs blancs, gorge rouge sombre
+  cx.fillStyle='#4a0e0e'; cx.beginPath(); cx.ellipse(sx,hy+r*0.22,r*0.3,r*0.24,0,0,Math.PI); cx.fill();
   cx.fillStyle='#e8e2d0';
-  for (let i=-2;i<=2;i++) { const tx=sx+i*r*0.07;
-    cx.beginPath(); cx.moveTo(tx-r*0.026,hy+r*0.14); cx.lineTo(tx,hy+r*0.28); cx.lineTo(tx+r*0.026,hy+r*0.14); cx.closePath(); cx.fill(); }
+  for (let i=-3;i<=3;i++) { const tx=sx+i*r*0.09;
+    cx.beginPath(); cx.moveTo(tx-r*0.032,hy+r*0.1); cx.lineTo(tx,hy+r*0.26); cx.lineTo(tx+r*0.032,hy+r*0.1); cx.closePath(); cx.fill();
+    cx.beginPath(); cx.moveTo(tx-r*0.03,hy+r*0.42); cx.lineTo(tx,hy+r*0.28); cx.lineTo(tx+r*0.03,hy+r*0.42); cx.closePath(); cx.fill(); }
   // yeux luminescents, petits et enfoncés
   cx.fillStyle = `rgba(255,${60+40*glow|0},60,1)`; cx.shadowColor='#ff3a3a'; cx.shadowBlur=12;
-  cx.beginPath(); cx.arc(sx-r*0.1,hy-r*0.02,r*0.05,0,7); cx.fill();
-  cx.beginPath(); cx.arc(sx+r*0.1,hy-r*0.02,r*0.05,0,7); cx.fill();
+  cx.beginPath(); cx.arc(sx-r*0.15,hy-r*0.06,r*0.06,0,7); cx.fill();
+  cx.beginPath(); cx.arc(sx+r*0.15,hy-r*0.06,r*0.06,0,7); cx.fill();
   cx.shadowBlur=0;
   cx.restore();
 }
@@ -9319,11 +9308,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V136', d:'08/07/2026 14:00', name:{fr:'Vell : nouvelle silhouette (cornes enroulées, socle drapé)', en:'Vell: new silhouette (curled horns, draped base)'}, fr:[
-      {t:'change', tx:'Silhouette de Vell redessinée une 3e fois d\'après une sculpture 3D de référence : deux immenses cornes/ailes enroulées en "C" qui encadrent la tête, une crête de pointes sur la nuque, un museau fin aux crocs visibles, des bras griffus repliés devant, une longue queue fine et courbe, le tout émergeant d\'un socle drapé façon vague/tissu enroulé'},
-    ], en:[
-      {t:'change', tx:'Vell\'s silhouette redesigned a 3rd time from a reference 3D sculpture: two huge horns/wings curled into a "C" shape framing the head, a spiked ridge along the neck, a slender snout with visible fangs, clawed arms folded in front, a long thin curved tail, all emerging from a draped wave/cloth-like base'},
-    ] },
   { v:'V135', d:'08/07/2026 13:00', name:{fr:'Correctif exploit World Boss, Vell dragon, notifications par onglets', en:'World Boss exploit fix, Vell dragon redesign, tabbed notifications'}, fr:[
       {t:'exploit', tx:'Corrigé un exploit sérieux : sur un boss partagé déjà mort, rentrer dans l\'arène redéclenchait la victoire et payait silver/matériau/loot rare une DEUXIÈME fois, alors que le serveur refusait déjà la réclamation en silence — le client accordait la récompense sans jamais vérifier si la réclamation avait réussi. Chaque victoire ne peut désormais être payée qu\'une seule fois'},
       {t:'change', tx:'Vell entièrement redessiné d\'après la vraie photo de référence : couronne de cornes/pointes asymétriques, grande gueule ouverte pleine de crocs, ailes membraneuses déployées, plastron clair/orangé, pattes griffues — une silhouette de dragon des mers, plus rien à voir avec le poisson/serpent précédent ni avec Kzarka'},
