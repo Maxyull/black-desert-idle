@@ -3323,10 +3323,7 @@ function drawBossCreature(bossId, cx, sx, sy, r, t) {
 // bateaux + tirs de canon (2026-07-08, demande explicite : "les joueurs sont autour en bateau et
 // lancent des boulets dessus") — dessinés SEULEMENT pour Vell. Réutilise le tableau bs.hits déjà
 // généré ~4×/s par bossLoop (chaque hit = un boulet, h.life 1→0 sert de progression de vol).
-// bateaux 10× plus gros (demande explicite du 2026-07-08) : repoussés vers les coins bas de l'écran
-// pour rester au premier plan sans recouvrir tout le combat malgré leur taille
-const VELL_BOATS = [ {x:0.04, y:0.92}, {x:0.96, y:0.92} ];
-const VELL_BOAT_SCALE = 13; // 1.3 × 10
+const VELL_BOATS = [ {x:0.10, y:0.74}, {x:0.90, y:0.74} ];
 function drawVellBoat(cx, sx, sy, scale, facingRight) {
   cx.save(); cx.translate(sx,sy); if (!facingRight) cx.scale(-1,1); cx.scale(scale,scale);
   cx.fillStyle='rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(0,4,26,7,0,0,7); cx.fill();
@@ -3379,8 +3376,8 @@ function drawBossRoom(t) {
   fog.addColorStop(0,'rgba(255,255,255,0)'); fog.addColorStop(1,`rgba(0,0,0,${isVell?.22:.4})`);
   cx.fillStyle = fog; cx.fillRect(0,0,W,H);
   if (isVell) { // bateaux des joueurs, de part et d'autre — demande explicite du 2026-07-08
-    drawVellBoat(cx, W*VELL_BOATS[0].x, H*VELL_BOATS[0].y, VELL_BOAT_SCALE, true);
-    drawVellBoat(cx, W*VELL_BOATS[1].x, H*VELL_BOATS[1].y, VELL_BOAT_SCALE, false);
+    drawVellBoat(cx, W*VELL_BOATS[0].x, H*VELL_BOATS[0].y, 1.3, true);
+    drawVellBoat(cx, W*VELL_BOATS[1].x, H*VELL_BOATS[1].y, 1.3, false);
   }
   // braises de corruption en arrière-plan (profondeur : plus loin = plus petit/lent/transparent)
   for (const e of bs.embers) {
@@ -3411,7 +3408,7 @@ function drawBossRoom(t) {
   if (isVell) {
     for (const h of bs.hits) {
       const boat = VELL_BOATS[h.x < 0.5 ? 0 : 1];
-      const bx = W*boat.x, by = H*boat.y - VELL_BOAT_SCALE*12; // départ du boulet à hauteur du pont, proportionnel à la taille du bateau
+      const bx = W*boat.x, by = H*boat.y - 20;
       const prog = 1-h.life; // 0 au départ du bateau, 1 à l'impact
       const px = bx + (bpos.x-bx)*prog;
       const py = by + (bpos.y-by)*prog - Math.sin(prog*Math.PI)*70; // arc parabolique
@@ -3464,25 +3461,8 @@ function drawBossRoom(t) {
       cx.fillStyle='#e8c96a'; cx.beginPath(); cx.moveTo(s.x,s.y-30); cx.lineTo(s.x+10,s.y-26); cx.lineTo(s.x,s.y-22); cx.closePath(); cx.fill();
     } else drawStonePillar(cx, s.x, s.y, Math.min(W,H)/500*1.6);
   } }));
-  // Vell (2026-07-08, demande explicite "fais plonger le personnage") : quand on s'abrite près
-  // d'une bouée pendant la charge, le héros disparaît sous l'eau (ridules + bulles) au lieu de
-  // rester debout comme si de rien n'était — bien plus lisible que le simple bouclier bleu.
-  const dodgingNow = bs.aoePhase==='telegraph' || bs.aoePhase==='blast';
-  const nearBuoy = isVell && bs.pillars.some(p => Math.hypot(p.x-bs.px, p.y-bs.py) < 0.10 && bs.py > p.y);
-  const diving = isVell && dodgingNow && nearBuoy;
   drawables.push({ ny:bs.py, fn:()=>{
     const s = bossProj(bs.px, bs.py);
-    if (diving) {
-      // ridules concentriques qui s'élargissent + bulles qui remontent, à la surface où il a plongé
-      cx.strokeStyle='rgba(200,230,255,.5)'; cx.lineWidth=1.4;
-      for (let i=0;i<3;i++) { const rr = 6+((t*30+i*9)%22);
-        cx.globalAlpha = Math.max(0,1-rr/22); cx.beginPath(); cx.ellipse(s.x,s.y,rr,rr*0.4,0,0,7); cx.stroke(); }
-      cx.globalAlpha = 1;
-      cx.fillStyle='rgba(220,240,255,.6)';
-      for (let i=0;i<4;i++) { const bx=s.x+Math.sin(t*3+i*2)*8, by=s.y-((t*18+i*7)%20);
-        cx.beginPath(); cx.arc(bx,by,1.4+i*0.3,0,7); cx.fill(); }
-      return;
-    }
     cx.fillStyle='rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(s.x, s.y, 12, 5, 0, 0, 7); cx.fill();
     // bouclier si paré
     if (bs.blockFlash>0) { cx.strokeStyle=`rgba(140,200,255,${bs.blockFlash})`; cx.lineWidth=3; cx.beginPath(); cx.arc(s.x, s.y-18, 20, 0, 7); cx.stroke(); }
@@ -9153,13 +9133,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V130', d:'08/07/2026 08:00', name:{fr:'Bateaux de Vell 10× plus gros, le héros plonge vraiment', en:'Vell\'s boats 10× bigger, hero really dives'}, fr:[
-      {t:'change', tx:'Les 2 bateaux du combat de Vell sont désormais 10× plus gros, repoussés dans les coins bas de l\'écran pour rester au premier plan sans recouvrir tout le combat'},
-      {t:'new', tx:'Le héros plonge VRAIMENT sous l\'eau quand il s\'abrite près d\'une bouée pendant la charge de Vell : il disparaît, remplacé par des ridules et des bulles qui remontent, au lieu de rester debout avec juste un bouclier bleu'},
-    ], en:[
-      {t:'change', tx:'Vell\'s 2 boats are now 10× bigger, pushed into the bottom corners of the screen to stay in the foreground without covering the whole fight'},
-      {t:'new', tx:'The hero now REALLY dives underwater when taking shelter near a buoy during Vell\'s charge: they vanish, replaced by ripples and rising bubbles, instead of just standing there with a blue shield'},
-    ] },
   { v:'V129', d:'08/07/2026 07:00', name:{fr:'Conseil de stuff & Craft regroupés, loot Velia condensé, Maîtrise PEN', en:'Grouped gear advice & Crafting, condensed Velia loot, PEN Mastery'}, fr:[
       {t:'change', tx:'Nouvelle carte "Conseil de stuff & Craft" en bas à droite, juste au-dessus de l\'Optimisation : regroupe le conseil de progression et TOUS les crafts (Trésor de Velia + conversion Poussière→Caphras), qui étaient auparavant éparpillés dans l\'Inventaire et l\'Optimisation'},
       {t:'fix', tx:'Le récapitulatif de loot "toutes zones" affiché à Velia est maintenant CONDENSÉ (1 ligne par zone, dépliable au clic) au lieu d\'afficher les 6 lignes de chaque zone d\'un coup — fini le scroll interminable'},

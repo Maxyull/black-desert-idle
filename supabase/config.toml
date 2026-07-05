@@ -1,0 +1,8 @@
+# Config minimal pour l'intégration GitHub de Supabase (Project Settings > Integrations).
+# Le project_id doit correspondre au projet Supabase réel (mkwwvzbjtyawpcyrnybk).
+# Voir supabase/README.md pour le contexte : ce dossier vient d'être créé, le schéma existant
+# a été construit avant l'intégration GitHub (via le SQL Editor / MCP Supabase), donc
+# supabase/migrations/ démarre vide — c'est sans risque, seules les migrations AJOUTÉES ici à
+# partir de maintenant seront poussées automatiquement au merge sur main.
+
+project_id = "mkwwvzbjtyawpcyrnybk"
