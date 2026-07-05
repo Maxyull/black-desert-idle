@@ -296,7 +296,7 @@
      sa voisine de rangée. Corrigé le 2026-07-06 (demande explicite : "pas que ça laisse des zones
      vides") avec align-self:start : ces 2 cartes ne s'étirent plus pour matcher leurs voisines,
      leur hauteur suit leur PROPRE contenu (plafonnée par max-height, avec défilement au-delà). */
-  #zonesCard, #lootCard { display:flex; flex-direction:column; align-self:start; }
+  #zonesCard, #lootCard, #statsCard { display:flex; flex-direction:column; align-self:start; }
   /* corrigé le 2026-07-05 : avec 16 zones (contre 12 avant), la liste dépassait largement la
      hauteur des cartes voisines au lieu de s'arrêter et défiler -- plafond dur pour toujours
      garder un défilement interne au-delà d'une hauteur raisonnable */

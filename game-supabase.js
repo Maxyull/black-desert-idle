@@ -2288,6 +2288,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V185', d:'06/07/2026 02:30', name:{fr:'Carte Statistiques sans espace vide', en:'Stats card without empty space'}, fr:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'La carte "Statistiques" s\'étirait elle aussi pour matcher la hauteur de ses voisines de rangée (Zones de farm/Loot), laissant un vide sous ses dernières lignes — suit maintenant sa propre hauteur de contenu, comme les 2 autres cartes de la rangée'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'The "Statistics" card also stretched to match its row neighbors\' height (Farming zones/Loot), leaving empty space under its last rows — now follows its own content height, like the other 2 cards in the row'},
+    ] },
   { v:'V184', d:'06/07/2026 02:00', name:{fr:'Joueurs par zone, niveau agrandi façon BDO, cartes sans espace vide, fix potion silencieuse', en:'Players per zone, BDO-style bigger level, no-empty-space cards, silent potion fix'}, fr:[
       {t:'new', sub:'interface', tx:'Nombre de joueurs actuellement présents affiché (👥 N) sur chaque zone de la liste de farm, masqué si personne n\'y est'},
       {t:'fix', sub:'interface', severity:'minor', tx:'Les cartes "Zones de farm" et "Loot de cette zone" s\'étiraient pour matcher la hauteur de leurs voisines de rangée, laissant un grand vide sous une liste courte — elles suivent maintenant leur propre contenu (toujours plafonnées avec défilement au-delà)'},
