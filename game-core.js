@@ -223,7 +223,7 @@ const Z = () => ZONES[zoneIdx];
 const S = {
   silver: 0, kills: 0, lootCount: 0, lvl: 1, xp: 0, xpNext: 1, // xpNext = LEVEL_XP_TABLE[lvl] (voir gainXp)
   pa: 4, dp: 10,   // PA innée (le gros vient de l'arme équipée ci-dessous)
-  castMult: 1, hpMax: 100, lootRadius: 26,
+  castMult: 1, hpMax: 100, mpMax: 100, lootRadius: 26, // mpMax (2026-07-05) : réserve de mana, voir SKILLS[].mp et usePotionMana()
   bossesKilled: {}, // Compendium World Boss (2026-07-08) : { [bossId]: true } dès qu'un World Boss a été vaincu au moins une fois (voir compendiumBossCount)
   penMastery: {}, // Compendium spécial "Maîtrise PEN" (2026-07-08) : { [itemName]: true } dès que cet objet a atteint PEN au moins une fois (voir markPenMastery)
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
@@ -619,6 +619,9 @@ function equipHP() {
   return h;
 }
 const effHpMax = () => S.hpMax + equipHP();
+// mana (2026-07-05, demande explicite) : pas de bonus d'équipement pour l'instant, juste la
+// réserve de base -- suit le même patron que effHpMax() pour rester facile à étendre plus tard
+const effManaMax = () => S.mpMax;
 // Esquive (2026-07-08) : stat de % dropée UNIQUEMENT sur les 4 pièces d'armure (voir GEAR_ROLE),
 // enchantée comme AP/DP/PV (itemMult). Chaque point de % réduit la chance de subir un coup.
 function equipDodge() {
@@ -2550,8 +2553,10 @@ function badgeOf(r) {
 // t'ont aggro deviennent plus rapides (demande explicite du 2026-07-05 : "tu es plus lent, les
 // monstres sont plus rapides")
 function isZoneDangerous() { return bottleneck() < 0.6; }
-const DANGER_PLAYER_SPEED_MULT = 0.7;
-const DANGER_MOB_SPEED_MULT = 1.35;
+// valeurs durcies le 2026-07-05 (demande explicite : "un plus gros ralenti du joueur et une
+// vitesse plus élevée des monstres") -- étaient 0.7/1.35 à l'introduction de cette mécanique
+const DANGER_PLAYER_SPEED_MULT = 0.5;
+const DANGER_MOB_SPEED_MULT = 1.7;
 function aiMode() {
   const r = bottleneck();
   if (r >= 1.5) return 'overgeared';
@@ -2581,18 +2586,24 @@ function toggleFarmMode() {
 }
 
 // ==================== COMPÉTENCES ====================
+// mp (2026-07-05, demande explicite : "ajoute de la mana au sort") : coût en mana par lancer,
+// grossièrement proportionnel à la puissance/au cooldown du sort -- avec mpMax:100 et une régén
+// passive (voir MANA_REGEN_PER_SEC), gate occasionnellement les gros sorts sans jamais bloquer
+// durablement le combat automatique (les petits sorts bon marché restent toujours castables)
 const SKILLS = [
-  { id:'speed',   name:'Speed Spell',        ic:'✦', cd:26, prio:0, type:'buff', dur:9,  castT:.35 },
-  { id:'meteor',  name:'Meteor Shower',      ic:'☄', cd:19, prio:1, dmg:8.5, castT:.85, vfx:'meteor', shake:8 },
-  { id:'blizzard',name:'Blizzard',           ic:'❄', cd:15, prio:2, dmg:6.8, castT:.7,  vfx:'ice' },
-  { id:'thunder', name:'Thunder Storm',      ic:'⚡', cd:12, prio:3, dmg:5.6, castT:.6,  vfx:'bolt', shake:4 },
-  { id:'bolide',  name:'Bolide of Destr.',   ic:'✹', cd:10, prio:4, dmg:4.8, castT:.55, vfx:'fire', shake:3 },
-  { id:'quake',   name:'Earthquake',         ic:'▲', cd:8,  prio:5, dmg:3.6, castT:.5,  vfx:'quake', shake:6 },
-  { id:'lstorm',  name:'Lightning Storm',    ic:'☇', cd:6,  prio:6, dmg:2.9, castT:.45, vfx:'bolt' },
-  { id:'equil',   name:'Equilibrium Break',  ic:'◉', cd:5,  prio:7, dmg:2.2, castT:.4,  vfx:'spark' },
-  { id:'fireball',name:'Fireball Explosion', ic:'●', cd:2.2,prio:8, dmg:1.5, castT:.38, vfx:'fire' },
-  { id:'voltaic', name:'Voltaic Pulse',      ic:'∿', cd:1.1,prio:9, dmg:1.0, castT:.32, vfx:'spark' },
+  { id:'speed',   name:'Speed Spell',        ic:'✦', cd:26, prio:0, type:'buff', dur:9,  castT:.35, mp:15 },
+  { id:'meteor',  name:'Meteor Shower',      ic:'☄', cd:19, prio:1, dmg:8.5, castT:.85, vfx:'meteor', shake:8, mp:40 },
+  { id:'blizzard',name:'Blizzard',           ic:'❄', cd:15, prio:2, dmg:6.8, castT:.7,  vfx:'ice', mp:32 },
+  { id:'thunder', name:'Thunder Storm',      ic:'⚡', cd:12, prio:3, dmg:5.6, castT:.6,  vfx:'bolt', shake:4, mp:26 },
+  { id:'bolide',  name:'Bolide of Destr.',   ic:'✹', cd:10, prio:4, dmg:4.8, castT:.55, vfx:'fire', shake:3, mp:22 },
+  { id:'quake',   name:'Earthquake',         ic:'▲', cd:8,  prio:5, dmg:3.6, castT:.5,  vfx:'quake', shake:6, mp:18 },
+  { id:'lstorm',  name:'Lightning Storm',    ic:'☇', cd:6,  prio:6, dmg:2.9, castT:.45, vfx:'bolt', mp:14 },
+  { id:'equil',   name:'Equilibrium Break',  ic:'◉', cd:5,  prio:7, dmg:2.2, castT:.4,  vfx:'spark', mp:10 },
+  { id:'fireball',name:'Fireball Explosion', ic:'●', cd:2.2,prio:8, dmg:1.5, castT:.38, vfx:'fire', mp:6 },
+  { id:'voltaic', name:'Voltaic Pulse',      ic:'∿', cd:1.1,prio:9, dmg:1.0, castT:.32, vfx:'spark', mp:3 },
 ];
+const MANA_REGEN_PER_SEC = 8; // régén passive, indépendante du combat
+const MANA_POTION = { name:{fr:'Potion de mana',en:'Mana Potion'}, cost:110, restore:0.4, cd:4.5 };
 const cds = {}; SKILLS.forEach(s => cds[s.id] = 0);
 let buffTimer = 0, teleportCd = 0, evasionCd = 0;
 
@@ -2615,11 +2626,11 @@ function screenToWorld(sx, sy) {
 
 // ==================== JOUEUR ====================
 const P = {
-  x: 0, y: 0, hp: 100,
+  x: 0, y: 0, hp: 100, mp: 100, // mp (2026-07-05) : réserve de mana courante, voir effManaMax()
   state: 'search', stateT: 0,
   castTimer: 0, castingSkill: null, castProgress: 0,
   bob: 0, faceX: 1, orbitDir: 1, orbitAng: 0,
-  potCd: 0, faint: 0, tpFlash: 0, lootTarget: null, lootClusterX: 0, lootClusterY: 0,
+  potCd: 0, manaPotCd: 0, faint: 0, tpFlash: 0, lootTarget: null, lootClusterX: 0, lootClusterY: 0,
   manualTarget: null, manualMoveT: 0,
 };
 const BASE_SPEED = 92;
@@ -2748,6 +2759,16 @@ function usePotion() {
   P.hp = Math.min(effHpMax(), P.hp + effHpMax()*pot.heal);
   floatTxt(P.x,P.y,90,'+PV',{green:true});
 }
+// potion de mana (2026-07-05, demande explicite : "ajoute ... une potion de mana") -- un seul
+// palier pour l'instant (pas de choix de taille comme les potions de PV), même mécanique
+function usePotionMana() {
+  if (S.silver < MANA_POTION.cost) { P.manaPotCd = 1; return; } // pas assez de silver : réessaie vite
+  S.silver -= MANA_POTION.cost;
+  floatTxt(P.x,P.y,80,'-'+fmt(MANA_POTION.cost)+'🪙',{hurt:true});
+  P.manaPotCd = MANA_POTION.cd;
+  P.mp = Math.min(effManaMax(), P.mp + effManaMax()*MANA_POTION.restore);
+  floatTxt(P.x,P.y,90,'+MP',{blue:true});
+}
 // sélecteur de potion : le joueur choisit laquelle des 4 tailles utiliser automatiquement en
 // combat — le soin affiché (en PV) dépend de ses PV max actuels, mis à jour à chaque ouverture
 function renderPotSelect() {
@@ -2797,6 +2818,11 @@ function fsm(dt) {
   P.potCd = Math.max(0, P.potCd-dt);
   const tier = hpTier();
   if ((P.hp/effHpMax()) <= (S.potionThreshold ?? 0.5) && P.potCd <= 0) usePotion();
+  // mana (2026-07-05, demande explicite) : régén passive + potion de mana auto-bue sous 30%,
+  // même principe que la potion de PV mais seuil fixe (pas de réglage joueur pour l'instant)
+  P.mp = Math.min(effManaMax(), P.mp + MANA_REGEN_PER_SEC*dt);
+  P.manaPotCd = Math.max(0, P.manaPotCd-dt);
+  if ((P.mp/effManaMax()) <= 0.3 && P.manaPotCd <= 0) usePotionMana();
   if (tier==='urgence' && teleportCd <= 0 && target && !target.dead) {
     doTeleport(P.x-target.x, P.y-target.y);
     teleportCd = 0; doTeleport(P.x-target.x, P.y-target.y);
@@ -2878,8 +2904,10 @@ function fsm(dt) {
 
 function pickSkill() {
   const buff = SKILLS.find(s=>s.type==='buff');
-  if (buffTimer <= 0 && cds[buff.id] <= 0) return buff;
-  const ready = SKILLS.filter(s=>!s.type && cds[s.id]<=0).sort((a,b)=>a.prio-b.prio);
+  if (buffTimer <= 0 && cds[buff.id] <= 0 && P.mp >= buff.mp) return buff;
+  // affordable (2026-07-05, demande explicite) : un sort dont le coût en mana dépasse la réserve
+  // actuelle n'est simplement pas proposé -- l'IA retombe sur un sort moins cher, ou aucun (kite)
+  const ready = SKILLS.filter(s=>!s.type && cds[s.id]<=0 && P.mp >= s.mp).sort((a,b)=>a.prio-b.prio);
   if (!ready.length) return null;
   const best = ready[0];
   if (best.prio >= 8) {
@@ -2921,6 +2949,7 @@ function combatTick(dt) {
   if (sk) {
     P.castingSkill = sk;
     P.castTimer = sk.castT/S.castMult;
+    P.mp = Math.max(0, P.mp - sk.mp); // coût en mana prélevé au lancer, pas à la résolution
     cds[sk.id] = sk.cd * (mode==='overgeared'?.85:1);
     $('aiSkill').textContent = sk.name;
   } else if (tier !== 'agressif' || mode === 'défensif') setState('kite');
@@ -4318,14 +4347,9 @@ function drawWitchIso(t) {
   if (P.faceX < 0) ctx.scale(-1,1);
   witchBody(t, P.castingSkill != null);
   ctx.restore();
-  if (P.castingSkill) {
-    ctx.fillStyle='rgba(0,0,0,.6)'; ctx.fillRect(c.sx-24,c.sy-78,48,4);
-    ctx.fillStyle='#9cc9e8'; ctx.fillRect(c.sx-24,c.sy-78,48*Math.min(1,P.castProgress),4);
-  }
-  const hpPct = P.hp/effHpMax();
-  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(c.sx-20,c.sy-70,40,4);
-  ctx.fillStyle = hpPct>.5?'#7aa35e':hpPct>.25?'#c9a55a':'#c05545';
-  ctx.fillRect(c.sx-20,c.sy-70,40*hpPct,4);
+  // barre d'incantation et de PV retirées d'au-dessus du personnage (2026-07-05, demande
+  // explicite) : la barre d'incantation vit désormais près de la barre de sorts (#castBar) et
+  // la barre de PV reste uniquement en bas à gauche (#hpBar) -- voir renderCastBar()/hud()
 }
 
 function witchBody(t,casting) {
@@ -4615,6 +4639,8 @@ function die() {
 function refreshStatsOnly() {
   const invFullEl = $('invFullBanner');
   if (invFullEl) invFullEl.classList.toggle('show', invUsed() >= INV_SIZE);
+  const dangerEl = $('dangerBanner');
+  if (dangerEl) dangerEl.classList.toggle('show', !atVelia && isZoneDangerous());
   const apR = apRatio(), dpR = dpRatio(), z = Z();
   $('silver').textContent = fmt(S.silver);
   $('invLvl').textContent = S.lvl;
@@ -4623,6 +4649,7 @@ function refreshStatsOnly() {
   $('stPA').textContent = Math.round(apEff()*10)/10;
   $('stDP').textContent = Math.round(totalDP()*10)/10;
   $('stHpMax').textContent = fmt(Math.round(effHpMax()));
+  $('stMpMax').textContent = fmt(Math.round(effManaMax()));
   $('stSpd').textContent = '+' + Math.round(totalSpdPct()) + '%';
   $('stDodge').textContent = Math.round(totalDodgePct(dpR)*10)/10 + '%';
   // affiche l'état du Compendium directement dans la zone de farm — demande explicite du 2026-07-08
@@ -4710,6 +4737,12 @@ function hudFast() {
   const hpPct = Math.max(0,P.hp/effHpMax()*100);
   $('hpFill').style.width = hpPct+'%';
   $('hpPct').textContent = Math.round(hpPct)+'%';
+  // mana (2026-07-05, demande explicite) : même principe que la barre de PV, juste en dessous
+  if (P.mp > effManaMax()) P.mp = effManaMax();
+  const mpPct = Math.max(0,P.mp/effManaMax()*100);
+  $('mpFill').style.width = mpPct+'%';
+  $('mpPct').textContent = Math.round(mpPct)+'%';
+  $('manaPotCd').style.height = (P.manaPotCd/MANA_POTION.cd*100)+'%';
   const pot = POTIONS[S.potionType] || POTIONS.medium;
   $('potCd').style.height = (P.potCd/pot.cd*100)+'%';
   const potIcon = $('potIcon');
@@ -4723,6 +4756,19 @@ function hudFast() {
     el.classList.toggle('cast', P.castingSkill===s);
     el.classList.toggle('buffed', s.type==='buff' && buffTimer>0);
   }
+  renderCastBar();
+}
+// barre d'incantation (2026-07-05, demande explicite) : "----------o----------", la matière se
+// retire des 2 côtés vers le centre au fil du temps -- le sort part quand elle a disparu. scaleX
+// part de 1 (barre pleine) et va vers 0 (juste le point central) en suivant P.castProgress.
+function renderCastBar() {
+  const bar = $('castBar');
+  if (!P.castingSkill) { bar.classList.remove('show'); return; }
+  bar.classList.add('show');
+  const remain = Math.max(0, 1 - P.castProgress);
+  $('castBarLeft').style.transform = `scaleX(${remain})`;
+  $('castBarRight').style.transform = `scaleX(${remain})`;
+  $('castBarLabel').textContent = P.castingSkill.name;
 }
 
 // ==================== BOUCLE ====================
