@@ -1436,29 +1436,6 @@
        largeur pour se répartir sur 3-4 par ligne, le texte passe en dessous. */
     #activitiesBar { flex-direction:column; align-items:stretch; gap:6px; }
     #nextBossMini { text-align:center; }
-    /* La zone de jeu (canvas) est déjà responsive (width:100%), mais toute sa surcouche HTML
-       (textes/icônes positionnés en absolu par-dessus) est calibrée en pixels fixes pour un canvas
-       ~1240px de large — une fois le canvas réduit à la largeur d'un téléphone (~360-380px), ces
-       éléments se chevauchent et débordent (confirmé sur un vrai téléphone) :
-       - #aiState (centré, "IA : ...") recouvrait #zoneTitle (aligné à gauche) → décalé plus bas
-       - #skillBar (9 icônes de 42px + espaces ≈ 418px de large, centré) dépassait des 2 côtés du
-         cadre de jeu, coupant les icônes de bord → icônes réduites pour tenir dans la largeur */
-    /* le cadre de jeu devient très bas sur téléphone (son ratio suit la largeur, ~135px de haut à
-       390px de large) : pas la place d'empiler proprement #zoneTitle, #aiState et #skillBar sans
-       chevauchement. #aiState n'est qu'un indicatif ("IA : SearchPack · Bolide"), pas essentiel au
-       jeu (le combat reste automatique) — masqué sur téléphone plutôt que de le caser de force */
-    #aiState { display:none; }
-    #skillBar { gap:3px; }
-    #skillBar .sk { width:30px; height:30px; }
-    #skillBar .sk .ic { font-size:11px; }
-    #skillBar .sk .nm { font-size:5.5px; margin-top:1px; }
-    /* la barre de vie/potion (bas-gauche) et la barre de sorts (bas-centre) se marchent encore un
-       peu dessus à cette largeur — la barre de vie réduite laisse un peu plus de respiration (le
-       % exact reste lisible dans la barre, et le détail est de toute façon dans la carte
-       Statistiques en dessous) ; un vrai découpage sans aucun chevauchement demanderait de revoir
-       aussi #zoneTitle (2-3 lignes), pas fait dans cette passe */
-    #hpBar { width:110px; }
-    #potSlot { width:28px; height:28px; }
   }
 </style>
 </head>
@@ -9520,15 +9497,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V155', d:'05/07/2026 10:30', name:{fr:'Correctifs mobile : barre de sorts coupée, IA superposée', en:'Mobile fixes: cropped skill bar, overlapping AI status'}, fr:[
-      {t:'fix', tx:'Sur téléphone, la barre de 9 sorts (calibrée pour ~418px de large) dépassait des 2 côtés du cadre de jeu réduit (~360-380px), coupant les icônes de bord (ex: "Speed" et "Voltaic" à moitié visibles). Icônes réduites pour tenir entièrement dans le cadre'},
-      {t:'fix', tx:'Le texte "IA : ..." se superposait au nom de la zone — le cadre de jeu devient très bas sur téléphone (son ratio suit la largeur), pas assez de place pour empiler proprement les deux. Masqué sur téléphone (indicatif seulement, le combat reste automatique)'},
-      {t:'change', tx:'Barre de vie/potion légèrement réduite sur téléphone pour laisser plus de place à la barre de sorts juste à côté — un chevauchement résiduel entre les deux subsiste sur les téléphones les plus étroits, une refonte plus profonde (titre de zone notamment) serait nécessaire pour l\'éliminer complètement'},
-    ], en:[
-      {t:'fix', tx:'On phone, the 9-skill bar (sized for ~418px wide) overflowed both sides of the shrunk game frame (~360-380px), cropping the edge icons (e.g. "Speed" and "Voltaic" half-cut). Icons shrunk to fit entirely within the frame'},
-      {t:'fix', tx:'The "AI: ..." status text overlapped the zone name — the game frame becomes very short on phone (its ratio follows the width), not enough room to stack both cleanly. Hidden on phone (informational only, combat stays automatic)'},
-      {t:'change', tx:'HP/potion bar slightly shrunk on phone to leave more room for the skill bar right next to it — a residual overlap between the two remains on the narrowest phones; a deeper redesign (notably the zone title) would be needed to fully eliminate it'},
-    ] },
   { v:'V154', d:'05/07/2026 10:00', name:{fr:'Correctif mobile : barre d\'onglets empilée sur 8 lignes', en:'Mobile fix: tab bar stacked into 8 rows'}, fr:[
       {t:'fix', tx:'Sur téléphone, les 8 onglets (Zone/Boss/Pêche/Mine/Forêt/Champs/Bergerie/Atelier royal) et le texte "Prochain boss" se partageaient une seule ligne — le texte, assez long, écrasait la largeur dispo pour les onglets, forcés à 1 seul par ligne (8 lignes de haut, confirmé sur un vrai téléphone). Empilés l\'un sous l\'autre à la place : les onglets se répartissent maintenant sur 3-4 par ligne'},
     ], en:[
