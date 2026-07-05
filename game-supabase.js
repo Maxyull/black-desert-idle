@@ -3380,7 +3380,7 @@ let updateToastShown = false;
 async function checkForUpdate() {
   if (updateToastShown) return;
   try {
-    const res = await fetch('./index.html?_=' + Date.now(), { cache: 'no-store' });
+    const res = await fetch('./game-supabase.js?_=' + Date.now(), { cache: 'no-store' });
     const text = await res.text();
     const m = text.match(/const PATCH_NOTES = \[\s*\{\s*v:\s*'([^']+)'/);
     if (m && m[1] !== CURRENT_VERSION) {
