@@ -1906,6 +1906,7 @@ const S = {
   silver: 0, kills: 0, lootCount: 0, lvl: 1, xp: 0, xpNext: 1, // xpNext = LEVEL_XP_TABLE[lvl] (voir gainXp)
   pa: 4, dp: 10,   // PA innée (le gros vient de l'arme équipée ci-dessous)
   castMult: 1, hpMax: 100, lootRadius: 26,
+  zonesCollected: {}, // Compendium (2026-07-08) : { [zoneIdx]: true } dès qu'un objet a été ramassé au moins une fois dans cette zone — sert au bonus de collection (voir compendiumZoneCount)
   bossesKilled: {}, // Compendium World Boss (2026-07-08) : { [bossId]: true } dès qu'un World Boss a été vaincu au moins une fois (voir compendiumBossCount)
   penMastery: {}, // Compendium spécial "Maîtrise PEN" (2026-07-08) : { [itemName]: true } dès que cet objet a atteint PEN au moins une fois (voir markPenMastery)
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
@@ -2313,20 +2314,12 @@ const dpRatio = (z) => totalDP() / (z || Z()).reqDP;
 const bottleneck = (z) => Math.min(apRatio(z), dpRatio(z));
 
 // ==================== COMPENDIUM (bonus de collection) ====================
-// demande explicite du 2026-07-08 : le bonus d'une zone n'est actif QUE si les 4 objets de cette
-// zone (trash/matériau du palier/bijou jackpot/objet craft) ont TOUS déjà été obtenus au moins une
-// fois — pas juste "avoir farmé la zone une fois" comme avant. Entièrement CALCULÉ à la volée à
-// partir de S.lootByItem (jamais un flag stocké séparément) : donc automatiquement rétroactif, y
-// compris pour les objets obtenus dans d'autres zones du même palier (matériau/bijou partagés).
-function zoneItemNames(zi) {
-  const z = ZONES[zi], tier = gearTierForZone(zi);
-  return [tr(z.loot.trash.name), tr(tier.material.name), tr(z.loot.jackpot.name), tr(z.loot.craft.name)];
-}
-function zoneFullyCollected(zi) { return zoneItemNames(zi).every(n => compendiumItemDone(n)); }
-// appelé après chaque ramassage d'objet (voir dropsTick) : détecte le passage "incomplet → complet"
-// pour cette zone précise, et affiche la même notif +1% qu'avant (floatTxt + Discord)
-function checkZoneCompendiumUnlock(zi, wasDone) {
-  if (wasDone || !zoneFullyCollected(zi)) return;
+// demande explicite du 2026-07-08 : avoir ramassé AU MOINS 1 objet de chaque zone donne +1% SPD,
+// +1% DMG, +1% Esquive PAR zone — additif, jamais un multiplicateur (ex: les 11 zones de Velia
+// donnent +11% de chaque, pas +100%/×2). Persisté via S.zonesCollected (voir dropsTick).
+function markZoneCollected(zi) {
+  if (S.zonesCollected[zi]) return;
+  S.zonesCollected[zi] = true;
   floatTxt(P.x, P.y, 96, '📖 Compendium — '+tr(ZONES[zi].name), { gold:true });
   const zc = compendiumZoneCount();
   logToDiscord('📖 Compendium', `**${myPseudo||'Joueur'}** débloque le bonus de **${tr(ZONES[zi].name)}** (${zc}/${ZONES.length} zones${zc>=ZONES.length?' — COMPENDIUM COMPLET ✓':''})`, 0xc9a55a);
@@ -2340,7 +2333,7 @@ function markBossDefeated(bossId) {
   floatTxt(P.x, P.y, 96, '📖 Compendium — '+b.name[LANG], { gold:true });
   logToDiscord('📖 Compendium', `**${myPseudo||'Joueur'}** débloque le bonus de **${b.name.fr}** (World Boss)`, 0xc9a55a);
 }
-function compendiumZoneCount() { return ZONES.reduce((n,z,zi) => n + (zoneFullyCollected(zi)?1:0), 0); }
+function compendiumZoneCount() { return Object.keys(S.zonesCollected||{}).length; }
 function compendiumBossCount() { return Object.keys(S.bossesKilled||{}).length; }
 function compendiumTotalCount() { return compendiumZoneCount() + compendiumBossCount(); }
 function compendiumTotalMax() { return ZONES.length + Object.keys(BOSS_ROSTER).length; }
@@ -3764,8 +3757,9 @@ function openAchievements() {
 }
 
 // ---------- Compendium (bonus de collection par zone) — demande explicite du 2026-07-08 ----------
-// le bonus d'une zone n'est actif QUE si ses 4 objets (trash/matériau/bijou/craft) ont TOUS déjà
-// été obtenus au moins une fois (voir zoneFullyCollected/compendiumZoneCount) — pas juste 1 seul.
+// pas un vrai "dex" objet par objet : le bonus ne dépend que d'avoir ramassé AU MOINS 1 objet dans
+// chaque zone (voir markZoneCollected/compendiumZoneCount). Le détail par objet ci-dessous (trash/
+// matériau/bijou/craft) est juste informatif, pour savoir ce qu'on a déjà croisé dans chaque zone.
 function compendiumItemDone(name) { return (S.lootByItem[name]||0) > 0; }
 // clic sur un objet du Compendium : montre (halo doré) TOUTES les zones qui le lootent, et propose
 // d'y aller directement — demande explicite du 2026-07-08 ("je clique sur Ceinture de Naru j'ai un
@@ -3849,14 +3843,15 @@ function renderCompendiumHtml() {
       }).join('') + `</div>`;
   } else {
     bodyHtml = ZONES.map((z,zi) => {
-      const items = zoneItemNames(zi);
-      const unlocked = zoneFullyCollected(zi);
+      const tier = gearTierForZone(zi);
+      const items = [ tr(z.loot.trash.name), tr(tier.material.name), tr(z.loot.jackpot.name), tr(z.loot.craft.name) ];
+      const unlocked = !!S.zonesCollected[zi];
       const itemsHtml = items.map(name => `<span class="compItem${compendiumItemDone(name)?' done':''}" data-item="${escapeHtml(name)}">${compendiumItemDone(name)?'✓':'○'} ${escapeHtml(name)}</span>`).join('');
       return `<div class="achRow compZoneRow${unlocked?' done':''}" data-zi="${zi}">` +
         `<div class="achIcon">${unlocked?'📖':'🔒'}</div>` +
         `<div class="achInfo"><div class="achName">${tr(z.name)}</div>` +
         `<div class="achDesc compItems">${itemsHtml}</div></div>` +
-        `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Objet manquant':'Missing item')}</div></div>`;
+        `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Non visitée':'Not visited')}</div></div>`;
     }).join('');
   }
   return summaryCard + bodyHtml;
@@ -4915,9 +4910,8 @@ function dropsTick(dt) {
         floatTxt(l.x,l.y,40,it.name,{silver:true});
         particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
         queueFarmEvent(it.kind, it.name, 1, l.silver);
-        const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
         trackLoot(it.name);
-        checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
+        markZoneCollected(zoneIdx); // Compendium : 1er objet ramassé dans cette zone
         continue;
       }
 
@@ -4941,9 +4935,8 @@ function dropsTick(dt) {
       l.taken = true;
       S.lootCount++;
       queueFarmEvent(it.kind, it.name, 1, l.silver);
-      const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
       trackLoot(it.name);
-      checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
+      markZoneCollected(zoneIdx); // Compendium : 1er objet ramassé dans cette zone
       if (it.kind === 'jackpot') {
         S.jackpotCount = (S.jackpotCount||0) + 1;
         lootLine(it, l.silver, 'jackpot');
@@ -7365,6 +7358,12 @@ function applySaveState(data) {
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
   if (!POTIONS[S.potionType]) S.potionType = 'medium'; // migre l'ancienne potion unique 'basic' vers les 4 tailles
+  // rattrape le Compendium (2026-07-08, bug corrigé) : S.zonesCollected n'existe que depuis V128,
+  // alors que S.lootByItem existe depuis bien plus longtemps — un joueur qui possède déjà l'objet
+  // "trash" (unique par zone, ex: "Viande de loup" pour Camp des Loups) a forcément déjà farmé
+  // cette zone, même si elle n'était jamais marquée visitée faute d'avoir existé à l'époque
+  S.zonesCollected = S.zonesCollected || {};
+  ZONES.forEach((z,zi) => { if (!S.zonesCollected[zi] && (S.lootByItem[z.loot.trash.name]||0) > 0) S.zonesCollected[zi] = true; });
   resetWorld(); // recrée les packs de la zone chargée
   if (data.playerPos) { P.x = data.playerPos.x; P.y = data.playerPos.y; }
   hud();
@@ -9414,11 +9413,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V150', d:'09/07/2026 01:00', name:{fr:'Compendium : bonus de zone = TOUS les objets obtenus', en:'Compendium: zone bonus = ALL items obtained'}, fr:[
-      {t:'change', tx:'Le bonus +1% d\'une zone n\'est désormais actif que si ses 4 objets (trash, matériau, bijou jackpot, objet craft) ont TOUS déjà été obtenus au moins une fois — avant, un seul suffisait. Une zone incomplète affiche "Objet manquant" au lieu de "Non visitée". Entièrement recalculé à partir de tes objets déjà possédés : aucune perte de progression, le changement s\'applique rétroactivement dès le rechargement'},
-    ], en:[
-      {t:'change', tx:'A zone\'s +1% bonus is now only active if ALL 4 of its items (trash, material, jackpot jewel, craft item) have been obtained at least once — previously just one was enough. An incomplete zone now shows "Missing item" instead of "Not visited". Fully recomputed from items you already own: no progress lost, the change applies retroactively as soon as you reload'},
-    ] },
   { v:'V149', d:'09/07/2026 00:30', name:{fr:'Tutoriel du Compendium', en:'Compendium tutorial'}, fr:[
       {t:'new', tx:'Nouveau bouton "?" en haut à droite du Compendium : lance un mini-tutoriel expliquant la progression globale, les 4 onglets, comment lire une zone, la Maîtrise PEN et le Sac protégé. Se lance automatiquement à la toute première ouverture du panneau, et peut être relancé à tout moment avec ce bouton'},
     ], en:[
