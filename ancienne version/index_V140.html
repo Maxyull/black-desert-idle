@@ -2971,24 +2971,7 @@ function leaveBossChannel() {
 }
 // 4 piliers de la salle (coords normalisées 0..1) — on se cache DERRIÈRE (en dessous) pour éviter l'AoE
 const BOSS_PILLARS = [{x:.28,y:.44},{x:.72,y:.44},{x:.28,y:.72},{x:.72,y:.72}];
-// 10 spots fixes où chaque joueur "attaque" (2026-07-08, demande explicite : "prévoir une dizaine
-// de spot fixe pour les joueurs... les joueurs vont arriver aléatoirement dans une des zones
-// prévues et se voir") — remplace l'ancien BOSS_ATTACK_POS unique où tout le monde se superposait
-// exactement au même endroit ; chaque joueur pioche un spot au hasard au début du combat (voir
-// startBossFight) et y revient entre deux AoE, ce qui les répartit visiblement dans l'arène tout en
-// restant à portée pour la stratégie commune (esquive vers le pilier/l'ancre le plus proche)
-const BOSS_SPOTS_KZARKA = [
-  {x:.18,y:.58},{x:.50,y:.52},{x:.82,y:.58},
-  {x:.28,y:.66},{x:.72,y:.66},
-  {x:.14,y:.76},{x:.38,y:.80},{x:.50,y:.84},{x:.62,y:.80},{x:.86,y:.76},
-];
-// Vell : les joueurs sont sur les pontons des 2 bateaux (demande explicite du 2026-07-08), 5 spots
-// par bateau échelonnés le long du pont, pas dans l'eau
-const BOSS_SPOTS_VELL = [
-  {x:.06,y:.86},{x:.11,y:.89},{x:.16,y:.92},{x:.09,y:.95},{x:.14,y:.97},
-  {x:.94,y:.86},{x:.89,y:.89},{x:.84,y:.92},{x:.91,y:.95},{x:.86,y:.97},
-];
-function bossAttackSpots(bossId) { return bossId === 'vell' ? BOSS_SPOTS_VELL : BOSS_SPOTS_KZARKA; }
+const BOSS_ATTACK_POS = {x:0.5, y:0.60}; // position où le héros frappe le boss entre deux AoE
 const bossCtx = document.getElementById('bossCv').getContext('2d');
 // DPS nominal ≈ PA effective × somme(dmg/cd des sorts) ; sert à calculer une durée dans [2,9] min.
 // SKILLS étant déclaré plus bas dans le fichier, la somme est calculée paresseusement (au 1er appel)
@@ -3012,15 +2995,10 @@ function startBossFight(bossId, isShared) {
   // Vell (2026-07-08, demande explicite) : les joueurs sont SUR les bateaux — les abris ne sont
   // plus des piliers de pierre mais les ancres des 2 bateaux, on plonge dessous pour se protéger
   const spots = bossId === 'vell' ? VELL_ANCHORS : BOSS_PILLARS;
-  // spot d'attaque personnel, tiré au hasard parmi les 10 spots fixes (voir BOSS_SPOTS_KZARKA /
-  // BOSS_SPOTS_VELL) — le joueur y apparaît directement et y revient entre deux AoE, ce qui
-  // répartit visiblement tout le monde dans l'arène au lieu de s'empiler au même endroit
-  const atkSpots = bossAttackSpots(bossId);
-  const atkPos = { ...atkSpots[Math.floor(Math.random()*atkSpots.length)] };
   Object.assign(bossState, {
     active:true, ended:false, boss:b, bossId, hp, maxHp, duration, elapsed:0,
     playerHp: effHpMax(), playerHpMax: effHpMax(), hits:[], last:performance.now(), potCd:0,
-    px:atkPos.x, py:atkPos.y, atkPos, pillars:spots.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
+    px:0.5, py:0.85, pillars:spots.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
     shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
     shakeT:0, embers:[],
@@ -3244,7 +3222,7 @@ function bossLoop(now) {
     let best=bs.pillars[0], bd=1e9;
     for (const p of bs.pillars) { const d=Math.hypot(p.x-bs.px, p.y-bs.py); if(d<bd){bd=d;best=p;} }
     tx = best.x; ty = best.y + 0.07; // juste derrière (sous) le pilier, loin du boss placé en haut
-  } else { tx = bs.atkPos.x; ty = bs.atkPos.y; }
+  } else { tx = BOSS_ATTACK_POS.x; ty = BOSS_ATTACK_POS.y; }
   const spd = 0.9*dt, mdx = tx-bs.px, mdy = ty-bs.py, md = Math.hypot(mdx,mdy);
   if (md>0.002) { bs.px += mdx/md*Math.min(spd,md); bs.py += mdy/md*Math.min(spd,md); }
   // machine à états de l'AoE
@@ -9353,13 +9331,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V141', d:'08/07/2026 19:00', name:{fr:'10 spots fixes par World Boss, Vell sur les pontons', en:'10 fixed spots per World Boss, Vell on the boat decks'}, fr:[
-      {t:'change', tx:'Chaque joueur arrive désormais sur l\'un de 10 spots fixes tirés au hasard dans l\'arène du boss (au lieu de se superposer exactement au même point que tout le monde), et y revient entre deux AoE — les joueurs se voient enfin répartis dans la zone pendant la strat'},
-      {t:'change', tx:'Sur Vell, ces 10 spots sont répartis sur les pontons des 2 bateaux (5 chacun) au lieu d\'un point unique en pleine mer'},
-    ], en:[
-      {t:'change', tx:'Each player now spawns on one of 10 fixed spots picked at random in the boss arena (instead of stacking exactly on the same point as everyone else), and returns there between AoEs — players are finally spread out visibly during the strat'},
-      {t:'change', tx:'On Vell, these 10 spots are spread across the 2 boats\' decks (5 each) instead of a single point out in open water'},
-    ] },
   { v:'V140', d:'08/07/2026 18:00', name:{fr:'Planning des World Boss ancré sur l\'heure française', en:'World Boss schedule anchored to French time'}, fr:[
       {t:'fix', tx:'Les horaires de Vell/Kzarka (repris de garmoth.com) sont ceux de l\'heure française (Europe/Paris) — mais le planning était calculé avec l\'heure LOCALE du navigateur, donc un joueur situé hors de France voyait un planning décalé de son propre fuseau. Le calcul est maintenant toujours ancré sur l\'heure de Paris (été/hiver géré automatiquement), quel que soit le fuseau du joueur'},
     ], en:[
