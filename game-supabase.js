@@ -397,6 +397,44 @@ async function resetAllAccounts() {
   await saveToCloud();
   showResetNotice('🔄', title_fr, body_fr);
 }
+// "Screenshot" admin d'un joueur par UUID (demande explicite du 2026-07-06 : "coté admin pouvoir
+// voir un screen jeu des joueurs en plus de l'uuid l'inventaire") -- lecture SEULE de sa
+// sauvegarde brute (admin_get_player_save), affichée dans le panneau info générique. N'équipe/ne
+// modifie jamais rien : c'est un snapshot en texte, pas une vraie capture d'écran de son navigateur
+// (impossible côté web), mais montre exactement l'équivalent (équipement + sac + état).
+async function adminScreenshotPlayer() {
+  if (!isAdmin() || !sb) return;
+  const uuid = ($a('admResetUuidInput').value || '').trim();
+  if (!uuid) return;
+  const { data, error } = await sb.rpc('admin_get_player_save', { p_user_id: uuid });
+  if (error) { floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true }); return; }
+  if (!data) { floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Aucune sauvegarde pour cet UUID' : 'No save found for that UUID', { hurt:true }); return; }
+  openInfo((LANG==='fr'?'📸 Screenshot — ':'📸 Screenshot — ') + escapeHtml(data._pseudo||'?'), renderAdminScreenshotHtml(data));
+}
+function renderAdminScreenshotHtml(save) {
+  const s = save.S || {};
+  const eq = save.EQUIP || {};
+  const inv = (save.INV || []).filter(Boolean);
+  const zone = ZONES[save.zoneIdx];
+  const zoneName = zone ? tr(zone.name) : (LANG==='fr'?'Velia':'Velia');
+  const eqRows = Object.entries(eq).filter(([,v]) => v).map(([slot,it]) => {
+    const lvl = it.optimizable ? (ENH_NAMES[it.enhLv||0] || '+0') : '';
+    return `<div class="row"><span>${it.icon||'▪'} ${SLOT_LABEL[slot]||slot}</span><span class="v">${escapeHtml(it.name)}${lvl?' ('+lvl+')':''}</span></div>`;
+  }).join('') || `<div class="admEmpty">${LANG==='fr'?'Aucun équipement':'No gear'}</div>`;
+  const invRows = inv.map(it =>
+    `<div class="row"><span>${it.icon||'▪'} ${escapeHtml(it.name)}</span><span class="v">${it.stackable ? 'x'+it.qty : (it.optimizable ? (ENH_NAMES[it.enhLv||0]||'+0') : '')}</span></div>`
+  ).join('') || `<div class="admEmpty">${LANG==='fr'?'Sac vide':'Empty bag'}</div>`;
+  return `
+    <div class="admStatTiles">
+      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Niveau':'Level'}</div><div class="astVal">${s.lvl||1}</div></div>
+      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Silver':'Silver'}</div><div class="astVal">${fmt(Math.round(s.silver||0))}</div></div>
+      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Zone':'Zone'}</div><div class="astVal">${escapeHtml(zoneName)}</div></div>
+    </div>
+    <div class="admSummary">${LANG==='fr'?'Sauvegardé le':'Saved on'} ${save.savedAt ? new Date(save.savedAt).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</div>
+    <h3>${LANG==='fr'?'Équipement':'Equipment'}</h3>${eqRows}
+    <h3>${LANG==='fr'?'Inventaire':'Inventory'} (${inv.length}/${INV_SIZE})</h3>${invRows}
+  `;
+}
 // remise à zéro CIBLÉE d'UN SEUL joueur par UUID (demande explicite du 2026-07-06 : "ajoute côté
 // admin de pouvoir réinitialiser un joueur spécifique par uuid") — même mécanique que
 // resetAllAccounts (silver/équipement/niveau/sac effacés + bannière d'explication à la prochaine
@@ -693,9 +731,10 @@ async function openAdminPanel() {
       <div class="admSectionSub">⚠️ ${LANG==='fr'?'Efface silver/équipement/niveau/sac de CE joueur uniquement.':'Wipes silver/gear/level/bag for THAT player only.'}</div>
       <div class="admActions">
         <input type="text" id="admResetUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
+        <button id="btnScreenshotPlayer">📸 ${LANG==='fr'?'Screenshot':'Screenshot'}</button>
         <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${LANG==='fr'?'Réinitialiser ce joueur':'Reset this player'}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Trouve l\'UUID d\'un joueur via le Classement ou ses messages en jeu (bouton "Copier UUID" dans son propre menu). Même message d\'explication que le reset global, mais montré UNIQUEMENT à ce joueur.':'Find a player\'s UUID via the Leaderboard or their in-game messages (the "Copy UUID" button in their own menu). Same explanation message as the global reset, but shown ONLY to that player.'}</div>
+      <div class="admHint">${LANG==='fr'?'Trouve l\'UUID d\'un joueur via le Classement ou ses messages en jeu (bouton "Copier UUID" dans son propre menu). "Screenshot" affiche son équipement/inventaire en lecture seule (aucune modification). Le reset envoie le même message d\'explication que le reset global, mais montré UNIQUEMENT à ce joueur.':'Find a player\'s UUID via the Leaderboard or their in-game messages (the "Copy UUID" button in their own menu). "Screenshot" shows their gear/inventory read-only (no changes made). The reset sends the same explanation message as the global reset, but shown ONLY to that player.'}</div>
     </div>
     <div class="admSection riskGlobal">
       <div class="admSectionTitle">🌍 ${LANG==='fr'?'Pour les joueurs — actions serveur':'For players — server-wide'}</div>
@@ -780,6 +819,7 @@ async function openAdminPanel() {
   };
   // --- pour un joueur précis ---
   $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
+  $a('btnScreenshotPlayer').onclick = adminScreenshotPlayer;
   // --- pour les joueurs ---
   $a('btnResetAllQuests').onclick = resetAllQuests;
   $a('btnResetAllAccounts').onclick = resetAllAccounts;
@@ -2288,6 +2328,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V188', d:'06/07/2026 03:30', name:{fr:'Plafond de dégâts par coup, screenshot admin, alignement joueurs par zone', en:'Per-hit damage cap, admin player screenshot, zone player count alignment'}, fr:[
+      {t:'fix', sub:'pve', severity:'major', tx:'En zone très dangereuse, un coup pouvait carrément one-shot (vérifié : 544 dégâts pour 478 PV max) — les dégâts par coup sont désormais plafonnés à 30% des PV max, garantissant au moins ~3-4 coups pour mourir depuis la vie pleine, même dans le pire des cas'},
+      {t:'new', sub:'comptes', tx:'Admin : bouton "📸 Screenshot" à côté du champ UUID — affiche l\'équipement et l\'inventaire d\'un joueur en lecture seule (aucune modification), en plus du reset ciblé déjà existant'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'Le badge 👥 (joueurs sur la zone) réserve maintenant toujours la même largeur : le bouton 👁 ne bouge plus d\'une ligne à l\'autre selon qu\'il y ait ou non des joueurs présents'},
+    ], en:[
+      {t:'fix', sub:'pve', severity:'major', tx:'In a very dangerous zone, a single hit could straight up one-shot (verified: 544 damage for 478 max HP) — per-hit damage is now capped at 30% of max HP, guaranteeing at least ~3-4 hits to die from full health, even in the worst case'},
+      {t:'new', sub:'comptes', tx:'Admin: "📸 Screenshot" button next to the UUID field — shows a player\'s gear and inventory read-only (no changes made), alongside the existing targeted reset'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'The 👥 badge (players on the zone) now always reserves the same width: the 👁 button no longer shifts between rows depending on whether players are present'},
+    ] },
   { v:'V187', d:'06/07/2026 03:00', name:{fr:'Nombre de joueurs déplacé à côté de l\'œil de loot', en:'Player count moved next to the loot eye'}, fr:[
       {t:'change', sub:'interface', severity:'minor', tx:'Le badge 👥 (joueurs sur la zone) est maintenant affiché juste à gauche du bouton 👁 (voir le loot), au lieu de juste après le badge de difficulté'},
     ], en:[
