@@ -7337,12 +7337,6 @@ function applySaveState(data) {
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
   if (!POTIONS[S.potionType]) S.potionType = 'medium'; // migre l'ancienne potion unique 'basic' vers les 4 tailles
-  // rattrape le Compendium (2026-07-08, bug corrigé) : S.zonesCollected n'existe que depuis V128,
-  // alors que S.lootByItem existe depuis bien plus longtemps — un joueur qui possède déjà l'objet
-  // "trash" (unique par zone, ex: "Viande de loup" pour Camp des Loups) a forcément déjà farmé
-  // cette zone, même si elle n'était jamais marquée visitée faute d'avoir existé à l'époque
-  S.zonesCollected = S.zonesCollected || {};
-  ZONES.forEach((z,zi) => { if (!S.zonesCollected[zi] && (S.lootByItem[z.loot.trash.name]||0) > 0) S.zonesCollected[zi] = true; });
   resetWorld(); // recrée les packs de la zone chargée
   if (data.playerPos) { P.x = data.playerPos.x; P.y = data.playerPos.y; }
   hud();
@@ -9392,11 +9386,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V148', d:'09/07/2026 00:00', name:{fr:'Correctif Compendium : zones marquées "Non visitée" à tort', en:'Compendium fix: zones wrongly shown "Not visited"'}, fr:[
-      {t:'fix', tx:'Une zone pouvait afficher "Non visitée" dans le Compendium alors que ses objets étaient déjà cochés ✓ — le suivi des zones visitées n\'existait pas encore quand ces objets avaient été ramassés. Rattrapage rétroactif au chargement : si tu possèdes déjà l\'objet unique de la zone, elle est maintenant marquée visitée (et le bonus +1% associé accordé)'},
-    ], en:[
-      {t:'fix', tx:'A zone could show "Not visited" in the Compendium even though its items were already checked ✓ — zone-visited tracking didn\'t exist yet when those items were first picked up. Retroactively backfilled on load: if you already own the zone\'s unique item, it\'s now marked visited (and the associated +1% bonus granted)'},
-    ] },
   { v:'V147', d:'08/07/2026 23:45', name:{fr:'Alerte double réclamation déplacée sur le salon cheat', en:'Double-claim alert moved to the cheat channel'}, fr:[
       {t:'change', tx:'L\'alerte "Tentative de double réclamation" part désormais sur le salon Discord "cheat" (comme les bornages anti-triche) au lieu du salon général — déplacée côté serveur directement dans boss_claim(), plus fiable et impossible à contourner côté client'},
     ], en:[
