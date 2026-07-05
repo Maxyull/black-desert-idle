@@ -2545,6 +2545,13 @@ function badgeOf(r) {
   if (r <= 1.8) return { cls:'b-blue',   txt:'ZONE FACILE' };
   return { cls:'b-grey', txt:'ZONE DÉPASSÉE' };
 }
+// zone trop dure pour le stuff actuel ("ZONE DANGEREUSE", r<0.6) : rend le danger tangible plutôt
+// qu'une pénalité invisible de dégâts/loot -- le joueur devient plus lent, et les monstres qui
+// t'ont aggro deviennent plus rapides (demande explicite du 2026-07-05 : "tu es plus lent, les
+// monstres sont plus rapides")
+function isZoneDangerous() { return bottleneck() < 0.6; }
+const DANGER_PLAYER_SPEED_MULT = 0.7;
+const DANGER_MOB_SPEED_MULT = 1.35;
 function aiMode() {
   const r = bottleneck();
   if (r >= 1.5) return 'overgeared';
@@ -2691,7 +2698,8 @@ function setState(st){ P.state = st; P.stateT = 0; }
 function speedMult() {
   const w = invWeight(), mw = MAX_WEIGHT();
   const weightMult = w <= mw ? 1 : Math.max(0.35, 1 - (w - mw) / mw * 0.7);
-  return weightMult * (1 + totalSpdPct()/100);
+  const dangerMult = isZoneDangerous() ? DANGER_PLAYER_SPEED_MULT : 1;
+  return weightMult * (1 + totalSpdPct()/100) * dangerMult;
 }
 function moveToward(tx, ty, speed, dt) {
   const d = dist(P.x,P.y,tx,ty);
@@ -2944,10 +2952,11 @@ function wolvesTick(dt) {
   const dpR = dpRatio();
   const mitig = dmgTakenMult(dpR);
   const dodgeChance = totalDodgePct(dpR) / 100; // voir dodgeEffectiveness : quasi nulle si trop sous-géré
+  const mobSpeed = 50 * (isZoneDangerous() ? DANGER_MOB_SPEED_MULT : 1);
   for (const p of packs) {
     if (p.dead || !p.aggro) continue;
     const d = dist(P.x,P.y,p.x,p.y);
-    if (d > 60) { p.x += (P.x-p.x)/d*50*dt; p.y += (P.y-p.y)/d*50*dt; }
+    if (d > 60) { p.x += (P.x-p.x)/d*mobSpeed*dt; p.y += (P.y-p.y)/d*mobSpeed*dt; }
     for (const w of p.wolves) {
       if (w.lunge > 0) {
         w.lunge -= dt;
@@ -4656,6 +4665,11 @@ function refreshStatsOnly() {
   } else {
     const b = badgeOf(bottleneck());
     zb.className = b.cls; zb.textContent = tr(b.txt);
+    // rend le danger tangible (2026-07-05, demande explicite) : rappel au survol de la pénalité de
+    // vitesse (toi) / bonus de vitesse (monstres aggro) en zone dangereuse -- voir isZoneDangerous()
+    zb.title = b.cls === 'b-red'
+      ? (LANG==='fr' ? '⚠️ Zone trop dure pour ton stuff : tu es ralenti, les monstres qui t\'ont repéré sont plus rapides' : '⚠️ Zone too hard for your gear: you are slowed down, monsters that spotted you are faster')
+      : '';
     $('ztReq').innerHTML = `<span class="${apR>=1?'ok':'bad'}">${Math.round(apEff())}/${z.reqAP} PA</span> · <span class="${dpR>=1?'ok':'bad'}">${Math.round(totalDP())}/${z.reqDP} PD</span>`;
   }
 }
