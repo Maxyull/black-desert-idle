@@ -6703,8 +6703,6 @@ async function syncPlayerStats() {
       display_name: myPseudo || (currentUser.email||'?').split('@')[0],
       silver: Math.round(S.silver),
       gearscore: Math.round(GS()),
-      ap: Math.round(apEff()*10)/10,
-      dp: Math.round(totalDP()*10)/10,
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
@@ -6962,20 +6960,17 @@ async function openAdminPanel() {
   const playersHtml = (playersList||[]).map(p => `
     <tr>
       <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
-      <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td>
-      <td title="${LANG==='fr'?'PA (Puissance d\'Attaque)':'AP (Attack Power)'}">${(p.ap||0).toFixed(1)}</td>
-      <td title="${LANG==='fr'?'PD (Puissance de Défense)':'DP (Defense Power)'}">${(p.dp||0).toFixed(1)}</td>
-      <td>${p.lvl||1}</td>
+      <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td><td>${p.lvl||1}</td>
       <td title="${LANG==='fr'?'Record personnel de kills/min (à vie)':'Personal kills/min record (lifetime)'}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
       <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
       <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${LANG==='fr'?'Ouvre l\'équipement porté et le sac complet (192 cases) de ce joueur, en lecture seule, dans une nouvelle fenêtre':'Opens this player\'s equipped gear and full bag (192 slots), read-only, in a new window'}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
-    </tr>`).join('') || `<tr><td colspan="10" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="8" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
   const loadingHtml = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   const cats = [
     { id:'players', icon:'👥', label:{fr:'Joueurs',en:'Players'},
       body: `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered`}</div>
       <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th title="${LANG==='fr'?'PA':'AP'}">PA</th><th title="${LANG==='fr'?'PD':'DP'}">PD</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
+        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>` },
     { id:'hourly', icon:'💰', label:{fr:'Silver & temps de jeu / heure',en:'Silver & playtime / hour'}, body: loadingHtml },
@@ -7601,8 +7596,8 @@ async function openLeaderboard() {
   const cats = [
     { id:'silver', icon:'💰', label:{fr:'Silver',en:'Silver'}, col:{fr:'Silver',en:'Silver'},
       rows: rankRows(rows, r => Number(r.silver||0), r => fmt(r.silver||0)) },
-    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'GS (PA/PD)',en:'GS (AP/DP)'},
-      rows: rankRows(rows, r => Number(r.gearscore||0), r => `${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})`) },
+    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'GS',en:'GS'},
+      rows: rankRows(rows, r => Number(r.gearscore||0), r => Math.round(r.gearscore||0)) },
     { id:'zone', icon:'🗺️', label:{fr:'Meilleure zone',en:'Best zone'}, col:{fr:'Zone',en:'Zone'},
       rows: rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—')) },
     { id:'sh', icon:'⏱️', label:{fr:'Silver/heure',en:'Silver/hour'}, col:{fr:'Taux (zone)',en:'Rate (zone)'},
@@ -8434,13 +8429,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V123', d:'08/07/2026 01:00', name:{fr:'PA/PD affichés à côté du Gearscore (classement + admin)', en:'AP/DP shown next to Gearscore (leaderboard + admin)'}, fr:[
-      {t:'new', tx:'Le classement "Gearscore" affiche maintenant le détail PA/PD de chaque joueur entre parenthèses, pas juste le score global'},
-      {t:'new', tx:'Le tableau "Joueurs" du panneau admin a 2 nouvelles colonnes PA et PD, à côté du Gearscore'},
-    ], en:[
-      {t:'new', tx:'The "Gearscore" leaderboard now shows each player\'s AP/DP breakdown in parentheses, not just the overall score'},
-      {t:'new', tx:'The admin panel\'s "Players" table has 2 new AP and DP columns, next to Gearscore'},
-    ] },
   { v:'V122', d:'08/07/2026 00:00', name:{fr:'Mine de Fer Abandonnée : mineurs, boss de pack, décor de carrière', en:'Abandoned Iron Mine: miners, pack bosses, quarry scenery'}, fr:[
       {t:'new', tx:'Nouvelles silhouettes originales pour la Mine de Fer Abandonnée : le Mineur corrompu (voûté, capuche tombante, yeux rougeoyants, pioche à l\'épaule) et son contremaître blindé — 1 pack sur 2 est mené par ce boss massif bardé de pointes, plus gros et qui loot plus (bonus élite ×1.5-1.6 déjà en place)'},
       {t:'new', tx:'Décor de carrière dédié à la Mine de Fer : terre rouge/ocre, tours de guet en bois, pitons rocheux, chariots de minerai cassés, crevasses et éboulis — fini le décor générique'},

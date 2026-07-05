@@ -33,6 +33,9 @@ alter table player_stats add column if not exists treasure_count bigint not null
 alter table player_stats add column if not exists loyalty bigint not null default 0;
 -- record personnel de kills/min à vie (classement "Record kills/min" + onglet admin) — 2026-07-07
 alter table player_stats add column if not exists best_kpm numeric not null default 0;
+-- AP/DP individuels, affichés à côté du Gearscore dans le classement et le panneau admin — 2026-07-08
+alter table player_stats add column if not exists ap numeric not null default 0;
+alter table player_stats add column if not exists dp numeric not null default 0;
 
 alter table player_stats enable row level security;
 

@@ -80,6 +80,16 @@ begin
   new.gearscore := least(greatest(coalesce(new.gearscore,0), 0), 2000);          -- GS endgame ~500, marge large
   if v_before is distinct from new.gearscore then perform public.notify_cheat_discord(new.user_id, 'gearscore', v_before, new.gearscore); end if;
 
+  -- AP/DP individuels (ajoutés le 2026-07-08, affichés à côté du Gearscore) : le Gearscore =
+  -- (AP+DP)/2 plafonne déjà à 2000, donc chacun ne peut pas dépasser ~4000 dans un cas extrême
+  v_before := coalesce(new.ap,0);
+  new.ap := least(greatest(coalesce(new.ap,0), 0), 4000);
+  if v_before is distinct from new.ap then perform public.notify_cheat_discord(new.user_id, 'ap', v_before, new.ap); end if;
+
+  v_before := coalesce(new.dp,0);
+  new.dp := least(greatest(coalesce(new.dp,0), 0), 4000);
+  if v_before is distinct from new.dp then perform public.notify_cheat_discord(new.user_id, 'dp', v_before, new.dp); end if;
+
   v_before := coalesce(new.lvl,1);
   new.lvl := least(greatest(coalesce(new.lvl,1), 1), 100);                  -- niveau max de la table d'XP
   if v_before is distinct from new.lvl then perform public.notify_cheat_discord(new.user_id, 'lvl', v_before, new.lvl); end if;

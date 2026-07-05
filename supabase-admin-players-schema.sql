@@ -6,11 +6,12 @@
 -- Supabase > SQL Editor > New query > Run
 -- ============================================================
 
--- best_kpm (record kills/min à vie) ajouté le 2026-07-07 — nécessite un DROP car changer le
--- type de retour d'une fonction existante n'est pas permis par un simple CREATE OR REPLACE.
+-- best_kpm (record kills/min à vie) ajouté le 2026-07-07, ap/dp ajoutés le 2026-07-08 — nécessite
+-- un DROP car changer le type de retour d'une fonction existante n'est pas permis par un simple
+-- CREATE OR REPLACE.
 drop function if exists public.admin_list_players();
 create or replace function public.admin_list_players()
-returns table(user_id uuid, display_name text, silver bigint, gearscore int, lvl int, online boolean, last_seen timestamptz, best_kpm numeric)
+returns table(user_id uuid, display_name text, silver bigint, gearscore int, lvl int, online boolean, last_seen timestamptz, best_kpm numeric, ap numeric, dp numeric)
 language plpgsql security definer
 as $$
 begin
@@ -20,7 +21,7 @@ begin
   return query
     select ps.user_id, coalesce(ps.display_name,'?'), coalesce(ps.silver,0), coalesce(ps.gearscore,0)::int, coalesce(ps.lvl,1)::int,
       (pr.last_seen is not null and pr.last_seen > now() - interval '90 seconds') as online,
-      pr.last_seen, coalesce(ps.best_kpm,0)
+      pr.last_seen, coalesce(ps.best_kpm,0), coalesce(ps.ap,0), coalesce(ps.dp,0)
     from public.player_stats ps
     left join public.presence pr on pr.user_id = ps.user_id
     order by (pr.last_seen is not null and pr.last_seen > now() - interval '90 seconds') desc, pr.last_seen desc nulls last;
