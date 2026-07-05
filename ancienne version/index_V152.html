@@ -625,19 +625,12 @@
     background:rgba(10,9,12,.88); border:1px solid #2c2a33; color:var(--ink-dim);
   }
   #btnCollapseMenu:hover { border-color:var(--gold); color:var(--gold); }
-  /* corrigé le 2026-07-05 (adaptation mobile) : #clientVersion (numéro de version, tout en bas du
-     menu) n'était PAS masqué par le repli — seuls #topBar/#userBar l'étaient — donc replier le menu
-     laissait ce texte flotter tout seul, hors de tout cadre, chevauchant le contenu du dessous */
-  #sideMenu.collapsed #topBar, #sideMenu.collapsed #userBar, #sideMenu.collapsed #clientVersion { display:none; }
+  #sideMenu.collapsed #topBar, #sideMenu.collapsed #userBar { display:none; }
   /* replié : la largeur fixe de 210px ne se réduisait jamais (seuls les ENFANTS étaient masqués),
      donc le menu "replié" gardait la même emprise qu'ouvert — sans conséquence sur grand écran
      (assez de place), mais ça faisait chevaucher les encarts de droite sur mobile/tablette une fois
      réduit (2026-07-05, adaptation mobile) */
   #sideMenu.collapsed { width:auto; }
-  /* déplié sur un petit écran, le menu (tous ses boutons + compte + version) peut être plus haut
-     que la fenêtre elle-même — jusqu'ici impossible d'atteindre les derniers boutons (Discord,
-     Admin...) : on scrolle DANS le menu plutôt que de le laisser déborder hors de l'écran */
-  #sideMenu:not(.collapsed) { max-height:calc(100vh - 28px); overflow-y:auto; }
 
   #btnDiscord {
     display:block; width:100%; box-sizing:border-box; padding:11px 14px; font-size:13.5px;
@@ -9490,13 +9483,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V153', d:'05/07/2026 09:30', name:{fr:'Correctifs mobile : menu scrollable, version bien rangée', en:'Mobile fixes: scrollable menu, version properly placed'}, fr:[
-      {t:'fix', tx:'Le numéro de version (tout en bas du menu de gauche) n\'était pas masqué quand le menu était replié — il flottait tout seul par-dessus le jeu. Il est maintenant bien rangé dans le menu, visible seulement quand celui-ci est déplié'},
-      {t:'fix', tx:'Sur un petit écran, le menu de gauche déplié pouvait être plus haut que l\'écran lui-même, rendant certains boutons (Discord, Admin...) impossibles à atteindre. Le menu défile maintenant lui-même si besoin, plutôt que de déborder hors de l\'écran'},
-    ], en:[
-      {t:'fix', tx:'The version number (at the very bottom of the left menu) wasn\'t hidden when the menu was folded — it floated on its own over the game. It\'s now properly tucked inside the menu, only visible when expanded'},
-      {t:'fix', tx:'On a small screen, the expanded left menu could be taller than the screen itself, making some buttons (Discord, Admin...) unreachable. The menu now scrolls internally when needed instead of overflowing off-screen'},
-    ] },
   { v:'V152', d:'05/07/2026 09:00', name:{fr:'Adaptation tablette/téléphone', en:'Tablet/phone optimization'}, fr:[
       {t:'new', tx:'Sur tablette/téléphone (≤1024px de large, couvre les tailles standards du marché — iPhone SE à iPad en paysage), le menu de gauche, le suivi de quêtes et le chat se replient désormais automatiquement par défaut pour ne plus recouvrir le jeu ni se chevaucher entre eux ; toujours dépliables en un tap. Aucun changement sur la version ordinateur (>1024px), testée et inchangée'},
     ], en:[
