@@ -9617,15 +9617,8 @@ applyMenuCollapse();
 // ============================================================
 // PATCH NOTES — condensé de toutes les versions
 // ============================================================
-// chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte', plat:'mobile'? }
-// plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
-// avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
+// chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V159', d:'05/07/2026 12:30', name:{fr:'Notes de version : badge Tablette/Mobile', en:'Patch notes: Tablet/Mobile badge'}, fr:[
-      {t:'new', tx:'Chaque ligne des notes de version peut maintenant porter un 2e badge "📱 Tab/Mobile" en plus du type (Nouveauté/Modification/Correction/Faille), pour repérer d\'un coup d\'œil les changements qui ne concernent QUE la tablette/le téléphone. Appliqué rétroactivement aux notes V152 à V157 (adaptation mobile)'},
-    ], en:[
-      {t:'new', tx:'Each patch note line can now carry a 2nd "📱 Tab/Mobile" badge next to its type (New/Change/Fix/Security), to spot at a glance changes that only concern tablet/phone. Applied retroactively to notes V152 through V157 (mobile adaptation)'},
-    ] },
   { v:'V158', d:'05/07/2026 12:00', name:{fr:'1 arme garantie par zone, PA des armes fortement réduit', en:'1 guaranteed weapon per zone, weapon AP greatly reduced'}, fr:[
       {t:'change', tx:'Chaque zone garantit désormais un type d\'arme précis (épée/dague/éveil, en rotation par palier) au lieu de tirer au hasard le même emplacement que l\'armure — la zone bleue (2 zones seulement pour l\'instant) fait exception : sa 2e zone garantit 2 types d\'arme'},
       {t:'change', tx:'Les armes donnaient bien trop de PA (à elles 3, environ 750 PA au PEN sur un stuff bleu complet, contre ~460 PD total) — rééquilibrées pour qu\'un stuff bleu complet (3 armes + 4 armures + bijoux) totalise environ 301 PA et 248 PD au PEN, chaque palier plus bas donnant proportionnellement moins'},
@@ -9634,48 +9627,48 @@ const PATCH_NOTES = [
       {t:'change', tx:'Weapons gave far too much AP (the 3 of them alone reached ~750 AP at PEN on a full blue set, vs ~460 total DP) — rebalanced so a full blue set (3 weapons + 4 armor + jewelry) totals around 301 AP and 248 DP at PEN, with each lower tier giving proportionally less'},
     ] },
   { v:'V157', d:'05/07/2026 11:30', name:{fr:'Mobile : header dégagé, gains XP/Loot lisibles, moins de chevauchement', en:'Mobile: cleared header, readable XP/Loot gains, less overlap'}, fr:[
-      {t:'fix', plat:'mobile', tx:'Le bouton replié du menu de gauche (position fixe, en haut à gauche) cachait le premier onglet de la barre d\'activités sur téléphone — le contenu est repoussé sous ce bouton pour ne plus jamais le chevaucher'},
-      {t:'fix', plat:'mobile', tx:'Les bannières "Sac plein" et "Tu es mort" recouvraient le nom de la zone sur téléphone (cadre de jeu très bas) — repoussées en dessous'},
-      {t:'change', plat:'mobile', tx:'Les nombres flottants de gains (loot, XP, dégâts) sont dessinés sur un canvas à résolution fixe, réduit à la taille de l\'écran — sur téléphone ils devenaient minuscules, quasi illisibles. Leur taille compense maintenant la réduction de l\'écran pour rester lisible, quelle que soit la largeur'},
-      {t:'change', plat:'mobile', tx:'Silver, taux/h et butin en direct légèrement resserrés sur téléphone pour laisser plus de place à cet ensemble sur un cadre de jeu réduit'},
+      {t:'fix', tx:'Le bouton replié du menu de gauche (position fixe, en haut à gauche) cachait le premier onglet de la barre d\'activités sur téléphone — le contenu est repoussé sous ce bouton pour ne plus jamais le chevaucher'},
+      {t:'fix', tx:'Les bannières "Sac plein" et "Tu es mort" recouvraient le nom de la zone sur téléphone (cadre de jeu très bas) — repoussées en dessous'},
+      {t:'change', tx:'Les nombres flottants de gains (loot, XP, dégâts) sont dessinés sur un canvas à résolution fixe, réduit à la taille de l\'écran — sur téléphone ils devenaient minuscules, quasi illisibles. Leur taille compense maintenant la réduction de l\'écran pour rester lisible, quelle que soit la largeur'},
+      {t:'change', tx:'Silver, taux/h et butin en direct légèrement resserrés sur téléphone pour laisser plus de place à cet ensemble sur un cadre de jeu réduit'},
     ], en:[
-      {t:'fix', plat:'mobile', tx:'The left menu\'s folded button (fixed position, top-left) hid the first tab of the activity bar on phone — content is now pushed below this button so it\'s never covered again'},
-      {t:'fix', plat:'mobile', tx:'The "Bag full" and "You died" banners covered the zone name on phone (very short game frame) — pushed further down'},
-      {t:'change', plat:'mobile', tx:'Floating gain numbers (loot, XP, damage) are drawn on a fixed-resolution canvas that shrinks to fit the screen — on phone they became tiny, barely readable. Their size now compensates for the screen shrink to stay legible at any width'},
-      {t:'change', plat:'mobile', tx:'Silver, rate/h and live loot slightly tightened on phone to leave more room for this group on a shrunk game frame'},
+      {t:'fix', tx:'The left menu\'s folded button (fixed position, top-left) hid the first tab of the activity bar on phone — content is now pushed below this button so it\'s never covered again'},
+      {t:'fix', tx:'The "Bag full" and "You died" banners covered the zone name on phone (very short game frame) — pushed further down'},
+      {t:'change', tx:'Floating gain numbers (loot, XP, damage) are drawn on a fixed-resolution canvas that shrinks to fit the screen — on phone they became tiny, barely readable. Their size now compensates for the screen shrink to stay legible at any width'},
+      {t:'change', tx:'Silver, rate/h and live loot slightly tightened on phone to leave more room for this group on a shrunk game frame'},
     ] },
   { v:'V156', d:'05/07/2026 11:00', name:{fr:'Mobile : barre de sorts repliable, potion mise en avant', en:'Mobile: collapsible skill bar, potion put forward'}, fr:[
-      {t:'change', plat:'mobile', tx:'Sur mobile/tablette, la barre de sorts est maintenant repliée par défaut (purement indicative, aucun clic requis, le combat reste automatique) — un bouton ⚡ la déplie/replie à la demande, libérant de la place dans le cadre de jeu'},
-      {t:'change', plat:'mobile', tx:'La potion (soin automatique), ce qui compte vraiment à surveiller en jeu, est mise en avant sur mobile/tablette : agrandie avec un halo doré au lieu d\'être réduite comme le reste du HUD'},
+      {t:'change', tx:'Sur mobile/tablette, la barre de sorts est maintenant repliée par défaut (purement indicative, aucun clic requis, le combat reste automatique) — un bouton ⚡ la déplie/replie à la demande, libérant de la place dans le cadre de jeu'},
+      {t:'change', tx:'La potion (soin automatique), ce qui compte vraiment à surveiller en jeu, est mise en avant sur mobile/tablette : agrandie avec un halo doré au lieu d\'être réduite comme le reste du HUD'},
     ], en:[
-      {t:'change', plat:'mobile', tx:'On mobile/tablet, the skill bar is now collapsed by default (purely informational, no click required, combat stays automatic) — a ⚡ button expands/collapses it on demand, freeing up space in the game frame'},
-      {t:'change', plat:'mobile', tx:'The potion (auto-heal), the thing that actually matters to watch during play, is put forward on mobile/tablet: enlarged with a gold glow instead of being shrunk like the rest of the HUD'},
+      {t:'change', tx:'On mobile/tablet, the skill bar is now collapsed by default (purely informational, no click required, combat stays automatic) — a ⚡ button expands/collapses it on demand, freeing up space in the game frame'},
+      {t:'change', tx:'The potion (auto-heal), the thing that actually matters to watch during play, is put forward on mobile/tablet: enlarged with a gold glow instead of being shrunk like the rest of the HUD'},
     ] },
   { v:'V155', d:'05/07/2026 10:30', name:{fr:'Correctifs mobile : barre de sorts coupée, IA superposée', en:'Mobile fixes: cropped skill bar, overlapping AI status'}, fr:[
-      {t:'fix', plat:'mobile', tx:'Sur téléphone, la barre de 9 sorts (calibrée pour ~418px de large) dépassait des 2 côtés du cadre de jeu réduit (~360-380px), coupant les icônes de bord (ex: "Speed" et "Voltaic" à moitié visibles). Icônes réduites pour tenir entièrement dans le cadre'},
-      {t:'fix', plat:'mobile', tx:'Le texte "IA : ..." se superposait au nom de la zone — le cadre de jeu devient très bas sur téléphone (son ratio suit la largeur), pas assez de place pour empiler proprement les deux. Masqué sur téléphone (indicatif seulement, le combat reste automatique)'},
-      {t:'change', plat:'mobile', tx:'Barre de vie/potion légèrement réduite sur téléphone pour laisser plus de place à la barre de sorts juste à côté — un chevauchement résiduel entre les deux subsiste sur les téléphones les plus étroits, une refonte plus profonde (titre de zone notamment) serait nécessaire pour l\'éliminer complètement'},
+      {t:'fix', tx:'Sur téléphone, la barre de 9 sorts (calibrée pour ~418px de large) dépassait des 2 côtés du cadre de jeu réduit (~360-380px), coupant les icônes de bord (ex: "Speed" et "Voltaic" à moitié visibles). Icônes réduites pour tenir entièrement dans le cadre'},
+      {t:'fix', tx:'Le texte "IA : ..." se superposait au nom de la zone — le cadre de jeu devient très bas sur téléphone (son ratio suit la largeur), pas assez de place pour empiler proprement les deux. Masqué sur téléphone (indicatif seulement, le combat reste automatique)'},
+      {t:'change', tx:'Barre de vie/potion légèrement réduite sur téléphone pour laisser plus de place à la barre de sorts juste à côté — un chevauchement résiduel entre les deux subsiste sur les téléphones les plus étroits, une refonte plus profonde (titre de zone notamment) serait nécessaire pour l\'éliminer complètement'},
     ], en:[
-      {t:'fix', plat:'mobile', tx:'On phone, the 9-skill bar (sized for ~418px wide) overflowed both sides of the shrunk game frame (~360-380px), cropping the edge icons (e.g. "Speed" and "Voltaic" half-cut). Icons shrunk to fit entirely within the frame'},
-      {t:'fix', plat:'mobile', tx:'The "AI: ..." status text overlapped the zone name — the game frame becomes very short on phone (its ratio follows the width), not enough room to stack both cleanly. Hidden on phone (informational only, combat stays automatic)'},
-      {t:'change', plat:'mobile', tx:'HP/potion bar slightly shrunk on phone to leave more room for the skill bar right next to it — a residual overlap between the two remains on the narrowest phones; a deeper redesign (notably the zone title) would be needed to fully eliminate it'},
+      {t:'fix', tx:'On phone, the 9-skill bar (sized for ~418px wide) overflowed both sides of the shrunk game frame (~360-380px), cropping the edge icons (e.g. "Speed" and "Voltaic" half-cut). Icons shrunk to fit entirely within the frame'},
+      {t:'fix', tx:'The "AI: ..." status text overlapped the zone name — the game frame becomes very short on phone (its ratio follows the width), not enough room to stack both cleanly. Hidden on phone (informational only, combat stays automatic)'},
+      {t:'change', tx:'HP/potion bar slightly shrunk on phone to leave more room for the skill bar right next to it — a residual overlap between the two remains on the narrowest phones; a deeper redesign (notably the zone title) would be needed to fully eliminate it'},
     ] },
   { v:'V154', d:'05/07/2026 10:00', name:{fr:'Correctif mobile : barre d\'onglets empilée sur 8 lignes', en:'Mobile fix: tab bar stacked into 8 rows'}, fr:[
-      {t:'fix', plat:'mobile', tx:'Sur téléphone, les 8 onglets (Zone/Boss/Pêche/Mine/Forêt/Champs/Bergerie/Atelier royal) et le texte "Prochain boss" se partageaient une seule ligne — le texte, assez long, écrasait la largeur dispo pour les onglets, forcés à 1 seul par ligne (8 lignes de haut, confirmé sur un vrai téléphone). Empilés l\'un sous l\'autre à la place : les onglets se répartissent maintenant sur 3-4 par ligne'},
+      {t:'fix', tx:'Sur téléphone, les 8 onglets (Zone/Boss/Pêche/Mine/Forêt/Champs/Bergerie/Atelier royal) et le texte "Prochain boss" se partageaient une seule ligne — le texte, assez long, écrasait la largeur dispo pour les onglets, forcés à 1 seul par ligne (8 lignes de haut, confirmé sur un vrai téléphone). Empilés l\'un sous l\'autre à la place : les onglets se répartissent maintenant sur 3-4 par ligne'},
     ], en:[
-      {t:'fix', plat:'mobile', tx:'On phone, the 8 tabs (Zone/Boss/Fishing/Mining/Forest/Fields/Ranch/Royal Workshop) and the "Next boss" text shared a single row — the fairly long text crushed the space left for the tabs, forcing them to 1 per row (8 rows tall, confirmed on a real phone). Stacked on top of each other instead: tabs now spread across 3-4 per row'},
+      {t:'fix', tx:'On phone, the 8 tabs (Zone/Boss/Fishing/Mining/Forest/Fields/Ranch/Royal Workshop) and the "Next boss" text shared a single row — the fairly long text crushed the space left for the tabs, forcing them to 1 per row (8 rows tall, confirmed on a real phone). Stacked on top of each other instead: tabs now spread across 3-4 per row'},
     ] },
   { v:'V153', d:'05/07/2026 09:30', name:{fr:'Correctifs mobile : menu scrollable, version bien rangée', en:'Mobile fixes: scrollable menu, version properly placed'}, fr:[
-      {t:'fix', plat:'mobile', tx:'Le numéro de version (tout en bas du menu de gauche) n\'était pas masqué quand le menu était replié — il flottait tout seul par-dessus le jeu. Il est maintenant bien rangé dans le menu, visible seulement quand celui-ci est déplié'},
-      {t:'fix', plat:'mobile', tx:'Sur un petit écran, le menu de gauche déplié pouvait être plus haut que l\'écran lui-même, rendant certains boutons (Discord, Admin...) impossibles à atteindre. Le menu défile maintenant lui-même si besoin, plutôt que de déborder hors de l\'écran'},
+      {t:'fix', tx:'Le numéro de version (tout en bas du menu de gauche) n\'était pas masqué quand le menu était replié — il flottait tout seul par-dessus le jeu. Il est maintenant bien rangé dans le menu, visible seulement quand celui-ci est déplié'},
+      {t:'fix', tx:'Sur un petit écran, le menu de gauche déplié pouvait être plus haut que l\'écran lui-même, rendant certains boutons (Discord, Admin...) impossibles à atteindre. Le menu défile maintenant lui-même si besoin, plutôt que de déborder hors de l\'écran'},
     ], en:[
-      {t:'fix', plat:'mobile', tx:'The version number (at the very bottom of the left menu) wasn\'t hidden when the menu was folded — it floated on its own over the game. It\'s now properly tucked inside the menu, only visible when expanded'},
-      {t:'fix', plat:'mobile', tx:'On a small screen, the expanded left menu could be taller than the screen itself, making some buttons (Discord, Admin...) unreachable. The menu now scrolls internally when needed instead of overflowing off-screen'},
+      {t:'fix', tx:'The version number (at the very bottom of the left menu) wasn\'t hidden when the menu was folded — it floated on its own over the game. It\'s now properly tucked inside the menu, only visible when expanded'},
+      {t:'fix', tx:'On a small screen, the expanded left menu could be taller than the screen itself, making some buttons (Discord, Admin...) unreachable. The menu now scrolls internally when needed instead of overflowing off-screen'},
     ] },
   { v:'V152', d:'05/07/2026 09:00', name:{fr:'Adaptation tablette/téléphone', en:'Tablet/phone optimization'}, fr:[
-      {t:'new', plat:'mobile', tx:'Sur tablette/téléphone (≤1024px de large, couvre les tailles standards du marché — iPhone SE à iPad en paysage), le menu de gauche, le suivi de quêtes et le chat se replient désormais automatiquement par défaut pour ne plus recouvrir le jeu ni se chevaucher entre eux ; toujours dépliables en un tap. Aucun changement sur la version ordinateur (>1024px), testée et inchangée'},
+      {t:'new', tx:'Sur tablette/téléphone (≤1024px de large, couvre les tailles standards du marché — iPhone SE à iPad en paysage), le menu de gauche, le suivi de quêtes et le chat se replient désormais automatiquement par défaut pour ne plus recouvrir le jeu ni se chevaucher entre eux ; toujours dépliables en un tap. Aucun changement sur la version ordinateur (>1024px), testée et inchangée'},
     ], en:[
-      {t:'new', plat:'mobile', tx:'On tablet/phone (≤1024px wide, covers standard market sizes — iPhone SE to iPad landscape), the left menu, quest tracker and chat now auto-fold by default so they no longer cover the game or overlap each other; still one tap away to expand. No change to the desktop version (>1024px), tested and unaffected'},
+      {t:'new', tx:'On tablet/phone (≤1024px wide, covers standard market sizes — iPhone SE to iPad landscape), the left menu, quest tracker and chat now auto-fold by default so they no longer cover the game or overlap each other; still one tap away to expand. No change to the desktop version (>1024px), tested and unaffected'},
     ] },
   { v:'V151', d:'05/07/2026 08:15', name:{fr:'Dates des notes de version, tutoriel Compendium, joueurs fluides', en:'Patch note dates, Compendium tutorial, smooth players'}, fr:[
       {t:'fix', tx:'Les notes de version affichaient une date/heure de publication erronée (jusqu\'à plusieurs jours dans le futur) — corrigé pour les versions V91 à V150 avec l\'horodatage réel'},
@@ -11384,13 +11377,6 @@ const PATCH_CATS = {
   exploit: { fr:'Faille',       en:'Security', icon:'🛡', color:'#b48ce8' },
   admin:   { fr:'Admin',        en:'Admin',    icon:'🛠️', color:'#c9a55a' },
 };
-// tag de plateforme (2026-07-05, demande explicite) : en plus du type (Nouveauté/Modification/
-// Correction/Faille), précise quand une ligne ne concerne QUE tablette/téléphone — sert à repérer
-// d'un coup d'œil les changements qui ne touchent pas la version ordinateur. Optionnel (line.plat) :
-// absent = concerne toutes les plateformes, pas besoin de le préciser à chaque ligne.
-const PATCH_PLATFORMS = {
-  mobile: { fr:'Tab/Mobile', en:'Tab/Mobile', icon:'📱', color:'#e0a840' },
-};
 
 let patchObserver = null;
 $a('btnPatch').onclick = () => {
@@ -11406,10 +11392,8 @@ $a('btnPatch').onclick = () => {
       </div>
       <ul>${p[LANG].map(line => {
         const cat = PATCH_CATS[line.t] || PATCH_CATS.change;
-        const plat = line.plat ? PATCH_PLATFORMS[line.plat] : null;
-        const platTag = plat ? `<span class="patchCat" style="color:${plat.color};border-color:${plat.color}">${plat.icon} ${plat[LANG]}</span>` : '';
         const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
-        return `<li class="${line.removed?'patchLineRemoved':''}"><span class="patchCat" style="color:${cat.color};border-color:${cat.color}">${cat.icon} ${cat[LANG]}</span>${platTag}${line.tx}${removedTag}</li>`;
+        return `<li class="${line.removed?'patchLineRemoved':''}"><span class="patchCat" style="color:${cat.color};border-color:${cat.color}">${cat.icon} ${cat[LANG]}</span>${line.tx}${removedTag}</li>`;
       }).join('')}</ul>
     </div>`;
   }).join('');
