@@ -2288,6 +2288,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V186', d:'06/07/2026 02:45', name:{fr:'% d\'XP aussi gros que le niveau', en:'XP % as big as the level'}, fr:[
+      {t:'improve', sub:'interface', severity:'minor', tx:'Le % d\'XP au-dessus de la barre de vie est maintenant aussi gros que le niveau (au lieu de petit en dessous)'},
+    ], en:[
+      {t:'improve', sub:'interface', severity:'minor', tx:'The XP % above the HP bar is now as big as the level (instead of small underneath)'},
+    ] },
   { v:'V185', d:'06/07/2026 02:30', name:{fr:'Carte Statistiques sans espace vide', en:'Stats card without empty space'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'La carte "Statistiques" s\'étirait elle aussi pour matcher la hauteur de ses voisines de rangée (Zones de farm/Loot), laissant un vide sous ses dernières lignes — suit maintenant sa propre hauteur de contenu, comme les 2 autres cartes de la rangée'},
     ], en:[
