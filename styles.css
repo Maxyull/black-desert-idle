@@ -290,8 +290,15 @@
      elle-même étirée par le contenu le plus haut) la contraignait, ce qui ne suffit plus avec
      autant de zones. Plafond dur en plus du flex:1, pour toujours garder un scroll interne. */
   #zoneList { flex:1; min-height:150px; max-height:60vh; overflow-y:auto; }
-  #zoneList::-webkit-scrollbar { width:6px; } 
+  #zoneList::-webkit-scrollbar { width:6px; }
   #zoneList::-webkit-scrollbar-thumb { background:#3a3742; }
+  /* même traitement pour la carte Loot (2026-07-05, demande explicite : "refais la découpe de
+     carte et rajoute le scroll") -- la table de loot peut aussi devenir longue (Trésor de Velia,
+     vue condensée de toutes les zones à Velia...) sans plafond ni défilement jusqu'ici */
+  #lootCard { display:flex; flex-direction:column; }
+  #lootTable { flex:1; min-height:150px; max-height:60vh; overflow-y:auto; padding-right:2px; }
+  #lootTable::-webkit-scrollbar { width:6px; }
+  #lootTable::-webkit-scrollbar-thumb { background:#3a3742; }
   .zRow {
     display:flex; align-items:center; gap:6px; padding:4px 5px;
     border-bottom:1px solid #232128; border-left:2px solid transparent; font-size:10.5px; cursor:pointer;
