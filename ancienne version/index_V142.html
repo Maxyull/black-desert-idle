@@ -9365,13 +9365,6 @@ applyMenuCollapse();
 // ============================================================
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte' }
 const PATCH_NOTES = [
-  { v:'V143', d:'08/07/2026 21:00', name:{fr:'Correctif serveur : Vell planifié était toujours en solo', en:'Server fix: scheduled Vell was always solo'}, fr:[
-      {t:'fix', tx:'Les apparitions programmées de Vell (jeudi 12h00, dimanche 16h45) ne créaient jamais d\'instance PARTAGÉE côté serveur — chaque joueur combattait Vell tout seul, sans jamais voir les autres joueurs ni PV communs, contrairement à Kzarka qui fonctionnait déjà correctement. Corrigé côté Supabase ; un spawn Vell déclenché par le planning est désormais bien partagé entre tous les joueurs, exactement comme un spawn admin'},
-      {t:'fix', tx:'Correctif complémentaire : un spawn admin en cours (ex: Vell lancé manuellement) pouvait être écrasé par erreur si un créneau planifié de Kzarka devenait actif entre-temps — n\'importe quel spawn valide (admin ou planifié) est désormais protégé jusqu\'à son expiration'},
-    ], en:[
-      {t:'fix', tx:'Vell\'s scheduled appearances (Thursday 12:00, Sunday 16:45) never created a SHARED instance server-side — each player fought Vell completely alone, never seeing other players or shared HP, unlike Kzarka which already worked correctly. Fixed server-side; a scheduled Vell spawn is now properly shared among all players, exactly like an admin spawn'},
-      {t:'fix', tx:'Additional fix: an ongoing admin spawn (e.g. Vell triggered manually) could be wrongly overwritten if a scheduled Kzarka slot became active in the meantime — any valid spawn (admin or scheduled) is now protected until it expires'},
-    ] },
   { v:'V142', d:'08/07/2026 20:00', name:{fr:'Persistance : chat, encarts de suivi', en:'Persistence: chat, tracker widgets'}, fr:[
       {t:'change', tx:'Le canal de chat choisi et l\'état replié/déplié du chat survivent maintenant à un rechargement de la page (comme le menu de gauche, déjà persisté)'},
       {t:'change', tx:'Les encarts "🗒️ Suivi" (temps de jeu, reset quotidien/hebdo) et "🔖 Quêtes suivies" gardent leur état replié/déplié après un rechargement au lieu de toujours repartir dépliés'},
