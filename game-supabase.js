@@ -1392,6 +1392,7 @@ document.querySelectorAll('.authLangBtn').forEach(b => {
   };
 });
 $a('btnSignInDiscord').onclick = doSignInDiscord;
+$a('btnClearCacheAuth').onclick = clearGameCache;
 $a('btnLogout').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {
   if (!currentUser) return;
@@ -1908,6 +1909,7 @@ const I18N = {
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
   btnSignInDiscord: { fr:'🎮 Se connecter avec Discord', en:'🎮 Sign in with Discord' },
+  btnClearCacheAuth: { fr:'🧹 Vider le cache du jeu', en:'🧹 Clear game cache' },
   marketTitle: { fr:'🏛️ Hôtel des ventes', en:'🏛️ Marketplace' },
   tabBuy: { fr:'Acheter', en:'Buy' },
   tabSell: { fr:'Vendre', en:'Sell' },
