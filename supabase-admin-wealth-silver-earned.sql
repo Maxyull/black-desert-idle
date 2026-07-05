@@ -10,9 +10,18 @@
 -- sans décrémenter "silverEarned" en même temps).
 --
 -- Supabase > SQL Editor > New query > Run
+--
+-- FAILLE CORRIGÉE le 2026-07-05 (audit des avertissements Supabase, voir
+-- supabase/migrations/20260705080000_fix_admin_views_security.sql) : cette vue est en SECURITY
+-- DEFINER (nécessaire pour agréger le silver de TOUS les joueurs en bypassant leur RLS
+-- individuelle), mais elle était lisible par N'IMPORTE QUEL compte connecté ou anonyme via l'API
+-- REST (/rest/v1/admin_wealth) — n'importe qui pouvait donc lire le silver/niveau de tous les
+-- joueurs. La clause WHERE ci-dessous ne renvoie des lignes que pour l'email admin ; ne JAMAIS
+-- retirer ce filtre si ce fichier est ré-exécuté.
 -- ============================================================
 
-create or replace view public.admin_wealth as
+create or replace view public.admin_wealth
+with (security_invoker = false) as
 select
   user_id,
   ((save_data->'S'->>'silver')::bigint) as silver,
@@ -20,4 +29,8 @@ select
   (save_data->>'savedAt')::timestamptz as last_saved,
   ((save_data->'S'->>'silverEarned')::bigint) as silver_earned
 from game_saves
+where coalesce((select auth.jwt()->>'email'), '') = 'maxime.lacoste@icloud.com'
 order by ((save_data->'S'->>'silver')::bigint) desc nulls last;
+
+revoke all on public.admin_wealth from anon, authenticated;
+grant select on public.admin_wealth to authenticated;
