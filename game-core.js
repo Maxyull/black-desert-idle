@@ -4736,7 +4736,10 @@ function pdSlotInnerHtmlFor(id, e) {
     if (ap) apDpBadge += `<span class="pdAp">${ap}</span>`;
     if (dp) apDpBadge += `<span class="pdDp">${dp}</span>`;
   }
-  return icon + badge + apDpBadge;
+  // petit bouton "optimiser" directement sur la pièce équipée (2026-07-05, demande explicite :
+  // "petit mais visible") -- raccourci vers le panneau d'optimisation, en plus du menu au clic
+  const optBadge = (e && e.optimizable) ? `<span class="pdOptBtn" title="${LANG==='fr'?'Optimiser':'Enhance'}">🔧</span>` : '';
+  return icon + badge + apDpBadge + optBadge;
 }
 function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
 // texte "+X PA +Y PD +Z PV" affiché dans le tooltip d'une pièce de la poupée d'équipement —
@@ -4810,6 +4813,12 @@ function fillPdCol(colId, ids) {
     div.innerHTML = pdSlotInnerHtml(id);
     div.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showEquipSlotMenu(div, id); };
     div.ondblclick = ev => { ev.stopPropagation(); hideItemPop(); if (e) unequip(id); };
+    const optBtn = div.querySelector('.pdOptBtn');
+    if (optBtn) optBtn.onclick = ev => {
+      ev.stopPropagation(); hideItemTooltip(); hideItemPop();
+      optTargetSlot = id; renderOptimization();
+      $('optCard').scrollIntoView({ behavior:'smooth', block:'center' });
+    };
     col.appendChild(div);
   }
 }
