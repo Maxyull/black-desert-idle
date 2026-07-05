@@ -2044,6 +2044,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V166', d:'05/07/2026 16:00', name:{fr:'Correction : page de connexion bloquée après une connexion réussie', en:'Fix: login screen stuck after a successful sign-in'}, fr:[
+      {t:'fix', nature:'backend', tx:'Après une connexion via Discord (ou un lien de confirmation d\'email), l\'écran de connexion pouvait rester affiché malgré une connexion réussie, y compris après un rechargement de la page — la session était bien établie mais le jeu ne le détectait pas toujours à temps'},
+    ], en:[
+      {t:'fix', nature:'backend', tx:'After signing in via Discord (or an email confirmation link), the login screen could stay on-screen despite a successful sign-in, even after reloading the page — the session was properly established but the game didn\'t always detect it in time'},
+    ] },
   { v:'V165', d:'05/07/2026 15:30', name:{fr:'Bouton "Vider le cache" et notes de version plus lisibles', en:'"Clear cache" button and more readable patch notes'}, fr:[
       {t:'new', tx:'Panneau "Mon compte" : bouton "🧹 Vider le cache et recharger" pour les cas où une mise à jour ne s\'affiche pas correctement (fichiers du jeu mis en cache par le navigateur) — ne touche jamais à la sauvegarde'},
       {t:'change', nature:'opticode', tx:'Refonte visuelle des notes de version : chaque entrée devient une carte avec un fond légèrement teinté et des séparateurs entre les lignes, badges arrondis en forme de pilule, entrée la plus récente mise en valeur'},
