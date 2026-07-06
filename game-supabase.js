@@ -2504,6 +2504,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V235', d:'11/07/2026 16:00', name:{fr:'Combat monstre par monstre, loot Alpha ×2, flèche d\'upgrade limitée aux zones découvertes', en:'Monster-by-monster combat, ×2 Alpha loot, upgrade arrow limited to discovered zones'}, fr:[
+      {t:'change', sub:'combat', severity:'major', tx:'Chaque monstre d\'un pack a désormais sa propre barre de vie et son propre loot : avant, tout le pack partageait une seule barre agrégée et tous les monstres mouraient d\'un coup une fois vidée. Ils meurent maintenant un par un au fil du combat, chacun avec sa barre au-dessus de lui'},
+      {t:'change', sub:'loot', tx:'Les groupes Alpha (boss de pack) ont maintenant un taux de drop uniformément ×2 par rapport à un groupe normal, sur tous les types de loot (trash, matériau, bijou, craft, trésor, pierre de Cron, armure, arme) — remplace les anciens multiplicateurs disparates (×1.5 et ×1.6 selon le type)'},
+      {t:'fix', sub:'interface', tx:'La flèche ⬆️ sur une pièce équipée (indiquant qu\'un meilleur stuff existe) pouvait pointer vers une zone jamais découverte. Elle ne propose désormais que des zones déjà atteintes au moins une fois, en plus d\'exclure toujours les zones dangereuses'},
+      {t:'change', sub:'zones', tx:'Les 3 dernières zones du jeu (Ruines de Kratuga, Planque des Mânes, Forêt de Polly) demandaient toutes exactement 320 PA / 175 PD. Elles montent désormais progressivement vers ce même plafond (286/157, puis 303/166, puis 320/175 sur la toute dernière) au lieu d\'y être déjà les 3 en même temps'},
+    ], en:[
+      {t:'change', sub:'combat', severity:'major', tx:'Each monster in a pack now has its own health bar and its own loot: before, the whole pack shared one aggregate bar and every monster died at once when it emptied. They now die one at a time as the fight goes on, each with its own bar above it'},
+      {t:'change', sub:'loot', tx:'Alpha packs (pack bosses) now have a uniform ×2 drop rate compared to a normal pack, across every loot type (trash, material, jewelry, craft, treasure, Cron stone, armor, weapon) — replaces the previous mismatched multipliers (×1.5 and ×1.6 depending on type)'},
+      {t:'fix', sub:'interface', tx:'The ⬆️ arrow on an equipped piece (flagging that better gear exists) could point to a zone never discovered. It now only suggests zones already reached at least once, on top of always excluding dangerous zones'},
+      {t:'change', sub:'zones', tx:'The game\'s last 3 zones (Kratuga Ruins, Manes\' Hideout, Polly Forest) all required exactly 320 AP / 175 DP. They now climb progressively toward that same cap (286/157, then 303/166, then 320/175 on the very last one) instead of all 3 being there at once'},
+    ] },
   { v:'V234', d:'11/07/2026 15:00', name:{fr:'Zones jumelles échelonnées (Trent, Île d\'Iliya, Base de Bashim)', en:'Twin zones staggered (Trent, Iliya Island, Bashim Base)'}, fr:[
       {t:'change', sub:'zones', tx:'Ruines de Trent, Île d\'Iliya et Base de Bashim demandaient exactement le même PA/PD que leur zone jumelle du même palier (Repaire des Pirates, Colonie Sausan, Repaire Bandits Gahaz) — elles demandent désormais un peu plus, sans jamais dépasser la zone suivante du palier suivant. Le plafond de fin de jeu (320 PA / 175 PD, Ruines de Kratuga / Planque des Mânes / Forêt de Polly) reste inchangé'},
     ], en:[

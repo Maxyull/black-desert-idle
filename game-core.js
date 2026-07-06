@@ -173,17 +173,21 @@ const ZONES = [
     // bleu, il en faut beaucoup plus pour pousser du stuff Grunil jusqu'à PRI+
     loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.12},
       jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:6}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
-  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:320, reqDP:175, mob:'Uluan',
+  // les 3 dernières zones du jeu (Kratuga/Mânes/Polly) étaient toutes identiques à 320/175
+  // (plafond de fin de jeu) -- lissées le 2026-07-11 (demande explicite : "lisse les req des 3
+  // dernière zone du jeu") en une montée linéaire depuis Sanctuaire Elric (269/148) jusqu'au même
+  // plafond 320/175, désormais atteint seulement à la toute dernière zone (Forêt de Polly, inchangée)
+  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:286, reqDP:157, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
       jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:9}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
-  // 3e zone Grunil (2026-07-05, demande explicite : "ajoute Planque des Mânes dernière zone SANS
-  // TOUCHER AU MAXIMUM") — reqAP/reqDP volontairement IDENTIQUES à Ruines de Kratuga, pas une
-  // nouvelle escalade (valeurs abaissées le 2026-07-08 avec Kratuga, voir plus haut). Complète
-  // juste la rotation d'arme (weapon/secondary/awakening, une par zone du palier — voir
-  // ZONE_WEAPON_SLOTS) et apporte la ceinture manquante (Orkinrad's Belt).
-  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:320, reqDP:175, mob:'Esprit des Mânes',
+  // 3e zone Grunil (2026-07-05, demande explicite : "ajoute Planque des Mânes dernière zone") —
+  // complète la rotation d'arme (weapon/secondary/awakening, une par zone du palier — voir
+  // ZONE_WEAPON_SLOTS) et apporte la ceinture manquante (Orkinrad's Belt). reqAP/reqDP lissés le
+  // 2026-07-11 (voir commentaire sur Ruines de Kratuga juste au-dessus) — 1 palier intermédiaire
+  // entre Kratuga (286/157) et le plafond final 320/175 (Forêt de Polly).
+  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:303, reqDP:166, mob:'Esprit des Mânes',
     hpPer:1000, dmg:125, xp:500,
     tint:{ a:'#3a3f4a', b:'#343943', dry:'#40454f' }, tones:['#8a9ab0','#7c8ca2','#98a8c0'], alphaTone:'#4a5568',
     loot:{ trash:{name:'Larme de Mâne',val:120,ch:1}, mat:{name:'Pierre de Caphras',val:5,ch:.07},
@@ -200,8 +204,10 @@ const ZONES = [
   // "certaine zone ont le meme nombre d'ap dp req, pas normal") -- Trent/Iliya/Bashim montent d'un
   // cran (toujours nettement sous le premier req du palier suivant, voir testZoneMonotonicity) pour
   // ne plus être de purs doublons, TOUJOURS sans dépasser le plafond de fin de jeu à 320/175 fixé
-  // explicitement avant : Forêt de Polly (dernière zone, palier bleu) reste identique à Ruines de
-  // Kratuga/Planque des Mânes, choix explicite du joueur de ne pas toucher ce plafond.
+  // explicitement avant : Forêt de Polly (dernière zone du jeu, palier bleu) reste à 320/175, seul
+  // vrai plafond — Ruines de Kratuga et Planque des Mânes, qui étaient identiques à Polly, ont
+  // ensuite été lissées le même jour pour monter progressivement jusqu'à ce plafond (voir leur
+  // commentaire dédié plus bas) au lieu d'y être déjà au premier des 3.
   // Le total de PA des bijoux d'un palier (avant réparti sur 3 pièces) a été redistribué sur 4 (voir
   // les ap ci-dessus, réduits en conséquence) pour que le total PA du palier reste EXACTEMENT le
   // même malgré ce nouveau 4e bijou -- migration rétroactive du stuff déjà possédé, voir
@@ -2952,11 +2958,14 @@ function spawnPackNear() {
       tone: alpha ? z.alphaTone : z.tones[i % z.tones.length],
       alpha, // les silhouettes par zone peuvent dessiner une variante "boss" (voir drawMineurIso)
       atkT: 1 + Math.random()*2, lunge: 0,
+      // PV INDIVIDUEL par monstre (2026-07-11, demande explicite : "chaque monstre a sa propre
+      // barre de vie et son loot associé") -- avant, tout le pack partageait une seule barre/PV
+      // agrégée et mourait d'un coup ; chaque monstre meurt maintenant un par un, voir currentWolf()/killWolf()
+      hp: hpPer, maxHp: hpPer, dead: false,
     });
   }
   packs.push({
     x, y, wolves, alpha,
-    hp: hpPer*n, maxHp: hpPer*n,
     aggro:false, gathered:0, dead:false,
     dmg: z.dmg * (alpha ? 1.8 : 1),
   });
@@ -3230,7 +3239,7 @@ function fsm(dt) {
       P.orbitAng += dt*1.9*P.orbitDir;
       const r = 125 + Math.sin(P.stateT*3)*14;
       moveToward(target.x+Math.cos(P.orbitAng)*r, target.y+Math.sin(P.orbitAng)*r, BASE_SPEED*.95, dt);
-      const danger = target.wolves.filter(w=>w.lunge>0).length >= 2;
+      const danger = target.wolves.filter(w=>!w.dead && w.lunge>0).length >= 2;
       if (danger && teleportCd <= 0) { doTeleport(P.x-target.x,P.y-target.y); P.orbitDir *= -1; }
       if (pickSkill()) setState('combat');
       if (P.stateT > 2.5) setState('combat');
@@ -3302,7 +3311,7 @@ function combatTick(dt) {
   // pas d'esquive automatique en zone dangereuse (2026-07-08, demande explicite : "les monstres...
   // doivent tuer rapidement le joueurs... ONE SHOT") -- sinon ce téléport défensif pouvait sauver
   // le joueur du coup fatal garanti (voir wolvesTick), rendant le risque de la zone contournable
-  const incoming = !isZoneDangerous() && target.wolves.some(w=>w.lunge>.25 && w.lunge<.5);
+  const incoming = !isZoneDangerous() && target.wolves.some(w=>!w.dead && w.lunge>.25 && w.lunge<.5);
   if (incoming && evasionCd <= 0 && mode !== 'overgeared') {
     evasionCd = 3.2;
     P.x += dx*36; P.y += dy*36; P.tpFlash = .6;
@@ -3325,20 +3334,28 @@ function combatTick(dt) {
   } else if (tier !== 'agressif' || mode === 'défensif') setState('kite');
 }
 
+// le monstre du pack ACTUELLEMENT visé par le joueur : le premier encore vivant (2026-07-11,
+// demande explicite : chaque monstre a désormais son propre PV, on les abat un par un plutôt que
+// de vider une seule barre agrégée pour tout le pack d'un coup)
+function currentWolf(p) { return p.wolves.find(w => !w.dead) || null; }
+
 function resolveSkill(sk) {
   P.castingSkill = null;
   if (sk.type === 'buff') { buffTimer = sk.dur; floatTxt(P.x,P.y,98,'✦ Speed Spell',{gold:true}); return; }
   if (!target || target.dead) return;
+  const w = currentWolf(target);
+  if (!w) return; // sécurité : pack déjà vidé (ne devrait pas arriver, target.dead le couvre déjà)
   const crit = Math.random() < .15;
   // >>> scaling par la PA face à la PA requise de la zone <<<
   const dmg = apEff() * sk.dmg * dmgMult(apRatio()) * (1+totalDmgPct()/100)
             * (0.9+Math.random()*.25) * (crit?2:1) * (buffTimer>0?1.12:1);
-  target.hp -= dmg;
+  w.hp -= dmg;
   spawnVfx(sk,target);
   if (sk.shake) { shakeT=.3; shakeAmp=sk.shake; }
-  floatTxt(target.x+(Math.random()*36-18), target.y+(Math.random()*36-18), 62,
+  const wp = wolfPos(target,w);
+  floatTxt(wp.x+(Math.random()*36-18), wp.y+(Math.random()*36-18), 62,
     '-'+fmt(Math.ceil(dmg))+(crit?'!':''), {crit});
-  if (target.hp <= 0 && !target.dead) killPack(target);
+  if (w.hp <= 0 && !w.dead) killWolf(target, w);
 }
 
 // ---------- loups ----------
@@ -3382,6 +3399,7 @@ function wolvesTick(dt) {
     if (d > 550) { p.aggro = false; continue; }
     if (d > 60) { p.x += (P.x-p.x)/d*mobSpeed*dt; p.y += (P.y-p.y)/d*mobSpeed*dt; }
     for (const w of p.wolves) {
+      if (w.dead) continue; // (2026-07-11) un monstre déjà tué individuellement n'attaque plus
       if (w.lunge > 0) {
         w.lunge -= dt;
         if (w.lunge <= 0) {
@@ -3439,23 +3457,30 @@ function wolvesTick(dt) {
   }
 }
 
-// ---------- mort de pack & loot ----------
-function killPack(p) {
-  p.dead = true;
+// ---------- mort de monstre (individuel) & de pack (une fois tous ses monstres tués) ----------
+// (2026-07-11, demande explicite : "chaque monstre a sa propre barre de vie et son loot associé")
+// -- avant, killPack tuait tout le pack et tirait le loot de chaque loup EN UNE FOIS quand la barre
+// agrégée du pack tombait à 0 ; désormais chaque monstre meurt et loot individuellement dès que SON
+// PROPRE PV atteint 0 (voir currentWolf/resolveSkill), et killPack ne fait plus que la finalisation
+// une fois le DERNIER monstre du pack tombé.
+function killWolf(p, w) {
+  w.dead = true;
   const z = Z(), lm = lootMult(bottleneck());
   const killsBefore = S.kills;
-  S.kills += p.wolves.length;
-  // palier de kills "pour le fun" (demande explicite du 2026-07-08) — comparaison par tranche de
-  // 1000 pour ne jamais rater le seuil quand un pack entier (plusieurs loups) le franchit d'un coup
+  S.kills++;
+  // palier de kills "pour le fun" (demande explicite du 2026-07-08)
   if (Math.floor(S.kills/1000) > Math.floor(killsBefore/1000)) {
     logToDiscord('💀 Palier de kills', `**${myPseudo||'Joueur'}** vient d'atteindre **${fmt(Math.floor(S.kills/1000)*1000)}** monstres tués à vie`, 0x7a2d33);
   }
-  gainXp(p.wolves.length * z.xp * (p.alpha?3:1));
-  for (const w of p.wolves) {
-    const wp = wolfPos(p,w);
-    corpses.push({ x:wp.x, y:wp.y, scale:w.scale, tone:w.tone, life:2.4 });
-    rollDrops(wp, p.alpha, lm);
-  }
+  gainXp(z.xp * (p.alpha?3:1));
+  const wp = wolfPos(p,w);
+  corpses.push({ x:wp.x, y:wp.y, scale:w.scale, tone:w.tone, life:2.4 });
+  rollDrops(wp, p.alpha, lm);
+  hud();
+  if (p.wolves.every(ww => ww.dead)) killPack(p);
+}
+function killPack(p) {
+  p.dead = true;
   $('aiSkill').textContent = '—';
   P.lootTarget = null;
   if (S.farmMode === 'xp') {
@@ -3604,10 +3629,16 @@ const GEAR_SELL_MULT = 2.2;
 // ratio bijou/trash (2026-07-09) — voir le commentaire complet dans rollDrops. Scope module (pas
 // local à rollDrops) pour être réutilisable par migrateGearFixedStatsV226 (rétroactivité).
 const JACKPOT_VAL_TRASH_RATIO = 20;
+// taux de drop (chance) d'un groupe ALPHA (boss de pack) : uniformément ×2 par rapport au taux
+// normal (2026-07-11, demande explicite : "les groupe alpha (boss) drop x2 par rapport au taux de
+// loot") -- remplace les anciens multiplicateurs disparates (×1.5 trash/mat/jackpot/craft, ×1.6
+// gear/arme). Ne touche PAS au multiplicateur de VALEUR silver (×1.6, inchangé, un concept séparé
+// du taux de drop).
+const ALPHA_LOOT_CHANCE_MULT = 2;
 function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
-  if (Math.random() > chance * (alpha ? 1.6 : 1)) return null;
+  if (Math.random() > chance * (alpha ? ALPHA_LOOT_CHANCE_MULT : 1)) return null;
   // 1 seule pièce d'armure garantie par zone (2026-07-06, demande explicite), voir ZONE_ARMOR_SLOTS
   // -- remplace l'ancien tirage au hasard parmi les 4 pièces, partagé entre les 4 zones du palier
   const slot = (ZONE_ARMOR_SLOTS[zoneIdx] || GEAR_SLOTS)[0];
@@ -3649,7 +3680,7 @@ function rollWeaponDrop(zone, alpha) {
   const TIER_COLORED_ICON = { weapon: staffIconForColor, secondary: daggerIconForColor, awakening: orbPairIconForColor };
   const out = [];
   for (const slot of slots) {
-    if (Math.random() > chance * (alpha ? 1.6 : 1)) continue;
+    if (Math.random() > chance * (alpha ? ALPHA_LOOT_CHANCE_MULT : 1)) continue;
     const role = GEAR_ROLE[slot];
     // stat FIXE, aucun jet aléatoire (2026-07-09, demande explicite) — voir rollGearDrop
     const basisAP = zone.gearBasisAP ?? zone.reqAP;
@@ -3778,7 +3809,7 @@ function fmtDurationMin(min) {
 function rollDrops(wp, alpha, lm) {
   const zone = Z(), L = zone.loot;
   const zk = zoneIdx; // pour rendre les clés uniques par zone
-  const mults = alpha ? 1.5 : 1;
+  const mults = alpha ? ALPHA_LOOT_CHANCE_MULT : 1;
   // le matériau d'optimisation dépend désormais du PALIER de stuff (Naru/Tuvala/Yuria/Grunil),
   // pas de la zone — on garde juste la valeur/chance d'origine de la zone (économie inchangée)
   const tier = gearTierForZone(zoneIdx);
@@ -4154,10 +4185,11 @@ function drawEntities(t) {
   packs.forEach(p => {
     if (p.dead) return;
     p.wolves.forEach(w => {
+      if (w.dead) return; // déjà tué individuellement (2026-07-11) -- retiré de l'affichage
       const wp = wolfPos(p,w);
       items.push({ depth:wp.x+wp.y, fn:()=>drawMonsterIso(wp.x,wp.y,w,t) });
+      items.push({ depth:wp.x+wp.y+1, fn:()=>drawWolfHpBar(p,w) });
     });
-    items.push({ depth:p.x+p.y+60, fn:()=>drawPackBar(p) });
   });
   items.push({ depth:P.x+P.y, fn:()=>drawWitchIso(t) });
   particles.forEach(q => items.push({ depth:(q.x??P.x)+(q.y??P.y)+30, fn:()=>drawParticle(q) }));
@@ -4832,17 +4864,20 @@ function drawMonsterIso(wx,wy,w,t) {
   return drawWolfIso(wx,wy,w,t);
 }
 
-function drawPackBar(p) {
-  const c = toScreen(p.x,p.y);
-  const bw = p.alpha?78:60, pct = Math.max(0,p.hp/p.maxHp);
-  const y = c.sy-58;
-  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(c.sx-bw/2,y,bw,5.5);
+// une barre de vie PAR MONSTRE (2026-07-11, demande explicite : "chaque monstre a sa propre barre
+// de vie") -- remplace l'ancienne drawPackBar, unique et partagée par tout le pack
+function drawWolfHpBar(p, w) {
+  const wp = wolfPos(p,w);
+  const c = toScreen(wp.x,wp.y);
+  const bw = w.alpha?46:28, pct = Math.max(0,w.hp/w.maxHp);
+  const y = c.sy-(w.alpha?50:36);
+  ctx.fillStyle='rgba(0,0,0,.55)'; ctx.fillRect(c.sx-bw/2,y,bw,4.5);
   ctx.fillStyle = pct>.35 ? '#a33d34' : '#7a2d26';
-  ctx.fillRect(c.sx-bw/2,y,bw*pct,5.5);
-  ctx.strokeStyle='#00000088'; ctx.strokeRect(c.sx-bw/2+.5,y+.5,bw,5.5);
-  if (p.alpha) {
-    ctx.fillStyle='#c9a55a'; ctx.font='bold 10px Georgia'; ctx.textAlign='center';
-    ctx.fillText('◆ ALPHA',c.sx,y-5); ctx.textAlign='left';
+  ctx.fillRect(c.sx-bw/2,y,bw*pct,4.5);
+  ctx.strokeStyle='#00000088'; ctx.strokeRect(c.sx-bw/2+.5,y+.5,bw,4.5);
+  if (w.alpha) {
+    ctx.fillStyle='#c9a55a'; ctx.font='bold 8px Georgia'; ctx.textAlign='center';
+    ctx.fillText('◆',c.sx,y-4); ctx.textAlign='left';
   }
 }
 
@@ -5704,8 +5739,11 @@ function zonesForSlot(slotId) {
 // zones à proposer pour l'icône ⬆️ d'un socle REMPLI — demande explicite du 2026-07-09 : cette
 // icône ne doit s'afficher que s'il existe un endroit pour mieux se stuffer qui N'EST PAS une zone
 // dangereuse (pas de fallback sur le dangereux ici, contrairement à zonesForSlot).
+// Filtre aussi sur les zones DÉCOUVERTES (2026-07-11, demande explicite : "indique quel stuff
+// t'améliore en base selon les zones découvertes qui ne sont pas une zone dangereuse") — même
+// convention que showFarmGuide (zi <= S.maxZoneIdx) : ne propose jamais une zone jamais visitée.
 function safeZonesForSlot(slotId) {
-  return slotCandidateZones(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
+  return slotCandidateZones(slotId).filter(zi => zi <= S.maxZoneIdx && bottleneck(ZONES[zi]) >= 0.6);
 }
 // index de palier d'un objet équipé (grey=0 < white=1 < green=2 < blue=3), déduit de sa couleur —
 // voir GEAR_TIERS (gear ET jackpot sont toujours tagués color:tier.color au drop). -1 si la

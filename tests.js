@@ -254,7 +254,10 @@
   // ZONE_WEAPON_SLOTS) sont temporairement forcés à 1 pour rendre le test indépendant du stuff
   // réel du joueur (bottleneck() dépend de apEff()/totalDP() en direct).
   function testUpgradeIconOnlyWhenBetterStuffAvailable() {
-    const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP };
+    const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP, maxZoneIdx: S.maxZoneIdx };
+    // (2026-07-11) safeZonesForSlot filtre désormais aussi par zone DÉCOUVERTE (zi <= S.maxZoneIdx)
+    // -- ce test doit rester indépendant de la progression réelle du joueur, comme zoneIdx/EQUIP ci-dessus
+    S.maxZoneIdx = ZONES.length - 1;
     ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
     EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey
     zoneIdx = 0; // palier grey, même que la pièce équipée : aucun palier supérieur possible ici
@@ -267,6 +270,25 @@
     assert('⬆️ absent si la seule zone source du palier supérieur est celle où on se trouve déjà',
       !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
+    S.maxZoneIdx = s.maxZoneIdx;
+  }
+  // "la flèche qui indique le stuff que tu peux farm sur le stuff équipé indique quel stuff
+  // t'améliore en base selon les zones découvertes qui ne sont pas une zone dangereuse" (2026-07-11)
+  // -- safeZonesForSlot ne doit jamais proposer une zone jamais visitée (zi > S.maxZoneIdx), même
+  // si elle offrirait un palier supérieur et n'est pas dangereuse.
+  function testUpgradeIconRequiresDiscoveredZone() {
+    const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP, maxZoneIdx: S.maxZoneIdx };
+    ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
+    EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey
+    zoneIdx = 3; // palier blanc : la pièce grey équipée est d'un palier inférieur, upgrade possible ici
+    S.maxZoneIdx = 2; // jamais dépassé le palier gris -> zone 4 (blanche) jamais découverte
+    assert('⬆️ absent si la seule zone qui offrirait mieux n\'a jamais été découverte',
+      !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
+    S.maxZoneIdx = 4; // zone 4 désormais découverte
+    assert('⬆️ présent dès que la zone qui offre mieux est découverte',
+      pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
+    zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
+    S.maxZoneIdx = s.maxZoneIdx;
   }
   // "sac protégé compendium ... l'item optimisé qui part dans le compendium à la place du +0 garde
   // son optimisation" (2026-07-09) -- ensureCompendiumProtection() doit toujours faire remonter le
@@ -727,6 +749,7 @@
     testKoStopsMonsterAttacks();
     testNoAutoPotionAtVelia();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
+    testUpgradeIconRequiresDiscoveredZone();
     testCompendiumBackfillAfterSell();
     testCellEnhBadgeVisibility();
     testNeglectedUpgradeHighlight();
