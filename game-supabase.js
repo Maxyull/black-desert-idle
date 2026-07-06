@@ -2343,6 +2343,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V199', d:'08/07/2026 09:00', name:{fr:'Refonte complète du stuff : sorcier, ornements par rareté', en:'Full gear rework: wizard theme, rarity ornaments'}, fr:[
+      {t:'new', sub:'graphismes', tx:'Toutes les icônes d\'équipement redessinées et alignées sur la classe sorcier : bâton (arme principale), dague (arme secondaire), deux sphères Aad en lévitation (éveil), casque à fente en Y, cuirasse cintrée à épaulières, gants griffus, bottes à genouillère, collier/bague/boucles d\'oreille à pendentif'},
+      {t:'new', sub:'graphismes', tx:'Ornementation cohérente par rareté sur TOUTE pièce de stuff : rien au gris/blanc, 4 rivets au palier Vert (Yuria), 4 gemmes + 1 losange central au palier Bleu (Grunil)'},
+      {t:'new', sub:'graphismes', tx:'Fond de case plus abouti selon la rareté (remplace le halo autour de l\'objet) : uni au gris, bandeau clair au blanc, teinte + coins marqués au vert, teinte + coins ornés de losanges au bleu'},
+      {t:'change', sub:'equipements', tx:'Arme principale renommée Bâton (au lieu d\'Épée/Lame) sur les 4 paliers, pour coller au thème sorcier — aucun impact sur les statistiques'},
+    ], en:[
+      {t:'new', sub:'graphismes', tx:'Every equipment icon redrawn around the wizard theme: staff (main weapon), dagger (secondary weapon), two floating Aad spheres (awakening), Y-slit helmet, waisted cuirass with pauldrons, clawed gloves, greaved boots, pendant necklace/ring/earrings'},
+      {t:'new', sub:'graphismes', tx:'Consistent rarity ornamentation on EVERY gear piece: none at grey/white, 4 rivets at Green tier (Yuria), 4 gems + 1 center diamond at Blue tier (Grunil)'},
+      {t:'new', sub:'graphismes', tx:'More refined slot background by rarity (replaces the glow around the item): plain at grey, light banner at white, tinted with marked corners at green, tinted with ornate diamond corners at blue'},
+      {t:'change', sub:'equipements', tx:'Main weapon renamed Staff (instead of Sword/Blade) across all 4 tiers to fit the wizard theme — no stat impact'},
+    ] },
   { v:'V198', d:'06/07/2026 11:00', name:{fr:'Halo de couleur sur le stuff, pastille de notes déplacée dans le panneau', en:'Color halo on gear, unread badge moved into the panel'}, fr:[
       {t:'new', sub:'graphismes', tx:'Chaque pièce équipée (arme, armure, bijou...) et chaque emplacement du panneau d\'optimisation (pièce en cours, matériau, Pierre de Cron) affiche désormais un halo lumineux dans la couleur de son palier — même esprit que le halo de l\'orbe de Pierre de Cron'},
       {t:'change', sub:'interface', tx:'La pastille "notes non lues" en haut de l\'écran a été retirée — l\'appel à remonter est maintenant un bandeau directement en haut du panneau des notes de version, qui scrolle en un clic'},

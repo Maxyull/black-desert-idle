@@ -261,46 +261,11 @@ function bestFarmedItem() {
 // icônes SVG originales (dessinées pour ce projet, aucun asset BDO réel) — plus détaillées :
 // base + reflets + ombres pour un rendu plus joli, remplissant davantage la case
 function svgIcon(inner) { return `<svg class="gicon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`; }
-// arme principale : bâton magique à orbe bleu lumineux
-const ICO_WEAPON = svgIcon(
-  '<rect x="10.6" y="7" width="2.8" height="15" rx="1.4" fill="#5a3f22"/><rect x="11" y="7" width="1" height="15" fill="#9a7a45"/>' +
-  '<circle cx="12" cy="6" r="5" fill="#2f5c8a"/><circle cx="12" cy="6" r="5" fill="none" stroke="#8cc8ff" stroke-width="1.1"/>' +
-  '<circle cx="12" cy="6" r="2.4" fill="#bfe4ff"/><circle cx="10.6" cy="4.6" r="1" fill="#fff"/>');
-// arme d\'éveil : grande épée dorée
-const ICO_AWAKENING = svgIcon(
-  '<path d="M12 1l2 3-2 12-2-12z" fill="#e6cf7a"/><path d="M12 1l2 3-2 12z" fill="#c9a55a"/>' +
-  '<rect x="7.5" y="16" width="9" height="2.4" rx="1.2" fill="#8a6a3a"/>' +
-  '<rect x="10.8" y="18" width="2.4" height="4" rx="1.2" fill="#5a3f22"/><circle cx="12" cy="22.4" r="1.3" fill="#e6cf7a"/>');
-// arme secondaire : dague
-const ICO_SECONDARY = svgIcon(
-  '<path d="M12 2l1.8 9h-3.6z" fill="#d8dde3"/><path d="M12 2l1.8 9H12z" fill="#aeb6bf"/>' +
-  '<rect x="8" y="11" width="8" height="2.2" rx="1.1" fill="#8a6a3a"/>' +
-  '<rect x="11" y="13" width="2" height="7" rx="1" fill="#3a2f22"/><circle cx="12" cy="20.5" r="1.4" fill="#c9a55a"/>');
 // livre (compétences de vie) : couverture bleue + tranche + pages
 const ICO_BOOK = svgIcon(
   '<path d="M4 4.5c3-1.2 5.5-1 8 .5v15c-2.5-1.5-5-1.7-8-.5z" fill="#3a6ea8"/>' +
   '<path d="M20 4.5c-3-1.2-5.5-1-8 .5v15c2.5-1.5 5-1.7 8-.5z" fill="#5a8fc8"/>' +
   '<path d="M12 5v15" stroke="#274a6e" stroke-width="1.4"/><path d="M14 8h4M14 11h4M6 8h4M6 11h4" stroke="#dfeaf5" stroke-width="0.9"/>');
-// casque : dôme + visière + cimier doré
-const ICO_HELMET = svgIcon(
-  '<path d="M4 15a8 8 0 0116 0v1H4z" fill="#8f9aa6"/><path d="M4 15a8 8 0 0116 0h-4a4 4 0 00-8 0z" fill="#aab4bf"/>' +
-  '<rect x="3" y="16" width="18" height="2.6" rx="1.2" fill="#5f6873"/>' +
-  '<path d="M11 4h2l-.4 7h-1.2z" fill="#e6cf7a"/><path d="M12 4h1l-.4 7H12z" fill="#c9a55a"/>');
-// armure : plastron
-const ICO_ARMOR = svgIcon(
-  '<path d="M12 2l7 3.2v5.3C19 17 15.5 20.5 12 22.5 8.5 20.5 5 17 5 10.5V5.2z" fill="#6f7d8a"/>' +
-  '<path d="M12 2l7 3.2v5.3C19 17 15.5 20.5 12 22.5z" fill="#586773"/>' +
-  '<path d="M12 6v13" stroke="#3f4b55" stroke-width="1.2"/><path d="M8 9l4 2 4-2" fill="none" stroke="#9aa7b3" stroke-width="1"/>');
-// gants : gantelet
-const ICO_GLOVES = svgIcon(
-  '<path d="M6 22V10.5a2.5 2.5 0 015 0V12a2.5 2.5 0 015 0v10z" fill="#7a5a30"/>' +
-  '<path d="M6 22V10.5a2.5 2.5 0 015 0V22z" fill="#9a7a45"/>' +
-  '<rect x="5" y="19.5" width="14" height="3" rx="1.2" fill="#5a3f22"/>');
-// bottes
-const ICO_BOOTS = svgIcon(
-  '<path d="M8.5 2h4.5v11l6 4.5v3H4v-4.5l4.5-2.5z" fill="#7a5a30"/>' +
-  '<path d="M8.5 2h4.5v11l6 4.5v3h-6z" fill="#5a3f22"/>' +
-  '<rect x="4" y="20" width="16" height="2.2" rx="1" fill="#332412"/>');
 // éclaircit/assombrit une couleur hex (amt en [-255,255]) — sert à générer les tons d'ombre/lumière
 // des icônes teintées par palier de stuff ci-dessous
 function shadeHex(hex, amt) {
@@ -310,44 +275,164 @@ function shadeHex(hex, amt) {
   r = Math.max(0,Math.min(255,r)); g = Math.max(0,Math.min(255,g)); b = Math.max(0,Math.min(255,b));
   return '#' + ((1<<24) + (r<<16) + (g<<8) + b).toString(16).slice(1);
 }
-// armure/gants/bottes teintés par la vraie couleur du palier de stuff (gris/blanc/vert/bleu...) —
-// remplace ICO_ARMOR/ICO_GLOVES/ICO_BOOTS (couleurs fixes) au moment du drop, demande explicite du
-// 2026-07-07 : chaque catégorie garde sa forme mais prend la couleur de la zone où elle se loot
-function armorIconForColor(color) {
-  const dark = shadeHex(color, -70), line = shadeHex(color, -100), light = shadeHex(color, 60);
-  return svgIcon(
-    `<path d="M12 2l7 3.2v5.3C19 17 15.5 20.5 12 22.5 8.5 20.5 5 17 5 10.5V5.2z" fill="${color}"/>` +
-    `<path d="M12 2l7 3.2v5.3C19 17 15.5 20.5 12 22.5z" fill="${dark}"/>` +
-    `<path d="M12 6v13" stroke="${line}" stroke-width="1.2"/><path d="M8 9l4 2 4-2" fill="none" stroke="${light}" stroke-width="1"/>`);
+// fond de case selon la rareté (remplace l'ancien halo autour de l'objet, demande explicite du
+// 2026-07-08 : "enleve le halo et met un fond de couleur plus ou moins abouti selon la rareté") —
+// rien pour gris/blanc, teinte + coins marqués au vert, teinte + coins ornés de losanges au bleu.
+// tierIdx : 0=gris/blanc, 1=vert, 2=bleu (voir JEWEL_TIER_IDX plus bas)
+function rarityBackdrop(tierIdx, color) {
+  if (tierIdx === 1) return `<rect x="1" y="1" width="22" height="22" rx="4" fill="${color}" opacity=".14"/>` +
+    `<path d="M2 6.5l4.5-4.5M22 6.5l-4.5-4.5M2 17.5l4.5 4.5M22 17.5l-4.5 4.5" stroke="${color}" stroke-width="1" opacity=".5"/>`;
+  if (tierIdx >= 2) return `<rect x="1" y="1" width="22" height="22" rx="4" fill="${color}" opacity=".18"/>` +
+    `<path d="M2 7.5l5.5-5.5M22 7.5l-5.5-5.5M2 16.5l5.5 5.5M22 16.5l-5.5 5.5" stroke="${color}" stroke-width="1.2" opacity=".65"/>` +
+    `<path d="M12 .3l1.5 1.9-1.5 1.9-1.5-1.9z" fill="${color}" opacity=".7"/><path d="M12 23.7l1.5-1.9-1.5-1.9-1.5 1.9z" fill="${color}" opacity=".7"/>`;
+  return '';
 }
-function glovesIconForColor(color) {
-  const dark = shadeHex(color, -70);
-  return svgIcon(
-    `<path d="M6 22V10.5a2.5 2.5 0 015 0V12a2.5 2.5 0 015 0v10z" fill="${color}"/>` +
-    `<path d="M6 22V10.5a2.5 2.5 0 015 0V22z" fill="${dark}"/>` +
-    `<rect x="5" y="19.5" width="14" height="3" rx="1.2" fill="#5a3f22"/>`);
+// ornements communs à toute pièce de stuff (armes, armure, bijoux) : rien au gris/blanc, 4 rivets
+// pleins au vert, 4 gemmes claires + 1 losange central (5e ornement) au bleu — demande explicite du
+// 2026-07-08 : "ornement 5 pour la bleu et 4 pour la verte", appliqué de façon cohérente partout
+function gearOrnaments(tierIdx, positions, color, center) {
+  if (tierIdx === 1) return positions.map(([x,y]) => `<circle cx="${x}" cy="${y}" r=".6" fill="${color}"/>`).join('');
+  if (tierIdx >= 2) {
+    const gem = shadeHex(color, 60);
+    let out = positions.map(([x,y]) => `<circle cx="${x}" cy="${y}" r=".6" fill="${gem}"/>`).join('');
+    if (center) out += `<path d="M${center[0]} ${center[1]-1.3}l1.3 1.3-1.3 1.3-1.3-1.3z" fill="#eaf6ff"/>`;
+    return out;
+  }
+  return '';
 }
-function bootsIconForColor(color) {
-  const dark = shadeHex(color, -70);
-  return svgIcon(
-    `<path d="M8.5 2h4.5v11l6 4.5v3H4v-4.5l4.5-2.5z" fill="${color}"/>` +
-    `<path d="M8.5 2h4.5v11l6 4.5v3h-6z" fill="${dark}"/>` +
-    `<rect x="4" y="20" width="16" height="2.2" rx="1" fill="#332412"/>`);
+// arme principale : bâton de sorcier (manche + tête sertie d'un cristal), teinté par palier —
+// remplace l'ancienne arme fixe (2026-07-08, demande explicite : "l'arme c'est un baton de sorcier")
+function staffIconForColor(color, grade) {
+  const t = JEWEL_TIER_IDX[grade] || 0;
+  const wood = grade==='grey' ? '#6b5030' : grade==='white' ? '#7a8083' : grade==='green' ? '#26301f' : '#0a1216';
+  const gem = grade==='grey' ? '#9aa0a3' : color;
+  const cage = grade==='grey' ? wood : shadeHex(color,-95);
+  let claws = '';
+  if (grade==='green') claws = `<path d="M12 1.8c-2.2.6-3.6 2-4 4.2l2 1.6c-.2-2 .5-3.8 2-5.8z" fill="${cage}"/><path d="M12 1.8c2.2.6 3.6 2 4 4.2l-2 1.6c.2-2-.5-3.8-2-5.8z" fill="${shadeHex(cage,-30)}"/>`;
+  if (grade==='blue') claws = `<path d="M12 1.4c-2.6.5-4.3 2.1-4.8 4.8l2.3 1.8c-.4-2.4.5-4.5 2.5-6.6z" fill="${cage}"/><path d="M12 1.4c2.6.5 4.3 2.1 4.8 4.8l-2.3 1.8c.4-2.4-.5-4.5-2.5-6.6z" fill="${shadeHex(cage,-30)}"/>`;
+  let cross = '';
+  if (grade==='white') cross = `<rect x="10.6" y="12" width="2.8" height="1.2" rx=".5" fill="${gem}"/>`;
+  if (grade==='blue') cross = `<rect x="10.6" y="11.6" width="2.8" height="1.1" rx=".5" fill="${gem}"/><rect x="10.6" y="14.4" width="2.8" height="1.1" rx=".5" fill="${gem}" opacity=".65"/>`;
+  const rivets = gearOrnaments(t, [[12,10.4],[12,13.2],[12,16],[12,18.8]], color, [12,15]);
+  return svgIcon(rarityBackdrop(t,color) + claws +
+    `<rect x="11" y="7.5" width="2" height="14.5" rx="1" fill="${wood}"/><rect x="11" y="7.5" width=".9" height="14.5" rx=".45" fill="${shadeHex(wood,40)}"/>` +
+    cross +
+    `<path d="M12 3l1.7 1.9-1.7 2.6-1.7-2.6z" fill="${shadeHex(gem,30)}"/><path d="M12 3l1.7 1.9-1.7 2.6z" fill="${gem}"/>` +
+    `<circle cx="12" cy="5" r=".5" fill="#eaf6ff"/>` +
+    rivets);
 }
-// collier : chaîne + pendentif
-const ICO_NECKLACE = svgIcon(
-  '<path d="M4 5c0 6.5 4 10 8 10s8-3.5 8-10" fill="none" stroke="#c9a55a" stroke-width="1.8"/>' +
-  '<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="#e6cf7a" stroke-width="1.8"/>' +
-  '<path d="M12 15l3 4-3 3-3-3z" fill="#3a6ea8"/><path d="M12 15l3 4-3 3z" fill="#274a6e"/>');
-// boucle d\'oreille
-const ICO_EARRING = svgIcon(
-  '<circle cx="12" cy="7" r="3.4" fill="none" stroke="#e6cf7a" stroke-width="1.8"/>' +
-  '<path d="M12 11l3 4.5-3 4.5-3-4.5z" fill="#3a6ea8"/><path d="M12 11l3 4.5-3 4.5z" fill="#274a6e"/>');
-// bague
-const ICO_RING = svgIcon(
-  '<circle cx="12" cy="15" r="6.5" fill="none" stroke="#c9a55a" stroke-width="2.6"/>' +
-  '<circle cx="12" cy="15" r="6.5" fill="none" stroke="#e6cf7a" stroke-width="1"/>' +
-  '<path d="M12 3l3.2 4.5L12 11 8.8 7.5z" fill="#3a6ea8"/><path d="M12 3l3.2 4.5L12 11z" fill="#274a6e"/>');
+// arme secondaire : dague, teintée par palier — remplace l'ancienne dague fixe
+function daggerIconForColor(color, grade) {
+  const t = JEWEL_TIER_IDX[grade] || 0;
+  const blade = grade==='grey' ? '#8f9aa6' : grade==='white' ? '#e8e8e8' : grade==='green' ? '#3d4a3a' : '#20303c';
+  const bladeDark = grade==='green' ? '#26301f' : grade==='blue' ? '#16232b' : shadeHex(blade,-30);
+  const guard = grade==='grey' ? '#5f6873' : grade==='white' ? '#9aa0a3' : grade==='green' ? '#182015' : '#0a1216';
+  const pommel = grade==='grey' ? '#6b5030' : grade==='white' ? '#7a8083' : grade==='green' ? '#26301f' : '#0a1216';
+  const fuller = grade!=='grey' ? `<path d="M12 9.6v9.8" stroke="${grade==='white'?guard:color}" stroke-width=".55"/>` : '';
+  const curvedGuard = (grade==='green'||grade==='blue')
+    ? `<path d="M7.6 8.4c1.4-1 3-1.4 4.4-1.4s3 .4 4.4 1.4l-.8 1.2c-1.2-.7-2.4-1-3.6-1s-2.4.3-3.6 1z" fill="${guard}"/>`
+    : `<rect x="8.2" y="7.6" width="7.6" height="1.7" rx=".8" fill="${guard}"/>`;
+  const rivets = gearOrnaments(t, [[9.2,8.9],[14.8,8.9],[12,4.4],[12,6.4]], color, [12,10.5]);
+  return svgIcon(rarityBackdrop(t,color) +
+    `<path d="M12 22l-2.2-4.6V9h4.4v8.4z" fill="${blade}"/><path d="M12 22l-2.2-4.6V9H12z" fill="${bladeDark}"/>` +
+    fuller + curvedGuard +
+    `<rect x="11" y="3.4" width="2" height="4.2" rx=".9" fill="${pommel}"/><circle cx="12" cy="2.8" r="1.1" fill="${guard}"/>` +
+    rivets);
+}
+// éveil : deux sphères Aad flottant en lévitation (remplace l'ancienne grande épée dorée, 2026-07-08
+// demande explicite : "l'eveil c'est 2 boules flottante" / "que les 2 boules ce sont des sphere aad")
+function orbPairIconForColor(color, grade) {
+  const t = JEWEL_TIER_IDX[grade] || 0;
+  const stone = grade==='grey' ? '#6b6f74' : grade==='white' ? '#cfd8dc' : grade==='green' ? '#182015' : '#0f1a20';
+  const ringCol = grade==='grey' ? '#43494f' : grade==='white' ? '#9aa0a3' : color;
+  let bigCore = '', smallCore = '';
+  if (grade === 'grey') { bigCore = '<circle cx="7.6" cy="9.1" r="1.1" fill="#8f9aa6"/>'; smallCore = '<circle cx="15.5" cy="13.9" r=".75" fill="#8f9aa6"/>'; }
+  else if (grade === 'white') { bigCore = '<circle cx="7.6" cy="9.1" r="1.2" fill="#fff"/>'; smallCore = '<circle cx="15.5" cy="13.9" r=".8" fill="#fff"/>'; }
+  else if (grade === 'green') {
+    bigCore = `<path d="M9 7.4c1.7 1.2 2.3 2.7 1.8 4.4-.5 1.3-1.8 2.1-1.8 2.1s-1.3-.8-1.8-2.1c-.5-1.7.1-3.2 1.8-4.4z" fill="${color}" opacity=".8"/>`;
+    smallCore = `<path d="M16.4 12.8c1.1.8 1.5 1.8 1.2 2.9-.3.9-1.2 1.4-1.2 1.4s-.9-.5-1.2-1.4c-.3-1.1.1-2.1 1.2-2.9z" fill="${color}" opacity=".8"/>`;
+  } else {
+    bigCore = '<path d="M9.8 7.6l-1.9 3.3h1.5L8 14.3l3.3-4.3H9.6z" fill="#dfeaf4"/>';
+    smallCore = '<path d="M17 13l-1.3 2.2h1l-.9 2.1 2.2-2.9h-1.1z" fill="#dfeaf4"/>';
+  }
+  const rivets = gearOrnaments(t, [[3.6,8.4],[14.2,12.2],[12.4,6.2],[19.8,11.7]], color, [12,17.2]);
+  return svgIcon(rarityBackdrop(t,color) +
+    `<circle cx="9" cy="10.5" r="4.2" fill="${stone}"/><circle cx="9" cy="10.5" r="4.2" fill="none" stroke="${ringCol}" stroke-width=".8"/>` +
+    bigCore +
+    `<circle cx="16.4" cy="14.8" r="2.9" fill="${stone}"/><circle cx="16.4" cy="14.8" r="2.9" fill="none" stroke="${ringCol}" stroke-width=".8"/>` +
+    smallCore +
+    `<path d="M7 17.8h4M14.6 19.6h3.6" stroke="${ringCol}" stroke-width=".8" stroke-linecap="round"/>` +
+    rivets);
+}
+// casque : heaume avec fente en Y, teinté par palier — cornes qui apparaissent au vert/bleu
+function helmetIconForColor(color, grade) {
+  const t = JEWEL_TIER_IDX[grade] || 0;
+  const base = (grade==='green'||grade==='blue') ? shadeHex(color,-95) : color;
+  const dark = shadeHex(base,-40), visor = shadeHex(base,-90);
+  let horns = '';
+  if (grade==='white') horns = `<path d="M9 8l-1.6-2.6 1.4-.6z" fill="${shadeHex(color,-20)}"/><path d="M15 8l1.6-2.6-1.4-.6z" fill="${shadeHex(color,-20)}"/>`;
+  if (grade==='green') horns = `<path d="M6.2 6.8C4.8 5.6 4.4 4 5 2.4c.5 1.5 1.5 2.6 2.9 3.2z" fill="${shadeHex(color,70)}"/><path d="M17.8 6.8c1.4-1.2 1.8-2.8 1.2-4.4-.5 1.5-1.5 2.6-2.9 3.2z" fill="${shadeHex(color,70)}"/>`;
+  if (grade==='blue') horns = `<path d="M6.4 7.4C3.6 6 2.6 3.4 3.6.8c.6 2.4 2.2 4.2 4.4 5z" fill="${shadeHex(color,70)}"/><path d="M17.6 7.4C20.4 6 21.4 3.4 20.4.8c-.6 2.4-2.2 4.2-4.4 5z" fill="${shadeHex(color,70)}"/>`;
+  const rivets = gearOrnaments(t, [[7,9.4],[17,9.4],[7,16.6],[17,16.6]], color, [12,9.6]);
+  return svgIcon(rarityBackdrop(t,color) + horns +
+    `<path d="M4 15a8 8 0 0116 0v1H4z" fill="${base}"/><path d="M4 15a8 8 0 0116 0h-4a4 4 0 00-8 0z" fill="${shadeHex(base,35)}"/>` +
+    `<rect x="3" y="16" width="18" height="2.6" rx="1.2" fill="${dark}"/>` +
+    `<path d="M12 8.6c1.8 0 3.2.6 3.2 2v1.2h-2v6h-2.4v-6h-2v-1.2c0-1.4 1.4-2 3.2-2z" fill="${visor}"/>` +
+    `<path d="M8 12.2h1.8M14.2 12.2H16" stroke="${visor}" stroke-width="1.5"/>` +
+    rivets);
+}
+// armure : cuirasse cintrée avec épaulières, teintée par palier — redessinée le 2026-07-08 pour
+// mieux lire comme une armure (col en V, taille marquée, panneaux abdominaux)
+function armorIconForColor(color, grade) {
+  const t = JEWEL_TIER_IDX[grade] || 0;
+  const base = (grade==='green'||grade==='blue') ? shadeHex(color,-95) : color;
+  const dark = shadeHex(base,-40), line = shadeHex(base,-70), light = shadeHex(base,45);
+  const epaulettes = grade==='grey' ? '' :
+    `<path d="M7.4 4.6C4.8 5 3.4 6.6 3.2 9l2.8 1c.2-2 .6-3.8 1.4-5.4z" fill="${grade==='white'?light:shadeHex(base,25)}"/>` +
+    `<path d="M16.6 4.6c2.6.4 4 2 4.2 4.4l-2.8 1c-.2-2-.6-3.8-1.4-5.4z" fill="${dark}"/>`;
+  const rivets = gearOrnaments(t, [[9.5,8],[14.5,8],[9.8,14.6],[14.2,14.6]], color, [12,11.3]);
+  return svgIcon(rarityBackdrop(t,color) + epaulettes +
+    `<path d="M12 3l4.6 1.6c1 2.4.8 4.9.4 7.4-.4 3.5-2 6.6-5 7.8-3-1.2-4.6-4.3-5-7.8-.4-2.5-.6-5-.4-7.4z" fill="${base}"/>` +
+    `<path d="M12 3l4.6 1.6c1 2.4.8 4.9.4 7.4-.4 3.5-2 6.6-5 7.8z" fill="${dark}"/>` +
+    `<path d="M9.6 4.4c.8 1.6 4 1.6 4.8 0" fill="none" stroke="${line}" stroke-width=".8"/>` +
+    `<path d="M12 6v13" stroke="${line}" stroke-width=".7"/>` +
+    `<path d="M8.6 9.2c1.2 1 5.6 1 6.8 0M9 13c1.1.9 4.9.9 6 0" fill="none" stroke="${line}" stroke-width=".55"/>` +
+    rivets);
+}
+// gants : moufle d'armure vue de dos avec doigts segmentés — redessinés le 2026-07-08 (griffes au
+// vert/bleu, plus lisibles que l'ancien gantelet trop simple)
+function glovesIconForColor(color, grade) {
+  const t = JEWEL_TIER_IDX[grade] || 0;
+  const base = (grade==='green'||grade==='blue') ? shadeHex(color,-95) : color;
+  const dark = shadeHex(base,-40), cuff = shadeHex(base,-70);
+  let claws = '';
+  if (grade === 'green') claws = `<path d="M6.9 11.7l-.9-2 1.1.6zM10.1 10.3l-.7-2.2 1.1.8zM13.3 9.9l.4-2.3.7 1zM16.5 11.2l1-1.9-.1 1.3z" fill="${shadeHex(color,60)}"/>`;
+  if (grade === 'blue') claws = `<path d="M6.9 11.7l-1.4-3 1.6 1zM10.1 10.3l-1-3.2 1.5 1.2zM13.3 9.9l.6-3.3 1 1.5zM16.5 11.2l1.6-2.8-.2 1.9z" fill="${shadeHex(color,70)}"/>`;
+  const rivets = gearOrnaments(t, [[9.2,11.8],[14.8,11.8],[9.2,15.6],[14.8,15.6]], color, [12,13.7]);
+  return svgIcon(rarityBackdrop(t,color) + claws +
+    `<path d="M5.6 20.5V13a1.3 1.3 0 012.6 0v3h.6v-4.4a1.3 1.3 0 012.6 0V16h.6v-4.8a1.3 1.3 0 012.6 0V16h.6v-3.6a1.3 1.3 0 012.6 0v6c0 1.5-1.2 2.7-2.7 2.7H8.3c-1.5 0-2.7-1.2-2.7-2.6z" fill="${base}"/>` +
+    `<path d="M5.6 20.5V13a1.3 1.3 0 012.6 0v7.4c0 .4-.1.7-.3 1-1.3-.1-2.3-1.2-2.3-1.9z" fill="${dark}"/>` +
+    `<path d="M4.6 19.4h14.8l-.8 3.2H5.4z" fill="${cuff}"/>` +
+    rivets);
+}
+// bottes : tige haute + pied, genouillère pointue au vert/bleu — redessinées le 2026-07-08
+function bootsIconForColor(color, grade) {
+  const t = JEWEL_TIER_IDX[grade] || 0;
+  const base = (grade==='green'||grade==='blue') ? shadeHex(color,-95) : color;
+  const dark = shadeHex(base,-40), sole = shadeHex(base,-80);
+  let knee = '';
+  if (grade==='green') knee = `<path d="M8.6 5.4L11.7 3l3.1 2.4-3.1 1.5z" fill="${dark}"/>`;
+  if (grade==='blue') knee = `<path d="M8.6 5.4L11.7 2.6l3.1 2.8-3.1 1.5z" fill="${dark}"/><path d="M11.7 2.6V.9l1.5 1.9z" fill="${shadeHex(color,50)}"/>`;
+  const spur = grade==='blue' ? `<path d="M7.5 18.2l-1.7-.9 1.7-.9z" fill="${color}"/>` : '';
+  const trim = (grade==='green'||grade==='blue') ? `<path d="M9.4 12.4h4.4" stroke="${color}" stroke-width=".5"/>` : '';
+  const rivets = gearOrnaments(t, [[10.4,9],[13,9],[10.4,12.4],[13,12.4]], color, [11.7,10.7]);
+  return svgIcon(rarityBackdrop(t,color) + knee +
+    `<path d="M9 4h5.5v9.8c0 .9.4 1.7 1.1 2.2l2.7 2c.7.5 1.1 1.3 1.1 2.2v1.4H9z" fill="${base}"/>` +
+    `<path d="M14.5 4v9.8c0 .9.4 1.7 1.1 2.2l2.7 2c.7.5 1.1 1.3 1.1 2.2v1.4h-5V4z" fill="${dark}"/>` +
+    `<ellipse cx="11.7" cy="5.2" rx="2.9" ry="1.4" fill="${sole}"/>` + trim + spur +
+    `<path d="M8.4 21.6c-.5 0-.9-.4-.9-.9s.4-.9.9-.9h11.2c.5 0 .9.4.9.9s-.4.9-.9.9z" fill="${dark}"/>` +
+    rivets);
+}
 // ceinture : sangle + boucle
 const ICO_BELT = svgIcon(
   '<rect x="1.5" y="9.5" width="21" height="5" rx="1.4" fill="#5a3f22"/><rect x="1.5" y="9.5" width="21" height="2" rx="1" fill="#8a6a3a"/>' +
@@ -384,22 +469,51 @@ function jewelGemCluster(tierIdx, color, cx, cy) {
       `<path d="M${cx} ${cy-4.6}l2.4 3.6-2.4 3.6-2.4-3.6z" fill="#fff" opacity=".95"/><path d="M${cx} ${cy-4.6}l2.4 3.6-2.4 3.6z" fill="${color}"/>` +
       `<path d="M${cx-4} ${cy-1.4}l1.3 2-1.3 2-1.3-2z" fill="${color}"/><path d="M${cx+4} ${cy-1.4}l1.3 2-1.3 2-1.3-2z" fill="${color}"/>`;
 }
+// bague / collier / boucles d'oreille redessinés le 2026-07-08 (cohérence avec le reste du set) —
+// même règle d'ornements que les armes/armure : 0 au gris/blanc, 4 rivets au vert, 4 gemmes + 1
+// losange (5e ornement) au bleu (voir gearOrnaments) ; le tierIdx (0/1/2) reste celui de
+// JEWEL_TIER_IDX, la couleur elle-même distingue déjà gris de blanc
 function ringIconForTier(tierIdx, color) {
-  return svgIcon(
-    '<circle cx="12" cy="15" r="6.5" fill="none" stroke="#c9a55a" stroke-width="2.6"/>' +
-    '<circle cx="12" cy="15" r="6.5" fill="none" stroke="#e6cf7a" stroke-width="1"/>' +
-    jewelGemCluster(tierIdx, color, 12, 7));
+  const band = tierIdx<=0 ? color : tierIdx===1 ? '#26301f' : '#16232b';
+  const bandLine = shadeHex(band,-15);
+  let gem = '';
+  if (tierIdx<=0) gem = `<rect x="10.6" y="6.6" width="2.8" height="2.4" rx=".7" fill="${shadeHex(color,-30)}"/>`;
+  else if (tierIdx===1) gem = `<path d="M12 4.2l2 2.4-2 3-2-3z" fill="${color}"/><path d="M12 4.2l2 2.4-2 3z" fill="${shadeHex(color,-40)}"/>`;
+  else gem = `<path d="M12 3.4l2.4 2.8-2.4 3.6-2.4-3.6z" fill="${shadeHex(color,70)}"/><path d="M12 3.4l2.4 2.8-2.4 3.6z" fill="${color}"/>`;
+  const rivets = gearOrnaments(tierIdx, [[6.9,10.5],[17.1,10.5],[6.9,17.5],[17.1,17.5]], color, [12,20.8]);
+  return svgIcon(rarityBackdrop(tierIdx,color) +
+    `<circle cx="12" cy="14" r="6" fill="none" stroke="${band}" stroke-width="2.4"/>` +
+    `<circle cx="12" cy="14" r="6" fill="none" stroke="${bandLine}" stroke-width=".9"/>` +
+    gem + rivets);
 }
 function necklaceIconForTier(tierIdx, color) {
-  return svgIcon(
-    '<path d="M4 5c0 6.5 4 10 8 10s8-3.5 8-10" fill="none" stroke="#c9a55a" stroke-width="1.8"/>' +
-    '<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="#e6cf7a" stroke-width="1.8"/>' +
-    (tierIdx <= 0 ? '<circle cx="12" cy="16.5" r="1.3" fill="#e6cf7a"/>' : jewelGemCluster(tierIdx, color, 12, 18)));
+  const chain = tierIdx<=0 ? color : tierIdx===1 ? '#26301f' : '#16232b';
+  let pend = '';
+  if (tierIdx<=0) pend = `<circle cx="12" cy="16.5" r="1.6" fill="${shadeHex(color,-30)}"/>`;
+  else if (tierIdx===1) pend = `<path d="M12 13l3.4 4-3.4 4.4L8.6 17z" fill="${chain}"/><path d="M12 13l3.4 4-3.4 4.4z" fill="${shadeHex(chain,-25)}"/><path d="M12 15l1.6 2-1.6 2.2-1.6-2.2z" fill="${color}"/>`;
+  else pend = `<path d="M12 12.6l3.8 4.4-3.8 4.8-3.8-4.8z" fill="${chain}"/><path d="M12 12.6l3.8 4.4-3.8 4.8z" fill="${shadeHex(chain,-25)}"/><path d="M12 14.6l1.9 2.4-1.9 2.6-1.9-2.6z" fill="#eaf6ff"/><path d="M12 14.6l1.9 2.4-1.9 2.6z" fill="${shadeHex(color,60)}"/>`;
+  const rivets = gearOrnaments(tierIdx, [[12,13.6],[8.9,17],[15.1,17],[12,20.6]], color, [17.2,13.8]);
+  return svgIcon(rarityBackdrop(tierIdx,color) +
+    `<path d="M4 5c0 6.5 4 10 8 10s8-3.5 8-10" fill="none" stroke="${chain}" stroke-width="1.8"/>` +
+    `<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="${shadeHex(chain,40)}" stroke-width="1.8"/>` +
+    pend + rivets);
 }
 function earringIconForTier(tierIdx, color) {
-  return svgIcon(
-    '<circle cx="12" cy="7" r="3.4" fill="none" stroke="#e6cf7a" stroke-width="1.8"/>' +
-    (tierIdx <= 0 ? '<circle cx="12" cy="15.5" r="1.3" fill="#e6cf7a"/>' : jewelGemCluster(tierIdx, color, 12, 15.5)));
+  const ring = tierIdx<=0 ? color : tierIdx===1 ? '#26301f' : '#16232b';
+  let drop = '', drop2 = '';
+  if (tierIdx<=0) { drop = `<circle cx="8" cy="13.5" r="1.4" fill="${shadeHex(color,-30)}"/>`; drop2 = `<circle cx="16" cy="13.5" r="1.4" fill="${shadeHex(color,-30)}"/>`; }
+  else if (tierIdx===1) {
+    drop = `<path d="M8 10.8l1.6 2.4-1.6 3.2-1.6-2.8z" fill="${ring}"/><path d="M8 11.8l.9 1.4-.9 1.6-.9-1.6z" fill="${color}"/>`;
+    drop2 = `<path d="M16 10.8l1.6 2.4-1.6 3.2-1.6-2.8z" fill="${ring}"/><path d="M16 11.8l.9 1.4-.9 1.6-.9-1.6z" fill="${color}"/>`;
+  } else {
+    drop = `<path d="M8 10.4l1.8 2.7-1.8 3.3-1.8-3.3z" fill="${ring}"/><path d="M8 11.6l1 1.5-1 1.9-1-1.9z" fill="#eaf6ff"/><path d="M8 11.6l1 1.5-1 1.9z" fill="${shadeHex(color,60)}"/>`;
+    drop2 = `<path d="M16 10.4l1.8 2.7-1.8 3.3-1.8-3.3z" fill="${ring}"/><path d="M16 11.6l1 1.5-1 1.9-1-1.9z" fill="#eaf6ff"/><path d="M16 11.6l1 1.5-1 1.9z" fill="${shadeHex(color,60)}"/>`;
+  }
+  const rivets = gearOrnaments(tierIdx, [[6.2,9],[9.8,9],[14.2,9],[17.8,9]], color, [12,5.6]);
+  return svgIcon(rarityBackdrop(tierIdx,color) +
+    `<circle cx="8" cy="7" r="2.6" fill="none" stroke="${ring}" stroke-width="1.5"/>` +
+    `<circle cx="16" cy="7" r="2.6" fill="none" stroke="${ring}" stroke-width="1.5"/>` +
+    drop + drop2 + rivets);
 }
 function beltIconForTier(tierIdx, color) {
   return svgIcon(
@@ -475,7 +589,7 @@ function compendiumBagAdd(obj) {
 
 // slots d'équipement type BDO — chaque pièce optimisable porte son PROPRE niveau d'enchant (enhLv)
 const EQUIP = {
-  weapon: { name:'Bâton de Grunil', kind:'gear', slot:'weapon', ap:10, dp:0, enhLv:0, optimizable:true, fsByLevel:{}, icon:ICO_WEAPON },
+  weapon: { name:'Bâton de Grunil', kind:'gear', slot:'weapon', ap:10, dp:0, enhLv:0, optimizable:true, fsByLevel:{}, icon:staffIconForColor('#8f9aa6','grey') },
   awakening: null, secondary: null, book: null,
   helmet: null, armor: null, gloves: null, boots: null,
   ring1: null, ring2: null, necklace: null, earring1: null, earring2: null, belt: null,
@@ -3112,20 +3226,22 @@ const GEAR_TIERS = [
   // zones étendues à 4 par palier le 2026-07-05 (voir commentaire sur les nouvelles zones dans
   // ZONES) -- les 4e zones (12,13,14,15) sont ajoutées à la fin du tableau, jamais insérées, donc
   // aucun index existant ne bouge
+  // noms d'armes alignés sur la classe sorcier le 2026-07-08 (demande explicite : "l'arme c'est un
+  // baton de sorcier... l'arme secondaire c'est une dague") — armure/bijoux inchangés
   { grade:'grey', color:'#b8b8b8', zones:[0,1,2,12], label:{fr:'Gris — Naru',en:'Grey — Naru'},
-    sets:{ weapon:'Épée Naru', awakening:'Éveil Naru', secondary:'Dague Naru',
+    sets:{ weapon:'Bâton Naru', awakening:'Éveil Naru', secondary:'Dague Naru',
            helmet:'Casque Naru', armor:'Armure Naru', gloves:'Gants Naru', boots:'Bottes Naru' },
     material:{ name:'Pierre de Novice', icon:ICO_MAT_NOVICE, color:'#b8b8b8' }, dropChance:null },
   { grade:'white', color:'#e8e8e8', zones:[3,4,5,13], label:{fr:'Blanc — Tuvala',en:'White — Tuvala'},
-    sets:{ weapon:'Lame Tuvala', awakening:'Éveil Tuvala', secondary:'Dague Tuvala',
+    sets:{ weapon:'Bâton Tuvala', awakening:'Éveil Tuvala', secondary:'Dague Tuvala',
            helmet:'Casque Tuvala', armor:'Armure Tuvala', gloves:'Gants Tuvala', boots:'Bottes Tuvala' },
     material:{ name:'Pierre du Temps', icon:ICO_MAT_TEMPS, color:'#cfd8dc' }, dropChance:null },
   { grade:'green', color:'#7aa35e', zones:[6,7,8,14], label:{fr:'Vert — Yuria',en:'Green — Yuria'},
-    sets:{ weapon:'Lame Yuria', awakening:'Éveil Yuria', secondary:'Dague Yuria',
+    sets:{ weapon:'Bâton Yuria', awakening:'Éveil Yuria', secondary:'Dague Yuria',
            helmet:'Casque Yuria', armor:'Plastron Yuria', gloves:'Gants Yuria', boots:'Bottes Yuria' },
     material:{ name:'Pierre Noire', icon:ICO_MAT_NOIRE, color:'#7aa35e' }, dropChance:0.02 }, // même vert EXACT que le stuff Yuria (demande explicite du 2026-07-08)
   { grade:'blue', color:'#6ea3c9', zones:[9,10,11,15], label:{fr:'Bleu — Grunil',en:'Blue — Grunil'},
-    sets:{ weapon:'Dague Grunil', awakening:'Éveil Grunil', secondary:'Épée Grunil',
+    sets:{ weapon:'Bâton Grunil', awakening:'Éveil Grunil', secondary:'Dague Grunil',
            helmet:'Casque Grunil', armor:'Plastron Grunil', gloves:'Gants Grunil', boots:'Bottes Grunil' },
     // Pierre concentrée dédiée à Grunil depuis le 2026-07-06 (avant : partageait la Pierre Noire
     // de Yuria, ce qui mélangeait les 2 paliers) — Yuria (vert) garde la Pierre Noire
@@ -3229,10 +3345,10 @@ function rollGearDrop(zone, alpha) {
   const dp = Math.round(zone.reqDP * role.dpShare * scale);
   const hp = Math.round(zone.reqDP * role.hpShare * scale * HP_GEAR_SCALE);
   const dodge = Math.round(zone.reqDP * (role.dodgeShare||0) * scale * DODGE_GEAR_SCALE * 100) / 100;
-  // armure/gants/bottes prennent la couleur du palier (icône générée à la volée) — les autres
-  // slots gardent leur icône générique fixe — demande explicite du 2026-07-07
-  const TIER_COLORED_ICON = { armor: armorIconForColor, gloves: glovesIconForColor, boots: bootsIconForColor };
-  const icon = TIER_COLORED_ICON[slot] ? TIER_COLORED_ICON[slot](tier.color) : (SLOT_ICON ? SLOT_ICON[slot] : '⚔️');
+  // toute pièce d'armure prend la couleur ET l'ornementation du palier (icône générée à la volée,
+  // 2026-07-07 puis étendu au casque + ornements de rareté le 2026-07-08)
+  const TIER_COLORED_ICON = { helmet: helmetIconForColor, armor: armorIconForColor, gloves: glovesIconForColor, boots: bootsIconForColor };
+  const icon = TIER_COLORED_ICON[slot] ? TIER_COLORED_ICON[slot](tier.color, tier.grade) : (SLOT_ICON ? SLOT_ICON[slot] : '⚔️');
   return {
     name: tier.sets[slot], kind:'gear', slot, ap, dp, hp, dodge, enhLv:0, optimizable:true, fsByLevel:{},
     key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
@@ -3249,6 +3365,9 @@ function rollWeaponDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
   const slots = ZONE_WEAPON_SLOTS[zoneIdx] || ['weapon'];
+  // arme/dague/orbes d'éveil prennent aussi la couleur ET l'ornementation du palier (2026-07-08,
+  // même traitement que l'armure — voir staffIconForColor/daggerIconForColor/orbPairIconForColor)
+  const TIER_COLORED_ICON = { weapon: staffIconForColor, secondary: daggerIconForColor, awakening: orbPairIconForColor };
   const out = [];
   for (const slot of slots) {
     if (Math.random() > chance * (alpha ? 1.6 : 1)) continue;
@@ -3258,7 +3377,8 @@ function rollWeaponDrop(zone, alpha) {
     out.push({
       name: tier.sets[slot], kind:'gear', slot, ap, dp:0, hp:0, dodge:0, enhLv:0, optimizable:true, fsByLevel:{},
       key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
-      icon: SLOT_ICON ? SLOT_ICON[slot] : '⚔️', color:tier.color, stackable:false, weight:1.2,
+      icon: TIER_COLORED_ICON[slot] ? TIER_COLORED_ICON[slot](tier.color, tier.grade) : (SLOT_ICON ? SLOT_ICON[slot] : '⚔️'),
+      color:tier.color, stackable:false, weight:1.2,
       matName: tier.material.name,
       val: Math.round(ap*2 * 22),
     });
@@ -5021,9 +5141,14 @@ const SLOT_LABEL = { weapon:'Arme princ.', awakening:'Éveil', secondary:'Arme s
   helmet:'Casque', armor:'Armure', gloves:'Gants', boots:'Bottes',
   necklace:'Collier', earring1:'B. oreille', earring2:'B. oreille', ring1:'Bague', ring2:'Bague', belt:'Ceinture',
   artifact1:'Artéfact', artifact2:'Artéfact', eqStone:'Pierre' };
-const SLOT_ICON = { weapon:ICO_WEAPON, awakening:ICO_AWAKENING, secondary:ICO_SECONDARY, book:ICO_BOOK,
-  helmet:ICO_HELMET, armor:ICO_ARMOR, gloves:ICO_GLOVES, boots:ICO_BOOTS,
-  necklace:ICO_NECKLACE, earring1:ICO_EARRING, earring2:ICO_EARRING, ring1:ICO_RING, ring2:ICO_RING, belt:ICO_BELT,
+// icônes par défaut (palier neutre gris) — utilisées en repli quand une pièce sauvegardée n'a pas
+// sa propre icône (vieux objets, stuff de départ), voir helmetIconForColor & co. plus haut
+const SLOT_ICON = { weapon:staffIconForColor('#8f9aa6','grey'), awakening:orbPairIconForColor('#8f9aa6','grey'),
+  secondary:daggerIconForColor('#8f9aa6','grey'), book:ICO_BOOK,
+  helmet:helmetIconForColor('#8f9aa6','grey'), armor:armorIconForColor('#8f9aa6','grey'),
+  gloves:glovesIconForColor('#8f9aa6','grey'), boots:bootsIconForColor('#8f9aa6','grey'),
+  necklace:necklaceIconForTier(0,'#8f9aa6'), earring1:earringIconForTier(0,'#8f9aa6'), earring2:earringIconForTier(0,'#8f9aa6'),
+  ring1:ringIconForTier(0,'#8f9aa6'), ring2:ringIconForTier(0,'#8f9aa6'), belt:ICO_BELT,
   artifact1:ICO_ARTIFACT, artifact2:ICO_ARTIFACT, eqStone:ICO_EQSTONE };
 
 function renderEquipment() {
