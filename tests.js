@@ -543,6 +543,52 @@
       assert(`Bijou de ${z.name} : AP dynamique > 0`, expected > 0, `expected=${expected}`);
     }
   }
+  // "vérifie la rétroactivité lors de modification de stuff pour tout objet déjà existant"
+  // (2026-07-10) : migrateGearFixedStatsV226 doit recalculer un objet déjà possédé (stats ET val)
+  // avec EXACTEMENT la même formule que les nouveaux drops -- sinon un objet looté avant la V225/226
+  // reste bloqué sur l'ancien aléatoire/l'ancien prix pour toujours
+  function testGearRetroactiveMigration() {
+    const s = { a: EQUIP.armor, b: INV[INV_SIZE-1], zoneIdx };
+    // plastron de zone10 (Ruines de Kratuga, bleu) avec un ancien stat aléatoire ET un ancien prix élevé
+    // -- rollGearDrop lit aussi zoneIdx (global, pour tier/slot) EN PLUS du paramètre zone (pour
+    // gearBasisAP/DP) : les deux doivent pointer la même zone, comme en jeu réel (rollDrops appelle
+    // toujours rollGearDrop(Z(), ...), jamais une zone différente de zoneIdx)
+    zoneIdx = 10;
+    const zone = ZONES[10];
+    // les stats sont maintenant FIXES (V226) mais le drop reste soumis à une chance -- répète
+    // jusqu'à en obtenir un plutôt que de dépendre d'un seul tirage (référence : ce qu'un drop
+    // FRAIS donne aujourd'hui, forcément identique d'un essai à l'autre depuis la V226)
+    let freshArmor = null;
+    for (let i = 0; i < 2000 && !freshArmor; i++) freshArmor = rollGearDrop(zone, true);
+    EQUIP.armor = { name:'Plastron Grunil', kind:'gear', slot:'armor', ap:0, dp:999, hp:9999, dodge:9.9, enhLv:7, color:'#6ea3c9', val:99999, key:'t_old_armor' };
+    migrateGearFixedStatsV226();
+    assert('Migration : dp recalculé à la vraie formule fixe (plus l\'ancien aléatoire)',
+      EQUIP.armor.dp === freshArmor.dp, `got=${EQUIP.armor.dp}, attendu=${freshArmor.dp}`);
+    assert('Migration : hp recalculé', EQUIP.armor.hp === freshArmor.hp);
+    assert('Migration : val recalculé au nouveau (petit) prix de revente', EQUIP.armor.val === freshArmor.val, `got=${EQUIP.armor.val}, attendu=${freshArmor.val}`);
+    assert('Migration : enhLv (déjà investi) reste intact, jamais touché', EQUIP.armor.enhLv === 7);
+
+    // bijou avec un ancien prix figé (ancien ratio ~230-290x) -- "Anneau de Cadry" vient de la zone 9
+    // (voir JACKPOT_NAME_TO_ZONE dans game-core.js)
+    INV[INV_SIZE-1] = { name:'Anneau de Cadry', kind:'jackpot', slot:'ring1', ap:8, val:99999, color:'#6ea3c9', key:'t_old_ring' };
+    migrateGearFixedStatsV226();
+    const ringZone = ZONES[9];
+    assert('Migration : val du bijou recalculé au nouveau ratio (~20x le trash)',
+      INV[INV_SIZE-1].val === Math.max(1, Math.round(ringZone.loot.trash.val * 20)), `got=${INV[INV_SIZE-1].val}`);
+
+    EQUIP.armor = s.a; INV[INV_SIZE-1] = s.b; zoneIdx = s.zoneIdx;
+  }
+  // "vérifie les info de la table de loot (couleurs cadre)" (2026-07-10) : la ligne dépliée du
+  // bijou (kind jackpot) doit être colorée à la couleur du palier, comme les lignes gear/matériau
+  // et comme la ligne condensée (zoneLootCompactRowHtml) — bug trouvé en vérification : "jackpot"
+  // manquait de rowColor, seule la ligne du bijou restait sans couleur dans le détail déplié
+  function testLootTableJackpotRowHasColor() {
+    const html = zoneLootRowsHtml(0); // Camp des Loups, palier grey (#b8b8b8)
+    const jackpotRowMatch = html.match(/<div class="lootIcon k-jackpot"[^>]*>/);
+    assert('Table de loot : la ligne bijou a bien un style de couleur (border/color)',
+      !!jackpotRowMatch && jackpotRowMatch[0].includes('style='), `html=${jackpotRowMatch && jackpotRowMatch[0]}`);
+    assert('Table de loot : la couleur du bijou correspond au palier de la zone', !!jackpotRowMatch && jackpotRowMatch[0].includes(GEAR_TIERS[0].color));
+  }
   function testZone0LootReachesZone1Difficulty() {
     // scénario concret remonté par le joueur (2026-07-08) : casque + arme + 2 bijoux, tous
     // lootables à Camp des Loups (zone0), enchantés à +12 — ne doit plus tomber en ZONE DANGEREUSE
@@ -591,6 +637,8 @@
     testEquipBestTieBreaksOnHighestEnhLv();
     testOptDropdownShowsOnlyPrimaryStat();
     testJewelryApIsDynamic();
+    testGearRetroactiveMigration();
+    testLootTableJackpotRowHasColor();
     testZone0LootReachesZone1Difficulty();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
