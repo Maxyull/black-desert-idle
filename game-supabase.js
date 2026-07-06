@@ -273,6 +273,17 @@ async function loadCloudSave() {
     // aucune sauvegarde cloud trouvée = personnage tout juste créé : on l'accueille à Velia et on
     // lance le tutoriel (petite pause pour laisser l'UI/le HUD finir de s'initialiser)
     if (!tutorialAutoShown) { tutorialAutoShown = true; setTimeout(startTutorial, 500); }
+    // un nouveau joueur n'a pas à voir de notification sur les notes de version D'AVANT sa
+    // création de compte (demande explicite du 2026-07-08) -- sans ça, unreadPatchCount()
+    // comptait TOUT l'historique jamais publié (ex: "201 non lues"), un chiffre absurde pour
+    // quelqu'un qui vient de commencer. On marque tout SAUF la toute dernière version comme déjà
+    // lu : sa page de notes de version s'ouvre donc directement sur la dernière (1 seule pastille
+    // NEW, en haut), pas besoin de scroller dans un historique qu'il n'a pas vécu.
+    if (typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES.length) {
+      PATCH_NOTES.slice(1).forEach(p => readPatches.add(p.v));
+      try { localStorage.setItem('velia-patch-read', JSON.stringify([...readPatches])); } catch(e) {}
+      if (typeof updatePatchBadge === 'function') updatePatchBadge();
+    }
   }
   setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 3000);
   checkPendingNotice(); // annonce importante en attente (ex: reset de compte) — livrée une seule fois
@@ -2277,6 +2288,10 @@ const I18N = {
   optCronToggleLbl: { fr:'Utiliser la Pierre de Cron si dispo', en:'Use Cron Stone if available' },
   btnOptTry: { fr:"Tenter l'optimisation", en:'Attempt enhancement' },
   btnOptAuto: { fr:"▶ Auto jusqu'à", en:'▶ Auto to' },
+  optAutoModeTarget: { fr:"Jusqu'à un palier", en:'Until a target level' },
+  optAutoModeLoop: { fr:"En boucle (jusqu'à rupture de matériau)", en:'On loop (until out of material)' },
+  optAutoModeFail: { fr:"Jusqu'au premier échec", en:'Until the first failure' },
+  optAutoModeCron: { fr:"Jusqu'à épuisement des Pierres de Cron", en:'Until out of Cron Stones' },
   btnConvertCaphras: { fr:'Convertir (5:1)', en:'Convert (5:1)' },
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
 };
@@ -2343,6 +2358,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V202', d:'08/07/2026 11:00', name:{fr:'Nouveaux joueurs et notes de version, 3 nouveaux modes d\'optimisation auto, loupe sur le loot', en:'New players and patch notes, 3 new auto-enhance modes, loot magnifier'}, fr:[
+      {t:'fix', sub:'ux', severity:'major', tx:'Un nouveau joueur voyait un nombre absurde de notes de version "non lues" (tout l\'historique jamais publié). Désormais, seule la toute dernière version compte comme nouvelle à la création du compte — sa page de notes de version s\'ouvre directement dessus, pas besoin de fouiller un historique qu\'il n\'a pas vécu'},
+      {t:'new', sub:'optimisation', tx:'3 nouveaux modes pour l\'auto-optimisation, en plus de "jusqu\'à un palier" : "en boucle" (continue jusqu\'à rupture de matériau), "jusqu\'au premier échec" (s\'arrête dès le 1er raté), "jusqu\'à épuisement des Pierres de Cron" (pousse un palier risqué tant qu\'il reste de la protection)'},
+      {t:'new', sub:'interface', tx:'Les icônes de la table de loot s\'agrandissent automatiquement au survol (aperçu façon loupe) pour mieux voir le détail de chaque pièce'},
+      {t:'fix', sub:'interface', tx:'Filet de sécurité ajouté sur l\'inventaire et le sac protégé du Compendium : si jamais un objet équipable n\'a pas d\'icône propre (vieille sauvegarde), il retombe sur l\'icône générique de son emplacement au lieu d\'afficher une case vide'},
+    ], en:[
+      {t:'fix', sub:'ux', severity:'major', tx:'A new player saw an absurd number of "unread" patch notes (the entire history ever published). Now only the very latest version counts as new at account creation — their patch notes page opens straight on it, no need to dig through history they never lived through'},
+      {t:'new', sub:'optimisation', tx:'3 new modes for auto-enhance, alongside "until a target level": "on loop" (keeps going until out of material), "until the first failure" (stops at the first miss), "until out of Cron Stones" (push a risky tier as long as protection remains)'},
+      {t:'new', sub:'interface', tx:'Loot table icons now automatically zoom in on hover (magnifier-style preview) to see each piece\'s detail more clearly'},
+      {t:'fix', sub:'interface', tx:'Safety net added to the inventory grid and the Compendium\'s protected bag: if an equippable item somehow has no icon of its own (old save), it now falls back to its slot\'s generic icon instead of showing an empty cell'},
+    ] },
   { v:'V201', d:'08/07/2026 10:00', name:{fr:'Pierre de Cron cliquable, spawn sans arme, zones rééquilibrées', en:'Clickable Cron Stone, empty spawn, rebalanced zones'}, fr:[
       {t:'change', sub:'interface', tx:'La case Pierre de Cron du panneau d\'optimisation sert désormais elle-même de bouton on/off (clique dessus pour activer/désactiver) — grisée quand désactivée. Remplace l\'ancienne case à cocher séparée'},
       {t:'change', sub:'equipements', tx:'Le personnage ne spawn plus avec un "Bâton de Grunil" par défaut — l\'emplacement d\'arme principale démarre vide, comme tous les autres emplacements'},

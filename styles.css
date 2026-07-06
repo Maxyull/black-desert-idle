@@ -547,7 +547,15 @@
   .lootRow { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid #232128; font-size:12px; }
   .lootRow:last-child { border-bottom:none; }
   .lootIcon { width:26px; height:26px; display:flex; align-items:center; justify-content:center;
-    background:rgba(20,19,26,.8); border:1px solid #2c2a33; font-size:13px; flex-shrink:0; }
+    background:rgba(20,19,26,.8); border:1px solid #2c2a33; font-size:13px; flex-shrink:0; cursor:help; }
+  /* aperçu agrandi au survol d'une icône de loot (2026-07-08, demande explicite : "qu'on puisse
+     agrandir l'icone pour mieux la voir en tooltip en auto en passant dessus") -- position:fixed
+     pour échapper au overflow-y:auto de #lootTable, rempli/positionné en JS (voir lootIconZoomInit) */
+  #lootIconZoom { position:fixed; width:96px; height:96px; padding:6px; background:var(--panel-2);
+    border:1px solid var(--gold-dim); border-radius:6px; box-shadow:0 6px 20px rgba(0,0,0,.6);
+    display:none; align-items:center; justify-content:center; z-index:9999; pointer-events:none; }
+  #lootIconZoom.show { display:flex; }
+  #lootIconZoom svg { width:100%; height:100%; }
   .lootIcon.k-trash { color:#a08464; } .lootIcon.k-material { color:#8fb0c9; }
   .lootIcon.k-jackpot { color:#e8b84a; border-color:var(--gold-dim); } .lootIcon.k-craft { color:#b48ce8; }
   .lootIcon.k-gear { color:#c9a55a; border-color:var(--gold-dim); }
@@ -598,6 +606,8 @@
   #optResult { font-size:11.5px; min-height:15px; margin-top:5px; letter-spacing:.5px; }
   #optResult.ok { color:#8fc98a; } #optResult.fail { color:var(--danger); }
   .optShake { animation:shake .35s; }
+  #optAutoModeRow { margin-top:6px; }
+  #optAutoModeRow select { width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim); padding:5px; font-family:inherit; font-size:11px; }
   #optAutoRow { display:flex; gap:6px; margin-top:6px; }
   #optAutoRow select { flex:1; background:#191720; color:var(--ink); border:1px solid var(--gold-dim); padding:5px; font-family:inherit; font-size:11px; }
   #optAutoRow button { width:auto; margin:0; font-size:11px; padding:5px 10px; white-space:nowrap; }

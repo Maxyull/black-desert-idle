@@ -2311,7 +2311,7 @@ function renderCompendiumHtml() {
     const cellsHtml = COMPENDIUM_BAG.map((s,i) => {
       if (!s) return `<div class="cell compBagCell"></div>`;
       return `<div class="cell compBagCell has" title="${escapeHtml(tr(s.name))}">` +
-        `<span style="color:${s.color}">${s.icon}</span>` +
+        `<span style="color:${s.color}">${s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔'}</span>` +
         `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button></div>`;
     }).join('');
     bodyHtml = `<div class="admHint">${LANG==='fr'
@@ -5448,7 +5448,11 @@ function renderInventory() {
         cell.style.borderColor = s.color;
         cell.style.boxShadow = `inset 0 0 6px ${s.color}55`;
       }
-      cell.innerHTML = `<span style="color:${s.color}">${s.icon}</span>` +
+      // filet de sécurité (2026-07-08, demande explicite : "verifier que toutes les items
+      // équipable ont un svg associé") : repli sur l'icône générique du slot si jamais un objet
+      // (sauvegarde ancienne/corrompue) n'a pas de champ icon — évite une case vide/"undefined"
+      const cellIcon = s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔';
+      cell.innerHTML = `<span style="color:${s.color}">${cellIcon}</span>` +
         (s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : '') +
         (s.equipped ? `<span class="eqd">E</span>` : '') +
         (cellApDp && cellApDp.ap ? `<span class="cellAp">${cellApDp.ap}</span>` : '') +
@@ -6022,6 +6026,8 @@ function renderOptAutoGain() {
     : '';
 }
 $('optAutoTarget').onchange = renderOptAutoGain;
+// mode de l'auto-optimisation en cours ('target'/'loop'/'fail'/'cron') — voir startAutoOpt
+let autoOptMode = 'target';
 function stopAutoOpt() {
   if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; }
   autoOptTargetLvl = null;
@@ -6029,26 +6035,56 @@ function stopAutoOpt() {
   btn.classList.remove('running');
   btn.textContent = LANG==='fr' ? "▶ Auto jusqu'à" : '▶ Auto to';
   $('optAutoTarget').disabled = false;
+  $('optAutoMode').disabled = false;
 }
+// bascule l'affichage du sélecteur de palier : uniquement utile en mode 'target' (2026-07-08)
+$('optAutoMode').onchange = () => {
+  $('optAutoTarget').style.display = $('optAutoMode').value === 'target' ? '' : 'none';
+};
 function startAutoOpt() {
   if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; } // garde-fou : jamais 2 intervalles en parallèle
-  const sel = $('optAutoTarget');
-  const lvl = parseInt(sel.value, 10);
-  if (!Number.isInteger(lvl)) return;
-  autoOptTargetLvl = lvl;
-  sel.disabled = true;
+  const mode = $('optAutoMode').value;
+  autoOptMode = mode;
+  autoOptTargetLvl = null;
+  if (mode === 'target') {
+    const sel = $('optAutoTarget');
+    const lvl = parseInt(sel.value, 10);
+    if (!Number.isInteger(lvl)) return;
+    autoOptTargetLvl = lvl;
+    sel.disabled = true;
+  }
+  $('optAutoMode').disabled = true;
   const btn = $('btnOptAuto');
   btn.classList.add('running');
   btn.textContent = LANG==='fr' ? '⏸ Arrêter' : '⏸ Stop';
   autoOptTimer = setInterval(() => {
     const target = EQUIP[optTargetSlot];
-    if (!target || (target.enhLv||0) >= autoOptTargetLvl) { stopAutoOpt(); return; }
+    if (!target) { stopAutoOpt(); return; }
+    if (mode === 'target' && (target.enhLv||0) >= autoOptTargetLvl) { stopAutoOpt(); return; }
     if (findEnhanceMaterial() === -1) {
       $('optResult').textContent = LANG==='fr' ? 'Auto arrêté — plus de matériau' : 'Auto stopped — out of material';
       stopAutoOpt();
       return;
     }
+    // "jusqu'à plus de Pierre de Cron" (2026-07-08, demande explicite) : s'arrête dès que le sac
+    // n'a plus de quoi protéger la prochaine rétrogradation — utile pour pousser un palier risqué
+    // (+8 et au-delà) sans jamais tenter "à découvert" une fois le stock de protection épuisé
+    if (mode === 'cron' && findCronStone() === -1) {
+      $('optResult').textContent = LANG==='fr' ? 'Auto arrêté — plus de Pierre de Cron' : 'Auto stopped — out of Cron Stones';
+      stopAutoOpt();
+      return;
+    }
+    const prevLvl = target.enhLv||0;
     attemptEnhance();
+    // "jusqu'au premier échec" (2026-07-08, demande explicite) : un échec est détecté quand le
+    // niveau n'a PAS progressé d'exactement +1 (protection Cron incluse : le niveau ne bouge pas
+    // non plus dans ce cas, donc compte comme un échec qui arrête la boucle)
+    if (mode === 'fail') {
+      const target2 = EQUIP[optTargetSlot];
+      if (!target2 || (target2.enhLv||0) !== prevLvl + 1) { stopAutoOpt(); return; }
+    }
+    // "en boucle" (2026-07-08, demande explicite) : aucune condition d'arrêt sur le niveau, continue
+    // jusqu'à rupture de matériau (déjà géré ci-dessus) ou arrêt manuel
   }, 220);
 }
 $('btnOptAuto').onclick = () => { if (autoOptTimer) stopAutoOpt(); else startAutoOpt(); };
@@ -6124,6 +6160,33 @@ function renderOptSuggestions() {
 
 // ---------- table de loot de la zone active (ou en aperçu via le bouton "Voir"), avec % réels ----------
 const LOOT_ICONS = { trash:'▬', material:'◈', jackpot:'💍', craft:'✦', gear:'⚔️' };
+// aperçu agrandi au survol d'une icône de la table de loot (2026-07-08, demande explicite : "qu'on
+// puisse agrandir l'icone pour mieux la voir en tooltip en auto en passant dessus") -- écoute
+// déléguée sur tout le document (les icônes sont recréées à chaque rendu de table de loot, sur
+// plusieurs panneaux : zone active, récapitulatif Velia, guide de farm) plutôt qu'un binding par
+// élément qu'il faudrait refaire à chaque re-render
+(function initLootIconZoom() {
+  const zoomEl = document.getElementById('lootIconZoom');
+  if (!zoomEl) return;
+  document.addEventListener('mouseover', e => {
+    const icon = e.target.closest('.lootIcon');
+    if (!icon) return;
+    zoomEl.innerHTML = icon.innerHTML;
+    const col = icon.style.color; if (col) zoomEl.style.color = col;
+    const r = icon.getBoundingClientRect();
+    let left = r.right + 10, top = r.top + r.height/2 - 48;
+    if (left + 96 > window.innerWidth) left = r.left - 106;
+    top = Math.max(6, Math.min(top, window.innerHeight - 102));
+    zoomEl.style.left = left + 'px'; zoomEl.style.top = top + 'px';
+    zoomEl.classList.add('show');
+  });
+  document.addEventListener('mouseout', e => {
+    const icon = e.target.closest('.lootIcon');
+    if (!icon) return;
+    if (icon.contains(e.relatedTarget)) return;
+    zoomEl.classList.remove('show');
+  });
+})();
 // construit les lignes de loot d'UNE zone (utilisé pour l'aperçu normal ET pour le récapitulatif
 // "toutes zones confondues" affiché à Velia, voir renderLootTable ci-dessous)
 function zoneLootRowsHtml(idx) {

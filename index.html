@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=201">
+<link rel="stylesheet" href="styles.css?v=202">
 </head>
 <body>
 
@@ -35,6 +35,8 @@
 </div>
 
 <div id="achToastStack"></div>
+<!-- aperçu agrandi au survol d'une icône de la table de loot (2026-07-08, demande explicite) -->
+<div id="lootIconZoom"></div>
 <!-- bannière d'annonce importante (ex: reset complet des comptes), livrée une seule fois via
      claim_pending_notice() à la connexion — demande explicite du 2026-07-06 -->
 <div id="resetNoticeOverlay" class="resetNoticeOverlay">
@@ -443,6 +445,16 @@
         <div id="optChanceTxt" data-i18n="optChanceEmpty">Chargez un matériau depuis le sac</div>
       </div>
       <button id="btnOpt" disabled data-i18n="btnOptTry">Tenter l'optimisation</button>
+      <!-- modes d'auto-optimisation (2026-07-08, demande explicite : "tenter en boucle / jusqu'a
+           echec / jusqu'a plus de pierre de cron") — en plus du mode existant "jusqu'à un palier" -->
+      <div id="optAutoModeRow">
+        <select id="optAutoMode">
+          <option value="target" data-i18n="optAutoModeTarget">Jusqu'à un palier</option>
+          <option value="loop" data-i18n="optAutoModeLoop">En boucle (jusqu'à rupture de matériau)</option>
+          <option value="fail" data-i18n="optAutoModeFail">Jusqu'au premier échec</option>
+          <option value="cron" data-i18n="optAutoModeCron">Jusqu'à épuisement des Pierres de Cron</option>
+        </select>
+      </div>
       <div id="optAutoRow">
         <select id="optAutoTarget"></select>
         <button id="btnOptAuto" data-i18n="btnOptAuto">▶ Auto jusqu'à</button>
@@ -459,7 +471,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=201"></script>
-<script src="game-supabase.js?v=201"></script>
+<script src="game-core.js?v=202"></script>
+<script src="game-supabase.js?v=202"></script>
 </body>
 </html>
