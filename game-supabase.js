@@ -2507,6 +2507,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V249', d:'12/07/2026 06:00', name:{fr:'Lien zone ↔ pièce d\'équipement précis, fix armure "où farmer"', en:'Precise zone ↔ gear slot link, fixed armor "where to farm"'}, fr:[
+      {t:'fix', sub:'objets', severity:'major', tx:'Le système "où farmer" (case vide ou flèche ⬆️) proposait TOUTES les zones du palier pour n\'importe quelle pièce d\'armure, alors que chaque pièce (casque/torse/gants/bottes) ne peut en réalité dropper que dans SA zone dédiée — un reliquat de l\'ancien système d\'avant "1 pièce garantie par zone". Corrigé : casque/torse/gants/bottes ne proposent plus que leur zone exacte'},
+      {t:'new', sub:'interface', tx:'Survoler une zone dans la liste surligne désormais UNIQUEMENT la ou les pièces de la poupée d\'équipement que cette zone précise permet d\'améliorer — plus une pièce a de zones qui l\'améliorent, plus elle peut s\'allumer depuis plusieurs lignes de la liste'},
+    ], en:[
+      {t:'fix', sub:'objets', severity:'major', tx:'The "where to farm" system (empty slot or ⬆️ arrow) suggested EVERY zone of the tier for any armor piece, even though each piece (helmet/chest/gloves/boots) can only actually drop in its own dedicated zone — a leftover from the old system predating "1 guaranteed piece per zone". Fixed: helmet/chest/gloves/boots now only suggest their exact zone'},
+      {t:'new', sub:'interface', tx:'Hovering a zone in the list now highlights ONLY the equipment doll piece(s) that specific zone can actually upgrade — the more zones improve a piece, the more list rows can light it up'},
+    ] },
   { v:'V248', d:'12/07/2026 05:00', name:{fr:'Tooltip détaillé pour le stuff du sac protégé', en:'Detailed tooltip for protected bag gear'}, fr:[
       {t:'new', sub:'interface', tx:'Survoler une pièce du sac protégé (Compendium) affiche désormais le tooltip complet (PA/PD/PV/Esquive/enchantement), comme dans le sac principal — avant, seul un petit badge d\'enchantement était visible, sans détail au survol'},
     ], en:[

@@ -535,6 +535,9 @@
   .zRow.eqFarmHalo { border-left-color:var(--gold); background:rgba(201,165,90,.14);
     box-shadow:0 0 10px 1px rgba(201,165,90,.35); animation:patchHalo 1.6s infinite; }
   .eqFarmZoneBtn { width:auto; display:inline-block; margin:2px 4px 2px 0; padding:3px 9px; font-size:10.5px; }
+  /* lien inverse (2026-07-12) : survol d'une ligne de zone -> halo sur UNIQUEMENT les cases de la
+     poupée d'équipement que cette zone améliore réellement, jamais toute la poupée */
+  .pdSlot.pdFarmZoneHalo { box-shadow:0 0 10px 2px rgba(201,165,90,.6); animation:patchHalo 1.6s infinite; }
   /* Compendium spécial "Maîtrise PEN" (2026-07-08) : grille compacte, pas de halo/clic ici (pur suivi) */
   .compPenGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px 10px; padding-top:6px; }
   .compPenItem { cursor:default; font-size:11px; }

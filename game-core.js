@@ -5314,6 +5314,10 @@ function buildZoneList() {
         `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
       row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
       row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
+      // survol d'une zone -> surligne UNIQUEMENT les cases de la poupée que CETTE zone améliore
+      // (2026-07-12, demande explicite) -- lien inverse du halo existant "case vide -> zones"
+      row.onmouseenter = () => highlightEquipSlotsForZone(slotsUpgradedByZone(i));
+      row.onmouseleave = () => highlightEquipSlotsForZone([]);
       list.appendChild(row);
     });
   });
@@ -5797,16 +5801,24 @@ const NO_SOURCE_SLOTS = ['artifact1','artifact2','eqStone'];
 const JEWELRY_SLOTS = ['ring1','ring2','necklace','earring1','earring2','belt'];
 // zones candidates pour farmer/upgrader un socle donné, AVANT tout filtre de sécurité — se base
 // sur le palier de la zone actuellement farmée (zoneIdx) : armes → zones qui garantissent ce type
-// d'arme (ZONE_WEAPON_SLOTS) ; armures → les 4 zones du palier (n'importe laquelle peut looter
-// n'importe quelle pièce d'armure, voir GEAR_SLOTS) ; bijoux → la zone UNIQUE du palier dont le
-// jackpot correspond à ce type (ring/necklace/belt/earring, voir accSlotFor). artifact1/artifact2/
-// eqStone → jamais de résultat (voir NO_SOURCE_SLOTS).
+// d'arme (ZONE_WEAPON_SLOTS) ; armures → la zone UNIQUE du palier qui garantit CETTE pièce
+// précise (ZONE_ARMOR_SLOTS, corrigé le 2026-07-12 -- voir commentaire ci-dessous) ; bijoux → la
+// zone UNIQUE du palier dont le jackpot correspond à ce type (ring/necklace/belt/earring, voir
+// accSlotFor). artifact1/artifact2/eqStone → jamais de résultat (voir NO_SOURCE_SLOTS).
+// BUG corrigé le 2026-07-12 (demande explicite : "montrer dans l'inventaire uniquement les items
+// qui se lootent dans la zone... zone casque -> icône SEULEMENT sur le casque") : cette fonction
+// renvoyait TOUTES les zones du palier pour n'importe quelle pièce d'armure ("n'importe laquelle
+// peut looter n'importe quelle pièce"), un reliquat de l'ancien système d'AVANT ZONE_ARMOR_SLOTS
+// (qui garantit désormais EXACTEMENT 1 pièce par zone, voir rollGearDrop et
+// testZoneWeaponArmorSlotsComplete) — jamais mis à jour, ce qui cassait toute tentative de lier
+// une zone précise à SON socle précis (une pièce d'armure ne peut en réalité dropper QUE dans SA
+// zone dédiée, jamais ailleurs dans le palier).
 function slotCandidateZones(slotId) {
   const tier = gearTierForZone(zoneIdx);
   if (WEAPON_SLOTS.includes(slotId)) {
     return tier.zones.filter(zi => (ZONE_WEAPON_SLOTS[zi]||[]).includes(slotId));
   } else if (ARMOR_SLOTS.includes(slotId)) {
-    return tier.zones.slice();
+    return tier.zones.filter(zi => (ZONE_ARMOR_SLOTS[zi]||[]).includes(slotId));
   } else if (JEWELRY_SLOTS.includes(slotId)) {
     const base = accBaseSlot(slotId);
     return tier.zones.filter(zi => accSlotFor(ZONES[zi].loot.jackpot) === base);
@@ -5873,6 +5885,26 @@ function zonesOfferingUpgrade() {
     list.forEach(zi => zones.add(zi));
   }
   return zones;
+}
+// lien INVERSE de zonesOfferingUpgrade (2026-07-12, demande explicite : "montrer dans l'inventaire
+// UNIQUEMENT les items qui se lootent dans la zone... si plusieurs zones sont disponibles... je
+// peux montrer plusieurs flèches sur stuff ET zone à farm") : pour UNE zone donnée, quels socles
+// précis de la poupée d'équipement propose-t-elle réellement en amélioration ? Sert à ne surligner
+// QUE les cases concernées (pas toute la poupée) au survol d'une ligne de zone.
+function slotsUpgradedByZone(zi) {
+  const slots = [];
+  for (const slotId of [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...JEWELRY_SLOTS]) {
+    if (ownedBetterInBagForSlot(slotId)) continue; // déjà en stock -> équiper, pas farmer
+    const e = EQUIP[slotId];
+    const list = e ? upgradeZonesForEquippedSlot(slotId, e) : zonesForSlot(slotId).filter(z => bottleneck(ZONES[z]) >= 0.6);
+    if (list.includes(zi)) slots.push(slotId);
+  }
+  return slots;
+}
+// applique/retire le halo sur les cases de la poupée d'équipement concernées par UNE zone précise
+function highlightEquipSlotsForZone(slots) {
+  document.querySelectorAll('.pdSlot').forEach(el => el.classList.remove('pdFarmZoneHalo'));
+  slots.forEach(id => { const el = document.querySelector(`.pdSlot[data-slot="${id}"]`); if (el) el.classList.add('pdFarmZoneHalo'); });
 }
 // applique/retire le halo dans #zoneList pour les zones qui lootent l'objet manquant d'un socle vide
 function highlightFarmZones(zones) {

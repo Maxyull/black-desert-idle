@@ -298,6 +298,26 @@
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
     S.maxZoneIdx = s.maxZoneIdx;
   }
+  // "montrer dans l'inventaire uniquement les items qui se lootent dans la zone... si plusieurs
+  // zones sont disponibles... plusieurs flèches sur stuff ET zone à farm" (2026-07-12) --
+  // slotsUpgradedByZone(zi) doit retourner UNIQUEMENT le(s) socle(s) que CETTE zone améliore
+  // réellement, jamais tous les socles qui ont un upgrade quelque part ailleurs.
+  function testSlotsUpgradedByZoneIsZoneSpecific() {
+    const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon, EQUIP_helmet: EQUIP.helmet,
+      z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP };
+    ZONES[4].reqAP = 1; ZONES[4].reqDP = 1; // zone4 (Ferme Shultz) : donne l'ARME, pas le casque
+    EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey, upgradable
+    EQUIP.helmet = null; // aucun socle casque équipé -> pas d'upgrade "équipé" à proposer ici
+    zoneIdx = 3;
+    const slots4 = slotsUpgradedByZone(4);
+    assert('slotsUpgradedByZone(4) inclut "weapon" (Ferme Shultz donne l\'arme du palier blanc)', slots4.includes('weapon'), `slots=${JSON.stringify(slots4)}`);
+    assert('slotsUpgradedByZone(4) n\'inclut PAS "helmet" (Ferme Shultz ne donne pas le casque)', !slots4.includes('helmet'), `slots=${JSON.stringify(slots4)}`);
+    // zone3 (Camp Rhutum) donne le casque, pas l'arme -- vérifie que ça ne mélange pas les zones
+    const slots3 = slotsUpgradedByZone(3);
+    assert('slotsUpgradedByZone(3) n\'inclut PAS "weapon" (Camp Rhutum ne donne pas l\'arme)', !slots3.includes('weapon'), `slots=${JSON.stringify(slots3)}`);
+    zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; EQUIP.helmet = s.EQUIP_helmet;
+    ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
+  }
   // "la flèche qui affiche le stuff à farm sur la zone ne doit pas s'afficher si le stuff est dans
   // l'inventaire" (2026-07-11) -- zonesOfferingUpgrade() (badge ⬆️ sur les lignes de la liste de
   // zones) ne doit plus proposer un socle pour lequel un objet meilleur est DÉJÀ possédé, non
@@ -1052,6 +1072,7 @@
     testNoAutoPotionAtVelia();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
     testUpgradeIconIgnoresDiscoveredZone();
+    testSlotsUpgradedByZoneIsZoneSpecific();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
     testJewelryHasMatNameForEnhancement();
