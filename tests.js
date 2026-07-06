@@ -1015,6 +1015,23 @@
     if (s.pen === undefined) delete S.penMastery[TEST_NAME]; else S.penMastery[TEST_NAME] = s.pen;
     EQUIP.helmet = s.helmet; INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b; S.silver = s.silver;
   }
+  // bug trouvé le 2026-07-14 (demande explicite de vérification "que la vente... garde le
+  // meilleur") : le menu contextuel d'un objet (showItemMenu) n'affichait le bouton "Vendre 1" que
+  // pour trash/material/gear -- les bijoux (kind:'jackpot') en étaient exclus, alors que sellOne()
+  // les gère très bien. Un joueur ne pouvait donc jamais vendre manuellement un bijou en trop via
+  // ce menu (seul l'auto-équipement au clic simple fonctionnait).
+  function testJackpotHasSellButtonInItemMenu() {
+    if (!$('itemPop')) return; // pas de DOM (contexte hors-jeu)
+    const TEST_NAME = 'TestSellBtnRingXYZ';
+    const s = { a: INV[INV_SIZE-1] };
+    INV[INV_SIZE-1] = { name:TEST_NAME, kind:'jackpot', slot:'ring1', ap:2, dp:0, hp:0, enhLv:0, val:100, key:'t_ring', qty:1 };
+    showItemMenu(0, 0, { invIndex:INV_SIZE-1, ...INV[INV_SIZE-1] });
+    const labels = Array.from($('itemPop').querySelectorAll('button')).map(b => b.textContent);
+    assert('Le menu contextuel d\'un bijou propose bien un bouton "Vendre 1"',
+      labels.some(l => /vendre 1|sell 1/i.test(l)), `labels=${JSON.stringify(labels)}`);
+    hideItemPop();
+    INV[INV_SIZE-1] = s.a;
+  }
   // "si 2 stuff identique doivent etre changé toujours prendre celui le plus optimisé... sans
   // oublier les 2 anneaux verification slot 1 puis slot 2 et oreille slot 1 puis slot 2" (2026-07-11)
   // -- bug trouvé : tryAutoEquipIfBetter (utilisé par sellOne) comparait avec un simple ">"/"<="
@@ -1274,6 +1291,7 @@
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();
     testSellOnePriorityEquipCompendiumSell();
+    testJackpotHasSellButtonInItemMenu();
     testAutoEquipPrefersMoreEnhancedOnTiedBaseScore();
     testXpGainFlashesLevelBox();
     testClaimLoyaltyMovesMailboxToStock();

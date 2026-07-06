@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V260', d:'14/07/2026 15:00', name:{fr:'Fix : vente d\'un bijou en trop via le menu objet', en:'Fix: selling a spare jewelry piece via the item menu'}, fr:[
+      {t:'fix', sub:'inventaire', tx:'Le menu contextuel d\'un objet (clic droit / appui long) n\'affichait le bouton "Vendre 1" que pour le rebut/matériaux/équipement — les bijoux (anneaux, boucles, colliers, ceintures) en étaient exclus, rendant impossible leur vente manuelle via ce menu (seul l\'auto-équipement au clic simple fonctionnait). Vérifié au passage : la vente garde toujours le meilleur exemplaire enchanté d\'un doublon dans le sac protégé, y compris pour les bijoux'},
+    ], en:[
+      {t:'fix', sub:'inventaire', tx:'An item\'s context menu (right-click / long-press) only showed the "Sell 1" button for trash/materials/gear — jewelry (rings, earrings, necklaces, belts) was excluded, making it impossible to manually sell a spare one through that menu (only auto-equip on simple click worked). Also verified: selling always keeps the best-enchanted duplicate copy in the protected bag, jewelry included'},
+    ] },
   { v:'V259', d:'14/07/2026 14:00', name:{fr:'Fix notification de mise à jour, le jeu ne se met plus en pause en arrière-plan', en:'Fixed update notification, game no longer pauses in the background'}, fr:[
       {t:'fix', sub:'systeme', severity:'major', tx:'La notification "nouvelle version disponible" ne s\'affichait plus depuis le découpage de game-supabase.js (2026-07-14) : la détection allait chercher PATCH_NOTES dans le mauvais fichier (déplacé entre-temps dans patch-notes-data.js) et ne matchait donc plus jamais'},
       {t:'change', sub:'systeme', tx:'Le jeu ne se met plus en pause quand l\'onglet/la fenêtre perd le focus — le farm, le combat et le loot continuent de tourner en arrière-plan, comme attendu d\'un jeu idle'},
