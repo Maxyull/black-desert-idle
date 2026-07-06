@@ -121,20 +121,23 @@
   }
   #resetNoticeClose:hover { filter:brightness(1.08); }
 
-  /* pastille persistante "notes de version non lues" (2026-07-06, demande explicite) -- reste
-     affichée en haut de la page tant que le joueur n'a pas fait défiler les notes de version
-     jusqu'à ses entrées non lues, quel que soit l'état du menu (replié/déplié) */
-  #patchTopBadge {
-    position:fixed; top:14px; left:50%; transform:translateX(-50%); z-index:210;
-    display:none; align-items:center; gap:6px; cursor:pointer;
-    background:var(--panel-2); border:1px solid var(--danger); color:var(--ink);
-    padding:6px 14px; border-radius:20px; font-size:11.5px;
-    box-shadow:0 4px 14px rgba(0,0,0,.5); animation:patchHalo 1.6s infinite;
+  /* bandeau "N notes non lues" DANS le panneau des notes de version lui-même (2026-07-06,
+     demande explicite : "enleve la pastille en haut de l'ecran... je veux que tu la mette dans
+     note de version directement pour appel au scroll vers le haut") -- remplace l'ancienne
+     pastille flottante en haut de page, qui chevauchait le panneau. Collé en haut du contenu
+     défilant (position:sticky) : reste visible pendant le défilement, cliquer scrolle en haut
+     où sont les entrées non lues. */
+  #patchUnreadBanner {
+    display:none; position:sticky; top:0; z-index:5; cursor:pointer;
+    align-items:center; gap:8px; margin:-16px -18px 12px; padding:8px 18px;
+    background:var(--panel-2); border-bottom:1px solid var(--danger); color:var(--ink);
+    font-size:11.5px; box-shadow:0 4px 10px rgba(0,0,0,.4); animation:patchHalo 1.6s infinite;
   }
-  #patchTopBadge.show { display:flex; }
-  #patchTopBadgeNum {
+  #patchUnreadBanner.show { display:flex; }
+  #patchUnreadBannerNum {
     background:var(--danger); color:#fff; font-weight:bold; font-size:10.5px;
     min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+    flex-shrink:0;
   }
   #updateToast {
     position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-20px);

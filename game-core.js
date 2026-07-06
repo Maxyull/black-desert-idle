@@ -5187,6 +5187,12 @@ function fillPdCol(colId, ids) {
     div.dataset.slot = id;
     div.title = SLOT_LABEL[id] + (e ? ' — ' + e.name + pdStatSuffix(e) : ' (vide)');
     div.innerHTML = pdSlotInnerHtml(id);
+    // halo de couleur sur le stuff équipé (2026-07-06, demande explicite : "met un halo de
+    // couleurs sur le stuff... aussi comme les pierre de crons") -- couleur du palier (grise/
+    // blanche/verte/bleue) ou couleur propre à l'objet (bijoux), même esprit que le glow de
+    // l'orbe de Pierre de Cron
+    if (e && e.color) div.style.boxShadow = `0 0 8px 2px ${e.color}66`;
+    else div.style.boxShadow = '';
     div.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showEquipSlotMenu(div, id); };
     div.ondblclick = ev => { ev.stopPropagation(); hideItemPop(); if (e) unequip(id); };
     const optBtn = div.querySelector('.pdOptBtn');
@@ -5209,6 +5215,7 @@ function refreshEquipSlot(slotId) {
   div.className = 'pdSlot ' + (e ? 'filled' : 'empty');
   div.title = SLOT_LABEL[slotId] + (e ? ' — ' + e.name + pdStatSuffix(e) : ' (vide)');
   div.innerHTML = pdSlotInnerHtml(slotId);
+  div.style.boxShadow = (e && e.color) ? `0 0 8px 2px ${e.color}66` : '';
 }
 
 function drawPreviewChar() {
@@ -5729,19 +5736,21 @@ function renderOptimization() {
   const parts = target && !maxed ? enhChanceParts(lvl+1, target) : { base:0, bonus:0, total:0 };
   const fsCount = target ? itemFailstack(target, lvl+1) : 0;
   $('optItem').innerHTML = target ? (target.icon || SLOT_ICON[optTargetSlot]) : '—';
+  $('optItem').style.boxShadow = (target && target.color) ? `0 0 8px 2px ${target.color}66` : '';
   $('optLevelLbl').innerHTML = (target ? tr(target.name) : (LANG==='fr'?'Aucune pièce équipée':'No piece equipped')) + ' <b id="optLevelVal">' + (target ? ENH_NAMES[lvl] : '—') + '</b>';
 
   const matIdx = findEnhanceMaterial(), matSlotEl = $('optMat');
   const maxedTxt = LANG==='fr' ? 'PEN atteint — niveau maximum' : 'PEN reached — max level';
-  if (!target) { matSlotEl.className='empty'; matSlotEl.innerHTML='＋'; $('optChanceTxt').textContent = LANG==='fr'?'Équipez une pièce à optimiser':'Equip a piece to enhance'; $('btnOpt').disabled=true; }
+  if (!target) { matSlotEl.className='empty'; matSlotEl.innerHTML='＋'; matSlotEl.style.boxShadow=''; $('optChanceTxt').textContent = LANG==='fr'?'Équipez une pièce à optimiser':'Equip a piece to enhance'; $('btnOpt').disabled=true; }
   else if (matIdx === -1) {
-    matSlotEl.className = 'empty'; matSlotEl.innerHTML = '＋'; matSlotEl.title = '';
+    matSlotEl.className = 'empty'; matSlotEl.innerHTML = '＋'; matSlotEl.title = ''; matSlotEl.style.boxShadow = '';
     $('optChanceTxt').textContent = maxed ? maxedTxt : (LANG==='fr'?'Aucun matériau en sac — farmez du loot':'No material in bag — go loot some');
     $('btnOpt').disabled = true;
   } else {
     const it = INV[matIdx];
     matSlotEl.className = ''; matSlotEl.title = it.name;
     matSlotEl.innerHTML = `<span style="color:${it.color}">${it.icon}</span>` + (it.qty>1?`<span class="matQty">${fmt(it.qty)}</span>`:'');
+    matSlotEl.style.boxShadow = it.color ? `0 0 8px 2px ${it.color}66` : '';
     $('btnOpt').disabled = maxed;
     const fsTxt = fsCount > 0 ? ` <span style="color:#8fc9e8">(+${fsCount} ${LANG==='fr'?'échecs sur ce palier':'fails on this tier'})</span>` : '';
     $('optChanceTxt').innerHTML = maxed ? maxedTxt
@@ -5758,10 +5767,11 @@ function renderOptimization() {
   $('optCronIcon').innerHTML = CRON_STONE.icon;
   if (cronIdx === -1) {
     cronSlotEl.className = 'empty'; cronSlotEl.title = LANG==='fr'?'Aucune Pierre de Cron en sac':'No Cron Stone in bag';
-    $('optCronQty').textContent = '';
+    $('optCronQty').textContent = ''; cronSlotEl.style.boxShadow = '';
   } else {
     cronSlotEl.className = ''; cronSlotEl.title = CRON_STONE.name;
     $('optCronQty').textContent = fmt(INV[cronIdx].qty);
+    cronSlotEl.style.boxShadow = `0 0 8px 2px ${CRON_STONE.color}66`;
   }
   $('optCronToggle').checked = !!S.useCronStone;
   renderOptSuggestions();

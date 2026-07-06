@@ -2177,7 +2177,6 @@ const I18N = {
   btnWiki: { fr:'📖 Wiki', en:'📖 Wiki' },
   btnNotifCenter: { fr:'🔔 Notifications', en:'🔔 Notifications' },
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },
-  patchTopBadgeLbl: { fr:'notes de version non lues', en:'unread patch notes' },
   btnMarketLbl: { fr:'🏛️ Marché', en:'🏛️ Market' },
   marketConstructionBanner: { fr:'🚧 BETA — Marché en construction, encore peu fonctionnel : bugs et changements à prévoir', en:'🚧 BETA — Market under construction, still not very functional: expect bugs and changes' },
   btnLogout: { fr:'🚪 Déconnexion', en:'🚪 Log out' },
@@ -2344,6 +2343,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V198', d:'06/07/2026 11:00', name:{fr:'Halo de couleur sur le stuff, pastille de notes déplacée dans le panneau', en:'Color halo on gear, unread badge moved into the panel'}, fr:[
+      {t:'new', sub:'graphismes', tx:'Chaque pièce équipée (arme, armure, bijou...) et chaque emplacement du panneau d\'optimisation (pièce en cours, matériau, Pierre de Cron) affiche désormais un halo lumineux dans la couleur de son palier — même esprit que le halo de l\'orbe de Pierre de Cron'},
+      {t:'change', sub:'interface', tx:'La pastille "notes non lues" en haut de l\'écran a été retirée — l\'appel à remonter est maintenant un bandeau directement en haut du panneau des notes de version, qui scrolle en un clic'},
+    ], en:[
+      {t:'new', sub:'graphismes', tx:'Every equipped piece (weapon, armor, jewelry...) and every optimization panel slot (piece being enhanced, material, Cron Stone) now shows a glowing halo in its tier color — same spirit as the Cron Stone orb\'s glow'},
+      {t:'change', sub:'interface', tx:'The "unread notes" badge at the top of the screen was removed — the scroll-up prompt is now a banner right at the top of the patch notes panel itself, one click to jump up'},
+    ] },
   { v:'V197', d:'06/07/2026 10:00', name:{fr:'Nouvelle icône Pierre de Cron (orbe turquoise)', en:'New Cron Stone icon (teal orb)'}, fr:[
       {t:'improve', sub:'graphismes', tx:'Icône de la Pierre de Cron redessinée en orbe turquoise lumineux façon perle (au lieu du sablier doré), couleur mise à jour partout (sac, table de loot, panneau d\'optimisation)'},
       {t:'fix', sub:'interface', severity:'minor', tx:'La case Pierre de Cron du panneau d\'optimisation affichait un sablier ⏳ générique figé — elle montre maintenant la vraie icône de l\'objet'},
@@ -4455,18 +4461,17 @@ function updatePatchBadge() {
   const badge = $a('patchBadge');
   if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
   $a('btnPatch').classList.toggle('hasNew', n > 0);
-  // masquée tant qu'un panneau (notes de version ou autre) est ouvert (2026-07-06, demande
-  // explicite, capture à l'appui : "la pastielle de note non lu doit etre déplacé sur le screeen"
-  // -- elle chevauchait le panneau des notes de version lui-même, pile au-dessus). Redevient
-  // visible dès que tout panneau se referme (voir l'appel régulier depuis hud()).
-  const topBadge = $a('patchTopBadge');
-  if (topBadge) {
-    const overlayOpen = $a('infoOverlay').classList.contains('open');
-    $a('patchTopBadgeNum').textContent = n;
-    topBadge.classList.toggle('show', n > 0 && !overlayOpen);
+  // bandeau DANS le panneau des notes de version (2026-07-06, demande explicite : "enleve la
+  // pastille en haut de l'ecran... mets-la dans notes de version directement pour appel au scroll
+  // vers le haut") -- remplace l'ancienne pastille flottante sur toute la page, qui chevauchait le
+  // panneau. Ne s'affiche que si CE panneau est ouvert (sinon rien à quoi l'accrocher/scroller).
+  const banner = $a('patchUnreadBanner');
+  if (banner) {
+    const patchPanelOpen = $a('infoOverlay').classList.contains('open') && document.querySelector('.patchEntry');
+    $a('patchUnreadBannerNum').textContent = n;
+    banner.classList.toggle('show', n > 0 && !!patchPanelOpen);
   }
 }
-$a('patchTopBadge').onclick = () => $a('btnPatch').onclick();
 
 // catégories principales des notes de version (refonte du 2026-07-05, demande explicite) --
 // taxonomie standard adaptée à Velia Idle (les catégories sans équivalent dans ce jeu, ex.
@@ -4565,7 +4570,13 @@ const PATCH_SUBCATS_EN = {
 
 let patchObserver = null;
 $a('btnPatch').onclick = () => {
-  const html = PATCH_NOTES.map((p,i) => {
+  // bandeau "N notes non lues", collé en haut du panneau tant qu'on n'a pas défilé jusqu'à elles
+  // (2026-07-06, demande explicite) — calculé AVANT le reste (qui ne change plus ce compte)
+  const unreadNow = unreadPatchCount();
+  const unreadBannerHtml = `<div id="patchUnreadBanner" class="${unreadNow>0?'show':''}">` +
+    `<span id="patchUnreadBannerNum">${unreadNow}</span> ` +
+    `<span>${LANG==='fr'?'note(s) de version non lue(s) — clique pour remonter':'unread patch note(s) — click to scroll up'}</span></div>`;
+  const html = unreadBannerHtml + PATCH_NOTES.map((p,i) => {
     const isNew = !readPatches.has(p.v); // basé UNIQUEMENT sur les sessions précédentes, pas sur le défilement en cours
     return `
     <div class="patchEntry ${i===0?'latest':''}" data-ver="${p.v}">
@@ -4623,6 +4634,8 @@ $a('btnPatch').onclick = () => {
     </div>`;
   }).join('');
   openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', html);
+  const unreadBannerEl = $a('patchUnreadBanner');
+  if (unreadBannerEl) unreadBannerEl.onclick = () => { $a('infoBody').scrollTo({ top:0, behavior:'smooth' }); };
 
   // reprend le défilement exactement là où CE joueur s'était arrêté (2026-07-06, demande
   // explicite : "rappel toi la ou s'est arrete son scroll... et reprend a cet endroit tout le
