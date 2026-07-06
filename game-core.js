@@ -5415,12 +5415,14 @@ function pdSlotInnerHtmlFor(id, e) {
   // icône "aller à la zone" en coin, EMPILÉE sous 🔧 (2026-07-09, demande explicite : "opti en
   // haut à droite, upgrade sous l'icone d'opti") : ⬆️ sur une case remplie (pointe vers une zone
   // NON dangereuse où trouver mieux pour ce slot — n'apparaît pas si la seule option est
-  // dangereuse, demande explicite) ou 📍 sur une case vide (pointe vers où farmer l'objet
-  // manquant, dangereux accepté en dernier recours faute d'alternative) ; 🔒 sur les 3 slots sans
-  // aucune source en jeu (artéfacts/pierre)
+  // dangereuse, demande explicite, NI si la seule zone sûre proposée est celle où l'on se trouve
+  // déjà — inutile de proposer d'aller là où on est déjà, demande explicite) ou 📍 sur une case
+  // vide (pointe vers où farmer l'objet manquant, dangereux accepté en dernier recours faute
+  // d'alternative) ; 🔒 sur les 3 slots sans aucune source en jeu (artéfacts/pierre)
   let goBadge = '';
   if (e) {
-    if (safeZonesForSlot(id).length) goBadge = `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>`;
+    const upgradeZones = safeZonesForSlot(id).filter(zi => atVelia || zi !== zoneIdx);
+    if (upgradeZones.length) goBadge = `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>`;
   } else if (NO_SOURCE_SLOTS.includes(id)) {
     goBadge = `<span class="pdLockBtn" title="${LANG==='fr'?'Pas encore disponible':'Not available yet'}">🔒</span>`;
   } else if (zonesForSlot(id).length) {
@@ -5570,11 +5572,14 @@ function fillPdCol(colId, ids) {
     };
     // ⬆️/📍 en coin : raccourci direct vers la zone (pas de popup intermédiaire) — demande
     // explicite du 2026-07-09. ⬆️ ne propose que des zones sûres (safeZonesForSlot, jamais de
-    // fallback dangereux) ; 📍 garde le fallback dangereux de zonesForSlot en dernier recours.
+    // fallback dangereux) et jamais la zone actuelle (inutile d'aller là où on est déjà) ;
+    // 📍 garde le fallback dangereux de zonesForSlot en dernier recours.
     const goBtn = div.querySelector('.pdUpgradeBtn, .pdFarmBtn');
     if (goBtn) goBtn.onclick = ev => {
       ev.stopPropagation(); hideItemTooltip(); hideItemPop();
-      const zones = e ? safeZonesForSlot(id) : zonesForSlot(id);
+      const zones = e
+        ? safeZonesForSlot(id).filter(zi => atVelia || zi !== zoneIdx)
+        : zonesForSlot(id);
       if (zones.length) { const zi = zones[0]; if (atVelia || zi !== zoneIdx) travelTo(zi); }
     };
     col.appendChild(div);

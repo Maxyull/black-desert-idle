@@ -229,6 +229,21 @@
     assert('K.O. : le décompte n\'est pas réinitialisé par un coup', P.faint === 6);
     zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax; P.faint = s.faint;
   }
+  // "le bouton zone pour améliorer ne doit pas s'afficher si la zone est la même que l'item"
+  // (2026-07-09) : le bâton (weapon) du palier grey n'a qu'UNE seule zone source, Camp des Loups
+  // (zoneIdx 0, voir ZONE_WEAPON_SLOTS) -- si le joueur y est déjà, ⬆️ ne doit pas apparaître ;
+  // dans une autre zone du même palier, ⬆️ doit apparaître puisque Camp des Loups reste à visiter
+  function testUpgradeIconHidesWhenAlreadyInTheOnlyZone() {
+    const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon };
+    EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color:'#b8b8b8' };
+    zoneIdx = 0;
+    assert('⬆️ absent : la seule zone source est celle où le joueur se trouve déjà',
+      !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
+    zoneIdx = 1;
+    assert('⬆️ présent : la seule zone source (Camp des Loups) reste à visiter depuis ici',
+      pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
+    zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon;
+  }
 
   // ---------- affichage PA/PD sans décimale (2026-07-08 : "enleve toute trace de virgule de
   // PA/PD") ----------
@@ -298,6 +313,7 @@
     testDangerousZoneNoDodgeNoEvasion();
     testDangerousZoneWideAggro();
     testKoStopsMonsterAttacks();
+    testUpgradeIconHidesWhenAlreadyInTheOnlyZone();
     testApDpDisplayHasNoDecimals();
     testEffectiveApDpFloors();
     testJewelryApIsDynamic();
