@@ -671,7 +671,11 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
         <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🔻 Dépensé (sorti du jeu)':'🔻 Spent (sunk)'}</div><div class="astVal">${fmt(totalSpent)}</div></div>
         <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne stockée / joueur':'📊 Average stored / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'🔍 Où partent les silver ? (registre détaillé)':'🔍 Where does the silver go? (detailed ledger)'}</h3>
+      <div class="admHint">${LANG==='fr'
+        ? 'Pour ajouter une nouvelle catégorie plus tard : passe-la simplement en 3e argument d\'addSilver(delta, \'ma_categorie\', note) côté client — aucune migration Supabase n\'est nécessaire (la colonne "category" du registre accepte n\'importe quel texte), il suffit d\'ajouter son libellé dans CATEGORY_LABEL (game-supabase.js) pour un affichage propre ici.'
+        : 'To add a new category later: just pass it as the 3rd argument of addSilver(delta, \'my_category\', note) client-side — no Supabase migration needed (the ledger\'s "category" column accepts any text), just add its label to CATEGORY_LABEL (game-supabase.js) for a clean display here.'}</div>
+      <h3>${LANG==='fr'?'🔍 Où partent les silver ? (registre détaillé)':'🔍 Where does the silver go? (detailed ledger)'}
+        <button id="btnReloadSilverTab" class="admReloadBtn" title="${LANG==='fr'?'Rafraîchir sans rouvrir le panneau':'Refresh without reopening the panel'}">🔄 ${LANG==='fr'?'Recharger':'Reload'}</button></h3>
       <div class="admHint">${LANG==='fr'
         ? 'Chaque variation de silver (loot, potions, ventes, quêtes, succès, marché...) est journalisée individuellement dans le registre — tableau ci-dessous par catégorie, graphique par heure. Le marché reste un simple TRANSFERT entre joueurs (achat/vente/remboursement), pas un sink net.'
         : 'Every silver change (loot, potions, sales, quests, achievements, market...) is individually logged in the ledger — table below by category, hourly graph. The market remains a plain TRANSFER between players (buy/sell/refund), not a net sink.'}</div>
@@ -779,7 +783,31 @@ async function openAdminPanel() {
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
   // dès que les 3 agrégations lourdes arrivent, on remplace juste le contenu "Chargement…" de leurs
   // onglets — sans jamais avoir bloqué l'affichage initial du panneau ci-dessus
+  // mémorise les 4 agrégations qui ne changent pas au reload (voir btnReloadSilverTab) --
+  // seules silverByCategory/silverByHour sont re-fetchées, pas besoin de refaire tout le reste
+  let cachedAnalytics = null;
+  // bouton "🔄 Recharger" de l'onglet Silver (2026-07-11, demande explicite : "met un bouton
+  // reload") : avant, il fallait fermer et rouvrir tout le panneau admin pour rafraîchir ces
+  // données, alors qu'elles évoluent en temps réel (registre de silver alimenté en continu)
+  function wireSilverReloadBtn() {
+    const btn = $a('btnReloadSilverTab'); if (!btn) return;
+    btn.onclick = async () => {
+      if (!cachedAnalytics) return;
+      btn.disabled = true; const oldTxt = btn.textContent; btn.textContent = '🔄 …';
+      const [{data: silverByCategory}, {data: silverByHour}] = await Promise.all([
+        sb.from('admin_silver_ledger_by_category').select('*'),
+        sb.from('admin_silver_ledger_by_hour').select('*'),
+      ]);
+      const html = buildAdminAnalyticsHtml(cachedAnalytics.byHour, cachedAnalytics.byItem, cachedAnalytics.wealth, playtimeByUser, cachedAnalytics.playtimeByHour, nameByUser, silverByCategory, silverByHour);
+      const body = $a('infoBody'); if (!body) return; // panneau déjà refermé entre-temps
+      const silverPane = body.querySelector('.catPane[data-cat="silver"]');
+      if (silverPane) silverPane.innerHTML = html.silver;
+      wireSilverReloadBtn(); // le bouton a été recréé dans le HTML injecté, re-brancher dessus
+      btn.disabled = false; btn.textContent = oldTxt;
+    };
+  }
   analyticsPromise.then(([{data: byHour}, {data: byItem}, {data: wealth}, {data: playtimeByHour}, {data: silverByCategory}, {data: silverByHour}]) => {
+    cachedAnalytics = { byHour, byItem, wealth, playtimeByHour };
     const html = buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser, silverByCategory, silverByHour);
     const body = $a('infoBody'); if (!body) return; // panneau déjà refermé entre-temps
     const hourlyPane = body.querySelector('.catPane[data-cat="hourly"]');
@@ -790,6 +818,7 @@ async function openAdminPanel() {
     if (itemsPane) itemsPane.innerHTML = html.items;
     if (wealthPane) wealthPane.innerHTML = html.wealth;
     if (silverPane) silverPane.innerHTML = html.silver;
+    wireSilverReloadBtn();
   }).catch(()=>{});
   // sélecteur de World Boss : fait apparaître immédiatement le boss choisi (combat local de test),
   // sans toucher au planning horaire normal — réservé à l'admin
@@ -910,7 +939,7 @@ async function openAdminPanel() {
   });
   // --- pour moi ---
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; addSilver(1000000, 'admin_test'); refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
-  $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; S.loyalty=(S.loyalty||0)+200; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); };
+  $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); floatTxt(P.x,P.y,100,'+200 🏅 (courrier)',{gold:true}); };
   // corrigé le 2026-07-10 (vérification demandée : "verifie si toute les action fonctionne") :
   // ce bouton manipulait S.silver directement au lieu de passer par addSilver() (voir V231, le
   // registre de silver) -- les récompenses de succès débloqués via ce test n'étaient donc jamais
@@ -2475,6 +2504,19 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V233', d:'11/07/2026 14:00', name:{fr:'Loyalties récupérables, liste admin fiabilisée, reload Silver, notes de version', en:'Claimable Loyalty, fixed admin list, Silver reload, patch notes'}, fr:[
+      {t:'fix', sub:'admin', severity:'major', tx:'La réinitialisation des quêtes de tous les joueurs (bouton Admin) était cassée depuis sa création — la fonction serveur associée n\'avait jamais réellement été mise en place. Corrigé'},
+      {t:'fix', sub:'admin', severity:'major', tx:'La liste des joueurs du panneau Admin ne montrait que les comptes vérifiés — tout joueur en mode invité (même actif, avec une vraie progression) en était totalement absent. Elle inclut désormais tous les comptes, invités compris'},
+      {t:'new', sub:'admin', tx:'L\'onglet Admin "Silver" a maintenant un bouton de rechargement pour rafraîchir le registre sans fermer/rouvrir tout le panneau'},
+      {t:'change', sub:'economie', severity:'major', tx:'Les Loyalties gagnées chaque jour (200) ne sont plus ajoutées automatiquement à ton stock : elles s\'accumulent dans le courrier (sans limite, tant que non récupérées), et un bouton "Récupérer" les transfère vers ton stock réel — désormais affiché à côté du silver dans l\'inventaire'},
+      {t:'change', sub:'interface', tx:'Les notes de version ne remontent plus en haut toutes seules quand une nouvelle version sort — la position de lecture reprend toujours exactement là où tu l\'avais laissée, à toi de remonter pour découvrir les nouveautés'},
+    ], en:[
+      {t:'fix', sub:'admin', severity:'major', tx:'Resetting everyone\'s quests (Admin button) had been broken since it was added — the associated server function had never actually been set up. Fixed'},
+      {t:'fix', sub:'admin', severity:'major', tx:'The Admin panel\'s player list only showed verified accounts — any guest player (even active, with real progress) was completely absent from it. It now includes every account, guests included'},
+      {t:'new', sub:'admin', tx:'The Admin "Silver" tab now has a reload button to refresh the ledger without closing/reopening the whole panel'},
+      {t:'change', sub:'economie', severity:'major', tx:'The daily 200 Loyalty gain is no longer added to your stock automatically: it accumulates in the mailbox (no limit, until claimed), and a "Claim" button moves it to your real stock — now shown next to silver in the inventory'},
+      {t:'change', sub:'interface', tx:'Patch notes no longer jump back to the top on their own when a new version ships — reading position always resumes exactly where you left it, you have to scroll up yourself to discover what\'s new'},
+    ] },
   { v:'V232', d:'11/07/2026 10:00', name:{fr:'Vente intelligente (Équiper > Compendium > Vendre), rappel invité, flash XP, refonte panneau Admin', en:'Smart selling (Equip > Compendium > Sell), guest reminder, XP flash, Admin panel redesign'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Vendre un objet vérifie désormais dans l\'ordre : 1) s\'il est meilleur que ce qui est déjà équipé sur son emplacement, il est équipé au lieu d\'être vendu ; 2) sinon, s\'il doit rejoindre ou remplacer un exemplaire moins enchanté dans le sac protégé du Compendium, il y est déplacé au lieu d\'être vendu ; 3) seulement si aucun des deux cas ne s\'applique, il est réellement vendu. S\'applique quelle que soit l\'origine de la vente'},
       {t:'new', sub:'compte', tx:'Un joueur en mode invité reçoit désormais une notification lui rappelant que sa progression n\'est sauvegardée que sur cet appareil et l\'invitant à créer un compte (progression conservée) ou à se reconnecter à un compte existant'},
@@ -5040,20 +5082,16 @@ $a('btnPatch').onclick = () => {
 
   // reprend le défilement exactement là où CE joueur s'était arrêté (2026-07-06, demande
   // explicite : "rappel toi la ou s'est arrete son scroll... et reprend a cet endroit tout le
-  // temps") -- persisté par joueur (localStorage), restauré à CHAQUE ouverture du panneau, pas
-  // seulement la première fois de la session. CORRIGÉ le 2026-07-06 (capture à l'appui :
-  // "obligé de scroll pour voir les nouvelle update") : s'il reste des notes NON LUES, on ouvre
-  // en haut (où elles sont, les plus récentes en premier) plutôt que de forcer la reprise de
-  // l'ancienne position, qui les cachait en dessous -- la reprise de position ne s'applique donc
-  // qu'une fois qu'il n'y a plus rien de nouveau à voir.
+  // temps") -- persisté par joueur (localStorage), restauré à CHAQUE ouverture du panneau.
+  // REVENU en arrière le 2026-07-11 (demande explicite, annule le correctif du 2026-07-06 qui
+  // forçait un scroll en haut s'il restait des notes non lues) : un nouveau patch ne doit PLUS
+  // faire remonter la page tout seul -- le joueur doit remonter lui-même pour le découvrir, la
+  // position reprend toujours exactement là où il s'était arrêté, lu ou non. Le bandeau "non lu"
+  // (patchUnreadBanner, cliquable) reste le moyen volontaire de sauter en haut si le joueur le veut.
   const body = $a('infoBody');
-  if (unreadPatchCount() > 0) {
-    requestAnimationFrame(() => { body.scrollTop = 0; });
-  } else {
-    let savedScroll = 0;
-    try { savedScroll = parseInt(localStorage.getItem('velia-patch-scroll')||'0', 10) || 0; } catch(e) {}
-    requestAnimationFrame(() => { body.scrollTop = savedScroll; });
-  }
+  let savedScroll = 0;
+  try { savedScroll = parseInt(localStorage.getItem('velia-patch-scroll')||'0', 10) || 0; } catch(e) {}
+  requestAnimationFrame(() => { body.scrollTop = savedScroll; });
   body.onscroll = () => { try { localStorage.setItem('velia-patch-scroll', String(body.scrollTop)); } catch(e) {} };
 
   // suit ce qui défile RÉELLEMENT dans la fenêtre pour marquer lu (pastille du bouton + pastille

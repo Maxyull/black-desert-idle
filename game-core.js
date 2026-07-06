@@ -1163,18 +1163,35 @@ function showMailToast(icon, name, qty) {
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4500);
 }
-// 200 points de fidélité par jour, livrés dans le courrier — appelé depuis hud() (cheap check)
+// 200 points de fidélité par jour, livrés dans le courrier — appelé depuis hud() (cheap check).
+// Depuis le 2026-07-11 (demande explicite) : le gain quotidien ne rejoint plus S.loyalty tout
+// seul, il s'accumule dans le courrier (sans limite, tant que le joueur ne les récupère pas) —
+// voir claimLoyalty() pour le passage courrier -> stock utilisable (affiché à côté du silver).
 function ensureLoyaltyGrant() {
   if (!saveReady) return; // attend la vraie sauvegarde -- voir la déclaration de saveReady
   const now = new Date();
   const key = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
   if (S.lastLoyaltyDate === key) return;
   S.lastLoyaltyDate = key;
-  S.loyalty = (S.loyalty||0) + 200;
   const name = 'Loyalties'; // renommé le 2026-07-07 (demande explicite), même nom dans les 2 langues
   mailboxAdd('loyalty', name, '🏅', 200);
   showMailToast('🏅', name, 200);
   updateMailBadge();
+}
+// déplace tout le solde en attente dans le courrier vers S.loyalty (stock réellement utilisable,
+// affiché à côté du silver dans l'inventaire) -- le courrier continuera d'accumuler normalement
+// dès le prochain octroi journalier, rien n'est jamais plafonné ni perdu entre-temps
+function claimLoyalty() {
+  const m = S.mailbox.find(m => m.key === 'loyalty');
+  if (!m || m.qty <= 0) return;
+  S.loyalty = (S.loyalty||0) + m.qty;
+  m.qty = 0;
+  updateMailBadge();
+  hud();
+  // hud() ne rafraîchit invSilver/invLoyalty que si la COMPOSITION du sac change (voir
+  // invSignature) -- ici seul le stock de loyalty change, donc mise à jour directe nécessaire
+  // pour un retour visuel immédiat après avoir cliqué "Récupérer"
+  const invLoyaltyEl = $('invLoyalty'); if (invLoyaltyEl) invLoyaltyEl.textContent = '🏅 '+fmt(S.loyalty||0);
 }
 // après une réinitialisation complète, on veut un VRAI 0 immédiat — sans ça, le hud() appelé en
 // fin d'applySaveState() redéclenche aussitôt ensureLoyaltyGrant() (lastLoyaltyDate remis à null
@@ -1193,15 +1210,23 @@ function updateMailBadge() {
   badge.classList.toggle('show', n > 0);
 }
 function renderMailboxHtml() {
-  if (!S.mailbox.length) return `<div class="admEmpty">${LANG==='fr'?'Ton courrier est vide':'Your mailbox is empty'}</div>`;
-  return S.mailbox.map(m => `<div class="achRow">` +
+  const stockRow = `<div class="admSummary">${LANG==='fr'?'Stock de Loyalties déjà récupéré':'Already claimed Loyalty stock'} : <b>${fmt(S.loyalty||0)}</b> 🏅</div>`;
+  if (!S.mailbox.length || !S.mailbox.some(m => m.qty > 0)) {
+    return stockRow + `<div class="admEmpty">${LANG==='fr'?'Ton courrier est vide':'Your mailbox is empty'}</div>`;
+  }
+  return stockRow + S.mailbox.filter(m => m.qty > 0).map(m => `<div class="achRow">` +
     `<div class="achIcon">${m.icon}</div>` +
     `<div class="achInfo"><div class="achName">${m.name}</div></div>` +
-    `<div class="achReward">×${fmt(m.qty)}</div></div>`).join('') +
-    `<div class="admSummary">${LANG==='fr'?'Ces objets restent ici en permanence — ils ne se perdent jamais et s\'empilent sans limite.':'These items stay here permanently — they never get lost and stack without limit.'}</div>`;
+    `<div class="achReward">×${fmt(m.qty)}</div>` +
+    (m.key === 'loyalty' ? `<button class="mailClaimBtn" data-key="${m.key}">${LANG==='fr'?'Récupérer':'Claim'}</button>` : '') +
+    `</div>`).join('') +
+    `<div class="admSummary">${LANG==='fr'?'Ces objets restent ici en permanence tant qu\'ils ne sont pas récupérés — ils ne se perdent jamais et s\'empilent sans limite.':'These items stay here permanently until claimed — they never get lost and stack without limit.'}</div>`;
 }
 function openMailbox() {
   openInfo(LANG==='fr' ? '📬 Courrier' : '📬 Mailbox', renderMailboxHtml());
+  $a('infoBody').querySelectorAll('.mailClaimBtn').forEach(btn => {
+    btn.onclick = () => { if (btn.dataset.key === 'loyalty') claimLoyalty(); openMailbox(); };
+  });
 }
 
 // ---------- 2e équipement : lifeskill (outils de collecte + pêche) ----------
@@ -5947,6 +5972,7 @@ function renderInventory() {
   $('wTxt').textContent = w.toFixed(1)+' / '+mw+' LT' + (overW ? (LANG==='fr'?' — ralenti !':' — slowed!') : '');
   $('wTxt').classList.toggle('bad', overW);
   $('invSilver').textContent = fmt(S.silver);
+  $('invLoyalty').textContent = '🏅 '+fmt(S.loyalty||0);
 }
 
 // double-clic = action rapide selon le type d'objet

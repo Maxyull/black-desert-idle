@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=246">
+<link rel="stylesheet" href="styles.css?v=248">
 </head>
 <body>
 
@@ -432,7 +432,7 @@
         <div id="invGrid"></div>
         <div class="invFoot">
           <div class="frow"><span data-i18n="lblWeight">Poids</span> <div class="bar wbar"><div id="wBar"></div></div> <span id="wTxt">0 LT</span></div>
-          <div class="money"><span class="coin" style="width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fdf3d0,#c9a55a 60%,#8a7038)"></span> <span id="invSilver">0</span> silver</div>
+          <div class="money"><span class="coin" style="width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fdf3d0,#c9a55a 60%,#8a7038)"></span> <span id="invSilver">0</span> silver <span id="invLoyalty" title="Loyalties">🏅 0</span></div>
         </div>
       </div>
       <div id="invModeCraftPane" style="display:none">
@@ -486,10 +486,10 @@
   </div>
 </div>
 
-<script src="game-core.js?v=246"></script>
-<script src="game-supabase.js?v=246"></script>
+<script src="game-core.js?v=248"></script>
+<script src="game-supabase.js?v=248"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=246"></script>
+<script src="tests.js?v=248"></script>
 </body>
 </html>

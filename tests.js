@@ -675,6 +675,24 @@
     assert('gainXp(0) n\'illumine rien (pas de gain réel)', !el.classList.contains('xpFlash'));
     S.xp = s.xp; S.xpNext = s.xpNext; S.lvl = s.lvl; S.hpMax = s.hpMax; P.hp = s.hp;
   }
+  // "Les Loyalties se gagne 200 par jours se stack dans le courrier a l'infini et peut se
+  // récuperer pour etre stock a coté des silver dans l'inventaire" (2026-07-11) : le gain
+  // quotidien ne crédite plus S.loyalty directement, il s'accumule dans le courrier tant que le
+  // joueur ne clique pas sur "Récupérer" (claimLoyalty).
+  function testClaimLoyaltyMovesMailboxToStock() {
+    const s = { loyalty: S.loyalty, mailbox: S.mailbox.slice() };
+    S.mailbox = S.mailbox.filter(m => m.key !== 'loyalty');
+    S.loyalty = 0;
+    mailboxAdd('loyalty', 'Loyalties', '🏅', 200);
+    assert('mailboxAdd accumule le gain journalier sans toucher au stock', S.loyalty === 0);
+    claimLoyalty();
+    assert('claimLoyalty transfère le solde du courrier vers le stock (S.loyalty)', S.loyalty === 200, `S.loyalty=${S.loyalty}`);
+    const m = S.mailbox.find(m => m.key === 'loyalty');
+    assert('claimLoyalty vide l\'entrée du courrier après récupération', !!m && m.qty === 0, `qty=${m&&m.qty}`);
+    mailboxAdd('loyalty', 'Loyalties', '🏅', 200); // 2e journée sans récupérer -> doit re-accumuler sans limite
+    assert('le courrier ré-accumule normalement après une récupération', m.qty === 200, `qty=${m.qty}`);
+    S.loyalty = s.loyalty; S.mailbox = s.mailbox;
+  }
   function testZone0LootReachesZone1Difficulty() {
     // scénario concret remonté par le joueur (2026-07-08) : casque + arme + 2 bijoux, tous
     // lootables à Camp des Loups (zone0), enchantés à +12 — ne doit plus tomber en ZONE DANGEREUSE
@@ -728,6 +746,7 @@
     testAddSilverUpdatesStateCorrectly();
     testSellOnePriorityEquipCompendiumSell();
     testXpGainFlashesLevelBox();
+    testClaimLoyaltyMovesMailboxToStock();
     testZone0LootReachesZone1Difficulty();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;

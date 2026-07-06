@@ -798,6 +798,12 @@
   .admSection .admBossSpawn { border-bottom:none; padding-bottom:0; margin-bottom:0; }
   .admHint { font-size:10px; color:var(--ink-dim); font-style:italic; }
   .admHint.warn { color:var(--danger); }
+  .admReloadBtn {
+    width:auto; margin-left:8px; padding:2px 8px; font-size:10px; font-weight:bold; cursor:pointer;
+    background:var(--gold); color:#1a1712; border:none; border-radius:3px; vertical-align:middle;
+  }
+  .admReloadBtn:hover { background:#e0bc72; }
+  .admReloadBtn:disabled { opacity:.6; cursor:default; }
   .modRow { display:flex; align-items:center; gap:8px; padding:4px 2px; border-bottom:1px solid #232128; font-size:11px; }
   .modPseudo { color:var(--gold); font-weight:bold; flex-shrink:0; }
   .modUuid { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; font-size:9.5px; color:var(--ink-dim); }
@@ -1328,6 +1334,11 @@
     padding:3px 8px; font-size:9.5px; font-weight:bold; cursor:pointer; white-space:nowrap;
   }
   .questClaimBtn:hover { background:#e0bc72; }
+  .mailClaimBtn {
+    flex-shrink:0; width:auto; margin:0; background:var(--gold); color:#1a1712; border:none; border-radius:3px;
+    padding:3px 8px; font-size:9.5px; font-weight:bold; cursor:pointer; white-space:nowrap;
+  }
+  .mailClaimBtn:hover { background:#e0bc72; }
   /* petit bouton claim compact dans l'encart de suivi */
   .qwClaimBtn {
     flex-shrink:0; width:auto; margin:0; background:var(--gold); color:#1a1712; border:none; border-radius:3px;
