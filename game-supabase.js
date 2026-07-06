@@ -2343,6 +2343,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V200', d:'08/07/2026 09:30', name:{fr:'Les nouvelles icônes de stuff arrivent aussi dans la table de loot', en:'The new gear icons now show up in the loot table too'}, fr:[
+      {t:'fix', sub:'interface', tx:'La table de loot (et le récapitulatif condensé des zones de Velia) affichait encore un glyphe générique (⚔️/💍) partagé par toutes les pièces d\'un même type — elle montre désormais la VRAIE icône de chaque pièce (casque, arme, bijou...), avec sa couleur et son ornementation de palier'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The loot table (and the condensed Velia zone summary) still showed a generic shared glyph (⚔️/💍) for every piece of a given type — it now shows each piece\'s REAL icon, with its tier color and rarity ornamentation'},
+    ] },
   { v:'V199', d:'08/07/2026 09:00', name:{fr:'Refonte complète du stuff : sorcier, ornements par rareté', en:'Full gear rework: wizard theme, rarity ornaments'}, fr:[
       {t:'new', sub:'graphismes', tx:'Toutes les icônes d\'équipement redessinées et alignées sur la classe sorcier : bâton (arme principale), dague (arme secondaire), deux sphères Aad en lévitation (éveil), casque à fente en Y, cuirasse cintrée à épaulières, gants griffus, bottes à genouillère, collier/bague/boucles d\'oreille à pendentif'},
       {t:'new', sub:'graphismes', tx:'Ornementation cohérente par rareté sur TOUTE pièce de stuff : rien au gris/blanc, 4 rivets au palier Vert (Yuria), 4 gemmes + 1 losange central au palier Bleu (Grunil)'},
