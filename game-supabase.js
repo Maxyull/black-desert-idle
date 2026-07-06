@@ -247,6 +247,22 @@ async function onAuthedInner(user) {
   heartbeatPresence();
   refreshOnlineCounter();
   refreshLiveBoss(); // affiche tout de suite un éventuel boss global déjà en cours
+  // rappel proactif pour un invité (2026-07-10, demande explicite : "verifie que l'invité a bien
+  // des notifications qui l'invitent à se connecter pour ne pas perdre son avancée") -- jusqu'ici
+  // le seul rappel était RÉACTIF (en tentant le Marché/Classement/parrainage) : rien n'avertissait
+  // un invité qui ne touche jamais à ces fonctionnalités, alors qu'une session anonyme est perdue
+  // dès qu'il change d'appareil ou vide son navigateur (voir doc Supabase Anonymous Sign-Ins).
+  // Poussée dans le centre de notifications (🔔), pas un toast intrusif — une seule fois par
+  // session, avec un léger délai pour ne pas se mélanger aux autres popups de démarrage.
+  if (isGuest()) {
+    setTimeout(() => {
+      pushNotif('🎭', LANG==='fr'?'Tu joues en mode invité':'You\'re playing as a guest',
+        LANG==='fr'
+          ? 'Ta progression n\'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur "🔗 Lier un compte" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.'
+          : 'Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click "🔗 Link account" to create an account (your current progress is kept) or sign back into an existing one.',
+        'info');
+    }, 3000);
+  }
 }
 
 // détermine le pseudo effectif : pseudo choisi > pseudo Discord > partie locale de l'email
@@ -778,77 +794,105 @@ async function openAdminPanel() {
   // sélecteur de World Boss : fait apparaître immédiatement le boss choisi (combat local de test),
   // sans toucher au planning horaire normal — réservé à l'admin
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
-  // panneau admin scindé en 2 : "Pour moi" (test sur mon propre compte, purement local) et
-  // "Pour les joueurs" (actions serveur qui touchent tout le monde)
+  // panneau admin réorganisé en VRAIS onglets de premier niveau (2026-07-10, demande explicite :
+  // "refais un systeme de tab pour le menu admin pour moi pour serveur pour joueurs précis stats")
+  // -- avant, les 4 sections (Moi/Joueur précis/Serveur/Rôles) étaient toutes empilées et visibles
+  // en même temps au-dessus des stats, rendant le panneau très long à parcourir. "Rôles" rejoint
+  // l'onglet "Joueur précis" (les deux ciblent un joueur par UUID) ; "Stats" contient tel quel
+  // l'ancien sous-système d'onglets (catTabs/panesHtml, inchangé).
+  const adminTopTabs = [
+    { id:'moi', icon:'👤', label:{fr:'Moi',en:'Me'} },
+    { id:'joueur', icon:'🎯', label:{fr:'Joueur précis',en:'Specific player'} },
+    { id:'serveur', icon:'🌍', label:{fr:'Serveur',en:'Server'} },
+    { id:'stats', icon:'📊', label:{fr:'Stats',en:'Stats'} },
+  ];
+  const adminTopTabsHtml = adminTopTabs.map((t,i) => `<button class="catTab${i===0?' active':''}" data-top="${t.id}">${t.icon} ${t.label[LANG]}</button>`).join('');
   const actionsHtml = `
     <div class="admRiskLegend">
       <span><i style="background:#5a8fc8"></i>${LANG==='fr'?'Bleu = sans risque, perso':'Blue = safe, personal'}</span>
       <span><i style="background:var(--danger)"></i>${LANG==='fr'?'Rouge = touche TOUS les joueurs':'Red = affects ALL players'}</span>
       <span><i style="background:#7aa35e"></i>${LANG==='fr'?'Vert = gestion (rôles, boutons verrouillés)':'Green = management (roles, locked buttons)'}</span>
     </div>
-    <div class="admSection riskSafe">
-      <div class="admSectionTitle">👤 ${LANG==='fr'?'Pour moi — test sur mon compte':'For me — test on my account'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Sans danger : ça ne touche que TON propre personnage.':'Safe: only affects YOUR own character.'}</div>
-      <div class="admActions">
-        <button id="btnTestSilver">💰 +1M silver</button>
-        <button id="btnTestLoyalty">📬 +200 Loyalties</button>
-        <button id="btnTestAch">🏅 ${LANG==='fr'?'Débloquer tous les succès':'Unlock all achievements'}</button>
-        <button id="btnResetMyQuests" data-i18n="btnResetMyQuests">🔄 Réinitialiser mes quêtes</button>
-        <button id="btnResetDemo" data-i18n="btnResetDemo">🔄 Réinitialiser la démo</button>
+    <div class="catTabs admTopTabs">${adminTopTabsHtml}</div>
+    <div class="admTopPane" data-top="moi">
+      <div class="admSection riskSafe">
+        <div class="admSectionTitle">👤 ${LANG==='fr'?'Pour moi — test sur mon compte':'For me — test on my account'}</div>
+        <div class="admSectionSub">${LANG==='fr'?'Sans danger : ça ne touche que TON propre personnage.':'Safe: only affects YOUR own character.'}</div>
+        <div class="admActions">
+          <button id="btnTestSilver">💰 +1M silver</button>
+          <button id="btnTestLoyalty">📬 +200 Loyalties</button>
+          <button id="btnTestAch">🏅 ${LANG==='fr'?'Débloquer tous les succès':'Unlock all achievements'}</button>
+          <button id="btnResetMyQuests" data-i18n="btnResetMyQuests">🔄 Réinitialiser mes quêtes</button>
+          <button id="btnResetDemo" data-i18n="btnResetDemo">🔄 Réinitialiser la démo</button>
+        </div>
+        <div class="admBossSpawn">
+          <span>${LANG==='fr'?'⚔️ Combattre un World Boss :':'⚔️ Fight a World Boss:'}</span>
+          <select id="admBossSelect">${bossOptions}</select>
+          <button id="btnAdmSpawnBoss">${LANG==='fr'?'Combattre maintenant':'Fight now'}</button>
+        </div>
+        <div class="admHint">${LANG==='fr'?'Lance un vrai boss partagé (PV communs) rien que pour toi, pour tester sans attendre le planning ni prévenir personne.':'Spawns a real shared boss (common HP) just for you, to test without waiting for the schedule or notifying anyone.'}</div>
       </div>
-      <div class="admBossSpawn">
-        <span>${LANG==='fr'?'⚔️ Combattre un World Boss :':'⚔️ Fight a World Boss:'}</span>
-        <select id="admBossSelect">${bossOptions}</select>
-        <button id="btnAdmSpawnBoss">${LANG==='fr'?'Combattre maintenant':'Fight now'}</button>
-      </div>
-      <div class="admHint">${LANG==='fr'?'Lance un vrai boss partagé (PV communs) rien que pour toi, pour tester sans attendre le planning ni prévenir personne.':'Spawns a real shared boss (common HP) just for you, to test without waiting for the schedule or notifying anyone.'}</div>
     </div>
-    <div class="admSection riskSingle">
-      <div class="admSectionTitle">🎯 ${LANG==='fr'?'Un joueur précis — par UUID':'A specific player — by UUID'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Efface silver/équipement/niveau/sac de CE joueur uniquement.':'Wipes silver/gear/level/bag for THAT player only.'}</div>
-      <div class="admActions">
-        <input type="text" id="admResetUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
-        <button id="btnScreenshotPlayer">📸 ${LANG==='fr'?'Screenshot':'Screenshot'}</button>
-        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${LANG==='fr'?'Réinitialiser ce joueur':'Reset this player'}</button>
+    <div class="admTopPane" data-top="joueur" style="display:none">
+      <div class="admSection riskSingle">
+        <div class="admSectionTitle">🎯 ${LANG==='fr'?'Un joueur précis — par UUID':'A specific player — by UUID'}</div>
+        <div class="admSectionSub">⚠️ ${LANG==='fr'?'Efface silver/équipement/niveau/sac de CE joueur uniquement.':'Wipes silver/gear/level/bag for THAT player only.'}</div>
+        <div class="admActions">
+          <input type="text" id="admResetUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
+          <button id="btnScreenshotPlayer">📸 ${LANG==='fr'?'Screenshot':'Screenshot'}</button>
+          <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${LANG==='fr'?'Réinitialiser ce joueur':'Reset this player'}</button>
+        </div>
+        <div class="admHint">${LANG==='fr'?'Trouve l\'UUID d\'un joueur via le Classement ou ses messages en jeu (bouton "Copier UUID" dans son propre menu). "Screenshot" affiche son équipement/inventaire en lecture seule (aucune modification). Le reset envoie le même message d\'explication que le reset global, mais montré UNIQUEMENT à ce joueur.':'Find a player\'s UUID via the Leaderboard or their in-game messages (the "Copy UUID" button in their own menu). "Screenshot" shows their gear/inventory read-only (no changes made). The reset sends the same explanation message as the global reset, but shown ONLY to that player.'}</div>
       </div>
-      <div class="admHint">${LANG==='fr'?'Trouve l\'UUID d\'un joueur via le Classement ou ses messages en jeu (bouton "Copier UUID" dans son propre menu). "Screenshot" affiche son équipement/inventaire en lecture seule (aucune modification). Le reset envoie le même message d\'explication que le reset global, mais montré UNIQUEMENT à ce joueur.':'Find a player\'s UUID via the Leaderboard or their in-game messages (the "Copy UUID" button in their own menu). "Screenshot" shows their gear/inventory read-only (no changes made). The reset sends the same explanation message as the global reset, but shown ONLY to that player.'}</div>
+      <div class="admSection riskMgmt">
+        <div class="admSectionTitle">🎭 ${LANG==='fr'?'Rôles (Modérateur / Testeur)':'Roles (Moderator / Tester)'}</div>
+        <div class="admSectionSub">${LANG==='fr'?'🛡️ Modérateur : peut supprimer des messages de chat. 🧪 Testeur : accès en avant-première aux fonctionnalités pas encore publiques. Un joueur peut cumuler les deux.':'🛡️ Moderator: can delete chat messages. 🧪 Tester: early access to not-yet-public features. A player can hold both roles.'}</div>
+        <div class="admBossSpawn">
+          <input type="text" id="admRoleUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
+          <select id="admRoleSelect" style="flex:0 0 auto;width:auto;">
+            <option value="mod">🛡️ ${LANG==='fr'?'Modérateur':'Moderator'}</option>
+            <option value="tester">🧪 ${LANG==='fr'?'Testeur':'Tester'}</option>
+          </select>
+          <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${LANG==='fr'?'➕ Ajouter':'➕ Add'}</button>
+        </div>
+        <div id="admRoleList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      </div>
     </div>
-    <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🌍 ${LANG==='fr'?'Pour les joueurs — actions serveur':'For players — server-wide'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
-      <div class="admActions">
-        <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
-        <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Réinitialiser TOUS les comptes':'Reset ALL accounts'}</button>
+    <div class="admTopPane" data-top="serveur" style="display:none">
+      <div class="admSection riskGlobal">
+        <div class="admSectionTitle">🌍 ${LANG==='fr'?'Pour les joueurs — actions serveur':'For players — server-wide'}</div>
+        <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
+        <div class="admActions">
+          <button id="btnResetAllQuests" data-i18n="btnResetAllQuests">⚠️ Réinitialiser les quêtes de tous</button>
+          <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Réinitialiser TOUS les comptes':'Reset ALL accounts'}</button>
+        </div>
+        <div class="admHint warn">${LANG==='fr'?'"Réinitialiser TOUS les comptes" efface silver/équipement/niveau/sac de TOUT LE MONDE et affiche un message d\'explication à chaque joueur à sa prochaine connexion. Irréversible.':'"Reset ALL accounts" wipes silver/gear/level/bag for EVERYONE and shows an explanation message to each player on their next login. Irreversible.'}</div>
+        <div class="admBossSpawn">
+          <span>${LANG==='fr'?'🌍 Lancer un boss pour TOUS :':'🌍 Launch a boss for ALL:'}</span>
+          <select id="admGlobalBossSelect">${bossOptions}</select>
+          <select id="admBossDurationSelect">
+            ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${LANG==='fr'?`~${m} min à tuer`:`~${m} min to kill`}</option>`).join('')}
+          </select>
+          <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (9 min)':'Launch (9 min)'}</button>
+          <button id="btnAdmDespawnBoss">🛑 ${LANG==='fr'?'Faire disparaître':'Despawn'}</button>
+        </div>
+        <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels). Le boss disparaît de toute façon au bout de 9 minutes.':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation). The boss despawns after 9 minutes regardless.'}</div>
       </div>
-      <div class="admHint warn">${LANG==='fr'?'"Réinitialiser TOUS les comptes" efface silver/équipement/niveau/sac de TOUT LE MONDE et affiche un message d\'explication à chaque joueur à sa prochaine connexion. Irréversible.':'"Reset ALL accounts" wipes silver/gear/level/bag for EVERYONE and shows an explanation message to each player on their next login. Irreversible.'}</div>
-      <div class="admBossSpawn">
-        <span>${LANG==='fr'?'🌍 Lancer un boss pour TOUS :':'🌍 Launch a boss for ALL:'}</span>
-        <select id="admGlobalBossSelect">${bossOptions}</select>
-        <select id="admBossDurationSelect">
-          ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${LANG==='fr'?`~${m} min à tuer`:`~${m} min to kill`}</option>`).join('')}
-        </select>
-        <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (9 min)':'Launch (9 min)'}</button>
-        <button id="btnAdmDespawnBoss">🛑 ${LANG==='fr'?'Faire disparaître':'Despawn'}</button>
-      </div>
-      <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels). Le boss disparaît de toute façon au bout de 9 minutes.':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation). The boss despawns after 9 minutes regardless.'}</div>
-    </div>
-    <div class="admSection riskMgmt">
-      <div class="admSectionTitle">🎭 ${LANG==='fr'?'Rôles (Modérateur / Testeur)':'Roles (Moderator / Tester)'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'🛡️ Modérateur : peut supprimer des messages de chat. 🧪 Testeur : accès en avant-première aux fonctionnalités pas encore publiques. Un joueur peut cumuler les deux.':'🛡️ Moderator: can delete chat messages. 🧪 Tester: early access to not-yet-public features. A player can hold both roles.'}</div>
-      <div class="admBossSpawn">
-        <input type="text" id="admRoleUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
-        <select id="admRoleSelect" style="flex:0 0 auto;width:auto;">
-          <option value="mod">🛡️ ${LANG==='fr'?'Modérateur':'Moderator'}</option>
-          <option value="tester">🧪 ${LANG==='fr'?'Testeur':'Tester'}</option>
-        </select>
-        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${LANG==='fr'?'➕ Ajouter':'➕ Add'}</button>
-      </div>
-      <div id="admRoleList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
     </div>
 `;
-  openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + `<div class="catTabs">${tabsHtml}</div>${panesHtml}`);
+  const statsTopPane = `<div class="admTopPane" data-top="stats" style="display:none"><div class="catTabs">${tabsHtml}</div>${panesHtml}</div>`;
+  openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + statsTopPane);
   applyI18n();
   wireCatTabs();
+  // onglets de PREMIER niveau (Moi/Joueur précis/Serveur/Stats) — indépendants des catTabs déjà
+  // gérés par wireCatTabs() ci-dessus (ceux-là restent pour les sous-onglets DANS "Stats")
+  $a('infoBody').querySelectorAll('.admTopTabs .catTab').forEach(btn => {
+    btn.onclick = () => {
+      const top = btn.dataset.top;
+      $a('infoBody').querySelectorAll('.admTopTabs .catTab').forEach(b => b.classList.toggle('active', b === btn));
+      $a('infoBody').querySelectorAll('.admTopPane').forEach(p => p.style.display = p.dataset.top === top ? '' : 'none');
+    };
+  });
   refreshRoleList();
   // bouton dédié "UUID" (onglet Joueurs) : copie l'UUID dans le presse-papiers
   $a('infoBody').querySelectorAll('.admUuidBtn').forEach(btn => {
@@ -867,7 +911,11 @@ async function openAdminPanel() {
   // --- pour moi ---
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; addSilver(1000000, 'admin_test'); refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
   $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; S.loyalty=(S.loyalty||0)+200; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); };
-  $a('btnTestAch').onclick = () => { if(!isAdmin())return; ACHIEVEMENTS.forEach(a => { if(!S.achUnlocked[a.id]){ S.achUnlocked[a.id]=Date.now(); S.silver+=a.reward; S.silverEarned+=a.reward; } }); refreshStatsOnly(); openAdminPanel(); };
+  // corrigé le 2026-07-10 (vérification demandée : "verifie si toute les action fonctionne") :
+  // ce bouton manipulait S.silver directement au lieu de passer par addSilver() (voir V231, le
+  // registre de silver) -- les récompenses de succès débloqués via ce test n'étaient donc jamais
+  // journalisées, contrairement à un déblocage normal en jeu (checkAchievements)
+  $a('btnTestAch').onclick = () => { if(!isAdmin())return; ACHIEVEMENTS.forEach(a => { if(!S.achUnlocked[a.id]){ S.achUnlocked[a.id]=Date.now(); addSilver(a.reward, 'admin_test', a.name.fr); } }); refreshStatsOnly(); openAdminPanel(); };
   $a('btnResetMyQuests').onclick = resetMyQuests;
   $a('btnResetDemo').onclick = resetDemo;
   // spawn un VRAI boss partagé (PV communs, top10, contribution %, joueurs en direct) — utilisé à la
@@ -2427,6 +2475,19 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V232', d:'11/07/2026 10:00', name:{fr:'Vente intelligente (Équiper > Compendium > Vendre), rappel invité, flash XP, refonte panneau Admin', en:'Smart selling (Equip > Compendium > Sell), guest reminder, XP flash, Admin panel redesign'}, fr:[
+      {t:'change', sub:'objets', severity:'major', tx:'Vendre un objet vérifie désormais dans l\'ordre : 1) s\'il est meilleur que ce qui est déjà équipé sur son emplacement, il est équipé au lieu d\'être vendu ; 2) sinon, s\'il doit rejoindre ou remplacer un exemplaire moins enchanté dans le sac protégé du Compendium, il y est déplacé au lieu d\'être vendu ; 3) seulement si aucun des deux cas ne s\'applique, il est réellement vendu. S\'applique quelle que soit l\'origine de la vente'},
+      {t:'new', sub:'compte', tx:'Un joueur en mode invité reçoit désormais une notification lui rappelant que sa progression n\'est sauvegardée que sur cet appareil et l\'invitant à créer un compte (progression conservée) ou à se reconnecter à un compte existant'},
+      {t:'new', sub:'interface', tx:'Le niveau et la barre d\'XP s\'illuminent brièvement à chaque gain d\'expérience'},
+      {t:'change', sub:'admin', tx:'Le panneau Admin est réorganisé en onglets : Moi, Joueur précis (inclut désormais la gestion des rôles), Serveur, Stats'},
+      {t:'fix', sub:'admin', tx:'Le bouton de test "Débloquer tous les succès" ne journalisait pas le silver gagné dans le registre (voir V231) — corrigé'},
+    ], en:[
+      {t:'change', sub:'objets', severity:'major', tx:'Selling an item now checks in order: 1) if it\'s better than what\'s currently equipped on its slot, it\'s equipped instead of sold; 2) otherwise, if it should join or replace a less-enhanced copy in the Compendium\'s protected bag, it\'s moved there instead of sold; 3) only if neither applies is it actually sold. Applies regardless of how the sale was triggered'},
+      {t:'new', sub:'compte', tx:'A guest player now receives a notification reminding them that their progress is only saved on this device, inviting them to create an account (progress kept) or sign back into an existing one'},
+      {t:'new', sub:'interface', tx:'The level and XP bar now briefly light up on every experience gain'},
+      {t:'change', sub:'admin', tx:'The Admin panel is now organized into tabs: Me, Specific player (now includes role management), Server, Stats'},
+      {t:'fix', sub:'admin', tx:'The "Unlock all achievements" test button wasn\'t logging the silver gained to the ledger (see V231) — fixed'},
+    ] },
   { v:'V231', d:'10/07/2026 12:00', name:{fr:'Registre de silver détaillé (panneau Admin)', en:'Detailed silver ledger (Admin panel)'}, fr:[
       {t:'admin', tx:'L\'onglet Admin "Silver" affiche désormais un vrai registre : tableau par catégorie (loot, potions, ventes, quêtes, succès, marché...) avec gagné/dépensé/nombre de mouvements, et un graphique du flux net par heure sur 48h. Toute variation de silver passe désormais par un point d\'entrée unique côté client, journalisé individuellement ; les mouvements du Marché (achat/vente/remboursement, gérés côté serveur) sont journalisés directement en base'},
     ], en:[

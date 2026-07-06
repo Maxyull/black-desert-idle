@@ -274,9 +274,12 @@
   // en SWAP avec ce qui y était déjà (l'ancien retourne dans le sac principal, jamais perdu).
   function testCompendiumBackfillAfterSell() {
     const TEST_NAME = 'TestUniqueGearXYZ_compendium';
-    const s = { a: INV[INV_SIZE-1], b: INV[INV_SIZE-2], c: INV[INV_SIZE-3], pen: S.penMastery[TEST_NAME] };
+    const s = { a: INV[INV_SIZE-1], b: INV[INV_SIZE-2], c: INV[INV_SIZE-3], pen: S.penMastery[TEST_NAME], helmet: EQUIP.helmet };
     delete S.penMastery[TEST_NAME];
     INV[INV_SIZE-1] = null; INV[INV_SIZE-2] = null; INV[INV_SIZE-3] = null;
+    // équipe un casque volontairement écrasant pour que sellOne (EQUIPE>COMPENDIUM>VENDRE) ne
+    // dévie jamais vers un auto-équipement pendant ce test, qui porte sur le comportement compendium
+    EQUIP.helmet = { name:'TestGuardHelmet', kind:'gear', slot:'helmet', ap:0, dp:9999, hp:0, enhLv:0 };
     // s'assure qu'aucune trace de ce nom ne traîne déjà dans le sac protégé (test précédent, etc.)
     const clearCompBag = () => { for (let i=0;i<INV_SIZE;i++) if (COMPENDIUM_BAG[i] && COMPENDIUM_BAG[i].name===TEST_NAME) COMPENDIUM_BAG[i]=null; };
     clearCompBag();
@@ -316,6 +319,7 @@
 
     clearCompBag();
     for (let i=0;i<INV_SIZE;i++) if (INV[i] && INV[i].name===TEST_NAME) INV[i]=null;
+    EQUIP.helmet = s.helmet;
     if (s.pen === undefined) delete S.penMastery[TEST_NAME]; else S.penMastery[TEST_NAME] = s.pen;
     INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b; INV[INV_SIZE-3] = s.c;
   }
@@ -607,6 +611,70 @@
     assert('addSilver (delta nul) : aucun effet', S.silver === 900 && S.silverEarned === 700);
     S.silver = s.silver; S.silverEarned = s.silverEarned;
   }
+  // "lorsque je vends un item ... EQUIPE>COMPENDIUM>VENDRE" (2026-07-10) : sellOne() doit d'abord
+  // tenter d'équiper l'objet s'il est meilleur, puis de le protéger dans le Compendium, et ne le
+  // vendre RÉELLEMENT que si ni l'un ni l'autre ne s'applique
+  function testSellOnePriorityEquipCompendiumSell() {
+    const TEST_NAME = 'TestSellPriorityHelmet';
+    const s = { helmet: EQUIP.helmet, a: INV[INV_SIZE-1], b: INV[INV_SIZE-2], silver: S.silver, pen: S.penMastery[TEST_NAME] };
+    delete S.penMastery[TEST_NAME];
+    EQUIP.helmet = null; INV[INV_SIZE-1] = null; INV[INV_SIZE-2] = null;
+    const clearName = () => {
+      for (let k=0;k<INV_SIZE;k++) if (INV[k] && INV[k].name===TEST_NAME) INV[k]=null;
+      for (let k=0;k<INV_SIZE;k++) if (COMPENDIUM_BAG[k] && COMPENDIUM_BAG[k].name===TEST_NAME) COMPENDIUM_BAG[k]=null;
+      if (EQUIP.helmet && EQUIP.helmet.name===TEST_NAME) EQUIP.helmet=null;
+    };
+    clearName(); // filet de sécurité si un run précédent a laissé une trace de ce nom
+
+    // cas 1 (ÉQUIPER) : rien d'équipé -> le premier exemplaire vendu doit s'équiper, pas se vendre
+    EQUIP.helmet = null;
+    INV[INV_SIZE-1] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:20, enhLv:0, val:500, key:'t1', qty:1 };
+    const silverBefore1 = S.silver;
+    sellOne(INV_SIZE-1);
+    assert('Priorité 1/3 : objet meilleur que l\'équipé -> ÉQUIPÉ, pas vendu',
+      EQUIP.helmet && EQUIP.helmet.name === TEST_NAME, `EQUIP.helmet=${EQUIP.helmet&&EQUIP.helmet.name}`);
+    assert('Priorité 1/3 : aucun silver gagné (pas une vente)', S.silver === silverBefore1);
+    clearName();
+
+    // cas 2 (COMPENDIUM) : un exemplaire moins bon déjà équipé (donc pas équipable) et pas encore
+    // protégé -> doit rejoindre le sac protégé, pas se vendre
+    EQUIP.helmet = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:50, hp:200, enhLv:0, val:5000, key:'t_worn' };
+    INV[INV_SIZE-1] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:20, enhLv:3, val:500, key:'t2', qty:1 };
+    const silverBefore2 = S.silver;
+    sellOne(INV_SIZE-1);
+    assert('Priorité 2/3 : pas équipable (moins bon que l\'équipé) mais protégeable -> COMPENDIUM, pas vendu',
+      compendiumBagHasName(TEST_NAME));
+    assert('Priorité 2/3 : aucun silver gagné (pas une vente)', S.silver === silverBefore2);
+    clearName();
+
+    // cas 3 (VENDRE) : déjà en maîtrise PEN -> ni équipable de mieux, ni protégeable -> vente réelle
+    S.penMastery[TEST_NAME] = true;
+    EQUIP.helmet = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:50, hp:200, enhLv:0, val:5000, key:'t_worn2' };
+    INV[INV_SIZE-1] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:20, enhLv:3, val:777, key:'t3', qty:1 };
+    const silverBefore3 = S.silver;
+    sellOne(INV_SIZE-1);
+    assert('Priorité 3/3 : ni équipable ni protégeable (déjà PEN) -> vendu pour de vrai',
+      S.silver === silverBefore3 + 777, `S.silver=${S.silver}, attendu=${silverBefore3+777}`);
+    assert('Priorité 3/3 : l\'objet a bien quitté le sac', INV[INV_SIZE-1] === null);
+
+    clearName();
+    if (s.pen === undefined) delete S.penMastery[TEST_NAME]; else S.penMastery[TEST_NAME] = s.pen;
+    EQUIP.helmet = s.helmet; INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b; S.silver = s.silver;
+  }
+  // "fais un carré autour du niveau et % d'xp qui s'illumine quand on gagne de l'xp" (2026-07-10) :
+  // gainXp(n>0) doit ajouter la classe .xpFlash à #lvlXpRow ; un gain nul ou négatif ne doit rien
+  // déclencher (n<=0 ne devrait jamais arriver en pratique, mais gainXp ne doit pas planter dessus)
+  function testXpGainFlashesLevelBox() {
+    const el = $('lvlXpRow'); if (!el) return; // pas de DOM (contexte hors-jeu) -> rien à vérifier
+    const s = { xp: S.xp, xpNext: S.xpNext, lvl: S.lvl, hpMax: S.hpMax, hp: P.hp };
+    el.classList.remove('xpFlash');
+    gainXp(5);
+    assert('gainXp(n>0) illumine #lvlXpRow (.xpFlash)', el.classList.contains('xpFlash'));
+    el.classList.remove('xpFlash');
+    gainXp(0);
+    assert('gainXp(0) n\'illumine rien (pas de gain réel)', !el.classList.contains('xpFlash'));
+    S.xp = s.xp; S.xpNext = s.xpNext; S.lvl = s.lvl; S.hpMax = s.hpMax; P.hp = s.hp;
+  }
   function testZone0LootReachesZone1Difficulty() {
     // scénario concret remonté par le joueur (2026-07-08) : casque + arme + 2 bijoux, tous
     // lootables à Camp des Loups (zone0), enchantés à +12 — ne doit plus tomber en ZONE DANGEREUSE
@@ -658,6 +726,8 @@
     testGearRetroactiveMigration();
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();
+    testSellOnePriorityEquipCompendiumSell();
+    testXpGainFlashesLevelBox();
     testZone0LootReachesZone1Difficulty();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;

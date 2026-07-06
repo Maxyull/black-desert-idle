@@ -3959,7 +3959,18 @@ function fmtXpPct(pct) {
   const [intPart, decPart] = pct.toFixed(3).split('.');
   return intPart.padStart(2,'0') + '.' + decPart + '%';
 }
+// s'illumine brièvement autour du niveau/XP à chaque gain (2026-07-10, demande explicite : "fais
+// un carré autour du niveau et % d'xp qui s'illumine quand on gagne de l'xp")
+function flashXpGain() {
+  const el = $('lvlXpRow'); if (!el) return;
+  el.classList.remove('xpFlash');
+  void el.offsetWidth; // force reflow pour rejouer la transition CSS même si déjà en cours
+  el.classList.add('xpFlash');
+  clearTimeout(flashXpGain._t);
+  flashXpGain._t = setTimeout(() => el.classList.remove('xpFlash'), 500);
+}
 function gainXp(n) {
+  if (n > 0) flashXpGain();
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;
@@ -6092,6 +6103,31 @@ function resolveEquipSlot(item) {
   }
   return null;
 }
+// équipe automatiquement l'objet à l'index i S'IL EST MEILLEUR que ce qui est déjà équipé sur son
+// slot (2026-07-10, demande explicite : "lorsque je vends un item ... s'il est meilleur je
+// l'équipe" -- utilisé par sellOne AVANT toute vente, quelle que soit la provenance de l'objet).
+// Pour un anneau/boucle (paire), compare au PIRE des deux déjà équipés (celui qui serait remplacé
+// en premier, même logique que refScoreForSlot) et l'équipe SPÉCIFIQUEMENT à cette place — jamais
+// via resolveEquipSlot seul, qui ne regarde pas lequel des deux est le plus faible.
+function tryAutoEquipIfBetter(i, s) {
+  if (s.kind !== 'gear' && s.kind !== 'jackpot') return false;
+  // gear : s.slot EST le slot direct ('helmet','weapon'...) ; jackpot : s.slot est déjà la BASE
+  // ('ring'/'earring'/'necklace'/'belt'), voir accSlotFor -- pas besoin de resolveEquipSlot ici
+  const base = s.slot;
+  if (base === 'ring' || base === 'earring') {
+    const slotA = base+'1', slotB = base+'2';
+    const worseSlot = itemScore(EQUIP[slotA]) <= itemScore(EQUIP[slotB]) ? slotA : slotB;
+    if (itemScore(s) <= itemScore(EQUIP[worseSlot])) return false;
+    const old = EQUIP[worseSlot];
+    if (old && !invAdd({ ...old, equipped:false, qty:1, stackable:false })) return false; // sac plein
+    EQUIP[worseSlot] = { ...s };
+    INV[i] = null;
+    return true;
+  }
+  if (itemScore(s) <= itemScore(EQUIP[base])) return false;
+  equipItem(i);
+  return true;
+}
 // équipe n'importe quelle pièce (arme/armure/accessoire) dans le bon slot
 function equipItem(i) {
   const item = INV[i]; if (!item) return;
@@ -6852,13 +6888,26 @@ function dropItem(i) {
   INV[i] = null;
   hud();
 }
+// vente individuelle (bouton "Vendre 1", voir showItemMenu) — ordre de priorité STRICT avant de
+// vraiment vendre quoi que ce soit, quelle que soit la provenance de l'objet (2026-07-10, demande
+// explicite : "quelque soit sa provenance s'il est meilleur je l'equipe, puis je regarde si il
+// doit remplacer un moins bon item dans le compendium... EQUIPE>COMPENDIUM>VENDRE") :
+//   1. ÉQUIPER : si l'objet est meilleur (socle) que ce qui est déjà porté sur son slot, il prend
+//      sa place au lieu d'être vendu (l'ancien retourne dans le sac, jamais perdu).
+//   2. COMPENDIUM : sinon, s'il doit remplacer un exemplaire moins enchanté déjà protégé (ou s'il
+//      n'y en a aucun), il rejoint le sac protégé au lieu d'être vendu (voir ensureCompendiumProtection).
+//   3. VENDRE : seulement si aucun des 2 cas au-dessus ne s'applique.
 function sellOne(i) {
   const s = INV[i]; if (!s) return;
+  if (s.kind === 'gear' || s.kind === 'jackpot') {
+    if (tryAutoEquipIfBetter(i, s)) { hud(); return; }
+    if (!S.penMastery[s.name]) {
+      ensureCompendiumProtection(s.name);
+      if (INV[i] !== s) { hud(); return; } // ensureCompendiumProtection a pris CET exemplaire précis
+    }
+  }
   addSilver(s.val, 'sell', s.name);
-  invRemoveAt(i, 1);
-  // vente individuelle d'une pièce de gear/jackpot (voir showItemMenu, bouton "Vendre 1") : si ce
-  // type n'est plus protégé nulle part, promeut le meilleur exemplaire restant dans le sac
-  if (s.kind === 'gear' || s.kind === 'jackpot') ensureCompendiumProtection(s.name);
+  if (s.kind === 'gear' || s.kind === 'jackpot') INV[i] = null; else invRemoveAt(i, 1);
   hud();
 }
 function sellStack(i) {
