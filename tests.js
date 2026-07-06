@@ -313,6 +313,29 @@
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
     S.maxZoneIdx = s.maxZoneIdx; INV[INV_SIZE-1] = s.a;
   }
+  // "chaque catégorie d'item a sa pierre associée d'optimisation on doit pas avoir un stuff tuvala
+  // qui s'opti avec une pierre de naru" (2026-07-11) -- findEnhanceMaterial() ne doit JAMAIS
+  // retomber sur un matériau d'un autre palier, ni honorer un matériau épinglé (clic droit) qui ne
+  // correspond pas au palier de la pièce ciblée.
+  function testEnhanceMaterialNeverSubstitutesWrongTier() {
+    const s = { optTargetSlot, EQUIP_weapon: EQUIP.weapon, forcedMatKey, a: INV[INV_SIZE-1], b: INV[INV_SIZE-2] };
+    optTargetSlot = 'weapon';
+    EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:0, optimizable:true, matName:'Pierre du Temps' }; // Tuvala
+    INV[INV_SIZE-1] = null; INV[INV_SIZE-2] = null;
+    forcedMatKey = null;
+    // seule une pierre de Naru (mauvais palier) est en stock -> aucun matériau ne doit être trouvé
+    INV[INV_SIZE-1] = { key:'mat_Pierre de Novice', name:'Pierre de Novice', kind:'material', qty:5, stackable:true, weight:0.1, val:1 };
+    assert('findEnhanceMaterial refuse la pierre de Naru pour une pièce Tuvala', findEnhanceMaterial() === -1);
+    // la bonne pierre (Tuvala) est ajoutée -> doit être trouvée
+    INV[INV_SIZE-2] = { key:'mat_Pierre du Temps', name:'Pierre du Temps', kind:'material', qty:5, stackable:true, weight:0.1, val:1 };
+    assert('findEnhanceMaterial trouve la pierre du bon palier (Tuvala)', INV[findEnhanceMaterial()] === INV[INV_SIZE-2]);
+    // matériau épinglé (clic droit "Mettre en optimisation") sur la pierre de Naru -> doit être
+    // ignoré (mauvais palier), pas utilisé de force, retombe sur la pierre Tuvala correcte
+    forcedMatKey = 'mat_Pierre de Novice';
+    assert('un matériau épinglé du mauvais palier est ignoré, jamais forcé', INV[findEnhanceMaterial()] === INV[INV_SIZE-2]);
+    optTargetSlot = s.optTargetSlot; EQUIP.weapon = s.EQUIP_weapon; forcedMatKey = s.forcedMatKey;
+    INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b;
+  }
   // "sac protégé compendium ... l'item optimisé qui part dans le compendium à la place du +0 garde
   // son optimisation" (2026-07-09) -- ensureCompendiumProtection() doit toujours faire remonter le
   // PLUS enchanté des exemplaires possédés dans le sac protégé (jamais un +0 si mieux existe),
@@ -774,6 +797,7 @@
     testUpgradeIconOnlyWhenBetterStuffAvailable();
     testUpgradeIconRequiresDiscoveredZone();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
+    testEnhanceMaterialNeverSubstitutesWrongTier();
     testCompendiumBackfillAfterSell();
     testCellEnhBadgeVisibility();
     testNeglectedUpgradeHighlight();

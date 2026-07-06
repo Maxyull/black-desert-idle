@@ -2504,6 +2504,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V237', d:'11/07/2026 18:00', name:{fr:'Fix : une pierre du mauvais palier ne peut plus optimiser du stuff', en:'Fix: a stone from the wrong tier can no longer enhance gear'}, fr:[
+      {t:'fix', sub:'objets', severity:'major', tx:'S\'il ne restait plus de pierre du bon palier en sac (ex: Pierre du Temps pour du stuff Tuvala), l\'optimisation retombait silencieusement sur N\'IMPORTE QUELLE autre pierre en stock, même d\'un palier différent (ex: Pierre de Novice, Naru). Corrigé : sans le bon matériau, l\'optimisation reste bloquée ("Aucun matériau en sac") au lieu de consommer une pierre qui ne correspond pas. Un matériau épinglé via "Mettre en optimisation" qui ne correspond plus au palier de la pièce ciblée est désormais lui aussi ignoré'},
+    ], en:[
+      {t:'fix', sub:'objets', severity:'major', tx:'If no stone of the right tier was left in the bag (e.g. Time Stone for Tuvala gear), enhancement silently fell back to ANY other stone in stock, even from a different tier (e.g. Novice Stone, Naru). Fixed: without the right material, enhancement stays blocked ("No material in bag") instead of consuming a mismatched stone. A material pinned via "Set for enhancement" that no longer matches the targeted piece\'s tier is now also ignored'},
+    ] },
   { v:'V236', d:'11/07/2026 17:00', name:{fr:'La flèche de zone ignore le stuff déjà dans le sac', en:'The zone arrow ignores gear already in the bag'}, fr:[
       {t:'fix', sub:'interface', tx:'L\'icône ⬆️ affichée sur une zone (suggérant d\'aller y farmer un meilleur stuff) pouvait s\'afficher alors que ce meilleur stuff se trouvait déjà, non équipé, dans le sac — il suffisait de l\'équiper, pas d\'aller le farmer. Elle ne s\'affiche plus dans ce cas'},
     ], en:[

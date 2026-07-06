@@ -6432,21 +6432,22 @@ let optTargetSlot = 'weapon';
 let forcedMatKey = null; // matériau épinglé via le menu clic droit ("Mettre en optimisation")
 
 function optimizableList() { return OPTIMIZABLE_SLOTS.filter(k => EQUIP[k]); }
+// chaque palier de stuff (Naru/Tuvala/Yuria/Grunil) a SA PROPRE pierre d'optimisation, jamais
+// interchangeable avec celle d'un autre palier (2026-07-11, demande explicite : "on doit pas
+// avoir un stuff tuvala qui s'opti avec une pierre de naru") -- avant, si le bon matériau
+// n'était pas en stock, un repli silencieux consommait N'IMPORTE QUEL AUTRE matériau (y compris
+// celui d'un palier différent) ; supprimé, sans le bon matériau l'optimisation reste bloquée.
 function findEnhanceMaterial() {
-  if (forcedMatKey) {
-    const idx = INV.findIndex(s => s && s.key === forcedMatKey);
-    if (idx !== -1) return idx;
-    forcedMatKey = null; // épuisé, retombe sur la recherche automatique
-  }
-  // priorité : le matériau du PALIER de la pièce ciblée (Naru/Tuvala/Yuria/Grunil — voir
-  // rollGearDrop/matName), sinon celui de la zone actuelle, sinon n'importe quel matériau en stock
   const target = EQUIP[optTargetSlot];
   const wantedName = (target && target.matName) || Z().loot.mat.name;
-  let idx = INV.findIndex(s => s && s.kind === 'material' && s.name === wantedName);
-  // la Pierre de Cron est un matériau à PART (protection anti-rétrogradation, voir attemptEnhance) —
-  // jamais consommée comme matériau d'optimisation "normal", même en dernier recours
-  if (idx === -1) idx = INV.findIndex(s => s && s.kind === 'material' && s.name !== CRON_STONE.name);
-  return idx;
+  if (forcedMatKey) {
+    const idx = INV.findIndex(s => s && s.key === forcedMatKey);
+    // le matériau épinglé (clic droit "Mettre en optimisation") doit AUSSI correspondre au
+    // palier de la pièce actuellement ciblée -- sinon il est ignoré, jamais utilisé de force
+    if (idx !== -1 && INV[idx].name === wantedName) return idx;
+    forcedMatKey = null; // épuisé ou ne correspond plus à la pièce ciblée -> repli automatique
+  }
+  return INV.findIndex(s => s && s.kind === 'material' && s.name === wantedName);
 }
 function findCronStone() { return INV.findIndex(s => s && s.name === CRON_STONE.name); }
 function renderOptimization() {
