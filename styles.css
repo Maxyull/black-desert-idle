@@ -552,6 +552,15 @@
   .cell .eqd { position:absolute; top:1px; left:2px; font-size:8px; color:#7aa35e; }
   .cell .cellAp { position:absolute; bottom:-1px; left:2px; font-size:8px; color:#e0a86e; text-shadow:0 0 3px #000,0 0 3px #000; }
   .cell .cellDp { position:absolute; bottom:-1px; right:2px; font-size:8px; color:#8fc9c9; text-shadow:0 0 3px #000,0 0 3px #000; }
+  /* niveau d'enchantement visible sur le sac ET le sac protégé du Compendium (2026-07-09, demande
+     explicite) — même coin (haut-droit) que .qty, jamais en conflit : le gear/bijou enchanté n'est
+     jamais stackable (qty toujours 1, jamais affiché), et un stack (trash/matériau) n'a jamais
+     enhLv. Même palette que le badge équivalent de la poupée d'équipement (.pdSlot .enh). */
+  .cell .cellEnh {
+    position:absolute; top:1px; right:2px; font-size:8px; font-weight:bold; padding:0 2px; border-radius:2px;
+    background:#1a2a14; color:#8fe07a; text-shadow:none;
+  }
+  .cell .cellEnh.pri { background:#2a1a14; color:#e6cf7a; }
   .invFoot { margin-top:8px; padding-top:7px; border-top:1px solid #2c2a33; font-size:12px; }
   .invFoot .frow { display:flex; align-items:center; gap:8px; margin:4px 0; }
   .invFoot .bar { flex:1; height:8px; background:#0d0c11; border:1px solid #333; overflow:hidden; }
