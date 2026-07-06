@@ -3558,6 +3558,9 @@ const DODGE_GEAR_SCALE = 0.08;
 // valait 8228 silver (×78 le trash de la même zone, 105) contre ~823 désormais (×~8), toujours
 // notable mais clairement secondaire au farm de trash.
 const GEAR_SELL_MULT = 2.2;
+// ratio bijou/trash (2026-07-09) — voir le commentaire complet dans rollDrops. Scope module (pas
+// local à rollDrops) pour être réutilisable par migrateGearFixedStatsV226 (rétroactivité).
+const JACKPOT_VAL_TRASH_RATIO = 20;
 function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
@@ -3629,7 +3632,7 @@ const VELIA_TREASURE = [
   // fusionné en un seul objet le 2026-07-06 (demande explicite : "passage du bout de velia a 0.5%
   // fixe une seule item pas 2 et elle se loot de 1 a 3") -- avant, 2 "Bout" séparés (0.01%/0.001%)
   // menaient chacun à un Trésor différent ; un seul Bout désormais, taux fixe 0.5%, 1 à 3 par drop
-  { name:'Bout du trésor de Velia',    ch:.0033,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' }, // 0.33% (2026-07-08, demande explicite)
+  { name:'Bout du trésor de Velia',    ch:.0022,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' }, // 0.22% (2026-07-10, demande explicite)
   { name:'Trésor de Velia 1',         ch:.00001,  icon:'🗺️', color:'#e8c96a', key:'treasure_velia1' },
   { name:'Trésor de Velia 2',         ch:.000001, icon:'🗺️', color:'#e8c96a', key:'treasure_velia2' },
   { name:'Trésor de Velia 3',         ch:.0000001,icon:'🗺️', color:'#e8c96a', key:'treasure_velia3' },
@@ -3753,7 +3756,8 @@ function rollDrops(wp, alpha, lm) {
   // ~180 à ~290× le trash de sa propre zone (ex: 35 000 contre 120 en zone 11) : le bijou éclipsait
   // totalement le trash comme source de revenu. Recalculée dynamiquement à ~20× le trash de la
   // zone, un vrai bonus notable au dropped mais qui ne concurrence plus le farm de trash.
-  const JACKPOT_VAL_TRASH_RATIO = 20;
+  // (constante en scope MODULE, pas locale — réutilisée par migrateGearFixedStatsV226 pour
+  // recalculer rétroactivement le stuff déjà possédé, voir plus bas)
   const jackpotVal = gearFloor(L.trash.val * JACKPOT_VAL_TRASH_RATIO);
   const table = [
     { ...L.trash,   kind:'trash',    color:'#a08464', key:'trash_'+zk,   icon:'▬', stackable:true,  weight:0.3 },
@@ -6720,8 +6724,11 @@ function zoneLootRowsHtml(idx) {
     { kind:'material', it:{name:CRON_STONE.name, icon:CRON_STONE.icon}, ch:CRON_STONE.ch, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
   );
   // les couleurs des rangées "armure" et "matériau" reprennent celles du stuff dans l'inventaire
-  // (gris/blanc/vert/bleu selon le palier) au lieu d'un violet/or générique — demande du 2026-07-06
-  const rowColor = { gear: tier.color, material: tier.material.color };
+  // (gris/blanc/vert/bleu selon le palier) au lieu d'un violet/or générique — demande du 2026-07-06.
+  // "jackpot" (bijou) manquait à cette table (2026-07-10, bug trouvé en vérification) : la ligne
+  // dépliée du bijou restait sans couleur alors que la ligne condensée (zoneLootCompactRowHtml),
+  // l'inventaire (2026-07-09) et la poupée d'équipement (2026-07-05) l'ont toutes.
+  const rowColor = { gear: tier.color, material: tier.material.color, jackpot: tier.color };
   return rows.map(r => {
     const ch = r.ch ?? r.it.ch;
     // la Pierre de Cron garde SA couleur propre (dorée) plutôt que celle du matériau de palier —
@@ -6987,6 +6994,53 @@ function migrateJewelryApV207() {
   INV.forEach(rescaleOne);
   COMPENDIUM_BAG.forEach(rescaleOne);
 }
+// retrouve la zone d'origine d'une pièce de GEAR déjà possédée (armure/arme) à partir de son
+// palier (couleur) + son slot -- contrairement aux bijoux (1 nom unique par zone, voir
+// JACKPOT_NAME_TO_ZONE), un nom de gear est partagé par tout un palier ; mais chaque (palier,slot)
+// ne correspond qu'à UNE SEULE zone (voir ZONE_ARMOR_SLOTS/ZONE_WEAPON_SLOTS, 1 pièce garantie par
+// zone), donc la paire reste sans ambiguïté.
+function zoneForGearPiece(item) {
+  const tierIdx = GEAR_TIERS.findIndex(t => t.color === item.color);
+  if (tierIdx === -1) return null;
+  const tier = GEAR_TIERS[tierIdx];
+  for (const zi of tier.zones) {
+    if ((ZONE_ARMOR_SLOTS[zi]||[]).includes(item.slot) || (ZONE_WEAPON_SLOTS[zi]||[]).includes(item.slot)) return zi;
+  }
+  return null;
+}
+// migration 2026-07-10 (demande explicite : "vérifie la rétroactivité lors de modification de
+// stuff pour tout objet déjà existant") : les stats de BASE du gear (ap/dp/hp/dodge) et le prix de
+// revente (val, gear ET bijoux) sont figés sur l'objet dès son drop, jamais recalculés tout seuls —
+// la V226 (stats FIXES, plus de ±15% aléatoire) et la V225 (revente du gear/bijou fortement
+// réduite, voir GEAR_SELL_MULT/JACKPOT_VAL_TRASH_RATIO) ne s'appliquaient donc QU'aux nouveaux
+// drops, laissant tout le stuff déjà possédé sur l'ancien tirage aléatoire et l'ancien prix. Cette
+// migration recalcule les 2 pour tout gear/bijou déjà en sac/équipé/protégé, avec EXACTEMENT la
+// même formule que rollGearDrop/rollWeaponDrop/rollDrops (jamais dupliquée à la main) — seul
+// l'enchantement (enhLv, géré séparément par enhBonus/itemMult) reste inchangé.
+function migrateGearFixedStatsV226() {
+  const rescaleOne = it => {
+    if (!it) return;
+    if (it.kind === 'gear' && it.slot) {
+      const zi = zoneForGearPiece(it);
+      if (zi == null) return;
+      const zone = ZONES[zi];
+      const role = GEAR_ROLE[it.slot];
+      const basisAP = zone.gearBasisAP ?? zone.reqAP, basisDP = zone.gearBasisDP ?? zone.reqDP;
+      it.ap = role.apShare ? gearFloor(basisAP * role.apShare) : 0;
+      it.dp = role.dpShare ? gearFloor(basisDP * role.dpShare) : 0;
+      it.hp = role.hpShare ? gearFloor(basisDP * role.hpShare * HP_GEAR_SCALE) : 0;
+      it.dodge = Math.round(basisDP * (role.dodgeShare||0) * DODGE_GEAR_SCALE * 100) / 100;
+      it.val = Math.round((it.ap*2 + it.dp + it.hp*0.5) * GEAR_SELL_MULT);
+    } else if (it.kind === 'jackpot') {
+      const zi = JACKPOT_NAME_TO_ZONE[it.name];
+      if (zi == null) return;
+      it.val = gearFloor(ZONES[zi].loot.trash.val * JACKPOT_VAL_TRASH_RATIO);
+    }
+  };
+  Object.values(EQUIP).forEach(rescaleOne);
+  INV.forEach(rescaleOne);
+  COMPENDIUM_BAG.forEach(rescaleOne);
+}
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
 // C'est CE bloc qui doit être envoyé/lu depuis la table Supabase "game_saves".
@@ -7020,6 +7074,7 @@ function applySaveState(data) {
   if (!S.migratedEarringRebalanceV175) { migrateEarringRebalanceV175(); S.migratedEarringRebalanceV175 = true; }
   if (!S.migratedArmorNoApV192) { migrateArmorNoApV192(); S.migratedArmorNoApV192 = true; }
   if (!S.migratedJewelryApV207) { migrateJewelryApV207(); S.migratedJewelryApV207 = true; }
+  if (!S.migratedGearFixedStatsV226) { migrateGearFixedStatsV226(); S.migratedGearFixedStatsV226 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO

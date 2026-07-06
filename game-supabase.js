@@ -2361,6 +2361,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V228', d:'10/07/2026 09:00', name:{fr:'Rétroactivité du stuff déjà possédé, fix couleur bijou (loot table), trésor à 0.22%', en:'Retroactivity for already-owned gear, jewelry color fix (loot table), treasure at 0.22%'}, fr:[
+      {t:'fix', sub:'objets', severity:'major', tx:'Les stats de base et le prix de revente d\'une pièce d\'équipement/bijou étaient figés dès son drop, jamais mis à jour automatiquement — le passage aux stats fixes (V226) et à la revente réduite (V225) ne s\'appliquait donc qu\'aux nouveaux drops. Tout le stuff déjà possédé (équipé, dans le sac, ou dans le sac protégé) est désormais recalculé automatiquement avec les mêmes formules, sans toucher à l\'enchantement déjà investi'},
+      {t:'fix', sub:'interface', tx:'Dans la table de loot d\'une zone, la ligne du bijou (dépliée) restait sans couleur de palier — corrigé, elle reprend maintenant la couleur comme le reste des lignes'},
+      {t:'change', sub:'loot', tx:'Chance du "Bout du trésor de Velia" ajustée à 0.22% (était 0.33%)'},
+    ], en:[
+      {t:'fix', sub:'objets', severity:'major', tx:'A gear/jewelry piece\'s base stats and resale price were frozen at drop time, never updated automatically — the switch to fixed stats (V226) and reduced resale (V225) only applied to new drops. All already-owned gear (equipped, in bag, or in the protected bag) is now automatically recalculated with the same formulas, without touching already-invested enhancement'},
+      {t:'fix', sub:'interface', tx:'In a zone\'s loot table, the jewelry row (expanded view) stayed without a tier color — fixed, it now matches the rest of the rows'},
+      {t:'change', sub:'loot', tx:'"Bout du trésor de Velia" chance adjusted to 0.22% (was 0.33%)'},
+    ] },
   { v:'V227', d:'09/07/2026 23:00', name:{fr:'Bandeau "en construction" sur l\'onglet Recommandations', en:'"Under construction" banner on the Recommendations tab'}, fr:[
       {t:'new', sub:'interface', tx:'L\'onglet "Recommandations" de la carte Statistiques affiche désormais un bandeau "en construction" — les calculs et la présentation sont encore amenés à évoluer'},
     ], en:[
