@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=191">
+<link rel="stylesheet" href="styles.css?v=192">
 </head>
 <body>
 
@@ -393,23 +393,34 @@
       <h3><span data-i18n="cardInv">Inventaire</span>
         <button id="btnLifeskillToggle" disabled title="Lifeskill — bientôt disponible">🔒 ⛏️</button>
         <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
-      <div class="catTabs" id="invCatTabs"></div>
-      <div class="invTools invToolsMain">
-        <button id="btnEquipBest" data-i18n="btnEquipBest" title="Équipe automatiquement, sur chaque emplacement, la meilleure pièce de ton sac (comparée sur ses stats de base)">⚡ Équiper meilleur</button>
-        <span class="sellWorseGroup">
-          <button id="btnSellWorse" data-i18n="btnSellWorse" title="Vendre : vend tout objet strictement moins bon que ce qui est déjà équipé (garde toujours la meilleure pièce de chaque emplacement)">🗑️ Vendre</button><button id="btnBuyBackWorse" disabled title="Racheter : annule la dernière vente faite via le bouton Vendre (restaure les objets et le silver dépensé)">↩️</button>
-        </span>
+      <!-- bascule Inventaire/Assemblage (2026-07-06, demande explicite) : le craft du Trésor de
+           Velia vivait dans la carte Optimisation, déplacé ici derrière un bouton en haut -->
+      <div class="invModeTabs" id="invModeTabs">
+        <button class="invModeTab active" data-mode="inv"><span data-i18n="invModeInv">🎒 Inventaire</span></button>
+        <button class="invModeTab" data-mode="craft"><span data-i18n="invModeCraft">🔧 Assemblage</span></button>
       </div>
-      <div id="equipBestMsg"></div>
-      <div class="invTools">
-        <button id="sellTrash" data-i18n="btnSellTrash" disabled title="Bientôt disponible">🔒 Vendre trash</button>
-        <button id="sellMats" data-i18n="btnSellMats" disabled title="Bientôt disponible">🔒 Vendre mat.</button>
-        <button id="sortInv" data-i18n="btnSort">Trier</button>
+      <div id="invModeInvPane">
+        <div class="catTabs" id="invCatTabs"></div>
+        <div class="invTools invToolsMain">
+          <button id="btnEquipBest" data-i18n="btnEquipBest" title="Équipe automatiquement, sur chaque emplacement, la meilleure pièce de ton sac (comparée sur ses stats de base)">⚡ Équiper meilleur</button>
+          <span class="sellWorseGroup">
+            <button id="btnSellWorse" data-i18n="btnSellWorse" title="Vendre : vend tout objet strictement moins bon que ce qui est déjà équipé (garde toujours la meilleure pièce de chaque emplacement)">🗑️ Vendre</button><button id="btnBuyBackWorse" disabled title="Racheter : annule la dernière vente faite via le bouton Vendre (restaure les objets et le silver dépensé)">↩️</button>
+          </span>
+        </div>
+        <div id="equipBestMsg"></div>
+        <div class="invTools">
+          <button id="sellTrash" data-i18n="btnSellTrash" disabled title="Bientôt disponible">🔒 Vendre trash</button>
+          <button id="sellMats" data-i18n="btnSellMats" disabled title="Bientôt disponible">🔒 Vendre mat.</button>
+          <button id="sortInv" data-i18n="btnSort">Trier</button>
+        </div>
+        <div id="invGrid"></div>
+        <div class="invFoot">
+          <div class="frow"><span data-i18n="lblWeight">Poids</span> <div class="bar wbar"><div id="wBar"></div></div> <span id="wTxt">0 LT</span></div>
+          <div class="money"><span class="coin" style="width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fdf3d0,#c9a55a 60%,#8a7038)"></span> <span id="invSilver">0</span> silver</div>
+        </div>
       </div>
-      <div id="invGrid"></div>
-      <div class="invFoot">
-        <div class="frow"><span data-i18n="lblWeight">Poids</span> <div class="bar wbar"><div id="wBar"></div></div> <span id="wTxt">0 LT</span></div>
-        <div class="money"><span class="coin" style="width:12px;height:12px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fdf3d0,#c9a55a 60%,#8a7038)"></span> <span id="invSilver">0</span> silver</div>
+      <div id="invModeCraftPane" style="display:none">
+        <div id="treasureCraftPanel"></div>
       </div>
     </div>
 
@@ -435,8 +446,6 @@
       <div id="optResult"></div>
       <div class="statSep">🔥 <span data-i18n="cardAdvice">Conseil de stuff</span></div>
       <div id="optSuggest"></div>
-      <div class="statSep">🔧 <span data-i18n="cardCraft">Craft</span></div>
-      <div id="treasureCraftPanel"></div>
       <div id="capConvertRow">
         <span id="capConvertLbl"></span>
         <button id="btnConvertCaphras">♻️ <span data-i18n="btnConvertCaphras">Convertir (5:1)</span></button>
@@ -445,7 +454,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=191"></script>
-<script src="game-supabase.js?v=191"></script>
+<script src="game-core.js?v=192"></script>
+<script src="game-supabase.js?v=192"></script>
 </body>
 </html>

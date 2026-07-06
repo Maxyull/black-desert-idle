@@ -2910,10 +2910,21 @@ function fsm(dt) {
       // que l'IA "Loot" ramasse VRAIMENT tout le loot du pack avant de repartir, même les drops
       // tombés plus loin que sa position une fois qu'elle a commencé à se déplacer pour looter
       if (!P.lootTarget || P.lootTarget.taken) {
-        P.lootTarget = drops.filter(l=>!l.taken && dist(P.lootClusterX,P.lootClusterY,l.x,l.y)<320)
+        P.lootStuckT = 0;
+        P.lootTarget = drops.filter(l=>!l.taken && !l.skipped && dist(P.lootClusterX,P.lootClusterY,l.x,l.y)<320)
                             .sort((a,b)=>dist(P.x,P.y,a.x,a.y)-dist(P.x,P.y,b.x,b.y))[0]||null;
       }
-      if (P.lootTarget) moveToward(P.lootTarget.x,P.lootTarget.y,BASE_SPEED*.9,dt);
+      if (P.lootTarget) {
+        moveToward(P.lootTarget.x,P.lootTarget.y,BASE_SPEED*.9,dt);
+        // sac plein : dropsTick() échoue en boucle à ramasser CET objet précis (jamais marqué
+        // .taken), le perso restait donc bloqué à le suivre indéfiniment au lieu de continuer à
+        // farmer (bug remonté en jeu le 2026-07-06 : "mon perso s'arrête quand il est full, il doit
+        // continuer à attaquer comme convenu") -- au bout d'un délai raisonnable, on l'ignore (sans
+        // le marquer .taken : il reste au sol, ramassable plus tard si de la place se libère) et on
+        // repart chercher le pack suivant, exactement comme prévu à l'origine pour le sac plein.
+        P.lootStuckT = (P.lootStuckT||0) + dt;
+        if (P.lootStuckT > 1.5) { P.lootTarget.skipped = true; P.lootTarget = null; P.lootStuckT = 0; setState('search'); }
+      }
       else setState('search');
       break;
     }
@@ -3009,6 +3020,14 @@ function wolvesTick(dt) {
   for (const p of packs) {
     if (p.dead || !p.aggro) continue;
     const d = dist(P.x,P.y,p.x,p.y);
+    // désengagement à distance (demande explicite du 2026-07-06 : "les groupes t'attaquent de plus
+    // loin et les autres groupes t'agressent aussi") -- .aggro ne repassait JAMAIS à false une fois
+    // activé (voir la FSM, état 'move'), donc chaque pack déjà croisé restait accroché pour
+    // toujours, même après que l'IA soit passée à un autre combat : en zone dangereuse (monstres
+    // plus rapides, joueur plus lent), ces packs abandonnés finissaient par rattraper le joueur en
+    // même temps qu'un autre déjà engagé, créant un effet de meute cumulatif jamais voulu. Passé
+    // cette distance, le pack retourne en patrouille (comme s'il n'avait jamais été engagé).
+    if (d > 550) { p.aggro = false; continue; }
     if (d > 60) { p.x += (P.x-p.x)/d*mobSpeed*dt; p.y += (P.y-p.y)/d*mobSpeed*dt; }
     for (const w of p.wolves) {
       if (w.lunge > 0) {
