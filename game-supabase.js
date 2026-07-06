@@ -102,13 +102,18 @@ async function doSignUp() {
   authShow('Création du compte...');
   if (pseudo) { try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {} }
   if (isGuest()) {
-    const { data, error } = await sb.auth.updateUser({ email, password: pass });
+    // sans emailRedirectTo (2026-07-10, bug trouvé en vérification : "verifie que les redirection
+    // vers le jeu se font bien après inscription"), le lien de confirmation d'email utilisait le
+    // "Site URL" par défaut configuré côté dashboard Supabase au lieu de la page réellement visitée
+    // — source probable de l'erreur 404 signalée après inscription si ce réglage était périmé.
+    // Même correctif que doForgotPassword/doSignInDiscord, qui passaient déjà redirectTo.
+    const { data, error } = await sb.auth.updateUser({ email, password: pass }, { emailRedirectTo: location.href });
     if (error) { authShow(error.message, true); return; }
     onAuthed(data.user);
     authShow('Compte lié ! Ta progression est conservée.');
     return;
   }
-  const { data, error } = await sb.auth.signUp({ email, password: pass });
+  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href } });
   if (error) { authShow(error.message, true); return; }
   if (data.session) { onAuthed(data.session.user); }
   else authShow('Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi.');
@@ -2361,6 +2366,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V229', d:'10/07/2026 10:00', name:{fr:'Fix probable de l\'erreur 404 après inscription par email', en:'Likely fix for the 404 error after email signup'}, fr:[
+      {t:'fix', sub:'authentification', severity:'major', tx:'La création de compte par email (et la liaison d\'un compte invité à un email) n\'indiquait jamais explicitement où revenir après confirmation — contrairement à la connexion Discord et à la réinitialisation de mot de passe, qui le faisaient déjà. Le lien de confirmation retombait donc sur l\'adresse par défaut configurée côté serveur au lieu de la page réellement visitée, ce qui pouvait mener à une page inexistante (404) après inscription. Corrigé : le lien de confirmation ramène désormais toujours vers la page d\'où l\'inscription a été lancée'},
+    ], en:[
+      {t:'fix', sub:'authentification', severity:'major', tx:'Email account creation (and linking a guest account to an email) never explicitly stated where to return after confirmation — unlike Discord sign-in and password reset, which already did. The confirmation link therefore fell back to the server-side default address instead of the page actually visited, which could lead to a non-existent page (404) after signing up. Fixed: the confirmation link now always leads back to the page signup was started from'},
+    ] },
   { v:'V228', d:'10/07/2026 09:00', name:{fr:'Rétroactivité du stuff déjà possédé, fix couleur bijou (loot table), trésor à 0.22%', en:'Retroactivity for already-owned gear, jewelry color fix (loot table), treasure at 0.22%'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Les stats de base et le prix de revente d\'une pièce d\'équipement/bijou étaient figés dès son drop, jamais mis à jour automatiquement — le passage aux stats fixes (V226) et à la revente réduite (V225) ne s\'appliquait donc qu\'aux nouveaux drops. Tout le stuff déjà possédé (équipé, dans le sac, ou dans le sac protégé) est désormais recalculé automatiquement avec les mêmes formules, sans toucher à l\'enchantement déjà investi'},
       {t:'fix', sub:'interface', tx:'Dans la table de loot d\'une zone, la ligne du bijou (dépliée) restait sans couleur de palier — corrigé, elle reprend maintenant la couleur comme le reste des lignes'},
