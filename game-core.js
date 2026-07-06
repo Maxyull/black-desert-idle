@@ -2957,15 +2957,23 @@ const POTIONS = {
 const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite" toujours en dernier, verrouillée (voir p.locked)
 // prix des potions à l'échelle de la zone (2026-07-08, demande explicite : "modifie le prix des
 // potion par zone pour qu'il soit en accord avec le loot de gold") -- les coûts fixes ci-dessus
-// (cost:) restent la valeur de RÉFÉRENCE, calibrée sur Camp des Loups (zone 0). Ils sont ensuite
-// mis à l'échelle du revenu de base de la zone ACTUELLE (loot.trash.val, qui suit déjà la courbe
-// économique voulue : ~3 000 silver/h zone 1 → ~100 000 silver/h zone 11, voir ZONES) pour que la
-// potion reste toujours le même % du revenu horaire, au lieu de devenir dérisoire en zone avancée
-// ou trop chère en zone de départ.
+// (cost:) restent la valeur de RÉFÉRENCE, calibrée sur Camp des Loups (zone 0). Ils sont ensuite mis
+// à l'échelle (racine carrée, voir potionZoneScale, adoucie le 2026-07-09) du revenu de base de la
+// zone ACTUELLE (loot.trash.val, qui suit la courbe économique voulue : ~3 000 silver/h zone 1 →
+// ~100 000 silver/h zone 11, voir ZONES) pour rester lié au revenu de la zone sans devenir ruineux
+// en zone avancée ni dérisoire en zone de départ.
+// amorti en racine carrée (2026-07-09, demande explicite : "moins agressif mais toujours bloqué en
+// fonction de la zone, en fonction de la génération de silver") -- le ratio linéaire (jusqu'à ×135
+// en zone 11) supposait un revenu "idéal" (stuff bien adapté, 15 kills/min) qui ne tient pas en
+// pratique dès qu'on est un peu sous-géré pour sa zone : plus de dégâts encaissés → plus de
+// potions, sans le revenu supposé pour les payer, d'où un joueur rapidement à sec. La racine carrée
+// garde le principe (toujours plus cher en zone difficile, jamais gratuit) mais beaucoup plus doux
+// (zone 11 : ×135 devient ×~11.6) tout en restant strictement croissant avec la zone.
 function potionZoneScale() {
   if (typeof atVelia === 'undefined' || atVelia || typeof Z !== 'function') return 1;
   const z = Z(), ref = ZONES[0].loot.trash.val || 1;
-  return Math.max(1, (z.loot.trash.val || ref) / ref);
+  const ratio = Math.max(1, (z.loot.trash.val || ref) / ref);
+  return Math.sqrt(ratio);
 }
 function potionCost(baseCost) { return baseCost > 0 ? Math.round(baseCost * potionZoneScale()) : 0; }
 // icône unique vie+mana (2026-07-08, demande explicite : "la potion qui remplace les 2 potion")

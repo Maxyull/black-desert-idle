@@ -383,6 +383,34 @@
     const mult = 1 + enhBonus(12);
     assert('effectiveApDp.ap = floor, pas round', eff.ap === Math.floor(5*mult), `eff.ap=${eff.ap}, floor attendu=${Math.floor(5*mult)}, round aurait donné=${Math.round(5*mult)}`);
   }
+  // "la potion doit être moins agressive mais toujours bloquée en fonction de la zone, en fonction
+  // de la génération de silver" (2026-07-09) : potionZoneScale() doit rester liée au revenu de la
+  // zone (jamais gratuit/plat) mais BEAUCOUP plus douce qu'un ratio linéaire — vérifie la racine
+  // carrée exacte sur les 16 zones, que zone0 reste ×1 (référence inchangée), et qu'une zone plus
+  // dure au sein d'un MÊME palier de stuff (donc un revenu directement comparable, voir
+  // testZoneMonotonicity) coûte bien plus cher, jamais moins
+  function testPotionZoneScaleIsDampened() {
+    const s = { zoneIdx, atVelia };
+    atVelia = false;
+    const ref = ZONES[0].loot.trash.val;
+    zoneIdx = 0;
+    assert('potionZoneScale = ×1 en zone de référence (Camp des Loups)', potionZoneScale() === 1);
+    for (let i = 1; i < ZONES.length; i++) {
+      zoneIdx = i;
+      const expected = Math.sqrt(ZONES[i].loot.trash.val / ref);
+      const scale = potionZoneScale();
+      assert(`potionZoneScale de ${ZONES[i].name.fr} = racine carrée du ratio, pas le ratio linéaire`,
+        Math.abs(scale - expected) < 0.001, `scale=${scale}, attendu=${expected}`);
+    }
+    // comparaison monotone au sein d'un même palier (grey : zones 0,1,2,12, voir GEAR_TIERS) —
+    // chaque zone suivante du palier a un revenu de base plus élevé, donc un coût plus élevé
+    GEAR_TIERS[0].zones.reduce((prevVal, zi) => {
+      zoneIdx = zi;
+      if (prevVal !== null) assert(`potionZoneScale du palier grey croît de zone en zone (zone ${zi})`, potionZoneScale() >= prevVal);
+      return potionZoneScale();
+    }, null);
+    zoneIdx = s.zoneIdx; atVelia = s.atVelia;
+  }
 
   // ---------- puissance réelle du stuff lootable (2026-07-08 : "compliqué d'arriver à 20PA avec
   // ce que je loot") ----------
@@ -436,6 +464,7 @@
     testZonesOfferingUpgradeAggregatesAllSlots();
     testApDpDisplayHasNoDecimals();
     testEffectiveApDpFloors();
+    testPotionZoneScaleIsDampened();
     testJewelryApIsDynamic();
     testZone0LootReachesZone1Difficulty();
     const failed = results.filter(r => !r.pass);

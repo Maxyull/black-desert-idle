@@ -2359,6 +2359,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V222', d:'09/07/2026 18:00', name:{fr:'Prix des potions adouci (racine carrée au lieu du ratio linéaire)', en:'Potion prices softened (square root instead of linear ratio)'}, fr:[
+      {t:'change', sub:'economie', severity:'major', tx:'Le prix des potions reste lié au revenu de la zone (toujours plus cher en zone difficile) mais beaucoup plus doux : la mise à l\'échelle passait de manière linéaire (jusqu\'à ×135 en zone 11), elle suit désormais une racine carrée (×~11.6 en zone 11) — le ratio linéaire supposait un revenu "idéal" qui ne tenait pas dès qu\'on est un peu sous-géré pour sa zone (plus de dégâts encaissés, donc plus de potions, sans le revenu supposé pour les payer)'},
+    ], en:[
+      {t:'change', sub:'economie', severity:'major', tx:'Potion prices stay tied to the zone\'s income (still pricier in harder zones) but much gentler: scaling used to be linear (up to ×135 in zone 11), it now follows a square root (×~11.6 in zone 11) — the linear ratio assumed an "ideal" income that didn\'t hold once you\'re a bit under-geared for your zone (more damage taken, so more potions, without the assumed income to pay for them)'},
+    ] },
   { v:'V221', d:'09/07/2026 17:00', name:{fr:'Sac protégé : garde le PLUS enchanté (pas le +0), niveau visible partout', en:'Protected bag: keeps the MOST enhanced copy (not +0), level now visible everywhere'}, fr:[
       {t:'change', sub:'objets', tx:'Le sac protégé du Compendium garde désormais le PLUS ENCHANTÉ des exemplaires possédés d\'un type jamais monté en PEN, plutôt qu\'un simple +0 — un exemplaire plus enchanté trouvé dans le sac prend automatiquement sa place (l\'ancien, souvent un +0, revient dans le sac principal, jamais perdu)'},
       {t:'new', sub:'interface', tx:'Le niveau d\'enchantement (+1 à PEN) est désormais visible directement sur les cases du sac principal ET du sac protégé du Compendium, comme sur la poupée d\'équipement'},
