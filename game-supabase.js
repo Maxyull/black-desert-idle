@@ -2504,6 +2504,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V244', d:'12/07/2026 01:00', name:{fr:'Fix layout Firefox, Mine de Fer Abandonnée accessible en +13', en:'Firefox layout fix, Abandoned Iron Mine reachable at +13'}, fr:[
+      {t:'fix', sub:'interface', severity:'major', plat:'firefox', tx:'Sur Firefox, certaines lignes de la carte Statistiques ("PA/PD requis (zone)") pouvaient déborder par-dessus les cartes Équipement/Inventaire au lieu de rester dans leur colonne. Corrigé (min-width:0 sur les cartes de la grille) — Chrome n\'était pas affecté, mais toute la mise en page en 3 colonnes est concernée par ce type de bug ; on va vérifier Firefox plus systématiquement à chaque changement de mise en page à l\'avenir'},
+      {t:'change', sub:'zones', tx:'Un stuff complet de Colonie Sausan enchanté à +13 atteint désormais bien "ZONE DIFFICILE" face à Mine de Fer Abandonnée (au lieu de "ZONE DANGEREUSE") — la puissance de PD de son stuff est légèrement augmentée sans changer sa propre difficulté de combat. Le même stuff au PEN atteint "ZONE DIFFICILE" face à Poste Helm, 2 zones plus loin. Rétroactif sur le stuff déjà possédé'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'major', plat:'firefox', tx:'On Firefox, some Stats card rows ("AP/DP required (zone)") could overflow on top of the Equipment/Inventory cards instead of staying in their own column. Fixed (min-width:0 on the grid cards) — Chrome wasn\'t affected, but this class of bug applies to the whole 3-column layout; Firefox will be checked more systematically on future layout changes'},
+      {t:'change', sub:'zones', tx:'A full Sausan Colony gear set enhanced to +13 now correctly reaches "DIFFICULT ZONE" against Abandoned Iron Mine (instead of "DANGEROUS ZONE") — its gear\'s DP power is slightly increased without changing the zone\'s own combat difficulty. The same gear at PEN reaches "DIFFICULT ZONE" against Helm Post, 2 zones further. Retroactive for already-owned gear'},
+    ] },
   { v:'V243', d:'12/07/2026 00:00', name:{fr:'Plus de groupes de monstres à partir du palier blanc', en:'More monster groups from the White tier onward'}, fr:[
       {t:'change', sub:'combat', tx:'Le nombre de groupes de monstres actifs en même temps dans le monde augmente désormais à chaque palier de stuff : 6 (gris, inchangé), 8 (blanc), 10 (vert), 12 (bleu). Même monstre et même loot par zone, juste plus de groupes vivants simultanément'},
     ], en:[
@@ -5028,6 +5035,8 @@ const PATCH_CATS = {
 const PATCH_PLATFORMS = {
   mobile: { fr:'Tab/Mobile', en:'Tab/Mobile', icon:'📱', color:'#e0a840',
     desc:{fr:'Concerne uniquement tablette/téléphone', en:'Only concerns tablet/phone'} },
+  firefox: { fr:'Firefox', en:'Firefox', icon:'🦊', color:'#e0824a',
+    desc:{fr:'Bug spécifique à Firefox (Chrome non affecté)', en:'Firefox-specific bug (Chrome unaffected)'} },
 };
 // tag de nature (2026-07-05, demande explicite) : précise si une ligne relève d'une optimisation
 // "sous le capot" (code, performance, structure des données) plutôt que du contenu de jeu direct.

@@ -153,7 +153,13 @@
     zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; P.dmgBurstAccum = s.accum; P.dmgBurstT = s.t; S.hpMax = s.hpMax;
   }
   function testSafeZoneDamageCap() {
-    const s = { zoneIdx, packs, hp:P.hp, accum:P.dmgBurstAccum, t:P.dmgBurstT, hpMax:S.hpMax, faint:P.faint };
+    const s = { zoneIdx, packs, hp:P.hp, accum:P.dmgBurstAccum, t:P.dmgBurstT, hpMax:S.hpMax, faint:P.faint,
+      EQUIP: JSON.parse(JSON.stringify(EQUIP)) };
+    // neutralise le bonus de PV du stuff RÉELLEMENT équipé par le personnage live (effHpMax() =
+    // S.hpMax + equipHP()) -- sans ça, le plafond réel (30% d'effHpMax) peut dépasser largement les
+    // "30" attendus si le perso live porte de l'armure avec bonus PV, rendant ce test dépendant d'un
+    // état qui n'a rien à voir avec la logique testée (flaky, confirmé le 2026-07-12)
+    for (const k in EQUIP) if (EQUIP[k]) EQUIP[k].hp = 0;
     zoneIdx = 0; S.hpMax = 100; P.hp = 100; P.faint = 0; // wolvesTick ignore tout tant que P.faint>0
     packs = [{ dead:false, aggro:true, x:P.x, y:P.y, gathered:1, dmg:9999,
       wolves: Array.from({length:5}, () => ({ox:0,oy:0,gx:0,gy:0,lunge:0.01,atkT:0})) }];
@@ -163,6 +169,7 @@
     assert('Zone non-dangereuse : dégâts cumulés plafonnés à 30% des PV max sur 1s même avec 5 coups simultanés',
       Math.abs(lost - 30) < 1, `perte=${lost}`);
     zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; P.dmgBurstAccum = s.accum; P.dmgBurstT = s.t; S.hpMax = s.hpMax; P.faint = s.faint;
+    for (const k in EQUIP) EQUIP[k] = s.EQUIP[k];
   }
 
   function testDangerousZoneAlways100PercentLethal() {
@@ -955,6 +962,30 @@
     assert("Stuff réaliste de Camp des Loups (+12) atteint ratio >=0.6 face à Ruines de Protty",
       ratio >= 0.6, `total PA=${total.toFixed(1)}, ratio=${ratio.toFixed(2)}`);
   }
+  // "fais en sorte que la mine de fer abandonné pass en zone difficile en moyenne avec le stuff de
+  // la zone d'avant en +13. Le full PEN te donne acces direct en difficile en la zone 2 (poste
+  // helm)" (2026-07-12) -- simulation d'un stuff COMPLET de Colonie Sausan (3 armes + 4 armures + 6
+  // bijoux, formule réelle GEAR_ROLE) à +13 puis à PEN.
+  function testSausanGearReachesMineDeFerDifficile() {
+    const z = ZONES[5], mine = ZONES[6], helm = ZONES[7];
+    const basisAP = z.gearBasisAP ?? z.reqAP, basisDP = z.gearBasisDP ?? z.reqDP;
+    function totalFor(enhLv) {
+      const bonus = 1 + enhBonus(enhLv);
+      let ap = 4 /* PA innée */, dp = 10 /* PD innée */;
+      for (const slot of ['weapon','awakening','secondary']) ap += gearFloor(basisAP*GEAR_ROLE[slot].apShare)*bonus;
+      for (const slot of ['helmet','armor','gloves','boots']) dp += gearFloor(basisDP*GEAR_ROLE[slot].dpShare)*bonus;
+      ap += gearFloor(basisAP*GEAR_ROLE.jackpot.apShare)*bonus*6; // 2 anneaux+2 boucles+collier+ceinture
+      return { ap, dp };
+    }
+    const t13 = totalFor(13);
+    const ratio13 = Math.min(t13.ap/mine.reqAP, t13.dp/mine.reqDP);
+    assert('Stuff complet de Colonie Sausan (+13) atteint ZONE DIFFICILE face à Mine de Fer Abandonnée',
+      ratio13 >= 0.6 && ratio13 < 0.9, `ratio=${ratio13.toFixed(2)} (PA=${t13.ap.toFixed(1)}, PD=${t13.dp.toFixed(1)})`);
+    const tPen = totalFor(ENH_NAMES.length-1);
+    const ratioPen = Math.min(tPen.ap/helm.reqAP, tPen.dp/helm.reqDP);
+    assert('Stuff complet de Colonie Sausan (PEN) atteint ZONE DIFFICILE face à Poste Helm (2 zones plus loin)',
+      ratioPen >= 0.6 && ratioPen < 0.9, `ratio=${ratioPen.toFixed(2)} (PA=${tPen.ap.toFixed(1)}, PD=${tPen.dp.toFixed(1)})`);
+  }
 
   window.runRegressionTests = function() {
     results.length = 0;
@@ -1007,6 +1038,7 @@
     testXpGainFlashesLevelBox();
     testClaimLoyaltyMovesMailboxToStock();
     testZone0LootReachesZone1Difficulty();
+    testSausanGearReachesMineDeFerDifficile();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

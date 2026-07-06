@@ -141,7 +141,17 @@ const ZONES = [
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:15,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:1,ch:.26},
       jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
-  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:62, reqDP:37, mob:'Combattant Sausan',
+  // gearBasisDP (2026-07-12, demande explicite : "fais en sorte que la mine de fer abandonné pass
+  // en zone difficile en moyenne avec le stuff de la zone d'avant en +13") -- simulation d'un stuff
+  // COMPLET de Colonie Sausan (armes+armure+bijoux, formule réelle GEAR_ROLE) : à +13, le ratio face
+  // à Mine de Fer Abandonnée était bloqué par la PD (0.56, ZONE DANGEREUSE) alors que la PA était
+  // déjà largement suffisante (0.74) -- reqDP:37 ne donnait pas assez de PD au stuff d'armure pour y
+  // parvenir. Découple la PUISSANCE de PD du stuff (gearBasisDP) de la difficulté de COMBAT de cette
+  // zone (reqDP, inchangé) : même principe déjà utilisé pour Camp des Loups (gearBasisAP/DP), qui
+  // prépare volontairement à la zone suivante plutôt que de refléter sa propre facilité. Au PEN, ce
+  // même stuff de Colonie Sausan atteint bien "ZONE DIFFICILE" face à Poste Helm (2 zones plus loin),
+  // déjà vrai avant ce changement (0.65) et non affecté négativement par cette hausse de PD.
+  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:62, reqDP:37, gearBasisDP:45, mob:'Combattant Sausan',
     hpPer:93, dmg:12, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
@@ -7253,6 +7263,16 @@ function migrateGearRescaleV235() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
 }
+// migration 2026-07-12 (demande explicite : "fais en sorte que la mine de fer abandonné pass en
+// zone difficile...") : Colonie Sausan a reçu un gearBasisDP dédié (45, au lieu du reqDP:37 utilisé
+// par défaut) -- comme à chaque changement de reqAP/reqDP/gearBasisAP/DP de zone (voir
+// migrateGearRescaleV235 ci-dessus), le stuff déjà dropé de cette zone AVANT ce changement doit être
+// rattrapé. Nouveau flag dédié plutôt que réutiliser migratedGearRescaleV235 (déjà consommé par les
+// comptes qui ont chargé une sauvegarde depuis le 2026-07-11).
+function migrateGearRescaleV243() {
+  migrateGearFixedStatsV226();
+  migrateJewelryApV207();
+}
 // migration 2026-07-11 (bug corrigé : "aucune pierre ne se met dans le slot pour les bijoux") --
 // les bijoux (jackpot) n'ont jamais eu de matName depuis leur introduction (voir rollDrops,
 // corrigé juste au-dessus) : findEnhanceMaterial() retombait donc sur le matériau de la zone
@@ -7306,6 +7326,7 @@ function applySaveState(data) {
   if (!S.migratedGearFixedStatsV226) { migrateGearFixedStatsV226(); S.migratedGearFixedStatsV226 = true; }
   if (!S.migratedGearRescaleV235) { migrateGearRescaleV235(); S.migratedGearRescaleV235 = true; }
   if (!S.migratedJewelryMatNameV239) { migrateJewelryMatNameV239(); S.migratedJewelryMatNameV239 = true; }
+  if (!S.migratedGearRescaleV243) { migrateGearRescaleV243(); S.migratedGearRescaleV243 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO

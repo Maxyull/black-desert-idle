@@ -293,7 +293,16 @@
     border:1px solid #2c2a31; border-top:1px solid var(--gold-dim);
     display:grid; grid-template-columns:repeat(3, 1fr); gap:8px; padding:8px;
   }
-  .card { background:var(--panel-2); border:1px solid #2c2a31; padding:7px 10px; }
+  /* min-width:0 (2026-07-12, fix Firefox) : une carte est un item de la grille #panel (3 colonnes
+     1fr) -- par défaut, un item de grid/flex a min-width:auto, c'est-à-dire qu'il refuse de
+     rétrécir sous la taille minimale de son CONTENU (ex: une ligne .row assez longue comme "PD
+     requis (zone)"). Chrome tolère souvent le débordement en le faisant chevaucher silencieusement
+     les colonnes voisines sans casser visuellement la mise en page ; Firefox, plus strict sur ce
+     point du spec CSS Grid, peut alors laisser le contenu déborder visiblement par-dessus les
+     cartes adjacentes (repéré en jeu : lignes PA/PD requis de zone chevauchant Équipement/Inventaire
+     sur Firefox). min-width:0 force la carte à respecter sa colonne, quel que soit son contenu. */
+  .card { background:var(--panel-2); border:1px solid #2c2a31; padding:7px 10px; min-width:0; }
+  .row > span { min-width:0; overflow-wrap:anywhere; }
   .card h3 { font-size:9.5px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold);
     font-weight:normal; margin-bottom:5px; border-bottom:1px solid #2c2a31; padding-bottom:4px; }
   #btnLifeskillToggle {
