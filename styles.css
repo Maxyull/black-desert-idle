@@ -226,7 +226,13 @@
      l'autre, empilés dans leur propre colonne étroite, juste à gauche des barres PV/mana. */
   #lvlHpCol { display:flex; flex-direction:row; align-items:center; gap:8px; }
   #lvlHpCol #lvlXpRow {
-    display:flex; flex-direction:column; width:auto; margin:0; padding:0; border:none;
+    display:flex; flex-direction:column; width:auto; margin:0; padding:2px 6px; border:1px solid transparent; border-radius:4px;
+    transition:border-color .25s, box-shadow .25s, background-color .25s;
+  }
+  /* s'illumine brièvement à chaque gain d'XP (2026-07-10, demande explicite) — voir flashXpGain()
+     dans gainXp() (game-core.js) */
+  #lvlHpCol #lvlXpRow.xpFlash {
+    border-color:var(--gold); box-shadow:0 0 10px 2px rgba(201,165,90,.7); background-color:rgba(201,165,90,.14);
   }
   #lvlXpTop { display:flex; align-items:baseline; gap:5px; text-shadow:0 1px 3px #000; }
   #lvlXpLbl { font-size:12px; color:var(--ink-dim); font-weight:normal; }
