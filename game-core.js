@@ -5413,14 +5413,15 @@ function pdSlotInnerHtmlFor(id, e) {
   // "petit mais visible") -- raccourci vers le panneau d'optimisation, en plus du menu au clic
   const optBadge = (e && e.optimizable) ? `<span class="pdOptBtn" title="${LANG==='fr'?'Optimiser':'Enhance'}">🔧</span>` : '';
   // icône "aller à la zone" en coin, EMPILÉE sous 🔧 (2026-07-09, demande explicite : "opti en
-  // haut à droite, upgrade sous l'icone d'opti") : ⬆️ sur une case remplie (pointe vers une zone
-  // NON dangereuse où trouver mieux pour ce slot — n'apparaît pas si la seule option est
-  // dangereuse, demande explicite) ou 📍 sur une case vide (pointe vers où farmer l'objet
-  // manquant, dangereux accepté en dernier recours faute d'alternative) ; 🔒 sur les 3 slots sans
-  // aucune source en jeu (artéfacts/pierre)
+  // haut à droite, upgrade sous l'icone d'opti") : ⬆️ sur une case remplie, UNIQUEMENT s'il existe
+  // un vrai stuff meilleur à trouver (voir upgradeZonesForEquippedSlot : palier de la pièce
+  // équipée strictement inférieur au palier de la zone actuelle), dans une zone NON dangereuse,
+  // différente de la zone actuelle (demandes explicites successives) ; ou 📍 sur une case vide
+  // (pointe vers où farmer l'objet manquant, dangereux accepté en dernier recours faute
+  // d'alternative) ; 🔒 sur les 3 slots sans aucune source en jeu (artéfacts/pierre)
   let goBadge = '';
   if (e) {
-    if (safeZonesForSlot(id).length) goBadge = `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>`;
+    if (upgradeZonesForEquippedSlot(id, e).length) goBadge = `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>`;
   } else if (NO_SOURCE_SLOTS.includes(id)) {
     goBadge = `<span class="pdLockBtn" title="${LANG==='fr'?'Pas encore disponible':'Not available yet'}">🔒</span>`;
   } else if (zonesForSlot(id).length) {
@@ -5489,6 +5490,22 @@ function zonesForSlot(slotId) {
 // dangereuse (pas de fallback sur le dangereux ici, contrairement à zonesForSlot).
 function safeZonesForSlot(slotId) {
   return slotCandidateZones(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
+}
+// index de palier d'un objet équipé (grey=0 < white=1 < green=2 < blue=3), déduit de sa couleur —
+// voir GEAR_TIERS (gear ET jackpot sont toujours tagués color:tier.color au drop). -1 si la
+// couleur ne correspond à aucun palier connu.
+function itemTierIdx(item) { return GEAR_TIERS.findIndex(t => t.color === item.color); }
+// zones à proposer pour l'icône ⬆️ d'un socle REMPLI — demande explicite du 2026-07-09 : "l'icone
+// s'affiche uniquement [si] tu peux trouver un stuff meilleur que celui que tu as déjà, SAUF
+// dangereuse". Un palier supérieur au sien n'existe que si la pièce équipée est d'un palier
+// INFÉRIEUR au palier de la zone actuellement farmée (le palier borne la qualité maximale du
+// stuff trouvable ici) ; sinon (même palier ou palier supérieur, ex: stuff gardé d'avant) la zone
+// ne peut rien offrir de mieux pour ce socle, quelle que soit la zone proposée.
+function upgradeZonesForEquippedSlot(id, e) {
+  if (!e) return [];
+  const curTierIdx = GEAR_TIERS.indexOf(gearTierForZone(zoneIdx));
+  if (itemTierIdx(e) >= curTierIdx) return [];
+  return safeZonesForSlot(id).filter(zi => atVelia || zi !== zoneIdx);
 }
 // applique/retire le halo dans #zoneList pour les zones qui lootent l'objet manquant d'un socle vide
 function highlightFarmZones(zones) {
@@ -5569,12 +5586,14 @@ function fillPdCol(colId, ids) {
       unequip(id);
     };
     // ⬆️/📍 en coin : raccourci direct vers la zone (pas de popup intermédiaire) — demande
-    // explicite du 2026-07-09. ⬆️ ne propose que des zones sûres (safeZonesForSlot, jamais de
-    // fallback dangereux) ; 📍 garde le fallback dangereux de zonesForSlot en dernier recours.
+    // explicite du 2026-07-09. ⬆️ ne propose que des zones où un vrai palier supérieur existe
+    // (upgradeZonesForEquippedSlot : sûres, différentes de la zone actuelle, jamais si la pièce
+    // équipée est déjà du palier de la zone ou mieux) ; 📍 garde le fallback dangereux de
+    // zonesForSlot en dernier recours.
     const goBtn = div.querySelector('.pdUpgradeBtn, .pdFarmBtn');
     if (goBtn) goBtn.onclick = ev => {
       ev.stopPropagation(); hideItemTooltip(); hideItemPop();
-      const zones = e ? safeZonesForSlot(id) : zonesForSlot(id);
+      const zones = e ? upgradeZonesForEquippedSlot(id, e) : zonesForSlot(id);
       if (zones.length) { const zi = zones[0]; if (atVelia || zi !== zoneIdx) travelTo(zi); }
     };
     col.appendChild(div);

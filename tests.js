@@ -229,6 +229,28 @@
     assert('K.O. : le décompte n\'est pas réinitialisé par un coup', P.faint === 6);
     zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax; P.faint = s.faint;
   }
+  // "l'icone s'affiche uniquement [si] tu peux trouver un stuff meilleur que celui que tu as
+  // déjà, SAUF dangereuse" (2026-07-09) : ⬆️ ne doit apparaître QUE si (1) la pièce équipée est
+  // d'un palier STRICTEMENT inférieur au palier de la zone actuelle (sinon rien de mieux à trouver
+  // ici, tier-wise) ET (2) il existe une zone sûre différente de la zone actuelle où ce palier
+  // supérieur se trouve. reqAP/reqDP de la zone 4 (blanc, seule source d'arme du palier, voir
+  // ZONE_WEAPON_SLOTS) sont temporairement forcés à 1 pour rendre le test indépendant du stuff
+  // réel du joueur (bottleneck() dépend de apEff()/totalDP() en direct).
+  function testUpgradeIconOnlyWhenBetterStuffAvailable() {
+    const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP };
+    ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
+    EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey
+    zoneIdx = 0; // palier grey, même que la pièce équipée : aucun palier supérieur possible ici
+    assert('⬆️ absent si la pièce équipée est déjà du palier de la zone actuelle',
+      !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
+    zoneIdx = 3; // palier blanc : la pièce grey équipée est d'un palier inférieur, upgrade possible
+    assert('⬆️ présent quand un palier supérieur existe ailleurs dans le palier de zone actuel',
+      pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
+    zoneIdx = 4; // seule zone source d'arme du palier blanc : déjà là, rien à proposer
+    assert('⬆️ absent si la seule zone source du palier supérieur est celle où on se trouve déjà',
+      !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
+    zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
+  }
 
   // ---------- affichage PA/PD sans décimale (2026-07-08 : "enleve toute trace de virgule de
   // PA/PD") ----------
@@ -298,6 +320,7 @@
     testDangerousZoneNoDodgeNoEvasion();
     testDangerousZoneWideAggro();
     testKoStopsMonsterAttacks();
+    testUpgradeIconOnlyWhenBetterStuffAvailable();
     testApDpDisplayHasNoDecimals();
     testEffectiveApDpFloors();
     testJewelryApIsDynamic();
