@@ -3650,11 +3650,11 @@ function renderCastBar() {
 let last = performance.now();
 function loop(now) {
   const dt = Math.min(.05,(now-last)/1000); last = now;
-  // onglet en arrière-plan : Chrome ralentit déjà requestAnimationFrame tout seul, mais on saute
-  // en plus tout le travail (simulation + rendu canvas) tant qu'on ne voit pas la page — demande
-  // explicite du 2026-07-06 ("ma souris se met à buguer si je garde les onglets ouverts") : réduit
-  // la charge CPU/GPU soutenue sur les sessions de plusieurs heures, quelle que soit la cause exacte
-  if (document.hidden) { requestAnimationFrame(loop); return; }
+  // le jeu ne se met plus en pause en arrière-plan (2026-07-14, demande explicite : "arrete de
+  // mettre en pause le navigateur quand on change de fenetre") -- retire l'ancien "if
+  // (document.hidden) return" (2026-07-06) qui gelait toute la simulation (farm/combat/loot) dès
+  // que l'onglet perdait le focus, contraire à l'esprit "idle" du jeu. Le clamp dt (Math.min .05)
+  // ci-dessus évite déjà tout saut de temps massif au retour sur l'onglet.
   // pendant un combat de boss (plein écran), on met le farm en pause : la salle de boss couvre
   // tout l'écran, inutile de continuer à simuler/dessiner la zone de farm derrière
   if (bossState.active) { requestAnimationFrame(loop); return; }

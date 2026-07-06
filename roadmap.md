@@ -415,3 +415,88 @@ function bonusStat(doublons, baseBonus = 0.5) {
 - Nécessite que le **Compendium** soit déjà fonctionnel (détection 1ère obtention)
 - Nécessite une table Supabase dédiée : `essence_wallet` (user_id, tier, montant) et `bonus_paliers` (item_id ou tier, seuil, effet)
 - Le calcul de bonus doit être fait côté serveur (ou vérifié côté serveur) pour éviter la triche sur les stats
+
+---
+
+# Roadmap — Système d'enchantement par zones
+
+> ⚠️ Toute information présente dans ce document est susceptible d'être changée. Ce sont des notes en vrac qui donnent une idée dans les grandes lignes de la direction du projet, pas un plan figé.
+
+## Vue d'ensemble
+
+| Zone | Contenu | Enchantement | Mécanique |
+|---|---|---|---|
+| 1 | Tout item (armes/armures) | Jusqu'à PEN | Safe, pas de casse |
+| 2 | Bijoux uniquement | PRI → PEN | Safe, pas de casse |
+| 3 | Bijoux | Roulette | Cassable, perte totale à l'échec |
+| 4 | Stuff complet | PEN + jusqu'à X | Post-PEN, cap à définir |
+| 5 | — | — | À définir (TBD) |
+
+---
+
+## Zone 1 — Stuff général
+
+- Tous les items (armes/armures/accessoires hors bijoux) enchantables jusqu'à PEN.
+- Pas de casse : échec = pas de progression, mais pas de perte.
+- Zone d'onboarding : doit rester safe pour ne pas décourager les nouveaux joueurs.
+
+## Zone 2 — Bijoux "sûrs"
+
+- Bijoux uniquement, PRI → PEN.
+- Aucune casse : sert de transition avant d'introduire le risque en Zone 3.
+- Bon endroit pour introduire les matériaux nécessaires à la Zone 3 (le joueur apprend le système avant de risquer gros).
+
+## Zone 3 — Roulette cassable
+
+- Mécanique : à chaque tentative d'enchantement, une table de probabilités façon roulette BDO.
+  - **Succès** → passe au palier supérieur.
+  - **Échec** → le bijou est **détruit entièrement** (perte totale).
+- Points à équilibrer :
+  - Taux de succès par palier (doit baisser progressivement, ex : PRI 90% → PEN 5-10%).
+  - Coût de fabrication d'un bijou, pour calibrer la douleur de la perte (matériaux rares = perte plus marquante).
+  - Éventuel "filet de sécurité" optionnel (item consommable protégeant une tentative), à la manière des items de protection dans BDO.
+- UX critique : bien communiquer **avant** le clic que c'est une perte totale, pour éviter la frustration/rage-quit.
+
+## Zone 4 — Post-PEN
+
+- Stuff PEN + jusqu'à un cap X (à définir, ex : PEN+1 à PEN+5).
+- Courbe de gain de stats à définir en fonction du cap choisi.
+- À trancher : re-cassable comme la Zone 3, ou juste très cher/rare sans casse.
+
+## Zone 5 — À définir (TBD)
+
+Placeholder pour l'instant. Pistes classiques pour la fin de progression verticale dans un idle game :
+
+- Système de prestige/rebirth (reset avec bonus permanent).
+- Palier cosmétique/collection (sans stats, juste flex).
+- Contenu type "boss endgame" qui consomme le stuff de la Zone 4.
+
+Pas besoin de trancher maintenant — à laisser en TBD et itérer une fois les zones 1-4 stables.
+
+---
+
+## Roadmap de développement
+
+### Phase 1 — Design des systèmes
+- [ ] Définir la courbe de difficulté d'enchantement par zone (taux de succès, coûts)
+- [ ] Définir le cap exact de la Zone 4 (PEN+X) et son impact sur les stats
+- [ ] Spécifier précisément la table de probabilités de la roulette Zone 3
+- [ ] Décider du concept de la Zone 5
+
+### Phase 2 — Modèle de données (Supabase)
+- [ ] Table `zones` (id, nom, tier_min, tier_max, mecanique_speciale)
+- [ ] Table `enhancement_rules` (zone_id, item_type, base_rate, fail_penalty)
+- [ ] Étendre le système de rareté existant (Grey→Red) avec un champ `enhancement_level` (PRI, DUO, TRI, TET, PEN, PEN+X)
+
+### Phase 3 — Logique du moteur d'enchantement
+- [ ] Fonction générique `attemptEnhancement(item, zoneRules)` gérant les 3 comportements (safe / cassable / cap)
+- [ ] Tests unitaires sur les taux de réussite pour équilibrer l'économie du jeu
+
+### Phase 4 — UI/UX
+- [ ] Écran par zone avec règles claires (icône "sûr" vs icône "risque de casse")
+- [ ] Feedback visuel fort sur la Zone 3 (animation de roulette, suspense)
+- [ ] Avertissement explicite avant toute tentative à risque de casse
+
+### Phase 5 — Équilibrage & tests
+- [ ] Simulateur de temps moyen jusqu'à PEN par zone
+- [ ] Ajustement des probabilités pour éviter un mur de progression trop dur ou trop facile

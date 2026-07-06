@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V259', d:'14/07/2026 14:00', name:{fr:'Fix notification de mise à jour, le jeu ne se met plus en pause en arrière-plan', en:'Fixed update notification, game no longer pauses in the background'}, fr:[
+      {t:'fix', sub:'systeme', severity:'major', tx:'La notification "nouvelle version disponible" ne s\'affichait plus depuis le découpage de game-supabase.js (2026-07-14) : la détection allait chercher PATCH_NOTES dans le mauvais fichier (déplacé entre-temps dans patch-notes-data.js) et ne matchait donc plus jamais'},
+      {t:'change', sub:'systeme', tx:'Le jeu ne se met plus en pause quand l\'onglet/la fenêtre perd le focus — le farm, le combat et le loot continuent de tourner en arrière-plan, comme attendu d\'un jeu idle'},
+    ], en:[
+      {t:'fix', sub:'systeme', severity:'major', tx:'The "new version available" notification stopped showing since the game-supabase.js split (2026-07-14): the detection fetched PATCH_NOTES from the wrong file (moved to patch-notes-data.js) and could never match anymore'},
+      {t:'change', sub:'systeme', tx:'The game no longer pauses when the tab/window loses focus — farming, combat and loot keep running in the background, as expected from an idle game'},
+    ] },
   { v:'V258', d:'14/07/2026 13:00', name:{fr:'Nouveau sélecteur de mode de farm, mode Opti retiré', en:'New farm mode selector, Opti mode removed'}, fr:[
       {t:'change', sub:'interface', severity:'major', tx:'Le mode de farm (Loot/XP) se choisit désormais via un petit sélecteur à bulles à la place du slider — la bulle active s\'affiche en capsule dorée pleine (icône + texte), les autres en icône seule'},
       {t:'change', sub:'combat', tx:'Le mode "Opti" (pack à pack rapide) est retiré, ainsi que toute sa logique associée — un 3e emplacement verrouillé (cadenas grisé) reste visible dans le sélecteur, en attente d\'un futur mode'},

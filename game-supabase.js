@@ -1029,7 +1029,10 @@ let updateToastShown = false;
 async function checkForUpdate() {
   if (updateToastShown) return;
   try {
-    const res = await fetch('./game-supabase.js?_=' + Date.now(), { cache: 'no-store' });
+    // PATCH_NOTES vit dans patch-notes-data.js depuis le 2026-07-14 (découpage de
+    // game-supabase.js) -- ce check doit fetch CE fichier, pas game-supabase.js (qui ne contient
+    // plus le tableau), sinon la regex ne matche plus jamais et le toast ne s'affiche plus
+    const res = await fetch('./patch-notes-data.js?_=' + Date.now(), { cache: 'no-store' });
     const text = await res.text();
     const m = text.match(/const PATCH_NOTES = \[\s*\{\s*v:\s*'([^']+)'/);
     if (m && m[1] !== CURRENT_VERSION) {
