@@ -343,7 +343,10 @@ async function saveToCloud() {
 async function syncPlayerStats() {
   if (!sb || !currentUser || isGuest()) return; // classement réservé aux comptes vérifiés
   const mins = (performance.now() - S.startTime) / 60000;
-  const silverPerHour = mins > .1 ? Math.round((S.silverEarned-(S.silverEarnedAtLoad||0)) / (mins/60)) : 0;
+  // "silver par heure" (2026-07-12, demande explicite : "compté exclusivement par les silver
+  // recolté grace au token vendu") -- reflète le rythme de FARM réel, pas un gros coup de chance
+  // ponctuel (succès/quête/boss/marché) qui gonflerait artificiellement ce classement
+  const silverPerHour = mins > .1 ? Math.round((S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0)) / (mins/60)) : 0;
   const best = bestFarmedItem();
   // total de morceaux du "Trésor de Velia" ramassés À VIE — sert au classement dédié "🗺️ Trésors"
   const treasureCount = treasureTotal(S);
@@ -2504,6 +2507,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V245', d:'12/07/2026 02:00', name:{fr:'Silver/h uniquement du token, potions rééquilibrées (5% à 30%)', en:'Silver/h from tokens only, potions rebalanced (5% to 30%)'}, fr:[
+      {t:'change', sub:'economie', severity:'major', tx:'Le "silver/h" affiché en jeu (et celui utilisé pour le classement) comptait toutes les sources de gain (quêtes, succès, boss, marché...), ce qui pouvait gonfler artificiellement la lecture du rythme de farm réel après un gros coup de chance. Il ne compte désormais QUE le silver du trash (token) ramassé au sol'},
+      {t:'change', sub:'economie', tx:'Prix des potions réajusté : la petite potion coûte désormais environ 5% du revenu horaire de trash de la zone actuelle, la potion majeure environ 30% (au lieu de 2.76% à 15%) — moyenne/grande potion interpolées entre les deux'},
+    ], en:[
+      {t:'change', sub:'economie', severity:'major', tx:'The in-game "silver/h" (and the one used for the leaderboard) counted every income source (quests, achievements, boss, market...), which could artificially inflate the reading of actual farming pace after a lucky reward. It now only counts trash (token) silver picked up off the ground'},
+      {t:'change', sub:'economie', tx:'Potion pricing adjusted: the small potion now costs about 5% of the current zone\'s hourly trash income, the major potion about 30% (up from 2.76%-15%) — medium/large potions interpolated in between'},
+    ] },
   { v:'V244', d:'12/07/2026 01:00', name:{fr:'Fix layout Firefox, Mine de Fer Abandonnée accessible en +13', en:'Firefox layout fix, Abandoned Iron Mine reachable at +13'}, fr:[
       {t:'fix', sub:'interface', severity:'major', plat:'firefox', tx:'Sur Firefox, certaines lignes de la carte Statistiques ("PA/PD requis (zone)") pouvaient déborder par-dessus les cartes Équipement/Inventaire au lieu de rester dans leur colonne. Corrigé (min-width:0 sur les cartes de la grille) — Chrome n\'était pas affecté, mais toute la mise en page en 3 colonnes est concernée par ce type de bug ; on va vérifier Firefox plus systématiquement à chaque changement de mise en page à l\'avenir'},
       {t:'change', sub:'zones', tx:'Un stuff complet de Colonie Sausan enchanté à +13 atteint désormais bien "ZONE DIFFICILE" face à Mine de Fer Abandonnée (au lieu de "ZONE DANGEREUSE") — la puissance de PD de son stuff est légèrement augmentée sans changer sa propre difficulté de combat. Le même stuff au PEN atteint "ZONE DIFFICILE" face à Poste Helm, 2 zones plus loin. Rétroactif sur le stuff déjà possédé'},

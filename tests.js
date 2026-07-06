@@ -555,31 +555,36 @@
     assert('Aucun gain -> texte vide (pas de parenthèses vides)', optAutoGainPrimaryPart(helmet, 0, 'helmet') === '');
   }
   // "revois le prix des potion en fonction de l'argent qu'on se fait en vendant les token en
-  // instantané au jeu et uniquement par rapport a ça pas au vente de stuff" (2026-07-11) --
+  // instantané au jeu et uniquement par rapport a ça pas au vente de stuff" (2026-07-11), puis
+  // "les potion doivent couter autour de 5 a 30% de ce que tu gagne en silver" (2026-07-12) --
   // remplace l'ancien amortissement en racine carrée (potionZoneScale, dérivait de 42% à 3.6% du
-  // revenu horaire au lieu de rester proche des 15% visés) par un pourcentage FIXE du revenu
-  // horaire de trash de la zone ACTUELLE, jamais relatif à une autre zone. Vérifie : la potion mega
-  // coûte TOUJOURS exactement 15% du revenu horaire de trash (peu importe la zone), les autres
-  // tailles gardent le même ratio entre elles qu'avant (70/140/240/380), et le coût ne dépend QUE de
-  // trash.val (jamais du prix de vente du stuff, GEAR_SELL_MULT).
+  // revenu horaire) par un pourcentage du revenu horaire de trash de la zone ACTUELLE (jamais
+  // relatif à une autre zone, donc jamais de dérive), interpolé linéairement entre 5% (small) et
+  // 30% (mega) selon le coût de base de la taille. Vérifie : small = 5%, mega = 30%, peu importe la
+  // zone, medium/large entre les deux, et le coût ne dépend QUE de trash.val (jamais du prix de
+  // vente du stuff, GEAR_SELL_MULT).
   function testPotionCostIsFixedPctOfHourlyTrashIncome() {
     const s = { zoneIdx, atVelia };
     atVelia = false;
     for (const zi of [0, 5, 10, 15]) { // échantillon zones début/milieu/fin
       zoneIdx = zi;
       const hourly = ZONES[zi].loot.trash.val * POTION_KPM_REF * 60;
-      const megaCost = potionCost(POTIONS.mega.cost);
-      assert(`Potion mega = 15% du revenu horaire de trash en ${ZONES[zi].name.fr}`,
-        Math.abs(megaCost - Math.round(hourly*0.15)) <= 1, `got=${megaCost}, attendu=${Math.round(hourly*0.15)}`);
-      // ratio conservé entre tailles (2× / 3.43× / 5.43× environ, comme les anciens coûts de base)
-      const smallCost = potionCost(POTIONS.small.cost), mediumCost = potionCost(POTIONS.medium.cost);
-      assert(`Potion medium ≈ 2× la petite en ${ZONES[zi].name.fr} (même ratio que les coûts de base)`,
-        Math.abs(mediumCost/smallCost - POTIONS.medium.cost/POTIONS.small.cost) < 0.05, `medium/small=${(mediumCost/smallCost).toFixed(2)}`);
+      const smallCost = potionCost(POTIONS.small.cost), megaCost = potionCost(POTIONS.mega.cost);
+      assert(`Potion small = 5% du revenu horaire de trash en ${ZONES[zi].name.fr}`,
+        Math.abs(smallCost - Math.round(hourly*0.05)) <= 1, `got=${smallCost}, attendu=${Math.round(hourly*0.05)}`);
+      assert(`Potion mega = 30% du revenu horaire de trash en ${ZONES[zi].name.fr}`,
+        Math.abs(megaCost - Math.round(hourly*0.30)) <= 1, `got=${megaCost}, attendu=${Math.round(hourly*0.30)}`);
+      // medium/large strictement entre les deux bornes (interpolation linéaire, jamais en dehors)
+      const mediumCost = potionCost(POTIONS.medium.cost), largeCost = potionCost(POTIONS.large.cost);
+      assert(`Potion medium/large entre 5% et 30% en ${ZONES[zi].name.fr}`,
+        mediumCost > smallCost && mediumCost < largeCost && largeCost < megaCost,
+        `small=${smallCost}, medium=${mediumCost}, large=${largeCost}, mega=${megaCost}`);
     }
     // le coût ne doit dépendre QUE de trash.val -- vérifie qu'il est bien recalculable à partir de
     // cette seule donnée (fonction pure), sans référence cachée au prix de vente du stuff
     zoneIdx = 7;
-    const expected7 = Math.max(1, Math.round(ZONES[7].loot.trash.val * POTION_KPM_REF * 60 * (POTIONS.mega.cost/POTIONS.mega.cost*0.15)));
+    const hourly7 = ZONES[7].loot.trash.val * POTION_KPM_REF * 60;
+    const expected7 = Math.max(1, Math.round(hourly7 * 0.30));
     assert('potionCost est entièrement dérivable de trash.val (fonction pure, aucune dépendance cachée)',
       potionCost(POTIONS.mega.cost) === expected7, `got=${potionCost(POTIONS.mega.cost)}, attendu=${expected7}`);
     zoneIdx = s.zoneIdx; atVelia = s.atVelia;
@@ -823,17 +828,23 @@
   // pour un gain (jamais pour une dépense), sans jamais planter si le registre serveur est absent
   // (queueSilverLedger non défini, ex: tests hors contexte Supabase)
   function testAddSilverUpdatesStateCorrectly() {
-    const s = { silver: S.silver, silverEarned: S.silverEarned };
-    S.silver = 1000; S.silverEarned = 500;
+    const s = { silver: S.silver, silverEarned: S.silverEarned, tokenSilverEarned: S.tokenSilverEarned };
+    S.silver = 1000; S.silverEarned = 500; S.tokenSilverEarned = 300;
     addSilver(200, 'loot', 'test');
     assert('addSilver (gain) : S.silver augmente du montant exact', S.silver === 1200, `S.silver=${S.silver}`);
     assert('addSilver (gain) : S.silverEarned augmente aussi (compteur à vie)', S.silverEarned === 700, `S.silverEarned=${S.silverEarned}`);
+    // "silver par heure compté exclusivement par les silver recolté grace au token vendu" (2026-07-12)
+    // -- category:'loot' (trash/token) DOIT alimenter tokenSilverEarned, jamais les autres catégories
+    assert('addSilver (loot/token) : S.tokenSilverEarned augmente aussi', S.tokenSilverEarned === 500, `S.tokenSilverEarned=${S.tokenSilverEarned}`);
+    addSilver(150, 'quest', 'test'); // gain d'une AUTRE source -> ne doit PAS compter comme "token"
+    assert('addSilver (quête) : S.silverEarned augmente (compteur global)', S.silverEarned === 850, `S.silverEarned=${S.silverEarned}`);
+    assert('addSilver (quête) : S.tokenSilverEarned NE bouge PAS (pas du token/trash)', S.tokenSilverEarned === 500, `S.tokenSilverEarned=${S.tokenSilverEarned}`);
     addSilver(-300, 'potion', 'test');
-    assert('addSilver (dépense) : S.silver diminue du montant exact', S.silver === 900, `S.silver=${S.silver}`);
-    assert('addSilver (dépense) : S.silverEarned NE bouge PAS (compteur à vie, jamais décrémenté par une dépense)', S.silverEarned === 700, `S.silverEarned=${S.silverEarned}`);
+    assert('addSilver (dépense) : S.silver diminue du montant exact', S.silver === 1050, `S.silver=${S.silver}`);
+    assert('addSilver (dépense) : S.silverEarned NE bouge PAS (compteur à vie, jamais décrémenté par une dépense)', S.silverEarned === 850, `S.silverEarned=${S.silverEarned}`);
     addSilver(0, 'loot', 'test'); // delta nul -> no-op silencieux, ne doit rien casser
-    assert('addSilver (delta nul) : aucun effet', S.silver === 900 && S.silverEarned === 700);
-    S.silver = s.silver; S.silverEarned = s.silverEarned;
+    assert('addSilver (delta nul) : aucun effet', S.silver === 1050 && S.silverEarned === 850 && S.tokenSilverEarned === 500);
+    S.silver = s.silver; S.silverEarned = s.silverEarned; S.tokenSilverEarned = s.tokenSilverEarned;
   }
   // "lorsque je vends un item ... EQUIPE>COMPENDIUM>VENDRE" (2026-07-10) : sellOne() doit d'abord
   // tenter d'équiper l'objet s'il est meilleur, puis de le protéger dans le Compendium, et ne le

@@ -272,6 +272,11 @@ const S = {
   // anti-triche confirmé le 2026-07-06). Corrigé en réinitialisant startTime + ces baselines à
   // chaque chargement (voir applySaveState).
   silverEarnedAtLoad: 0, killsAtLoad: 0,
+  // "silver par heure" affiché (#shRate) = UNIQUEMENT le trash/token vendu au sol (2026-07-12,
+  // demande explicite : "compté exclusivement par les silver recolté grace au token vendu") --
+  // compteur À VIE séparé de silverEarned (qui reste global, toutes sources, pour les succès), voir
+  // addSilver(). tokenSilverEarnedAtLoad = même principe de baseline de session que silverEarnedAtLoad.
+  tokenSilverEarned: 0, tokenSilverEarnedAtLoad: 0,
   bestKpm: 0, // record personnel de kills/min À VIE (voir refreshStatsOnly) — sert au classement "🏹 Record kills/min"
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
@@ -295,6 +300,13 @@ function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
   if (delta > 0) S.silverEarned += delta;
+  // "silver par heure" (2026-07-12, demande explicite : "compté exclusivement par les silver
+  // recolté grace au token vendu") -- S.silverEarned (au-dessus) reste un compteur GLOBAL À VIE
+  // (toutes sources : quêtes, succès, boss, marché...), utilisé pour les succès/classements. Le
+  // HUD "silver/h" (#shRate) doit lui refléter UNIQUEMENT le revenu du trash (token) au sol, pas
+  // le loot occasionnel de gros montants (succès/boss/quêtes) qui fausserait la lecture du rythme
+  // de farm réel -- voir dropsTick, seul endroit qui appelle addSilver avec category:'loot'.
+  if (delta > 0 && category === 'loot') S.tokenSilverEarned = (S.tokenSilverEarned||0) + delta;
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -3062,27 +3074,30 @@ const POTIONS = {
   infinite: { name:{fr:'Potion de vie infinie', en:'Infinite HP Potion'}, icon:'♾️', cost:0, heal:0.40, cd:4.2, locked:true },
 };
 const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite" toujours en dernier, verrouillée (voir p.locked)
-// prix des potions = un POURCENTAGE FIXE du revenu horaire théorique de trash (token vendu au sol,
-// jamais du prix de vente du stuff) de la zone ACTUELLE (2026-07-11, demande explicite : "revois le
-// prix des potion en fonction de l'argent qu'on se fait en vendant les token en instantané... et
-// uniquement par rapport à ça, pas a la vente de stuff"). Remplace l'ancien amortissement en racine
-// carrée (potionZoneScale, 2026-07-09) : celui-ci dérivait fortement de son propre objectif déclaré
-// ("mega ne dépasse jamais ~15% du revenu horaire d'une zone adaptée") -- vérifié en simulation, le
-// ratio réel allait de 42% (Camp des Loups) à seulement 3.6% (Forêt de Polly) au lieu de rester
-// proche de 15% partout, car un ratio sqrt(zone.trash/zone0.trash) dérive nécessairement de sa
-// cible à mesure que l'écart entre zones grandit. Ici chaque taille de potion coûte un % FIXE du
-// revenu horaire de trash de SA PROPRE zone (jamais relatif à une zone de référence) : le ratio
-// small/medium/large/mega entre eux reprend celui des anciens coûts de base (70/140/240/380),
-// ancré sur mega = 15% (l'objectif initial), ce qui reste vrai dans TOUTE zone, sans dériver.
+// prix des potions = un POURCENTAGE du revenu horaire théorique de trash (token vendu au sol,
+// jamais du prix de vente du stuff) de la zone ACTUELLE (2026-07-11/12, demande explicite : "revois
+// le prix des potion en fonction de l'argent qu'on se fait en vendant les token en instantané...
+// uniquement par rapport à ça" puis "les potions doivent couter entre 5 et 30% de ce que tu gagne
+// en silver"). Remplace l'ancien amortissement en racine carrée (potionZoneScale, 2026-07-09) : il
+// dérivait fortement de son propre objectif déclaré ("mega ~15% du revenu horaire") -- vérifié en
+// simulation, le ratio réel allait de 42% (Camp des Loups) à 3.6% (Forêt de Polly) au lieu de rester
+// stable, un ratio sqrt(zone.trash/zone0.trash) dérivant nécessairement à mesure que l'écart entre
+// zones grandit. Ici chaque taille de potion coûte un % du revenu horaire de trash de SA PROPRE
+// zone (jamais relatif à une zone de référence, donc jamais de dérive) : interpolé linéairement
+// entre 5% (small) et 30% (mega) selon le coût de base de la taille (70/140/240/380), ce qui reste
+// vrai dans TOUTE zone.
 const POTION_KPM_REF = 15; // même rythme que la courbe économique des zones (~3000/h zone1 → ~100000/h zone11)
-const POTION_MEGA_PCT_OF_HOURLY = 0.15;
+const POTION_PCT_MIN = 0.05; // small ≈ 5% du revenu horaire
+const POTION_PCT_MAX = 0.30; // mega ≈ 30% du revenu horaire
 function potionHourlyIncome() {
   const z = (typeof atVelia !== 'undefined' && !atVelia && typeof Z === 'function') ? Z() : ZONES[0];
   return (z.loot.trash.val || 1) * POTION_KPM_REF * 60;
 }
 function potionCost(baseCost) {
   if (!baseCost) return 0;
-  const pct = (baseCost / POTIONS.mega.cost) * POTION_MEGA_PCT_OF_HOURLY;
+  const lo = POTIONS.small.cost, hi = POTIONS.mega.cost;
+  const t = hi > lo ? (baseCost - lo) / (hi - lo) : 0;
+  const pct = POTION_PCT_MIN + t * (POTION_PCT_MAX - POTION_PCT_MIN);
   return Math.max(1, Math.round(potionHourlyIncome() * pct));
 }
 // icône unique vie+mana (2026-07-08, demande explicite : "la potion qui remplace les 2 potion")
@@ -5421,7 +5436,7 @@ function refreshStatsOnly() {
     if (kpmNow - (S.bestKpm||0) > 0.5) logToDiscord('🏹 Record kills/min', `**${myPseudo||'Joueur'}** bat son record perso : **${kpmNow.toFixed(1)}** kills/min (${tr(Z().name)})`, 0xc9a55a);
     S.bestKpm = kpmNow;
   }
-  $('shRate').textContent = mins>.1 ? fmt((S.silverEarned-(S.silverEarnedAtLoad||0))/(mins/60))+' silver/h' : '— silver/h';
+  $('shRate').textContent = mins>.1 ? fmt((S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0))/(mins/60))+' silver/h' : '— silver/h';
   const zb = $('zoneBadge');
   if (atVelia) {
     zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
@@ -7313,6 +7328,7 @@ function applySaveState(data) {
   // du 2026-07-06 (silver_per_hour astronomique juste après le chargement d'une sauvegarde)
   S.startTime = performance.now();
   S.silverEarnedAtLoad = S.silverEarned || 0;
+  S.tokenSilverEarnedAtLoad = S.tokenSilverEarned || 0;
   S.killsAtLoad = S.kills || 0;
   Object.keys(EQUIP).forEach(k => EQUIP[k] = data.EQUIP[k] ?? null);
   for (let i = 0; i < INV_SIZE; i++) INV[i] = data.INV[i] ?? null;
