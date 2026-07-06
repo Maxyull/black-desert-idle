@@ -589,6 +589,24 @@
       !!jackpotRowMatch && jackpotRowMatch[0].includes('style='), `html=${jackpotRowMatch && jackpotRowMatch[0]}`);
     assert('Table de loot : la couleur du bijou correspond au palier de la zone', !!jackpotRowMatch && jackpotRowMatch[0].includes(GEAR_TIERS[0].color));
   }
+  // "toute modificaitonn de silver doit etre écris dans ce registre... je dois pouvoir traquer le
+  // moidre silver" (2026-07-10) : addSilver() est le point d'entrée UNIQUE pour toute variation de
+  // silver côté client -- doit toujours mettre à jour S.silver, et n'incrémenter S.silverEarned que
+  // pour un gain (jamais pour une dépense), sans jamais planter si le registre serveur est absent
+  // (queueSilverLedger non défini, ex: tests hors contexte Supabase)
+  function testAddSilverUpdatesStateCorrectly() {
+    const s = { silver: S.silver, silverEarned: S.silverEarned };
+    S.silver = 1000; S.silverEarned = 500;
+    addSilver(200, 'loot', 'test');
+    assert('addSilver (gain) : S.silver augmente du montant exact', S.silver === 1200, `S.silver=${S.silver}`);
+    assert('addSilver (gain) : S.silverEarned augmente aussi (compteur à vie)', S.silverEarned === 700, `S.silverEarned=${S.silverEarned}`);
+    addSilver(-300, 'potion', 'test');
+    assert('addSilver (dépense) : S.silver diminue du montant exact', S.silver === 900, `S.silver=${S.silver}`);
+    assert('addSilver (dépense) : S.silverEarned NE bouge PAS (compteur à vie, jamais décrémenté par une dépense)', S.silverEarned === 700, `S.silverEarned=${S.silverEarned}`);
+    addSilver(0, 'loot', 'test'); // delta nul -> no-op silencieux, ne doit rien casser
+    assert('addSilver (delta nul) : aucun effet', S.silver === 900 && S.silverEarned === 700);
+    S.silver = s.silver; S.silverEarned = s.silverEarned;
+  }
   function testZone0LootReachesZone1Difficulty() {
     // scénario concret remonté par le joueur (2026-07-08) : casque + arme + 2 bijoux, tous
     // lootables à Camp des Loups (zone0), enchantés à +12 — ne doit plus tomber en ZONE DANGEREUSE
@@ -639,6 +657,7 @@
     testJewelryApIsDynamic();
     testGearRetroactiveMigration();
     testLootTableJackpotRowHasColor();
+    testAddSilverUpdatesStateCorrectly();
     testZone0LootReachesZone1Difficulty();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;

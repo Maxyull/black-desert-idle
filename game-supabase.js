@@ -61,6 +61,26 @@ async function flushFarmEvents() {
 setInterval(flushFarmEvents, 25000);
 window.addEventListener('beforeunload', flushFarmEvents);
 
+// ---------- registre de silver (2026-07-10, demande explicite : "je dois pouvoir traquer le
+// moindre silver") : même principe que le journal de farm ci-dessus -- queue légère envoyée par
+// lots, jamais bloquante. Appelée par addSilver() (game-core.js) à CHAQUE variation de silver côté
+// client (loot, potions, ventes, quêtes, succès...) ; les mouvements côté marché (SECURITY
+// DEFINER, silver déplacé directement en base sans jamais repasser par le client) sont journalisés
+// séparément, directement dans les fonctions SQL market_place_order/market_match_item — voir la
+// migration silver_ledger.
+let silverLedgerQueue = [];
+function queueSilverLedger(delta, category, note) {
+  if (!sb || !currentUser || isGuest() || !delta) return; // pas de compte vérifié → pas de journalisation
+  silverLedgerQueue.push({ user_id: currentUser.id, delta: Math.round(delta), category, note: note || null });
+}
+async function flushSilverLedger() {
+  if (!sb || !currentUser || isGuest() || silverLedgerQueue.length === 0) return;
+  const batch = silverLedgerQueue.splice(0, silverLedgerQueue.length);
+  try { await sb.from('silver_ledger').insert(batch); } catch(e) { /* pas grave, prochain lot rattrapera */ }
+}
+setInterval(flushSilverLedger, 25000);
+window.addEventListener('beforeunload', flushSilverLedger);
+
 const $a = id => document.getElementById(id);
 
 function authShow(msg, isError) {
@@ -497,7 +517,7 @@ function fmtAdmPlaytime(sec) {
 // construit le HTML des 3 onglets "lourds" (agrégations sur farm_events/game_saves) une fois que
 // leurs données sont arrivées — séparé de openAdminPanel() pour pouvoir les patcher en arrière-plan
 // sans bloquer l'ouverture du panneau (voir plus bas, correctif de lenteur du 2026-07-06)
-function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser) {
+function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser, silverByCategory, silverByHour) {
   const hourMap = new Map();
   (byHour||[]).forEach(r => hourMap.set(r.hour, (hourMap.get(r.hour)||0) + Number(r.total_silver||0)));
   const hours = [...hourMap.entries()].sort((a,b) => new Date(b[0]) - new Date(a[0])).slice(0,24);
@@ -534,6 +554,42 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
   const totalEarned = (wealth||[]).reduce((a,r) => a + Number(r.silver_earned||0), 0);
   const totalSpent = Math.max(0, totalEarned - totalSilver);
   const spentPct = totalEarned > 0 ? Math.round(totalSpent/totalEarned*100) : 0;
+  // registre de silver (2026-07-10, demande explicite : "je dois pouvoir traquer le moindre
+  // silver") : chaque variation passe par addSilver() (game-core.js) ou est journalisée directement
+  // côté serveur pour le marché (voir la migration silver_ledger) -- ce tableau + ce graphique
+  // remplacent l'ancien résumé purement textuel "où partent les silver"
+  const CATEGORY_LABEL = {
+    loot:{fr:'🎒 Butin au sol (trash)',en:'🎒 Ground loot (trash)'},
+    sell:{fr:'🏷️ Ventes (sac)',en:'🏷️ Sales (bag)'},
+    potion:{fr:'🧪 Potions',en:'🧪 Potions'},
+    quest:{fr:'🗒️ Quêtes',en:'🗒️ Quests'},
+    achievement:{fr:'🏅 Succès',en:'🏅 Achievements'},
+    boss:{fr:'🐋 World Boss',en:'🐋 World Boss'},
+    welcome:{fr:'🎁 Bonus de bienvenue',en:'🎁 Welcome bonus'},
+    market_buy:{fr:'🏛️ Marché — achats',en:'🏛️ Market — buys'},
+    market_sell:{fr:'🏛️ Marché — ventes',en:'🏛️ Market — sells'},
+    market_refund:{fr:'🏛️ Marché — remboursements',en:'🏛️ Market — refunds'},
+    undo_sell:{fr:'↩️ Annulation de vente',en:'↩️ Sale undo'},
+    admin_test:{fr:'🛠️ Test admin',en:'🛠️ Admin test'},
+  };
+  const catRows = (silverByCategory||[]).map(r => ({
+    category: r.category, gained: Number(r.total_gained||0), spent: Number(r.total_spent||0), tx: Number(r.tx_count||0),
+  }));
+  const maxCatVolume = Math.max(1, ...catRows.map(r => r.gained + r.spent));
+  const categoryHtml = catRows.map(r => {
+    const label = CATEGORY_LABEL[r.category] ? CATEGORY_LABEL[r.category][LANG] : r.category;
+    const pct = Math.round((r.gained + r.spent) / maxCatVolume * 100);
+    return `<tr><td>${escapeHtml(label)}</td><td class="admGain">+${fmt(r.gained)}</td><td class="admLoss">-${fmt(r.spent)}</td>` +
+      `<td>${fmt(r.tx)}</td><td><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div></td></tr>`;
+  }).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données (le registre vient d\'être mis en place)':'No data yet (the ledger was just set up)'}</td></tr>`;
+  const silverHourRows = (silverByHour||[]).map(r => ({ hour:r.hour, net:Number(r.net_delta||0) }))
+    .sort((a,b) => new Date(b.hour) - new Date(a.hour)).slice(0,24);
+  const maxSilverHourAbs = Math.max(1, ...silverHourRows.map(r => Math.abs(r.net)));
+  const silverHourHtml = silverHourRows.map(r => {
+    const label = new Date(r.hour).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { hour:'2-digit', day:'2-digit', month:'2-digit' });
+    const pct = Math.round(Math.abs(r.net)/maxSilverHourAbs*100);
+    return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar${r.net<0?' admBarNeg':''}" style="width:${pct}%"></div></div><span class="admBarVal${r.net<0?' admLoss':' admGain'}">${r.net>=0?'+':''}${fmt(r.net)}</span></div>`;
+  }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
   const WEALTH_BRACKETS = [
     { max:10000,      label:'< 10k' },
     { max:100000,     label:'10k-100k' },
@@ -599,14 +655,16 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
         <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🔻 Dépensé (sorti du jeu)':'🔻 Spent (sunk)'}</div><div class="astVal">${fmt(totalSpent)}</div></div>
         <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne stockée / joueur':'📊 Average stored / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'🔍 Où partent les silver ?':'🔍 Where does the silver go?'}</h3>
-      <div class="admSilverFlow">
-        <div class="asfBar"><div class="asfStored" style="width:${100-spentPct}%"></div><div class="asfSpent" style="width:${spentPct}%"></div></div>
-        <div class="asfLegend"><span><i class="asfDotStored"></i>${LANG==='fr'?'Stocké':'Stored'} (${100-spentPct}%)</span><span><i class="asfDotSpent"></i>${LANG==='fr'?'Dépensé':'Spent'} (${spentPct}%)</span></div>
-      </div>
+      <h3>${LANG==='fr'?'🔍 Où partent les silver ? (registre détaillé)':'🔍 Where does the silver go? (detailed ledger)'}</h3>
       <div class="admHint">${LANG==='fr'
-        ? 'Le silver "dépensé" sort du jeu presque exclusivement via les coûts d\'optimisation (enchantement) — le Marché Central n\'est PAS un sink, c\'est un simple transfert de silver entre joueurs (ce qu\'un vendeur reçoit, un acheteur l\'a payé). Pas encore de détail par catégorie de sink, cette vue sert à surveiller la tendance globale (le silver total dépensé devrait progressivement augmenter avec l\'optimisation).'
-        : 'Silver "spent" leaves the game almost exclusively via enhancement costs — the Central Market is NOT a sink, it\'s a plain transfer of silver between players (what a seller receives, a buyer paid). No per-category sink breakdown yet, this view tracks the overall trend (total spent silver should gradually grow as players enhance gear).'}</div>
+        ? 'Chaque variation de silver (loot, potions, ventes, quêtes, succès, marché...) est journalisée individuellement dans le registre — tableau ci-dessous par catégorie, graphique par heure. Le marché reste un simple TRANSFERT entre joueurs (achat/vente/remboursement), pas un sink net.'
+        : 'Every silver change (loot, potions, sales, quests, achievements, market...) is individually logged in the ledger — table below by category, hourly graph. The market remains a plain TRANSFER between players (buy/sell/refund), not a net sink.'}</div>
+      <table class="admTable">
+        <thead><tr><th>${LANG==='fr'?'Catégorie':'Category'}</th><th>${LANG==='fr'?'Gagné':'Gained'}</th><th>${LANG==='fr'?'Dépensé':'Spent'}</th><th>${LANG==='fr'?'Mouvements':'Transactions'}</th><th>${LANG==='fr'?'Volume':'Volume'}</th></tr></thead>
+        <tbody>${categoryHtml}</tbody>
+      </table>
+      <h3>${LANG==='fr'?'📊 Flux net de silver par heure (48h)':'📊 Net silver flow per hour (48h)'}</h3>
+      <div class="admBars">${silverHourHtml}</div>
       <h3>${LANG==='fr'?'🏆 Qui gagne le plus vite ? (taux à vie)':'🏆 Who earns fastest? (lifetime rate)'}</h3>
       <div class="admSummary">${LANG==='fr'?'Silver gagné à vie ÷ temps de jeu total — classé par taux, pas par montant. Au moins 3 min de jeu requises.':'Lifetime silver earned ÷ total playtime — ranked by rate, not by amount. At least 3 min playtime required.'}</div>
       <table class="admTable">
@@ -627,6 +685,9 @@ async function openAdminPanel() {
     sb.from('admin_farm_by_item').select('*').limit(20),
     sb.from('admin_wealth').select('*'),
     sb.from('admin_playtime_by_hour').select('*'),
+    // registre de silver (2026-07-10, demande explicite) : voir la migration silver_ledger
+    sb.from('admin_silver_ledger_by_category').select('*'),
+    sb.from('admin_silver_ledger_by_hour').select('*'),
   ]);
   const [{data: stats}, {data: playersList}] = await Promise.all([
     sb.from('player_stats').select('user_id, playtime_sec, loyalty'),
@@ -702,8 +763,8 @@ async function openAdminPanel() {
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
   // dès que les 3 agrégations lourdes arrivent, on remplace juste le contenu "Chargement…" de leurs
   // onglets — sans jamais avoir bloqué l'affichage initial du panneau ci-dessus
-  analyticsPromise.then(([{data: byHour}, {data: byItem}, {data: wealth}, {data: playtimeByHour}]) => {
-    const html = buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser);
+  analyticsPromise.then(([{data: byHour}, {data: byItem}, {data: wealth}, {data: playtimeByHour}, {data: silverByCategory}, {data: silverByHour}]) => {
+    const html = buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser, silverByCategory, silverByHour);
     const body = $a('infoBody'); if (!body) return; // panneau déjà refermé entre-temps
     const hourlyPane = body.querySelector('.catPane[data-cat="hourly"]');
     const itemsPane = body.querySelector('.catPane[data-cat="items"]');
@@ -804,7 +865,7 @@ async function openAdminPanel() {
     btn.onclick = e => { e.stopPropagation(); showPlayerInventoryWindow(btn.dataset.uuid, btn.dataset.name); };
   });
   // --- pour moi ---
-  $a('btnTestSilver').onclick = () => { if(!isAdmin())return; S.silver += 1000000; S.silverEarned += 1000000; refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
+  $a('btnTestSilver').onclick = () => { if(!isAdmin())return; addSilver(1000000, 'admin_test'); refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
   $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; S.loyalty=(S.loyalty||0)+200; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); };
   $a('btnTestAch').onclick = () => { if(!isAdmin())return; ACHIEVEMENTS.forEach(a => { if(!S.achUnlocked[a.id]){ S.achUnlocked[a.id]=Date.now(); S.silver+=a.reward; S.silverEarned+=a.reward; } }); refreshStatsOnly(); openAdminPanel(); };
   $a('btnResetMyQuests').onclick = resetMyQuests;
@@ -2366,6 +2427,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V231', d:'10/07/2026 12:00', name:{fr:'Registre de silver détaillé (panneau Admin)', en:'Detailed silver ledger (Admin panel)'}, fr:[
+      {t:'admin', tx:'L\'onglet Admin "Silver" affiche désormais un vrai registre : tableau par catégorie (loot, potions, ventes, quêtes, succès, marché...) avec gagné/dépensé/nombre de mouvements, et un graphique du flux net par heure sur 48h. Toute variation de silver passe désormais par un point d\'entrée unique côté client, journalisé individuellement ; les mouvements du Marché (achat/vente/remboursement, gérés côté serveur) sont journalisés directement en base'},
+    ], en:[
+      {t:'admin', tx:'The Admin "Silver" tab now shows a real ledger: a per-category table (loot, potions, sales, quests, achievements, market...) with gained/spent/transaction count, and an hourly net-flow graph over 48h. Every silver change now goes through a single client-side entry point, individually logged; Market movements (buy/sell/refund, server-side) are logged directly in the database'},
+    ] },
   { v:'V230', d:'10/07/2026 11:00', name:{fr:'La protection Pierre de Cron est désormais désactivée par défaut', en:'Cron Stone protection is now disabled by default'}, fr:[
       {t:'change', sub:'systeme', tx:'L\'utilisation automatique des Pierres de Cron (protection contre une rétrogradation) est désormais désactivée par défaut sur un nouveau compte — active-la toi-même en cliquant sur la case Pierre de Cron du panneau Optimisation si tu la veux'},
     ], en:[

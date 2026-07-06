@@ -1282,14 +1282,12 @@
   .admHistBar .ahbCount { font-size:10px; color:var(--gold); margin-bottom:2px; }
   .admHistBar .ahbLbl { font-size:9px; color:var(--ink-dim); margin-top:4px; text-align:center; }
   .staleTag { font-size:10px; cursor:help; }
-  /* barre "où partent les silver" (onglet Silver, façon Loyalties) : stocké vs dépensé */
-  .admSilverFlow { margin-bottom:10px; }
-  .asfBar { display:flex; height:16px; border-radius:8px; overflow:hidden; border:1px solid #3a3742; }
-  .asfStored { background:linear-gradient(180deg,#8fc98a,#5a9a56); }
-  .asfSpent { background:linear-gradient(180deg,#e08a6e,#a85a42); }
-  .asfLegend { display:flex; gap:16px; margin-top:6px; font-size:11px; color:var(--ink-dim); }
-  .asfLegend i { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:5px; vertical-align:middle; }
-  .asfDotStored { background:#8fc98a; } .asfDotSpent { background:#e08a6e; }
+  /* registre de silver (onglet Silver, 2026-07-10, demande explicite : "je dois pouvoir traquer le
+     moindre silver") : gagné en vert, dépensé en rouge, même code couleur partout (tableau par
+     catégorie + graphique horaire) */
+  .admGain { color:#8fc98a; }
+  .admLoss { color:#e08a6e; }
+  .admBar.admBarNeg { background:linear-gradient(90deg,#a85a42,#e08a6e); }
 
   /* ===== succès & quêtes journalières ===== */
   .achSummary { font-size:12px; color:var(--gold); font-weight:bold; margin-bottom:8px; }

@@ -263,6 +263,18 @@ const S = {
   useCronStone: false, // 2026-07-06 : au choix du joueur (case à cocher) si elle protège une rétrogradation, plus automatique en silence -- désactivée par défaut (2026-07-10, demande explicite), le joueur l'active lui-même s'il en veut
 };
 
+// point d'entrée UNIQUE pour toute variation de silver côté client (2026-07-10, demande explicite :
+// "toute modification de silver doit être écrit dans ce registre... je dois pouvoir traquer le
+// moindre silver") -- centralise S.silver/S.silverEarned ET la journalisation (voir
+// queueSilverLedger, game-supabase.js), pour ne plus jamais pouvoir modifier l'un sans l'autre.
+// category : identifiant court et STABLE (ex: 'loot','potion','sell','quest','achievement',
+// 'welcome','admin_test') -- alimente l'onglet Admin "Silver" (tableau + graphique par catégorie).
+function addSilver(delta, category, note) {
+  if (!delta) return;
+  S.silver += delta;
+  if (delta > 0) S.silverEarned += delta;
+  if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
+}
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
 function trackLoot(name) { S.lootByItem[name] = (S.lootByItem[name]||0) + 1; }
 function bestFarmedItem() {
@@ -1110,7 +1122,7 @@ function checkAchievements() {
     if (S.achUnlocked[a.id]) continue;
     if (a.statFn(S) >= a.target) {
       S.achUnlocked[a.id] = Date.now();
-      S.silver += a.reward; S.silverEarned += a.reward;
+      addSilver(a.reward, 'achievement', a.name.fr);
       showAchToast(a);
       pushNotif('🏅', LANG==='fr'?'Succès débloqué':'Achievement unlocked', a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)', 'success');
       logToDiscord('🏅 Succès débloqué', `**${myPseudo||'Joueur'}** — ${a.name.fr} (+${fmt(a.reward)} 🪙)`, 0xc9a55a);
@@ -1720,7 +1732,7 @@ async function endBossFight(win) {
       const deathFreeOk = deathFreeMs >= 3*60*1000;
       const zoneMult = deathFreeOk ? 1 + (S.maxZoneIdx/(ZONES.length-1))*1.5 : 1;
       const reward = Math.round(b.reward * mult * zoneMult);
-      S.silver += reward; S.silverEarned += reward;
+      addSilver(reward, 'boss', b.name.fr);
       const qty = Math.max(1, Math.round((b.matQty[0] + Math.floor(Math.random()*(b.matQty[1]-b.matQty[0]+1))) * mult * zoneMult));
       invAdd({ key:b.matKey, name:b.matName, kind:'material', icon:b.matIcon, color:'#c9c9c9', qty, stackable:true, weight:0.1, val:5 });
       const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
@@ -2514,7 +2526,7 @@ function claimQuest(scope, i) {
   // q.claimed rend la réclamation idempotente → impossible de toucher 2× la récompense même en
   // cliquant dans le suivi ET dans le panneau (exploit signalé).
   if (!q || q.claimed || questProgress(scope,q) < q.target) return;
-  q.claimed = true; S.silver += q.reward; S.silverEarned += q.reward;
+  q.claimed = true; addSilver(q.reward, 'quest', q.kind);
   refreshStatsOnly(); updateQuestBadge();
   // rafraîchit IMMÉDIATEMENT les deux UI pour qu'aucun bouton "Réclamer" périmé ne subsiste
   renderQuestTrackerWidget();
@@ -3048,7 +3060,7 @@ function usePotion() {
   const cost = potionCost(pot.cost);
   if (cost > 0) {
     if (S.silver < cost) { P.potCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite, aucun soin
-    S.silver -= cost;
+    addSilver(-cost, 'potion', pot.name.fr);
     floatTxt(P.x,P.y,80,'-'+fmt(cost)+'🪙',{hurt:true});
   }
   P.potCd = pot.cd;
@@ -3060,7 +3072,7 @@ function usePotion() {
 function usePotionMana() {
   const cost = potionCost(MANA_POTION.cost);
   if (S.silver < cost) { P.manaPotCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite
-  S.silver -= cost;
+  addSilver(-cost, 'potion', MANA_POTION.name.fr);
   floatTxt(P.x,P.y,80,'-'+fmt(cost)+'🪙',{hurt:true});
   P.manaPotCd = MANA_POTION.cd;
   P.mp = Math.min(effManaMax(), P.mp + effManaMax()*MANA_POTION.restore);
@@ -3821,7 +3833,7 @@ function dropsTick(dt) {
 
       // le trash est du silver pur : toujours ramassé, ne prend jamais de place dans le sac
       if (it.kind === 'trash') {
-        S.silver += l.silver; S.silverEarned += l.silver;
+        addSilver(l.silver, 'loot', it.name);
         l.taken = true; S.lootCount++;
         lootLine(it, l.silver, 'trashLoot');
         floatTxt(l.x,l.y,40,it.name,{silver:true});
@@ -6222,7 +6234,7 @@ function sellWorseThanEquipped() {
       }
     }
   }
-  if (count > 0) { S.silver += total; S.silverEarned += total; lastWorseSaleSold = sold; hud(); }
+  if (count > 0) { addSilver(total, 'sell', 'Vendre l\'inférieur'); lastWorseSaleSold = sold; hud(); }
   return { count, total, divertedCount };
 }
 // annule la dernière "Vendre l'inférieur" : reverse le silver gagné et restaure les objets vendus
@@ -6233,7 +6245,10 @@ function buyBackLastWorseSale() {
   const total = lastWorseSaleSold.reduce((a,it) => a + it.val*it.qty, 0);
   const freeSlots = INV.filter(s => s === null).length;
   if (freeSlots < lastWorseSaleSold.length || S.silver < total) return false;
+  // annule une vente : contrairement à une dépense normale (voir addSilver), ceci retire du
+  // silverEarned aussi (le gain précédent est complètement défait, pas juste dépensé)
   S.silver -= total; S.silverEarned -= total;
+  if (typeof queueSilverLedger === 'function') queueSilverLedger(-total, 'undo_sell', 'Racheter');
   lastWorseSaleSold.forEach(it => invAdd({ ...it }));
   lastWorseSaleSold = null;
   hud();
@@ -6839,7 +6854,7 @@ function dropItem(i) {
 }
 function sellOne(i) {
   const s = INV[i]; if (!s) return;
-  S.silver += s.val; S.silverEarned += s.val;
+  addSilver(s.val, 'sell', s.name);
   invRemoveAt(i, 1);
   // vente individuelle d'une pièce de gear/jackpot (voir showItemMenu, bouton "Vendre 1") : si ce
   // type n'est plus protégé nulle part, promeut le meilleur exemplaire restant dans le sac
@@ -6849,7 +6864,7 @@ function sellOne(i) {
 function sellStack(i) {
   const s = INV[i]; if (!s) return;
   const total = s.val * s.qty;
-  S.silver += total; S.silverEarned += total;
+  addSilver(total, 'sell', s.name);
   INV[i] = null;
   if (s.kind === 'gear' || s.kind === 'jackpot') ensureCompendiumProtection(s.name);
   hud();
@@ -6861,7 +6876,7 @@ function sellAllOfKind(kind) {
     const s = INV[i];
     if (s && s.kind === kind) { total += s.val * s.qty; soldItems.push({ ...s }); INV[i] = null; }
   }
-  S.silver += total; S.silverEarned += total;
+  addSilver(total, 'sell', kind);
   if (kind === 'material' && soldItems.length) logSellMats(soldItems, total);
   hud();
 }
@@ -7109,7 +7124,7 @@ renderInvCatTabs();
 hud();
 setInterval(hud, 1000);
 setInterval(() => { if (!document.hidden) S.playtimeSec++; }, 1000); // temps de jeu cumulé (onglet actif uniquement)
-setTimeout(()=>{ S.silver += 80; hud(); }, 1200);
+setTimeout(()=>{ addSilver(80, 'welcome'); hud(); }, 1200);
 // sauvegarde automatique locale (fallback hors-ligne, coexiste avec Supabase)
 setInterval(() => { try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {} }, 15000);
 requestAnimationFrame(loop);
