@@ -6122,21 +6122,30 @@ function zoneLootRowsHtml(idx) {
   const weaponPieceNote = LANG==='fr' ? 'arme — cette zone uniquement' : 'weapon — this zone only';
   const rows = [
     { kind:'trash',    it:L.trash,   note:'revenu de base' },
-    { kind:'material', it:{name:tier.material.name}, ch:L.mat.ch, note:'optimisation' },
+    { kind:'material', it:{name:tier.material.name, icon:tier.material.icon}, ch:L.mat.ch, note:'optimisation' },
   ];
   // détaille EXACTEMENT quelle pièce d'armure (et quelle arme, s'il y en a une) cette zone précise
   // garantit (2026-07-06, demande explicite : "explique quel stuff exactement tu vas pouvoir
   // loot") — remplace l'ancienne ligne générique "Gris — Naru / arme+armure (7 pièces)", qui ne
   // disait pas laquelle des 7 pièces on obtenait réellement ici (voir ZONE_ARMOR_SLOTS/ZONE_WEAPON_SLOTS)
+  // -- chaque ligne utilise désormais la VRAIE icône de la pièce (2026-07-08, demande explicite :
+  // "as-tu mis les svg sur la loottable" — remplace le glyphe générique ⚔️/💍 partagé par tout un
+  // "kind", qui ne montrait pas à quoi la pièce allait réellement ressembler)
+  const GEAR_ICON_FOR_SLOT = { helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor,
+    weapon:staffIconForColor, secondary:daggerIconForColor, awakening:orbPairIconForColor };
   const armorSlot = (ZONE_ARMOR_SLOTS[idx]||[])[0];
-  if (armorSlot) rows.push({ kind:'gear', it:{name:tier.sets[armorSlot]}, ch:gearCh, note:armorPieceNote });
+  if (armorSlot) rows.push({ kind:'gear', it:{name:tier.sets[armorSlot], icon:GEAR_ICON_FOR_SLOT[armorSlot](tier.color,tier.grade)}, ch:gearCh, note:armorPieceNote });
   const weaponSlot = (ZONE_WEAPON_SLOTS[idx]||[])[0];
-  if (weaponSlot) rows.push({ kind:'gear', it:{name:tier.sets[weaponSlot]}, ch:gearCh, note:weaponPieceNote });
+  if (weaponSlot) rows.push({ kind:'gear', it:{name:tier.sets[weaponSlot], icon:GEAR_ICON_FOR_SLOT[weaponSlot](tier.color,tier.grade)}, ch:gearCh, note:weaponPieceNote });
+  const jSlot = accSlotFor(L.jackpot);
+  const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
+  const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+  const jackpotIcon = (JEWEL_ICON_FOR_SLOT[jSlot] || ringIconForTier)(jTierIdx, tier.color);
   rows.push(
-    { kind:'jackpot',  it:L.jackpot, note:'+'+L.jackpot.ap+' '+equippedWord },
+    { kind:'jackpot',  it:{...L.jackpot, icon:jackpotIcon}, note:'+'+L.jackpot.ap+' '+equippedWord },
     { kind:'craft',    it:L.craft,   note:'craft endgame' },
     // Pierre de Cron : taux fixe (voir CRON_STONE.ch), identique dans TOUTES les zones — demande explicite du 2026-07-08
-    { kind:'material', it:{name:CRON_STONE.name}, ch:CRON_STONE.ch, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
+    { kind:'material', it:{name:CRON_STONE.name, icon:CRON_STONE.icon}, ch:CRON_STONE.ch, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
   );
   // les couleurs des rangées "armure" et "matériau" reprennent celles du stuff dans l'inventaire
   // (gris/blanc/vert/bleu selon le palier) au lieu d'un violet/or générique — demande du 2026-07-06
@@ -6146,9 +6155,10 @@ function zoneLootRowsHtml(idx) {
     // la Pierre de Cron garde SA couleur propre (dorée) plutôt que celle du matériau de palier —
     // sinon les 2 rangées "material" se confondraient visuellement
     const col = r.it.name === CRON_STONE.name ? CRON_STONE.color : rowColor[r.kind];
+    const iconHtml = r.it.icon || LOOT_ICONS[r.kind];
     return `
     <div class="lootRow">
-      <div class="lootIcon k-${r.kind}"${col?` style="color:${col};border-color:${col}"`:''}>${LOOT_ICONS[r.kind]}</div>
+      <div class="lootIcon k-${r.kind}"${col?` style="color:${col};border-color:${col}"`:''}>${iconHtml}</div>
       <div class="lootInfo"><div class="ln"${col?` style="color:${col}"`:''}>${tr(r.it.name)}</div><div class="lv">${tr(r.note)}</div></div>
       <div class="lootPct">${(ch*100).toFixed(ch < .01 ? 3 : 1)}%</div>
     </div>`;
@@ -6159,8 +6169,14 @@ function zoneLootRowsHtml(idx) {
 // plus recherché de la zone), un clic déplie le détail complet via zoneLootRowsHtml
 function zoneLootCompactRowHtml(idx) {
   const z = ZONES[idx], tier = gearTierForZone(idx);
+  // vraie icône du bijou de cette zone (2026-07-08, même correctif que zoneLootRowsHtml) au lieu
+  // du glyphe générique 💍 partagé par tous les paliers
+  const jSlot = accSlotFor(z.loot.jackpot);
+  const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
+  const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+  const jackpotIcon = (JEWEL_ICON_FOR_SLOT[jSlot] || ringIconForTier)(jTierIdx, tier.color);
   return `<div class="lootRow lootZoneCompact" data-zi="${idx}">
-    <div class="lootIcon k-jackpot" style="color:${tier.color};border-color:${tier.color}">💍</div>
+    <div class="lootIcon k-jackpot" style="color:${tier.color};border-color:${tier.color}">${jackpotIcon}</div>
     <div class="lootInfo"><div class="ln" style="color:${tier.color}">${tr(z.name)}</div><div class="lv">${tr(z.mob)} · ${tr(z.loot.jackpot.name)}</div></div>
     <div class="lootPct">${fmtTinyPct(z.loot.jackpot.ch)} <span class="lootExpandHint">▾</span></div>
   </div>`;
