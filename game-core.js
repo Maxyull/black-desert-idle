@@ -156,6 +156,10 @@ const ZONES = [
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
       jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
+  // chance de bijou (jackpot) des 4 zones VERTES rehaussée ×1.8 et des 4 zones BLEUES ×2.0
+  // (2026-07-14, demande explicite : "réhausser tout les drop de bijou de 100% zone bleu, 80% zone
+  // verte") -- ne touche pas les zones grise/blanche. Voir GEAR_TIERS pour la liste des zones par
+  // palier (vert:[6,7,8,14], bleu:[9,10,11,15]).
   // reqAP/reqDP des 4 zones du palier VERT (Mine de Fer/Poste Helm/Repaire Bandits Gahaz/Base de
   // Bashim) abaissées le 2026-07-12 (demande explicite : "avec un full stuff blanc je dois pouvoir
   // passer en zone vert tout juste difficile en +13 en moyenne et full pen me fais passer a la 2e
@@ -173,17 +177,17 @@ const ZONES = [
     // alphaTone = armure de fer bleuté du boss de pack (voir drawMineurIso)
     tint:{ a:'#4a3226', b:'#443023', dry:'#583c2c' }, tones:['#8a7a68','#7a6c5a','#988676'], alphaTone:'#5a6068',
     loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
-      jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:2}, craft:{name:'Fragment de mémoire',ch:.009} } },
+      jackpot:{name:'Anneau Asula',val:8900,ch:.0018,ap:2}, craft:{name:'Fragment de mémoire',ch:.009} } },
   { name:'Poste Helm', tier:'Serendia — Late', reqAP:122, reqDP:66, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:56,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.11},
-      jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:4}, craft:{name:'Fragment de mémoire',ch:.007} } },
+      jackpot:{name:'Collier Asula',val:13000,ch:.00126,ap:4}, craft:{name:'Fragment de mémoire',ch:.007} } },
   { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:150, reqDP:82, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
-      jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:6}, craft:{name:'Fragment de mémoire',ch:.005} } },
+      jackpot:{name:'Ceinture Asula',val:17850,ch:.0009,ap:6}, craft:{name:'Fragment de mémoire',ch:.005} } },
   { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:269, reqDP:148, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
@@ -192,7 +196,7 @@ const ZONES = [
     // avec l'enchantement ralenti, ces 2 dernières zones sont désormais LA seule source de matériau
     // bleu, il en faut beaucoup plus pour pousser du stuff Grunil jusqu'à PRI+
     loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.12},
-      jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:6}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
+      jackpot:{name:'Anneau de Cadry',val:24200,ch:.0006,ap:6}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
   // les 3 dernières zones du jeu (Kratuga/Mânes/Polly) étaient toutes identiques à 320/175
   // (plafond de fin de jeu) -- lissées le 2026-07-11 (demande explicite : "lisse les req des 3
   // dernière zone du jeu") en une montée linéaire depuis Sanctuaire Elric (269/148) jusqu'au même
@@ -201,7 +205,7 @@ const ZONES = [
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
-      jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:9}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
+      jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0004,ap:9}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
   // 3e zone Grunil (2026-07-05, demande explicite : "ajoute Planque des Mânes dernière zone") —
   // complète la rotation d'arme (weapon/secondary/awakening, une par zone du palier — voir
   // ZONE_WEAPON_SLOTS) et apporte la ceinture manquante (Orkinrad's Belt). reqAP/reqDP lissés le
@@ -211,7 +215,7 @@ const ZONES = [
     hpPer:1000, dmg:125, xp:500,
     tint:{ a:'#3a3f4a', b:'#343943', dry:'#40454f' }, tones:['#8a9ab0','#7c8ca2','#98a8c0'], alphaTone:'#4a5568',
     loot:{ trash:{name:'Larme de Mâne',val:120,ch:1}, mat:{name:'Pierre de Caphras',val:5,ch:.07},
-      jackpot:{name:'Orkinrad\'s Belt',val:35000,ch:.00015,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0018} } },
+      jackpot:{name:'Orkinrad\'s Belt',val:35000,ch:.0003,ap:10}, craft:{name:'Marbre du Dieu déchu',ch:.0018} } },
   // 4e zone de CHAQUE palier (2026-07-05, demande explicite : "1 sous-zone pour en avoir 4 au
   // maximum et ajouter les boucles d'oreille") -- complète le seul type de bijou qui manquait
   // partout (ACC_SLOTS a bien earring1/earring2, mais aucune zone n'en droppait jusqu'ici).
@@ -246,12 +250,12 @@ const ZONES = [
     hpPer:395, dmg:49, xp:224,
     tint:{ a:'#3c3c34', b:'#36362f', dry:'#44443a' }, tones:['#8a8a68', '#78785a', '#9a9a78'], alphaTone:'#565640',
     loot:{ trash:{name:'Insigne de Bashim',val:92,ch:1}, mat:{name:'Pierre de Caphras',val:8,ch:.058},
-      jackpot:{name:'Boucle Asula',val:22300,ch:.00035,ap:9}, craft:{name:'Fragment de mémoire',ch:.003} } },
+      jackpot:{name:'Boucle Asula',val:22300,ch:.00063,ap:9}, craft:{name:'Fragment de mémoire',ch:.003} } },
   { name:'Forêt de Polly', tier:'Mediah — Early', reqAP:320, reqDP:175, mob:'Troll de Polly',
     hpPer:1120, dmg:140, xp:560,
     tint:{ a:'#25382c', b:'#213228', dry:'#2c4034' }, tones:['#3f6e50', '#356045', '#4a805c'], alphaTone:'#274a34',
     loot:{ trash:{name:'Mousse de Polly',val:135,ch:1}, mat:{name:'Pierre de Caphras',val:4,ch:.055},
-      jackpot:{name:'Tungrad\'s Earring',val:38500,ch:.00011,ap:11}, craft:{name:'Marbre du Dieu déchu',ch:.0013} } },
+      jackpot:{name:'Tungrad\'s Earring',val:38500,ch:.00022,ap:11}, craft:{name:'Marbre du Dieu déchu',ch:.0013} } },
 ];
 let zoneIdx = 0;
 // devient true une fois la vraie sauvegarde cloud chargée (ou d'emblée si Supabase n'est pas

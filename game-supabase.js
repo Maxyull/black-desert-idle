@@ -2507,6 +2507,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V256', d:'14/07/2026 11:00', name:{fr:'Plus de bijoux en zones vertes et bleues', en:'More jewelry in Green and Blue tiers'}, fr:[
+      {t:'change', sub:'objets', severity:'major', tx:'Chance de trouver un bijou rehaussée dans les 4 zones du palier vert (×1.8 : Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) et les 4 zones du palier bleu (×2 : Sanctuaire Elric, Ruines de Kratuga, Planque des Mânes, Forêt de Polly). Paliers gris et blanc inchangés'},
+    ], en:[
+      {t:'change', sub:'objets', severity:'major', tx:'Jewelry drop chance raised in the 4 Green tier zones (×1.8: Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Bashim Base) and the 4 Blue tier zones (×2: Elric Shrine, Kratuga Ruins, Manes Hideout, Polly Forest). Grey and White tiers unchanged'},
+    ] },
   { v:'V255', d:'14/07/2026 10:00', name:{fr:'Les sorts de zone touchent enfin toute la zone', en:'Zone spells finally hit the whole zone'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'Les sorts (Météore, Blizzard, Tempête de foudre, Tremblement de terre...) ont toujours eu un effet visuel étalé sur tout le groupe de monstres, mais ne blessaient en réalité qu\'un seul monstre (le premier vivant) — ils infligent désormais leurs dégâts à TOUS les monstres vivants du groupe ciblé, comme leur effet le laissait déjà croire'},
     ], en:[
