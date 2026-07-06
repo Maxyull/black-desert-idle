@@ -3832,7 +3832,13 @@ function rollDrops(wp, alpha, lm) {
   const table = [
     { ...L.trash,   kind:'trash',    color:'#a08464', key:'trash_'+zk,   icon:'▬', stackable:true,  weight:0.3 },
     { name:tierMat.name, val:L.mat.val, ch:L.mat.ch, kind:'material', color:tierMat.color, key:'mat_'+tierMat.name, icon:tierMat.icon, stackable:true, weight:0.1 },
-    { ...L.jackpot, ap:jackpotAp, val:jackpotVal, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5 },
+    // matName (2026-07-11, bug corrigé : "aucune pierre ne se met dans le slot pour les bijoux") --
+    // manquait sur les bijoux (jackpot), contrairement au gear/armes qui l'ont toujours eu ; sans
+    // lui, findEnhanceMaterial() retombait sur le matériau de la zone COURANTE au lieu de celui du
+    // PALIER du bijou ciblé, cassant l'auto-sélection dès que le bijou équipé n'était pas du même
+    // palier que la zone où l'on farme actuellement (voir tier.material, même valeur que pour
+    // l'armure/les armes de ce palier).
+    { ...L.jackpot, ap:jackpotAp, val:jackpotVal, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5, matName:tierMat.name },
     { ...L.craft,   kind:'craft',    color:'#b48ce8', key:'craft_'+L.craft.name, icon:'✦', stackable:true, weight:0.2, val:0 },
     // "Bout du trésor de Velia" se loot par 1 à 3 (demande explicite du 2026-07-06) -- pickupQty
     // DOIT être tiré ici (dans ce tableau reconstruit à chaque kill), jamais dans la définition
@@ -7229,6 +7235,23 @@ function migrateGearRescaleV235() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
 }
+// migration 2026-07-11 (bug corrigé : "aucune pierre ne se met dans le slot pour les bijoux") --
+// les bijoux (jackpot) n'ont jamais eu de matName depuis leur introduction (voir rollDrops,
+// corrigé juste au-dessus) : findEnhanceMaterial() retombait donc sur le matériau de la zone
+// COURANTE au lieu de celui du PALIER du bijou lui-même. Backfill pour tout bijou déjà possédé
+// (équipé/sac/protégé), à partir de SA PROPRE zone d'origine (JACKPOT_NAME_TO_ZONE, jamais celle
+// où l'on farme actuellement).
+function migrateJewelryMatNameV239() {
+  const fix = it => {
+    if (!it || it.kind !== 'jackpot' || it.matName) return;
+    const zi = JACKPOT_NAME_TO_ZONE[it.name];
+    if (zi == null) return;
+    it.matName = gearTierForZone(zi).material.name;
+  };
+  Object.values(EQUIP).forEach(fix);
+  INV.forEach(fix);
+  COMPENDIUM_BAG.forEach(fix);
+}
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
 // C'est CE bloc qui doit être envoyé/lu depuis la table Supabase "game_saves".
@@ -7264,6 +7287,7 @@ function applySaveState(data) {
   if (!S.migratedJewelryApV207) { migrateJewelryApV207(); S.migratedJewelryApV207 = true; }
   if (!S.migratedGearFixedStatsV226) { migrateGearFixedStatsV226(); S.migratedGearFixedStatsV226 = true; }
   if (!S.migratedGearRescaleV235) { migrateGearRescaleV235(); S.migratedGearRescaleV235 = true; }
+  if (!S.migratedJewelryMatNameV239) { migrateJewelryMatNameV239(); S.migratedJewelryMatNameV239 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO

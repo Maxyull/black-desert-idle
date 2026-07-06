@@ -336,6 +336,40 @@
     optTargetSlot = s.optTargetSlot; EQUIP.weapon = s.EQUIP_weapon; forcedMatKey = s.forcedMatKey;
     INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b;
   }
+  // "strcitement, suit cette liste car aucune pierre ne se met dans le slot pour les bijou" (2026-07-11)
+  // -- bug trouvé : les bijoux (jackpot) n'avaient JAMAIS de matName (contrairement au gear/armes),
+  // donc findEnhanceMaterial() retombait sur le matériau de la zone COURANTE au lieu de celui du
+  // PALIER du bijou ciblé. Vérifie le drop (rollDrops) ET la rétroactivité (migrateJewelryMatNameV239).
+  function testJewelryHasMatNameForEnhancement() {
+    const s = { zoneIdx, optTargetSlot, ring1: EQUIP.ring1, dropsLen: drops.length };
+    // un bijou fraîchement dropé (zone 3, Camp Rhutum, palier blanc/Tuvala) doit porter le matName
+    // de SON palier, exactement comme le gear/les armes (rollDrops, pas rollGearDrop)
+    zoneIdx = 3;
+    assert('Le palier de la zone 3 utilise bien Pierre du Temps (Tuvala)', gearTierForZone(3).material.name === 'Pierre du Temps');
+    let freshJackpotMatName = null;
+    for (let i = 0; i < 500 && freshJackpotMatName == null; i++) {
+      const before = drops.length;
+      rollDrops({x:0,y:0}, true, 1);
+      for (let k = before; k < drops.length; k++) if (drops[k].item.kind === 'jackpot') freshJackpotMatName = drops[k].item.matName;
+    }
+    drops.length = s.dropsLen; // nettoie tous les drops générés par ce test
+    assert('Un bijou fraîchement dropé porte le matName de son palier (Pierre du Temps)',
+      freshJackpotMatName === 'Pierre du Temps', `got=${freshJackpotMatName}`);
+    // simule un bijou déjà possédé AVANT ce correctif (matName jamais renseigné) pour vérifier la
+    // rétroactivité -- "Anneau Tuvala" vient de la zone 3 (voir JACKPOT_NAME_TO_ZONE)
+    EQUIP.ring1 = { name:'Anneau Tuvala', kind:'jackpot', slot:'ring', ap:3, enhLv:0, color:GEAR_TIERS[1].color, key:'r_old' };
+    delete EQUIP.ring1.matName; // simule une sauvegarde d'avant ce correctif
+    migrateJewelryMatNameV239();
+    assert('migrateJewelryMatNameV239 backfill le bon matName (Pierre du Temps)',
+      EQUIP.ring1.matName === 'Pierre du Temps', `got=${EQUIP.ring1.matName}`);
+    // l'auto-sélection de matériau doit utiliser CE matName, jamais la zone où l'on farme
+    // actuellement (ici zone 0, palier gris/Naru -- totalement différent du bijou Tuvala équipé)
+    optTargetSlot = 'ring1';
+    zoneIdx = 0;
+    assert('findEnhanceMaterial utilise le palier du BIJOU (Tuvala), pas la zone actuelle (gris)',
+      (EQUIP.ring1.matName || Z().loot.mat.name) === 'Pierre du Temps');
+    zoneIdx = s.zoneIdx; optTargetSlot = s.optTargetSlot; EQUIP.ring1 = s.ring1;
+  }
   // "sac protégé compendium ... l'item optimisé qui part dans le compendium à la place du +0 garde
   // son optimisation" (2026-07-09) -- ensureCompendiumProtection() doit toujours faire remonter le
   // PLUS enchanté des exemplaires possédés dans le sac protégé (jamais un +0 si mieux existe),
@@ -862,6 +896,7 @@
     testUpgradeIconRequiresDiscoveredZone();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
+    testJewelryHasMatNameForEnhancement();
     testCompendiumBackfillAfterSell();
     testCellEnhBadgeVisibility();
     testNeglectedUpgradeHighlight();
