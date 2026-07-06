@@ -92,6 +92,12 @@ Actuellement en jeu (Velia) : Gris/Blanc/Vert/Bleu seulement (voir ZONES dans in
 
 Armes par palier (déjà utilisées pour Gris→Bleu, à réutiliser telles quelles pour la suite) :
 - Gris : Naru · Blanc : Tuvala · Vert : Yuria · Bleu : Grunil
-- Jaune : Liverto, Kzarka (tueur de dragon), Kutum, Dandelion
+- Jaune (Heidel) : Cliff, Narchilan, Réprimé, Liverto, Kzarka (tueur de dragon), Kutum, Dandelion
 - Orange : Blackstar, Godr-Ayed
 - Rouge : Armes Sovereign
+
+Armure par palier (2026-07-09, ajouté pour accompagner les nouveaux noms d'armes Jaune) :
+- Gris : Naru · Blanc : Tuvala · Vert : Yuria · Bleu : Grunil
+- Jaune (Heidel) : Cliff, Narchilan, Réprimé
+- Orange : à définir
+- Rouge : à définir
