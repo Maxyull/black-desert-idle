@@ -268,11 +268,10 @@
       !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
   }
-  // "sac protégé compendium, si je supprime un objet déjà monté et que je ne l'ai pas déjà en PEN
-  // alors le meilleur prend sa place dans le sac protégé jusqu'à monter en PEN" (2026-07-09) --
-  // sellOne()/sellStack() doivent maintenant promouvoir automatiquement un exemplaire restant du
-  // sac principal si la vente vient de faire disparaître la dernière copie protégée. Priorité à un
-  // +0 (moins coûteux à immobiliser) ; à défaut, prend le premier exemplaire enchanté trouvé.
+  // "sac protégé compendium ... l'item optimisé qui part dans le compendium à la place du +0 garde
+  // son optimisation" (2026-07-09) -- ensureCompendiumProtection() doit toujours faire remonter le
+  // PLUS enchanté des exemplaires possédés dans le sac protégé (jamais un +0 si mieux existe),
+  // en SWAP avec ce qui y était déjà (l'ancien retourne dans le sac principal, jamais perdu).
   function testCompendiumBackfillAfterSell() {
     const TEST_NAME = 'TestUniqueGearXYZ_compendium';
     const s = { a: INV[INV_SIZE-1], b: INV[INV_SIZE-2], c: INV[INV_SIZE-3], pen: S.penMastery[TEST_NAME] };
@@ -282,31 +281,54 @@
     const clearCompBag = () => { for (let i=0;i<INV_SIZE;i++) if (COMPENDIUM_BAG[i] && COMPENDIUM_BAG[i].name===TEST_NAME) COMPENDIUM_BAG[i]=null; };
     clearCompBag();
 
-    // 2 exemplaires en stock : un +0 et un +3, aucun protégé pour l'instant
+    // 2 exemplaires en stock : un +0 et un +3, aucun protégé pour l'instant -> le +3 (le plus
+    // enchanté) doit être protégé, pas le +0
     INV[INV_SIZE-1] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:5, hp:0, enhLv:0, val:10, key:'t1' };
     INV[INV_SIZE-2] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:8, hp:0, enhLv:3, val:20, key:'t2' };
-    sellOne(INV_SIZE-2); // vend le +3 -> doit backfill avec le +0 restant (priorité +0)
+    sellOne(INV_SIZE-1); // vend le +0 (déclencheur quelconque) -> doit protéger le +3 restant
     assert('Backfill : le sac protégé contient bien un exemplaire après la vente', compendiumBagHasName(TEST_NAME));
-    const protectedIt = COMPENDIUM_BAG.find(it => it && it.name === TEST_NAME);
-    assert('Backfill : préfère l\'exemplaire +0 restant', !!protectedIt && (protectedIt.enhLv||0) === 0, `enhLv=${protectedIt&&protectedIt.enhLv}`);
-    assert('Backfill : l\'exemplaire promu a bien quitté le sac principal', INV[INV_SIZE-1] === null);
-    clearCompBag();
+    let protectedIt = COMPENDIUM_BAG.find(it => it && it.name === TEST_NAME);
+    assert('Backfill : protège le PLUS enchanté des exemplaires restants', !!protectedIt && (protectedIt.enhLv||0) === 3, `enhLv=${protectedIt&&protectedIt.enhLv}`);
+    assert('Backfill : l\'exemplaire promu a bien quitté le sac principal', INV[INV_SIZE-2] === null);
+    clearCompBag(); INV[INV_SIZE-1] = null; INV[INV_SIZE-2] = null;
 
-    // un seul exemplaire enchanté restant (pas de +0 disponible) -> doit quand même protéger
-    INV[INV_SIZE-3] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:0, enhLv:5, val:30, key:'t3' };
+    // un +0 est déjà protégé ; un +5 apparaît ensuite dans le sac -> doit SWAP (le +5 prend la
+    // place, le +0 revient dans le sac principal, jamais perdu)
+    INV[INV_SIZE-1] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:4, hp:0, enhLv:0, val:10, key:'t3' };
+    ensureCompendiumProtection(TEST_NAME); // protège d'abord le +0 (rien de mieux disponible)
+    protectedIt = COMPENDIUM_BAG.find(it => it && it.name === TEST_NAME);
+    assert('Swap (préparation) : le +0 est bien protégé en l\'absence de mieux', !!protectedIt && (protectedIt.enhLv||0) === 0);
+    INV[INV_SIZE-2] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:0, enhLv:5, val:30, key:'t4' };
     ensureCompendiumProtection(TEST_NAME);
-    assert('Backfill : protège même un exemplaire déjà enchanté si aucun +0 n\'existe', compendiumBagHasName(TEST_NAME));
-    clearCompBag();
+    protectedIt = COMPENDIUM_BAG.find(it => it && it.name === TEST_NAME);
+    assert('Swap : le +5 prend la place du +0 dans le sac protégé', !!protectedIt && (protectedIt.enhLv||0) === 5, `enhLv=${protectedIt&&protectedIt.enhLv}`);
+    const backInMain = INV.find(it => it && it.name === TEST_NAME && (it.enhLv||0) === 0);
+    assert('Swap : le +0 déplacé revient bien dans le sac principal, jamais perdu', !!backInMain);
+    clearCompBag(); INV[INV_SIZE-1] = null; INV[INV_SIZE-2] = null;
+    // retire aussi la copie du +0 revenue potentiellement à un autre index par invAdd
+    for (let i=0;i<INV_SIZE;i++) if (INV[i] && INV[i].name===TEST_NAME) INV[i]=null;
 
     // déjà PEN -> aucune protection à maintenir, ensureCompendiumProtection ne doit rien faire
-    INV[INV_SIZE-3] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:0, enhLv:5, val:30, key:'t4' };
+    INV[INV_SIZE-3] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:0, enhLv:5, val:30, key:'t5' };
     S.penMastery[TEST_NAME] = true;
     ensureCompendiumProtection(TEST_NAME);
     assert('Backfill : aucune protection si le type est déjà en maîtrise PEN', !compendiumBagHasName(TEST_NAME));
 
     clearCompBag();
+    for (let i=0;i<INV_SIZE;i++) if (INV[i] && INV[i].name===TEST_NAME) INV[i]=null;
     if (s.pen === undefined) delete S.penMastery[TEST_NAME]; else S.penMastery[TEST_NAME] = s.pen;
     INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b; INV[INV_SIZE-3] = s.c;
+  }
+  // "on peut voir l'optimisation dans l'inventaire ET le compendium" (2026-07-09) : le badge de
+  // niveau d'enchantement doit apparaître pour une pièce optimisable enchantée, jamais pour une
+  // pièce non optimisable (bijoux, qui n'ont pas d'enhLv/PRI-PEN)
+  function testCellEnhBadgeVisibility() {
+    const enhanced = { kind:'gear', slot:'helmet', optimizable:true, enhLv:5 };
+    const fresh = { kind:'gear', slot:'helmet', optimizable:true, enhLv:0 };
+    const jewelry = { kind:'jackpot', slot:'ring1', ap:3 };
+    assert('Badge d\'enchant visible sur une pièce enchantée', cellEnhBadgeHtml(enhanced).includes('cellEnh'));
+    assert('Badge d\'enchant aussi visible sur une pièce fraîche (+0)', cellEnhBadgeHtml(fresh).includes('cellEnh'));
+    assert('Pas de badge d\'enchant sur un bijou (non optimisable)', cellEnhBadgeHtml(jewelry) === '');
   }
   // "mettre en évidence Équiper meilleur quand un équipement meilleur est dans l'inventaire depuis
   // plus de 15 secondes et qu'il est meilleur que ton stuff actuel" (2026-07-09) : un objet fraîchement
@@ -409,6 +431,7 @@
     testNoAutoPotionAtVelia();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
     testCompendiumBackfillAfterSell();
+    testCellEnhBadgeVisibility();
     testNeglectedUpgradeHighlight();
     testZonesOfferingUpgradeAggregatesAllSlots();
     testApDpDisplayHasNoDecimals();

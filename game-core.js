@@ -600,9 +600,11 @@ const INV = new Array(INV_SIZE).fill(null);   // chaque slot : null | { key, nam
 const MAX_STACK = 9999;
 // Sac "Compendium" (2026-07-08, demande explicite) : même taille que le sac principal (192 cases).
 // Quand "Vendre" s'apprête à vendre une pièce d'équipement/bijou dont ce TYPE n'a JAMAIS atteint
-// PEN (voir S.penMastery), le PREMIER exemplaire trouvé est déposé ici au lieu d'être vendu — pour
-// ne jamais perdre la chance de le monter en PEN plus tard. Les exemplaires suivants du même type
-// continuent d'être vendus normalement (pas la peine d'en garder plusieurs).
+// PEN (voir S.penMastery), un exemplaire est déposé ici au lieu d'être vendu — pour ne jamais perdre
+// la chance de le monter en PEN plus tard. Toujours le PLUS ENCHANTÉ des exemplaires possédés (voir
+// ensureCompendiumProtection, 2026-07-09) : un exemplaire plus enchanté trouvé dans le sac principal
+// prend automatiquement la place de celui déjà protégé (souvent un +0), qui retourne dans le sac
+// principal — jamais perdu ni détruit.
 const COMPENDIUM_BAG = new Array(INV_SIZE).fill(null);
 function compendiumBagHasName(name) { return COMPENDIUM_BAG.some(s => s && s.name === name); }
 function compendiumBagAdd(obj) {
@@ -612,25 +614,32 @@ function compendiumBagAdd(obj) {
   return true;
 }
 // filet de sécurité : après une VENTE (sellOne/sellStack, jamais "Jeter") qui touche du gear/jackpot,
-// vérifie qu'il reste bien un exemplaire protégé de ce nom tant qu'il n'a jamais atteint PEN — si la
-// vente vient de faire disparaître la dernière copie du sac protégé, promeut automatiquement le
-// meilleur exemplaire ENCORE dans le sac principal à sa place (2026-07-09, demande explicite :
-// "si je supprime un objet déjà monté ... le meilleur prend sa place dans le sac protégé"). Ne
-// touche JAMAIS l'équipement porté (demande explicite) — uniquement le sac principal. Préférence
-// donnée à un exemplaire +0 (le moins coûteux à immobiliser) ; à défaut, prend le premier exemplaire
-// enchanté trouvé plutôt que de laisser le type totalement non protégé.
+// garantit que le sac protégé du Compendium contient toujours le PLUS ENCHANTÉ des exemplaires
+// possédés de ce nom tant qu'il n'a jamais atteint PEN (2026-07-09, demande explicite : "l'item
+// optimisé qui part dans le compendium à la place du +0, garde son optimisation"). Si un exemplaire
+// du sac principal est plus enchanté que celui déjà protégé, il PREND SA PLACE (swap) — l'ancien
+// exemplaire protégé (souvent un +0) retourne dans le sac principal, jamais perdu ni détruit. Ne
+// touche JAMAIS l'équipement porté (demande explicite) — uniquement le sac principal.
 function ensureCompendiumProtection(name) {
-  if (!name || S.penMastery[name] || compendiumBagHasName(name)) return;
-  let bestIdx = -1, bestEnh = Infinity;
+  if (!name || S.penMastery[name]) return;
+  const curIdx = COMPENDIUM_BAG.findIndex(s => s && s.name === name);
+  const current = curIdx !== -1 ? COMPENDIUM_BAG[curIdx] : null;
+  let bestIdx = -1, bestEnh = current ? (current.enhLv || 0) : -1;
   for (let i = 0; i < INV_SIZE; i++) {
     const it = INV[i];
     if (!it || it.name !== name || (it.kind !== 'gear' && it.kind !== 'jackpot')) continue;
     const enh = it.enhLv || 0;
-    if (enh < bestEnh) { bestEnh = enh; bestIdx = i; if (enh === 0) break; }
+    if (enh > bestEnh) { bestEnh = enh; bestIdx = i; }
   }
-  if (bestIdx === -1) return; // plus aucune copie disponible dans le sac : rien à protéger
-  const it = INV[bestIdx];
-  if (compendiumBagAdd(it)) INV[bestIdx] = null;
+  if (bestIdx === -1) return; // rien de mieux dans le sac que ce qui est déjà protégé (ou rien du tout)
+  const better = INV[bestIdx];
+  if (current) {
+    if (!invAdd(current)) return; // sac principal plein : annule le swap, rien ne bouge
+    COMPENDIUM_BAG[curIdx] = { ...better };
+    INV[bestIdx] = null;
+  } else if (compendiumBagAdd(better)) {
+    INV[bestIdx] = null;
+  }
 }
 
 // slots d'équipement type BDO — chaque pièce optimisable porte son PROPRE niveau d'enchant (enhLv)
@@ -2360,11 +2369,12 @@ function renderCompendiumHtml() {
       if (!s) return `<div class="cell compBagCell"></div>`;
       return `<div class="cell compBagCell has" title="${escapeHtml(tr(s.name))}">` +
         `<span style="color:${s.color}">${s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔'}</span>` +
+        cellEnhBadgeHtml(s) +
         `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button></div>`;
     }).join('');
     bodyHtml = `<div class="admHint">${LANG==='fr'
-        ? '"Vendre" protège ici le 1er exemplaire de chaque type d\'équipement/bijou jamais monté en PEN, au lieu de le vendre. Renvoie-le au sac principal pour t\'en servir (il continuera à être protégé si tu le revends).'
-        : '"Sell" protects here the 1st copy of each gear/jewelry type never brought to PEN, instead of selling it. Send it back to your main bag to use it (it\'ll stay protected if you sell it again).'}</div>` +
+        ? '"Vendre 1" garde toujours ici le PLUS ENCHANTÉ des exemplaires possédés de chaque type d\'équipement/bijou jamais monté en PEN, au lieu de le perdre — un exemplaire plus enchanté trouvé dans le sac prend automatiquement sa place. Renvoie-le au sac principal pour t\'en servir.'
+        : '"Sell 1" always keeps here the MOST ENHANCED copy owned of each gear/jewelry type never brought to PEN, instead of losing it — a more enhanced copy found in your bag automatically takes its place. Send it back to your main bag to use it.'}</div>` +
       `<div class="admSummary">${used} / ${INV_SIZE}</div>` +
       `<div class="admInvGrid compBagGrid">${cellsHtml}</div>`;
   } else if (compendiumTab === 'bosses') {
@@ -5720,6 +5730,15 @@ function renderInvCatTabs() {
   });
 }
 
+// badge de niveau d'enchantement pour une case de sac — même logique que pdSlotInnerHtmlFor (poupée
+// d'équipement), réutilisée ici pour le sac principal ET le sac protégé du Compendium (2026-07-09,
+// demande explicite : "on peut voir l'optimisation dans l'inventaire ET le compendium")
+function cellEnhBadgeHtml(s) {
+  if (!s.optimizable) return '';
+  const lvl = s.enhLv || 0;
+  return `<span class="cellEnh${lvl>=PRI_IDX?' pri':''}">${enhShortLabel(lvl)}</span>`;
+}
+
 let hoverInvIndex = -1;
 let lastMouseX = 0, lastMouseY = 0;
 function renderInventory() {
@@ -5750,6 +5769,7 @@ function renderInventory() {
       // (sauvegarde ancienne/corrompue) n'a pas de champ icon — évite une case vide/"undefined"
       const cellIcon = s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔';
       cell.innerHTML = `<span style="color:${s.color}">${cellIcon}</span>` +
+        cellEnhBadgeHtml(s) +
         (s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : '') +
         (s.equipped ? `<span class="eqd">E</span>` : '') +
         (cellApDp && cellApDp.ap ? `<span class="cellAp">${cellApDp.ap}</span>` : '') +

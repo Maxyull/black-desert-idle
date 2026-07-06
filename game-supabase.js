@@ -2359,6 +2359,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V221', d:'09/07/2026 17:00', name:{fr:'Sac protégé : garde le PLUS enchanté (pas le +0), niveau visible partout', en:'Protected bag: keeps the MOST enhanced copy (not +0), level now visible everywhere'}, fr:[
+      {t:'change', sub:'objets', tx:'Le sac protégé du Compendium garde désormais le PLUS ENCHANTÉ des exemplaires possédés d\'un type jamais monté en PEN, plutôt qu\'un simple +0 — un exemplaire plus enchanté trouvé dans le sac prend automatiquement sa place (l\'ancien, souvent un +0, revient dans le sac principal, jamais perdu)'},
+      {t:'new', sub:'interface', tx:'Le niveau d\'enchantement (+1 à PEN) est désormais visible directement sur les cases du sac principal ET du sac protégé du Compendium, comme sur la poupée d\'équipement'},
+    ], en:[
+      {t:'change', sub:'objets', tx:'The Compendium\'s protected bag now keeps the MOST ENHANCED copy owned of a type never brought to PEN, rather than a plain +0 — a more enhanced copy found in the bag automatically takes its place (the old one, often a +0, goes back to the main bag, never lost)'},
+      {t:'new', sub:'interface', tx:'The enhancement level (+1 to PEN) is now visible directly on cells in the main bag AND the Compendium\'s protected bag, just like on the equipment doll'},
+    ] },
   { v:'V220', d:'09/07/2026 16:00', name:{fr:'Sac protégé Compendium : remplacement auto après une vente', en:'Compendium protected bag: auto-replacement after a sale'}, fr:[
       {t:'new', sub:'objets', tx:'Vendre individuellement ("Vendre 1") ta dernière copie d\'une pièce jamais montée en PEN ne la perd plus totalement : si une autre copie du même type traîne dans le sac, elle prend automatiquement sa place dans le sac protégé du Compendium — priorité à un exemplaire +0 (moins coûteux à immobiliser), sinon le premier exemplaire enchanté trouvé'},
     ], en:[
