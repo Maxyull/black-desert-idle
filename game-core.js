@@ -1200,10 +1200,6 @@ function claimLoyalty() {
   m.qty = 0;
   updateMailBadge();
   hud();
-  // hud() ne rafraîchit invSilver/invLoyalty que si la COMPOSITION du sac change (voir
-  // invSignature) -- ici seul le stock de loyalty change, donc mise à jour directe nécessaire
-  // pour un retour visuel immédiat après avoir cliqué "Récupérer"
-  const invLoyaltyEl = $('invLoyalty'); if (invLoyaltyEl) invLoyaltyEl.textContent = '🏅 '+fmt(S.loyalty||0);
 }
 // après une réinitialisation complète, on veut un VRAI 0 immédiat — sans ça, le hud() appelé en
 // fin d'applySaveState() redéclenche aussitôt ensureLoyaltyGrant() (lastLoyaltyDate remis à null
@@ -5475,6 +5471,11 @@ function hud() {
   if (zSig !== lastZoneSig) { lastZoneSig = zSig; buildZoneList(); syncFarmCardHeights(); }
   const iSig = invSignature();
   if (iSig !== lastInvSig) { lastInvSig = iSig; refreshInvUI(); }
+  // silver/loyalty peuvent changer sans toucher à la composition du sac (récompense de succès,
+  // de quête, de boss, achat...) -- mis à jour hors du gate d'invSignature, sinon l'affichage
+  // reste visuellement obsolète jusqu'au prochain vrai changement d'inventaire
+  const invSilverEl = $('invSilver'); if (invSilverEl) invSilverEl.textContent = fmt(S.silver);
+  const invLoyaltyEl2 = $('invLoyalty'); if (invLoyaltyEl2) invLoyaltyEl2.textContent = '🏅 '+fmt(S.loyalty||0);
   ensureQuests('daily');
   ensureQuests('weekly');
   checkAchievements();
@@ -5761,6 +5762,17 @@ function upgradeZonesForEquippedSlot(id, e) {
   if (itemTierIdx(e) >= curTierIdx) return [];
   return safeZonesForSlot(id).filter(zi => atVelia || zi !== zoneIdx);
 }
+// un objet qui améliorerait ce socle est-il déjà possédé, non équipé, dans le sac ? (2026-07-11,
+// demande explicite : "la flèche qui affiche le stuff à farm sur la zone ne doit pas s'afficher si
+// le stuff est dans l'inventaire") -- si oui, inutile de suggérer d'aller le farmer, il suffit de
+// l'équiper. Réutilise refScoreForSlot (même référence -- le pire des 2 anneaux/boucles pour une
+// paire, -1 pour un socle vide -- que hasNeglectedUpgradeInBag) plutôt que de la recalculer.
+function ownedBetterInBagForSlot(slotId) {
+  const accSlot = JEWELRY_SLOTS.includes(slotId) ? accBaseSlot(slotId) : null;
+  const ref = refScoreForSlot(slotId, accSlot);
+  const wantSlot = accSlot || slotId;
+  return INV.some(it => it && (it.kind==='gear' || it.kind==='jackpot') && it.slot === wantSlot && itemScore(it) > ref);
+}
 // ensemble des zones (sûres uniquement) qui offrent vraiment mieux pour AU MOINS un socle du
 // joueur (vide, ou équipé d'un palier inférieur) — sert au badge ⬆️ affiché directement sur les
 // lignes de la liste de zones (2026-07-09, demande explicite : "ajoute l'icone d'upgrade sur les
@@ -5769,6 +5781,7 @@ function upgradeZonesForEquippedSlot(id, e) {
 function zonesOfferingUpgrade() {
   const zones = new Set();
   for (const slotId of [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...JEWELRY_SLOTS]) {
+    if (ownedBetterInBagForSlot(slotId)) continue; // déjà en stock -> équiper, pas farmer
     const e = EQUIP[slotId];
     const list = e ? upgradeZonesForEquippedSlot(slotId, e) : zonesForSlot(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
     list.forEach(zi => zones.add(zi));

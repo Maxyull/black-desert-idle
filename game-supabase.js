@@ -2504,6 +2504,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V236', d:'11/07/2026 17:00', name:{fr:'La flèche de zone ignore le stuff déjà dans le sac', en:'The zone arrow ignores gear already in the bag'}, fr:[
+      {t:'fix', sub:'interface', tx:'L\'icône ⬆️ affichée sur une zone (suggérant d\'aller y farmer un meilleur stuff) pouvait s\'afficher alors que ce meilleur stuff se trouvait déjà, non équipé, dans le sac — il suffisait de l\'équiper, pas d\'aller le farmer. Elle ne s\'affiche plus dans ce cas'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The ⬆️ icon shown on a zone (suggesting better gear could be farmed there) could appear even when that better gear was already sitting unequipped in the bag — equipping it was all that was needed, not farming. It no longer shows in that case'},
+    ] },
   { v:'V235', d:'11/07/2026 16:00', name:{fr:'Combat monstre par monstre, loot Alpha ×2, flèche d\'upgrade limitée aux zones découvertes', en:'Monster-by-monster combat, ×2 Alpha loot, upgrade arrow limited to discovered zones'}, fr:[
       {t:'change', sub:'combat', severity:'major', tx:'Chaque monstre d\'un pack a désormais sa propre barre de vie et son propre loot : avant, tout le pack partageait une seule barre agrégée et tous les monstres mouraient d\'un coup une fois vidée. Ils meurent maintenant un par un au fil du combat, chacun avec sa barre au-dessus de lui'},
       {t:'change', sub:'loot', tx:'Les groupes Alpha (boss de pack) ont maintenant un taux de drop uniformément ×2 par rapport à un groupe normal, sur tous les types de loot (trash, matériau, bijou, craft, trésor, pierre de Cron, armure, arme) — remplace les anciens multiplicateurs disparates (×1.5 et ×1.6 selon le type)'},

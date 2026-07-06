@@ -290,6 +290,29 @@
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
     S.maxZoneIdx = s.maxZoneIdx;
   }
+  // "la flèche qui affiche le stuff à farm sur la zone ne doit pas s'afficher si le stuff est dans
+  // l'inventaire" (2026-07-11) -- zonesOfferingUpgrade() (badge ⬆️ sur les lignes de la liste de
+  // zones) ne doit plus proposer un socle pour lequel un objet meilleur est DÉJÀ possédé, non
+  // équipé, dans le sac : il suffit de l'équiper, pas la peine d'aller le farmer.
+  function testZoneUpgradeArrowHiddenIfAlreadyInBag() {
+    const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP,
+      maxZoneIdx: S.maxZoneIdx, a: INV[INV_SIZE-1] };
+    ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
+    EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey
+    zoneIdx = 3; // palier blanc : la pièce grey équipée est d'un palier inférieur, upgrade possible ici
+    S.maxZoneIdx = ZONES.length - 1;
+    INV[INV_SIZE-1] = null;
+    // teste directement ownedBetterInBagForSlot (pas zonesOfferingUpgrade().has(4), qui agrège
+    // TOUS les socles et dépendrait de l'état réel des autres équipements du perso de démo live)
+    assert('rien de mieux pour l\'arme dans le sac -> ownedBetterInBagForSlot false',
+      !ownedBetterInBagForSlot('weapon'));
+    // objet MEILLEUR que l'équipé (ap:5), pour ce même socle, déjà dans le sac
+    INV[INV_SIZE-1] = { name:'testBetter', kind:'gear', slot:'weapon', ap:50, dp:0, hp:0, enhLv:0, val:1, qty:1, color: GEAR_TIERS[1].color };
+    assert('un objet meilleur déjà dans le sac -> ownedBetterInBagForSlot true',
+      ownedBetterInBagForSlot('weapon'));
+    zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
+    S.maxZoneIdx = s.maxZoneIdx; INV[INV_SIZE-1] = s.a;
+  }
   // "sac protégé compendium ... l'item optimisé qui part dans le compendium à la place du +0 garde
   // son optimisation" (2026-07-09) -- ensureCompendiumProtection() doit toujours faire remonter le
   // PLUS enchanté des exemplaires possédés dans le sac protégé (jamais un +0 si mieux existe),
@@ -750,6 +773,7 @@
     testNoAutoPotionAtVelia();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
     testUpgradeIconRequiresDiscoveredZone();
+    testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testCompendiumBackfillAfterSell();
     testCellEnhBadgeVisibility();
     testNeglectedUpgradeHighlight();
