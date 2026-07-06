@@ -362,6 +362,10 @@
   .zRow.veliaRow:hover { background:rgba(140,201,138,.14); }
   .zRow.veliaRow .zBadge { color:#8fc98a; border-color:#8fc98a; }
   .zBadge { font-size:9px; letter-spacing:.5px; padding:1px 6px; border:1px solid; white-space:nowrap; flex-shrink:0; }
+  /* icône ⬆️ : cette zone offre un meilleur socle (vide ou palier supérieur) que le stuff actuel
+     (2026-07-09, demande explicite) — même logique visibility que zPlayerCount juste en dessous,
+     pour ne jamais faire bouger le reste de la ligne */
+  .zUpgradeIcon { font-size:10px; flex-shrink:0; width:14px; text-align:center; }
   /* nombre de joueurs actuellement sur cette zone (2026-07-06, demande explicite) */
   /* largeur fixe + visibility (jamais display:none) : le bouton 👁 reste TOUJOURS aligné à la même
      position d'une ligne à l'autre, que la zone ait des joueurs ou non (demande explicite du
@@ -428,17 +432,16 @@
   .pdSlot .pdUnequipBtn:hover { background:#2a1616; border-color:var(--danger); color:#fff; transform:scale(1.15); }
   /* raccourci(s) directement sur la case, coin haut-droit, EMPILÉS verticalement (2026-07-05 :
      🔧 optimiser ; 2026-07-09, demande explicite "opti en haut à droite, upgrade sous l'icone
-     d'opti" : ⬆️ zone pour améliorer une case remplie / 📍 où farmer une case vide / 🔒 slot sans
-     source, chacun sous 🔧 s'il est présent) */
+     d'opti" : ⬆️ zone pour améliorer une case remplie OU vide (même icône dans les 2 cas, demande
+     explicite du 2026-07-09) / 🔒 slot sans source, chacun sous 🔧 s'il est présent) */
   .pdSlot .pdCorner { position:absolute; top:-4px; right:-4px; display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
   .pdSlot .pdOptBtn, .pdSlot .pdUpgradeBtn, .pdSlot .pdFarmBtn, .pdSlot .pdLockBtn {
     width:15px; height:15px; line-height:14px;
     text-align:center; font-size:9px; border-radius:50%; background:#1a1822;
     border:1px solid var(--gold-dim); box-shadow:0 1px 3px rgba(0,0,0,.6); cursor:pointer;
   }
-  .pdSlot .pdUpgradeBtn { border-color:#6ea3c9; }
+  .pdSlot .pdUpgradeBtn, .pdSlot .pdFarmBtn { border-color:#6ea3c9; }
   .pdSlot .pdLockBtn { cursor:default; border-color:#5a5666; opacity:.85; }
-  .pdSlot .pdFarmBtn { border-color:var(--gold); }
   .pdSlot .pdOptBtn:hover, .pdSlot .pdUpgradeBtn:hover, .pdSlot .pdFarmBtn:hover { background:#2a2416; border-color:var(--gold); transform:scale(1.15); }
   .gicon { width:1.55em; height:1.55em; vertical-align:middle; flex-shrink:0; }
   #pdWeapons { display:flex; justify-content:center; gap:6px; padding:6px 0; border-top:1px solid #2c2a33; border-bottom:1px solid #2c2a33; margin-bottom:2px; }
@@ -456,6 +459,13 @@
   #btnEquipBest, #btnSellWorse { margin-top:8px; font-size:11px; }
   #equipBestMsg { font-size:10.5px; text-align:center; margin-top:4px; min-height:14px; color:var(--ink-dim); }
   #equipBestMsg.ok { color:#8fc98a; }
+  /* mis en évidence quand un meilleur objet traîne dans le sac depuis plus de 15s sans être équipé
+     (2026-07-09, demande explicite) — pulsation dorée, discrète mais visible */
+  #btnEquipBest.hasUpgrade { border-color:var(--gold); box-shadow:0 0 6px 1px rgba(201,165,90,.6); animation:eqBestPulse 1.4s ease-in-out infinite; }
+  @keyframes eqBestPulse {
+    0%, 100% { box-shadow:0 0 6px 1px rgba(201,165,90,.6); }
+    50% { box-shadow:0 0 12px 4px rgba(201,165,90,.95); }
+  }
 
   .statBlock { padding-top:8px; border-top:1px solid #2c2a33; }
   .statBlock .srow { display:flex; justify-content:space-between; font-size:12px; margin:3px 0; }

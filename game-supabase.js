@@ -2359,6 +2359,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V218', d:'09/07/2026 14:00', name:{fr:'Halo sur "Équiper meilleur", icône ⬆️ sur les zones et cases vides', en:'Highlight on "Equip best", ⬆️ icon on zones and empty slots'}, fr:[
+      {t:'new', sub:'interface', tx:'Le bouton "⚡ Équiper meilleur" se met en évidence (pulsation dorée) dès qu\'un objet du sac est resté plus de 15 secondes sans être équipé alors qu\'il est réellement meilleur que la pièce actuelle — pour ne plus oublier un upgrade qui traîne'},
+      {t:'new', sub:'interface', tx:'Icône ⬆️ ajoutée directement sur les lignes de la liste de zones (entre le PA/PD requis et le nombre de joueurs) : indique qu\'un meilleur socle t\'attend dans cette zone, tous équipements confondus'},
+      {t:'change', sub:'interface', tx:'Les cases d\'équipement vides affichent désormais la même icône ⬆️ que les cases remplies (au lieu d\'un pin 📍 séparé) — un socle vide est par définition à améliorer, langage visuel unifié'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The "⚡ Equip best" button now highlights (gold pulse) as soon as a bag item has sat unequipped for more than 15 seconds while being genuinely better than the currently equipped piece — so a forgotten upgrade doesn\'t go unnoticed'},
+      {t:'new', sub:'interface', tx:'⬆️ icon added directly on zone list rows (between required AP/DP and the player count): signals that a better piece awaits in that zone, across all gear slots'},
+      {t:'change', sub:'interface', tx:'Empty equipment slots now show the same ⬆️ icon as filled ones (instead of a separate 📍 pin) — an empty slot is by definition something to upgrade, unified visual language'},
+    ] },
   { v:'V217', d:'09/07/2026 13:00', name:{fr:'Fix icône ⬆️ : n\'apparaît que s\'il existe vraiment un meilleur stuff', en:'Fix ⬆️ icon: only shows when actually better gear exists'}, fr:[
       {t:'fix', sub:'interface', tx:'L\'icône ⬆️ pouvait s\'afficher même quand la pièce déjà équipée était du même palier (ou mieux) que la zone actuelle, donc sans rien de mieux à trouver. Elle ne s\'affiche désormais que si la pièce équipée est d\'un palier strictement inférieur à celui de la zone actuelle ET qu\'une zone sûre différente propose ce palier supérieur'},
     ], en:[

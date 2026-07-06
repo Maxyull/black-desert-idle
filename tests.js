@@ -251,6 +251,35 @@
       !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
   }
+  // "mettre en évidence Équiper meilleur quand un équipement meilleur est dans l'inventaire depuis
+  // plus de 15 secondes et qu'il est meilleur que ton stuff actuel" (2026-07-09) : un objet fraîchement
+  // looté (pickedAt récent) ne doit PAS déclencher le halo (le joueur n'a pas encore eu le temps de
+  // le remarquer) ; un objet ancien mais moins bon non plus ; seul un objet ancien ET meilleur doit
+  const TEST_INV_SLOT = INV_SIZE - 1; // dernière case, réutilisée par les autres tests de la même façon
+  function testNeglectedUpgradeHighlight() {
+    const s = { helmet: EQUIP.helmet, slot: INV[TEST_INV_SLOT] };
+    EQUIP.helmet = { name:'ref', kind:'gear', slot:'helmet', ap:0, dp:5, hp:0, color:GEAR_TIERS[0].color };
+    INV[TEST_INV_SLOT] = { name:'better-fresh', kind:'gear', slot:'helmet', ap:0, dp:50, hp:0, color:GEAR_TIERS[3].color, pickedAt: Date.now() };
+    assert('Pas de halo : objet meilleur mais looté à l\'instant (< 15s)', !hasNeglectedUpgradeInBag());
+    INV[TEST_INV_SLOT] = { name:'worse-old', kind:'gear', slot:'helmet', ap:0, dp:1, hp:0, color:GEAR_TIERS[0].color, pickedAt: Date.now() - 20000 };
+    assert('Pas de halo : objet ancien mais moins bon que l\'équipé', !hasNeglectedUpgradeInBag());
+    INV[TEST_INV_SLOT] = { name:'better-old', kind:'gear', slot:'helmet', ap:0, dp:50, hp:0, color:GEAR_TIERS[3].color, pickedAt: Date.now() - 20000 };
+    assert('Halo : objet ancien (>15s) ET meilleur que l\'équipé', hasNeglectedUpgradeInBag());
+    EQUIP.helmet = s.helmet; INV[TEST_INV_SLOT] = s.slot;
+  }
+  // badge ⬆️ sur les lignes de la liste de zones (2026-07-09, demande explicite) : agrège la même
+  // logique d'upgrade que la poupée d'équipement sur TOUS les slots -- vérifie juste que la zone 4
+  // (seule source d'arme du palier blanc, voir le test précédent) ressort bien de l'agrégat quand
+  // un socle équipé grey se trouve dans un contexte où le palier blanc est accessible
+  function testZonesOfferingUpgradeAggregatesAllSlots() {
+    const s = { zoneIdx, weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP };
+    ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
+    EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color };
+    zoneIdx = 3; // palier blanc, la pièce grey équipée peut être améliorée en zone 4
+    assert('zonesOfferingUpgrade contient la zone source d\'un vrai palier supérieur',
+      zonesOfferingUpgrade().has(4));
+    zoneIdx = s.zoneIdx; EQUIP.weapon = s.weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
+  }
 
   // ---------- affichage PA/PD sans décimale (2026-07-08 : "enleve toute trace de virgule de
   // PA/PD") ----------
@@ -321,6 +350,8 @@
     testDangerousZoneWideAggro();
     testKoStopsMonsterAttacks();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
+    testNeglectedUpgradeHighlight();
+    testZonesOfferingUpgradeAggregatesAllSlots();
     testApDpDisplayHasNoDecimals();
     testEffectiveApDpFloors();
     testJewelryApIsDynamic();

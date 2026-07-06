@@ -671,7 +671,10 @@ function invAdd(obj) {
   }
   const idx = INV.findIndex(s => s === null);
   if (idx === -1) return false; // inventaire plein
-  INV[idx] = { ...obj };
+  // horodatage d'entrée dans le sac (2026-07-09, demande explicite) -- sert à détecter un meilleur
+  // stuff laissé sans y toucher plus de 15s (voir hasNeglectedUpgradeInBag) ; ne l'écrase pas si
+  // déjà présent (ex: un objet qui revient dans le sac après un déséquipement garde sa date d'origine)
+  INV[idx] = { pickedAt: Date.now(), ...obj };
   return true;
 }
 function invRemoveAt(i, n) {
@@ -4975,6 +4978,9 @@ function buildZoneList() {
   // (2026-07-05, bug corrigé) : les 4e zones de chaque palier ont été ajoutées en FIN de tableau
   // (voir ZONES) pour ne jamais décaler les index existants — les parcourir dans l'ordre physique
   // dédoublait les en-têtes de palier (grey/white/green/blue une 2e fois pour ces 4 zones-là).
+  // zones offrant vraiment un meilleur socle (2026-07-09, demande explicite) — calculé UNE fois
+  // avant la boucle, pas par ligne (chaque appel parcourt tous les slots équipables)
+  const upgradeZones = zonesOfferingUpgrade();
   GEAR_TIERS.forEach(tier => {
     const head = document.createElement('div');
     head.className = 'zTierHead';
@@ -4995,10 +5001,12 @@ function buildZoneList() {
       // zonePlayerCounts/refreshZonePlayerCounts (game-supabase.js), alimenté par le heartbeat de
       // présence toutes les 20s ; masqué (pas de case vide) tant que personne n'y est
       const pCount = (typeof zonePlayerCounts !== 'undefined' && zonePlayerCounts[i]) || 0;
+      const hasUpgrade = upgradeZones.has(i);
       row.innerHTML =
         `<span class="zname">${tr(z.name)}</span>` +
         `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
         `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
+        `<span class="zUpgradeIcon"${hasUpgrade?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Meilleur stuff à trouver ici':'Better gear to find here'}">⬆️</span>` +
         `<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span>` +
         `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
       row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
@@ -5246,6 +5254,11 @@ function hud() {
   // dès qu'un panneau se referme (quel que soit le chemin de fermeture — bouton ✕, clic sur le
   // fond, Échap...), voir updatePatchBadge (game-supabase.js)
   if (typeof updatePatchBadge === 'function') updatePatchBadge();
+  // met en évidence "⚡ Équiper meilleur" dès qu'un objet oublié plus de 15s est meilleur que
+  // l'équipé (2026-07-09, demande explicite) — recalculé chaque seconde (hud tourne sur un
+  // setInterval(hud,1000)), pas besoin d'un timer dédié
+  const equipBestBtn = $('btnEquipBest');
+  if (equipBestBtn) equipBestBtn.classList.toggle('hasUpgrade', hasNeglectedUpgradeInBag());
 }
 // aligne la hauteur des cartes "Zones de farm" et "Loot de cette zone" sur celle de la carte
 // Statistiques (demande explicite du 2026-07-06 : "fait en sorte que les carte zone de farm et
@@ -5416,16 +5429,20 @@ function pdSlotInnerHtmlFor(id, e) {
   // haut à droite, upgrade sous l'icone d'opti") : ⬆️ sur une case remplie, UNIQUEMENT s'il existe
   // un vrai stuff meilleur à trouver (voir upgradeZonesForEquippedSlot : palier de la pièce
   // équipée strictement inférieur au palier de la zone actuelle), dans une zone NON dangereuse,
-  // différente de la zone actuelle (demandes explicites successives) ; ou 📍 sur une case vide
-  // (pointe vers où farmer l'objet manquant, dangereux accepté en dernier recours faute
-  // d'alternative) ; 🔒 sur les 3 slots sans aucune source en jeu (artéfacts/pierre)
+  // différente de la zone actuelle (demandes explicites successives) ; MÊME icône ⬆️ sur une case
+  // vide (2026-07-09, demande explicite : "ajoute l'icone d'upgrade sur les case vide" -- un socle
+  // vide EST par définition à améliorer, langage visuel cohérent), dangereux accepté en dernier
+  // recours faute d'alternative ; 🔒 sur les 3 slots sans aucune source en jeu (artéfacts/pierre)
   let goBadge = '';
   if (e) {
     if (upgradeZonesForEquippedSlot(id, e).length) goBadge = `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>`;
   } else if (NO_SOURCE_SLOTS.includes(id)) {
     goBadge = `<span class="pdLockBtn" title="${LANG==='fr'?'Pas encore disponible':'Not available yet'}">🔒</span>`;
   } else if (zonesForSlot(id).length) {
-    goBadge = `<span class="pdFarmBtn" title="${LANG==='fr'?'Où farmer':'Where to farm'}">📍</span>`;
+    // même icône ⬆️ que pour un socle rempli (2026-07-09, demande explicite : "ajoute l'icone
+    // d'upgrade sur les case vide") -- un socle vide EST par définition à améliorer, même symbole
+    // pour un langage visuel cohérent dans toute l'interface
+    goBadge = `<span class="pdFarmBtn" title="${LANG==='fr'?'Zone pour trouver ce stuff':'Zone to find this gear'}">⬆️</span>`;
   }
   const cornerHtml = (optBadge || goBadge) ? `<span class="pdCorner">${optBadge}${goBadge}</span>` : '';
   // croix de déséquipement en bas-droite (2026-07-09, demande explicite) — raccourci direct en
@@ -5506,6 +5523,20 @@ function upgradeZonesForEquippedSlot(id, e) {
   const curTierIdx = GEAR_TIERS.indexOf(gearTierForZone(zoneIdx));
   if (itemTierIdx(e) >= curTierIdx) return [];
   return safeZonesForSlot(id).filter(zi => atVelia || zi !== zoneIdx);
+}
+// ensemble des zones (sûres uniquement) qui offrent vraiment mieux pour AU MOINS un socle du
+// joueur (vide, ou équipé d'un palier inférieur) — sert au badge ⬆️ affiché directement sur les
+// lignes de la liste de zones (2026-07-09, demande explicite : "ajoute l'icone d'upgrade sur les
+// case vide, et sur les zone en question"), en plus de l'icône déjà présente sur la poupée
+// d'équipement elle-même.
+function zonesOfferingUpgrade() {
+  const zones = new Set();
+  for (const slotId of [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...JEWELRY_SLOTS]) {
+    const e = EQUIP[slotId];
+    const list = e ? upgradeZonesForEquippedSlot(slotId, e) : zonesForSlot(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
+    list.forEach(zi => zones.add(zi));
+  }
+  return zones;
 }
 // applique/retire le halo dans #zoneList pour les zones qui lootent l'objet manquant d'un socle vide
 function highlightFarmZones(zones) {
@@ -5983,6 +6014,24 @@ function refScoreForSlot(slotId, accSlot) {
   if (accSlot === 'ring') return Math.min(itemScore(EQUIP.ring1), itemScore(EQUIP.ring2));
   if (accSlot === 'earring') return Math.min(itemScore(EQUIP.earring1), itemScore(EQUIP.earring2));
   return itemScore(EQUIP[slotId]);
+}
+// met en évidence "⚡ Équiper meilleur" (2026-07-09, demande explicite) : au moins un objet du sac
+// est resté SANS être équipé plus de 15s (voir pickedAt dans invAdd) tout en étant réellement
+// meilleur (itemScore) que ce qui est actuellement équipé sur son socle -- signale un oubli plutôt
+// qu'un objet tout juste looté qu'on n'a pas encore eu le temps de comparer
+const NEGLECTED_UPGRADE_DELAY_MS = 15000;
+function hasNeglectedUpgradeInBag() {
+  const now = Date.now();
+  for (let i = 0; i < INV_SIZE; i++) {
+    const it = INV[i]; if (!it) continue;
+    if (it.kind !== 'gear' && it.kind !== 'jackpot') continue;
+    if (now - (it.pickedAt || 0) < NEGLECTED_UPGRADE_DELAY_MS) continue;
+    const slotId = it.kind === 'gear' ? it.slot : accSlotFor(it);
+    const accSlot = it.kind === 'jackpot' ? accSlotFor(it) : null;
+    const ref = refScoreForSlot(slotId, accSlot);
+    if (itemScore(it) > ref) return true;
+  }
+  return false;
 }
 // dernière vente "Vendre l'inférieur" (snapshot des objets vendus) — sert au bouton "↩️ Racheter"
 // pour annuler un clic accidentel, demande explicite du 2026-07-06 ; annulable une seule fois,
