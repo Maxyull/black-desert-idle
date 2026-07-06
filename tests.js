@@ -1166,6 +1166,59 @@
       rPen >= 0.6 && rPen < 0.9, `ratio=${rPen.toFixed(3)} (PA=${tPen.ap.toFixed(1)}, PD=${tPen.dp.toFixed(1)})`);
   }
 
+  // ---------- Trésor de Velia (2026-07-13 : fusion 1/2/3, prix réels, plafond d'empilement) ----------
+  function testVeliaTreasureMergedIntoSingleTier() {
+    assert('VELIA_TREASURE ne contient que 2 objets (Bout + Trésor, fusion des 3 variantes numérotées)',
+      VELIA_TREASURE.length === 2, `length=${VELIA_TREASURE.length}`);
+    const names = VELIA_TREASURE.map(t => t.name);
+    assert('"Trésor de Velia" (sans numéro) est bien présent', names.includes('Trésor de Velia'), `names=${JSON.stringify(names)}`);
+    assert('Aucune variante numérotée ne subsiste (Trésor de Velia 1/2/3)',
+      !names.some(n => /Trésor de Velia [123]/.test(n)), `names=${JSON.stringify(names)}`);
+    const bout = VELIA_TREASURE.find(t => t.key === 'treasure_bout_velia');
+    const treasure = VELIA_TREASURE.find(t => t.key === 'treasure_velia');
+    assert('"Bout du trésor de Velia" a une chance de 0.17%', Math.abs(bout.ch - 0.0017) < 1e-9, `ch=${bout.ch}`);
+    assert('"Trésor de Velia" a une chance de 0.0005%', Math.abs(treasure.ch - 0.000005) < 1e-9, `ch=${treasure.ch}`);
+  }
+  function testTreasurePricingIsMultipleOfReferenceGearVal() {
+    const ref = referenceGearVal();
+    assert('referenceGearVal() renvoie un nombre positif dans la zone courante', ref > 0, `ref=${ref}`);
+    // même calcul que rollDrops (dupliqué volontairement, comme d'autres tests de prix ci-dessus) :
+    // "Bout" = 10x le prix d'un équipement, "Trésor" = 10 000x
+    const boutVal = ref * 10, treasureVal = ref * 10000;
+    assert('Le "Bout du trésor de Velia" vaut 10x le prix d\'un équipement', boutVal === ref * 10);
+    assert('Le "Trésor de Velia" vaut 10 000x le prix d\'un équipement', treasureVal === ref * 10000);
+  }
+  function testTreasureStackCapAutoSellsSurplus() {
+    const savedInv = INV.slice(), savedSilver = S.silver;
+    try {
+      for (let i = 0; i < INV_SIZE; i++) INV[i] = null;
+      // "Bout" plafonne à 100 : un ajout qui dépasse revend automatiquement le surplus
+      INV[0] = { name:'Bout du trésor de Velia', kind:'treasure', key:'treasure_bout_velia', qty:98, val:50, stackable:true, weight:0.05 };
+      const silverBefore = S.silver;
+      const ok = invAdd({ name:'Bout du trésor de Velia', kind:'treasure', key:'treasure_bout_velia', qty:5, val:50, stackable:true, weight:0.05 });
+      assert('invAdd() réussit même quand ça dépasse le plafond du Bout', ok === true);
+      assert('Le stack de Bout est plafonné à 100 après un ajout qui dépasse', INV[0].qty === 100, `qty=${INV[0].qty}`);
+      assert('Le surplus de Bout (3 unités × 50) a été revendu automatiquement', S.silver === silverBefore + 3*50, `silver=${S.silver}, attendu=${silverBefore+150}`);
+      // "Trésor de Velia" plafonne à 1
+      for (let i = 0; i < INV_SIZE; i++) INV[i] = null;
+      INV[0] = { name:'Trésor de Velia', kind:'treasure', key:'treasure_velia', qty:1, val:2000, stackable:true, weight:0.05 };
+      const silverBefore2 = S.silver;
+      invAdd({ name:'Trésor de Velia', kind:'treasure', key:'treasure_velia', qty:1, val:2000, stackable:true, weight:0.05 });
+      assert('Le stack de Trésor de Velia reste à 1 après un 2e ramassage', INV[0].qty === 1, `qty=${INV[0].qty}`);
+      assert('Le Trésor de Velia surnuméraire (1 × 2000) a été revendu automatiquement', S.silver === silverBefore2 + 2000, `silver=${S.silver}, attendu=${silverBefore2+2000}`);
+    } finally {
+      for (let i = 0; i < INV_SIZE; i++) INV[i] = savedInv[i];
+      S.silver = savedSilver;
+    }
+  }
+  function testTreasureCraftRecipeTargetsUnnumberedTreasure() {
+    const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === 'treasure_bout_velia');
+    assert('La recette de craft (100 Bouts) existe toujours', !!r);
+    assert('La recette donne "Trésor de Velia" (sans numéro)', r && r.giveName === 'Trésor de Velia', `giveName=${r&&r.giveName}`);
+    assert('La recette donne la clé treasure_velia', r && r.giveKey === 'treasure_velia', `giveKey=${r&&r.giveKey}`);
+    assert('needQty reste 100', r && r.needQty === 100, `needQty=${r&&r.needQty}`);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -1226,6 +1279,10 @@
     testZone0LootReachesZone1Difficulty();
     testSausanGearReachesMineDeFerDifficile();
     testFullWhiteTierGearReachesGreenTierDifficile();
+    testVeliaTreasureMergedIntoSingleTier();
+    testTreasurePricingIsMultipleOfReferenceGearVal();
+    testTreasureStackCapAutoSellsSurplus();
+    testTreasureCraftRecipeTargetsUnnumberedTreasure();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

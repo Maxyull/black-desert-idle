@@ -753,7 +753,7 @@ function invUsed() { return INV.filter(s => s).length; }
 function invAdd(obj) {
   if (obj.stackable) {
     const slot = INV.find(s => s && s.key === obj.key && s.qty < MAX_STACK);
-    if (slot) { slot.qty += obj.qty; return true; }
+    if (slot) { slot.qty += obj.qty; enforceTreasureStackCap(slot); return true; }
   }
   const idx = INV.findIndex(s => s === null);
   if (idx === -1) return false; // inventaire plein
@@ -761,6 +761,7 @@ function invAdd(obj) {
   // stuff laissé sans y toucher plus de 15s (voir hasNeglectedUpgradeInBag) ; ne l'écrase pas si
   // déjà présent (ex: un objet qui revient dans le sac après un déséquipement garde sa date d'origine)
   INV[idx] = { pickedAt: Date.now(), ...obj };
+  enforceTreasureStackCap(INV[idx]);
   return true;
 }
 function invRemoveAt(i, n) {
@@ -3799,19 +3800,17 @@ function rollWeaponDrop(zone, alpha) {
   return out;
 }
 
-// Trésor de Velia — catégorie EXPÉRIMENTALE ("TEST"), identique dans TOUTES les zones de Velia
-// (pas de scaling par zone/palier), demande explicite du 2026-07-06. Pas encore de recette/usage :
-// juste des collectibles pour l'instant, d'où le badge "TEST" dans la table de loot.
-// chances RE-précisées en % explicite le 2026-07-06 (0.01% = 0.0001, pas 0.01 = 1% comme
-// interprété la première fois) : 100× plus rares qu'à l'origine
+// Trésor de Velia — objets de production à part entière (2026-07-13 : sorti du statut
+// expérimental "TEST", demande explicite), identique dans TOUTES les zones du jeu (pas de scaling
+// par zone/palier pour la CHANCE de drop — le PRIX, lui, suit le palier courant, voir referenceGearVal).
+// Trésor de Velia 1/2/3 fusionnés en un seul "Trésor de Velia" (2026-07-13, demande explicite :
+// "tout les tresors de velia 1/2/3 s'appel maintenant tresors de velia") -- avant, 3 variantes
+// distinctes servaient d'ingrédients pour un objet mystère (voir historique de craftMysteryItem,
+// retiré : il fallait pouvoir empiler 3 exemplaires, impossible désormais que le Trésor plafonne à
+// 1 en sac, voir TREASURE_STACK_CAP).
 const VELIA_TREASURE = [
-  // fusionné en un seul objet le 2026-07-06 (demande explicite : "passage du bout de velia a 0.5%
-  // fixe une seule item pas 2 et elle se loot de 1 a 3") -- avant, 2 "Bout" séparés (0.01%/0.001%)
-  // menaient chacun à un Trésor différent ; un seul Bout désormais, taux fixe 0.5%, 1 à 3 par drop
-  { name:'Bout du trésor de Velia',    ch:.0022,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' }, // 0.22% (2026-07-10, demande explicite)
-  { name:'Trésor de Velia 1',         ch:.00001,  icon:'🗺️', color:'#e8c96a', key:'treasure_velia1' },
-  { name:'Trésor de Velia 2',         ch:.000001, icon:'🗺️', color:'#e8c96a', key:'treasure_velia2' },
-  { name:'Trésor de Velia 3',         ch:.0000001,icon:'🗺️', color:'#e8c96a', key:'treasure_velia3' },
+  { name:'Bout du trésor de Velia', ch:.0017,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' }, // 0.17% (2026-07-13, demande explicite)
+  { name:'Trésor de Velia',         ch:.000005, icon:'🗺️', color:'#e8c96a', key:'treasure_velia' },      // 0.0005% (2026-07-13, demande explicite)
 ];
 // total de morceaux du Trésor de Velia ramassés À VIE (lifetime, via S.lootByItem) — utilisé par
 // les succès et le classement dédié
@@ -3820,19 +3819,40 @@ function treasureTotal(S) {
   for (const t of new Set(VELIA_TREASURE.map(x => x.name))) total += S.lootByItem[t] || 0;
   return total;
 }
+// "prix d'un équipement" de référence (2026-07-13, demande explicite) pour tarifer le Trésor de
+// Velia -- réutilise TELLE QUELLE la formule de valeur d'une pièce d'armure de rollGearDrop (même
+// palier/zone que celle où le trésor est looté), pour rester automatiquement à jour si
+// GEAR_SELL_MULT ou les stats de zone changent (voir la règle mémoire "rebalance stuff = rétroactif
+// automatique" : préférer une formule dynamique à un chiffre figé).
+function referenceGearVal() {
+  const zone = Z(), tier = gearTierForZone(zoneIdx);
+  const basisAP = zone.gearBasisAP ?? zone.reqAP, basisDP = zone.gearBasisDP ?? zone.reqDP;
+  const slot = (ZONE_ARMOR_SLOTS[zoneIdx] || GEAR_SLOTS)[0];
+  const role = GEAR_ROLE[slot];
+  const ap = role.apShare ? gearFloor(basisAP * role.apShare) : 0;
+  const dp = role.dpShare ? gearFloor(basisDP * role.dpShare) : 0;
+  const hp = role.hpShare ? gearFloor(basisDP * role.hpShare * HP_GEAR_SCALE) : 0;
+  return Math.round((ap*2 + dp + hp*0.5) * GEAR_SELL_MULT);
+}
+// plafond d'empilement en sac (2026-07-13, demande explicite) : au-delà, le surplus est vendu
+// automatiquement (voir enforceTreasureStackCap, appelé depuis invAdd) plutôt que de bloquer le
+// ramassage ou de remplir le sac indéfiniment.
+const TREASURE_STACK_CAP = { treasure_bout_velia:100, treasure_velia:1 };
+function enforceTreasureStackCap(slot) {
+  if (!slot || slot.kind !== 'treasure') return;
+  const cap = TREASURE_STACK_CAP[slot.key]; if (!cap) return;
+  if (slot.qty > cap) {
+    const excess = slot.qty - cap;
+    addSilver(excess * (slot.val||0), 'sell', slot.name);
+    slot.qty = cap;
+  }
+}
 
-// ---------- conversions du Trésor de Velia (craft) — demande explicite du 2026-07-08 ----------
-// 100 "Bout du trésor de Velia N" → 1 "Trésor de Velia N" (même numéro) ; 3 Trésors de Velia AU
-// TOTAL (n'importe lesquels/mélangés) → 1 "Objet inconnu" (récompense mystère, contenu réel encore
-// à définir — catégorie toujours "TEST", comme le reste du Trésor de Velia).
-// un seul "Bout" désormais (voir VELIA_TREASURE, fusion du 2026-07-06) : une seule recette, vers
-// le 1er Trésor -- le 2e/3e restent obtenables via leur propre drop direct (très rare) dans VELIA_TREASURE
+// ---------- conversion du Trésor de Velia (craft) — demande explicite du 2026-07-08 ----------
+// 100 "Bout du trésor de Velia" → 1 "Trésor de Velia".
 const TREASURE_PIECE_RECIPES = [
-  { needKey:'treasure_bout_velia', needQty:100, giveName:'Trésor de Velia 1', giveKey:'treasure_velia1' },
+  { needKey:'treasure_bout_velia', needQty:100, giveName:'Trésor de Velia', giveKey:'treasure_velia' },
 ];
-const MYSTERY_ITEM = { name:'Objet inconnu', icon:'❓', color:'#8878aa', key:'treasure_objet_inconnu' };
-const MYSTERY_NEED_QTY = 3;
-const MYSTERY_SOURCE_KEYS = ['treasure_velia1','treasure_velia2','treasure_velia3'];
 function invSlotByKey(key) { return INV.findIndex(s => s && s.key === key); }
 function invQtyByKey(key) { const i = invSlotByKey(key); return i===-1 ? 0 : INV[i].qty; }
 // une place est déjà garantie si l'objet résultant a déjà un stack existant (il fusionne dedans) —
@@ -3842,28 +3862,10 @@ function craftTreasurePiece(recipe) {
   if (invQtyByKey(recipe.needKey) < recipe.needQty) return false;
   if (!invHasRoomFor(recipe.giveKey)) { floatTxt(P.x,P.y,90,LANG==='fr'?'Sac plein !':'Bag full!',{hurt:true}); return false; }
   invRemoveAt(invSlotByKey(recipe.needKey), recipe.needQty);
-  invAdd({ name:recipe.giveName, kind:'treasure', icon:'🗺️', color:'#e8c96a', key:recipe.giveKey, qty:1, stackable:true, weight:0.05, val:0, ap:0, dp:0, hp:0, dodge:0 });
+  invAdd({ name:recipe.giveName, kind:'treasure', icon:'🗺️', color:'#e8c96a', key:recipe.giveKey, qty:1, stackable:true, weight:0.05, val:referenceGearVal()*10000, ap:0, dp:0, hp:0, dodge:0 });
   trackLoot(recipe.giveName);
   floatTxt(P.x,P.y,90,'🗺️ '+recipe.giveName,{gold:true});
   logToDiscord('🔧 Craft', `**${myPseudo||'Joueur'}** combine ${recipe.needQty} morceaux en 1 ${recipe.giveName}`, 0xe8c96a);
-  renderInventory();
-  return true;
-}
-function craftMysteryItem() {
-  const total = MYSTERY_SOURCE_KEYS.reduce((s,k) => s + invQtyByKey(k), 0);
-  if (total < MYSTERY_NEED_QTY) return false;
-  if (!invHasRoomFor(MYSTERY_ITEM.key)) { floatTxt(P.x,P.y,90,LANG==='fr'?'Sac plein !':'Bag full!',{hurt:true}); return false; }
-  let remaining = MYSTERY_NEED_QTY;
-  for (const k of MYSTERY_SOURCE_KEYS) {
-    if (remaining <= 0) break;
-    const idx = invSlotByKey(k); if (idx === -1) continue;
-    const take = Math.min(INV[idx].qty, remaining);
-    invRemoveAt(idx, take); remaining -= take;
-  }
-  invAdd({ name:MYSTERY_ITEM.name, kind:'treasure', icon:MYSTERY_ITEM.icon, color:MYSTERY_ITEM.color, key:MYSTERY_ITEM.key, qty:1, stackable:true, weight:0.05, val:0, ap:0, dp:0, hp:0, dodge:0 });
-  trackLoot(MYSTERY_ITEM.name);
-  floatTxt(P.x,P.y,95,'❓ '+MYSTERY_ITEM.name,{lvl:true});
-  logToDiscord('❓ Objet mystère', `**${myPseudo||'Joueur'}** combine 3 Trésors de Velia en 1 Objet inconnu... quel mystère !`, 0x8878aa);
   renderInventory();
   return true;
 }
@@ -3879,17 +3881,11 @@ function renderTreasureCraftPanel() {
     return `<button class="craftRecipeBtn${ok?' ready':''}" data-kind="piece" data-key="${r.needKey}" ${ok?'':'disabled'}>` +
       `🧩 ${have}/${r.needQty} → 🗺️ ${escapeHtml(r.giveName)}</button>`;
   }).join('');
-  const mysteryHave = MYSTERY_SOURCE_KEYS.reduce((s,k) => s + invQtyByKey(k), 0);
-  const mysteryOk = mysteryHave >= MYSTERY_NEED_QTY;
-  const mysteryRow = `<button class="craftRecipeBtn${mysteryOk?' ready':''}" data-kind="mystery" ${mysteryOk?'':'disabled'}>` +
-    `🗺️ ${mysteryHave}/${MYSTERY_NEED_QTY} → ❓ ${LANG==='fr'?'Objet inconnu':'Unknown Item'}</button>`;
   el.innerHTML = `<div class="craftPanelTitle">${LANG==='fr'?'🔧 Combiner':'🔧 Combine'}</div>` +
-    `<div class="craftRecipes">${pieceRows}${mysteryRow}</div>`;
+    `<div class="craftRecipes">${pieceRows}</div>`;
   el.querySelectorAll('.craftRecipeBtn[data-kind="piece"]').forEach(btn => {
     btn.onclick = () => { const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === btn.dataset.key); if (r) craftTreasurePiece(r); renderTreasureCraftPanel(); };
   });
-  const mb = el.querySelector('.craftRecipeBtn[data-kind="mystery"]');
-  if (mb) mb.onclick = () => { craftMysteryItem(); renderTreasureCraftPanel(); };
 }
 // affiche un % avec juste assez de décimales pour rester lisible même sur des chances minuscules
 // (ex: 0.00001%) — toFixed(1) fixe habituel afficherait juste "0.0%"
@@ -3950,7 +3946,10 @@ function rollDrops(wp, alpha, lm) {
     // DOIT être tiré ici (dans ce tableau reconstruit à chaque kill), jamais dans la définition
     // statique de VELIA_TREASURE (const de module, évaluée UNE SEULE fois au chargement du script :
     // un Math.random() y serait figé pour toute la session au lieu d'être retiré à chaque drop)
-    ...VELIA_TREASURE.map(t => ({ name:t.name, val:0, ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05,
+    // val (2026-07-13, demande explicite) : "Bout" = 10× le prix d'un équipement de CE palier,
+    // "Trésor de Velia" = 10 000× -- voir referenceGearVal (ignoré par le multiplicateur alpha/lm
+    // habituel juste en dessous, ce n'est pas un revenu de trash mais un prix de vente fixe)
+    ...VELIA_TREASURE.map(t => ({ name:t.name, val:referenceGearVal()*(t.key==='treasure_bout_velia'?10:10000), ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05,
       pickupQty: t.key==='treasure_bout_velia' ? 1+Math.floor(Math.random()*3) : 1 })),
     // Pierre de Cron : taux FIXE (voir CRON_STONE.ch), identique dans TOUTES les zones du jeu
     // (indépendante du palier de stuff). 1 à 3 unités par drop (pickupQty).
@@ -3963,8 +3962,10 @@ function rollDrops(wp, alpha, lm) {
     drops.push({
       x: wp.x + Math.cos(a)*r, y: wp.y + Math.sin(a)*r,
       item, taken:false,
-      // valeur FIXE par zone × lootMult(r) — plus aucun scaling au niveau joueur
-      silver: Math.ceil((item.val||0) * (alpha?1.6:1) * lm),
+      // valeur FIXE par zone × lootMult(r) — plus aucun scaling au niveau joueur ; le Trésor de
+      // Velia échappe à ce multiplicateur (2026-07-13) : son prix est déjà un multiple fixe du
+      // prix d'un équipement (voir referenceGearVal ci-dessus), pas un revenu de trash à booster
+      silver: item.kind === 'treasure' ? item.val : Math.ceil((item.val||0) * (alpha?1.6:1) * lm),
       age:0, pop:.35,
     });
   }
@@ -6100,7 +6101,7 @@ const INV_CATEGORIES = [
   { id:'opt',         icon:'✦',  label:{fr:'Optimisation',en:'Enhancement'}, kinds:['material','craft'] },
   { id:'consumable',  icon:'🧪', label:{fr:'Consommable',en:'Consumable'},   kinds:['consumable'], locked:true },
   { id:'rng',         icon:'🎲', label:{fr:'RNG',en:'RNG'},          kinds:['rngbox'], locked:true },
-  // inventaire dédié au "Trésor de Velia" (catégorie TEST) — demande explicite du 2026-07-06
+  // inventaire dédié au "Trésor de Velia" — demande explicite du 2026-07-06
   { id:'treasure',    icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, kinds:['treasure'] },
 ];
 let invCategory = 'normal';
@@ -7150,16 +7151,16 @@ function renderLootTable(previewIdx) {
     ? (LANG==='fr' ? '👁 Aperçu — ' : '👁 Preview — ') : '';
   $('lootZoneName').textContent = previewTag + tr(z.mob);
   const mainRowsHtml = zoneLootRowsHtml(idx);
-  // catégorie EXPÉRIMENTALE "Trésor de Velia" : identique dans toutes les zones de Velia, marquée
-  // TEST en attendant une vraie recette/usage — demande explicite du 2026-07-06
-  const testRowsHtml = VELIA_TREASURE.map(t => `
+  // catégorie "Trésor de Velia" : identique dans toutes les zones du jeu (sortie du statut
+  // expérimental le 2026-07-13, demande explicite)
+  const treasureRowsHtml = VELIA_TREASURE.map(t => `
     <div class="lootRow">
       <div class="lootIcon k-treasure" style="color:${t.color};border-color:${t.color}">${t.icon}</div>
       <div class="lootInfo"><div class="ln" style="color:${t.color}">${tr(t.name)}</div></div>
       <div class="lootPct">${fmtTinyPct(t.ch)}</div>
     </div>`).join('');
   $('lootTable').innerHTML = mainRowsHtml +
-    `<div class="lootCatHead">🧪 TEST</div>` + testRowsHtml;
+    `<div class="lootCatHead">🗺️ ${LANG==='fr'?'Trésor de Velia':'Velia Treasure'}</div>` + treasureRowsHtml;
 }
 function dropItem(i) {
   const s = INV[i]; if (!s) return;

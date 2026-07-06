@@ -420,7 +420,12 @@
   #eqSumLvl { color:#fff; }
   #eqSumXp { color:var(--gold); }
   #eqSumGs { color:#9cc9e8; }
-  #paperdoll { display:flex; align-items:center; justify-content:space-between; gap:2px; margin-bottom:6px; }
+  /* padding-right (2026-07-13, demande explicite "certain item se retrouve derriere la page
+     inventaire, met les juste plus a gauche") : les badges de coin (.pdCorner, ⬆️/🔧) débordent de
+     4px hors de leur .pdSlot -- sans marge, la colonne #pdRight (collée au bord droit via
+     justify-content:space-between) les pousse jusqu'à la limite de la carte, où overflow-x:hidden
+     (fix Firefox du 2026-07-12) peut les rogner juste avant la carte Inventaire voisine */
+  #paperdoll { display:flex; align-items:center; justify-content:space-between; gap:2px; margin-bottom:6px; padding-right:8px; }
   .pdCol { display:flex; flex-direction:column; gap:5px; }
   /* pdRight est passé de 6 à 9 emplacements (2 artéfacts + 1 pierre, demande du 2026-07-07) —
      wrap en colonnes de 3 pour rester compact plutôt qu'une seule colonne trop haute */

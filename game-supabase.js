@@ -2507,6 +2507,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V253', d:'14/07/2026 08:00', name:{fr:'Trésor de Velia en production, plafond d\'empilement, poupée décalée', en:'Velia Treasure goes live, stack cap, doll shifted left'}, fr:[
+      {t:'change', sub:'objets', severity:'major', tx:'Le Trésor de Velia sort du statut expérimental "TEST" : "Bout du trésor de Velia" (0.17% de chance) et "Trésor de Velia" (0.0005%, fusion des anciennes variantes 1/2/3) ont désormais un vrai prix de revente — 10× le prix d\'un équipement du palier courant pour un Bout, 10 000× pour un Trésor'},
+      {t:'change', sub:'objets', tx:'Le sac plafonne les Bouts à 100 et le Trésor de Velia à 1 : tout surplus est revendu automatiquement au prix ci-dessus au lieu de bloquer le ramassage ou remplir le sac. L\'ancien objet mystère "Objet inconnu" (qui demandait d\'empiler 3 Trésors différents) est retiré, devenu impossible à obtenir avec ce plafond'},
+      {t:'fix', sub:'interface', tx:'Certaines icônes de la poupée d\'équipement (côté droit : bijoux/artefacts) pouvaient se retrouver coupées près du bord de la carte, juste à côté de l\'Inventaire — décalées d\'une marge supplémentaire vers la gauche'},
+    ], en:[
+      {t:'change', sub:'objets', severity:'major', tx:'Velia Treasure leaves the experimental "TEST" status: "Velia Treasure Fragment" (0.17% chance) and "Velia Treasure" (0.0005%, merging the old 1/2/3 variants) now have a real sell price — 10x the price of a current-tier equipment piece for a fragment, 10,000x for a Treasure'},
+      {t:'change', sub:'objets', tx:'The bag caps fragments at 100 and Velia Treasure at 1: any surplus is auto-sold at the price above instead of blocking pickup or filling the bag. The old "Unknown Item" mystery item (which required stacking 3 different Treasures) is removed, now impossible to obtain with this cap'},
+      {t:'fix', sub:'interface', tx:'Some equipment doll icons (right side: jewelry/artifacts) could end up clipped near the card edge, right next to the Inventory panel — shifted with extra left margin'},
+    ] },
   { v:'V252', d:'13/07/2026 08:00', name:{fr:'Mode Opti (IA pack à pack), slider de mode, icônes de stuff agrandies', en:'Opti mode (pack-to-pack AI), mode slider, bigger gear icons'}, fr:[
       {t:'new', sub:'combat', severity:'major', tx:'Nouveau 3e mode de farm "🌀 Opti" : dès que le pack combattu tombe à 70% de vie cumulée, le personnage repère déjà le pack vivant le plus proche et bascule dessus dès qu\'il serait normalement aggro — enchaîne les packs sans jamais attendre la fin d\'un combat'},
       {t:'change', sub:'interface', tx:'Le bouton de mode de farm est remplacé par un slider à 3 crans (🎒 Loot / 📖 XP / 🌀 Opti), plus lisible qu\'un simple clic cyclique'},
@@ -4676,22 +4685,14 @@ function renderCodexHtml() {
   const crafts = [...craftSet.values()].map(c => ({ icon:'✦', name:tr(c.name), desc:LANG==='fr'?'Composant de craft endgame':'Endgame crafting component' }));
   // butin de base (trash → silver)
   const trash = ZONES.map((z,i) => ({ icon:'▬', name:tr(z.loot.trash.name), desc:`${fmt(z.loot.trash.val)} silver · ${tr(z.mob)}` }));
-  // Trésor de Velia (catégorie TEST) : dédoublonne les 2 lignes "Bout du trésor de Velia 1" en
-  // affichant leurs 2 chances côte à côte plutôt que 2 lignes identiques
-  const treasureByName = new Map();
-  VELIA_TREASURE.forEach(t => {
-    if (!treasureByName.has(t.name)) treasureByName.set(t.name, []);
-    treasureByName.get(t.name).push(t.ch);
-  });
-  const treasures = [...treasureByName.entries()].map(([name, chs]) => {
-    const t = VELIA_TREASURE.find(x => x.name === name);
-    return { icon:t.icon, name:tr(name), desc:`${LANG==='fr'?'TEST — toutes zones de Velia':'TEST — all Velia zones'} · ${chs.map(fmtTinyPct).join(' / ')}` };
-  });
+  // Trésor de Velia (2026-07-13, sorti du statut expérimental "TEST", demande explicite)
+  const treasures = VELIA_TREASURE.map(t =>
+    ({ icon:t.icon, name:tr(t.name), desc:`${LANG==='fr'?'Toutes zones':'All zones'} · ${fmtTinyPct(t.ch)}` }));
   return `<div class="admSummary">${LANG==='fr'?'Tous les objets actuellement présents dans le jeu.':'All items currently in the game.'}</div>` +
     section(LANG==='fr'?'💎 Bijoux rares':'💎 Rare jewelry', jewels) +
     section(LANG==='fr'?'◈ Matériaux d\'optimisation':'◈ Enhancement materials', mats) +
     section(LANG==='fr'?'✦ Composants de craft':'✦ Crafting components', crafts) +
-    section(LANG==='fr'?'🗺️ Trésor de Velia (test)':'🗺️ Velia Treasure (test)', treasures) +
+    section(LANG==='fr'?'🗺️ Trésor de Velia':'🗺️ Velia Treasure', treasures) +
     section(LANG==='fr'?'▬ Butin de base':'▬ Base loot', trash);
 }
 // page Wiki "Tutoriel" : résumé + bouton pour relancer le tutoriel d'arrivée à Velia à tout moment
