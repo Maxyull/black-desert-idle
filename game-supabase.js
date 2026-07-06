@@ -2504,6 +2504,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V239', d:'11/07/2026 20:00', name:{fr:'Fix : l\'auto-équipement ignorait un doublon plus enchanté à socle égal', en:'Fix: auto-equip ignored a more enhanced duplicate with the same base'}, fr:[
+      {t:'fix', sub:'objets', severity:'major', tx:'Quand tu vends un objet dont un exemplaire est déjà équipé avec exactement le même socle de base, l\'auto-équipement (avant vente) ne comparait pas l\'enchantement — un doublon plus enchanté restait ignoré au lieu de remplacer l\'exemplaire équipé moins monté. Concerne aussi les anneaux et boucles d\'oreille (vérifie désormais le slot 1 puis le slot 2, remplace toujours le moins enchanté des deux)'},
+    ], en:[
+      {t:'fix', sub:'objets', severity:'major', tx:'When selling an item with an exact same-base copy already equipped, auto-equip (before the sale) never compared enhancement level — a more enhanced duplicate stayed ignored instead of replacing the less-enhanced equipped copy. Also affects rings and earrings (now checks slot 1 then slot 2, always replaces the less enhanced of the two)'},
+    ] },
   { v:'V238', d:'11/07/2026 19:00', name:{fr:'Rétroactivité du lissage des zones, nom de zone corrigé au chargement', en:'Retroactive zone smoothing, fixed zone name on load'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Les changements de PA/PD requis de zones (échelonnement de Ruines de Trent/Île d\'Iliya/Base de Bashim et lissage de Ruines de Kratuga/Planque des Mânes) ne se répercutaient pas sur le stuff déjà dropé avant ces changements — tout objet déjà possédé de ces zones est désormais recalculé automatiquement, sans toucher à l\'enchantement déjà investi'},
       {t:'fix', sub:'interface', tx:'Le nom de la zone affiché en haut du cadre de jeu pouvait rester bloqué sur "Camp des Loups" après le chargement d\'une sauvegarde sur une autre zone, tant qu\'aucun voyage manuel n\'était fait. Il reflète désormais toujours la vraie zone dès le chargement'},
