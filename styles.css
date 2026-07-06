@@ -415,15 +415,18 @@
   }
   .pdSlot .pdAp { left:-3px; color:#e0a86e; }
   .pdSlot .pdDp { right:-3px; color:#8fc9c9; }
-  /* raccourci(s) directement sur la case, coin haut-droit (2026-07-05 : 🔧 optimiser ; 2026-07-09 :
-     ⬆️ zone pour améliorer une case remplie / 📍 où farmer une case vide, ajoutés côte à côte) */
-  .pdSlot .pdCorner { position:absolute; top:-4px; right:-4px; display:flex; gap:2px; }
-  .pdSlot .pdOptBtn, .pdSlot .pdUpgradeBtn, .pdSlot .pdFarmBtn {
+  /* raccourci(s) directement sur la case, coin haut-droit, EMPILÉS verticalement (2026-07-05 :
+     🔧 optimiser ; 2026-07-09, demande explicite "opti en haut à droite, upgrade sous l'icone
+     d'opti" : ⬆️ zone pour améliorer une case remplie / 📍 où farmer une case vide / 🔒 slot sans
+     source, chacun sous 🔧 s'il est présent) */
+  .pdSlot .pdCorner { position:absolute; top:-4px; right:-4px; display:flex; flex-direction:column; align-items:flex-end; gap:2px; }
+  .pdSlot .pdOptBtn, .pdSlot .pdUpgradeBtn, .pdSlot .pdFarmBtn, .pdSlot .pdLockBtn {
     width:15px; height:15px; line-height:14px;
     text-align:center; font-size:9px; border-radius:50%; background:#1a1822;
     border:1px solid var(--gold-dim); box-shadow:0 1px 3px rgba(0,0,0,.6); cursor:pointer;
   }
   .pdSlot .pdUpgradeBtn { border-color:#6ea3c9; }
+  .pdSlot .pdLockBtn { cursor:default; border-color:#5a5666; opacity:.85; }
   .pdSlot .pdFarmBtn { border-color:var(--gold); }
   .pdSlot .pdOptBtn:hover, .pdSlot .pdUpgradeBtn:hover, .pdSlot .pdFarmBtn:hover { background:#2a2416; border-color:var(--gold); transform:scale(1.15); }
   .gicon { width:1.55em; height:1.55em; vertical-align:middle; flex-shrink:0; }
@@ -518,8 +521,11 @@
   .cell.k-craft.has { background:#221c2a; border-color:#4a3a5a; }
   .cell.k-gear.has { background:#26200f; border-color:var(--gold-dim); }
   .cell.k-treasure.has { background:#221c14; border-color:#4a3a28; }
+  /* réorganisé le 2026-07-09 (demande explicite) pour ne plus superposer qty et cellDp qui
+     partageaient tous les deux bottom-right : coins logiques identiques à la poupée d'équipement
+     (haut-gauche = équipé, haut-droit = quantité, bas-gauche = PA, bas-droit = PD) */
   .cell .qty {
-    position:absolute; bottom:-1px; right:2px; font-size:9px; color:var(--ink);
+    position:absolute; top:1px; right:2px; font-size:9px; color:var(--ink);
     text-shadow:0 0 3px #000,0 0 3px #000; font-family:Arial;
   }
   .cell .eqd { position:absolute; top:1px; left:2px; font-size:8px; color:#7aa35e; }

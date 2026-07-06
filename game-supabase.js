@@ -2359,6 +2359,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V214', d:'09/07/2026 11:00', name:{fr:'Icônes de case réorganisées, cadenas sur les slots sans source, fix sac', en:'Reorganized slot icons, lock on sourceless slots, bag fix'}, fr:[
+      {t:'change', sub:'interface', tx:'Coin haut-droit des cases d\'équipement réorganisé : 🔧 (optimiser) en haut, ⬆️/📍/🔒 juste en dessous, plutôt que côte à côte'},
+      {t:'change', sub:'interface', tx:'L\'icône ⬆️ (upgrade) d\'une case équipée ne s\'affiche désormais que s\'il existe une zone NON dangereuse où trouver mieux pour ce socle — plus d\'icône pointant vers une zone dangereuse'},
+      {t:'new', sub:'interface', tx:'Cadenas 🔒 sur les 2 artéfacts et la pierre d\'équipement : ces 3 socles n\'ont encore aucune source en jeu, le cadenas l\'indique clairement au lieu d\'une case vide muette'},
+      {t:'fix', sub:'inventaire', tx:'Dans le sac, la quantité (qty) et le PD affiché d\'un objet se superposaient (les deux étaient en bas à droite) — la quantité passe en haut à droite, les coins suivent maintenant la même logique que la poupée d\'équipement (équipé en haut à gauche, PA en bas à gauche, PD en bas à droite)'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'Top-right corner of equipment slots reorganized: 🔧 (enhance) on top, ⬆️/📍/🔒 stacked right below it instead of side by side'},
+      {t:'change', sub:'interface', tx:'The ⬆️ (upgrade) icon on an equipped slot now only shows if there is a NON-dangerous zone offering something better for that slot — no more icon pointing at a dangerous zone'},
+      {t:'new', sub:'interface', tx:'🔒 lock icon on the 2 artifacts and the equipment stone: these 3 slots have no in-game source yet, the lock makes that clear instead of a silent empty slot'},
+      {t:'fix', sub:'inventaire', tx:'In the bag, an item\'s quantity and its displayed DP overlapped (both bottom-right) — quantity moved to top-right, corners now follow the same logic as the equipment doll (equipped top-left, AP bottom-left, DP bottom-right)'},
+    ] },
   { v:'V213', d:'09/07/2026 10:00', name:{fr:'Cases d\'équipement simplifiées : icônes ⬆️/📍 dédiées, clic = infos seulement', en:'Simplified equipment slots: dedicated ⬆️/📍 icons, click = info only'}, fr:[
       {t:'change', sub:'interface', tx:'Cliquer sur une case équipée n\'affiche plus que le nom et les stats de la pièce ; cliquer sur une case vide n\'affiche plus que le nom du slot et où le farmer (déséquiper reste au double-clic, optimiser reste sur le bouton 🔧)'},
       {t:'new', sub:'interface', tx:'Nouvelle icône ⬆️ en coin sur une case équipée : raccourci direct vers la zone où trouver une meilleure pièce pour ce socle'},

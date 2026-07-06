@@ -5392,12 +5392,20 @@ function pdSlotInnerHtmlFor(id, e) {
   // petit bouton "optimiser" directement sur la pièce équipée (2026-07-05, demande explicite :
   // "petit mais visible") -- raccourci vers le panneau d'optimisation, en plus du menu au clic
   const optBadge = (e && e.optimizable) ? `<span class="pdOptBtn" title="${LANG==='fr'?'Optimiser':'Enhance'}">🔧</span>` : '';
-  // icône "aller à la zone" en coin (2026-07-09, demande explicite) : ⬆️ sur une case remplie
-  // (pointe vers la zone où farmer un meilleur objet pour ce slot) ou 📍 sur une case vide
-  // (pointe vers où farmer l'objet manquant) — regroupées avec 🔧 dans le même coin haut-droit
-  const goBadge = e
-    ? (zonesForSlot(id).length ? `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>` : '')
-    : (zonesForSlot(id).length ? `<span class="pdFarmBtn" title="${LANG==='fr'?'Où farmer':'Where to farm'}">📍</span>` : '');
+  // icône "aller à la zone" en coin, EMPILÉE sous 🔧 (2026-07-09, demande explicite : "opti en
+  // haut à droite, upgrade sous l'icone d'opti") : ⬆️ sur une case remplie (pointe vers une zone
+  // NON dangereuse où trouver mieux pour ce slot — n'apparaît pas si la seule option est
+  // dangereuse, demande explicite) ou 📍 sur une case vide (pointe vers où farmer l'objet
+  // manquant, dangereux accepté en dernier recours faute d'alternative) ; 🔒 sur les 3 slots sans
+  // aucune source en jeu (artéfacts/pierre)
+  let goBadge = '';
+  if (e) {
+    if (safeZonesForSlot(id).length) goBadge = `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>`;
+  } else if (NO_SOURCE_SLOTS.includes(id)) {
+    goBadge = `<span class="pdLockBtn" title="${LANG==='fr'?'Pas encore disponible':'Not available yet'}">🔒</span>`;
+  } else if (zonesForSlot(id).length) {
+    goBadge = `<span class="pdFarmBtn" title="${LANG==='fr'?'Où farmer':'Where to farm'}">📍</span>`;
+  }
   const cornerHtml = (optBadge || goBadge) ? `<span class="pdCorner">${optBadge}${goBadge}</span>` : '';
   return icon + badge + apDpBadge + cornerHtml;
 }
@@ -5420,30 +5428,41 @@ function accBaseSlot(slotId) {
   if (slotId==='earring1'||slotId==='earring2') return 'earring';
   return slotId;
 }
-// zones où farmer/upgrader un socle (vide OU rempli) — demande explicite : "un socle d'équipement
-// vide, lorsque tu cliques dessus, te montre où farm l'item... halo bien visible, tout sauf zone
-// dangereuse". Se base sur le palier de la zone actuellement farmée (zoneIdx) : armes → zones qui
-// garantissent ce type d'arme (ZONE_WEAPON_SLOTS) ; armures → les 4 zones du palier (n'importe
-// laquelle peut looter n'importe quelle pièce d'armure, voir GEAR_SLOTS) ; bijoux → la zone UNIQUE
-// du palier dont le jackpot correspond à ce type (ring/necklace/belt/earring, voir accSlotFor).
-// artifact1/artifact2/eqStone n'ont encore aucune source en jeu (voir renderLifeskillPanelHtml) →
-// jamais de résultat pour ces 3 slots.
-function zonesForSlot(slotId) {
+// slots sans aucune source en jeu pour l'instant (voir renderLifeskillPanelHtml) — affichés
+// avec un cadenas 🔒 plutôt qu'une case vide muette (demande explicite du 2026-07-09)
+const NO_SOURCE_SLOTS = ['artifact1','artifact2','eqStone'];
+// zones candidates pour farmer/upgrader un socle donné, AVANT tout filtre de sécurité — se base
+// sur le palier de la zone actuellement farmée (zoneIdx) : armes → zones qui garantissent ce type
+// d'arme (ZONE_WEAPON_SLOTS) ; armures → les 4 zones du palier (n'importe laquelle peut looter
+// n'importe quelle pièce d'armure, voir GEAR_SLOTS) ; bijoux → la zone UNIQUE du palier dont le
+// jackpot correspond à ce type (ring/necklace/belt/earring, voir accSlotFor). artifact1/artifact2/
+// eqStone → jamais de résultat (voir NO_SOURCE_SLOTS).
+function slotCandidateZones(slotId) {
   const tier = gearTierForZone(zoneIdx);
-  let zones;
   if (WEAPON_SLOTS.includes(slotId)) {
-    zones = tier.zones.filter(zi => (ZONE_WEAPON_SLOTS[zi]||[]).includes(slotId));
+    return tier.zones.filter(zi => (ZONE_WEAPON_SLOTS[zi]||[]).includes(slotId));
   } else if (ARMOR_SLOTS.includes(slotId)) {
-    zones = tier.zones.slice();
+    return tier.zones.slice();
   } else if (['ring1','ring2','necklace','earring1','earring2','belt'].includes(slotId)) {
     const base = accBaseSlot(slotId);
-    zones = tier.zones.filter(zi => accSlotFor(ZONES[zi].loot.jackpot) === base);
-  } else {
-    zones = [];
+    return tier.zones.filter(zi => accSlotFor(ZONES[zi].loot.jackpot) === base);
   }
-  // ne recommande une zone DANGEREUSE que s'il n'existe vraiment aucune alternative plus sûre
+  return [];
+}
+// zones à proposer pour un socle VIDE (popup "où farmer") — demande explicite : "un socle
+// d'équipement vide, lorsque tu cliques dessus, te montre où farm l'item... halo bien visible,
+// tout sauf zone dangereuse". Ne recommande une zone DANGEREUSE que s'il n'existe vraiment aucune
+// alternative plus sûre (sinon le joueur n'a aucune option affichée du tout).
+function zonesForSlot(slotId) {
+  const zones = slotCandidateZones(slotId);
   const safe = zones.filter(zi => bottleneck(ZONES[zi]) >= 0.6);
   return safe.length ? safe : zones;
+}
+// zones à proposer pour l'icône ⬆️ d'un socle REMPLI — demande explicite du 2026-07-09 : cette
+// icône ne doit s'afficher que s'il existe un endroit pour mieux se stuffer qui N'EST PAS une zone
+// dangereuse (pas de fallback sur le dangereux ici, contrairement à zonesForSlot).
+function safeZonesForSlot(slotId) {
+  return slotCandidateZones(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
 }
 // applique/retire le halo dans #zoneList pour les zones qui lootent l'objet manquant d'un socle vide
 function highlightFarmZones(zones) {
@@ -5457,10 +5476,13 @@ function showEquipSlotMenu(cell, slotId) {
   const e = EQUIP[slotId];
   const pop = $('itemPop');
   let html = `<div class="ipName gear">${SLOT_LABEL[slotId] || slotId}</div>`;
-  html += `<div class="ipDesc">${e ? (escapeHtml(e.name)+pdStatSuffix(e)) : (LANG==='fr'?'Rien d\'équipé':'Nothing equipped')}</div>`;
+  const emptyTxt = NO_SOURCE_SLOTS.includes(slotId)
+    ? (LANG==='fr'?'🔒 Pas encore disponible':'🔒 Not available yet')
+    : (LANG==='fr'?'Rien d\'équipé':'Nothing equipped');
+  html += `<div class="ipDesc">${e ? (escapeHtml(e.name)+pdStatSuffix(e)) : emptyTxt}</div>`;
   pop.innerHTML = html;
   let farmZones = [];
-  if (!e) {
+  if (!e && !NO_SOURCE_SLOTS.includes(slotId)) {
     farmZones = zonesForSlot(slotId);
     if (farmZones.length) {
       const box = document.createElement('div');
@@ -5511,11 +5533,12 @@ function fillPdCol(colId, ids) {
       $('optCard').scrollIntoView({ behavior:'smooth', block:'center' });
     };
     // ⬆️/📍 en coin : raccourci direct vers la zone (pas de popup intermédiaire) — demande
-    // explicite du 2026-07-09
+    // explicite du 2026-07-09. ⬆️ ne propose que des zones sûres (safeZonesForSlot, jamais de
+    // fallback dangereux) ; 📍 garde le fallback dangereux de zonesForSlot en dernier recours.
     const goBtn = div.querySelector('.pdUpgradeBtn, .pdFarmBtn');
     if (goBtn) goBtn.onclick = ev => {
       ev.stopPropagation(); hideItemTooltip(); hideItemPop();
-      const zones = zonesForSlot(id);
+      const zones = e ? safeZonesForSlot(id) : zonesForSlot(id);
       if (zones.length) { const zi = zones[0]; if (atVelia || zi !== zoneIdx) travelTo(zi); }
     };
     col.appendChild(div);
