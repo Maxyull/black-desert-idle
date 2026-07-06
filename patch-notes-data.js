@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V258', d:'14/07/2026 13:00', name:{fr:'Nouveau sélecteur de mode de farm, mode Opti retiré', en:'New farm mode selector, Opti mode removed'}, fr:[
+      {t:'change', sub:'interface', severity:'major', tx:'Le mode de farm (Loot/XP) se choisit désormais via un petit sélecteur à bulles à la place du slider — la bulle active s\'affiche en capsule dorée pleine (icône + texte), les autres en icône seule'},
+      {t:'change', sub:'combat', tx:'Le mode "Opti" (pack à pack rapide) est retiré, ainsi que toute sa logique associée — un 3e emplacement verrouillé (cadenas grisé) reste visible dans le sélecteur, en attente d\'un futur mode'},
+    ], en:[
+      {t:'change', sub:'interface', severity:'major', tx:'The farm mode (Loot/XP) is now chosen via a small bubble selector instead of the slider — the active bubble shows as a full gold capsule (icon + text), the others as icon only'},
+      {t:'change', sub:'combat', tx:'The "Opti" mode (fast pack-to-pack) is removed, along with all its associated logic — a 3rd locked slot (greyed padlock) remains visible in the selector, awaiting a future mode'},
+    ] },
   { v:'V257', d:'14/07/2026 12:00', name:{fr:'Nettoyage technique du code (aucun changement de jeu)', en:'Technical code cleanup (no gameplay change)'}, fr:[
       {t:'change', sub:'systeme', tx:'Réorganisation interne du code : les deux gros fichiers du jeu (game-supabase.js et game-core.js) ont été découpés en plusieurs fichiers plus petits et thématiques (admin, chat, marché, boss mondial, rendu, inventaire...) pour être plus faciles à maintenir. Aucun impact sur le gameplay, tout a été vérifié par la suite de tests avant chaque étape'},
     ], en:[

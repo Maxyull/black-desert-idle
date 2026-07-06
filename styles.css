@@ -173,17 +173,31 @@
     padding:4px 14px; white-space:nowrap;
   }
   #aiSkill { color:var(--gold); }
-  /* slider à 3 crans (2026-07-12, remplace l'ancien bouton à bascule Loot<->XP) : Loot/XP/Opti,
-     voir FARM_MODE_ORDER */
+  /* sélecteur à bulles (2026-07-14, demande explicite "petit selecteur a bulle") : remplace le
+     slider <input type="range"> Loot/XP/Opti -- Opti est retiré (voir FARM_MODES), la pilule garde
+     un 3e emplacement verrouillé (.farmModeLocked) en attente d'un futur mode */
   #farmModeSlider {
     position:absolute; top:10px; left:calc(50% + 165px);
-    display:flex; align-items:center; gap:6px;
-    font-size:10px; letter-spacing:1px; text-transform:uppercase;
-    color:var(--gold); background:rgba(10,9,12,.6); border:1px solid var(--gold-dim);
-    padding:4px 10px; white-space:nowrap; border-radius:3px;
+    display:flex; align-items:center; gap:2px;
+    background:rgba(10,9,12,.6); border:1px solid var(--gold-dim);
+    padding:4px; white-space:nowrap; border-radius:20px;
   }
-  #farmModeSlider:hover { background:rgba(201,165,90,.15); }
-  #farmModeRange { width:52px; margin:0; accent-color:var(--gold); cursor:pointer; }
+  .farmModeSeg {
+    display:flex; align-items:center; gap:5px; cursor:pointer;
+    width:28px; height:28px; border-radius:50%; justify-content:center;
+    font-size:13px; color:var(--ink-dim);
+  }
+  .farmModeSeg.active {
+    width:auto; height:auto; border-radius:16px; padding:6px 12px;
+    background:var(--gold); color:#1a1712; font-weight:bold;
+    font-size:11px; letter-spacing:.5px; text-transform:uppercase;
+  }
+  .farmModeSeg .farmModeSegIcon { font-size:13px; }
+  .farmModeLocked {
+    display:flex; align-items:center; justify-content:center;
+    width:28px; height:28px; border-radius:50%; font-size:12px;
+    color:#5a5666; opacity:.6; cursor:not-allowed;
+  }
 
   #skillBar { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
   /* barre d'incantation (2026-07-05, demande explicite : "----------o----------", la matière se

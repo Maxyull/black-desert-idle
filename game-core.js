@@ -1853,34 +1853,37 @@ function aiMode() {
 // mode de farm choisi par le joueur : "Loot" ramasse tout avant de passer au pack suivant (voir
 // killPack + case 'loot' du fsm), "XP" ignore le loot au sol et enchaîne les packs pour maximiser
 // les kills/xp par minute (demande : 2 IA différentes, une full-loot, une full-XP)
-// "Opti" (2026-07-12, demande explicite : "nouvelle ia, pack to pack rapide") : une fois le pack
-// actuel entamé à -30% (HP cumulés des monstres vivants sous 70%), repère déjà le pack vivant le
-// plus proche et bascule dessus dès qu'il aggro (même rayon que l'état 'move'), achevé ou non --
-// voir combatTick/packHpFraction. Toujours 3 modes au total, comme demandé.
+// mode "Opti" (pack to pack rapide) retiré le 2026-07-14 (demande explicite) : un 3e emplacement
+// reste affiché dans le sélecteur, verrouillé (cadenas grisé), en attente d'un futur 3e mode.
 const FARM_MODES = {
   loot: { icon:'🎒', name:{fr:'Loot', en:'Loot'} },
   xp:   { icon:'⚡', name:{fr:'XP',   en:'XP'} },
-  opti: { icon:'🌀', name:{fr:'Opti', en:'Opti'} },
 };
-const FARM_MODE_ORDER = ['loot','xp','opti'];
-// slider à 3 positions (2026-07-12, demande explicite : "fais moi un slider pour le choix d'ia
-// avec les 3 ia") -- remplace l'ancien bouton à bascule (clic = cycle Loot<->XP) par un vrai
-// <input type="range"> à 3 crans (0=Loot, 1=XP, 2=Opti, voir FARM_MODE_ORDER).
+const FARM_MODE_ORDER = ['loot','xp'];
+// sélecteur à bulles (2026-07-14, demande explicite : "petit selecteur a bulle") -- remplace le
+// slider <input type="range"> par une pilule segmentée : le mode actif s'affiche en capsule dorée
+// pleine (icône + texte), les autres modes en icône seule, et un 3e rond grisé/verrouillé (aucun
+// mode derrière pour l'instant) ferme la pilule.
 function renderFarmModeBtn() {
-  const label = $('farmModeLabel'), range = $('farmModeRange'); if (!label || !range) return;
-  const m = FARM_MODES[S.farmMode] || FARM_MODES.loot;
-  label.textContent = m.icon + ' ' + m.name[LANG];
-  range.value = FARM_MODE_ORDER.indexOf(S.farmMode);
+  const el = $('farmModeSlider'); if (!el) return;
+  // repli (2026-07-14) : une sauvegarde existante peut encore avoir S.farmMode==='opti' (mode
+  // retiré) -- sans ce filet, aucune bulle ne s'affiche active tant que le joueur n'en reclique pas une
+  if (!FARM_MODES[S.farmMode]) S.farmMode = 'loot';
   const titles = {
     loot: LANG==='fr' ? 'IA "Loot" : ramasse tout le butin avant de passer au pack suivant' : 'Loot AI: picks up all drops before moving to the next pack',
     xp:   LANG==='fr' ? 'IA "XP" : enchaîne les packs sans ramasser le butin au sol' : 'XP AI: chains packs without picking up ground loot',
-    opti: LANG==='fr' ? 'IA "Opti" : repère déjà le pack suivant et bascule dessus dès qu\'il aggro, pack fini ou non' : 'Opti AI: already spots the next pack and switches to it as soon as it aggros, whether the current one is finished or not',
   };
-  range.title = label.title = titles[S.farmMode] || titles.loot;
+  el.querySelectorAll('.farmModeSeg').forEach(seg => {
+    const key = seg.dataset.mode, m = FARM_MODES[key];
+    const active = S.farmMode === key;
+    seg.classList.toggle('active', active);
+    seg.title = titles[key] || '';
+    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
+  });
 }
-function setFarmModeFromSlider(idx) {
-  S.farmMode = FARM_MODE_ORDER[idx] || 'loot';
-  if (S.farmMode !== 'opti') P.nextPack = null; // pas de pack "déjà repéré" pertinent hors mode Opti
+function setFarmMode(key) {
+  if (!FARM_MODES[key]) return;
+  S.farmMode = key;
   renderFarmModeBtn();
 }
 
@@ -2004,7 +2007,7 @@ function targetPackCount() {
 }
 function resetWorld() {
   packs = []; drops = []; corpses = []; particles = []; floats = [];
-  target = null; P.lootTarget = null; P.manualTarget = null; P.nextPack = null;
+  target = null; P.lootTarget = null; P.manualTarget = null;
   P.x = 0; P.y = 0; cam.x = 0; cam.y = 0; P.lootClusterX = 0; P.lootClusterY = 0;
   P.state = 'search'; P.hp = effHpMax();
   lastLootEntry = null; // évite de fusionner le loot d'une nouvelle zone avec celui d'avant
@@ -2332,32 +2335,8 @@ function pickSkill() {
   return best;
 }
 
-// fraction de PV cumulés encore vivants dans un pack (0 = tous morts, 1 = intact) -- sert au mode
-// de farm "Opti" (2026-07-12, demande explicite : "pack to pack rapide")
-function packHpFraction(p) {
-  let total = 0, cur = 0;
-  for (const w of p.wolves) { total += w.maxHp; if (!w.dead) cur += w.hp; }
-  return total > 0 ? cur/total : 0;
-}
 function combatTick(dt) {
   const mode = aiMode(), tier = hpTier();
-  // IA "Opti" : pack to pack rapide (2026-07-12, demande explicite) -- une fois le pack actuel
-  // entamé à -30% (PV cumulés des monstres vivants sous 70%), repère déjà le pack vivant le plus
-  // proche (hors celui-ci) et bascule directement dessus dès qu'il serait normalement aggro (même
-  // rayon que l'état 'move', d<=170), que l'ancien pack soit fini ou non -- enchaîne les packs sans
-  // temps mort entre deux, quitte à laisser un pack partiellement vidé derrière soi.
-  if (S.farmMode === 'opti' && target && !target.dead && packHpFraction(target) <= 0.7) {
-    if (!P.nextPack || P.nextPack.dead) {
-      P.nextPack = packs.filter(p => !p.dead && p !== target)
-        .sort((a,b) => dist(P.x,P.y,a.x,a.y)-dist(P.x,P.y,b.x,b.y))[0] || null;
-    }
-    if (P.nextPack && dist(P.x,P.y,P.nextPack.x,P.nextPack.y) <= 170) {
-      target = P.nextPack; P.nextPack = null;
-      target.aggro = true;
-      setState(mode==='overgeared' ? 'combat' : 'gather');
-      return;
-    }
-  }
   const wantDist = tier==='agressif' ? 75 : tier==='normal' ? 100 : 130;
   const d = dist(P.x,P.y,target.x,target.y);
   const dx = (P.x-target.x)/(d||1), dy = (P.y-target.y)/(d||1);

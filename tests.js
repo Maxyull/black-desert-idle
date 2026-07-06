@@ -325,50 +325,29 @@
     P.x = s.x; P.y = s.y;
   }
   // "nouvelle ia, pack to pack rapide: l'ia choisi deja son prochain pack en tournant autour avec
-  // l'ancien quand l'ancien a -30% hp jusqu'a se faire aggro et recommencer sur le pack suivant"
-  // (2026-07-12) -- packHpFraction() calcule bien la fraction de PV cumulés vivants d'un pack.
-  function testPackHpFraction() {
-    const full = { wolves: [ {maxHp:10,hp:10,dead:false}, {maxHp:10,hp:10,dead:false} ] };
-    assert('packHpFraction : pack intact = 1', packHpFraction(full) === 1);
-    const partial = { wolves: [ {maxHp:10,hp:10,dead:false}, {maxHp:10,hp:4,dead:false} ] };
-    assert('packHpFraction : 1 plein + 1 à 40% = 0.7 (moyenne pondérée)', Math.abs(packHpFraction(partial) - 0.7) < 0.001, `got=${packHpFraction(partial)}`);
-    const oneDead = { wolves: [ {maxHp:10,hp:10,dead:false}, {maxHp:10,hp:0,dead:true} ] };
-    assert('packHpFraction : 1 mort sur 2 = 0.5 (le mort compte pour 0, pas son hp figé)', packHpFraction(oneDead) === 0.5);
-    const allDead = { wolves: [ {maxHp:10,hp:0,dead:true}, {maxHp:10,hp:0,dead:true} ] };
-    assert('packHpFraction : pack entièrement mort = 0', packHpFraction(allDead) === 0);
-  }
-  // vérifie le VRAI comportement de bascule en mode Opti : une fois le pack actuel sous 70% de PV
-  // cumulés, combatTick() doit basculer target sur le pack vivant le plus proche dès qu'il serait
-  // aggro (d<=170), sans attendre que l'ancien soit fini.
-  function testOptiModeSwitchesToNextPack() {
-    const s = { farmMode: S.farmMode, target, packs, x: P.x, y: P.y, nextPack: P.nextPack };
-    S.farmMode = 'opti';
-    const oldPack = { x:0, y:0, dead:false, aggro:true, gathered:1,
-      wolves:[{maxHp:10,hp:5,dead:false}] }; // 50% de PV cumulés -> sous le seuil de 70%
-    const nearPack = { x:50, y:0, dead:false, aggro:false, gathered:0,
-      wolves:[{maxHp:10,hp:10,dead:false}] }; // à 50 unités -> < 170, aggro immédiat
-    packs = [oldPack, nearPack];
-    target = oldPack;
-    P.x = 0; P.y = 0; P.nextPack = null;
-    combatTick(0.016);
-    assert('Mode Opti : combatTick bascule sur le pack le plus proche une fois sous 70% de PV', target === nearPack, `target===oldPack? ${target===oldPack}`);
-    assert('Mode Opti : le nouveau pack ciblé est marqué aggro', nearPack.aggro === true);
-    S.farmMode = s.farmMode; target = s.target; packs = s.packs; P.x = s.x; P.y = s.y; P.nextPack = s.nextPack;
-  }
-  // "fais moi un slider pour le choix d'ia avec les 3 ia" (2026-07-12) -- le slider (#farmModeRange)
-  // doit refléter S.farmMode et permettre les 3 valeurs (loot/xp/opti) dans les 2 sens.
-  function testFarmModeSliderReflectsThreeModes() {
-    if (!$('farmModeRange')) return; // pas de DOM (contexte hors-jeu)
+  // mode "Opti" (pack to pack rapide) retiré le 2026-07-14 (demande explicite) : plus que 2 modes
+  // de farm (Loot/XP), voir FARM_MODES/FARM_MODE_ORDER. Le sélecteur à bulles (#farmModeSlider)
+  // doit refléter S.farmMode sur les 2 segments cliquables, et garder un 3e emplacement verrouillé.
+  function testFarmModeBubbleSelectorReflectsTwoModes() {
+    if (!$('farmModeSlider')) return; // pas de DOM (contexte hors-jeu)
     const s = { farmMode: S.farmMode };
-    for (let i = 0; i < FARM_MODE_ORDER.length; i++) {
-      S.farmMode = FARM_MODE_ORDER[i];
+    assert('FARM_MODE_ORDER ne contient plus que loot/xp (Opti retiré)',
+      FARM_MODE_ORDER.length === 2 && !FARM_MODE_ORDER.includes('opti'), `order=${JSON.stringify(FARM_MODE_ORDER)}`);
+    for (const key of FARM_MODE_ORDER) {
+      S.farmMode = key;
       renderFarmModeBtn();
-      assert(`Slider : value correspond bien à S.farmMode="${FARM_MODE_ORDER[i]}"`, parseInt($('farmModeRange').value,10) === i);
+      const seg = $('farmModeSlider').querySelector(`.farmModeSeg[data-mode="${key}"]`);
+      assert(`Bulle "${key}" active quand S.farmMode="${key}"`, seg && seg.classList.contains('active'));
     }
-    for (let i = 0; i < FARM_MODE_ORDER.length; i++) {
-      setFarmModeFromSlider(i);
-      assert(`setFarmModeFromSlider(${i}) fixe bien S.farmMode="${FARM_MODE_ORDER[i]}"`, S.farmMode === FARM_MODE_ORDER[i]);
+    for (const key of FARM_MODE_ORDER) {
+      setFarmMode(key);
+      assert(`setFarmMode("${key}") fixe bien S.farmMode="${key}"`, S.farmMode === key);
     }
+    assert('Le 3e emplacement verrouillé (.farmModeLocked) est bien présent', !!$('farmModeSlider').querySelector('.farmModeLocked'));
+    // repli sur "loot" pour une sauvegarde existante qui a encore S.farmMode==='opti' (mode retiré)
+    S.farmMode = 'opti';
+    renderFarmModeBtn();
+    assert('Une sauvegarde avec farmMode="opti" (retiré) retombe sur "loot"', S.farmMode === 'loot', `farmMode=${S.farmMode}`);
     S.farmMode = s.farmMode; renderFarmModeBtn();
   }
   // "montrer dans l'inventaire uniquement les items qui se lootent dans la zone... si plusieurs
@@ -1264,9 +1243,7 @@
     testUpgradeIconOnlyWhenBetterStuffAvailable();
     testUpgradeIconIgnoresDiscoveredZone();
     testEquipmentDollRefreshesOnZoneTravel();
-    testPackHpFraction();
-    testOptiModeSwitchesToNextPack();
-    testFarmModeSliderReflectsThreeModes();
+    testFarmModeBubbleSelectorReflectsTwoModes();
     testSlotsUpgradedByZoneIsZoneSpecific();
     testZoneTierLockIsSeparateFromLabel();
     testJewelryShowsGainInAutoOptList();

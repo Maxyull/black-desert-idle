@@ -609,7 +609,9 @@ $a('skillBarToggle').onclick = () => {
   $a('skillBar').classList.toggle('expanded');
   $a('skillBarToggle').classList.toggle('expanded');
 };
-$a('farmModeRange').oninput = e => setFarmModeFromSlider(parseInt(e.target.value, 10));
+$a('farmModeSlider').querySelectorAll('.farmModeSeg').forEach(seg => {
+  seg.onclick = () => setFarmMode(seg.dataset.mode);
+});
 renderFarmModeBtn();
 
 // clic sur un objet au sol : déplace le perso jusque là. Prioritaire sur l'IA — tant qu'il n'est
