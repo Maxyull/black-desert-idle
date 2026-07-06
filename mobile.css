@@ -10,16 +10,17 @@
   #zoneTitle small { font-size:8px; letter-spacing:1.8px; }
   #zoneBadge { font-size:8px; padding:1px 5px; margin-top:2px; }
   #ztReq, #ztCompendium { font-size:8px; margin-top:2px; }
-  #hpPotWrap { left:8px; bottom:8px; gap:6px; }
+  #hpPotWrap { left:8px; bottom:16px; gap:6px; z-index:5; }
   #hpBar, #mpBar { width:112px; }
-  #silverBox { top:7px; right:8px; font-size:11px; padding:4px 7px; max-width:122px; overflow:hidden; }
-  #shRate { top:36px; right:8px; font-size:8.5px; }
-  #lootTicker { right:8px; bottom:8px; max-width:44%; font-size:9px; max-height:120px; }
-  #invFullBanner { top:auto; bottom:104px; font-size:9.5px; }
-  #deathBanner { top:auto; bottom:104px; font-size:9.5px; }
-  #dangerBanner { top:auto; bottom:138px; font-size:9px; }
-  #castBar { bottom:54px; width:176px; }
-  #skillBarToggle { bottom:12px; }
+  #silverBox { top:54px; right:8px; font-size:11px; padding:4px 7px; max-width:118px; overflow:hidden; z-index:6; }
+  #shRate { top:83px; right:8px; font-size:8.5px; max-width:118px; text-align:right; z-index:6; }
+  #lootTicker { right:8px; bottom:112px; max-width:42%; font-size:9px; max-height:116px; z-index:4; }
+  #invFullBanner { top:auto; bottom:184px; font-size:9.5px; }
+  #deathBanner { top:auto; bottom:184px; font-size:9.5px; }
+  #dangerBanner { top:auto; bottom:218px; font-size:9px; }
+  #castBar { bottom:118px; width:176px; z-index:5; }
+  #skillBar { bottom:42px; left:50%; transform:translateX(-50%); max-width:46%; z-index:6; }
+  #skillBarToggle { bottom:42px; left:50%; transform:translateX(-50%); z-index:7; }
   #equipCard { overflow:hidden; }
   #equipSummary { justify-content:center; gap:5px 12px; padding:6px; }
   #paperdoll { display:grid; grid-template-columns:1fr; gap:8px; justify-items:center; overflow:hidden; }
