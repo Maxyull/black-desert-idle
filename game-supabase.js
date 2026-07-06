@@ -2361,6 +2361,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V226', d:'09/07/2026 22:00', name:{fr:'Stats d\'équipement fixes (fini l\'aléatoire), tie-break "Équiper meilleur"', en:'Fixed gear stats (no more randomness), "Equip best" tie-break'}, fr:[
+      {t:'change', sub:'objets', severity:'major', tx:'Les objets équipables (armure, armes) donnaient des stats avec ±15% d\'aléatoire au drop — 2 exemplaires du même palier/slot/zone pouvaient différer sans raison. Ils donnent désormais des stats FIXES, toujours identiques ; seul l\'enchantement fait ensuite varier la puissance réelle'},
+      {t:'fix', sub:'objets', tx:'"Équiper le meilleur" : quand 2 pièces ont exactement le même socle (stats de base), la plus enchantée l\'emporte désormais toujours — avant, le choix pouvait tomber sur un jumeau moins monté simplement parce qu\'il était rencontré en premier dans le sac'},
+    ], en:[
+      {t:'change', sub:'objets', severity:'major', tx:'Equipable items (armor, weapons) rolled stats with ±15% randomness on drop — 2 copies of the same tier/slot/zone could differ for no reason. They now give FIXED stats, always identical; only enhancement makes actual power vary afterward'},
+      {t:'fix', sub:'objets', tx:'"Equip best": when 2 pieces have the exact same base stats, the more enhanced one now always wins — before, the pick could land on a less-enhanced twin simply because it was encountered first in the bag'},
+    ] },
   { v:'V225', d:'09/07/2026 21:00', name:{fr:'Le trash redevient la vraie source de revenu, bijoux dans le sac colorés', en:'Trash becomes the real income source again, jewelry in bag now colored'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le silver/h "théorique" d\'une zone (voir onglet Recommandations) ne compte plus que le trash au sol — matériaux et bijoux sont des objets de PROGRESSION, pas une source de revenu régulière'},
       {t:'change', sub:'economie', severity:'major', tx:'Prix de revente du gear et des bijoux looté fortement réduit : un bijou valait jusqu\'à ~290× le trash de sa propre zone (35 000 silver contre 120), une pièce d\'armure jusqu\'à ~78×. Désormais ~20× pour un bijou et nettement moins pour le gear — un vrai bonus au drop, sans éclipser le farm de trash comme revenu principal'},
