@@ -10,6 +10,7 @@
   #zoneTitle small { font-size:8px; letter-spacing:1.8px; }
   #zoneBadge { font-size:8px; padding:1px 5px; margin-top:2px; }
   #ztReq, #ztCompendium { font-size:8px; margin-top:2px; }
+  #farmModeBtn { left:auto; right:8px; }
   #hpPotWrap { left:8px; right:8px; bottom:16px; gap:6px; z-index:5; justify-content:space-between; }
   #lvlHpCol { min-width:0; }
   #potStack { margin-left:auto; flex:0 0 auto; }
