@@ -2504,6 +2504,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V242', d:'11/07/2026 23:00', name:{fr:'Rééquilibrage du prix des potions (lié uniquement au trash/token)', en:'Potion price rebalance (tied only to trash/token)'}, fr:[
+      {t:'change', sub:'economie', severity:'major', tx:'Le prix des potions ne dépendait déjà que du silver de trash (token) de la zone, jamais de la vente de stuff — mais l\'amortissement en racine carrée dérivait fortement de l\'objectif visé : la potion la plus chère (mega) coûtait jusqu\'à 42% du revenu horaire en début de jeu, mais seulement 3.6% en fin de jeu, au lieu de rester proche de 15% partout. Elle coûte désormais TOUJOURS exactement 15% du revenu horaire de trash de la zone actuelle, quelle que soit la zone — les autres tailles (petite/moyenne/grande) gardent le même ratio entre elles qu\'avant'},
+    ], en:[
+      {t:'change', sub:'economie', severity:'major', tx:'Potion price already depended only on the zone\'s trash (token) silver, never on gear sales — but the square-root dampening drifted far from its own target: the priciest potion (mega) cost up to 42% of hourly income early on, but only 3.6% late-game, instead of staying close to 15% everywhere. It now always costs exactly 15% of the current zone\'s hourly trash income, regardless of zone — the other sizes (small/medium/large) keep the same ratio between them as before'},
+    ] },
   { v:'V241', d:'11/07/2026 22:00', name:{fr:'Notes de version : pagination au lieu du scroll', en:'Patch notes: pagination instead of scrolling'}, fr:[
       {t:'change', sub:'interface', tx:'Le panneau "Notes de version" ne se lit plus au scroll : il affiche désormais 2 à 7 notes à la fois (selon leur taille), avec un bouton "▲ Plus récent" et "Plus ancien ▼" pour naviguer dans l\'historique. La page affichée est toujours retenue d\'une ouverture à l\'autre'},
     ], en:[

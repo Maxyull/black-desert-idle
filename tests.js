@@ -547,32 +547,34 @@
     assert('Arme : le menu montre la PA, jamais la PD', weaponTxt.includes('PA') && !weaponTxt.includes('PD'));
     assert('Aucun gain -> texte vide (pas de parenthèses vides)', optAutoGainPrimaryPart(helmet, 0, 'helmet') === '');
   }
-  // "la potion doit être moins agressive mais toujours bloquée en fonction de la zone, en fonction
-  // de la génération de silver" (2026-07-09) : potionZoneScale() doit rester liée au revenu de la
-  // zone (jamais gratuit/plat) mais BEAUCOUP plus douce qu'un ratio linéaire — vérifie la racine
-  // carrée exacte sur les 16 zones, que zone0 reste ×1 (référence inchangée), et qu'une zone plus
-  // dure au sein d'un MÊME palier de stuff (donc un revenu directement comparable, voir
-  // testZoneMonotonicity) coûte bien plus cher, jamais moins
-  function testPotionZoneScaleIsDampened() {
+  // "revois le prix des potion en fonction de l'argent qu'on se fait en vendant les token en
+  // instantané au jeu et uniquement par rapport a ça pas au vente de stuff" (2026-07-11) --
+  // remplace l'ancien amortissement en racine carrée (potionZoneScale, dérivait de 42% à 3.6% du
+  // revenu horaire au lieu de rester proche des 15% visés) par un pourcentage FIXE du revenu
+  // horaire de trash de la zone ACTUELLE, jamais relatif à une autre zone. Vérifie : la potion mega
+  // coûte TOUJOURS exactement 15% du revenu horaire de trash (peu importe la zone), les autres
+  // tailles gardent le même ratio entre elles qu'avant (70/140/240/380), et le coût ne dépend QUE de
+  // trash.val (jamais du prix de vente du stuff, GEAR_SELL_MULT).
+  function testPotionCostIsFixedPctOfHourlyTrashIncome() {
     const s = { zoneIdx, atVelia };
     atVelia = false;
-    const ref = ZONES[0].loot.trash.val;
-    zoneIdx = 0;
-    assert('potionZoneScale = ×1 en zone de référence (Camp des Loups)', potionZoneScale() === 1);
-    for (let i = 1; i < ZONES.length; i++) {
-      zoneIdx = i;
-      const expected = Math.sqrt(ZONES[i].loot.trash.val / ref);
-      const scale = potionZoneScale();
-      assert(`potionZoneScale de ${ZONES[i].name.fr} = racine carrée du ratio, pas le ratio linéaire`,
-        Math.abs(scale - expected) < 0.001, `scale=${scale}, attendu=${expected}`);
-    }
-    // comparaison monotone au sein d'un même palier (grey : zones 0,1,2,12, voir GEAR_TIERS) —
-    // chaque zone suivante du palier a un revenu de base plus élevé, donc un coût plus élevé
-    GEAR_TIERS[0].zones.reduce((prevVal, zi) => {
+    for (const zi of [0, 5, 10, 15]) { // échantillon zones début/milieu/fin
       zoneIdx = zi;
-      if (prevVal !== null) assert(`potionZoneScale du palier grey croît de zone en zone (zone ${zi})`, potionZoneScale() >= prevVal);
-      return potionZoneScale();
-    }, null);
+      const hourly = ZONES[zi].loot.trash.val * POTION_KPM_REF * 60;
+      const megaCost = potionCost(POTIONS.mega.cost);
+      assert(`Potion mega = 15% du revenu horaire de trash en ${ZONES[zi].name.fr}`,
+        Math.abs(megaCost - Math.round(hourly*0.15)) <= 1, `got=${megaCost}, attendu=${Math.round(hourly*0.15)}`);
+      // ratio conservé entre tailles (2× / 3.43× / 5.43× environ, comme les anciens coûts de base)
+      const smallCost = potionCost(POTIONS.small.cost), mediumCost = potionCost(POTIONS.medium.cost);
+      assert(`Potion medium ≈ 2× la petite en ${ZONES[zi].name.fr} (même ratio que les coûts de base)`,
+        Math.abs(mediumCost/smallCost - POTIONS.medium.cost/POTIONS.small.cost) < 0.05, `medium/small=${(mediumCost/smallCost).toFixed(2)}`);
+    }
+    // le coût ne doit dépendre QUE de trash.val -- vérifie qu'il est bien recalculable à partir de
+    // cette seule donnée (fonction pure), sans référence cachée au prix de vente du stuff
+    zoneIdx = 7;
+    const expected7 = Math.max(1, Math.round(ZONES[7].loot.trash.val * POTION_KPM_REF * 60 * (POTIONS.mega.cost/POTIONS.mega.cost*0.15)));
+    assert('potionCost est entièrement dérivable de trash.val (fonction pure, aucune dépendance cachée)',
+      potionCost(POTIONS.mega.cost) === expected7, `got=${potionCost(POTIONS.mega.cost)}, attendu=${expected7}`);
     zoneIdx = s.zoneIdx; atVelia = s.atVelia;
   }
 
@@ -950,7 +952,7 @@
     testZonesOfferingUpgradeAggregatesAllSlots();
     testApDpDisplayHasNoDecimals();
     testEffectiveApDpFloors();
-    testPotionZoneScaleIsDampened();
+    testPotionCostIsFixedPctOfHourlyTrashIncome();
     testStatsRecoPicksTrueBestZone();
     testLootedItemsSellForMuchLess();
     testJewelryGetsColoredBorderInBag();
