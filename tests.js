@@ -153,8 +153,8 @@
     zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; P.dmgBurstAccum = s.accum; P.dmgBurstT = s.t; S.hpMax = s.hpMax;
   }
   function testSafeZoneDamageCap() {
-    const s = { zoneIdx, packs, hp:P.hp, accum:P.dmgBurstAccum, t:P.dmgBurstT, hpMax:S.hpMax };
-    zoneIdx = 0; S.hpMax = 100; P.hp = 100;
+    const s = { zoneIdx, packs, hp:P.hp, accum:P.dmgBurstAccum, t:P.dmgBurstT, hpMax:S.hpMax, faint:P.faint };
+    zoneIdx = 0; S.hpMax = 100; P.hp = 100; P.faint = 0; // wolvesTick ignore tout tant que P.faint>0
     packs = [{ dead:false, aggro:true, x:P.x, y:P.y, gathered:1, dmg:9999,
       wolves: Array.from({length:5}, () => ({ox:0,oy:0,gx:0,gy:0,lunge:0.01,atkT:0})) }];
     P.dmgBurstAccum = 0; P.dmgBurstT = 0;
@@ -162,14 +162,14 @@
     const lost = 100 - P.hp;
     assert('Zone non-dangereuse : dégâts cumulés plafonnés à 30% des PV max sur 1s même avec 5 coups simultanés',
       Math.abs(lost - 30) < 1, `perte=${lost}`);
-    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; P.dmgBurstAccum = s.accum; P.dmgBurstT = s.t; S.hpMax = s.hpMax;
+    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; P.dmgBurstAccum = s.accum; P.dmgBurstT = s.t; S.hpMax = s.hpMax; P.faint = s.faint;
   }
 
   function testDangerousZoneAlways100PercentLethal() {
     // demande explicite du 2026-07-08 : "dans 100% des cas" -- même avec un coup brut FAIBLE
     // (dmg très bas, mitigation minimale), Math.max(dmgRaw, effHpMax()) doit garantir la mort à
     // chaque tentative, pas juste "parfois" selon le tirage aléatoire du dégât
-    const s = { zoneIdx, packs, hp:P.hp, hpMax:S.hpMax };
+    const s = { zoneIdx, packs, hp:P.hp, hpMax:S.hpMax, faint:P.faint };
     zoneIdx = 10; S.hpMax = 100;
     let allDied = true;
     for (let i = 0; i < 20; i++) {
@@ -180,12 +180,14 @@
       if (P.hp > 0) allDied = false;
     }
     assert('Zone DANGEREUSE : mort garantie même avec un dégât brut de mob quasi nul (20/20 essais)', allDied);
-    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax;
+    // dernière itération laisse P.faint=6 (K.O. déclenché) -- doit être restauré, sinon la garde
+    // "if (P.faint>0) return" ajoutée dans wolvesTick (2026-07-09) fait planter les tests suivants
+    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax; P.faint = s.faint;
   }
   function testDangerousZoneNoDodgeNoEvasion() {
     // l'esquive doit être totalement désactivée en zone dangereuse (2026-07-08) — sinon un résidu
     // de dodgeEffectiveness (dpR entre 0.5 et 0.6) pourrait sauver le joueur du coup garanti
-    const s = { zoneIdx, packs, hp:P.hp, hpMax:S.hpMax };
+    const s = { zoneIdx, packs, hp:P.hp, hpMax:S.hpMax, faint:P.faint };
     zoneIdx = 10; S.hpMax = 100;
     let anySurvived = false;
     for (let i = 0; i < 20; i++) {
@@ -196,12 +198,14 @@
       if (P.hp > 0) anySurvived = true;
     }
     assert('Zone DANGEREUSE : aucune esquive résiduelle ne sauve le joueur (0/20 survies attendues)', !anySurvived);
-    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax;
+    // voir le commentaire équivalent dans testDangerousZoneAlways100PercentLethal
+    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax; P.faint = s.faint;
   }
   function testDangerousZoneWideAggro() {
     // "les monstres aggros de plus loin" (2026-07-08) : un pack non ciblé, à 350 unités, doit
     // s'activer tout seul en zone dangereuse (jamais en zone sûre, comportement inchangé là-bas)
-    const s = { zoneIdx, packs };
+    const s = { zoneIdx, packs, faint:P.faint };
+    P.faint = 0; // wolvesTick ignore tout tant que P.faint>0 (voir testSafeZoneDamageCap)
     zoneIdx = 10;
     packs = [{ dead:false, aggro:false, x:P.x+350, y:P.y, gathered:1, dmg:1, wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0,atkT:5}] }];
     wolvesTick(1/60);
@@ -210,7 +214,20 @@
     packs = [{ dead:false, aggro:false, x:P.x+350, y:P.y, gathered:1, dmg:1, wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0,atkT:5}] }];
     wolvesTick(1/60);
     assert('Zone non-dangereuse : un pack à 350 unités reste inactif (comportement inchangé)', packs[0].aggro === false);
-    zoneIdx = s.zoneIdx; packs = s.packs;
+    zoneIdx = s.zoneIdx; packs = s.packs; P.faint = s.faint;
+  }
+  // "quand tu meurs, les monstres ne t'attaquent plus" (2026-07-09) : tant que P.faint>0 (K.O.),
+  // wolvesTick doit ignorer tout pack, même en zone dangereuse avec un dégât garanti létal —
+  // sinon chaque coup repoussait le décompte (P.faint réinitialisé) et retirait de l'XP en boucle
+  function testKoStopsMonsterAttacks() {
+    const s = { zoneIdx, packs, hp:P.hp, hpMax:S.hpMax, faint:P.faint };
+    zoneIdx = 10; S.hpMax = 100; P.hp = 0; P.faint = 6;
+    packs = [{ dead:false, aggro:true, x:P.x, y:P.y, gathered:1, dmg:9999,
+      wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0.01,atkT:0}] }];
+    wolvesTick(0.02);
+    assert('K.O. : un monstre ne peut plus toucher le joueur (PV inchangés)', P.hp === 0);
+    assert('K.O. : le décompte n\'est pas réinitialisé par un coup', P.faint === 6);
+    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax; P.faint = s.faint;
   }
 
   // ---------- affichage PA/PD sans décimale (2026-07-08 : "enleve toute trace de virgule de
@@ -280,6 +297,7 @@
     testDangerousZoneAlways100PercentLethal();
     testDangerousZoneNoDodgeNoEvasion();
     testDangerousZoneWideAggro();
+    testKoStopsMonsterAttacks();
     testApDpDisplayHasNoDecimals();
     testEffectiveApDpFloors();
     testJewelryApIsDynamic();

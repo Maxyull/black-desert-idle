@@ -2359,6 +2359,19 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V215', d:'09/07/2026 12:00', name:{fr:'Fix K.O. : les monstres n\'attaquent plus pendant le K.O., croix de déséquipement, cadre des bijoux', en:'K.O. fix: monsters stop attacking during K.O., unequip cross, jewelry frame color'}, fr:[
+      {t:'fix', sub:'combat', severity:'major', tx:'Pendant le K.O. (à 0 PV, avant renvoi en zone paisible), les monstres continuaient de frapper : ça repoussait le décompte à chaque coup et retirait de l\'XP en boucle au lieu d\'une seule fois. Plus aucun monstre n\'attaque tant que tu es K.O.'},
+      {t:'change', sub:'systeme', tx:'Si tu changes de zone pendant le K.O., la fin du décompte ne te renvoie plus de force à Velia — tu restes là où tu as choisi d\'aller'},
+      {t:'new', sub:'interface', tx:'Croix ✕ en bas à droite de chaque pièce équipée pour la déséquiper en un clic (le double-clic existant fonctionne toujours)'},
+      {t:'change', sub:'interface', tx:'Le cadre des bijoux équipés (bagues, collier, boucles, ceinture) reprend maintenant la couleur de leur palier'},
+      {t:'change', sub:'interface', tx:'Sur les pièces d\'armure, le PD passe en bas à gauche (même position que le PA des autres pièces) ; les chiffres de PA/PD affichés sur l\'équipement sont agrandis'},
+    ], en:[
+      {t:'fix', sub:'combat', severity:'major', tx:'While K.O.\'d (0 HP, before being sent to the peaceful zone), monsters kept hitting: this reset the countdown on every hit and drained XP repeatedly instead of once. No monster can hit you anymore while K.O.\'d'},
+      {t:'change', sub:'systeme', tx:'If you change zone while K.O.\'d, the end of the countdown no longer forces you back to Velia — you stay wherever you chose to go'},
+      {t:'new', sub:'interface', tx:'✕ cross at the bottom-right of each equipped piece to unequip it in one click (the existing double-click still works)'},
+      {t:'change', sub:'interface', tx:'The frame of equipped jewelry (rings, necklace, earrings, belt) now takes on their tier color'},
+      {t:'change', sub:'interface', tx:'On armor pieces, DP moves to the bottom-left (same spot as AP on other pieces); the AP/DP numbers shown on gear are bigger'},
+    ] },
   { v:'V214', d:'09/07/2026 11:00', name:{fr:'Icônes de case réorganisées, cadenas sur les slots sans source, fix sac', en:'Reorganized slot icons, lock on sourceless slots, bag fix'}, fr:[
       {t:'change', sub:'interface', tx:'Coin haut-droit des cases d\'équipement réorganisé : 🔧 (optimiser) en haut, ⬆️/📍/🔒 juste en dessous, plutôt que côte à côte'},
       {t:'change', sub:'interface', tx:'L\'icône ⬆️ (upgrade) d\'une case équipée ne s\'affiche désormais que s\'il existe une zone NON dangereuse où trouver mieux pour ce socle — plus d\'icône pointant vers une zone dangereuse'},

@@ -2804,6 +2804,7 @@ const P = {
   potCd: 0, manaPotCd: 0, faint: 0, tpFlash: 0, lootTarget: null, lootClusterX: 0, lootClusterY: 0,
   manualTarget: null, manualMoveT: 0,
   dmgBurstAccum: 0, dmgBurstT: 0, // dégâts encaissés dans la fenêtre glissante en cours (voir wolvesTick)
+  faintZoneIdx: 0, faintAtVelia: false, // zone au moment du K.O., utilisée par die() (voir wolvesTick)
 };
 const BASE_SPEED = 92;
 
@@ -3223,6 +3224,11 @@ function wolfPos(p,w){
            y:p.y + w.oy*(1-p.gathered) + w.gy*p.gathered };
 }
 function wolvesTick(dt) {
+  // K.O. (2026-07-09, demande explicite : "quand tu meurs, les monstres ne t'attaquent plus") --
+  // sans cette garde, les loups continuaient de charger et de toucher le joueur déjà à 0 PV
+  // pendant tout le compte à rebours, ce qui reprolongeait le K.O. (P.faint réinitialisé à 6 à
+  // chaque coup) et retirait de l'XP en boucle au lieu d'une seule fois.
+  if (P.faint > 0) return;
   // atténuation des dégâts reçus : dépend de TA PD (base + équipement) face à la PD requise de cette zone
   const dpR = dpRatio();
   const mitig = dmgTakenMult(dpR);
@@ -3287,6 +3293,9 @@ function wolvesTick(dt) {
               floatTxt(P.x,P.y,80,'-'+Math.ceil(dmg),{hurt:true});
               if (P.hp <= 0) {
                 P.hp = 0; P.faint = 6;
+                // zone au moment du K.O. (2026-07-09, demande explicite) : sert à die() pour ne
+                // renvoyer à Velia que si le joueur n'a pas déjà changé de zone pendant le KO
+                P.faintZoneIdx = zoneIdx; P.faintAtVelia = atVelia;
                 floatTxt(P.x,P.y,105,'K.O.',{hurt:true});
                 S.xp = Math.max(0, S.xp - S.xpNext*.01); // -1 % XP
               }
@@ -5048,16 +5057,23 @@ function goToVelia() {
   buildZoneList();
 }
 // mort au combat (PV à 0) : renvoie à Velia (zone paisible) avec un message d'avertissement —
-// demande explicite du 2026-07-05, remplace l'ancien "faint" qui soignait sur place
+// demande explicite du 2026-07-05, remplace l'ancien "faint" qui soignait sur place. Ne renvoie
+// PLUS de force vers Velia si le joueur a déjà changé de zone pendant le K.O. (2026-07-09, demande
+// explicite : "à la fin du timer tu es renvoyé en ville SI tu n'as pas changé de zone entre temps")
 function die() {
-  goToVelia();
+  const stayedPut = (zoneIdx === P.faintZoneIdx) && (atVelia === P.faintAtVelia);
+  if (stayedPut) goToVelia();
   P.hp = effHpMax()*.5;
   S.lastDeathAt = Date.now(); // sert au bonus de zone des World Boss ("certifié sans mort 3 min", voir endBossFight)
   const banner = $('deathBanner');
   if (banner) {
-    banner.textContent = LANG==='fr'
-      ? '⚠ Les monstres t\'ont tué ! Choisis une zone plus adaptée à ton niveau ou améliore ton stuff.'
-      : '⚠ The monsters killed you! Pick a zone better suited to your level or improve your gear.';
+    banner.textContent = stayedPut
+      ? (LANG==='fr'
+        ? '⚠ Les monstres t\'ont tué ! Choisis une zone plus adaptée à ton niveau ou améliore ton stuff.'
+        : '⚠ The monsters killed you! Pick a zone better suited to your level or improve your gear.')
+      : (LANG==='fr'
+        ? '⚠ Tu t\'es relevé — tu as changé de zone pendant le K.O.'
+        : '⚠ You got back up — you changed zone during the K.O.');
     banner.classList.add('show');
     clearTimeout(die._t);
     die._t = setTimeout(() => banner.classList.remove('show'), 6000);
@@ -5382,7 +5398,11 @@ function pdSlotInnerHtmlFor(id, e) {
   } else if (e && e.ap) {
     badge = `<span class="enh">+${e.ap}</span>`;
   }
-  // PA/PD directement sur la pièce équipée (bas-gauche/bas-droite) — demande explicite
+  // PA/PD directement sur la pièce équipée, toujours en bas-gauche (2026-07-09, demande explicite :
+  // "sur l'armure met la dp en bas a gauche") -- AP et PD ne sont jamais tous les deux non-nuls sur
+  // le même objet (voir GEAR_ROLE : apShare/dpShare s'excluent selon le type de pièce), donc les
+  // deux badges peuvent partager la même position sans jamais se chevaucher ; ça libère le
+  // bas-droite pour la croix de déséquipement ci-dessous
   let apDpBadge = '';
   if (e) {
     const { ap, dp } = effectiveApDp(e);
@@ -5407,7 +5427,10 @@ function pdSlotInnerHtmlFor(id, e) {
     goBadge = `<span class="pdFarmBtn" title="${LANG==='fr'?'Où farmer':'Where to farm'}">📍</span>`;
   }
   const cornerHtml = (optBadge || goBadge) ? `<span class="pdCorner">${optBadge}${goBadge}</span>` : '';
-  return icon + badge + apDpBadge + cornerHtml;
+  // croix de déséquipement en bas-droite (2026-07-09, demande explicite) — raccourci direct en
+  // plus du double-clic déjà existant sur la case
+  const unequipBadge = e ? `<span class="pdUnequipBtn" title="${LANG==='fr'?'Déséquiper':'Unequip'}">✕</span>` : '';
+  return icon + badge + apDpBadge + cornerHtml + unequipBadge;
 }
 function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
 // texte "+X PA +Y PD +Z PV" affiché dans le tooltip d'une pièce de la poupée d'équipement —
@@ -5431,6 +5454,9 @@ function accBaseSlot(slotId) {
 // slots sans aucune source en jeu pour l'instant (voir renderLifeskillPanelHtml) — affichés
 // avec un cadenas 🔒 plutôt qu'une case vide muette (demande explicite du 2026-07-09)
 const NO_SOURCE_SLOTS = ['artifact1','artifact2','eqStone'];
+// bijoux (bagues/collier/boucles/ceinture) — utilisé pour colorer le cadre de la case selon le
+// palier du bijou équipé (2026-07-09, demande explicite : "ajoute la couleur du cadre des bijoux")
+const JEWELRY_SLOTS = ['ring1','ring2','necklace','earring1','earring2','belt'];
 // zones candidates pour farmer/upgrader un socle donné, AVANT tout filtre de sécurité — se base
 // sur le palier de la zone actuellement farmée (zoneIdx) : armes → zones qui garantissent ce type
 // d'arme (ZONE_WEAPON_SLOTS) ; armures → les 4 zones du palier (n'importe laquelle peut looter
@@ -5443,7 +5469,7 @@ function slotCandidateZones(slotId) {
     return tier.zones.filter(zi => (ZONE_WEAPON_SLOTS[zi]||[]).includes(slotId));
   } else if (ARMOR_SLOTS.includes(slotId)) {
     return tier.zones.slice();
-  } else if (['ring1','ring2','necklace','earring1','earring2','belt'].includes(slotId)) {
+  } else if (JEWELRY_SLOTS.includes(slotId)) {
     const base = accBaseSlot(slotId);
     return tier.zones.filter(zi => accSlotFor(ZONES[zi].loot.jackpot) === base);
   }
@@ -5524,6 +5550,9 @@ function fillPdCol(colId, ids) {
     // l'orbe de Pierre de Cron
     if (e && e.color) div.style.boxShadow = `0 0 8px 2px ${e.color}66`;
     else div.style.boxShadow = '';
+    // cadre coloré sur les bijoux équipés (2026-07-09, demande explicite) — le halo ci-dessus
+    // reste discret, le CADRE lui-même reprend désormais la couleur du palier du bijou
+    div.style.borderColor = (e && e.color && JEWELRY_SLOTS.includes(id)) ? e.color : '';
     div.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showEquipSlotMenu(div, id); };
     div.ondblclick = ev => { ev.stopPropagation(); hideItemPop(); if (e) unequip(id); };
     const optBtn = div.querySelector('.pdOptBtn');
@@ -5531,6 +5560,13 @@ function fillPdCol(colId, ids) {
       ev.stopPropagation(); hideItemTooltip(); hideItemPop();
       optTargetSlot = id; renderOptimization();
       $('optCard').scrollIntoView({ behavior:'smooth', block:'center' });
+    };
+    // ✕ en bas-droite : déséquiper directement, en plus du double-clic déjà existant —
+    // demande explicite du 2026-07-09
+    const unequipBtn = div.querySelector('.pdUnequipBtn');
+    if (unequipBtn) unequipBtn.onclick = ev => {
+      ev.stopPropagation(); hideItemTooltip(); hideItemPop();
+      unequip(id);
     };
     // ⬆️/📍 en coin : raccourci direct vers la zone (pas de popup intermédiaire) — demande
     // explicite du 2026-07-09. ⬆️ ne propose que des zones sûres (safeZonesForSlot, jamais de
@@ -5556,6 +5592,7 @@ function refreshEquipSlot(slotId) {
   div.title = SLOT_LABEL[slotId] + (e ? ' — ' + e.name + pdStatSuffix(e) : ' (vide)');
   div.innerHTML = pdSlotInnerHtml(slotId);
   div.style.boxShadow = (e && e.color) ? `0 0 8px 2px ${e.color}66` : '';
+  div.style.borderColor = (e && e.color && JEWELRY_SLOTS.includes(slotId)) ? e.color : '';
 }
 
 function drawPreviewChar() {

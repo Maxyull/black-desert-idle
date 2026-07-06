@@ -409,12 +409,23 @@
     background:#1a2a14; color:#8fe07a; border:1px solid #4a7a38; box-shadow:0 1px 3px rgba(0,0,0,.6);
   }
   .pdSlot .enh.pri { background:#2a1a14; color:#e6cf7a; border-color:#8a6a3a; } /* PRI+ en doré */
+  /* PA/PD grossis (2026-07-09, demande explicite "grossit le numero sur tout les stuff") et
+     TOUJOURS en bas-gauche (même pour la PD des armures, demande explicite "sur l'armure met la
+     dp en bas a gauche") -- AP et PD ne coexistent jamais sur le même objet (voir GEAR_ROLE), donc
+     partager la position ne crée aucun chevauchement ; libère le bas-droite pour ✕ ci-dessous */
   .pdSlot .pdAp, .pdSlot .pdDp {
-    position:absolute; bottom:-3px; font-size:8.5px; font-weight:bold; padding:0 2px; border-radius:2px;
-    background:rgba(10,9,12,.85); text-shadow:none;
+    position:absolute; bottom:-3px; left:-3px; font-size:11px; font-weight:bold; padding:0 3px; border-radius:2px;
+    background:rgba(10,9,12,.9); text-shadow:none;
   }
-  .pdSlot .pdAp { left:-3px; color:#e0a86e; }
-  .pdSlot .pdDp { right:-3px; color:#8fc9c9; }
+  .pdSlot .pdAp { color:#e0a86e; }
+  .pdSlot .pdDp { color:#8fc9c9; }
+  /* croix de déséquipement en bas-droite (2026-07-09, demande explicite) */
+  .pdSlot .pdUnequipBtn {
+    position:absolute; bottom:-4px; right:-4px; width:15px; height:15px; line-height:14px;
+    text-align:center; font-size:10px; font-weight:bold; border-radius:50%; background:#1a1822;
+    border:1px solid #7a3a3a; color:#d98a8a; box-shadow:0 1px 3px rgba(0,0,0,.6); cursor:pointer;
+  }
+  .pdSlot .pdUnequipBtn:hover { background:#2a1616; border-color:var(--danger); color:#fff; transform:scale(1.15); }
   /* raccourci(s) directement sur la case, coin haut-droit, EMPILÉS verticalement (2026-07-05 :
      🔧 optimiser ; 2026-07-09, demande explicite "opti en haut à droite, upgrade sous l'icone
      d'opti" : ⬆️ zone pour améliorer une case remplie / 📍 où farmer une case vide / 🔒 slot sans
