@@ -96,7 +96,11 @@ function tr(s) { if (LANG !== 'en' || !s) return s; return NAME_EN[s] || s; }
 // naturellement de la mécanique existante (un stuff mieux enchanté = plus de dps = plus de
 // kills/min = plus haut dans la fourchette de la zone), sans formule additionnelle nécessaire.
 const ZONES = [
-  { name:'Camp des Loups', tier:'Balenos — Early', reqAP:15, reqDP:14, mob:'Loup',
+  // reqAP abaissé le 2026-07-08 (demande explicite, suite au retrait de l'arme de départ "spawn à
+  // vide") : un personnage tout juste créé (PA innée = 4, aucune arme avant le drop de la zone1)
+  // tombait à un ratio de 0.27 ici (ZONE DANGEREUSE) au lieu de ~0.93 avec l'ancien "Bâton de
+  // Grunil" par défaut — reqDP inchangé (déjà correct, ratio PD ~0.71 avec la PD innée de 10)
+  { name:'Camp des Loups', tier:'Balenos — Early', reqAP:6, reqDP:14, mob:'Loup',
     hpPer:23, dmg:3, xp:8,
     tint:{ a:'#3a4a31', b:'#36452e', dry:'#414f33' }, tones:['#6b5f52','#5a5248','#75685a'], alphaTone:'#3d3a45',
     loot:{ trash:{name:'Viande de loup',val:1,ch:1}, mat:{name:'Pierre noire',val:1,ch:.55},
@@ -111,28 +115,32 @@ const ZONES = [
     tint:{ a:'#4a4232', b:'#443c2d', dry:'#524936' }, tones:['#7a6248','#6b563e','#8a7055'], alphaTone:'#4a3a28',
     loot:{ trash:{name:'Insigne de Sausan',val:5,ch:1}, mat:{name:'Pierre noire',val:1,ch:.4},
       jackpot:{name:'Ceinture Naru',val:1025,ch:.0038,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
-  // reqAP/reqDP des zones 3, 6 et 9 (première zone de chaque nouveau palier de couleur) relevées
-  // le 2026-07-08 (+~30%, avec les zones suivantes du même palier réajustées en proportion pour
-  // garder une progression lisse) : avec le ralentissement de l'enchantement +1→+15 (voir
-  // ENH_STEP), un stuff complet du palier précédent à +0 ne suffit plus à franchir la zone
-  // suivante — il faut réellement pousser au moins jusqu'à PRI. Demande explicite de l'utilisateur,
-  // qui a autorisé à dépasser largement l'ancien seuil ("on ajustera les zones après").
-  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:50, reqDP:46, mob:'Guerrier Rhutum',
+  // reqAP/reqDP des zones 3, 6 et 9 (première zone de chaque nouveau palier de couleur) ABAISSÉES
+  // le 2026-07-08 (demande explicite : "revoir la difficulté de passage en rang supérieur... au
+  // besoin descendre le req pour balanced") — le +30% du 2026-07-06 (voir historique) combiné à
+  // "1 seule pièce d'équipement par zone" (ZONE_ARMOR_SLOTS/ZONE_WEAPON_SLOTS) rendait la
+  // transition de palier bien plus dure que prévu : simulation d'un stuff COMPLET du palier
+  // précédent, poussé jusqu'à PRI sur les 7 pièces, ne donnait qu'un ratio PA/PD de 0.29-0.45 face
+  // à la 1ère zone du palier suivant (largement ZONE DANGEREUSE, <0.6) — bien pire que le 0.58-0.70
+  // visé à l'origine. Toutes les zones de palier 3+ recalibrées pour qu'un tel stuff PRI atteigne
+  // ~0.8 (ZONE DIFFICILE, plus DANGEREUSE) sur la 1ère zone du palier, progression interne au
+  // palier gardée dans les mêmes proportions relatives qu'avant.
+  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:18, reqDP:18, mob:'Guerrier Rhutum',
     hpPer:48, dmg:6, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
     loot:{ trash:{name:'Bourse de pirate',val:9,ch:1}, mat:{name:'Pierre noire',val:1,ch:.32},
       jackpot:{name:'Anneau Tuvala',val:1960,ch:.0028,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
-  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:62, reqDP:57, mob:'Garde Shultz',
+  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:22, reqDP:22, mob:'Garde Shultz',
     hpPer:66, dmg:8, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:15,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:1,ch:.26},
       jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
-  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:78, reqDP:71, mob:'Combattant Sausan',
+  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:28, reqDP:28, mob:'Combattant Sausan',
     hpPer:93, dmg:12, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
       jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
-  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:111, reqDP:101, mob:'Mineur corrompu',
+  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:56, reqDP:60, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
     // sol terre rouge/brune de carrière (retexturé le 2026-07-07 d'après les captures de référence :
     // canyon ocre, crevasses, chariots) — tones = capuches/tuniques poussiéreuses des mineurs,
@@ -140,17 +148,17 @@ const ZONES = [
     tint:{ a:'#4a3226', b:'#443023', dry:'#583c2c' }, tones:['#8a7a68','#7a6c5a','#988676'], alphaTone:'#5a6068',
     loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
       jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:2}, craft:{name:'Fragment de mémoire',ch:.009} } },
-  { name:'Poste Helm', tier:'Serendia — Late', reqAP:137, reqDP:125, mob:'Soldat Helm',
+  { name:'Poste Helm', tier:'Serendia — Late', reqAP:69, reqDP:74, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:56,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.11},
       jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:4}, craft:{name:'Fragment de mémoire',ch:.007} } },
-  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:169, reqDP:155, mob:'Bandit Gahaz',
+  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:85, reqDP:92, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
       jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:6}, craft:{name:'Fragment de mémoire',ch:.005} } },
-  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:221, reqDP:202, mob:'Sectateur d\'Elric',
+  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:122, reqDP:132, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
     // % de la "Pierre concentrée" (matériau réel dropé ici, voir tierMat dans rollDrops — le nom
@@ -159,18 +167,17 @@ const ZONES = [
     // bleu, il en faut beaucoup plus pour pousser du stuff Grunil jusqu'à PRI+
     loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.12},
       jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:6}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
-  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:263, reqDP:239, mob:'Uluan',
+  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:145, reqDP:156, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
       jackpot:{name:'Serap\'s Necklace',val:29600,ch:.0002,ap:9}, craft:{name:'Marbre du Dieu déchu',ch:.0025} } },
   // 3e zone Grunil (2026-07-05, demande explicite : "ajoute Planque des Mânes dernière zone SANS
-  // TOUCHER AU MAXIMUM") — reqAP/reqDP volontairement IDENTIQUES à Ruines de Kratuga (263/239),
-  // pas une nouvelle escalade : le plafond du palier bleu (~301 PA / ~248 PD au PEN, voir GEAR_ROLE)
-  // reste donc EXACTEMENT le même, aucune valeur de zone9/10 ni aucune part de GEAR_ROLE n'a besoin
-  // de changer. Complète juste la rotation d'arme (weapon/secondary/awakening, une par zone du
-  // palier — voir ZONE_WEAPON_SLOTS) et apporte la ceinture manquante (Orkinrad's Belt).
-  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:263, reqDP:239, mob:'Esprit des Mânes',
+  // TOUCHER AU MAXIMUM") — reqAP/reqDP volontairement IDENTIQUES à Ruines de Kratuga, pas une
+  // nouvelle escalade (valeurs abaissées le 2026-07-08 avec Kratuga, voir plus haut). Complète
+  // juste la rotation d'arme (weapon/secondary/awakening, une par zone du palier — voir
+  // ZONE_WEAPON_SLOTS) et apporte la ceinture manquante (Orkinrad's Belt).
+  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:145, reqDP:156, mob:'Esprit des Mânes',
     hpPer:1000, dmg:125, xp:500,
     tint:{ a:'#3a3f4a', b:'#343943', dry:'#40454f' }, tones:['#8a9ab0','#7c8ca2','#98a8c0'], alphaTone:'#4a5568',
     loot:{ trash:{name:'Larme de Mâne',val:120,ch:1}, mat:{name:'Pierre de Caphras',val:5,ch:.07},
@@ -192,17 +199,17 @@ const ZONES = [
     tint:{ a:'#3d4238', b:'#383d33', dry:'#454a3e' }, tones:['#6a7a5e','#5c6c50','#788a6c'], alphaTone:'#455038',
     loot:{ trash:{name:'Pierre de Trent',val:7,ch:1}, mat:{name:'Pierre noire',val:1,ch:.34},
       jackpot:{name:'Boucle Naru',val:1300,ch:.0032,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.019} } },
-  { name:'Île d\'Iliya', tier:'Serendia — Mid', reqAP:78, reqDP:71, mob:'Pirate d\'Iliya',
+  { name:'Île d\'Iliya', tier:'Serendia — Mid', reqAP:28, reqDP:28, mob:'Pirate d\'Iliya',
     hpPer:104, dmg:13, xp:67,
     tint:{ a:'#2e4a4a', b:'#2a4444', dry:'#355656' }, tones:['#4a9a9a', '#3f8888', '#5aacac'], alphaTone:'#2c5a5a',
     loot:{ trash:{name:'Perle d\'Iliya',val:38,ch:1}, mat:{name:'Éclat de cristal noir dur',val:5,ch:.14},
       jackpot:{name:'Boucle Tuvala',val:6900,ch:.0011,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.009} } },
-  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:169, reqDP:155, mob:'Soldat de Bashim',
+  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:85, reqDP:92, mob:'Soldat de Bashim',
     hpPer:395, dmg:49, xp:224,
     tint:{ a:'#3c3c34', b:'#36362f', dry:'#44443a' }, tones:['#8a8a68', '#78785a', '#9a9a78'], alphaTone:'#565640',
     loot:{ trash:{name:'Insigne de Bashim',val:92,ch:1}, mat:{name:'Pierre de Caphras',val:8,ch:.058},
       jackpot:{name:'Boucle Asula',val:22300,ch:.00035,ap:9}, craft:{name:'Fragment de mémoire',ch:.003} } },
-  { name:'Forêt de Polly', tier:'Mediah — Early', reqAP:263, reqDP:239, mob:'Troll de Polly',
+  { name:'Forêt de Polly', tier:'Mediah — Early', reqAP:145, reqDP:156, mob:'Troll de Polly',
     hpPer:1120, dmg:140, xp:560,
     tint:{ a:'#25382c', b:'#213228', dry:'#2c4034' }, tones:['#3f6e50', '#356045', '#4a805c'], alphaTone:'#274a34',
     loot:{ trash:{name:'Mousse de Polly',val:135,ch:1}, mat:{name:'Pierre de Caphras',val:4,ch:.055},
@@ -588,9 +595,11 @@ function compendiumBagAdd(obj) {
 }
 
 // slots d'équipement type BDO — chaque pièce optimisable porte son PROPRE niveau d'enchant (enhLv)
+// spawn à vide (2026-07-08, demande explicite : "ne plus spawn avec baton grunil -> spawn a vide")
+// -- avant, un "Bâton de Grunil" (nom du palier le plus haut, trompeur pour un objet de départ)
+// était équipé par défaut ; le joueur commence désormais sans arme, comme pour tous les autres slots
 const EQUIP = {
-  weapon: { name:'Bâton de Grunil', kind:'gear', slot:'weapon', ap:10, dp:0, enhLv:0, optimizable:true, fsByLevel:{}, icon:staffIconForColor('#8f9aa6','grey') },
-  awakening: null, secondary: null, book: null,
+  weapon: null, awakening: null, secondary: null, book: null,
   helmet: null, armor: null, gloves: null, boots: null,
   ring1: null, ring2: null, necklace: null, earring1: null, earring2: null, belt: null,
   // 2 emplacements Artéfact (ex: Vell, Khan) + 1 emplacement Pierre — pas encore de source de
@@ -5884,27 +5893,31 @@ function renderOptimization() {
   // barre à deux tons : chance de base (or) + bonus du failstack accumulé sur CE palier (bleu)
   $('optChanceFill').style.width = (parts.base*100)+'%';
   $('optChanceFillFS').style.width = (parts.bonus*100)+'%';
-  // Pierre de Cron : case à part, à droite du matériau — au choix du joueur (case à cocher),
-  // plus consommée automatiquement en silence (demande explicite du 2026-07-06). L'icône réelle
-  // (orbe turquoise, voir ICO_CRON_STONE) remplace le placeholder ⏳ statique qui ne changeait
-  // jamais -- affichée en permanence (juste atténuée par .empty), comme #optMat/#optItem.
+  // Pierre de Cron : case à part, à droite du matériau — au choix du joueur, la case elle-même
+  // sert de bouton on/off (2026-07-08, demande explicite : remplace l'ancienne case à cocher
+  // séparée). L'icône réelle (orbe turquoise, voir ICO_CRON_STONE) remplace le placeholder ⏳
+  // statique qui ne changeait jamais -- affichée en permanence, grisée si désactivée ou vide.
   const cronIdx = findCronStone(), cronSlotEl = $('optCronSlot');
   $('optCronIcon').innerHTML = CRON_STONE.icon;
+  const cronOffCls = S.useCronStone ? '' : ' off';
   if (cronIdx === -1) {
-    cronSlotEl.className = 'empty'; cronSlotEl.title = LANG==='fr'?'Aucune Pierre de Cron en sac':'No Cron Stone in bag';
+    cronSlotEl.className = 'empty' + cronOffCls; cronSlotEl.title = LANG==='fr'?'Aucune Pierre de Cron en sac':'No Cron Stone in bag';
     $('optCronQty').textContent = ''; cronSlotEl.style.boxShadow = '';
   } else {
-    cronSlotEl.className = ''; cronSlotEl.title = CRON_STONE.name;
+    cronSlotEl.className = cronOffCls.trim(); cronSlotEl.title = CRON_STONE.name + ' — ' +
+      (S.useCronStone ? (LANG==='fr'?'utilisée (clique pour désactiver)':'in use (click to disable)')
+                      : (LANG==='fr'?'non utilisée (clique pour activer)':'not used (click to enable)'));
     $('optCronQty').textContent = fmt(INV[cronIdx].qty);
-    cronSlotEl.style.boxShadow = `0 0 8px 2px ${CRON_STONE.color}66`;
+    cronSlotEl.style.boxShadow = S.useCronStone ? `0 0 8px 2px ${CRON_STONE.color}66` : '';
   }
-  $('optCronToggle').checked = !!S.useCronStone;
   renderOptSuggestions();
   if (!autoOptTimer) renderOptAutoTargetSelect(); // pas touché pendant une auto en cours (garde le palier choisi)
   renderCapConvertRow();
 }
 $('optTarget').onchange = e => { optTargetSlot = e.target.value; stopAutoOpt(); renderOptimization(); };
-$('optCronToggle').onchange = e => { S.useCronStone = e.target.checked; };
+// la case Pierre de Cron sert elle-même de bouton on/off (2026-07-08, demande explicite),
+// remplace l'ancienne case à cocher #optCronToggle
+$('optCronSlot').onclick = () => { S.useCronStone = !S.useCronStone; renderOptimization(); };
 
 // une tentative d'optimisation (succès/échec/rétrogradation) — factorisée pour être appelée
 // aussi bien par le bouton manuel que par la boucle "Auto jusqu'à" (voir plus bas)

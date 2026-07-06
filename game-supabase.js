@@ -2343,6 +2343,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V201', d:'08/07/2026 10:00', name:{fr:'Pierre de Cron cliquable, spawn sans arme, zones rééquilibrées', en:'Clickable Cron Stone, empty spawn, rebalanced zones'}, fr:[
+      {t:'change', sub:'interface', tx:'La case Pierre de Cron du panneau d\'optimisation sert désormais elle-même de bouton on/off (clique dessus pour activer/désactiver) — grisée quand désactivée. Remplace l\'ancienne case à cocher séparée'},
+      {t:'change', sub:'equipements', tx:'Le personnage ne spawn plus avec un "Bâton de Grunil" par défaut — l\'emplacement d\'arme principale démarre vide, comme tous les autres emplacements'},
+      {t:'fix', sub:'zones', severity:'major', tx:'Le passage vers le palier de stuff suivant était devenu bien plus dur que prévu depuis qu\'une zone ne garantit plus qu\'UNE SEULE pièce d\'équipement : un stuff complet du palier précédent poussé jusqu\'à PRI ne donnait qu\'un ratio PA/PD de 0.29-0.45 (ZONE DANGEREUSE) face à la 1ère zone du palier suivant. Toutes les zones à partir de Camp Rhutum recalibrées pour qu\'un tel stuff PRI atteigne ~0.8 (ZONE DIFFICILE, plus DANGEREUSE)'},
+      {t:'fix', sub:'zones', tx:'Camp des Loups (1ère zone du jeu) rééquilibrée suite au spawn sans arme : un personnage tout juste créé y tombait à 0.27 (ZONE DANGEREUSE) au lieu de ~0.93 avec l\'ancienne arme de départ'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Cron Stone slot in the optimization panel now doubles as an on/off button (click it to enable/disable) — greyed out when disabled. Replaces the old separate checkbox'},
+      {t:'change', sub:'equipements', tx:'The character no longer spawns with a default "Grunil Staff" — the main weapon slot now starts empty, like every other slot'},
+      {t:'fix', sub:'zones', severity:'major', tx:'Moving up to the next gear tier had become far harder than intended since a zone now guarantees only ONE piece of gear: a full previous-tier set pushed to PRI only reached a 0.29-0.45 AP/DP ratio (DANGEROUS ZONE) against the next tier\'s first zone. Every zone from Camp Rhutum onward recalibrated so such a PRI set reaches ~0.8 (HARD ZONE, no longer dangerous)'},
+      {t:'fix', sub:'zones', tx:'Camp des Loups (the game\'s very first zone) rebalanced following the weaponless spawn: a freshly created character dropped to a 0.27 ratio (DANGEROUS ZONE) there instead of ~0.93 with the old starter weapon'},
+    ] },
   { v:'V200', d:'08/07/2026 09:30', name:{fr:'Les nouvelles icônes de stuff arrivent aussi dans la table de loot', en:'The new gear icons now show up in the loot table too'}, fr:[
       {t:'fix', sub:'interface', tx:'La table de loot (et le récapitulatif condensé des zones de Velia) affichait encore un glyphe générique (⚔️/💍) partagé par toutes les pièces d\'un même type — elle montre désormais la VRAIE icône de chaque pièce (casque, arme, bijou...), avec sa couleur et son ornementation de palier'},
     ], en:[

@@ -582,12 +582,13 @@
   #optCronSlot {
     width:44px; height:44px; background:rgba(20,19,26,.85); border:1px solid #4ecdc4;
     display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; position:relative;
-    margin-left:auto;
+    margin-left:auto; cursor:pointer;
   }
-  #optCronSlot.empty { opacity:.35; border-style:dashed; }
+  #optCronSlot.empty { opacity:.35; border-style:dashed; cursor:default; }
+  /* la case sert elle-meme de bouton on/off (2026-07-08) : grisee/desaturee quand desactivee,
+     meme quand une pierre est en sac -- remplace l'ancienne case a cocher separee */
+  #optCronSlot.off { filter:grayscale(1); opacity:.45; border-color:#666; }
   #optCronQty { position:absolute; bottom:-1px; right:1px; font-size:9px; color:var(--ink); text-shadow:0 0 2px #000; }
-  #optCronToggleRow { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-dim); margin:-2px 0 8px; cursor:pointer; }
-  #optCronToggleRow input { width:auto; margin:0; accent-color:var(--gold); }
   #optLevelLbl { font-size:13px; } #optLevelLbl b { color:var(--gold); }
   #optChanceWrap { margin:8px 0; }
   #optChanceBar { height:7px; background:#0d0c11; border:1px solid #333; overflow:hidden; display:flex; }
