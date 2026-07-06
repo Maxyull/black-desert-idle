@@ -2507,6 +2507,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V255', d:'14/07/2026 10:00', name:{fr:'Les sorts de zone touchent enfin toute la zone', en:'Zone spells finally hit the whole zone'}, fr:[
+      {t:'fix', sub:'combat', severity:'major', tx:'Les sorts (Météore, Blizzard, Tempête de foudre, Tremblement de terre...) ont toujours eu un effet visuel étalé sur tout le groupe de monstres, mais ne blessaient en réalité qu\'un seul monstre (le premier vivant) — ils infligent désormais leurs dégâts à TOUS les monstres vivants du groupe ciblé, comme leur effet le laissait déjà croire'},
+    ], en:[
+      {t:'fix', sub:'combat', severity:'major', tx:'Spells (Meteor Shower, Blizzard, Thunder Storm, Earthquake...) always had a visual effect spread across the whole monster pack, but only actually hurt one monster (the first alive) — they now deal damage to ALL living monsters in the targeted pack, matching what the effect already showed'},
+    ] },
   { v:'V254', d:'14/07/2026 09:00', name:{fr:'Potions ÷10 (encore), aggro de proximité partout', en:'Potions ÷10 (again), proximity aggro everywhere'}, fr:[
       {t:'change', sub:'economie', tx:'Prix des potions divisé par 10 une 2e fois (la petite coûte désormais ≈0.05% du revenu horaire de trash de la zone, la majeure ≈0.3%, au lieu de 0.5%/3%)'},
       {t:'change', sub:'combat', severity:'major', tx:'Les groupes de monstres proches (400 unités) s\'aggro désormais tout seuls dès qu\'on s\'approche, dans TOUTE zone — avant, ce réveil automatique n\'existait qu\'en zone dangereuse ; ailleurs, seul le pack visé par l\'IA s\'activait'},

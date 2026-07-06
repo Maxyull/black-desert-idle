@@ -3447,19 +3447,28 @@ function resolveSkill(sk) {
   P.castingSkill = null;
   if (sk.type === 'buff') { buffTimer = sk.dur; floatTxt(P.x,P.y,98,'✦ Speed Spell',{gold:true}); return; }
   if (!target || target.dead) return;
-  const w = currentWolf(target);
-  if (!w) return; // sécurité : pack déjà vidé (ne devrait pas arriver, target.dead le couvre déjà)
-  const crit = Math.random() < .15;
-  // >>> scaling par la PA face à la PA requise de la zone <<<
-  const dmg = apEff() * sk.dmg * dmgMult(apRatio()) * (1+totalDmgPct()/100)
-            * (0.9+Math.random()*.25) * (crit?2:1) * (buffTimer>0?1.12:1);
-  w.hp -= dmg;
+  const aliveWolves = target.wolves.filter(w => !w.dead);
+  if (!aliveWolves.length) return; // sécurité : pack déjà vidé (ne devrait pas arriver, target.dead le couvre déjà)
   spawnVfx(sk,target);
   if (sk.shake) { shakeT=.3; shakeAmp=sk.shake; }
-  const wp = wolfPos(target,w);
-  floatTxt(wp.x+(Math.random()*36-18), wp.y+(Math.random()*36-18), 62,
-    '-'+fmt(Math.ceil(dmg))+(crit?'!':''), {crit});
-  if (w.hp <= 0 && !w.dead) killWolf(target, w);
+  // dégâts de ZONE (2026-07-14, demande explicite : "les attaques de zone visuellement doivent
+  // faire des degats de zone sur les monstres") -- les VFX (meteor/ice/quake/bolt...) couvrent déjà
+  // toute l'aire du pack (dispersion des particules ~100-110, contre un offset max de ~52 entre
+  // monstres d'un même pack, voir spawnPackNear) : avant ce correctif, seul currentWolf() (le 1er
+  // monstre vivant) encaissait les dégâts malgré une explosion visuellement étalée sur tout le
+  // groupe -- chaque sort touche désormais TOUS les monstres vivants du pack ciblé, chacun avec son
+  // propre jet de dégâts/critique indépendant.
+  for (const w of aliveWolves) {
+    const crit = Math.random() < .15;
+    // >>> scaling par la PA face à la PA requise de la zone <<<
+    const dmg = apEff() * sk.dmg * dmgMult(apRatio()) * (1+totalDmgPct()/100)
+              * (0.9+Math.random()*.25) * (crit?2:1) * (buffTimer>0?1.12:1);
+    w.hp -= dmg;
+    const wp = wolfPos(target,w);
+    floatTxt(wp.x+(Math.random()*36-18), wp.y+(Math.random()*36-18), 62,
+      '-'+fmt(Math.ceil(dmg))+(crit?'!':''), {crit});
+    if (w.hp <= 0 && !w.dead) killWolf(target, w);
+  }
 }
 
 // ---------- loups ----------
