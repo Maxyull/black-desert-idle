@@ -2177,6 +2177,7 @@ const I18N = {
   btnWiki: { fr:'📖 Wiki', en:'📖 Wiki' },
   btnNotifCenter: { fr:'🔔 Notifications', en:'🔔 Notifications' },
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },
+  patchTopBadgeLbl: { fr:'notes de version non lues', en:'unread patch notes' },
   btnMarketLbl: { fr:'🏛️ Marché', en:'🏛️ Market' },
   marketConstructionBanner: { fr:'🚧 BETA — Marché en construction, encore peu fonctionnel : bugs et changements à prévoir', en:'🚧 BETA — Market under construction, still not very functional: expect bugs and changes' },
   btnLogout: { fr:'🚪 Déconnexion', en:'🚪 Log out' },
@@ -2343,6 +2344,19 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V195', d:'06/07/2026 09:00', name:{fr:'Loot détaillé par zone, armes réparties sur les dernières zones, patch notes qui se souviennent de toi', en:'Detailed per-zone loot, weapons spread on the last zones, patch notes that remember you'}, fr:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'Fix : la table de loot affichait encore 0.1% pour la Pierre de Cron (l\'ancien taux, avant le passage à 1% de la mise à jour précédente) — un seul chiffre de référence désormais, ne peut plus se désynchroniser'},
+      {t:'improve', sub:'interface', tx:'La table de loot indique maintenant exactement QUELLE pièce d\'équipement (casque/plastron/gants/bottes/arme précise) cette zone garantit, au lieu d\'une ligne générique "arme/armure (7 pièces)"'},
+      {t:'change', sub:'equipements', severity:'major', tx:'Les 3 types d\'arme se répartissent maintenant sur les 3 DERNIÈRES zones de chaque palier (au lieu des 3 premières, avec la 4e qui répétait l\'arme principale) — la toute première zone d\'un palier n\'a donc plus aucune arme garantie, mais chaque type n\'apparaît plus qu\'une seule fois par palier'},
+      {t:'new', sub:'interface', tx:'Notes de version : le défilement reprend exactement là où tu l\'as laissé à chaque ouverture, et une pastille en haut de la page indique combien de notes tu n\'as pas encore lues (en plus du numéro sur le bouton du menu) — ces deux pastilles ne disparaissent que quand tu as réellement fait défiler jusqu\'à ces entrées, pas juste en ouvrant le panneau'},
+      {t:'new', sub:'tresors', tx:'Nouvelle étiquette "Trésors" pour les notes de version liées au Trésor de Velia'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'Fix: the loot table still showed 0.1% for the Cron Stone (the old rate, before the previous update\'s move to 1%) — a single reference value now, can no longer drift out of sync'},
+      {t:'improve', sub:'interface', tx:'The loot table now shows exactly WHICH gear piece (helmet/armor/gloves/boots/specific weapon) this zone guarantees, instead of a generic "weapon/armor (7 pieces)" line'},
+      {t:'change', sub:'equipements', severity:'major', tx:'The 3 weapon types now spread across a tier\'s LAST 3 zones (instead of the first 3, with the 4th repeating the main weapon) — a tier\'s very first zone no longer has any guaranteed weapon, but each type now appears only once per tier'},
+      {t:'new', sub:'interface', tx:'Patch notes: scrolling now resumes exactly where you left it every time you open the panel, and a badge at the top of the page shows how many notes you haven\'t read yet (alongside the number on the menu button) — both badges only disappear once you\'ve actually scrolled to those entries, not just from opening the panel'},
+      {t:'new', sub:'tresors', tx:'New "Treasures" tag for patch notes related to the Velia Treasure'},
+    ] },
   { v:'V194', d:'06/07/2026 08:00', name:{fr:'Badge NEW repensé (numéro, par joueur, met en évidence le changement)', en:'Redesigned NEW badge (number, per-player, highlights the change)'}, fr:[
       {t:'change', sub:'interface', tx:'Le badge "NEW" clignotant (24h pour tout le monde) remplacé par un badge numéroté "1" qui disparaît dès que TOI tu ouvres le panneau — et le changement précis est mis en évidence en haut du panneau (Wiki/Compendium/Codex/Succès) tant que tu ne l\'as pas encore vu'},
       {t:'fix', sub:'interface', severity:'minor', tx:'Corrigé un bug qui empêchait le badge de jamais disparaître (comparaison à une date qui pouvait tomber dans le futur par rapport à l\'horloge réelle) — remplacé par un simple compteur, plus fiable'},
@@ -3981,8 +3995,9 @@ const WIKI_SECTIONS = [
       <p>Le silver n'occupe jamais de place (toujours ramassé). Un matériau/bijou déjà en stack dans ton sac continue lui aussi d'être ramassé tant que ce stack n'est pas à son maximum, même sac plein. Seuls les <b>nouveaux</b> objets qui auraient besoin d'une case libre restent au sol — un bandeau rouge ⚠ t'en avertit, sans jamais t'empêcher de continuer à farmer.</p>
       <h3>Zones groupées par palier de stuff</h3>
       <p>Les 16 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu — 4 zones chacun) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
+      <p>Chaque zone garantit une seule pièce d'équipement précise : casque/plastron/gants sur les 3 premières zones du palier, bottes sur la 4e, et une arme (arme principale/secondaire/éveil) sur les 3 <b>dernières</b> zones — la toute première zone d'un palier n'a donc aucune arme garantie. Clique l'icône 👁 d'une zone pour voir exactement laquelle.</p>
       <h3>Trésor de Velia (catégorie TEST)</h3>
-      <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 5 objets collectibles très rares (0,01% à 0,00001% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
+      <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 4 objets collectibles très rares (0,5% à 0,00001% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
       <h3>Boss mondial partagé</h3>
       <p>Le Kzarka du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a désormais des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène.</p>
       <h3>Où farmer un socle vide ?</h3>
@@ -4004,8 +4019,9 @@ const WIKI_SECTIONS = [
       <p>Silver never takes up space (always picked up). A material/jewelry already stacked in your bag keeps getting picked up as long as that stack isn't full, even with a full bag. Only <b>new</b> items that would need a free slot stay on the ground — a red ⚠ banner warns you, without ever stopping you from farming.</p>
       <h3>Zones grouped by gear tier</h3>
       <p>The 16 Velia zones are grouped by gear tier (Naru/grey, Tuvala/white, Yuria/green, Grunil/blue — 4 zones each) — the header and border color match the gear color found there, same as in the inventory.</p>
+      <p>Every zone guarantees exactly one specific gear piece: helmet/armor/gloves on the tier's first 3 zones, boots on the 4th, and a weapon (main/secondary/awakening) on the <b>last</b> 3 zones — the very first zone of a tier has no guaranteed weapon. Click a zone's 👁 icon to see exactly which one.</p>
       <h3>Velia Treasure (TEST category)</h3>
-      <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 5 very rare collectibles (0.01% to 0.00001% per kill), stored in their own 🗺️ inventory tab. Still experimental: no recipe or use yet.</p>
+      <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 4 very rare collectibles (0.5% to 0.00001% per kill), stored in their own 🗺️ inventory tab. Still experimental: no recipe or use yet.</p>
       <h3>Shared world boss</h3>
       <p>The scheduled Kzarka (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) now has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena.</p>
       <h3>Where to farm an empty slot?</h3>
@@ -4408,18 +4424,23 @@ function commitPatchRead() { // appelé à la fermeture de l'onglet
 window.addEventListener('beforeunload', commitPatchRead);
 window.addEventListener('pagehide', commitPatchRead); // filet de sécurité (mobile / onglets fermés brutalement)
 
-// le badge (pastille numérique sur le bouton) compte ce qui n'a été vu ni lors d'une session
-// précédente NI pendant la session en cours -- se vide dès l'ouverture du panneau (demande
-// explicite du 2026-07-05 : "la notification s'enlève une fois visité"). Le tag "NEW" sur chaque
-// entrée, lui, reste basé UNIQUEMENT sur les sessions précédentes (readPatches) : il continue
-// d'indiquer "nouveau depuis ta dernière visite" pendant toute la session, comme prévu à l'origine.
+// le badge (pastille numérique sur le bouton + pastille en haut de page) compte ce qui n'a été vu
+// ni lors d'une session précédente NI pendant la session en cours. Changement du 2026-07-06
+// (demande explicite : "s'il a pas scrollé les pastille restent... le numero reste aussi tant
+// qu'il n'a pas scrollé pour lire le patch") -- REMPLACE le comportement du 2026-07-05 où ouvrir le
+// panneau suffisait à tout vider d'un coup : désormais, seul le DÉFILEMENT réel jusqu'à une entrée
+// (voir patchObserver plus bas) la marque vue, ouvrir le panneau seul ne change plus rien. Le tag
+// "NEW" sur chaque entrée reste basé UNIQUEMENT sur les sessions précédentes (readPatches).
 function unreadPatchCount() { return PATCH_NOTES.filter(p => !readPatches.has(p.v) && !seenThisSession.has(p.v)).length; }
 function updatePatchBadge() {
   const n = unreadPatchCount();
   const badge = $a('patchBadge');
   if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
   $a('btnPatch').classList.toggle('hasNew', n > 0);
+  const topBadge = $a('patchTopBadge');
+  if (topBadge) { $a('patchTopBadgeNum').textContent = n; topBadge.classList.toggle('show', n > 0); }
 }
+$a('patchTopBadge').onclick = () => $a('btnPatch').onclick();
 
 // catégories principales des notes de version (refonte du 2026-07-05, demande explicite) --
 // taxonomie standard adaptée à Velia Idle (les catégories sans équivalent dans ce jeu, ex.
@@ -4495,7 +4516,7 @@ const PATCH_SUBCATS = {
   eventTemp:'Événements temporaires', bonusXp:'Bonus XP', bonusDrop:'Bonus Drop',
   cadeaux:'Cadeaux', calendrier:'Calendrier',
   annonces:'Annonces', roadmap:'Feuille de route', prochaines:'Prochaines mises à jour',
-  connus:'Problèmes connus',
+  connus:'Problèmes connus', tresors:'Trésors',
 };
 const PATCH_SUBCATS_EN = {
   boss:'Boss', monstres:'Monsters', zones:'Zones', quetes:'Quests', pnj:'NPC', objets:'Items',
@@ -4513,7 +4534,7 @@ const PATCH_SUBCATS_EN = {
   eventTemp:'Time-limited events', bonusXp:'XP bonus', bonusDrop:'Drop bonus',
   cadeaux:'Gifts', calendrier:'Calendar',
   annonces:'Announcements', roadmap:'Roadmap', prochaines:'Upcoming updates',
-  connus:'Known issues',
+  connus:'Known issues', tresors:'Treasures',
 };
 
 let patchObserver = null;
@@ -4577,16 +4598,26 @@ $a('btnPatch').onclick = () => {
   }).join('');
   openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', html);
 
-  // la pastille de notification se vide dès l'ouverture du panneau (demande explicite du
-  // 2026-07-05) -- le tag "NEW" par entrée, lui, reste affiché toute la session (voir plus haut)
-  PATCH_NOTES.forEach(p => seenThisSession.add(p.v));
-  updatePatchBadge();
+  // reprend le défilement exactement là où CE joueur s'était arrêté (2026-07-06, demande
+  // explicite : "rappel toi la ou s'est arrete son scroll... et reprend a cet endroit tout le
+  // temps") -- persisté par joueur (localStorage), restauré à CHAQUE ouverture du panneau, pas
+  // seulement la première fois de la session
+  const body = $a('infoBody');
+  let savedScroll = 0;
+  try { savedScroll = parseInt(localStorage.getItem('velia-patch-scroll')||'0', 10) || 0; } catch(e) {}
+  requestAnimationFrame(() => { body.scrollTop = savedScroll; });
+  body.onscroll = () => { try { localStorage.setItem('velia-patch-scroll', String(body.scrollTop)); } catch(e) {} };
 
-  // suit ce qui défile dans la fenêtre pour savoir quoi marquer lu à la fermeture de la page
-  // (le tag NEW, lui, reste affiché pendant toute la session — voir commitPatchRead)
+  // suit ce qui défile RÉELLEMENT dans la fenêtre pour marquer lu (pastille du bouton + pastille
+  // en haut de page, voir updatePatchBadge) -- changement du 2026-07-06 (demande explicite) :
+  // ouvrir le panneau seul ne marque plus rien lu, contrairement au comportement précédent (voir
+  // le commentaire au-dessus d'updatePatchBadge) ; le tag "NEW" par entrée reste affiché toute la
+  // session (voir commitPatchRead)
   if (patchObserver) patchObserver.disconnect();
   patchObserver = new IntersectionObserver((entries) => {
-    for (const entry of entries) if (entry.isIntersecting) seenThisSession.add(entry.target.dataset.ver);
+    let changed = false;
+    for (const entry of entries) if (entry.isIntersecting && !seenThisSession.has(entry.target.dataset.ver)) { seenThisSession.add(entry.target.dataset.ver); changed = true; }
+    if (changed) updatePatchBadge();
   }, { root: $a('infoBody'), threshold: 0.6 });
   document.querySelectorAll('.patchEntry').forEach(el => patchObserver.observe(el));
 

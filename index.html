@@ -5,9 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=194">
+<link rel="stylesheet" href="styles.css?v=195">
 </head>
 <body>
+
+<!-- pastille persistante en haut de la page (2026-07-06, demande explicite : "met une pastille en
+     haut de la page pour montrer combien de note il a manque, s'il a pas scrolle les pastille
+     restent") -- reste visible tant que le joueur n'a pas fait défiler les notes de version
+     jusqu'à SES entrées non lues, indépendamment du menu replié/déplié -->
+<div id="patchTopBadge"><span id="patchTopBadgeNum"></span> <span data-i18n="patchTopBadgeLbl">notes de version non lues</span></div>
 
 <div id="authOverlay" class="hidden">
   <div id="authBox">
@@ -461,7 +467,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=194"></script>
-<script src="game-supabase.js?v=194"></script>
+<script src="game-core.js?v=195"></script>
+<script src="game-supabase.js?v=195"></script>
 </body>
 </html>
