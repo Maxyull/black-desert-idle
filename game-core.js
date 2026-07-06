@@ -6161,11 +6161,19 @@ function renderOptAutoTargetSelect() {
   const curLvl = target ? (target.enhLv||0) : 0;
   const options = ENH_NAMES.map((name,i) => i).filter(i => i > curLvl);
   // affiche le gain directement dans chaque option du menu déroulant (demande explicite du
-  // 2026-07-05), pas seulement pour le palier actuellement sélectionné
+  // 2026-07-05), pas seulement pour le palier actuellement sélectionné -- n'affiche le gain QUE
+  // sur le palier où il change RÉELLEMENT (2026-07-08, demande explicite : "n'affiche +1 que
+  // lorsque tu gagne 1AP, le suivant sera +2") : avec l'arrondi vers le bas (voir effectiveApDp),
+  // plusieurs paliers consécutifs peuvent cumuler le même gain entier tant que la fraction
+  // accumulée n'a pas franchi le point suivant -- répéter "(+1 PA)" sur 7 paliers d'affilée
+  // donnait l'impression d'un gain figé/buggé ; on ne le réaffiche donc qu'au moment où il change.
+  let lastGainTxt = null;
   sel.innerHTML = options.map(i => {
     const parts = optAutoGainParts(target, i);
     const gainTxt = parts.length ? ` (${parts.join(' · ')})` : '';
-    return `<option value="${i}">${ENH_NAMES[i]}${gainTxt}</option>`;
+    const showGain = gainTxt !== lastGainTxt;
+    if (gainTxt) lastGainTxt = gainTxt;
+    return `<option value="${i}">${ENH_NAMES[i]}${showGain ? gainTxt : ''}</option>`;
   }).join('') || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
   sel.disabled = !options.length;
   renderOptAutoGain();

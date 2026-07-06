@@ -2358,6 +2358,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V211', d:'08/07/2026 16:00', name:{fr:'Fix menu d\'optimisation : le gain de PA ne se répète plus sur plusieurs paliers', en:'Fix enhancement menu: the AP gain no longer repeats across several levels'}, fr:[
+      {t:'fix', sub:'interface', tx:'Depuis le passage à l\'arrondi vers le bas (voir mise à jour précédente), le menu déroulant d\'optimisation pouvait afficher "(+1 PA)" identique sur 7 paliers d\'affilée (la fraction accumulée n\'avait pas encore franchi le point suivant) — donnait l\'impression d\'un gain figé. Le gain ne s\'affiche désormais qu\'au palier où il change réellement : "+1 PA" apparaît une seule fois, puis rien jusqu\'à "+2 PA" au prochain vrai palier'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'Since switching to round-down (see previous update), the enhancement dropdown could show the identical "(+1 AP)" across 7 levels in a row (the accumulated fraction hadn\'t crossed the next point yet) — looked like a frozen/stuck gain. The gain now only shows on the level where it actually changes: "+1 AP" appears once, then nothing until "+2 AP" at the next real milestone'},
+    ] },
   { v:'V210', d:'08/07/2026 15:30', name:{fr:'PA/PD sans virgule, zone dangereuse = mort garantie en 100% des cas', en:'AP/DP without decimals, dangerous zone = guaranteed death 100% of the time'}, fr:[
       {t:'change', sub:'interface', tx:'Le PA/PD effectif affiché (stats, résumé équipement, menu d\'optimisation) est désormais un nombre entier, arrondi vers le BAS — jamais de virgule, et jamais plus que ce qui est réellement acquis'},
       {t:'change', sub:'combat', severity:'major', tx:'Zone DANGEREUSE : la mort est maintenant garantie à 100% dès le premier coup qui touche (plus de dégât insuffisant possible), l\'esquive automatique et la téléportation défensive sont désactivées, et TOUS les packs à moins de 400 unités s\'activent d\'un coup (pas seulement celui visé) — le badge représente désormais un risque de mort certaine et immédiate, pas probable'},
