@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V257', d:'14/07/2026 12:00', name:{fr:'Nettoyage technique du code (aucun changement de jeu)', en:'Technical code cleanup (no gameplay change)'}, fr:[
+      {t:'change', sub:'systeme', tx:'Réorganisation interne du code : les deux gros fichiers du jeu (game-supabase.js et game-core.js) ont été découpés en plusieurs fichiers plus petits et thématiques (admin, chat, marché, boss mondial, rendu, inventaire...) pour être plus faciles à maintenir. Aucun impact sur le gameplay, tout a été vérifié par la suite de tests avant chaque étape'},
+    ], en:[
+      {t:'change', sub:'systeme', tx:'Internal code reorganization: the two large game files (game-supabase.js and game-core.js) were split into several smaller, themed files (admin, chat, market, world boss, rendering, inventory...) to be easier to maintain. No gameplay impact, everything was verified by the test suite before each step'},
+    ] },
   { v:'V256', d:'14/07/2026 11:00', name:{fr:'Plus de bijoux en zones vertes et bleues', en:'More jewelry in Green and Blue tiers'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Chance de trouver un bijou rehaussée dans les 4 zones du palier vert (×1.8 : Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) et les 4 zones du palier bleu (×2 : Sanctuaire Elric, Ruines de Kratuga, Planque des Mânes, Forêt de Polly). Paliers gris et blanc inchangés'},
     ], en:[
