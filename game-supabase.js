@@ -2361,6 +2361,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V224', d:'09/07/2026 20:00', name:{fr:'Tutoriel au premier ramassage d\'une Pierre de Cron', en:'Tutorial on first Cron Stone pickup'}, fr:[
+      {t:'new', sub:'interface', tx:'Un petit tutoriel se lance automatiquement la toute première fois que tu ramasses une Pierre de Cron : explique qu\'elle protège ta pièce d\'équipement contre une rétrogradation, et qu\'elle s\'active/désactive en cliquant dessus'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'A small tutorial now triggers automatically the very first time you pick up a Cron Stone: explains that it protects your gear piece from downgrading, and that it toggles on/off by clicking it'},
+    ] },
   { v:'V223', d:'09/07/2026 19:00', name:{fr:'Carte Statistiques en onglets, menu d\'optimisation simplifié', en:'Tabbed Stats card, simplified enhancement menu'}, fr:[
       {t:'new', sub:'interface', tx:'La carte Statistiques se divise désormais en 2 onglets : "Perso" (contenu inchangé) et "Recommandations" (nouveau) — ce dernier affiche la meilleure zone théorique pour le silver/h, le XP/h et les kills/min, chacune cliquable pour s\'y rendre directement'},
       {t:'change', sub:'interface', tx:'Le menu déroulant d\'optimisation n\'affiche plus qu\'une seule statistique par palier (la principale de la pièce : PA pour arme/éveil/dague, PD pour casque/armure/gants/bottes) au lieu de cumuler PD+PV+Esquive sur la même ligne — le détail complet reste visible juste en dessous du menu'},
@@ -4524,6 +4529,19 @@ const COMPENDIUM_TUTORIAL_STEPS = [
 function startCompendiumTutorial() {
   tutCompTabSaved = compendiumTab;
   startTutorial(COMPENDIUM_TUTORIAL_STEPS, { resetView:false });
+}
+// ============================================================
+// Tutoriel de la Pierre de Cron (2026-07-09, demande explicite) — se lance automatiquement au tout
+// premier ramassage d'une Pierre de Cron (voir dropsTick/cronTutoSeen dans game-core.js), 1 seule
+// étape, même moteur/overlay que les autres tutoriels (resetView:false pour laisser le jeu affiché
+// derrière le spotlight au lieu de le fermer).
+const CRON_TUTORIAL_STEPS = [
+  { target:'#optCronSlot', placement:'top', final:true,
+    title:{fr:'Pierre de Cron',en:'Cron Stone'},
+    text:{fr:'Cet objet protège ta pièce d\'équipement contre une rétrogradation en cas d\'échec d\'optimisation. Clique dessus pour l\'activer ou la désactiver.', en:'This item protects your gear piece from downgrading if an enhancement attempt fails. Click it to activate or deactivate it.'} },
+];
+function startCronTutorial() {
+  startTutorial(CRON_TUTORIAL_STEPS, { resetView:false });
 }
 let tutorialStepIdx = -1;
 // moteur générique (2026-07-08) : au départ figé sur TUTORIAL_STEPS (le tutoriel d'arrivée), rendu

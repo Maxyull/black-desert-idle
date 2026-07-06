@@ -2412,6 +2412,11 @@ function renderCompendiumHtml() {
 // persisté en localStorage pour ne se déclencher qu'une seule fois, jamais aux ouvertures suivantes
 let compTutoSeen = false;
 try { compTutoSeen = localStorage.getItem('velia-idle-comp-tuto-seen') === '1'; } catch(e) {}
+// tutoriel auto-lancé au tout premier ramassage d'une Pierre de Cron (2026-07-09, demande explicite)
+// — même principe que compTutoSeen : persisté en localStorage, ne se déclenche qu'une seule fois.
+// Voir CRON_TUTORIAL_STEPS/startCronTutorial (game-supabase.js) et son déclenchement dans dropsTick.
+let cronTutoSeen = false;
+try { cronTutoSeen = localStorage.getItem('velia-idle-cron-tuto-seen') === '1'; } catch(e) {}
 function openCompendium() {
   const callout = contentChangeCalloutHtml('compendium');
   openInfo(LANG==='fr'?'📖 Compendium':'📖 Compendium', callout + renderCompendiumHtml());
@@ -3851,6 +3856,14 @@ function dropsTick(dt) {
       } else {
         lootLine(it, l.silver, it.kind === 'material' ? 'matLoot' : '');
         floatTxt(l.x,l.y,40,it.name,{silver:true});
+        // tout premier ramassage d'une Pierre de Cron (2026-07-09, demande explicite) : petit
+        // tutoriel expliquant son rôle (protège contre une rétrogradation, activable/désactivable
+        // en cliquant dessus) — voir CRON_TUTORIAL_STEPS/startCronTutorial (game-supabase.js)
+        if (it.name === CRON_STONE.name && !cronTutoSeen) {
+          cronTutoSeen = true;
+          try { localStorage.setItem('velia-idle-cron-tuto-seen', '1'); } catch(e) {}
+          setTimeout(startCronTutorial, 400);
+        }
       }
       particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
       if (invPanelOpen) renderInventory();
