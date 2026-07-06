@@ -335,6 +335,29 @@
     heidelClone.querySelector('.zoneTierLock').remove();
     assert('Le texte du bouton (hors badge) ne contient plus le cadenas', !heidelClone.textContent.includes('🔒'), `texte=${heidelClone.textContent}`);
   }
+  // "l'anneau de yuria ne fournit pas les bonus +1 +2 dans la liste lors de l'opti automatique"
+  // (2026-07-12) -- optAutoGainPrimaryPart() ne testait que WEAPON_SLOTS (PA) vs le reste (PD),
+  // oubliant que les bijoux (JEWELRY_SLOTS) donnent de la PA eux aussi (jamais de PD) : le delta
+  // PD d'un bijou est toujours 0, donc aucun gain n'était jamais affiché dans la liste déroulante.
+  function testJewelryShowsGainInAutoOptList() {
+    // cible un palier assez haut (PRI, garanti) pour que le gain croise un seuil entier quel que
+    // soit le détail exact de la courbe d'enchantement (voir gearFloor/effectiveApDp) -- +1 seul
+    // peut légitimement n'afficher aucun gain si la fraction accumulée n'a pas encore franchi un
+    // entier (comportement voulu, voir le commentaire sur optAutoGainPrimaryPart), donc pas fiable
+    // pour isoler CE bug précis.
+    const target = PRI_IDX;
+    const ring = { name:'test', kind:'jackpot', slot:'ring', ap:10, dp:0, hp:0, enhLv:0, optimizable:true };
+    const gainRing = optAutoGainPrimaryPart(ring, target, 'ring1');
+    assert('Un bijou (ring1) affiche bien un gain de PA dans la liste', gainRing.includes('PA') && gainRing !== '', `got="${gainRing}"`);
+    // même vérification pour les 2 autres types de bijoux (boucle/collier/ceinture)
+    const earring = { name:'test2', kind:'jackpot', slot:'earring', ap:8, dp:0, hp:0, enhLv:0, optimizable:true };
+    assert('Un bijou (earring1) affiche aussi un gain de PA', optAutoGainPrimaryPart(earring, target, 'earring1').includes('PA'));
+    // vérifie que ça ne casse pas le comportement existant pour armure (PD) et arme (PA)
+    const helmet = { name:'test3', kind:'gear', slot:'helmet', ap:0, dp:10, hp:0, enhLv:0, optimizable:true };
+    assert('Une pièce d\'armure (helmet) affiche toujours un gain de PD', optAutoGainPrimaryPart(helmet, target, 'helmet').includes('PD'));
+    const weapon = { name:'test4', kind:'gear', slot:'weapon', ap:10, dp:0, hp:0, enhLv:0, optimizable:true };
+    assert('Une arme affiche toujours un gain de PA', optAutoGainPrimaryPart(weapon, target, 'weapon').includes('PA'));
+  }
   // "la flèche qui affiche le stuff à farm sur la zone ne doit pas s'afficher si le stuff est dans
   // l'inventaire" (2026-07-11) -- zonesOfferingUpgrade() (badge ⬆️ sur les lignes de la liste de
   // zones) ne doit plus proposer un socle pour lequel un objet meilleur est DÉJÀ possédé, non
@@ -638,13 +661,15 @@
     zoneIdx = 0; // grey
     assert('targetPackCount = 6 en palier gris (inchangé)', targetPackCount() === 6);
     zoneIdx = 3; // white
-    assert('targetPackCount augmente au palier blanc', targetPackCount() > 6, `got=${targetPackCount()}`);
+    assert('targetPackCount = 8 en palier blanc', targetPackCount() === 8, `got=${targetPackCount()}`);
     const whiteCount = targetPackCount();
+    // "zone verte rajoute 2x le nombre de monstre actuel" (2026-07-12, précisé "2x la valeur du
+    // palier blanc") -- le vert est volontairement un PIC (16, plus que le bleu, 12), pas une
+    // simple progression monotone -- confirmé explicitement par le joueur.
     zoneIdx = 6; // green
-    assert('targetPackCount augmente encore au palier vert', targetPackCount() > whiteCount, `got=${targetPackCount()}`);
-    const greenCount = targetPackCount();
+    assert('targetPackCount du palier vert = 2x le palier blanc (8*2=16)', targetPackCount() === whiteCount*2, `got=${targetPackCount()}`);
     zoneIdx = 9; // blue
-    assert('targetPackCount augmente encore au palier bleu', targetPackCount() > greenCount, `got=${targetPackCount()}`);
+    assert('targetPackCount = 12 en palier bleu (inchangé, le vert reste un pic au-dessus)', targetPackCount() === 12, `got=${targetPackCount()}`);
     atVelia = true;
     assert('targetPackCount = 0 à Velia (zone paisible, aucun monstre)', targetPackCount() === 0);
     zoneIdx = s.zoneIdx; atVelia = s.atVelia;
@@ -1091,6 +1116,7 @@
     testUpgradeIconIgnoresDiscoveredZone();
     testSlotsUpgradedByZoneIsZoneSpecific();
     testZoneTierLockIsSeparateFromLabel();
+    testJewelryShowsGainInAutoOptList();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
     testJewelryHasMatNameForEnhancement();

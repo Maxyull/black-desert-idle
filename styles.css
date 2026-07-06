@@ -301,7 +301,13 @@
      point du spec CSS Grid, peut alors laisser le contenu déborder visiblement par-dessus les
      cartes adjacentes (repéré en jeu : lignes PA/PD requis de zone chevauchant Équipement/Inventaire
      sur Firefox). min-width:0 force la carte à respecter sa colonne, quel que soit son contenu. */
-  .card { background:var(--panel-2); border:1px solid #2c2a31; padding:7px 10px; min-width:0; }
+  /* overflow-x:hidden (2026-07-12) : min-width:0 seul n'a pas suffi (rapporté par le joueur, même
+     bug persistant sur Firefox) -- filet de sécurité supplémentaire qui GARANTIT qu'aucun contenu
+     ne peut déborder HORIZONTALEMENT par-dessus une carte voisine, quelle que soit la cause exacte
+     restante. N'affecte pas les débordements VERTICAUX volontaires (ex: badge .zoneTierLock qui
+     dépasse légèrement au-dessus d'un bouton) : seul overflow-x est contraint. Non vérifié
+     visuellement sur un vrai Firefox (indisponible dans cet environnement) -- à reconfirmer. */
+  .card { background:var(--panel-2); border:1px solid #2c2a31; padding:7px 10px; min-width:0; overflow-x:hidden; }
   .row > span { min-width:0; overflow-wrap:anywhere; }
   .card h3 { font-size:9.5px; letter-spacing:2.5px; text-transform:uppercase; color:var(--gold);
     font-weight:normal; margin-bottom:5px; border-bottom:1px solid #2c2a31; padding-bottom:4px; }

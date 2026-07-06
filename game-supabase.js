@@ -2507,6 +2507,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V251', d:'12/07/2026 08:00', name:{fr:'Fix bijoux dans l\'auto-opti, 2x plus de monstres en zone verte, filet Firefox renforcé', en:'Fixed jewelry in auto-opt, 2x more monsters in Green tier, stronger Firefox safety net'}, fr:[
+      {t:'fix', sub:'objets', severity:'major', tx:'La liste déroulante de l\'optimisation automatique n\'affichait jamais le gain (+1 PA, +2 PA...) pour les bijoux (anneaux, boucles, colliers, ceintures) — le code ne regardait que le gain de PD par défaut pour tout ce qui n\'est pas une arme, alors que les bijoux donnent de la PA, jamais de PD. Corrigé : le gain s\'affiche désormais correctement pour les bijoux'},
+      {t:'change', sub:'combat', tx:'Le palier vert (Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) a désormais 16 groupes de monstres actifs en même temps (2× le palier blanc), au lieu de 10'},
+      {t:'fix', sub:'interface', plat:'firefox', tx:'Le filet de sécurité Firefox posé précédemment (min-width:0) ne suffisait pas d\'après un retour en jeu — ajout d\'un filet supplémentaire (overflow-x:hidden sur les cartes) qui empêche tout débordement horizontal, quelle que soit la cause exacte restante. Non vérifié visuellement sur un vrai Firefox (indisponible dans cet environnement de développement) — à reconfirmer'},
+    ], en:[
+      {t:'fix', sub:'objets', severity:'major', tx:'The auto-optimization dropdown list never showed the gain (+1 AP, +2 AP...) for jewelry (rings, earrings, necklaces, belts) — the code only checked DP gain by default for anything that isn\'t a weapon, even though jewelry gives AP, never DP. Fixed: the gain now displays correctly for jewelry'},
+      {t:'change', sub:'combat', tx:'The Green tier (Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Bashim Base) now has 16 monster groups active at once (2x the White tier), up from 10'},
+      {t:'fix', sub:'interface', plat:'firefox', tx:'The previous Firefox safety net (min-width:0) wasn\'t enough per an in-game report — added another layer (overflow-x:hidden on cards) that prevents any horizontal overflow regardless of the exact remaining cause. Not visually verified on a real Firefox (unavailable in this dev environment) — to be reconfirmed'},
+    ] },
   { v:'V250', d:'12/07/2026 07:00', name:{fr:'Onglets de région (Velia à Edana) sur une seule ligne', en:'Region tabs (Velia to Edana) on a single row'}, fr:[
       {t:'change', sub:'interface', tx:'Les 5 onglets de région (Velia/Heidel/Calpheon/Valencia/Edana) passaient parfois sur 2 rangées. Le cadenas 🔒 des régions verrouillées est désormais un petit badge au-dessus de chaque onglet, centré, au lieu d\'être dans le texte — libère assez de place pour que les 5 tiennent toujours sur une seule ligne'},
     ], en:[
