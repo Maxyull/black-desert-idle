@@ -2289,6 +2289,7 @@ const I18N = {
   btnOptTry: { fr:"Tenter l'optimisation", en:'Attempt enhancement' },
   btnOptAuto: { fr:"▶ Auto jusqu'à", en:'▶ Auto to' },
   optAutoModeTarget: { fr:"Jusqu'à un palier", en:'Until a target level' },
+  optAutoModeNextGain: { fr:"Jusqu'au prochain gain de PA/PD", en:'Until the next AP/DP gain' },
   optAutoModeLoop: { fr:"En boucle (jusqu'à rupture de matériau)", en:'On loop (until out of material)' },
   optAutoModeFail: { fr:"Jusqu'au premier échec", en:'Until the first failure' },
   optAutoModeCron: { fr:"Jusqu'à épuisement des Pierres de Cron", en:'Until out of Cron Stones' },
@@ -2358,6 +2359,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V212', d:'08/07/2026 16:30', name:{fr:'Mode auto "jusqu\'au prochain gain", prix des potions par zone, trésor à 0.33%', en:'"Until next gain" auto mode, per-zone potion prices, treasure at 0.33%'}, fr:[
+      {t:'change', sub:'loot', tx:'Chance du "Bout du trésor de Velia" ajustée à 0.33% (au lieu de 0.5%)'},
+      {t:'new', sub:'optimisation', tx:'Nouveau mode d\'auto-optimisation : "Jusqu\'au prochain gain de PA/PD" — s\'arrête automatiquement dès que le PA ou le PD affiché de la pièce augmente réellement, sans avoir à deviner à quel palier précis ça se produit (voir le fix du menu déroulant de la mise à jour précédente)'},
+      {t:'change', sub:'economie', severity:'major', tx:'Le prix des potions (vie et mana) suit désormais le revenu de base de la zone actuelle au lieu d\'être fixe partout — les prix affichés/débités restent calibrés sur Camp des Loups en tout début de jeu, puis augmentent avec la zone pour rester un coût cohérent avec le loot d\'or gagné là où on farme'},
+    ], en:[
+      {t:'change', sub:'loot', tx:'"Bout du trésor de Velia" chance adjusted to 0.33% (from 0.5%)'},
+      {t:'new', sub:'optimisation', tx:'New auto-enhance mode: "Until the next AP/DP gain" — automatically stops as soon as the piece\'s displayed AP or DP actually increases, no more guessing which exact level that happens at (see the dropdown fix from the previous update)'},
+      {t:'change', sub:'economie', severity:'major', tx:'Potion prices (HP and mana) now follow the current zone\'s base income instead of being flat everywhere — displayed/charged prices stay calibrated on Camp des Loups at the very start, then rise with the zone to remain a cost consistent with the gold looted where you\'re farming'},
+    ] },
   { v:'V211', d:'08/07/2026 16:00', name:{fr:'Fix menu d\'optimisation : le gain de PA ne se répète plus sur plusieurs paliers', en:'Fix enhancement menu: the AP gain no longer repeats across several levels'}, fr:[
       {t:'fix', sub:'interface', tx:'Depuis le passage à l\'arrondi vers le bas (voir mise à jour précédente), le menu déroulant d\'optimisation pouvait afficher "(+1 PA)" identique sur 7 paliers d\'affilée (la fraction accumulée n\'avait pas encore franchi le point suivant) — donnait l\'impression d\'un gain figé. Le gain ne s\'affiche désormais qu\'au palier où il change réellement : "+1 PA" apparaît une seule fois, puis rien jusqu\'à "+2 PA" au prochain vrai palier'},
     ], en:[

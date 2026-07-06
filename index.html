@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=211">
+<link rel="stylesheet" href="styles.css?v=212">
 </head>
 <body>
 
@@ -457,6 +457,7 @@
       <div id="optAutoModeRow">
         <select id="optAutoMode">
           <option value="target" data-i18n="optAutoModeTarget">Jusqu'à un palier</option>
+          <option value="nextgain" data-i18n="optAutoModeNextGain">Jusqu'au prochain gain de PA/PD</option>
           <option value="loop" data-i18n="optAutoModeLoop">En boucle (jusqu'à rupture de matériau)</option>
           <option value="fail" data-i18n="optAutoModeFail">Jusqu'au premier échec</option>
           <option value="cron" data-i18n="optAutoModeCron">Jusqu'à épuisement des Pierres de Cron</option>
@@ -478,10 +479,10 @@
   </div>
 </div>
 
-<script src="game-core.js?v=211"></script>
-<script src="game-supabase.js?v=211"></script>
+<script src="game-core.js?v=212"></script>
+<script src="game-supabase.js?v=212"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=211"></script>
+<script src="tests.js?v=212"></script>
 </body>
 </html>

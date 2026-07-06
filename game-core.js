@@ -2920,6 +2920,19 @@ const POTIONS = {
   infinite: { name:{fr:'Potion de vie infinie', en:'Infinite HP Potion'}, icon:'♾️', cost:0, heal:0.40, cd:4.2, locked:true },
 };
 const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite" toujours en dernier, verrouillée (voir p.locked)
+// prix des potions à l'échelle de la zone (2026-07-08, demande explicite : "modifie le prix des
+// potion par zone pour qu'il soit en accord avec le loot de gold") -- les coûts fixes ci-dessus
+// (cost:) restent la valeur de RÉFÉRENCE, calibrée sur Camp des Loups (zone 0). Ils sont ensuite
+// mis à l'échelle du revenu de base de la zone ACTUELLE (loot.trash.val, qui suit déjà la courbe
+// économique voulue : ~3 000 silver/h zone 1 → ~100 000 silver/h zone 11, voir ZONES) pour que la
+// potion reste toujours le même % du revenu horaire, au lieu de devenir dérisoire en zone avancée
+// ou trop chère en zone de départ.
+function potionZoneScale() {
+  if (typeof atVelia === 'undefined' || atVelia || typeof Z !== 'function') return 1;
+  const z = Z(), ref = ZONES[0].loot.trash.val || 1;
+  return Math.max(1, (z.loot.trash.val || ref) / ref);
+}
+function potionCost(baseCost) { return baseCost > 0 ? Math.round(baseCost * potionZoneScale()) : 0; }
 // icône unique vie+mana (2026-07-08, demande explicite : "la potion qui remplace les 2 potion")
 // -- remplace les 2 cases séparées #potSlot/#manaPotSlot par une seule, fiole ronde rouge (vie) +
 // fiole élancée bleue (mana) penchées l'une vers l'autre, volutes entrelacées animées
@@ -2956,10 +2969,11 @@ function warnPotionNoSilver() {
 }
 function usePotion() {
   const pot = POTIONS[S.potionType] || POTIONS.medium;
-  if (pot.cost > 0) {
-    if (S.silver < pot.cost) { P.potCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite, aucun soin
-    S.silver -= pot.cost;
-    floatTxt(P.x,P.y,80,'-'+fmt(pot.cost)+'🪙',{hurt:true});
+  const cost = potionCost(pot.cost);
+  if (cost > 0) {
+    if (S.silver < cost) { P.potCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite, aucun soin
+    S.silver -= cost;
+    floatTxt(P.x,P.y,80,'-'+fmt(cost)+'🪙',{hurt:true});
   }
   P.potCd = pot.cd;
   P.hp = Math.min(effHpMax(), P.hp + effHpMax()*pot.heal);
@@ -2968,9 +2982,10 @@ function usePotion() {
 // potion de mana (2026-07-05, demande explicite : "ajoute ... une potion de mana") -- un seul
 // palier pour l'instant (pas de choix de taille comme les potions de PV), même mécanique
 function usePotionMana() {
-  if (S.silver < MANA_POTION.cost) { P.manaPotCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite
-  S.silver -= MANA_POTION.cost;
-  floatTxt(P.x,P.y,80,'-'+fmt(MANA_POTION.cost)+'🪙',{hurt:true});
+  const cost = potionCost(MANA_POTION.cost);
+  if (S.silver < cost) { P.manaPotCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite
+  S.silver -= cost;
+  floatTxt(P.x,P.y,80,'-'+fmt(cost)+'🪙',{hurt:true});
   P.manaPotCd = MANA_POTION.cd;
   P.mp = Math.min(effManaMax(), P.mp + effManaMax()*MANA_POTION.restore);
   floatTxt(P.x,P.y,90,'+MP',{blue:true});
@@ -2995,7 +3010,7 @@ function renderPotSelect() {
     return `<div class="psRow${S.potionType===key?' sel':''}" data-pot="${key}">` +
       `<span class="psIcon">${p.icon}</span>` +
       `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${fmt(healHp)} PV (${Math.round(p.heal*100)}%) · CD ${p.cd}s</span></span>` +
-      `<span class="psCost">${fmt(p.cost)} 🪙</span></div>`;
+      `<span class="psCost">${fmt(potionCost(p.cost))} 🪙</span></div>`;
   }).join('');
   // section mana (2026-07-08, demande explicite : "qui ouvre le pannel de potion vie et mana") --
   // un seul palier pour l'instant (pas de choix de taille comme les potions de vie), donc juste
@@ -3006,7 +3021,7 @@ function renderPotSelect() {
     `<div class="psRow psRowInfo">` +
       `<span class="psIcon">🔷</span>` +
       `<span class="psInfo"><span class="psName">${MANA_POTION.name[LANG]}</span><br><span class="psHeal">+${Math.round(MANA_POTION.restore*100)}% MP · CD ${MANA_POTION.cd}s</span></span>` +
-      `<span class="psCost">${fmt(MANA_POTION.cost)} 🪙</span></div>`;
+      `<span class="psCost">${fmt(potionCost(MANA_POTION.cost))} 🪙</span></div>`;
   el.innerHTML = threshRow + manaSection;
   // .psRowInfo (ligne mana) exclue : purement informative, aucune taille à choisir (voir plus haut)
   el.querySelectorAll('.psRow:not(.locked):not(.psRowInfo)').forEach(row => {
@@ -3516,7 +3531,7 @@ const VELIA_TREASURE = [
   // fusionné en un seul objet le 2026-07-06 (demande explicite : "passage du bout de velia a 0.5%
   // fixe une seule item pas 2 et elle se loot de 1 a 3") -- avant, 2 "Bout" séparés (0.01%/0.001%)
   // menaient chacun à un Trésor différent ; un seul Bout désormais, taux fixe 0.5%, 1 à 3 par drop
-  { name:'Bout du trésor de Velia',    ch:.005,    icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' },
+  { name:'Bout du trésor de Velia',    ch:.0033,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' }, // 0.33% (2026-07-08, demande explicite)
   { name:'Trésor de Velia 1',         ch:.00001,  icon:'🗺️', color:'#e8c96a', key:'treasure_velia1' },
   { name:'Trésor de Velia 2',         ch:.000001, icon:'🗺️', color:'#e8c96a', key:'treasure_velia2' },
   { name:'Trésor de Velia 3',         ch:.0000001,icon:'🗺️', color:'#e8c96a', key:'treasure_velia3' },
@@ -5256,8 +5271,9 @@ function hudFast() {
   // rendue une seule fois (innerHTML déjà posé au premier hud() suffit, voir plus bas)
   const dualIcon = $('potDualIcon');
   if (dualIcon && !dualIcon.dataset.set) { dualIcon.innerHTML = ICO_POTION_DUO; dualIcon.dataset.set = '1'; }
-  $('potSlot').title = pot.name[LANG] + (pot.cost>0 ? ` — ${fmt(pot.cost)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : (LANG==='fr'?` — gratuite (CD ${pot.cd}s)`:` — free (CD ${pot.cd}s)`)) +
-    ' · ' + MANA_POTION.name[LANG] + ` — ${fmt(MANA_POTION.cost)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(MANA_POTION.restore*100)}% MP, CD ${MANA_POTION.cd}s, auto)`;
+  const potCostNow = potionCost(pot.cost), manaCostNow = potionCost(MANA_POTION.cost);
+  $('potSlot').title = pot.name[LANG] + (potCostNow>0 ? ` — ${fmt(potCostNow)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : (LANG==='fr'?` — gratuite (CD ${pot.cd}s)`:` — free (CD ${pot.cd}s)`)) +
+    ' · ' + MANA_POTION.name[LANG] + ` — ${fmt(manaCostNow)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(MANA_POTION.restore*100)}% MP, CD ${MANA_POTION.cd}s, auto)`;
   for (const s of SKILLS) {
     const el = skEls[s.id];
     el.querySelector('.cd').style.height = (cds[s.id]/s.cd*100)+'%';
@@ -6217,6 +6233,18 @@ function startAutoOpt() {
     autoOptTargetLvl = lvl;
     sel.disabled = true;
   }
+  // "jusqu'au prochain gain de PA/PD" (2026-07-08, demande explicite) : capture le PA/PD ACTUEL
+  // (entier, arrondi vers le bas — voir effectiveApDp) avant de démarrer, puis s'arrête dès que ce
+  // chiffre affiché augmente réellement — utile après le fix du menu déroulant (2026-07-08) qui a
+  // montré que plusieurs paliers d'affilée ne changent parfois rien tant que la fraction accumulée
+  // n'a pas franchi le point suivant
+  let startAp = 0, startDp = 0;
+  if (mode === 'nextgain') {
+    const target0 = EQUIP[optTargetSlot];
+    if (!target0) return;
+    const cur = effectiveApDp(target0);
+    startAp = cur.ap; startDp = cur.dp;
+  }
   $('optAutoMode').disabled = true;
   const btn = $('btnOptAuto');
   btn.classList.add('running');
@@ -6225,6 +6253,7 @@ function startAutoOpt() {
     const target = EQUIP[optTargetSlot];
     if (!target) { stopAutoOpt(); return; }
     if (mode === 'target' && (target.enhLv||0) >= autoOptTargetLvl) { stopAutoOpt(); return; }
+    if ((target.enhLv||0) >= ENH_NAMES.length-1) { stopAutoOpt(); return; } // niveau max déjà atteint
     if (findEnhanceMaterial() === -1) {
       $('optResult').textContent = LANG==='fr' ? 'Auto arrêté — plus de matériau' : 'Auto stopped — out of material';
       stopAutoOpt();
@@ -6246,6 +6275,18 @@ function startAutoOpt() {
     if (mode === 'fail') {
       const target2 = EQUIP[optTargetSlot];
       if (!target2 || (target2.enhLv||0) !== prevLvl + 1) { stopAutoOpt(); return; }
+    }
+    // "jusqu'au prochain gain de PA/PD" : s'arrête dès que le PA OU le PD affiché a réellement
+    // augmenté par rapport au début de l'auto (voir startAp/startDp ci-dessus)
+    if (mode === 'nextgain') {
+      const target3 = EQUIP[optTargetSlot];
+      if (!target3) { stopAutoOpt(); return; }
+      const cur = effectiveApDp(target3);
+      if (cur.ap > startAp || cur.dp > startDp) {
+        $('optResult').textContent = LANG==='fr' ? `Auto arrêté — gain obtenu (${ENH_NAMES[target3.enhLv||0]})` : `Auto stopped — gain reached (${ENH_NAMES[target3.enhLv||0]})`;
+        stopAutoOpt();
+        return;
+      }
     }
     // "en boucle" (2026-07-08, demande explicite) : aucune condition d'arrêt sur le niveau, continue
     // jusqu'à rupture de matériau (déjà géré ci-dessus) ou arrêt manuel
