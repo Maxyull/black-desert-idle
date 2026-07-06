@@ -383,6 +383,19 @@
     const mult = 1 + enhBonus(12);
     assert('effectiveApDp.ap = floor, pas round', eff.ap === Math.floor(5*mult), `eff.ap=${eff.ap}, floor attendu=${Math.floor(5*mult)}, round aurait donné=${Math.round(5*mult)}`);
   }
+  // "revois les info que tu donne lorsqu'il y a plusieurs stats et que tu opti" (2026-07-09) : le
+  // menu déroulant d'optimisation ne doit plus cumuler PD+PV+Esquive sur une seule ligne (illisible,
+  // voir capture jointe) -- une seule stat, la PRINCIPALE de la pièce (PA pour arme/éveil/dague, PD
+  // pour casque/armure/gants/bottes), jamais l'autre même si elle change aussi
+  function testOptDropdownShowsOnlyPrimaryStat() {
+    const helmet = { ap: 0, dp: 5, hp: 8, dodge: .2, enhLv: 0, fsByLevel: {} };
+    const weapon = { ap: 6, dp: 0, hp: 0, dodge: 0, enhLv: 0, fsByLevel: {} };
+    const helmetTxt = optAutoGainPrimaryPart(helmet, 5, 'helmet');
+    const weaponTxt = optAutoGainPrimaryPart(weapon, 5, 'weapon');
+    assert('Casque : le menu ne montre que la PD, jamais PV/Esquive', helmetTxt.includes('PD') && !helmetTxt.includes('PV') && !helmetTxt.includes('Esq'));
+    assert('Arme : le menu montre la PA, jamais la PD', weaponTxt.includes('PA') && !weaponTxt.includes('PD'));
+    assert('Aucun gain -> texte vide (pas de parenthèses vides)', optAutoGainPrimaryPart(helmet, 0, 'helmet') === '');
+  }
   // "la potion doit être moins agressive mais toujours bloquée en fonction de la zone, en fonction
   // de la génération de silver" (2026-07-09) : potionZoneScale() doit rester liée au revenu de la
   // zone (jamais gratuit/plat) mais BEAUCOUP plus douce qu'un ratio linéaire — vérifie la racine
@@ -410,6 +423,23 @@
       return potionZoneScale();
     }, null);
     zoneIdx = s.zoneIdx; atVelia = s.atVelia;
+  }
+
+  // "refonte de la carte statistique ... best silver, best xp, best monstre" (2026-07-09) : les
+  // recommandations doivent être des valeurs THÉORIQUES par zone (indépendantes du stuff actuel du
+  // joueur) — vérifie que bestZoneForMetric trouve bien le maximum réel parmi les 16 zones pour
+  // chacune des 3 métriques, en calculant le maximum "à la main" indépendamment de l'implémentation
+  function testStatsRecoPicksTrueBestZone() {
+    [zoneSilverPerHour, zoneXpPerHour, zoneKillsPerMin].forEach(metricFn => {
+      let expectedI = 0, expectedV = -Infinity;
+      for (let i = 0; i < ZONES.length; i++) {
+        const v = metricFn(ZONES[i]);
+        if (v > expectedV) { expectedV = v; expectedI = i; }
+      }
+      const got = bestZoneForMetric(metricFn);
+      assert(`bestZoneForMetric(${metricFn.name}) trouve bien le vrai maximum parmi les 16 zones`,
+        got.i === expectedI && Math.abs(got.v - expectedV) < 0.001, `got.i=${got.i}, expected.i=${expectedI}`);
+    });
   }
 
   // ---------- puissance réelle du stuff lootable (2026-07-08 : "compliqué d'arriver à 20PA avec
@@ -465,6 +495,8 @@
     testApDpDisplayHasNoDecimals();
     testEffectiveApDpFloors();
     testPotionZoneScaleIsDampened();
+    testStatsRecoPicksTrueBestZone();
+    testOptDropdownShowsOnlyPrimaryStat();
     testJewelryApIsDynamic();
     testZone0LootReachesZone1Difficulty();
     const failed = results.filter(r => !r.pass);

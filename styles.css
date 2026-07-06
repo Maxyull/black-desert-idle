@@ -297,6 +297,10 @@
   .cell.catHidden { display:none; }
   .invCatEmpty { grid-column:1/-1; text-align:center; color:var(--ink-dim); font-style:italic; font-size:11px; padding:14px 0; }
   .row { display:flex; justify-content:space-between; align-items:center; margin:2.5px 0; font-size:11.5px; }
+  /* onglet "Recommandations" de la carte Statistiques (2026-07-09, demande explicite) : chaque
+     ligne (meilleur silver/xp/kills) mène directement à la zone concernée */
+  .statsRecoRow { cursor:pointer; padding:3px 4px; border-radius:3px; }
+  .statsRecoRow:hover { background:rgba(201,165,90,.12); }
   .statSep {
     margin:8px 0 5px; padding-top:6px; border-top:1px solid #2c2a33;
     font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold);

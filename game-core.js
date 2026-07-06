@@ -2746,6 +2746,30 @@ function lootMult(r) {
   if (r < 0.9) return Math.max(0.3, r * 0.85);
   return 1.0;
 }
+// ---------- recommandations "meilleur endroit pour farmer" (2026-07-09, demande explicite : carte
+// Statistiques refondue en onglets Perso/Recommandations) ----------
+// valeurs THÉORIQUES, indépendantes du stuff actuel du joueur (demande explicite : "silver/h, xp/h,
+// kills/min théoriques par zone") -- comparent les zones entre elles à armes égales, sans se
+// soucier de si le joueur peut y survivre aujourd'hui.
+const REF_KPM_FOR_STATS = 15; // kills/min de référence (voir zones-roadmap.md, même valeur que le calibrage économique des zones)
+const REF_DPS_FOR_STATS = 900; // dégâts/min de référence PUREMENT relatif : seul hpPer varie d'une zone à l'autre, donc le classement (et le ratio entre zones) ne dépend pas de la valeur choisie ici
+function zoneSilverPerHour(z) {
+  const l = z.loot;
+  const perKill = l.trash.val*l.trash.ch + l.mat.val*l.mat.ch + l.jackpot.val*l.jackpot.ch;
+  return perKill * REF_KPM_FOR_STATS * 60;
+}
+function zoneXpPerHour(z) { return z.xp * REF_KPM_FOR_STATS * 60; }
+function zoneKillsPerMin(z) { return REF_DPS_FOR_STATS / z.hpPer; }
+// meilleure zone selon une métrique donnée (silver/xp/kills), toutes zones confondues (demande
+// explicite : classement théorique, PAS limité aux zones survivables aujourd'hui)
+function bestZoneForMetric(metricFn) {
+  let bestI = 0, bestV = -Infinity;
+  for (let i = 0; i < ZONES.length; i++) {
+    const v = metricFn(ZONES[i]);
+    if (v > bestV) { bestV = v; bestI = i; }
+  }
+  return { i: bestI, v: bestV };
+}
 function badgeOf(r) {
   if (r < 0.6)  return { cls:'b-red',    txt:'ZONE DANGEREUSE' };
   if (r < 0.9)  return { cls:'b-orange', txt:'ZONE DIFFICILE' };
@@ -4992,6 +5016,43 @@ const ZONE_TIERS = [
   { id:'end2',  icon:'🟠', label:{fr:'Valencia',en:'Valencia'}, locked:true },
   { id:'end3',  icon:'🔴', label:{fr:'Edana',en:'Edana'},       locked:true },
 ];
+// onglets de la carte Statistiques : "Perso" (contenu existant, inchangé) / "Recommandations"
+// (2026-07-09, demande explicite) -- les valeurs de recommandation sont purement THÉORIQUES (voir
+// zoneSilverPerHour/zoneXpPerHour/zoneKillsPerMin), donc constantes tout le long d'une session :
+// rendu une seule fois au clic sur l'onglet plutôt qu'à chaque tick de hud().
+let statsTab = 'perso';
+function renderStatsTabs() {
+  const el = $('statsTabTabs'); if (!el) return;
+  el.querySelectorAll('.catTab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === statsTab));
+  const personaPane = $('statsPersoPane'), recoPane = $('statsRecoPane');
+  if (personaPane) personaPane.style.display = statsTab === 'perso' ? '' : 'none';
+  if (recoPane) recoPane.style.display = statsTab === 'reco' ? '' : 'none';
+  if (statsTab === 'reco' && recoPane && !recoPane.dataset.rendered) { renderStatsRecoPane(); recoPane.dataset.rendered = '1'; }
+}
+(function wireStatsTabTabs() {
+  const el = $('statsTabTabs'); if (!el) return;
+  el.querySelectorAll('.catTab').forEach(btn => {
+    btn.onclick = () => { statsTab = btn.dataset.tab; renderStatsTabs(); };
+  });
+})();
+// contenu de l'onglet "Recommandations" : meilleure zone pour le silver/h, le xp/h et les
+// kills/min, chacun cliquable pour s'y rendre directement (même geste que les zones de farm)
+function renderStatsRecoPane() {
+  const el = $('statsRecoPane'); if (!el) return;
+  const rows = [
+    { label: LANG==='fr'?'💰 Meilleur silver/h':'💰 Best silver/h', best: bestZoneForMetric(zoneSilverPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
+    { label: LANG==='fr'?'⭐ Meilleur XP/h':'⭐ Best XP/h', best: bestZoneForMetric(zoneXpPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
+    { label: LANG==='fr'?'⚔️ Meilleurs kills/min':'⚔️ Best kills/min', best: bestZoneForMetric(zoneKillsPerMin), fmtV: v => v.toFixed(1)+'/min' },
+  ];
+  el.innerHTML = `<div class="admHint">${LANG==='fr'
+      ? 'Classement théorique (stuff idéal, indépendant de ta survie actuelle) — clique une zone pour t\'y rendre.'
+      : 'Theoretical ranking (ideal gear, independent of your current survival) — click a zone to go there.'}</div>` +
+    rows.map((r,ri) => `<div class="row statsRecoRow" data-zi="${r.best.i}" data-ri="${ri}">` +
+      `<span>${r.label}</span><span class="v">${tr(ZONES[r.best.i].name)} · ${r.fmtV(r.best.v)}</span></div>`).join('');
+  el.querySelectorAll('.statsRecoRow').forEach(row => {
+    row.onclick = () => { const zi = parseInt(row.dataset.zi,10); if (atVelia || zi !== zoneIdx) travelTo(zi); };
+  });
+}
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
   el.innerHTML = ZONE_TIERS.map(t => `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
@@ -6342,6 +6403,18 @@ function optAutoGainParts(target, targetLvl) {
   if (proj.dodge > cur.dodge) parts.push('+' + (proj.dodge-cur.dodge).toFixed(2) + '% ' + (LANG==='fr'?'Esq.':'Dodge'));
   return parts;
 }
+// version compacte du gain, un SEUL stat (le principal de la pièce : PA pour arme/éveil/dague, PD
+// pour casque/armure/gants/bottes) — demande explicite du 2026-07-09 : "revois les info que tu
+// donne lorsqu'il y a plusieurs stats" -- le menu déroulant cumulait PD+PV+Esquive sur une seule
+// ligne par palier (voir capture jointe), illisible. Le détail complet (tous les stats) reste
+// disponible juste en dessous du menu, voir renderOptAutoGain/optAutoGainParts.
+function optAutoGainPrimaryPart(target, targetLvl, slotId) {
+  if (!target || !Number.isInteger(targetLvl)) return '';
+  const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
+  const primary = WEAPON_SLOTS.includes(slotId) ? 'ap' : 'dp';
+  const delta = proj[primary] - cur[primary];
+  return delta > 0 ? '+' + delta + ' ' + (primary === 'ap' ? 'PA' : 'PD') : '';
+}
 function renderOptAutoTargetSelect() {
   const sel = $('optAutoTarget'); if (!sel) return;
   const target = EQUIP[optTargetSlot];
@@ -6356,11 +6429,10 @@ function renderOptAutoTargetSelect() {
   // donnait l'impression d'un gain figé/buggé ; on ne le réaffiche donc qu'au moment où il change.
   let lastGainTxt = null;
   sel.innerHTML = options.map(i => {
-    const parts = optAutoGainParts(target, i);
-    const gainTxt = parts.length ? ` (${parts.join(' · ')})` : '';
+    const gainTxt = optAutoGainPrimaryPart(target, i, optTargetSlot);
     const showGain = gainTxt !== lastGainTxt;
     if (gainTxt) lastGainTxt = gainTxt;
-    return `<option value="${i}">${ENH_NAMES[i]}${showGain ? gainTxt : ''}</option>`;
+    return `<option value="${i}">${ENH_NAMES[i]}${(showGain && gainTxt) ? ' (' + gainTxt + ')' : ''}</option>`;
   }).join('') || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
   sel.disabled = !options.length;
   renderOptAutoGain();

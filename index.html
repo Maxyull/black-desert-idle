@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=224">
+<link rel="stylesheet" href="styles.css?v=226">
 </head>
 <body>
 
@@ -351,22 +351,29 @@
   <div id="panel">
     <div class="card" id="statsCard">
       <h3 data-i18n="cardStats">Statistiques</h3>
-      <div class="row"><span data-i18n="lblPS">Gearscore</span><span class="v" id="stPS">21</span></div>
-      <div class="row"><span data-i18n="lblPA">PA effective</span><span class="v" id="stPA">14</span></div>
-      <div class="row"><span data-i18n="lblPD">PD</span><span class="v" id="stDP">10</span></div>
-      <div class="row"><span data-i18n="lblHpMax">PV max</span><span class="v" id="stHpMax">100</span></div>
-      <div class="row"><span data-i18n="lblMpMax">Mana max</span><span class="v" id="stMpMax">100</span></div>
-      <div class="row"><span data-i18n="lblSpd">Vitesse (SPD)</span><span class="v" id="stSpd">+0%</span></div>
-      <div class="row"><span data-i18n="lblDodge">Esquive</span><span class="v" id="stDodge">0%</span></div>
-      <div class="row"><span data-i18n="lblWeaponBonus">Bonus arme</span><span class="v" id="stWeaponBonus">+0%</span></div>
-      <div class="row"><span data-i18n="lblArmorBonus">Bonus armure (moy.)</span><span class="v" id="stArmorBonus">+0%</span></div>
-      <div class="row"><span data-i18n="lblAiMode">Mode IA</span><span class="v blue" id="stMode">équilibré</span></div>
-      <div class="row"><span data-i18n="lblKpm">Kills / min</span><span class="v" id="stKpm">—</span></div>
-      <div class="row"><span data-i18n="lblKills">Loups abattus</span><span class="v" id="stKills">0</span></div>
-      <div class="row"><span data-i18n="lblLootCount">Objets ramassés</span><span class="v" id="stLoot">0</span></div>
-      <div class="statSep" data-i18n="cardZoneStats">Stats de la zone de farm</div>
-      <div class="row"><span data-i18n="lblApZone">PA requis (zone)</span><span class="v" id="stApZone">14 / 20</span></div>
-      <div class="row"><span data-i18n="lblDpZone">PD requis (zone)</span><span class="v" id="stDpZone">10 / 20</span></div>
+      <div class="catTabs" id="statsTabTabs">
+        <button class="catTab active" data-tab="perso" data-i18n="statsTabPerso">Perso</button>
+        <button class="catTab" data-tab="reco" data-i18n="statsTabReco">Recommandations</button>
+      </div>
+      <div id="statsPersoPane">
+        <div class="row"><span data-i18n="lblPS">Gearscore</span><span class="v" id="stPS">21</span></div>
+        <div class="row"><span data-i18n="lblPA">PA effective</span><span class="v" id="stPA">14</span></div>
+        <div class="row"><span data-i18n="lblPD">PD</span><span class="v" id="stDP">10</span></div>
+        <div class="row"><span data-i18n="lblHpMax">PV max</span><span class="v" id="stHpMax">100</span></div>
+        <div class="row"><span data-i18n="lblMpMax">Mana max</span><span class="v" id="stMpMax">100</span></div>
+        <div class="row"><span data-i18n="lblSpd">Vitesse (SPD)</span><span class="v" id="stSpd">+0%</span></div>
+        <div class="row"><span data-i18n="lblDodge">Esquive</span><span class="v" id="stDodge">0%</span></div>
+        <div class="row"><span data-i18n="lblWeaponBonus">Bonus arme</span><span class="v" id="stWeaponBonus">+0%</span></div>
+        <div class="row"><span data-i18n="lblArmorBonus">Bonus armure (moy.)</span><span class="v" id="stArmorBonus">+0%</span></div>
+        <div class="row"><span data-i18n="lblAiMode">Mode IA</span><span class="v blue" id="stMode">équilibré</span></div>
+        <div class="row"><span data-i18n="lblKpm">Kills / min</span><span class="v" id="stKpm">—</span></div>
+        <div class="row"><span data-i18n="lblKills">Loups abattus</span><span class="v" id="stKills">0</span></div>
+        <div class="row"><span data-i18n="lblLootCount">Objets ramassés</span><span class="v" id="stLoot">0</span></div>
+        <div class="statSep" data-i18n="cardZoneStats">Stats de la zone de farm</div>
+        <div class="row"><span data-i18n="lblApZone">PA requis (zone)</span><span class="v" id="stApZone">14 / 20</span></div>
+        <div class="row"><span data-i18n="lblDpZone">PD requis (zone)</span><span class="v" id="stDpZone">10 / 20</span></div>
+      </div>
+      <div id="statsRecoPane" style="display:none"></div>
     </div>
 
     <div class="card" id="zonesCard">
@@ -479,10 +486,10 @@
   </div>
 </div>
 
-<script src="game-core.js?v=224"></script>
-<script src="game-supabase.js?v=224"></script>
+<script src="game-core.js?v=226"></script>
+<script src="game-supabase.js?v=226"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=224"></script>
+<script src="tests.js?v=226"></script>
 </body>
 </html>

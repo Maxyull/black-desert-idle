@@ -2234,6 +2234,8 @@ const I18N = {
   cmWalletLbl: { fr:'💰 Ton solde', en:'💰 Your balance' },
   btnListItem: { fr:'Mettre en vente', en:'List for sale' },
   cardStats: { fr:'Statistiques', en:'Stats' },
+  statsTabPerso: { fr:'Perso', en:'Personal' },
+  statsTabReco: { fr:'Recommandations', en:'Recommendations' },
   cardZoneStats: { fr:'Stats de la zone de farm', en:'Farming zone stats' },
   lblPS: { fr:'Gearscore', en:'Gearscore' },
   lblPA: { fr:'PA effective', en:'Effective AP' },
@@ -2359,6 +2361,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V223', d:'09/07/2026 19:00', name:{fr:'Carte Statistiques en onglets, menu d\'optimisation simplifié', en:'Tabbed Stats card, simplified enhancement menu'}, fr:[
+      {t:'new', sub:'interface', tx:'La carte Statistiques se divise désormais en 2 onglets : "Perso" (contenu inchangé) et "Recommandations" (nouveau) — ce dernier affiche la meilleure zone théorique pour le silver/h, le XP/h et les kills/min, chacune cliquable pour s\'y rendre directement'},
+      {t:'change', sub:'interface', tx:'Le menu déroulant d\'optimisation n\'affiche plus qu\'une seule statistique par palier (la principale de la pièce : PA pour arme/éveil/dague, PD pour casque/armure/gants/bottes) au lieu de cumuler PD+PV+Esquive sur la même ligne — le détail complet reste visible juste en dessous du menu'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The Stats card now splits into 2 tabs: "Personal" (unchanged content) and "Recommendations" (new) — the latter shows the best theoretical zone for silver/h, XP/h and kills/min, each clickable to travel there directly'},
+      {t:'change', sub:'interface', tx:'The enhancement dropdown now only shows one stat per level (the piece\'s main one: AP for weapon/awakening/dagger, DP for helmet/armor/gloves/boots) instead of stacking DP+HP+Dodge on the same line — the full detail is still visible right below the menu'},
+    ] },
   { v:'V222', d:'09/07/2026 18:00', name:{fr:'Prix des potions adouci (racine carrée au lieu du ratio linéaire)', en:'Potion prices softened (square root instead of linear ratio)'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le prix des potions reste lié au revenu de la zone (toujours plus cher en zone difficile) mais beaucoup plus doux : la mise à l\'échelle passait de manière linéaire (jusqu\'à ×135 en zone 11), elle suit désormais une racine carrée (×~11.6 en zone 11) — le ratio linéaire supposait un revenu "idéal" qui ne tenait pas dès qu\'on est un peu sous-géré pour sa zone (plus de dégâts encaissés, donc plus de potions, sans le revenu supposé pour les payer)'},
     ], en:[
