@@ -2359,6 +2359,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V217', d:'09/07/2026 13:00', name:{fr:'Fix icône ⬆️ : n\'apparaît que s\'il existe vraiment un meilleur stuff', en:'Fix ⬆️ icon: only shows when actually better gear exists'}, fr:[
+      {t:'fix', sub:'interface', tx:'L\'icône ⬆️ pouvait s\'afficher même quand la pièce déjà équipée était du même palier (ou mieux) que la zone actuelle, donc sans rien de mieux à trouver. Elle ne s\'affiche désormais que si la pièce équipée est d\'un palier strictement inférieur à celui de la zone actuelle ET qu\'une zone sûre différente propose ce palier supérieur'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The ⬆️ icon could show up even when the already-equipped piece was the same tier (or better) as the current zone, so there was nothing better to find. It now only shows if the equipped piece is a strictly lower tier than the current zone AND a different safe zone offers that higher tier'},
+    ] },
   { v:'V216', d:'09/07/2026 12:30', name:{fr:'Fix icône ⬆️ : plus affichée si on est déjà dans l\'unique zone proposée', en:'Fix ⬆️ icon: no longer shown if already in the only proposed zone'}, fr:[
       {t:'fix', sub:'interface', tx:'L\'icône ⬆️ (zone pour améliorer) restait affichée même quand la seule zone sûre proposée était celle où le joueur se trouvait déjà — inutile de proposer d\'aller là où on est. Elle ne s\'affiche plus dans ce cas'},
     ], en:[
