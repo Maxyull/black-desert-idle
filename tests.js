@@ -762,6 +762,37 @@
     if (s.pen === undefined) delete S.penMastery[TEST_NAME]; else S.penMastery[TEST_NAME] = s.pen;
     EQUIP.helmet = s.helmet; INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b; S.silver = s.silver;
   }
+  // "si 2 stuff identique doivent etre changé toujours prendre celui le plus optimisé... sans
+  // oublier les 2 anneaux verification slot 1 puis slot 2 et oreille slot 1 puis slot 2" (2026-07-11)
+  // -- bug trouvé : tryAutoEquipIfBetter (utilisé par sellOne) comparait avec un simple ">"/"<="
+  // SANS tenir compte de l'enchantement à socle égal, contrairement à equipBestSingle/equipBestPair.
+  // Un doublon plus enchanté (même socle de base) ne remplaçait donc jamais l'exemplaire équipé
+  // moins monté. isStrictlyBetterGear() corrige ça pour tous les cas (slot simple + paire anneau/boucle).
+  function testAutoEquipPrefersMoreEnhancedOnTiedBaseScore() {
+    const TEST_NAME = 'TestAutoEquipTieBreak';
+    const s = { ring1: EQUIP.ring1, ring2: EQUIP.ring2, a: INV[INV_SIZE-1] };
+    const clearName = () => {
+      for (let k=0;k<INV_SIZE;k++) if (INV[k] && INV[k].name===TEST_NAME) INV[k]=null;
+      if (EQUIP.ring1 && EQUIP.ring1.name===TEST_NAME) EQUIP.ring1=null;
+      if (EQUIP.ring2 && EQUIP.ring2.name===TEST_NAME) EQUIP.ring2=null;
+    };
+    clearName();
+    // 2 anneaux déjà équipés, MÊME socle de base (ap:5) mais enchantements différents
+    EQUIP.ring1 = { name:TEST_NAME, kind:'jackpot', slot:'ring', ap:5, enhLv:2, key:'r1' };
+    EQUIP.ring2 = { name:TEST_NAME, kind:'jackpot', slot:'ring', ap:5, enhLv:5, key:'r2' };
+    // nouvel exemplaire : MÊME socle de base (ap:5, donc itemScore identique aux 2 déjà équipés)
+    // mais PLUS enchanté que ring1 (2) ET ring2 (5) -> doit remplacer ring1 (le moins enchanté des 2,
+    // "vérifie slot 1 puis slot 2" -- c'est bien celui-là qui doit céder sa place, pas ring2)
+    INV[INV_SIZE-1] = { name:TEST_NAME, kind:'jackpot', slot:'ring', ap:5, enhLv:7, key:'r3', qty:1 };
+    const equipped = tryAutoEquipIfBetter(INV_SIZE-1, INV[INV_SIZE-1]);
+    assert('Doublon plus enchanté à socle égal -> équipé (pas ignoré à tort)', equipped);
+    assert('Remplace bien le MOINS enchanté des 2 anneaux (ring1, enhLv=2)', EQUIP.ring1 && EQUIP.ring1.enhLv === 7, `ring1.enhLv=${EQUIP.ring1&&EQUIP.ring1.enhLv}`);
+    assert('ring2 (le plus enchanté des 2) reste intact', EQUIP.ring2 && EQUIP.ring2.enhLv === 5);
+    // l'ancien ring1 (enhLv 2) doit être revenu dans le sac, jamais perdu
+    assert('L\'ancien ring1 délogé revient dans le sac', INV.some(it => it && it.name===TEST_NAME && it.enhLv===2));
+    clearName();
+    EQUIP.ring1 = s.ring1; EQUIP.ring2 = s.ring2; INV[INV_SIZE-1] = s.a;
+  }
   // "fais un carré autour du niveau et % d'xp qui s'illumine quand on gagne de l'xp" (2026-07-10) :
   // gainXp(n>0) doit ajouter la classe .xpFlash à #lvlXpRow ; un gain nul ou négatif ne doit rien
   // déclencher (n<=0 ne devrait jamais arriver en pratique, mais gainXp ne doit pas planter dessus)
@@ -851,6 +882,7 @@
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();
     testSellOnePriorityEquipCompendiumSell();
+    testAutoEquipPrefersMoreEnhancedOnTiedBaseScore();
     testXpGainFlashesLevelBox();
     testClaimLoyaltyMovesMailboxToStock();
     testZone0LootReachesZone1Difficulty();

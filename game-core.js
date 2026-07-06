@@ -6204,6 +6204,18 @@ function resolveEquipSlot(item) {
 // Pour un anneau/boucle (paire), compare au PIRE des deux déjà équipés (celui qui serait remplacé
 // en premier, même logique que refScoreForSlot) et l'équipe SPÉCIFIQUEMENT à cette place — jamais
 // via resolveEquipSlot seul, qui ne regarde pas lequel des deux est le plus faible.
+// compare 2 pièces avec la MÊME règle partout (2026-07-11, demande explicite : "si 2 stuff
+// identique doivent etre changé toujours prendre celui le plus optimisé... sans oublier les 2
+// anneaux verification slot 1 puis slot 2 et oreille slot 1 puis slot 2") : meilleur SOCLE
+// (itemScore) d'abord ; à socle STRICTEMENT égal, le plus enchanté (enhLv) l'emporte ; à égalité
+// totale, "a" (slot 1) reste la référence -- même critère que equipBestSingle/equipBestPair, pour
+// que sellOne (via tryAutoEquipIfBetter) ne rate plus jamais un doublon plus enchanté juste parce
+// que son socle de base est identique.
+function isStrictlyBetterGear(a, b) {
+  const sa = itemScore(a), sb = itemScore(b);
+  if (sa !== sb) return sa > sb;
+  return (a ? (a.enhLv||0) : -1) > (b ? (b.enhLv||0) : -1);
+}
 function tryAutoEquipIfBetter(i, s) {
   if (s.kind !== 'gear' && s.kind !== 'jackpot') return false;
   // gear : s.slot EST le slot direct ('helmet','weapon'...) ; jackpot : s.slot est déjà la BASE
@@ -6211,15 +6223,18 @@ function tryAutoEquipIfBetter(i, s) {
   const base = s.slot;
   if (base === 'ring' || base === 'earring') {
     const slotA = base+'1', slotB = base+'2';
-    const worseSlot = itemScore(EQUIP[slotA]) <= itemScore(EQUIP[slotB]) ? slotA : slotB;
-    if (itemScore(s) <= itemScore(EQUIP[worseSlot])) return false;
+    // "slot 1 puis slot 2" : à égalité totale entre les 2 anneaux/boucles déjà équipés, slotA
+    // (slot 1) reste la référence "pire" par défaut -- slotB n'est le pire QUE si slotA est
+    // strictement meilleur que lui, sinon (slotB meilleur OU égalité) slotA est vérifié en premier
+    const worseSlot = isStrictlyBetterGear(EQUIP[slotA], EQUIP[slotB]) ? slotB : slotA;
+    if (!isStrictlyBetterGear(s, EQUIP[worseSlot])) return false;
     const old = EQUIP[worseSlot];
     if (old && !invAdd({ ...old, equipped:false, qty:1, stackable:false })) return false; // sac plein
     EQUIP[worseSlot] = { ...s };
     INV[i] = null;
     return true;
   }
-  if (itemScore(s) <= itemScore(EQUIP[base])) return false;
+  if (!isStrictlyBetterGear(s, EQUIP[base])) return false;
   equipItem(i);
   return true;
 }
