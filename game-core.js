@@ -3024,7 +3024,10 @@ function targetPackCount() {
   // que GEAR_TIERS.zones (grey/white/green/blue), sans dépendance d'ordre de déclaration.
   if (zoneIdx===0 || zoneIdx===1 || zoneIdx===2 || zoneIdx===12) return 6;  // grey
   if (zoneIdx===3 || zoneIdx===4 || zoneIdx===5 || zoneIdx===13) return 8;  // white
-  if (zoneIdx===6 || zoneIdx===7 || zoneIdx===8 || zoneIdx===14) return 10; // green
+  // vert = 2x le palier blanc (2026-07-12, demande explicite : "zone verte rajoute 2x le nombre
+  // de monstre actuel", précisé "2x la valeur du palier blanc") -- 16 au lieu du +2 progressif
+  // utilisé jusqu'ici (10), qui ne doublait rien
+  if (zoneIdx===6 || zoneIdx===7 || zoneIdx===8 || zoneIdx===14) return 16; // green
   return 12; // blue : 9,10,11,15
 }
 function resetWorld() {
@@ -6734,10 +6737,16 @@ function optAutoGainParts(target, targetLvl) {
 // donne lorsqu'il y a plusieurs stats" -- le menu déroulant cumulait PD+PV+Esquive sur une seule
 // ligne par palier (voir capture jointe), illisible. Le détail complet (tous les stats) reste
 // disponible juste en dessous du menu, voir renderOptAutoGain/optAutoGainParts.
+// bug corrigé le 2026-07-12 (demande explicite : "l'anneau de yuria ne fournit pas les bonus +1
+// +2 dans la liste lors de l'opti automatique") -- ne testait que WEAPON_SLOTS (PA) vs "tout le
+// reste" (PD) par défaut, oubliant que les BIJOUX (JEWELRY_SLOTS) donnent de la PA eux aussi
+// (GEAR_ROLE.jackpot : apShare:0.10, dpShare:0) — pour un anneau/collier/boucle/ceinture, le code
+// regardait donc le delta de PD (toujours 0 sur un bijou), jamais celui de PA, et n'affichait donc
+// jamais de gain dans la liste déroulante, quel que soit le palier visé.
 function optAutoGainPrimaryPart(target, targetLvl, slotId) {
   if (!target || !Number.isInteger(targetLvl)) return '';
   const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
-  const primary = WEAPON_SLOTS.includes(slotId) ? 'ap' : 'dp';
+  const primary = (WEAPON_SLOTS.includes(slotId) || JEWELRY_SLOTS.includes(slotId)) ? 'ap' : 'dp';
   const delta = proj[primary] - cur[primary];
   return delta > 0 ? '+' + delta + ' ' + (primary === 'ap' ? 'PA' : 'PD') : '';
 }
