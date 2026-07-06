@@ -2113,7 +2113,9 @@ function renderAchievementsHtml() {
     `<div class="catTabs">${tabsHtml}</div>${filterBtn}${rows}`;
 }
 function openAchievements() {
-  openInfo(LANG==='fr'?'🏅 Succès':'🏅 Achievements', renderAchievementsHtml());
+  const callout = contentChangeCalloutHtml('achievements');
+  openInfo(LANG==='fr'?'🏅 Succès':'🏅 Achievements', callout + renderAchievementsHtml());
+  markContentSeen('achievements');
   $a('infoBody').querySelectorAll('.achCatTab').forEach(btn => {
     btn.onclick = () => { achPanelCat = btn.dataset.cat; openAchievements(); };
   });
@@ -2224,7 +2226,9 @@ function renderCompendiumHtml() {
 let compTutoSeen = false;
 try { compTutoSeen = localStorage.getItem('velia-idle-comp-tuto-seen') === '1'; } catch(e) {}
 function openCompendium() {
-  openInfo(LANG==='fr'?'📖 Compendium':'📖 Compendium', renderCompendiumHtml());
+  const callout = contentChangeCalloutHtml('compendium');
+  openInfo(LANG==='fr'?'📖 Compendium':'📖 Compendium', callout + renderCompendiumHtml());
+  markContentSeen('compendium');
   const tutoBtn = $a('compTutoBtn');
   if (tutoBtn) tutoBtn.onclick = () => startCompendiumTutorial();
   if (!compTutoSeen) {
@@ -4817,26 +4821,54 @@ function invSignature() {
 }
 function zoneSignature() { return zoneIdx + ':' + atVelia + ':' + Math.round(apEff()) + ':' + Math.round(totalDP()); }
 
-// badge "NEW" pendant 24h sur Wiki/Compendium/Codex/Succès après une modification de contenu
-// (demande explicite du 2026-07-06 : "affiche NEW pendant 24h sur les modifications du wiki,
-// compendium, succes, codex modif de text etc") -- fenêtre GLOBALE (pas par joueur) : visible pour
-// tout le monde pendant 24h à partir de la date ci-dessous, PAS liée à si CE joueur l'a déjà vu.
-// RÈGLE À SUIVRE DÉSORMAIS : mettre à jour la date correspondante à chaque fois qu'une modification
-// de contenu (texte, entrée, catégorie...) est faite dans un de ces 4 panneaux.
-const CONTENT_UPDATE_TIMESTAMPS = {
-  wiki:         '2026-07-06T07:00:00Z',
-  compendium:   '2026-07-06T04:30:00Z',
-  codex:        '2026-07-06T04:30:00Z',
-  achievements: '2026-07-06T04:30:00Z',
+// badge "1" sur Wiki/Compendium/Codex/Succès après une modification de contenu, RETIRÉ dès que CE
+// joueur ouvre le panneau (2026-07-06, demande explicite : "affiche plutot un numero qui s'enleve
+// une fois lu et a l'interieur met en évidence ce qui a été modifié" — remplace la version
+// précédente, un simple "NEW" clignotant pendant 24h pour tout le monde sans lien avec la lecture).
+// Chaque entrée porte aussi une courte description ("desc") du changement, affichée en évidence en
+// haut du panneau tant qu'il n'a pas encore été ouvert depuis ce changement.
+// RÈGLE À SUIVRE DÉSORMAIS : mettre à jour "at" (et "desc") à chaque modification de contenu dans
+// un de ces 4 panneaux.
+// numéro de version PAR PANNEAU, pas un horodatage -- un 1er essai avec des dates ISO "à venir
+// dans la journée" (ex: '...T07:00:00Z') s'est révélé cassé en le testant : si l'heure choisie est
+// dans le FUTUR par rapport à l'horloge réelle au moment du déploiement, contentIsUnread() reste
+// vrai pour toujours (aucun "vu" ne peut jamais dépasser une date future) -- le badge ne
+// disparaissait JAMAIS, peu importe combien de fois le panneau était ouvert. Un simple compteur
+// entier incrémenté à la main élimine tout risque de désynchronisation d'horloge.
+const CONTENT_UPDATE_VERSION = {
+  wiki:         { v:1, desc:{fr:'Pierre de Cron : nouveau fonctionnement au choix du joueur (case à cocher, plus automatique)', en:'Cron Stone: new player-choice behavior (checkbox, no longer automatic)'} },
+  compendium:   { v:1, desc:{fr:'Clique un objet pour voir dans quelles zones le farmer',en:'Click an item to see which zones farm it'} },
+  codex:        { v:1, desc:{fr:'Liste à jour de tous les objets du jeu',en:'Up to date list of every item in the game'} },
+  achievements: { v:1, desc:{fr:'Filtres par catégorie et "pas fini" disponibles',en:'Category and "unfinished" filters available'} },
 };
-const CONTENT_NEW_WINDOW_MS = 24 * 3600 * 1000;
+function contentSeenKey(panel) { return 'velia-idle-seenv-'+panel; }
+function contentLastSeenVersion(panel) {
+  try { return parseInt(localStorage.getItem(contentSeenKey(panel))||'0', 10) || 0; } catch(e) { return 0; }
+}
+function contentIsUnread(panel) {
+  const entry = CONTENT_UPDATE_VERSION[panel]; if (!entry) return false;
+  return entry.v > contentLastSeenVersion(panel);
+}
+// à appeler à l'OUVERTURE de chaque panneau (après avoir déjà lu contentIsUnread pour l'affichage
+// de cette ouverture précise) — le badge disparaît, mais la mise en évidence reste visible tant
+// que le panneau affiché à l'écran ne s'est pas refermé/rouvert
+function markContentSeen(panel) {
+  const entry = CONTENT_UPDATE_VERSION[panel]; if (!entry) return;
+  try { localStorage.setItem(contentSeenKey(panel), String(entry.v)); } catch(e) {}
+  refreshContentNewBadges();
+}
+// callout affiché en haut du panneau tant qu'il n'a pas encore été ouvert depuis le changement
+function contentChangeCalloutHtml(panel) {
+  if (!contentIsUnread(panel)) return '';
+  const entry = CONTENT_UPDATE_VERSION[panel]; if (!entry || !entry.desc) return '';
+  return `<div class="contentNewCallout">🆕 ${escapeHtml(entry.desc[LANG]||entry.desc.fr)}</div>`;
+}
 function refreshContentNewBadges() {
-  const now = Date.now();
   const map = { wiki:'newBadgeWiki', compendium:'newBadgeCompendium', codex:'newBadgeCodex', achievements:'newBadgeAchievements' };
   for (const key in map) {
     const el = $(map[key]); if (!el) continue;
-    const ts = new Date(CONTENT_UPDATE_TIMESTAMPS[key]).getTime();
-    el.classList.toggle('show', !isNaN(ts) && (now - ts) < CONTENT_NEW_WINDOW_MS);
+    el.textContent = '1';
+    el.classList.toggle('show', contentIsUnread(key));
   }
 }
 

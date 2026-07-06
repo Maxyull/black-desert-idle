@@ -2343,6 +2343,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V194', d:'06/07/2026 08:00', name:{fr:'Badge NEW repensé (numéro, par joueur, met en évidence le changement)', en:'Redesigned NEW badge (number, per-player, highlights the change)'}, fr:[
+      {t:'change', sub:'interface', tx:'Le badge "NEW" clignotant (24h pour tout le monde) remplacé par un badge numéroté "1" qui disparaît dès que TOI tu ouvres le panneau — et le changement précis est mis en évidence en haut du panneau (Wiki/Compendium/Codex/Succès) tant que tu ne l\'as pas encore vu'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'Corrigé un bug qui empêchait le badge de jamais disparaître (comparaison à une date qui pouvait tomber dans le futur par rapport à l\'horloge réelle) — remplacé par un simple compteur, plus fiable'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The blinking "NEW" badge (24h for everyone) replaced by a numbered "1" badge that disappears as soon as YOU open the panel — and the specific change is highlighted at the top of the panel (Wiki/Compendium/Codex/Achievements) until you\'ve seen it'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'Fixed a bug that could keep the badge showing forever (comparison against a date that could fall in the future relative to the real clock) — replaced with a simple counter, more reliable'},
+    ] },
   { v:'V193', d:'06/07/2026 07:00', name:{fr:'1 pièce d\'armure garantie par zone, armures sans AP, Pierre de Cron au choix, Bout de Velia simplifié', en:'1 guaranteed armor piece per zone, armor with no AP, choosable Cron Stone, simplified Velia piece'}, fr:[
       {t:'change', sub:'equipements', severity:'major', tx:'Chaque zone garantit désormais 1 seule pièce d\'armure précise (casque/armure/gants sur les 3 premières zones du palier, bottes sur la 4e) au lieu d\'un tirage au hasard partagé entre les 4 zones — même logique que les armes'},
       {t:'change', sub:'equipements', severity:'major', tx:'Les armures ne donnent plus d\'AP (comme dans le vrai jeu, purement défensif) — le total AP retiré est redistribué aux 3 armes pour que le total AP d\'un stuff complet reste identique. Rétroactif sur le stuff déjà possédé'},
@@ -4132,9 +4139,15 @@ $a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOver
 
 // Codex des objets (2026-07-05, demande explicite) : sorti du Wiki pour sa propre section,
 // plus visible, directement accessible depuis le menu de gauche
-$a('btnCodex').onclick = () => openInfo(LANG === 'fr' ? '📚 Codex des objets' : '📚 Item Codex', renderCodexHtml());
+$a('btnCodex').onclick = () => {
+  const callout = contentChangeCalloutHtml('codex');
+  openInfo(LANG === 'fr' ? '📚 Codex des objets' : '📚 Item Codex', callout + renderCodexHtml());
+  markContentSeen('codex');
+};
 $a('btnWiki').onclick = () => {
-  openInfo(LANG === 'fr' ? '📖 Wiki' : '📖 Wiki', renderWikiHtml());
+  const callout = contentChangeCalloutHtml('wiki');
+  openInfo(LANG === 'fr' ? '📖 Wiki' : '📖 Wiki', callout + renderWikiHtml());
+  markContentSeen('wiki');
   $a('infoBody').querySelectorAll('.wikiTab').forEach(btn => {
     btn.onclick = () => { wikiSection = btn.dataset.sec; $a('btnWiki').onclick(); };
   });

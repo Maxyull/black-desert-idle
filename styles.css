@@ -1019,15 +1019,22 @@
     animation:patchNewFade 1.6s infinite;
   }
   @keyframes patchNewFade { 0%,100% { opacity:1; } 50% { opacity:.55; } }
-  /* badge "NEW" pendant 24h sur Wiki/Compendium/Codex/Succès après une modif de contenu (demande
-     explicite du 2026-07-06) -- même style que .patchNewTag, masqué par défaut (voir
-     refreshContentNewBadges dans game-core.js) */
+  /* badge "1" sur Wiki/Compendium/Codex/Succès après une modification de contenu, retiré dès que
+     CE joueur ouvre le panneau (2026-07-06, demande explicite : "un numero qui s'enleve une fois
+     lu") -- même style que #questBadge/#notifBadge, masqué par défaut (voir refreshContentNewBadges) */
   .contentNewBadge {
-    display:none; background:var(--danger); color:#fff; font-size:8px; font-weight:bold;
-    letter-spacing:.5px; padding:1px 5px; margin-left:5px; border-radius:2px; vertical-align:middle;
-    animation:patchNewFade 1.6s infinite;
+    display:none; align-items:center; justify-content:center;
+    min-width:15px; height:15px; padding:0 3px; margin-left:5px;
+    background:var(--danger); color:#fff; font-size:9px; font-weight:bold;
+    border-radius:8px; vertical-align:middle;
   }
-  .contentNewBadge.show { display:inline-block; }
+  .contentNewBadge.show { display:inline-flex; }
+  /* mise en évidence de ce qui a changé, en haut du panneau, tant qu'il n'a pas encore été ouvert
+     depuis ce changement (demande explicite : "a l'interieur met en évidence ce qui a été modifié") */
+  .contentNewCallout {
+    background:rgba(201,165,90,.12); border:1px solid var(--gold-dim); border-radius:4px;
+    padding:7px 10px; margin-bottom:10px; font-size:11.5px; color:var(--gold);
+  }
 
   /* ===== modal générique (wiki / patch notes) ===== */
   #infoOverlay {
