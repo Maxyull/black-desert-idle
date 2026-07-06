@@ -3036,27 +3036,29 @@ const POTIONS = {
   infinite: { name:{fr:'Potion de vie infinie', en:'Infinite HP Potion'}, icon:'♾️', cost:0, heal:0.40, cd:4.2, locked:true },
 };
 const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite" toujours en dernier, verrouillée (voir p.locked)
-// prix des potions à l'échelle de la zone (2026-07-08, demande explicite : "modifie le prix des
-// potion par zone pour qu'il soit en accord avec le loot de gold") -- les coûts fixes ci-dessus
-// (cost:) restent la valeur de RÉFÉRENCE, calibrée sur Camp des Loups (zone 0). Ils sont ensuite mis
-// à l'échelle (racine carrée, voir potionZoneScale, adoucie le 2026-07-09) du revenu de base de la
-// zone ACTUELLE (loot.trash.val, qui suit la courbe économique voulue : ~3 000 silver/h zone 1 →
-// ~100 000 silver/h zone 11, voir ZONES) pour rester lié au revenu de la zone sans devenir ruineux
-// en zone avancée ni dérisoire en zone de départ.
-// amorti en racine carrée (2026-07-09, demande explicite : "moins agressif mais toujours bloqué en
-// fonction de la zone, en fonction de la génération de silver") -- le ratio linéaire (jusqu'à ×135
-// en zone 11) supposait un revenu "idéal" (stuff bien adapté, 15 kills/min) qui ne tient pas en
-// pratique dès qu'on est un peu sous-géré pour sa zone : plus de dégâts encaissés → plus de
-// potions, sans le revenu supposé pour les payer, d'où un joueur rapidement à sec. La racine carrée
-// garde le principe (toujours plus cher en zone difficile, jamais gratuit) mais beaucoup plus doux
-// (zone 11 : ×135 devient ×~11.6) tout en restant strictement croissant avec la zone.
-function potionZoneScale() {
-  if (typeof atVelia === 'undefined' || atVelia || typeof Z !== 'function') return 1;
-  const z = Z(), ref = ZONES[0].loot.trash.val || 1;
-  const ratio = Math.max(1, (z.loot.trash.val || ref) / ref);
-  return Math.sqrt(ratio);
+// prix des potions = un POURCENTAGE FIXE du revenu horaire théorique de trash (token vendu au sol,
+// jamais du prix de vente du stuff) de la zone ACTUELLE (2026-07-11, demande explicite : "revois le
+// prix des potion en fonction de l'argent qu'on se fait en vendant les token en instantané... et
+// uniquement par rapport à ça, pas a la vente de stuff"). Remplace l'ancien amortissement en racine
+// carrée (potionZoneScale, 2026-07-09) : celui-ci dérivait fortement de son propre objectif déclaré
+// ("mega ne dépasse jamais ~15% du revenu horaire d'une zone adaptée") -- vérifié en simulation, le
+// ratio réel allait de 42% (Camp des Loups) à seulement 3.6% (Forêt de Polly) au lieu de rester
+// proche de 15% partout, car un ratio sqrt(zone.trash/zone0.trash) dérive nécessairement de sa
+// cible à mesure que l'écart entre zones grandit. Ici chaque taille de potion coûte un % FIXE du
+// revenu horaire de trash de SA PROPRE zone (jamais relatif à une zone de référence) : le ratio
+// small/medium/large/mega entre eux reprend celui des anciens coûts de base (70/140/240/380),
+// ancré sur mega = 15% (l'objectif initial), ce qui reste vrai dans TOUTE zone, sans dériver.
+const POTION_KPM_REF = 15; // même rythme que la courbe économique des zones (~3000/h zone1 → ~100000/h zone11)
+const POTION_MEGA_PCT_OF_HOURLY = 0.15;
+function potionHourlyIncome() {
+  const z = (typeof atVelia !== 'undefined' && !atVelia && typeof Z === 'function') ? Z() : ZONES[0];
+  return (z.loot.trash.val || 1) * POTION_KPM_REF * 60;
 }
-function potionCost(baseCost) { return baseCost > 0 ? Math.round(baseCost * potionZoneScale()) : 0; }
+function potionCost(baseCost) {
+  if (!baseCost) return 0;
+  const pct = (baseCost / POTIONS.mega.cost) * POTION_MEGA_PCT_OF_HOURLY;
+  return Math.max(1, Math.round(potionHourlyIncome() * pct));
+}
 // icône unique vie+mana (2026-07-08, demande explicite : "la potion qui remplace les 2 potion")
 // -- remplace les 2 cases séparées #potSlot/#manaPotSlot par une seule, fiole ronde rouge (vie) +
 // fiole élancée bleue (mana) penchées l'une vers l'autre, volutes entrelacées animées
