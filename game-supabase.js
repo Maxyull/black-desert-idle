@@ -2359,6 +2359,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V220', d:'09/07/2026 16:00', name:{fr:'Sac protégé Compendium : remplacement auto après une vente', en:'Compendium protected bag: auto-replacement after a sale'}, fr:[
+      {t:'new', sub:'objets', tx:'Vendre individuellement ("Vendre 1") ta dernière copie d\'une pièce jamais montée en PEN ne la perd plus totalement : si une autre copie du même type traîne dans le sac, elle prend automatiquement sa place dans le sac protégé du Compendium — priorité à un exemplaire +0 (moins coûteux à immobiliser), sinon le premier exemplaire enchanté trouvé'},
+    ], en:[
+      {t:'new', sub:'objets', tx:'Selling your last copy of a piece never brought to PEN ("Sell 1") no longer loses it for good: if another copy of the same type is sitting in your bag, it automatically takes its place in the Compendium\'s protected bag — priority to a +0 copy (cheaper to set aside), otherwise the first enhanced copy found'},
+    ] },
   { v:'V219', d:'09/07/2026 15:00', name:{fr:'Fix : plus d\'auto-potion payante à Velia (zone paisible)', en:'Fix: no more paid auto-potion in Velia (peaceful zone)'}, fr:[
       {t:'fix', sub:'economie', severity:'major', tx:'Une potion de vie ou de mana payante pouvait s\'auto-boire à Velia (zone paisible, aucun monstre) — typiquement juste après une mort, qui remet les PV à pile 50% (le seuil par défaut). Le silver était dépensé pour rien puisqu\'aucun combat ne s\'y déroule. Les auto-potions ne se déclenchent plus tant qu\'on est à Velia (la régénération passive de mana continue normalement)'},
     ], en:[

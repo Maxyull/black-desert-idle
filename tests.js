@@ -268,6 +268,46 @@
       !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
   }
+  // "sac protégé compendium, si je supprime un objet déjà monté et que je ne l'ai pas déjà en PEN
+  // alors le meilleur prend sa place dans le sac protégé jusqu'à monter en PEN" (2026-07-09) --
+  // sellOne()/sellStack() doivent maintenant promouvoir automatiquement un exemplaire restant du
+  // sac principal si la vente vient de faire disparaître la dernière copie protégée. Priorité à un
+  // +0 (moins coûteux à immobiliser) ; à défaut, prend le premier exemplaire enchanté trouvé.
+  function testCompendiumBackfillAfterSell() {
+    const TEST_NAME = 'TestUniqueGearXYZ_compendium';
+    const s = { a: INV[INV_SIZE-1], b: INV[INV_SIZE-2], c: INV[INV_SIZE-3], pen: S.penMastery[TEST_NAME] };
+    delete S.penMastery[TEST_NAME];
+    INV[INV_SIZE-1] = null; INV[INV_SIZE-2] = null; INV[INV_SIZE-3] = null;
+    // s'assure qu'aucune trace de ce nom ne traîne déjà dans le sac protégé (test précédent, etc.)
+    const clearCompBag = () => { for (let i=0;i<INV_SIZE;i++) if (COMPENDIUM_BAG[i] && COMPENDIUM_BAG[i].name===TEST_NAME) COMPENDIUM_BAG[i]=null; };
+    clearCompBag();
+
+    // 2 exemplaires en stock : un +0 et un +3, aucun protégé pour l'instant
+    INV[INV_SIZE-1] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:5, hp:0, enhLv:0, val:10, key:'t1' };
+    INV[INV_SIZE-2] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:8, hp:0, enhLv:3, val:20, key:'t2' };
+    sellOne(INV_SIZE-2); // vend le +3 -> doit backfill avec le +0 restant (priorité +0)
+    assert('Backfill : le sac protégé contient bien un exemplaire après la vente', compendiumBagHasName(TEST_NAME));
+    const protectedIt = COMPENDIUM_BAG.find(it => it && it.name === TEST_NAME);
+    assert('Backfill : préfère l\'exemplaire +0 restant', !!protectedIt && (protectedIt.enhLv||0) === 0, `enhLv=${protectedIt&&protectedIt.enhLv}`);
+    assert('Backfill : l\'exemplaire promu a bien quitté le sac principal', INV[INV_SIZE-1] === null);
+    clearCompBag();
+
+    // un seul exemplaire enchanté restant (pas de +0 disponible) -> doit quand même protéger
+    INV[INV_SIZE-3] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:0, enhLv:5, val:30, key:'t3' };
+    ensureCompendiumProtection(TEST_NAME);
+    assert('Backfill : protège même un exemplaire déjà enchanté si aucun +0 n\'existe', compendiumBagHasName(TEST_NAME));
+    clearCompBag();
+
+    // déjà PEN -> aucune protection à maintenir, ensureCompendiumProtection ne doit rien faire
+    INV[INV_SIZE-3] = { name:TEST_NAME, kind:'gear', slot:'helmet', ap:0, dp:9, hp:0, enhLv:5, val:30, key:'t4' };
+    S.penMastery[TEST_NAME] = true;
+    ensureCompendiumProtection(TEST_NAME);
+    assert('Backfill : aucune protection si le type est déjà en maîtrise PEN', !compendiumBagHasName(TEST_NAME));
+
+    clearCompBag();
+    if (s.pen === undefined) delete S.penMastery[TEST_NAME]; else S.penMastery[TEST_NAME] = s.pen;
+    INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b; INV[INV_SIZE-3] = s.c;
+  }
   // "mettre en évidence Équiper meilleur quand un équipement meilleur est dans l'inventaire depuis
   // plus de 15 secondes et qu'il est meilleur que ton stuff actuel" (2026-07-09) : un objet fraîchement
   // looté (pickedAt récent) ne doit PAS déclencher le halo (le joueur n'a pas encore eu le temps de
@@ -368,6 +408,7 @@
     testKoStopsMonsterAttacks();
     testNoAutoPotionAtVelia();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
+    testCompendiumBackfillAfterSell();
     testNeglectedUpgradeHighlight();
     testZonesOfferingUpgradeAggregatesAllSlots();
     testApDpDisplayHasNoDecimals();

@@ -611,6 +611,27 @@ function compendiumBagAdd(obj) {
   COMPENDIUM_BAG[idx] = { ...obj };
   return true;
 }
+// filet de sécurité : après une VENTE (sellOne/sellStack, jamais "Jeter") qui touche du gear/jackpot,
+// vérifie qu'il reste bien un exemplaire protégé de ce nom tant qu'il n'a jamais atteint PEN — si la
+// vente vient de faire disparaître la dernière copie du sac protégé, promeut automatiquement le
+// meilleur exemplaire ENCORE dans le sac principal à sa place (2026-07-09, demande explicite :
+// "si je supprime un objet déjà monté ... le meilleur prend sa place dans le sac protégé"). Ne
+// touche JAMAIS l'équipement porté (demande explicite) — uniquement le sac principal. Préférence
+// donnée à un exemplaire +0 (le moins coûteux à immobiliser) ; à défaut, prend le premier exemplaire
+// enchanté trouvé plutôt que de laisser le type totalement non protégé.
+function ensureCompendiumProtection(name) {
+  if (!name || S.penMastery[name] || compendiumBagHasName(name)) return;
+  let bestIdx = -1, bestEnh = Infinity;
+  for (let i = 0; i < INV_SIZE; i++) {
+    const it = INV[i];
+    if (!it || it.name !== name || (it.kind !== 'gear' && it.kind !== 'jackpot')) continue;
+    const enh = it.enhLv || 0;
+    if (enh < bestEnh) { bestEnh = enh; bestIdx = i; if (enh === 0) break; }
+  }
+  if (bestIdx === -1) return; // plus aucune copie disponible dans le sac : rien à protéger
+  const it = INV[bestIdx];
+  if (compendiumBagAdd(it)) INV[bestIdx] = null;
+}
 
 // slots d'équipement type BDO — chaque pièce optimisable porte son PROPRE niveau d'enchant (enhLv)
 // spawn à vide (2026-07-08, demande explicite : "ne plus spawn avec baton grunil -> spawn a vide")
@@ -6668,6 +6689,9 @@ function sellOne(i) {
   const s = INV[i]; if (!s) return;
   S.silver += s.val; S.silverEarned += s.val;
   invRemoveAt(i, 1);
+  // vente individuelle d'une pièce de gear/jackpot (voir showItemMenu, bouton "Vendre 1") : si ce
+  // type n'est plus protégé nulle part, promeut le meilleur exemplaire restant dans le sac
+  if (s.kind === 'gear' || s.kind === 'jackpot') ensureCompendiumProtection(s.name);
   hud();
 }
 function sellStack(i) {
@@ -6675,6 +6699,7 @@ function sellStack(i) {
   const total = s.val * s.qty;
   S.silver += total; S.silverEarned += total;
   INV[i] = null;
+  if (s.kind === 'gear' || s.kind === 'jackpot') ensureCompendiumProtection(s.name);
   hud();
 }
 function sellAllOfKind(kind) {
