@@ -2507,6 +2507,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V247', d:'12/07/2026 04:00', name:{fr:'La flèche d\'upgrade propose à nouveau toutes les zones', en:'The upgrade arrow suggests all zones again'}, fr:[
+      {t:'change', sub:'interface', tx:'La flèche ⬆️ (sur une pièce équipée ou sur une zone) ne proposait plus que des zones déjà découvertes (visitées au moins une fois) — revirement assumé : elle propose à nouveau n\'importe quelle zone du jeu, même jamais visitée, tant qu\'elle n\'est pas dangereuse'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The ⬆️ arrow (on an equipped piece or a zone) only suggested already-discovered zones (visited at least once) — deliberate reversal: it now suggests any zone in the game again, even one never visited, as long as it isn\'t dangerous'},
+    ] },
   { v:'V246', d:'12/07/2026 03:00', name:{fr:'Potions ÷10, palier vert accessible avec un stuff blanc complet', en:'Potions ÷10, Green tier reachable with full White gear'}, fr:[
       {t:'change', sub:'economie', tx:'Prix des potions divisé par 10 (la petite coûte désormais ≈0.5% du revenu horaire de trash, la majeure ≈3%, au lieu de 5%/30%)'},
       {t:'change', sub:'zones', severity:'major', tx:'Les 4 zones du palier vert (Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) ont leur PA/PD requis abaissés d\'environ 20% : un stuff complet du palier blanc (armes+armure+bijoux des 4 zones blanches) enchanté à +13 atteint désormais tout juste "ZONE DIFFICILE" face à Mine de Fer Abandonnée, et ce même stuff au PEN atteint "ZONE DIFFICILE" face à Poste Helm (2e zone verte). Le palier blanc n\'est pas touché. Rétroactif sur le stuff déjà possédé de ces 4 zones'},

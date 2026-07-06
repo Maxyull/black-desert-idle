@@ -5813,11 +5813,12 @@ function zonesForSlot(slotId) {
 // zones à proposer pour l'icône ⬆️ d'un socle REMPLI — demande explicite du 2026-07-09 : cette
 // icône ne doit s'afficher que s'il existe un endroit pour mieux se stuffer qui N'EST PAS une zone
 // dangereuse (pas de fallback sur le dangereux ici, contrairement à zonesForSlot).
-// Filtre aussi sur les zones DÉCOUVERTES (2026-07-11, demande explicite : "indique quel stuff
-// t'améliore en base selon les zones découvertes qui ne sont pas une zone dangereuse") — même
-// convention que showFarmGuide (zi <= S.maxZoneIdx) : ne propose jamais une zone jamais visitée.
+// Le filtre sur les zones DÉCOUVERTES (ajouté le 2026-07-11, zi <= S.maxZoneIdx) a été RETIRÉ le
+// 2026-07-12 (demande explicite : "si un meilleur stuff base est disponible au loot, le montrer...
+// toute zone SAUF dangereuse") -- revirement assumé : propose à nouveau TOUTES les zones du jeu
+// (même jamais visitées), en excluant uniquement les zones dangereuses.
 function safeZonesForSlot(slotId) {
-  return slotCandidateZones(slotId).filter(zi => zi <= S.maxZoneIdx && bottleneck(ZONES[zi]) >= 0.6);
+  return slotCandidateZones(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
 }
 // index de palier d'un objet équipé (grey=0 < white=1 < green=2 < blue=3), déduit de sa couleur —
 // voir GEAR_TIERS (gear ET jackpot sont toujours tagués color:tier.color au drop). -1 si la

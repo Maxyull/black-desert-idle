@@ -283,16 +283,17 @@
   // t'améliore en base selon les zones découvertes qui ne sont pas une zone dangereuse" (2026-07-11)
   // -- safeZonesForSlot ne doit jamais proposer une zone jamais visitée (zi > S.maxZoneIdx), même
   // si elle offrirait un palier supérieur et n'est pas dangereuse.
-  function testUpgradeIconRequiresDiscoveredZone() {
+  // "si un meilleur stuff base est disponible au loot, le montrer... toute zone SAUF dangereuse"
+  // (2026-07-12) -- annule le filtre "zone découverte" ajouté le 2026-07-11 (revirement assumé,
+  // voir safeZonesForSlot) : la flèche ⬆️ doit à nouveau proposer une zone MÊME jamais visitée,
+  // tant qu'elle n'est pas dangereuse.
+  function testUpgradeIconIgnoresDiscoveredZone() {
     const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP, maxZoneIdx: S.maxZoneIdx };
     ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
     EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey
     zoneIdx = 3; // palier blanc : la pièce grey équipée est d'un palier inférieur, upgrade possible ici
     S.maxZoneIdx = 2; // jamais dépassé le palier gris -> zone 4 (blanche) jamais découverte
-    assert('⬆️ absent si la seule zone qui offrirait mieux n\'a jamais été découverte',
-      !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
-    S.maxZoneIdx = 4; // zone 4 désormais découverte
-    assert('⬆️ présent dès que la zone qui offre mieux est découverte',
+    assert('⬆️ présent même si la seule zone qui offrirait mieux n\'a jamais été découverte',
       pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
     S.maxZoneIdx = s.maxZoneIdx;
@@ -1050,7 +1051,7 @@
     testKoStopsMonsterAttacks();
     testNoAutoPotionAtVelia();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
-    testUpgradeIconRequiresDiscoveredZone();
+    testUpgradeIconIgnoresDiscoveredZone();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
     testJewelryHasMatNameForEnhancement();
