@@ -5077,7 +5077,10 @@ function renderStatsRecoPane() {
     { label: LANG==='fr'?'⭐ Meilleur XP/h':'⭐ Best XP/h', best: bestZoneForMetric(zoneXpPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
     { label: LANG==='fr'?'⚔️ Meilleurs kills/min':'⚔️ Best kills/min', best: bestZoneForMetric(zoneKillsPerMin), fmtV: v => v.toFixed(1)+'/min' },
   ];
-  el.innerHTML = `<div class="admHint">${LANG==='fr'
+  el.innerHTML = `<div class="constructionBanner">${LANG==='fr'
+      ? '🚧 En construction — calculs et présentation encore amenés à changer'
+      : '🚧 Under construction — calculations and presentation still subject to change'}</div>` +
+    `<div class="admHint">${LANG==='fr'
       ? 'Classement théorique (stuff idéal, indépendant de ta survie actuelle) — clique une zone pour t\'y rendre.'
       : 'Theoretical ranking (ideal gear, independent of your current survival) — click a zone to go there.'}</div>` +
     rows.map((r,ri) => `<div class="row statsRecoRow" data-zi="${r.best.i}" data-ri="${ri}">` +

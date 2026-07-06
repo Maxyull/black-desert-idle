@@ -490,8 +490,10 @@
     const s = { zoneIdx };
     zoneIdx = 10;
     const z = ZONES[10];
+    // chance de drop en zone bleue = 2% × 1.6 (alpha) ≈ 3.2% -- 30 essais donnait ~1 exemplaire en
+    // moyenne (bien trop peu, flaky) ; 1000 essais donne ~32 exemplaires, fiable
     const samples = [];
-    for (let i = 0; i < 30; i++) { const g = rollGearDrop(z, true); if (g) samples.push(g); }
+    for (let i = 0; i < 1000; i++) { const g = rollGearDrop(z, true); if (g) samples.push(g); }
     assert('Au moins quelques exemplaires obtenus pour comparer (armure zone 10)', samples.length >= 2, `n=${samples.length}`);
     if (samples.length >= 2) {
       const ref = samples[0];
@@ -499,7 +501,7 @@
       assert('rollGearDrop : aucune variance entre plusieurs exemplaires du même palier/slot/zone', allIdentical);
     }
     const weaponSamples = [];
-    for (let i = 0; i < 30; i++) weaponSamples.push(...rollWeaponDrop(z, true));
+    for (let i = 0; i < 1000; i++) weaponSamples.push(...rollWeaponDrop(z, true));
     if (weaponSamples.length >= 2) {
       const ref = weaponSamples[0];
       const allIdentical = weaponSamples.every(g => g.ap === ref.ap && g.val === ref.val);

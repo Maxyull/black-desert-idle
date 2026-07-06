@@ -894,11 +894,14 @@
   #marketHead h2 { font-size:15px; letter-spacing:1px; margin:0; }
   /* rappel clair "en construction" dans le panneau lui-même (2026-07-06, demande explicite :
      "faut que les gens comprennent que c'est peu fonctionnel et en construction") */
-  #marketConstructionBanner {
+  #marketConstructionBanner, .constructionBanner {
     background-image:repeating-linear-gradient(45deg,#3a2f0f,#3a2f0f 10px,#241c0a 10px,#241c0a 20px);
     color:var(--gold); font-weight:bold; font-size:10.5px; letter-spacing:.3px;
     padding:5px 16px; text-align:center; border-bottom:1px solid var(--gold-dim);
   }
+  /* variante autonome (pas dans un bandeau de panneau) : coins arrondis + marge, utilisée dans les
+     cartes (ex: onglet Recommandations de Statistiques, 2026-07-09, demande explicite) */
+  .constructionBanner { border:1px solid var(--gold-dim); border-radius:4px; margin-bottom:8px; }
   #marketTabs { display:flex; gap:6px; flex:1; }
   .mtab {
     width:auto; margin:0; padding:6px 12px; font-size:11.5px;

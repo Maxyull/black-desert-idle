@@ -2361,6 +2361,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V227', d:'09/07/2026 23:00', name:{fr:'Bandeau "en construction" sur l\'onglet Recommandations', en:'"Under construction" banner on the Recommendations tab'}, fr:[
+      {t:'new', sub:'interface', tx:'L\'onglet "Recommandations" de la carte Statistiques affiche désormais un bandeau "en construction" — les calculs et la présentation sont encore amenés à évoluer'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The "Recommendations" tab of the Stats card now shows an "under construction" banner — calculations and presentation are still subject to change'},
+    ] },
   { v:'V226', d:'09/07/2026 22:00', name:{fr:'Stats d\'équipement fixes (fini l\'aléatoire), tie-break "Équiper meilleur"', en:'Fixed gear stats (no more randomness), "Equip best" tie-break'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Les objets équipables (armure, armes) donnaient des stats avec ±15% d\'aléatoire au drop — 2 exemplaires du même palier/slot/zone pouvaient différer sans raison. Ils donnent désormais des stats FIXES, toujours identiques ; seul l\'enchantement fait ensuite varier la puissance réelle'},
       {t:'fix', sub:'objets', tx:'"Équiper le meilleur" : quand 2 pièces ont exactement le même socle (stats de base), la plus enchantée l\'emporte désormais toujours — avant, le choix pouvait tomber sur un jumeau moins monté simplement parce qu\'il était rencontré en premier dans le sac'},
