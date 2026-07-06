@@ -2361,6 +2361,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V225', d:'09/07/2026 21:00', name:{fr:'Le trash redevient la vraie source de revenu, bijoux dans le sac colorés', en:'Trash becomes the real income source again, jewelry in bag now colored'}, fr:[
+      {t:'change', sub:'economie', severity:'major', tx:'Le silver/h "théorique" d\'une zone (voir onglet Recommandations) ne compte plus que le trash au sol — matériaux et bijoux sont des objets de PROGRESSION, pas une source de revenu régulière'},
+      {t:'change', sub:'economie', severity:'major', tx:'Prix de revente du gear et des bijoux looté fortement réduit : un bijou valait jusqu\'à ~290× le trash de sa propre zone (35 000 silver contre 120), une pièce d\'armure jusqu\'à ~78×. Désormais ~20× pour un bijou et nettement moins pour le gear — un vrai bonus au drop, sans éclipser le farm de trash comme revenu principal'},
+      {t:'change', sub:'interface', tx:'Les bijoux dans le sac principal ont désormais leur case bordée de la couleur de leur palier, comme le reste de l\'équipement'},
+    ], en:[
+      {t:'change', sub:'economie', severity:'major', tx:'A zone\'s "theoretical" silver/h (see Recommendations tab) now only counts ground trash — materials and jewelry are PROGRESSION items, not a regular income source'},
+      {t:'change', sub:'economie', severity:'major', tx:'Resell price of looted gear and jewelry heavily reduced: a jewel used to be worth up to ~290× its own zone\'s trash (35,000 silver vs 120), an armor piece up to ~78×. Now ~20× for a jewel and notably less for gear — still a real bonus on drop, without eclipsing trash farming as the main income'},
+      {t:'change', sub:'interface', tx:'Jewelry in the main bag now has its cell bordered with its tier color, like the rest of the gear'},
+    ] },
   { v:'V224', d:'09/07/2026 20:00', name:{fr:'Tutoriel au premier ramassage d\'une Pierre de Cron', en:'Tutorial on first Cron Stone pickup'}, fr:[
       {t:'new', sub:'interface', tx:'Un petit tutoriel se lance automatiquement la toute première fois que tu ramasses une Pierre de Cron : explique qu\'elle protège ta pièce d\'équipement contre une rétrogradation, et qu\'elle s\'active/désactive en cliquant dessus'},
     ], en:[

@@ -2758,10 +2758,14 @@ function lootMult(r) {
 // soucier de si le joueur peut y survivre aujourd'hui.
 const REF_KPM_FOR_STATS = 15; // kills/min de référence (voir zones-roadmap.md, même valeur que le calibrage économique des zones)
 const REF_DPS_FOR_STATS = 900; // dégâts/min de référence PUREMENT relatif : seul hpPer varie d'une zone à l'autre, donc le classement (et le ratio entre zones) ne dépend pas de la valeur choisie ici
+// UNIQUEMENT le trash (2026-07-09, demande explicite : "le calcul de silver/h se fait uniquement
+// sur les silver looté au sol grâce au token qui doivent être la principale source de revenu") --
+// matériaux et bijoux ne sont plus comptés : ce sont des objets de PROGRESSION (optimisation/gear),
+// pas une source de revenu régulière, et les looter au lieu de les vendre ne doit rien retirer au
+// classement "meilleur silver/h" d'une zone.
 function zoneSilverPerHour(z) {
   const l = z.loot;
-  const perKill = l.trash.val*l.trash.ch + l.mat.val*l.mat.ch + l.jackpot.val*l.jackpot.ch;
-  return perKill * REF_KPM_FOR_STATS * 60;
+  return l.trash.val*l.trash.ch * REF_KPM_FOR_STATS * 60;
 }
 function zoneXpPerHour(z) { return z.xp * REF_KPM_FOR_STATS * 60; }
 function zoneKillsPerMin(z) { return REF_DPS_FOR_STATS / z.hpPer; }
@@ -3548,6 +3552,12 @@ const HP_GEAR_SCALE = 9;
 // beaucoup plus petit que HP_GEAR_SCALE : à endgame (zone 10, reqDP~239), un stuff complet adapté
 // donne environ 19% d'esquive brute, avant le facteur d'efficacité (voir dodgeEffectiveness)
 const DODGE_GEAR_SCALE = 0.08;
+// prix de revente du gear looté (2026-07-09, demande explicite : "les item looté doivent se vendre
+// bien moins chere" -- le trash au sol doit rester la SOURCE PRINCIPALE de revenu, pas la revente de
+// pièces d'équipement/bijoux). Multiplicateur divisé par 10 (était 22) -- ex: un plastron de zone10
+// valait 8228 silver (×78 le trash de la même zone, 105) contre ~823 désormais (×~8), toujours
+// notable mais clairement secondaire au farm de trash.
+const GEAR_SELL_MULT = 2.2;
 function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
@@ -3574,7 +3584,7 @@ function rollGearDrop(zone, alpha) {
     key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
     icon, color:tier.color, stackable:false, weight:1.2,
     matName: tier.material.name, // matériau requis pour optimiser CETTE pièce (voir findEnhanceMaterial)
-    val: Math.round((ap*2 + dp + hp*0.5) * 22),
+    val: Math.round((ap*2 + dp + hp*0.5) * GEAR_SELL_MULT),
   };
 }
 // arme(s) garantie(s) de la zone (2026-07-05, demande explicite : "1 arme dans chaque zone") —
@@ -3601,7 +3611,7 @@ function rollWeaponDrop(zone, alpha) {
       icon: TIER_COLORED_ICON[slot] ? TIER_COLORED_ICON[slot](tier.color, tier.grade) : (SLOT_ICON ? SLOT_ICON[slot] : '⚔️'),
       color:tier.color, stackable:false, weight:1.2,
       matName: tier.material.name,
-      val: Math.round(ap*2 * 22),
+      val: Math.round(ap*2 * GEAR_SELL_MULT),
     });
   }
   return out;
@@ -3735,10 +3745,17 @@ function rollDrops(wp, alpha, lm) {
   // l'ancienne valeur FIGÉE (L.jackpot.ap dans ZONES), jamais recalculée après un changement de
   // reqAP et donc désynchronisée du reste du stuff, qui a toujours scalé dynamiquement
   const jackpotAp = gearFloor((zone.gearBasisAP ?? zone.reqAP) * GEAR_ROLE.jackpot.apShare);
+  // valeur de revente du bijou (2026-07-09, demande explicite : "les item looté doivent se vendre
+  // bien moins chere") -- remplace l'ancienne valeur FIGÉE de ZONES (L.jackpot.val), qui valait
+  // ~180 à ~290× le trash de sa propre zone (ex: 35 000 contre 120 en zone 11) : le bijou éclipsait
+  // totalement le trash comme source de revenu. Recalculée dynamiquement à ~20× le trash de la
+  // zone, un vrai bonus notable au dropped mais qui ne concurrence plus le farm de trash.
+  const JACKPOT_VAL_TRASH_RATIO = 20;
+  const jackpotVal = gearFloor(L.trash.val * JACKPOT_VAL_TRASH_RATIO);
   const table = [
     { ...L.trash,   kind:'trash',    color:'#a08464', key:'trash_'+zk,   icon:'▬', stackable:true,  weight:0.3 },
     { name:tierMat.name, val:L.mat.val, ch:L.mat.ch, kind:'material', color:tierMat.color, key:'mat_'+tierMat.name, icon:tierMat.icon, stackable:true, weight:0.1 },
-    { ...L.jackpot, ap:jackpotAp, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5 },
+    { ...L.jackpot, ap:jackpotAp, val:jackpotVal, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5 },
     { ...L.craft,   kind:'craft',    color:'#b48ce8', key:'craft_'+L.craft.name, icon:'✦', stackable:true, weight:0.2, val:0 },
     // "Bout du trésor de Velia" se loot par 1 à 3 (demande explicite du 2026-07-06) -- pickupQty
     // DOIT être tiré ici (dans ce tableau reconstruit à chaque kill), jamais dans la définition
@@ -5841,8 +5858,10 @@ function renderInventory() {
       // "color" posé sur le <span> n'a donc aucun effet sur elles (une SVG ignore le color CSS du
       // parent sauf si elle utilise currentColor). Résultat : tout le stuff gris/blanc/vert/bleu se
       // ressemblait dans le sac. Corrigé en teintant la BORDURE de la case avec la vraie couleur du
-      // palier/matériau — demande explicite du 2026-07-07.
-      if (s.color && (s.kind === 'gear' || s.kind === 'material')) {
+      // palier/matériau — demande explicite du 2026-07-07. Étendu aux bijoux (jackpot) le 2026-07-09
+      // (demande explicite) — même halo que sur la poupée d'équipement (voir JEWELRY_SLOTS), les
+      // bijoux du sac restaient les seuls objets équipables sans indice visuel de palier.
+      if (s.color && (s.kind === 'gear' || s.kind === 'material' || s.kind === 'jackpot')) {
         cell.style.borderColor = s.color;
         cell.style.boxShadow = `inset 0 0 6px ${s.color}55`;
       }

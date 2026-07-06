@@ -441,6 +441,48 @@
         got.i === expectedI && Math.abs(got.v - expectedV) < 0.001, `got.i=${got.i}, expected.i=${expectedI}`);
     });
   }
+  // "le calcul de silver/h se fait uniquement sur les silver looté au sol grâce au token qui
+  // doivent être la principale source de revenu, les item looté doivent se vendre bien moins
+  // chere" (2026-07-09) : zoneSilverPerHour ne doit PLUS compter matériau/bijou, uniquement le
+  // trash ; le prix de revente du gear/bijou doit rester nettement sous l'ancien ratio (~230× le
+  // trash pour un bijou, ~78× pour une pièce d'armure) -- vérifie un ordre de grandeur raisonnable
+  // (<= 30×) sur les 16 zones plutôt qu'un nombre exact (scale/RNG dans rollGearDrop)
+  function testLootedItemsSellForMuchLess() {
+    const s = { zoneIdx };
+    for (let i = 0; i < ZONES.length; i++) {
+      const z = ZONES[i];
+      const expectedSilverPerHour = z.loot.trash.val * z.loot.trash.ch * REF_KPM_FOR_STATS * 60;
+      assert(`zoneSilverPerHour de ${z.name.fr} ne compte QUE le trash (pas mat/jackpot)`,
+        Math.abs(zoneSilverPerHour(z) - expectedSilverPerHour) < 0.001);
+    }
+    zoneIdx = 10; // Ruines de Kratuga : trash=105, ancien jackpot.val=29600 (×282), ancien plastron ~8228 (×78)
+    const z = ZONES[10];
+    let gearSample = null;
+    for (let i = 0; i < 300 && !gearSample; i++) gearSample = rollGearDrop(z, true);
+    assert('Le ratio bijou/trash reste raisonnable (<=30x, était ~230-290x)',
+      (JACKPOT_VAL_TRASH_RATIO_FOR_TEST(z) / z.loot.trash.val) <= 30);
+    if (gearSample) {
+      assert('Le ratio gear/trash reste raisonnable (<=20x, était ~78x en zone 10)',
+        (gearSample.val / z.loot.trash.val) <= 20, `gearVal=${gearSample.val}, trashVal=${z.loot.trash.val}`);
+    }
+    zoneIdx = s.zoneIdx;
+  }
+  // même formule que rollDrops (dupliquée volontairement, comme testJewelryApIsDynamic un peu plus
+  // bas, pour ne pas dépendre de l'implémentation interne) -- sert uniquement à vérifier le ratio
+  function JACKPOT_VAL_TRASH_RATIO_FOR_TEST(z) { return z.loot.trash.val * 20; }
+  // "modifier l'encadrement de couleur en fonction de la zone sur les bijoux" (2026-07-09) : un
+  // bijou (kind jackpot) dans le sac principal doit colorer la bordure de sa case comme le gear/
+  // matériau, au lieu de rester sans indice visuel de palier
+  function testJewelryGetsColoredBorderInBag() {
+    const TEST_SLOT = INV_SIZE - 1;
+    const s = { it: INV[TEST_SLOT] };
+    INV[TEST_SLOT] = { name:'TestRingXYZ', kind:'jackpot', slot:'ring1', ap:3, color:'#7aa35e', key:'t_ring_border' };
+    renderInventory();
+    const cell = document.querySelectorAll('#invGrid .cell')[TEST_SLOT];
+    assert('Bijou du sac : bordure teintée avec sa couleur de palier', cell && cell.style.borderColor && cell.style.borderColor !== '');
+    INV[TEST_SLOT] = s.it;
+    renderInventory();
+  }
 
   // ---------- puissance réelle du stuff lootable (2026-07-08 : "compliqué d'arriver à 20PA avec
   // ce que je loot") ----------
@@ -496,6 +538,8 @@
     testEffectiveApDpFloors();
     testPotionZoneScaleIsDampened();
     testStatsRecoPicksTrueBestZone();
+    testLootedItemsSellForMuchLess();
+    testJewelryGetsColoredBorderInBag();
     testOptDropdownShowsOnlyPrimaryStat();
     testJewelryApIsDynamic();
     testZone0LootReachesZone1Difficulty();
