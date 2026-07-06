@@ -3566,15 +3566,18 @@ function rollGearDrop(zone, alpha) {
   // -- remplace l'ancien tirage au hasard parmi les 4 pièces, partagé entre les 4 zones du palier
   const slot = (ZONE_ARMOR_SLOTS[zoneIdx] || GEAR_SLOTS)[0];
   const role = GEAR_ROLE[slot];
-  const scale = 0.85 + Math.random()*.3;
   // gearBasisAP/DP (2026-07-08) : la PUISSANCE du stuff loot ici peut différer du reqAP/reqDP de
   // COMBAT de la zone (ex: Camp des Loups, volontairement facile mais dont le stuff doit préparer
   // à la zone suivante) — repli sur reqAP/reqDP si la zone n'a pas de gearBasis dédié
   const basisAP = zone.gearBasisAP ?? zone.reqAP, basisDP = zone.gearBasisDP ?? zone.reqDP;
-  const ap = role.apShare ? gearFloor(basisAP * role.apShare * scale) : 0;
-  const dp = role.dpShare ? gearFloor(basisDP * role.dpShare * scale) : 0;
-  const hp = role.hpShare ? gearFloor(basisDP * role.hpShare * scale * HP_GEAR_SCALE) : 0;
-  const dodge = Math.round(basisDP * (role.dodgeShare||0) * scale * DODGE_GEAR_SCALE * 100) / 100;
+  // stats FIXES, aucun jet aléatoire (2026-07-09, demande explicite : "Aucuns jet aléatoire sur les
+  // objet équipable, ils donnent des statisque fix") -- avant, un ±15% (0.85-1.15) rendait 2
+  // exemplaires du même objet différents sans raison ; désormais toujours la même valeur pour un
+  // même palier/slot/zone, seul l'enchantement (enhLv) fait ensuite varier la puissance réelle.
+  const ap = role.apShare ? gearFloor(basisAP * role.apShare) : 0;
+  const dp = role.dpShare ? gearFloor(basisDP * role.dpShare) : 0;
+  const hp = role.hpShare ? gearFloor(basisDP * role.hpShare * HP_GEAR_SCALE) : 0;
+  const dodge = Math.round(basisDP * (role.dodgeShare||0) * DODGE_GEAR_SCALE * 100) / 100;
   // toute pièce d'armure prend la couleur ET l'ornementation du palier (icône générée à la volée,
   // 2026-07-07 puis étendu au casque + ornements de rareté le 2026-07-08)
   const TIER_COLORED_ICON = { helmet: helmetIconForColor, armor: armorIconForColor, gloves: glovesIconForColor, boots: bootsIconForColor };
@@ -3602,9 +3605,9 @@ function rollWeaponDrop(zone, alpha) {
   for (const slot of slots) {
     if (Math.random() > chance * (alpha ? 1.6 : 1)) continue;
     const role = GEAR_ROLE[slot];
-    const scale = 0.85 + Math.random()*.3;
+    // stat FIXE, aucun jet aléatoire (2026-07-09, demande explicite) — voir rollGearDrop
     const basisAP = zone.gearBasisAP ?? zone.reqAP;
-    const ap = gearFloor(basisAP * role.apShare * scale);
+    const ap = gearFloor(basisAP * role.apShare);
     out.push({
       name: tier.sets[slot], kind:'gear', slot, ap, dp:0, hp:0, dodge:0, enhLv:0, optimizable:true, fsByLevel:{},
       key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
@@ -6097,14 +6100,19 @@ function itemScore(it) { return it ? (it.ap||0) + (it.dp||0)*0.5 + (it.dodge||0)
 
 function equipBestSingle(slotId, kind) {
   const current = EQUIP[slotId];
-  let best = null, bestIdx = -1, bestScore = itemScore(current);
+  let best = null, bestIdx = -1;
+  let bestScore = itemScore(current), bestEnh = current ? (current.enhLv||0) : -1;
   for (let i = 0; i < INV_SIZE; i++) {
     const it = INV[i];
     if (!it || it.kind !== kind) continue;
     const itSlot = kind === 'gear' ? it.slot : accSlotFor(it);
     if (itSlot !== slotId) continue;
     const sc = itemScore(it);
-    if (sc > bestScore) { bestScore = sc; best = it; bestIdx = i; }
+    const enh = it.enhLv || 0;
+    // meilleur SOCLE d'abord ; à socle ÉGAL, le plus haut déjà enchanté l'emporte (2026-07-09,
+    // demande explicite : "si les 2 base sont identique alors ce sera le plus haut deja monté") --
+    // ne remplace jamais un objet déjà enchanté par un jumeau au même socle mais moins monté
+    if (sc > bestScore || (sc === bestScore && enh > bestEnh)) { bestScore = sc; bestEnh = enh; best = it; bestIdx = i; }
   }
   if (!best) return false;
   if (current && !invAdd({ ...current, equipped:false, qty:1, stackable:false })) return false; // sac plein
@@ -6121,7 +6129,9 @@ function equipBestPair(slotA, slotB, accSlot) {
     const it = INV[i];
     if (it && it.kind === 'jackpot' && accSlotFor(it) === accSlot) { candidates.push(it); invIdxOf.set(it, i); }
   }
-  candidates.sort((a,b) => itemScore(b) - itemScore(a));
+  // même règle que equipBestSingle (2026-07-09, demande explicite) : meilleur socle d'abord, et à
+  // socle égal le plus haut déjà enchanté l'emporte
+  candidates.sort((a,b) => (itemScore(b) - itemScore(a)) || ((b.enhLv||0) - (a.enhLv||0)));
   const chosen = candidates.slice(0, 2);
   const before = [EQUIP[slotA], EQUIP[slotB]].filter(Boolean);
   const changed = before.length !== chosen.length || before.some(it => !chosen.includes(it));

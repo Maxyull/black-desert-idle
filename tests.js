@@ -483,6 +483,51 @@
     INV[TEST_SLOT] = s.it;
     renderInventory();
   }
+  // "Aucuns jet aléatoire sur les objet équipable, ils donnent des statisque fix" (2026-07-09) :
+  // rollGearDrop/rollWeaponDrop doivent produire EXACTEMENT le même résultat à chaque appel pour un
+  // même palier/slot/zone — vérifie sur plusieurs tirages successifs qu'aucune variance ne subsiste
+  function testGearDropsAreDeterministic() {
+    const s = { zoneIdx };
+    zoneIdx = 10;
+    const z = ZONES[10];
+    const samples = [];
+    for (let i = 0; i < 30; i++) { const g = rollGearDrop(z, true); if (g) samples.push(g); }
+    assert('Au moins quelques exemplaires obtenus pour comparer (armure zone 10)', samples.length >= 2, `n=${samples.length}`);
+    if (samples.length >= 2) {
+      const ref = samples[0];
+      const allIdentical = samples.every(g => g.ap === ref.ap && g.dp === ref.dp && g.hp === ref.hp && g.dodge === ref.dodge && g.val === ref.val);
+      assert('rollGearDrop : aucune variance entre plusieurs exemplaires du même palier/slot/zone', allIdentical);
+    }
+    const weaponSamples = [];
+    for (let i = 0; i < 30; i++) weaponSamples.push(...rollWeaponDrop(z, true));
+    if (weaponSamples.length >= 2) {
+      const ref = weaponSamples[0];
+      const allIdentical = weaponSamples.every(g => g.ap === ref.ap && g.val === ref.val);
+      assert('rollWeaponDrop : aucune variance entre plusieurs exemplaires', allIdentical);
+    }
+    zoneIdx = s.zoneIdx;
+  }
+  // "un objet qui a déjà été équipé ... s'il est moins bon qu'un item dans l'inventaire, lors du
+  // clique equiper meilleurs, ce sera toujours le meilleur base qui va s'equiper si les 2 base sont
+  // identique alors ce sera le plus haut deja monte" (2026-07-09) : à SOCLE égal (même itemScore),
+  // equipBestSingle/equipBestPair doivent choisir l'exemplaire le PLUS ENCHANTÉ, jamais un jumeau
+  // moins monté rencontré en premier dans le sac
+  function testEquipBestTieBreaksOnHighestEnhLv() {
+    const s = { helmet: EQUIP.helmet, a: INV[INV_SIZE-1], b: INV[INV_SIZE-2] };
+    EQUIP.helmet = null;
+    // 2 casques au MÊME socle (ap/dp/hp/dodge identiques), enhLv différent -- le +5 doit gagner
+    // même s'il est rencontré AVANT le +12 dans le sac (l'inverse de l'ordre "naturel" du tri)
+    INV[INV_SIZE-2] = { name:'TestHelmetA', kind:'gear', slot:'helmet', ap:0, dp:10, hp:50, dodge:1, enhLv:5, key:'t_helm_a' };
+    INV[INV_SIZE-1] = { name:'TestHelmetB', kind:'gear', slot:'helmet', ap:0, dp:10, hp:50, dodge:1, enhLv:12, key:'t_helm_b' };
+    equipBestSingle('helmet', 'gear');
+    assert('Socles identiques -> le plus enchanté (+12) est équipé, pas le premier rencontré (+5)',
+      EQUIP.helmet && EQUIP.helmet.enhLv === 12, `enhLv équipé=${EQUIP.helmet&&EQUIP.helmet.enhLv}`);
+    // le perdant (+5) doit être revenu intact dans le sac, jamais perdu
+    const back = INV.find(it => it && it.name === 'TestHelmetA');
+    assert('Le casque non retenu (+5) retourne bien dans le sac, jamais perdu', !!back && back.enhLv === 5);
+    EQUIP.helmet = s.helmet; INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b;
+    for (let i=0;i<INV_SIZE;i++) if (INV[i] && (INV[i].name==='TestHelmetA'||INV[i].name==='TestHelmetB')) INV[i]=null;
+  }
 
   // ---------- puissance réelle du stuff lootable (2026-07-08 : "compliqué d'arriver à 20PA avec
   // ce que je loot") ----------
@@ -540,6 +585,8 @@
     testStatsRecoPicksTrueBestZone();
     testLootedItemsSellForMuchLess();
     testJewelryGetsColoredBorderInBag();
+    testGearDropsAreDeterministic();
+    testEquipBestTieBreaksOnHighestEnhLv();
     testOptDropdownShowsOnlyPrimaryStat();
     testJewelryApIsDynamic();
     testZone0LootReachesZone1Difficulty();
