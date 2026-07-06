@@ -2358,6 +2358,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V207', d:'08/07/2026 14:00', name:{fr:'Suite de tests de régression (coulisses)', en:'Regression test suite (behind the scenes)'}, fr:[
+      {t:'new', sub:'systeme', tx:'Ajout d\'une suite de tests de régression pour la progression PA/PD (monotonie des zones, ratios de transition de palier, génération des icônes, plafond de dégâts) — purement un outil de développement, invisible en jeu, sert à repérer automatiquement ce genre de régression avant qu\'un joueur ne la remarque (comme le fix de Camp Rhutum plus tôt aujourd\'hui)'},
+    ], en:[
+      {t:'new', sub:'systeme', tx:'Added a regression test suite for AP/DP progression (zone monotonicity, tier-transition ratios, icon generation, damage cap) — a pure development tool, invisible in-game, meant to catch this kind of regression automatically before a player notices it (like the Camp Rhutum fix earlier today)'},
+    ] },
   { v:'V206', d:'08/07/2026 13:30', name:{fr:'Zone dangereuse = vrai risque de one-shot, ceinture redessinée, bijoux recolorés', en:'Dangerous zone = real one-shot risk, redesigned belt, recolored jewelry'}, fr:[
       {t:'change', sub:'combat', severity:'major', tx:'Marche arrière sur le plafond de dégâts ajouté plus tôt aujourd\'hui : en ZONE DANGEREUSE spécifiquement, les monstres peuvent de nouveau te tuer d\'un seul coup si le stuff est très en dessous du seuil — c\'est le vrai risque que ce badge doit représenter. Les autres zones (DIFFICILE et mieux) gardent le plafond de 30% des PV max cumulé sur 1s, pour ne jamais surprendre avec une mort instantanée quand le stuff n\'est QUE légèrement insuffisant'},
       {t:'new', sub:'graphismes', tx:'Nouvelle icône de ceinture dans le même style que le reste du set (sangle teintée par palier, boucle au contour coloré, rivets/gemmes de rareté)'},
