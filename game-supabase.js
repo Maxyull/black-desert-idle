@@ -2366,6 +2366,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V230', d:'10/07/2026 11:00', name:{fr:'La protection Pierre de Cron est désormais désactivée par défaut', en:'Cron Stone protection is now disabled by default'}, fr:[
+      {t:'change', sub:'systeme', tx:'L\'utilisation automatique des Pierres de Cron (protection contre une rétrogradation) est désormais désactivée par défaut sur un nouveau compte — active-la toi-même en cliquant sur la case Pierre de Cron du panneau Optimisation si tu la veux'},
+    ], en:[
+      {t:'change', sub:'systeme', tx:'Automatic use of Cron Stones (protection against downgrading) is now disabled by default on a new account — enable it yourself by clicking the Cron Stone slot in the Enhancement panel if you want it'},
+    ] },
   { v:'V229', d:'10/07/2026 10:00', name:{fr:'Fix probable de l\'erreur 404 après inscription par email', en:'Likely fix for the 404 error after email signup'}, fr:[
       {t:'fix', sub:'authentification', severity:'major', tx:'La création de compte par email (et la liaison d\'un compte invité à un email) n\'indiquait jamais explicitement où revenir après confirmation — contrairement à la connexion Discord et à la réinitialisation de mot de passe, qui le faisaient déjà. Le lien de confirmation retombait donc sur l\'adresse par défaut configurée côté serveur au lieu de la page réellement visitée, ce qui pouvait mener à une page inexistante (404) après inscription. Corrigé : le lien de confirmation ramène désormais toujours vers la page d\'où l\'inscription a été lancée'},
     ], en:[

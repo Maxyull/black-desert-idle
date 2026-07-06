@@ -260,7 +260,7 @@ const S = {
   potionType: 'medium', // 'small'/'medium'/'large'/'mega' = potions payantes ; 'infinite' = gratuite (débloquée plus tard)
   farmMode: 'loot', // 'loot' = ramasse tout avant le pack suivant ; 'xp' = enchaîne les packs sans se soucier du loot
   potionThreshold: 0.5, // % de PV en dessous duquel l'IA boit une potion automatiquement (réglable via le slider)
-  useCronStone: true, // 2026-07-06 : au choix du joueur (case à cocher) si elle protège une rétrogradation, plus automatique en silence
+  useCronStone: false, // 2026-07-06 : au choix du joueur (case à cocher) si elle protège une rétrogradation, plus automatique en silence -- désactivée par défaut (2026-07-10, demande explicite), le joueur l'active lui-même s'il en veut
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
