@@ -1456,6 +1456,19 @@ $a('ztCompendium').onclick = openCompendium;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 $a('btnLifeskillToggle').onclick = openLifeskillPanel;
+// bascule Inventaire/Assemblage dans la carte Inventaire (2026-07-06, demande explicite : "on va
+// mettre le craft dans la carte de l'inventaire en haut par un bouton") -- le panneau de craft du
+// Trésor de Velia (#treasureCraftPanel) vivait dans la carte Optimisation, déplacé ici
+document.querySelectorAll('.invModeTab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.invModeTab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const isCraft = btn.dataset.mode === 'craft';
+    $a('invModeInvPane').style.display = isCraft ? 'none' : '';
+    $a('invModeCraftPane').style.display = isCraft ? '' : 'none';
+    if (isCraft) renderTreasureCraftPanel();
+  };
+});
 renderActivityTabs();
 // quitter un combat en cours → retour au lobby Boss ; fermer le lobby → retour à la Zone (farm)
 $a('bossLeaveBtn').onclick = () => { if (bossState.active) endBossFight(false); else openBossLobby(); };
@@ -2257,8 +2270,9 @@ const I18N = {
   btnSort: { fr:'Trier', en:'Sort' },
   lblWeight: { fr:'Poids', en:'Weight' },
   cardAdvice: { fr:'Conseil de stuff', en:'Gear advice' },
-  cardCraft: { fr:'Craft', en:'Crafting' },
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
+  invModeInv: { fr:'🎒 Inventaire', en:'🎒 Inventory' },
+  invModeCraft: { fr:'🔧 Assemblage', en:'🔧 Craft' },
   optChanceEmpty: { fr:'Chargez un matériau depuis le sac', en:'Load a material from your bag' },
   btnOptTry: { fr:"Tenter l'optimisation", en:'Attempt enhancement' },
   btnOptAuto: { fr:"▶ Auto jusqu'à", en:'▶ Auto to' },
@@ -2328,6 +2342,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V192', d:'06/07/2026 06:00', name:{fr:'Fix meute en zone dangereuse, sac plein qui bloquait le farm, Craft déplacé dans l\'Inventaire', en:'Dangerous zone pack pile-up fix, full-bag freeze fix, Craft moved into Inventory'}, fr:[
+      {t:'fix', sub:'pve', severity:'major', tx:'Un groupe de monstres engagé restait accroché pour toujours (jamais de désengagement), y compris en dehors de tout combat actif — en zone dangereuse (monstres plus rapides, toi plus lent), plusieurs groupes abandonnés finissaient par te rattraper en même temps qu\'un autre déjà engagé et faisaient meute. Un groupe trop éloigné (>550) abandonne maintenant la poursuite'},
+      {t:'fix', sub:'interface', severity:'major', tx:'Sac plein : le personnage restait bloqué à suivre indéfiniment un objet au sol qu\'il ne pouvait plus ramasser, au lieu de continuer à combattre comme prévu — il abandonne maintenant cet objet précis après un court délai et repart chercher le prochain groupe'},
+      {t:'change', sub:'interface', tx:'Le panneau de craft du Trésor de Velia déplacé de la carte Optimisation vers la carte Inventaire, accessible via un nouveau bouton "Assemblage" en haut (à côté d\'"Inventaire")'},
+    ], en:[
+      {t:'fix', sub:'pve', severity:'major', tx:'An engaged monster pack stayed aggroed forever (never disengaged), even outside of any active fight — in a dangerous zone (faster monsters, slower you), several abandoned packs would end up catching up to you at the same time as another already-engaged one, piling on. A pack too far away (>550) now gives up the chase'},
+      {t:'fix', sub:'interface', severity:'major', tx:'Full bag: the character got stuck endlessly following a ground item it could no longer pick up, instead of continuing to fight as intended — it now abandons that specific item after a short delay and goes back to looking for the next pack'},
+      {t:'change', sub:'interface', tx:'The Velia Treasure crafting panel moved from the Enhancement card to the Inventory card, accessible via a new "Craft" button up top (next to "Inventory")'},
+    ] },
   { v:'V191', d:'06/07/2026 05:00', name:{fr:'Optimisations contre le ralentissement sur session longue', en:'Optimizations against long-session slowdown'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Réduction de charge après un signalement de ralentissement système sur des sessions de plusieurs heures : le rendu (canvas + simulation) est désormais mis en pause quand l\'onglet est en arrière-plan, et le recalcul de hauteur des cartes (ajouté par erreur à chaque battement du HUD, potentiellement plusieurs fois par seconde) ne se déclenche plus qu\'au vrai changement de zone/inventaire'},
       {t:'fix', sub:'equipements', severity:'minor', tx:'Garde-fou : l\'optimisation automatique ne peut plus jamais empiler 2 minuteurs en parallèle'},

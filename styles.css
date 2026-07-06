@@ -1149,6 +1149,10 @@
   .catTab { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; }
   .catTab.active { border-color:var(--gold); color:var(--gold); }
   .catTab.locked { opacity:.45; cursor:not-allowed; }
+  /* bascule Inventaire/Assemblage en haut de la carte Inventaire (2026-07-06, demande explicite) */
+  .invModeTabs { display:flex; gap:6px; margin-bottom:8px; }
+  .invModeTab { flex:1; margin:0; padding:6px 11px; font-size:11.5px; background:transparent; border:1px solid #3a3742; }
+  .invModeTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
   .admEmpty { color:var(--ink-dim); font-style:italic; text-align:center; padding:10px 0; }
   .admSummary { font-size:11px; color:var(--ink-dim); margin-bottom:8px; }
   .admSummary b { color:var(--gold); }
