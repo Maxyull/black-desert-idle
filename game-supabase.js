@@ -2504,6 +2504,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V238', d:'11/07/2026 19:00', name:{fr:'Rétroactivité du lissage des zones, nom de zone corrigé au chargement', en:'Retroactive zone smoothing, fixed zone name on load'}, fr:[
+      {t:'fix', sub:'objets', severity:'major', tx:'Les changements de PA/PD requis de zones (échelonnement de Ruines de Trent/Île d\'Iliya/Base de Bashim et lissage de Ruines de Kratuga/Planque des Mânes) ne se répercutaient pas sur le stuff déjà dropé avant ces changements — tout objet déjà possédé de ces zones est désormais recalculé automatiquement, sans toucher à l\'enchantement déjà investi'},
+      {t:'fix', sub:'interface', tx:'Le nom de la zone affiché en haut du cadre de jeu pouvait rester bloqué sur "Camp des Loups" après le chargement d\'une sauvegarde sur une autre zone, tant qu\'aucun voyage manuel n\'était fait. Il reflète désormais toujours la vraie zone dès le chargement'},
+    ], en:[
+      {t:'fix', sub:'objets', severity:'major', tx:'Zone AP/DP requirement changes (staggering Trent Ruins/Iliya Island/Bashim Base and smoothing Kratuga Ruins/Manes\' Hideout) didn\'t carry over to gear already dropped before those changes — any already-owned item from those zones is now automatically recalculated, without touching already-invested enhancement'},
+      {t:'fix', sub:'interface', tx:'The zone name shown at the top of the game frame could stay stuck on "Wolf Camp" after loading a save on a different zone, until a manual travel was made. It now always reflects the real zone right after loading'},
+    ] },
   { v:'V237', d:'11/07/2026 18:00', name:{fr:'Fix : une pierre du mauvais palier ne peut plus optimiser du stuff', en:'Fix: a stone from the wrong tier can no longer enhance gear'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'S\'il ne restait plus de pierre du bon palier en sac (ex: Pierre du Temps pour du stuff Tuvala), l\'optimisation retombait silencieusement sur N\'IMPORTE QUELLE autre pierre en stock, même d\'un palier différent (ex: Pierre de Novice, Naru). Corrigé : sans le bon matériau, l\'optimisation reste bloquée ("Aucun matériau en sac") au lieu de consommer une pierre qui ne correspond pas. Un matériau épinglé via "Mettre en optimisation" qui ne correspond plus au palier de la pièce ciblée est désormais lui aussi ignoré'},
     ], en:[

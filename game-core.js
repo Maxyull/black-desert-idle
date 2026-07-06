@@ -5267,6 +5267,20 @@ function updateZoneViewHalo() {
     row.querySelector('.zBtnView').classList.toggle('active', previewed);
   });
 }
+// nom + palier affichés en haut du cadre de jeu (#ztName/#ztTier) -- SEUL endroit qui les met à
+// jour (2026-07-11, bug corrigé : "le nom de la zone doit être mis à jour et rester en place") :
+// avant, seuls travelTo()/goToVelia() les modifiaient, jamais applySaveState() -- après un
+// rechargement de page sur une zone différente de la zone 0, le nom affiché restait bloqué sur le
+// texte statique du HTML ("Camp des Loups") tant que le joueur ne voyageait pas manuellement.
+function updateZoneTitleText() {
+  if (atVelia) {
+    $('ztName').textContent = LANG==='fr' ? 'Velia' : 'Velia';
+    $('ztTier').textContent = LANG==='fr' ? 'Zone paisible' : 'Peaceful zone';
+  } else {
+    $('ztName').textContent = tr(Z().name);
+    $('ztTier').textContent = Z().tier;
+  }
+}
 function travelTo(i) {
   atVelia = false;
   // "pour le fun" (demande du 2026-07-08) : log Discord la 1ère fois qu'une zone est atteinte
@@ -5275,8 +5289,7 @@ function travelTo(i) {
   if (i > S.maxZoneIdx) S.maxZoneIdx = i;
   S.travelCount = (S.travelCount||0) + 1;
   resetWorld();
-  $('ztName').textContent = tr(Z().name);
-  $('ztTier').textContent = Z().tier;
+  updateZoneTitleText();
   lootPreviewIdx = null; // farmer une nouvelle zone fait à nouveau suivre son loot par défaut
   renderLootTable();
   hud();
@@ -5287,8 +5300,7 @@ function travelTo(i) {
 function goToVelia() {
   atVelia = true;
   resetWorld();
-  $('ztName').textContent = LANG==='fr' ? 'Velia' : 'Velia';
-  $('ztTier').textContent = LANG==='fr' ? 'Zone paisible' : 'Peaceful zone';
+  updateZoneTitleText();
   lootPreviewIdx = null;
   renderLootTable();
   hud();
@@ -7189,6 +7201,19 @@ function migrateGearFixedStatsV226() {
   INV.forEach(rescaleOne);
   COMPENDIUM_BAG.forEach(rescaleOne);
 }
+// migration 2026-07-11 (demande explicite : "Tout les stuff sont strictement sans range,
+// rétroactif") : migrateGearFixedStatsV226/migrateJewelryApV207 recalculent bien ap/dp/hp/dodge/val
+// à partir des reqAP/reqDP ACTUELS des zones, mais ne se relancent JAMAIS une fois passées (gate à
+// usage unique par compte) -- les changements de reqAP/reqDP de zones de cette session (V234 :
+// Trent/Iliya/Bashim échelonnées ; V235 : Kratuga/Planque des Mânes lissées) ne se répercutaient
+// donc PAS sur le stuff déjà possédé avant ces changements. Relance simplement les 2 migrations
+// existantes (mêmes formules, jamais dupliquées) pour rattraper tout le monde une fois de plus.
+// À REFAIRE (nouveau flag S.migratedGearRescaleVxxx) à chaque future modification de reqAP/reqDP/
+// gearBasisAP/DP d'une zone, sans quoi le stuff déjà dropé reste sur l'ancien calcul pour toujours.
+function migrateGearRescaleV235() {
+  migrateGearFixedStatsV226();
+  migrateJewelryApV207();
+}
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
 // C'est CE bloc qui doit être envoyé/lu depuis la table Supabase "game_saves".
@@ -7223,11 +7248,13 @@ function applySaveState(data) {
   if (!S.migratedArmorNoApV192) { migrateArmorNoApV192(); S.migratedArmorNoApV192 = true; }
   if (!S.migratedJewelryApV207) { migrateJewelryApV207(); S.migratedJewelryApV207 = true; }
   if (!S.migratedGearFixedStatsV226) { migrateGearFixedStatsV226(); S.migratedGearFixedStatsV226 = true; }
+  if (!S.migratedGearRescaleV235) { migrateGearRescaleV235(); S.migratedGearRescaleV235 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
   if (!POTIONS[S.potionType]) S.potionType = 'medium'; // migre l'ancienne potion unique 'basic' vers les 4 tailles
   resetWorld(); // recrée les packs de la zone chargée
+  updateZoneTitleText(); // voir son commentaire -- sans cet appel, le nom de zone affiché restait figé au placeholder HTML
   if (data.playerPos) { P.x = data.playerPos.x; P.y = data.playerPos.y; }
   hud();
   return true;

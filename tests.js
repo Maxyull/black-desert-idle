@@ -650,6 +650,39 @@
 
     EQUIP.armor = s.a; INV[INV_SIZE-1] = s.b; zoneIdx = s.zoneIdx;
   }
+  // "Tout les stuff sont strictement sans range, rétroactif" (2026-07-11) : les changements de
+  // reqAP/reqDP de zone de cette session (Ruines de Trent 25->30, voir V234) doivent eux aussi se
+  // répercuter sur le stuff déjà dropé -- migrateGearFixedStatsV226 seule ne suffit pas car figée
+  // par un gate à usage unique, migrateGearRescaleV235 doit rattraper.
+  function testGearRescaleV235RetroactiveOnZoneReqChange() {
+    const s = { b: INV[INV_SIZE-1], zoneIdx };
+    zoneIdx = 12; // Ruines de Trent (grey, reqAP échelonné le 2026-07-11)
+    const zone = ZONES[12];
+    let freshBoots = null;
+    for (let i = 0; i < 2000 && !freshBoots; i++) freshBoots = rollGearDrop(zone, true);
+    // simule des bottes dropées avant le lissage des zones (ancien reqAP=25 au lieu de 30 -> ancien dp plus faible)
+    INV[INV_SIZE-1] = { name:'Bottes Naru', kind:'gear', slot:'boots', ap:0, dp:1, hp:1, dodge:0.1, enhLv:3, color:GEAR_TIERS[0].color, val:1, key:'t_old_boots' };
+    migrateGearRescaleV235();
+    assert('Rescale V235 : dp recalculé au reqAP/reqDP ACTUEL de la zone (post-lissage)',
+      INV[INV_SIZE-1].dp === freshBoots.dp, `got=${INV[INV_SIZE-1].dp}, attendu=${freshBoots.dp}`);
+    assert('Rescale V235 : enhLv déjà investi reste intact', INV[INV_SIZE-1].enhLv === 3);
+    INV[INV_SIZE-1] = s.b; zoneIdx = s.zoneIdx;
+  }
+  // "le nom de la zone doit être mis à jour et rester en place" (2026-07-11) : après un chargement
+  // de sauvegarde sur une zone différente de la zone 0, #ztName restait bloqué sur le placeholder
+  // HTML statique -- seuls travelTo()/goToVelia() le mettaient à jour, jamais applySaveState().
+  function testApplySaveStateUpdatesZoneTitleText() {
+    const el = $('ztName'); if (!el) return; // pas de DOM (contexte hors-jeu)
+    const s = { zoneIdx, atVelia };
+    atVelia = false;
+    const save = getSaveState();
+    save.zoneIdx = 5; // Colonie Sausan
+    el.textContent = 'STALE_PLACEHOLDER';
+    applySaveState(save);
+    assert('applySaveState() met à jour #ztName selon le zoneIdx restauré',
+      el.textContent === tr(ZONES[5].name), `got=${el.textContent}`);
+    zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
+  }
   // "vérifie les info de la table de loot (couleurs cadre)" (2026-07-10) : la ligne dépliée du
   // bijou (kind jackpot) doit être colorée à la couleur du palier, comme les lignes gear/matériau
   // et comme la ligne condensée (zoneLootCompactRowHtml) — bug trouvé en vérification : "jackpot"
@@ -813,6 +846,8 @@
     testOptDropdownShowsOnlyPrimaryStat();
     testJewelryApIsDynamic();
     testGearRetroactiveMigration();
+    testGearRescaleV235RetroactiveOnZoneReqChange();
+    testApplySaveStateUpdatesZoneTitleText();
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();
     testSellOnePriorityEquipCompendiumSell();
