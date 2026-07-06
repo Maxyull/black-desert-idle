@@ -435,17 +435,20 @@ const ICO_MAT_CAPHRAS = svgIcon(
 const ICO_MAT_CONCENTREE = svgIcon(
   '<path d="M12 2l5.8 4.8-1.8 9.6-4 5.6-4-5.6-1.8-9.6z" fill="#2e3a52"/><path d="M12 2l5.8 4.8-1.8 9.6-4 5.6z" fill="#1c2438"/>' +
   '<path d="M12 2l-2 7.4 4 1.2z" fill="#4a5c7a"/><circle cx="12" cy="13" r="2.3" fill="#5ec9e8" opacity=".65"/>');
-// Pierre de Cron (2026-07-08) : sablier doré gravé dans la pierre — protège un enchantement d'une
-// rétrogradation en cas d'échec (consommée automatiquement, voir attemptEnhance). Dropée dans
-// TOUTES les zones du jeu à un taux fixe de 0.1%, sans lien avec le palier de stuff.
+// Pierre de Cron : orbe turquoise lumineux façon perle (redessiné le 2026-07-06, demande explicite,
+// références visuelles fournies) — protège un enchantement d'une rétrogradation en cas d'échec
+// (au choix du joueur depuis V193, voir attemptEnhance/S.useCronStone). Dropée dans TOUTES les
+// zones du jeu à un taux fixe (voir CRON_STONE.ch), sans lien avec le palier de stuff.
 const ICO_CRON_STONE = svgIcon(
-  '<path d="M12 1l6 6-3 8-3 8-3-8-3-8z" fill="#5a4a2e"/><path d="M12 1l6 6-3 8-3 8z" fill="#3e321e"/>' +
-  '<path d="M8 5.5h8l-4 5.5z" fill="#e8c96a"/><path d="M8 17.5h8l-4-5.5z" fill="#e8c96a" opacity=".7"/>' +
-  '<circle cx="12" cy="12" r="1.3" fill="#fff2c0"/>');
+  '<circle cx="12" cy="12" r="9.5" fill="#1f7a72"/><circle cx="12" cy="12" r="9.5" fill="#4ecdc4" opacity=".5"/>' +
+  '<path d="M7 15c1.8 1.4 3.4.6 4.6-1s3.2-2.4 5-1" stroke="#eafffa" stroke-width="1.1" fill="none" opacity=".4" stroke-linecap="round"/>' +
+  '<path d="M6.5 6.5c1.8 2.6.8 5-.8 6.8s-.4 4.2 2.4 4.2 4.6-2.4 5.4-5-.6-5.4-2.6-6.4-2.6-1.8-4.4.4z" fill="#eafffa" opacity=".35"/>' +
+  '<ellipse cx="9" cy="7.5" rx="3.1" ry="2.1" fill="#fff" opacity=".75"/>' +
+  '<circle cx="12" cy="12" r="9.5" fill="none" stroke="#bff2ea" stroke-width=".6" opacity=".5"/>');
 // ch centralisé ici (2026-07-06, corrige un bug d'affichage : la table de loot avait un 0.001
 // codé en dur, resté à l'ancien taux après le passage à 1% le 2026-07-06 — une seule source de
 // vérité désormais, utilisée à la fois par le tirage réel et par son affichage)
-const CRON_STONE = { name:'Pierre de Cron', key:'mat_cron_stone', icon:ICO_CRON_STONE, color:'#c9a55a', ch:0.01 };
+const CRON_STONE = { name:'Pierre de Cron', key:'mat_cron_stone', icon:ICO_CRON_STONE, color:'#4ecdc4', ch:0.01 };
 // Coeur de Vell : cœur stylisé bleu abyssal, lueur cyan pulsante — récompense rare du boss Vell
 const ICO_COEUR_VELL = svgIcon(
   '<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0112 6.5 5.5 5.5 0 0121.5 12c-2.5 4.5-9.5 9-9.5 9z" fill="#2a5a78"/>' +
@@ -5748,8 +5751,11 @@ function renderOptimization() {
   $('optChanceFill').style.width = (parts.base*100)+'%';
   $('optChanceFillFS').style.width = (parts.bonus*100)+'%';
   // Pierre de Cron : case à part, à droite du matériau — au choix du joueur (case à cocher),
-  // plus consommée automatiquement en silence (demande explicite du 2026-07-06)
+  // plus consommée automatiquement en silence (demande explicite du 2026-07-06). L'icône réelle
+  // (orbe turquoise, voir ICO_CRON_STONE) remplace le placeholder ⏳ statique qui ne changeait
+  // jamais -- affichée en permanence (juste atténuée par .empty), comme #optMat/#optItem.
   const cronIdx = findCronStone(), cronSlotEl = $('optCronSlot');
+  $('optCronIcon').innerHTML = CRON_STONE.icon;
   if (cronIdx === -1) {
     cronSlotEl.className = 'empty'; cronSlotEl.title = LANG==='fr'?'Aucune Pierre de Cron en sac':'No Cron Stone in bag';
     $('optCronQty').textContent = '';

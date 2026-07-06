@@ -2344,6 +2344,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V197', d:'06/07/2026 10:00', name:{fr:'Nouvelle icône Pierre de Cron (orbe turquoise)', en:'New Cron Stone icon (teal orb)'}, fr:[
+      {t:'improve', sub:'graphismes', tx:'Icône de la Pierre de Cron redessinée en orbe turquoise lumineux façon perle (au lieu du sablier doré), couleur mise à jour partout (sac, table de loot, panneau d\'optimisation)'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'La case Pierre de Cron du panneau d\'optimisation affichait un sablier ⏳ générique figé — elle montre maintenant la vraie icône de l\'objet'},
+    ], en:[
+      {t:'improve', sub:'graphismes', tx:'Cron Stone icon redesigned as a glowing pearl-like teal orb (instead of the golden hourglass), color updated everywhere (bag, loot table, enhancement panel)'},
+      {t:'fix', sub:'interface', severity:'minor', tx:'The Cron Stone slot in the enhancement panel showed a static generic ⏳ hourglass — it now shows the item\'s real icon'},
+    ] },
   { v:'V196', d:'06/07/2026 09:30', name:{fr:'Fix pastille notes de version : plus de chevauchement, plus de scroll forcé', en:'Patch notes badge fix: no more overlap, no more forced scrolling'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'La pastille "notes de version non lues" en haut de page chevauchait le panneau des notes de version lui-même — elle se masque désormais tant qu\'un panneau est ouvert, et réapparaît dès qu\'il se ferme'},
       {t:'fix', sub:'interface', tx:'Notes de version : s\'il reste des entrées non lues, le panneau s\'ouvre désormais tout en haut (où elles sont) au lieu de reprendre l\'ancienne position de défilement, qui les cachait en dessous — la reprise de position ne s\'applique qu\'une fois à jour'},
