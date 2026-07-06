@@ -480,8 +480,10 @@ function jewelGemCluster(tierIdx, color, cx, cy) {
 // losange (5e ornement) au bleu (voir gearOrnaments) ; le tierIdx (0/1/2) reste celui de
 // JEWEL_TIER_IDX, la couleur elle-même distingue déjà gris de blanc
 function ringIconForTier(tierIdx, color) {
-  const band = tierIdx<=0 ? color : tierIdx===1 ? '#26301f' : '#16232b';
-  const bandLine = shadeHex(band,-15);
+  // contour dans la couleur du palier (2026-07-08, demande explicite : "contour des bijou =
+  // couleurs de la zone") -- remplace l'ancien contour sombre/noir au vert et au bleu
+  const band = color;
+  const bandLine = tierIdx<=0 ? shadeHex(color,-15) : shadeHex(color,60);
   let gem = '';
   if (tierIdx<=0) gem = `<rect x="10.6" y="6.6" width="2.8" height="2.4" rx=".7" fill="${shadeHex(color,-30)}"/>`;
   else if (tierIdx===1) gem = `<path d="M12 4.2l2 2.4-2 3-2-3z" fill="${color}"/><path d="M12 4.2l2 2.4-2 3z" fill="${shadeHex(color,-40)}"/>`;
@@ -493,27 +495,27 @@ function ringIconForTier(tierIdx, color) {
     gem + rivets);
 }
 function necklaceIconForTier(tierIdx, color) {
-  const chain = tierIdx<=0 ? color : tierIdx===1 ? '#26301f' : '#16232b';
+  const chain = color;
   let pend = '';
   if (tierIdx<=0) pend = `<circle cx="12" cy="16.5" r="1.6" fill="${shadeHex(color,-30)}"/>`;
-  else if (tierIdx===1) pend = `<path d="M12 13l3.4 4-3.4 4.4L8.6 17z" fill="${chain}"/><path d="M12 13l3.4 4-3.4 4.4z" fill="${shadeHex(chain,-25)}"/><path d="M12 15l1.6 2-1.6 2.2-1.6-2.2z" fill="${color}"/>`;
-  else pend = `<path d="M12 12.6l3.8 4.4-3.8 4.8-3.8-4.8z" fill="${chain}"/><path d="M12 12.6l3.8 4.4-3.8 4.8z" fill="${shadeHex(chain,-25)}"/><path d="M12 14.6l1.9 2.4-1.9 2.6-1.9-2.6z" fill="#eaf6ff"/><path d="M12 14.6l1.9 2.4-1.9 2.6z" fill="${shadeHex(color,60)}"/>`;
+  else if (tierIdx===1) pend = `<path d="M12 13l3.4 4-3.4 4.4L8.6 17z" fill="${color}"/><path d="M12 13l3.4 4-3.4 4.4z" fill="${shadeHex(color,-40)}"/><path d="M12 15l1.6 2-1.6 2.2-1.6-2.2z" fill="${shadeHex(color,60)}"/>`;
+  else pend = `<path d="M12 12.6l3.8 4.4-3.8 4.8-3.8-4.8z" fill="${color}"/><path d="M12 12.6l3.8 4.4-3.8 4.8z" fill="${shadeHex(color,-40)}"/><path d="M12 14.6l1.9 2.4-1.9 2.6-1.9-2.6z" fill="#eaf6ff"/><path d="M12 14.6l1.9 2.4-1.9 2.6z" fill="${shadeHex(color,60)}"/>`;
   const rivets = gearOrnaments(tierIdx, [[12,13.6],[8.9,17],[15.1,17],[12,20.6]], color, [17.2,13.8]);
   return svgIcon(rarityBackdrop(tierIdx,color) +
     `<path d="M4 5c0 6.5 4 10 8 10s8-3.5 8-10" fill="none" stroke="${chain}" stroke-width="1.8"/>` +
-    `<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="${shadeHex(chain,40)}" stroke-width="1.8"/>` +
+    `<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="${tierIdx<=0?shadeHex(chain,40):shadeHex(chain,60)}" stroke-width="1.8"/>` +
     pend + rivets);
 }
 function earringIconForTier(tierIdx, color) {
-  const ring = tierIdx<=0 ? color : tierIdx===1 ? '#26301f' : '#16232b';
+  const ring = color;
   let drop = '', drop2 = '';
   if (tierIdx<=0) { drop = `<circle cx="8" cy="13.5" r="1.4" fill="${shadeHex(color,-30)}"/>`; drop2 = `<circle cx="16" cy="13.5" r="1.4" fill="${shadeHex(color,-30)}"/>`; }
   else if (tierIdx===1) {
-    drop = `<path d="M8 10.8l1.6 2.4-1.6 3.2-1.6-2.8z" fill="${ring}"/><path d="M8 11.8l.9 1.4-.9 1.6-.9-1.6z" fill="${color}"/>`;
-    drop2 = `<path d="M16 10.8l1.6 2.4-1.6 3.2-1.6-2.8z" fill="${ring}"/><path d="M16 11.8l.9 1.4-.9 1.6-.9-1.6z" fill="${color}"/>`;
+    drop = `<path d="M8 10.8l1.6 2.4-1.6 3.2-1.6-2.8z" fill="${shadeHex(color,-40)}"/><path d="M8 11.8l.9 1.4-.9 1.6-.9-1.6z" fill="${color}"/>`;
+    drop2 = `<path d="M16 10.8l1.6 2.4-1.6 3.2-1.6-2.8z" fill="${shadeHex(color,-40)}"/><path d="M16 11.8l.9 1.4-.9 1.6-.9-1.6z" fill="${color}"/>`;
   } else {
-    drop = `<path d="M8 10.4l1.8 2.7-1.8 3.3-1.8-3.3z" fill="${ring}"/><path d="M8 11.6l1 1.5-1 1.9-1-1.9z" fill="#eaf6ff"/><path d="M8 11.6l1 1.5-1 1.9z" fill="${shadeHex(color,60)}"/>`;
-    drop2 = `<path d="M16 10.4l1.8 2.7-1.8 3.3-1.8-3.3z" fill="${ring}"/><path d="M16 11.6l1 1.5-1 1.9-1-1.9z" fill="#eaf6ff"/><path d="M16 11.6l1 1.5-1 1.9z" fill="${shadeHex(color,60)}"/>`;
+    drop = `<path d="M8 10.4l1.8 2.7-1.8 3.3-1.8-3.3z" fill="${shadeHex(color,-40)}"/><path d="M8 11.6l1 1.5-1 1.9-1-1.9z" fill="#eaf6ff"/><path d="M8 11.6l1 1.5-1 1.9z" fill="${shadeHex(color,60)}"/>`;
+    drop2 = `<path d="M16 10.4l1.8 2.7-1.8 3.3-1.8-3.3z" fill="${shadeHex(color,-40)}"/><path d="M16 11.6l1 1.5-1 1.9-1-1.9z" fill="#eaf6ff"/><path d="M16 11.6l1 1.5-1 1.9z" fill="${shadeHex(color,60)}"/>`;
   }
   const rivets = gearOrnaments(tierIdx, [[6.2,9],[9.8,9],[14.2,9],[17.8,9]], color, [12,5.6]);
   return svgIcon(rarityBackdrop(tierIdx,color) +
@@ -521,11 +523,21 @@ function earringIconForTier(tierIdx, color) {
     `<circle cx="16" cy="7" r="2.6" fill="none" stroke="${ring}" stroke-width="1.5"/>` +
     drop + drop2 + rivets);
 }
+// ceinture redessinée le 2026-07-08 (demande explicite, même style que le reste du set) : sangle
+// teintée par palier, boucle au contour dans la couleur de la zone (comme bague/collier/boucles
+// d'oreille), même règle de rivets/gemmes que le reste (voir gearOrnaments)
 function beltIconForTier(tierIdx, color) {
-  return svgIcon(
-    '<rect x="1.5" y="9.5" width="21" height="5" rx="1.4" fill="#5a3f22"/><rect x="1.5" y="9.5" width="21" height="2" rx="1" fill="#8a6a3a"/>' +
-    '<rect x="8.5" y="7.5" width="7" height="9" rx="1.6" fill="none" stroke="#e6cf7a" stroke-width="2"/>' +
-    (tierIdx <= 0 ? '<rect x="11" y="9.5" width="2" height="5" rx="1" fill="#c9a55a"/>' : jewelGemCluster(tierIdx, color, 12, 12)));
+  const strap = tierIdx<=0 ? color : shadeHex(color,-90);
+  const strapLine = tierIdx<=0 ? shadeHex(color,60) : shadeHex(color,60);
+  let buckle = '';
+  if (tierIdx<=0) buckle = `<rect x="11" y="9.5" width="2" height="5" rx="1" fill="${shadeHex(color,-30)}"/>`;
+  else if (tierIdx===1) buckle = `<path d="M11.7 9.4l1.3 2-1.3 2-1.3-2z" fill="${color}"/>`;
+  else buckle = `<path d="M11.7 8.8l1.5 2.3-1.5 2.3-1.5-2.3z" fill="${shadeHex(color,60)}"/><path d="M11.7 8.8l1.5 2.3-1.5 2.3z" fill="${color}"/>`;
+  const rivets = gearOrnaments(tierIdx, [[4.5,12],[19.5,12],[9,11.2],[15,11.2]], color, [11.7,15.5]);
+  return svgIcon(rarityBackdrop(tierIdx,color) +
+    `<rect x="1.5" y="9.5" width="21" height="5" rx="1.4" fill="${strap}"/><rect x="1.5" y="9.5" width="21" height="1.6" rx=".8" fill="${strapLine}"/>` +
+    `<rect x="8.5" y="7.5" width="7" height="9" rx="1.6" fill="none" stroke="${color}" stroke-width="2"/>` +
+    buckle + rivets);
 }
 // convertit un grade GEAR_TIERS ('grey'/'white'/'green'/'blue') en tierIdx de richesse visuelle
 // (gris+blanc = "simples anneaux", même palier visuel — voir demande utilisateur)
@@ -3173,18 +3185,26 @@ function wolvesTick(dt) {
               floatTxt(P.x,P.y,80,LANG==='fr'?'Esquivé !':'Dodged!',{blue:true});
             } else {
               const dmgRaw = p.dmg*(0.8+Math.random()*.4)*mitig;
-              // plafond à 30% des PV max CUMULÉ sur une fenêtre glissante d'1s (2026-07-08, demande
-              // explicite : "dangereuse = one shot") -- l'ancien plafond s'appliquait PAR COUP
-              // individuel, mais plusieurs loups d'un même pack (ou plusieurs packs agressifs en
-              // même temps, voir le désengagement à distance ci-dessus) peuvent chacun toucher au
-              // même moment : plusieurs coups à 30% qui s'enchaînent en une fraction de seconde
-              // équivalent à un one-shot même si aucun coup, pris isolément, ne dépasse le plafond.
-              // On limite désormais les dégâts TOTAUX encaissés sur 1s glissante, pas coup par coup.
-              if (performance.now() - P.dmgBurstT > 1000) P.dmgBurstAccum = 0;
-              P.dmgBurstT = performance.now();
-              const room = Math.max(0, effHpMax()*0.3 - P.dmgBurstAccum);
-              const dmg = Math.min(dmgRaw, room);
-              P.dmgBurstAccum += dmg;
+              let dmg;
+              if (isZoneDangerous()) {
+                // ZONE DANGEREUSE : aucun plafond -- demande explicite du 2026-07-08 ("JE VEUX QUE
+                // LES MONSTRE EN ZONE DANGEREUSE ONE SHOT LE JOUEUR") : le badge doit représenter un
+                // vrai risque de mort instantanée si le stuff est très en dessous du seuil, pas
+                // juste un ralenti/malus — dissuade explicitement d'y entrer sous-géré.
+                dmg = dmgRaw;
+              } else {
+                // en dehors d'une zone dangereuse : garde le plafond à 30% des PV max CUMULÉ sur
+                // une fenêtre glissante d'1s (2026-07-06/08) -- plusieurs loups d'un même pack (ou
+                // plusieurs packs agressifs à la fois) peuvent chacun toucher au même moment ; sans
+                // ce plafond cumulé, plusieurs coups à 30% s'enchaînant en une fraction de seconde
+                // équivaudraient à une mort surprise même quand le stuff n'est QUE légèrement sous
+                // le seuil (DIFFICILE, pas DANGEREUSE).
+                if (performance.now() - P.dmgBurstT > 1000) P.dmgBurstAccum = 0;
+                P.dmgBurstT = performance.now();
+                const room = Math.max(0, effHpMax()*0.3 - P.dmgBurstAccum);
+                dmg = Math.min(dmgRaw, room);
+                P.dmgBurstAccum += dmg;
+              }
               P.hp -= dmg;
               floatTxt(P.x,P.y,80,'-'+Math.ceil(dmg),{hurt:true});
               if (P.hp <= 0) {

@@ -2358,6 +2358,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V206', d:'08/07/2026 13:30', name:{fr:'Zone dangereuse = vrai risque de one-shot, ceinture redessinée, bijoux recolorés', en:'Dangerous zone = real one-shot risk, redesigned belt, recolored jewelry'}, fr:[
+      {t:'change', sub:'combat', severity:'major', tx:'Marche arrière sur le plafond de dégâts ajouté plus tôt aujourd\'hui : en ZONE DANGEREUSE spécifiquement, les monstres peuvent de nouveau te tuer d\'un seul coup si le stuff est très en dessous du seuil — c\'est le vrai risque que ce badge doit représenter. Les autres zones (DIFFICILE et mieux) gardent le plafond de 30% des PV max cumulé sur 1s, pour ne jamais surprendre avec une mort instantanée quand le stuff n\'est QUE légèrement insuffisant'},
+      {t:'new', sub:'graphismes', tx:'Nouvelle icône de ceinture dans le même style que le reste du set (sangle teintée par palier, boucle au contour coloré, rivets/gemmes de rareté)'},
+      {t:'change', sub:'graphismes', tx:'Le contour des bagues, colliers et boucles d\'oreille reprend maintenant la couleur du palier (vert/bleu) au lieu d\'un contour sombre neutre'},
+    ], en:[
+      {t:'change', sub:'combat', severity:'major', tx:'Reverted the damage cap added earlier today: in DANGEROUS ZONES specifically, monsters can once again kill you in one hit if your gear is far below the threshold — that\'s the real risk this badge is meant to represent. Other zones (HARD and above) keep the 30% max-HP cap accumulated over 1s, so a merely slightly-insufficient gear never gets an instant-death surprise'},
+      {t:'new', sub:'graphismes', tx:'New belt icon matching the rest of the set\'s style (tier-tinted strap, colored buckle outline, rarity rivets/gems)'},
+      {t:'change', sub:'graphismes', tx:'Rings, necklaces, and earrings now show their tier color (green/blue) on their outline instead of a neutral dark outline'},
+    ] },
   { v:'V205', d:'08/07/2026 13:00', name:{fr:'Fix one-shot en zone dangereuse, Bâton Naru exclusif à Camp des Loups', en:'Fix dangerous-zone one-shots, Naru Staff exclusive to Wolf Camp'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'En zone dangereuse, plusieurs loups d\'un même pack (ou de plusieurs packs agressifs à la fois) pouvaient chacun toucher au même instant : chaque coup individuel restait plafonné à 30% des PV max, mais l\'ensemble s\'additionnait en une fraction de seconde et équivalait à un one-shot. Le plafond de 30% s\'applique désormais aux dégâts TOTAUX encaissés sur 1 seconde glissante, plus par coup isolé'},
       {t:'change', sub:'equipements', tx:'Le Bâton Naru (arme de départ du palier gris) se loot désormais exclusivement à Camp des Loups (1ère zone du jeu) au lieu de Ruines de Protty — cohérent avec le spawn sans arme : la toute première zone donne directement de quoi se défendre'},
