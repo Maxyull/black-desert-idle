@@ -2358,6 +2358,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V204', d:'08/07/2026 12:30', name:{fr:'Fix : la PD de Camp Rhutum retombait sous la zone précédente', en:'Fix: Camp Rhutum\'s DP dropped below the previous zone'}, fr:[
+      {t:'fix', sub:'zones', tx:'La PD requise de Camp Rhutum (1ère zone du palier Blanc) était passée à 20, sous les 23 PD de la zone précédente — une régression introduite par le rééquilibrage de la mise à jour précédente. Corrigée (24 PD), avec les zones suivantes du palier (Ferme Shultz, Colonie Sausan, Île d\'Iliya) réajustées en proportion'},
+    ], en:[
+      {t:'fix', sub:'zones', tx:'Camp Rhutum\'s (first White tier zone) required DP had dropped to 20, below the previous zone\'s 23 DP — a regression introduced by the previous update\'s rebalance. Fixed (24 DP), with the tier\'s following zones (Ferme Shultz, Colonie Sausan, Île d\'Iliya) adjusted proportionally'},
+    ] },
   { v:'V203', d:'08/07/2026 12:00', name:{fr:'Plafond de stuff rehaussé à 320 PA, transitions de palier plus dures', en:'Gear ceiling raised to 320 AP, harder tier transitions'}, fr:[
       {t:'change', sub:'zones', severity:'major', tx:'Le plafond de PA requis en fin de jeu (Forêt de Polly) passe de 145 à 320 (PD : 156 → 175). Les paliers Blanc/Vert/Bleu sont recalibrés pour qu\'un stuff complet du palier précédent, poussé en moyenne à PRI, retrouve son rôle de vrai jalon de progression pour passer au palier suivant'},
       {t:'change', sub:'zones', tx:'Chaque transition vers un nouveau palier de couleur (zones 3, 6 et 9) est délibérément plus dure que la progression fluide à l\'intérieur d\'un palier — le ratio PA/PD retombe nettement à l\'entrée d\'un nouveau palier avant de remonter au fil de ses zones, pour bien marquer le cap'},
