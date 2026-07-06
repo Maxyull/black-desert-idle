@@ -3125,10 +3125,11 @@ const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite"
 // entre 5% (small) et 30% (mega) selon le coût de base de la taille (70/140/240/380), ce qui reste
 // vrai dans TOUTE zone.
 const POTION_KPM_REF = 15; // même rythme que la courbe économique des zones (~3000/h zone1 → ~100000/h zone11)
-// prix divisé par 10 le 2026-07-12 (demande explicite : "divise le prix des potion par 10") --
-// small ≈ 0.5% du revenu horaire, mega ≈ 3% (au lieu de 5%/30%)
-const POTION_PCT_MIN = 0.005; // small ≈ 0.5% du revenu horaire
-const POTION_PCT_MAX = 0.03;  // mega ≈ 3% du revenu horaire
+// prix divisé par 10 une 2e fois le 2026-07-14 (demande explicite : "divise par 10 le prix des
+// potion") -- small ≈ 0.05% du revenu horaire, mega ≈ 0.3% (au lieu de 0.5%/3%, déjà divisé par 10
+// une 1ère fois le 2026-07-12)
+const POTION_PCT_MIN = 0.0005; // small ≈ 0.05% du revenu horaire
+const POTION_PCT_MAX = 0.003;  // mega ≈ 0.3% du revenu horaire
 function potionHourlyIncome() {
   const z = (typeof atVelia !== 'undefined' && !atVelia && typeof Z === 'function') ? Z() : ZONES[0];
   return (z.loot.trash.val || 1) * POTION_KPM_REF * 60;
@@ -3481,13 +3482,13 @@ function wolvesTick(dt) {
   // 0.5 et 0.6, voir dodgeEffectiveness) pouvait sauver le joueur du coup garanti ci-dessous
   const dodgeChance = dangerous ? 0 : totalDodgePct(dpR) / 100; // voir dodgeEffectiveness : quasi nulle si trop sous-géré
   const mobSpeed = 50 * (dangerous ? DANGER_MOB_SPEED_MULT : 1);
-  // en zone dangereuse, TOUS les packs proches se réveillent d'un coup, pas seulement celui visé
-  // par l'IA (2026-07-08, demande explicite : "les monstres aggros de plus loins... dans 100% des
-  // cas") -- rend le risque immédiat et évident dès qu'on s'approche, pas juste sur le pack engagé
-  if (dangerous) {
-    for (const p of packs) {
-      if (!p.dead && !p.aggro && dist(P.x,P.y,p.x,p.y) <= 400) p.aggro = true;
-    }
+  // TOUS les packs proches se réveillent d'un coup, pas seulement celui visé par l'IA (2026-07-08,
+  // demande explicite : "les monstres aggros de plus loins... dans 100% des cas" — d'abord limité
+  // aux zones dangereuses ; généralisé à TOUTE zone le 2026-07-14, demande explicite : "les monstre
+  // aggro lorsque tu es proche d'eux maintenant") -- rend le risque immédiat et évident dès qu'on
+  // s'approche, dans n'importe quelle zone, pas juste sur le pack engagé
+  for (const p of packs) {
+    if (!p.dead && !p.aggro && dist(P.x,P.y,p.x,p.y) <= 400) p.aggro = true;
   }
   for (const p of packs) {
     if (p.dead || !p.aggro) continue;

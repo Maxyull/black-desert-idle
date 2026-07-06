@@ -210,17 +210,18 @@
   }
   function testDangerousZoneWideAggro() {
     // "les monstres aggros de plus loin" (2026-07-08) : un pack non ciblé, à 350 unités, doit
-    // s'activer tout seul en zone dangereuse (jamais en zone sûre, comportement inchangé là-bas)
+    // s'activer tout seul -- d'abord limité aux zones dangereuses, généralisé à TOUTE zone le
+    // 2026-07-14 (demande explicite : "les monstre aggro lorsque tu es proche d'eux maintenant")
     const s = { zoneIdx, packs, faint:P.faint };
     P.faint = 0; // wolvesTick ignore tout tant que P.faint>0 (voir testSafeZoneDamageCap)
     zoneIdx = 10;
     packs = [{ dead:false, aggro:false, x:P.x+350, y:P.y, gathered:1, dmg:1, wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0,atkT:5}] }];
     wolvesTick(1/60);
-    assert('Zone DANGEREUSE : un pack à 350 unités s\'aggro tout seul', packs[0].aggro === true);
+    assert('Zone dangereuse : un pack à 350 unités s\'aggro tout seul', packs[0].aggro === true);
     zoneIdx = 0;
     packs = [{ dead:false, aggro:false, x:P.x+350, y:P.y, gathered:1, dmg:1, wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0,atkT:5}] }];
     wolvesTick(1/60);
-    assert('Zone non-dangereuse : un pack à 350 unités reste inactif (comportement inchangé)', packs[0].aggro === false);
+    assert('Zone non-dangereuse : un pack à 350 unités s\'aggro aussi tout seul (généralisé, 2026-07-14)', packs[0].aggro === true);
     zoneIdx = s.zoneIdx; packs = s.packs; P.faint = s.faint;
   }
   // "quand tu meurs, les monstres ne t'attaquent plus" (2026-07-09) : tant que P.faint>0 (K.O.),
@@ -708,10 +709,13 @@
         Math.abs(smallCost - Math.round(hourly*POTION_PCT_MIN)) <= 1, `got=${smallCost}, attendu=${Math.round(hourly*POTION_PCT_MIN)}`);
       assert(`Potion mega = POTION_PCT_MAX du revenu horaire de trash en ${ZONES[zi].name.fr}`,
         Math.abs(megaCost - Math.round(hourly*POTION_PCT_MAX)) <= 1, `got=${megaCost}, attendu=${Math.round(hourly*POTION_PCT_MAX)}`);
-      // medium/large strictement entre les deux bornes (interpolation linéaire, jamais en dehors)
+      // medium/large entre les deux bornes (interpolation linéaire, jamais en dehors) -- non-strict
+      // (>=/<=) depuis la 2e division par 10 des prix (2026-07-14) : en tout début de jeu, le
+      // revenu horaire de trash est si faible que plusieurs paliers arrondissent au même silver
+      // entier (ex: 1), ce qui est un arrondi attendu, pas une régression de l'interpolation
       const mediumCost = potionCost(POTIONS.medium.cost), largeCost = potionCost(POTIONS.large.cost);
       assert(`Potion medium/large entre les bornes min/max en ${ZONES[zi].name.fr}`,
-        mediumCost > smallCost && mediumCost < largeCost && largeCost < megaCost,
+        mediumCost >= smallCost && mediumCost <= largeCost && largeCost <= megaCost,
         `small=${smallCost}, medium=${mediumCost}, large=${largeCost}, mega=${megaCost}`);
     }
     // le coût ne doit dépendre QUE de trash.val -- vérifie qu'il est bien recalculable à partir de

@@ -2507,6 +2507,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V254', d:'14/07/2026 09:00', name:{fr:'Potions ÷10 (encore), aggro de proximité partout', en:'Potions ÷10 (again), proximity aggro everywhere'}, fr:[
+      {t:'change', sub:'economie', tx:'Prix des potions divisé par 10 une 2e fois (la petite coûte désormais ≈0.05% du revenu horaire de trash de la zone, la majeure ≈0.3%, au lieu de 0.5%/3%)'},
+      {t:'change', sub:'combat', severity:'major', tx:'Les groupes de monstres proches (400 unités) s\'aggro désormais tout seuls dès qu\'on s\'approche, dans TOUTE zone — avant, ce réveil automatique n\'existait qu\'en zone dangereuse ; ailleurs, seul le pack visé par l\'IA s\'activait'},
+    ], en:[
+      {t:'change', sub:'economie', tx:'Potion prices divided by 10 a 2nd time (small now costs ≈0.05% of the zone\'s hourly trash income, mega ≈0.3%, down from 0.5%/3%)'},
+      {t:'change', sub:'combat', severity:'major', tx:'Nearby monster packs (within 400 units) now aggro on their own as soon as you get close, in ANY zone — before, this auto-wakeup only existed in dangerous zones; elsewhere only the AI\'s current target would engage'},
+    ] },
   { v:'V253', d:'14/07/2026 08:00', name:{fr:'Trésor de Velia en production, plafond d\'empilement, poupée décalée', en:'Velia Treasure goes live, stack cap, doll shifted left'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Le Trésor de Velia sort du statut expérimental "TEST" : "Bout du trésor de Velia" (0.17% de chance) et "Trésor de Velia" (0.0005%, fusion des anciennes variantes 1/2/3) ont désormais un vrai prix de revente — 10× le prix d\'un équipement du palier courant pour un Bout, 10 000× pour un Trésor'},
       {t:'change', sub:'objets', tx:'Le sac plafonne les Bouts à 100 et le Trésor de Velia à 1 : tout surplus est revendu automatiquement au prix ci-dessus au lieu de bloquer le ramassage ou remplir le sac. L\'ancien objet mystère "Objet inconnu" (qui demandait d\'empiler 3 Trésors différents) est retiré, devenu impossible à obtenir avec ce plafond'},
