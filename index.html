@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=192">
+<link rel="stylesheet" href="styles.css?v=193">
 </head>
 <body>
 
@@ -431,7 +431,14 @@
         <div id="optItem">🪄</div>
         <span id="optArrow">→</span>
         <div id="optMat" class="empty">＋</div>
+        <!-- Pierre de Cron : desormais au choix du joueur (2026-07-06, demande explicite), plus
+             consommee automatiquement en silence -- case a droite du materiau + case a cocher -->
+        <div id="optCronSlot" class="empty" title=""><span id="optCronIcon">⏳</span><span id="optCronQty"></span></div>
       </div>
+      <label id="optCronToggleRow">
+        <input type="checkbox" id="optCronToggle" checked>
+        <span data-i18n="optCronToggleLbl">Utiliser la Pierre de Cron si dispo</span>
+      </label>
       <div id="optLevelLbl">Bâton de Grunil <b id="optLevelVal">+0</b></div>
       <div id="optChanceWrap">
         <div id="optChanceBar"><div id="optChanceFill"></div><div id="optChanceFillFS"></div></div>
@@ -454,7 +461,7 @@
   </div>
 </div>
 
-<script src="game-core.js?v=192"></script>
-<script src="game-supabase.js?v=192"></script>
+<script src="game-core.js?v=193"></script>
+<script src="game-supabase.js?v=193"></script>
 </body>
 </html>

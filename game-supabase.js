@@ -2274,6 +2274,7 @@ const I18N = {
   invModeInv: { fr:'🎒 Inventaire', en:'🎒 Inventory' },
   invModeCraft: { fr:'🔧 Assemblage', en:'🔧 Craft' },
   optChanceEmpty: { fr:'Chargez un matériau depuis le sac', en:'Load a material from your bag' },
+  optCronToggleLbl: { fr:'Utiliser la Pierre de Cron si dispo', en:'Use Cron Stone if available' },
   btnOptTry: { fr:"Tenter l'optimisation", en:'Attempt enhancement' },
   btnOptAuto: { fr:"▶ Auto jusqu'à", en:'▶ Auto to' },
   btnConvertCaphras: { fr:'Convertir (5:1)', en:'Convert (5:1)' },
@@ -2342,6 +2343,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V193', d:'06/07/2026 07:00', name:{fr:'1 pièce d\'armure garantie par zone, armures sans AP, Pierre de Cron au choix, Bout de Velia simplifié', en:'1 guaranteed armor piece per zone, armor with no AP, choosable Cron Stone, simplified Velia piece'}, fr:[
+      {t:'change', sub:'equipements', severity:'major', tx:'Chaque zone garantit désormais 1 seule pièce d\'armure précise (casque/armure/gants sur les 3 premières zones du palier, bottes sur la 4e) au lieu d\'un tirage au hasard partagé entre les 4 zones — même logique que les armes'},
+      {t:'change', sub:'equipements', severity:'major', tx:'Les armures ne donnent plus d\'AP (comme dans le vrai jeu, purement défensif) — le total AP retiré est redistribué aux 3 armes pour que le total AP d\'un stuff complet reste identique. Rétroactif sur le stuff déjà possédé'},
+      {t:'change', sub:'equipements', tx:'Pierre de Cron : taux relevé à 1% (au lieu de 0.1%), et son utilisation passe au choix du joueur — nouvelle case à droite du matériau chargé (panneau Optimisation) avec une case à cocher "Utiliser la Pierre de Cron si dispo", au lieu d\'une consommation 100% automatique et silencieuse'},
+      {t:'change', sub:'pve', tx:'"Bout du trésor de Velia" : les 2 objets séparés fusionnés en 1 seul, taux fixe à 0.5%, 1 à 3 unités par ramassage'},
+    ], en:[
+      {t:'change', sub:'equipements', severity:'major', tx:'Every zone now guarantees exactly 1 specific armor piece (helmet/armor/gloves on the tier\'s first 3 zones, boots on the 4th) instead of a random pick shared across the tier\'s 4 zones — same logic as weapons'},
+      {t:'change', sub:'equipements', severity:'major', tx:'Armor no longer grants AP (purely defensive, like the real game) — the removed AP total is redistributed to the 3 weapons so a full set\'s total AP stays the same. Retroactive on gear you already own'},
+      {t:'change', sub:'equipements', tx:'Cron Stone: drop rate raised to 1% (from 0.1%), and its use is now the player\'s choice — new slot to the right of the loaded material (Enhancement panel) with a "Use Cron Stone if available" checkbox, instead of a fully automatic, silent consumption'},
+      {t:'change', sub:'pve', tx:'"Velia Treasure Piece": the 2 separate items merged into 1, fixed 0.5% rate, 1 to 3 units per pickup'},
+    ] },
   { v:'V192', d:'06/07/2026 06:00', name:{fr:'Fix meute en zone dangereuse, sac plein qui bloquait le farm, Craft déplacé dans l\'Inventaire', en:'Dangerous zone pack pile-up fix, full-bag freeze fix, Craft moved into Inventory'}, fr:[
       {t:'fix', sub:'pve', severity:'major', tx:'Un groupe de monstres engagé restait accroché pour toujours (jamais de désengagement), y compris en dehors de tout combat actif — en zone dangereuse (monstres plus rapides, toi plus lent), plusieurs groupes abandonnés finissaient par te rattraper en même temps qu\'un autre déjà engagé et faisaient meute. Un groupe trop éloigné (>550) abandonne maintenant la poursuite'},
       {t:'fix', sub:'interface', severity:'major', tx:'Sac plein : le personnage restait bloqué à suivre indéfiniment un objet au sol qu\'il ne pouvait plus ramasser, au lieu de continuer à combattre comme prévu — il abandonne maintenant cet objet précis après un court délai et repart chercher le prochain groupe'},
@@ -3997,12 +4009,14 @@ const WIKI_SECTIONS = [
       <p>Puis <b>PRI/DUO/TRI/TET/PEN</b> suivent des chances fixes (12%/9%/6%/3%/1,2%). À partir de PRI, un échec fait <b>rétrograder d'un palier</b> (ex : DUO → PRI) — mais <b>jamais sous PRI</b> : tu ne retombes plus jamais à +15.</p>
       <p>Pas de failstack caché : ce que tu vois à l'écran est la chance réelle. Chaque pièce a son propre niveau, indépendant.</p>
       <p>La <b>Poussière d'esprit ancien</b> ne sert pas à optimiser directement : c'est un composant pour fabriquer des Pierres de Caphras.</p>
+      <p>La <b>Pierre de Cron</b> (1% de drop, 1 à 3 unités, toutes zones) protège d'une rétrogradation en cas d'échec — à toi de décider si tu veux l'utiliser via la case à cocher à côté du matériau chargé, elle n'est plus consommée automatiquement.</p>
       <p>Astuce : clique le petit 🔧 sur une pièce équipée pour charger directement CETTE pièce dans le panneau d'optimisation.</p>`,
     en:`<h3>Enhancement</h3>
       <p>+1 to +7 always succeed. <b>+8 to +15</b> are probabilistic (45% → 5%) and can downgrade on failure, but never below +7.</p>
       <p>Then <b>PRI/DUO/TRI/TET/PEN</b> follow fixed chances (12%/9%/6%/3%/1.2%). From PRI, a failure <b>downgrades one tier</b> (e.g. DUO → PRI) — but <b>never below PRI</b>: you never drop back to +15.</p>
       <p>No hidden failstack: what you see is the real chance. Each piece has its own independent level.</p>
       <p><b>Ancient Spirit Dust</b> isn't used to enhance directly: it's a component to craft Caphras Stones.</p>
+      <p>The <b>Cron Stone</b> (1% drop rate, 1 to 3 units, every zone) protects against a downgrade on failure — you decide whether to use it via the checkbox next to the loaded material, it's no longer consumed automatically.</p>
       <p>Tip: click the small 🔧 on an equipped piece to load THAT piece directly into the enhancement panel.</p>` },
   { id:'market', icon:'🏛️', label:{fr:'Marché',en:'Market'},
     fr:`<h3>🚧 BETA — en construction</h3>

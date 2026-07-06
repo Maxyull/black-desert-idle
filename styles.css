@@ -558,6 +558,18 @@
   #optArrow { color:var(--ink-dim); font-size:16px; }
   #optMat.empty { opacity:.35; border-style:dashed; }
   #optMat .matQty { position:absolute; bottom:-1px; right:1px; font-size:9px; color:var(--ink); text-shadow:0 0 2px #000; }
+  /* Pierre de Cron : case dédiée à droite du matériau, plus consommée en silence (2026-07-06,
+     demande explicite : "s'utilise sur choix du joueur avec nouvelle case... et une case utiliser
+     cron ou non") */
+  #optCronSlot {
+    width:44px; height:44px; background:rgba(20,19,26,.85); border:1px solid #3a6ea8;
+    display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; position:relative;
+    margin-left:auto;
+  }
+  #optCronSlot.empty { opacity:.35; border-style:dashed; }
+  #optCronQty { position:absolute; bottom:-1px; right:1px; font-size:9px; color:var(--ink); text-shadow:0 0 2px #000; }
+  #optCronToggleRow { display:flex; align-items:center; gap:6px; font-size:11px; color:var(--ink-dim); margin:-2px 0 8px; cursor:pointer; }
+  #optCronToggleRow input { width:auto; margin:0; accent-color:var(--gold); }
   #optLevelLbl { font-size:13px; } #optLevelLbl b { color:var(--gold); }
   #optChanceWrap { margin:8px 0; }
   #optChanceBar { height:7px; background:#0d0c11; border:1px solid #333; overflow:hidden; display:flex; }

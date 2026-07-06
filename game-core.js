@@ -247,6 +247,7 @@ const S = {
   potionType: 'medium', // 'small'/'medium'/'large'/'mega' = potions payantes ; 'infinite' = gratuite (débloquée plus tard)
   farmMode: 'loot', // 'loot' = ramasse tout avant le pack suivant ; 'xp' = enchaîne les packs sans se soucier du loot
   potionThreshold: 0.5, // % de PV en dessous duquel l'IA boit une potion automatiquement (réglable via le slider)
+  useCronStone: true, // 2026-07-06 : au choix du joueur (case à cocher) si elle protège une rétrogradation, plus automatique en silence
 };
 
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
@@ -3149,6 +3150,23 @@ const ZONE_WEAPON_SLOTS = [
   ['weapon'],                                     // green : zone 14 (Base de Bashim)
   ['weapon'],                                     // blue : zone 15 (Forêt de Polly)
 ];
+// quelle pièce d'armure chaque zone garantit (2026-07-06, demande explicite : "les 4 zones donnent
+// 1 seule pièce d'armure casque/armure/bottes/gants") — remplace l'ancien tirage au hasard partagé
+// entre les 4 zones du palier (rollGearDrop piochait au hasard dans GEAR_SLOTS). Chaque palier a
+// désormais EXACTEMENT 4 zones (voir le commentaire sur les nouvelles zones dans ZONES) : mapping
+// 1-pour-1 parfait avec les 4 pièces d'armure, même logique que ZONE_WEAPON_SLOTS pour les armes.
+// Les 3 premières zones de chaque palier donnent casque/armure/gants, la 4e zone (ajoutée le
+// 2026-07-05, voir ZONES) donne les bottes.
+const ZONE_ARMOR_SLOTS = [
+  ['helmet'], ['armor'], ['gloves'],              // grey : zones 0,1,2
+  ['helmet'], ['armor'], ['gloves'],              // white : zones 3,4,5
+  ['helmet'], ['armor'], ['gloves'],              // green : zones 6,7,8
+  ['helmet'], ['armor'], ['gloves'],              // blue : zones 9,10,11
+  ['boots'],                                       // grey : zone 12 (Ruines de Trent)
+  ['boots'],                                       // white : zone 13 (Île d'Iliya)
+  ['boots'],                                       // green : zone 14 (Base de Bashim)
+  ['boots'],                                       // blue : zone 15 (Forêt de Polly)
+];
 // part du PA/PD requis de zone que chaque pièce peut apporter, selon son rôle
 // (l'éveil est l'arme la plus forte en PA dans le vrai jeu, la secondaire un peu moins que l'arme principale)
 // hpShare : part du bonus de PV que chaque pièce d'armure apporte (le plastron/casque protègent
@@ -3160,14 +3178,20 @@ const ZONE_WEAPON_SLOTS = [
 // COMPLET du palier bleu (3 armes + 4 armures + bijoux) totalise ~301 PA / ~248 PD au PEN (×2.33,
 // voir enhBonus(20)), chaque palier plus bas donnant proportionnellement moins (la formule suit le
 // PA/PD requis de zone, qui grandit à chaque palier) — voir zones-roadmap.md pour le détail du calcul.
+// AP retiré des 4 pièces d'armure (2026-07-06, demande explicite : "les armures ne donnent pas
+// d'AP") — comme dans le vrai jeu, l'armure est purement défensive (PD/PV/Esquive), seules les
+// armes apportent de l'AP. L'ancien total d'AP armure (.0204+.0204+.0163+.0163 = .0734) est
+// redistribué aux 3 armes en conservant leurs proportions relatives (×1.271), pour que le total
+// d'AP d'un stuff complet reste EXACTEMENT le même qu'avant — préserve tel quel le calibrage
+// PA/PD des transitions de palier de couleur fait le 2026-07-06 (voir ENH_STEP/palier PRI).
 const GEAR_ROLE = {
-  weapon:     { apShare:0.0896, dpShare:0,      hpShare:0,    dodgeShare:0 },
-  awakening:  { apShare:0.1173, dpShare:0,      hpShare:0,    dodgeShare:0 },
-  secondary:  { apShare:0.0640, dpShare:0,      hpShare:0,    dodgeShare:0 },
-  helmet:     { apShare:0.0204, dpShare:0.1272, hpShare:0.30, dodgeShare:0.25 },
-  armor:      { apShare:0.0204, dpShare:0.1272, hpShare:0.40, dodgeShare:0.25 },
-  gloves:     { apShare:0.0163, dpShare:0.0954, hpShare:0.15, dodgeShare:0.25 },
-  boots:      { apShare:0.0163, dpShare:0.0954, hpShare:0.15, dodgeShare:0.25 },
+  weapon:     { apShare:0.1139, dpShare:0,      hpShare:0,    dodgeShare:0 },
+  awakening:  { apShare:0.1491, dpShare:0,      hpShare:0,    dodgeShare:0 },
+  secondary:  { apShare:0.0813, dpShare:0,      hpShare:0,    dodgeShare:0 },
+  helmet:     { apShare:0,      dpShare:0.1272, hpShare:0.30, dodgeShare:0.25 },
+  armor:      { apShare:0,      dpShare:0.1272, hpShare:0.40, dodgeShare:0.25 },
+  gloves:     { apShare:0,      dpShare:0.0954, hpShare:0.15, dodgeShare:0.25 },
+  boots:      { apShare:0,      dpShare:0.0954, hpShare:0.15, dodgeShare:0.25 },
 };
 // facteur d'échelle des PV d'armure par rapport au PD requis de zone (calibré pour qu'un stuff
 // d'armure complet et adapté à la zone évite un one-shot même en subissant la pénalité de PD
@@ -3181,7 +3205,9 @@ function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
   if (Math.random() > chance * (alpha ? 1.6 : 1)) return null;
-  const slot = GEAR_SLOTS[Math.floor(Math.random()*GEAR_SLOTS.length)];
+  // 1 seule pièce d'armure garantie par zone (2026-07-06, demande explicite), voir ZONE_ARMOR_SLOTS
+  // -- remplace l'ancien tirage au hasard parmi les 4 pièces, partagé entre les 4 zones du palier
+  const slot = (ZONE_ARMOR_SLOTS[zoneIdx] || GEAR_SLOTS)[0];
   const role = GEAR_ROLE[slot];
   const scale = 0.85 + Math.random()*.3;
   const ap = Math.round(zone.reqAP * role.apShare * scale);
@@ -3231,11 +3257,10 @@ function rollWeaponDrop(zone, alpha) {
 // chances RE-précisées en % explicite le 2026-07-06 (0.01% = 0.0001, pas 0.01 = 1% comme
 // interprété la première fois) : 100× plus rares qu'à l'origine
 const VELIA_TREASURE = [
-  // correctif du 2026-07-08 : les 2 lignes portaient le même nom "...Velia 1" alors que ce sont 2
-  // morceaux DIFFÉRENTS (chances distinctes) — la 2e (la plus rare, 0.001%) est en fait le morceau
-  // du "Velia 2", pas un doublon du "Velia 1"
-  { name:'Bout du trésor de Velia 1', ch:.0001,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia1' },
-  { name:'Bout du trésor de Velia 2', ch:.00001,  icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia2' },
+  // fusionné en un seul objet le 2026-07-06 (demande explicite : "passage du bout de velia a 0.5%
+  // fixe une seule item pas 2 et elle se loot de 1 a 3") -- avant, 2 "Bout" séparés (0.01%/0.001%)
+  // menaient chacun à un Trésor différent ; un seul Bout désormais, taux fixe 0.5%, 1 à 3 par drop
+  { name:'Bout du trésor de Velia',    ch:.005,    icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' },
   { name:'Trésor de Velia 1',         ch:.00001,  icon:'🗺️', color:'#e8c96a', key:'treasure_velia1' },
   { name:'Trésor de Velia 2',         ch:.000001, icon:'🗺️', color:'#e8c96a', key:'treasure_velia2' },
   { name:'Trésor de Velia 3',         ch:.0000001,icon:'🗺️', color:'#e8c96a', key:'treasure_velia3' },
@@ -3252,9 +3277,10 @@ function treasureTotal(S) {
 // 100 "Bout du trésor de Velia N" → 1 "Trésor de Velia N" (même numéro) ; 3 Trésors de Velia AU
 // TOTAL (n'importe lesquels/mélangés) → 1 "Objet inconnu" (récompense mystère, contenu réel encore
 // à définir — catégorie toujours "TEST", comme le reste du Trésor de Velia).
+// un seul "Bout" désormais (voir VELIA_TREASURE, fusion du 2026-07-06) : une seule recette, vers
+// le 1er Trésor -- le 2e/3e restent obtenables via leur propre drop direct (très rare) dans VELIA_TREASURE
 const TREASURE_PIECE_RECIPES = [
-  { needKey:'treasure_bout_velia1', needQty:100, giveName:'Trésor de Velia 1', giveKey:'treasure_velia1' },
-  { needKey:'treasure_bout_velia2', needQty:100, giveName:'Trésor de Velia 2', giveKey:'treasure_velia2' },
+  { needKey:'treasure_bout_velia', needQty:100, giveName:'Trésor de Velia 1', giveKey:'treasure_velia1' },
 ];
 const MYSTERY_ITEM = { name:'Objet inconnu', icon:'❓', color:'#8878aa', key:'treasure_objet_inconnu' };
 const MYSTERY_NEED_QTY = 3;
@@ -3353,10 +3379,15 @@ function rollDrops(wp, alpha, lm) {
     { name:tierMat.name, val:L.mat.val, ch:L.mat.ch, kind:'material', color:tierMat.color, key:'mat_'+tierMat.name, icon:tierMat.icon, stackable:true, weight:0.1 },
     { ...L.jackpot, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5 },
     { ...L.craft,   kind:'craft',    color:'#b48ce8', key:'craft_'+L.craft.name, icon:'✦', stackable:true, weight:0.2, val:0 },
-    ...VELIA_TREASURE.map(t => ({ name:t.name, val:0, ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05 })),
-    // Pierre de Cron : taux FIXE de 0.1%, identique dans TOUTES les zones du jeu (indépendante du
-    // palier de stuff) — demande explicite du 2026-07-08. 1 à 3 unités par drop (pickupQty).
-    { name:CRON_STONE.name, val:0, ch:0.001, kind:'material', color:CRON_STONE.color, key:CRON_STONE.key,
+    // "Bout du trésor de Velia" se loot par 1 à 3 (demande explicite du 2026-07-06) -- pickupQty
+    // DOIT être tiré ici (dans ce tableau reconstruit à chaque kill), jamais dans la définition
+    // statique de VELIA_TREASURE (const de module, évaluée UNE SEULE fois au chargement du script :
+    // un Math.random() y serait figé pour toute la session au lieu d'être retiré à chaque drop)
+    ...VELIA_TREASURE.map(t => ({ name:t.name, val:0, ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05,
+      pickupQty: t.key==='treasure_bout_velia' ? 1+Math.floor(Math.random()*3) : 1 })),
+    // Pierre de Cron : taux FIXE de 1% (relevé de 0.1% le 2026-07-06, demande explicite), identique
+    // dans TOUTES les zones du jeu (indépendante du palier de stuff). 1 à 3 unités par drop (pickupQty).
+    { name:CRON_STONE.name, val:0, ch:0.01, kind:'material', color:CRON_STONE.color, key:CRON_STONE.key,
       icon:CRON_STONE.icon, stackable:true, weight:0.1, pickupQty: 1+Math.floor(Math.random()*3) },
   ];
   for (const item of table) {
@@ -4793,7 +4824,7 @@ function zoneSignature() { return zoneIdx + ':' + atVelia + ':' + Math.round(apE
 // RÈGLE À SUIVRE DÉSORMAIS : mettre à jour la date correspondante à chaque fois qu'une modification
 // de contenu (texte, entrée, catégorie...) est faite dans un de ces 4 panneaux.
 const CONTENT_UPDATE_TIMESTAMPS = {
-  wiki:         '2026-07-06T04:30:00Z',
+  wiki:         '2026-07-06T07:00:00Z',
   compendium:   '2026-07-06T04:30:00Z',
   codex:        '2026-07-06T04:30:00Z',
   achievements: '2026-07-06T04:30:00Z',
@@ -5672,11 +5703,23 @@ function renderOptimization() {
   // barre à deux tons : chance de base (or) + bonus du failstack accumulé sur CE palier (bleu)
   $('optChanceFill').style.width = (parts.base*100)+'%';
   $('optChanceFillFS').style.width = (parts.bonus*100)+'%';
+  // Pierre de Cron : case à part, à droite du matériau — au choix du joueur (case à cocher),
+  // plus consommée automatiquement en silence (demande explicite du 2026-07-06)
+  const cronIdx = findCronStone(), cronSlotEl = $('optCronSlot');
+  if (cronIdx === -1) {
+    cronSlotEl.className = 'empty'; cronSlotEl.title = LANG==='fr'?'Aucune Pierre de Cron en sac':'No Cron Stone in bag';
+    $('optCronQty').textContent = '';
+  } else {
+    cronSlotEl.className = ''; cronSlotEl.title = CRON_STONE.name;
+    $('optCronQty').textContent = fmt(INV[cronIdx].qty);
+  }
+  $('optCronToggle').checked = !!S.useCronStone;
   renderOptSuggestions();
   if (!autoOptTimer) renderOptAutoTargetSelect(); // pas touché pendant une auto en cours (garde le palier choisi)
   renderCapConvertRow();
 }
 $('optTarget').onchange = e => { optTargetSlot = e.target.value; stopAutoOpt(); renderOptimization(); };
+$('optCronToggle').onchange = e => { S.useCronStone = e.target.checked; };
 
 // une tentative d'optimisation (succès/échec/rétrogradation) — factorisée pour être appelée
 // aussi bien par le bouton manuel que par la boucle "Auto jusqu'à" (voir plus bas)
@@ -5700,11 +5743,12 @@ function attemptEnhance() {
     if (target.enhLv >= ENH_NAMES.length-1) markPenMastery(target.name);
   } else {
     addItemFailstack(target, lvl+1); // le failstack de CE palier, pour CET objet, progresse et reste acquis
-    // Pierre de Cron (2026-07-08) : consommée AUTOMATIQUEMENT s'il y en a une disponible, UNIQUEMENT
-    // quand cet échec aurait fait rétrograder l'objet — protège le palier actuel, le matériau
-    // d'optimisation reste perdu comme sur n'importe quel échec
+    // Pierre de Cron : au choix du joueur (case à cocher #optCronToggle, S.useCronStone — demande
+    // explicite du 2026-07-06, remplace l'ancienne consommation 100% automatique et silencieuse),
+    // UNIQUEMENT quand cet échec aurait fait rétrograder l'objet — protège le palier actuel, le
+    // matériau d'optimisation reste perdu comme sur n'importe quel échec
     const wouldDowngrade = lvl >= SAFE_IDX;
-    const cronIdx = wouldDowngrade ? findCronStone() : -1;
+    const cronIdx = (wouldDowngrade && S.useCronStone) ? findCronStone() : -1;
     if (cronIdx !== -1) {
       invRemoveAt(cronIdx, 1);
       r.textContent = (LANG==='fr'?'✖ ÉCHEC — protégé par une Pierre de Cron (':'✖ FAIL — protected by a Cron Stone (')+ENH_NAMES[target.enhLv]+')';
@@ -6112,6 +6156,23 @@ function migrateEarringRebalanceV175() {
   INV.forEach(rescaleOne);
   COMPENDIUM_BAG.forEach(rescaleOne);
 }
+// AP retiré des armures, redistribué aux armes (2026-07-06, demande explicite : "les armures ne
+// donnent pas d'AP") — voir GEAR_ROLE. Rétroactif sur le stuff déjà possédé : armure → AP à 0,
+// armes → ×1.271 (même ratio que le nouveau/l'ancien apShare total, préserve le total AP du stuff).
+const GEAR_RESCALE_RATIO_AP_V192 = {
+  weapon: 1.271, awakening: 1.271, secondary: 1.271,
+  helmet: 0, armor: 0, gloves: 0, boots: 0,
+};
+function migrateArmorNoApV192() {
+  const rescaleOne = it => {
+    if (!it || it.kind !== 'gear' || !it.slot) return;
+    const r = GEAR_RESCALE_RATIO_AP_V192[it.slot];
+    if (r != null) it.ap = Math.round((it.ap||0) * r);
+  };
+  Object.values(EQUIP).forEach(rescaleOne);
+  INV.forEach(rescaleOne);
+  COMPENDIUM_BAG.forEach(rescaleOne);
+}
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
 // C'est CE bloc qui doit être envoyé/lu depuis la table Supabase "game_saves".
@@ -6143,6 +6204,7 @@ function applySaveState(data) {
   for (let i = 0; i < INV_SIZE; i++) COMPENDIUM_BAG[i] = data.COMPENDIUM_BAG?.[i] ?? null;
   if (!S.migratedGearRebalanceV158) { migrateGearRebalanceV158(); S.migratedGearRebalanceV158 = true; }
   if (!S.migratedEarringRebalanceV175) { migrateEarringRebalanceV175(); S.migratedEarringRebalanceV175 = true; }
+  if (!S.migratedArmorNoApV192) { migrateArmorNoApV192(); S.migratedArmorNoApV192 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
