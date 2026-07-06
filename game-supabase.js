@@ -2344,6 +2344,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V196', d:'06/07/2026 09:30', name:{fr:'Fix pastille notes de version : plus de chevauchement, plus de scroll forcé', en:'Patch notes badge fix: no more overlap, no more forced scrolling'}, fr:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'La pastille "notes de version non lues" en haut de page chevauchait le panneau des notes de version lui-même — elle se masque désormais tant qu\'un panneau est ouvert, et réapparaît dès qu\'il se ferme'},
+      {t:'fix', sub:'interface', tx:'Notes de version : s\'il reste des entrées non lues, le panneau s\'ouvre désormais tout en haut (où elles sont) au lieu de reprendre l\'ancienne position de défilement, qui les cachait en dessous — la reprise de position ne s\'applique qu\'une fois à jour'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'minor', tx:'The "unread patch notes" badge at the top of the page overlapped the patch notes panel itself — it now hides while any panel is open, and reappears as soon as it closes'},
+      {t:'fix', sub:'interface', tx:'Patch notes: if unread entries remain, the panel now opens scrolled to the very top (where they are) instead of resuming the old scroll position, which hid them below — position resume only kicks in once caught up'},
+    ] },
   { v:'V195', d:'06/07/2026 09:00', name:{fr:'Loot détaillé par zone, armes réparties sur les dernières zones, patch notes qui se souviennent de toi', en:'Detailed per-zone loot, weapons spread on the last zones, patch notes that remember you'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'Fix : la table de loot affichait encore 0.1% pour la Pierre de Cron (l\'ancien taux, avant le passage à 1% de la mise à jour précédente) — un seul chiffre de référence désormais, ne peut plus se désynchroniser'},
       {t:'improve', sub:'interface', tx:'La table de loot indique maintenant exactement QUELLE pièce d\'équipement (casque/plastron/gants/bottes/arme précise) cette zone garantit, au lieu d\'une ligne générique "arme/armure (7 pièces)"'},
@@ -4144,14 +4151,18 @@ function openInfo(title, bodyHtml) {
   $a('infoTitle').textContent = title;
   $a('infoBody').innerHTML = bodyHtml;
   $a('infoOverlay').classList.add('open');
+  // masque immédiatement la pastille "notes de version non lues" du haut de page tant qu'un
+  // panneau est ouvert (2026-07-06, demande explicite, capture à l'appui : elle chevauchait le
+  // panneau lui-même) -- ne pas attendre le prochain tick de hud() (jusqu'à 1s de délai visible)
+  if (typeof updatePatchBadge === 'function') updatePatchBadge();
 }
-$a('closeInfo').onclick = () => { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); };
+$a('closeInfo').onclick = () => { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); updatePatchBadge(); };
 // ferme seulement si le clic ET l'appui initial (mousedown) sont bien sur le fond noir —
 // sinon, sélectionner du texte dans un champ (ex: le pseudo) et relâcher la souris un peu
 // hors du champ pouvait faire remonter le clic jusqu'au fond et fermer tout le panneau
 let infoMouseDownOnBackdrop = false;
 $a('infoOverlay').addEventListener('mousedown', e => { infoMouseDownOnBackdrop = (e.target.id === 'infoOverlay'); });
-$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); } });
+$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); updatePatchBadge(); } });
 
 // Codex des objets (2026-07-05, demande explicite) : sorti du Wiki pour sa propre section,
 // plus visible, directement accessible depuis le menu de gauche
@@ -4437,8 +4448,16 @@ function updatePatchBadge() {
   const badge = $a('patchBadge');
   if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
   $a('btnPatch').classList.toggle('hasNew', n > 0);
+  // masquée tant qu'un panneau (notes de version ou autre) est ouvert (2026-07-06, demande
+  // explicite, capture à l'appui : "la pastielle de note non lu doit etre déplacé sur le screeen"
+  // -- elle chevauchait le panneau des notes de version lui-même, pile au-dessus). Redevient
+  // visible dès que tout panneau se referme (voir l'appel régulier depuis hud()).
   const topBadge = $a('patchTopBadge');
-  if (topBadge) { $a('patchTopBadgeNum').textContent = n; topBadge.classList.toggle('show', n > 0); }
+  if (topBadge) {
+    const overlayOpen = $a('infoOverlay').classList.contains('open');
+    $a('patchTopBadgeNum').textContent = n;
+    topBadge.classList.toggle('show', n > 0 && !overlayOpen);
+  }
 }
 $a('patchTopBadge').onclick = () => $a('btnPatch').onclick();
 
@@ -4601,11 +4620,19 @@ $a('btnPatch').onclick = () => {
   // reprend le défilement exactement là où CE joueur s'était arrêté (2026-07-06, demande
   // explicite : "rappel toi la ou s'est arrete son scroll... et reprend a cet endroit tout le
   // temps") -- persisté par joueur (localStorage), restauré à CHAQUE ouverture du panneau, pas
-  // seulement la première fois de la session
+  // seulement la première fois de la session. CORRIGÉ le 2026-07-06 (capture à l'appui :
+  // "obligé de scroll pour voir les nouvelle update") : s'il reste des notes NON LUES, on ouvre
+  // en haut (où elles sont, les plus récentes en premier) plutôt que de forcer la reprise de
+  // l'ancienne position, qui les cachait en dessous -- la reprise de position ne s'applique donc
+  // qu'une fois qu'il n'y a plus rien de nouveau à voir.
   const body = $a('infoBody');
-  let savedScroll = 0;
-  try { savedScroll = parseInt(localStorage.getItem('velia-patch-scroll')||'0', 10) || 0; } catch(e) {}
-  requestAnimationFrame(() => { body.scrollTop = savedScroll; });
+  if (unreadPatchCount() > 0) {
+    requestAnimationFrame(() => { body.scrollTop = 0; });
+  } else {
+    let savedScroll = 0;
+    try { savedScroll = parseInt(localStorage.getItem('velia-patch-scroll')||'0', 10) || 0; } catch(e) {}
+    requestAnimationFrame(() => { body.scrollTop = savedScroll; });
+  }
   body.onscroll = () => { try { localStorage.setItem('velia-patch-scroll', String(body.scrollTop)); } catch(e) {} };
 
   // suit ce qui défile RÉELLEMENT dans la fenêtre pour marquer lu (pastille du bouton + pastille

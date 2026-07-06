@@ -4904,6 +4904,10 @@ function hud() {
   ensureLoyaltyGrant();
   updateMailBadge();
   refreshContentNewBadges();
+  // resynchronise la pastille "notes de version non lues" en haut de page : elle doit disparaître
+  // dès qu'un panneau se referme (quel que soit le chemin de fermeture — bouton ✕, clic sur le
+  // fond, Échap...), voir updatePatchBadge (game-supabase.js)
+  if (typeof updatePatchBadge === 'function') updatePatchBadge();
 }
 // aligne la hauteur des cartes "Zones de farm" et "Loot de cette zone" sur celle de la carte
 // Statistiques (demande explicite du 2026-07-06 : "fait en sorte que les carte zone de farm et
