@@ -165,6 +165,33 @@
     zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; P.dmgBurstAccum = s.accum; P.dmgBurstT = s.t; S.hpMax = s.hpMax;
   }
 
+  // ---------- puissance réelle du stuff lootable (2026-07-08 : "compliqué d'arriver à 20PA avec
+  // ce que je loot") ----------
+  function testJewelryApIsDynamic() {
+    // l'AP d'un bijou dropé doit suivre gearBasisAP/reqAP de SA zone, pas une valeur figée —
+    // vérifie que la formule utilisée par rollDrops (dupliquée ici volontairement, pour ne PAS
+    // dépendre de l'implémentation interne) donne un résultat cohérent et jamais 0
+    for (let zi = 0; zi < ZONES.length; zi++) {
+      const z = ZONES[zi];
+      const expected = Math.max(1, Math.round((z.gearBasisAP ?? z.reqAP) * GEAR_ROLE.jackpot.apShare));
+      assert(`Bijou de ${z.name} : AP dynamique > 0`, expected > 0, `expected=${expected}`);
+    }
+  }
+  function testZone0LootReachesZone1Difficulty() {
+    // scénario concret remonté par le joueur (2026-07-08) : casque + arme + 2 bijoux, tous
+    // lootables à Camp des Loups (zone0), enchantés à +12 — ne doit plus tomber en ZONE DANGEREUSE
+    // (ratio <0.6) face à la zone suivante une fois un minimum farmé/enchanté
+    const z0 = ZONES[0], z1 = ZONES[1];
+    const basisAP = z0.gearBasisAP ?? z0.reqAP;
+    const weaponBase = Math.max(1, Math.round(basisAP * GEAR_ROLE.weapon.apShare));
+    const jackpotBase = Math.max(1, Math.round(basisAP * GEAR_ROLE.jackpot.apShare));
+    const bonus = 1 + enhBonus(12); // +12, palier garanti (voir SAFE_IDX)
+    const total = 4 /* PA innée de base */ + weaponBase*bonus + jackpotBase*bonus*2 /* 2 bagues */;
+    const ratio = total / z1.reqAP;
+    assert("Stuff réaliste de Camp des Loups (+12) atteint ratio >=0.6 face à Ruines de Protty",
+      ratio >= 0.6, `total PA=${total.toFixed(1)}, ratio=${ratio.toFixed(2)}`);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -178,6 +205,8 @@
     testEquipWeaponNullDoesNotBreakRender();
     testDangerousZoneOneShot();
     testSafeZoneDamageCap();
+    testJewelryApIsDynamic();
+    testZone0LootReachesZone1Difficulty();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

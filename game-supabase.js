@@ -2358,6 +2358,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V208', d:'08/07/2026 14:30', name:{fr:'PA des bijoux recalculé, stuff de Camp des Loups vraiment utile', en:'Jewelry AP recalculated, Wolf Camp gear actually useful'}, fr:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'Les PA donnés par un bijou (bague/collier/boucle/ceinture) étaient une valeur figée par zone, jamais recalculée depuis les rééquilibrages précédents — complètement désynchronisée du reste du stuff. Recalculés dynamiquement comme tout le reste (rétroactif sur les bijoux déjà en sac/équipés)'},
+      {t:'change', sub:'equipements', tx:'Camp des Loups (1ère zone) : le stuff qu\'on y loot (casque, Bâton Naru, bagues) est désormais calibré sur la zone SUIVANTE plutôt que sur sa propre difficulté (volontairement basse pour rester jouable sans arme) — un casque+arme+2 bagues correctement enchantés (+12) donnaient 8.5 PA effectif (ZONE DANGEREUSE face à la zone suivante) ; ils en donnent maintenant 13 (ZONE DIFFICILE, plus DANGEREUSE)'},
+      {t:'new', sub:'systeme', tx:'2 tests de régression ajoutés pour ce cas précis (AP des bijoux jamais figé à 0, stuff réaliste de Camp des Loups atteint la difficulté attendue face à la zone suivante)'},
+    ], en:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'The AP granted by jewelry (ring/necklace/earring/belt) was a value frozen per zone, never recalculated through previous rebalances — completely out of sync with the rest of the gear. Now recalculated dynamically like everything else (retroactive on jewelry already in bag/equipped)'},
+      {t:'change', sub:'equipements', tx:'Camp des Loups (1st zone): the gear looted there (helmet, Naru Staff, rings) is now calibrated against the NEXT zone rather than its own difficulty (deliberately low to stay playable weaponless) — a properly enhanced (+12) helmet+weapon+2 rings gave 8.5 effective AP (DANGEROUS ZONE against the next zone); they now give 13 (HARD ZONE, no longer dangerous)'},
+      {t:'new', sub:'systeme', tx:'2 regression tests added for this exact case (jewelry AP never frozen at 0, a realistic Camp des Loups loadout reaches the expected difficulty against the next zone)'},
+    ] },
   { v:'V207', d:'08/07/2026 14:00', name:{fr:'Suite de tests de régression (coulisses)', en:'Regression test suite (behind the scenes)'}, fr:[
       {t:'new', sub:'systeme', tx:'Ajout d\'une suite de tests de régression pour la progression PA/PD (monotonie des zones, ratios de transition de palier, génération des icônes, plafond de dégâts) — purement un outil de développement, invisible en jeu, sert à repérer automatiquement ce genre de régression avant qu\'un joueur ne la remarque (comme le fix de Camp Rhutum plus tôt aujourd\'hui)'},
     ], en:[

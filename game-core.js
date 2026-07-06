@@ -99,8 +99,15 @@ const ZONES = [
   // reqAP abaissé le 2026-07-08 (demande explicite, suite au retrait de l'arme de départ "spawn à
   // vide") : un personnage tout juste créé (PA innée = 4, aucune arme avant le drop de la zone1)
   // tombait à un ratio de 0.27 ici (ZONE DANGEREUSE) au lieu de ~0.93 avec l'ancien "Bâton de
-  // Grunil" par défaut — reqDP inchangé (déjà correct, ratio PD ~0.71 avec la PD innée de 10)
-  { name:'Camp des Loups', tier:'Balenos — Early', reqAP:6, reqDP:14, mob:'Loup',
+  // Grunil" par défaut — reqDP inchangé (déjà correct, ratio PD ~0.71 avec la PD innée de 10).
+  // gearBasisAP/DP (2026-07-08, demande explicite : "compliqué d'arriver à 20PA avec ce que je
+  // loot") : reqAP:6 rendait aussi le STUFF de cette zone quasi inutile (round(6*apShare) ≈ 1),
+  // un casque+arme+2 bagues full +12 ne donnait que 8.5 PA effectif — bien en dessous des 20 PA de
+  // la zone suivante. Découple la difficulté DE COMBAT de cette zone (reqAP, volontairement bas
+  // pour rester jouable sans arme) de la PUISSANCE de son stuff (gearBasisAP/DP, calé sur la zone
+  // SUIVANTE) : le stuff qu'on y loot doit préparer à la zone d'après, pas refléter sa propre
+  // facilité. Voir rollGearDrop/rollWeaponDrop/rollDrops (jackpot).
+  { name:'Camp des Loups', tier:'Balenos — Early', reqAP:6, reqDP:14, gearBasisAP:20, gearBasisDP:19, mob:'Loup',
     hpPer:23, dmg:3, xp:8,
     tint:{ a:'#3a4a31', b:'#36452e', dry:'#414f33' }, tones:['#6b5f52','#5a5248','#75685a'], alphaTone:'#3d3a45',
     loot:{ trash:{name:'Viande de loup',val:1,ch:1}, mat:{name:'Pierre noire',val:1,ch:.55},
@@ -3361,7 +3368,16 @@ const GEAR_ROLE = {
   armor:      { apShare:0,      dpShare:0.1272, hpShare:0.40, dodgeShare:0.25 },
   gloves:     { apShare:0,      dpShare:0.0954, hpShare:0.15, dodgeShare:0.25 },
   boots:      { apShare:0,      dpShare:0.0954, hpShare:0.15, dodgeShare:0.25 },
+  // bijoux (jackpot ring/necklace/earring/belt) — ajouté le 2026-07-08 (demande explicite :
+  // "revois ce que donne le stuff et aligne avec toute les autre stuff") : l'AP des bijoux était
+  // jusqu'ici une valeur FIGÉE par zone (jackpot.ap dans ZONES), jamais recalculée quand reqAP a
+  // changé (V201-V206) — complètement désynchronisée du reste du stuff, qui scale TOUJOURS
+  // dynamiquement depuis reqAP. Les bijoux suivent désormais la même règle (voir rollDrops).
+  jackpot:    { apShare:0.10,   dpShare:0,      hpShare:0,    dodgeShare:0 },
 };
+// plancher minimum (2026-07-08) : évite qu'une zone à faible reqAP/reqDP (ex: Camp des Loups,
+// gearBasisAP volontairement bas pour le combat) ne produise un stuff à 0 PA/PD après arrondi
+function gearFloor(v) { return Math.max(1, Math.round(v)); }
 // facteur d'échelle des PV d'armure par rapport au PD requis de zone (calibré pour qu'un stuff
 // d'armure complet et adapté à la zone évite un one-shot même en subissant la pénalité de PD
 // insuffisante, cf dmgTakenMult qui monte jusqu'à ×4,5)
@@ -3379,10 +3395,14 @@ function rollGearDrop(zone, alpha) {
   const slot = (ZONE_ARMOR_SLOTS[zoneIdx] || GEAR_SLOTS)[0];
   const role = GEAR_ROLE[slot];
   const scale = 0.85 + Math.random()*.3;
-  const ap = Math.round(zone.reqAP * role.apShare * scale);
-  const dp = Math.round(zone.reqDP * role.dpShare * scale);
-  const hp = Math.round(zone.reqDP * role.hpShare * scale * HP_GEAR_SCALE);
-  const dodge = Math.round(zone.reqDP * (role.dodgeShare||0) * scale * DODGE_GEAR_SCALE * 100) / 100;
+  // gearBasisAP/DP (2026-07-08) : la PUISSANCE du stuff loot ici peut différer du reqAP/reqDP de
+  // COMBAT de la zone (ex: Camp des Loups, volontairement facile mais dont le stuff doit préparer
+  // à la zone suivante) — repli sur reqAP/reqDP si la zone n'a pas de gearBasis dédié
+  const basisAP = zone.gearBasisAP ?? zone.reqAP, basisDP = zone.gearBasisDP ?? zone.reqDP;
+  const ap = role.apShare ? gearFloor(basisAP * role.apShare * scale) : 0;
+  const dp = role.dpShare ? gearFloor(basisDP * role.dpShare * scale) : 0;
+  const hp = role.hpShare ? gearFloor(basisDP * role.hpShare * scale * HP_GEAR_SCALE) : 0;
+  const dodge = Math.round(basisDP * (role.dodgeShare||0) * scale * DODGE_GEAR_SCALE * 100) / 100;
   // toute pièce d'armure prend la couleur ET l'ornementation du palier (icône générée à la volée,
   // 2026-07-07 puis étendu au casque + ornements de rareté le 2026-07-08)
   const TIER_COLORED_ICON = { helmet: helmetIconForColor, armor: armorIconForColor, gloves: glovesIconForColor, boots: bootsIconForColor };
@@ -3411,7 +3431,8 @@ function rollWeaponDrop(zone, alpha) {
     if (Math.random() > chance * (alpha ? 1.6 : 1)) continue;
     const role = GEAR_ROLE[slot];
     const scale = 0.85 + Math.random()*.3;
-    const ap = Math.round(zone.reqAP * role.apShare * scale);
+    const basisAP = zone.gearBasisAP ?? zone.reqAP;
+    const ap = gearFloor(basisAP * role.apShare * scale);
     out.push({
       name: tier.sets[slot], kind:'gear', slot, ap, dp:0, hp:0, dodge:0, enhLv:0, optimizable:true, fsByLevel:{},
       key:'gear_'+tier.grade+'_'+slot+'_'+Math.random().toString(36).slice(2,7),
@@ -3547,10 +3568,15 @@ function rollDrops(wp, alpha, lm) {
   const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
   const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
   const jackpotIcon = (JEWEL_ICON_FOR_SLOT[jSlot] || ringIconForTier)(jTierIdx, tier.color);
+  // AP du bijou calculé dynamiquement depuis reqAP/gearBasisAP de la zone (2026-07-08, demande
+  // explicite : "revois ce que donne le stuff et aligne avec toute les autre stuff") — remplace
+  // l'ancienne valeur FIGÉE (L.jackpot.ap dans ZONES), jamais recalculée après un changement de
+  // reqAP et donc désynchronisée du reste du stuff, qui a toujours scalé dynamiquement
+  const jackpotAp = gearFloor((zone.gearBasisAP ?? zone.reqAP) * GEAR_ROLE.jackpot.apShare);
   const table = [
     { ...L.trash,   kind:'trash',    color:'#a08464', key:'trash_'+zk,   icon:'▬', stackable:true,  weight:0.3 },
     { name:tierMat.name, val:L.mat.val, ch:L.mat.ch, kind:'material', color:tierMat.color, key:'mat_'+tierMat.name, icon:tierMat.icon, stackable:true, weight:0.1 },
-    { ...L.jackpot, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5 },
+    { ...L.jackpot, ap:jackpotAp, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5 },
     { ...L.craft,   kind:'craft',    color:'#b48ce8', key:'craft_'+L.craft.name, icon:'✦', stackable:true, weight:0.2, val:0 },
     // "Bout du trésor de Velia" se loot par 1 à 3 (demande explicite du 2026-07-06) -- pickupQty
     // DOIT être tiré ici (dans ce tableau reconstruit à chaque kill), jamais dans la définition
@@ -6246,8 +6272,11 @@ function zoneLootRowsHtml(idx) {
   const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
   const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
   const jackpotIcon = (JEWEL_ICON_FOR_SLOT[jSlot] || ringIconForTier)(jTierIdx, tier.color);
+  // AP affiché = celui RÉELLEMENT dropé (voir rollDrops), pas l'ancienne valeur figée de ZONES —
+  // sinon la table de loot promettrait un chiffre différent de ce qu'on obtient vraiment en jeu
+  const jackpotApShown = gearFloor((z.gearBasisAP ?? z.reqAP) * GEAR_ROLE.jackpot.apShare);
   rows.push(
-    { kind:'jackpot',  it:{...L.jackpot, icon:jackpotIcon}, note:'+'+L.jackpot.ap+' '+equippedWord },
+    { kind:'jackpot',  it:{...L.jackpot, icon:jackpotIcon}, note:'+'+jackpotApShown+' '+equippedWord },
     { kind:'craft',    it:L.craft,   note:'craft endgame' },
     // Pierre de Cron : taux fixe (voir CRON_STONE.ch), identique dans TOUTES les zones — demande explicite du 2026-07-08
     { kind:'material', it:{name:CRON_STONE.name, icon:CRON_STONE.icon}, ch:CRON_STONE.ch, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
@@ -6489,6 +6518,33 @@ function migrateArmorNoApV192() {
   INV.forEach(rescaleOne);
   COMPENDIUM_BAG.forEach(rescaleOne);
 }
+// nom du bijou (jackpot) → index de zone qui le drope — chaque zone a un nom UNIQUE de bijou,
+// donc cette table est sans ambiguïté (voir ZONES[i].loot.jackpot.name)
+const JACKPOT_NAME_TO_ZONE = {
+  'Anneau Naru':0, 'Collier Naru':1, 'Ceinture Naru':2,
+  'Anneau Tuvala':3, 'Collier Tuvala':4, 'Ceinture Tuvala':5,
+  'Anneau Asula':6, 'Collier Asula':7, 'Ceinture Asula':8,
+  'Anneau de Cadry':9, "Serap's Necklace":10, "Orkinrad's Belt":11,
+  'Boucle Naru':12, 'Boucle Tuvala':13, 'Boucle Asula':14, "Tungrad's Earring":15,
+};
+// migration 2026-07-08 (demande explicite : "revois ce que donne le stuff et aligne avec toute
+// les autre stuff") : l'AP des bijoux (jackpot) était une valeur FIGÉE par zone dans ZONES, jamais
+// recalculée après les changements de reqAP (V201-V206) — un bijou déjà en sac/équipé gardait
+// l'ancien chiffre pour toujours, désynchronisé du stuff nouvellement dropé (qui, lui, utilise
+// désormais gearFloor(gearBasisAP*apShare), voir rollDrops). Recalcule l'AP de BASE (avant
+// enchantement, qui reste géré par enhBonus/itemMult comme d'habitude) de tout bijou déjà possédé.
+function migrateJewelryApV207() {
+  const rescaleOne = it => {
+    if (!it || it.kind !== 'jackpot') return;
+    const zi = JACKPOT_NAME_TO_ZONE[it.name];
+    if (zi == null) return;
+    const zone = ZONES[zi];
+    it.ap = gearFloor((zone.gearBasisAP ?? zone.reqAP) * GEAR_ROLE.jackpot.apShare);
+  };
+  Object.values(EQUIP).forEach(rescaleOne);
+  INV.forEach(rescaleOne);
+  COMPENDIUM_BAG.forEach(rescaleOne);
+}
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
 // C'est CE bloc qui doit être envoyé/lu depuis la table Supabase "game_saves".
@@ -6521,6 +6577,7 @@ function applySaveState(data) {
   if (!S.migratedGearRebalanceV158) { migrateGearRebalanceV158(); S.migratedGearRebalanceV158 = true; }
   if (!S.migratedEarringRebalanceV175) { migrateEarringRebalanceV175(); S.migratedEarringRebalanceV175 = true; }
   if (!S.migratedArmorNoApV192) { migrateArmorNoApV192(); S.migratedArmorNoApV192 = true; }
+  if (!S.migratedJewelryApV207) { migrateJewelryApV207(); S.migratedJewelryApV207 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
