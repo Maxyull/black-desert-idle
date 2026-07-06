@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=208">
+<link rel="stylesheet" href="styles.css?v=209">
 </head>
 <body>
 
@@ -320,9 +320,16 @@
           <div id="mpBar"><div id="mpFill"></div><span id="mpPct"></span></div>
         </div>
       </div>
+      <!-- case unique vie+mana (2026-07-08, demande explicite : "la potion qui remplace les 2
+           potion, qui ouvre le pannel de potion vie et mana") -- remplace les 2 cases séparées
+           #potSlot/#manaPotSlot ; le CD de chaque potion reste suivi indépendamment (moitié
+           gauche = vie, moitié droite = mana), le clic ouvre un panneau unique pour les 2 -->
       <div id="potStack">
-        <div id="potSlot"><span id="potIcon">🧪</span><div id="potCd"></div></div>
-        <div id="manaPotSlot" title="Potion de mana (auto)"><span id="manaPotIcon">🔷</span><div id="manaPotCd"></div></div>
+        <div id="potSlot">
+          <span id="potDualIcon"></span>
+          <div id="potCd"></div>
+          <div id="manaPotCd"></div>
+        </div>
       </div>
       <div id="potSelect"></div>
     </div>
@@ -471,10 +478,10 @@
   </div>
 </div>
 
-<script src="game-core.js?v=208"></script>
-<script src="game-supabase.js?v=208"></script>
+<script src="game-core.js?v=209"></script>
+<script src="game-supabase.js?v=209"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=208"></script>
+<script src="tests.js?v=209"></script>
 </body>
 </html>

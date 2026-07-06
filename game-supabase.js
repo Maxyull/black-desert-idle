@@ -2358,6 +2358,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V209', d:'08/07/2026 15:00', name:{fr:'Le personnage change d\'apparence selon le stuff, potion vie+mana fusionnée', en:'Character appearance changes with gear, merged HP+mana potion'}, fr:[
+      {t:'new', sub:'graphismes', tx:'L\'apparence du personnage (robe, chapeau, bâton) change désormais selon la couleur du meilleur palier de stuff équipé (arme ou armure) : gris/blanc restent sobres, vert et bleu ajoutent des cornes au chapeau, le palier bleu ajoute une cape. Si une pièce d\'éveil est équipée, 2 orbes flottent en orbite autour du personnage'},
+      {t:'change', sub:'interface', tx:'Les 2 cases séparées de potion (vie / mana) sont fusionnées en une seule icône (fioles entrelacées) — un clic ouvre désormais un panneau unique listant les tailles de potion de vie ET les infos de la potion de mana, au lieu de 2 emplacements distincts'},
+    ], en:[
+      {t:'new', sub:'graphismes', tx:'The character\'s appearance (robe, hat, staff) now changes based on the color of the best equipped gear tier (weapon or armor): grey/white stay plain, green and blue add horns to the hat, blue adds a cape. If an awakening piece is equipped, 2 orbs float in orbit around the character'},
+      {t:'change', sub:'interface', tx:'The 2 separate potion slots (HP / mana) are merged into a single icon (intertwined vials) — one click now opens a single panel listing HP potion sizes AND mana potion info, instead of 2 separate slots'},
+    ] },
   { v:'V208', d:'08/07/2026 14:30', name:{fr:'PA des bijoux recalculé, stuff de Camp des Loups vraiment utile', en:'Jewelry AP recalculated, Wolf Camp gear actually useful'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Les PA donnés par un bijou (bague/collier/boucle/ceinture) étaient une valeur figée par zone, jamais recalculée depuis les rééquilibrages précédents — complètement désynchronisée du reste du stuff. Recalculés dynamiquement comme tout le reste (rétroactif sur les bijoux déjà en sac/équipés)'},
       {t:'change', sub:'equipements', tx:'Camp des Loups (1ère zone) : le stuff qu\'on y loot (casque, Bâton Naru, bagues) est désormais calibré sur la zone SUIVANTE plutôt que sur sa propre difficulté (volontairement basse pour rester jouable sans arme) — un casque+arme+2 bagues correctement enchantés (+12) donnaient 8.5 PA effectif (ZONE DANGEREUSE face à la zone suivante) ; ils en donnent maintenant 13 (ZONE DIFFICILE, plus DANGEREUSE)'},
@@ -4314,8 +4321,8 @@ const TUTORIAL_STEPS = [
     title:{fr:'Sorts automatiques',en:'Automatic skills'},
     text:{fr:'Tes sorts se lancent tout seuls selon une IA de combat. Optimise ton équipement pour qu\'ils tapent plus fort.', en:'Your skills cast themselves based on a combat AI. Improve your gear so they hit harder.'} },
   { target:'#potSlot', placement:'right',
-    title:{fr:'Potions de vie',en:'HP potions'},
-    text:{fr:'Clique ici pour choisir la taille de potion bue automatiquement (prix fixe et soin différents selon la taille), et régler le curseur "Boire sous X%" qui fixe le seuil de PV déclenchant le soin.', en:'Click here to choose the potion size drunk automatically (fixed price and heal that differ by size), and set the "Drink under X%" slider that sets the HP threshold triggering the heal.'},
+    title:{fr:'Potions de vie et de mana',en:'HP and mana potions'},
+    text:{fr:'Clique ici pour choisir la taille de potion de vie bue automatiquement (prix fixe et soin différents selon la taille) et régler le seuil "Boire sous X%". La potion de mana se boit toute seule sous 30% mana, aucun réglage nécessaire.', en:'Click here to choose the HP potion size drunk automatically (fixed price and heal that differ by size) and set the "Drink under X%" threshold. The mana potion drinks itself under 30% mana, no setting needed.'},
     before: () => { tutPotWasOpen = $a('potSelect').classList.contains('show'); renderPotSelect(); $a('potSelect').classList.add('show'); },
     after: () => { if (!tutPotWasOpen) $a('potSelect').classList.remove('show'); } },
   { target:'#panel .card', placement:'left',

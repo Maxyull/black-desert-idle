@@ -2914,6 +2914,29 @@ const POTIONS = {
   infinite: { name:{fr:'Potion de vie infinie', en:'Infinite HP Potion'}, icon:'♾️', cost:0, heal:0.40, cd:4.2, locked:true },
 };
 const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite" toujours en dernier, verrouillée (voir p.locked)
+// icône unique vie+mana (2026-07-08, demande explicite : "la potion qui remplace les 2 potion")
+// -- remplace les 2 cases séparées #potSlot/#manaPotSlot par une seule, fiole ronde rouge (vie) +
+// fiole élancée bleue (mana) penchées l'une vers l'autre, volutes entrelacées animées
+const ICO_POTION_DUO = `<svg class="gicon" viewBox="0 0 44 34" xmlns="http://www.w3.org/2000/svg">
+  <path d="M15 15 C 10 10, 20 7, 16 2" fill="none" stroke="#e88a8a" stroke-width="1.6" stroke-linecap="round" opacity=".7">
+    <animate attributeName="d" values="M15 15 C 10 10, 20 7, 16 2;M15 15 C 20 10, 12 7, 17 2;M15 15 C 10 10, 20 7, 16 2" dur="3.2s" repeatCount="indefinite"/>
+  </path>
+  <path d="M25 16 C 30 10, 20 8, 24 2" fill="none" stroke="#8ab0e8" stroke-width="1.6" stroke-linecap="round" opacity=".7">
+    <animate attributeName="d" values="M25 16 C 30 10, 20 8, 24 2;M25 16 C 21 10, 29 8, 23 2;M25 16 C 30 10, 20 8, 24 2" dur="3.2s" begin="1.6s" repeatCount="indefinite"/>
+  </path>
+  <g transform="translate(14,25) rotate(-12)">
+    <circle cx="0" cy="4" r="8.5" fill="#7a1f24"/>
+    <circle cx="0" cy="4" r="8.5" fill="none" stroke="#3a171a" stroke-width="1"/>
+    <path d="M-1.8 2.5 h3.6 M0 0.6 v3.8" stroke="#ffb0b0" stroke-width="1.5" stroke-linecap="round"/>
+    <rect x="-2.2" y="-7" width="4.4" height="4.2" rx="1" fill="#5a3f22"/>
+  </g>
+  <g transform="translate(28,24) rotate(10)">
+    <path d="M0 -4 C 4.2 1.5, 5.5 6.5, 3.8 11.5 Q 0 15.5 -3.8 11.5 C -5.5 6.5, -4.2 1.5, 0 -4 z" fill="#243a8a"/>
+    <path d="M0 -4 C 4.2 1.5, 5.5 6.5, 3.8 11.5 Q 0 15.5 -3.8 11.5 C -5.5 6.5, -4.2 1.5, 0 -4 z" fill="none" stroke="#141f4a" stroke-width="1"/>
+    <path d="M1.3 5 a2.4 2.4 0 1 1 -2 -3.6 a2 2 0 0 0 2 3.6 z" fill="#a8c4ff"/>
+    <path d="M-1 -9 l1.2 -2.4 1.2 2.4 v3.2 h-2.4 z" fill="#5a7ac9"/>
+  </g>
+</svg>`;
 // avertissement "pas assez de silver pour la potion" -- avant ce correctif (2026-07-06, remonté en
 // jeu : "les potions ne fonctionnent pas") l'échec était TOTALEMENT silencieux (juste un retry
 // rapide sans soin), ce qui passait pour un bug, surtout en zone dangereuse où les dégâts encaissés
@@ -2968,8 +2991,19 @@ function renderPotSelect() {
       `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${fmt(healHp)} PV (${Math.round(p.heal*100)}%) · CD ${p.cd}s</span></span>` +
       `<span class="psCost">${fmt(p.cost)} 🪙</span></div>`;
   }).join('');
-  el.innerHTML = threshRow + rows;
-  el.querySelectorAll('.psRow:not(.locked)').forEach(row => {
+  // section mana (2026-07-08, demande explicite : "qui ouvre le pannel de potion vie et mana") --
+  // un seul palier pour l'instant (pas de choix de taille comme les potions de vie), donc juste
+  // informatif : boit automatiquement sous 30% de mana, pas de sélection à faire ici
+  const manaSection = `<div class="psSectionLabel">${LANG==='fr'?'Potion de vie':'HP Potion'}</div>` +
+    rows +
+    `<div class="psSectionLabel">${LANG==='fr'?'Potion de mana (auto sous 30%)':'Mana Potion (auto under 30%)'}</div>` +
+    `<div class="psRow psRowInfo">` +
+      `<span class="psIcon">🔷</span>` +
+      `<span class="psInfo"><span class="psName">${MANA_POTION.name[LANG]}</span><br><span class="psHeal">+${Math.round(MANA_POTION.restore*100)}% MP · CD ${MANA_POTION.cd}s</span></span>` +
+      `<span class="psCost">${fmt(MANA_POTION.cost)} 🪙</span></div>`;
+  el.innerHTML = threshRow + manaSection;
+  // .psRowInfo (ligne mana) exclue : purement informative, aucune taille à choisir (voir plus haut)
+  el.querySelectorAll('.psRow:not(.locked):not(.psRowInfo)').forEach(row => {
     row.onclick = e => { e.stopPropagation(); S.potionType = row.dataset.pot; el.classList.remove('show'); };
   });
   const slider = $('potThreshSlider');
@@ -4633,38 +4667,94 @@ function drawWitchIso(t) {
   // la barre de PV reste uniquement en bas à gauche (#hpBar) -- voir renderCastBar()/hud()
 }
 
-function witchBody(t,casting) {
-  const sway = Math.sin(P.bob*.9)*2;
-  ctx.fillStyle='#3b6ea8';
-  ctx.beginPath();
-  ctx.moveTo(-3,-18);
-  ctx.quadraticCurveTo(-14+sway,8,-11+sway,24);
-  ctx.lineTo(11-sway,24);
-  ctx.quadraticCurveTo(13-sway,6,3,-18);
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle='#c9a55a'; ctx.lineWidth=1.4;
-  ctx.beginPath(); ctx.moveTo(-10.4+sway,21.6); ctx.lineTo(10.4-sway,21.6); ctx.stroke();
-  ctx.fillStyle='#3b6ea8'; ctx.fillRect(-5,-20,10,12);
-  ctx.fillStyle='#e8e0cf'; ctx.fillRect(-2.4,-19,4.8,9);
-  ctx.fillStyle='#e9c9a8'; ctx.beginPath(); ctx.arc(0,-26,5.6,0,7); ctx.fill();
-  ctx.fillStyle='#7a95b8'; ctx.beginPath(); ctx.arc(-1,-28,5.4,Math.PI*.85,Math.PI*1.95); ctx.fill();
-  ctx.fillStyle='#2d5a94';
-  ctx.beginPath(); ctx.ellipse(0,-30.5,12.5,3.4,-.07,0,7); ctx.fill();
-  ctx.beginPath(); ctx.moveTo(-6.4,-31); ctx.quadraticCurveTo(-2,-46,5.5,-42);
-  ctx.quadraticCurveTo(3.5,-37,6.4,-31); ctx.closePath(); ctx.fill();
-  ctx.strokeStyle='#c9a55a'; ctx.lineWidth=1.1;
-  ctx.beginPath(); ctx.ellipse(0,-30.5,12.5,3.4,-.07,0,7); ctx.stroke();
-  const staffAng = casting ? -0.5+Math.sin(t*10)*.08 : 0.18;
-  ctx.save(); ctx.translate(9,-14); ctx.rotate(staffAng);
-  ctx.strokeStyle='#6b5a42'; ctx.lineWidth=2.6; ctx.lineCap='round';
-  ctx.beginPath(); ctx.moveTo(0,22); ctx.lineTo(0,-22); ctx.stroke();
-  const glow = casting ? .85+Math.sin(t*12)*.15 : .4;
-  ctx.fillStyle=`rgba(140,200,255,${glow})`;
-  ctx.beginPath(); ctx.moveTo(0,-30); ctx.lineTo(4,-23); ctx.lineTo(0,-19); ctx.lineTo(-4,-23); ctx.closePath(); ctx.fill();
-  if (casting) { ctx.fillStyle='rgba(150,210,255,.25)';
-    ctx.beginPath(); ctx.arc(0,-24,9+Math.sin(t*12)*2,0,7); ctx.fill(); }
-  ctx.restore();
+// tient compte de la couleur des pièces équipées pour changer l'apparence du personnage
+// (2026-07-08, demande explicite : "ajoute le nouveau personnage et ses couleurs selon stuff") —
+// réutilise les mêmes couleurs que les icônes de stuff (armorIconForColor & co), gris/blanc en
+// tons clairs, vert/bleu en version sombre desaturée pour rester lisible en robe
+const CHAR_TIER_PALETTE = {
+  grey:  { robe:'#6f7d8a', hat:'#586773', hatDark:'#465360', horn:false, cape:false, trim:'#c9a55a' },
+  white: { robe:'#c3c9cc', hat:'#9aa0a3', hatDark:'#7a8083', horn:false, cape:false, trim:'#e8e8e8' },
+  green: { robe:'#3d4a3a', hat:'#26301f', hatDark:'#182015', horn:true,  cape:false, trim:'#7aa35e' },
+  blue:  { robe:'#20303c', hat:'#16232b', hatDark:'#0a1216', horn:true,  cape:true,  trim:'#6ea3c9' },
+};
+// palier visuel = le plus HAUT palier de couleur présent parmi les pièces équipées (arme/armure) —
+// null si rien d'équipé, retombe alors sur le gris par défaut (voir witchBody/drawWitchOn)
+function gearVisualTier() {
+  const rank = { blue:0, green:1, white:2, grey:3 };
+  const gradeByColor = {}; GEAR_TIERS.forEach(t => gradeByColor[t.color] = t.grade);
+  let best = null, bestRank = 4;
+  for (const slot of ['weapon','awakening','secondary','helmet','armor','gloves','boots']) {
+    const e = EQUIP[slot];
+    const g = e && e.color && gradeByColor[e.color];
+    if (g && rank[g] < bestRank) { bestRank = rank[g]; best = g; }
+  }
+  return best;
 }
+function hexToRgba(hex, alpha) {
+  const h = hex.replace('#','');
+  const num = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return `rgba(${(num>>16)&0xff},${(num>>8)&0xff},${num&0xff},${alpha})`;
+}
+// dessine le corps de la sorcière sur un contexte 2D donné (ctx global en jeu, ou un contexte de
+// prévisualisation dédié — voir drawWitchOn) : factorisé le 2026-07-08 pour que le personnage en
+// combat ET la prévisualisation de l'équipement partagent EXACTEMENT le même rendu par palier
+function witchBodyOn(g, t, casting) {
+  const sway = Math.sin(P.bob*.9)*2;
+  const grade = gearVisualTier() || 'grey';
+  const pal = CHAR_TIER_PALETTE[grade];
+  if (pal.cape) {
+    g.fillStyle = hexToRgba(pal.hat,.9);
+    g.beginPath();
+    g.moveTo(-9+sway*.6,-14); g.quadraticCurveTo(-22,10,-15,27);
+    g.lineTo(-5,25); g.quadraticCurveTo(-11,4,-3,-16);
+    g.closePath(); g.fill();
+  }
+  g.fillStyle=pal.robe;
+  g.beginPath();
+  g.moveTo(-3,-18);
+  g.quadraticCurveTo(-14+sway,8,-11+sway,24);
+  g.lineTo(11-sway,24);
+  g.quadraticCurveTo(13-sway,6,3,-18);
+  g.closePath(); g.fill();
+  g.strokeStyle=pal.trim; g.lineWidth=1.4;
+  g.beginPath(); g.moveTo(-10.4+sway,21.6); g.lineTo(10.4-sway,21.6); g.stroke();
+  g.fillStyle=pal.robe; g.fillRect(-5,-20,10,12);
+  g.fillStyle='#e8e0cf'; g.fillRect(-2.4,-19,4.8,9);
+  g.fillStyle='#e9c9a8'; g.beginPath(); g.arc(0,-26,5.6,0,7); g.fill();
+  g.fillStyle=pal.hatDark; g.beginPath(); g.arc(-1,-28,5.4,Math.PI*.85,Math.PI*1.95); g.fill();
+  g.fillStyle=pal.hat;
+  g.beginPath(); g.ellipse(0,-30.5,12.5,3.4,-.07,0,7); g.fill();
+  g.beginPath(); g.moveTo(-6.4,-31); g.quadraticCurveTo(-2,-46,5.5,-42);
+  g.quadraticCurveTo(3.5,-37,6.4,-31); g.closePath(); g.fill();
+  g.strokeStyle=pal.trim; g.lineWidth=1.1;
+  g.beginPath(); g.ellipse(0,-30.5,12.5,3.4,-.07,0,7); g.stroke();
+  // cornes : palier vert et bleu uniquement (2026-07-08, même logique que les icônes de casque)
+  if (pal.horn) {
+    g.fillStyle = pal.trim;
+    g.beginPath(); g.moveTo(-9,-32); g.quadraticCurveTo(-14,-40,-11,-48); g.quadraticCurveTo(-9,-40,-6,-33); g.closePath(); g.fill();
+    g.beginPath(); g.moveTo(9,-32); g.quadraticCurveTo(14,-40,11,-48); g.quadraticCurveTo(9,-40,6,-33); g.closePath(); g.fill();
+  }
+  const staffAng = casting ? -0.5+Math.sin(t*10)*.08 : 0.18;
+  g.save(); g.translate(9,-14); g.rotate(staffAng);
+  g.strokeStyle='#6b5a42'; g.lineWidth=2.6; g.lineCap='round';
+  g.beginPath(); g.moveTo(0,22); g.lineTo(0,-22); g.stroke();
+  const glow = casting ? .85+Math.sin(t*12)*.15 : .4;
+  g.fillStyle=hexToRgba(pal.trim, glow);
+  g.beginPath(); g.moveTo(0,-30); g.lineTo(4,-23); g.lineTo(0,-19); g.lineTo(-4,-23); g.closePath(); g.fill();
+  if (casting) { g.fillStyle=hexToRgba(pal.trim,.25);
+    g.beginPath(); g.arc(0,-24,9+Math.sin(t*12)*2,0,7); g.fill(); }
+  g.restore();
+  // orbes d'éveil en orbite : uniquement si une pièce d'éveil est équipée (2026-07-08, demande
+  // explicite, même esprit que orbPairIconForColor)
+  if (EQUIP.awakening) {
+    const ang = t*1.4;
+    [[Math.cos(ang)*16, Math.sin(ang)*7-10, 3.2], [Math.cos(ang+Math.PI)*11, Math.sin(ang+Math.PI)*5-6, 2.4]].forEach(([ox,oy,r]) => {
+      g.fillStyle = hexToRgba(pal.trim,.9);
+      g.beginPath(); g.arc(ox, oy-20, r, 0, 7); g.fill();
+    });
+  }
+}
+function witchBody(t,casting) { witchBodyOn(ctx, t, casting); }
 
 function drawParticle(q) {
   const a = q.max ? Math.max(0,q.life/q.max) : 1;
@@ -5131,11 +5221,13 @@ function hudFast() {
   $('manaPotCd').style.height = (P.manaPotCd/MANA_POTION.cd*100)+'%';
   const pot = POTIONS[S.potionType] || POTIONS.medium;
   $('potCd').style.height = (P.potCd/pot.cd*100)+'%';
-  const potIcon = $('potIcon');
-  if (potIcon && potIcon.textContent !== pot.icon) {
-    potIcon.textContent = pot.icon;
-    $('potSlot').title = pot.name[LANG] + (pot.cost>0 ? ` — ${fmt(pot.cost)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : (LANG==='fr'?` — gratuite (CD ${pot.cd}s)`:` — free (CD ${pot.cd}s)`));
-  }
+  // case unique vie+mana (2026-07-08) : l'icône est désormais FIXE (fiole vie+mana générique),
+  // plus besoin de la changer selon la taille de potion choisie (ça reste géré dans le panneau) —
+  // rendue une seule fois (innerHTML déjà posé au premier hud() suffit, voir plus bas)
+  const dualIcon = $('potDualIcon');
+  if (dualIcon && !dualIcon.dataset.set) { dualIcon.innerHTML = ICO_POTION_DUO; dualIcon.dataset.set = '1'; }
+  $('potSlot').title = pot.name[LANG] + (pot.cost>0 ? ` — ${fmt(pot.cost)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : (LANG==='fr'?` — gratuite (CD ${pot.cd}s)`:` — free (CD ${pot.cd}s)`)) +
+    ' · ' + MANA_POTION.name[LANG] + ` — ${fmt(MANA_POTION.cost)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(MANA_POTION.restore*100)}% MP, CD ${MANA_POTION.cd}s, auto)`;
   for (const s of SKILLS) {
     const el = skEls[s.id];
     el.querySelector('.cd').style.height = (cds[s.id]/s.cd*100)+'%';
@@ -5416,34 +5508,12 @@ function drawPreviewChar() {
   drawWitchOn(x, 60, 150, 2.5);
 }
 
-// version paramétrable de witchBody pour un contexte/échelle donnés
+// version paramétrable de witchBody pour un contexte/échelle donnés — délègue maintenant à
+// witchBodyOn (2026-07-08) pour partager EXACTEMENT le même rendu par palier que le personnage en
+// combat (couleurs/cornes/cape/orbes selon le stuff équipé)
 function drawWitchOn(x, cx, cy, sc) {
   x.save(); x.translate(cx,cy); x.scale(sc,sc);
-  const sway = 0;
-  x.fillStyle='#3b6ea8';
-  x.beginPath();
-  x.moveTo(-3,-18); x.quadraticCurveTo(-14+sway,8,-11+sway,24);
-  x.lineTo(11-sway,24); x.quadraticCurveTo(13-sway,6,3,-18); x.closePath(); x.fill();
-  x.strokeStyle='#c9a55a'; x.lineWidth=1.4;
-  x.beginPath(); x.moveTo(-10.4,21.6); x.lineTo(10.4,21.6); x.stroke();
-  x.fillStyle='#3b6ea8'; x.fillRect(-5,-20,10,12);
-  x.fillStyle='#e8e0cf'; x.fillRect(-2.4,-19,4.8,9);
-  x.fillStyle='#e9c9a8'; x.beginPath(); x.arc(0,-26,5.6,0,7); x.fill();
-  x.fillStyle='#7a95b8'; x.beginPath(); x.arc(-1,-28,5.4,Math.PI*.85,Math.PI*1.95); x.fill();
-  x.fillStyle='#2d5a94';
-  x.beginPath(); x.ellipse(0,-30.5,12.5,3.4,-.07,0,7); x.fill();
-  x.beginPath(); x.moveTo(-6.4,-31); x.quadraticCurveTo(-2,-46,5.5,-42);
-  x.quadraticCurveTo(3.5,-37,6.4,-31); x.closePath(); x.fill();
-  x.strokeStyle='#c9a55a'; x.lineWidth=1.1;
-  x.beginPath(); x.ellipse(0,-30.5,12.5,3.4,-.07,0,7); x.stroke();
-  // bâton (montre l'enchant par une lueur plus forte si élevé)
-  x.save(); x.translate(9,-14); x.rotate(0.18);
-  x.strokeStyle='#6b5a42'; x.lineWidth=2.6; x.lineCap='round';
-  x.beginPath(); x.moveTo(0,22); x.lineTo(0,-22); x.stroke();
-  const glow = .4 + Math.min(.5, enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0));
-  x.fillStyle=`rgba(140,200,255,${glow})`;
-  x.beginPath(); x.moveTo(0,-30); x.lineTo(4,-23); x.lineTo(0,-19); x.lineTo(-4,-23); x.closePath(); x.fill();
-  x.restore();
+  witchBodyOn(x, performance.now()/1000, false);
   x.restore();
 }
 

@@ -242,11 +242,15 @@
     font-size:9.5px; font-weight:bold; color:#fff; text-shadow:0 1px 2px #000; font-variant-numeric:tabular-nums;
   }
   #mpPct { font-size:8.5px; }
-  #potSlot, #manaPotSlot { width:34px; height:34px; position:relative; border:1px solid var(--gold-dim);
-    background:#191720; display:flex; align-items:center; justify-content:center; font-size:15px; overflow:hidden; cursor:pointer; }
-  #manaPotSlot { border-color:#3a6ea8; cursor:default; }
+  /* case unique vie+mana (2026-07-08) : remplace les 2 cases séparées #potSlot/#manaPotSlot --
+     le clic ouvre un seul panneau pour les 2 potions, chaque moitié suit son propre CD */
+  #potSlot { width:44px; height:34px; position:relative; border:1px solid var(--gold-dim);
+    background:#191720; display:flex; align-items:center; justify-content:center; overflow:hidden; cursor:pointer; }
   #potSlot:hover { border-color:var(--gold); }
-  #potCd, #manaPotCd { position:absolute; left:0; bottom:0; width:100%; background:rgba(0,0,0,.75); }
+  #potDualIcon { width:100%; height:100%; display:flex; }
+  #potDualIcon svg { width:100%; height:100%; }
+  #potCd { position:absolute; left:0; bottom:0; width:50%; background:rgba(0,0,0,.75); }
+  #manaPotCd { position:absolute; right:0; bottom:0; width:50%; background:rgba(0,0,0,.75); }
   #potSelect {
     display:none; position:absolute; bottom:52px; left:14px; z-index:30; width:210px;
     background:rgba(12,10,15,.95); border:1px solid var(--gold-dim); border-radius:6px; padding:6px;
@@ -266,6 +270,14 @@
   #potSelect .psName { color:var(--ink); }
   #potSelect .psHeal { color:#8fc98a; font-size:10px; }
   #potSelect .psCost { color:var(--gold); font-variant-numeric:tabular-nums; flex-shrink:0; font-size:10.5px; }
+  /* panneau vie+mana fusionné (2026-07-08) : sépare visuellement les 2 sections, la ligne mana
+     est purement informative (pas de choix de taille, elle boit automatiquement sous 30% mana) */
+  #potSelect .psSectionLabel { font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-dim);
+    padding:6px 5px 3px; border-top:1px solid #2c2a33; margin-top:2px; }
+  #potSelect .psSectionLabel:first-child { border-top:none; margin-top:0; }
+  #potSelect .psRow.psRowInfo { cursor:default; }
+  #potSelect .psRow.psRowInfo:hover { background:transparent; }
+  #potSelect .psRow.psRowInfo .psIcon { color:#8fc4e6; }
   #potThreshRow { display:flex; align-items:center; gap:7px; padding:4px 5px 8px; border-bottom:1px solid #2c2a33; margin-bottom:4px; font-size:10.5px; color:var(--ink-dim); }
   #potThreshRow input[type=range] { flex:1; accent-color:var(--gold); }
   #potThreshVal { color:var(--gold); font-variant-numeric:tabular-nums; width:32px; text-align:right; flex-shrink:0; }
@@ -1744,13 +1756,9 @@
     #lvlHpCol #lvlXpRow b { font-size:16px; }
     #lvlHpCol #invXpPct { font-size:16px; }
     #potSlot {
-      width:46px; height:46px; border-color:var(--gold); border-width:2px;
-      box-shadow:0 0 10px rgba(201,165,90,.5); font-size:20px;
+      width:58px; height:46px; border-color:var(--gold); border-width:2px;
+      box-shadow:0 0 10px rgba(201,165,90,.5);
     }
-    #potSlot #potIcon { font-size:20px; }
-    /* potion de mana (2026-07-05) : reste discrète sur mobile, contrairement à la potion de PV
-       mise en avant ci-dessus -- pas assez de place pour agrandir les 2 pareillement */
-    #manaPotSlot { width:26px; height:26px; font-size:11px; }
     /* #invFullBanner ("Sac plein"), #deathBanner et #dangerBanner sont centrés en haut, à la même
        hauteur que #zoneTitle (aligné à gauche, 2-3 lignes) — ils se recouvraient sur un cadre de
        jeu aussi bas (confirmé sur un vrai téléphone : la bannière rouge cachait le nom de zone ET
