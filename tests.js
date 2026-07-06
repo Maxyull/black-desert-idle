@@ -229,6 +229,23 @@
     assert('K.O. : le décompte n\'est pas réinitialisé par un coup', P.faint === 6);
     zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax; P.faint = s.faint;
   }
+  // "vérifie l'utilisation de la potion" (2026-07-09) : bug trouvé en vérification -- fsm()
+  // tournait aussi à Velia (zone paisible, aucun monstre) sans jamais vérifier atVelia, donc une
+  // potion payante pouvait partir automatiquement là-bas (ex: juste après die(), qui met P.hp à
+  // pile 50%, le seuil par défaut). Ni la potion de vie ni celle de mana ne doivent s'auto-boire
+  // à Velia, même si les seuils sont franchis ; la régén passive de mana, elle, continue.
+  function testNoAutoPotionAtVelia() {
+    const s = { atVelia, hp:P.hp, mp:P.mp, potCd:P.potCd, manaPotCd:P.manaPotCd, silver:S.silver,
+      threshold:S.potionThreshold, faint:P.faint, state:P.state, manualTarget:P.manualTarget };
+    atVelia = true; P.faint = 0; P.potCd = 0; P.manaPotCd = 0; P.manualTarget = null; P.state = 'search';
+    S.potionThreshold = 0.5; P.hp = effHpMax()*0.5; P.mp = 0;
+    const silverBefore = S.silver;
+    fsm(0.02);
+    assert('Pas d\'auto-soin PV à Velia même sous le seuil', S.silver === silverBefore && P.potCd === 0);
+    assert('Pas d\'auto-potion de mana à Velia même sous 30%', P.manaPotCd === 0);
+    atVelia = s.atVelia; P.hp = s.hp; P.mp = s.mp; P.potCd = s.potCd; P.manaPotCd = s.manaPotCd;
+    S.silver = s.silver; S.potionThreshold = s.threshold; P.faint = s.faint; P.state = s.state; P.manualTarget = s.manualTarget;
+  }
   // "l'icone s'affiche uniquement [si] tu peux trouver un stuff meilleur que celui que tu as
   // déjà, SAUF dangereuse" (2026-07-09) : ⬆️ ne doit apparaître QUE si (1) la pièce équipée est
   // d'un palier STRICTEMENT inférieur au palier de la zone actuelle (sinon rien de mieux à trouver
@@ -349,6 +366,7 @@
     testDangerousZoneNoDodgeNoEvasion();
     testDangerousZoneWideAggro();
     testKoStopsMonsterAttacks();
+    testNoAutoPotionAtVelia();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
     testNeglectedUpgradeHighlight();
     testZonesOfferingUpgradeAggregatesAllSlots();
