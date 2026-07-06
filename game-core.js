@@ -442,7 +442,10 @@ const ICO_CRON_STONE = svgIcon(
   '<path d="M12 1l6 6-3 8-3 8-3-8-3-8z" fill="#5a4a2e"/><path d="M12 1l6 6-3 8-3 8z" fill="#3e321e"/>' +
   '<path d="M8 5.5h8l-4 5.5z" fill="#e8c96a"/><path d="M8 17.5h8l-4-5.5z" fill="#e8c96a" opacity=".7"/>' +
   '<circle cx="12" cy="12" r="1.3" fill="#fff2c0"/>');
-const CRON_STONE = { name:'Pierre de Cron', key:'mat_cron_stone', icon:ICO_CRON_STONE, color:'#c9a55a' };
+// ch centralisé ici (2026-07-06, corrige un bug d'affichage : la table de loot avait un 0.001
+// codé en dur, resté à l'ancien taux après le passage à 1% le 2026-07-06 — une seule source de
+// vérité désormais, utilisée à la fois par le tirage réel et par son affichage)
+const CRON_STONE = { name:'Pierre de Cron', key:'mat_cron_stone', icon:ICO_CRON_STONE, color:'#c9a55a', ch:0.01 };
 // Coeur de Vell : cœur stylisé bleu abyssal, lueur cyan pulsante — récompense rare du boss Vell
 const ICO_COEUR_VELL = svgIcon(
   '<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0112 6.5 5.5 5.5 0 0121.5 12c-2.5 4.5-9.5 9-9.5 9z" fill="#2a5a78"/>' +
@@ -3141,18 +3144,23 @@ const GEAR_SLOTS = ['helmet','armor','gloves','boots'];
 // désormais lui aussi 3 zones (Planque des Mânes ajoutée le 2026-07-05) : la rotation complète
 // remplace le compromis provisoire "2 armes sur la dernière zone" utilisé tant qu'il n'y avait que
 // 2 zones bleues.
+// rééquilibré le 2026-07-06 (demande explicite : "divise aussi les 3 armes dans les 3 dernieres
+// zones de chaque couleurs") : avant, les 3 armes se répartissaient sur les 3 PREMIÈRES zones (la
+// 4e répétait 'weapon' en double). Désormais, les 3 armes se répartissent sur les 3 DERNIÈRES zones
+// du palier — la toute première zone de chaque palier ne garantit plus aucune arme (seulement sa
+// pièce d'armure, voir ZONE_ARMOR_SLOTS), symétrique à l'armure qui, elle, laisse sa 4e zone sans
+// répétition. Chaque type d'arme n'apparaît donc plus qu'UNE seule fois par palier (au lieu de 2).
 const ZONE_WEAPON_SLOTS = [
-  ['weapon'], ['secondary'], ['awakening'],       // grey : zones 0,1,2
-  ['weapon'], ['secondary'], ['awakening'],       // white : zones 3,4,5
-  ['weapon'], ['secondary'], ['awakening'],       // green : zones 6,7,8
-  ['weapon'], ['secondary'], ['awakening'],       // blue : zones 9,10,11
-  // 4e zone de chaque palier (2026-07-05) : seulement 3 types d'arme pour 4 zones désormais,
-  // 'weapon' se répète donc une 2e fois par palier -- sans impact (juste une 2e zone qui peut
-  // dropper ce type), voir le commentaire sur les nouvelles zones dans ZONES
-  ['weapon'],                                     // grey : zone 12 (Ruines de Trent)
-  ['weapon'],                                     // white : zone 13 (Île d'Iliya)
-  ['weapon'],                                     // green : zone 14 (Base de Bashim)
-  ['weapon'],                                     // blue : zone 15 (Forêt de Polly)
+  [], ['weapon'], ['secondary'],                  // grey : zones 0 (rien),1,2
+  [], ['weapon'], ['secondary'],                  // white : zones 3 (rien),4,5
+  [], ['weapon'], ['secondary'],                  // green : zones 6 (rien),7,8
+  [], ['weapon'], ['secondary'],                  // blue : zones 9 (rien),10,11
+  // 4e zone de chaque palier : complète la rotation avec l'éveil (2026-07-05 : "1 arme dans chaque
+  // zone" -- corrigé le 2026-07-06 pour ne plus jamais répéter un type sur 2 zones du même palier)
+  ['awakening'],                                   // grey : zone 12 (Ruines de Trent)
+  ['awakening'],                                   // white : zone 13 (Île d'Iliya)
+  ['awakening'],                                   // green : zone 14 (Base de Bashim)
+  ['awakening'],                                   // blue : zone 15 (Forêt de Polly)
 ];
 // quelle pièce d'armure chaque zone garantit (2026-07-06, demande explicite : "les 4 zones donnent
 // 1 seule pièce d'armure casque/armure/bottes/gants") — remplace l'ancien tirage au hasard partagé
@@ -3389,9 +3397,9 @@ function rollDrops(wp, alpha, lm) {
     // un Math.random() y serait figé pour toute la session au lieu d'être retiré à chaque drop)
     ...VELIA_TREASURE.map(t => ({ name:t.name, val:0, ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05,
       pickupQty: t.key==='treasure_bout_velia' ? 1+Math.floor(Math.random()*3) : 1 })),
-    // Pierre de Cron : taux FIXE de 1% (relevé de 0.1% le 2026-07-06, demande explicite), identique
-    // dans TOUTES les zones du jeu (indépendante du palier de stuff). 1 à 3 unités par drop (pickupQty).
-    { name:CRON_STONE.name, val:0, ch:0.01, kind:'material', color:CRON_STONE.color, key:CRON_STONE.key,
+    // Pierre de Cron : taux FIXE (voir CRON_STONE.ch), identique dans TOUTES les zones du jeu
+    // (indépendante du palier de stuff). 1 à 3 unités par drop (pickupQty).
+    { name:CRON_STONE.name, val:0, ch:CRON_STONE.ch, kind:'material', color:CRON_STONE.color, key:CRON_STONE.key,
       icon:CRON_STONE.icon, stackable:true, weight:0.1, pickupQty: 1+Math.floor(Math.random()*3) },
   ];
   for (const item of table) {
@@ -4836,7 +4844,7 @@ function zoneSignature() { return zoneIdx + ':' + atVelia + ':' + Math.round(apE
 // disparaissait JAMAIS, peu importe combien de fois le panneau était ouvert. Un simple compteur
 // entier incrémenté à la main élimine tout risque de désynchronisation d'horloge.
 const CONTENT_UPDATE_VERSION = {
-  wiki:         { v:1, desc:{fr:'Pierre de Cron : nouveau fonctionnement au choix du joueur (case à cocher, plus automatique)', en:'Cron Stone: new player-choice behavior (checkbox, no longer automatic)'} },
+  wiki:         { v:2, desc:{fr:'1 arme garantie sur les 3 dernières zones de chaque palier (plus rien sur la 1ère)',en:'1 guaranteed weapon on a tier\'s last 3 zones (none on the 1st)'} },
   compendium:   { v:1, desc:{fr:'Clique un objet pour voir dans quelles zones le farmer',en:'Click an item to see which zones farm it'} },
   codex:        { v:1, desc:{fr:'Liste à jour de tous les objets du jeu',en:'Up to date list of every item in the game'} },
   achievements: { v:1, desc:{fr:'Filtres par catégorie et "pas fini" disponibles',en:'Category and "unfinished" filters available'} },
@@ -5964,17 +5972,27 @@ function zoneLootRowsHtml(idx) {
   const z = ZONES[idx], L = z.loot;
   const tier = gearTierForZone(idx);
   const gearCh = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[idx] ?? .002);
-  const setName = tier.label[LANG];
   const equippedWord = LANG === 'fr' ? 'PA équipé' : 'AP equipped';
+  const armorPieceNote = LANG==='fr' ? 'armure — cette zone uniquement' : 'armor — this zone only';
+  const weaponPieceNote = LANG==='fr' ? 'arme — cette zone uniquement' : 'weapon — this zone only';
   const rows = [
     { kind:'trash',    it:L.trash,   note:'revenu de base' },
     { kind:'material', it:{name:tier.material.name}, ch:L.mat.ch, note:'optimisation' },
-    { kind:'gear',     it:{name:setName}, ch:gearCh, note:'arme/armure (7 pièces)' },
+  ];
+  // détaille EXACTEMENT quelle pièce d'armure (et quelle arme, s'il y en a une) cette zone précise
+  // garantit (2026-07-06, demande explicite : "explique quel stuff exactement tu vas pouvoir
+  // loot") — remplace l'ancienne ligne générique "Gris — Naru / arme+armure (7 pièces)", qui ne
+  // disait pas laquelle des 7 pièces on obtenait réellement ici (voir ZONE_ARMOR_SLOTS/ZONE_WEAPON_SLOTS)
+  const armorSlot = (ZONE_ARMOR_SLOTS[idx]||[])[0];
+  if (armorSlot) rows.push({ kind:'gear', it:{name:tier.sets[armorSlot]}, ch:gearCh, note:armorPieceNote });
+  const weaponSlot = (ZONE_WEAPON_SLOTS[idx]||[])[0];
+  if (weaponSlot) rows.push({ kind:'gear', it:{name:tier.sets[weaponSlot]}, ch:gearCh, note:weaponPieceNote });
+  rows.push(
     { kind:'jackpot',  it:L.jackpot, note:'+'+L.jackpot.ap+' '+equippedWord },
     { kind:'craft',    it:L.craft,   note:'craft endgame' },
-    // Pierre de Cron : taux fixe, identique dans TOUTES les zones — demande explicite du 2026-07-08
-    { kind:'material', it:{name:CRON_STONE.name}, ch:0.001, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
-  ];
+    // Pierre de Cron : taux fixe (voir CRON_STONE.ch), identique dans TOUTES les zones — demande explicite du 2026-07-08
+    { kind:'material', it:{name:CRON_STONE.name}, ch:CRON_STONE.ch, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
+  );
   // les couleurs des rangées "armure" et "matériau" reprennent celles du stuff dans l'inventaire
   // (gris/blanc/vert/bleu selon le palier) au lieu d'un violet/or générique — demande du 2026-07-06
   const rowColor = { gear: tier.color, material: tier.material.color };
