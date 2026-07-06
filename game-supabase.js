@@ -2507,6 +2507,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V246', d:'12/07/2026 03:00', name:{fr:'Potions ÷10, palier vert accessible avec un stuff blanc complet', en:'Potions ÷10, Green tier reachable with full White gear'}, fr:[
+      {t:'change', sub:'economie', tx:'Prix des potions divisé par 10 (la petite coûte désormais ≈0.5% du revenu horaire de trash, la majeure ≈3%, au lieu de 5%/30%)'},
+      {t:'change', sub:'zones', severity:'major', tx:'Les 4 zones du palier vert (Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) ont leur PA/PD requis abaissés d\'environ 20% : un stuff complet du palier blanc (armes+armure+bijoux des 4 zones blanches) enchanté à +13 atteint désormais tout juste "ZONE DIFFICILE" face à Mine de Fer Abandonnée, et ce même stuff au PEN atteint "ZONE DIFFICILE" face à Poste Helm (2e zone verte). Le palier blanc n\'est pas touché. Rétroactif sur le stuff déjà possédé de ces 4 zones'},
+    ], en:[
+      {t:'change', sub:'economie', tx:'Potion prices divided by 10 (the small one now costs ≈0.5% of the hourly trash income, the major one ≈3%, down from 5%/30%)'},
+      {t:'change', sub:'zones', severity:'major', tx:'The 4 Green tier zones (Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Bashim Base) have their required AP/DP lowered by about 20%: a full White tier gear set (weapons+armor+jewelry from all 4 White zones) enhanced to +13 now just barely reaches "DIFFICULT ZONE" against Abandoned Iron Mine, and the same gear at PEN reaches "DIFFICULT ZONE" against Helm Post (2nd Green zone). White tier is untouched. Retroactive for gear already owned from these 4 zones'},
+    ] },
   { v:'V245', d:'12/07/2026 02:00', name:{fr:'Silver/h uniquement du token, potions rééquilibrées (5% à 30%)', en:'Silver/h from tokens only, potions rebalanced (5% to 30%)'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le "silver/h" affiché en jeu (et celui utilisé pour le classement) comptait toutes les sources de gain (quêtes, succès, boss, marché...), ce qui pouvait gonfler artificiellement la lecture du rythme de farm réel après un gros coup de chance. Il ne compte désormais QUE le silver du trash (token) ramassé au sol'},
       {t:'change', sub:'economie', tx:'Prix des potions réajusté : la petite potion coûte désormais environ 5% du revenu horaire de trash de la zone actuelle, la potion majeure environ 30% (au lieu de 2.76% à 15%) — moyenne/grande potion interpolées entre les deux'},

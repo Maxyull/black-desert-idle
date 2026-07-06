@@ -556,13 +556,14 @@
   }
   // "revois le prix des potion en fonction de l'argent qu'on se fait en vendant les token en
   // instantané au jeu et uniquement par rapport a ça pas au vente de stuff" (2026-07-11), puis
-  // "les potion doivent couter autour de 5 a 30% de ce que tu gagne en silver" (2026-07-12) --
-  // remplace l'ancien amortissement en racine carrée (potionZoneScale, dérivait de 42% à 3.6% du
-  // revenu horaire) par un pourcentage du revenu horaire de trash de la zone ACTUELLE (jamais
-  // relatif à une autre zone, donc jamais de dérive), interpolé linéairement entre 5% (small) et
-  // 30% (mega) selon le coût de base de la taille. Vérifie : small = 5%, mega = 30%, peu importe la
-  // zone, medium/large entre les deux, et le coût ne dépend QUE de trash.val (jamais du prix de
-  // vente du stuff, GEAR_SELL_MULT).
+  // "les potion doivent couter autour de 5 a 30% de ce que tu gagne en silver" et enfin "divise le
+  // prix des potion par 10" (2026-07-12) -- remplace l'ancien amortissement en racine carrée
+  // (potionZoneScale, dérivait de 42% à 3.6% du revenu horaire) par un pourcentage du revenu horaire
+  // de trash de la zone ACTUELLE (jamais relatif à une autre zone, donc jamais de dérive), interpolé
+  // linéairement entre POTION_PCT_MIN (small) et POTION_PCT_MAX (mega) selon le coût de base de la
+  // taille. Vérifie contre les CONSTANTES (pas un pourcentage codé en dur) pour rester correct même
+  // si ces bornes sont encore ajustées plus tard, et que le coût ne dépend QUE de trash.val (jamais
+  // du prix de vente du stuff, GEAR_SELL_MULT).
   function testPotionCostIsFixedPctOfHourlyTrashIncome() {
     const s = { zoneIdx, atVelia };
     atVelia = false;
@@ -570,13 +571,13 @@
       zoneIdx = zi;
       const hourly = ZONES[zi].loot.trash.val * POTION_KPM_REF * 60;
       const smallCost = potionCost(POTIONS.small.cost), megaCost = potionCost(POTIONS.mega.cost);
-      assert(`Potion small = 5% du revenu horaire de trash en ${ZONES[zi].name.fr}`,
-        Math.abs(smallCost - Math.round(hourly*0.05)) <= 1, `got=${smallCost}, attendu=${Math.round(hourly*0.05)}`);
-      assert(`Potion mega = 30% du revenu horaire de trash en ${ZONES[zi].name.fr}`,
-        Math.abs(megaCost - Math.round(hourly*0.30)) <= 1, `got=${megaCost}, attendu=${Math.round(hourly*0.30)}`);
+      assert(`Potion small = POTION_PCT_MIN du revenu horaire de trash en ${ZONES[zi].name.fr}`,
+        Math.abs(smallCost - Math.round(hourly*POTION_PCT_MIN)) <= 1, `got=${smallCost}, attendu=${Math.round(hourly*POTION_PCT_MIN)}`);
+      assert(`Potion mega = POTION_PCT_MAX du revenu horaire de trash en ${ZONES[zi].name.fr}`,
+        Math.abs(megaCost - Math.round(hourly*POTION_PCT_MAX)) <= 1, `got=${megaCost}, attendu=${Math.round(hourly*POTION_PCT_MAX)}`);
       // medium/large strictement entre les deux bornes (interpolation linéaire, jamais en dehors)
       const mediumCost = potionCost(POTIONS.medium.cost), largeCost = potionCost(POTIONS.large.cost);
-      assert(`Potion medium/large entre 5% et 30% en ${ZONES[zi].name.fr}`,
+      assert(`Potion medium/large entre les bornes min/max en ${ZONES[zi].name.fr}`,
         mediumCost > smallCost && mediumCost < largeCost && largeCost < megaCost,
         `small=${smallCost}, medium=${mediumCost}, large=${largeCost}, mega=${megaCost}`);
     }
@@ -584,7 +585,7 @@
     // cette seule donnée (fonction pure), sans référence cachée au prix de vente du stuff
     zoneIdx = 7;
     const hourly7 = ZONES[7].loot.trash.val * POTION_KPM_REF * 60;
-    const expected7 = Math.max(1, Math.round(hourly7 * 0.30));
+    const expected7 = Math.max(1, Math.round(hourly7 * POTION_PCT_MAX));
     assert('potionCost est entièrement dérivable de trash.val (fonction pure, aucune dépendance cachée)',
       potionCost(POTIONS.mega.cost) === expected7, `got=${potionCost(POTIONS.mega.cost)}, attendu=${expected7}`);
     zoneIdx = s.zoneIdx; atVelia = s.atVelia;
@@ -997,6 +998,38 @@
     assert('Stuff complet de Colonie Sausan (PEN) atteint ZONE DIFFICILE face à Poste Helm (2 zones plus loin)',
       ratioPen >= 0.6 && ratioPen < 0.9, `ratio=${ratioPen.toFixed(2)} (PA=${tPen.ap.toFixed(1)}, PD=${tPen.dp.toFixed(1)})`);
   }
+  // "avec un full stuff blanc je dois pouvoir passer en zone vert tout juste difficile en +13 en
+  // moyenne et full pen me fais passer a la 2e zone verte" (2026-07-12) -- simulation PRÉCISE d'un
+  // stuff COMPLET du palier blanc : chaque pièce depuis SA PROPRE zone réelle (Camp Rhutum=casque+
+  // anneau, Ferme Shultz=arme+armure+collier, Colonie Sausan=secondaire+gants+ceinture, Île
+  // d'Iliya=éveil+bottes+boucle), formule réelle GEAR_ROLE -- contrairement au test précédent (une
+  // approximation à partir d'une seule zone), celle-ci reflète exactement ce qu'un joueur obtient en
+  // farmant réellement les 4 zones du palier.
+  function testFullWhiteTierGearReachesGreenTierDifficile() {
+    const zBySlot = { helmet:3, ring:3, weapon:4, armor:4, necklace:4, secondary:5, gloves:5, belt:5, awakening:13, boots:13, earring:13 };
+    function basisFor(slotKey) { const z = ZONES[zBySlot[slotKey]]; return { ap: z.gearBasisAP ?? z.reqAP, dp: z.gearBasisDP ?? z.reqDP }; }
+    function totalFor(enhLv) {
+      const bonus = 1 + enhBonus(enhLv);
+      let ap = 4, dp = 10;
+      for (const slot of ['weapon','awakening','secondary']) { const b = basisFor(slot); ap += gearFloor(b.ap*GEAR_ROLE[slot].apShare)*bonus; }
+      for (const slot of ['helmet','armor','gloves','boots']) { const b = basisFor(slot); dp += gearFloor(b.dp*GEAR_ROLE[slot].dpShare)*bonus; }
+      const ringB = basisFor('ring'), neckB = basisFor('necklace'), beltB = basisFor('belt'), earB = basisFor('earring');
+      ap += gearFloor(ringB.ap*GEAR_ROLE.jackpot.apShare)*bonus*2; // 2 anneaux
+      ap += gearFloor(neckB.ap*GEAR_ROLE.jackpot.apShare)*bonus;
+      ap += gearFloor(beltB.ap*GEAR_ROLE.jackpot.apShare)*bonus;
+      ap += gearFloor(earB.ap*GEAR_ROLE.jackpot.apShare)*bonus*2; // 2 boucles
+      return { ap, dp };
+    }
+    const mine = ZONES[6], helm = ZONES[7];
+    const t13 = totalFor(13);
+    const r13 = Math.min(t13.ap/mine.reqAP, t13.dp/mine.reqDP);
+    assert('Stuff COMPLET du palier blanc (+13) atteint tout juste ZONE DIFFICILE face à Mine de Fer Abandonnée',
+      r13 >= 0.6 && r13 < 0.7, `ratio=${r13.toFixed(3)} (PA=${t13.ap.toFixed(1)}, PD=${t13.dp.toFixed(1)})`);
+    const tPen = totalFor(ENH_NAMES.length-1);
+    const rPen = Math.min(tPen.ap/helm.reqAP, tPen.dp/helm.reqDP);
+    assert('Stuff COMPLET du palier blanc (PEN) atteint ZONE DIFFICILE face à Poste Helm (2e zone verte)',
+      rPen >= 0.6 && rPen < 0.9, `ratio=${rPen.toFixed(3)} (PA=${tPen.ap.toFixed(1)}, PD=${tPen.dp.toFixed(1)})`);
+  }
 
   window.runRegressionTests = function() {
     results.length = 0;
@@ -1050,6 +1083,7 @@
     testClaimLoyaltyMovesMailboxToStock();
     testZone0LootReachesZone1Difficulty();
     testSausanGearReachesMineDeFerDifficile();
+    testFullWhiteTierGearReachesGreenTierDifficile();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

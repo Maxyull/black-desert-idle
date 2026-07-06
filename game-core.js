@@ -156,7 +156,17 @@ const ZONES = [
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
       jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
-  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:124, reqDP:67, mob:'Mineur corrompu',
+  // reqAP/reqDP des 4 zones du palier VERT (Mine de Fer/Poste Helm/Repaire Bandits Gahaz/Base de
+  // Bashim) abaissées le 2026-07-12 (demande explicite : "avec un full stuff blanc je dois pouvoir
+  // passer en zone vert tout juste difficile en +13 en moyenne et full pen me fais passer a la 2e
+  // zone verte" -- "sans toucher a la blanche") : simulation d'un stuff COMPLET de palier blanc (3
+  // armes + 4 armures + 6 bijoux, chacun depuis SA zone réelle du palier blanc, formule GEAR_ROLE) :
+  // à +13, la PD était le vrai facteur bloquant (0.49, ZONE DANGEREUSE) malgré une PA déjà largement
+  // suffisante (0.73) -- confirmé qu'abaisser seulement le PA requis n'aurait rien changé. Les 4
+  // zones sont réduites uniformément ×0.80 (PA ET PD, préserve la progression interne du palier) :
+  // Mine de Fer Abandonnée passe tout juste en ZONE DIFFICILE à +13 (0.61), Poste Helm (2e zone
+  // verte) atteint ZONE DIFFICILE au PEN (0.70). Le palier blanc (reqAP/reqDP) reste inchangé.
+  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:99, reqDP:54, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
     // sol terre rouge/brune de carrière (retexturé le 2026-07-07 d'après les captures de référence :
     // canyon ocre, crevasses, chariots) — tones = capuches/tuniques poussiéreuses des mineurs,
@@ -164,12 +174,12 @@ const ZONES = [
     tint:{ a:'#4a3226', b:'#443023', dry:'#583c2c' }, tones:['#8a7a68','#7a6c5a','#988676'], alphaTone:'#5a6068',
     loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
       jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:2}, craft:{name:'Fragment de mémoire',ch:.009} } },
-  { name:'Poste Helm', tier:'Serendia — Late', reqAP:152, reqDP:83, mob:'Soldat Helm',
+  { name:'Poste Helm', tier:'Serendia — Late', reqAP:122, reqDP:66, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:56,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.11},
       jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:4}, craft:{name:'Fragment de mémoire',ch:.007} } },
-  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:188, reqDP:103, mob:'Bandit Gahaz',
+  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:150, reqDP:82, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
@@ -232,7 +242,7 @@ const ZONES = [
     tint:{ a:'#2e4a4a', b:'#2a4444', dry:'#355656' }, tones:['#4a9a9a', '#3f8888', '#5aacac'], alphaTone:'#2c5a5a',
     loot:{ trash:{name:'Perle d\'Iliya',val:38,ch:1}, mat:{name:'Éclat de cristal noir dur',val:5,ch:.14},
       jackpot:{name:'Boucle Tuvala',val:6900,ch:.0011,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.009} } },
-  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:210, reqDP:114, mob:'Soldat de Bashim',
+  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:168, reqDP:91, mob:'Soldat de Bashim',
     hpPer:395, dmg:49, xp:224,
     tint:{ a:'#3c3c34', b:'#36362f', dry:'#44443a' }, tones:['#8a8a68', '#78785a', '#9a9a78'], alphaTone:'#565640',
     loot:{ trash:{name:'Insigne de Bashim',val:92,ch:1}, mat:{name:'Pierre de Caphras',val:8,ch:.058},
@@ -3087,8 +3097,10 @@ const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite"
 // entre 5% (small) et 30% (mega) selon le coût de base de la taille (70/140/240/380), ce qui reste
 // vrai dans TOUTE zone.
 const POTION_KPM_REF = 15; // même rythme que la courbe économique des zones (~3000/h zone1 → ~100000/h zone11)
-const POTION_PCT_MIN = 0.05; // small ≈ 5% du revenu horaire
-const POTION_PCT_MAX = 0.30; // mega ≈ 30% du revenu horaire
+// prix divisé par 10 le 2026-07-12 (demande explicite : "divise le prix des potion par 10") --
+// small ≈ 0.5% du revenu horaire, mega ≈ 3% (au lieu de 5%/30%)
+const POTION_PCT_MIN = 0.005; // small ≈ 0.5% du revenu horaire
+const POTION_PCT_MAX = 0.03;  // mega ≈ 3% du revenu horaire
 function potionHourlyIncome() {
   const z = (typeof atVelia !== 'undefined' && !atVelia && typeof Z === 'function') ? Z() : ZONES[0];
   return (z.loot.trash.val || 1) * POTION_KPM_REF * 60;
@@ -7288,6 +7300,14 @@ function migrateGearRescaleV243() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
 }
+// migration 2026-07-12 (demande explicite : "change les ap requis a partir de la zone verte") --
+// les 4 zones du palier vert (Mine de Fer/Poste Helm/Repaire Bandits Gahaz/Base de Bashim) ont vu
+// leur reqAP/reqDP abaissés ×0.80 -- comme à chaque changement de reqAP/reqDP/gearBasisAP/DP de
+// zone (voir les migrations ci-dessus), le stuff déjà dropé de ces 4 zones doit être rattrapé.
+function migrateGearRescaleV245() {
+  migrateGearFixedStatsV226();
+  migrateJewelryApV207();
+}
 // migration 2026-07-11 (bug corrigé : "aucune pierre ne se met dans le slot pour les bijoux") --
 // les bijoux (jackpot) n'ont jamais eu de matName depuis leur introduction (voir rollDrops,
 // corrigé juste au-dessus) : findEnhanceMaterial() retombait donc sur le matériau de la zone
@@ -7343,6 +7363,7 @@ function applySaveState(data) {
   if (!S.migratedGearRescaleV235) { migrateGearRescaleV235(); S.migratedGearRescaleV235 = true; }
   if (!S.migratedJewelryMatNameV239) { migrateJewelryMatNameV239(); S.migratedJewelryMatNameV239 = true; }
   if (!S.migratedGearRescaleV243) { migrateGearRescaleV243(); S.migratedGearRescaleV243 = true; }
+  if (!S.migratedGearRescaleV245) { migrateGearRescaleV245(); S.migratedGearRescaleV245 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
