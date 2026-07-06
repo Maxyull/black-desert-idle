@@ -1223,6 +1223,26 @@
     assert('needQty reste 100', r && r.needQty === 100, `needQty=${r&&r.needQty}`);
   }
 
+  // "les attaques de zone visuellement doivent faire des degats de zone sur les monstres"
+  // (2026-07-14) : un sort dont le VFX est étalé sur toute l'aire du pack (meteor/ice/quake...)
+  // doit endommager TOUS les monstres vivants du pack, pas seulement currentWolf() (le 1er vivant)
+  function testZoneSkillsDamageAllWolvesInPack() {
+    const s = { target, packs, buffTimer };
+    buffTimer = 0;
+    const pack = { dead:false, aggro:true, x:0, y:0, gathered:1, wolves:[
+      { ox:0,oy:0,gx:0,gy:0, hp:99999, maxHp:99999, dead:false, scale:1, tone:'#fff' },
+      { ox:10,oy:0,gx:5,gy:0, hp:99999, maxHp:99999, dead:false, scale:1, tone:'#fff' },
+      { ox:20,oy:0,gx:10,gy:0, hp:99999, maxHp:99999, dead:false, scale:1, tone:'#fff' },
+    ] };
+    packs = [pack];
+    target = pack;
+    const sk = SKILLS.find(x => x.id === 'meteor');
+    resolveSkill(sk);
+    assert('Un sort de zone inflige des dégâts à TOUS les monstres vivants du pack (pas seulement le 1er)',
+      pack.wolves.every(w => w.hp < 99999), `hp=${JSON.stringify(pack.wolves.map(w=>w.hp))}`);
+    target = s.target; packs = s.packs; buffTimer = s.buffTimer;
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -1283,6 +1303,7 @@
     testZone0LootReachesZone1Difficulty();
     testSausanGearReachesMineDeFerDifficile();
     testFullWhiteTierGearReachesGreenTierDifficile();
+    testZoneSkillsDamageAllWolvesInPack();
     testVeliaTreasureMergedIntoSingleTier();
     testTreasurePricingIsMultipleOfReferenceGearVal();
     testTreasureStackCapAutoSellsSurplus();
