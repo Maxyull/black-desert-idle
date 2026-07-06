@@ -2893,22 +2893,34 @@ function aiMode() {
 // mode de farm choisi par le joueur : "Loot" ramasse tout avant de passer au pack suivant (voir
 // killPack + case 'loot' du fsm), "XP" ignore le loot au sol et enchaîne les packs pour maximiser
 // les kills/xp par minute (demande : 2 IA différentes, une full-loot, une full-XP)
+// "Opti" (2026-07-12, demande explicite : "nouvelle ia, pack to pack rapide") : une fois le pack
+// actuel entamé à -30% (HP cumulés des monstres vivants sous 70%), repère déjà le pack vivant le
+// plus proche et bascule dessus dès qu'il aggro (même rayon que l'état 'move'), achevé ou non --
+// voir combatTick/packHpFraction. Toujours 3 modes au total, comme demandé.
 const FARM_MODES = {
   loot: { icon:'🎒', name:{fr:'Loot', en:'Loot'} },
   xp:   { icon:'⚡', name:{fr:'XP',   en:'XP'} },
+  opti: { icon:'🌀', name:{fr:'Opti', en:'Opti'} },
 };
+const FARM_MODE_ORDER = ['loot','xp','opti'];
+// slider à 3 positions (2026-07-12, demande explicite : "fais moi un slider pour le choix d'ia
+// avec les 3 ia") -- remplace l'ancien bouton à bascule (clic = cycle Loot<->XP) par un vrai
+// <input type="range"> à 3 crans (0=Loot, 1=XP, 2=Opti, voir FARM_MODE_ORDER).
 function renderFarmModeBtn() {
-  const el = $('farmModeBtn'); if (!el) return;
+  const label = $('farmModeLabel'), range = $('farmModeRange'); if (!label || !range) return;
   const m = FARM_MODES[S.farmMode] || FARM_MODES.loot;
-  el.textContent = m.icon + ' ' + m.name[LANG];
-  el.title = LANG==='fr'
-    ? (S.farmMode==='loot' ? 'IA "Loot" : ramasse tout le butin avant de passer au pack suivant (clique pour passer en XP)'
-                            : 'IA "XP" : enchaîne les packs sans ramasser le butin au sol (clique pour passer en Loot)')
-    : (S.farmMode==='loot' ? 'Loot AI: picks up all drops before moving to the next pack (click to switch to XP)'
-                            : 'XP AI: chains packs without picking up ground loot (click to switch to Loot)');
+  label.textContent = m.icon + ' ' + m.name[LANG];
+  range.value = FARM_MODE_ORDER.indexOf(S.farmMode);
+  const titles = {
+    loot: LANG==='fr' ? 'IA "Loot" : ramasse tout le butin avant de passer au pack suivant' : 'Loot AI: picks up all drops before moving to the next pack',
+    xp:   LANG==='fr' ? 'IA "XP" : enchaîne les packs sans ramasser le butin au sol' : 'XP AI: chains packs without picking up ground loot',
+    opti: LANG==='fr' ? 'IA "Opti" : repère déjà le pack suivant et bascule dessus dès qu\'il aggro, pack fini ou non' : 'Opti AI: already spots the next pack and switches to it as soon as it aggros, whether the current one is finished or not',
+  };
+  range.title = label.title = titles[S.farmMode] || titles.loot;
 }
-function toggleFarmMode() {
-  S.farmMode = S.farmMode === 'loot' ? 'xp' : 'loot';
+function setFarmModeFromSlider(idx) {
+  S.farmMode = FARM_MODE_ORDER[idx] || 'loot';
+  if (S.farmMode !== 'opti') P.nextPack = null; // pas de pack "déjà repéré" pertinent hors mode Opti
   renderFarmModeBtn();
 }
 
@@ -3032,7 +3044,7 @@ function targetPackCount() {
 }
 function resetWorld() {
   packs = []; drops = []; corpses = []; particles = []; floats = [];
-  target = null; P.lootTarget = null; P.manualTarget = null;
+  target = null; P.lootTarget = null; P.manualTarget = null; P.nextPack = null;
   P.x = 0; P.y = 0; cam.x = 0; cam.y = 0; P.lootClusterX = 0; P.lootClusterY = 0;
   P.state = 'search'; P.hp = effHpMax();
   lastLootEntry = null; // évite de fusionner le loot d'une nouvelle zone avec celui d'avant
@@ -3359,8 +3371,32 @@ function pickSkill() {
   return best;
 }
 
+// fraction de PV cumulés encore vivants dans un pack (0 = tous morts, 1 = intact) -- sert au mode
+// de farm "Opti" (2026-07-12, demande explicite : "pack to pack rapide")
+function packHpFraction(p) {
+  let total = 0, cur = 0;
+  for (const w of p.wolves) { total += w.maxHp; if (!w.dead) cur += w.hp; }
+  return total > 0 ? cur/total : 0;
+}
 function combatTick(dt) {
   const mode = aiMode(), tier = hpTier();
+  // IA "Opti" : pack to pack rapide (2026-07-12, demande explicite) -- une fois le pack actuel
+  // entamé à -30% (PV cumulés des monstres vivants sous 70%), repère déjà le pack vivant le plus
+  // proche (hors celui-ci) et bascule directement dessus dès qu'il serait normalement aggro (même
+  // rayon que l'état 'move', d<=170), que l'ancien pack soit fini ou non -- enchaîne les packs sans
+  // temps mort entre deux, quitte à laisser un pack partiellement vidé derrière soi.
+  if (S.farmMode === 'opti' && target && !target.dead && packHpFraction(target) <= 0.7) {
+    if (!P.nextPack || P.nextPack.dead) {
+      P.nextPack = packs.filter(p => !p.dead && p !== target)
+        .sort((a,b) => dist(P.x,P.y,a.x,a.y)-dist(P.x,P.y,b.x,b.y))[0] || null;
+    }
+    if (P.nextPack && dist(P.x,P.y,P.nextPack.x,P.nextPack.y) <= 170) {
+      target = P.nextPack; P.nextPack = null;
+      target.aggro = true;
+      setState(mode==='overgeared' ? 'combat' : 'gather');
+      return;
+    }
+  }
   const wantDist = tier==='agressif' ? 75 : tier==='normal' ? 100 : 130;
   const d = dist(P.x,P.y,target.x,target.y);
   const dx = (P.x-target.x)/(d||1), dy = (P.y-target.y)/(d||1);
@@ -5383,6 +5419,13 @@ function travelTo(i) {
   renderLootTable();
   hud();
   buildZoneList();
+  // "l'icône d'upgrade doit revenir sur le stuff... si elle est quittée" (2026-07-12, bug corrigé) :
+  // renderEquipment() (badges ⬆️ pdUpgradeBtn de la poupée) n'était jusqu'ici rafraîchi QUE par
+  // hud() quand la COMPOSITION du sac change (voir invSignature) -- upgradeZonesForEquippedSlot()
+  // dépend pourtant de zoneIdx (une zone quittée redevient une source d'upgrade valide, voir son
+  // filtre "atVelia || zi !== zoneIdx"), donc changer de zone SEULE ne rafraîchissait jamais la
+  // poupée, qui restait figée sur l'état de la zone précédente jusqu'au prochain loot/vente.
+  renderEquipment();
 }
 // Velia : zone paisible, aucun monstre — ne lance plus le tutoriel automatiquement (voir
 // demande du 2026-07-04), juste un endroit calme où se rendre (à la main ou après une mort)
@@ -5394,6 +5437,7 @@ function goToVelia() {
   renderLootTable();
   hud();
   buildZoneList();
+  renderEquipment(); // voir le commentaire équivalent dans travelTo()
 }
 // mort au combat (PV à 0) : renvoie à Velia (zone paisible) avec un message d'avertissement —
 // demande explicite du 2026-07-05, remplace l'ancien "faint" qui soignait sur place. Ne renvoie

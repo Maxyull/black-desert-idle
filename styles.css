@@ -173,13 +173,17 @@
     padding:4px 14px; white-space:nowrap;
   }
   #aiSkill { color:var(--gold); }
-  #farmModeBtn {
+  /* slider à 3 crans (2026-07-12, remplace l'ancien bouton à bascule Loot<->XP) : Loot/XP/Opti,
+     voir FARM_MODE_ORDER */
+  #farmModeSlider {
     position:absolute; top:10px; left:calc(50% + 165px);
-    font-size:10px; letter-spacing:1px; text-transform:uppercase; cursor:pointer;
+    display:flex; align-items:center; gap:6px;
+    font-size:10px; letter-spacing:1px; text-transform:uppercase;
     color:var(--gold); background:rgba(10,9,12,.6); border:1px solid var(--gold-dim);
     padding:4px 10px; white-space:nowrap; border-radius:3px;
   }
-  #farmModeBtn:hover { background:rgba(201,165,90,.15); }
+  #farmModeSlider:hover { background:rgba(201,165,90,.15); }
+  #farmModeRange { width:52px; margin:0; accent-color:var(--gold); cursor:pointer; }
 
   #skillBar { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
   /* barre d'incantation (2026-07-05, demande explicite : "----------o----------", la matière se
@@ -469,6 +473,12 @@
   .pdSlot .pdLockBtn { cursor:default; border-color:#5a5666; opacity:.85; }
   .pdSlot .pdOptBtn:hover, .pdSlot .pdUpgradeBtn:hover, .pdSlot .pdFarmBtn:hover { background:#2a2416; border-color:var(--gold); transform:scale(1.15); }
   .gicon { width:1.55em; height:1.55em; vertical-align:middle; flex-shrink:0; }
+  /* agrandi pour remplir les cases d'inventaire/équipement (2026-07-12, demande explicite :
+     "agrandit tous les svg pour qu'il prenne la taille entière des icone inventaire et
+     equipement") -- en % de la case plutôt qu'en em (dont la taille dépend d'un font-size qui
+     diffère entre .cell 15px et .pdSlot 20px, une valeur em unique ne remplirait jamais les 2
+     pareil) ; ne touche PAS .lootIcon (table de loot, case dédiée déjà correctement dimensionnée). */
+  .cell .gicon, .pdSlot .gicon { width:88%; height:88%; }
   #pdWeapons { display:flex; justify-content:center; gap:6px; padding:6px 0; border-top:1px solid #2c2a33; border-bottom:1px solid #2c2a33; margin-bottom:2px; }
   #pdWeapons .pdSlot { width:48px; height:48px; }
   #pdWeapons .pdGroupLbl { position:absolute; top:-12px; left:0; right:0; text-align:center; font-size:7px; letter-spacing:.5px; color:var(--ink-dim); }
