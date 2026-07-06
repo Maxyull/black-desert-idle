@@ -64,7 +64,7 @@ Quelques convictions qui guident les choix :
 ### Ce qui arrive
 
 - Extension du contenu vers les régions suivantes (Heidel → Calpheon → Valencia → Edana), voir le
-  détail zone par zone et l'économie visée dans [`zones-roadmap.md`](zones-roadmap.md).
+  détail zone par zone et l'économie visée dans [`roadmap.md`](roadmap.md).
 - Poursuite de l'équilibrage PA/PD/loot au fil des retours joueurs.
 - Amélioration continue de l'expérience mobile/tablette.
 - Refonte progressive de la structure du code pour rester lisible et maintenable à mesure que le jeu

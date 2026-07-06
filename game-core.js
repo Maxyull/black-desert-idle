@@ -92,7 +92,7 @@ function tr(s) { if (LANG !== 'en' || !s) return s; return NAME_EN[s] || s; }
 // 100 000/h max (zone 11, Ruines de Kratuga, avec un stuff bien optimisé) — c'est le plafond haut de
 // la région Velia dans la nouvelle courbe économique à 5 régions :
 //   Velia 0→100k/h · Heidel 100k→1M/h · Calpheon 1M→100M/h · Valencia 100M→1B/h · Edana 1B→10B/h
-// (voir zones-roadmap.md pour le détail des paliers futurs). Le "selon l'optimisation" vient
+// (voir roadmap.md pour le détail des paliers futurs). Le "selon l'optimisation" vient
 // naturellement de la mécanique existante (un stuff mieux enchanté = plus de dps = plus de
 // kills/min = plus haut dans la fourchette de la zone), sans formule additionnelle nécessaire.
 const ZONES = [
@@ -2850,7 +2850,7 @@ function lootMult(r) {
 // valeurs THÉORIQUES, indépendantes du stuff actuel du joueur (demande explicite : "silver/h, xp/h,
 // kills/min théoriques par zone") -- comparent les zones entre elles à armes égales, sans se
 // soucier de si le joueur peut y survivre aujourd'hui.
-const REF_KPM_FOR_STATS = 15; // kills/min de référence (voir zones-roadmap.md, même valeur que le calibrage économique des zones)
+const REF_KPM_FOR_STATS = 15; // kills/min de référence (voir roadmap.md, même valeur que le calibrage économique des zones)
 const REF_DPS_FOR_STATS = 900; // dégâts/min de référence PUREMENT relatif : seul hpPer varie d'une zone à l'autre, donc le classement (et le ratio entre zones) ne dépend pas de la valeur choisie ici
 // UNIQUEMENT le trash (2026-07-09, demande explicite : "le calcul de silver/h se fait uniquement
 // sur les silver looté au sol grâce au token qui doivent être la principale source de revenu") --
@@ -3103,7 +3103,7 @@ function doTeleport(dirX, dirY) {
 // restent un luxe) et le temps de recharge grandit avec le soin apporté, pour qu'aucune taille
 // ne soit "abusable" (spam en boucle) ni trop faible pour être utile.
 // Recalibré le 2026-07-08 par rapport à la courbe de gains des zones de Velia (~3 000 silver/h en
-// zone 1 jusqu'à ~100 000 silver/h en zone 11, voir zones-roadmap.md) : même utilisée en continu à
+// zone 1 jusqu'à ~100 000 silver/h en zone 11, voir roadmap.md) : même utilisée en continu à
 // son propre CD, la potion la plus chère (mega) ne dépasse jamais ~15% du revenu horaire d'une
 // zone adaptée à son coût — un vrai sink sans jamais casser l'économie du joueur qui progresse.
 // "Potion de vie" (infinite, cost:0) : verrouillée 🔒 en bas du sélecteur, réservée à un futur
@@ -3704,7 +3704,7 @@ const ZONE_ARMOR_SLOTS = [
 // 3, ~750 PA au PEN en bleu, contre ~460 PD total) — apShare/dpShare recalculés pour qu'un stuff
 // COMPLET du palier bleu (3 armes + 4 armures + bijoux) totalise ~301 PA / ~248 PD au PEN (×2.33,
 // voir enhBonus(20)), chaque palier plus bas donnant proportionnellement moins (la formule suit le
-// PA/PD requis de zone, qui grandit à chaque palier) — voir zones-roadmap.md pour le détail du calcul.
+// PA/PD requis de zone, qui grandit à chaque palier) — voir roadmap.md pour le détail du calcul.
 // AP retiré des 4 pièces d'armure (2026-07-06, demande explicite : "les armures ne donnent pas
 // d'AP") — comme dans le vrai jeu, l'armure est purement défensive (PD/PV/Esquive), seules les
 // armes apportent de l'AP. L'ancien total d'AP armure (.0204+.0204+.0163+.0163 = .0734) est
@@ -5255,7 +5255,7 @@ let lootPreviewIdx = null; // null = suit la zone qu'on farm ; sinon index de la
 // paliers de zones : pour l'instant tout ZONES[] est "Early" (jusqu'au niveau ~31) — Mid et End
 // arriveront dans une future mise à jour, d'où le verrou 🔒 (demande explicite du 2026-07-05)
 let zoneTier = 'early';
-// 5 paliers de régions (voir zones-roadmap.md pour le détail des zones prévues par palier) —
+// 5 paliers de régions (voir roadmap.md pour le détail des zones prévues par palier) —
 // seul "Early / Velia" est en jeu pour l'instant, les autres sont verrouillés en attendant
 // d'être construits (demande explicite du 2026-07-05)
 const ZONE_TIERS = [
