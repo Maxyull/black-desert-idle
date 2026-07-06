@@ -2507,6 +2507,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V248', d:'12/07/2026 05:00', name:{fr:'Tooltip détaillé pour le stuff du sac protégé', en:'Detailed tooltip for protected bag gear'}, fr:[
+      {t:'new', sub:'interface', tx:'Survoler une pièce du sac protégé (Compendium) affiche désormais le tooltip complet (PA/PD/PV/Esquive/enchantement), comme dans le sac principal — avant, seul un petit badge d\'enchantement était visible, sans détail au survol'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Hovering a piece in the protected bag (Compendium) now shows the full tooltip (AP/DP/HP/Dodge/enhancement), like in the main bag — before, only a small enhancement badge was visible, with no hover detail'},
+    ] },
   { v:'V247', d:'12/07/2026 04:00', name:{fr:'La flèche d\'upgrade propose à nouveau toutes les zones', en:'The upgrade arrow suggests all zones again'}, fr:[
       {t:'change', sub:'interface', tx:'La flèche ⬆️ (sur une pièce équipée ou sur une zone) ne proposait plus que des zones déjà découvertes (visitées au moins une fois) — revirement assumé : elle propose à nouveau n\'importe quelle zone du jeu, même jamais visitée, tant qu\'elle n\'est pas dangereuse'},
     ], en:[

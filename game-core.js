@@ -2444,7 +2444,7 @@ function renderCompendiumHtml() {
     const used = COMPENDIUM_BAG.filter(Boolean).length;
     const cellsHtml = COMPENDIUM_BAG.map((s,i) => {
       if (!s) return `<div class="cell compBagCell"></div>`;
-      return `<div class="cell compBagCell has" title="${escapeHtml(tr(s.name))}">` +
+      return `<div class="cell compBagCell has" data-i="${i}" title="${escapeHtml(tr(s.name))}">` +
         `<span style="color:${s.color}">${s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔'}</span>` +
         cellEnhBadgeHtml(s) +
         `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button></div>`;
@@ -2519,6 +2519,18 @@ function openCompendium() {
       if (invAdd({ ...it })) { COMPENDIUM_BAG[i] = null; openCompendium(); }
       else floatTxt(P.x,P.y,90,LANG==='fr'?'Sac principal plein':'Main bag full',{hurt:true});
     };
+  });
+  // "afficher l'optimisation des item protégé dans le sac protégé" (2026-07-12) : le petit badge
+  // +X (cellEnhBadgeHtml) était déjà là, mais contrairement au sac principal, aucun survol ne
+  // montrait le tooltip détaillé (PA/PD/PV/Esquive/enchantement complet, voir itemTooltipHtml) --
+  // même wiring que renderInventory(), juste sans invIndex (ces objets ne vivent pas dans INV[]).
+  COMPENDIUM_BAG.forEach((s, i) => {
+    if (!s) return;
+    const cell = $a('infoBody').querySelector(`.compBagCell[data-i="${i}"]`);
+    if (!cell) return;
+    cell.onmouseenter = ev => showItemTooltip(ev.clientX, ev.clientY, s);
+    cell.onmousemove = ev => moveItemTooltip(ev.clientX, ev.clientY);
+    cell.onmouseleave = () => hideItemTooltip();
   });
 }
 
