@@ -298,6 +298,78 @@
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
     S.maxZoneIdx = s.maxZoneIdx;
   }
+  // "l'icone d'upgrade de stuff dois revenir sur le stuff... si elle est quitté et qu'un stuff est
+  // jugé plus intéréssant" (2026-07-12) -- bug trouvé : renderEquipment() (badge ⬆️ de la poupée)
+  // n'était rafraîchi par hud() QUE si la composition du sac changeait (invSignature), jamais sur un
+  // simple changement de zone -- upgradeZonesForEquippedSlot() dépend pourtant de zoneIdx (exclut
+  // la zone où l'on se trouve DÉJÀ). Vérifie que le DOM réel se met bien à jour après un vrai
+  // travelTo(), pas juste que la fonction de calcul répond juste (déjà couvert ailleurs).
+  function testEquipmentDollRefreshesOnZoneTravel() {
+    if (!$('pdLeft') && !$('pdRight')) return; // pas de DOM (contexte hors-jeu)
+    const s = { zoneIdx, atVelia, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP,
+      x: P.x, y: P.y, maxZoneIdx: S.maxZoneIdx };
+    ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
+    EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey
+    S.maxZoneIdx = ZONES.length - 1;
+    travelTo(4); // pile dans la SEULE zone qui offrirait mieux -> pas de badge à afficher ici
+    const slotWhileIn = document.querySelector('.pdSlot[data-slot="weapon"]');
+    assert('⬆️ absent sur la poupée (DOM réel) tant qu\'on est DANS la seule zone qui offrirait mieux',
+      !slotWhileIn || !slotWhileIn.querySelector('.pdUpgradeBtn'));
+    travelTo(3); // on quitte -> la zone 4 redevient une source d'upgrade valide
+    const slotAfterLeave = document.querySelector('.pdSlot[data-slot="weapon"]');
+    assert('⬆️ réapparaît sur la poupée (DOM réel) dès qu\'on quitte cette zone',
+      !!slotAfterLeave && !!slotAfterLeave.querySelector('.pdUpgradeBtn'));
+    EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP; S.maxZoneIdx = s.maxZoneIdx;
+    if (s.atVelia) goToVelia(); else travelTo(s.zoneIdx);
+    P.x = s.x; P.y = s.y;
+  }
+  // "nouvelle ia, pack to pack rapide: l'ia choisi deja son prochain pack en tournant autour avec
+  // l'ancien quand l'ancien a -30% hp jusqu'a se faire aggro et recommencer sur le pack suivant"
+  // (2026-07-12) -- packHpFraction() calcule bien la fraction de PV cumulés vivants d'un pack.
+  function testPackHpFraction() {
+    const full = { wolves: [ {maxHp:10,hp:10,dead:false}, {maxHp:10,hp:10,dead:false} ] };
+    assert('packHpFraction : pack intact = 1', packHpFraction(full) === 1);
+    const partial = { wolves: [ {maxHp:10,hp:10,dead:false}, {maxHp:10,hp:4,dead:false} ] };
+    assert('packHpFraction : 1 plein + 1 à 40% = 0.7 (moyenne pondérée)', Math.abs(packHpFraction(partial) - 0.7) < 0.001, `got=${packHpFraction(partial)}`);
+    const oneDead = { wolves: [ {maxHp:10,hp:10,dead:false}, {maxHp:10,hp:0,dead:true} ] };
+    assert('packHpFraction : 1 mort sur 2 = 0.5 (le mort compte pour 0, pas son hp figé)', packHpFraction(oneDead) === 0.5);
+    const allDead = { wolves: [ {maxHp:10,hp:0,dead:true}, {maxHp:10,hp:0,dead:true} ] };
+    assert('packHpFraction : pack entièrement mort = 0', packHpFraction(allDead) === 0);
+  }
+  // vérifie le VRAI comportement de bascule en mode Opti : une fois le pack actuel sous 70% de PV
+  // cumulés, combatTick() doit basculer target sur le pack vivant le plus proche dès qu'il serait
+  // aggro (d<=170), sans attendre que l'ancien soit fini.
+  function testOptiModeSwitchesToNextPack() {
+    const s = { farmMode: S.farmMode, target, packs, x: P.x, y: P.y, nextPack: P.nextPack };
+    S.farmMode = 'opti';
+    const oldPack = { x:0, y:0, dead:false, aggro:true, gathered:1,
+      wolves:[{maxHp:10,hp:5,dead:false}] }; // 50% de PV cumulés -> sous le seuil de 70%
+    const nearPack = { x:50, y:0, dead:false, aggro:false, gathered:0,
+      wolves:[{maxHp:10,hp:10,dead:false}] }; // à 50 unités -> < 170, aggro immédiat
+    packs = [oldPack, nearPack];
+    target = oldPack;
+    P.x = 0; P.y = 0; P.nextPack = null;
+    combatTick(0.016);
+    assert('Mode Opti : combatTick bascule sur le pack le plus proche une fois sous 70% de PV', target === nearPack, `target===oldPack? ${target===oldPack}`);
+    assert('Mode Opti : le nouveau pack ciblé est marqué aggro', nearPack.aggro === true);
+    S.farmMode = s.farmMode; target = s.target; packs = s.packs; P.x = s.x; P.y = s.y; P.nextPack = s.nextPack;
+  }
+  // "fais moi un slider pour le choix d'ia avec les 3 ia" (2026-07-12) -- le slider (#farmModeRange)
+  // doit refléter S.farmMode et permettre les 3 valeurs (loot/xp/opti) dans les 2 sens.
+  function testFarmModeSliderReflectsThreeModes() {
+    if (!$('farmModeRange')) return; // pas de DOM (contexte hors-jeu)
+    const s = { farmMode: S.farmMode };
+    for (let i = 0; i < FARM_MODE_ORDER.length; i++) {
+      S.farmMode = FARM_MODE_ORDER[i];
+      renderFarmModeBtn();
+      assert(`Slider : value correspond bien à S.farmMode="${FARM_MODE_ORDER[i]}"`, parseInt($('farmModeRange').value,10) === i);
+    }
+    for (let i = 0; i < FARM_MODE_ORDER.length; i++) {
+      setFarmModeFromSlider(i);
+      assert(`setFarmModeFromSlider(${i}) fixe bien S.farmMode="${FARM_MODE_ORDER[i]}"`, S.farmMode === FARM_MODE_ORDER[i]);
+    }
+    S.farmMode = s.farmMode; renderFarmModeBtn();
+  }
   // "montrer dans l'inventaire uniquement les items qui se lootent dans la zone... si plusieurs
   // zones sont disponibles... plusieurs flèches sur stuff ET zone à farm" (2026-07-12) --
   // slotsUpgradedByZone(zi) doit retourner UNIQUEMENT le(s) socle(s) que CETTE zone améliore
@@ -1114,6 +1186,10 @@
     testNoAutoPotionAtVelia();
     testUpgradeIconOnlyWhenBetterStuffAvailable();
     testUpgradeIconIgnoresDiscoveredZone();
+    testEquipmentDollRefreshesOnZoneTravel();
+    testPackHpFraction();
+    testOptiModeSwitchesToNextPack();
+    testFarmModeSliderReflectsThreeModes();
     testSlotsUpgradedByZoneIsZoneSpecific();
     testZoneTierLockIsSeparateFromLabel();
     testJewelryShowsGainInAutoOptList();

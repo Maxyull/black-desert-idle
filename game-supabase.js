@@ -1638,7 +1638,7 @@ $a('skillBarToggle').onclick = () => {
   $a('skillBar').classList.toggle('expanded');
   $a('skillBarToggle').classList.toggle('expanded');
 };
-$a('farmModeBtn').onclick = toggleFarmMode;
+$a('farmModeRange').oninput = e => setFarmModeFromSlider(parseInt(e.target.value, 10));
 renderFarmModeBtn();
 
 // clic sur un objet au sol : déplace le perso jusque là. Prioritaire sur l'IA — tant qu'il n'est
@@ -2507,6 +2507,17 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V252', d:'13/07/2026 08:00', name:{fr:'Mode Opti (IA pack à pack), slider de mode, icônes de stuff agrandies', en:'Opti mode (pack-to-pack AI), mode slider, bigger gear icons'}, fr:[
+      {t:'new', sub:'combat', severity:'major', tx:'Nouveau 3e mode de farm "🌀 Opti" : dès que le pack combattu tombe à 70% de vie cumulée, le personnage repère déjà le pack vivant le plus proche et bascule dessus dès qu\'il serait normalement aggro — enchaîne les packs sans jamais attendre la fin d\'un combat'},
+      {t:'change', sub:'interface', tx:'Le bouton de mode de farm est remplacé par un slider à 3 crans (🎒 Loot / 📖 XP / 🌀 Opti), plus lisible qu\'un simple clic cyclique'},
+      {t:'fix', sub:'objets', tx:'La flèche ⬆️ d\'amélioration sur une pièce équipée ne se rafraîchissait pas en changeant de zone (elle ne réapparaissait qu\'après un loot ou une vente) — elle suit désormais correctement chaque voyage, y compris en quittant une zone qui devient une meilleure option'},
+      {t:'change', sub:'interface', tx:'Les icônes de stuff (sac et poupée d\'équipement) remplissent désormais presque toute leur case au lieu de flotter avec une grosse marge autour'},
+    ], en:[
+      {t:'new', sub:'combat', severity:'major', tx:'New 3rd farm mode "🌀 Opti": as soon as the current pack drops to 70% combined HP, the character already spots the nearest living pack and switches to it as soon as it would normally aggro — chains packs without ever waiting for a fight to end'},
+      {t:'change', sub:'interface', tx:'The farm mode button is replaced by a 3-position slider (🎒 Loot / 📖 XP / 🌀 Opti), clearer than a single cyclic click'},
+      {t:'fix', sub:'objets', tx:'The ⬆️ upgrade arrow on an equipped piece didn\'t refresh on zone change (it only reappeared after a loot or a sale) — it now correctly follows every trip, including leaving a zone that becomes a better option'},
+      {t:'change', sub:'interface', tx:'Gear icons (bag and equipment doll) now fill almost their entire cell instead of floating with a large margin around them'},
+    ] },
   { v:'V251', d:'12/07/2026 08:00', name:{fr:'Fix bijoux dans l\'auto-opti, 2x plus de monstres en zone verte, filet Firefox renforcé', en:'Fixed jewelry in auto-opt, 2x more monsters in Green tier, stronger Firefox safety net'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'La liste déroulante de l\'optimisation automatique n\'affichait jamais le gain (+1 PA, +2 PA...) pour les bijoux (anneaux, boucles, colliers, ceintures) — le code ne regardait que le gain de PD par défaut pour tout ce qui n\'est pas une arme, alors que les bijoux donnent de la PA, jamais de PD. Corrigé : le gain s\'affiche désormais correctement pour les bijoux'},
       {t:'change', sub:'combat', tx:'Le palier vert (Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) a désormais 16 groupes de monstres actifs en même temps (2× le palier blanc), au lieu de 10'},

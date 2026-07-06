@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Velia Idle — Progression & Zones</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="styles.css?v=288">
+<link rel="stylesheet" href="styles.css?v=289">
 </head>
 <body>
 
@@ -302,7 +302,10 @@
     <canvas id="zoneMobIcon" width="34" height="34"></canvas>
     <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Camp des Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span><br><span id="ztCompendium"></span></div>
     <div id="aiState">IA : <span id="stateName">SearchPack</span> · <span id="aiSkill">—</span></div>
-    <div id="farmModeBtn" title="Change le comportement de l'IA"></div>
+    <div id="farmModeSlider" title="Choix du mode de farm">
+      <span id="farmModeLabel"></span>
+      <input type="range" id="farmModeRange" min="0" max="2" step="1" value="0">
+    </div>
     <div id="silverBox"><span class="coin"></span><span id="silver">0</span></div>
     <div id="shRate">— silver/h</div>
     <div id="lootTicker"></div>
@@ -486,10 +489,10 @@
   </div>
 </div>
 
-<script src="game-core.js?v=288"></script>
-<script src="game-supabase.js?v=288"></script>
+<script src="game-core.js?v=289"></script>
+<script src="game-supabase.js?v=289"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=288"></script>
+<script src="tests.js?v=289"></script>
 </body>
 </html>
