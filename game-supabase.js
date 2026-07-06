@@ -2504,6 +2504,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V234', d:'11/07/2026 15:00', name:{fr:'Zones jumelles échelonnées (Trent, Île d\'Iliya, Base de Bashim)', en:'Twin zones staggered (Trent, Iliya Island, Bashim Base)'}, fr:[
+      {t:'change', sub:'zones', tx:'Ruines de Trent, Île d\'Iliya et Base de Bashim demandaient exactement le même PA/PD que leur zone jumelle du même palier (Repaire des Pirates, Colonie Sausan, Repaire Bandits Gahaz) — elles demandent désormais un peu plus, sans jamais dépasser la zone suivante du palier suivant. Le plafond de fin de jeu (320 PA / 175 PD, Ruines de Kratuga / Planque des Mânes / Forêt de Polly) reste inchangé'},
+    ], en:[
+      {t:'change', sub:'zones', tx:'Ruines de Trent, Iliya Island and Bashim Base required the exact same AP/DP as their twin zone in the same tier (Pirate Hideout, Sausan Colony, Gahaz Bandit Den) — they now require a bit more, never exceeding the next tier\'s opening zone. The endgame cap (320 AP / 175 DP, Kratuga Ruins / Manes\' Hideout / Polly Forest) stays unchanged'},
+    ] },
   { v:'V233', d:'11/07/2026 14:00', name:{fr:'Loyalties récupérables, liste admin fiabilisée, reload Silver, notes de version', en:'Claimable Loyalty, fixed admin list, Silver reload, patch notes'}, fr:[
       {t:'fix', sub:'admin', severity:'major', tx:'La réinitialisation des quêtes de tous les joueurs (bouton Admin) était cassée depuis sa création — la fonction serveur associée n\'avait jamais réellement été mise en place. Corrigé'},
       {t:'fix', sub:'admin', severity:'major', tx:'La liste des joueurs du panneau Admin ne montrait que les comptes vérifiés — tout joueur en mode invité (même actif, avec une vraie progression) en était totalement absent. Elle inclut désormais tous les comptes, invités compris'},

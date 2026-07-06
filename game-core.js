@@ -195,22 +195,28 @@ const ZONES = [
   // AUCUN index de zone déjà utilisé par les sauvegardes existantes (S.maxZoneIdx, zoneIdx,
   // Compendium par zone...) — voir GEAR_TIERS.zones et ZONE_WEAPON_SLOTS plus bas, mis à jour
   // en conséquence avec ces nouveaux index (12,13,14,15).
-  // reqAP/reqDP volontairement IDENTIQUES à la dernière zone déjà existante de chaque palier
-  // (aucun changement du plafond de difficulté). Le total de PA des bijoux d'un palier (avant
-  // réparti sur 3 pièces) a été redistribué sur 4 (voir les ap ci-dessus, réduits en conséquence)
-  // pour que le total PA du palier reste EXACTEMENT le même malgré ce nouveau 4e bijou -- migration
-  // rétroactive du stuff déjà possédé, voir migrateEarringRebalanceV175().
-  { name:'Ruines de Trent', tier:'Balenos — Early', reqAP:25, reqDP:23, mob:'Troll des Ruines',
+  // reqAP/reqDP étaient volontairement IDENTIQUES à la dernière zone déjà existante de chaque
+  // palier depuis leur ajout (2026-07-05). Légèrement échelonnées le 2026-07-11 (demande explicite :
+  // "certaine zone ont le meme nombre d'ap dp req, pas normal") -- Trent/Iliya/Bashim montent d'un
+  // cran (toujours nettement sous le premier req du palier suivant, voir testZoneMonotonicity) pour
+  // ne plus être de purs doublons, TOUJOURS sans dépasser le plafond de fin de jeu à 320/175 fixé
+  // explicitement avant : Forêt de Polly (dernière zone, palier bleu) reste identique à Ruines de
+  // Kratuga/Planque des Mânes, choix explicite du joueur de ne pas toucher ce plafond.
+  // Le total de PA des bijoux d'un palier (avant réparti sur 3 pièces) a été redistribué sur 4 (voir
+  // les ap ci-dessus, réduits en conséquence) pour que le total PA du palier reste EXACTEMENT le
+  // même malgré ce nouveau 4e bijou -- migration rétroactive du stuff déjà possédé, voir
+  // migrateEarringRebalanceV175().
+  { name:'Ruines de Trent', tier:'Balenos — Early', reqAP:30, reqDP:24, mob:'Troll des Ruines',
     hpPer:35, dmg:4, xp:20,
     tint:{ a:'#3d4238', b:'#383d33', dry:'#454a3e' }, tones:['#6a7a5e','#5c6c50','#788a6c'], alphaTone:'#455038',
     loot:{ trash:{name:'Pierre de Trent',val:7,ch:1}, mat:{name:'Pierre noire',val:1,ch:.34},
       jackpot:{name:'Boucle Naru',val:1300,ch:.0032,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.019} } },
-  { name:'Île d\'Iliya', tier:'Serendia — Mid', reqAP:62, reqDP:37, mob:'Pirate d\'Iliya',
+  { name:'Île d\'Iliya', tier:'Serendia — Mid', reqAP:75, reqDP:44, mob:'Pirate d\'Iliya',
     hpPer:104, dmg:13, xp:67,
     tint:{ a:'#2e4a4a', b:'#2a4444', dry:'#355656' }, tones:['#4a9a9a', '#3f8888', '#5aacac'], alphaTone:'#2c5a5a',
     loot:{ trash:{name:'Perle d\'Iliya',val:38,ch:1}, mat:{name:'Éclat de cristal noir dur',val:5,ch:.14},
       jackpot:{name:'Boucle Tuvala',val:6900,ch:.0011,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.009} } },
-  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:188, reqDP:103, mob:'Soldat de Bashim',
+  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:210, reqDP:114, mob:'Soldat de Bashim',
     hpPer:395, dmg:49, xp:224,
     tint:{ a:'#3c3c34', b:'#36362f', dry:'#44443a' }, tones:['#8a8a68', '#78785a', '#9a9a78'], alphaTone:'#565640',
     loot:{ trash:{name:'Insigne de Bashim',val:92,ch:1}, mat:{name:'Pierre de Caphras',val:8,ch:.058},
