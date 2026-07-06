@@ -2967,6 +2967,22 @@ function spawnPackNear() {
   });
 }
 
+// nombre de packs actifs simultanément dans le monde -- davantage à partir du palier BLANC
+// (2026-07-11, demande explicite : "rajoute des groupe de monstre a partir de la zone blanche" /
+// "+ de pack meme monstre") : le monstre et son loot restent ceux de la zone, seul le nombre de
+// groupes vivants en même temps dans le monde augmente avec le palier de stuff.
+function targetPackCount() {
+  if (atVelia) return 0;
+  // volontairement SANS passer par GEAR_TIERS/gearTierForZone : resetWorld() (juste en dessous)
+  // s'exécute immédiatement au chargement du script, AVANT que GEAR_TIERS (const déclarée bien
+  // plus bas dans le fichier) n'existe -- y faire appel ici plantait tout le script au chargement
+  // (ReferenceError, confirmé en live). Reprend directement les mêmes groupes de zones par palier
+  // que GEAR_TIERS.zones (grey/white/green/blue), sans dépendance d'ordre de déclaration.
+  if (zoneIdx===0 || zoneIdx===1 || zoneIdx===2 || zoneIdx===12) return 6;  // grey
+  if (zoneIdx===3 || zoneIdx===4 || zoneIdx===5 || zoneIdx===13) return 8;  // white
+  if (zoneIdx===6 || zoneIdx===7 || zoneIdx===8 || zoneIdx===14) return 10; // green
+  return 12; // blue : 9,10,11,15
+}
 function resetWorld() {
   packs = []; drops = []; corpses = []; particles = []; floats = [];
   target = null; P.lootTarget = null; P.manualTarget = null;
@@ -2974,7 +2990,7 @@ function resetWorld() {
   P.state = 'search'; P.hp = effHpMax();
   lastLootEntry = null; // évite de fusionner le loot d'une nouvelle zone avec celui d'avant
   if (atVelia) return; // Velia = zone paisible, aucun monstre n'y est jamais généré
-  for (let i = 0; i < 6; i++) spawnPackNear();
+  for (let i = 0; i < targetPackCount(); i++) spawnPackNear();
 }
 resetWorld();
 // capture immédiate et synchrone de l'état "personnage neuf" — AVANT toute sauvegarde cloud
@@ -5594,7 +5610,7 @@ function loop(now) {
   // BUG trouvé le 2026-07-07 : cette respawn continue n'était jamais gardée par atVelia — Velia
   // partait bien à 0 pack (resetWorld), mais dès la frame suivante ce respawn en ajoutait jusqu'à
   // en avoir 6, remplissant en boucle la "zone paisible" de monstres. Confirmé par le joueur.
-  if (!atVelia && packs.filter(p=>!p.dead).length < 6) spawnPackNear();
+  if (!atVelia && packs.filter(p=>!p.dead).length < targetPackCount()) spawnPackNear();
   // les packs morts ne sont plus jamais dessinés (voir render()) ni utilisés ailleurs —
   // avant ce correctif ils restaient dans le tableau tant que le joueur ne s'éloignait pas
   // de 900 unités, ce qui faisait grossir `packs` indéfiniment sur une session de farm

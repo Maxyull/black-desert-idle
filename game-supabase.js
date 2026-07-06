@@ -2504,6 +2504,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V243', d:'12/07/2026 00:00', name:{fr:'Plus de groupes de monstres à partir du palier blanc', en:'More monster groups from the White tier onward'}, fr:[
+      {t:'change', sub:'combat', tx:'Le nombre de groupes de monstres actifs en même temps dans le monde augmente désormais à chaque palier de stuff : 6 (gris, inchangé), 8 (blanc), 10 (vert), 12 (bleu). Même monstre et même loot par zone, juste plus de groupes vivants simultanément'},
+    ], en:[
+      {t:'change', sub:'combat', tx:'The number of monster groups active at the same time in the world now increases with each gear tier: 6 (grey, unchanged), 8 (white), 10 (green), 12 (blue). Same monster and loot per zone, just more groups alive at once'},
+    ] },
   { v:'V242', d:'11/07/2026 23:00', name:{fr:'Rééquilibrage du prix des potions (lié uniquement au trash/token)', en:'Potion price rebalance (tied only to trash/token)'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le prix des potions ne dépendait déjà que du silver de trash (token) de la zone, jamais de la vente de stuff — mais l\'amortissement en racine carrée dérivait fortement de l\'objectif visé : la potion la plus chère (mega) coûtait jusqu\'à 42% du revenu horaire en début de jeu, mais seulement 3.6% en fin de jeu, au lieu de rester proche de 15% partout. Elle coûte désormais TOUJOURS exactement 15% du revenu horaire de trash de la zone actuelle, quelle que soit la zone — les autres tailles (petite/moyenne/grande) gardent le même ratio entre elles qu\'avant'},
     ], en:[

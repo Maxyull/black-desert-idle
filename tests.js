@@ -578,6 +578,41 @@
     zoneIdx = s.zoneIdx; atVelia = s.atVelia;
   }
 
+  // "rajoute des groupe de monstre a partir de la zone blanche" / "+ de pack meme monstre" (2026-07-11)
+  // -- targetPackCount() doit rester à 6 (inchangé) au palier gris, puis augmenter à chaque palier
+  // suivant (blanc/vert/bleu), et retomber à 0 à Velia (zone paisible, aucun monstre).
+  function testTargetPackCountIncreasesFromWhiteTier() {
+    const s = { zoneIdx, atVelia };
+    atVelia = false;
+    zoneIdx = 0; // grey
+    assert('targetPackCount = 6 en palier gris (inchangé)', targetPackCount() === 6);
+    zoneIdx = 3; // white
+    assert('targetPackCount augmente au palier blanc', targetPackCount() > 6, `got=${targetPackCount()}`);
+    const whiteCount = targetPackCount();
+    zoneIdx = 6; // green
+    assert('targetPackCount augmente encore au palier vert', targetPackCount() > whiteCount, `got=${targetPackCount()}`);
+    const greenCount = targetPackCount();
+    zoneIdx = 9; // blue
+    assert('targetPackCount augmente encore au palier bleu', targetPackCount() > greenCount, `got=${targetPackCount()}`);
+    atVelia = true;
+    assert('targetPackCount = 0 à Velia (zone paisible, aucun monstre)', targetPackCount() === 0);
+    zoneIdx = s.zoneIdx; atVelia = s.atVelia;
+  }
+  // vérifie que resetWorld() peuple bien EXACTEMENT targetPackCount() packs pour la zone chargée
+  // (pas juste que la fonction existe, mais qu'elle est bien branchée à l'initialisation du monde)
+  function testResetWorldSpawnsTargetPackCount() {
+    const s = { zoneIdx, atVelia, x: P.x, y: P.y };
+    atVelia = false;
+    zoneIdx = 3; // palier blanc
+    resetWorld();
+    const expected = targetPackCount();
+    assert(`resetWorld() peuple bien ${expected} packs en zone blanche`,
+      packs.filter(p=>!p.dead).length === expected, `got=${packs.filter(p=>!p.dead).length}, attendu=${expected}`);
+    zoneIdx = s.zoneIdx; atVelia = s.atVelia;
+    resetWorld(); // restaure un monde cohérent avec la vraie zone/atVelia du joueur
+    P.x = s.x; P.y = s.y;
+  }
+
   // "refonte de la carte statistique ... best silver, best xp, best monstre" (2026-07-09) : les
   // recommandations doivent être des valeurs THÉORIQUES par zone (indépendantes du stuff actuel du
   // joueur) — vérifie que bestZoneForMetric trouve bien le maximum réel parmi les 16 zones pour
@@ -953,6 +988,8 @@
     testApDpDisplayHasNoDecimals();
     testEffectiveApDpFloors();
     testPotionCostIsFixedPctOfHourlyTrashIncome();
+    testTargetPackCountIncreasesFromWhiteTier();
+    testResetWorldSpawnsTargetPackCount();
     testStatsRecoPicksTrueBestZone();
     testLootedItemsSellForMuchLess();
     testJewelryGetsColoredBorderInBag();
