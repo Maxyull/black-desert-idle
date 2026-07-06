@@ -1,10 +1,10 @@
-/* Correctif mobile 2026-07-06 : frame de jeu plus haute et paperdoll compact. */
+/* Correctif mobile 2026-07-06 : HUD respirant sans étirer le canvas du jeu. */
 @media (max-width:600px) {
   html, body { min-height:100svh; }
   body { padding:6px 4px calc(18px + env(safe-area-inset-bottom)); }
   #wrap { margin-top:42px; padding:0; }
-  #gameFrame { height:clamp(420px, 90svh, 680px); }
-  #gameFrame > #cv { width:100%; height:100%; }
+  #gameFrame { height:auto; aspect-ratio:1240 / 440; }
+  #gameFrame > #cv { width:100%; height:auto; }
   #gameFrame > #zoneMobIcon { width:28px; height:28px; top:7px; left:8px; }
   #zoneTitle { top:7px; left:42px; font-size:12px; letter-spacing:1.2px; max-width:calc(100% - 150px); }
   #zoneTitle small { font-size:8px; letter-spacing:1.8px; }
@@ -14,12 +14,12 @@
   #hpBar, #mpBar { width:112px; }
   #silverBox { top:7px; right:8px; font-size:11px; padding:4px 7px; max-width:122px; overflow:hidden; }
   #shRate { top:36px; right:8px; font-size:8.5px; }
-  #lootTicker { right:8px; bottom:8px; max-width:44%; font-size:9px; max-height:120px; }
-  #invFullBanner { top:auto; bottom:104px; font-size:9.5px; }
-  #deathBanner { top:auto; bottom:104px; font-size:9.5px; }
-  #dangerBanner { top:auto; bottom:138px; font-size:9px; }
-  #castBar { bottom:54px; width:176px; }
-  #skillBarToggle { bottom:12px; }
+  #lootTicker { right:8px; bottom:8px; max-width:44%; font-size:9px; max-height:70px; }
+  #invFullBanner { top:112px; bottom:auto; font-size:9.5px; }
+  #deathBanner { top:112px; bottom:auto; font-size:9.5px; }
+  #dangerBanner { top:146px; bottom:auto; font-size:9px; }
+  #castBar { bottom:46px; width:160px; }
+  #skillBarToggle { bottom:10px; }
   #equipCard { overflow:hidden; }
   #equipSummary { justify-content:center; gap:5px 12px; padding:6px; }
   #paperdoll { display:grid; grid-template-columns:1fr; gap:8px; justify-items:center; overflow:hidden; }
