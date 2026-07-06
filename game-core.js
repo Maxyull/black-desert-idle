@@ -4795,7 +4795,14 @@ function hud() {
   drawZoneMobIcon();
   renderFarmModeBtn();
   const zSig = zoneSignature();
-  if (zSig !== lastZoneSig) { lastZoneSig = zSig; buildZoneList(); }
+  // syncFarmCardHeights() force une lecture de mise en page (getBoundingClientRect) — coûteux à
+  // répéter à CHAQUE appel de hud() (bien plus qu'1×/s en combat actif, hud() étant aussi appelé
+  // après chaque loot/vente/équipement). Ne le refaire que quand la liste de zones est VRAIMENT
+  // reconstruite (même déclencheur que buildZoneList) + au redimensionnement (voir plus bas) —
+  // remonté en jeu le 2026-07-06 ("la souris se met à buguer si je garde les onglets ouverts") :
+  // ce recalcul répété pendant des heures de session active était un coût inutile à éliminer,
+  // même sans certitude que ce soit LA cause exacte du ralenti.
+  if (zSig !== lastZoneSig) { lastZoneSig = zSig; buildZoneList(); syncFarmCardHeights(); }
   const iSig = invSignature();
   if (iSig !== lastInvSig) { lastInvSig = iSig; refreshInvUI(); }
   ensureQuests('daily');
@@ -4806,7 +4813,6 @@ function hud() {
   renderQuestTrackerWidget();
   ensureLoyaltyGrant();
   updateMailBadge();
-  syncFarmCardHeights();
   refreshContentNewBadges();
 }
 // aligne la hauteur des cartes "Zones de farm" et "Loot de cette zone" sur celle de la carte
@@ -4874,6 +4880,11 @@ function renderCastBar() {
 let last = performance.now();
 function loop(now) {
   const dt = Math.min(.05,(now-last)/1000); last = now;
+  // onglet en arrière-plan : Chrome ralentit déjà requestAnimationFrame tout seul, mais on saute
+  // en plus tout le travail (simulation + rendu canvas) tant qu'on ne voit pas la page — demande
+  // explicite du 2026-07-06 ("ma souris se met à buguer si je garde les onglets ouverts") : réduit
+  // la charge CPU/GPU soutenue sur les sessions de plusieurs heures, quelle que soit la cause exacte
+  if (document.hidden) { requestAnimationFrame(loop); return; }
   // pendant un combat de boss (plein écran), on met le farm en pause : la salle de boss couvre
   // tout l'écran, inutile de continuer à simuler/dessiner la zone de farm derrière
   if (bossState.active) { requestAnimationFrame(loop); return; }
@@ -5759,6 +5770,7 @@ function stopAutoOpt() {
   $('optAutoTarget').disabled = false;
 }
 function startAutoOpt() {
+  if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; } // garde-fou : jamais 2 intervalles en parallèle
   const sel = $('optAutoTarget');
   const lvl = parseInt(sel.value, 10);
   if (!Number.isInteger(lvl)) return;

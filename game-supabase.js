@@ -2328,6 +2328,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V191', d:'06/07/2026 05:00', name:{fr:'Optimisations contre le ralentissement sur session longue', en:'Optimizations against long-session slowdown'}, fr:[
+      {t:'fix', sub:'interface', severity:'major', tx:'Réduction de charge après un signalement de ralentissement système sur des sessions de plusieurs heures : le rendu (canvas + simulation) est désormais mis en pause quand l\'onglet est en arrière-plan, et le recalcul de hauteur des cartes (ajouté par erreur à chaque battement du HUD, potentiellement plusieurs fois par seconde) ne se déclenche plus qu\'au vrai changement de zone/inventaire'},
+      {t:'fix', sub:'equipements', severity:'minor', tx:'Garde-fou : l\'optimisation automatique ne peut plus jamais empiler 2 minuteurs en parallèle'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'major', tx:'Reduced load after a report of system-wide slowdown on multi-hour sessions: rendering (canvas + simulation) now pauses when the tab is in the background, and the card-height recalculation (mistakenly added on every HUD tick, potentially several times per second) now only fires on an actual zone/inventory change'},
+      {t:'fix', sub:'equipements', severity:'minor', tx:'Safety net: auto-enhancement can no longer ever stack 2 timers in parallel'},
+    ] },
   { v:'V190', d:'06/07/2026 04:45', name:{fr:'Badge NEW sur contenu modifié, carré unique en ligne/inscrits, niveau à côté de la vie', en:'NEW badge on updated content, single online/registered box, level next to HP'}, fr:[
       {t:'new', sub:'interface', tx:'Badge "NEW" clignotant pendant 24h sur Wiki/Compendium/Codex/Succès après une modification de contenu, visible pour tout le monde (pas besoin de l\'avoir déjà vu ou pas)'},
       {t:'change', sub:'interface', severity:'minor', tx:'"En ligne" et "Inscrits" fusionnés dans un seul carré (au lieu de 2 boîtes empilées séparément)'},
