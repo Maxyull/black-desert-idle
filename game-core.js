@@ -3053,12 +3053,17 @@ function fsm(dt) {
 
   P.potCd = Math.max(0, P.potCd-dt);
   const tier = hpTier();
-  if ((P.hp/effHpMax()) <= (S.potionThreshold ?? 0.5) && P.potCd <= 0) usePotion();
+  // jamais d'auto-soin à Velia (2026-07-09, bug trouvé lors d'une vérification) : Velia est une
+  // zone paisible sans aucun monstre, mais fsm() tournait quand même à Velia -- juste après une
+  // mort (die() met P.hp à 50% PILE au seuil par défaut), une potion payante partait aussitôt sans
+  // aucun combat pour la justifier, gaspillant du silver au pire moment (juste après avoir été tué)
+  if (!atVelia && (P.hp/effHpMax()) <= (S.potionThreshold ?? 0.5) && P.potCd <= 0) usePotion();
   // mana (2026-07-05, demande explicite) : régén passive + potion de mana auto-bue sous 30%,
-  // même principe que la potion de PV mais seuil fixe (pas de réglage joueur pour l'instant)
+  // même principe que la potion de PV mais seuil fixe (pas de réglage joueur pour l'instant) —
+  // la régén passive continue à Velia (sans danger), seul l'ACHAT auto d'une potion est bloqué
   P.mp = Math.min(effManaMax(), P.mp + MANA_REGEN_PER_SEC*dt);
   P.manaPotCd = Math.max(0, P.manaPotCd-dt);
-  if ((P.mp/effManaMax()) <= 0.3 && P.manaPotCd <= 0) usePotionMana();
+  if (!atVelia && (P.mp/effManaMax()) <= 0.3 && P.manaPotCd <= 0) usePotionMana();
   if (tier==='urgence' && teleportCd <= 0 && target && !target.dead) {
     doTeleport(P.x-target.x, P.y-target.y);
     teleportCd = 0; doTeleport(P.x-target.x, P.y-target.y);

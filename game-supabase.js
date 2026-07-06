@@ -2359,6 +2359,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V219', d:'09/07/2026 15:00', name:{fr:'Fix : plus d\'auto-potion payante à Velia (zone paisible)', en:'Fix: no more paid auto-potion in Velia (peaceful zone)'}, fr:[
+      {t:'fix', sub:'economie', severity:'major', tx:'Une potion de vie ou de mana payante pouvait s\'auto-boire à Velia (zone paisible, aucun monstre) — typiquement juste après une mort, qui remet les PV à pile 50% (le seuil par défaut). Le silver était dépensé pour rien puisqu\'aucun combat ne s\'y déroule. Les auto-potions ne se déclenchent plus tant qu\'on est à Velia (la régénération passive de mana continue normalement)'},
+    ], en:[
+      {t:'fix', sub:'economie', severity:'major', tx:'A paid HP or mana potion could auto-trigger while in Velia (peaceful zone, no monsters) — typically right after a death, which resets HP to exactly 50% (the default threshold). Silver was spent for nothing since no combat happens there. Auto-potions no longer trigger while in Velia (passive mana regen still works normally)'},
+    ] },
   { v:'V218', d:'09/07/2026 14:00', name:{fr:'Halo sur "Équiper meilleur", icône ⬆️ sur les zones et cases vides', en:'Highlight on "Equip best", ⬆️ icon on zones and empty slots'}, fr:[
       {t:'new', sub:'interface', tx:'Le bouton "⚡ Équiper meilleur" se met en évidence (pulsation dorée) dès qu\'un objet du sac est resté plus de 15 secondes sans être équipé alors qu\'il est réellement meilleur que la pièce actuelle — pour ne plus oublier un upgrade qui traîne'},
       {t:'new', sub:'interface', tx:'Icône ⬆️ ajoutée directement sur les lignes de la liste de zones (entre le PA/PD requis et le nombre de joueurs) : indique qu\'un meilleur socle t\'attend dans cette zone, tous équipements confondus'},
