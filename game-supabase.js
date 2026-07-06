@@ -2507,6 +2507,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V250', d:'12/07/2026 07:00', name:{fr:'Onglets de région (Velia à Edana) sur une seule ligne', en:'Region tabs (Velia to Edana) on a single row'}, fr:[
+      {t:'change', sub:'interface', tx:'Les 5 onglets de région (Velia/Heidel/Calpheon/Valencia/Edana) passaient parfois sur 2 rangées. Le cadenas 🔒 des régions verrouillées est désormais un petit badge au-dessus de chaque onglet, centré, au lieu d\'être dans le texte — libère assez de place pour que les 5 tiennent toujours sur une seule ligne'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The 5 region tabs (Velia/Heidel/Calpheon/Valencia/Edana) sometimes wrapped onto 2 rows. The 🔒 lock for locked regions is now a small badge above each tab, centered, instead of being in the text — frees up enough room for all 5 to always fit on a single row'},
+    ] },
   { v:'V249', d:'12/07/2026 06:00', name:{fr:'Lien zone ↔ pièce d\'équipement précis, fix armure "où farmer"', en:'Precise zone ↔ gear slot link, fixed armor "where to farm"'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Le système "où farmer" (case vide ou flèche ⬆️) proposait TOUTES les zones du palier pour n\'importe quelle pièce d\'armure, alors que chaque pièce (casque/torse/gants/bottes) ne peut en réalité dropper que dans SA zone dédiée — un reliquat de l\'ancien système d\'avant "1 pièce garantie par zone". Corrigé : casque/torse/gants/bottes ne proposent plus que leur zone exacte'},
       {t:'new', sub:'interface', tx:'Survoler une zone dans la liste surligne désormais UNIQUEMENT la ou les pièces de la poupée d\'équipement que cette zone précise permet d\'améliorer — plus une pièce a de zones qui l\'améliorent, plus elle peut s\'allumer depuis plusieurs lignes de la liste'},

@@ -5253,8 +5253,17 @@ function renderStatsRecoPane() {
 }
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
+  // cadenas déplacé AU-DESSUS, centré (2026-07-12, demande explicite : "réorganise les noms de
+  // zone... pour qu'elle prenne qu'une seule ligne si possible en mettant le cadenas au dessus au
+  // milieu de chaque item") -- avant, "🔒 🔵 Calpheon" tout sur la même ligne dans le texte du
+  // bouton faisait déborder/passer à la ligne certains des 5 onglets ; le cadenas est maintenant un
+  // badge séparé au-dessus (.zoneTierLock), le texte du bouton se limite à "🔵 Calpheon", plus court.
+  // le libellé vit dans un <span> interne à sa propre troncature (overflow/ellipsis) -- le
+  // <button> lui-même reste overflow:visible pour que le badge cadenas (position absolute, dépasse
+  // au-dessus) ne soit jamais rogné par la troncature du texte.
   el.innerHTML = ZONE_TIERS.map(t => `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
-    `${t.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-tier="${t.id}">${t.locked?'🔒 ':''}${t.icon} ${t.label[LANG]}</button>`).join('');
+    `${t.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-tier="${t.id}">` +
+    `${t.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`).join('');
   el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
     btn.onclick = () => { zoneTier = btn.dataset.tier; buildZoneList(); };
   });

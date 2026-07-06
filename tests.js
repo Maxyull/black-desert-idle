@@ -318,6 +318,23 @@
     zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; EQUIP.helmet = s.EQUIP_helmet;
     ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
   }
+  // "réorganise les noms de zone velia a edana pour qu'elle prenne qu'une seule ligne... en mettant
+  // le cadenas au dessus au milieu de chaque item" (2026-07-12) -- le cadenas doit être un élément
+  // SÉPARÉ (.zoneTierLock), jamais concaténé dans le texte visible du bouton (qui doit rester court :
+  // juste icône + nom de région) pour laisser assez de place aux 5 onglets sur une seule rangée.
+  function testZoneTierLockIsSeparateFromLabel() {
+    if (!$('zoneTierTabs')) return; // pas de DOM (contexte hors-jeu)
+    renderZoneTierTabs();
+    const buttons = [...$('zoneTierTabs').querySelectorAll('.catTab')];
+    const velia = buttons.find(b => b.dataset.tier === 'early');
+    const heidel = buttons.find(b => b.dataset.tier === 'mid');
+    assert('Onglet Velia (non verrouillé) n\'a pas de badge cadenas', !velia.querySelector('.zoneTierLock'));
+    assert('Onglet Heidel (verrouillé) a bien un badge cadenas séparé', !!heidel.querySelector('.zoneTierLock'));
+    // le texte visible du bouton (hors badge cadenas) ne doit PAS contenir 🔒 -- il doit être court
+    const heidelClone = heidel.cloneNode(true);
+    heidelClone.querySelector('.zoneTierLock').remove();
+    assert('Le texte du bouton (hors badge) ne contient plus le cadenas', !heidelClone.textContent.includes('🔒'), `texte=${heidelClone.textContent}`);
+  }
   // "la flèche qui affiche le stuff à farm sur la zone ne doit pas s'afficher si le stuff est dans
   // l'inventaire" (2026-07-11) -- zonesOfferingUpgrade() (badge ⬆️ sur les lignes de la liste de
   // zones) ne doit plus proposer un socle pour lequel un objet meilleur est DÉJÀ possédé, non
@@ -1073,6 +1090,7 @@
     testUpgradeIconOnlyWhenBetterStuffAvailable();
     testUpgradeIconIgnoresDiscoveredZone();
     testSlotsUpgradedByZoneIsZoneSpecific();
+    testZoneTierLockIsSeparateFromLabel();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
     testJewelryHasMatNameForEnhancement();

@@ -1292,6 +1292,23 @@
   .catTab { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; }
   .catTab.active { border-color:var(--gold); color:var(--gold); }
   .catTab.locked { opacity:.45; cursor:not-allowed; }
+  /* onglets de région Velia->Edana (2026-07-12) : le cadenas passe AU-DESSUS, centré, plutôt que
+     dans le texte du bouton -- libère de la largeur, mais 5 boutons "flex + flex-wrap" restaient
+     tout de même sur 2 rangées dans une carte étroite (le mot "Calpheon" à lui seul dépasse la
+     largeur d'1/5e de la carte). Grille à 5 colonnes STRICTEMENT égales (jamais de retour à la
+     ligne possible, contrairement à flex-wrap) + troncature (ellipsis) en dernier recours si un nom
+     ne tient vraiment pas : garantit une seule ligne dans tous les cas, quitte à couper "Calpheon"
+     en "Calphe…" dans les cartes les plus étroites plutôt que de repasser sur 2 rangées. */
+  #zoneTierTabs { display:grid; grid-template-columns:repeat(5, 1fr); gap:2px; margin-bottom:14px; }
+  #zoneTierTabs .catTab { position:relative; padding:6px 2px; font-size:9px; min-width:0; overflow:visible; }
+  /* le libellé (pas le bouton) porte la troncature -- le bouton reste overflow:visible pour ne
+     jamais rogner le badge cadenas qui dépasse au-dessus */
+  .zoneTierLabel { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .zoneTierLock {
+    position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+    font-size:9px; line-height:1; background:var(--panel-2); border:1px solid #3a3742; border-radius:50%;
+    width:14px; height:14px; display:flex; align-items:center; justify-content:center;
+  }
   /* bascule Inventaire/Assemblage en haut de la carte Inventaire (2026-07-06, demande explicite) */
   .invModeTabs { display:flex; gap:6px; margin-bottom:8px; }
   .invModeTab { flex:1; margin:0; padding:6px 11px; font-size:11.5px; background:transparent; border:1px solid #3a3742; }
