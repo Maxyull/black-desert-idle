@@ -708,9 +708,15 @@ function enhBonus(lvl) { let b = 0; for (let i = 1; i <= (lvl||0); i++) b += ENH
 function itemMult(item) { return item && item.optimizable ? (1 + enhBonus(item.enhLv||0)) : 1; }
 // PA/PD réels d'un objet une fois son bonus d'enchantement appliqué (affichage tooltip/popup —
 // avant ce correctif, ces deux endroits affichaient la stat de BASE même sur un objet enchanté +15)
+// PA/PD arrondis vers le BAS (2026-07-08, demande explicite : "laisse uniquement des ajout de PA
+// entier, enleve toute trace de virgule de PA/PD... rajoute les plus bas que necessaire pas a la
+// hausse") -- Math.floor plutôt que Math.round : ne JAMAIS afficher/accorder plus de PA/PD que ce
+// qui est réellement gagné (un Math.round aurait pu arrondir 2.6 à 3, donnant l'illusion d'un
+// point de plus que la vraie valeur). L'Esquive reste en % avec décimales (pas concernée, c'est
+// une stat de %, pas un PA/PD).
 function effectiveApDp(item) {
   const mult = itemMult(item);
-  return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult), hp: Math.round((item.hp||0) * mult),
+  return { ap: Math.floor((item.ap||0) * mult), dp: Math.floor((item.dp||0) * mult), hp: Math.floor((item.hp||0) * mult),
     dodge: Math.round((item.dodge||0) * mult * 100) / 100 };
 }
 // stats projetées SI l'objet atteignait targetLvl -- sert à afficher le gain avant de lancer
@@ -718,7 +724,7 @@ function effectiveApDp(item) {
 // passes à ce palier")
 function projectedApDp(item, targetLvl) {
   const mult = 1 + enhBonus(targetLvl);
-  return { ap: Math.round((item.ap||0) * mult), dp: Math.round((item.dp||0) * mult), hp: Math.round((item.hp||0) * mult),
+  return { ap: Math.floor((item.ap||0) * mult), dp: Math.floor((item.dp||0) * mult), hp: Math.floor((item.hp||0) * mult),
     dodge: Math.round((item.dodge||0) * mult * 100) / 100 };
 }
 
@@ -3154,7 +3160,10 @@ function combatTick(dt) {
   P.bob += dt*4;
   if (Math.random() < dt*.15) P.orbitDir *= -1;
 
-  const incoming = target.wolves.some(w=>w.lunge>.25 && w.lunge<.5);
+  // pas d'esquive automatique en zone dangereuse (2026-07-08, demande explicite : "les monstres...
+  // doivent tuer rapidement le joueurs... ONE SHOT") -- sinon ce téléport défensif pouvait sauver
+  // le joueur du coup fatal garanti (voir wolvesTick), rendant le risque de la zone contournable
+  const incoming = !isZoneDangerous() && target.wolves.some(w=>w.lunge>.25 && w.lunge<.5);
   if (incoming && evasionCd <= 0 && mode !== 'overgeared') {
     evasionCd = 3.2;
     P.x += dx*36; P.y += dy*36; P.tpFlash = .6;
@@ -3202,8 +3211,20 @@ function wolvesTick(dt) {
   // atténuation des dégâts reçus : dépend de TA PD (base + équipement) face à la PD requise de cette zone
   const dpR = dpRatio();
   const mitig = dmgTakenMult(dpR);
-  const dodgeChance = totalDodgePct(dpR) / 100; // voir dodgeEffectiveness : quasi nulle si trop sous-géré
-  const mobSpeed = 50 * (isZoneDangerous() ? DANGER_MOB_SPEED_MULT : 1);
+  const dangerous = isZoneDangerous();
+  // aucune esquive possible en zone dangereuse (2026-07-08, demande explicite : "les monstres...
+  // doivent tuer... ONE SHOT dans 100% des cas") -- sinon un résidu de chance d'esquive (dpR entre
+  // 0.5 et 0.6, voir dodgeEffectiveness) pouvait sauver le joueur du coup garanti ci-dessous
+  const dodgeChance = dangerous ? 0 : totalDodgePct(dpR) / 100; // voir dodgeEffectiveness : quasi nulle si trop sous-géré
+  const mobSpeed = 50 * (dangerous ? DANGER_MOB_SPEED_MULT : 1);
+  // en zone dangereuse, TOUS les packs proches se réveillent d'un coup, pas seulement celui visé
+  // par l'IA (2026-07-08, demande explicite : "les monstres aggros de plus loins... dans 100% des
+  // cas") -- rend le risque immédiat et évident dès qu'on s'approche, pas juste sur le pack engagé
+  if (dangerous) {
+    for (const p of packs) {
+      if (!p.dead && !p.aggro && dist(P.x,P.y,p.x,p.y) <= 400) p.aggro = true;
+    }
+  }
   for (const p of packs) {
     if (p.dead || !p.aggro) continue;
     const d = dist(P.x,P.y,p.x,p.y);
@@ -3227,12 +3248,13 @@ function wolvesTick(dt) {
             } else {
               const dmgRaw = p.dmg*(0.8+Math.random()*.4)*mitig;
               let dmg;
-              if (isZoneDangerous()) {
-                // ZONE DANGEREUSE : aucun plafond -- demande explicite du 2026-07-08 ("JE VEUX QUE
-                // LES MONSTRE EN ZONE DANGEREUSE ONE SHOT LE JOUEUR") : le badge doit représenter un
-                // vrai risque de mort instantanée si le stuff est très en dessous du seuil, pas
-                // juste un ralenti/malus — dissuade explicitement d'y entrer sous-géré.
-                dmg = dmgRaw;
+              if (dangerous) {
+                // ZONE DANGEREUSE : dégâts GARANTIS létaux, pas juste "sans plafond" -- demande
+                // explicite du 2026-07-08 ("dans 100% des cas... tuer rapidement... ONE SHOT") :
+                // le coup brut peut suffire seul, mais Math.max avec effHpMax() garantit la mort
+                // même sur un stuff tout juste sous le seuil (dmgRaw parfois insuffisant de peu) —
+                // le badge doit représenter un risque de mort certaine, jamais probable seulement.
+                dmg = Math.max(dmgRaw, effHpMax());
               } else {
                 // en dehors d'une zone dangereuse : garde le plafond à 30% des PV max CUMULÉ sur
                 // une fenêtre glissante d'1s (2026-07-06/08) -- plusieurs loups d'un même pack (ou
@@ -3258,7 +3280,13 @@ function wolvesTick(dt) {
         }
       } else {
         w.atkT -= dt;
-        if (w.atkT <= 0) { w.atkT = 2.6+Math.random()*2; w.lunge = .55; }
+        if (w.atkT <= 0) {
+          // attaque bien plus rapide en zone dangereuse (2026-07-08, demande explicite : "doivent
+          // tuer rapidement le joueur") -- le loup n'attend presque plus entre deux coups et lance
+          // sa charge quasi instantanément, au lieu du rythme normal de patrouille
+          w.atkT = dangerous ? 0.4+Math.random()*.3 : 2.6+Math.random()*2;
+          w.lunge = dangerous ? 0.15 : 0.55;
+        }
       }
     }
   }
@@ -5038,8 +5066,10 @@ function refreshStatsOnly() {
   if (eqSumLvlEl) eqSumLvlEl.textContent = (LANG==='fr'?'Niv. ':'Lvl ') + S.lvl;
   if (eqSumXpEl) eqSumXpEl.textContent = fmtXpPct(S.xp / S.xpNext * 100);
   $('stPS').textContent = Math.round(GS());
-  $('stPA').textContent = Math.round(apEff()*10)/10;
-  $('stDP').textContent = Math.round(totalDP()*10)/10;
+  // PA/PD affichés en entier, arrondis vers le bas (2026-07-08, demande explicite : "enleve toute
+  // trace de virgule de PA/PD" -- ne jamais afficher plus que ce qui est réellement acquis)
+  $('stPA').textContent = Math.floor(apEff());
+  $('stDP').textContent = Math.floor(totalDP());
   $('stHpMax').textContent = fmt(Math.round(effHpMax()));
   $('stMpMax').textContent = fmt(Math.round(effManaMax()));
   $('stSpd').textContent = '+' + Math.round(totalSpdPct()) + '%';
@@ -5057,9 +5087,9 @@ function refreshStatsOnly() {
     apEl.textContent = LANG==='fr' ? '—' : '—'; apEl.className = 'v';
     dpEl.textContent = '—'; dpEl.className = 'v';
   } else {
-    apEl.textContent = Math.round(apEff()) + ' / ' + z.reqAP;
+    apEl.textContent = Math.floor(apEff()) + ' / ' + z.reqAP;
     apEl.className = 'v ' + (apR >= 1 ? 'ok' : 'bad');
-    dpEl.textContent = Math.round(totalDP()) + ' / ' + z.reqDP;
+    dpEl.textContent = Math.floor(totalDP()) + ' / ' + z.reqDP;
     dpEl.className = 'v ' + (dpR >= 1 ? 'ok' : 'bad');
   }
   $('stMode').textContent = tr(aiMode());
@@ -5089,7 +5119,7 @@ function refreshStatsOnly() {
     zb.title = b.cls === 'b-red'
       ? (LANG==='fr' ? '⚠️ Zone trop dure pour ton stuff : tu es ralenti, les monstres qui t\'ont repéré sont plus rapides' : '⚠️ Zone too hard for your gear: you are slowed down, monsters that spotted you are faster')
       : '';
-    $('ztReq').innerHTML = `<span class="${apR>=1?'ok':'bad'}">${Math.round(apEff())}/${z.reqAP} PA</span> · <span class="${dpR>=1?'ok':'bad'}">${Math.round(totalDP())}/${z.reqDP} PD</span>`;
+    $('ztReq').innerHTML = `<span class="${apR>=1?'ok':'bad'}">${Math.floor(apEff())}/${z.reqAP} PA</span> · <span class="${dpR>=1?'ok':'bad'}">${Math.floor(totalDP())}/${z.reqDP} PD</span>`;
   }
 }
 // version complète : chiffres + reconstruction du DOM (192 cases d'inventaire, liste des 12 zones, paperdoll...)
@@ -5316,9 +5346,10 @@ function renderEquipment() {
   // les stats vont dans la carte Statistiques (pas de doublon)
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
-  // résumé PA/PD/GS directement sur la carte Équipement — demande explicite
-  $('eqSumAp').textContent = 'PA ' + (Math.round(apEff()*10)/10);
-  $('eqSumDp').textContent = 'PD ' + (Math.round(totalDP()*10)/10);
+  // résumé PA/PD/GS directement sur la carte Équipement — demande explicite (entier, arrondi vers
+  // le bas — 2026-07-08, voir le commentaire sur $('stPA') plus haut)
+  $('eqSumAp').textContent = 'PA ' + Math.floor(apEff());
+  $('eqSumDp').textContent = 'PD ' + Math.floor(totalDP());
   $('eqSumGs').textContent = 'GS ' + Math.round(GS());
 }
 // libellé court du niveau d'optimisation : "+N" jusqu'à +15, puis chiffres romains I..V pour PRI..PEN

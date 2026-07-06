@@ -165,6 +165,78 @@
     zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; P.dmgBurstAccum = s.accum; P.dmgBurstT = s.t; S.hpMax = s.hpMax;
   }
 
+  function testDangerousZoneAlways100PercentLethal() {
+    // demande explicite du 2026-07-08 : "dans 100% des cas" -- même avec un coup brut FAIBLE
+    // (dmg très bas, mitigation minimale), Math.max(dmgRaw, effHpMax()) doit garantir la mort à
+    // chaque tentative, pas juste "parfois" selon le tirage aléatoire du dégât
+    const s = { zoneIdx, packs, hp:P.hp, hpMax:S.hpMax };
+    zoneIdx = 10; S.hpMax = 100;
+    let allDied = true;
+    for (let i = 0; i < 20; i++) {
+      P.hp = 100; P.faint = 0;
+      packs = [{ dead:false, aggro:true, x:P.x, y:P.y, gathered:1, dmg:0.01 /* dégât brut quasi nul */,
+        wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0.01,atkT:0}] }];
+      wolvesTick(0.02);
+      if (P.hp > 0) allDied = false;
+    }
+    assert('Zone DANGEREUSE : mort garantie même avec un dégât brut de mob quasi nul (20/20 essais)', allDied);
+    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax;
+  }
+  function testDangerousZoneNoDodgeNoEvasion() {
+    // l'esquive doit être totalement désactivée en zone dangereuse (2026-07-08) — sinon un résidu
+    // de dodgeEffectiveness (dpR entre 0.5 et 0.6) pourrait sauver le joueur du coup garanti
+    const s = { zoneIdx, packs, hp:P.hp, hpMax:S.hpMax };
+    zoneIdx = 10; S.hpMax = 100;
+    let anySurvived = false;
+    for (let i = 0; i < 20; i++) {
+      P.hp = 100; P.faint = 0;
+      packs = [{ dead:false, aggro:true, x:P.x, y:P.y, gathered:1, dmg:ZONES[10].dmg,
+        wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0.01,atkT:0}] }];
+      wolvesTick(0.02);
+      if (P.hp > 0) anySurvived = true;
+    }
+    assert('Zone DANGEREUSE : aucune esquive résiduelle ne sauve le joueur (0/20 survies attendues)', !anySurvived);
+    zoneIdx = s.zoneIdx; packs = s.packs; P.hp = s.hp; S.hpMax = s.hpMax;
+  }
+  function testDangerousZoneWideAggro() {
+    // "les monstres aggros de plus loin" (2026-07-08) : un pack non ciblé, à 350 unités, doit
+    // s'activer tout seul en zone dangereuse (jamais en zone sûre, comportement inchangé là-bas)
+    const s = { zoneIdx, packs };
+    zoneIdx = 10;
+    packs = [{ dead:false, aggro:false, x:P.x+350, y:P.y, gathered:1, dmg:1, wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0,atkT:5}] }];
+    wolvesTick(1/60);
+    assert('Zone DANGEREUSE : un pack à 350 unités s\'aggro tout seul', packs[0].aggro === true);
+    zoneIdx = 0;
+    packs = [{ dead:false, aggro:false, x:P.x+350, y:P.y, gathered:1, dmg:1, wolves:[{ox:0,oy:0,gx:0,gy:0,lunge:0,atkT:5}] }];
+    wolvesTick(1/60);
+    assert('Zone non-dangereuse : un pack à 350 unités reste inactif (comportement inchangé)', packs[0].aggro === false);
+    zoneIdx = s.zoneIdx; packs = s.packs;
+  }
+
+  // ---------- affichage PA/PD sans décimale (2026-07-08 : "enleve toute trace de virgule de
+  // PA/PD") ----------
+  function testApDpDisplayHasNoDecimals() {
+    const saved = JSON.parse(JSON.stringify(EQUIP.helmet || null));
+    EQUIP.helmet = { name:'test', kind:'gear', slot:'helmet', ap:0, dp:3, hp:10, dodge:.1, enhLv:16, optimizable:true, fsByLevel:{}, color:'#b8b8b8' };
+    renderEquipment(); hud();
+    const stDPText = document.getElementById('stDP')?.textContent || '';
+    const eqSumDpText = document.getElementById('eqSumDp')?.textContent || '';
+    assert('#stDP ne contient aucune décimale', !stDPText.includes('.') && !stDPText.includes(','), `text="${stDPText}"`);
+    assert('#eqSumDp ne contient aucune décimale', !eqSumDpText.includes('.') && !eqSumDpText.includes(','), `text="${eqSumDpText}"`);
+    // vérifie aussi que floor (pas round) est bien utilisé : totalDP() doit avoir une partie
+    // décimale réelle ici pour que le test soit probant (sinon floor et round donneraient pareil)
+    const raw = totalDP();
+    assert('Le test utilise bien une valeur avec décimale (sinon floor vs round indiscernable)', raw % 1 !== 0, `totalDP=${raw}`);
+    EQUIP.helmet = saved;
+    renderEquipment();
+  }
+  function testEffectiveApDpFloors() {
+    const item = { ap: 5, dp: 3, hp: 2, dodge: .1, enhLv: 12, optimizable: true, fsByLevel: {} };
+    const eff = effectiveApDp(item);
+    const mult = 1 + enhBonus(12);
+    assert('effectiveApDp.ap = floor, pas round', eff.ap === Math.floor(5*mult), `eff.ap=${eff.ap}, floor attendu=${Math.floor(5*mult)}, round aurait donné=${Math.round(5*mult)}`);
+  }
+
   // ---------- puissance réelle du stuff lootable (2026-07-08 : "compliqué d'arriver à 20PA avec
   // ce que je loot") ----------
   function testJewelryApIsDynamic() {
@@ -205,6 +277,11 @@
     testEquipWeaponNullDoesNotBreakRender();
     testDangerousZoneOneShot();
     testSafeZoneDamageCap();
+    testDangerousZoneAlways100PercentLethal();
+    testDangerousZoneNoDodgeNoEvasion();
+    testDangerousZoneWideAggro();
+    testApDpDisplayHasNoDecimals();
+    testEffectiveApDpFloors();
     testJewelryApIsDynamic();
     testZone0LootReachesZone1Difficulty();
     const failed = results.filter(r => !r.pass);

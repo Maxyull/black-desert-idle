@@ -2358,6 +2358,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V210', d:'08/07/2026 15:30', name:{fr:'PA/PD sans virgule, zone dangereuse = mort garantie en 100% des cas', en:'AP/DP without decimals, dangerous zone = guaranteed death 100% of the time'}, fr:[
+      {t:'change', sub:'interface', tx:'Le PA/PD effectif affiché (stats, résumé équipement, menu d\'optimisation) est désormais un nombre entier, arrondi vers le BAS — jamais de virgule, et jamais plus que ce qui est réellement acquis'},
+      {t:'change', sub:'combat', severity:'major', tx:'Zone DANGEREUSE : la mort est maintenant garantie à 100% dès le premier coup qui touche (plus de dégât insuffisant possible), l\'esquive automatique et la téléportation défensive sont désactivées, et TOUS les packs à moins de 400 unités s\'activent d\'un coup (pas seulement celui visé) — le badge représente désormais un risque de mort certaine et immédiate, pas probable'},
+      {t:'new', sub:'systeme', tx:'5 tests de régression ajoutés pour ces 2 points (mort garantie sur 20 essais même avec un dégât brut quasi nul, aggro à distance, absence de décimale dans l\'affichage PA/PD)'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The displayed effective AP/DP (stats, gear summary, enhancement menu) is now a whole number, rounded DOWN — never a decimal, and never more than what\'s actually earned'},
+      {t:'change', sub:'combat', severity:'major', tx:'DANGEROUS zone: death is now guaranteed 100% of the time on the very first hit that lands (no more insufficient-damage rolls), automatic dodge and the defensive teleport are disabled, and ALL packs within 400 units activate at once (not just the targeted one) — the badge now represents a certain, immediate death risk, not just a probable one'},
+      {t:'new', sub:'systeme', tx:'5 regression tests added for these 2 points (guaranteed death over 20 trials even with near-zero raw mob damage, ranged aggro, no decimals in AP/DP display)'},
+    ] },
   { v:'V209', d:'08/07/2026 15:00', name:{fr:'Le personnage change d\'apparence selon le stuff, potion vie+mana fusionnée', en:'Character appearance changes with gear, merged HP+mana potion'}, fr:[
       {t:'new', sub:'graphismes', tx:'L\'apparence du personnage (robe, chapeau, bâton) change désormais selon la couleur du meilleur palier de stuff équipé (arme ou armure) : gris/blanc restent sobres, vert et bleu ajoutent des cornes au chapeau, le palier bleu ajoute une cape. Si une pièce d\'éveil est équipée, 2 orbes flottent en orbite autour du personnage'},
       {t:'change', sub:'interface', tx:'Les 2 cases séparées de potion (vie / mana) sont fusionnées en une seule icône (fioles entrelacées) — un clic ouvre désormais un panneau unique listant les tailles de potion de vie ET les infos de la potion de mana, au lieu de 2 emplacements distincts'},
