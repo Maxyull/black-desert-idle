@@ -347,7 +347,9 @@
     zoneIdx = 3;
     assert('Le palier de la zone 3 utilise bien Pierre du Temps (Tuvala)', gearTierForZone(3).material.name === 'Pierre du Temps');
     let freshJackpotMatName = null;
-    for (let i = 0; i < 500 && freshJackpotMatName == null; i++) {
+    // chance de jackpot très faible (zone 3 : ch=.0028) -- 500 essais laissait ~25% de chance de
+    // rater complètement (miss flaky confirmé en live), 8000 réduit ce risque à quasi zéro
+    for (let i = 0; i < 8000 && freshJackpotMatName == null; i++) {
       const before = drops.length;
       rollDrops({x:0,y:0}, true, 1);
       for (let k = before; k < drops.length; k++) if (drops[k].item.kind === 'jackpot') freshJackpotMatName = drops[k].item.matName;
@@ -369,6 +371,49 @@
     assert('findEnhanceMaterial utilise le palier du BIJOU (Tuvala), pas la zone actuelle (gris)',
       (EQUIP.ring1.matName || Z().loot.mat.name) === 'Pierre du Temps');
     zoneIdx = s.zoneIdx; optTargetSlot = s.optTargetSlot; EQUIP.ring1 = s.ring1;
+  }
+  // "enleve le scroll affiche les 2 a 7 dernier note selon la taille et met un bouton vers le haut
+  // pour voir les nouveau et vers le bas pour regarder les ancien" (2026-07-11) -- computePatchPages()
+  // découpe PATCH_NOTES en pages contiguës de 2 à 7 entrées, sans trou ni chevauchement.
+  function testPatchPagesCoverAllEntriesWithinBounds() {
+    const pages = computePatchPages();
+    assert('computePatchPages : la 1ère page commence à l\'index 0 (le plus récent)', pages[0].start === 0);
+    let covered = 0;
+    for (let i = 0; i < pages.length; i++) {
+      const pg = pages[i];
+      assert(`Page ${i} : au plus 7 entrées`, pg.count <= 7, `count=${pg.count}`);
+      assert(`Page ${i} : commence juste après la précédente (pas de trou/chevauchement)`, pg.start === covered, `start=${pg.start}, attendu=${covered}`);
+      covered += pg.count;
+    }
+    assert('computePatchPages : couvre bien la totalité de PATCH_NOTES, sans rien oublier',
+      covered === PATCH_NOTES.length, `covered=${covered}, total=${PATCH_NOTES.length}`);
+    // toute page SAUF potentiellement la toute dernière (fin de l'historique) doit avoir au moins 2 entrées
+    for (let i = 0; i < pages.length - 1; i++) {
+      assert(`Page ${i} (non-finale) : au moins 2 entrées`, pages[i].count >= 2, `count=${pages[i].count}`);
+    }
+  }
+  // navigation "Plus récent"/"Plus ancien" du panneau patch notes -- vérifie que les boutons
+  // changent bien patchPageStart d'une page à l'autre (haut = vers l'index 0, bas = plus loin dans
+  // l'historique), et que le bouton "Plus récent" est désactivé sur la toute première page.
+  function testPatchNotesNavButtons() {
+    if (!$a('infoBody') || !$a('infoOverlay')) return; // pas de DOM (contexte hors-jeu)
+    const s = { patchPageStart, wasOpen: $a('infoOverlay').classList.contains('open') };
+    patchPageStart = 0;
+    renderPatchNotesPanel();
+    const upBtn = $a('patchNavUp'), downBtn = $a('patchNavDown');
+    if (!upBtn || !downBtn) { patchPageStart = s.patchPageStart; if (!s.wasOpen) $a('infoOverlay').classList.remove('open'); return; }
+    assert('"Plus récent" désactivé sur la toute première page', upBtn.disabled);
+    const pages = computePatchPages();
+    if (pages.length > 1) {
+      downBtn.click();
+      assert('"Plus ancien" avance bien patchPageStart vers l\'historique', patchPageStart === pages[1].start, `patchPageStart=${patchPageStart}`);
+      $a('patchNavUp').click(); // re-render : le bouton a été recréé, re-cibler
+      assert('"Plus récent" ramène bien patchPageStart à la 1ère page', patchPageStart === 0, `patchPageStart=${patchPageStart}`);
+    }
+    patchPageStart = s.patchPageStart;
+    // referme le panneau si ce test l'a ouvert (le joueur n'avait rien demandé) -- ne le laisse
+    // ouvert que si un AUTRE panneau était déjà affiché avant ce test
+    if (!s.wasOpen) $a('infoOverlay').classList.remove('open'); else renderPatchNotesPanel();
   }
   // "sac protégé compendium ... l'item optimisé qui part dans le compendium à la place du +0 garde
   // son optimisation" (2026-07-09) -- ensureCompendiumProtection() doit toujours faire remonter le
@@ -897,6 +942,8 @@
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
     testJewelryHasMatNameForEnhancement();
+    testPatchPagesCoverAllEntriesWithinBounds();
+    testPatchNotesNavButtons();
     testCompendiumBackfillAfterSell();
     testCellEnhBadgeVisibility();
     testNeglectedUpgradeHighlight();

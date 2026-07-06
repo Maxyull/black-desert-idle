@@ -2504,6 +2504,11 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V241', d:'11/07/2026 22:00', name:{fr:'Notes de version : pagination au lieu du scroll', en:'Patch notes: pagination instead of scrolling'}, fr:[
+      {t:'change', sub:'interface', tx:'Le panneau "Notes de version" ne se lit plus au scroll : il affiche désormais 2 à 7 notes à la fois (selon leur taille), avec un bouton "▲ Plus récent" et "Plus ancien ▼" pour naviguer dans l\'historique. La page affichée est toujours retenue d\'une ouverture à l\'autre'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The "Patch Notes" panel is no longer read by scrolling: it now shows 2 to 7 notes at a time (depending on size), with a "▲ Newer" and "Older ▼" button to navigate through history. The displayed page is always remembered between openings'},
+    ] },
   { v:'V240', d:'11/07/2026 21:00', name:{fr:'Fix : aucune pierre ne s\'auto-sélectionnait pour les bijoux', en:'Fix: no stone was auto-selected for jewelry'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Les bijoux (anneaux, boucles, colliers, ceintures) n\'ont jamais porté l\'information de leur propre palier de matériau — contrairement à l\'armure et aux armes, qui l\'ont toujours eu. L\'optimisation retombait donc sur le matériau de la zone où tu farmes ACTUELLEMENT au lieu de celui du palier du bijou équipé, affichant "Aucun matériau en sac" à tort dès que les deux ne correspondaient pas. Corrigé pour tout nouveau bijou, et rétroactivement pour tous ceux déjà possédés (équipés, en sac, ou protégés). Rappel des paliers : Pierre de Novice = Naru, Pierre du Temps = Tuvala, Pierre Noire = tout le stuff vert, Pierre concentrée = tout le stuff bleu'},
     ], en:[
@@ -4925,6 +4930,11 @@ $a('tutPrevBtn').onclick = () => {
 let readPatches = new Set();          // patchs déjà lus lors de sessions PRÉCÉDENTES (persisté)
 try { readPatches = new Set(JSON.parse(localStorage.getItem('velia-patch-read') || '[]')); } catch(e) {}
 let seenThisSession = new Set();      // patchs vus pendant CETTE session (pas encore persistés)
+// index (dans PATCH_NOTES, 0 = le plus récent) du début de la page actuellement affichée
+// (2026-07-11, demande explicite : "enleve le scroll... met un bouton vers le haut/vers le bas")
+// -- persisté par joueur, remplace l'ancien "velia-patch-scroll" (position de pixels).
+let patchPageStart = 0;
+try { patchPageStart = parseInt(localStorage.getItem('velia-patch-page')||'0', 10) || 0; } catch(e) {}
 function commitPatchRead() { // appelé à la fermeture de l'onglet
   try {
     const merged = new Set([...readPatches, ...seenThisSession]);
@@ -4942,6 +4952,28 @@ window.addEventListener('pagehide', commitPatchRead); // filet de sécurité (mo
 // (voir patchObserver plus bas) la marque vue, ouvrir le panneau seul ne change plus rien. Le tag
 // "NEW" sur chaque entrée reste basé UNIQUEMENT sur les sessions précédentes (readPatches).
 function unreadPatchCount() { return PATCH_NOTES.filter(p => !readPatches.has(p.v) && !seenThisSession.has(p.v)).length; }
+// découpe PATCH_NOTES en pages de 2 à 7 entrées SELON LA TAILLE (2026-07-11, demande explicite :
+// "affiche les 2 a 7 dernier note selon la taille") -- une page s'arrête dès qu'elle atteint 7
+// entrées OU que son total de lignes dépasserait le budget (mais jamais moins de 2 entrées, même
+// si les 2 premières sont déjà volumineuses). Recalculé à chaque ouverture/navigation (bon marché,
+// PATCH_NOTES ne bouge jamais en cours de session).
+const PATCH_PAGE_MIN = 2, PATCH_PAGE_MAX = 7, PATCH_PAGE_LINE_BUDGET = 10;
+function computePatchPages() {
+  const pages = [];
+  let i = 0;
+  while (i < PATCH_NOTES.length) {
+    let count = 0, lines = 0;
+    while (count < PATCH_PAGE_MAX && i+count < PATCH_NOTES.length) {
+      const entryLines = (PATCH_NOTES[i+count][LANG] || []).length;
+      if (count >= PATCH_PAGE_MIN && lines + entryLines > PATCH_PAGE_LINE_BUDGET) break;
+      lines += entryLines; count++;
+    }
+    if (count === 0) count = 1; // filet de sécurité, jamais une page vide
+    pages.push({ start: i, count });
+    i += count;
+  }
+  return pages;
+}
 function updatePatchBadge() {
   const n = unreadPatchCount();
   const badge = $a('patchBadge');
@@ -5054,18 +5086,13 @@ const PATCH_SUBCATS_EN = {
   connus:'Known issues', tresors:'Treasures',
 };
 
-let patchObserver = null;
-$a('btnPatch').onclick = () => {
-  // bandeau "N notes non lues", collé en haut du panneau tant qu'on n'a pas défilé jusqu'à elles
-  // (2026-07-06, demande explicite) — calculé AVANT le reste (qui ne change plus ce compte)
-  const unreadNow = unreadPatchCount();
-  const unreadBannerHtml = `<div id="patchUnreadBanner" class="${unreadNow>0?'show':''}">` +
-    `<span id="patchUnreadBannerNum">${unreadNow}</span> ` +
-    `<span>${LANG==='fr'?'note(s) de version non lue(s) — clique pour remonter':'unread patch note(s) — click to scroll up'}</span></div>`;
-  const html = unreadBannerHtml + PATCH_NOTES.map((p,i) => {
-    const isNew = !readPatches.has(p.v); // basé UNIQUEMENT sur les sessions précédentes, pas sur le défilement en cours
+// construit le HTML d'UNE entrée de patch note -- absIdx = index ABSOLU dans PATCH_NOTES (pas
+// juste dans la page affichée), pour que la classe "latest" ne s'applique qu'à la toute dernière
+// version du jeu, même quand on navigue vers une page qui ne contient pas l'index 0.
+function renderPatchEntryHtml(p, absIdx) {
+    const isNew = !readPatches.has(p.v); // basé UNIQUEMENT sur les sessions précédentes, pas sur l'affichage en cours
     return `
-    <div class="patchEntry ${i===0?'latest':''}" data-ver="${p.v}">
+    <div class="patchEntry ${absIdx===0?'latest':''}" data-ver="${p.v}">
       <div class="patchEntryHead">
         <span class="patchVer">${p.v}</span>
         ${p.name ? `<span class="patchName">${p.name[LANG]}</span>` : ''}
@@ -5118,43 +5145,56 @@ $a('btnPatch').onclick = () => {
         }).join('');
       })()}
     </div>`;
-  }).join('');
-  openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', html);
+}
+// affiche la page COURANTE (patchPageStart) des notes de version -- remplace l'ancien système à
+// scroll (2026-07-11, demande explicite : "enleve le scroll affiche les 2 a 7 dernier note selon
+// la taille et met un bouton vers le haut pour voir les nouveau et vers le bas pour regarder les
+// ancien") : plus de mémoire de position de scroll, plus d'IntersectionObserver -- une page ENTIÈRE
+// (2 à 7 notes, voir computePatchPages) est toujours affichée en entier, donc marquée "vue" dès son
+// rendu, sans avoir besoin de défiler dessus.
+function renderPatchNotesPanel() {
+  const pages = computePatchPages();
+  let pageIdx = pages.findIndex(pg => pg.start === patchPageStart);
+  if (pageIdx === -1) { pageIdx = 0; patchPageStart = pages[0].start; } // sécurité si l'historique a changé depuis
+  const page = pages[pageIdx];
+  const entries = PATCH_NOTES.slice(page.start, page.start + page.count);
+
+  // bandeau "N notes non lues" -- calculé AVANT le reste (qui ne change plus ce compte)
+  const unreadNow = unreadPatchCount();
+  const unreadBannerHtml = `<div id="patchUnreadBanner" class="${unreadNow>0?'show':''}">` +
+    `<span id="patchUnreadBannerNum">${unreadNow}</span> ` +
+    `<span>${LANG==='fr'?'note(s) de version non lue(s) — clique pour remonter':'unread patch note(s) — click to jump to newest'}</span></div>`;
+
+  const navHtml = `<div class="patchNavRow">
+      <button id="patchNavUp" class="patchNavBtn"${pageIdx===0?' disabled':''} title="${LANG==='fr'?'Notes plus récentes':'Newer notes'}">▲ ${LANG==='fr'?'Plus récent':'Newer'}</button>
+      <span class="patchNavPos">${page.start+1}–${page.start+entries.length} / ${PATCH_NOTES.length}</span>
+      <button id="patchNavDown" class="patchNavBtn"${pageIdx===pages.length-1?' disabled':''} title="${LANG==='fr'?'Notes plus anciennes':'Older notes'}">${LANG==='fr'?'Plus ancien':'Older'} ▼</button>
+    </div>`;
+
+  const entriesHtml = entries.map((p,k) => renderPatchEntryHtml(p, page.start+k)).join('');
+  openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', unreadBannerHtml + navHtml + entriesHtml);
+
+  // toute la page affichée est immédiatement marquée "vue" (plus besoin de défiler dessus,
+  // contrairement à l'ancien système) -- le tag "NEW" par entrée reste basé sur readPatches
+  // (sessions précédentes) et ne disparaît qu'à la fermeture de l'onglet, voir commitPatchRead
+  let changed = false;
+  entries.forEach(p => { if (!seenThisSession.has(p.v)) { seenThisSession.add(p.v); changed = true; } });
+  if (changed) updatePatchBadge();
+
+  try { localStorage.setItem('velia-patch-page', String(patchPageStart)); } catch(e) {}
+
   const unreadBannerEl = $a('patchUnreadBanner');
-  if (unreadBannerEl) unreadBannerEl.onclick = () => { $a('infoBody').scrollTo({ top:0, behavior:'smooth' }); };
-
-  // reprend le défilement exactement là où CE joueur s'était arrêté (2026-07-06, demande
-  // explicite : "rappel toi la ou s'est arrete son scroll... et reprend a cet endroit tout le
-  // temps") -- persisté par joueur (localStorage), restauré à CHAQUE ouverture du panneau.
-  // REVENU en arrière le 2026-07-11 (demande explicite, annule le correctif du 2026-07-06 qui
-  // forçait un scroll en haut s'il restait des notes non lues) : un nouveau patch ne doit PLUS
-  // faire remonter la page tout seul -- le joueur doit remonter lui-même pour le découvrir, la
-  // position reprend toujours exactement là où il s'était arrêté, lu ou non. Le bandeau "non lu"
-  // (patchUnreadBanner, cliquable) reste le moyen volontaire de sauter en haut si le joueur le veut.
-  const body = $a('infoBody');
-  let savedScroll = 0;
-  try { savedScroll = parseInt(localStorage.getItem('velia-patch-scroll')||'0', 10) || 0; } catch(e) {}
-  requestAnimationFrame(() => { body.scrollTop = savedScroll; });
-  body.onscroll = () => { try { localStorage.setItem('velia-patch-scroll', String(body.scrollTop)); } catch(e) {} };
-
-  // suit ce qui défile RÉELLEMENT dans la fenêtre pour marquer lu (pastille du bouton + pastille
-  // en haut de page, voir updatePatchBadge) -- changement du 2026-07-06 (demande explicite) :
-  // ouvrir le panneau seul ne marque plus rien lu, contrairement au comportement précédent (voir
-  // le commentaire au-dessus d'updatePatchBadge) ; le tag "NEW" par entrée reste affiché toute la
-  // session (voir commitPatchRead)
-  if (patchObserver) patchObserver.disconnect();
-  patchObserver = new IntersectionObserver((entries) => {
-    let changed = false;
-    for (const entry of entries) if (entry.isIntersecting && !seenThisSession.has(entry.target.dataset.ver)) { seenThisSession.add(entry.target.dataset.ver); changed = true; }
-    if (changed) updatePatchBadge();
-  }, { root: $a('infoBody'), threshold: 0.6 });
-  document.querySelectorAll('.patchEntry').forEach(el => patchObserver.observe(el));
+  if (unreadBannerEl) unreadBannerEl.onclick = () => { patchPageStart = 0; renderPatchNotesPanel(); };
+  const upBtn = $a('patchNavUp'), downBtn = $a('patchNavDown');
+  if (upBtn) upBtn.onclick = () => { if (pageIdx > 0) { patchPageStart = pages[pageIdx-1].start; renderPatchNotesPanel(); } };
+  if (downBtn) downBtn.onclick = () => { if (pageIdx < pages.length-1) { patchPageStart = pages[pageIdx+1].start; renderPatchNotesPanel(); } };
 
   // comparateur avant/après (2026-07-05, demande explicite) : câblé après insertion du HTML
   $a('infoBody').querySelectorAll('.patchImgBtn').forEach(btn => {
     btn.onclick = () => openPatchImgCompare(btn.dataset.before, btn.dataset.after);
   });
-};
+}
+$a('btnPatch').onclick = renderPatchNotesPanel;
 function openPatchImgCompare(before, after) {
   $a('patchImgLblBefore').textContent = LANG==='fr' ? 'Avant' : 'Before';
   $a('patchImgLblAfter').textContent = LANG==='fr' ? 'Après' : 'After';
