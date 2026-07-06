@@ -2358,6 +2358,13 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V205', d:'08/07/2026 13:00', name:{fr:'Fix one-shot en zone dangereuse, Bâton Naru exclusif à Camp des Loups', en:'Fix dangerous-zone one-shots, Naru Staff exclusive to Wolf Camp'}, fr:[
+      {t:'fix', sub:'combat', severity:'major', tx:'En zone dangereuse, plusieurs loups d\'un même pack (ou de plusieurs packs agressifs à la fois) pouvaient chacun toucher au même instant : chaque coup individuel restait plafonné à 30% des PV max, mais l\'ensemble s\'additionnait en une fraction de seconde et équivalait à un one-shot. Le plafond de 30% s\'applique désormais aux dégâts TOTAUX encaissés sur 1 seconde glissante, plus par coup isolé'},
+      {t:'change', sub:'equipements', tx:'Le Bâton Naru (arme de départ du palier gris) se loot désormais exclusivement à Camp des Loups (1ère zone du jeu) au lieu de Ruines de Protty — cohérent avec le spawn sans arme : la toute première zone donne directement de quoi se défendre'},
+    ], en:[
+      {t:'fix', sub:'combat', severity:'major', tx:'In dangerous zones, several wolves from the same pack (or from multiple aggressive packs at once) could each land a hit at the same instant: each individual hit stayed capped at 30% max HP, but they added up within a fraction of a second into an effective one-shot. The 30% cap now applies to TOTAL damage taken over a rolling 1-second window, not per isolated hit'},
+      {t:'change', sub:'equipements', tx:'The Naru Staff (Grey tier\'s starting weapon) now drops exclusively from Camp des Loups (the game\'s very first zone) instead of Ruines de Protty — consistent with the weaponless spawn: the very first zone directly gives you something to defend yourself with'},
+    ] },
   { v:'V204', d:'08/07/2026 12:30', name:{fr:'Fix : la PD de Camp Rhutum retombait sous la zone précédente', en:'Fix: Camp Rhutum\'s DP dropped below the previous zone'}, fr:[
       {t:'fix', sub:'zones', tx:'La PD requise de Camp Rhutum (1ère zone du palier Blanc) était passée à 20, sous les 23 PD de la zone précédente — une régression introduite par le rééquilibrage de la mise à jour précédente. Corrigée (24 PD), avec les zones suivantes du palier (Ferme Shultz, Colonie Sausan, Île d\'Iliya) réajustées en proportion'},
     ], en:[

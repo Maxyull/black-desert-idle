@@ -2778,6 +2778,7 @@ const P = {
   bob: 0, faceX: 1, orbitDir: 1, orbitAng: 0,
   potCd: 0, manaPotCd: 0, faint: 0, tpFlash: 0, lootTarget: null, lootClusterX: 0, lootClusterY: 0,
   manualTarget: null, manualMoveT: 0,
+  dmgBurstAccum: 0, dmgBurstT: 0, // dégâts encaissés dans la fenêtre glissante en cours (voir wolvesTick)
 };
 const BASE_SPEED = 92;
 
@@ -3172,14 +3173,18 @@ function wolvesTick(dt) {
               floatTxt(P.x,P.y,80,LANG==='fr'?'Esquivé !':'Dodged!',{blue:true});
             } else {
               const dmgRaw = p.dmg*(0.8+Math.random()*.4)*mitig;
-              // plafond à 30% des PV max par coup (demande explicite du 2026-07-06 : "les monstres
-              // ... te tue en 3 coups dans tous les cas") -- sans ça, un très gros écart de PD (le
-              // multiplicateur dmgTakenMult monte jusqu'à ×4.5) combiné aux dégâts bruts élevés des
-              // zones avancées pouvait carrément one-shot (vérifié : 544 dégâts pour 478 PV max en
-              // zone Grunil avec un stuff Naru) -- garantit désormais AU MOINS ~4 coups pour mourir
-              // depuis la vie pleine, même dans le pire des cas, sans adoucir la vraie punition pour
-              // un stuff juste un peu sous le seuil (le plafond ne s'applique alors jamais).
-              const dmg = Math.min(dmgRaw, effHpMax()*0.3);
+              // plafond à 30% des PV max CUMULÉ sur une fenêtre glissante d'1s (2026-07-08, demande
+              // explicite : "dangereuse = one shot") -- l'ancien plafond s'appliquait PAR COUP
+              // individuel, mais plusieurs loups d'un même pack (ou plusieurs packs agressifs en
+              // même temps, voir le désengagement à distance ci-dessus) peuvent chacun toucher au
+              // même moment : plusieurs coups à 30% qui s'enchaînent en une fraction de seconde
+              // équivalent à un one-shot même si aucun coup, pris isolément, ne dépasse le plafond.
+              // On limite désormais les dégâts TOTAUX encaissés sur 1s glissante, pas coup par coup.
+              if (performance.now() - P.dmgBurstT > 1000) P.dmgBurstAccum = 0;
+              P.dmgBurstT = performance.now();
+              const room = Math.max(0, effHpMax()*0.3 - P.dmgBurstAccum);
+              const dmg = Math.min(dmgRaw, room);
+              P.dmgBurstAccum += dmg;
               P.hp -= dmg;
               floatTxt(P.x,P.y,80,'-'+Math.ceil(dmg),{hurt:true});
               if (P.hp <= 0) {
@@ -3277,8 +3282,13 @@ const GEAR_SLOTS = ['helmet','armor','gloves','boots'];
 // du palier — la toute première zone de chaque palier ne garantit plus aucune arme (seulement sa
 // pièce d'armure, voir ZONE_ARMOR_SLOTS), symétrique à l'armure qui, elle, laisse sa 4e zone sans
 // répétition. Chaque type d'arme n'apparaît donc plus qu'UNE seule fois par palier (au lieu de 2).
+// Bâton Naru exclusif à Camp des Loups (2026-07-08, demande explicite : "baton naru lootable
+// exclusivement camp des loups") -- le palier gris est le seul où l'arme vient de la 1ère zone au
+// lieu de la 2e : cohérent avec le spawn sans arme (2026-07-08), la toute première zone du jeu
+// donne directement de quoi se défendre, plutôt que de forcer à survivre une zone entière à mains
+// nues avant le premier drop d'arme.
 const ZONE_WEAPON_SLOTS = [
-  [], ['weapon'], ['secondary'],                  // grey : zones 0 (rien),1,2
+  ['weapon'], [], ['secondary'],                  // grey : zones 0,1 (rien),2
   [], ['weapon'], ['secondary'],                  // white : zones 3 (rien),4,5
   [], ['weapon'], ['secondary'],                  // green : zones 6 (rien),7,8
   [], ['weapon'], ['secondary'],                  // blue : zones 9 (rien),10,11
