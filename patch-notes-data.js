@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V261', d:'14/07/2026 16:00', name:{fr:'Audit post-découpage : réfs de fichiers obsolètes corrigées', en:'Post-split audit: stale file references fixed'}, fr:[
+      {t:'fix', sub:'admin', tx:'L\'astuce du panneau Admin "Silver" pour ajouter une nouvelle catégorie pointait encore vers game-supabase.js pour CATEGORY_LABEL, alors que ce code vit désormais dans admin-panel.js depuis le découpage'},
+      {t:'change', sub:'systeme', tx:'Ajout d\'un test de régression qui vérifie que la détection de nouvelle version cible bien le fichier qui contient réellement PATCH_NOTES aujourd\'hui — pour attraper immédiatement un futur déplacement oublié, comme celui qui avait cassé la notification (voir V259)'},
+    ], en:[
+      {t:'fix', sub:'admin', tx:'The Admin "Silver" panel\'s hint for adding a new category still pointed to game-supabase.js for CATEGORY_LABEL, when that code now lives in admin-panel.js since the split'},
+      {t:'change', sub:'systeme', tx:'Added a regression test that checks the update-detection fetch actually targets the file that currently defines PATCH_NOTES — to immediately catch a future forgotten move, like the one that broke the notification (see V259)'},
+    ] },
   { v:'V260', d:'14/07/2026 15:00', name:{fr:'Fix : vente d\'un bijou en trop via le menu objet', en:'Fix: selling a spare jewelry piece via the item menu'}, fr:[
       {t:'fix', sub:'inventaire', tx:'Le menu contextuel d\'un objet (clic droit / appui long) n\'affichait le bouton "Vendre 1" que pour le rebut/matériaux/équipement — les bijoux (anneaux, boucles, colliers, ceintures) en étaient exclus, rendant impossible leur vente manuelle via ce menu (seul l\'auto-équipement au clic simple fonctionnait). Vérifié au passage : la vente garde toujours le meilleur exemplaire enchanté d\'un doublon dans le sac protégé, y compris pour les bijoux'},
     ], en:[

@@ -495,6 +495,19 @@
   // "enleve le scroll affiche les 2 a 7 dernier note selon la taille et met un bouton vers le haut
   // pour voir les nouveau et vers le bas pour regarder les ancien" (2026-07-11) -- computePatchPages()
   // découpe PATCH_NOTES en pages contiguës de 2 à 7 entrées, sans trou ni chevauchement.
+  // bug trouvé le 2026-07-14 : checkForUpdate() (détection "nouvelle version disponible") allait
+  // fetch game-supabase.js pour y chercher PATCH_NOTES via regex -- ça a cassé la notification en
+  // silence quand PATCH_NOTES a été déplacé dans patch-notes-data.js (découpage de
+  // game-supabase.js), sans qu'aucun test ne le détecte. Garde-fou statique (pas besoin de vrai
+  // fetch réseau) : vérifie que la fonction cible bien le fichier qui contient RÉELLEMENT
+  // PATCH_NOTES aujourd'hui, pour attraper immédiatement un futur déplacement oublié.
+  function testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes() {
+    const src = checkForUpdate.toString();
+    assert('checkForUpdate() fetch bien patch-notes-data.js (le fichier qui définit réellement PATCH_NOTES)',
+      src.includes("'./patch-notes-data.js"), `src=${src.slice(0,200)}`);
+    assert('checkForUpdate() ne fetch plus game-supabase.js (ne contient plus PATCH_NOTES depuis le découpage)',
+      !src.includes("'./game-supabase.js"));
+  }
   function testPatchPagesCoverAllEntriesWithinBounds() {
     const pages = computePatchPages();
     assert('computePatchPages : la 1ère page commence à l\'index 0 (le plus récent)', pages[0].start === 0);
@@ -1267,6 +1280,7 @@
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
     testJewelryHasMatNameForEnhancement();
+    testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
     testCompendiumBackfillAfterSell();
