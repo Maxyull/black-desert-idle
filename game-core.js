@@ -115,32 +115,31 @@ const ZONES = [
     tint:{ a:'#4a4232', b:'#443c2d', dry:'#524936' }, tones:['#7a6248','#6b563e','#8a7055'], alphaTone:'#4a3a28',
     loot:{ trash:{name:'Insigne de Sausan',val:5,ch:1}, mat:{name:'Pierre noire',val:1,ch:.4},
       jackpot:{name:'Ceinture Naru',val:1025,ch:.0038,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.022} } },
-  // reqAP/reqDP des zones 3, 6 et 9 (première zone de chaque nouveau palier de couleur) ABAISSÉES
-  // le 2026-07-08 (demande explicite : "revoir la difficulté de passage en rang supérieur... au
-  // besoin descendre le req pour balanced") — le +30% du 2026-07-06 (voir historique) combiné à
-  // "1 seule pièce d'équipement par zone" (ZONE_ARMOR_SLOTS/ZONE_WEAPON_SLOTS) rendait la
-  // transition de palier bien plus dure que prévu : simulation d'un stuff COMPLET du palier
-  // précédent, poussé jusqu'à PRI sur les 7 pièces, ne donnait qu'un ratio PA/PD de 0.29-0.45 face
-  // à la 1ère zone du palier suivant (largement ZONE DANGEREUSE, <0.6) — bien pire que le 0.58-0.70
-  // visé à l'origine. Toutes les zones de palier 3+ recalibrées pour qu'un tel stuff PRI atteigne
-  // ~0.8 (ZONE DIFFICILE, plus DANGEREUSE) sur la 1ère zone du palier, progression interne au
-  // palier gardée dans les mêmes proportions relatives qu'avant.
-  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:18, reqDP:18, mob:'Guerrier Rhutum',
+  // reqAP/reqDP des paliers blanc/vert/bleu (zones 3+) REHAUSSÉES le 2026-07-08 (demande explicite :
+  // "rehausse le max a 320 et le stuff comme avant, chaque item doit etre monte en moyenne en PRI
+  // pour pouvoir monter de zone et un peu plus dure entre chaque grosse zone") — reprend la forme
+  // de la courbe précédente (2026-07-08, voir historique ci-dessous) étirée jusqu'à 320 PA / 175 PD
+  // en toute fin de jeu (Forêt de Polly). Grille de contrôle (stuff COMPLET du palier précédent à
+  // PRI, walkthrough zone par zone en ordre réel de farm) : le ratio PA/PD retombe à ~0.3-0.4 pile à
+  // l'entrée de chaque nouveau palier (un peu plus dur "entre les grosses zones", comme demandé),
+  // puis remonte jusqu'à ~0.85 en fin de palier avant la marche suivante — grey (zones 0-2/12)
+  // inchangé, déjà calé sur le spawn sans arme (session précédente).
+  { name:'Camp Rhutum', tier:'Serendia — Early', reqAP:40, reqDP:20, mob:'Guerrier Rhutum',
     hpPer:48, dmg:6, xp:27,
     tint:{ a:'#32383f', b:'#2d333a', dry:'#3a4147' }, tones:['#5a6a78','#4e5d6a','#687888'], alphaTone:'#33404d',
     loot:{ trash:{name:'Bourse de pirate',val:9,ch:1}, mat:{name:'Pierre noire',val:1,ch:.32},
       jackpot:{name:'Anneau Tuvala',val:1960,ch:.0028,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.018} } },
-  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:22, reqDP:22, mob:'Garde Shultz',
+  { name:'Ferme Shultz', tier:'Serendia — Early', reqAP:49, reqDP:25, mob:'Garde Shultz',
     hpPer:66, dmg:8, xp:40,
     tint:{ a:'#2f4038', b:'#2b3b33', dry:'#37473c' }, tones:['#4a7060','#3f6353','#568070'], alphaTone:'#2c4a3e',
     loot:{ trash:{name:'Croc de Naga',val:15,ch:1}, mat:{name:'Éclat de cristal noir tranchant',val:1,ch:.26},
       jackpot:{name:'Collier Tuvala',val:3375,ch:.002,ap:2}, craft:{name:'Poussière d\'esprit ancien',ch:.015} } },
-  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:28, reqDP:28, mob:'Combattant Sausan',
+  { name:'Colonie Sausan', tier:'Serendia — Mid', reqAP:62, reqDP:31, mob:'Combattant Sausan',
     hpPer:93, dmg:12, xp:60,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Oreille de Fogan',val:24,ch:1}, mat:{name:'Éclat de cristal noir dur',val:4,ch:.2},
       jackpot:{name:'Ceinture Tuvala',val:5500,ch:.0015,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.012} } },
-  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:56, reqDP:60, mob:'Mineur corrompu',
+  { name:'Mine de Fer Abandonnée', tier:'Serendia — Mid', reqAP:124, reqDP:67, mob:'Mineur corrompu',
     hpPer:156, dmg:19, xp:90,
     // sol terre rouge/brune de carrière (retexturé le 2026-07-07 d'après les captures de référence :
     // canyon ocre, crevasses, chariots) — tones = capuches/tuniques poussiéreuses des mineurs,
@@ -148,17 +147,17 @@ const ZONES = [
     tint:{ a:'#4a3226', b:'#443023', dry:'#583c2c' }, tones:['#8a7a68','#7a6c5a','#988676'], alphaTone:'#5a6068',
     loot:{ trash:{name:'Fer rouillé',val:39,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.15},
       jackpot:{name:'Anneau Asula',val:8900,ch:.001,ap:2}, craft:{name:'Fragment de mémoire',ch:.009} } },
-  { name:'Poste Helm', tier:'Serendia — Late', reqAP:69, reqDP:74, mob:'Soldat Helm',
+  { name:'Poste Helm', tier:'Serendia — Late', reqAP:152, reqDP:83, mob:'Soldat Helm',
     hpPer:233, dmg:29, xp:135,
     tint:{ a:'#403845', b:'#3a3340', dry:'#48404d' }, tones:['#6a5a80','#5c4e70','#786890'], alphaTone:'#3a2f52',
     loot:{ trash:{name:'Fourrure de Biraghi',val:56,ch:1}, mat:{name:'Pierre de Caphras',val:11,ch:.11},
       jackpot:{name:'Collier Asula',val:13000,ch:.0007,ap:4}, craft:{name:'Fragment de mémoire',ch:.007} } },
-  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:85, reqDP:92, mob:'Bandit Gahaz',
+  { name:'Repaire Bandits Gahaz', tier:'Serendia — Late', reqAP:188, reqDP:103, mob:'Bandit Gahaz',
     hpPer:353, dmg:44, xp:200,
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
       jackpot:{name:'Ceinture Asula',val:17850,ch:.0005,ap:6}, craft:{name:'Fragment de mémoire',ch:.005} } },
-  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:122, reqDP:132, mob:'Sectateur d\'Elric',
+  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:269, reqDP:148, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
     // % de la "Pierre concentrée" (matériau réel dropé ici, voir tierMat dans rollDrops — le nom
@@ -167,7 +166,7 @@ const ZONES = [
     // bleu, il en faut beaucoup plus pour pousser du stuff Grunil jusqu'à PRI+
     loot:{ trash:{name:'Éclat de relique ancienne',val:90,ch:1}, mat:{name:'Pierre de Caphras',val:7,ch:.12},
       jackpot:{name:'Anneau de Cadry',val:24200,ch:.0003,ap:6}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
-  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:145, reqDP:156, mob:'Uluan',
+  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:320, reqDP:175, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
@@ -177,7 +176,7 @@ const ZONES = [
   // nouvelle escalade (valeurs abaissées le 2026-07-08 avec Kratuga, voir plus haut). Complète
   // juste la rotation d'arme (weapon/secondary/awakening, une par zone du palier — voir
   // ZONE_WEAPON_SLOTS) et apporte la ceinture manquante (Orkinrad's Belt).
-  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:145, reqDP:156, mob:'Esprit des Mânes',
+  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:320, reqDP:175, mob:'Esprit des Mânes',
     hpPer:1000, dmg:125, xp:500,
     tint:{ a:'#3a3f4a', b:'#343943', dry:'#40454f' }, tones:['#8a9ab0','#7c8ca2','#98a8c0'], alphaTone:'#4a5568',
     loot:{ trash:{name:'Larme de Mâne',val:120,ch:1}, mat:{name:'Pierre de Caphras',val:5,ch:.07},
@@ -199,17 +198,17 @@ const ZONES = [
     tint:{ a:'#3d4238', b:'#383d33', dry:'#454a3e' }, tones:['#6a7a5e','#5c6c50','#788a6c'], alphaTone:'#455038',
     loot:{ trash:{name:'Pierre de Trent',val:7,ch:1}, mat:{name:'Pierre noire',val:1,ch:.34},
       jackpot:{name:'Boucle Naru',val:1300,ch:.0032,ap:1}, craft:{name:'Poussière d\'esprit ancien',ch:.019} } },
-  { name:'Île d\'Iliya', tier:'Serendia — Mid', reqAP:28, reqDP:28, mob:'Pirate d\'Iliya',
+  { name:'Île d\'Iliya', tier:'Serendia — Mid', reqAP:62, reqDP:31, mob:'Pirate d\'Iliya',
     hpPer:104, dmg:13, xp:67,
     tint:{ a:'#2e4a4a', b:'#2a4444', dry:'#355656' }, tones:['#4a9a9a', '#3f8888', '#5aacac'], alphaTone:'#2c5a5a',
     loot:{ trash:{name:'Perle d\'Iliya',val:38,ch:1}, mat:{name:'Éclat de cristal noir dur',val:5,ch:.14},
       jackpot:{name:'Boucle Tuvala',val:6900,ch:.0011,ap:3}, craft:{name:'Poussière d\'esprit ancien',ch:.009} } },
-  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:85, reqDP:92, mob:'Soldat de Bashim',
+  { name:'Base de Bashim', tier:'Serendia — Late', reqAP:188, reqDP:103, mob:'Soldat de Bashim',
     hpPer:395, dmg:49, xp:224,
     tint:{ a:'#3c3c34', b:'#36362f', dry:'#44443a' }, tones:['#8a8a68', '#78785a', '#9a9a78'], alphaTone:'#565640',
     loot:{ trash:{name:'Insigne de Bashim',val:92,ch:1}, mat:{name:'Pierre de Caphras',val:8,ch:.058},
       jackpot:{name:'Boucle Asula',val:22300,ch:.00035,ap:9}, craft:{name:'Fragment de mémoire',ch:.003} } },
-  { name:'Forêt de Polly', tier:'Mediah — Early', reqAP:145, reqDP:156, mob:'Troll de Polly',
+  { name:'Forêt de Polly', tier:'Mediah — Early', reqAP:320, reqDP:175, mob:'Troll de Polly',
     hpPer:1120, dmg:140, xp:560,
     tint:{ a:'#25382c', b:'#213228', dry:'#2c4034' }, tones:['#3f6e50', '#356045', '#4a805c'], alphaTone:'#274a34',
     loot:{ trash:{name:'Mousse de Polly',val:135,ch:1}, mat:{name:'Pierre de Caphras',val:4,ch:.055},

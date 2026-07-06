@@ -2358,6 +2358,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V203', d:'08/07/2026 12:00', name:{fr:'Plafond de stuff rehaussé à 320 PA, transitions de palier plus dures', en:'Gear ceiling raised to 320 AP, harder tier transitions'}, fr:[
+      {t:'change', sub:'zones', severity:'major', tx:'Le plafond de PA requis en fin de jeu (Forêt de Polly) passe de 145 à 320 (PD : 156 → 175). Les paliers Blanc/Vert/Bleu sont recalibrés pour qu\'un stuff complet du palier précédent, poussé en moyenne à PRI, retrouve son rôle de vrai jalon de progression pour passer au palier suivant'},
+      {t:'change', sub:'zones', tx:'Chaque transition vers un nouveau palier de couleur (zones 3, 6 et 9) est délibérément plus dure que la progression fluide à l\'intérieur d\'un palier — le ratio PA/PD retombe nettement à l\'entrée d\'un nouveau palier avant de remonter au fil de ses zones, pour bien marquer le cap'},
+      {t:'change', sub:'equipements', tx:'Le palier Gris (zones de départ) n\'est pas concerné par ce rééquilibrage, déjà calé sur le spawn sans arme'},
+    ], en:[
+      {t:'change', sub:'zones', severity:'major', tx:'The end-game required AP ceiling (Forêt de Polly) goes from 145 to 320 (DP: 156 → 175). The White/Green/Blue tiers are recalibrated so a full previous-tier set, enhanced to PRI on average, is once again a real progression milestone for moving up a tier'},
+      {t:'change', sub:'zones', tx:'Every move into a new color tier (zones 3, 6, and 9) is deliberately harder than the smooth progression within a tier — the AP/DP ratio drops noticeably right at the start of a new tier before climbing back up across its zones, to properly mark the milestone'},
+      {t:'change', sub:'equipements', tx:'The Grey tier (starting zones) isn\'t affected by this rebalance, already tuned for the weaponless spawn'},
+    ] },
   { v:'V202', d:'08/07/2026 11:00', name:{fr:'Nouveaux joueurs et notes de version, 3 nouveaux modes d\'optimisation auto, loupe sur le loot', en:'New players and patch notes, 3 new auto-enhance modes, loot magnifier'}, fr:[
       {t:'fix', sub:'ux', severity:'major', tx:'Un nouveau joueur voyait un nombre absurde de notes de version "non lues" (tout l\'historique jamais publié). Désormais, seule la toute dernière version compte comme nouvelle à la création du compte — sa page de notes de version s\'ouvre directement dessus, pas besoin de fouiller un historique qu\'il n\'a pas vécu'},
       {t:'new', sub:'optimisation', tx:'3 nouveaux modes pour l\'auto-optimisation, en plus de "jusqu\'à un palier" : "en boucle" (continue jusqu\'à rupture de matériau), "jusqu\'au premier échec" (s\'arrête dès le 1er raté), "jusqu\'à épuisement des Pierres de Cron" (pousse un palier risqué tant qu\'il reste de la protection)'},
