@@ -2359,6 +2359,15 @@ applyMenuCollapse();
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V213', d:'09/07/2026 10:00', name:{fr:'Cases d\'équipement simplifiées : icônes ⬆️/📍 dédiées, clic = infos seulement', en:'Simplified equipment slots: dedicated ⬆️/📍 icons, click = info only'}, fr:[
+      {t:'change', sub:'interface', tx:'Cliquer sur une case équipée n\'affiche plus que le nom et les stats de la pièce ; cliquer sur une case vide n\'affiche plus que le nom du slot et où le farmer (déséquiper reste au double-clic, optimiser reste sur le bouton 🔧)'},
+      {t:'new', sub:'interface', tx:'Nouvelle icône ⬆️ en coin sur une case équipée : raccourci direct vers la zone où trouver une meilleure pièce pour ce socle'},
+      {t:'new', sub:'interface', tx:'Nouvelle icône 📍 en coin sur une case vide : raccourci direct vers la zone où farmer l\'objet manquant'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'Clicking an equipped slot now only shows the piece\'s name and stats; clicking an empty slot now only shows the slot name and where to farm it (unequip stays on double-click, enhance stays on the 🔧 button)'},
+      {t:'new', sub:'interface', tx:'New ⬆️ corner icon on an equipped slot: direct shortcut to the zone where a better piece for that slot can be found'},
+      {t:'new', sub:'interface', tx:'New 📍 corner icon on an empty slot: direct shortcut to the zone where the missing item can be farmed'},
+    ] },
   { v:'V212', d:'08/07/2026 16:30', name:{fr:'Mode auto "jusqu\'au prochain gain", prix des potions par zone, trésor à 0.33%', en:'"Until next gain" auto mode, per-zone potion prices, treasure at 0.33%'}, fr:[
       {t:'change', sub:'loot', tx:'Chance du "Bout du trésor de Velia" ajustée à 0.33% (au lieu de 0.5%)'},
       {t:'new', sub:'optimisation', tx:'Nouveau mode d\'auto-optimisation : "Jusqu\'au prochain gain de PA/PD" — s\'arrête automatiquement dès que le PA ou le PD affiché de la pièce augmente réellement, sans avoir à deviner à quel palier précis ça se produit (voir le fix du menu déroulant de la mise à jour précédente)'},

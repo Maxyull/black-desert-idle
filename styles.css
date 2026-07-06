@@ -415,14 +415,17 @@
   }
   .pdSlot .pdAp { left:-3px; color:#e0a86e; }
   .pdSlot .pdDp { right:-3px; color:#8fc9c9; }
-  /* raccourci "optimiser" directement sur la pièce équipée (2026-07-05, demande explicite :
-     "petit mais visible") -- coin haut-droit, seul coin encore libre de la case */
-  .pdSlot .pdOptBtn {
-    position:absolute; top:-4px; right:-4px; width:15px; height:15px; line-height:14px;
+  /* raccourci(s) directement sur la case, coin haut-droit (2026-07-05 : 🔧 optimiser ; 2026-07-09 :
+     ⬆️ zone pour améliorer une case remplie / 📍 où farmer une case vide, ajoutés côte à côte) */
+  .pdSlot .pdCorner { position:absolute; top:-4px; right:-4px; display:flex; gap:2px; }
+  .pdSlot .pdOptBtn, .pdSlot .pdUpgradeBtn, .pdSlot .pdFarmBtn {
+    width:15px; height:15px; line-height:14px;
     text-align:center; font-size:9px; border-radius:50%; background:#1a1822;
     border:1px solid var(--gold-dim); box-shadow:0 1px 3px rgba(0,0,0,.6); cursor:pointer;
   }
-  .pdSlot .pdOptBtn:hover { background:#2a2416; border-color:var(--gold); transform:scale(1.15); }
+  .pdSlot .pdUpgradeBtn { border-color:#6ea3c9; }
+  .pdSlot .pdFarmBtn { border-color:var(--gold); }
+  .pdSlot .pdOptBtn:hover, .pdSlot .pdUpgradeBtn:hover, .pdSlot .pdFarmBtn:hover { background:#2a2416; border-color:var(--gold); transform:scale(1.15); }
   .gicon { width:1.55em; height:1.55em; vertical-align:middle; flex-shrink:0; }
   #pdWeapons { display:flex; justify-content:center; gap:6px; padding:6px 0; border-top:1px solid #2c2a33; border-bottom:1px solid #2c2a33; margin-bottom:2px; }
   #pdWeapons .pdSlot { width:48px; height:48px; }

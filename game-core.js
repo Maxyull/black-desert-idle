@@ -5392,7 +5392,14 @@ function pdSlotInnerHtmlFor(id, e) {
   // petit bouton "optimiser" directement sur la pièce équipée (2026-07-05, demande explicite :
   // "petit mais visible") -- raccourci vers le panneau d'optimisation, en plus du menu au clic
   const optBadge = (e && e.optimizable) ? `<span class="pdOptBtn" title="${LANG==='fr'?'Optimiser':'Enhance'}">🔧</span>` : '';
-  return icon + badge + apDpBadge + optBadge;
+  // icône "aller à la zone" en coin (2026-07-09, demande explicite) : ⬆️ sur une case remplie
+  // (pointe vers la zone où farmer un meilleur objet pour ce slot) ou 📍 sur une case vide
+  // (pointe vers où farmer l'objet manquant) — regroupées avec 🔧 dans le même coin haut-droit
+  const goBadge = e
+    ? (zonesForSlot(id).length ? `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>` : '')
+    : (zonesForSlot(id).length ? `<span class="pdFarmBtn" title="${LANG==='fr'?'Où farmer':'Where to farm'}">📍</span>` : '');
+  const cornerHtml = (optBadge || goBadge) ? `<span class="pdCorner">${optBadge}${goBadge}</span>` : '';
+  return icon + badge + apDpBadge + cornerHtml;
 }
 function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
 // texte "+X PA +Y PD +Z PV" affiché dans le tooltip d'une pièce de la poupée d'équipement —
@@ -5413,20 +5420,7 @@ function accBaseSlot(slotId) {
   if (slotId==='earring1'||slotId==='earring2') return 'earring';
   return slotId;
 }
-// jusqu'à 5 objets du sac équipables dans ce slot précis, triés du meilleur socle au pire —
-// demande explicite : clic sur une pièce d'équipement → menu des objets associés qu'on peut équiper
-function candidatesForSlot(slotId) {
-  const isGear = ARMOR_SLOTS.includes(slotId) || WEAPON_SLOTS.includes(slotId);
-  const base = accBaseSlot(slotId);
-  const list = [];
-  for (let i = 0; i < INV_SIZE; i++) {
-    const it = INV[i]; if (!it) continue;
-    if (isGear && it.kind === 'gear' && it.slot === slotId) list.push({ i, it });
-    else if (!isGear && it.kind === 'jackpot' && accSlotFor(it) === base) list.push({ i, it });
-  }
-  return list.sort((a,b) => itemScore(b.it) - itemScore(a.it)).slice(0,5);
-}
-// zones où farmer l'objet manquant d'un socle VIDE — demande explicite : "un socle d'équipement
+// zones où farmer/upgrader un socle (vide OU rempli) — demande explicite : "un socle d'équipement
 // vide, lorsque tu cliques dessus, te montre où farm l'item... halo bien visible, tout sauf zone
 // dangereuse". Se base sur le palier de la zone actuellement farmée (zoneIdx) : armes → zones qui
 // garantissent ce type d'arme (ZONE_WEAPON_SLOTS) ; armures → les 4 zones du palier (n'importe
@@ -5434,7 +5428,7 @@ function candidatesForSlot(slotId) {
 // du palier dont le jackpot correspond à ce type (ring/necklace/belt/earring, voir accSlotFor).
 // artifact1/artifact2/eqStone n'ont encore aucune source en jeu (voir renderLifeskillPanelHtml) →
 // jamais de résultat pour ces 3 slots.
-function zonesForEmptySlot(slotId) {
+function zonesForSlot(slotId) {
   const tier = gearTierForZone(zoneIdx);
   let zones;
   if (WEAPON_SLOTS.includes(slotId)) {
@@ -5456,31 +5450,18 @@ function highlightFarmZones(zones) {
   document.querySelectorAll('#zoneList .zRow').forEach(r => r.classList.remove('eqFarmHalo'));
   zones.forEach(zi => { const row = document.querySelector(`#zoneList .zRow[data-zi="${zi}"]`); if (row) row.classList.add('eqFarmHalo'); });
 }
+// clic simple sur une case de la poupée d'équipement — demande explicite du 2026-07-09 : une case
+// équipée n'affiche plus QUE le nom + les stats (déséquiper/optimiser restent accessibles via le
+// double-clic et le bouton 🔧 dédiés) ; une case vide n'affiche plus QUE le nom + où farmer
 function showEquipSlotMenu(cell, slotId) {
   const e = EQUIP[slotId];
-  const candidates = candidatesForSlot(slotId);
   const pop = $('itemPop');
   let html = `<div class="ipName gear">${SLOT_LABEL[slotId] || slotId}</div>`;
-  html += `<div class="ipDesc">${e ? ((LANG==='fr'?'Équipé : ':'Equipped: ')+escapeHtml(e.name)+pdStatSuffix(e)) : (LANG==='fr'?'Rien d\'équipé':'Nothing equipped')}</div>`;
+  html += `<div class="ipDesc">${e ? (escapeHtml(e.name)+pdStatSuffix(e)) : (LANG==='fr'?'Rien d\'équipé':'Nothing equipped')}</div>`;
   pop.innerHTML = html;
-  if (e) {
-    addPopBtn(pop, LANG==='fr'?'Déséquiper':'Unequip', () => unequip(slotId));
-    if (e.optimizable) addPopBtn(pop, LANG==='fr'?'Mettre en optimisation':'Load into enhancement', () => { optTargetSlot = slotId; });
-  }
-  candidates.forEach(c => {
-    const html = `<span class="psIcon">${c.it.icon || SLOT_ICON[slotId] || '⚔️'}</span> ${escapeHtml(c.it.name)}${escapeHtml(statDeltaShortText(c.it))}`;
-    addPopBtnHtml(pop, html, () => equipItem(c.i));
-  });
-  if (!candidates.length) {
-    const none = document.createElement('div');
-    none.className = 'ipDesc';
-    none.style.marginTop = '4px';
-    none.textContent = LANG==='fr' ? 'Aucun autre objet pour ce slot dans le sac' : 'No other item for this slot in the bag';
-    pop.appendChild(none);
-  }
   let farmZones = [];
   if (!e) {
-    farmZones = zonesForEmptySlot(slotId);
+    farmZones = zonesForSlot(slotId);
     if (farmZones.length) {
       const box = document.createElement('div');
       box.className = 'ipDesc';
@@ -5528,6 +5509,14 @@ function fillPdCol(colId, ids) {
       ev.stopPropagation(); hideItemTooltip(); hideItemPop();
       optTargetSlot = id; renderOptimization();
       $('optCard').scrollIntoView({ behavior:'smooth', block:'center' });
+    };
+    // ⬆️/📍 en coin : raccourci direct vers la zone (pas de popup intermédiaire) — demande
+    // explicite du 2026-07-09
+    const goBtn = div.querySelector('.pdUpgradeBtn, .pdFarmBtn');
+    if (goBtn) goBtn.onclick = ev => {
+      ev.stopPropagation(); hideItemTooltip(); hideItemPop();
+      const zones = zonesForSlot(id);
+      if (zones.length) { const zi = zones[0]; if (atVelia || zi !== zoneIdx) travelTo(zi); }
     };
     col.appendChild(div);
   }
