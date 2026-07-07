@@ -586,7 +586,6 @@ $a('btnCompendium').onclick = openCompendium;
 $a('ztCompendium').onclick = openCompendium;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
-$a('btnLifeskillToggle').onclick = openLifeskillPanel;
 // bascule Inventaire/Assemblage dans la carte Inventaire (2026-07-06, demande explicite : "on va
 // mettre le craft dans la carte de l'inventaire en haut par un bouton") -- le panneau de craft du
 // Trésor de Velia (#treasureCraftPanel) vivait dans la carte Optimisation, déplacé ici
@@ -913,20 +912,24 @@ const I18N = {
   statsTabPerso: { fr:'Perso', en:'Personal' },
   statsTabReco: { fr:'Recommandations', en:'Recommendations' },
   cardZoneStats: { fr:'Stats de la zone de farm', en:'Farming zone stats' },
-  lblPS: { fr:'Gearscore', en:'Gearscore' },
-  lblPA: { fr:'PA (Attaque) effective', en:'AP (Attack) effective' },
-  lblPD: { fr:'PD (Défense)', en:'DP (Defense)' },
-  lblHpMax: { fr:'PV max', en:'Max HP' },
-  lblMpMax: { fr:'Mana max', en:'Max Mana' },
-  lblSpd: { fr:'Vitesse (SPD)', en:'Speed (SPD)' },
-  lblDodge: { fr:'Esquive', en:'Dodge' },
+  // stats du haut de #statsPersoPane passées en 3 colonnes le 2026-07-15 (demande explicite :
+  // "3 colonnes a gauche le mot au milieu l'abreviation et a droite la stat") -- le mot et
+  // l'abréviation sont désormais 2 clés i18n séparées (avant, l'abréviation était parfois
+  // incluse entre parenthèses dans le mot, ex: "PA (Attaque) effective")
+  lblPS: { fr:'Gearscore', en:'Gearscore' }, lblPSAbbr: { fr:'GS', en:'GS' },
+  lblPA: { fr:'Attaque effective', en:'Attack effective' }, lblPAAbbr: { fr:'PA', en:'AP' },
+  lblPD: { fr:'Défense', en:'Defense' }, lblPDAbbr: { fr:'PD', en:'DP' },
+  lblHpMax: { fr:'Vie max', en:'Max health' }, lblHpMaxAbbr: { fr:'PV', en:'HP' },
+  lblMpMax: { fr:'Mana max', en:'Max mana' }, lblMpMaxAbbr: { fr:'MP', en:'MP' },
+  lblSpd: { fr:'Vitesse', en:'Speed' }, lblSpdAbbr: { fr:'SPD', en:'SPD' },
+  lblDodge: { fr:'Esquive', en:'Dodge' }, lblDodgeAbbr: { fr:'ESQ', en:'EVA' },
   lblApZone: { fr:'PA requis (zone)', en:'AP required (zone)' },
   lblDpZone: { fr:'PD requis (zone)', en:'DP required (zone)' },
-  lblWeaponBonus: { fr:'Bonus arme', en:'Weapon bonus' },
-  lblArmorBonus: { fr:'Bonus armure (moy.)', en:'Armor bonus (avg)' },
-  lblAiMode: { fr:'Mode IA', en:'AI mode' },
+  lblWeaponBonus: { fr:'Bonus arme', en:'Weapon bonus' }, lblWeaponBonusAbbr: { fr:'ATK', en:'ATK' },
+  lblArmorBonus: { fr:'Bonus armure (moy.)', en:'Armor bonus (avg)' }, lblArmorBonusAbbr: { fr:'DEF', en:'DEF' },
+  lblAiMode: { fr:'Mode de combat', en:'Combat mode' }, lblAiModeAbbr: { fr:'IA', en:'AI' },
   lblKpm: { fr:'Kills / min', en:'Kills / min' },
-  lblKills: { fr:'Loups abattus', en:'Monsters slain' },
+  lblKills: { fr:'Monstres tués', en:'Monsters slain' },
   lblLootCount: { fr:'Objets ramassés', en:'Items looted' },
   cardZones: { fr:'Zones de farm', en:'Farming zones' },
   cardLoot: { fr:'Loot de cette zone', en:'Loot in this zone' },
@@ -957,7 +960,6 @@ const I18N = {
   btnAutoSellLoot: { fr:'Vente automatique', en:'Auto-sell' },
   btnEquipSellCompendium: { fr:'⚡ Équiper → 🗑️ Vendre → 📖 Compendium', en:'⚡ Equip → 🗑️ Sell → 📖 Compendium' },
   lblWeight: { fr:'Poids', en:'Weight' },
-  cardAdvice: { fr:'Conseil de stuff', en:'Gear advice' },
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
   invModeInv: { fr:'🎒 Inventaire', en:'🎒 Inventory' },
   invModeCraft: { fr:'🔧 Assemblage', en:'🔧 Craft' },

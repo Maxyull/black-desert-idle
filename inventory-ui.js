@@ -115,8 +115,8 @@ function accBaseSlot(slotId) {
   if (slotId==='earring1'||slotId==='earring2') return 'earring';
   return slotId;
 }
-// slots sans aucune source en jeu pour l'instant (voir renderLifeskillPanelHtml) — affichés
-// avec un cadenas 🔒 plutôt qu'une case vide muette (demande explicite du 2026-07-09)
+// slots sans aucune source en jeu pour l'instant — affichés avec un cadenas 🔒 plutôt qu'une
+// case vide muette (demande explicite du 2026-07-09)
 const NO_SOURCE_SLOTS = ['artifact1','artifact2','eqStone'];
 // bijoux (bagues/collier/boucles/ceinture) — utilisé pour colorer le cadre de la case selon le
 // palier du bijou équipé (2026-07-09, demande explicite : "ajoute la couleur du cadre des bijoux")
@@ -503,7 +503,11 @@ function renderCompendiumPane() {
       cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
       cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
       cell.onmouseleave = () => hideItemTooltip();
-      cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); equipFromCompendium(i); };
+      // clic = ouvre le même menu popup que le reste du sac (2026-07-15, demande explicite :
+      // "ajoute le bouton d'opti pour le compendium") -- avant, un clic déclenchait
+      // equipFromCompendium() en silence ; désormais un bouton "Mettre en optimisation" explicite,
+      // cohérent avec showItemMenu() pour tous les autres objets
+      cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showItemMenuAtCell(cell, { compIndex:i, ...s }); };
     }
     grid.appendChild(cell);
   }
@@ -597,6 +601,12 @@ function showItemMenu(px, py, data) {
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
+  } else if (data.compIndex != null) {
+    // objet du Compendium (sac protégé) — seule action possible : équiper et cibler directement
+    // l'optimisation dessus (2026-07-15, demande explicite : "ajoute le bouton d'opti pour le
+    // compendium") -- avant, le clic sur la case déclenchait equipFromCompendium() en silence, sans
+    // passer par ce même menu que le reste du sac (incohérent avec le pattern établi ailleurs)
+    addPopBtn(pop, L.toOpt, () => { equipFromCompendium(data.compIndex); });
   }
   pop.style.display = 'block';
   const r = pop.getBoundingClientRect();
