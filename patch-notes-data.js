@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V268', d:'14/07/2026 23:00', name:{fr:'Bouton "Équiper → Vendre → Compendium" verrouillé', en:'"Equip → Sell → Compendium" button locked'}, fr:[
+      {t:'change', sub:'inventaire', tx:'Le bouton "Équiper → Vendre → Compendium" est temporairement verrouillé (cadenas, grisé), en attente d\'une future activation — même convention que le bouton "Vente automatique"'},
+    ], en:[
+      {t:'change', sub:'inventaire', tx:'The "Equip → Sell → Compendium" button is temporarily locked (padlock, greyed out), awaiting a future activation — same convention as the "Auto-sell" button'},
+    ] },
   { v:'V267', d:'14/07/2026 22:00', name:{fr:'Fix affichage PA/PD figé, Sanctuaire d\'Elric ajusté', en:'Fixed frozen AP/DP display, Elric Shrine adjusted'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Le PA/PD affiché au-dessus du personnage ne se rafraîchissait qu\'à un changement de composition du sac — une réussite d\'optimisation (qui ne touche que l\'équipement) pouvait donc laisser cet affichage figé sur une ancienne valeur jusqu\'au prochain loot/vente. Il se met désormais à jour instantanément'},
       {t:'change', sub:'zones', tx:'Sanctuaire d\'Elric était devenu exactement aussi difficile que Base de Bashim (la dernière zone verte) — reqDP relevé de 91 à 101 pour que ce soit de nouveau une vraie progression, tout en restant "tout juste difficile" pour un stuff vert complet enchanté à +15 en moyenne'},
