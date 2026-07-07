@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V276', d:'15/07/2026 07:00', name:{fr:'Loot ticker : prix uniquement pour le trash', en:'Loot ticker: price only for trash'}, fr:[
+      {t:'change', sub:'interface', tx:'Le ticker de loot n\'affiche plus le prix de revente pour les matériaux/bijoux/équipements ramassés — seul le trash (token) garde son prix, désormais précédé d\'une icône 🪙'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The loot ticker no longer shows the resale price for picked-up materials/jewelry/gear — only trash (token) keeps its price, now prefixed with a 🪙 icon'},
+    ] },
   { v:'V275', d:'15/07/2026 06:00', name:{fr:'Plus de ralentissement lié au poids', en:'No more weight-based slowdown'}, fr:[
       {t:'change', sub:'systeme', tx:'Le poids du sac ne réduit plus la vitesse de déplacement — la barre de poids reste affichée à titre indicatif, mais dépasser la limite n\'entraîne plus de malus'},
     ], en:[
