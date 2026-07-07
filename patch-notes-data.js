@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V272', d:'15/07/2026 03:00', name:{fr:'Fix icône d\'upgrade de zone, étiquette admin, historique d\'optimisation', en:'Fixed zone upgrade icon, admin tag, enhancement history'}, fr:[
+      {t:'fix', sub:'interface', severity:'major', tx:'L\'icône ⬆️ signalant qu\'un meilleur stuff attend dans une autre zone ne se déclenchait jamais quand le palier de la pièce équipée était le même que celui de la zone actuellement farmée — un joueur en stuff vert farmant une zone verte ne voyait donc jamais l\'icône, même si une zone bleue sûre offrait mieux. Corrigé et vérifié sur les 3 transitions de palier (gris→blanc, blanc→vert, vert→bleu)'},
+      {t:'new', sub:'admin', tx:'Étiquette "ADMIN" affichée à côté du compteur de joueurs, sur la ligne de la zone où se trouve l\'admin — visible uniquement sur son propre client'},
+      {t:'new', sub:'objets', tx:'Le Compendium (onglet Sac protégé) garde désormais un historique des objets déjà optimisés puis vendus, avec leur meilleur niveau atteint — avant, cette information disparaissait complètement dès que le dernier exemplaire était vendu'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'major', tx:'The ⬆️ icon signaling better gear waits in another zone never triggered when the equipped piece\'s tier matched the currently farmed zone\'s tier — a player in Green gear farming a Green zone never saw the icon, even when a safe Blue zone offered an upgrade. Fixed and verified across all 3 tier transitions (Grey→White, White→Green, Green→Blue)'},
+      {t:'new', sub:'admin', tx:'"ADMIN" tag shown next to the player count, on the row of the zone the admin is currently in — visible only on their own client'},
+      {t:'new', sub:'objets', tx:'The Compendium (Protected bag tab) now keeps a history of items that were enhanced and later sold, with their best level reached — previously this information vanished entirely once the last copy was sold'},
+    ] },
   { v:'V271', d:'15/07/2026 02:00', name:{fr:'Nouvelle recette secrète dans Assemblage', en:'New secret recipe in Assembly'}, fr:[
       {t:'new', sub:'objets', tx:'Nouvelle recette dans Assemblage : combiner 1 Bout du trésor de Velia + 1 matériau d\'optimisation + 1 bijou (3 objets différents) donne un "Coffret secret" en silver — un bon moyen de valoriser un bijou ou un matériau isolé plutôt que de le vendre au rabais'},
     ], en:[
