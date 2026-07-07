@@ -225,7 +225,19 @@ const ZONES = [
   // PLANCHER imposé par testZoneMonotonicity (ne peut pas descendre sous le reqDP de Sanctuaire
   // Elric, 101, la zone juste avant dans l'ordre réel de farm) qui ramène le ratio PD à 0.624 (ZONE
   // DIFFICILE, "tout juste" comme demandé). Ne touche pas Planque des Mânes/Forêt de Polly.
-  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:286, reqDP:125, mob:'Uluan',
+  // reqDP remonté de 125 à 129 le 2026-07-16 (demande explicite, nouvelle capture d'écran : "kratuga
+  // dois tout juste acces difficile avec stuff comme sur le screen, modifie les ap [sic] de la
+  // zone... moyenne pri" -- stuff réel du joueur cette fois : Niv.29, PA 365 / PD 92). Le PA
+  // (365/286 = 1.276, largement ZONE ADAPTÉE) n'est PAS et ne PEUT PAS devenir le facteur bloquant
+  // ici : même au plafond monotone autorisé (reqAP ≤ 303, celui de Planque des Mânes), le ratio PA
+  // resterait ≥ 1.20, toujours loin au-dessus du ratio PD -- reqAP volontairement inchangé, le
+  // rendre plus strict n'aurait aucun effet sur le badge affiché. Le PD (92/125 = 0.736) restait
+  // le vrai goulot, mais confortablement au milieu de la zone DIFFICILE plutôt que "tout juste" —
+  // reqDP=129 est le PLAFOND imposé par testZoneMonotonicity (ne peut pas dépasser le reqDP de
+  // Planque des Mânes, 129, calibré la veille pour SA propre référence de stuff — le dépasser aurait
+  // fait glisser Mânes en ZONE DANGEREUSE pour cette référence-là) : ramène le ratio PD à 0.713, le
+  // plus proche du seuil 0.6 atteignable sans casser le calibrage de Planque des Mânes.
+  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:286, reqDP:129, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
@@ -1389,6 +1401,10 @@ function compendiumHighlightItem(name) {
     };
   });
 }
+// 'bag' retiré le 2026-07-16 (demande explicite : "enleve le sac protege du compendium il est
+// maintenant dans l'inventaire") -- doublon exact du même COMPENDIUM_BAG déjà affiché dans la carte
+// Inventaire (onglet "Compendium", voir #invModeCompendiumPane/renderCompendiumPane, promu là-bas
+// le 2026-07-14)
 let compendiumTab = 'zones'; // 'zones' | 'bosses' | 'pen' — demande explicite du 2026-07-08 ("refais moi le compendium pour qu'il ressemble a quelque chose de lisible")
 function renderCompendiumHtml() {
   const zc = compendiumZoneCount(), bc = compendiumBossCount();
@@ -1411,35 +1427,9 @@ function renderCompendiumHtml() {
       <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${LANG==='fr'?'Zones':'Zones'} (${zc}/${ZONES.length})</button>
       <button class="catTab compTab${compendiumTab==='bosses'?' active':''}" data-tab="bosses">🐋 World Bosses (${bc}/${bossCountMax})</button>
       <button class="catTab compTab${compendiumTab==='pen'?' active':''}" data-tab="pen">🌟 ${LANG==='fr'?'Maîtrise PEN':'PEN Mastery'} (${penDone}/${penItems.length})</button>
-      <button class="catTab compTab${compendiumTab==='bag'?' active':''}" data-tab="bag">🎒 ${LANG==='fr'?'Sac protégé':'Protected bag'} (${COMPENDIUM_BAG.filter(Boolean).length}/${INV_SIZE})</button>
     </div>`;
   let bodyHtml;
-  if (compendiumTab === 'bag') {
-    const used = COMPENDIUM_BAG.filter(Boolean).length;
-    const cellsHtml = COMPENDIUM_BAG.map((s,i) => {
-      if (!s) return `<div class="cell compBagCell"></div>`;
-      return `<div class="cell compBagCell has" data-i="${i}" title="${escapeHtml(tr(s.name))}">` +
-        `<span style="color:${s.color}">${s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔'}</span>` +
-        cellEnhBadgeHtml(s) +
-        `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button></div>`;
-    }).join('');
-    // historique d'optimisation (2026-07-15, demande explicite : "affiche l'opti dans le compendium
-    // si on a vendu un objet optimisé") -- S.enhPeakByName retient le meilleur niveau JAMAIS atteint
-    // par nom, même après avoir vendu le dernier exemplaire physique (contrairement à la grille
-    // ci-dessus, purement live sur COMPENDIUM_BAG). N'affiche que les noms qui ne sont PLUS dans le
-    // sac protégé actuellement (sinon doublon avec la grille, déjà visible avec son enh en direct).
-    const soldHistoryHtml = Object.entries(S.enhPeakByName||{})
-      .filter(([name, lvl]) => lvl > 0 && !compendiumBagHasName(name))
-      .sort((a,b) => b[1]-a[1])
-      .map(([name, lvl]) => `<div class="compSoldRow"><span class="compSoldName">${escapeHtml(tr(name))}</span>${cellEnhBadgeHtml({optimizable:true, enhLv:lvl})}</div>`)
-      .join('');
-    bodyHtml = `<div class="admHint">${LANG==='fr'
-        ? '"Vendre 1" garde toujours ici le PLUS ENCHANTÉ des exemplaires possédés de chaque type d\'équipement/bijou jamais monté en PEN, au lieu de le perdre — un exemplaire plus enchanté trouvé dans le sac prend automatiquement sa place. Renvoie-le au sac principal pour t\'en servir.'
-        : '"Sell 1" always keeps here the MOST ENHANCED copy owned of each gear/jewelry type never brought to PEN, instead of losing it — a more enhanced copy found in your bag automatically takes its place. Send it back to your main bag to use it.'}</div>` +
-      `<div class="admSummary">${used} / ${INV_SIZE}</div>` +
-      `<div class="admInvGrid compBagGrid">${cellsHtml}</div>` +
-      (soldHistoryHtml ? `<div class="statSep">${LANG==='fr'?'Déjà optimisés (vendus depuis)':'Previously enhanced (since sold)'}</div><div class="compSoldList">${soldHistoryHtml}</div>` : '');
-  } else if (compendiumTab === 'bosses') {
+  if (compendiumTab === 'bosses') {
     bodyHtml = Object.entries(BOSS_ROSTER).map(([id,b]) => {
       const unlocked = !!S.bossesKilled[id];
       return `<div class="achRow${unlocked?' done':''}">` +
@@ -1457,15 +1447,26 @@ function renderCompendiumHtml() {
         return `<span class="compItem compPenItem${done?' done':''}">${done?'✓':'○'} ${escapeHtml(tr(name))}</span>`;
       }).join('') + `</div>`;
   } else {
-    bodyHtml = ZONES.map((z,zi) => {
-      const items = zoneItemNames(zi);
-      const unlocked = zoneFullyCollected(zi);
-      const itemsHtml = items.map(name => `<span class="compItem${compendiumItemDone(name)?' done':''}" data-item="${escapeHtml(name)}">${compendiumItemDone(name)?'✓':'○'} ${escapeHtml(name)}</span>`).join('');
-      return `<div class="achRow compZoneRow${unlocked?' done':''}" data-zi="${zi}">` +
-        `<div class="achIcon">${unlocked?'📖':'🔒'}</div>` +
-        `<div class="achInfo"><div class="achName">${tr(z.name)}</div>` +
-        `<div class="achDesc compItems">${itemsHtml}</div></div>` +
-        `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Objet manquant':'Missing item')}</div></div>`;
+    // regroupé par palier de stuff, en-tête colorée (2026-07-16, demande explicite : "ajoute au
+    // compendium des categorie dans zone par zone de couleurs") -- même convention que #zoneList
+    // (voir buildZoneList/.zTierHead/.zTierDot), zones dans le VRAI ordre de farm (GEAR_TIERS.zones)
+    // plutôt que l'ordre brut de ZONES[]. Chaque ligne porte aussi un effet de complétion "implicite"
+    // (demande explicite : "un effet qui montre implicitement si c'est fini ou pas comme ça pas
+    // besoin d'y aller") -- halo vert (voir .compZoneRow.done dans styles.css) visible sans avoir à
+    // dérouler la liste d'objets de la zone pour vérifier.
+    bodyHtml = GEAR_TIERS.map(tier => {
+      const rowsHtml = tier.zones.map(zi => {
+        const z = ZONES[zi];
+        const items = zoneItemNames(zi);
+        const unlocked = zoneFullyCollected(zi);
+        const itemsHtml = items.map(name => `<span class="compItem${compendiumItemDone(name)?' done':''}" data-item="${escapeHtml(name)}">${compendiumItemDone(name)?'✓':'○'} ${escapeHtml(name)}</span>`).join('');
+        return `<div class="achRow compZoneRow${unlocked?' done':''}" data-zi="${zi}" style="--tier-color:${tier.color}">` +
+          `<div class="achIcon">${unlocked?'📖':'🔒'}</div>` +
+          `<div class="achInfo"><div class="achName">${tr(z.name)}</div>` +
+          `<div class="achDesc compItems">${itemsHtml}</div></div>` +
+          `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Objet manquant':'Missing item')}</div></div>`;
+      }).join('');
+      return `<div class="zTierHead"><span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}</div>${rowsHtml}`;
     }).join('');
   }
   return summaryCard + bodyHtml;
@@ -1495,27 +1496,6 @@ function openCompendium() {
   });
   $a('infoBody').querySelectorAll('.compItem[data-item]').forEach(el => {
     el.onclick = () => compendiumHighlightItem(el.dataset.item);
-  });
-  $a('infoBody').querySelectorAll('.compBagReturnBtn').forEach(btn => {
-    btn.onclick = e => {
-      e.stopPropagation();
-      const i = parseInt(btn.dataset.i,10);
-      const it = COMPENDIUM_BAG[i]; if (!it) return;
-      if (invAdd({ ...it })) { COMPENDIUM_BAG[i] = null; openCompendium(); }
-      else floatTxt(P.x,P.y,90,LANG==='fr'?'Sac principal plein':'Main bag full',{hurt:true});
-    };
-  });
-  // "afficher l'optimisation des item protégé dans le sac protégé" (2026-07-12) : le petit badge
-  // +X (cellEnhBadgeHtml) était déjà là, mais contrairement au sac principal, aucun survol ne
-  // montrait le tooltip détaillé (PA/PD/PV/Esquive/enchantement complet, voir itemTooltipHtml) --
-  // même wiring que renderInventory(), juste sans invIndex (ces objets ne vivent pas dans INV[]).
-  COMPENDIUM_BAG.forEach((s, i) => {
-    if (!s) return;
-    const cell = $a('infoBody').querySelector(`.compBagCell[data-i="${i}"]`);
-    if (!cell) return;
-    cell.onmouseenter = ev => showItemTooltip(ev.clientX, ev.clientY, s);
-    cell.onmousemove = ev => moveItemTooltip(ev.clientX, ev.clientY);
-    cell.onmouseleave = () => hideItemTooltip();
   });
 }
 

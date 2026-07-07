@@ -968,6 +968,7 @@ const I18N = {
   // teasers verrouillés (2026-07-16, demande explicite : "ajoute onglet pet et mer")
   btnPet: { fr:'🐾 Compagnon', en:'🐾 Companion' },
   btnSea: { fr:'🌊 Vie en mer', en:'🌊 Sea life' },
+  btnDonation: { fr:'💖 Donation', en:'💖 Donation' },
   lblWeight: { fr:'Poids', en:'Weight' },
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
   invModeInv: { fr:'🎒 Inventaire', en:'🎒 Inventory' },
@@ -1381,21 +1382,20 @@ const COMPENDIUM_TUTORIAL_STEPS = [
     title:{fr:'Ta progression globale',en:'Your overall progress'},
     text:{fr:'+1% Vitesse, +1% Dégâts et +1% Esquive pour chaque zone visitée ou boss vaincu — visible ici en un coup d\'œil.', en:'+1% Speed, +1% Damage and +1% Dodge for every zone visited or boss defeated — visible here at a glance.'} },
   { target:'#infoBody .catTabs', placement:'bottom',
-    title:{fr:'4 onglets à explorer',en:'4 tabs to explore'},
-    text:{fr:'Zones (farm), World Bosses, Maîtrise PEN (suivi pur, sans bonus) et le Sac protégé — chacun a sa propre logique, voir les étapes suivantes.', en:'Zones (farming), World Bosses, PEN Mastery (pure tracking, no bonus) and the Protected bag — each has its own logic, see the next steps.'},
+    title:{fr:'3 onglets à explorer',en:'3 tabs to explore'},
+    // "sac protégé" retiré le 2026-07-16 (demande explicite : "enleve le sac protege du compendium
+    // il est maintenant dans l'inventaire") -- vit désormais uniquement dans la carte Inventaire
+    // (onglet "Compendium", voir #invModeCompendiumPane)
+    text:{fr:'Zones (farm), World Bosses et Maîtrise PEN (suivi pur, sans bonus) — chacun a sa propre logique, voir les étapes suivantes. Le sac protégé vit maintenant dans la carte Inventaire.', en:'Zones (farming), World Bosses and PEN Mastery (pure tracking, no bonus) — each has its own logic, see the next steps. The protected bag now lives in the Inventory card.'},
     before: () => { tutCompTabSaved = compendiumTab; compendiumTab = 'zones'; openCompendium(); } },
   { target:'#infoBody .compZoneRow', placement:'top',
     title:{fr:'Une zone, ses objets',en:'A zone, its items'},
     text:{fr:'✓ = objet déjà obtenu au moins une fois. Clique sur un objet pour voir quelles zones le font dropper, puis clique une zone pour y lancer le farm directement (téléportation immédiate, sans confirmation).', en:'✓ = item already obtained at least once. Click an item to see which zones drop it, then click a zone to start farming there right away (instant teleport, no confirmation).'},
     before: () => { compendiumTab = 'zones'; openCompendium(); } },
-  { target:'#infoBody .compPenGrid', placement:'top',
+  { target:'#infoBody .compPenGrid', placement:'top', final:true,
     title:{fr:'Maîtrise PEN',en:'PEN Mastery'},
-    text:{fr:'Suivi de complétion pur (aucun bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.', en:'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.'},
-    before: () => { compendiumTab = 'pen'; openCompendium(); } },
-  { target:'#infoBody .compBagGrid', placement:'top', final:true,
-    title:{fr:'Le sac protégé',en:'The protected bag'},
-    text:{fr:'Quand "Vendre" s\'apprête à vendre un objet dont ce TYPE n\'a jamais atteint PEN, le 1er exemplaire est protégé ici au lieu d\'être vendu. Tu peux relancer ce tutoriel à tout moment avec le bouton "?" en haut du panneau.', en:'When "Sell" is about to sell an item whose TYPE has never reached PEN, the 1st copy is protected here instead of being sold. You can replay this tutorial anytime with the "?" button at the top of the panel.'},
-    before: () => { compendiumTab = 'bag'; openCompendium(); },
+    text:{fr:'Suivi de complétion pur (aucun bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire. Tu peux relancer ce tutoriel à tout moment avec le bouton "?" en haut du panneau.', en:'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory. You can replay this tutorial anytime with the "?" button at the top of the panel.'},
+    before: () => { compendiumTab = 'pen'; openCompendium(); },
     after: () => { compendiumTab = tutCompTabSaved; openCompendium(); } },
 ];
 function startCompendiumTutorial() {

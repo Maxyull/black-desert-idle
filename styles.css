@@ -1554,6 +1554,15 @@
     border-bottom:1px solid #201f26; opacity:.72;
   }
   .achRow.done { opacity:1; }
+  /* Compendium "Zones" : catégorisé par palier de stuff, en-tête colorée (2026-07-16, demande
+     explicite : "ajoute au compendium des categorie dans zone par zone de couleurs") -- bordure
+     gauche teintée par palier (--tier-color, posée en inline sur chaque .compZoneRow, voir
+     renderCompendiumHtml) + effet de complétion "implicite" (halo vert) SANS toucher
+     border-left-color pour ne jamais entrer en conflit avec .compHalo (recherche d'objet, même
+     propriété, voir plus haut) -- uniquement fond/glow/icône, jamais besoin de dérouler la zone. */
+  .compZoneRow { border-left:3px solid var(--tier-color, #2c2a33); }
+  .compZoneRow.done { background:rgba(143,201,138,.07); box-shadow:inset 3px 0 0 0 rgba(143,201,138,.4); }
+  .compZoneRow.done .achIcon { filter:drop-shadow(0 0 4px rgba(143,201,138,.65)); }
   .achIcon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
   .achInfo { flex:1; min-width:0; }
   .achName { font-weight:bold; color:var(--ink); font-size:12px; }
