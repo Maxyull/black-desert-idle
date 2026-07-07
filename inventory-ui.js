@@ -1046,14 +1046,23 @@ function renderOptimization() {
   const cronIdx = findCronStone(), cronSlotEl = $('optCronSlot');
   $('optCronIcon').innerHTML = CRON_STONE.icon;
   const cronOffCls = S.useCronStone ? '' : ' off';
+  // coût variable selon le palier de la pièce CIBLÉE (2026-07-15, demande explicite : "affiche ce
+  // que tu utilise/besoin selon le stuff équipé dans l'opti") -- affiché "as-tu / il-faut", ex.
+  // "5 / 3" (5 en stock, 3 nécessaires pour CETTE pièce), en rouge si pas assez en stock
+  const cronCost = cronStoneCostForItem(target);
+  const cronHave = cronIdx === -1 ? 0 : INV[cronIdx].qty;
   if (cronIdx === -1) {
     cronSlotEl.className = 'empty' + cronOffCls; cronSlotEl.title = LANG==='fr'?'Aucune Pierre de Cron en sac':'No Cron Stone in bag';
-    $('optCronQty').textContent = ''; cronSlotEl.style.boxShadow = '';
+    $('optCronQty').textContent = target ? `0/${cronCost}` : '';
+    cronSlotEl.style.boxShadow = '';
   } else {
     cronSlotEl.className = cronOffCls.trim(); cronSlotEl.title = CRON_STONE.name + ' — ' +
       (S.useCronStone ? (LANG==='fr'?'utilisée (clique pour désactiver)':'in use (click to disable)')
-                      : (LANG==='fr'?'non utilisée (clique pour activer)':'not used (click to enable)'));
-    $('optCronQty').textContent = fmt(INV[cronIdx].qty);
+                      : (LANG==='fr'?'non utilisée (clique pour activer)':'not used (click to enable)')) +
+      (target ? (LANG==='fr'?` · coût pour cette pièce : ${cronCost}`:` · cost for this piece: ${cronCost}`) : '');
+    $('optCronQty').innerHTML = target
+      ? `<span class="${cronHave >= cronCost ? '' : 'bad'}">${fmt(cronHave)}/${cronCost}</span>`
+      : fmt(cronHave);
     cronSlotEl.style.boxShadow = S.useCronStone ? `0 0 8px 2px ${CRON_STONE.color}66` : '';
   }
   renderOptSuggestions();
@@ -1095,10 +1104,15 @@ function attemptEnhance() {
     // UNIQUEMENT quand cet échec aurait fait rétrograder l'objet — protège le palier actuel, le
     // matériau d'optimisation reste perdu comme sur n'importe quel échec
     const wouldDowngrade = lvl >= SAFE_IDX;
-    const cronIdx = (wouldDowngrade && S.useCronStone) ? findCronStone() : -1;
+    // coût variable selon le palier de LA PIÈCE PROTÉGÉE (2026-07-15, demande explicite : "pierre
+    // de cron utilisation gris 1 blanc 2 vert 3 bleu 4") -- avant, toujours 1 pierre quel que soit
+    // le palier ; il faut désormais assez de pierres en stock pour couvrir le coût du palier
+    const cronCost = cronStoneCostForItem(target);
+    const cronIdxRaw = (wouldDowngrade && S.useCronStone) ? findCronStone() : -1;
+    const cronIdx = (cronIdxRaw !== -1 && INV[cronIdxRaw].qty >= cronCost) ? cronIdxRaw : -1;
     if (cronIdx !== -1) {
-      invRemoveAt(cronIdx, 1);
-      r.textContent = (LANG==='fr'?'✖ ÉCHEC — protégé par une Pierre de Cron (':'✖ FAIL — protected by a Cron Stone (')+ENH_NAMES[target.enhLv]+')';
+      invRemoveAt(cronIdx, cronCost);
+      r.textContent = (LANG==='fr'?'✖ ÉCHEC — protégé par '+cronCost+' Pierre'+(cronCost>1?'s':'')+' de Cron (':'✖ FAIL — protected by '+cronCost+' Cron Stone'+(cronCost>1?'s':'')+' (')+ENH_NAMES[target.enhLv]+')';
       floatTxt(P.x,P.y,100,LANG==='fr'?'⏳ Protégé !':'⏳ Protected!',{blue:true});
     } else if (lvl >= SAFE_IDX && lvl < PRI_IDX) { // +8 à +15 : peut rétrograder, jamais sous +7
       target.enhLv = Math.max(SAFE_IDX-1, lvl-1);

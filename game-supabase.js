@@ -916,6 +916,7 @@ const I18N = {
   cardStats: { fr:'Statistiques', en:'Stats' },
   statsTabPerso: { fr:'Perso', en:'Personal' },
   statsTabReco: { fr:'Recommandations', en:'Recommendations' },
+  statsTabLevels: { fr:'Niveaux', en:'Levels' },
   cardZoneStats: { fr:'Stats de la zone de farm', en:'Farming zone stats' },
   // stats du haut de #statsPersoPane passées en 3 colonnes le 2026-07-15 (demande explicite :
   // "3 colonnes a gauche le mot au milieu l'abreviation et a droite la stat") -- le mot et

@@ -364,6 +364,11 @@
      ligne (meilleur silver/xp/kills) mène directement à la zone concernée */
   .statsRecoRow { cursor:pointer; padding:3px 4px; border-radius:3px; }
   .statsRecoRow:hover { background:rgba(201,165,90,.12); }
+  /* onglet "Niveaux" de la carte Statistiques (2026-07-15, demande explicite) : ligne du niveau
+     ACTUEL mise en évidence parmi les 5 avant/après */
+  .statsLevelRow { padding:3px 4px; border-radius:3px; }
+  .statsLevelRow.current { background:rgba(201,165,90,.14); border:1px solid var(--gold-dim); }
+  .statsLevelRow.current span:first-child { color:var(--gold); font-weight:bold; }
   .statSep {
     margin:8px 0 5px; padding-top:6px; border-top:1px solid #2c2a33;
     font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gold);
@@ -779,6 +784,10 @@
      meme quand une pierre est en sac -- remplace l'ancienne case a cocher separee */
   #optCronSlot.off { filter:grayscale(1); opacity:.45; border-color:#666; }
   #optCronQty { position:absolute; bottom:-1px; right:1px; font-size:9px; color:var(--ink); text-shadow:0 0 2px #000; }
+  /* "as-tu / il-faut" en rouge quand le stock de Pierres de Cron est insuffisant pour la pièce
+     ciblée (2026-07-15, demande explicite : "affiche ce que tu utilise/besoin selon le stuff
+     équipé dans l'opti") */
+  #optCronQty .bad { color:var(--danger); }
   #optLevelLbl { font-size:13px; } #optLevelLbl b { color:var(--gold); }
   #optChanceWrap { margin:8px 0; }
   #optChanceBar { height:7px; background:#0d0c11; border:1px solid #333; overflow:hidden; display:flex; }
