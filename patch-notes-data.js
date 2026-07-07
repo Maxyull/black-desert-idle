@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V292', d:'16/07/2026 14:00', name:{fr:'Étiquette admin visible par tous', en:'Admin tag visible to everyone'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'étiquette "ADMIN" sur la liste des zones est désormais visible par TOUS les joueurs (avant, uniquement par l\'admin lui-même) — sans exposer l\'identité d\'aucun autre joueur, seule la zone où se trouve l\'admin est partagée'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The "ADMIN" tag on the zone list is now visible to ALL players (previously only to the admin themselves) — without exposing any other player\'s identity, only the zone the admin is in is shared'},
+    ] },
   { v:'V291', d:'16/07/2026 13:00', name:{fr:'Tooltip admin précisé, podium boss déplacé', en:'Clearer admin tooltip, boss podium moved'}, fr:[
       {t:'change', sub:'interface', tx:'L\'étiquette ADMIN (visible uniquement par l\'admin, sur sa propre zone) affiche désormais "Un admin est ici" au survol, moins ambigu'},
       {t:'change', sub:'combat', tx:'Le podium de récompenses World Boss s\'affiche désormais après le calendrier hebdomadaire complet, au lieu d\'être coincé juste sous le décompte du prochain spawn'},
