@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V264', d:'14/07/2026 19:00', name:{fr:'Outils de debug admin pour l\'enchantement', en:'Admin debug tools for enhancement'}, fr:[
+      {t:'new', sub:'admin', tx:'4 boutons réservés à l\'admin dans l\'onglet inventaire principal (invisibles pour tous les autres joueurs) : passer tout l\'équipement en Optimisation max, tout rétrograder à +0, ou avancer/reculer d\'1 rang à la fois — aucun effet sur les compteurs de tentative ni les succès'},
+    ], en:[
+      {t:'new', sub:'admin', tx:'4 admin-only buttons in the main inventory tab (invisible to all other players): set all equipped gear to max Enhancement, reset it all to +0, or step it up/down by 1 rank at a time — no effect on attempt counters or achievements'},
+    ] },
   { v:'V263', d:'14/07/2026 18:00', name:{fr:'Refonte inventaire (onglets, Compendium, vente), IA manuelle, Sanctuaire d\'Elric régulé', en:'Inventory overhaul (tabs, Compendium, selling), manual AI, Elric Shrine access regulated'}, fr:[
       {t:'change', sub:'inventaire', tx:'Le craft de la Pierre de Caphras a été déplacé dans l\'onglet "🔧 Assemblage" — tout futur craft y sera ajouté'},
       {t:'change', sub:'interface', tx:'PA (Attaque) et PD (Défense) affichés à côté des autres stats'},
