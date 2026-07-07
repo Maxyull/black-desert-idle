@@ -392,12 +392,19 @@ function drawWitchOn(x, cx, cy, sc) {
 // "Normal" renommé "Équipements" et Compendium promu en onglet PRINCIPAL au même niveau
 // qu'Inventaire/Assemblage (2026-07-14, demande explicite : "met compendium en grand avec
 // inventaire et assemblage") -- ne fait plus partie de ces catégories, voir #invModeCompendiumPane
+// libellés raccourcis le 2026-07-16 (demande explicite : "inventaire rename Equip. Opti. Conso.")
+// pour laisser respirer la grille désormais à 6 colonnes (ajout de Cristal, voir juste en dessous) --
+// "Trésors"/"RNG" déjà assez courts, inchangés.
 const INV_CATEGORIES = [
-  { id:'normal',      icon:'⚔️', label:{fr:'Équipements',en:'Gear'},    kinds:['gear','jackpot'] },
-  { id:'opt',         icon:'✦',  label:{fr:'Optimisation',en:'Enhancement'}, kinds:['material','craft'] },
+  { id:'normal',      icon:'⚔️', label:{fr:'Equip.',en:'Gear'},    kinds:['gear','jackpot'] },
+  { id:'opt',         icon:'✦',  label:{fr:'Opti.',en:'Enh.'}, kinds:['material','craft'] },
+  // Cristal (2026-07-16, demande explicite : "ajoute crystal") -- verrouillée, en attente d'un futur
+  // système de cristaux en jeu (même stade que l'onglet Cristal de la carte Équipement, voir
+  // #equipCrystalPane) ; aucun objet de type 'crystal' n'existe encore, la catégorie reste vide
+  { id:'crystal',     icon:'💎', label:{fr:'Cristal',en:'Crystal'}, kinds:['crystal'], locked:true },
   // Trésors remonté avant Consommable (2026-07-14, demande explicite : "met tresors avant conso")
   { id:'treasure',    icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, kinds:['treasure'] },
-  { id:'consumable',  icon:'🧪', label:{fr:'Consommable',en:'Consumable'},   kinds:['consumable'], locked:true },
+  { id:'consumable',  icon:'🧪', label:{fr:'Conso.',en:'Cons.'},   kinds:['consumable'], locked:true },
   { id:'rng',         icon:'🎲', label:{fr:'RNG',en:'RNG'},          kinds:['rngbox'], locked:true },
 ];
 let invCategory = 'normal';
@@ -1376,6 +1383,13 @@ function renderOptSuggestions() {
 
 // ---------- table de loot de la zone active (ou en aperçu via le bouton "Voir"), avec % réels ----------
 const LOOT_ICONS = { trash:'▬', material:'◈', jackpot:'💍', craft:'✦', gear:'⚔️' };
+// bouton "vente auto" verrouillé, par item de la table de loot (2026-07-16, demande explicite :
+// "ajoute un bouton bloqué cadenas vente auto sur chaque item dans la lootable") -- même convention
+// que #btnAutoSellLoot (global, voir index.html) : cadenas TOUJOURS en badge au-dessus, centré
+// (.zoneTierLock/.lockedFeatureBtn), jamais inline dans le bouton
+function lootAutoSellLockHtml() {
+  return `<button class="lootAutoSellBtn" disabled title="${LANG==='fr'?'Vente automatique (bientôt disponible)':'Auto-sell (coming soon)'}"><span class="zoneTierLock">🔒</span>🗑️</button>`;
+}
 // aperçu agrandi au survol d'une icône de la table de loot (2026-07-08, demande explicite : "qu'on
 // puisse agrandir l'icone pour mieux la voir en tooltip en auto en passant dessus") -- écoute
 // déléguée sur tout le document (les icônes sont recréées à chaque rendu de table de loot, sur
@@ -1474,6 +1488,7 @@ function zoneLootRowsHtml(idx) {
       <div class="lootIcon k-${r.kind}"${col?` style="color:${col};border-color:${col}"`:''}>${iconHtml}</div>
       <div class="lootInfo"><div class="ln"${col?` style="color:${col}"`:''}>${tr(r.it.name)}</div><div class="lv">${tr(r.note)}</div>${priceHtml}</div>
       <div class="lootPct">${(ch*100).toFixed(ch < .01 ? 3 : 1)}%</div>
+      ${lootAutoSellLockHtml()}
     </div>` };
   });
   const catOrder = [...new Set(rowsHtml.map(r => r.cat.order))].sort((a,b) => a-b);
@@ -1567,6 +1582,7 @@ function renderLootTable(previewIdx) {
       <div class="lootIcon k-treasure" style="color:${t.color};border-color:${t.color}">${t.icon}</div>
       <div class="lootInfo"><div class="ln" style="color:${t.color}">${tr(t.name)}</div></div>
       <div class="lootPct">${fmtTinyPct(t.ch)}</div>
+      ${lootAutoSellLockHtml()}
     </div>`).join('');
   $('lootTable').innerHTML = mainRowsHtml +
     `<div class="lootCatHead">🗺️ ${LANG==='fr'?'Trésor de Velia':'Velia Treasure'}</div>` + treasureRowsHtml;

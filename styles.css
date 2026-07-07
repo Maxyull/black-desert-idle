@@ -739,8 +739,21 @@
   #itemTooltip .ipDesc { color:var(--ink-dim); line-height:1.35; }
 
   /* ===== loot de la zone ===== */
-  .lootRow { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid #232128; font-size:12px; }
+  /* padding-top agrandi (2026-07-16) pour laisser la place au badge cadenas de .lootAutoSellBtn qui
+     dépasse au-dessus de chaque ligne (voir plus bas) -- avant 5px 0, insuffisant pour le badge */
+  .lootRow { display:flex; align-items:center; gap:8px; padding:9px 0 5px; border-bottom:1px solid #232128; font-size:12px; }
   .lootRow:last-child { border-bottom:none; }
+  /* petite marge de sécurité pour la toute 1ère ligne (sans .lootCatHead au-dessus pour lui faire
+     de la place) -- évite que son badge cadenas ne soit rogné par overflow-y:auto */
+  #lootTable { padding-top:6px; }
+  /* bouton "vente auto" par item de la table de loot (2026-07-16, demande explicite : "ajoute un
+     bouton bloqué cadenas vente auto sur chaque item dans la lootable") -- cadenas TOUJOURS en badge
+     au-dessus, centré (.zoneTierLock), même convention que .lockedFeatureBtn (voir plus haut) */
+  .lootAutoSellBtn {
+    position:relative; flex-shrink:0; width:22px; height:22px; margin:0; padding:0;
+    display:flex; align-items:center; justify-content:center; font-size:11px;
+    background:rgba(20,19,26,.8); border:1px solid #2c2a33; opacity:.5; cursor:not-allowed; overflow:visible;
+  }
   .lootIcon { width:26px; height:26px; display:flex; align-items:center; justify-content:center;
     background:rgba(20,19,26,.8); border:1px solid #2c2a33; font-size:13px; flex-shrink:0; cursor:help; }
   /* aperçu agrandi au survol d'une icône de loot (2026-07-08, demande explicite : "qu'on puisse
@@ -898,6 +911,11 @@
   #gameBar button, #userBar button, #metaBar button {
     width:100%; margin:0; padding:11px 14px; font-size:13.5px; text-align:left;
   }
+  /* convention UNIQUE pour tout bouton verrouillé "bientôt disponible" (2026-07-16, demande
+     explicite : "met tout les cadenas en haut au milieu... systematique meme les prochain") --
+     cadenas TOUJOURS en badge au-dessus, centré (.zoneTierLock), jamais inline dans le texte.
+     opacity/cursor réduits comme les autres placeholders verrouillés déjà existants. */
+  .lockedFeatureBtn { position:relative; opacity:.5; cursor:not-allowed; overflow:visible; }
   #userBarTop { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-dim); padding:0 2px; }
   #userEmail { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   /* dernier élément du flux : son texte variable (vide / "✓ sauvegardé" / ...) ne fait
@@ -1472,7 +1490,9 @@
      les onglets de région ci-dessus, jamais de retour à la ligne */
   /* repassé à 5 colonnes le 2026-07-14 : Compendium promu en onglet PRINCIPAL (voir
      #invModeCompendiumPane), ce n'est plus une catégorie de cette barre */
-  #invCatTabs { display:grid; grid-template-columns:repeat(5, 1fr); gap:2px; margin-bottom:8px; }
+  /* passé à 6 colonnes le 2026-07-16 (demande explicite : "ajoute crystal") -- nouvelle catégorie
+     Cristal, verrouillée, en attente d'un futur système de cristaux (voir INV_CATEGORIES) */
+  #invCatTabs { display:grid; grid-template-columns:repeat(6, 1fr); gap:2px; margin-bottom:8px; }
   #invCatTabs .catTab { position:relative; padding:6px 2px; font-size:9px; min-width:0; overflow:visible; }
   /* onglet Compendium intégré à l'inventaire (2026-07-14) -- bouton d'optimisation directe par case */
   .compOptBtn { position:absolute; bottom:1px; right:1px; font-size:9px; opacity:.85; }

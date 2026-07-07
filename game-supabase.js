@@ -965,6 +965,9 @@ const I18N = {
   lblLevel: { fr:'Niv.', en:'Lvl' },
   btnAutoSellLoot: { fr:'Vente automatique', en:'Auto-sell' },
   btnEquipSellCompendium: { fr:'⚡ Équiper → 🗑️ Vendre → 📖 Compendium', en:'⚡ Equip → 🗑️ Sell → 📖 Compendium' },
+  // teasers verrouillés (2026-07-16, demande explicite : "ajoute onglet pet et mer")
+  btnPet: { fr:'🐾 Compagnon', en:'🐾 Companion' },
+  btnSea: { fr:'🌊 Vie en mer', en:'🌊 Sea life' },
   lblWeight: { fr:'Poids', en:'Weight' },
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
   invModeInv: { fr:'🎒 Inventaire', en:'🎒 Inventory' },
