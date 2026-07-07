@@ -945,6 +945,31 @@
     border:1px solid var(--gold-dim); border-radius:4px; padding:9px 11px; margin:8px 0 14px;
   }
   .bossRewardRules b { color:var(--gold); }
+  /* sélecteur Kzarka/Vell + podium (2026-07-16, demande explicite : "affiche les recompense en
+     dessous des horaires boss avec un selecteur vell/kzarka et un podium") -- même pilule dorée que
+     #equipModeSlider, podium à 3 marches (2e/1er/3e dans cet ordre visuel classique) */
+  .bossRewardSel {
+    display:flex; justify-content:center; gap:4px; margin-bottom:8px;
+    background:rgba(10,9,12,.5); border:1px solid var(--gold-dim); border-radius:14px; padding:3px; width:fit-content; margin-left:auto; margin-right:auto;
+  }
+  .bossRewardSelSeg { cursor:pointer; padding:4px 11px; border-radius:11px; font-size:11px; color:var(--ink-dim); }
+  .bossRewardSelSeg.active { background:var(--gold); color:#1a1712; font-weight:bold; }
+  .bossRewardBase { text-align:center; margin-bottom:8px; }
+  .bossPodium { display:flex; align-items:flex-end; justify-content:center; gap:6px; margin:6px 0 2px; }
+  .bossPodiumStep { display:flex; flex-direction:column; align-items:center; width:32%; text-align:center; }
+  .bossPodiumStep.rank2 { order:1; }
+  .bossPodiumStep.rank1 { order:2; }
+  .bossPodiumStep.rank3 { order:3; }
+  .bossPodiumMedal { font-size:19px; }
+  .bossPodiumReward { font-size:9.5px; color:var(--ink-dim); line-height:1.35; margin-top:2px; min-height:28px; }
+  .bossPodiumStep::after {
+    content:''; display:block; width:100%; border-radius:3px 3px 0 0; margin-top:5px;
+    background:linear-gradient(180deg, rgba(201,165,90,.35), rgba(201,165,90,.1));
+  }
+  .bossPodiumStep.rank1::after { height:34px; background:linear-gradient(180deg, rgba(255,215,110,.55), rgba(255,215,110,.15)); }
+  .bossPodiumStep.rank2::after { height:24px; }
+  .bossPodiumStep.rank3::after { height:15px; background:linear-gradient(180deg, rgba(190,120,70,.4), rgba(190,120,70,.12)); }
+  .bossRewardExtra { text-align:center; font-size:11px; color:#7ecdec; margin-top:8px; }
   .admReloadBtn {
     width:auto; margin-left:8px; padding:2px 8px; font-size:10px; font-weight:bold; cursor:pointer;
     background:var(--gold); color:#1a1712; border:none; border-radius:3px; vertical-align:middle;

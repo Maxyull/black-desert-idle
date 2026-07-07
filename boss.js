@@ -267,6 +267,15 @@ function wireBossLobby() {
   const btn = $a('bossFightBtn');
   const occ = nextBossOccurrence();
   if (btn && !btn.disabled && occ) btn.onclick = () => startBossFight(occ.boss, !!occ.sharedHp);
+  // sélecteur Kzarka/Vell de l'aperçu de récompense (2026-07-16, demande explicite) : re-render
+  // complet du lobby au clic, même idiome que refreshLiveBoss() plus haut
+  document.querySelectorAll('.bossRewardSelSeg').forEach(seg => {
+    seg.onclick = () => {
+      bossRewardPreviewBoss = seg.dataset.boss;
+      $('bossLobbyBody').innerHTML = renderBossLobbyHtml();
+      wireBossLobby();
+    };
+  });
 }
 
 // ---- combat de boss : plein écran, canvas dédié, boucle rAF indépendante du farm ----
@@ -478,18 +487,43 @@ function bossZoneMaterialItem(zi, qty) {
   const tier = gearTierForZone(zi), z = ZONES[zi];
   return { name:tier.material.name, kind:'material', icon:tier.material.icon, color:tier.material.color, key:'mat_'+tier.material.name, qty, stackable:true, weight:0.1, val:z.loot.mat.val };
 }
-// résumé des règles de récompense, utilisé à la fois dans le lobby (aperçu, "visible par tous" --
-// demande explicite) et en fin de combat. Agrandi le 2026-07-15 (demande explicite : "recompense,
-// affiche en plus gros en dessous des horaires de boss") -- avant, un simple .admHint discret,
-// facile à manquer ; désormais une carte dédiée (.bossRewardRules), toujours juste sous le bloc
-// horaires/countdown (nextHtml) et avant le calendrier hebdomadaire.
+// sélecteur Kzarka/Vell de l'aperçu de récompense (2026-07-16, demande explicite : "affiche les
+// recompense en dessous des horaires boss avec un selecteur vell/kzarka et un podium") -- la
+// formule de récompense (zone difficile/dangereuse, rang de contribution) est IDENTIQUE pour les
+// 2 boss, seule la ligne "extra" (Coeur de Vell, voir BOSS_ROSTER.vell.rareLoot) diffère -- le
+// sélecteur sert donc surtout à prévisualiser cette différence.
+let bossRewardPreviewBoss = 'kzarka';
+function bossRewardSelectorHtml() {
+  return `<div class="bossRewardSel">` + Object.keys(BOSS_ROSTER).map(k => {
+    const b = BOSS_ROSTER[k], active = bossRewardPreviewBoss === k;
+    return `<div class="bossRewardSelSeg${active?' active':''}" data-boss="${k}">${b.icon} ${b.short[LANG]}</div>`;
+  }).join('') + `</div>`;
+}
+// résumé des règles de récompense, utilisé dans le lobby (aperçu, "visible par tous" --
+// demande explicite). Agrandi le 2026-07-15 (demande explicite : "recompense, affiche en plus gros
+// en dessous des horaires de boss") -- avant, un simple .admHint discret, facile à manquer ;
+// désormais une carte dédiée (.bossRewardRules), toujours juste sous le bloc horaires/countdown
+// (nextHtml) et avant le calendrier hebdomadaire. Restructuré en podium le 2026-07-16 (demande
+// explicite) -- avant, une seule phrase en ligne listant #1/#2/#3 ; désormais un vrai podium visuel
+// (2e/1er/3e) avec un sélecteur de boss au-dessus.
 function bossRewardRulesHtml() {
   const dZi = bestDifficileZoneIdx(), dgZi = nextDangereuseZoneIdx();
-  const dName = dZi != null ? tr(ZONES[dZi].name) : (LANG==='fr'?'—':'—');
-  const dgName = dgZi != null ? tr(ZONES[dgZi].name) : (LANG==='fr'?'—':'—');
-  return LANG==='fr'
-    ? `<div class="bossRewardRules">🎁 Récompenses selon ta progression : pierre d'optimisation de ta meilleure zone difficile (<b>${dName}</b>) pour tous · #1 : +1 bijou de la prochaine zone dangereuse (<b>${dgName}</b>) · #2 : +1 bijou de ta zone difficile · #3 : 20% bijou zone dangereuse + 30% bijou zone difficile</div>`
-    : `<div class="bossRewardRules">🎁 Rewards based on your progress: enhancement stone from your best hard zone (<b>${dName}</b>) for everyone · #1: +1 jewel from the next dangerous zone (<b>${dgName}</b>) · #2: +1 jewel from your hard zone · #3: 20% dangerous-zone jewel + 30% hard-zone jewel</div>`;
+  const dName = dZi != null ? tr(ZONES[dZi].name) : '—';
+  const dgName = dgZi != null ? tr(ZONES[dgZi].name) : '—';
+  const b = BOSS_ROSTER[bossRewardPreviewBoss];
+  const rareLine = b.rareLoot
+    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${LANG==='fr'?'de chance':'chance'} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>`
+    : '';
+  return `<div class="bossRewardRules">
+    ${bossRewardSelectorHtml()}
+    <div class="bossRewardBase">🎁 ${LANG==='fr'?'Pour tous':'For everyone'} : ${LANG==='fr'?"pierre d'optimisation de ta meilleure zone difficile":'enhancement stone from your best hard zone'} (<b>${dName}</b>)</div>
+    <div class="bossPodium">
+      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">${LANG==='fr'?'+1 bijou de ta zone difficile':'+1 jewel from your hard zone'} (<b>${dName}</b>)</div></div>
+      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">${LANG==='fr'?'+1 bijou de la prochaine zone dangereuse':'+1 jewel from the next dangerous zone'} (<b>${dgName}</b>)</div></div>
+      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">${LANG==='fr'?'20% bijou dangereuse + 30% bijou difficile':'20% dangerous jewel + 30% hard jewel'}</div></div>
+    </div>
+    ${rareLine}
+  </div>`;
 }
 // roue de récompense rare (2026-07-08, demande explicite) : affichée en fin de combat quand le
 // boss a une table "rareLoot" définie (Vell → Coeur de Vell, 5%) — tourne toute seule et s'arrête
