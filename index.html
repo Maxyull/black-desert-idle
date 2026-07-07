@@ -10,7 +10,7 @@
      commit), pas juste copie depuis jsdelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"
   integrity="sha256-LbKRLxaTmjshtHKYCnradGszpqQHCLxVXLC+JVxutbE=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=354">
+<link rel="stylesheet" href="styles.css?v=355">
 </head>
 <body>
 
@@ -541,41 +541,41 @@
   </div>
 </div>
 
-<script src="game-core.js?v=354"></script>
+<script src="game-core.js?v=355"></script>
 <!-- World Boss (Kzarka/Vell : lobby, combat, rendu de la salle) -- extrait de game-core.js le
      2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà définies à ce stade
      ($, S, EQUIP, effHpMax, ZONES...) et le canvas #bossCv déjà présent dans le DOM -->
-<script src="boss.js?v=354"></script>
+<script src="boss.js?v=355"></script>
 <!-- inventaire/équipement -- UI (paperdoll, grille, enchantement, auto-opti) -- extrait de
      game-core.js le 2026-07-14 -- DOIT charger AVANT render.js : le démarrage du jeu (à la fin de
      render.js) appelle hud(), qui appelle refreshInvUI()/hasNeglectedUpgradeInBag(), tous deux
      définis ici -->
-<script src="inventory-ui.js?v=354"></script>
+<script src="inventory-ui.js?v=355"></script>
 <!-- rendu canvas (scène, sprites, particules) -- extrait de game-core.js le 2026-07-14 -- charge
      APRÈS game-core.js/boss.js/inventory-ui.js : hud() (dans game-core.js) appelle
      drawZoneMobIcon() (défini ici), donc ce fichier DOIT charger avant le tout premier hud(). C'est
      pourquoi le démarrage du jeu (renderInvCatTabs/hud/requestAnimationFrame(loop), avant à la toute
      fin de game-core.js) a été déplacé à la fin de CE fichier -- requestAnimationFrame(loop) doit
      rester le tout dernier appel synchrone du chargement, sinon la boucle de jeu ne démarre jamais -->
-<script src="render.js?v=354"></script>
+<script src="render.js?v=355"></script>
 <!-- données pures PATCH_NOTES (~2000 lignes, extraites de game-supabase.js le 2026-07-14 pour
      alléger le fichier) -- DOIT charger avant game-supabase.js, qui lit PATCH_NOTES[0].v au
      top-level dès son chargement (voir CURRENT_VERSION) -->
-<script src="patch-notes-data.js?v=354"></script>
-<script src="game-supabase.js?v=354"></script>
+<script src="patch-notes-data.js?v=355"></script>
+<script src="game-supabase.js?v=355"></script>
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->
-<script src="admin-panel.js?v=354"></script>
+<script src="admin-panel.js?v=355"></script>
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
-<script src="chat.js?v=354"></script>
+<script src="chat.js?v=355"></script>
 <!-- marché (Hôtel des ventes + Marché commun v2, carnet d'ordres) -- extrait de game-supabase.js
      le 2026-07-14 -- charge APRÈS lui : wiring $a('btnMarket').onclick etc au top-level -->
-<script src="market.js?v=354"></script>
+<script src="market.js?v=355"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=354"></script>
+<script src="tests.js?v=355"></script>
 </body>
 </html>
