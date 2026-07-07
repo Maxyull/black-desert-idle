@@ -2079,10 +2079,18 @@ function targetPackCount() {
   if (zoneIdx===6 || zoneIdx===7 || zoneIdx===8 || zoneIdx===14) return 16; // green
   return 12; // blue : 9,10,11,15
 }
-function resetWorld() {
+// keepPos (2026-07-15, demande explicite : "au reload, apres maj le joueur arrive dans une zone
+// vide, fais en sorte qu'il trouve rapidement des monstre") -- BUG trouvé : au chargement d'une
+// sauvegarde, applySaveState() restaurait bien P.x/P.y APRÈS resetWorld(), mais resetWorld()
+// remettait TOUJOURS P.x/P.y à (0,0) avant de faire spawn les packs autour. Résultat : les packs
+// spawnaient près de l'origine pendant que le joueur se téléportait ensuite loin de là -- "zone
+// vide" au reload. keepPos=true fait spawn les packs autour de la position ACTUELLE de P (déjà
+// restaurée par l'appelant) au lieu de forcer un retour à l'origine.
+function resetWorld(keepPos) {
   packs = []; drops = []; corpses = []; particles = []; floats = [];
   target = null; P.lootTarget = null; P.manualTarget = null;
-  P.x = 0; P.y = 0; cam.x = 0; cam.y = 0; P.lootClusterX = 0; P.lootClusterY = 0;
+  if (!keepPos) { P.x = 0; P.y = 0; }
+  cam.x = P.x; cam.y = P.y; P.lootClusterX = 0; P.lootClusterY = 0;
   P.state = 'search'; P.hp = effHpMax();
   lastLootEntry = null; // évite de fusionner le loot d'une nouvelle zone avec celui d'avant
   if (atVelia) return; // Velia = zone paisible, aucun monstre n'y est jamais généré
@@ -3880,16 +3888,21 @@ function renderCastBar() {
 
 // ==================== BOUCLE ====================
 let last = performance.now();
-function loop(now) {
-  const dt = Math.min(.05,(now-last)/1000); last = now;
-  // le jeu ne se met plus en pause en arrière-plan (2026-07-14, demande explicite : "arrete de
-  // mettre en pause le navigateur quand on change de fenetre") -- retire l'ancien "if
-  // (document.hidden) return" (2026-07-06) qui gelait toute la simulation (farm/combat/loot) dès
-  // que l'onglet perdait le focus, contraire à l'esprit "idle" du jeu. Le clamp dt (Math.min .05)
-  // ci-dessus évite déjà tout saut de temps massif au retour sur l'onglet.
+// simulation extraite de loop() en fonction séparée (2026-07-15, demande explicite : "fais en sorte
+// que le jeu ne s'arrete pas une fois changer d'onglet, on doit farmer meme sur un autre onglet du
+// jeu ou du navigateur") -- retirer le check document.hidden (fait le 2026-07-14) ne suffisait PAS :
+// requestAnimationFrame lui-même est THROTTLÉ/SUSPENDU par le navigateur dès que l'onglet n'est
+// plus visible, quel que soit le code JS qui l'appelle -- aucune ligne de ce fichier ne peut
+// changer ce comportement du navigateur. La vraie solution : un setInterval (voir tout en bas de
+// cette fonction) qui, lui, continue de tourner en arrière-plan (juste clampé à ~1s minimum par les
+// navigateurs, jamais suspendu comme rAF) prend le relais pour cette même fonction quand l'onglet
+// est caché, avec un dt basé sur le temps RÉEL écoulé (pas un FPS supposé).
+function advanceSim(now) {
+  const dt = Math.min(2, (now-last)/1000); last = now;
+  if (dt <= 0) return;
   // pendant un combat de boss (plein écran), on met le farm en pause : la salle de boss couvre
-  // tout l'écran, inutile de continuer à simuler/dessiner la zone de farm derrière
-  if (bossState.active) { requestAnimationFrame(loop); return; }
+  // tout l'écran, inutile de continuer à simuler la zone de farm derrière
+  if (bossState.active) return;
   // BUG trouvé le 2026-07-07 : cette respawn continue n'était jamais gardée par atVelia — Velia
   // partait bien à 0 pack (resetWorld), mais dès la frame suivante ce respawn en ajoutait jusqu'à
   // en avoir 6, remplissant en boucle la "zone paisible" de monstres. Confirmé par le joueur.
@@ -3909,11 +3922,18 @@ function loop(now) {
 
   cam.x += (P.x-cam.x)*Math.min(1,dt*4);
   cam.y += (P.y-cam.y)*Math.min(1,dt*4);
-
+}
+function loop(now) {
+  if (bossState.active) { requestAnimationFrame(loop); return; }
+  advanceSim(now);
   render(now/1000);
   hudFast();
   requestAnimationFrame(loop);
 }
+// filet de secours en arrière-plan (2026-07-15) : ne fait RIEN tant que l'onglet est visible (rAF
+// s'en charge déjà, ce setInterval serait redondant) -- dès que l'onglet est caché, prend le relais
+// pour que kills/loot/déplacement continuent réellement d'avancer, pas juste "en théorie"
+setInterval(() => { if (document.hidden) advanceSim(performance.now()); }, 1000);
 
 // Inventaire/Equipement -- UI (paperdoll, grille, enchantement, auto-opti) -> voir inventory-ui.js (charge APRES boss.js, AVANT render.js -- voir index.html)
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
@@ -3959,9 +3979,16 @@ function applySaveState(data) {
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
   if (!POTIONS[S.potionType]) S.potionType = 'medium'; // migre l'ancienne potion unique 'basic' vers les 4 tailles
-  resetWorld(); // recrée les packs de la zone chargée
-  updateZoneTitleText(); // voir son commentaire -- sans cet appel, le nom de zone affiché restait figé au placeholder HTML
+  // BUG trouvé le 2026-07-15 (demande explicite : "au reload, apres maj le joueur arrive dans une
+  // zone vide, fais en sorte qu'il trouve rapidement des monstre") : resetWorld() fait spawn tous
+  // les packs autour de P.x/P.y -- or à ce stade P.x/P.y valaient encore (0,0) (position par défaut),
+  // la vraie position sauvegardée n'était restaurée QU'APRÈS, sur la ligne suivante. Le joueur se
+  // téléportait donc sur sa position réelle pendant que tous les monstres restaient massés près de
+  // l'origine, potentiellement à des centaines d'unités -- d'où la "zone vide" au reload. Restaurer
+  // playerPos AVANT resetWorld() pour que les packs spawnent bien autour du joueur.
   if (data.playerPos) { P.x = data.playerPos.x; P.y = data.playerPos.y; }
+  resetWorld(true); // recrée les packs autour de la vraie position du joueur (keepPos, voir commentaire sur resetWorld)
+  updateZoneTitleText(); // voir son commentaire -- sans cet appel, le nom de zone affiché restait figé au placeholder HTML
   hud();
   return true;
 }

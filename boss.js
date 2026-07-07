@@ -478,15 +478,18 @@ function bossZoneMaterialItem(zi, qty) {
   const tier = gearTierForZone(zi), z = ZONES[zi];
   return { name:tier.material.name, kind:'material', icon:tier.material.icon, color:tier.material.color, key:'mat_'+tier.material.name, qty, stackable:true, weight:0.1, val:z.loot.mat.val };
 }
-// petit résumé texte des règles de récompense, utilisé à la fois dans le lobby (aperçu, "visible
-// par tous" -- demande explicite) et en fin de combat
+// résumé des règles de récompense, utilisé à la fois dans le lobby (aperçu, "visible par tous" --
+// demande explicite) et en fin de combat. Agrandi le 2026-07-15 (demande explicite : "recompense,
+// affiche en plus gros en dessous des horaires de boss") -- avant, un simple .admHint discret,
+// facile à manquer ; désormais une carte dédiée (.bossRewardRules), toujours juste sous le bloc
+// horaires/countdown (nextHtml) et avant le calendrier hebdomadaire.
 function bossRewardRulesHtml() {
   const dZi = bestDifficileZoneIdx(), dgZi = nextDangereuseZoneIdx();
   const dName = dZi != null ? tr(ZONES[dZi].name) : (LANG==='fr'?'—':'—');
   const dgName = dgZi != null ? tr(ZONES[dgZi].name) : (LANG==='fr'?'—':'—');
   return LANG==='fr'
-    ? `<div class="admHint bossRewardRules">🎁 Récompenses selon ta progression : pierre d'optimisation de ta meilleure zone difficile (<b>${dName}</b>) pour tous · #1 : +1 bijou de la prochaine zone dangereuse (<b>${dgName}</b>) · #2 : +1 bijou de ta zone difficile · #3 : 20% bijou zone dangereuse + 30% bijou zone difficile</div>`
-    : `<div class="admHint bossRewardRules">🎁 Rewards based on your progress: enhancement stone from your best hard zone (<b>${dName}</b>) for everyone · #1: +1 jewel from the next dangerous zone (<b>${dgName}</b>) · #2: +1 jewel from your hard zone · #3: 20% dangerous-zone jewel + 30% hard-zone jewel</div>`;
+    ? `<div class="bossRewardRules">🎁 Récompenses selon ta progression : pierre d'optimisation de ta meilleure zone difficile (<b>${dName}</b>) pour tous · #1 : +1 bijou de la prochaine zone dangereuse (<b>${dgName}</b>) · #2 : +1 bijou de ta zone difficile · #3 : 20% bijou zone dangereuse + 30% bijou zone difficile</div>`
+    : `<div class="bossRewardRules">🎁 Rewards based on your progress: enhancement stone from your best hard zone (<b>${dName}</b>) for everyone · #1: +1 jewel from the next dangerous zone (<b>${dgName}</b>) · #2: +1 jewel from your hard zone · #3: 20% dangerous-zone jewel + 30% hard-zone jewel</div>`;
 }
 // roue de récompense rare (2026-07-08, demande explicite) : affichée en fin de combat quand le
 // boss a une table "rareLoot" définie (Vell → Coeur de Vell, 5%) — tourne toute seule et s'arrête

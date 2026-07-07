@@ -412,7 +412,7 @@
   #lootTable::-webkit-scrollbar { width:6px; }
   #lootTable::-webkit-scrollbar-thumb { background:#3a3742; }
   .zRow {
-    display:flex; align-items:center; gap:6px; padding:4px 5px;
+    position:relative; display:flex; align-items:center; gap:6px; padding:4px 5px;
     border-bottom:1px solid #232128; border-left:2px solid transparent; font-size:10.5px; cursor:pointer;
   }
   /* en-tête de groupe de zones par palier de stuff (couleur = couleur du stuff dans l'inventaire) */
@@ -445,10 +445,15 @@
      2026-07-06 : "en aucun cas le compteur de joueurs dois faire bouger le texte") */
   .zPlayerCount { font-size:9px; color:var(--ink-dim); white-space:nowrap; flex-shrink:0; width:26px; text-align:right; }
   /* étiquette "admin ici" (2026-07-15, demande explicite) : n'apparaît que sur le propre client de
-     l'admin, sur la ligne de SA zone actuelle -- voir le commentaire dans buildZoneList() */
+     l'admin, sur la ligne de SA zone actuelle -- voir le commentaire dans buildZoneList().
+     Repositionnée en badge ABSOLU (2026-07-15, demande explicite : "affiche l'etiquette admin a un
+     endroit ou il ne fais bouger aucun texte") -- avant, insérée dans le flux flex de la ligne, elle
+     poussait le bouton 👁 et déplaçait le reste du texte sur SA ligne uniquement (incohérent avec
+     les autres lignes). Superposée en haut à droite de la ligne, ne touche plus jamais le texte. */
   .zAdminTag {
-    font-size:8px; letter-spacing:.5px; font-weight:bold; color:#1a1712; background:var(--gold);
-    border-radius:3px; padding:1px 4px; flex-shrink:0; white-space:nowrap;
+    position:absolute; top:-1px; right:2px;
+    font-size:7px; letter-spacing:.5px; font-weight:bold; color:#1a1712; background:var(--gold);
+    border-radius:0 0 3px 3px; padding:1px 4px; white-space:nowrap; pointer-events:none;
   }
   .b-red { color:var(--r-red); border-color:var(--r-red); }
   .b-orange { color:var(--r-orange); border-color:var(--r-orange); }
@@ -928,6 +933,14 @@
   .admSection .admBossSpawn { border-bottom:none; padding-bottom:0; margin-bottom:0; }
   .admHint { font-size:10px; color:var(--ink-dim); font-style:italic; }
   .admHint.warn { color:var(--danger); }
+  /* règles de récompense World Boss, agrandies (2026-07-15, demande explicite : "recompense,
+     affiche en plus gros en dessous des horaires de boss") -- carte dédiée au lieu d'un simple
+     .admHint discret, toujours juste sous le bloc horaires/countdown du lobby */
+  .bossRewardRules {
+    font-size:12.5px; line-height:1.5; color:var(--ink); background:rgba(201,165,90,.08);
+    border:1px solid var(--gold-dim); border-radius:4px; padding:9px 11px; margin:8px 0 14px;
+  }
+  .bossRewardRules b { color:var(--gold); }
   .admReloadBtn {
     width:auto; margin-left:8px; padding:2px 8px; font-size:10px; font-weight:bold; cursor:pointer;
     background:var(--gold); color:#1a1712; border:none; border-radius:3px; vertical-align:middle;
