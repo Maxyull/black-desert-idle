@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V279', d:'15/07/2026 10:00', name:{fr:'Nouveau sélecteur Équipement/Cristal', en:'New Gear/Crystal selector'}, fr:[
+      {t:'new', sub:'interface', tx:'Nouveau sélecteur à bulles dans la carte Équipement, pour basculer entre la poupée d\'équipement normale et un nouvel onglet "Cristal" — 1 seul emplacement pour l\'instant, verrouillé (système de cristaux pas encore en jeu)'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'New bubble selector in the Equipment card, to switch between the normal equipment doll and a new "Crystal" tab — only 1 slot for now, locked (crystal system not in-game yet)'},
+    ] },
   { v:'V278', d:'15/07/2026 09:00', name:{fr:'Loot ticker : quantité avant le prix', en:'Loot ticker: quantity before price'}, fr:[
       {t:'change', sub:'interface', tx:'Dans le ticker de loot, la quantité (×N) s\'affiche désormais avant le prix au lieu d\'après'},
     ], en:[
