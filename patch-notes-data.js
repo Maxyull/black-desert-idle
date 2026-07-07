@@ -5,6 +5,27 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V263', d:'14/07/2026 18:00', name:{fr:'Refonte inventaire (onglets, Compendium, vente), IA manuelle, Sanctuaire d\'Elric régulé', en:'Inventory overhaul (tabs, Compendium, selling), manual AI, Elric Shrine access regulated'}, fr:[
+      {t:'change', sub:'inventaire', tx:'Le craft de la Pierre de Caphras a été déplacé dans l\'onglet "🔧 Assemblage" — tout futur craft y sera ajouté'},
+      {t:'change', sub:'interface', tx:'PA (Attaque) et PD (Défense) affichés à côté des autres stats'},
+      {t:'change', sub:'combat', severity:'major', tx:'Le mode de combat de l\'IA (Défensif/Équilibré/Offensif) se choisit désormais manuellement via un sélecteur à bulles, à la place de l\'ancien calcul automatique selon le stuff'},
+      {t:'new', sub:'inventaire', tx:'Bouton "Vente automatique" ajouté dans la table de loot (verrouillé, cadenas — fonctionnalité à venir)'},
+      {t:'change', sub:'interface', tx:'Les onglets d\'inventaire (Normal/Optimisation/Trésors/Consommable/RNG/Compendium) tiennent désormais sur une seule ligne, avec les cadenas des onglets verrouillés affichés au-dessus, centrés'},
+      {t:'change', sub:'inventaire', tx:'La table de loot est désormais catégorisée par groupe (Trashloot avec son prix, Objets d\'optimisation, Stuff) au lieu d\'une liste plate'},
+      {t:'change', sub:'inventaire', severity:'major', tx:'Les boutons "Vendre trash", "Vendre mat" et "Trier" (et toute leur logique associée, devenue inutile) sont retirés, remplacés par un bouton unique pleine largeur : "Équiper meilleur → Vendre → Compendium"'},
+      {t:'new', sub:'inventaire', severity:'major', tx:'Le sac protégé (Compendium) est désormais un onglet à part entière de l\'inventaire (nouvelle icône 📖) : les objets protégés s\'y affichent avec leur PA/PD et un bouton pour les équiper et lancer directement leur optimisation'},
+      {t:'change', sub:'zones', tx:'Accès à Sanctuaire d\'Elric régulé : un stuff vert (Yuria) complet enchanté à +15 en moyenne passe désormais en ZONE DIFFICILE au lieu de ZONE DANGEREUSE (seule la Défense requise a été abaissée, l\'Attaque était déjà correctement calibrée)'},
+    ], en:[
+      {t:'change', sub:'inventaire', tx:'Caphras Stone crafting moved to the "🔧 Assembly" tab — every future craft will be added there'},
+      {t:'change', sub:'interface', tx:'AP (Attack) and DP (Defense) now shown next to the other stats'},
+      {t:'change', sub:'combat', severity:'major', tx:'The AI combat mode (Defensive/Balanced/Overgeared) is now chosen manually via a bubble selector, replacing the old automatic calculation based on gear'},
+      {t:'new', sub:'inventaire', tx:'Added an "Auto-sell" button in the loot table (locked, padlock — feature coming soon)'},
+      {t:'change', sub:'interface', tx:'Inventory tabs (Normal/Enhancement/Treasures/Consumable/RNG/Compendium) now fit on a single row, with locked-tab padlocks shown above, centered'},
+      {t:'change', sub:'inventaire', tx:'The loot table is now grouped by category (Trash loot with its price, Enhancement items, Gear) instead of a flat list'},
+      {t:'change', sub:'inventaire', severity:'major', tx:'The "Sell trash", "Sell materials" and "Sort" buttons (and all their now-unused logic) are removed, replaced by a single full-width button: "Equip best → Sell → Compendium"'},
+      {t:'new', sub:'inventaire', severity:'major', tx:'The protected bag (Compendium) is now a full inventory tab (new 📖 icon): protected items show their AP/DP and a button to equip them and jump straight into their enhancement'},
+      {t:'change', sub:'zones', tx:'Elric Shrine access regulated: a full green (Yuria) gear set enchanted to +15 average now lands in HARD ZONE instead of DANGEROUS ZONE (only the required Defense was lowered, Attack was already correctly calibrated)'},
+    ] },
   { v:'V262', d:'14/07/2026 17:00', name:{fr:'Audit de sécurité (issue GitHub #4)', en:'Security audit (GitHub issue #4)'}, fr:[
       {t:'exploit', sub:'securite', severity:'major', tx:'Sauvegarde cloud : borne serveur sur silver/niveau/loyauté/enchantement (au-delà de PEN), avec alerte auto en cas de tentative — avant, seul le client validait ces valeurs'},
       {t:'exploit', sub:'securite', tx:'Registre anti-triche (silver_ledger) : catégories et montants désormais bornés côté serveur'},
