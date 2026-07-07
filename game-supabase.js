@@ -590,14 +590,19 @@ $a('btnLifeskillToggle').onclick = openLifeskillPanel;
 // bascule Inventaire/Assemblage dans la carte Inventaire (2026-07-06, demande explicite : "on va
 // mettre le craft dans la carte de l'inventaire en haut par un bouton") -- le panneau de craft du
 // Trésor de Velia (#treasureCraftPanel) vivait dans la carte Optimisation, déplacé ici
+// 3e mode "compendium" ajouté le 2026-07-14 (demande explicite : "met compendium en grand avec
+// inventaire et assemblage") -- promu au même niveau qu'Inventaire/Assemblage, plus une simple
+// catégorie dans l'onglet Inventaire
 document.querySelectorAll('.invModeTab').forEach(btn => {
   btn.onclick = () => {
     document.querySelectorAll('.invModeTab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    const isCraft = btn.dataset.mode === 'craft';
-    $a('invModeInvPane').style.display = isCraft ? 'none' : '';
-    $a('invModeCraftPane').style.display = isCraft ? '' : 'none';
-    if (isCraft) renderTreasureCraftPanel();
+    const mode = btn.dataset.mode;
+    $a('invModeInvPane').style.display = mode === 'inv' ? '' : 'none';
+    $a('invModeCraftPane').style.display = mode === 'craft' ? '' : 'none';
+    $a('invModeCompendiumPane').style.display = mode === 'compendium' ? '' : 'none';
+    if (mode === 'craft') renderTreasureCraftPanel();
+    else if (mode === 'compendium') renderCompendiumPane();
   };
 });
 renderActivityTabs();
@@ -956,6 +961,8 @@ const I18N = {
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
   invModeInv: { fr:'🎒 Inventaire', en:'🎒 Inventory' },
   invModeCraft: { fr:'🔧 Assemblage', en:'🔧 Craft' },
+  invModeCompendium: { fr:'📖 Compendium', en:'📖 Compendium' },
+  compGridEmpty: { fr:'Aucun objet protégé pour l\'instant', en:'No protected item yet' },
   optChanceEmpty: { fr:'Chargez un matériau depuis le sac', en:'Load a material from your bag' },
   optCronToggleLbl: { fr:'Utiliser la Pierre de Cron si dispo', en:'Use Cron Stone if available' },
   btnOptTry: { fr:"Tenter l'optimisation", en:'Attempt enhancement' },

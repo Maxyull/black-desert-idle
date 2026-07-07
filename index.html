@@ -10,7 +10,7 @@
      commit), pas juste copie depuis jsdelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"
   integrity="sha256-LbKRLxaTmjshtHKYCnradGszpqQHCLxVXLC+JVxutbE=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=338">
+<link rel="stylesheet" href="styles.css?v=339">
 </head>
 <body>
 
@@ -431,9 +431,13 @@
         <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
       <!-- bascule Inventaire/Assemblage (2026-07-06, demande explicite) : le craft du Trésor de
            Velia vivait dans la carte Optimisation, déplacé ici derrière un bouton en haut -->
+      <!-- Compendium promu au même niveau qu'Inventaire/Assemblage (2026-07-14, demande explicite :
+           "met compendium en grand avec inventaire et assemblage") -- avant, simple catégorie DANS
+           l'onglet Inventaire, voir #invModeCompendiumPane -->
       <div class="invModeTabs" id="invModeTabs">
         <button class="invModeTab active" data-mode="inv"><span data-i18n="invModeInv">🎒 Inventaire</span></button>
         <button class="invModeTab" data-mode="craft"><span data-i18n="invModeCraft">🔧 Assemblage</span></button>
+        <button class="invModeTab" data-mode="compendium"><span data-i18n="invModeCompendium">📖 Compendium</span></button>
       </div>
       <div id="invModeInvPane">
         <div class="catTabs" id="invCatTabs"></div>
@@ -474,6 +478,12 @@
           <span id="capConvertLbl"></span>
           <button id="btnConvertCaphras">♻️ <span data-i18n="btnConvertCaphras">Convertir (5:1)</span></button>
         </div>
+      </div>
+      <!-- sac protégé (Compendium), promu en onglet principal le 2026-07-14 -- grille dédiée
+           (#compGrid), même style de case que #invGrid, remplie par renderCompendiumPane() -->
+      <div id="invModeCompendiumPane" style="display:none">
+        <div id="compGrid"></div>
+        <div id="compGridEmpty" class="invCatEmpty" data-i18n="compGridEmpty" style="display:none">Aucun objet protégé pour l'instant</div>
       </div>
     </div>
 
@@ -524,41 +534,41 @@
   </div>
 </div>
 
-<script src="game-core.js?v=338"></script>
+<script src="game-core.js?v=339"></script>
 <!-- World Boss (Kzarka/Vell : lobby, combat, rendu de la salle) -- extrait de game-core.js le
      2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà définies à ce stade
      ($, S, EQUIP, effHpMax, ZONES...) et le canvas #bossCv déjà présent dans le DOM -->
-<script src="boss.js?v=338"></script>
+<script src="boss.js?v=339"></script>
 <!-- inventaire/équipement -- UI (paperdoll, grille, enchantement, auto-opti) -- extrait de
      game-core.js le 2026-07-14 -- DOIT charger AVANT render.js : le démarrage du jeu (à la fin de
      render.js) appelle hud(), qui appelle refreshInvUI()/hasNeglectedUpgradeInBag(), tous deux
      définis ici -->
-<script src="inventory-ui.js?v=338"></script>
+<script src="inventory-ui.js?v=339"></script>
 <!-- rendu canvas (scène, sprites, particules) -- extrait de game-core.js le 2026-07-14 -- charge
      APRÈS game-core.js/boss.js/inventory-ui.js : hud() (dans game-core.js) appelle
      drawZoneMobIcon() (défini ici), donc ce fichier DOIT charger avant le tout premier hud(). C'est
      pourquoi le démarrage du jeu (renderInvCatTabs/hud/requestAnimationFrame(loop), avant à la toute
      fin de game-core.js) a été déplacé à la fin de CE fichier -- requestAnimationFrame(loop) doit
      rester le tout dernier appel synchrone du chargement, sinon la boucle de jeu ne démarre jamais -->
-<script src="render.js?v=338"></script>
+<script src="render.js?v=339"></script>
 <!-- données pures PATCH_NOTES (~2000 lignes, extraites de game-supabase.js le 2026-07-14 pour
      alléger le fichier) -- DOIT charger avant game-supabase.js, qui lit PATCH_NOTES[0].v au
      top-level dès son chargement (voir CURRENT_VERSION) -->
-<script src="patch-notes-data.js?v=338"></script>
-<script src="game-supabase.js?v=338"></script>
+<script src="patch-notes-data.js?v=339"></script>
+<script src="game-supabase.js?v=339"></script>
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->
-<script src="admin-panel.js?v=338"></script>
+<script src="admin-panel.js?v=339"></script>
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
-<script src="chat.js?v=338"></script>
+<script src="chat.js?v=339"></script>
 <!-- marché (Hôtel des ventes + Marché commun v2, carnet d'ordres) -- extrait de game-supabase.js
      le 2026-07-14 -- charge APRÈS lui : wiring $a('btnMarket').onclick etc au top-level -->
-<script src="market.js?v=338"></script>
+<script src="market.js?v=339"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=338"></script>
+<script src="tests.js?v=339"></script>
 </body>
 </html>

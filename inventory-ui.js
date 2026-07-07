@@ -361,16 +361,16 @@ function drawWitchOn(x, cx, cy, sc) {
 //  - Optimisation : matériaux d'enchantement + composants de craft endgame
 //  - Consommable : consommables (potions, etc.)
 //  - RNG : coffres/box aléatoires (vide pour l'instant — du contenu viendra)
+// "Normal" renommé "Équipements" et Compendium promu en onglet PRINCIPAL au même niveau
+// qu'Inventaire/Assemblage (2026-07-14, demande explicite : "met compendium en grand avec
+// inventaire et assemblage") -- ne fait plus partie de ces catégories, voir #invModeCompendiumPane
 const INV_CATEGORIES = [
-  { id:'normal',      icon:'⚔️', label:{fr:'Normal',en:'Normal'},    kinds:['gear','jackpot'] },
+  { id:'normal',      icon:'⚔️', label:{fr:'Équipements',en:'Gear'},    kinds:['gear','jackpot'] },
   { id:'opt',         icon:'✦',  label:{fr:'Optimisation',en:'Enhancement'}, kinds:['material','craft'] },
+  // Trésors remonté avant Consommable (2026-07-14, demande explicite : "met tresors avant conso")
+  { id:'treasure',    icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, kinds:['treasure'] },
   { id:'consumable',  icon:'🧪', label:{fr:'Consommable',en:'Consumable'},   kinds:['consumable'], locked:true },
   { id:'rng',         icon:'🎲', label:{fr:'RNG',en:'RNG'},          kinds:['rngbox'], locked:true },
-  // inventaire dédié au "Trésor de Velia" — demande explicite du 2026-07-06
-  { id:'treasure',    icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, kinds:['treasure'] },
-  // sac protégé (Compendium) intégré à l'inventaire (2026-07-14, demande explicite) -- special:'compendium'
-  // signale à renderInventory() de lire COMPENDIUM_BAG au lieu de INV pour cet onglet
-  { id:'compendium',  icon:'📖', label:{fr:'Compendium',en:'Compendium'}, kinds:null, special:'compendium' },
 ];
 let invCategory = 'normal';
 // cadenas en badge au-dessus, centré (2026-07-14, demande explicite : "avec les cadenas au dessus
@@ -407,32 +407,13 @@ function renderInventory() {
   grid.innerHTML = '';
   renderTreasureCraftPanel();
   const cat = INV_CATEGORIES.find(c => c.id === invCategory) || INV_CATEGORIES[0];
-  // onglet Compendium (sac protégé) : source de données différente (COMPENDIUM_BAG, pas INV) —
-  // demande explicite du 2026-07-14, avec bouton d'optimisation directe par case
-  const source = cat.special === 'compendium' ? COMPENDIUM_BAG : INV;
   for (let i = 0; i < INV_SIZE; i++) {
-    const s = source[i];
+    const s = INV[i];
     const cell = document.createElement('div');
     // en vue filtrée (pas "Tout"), les cases vides ET les objets d'une autre catégorie sont
     // masqués — sinon un onglet avec 3 objets ressemblerait à 189 cases vides pour rien
-    const visible = cat.special === 'compendium' || cat.kinds === null || (s && cat.kinds.includes(s.kind));
+    const visible = cat.kinds === null || (s && cat.kinds.includes(s.kind));
     cell.className = 'cell' + (s ? ' has k-'+s.kind : '') + (visible ? '' : ' catHidden');
-    if (s && cat.special === 'compendium') {
-      const cellApDp = effectiveApDp(s);
-      const cellIcon = s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔';
-      cell.innerHTML = `<span style="color:${s.color}">${cellIcon}</span>` +
-        cellEnhBadgeHtml(s) +
-        (cellApDp && cellApDp.ap ? `<span class="cellAp">${cellApDp.ap}</span>` : '') +
-        (cellApDp && cellApDp.dp ? `<span class="cellDp">${cellApDp.dp}</span>` : '') +
-        `<span class="compOptBtn" title="${LANG==='fr'?'Équiper et optimiser':'Equip and optimize'}">✦</span>`;
-      if (s.color) { cell.style.borderColor = s.color; cell.style.boxShadow = `inset 0 0 6px ${s.color}55`; }
-      cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
-      cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
-      cell.onmouseleave = () => hideItemTooltip();
-      cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); equipFromCompendium(i); };
-      grid.appendChild(cell);
-      continue;
-    }
     if (s) {
       const cellApDp = (s.kind === 'gear' || s.kind === 'jackpot') ? effectiveApDp(s) : null;
       // les icônes SVG (équipement, matériaux) ont leurs couleurs FIGÉES dans le tracé — le style
@@ -462,22 +443,20 @@ function renderInventory() {
       cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showItemMenuAtCell(cell, { invIndex:i, ...s }); };
       cell.ondblclick = ev => { ev.stopPropagation(); hideItemTooltip(); quickAction(i); };
       cell.oncontextmenu = ev => { ev.preventDefault(); ev.stopPropagation(); hideItemTooltip(); showItemMenu(ev.clientX, ev.clientY, { invIndex:i, ...s }); };
-    } else if (cat.special !== 'compendium') {
+    } else {
       // case vide : clic = guide de farm (2026-07-05, demande explicite) -- où aller farmer,
       // hors zones trop dangereuses pour le stuff actuel
       cell.onclick = ev => { ev.stopPropagation(); showFarmGuide(); };
     }
     grid.appendChild(cell);
   }
-  // message quand la catégorie active ne contient encore aucun objet (ex: RNG, Consommable, Compendium)
-  const anyVisible = cat.special === 'compendium' ? COMPENDIUM_BAG.some(Boolean) : INV.some(s => s && cat.kinds.includes(s.kind));
+  // message quand la catégorie active ne contient encore aucun objet (ex: RNG, Consommable)
+  const anyVisible = INV.some(s => s && cat.kinds.includes(s.kind));
   if (!anyVisible) {
     const empty = document.createElement('div');
     empty.className = 'invCatEmpty';
     empty.textContent = cat.id === 'rng'
       ? (LANG==='fr'?'Aucun coffre RNG pour l\'instant':'No RNG box yet')
-      : cat.id === 'compendium'
-      ? (LANG==='fr'?'Aucun objet protégé pour l\'instant':'No protected item yet')
       : (LANG==='fr'?'Vide':'Empty');
     grid.appendChild(empty);
   }
@@ -498,6 +477,38 @@ function renderInventory() {
   $('wTxt').classList.toggle('bad', overW);
   $('invSilver').textContent = fmt(S.silver);
   $('invLoyalty').textContent = '🏅 '+fmt(S.loyalty||0);
+}
+
+// onglet Compendium PRINCIPAL, au même niveau qu'Inventaire/Assemblage (2026-07-14, demande
+// explicite : "met compendium en grand avec inventaire et assemblage") -- avant, c'était une
+// catégorie parmi d'autres DANS l'onglet Inventaire ; extrait ici en pane dédiée, grille séparée
+// (#compGrid), même logique de case (icône, badge d'enchantement, PA/PD, bouton "équiper et
+// optimiser") que l'ancienne intégration.
+function renderCompendiumPane() {
+  const grid = $('compGrid'); if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < INV_SIZE; i++) {
+    const s = COMPENDIUM_BAG[i];
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (s ? ' has k-'+s.kind : '');
+    if (s) {
+      const cellApDp = effectiveApDp(s);
+      const cellIcon = s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔';
+      cell.innerHTML = `<span style="color:${s.color}">${cellIcon}</span>` +
+        cellEnhBadgeHtml(s) +
+        (cellApDp && cellApDp.ap ? `<span class="cellAp">${cellApDp.ap}</span>` : '') +
+        (cellApDp && cellApDp.dp ? `<span class="cellDp">${cellApDp.dp}</span>` : '') +
+        `<span class="compOptBtn" title="${LANG==='fr'?'Équiper et optimiser':'Equip and optimize'}">✦</span>`;
+      if (s.color) { cell.style.borderColor = s.color; cell.style.boxShadow = `inset 0 0 6px ${s.color}55`; }
+      cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
+      cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
+      cell.onmouseleave = () => hideItemTooltip();
+      cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); equipFromCompendium(i); };
+    }
+    grid.appendChild(cell);
+  }
+  const empty = $('compGridEmpty');
+  if (empty) empty.style.display = COMPENDIUM_BAG.some(Boolean) ? 'none' : '';
 }
 
 // double-clic = action rapide selon le type d'objet
@@ -724,7 +735,7 @@ function equipFromCompendium(i) {
   COMPENDIUM_BAG[i] = null;
   optTargetSlot = slotId;
   hud();
-  renderInventory();
+  renderCompendiumPane();
   renderOptimization();
 }
 function unequip(slotId) {
@@ -1662,7 +1673,7 @@ wireAdminEnhStepBtn('btnAdminEnhUp1', 1,
 // passe lootPreviewIdx explicitement : un simple renderLootTable() remettrait le loot affiché
 // sur la zone qu'on farm à CHAQUE rafraîchissement auto (dès qu'un objet est ramassé), écrasant
 // l'aperçu manuel choisi via le 👁 quasi instantanément
-function refreshInvUI() { renderEquipment(); renderInventory(); renderOptimization(); renderLootTable(lootPreviewIdx); }
+function refreshInvUI() { renderEquipment(); renderInventory(); renderCompendiumPane(); renderOptimization(); renderLootTable(lootPreviewIdx); }
 
 // migration RÉTROACTIVE du rééquilibrage PA/PD des armes/armures/bijoux (V158, 2026-07-05, demande
 // explicite : "le stuff est rétroactif, modifie celui déjà existant") — sans elle, tout objet

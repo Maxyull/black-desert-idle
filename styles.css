@@ -572,13 +572,20 @@
   /* action combinée "Équiper → Vendre → Compendium" (2026-07-14, demande explicite : "un bouton...
      qui fais toute la taille") -- pleine largeur, sous la rangée Équiper meilleur/Vendre */
   #btnEquipSellCompendium { width:100%; margin:8px 0 0; font-size:11px; padding:6px 4px; }
-  #invGrid, .admInvGrid {
+  #invGrid, .admInvGrid, #compGrid {
     display:grid; grid-template-columns:repeat(8, 1fr); gap:3px;
     overflow-y:auto; max-height:188px; align-content:start; padding-right:2px;
   }
   .admInvGrid { max-height:none; }
   #invGrid::-webkit-scrollbar { width:7px; }
   #invGrid::-webkit-scrollbar-thumb { background:#3a3742; }
+  /* Compendium en onglet principal "en grand" (2026-07-14, demande explicite) -- plus de place
+     disponible qu'avant (pas de barre d'outils au-dessus, juste les onglets de mode), la grille
+     profite d'une hauteur bien plus généreuse que celle de l'inventaire normal */
+  #compGrid { max-height:420px; }
+  #compGrid::-webkit-scrollbar { width:7px; }
+  #compGrid::-webkit-scrollbar-thumb { background:#3a3742; }
+  #compGridEmpty { text-align:center; padding:20px 0; }
   /* panneau de craft du Trésor de Velia (onglet "Trésors" uniquement) — demande explicite du 2026-07-08 */
   .craftPanelTitle { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:4px; }
   .craftRecipes { display:flex; flex-direction:column; gap:4px; margin-bottom:8px; }
@@ -1366,7 +1373,9 @@
   /* onglets d'inventaire (Normal/Opti/Trésors/Conso/RNG, 2026-07-14, demande explicite : "met sur
      la meme ligne... avec les cadenas au dessus au milieu") -- même grille stricte à 5 colonnes que
      les onglets de région ci-dessus, jamais de retour à la ligne */
-  #invCatTabs { display:grid; grid-template-columns:repeat(6, 1fr); gap:2px; margin-bottom:8px; }
+  /* repassé à 5 colonnes le 2026-07-14 : Compendium promu en onglet PRINCIPAL (voir
+     #invModeCompendiumPane), ce n'est plus une catégorie de cette barre */
+  #invCatTabs { display:grid; grid-template-columns:repeat(5, 1fr); gap:2px; margin-bottom:8px; }
   #invCatTabs .catTab { position:relative; padding:6px 2px; font-size:9px; min-width:0; overflow:visible; }
   /* onglet Compendium intégré à l'inventaire (2026-07-14) -- bouton d'optimisation directe par case */
   .compOptBtn { position:absolute; bottom:1px; right:1px; font-size:9px; opacity:.85; }
