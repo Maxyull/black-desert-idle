@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V266', d:'14/07/2026 21:00', name:{fr:'Poupée d\'équipement réorganisée', en:'Equipment doll reorganized'}, fr:[
+      {t:'change', sub:'interface', tx:'La colonne de droite de la poupée d\'équipement ne garde plus que collier, 2 bagues et 2 boucles d\'oreille (+ ceinture) — les 2 artéfacts, la Pierre d\'alchimie et le Livre de vie sont désormais regroupés sous les armes'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The right column of the equipment doll now only holds necklace, 2 rings and 2 earrings (+ belt) — the 2 artifacts, the Alchemy Stone and the Life Book are now grouped below the weapons'},
+    ] },
   { v:'V265', d:'14/07/2026 20:00', name:{fr:'Fix : PA/PD au-dessus de l\'équipement restaient en français en anglais', en:'Fix: AP/DP above equipment stayed in French while in English'}, fr:[
       {t:'fix', sub:'interface', tx:'Le résumé PA/PD/GS affiché juste au-dessus de la poupée d\'équipement était codé en dur en français ("PA "/"PD "), même quand le jeu était en anglais — il suit désormais la langue choisie comme partout ailleurs. Les valeurs elles-mêmes étaient déjà correctes, seul le libellé était fautif'},
     ], en:[
