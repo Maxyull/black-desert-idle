@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V277', d:'15/07/2026 08:00', name:{fr:'Bijoux doublés en zones vertes et bleues', en:'Jewelry doubled in Green and Blue tiers'}, fr:[
+      {t:'change', sub:'objets', severity:'major', tx:'Chance de trouver un bijou à nouveau doublée dans les 4 zones vertes et les 4 zones bleues (×3.6 et ×4.0 au total depuis l\'origine). Zones grise et blanche inchangées'},
+    ], en:[
+      {t:'change', sub:'objets', severity:'major', tx:'Jewelry drop chance doubled again in the 4 Green tier zones and the 4 Blue tier zones (×3.6 and ×4.0 total from the original rate). Grey and White tiers unchanged'},
+    ] },
   { v:'V276', d:'15/07/2026 07:00', name:{fr:'Loot ticker : prix uniquement pour le trash', en:'Loot ticker: price only for trash'}, fr:[
       {t:'change', sub:'interface', tx:'Le ticker de loot n\'affiche plus le prix de revente pour les matériaux/bijoux/équipements ramassés — seul le trash (token) garde son prix, désormais précédé d\'une icône 🪙'},
     ], en:[
