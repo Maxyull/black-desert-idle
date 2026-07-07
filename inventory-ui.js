@@ -30,8 +30,10 @@ function renderEquipment() {
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
   // résumé PA/PD/GS directement sur la carte Équipement — demande explicite (entier, arrondi vers
   // le bas — 2026-07-08, voir le commentaire sur $('stPA') plus haut)
-  $('eqSumAp').textContent = 'PA ' + Math.floor(apEff());
-  $('eqSumDp').textContent = 'PD ' + Math.floor(totalDP());
+  // préfixe PA/PD codé en dur en français jusqu'ici, même en anglais (2026-07-14, découvert lors
+  // d'une vérif des stats) -- corrigé pour suivre LANG, comme le préfixe "Niv."/"Lvl" juste au-dessus
+  $('eqSumAp').textContent = (LANG==='fr'?'PA ':'AP ') + Math.floor(apEff());
+  $('eqSumDp').textContent = (LANG==='fr'?'PD ':'DP ') + Math.floor(totalDP());
   $('eqSumGs').textContent = 'GS ' + Math.round(GS());
 }
 // libellé court du niveau d'optimisation : "+N" jusqu'à +15, puis chiffres romains I..V pour PRI..PEN
