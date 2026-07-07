@@ -361,10 +361,14 @@ const INV_CATEGORIES = [
   { id:'treasure',    icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, kinds:['treasure'] },
 ];
 let invCategory = 'normal';
+// cadenas en badge au-dessus, centré (2026-07-14, demande explicite : "avec les cadenas au dessus
+// au milieu") -- même pattern que les onglets de région (#zoneTierTabs, voir styles.css), sur une
+// grille à 5 colonnes strictes pour que les 5 catégories tiennent toujours sur une seule ligne.
 function renderInvCatTabs() {
   const el = $('invCatTabs'); if (!el) return;
   el.innerHTML = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCategory?' active':''}${c.locked?' locked':''}"` +
-    `${c.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-cat="${c.id}">${c.locked?'🔒 ':''}${c.icon} ${c.label[LANG]}</button>`).join('');
+    `${c.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-cat="${c.id}">` +
+    `${c.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${c.icon} ${c.label[LANG]}</span></button>`).join('');
   el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
     btn.onclick = () => {
       invCategory = btn.dataset.cat;
@@ -1316,18 +1320,37 @@ function zoneLootRowsHtml(idx) {
   // dépliée du bijou restait sans couleur alors que la ligne condensée (zoneLootCompactRowHtml),
   // l'inventaire (2026-07-09) et la poupée d'équipement (2026-07-05) l'ont toutes.
   const rowColor = { gear: tier.color, material: tier.material.color, jackpot: tier.color };
-  return rows.map(r => {
+  // catégorisation (2026-07-14, demande explicite : "catégorise la table de loot, Trashloot avec
+  // son prix, objet d'optimisation, stuff") -- 3 groupes : Trash (avec son prix silver), objets
+  // d'optimisation (matériaux + composants de craft), stuff (armure/arme/bijou).
+  const LOOT_CATS = {
+    trash:    { fr:'Trashloot', en:'Trash loot', order:0 },
+    material: { fr:'Objets d\'optimisation', en:'Enhancement items', order:1 },
+    craft:    { fr:'Objets d\'optimisation', en:'Enhancement items', order:1 },
+    gear:     { fr:'Stuff', en:'Gear', order:2 },
+    jackpot:  { fr:'Stuff', en:'Gear', order:2 },
+  };
+  const rowsHtml = rows.map(r => {
     const ch = r.ch ?? r.it.ch;
     // la Pierre de Cron garde SA couleur propre (dorée) plutôt que celle du matériau de palier —
     // sinon les 2 rangées "material" se confondraient visuellement
     const col = r.it.name === CRON_STONE.name ? CRON_STONE.color : rowColor[r.kind];
     const iconHtml = r.it.icon || LOOT_ICONS[r.kind];
-    return `
+    // prix affiché uniquement pour le trash (2026-07-14, demande explicite) -- seul objet dont la
+    // valeur est fixe et connue à l'avance (gear/bijou dépendent de l'enchantement, non pertinent ici)
+    const priceHtml = r.kind === 'trash' ? `<div class="lv">${fmt(r.it.val)} silver</div>` : '';
+    return { cat: LOOT_CATS[r.kind] || { fr:'Autre', en:'Other', order:9 }, html: `
     <div class="lootRow">
       <div class="lootIcon k-${r.kind}"${col?` style="color:${col};border-color:${col}"`:''}>${iconHtml}</div>
-      <div class="lootInfo"><div class="ln"${col?` style="color:${col}"`:''}>${tr(r.it.name)}</div><div class="lv">${tr(r.note)}</div></div>
+      <div class="lootInfo"><div class="ln"${col?` style="color:${col}"`:''}>${tr(r.it.name)}</div><div class="lv">${tr(r.note)}</div>${priceHtml}</div>
       <div class="lootPct">${(ch*100).toFixed(ch < .01 ? 3 : 1)}%</div>
-    </div>`;
+    </div>` };
+  });
+  const catOrder = [...new Set(rowsHtml.map(r => r.cat.order))].sort((a,b) => a-b);
+  return catOrder.map(order => {
+    const group = rowsHtml.filter(r => r.cat.order === order);
+    const label = group[0].cat[LANG];
+    return `<div class="lootCatHead">${label}</div>${group.map(r => r.html).join('')}`;
   }).join('');
 }
 // ligne CONDENSÉE (1 par zone, repliée par défaut) pour le récapitulatif "toutes zones" de Velia —
