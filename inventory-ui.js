@@ -498,10 +498,13 @@ function renderInventory() {
   // pied
   const used = invUsed();
   $('slotTxtH').textContent = used+'/'+INV_SIZE;
+  // le malus de vitesse lié au poids est retiré (2026-07-15, demande explicite : "enleve ralentit
+  // par le poids") -- la barre de poids reste affichée à titre indicatif, mais "— ralenti !"
+  // n'apparaît plus (voir speedMult() : ne dépend plus du tout du poids)
   const w = invWeight(), mw = MAX_WEIGHT(), overW = w > mw;
   $('wBar').style.width = Math.min(100, w/mw*100)+'%';
   $('wBar').classList.toggle('over', overW);
-  $('wTxt').textContent = w.toFixed(1)+' / '+mw+' LT' + (overW ? (LANG==='fr'?' — ralenti !':' — slowed!') : '');
+  $('wTxt').textContent = w.toFixed(1)+' / '+mw+' LT';
   $('wTxt').classList.toggle('bad', overW);
   $('invSilver').textContent = fmt(S.silver);
   $('invLoyalty').textContent = '🏅 '+fmt(S.loyalty||0);

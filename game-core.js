@@ -2044,14 +2044,11 @@ function hpTier() {
 }
 function setState(st){ P.state = st; P.stateT = 0; }
 
-// vitesse réduite si le poids dépasse la limite LT — 1.0 en dessous, jusqu'à 0.35× très surchargé
-// (2026-07-08 : + bonus SPD niveau/Compendium, voir totalSpdPct — s'applique APRÈS la pénalité de
-// poids, un perso surchargé mais bien nivelé/complété reste quand même plus rapide qu'à niveau 1)
+// pénalité de vitesse liée au poids retirée (2026-07-15, demande explicite : "enleve ralentit par
+// le poids") -- ne reste que le bonus SPD niveau/Compendium et le malus de zone dangereuse
 function speedMult() {
-  const w = invWeight(), mw = MAX_WEIGHT();
-  const weightMult = w <= mw ? 1 : Math.max(0.35, 1 - (w - mw) / mw * 0.7);
   const dangerMult = isZoneDangerous() ? DANGER_PLAYER_SPEED_MULT : 1;
-  return weightMult * (1 + totalSpdPct()/100) * dangerMult;
+  return (1 + totalSpdPct()/100) * dangerMult;
 }
 function moveToward(tx, ty, speed, dt) {
   const d = dist(P.x,P.y,tx,ty);
