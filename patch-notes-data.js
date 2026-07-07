@@ -5,6 +5,22 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V284', d:'15/07/2026 15:00', name:{fr:'Conseil de stuff minimal', en:'Minimal gear suggestion'}, fr:[
+      {t:'change', sub:'interface', tx:'Le conseil de stuff (entre l\'action d\'optimisation et les Pierres de Cron) affiche désormais juste "Recommandé :" suivi du nom de la pièce et de son palier cible, sans phrase ni chiffres'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The gear suggestion (between the enhance action and the Cron Stones) now just shows "Recommended :" followed by the piece name and its target tier, no sentence or numbers'},
+    ] },
+  { v:'V283', d:'15/07/2026 14:00', name:{fr:'Farm en arrière-plan, spawn au reload, étiquette admin fixe', en:'Background farming, reload spawn, fixed admin tag'}, fr:[
+      {t:'fix', sub:'combat', severity:'major', tx:'Au chargement d\'une sauvegarde, les groupes de monstres pouvaient réapparaître loin du joueur (autour de l\'ancienne position par défaut) au lieu d\'être générés autour de sa position réelle — la zone semblait vide juste après un reload'},
+      {t:'new', sub:'combat', tx:'Le jeu continue de farmer même sur un onglet en arrière-plan (navigateur minimisé ou un autre onglet ouvert) — un filet de secours prend le relais pour compenser le ralentissement que les navigateurs imposent aux onglets cachés'},
+      {t:'fix', sub:'interface', tx:'L\'étiquette "ADMIN" (visible uniquement par l\'admin, sur sa propre zone) ne décale plus jamais le texte ni les boutons de la ligne de zone'},
+      {t:'change', sub:'combat', tx:'Les règles de récompense du World Boss s\'affichent désormais plus grandes, dans un encadré dédié sous les horaires'},
+    ], en:[
+      {t:'fix', sub:'combat', severity:'major', tx:'On loading a save, monster packs could spawn far from the player (around the old default position) instead of around their real position — the zone looked empty right after a reload'},
+      {t:'new', sub:'combat', tx:'The game keeps farming even on a background tab (minimized browser or another tab open) — a fallback takes over to compensate for the throttling browsers apply to hidden tabs'},
+      {t:'fix', sub:'interface', tx:'The "ADMIN" tag (visible only to the admin, on their own zone) no longer shifts any text or buttons on the zone row'},
+      {t:'change', sub:'combat', tx:'World Boss reward rules now display bigger, in a dedicated box below the schedule'},
+    ] },
   { v:'V282', d:'15/07/2026 13:00', name:{fr:'Onglet Niveaux, coût de Cron par palier, Kratuga rééquilibrée', en:'Levels tab, tiered Cron cost, Kratuga rebalanced'}, fr:[
       {t:'new', sub:'interface', tx:'Nouvel onglet "Niveaux" dans la carte Statistiques : PV de base, bonus de Vitesse et XP requise pour les 5 niveaux avant et après ton niveau actuel, mis à jour en direct à chaque level-up'},
       {t:'change', sub:'objets', tx:'Le coût en Pierres de Cron dépend désormais du palier de la pièce protégée (gris 1 / blanc 2 / vert 3 / bleu 4) au lieu de toujours 1 — le panneau Optimisation affiche "as-tu/il-faut" pour la pièce ciblée'},
