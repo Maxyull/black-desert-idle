@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V285', d:'15/07/2026 16:00', name:{fr:'Récompenses World Boss en podium', en:'World Boss rewards as a podium'}, fr:[
+      {t:'new', sub:'combat', tx:'Les règles de récompense du World Boss (sous les horaires du lobby) prennent la forme d\'un vrai podium visuel (2e/1er/3e), avec un sélecteur Kzarka/Vell au-dessus pour prévisualiser la récompense propre à chaque boss'},
+      {t:'new', sub:'combat', tx:'La chance de Coeur de Vell (5%) est désormais affichée dans ce même aperçu quand Vell est sélectionné'},
+    ], en:[
+      {t:'new', sub:'combat', tx:'World Boss reward rules (below the lobby schedule) now show as a real visual podium (2nd/1st/3rd), with a Kzarka/Vell selector above it to preview each boss\'s own reward'},
+      {t:'new', sub:'combat', tx:'The Coeur de Vell chance (5%) is now shown in this same preview when Vell is selected'},
+    ] },
   { v:'V284', d:'15/07/2026 15:00', name:{fr:'Conseil de stuff minimal', en:'Minimal gear suggestion'}, fr:[
       {t:'change', sub:'interface', tx:'Le conseil de stuff (entre l\'action d\'optimisation et les Pierres de Cron) affiche désormais juste "Recommandé :" suivi du nom de la pièce et de son palier cible, sans phrase ni chiffres'},
     ], en:[
