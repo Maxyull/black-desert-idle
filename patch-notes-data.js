@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V275', d:'15/07/2026 06:00', name:{fr:'Plus de ralentissement lié au poids', en:'No more weight-based slowdown'}, fr:[
+      {t:'change', sub:'systeme', tx:'Le poids du sac ne réduit plus la vitesse de déplacement — la barre de poids reste affichée à titre indicatif, mais dépasser la limite n\'entraîne plus de malus'},
+    ], en:[
+      {t:'change', sub:'systeme', tx:'Bag weight no longer reduces movement speed — the weight bar is still shown for reference, but going over the limit no longer applies a penalty'},
+    ] },
   { v:'V274', d:'15/07/2026 05:00', name:{fr:'Coffret secret : les 3 Trésors régionaux', en:'Secret box: the 3 regional treasures'}, fr:[
       {t:'change', sub:'objets', tx:'"Carte de Heidel/Calpheon" renommés "Trésor de Heidel/Calpheon" (même famille que Trésor de Velia). Le Coffret secret demande désormais 1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon au lieu de Bout+matériau+bijou — pas encore complétable tant que Heidel/Calpheon restent verrouillés'},
     ], en:[
