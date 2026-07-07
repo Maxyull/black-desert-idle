@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V273', d:'15/07/2026 04:00', name:{fr:'Aperçu des cartes Heidel et Calpheon', en:'Heidel and Calpheon card preview'}, fr:[
+      {t:'new', sub:'objets', tx:'Le palier verrouillé Heidel annonce désormais sa future récompense "Carte de Heidel" (visible en survolant l\'onglet 🔒) — pareil pour Calpheon avec "Carte de Calpheon". Un couple de recettes "100 fragment → 1 carte" grisées apparaît aussi dans Assemblage, prêtes pour l\'ouverture de ces paliers'},
+    ], en:[
+      {t:'new', sub:'objets', tx:'The locked Heidel tier now teases its future "Heidel Card" reward (visible by hovering the 🔒 tab) — same for Calpheon with "Calpheon Card". A pair of greyed-out "100 fragment → 1 card" recipes also appears in Assembly, ready for when those tiers open'},
+    ] },
   { v:'V272', d:'15/07/2026 03:00', name:{fr:'Fix icône d\'upgrade de zone, étiquette admin, historique d\'optimisation', en:'Fixed zone upgrade icon, admin tag, enhancement history'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'L\'icône ⬆️ signalant qu\'un meilleur stuff attend dans une autre zone ne se déclenchait jamais quand le palier de la pièce équipée était le même que celui de la zone actuellement farmée — un joueur en stuff vert farmant une zone verte ne voyait donc jamais l\'icône, même si une zone bleue sûre offrait mieux. Corrigé et vérifié sur les 3 transitions de palier (gris→blanc, blanc→vert, vert→bleu)'},
       {t:'new', sub:'admin', tx:'Étiquette "ADMIN" affichée à côté du compteur de joueurs, sur la ligne de la zone où se trouve l\'admin — visible uniquement sur son propre client'},
