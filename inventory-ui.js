@@ -147,6 +147,23 @@ function slotCandidateZones(slotId) {
   }
   return [];
 }
+// variante de slotCandidateZones qui cherche dans TOUS les paliers, pas seulement celui de la zone
+// actuellement farmée (2026-07-15, bug corrigé : voir upgradeZonesForEquippedSlot ci-dessous) --
+// réservée au cas du socle REMPLI (safeZonesForSlot), slotCandidateZones reste inchangée pour le
+// socle VIDE (zonesForSlot, "où farmer" : rester scopé au palier courant y est voulu, on ne veut
+// pas suggérer un palier inférieur déjà dépassé).
+function slotCandidateZonesAllTiers(slotId) {
+  const allZoneIdx = ZONES.map((_, zi) => zi);
+  if (WEAPON_SLOTS.includes(slotId)) {
+    return allZoneIdx.filter(zi => (ZONE_WEAPON_SLOTS[zi]||[]).includes(slotId));
+  } else if (ARMOR_SLOTS.includes(slotId)) {
+    return allZoneIdx.filter(zi => (ZONE_ARMOR_SLOTS[zi]||[]).includes(slotId));
+  } else if (JEWELRY_SLOTS.includes(slotId)) {
+    const base = accBaseSlot(slotId);
+    return allZoneIdx.filter(zi => accSlotFor(ZONES[zi].loot.jackpot) === base);
+  }
+  return [];
+}
 // zones à proposer pour un socle VIDE (popup "où farmer") — demande explicite : "un socle
 // d'équipement vide, lorsque tu cliques dessus, te montre où farm l'item... halo bien visible,
 // tout sauf zone dangereuse". Ne recommande une zone DANGEREUSE que s'il n'existe vraiment aucune
@@ -163,8 +180,13 @@ function zonesForSlot(slotId) {
 // 2026-07-12 (demande explicite : "si un meilleur stuff base est disponible au loot, le montrer...
 // toute zone SAUF dangereuse") -- revirement assumé : propose à nouveau TOUTES les zones du jeu
 // (même jamais visitées), en excluant uniquement les zones dangereuses.
+// Cherche désormais dans TOUS les paliers (slotCandidateZonesAllTiers), pas seulement celui de la
+// zone actuellement farmée (2026-07-15, bug corrigé : "je suis en zone verte, accès difficile zone
+// bleu, je devrais avoir une icône qui me montre que du stuff m'attend" -- avant, scopé au palier
+// courant via slotCandidateZones, un palier SUPÉRIEUR ne pouvait jamais être suggéré, quel que soit
+// le palier de la pièce déjà équipée).
 function safeZonesForSlot(slotId) {
-  return slotCandidateZones(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
+  return slotCandidateZonesAllTiers(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
 }
 // index de palier d'un objet équipé (grey=0 < white=1 < green=2 < blue=3), déduit de sa couleur —
 // voir GEAR_TIERS (gear ET jackpot sont toujours tagués color:tier.color au drop). -1 si la
@@ -172,15 +194,21 @@ function safeZonesForSlot(slotId) {
 function itemTierIdx(item) { return GEAR_TIERS.findIndex(t => t.color === item.color); }
 // zones à proposer pour l'icône ⬆️ d'un socle REMPLI — demande explicite du 2026-07-09 : "l'icone
 // s'affiche uniquement [si] tu peux trouver un stuff meilleur que celui que tu as déjà, SAUF
-// dangereuse". Un palier supérieur au sien n'existe que si la pièce équipée est d'un palier
-// INFÉRIEUR au palier de la zone actuellement farmée (le palier borne la qualité maximale du
-// stuff trouvable ici) ; sinon (même palier ou palier supérieur, ex: stuff gardé d'avant) la zone
-// ne peut rien offrir de mieux pour ce socle, quelle que soit la zone proposée.
+// dangereuse".
+// BUG corrigé le 2026-07-15 (demande explicite : "je suis en zone verte, acces difficile zone
+// bleu je devrais avoir un icone qui me montre que du stuff m'attend... verifie pour les autres
+// grades") : la comparaison se faisait contre le palier de la zone ACTUELLEMENT FARMÉE
+// (gearTierForZone(zoneIdx)), pas contre le palier de CHAQUE zone candidate. Résultat : un joueur
+// en stuff vert qui farme une zone verte (itemTier=2, curTier=2) ne voyait JAMAIS l'icône, même
+// si une zone bleue (palier 3, strictement meilleure) était sûre et accessible -- le palier de la
+// zone qu'on farme n'a aucun rapport avec le palier des zones qu'on POURRAIT viser ensuite.
+// Corrigé en comparant le palier de CHAQUE zone candidate individuellement au palier de la pièce
+// équipée, ce qui généralise correctement à toutes les transitions de palier (gris→blanc,
+// blanc→vert, vert→bleu), pas seulement au cas testé initialement.
 function upgradeZonesForEquippedSlot(id, e) {
   if (!e) return [];
-  const curTierIdx = GEAR_TIERS.indexOf(gearTierForZone(zoneIdx));
-  if (itemTierIdx(e) >= curTierIdx) return [];
-  return safeZonesForSlot(id).filter(zi => atVelia || zi !== zoneIdx);
+  const eTier = itemTierIdx(e);
+  return safeZonesForSlot(id).filter(zi => (atVelia || zi !== zoneIdx) && GEAR_TIERS.indexOf(gearTierForZone(zi)) > eTier);
 }
 // un objet qui améliorerait ce socle est-il déjà possédé, non équipé, dans le sac ? (2026-07-11,
 // demande explicite : "la flèche qui affiche le stuff à farm sur la zone ne doit pas s'afficher si

@@ -255,29 +255,42 @@
     S.silver = s.silver; S.potionThreshold = s.threshold; P.faint = s.faint; P.state = s.state; P.manualTarget = s.manualTarget;
   }
   // "l'icone s'affiche uniquement [si] tu peux trouver un stuff meilleur que celui que tu as
-  // déjà, SAUF dangereuse" (2026-07-09) : ⬆️ ne doit apparaître QUE si (1) la pièce équipée est
-  // d'un palier STRICTEMENT inférieur au palier de la zone actuelle (sinon rien de mieux à trouver
-  // ici, tier-wise) ET (2) il existe une zone sûre différente de la zone actuelle où ce palier
-  // supérieur se trouve. reqAP/reqDP de la zone 4 (blanc, seule source d'arme du palier, voir
-  // ZONE_WEAPON_SLOTS) sont temporairement forcés à 1 pour rendre le test indépendant du stuff
-  // réel du joueur (bottleneck() dépend de apEff()/totalDP() en direct).
+  // déjà, SAUF dangereuse" (2026-07-09) : ⬆️ ne doit apparaître QUE s'il existe une zone SÛRE,
+  // AILLEURS que la zone actuelle, d'un palier strictement supérieur à la pièce équipée.
+  // BUG corrigé le 2026-07-15 (demande explicite : "je suis en zone verte, accès difficile zone
+  // bleu, je devrais avoir une icône... vérifie pour les autres grades") : la version précédente
+  // comparait le palier de la pièce équipée au palier de la ZONE ACTUELLEMENT FARMÉE (zoneIdx),
+  // pas au palier des zones CANDIDATES -- un joueur en stuff vert farmant une zone verte ne voyait
+  // donc JAMAIS l'icône, même si une zone bleue sûre existait, puisque "vert == vert" court-
+  // circuitait tout le reste. Le test ci-dessous couvrait justement ce cas précis en asserte
+  // "absent" -- c'était la bonne assertion pour le mauvais raisonnement, corrigée ci-dessous.
+  // reqAP/reqDP de la zone 4 (blanc, seule source d'arme du palier, voir ZONE_WEAPON_SLOTS) sont
+  // temporairement forcés à 1 pour rendre le test indépendant du stuff réel du joueur (bottleneck()
+  // dépend de apEff()/totalDP() en direct).
   function testUpgradeIconOnlyWhenBetterStuffAvailable() {
-    const s = { zoneIdx, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP, maxZoneIdx: S.maxZoneIdx };
+    const s = { zoneIdx, EQUIP: {...EQUIP}, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP, maxZoneIdx: S.maxZoneIdx };
     // (2026-07-11) safeZonesForSlot filtre désormais aussi par zone DÉCOUVERTE (zi <= S.maxZoneIdx)
-    // -- ce test doit rester indépendant de la progression réelle du joueur, comme zoneIdx/EQUIP ci-dessus
+    // -- ce test doit rester indépendant de la progression réelle du joueur, comme zoneIdx/EQUIP ci-dessus.
+    // TOUS les autres socles sont vidés (2026-07-15, fix de flakiness) : ce test ne touchait avant
+    // que EQUIP.weapon, laissant apEff()/totalDP() dépendre du reste du stuff RÉEL de la sauvegarde
+    // en cours -- un joueur déjà bien équipé sur les autres socles pouvait rendre une zone "sûre"
+    // par accident, indépendamment du scénario testé, et faire échouer l'assertion "absent" au hasard.
+    for (const k of Object.keys(EQUIP)) EQUIP[k] = null;
     S.maxZoneIdx = ZONES.length - 1;
-    ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
     EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey
-    zoneIdx = 0; // palier grey, même que la pièce équipée : aucun palier supérieur possible ici
-    assert('⬆️ absent si la pièce équipée est déjà du palier de la zone actuelle',
+    zoneIdx = 0; // palier grey, zone AUSSI grey -- mais AUCUNE zone supérieure n'est rendue sûre ici
+    assert('⬆️ absent quand aucune zone sûre de palier supérieur n\'existe, même palier grey == zone grey',
       !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
+    ZONES[4].reqAP = 1; ZONES[4].reqDP = 1; // rend la zone blanche (zone4) trivialement sûre
+    assert('⬆️ présent même quand le palier de la pièce équipée == palier de la zone actuelle, si une zone supérieure devient sûre (reproduit le bug du 2026-07-15)',
+      pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
     zoneIdx = 3; // palier blanc : la pièce grey équipée est d'un palier inférieur, upgrade possible
     assert('⬆️ présent quand un palier supérieur existe ailleurs dans le palier de zone actuel',
       pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
     zoneIdx = 4; // seule zone source d'arme du palier blanc : déjà là, rien à proposer
     assert('⬆️ absent si la seule zone source du palier supérieur est celle où on se trouve déjà',
       !pdSlotInnerHtmlFor('weapon', EQUIP.weapon).includes('pdUpgradeBtn'));
-    zoneIdx = s.zoneIdx; EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
+    zoneIdx = s.zoneIdx; Object.assign(EQUIP, s.EQUIP); ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP;
     S.maxZoneIdx = s.maxZoneIdx;
   }
   // "la flèche qui indique le stuff que tu peux farm sur le stuff équipé indique quel stuff
@@ -307,8 +320,13 @@
   // travelTo(), pas juste que la fonction de calcul répond juste (déjà couvert ailleurs).
   function testEquipmentDollRefreshesOnZoneTravel() {
     if (!$('pdLeft') && !$('pdRight')) return; // pas de DOM (contexte hors-jeu)
-    const s = { zoneIdx, atVelia, EQUIP_weapon: EQUIP.weapon, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP,
+    const s = { zoneIdx, atVelia, EQUIP: {...EQUIP}, z4ReqAP: ZONES[4].reqAP, z4ReqDP: ZONES[4].reqDP,
       x: P.x, y: P.y, maxZoneIdx: S.maxZoneIdx };
+    // tous les autres socles vidés (2026-07-15, même fix de flakiness que
+    // testUpgradeIconOnlyWhenBetterStuffAvailable) : la 1ère assertion attend "absent", un socle
+    // réel bien stuffé ailleurs pourrait rendre une zone bleue/verte "sûre" par accident et casser
+    // le test au hasard, sans rapport avec le scénario testé (zone4/palier blanc)
+    for (const k of Object.keys(EQUIP)) EQUIP[k] = null;
     ZONES[4].reqAP = 1; ZONES[4].reqDP = 1;
     EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:5, optimizable:true, color: GEAR_TIERS[0].color }; // grey
     S.maxZoneIdx = ZONES.length - 1;
@@ -320,7 +338,7 @@
     const slotAfterLeave = document.querySelector('.pdSlot[data-slot="weapon"]');
     assert('⬆️ réapparaît sur la poupée (DOM réel) dès qu\'on quitte cette zone',
       !!slotAfterLeave && !!slotAfterLeave.querySelector('.pdUpgradeBtn'));
-    EQUIP.weapon = s.EQUIP_weapon; ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP; S.maxZoneIdx = s.maxZoneIdx;
+    Object.assign(EQUIP, s.EQUIP); ZONES[4].reqAP = s.z4ReqAP; ZONES[4].reqDP = s.z4ReqDP; S.maxZoneIdx = s.maxZoneIdx;
     if (s.atVelia) goToVelia(); else travelTo(s.zoneIdx);
     P.x = s.x; P.y = s.y;
   }
