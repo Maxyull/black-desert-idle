@@ -1868,6 +1868,35 @@ function setAiCombatMode(key) {
   S.aiCombatMode = key;
   renderAiModeBtn();
 }
+// bascule Équipement/Cristal de la carte Équipement (2026-07-15, demande explicite : "un nouveau
+// slider a bulle... pour changer d'equipement a cristal") -- même pilule que le mode IA/farm, mais
+// dans le panneau latéral (pas sur le canvas). "Cristal" n'a qu'1 seul emplacement pour l'instant,
+// verrouillé (voir #equipCrystalPane dans index.html) -- pas encore de système de cristaux en jeu.
+let equipMode = 'gear';
+const EQUIP_MODES = {
+  gear:    { icon:'⚔️', name:{fr:'Équipement', en:'Gear'} },
+  crystal: { icon:'💎', name:{fr:'Cristal',    en:'Crystal'} },
+};
+function renderEquipModeBtn() {
+  const el = $('equipModeSlider'); if (!el) return;
+  el.querySelectorAll('.equipModeSeg').forEach(seg => {
+    const key = seg.dataset.mode, m = EQUIP_MODES[key];
+    const active = equipMode === key;
+    seg.classList.toggle('active', active);
+    seg.title = m.name[LANG];
+    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
+  });
+  const gearPane = $('equipGearPane'), crystalPane = $('equipCrystalPane');
+  if (gearPane) gearPane.style.display = equipMode === 'gear' ? '' : 'none';
+  if (crystalPane) crystalPane.style.display = equipMode === 'crystal' ? '' : 'none';
+  const crystalSlot = $('crystalSlotCenter');
+  if (crystalSlot) crystalSlot.title = LANG==='fr' ? 'Bientôt disponible' : 'Coming soon';
+}
+function setEquipMode(key) {
+  if (!EQUIP_MODES[key]) return;
+  equipMode = key;
+  renderEquipModeBtn();
+}
 // mode de farm choisi par le joueur : "Loot" ramasse tout avant de passer au pack suivant (voir
 // killPack + case 'loot' du fsm), "XP" ignore le loot au sol et enchaîne les packs pour maximiser
 // les kills/xp par minute (demande : 2 IA différentes, une full-loot, une full-XP)

@@ -625,6 +625,11 @@ $a('aiModeSlider').querySelectorAll('.aiModeSeg').forEach(seg => {
   seg.onclick = () => setAiCombatMode(seg.dataset.mode);
 });
 renderAiModeBtn();
+// bascule Équipement/Cristal (2026-07-15, demande explicite)
+$a('equipModeSlider').querySelectorAll('.equipModeSeg').forEach(seg => {
+  seg.onclick = () => setEquipMode(seg.dataset.mode);
+});
+renderEquipModeBtn();
 
 // clic sur un objet au sol : déplace le perso jusque là. Prioritaire sur l'IA — tant qu'il n'est
 // pas arrivé à l'endroit cliqué, l'IA ne reprend pas la main (voir P.manualTarget dans fsm())

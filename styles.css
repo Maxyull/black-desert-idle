@@ -454,6 +454,32 @@
   @media (prefers-reduced-motion:reduce){ .shake{animation:none;} button{transition:none;} }
   @media (max-width:860px){ #panel{grid-template-columns:1fr 1fr;} }
 
+  /* sélecteur à bulles Équipement/Cristal (2026-07-15, demande explicite : "un nouveau slider a
+     bulle dans le theme... pour changer d'equipement a cristal") -- même pilule dorée que
+     #farmModeSlider/#aiModeSlider (voir plus bas), mais posée en flux normal (pas position:absolute
+     sur le canvas) puisqu'elle vit dans la carte Équipement du panneau latéral, pas sur le jeu */
+  #equipModeSlider {
+    display:flex; justify-content:center; align-items:center; gap:2px;
+    width:fit-content; margin:0 auto 8px; background:rgba(10,9,12,.6); border:1px solid var(--gold-dim);
+    padding:4px; border-radius:20px;
+  }
+  .equipModeSeg {
+    display:flex; align-items:center; gap:5px; cursor:pointer;
+    width:28px; height:28px; border-radius:50%; justify-content:center;
+    font-size:13px; color:var(--ink-dim);
+  }
+  .equipModeSeg.active {
+    width:auto; height:auto; border-radius:16px; padding:6px 12px;
+    background:var(--gold); color:#1a1712; font-weight:bold;
+    font-size:11px; letter-spacing:.5px; text-transform:uppercase;
+  }
+  .equipModeSeg .farmModeSegIcon { font-size:13px; }
+  /* onglet Cristal : 1 seul emplacement verrouillé, centré (2026-07-15, demande explicite : "1 slot
+     de crystal au milieu locké") */
+  .crystalSlotWrap { display:flex; justify-content:center; padding:24px 0; }
+  .crystalSlot { width:56px; height:56px; font-size:24px; position:relative; opacity:.55; filter:grayscale(.4); cursor:not-allowed; }
+  .crystalSlot .crystalLock { position:absolute; top:-9px; left:50%; transform:translateX(-50%); font-size:12px; }
+
   /* ===== paperdoll équipement (permanent) ===== */
   /* niveau/XP fusionnés sur la même ligne que PA/PD/GS (demande explicite du 2026-07-06) --
      flex-wrap en secours si la carte est trop étroite (mobile) pour les 5 sur une seule ligne */
