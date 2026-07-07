@@ -3052,7 +3052,10 @@ function dropsTick(dt) {
       checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
       if (it.kind === 'jackpot') {
         S.jackpotCount = (S.jackpotCount||0) + 1;
-        lootLine(it, l.silver, 'jackpot');
+        // prix affiché uniquement pour le trash/token (2026-07-15, demande explicite : "affiche pas
+        // le prix sur les item autre que token met juste la quantité") -- avant, le ticker montrait
+        // "(+1234)" pour n'importe quel objet vendable au ramassage, pas seulement le trash
+        lootLine(it, 0, 'jackpot');
         floatTxt(l.x,l.y,55,'★ '+it.name,{lvl:true});
         // le centre de notifications ne garde que les infos importantes (succès, boss, niveau) —
         // les trouvailles de loot restent visibles dans le loot ticker, pas besoin de les dupliquer
@@ -3060,7 +3063,7 @@ function dropsTick(dt) {
         logToDiscord('💍 Bijou rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'gear') {
         S.gearDropCount = (S.gearDropCount||0) + 1;
-        lootLine(it, l.silver, 'jackpot');
+        lootLine(it, 0, 'jackpot');
         floatTxt(l.x,l.y,55,'⚔ '+it.name,{lvl:true});
         logToDiscord('⚔️ Équipement rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'craft') {
@@ -3072,7 +3075,7 @@ function dropsTick(dt) {
         // les trésors sont TRÈS rares (jusqu'à 0.00001% de chance) — vaut bien un log "pour le fun"
         logToDiscord('🗺️ Trésor de Velia', `**${myPseudo||'Joueur'}** trouve ${it.name} (${fmtTinyPct(it.ch)} de chance)`, 0xe8c96a);
       } else {
-        lootLine(it, l.silver, it.kind === 'material' ? 'matLoot' : '');
+        lootLine(it, 0, it.kind === 'material' ? 'matLoot' : '');
         floatTxt(l.x,l.y,40,it.name,{silver:true});
         // tout premier ramassage d'une Pierre de Cron (2026-07-09, demande explicite) : petit
         // tutoriel expliquant son rôle (protège contre une rétrogradation, activable/désactivable
@@ -3103,17 +3106,21 @@ function accSlotFor(it) {
 
 // regroupe les drops IDENTIQUES consécutifs en une seule ligne "xN" au lieu de spammer une
 // ligne par ramassage — demande explicite du 2026-07-05
+// prix affiché UNIQUEMENT pour le trash/token (2026-07-15, demande explicite : "affiche pas le prix
+// sur les item autre que token met juste la quantité et met une icone quand c'est le prix pour le
+// loot") -- seul le trash passe encore un val>0 (voir les appels de lootLine dans dropsTick), les
+// autres kinds n'affichent plus que leur nom + ×N. Une pièce 🪙 précède le prix quand il est affiché.
 function lootLine(item, val, cls) {
   const t = $('lootTicker');
   if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.el.isConnected) {
     lastLootEntry.count++;
     lastLootEntry.val += val;
-    lastLootEntry.el.textContent = (lastLootEntry.val > 0 ? `${item.name} (+${fmt(lastLootEntry.val)})` : item.name) + ` ×${lastLootEntry.count}`;
+    lastLootEntry.el.innerHTML = (lastLootEntry.val > 0 ? `${escapeHtml(item.name)} (🪙+${fmt(lastLootEntry.val)})` : escapeHtml(item.name)) + ` ×${lastLootEntry.count}`;
     return;
   }
   const div = document.createElement('div');
   if (cls) div.className = cls;
-  div.textContent = val > 0 ? `${item.name} (+${fmt(val)})` : item.name;
+  div.innerHTML = val > 0 ? `${escapeHtml(item.name)} (🪙+${fmt(val)})` : escapeHtml(item.name);
   t.appendChild(div); // + flex-direction:column en CSS → apparaît en bas, pousse les anciennes vers le haut
   while (t.children.length > 15) t.removeChild(t.firstChild);
   lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div };
