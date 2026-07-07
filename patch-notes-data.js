@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V267', d:'14/07/2026 22:00', name:{fr:'Fix affichage PA/PD figé, Sanctuaire d\'Elric ajusté', en:'Fixed frozen AP/DP display, Elric Shrine adjusted'}, fr:[
+      {t:'fix', sub:'interface', severity:'major', tx:'Le PA/PD affiché au-dessus du personnage ne se rafraîchissait qu\'à un changement de composition du sac — une réussite d\'optimisation (qui ne touche que l\'équipement) pouvait donc laisser cet affichage figé sur une ancienne valeur jusqu\'au prochain loot/vente. Il se met désormais à jour instantanément'},
+      {t:'change', sub:'zones', tx:'Sanctuaire d\'Elric était devenu exactement aussi difficile que Base de Bashim (la dernière zone verte) — reqDP relevé de 91 à 101 pour que ce soit de nouveau une vraie progression, tout en restant "tout juste difficile" pour un stuff vert complet enchanté à +15 en moyenne'},
+      {t:'change', sub:'interface', tx:'Le sélecteur manuel de la pièce à optimiser est retiré — la cible se choisit désormais uniquement via "Mettre en optimisation" (menu objet/poupée) ou en équipant depuis le Compendium'},
+      {t:'change', sub:'interface', tx:'Le cadre Niveau/PA/PD/GS est déplacé sous le personnage animé (était au-dessus de la poupée d\'équipement)'},
+      {t:'change', sub:'inventaire', tx:'Dans la table de loot, la catégorie "Stuff" est renommée "Équipements" et affichée au-dessus de "Objets d\'optimisation"'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'major', tx:'The AP/DP shown above the character only refreshed when the bag\'s contents changed — a successful enhancement (which only touches equipped gear) could leave this display frozen on a stale value until the next loot/sale. It now updates instantly'},
+      {t:'change', sub:'zones', tx:'Elric Shrine had become exactly as hard as Bashim Base (the last Green zone) — reqDP raised from 91 to 101 so it\'s a real step up again, while staying "just barely hard" for a full Green gear set enchanted to +15 average'},
+      {t:'change', sub:'interface', tx:'The manual enhancement-target selector is removed — the target is now chosen only via "Set as enhancement target" (item/doll menu) or by equipping from the Compendium'},
+      {t:'change', sub:'interface', tx:'The Level/AP/DP/GS frame is moved below the animated character (was above the equipment doll)'},
+      {t:'change', sub:'inventaire', tx:'In the loot table, the "Gear" category is renamed and moved above "Enhancement items"'},
+    ] },
   { v:'V266', d:'14/07/2026 21:00', name:{fr:'Poupée d\'équipement réorganisée', en:'Equipment doll reorganized'}, fr:[
       {t:'change', sub:'interface', tx:'La colonne de droite de la poupée d\'équipement ne garde plus que collier, 2 bagues et 2 boucles d\'oreille (+ ceinture) — les 2 artéfacts, la Pierre d\'alchimie et le Livre de vie sont désormais regroupés sous les armes'},
     ], en:[
