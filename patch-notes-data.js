@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V271', d:'15/07/2026 02:00', name:{fr:'Nouvelle recette secrète dans Assemblage', en:'New secret recipe in Assembly'}, fr:[
+      {t:'new', sub:'objets', tx:'Nouvelle recette dans Assemblage : combiner 1 Bout du trésor de Velia + 1 matériau d\'optimisation + 1 bijou (3 objets différents) donne un "Coffret secret" en silver — un bon moyen de valoriser un bijou ou un matériau isolé plutôt que de le vendre au rabais'},
+    ], en:[
+      {t:'new', sub:'objets', tx:'New Assembly recipe: combining 1 Velia Treasure piece + 1 enhancement material + 1 jewelry piece (3 different items) grants a "Secret box" in silver — a good way to cash in a stray jewelry piece or material instead of selling it cheap'},
+    ] },
   { v:'V270', d:'15/07/2026 01:00', name:{fr:'Compendium via menu, retrait Lifeskill, stats réorganisées', en:'Compendium via menu, Lifeskill removed, stats reorganized'}, fr:[
       {t:'change', sub:'inventaire', tx:'Dans le Compendium, cliquer un objet ouvre désormais le même menu que le reste du sac, avec un bouton "Mettre en optimisation" explicite (au lieu d\'équiper directement en silence)'},
       {t:'change', sub:'systeme', tx:'Retrait complet de l\'équipement "Lifeskill" (jamais utilisé en jeu, verrouillé depuis son introduction)'},
