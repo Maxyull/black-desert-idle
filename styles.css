@@ -445,9 +445,11 @@
   /* ===== paperdoll équipement (permanent) ===== */
   /* niveau/XP fusionnés sur la même ligne que PA/PD/GS (demande explicite du 2026-07-06) --
      flex-wrap en secours si la carte est trop étroite (mobile) pour les 5 sur une seule ligne */
+  /* déplacé sous #paperdoll le 2026-07-14 (demande explicite) -- margin-top remplace l'ancien
+     margin-bottom, le reste du cadre (bordure dorée, fond teinté) est inchangé */
   #equipSummary {
     display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:2px 8px;
-    border:1px solid var(--gold-dim); border-radius:4px; padding:5px 10px; margin-bottom:6px;
+    border:1px solid var(--gold-dim); border-radius:4px; padding:5px 10px; margin-top:6px;
     font-size:11px; color:var(--gold); font-weight:bold; background:rgba(201,165,90,.05);
   }
   #eqSumLvl { color:#fff; }

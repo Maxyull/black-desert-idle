@@ -1375,12 +1375,14 @@ function zoneLootRowsHtml(idx) {
   // catégorisation (2026-07-14, demande explicite : "catégorise la table de loot, Trashloot avec
   // son prix, objet d'optimisation, stuff") -- 3 groupes : Trash (avec son prix silver), objets
   // d'optimisation (matériaux + composants de craft), stuff (armure/arme/bijou).
+  // "Stuff" renommé "Équipements" et remonté au-dessus des objets d'optimisation (2026-07-14,
+  // demande explicite : "modifie stuff en equipements" / "met le stuff au dessus d'objet dopti")
   const LOOT_CATS = {
     trash:    { fr:'Trashloot', en:'Trash loot', order:0 },
-    material: { fr:'Objets d\'optimisation', en:'Enhancement items', order:1 },
-    craft:    { fr:'Objets d\'optimisation', en:'Enhancement items', order:1 },
-    gear:     { fr:'Stuff', en:'Gear', order:2 },
-    jackpot:  { fr:'Stuff', en:'Gear', order:2 },
+    gear:     { fr:'Équipements', en:'Gear', order:1 },
+    jackpot:  { fr:'Équipements', en:'Gear', order:1 },
+    material: { fr:'Objets d\'optimisation', en:'Enhancement items', order:2 },
+    craft:    { fr:'Objets d\'optimisation', en:'Enhancement items', order:2 },
   };
   const rowsHtml = rows.map(r => {
     const ch = r.ch ?? r.it.ch;

@@ -188,18 +188,18 @@ const ZONES = [
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
       jackpot:{name:'Ceinture Asula',val:17850,ch:.0009,ap:6}, craft:{name:'Fragment de mémoire',ch:.005} } },
-  // reqDP abaissé de 148 à 91 le 2026-07-14 (demande explicite : "regule l'acces a sanctuaire d'elric
-  // avec un stuff vert +15 en moyenne") : simulation d'un stuff COMPLET de palier vert/Yuria (3 armes
-  // + 4 armures + 6 bijoux, chacun depuis SA zone verte réelle, formule GEAR_ROLE, + stats innées
-  // S.pa/S.dp) à +15 -- la PD était le facteur totalement bloquant (61 PD dispo contre 148 requis,
-  // ratio 0.41, ZONE DANGEREUSE) alors que la PA (206 dispo / 269 requis, ratio 0.77) était déjà
-  // tout juste en ZONE DIFFICILE. reqAP inchangé (n'était pas le problème). reqDP=91 est le PLANCHER
-  // imposé par testZoneMonotonicity (ne peut pas descendre sous le reqDP de Base de Bashim, la zone
-  // verte juste avant dans l'ordre réel de farm, voir GEAR_TIERS) -- ramène le ratio PD à 0.67 (ZONE
-  // DIFFICILE, accessible mais encore risqué), cohérent avec les autres paliers d'entrée de zone déjà
-  // calibrés pareil (voir Mine de Fer Abandonnée ci-dessus). Ne touche pas Forêt de Polly (dernière
-  // zone du jeu, demande explicite de ne pas y toucher) ni les 2 autres zones Mediah (Kratuga/Mânes).
-  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:269, reqDP:91, mob:'Sectateur d\'Elric',
+  // reqDP abaissé de 148 à 91 le 2026-07-14, PUIS remonté à 101 le même jour (demande explicite :
+  // "la premiere zone bleu est difficile en meme temps que bashim pas normal modifie dp au besoin"
+  // -- reqDP=91 rendait Sanctuaire Elric EXACTEMENT aussi difficile que Base de Bashim, la dernière
+  // zone verte juste avant, ce qui n'a pas de sens pour la 1ère zone d'un palier supérieur) :
+  // simulation d'un stuff COMPLET de palier vert/Yuria (3 armes + 4 armures + 6 bijoux, chacun
+  // depuis SA zone verte réelle, formule GEAR_ROLE, + stats innées S.pa/S.dp) à +15 -- 61 PD dispo.
+  // reqAP inchangé (n'était pas le problème). reqDP=101 ramène le ratio PD à 0.603 (tout juste au-
+  // dessus du seuil ZONE DIFFICILE à 0.6, voir bottleneck()) : Sanctuaire Elric reste "tout juste
+  // difficile" pour un stuff vert +15 COMME demandé, tout en étant désormais visiblement plus dur
+  // que Base de Bashim (91), pas identique. Ne touche pas Forêt de Polly (dernière zone du jeu,
+  // demande explicite de ne pas y toucher) ni les 2 autres zones Mediah (Kratuga/Mânes).
+  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:269, reqDP:101, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
     // % de la "Pierre concentrée" (matériau réel dropé ici, voir tierMat dans rollDrops — le nom
@@ -211,9 +211,9 @@ const ZONES = [
   // les 3 dernières zones du jeu (Kratuga/Mânes/Polly) étaient toutes identiques à 320/175
   // (plafond de fin de jeu) -- lissées le 2026-07-11 (demande explicite : "lisse les req des 3
   // dernière zone du jeu") en une montée linéaire depuis Sanctuaire Elric (269/148 à l'époque,
-  // désormais 269/91 en PD depuis le rééquilibrage du 2026-07-14 ci-dessus -- ce lissage ne touchait
-  // que Kratuga/Mânes/Polly, restés inchangés) jusqu'au même plafond 320/175, désormais atteint
-  // seulement à la toute dernière zone (Forêt de Polly, inchangée)
+  // désormais 269/101 en PD depuis le rééquilibrage du 2026-07-14 ci-dessus -- ce lissage ne
+  // touchait que Kratuga/Mânes/Polly, restés inchangés) jusqu'au même plafond 320/175, désormais
+  // atteint seulement à la toute dernière zone (Forêt de Polly, inchangée)
   { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:286, reqDP:157, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
@@ -3532,6 +3532,12 @@ let lastInvSig = '', lastZoneSig = '';
 function invSignature() {
   let s = '';
   for (let i = 0; i < INV_SIZE; i++) { const it = INV[i]; s += it ? (it.key+','+it.qty+','+(it.enhLv||0)) : '_'; s += '|'; }
+  // EQUIP inclus depuis le 2026-07-14 (bug trouvé : "l'affichage ap dp au dessus du personnage
+  // n'est parfois pas instantané et parfois figé mauvaise valeur") -- une réussite d'optimisation
+  // change EQUIP[slot].enhLv SANS toucher au sac, donc cette signature ne changeait pas et
+  // refreshInvUI()/renderEquipment() (le résumé PA/PD au-dessus du perso) ne se rafraîchissait que
+  // par coïncidence, au prochain vrai changement de sac (loot/vente/équipement d'un autre objet)
+  for (const k of Object.keys(EQUIP)) { const e = EQUIP[k]; s += e ? (e.key+','+(e.enhLv||0)) : '_'; s += '|'; }
   return s;
 }
 function zoneSignature() { return zoneIdx + ':' + atVelia + ':' + Math.round(apEff()) + ':' + Math.round(totalDP()); }
