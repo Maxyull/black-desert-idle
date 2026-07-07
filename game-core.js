@@ -2877,8 +2877,18 @@ function renderTreasureCraftPanel() {
   const secretRow = `<button class="craftRecipeBtn${secretOk?' ready':''}" data-kind="secret" ${secretOk?'':'disabled'} ` +
     `title="${LANG==='fr'?'1 Bout du trésor + 1 matériau + 1 bijou (tous différents) → silver':'1 Treasure piece + 1 material + 1 jewelry piece (all different) → silver'}">` +
     `🧩+💎+💍 → 🎁 ${LANG==='fr'?'Coffret secret':'Secret box'}</button>`;
+  // recettes verrouillées "100 fragment → 1 carte" pour Heidel/Calpheon (2026-07-15, demande
+  // explicite : "ajoute 2 crafte /100 > carte") -- aucun fragment n'est obtenable tant que ces
+  // paliers restent verrouillés (voir TIER_PREVIEW_CARD/ZONE_TIERS), donc affichées grisées comme
+  // les autres emplacements verrouillés du jeu (Consommable/RNG...), prêtes pour le jour où le
+  // palier ouvrira -- toujours "0/100", jamais cliquables.
+  const upcomingRows = Object.entries(TIER_PREVIEW_CARD).map(([tierId, card]) => {
+    const tierLabel = ZONE_TIERS.find(t => t.id === tierId).label[LANG];
+    return `<button class="craftRecipeBtn" disabled title="${LANG==='fr'?'Bientôt disponible — palier '+tierLabel+' pas encore ouvert':'Coming soon — '+tierLabel+' tier not yet open'}">` +
+      `🔒 🧩 0/100 → ${card.icon} ${escapeHtml(tr(card.name))}</button>`;
+  }).join('');
   el.innerHTML = `<div class="craftPanelTitle">${LANG==='fr'?'🔧 Combiner':'🔧 Combine'}</div>` +
-    `<div class="craftRecipes">${pieceRows}${secretRow}</div>`;
+    `<div class="craftRecipes">${pieceRows}${secretRow}${upcomingRows}</div>`;
   el.querySelectorAll('.craftRecipeBtn[data-kind="piece"]').forEach(btn => {
     btn.onclick = () => { const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === btn.dataset.key); if (r) craftTreasurePiece(r); renderTreasureCraftPanel(); };
   });
@@ -3235,6 +3245,16 @@ let zoneTier = 'early';
 // 5 paliers de régions (voir roadmap.md pour le détail des zones prévues par palier) —
 // seul "Early / Velia" est en jeu pour l'instant, les autres sont verrouillés en attendant
 // d'être construits (demande explicite du 2026-07-05)
+// cartes-teaser des 2 prochains paliers (2026-07-15, demande explicite : "créer 2 nouvelles cartes
+// qui se loot dans les prochaines zones heidel et calpheon") -- Heidel/Calpheon restent verrouillés
+// (zones pas encore construites, confirmé "zone bloqué"), ces objets ne sont donc PAS obtenables
+// pour l'instant : juste un aperçu affiché dans le tooltip du palier verrouillé (voir
+// renderZoneTierTabs) et un couple de recettes verrouillées dans Assemblage (voir
+// renderTreasureCraftPanel/CARD_FRAGMENT_RECIPES) prêtes pour le jour où le palier ouvrira.
+const TIER_PREVIEW_CARD = {
+  mid: { name:'Carte de Heidel', icon:'🃏', color:'#6ea3c9' },
+  end: { name:'Carte de Calpheon', icon:'🎴', color:'#e8c96a' },
+};
 const ZONE_TIERS = [
   { id:'early', icon:'🟢', label:{fr:'Velia',en:'Velia'},       locked:false },
   { id:'mid',   icon:'🔵', label:{fr:'Heidel',en:'Heidel'},     locked:true },
@@ -3292,9 +3312,15 @@ function renderZoneTierTabs() {
   // le libellé vit dans un <span> interne à sa propre troncature (overflow/ellipsis) -- le
   // <button> lui-même reste overflow:visible pour que le badge cadenas (position absolute, dépasse
   // au-dessus) ne soit jamais rogné par la troncature du texte.
-  el.innerHTML = ZONE_TIERS.map(t => `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
-    `${t.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-tier="${t.id}">` +
-    `${t.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`).join('');
+  el.innerHTML = ZONE_TIERS.map(t => {
+    const card = TIER_PREVIEW_CARD[t.id];
+    const lockedTitle = card
+      ? (LANG==='fr' ? `Bientôt disponible — droppera : ${card.icon} ${tr(card.name)}` : `Coming soon — will drop: ${card.icon} ${tr(card.name)}`)
+      : (LANG==='fr' ? 'Bientôt disponible' : 'Coming soon');
+    return `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
+    `${t.locked?' disabled title="'+lockedTitle+'"':''} data-tier="${t.id}">` +
+    `${t.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`;
+  }).join('');
   el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
     btn.onclick = () => { zoneTier = btn.dataset.tier; buildZoneList(); };
   });
