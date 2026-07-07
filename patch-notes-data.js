@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V278', d:'15/07/2026 09:00', name:{fr:'Loot ticker : quantité avant le prix', en:'Loot ticker: quantity before price'}, fr:[
+      {t:'change', sub:'interface', tx:'Dans le ticker de loot, la quantité (×N) s\'affiche désormais avant le prix au lieu d\'après'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'In the loot ticker, the quantity (×N) now shows before the price instead of after'},
+    ] },
   { v:'V277', d:'15/07/2026 08:00', name:{fr:'Bijoux doublés en zones vertes et bleues', en:'Jewelry doubled in Green and Blue tiers'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Chance de trouver un bijou à nouveau doublée dans les 4 zones vertes et les 4 zones bleues (×3.6 et ×4.0 au total depuis l\'origine). Zones grise et blanche inchangées'},
     ], en:[
