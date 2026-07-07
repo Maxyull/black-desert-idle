@@ -737,28 +737,6 @@ const WEAPON_SLOTS = ['weapon','awakening','secondary'];
 // tout ce qui peut être optimisé — armes, armure ET bijoux
 const OPTIMIZABLE_SLOTS = [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...ACC_SLOTS];
 
-// ---- 2e équipement : outils de lifeskill (icônes SVG originales, même style que ICO_*) ----
-// pas encore de système de récolte/pêche en jeu — ces emplacements sont préparés à l'avance,
-// vides pour l'instant, en attendant du contenu (voir demande utilisateur du 2026-07-04)
-const ICO_SKINNING = svgIcon('<path d="M4 18l11-11 3 3-11 11z" fill="#c9c9c9"/><path d="M15 7l3 3-2 2-3-3z" fill="#8a6a3a"/>');
-const ICO_PICKAXE  = svgIcon('<path d="M4 8c4-4 12-4 16 0l-3 3C14 8 10 8 7 11z" fill="#9aa5b1"/><rect x="10.5" y="9" width="3" height="13" rx="1" fill="#8a6a3a"/>');
-const ICO_AXE      = svgIcon('<path d="M6 4c4 0 7 3 7 7l-4 4C5 15 3 11 3 7z" fill="#9aa5b1"/><rect x="11" y="9" width="3" height="13" rx="1" fill="#8a6a3a"/>');
-const ICO_FLUID    = svgIcon('<rect x="9" y="3" width="6" height="6" rx="1" fill="#8cc8ff"/><rect x="10.5" y="8" width="3" height="12" rx="1" fill="#c9c9c9"/><rect x="8" y="19" width="8" height="2.5" rx="1" fill="#6b7480"/>');
-const ICO_HOE      = svgIcon('<rect x="10.5" y="4" width="3" height="14" rx="1" fill="#8a6a3a"/><rect x="5" y="17" width="14" height="3" rx="1" fill="#9aa5b1"/>');
-const ICO_TANNING  = svgIcon('<path d="M4 18l11-11 3 3-11 11z" fill="#e0bc72"/><path d="M15 7l3 3-2 2-3-3z" fill="#6b4f28"/>');
-const ICO_FLOAT    = svgIcon('<ellipse cx="12" cy="10" rx="5" ry="6" fill="#e05a4e"/><ellipse cx="12" cy="15" rx="5" ry="5" fill="#f4efe0"/>');
-const ICO_ROD      = svgIcon('<path d="M4 20l14-16" stroke="#8a6a3a" stroke-width="2" fill="none"/><path d="M18 4c1.5 1.5 1.5 4 0 5" stroke="#c9c9c9" stroke-width="1.2" fill="none"/>');
-const LIFESKILL_LABEL = {
-  skinning:{fr:'Couteau à dépecer',en:'Skinning Knife'}, pickaxe:{fr:'Pioche',en:'Pickaxe'},
-  axe:{fr:'Hache',en:'Axe'}, fluid:{fr:'Seringue (collecteur de fluide)',en:'Fluid Collector'},
-  hoe:{fr:'Houe',en:'Hoe'}, tanning:{fr:'Couteau de tanneur',en:'Tanning Knife'},
-  float:{fr:'Flotteur',en:'Float'}, rod:{fr:'Canne à pêche',en:'Fishing Rod'},
-};
-const LIFESKILL_ICON = { skinning:ICO_SKINNING, pickaxe:ICO_PICKAXE, axe:ICO_AXE, fluid:ICO_FLUID,
-  hoe:ICO_HOE, tanning:ICO_TANNING, float:ICO_FLOAT, rod:ICO_ROD };
-const LIFESKILL_TOOL_SLOTS = ['skinning','pickaxe','axe','fluid','hoe','tanning'];
-const LIFESKILL_FISHING_SLOTS = ['float','rod'];
-const LIFESKILL_EQUIP = { skinning:null, pickaxe:null, axe:null, fluid:null, hoe:null, tanning:null, float:null, rod:null };
 
 function invWeight() {
   let w = 0;
@@ -1289,34 +1267,6 @@ function openMailbox() {
   $a('infoBody').querySelectorAll('.mailClaimBtn').forEach(btn => {
     btn.onclick = () => { if (btn.dataset.key === 'loyalty') claimLoyalty(); openMailbox(); };
   });
-}
-
-// ---------- 2e équipement : lifeskill (outils de collecte + pêche) ----------
-// pas de source en jeu pour l'instant (aucune récolte/pêche implémentée) — ces emplacements
-// sont préparés à l'avance ; les accessoires de combat sont juste rappelés ici en lecture
-// seule (dans le vrai jeu ce sont les MÊMES bagues/boucles/collier/ceinture qui comptent
-// pour le lifeskill, il n'y a pas de second jeu d'accessoires séparé)
-function renderLifeskillSlot(icon, label, item) {
-  return `<div class="lsSlot${item?' filled':' empty'}" title="${item ? tr(item.name) : label}">${item ? item.icon : icon}</div>`;
-}
-function renderLifeskillPanelHtml() {
-  const toolsHtml = LIFESKILL_TOOL_SLOTS.map(k => renderLifeskillSlot(LIFESKILL_ICON[k], LIFESKILL_LABEL[k][LANG], LIFESKILL_EQUIP[k])).join('');
-  const accHtml = ACC_SLOTS.map(k => renderLifeskillSlot(SLOT_ICON[k], SLOT_LABEL[k], EQUIP[k])).join('');
-  const fishHtml = LIFESKILL_FISHING_SLOTS.map(k => renderLifeskillSlot(LIFESKILL_ICON[k], LIFESKILL_LABEL[k][LANG], LIFESKILL_EQUIP[k])).join('');
-  return `
-    <h3>${LANG==='fr'?'🛠️ Outils de collecte':'🛠️ Gathering tools'}</h3>
-    <div class="lsGrid">${toolsHtml}</div>
-    <h3>${LANG==='fr'?'💍 Accessoires équipés':'💍 Equipped accessories'}</h3>
-    <div class="lsGrid">${accHtml}</div>
-    <h3>${LANG==='fr'?'🎣 Pêche':'🎣 Fishing'}</h3>
-    <div class="lsGrid">${fishHtml}</div>
-    <div class="admSummary">${LANG==='fr'
-      ? 'Aucun outil de lifeskill ne se trouve encore en jeu — ces emplacements sont prêts pour une future mise à jour (récolte, pêche...).'
-      : 'No lifeskill tools can be found in-game yet — these slots are ready for a future update (gathering, fishing...).'}</div>
-  `;
-}
-function openLifeskillPanel() {
-  openInfo(LANG==='fr' ? '⛏️ Équipement Lifeskill' : '⛏️ Lifeskill Gear', renderLifeskillPanelHtml());
 }
 
 // World Boss (Kzarka/Vell : lobby, combat, rendu de la salle) -> voir boss.js (charge APRES ce fichier, voir index.html)

@@ -10,7 +10,7 @@
      commit), pas juste copie depuis jsdelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"
   integrity="sha256-LbKRLxaTmjshtHKYCnradGszpqQHCLxVXLC+JVxutbE=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=340">
+<link rel="stylesheet" href="styles.css?v=341">
 </head>
 <body>
 
@@ -369,23 +369,27 @@
         <button class="catTab active" data-tab="perso" data-i18n="statsTabPerso">Perso</button>
         <button class="catTab" data-tab="reco" data-i18n="statsTabReco">Recommandations</button>
       </div>
+      <!-- stats du haut passées en 3 colonnes le 2026-07-15 (demande explicite : "3 colonnes a
+           gauche le mot au milieu l'abreviation et a droite la stat") -- voir .statRow3 dans
+           styles.css. Kills/min, Monstres tués et Objets ramassés déplacés dans "Stats de la zone"
+           (demande explicite), Loups abattus renommé Monstres tués -->
       <div id="statsPersoPane">
-        <div class="row"><span data-i18n="lblPS">Gearscore</span><span class="v" id="stPS">21</span></div>
-        <div class="row"><span data-i18n="lblPA">PA effective</span><span class="v" id="stPA">14</span></div>
-        <div class="row"><span data-i18n="lblPD">PD</span><span class="v" id="stDP">10</span></div>
-        <div class="row"><span data-i18n="lblHpMax">PV max</span><span class="v" id="stHpMax">100</span></div>
-        <div class="row"><span data-i18n="lblMpMax">Mana max</span><span class="v" id="stMpMax">100</span></div>
-        <div class="row"><span data-i18n="lblSpd">Vitesse (SPD)</span><span class="v" id="stSpd">+0%</span></div>
-        <div class="row"><span data-i18n="lblDodge">Esquive</span><span class="v" id="stDodge">0%</span></div>
-        <div class="row"><span data-i18n="lblWeaponBonus">Bonus arme</span><span class="v" id="stWeaponBonus">+0%</span></div>
-        <div class="row"><span data-i18n="lblArmorBonus">Bonus armure (moy.)</span><span class="v" id="stArmorBonus">+0%</span></div>
-        <div class="row"><span data-i18n="lblAiMode">Mode IA</span><span class="v blue" id="stMode">équilibré</span></div>
-        <div class="row"><span data-i18n="lblKpm">Kills / min</span><span class="v" id="stKpm">—</span></div>
-        <div class="row"><span data-i18n="lblKills">Loups abattus</span><span class="v" id="stKills">0</span></div>
-        <div class="row"><span data-i18n="lblLootCount">Objets ramassés</span><span class="v" id="stLoot">0</span></div>
+        <div class="statRow3"><span data-i18n="lblPS">Gearscore</span><span class="srAbbr" data-i18n="lblPSAbbr">GS</span><span class="v" id="stPS">21</span></div>
+        <div class="statRow3"><span data-i18n="lblPA">Attaque effective</span><span class="srAbbr" data-i18n="lblPAAbbr">PA</span><span class="v" id="stPA">14</span></div>
+        <div class="statRow3"><span data-i18n="lblPD">Défense</span><span class="srAbbr" data-i18n="lblPDAbbr">PD</span><span class="v" id="stDP">10</span></div>
+        <div class="statRow3"><span data-i18n="lblHpMax">Vie max</span><span class="srAbbr" data-i18n="lblHpMaxAbbr">PV</span><span class="v" id="stHpMax">100</span></div>
+        <div class="statRow3"><span data-i18n="lblMpMax">Mana max</span><span class="srAbbr" data-i18n="lblMpMaxAbbr">MP</span><span class="v" id="stMpMax">100</span></div>
+        <div class="statRow3"><span data-i18n="lblSpd">Vitesse</span><span class="srAbbr" data-i18n="lblSpdAbbr">SPD</span><span class="v" id="stSpd">+0%</span></div>
+        <div class="statRow3"><span data-i18n="lblDodge">Esquive</span><span class="srAbbr" data-i18n="lblDodgeAbbr">ESQ</span><span class="v" id="stDodge">0%</span></div>
+        <div class="statRow3"><span data-i18n="lblWeaponBonus">Bonus arme</span><span class="srAbbr" data-i18n="lblWeaponBonusAbbr">ATK</span><span class="v" id="stWeaponBonus">+0%</span></div>
+        <div class="statRow3"><span data-i18n="lblArmorBonus">Bonus armure (moy.)</span><span class="srAbbr" data-i18n="lblArmorBonusAbbr">DEF</span><span class="v" id="stArmorBonus">+0%</span></div>
+        <div class="statRow3"><span data-i18n="lblAiMode">Mode de combat</span><span class="srAbbr" data-i18n="lblAiModeAbbr">IA</span><span class="v blue" id="stMode">équilibré</span></div>
         <div class="statSep" data-i18n="cardZoneStats">Stats de la zone de farm</div>
         <div class="row"><span data-i18n="lblApZone">PA requis (zone)</span><span class="v" id="stApZone">14 / 20</span></div>
         <div class="row"><span data-i18n="lblDpZone">PD requis (zone)</span><span class="v" id="stDpZone">10 / 20</span></div>
+        <div class="row"><span data-i18n="lblKpm">Kills / min</span><span class="v" id="stKpm">—</span></div>
+        <div class="row"><span data-i18n="lblKills">Monstres tués</span><span class="v" id="stKills">0</span></div>
+        <div class="row"><span data-i18n="lblLootCount">Objets ramassés</span><span class="v" id="stLoot">0</span></div>
       </div>
       <div id="statsRecoPane" style="display:none"></div>
     </div>
@@ -427,7 +431,6 @@
 
     <div class="card" id="invCard">
       <h3><span data-i18n="cardInv">Inventaire</span>
-        <button id="btnLifeskillToggle" disabled title="Lifeskill — bientôt disponible">🔒 ⛏️</button>
         <span id="slotTxtH" style="float:right;color:var(--ink-dim);font-size:11px;letter-spacing:0">0/192</span></h3>
       <!-- bascule Inventaire/Assemblage (2026-07-06, demande explicite) : le craft du Trésor de
            Velia vivait dans la carte Optimisation, déplacé ici derrière un bouton en haut -->
@@ -511,6 +514,12 @@
         <div id="optChanceTxt" data-i18n="optChanceEmpty">Chargez un matériau depuis le sac</div>
       </div>
       <button id="btnOpt" disabled data-i18n="btnOptTry">Tenter l'optimisation</button>
+      <!-- "Conseil de stuff" repositionné entre l'action d'optimisation et les contrôles
+           d'auto-optimisation qui consomment des Pierres de Cron (2026-07-15, demande explicite :
+           "met le conseil de stuff entre l'opti et les cron") -- le titre de catégorie ("statSep")
+           est supprimé au passage (demande explicite : "supprime categorie conseil de stuff"),
+           #optSuggest reste seul, sans en-tête -->
+      <div id="optSuggest"></div>
       <!-- modes d'auto-optimisation (2026-07-08, demande explicite : "tenter en boucle / jusqu'a
            echec / jusqu'a plus de pierre de cron") — en plus du mode existant "jusqu'à un palier" -->
       <div id="optAutoModeRow">
@@ -528,47 +537,45 @@
       </div>
       <div id="optAutoGainTxt"></div>
       <div id="optResult"></div>
-      <div class="statSep">🔥 <span data-i18n="cardAdvice">Conseil de stuff</span></div>
-      <div id="optSuggest"></div>
     </div>
   </div>
 </div>
 
-<script src="game-core.js?v=340"></script>
+<script src="game-core.js?v=341"></script>
 <!-- World Boss (Kzarka/Vell : lobby, combat, rendu de la salle) -- extrait de game-core.js le
      2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà définies à ce stade
      ($, S, EQUIP, effHpMax, ZONES...) et le canvas #bossCv déjà présent dans le DOM -->
-<script src="boss.js?v=340"></script>
+<script src="boss.js?v=341"></script>
 <!-- inventaire/équipement -- UI (paperdoll, grille, enchantement, auto-opti) -- extrait de
      game-core.js le 2026-07-14 -- DOIT charger AVANT render.js : le démarrage du jeu (à la fin de
      render.js) appelle hud(), qui appelle refreshInvUI()/hasNeglectedUpgradeInBag(), tous deux
      définis ici -->
-<script src="inventory-ui.js?v=340"></script>
+<script src="inventory-ui.js?v=341"></script>
 <!-- rendu canvas (scène, sprites, particules) -- extrait de game-core.js le 2026-07-14 -- charge
      APRÈS game-core.js/boss.js/inventory-ui.js : hud() (dans game-core.js) appelle
      drawZoneMobIcon() (défini ici), donc ce fichier DOIT charger avant le tout premier hud(). C'est
      pourquoi le démarrage du jeu (renderInvCatTabs/hud/requestAnimationFrame(loop), avant à la toute
      fin de game-core.js) a été déplacé à la fin de CE fichier -- requestAnimationFrame(loop) doit
      rester le tout dernier appel synchrone du chargement, sinon la boucle de jeu ne démarre jamais -->
-<script src="render.js?v=340"></script>
+<script src="render.js?v=341"></script>
 <!-- données pures PATCH_NOTES (~2000 lignes, extraites de game-supabase.js le 2026-07-14 pour
      alléger le fichier) -- DOIT charger avant game-supabase.js, qui lit PATCH_NOTES[0].v au
      top-level dès son chargement (voir CURRENT_VERSION) -->
-<script src="patch-notes-data.js?v=340"></script>
-<script src="game-supabase.js?v=340"></script>
+<script src="patch-notes-data.js?v=341"></script>
+<script src="game-supabase.js?v=341"></script>
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->
-<script src="admin-panel.js?v=340"></script>
+<script src="admin-panel.js?v=341"></script>
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
-<script src="chat.js?v=340"></script>
+<script src="chat.js?v=341"></script>
 <!-- marché (Hôtel des ventes + Marché commun v2, carnet d'ordres) -- extrait de game-supabase.js
      le 2026-07-14 -- charge APRÈS lui : wiring $a('btnMarket').onclick etc au top-level -->
-<script src="market.js?v=340"></script>
+<script src="market.js?v=341"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=340"></script>
+<script src="tests.js?v=341"></script>
 </body>
 </html>
