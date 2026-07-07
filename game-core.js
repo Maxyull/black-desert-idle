@@ -300,6 +300,10 @@ const S = {
   lastDeathAt: 0, // horodatage de la dernière mort — 0 = jamais mort (voir endBossFight, bonus "certifié sans mort")
   potionType: 'medium', // 'small'/'medium'/'large'/'mega' = potions payantes ; 'infinite' = gratuite (débloquée plus tard)
   farmMode: 'loot', // 'loot' = ramasse tout avant le pack suivant ; 'xp' = enchaîne les packs sans se soucier du loot
+  // mode de combat IA choisi MANUELLEMENT par le joueur (2026-07-14, demande explicite : "ajoute
+  // le fais de pouvoir changer l'ia manuellement" -- remplace l'ancien calcul auto via bottleneck()
+  // de gear, voir aiMode()) : 'défensif' | 'équilibré' | 'overgeared'
+  aiCombatMode: 'équilibré',
   potionThreshold: 0.5, // % de PV en dessous duquel l'IA boit une potion automatiquement (réglable via le slider)
   useCronStone: false, // 2026-07-06 : au choix du joueur (case à cocher) si elle protège une rétrogradation, plus automatique en silence -- désactivée par défaut (2026-07-10, demande explicite), le joueur l'active lui-même s'il en veut
 };
@@ -1844,11 +1848,38 @@ function isZoneDangerous() { return bottleneck() < 0.6; }
 // vitesse plus élevée des monstres") -- étaient 0.7/1.35 à l'introduction de cette mécanique
 const DANGER_PLAYER_SPEED_MULT = 0.5;
 const DANGER_MOB_SPEED_MULT = 1.7;
+// mode de combat IA -- ÉTAIT auto-calculé depuis le ratio de gear (bottleneck()), REMPLACÉ le
+// 2026-07-14 (demande explicite, décision confirmée malgré la conception précédente) par un choix
+// manuel du joueur, voir S.aiCombatMode et AI_COMBAT_MODES/setAiCombatMode ci-dessous.
 function aiMode() {
-  const r = bottleneck();
-  if (r >= 1.5) return 'overgeared';
-  if (r >= 0.85) return 'équilibré';
-  return 'défensif';
+  return AI_COMBAT_MODES[S.aiCombatMode] ? S.aiCombatMode : 'équilibré';
+}
+const AI_COMBAT_MODES = {
+  'défensif':  { icon:'🛡️', name:{fr:'Défensif',  en:'Defensive'} },
+  'équilibré': { icon:'⚖️', name:{fr:'Équilibré', en:'Balanced'} },
+  'overgeared':{ icon:'⚔️', name:{fr:'Offensif',  en:'Overgeared'} },
+};
+const AI_COMBAT_MODE_ORDER = ['défensif','équilibré','overgeared'];
+function renderAiModeBtn() {
+  const el = $('aiModeSlider'); if (!el) return;
+  if (!AI_COMBAT_MODES[S.aiCombatMode]) S.aiCombatMode = 'équilibré';
+  const titles = {
+    'défensif':  LANG==='fr' ? 'IA défensive : esquive et soigne en priorité, quitte à moins attaquer' : 'Defensive AI: prioritizes dodging/healing over attacking',
+    'équilibré': LANG==='fr' ? 'IA équilibrée : alterne attaque et prudence selon la situation' : 'Balanced AI: alternates attack and caution based on the fight',
+    'overgeared':LANG==='fr' ? 'IA offensive : attaque sans relâche, ignore la plupart des esquives' : 'Overgeared AI: attacks relentlessly, skips most dodges',
+  };
+  el.querySelectorAll('.aiModeSeg').forEach(seg => {
+    const key = seg.dataset.mode, m = AI_COMBAT_MODES[key];
+    const active = S.aiCombatMode === key;
+    seg.classList.toggle('active', active);
+    seg.title = titles[key] || '';
+    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
+  });
+}
+function setAiCombatMode(key) {
+  if (!AI_COMBAT_MODES[key]) return;
+  S.aiCombatMode = key;
+  renderAiModeBtn();
 }
 // mode de farm choisi par le joueur : "Loot" ramasse tout avant de passer au pack suivant (voir
 // killPack + case 'loot' du fsm), "XP" ignore le loot au sol et enchaîne les packs pour maximiser

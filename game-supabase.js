@@ -613,6 +613,11 @@ $a('farmModeSlider').querySelectorAll('.farmModeSeg').forEach(seg => {
   seg.onclick = () => setFarmMode(seg.dataset.mode);
 });
 renderFarmModeBtn();
+// mode de combat IA manuel (2026-07-14, remplace l'ancien calcul auto -- voir aiMode())
+$a('aiModeSlider').querySelectorAll('.aiModeSeg').forEach(seg => {
+  seg.onclick = () => setAiCombatMode(seg.dataset.mode);
+});
+renderAiModeBtn();
 
 // clic sur un objet au sol : déplace le perso jusque là. Prioritaire sur l'IA — tant qu'il n'est
 // pas arrivé à l'endroit cliqué, l'IA ne reprend pas la main (voir P.manualTarget dans fsm())

@@ -198,6 +198,25 @@
     width:28px; height:28px; border-radius:50%; font-size:12px;
     color:#5a5666; opacity:.6; cursor:not-allowed;
   }
+  /* mode de combat IA choisi manuellement (2026-07-14, demande explicite) -- même pilule à bulles
+     que farmModeSlider, symétrique de l'autre côté du centre (#aiState) */
+  #aiModeSlider {
+    position:absolute; top:10px; left:calc(50% - 165px); transform:translateX(-100%);
+    display:flex; align-items:center; gap:2px;
+    background:rgba(10,9,12,.6); border:1px solid var(--gold-dim);
+    padding:4px; white-space:nowrap; border-radius:20px;
+  }
+  .aiModeSeg {
+    display:flex; align-items:center; gap:5px; cursor:pointer;
+    width:28px; height:28px; border-radius:50%; justify-content:center;
+    font-size:13px; color:var(--ink-dim);
+  }
+  .aiModeSeg.active {
+    width:auto; height:auto; border-radius:16px; padding:6px 12px;
+    background:var(--gold); color:#1a1712; font-weight:bold;
+    font-size:11px; letter-spacing:.5px; text-transform:uppercase;
+  }
+  .aiModeSeg .farmModeSegIcon { font-size:13px; }
 
   #skillBar { position:absolute; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:5px; }
   /* barre d'incantation (2026-07-05, demande explicite : "----------o----------", la matière se
