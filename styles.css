@@ -932,6 +932,9 @@
   .roleBadges { flex-shrink:0; font-size:10.5px; white-space:nowrap; }
   .admActions { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; padding-bottom:12px; border-bottom:1px solid #2c2a33; }
   .admActions button { width:auto; flex:1; min-width:140px; margin:0; }
+  /* bascule V1/V2 table de loot (2026-07-15) : surligne la version active, même convention "ready"
+     dorée que les recettes de craft (.craftRecipeBtn.ready) */
+  .admActions button.ready { border-color:var(--gold); color:var(--gold); font-weight:bold; }
   .admActions input[type=text] {
     flex:1; min-width:140px; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
     font-family:inherit; font-size:12px; padding:0 9px; margin:0;

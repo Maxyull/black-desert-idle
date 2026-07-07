@@ -321,6 +321,30 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
       </table>`,
   };
 }
+// table de loot V1/V2 (2026-07-15, demande explicite : "utilise ces valeurs pour le loot des a
+// present garde a memoire v1 le loot davant et ça c'est la v2 a tout moment je repasse en v1") --
+// S.lootTableVersion pilote gearDropChance/jewelDropChance (game-core.js). Les 2 tables restent
+// visibles ici pour comparer, jamais perdues même quand une seule est active.
+function buildLootVersionTabHtml() {
+  const v = S.lootTableVersion || 'v2';
+  const rows = [
+    { grade:'grey', label:{fr:'Gris',en:'Grey'} }, { grade:'white', label:{fr:'Blanc',en:'White'} },
+    { grade:'green', label:{fr:'Vert',en:'Green'} }, { grade:'blue', label:{fr:'Bleu',en:'Blue'} },
+  ];
+  const v2Table = `<table class="admTable"><thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Armure/Arme':'Armor/Weapon'}</th><th>${LANG==='fr'?'Bijou':'Jewel'}</th></tr></thead><tbody>` +
+    rows.map(r => `<tr><td>${r.label[LANG]}</td><td>${(LOOT_RATES_V2[r.grade].gear*100).toFixed(2)}%</td><td>${(LOOT_RATES_V2[r.grade].jewel*100).toFixed(3)}%</td></tr>`).join('') +
+    `</tbody></table>`;
+  return `<div class="admSummary">${LANG==='fr'?'Version active :':'Active version:'} <b>${v.toUpperCase()}</b></div>
+    <div class="admActions">
+      <button id="btnLootVerV1" class="${v==='v1'?'ready':''}">${LANG==='fr'?'V1 — taux par zone (historique)':'V1 — per-zone rates (legacy)'}</button>
+      <button id="btnLootVerV2" class="${v==='v2'?'ready':''}">${LANG==='fr'?'V2 — taux fixe par palier':'V2 — flat per-tier rate'}</button>
+    </div>
+    <div class="admHint">${LANG==='fr'
+      ? 'V1 : chaque zone a son propre taux (décroissant zone après zone, voir GEAR_CHANCE). V2 : un seul taux par palier, appliqué à ses 4 zones. Change instantanément, réversible à tout moment, aucune donnée perdue.'
+      : 'V1: each zone has its own rate (decreasing zone after zone, see GEAR_CHANCE). V2: a single rate per tier, applied to its 4 zones. Switches instantly, reversible anytime, no data lost.'}</div>
+    <h3>${LANG==='fr'?'📋 Table V2':'📋 V2 table'}</h3>
+    ${v2Table}`;
+}
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
   // Le panneau s'ouvre désormais dès que la liste des joueurs (rapide, tables minuscules) est prête,
@@ -406,6 +430,11 @@ async function openAdminPanel() {
       <div class="admEmpty">${LANG==='fr'
         ? 'Aucune boutique Loyalties en jeu pour l\'instant — rien à dépenser, ces stats servent à suivre l\'accumulation avant d\'ouvrir une boutique.'
         : 'No Loyalties shop in game yet — nothing to spend it on, these stats track accumulation ahead of opening a shop.'}</div>` },
+    // bascule V1/V2 de la table de loot (2026-07-15, demande explicite : "utilise ces valeurs pour
+    // le loot des a present, garde a memoire v1 le loot davant et ça c'est la v2, a tout moment je
+    // repasse en v1") -- S.lootTableVersion pilote gearDropChance/jewelDropChance (game-core.js),
+    // réversible en un clic, sans jamais perdre les valeurs V1 (toujours codées en dur à côté)
+    { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, body: buildLootVersionTabHtml() },
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
@@ -541,6 +570,14 @@ async function openAdminPanel() {
   openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + statsTopPane);
   applyI18n();
   wireCatTabs();
+  // bascule V1/V2 de la table de loot (2026-07-15, demande explicite) -- re-render juste cet onglet
+  // après le switch, pour refléter tout de suite quelle version est "ready" (surlignée)
+  function wireLootVersionButtons() {
+    const v1Btn = $a('btnLootVerV1'), v2Btn = $a('btnLootVerV2');
+    if (v1Btn) v1Btn.onclick = () => { if(!isAdmin())return; S.lootTableVersion = 'v1'; const pane = $a('infoBody').querySelector('.catPane[data-cat="loot"]'); if (pane) pane.innerHTML = buildLootVersionTabHtml(); wireLootVersionButtons(); floatTxt(P.x,P.y,100,'Loot V1',{blue:true}); };
+    if (v2Btn) v2Btn.onclick = () => { if(!isAdmin())return; S.lootTableVersion = 'v2'; const pane = $a('infoBody').querySelector('.catPane[data-cat="loot"]'); if (pane) pane.innerHTML = buildLootVersionTabHtml(); wireLootVersionButtons(); floatTxt(P.x,P.y,100,'Loot V2',{gold:true}); };
+  }
+  wireLootVersionButtons();
   // onglets de PREMIER niveau (Moi/Joueur précis/Serveur/Stats) — indépendants des catTabs déjà
   // gérés par wireCatTabs() ci-dessus (ceux-là restent pour les sous-onglets DANS "Stats")
   $a('infoBody').querySelectorAll('.admTopTabs .catTab').forEach(btn => {

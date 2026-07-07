@@ -292,6 +292,7 @@ const S = {
   bossesKilled: {}, // Compendium World Boss (2026-07-08) : { [bossId]: true } dès qu'un World Boss a été vaincu au moins une fois (voir compendiumBossCount)
   penMastery: {}, // Compendium spécial "Maîtrise PEN" (2026-07-08) : { [itemName]: true } dès que cet objet a atteint PEN au moins une fois (voir markPenMastery)
   enhPeakByName: {}, // meilleur niveau d'optimisation JAMAIS atteint par nom d'objet (2026-07-15) : { [itemName]: enhLv }, voir trackEnhPeak -- survit à la vente de l'objet
+  lootTableVersion: 'v2', // 'v1' (par zone, historique) ou 'v2' (taux fixe par palier, 2026-07-15) -- voir gearDropChance/jewelDropChance, réversible à tout moment via l'admin
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
   // baseline (silverEarned/kills au début de LA SESSION EN COURS), pour calculer un vrai "silver/h"
@@ -2636,6 +2637,32 @@ function gearTierForZone(zi) { return GEAR_TIERS.find(t => t.zones.includes(zi))
 // indices 12/13 (4e zone grey/white, 2026-07-05) continuent la même décroissance locale ; 14/15
 // ne sont jamais lus (green/blue ont un dropChance fixe), gardés pour la cohérence du tableau.
 const GEAR_CHANCE = [.16,.12,.09,.065,.046,.032,.021,.014,.009,.0055,.0032,.0018,.065,.022,.0014,.0014];
+// table de loot "V2" (2026-07-15, demande explicite, valeurs fournies par capture d'écran) : taux
+// FIXE par palier (armure et arme partagent le même taux, bijou moitié moins) — remplace le système
+// V1 ci-dessus (décroissance par zone via GEAR_CHANCE + tier.dropChance) le temps que S.lootTableVersion
+// vaille 'v2'. L'ancien système V1 reste intégralement en place et réactivable à tout moment (demande
+// explicite : "garde a memoire v1 le loot davant et ça c'est la v2 a tout moment je repasse en v1") --
+// voir gearDropChance/jewelDropChance ci-dessous, et le sélecteur admin (renderLootVersionToggle).
+const LOOT_RATES_V2 = {
+  grey:  { gear:0.0576, jewel:0.0288 },
+  white: { gear:0.0288, jewel:0.0144 },
+  green: { gear:0.0144, jewel:0.0072 },
+  blue:  { gear:0.0072, jewel:0.0036 },
+};
+// chance de drop d'armure/arme pour CE palier/CETTE zone, selon la version de table active
+// (S.lootTableVersion) -- zi explicite (pas juste zoneIdx global) pour rester utilisable aussi
+// bien lors d'un vrai tirage (zone actuellement farmée) que pour l'AFFICHAGE de la table de loot
+// d'une zone PRÉVISUALISÉE (zoneLootRowsHtml peut montrer une zone différente de celle qu'on farme)
+function gearDropChance(tier, zi) {
+  if (S.lootTableVersion === 'v2') return LOOT_RATES_V2[tier.grade].gear;
+  return tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zi] ?? .002);
+}
+// chance de drop de bijou pour CE palier -- v1FallbackCh = la valeur V1 propre à CETTE zone (celle
+// déjà stockée dans ZONES[zi].loot.jackpot.ch), utilisée telle quelle quand la V1 est active
+function jewelDropChance(tier, v1FallbackCh) {
+  if (S.lootTableVersion === 'v2') return LOOT_RATES_V2[tier.grade].jewel;
+  return v1FallbackCh;
+}
 // rééquilibrage du 2026-07-05 (demande explicite) : les armes (weapon/awakening/secondary) ne
 // tirent plus au hasard le même emplacement que l'armure — chaque zone garantit désormais un type
 // d'arme précis (voir ZONE_WEAPON_SLOTS/rollWeaponDrop), donc GEAR_SLOTS ne couvre plus QUE les 4
@@ -2746,7 +2773,7 @@ const JACKPOT_VAL_TRASH_RATIO = 20;
 const ALPHA_LOOT_CHANCE_MULT = 2;
 function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
-  const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
+  const chance = gearDropChance(tier, zoneIdx);
   if (Math.random() > chance * (alpha ? ALPHA_LOOT_CHANCE_MULT : 1)) return null;
   // 1 seule pièce d'armure garantie par zone (2026-07-06, demande explicite), voir ZONE_ARMOR_SLOTS
   // -- remplace l'ancien tirage au hasard parmi les 4 pièces, partagé entre les 4 zones du palier
@@ -2782,7 +2809,7 @@ function rollGearDrop(zone, alpha) {
 // tableau (0, 1 ou 2 armes selon la zone et la chance).
 function rollWeaponDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
-  const chance = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zoneIdx] ?? .002);
+  const chance = gearDropChance(tier, zoneIdx);
   const slots = ZONE_WEAPON_SLOTS[zoneIdx] || ['weapon'];
   // arme/dague/orbes d'éveil prennent aussi la couleur ET l'ornementation du palier (2026-07-08,
   // même traitement que l'armure — voir staffIconForColor/daggerIconForColor/orbPairIconForColor)
@@ -2997,7 +3024,7 @@ function rollDrops(wp, alpha, lm) {
     // PALIER du bijou ciblé, cassant l'auto-sélection dès que le bijou équipé n'était pas du même
     // palier que la zone où l'on farme actuellement (voir tier.material, même valeur que pour
     // l'armure/les armes de ce palier).
-    { ...L.jackpot, ap:jackpotAp, val:jackpotVal, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5, matName:tierMat.name },
+    { ...L.jackpot, ch:jewelDropChance(tier, L.jackpot.ch), ap:jackpotAp, val:jackpotVal, kind:'jackpot',  color:tier.color, key:'acc_'+zk+'_'+Math.random().toString(36).slice(2,7), icon:jackpotIcon, stackable:false, weight:0.5, matName:tierMat.name },
     { ...L.craft,   kind:'craft',    color:'#b48ce8', key:'craft_'+L.craft.name, icon:'✦', stackable:true, weight:0.2, val:0 },
     // "Bout du trésor de Velia" se loot par 1 à 3 (demande explicite du 2026-07-06) -- pickupQty
     // DOIT être tiré ici (dans ce tableau reconstruit à chaque kill), jamais dans la définition

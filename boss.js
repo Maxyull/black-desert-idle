@@ -110,8 +110,11 @@ async function refreshLiveBoss() {
   }
 }
 function nextBossOccurrence() {
-  // un spawn global admin encore valide passe avant tout
-  if (liveBoss && liveBoss.expires > Date.now()) return { boss: liveBoss.boss, time: liveBoss.time, live: true, sharedHp: true };
+  // un spawn global admin encore valide passe avant tout -- hp/maxHp exposés (2026-07-15, demande
+  // explicite : "si tu arrive trop tard et que le boss a été tué tu as un message... revenir plus
+  // tard") pour que le lobby puisse distinguer "encore en vie" de "déjà à 0 PV mais fenêtre encore
+  // ouverte" (le boss reste "live" tout le créneau de 9 min même mort, voir refreshLiveBoss)
+  if (liveBoss && liveBoss.expires > Date.now()) return { boss: liveBoss.boss, time: liveBoss.time, live: true, sharedHp: true, hp: liveBoss.hp, maxHp: liveBoss.maxHp };
   const occ = bossOccurrences(new Date());
   return occ.find(o => o.live) || occ[0] || null;
 }
@@ -192,19 +195,28 @@ function renderBossLobbyHtml() {
   let nextHtml = `<div class="admEmpty">${LANG==='fr'?'Aucun boss programmé':'No boss scheduled'}</div>`;
   if (occ) {
     const b = BOSS_ROSTER[occ.boss];
+    // boss partagé déjà à 0 PV mais fenêtre de 9 min encore ouverte (2026-07-15, demande explicite :
+    // "si tu arrive trop tard et que le boss a été tué tu as un message... revenir plus tard") --
+    // occ.live restait vrai (basé sur expires, pas sur hp), laissant un joueur en retard "entrer"
+    // dans un combat déjà gagné sans avoir tapé, avec le risque de repartir sans rien (voir
+    // endBossFight/boss_claim, -1 = aucune contribution). Bloqué en amont, avant même d'entrer.
+    const alreadyDead = occ.live && occ.sharedHp && typeof occ.hp === 'number' && occ.hp <= 0;
     const cd = occ.live
-      ? `<div class="bossNextCountdown live">${LANG==='fr'?'EN COURS':'LIVE'}</div>`
+      ? `<div class="bossNextCountdown live">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : (LANG==='fr'?'EN COURS':'LIVE')}</div>`
       : `<div class="bossNextCountdown" id="bossPanelCountdown">${fmtBossCountdown(occ.time - now)}</div>`;
     const when = new Date(occ.time).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', hour:'2-digit', minute:'2-digit' });
     nextHtml = `<div class="bossNext">
       <div class="bossNextIcon">${b.icon}</div>
       <div class="bossNextInfo">
         <div class="bossNextName">${b.name[LANG]}</div>
-        <div class="bossNextTime">${occ.live ? (LANG==='fr'?'Disponible maintenant !':'Available now!') : when}</div>
+        <div class="bossNextTime">${alreadyDead ? (LANG==='fr'?'Déjà vaincu par d\'autres joueurs':'Already defeated by other players') : occ.live ? (LANG==='fr'?'Disponible maintenant !':'Available now!') : when}</div>
       </div>
       ${cd}
-    </div>
-    <button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?(LANG==='fr'?'⚔️ Combattre':'⚔️ Fight'):(LANG==='fr'?'⏳ Pas encore apparu':'⏳ Not spawned yet')}</button>`;
+    </div>` +
+    (alreadyDead
+      ? `<div class="admHint">${LANG==='fr'?'Ce boss a déjà été vaincu — reviens plus tard, au prochain spawn.':'This boss has already been defeated — come back later, at the next spawn.'}</div>` +
+        `<button class="bossFightBtn" id="bossFightBtn" disabled>${LANG==='fr'?'💀 Déjà vaincu':'💀 Already defeated'}</button>`
+      : `<button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?(LANG==='fr'?'⚔️ Combattre':'⚔️ Fight'):(LANG==='fr'?'⏳ Pas encore apparu':'⏳ Not spawned yet')}</button>`);
   }
   // VRAI calendrier hebdomadaire : grille jours (colonnes) × heures de spawn (lignes), le nom du
   // boss dans chaque case. Seuls les boss implémentés (BOSS_ROSTER) apparaissent.
@@ -241,7 +253,11 @@ function renderBossLobbyHtml() {
   }
   // légende des boss (nom complet)
   const legend = Object.values(BOSS_ROSTER).map(b => `<span class="bcLegend">${b.icon} ${b.name[LANG]}</span>`).join('');
+  // règles de récompense "visibles par tous" (2026-07-15, demande explicite : "met ces recompense
+  // dans boss visible par tous") -- affichées dans le lobby, avant même de combattre, calculées
+  // pour SA propre progression (chaque joueur voit son propre aperçu, la règle est la même pour tous)
   return `${nextHtml}
+    ${bossRewardRulesHtml()}
     <h3>${LANG==='fr'?'📅 Calendrier de la semaine':'📅 Weekly calendar'}</h3>
     ${calHtml}
     <div class="bcLegendRow">${legend}</div>
@@ -421,6 +437,57 @@ function bossRankMultiplier(rank) {
   if (rank <= 10) return 1.4;
   return 1; // hors du top 10 : récompense de base pour avoir participé
 }
+// récompenses de World Boss basées sur la PROGRESSION du joueur (2026-07-15, demande explicite) --
+// remplace l'ancien matériau fixe par palier (matKey/matQty du roster) par une pierre d'optimisation
+// de SA meilleure zone "ZONE DIFFICILE" (garantie pour tout le monde) + un bijou bonus selon le
+// rang de contribution : #1 -> bijou de la PROCHAINE "ZONE DANGEREUSE" (au-dessus de son niveau
+// actuel) ; #2 -> bijou de sa propre zone difficile ; #3 -> 20% de chance de bijou zone dangereuse
+// + 30% de chance (tirage indépendant) de bijou zone difficile. Réutilise EXACTEMENT les mêmes
+// formules que rollDrops (GEAR_ROLE.jackpot.apShare, JACKPOT_VAL_TRASH_RATIO) pour rester cohérent
+// avec le loot normal de ces zones.
+// "meilleure zone difficile" = parmi les zones classées ZONE DIFFICILE (bottleneck 0.6-0.9), la
+// plus avancée (reqAP le plus haut) -- celle qui représente le mieux sa progression actuelle.
+function bestDifficileZoneIdx() {
+  let best = -1;
+  for (let zi = 0; zi < ZONES.length; zi++) {
+    if (badgeOf(bottleneck(ZONES[zi])).txt === 'ZONE DIFFICILE' && (best === -1 || ZONES[zi].reqAP > ZONES[best].reqAP)) best = zi;
+  }
+  return best === -1 ? null : best;
+}
+// "prochaine zone dangereuse" = parmi les zones classées ZONE DANGEREUSE (bottleneck < 0.6), la
+// moins hors de portée (reqAP le plus bas) -- celle juste au-dessus de ce que le joueur peut
+// actuellement gérer, pas une zone endgame totalement hors d'atteinte.
+function nextDangereuseZoneIdx() {
+  let best = -1;
+  for (let zi = 0; zi < ZONES.length; zi++) {
+    if (badgeOf(bottleneck(ZONES[zi])).txt === 'ZONE DANGEREUSE' && (best === -1 || ZONES[zi].reqAP < ZONES[best].reqAP)) best = zi;
+  }
+  return best === -1 ? null : best;
+}
+function bossZoneJackpotItem(zi) {
+  const z = ZONES[zi], tier = gearTierForZone(zi);
+  const jSlot = accSlotFor(z.loot.jackpot);
+  const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
+  const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+  const icon = (JEWEL_ICON_FOR_SLOT[jSlot] || ringIconForTier)(jTierIdx, tier.color);
+  const ap = gearFloor((z.gearBasisAP ?? z.reqAP) * GEAR_ROLE.jackpot.apShare);
+  const val = gearFloor(z.loot.trash.val * JACKPOT_VAL_TRASH_RATIO);
+  return { ...z.loot.jackpot, ap, val, kind:'jackpot', color:tier.color, key:'acc_boss_'+zi+'_'+Math.random().toString(36).slice(2,7), icon, stackable:false, weight:0.5, matName:tier.material.name };
+}
+function bossZoneMaterialItem(zi, qty) {
+  const tier = gearTierForZone(zi), z = ZONES[zi];
+  return { name:tier.material.name, kind:'material', icon:tier.material.icon, color:tier.material.color, key:'mat_'+tier.material.name, qty, stackable:true, weight:0.1, val:z.loot.mat.val };
+}
+// petit résumé texte des règles de récompense, utilisé à la fois dans le lobby (aperçu, "visible
+// par tous" -- demande explicite) et en fin de combat
+function bossRewardRulesHtml() {
+  const dZi = bestDifficileZoneIdx(), dgZi = nextDangereuseZoneIdx();
+  const dName = dZi != null ? tr(ZONES[dZi].name) : (LANG==='fr'?'—':'—');
+  const dgName = dgZi != null ? tr(ZONES[dgZi].name) : (LANG==='fr'?'—':'—');
+  return LANG==='fr'
+    ? `<div class="admHint bossRewardRules">🎁 Récompenses selon ta progression : pierre d'optimisation de ta meilleure zone difficile (<b>${dName}</b>) pour tous · #1 : +1 bijou de la prochaine zone dangereuse (<b>${dgName}</b>) · #2 : +1 bijou de ta zone difficile · #3 : 20% bijou zone dangereuse + 30% bijou zone difficile</div>`
+    : `<div class="admHint bossRewardRules">🎁 Rewards based on your progress: enhancement stone from your best hard zone (<b>${dName}</b>) for everyone · #1: +1 jewel from the next dangerous zone (<b>${dgName}</b>) · #2: +1 jewel from your hard zone · #3: 20% dangerous-zone jewel + 30% hard-zone jewel</div>`;
+}
 // roue de récompense rare (2026-07-08, demande explicite) : affichée en fin de combat quand le
 // boss a une table "rareLoot" définie (Vell → Coeur de Vell, 5%) — tourne toute seule et s'arrête
 // sur le lot RÉELLEMENT obtenu (déjà tiré au sort avant l'animation, la roue ne fait que le révéler).
@@ -477,6 +544,19 @@ async function endBossFight(win) {
     let mult = 1, rank = null;
     if (bossState.shared && sb) {
       try {
+        // BUG corrigé le 2026-07-15 (demande explicite : "ça affiche victoire sans donner de loot
+        // alors qu'il a tapé le boss solo") : le dernier paquet de dégâts (bossState.contribAccum)
+        // n'est envoyé au serveur que toutes les 1.2s (voir bossLoop) -- si le boss tombe à 0 PV
+        // AVANT le prochain envoi programmé (typique d'un kill très rapide, tout juste soloé), ce
+        // dernier paquet n'était JAMAIS transmis avant l'appel à boss_claim() juste en dessous : le
+        // serveur ne voyait alors AUCUNE contribution enregistrée pour ce joueur et boss_claim()
+        // renvoyait -1 ("aucune contribution"), refusant la récompense malgré une vraie victoire.
+        // On force désormais l'envoi de ce reliquat, ATTENDU avant de réclamer, pour que le serveur
+        // ait toujours la contribution complète au moment du claim.
+        if (bossState.contribAccum > 0) {
+          const dmg = bossState.contribAccum; bossState.contribAccum = 0;
+          try { await sb.rpc('boss_contribute', { p_damage: dmg, p_pseudo: myPseudo || null }); } catch (e) {}
+        }
         const { data } = await sb.rpc('boss_claim');
         if (typeof data === 'number' && data > 0) { rank = data; mult = bossRankMultiplier(rank); }
         // -1 : déjà réclamé, aucune contribution, ou boss pas encore à 0 PV. L'alerte Discord pour
@@ -499,13 +579,42 @@ async function endBossFight(win) {
       const zoneMult = deathFreeOk ? 1 + (S.maxZoneIdx/(ZONES.length-1))*1.5 : 1;
       const reward = Math.round(b.reward * mult * zoneMult);
       addSilver(reward, 'boss', b.name.fr);
-      const qty = Math.max(1, Math.round((b.matQty[0] + Math.floor(Math.random()*(b.matQty[1]-b.matQty[0]+1))) * mult * zoneMult));
-      invAdd({ key:b.matKey, name:b.matName, kind:'material', icon:b.matIcon, color:'#c9c9c9', qty, stackable:true, weight:0.1, val:5 });
+      // combat SOLO (pas de classement possible, instance perso) : traité comme rang #1, seul
+      // participant -- il n'y a personne avec qui "partager" le meilleur lot (2026-07-15)
+      if (!bossState.shared) rank = 1;
+      // récompenses par zone de progression (2026-07-15, demande explicite : "les recompense sont
+      // en fonction de ta meilleure zone difficile... + 1 bijou de la prochaine zone dangereuse si
+      // tu es premier...") -- remplace l'ancien matériau fixe du roster (matKey/matQty) par une
+      // pierre d'optimisation de la meilleure zone difficile (garantie pour tous) + bijoux bonus
+      // selon le rang, voir bossZoneMaterialItem/bossZoneJackpotItem/bestDifficileZoneIdx ci-dessus.
+      const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
+      const zoneRewardLines = [];
+      if (difficileZi != null) {
+        const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
+        const matItem = bossZoneMaterialItem(difficileZi, qty);
+        invAdd(matItem);
+        zoneRewardLines.push(`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>`);
+      }
+      const jewelZonesToGrant = [];
+      if (rank === 1 && dangereuseZi != null) jewelZonesToGrant.push(dangereuseZi);
+      else if (rank === 2 && difficileZi != null) jewelZonesToGrant.push(difficileZi);
+      else if (rank === 3) {
+        if (dangereuseZi != null && Math.random() < 0.20) jewelZonesToGrant.push(dangereuseZi);
+        if (difficileZi != null && Math.random() < 0.30) jewelZonesToGrant.push(difficileZi);
+      }
+      for (const zi of jewelZonesToGrant) {
+        const jItem = bossZoneJackpotItem(zi);
+        if (invAdd(jItem)) {
+          trackLoot(jItem.name);
+          zoneRewardLines.push(`+💎 ${tr(jItem.name)} <span class="admHint">(${tr(ZONES[zi].name)})</span>`);
+          logToDiscord('💎 Bijou de World Boss', `**${myPseudo||'Joueur'}** obtient ${jItem.name} (rang #${rank}) sur ${b.name.fr}`, 0xb48ce8);
+        }
+      }
       const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
       const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
         ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
         : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
-      rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${qty} × ${b.matName}</div>` + zoneHtml;
+      rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>${zoneRewardLines.join('<br>')}</div>` + zoneHtml;
       pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
       logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
       if (bossState.bossId) markBossDefeated(bossState.bossId); // Compendium (2026-07-08)

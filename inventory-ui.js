@@ -1387,7 +1387,7 @@ const LOOT_ICONS = { trash:'▬', material:'◈', jackpot:'💍', craft:'✦', g
 function zoneLootRowsHtml(idx) {
   const z = ZONES[idx], L = z.loot;
   const tier = gearTierForZone(idx);
-  const gearCh = tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[idx] ?? .002);
+  const gearCh = gearDropChance(tier, idx);
   const equippedWord = LANG === 'fr' ? 'PA équipé' : 'AP equipped';
   const armorPieceNote = LANG==='fr' ? 'armure — cette zone uniquement' : 'armor — this zone only';
   const weaponPieceNote = LANG==='fr' ? 'arme — cette zone uniquement' : 'weapon — this zone only';
@@ -1416,7 +1416,7 @@ function zoneLootRowsHtml(idx) {
   // sinon la table de loot promettrait un chiffre différent de ce qu'on obtient vraiment en jeu
   const jackpotApShown = gearFloor((z.gearBasisAP ?? z.reqAP) * GEAR_ROLE.jackpot.apShare);
   rows.push(
-    { kind:'jackpot',  it:{...L.jackpot, icon:jackpotIcon}, note:'+'+jackpotApShown+' '+equippedWord },
+    { kind:'jackpot',  it:{...L.jackpot, ch:jewelDropChance(tier, L.jackpot.ch), icon:jackpotIcon}, note:'+'+jackpotApShown+' '+equippedWord },
     { kind:'craft',    it:L.craft,   note:'craft endgame' },
     // Pierre de Cron : taux fixe (voir CRON_STONE.ch), identique dans TOUTES les zones — demande explicite du 2026-07-08
     { kind:'material', it:{name:CRON_STONE.name, icon:CRON_STONE.icon}, ch:CRON_STONE.ch, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
@@ -1476,7 +1476,7 @@ function zoneLootCompactRowHtml(idx) {
   return `<div class="lootRow lootZoneCompact" data-zi="${idx}">
     <div class="lootIcon k-jackpot" style="color:${tier.color};border-color:${tier.color}">${jackpotIcon}</div>
     <div class="lootInfo"><div class="ln" style="color:${tier.color}">${tr(z.name)}</div><div class="lv">${tr(z.mob)} · ${tr(z.loot.jackpot.name)}</div></div>
-    <div class="lootPct">${fmtTinyPct(z.loot.jackpot.ch)} <span class="lootExpandHint">▾</span></div>
+    <div class="lootPct">${fmtTinyPct(jewelDropChance(tier, z.loot.jackpot.ch))} <span class="lootExpandHint">▾</span></div>
   </div>`;
 }
 // guide de farm (2026-07-05, demande explicite) : clic sur un emplacement de sac VIDE -- affiche
