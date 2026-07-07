@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V281', d:'15/07/2026 12:00', name:{fr:'World Boss : fix loot solo, récompenses par zone, table de loot V2', en:'World Boss: fixed solo loot, zone-based rewards, V2 loot table'}, fr:[
+      {t:'fix', sub:'combat', severity:'major', tx:'Un kill de World Boss très rapide (solo) pouvait afficher "Victoire" sans donner aucune récompense — le dernier paquet de dégâts n\'était pas encore transmis au serveur au moment de la réclamation. Corrigé : ce reliquat est désormais envoyé et attendu avant de réclamer'},
+      {t:'new', sub:'combat', tx:'Nouveau message dans le lobby Boss quand un boss partagé est déjà à 0 PV mais que sa fenêtre reste ouverte : "Déjà vaincu — reviens plus tard" au lieu de pouvoir entrer dans un combat déjà gagné sans y avoir participé'},
+      {t:'change', sub:'combat', severity:'major', tx:'Récompenses de World Boss repensées : pierre d\'optimisation de ta meilleure zone difficile (garantie) + bijou bonus selon ton rang de contribution (#1 : bijou de la prochaine zone dangereuse · #2 : bijou de ta zone difficile · #3 : 20%/30% de chance). Les règles sont affichées dans le lobby, visibles par tous avant de combattre'},
+      {t:'new', sub:'objets', tx:'Nouvelle table de loot "V2" (taux fixe par palier au lieu d\'une décroissance par zone) activable par l\'admin à tout moment, réversible en un clic — l\'ancienne table V1 reste intacte'},
+    ], en:[
+      {t:'fix', sub:'combat', severity:'major', tx:'A very fast (solo) World Boss kill could show "Victory" with no reward at all — the last chunk of damage hadn\'t reached the server yet when claiming. Fixed: this remainder is now sent and awaited before claiming'},
+      {t:'new', sub:'combat', tx:'New message in the Boss lobby when a shared boss is already at 0 HP but its window is still open: "Already defeated — come back later" instead of being able to enter an already-won fight without participating'},
+      {t:'change', sub:'combat', severity:'major', tx:'World Boss rewards reworked: enhancement stone from your best hard zone (guaranteed) + bonus jewel based on your contribution rank (#1: jewel from the next dangerous zone · #2: jewel from your hard zone · #3: 20%/30% chance). Rules are shown in the lobby, visible to everyone before fighting'},
+      {t:'new', sub:'objets', tx:'New "V2" loot table (flat rate per tier instead of a per-zone decay) can be toggled by the admin anytime, reversible in one click — the old V1 table stays intact'},
+    ] },
   { v:'V280', d:'15/07/2026 11:00', name:{fr:'Sorts de zone : touchent aussi les packs voisins collés', en:'Zone spells: also hit touching neighbor packs'}, fr:[
       {t:'change', sub:'combat', severity:'major', tx:'Un sort de zone ne touchait que le pack ciblé, même si d\'autres packs étaient collés juste à côté — désormais tous les packs qui se chevauchent avec la cible sont touchés, dégâts répartis pour garder un total infligé comparable (pas de multiplicateur par nombre de packs). Un pack isolé (aucun voisin collé) garde ses pleins dégâts individuels, inchangé'},
     ], en:[
