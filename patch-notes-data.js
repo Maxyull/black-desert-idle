@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V286', d:'16/07/2026 09:00', name:{fr:'Fix sélection auto-opti, étiquette admin ancrée, Planque des Mânes rééquilibrée', en:'Fixed auto-enhance selection, anchored admin tag, Manes rebalanced'}, fr:[
+      {t:'fix', sub:'interface', severity:'major', tx:'Choisir un palier dans la liste déroulante d\'auto-optimisation pouvait être silencieusement écrasé par le prochain rafraîchissement (loot ramassé, équipement changé...) qui reconstruisait la liste sans garder le choix fait — le palier choisi est désormais préservé'},
+      {t:'fix', sub:'interface', tx:'L\'étiquette ADMIN (visible uniquement par l\'admin, sur sa propre zone) est maintenant ancrée précisément au-dessus du nombre de joueurs, plus au-dessus du bouton 👁'},
+      {t:'change', sub:'zones', tx:'Planque des Mânes : Défense requise abaissée pour qu\'un stuff moyen full PRI passe de zone dangereuse à tout juste difficile'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'major', tx:'Choosing a tier in the auto-enhance dropdown could be silently overwritten by the next refresh (loot picked up, gear changed...) which rebuilt the list without keeping the pick — the chosen tier is now preserved'},
+      {t:'fix', sub:'interface', tx:'The ADMIN tag (visible only to the admin, on their own zone) is now anchored precisely above the player count, no longer above the 👁 button'},
+      {t:'change', sub:'zones', tx:'Manes\' Hideout: required Defense lowered so an average full-PRI gear set moves from dangerous zone to just barely hard'},
+    ] },
   { v:'V285', d:'15/07/2026 16:00', name:{fr:'Récompenses World Boss en podium', en:'World Boss rewards as a podium'}, fr:[
       {t:'new', sub:'combat', tx:'Les règles de récompense du World Boss (sous les horaires du lobby) prennent la forme d\'un vrai podium visuel (2e/1er/3e), avec un sélecteur Kzarka/Vell au-dessus pour prévisualiser la récompense propre à chaque boss'},
       {t:'new', sub:'combat', tx:'La chance de Coeur de Vell (5%) est désormais affichée dans ce même aperçu quand Vell est sélectionné'},
