@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V262', d:'14/07/2026 17:00', name:{fr:'Correctifs de sécurité (issue GitHub #4)', en:'Security fixes (GitHub issue #4)'}, fr:[
+      {t:'fix', sub:'systeme', severity:'major', tx:'La sauvegarde cloud (silver, équipement, enchantement) n\'était validée que côté client — un trigger serveur borne désormais les valeurs manifestement impossibles (silver, niveau, loyauté, enchantement au-delà de PEN), avec alerte automatique en cas de tentative'},
+      {t:'fix', sub:'systeme', tx:'Le registre de silver (audit anti-triche) accepte désormais une liste fermée de catégories et un montant borné par entrée, au lieu de n\'importe quelle valeur'},
+      {t:'fix', sub:'systeme', tx:'La bibliothèque Supabase JS est désormais chargée en version figée avec vérification d\'intégrité (SRI), au lieu d\'une version flottante sans contrôle'},
+      {t:'fix', sub:'interface', tx:'Les messages d\'erreur affichés dans le panneau Admin sont désormais échappés avant affichage (prévention XSS par précaution)'},
+    ], en:[
+      {t:'fix', sub:'systeme', severity:'major', tx:'Cloud save data (silver, gear, enhancement) was only validated client-side — a server trigger now bounds obviously-impossible values (silver, level, loyalty, enhancement beyond PEN), with an automatic alert on any attempt'},
+      {t:'fix', sub:'systeme', tx:'The silver ledger (anti-cheat audit trail) now accepts a closed list of categories and a bounded amount per entry, instead of any value'},
+      {t:'fix', sub:'systeme', tx:'The Supabase JS library is now loaded with a pinned version and integrity check (SRI), instead of a floating unpinned version'},
+      {t:'fix', sub:'interface', tx:'Error messages shown in the Admin panel are now escaped before display (precautionary XSS prevention)'},
+    ] },
   { v:'V261', d:'14/07/2026 16:00', name:{fr:'Audit post-découpage : réfs de fichiers obsolètes corrigées', en:'Post-split audit: stale file references fixed'}, fr:[
       {t:'fix', sub:'admin', tx:'L\'astuce du panneau Admin "Silver" pour ajouter une nouvelle catégorie pointait encore vers game-supabase.js pour CATEGORY_LABEL, alors que ce code vit désormais dans admin-panel.js depuis le découpage'},
       {t:'change', sub:'systeme', tx:'Ajout d\'un test de régression qui vérifie que la détection de nouvelle version cible bien le fichier qui contient réellement PATCH_NOTES aujourd\'hui — pour attraper immédiatement un futur déplacement oublié, comme celui qui avait cassé la notification (voir V259)'},

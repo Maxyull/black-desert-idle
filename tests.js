@@ -508,6 +508,38 @@
     assert('checkForUpdate() ne fetch plus game-supabase.js (ne contient plus PATCH_NOTES depuis le découpage)',
       !src.includes("'./game-supabase.js"));
   }
+  // issue GitHub #4 (audit de sécurité, 2026-07-14), finding L1 : les messages d'erreur Supabase
+  // étaient injectés via innerHTML sans échappement (game-supabase.js:showPlayerGear,
+  // admin-panel.js:refreshRoleList) -- pas d'exploitation trouvée avec les RPC actuelles, mais
+  // fragile si une future RPC échoue avec de l'input utilisateur dans le message. Garde-fou
+  // statique : vérifie que ces 2 points passent bien error.message par escapeHtml().
+  function testErrorMessagesAreEscapedBeforeInnerHtml() {
+    if (typeof showPlayerGear === 'function') {
+      const src = showPlayerGear.toString();
+      assert('showPlayerGear() échappe error.message avant innerHTML (escapeHtml)',
+        /escapeHtml\(error\.message\)/.test(src), `src contient escapeHtml? ${src.includes('escapeHtml')}`);
+    }
+    if (typeof refreshRoleList === 'function') {
+      const src = refreshRoleList.toString();
+      assert('refreshRoleList() échappe (modErr||testErr).message avant innerHTML (escapeHtml)',
+        /escapeHtml\(\(modErr\|\|testErr\)\.message\)/.test(src));
+    }
+  }
+  // issue GitHub #4, finding M1 : le script Supabase JS était chargé en version flottante ("@2")
+  // sans intégrité (SRI) -- un CDN ou un paquet npm compromis aurait pu exécuter du JS arbitraire
+  // avec les pleins privilèges de la page. Vérifie directement sur le DOM déjà chargé (pas de
+  // fetch réseau nécessaire, donc test synchrone comme le reste de la suite) qu'une version exacte
+  // est figée et qu'un attribut integrity (SRI) est bien présent.
+  function testSupabaseScriptIsPinnedWithIntegrity() {
+    if (typeof document === 'undefined') return; // hors-contexte navigateur
+    const tag = Array.from(document.scripts).find(s => s.src.includes('@supabase/supabase-js'));
+    assert('index.html charge supabase-js (balise trouvée dans le DOM)', !!tag);
+    if (!tag) return;
+    assert('index.html charge supabase-js avec une version exacte (pas "@2" flottant)',
+      /@2\.\d+\.\d+/.test(tag.src), `src=${tag.src}`);
+    assert('index.html charge supabase-js avec un attribut integrity (SRI)',
+      !!tag.integrity && tag.integrity.startsWith('sha'), `integrity=${tag.integrity}`);
+  }
   function testPatchPagesCoverAllEntriesWithinBounds() {
     const pages = computePatchPages();
     assert('computePatchPages : la 1ère page commence à l\'index 0 (le plus récent)', pages[0].start === 0);
@@ -1281,6 +1313,8 @@
     testEnhanceMaterialNeverSubstitutesWrongTier();
     testJewelryHasMatNameForEnhancement();
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
+    testErrorMessagesAreEscapedBeforeInnerHtml();
+    testSupabaseScriptIsPinnedWithIntegrity();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
     testCompendiumBackfillAfterSell();

@@ -300,8 +300,8 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
         <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne stockée / joueur':'📊 Average stored / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
       </div>
       <div class="admHint">${LANG==='fr'
-        ? 'Pour ajouter une nouvelle catégorie plus tard : passe-la simplement en 3e argument d\'addSilver(delta, \'ma_categorie\', note) côté client — aucune migration Supabase n\'est nécessaire (la colonne "category" du registre accepte n\'importe quel texte), il suffit d\'ajouter son libellé dans CATEGORY_LABEL (admin-panel.js) pour un affichage propre ici.'
-        : 'To add a new category later: just pass it as the 3rd argument of addSilver(delta, \'my_category\', note) client-side — no Supabase migration needed (the ledger\'s "category" column accepts any text), just add its label to CATEGORY_LABEL (admin-panel.js) for a clean display here.'}</div>
+        ? 'Pour ajouter une nouvelle catégorie plus tard : passe-la en 3e argument d\'addSilver(delta, \'ma_categorie\', note) côté client, ET ajoute-la à la contrainte silver_ledger_category_check (migration Supabase, whitelist depuis le 2026-07-14 — voir issue GitHub #4) — sinon l\'insertion échoue silencieusement. Ajoute aussi son libellé dans CATEGORY_LABEL (admin-panel.js) pour un affichage propre ici.'
+        : 'To add a new category later: pass it as the 3rd argument of addSilver(delta, \'my_category\', note) client-side, AND add it to the silver_ledger_category_check constraint (Supabase migration, whitelist since 2026-07-14 — see GitHub issue #4) — otherwise the insert silently fails. Also add its label to CATEGORY_LABEL (admin-panel.js) for a clean display here.'}</div>
       <h3>${LANG==='fr'?'🔍 Où partent les silver ? (registre détaillé)':'🔍 Where does the silver go? (detailed ledger)'}
         <button id="btnReloadSilverTab" class="admReloadBtn" title="${LANG==='fr'?'Rafraîchir sans rouvrir le panneau':'Refresh without reopening the panel'}">🔄 ${LANG==='fr'?'Recharger':'Reload'}</button></h3>
       <div class="admHint">${LANG==='fr'
@@ -640,7 +640,7 @@ async function refreshRoleList() {
   const [{ data: mods, error: modErr }, { data: testers, error: testErr }] = await Promise.all([
     sb.rpc('admin_list_mods'), sb.rpc('admin_list_testers'),
   ]);
-  if (modErr || testErr) { el.innerHTML = `<div class="admHint">${(modErr||testErr).message}</div>`; return; }
+  if (modErr || testErr) { el.innerHTML = `<div class="admHint">${escapeHtml((modErr||testErr).message)}</div>`; return; }
   const byUser = new Map();
   (mods || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, mod:true }));
   (testers || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, tester:true }));

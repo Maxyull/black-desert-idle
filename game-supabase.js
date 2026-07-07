@@ -418,7 +418,7 @@ async function showPlayerGear(userId, displayName) {
   openInfo((LANG==='fr'?'⚔️ Stuff de ':'⚔️ Gear of ')+displayName,
     `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`);
   const { data, error } = await sb.rpc('get_player_gear', { p_user_id: userId });
-  if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${error.message}</div>`; return; }
+  if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${escapeHtml(error.message)}</div>`; return; }
   // bouton "Copier UUID" réservé à l'admin — demande explicite du 2026-07-05
   const copyBtn = isAdmin() ? `<button id="btnCopyGearUuid" style="margin-bottom:8px">📋 ${LANG==='fr'?'Copier UUID':'Copy UUID'}</button>` : '';
   $a('infoBody').innerHTML = copyBtn +
