@@ -235,7 +235,14 @@ const ZONES = [
   // ZONE_WEAPON_SLOTS) et apporte la ceinture manquante (Orkinrad's Belt). reqAP/reqDP lissés le
   // 2026-07-11 (voir commentaire sur Ruines de Kratuga juste au-dessus) — 1 palier intermédiaire
   // entre Kratuga (286/157) et le plafond final 320/175 (Forêt de Polly).
-  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:303, reqDP:166, mob:'Esprit des Mânes',
+  // reqDP abaissé de 166 à 129 le 2026-07-16 (demande explicite : "ce stuff en moyenne devrait
+  // arriver tout juste Planque des Mânes en difficile full pri, change ap et dp si nécessaire") --
+  // même référence "stuff moyen full PRI" que le rééquilibrage de Kratuga ci-dessus (301 PA / 78 PD) :
+  // à ces valeurs le PD était le facteur bloquant (78/166 = 0.470, ZONE DANGEREUSE) alors que le PA
+  // (301/303 = 0.993, quasi ZONE ADAPTÉE) n'était pas le problème -- reqAP inchangé. reqDP=129 ramène
+  // le ratio PD à 0.605 (tout juste au-dessus du seuil ZONE DIFFICILE à 0.6, voir bottleneck()),
+  // reste dans le couloir imposé par testZoneMonotonicity (Kratuga=125 ≤ 129 ≤ Polly=175).
+  { name:'Planque des Mânes', tier:'Mediah — Early', reqAP:303, reqDP:129, mob:'Esprit des Mânes',
     hpPer:1000, dmg:125, xp:500,
     tint:{ a:'#3a3f4a', b:'#343943', dry:'#40454f' }, tones:['#8a9ab0','#7c8ca2','#98a8c0'], alphaTone:'#4a5568',
     loot:{ trash:{name:'Larme de Mâne',val:120,ch:1}, mat:{name:'Pierre de Caphras',val:5,ch:.07},
@@ -3533,8 +3540,13 @@ function buildZoneList() {
         `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
         `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
         `<span class="zUpgradeIcon"${hasUpgrade?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Meilleur stuff à trouver ici':'Better gear to find here'}">⬆️</span>` +
-        `<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span>` +
-        adminHereTag +
+        // étiquette ADMIN désormais ancrée au-dessus du compteur de joueurs spécifiquement (2026-07-16,
+        // demande explicite : "met le admin absolu au dessus du nombre des joueurs sur la zone") --
+        // avant, positionnée en absolu par rapport à TOUTE la ligne (top-right), elle atterrissait
+        // au-dessus du bouton 👁 (largeur variable des autres éléments avant elle) plutôt qu'au-dessus
+        // du nombre lui-même ; sibling de zPlayerCount dans un wrapper dédié, jamais couplée à sa
+        // visibilité (reste visible même si pCount vaut encore 0 au moment du rendu)
+        `<span class="zPlayerCountWrap">${adminHereTag}<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span></span>` +
         `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
       row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
       row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };

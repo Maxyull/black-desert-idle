@@ -449,11 +449,14 @@
      Repositionnée en badge ABSOLU (2026-07-15, demande explicite : "affiche l'etiquette admin a un
      endroit ou il ne fais bouger aucun texte") -- avant, insérée dans le flux flex de la ligne, elle
      poussait le bouton 👁 et déplaçait le reste du texte sur SA ligne uniquement (incohérent avec
-     les autres lignes). Superposée en haut à droite de la ligne, ne touche plus jamais le texte. */
+     les autres lignes). Ancrée le 2026-07-16 (demande explicite : "met le admin absolu au dessus du
+     nombre des joueurs sur la zone") spécifiquement au-dessus de .zPlayerCount via ce wrapper dédié,
+     au lieu d'un positionnement relatif à toute la ligne qui la faisait atterrir au-dessus du 👁. */
+  .zPlayerCountWrap { position:relative; flex-shrink:0; }
   .zAdminTag {
-    position:absolute; top:-1px; right:2px;
+    position:absolute; top:-9px; left:50%; transform:translateX(-50%);
     font-size:7px; letter-spacing:.5px; font-weight:bold; color:#1a1712; background:var(--gold);
-    border-radius:0 0 3px 3px; padding:1px 4px; white-space:nowrap; pointer-events:none;
+    border-radius:3px; padding:1px 4px; white-space:nowrap; pointer-events:none;
   }
   .b-red { color:var(--r-red); border-color:var(--r-red); }
   .b-orange { color:var(--r-orange); border-color:var(--r-orange); }

@@ -1178,6 +1178,7 @@ function optAutoGainPrimaryPart(target, targetLvl, slotId) {
 }
 function renderOptAutoTargetSelect() {
   const sel = $('optAutoTarget'); if (!sel) return;
+  const prevVal = sel.value; // préserve le choix du joueur à travers les re-renders (voir plus bas)
   const target = EQUIP[optTargetSlot];
   const curLvl = target ? (target.enhLv||0) : 0;
   const options = ENH_NAMES.map((name,i) => i).filter(i => i > curLvl);
@@ -1196,6 +1197,13 @@ function renderOptAutoTargetSelect() {
     return `<option value="${i}">${ENH_NAMES[i]}${(showGain && gainTxt) ? ' (' + gainTxt + ')' : ''}</option>`;
   }).join('') || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
   sel.disabled = !options.length;
+  // restaure le palier précédemment choisi par le joueur, s'il est toujours une option valide
+  // (2026-07-16, bug corrigé : "je choisis qqch dans la liste pour opti auto et ça le choisit pas,
+  // revient sur le choix d'avant") -- avant, reconstruire innerHTML remettait TOUJOURS le <select>
+  // sur sa 1ère option ; comme renderOptimization() (donc cette fonction) est redéclenché par
+  // n'importe quel événement de fond (loot ramassé, équipement changé...), le choix du joueur
+  // pouvait être silencieusement écrasé quelques instants après l'avoir fait
+  if (options.some(i => String(i) === prevVal)) sel.value = prevVal;
   renderOptAutoGain();
 }
 // affiche le gain de stats si on atteint le palier choisi dans #optAutoTarget (ex: "+18 PA")
