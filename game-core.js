@@ -2811,6 +2811,35 @@ function craftTreasurePiece(recipe) {
   renderInventory();
   return true;
 }
+// recette "secrète" (2026-07-15, demande explicite : "ajoute un combiner 3 carte differente =
+// secret") : combine 1 Bout du trésor de Velia + 1 matériau d'optimisation (n'importe lequel) + 1
+// bijou (n'importe lequel) — 3 objets de nature DIFFÉRENTE, contrairement à la recette ci-dessus
+// qui empile 100 fois le MÊME objet — contre une récompense en silver immédiate. Le montant
+// (référence × 300) reste loin en dessous de la conversion complète en Trésor de Velia (référence
+// × 10000 pour 100 morceaux) : un bonus notable mais qui ne concurrence pas la vraie progression du
+// Trésor, seulement un moyen de valoriser un bijou/matériau isolé qu'on aurait sinon juste vendu.
+const SECRET_COMBO_SILVER_MULT = 300;
+function secretComboReady() {
+  return invSlotByKey('treasure_bout_velia') !== -1
+    && INV.some(s => s && s.kind === 'material')
+    && INV.some(s => s && s.kind === 'jackpot');
+}
+function craftSecretCombo() {
+  const bIdx = invSlotByKey('treasure_bout_velia');
+  const mIdx = INV.findIndex(s => s && s.kind === 'material');
+  const jIdx = INV.findIndex(s => s && s.kind === 'jackpot');
+  if (bIdx === -1 || mIdx === -1 || jIdx === -1) return false;
+  invRemoveAt(bIdx, 1); invRemoveAt(mIdx, 1); invRemoveAt(jIdx, 1);
+  const reward = Math.round(referenceGearVal() * SECRET_COMBO_SILVER_MULT);
+  // catégorie 'loot' (pas 'craft', absente de la whitelist CHECK de silver_ledger posée par
+  // l'audit de sécurité du 2026-07-14 -- voir supabase/migrations/20260714171000_...) : un
+  // gain via cette recette reste un revenu en jeu, la catégorie la plus proche déjà autorisée
+  addSilver(reward, 'loot', 'Coffret secret');
+  floatTxt(P.x,P.y,90,'🎁 +'+fmt(reward),{gold:true});
+  logToDiscord('🎁 Coffret secret', `**${myPseudo||'Joueur'}** combine 3 objets différents pour ${fmt(reward)} silver`, 0xe8c96a);
+  renderInventory();
+  return true;
+}
 // panneau de craft affiché SEULEMENT dans l'onglet "Trésors" de l'inventaire (voir renderInventory)
 function renderTreasureCraftPanel() {
   // affiché en permanence dans la carte "Optimisation & Craft" (2026-07-08) — avant ce correctif,
@@ -2823,11 +2852,17 @@ function renderTreasureCraftPanel() {
     return `<button class="craftRecipeBtn${ok?' ready':''}" data-kind="piece" data-key="${r.needKey}" ${ok?'':'disabled'}>` +
       `🧩 ${have}/${r.needQty} → 🗺️ ${escapeHtml(r.giveName)}</button>`;
   }).join('');
+  const secretOk = secretComboReady();
+  const secretRow = `<button class="craftRecipeBtn${secretOk?' ready':''}" data-kind="secret" ${secretOk?'':'disabled'} ` +
+    `title="${LANG==='fr'?'1 Bout du trésor + 1 matériau + 1 bijou (tous différents) → silver':'1 Treasure piece + 1 material + 1 jewelry piece (all different) → silver'}">` +
+    `🧩+💎+💍 → 🎁 ${LANG==='fr'?'Coffret secret':'Secret box'}</button>`;
   el.innerHTML = `<div class="craftPanelTitle">${LANG==='fr'?'🔧 Combiner':'🔧 Combine'}</div>` +
-    `<div class="craftRecipes">${pieceRows}</div>`;
+    `<div class="craftRecipes">${pieceRows}${secretRow}</div>`;
   el.querySelectorAll('.craftRecipeBtn[data-kind="piece"]').forEach(btn => {
     btn.onclick = () => { const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === btn.dataset.key); if (r) craftTreasurePiece(r); renderTreasureCraftPanel(); };
   });
+  const secretBtn = el.querySelector('.craftRecipeBtn[data-kind="secret"]');
+  if (secretBtn) secretBtn.onclick = () => { craftSecretCombo(); renderTreasureCraftPanel(); };
 }
 // affiche un % avec juste assez de décimales pour rester lisible même sur des chances minuscules
 // (ex: 0.00001%) — toFixed(1) fixe habituel afficherait juste "0.0%"
