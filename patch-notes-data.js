@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V294', d:'16/07/2026 16:00', name:{fr:'Avertissement admin pour le reset d\'un joueur en ligne', en:'Admin warning for resetting an online player'}, fr:[
+      {t:'new', sub:'interface', tx:'Le panel admin avertit désormais explicitement si le joueur ciblé par un reset de compte est actuellement en ligne (risque que sa propre sauvegarde automatique annule le reset)'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The admin panel now explicitly warns if the player targeted by an account reset is currently online (risk that their own autosave undoes the reset)'},
+    ] },
   { v:'V293', d:'16/07/2026 15:00', name:{fr:'La flèche d\'upgrade pointe l\'objet précis à ramasser', en:'The upgrade arrow now points at the exact item to grab'}, fr:[
       {t:'change', sub:'interface', tx:'La flèche ⬆️ qui indique un stuff meilleur ne reste plus figée sur la zone à atteindre une fois qu\'on y est : elle apparaît directement sur la ligne de loot concernée (arme/armure/bijou précis), pour montrer quel objet ramasser'},
     ], en:[
