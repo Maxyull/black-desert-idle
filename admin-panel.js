@@ -125,9 +125,25 @@ async function resetAccountByUuid() {
   const input = $a('admResetUuidInput');
   const uuid = (input.value || '').trim();
   if (!uuid) return;
-  const msg = LANG === 'fr'
+  // avertit si le joueur ciblé est EN LIGNE (2026-07-16, demande explicite : "oui averti le
+  // joueurs pour le reset" -- suite à la vérification du flux de reset : un joueur connecté garde
+  // son ancien état en mémoire et le RÉÉCRIT dans game_saves à la prochaine sauvegarde automatique
+  // (30s ou quasi chaque action), annulant silencieusement le reset en quelques secondes) -- ne
+  // BLOQUE pas l'action (l'admin peut avoir une bonne raison, ex: bannissement immédiat suivi d'une
+  // déconnexion forcée côté Discord), seulement un avertissement renforcé dans la confirmation.
+  let online = false;
+  try {
+    const { data } = await sb.rpc('admin_is_player_online', { p_user_id: uuid, p_window_seconds: 90 });
+    online = !!data;
+  } catch(e) {}
+  const onlineWarn = online
+    ? (LANG === 'fr'
+        ? '\n\n⚠️ CE JOUEUR EST ACTUELLEMENT EN LIGNE : sa propre sauvegarde automatique (toutes les 30s environ) risque de RÉÉCRIRE son ancien état par-dessus ce reset dans les secondes qui suivent, l\'annulant silencieusement. Pour un reset fiable, attends qu\'il soit déconnecté.'
+        : '\n\n⚠️ THIS PLAYER IS CURRENTLY ONLINE: their own autosave (roughly every 30s) may OVERWRITE their old state back over this reset within seconds, silently undoing it. For a reliable reset, wait until they\'re disconnected.')
+    : '';
+  const msg = (LANG === 'fr'
     ? `🔄 Réinitialiser le compte du joueur ${uuid} (silver, équipement, niveau, sac) ? Un message d'explication lui sera montré à sa prochaine connexion. Action IRRÉVERSIBLE.`
-    : `🔄 Reset player ${uuid}'s account (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.`;
+    : `🔄 Reset player ${uuid}'s account (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.`) + onlineWarn;
   if (!confirm(msg)) return;
   const title_fr = '🔄 Ton compte a été réinitialisé';
   const title_en = '🔄 Your account has been reset';
