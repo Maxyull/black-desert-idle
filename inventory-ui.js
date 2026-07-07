@@ -3,12 +3,16 @@ const invPanelOpen = true; // panneau toujours affiché
 
 // ---------- équipement (paperdoll permanent) ----------
 const PD_LEFT  = ['helmet','armor','gloves','boots'];
-const PD_RIGHT = ['necklace','earring1','earring2','ring1','ring2','belt','artifact1','artifact2','eqStone'];
+// réorganisé le 2026-07-14 (demande explicite : "a droite collier 2 bague 2 oreille en bas en
+// dessous des armes 2 artefact 1 pierre d'alchimie 1 livre") -- artéfacts/pierre/livre déplacés
+// sous les armes (voir #pdBook ci-dessous), la colonne de droite ne garde plus que
+// collier/bagues/boucles d'oreille/ceinture
+const PD_RIGHT = ['necklace','ring1','ring2','earring1','earring2','belt'];
 const PD_BOTTOM = ['weapon','awakening','secondary'];
 const SLOT_LABEL = { weapon:'Arme princ.', awakening:'Éveil', secondary:'Arme secondaire', book:'Livre (vie)',
   helmet:'Casque', armor:'Armure', gloves:'Gants', boots:'Bottes',
   necklace:'Collier', earring1:'B. oreille', earring2:'B. oreille', ring1:'Bague', ring2:'Bague', belt:'Ceinture',
-  artifact1:'Artéfact', artifact2:'Artéfact', eqStone:'Pierre' };
+  artifact1:'Artéfact', artifact2:'Artéfact', eqStone:'Pierre d\'alchimie' };
 // icônes par défaut (palier neutre gris) — utilisées en repli quand une pièce sauvegardée n'a pas
 // sa propre icône (vieux objets, stuff de départ), voir helmetIconForColor & co. plus haut
 const SLOT_ICON = { weapon:staffIconForColor('#8f9aa6','grey'), awakening:orbPairIconForColor('#8f9aa6','grey'),
@@ -24,7 +28,10 @@ function renderEquipment() {
   fillPdCol('pdLeft', PD_LEFT);
   fillPdCol('pdRight', PD_RIGHT);
   fillPdCol('pdWeapons', PD_BOTTOM);
-  fillPdCol('pdBook', ['book']);
+  // artéfacts/pierre d'alchimie/livre regroupés sous les armes (2026-07-14, demande explicite,
+  // voir commentaire sur PD_RIGHT ci-dessus) -- avant, seul le livre y était, les artéfacts/pierre
+  // vivaient dans la colonne de droite
+  fillPdCol('pdBook', ['artifact1','artifact2','eqStone','book']);
   // les stats vont dans la carte Statistiques (pas de doublon)
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
