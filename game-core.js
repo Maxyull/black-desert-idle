@@ -288,6 +288,7 @@ const S = {
   castMult: 1, hpMax: 100, mpMax: 100, lootRadius: 26, // mpMax (2026-07-05) : réserve de mana, voir SKILLS[].mp et usePotionMana()
   bossesKilled: {}, // Compendium World Boss (2026-07-08) : { [bossId]: true } dès qu'un World Boss a été vaincu au moins une fois (voir compendiumBossCount)
   penMastery: {}, // Compendium spécial "Maîtrise PEN" (2026-07-08) : { [itemName]: true } dès que cet objet a atteint PEN au moins une fois (voir markPenMastery)
+  enhPeakByName: {}, // meilleur niveau d'optimisation JAMAIS atteint par nom d'objet (2026-07-15) : { [itemName]: enhLv }, voir trackEnhPeak -- survit à la vente de l'objet
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
   // baseline (silverEarned/kills au début de LA SESSION EN COURS), pour calculer un vrai "silver/h"
@@ -946,6 +947,15 @@ function markPenMastery(name) {
   logToDiscord('🌟 Maîtrise PEN', `**${myPseudo||'Joueur'}** amène ${name} à PEN pour la première fois (${done}/${max}${done>=max?' — MAÎTRISE COMPLÈTE ✓':''})`, 0xffe9a8);
 }
 function compendiumPenCount() { return Object.keys(S.penMastery||{}).length; }
+// meilleur niveau d'optimisation JAMAIS atteint pour un nom d'objet donné (2026-07-15, demande
+// explicite : "affiche l'opti dans le compendium si on a vendu un objet optimisé") — contrairement
+// à S.penMastery (qui ne retient QUE le passage à PEN), ceci retient TOUT niveau intermédiaire
+// (+1 à +19 compris), pour que le Compendium garde une trace même d'un objet enchanté puis vendu
+// avant PEN. Mis à jour à CHAQUE succès d'optimisation (voir attemptEnhance), jamais effacé.
+function trackEnhPeak(name, lvl) {
+  if (!S.enhPeakByName) S.enhPeakByName = {};
+  if ((S.enhPeakByName[name]||0) < lvl) S.enhPeakByName[name] = lvl;
+}
 
 // Vitesse de déplacement (2026-07-08) : progression par NIVEAU (0% au niv.1, jusqu'à +75% au
 // niveau 61, plafonné ensuite) + bonus de Compendium (points de % additifs entre eux).
@@ -1376,11 +1386,22 @@ function renderCompendiumHtml() {
         cellEnhBadgeHtml(s) +
         `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button></div>`;
     }).join('');
+    // historique d'optimisation (2026-07-15, demande explicite : "affiche l'opti dans le compendium
+    // si on a vendu un objet optimisé") -- S.enhPeakByName retient le meilleur niveau JAMAIS atteint
+    // par nom, même après avoir vendu le dernier exemplaire physique (contrairement à la grille
+    // ci-dessus, purement live sur COMPENDIUM_BAG). N'affiche que les noms qui ne sont PLUS dans le
+    // sac protégé actuellement (sinon doublon avec la grille, déjà visible avec son enh en direct).
+    const soldHistoryHtml = Object.entries(S.enhPeakByName||{})
+      .filter(([name, lvl]) => lvl > 0 && !compendiumBagHasName(name))
+      .sort((a,b) => b[1]-a[1])
+      .map(([name, lvl]) => `<div class="compSoldRow"><span class="compSoldName">${escapeHtml(tr(name))}</span>${cellEnhBadgeHtml({optimizable:true, enhLv:lvl})}</div>`)
+      .join('');
     bodyHtml = `<div class="admHint">${LANG==='fr'
         ? '"Vendre 1" garde toujours ici le PLUS ENCHANTÉ des exemplaires possédés de chaque type d\'équipement/bijou jamais monté en PEN, au lieu de le perdre — un exemplaire plus enchanté trouvé dans le sac prend automatiquement sa place. Renvoie-le au sac principal pour t\'en servir.'
         : '"Sell 1" always keeps here the MOST ENHANCED copy owned of each gear/jewelry type never brought to PEN, instead of losing it — a more enhanced copy found in your bag automatically takes its place. Send it back to your main bag to use it.'}</div>` +
       `<div class="admSummary">${used} / ${INV_SIZE}</div>` +
-      `<div class="admInvGrid compBagGrid">${cellsHtml}</div>`;
+      `<div class="admInvGrid compBagGrid">${cellsHtml}</div>` +
+      (soldHistoryHtml ? `<div class="statSep">${LANG==='fr'?'Déjà optimisés (vendus depuis)':'Previously enhanced (since sold)'}</div><div class="compSoldList">${soldHistoryHtml}</div>` : '');
   } else if (compendiumTab === 'bosses') {
     bodyHtml = Object.entries(BOSS_ROSTER).map(([id,b]) => {
       const unlocked = !!S.bossesKilled[id];
@@ -3324,12 +3345,20 @@ function buildZoneList() {
       // présence toutes les 20s ; masqué (pas de case vide) tant que personne n'y est
       const pCount = (typeof zonePlayerCounts !== 'undefined' && zonePlayerCounts[i]) || 0;
       const hasUpgrade = upgradeZones.has(i);
+      // étiquette "admin ici" (2026-07-15, demande explicite : "ajoute a coté des joueurs sur zone
+      // une petite etiquette avec écris admin ici") -- purement client-side (isAdmin() + isCurrent,
+      // aucune donnée serveur supplémentaire) : get_zone_player_counts ne renvoie QUE des compteurs
+      // agrégés (voir l'audit de sécurité du 2026-07-14), jamais l'identité des joueurs par zone --
+      // ne peut donc indiquer la présence admin QUE sur le propre client de l'admin, sur SA propre zone
+      const adminHereTag = (typeof isAdmin === 'function' && isAdmin() && isCurrent)
+        ? `<span class="zAdminTag" title="${LANG==='fr'?'Tu es ici (vue admin)':'You are here (admin view)'}">ADMIN</span>` : '';
       row.innerHTML =
         `<span class="zname">${tr(z.name)}</span>` +
         `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
         `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
         `<span class="zUpgradeIcon"${hasUpgrade?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Meilleur stuff à trouver ici':'Better gear to find here'}">⬆️</span>` +
         `<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span>` +
+        adminHereTag +
         `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
       row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
       row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
