@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V287', d:'16/07/2026 10:00', name:{fr:'Onglets Pet/Mer, Cristal en inventaire, vente auto par item', en:'Pet/Sea tabs, Crystal in inventory, per-item auto-sell'}, fr:[
+      {t:'new', sub:'interface', tx:'2 nouveaux onglets verrouillés dans le menu latéral : Compagnon et Vie en mer, en attente de futur contenu'},
+      {t:'new', sub:'objets', tx:'Nouvelle catégorie "Cristal" (verrouillée) dans l\'inventaire, aux côtés d\'Équip./Opti./Trésors/Conso./RNG (libellés raccourcis)'},
+      {t:'new', sub:'interface', tx:'Bouton "vente auto" verrouillé ajouté sur chaque objet de la table de loot'},
+      {t:'change', sub:'interface', tx:'Tous les boutons verrouillés (vente auto, équiper→vendre→compendium, catégories, nouveaux onglets) affichent désormais leur cadenas en badge au-dessus, toujours centré — plus jamais dans le texte du bouton'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'2 new locked tabs in the side menu: Companion and Sea Life, awaiting future content'},
+      {t:'new', sub:'objets', tx:'New "Crystal" category (locked) in the inventory, alongside Gear/Enh./Treasures/Cons./RNG (shortened labels)'},
+      {t:'new', sub:'interface', tx:'Locked "auto-sell" button added on every item in the loot table'},
+      {t:'change', sub:'interface', tx:'Every locked button (auto-sell, equip→sell→compendium, categories, new tabs) now shows its padlock as a badge above, always centered — never inside the button text anymore'},
+    ] },
   { v:'V286', d:'16/07/2026 09:00', name:{fr:'Fix sélection auto-opti, étiquette admin ancrée, Planque des Mânes rééquilibrée', en:'Fixed auto-enhance selection, anchored admin tag, Manes rebalanced'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Choisir un palier dans la liste déroulante d\'auto-optimisation pouvait être silencieusement écrasé par le prochain rafraîchissement (loot ramassé, équipement changé...) qui reconstruisait la liste sans garder le choix fait — le palier choisi est désormais préservé'},
       {t:'fix', sub:'interface', tx:'L\'étiquette ADMIN (visible uniquement par l\'admin, sur sa propre zone) est maintenant ancrée précisément au-dessus du nombre de joueurs, plus au-dessus du bouton 👁'},
