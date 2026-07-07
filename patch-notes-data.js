@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V282', d:'15/07/2026 13:00', name:{fr:'Onglet Niveaux, coût de Cron par palier, Kratuga rééquilibrée', en:'Levels tab, tiered Cron cost, Kratuga rebalanced'}, fr:[
+      {t:'new', sub:'interface', tx:'Nouvel onglet "Niveaux" dans la carte Statistiques : PV de base, bonus de Vitesse et XP requise pour les 5 niveaux avant et après ton niveau actuel, mis à jour en direct à chaque level-up'},
+      {t:'change', sub:'objets', tx:'Le coût en Pierres de Cron dépend désormais du palier de la pièce protégée (gris 1 / blanc 2 / vert 3 / bleu 4) au lieu de toujours 1 — le panneau Optimisation affiche "as-tu/il-faut" pour la pièce ciblée'},
+      {t:'change', sub:'zones', tx:'Ruines de Kratuga : Défense requise abaissée pour qu\'un stuff moyen full PRI passe de zone dangereuse à tout juste difficile'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'New "Levels" tab in the Statistics card: base HP, Speed bonus and required XP for the 5 levels before and after your current one, updated live on every level-up'},
+      {t:'change', sub:'objets', tx:'Cron Stone cost now depends on the tier of the piece being protected (grey 1 / white 2 / green 3 / blue 4) instead of always 1 — the Enhancement panel shows "have/need" for the targeted piece'},
+      {t:'change', sub:'zones', tx:'Kratuga Ruins: required Defense lowered so an average full-PRI gear set moves from dangerous zone to just barely hard'},
+    ] },
   { v:'V281', d:'15/07/2026 12:00', name:{fr:'World Boss : fix loot solo, récompenses par zone, table de loot V2', en:'World Boss: fixed solo loot, zone-based rewards, V2 loot table'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'Un kill de World Boss très rapide (solo) pouvait afficher "Victoire" sans donner aucune récompense — le dernier paquet de dégâts n\'était pas encore transmis au serveur au moment de la réclamation. Corrigé : ce reliquat est désormais envoyé et attendu avant de réclamer'},
       {t:'new', sub:'combat', tx:'Nouveau message dans le lobby Boss quand un boss partagé est déjà à 0 PV mais que sa fenêtre reste ouverte : "Déjà vaincu — reviens plus tard" au lieu de pouvoir entrer dans un combat déjà gagné sans y avoir participé'},
