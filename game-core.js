@@ -3521,7 +3521,11 @@ function buildZoneList() {
       // agrégés (voir l'audit de sécurité du 2026-07-14), jamais l'identité des joueurs par zone --
       // ne peut donc indiquer la présence admin QUE sur le propre client de l'admin, sur SA propre zone
       const adminHereTag = (typeof isAdmin === 'function' && isAdmin() && isCurrent)
-        ? `<span class="zAdminTag" title="${LANG==='fr'?'Tu es ici (vue admin)':'You are here (admin view)'}">ADMIN</span>` : '';
+        // tooltip précisé le 2026-07-16 (demande explicite : "admin absolu tooltip ecrit un admin
+        // est ici") -- ancien texte "Tu es ici (vue admin)" ambigu (peut se lire comme "TU es un
+        // admin", pas assez explicite pour un autre joueur qui verrait ce badge -- même si en
+        // pratique il n'est visible que par l'admin lui-même, voir le commentaire juste au-dessus)
+        ? `<span class="zAdminTag" title="${LANG==='fr'?'Un admin est ici':'An admin is here'}">ADMIN</span>` : '';
       row.innerHTML =
         `<span class="zname">${tr(z.name)}</span>` +
         `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +

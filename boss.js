@@ -255,13 +255,16 @@ function renderBossLobbyHtml() {
   const legend = Object.values(BOSS_ROSTER).map(b => `<span class="bcLegend">${b.icon} ${b.name[LANG]}</span>`).join('');
   // règles de récompense "visibles par tous" (2026-07-15, demande explicite : "met ces recompense
   // dans boss visible par tous") -- affichées dans le lobby, avant même de combattre, calculées
-  // pour SA propre progression (chaque joueur voit son propre aperçu, la règle est la même pour tous)
+  // pour SA propre progression (chaque joueur voit son propre aperçu, la règle est la même pour tous).
+  // Repositionnées le 2026-07-16 (demande explicite : "podium world boss en dessous des horaire de
+  // boss") -- vivaient avant juste sous le countdown/prochain spawn (nextHtml) et AVANT le calendrier
+  // hebdomadaire ; désormais après le calendrier complet, qui compte comme "les horaires de boss".
   return `${nextHtml}
-    ${bossRewardRulesHtml()}
     <h3>${LANG==='fr'?'📅 Calendrier de la semaine':'📅 Weekly calendar'}</h3>
     ${calHtml}
     <div class="bcLegendRow">${legend}</div>
-    <div class="admSummary">${LANG==='fr'?'Horaires calqués sur le vrai BDO −15 min. Heure locale.':'Times mirror real BDO −15 min. Local time.'}</div>`;
+    <div class="admSummary">${LANG==='fr'?'Horaires calqués sur le vrai BDO −15 min. Heure locale.':'Times mirror real BDO −15 min. Local time.'}</div>
+    ${bossRewardRulesHtml()}`;
 }
 function wireBossLobby() {
   const btn = $a('bossFightBtn');
@@ -502,10 +505,11 @@ function bossRewardSelectorHtml() {
 // résumé des règles de récompense, utilisé dans le lobby (aperçu, "visible par tous" --
 // demande explicite). Agrandi le 2026-07-15 (demande explicite : "recompense, affiche en plus gros
 // en dessous des horaires de boss") -- avant, un simple .admHint discret, facile à manquer ;
-// désormais une carte dédiée (.bossRewardRules), toujours juste sous le bloc horaires/countdown
-// (nextHtml) et avant le calendrier hebdomadaire. Restructuré en podium le 2026-07-16 (demande
+// désormais une carte dédiée (.bossRewardRules). Restructuré en podium le 2026-07-16 (demande
 // explicite) -- avant, une seule phrase en ligne listant #1/#2/#3 ; désormais un vrai podium visuel
-// (2e/1er/3e) avec un sélecteur de boss au-dessus.
+// (2e/1er/3e) avec un sélecteur de boss au-dessus. Repositionné le même jour (demande explicite :
+// "podium world boss en dessous des horaire de boss") -- vivait avant entre le countdown (nextHtml)
+// et le calendrier hebdomadaire ; désormais après le calendrier complet (voir renderBossLobbyHtml).
 function bossRewardRulesHtml() {
   const dZi = bestDifficileZoneIdx(), dgZi = nextDangereuseZoneIdx();
   const dName = dZi != null ? tr(ZONES[dZi].name) : '—';
