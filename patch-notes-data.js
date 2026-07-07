@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V265', d:'14/07/2026 20:00', name:{fr:'Fix : PA/PD au-dessus de l\'équipement restaient en français en anglais', en:'Fix: AP/DP above equipment stayed in French while in English'}, fr:[
+      {t:'fix', sub:'interface', tx:'Le résumé PA/PD/GS affiché juste au-dessus de la poupée d\'équipement était codé en dur en français ("PA "/"PD "), même quand le jeu était en anglais — il suit désormais la langue choisie comme partout ailleurs. Les valeurs elles-mêmes étaient déjà correctes, seul le libellé était fautif'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The AP/DP/GS summary shown just above the equipment doll was hardcoded in French ("PA "/"PD "), even when the game was set to English — it now follows the selected language like everywhere else. The values themselves were already correct, only the label was wrong'},
+    ] },
   { v:'V264', d:'14/07/2026 19:00', name:{fr:'Outils de debug admin pour l\'enchantement', en:'Admin debug tools for enhancement'}, fr:[
       {t:'new', sub:'admin', tx:'4 boutons réservés à l\'admin dans l\'onglet inventaire principal (invisibles pour tous les autres joueurs) : passer tout l\'équipement en Optimisation max, tout rétrograder à +0, ou avancer/reculer d\'1 rang à la fois — aucun effet sur les compteurs de tentative ni les succès'},
     ], en:[
