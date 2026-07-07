@@ -743,6 +743,11 @@
      dépasse au-dessus de chaque ligne (voir plus bas) -- avant 5px 0, insuffisant pour le badge */
   .lootRow { display:flex; align-items:center; gap:8px; padding:9px 0 5px; border-bottom:1px solid #232128; font-size:12px; }
   .lootRow:last-child { border-bottom:none; }
+  /* flèche d'upgrade (2026-07-16, demande explicite : "une fois sur la zone la fleche se met dans
+     la loottable") -- pointe désormais l'objet précis à ramasser ICI, plutôt que la zone à
+     atteindre (voir .zUpgradeIcon/.pdUpgradeBtn, toujours utilisées pour indiquer OÙ aller) */
+  .lootUpgradeArrow { flex-shrink:0; font-size:13px; filter:drop-shadow(0 0 3px rgba(201,165,90,.7)); }
+  .lootRowUpgrade { background:rgba(201,165,90,.06); }
   /* petite marge de sécurité pour la toute 1ère ligne (sans .lootCatHead au-dessus pour lui faire
      de la place) -- évite que son badge cadenas ne soit rogné par overflow-y:auto */
   #lootTable { padding-top:6px; }
