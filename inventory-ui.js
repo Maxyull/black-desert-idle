@@ -1440,9 +1440,9 @@ function zoneLootRowsHtml(idx) {
   const GEAR_ICON_FOR_SLOT = { helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor,
     weapon:staffIconForColor, secondary:daggerIconForColor, awakening:orbPairIconForColor };
   const armorSlot = (ZONE_ARMOR_SLOTS[idx]||[])[0];
-  if (armorSlot) rows.push({ kind:'gear', it:{name:tier.sets[armorSlot], icon:GEAR_ICON_FOR_SLOT[armorSlot](tier.color,tier.grade)}, ch:gearCh, note:armorPieceNote });
+  if (armorSlot) rows.push({ kind:'gear', it:{name:tier.sets[armorSlot], icon:GEAR_ICON_FOR_SLOT[armorSlot](tier.color,tier.grade)}, ch:gearCh, note:armorPieceNote, slot:armorSlot });
   const weaponSlot = (ZONE_WEAPON_SLOTS[idx]||[])[0];
-  if (weaponSlot) rows.push({ kind:'gear', it:{name:tier.sets[weaponSlot], icon:GEAR_ICON_FOR_SLOT[weaponSlot](tier.color,tier.grade)}, ch:gearCh, note:weaponPieceNote });
+  if (weaponSlot) rows.push({ kind:'gear', it:{name:tier.sets[weaponSlot], icon:GEAR_ICON_FOR_SLOT[weaponSlot](tier.color,tier.grade)}, ch:gearCh, note:weaponPieceNote, slot:weaponSlot });
   const jSlot = accSlotFor(L.jackpot);
   const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
   const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
@@ -1451,11 +1451,19 @@ function zoneLootRowsHtml(idx) {
   // sinon la table de loot promettrait un chiffre différent de ce qu'on obtient vraiment en jeu
   const jackpotApShown = gearFloor((z.gearBasisAP ?? z.reqAP) * GEAR_ROLE.jackpot.apShare);
   rows.push(
-    { kind:'jackpot',  it:{...L.jackpot, ch:jewelDropChance(tier, L.jackpot.ch), icon:jackpotIcon}, note:'+'+jackpotApShown+' '+equippedWord },
+    { kind:'jackpot',  it:{...L.jackpot, ch:jewelDropChance(tier, L.jackpot.ch), icon:jackpotIcon}, note:'+'+jackpotApShown+' '+equippedWord, baseSlot:jSlot },
     { kind:'craft',    it:L.craft,   note:'craft endgame' },
     // Pierre de Cron : taux fixe (voir CRON_STONE.ch), identique dans TOUTES les zones — demande explicite du 2026-07-08
     { kind:'material', it:{name:CRON_STONE.name, icon:CRON_STONE.icon}, ch:CRON_STONE.ch, note:'1 à 3 unités — protège un enchantement d\'une rétrogradation' },
   );
+  // flèche ⬆️ dans la table de loot (2026-07-16, demande explicite : "pour la flèche qui te montre
+  // la zone du stuff qui t'upgrade, une fois sur la zone la fleche se met dans la loottable") --
+  // avant, l'indicateur ⬆️ restait uniquement sur la poupée d'équipement (.pdUpgradeBtn) et la
+  // ligne de la liste de zones (.zUpgradeIcon), pointant VERS la zone à atteindre ; une fois qu'on y
+  // est vraiment (idx === zoneIdx), pointer vers une zone où on se trouve déjà n'a plus de sens —
+  // l'indicateur se déplace donc sur la ligne de loot CONCERNÉE, pour montrer précisément QUEL objet
+  // ramasser ici. Ne s'affiche que sur la zone réellement farmée, jamais en aperçu (👁) ni à Velia.
+  const upgradedSlots = (idx === zoneIdx && !atVelia) ? slotsUpgradedByZone(idx) : [];
   // les couleurs des rangées "armure" et "matériau" reprennent celles du stuff dans l'inventaire
   // (gris/blanc/vert/bleu selon le palier) au lieu d'un violet/or générique — demande du 2026-07-06.
   // "jackpot" (bijou) manquait à cette table (2026-07-10, bug trouvé en vérification) : la ligne
@@ -1483,8 +1491,14 @@ function zoneLootRowsHtml(idx) {
     // prix affiché uniquement pour le trash (2026-07-14, demande explicite) -- seul objet dont la
     // valeur est fixe et connue à l'avance (gear/bijou dépendent de l'enchantement, non pertinent ici)
     const priceHtml = r.kind === 'trash' ? `<div class="lv">${fmt(r.it.val)} silver</div>` : '';
+    // flèche d'upgrade (voir le commentaire sur upgradedSlots plus haut) : gear -> son slot exact,
+    // jackpot -> n'importe quel slot de bijou de la même base (bague/collier/boucle/ceinture)
+    const isUpgrade = r.slot ? upgradedSlots.includes(r.slot)
+      : r.baseSlot ? upgradedSlots.some(s => accBaseSlot(s) === r.baseSlot) : false;
+    const upgradeHtml = isUpgrade ? `<span class="lootUpgradeArrow" title="${LANG==='fr'?'Améliore ton stuff actuel':'Upgrades your current gear'}">⬆️</span>` : '';
     return { cat: LOOT_CATS[r.kind] || { fr:'Autre', en:'Other', order:9 }, html: `
-    <div class="lootRow">
+    <div class="lootRow${isUpgrade?' lootRowUpgrade':''}">
+      ${upgradeHtml}
       <div class="lootIcon k-${r.kind}"${col?` style="color:${col};border-color:${col}"`:''}>${iconHtml}</div>
       <div class="lootInfo"><div class="ln"${col?` style="color:${col}"`:''}>${tr(r.it.name)}</div><div class="lv">${tr(r.note)}</div>${priceHtml}</div>
       <div class="lootPct">${(ch*100).toFixed(ch < .01 ? 3 : 1)}%</div>
