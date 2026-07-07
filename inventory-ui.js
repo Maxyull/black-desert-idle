@@ -1608,6 +1608,45 @@ if (adminResetEnhBtnEl) adminResetEnhBtnEl.onclick = () => {
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
 };
+// pas fin d'1 rang dans un sens ou l'autre (2026-07-14, demande explicite : "ajoute retrograder de
+// 1 rang augmenter de 1 rang") -- même filet de sécurité/non-effets de bord que les 2 boutons
+// ci-dessus, juste bornés à [0, maxLvl] au lieu de sauter directement à une extrémité
+function adminStepEnhAllEquipped(delta) {
+  const maxLvl = ENH_NAMES.length - 1;
+  let count = 0;
+  for (const slotId of Object.keys(EQUIP)) {
+    const item = EQUIP[slotId];
+    if (!item || !item.optimizable) continue;
+    const cur = item.enhLv||0, next = Math.max(0, Math.min(maxLvl, cur + delta));
+    if (next === cur) continue;
+    item.enhLv = next;
+    refreshEquipSlot(slotId);
+    count++;
+  }
+  if (count > 0) { hud(); renderOptimization(); drawPreviewChar(); }
+  return count;
+}
+function wireAdminEnhStepBtn(id, delta, msgUpFr, msgUpEn, msgNoneFr, msgNoneEn) {
+  const el = $(id); if (!el) return;
+  el.onclick = () => {
+    if (typeof isAdmin === 'function' && !isAdmin()) return;
+    const count = adminStepEnhAllEquipped(delta);
+    const msg = $('equipBestMsg');
+    if (msg) {
+      msg.textContent = count > 0
+        ? (LANG==='fr' ? `${count} ${msgUpFr}` : `${count} ${msgUpEn}`)
+        : (LANG==='fr' ? msgNoneFr : msgNoneEn);
+      msg.className = 'ok';
+      setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
+    }
+  };
+}
+wireAdminEnhStepBtn('btnAdminEnhDown1', -1,
+  'pièce(s) rétrogradée(s) d\'1 rang', 'piece(s) downgraded by 1 rank',
+  'Déjà toutes à +0', 'Already all at +0');
+wireAdminEnhStepBtn('btnAdminEnhUp1', 1,
+  'pièce(s) augmentée(s) d\'1 rang', 'piece(s) upgraded by 1 rank',
+  'Déjà toutes au maximum', 'Already all at max');
 
 // passe lootPreviewIdx explicitement : un simple renderLootTable() remettrait le loot affiché
 // sur la zone qu'on farm à CHAQUE rafraîchissement auto (dès qu'un objet est ramassé), écrasant
