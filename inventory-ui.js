@@ -359,6 +359,9 @@ const INV_CATEGORIES = [
   { id:'rng',         icon:'🎲', label:{fr:'RNG',en:'RNG'},          kinds:['rngbox'], locked:true },
   // inventaire dédié au "Trésor de Velia" — demande explicite du 2026-07-06
   { id:'treasure',    icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, kinds:['treasure'] },
+  // sac protégé (Compendium) intégré à l'inventaire (2026-07-14, demande explicite) -- special:'compendium'
+  // signale à renderInventory() de lire COMPENDIUM_BAG au lieu de INV pour cet onglet
+  { id:'compendium',  icon:'📖', label:{fr:'Compendium',en:'Compendium'}, kinds:null, special:'compendium' },
 ];
 let invCategory = 'normal';
 // cadenas en badge au-dessus, centré (2026-07-14, demande explicite : "avec les cadenas au dessus
@@ -395,13 +398,32 @@ function renderInventory() {
   grid.innerHTML = '';
   renderTreasureCraftPanel();
   const cat = INV_CATEGORIES.find(c => c.id === invCategory) || INV_CATEGORIES[0];
+  // onglet Compendium (sac protégé) : source de données différente (COMPENDIUM_BAG, pas INV) —
+  // demande explicite du 2026-07-14, avec bouton d'optimisation directe par case
+  const source = cat.special === 'compendium' ? COMPENDIUM_BAG : INV;
   for (let i = 0; i < INV_SIZE; i++) {
-    const s = INV[i];
+    const s = source[i];
     const cell = document.createElement('div');
     // en vue filtrée (pas "Tout"), les cases vides ET les objets d'une autre catégorie sont
     // masqués — sinon un onglet avec 3 objets ressemblerait à 189 cases vides pour rien
-    const visible = cat.kinds === null || (s && cat.kinds.includes(s.kind));
+    const visible = cat.special === 'compendium' || cat.kinds === null || (s && cat.kinds.includes(s.kind));
     cell.className = 'cell' + (s ? ' has k-'+s.kind : '') + (visible ? '' : ' catHidden');
+    if (s && cat.special === 'compendium') {
+      const cellApDp = effectiveApDp(s);
+      const cellIcon = s.icon || (s.slot && SLOT_ICON[s.slot]) || '❔';
+      cell.innerHTML = `<span style="color:${s.color}">${cellIcon}</span>` +
+        cellEnhBadgeHtml(s) +
+        (cellApDp && cellApDp.ap ? `<span class="cellAp">${cellApDp.ap}</span>` : '') +
+        (cellApDp && cellApDp.dp ? `<span class="cellDp">${cellApDp.dp}</span>` : '') +
+        `<span class="compOptBtn" title="${LANG==='fr'?'Équiper et optimiser':'Equip and optimize'}">✦</span>`;
+      if (s.color) { cell.style.borderColor = s.color; cell.style.boxShadow = `inset 0 0 6px ${s.color}55`; }
+      cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
+      cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
+      cell.onmouseleave = () => hideItemTooltip();
+      cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); equipFromCompendium(i); };
+      grid.appendChild(cell);
+      continue;
+    }
     if (s) {
       const cellApDp = (s.kind === 'gear' || s.kind === 'jackpot') ? effectiveApDp(s) : null;
       // les icônes SVG (équipement, matériaux) ont leurs couleurs FIGÉES dans le tracé — le style
@@ -431,20 +453,22 @@ function renderInventory() {
       cell.onclick = ev => { ev.stopPropagation(); hideItemTooltip(); showItemMenuAtCell(cell, { invIndex:i, ...s }); };
       cell.ondblclick = ev => { ev.stopPropagation(); hideItemTooltip(); quickAction(i); };
       cell.oncontextmenu = ev => { ev.preventDefault(); ev.stopPropagation(); hideItemTooltip(); showItemMenu(ev.clientX, ev.clientY, { invIndex:i, ...s }); };
-    } else {
+    } else if (cat.special !== 'compendium') {
       // case vide : clic = guide de farm (2026-07-05, demande explicite) -- où aller farmer,
       // hors zones trop dangereuses pour le stuff actuel
       cell.onclick = ev => { ev.stopPropagation(); showFarmGuide(); };
     }
     grid.appendChild(cell);
   }
-  // message quand la catégorie active ne contient encore aucun objet (ex: RNG, Consommable)
-  const anyVisible = INV.some(s => s && cat.kinds.includes(s.kind));
+  // message quand la catégorie active ne contient encore aucun objet (ex: RNG, Consommable, Compendium)
+  const anyVisible = cat.special === 'compendium' ? COMPENDIUM_BAG.some(Boolean) : INV.some(s => s && cat.kinds.includes(s.kind));
   if (!anyVisible) {
     const empty = document.createElement('div');
     empty.className = 'invCatEmpty';
     empty.textContent = cat.id === 'rng'
       ? (LANG==='fr'?'Aucun coffre RNG pour l\'instant':'No RNG box yet')
+      : cat.id === 'compendium'
+      ? (LANG==='fr'?'Aucun objet protégé pour l\'instant':'No protected item yet')
       : (LANG==='fr'?'Vide':'Empty');
     grid.appendChild(empty);
   }
@@ -674,6 +698,25 @@ function equipItem(i) {
   EQUIP[slotId] = { ...item };
   INV[i] = null;
   hud();
+}
+// équivalent de equipItem(i) mais pour un objet du sac protégé (Compendium) -- demande explicite
+// du 2026-07-14 : "possibilité d'optimisation direct avec un bouton" depuis l'onglet Compendium.
+// L'ancienne pièce équipée revient dans le sac PRINCIPAL (INV), pas dans le Compendium -- seul le
+// meilleur exemplaire de chaque nom est censé y résider (voir ensureCompendiumProtection).
+function equipFromCompendium(i) {
+  const item = COMPENDIUM_BAG[i]; if (!item) return;
+  const slotId = resolveEquipSlot(item);
+  if (!slotId) return;
+  if (EQUIP[slotId]) {
+    const old = EQUIP[slotId];
+    if (!invAdd({ ...old, equipped:false, qty:1, stackable:false })) return; // sac plein, on annule
+  }
+  EQUIP[slotId] = { ...item };
+  COMPENDIUM_BAG[i] = null;
+  optTargetSlot = slotId;
+  hud();
+  renderInventory();
+  renderOptimization();
 }
 function unequip(slotId) {
   const e = EQUIP[slotId]; if (!e) return;

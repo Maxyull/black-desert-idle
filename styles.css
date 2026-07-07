@@ -1342,8 +1342,10 @@
   /* onglets d'inventaire (Normal/Opti/Trésors/Conso/RNG, 2026-07-14, demande explicite : "met sur
      la meme ligne... avec les cadenas au dessus au milieu") -- même grille stricte à 5 colonnes que
      les onglets de région ci-dessus, jamais de retour à la ligne */
-  #invCatTabs { display:grid; grid-template-columns:repeat(5, 1fr); gap:2px; margin-bottom:8px; }
+  #invCatTabs { display:grid; grid-template-columns:repeat(6, 1fr); gap:2px; margin-bottom:8px; }
   #invCatTabs .catTab { position:relative; padding:6px 2px; font-size:9px; min-width:0; overflow:visible; }
+  /* onglet Compendium intégré à l'inventaire (2026-07-14) -- bouton d'optimisation directe par case */
+  .compOptBtn { position:absolute; bottom:1px; right:1px; font-size:9px; opacity:.85; }
   /* le libellé (pas le bouton) porte la troncature -- le bouton reste overflow:visible pour ne
      jamais rogner le badge cadenas qui dépasse au-dessus */
   .zoneTierLabel { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
