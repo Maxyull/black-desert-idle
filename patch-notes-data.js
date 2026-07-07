@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V270', d:'15/07/2026 01:00', name:{fr:'Compendium via menu, retrait Lifeskill, stats réorganisées', en:'Compendium via menu, Lifeskill removed, stats reorganized'}, fr:[
+      {t:'change', sub:'inventaire', tx:'Dans le Compendium, cliquer un objet ouvre désormais le même menu que le reste du sac, avec un bouton "Mettre en optimisation" explicite (au lieu d\'équiper directement en silence)'},
+      {t:'change', sub:'systeme', tx:'Retrait complet de l\'équipement "Lifeskill" (jamais utilisé en jeu, verrouillé depuis son introduction)'},
+      {t:'change', sub:'interface', tx:'"Conseil de stuff" repositionné entre le bouton d\'optimisation et les contrôles d\'auto-optimisation, sans son ancien titre de catégorie'},
+      {t:'change', sub:'interface', tx:'Le cadre Niveau/PA/PD/GS est restylisé en carré compact, calé sur la largeur des 3 emplacements d\'arme'},
+      {t:'change', sub:'interface', tx:'Dans la carte Statistiques : Kills/min, Monstres tués (renommé depuis Loups abattus) et Objets ramassés sont déplacés dans "Stats de la zone" ; les autres stats passent en 3 colonnes (mot / abréviation / valeur)'},
+    ], en:[
+      {t:'change', sub:'inventaire', tx:'In the Compendium, clicking an item now opens the same menu as the rest of the bag, with an explicit "Load into enhancement" button (instead of silently equipping)'},
+      {t:'change', sub:'systeme', tx:'Complete removal of the "Lifeskill" gear panel (never used in-game, locked since its introduction)'},
+      {t:'change', sub:'interface', tx:'"Gear advice" repositioned between the enhancement button and the auto-enhancement controls, without its old category title'},
+      {t:'change', sub:'interface', tx:'The Level/AP/DP/GS frame is restyled into a compact square, matching the width of the 3 weapon slots'},
+      {t:'change', sub:'interface', tx:'In the Statistics card: Kills/min, Monsters slain and Items looted are moved into "Farming zone stats"; the remaining stats switch to 3 columns (word / abbreviation / value)'},
+    ] },
   { v:'V269', d:'15/07/2026 00:00', name:{fr:'Compendium en grand onglet, catégories réorganisées', en:'Compendium as a main tab, categories reorganized'}, fr:[
       {t:'change', sub:'inventaire', severity:'major', tx:'Le Compendium (sac protégé) devient un 3e onglet principal, au même niveau qu\'Inventaire/Assemblage, avec sa propre grille en grand format — ce n\'est plus une simple catégorie dans l\'onglet Inventaire'},
       {t:'change', sub:'inventaire', tx:'La catégorie "Trésors" est remontée avant "Consommable"'},
