@@ -188,7 +188,18 @@ const ZONES = [
     tint:{ a:'#38452e', b:'#33402a', dry:'#3f4c33' }, tones:['#607a45','#546c3c','#6e8a50'], alphaTone:'#3c4e2a',
     loot:{ trash:{name:'Défense d\'orc',val:74,ch:1}, mat:{name:'Pierre de Caphras',val:9,ch:.08},
       jackpot:{name:'Ceinture Asula',val:17850,ch:.0009,ap:6}, craft:{name:'Fragment de mémoire',ch:.005} } },
-  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:269, reqDP:148, mob:'Sectateur d\'Elric',
+  // reqDP abaissé de 148 à 91 le 2026-07-14 (demande explicite : "regule l'acces a sanctuaire d'elric
+  // avec un stuff vert +15 en moyenne") : simulation d'un stuff COMPLET de palier vert/Yuria (3 armes
+  // + 4 armures + 6 bijoux, chacun depuis SA zone verte réelle, formule GEAR_ROLE, + stats innées
+  // S.pa/S.dp) à +15 -- la PD était le facteur totalement bloquant (61 PD dispo contre 148 requis,
+  // ratio 0.41, ZONE DANGEREUSE) alors que la PA (206 dispo / 269 requis, ratio 0.77) était déjà
+  // tout juste en ZONE DIFFICILE. reqAP inchangé (n'était pas le problème). reqDP=91 est le PLANCHER
+  // imposé par testZoneMonotonicity (ne peut pas descendre sous le reqDP de Base de Bashim, la zone
+  // verte juste avant dans l'ordre réel de farm, voir GEAR_TIERS) -- ramène le ratio PD à 0.67 (ZONE
+  // DIFFICILE, accessible mais encore risqué), cohérent avec les autres paliers d'entrée de zone déjà
+  // calibrés pareil (voir Mine de Fer Abandonnée ci-dessus). Ne touche pas Forêt de Polly (dernière
+  // zone du jeu, demande explicite de ne pas y toucher) ni les 2 autres zones Mediah (Kratuga/Mânes).
+  { name:'Sanctuaire Elric', tier:'Mediah — Early', reqAP:269, reqDP:91, mob:'Sectateur d\'Elric',
     hpPer:596, dmg:73, xp:300,
     tint:{ a:'#3d3545', b:'#383040', dry:'#453c4e' }, tones:['#7a6a9a','#6c5d8a','#8878aa'], alphaTone:'#4a3e62',
     // % de la "Pierre concentrée" (matériau réel dropé ici, voir tierMat dans rollDrops — le nom
@@ -199,8 +210,10 @@ const ZONES = [
       jackpot:{name:'Anneau de Cadry',val:24200,ch:.0006,ap:6}, craft:{name:'Marbre du Dieu déchu',ch:.0035} } },
   // les 3 dernières zones du jeu (Kratuga/Mânes/Polly) étaient toutes identiques à 320/175
   // (plafond de fin de jeu) -- lissées le 2026-07-11 (demande explicite : "lisse les req des 3
-  // dernière zone du jeu") en une montée linéaire depuis Sanctuaire Elric (269/148) jusqu'au même
-  // plafond 320/175, désormais atteint seulement à la toute dernière zone (Forêt de Polly, inchangée)
+  // dernière zone du jeu") en une montée linéaire depuis Sanctuaire Elric (269/148 à l'époque,
+  // désormais 269/91 en PD depuis le rééquilibrage du 2026-07-14 ci-dessus -- ce lissage ne touchait
+  // que Kratuga/Mânes/Polly, restés inchangés) jusqu'au même plafond 320/175, désormais atteint
+  // seulement à la toute dernière zone (Forêt de Polly, inchangée)
   { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:286, reqDP:157, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
