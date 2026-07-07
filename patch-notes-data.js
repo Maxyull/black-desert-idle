@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V291', d:'16/07/2026 13:00', name:{fr:'Tooltip admin précisé, podium boss déplacé', en:'Clearer admin tooltip, boss podium moved'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'étiquette ADMIN (visible uniquement par l\'admin, sur sa propre zone) affiche désormais "Un admin est ici" au survol, moins ambigu'},
+      {t:'change', sub:'combat', tx:'Le podium de récompenses World Boss s\'affiche désormais après le calendrier hebdomadaire complet, au lieu d\'être coincé juste sous le décompte du prochain spawn'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The ADMIN tag (visible only to the admin, on their own zone) now shows "An admin is here" on hover, less ambiguous'},
+      {t:'change', sub:'combat', tx:'The World Boss reward podium now displays after the full weekly calendar, instead of being squeezed right under the next-spawn countdown'},
+    ] },
   { v:'V290', d:'16/07/2026 12:00', name:{fr:'Forêt de Polly ajustée', en:'Polly Forest adjusted'}, fr:[
       {t:'change', sub:'zones', tx:'Forêt de Polly : Défense requise resserrée pour qu\'un stuff moyen arrive tout juste en zone difficile au lieu de dangereuse'},
     ], en:[
