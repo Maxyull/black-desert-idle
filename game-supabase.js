@@ -669,6 +669,25 @@ async function refreshZonePlayerCounts() {
     if (typeof updateZonePlayerCountBadges === 'function') updateZonePlayerCountBadges();
   } catch(e) {}
 }
+// étiquette "admin ici" visible par TOUS les joueurs (2026-07-16, demande explicite : "ettiquette
+// admin montré a tout le monde") -- avant, purement client-side (isAdmin() + isCurrent, voir
+// buildZoneList) : ne pouvait s'afficher QUE sur le propre client de l'admin. get_admin_zone()
+// (nouvelle fonction serveur, voir migration 20260716120000) renvoie l'index de zone où se trouve
+// le SEUL compte admin (ou null), sans exposer l'identité d'aucun autre joueur -- même rafraîchi
+// que zonePlayerCounts, ne reconstruit la liste de zones QUE si la valeur a changé.
+let adminZoneIdx = null;
+async function refreshAdminZone() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.rpc('get_admin_zone', { p_window_seconds: 90 });
+    if (error) return;
+    const next = (data === null || data === undefined) ? null : Number(data);
+    if (next !== adminZoneIdx) {
+      adminZoneIdx = next;
+      if (typeof buildZoneList === 'function') buildZoneList();
+    }
+  } catch(e) {}
+}
 async function refreshOnlineCounter() {
   if (!sb) return;
   try {
@@ -692,6 +711,8 @@ async function refreshRegisteredCounter() {
 setInterval(heartbeatPresence, 20000);
 setInterval(refreshOnlineCounter, 20000);
 setInterval(refreshZonePlayerCounts, 20000);
+setInterval(refreshAdminZone, 20000);
+refreshAdminZone();
 setInterval(refreshLiveBoss, 20000);
 refreshRegisteredCounter();
 setInterval(refreshRegisteredCounter, 5 * 60000);

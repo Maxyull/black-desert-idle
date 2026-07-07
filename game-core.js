@@ -3516,15 +3516,13 @@ function buildZoneList() {
       const pCount = (typeof zonePlayerCounts !== 'undefined' && zonePlayerCounts[i]) || 0;
       const hasUpgrade = upgradeZones.has(i);
       // étiquette "admin ici" (2026-07-15, demande explicite : "ajoute a coté des joueurs sur zone
-      // une petite etiquette avec écris admin ici") -- purement client-side (isAdmin() + isCurrent,
-      // aucune donnée serveur supplémentaire) : get_zone_player_counts ne renvoie QUE des compteurs
-      // agrégés (voir l'audit de sécurité du 2026-07-14), jamais l'identité des joueurs par zone --
-      // ne peut donc indiquer la présence admin QUE sur le propre client de l'admin, sur SA propre zone
-      const adminHereTag = (typeof isAdmin === 'function' && isAdmin() && isCurrent)
-        // tooltip précisé le 2026-07-16 (demande explicite : "admin absolu tooltip ecrit un admin
-        // est ici") -- ancien texte "Tu es ici (vue admin)" ambigu (peut se lire comme "TU es un
-        // admin", pas assez explicite pour un autre joueur qui verrait ce badge -- même si en
-        // pratique il n'est visible que par l'admin lui-même, voir le commentaire juste au-dessus)
+      // une petite etiquette avec écris admin ici") -- visible par TOUS les joueurs depuis le
+      // 2026-07-16 (demande explicite : "ettiquette admin montré a tout le monde") : avant, purement
+      // client-side (isAdmin() + isCurrent), ne pouvait s'afficher que sur le propre client de
+      // l'admin. adminZoneIdx (game-supabase.js, alimenté par get_admin_zone() côté serveur, voir sa
+      // migration) renvoie l'index de zone où se trouve le SEUL compte admin, sans exposer
+      // l'identité d'aucun autre joueur — même principe de minimisation que zonePlayerCounts.
+      const adminHereTag = (typeof adminZoneIdx !== 'undefined' && adminZoneIdx === i)
         ? `<span class="zAdminTag" title="${LANG==='fr'?'Un admin est ici':'An admin is here'}">ADMIN</span>` : '';
       row.innerHTML =
         `<span class="zname">${tr(z.name)}</span>` +
