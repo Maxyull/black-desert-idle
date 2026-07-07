@@ -1332,13 +1332,17 @@ function convertPoussiereToCaphras() {
 }
 $('btnConvertCaphras').onclick = convertPoussiereToCaphras;
 
-// suggestion : quelle pièce optimiser en priorité pour atteindre la zone suivante
+// suggestion : quelle pièce optimiser en priorité pour atteindre la zone suivante -- réduite au
+// minimum d'info le 2026-07-15 (demande explicite : "affiche les idée de stuff... avec le moins
+// d'info possible avec écris au dessus recommandé:") -- avant, une phrase complète avec le déficit
+// PA/PD et le gain estimé ; désormais juste un label "Recommandé :" suivi du nom de la pièce et de
+// son palier d'enchantement cible, sans justification ni chiffres
 function renderOptSuggestions() {
   const nextZone = ZONES[zoneIdx+1];
   const box = $('optSuggest');
-  if (!nextZone) { box.textContent = LANG==='fr' ? 'Zone finale déjà atteinte — continuez à optimiser librement.' : 'Final zone already reached — keep enhancing freely.'; return; }
+  if (!nextZone) { box.innerHTML = ''; return; }
   const avail = optimizableList();
-  if (!avail.length) { box.textContent = ''; return; }
+  if (!avail.length) { box.innerHTML = ''; return; }
 
   const apDeficit = Math.max(0, nextZone.reqAP - apEff());
   const dpDeficit = Math.max(0, nextZone.reqDP - totalDP());
@@ -1355,16 +1359,11 @@ function renderOptSuggestions() {
     const gain = focusAP ? e.ap*step : (e.dp||0)*step;
     if (gain > bestGain) { bestGain = gain; best = { k, e, lvl }; }
   }
-  if (!best || bestGain <= 0) { box.textContent = LANG==='fr' ? 'Toutes vos pièces pertinentes sont au niveau maximum.' : 'All relevant pieces are already at max level.'; return; }
+  if (!best || bestGain <= 0) { box.innerHTML = ''; return; }
 
   const arrow = ENH_NAMES[best.lvl] + '→' + ENH_NAMES[best.lvl+1];
-  const statLbl = focusAP ? 'PA' : 'PD';
-  const need = focusAP ? Math.round(apDeficit) : Math.round(dpDeficit);
-  if (LANG === 'fr') {
-    box.innerHTML = `🔥 Pour <b style="color:var(--gold)">${tr(nextZone.name)}</b>, il te manque ~${need} ${statLbl} :<br>${tr(best.e.name)} (${arrow}) — gain estimé <b style="color:var(--gold)">+${bestGain.toFixed(1)} ${statLbl}</b>`;
-  } else {
-    box.innerHTML = `🔥 For <b style="color:var(--gold)">${tr(nextZone.name)}</b>, you're short ~${need} ${statLbl}:<br>${tr(best.e.name)} (${arrow}) — estimated gain <b style="color:var(--gold)">+${bestGain.toFixed(1)} ${statLbl}</b>`;
-  }
+  const lbl = LANG==='fr' ? 'Recommandé' : 'Recommended';
+  box.innerHTML = `<div class="optSuggestLbl">${lbl} :</div><div class="optSuggestPick">${tr(best.e.name)} <span class="optSuggestArrow">${arrow}</span></div>`;
 }
 
 // ---------- table de loot de la zone active (ou en aperçu via le bouton "Voir"), avec % réels ----------

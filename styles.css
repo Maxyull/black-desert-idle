@@ -816,7 +816,11 @@
     width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
     font-family:inherit; font-size:11px; padding:5px 6px;
   }
-  #optSuggest { margin-top:8px; padding-top:7px; border-top:1px solid #2c2a33; font-size:10.5px; color:var(--ink-dim); line-height:1.5; }
+  #optSuggest { margin-top:8px; padding-top:7px; border-top:1px solid #2c2a33; }
+  /* minimisé le 2026-07-15 (demande explicite) : juste un label + le nom de la pièce, plus de phrase */
+  .optSuggestLbl { font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); }
+  .optSuggestPick { font-size:11.5px; color:var(--ink); margin-top:2px; }
+  .optSuggestArrow { color:var(--gold); }
   #optFailstack { font-size:11px; color:var(--ink-dim); margin-top:6px; }
   #naderrLbl { font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--ink-dim); margin-top:9px; }
   #naderrBand { display:flex; gap:3px; margin-top:4px; }
