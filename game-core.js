@@ -217,7 +217,15 @@ const ZONES = [
   // désormais 269/101 en PD depuis le rééquilibrage du 2026-07-14 ci-dessus -- ce lissage ne
   // touchait que Kratuga/Mânes/Polly, restés inchangés) jusqu'au même plafond 320/175, désormais
   // atteint seulement à la toute dernière zone (Forêt de Polly, inchangée)
-  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:286, reqDP:157, mob:'Uluan',
+  // reqDP abaissé de 157 à 125 le 2026-07-15 (demande explicite, valeurs RÉELLES fournies par
+  // capture d'écran : "selon mon stuff donc moyenne full pri change les pa pd de la zone kratuga
+  // pour tout juste difficile" -- stuff moyen full PRI du joueur : 301 PA / 78 PD) : à ces valeurs,
+  // le PD était le facteur totalement bloquant (78/157 = 0.497, ZONE DANGEREUSE) alors que le PA
+  // (301/286 = 1.05, déjà ZONE ADAPTÉE) n'était pas le problème -- reqAP inchangé. reqDP=125 est le
+  // PLANCHER imposé par testZoneMonotonicity (ne peut pas descendre sous le reqDP de Sanctuaire
+  // Elric, 101, la zone juste avant dans l'ordre réel de farm) qui ramène le ratio PD à 0.624 (ZONE
+  // DIFFICILE, "tout juste" comme demandé). Ne touche pas Planque des Mânes/Forêt de Polly.
+  { name:'Ruines de Kratuga', tier:'Mediah — Early', reqAP:286, reqDP:125, mob:'Uluan',
     hpPer:894, dmg:110, xp:450,
     tint:{ a:'#4a3d30', b:'#44382c', dry:'#524436' }, tones:['#b09060','#a08252','#c0a070'], alphaTone:'#6e5636',
     loot:{ trash:{name:'Relique d\'Hystria',val:105,ch:1}, mat:{name:'Pierre de Caphras',val:6,ch:.09},
@@ -670,6 +678,17 @@ const ICO_CRON_STONE = svgIcon(
 // codé en dur, resté à l'ancien taux après le passage à 1% le 2026-07-06 — une seule source de
 // vérité désormais, utilisée à la fois par le tirage réel et par son affichage)
 const CRON_STONE = { name:'Pierre de Cron', key:'mat_cron_stone', icon:ICO_CRON_STONE, color:'#4ecdc4', ch:0.01 };
+// coût en Pierres de Cron par palier de la pièce protégée (2026-07-15, demande explicite : "pierre
+// de cron utilisation gris 1 blanc 2 vert 3 bleu 4") -- avant, une protection coûtait toujours 1
+// pierre quel que soit le palier de l'objet. Voir cronStoneCostForItem/attemptEnhance.
+const CRON_STONE_COST_BY_TIER = { grey:1, white:2, green:3, blue:4 };
+// coût pour protéger CET objet (déduit de sa couleur de palier, comme itemTierIdx) -- 1 par défaut
+// si la couleur ne correspond à aucun palier connu (filet de sécurité, ne devrait pas arriver)
+function cronStoneCostForItem(item) {
+  if (!item) return 1;
+  const tier = GEAR_TIERS.find(t => t.color === item.color);
+  return tier ? (CRON_STONE_COST_BY_TIER[tier.grade] || 1) : 1;
+}
 // Coeur de Vell : cœur stylisé bleu abyssal, lueur cyan pulsante — récompense rare du boss Vell
 const ICO_COEUR_VELL = svgIcon(
   '<path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0112 6.5 5.5 5.5 0 0121.5 12c-2.5 4.5-9.5 9-9.5 9z" fill="#2a5a78"/>' +
@@ -965,6 +984,13 @@ function trackEnhPeak(name, lvl) {
 // niveau 61, plafonné ensuite) + bonus de Compendium (points de % additifs entre eux).
 function levelSpdPct() { return Math.max(0, Math.min(S.lvl,61)-1) / 60 * 75; }
 function totalSpdPct() { return levelSpdPct() + compendiumPct(); }
+// variantes "pour un niveau HYPOTHÉTIQUE" (2026-07-15, demande explicite : "ce qu'on gagne par
+// lvl... des qu'on prend un lvl les info change en fonction") -- réutilisées par l'onglet
+// Statistiques > Niveaux pour prévisualiser les 5 niveaux avant/après le niveau actuel, sans
+// dépendre de S.lvl. hpMaxFor() suppose la progression FIXE +8 PV/niveau depuis 100 à lvl 1 (voir
+// S.hpMax += 8 dans le level-up, aucune autre source ne modifie S.hpMax).
+function levelSpdPctFor(lvl) { return Math.max(0, Math.min(lvl,61)-1) / 60 * 75; }
+function hpMaxFor(lvl) { return 100 + 8*Math.max(0, lvl-1); }
 function totalDmgPct() { return compendiumPct(); } // le DMG ne monte qu'avec le Compendium, pas le niveau
 
 // Esquive : dépend du niveau du monstre RELATIF au joueur (via dpRatio, comme le reste du combat).
@@ -3244,6 +3270,9 @@ function gainXp(n) {
     pushNotif('⭐', LANG==='fr'?'Niveau supérieur':'Level up', (LANG==='fr'?'Niveau ':'Level ')+S.lvl, 'info');
     // log "pour le fun" (demande explicite du 2026-07-08 : "spam le channel, fais toi plaisir")
     logToDiscord('⭐ Niveau supérieur', `**${myPseudo||'Joueur'}** passe niveau **${S.lvl}** (SPD +${Math.round(levelSpdPct())}%)`, 0x9cc9e8);
+    // onglet Statistiques > Niveaux (2026-07-15, demande explicite : "des qu'on prend un lvl les
+    // info change en fonction") -- si l'onglet est déjà ouvert, le fait suivre le level-up en direct
+    if (statsTab === 'levels') renderStatsLevelsPane();
   }
 }
 
@@ -3358,10 +3387,14 @@ let statsTab = 'perso';
 function renderStatsTabs() {
   const el = $('statsTabTabs'); if (!el) return;
   el.querySelectorAll('.catTab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === statsTab));
-  const personaPane = $('statsPersoPane'), recoPane = $('statsRecoPane');
+  const personaPane = $('statsPersoPane'), recoPane = $('statsRecoPane'), levelsPane = $('statsLevelsPane');
   if (personaPane) personaPane.style.display = statsTab === 'perso' ? '' : 'none';
   if (recoPane) recoPane.style.display = statsTab === 'reco' ? '' : 'none';
+  if (levelsPane) levelsPane.style.display = statsTab === 'levels' ? '' : 'none';
   if (statsTab === 'reco' && recoPane && !recoPane.dataset.rendered) { renderStatsRecoPane(); recoPane.dataset.rendered = '1'; }
+  // pas de garde "déjà rendu" ici (contrairement à Reco) : demande explicite "des qu'on prend un
+  // lvl les info change en fonction" -- doit toujours refléter le niveau ACTUEL au moment de l'affichage
+  if (statsTab === 'levels') renderStatsLevelsPane();
 }
 (function wireStatsTabTabs() {
   const el = $('statsTabTabs'); if (!el) return;
@@ -3389,6 +3422,27 @@ function renderStatsRecoPane() {
   el.querySelectorAll('.statsRecoRow').forEach(row => {
     row.onclick = () => { const zi = parseInt(row.dataset.zi,10); if (atVelia || zi !== zoneIdx) travelTo(zi); };
   });
+}
+// onglet "Niveaux" de la carte Statistiques (2026-07-15, demande explicite : "ce qu'on gagne par
+// lvl (5 avant 5 apres et celui + le notre) en stats, des qu'on prend un lvl les info change en
+// fonction") -- 5 niveaux avant/après le niveau ACTUEL, ligne du niveau courant mise en évidence.
+// PAS de garde "déjà rendu" (contrairement à renderStatsRecoPane) : appelée à chaque affichage de
+// l'onglet ET après un level-up (voir le bloc S.lvl++ un peu plus haut) pour toujours refléter le
+// niveau courant, comme demandé explicitement.
+function renderStatsLevelsPane() {
+  const el = $('statsLevelsPane'); if (!el) return;
+  const cur = S.lvl, maxLvl = LEVEL_XP_TABLE.length - 1;
+  const from = Math.max(1, cur - 5), to = Math.min(maxLvl, cur + 5);
+  let rows = '';
+  for (let lvl = from; lvl <= to; lvl++) {
+    const isCur = lvl === cur;
+    rows += `<div class="row statsLevelRow${isCur?' current':''}">` +
+      `<span>${LANG==='fr'?'Niv.':'Lvl'} ${lvl}${isCur?(LANG==='fr'?' — toi':' — you'):''}</span>` +
+      `<span class="v">${LANG==='fr'?'PV':'HP'} ${fmt(hpMaxFor(lvl))} · SPD +${Math.round(levelSpdPctFor(lvl))}% · XP ${fmt(xpNeededFor(lvl))}</span></div>`;
+  }
+  el.innerHTML = `<div class="admHint">${LANG==='fr'
+    ? '5 niveaux avant et après le tien — PV de base (hors équipement), bonus de Vitesse et XP requise pour CE niveau.'
+    : '5 levels before and after yours — base HP (gear excluded), Speed bonus, and XP required for THAT level.'}</div>` + rows;
 }
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
