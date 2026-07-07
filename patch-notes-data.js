@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V274', d:'15/07/2026 05:00', name:{fr:'Coffret secret : les 3 Trésors régionaux', en:'Secret box: the 3 regional treasures'}, fr:[
+      {t:'change', sub:'objets', tx:'"Carte de Heidel/Calpheon" renommés "Trésor de Heidel/Calpheon" (même famille que Trésor de Velia). Le Coffret secret demande désormais 1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon au lieu de Bout+matériau+bijou — pas encore complétable tant que Heidel/Calpheon restent verrouillés'},
+    ], en:[
+      {t:'change', sub:'objets', tx:'"Heidel/Calpheon Card" renamed "Heidel/Calpheon Treasure" (same family as Velia Treasure). The Secret box now requires 1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure instead of Piece+material+jewelry — not completable yet while Heidel/Calpheon remain locked'},
+    ] },
   { v:'V273', d:'15/07/2026 04:00', name:{fr:'Aperçu des cartes Heidel et Calpheon', en:'Heidel and Calpheon card preview'}, fr:[
       {t:'new', sub:'objets', tx:'Le palier verrouillé Heidel annonce désormais sa future récompense "Carte de Heidel" (visible en survolant l\'onglet 🔒) — pareil pour Calpheon avec "Carte de Calpheon". Un couple de recettes "100 fragment → 1 carte" grisées apparaît aussi dans Assemblage, prêtes pour l\'ouverture de ces paliers'},
     ], en:[
