@@ -1477,38 +1477,29 @@ function sellStack(i) {
   if (s.kind === 'gear' || s.kind === 'jackpot') ensureCompendiumProtection(s.name);
   hud();
 }
-function sellAllOfKind(kind) {
-  let total = 0;
-  const soldItems = [];
-  for (let i = 0; i < INV_SIZE; i++) {
-    const s = INV[i];
-    if (s && s.kind === kind) { total += s.val * s.qty; soldItems.push({ ...s }); INV[i] = null; }
+// action combinée "Équiper → Vendre → Compendium" (2026-07-14, demande explicite) : enchaîne
+// equipBestGear() puis sellWorseThanEquipped() (qui protège déjà le 1er exemplaire de chaque type
+// dans le Compendium avant de vendre le reste, voir son commentaire) en une seule action. Remplace
+// les anciens boutons "Vendre trash"/"Vendre mat."/"Trier" (retirés, devenus inutiles avec cette
+// action unique) et leurs fonctions associées (sellAllOfKind, logSellMats).
+function equipSellCompendium() {
+  const equipped = equipBestGear();
+  const { count, total, divertedCount } = sellWorseThanEquipped();
+  return { equipped, sold: count - divertedCount, total, diverted: divertedCount };
+}
+$('btnEquipSellCompendium').onclick = () => {
+  const { equipped, sold, total, diverted } = equipSellCompendium();
+  $('btnBuyBackWorse').disabled = !lastWorseSaleSold || !lastWorseSaleSold.length;
+  const msg = $('equipBestMsg');
+  if (msg) {
+    const parts = [];
+    if (equipped > 0) parts.push(LANG==='fr' ? `${equipped} équipée${equipped>1?'s':''}` : `${equipped} equipped`);
+    if (sold > 0) parts.push(LANG==='fr' ? `${sold} vendue${sold>1?'s':''} (+${fmt(total)} silver)` : `${sold} sold (+${fmt(total)} silver)`);
+    if (diverted > 0) parts.push(LANG==='fr' ? `${diverted} protégée${diverted>1?'s':''} 📖` : `${diverted} protected 📖`);
+    msg.textContent = parts.length ? parts.join(' · ') : (LANG==='fr' ? 'Déjà optimal — rien à faire' : 'Already optimal — nothing to do');
+    msg.className = parts.length ? 'ok' : '';
+    setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
-  addSilver(total, 'sell', kind);
-  if (kind === 'material' && soldItems.length) logSellMats(soldItems, total);
-  hud();
-}
-// journal des ventes groupées de matériaux : permet à l'admin de rembourser un clic accidentel
-// sur "Vendre mat" (voir panneau admin) — best-effort, ne bloque jamais la vente si ça échoue
-async function logSellMats(items, total) {
-  if (!sb || !currentUser) return;
-  try { await sb.rpc('log_sell_mats', { p_items: items, p_total: total, p_pseudo: myPseudo || null }); } catch (e) {}
-}
-$('sellTrash').onclick = () => {
-  if (!confirm(LANG==='fr' ? 'Vendre tout le rebut ?' : 'Sell all trash?')) return;
-  sellAllOfKind('trash'); refreshInvUI();
-};
-$('sellMats').onclick = () => {
-  if (!confirm(LANG==='fr' ? 'Vendre tous les matériaux ?' : 'Sell all materials?')) return;
-  sellAllOfKind('material'); refreshInvUI();
-};
-$('sortInv').onclick = () => {
-  const items = INV.filter(s => s).sort((a,b) => {
-    const order = { jackpot:0, craft:1, material:2, trash:3 };
-    return (order[a.kind]-order[b.kind]) || a.name.localeCompare(b.name);
-  });
-  for (let i = 0; i < INV_SIZE; i++) INV[i] = items[i] || null;
-  refreshInvUI();
 };
 
 // passe lootPreviewIdx explicitement : un simple renderLootTable() remettrait le loot affiché
