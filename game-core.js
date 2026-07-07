@@ -294,7 +294,14 @@ const ZONES = [
     tint:{ a:'#3c3c34', b:'#36362f', dry:'#44443a' }, tones:['#8a8a68', '#78785a', '#9a9a78'], alphaTone:'#565640',
     loot:{ trash:{name:'Insigne de Bashim',val:92,ch:1}, mat:{name:'Pierre de Caphras',val:8,ch:.058},
       jackpot:{name:'Boucle Asula',val:22300,ch:.00126,ap:9}, craft:{name:'Fragment de mémoire',ch:.003} } },
-  { name:'Forêt de Polly', tier:'Mediah — Early', reqAP:320, reqDP:175, mob:'Troll de Polly',
+  // reqDP abaissé de 175 à 170 le 2026-07-16 (demande explicite, capture d'écran : "avec ce stuff en
+  // moyenne duo je dois tout juste avoir acces a polly en difficile" -- stuff réel du joueur :
+  // PA 438 / PD 104). Le PA (438/320 = 1.369, largement ZONE ADAPTÉE) n'est pas le problème --
+  // reqAP inchangé (Polly reste le plafond de fin de jeu à 320). Le PD (104/175 = 0.594) était le
+  // facteur bloquant, tout juste sous le seuil ZONE DANGEREUSE (0.6) -- reqDP=170 ramène le ratio à
+  // 0.612 (ZONE DIFFICILE, "tout juste" comme demandé). Polly est la DERNIÈRE zone de sa colonne
+  // monotone (après Planque des Mânes, reqDP=129) : aucune zone suivante à respecter, pas de cascade.
+  { name:'Forêt de Polly', tier:'Mediah — Early', reqAP:320, reqDP:170, mob:'Troll de Polly',
     hpPer:1120, dmg:140, xp:560,
     tint:{ a:'#25382c', b:'#213228', dry:'#2c4034' }, tones:['#3f6e50', '#356045', '#4a805c'], alphaTone:'#274a34',
     loot:{ trash:{name:'Mousse de Polly',val:135,ch:1}, mat:{name:'Pierre de Caphras',val:4,ch:.055},
