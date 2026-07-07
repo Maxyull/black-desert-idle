@@ -2839,25 +2839,31 @@ function craftTreasurePiece(recipe) {
 // (référence × 300) reste loin en dessous de la conversion complète en Trésor de Velia (référence
 // × 10000 pour 100 morceaux) : un bonus notable mais qui ne concurrence pas la vraie progression du
 // Trésor, seulement un moyen de valoriser un bijou/matériau isolé qu'on aurait sinon juste vendu.
+// Ingrédients changés le 2026-07-15 (demande explicite : "tresor de velia / tresor de heilde /
+// tresors de calpheon / donne coffret secret") -- c'était le sens original de "combiner 3 cartes
+// différentes" demandé bien plus tôt dans la session : les 3 Trésors RÉGIONAUX complets (pas Bout +
+// matériau + bijou comme la 1ère version). Tant que Heidel/Calpheon restent verrouillés (voir
+// TIER_PREVIEW_CARD), cette recette reste non complétable EN PRATIQUE -- ce n'est pas un bug, ces 2
+// ingrédients n'existent tout simplement pas encore en jeu.
 const SECRET_COMBO_SILVER_MULT = 300;
 function secretComboReady() {
-  return invSlotByKey('treasure_bout_velia') !== -1
-    && INV.some(s => s && s.kind === 'material')
-    && INV.some(s => s && s.kind === 'jackpot');
+  return invSlotByKey('treasure_velia') !== -1
+    && invSlotByKey('treasure_heidel') !== -1
+    && invSlotByKey('treasure_calpheon') !== -1;
 }
 function craftSecretCombo() {
-  const bIdx = invSlotByKey('treasure_bout_velia');
-  const mIdx = INV.findIndex(s => s && s.kind === 'material');
-  const jIdx = INV.findIndex(s => s && s.kind === 'jackpot');
-  if (bIdx === -1 || mIdx === -1 || jIdx === -1) return false;
-  invRemoveAt(bIdx, 1); invRemoveAt(mIdx, 1); invRemoveAt(jIdx, 1);
+  const vIdx = invSlotByKey('treasure_velia');
+  const hIdx = invSlotByKey('treasure_heidel');
+  const cIdx = invSlotByKey('treasure_calpheon');
+  if (vIdx === -1 || hIdx === -1 || cIdx === -1) return false;
+  invRemoveAt(vIdx, 1); invRemoveAt(hIdx, 1); invRemoveAt(cIdx, 1);
   const reward = Math.round(referenceGearVal() * SECRET_COMBO_SILVER_MULT);
   // catégorie 'loot' (pas 'craft', absente de la whitelist CHECK de silver_ledger posée par
   // l'audit de sécurité du 2026-07-14 -- voir supabase/migrations/20260714171000_...) : un
   // gain via cette recette reste un revenu en jeu, la catégorie la plus proche déjà autorisée
   addSilver(reward, 'loot', 'Coffret secret');
   floatTxt(P.x,P.y,90,'🎁 +'+fmt(reward),{gold:true});
-  logToDiscord('🎁 Coffret secret', `**${myPseudo||'Joueur'}** combine 3 objets différents pour ${fmt(reward)} silver`, 0xe8c96a);
+  logToDiscord('🎁 Coffret secret', `**${myPseudo||'Joueur'}** combine les 3 Trésors régionaux pour ${fmt(reward)} silver`, 0xe8c96a);
   renderInventory();
   return true;
 }
@@ -2875,8 +2881,8 @@ function renderTreasureCraftPanel() {
   }).join('');
   const secretOk = secretComboReady();
   const secretRow = `<button class="craftRecipeBtn${secretOk?' ready':''}" data-kind="secret" ${secretOk?'':'disabled'} ` +
-    `title="${LANG==='fr'?'1 Bout du trésor + 1 matériau + 1 bijou (tous différents) → silver':'1 Treasure piece + 1 material + 1 jewelry piece (all different) → silver'}">` +
-    `🧩+💎+💍 → 🎁 ${LANG==='fr'?'Coffret secret':'Secret box'}</button>`;
+    `title="${LANG==='fr'?'1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon → silver (Heidel/Calpheon pas encore débloqués)':'1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → silver (Heidel/Calpheon not unlocked yet)'}">` +
+    `🗺️+🗺️+🗺️ → 🎁 ${LANG==='fr'?'Coffret secret':'Secret box'}</button>`;
   // recettes verrouillées "100 fragment → 1 carte" pour Heidel/Calpheon (2026-07-15, demande
   // explicite : "ajoute 2 crafte /100 > carte") -- aucun fragment n'est obtenable tant que ces
   // paliers restent verrouillés (voir TIER_PREVIEW_CARD/ZONE_TIERS), donc affichées grisées comme
@@ -3245,15 +3251,18 @@ let zoneTier = 'early';
 // 5 paliers de régions (voir roadmap.md pour le détail des zones prévues par palier) —
 // seul "Early / Velia" est en jeu pour l'instant, les autres sont verrouillés en attendant
 // d'être construits (demande explicite du 2026-07-05)
-// cartes-teaser des 2 prochains paliers (2026-07-15, demande explicite : "créer 2 nouvelles cartes
-// qui se loot dans les prochaines zones heidel et calpheon") -- Heidel/Calpheon restent verrouillés
-// (zones pas encore construites, confirmé "zone bloqué"), ces objets ne sont donc PAS obtenables
-// pour l'instant : juste un aperçu affiché dans le tooltip du palier verrouillé (voir
-// renderZoneTierTabs) et un couple de recettes verrouillées dans Assemblage (voir
-// renderTreasureCraftPanel/CARD_FRAGMENT_RECIPES) prêtes pour le jour où le palier ouvrira.
+// trésors-teaser des 2 prochains paliers (2026-07-15, demande explicite : "créer 2 nouvelles cartes
+// qui se loot dans les prochaines zones heidel et calpheon" puis renommés "tresor de heilde /
+// tresors de calpheon" -- même famille que "Trésor de Velia", pas des "cartes" séparées) --
+// Heidel/Calpheon restent verrouillés (zones pas encore construites, confirmé "zone bloqué"), ces
+// objets ne sont donc PAS obtenables pour l'instant : juste un aperçu affiché dans le tooltip du
+// palier verrouillé (voir renderZoneTierTabs) et un couple de recettes verrouillées dans Assemblage
+// (voir renderTreasureCraftPanel) prêtes pour le jour où le palier ouvrira. Le "Coffret secret" (voir
+// craftSecretCombo) combine désormais les 3 Trésors régionaux (Velia + Heidel + Calpheon) —
+// c'était le sens original de "combiner 3 cartes différentes" demandé plus tôt.
 const TIER_PREVIEW_CARD = {
-  mid: { name:'Carte de Heidel', icon:'🃏', color:'#6ea3c9' },
-  end: { name:'Carte de Calpheon', icon:'🎴', color:'#e8c96a' },
+  mid: { name:'Trésor de Heidel', icon:'🗺️', color:'#6ea3c9', key:'treasure_heidel' },
+  end: { name:'Trésor de Calpheon', icon:'🗺️', color:'#e0935a', key:'treasure_calpheon' },
 };
 const ZONE_TIERS = [
   { id:'early', icon:'🟢', label:{fr:'Velia',en:'Velia'},       locked:false },
