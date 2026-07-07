@@ -17,6 +17,11 @@ const PATCH_NOTES = [
     ], en:[
       {t:'change', sub:'zones', tx:'Polly Forest: required Defense tightened so an average gear set lands just barely in hard-zone territory instead of dangerous'},
     ] },
+  { v:'V289', d:'16/07/2026 11:30', name:{fr:'Suivi des Pierres de Cron (panel admin)', en:'Cron Stone tracking (admin panel)'}, fr:[
+      {t:'new', sub:'interface', tx:'Nouvel onglet "Pierres de Cron" dans le panneau admin (section Stats) : total farmé, ramassages, moyenne par joueur, chance de drop et rappel du coût par palier'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'New "Cron Stones" tab in the admin panel (Stats section): total farmed, pickups, average per player, drop chance and cost-per-tier reminder'},
+    ] },
   { v:'V288', d:'16/07/2026 11:00', name:{fr:'Bouton Donation, Compendium par palier, Kratuga ajustée', en:'Donation button, tiered Compendium, Kratuga adjusted'}, fr:[
       {t:'new', sub:'interface', tx:'Nouveau bouton "Donation" (verrouillé) dans le menu latéral'},
       {t:'change', sub:'interface', tx:'Le "Sac protégé" a été retiré du Compendium : il vit maintenant uniquement dans la carte Inventaire (onglet Compendium), où il était déjà accessible en double'},
