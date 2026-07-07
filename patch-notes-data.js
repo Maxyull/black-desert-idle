@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V280', d:'15/07/2026 11:00', name:{fr:'Sorts de zone : touchent aussi les packs voisins collés', en:'Zone spells: also hit touching neighbor packs'}, fr:[
+      {t:'change', sub:'combat', severity:'major', tx:'Un sort de zone ne touchait que le pack ciblé, même si d\'autres packs étaient collés juste à côté — désormais tous les packs qui se chevauchent avec la cible sont touchés, dégâts répartis pour garder un total infligé comparable (pas de multiplicateur par nombre de packs). Un pack isolé (aucun voisin collé) garde ses pleins dégâts individuels, inchangé'},
+    ], en:[
+      {t:'change', sub:'combat', severity:'major', tx:'A zone spell only hit the targeted pack, even when other packs were right next to it — now every pack that overlaps with the target also gets hit, damage shared to keep the total output comparable (no per-pack multiplier). An isolated pack (no touching neighbor) keeps its full individual damage, unchanged'},
+    ] },
   { v:'V279', d:'15/07/2026 10:00', name:{fr:'Nouveau sélecteur Équipement/Cristal', en:'New Gear/Crystal selector'}, fr:[
       {t:'new', sub:'interface', tx:'Nouveau sélecteur à bulles dans la carte Équipement, pour basculer entre la poupée d\'équipement normale et un nouvel onglet "Cristal" — 1 seul emplacement pour l\'instant, verrouillé (système de cristaux pas encore en jeu)'},
     ], en:[
