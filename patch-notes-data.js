@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V269', d:'15/07/2026 00:00', name:{fr:'Compendium en grand onglet, catégories réorganisées', en:'Compendium as a main tab, categories reorganized'}, fr:[
+      {t:'change', sub:'inventaire', severity:'major', tx:'Le Compendium (sac protégé) devient un 3e onglet principal, au même niveau qu\'Inventaire/Assemblage, avec sa propre grille en grand format — ce n\'est plus une simple catégorie dans l\'onglet Inventaire'},
+      {t:'change', sub:'inventaire', tx:'La catégorie "Trésors" est remontée avant "Consommable"'},
+      {t:'change', sub:'inventaire', tx:'La catégorie "Normal" est renommée "Équipements"'},
+    ], en:[
+      {t:'change', sub:'inventaire', severity:'major', tx:'The Compendium (protected bag) becomes a 3rd main tab, alongside Inventory/Assembly, with its own large grid — no longer just a category inside the Inventory tab'},
+      {t:'change', sub:'inventaire', tx:'The "Treasures" category is moved above "Consumable"'},
+      {t:'change', sub:'inventaire', tx:'The "Normal" category is renamed "Gear"'},
+    ] },
   { v:'V268', d:'14/07/2026 23:00', name:{fr:'Bouton "Équiper → Vendre → Compendium" verrouillé', en:'"Equip → Sell → Compendium" button locked'}, fr:[
       {t:'change', sub:'inventaire', tx:'Le bouton "Équiper → Vendre → Compendium" est temporairement verrouillé (cadenas, grisé), en attente d\'une future activation — même convention que le bouton "Vente automatique"'},
     ], en:[
