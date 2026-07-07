@@ -3113,12 +3113,14 @@ function accSlotFor(it) {
 // sur les item autre que token met juste la quantité et met une icone quand c'est le prix pour le
 // loot") -- seul le trash passe encore un val>0 (voir les appels de lootLine dans dropsTick), les
 // autres kinds n'affichent plus que leur nom + ×N. Une pièce 🪙 précède le prix quand il est affiché.
+// Quantité ×N placée AVANT le prix (2026-07-15, demande explicite : "dans le loot ticker mais la
+// quantité avant le prix") -- était après.
 function lootLine(item, val, cls) {
   const t = $('lootTicker');
   if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.el.isConnected) {
     lastLootEntry.count++;
     lastLootEntry.val += val;
-    lastLootEntry.el.innerHTML = (lastLootEntry.val > 0 ? `${escapeHtml(item.name)} (🪙+${fmt(lastLootEntry.val)})` : escapeHtml(item.name)) + ` ×${lastLootEntry.count}`;
+    lastLootEntry.el.innerHTML = `${escapeHtml(item.name)} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
     return;
   }
   const div = document.createElement('div');
