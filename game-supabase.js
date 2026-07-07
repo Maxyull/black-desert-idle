@@ -94,6 +94,7 @@ function updateUserBar() {
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
   $a('btnLogout').style.display = isGuest() ? 'none' : '';
   $a('adminBox').style.display = isAdmin() ? '' : 'none';
+  const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
   // UUID copiable (utile pour l'ajout de modérateurs) — affiché pour tout compte connecté
   const uuidRow = $a('uuidRow');
   if (uuidRow) uuidRow.style.display = currentUser ? 'flex' : 'none';

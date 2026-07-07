@@ -1545,6 +1545,40 @@ $('btnEquipSellCompendium').onclick = () => {
   }
 };
 
+// outil de debug réservé à l'admin (2026-07-14, demande explicite : "ajoute un bouton dans
+// l'inventaire passer toutes les pieces équipé a une stats d'opti juste pour admin") -- passe
+// chaque pièce ÉQUIPÉE (arme/armure/bijou) directement à l'enchantement maximum (PEN). Ne touche
+// PAS S.enhAttempts/S.enhSuccess (ce ne sont pas de vraies tentatives) ni markPenMastery (éviterait
+// un faux log Discord "maîtrise PEN" et un faux déblocage de succès) -- mutation directe, aucun
+// effet de bord au-delà des pièces elles-mêmes.
+function adminMaxEnhAllEquipped() {
+  const maxLvl = ENH_NAMES.length - 1;
+  let count = 0;
+  for (const slotId of Object.keys(EQUIP)) {
+    const item = EQUIP[slotId];
+    if (item && item.optimizable && (item.enhLv||0) < maxLvl) {
+      item.enhLv = maxLvl;
+      refreshEquipSlot(slotId);
+      count++;
+    }
+  }
+  if (count > 0) { hud(); renderOptimization(); drawPreviewChar(); }
+  return count;
+}
+const adminMaxEnhBtnEl = $('btnAdminMaxEnh');
+if (adminMaxEnhBtnEl) adminMaxEnhBtnEl.onclick = () => {
+  if (typeof isAdmin === 'function' && !isAdmin()) return; // filet de sécurité : jamais actif hors admin, même si le bouton était visible par erreur
+  const count = adminMaxEnhAllEquipped();
+  const msg = $('equipBestMsg');
+  if (msg) {
+    msg.textContent = count > 0
+      ? (LANG==='fr' ? `${count} pièce${count>1?'s':''} passée${count>1?'s':''} en Optimisation max` : `${count} piece${count>1?'s':''} set to max Enhancement`)
+      : (LANG==='fr' ? 'Déjà toutes au maximum' : 'Already all at max');
+    msg.className = 'ok';
+    setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
+  }
+};
+
 // passe lootPreviewIdx explicitement : un simple renderLootTable() remettrait le loot affiché
 // sur la zone qu'on farm à CHAQUE rafraîchissement auto (dès qu'un objet est ramassé), écrasant
 // l'aperçu manuel choisi via le 👁 quasi instantanément
