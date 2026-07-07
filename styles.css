@@ -460,9 +460,10 @@
      (fix Firefox du 2026-07-12) peut les rogner juste avant la carte Inventaire voisine */
   #paperdoll { display:flex; align-items:center; justify-content:space-between; gap:2px; margin-bottom:6px; padding-right:8px; }
   .pdCol { display:flex; flex-direction:column; gap:5px; }
-  /* pdRight est passé de 6 à 9 emplacements (2 artéfacts + 1 pierre, demande du 2026-07-07) —
-     wrap en colonnes de 3 pour rester compact plutôt qu'une seule colonne trop haute */
-  #pdRight { flex-direction:column; flex-wrap:wrap; max-height:153px; gap:5px; }
+  /* pdRight était passé de 6 à 9 emplacements (2 artéfacts + 1 pierre, 2026-07-07), d'où le wrap en
+     colonnes de 3 -- repassé à 6 le 2026-07-14 (artéfacts/pierre/livre déplacés sous les armes,
+     voir PD_RIGHT/#pdBook) : une seule colonne suffit à nouveau, plus besoin de wrap */
+  #pdRight { flex-direction:column; gap:5px; }
   .pdCenter { flex:1; display:flex; align-items:center; justify-content:center; min-width:0; }
   .pdCenter canvas { width:70px; height:auto; }
   .pdSlot {
@@ -520,7 +521,9 @@
   #pdWeapons { display:flex; justify-content:center; gap:6px; padding:6px 0; border-top:1px solid #2c2a33; border-bottom:1px solid #2c2a33; margin-bottom:2px; }
   #pdWeapons .pdSlot { width:48px; height:48px; }
   #pdWeapons .pdGroupLbl { position:absolute; top:-12px; left:0; right:0; text-align:center; font-size:7px; letter-spacing:.5px; color:var(--ink-dim); }
-  #pdBook { display:flex; justify-content:center; padding:5px 0 7px; }
+  /* accueille désormais artéfacts/pierre d'alchimie/livre (2026-07-14, demande explicite) au lieu
+     du seul livre -- gap ajouté pour séparer les 4 emplacements, même largeur que #pdWeapons */
+  #pdBook { display:flex; justify-content:center; gap:6px; padding:5px 0 7px; }
   .lsGrid { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
   .lsSlot {
     width:40px; height:40px; border:1px solid #3a3742; background:rgba(20,19,26,.9);
