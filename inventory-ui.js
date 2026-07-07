@@ -1080,6 +1080,9 @@ function attemptEnhance() {
     // palier qu'on vient de passer n'a plus besoin d'être suivi, il reste stocké mais inutilisé
     r.textContent = (LANG==='fr'?'✦ SUCCÈS — ':'✦ SUCCESS — ') + ENH_NAMES[target.enhLv]; r.className = 'ok';
     floatTxt(P.x,P.y,100,'✦ '+ENH_NAMES[target.enhLv],{gold:true});
+    // Compendium : trace le meilleur niveau jamais atteint pour ce nom (2026-07-15), survit à une
+    // vente ultérieure -- avant, seul le passage à PEN précis était retenu (S.penMastery)
+    trackEnhPeak(target.name, target.enhLv);
     // Compendium PEN (2026-07-08) : marque CE type d'objet comme "atteint PEN au moins 1 fois"
     if (target.enhLv >= ENH_NAMES.length-1) markPenMastery(target.name);
   } else {

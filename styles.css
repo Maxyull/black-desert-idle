@@ -439,6 +439,12 @@
      position d'une ligne à l'autre, que la zone ait des joueurs ou non (demande explicite du
      2026-07-06 : "en aucun cas le compteur de joueurs dois faire bouger le texte") */
   .zPlayerCount { font-size:9px; color:var(--ink-dim); white-space:nowrap; flex-shrink:0; width:26px; text-align:right; }
+  /* étiquette "admin ici" (2026-07-15, demande explicite) : n'apparaît que sur le propre client de
+     l'admin, sur la ligne de SA zone actuelle -- voir le commentaire dans buildZoneList() */
+  .zAdminTag {
+    font-size:8px; letter-spacing:.5px; font-weight:bold; color:#1a1712; background:var(--gold);
+    border-radius:3px; padding:1px 4px; flex-shrink:0; white-space:nowrap;
+  }
   .b-red { color:var(--r-red); border-color:var(--r-red); }
   .b-orange { color:var(--r-orange); border-color:var(--r-orange); }
   .b-green { color:var(--r-green); border-color:var(--r-green); }
@@ -619,6 +625,13 @@
   .compBagReturnBtn { position:absolute; bottom:1px; right:1px; width:auto; margin:0; padding:0 2px;
     font-size:9px; line-height:1.4; border:none; background:rgba(10,9,14,.85); }
   .compBagReturnBtn:hover { background:rgba(201,165,90,.3); }
+  /* historique d'optimisation (2026-07-15, demande explicite : "affiche l'opti dans le compendium
+     si on a vendu un objet optimisé") -- liste plate sous la grille, pour les noms déjà enchantés
+     au moins 1 fois mais qui ne sont PLUS dans le sac protégé (vendus) */
+  .compSoldList { display:flex; flex-direction:column; gap:3px; margin-top:4px; }
+  .compSoldRow { display:flex; justify-content:space-between; align-items:center; font-size:10.5px;
+    color:var(--ink-dim); padding:2px 4px; }
+  .compSoldName { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .cell {
     aspect-ratio:1; background:rgba(20,19,26,.6); border:1px solid #262430;
     position:relative; display:flex; align-items:center; justify-content:center;
