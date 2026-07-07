@@ -161,7 +161,7 @@ function fmtAdmPlaytime(sec) {
 // construit le HTML des 3 onglets "lourds" (agrégations sur farm_events/game_saves) une fois que
 // leurs données sont arrivées — séparé de openAdminPanel() pour pouvoir les patcher en arrière-plan
 // sans bloquer l'ouverture du panneau (voir plus bas, correctif de lenteur du 2026-07-06)
-function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser, silverByCategory, silverByHour) {
+function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser, silverByCategory, silverByHour, cronData, playerStats) {
   const hourMap = new Map();
   (byHour||[]).forEach(r => hourMap.set(r.hour, (hourMap.get(r.hour)||0) + Number(r.total_silver||0)));
   const hours = [...hourMap.entries()].sort((a,b) => new Date(b[0]) - new Date(a[0])).slice(0,24);
@@ -269,6 +269,19 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
       <td>${fmt(r.earned)}</td><td>${fmtAdmPlaytime(r.sec)}</td><td>${fmt(Math.round(r.rate))}/h</td></tr>
   `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données (au moins 3 min de jeu requises)':'No data yet (at least 3 min playtime required)'}</td></tr>`;
 
+  // suivi des Pierres de Cron (2026-07-16, demande explicite : "ajoute un suivi des cron dans le
+  // panel admin") -- requête dédiée (cronData, voir openAdminPanel/analyticsPromise), filtrée sur ce
+  // seul item pour ne pas dépendre du top-20 de "Ressources farmées" (le 1% de drop y est noyé sous
+  // le trash, dropé à chaque kill) ; complété par un rappel des règles (taux fixe, coût par palier).
+  const cronRow = (cronData||[])[0];
+  const cronTotalQty = cronRow ? Number(cronRow.total_qty||0) : 0;
+  const cronPickups = cronRow ? Number(cronRow.pickups||0) : 0;
+  const cronPlayerCount = (playerStats||[]).length;
+  const cronAvgPerPlayer = cronPlayerCount ? cronTotalQty/cronPlayerCount : 0;
+  const CRON_TIER_LABEL = { grey:{fr:'Gris',en:'Grey'}, white:{fr:'Blanc',en:'White'}, green:{fr:'Vert',en:'Green'}, blue:{fr:'Bleu',en:'Blue'} };
+  const cronCostRows = Object.entries(CRON_STONE_COST_BY_TIER).map(([grade,cost]) =>
+    `<tr><td>${CRON_TIER_LABEL[grade][LANG]}</td><td>${cost}</td></tr>`).join('');
+
   return {
     hourly: `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
       <div class="admBars">${hourHtml}</div>
@@ -319,6 +332,23 @@ function buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtim
         <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Gagné à vie':'Lifetime earned'}</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
         <tbody>${rateHtml}</tbody>
       </table>`,
+    cron: `<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'⏳ Farmées (tous joueurs)':'⏳ Farmed (all players)'}</div><div class="astVal">${fmt(cronTotalQty)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🎒 Ramassages':'🎒 Pickups'}</div><div class="astVal">${fmt(cronPickups)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(Math.round(cronAvgPerPlayer))}</div></div>
+        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🎲 Chance/kill':'🎲 Chance/kill'}</div><div class="astVal">${(CRON_STONE.ch*100).toFixed(1)}%</div></div>
+      </div>
+      <div class="admHint">${LANG==='fr'
+        ? 'Taux de drop FIXE, identique dans toutes les zones du jeu (pas de décroissance par zone comme le trash/matériaux) — 1 à 3 unités par ramassage.'
+        : 'FIXED drop rate, identical in every zone of the game (no per-zone decay like trash/materials) — 1 to 3 units per pickup.'}</div>
+      <h3>${LANG==='fr'?'💎 Coût par palier de la pièce protégée':'💎 Cost by tier of the protected piece'}</h3>
+      <div class="admHint">${LANG==='fr'
+        ? 'Coût en Pierres de Cron pour protéger UNE tentative d\'optimisation contre une rétrogradation, selon le palier de la pièce ciblée (voir cronStoneCostForItem, game-core.js).'
+        : 'Cron Stone cost to protect ONE enhancement attempt from a downgrade, based on the tier of the targeted piece (see cronStoneCostForItem, game-core.js).'}</div>
+      <table class="admTable">
+        <thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Coût':'Cost'}</th></tr></thead>
+        <tbody>${cronCostRows}</tbody>
+      </table>`,
   };
 }
 // table de loot V1/V2 (2026-07-15, demande explicite : "utilise ces valeurs pour le loot des a
@@ -360,6 +390,12 @@ async function openAdminPanel() {
     // registre de silver (2026-07-10, demande explicite) : voir la migration silver_ledger
     sb.from('admin_silver_ledger_by_category').select('*'),
     sb.from('admin_silver_ledger_by_hour').select('*'),
+    // suivi des Pierres de Cron (2026-07-16, demande explicite : "ajoute un suivi des cron dans le
+    // panel admin") -- requête DÉDIÉE (même vue admin_farm_by_item que l'onglet "Ressources
+    // farmées", mais filtrée par nom) plutôt que de dépendre de la liste top-20 déjà chargée pour cet
+    // onglet : la Pierre de Cron (1% de drop) est noyée sous le trash (chance ~1, drop à chaque kill)
+    // en volume et n'apparaîtrait presque jamais dans ce top 20.
+    sb.from('admin_farm_by_item').select('*').eq('item_name', CRON_STONE.name),
   ]);
   const [{data: stats}, {data: playersList}] = await Promise.all([
     sb.from('player_stats').select('user_id, playtime_sec, loyalty'),
@@ -418,6 +454,9 @@ async function openAdminPanel() {
             `<td>${fmt(avgKills)}</td><td>${fmtDurationMin(avgMin)}</td></tr>`;
         }).join('')}</tbody>
       </table>` },
+    // suivi des Pierres de Cron (2026-07-16, demande explicite : "ajoute un suivi des cron dans le
+    // panel admin") -- même chargement asynchrone que hourly/items/wealth/silver (voir analyticsPromise)
+    { id:'cron', icon:'⏳', label:{fr:'Pierres de Cron',en:'Cron Stones'}, body: loadingHtml },
     { id:'loyalty', icon:'🏅', label:{fr:'Loyalties',en:'Loyalties'},
       // stats de la monnaie "Loyalties" (ex-points de fidélité, renommée le 2026-07-07) : total en
       // jeu, moyenne par joueur, et "utilisées pour" — demande explicite du 2026-07-07
@@ -463,18 +502,20 @@ async function openAdminPanel() {
       btn.disabled = false; btn.textContent = oldTxt;
     };
   }
-  analyticsPromise.then(([{data: byHour}, {data: byItem}, {data: wealth}, {data: playtimeByHour}, {data: silverByCategory}, {data: silverByHour}]) => {
+  analyticsPromise.then(([{data: byHour}, {data: byItem}, {data: wealth}, {data: playtimeByHour}, {data: silverByCategory}, {data: silverByHour}, {data: cronData}]) => {
     cachedAnalytics = { byHour, byItem, wealth, playtimeByHour };
-    const html = buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser, silverByCategory, silverByHour);
+    const html = buildAdminAnalyticsHtml(byHour, byItem, wealth, playtimeByUser, playtimeByHour, nameByUser, silverByCategory, silverByHour, cronData, stats);
     const body = $a('infoBody'); if (!body) return; // panneau déjà refermé entre-temps
     const hourlyPane = body.querySelector('.catPane[data-cat="hourly"]');
     const itemsPane = body.querySelector('.catPane[data-cat="items"]');
     const wealthPane = body.querySelector('.catPane[data-cat="wealth"]');
     const silverPane = body.querySelector('.catPane[data-cat="silver"]');
+    const cronPane = body.querySelector('.catPane[data-cat="cron"]');
     if (hourlyPane) hourlyPane.innerHTML = html.hourly;
     if (itemsPane) itemsPane.innerHTML = html.items;
     if (wealthPane) wealthPane.innerHTML = html.wealth;
     if (silverPane) silverPane.innerHTML = html.silver;
+    if (cronPane) cronPane.innerHTML = html.cron;
     wireSilverReloadBtn();
   }).catch(()=>{});
   // sélecteur de World Boss : fait apparaître immédiatement le boss choisi (combat local de test),
