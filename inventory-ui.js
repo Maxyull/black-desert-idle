@@ -1578,6 +1578,36 @@ if (adminMaxEnhBtnEl) adminMaxEnhBtnEl.onclick = () => {
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
 };
+// symétrique du bouton ci-dessus (2026-07-14, demande explicite : "ajoute un bouton tout
+// rétrogradé") -- remet chaque pièce équipée à +0, même filet de sécurité et mêmes non-effets de
+// bord (pas de compteur de tentative, pas de log/succès -- une rétrogradation n'en déclenche de
+// toute façon jamais côté succès, seule une MONTÉE en déclenche via markPenMastery)
+function adminResetEnhAllEquipped() {
+  let count = 0;
+  for (const slotId of Object.keys(EQUIP)) {
+    const item = EQUIP[slotId];
+    if (item && item.optimizable && (item.enhLv||0) > 0) {
+      item.enhLv = 0;
+      refreshEquipSlot(slotId);
+      count++;
+    }
+  }
+  if (count > 0) { hud(); renderOptimization(); drawPreviewChar(); }
+  return count;
+}
+const adminResetEnhBtnEl = $('btnAdminResetEnh');
+if (adminResetEnhBtnEl) adminResetEnhBtnEl.onclick = () => {
+  if (typeof isAdmin === 'function' && !isAdmin()) return;
+  const count = adminResetEnhAllEquipped();
+  const msg = $('equipBestMsg');
+  if (msg) {
+    msg.textContent = count > 0
+      ? (LANG==='fr' ? `${count} pièce${count>1?'s':''} rétrogradée${count>1?'s':''} à +0` : `${count} piece${count>1?'s':''} reset to +0`)
+      : (LANG==='fr' ? 'Déjà toutes à +0' : 'Already all at +0');
+    msg.className = 'ok';
+    setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
+  }
+};
 
 // passe lootPreviewIdx explicitement : un simple renderLootTable() remettrait le loot affiché
 // sur la zone qu'on farm à CHAQUE rafraîchissement auto (dès qu'un objet est ramassé), écrasant
