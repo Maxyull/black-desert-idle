@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V288', d:'16/07/2026 11:00', name:{fr:'Bouton Donation, Compendium par palier, Kratuga ajustée', en:'Donation button, tiered Compendium, Kratuga adjusted'}, fr:[
+      {t:'new', sub:'interface', tx:'Nouveau bouton "Donation" (verrouillé) dans le menu latéral'},
+      {t:'change', sub:'interface', tx:'Le "Sac protégé" a été retiré du Compendium : il vit maintenant uniquement dans la carte Inventaire (onglet Compendium), où il était déjà accessible en double'},
+      {t:'new', sub:'interface', tx:'La vue "Zones" du Compendium est désormais catégorisée par palier de stuff (en-tête colorée), avec un halo vert sur les zones déjà entièrement complétées — plus besoin de dérouler la liste d\'objets pour vérifier'},
+      {t:'change', sub:'zones', tx:'Ruines de Kratuga : Défense requise resserrée pour se rapprocher au maximum de "tout juste difficile" avec un stuff moyen'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'New "Donation" (locked) button in the side menu'},
+      {t:'change', sub:'interface', tx:'The "Protected bag" was removed from the Compendium: it now lives only in the Inventory card (Compendium tab), where it was already duplicated'},
+      {t:'new', sub:'interface', tx:'The Compendium\'s "Zones" view is now categorized by gear tier (colored header), with a green glow on fully completed zones — no need to expand the item list to check'},
+      {t:'change', sub:'zones', tx:'Kratuga Ruins: required Defense tightened to get as close as possible to "just barely hard" with average gear'},
+    ] },
   { v:'V287', d:'16/07/2026 10:00', name:{fr:'Onglets Pet/Mer, Cristal en inventaire, vente auto par item', en:'Pet/Sea tabs, Crystal in inventory, per-item auto-sell'}, fr:[
       {t:'new', sub:'interface', tx:'2 nouveaux onglets verrouillés dans le menu latéral : Compagnon et Vie en mer, en attente de futur contenu'},
       {t:'new', sub:'objets', tx:'Nouvelle catégorie "Cristal" (verrouillée) dans l\'inventaire, aux côtés d\'Équip./Opti./Trésors/Conso./RNG (libellés raccourcis)'},
