@@ -2440,16 +2440,30 @@ function resolveSkill(sk) {
   // monstre vivant) encaissait les dégâts malgré une explosion visuellement étalée sur tout le
   // groupe -- chaque sort touche désormais TOUS les monstres vivants du pack ciblé, chacun avec son
   // propre jet de dégâts/critique indépendant.
-  for (const w of aliveWolves) {
+  // packs VOISINS qui se chevauchent (2026-07-15, demande explicite : "si plusieurs pack se
+  // chevauche... le sort divise ses degats a tout les monstres meme ceux des packs a coté... tu as
+  // 4 pack et tu tue qu'un seul pack") -- même seuil de distance que spawnPackNear (200, la distance
+  // minimum entre 2 centres de pack) pour désigner 2 packs comme "collés". Confirmé explicitement :
+  // le cas à 1 seul pack (pas de voisin collé) garde ses PLEINS dégâts individuels, inchangé -- le
+  // partage ne s'applique QUE quand d'autres packs sont réellement dans la même zone d'effet.
+  const touchingPacks = packs.filter(p => !p.dead && (p === target || dist(p.x,p.y,target.x,target.y) < 200));
+  const allHits = [];
+  for (const p of touchingPacks) for (const w of p.wolves) if (!w.dead) allHits.push({ p, w });
+  // budget total ancré sur "dégâts pleins pour vider SEULEMENT le pack ciblé" (comme avant) --
+  // reparti sur tous les monstres touchés (packs voisins compris) au lieu de se concentrer QUE sur
+  // le pack ciblé : plus de packs collés = plus de monstres touchés, mais dégâts individuels plus
+  // faibles, pour un total infligé comparable plutôt qu'un multiplicateur par nombre de packs
+  const splitFactor = touchingPacks.length > 1 ? aliveWolves.length / allHits.length : 1;
+  for (const { p, w } of allHits) {
     const crit = Math.random() < .15;
     // >>> scaling par la PA face à la PA requise de la zone <<<
     const dmg = apEff() * sk.dmg * dmgMult(apRatio()) * (1+totalDmgPct()/100)
-              * (0.9+Math.random()*.25) * (crit?2:1) * (buffTimer>0?1.12:1);
+              * (0.9+Math.random()*.25) * (crit?2:1) * (buffTimer>0?1.12:1) * splitFactor;
     w.hp -= dmg;
-    const wp = wolfPos(target,w);
+    const wp = wolfPos(p,w);
     floatTxt(wp.x+(Math.random()*36-18), wp.y+(Math.random()*36-18), 62,
       '-'+fmt(Math.ceil(dmg))+(crit?'!':''), {crit});
-    if (w.hp <= 0 && !w.dead) killWolf(target, w);
+    if (w.hp <= 0 && !w.dead) killWolf(p, w);
   }
 }
 
