@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V295', d:'16/07/2026 17:00', name:{fr:'Marché fermé pour maintenance', en:'Market closed for maintenance'}, fr:[
+      {t:'change', sub:'objets', severity:'major', tx:'Le Marché est temporairement fermé pour maintenance — tous les ordres ouverts ont été annulés et intégralement remboursés (silver ou objet) à leurs propriétaires. Réouverture à venir.'},
+    ], en:[
+      {t:'change', sub:'objets', severity:'major', tx:'The Market is temporarily closed for maintenance — all open orders were cancelled and fully refunded (silver or item) to their owners. Reopening to come.'},
+    ] },
   { v:'V294', d:'16/07/2026 16:00', name:{fr:'Avertissement admin pour le reset d\'un joueur en ligne', en:'Admin warning for resetting an online player'}, fr:[
       {t:'new', sub:'interface', tx:'Le panel admin avertit désormais explicitement si le joueur ciblé par un reset de compte est actuellement en ligne (risque que sa propre sauvegarde automatique annule le reset)'},
     ], en:[
