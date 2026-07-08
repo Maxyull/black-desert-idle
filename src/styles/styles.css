@@ -423,6 +423,12 @@
   .zTierHead { display:flex; align-items:center; gap:5px; padding:6px 5px 2px; font-size:9.5px;
     letter-spacing:.5px; text-transform:uppercase; color:var(--ink-dim); }
   .zTierDot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+  /* "Maitrise pen ajoute a cote de chaque categorie ?/11 et montre que c'est fais si c'est 11/11"
+     (2026-07-09) -- compteur de complétion par palier de la Maîtrise PEN, même en-tête que les
+     zones. .done reprend le même halo vert que .compZoneRow.done pour rester cohérent. */
+  .zTierHeadCount { margin-left:auto; font-variant-numeric:tabular-nums; }
+  .zTierHead.done { color:#8fc98a; }
+  .zTierHead.done .zTierHeadCount { color:#8fc98a; font-weight:bold; }
   .zRow:hover { background:#232028; }
   .zRow.current { background:#26232e; border-left:2px solid var(--gold); }
   .zRow .zname { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }

@@ -970,6 +970,26 @@
       if (weaponSlots.includes(e.slot)) assert(`Arme "${e.name}" n'apparaît jamais après une armure du même palier`, !sawArmorInTier);
     }
   }
+  // "Maitrise pen ajoute a cote de chaque categorie ?/11 et montre que c'est fais si c'est 11/11"
+  // (2026-07-09) -- chaque en-tête de palier (.zTierHead) doit porter un compteur exact X/11, et
+  // la classe "done" uniquement quand X===11 (jamais avant, jamais pour un autre palier).
+  function testPenMasteryTierHeadersShowCountAndDoneAt11() {
+    if (typeof renderCompendiumHtml !== 'function' || compendiumTab === undefined) return;
+    const savedTab = compendiumTab, savedPen = { ...S.penMastery };
+    compendiumTab = 'pen';
+    S.penMastery = {};
+    penMasteryItemList().filter(e => e.grade === 'grey').forEach(e => S.penMastery[e.name] = true);
+    const div = document.createElement('div'); div.innerHTML = renderCompendiumHtml();
+    const headers = [...div.querySelectorAll('.zTierHead')];
+    assert('4 en-têtes de palier affichées (grey/white/green/blue)', headers.length === 4, `got=${headers.length}`);
+    const grey = headers.find(h => h.textContent.includes('Naru'));
+    const white = headers.find(h => h.textContent.includes('Tuvala'));
+    assert('Palier gris (complet) affiche 11/11', grey && grey.querySelector('.zTierHeadCount').textContent === '11/11', `texte=${grey && grey.textContent}`);
+    assert('Palier gris (complet) porte la classe "done"', grey && grey.classList.contains('done'));
+    assert('Palier blanc (vide) affiche 0/11', white && white.querySelector('.zTierHeadCount').textContent === '0/11', `texte=${white && white.textContent}`);
+    assert('Palier blanc (vide) ne porte PAS la classe "done"', white && !white.classList.contains('done'));
+    compendiumTab = savedTab; S.penMastery = savedPen;
+  }
   // "Un item qui passe pen... supprime l'item non pen du sac protégé compendium" (2026-07-08) --
   // généralise l'éviction : un exemplaire ÉQUIPÉ (pas la copie protégée elle-même) qui atteint PEN
   // doit quand même faire sortir du Compendium la copie non-PEN du même nom qui y était protégée.
@@ -2007,6 +2027,7 @@
     testBossRewardRevealEmptyShowsCloseButtonImmediately();
     testLeaveBossResultToZoneReturnsToFarm();
     testPenMasteryListIncludesAllGearAndIsOrderedByTier();
+    testPenMasteryTierHeadersShowCountAndDoneAt11();
     testChestLockedCellsUseBadgeConvention();
     testInvAddStacksByNameRegardlessOfKey();
     testBossLobbyShowsHpBarWhenAlreadyDefeated();
