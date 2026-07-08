@@ -523,6 +523,26 @@
     assert('Passer fait apparaître le bouton Quitter', getComputedStyle($('bossCloseBtn')).display !== 'none');
     $('bossResult').innerHTML = saved;
   }
+  // "Les roll du boss Pierre de caphras et frag memoire doivent se faire plus lentement et donner
+  // une lenteur plus en plus petite des qu'il arrive a la fin ou alors casino entierement pour
+  // tout les loot montre" (2026-07-09) -- un dé à valeur chiffrée (rollValue/rollTemplate) doit
+  // défiler (valeur affichée ≠ figée immédiatement) puis s'arrêter PILE sur la vraie valeur, que
+  // ce soit naturellement ou via "Passer".
+  function testBossDiceRollLandsOnTrueValueAndSkipIsInstant() {
+    if (typeof renderBossRewardReveal !== 'function' || typeof wireBossRewardReveal !== 'function' || !$('bossResult')) return;
+    const saved = $('bossResult').innerHTML;
+    const items = [
+      { kind:'dice', icon:'🪙', color:'#e8c96a', label:'Silver', rollValue:12345, rollTemplate:n=>`+${n} 🪙` },
+    ];
+    $('bossResult').innerHTML = renderBossRewardReveal(items);
+    wireBossRewardReveal(items);
+    assert('Avant révélation, le résultat n\'affiche pas déjà la valeur finale', $('brRevealResult0').textContent !== '+12345 🪙');
+    $('bossSkipBtn').click();
+    assert('"Passer" fait atterrir instantanément sur la VRAIE valeur tirée', $('brRevealResult0').textContent === '+12345 🪙', `texte=${$('brRevealResult0').textContent}`);
+    assert('L\'icône du dé est marquée "settled" une fois la valeur révélée', $('brDiceIcon0').classList.contains('settled'));
+    assert('Bouton Quitter visible une fois le roulement terminé', getComputedStyle($('bossCloseBtn')).display !== 'none');
+    $('bossResult').innerHTML = saved;
+  }
   function testBossRewardRevealEmptyShowsCloseButtonImmediately() {
     if (typeof renderBossRewardReveal !== 'function' || !$('bossResult')) return;
     const saved = $('bossResult').innerHTML;
@@ -2042,6 +2062,7 @@
     testBossActivityTabFlashesNearSpawnAndShowsHp();
     testBossActivityTabShowsDefeatedTextAtZeroHp();
     testBossRewardRevealSequenceThenSkipShowsCloseButton();
+    testBossDiceRollLandsOnTrueValueAndSkipIsInstant();
     testBossRewardRevealEmptyShowsCloseButtonImmediately();
     testLeaveBossResultToZoneReturnsToFarm();
     testPenMasteryListIncludesAllGearAndIsOrderedByTier();

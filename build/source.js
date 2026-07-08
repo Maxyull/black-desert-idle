@@ -3985,7 +3985,9 @@ function bossWheelMarkup(rareLoot) {
     `<div class="bossWheel" id="bossWheelEl" style="background:conic-gradient(${rareLoot.color} 0deg ${segDeg}deg, #232128 ${segDeg}deg 360deg)">${iconsHtml}</div></div>`;
 }
 
-const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_DICE_MS = 650, BOSS_REVEAL_WHEEL_MS = 3600;
+const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_WHEEL_MS = 3600;
+
+const BOSS_ROLL_DURATION_MS = 2200, BOSS_ROLL_START_INTERVAL_MS = 40, BOSS_ROLL_GROWTH = 1.16;
 function renderBossRewardReveal(items) {
   if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
   const itemsHtml = items.map((it,i) => {
@@ -4001,15 +4003,46 @@ function renderBossRewardReveal(items) {
 function wireBossRewardReveal(items) {
   if (!items.length) return;
   const done = new Array(items.length).fill(false);
-  let pendingTimers = [];
+  let pendingTimers = []; 
+  let cancelRolls = []; 
   function finishIfAllDone() {
     if (!done.every(Boolean)) return;
     const skipBtn = $a('bossSkipBtn'); if (skipBtn) skipBtn.style.display = 'none';
     const closeBtn = $a('bossCloseBtn'); if (closeBtn) closeBtn.style.display = '';
   }
+  
+  function rollDiceValue(i, instant) {
+    const it = items[i], resEl = $a('brRevealResult'+i), iconEl = $a('brDiceIcon'+i);
+    if (!resEl) return;
+    if (instant) {
+      resEl.innerHTML = it.rollTemplate(it.rollValue);
+      if (iconEl) iconEl.classList.add('settled');
+      done[i] = true; finishIfAllDone();
+      return;
+    }
+    const startTime = performance.now();
+    let interval = BOSS_ROLL_START_INTERVAL_MS, timer;
+    const tick = () => {
+      const elapsed = performance.now() - startTime;
+      if (elapsed >= BOSS_ROLL_DURATION_MS) {
+        resEl.innerHTML = it.rollTemplate(it.rollValue);
+        if (iconEl) iconEl.classList.add('settled');
+        done[i] = true; finishIfAllDone();
+        return;
+      }
+      const magnitude = Math.max(1, it.rollValue);
+      resEl.innerHTML = it.rollTemplate(Math.floor(Math.random()*(magnitude*1.5)));
+      interval *= BOSS_ROLL_GROWTH;
+      timer = setTimeout(tick, interval);
+    };
+    tick();
+    cancelRolls.push(() => clearTimeout(timer));
+  }
   function revealOne(i, { instant } = {}) {
-    if (done[i]) return; done[i] = true;
+    if (done[i]) return;
     const it = items[i], resEl = $a('brRevealResult'+i); if (!resEl) return;
+    if (it.kind === 'dice' && it.rollValue !== undefined) { rollDiceValue(i, instant); return; }
+    done[i] = true;
     if (it.kind === 'dice') {
       const iconEl = $a('brDiceIcon'+i); if (iconEl) iconEl.classList.add('settled');
       resEl.innerHTML = it.resultHtml;
@@ -4030,12 +4063,18 @@ function wireBossRewardReveal(items) {
   }
   items.forEach((it, i) => {
     const startDelay = i*BOSS_REVEAL_STAGGER_MS;
-    const revealDelay = startDelay + (it.kind==='wheel' ? BOSS_REVEAL_WHEEL_MS : BOSS_REVEAL_DICE_MS);
-    pendingTimers.push(setTimeout(() => revealOne(i), revealDelay));
+    if (it.kind === 'dice' && it.rollValue !== undefined) {
+      
+      pendingTimers.push(setTimeout(() => revealOne(i), startDelay));
+    } else {
+      const revealDelay = startDelay + (it.kind==='wheel' ? BOSS_REVEAL_WHEEL_MS : 650);
+      pendingTimers.push(setTimeout(() => revealOne(i), revealDelay));
+    }
   });
   const skipBtn = $a('bossSkipBtn');
   if (skipBtn) skipBtn.onclick = () => {
     pendingTimers.forEach(t => clearTimeout(t)); pendingTimers = [];
+    cancelRolls.forEach(c => c()); cancelRolls = [];
     items.forEach((_,i) => revealOne(i, { instant:true }));
   };
 }
@@ -4094,9 +4133,9 @@ async function endBossFight(win) {
         invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
         rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
         revealItems.push(
-          { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', resultHtml:`+${fmt(reward)} 🪙` },
-          { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), resultHtml:`+${caphrasQty} × ${tr(CAPHRAS_NAME)}` },
-          { kind:'dice', icon:'✦', color:'#b48ce8', label:tr('Fragment de mémoire'), resultHtml:`+${fragQty} × ${tr('Fragment de mémoire')}` },
+          { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` },
+          { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), rollValue:caphrasQty, rollTemplate:n=>`+${n} × ${tr(CAPHRAS_NAME)}` },
+          { kind:'dice', icon:'✦', color:'#b48ce8', label:tr('Fragment de mémoire'), rollValue:fragQty, rollTemplate:n=>`+${n} × ${tr('Fragment de mémoire')}` },
         );
       } else {
         
@@ -4107,13 +4146,13 @@ async function endBossFight(win) {
         addSilver(reward, 'boss', b.name.fr);
         
         const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
-        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', resultHtml:`+${fmt(reward)} 🪙` });
+        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` });
         if (difficileZi != null) {
           const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
           const matItem = bossZoneMaterialItem(difficileZi, qty);
           invAdd(matItem);
           revealItems.push({ kind:'dice', icon:matItem.icon, color:matItem.color, label:tr(matItem.name),
-            resultHtml:`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>` });
+            rollValue:qty, rollTemplate:n=>`+${n} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>` });
         }
         const jewelZonesToGrant = [];
         if (rank === 1 && dangereuseZi != null) jewelZonesToGrant.push(dangereuseZi);

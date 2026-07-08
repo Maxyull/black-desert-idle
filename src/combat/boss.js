@@ -661,7 +661,16 @@ function bossWheelMarkup(rareLoot) {
 // l'autre. "Passer" révèle tout instantanément. Le bouton "Quitter" (retour DIRECT à la zone de
 // farm, plus au lobby boss comme avant) n'apparaît qu'une fois tout révélé (naturellement ou via
 // Passer) -- jamais avant, pour que le joueur voie au moins une fois ce qu'il a gagné.
-const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_DICE_MS = 650, BOSS_REVEAL_WHEEL_MS = 3600;
+const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_WHEEL_MS = 3600;
+// "Les roll du boss Pierre de caphras et frag memoire doivent se faire plus lentement et donner
+// une lenteur plus en plus petite des qu'il arrive a la fin ou alors casino entierement pour tout
+// les loot montre" (2026-07-09) -- roulement "casino" pour TOUTE récompense chiffrée (silver,
+// matériau, Caphras, Fragment...), pas seulement les 2 citées : le nombre défile aléatoirement,
+// de plus en plus LENTEMENT (l'intervalle entre 2 tirages s'allonge à chaque tick, x1.16), jusqu'à
+// s'arrêter PILE sur la vraie valeur déjà tirée plus haut (le hasard a déjà eu lieu, ceci ne fait
+// que le révéler, comme la roue). Plus long qu'avant (2.2s de roulement contre 0.65s de rebond
+// fixe) pour laisser le temps de "voir" le ralentissement.
+const BOSS_ROLL_DURATION_MS = 2200, BOSS_ROLL_START_INTERVAL_MS = 40, BOSS_ROLL_GROWTH = 1.16;
 function renderBossRewardReveal(items) {
   if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
   const itemsHtml = items.map((it,i) => {
@@ -680,15 +689,49 @@ function renderBossRewardReveal(items) {
 function wireBossRewardReveal(items) {
   if (!items.length) return;
   const done = new Array(items.length).fill(false);
-  let pendingTimers = [];
+  let pendingTimers = []; // setTimeout des roues/dés statiques (sans rollValue) + démarrages différés (stagger)
+  let cancelRolls = []; // fonctions d'annulation des roulements "casino" en cours (dés avec rollValue)
   function finishIfAllDone() {
     if (!done.every(Boolean)) return;
     const skipBtn = $a('bossSkipBtn'); if (skipBtn) skipBtn.style.display = 'none';
     const closeBtn = $a('bossCloseBtn'); if (closeBtn) closeBtn.style.display = '';
   }
+  // roulement "casino" décélérant pour un dé À VALEUR CHIFFRÉE (rollValue défini) -- défile des
+  // nombres aléatoires de même ordre de grandeur, intervalle x1.16 à chaque tick (de plus en plus
+  // lent), s'arrête PILE sur la vraie valeur (déjà tirée avant l'appel, voir endBossFight) une fois
+  // BOSS_ROLL_DURATION_MS écoulé -- ou instantanément si `instant` (bouton Passer).
+  function rollDiceValue(i, instant) {
+    const it = items[i], resEl = $a('brRevealResult'+i), iconEl = $a('brDiceIcon'+i);
+    if (!resEl) return;
+    if (instant) {
+      resEl.innerHTML = it.rollTemplate(it.rollValue);
+      if (iconEl) iconEl.classList.add('settled');
+      done[i] = true; finishIfAllDone();
+      return;
+    }
+    const startTime = performance.now();
+    let interval = BOSS_ROLL_START_INTERVAL_MS, timer;
+    const tick = () => {
+      const elapsed = performance.now() - startTime;
+      if (elapsed >= BOSS_ROLL_DURATION_MS) {
+        resEl.innerHTML = it.rollTemplate(it.rollValue);
+        if (iconEl) iconEl.classList.add('settled');
+        done[i] = true; finishIfAllDone();
+        return;
+      }
+      const magnitude = Math.max(1, it.rollValue);
+      resEl.innerHTML = it.rollTemplate(Math.floor(Math.random()*(magnitude*1.5)));
+      interval *= BOSS_ROLL_GROWTH;
+      timer = setTimeout(tick, interval);
+    };
+    tick();
+    cancelRolls.push(() => clearTimeout(timer));
+  }
   function revealOne(i, { instant } = {}) {
-    if (done[i]) return; done[i] = true;
+    if (done[i]) return;
     const it = items[i], resEl = $a('brRevealResult'+i); if (!resEl) return;
+    if (it.kind === 'dice' && it.rollValue !== undefined) { rollDiceValue(i, instant); return; }
+    done[i] = true;
     if (it.kind === 'dice') {
       const iconEl = $a('brDiceIcon'+i); if (iconEl) iconEl.classList.add('settled');
       resEl.innerHTML = it.resultHtml;
@@ -710,12 +753,19 @@ function wireBossRewardReveal(items) {
   }
   items.forEach((it, i) => {
     const startDelay = i*BOSS_REVEAL_STAGGER_MS;
-    const revealDelay = startDelay + (it.kind==='wheel' ? BOSS_REVEAL_WHEEL_MS : BOSS_REVEAL_DICE_MS);
-    pendingTimers.push(setTimeout(() => revealOne(i), revealDelay));
+    if (it.kind === 'dice' && it.rollValue !== undefined) {
+      // démarre le roulement APRÈS le délai d'échelonnement -- pas de délai de révélation séparé,
+      // rollDiceValue gère elle-même sa propre durée (BOSS_ROLL_DURATION_MS)
+      pendingTimers.push(setTimeout(() => revealOne(i), startDelay));
+    } else {
+      const revealDelay = startDelay + (it.kind==='wheel' ? BOSS_REVEAL_WHEEL_MS : 650);
+      pendingTimers.push(setTimeout(() => revealOne(i), revealDelay));
+    }
   });
   const skipBtn = $a('bossSkipBtn');
   if (skipBtn) skipBtn.onclick = () => {
     pendingTimers.forEach(t => clearTimeout(t)); pendingTimers = [];
+    cancelRolls.forEach(c => c()); cancelRolls = [];
     items.forEach((_,i) => revealOne(i, { instant:true }));
   };
 }
@@ -803,9 +853,9 @@ async function endBossFight(win) {
         invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
         rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
         revealItems.push(
-          { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', resultHtml:`+${fmt(reward)} 🪙` },
-          { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), resultHtml:`+${caphrasQty} × ${tr(CAPHRAS_NAME)}` },
-          { kind:'dice', icon:'✦', color:'#b48ce8', label:tr('Fragment de mémoire'), resultHtml:`+${fragQty} × ${tr('Fragment de mémoire')}` },
+          { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` },
+          { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), rollValue:caphrasQty, rollTemplate:n=>`+${n} × ${tr(CAPHRAS_NAME)}` },
+          { kind:'dice', icon:'✦', color:'#b48ce8', label:tr('Fragment de mémoire'), rollValue:fragQty, rollTemplate:n=>`+${n} × ${tr('Fragment de mémoire')}` },
         );
       } else {
         // Le loot des World Boss dépend de la MEILLEURE zone découverte, mais seulement si le joueur
@@ -822,13 +872,13 @@ async function endBossFight(win) {
         // pierre d'optimisation de la meilleure zone difficile (garantie pour tous) + bijoux bonus
         // selon le rang, voir bossZoneMaterialItem/bossZoneJackpotItem/bestDifficileZoneIdx ci-dessus.
         const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
-        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', resultHtml:`+${fmt(reward)} 🪙` });
+        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` });
         if (difficileZi != null) {
           const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
           const matItem = bossZoneMaterialItem(difficileZi, qty);
           invAdd(matItem);
           revealItems.push({ kind:'dice', icon:matItem.icon, color:matItem.color, label:tr(matItem.name),
-            resultHtml:`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>` });
+            rollValue:qty, rollTemplate:n=>`+${n} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>` });
         }
         const jewelZonesToGrant = [];
         if (rank === 1 && dangereuseZi != null) jewelZonesToGrant.push(dangereuseZi);

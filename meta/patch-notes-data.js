@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V334', d:'19/07/2026 03:00', name:{fr:'Roulement "casino" pour toutes les récompenses chiffrées de boss', en:'"Casino" roll for all boss numeric rewards'}, fr:[
+      {t:'new', sub:'graphismes', severity:'major', tx:'Les récompenses chiffrées de fin de boss (silver, Pierre de Caphras, Fragment de mémoire, matériau...) défilent maintenant comme une machine à sous : le nombre change rapidement puis ralentit de plus en plus, jusqu\'à s\'arrêter pile sur la vraie valeur déjà tirée. Le roulement dure aussi plus longtemps qu\'avant pour bien voir le ralentissement. "Passer" fait toujours tout atterrir instantanément.'},
+    ], en:[
+      {t:'new', sub:'graphismes', severity:'major', tx:'Numeric boss rewards at the end of a fight (silver, Caphras Stone, Memory Fragment, material...) now roll like a slot machine: the number changes fast then slows down more and more, landing exactly on the real value already rolled. The roll also lasts longer than before so the slowdown is clearly visible. "Skip" still lands everything instantly.'},
+    ] },
   { v:'V333', d:'19/07/2026 02:00', name:{fr:'"VAINCU" sur l\'onglet Boss du header', en:'"DEFEATED" on the header\'s Boss tab'}, fr:[
       {t:'fix', sub:'interface', tx:'La bulle %PV de l\'onglet Boss du header restait sur "0%" une fois le boss tué, laissant croire que le combat continuait. Elle affiche désormais "VAINCU", comme le lobby.'},
     ], en:[
