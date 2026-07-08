@@ -534,8 +534,8 @@
   // PATCH_NOTES aujourd'hui, pour attraper immédiatement un futur déplacement oublié.
   function testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes() {
     const src = checkForUpdate.toString();
-    assert('checkForUpdate() fetch bien patch-notes-data.js (le fichier qui définit réellement PATCH_NOTES)',
-      src.includes("'./patch-notes-data.js"), `src=${src.slice(0,200)}`);
+    assert('checkForUpdate() fetch bien meta/patch-notes-data.js (le fichier qui définit réellement PATCH_NOTES)',
+      src.includes("'./meta/patch-notes-data.js"), `src=${src.slice(0,200)}`);
     assert('checkForUpdate() ne fetch plus game-supabase.js (ne contient plus PATCH_NOTES depuis le découpage)',
       !src.includes("'./game-supabase.js"));
   }
