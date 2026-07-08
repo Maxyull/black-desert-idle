@@ -203,10 +203,14 @@ function updateBossActivityTabHot() {
   const fighting = bossState.active && bossState.maxHp > 0;
   const hot = fighting || (!!occ && (occ.live || (occ.time - Date.now()) <= BOSS_TAB_FLASH_LEAD_MS));
   btn.classList.toggle('bossHot', hot);
+  // "une fois que le boss est vaincu ecrire vaincu a la place des %" (2026-07-09) -- même mot que
+  // le lobby (.bossNextHpTxt quand alreadyDead) plutôt qu'un "0%" qui laisse croire que le combat
+  // continue.
+  const defeatedTxt = LANG==='fr' ? 'VAINCU' : 'DEFEATED';
   const hpEl = $a('actTabBossHp');
   if (hpEl) {
-    if (fighting) hpEl.textContent = Math.max(0, bossState.hp/bossState.maxHp*100).toFixed(0)+'%';
-    else if (occ && occ.live && typeof occ.hp === 'number' && occ.maxHp > 0) hpEl.textContent = Math.max(0, occ.hp/occ.maxHp*100).toFixed(0)+'%';
+    if (fighting) hpEl.textContent = bossState.hp <= 0 ? defeatedTxt : (bossState.hp/bossState.maxHp*100).toFixed(0)+'%';
+    else if (occ && occ.live && typeof occ.hp === 'number' && occ.maxHp > 0) hpEl.textContent = occ.hp <= 0 ? defeatedTxt : (occ.hp/occ.maxHp*100).toFixed(0)+'%';
     else hpEl.textContent = '';
   }
 }

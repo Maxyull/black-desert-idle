@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V333', d:'19/07/2026 02:00', name:{fr:'"VAINCU" sur l\'onglet Boss du header', en:'"DEFEATED" on the header\'s Boss tab'}, fr:[
+      {t:'fix', sub:'interface', tx:'La bulle %PV de l\'onglet Boss du header restait sur "0%" une fois le boss tué, laissant croire que le combat continuait. Elle affiche désormais "VAINCU", comme le lobby.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The Boss tab\'s HP% bubble in the header stayed on "0%" once the boss was killed, making it look like the fight was still going. It now shows "DEFEATED", like the lobby.'},
+    ] },
   { v:'V332', d:'19/07/2026 01:00', name:{fr:'Compteur par palier dans la Maîtrise PEN', en:'Per-tier counter in PEN Mastery'}, fr:[
       {t:'new', sub:'interface', tx:'Chaque palier de couleur de la Maîtrise PEN affiche désormais son propre compteur (ex: 7/11), avec un halo vert dès que le palier est complet (11/11) — plus besoin de compter soi-même les icônes.'},
     ], en:[

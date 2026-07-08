@@ -481,6 +481,23 @@
     assert('Hors combat, le flash suit exactement la fenêtre planifiée (5 min avant + durée live)', btn.classList.contains('bossHot') === shouldBeHot);
     bossState.active = savedBossState.active;
   }
+  // "au niveau de l'onglet boss une fois que le boss est vaincu ecrire vaincu a la place des %"
+  // (2026-07-09) -- la bulle %PV de l'onglet Boss doit basculer sur "VAINCU"/"DEFEATED" à 0 PV,
+  // jamais rester sur "0%" qui laisserait croire que le combat continue.
+  function testBossActivityTabShowsDefeatedTextAtZeroHp() {
+    if (typeof updateBossActivityTabHot !== 'function' || !$('activityTabs') || typeof renderActivityTabs !== 'function') return;
+    renderActivityTabs();
+    if (!$('actTabBoss')) return;
+    const savedBossState = { active: bossState.active, hp: bossState.hp, maxHp: bossState.maxHp };
+    bossState.active = true; bossState.hp = 0; bossState.maxHp = 100;
+    updateBossActivityTabHot();
+    assert('Onglet Boss affiche "VAINCU"/"DEFEATED" à 0 PV, pas "0%"', /VAINCU|DEFEATED/.test($('actTabBossHp').textContent), `texte=${$('actTabBossHp').textContent}`);
+    bossState.hp = 17;
+    updateBossActivityTabHot();
+    assert('Onglet Boss revient bien à un %PV normal une fois les PV > 0', $('actTabBossHp').textContent === '17%', `texte=${$('actTabBossHp').textContent}`);
+    bossState.active = savedBossState.active; bossState.hp = savedBossState.hp; bossState.maxHp = savedBossState.maxHp;
+    updateBossActivityTabHot();
+  }
   // "lors de la fin du boss une roulette tourne ou un des se jette pour chaque recompense
   // aléatoire, le joueurs peut passer puisn un bouton quittersaffiche (retour a zone)" (2026-07-08)
   // -- verrouille : (1) un dé par récompense chiffrée + une roue pour le loot rarissime, (2)
@@ -2023,6 +2040,7 @@
     testActivityTabLockIsSeparateFromLabel();
     testHeaderBadgesSitOnBottomBorder();
     testBossActivityTabFlashesNearSpawnAndShowsHp();
+    testBossActivityTabShowsDefeatedTextAtZeroHp();
     testBossRewardRevealSequenceThenSkipShowsCloseButton();
     testBossRewardRevealEmptyShowsCloseButtonImmediately();
     testLeaveBossResultToZoneReturnsToFarm();
