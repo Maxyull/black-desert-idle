@@ -1540,14 +1540,8 @@ function doTeleport(dirX, dirY) {
 // zone adaptée à son coût — un vrai sink sans jamais casser l'économie du joueur qui progresse.
 // "Potion de vie" (infinite, cost:0) : verrouillée 🔒 en bas du sélecteur, réservée à un futur
 // déblocage (récompense/boutique) — visible dès maintenant pour montrer où elle mènera.
-const POTIONS = {
-  small:    { name:{fr:'Petite potion de vie',  en:'Small HP Potion'},  icon:'🧪', cost:70,  heal:0.20, cd:2.4 },
-  medium:   { name:{fr:'Potion de vie',         en:'HP Potion'},        icon:'🧴', cost:140, heal:0.35, cd:3.6 },
-  large:    { name:{fr:'Grande potion de vie',  en:'Large HP Potion'},  icon:'⚗️', cost:240, heal:0.55, cd:5.0 },
-  mega:     { name:{fr:'Potion de vie majeure', en:'Major HP Potion'},  icon:'🍾', cost:380, heal:0.80, cd:6.8 },
-  infinite: { name:{fr:'Potion de vie infinie', en:'Infinite HP Potion'}, icon:'♾️', cost:0, heal:0.40, cd:4.2, locked:true },
-};
-const POTION_ORDER = ['small','medium','large','mega','infinite']; // "infinite" toujours en dernier, verrouillée (voir p.locked)
+// POTIONS/POTION_ORDER desormais dans combat/potions-data.js (extrait le 2026-07-08,
+// reorganisation par dossiers) -- charge AVANT ce fichier, voir index.html.
 // prix des potions = un POURCENTAGE du revenu horaire théorique de trash (token vendu au sol,
 // jamais du prix de vente du stuff) de la zone ACTUELLE (2026-07-11/12, demande explicite : "revois
 // le prix des potion en fonction de l'argent qu'on se fait en vendant les token en instantané...
@@ -2480,21 +2474,8 @@ function lootLine(item, val, cls) {
   lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div };
 }
 
-// table d'XP requise par niveau du vrai jeu (BDO) — indice = niveau actuel, valeur = XP pour
-// passer au niveau suivant. Les niveaux 0-4 ne coûtent presque rien (quasi instantané), puis ça
-// explose jusqu'à des quantités astronomiques (~1.29 quadrillion à partir du niveau 71, où la
-// courbe plafonne dans le jeu original) — d'où le format d'affichage en % à 3 décimales : passé
-// un certain niveau, un monstre ne fait plus gagner que quelques 0.001% de la barre.
-const LEVEL_XP_TABLE = [
-  1,1,1,1,1,161,472,1181,2626,5319,10005,17721,29865,48273,75300,113911,167777,241381,340127,
-  470464,640005,857666,1133804,1480364,1911035,2441411,3089163,3874210,4818908,5948238,7290005,
-  8875042,10737423,12914685,15448049,18382661,21767828,25657269,30109369,35187443,40960005,
-  47501047,54890322,63213635,72563144,83037661,94742974,118571374,158997683,207619316,415238632,
-  830477264,1245715896,1868573844,2802860766,8408582298,21021455745,52553639363,105107278725,
-  210214557450,630643672350,1261287344700,2522574689400,5045149378800,10090298757600,
-  20180597515200,40361195000000,80722390000000,161444780000000,322889560000000,645779120000000,
-  1291558200000000,
-];
+// LEVEL_XP_TABLE desormais dans progression/level-xp-data.js (extrait le 2026-07-08,
+// reorganisation par dossiers) -- charge AVANT ce fichier, voir index.html.
 function xpNeededFor(lvl) { return LEVEL_XP_TABLE[Math.min(lvl, LEVEL_XP_TABLE.length-1)]; }
 // affichage façon BDO : pourcentage à 3 décimales, toujours 2 chiffres avant la virgule (00.000%)
 function fmtXpPct(pct) {
@@ -2612,26 +2593,8 @@ let zoneTier = 'early';
 // 5 paliers de régions (voir roadmap.md pour le détail des zones prévues par palier) —
 // seul "Early / Velia" est en jeu pour l'instant, les autres sont verrouillés en attendant
 // d'être construits (demande explicite du 2026-07-05)
-// trésors-teaser des 2 prochains paliers (2026-07-15, demande explicite : "créer 2 nouvelles cartes
-// qui se loot dans les prochaines zones heidel et calpheon" puis renommés "tresor de heilde /
-// tresors de calpheon" -- même famille que "Trésor de Velia", pas des "cartes" séparées) --
-// Heidel/Calpheon restent verrouillés (zones pas encore construites, confirmé "zone bloqué"), ces
-// objets ne sont donc PAS obtenables pour l'instant : juste un aperçu affiché dans le tooltip du
-// palier verrouillé (voir renderZoneTierTabs) et un couple de recettes verrouillées dans Assemblage
-// (voir renderTreasureCraftPanel) prêtes pour le jour où le palier ouvrira. Le "Coffret secret" (voir
-// craftSecretCombo) combine désormais les 3 Trésors régionaux (Velia + Heidel + Calpheon) —
-// c'était le sens original de "combiner 3 cartes différentes" demandé plus tôt.
-const TIER_PREVIEW_CARD = {
-  mid: { name:'Trésor de Heidel', icon:'🗺️', color:'#6ea3c9', key:'treasure_heidel' },
-  end: { name:'Trésor de Calpheon', icon:'🗺️', color:'#e0935a', key:'treasure_calpheon' },
-};
-const ZONE_TIERS = [
-  { id:'early', icon:'🟢', label:{fr:'Velia',en:'Velia'},       locked:false },
-  { id:'mid',   icon:'🔵', label:{fr:'Heidel',en:'Heidel'},     locked:true },
-  { id:'end',   icon:'🟡', label:{fr:'Calpheon',en:'Calpheon'}, locked:true },
-  { id:'end2',  icon:'🟠', label:{fr:'Valencia',en:'Valencia'}, locked:true },
-  { id:'end3',  icon:'🔴', label:{fr:'Edana',en:'Edana'},       locked:true },
-];
+// TIER_PREVIEW_CARD/ZONE_TIERS desormais dans world/region-tiers-data.js (extrait le
+// 2026-07-08, reorganisation par dossiers) -- charge AVANT ce fichier, voir index.html.
 // onglets de la carte Statistiques : "Perso" (contenu existant, inchangé) / "Recommandations"
 // (2026-07-09, demande explicite) -- les valeurs de recommandation sont purement THÉORIQUES (voir
 // zoneSilverPerHour/zoneXpPerHour/zoneKillsPerMin), donc constantes tout le long d'une session :
