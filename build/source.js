@@ -6915,27 +6915,37 @@ function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL)
 
 function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 
-let farmEventQueue = [];
+let farmEventQueue = new Map();
 function queueFarmEvent(kind, name, qty, silverVal) {
   if (!sb || !currentUser || isGuest()) return; 
-  farmEventQueue.push({ user_id: currentUser.id, item_name: name, item_kind: kind, qty, silver_value: silverVal, zone_name: Z().name });
+  const zone = Z().name;
+  const key = kind + '|' + name + '|' + zone;
+  const cur = farmEventQueue.get(key);
+  if (cur) { cur.qty += qty; cur.silver_value += silverVal; }
+  else farmEventQueue.set(key, { user_id: currentUser.id, item_name: name, item_kind: kind, qty, silver_value: silverVal, zone_name: zone });
 }
 async function flushFarmEvents() {
-  if (!sb || !currentUser || isGuest() || farmEventQueue.length === 0) return;
-  const batch = farmEventQueue.splice(0, farmEventQueue.length);
+  if (!sb || !currentUser || isGuest() || farmEventQueue.size === 0) return;
+  const batch = Array.from(farmEventQueue.values());
+  farmEventQueue.clear();
   try { await sb.from('farm_events').insert(batch); } catch(e) {  }
 }
 setInterval(flushFarmEvents, 25000);
 window.addEventListener('beforeunload', flushFarmEvents);
 
-let silverLedgerQueue = [];
+let silverLedgerQueue = new Map();
 function queueSilverLedger(delta, category, note) {
   if (!sb || !currentUser || isGuest() || !delta) return; 
-  silverLedgerQueue.push({ user_id: currentUser.id, delta: Math.round(delta), category, note: note || null });
+  const key = category + '|' + (note || '');
+  const cur = silverLedgerQueue.get(key);
+  if (cur) cur.delta += Math.round(delta);
+  else silverLedgerQueue.set(key, { user_id: currentUser.id, delta: Math.round(delta), category, note: note || null });
 }
 async function flushSilverLedger() {
-  if (!sb || !currentUser || isGuest() || silverLedgerQueue.length === 0) return;
-  const batch = silverLedgerQueue.splice(0, silverLedgerQueue.length);
+  if (!sb || !currentUser || isGuest() || silverLedgerQueue.size === 0) return;
+  const batch = Array.from(silverLedgerQueue.values()).filter(r => r.delta !== 0);
+  silverLedgerQueue.clear();
+  if (batch.length === 0) return;
   try { await sb.from('silver_ledger').insert(batch); } catch(e) {  }
 }
 setInterval(flushSilverLedger, 25000);

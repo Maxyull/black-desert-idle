@@ -48,14 +48,24 @@ function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL)
 function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 
 // ---------- journal de farm (pour les stats admin) : queue légère, envoyée par lots ----------
-let farmEventQueue = [];
+// Agrégée en mémoire (clé = objet+zone) plutôt qu'une ligne par ramassage individuel : le combat
+// automatique loot plusieurs fois par seconde, une ligne par pickup faisait exploser farm_events
+// (~250k lignes/jour, 250 Mo en moins d'une semaine sur un quota de 500 Mo -- constaté le
+// 2026-07-08). Les totaux par objet/zone restent exacts, seule la granularité "un pickup = une
+// ligne" est perdue (jamais utilisée : admin_farm_by_item ne fait que sommer qty/silver_value).
+let farmEventQueue = new Map();
 function queueFarmEvent(kind, name, qty, silverVal) {
   if (!sb || !currentUser || isGuest()) return; // pas de compte vérifié → pas de journalisation
-  farmEventQueue.push({ user_id: currentUser.id, item_name: name, item_kind: kind, qty, silver_value: silverVal, zone_name: Z().name });
+  const zone = Z().name;
+  const key = kind + '|' + name + '|' + zone;
+  const cur = farmEventQueue.get(key);
+  if (cur) { cur.qty += qty; cur.silver_value += silverVal; }
+  else farmEventQueue.set(key, { user_id: currentUser.id, item_name: name, item_kind: kind, qty, silver_value: silverVal, zone_name: zone });
 }
 async function flushFarmEvents() {
-  if (!sb || !currentUser || isGuest() || farmEventQueue.length === 0) return;
-  const batch = farmEventQueue.splice(0, farmEventQueue.length);
+  if (!sb || !currentUser || isGuest() || farmEventQueue.size === 0) return;
+  const batch = Array.from(farmEventQueue.values());
+  farmEventQueue.clear();
   try { await sb.from('farm_events').insert(batch); } catch(e) { /* pas grave, prochain lot rattrapera */ }
 }
 setInterval(flushFarmEvents, 25000);
@@ -68,14 +78,23 @@ window.addEventListener('beforeunload', flushFarmEvents);
 // DEFINER, silver déplacé directement en base sans jamais repasser par le client) sont journalisés
 // séparément, directement dans les fonctions SQL market_place_order/market_match_item — voir la
 // migration silver_ledger.
-let silverLedgerQueue = [];
+// Agrégée en mémoire (clé = catégorie+note) pour la même raison que farmEventQueue ci-dessus --
+// silver_ledger grossissait d'environ 480k lignes/jour (une ligne par variation de silver, y
+// compris chaque petit loot de trash). Les totaux par catégorie (admin_silver_ledger_by_category)
+// restent exacts, seul l'horodatage individuel de chaque micro-variation est perdu.
+let silverLedgerQueue = new Map();
 function queueSilverLedger(delta, category, note) {
   if (!sb || !currentUser || isGuest() || !delta) return; // pas de compte vérifié → pas de journalisation
-  silverLedgerQueue.push({ user_id: currentUser.id, delta: Math.round(delta), category, note: note || null });
+  const key = category + '|' + (note || '');
+  const cur = silverLedgerQueue.get(key);
+  if (cur) cur.delta += Math.round(delta);
+  else silverLedgerQueue.set(key, { user_id: currentUser.id, delta: Math.round(delta), category, note: note || null });
 }
 async function flushSilverLedger() {
-  if (!sb || !currentUser || isGuest() || silverLedgerQueue.length === 0) return;
-  const batch = silverLedgerQueue.splice(0, silverLedgerQueue.length);
+  if (!sb || !currentUser || isGuest() || silverLedgerQueue.size === 0) return;
+  const batch = Array.from(silverLedgerQueue.values()).filter(r => r.delta !== 0);
+  silverLedgerQueue.clear();
+  if (batch.length === 0) return;
   try { await sb.from('silver_ledger').insert(batch); } catch(e) { /* pas grave, prochain lot rattrapera */ }
 }
 setInterval(flushSilverLedger, 25000);
