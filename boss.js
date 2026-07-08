@@ -189,6 +189,27 @@ async function openBossLobby() {
   $('bossLobbyBody').innerHTML = renderBossLobbyHtml();
   wireBossLobby();
 }
+// BUG trouvé le 2026-07-16 (demande explicite : "le timer se met pas a jour dans boss") : le
+// commentaire ci-dessus promettait un "tick de polling (20s)" qui n'existait NULLE PART dans le
+// code -- le countdown #bossPanelCountdown n'était donc calculé qu'UNE SEULE FOIS, à l'ouverture du
+// lobby, puis restait figé indéfiniment (contrairement à #nextBossMini, en dehors du lobby, qui
+// tique bien chaque seconde via setInterval(updateNextBossMini,...) dans game-supabase.js). Un
+// joueur qui restait sur la page Boss ne voyait jamais le compte à rebours descendre, ni le bouton
+// "Combattre" apparaître automatiquement quand le créneau devenait live. Deux tickers, comme promis
+// par le commentaire d'origine : un local (1s, juste le texte du countdown, aucun réseau) + un
+// serveur (20s, ré-interroge ensure_scheduled_boss et re-render tout le lobby si l'état a changé) --
+// tous deux inertes tant que le lobby n'est pas réellement ouvert.
+function tickBossPanelCountdown() {
+  const el = $a('bossPanelCountdown'); if (!el) return;
+  const occ = nextBossOccurrence();
+  if (!occ || occ.live) return; // passe en "live" -> le prochain tick serveur (20s) re-render tout le lobby
+  el.textContent = fmtBossCountdown(occ.time - Date.now());
+}
+setInterval(tickBossPanelCountdown, 1000);
+setInterval(() => {
+  const room = $a('bossRoom');
+  if (room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active) refreshLiveBoss();
+}, 20000);
 function renderBossLobbyHtml() {
   const occ = nextBossOccurrence();
   const now = Date.now();
