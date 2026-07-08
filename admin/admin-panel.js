@@ -820,8 +820,8 @@ function openTesterPanel() {
     `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${LANG==='fr'?'En développement — bientôt en test':'In development — testable soon'}</div></div></div>`).join('');
   openInfo(LANG==='fr'?'🧪 Panneau Testeur':'🧪 Tester Panel',
     `<div class="admSummary">${LANG==='fr'
-      ? 'Merci de tester Velia Idle ! Ce panneau te donnera accès aux nouveautés en avant-première (sans aucun avantage en jeu — c\'est du test pur). Rien à tester pour l\'instant, mais voici ce qui arrive :'
-      : 'Thanks for testing Velia Idle! This panel gives you early access to new features (no in-game advantage — pure testing). Nothing to test yet, but here\'s what\'s coming:'}</div>` +
+      ? 'Merci de tester Black Desert Idle ! Ce panneau te donnera accès aux nouveautés en avant-première (sans aucun avantage en jeu — c\'est du test pur). Rien à tester pour l\'instant, mais voici ce qui arrive :'
+      : 'Thanks for testing Black Desert Idle! This panel gives you early access to new features (no in-game advantage — pure testing). Nothing to test yet, but here\'s what\'s coming:'}</div>` +
     list);
 }
 $a('btnTester').onclick = openTesterPanel;
