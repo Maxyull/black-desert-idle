@@ -20,13 +20,15 @@ rentables — la boucle centrale du jeu.
 
 ## Fonctionnalités principales
 
-- **Combat automatique** — pas de clic à répétition, l'IA de combat gère les sorts et le déplacement.
-- **12+ zones de farm** groupées par palier d'équipement (Naru/Tuvala/Yuria/Grunil), chacune avec sa
+- **Combat automatique** — pas de clic à répétition, deux IA réglables séparément : mode de
+  combat (défensif/équilibré/overgeared) et mode de farm (loot/xp).
+- **16 zones de farm** groupées par palier d'équipement (Naru/Tuvala/Yuria/Grunil), chacune avec sa
   propre table de loot (butin de base, matériau, bijou rare, composant de craft).
 - **Système d'enchantement fidèle à BDO** : +1 à +15 puis PRI/DUO/TRI/TET/PEN, avec risque de
   rétrogradation, failstack et protection par Pierre de Cron.
 - **Comptes joueurs + sauvegarde cloud** (Supabase) — jouable aussi en invité, sans compte.
-- **Hôtel des ventes** entre joueurs, **classement**, **chat** (mondial/trade/annonces, mentions @joueur).
+- **Marché commun** entre joueurs (vrai carnet d'ordres achat/vente, pas d'annonces à prix fixe),
+  **classement**, **chat** (mondial/trade/annonces, mentions @joueur).
 - **Boss mondial partagé** à horaires fixes, avec classement de contribution.
 - **Quêtes journalières/hebdomadaires**, **succès**, **Compendium** de progression, **Codex** des objets.
 - **Compatible mobile et tablette** (adaptatif, sans rien perdre de la version ordinateur).
@@ -72,8 +74,9 @@ Quelques convictions qui guident les choix :
   détail zone par zone et l'économie visée dans [`roadmap.md`](roadmap.md).
 - Poursuite de l'équilibrage PA/PD/loot au fil des retours joueurs.
 - Amélioration continue de l'expérience mobile/tablette.
-- Refonte progressive de la structure du code pour rester lisible et maintenable à mesure que le jeu
-  grossit (sans jamais casser la version en ligne).
+- Poursuite du découpage du code par domaine (voir `core/`, seul dossier encore volumineux) à
+  mesure que le jeu grossit, toujours sans casser la version en ligne — chaque dossier a son
+  propre `README.md` détaillant son rôle.
 
 ## Contribuer / signaler un bug
 
