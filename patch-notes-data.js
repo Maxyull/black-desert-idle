@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V300', d:'08/07/2026 07:24', name:{fr:'Marché commun : croix à droite, hauteur fixe, Vendre retiré', en:'Common Market: close button on the right, fixed height, Sell removed'}, fr:[
+      {t:'change', sub:'objets', tx:'La croix de fermeture du Marché commun est maintenant bien alignée à droite du panneau'},
+      {t:'change', sub:'objets', tx:'La fenêtre du Marché commun garde désormais une hauteur fixe : changer de sous-onglet ou sélectionner un objet ne fait plus jamais bouger la taille de la page'},
+      {t:'change', sub:'objets', tx:'Le sous-onglet "Vendre" (vente d\'1 pièce d\'équipement/bijou à prix fixe) a été retiré — les matériaux restent vendables via le sous-onglet Matériaux'},
+    ], en:[
+      {t:'change', sub:'objets', tx:'The Common Market\'s close button is now properly aligned to the right of the panel'},
+      {t:'change', sub:'objets', tx:'The Common Market window now keeps a fixed height: switching sub-tabs or selecting an item no longer changes the page size'},
+      {t:'change', sub:'objets', tx:'The "Sell" sub-tab (selling 1 gear/jewelry piece at a fixed price) was removed — materials remain sellable via the Materials sub-tab'},
+    ] },
   { v:'V299', d:'08/07/2026 07:04', name:{fr:'Marché renommé "Marché commun", réouvert', en:'Market renamed "Common Market", reopened'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Le Marché est renommé "Marché commun" et les anciens onglets Acheter/Vendre/Mes annonces (annonces à prix fixe) ont été retirés — on atterrit directement dans le carnet d\'ordres à l\'ouverture, plus léger et plus clair'},
       {t:'change', sub:'objets', tx:'Dans le sous-onglet Matériaux, la pastille de l\'objet choisi se colore désormais avec sa propre couleur pour bien voir lequel est sélectionné'},
