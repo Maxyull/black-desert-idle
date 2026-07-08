@@ -168,13 +168,13 @@ function marketKeyForGear(it) { return 'gear:' + it.name + '+' + (it.enhLv || 0)
 async function refreshCommonMarket() {
   wireCmSubTabs();
   refreshCmBrowse();
-  refreshCmMaterialList();
   refreshCmSellPicker();
   refreshMyMarketOrders();
+  initMarketMaterials();
 }
 // sous-onglets du marché commun : Parcourir (vitrine, façon référence fournie le 2026-07-07) /
 // Vendre / Mes ordres
-const CM_TAB_PANES = { browse:'cmPaneBrowse', sell:'cmPaneSell', orders:'cmPaneOrders' };
+const CM_TAB_PANES = { browse:'cmPaneBrowse', sell:'cmPaneSell', materials:'cmPaneMaterials', orders:'cmPaneOrders' };
 function wireCmSubTabs() {
   document.querySelectorAll('.cmSubTab').forEach(btn => {
     btn.onclick = () => {
@@ -184,40 +184,154 @@ function wireCmSubTabs() {
     };
   });
 }
-async function refreshCmMaterialList() {
-  const box = $a('marketCommonList');
-  box.innerHTML = '<div class="mEmpty">Chargement...</div>';
-  const rows = await Promise.all(MARKET_MATERIALS.map(async m => {
-    const key = 'material:' + m.name;
-    const { data } = await sb.rpc('market_order_book', { p_item_key: key });
-    return { m, key, book: data || [] };
-  }));
-  box.innerHTML = '';
-  for (const { m, key, book } of rows) {
-    const owned = INV.filter(s => s && s.kind === 'material' && s.name === m.name).reduce((n,s) => n + s.qty, 0);
-    const buys = book.filter(b => b.side === 'buy').sort((a,b) => b.price - a.price);
-    const sells = book.filter(b => b.side === 'sell').sort((a,b) => a.price - b.price);
-    const bestBuy = buys[0], bestSell = sells[0];
-    const row = document.createElement('div');
-    row.className = 'cmRow';
-    row.innerHTML = `
-      <div class="mIcon" style="color:${m.color}">${m.icon}</div>
-      <div class="cmInfo"><div class="mName">${tr(m.name)}</div><div class="cmOwned">${LANG==='fr'?'Possédé':'Owned'} : ${fmt(owned)}</div></div>
-      <div class="cmBook">
-        <div class="cmBid">${LANG==='fr'?'Meilleur achat':'Best buy'} : ${bestBuy?fmt(bestBuy.price)+' 🪙 (×'+fmt(bestBuy.qty)+')':'—'}</div>
-        <div class="cmAsk">${LANG==='fr'?'Meilleure vente':'Best sell'} : ${bestSell?fmt(bestSell.price)+' 🪙 (×'+fmt(bestSell.qty)+')':'—'}</div>
-      </div>
-      <div class="cmActions">
-        <input type="number" class="cmQty" value="1" min="1" title="${LANG==='fr'?'Quantité':'Quantity'}">
-        <input type="number" class="cmPriceInput" placeholder="${LANG==='fr'?'Prix':'Price'}" min="1">
-        <button class="cmBuy">${LANG==='fr'?'Ordre d\'achat':'Buy order'}</button>
-        <button class="cmSell" ${owned<=0?'disabled':''}>${LANG==='fr'?'Ordre de vente':'Sell order'}</button>
-      </div>`;
-    const qtyEl = row.querySelector('.cmQty'), priceEl = row.querySelector('.cmPriceInput');
-    row.querySelector('.cmBuy').onclick = () => placeMarketOrder('buy', key, m.name, 'material', priceEl.value, qtyEl.value);
-    row.querySelector('.cmSell').onclick = () => placeMarketOrder('sell', key, m.name, 'material', priceEl.value, qtyEl.value);
-    box.appendChild(row);
+// ---------- carnet d'ordres + graphique chandelier pour les matériaux (2026-07-16, demande
+// explicite : "envoyer le nouveau marché") -- reprend le design de l'artefact de démo (carnet à 2
+// colonnes avec barres de volume, meilleur prix mis en avant, spread, chandelier sur les 20
+// dernières transactions), branché sur les VRAIES données : market_order_book (RPC déjà
+// existante) et market_trades (table déjà existante, RLS SELECT publique). Pas de bots ni de
+// fourchette min/max fictive (concepts spécifiques à la démo) -- prix validé comme partout
+// ailleurs (juste > 0 côté serveur, voir market_place_order).
+let mktSelectedIdx = 0, mktSide = 'buy';
+function mktKey(m) { return 'material:' + m.name; }
+function initMarketMaterials() {
+  const pills = $a('mktItemPills'); if (!pills) return;
+  pills.innerHTML = MARKET_MATERIALS.map((m,i) => `<button class="mktPill${i===mktSelectedIdx?' active':''}" data-i="${i}">${m.icon} ${tr(m.name)}</button>`).join('');
+  pills.querySelectorAll('.mktPill').forEach(btn => {
+    btn.onclick = () => { mktSelectedIdx = Number(btn.dataset.i); refreshMarketMaterials(); };
+  });
+  $a('mktSideBuy').onclick = () => { mktSide = 'buy'; updateMktForm(); };
+  $a('mktSideSell').onclick = () => { mktSide = 'sell'; updateMktForm(); };
+  $a('mktPlaceBtn').onclick = mktPlaceOrder;
+  refreshMarketMaterials();
+}
+async function refreshMarketMaterials() {
+  const m = MARKET_MATERIALS[mktSelectedIdx];
+  const key = mktKey(m);
+  const [{ data: book }, { data: trades }] = await Promise.all([
+    sb.rpc('market_order_book', { p_item_key: key }),
+    sb.from('market_trades').select('price, qty, created_at').eq('item_key', key).order('created_at', { ascending: true }).limit(20),
+  ]);
+  const sells = (book || []).filter(o => o.side === 'sell').sort((a,b) => a.price - b.price);
+  const buys = (book || []).filter(o => o.side === 'buy').sort((a,b) => b.price - a.price);
+  const bestSell = sells[0], bestBuy = buys[0];
+  const spread = (bestSell && bestBuy) ? (bestSell.price - bestBuy.price) : null;
+
+  // pression du marché : tendance des 10 dernières transactions (2026-07-16, demande explicite)
+  const recentTrades = (trades || []).slice(-10);
+  let up = 0, down = 0;
+  for (let i = 1; i < recentTrades.length; i++) {
+    if (recentTrades[i].price > recentTrades[i-1].price) up++;
+    else if (recentTrades[i].price < recentTrades[i-1].price) down++;
   }
+  const pressure = recentTrades.length < 2 ? { icon:'➡️', label: LANG==='fr'?'NEUTRE':'NEUTRAL', cls:'' }
+    : up > down ? { icon:'🔺', label: LANG==='fr'?'HAUSSE':'RISING', cls:'up' }
+    : down > up ? { icon:'🔻', label: LANG==='fr'?'BAISSE':'FALLING', cls:'down' }
+    : { icon:'➡️', label: LANG==='fr'?'NEUTRE':'NEUTRAL', cls:'' };
+
+  $a('mktMetaRow').innerHTML = `
+    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Meilleure vente':'Best sell'}</div><div class="mktMetaVal sell">${bestSell?fmt(bestSell.price):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Spread':'Spread'}</div><div class="mktMetaVal">${spread!=null?fmt(spread):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Meilleur achat':'Best buy'}</div><div class="mktMetaVal buy">${bestBuy?fmt(bestBuy.price):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Pression marché':'Market pressure'}</div><div class="mktMetaVal ${pressure.cls}">${pressure.icon} ${pressure.label}</div></div>`;
+
+  $a('mktSellCol').innerHTML = `<div class="mktColHead sell"><span>${LANG==='fr'?'Ordres de vente':'Sell orders'}</span><span>${sells.length}</span></div>` +
+    `<div class="mktRowsWrap">${mktOrderRowsHtml(sells, 'sell')}</div>`;
+  $a('mktBuyCol').innerHTML = `<div class="mktColHead buy"><span>${LANG==='fr'?'Ordres d\'achat':'Buy orders'}</span><span>${buys.length}</span></div>` +
+    `<div class="mktRowsWrap">${mktOrderRowsHtml(buys, 'buy')}</div>`;
+
+  const histRows = (trades || []).slice().reverse().map(t => `
+    <div class="mktHistRow">
+      <span>${tr(m.name)}</span><span>${fmt(t.price)}</span><span>×${fmt(t.qty)}</span>
+      <span class="mktHistTime">${new Date(t.created_at).toLocaleTimeString(LANG==='fr'?'fr-FR':'en-US')}</span>
+    </div>`).join('');
+  $a('mktHistRows').innerHTML = histRows || `<div class="mEmpty">${LANG==='fr'?'Aucune transaction':'No transactions'}</div>`;
+
+  drawMktCandles(trades || []);
+  updateMktForm();
+}
+function mktOrderRowsHtml(orders, side) {
+  if (!orders.length) return `<div class="mEmpty">${LANG==='fr'?'Aucun ordre':'No orders'}</div>`;
+  const maxQty = Math.max(...orders.map(o => o.qty));
+  return orders.map((o,i) => `
+    <div class="mktOrderRow ${side}${i===0?' best':''}">
+      <div class="mktVol" style="width:${Math.round(o.qty/maxQty*100)}%"></div>
+      <span class="mktPrice">${fmt(o.price)}</span><span class="mktQty">${o.qty}</span><span class="mktTotal">${fmt(o.price*o.qty)}</span>
+    </div>`).join('');
+}
+function updateMktForm() {
+  const m = MARKET_MATERIALS[mktSelectedIdx];
+  const owned = INV.filter(s => s && s.kind === 'material' && s.name === m.name).reduce((n,s) => n + s.qty, 0);
+  $a('mktFormTitle').textContent = (LANG==='fr'?'Placer un ordre — ':'Place an order — ') + tr(m.name) + ' · ' + (LANG==='fr'?'possédé':'owned') + ' : ' + fmt(owned);
+  $a('mktSideBuy').classList.toggle('active', mktSide==='buy');
+  $a('mktSideSell').classList.toggle('active', mktSide==='sell');
+  const btn = $a('mktPlaceBtn');
+  btn.className = 'mktPlaceBtn ' + mktSide;
+  btn.textContent = mktSide === 'buy' ? (LANG==='fr'?"Placer l'ordre d'achat":'Place buy order') : (LANG==='fr'?"Placer l'ordre de vente":'Place sell order');
+  $a('mktFormMsg').textContent = '';
+}
+async function mktPlaceOrder() {
+  const m = MARKET_MATERIALS[mktSelectedIdx];
+  const price = Number($a('mktPriceInput').value), qty = parseInt($a('mktQtyInput').value, 10) || 1;
+  const msg = $a('mktFormMsg');
+  if (!price || price <= 0) { msg.textContent = LANG==='fr'?'Prix invalide.':'Invalid price.'; return; }
+  let invIndex = null;
+  if (mktSide === 'sell') {
+    invIndex = INV.findIndex(s => s && s.kind === 'material' && s.name === m.name);
+    if (invIndex === -1) { msg.textContent = LANG==='fr'?'Tu n\'en as pas.':'You don\'t have any.'; return; }
+  }
+  const { error } = await sb.rpc('market_place_order', {
+    p_side: mktSide, p_item_key: mktKey(m), p_item_name: m.name, p_item_kind: 'material',
+    p_price: price, p_qty: qty, p_inv_index: invIndex,
+  });
+  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; return; }
+  msg.textContent = '';
+  $a('mktPriceInput').value = ''; $a('mktQtyInput').value = '1';
+  await loadCloudSave();
+  refreshMarketMaterials();
+}
+// chandelier canvas (2026-07-16) : chaque transaction = 1 bougie (open = prix de la transaction
+// précédente, close = son propre prix), même logique que l'artefact de démo -- fidèle aux VRAIES
+// transactions, sans inventer de mèche haute/basse intra-transaction
+function drawMktCandles(trades) {
+  const canvas = $a('mktCandleCv'); if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.clientWidth * 2;
+  const H = canvas.height = 220 * 2;
+  ctx.clearRect(0,0,W,H);
+  if (trades.length < 2) {
+    ctx.fillStyle = '#5a5f74'; ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(LANG==='fr'?'Pas assez de transactions':'Not enough transactions', W/2, H/2);
+    return;
+  }
+  const candles = [];
+  for (let i = 1; i < trades.length; i++) {
+    const open = Number(trades[i-1].price), close = Number(trades[i].price);
+    candles.push({ open, close, high: Math.max(open,close), low: Math.min(open,close) });
+  }
+  const padL = 70, padR = 16, padT = 16, padB = 16;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const allPrices = candles.flatMap(c => [c.high, c.low]);
+  let pMin = Math.min(...allPrices), pMax = Math.max(...allPrices);
+  if (pMin === pMax) { pMin *= 0.98; pMax *= 1.02; }
+  const pad = (pMax-pMin)*0.08; pMin -= pad; pMax += pad;
+  const y = p => padT + plotH - ((p-pMin)/(pMax-pMin))*plotH;
+  const cw = plotW/candles.length;
+  ctx.strokeStyle = '#2c2a33'; ctx.lineWidth = 1; ctx.font = '18px sans-serif'; ctx.fillStyle = '#9a917e'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const py = padT + plotH*i/4;
+    ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(W-padR,py); ctx.stroke();
+    ctx.fillText(fmt(pMax - (pMax-pMin)*i/4), padL-8, py+6);
+  }
+  candles.forEach((c,i) => {
+    const cx = padL + cw*i + cw/2;
+    const up = c.close >= c.open;
+    ctx.strokeStyle = ctx.fillStyle = up ? '#7aa35e' : '#c05545';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, y(c.high)); ctx.lineTo(cx, y(c.low)); ctx.stroke();
+    const bodyTop = y(Math.max(c.open,c.close)), bodyBot = y(Math.min(c.open,c.close));
+    const bw = Math.max(4, cw*0.55);
+    ctx.fillRect(cx-bw/2, bodyTop, bw, Math.max(2, bodyBot-bodyTop));
+  });
 }
 
 // ---------- vitrine "Parcourir" : arbre de catégories, cartes groupées par objet avec tirage par

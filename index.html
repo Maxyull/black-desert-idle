@@ -10,7 +10,7 @@
      commit), pas juste copie depuis jsdelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"
   integrity="sha256-LbKRLxaTmjshtHKYCnradGszpqQHCLxVXLC+JVxutbE=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles.css?v=399">
+<link rel="stylesheet" href="styles.css?v=400">
 </head>
 <body>
 
@@ -240,6 +240,7 @@
       <div class="cmSubTabs">
         <button class="cmSubTab active" data-cmtab="browse" data-i18n="cmTabBrowse">🛒 Parcourir</button>
         <button class="cmSubTab" data-cmtab="sell" data-i18n="cmTabSell">🏷️ Vendre</button>
+        <button class="cmSubTab" data-cmtab="materials" data-i18n="cmTabMaterials">📊 Matériaux</button>
         <button class="cmSubTab" data-cmtab="orders" data-i18n="cmTabOrders">📋 Mes ordres</button>
       </div>
       <div id="commonMsg"></div>
@@ -271,8 +272,44 @@
         <select id="cmSellItemSelect"></select>
         <input type="number" id="cmSellPriceInput" placeholder="Prix en silver" min="1" data-i18n-ph="priceInputPh">
         <button id="btnCmListItem" data-i18n="btnCmListItem">Mettre en vente</button>
-        <h3 style="margin-top:14px" data-i18n="cmMaterialSectionTitle">◈ Vendre / acheter des matériaux</h3>
-        <div id="marketCommonList"></div>
+      </div>
+
+      <!-- carnet d'ordres + graphique chandelier pour les matériaux (2026-07-16, demande explicite :
+           "envoyer le nouveau marché" -- reprend le design de l'artefact de démo, branché sur les
+           vraies données : market_order_book (RPC déjà existante) + market_trades (table déjà
+           existante, RLS SELECT publique, alimentée par market_match_item côté serveur). Pas de
+           bots ni de fourchette min/max fictive (spécifiques à la démo) -- prix validé comme partout
+           ailleurs (juste > 0). -->
+      <div id="cmPaneMaterials" class="cmSubPane" style="display:none">
+        <div class="mktItems" id="mktItemPills"></div>
+        <div class="mktMetaRow" id="mktMetaRow"></div>
+        <div class="mktGrid">
+          <div class="mktCol" id="mktSellCol"></div>
+          <div class="mktCenter">
+            <div class="mktChartCard">
+              <div class="mktChartHead" data-i18n="mktChartHead">Graphique chandelier — 20 dernières transactions</div>
+              <canvas id="mktCandleCv"></canvas>
+            </div>
+          </div>
+          <div class="mktCol" id="mktBuyCol"></div>
+        </div>
+        <div class="mktFormCard">
+          <div class="mktFormTitle" id="mktFormTitle"></div>
+          <div class="mktSideToggle">
+            <button class="mktSideBtn buy active" id="mktSideBuy" data-i18n="mktSideBuy">Achat</button>
+            <button class="mktSideBtn sell" id="mktSideSell" data-i18n="mktSideSell">Vente</button>
+          </div>
+          <div class="mktFormGrid">
+            <div class="mktFld"><label data-i18n="mktPriceLbl">Prix unitaire</label><input type="number" id="mktPriceInput" min="1"></div>
+            <div class="mktFld"><label data-i18n="mktQtyLbl">Quantité</label><input type="number" id="mktQtyInput" min="1" value="1"></div>
+          </div>
+          <div class="mktErr" id="mktFormMsg"></div>
+          <button class="mktPlaceBtn buy" id="mktPlaceBtn" data-i18n="mktPlaceBuy">Placer l'ordre d'achat</button>
+        </div>
+        <div class="mktHistCard">
+          <div class="mktHistHead" data-i18n="mktHistHead">📜 Historique des transactions</div>
+          <div id="mktHistRows"></div>
+        </div>
       </div>
 
       <div id="cmPaneOrders" class="cmSubPane" style="display:none">
@@ -587,41 +624,41 @@
   </div>
 </div>
 
-<script src="game-core.js?v=399"></script>
+<script src="game-core.js?v=400"></script>
 <!-- World Boss (Kzarka/Vell : lobby, combat, rendu de la salle) -- extrait de game-core.js le
      2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà définies à ce stade
      ($, S, EQUIP, effHpMax, ZONES...) et le canvas #bossCv déjà présent dans le DOM -->
-<script src="boss.js?v=399"></script>
+<script src="boss.js?v=400"></script>
 <!-- inventaire/équipement -- UI (paperdoll, grille, enchantement, auto-opti) -- extrait de
      game-core.js le 2026-07-14 -- DOIT charger AVANT render.js : le démarrage du jeu (à la fin de
      render.js) appelle hud(), qui appelle refreshInvUI()/hasNeglectedUpgradeInBag(), tous deux
      définis ici -->
-<script src="inventory-ui.js?v=399"></script>
+<script src="inventory-ui.js?v=400"></script>
 <!-- rendu canvas (scène, sprites, particules) -- extrait de game-core.js le 2026-07-14 -- charge
      APRÈS game-core.js/boss.js/inventory-ui.js : hud() (dans game-core.js) appelle
      drawZoneMobIcon() (défini ici), donc ce fichier DOIT charger avant le tout premier hud(). C'est
      pourquoi le démarrage du jeu (renderInvCatTabs/hud/requestAnimationFrame(loop), avant à la toute
      fin de game-core.js) a été déplacé à la fin de CE fichier -- requestAnimationFrame(loop) doit
      rester le tout dernier appel synchrone du chargement, sinon la boucle de jeu ne démarre jamais -->
-<script src="render.js?v=399"></script>
+<script src="render.js?v=400"></script>
 <!-- données pures PATCH_NOTES (~2000 lignes, extraites de game-supabase.js le 2026-07-14 pour
      alléger le fichier) -- DOIT charger avant game-supabase.js, qui lit PATCH_NOTES[0].v au
      top-level dès son chargement (voir CURRENT_VERSION) -->
-<script src="patch-notes-data.js?v=399"></script>
-<script src="game-supabase.js?v=399"></script>
+<script src="patch-notes-data.js?v=400"></script>
+<script src="game-supabase.js?v=400"></script>
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->
-<script src="admin-panel.js?v=399"></script>
+<script src="admin-panel.js?v=400"></script>
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
-<script src="chat.js?v=399"></script>
+<script src="chat.js?v=400"></script>
 <!-- marché (Hôtel des ventes + Marché commun v2, carnet d'ordres) -- extrait de game-supabase.js
      le 2026-07-14 -- charge APRÈS lui : wiring $a('btnMarket').onclick etc au top-level -->
-<script src="market.js?v=399"></script>
+<script src="market.js?v=400"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests.js?v=399"></script>
+<script src="tests.js?v=400"></script>
 </body>
 </html>
