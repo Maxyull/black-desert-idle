@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V320', d:'18/07/2026 12:00', name:{fr:'Taxe de vente Marché : 20%', en:'Market sales tax: 20%'}, fr:[
+      {t:'change', sub:'economie', severity:'major', tx:'Le Marché commun applique désormais une taxe de vente de 20% (le vrai BDO prend ~30%) : le vendeur touche 80% du prix de vente, que ce soit via le carnet d\'ordres ou une vente instantanée — l\'acheteur, lui, paie toujours le prix affiché en entier. Un aperçu du montant net (après taxe) s\'affiche désormais avant de placer un ordre de vente.'},
+    ], en:[
+      {t:'change', sub:'economie', severity:'major', tx:'The Common Market now applies a 20% sales tax (real BDO takes ~30%): the seller receives 80% of the sale price, whether through the order book or an instant sale — the buyer always pays the full listed price. A preview of the net amount (after tax) now shows before placing a sell order.'},
+    ] },
   { v:'V319', d:'17/07/2026 13:30', name:{fr:'Coffre plafonné, Compagnon/Vie en mer dans les onglets de région, sécurité Marché', en:'Chest height capped, Companion/Sea life in region tabs, Market security'}, fr:[
       {t:'fix', sub:'objets', tx:'La grille du Coffre de ville (192 cases) pouvait déborder largement sous la carte — plafonnée avec un défilement interne, comme le sac principal'},
       {t:'fix', sub:'interface', tx:'Les cases verrouillées du Coffre affichaient un cadenas inline sans le badge visuel habituel — reprennent désormais la même convention que partout ailleurs (cadenas en badge au-dessus, centré)'},

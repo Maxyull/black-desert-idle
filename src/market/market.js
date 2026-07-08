@@ -82,6 +82,12 @@ function wireCmSubTabs() {
 // fourchette min/max fictive (concepts spécifiques à la démo) -- prix validé comme partout
 // ailleurs (juste > 0 côté serveur, voir market_place_order).
 let mktSelectedIdx = 0, mktSide = 'buy';
+// taxe de vente Marché 20% (2026-07-18, demande explicite : "taxe market 20% dorénavant") --
+// prélevée côté serveur sur le VENDEUR (market_match_item, voir migration
+// 20260718110000_market_sales_tax_20pct.sql) : garder cette constante synchronisée avec le
+// facteur SQL (* 0.8) si le taux change un jour. Purement informatif ici (aperçu du net avant
+// de placer un ordre) — le vrai calcul fait foi côté RPC.
+const MARKET_SELL_TAX_RATE = 0.20;
 function mktKey(m) { return 'material:' + m.name; }
 function initMarketMaterials() {
   const pills = $a('mktItemPills'); if (!pills) return;
@@ -92,7 +98,23 @@ function initMarketMaterials() {
   $a('mktSideBuy').onclick = () => { mktSide = 'buy'; updateMktForm(); };
   $a('mktSideSell').onclick = () => { mktSide = 'sell'; updateMktForm(); };
   $a('mktPlaceBtn').onclick = mktPlaceOrder;
+  // aperçu du net après taxe (côté vente uniquement) mis à jour à la volée pendant la saisie
+  $a('mktPriceInput').addEventListener('input', updateMktTaxHint);
+  $a('mktQtyInput').addEventListener('input', updateMktTaxHint);
   refreshMarketMaterials();
+}
+// aperçu "vous recevrez ~X après taxe (20%)" -- affiché uniquement en mode Vente, jamais en
+// Achat (l'acheteur paie toujours le plein prix affiché, seul le vendeur est taxé)
+function updateMktTaxHint() {
+  const hint = $a('mktSellTaxHint'); if (!hint) return;
+  if (mktSide !== 'sell') { hint.style.display = 'none'; return; }
+  const price = Number($a('mktPriceInput').value) || 0;
+  const qty = parseInt($a('mktQtyInput').value, 10) || 0;
+  hint.style.display = '';
+  const net = Math.floor(price * qty * (1 - MARKET_SELL_TAX_RATE));
+  hint.textContent = LANG==='fr'
+    ? `Tu recevras ~${fmt(net)} silver après taxe de vente (${Math.round(MARKET_SELL_TAX_RATE*100)}%)`
+    : `You'll receive ~${fmt(net)} silver after sale tax (${Math.round(MARKET_SELL_TAX_RATE*100)}%)`;
 }
 // met à jour l'état "actif" des pills à CHAQUE sélection (2026-07-16, bug corrigé : avant, seule
 // la pill de idx=0 recevait ".active" une fois à l'init -- cliquer une autre pill changeait bien
@@ -177,6 +199,7 @@ function updateMktForm() {
   const btn = $a('mktPlaceBtn');
   btn.className = 'mktPlaceBtn ' + mktSide;
   btn.textContent = mktSide === 'buy' ? (LANG==='fr'?"Placer l'ordre d'achat":'Place buy order') : (LANG==='fr'?"Placer l'ordre de vente":'Place sell order');
+  updateMktTaxHint();
   $a('mktFormMsg').textContent = '';
 }
 async function mktPlaceOrder() {

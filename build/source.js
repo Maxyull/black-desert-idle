@@ -7991,16 +7991,14 @@ const WIKI_SECTIONS = [
   { id:'market', icon:'🏛️', label:{fr:'Marché',en:'Market'},
     fr:`<h3>🚧 BETA — en construction</h3>
       <p>Le Marché est encore <b>peu fonctionnel</b> : attends-toi à des bugs, des changements et des remises à zéro pendant son développement. Ne t'y fie pas encore pour ta progression.</p>
-      <h3>Hôtel des ventes</h3>
-      <p>Prix fixes fixés par le vendeur, pas d'enchères ni de délai. <b>Aucune taxe de vente</b> (le vrai BDO prend ~30%).</p>
       <h3>Marché commun</h3>
-      <p>Les matériaux se vendent à un prix commun flottant, borné par un min/max, qui varie avec l'offre et la demande.</p>`,
+      <p>Vrai carnet d'ordres : place un ordre d'achat ou de vente à ton prix, apparié automatiquement avec un ordre en face dès que les prix se croisent (pas de prix fixe imposé).</p>
+      <p><b>Taxe de vente : 20%</b> (le vrai BDO prend ~30%) — prélevée uniquement sur le vendeur, qui touche 80% du prix de vente ; l'acheteur paie toujours le prix affiché.</p>`,
     en:`<h3>🚧 BETA — under construction</h3>
       <p>The Market is still <b>not very functional</b>: expect bugs, changes and resets while it's being developed. Don't rely on it for your progress yet.</p>
-      <h3>Marketplace</h3>
-      <p>Fixed prices set by the seller, no auctions or delay. <b>No sales tax</b> (real BDO takes ~30%).</p>
       <h3>Common market</h3>
-      <p>Materials sell at a common floating price, bounded by a min/max, varying with supply and demand.</p>` },
+      <p>A real order book: place a buy or sell order at your own price, automatically matched with an opposing order once prices cross (no fixed price imposed).</p>
+      <p><b>Sales tax: 20%</b> (real BDO takes ~30%) — charged only to the seller, who receives 80% of the sale price; the buyer always pays the listed price.</p>` },
   { id:'account', icon:'💾', label:{fr:'Compte & Sauvegarde',en:'Account & Save'},
     fr:`<h3>Sauvegarde</h3>
       <p>Sauvegarde cloud automatique toutes les 30 s, plus une sauvegarde locale de secours. En cas de déconnexion brutale, jusqu'à 30 s de progression peuvent être perdues.</p>
@@ -9668,6 +9666,8 @@ function wireCmSubTabs() {
 }
 
 let mktSelectedIdx = 0, mktSide = 'buy';
+
+const MARKET_SELL_TAX_RATE = 0.20;
 function mktKey(m) { return 'material:' + m.name; }
 function initMarketMaterials() {
   const pills = $a('mktItemPills'); if (!pills) return;
@@ -9678,7 +9678,22 @@ function initMarketMaterials() {
   $a('mktSideBuy').onclick = () => { mktSide = 'buy'; updateMktForm(); };
   $a('mktSideSell').onclick = () => { mktSide = 'sell'; updateMktForm(); };
   $a('mktPlaceBtn').onclick = mktPlaceOrder;
+  
+  $a('mktPriceInput').addEventListener('input', updateMktTaxHint);
+  $a('mktQtyInput').addEventListener('input', updateMktTaxHint);
   refreshMarketMaterials();
+}
+
+function updateMktTaxHint() {
+  const hint = $a('mktSellTaxHint'); if (!hint) return;
+  if (mktSide !== 'sell') { hint.style.display = 'none'; return; }
+  const price = Number($a('mktPriceInput').value) || 0;
+  const qty = parseInt($a('mktQtyInput').value, 10) || 0;
+  hint.style.display = '';
+  const net = Math.floor(price * qty * (1 - MARKET_SELL_TAX_RATE));
+  hint.textContent = LANG==='fr'
+    ? `Tu recevras ~${fmt(net)} silver après taxe de vente (${Math.round(MARKET_SELL_TAX_RATE*100)}%)`
+    : `You'll receive ~${fmt(net)} silver after sale tax (${Math.round(MARKET_SELL_TAX_RATE*100)}%)`;
 }
 
 function updateMktPills() {
@@ -9757,6 +9772,7 @@ function updateMktForm() {
   const btn = $a('mktPlaceBtn');
   btn.className = 'mktPlaceBtn ' + mktSide;
   btn.textContent = mktSide === 'buy' ? (LANG==='fr'?"Placer l'ordre d'achat":'Place buy order') : (LANG==='fr'?"Placer l'ordre de vente":'Place sell order');
+  updateMktTaxHint();
   $a('mktFormMsg').textContent = '';
 }
 async function mktPlaceOrder() {

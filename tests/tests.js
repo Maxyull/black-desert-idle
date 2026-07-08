@@ -603,6 +603,33 @@
     delete S.enhPeakByName['testCompPenItem'];
     if (s.hadMastery) S.penMastery['testCompPenItem'] = true; else delete S.penMastery['testCompPenItem'];
   }
+  // "taxe market 20% dorenavant" (2026-07-18) -- garde-fou de synchronisation : la constante
+  // client MARKET_SELL_TAX_RATE (aperçu affiché avant de placer un ordre, voir
+  // updateMktTaxHint()) doit rester alignée sur le facteur réel appliqué côté serveur
+  // (market_match_item/market_sell_material, migration 20260718110000_market_sales_tax_20pct.sql,
+  // "* 0.8"). Ne peut pas vérifier le SQL directement depuis ce fichier client -- documente et
+  // fige la valeur attendue pour qu'un futur changement du taux SQL sans toucher ce fichier soit
+  // repéré au moins côté rappel (voir le commentaire au-dessus de MARKET_SELL_TAX_RATE).
+  function testMarketSellTaxRateMatchesServerFactor() {
+    if (typeof MARKET_SELL_TAX_RATE === 'undefined') return; // pas de DOM/module marché chargé
+    assert('MARKET_SELL_TAX_RATE vaut bien 20% (0.8 côté SQL)', MARKET_SELL_TAX_RATE === 0.20, `got=${MARKET_SELL_TAX_RATE}`);
+  }
+  // aperçu "vous recevrez ~X après taxe" : calcul correct (prix*qty*80%, arrondi vers le bas),
+  // jamais affiché en mode Achat (l'acheteur paie toujours le plein prix affiché)
+  function testMarketTaxHintComputesNetAndOnlyShowsOnSell() {
+    if (!$('mktSellTaxHint') || !$('mktPriceInput') || !$('mktQtyInput')) return; // pas de DOM marché
+    const s = { side: mktSide, price: $('mktPriceInput').value, qty: $('mktQtyInput').value };
+    mktSide = 'buy';
+    $('mktPriceInput').value = '100'; $('mktQtyInput').value = '10';
+    updateMktTaxHint();
+    assert('Aperçu masqué en mode Achat', $('mktSellTaxHint').style.display === 'none');
+    mktSide = 'sell';
+    updateMktTaxHint();
+    assert('Aperçu visible en mode Vente', $('mktSellTaxHint').style.display !== 'none');
+    assert('Aperçu affiche bien le net à 80% (100*10*0.8=800)', $('mktSellTaxHint').textContent.includes('800'), `texte=${$('mktSellTaxHint').textContent}`);
+    mktSide = s.side; $('mktPriceInput').value = s.price; $('mktQtyInput').value = s.qty;
+    updateMktTaxHint();
+  }
   // "enleve le scroll affiche les 2 a 7 dernier note selon la taille et met un bouton vers le haut
   // pour voir les nouveau et vers le bas pour regarder les ancien" (2026-07-11) -- computePatchPages()
   // découpe PATCH_NOTES en pages contiguës de 2 à 7 entrées, sans trou ni chevauchement.
@@ -1493,6 +1520,8 @@
     testJewelryHasMatNameForEnhancement();
     testInvOptTargetDoesNotEquip();
     testCompendiumEvictsItemOnceItReachesPen();
+    testMarketSellTaxRateMatchesServerFactor();
+    testMarketTaxHintComputesNetAndOnlyShowsOnSell();
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();

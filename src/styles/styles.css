@@ -1201,6 +1201,8 @@
   .mktFld label { display:block; font-size:8.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:3px; }
   .mktFld input { width:100%; background:#191720; border:1px solid #3a3742; color:var(--ink); padding:7px; border-radius:4px; font-size:12px; font-weight:bold; }
   .mktErr { color:var(--danger); font-size:10.5px; font-weight:bold; min-height:14px; margin-bottom:4px; }
+  /* aperçu net après taxe de vente (2026-07-18) -- voir updateMktTaxHint() */
+  .mktTaxHint { color:var(--ink-dim); font-size:10px; margin-bottom:6px; }
   .mktPlaceBtn { width:100%; padding:9px; border-radius:5px; border:none; font-weight:bold; font-size:11px; letter-spacing:.5px; text-transform:uppercase; }
   .mktPlaceBtn.buy { background:var(--r-green); color:#0d1a08; }
   .mktPlaceBtn.sell { background:var(--r-red); color:#1a0805; }

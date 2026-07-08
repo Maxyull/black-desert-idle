@@ -10,7 +10,7 @@
      commit), pas juste copie depuis jsdelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"
   integrity="sha256-LbKRLxaTmjshtHKYCnradGszpqQHCLxVXLC+JVxutbE=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=430">
+<link rel="stylesheet" href="src/styles/styles.css?v=431">
 </head>
 <body>
 
@@ -279,6 +279,9 @@
             <div class="mktFld"><label data-i18n="mktPriceLbl">Prix unitaire</label><input type="number" id="mktPriceInput" min="1"></div>
             <div class="mktFld"><label data-i18n="mktQtyLbl">Quantité</label><input type="number" id="mktQtyInput" min="1" value="1"></div>
           </div>
+          <!-- aperçu du net apres taxe de vente (2026-07-18, demande explicite : "taxe market
+               20%") -- affiche uniquement en mode Vente, voir updateMktTaxHint() -->
+          <div class="mktTaxHint" id="mktSellTaxHint" style="display:none"></div>
           <div class="mktErr" id="mktFormMsg"></div>
           <button class="mktPlaceBtn buy" id="mktPlaceBtn" data-i18n="mktPlaceBuy">Placer l'ordre d'achat</button>
         </div>
@@ -603,11 +606,11 @@
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- module autonome, DOIT charger EN PREMIER : GEAR_TIERS
      (world/gear-tiers-data.js) lit ICO_MAT_* immédiatement au chargement -->
-<script src="meta/patch-notes-data.js?v=430"></script>
+<script src="meta/patch-notes-data.js?v=431"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=430"></script>
+<script src="build/source.min.js?v=431"></script>
 <!-- données pures ZONES[] -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers) --
      DOIT charger AVANT game-core.js : resetWorld() (appelé au top-level de game-core.js) lit ZONES
      dès le premier chargement du script -->
