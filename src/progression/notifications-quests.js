@@ -383,7 +383,13 @@ function renderCompendiumHtml() {
         ? 'Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.'
         : 'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.'}</div>` +
       GEAR_TIERS.map(tier => {
-        const rowsHtml = penItems.filter(e => e.grade === tier.grade).map(entry => {
+        const tierItems = penItems.filter(e => e.grade === tier.grade);
+        const tierDone = tierItems.filter(e => S.penMastery[e.name]).length;
+        // "Maitrise pen ajoute a cote de chaque categorie ?/11 et montre que c'est fais si c'est
+        // 11/11" (2026-07-09) -- compteur par palier (7 pieces + 4 bijoux = 11), classe "done" sur
+        // l'en-tête entière une fois complet, même convention visuelle que .compZoneRow.done
+        // (halo vert, voir styles.css) pour rester cohérent avec l'onglet Zones juste au-dessus.
+        const rowsHtml = tierItems.map(entry => {
           const done = !!S.penMastery[entry.name];
           const peak = (S.enhPeakByName && S.enhPeakByName[entry.name]) || 0;
           return `<span class="compItem compPenItem${done?' done':''}" title="${escapeHtml(tr(entry.name))}">` +
@@ -391,7 +397,8 @@ function renderCompendiumHtml() {
             `<span class="compPenName">${escapeHtml(tr(entry.name))}</span>` +
             `<span class="compPenPeak">${peak>0?ENH_NAMES[peak]:'—'}</span></span>`;
         }).join('');
-        return `<div class="zTierHead"><span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}</div>` +
+        return `<div class="zTierHead${tierDone===tierItems.length?' done':''}"><span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}` +
+          `<span class="zTierHeadCount">${tierDone}/${tierItems.length}</span></div>` +
           `<div class="compItems compPenGrid">${rowsHtml}</div>`;
       }).join('');
   } else {

@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V332', d:'19/07/2026 01:00', name:{fr:'Compteur par palier dans la Maîtrise PEN', en:'Per-tier counter in PEN Mastery'}, fr:[
+      {t:'new', sub:'interface', tx:'Chaque palier de couleur de la Maîtrise PEN affiche désormais son propre compteur (ex: 7/11), avec un halo vert dès que le palier est complet (11/11) — plus besoin de compter soi-même les icônes.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Each color tier in PEN Mastery now shows its own counter (e.g. 7/11), with a green highlight once the tier is complete (11/11) — no more counting icons by hand.'},
+    ] },
   { v:'V331', d:'19/07/2026 00:00', name:{fr:'Barre de vie du boss vaincu, stack par nom, coffre à taille standard', en:'Defeated boss HP bar, stack by name, standard chest size'}, fr:[
       {t:'new', sub:'interface', tx:'Le lobby Boss affiche désormais une vraie barre de vie (pas juste du texte) quand un boss partagé a déjà été vaincu par d\'autres joueurs — vide, grisée, "VAINCU" — visible jusqu\'au moment exact où il aurait normalement disparu (fin de la fenêtre de combat de 9 min).'},
       {t:'fix', sub:'economie', severity:'major', tx:'Deux objets identiques (même nom) provenant de sources différentes pouvaient finir dans 2 stacks séparés au lieu de fusionner, à cause d\'un identifiant technique de provenance différent. Corrigé : le stack se fait désormais uniquement par nom affiché, quelle que soit la provenance.'},
