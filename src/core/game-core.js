@@ -463,6 +463,21 @@ function markPenMastery(name) {
   logToDiscord('🌟 Maîtrise PEN', `**${myPseudo||'Joueur'}** amène ${name} à PEN pour la première fois (${done}/${max}${done>=max?' — MAÎTRISE COMPLÈTE ✓':''})`, 0xffe9a8);
 }
 function compendiumPenCount() { return Object.keys(S.penMastery||{}).length; }
+// "Un item qui passe pen... supprime l'item non pen du sac protégé spécial compendium" (2026-07-08)
+// -- ensureCompendiumProtection() protège toujours le PLUS ENCHANTÉ exemplaire d'un nom TANT QU'il
+// n'a jamais atteint PEN (voir plus haut). Une fois S.penMastery[name] vrai (peu importe QUEL
+// exemplaire a atteint PEN -- équipé, sac principal, ou celui-là même dans le Compendium), le
+// protégé n'a plus de raison d'être : rendu ici au sac principal, jamais perdu (comme tout
+// mouvement Compendium -> sac). ensureCompendiumProtection() ne re-protège jamais un nom déjà
+// masterisé (garde-fou déjà en place), donc rien ne viendra le remplacer entre-temps.
+function evictMasteredFromCompendiumBag(name) {
+  if (!name || !S.penMastery[name]) return;
+  const idx = COMPENDIUM_BAG.findIndex(s => s && s.name === name);
+  if (idx === -1) return;
+  if (invAdd({ ...COMPENDIUM_BAG[idx] })) COMPENDIUM_BAG[idx] = null;
+  // sac principal plein : l'objet reste protégé dans le Compendium plutôt que d'être perdu --
+  // rattrapé au prochain appel (une vente/enchant/chargement ultérieur relance ce garde-fou)
+}
 // meilleur niveau d'optimisation JAMAIS atteint pour un nom d'objet donné (2026-07-15, demande
 // explicite : "affiche l'opti dans le compendium si on a vendu un objet optimisé") — contrairement
 // à S.penMastery (qui ne retient QUE le passage à PEN), ceci retient TOUT niveau intermédiaire

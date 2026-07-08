@@ -1223,16 +1223,14 @@ function attemptEnhance() {
     if (target.enhLv >= ENH_NAMES.length-1) {
       markPenMastery(target.name);
       // Compendium : ne garde que du TET (IV) maximum (2026-07-17, demande explicite : "une fois
-      // PEN il disparaissent du compendium... uniquement des item TET maximum") -- un objet du
-      // Compendium enchanté jusqu'à PEN n'a plus besoin d'être protégé (déjà maîtrisé, voir
-      // S.penMastery ci-dessus), il rejoint le sac principal comme un objet normal
-      if (optTarget.loc === 'compendium') {
-        const compIdx = optTarget.key;
-        if (invAdd({ ...target })) COMPENDIUM_BAG[compIdx] = null;
-        // sac plein : l'objet reste dans le Compendium plutôt que d'être perdu -- pas de garde-fou
-        // supplémentaire nécessaire, ensureCompendiumProtection ne re-protège jamais un item déjà
-        // marqué PEN (S.penMastery), donc rien ne viendra le dupliquer ou le remplacer entre-temps
-      }
+      // PEN il disparaissent du compendium... uniquement des item TET maximum"), généralisé le
+      // 2026-07-08 (demande explicite : "un item qui passe pen... supprime l'item non pen du sac
+      // protégé compendium") -- avant, seul le cas où l'objet OPTIMISÉ était lui-même la copie
+      // protégée était géré (optTarget.loc==='compendium') ; désormais couvre aussi le cas où
+      // c'est un exemplaire ÉQUIPÉ ou du sac principal qui atteint PEN alors qu'une AUTRE copie
+      // (non-PEN) du même nom est protégée dans le Compendium en attendant -- cette copie n'a
+      // plus de raison d'y rester, voir evictMasteredFromCompendiumBag (core/game-core.js).
+      evictMasteredFromCompendiumBag(target.name);
     }
   } else {
     addItemFailstack(target, lvl+1); // le failstack de CE palier, pour CET objet, progresse et reste acquis

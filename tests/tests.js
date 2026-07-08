@@ -789,6 +789,55 @@
     EQUIP.helmet = savedHelmet;
     S.penMastery = savedPenMastery;
   }
+  // "Un item qui passe pen... supprime l'item non pen du sac protégé compendium" (2026-07-08) --
+  // généralise l'éviction : un exemplaire ÉQUIPÉ (pas la copie protégée elle-même) qui atteint PEN
+  // doit quand même faire sortir du Compendium la copie non-PEN du même nom qui y était protégée.
+  function testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen() {
+    if (typeof evictMasteredFromCompendiumBag !== 'function') return;
+    const freeIdx = INV.findIndex(s => s === null);
+    if (freeIdx === -1) return; // sac plein, invAdd refuserait légitimement -- pas un cas testable ici
+    const savedInv = INV[freeIdx];
+    const savedComp0 = COMPENDIUM_BAG[0];
+    const savedPen = S.penMastery['Test Helmet Evict Regression'];
+    INV[freeIdx] = null;
+    COMPENDIUM_BAG[0] = { name:'Test Helmet Evict Regression', kind:'gear', optimizable:true, enhLv:2 };
+    S.penMastery['Test Helmet Evict Regression'] = true; // simule un AUTRE exemplaire (équipé) ayant atteint PEN
+    evictMasteredFromCompendiumBag('Test Helmet Evict Regression');
+    assert('Compendium : la copie non-PEN protégée est évacuée dès que le nom est maîtrisé', COMPENDIUM_BAG[0] === null);
+    assert('Compendium : la copie évacuée rejoint bien le sac principal', INV.some(s => s && s.name === 'Test Helmet Evict Regression'));
+    const invIdx = INV.findIndex(s => s && s.name === 'Test Helmet Evict Regression');
+    if (invIdx !== -1) INV[invIdx] = null;
+    INV[freeIdx] = savedInv;
+    COMPENDIUM_BAG[0] = savedComp0;
+    if (savedPen === undefined) delete S.penMastery['Test Helmet Evict Regression']; else S.penMastery['Test Helmet Evict Regression'] = savedPen;
+  }
+  // rattrapage rétroactif : migratePenMasteryV308 doit aussi évacuer une copie protégée du
+  // Compendium dont le nom vient d'être marqué maîtrisé PAR CETTE MÊME migration (pas seulement
+  // les copies déjà marquées avant).
+  function testMigratePenMasteryV308EvictsCompendiumRetroactively() {
+    if (typeof migratePenMasteryV308 !== 'function') return;
+    const freeIdx = INV.findIndex(s => s === null);
+    if (freeIdx === -1) return;
+    const savedInv = INV[freeIdx];
+    const savedComp0 = COMPENDIUM_BAG[0];
+    const savedHelmet = EQUIP.helmet;
+    const savedPen = { ...S.penMastery };
+    const maxLvl = ENH_NAMES.length - 1;
+    INV[freeIdx] = null;
+    S.penMastery = {};
+    EQUIP.helmet = { name:'Test Helmet Retro Migration', kind:'gear', optimizable:true, enhLv:maxLvl };
+    COMPENDIUM_BAG[0] = { name:'Test Helmet Retro Migration', kind:'gear', optimizable:true, enhLv:3 };
+    migratePenMasteryV308();
+    assert('Migration rétroactive : marque bien la maîtrise PEN', S.penMastery['Test Helmet Retro Migration'] === true);
+    assert('Migration rétroactive : évacue la copie Compendium devenue inutile', COMPENDIUM_BAG[0] === null);
+    assert('Migration rétroactive : la copie évacuée rejoint le sac', INV.some(s => s && s.name === 'Test Helmet Retro Migration'));
+    const invIdx = INV.findIndex(s => s && s.name === 'Test Helmet Retro Migration');
+    if (invIdx !== -1) INV[invIdx] = null;
+    INV[freeIdx] = savedInv;
+    COMPENDIUM_BAG[0] = savedComp0;
+    EQUIP.helmet = savedHelmet;
+    S.penMastery = savedPen;
+  }
   // "Classement public : meilleur uniquement pas en temps reel donc oublie la synchro, on veut
   // juste le meilleur" (2026-07-08) -- Gearscore/PA/PD ACTUELS peuvent redescendre (rééquipement,
   // outil admin de test...) : verrouille que les records bestGearscore/bestAp/bestDp ne redescendent
@@ -1788,6 +1837,8 @@
     testCastVisualDifferenceIsClearlyVisible();
     testOrnamentFlashinessIncreasesByTier();
     testMigratePenMasteryV308MarksExistingPenItems();
+    testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
+    testMigratePenMasteryV308EvictsCompendiumRetroactively();
     testBestGearscoreApDpNeverDecrease();
     testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes();
     testShRateDisplaysPerMinuteNotPerHour();
