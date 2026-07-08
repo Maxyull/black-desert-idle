@@ -1114,6 +1114,15 @@ function renderStatsLevelsPane() {
     ? '5 niveaux avant et après le tien — PV de base (hors équipement), bonus de Vitesse et XP requise pour CE niveau.'
     : '5 levels before and after yours — base HP (gear excluded), Speed bonus, and XP required for THAT level.'}</div>` + rows;
 }
+// 2 onglets teasers supplémentaires (2026-07-17, demande explicite : "on y transvase du menu de
+// gauche compagnon et vie en mer avec cadenas") -- déplacés depuis le menu de gauche (btnPet/
+// btnSea, supprimés) vers la même barre que les onglets de région, toujours verrouillés (pas de
+// contenu en jeu pour l'instant), jamais dans ZONE_TIERS (qui pilote buildZoneList()/zoneTier --
+// ces 2 teasers n'ont ni zones ni palier de stuff associés, purs placeholders visuels)
+const EXTRA_TEASER_TABS = [
+  { icon:'🐾', label:{fr:'Compagnon',en:'Companion'} },
+  { icon:'🌊', label:{fr:'Vie en mer',en:'Sea life'} },
+];
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
   // cadenas déplacé AU-DESSUS, centré (2026-07-12, demande explicite : "réorganise les noms de
@@ -1132,7 +1141,10 @@ function renderZoneTierTabs() {
     return `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
     `${t.locked?' disabled title="'+lockedTitle+'"':''} data-tier="${t.id}">` +
     `${t.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`;
-  }).join('');
+  }).join('') + EXTRA_TEASER_TABS.map(t =>
+    `<button class="catTab locked" disabled title="${LANG==='fr'?'Bientôt disponible':'Coming soon'}">` +
+    `<span class="zoneTierLock">🔒</span><span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`
+  ).join('');
   el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
     btn.onclick = () => { zoneTier = btn.dataset.tier; buildZoneList(); };
   });

@@ -586,7 +586,10 @@ function renderVeliaChest() {
     const cell = document.createElement('div');
     cell.className = 'cell' + (s ? ' has k-'+s.kind : '') + (locked ? ' locked' : '');
     if (locked) {
-      cell.innerHTML = `<span class="zoneTierLock" style="position:static;background:none;border:none;color:var(--ink-dim);font-size:14px">🔒</span>`;
+      // cadenas au-dessus, centré, même convention que .zoneTierLock partout ailleurs (onglets de
+      // région/inventaire) -- avant, un span portait un style figé en dur (fond/bordure retirés,
+      // ancré dans le flux normal) qui rendait ce cadenas visuellement incohérent avec le reste
+      cell.innerHTML = `<span class="zoneTierLock">🔒</span>`;
       cell.style.opacity = '.4'; cell.style.cursor = 'not-allowed';
     } else if (s) {
       cell.innerHTML = `<span style="color:${s.color}">${s.icon || '❔'}</span>` +

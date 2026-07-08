@@ -10,7 +10,7 @@
      commit), pas juste copie depuis jsdelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"
   integrity="sha256-LbKRLxaTmjshtHKYCnradGszpqQHCLxVXLC+JVxutbE=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=429">
+<link rel="stylesheet" href="src/styles/styles.css?v=430">
 </head>
 <body>
 
@@ -93,11 +93,8 @@
     <button id="btnAchievements"><span data-i18n="btnAchievements">🏅 Succès</span><span class="contentNewBadge" id="newBadgeAchievements">1</span></button>
     <button id="btnMarket" title="BETA — en construction, encore peu fonctionnel"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
-    <!-- onglets Pet/Mer (2026-07-16, demande explicite : "ajoute onglet pet et mer... bloqué
-         cadenas") -- teasers verrouillés pour du contenu futur, même convention de cadenas que
-         partout ailleurs (voir .zoneTierLock, badge au-dessus, centré) -->
-    <button id="btnPet" class="lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnPet">🐾 Compagnon</span></button>
-    <button id="btnSea" class="lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnSea">🌊 Vie en mer</span></button>
+    <!-- Pet/Mer déplacés le 2026-07-17 (demande explicite) dans la barre d'onglets de région
+         (#zoneTierTabs, voir EXTRA_TEASER_TABS dans core/game-core.js) -- retirés d'ici -->
   </div>
 
   <div id="userBar">
@@ -128,8 +125,9 @@
     <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge"></span></button>
     <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
     <!-- Donation (2026-07-16, demande explicite : "ajoute un bouton Donation bloque cadenas") --
-         verrouillée, en attente d'une future intégration (ex: Ko-fi/Patreon) -->
-    <button id="btnDonation" class="lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnDonation">💖 Donation</span></button>
+         verrouillée, en attente d'une future intégration (ex: Ko-fi/Patreon) ; renommée "Soutenir"
+         le 2026-07-17 (demande explicite) -->
+    <button id="btnDonation" class="lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnDonation">💖 Soutenir</span></button>
     <div id="menuSideToggle">
       <span class="menuSideOpt" data-side="left" data-i18n="menuSideLeft">◀ Gauche</span>
       <span class="menuSideOpt" data-side="right" data-i18n="menuSideRight">Droite ▶</span>
@@ -605,10 +603,10 @@
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- module autonome, DOIT charger EN PREMIER : GEAR_TIERS
      (world/gear-tiers-data.js) lit ICO_MAT_* immédiatement au chargement -->
-<script src="meta/patch-notes-data.js?v=429"></script>
+<script src="meta/patch-notes-data.js?v=430"></script>
 <!-- build de production : un seul bundle concatene + commentaires retires --
      genere par scripts/build.py depuis index.dev.html, jamais edite a la main -->
-<script src="build/source.js?v=429"></script>
+<script src="build/source.js?v=430"></script>
 <!-- données pures ZONES[] -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers) --
      DOIT charger AVANT game-core.js : resetWorld() (appelé au top-level de game-core.js) lit ZONES
      dès le premier chargement du script -->

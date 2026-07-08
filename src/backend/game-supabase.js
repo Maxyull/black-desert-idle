@@ -1016,10 +1016,9 @@ const I18N = {
   lblLevel: { fr:'Niv.', en:'Lvl' },
   btnAutoSellLoot: { fr:'Vente automatique', en:'Auto-sell' },
   btnEquipSellCompendium: { fr:'⚡ Équiper → 🗑️ Vendre → 📖 Compendium', en:'⚡ Equip → 🗑️ Sell → 📖 Compendium' },
-  // teasers verrouillés (2026-07-16, demande explicite : "ajoute onglet pet et mer")
-  btnPet: { fr:'🐾 Compagnon', en:'🐾 Companion' },
-  btnSea: { fr:'🌊 Vie en mer', en:'🌊 Sea life' },
-  btnDonation: { fr:'💖 Donation', en:'💖 Donation' },
+  // btnPet/btnSea retirés le 2026-07-17 (déplacés dans #zoneTierTabs, voir EXTRA_TEASER_TABS dans
+  // core/game-core.js -- rendus dynamiquement, plus besoin de ces clés i18n)
+  btnDonation: { fr:'💖 Soutenir', en:'💖 Support' },
   lootPanelTabLoot: { fr:'🎒 Loot', en:'🎒 Loot' },
   lootPanelTabChest: { fr:'🏛️ Coffre', en:'🏛️ Chest' },
   cmTabMaterials: { fr:'📊 Matériaux', en:'📊 Materials' },

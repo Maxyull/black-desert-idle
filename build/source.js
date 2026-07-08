@@ -1353,6 +1353,11 @@ function renderStatsLevelsPane() {
     ? '5 niveaux avant et après le tien — PV de base (hors équipement), bonus de Vitesse et XP requise pour CE niveau.'
     : '5 levels before and after yours — base HP (gear excluded), Speed bonus, and XP required for THAT level.'}</div>` + rows;
 }
+
+const EXTRA_TEASER_TABS = [
+  { icon:'🐾', label:{fr:'Compagnon',en:'Companion'} },
+  { icon:'🌊', label:{fr:'Vie en mer',en:'Sea life'} },
+];
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
   
@@ -1364,7 +1369,10 @@ function renderZoneTierTabs() {
     return `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
     `${t.locked?' disabled title="'+lockedTitle+'"':''} data-tier="${t.id}">` +
     `${t.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`;
-  }).join('');
+  }).join('') + EXTRA_TEASER_TABS.map(t =>
+    `<button class="catTab locked" disabled title="${LANG==='fr'?'Bientôt disponible':'Coming soon'}">` +
+    `<span class="zoneTierLock">🔒</span><span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`
+  ).join('');
   el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
     btn.onclick = () => { zoneTier = btn.dataset.tier; buildZoneList(); };
   });
@@ -4819,7 +4827,8 @@ function renderVeliaChest() {
     const cell = document.createElement('div');
     cell.className = 'cell' + (s ? ' has k-'+s.kind : '') + (locked ? ' locked' : '');
     if (locked) {
-      cell.innerHTML = `<span class="zoneTierLock" style="position:static;background:none;border:none;color:var(--ink-dim);font-size:14px">🔒</span>`;
+      
+      cell.innerHTML = `<span class="zoneTierLock">🔒</span>`;
       cell.style.opacity = '.4'; cell.style.cursor = 'not-allowed';
     } else if (s) {
       cell.innerHTML = `<span style="color:${s.color}">${s.icon || '❔'}</span>` +
@@ -7795,9 +7804,7 @@ const I18N = {
   btnAutoSellLoot: { fr:'Vente automatique', en:'Auto-sell' },
   btnEquipSellCompendium: { fr:'⚡ Équiper → 🗑️ Vendre → 📖 Compendium', en:'⚡ Equip → 🗑️ Sell → 📖 Compendium' },
   
-  btnPet: { fr:'🐾 Compagnon', en:'🐾 Companion' },
-  btnSea: { fr:'🌊 Vie en mer', en:'🌊 Sea life' },
-  btnDonation: { fr:'💖 Donation', en:'💖 Donation' },
+  btnDonation: { fr:'💖 Soutenir', en:'💖 Support' },
   lootPanelTabLoot: { fr:'🎒 Loot', en:'🎒 Loot' },
   lootPanelTabChest: { fr:'🏛️ Coffre', en:'🏛️ Chest' },
   cmTabMaterials: { fr:'📊 Matériaux', en:'📊 Materials' },

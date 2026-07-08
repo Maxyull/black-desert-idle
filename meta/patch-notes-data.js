@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V319', d:'17/07/2026 13:30', name:{fr:'Coffre plafonné, Compagnon/Vie en mer dans les onglets de région, sécurité Marché', en:'Chest height capped, Companion/Sea life in region tabs, Market security'}, fr:[
+      {t:'fix', sub:'objets', tx:'La grille du Coffre de ville (192 cases) pouvait déborder largement sous la carte — plafonnée avec un défilement interne, comme le sac principal'},
+      {t:'fix', sub:'interface', tx:'Les cases verrouillées du Coffre affichaient un cadenas inline sans le badge visuel habituel — reprennent désormais la même convention que partout ailleurs (cadenas en badge au-dessus, centré)'},
+      {t:'change', sub:'interface', tx:'Les onglets 🐾 Compagnon et 🌊 Vie en mer, jusque-là dans le menu de gauche, rejoignent la barre d\'onglets de région (Velia à Edana) en haut du cadre de jeu, toujours verrouillés'},
+      {t:'change', sub:'interface', tx:'Le bouton "Donation" est renommé "Soutenir"'},
+      {t:'fix', sub:'systeme', severity:'major', tx:'Marché commun : un joueur pouvait faire s\'apparier son propre ordre d\'achat avec son propre ordre de vente (auto-échange), permettant de manipuler artificiellement le dernier prix affiché aux autres joueurs. Un ordre d\'achat ne peut désormais plus jamais matcher avec une vente du même compte'},
+    ], en:[
+      {t:'fix', sub:'objets', tx:'The town Chest grid (192 slots) could overflow well below the card — capped with internal scrolling, like the main bag'},
+      {t:'fix', sub:'interface', tx:'Locked Chest slots showed an inline lock icon without the usual badge styling — now follows the same convention as everywhere else (lock badge above, centered)'},
+      {t:'change', sub:'interface', tx:'The 🐾 Companion and 🌊 Sea life tabs, previously in the left menu, move to the region tab bar (Velia to Edana) at the top of the game frame, still locked'},
+      {t:'change', sub:'interface', tx:'The "Donation" button is renamed "Support"'},
+      {t:'fix', sub:'systeme', severity:'major', tx:'Common Market: a player could match their own buy order against their own sell order (self-trade), allowing artificial manipulation of the last price shown to other players. A buy order can no longer ever match a sell order from the same account'},
+    ] },
   { v:'V318', d:'17/07/2026 12:00', name:{fr:'Optimiser un objet du sac/Compendium ne l\'équipe plus', en:'Enhancing a bag/Compendium item no longer equips it'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'"Mettre en optimisation" sur un objet du sac équipait automatiquement cet objet (remplaçant ce qui était porté) avant de lancer l\'enchantement. Il est désormais enchanté EN PLACE, dans le sac, sans jamais toucher à l\'équipement.'},
       {t:'new', sub:'objets', tx:'Les objets du Compendium (sac protégé) peuvent désormais être enchantés directement jusqu\'à PEN, sans avoir à les équiper au préalable — un bouton "Équiper" séparé reste disponible pour les sortir du Compendium et les utiliser en combat.'},

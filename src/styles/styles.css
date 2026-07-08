@@ -627,6 +627,16 @@
     overflow-y:auto; max-height:188px; align-content:start; padding-right:2px;
   }
   .admInvGrid { max-height:none; }
+  /* coffre de ville (2026-07-17, demande explicite : "le coffre ne doit pas dépasser la taille de
+     la carte") -- .admInvGrid est partagée avec le grid de l'admin (#admGrid, popup dédiée qui
+     gère sa propre hauteur), donc surchargée ICI spécifiquement pour le coffre (sélecteur par ID,
+     plus spécifique) : plafonnée + défilement interne, comme le sac principal/Compendium */
+  #veliaChestGrid { max-height:260px; overflow-y:auto; }
+  /* cadenas des cases verrouillées du coffre : même badge que .zoneTierLock (fond/bordure/cercle),
+     mais repositionné DANS la case (top:2px) plutôt qu'au-dessus (top:-9px, pensé pour un onglet
+     isolé) -- dans une grille dense de 192 cases, flotter au-dessus chevaucherait la rangée
+     précédente */
+  #veliaChestGrid .cell .zoneTierLock { position:absolute; top:2px; left:50%; transform:translateX(-50%); }
   #invGrid::-webkit-scrollbar { width:7px; }
   #invGrid::-webkit-scrollbar-thumb { background:#3a3742; }
   /* Compendium en onglet principal "en grand" (2026-07-14, demande explicite) -- plus de place
@@ -1518,7 +1528,9 @@
      ligne possible, contrairement à flex-wrap) + troncature (ellipsis) en dernier recours si un nom
      ne tient vraiment pas : garantit une seule ligne dans tous les cas, quitte à couper "Calpheon"
      en "Calphe…" dans les cartes les plus étroites plutôt que de repasser sur 2 rangées. */
-  #zoneTierTabs { display:grid; grid-template-columns:repeat(5, 1fr); gap:2px; margin-bottom:14px; }
+  /* passé à 7 colonnes le 2026-07-17 (demande explicite) : 2 onglets teasers supplémentaires
+     (Compagnon, Vie en mer) déplacés ici depuis le menu de gauche, voir EXTRA_TEASER_TABS */
+  #zoneTierTabs { display:grid; grid-template-columns:repeat(7, 1fr); gap:2px; margin-bottom:14px; }
   #zoneTierTabs .catTab { position:relative; padding:6px 2px; font-size:9px; min-width:0; overflow:visible; }
   /* onglets d'inventaire (Normal/Opti/Trésors/Conso/RNG, 2026-07-14, demande explicite : "met sur
      la meme ligne... avec les cadenas au dessus au milieu") -- même grille stricte à 5 colonnes que

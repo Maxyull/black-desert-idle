@@ -405,6 +405,43 @@
     heidelClone.querySelector('.zoneTierLock').remove();
     assert('Le texte du bouton (hors badge) ne contient plus le cadenas', !heidelClone.textContent.includes('🔒'), `texte=${heidelClone.textContent}`);
   }
+  // "les zone dans le header ont un cadenas au milieu en bas on y transvase du menu de gauche
+  // compagnon et vie en mer avec cadenas" (2026-07-17) -- Compagnon/Vie en mer déplacés du menu de
+  // gauche vers la barre d'onglets de région, toujours verrouillés, jamais mélangés à ZONE_TIERS
+  // (qui pilote buildZoneList()/zoneTier -- ces 2 teasers n'ont pas de data-tier).
+  function testZoneTierTabsIncludeLockedTeasers() {
+    if (!$('zoneTierTabs')) return; // pas de DOM (contexte hors-jeu)
+    renderZoneTierTabs();
+    const buttons = [...$('zoneTierTabs').querySelectorAll('.catTab')];
+    const teasers = buttons.filter(b => !b.dataset.tier);
+    assert('Les 2 onglets teasers (Compagnon, Vie en mer) sont bien présents', teasers.length === EXTRA_TEASER_TABS.length, `got=${teasers.length}`);
+    for (const b of teasers) {
+      assert('Chaque onglet teaser est verrouillé (classe locked)', b.classList.contains('locked'));
+      assert('Chaque onglet teaser porte le badge cadenas', !!b.querySelector('.zoneTierLock'));
+      assert('Chaque onglet teaser est désactivé (disabled)', b.disabled);
+    }
+  }
+  // "le coffre ne doit pas dépasser la taille de la carte, les slots bloqué sont bloqué avec un
+  // cadenas au dessus au milieu" (2026-07-17) -- avant, les cases verrouillées du coffre affichaient
+  // un cadenas inline (position:static, sans le badge visuel), incohérent avec .zoneTierLock utilisé
+  // partout ailleurs (onglets de région/inventaire). Garde-fou statique (empêche un futur retour de
+  // l'override inline) + DOM (le badge est bien présent, sans style qui casserait la convention).
+  function testChestLockedCellsUseBadgeConvention() {
+    if (!$('veliaChestGrid')) return; // pas de DOM (contexte hors-jeu)
+    const src = renderVeliaChest.toString();
+    // recherche le pattern d'ATTRIBUT HTML (style="...") -- pas juste le texte "position:static",
+    // qui apparaîtrait aussi dans un commentaire décrivant l'ancien comportement (toString()
+    // inclut les commentaires du code source)
+    assert('renderVeliaChest() ne réintroduit pas l\'ancien style inline sur le cadenas', !src.includes('zoneTierLock" style='), 'src contient encore un override inline du cadenas');
+    renderVeliaChest();
+    const lockedCell = $('veliaChestGrid').querySelector('.cell.locked');
+    assert('Au moins une case verrouillée existe dans le coffre (192 cases, VELIA_CHEST_OPEN=20)', !!lockedCell);
+    if (lockedCell) {
+      const lock = lockedCell.querySelector('.zoneTierLock');
+      assert('La case verrouillée porte bien le badge .zoneTierLock', !!lock);
+      assert('Le badge n\'a pas de style inline qui casserait la convention visuelle', lock && !lock.getAttribute('style'));
+    }
+  }
   // "l'anneau de yuria ne fournit pas les bonus +1 +2 dans la liste lors de l'opti automatique"
   // (2026-07-12) -- optAutoGainPrimaryPart() ne testait que WEAPON_SLOTS (PA) vs le reste (PD),
   // oubliant que les bijoux (JEWELRY_SLOTS) donnent de la PA eux aussi (jamais de PD) : le delta
@@ -1448,6 +1485,8 @@
     testFarmModeBubbleSelectorReflectsTwoModes();
     testSlotsUpgradedByZoneIsZoneSpecific();
     testZoneTierLockIsSeparateFromLabel();
+    testZoneTierTabsIncludeLockedTeasers();
+    testChestLockedCellsUseBadgeConvention();
     testJewelryShowsGainInAutoOptList();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
