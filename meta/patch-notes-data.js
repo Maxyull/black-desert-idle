@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V318', d:'17/07/2026 12:00', name:{fr:'Optimiser un objet du sac/Compendium ne l\'équipe plus', en:'Enhancing a bag/Compendium item no longer equips it'}, fr:[
+      {t:'fix', sub:'objets', severity:'major', tx:'"Mettre en optimisation" sur un objet du sac équipait automatiquement cet objet (remplaçant ce qui était porté) avant de lancer l\'enchantement. Il est désormais enchanté EN PLACE, dans le sac, sans jamais toucher à l\'équipement.'},
+      {t:'new', sub:'objets', tx:'Les objets du Compendium (sac protégé) peuvent désormais être enchantés directement jusqu\'à PEN, sans avoir à les équiper au préalable — un bouton "Équiper" séparé reste disponible pour les sortir du Compendium et les utiliser en combat.'},
+      {t:'change', sub:'objets', tx:'Une fois PEN atteint, l\'objet quitte automatiquement le Compendium et rejoint le sac principal : le Compendium ne conserve désormais que des objets TET (IV) maximum, il n\'a plus besoin de protéger un objet déjà maîtrisé.'},
+    ], en:[
+      {t:'fix', sub:'objets', severity:'major', tx:'"Set for enhancement" on a bag item automatically equipped that item (replacing whatever was worn) before starting the enhancement. It\'s now enhanced IN PLACE, in the bag, without ever touching your equipment.'},
+      {t:'new', sub:'objets', tx:'Compendium (protected bag) items can now be enhanced directly up to PEN, without equipping them first — a separate "Equip" button remains available to take them out of the Compendium and use them in combat.'},
+      {t:'change', sub:'objets', tx:'Once PEN is reached, the item automatically leaves the Compendium and joins the main bag: the Compendium now only ever holds TET (IV) items at most, it no longer needs to protect an already-mastered item.'},
+    ] },
   { v:'V317', d:'08/07/2026 10:11', name:{fr:'Fix critique : le jeu pouvait rester gelé au chargement', en:'Critical fix: the game could freeze on load'}, fr:[
       {t:'fix', sub:'systeme', severity:'major', tx:'Correctif d\'une régression introduite lors d\'une réorganisation technique du code : dans certains cas, le personnage ne s\'affichait pas et toute la boucle de jeu (combat, loot, sauvegarde automatique) restait gelée dès le chargement de la page. Un simple rechargement ne suffisait pas à s\'en sortir tant que le correctif n\'était pas en place.'},
     ], en:[

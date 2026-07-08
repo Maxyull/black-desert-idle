@@ -4615,7 +4615,7 @@ function fillPdCol(colId, ids) {
     const optBtn = div.querySelector('.pdOptBtn');
     if (optBtn) optBtn.onclick = ev => {
       ev.stopPropagation(); hideItemTooltip(); hideItemPop();
-      optTargetSlot = id; renderOptimization();
+      optTarget = { loc:'equip', key:id }; renderOptimization();
       $('optCard').scrollIntoView({ behavior:'smooth', block:'center' });
     };
     
@@ -4924,12 +4924,13 @@ function showItemMenu(px, py, data) {
         confirmSell1:n=>'Sell 1 item for '+n+' silver?', confirmSellAll:n=>'Sell the whole stack for '+n+' silver?' };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
-    if (data.kind === 'gear' || data.kind === 'jackpot') addPopBtn(pop, L.toOpt, () => { optTargetSlot = data.slotId; });
+    if (data.kind === 'gear' || data.kind === 'jackpot') addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'equip', key:data.slotId }; });
   } else if (data.invIndex != null) {
     const s = INV[data.invIndex];
     if (s.kind === 'jackpot' || s.kind === 'gear') {
       addPopBtn(pop, L.equip, () => { equipItem(data.invIndex); });
-      addPopBtn(pop, L.toOpt, () => { const slotId = resolveEquipSlot(s); equipItem(data.invIndex); optTargetSlot = slotId; });
+      
+      addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'inv', key:data.invIndex }; });
     }
     if (s.kind === 'material') addPopBtn(pop, L.toOpt, () => { forcedMatKey = s.key; });
     if (s.kind === 'trash' || s.kind === 'material' || s.kind === 'gear' || s.kind === 'jackpot')
@@ -4943,7 +4944,8 @@ function showItemMenu(px, py, data) {
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
     
-    addPopBtn(pop, L.toOpt, () => { equipFromCompendium(data.compIndex); });
+    addPopBtn(pop, L.equip, () => { equipFromCompendium(data.compIndex); });
+    addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'compendium', key:data.compIndex }; });
   }
   pop.style.display = 'block';
   const r = pop.getBoundingClientRect();
@@ -5057,7 +5059,7 @@ function equipFromCompendium(i) {
   }
   EQUIP[slotId] = { ...item };
   COMPENDIUM_BAG[i] = null;
-  optTargetSlot = slotId;
+  optTarget = { loc:'equip', key:slotId };
   hud();
   renderCompendiumPane();
   renderOptimization();
@@ -5245,13 +5247,19 @@ function enhanceWithMaterial(i) {
   renderEquipment(); refreshStatsOnly(); renderOptimization();
 }
 
-let optTargetSlot = 'weapon';
+let optTarget = { loc:'equip', key:'weapon' };
+function getOptTargetItem() {
+  if (optTarget.loc === 'equip') return EQUIP[optTarget.key];
+  if (optTarget.loc === 'inv') return INV[optTarget.key];
+  if (optTarget.loc === 'compendium') return COMPENDIUM_BAG[optTarget.key];
+  return null;
+}
 let forcedMatKey = null; 
 
 function optimizableList() { return OPTIMIZABLE_SLOTS.filter(k => EQUIP[k]); }
 
 function findEnhanceMaterial() {
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const wantedName = (target && target.matName) || Z().loot.mat.name;
   if (forcedMatKey) {
     const idx = INV.findIndex(s => s && s.key === forcedMatKey);
@@ -5265,15 +5273,16 @@ function findCronStone() { return INV.findIndex(s => s && s.name === CRON_STONE.
 function renderOptimization() {
   
   const avail = optimizableList();
-  if (!avail.includes(optTargetSlot)) optTargetSlot = avail[0] || 'weapon';
+  
+  if (!getOptTargetItem()) optTarget = { loc:'equip', key: avail[0] || 'weapon' };
   const sel = $('optTarget');
-  sel.innerHTML = avail.map(k => `<option value="${k}" ${k===optTargetSlot?'selected':''}>${SLOT_LABEL[k]} — ${tr(EQUIP[k].name)} (${ENH_NAMES[EQUIP[k].enhLv||0]})</option>`).join('');
+  sel.innerHTML = avail.map(k => `<option value="${k}" ${(optTarget.loc==='equip'&&k===optTarget.key)?'selected':''}>${SLOT_LABEL[k]} — ${tr(EQUIP[k].name)} (${ENH_NAMES[EQUIP[k].enhLv||0]})</option>`).join('');
 
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const lvl = target ? (target.enhLv||0) : 0, maxed = lvl >= ENH_NAMES.length-1;
   const parts = target && !maxed ? enhChanceParts(lvl+1, target) : { base:0, bonus:0, total:0 };
   const fsCount = target ? itemFailstack(target, lvl+1) : 0;
-  $('optItem').innerHTML = target ? (target.icon || SLOT_ICON[optTargetSlot]) : '—';
+  $('optItem').innerHTML = target ? (target.icon || (optTarget.loc==='equip' ? SLOT_ICON[optTarget.key] : '❔')) : '—';
   $('optItem').style.boxShadow = (target && target.color) ? `0 0 8px 2px ${target.color}66` : '';
   $('optLevelLbl').innerHTML = (target ? tr(target.name) : (LANG==='fr'?'Aucune pièce équipée':'No piece equipped')) + ' <b id="optLevelVal">' + (target ? ENH_NAMES[lvl] : '—') + '</b>';
 
@@ -5322,12 +5331,12 @@ function renderOptimization() {
   if (!autoOptTimer) renderOptAutoTargetSelect(); 
   renderCapConvertRow();
 }
-$('optTarget').onchange = e => { optTargetSlot = e.target.value; stopAutoOpt(); renderOptimization(); };
+$('optTarget').onchange = e => { optTarget = { loc:'equip', key:e.target.value }; stopAutoOpt(); renderOptimization(); };
 
 $('optCronSlot').onclick = () => { S.useCronStone = !S.useCronStone; renderOptimization(); };
 
 function attemptEnhance() {
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const idx = findEnhanceMaterial();
   if (!target || idx === -1 || (target.enhLv||0) >= ENH_NAMES.length-1) return false;
   invRemoveAt(idx, 1);
@@ -5344,7 +5353,15 @@ function attemptEnhance() {
     
     trackEnhPeak(target.name, target.enhLv);
     
-    if (target.enhLv >= ENH_NAMES.length-1) markPenMastery(target.name);
+    if (target.enhLv >= ENH_NAMES.length-1) {
+      markPenMastery(target.name);
+      
+      if (optTarget.loc === 'compendium') {
+        const compIdx = optTarget.key;
+        if (invAdd({ ...target })) COMPENDIUM_BAG[compIdx] = null;
+        
+      }
+    }
   } else {
     addItemFailstack(target, lvl+1); 
     
@@ -5372,8 +5389,14 @@ function attemptEnhance() {
     requestAnimationFrame(() => card.classList.add('optShake'));
   }
   
-  refreshEquipSlot(optTargetSlot);
-  if (optTargetSlot === 'weapon') drawPreviewChar(); 
+  if (optTarget.loc === 'equip') {
+    refreshEquipSlot(optTarget.key);
+    if (optTarget.key === 'weapon') drawPreviewChar(); 
+  } else if (optTarget.loc === 'inv') {
+    renderInventory();
+  } else if (optTarget.loc === 'compendium') {
+    renderCompendiumPane();
+  }
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
   refreshStatsOnly(); renderOptimization();
@@ -5392,23 +5415,28 @@ function optAutoGainParts(target, targetLvl) {
   return parts;
 }
 
-function optAutoGainPrimaryPart(target, targetLvl, slotId) {
+function targetPrimaryStat(target) {
+  if (!target) return 'dp';
+  if (target.kind === 'jackpot') return 'ap';
+  return WEAPON_SLOTS.includes(target.slot) ? 'ap' : 'dp';
+}
+function optAutoGainPrimaryPart(target, targetLvl) {
   if (!target || !Number.isInteger(targetLvl)) return '';
   const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
-  const primary = (WEAPON_SLOTS.includes(slotId) || JEWELRY_SLOTS.includes(slotId)) ? 'ap' : 'dp';
+  const primary = targetPrimaryStat(target);
   const delta = proj[primary] - cur[primary];
   return delta > 0 ? '+' + delta + ' ' + (primary === 'ap' ? 'PA' : 'PD') : '';
 }
 function renderOptAutoTargetSelect() {
   const sel = $('optAutoTarget'); if (!sel) return;
   const prevVal = sel.value; 
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const curLvl = target ? (target.enhLv||0) : 0;
   const options = ENH_NAMES.map((name,i) => i).filter(i => i > curLvl);
   
   let lastGainTxt = null;
   sel.innerHTML = options.map(i => {
-    const gainTxt = optAutoGainPrimaryPart(target, i, optTargetSlot);
+    const gainTxt = optAutoGainPrimaryPart(target, i);
     const showGain = gainTxt !== lastGainTxt;
     if (gainTxt) lastGainTxt = gainTxt;
     return `<option value="${i}">${ENH_NAMES[i]}${(showGain && gainTxt) ? ' (' + gainTxt + ')' : ''}</option>`;
@@ -5421,7 +5449,7 @@ function renderOptAutoTargetSelect() {
 
 function renderOptAutoGain() {
   const el = $('optAutoGainTxt'); if (!el) return;
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const sel = $('optAutoTarget');
   const targetLvl = sel ? parseInt(sel.value, 10) : NaN;
   const parts = optAutoGainParts(target, targetLvl);
@@ -5460,7 +5488,7 @@ function startAutoOpt() {
   
   let startAp = 0, startDp = 0;
   if (mode === 'nextgain') {
-    const target0 = EQUIP[optTargetSlot];
+    const target0 = getOptTargetItem();
     if (!target0) return;
     const cur = effectiveApDp(target0);
     startAp = cur.ap; startDp = cur.dp;
@@ -5470,7 +5498,7 @@ function startAutoOpt() {
   btn.classList.add('running');
   btn.textContent = LANG==='fr' ? '⏸ Arrêter' : '⏸ Stop';
   autoOptTimer = setInterval(() => {
-    const target = EQUIP[optTargetSlot];
+    const target = getOptTargetItem();
     if (!target) { stopAutoOpt(); return; }
     if (mode === 'target' && (target.enhLv||0) >= autoOptTargetLvl) { stopAutoOpt(); return; }
     if ((target.enhLv||0) >= ENH_NAMES.length-1) { stopAutoOpt(); return; } 
@@ -5489,12 +5517,12 @@ function startAutoOpt() {
     attemptEnhance();
     
     if (mode === 'fail') {
-      const target2 = EQUIP[optTargetSlot];
+      const target2 = getOptTargetItem();
       if (!target2 || (target2.enhLv||0) !== prevLvl + 1) { stopAutoOpt(); return; }
     }
     
     if (mode === 'nextgain') {
-      const target3 = EQUIP[optTargetSlot];
+      const target3 = getOptTargetItem();
       if (!target3) { stopAutoOpt(); return; }
       const cur = effectiveApDp(target3);
       if (cur.ap > startAp || cur.dp > startDp) {

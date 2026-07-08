@@ -324,7 +324,7 @@ function fillPdCol(colId, ids) {
     const optBtn = div.querySelector('.pdOptBtn');
     if (optBtn) optBtn.onclick = ev => {
       ev.stopPropagation(); hideItemTooltip(); hideItemPop();
-      optTargetSlot = id; renderOptimization();
+      optTarget = { loc:'equip', key:id }; renderOptimization();
       $('optCard').scrollIntoView({ behavior:'smooth', block:'center' });
     };
     // ✕ en bas-droite : déséquiper directement, en plus du double-clic déjà existant —
@@ -701,12 +701,14 @@ function showItemMenu(px, py, data) {
         confirmSell1:n=>'Sell 1 item for '+n+' silver?', confirmSellAll:n=>'Sell the whole stack for '+n+' silver?' };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
-    if (data.kind === 'gear' || data.kind === 'jackpot') addPopBtn(pop, L.toOpt, () => { optTargetSlot = data.slotId; });
+    if (data.kind === 'gear' || data.kind === 'jackpot') addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'equip', key:data.slotId }; });
   } else if (data.invIndex != null) {
     const s = INV[data.invIndex];
     if (s.kind === 'jackpot' || s.kind === 'gear') {
       addPopBtn(pop, L.equip, () => { equipItem(data.invIndex); });
-      addPopBtn(pop, L.toOpt, () => { const slotId = resolveEquipSlot(s); equipItem(data.invIndex); optTargetSlot = slotId; });
+      // (2026-07-17, demande explicite : "optimiser un objet d'inventaire... sans toucher a
+      // l'equipement") -- ne PLUS équiper l'objet ici, juste le cibler là où il est (dans le sac)
+      addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'inv', key:data.invIndex }; });
     }
     if (s.kind === 'material') addPopBtn(pop, L.toOpt, () => { forcedMatKey = s.key; });
     if (s.kind === 'trash' || s.kind === 'material' || s.kind === 'gear' || s.kind === 'jackpot')
@@ -720,11 +722,13 @@ function showItemMenu(px, py, data) {
     });
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
-    // objet du Compendium (sac protégé) — seule action possible : équiper et cibler directement
-    // l'optimisation dessus (2026-07-15, demande explicite : "ajoute le bouton d'opti pour le
-    // compendium") -- avant, le clic sur la case déclenchait equipFromCompendium() en silence, sans
-    // passer par ce même menu que le reste du sac (incohérent avec le pattern établi ailleurs)
-    addPopBtn(pop, L.toOpt, () => { equipFromCompendium(data.compIndex); });
+    // objet du Compendium (sac protégé) — "Équiper" (equipFromCompendium, inchangé) ET "Mettre en
+    // optimisation" séparés (2026-07-17, demande explicite : "on peut optimiser les item du
+    // compendium" SANS les équiper) -- avant, le seul bouton disponible équipait ET ciblait
+    // l'optimisation en même temps ; désormais l'objet peut être enchanté EN PLACE dans le
+    // Compendium, jusqu'à PEN (voir attemptEnhance, qui l'évacue vers le sac une fois PEN atteint).
+    addPopBtn(pop, L.equip, () => { equipFromCompendium(data.compIndex); });
+    addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'compendium', key:data.compIndex }; });
   }
   pop.style.display = 'block';
   const r = pop.getBoundingClientRect();
@@ -861,7 +865,7 @@ function equipFromCompendium(i) {
   }
   EQUIP[slotId] = { ...item };
   COMPENDIUM_BAG[i] = null;
-  optTargetSlot = slotId;
+  optTarget = { loc:'equip', key:slotId };
   hud();
   renderCompendiumPane();
   renderOptimization();
@@ -1069,7 +1073,19 @@ function enhanceWithMaterial(i) {
 }
 
 // ---------- cadre d'optimisation (armes + armure + bijoux, cible sélectionnable, façon BDO) ----------
-let optTargetSlot = 'weapon';
+// cible généralisée (2026-07-17, demande explicite : "optimiser un objet d'inventaire... sans
+// toucher a l'equipement... on peut optimiser les item du compendium") -- avant, l'optimisation ne
+// pouvait cibler QUE l'équipement (EQUIP[optTargetSlot]), donc "optimiser" un objet du sac ou du
+// Compendium devait d'abord l'ÉQUIPER (remplaçant ce qui était porté). Remplacé par une cible
+// {loc,key} : 'equip' (key = slot EQUIP), 'inv' (key = index INV), 'compendium' (key = index
+// COMPENDIUM_BAG) -- l'objet est enchanté EN PLACE, quel que soit l'endroit où il se trouve.
+let optTarget = { loc:'equip', key:'weapon' };
+function getOptTargetItem() {
+  if (optTarget.loc === 'equip') return EQUIP[optTarget.key];
+  if (optTarget.loc === 'inv') return INV[optTarget.key];
+  if (optTarget.loc === 'compendium') return COMPENDIUM_BAG[optTarget.key];
+  return null;
+}
 let forcedMatKey = null; // matériau épinglé via le menu clic droit ("Mettre en optimisation")
 
 function optimizableList() { return OPTIMIZABLE_SLOTS.filter(k => EQUIP[k]); }
@@ -1079,7 +1095,7 @@ function optimizableList() { return OPTIMIZABLE_SLOTS.filter(k => EQUIP[k]); }
 // n'était pas en stock, un repli silencieux consommait N'IMPORTE QUEL AUTRE matériau (y compris
 // celui d'un palier différent) ; supprimé, sans le bon matériau l'optimisation reste bloquée.
 function findEnhanceMaterial() {
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const wantedName = (target && target.matName) || Z().loot.mat.name;
   if (forcedMatKey) {
     const idx = INV.findIndex(s => s && s.key === forcedMatKey);
@@ -1094,15 +1110,19 @@ function findCronStone() { return INV.findIndex(s => s && s.name === CRON_STONE.
 function renderOptimization() {
   // (re)construit la liste déroulante des pièces optimisables équipées (armes + armure + bijoux)
   const avail = optimizableList();
-  if (!avail.includes(optTargetSlot)) optTargetSlot = avail[0] || 'weapon';
+  // ne réinitialise sur le 1er équipement QUE si la cible actuelle ne pointe plus vers rien de
+  // valide (objet retiré/vendu/évacué ailleurs) -- une cible sac/Compendium (2026-07-17) reste
+  // volontairement HORS de "avail" (qui ne liste que l'équipement), donc ne doit jamais être
+  // écrasée simplement parce qu'elle n'y figure pas
+  if (!getOptTargetItem()) optTarget = { loc:'equip', key: avail[0] || 'weapon' };
   const sel = $('optTarget');
-  sel.innerHTML = avail.map(k => `<option value="${k}" ${k===optTargetSlot?'selected':''}>${SLOT_LABEL[k]} — ${tr(EQUIP[k].name)} (${ENH_NAMES[EQUIP[k].enhLv||0]})</option>`).join('');
+  sel.innerHTML = avail.map(k => `<option value="${k}" ${(optTarget.loc==='equip'&&k===optTarget.key)?'selected':''}>${SLOT_LABEL[k]} — ${tr(EQUIP[k].name)} (${ENH_NAMES[EQUIP[k].enhLv||0]})</option>`).join('');
 
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const lvl = target ? (target.enhLv||0) : 0, maxed = lvl >= ENH_NAMES.length-1;
   const parts = target && !maxed ? enhChanceParts(lvl+1, target) : { base:0, bonus:0, total:0 };
   const fsCount = target ? itemFailstack(target, lvl+1) : 0;
-  $('optItem').innerHTML = target ? (target.icon || SLOT_ICON[optTargetSlot]) : '—';
+  $('optItem').innerHTML = target ? (target.icon || (optTarget.loc==='equip' ? SLOT_ICON[optTarget.key] : '❔')) : '—';
   $('optItem').style.boxShadow = (target && target.color) ? `0 0 8px 2px ${target.color}66` : '';
   $('optLevelLbl').innerHTML = (target ? tr(target.name) : (LANG==='fr'?'Aucune pièce équipée':'No piece equipped')) + ' <b id="optLevelVal">' + (target ? ENH_NAMES[lvl] : '—') + '</b>';
 
@@ -1156,7 +1176,7 @@ function renderOptimization() {
   if (!autoOptTimer) renderOptAutoTargetSelect(); // pas touché pendant une auto en cours (garde le palier choisi)
   renderCapConvertRow();
 }
-$('optTarget').onchange = e => { optTargetSlot = e.target.value; stopAutoOpt(); renderOptimization(); };
+$('optTarget').onchange = e => { optTarget = { loc:'equip', key:e.target.value }; stopAutoOpt(); renderOptimization(); };
 // la case Pierre de Cron sert elle-même de bouton on/off (2026-07-08, demande explicite),
 // remplace l'ancienne case à cocher #optCronToggle
 $('optCronSlot').onclick = () => { S.useCronStone = !S.useCronStone; renderOptimization(); };
@@ -1164,7 +1184,7 @@ $('optCronSlot').onclick = () => { S.useCronStone = !S.useCronStone; renderOptim
 // une tentative d'optimisation (succès/échec/rétrogradation) — factorisée pour être appelée
 // aussi bien par le bouton manuel que par la boucle "Auto jusqu'à" (voir plus bas)
 function attemptEnhance() {
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const idx = findEnhanceMaterial();
   if (!target || idx === -1 || (target.enhLv||0) >= ENH_NAMES.length-1) return false;
   invRemoveAt(idx, 1);
@@ -1183,7 +1203,20 @@ function attemptEnhance() {
     // vente ultérieure -- avant, seul le passage à PEN précis était retenu (S.penMastery)
     trackEnhPeak(target.name, target.enhLv);
     // Compendium PEN (2026-07-08) : marque CE type d'objet comme "atteint PEN au moins 1 fois"
-    if (target.enhLv >= ENH_NAMES.length-1) markPenMastery(target.name);
+    if (target.enhLv >= ENH_NAMES.length-1) {
+      markPenMastery(target.name);
+      // Compendium : ne garde que du TET (IV) maximum (2026-07-17, demande explicite : "une fois
+      // PEN il disparaissent du compendium... uniquement des item TET maximum") -- un objet du
+      // Compendium enchanté jusqu'à PEN n'a plus besoin d'être protégé (déjà maîtrisé, voir
+      // S.penMastery ci-dessus), il rejoint le sac principal comme un objet normal
+      if (optTarget.loc === 'compendium') {
+        const compIdx = optTarget.key;
+        if (invAdd({ ...target })) COMPENDIUM_BAG[compIdx] = null;
+        // sac plein : l'objet reste dans le Compendium plutôt que d'être perdu -- pas de garde-fou
+        // supplémentaire nécessaire, ensureCompendiumProtection ne re-protège jamais un item déjà
+        // marqué PEN (S.penMastery), donc rien ne viendra le dupliquer ou le remplacer entre-temps
+      }
+    }
   } else {
     addItemFailstack(target, lvl+1); // le failstack de CE palier, pour CET objet, progresse et reste acquis
     // Pierre de Cron : au choix du joueur (case à cocher #optCronToggle, S.useCronStone — demande
@@ -1219,9 +1252,17 @@ function attemptEnhance() {
     requestAnimationFrame(() => card.classList.add('optShake'));
   }
   // mise à jour ciblée (voir refreshEquipSlot) au lieu de tout reconstruire (poupée + canvas) à
-  // chaque tentative — gardait le jeu fluide même en spammant le bouton d'optimisation
-  refreshEquipSlot(optTargetSlot);
-  if (optTargetSlot === 'weapon') drawPreviewChar(); // seule la lueur du bâton en dépend visuellement
+  // chaque tentative — gardait le jeu fluide même en spammant le bouton d'optimisation. Une cible
+  // sac/Compendium (2026-07-17) n'a pas de case dédiée à rafraîchir en place -- retombe sur un
+  // rendu complet de la grille concernée (même coût que le reste de refreshInvUI, déjà accepté).
+  if (optTarget.loc === 'equip') {
+    refreshEquipSlot(optTarget.key);
+    if (optTarget.key === 'weapon') drawPreviewChar(); // seule la lueur du bâton en dépend visuellement
+  } else if (optTarget.loc === 'inv') {
+    renderInventory();
+  } else if (optTarget.loc === 'compendium') {
+    renderCompendiumPane();
+  }
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
   refreshStatsOnly(); renderOptimization();
@@ -1256,17 +1297,25 @@ function optAutoGainParts(target, targetLvl) {
 // (GEAR_ROLE.jackpot : apShare:0.10, dpShare:0) — pour un anneau/collier/boucle/ceinture, le code
 // regardait donc le delta de PD (toujours 0 sur un bijou), jamais celui de PA, et n'affichait donc
 // jamais de gain dans la liste déroulante, quel que soit le palier visé.
-function optAutoGainPrimaryPart(target, targetLvl, slotId) {
+// primary dérivé directement de l'objet ciblé (2026-07-17 : plus de slotId disponible pour une
+// cible sac/Compendium) plutôt que du slot EQUIP -- gear : arme (WEAPON_SLOTS) -> PA, sinon PD ;
+// jackpot (bijou) -> toujours PA, quel que soit l'endroit où l'objet se trouve
+function targetPrimaryStat(target) {
+  if (!target) return 'dp';
+  if (target.kind === 'jackpot') return 'ap';
+  return WEAPON_SLOTS.includes(target.slot) ? 'ap' : 'dp';
+}
+function optAutoGainPrimaryPart(target, targetLvl) {
   if (!target || !Number.isInteger(targetLvl)) return '';
   const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
-  const primary = (WEAPON_SLOTS.includes(slotId) || JEWELRY_SLOTS.includes(slotId)) ? 'ap' : 'dp';
+  const primary = targetPrimaryStat(target);
   const delta = proj[primary] - cur[primary];
   return delta > 0 ? '+' + delta + ' ' + (primary === 'ap' ? 'PA' : 'PD') : '';
 }
 function renderOptAutoTargetSelect() {
   const sel = $('optAutoTarget'); if (!sel) return;
   const prevVal = sel.value; // préserve le choix du joueur à travers les re-renders (voir plus bas)
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const curLvl = target ? (target.enhLv||0) : 0;
   const options = ENH_NAMES.map((name,i) => i).filter(i => i > curLvl);
   // affiche le gain directement dans chaque option du menu déroulant (demande explicite du
@@ -1278,7 +1327,7 @@ function renderOptAutoTargetSelect() {
   // donnait l'impression d'un gain figé/buggé ; on ne le réaffiche donc qu'au moment où il change.
   let lastGainTxt = null;
   sel.innerHTML = options.map(i => {
-    const gainTxt = optAutoGainPrimaryPart(target, i, optTargetSlot);
+    const gainTxt = optAutoGainPrimaryPart(target, i);
     const showGain = gainTxt !== lastGainTxt;
     if (gainTxt) lastGainTxt = gainTxt;
     return `<option value="${i}">${ENH_NAMES[i]}${(showGain && gainTxt) ? ' (' + gainTxt + ')' : ''}</option>`;
@@ -1296,7 +1345,7 @@ function renderOptAutoTargetSelect() {
 // affiche le gain de stats si on atteint le palier choisi dans #optAutoTarget (ex: "+18 PA")
 function renderOptAutoGain() {
   const el = $('optAutoGainTxt'); if (!el) return;
-  const target = EQUIP[optTargetSlot];
+  const target = getOptTargetItem();
   const sel = $('optAutoTarget');
   const targetLvl = sel ? parseInt(sel.value, 10) : NaN;
   const parts = optAutoGainParts(target, targetLvl);
@@ -1339,7 +1388,7 @@ function startAutoOpt() {
   // n'a pas franchi le point suivant
   let startAp = 0, startDp = 0;
   if (mode === 'nextgain') {
-    const target0 = EQUIP[optTargetSlot];
+    const target0 = getOptTargetItem();
     if (!target0) return;
     const cur = effectiveApDp(target0);
     startAp = cur.ap; startDp = cur.dp;
@@ -1349,7 +1398,7 @@ function startAutoOpt() {
   btn.classList.add('running');
   btn.textContent = LANG==='fr' ? '⏸ Arrêter' : '⏸ Stop';
   autoOptTimer = setInterval(() => {
-    const target = EQUIP[optTargetSlot];
+    const target = getOptTargetItem();
     if (!target) { stopAutoOpt(); return; }
     if (mode === 'target' && (target.enhLv||0) >= autoOptTargetLvl) { stopAutoOpt(); return; }
     if ((target.enhLv||0) >= ENH_NAMES.length-1) { stopAutoOpt(); return; } // niveau max déjà atteint
@@ -1372,13 +1421,13 @@ function startAutoOpt() {
     // niveau n'a PAS progressé d'exactement +1 (protection Cron incluse : le niveau ne bouge pas
     // non plus dans ce cas, donc compte comme un échec qui arrête la boucle)
     if (mode === 'fail') {
-      const target2 = EQUIP[optTargetSlot];
+      const target2 = getOptTargetItem();
       if (!target2 || (target2.enhLv||0) !== prevLvl + 1) { stopAutoOpt(); return; }
     }
     // "jusqu'au prochain gain de PA/PD" : s'arrête dès que le PA OU le PD affiché a réellement
     // augmenté par rapport au début de l'auto (voir startAp/startDp ci-dessus)
     if (mode === 'nextgain') {
-      const target3 = EQUIP[optTargetSlot];
+      const target3 = getOptTargetItem();
       if (!target3) { stopAutoOpt(); return; }
       const cur = effectiveApDp(target3);
       if (cur.ap > startAp || cur.dp > startDp) {
