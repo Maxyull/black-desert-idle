@@ -571,6 +571,31 @@
     assert('index.html charge supabase-js avec un attribut integrity (SRI)',
       !!tag.integrity && tag.integrity.startsWith('sha'), `integrity=${tag.integrity}`);
   }
+  // regression V317 (2026-07-08) : classes/sorcier/sorcier-render.js (witchBodyOn, drawWitchIso)
+  // chargeait APRÈS world/render.js -- or render.js appelle hud() de façon SYNCHRONE tout à la
+  // fin de son chargement, AVANT requestAnimationFrame(loop) : hud() -> refreshInvUI() ->
+  // renderEquipment() -> drawPreviewChar() -> drawWitchOn() -> witchBodyOn(). witchBodyOn
+  // n'existant pas encore à ce moment-là, ce premier hud() lançait un ReferenceError qui coupait
+  // le reste du chargement de render.js -- y compris requestAnimationFrame(loop), qui ne
+  // s'exécutait donc JAMAIS : perso invisible, mais en réalité toute la boucle de jeu (combat,
+  // loot, sauvegarde auto) restait gelée dès le chargement. Garde-fou statique : vérifie l'ordre
+  // réel des <script> dans le DOM déjà chargé, pour attraper immédiatement un futur retour de ce
+  // fichier après render.js/inventory-ui.js lors d'un prochain découpage.
+  function testSorcierRenderLoadsBeforeSyncStartupCallers() {
+    if (typeof document === 'undefined') return; // hors-contexte navigateur
+    const srcIndexOf = needle => Array.from(document.scripts).findIndex(s => s.src.includes(needle));
+    const sorcierIdx = srcIndexOf('classes/sorcier/sorcier-render.js');
+    const renderIdx = srcIndexOf('world/render.js');
+    const invUiIdx = srcIndexOf('inventory/inventory-ui.js');
+    assert('classes/sorcier/sorcier-render.js est bien chargé (balise trouvée dans le DOM)', sorcierIdx !== -1);
+    assert('world/render.js est bien chargé (balise trouvée dans le DOM)', renderIdx !== -1);
+    assert('inventory/inventory-ui.js est bien chargé (balise trouvée dans le DOM)', invUiIdx !== -1);
+    if (sorcierIdx === -1 || renderIdx === -1 || invUiIdx === -1) return;
+    assert('sorcier-render.js charge AVANT render.js (hud() y appelle witchBodyOn de façon synchrone au chargement)',
+      sorcierIdx < renderIdx, `sorcierIdx=${sorcierIdx}, renderIdx=${renderIdx}`);
+    assert('sorcier-render.js charge AVANT inventory-ui.js (drawPreviewChar y appelle witchBodyOn)',
+      sorcierIdx < invUiIdx, `sorcierIdx=${sorcierIdx}, invUiIdx=${invUiIdx}`);
+  }
   // check systématique (2026-07-08, demande explicite : "revois les dates des patchnote / ajoute
   // check systematique") -- trouvé en vérifiant manuellement : plusieurs versions récentes
   // (V283-V299) avaient été datées 15-16/07/2026 alors que l'horloge réelle (Supabase + timestamps
@@ -1384,6 +1409,7 @@
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();
+    testSorcierRenderLoadsBeforeSyncStartupCallers();
     testPatchNotesDatesFormatAndOrder();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
