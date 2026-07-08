@@ -373,13 +373,27 @@ function renderCompendiumHtml() {
         `<div class="achReward">${unlocked?'+1% ✓':'🔒'}</div></div>`;
     }).join('');
   } else if (compendiumTab === 'pen') {
+    // reorganisé par palier de couleur le 2026-07-08 (demande explicite : "reorgniser par zone de
+    // couleurs et toujours dans le meme ordre arme armure, bijou avec leurs icone, grisé si on a
+    // pas et montrant le max qu'on a eu jusqu'a present") -- même convention d'en-tête que l'onglet
+    // Zones (.zTierHead/.zTierDot), icône réelle de l'objet (penMasteryIcon, core/game-core.js,
+    // grisée en CSS si jamais atteint PEN), pic d'enchantement jamais atteint (S.enhPeakByName,
+    // voir trackEnhPeak) affiché même pour un objet qui n'a pas (encore) touché PEN.
     bodyHtml = `<div class="admHint">${LANG==='fr'
         ? 'Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.'
         : 'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.'}</div>` +
-      `<div class="compItems compPenGrid">` + penItems.map(name => {
-        const done = !!S.penMastery[name];
-        return `<span class="compItem compPenItem${done?' done':''}">${done?'✓':'○'} ${escapeHtml(tr(name))}</span>`;
-      }).join('') + `</div>`;
+      GEAR_TIERS.map(tier => {
+        const rowsHtml = penItems.filter(e => e.grade === tier.grade).map(entry => {
+          const done = !!S.penMastery[entry.name];
+          const peak = (S.enhPeakByName && S.enhPeakByName[entry.name]) || 0;
+          return `<span class="compItem compPenItem${done?' done':''}" title="${escapeHtml(tr(entry.name))}">` +
+            `<span class="compPenIcon${done?'':' notDone'}">${penMasteryIcon(entry)}</span>` +
+            `<span class="compPenName">${escapeHtml(tr(entry.name))}</span>` +
+            `<span class="compPenPeak">${peak>0?ENH_NAMES[peak]:'—'}</span></span>`;
+        }).join('');
+        return `<div class="zTierHead"><span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}</div>` +
+          `<div class="compItems compPenGrid">${rowsHtml}</div>`;
+      }).join('');
   } else {
     // regroupé par palier de stuff, en-tête colorée (2026-07-16, demande explicite : "ajoute au
     // compendium des categorie dans zone par zone de couleurs") -- même convention que #zoneList

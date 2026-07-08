@@ -449,11 +449,40 @@ function compendiumPct() { return compendiumTotalCount() * 1; } // points de %, 
 // optimisables du jeu (7 pièces × 4 paliers de stuff + 1 bijou par zone) et suit lesquels ont déjà
 // atteint PEN (niveau max) AU MOINS UNE FOIS — purement un suivi de complétion, sans bonus de
 // stats (contrairement au Compendium zones/World Boss). Persisté via S.penMastery.
+// BUG trouvé le 2026-07-08 (demande explicite : "verifier si tout les stuff sont dans la maitrise
+// pen") : cette fonction utilisait GEAR_SLOTS (= ['helmet','armor','gloves','boots'], réduit aux 4
+// pièces d'ARMURE le 2026-07-05 pour les besoins du tirage aléatoire de loot, voir le commentaire
+// sur GEAR_SLOTS dans world/gear-tiers-data.js) au lieu de [...WEAPON_SLOTS, ...ARMOR_SLOTS] (les 7
+// VRAIES pièces optimisables : bâton/éveil/dague + casque/armure/gants/bottes) -- les 3 armes de
+// chaque palier (12 au total) n'étaient donc JAMAIS suivies dans la Maîtrise PEN, aucun moyen de
+// les compléter. Chaque entrée porte maintenant slot/grade/color/kind pour permettre un
+// regroupement par palier de couleur + une icône fidèle (voir renderCompendiumHtml).
 function penMasteryItemList() {
-  const names = [];
-  for (const tier of GEAR_TIERS) for (const slot of GEAR_SLOTS) names.push(tier.sets[slot]);
-  for (const z of ZONES) names.push(z.loot.jackpot.name);
-  return names; // 4×7 + 11 = 39 entrées, dans l'ordre gris→blanc→vert→bleu puis zone 1→11
+  const entries = [];
+  for (const tier of GEAR_TIERS) {
+    // ordre demandé : arme, armure, puis bijou -- jamais mélangé entre paliers
+    for (const slot of [...WEAPON_SLOTS, ...ARMOR_SLOTS]) {
+      entries.push({ name: tier.sets[slot], slot, grade: tier.grade, color: tier.color, kind:'gear' });
+    }
+    for (const zi of tier.zones) {
+      const jp = ZONES[zi].loot.jackpot;
+      entries.push({ name: jp.name, slot: accSlotFor(jp), grade: tier.grade, color: tier.color, kind:'jackpot' });
+    }
+  }
+  return entries; // 4 paliers × (7 pièces + 4 bijoux) = 44 entrées, groupées par palier de couleur
+}
+// icône fidèle d'une entrée de Maîtrise PEN (2026-07-08, demande explicite : "avec leurs icone") --
+// réutilise EXACTEMENT les mêmes fonctions d'icône que le vrai stuff (gear-icons.js), jamais une
+// icône générique, pour que l'objet soit reconnaissable au premier coup d'oeil
+const PEN_GEAR_ICON_FOR_SLOT = {
+  weapon:staffIconForColor, awakening:orbPairIconForColor, secondary:daggerIconForColor,
+  helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor,
+};
+const PEN_JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+function penMasteryIcon(entry) {
+  if (entry.kind === 'gear') { const fn = PEN_GEAR_ICON_FOR_SLOT[entry.slot]; return fn ? fn(entry.color, entry.grade) : ''; }
+  const fn = PEN_JEWEL_ICON_FOR_SLOT[entry.slot] || ringIconForTier;
+  return fn(JEWEL_TIER_IDX[entry.grade] || 0, entry.color);
 }
 function markPenMastery(name) {
   if (S.penMastery[name]) return;

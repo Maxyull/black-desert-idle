@@ -438,6 +438,28 @@
     clone.querySelector('.actTabLock').remove();
     assert('Le libellé (hors badge cadenas) ne contient plus le cadenas', !clone.querySelector('.actTabLabel').textContent.includes('🔒'));
   }
+  // "Cadenas dans le header sur le cadre de la ligne du bas" + "les pv du boss se retrouve dans une
+  // bulle sur la ligne du bas du rectangle dans le header" (2026-07-08) -- les 2 badges doivent être
+  // des overlays position:absolute à cheval sur la bordure inférieure du bouton (même convention que
+  // .zoneTierLock, mais en bas), pas de simples éléments dans le flux normal du texte.
+  function testHeaderBadgesSitOnBottomBorder() {
+    if (!$('activityTabs') || typeof renderActivityTabs !== 'function' || typeof updateBossActivityTabHot !== 'function') return;
+    renderActivityTabs();
+    const fish = [...$('activityTabs').querySelectorAll('.actTab')].find(b => b.dataset.id === 'fish');
+    if (fish) {
+      const lockStyle = getComputedStyle(fish.querySelector('.actTabLock'));
+      assert('Le badge cadenas est en position absolute (chevauche le cadre)', lockStyle.position === 'absolute', `position=${lockStyle.position}`);
+      assert('Le badge cadenas est ancré en bas du bouton (bottom négatif)', parseFloat(lockStyle.bottom) < 0, `bottom=${lockStyle.bottom}`);
+    }
+    const savedActive = bossState.active, savedHp = bossState.hp, savedMax = bossState.maxHp;
+    bossState.active = true; bossState.hp = 55; bossState.maxHp = 100;
+    updateBossActivityTabHot();
+    const hpEl = $('actTabBossHp'), hpStyle = getComputedStyle(hpEl);
+    assert('La bulle %PV du boss est en position absolute (chevauche le cadre)', hpStyle.position === 'absolute', `position=${hpStyle.position}`);
+    assert('La bulle %PV du boss est ancrée en bas du bouton (bottom négatif)', parseFloat(hpStyle.bottom) < 0, `bottom=${hpStyle.bottom}`);
+    bossState.active = savedActive; bossState.hp = savedHp; bossState.maxHp = savedMax;
+    updateBossActivityTabHot();
+  }
   // "Créer un Flash lumineux sur la catégorie boss, qu'on le vois bien 5 min avant et pendant toute
   // la durée du boss, met y les % hp du boss bien visible aussi" (2026-07-08) -- verrouille le
   // déclenchement du flash (bossHot) et l'affichage du %PV sur l'onglet Boss du header.
@@ -458,6 +480,53 @@
     const shouldBeHot = !!occNow && (occNow.live || (occNow.time - Date.now()) <= BOSS_TAB_FLASH_LEAD_MS);
     assert('Hors combat, le flash suit exactement la fenêtre planifiée (5 min avant + durée live)', btn.classList.contains('bossHot') === shouldBeHot);
     bossState.active = savedBossState.active;
+  }
+  // "lors de la fin du boss une roulette tourne ou un des se jette pour chaque recompense
+  // aléatoire, le joueurs peut passer puisn un bouton quittersaffiche (retour a zone)" (2026-07-08)
+  // -- verrouille : (1) un dé par récompense chiffrée + une roue pour le loot rarissime, (2)
+  // "Passer" révèle tout instantanément et fait apparaître "Quitter", (3) sans aucune récompense
+  // à révéler (défaite/déjà réclamé), "Quitter" s'affiche d'emblée sans dé ni roue superflu.
+  function testBossRewardRevealSequenceThenSkipShowsCloseButton() {
+    if (typeof renderBossRewardReveal !== 'function' || typeof wireBossRewardReveal !== 'function' || !$('bossResult')) return;
+    const saved = $('bossResult').innerHTML;
+    const items = [
+      { kind:'dice', icon:'🪙', color:'#e8c96a', label:'Silver', resultHtml:'+100 🪙' },
+      { kind:'wheel', rareLoot:{ name:'Test Rare', icon:'❤️', color:'#5ec9e8', ch:0.05 }, won:false },
+    ];
+    $('bossResult').innerHTML = renderBossRewardReveal(items);
+    wireBossRewardReveal(items);
+    assert('2 items de révélation rendus (1 dé + 1 roue)', $('bossResult').querySelectorAll('.brRevealItem').length === 2);
+    assert('Bouton Passer présent avant révélation', getComputedStyle($('bossSkipBtn')).display !== 'none');
+    assert('Bouton Quitter masqué avant révélation', getComputedStyle($('bossCloseBtn')).display === 'none');
+    $('bossSkipBtn').click();
+    const results = [...$('bossResult').querySelectorAll('.brRevealResult')].map(r => r.textContent.trim());
+    assert('Passer révèle bien le résultat du dé', results[0].includes('100'), `results=${JSON.stringify(results)}`);
+    assert('Passer révèle bien le résultat de la roue (perdu)', results[1].length > 0, `results=${JSON.stringify(results)}`);
+    assert('Passer fait disparaître le bouton Passer', getComputedStyle($('bossSkipBtn')).display === 'none');
+    assert('Passer fait apparaître le bouton Quitter', getComputedStyle($('bossCloseBtn')).display !== 'none');
+    $('bossResult').innerHTML = saved;
+  }
+  function testBossRewardRevealEmptyShowsCloseButtonImmediately() {
+    if (typeof renderBossRewardReveal !== 'function' || !$('bossResult')) return;
+    const saved = $('bossResult').innerHTML;
+    $('bossResult').innerHTML = renderBossRewardReveal([]);
+    assert('Sans récompense, aucun dé/roue superflu', $('bossResult').querySelectorAll('.brRevealItem').length === 0);
+    assert('Sans récompense, Quitter est visible d\'emblée', !!$('bossCloseBtn') && getComputedStyle($('bossCloseBtn')).display !== 'none');
+    $('bossResult').innerHTML = saved;
+  }
+  // "un bouton quitter s'affiche (retour a zone)" -- le retour doit aller à la ZONE de farm (pas
+  // au lobby boss comme avant ce changement), fermer bossResult, remettre l'onglet Zone actif.
+  function testLeaveBossResultToZoneReturnsToFarm() {
+    if (typeof leaveBossResultToZone !== 'function' || !$('bossResult') || !$('gameFrame')) return;
+    const savedActivity = currentActivity, savedActive = bossState.active;
+    $('bossResult').classList.add('show');
+    currentActivity = 'boss';
+    bossState.active = false;
+    leaveBossResultToZone();
+    assert('leaveBossResultToZone repasse currentActivity à "zone"', currentActivity === 'zone');
+    assert('leaveBossResultToZone ferme le panneau de résultat', !$('bossResult').classList.contains('show'));
+    assert('leaveBossResultToZone rend la vue farm visible', getComputedStyle($('gameFrame')).display !== 'none');
+    currentActivity = savedActivity; bossState.active = savedActive;
   }
   // "le coffre ne doit pas dépasser la taille de la carte, les slots bloqué sont bloqué avec un
   // cadenas au dessus au milieu" (2026-07-17) -- avant, les cases verrouillées du coffre affichaient
@@ -826,6 +895,29 @@
     assert('migratePenMasteryV308 marque un objet équipé déjà à PEN', S.penMastery['Test Helmet PEN Migration'] === true);
     EQUIP.helmet = savedHelmet;
     S.penMastery = savedPenMastery;
+  }
+  // "verifier si tout les stuff sont dans la maitrise pen" (2026-07-08) -- BUG trouvé : la liste
+  // utilisait GEAR_SLOTS (réduit aux 4 pièces d'armure depuis le 2026-07-05, voir gear-tiers-data.js)
+  // au lieu de WEAPON_SLOTS+ARMOR_SLOTS -- les 12 armes (bâton/éveil/dague × 4 paliers) n'étaient
+  // JAMAIS suivies. Verrouille les 44 entrées (4 paliers × 7 pièces + 4 bijoux), l'ordre arme->
+  // armure->bijou, et le regroupement par palier de couleur (jamais mélangé entre paliers).
+  function testPenMasteryListIncludesAllGearAndIsOrderedByTier() {
+    if (typeof penMasteryItemList !== 'function') return;
+    const list = penMasteryItemList();
+    assert('44 entrées au total (4 paliers × (3 armes + 4 armure + 4 bijoux))', list.length === 44, `got=${list.length}`);
+    const weaponSlots = ['weapon','awakening','secondary'], armorSlots = ['helmet','armor','gloves','boots'];
+    assert('12 pièces d\'arme suivies (3 × 4 paliers)', list.filter(e => weaponSlots.includes(e.slot)).length === 12);
+    assert('16 pièces d\'armure suivies (4 × 4 paliers)', list.filter(e => armorSlots.includes(e.slot)).length === 16);
+    assert('16 bijoux suivis (1 par zone × 16 zones)', list.filter(e => e.kind==='jackpot').length === 16);
+    assert('Bâton Grunil (arme du palier bleu) est bien présent', list.some(e => e.name === 'Bâton Grunil'));
+    // ordre : dans chaque palier, arme(s) avant armure avant bijou, jamais mélangé entre paliers
+    let lastTierIdx = -1, sawArmorInTier = false;
+    for (const e of list) {
+      const tierIdx = GEAR_TIERS.findIndex(t => t.grade === e.grade);
+      if (tierIdx !== lastTierIdx) { lastTierIdx = tierIdx; sawArmorInTier = false; }
+      if (armorSlots.includes(e.slot)) sawArmorInTier = true;
+      if (weaponSlots.includes(e.slot)) assert(`Arme "${e.name}" n'apparaît jamais après une armure du même palier`, !sawArmorInTier);
+    }
   }
   // "Un item qui passe pen... supprime l'item non pen du sac protégé compendium" (2026-07-08) --
   // généralise l'éviction : un exemplaire ÉQUIPÉ (pas la copie protégée elle-même) qui atteint PEN
@@ -1858,7 +1950,12 @@
     testZoneTierLockIsSeparateFromLabel();
     testCompagnonSeaLifeLiveInHeaderNotZoneTierTabs();
     testActivityTabLockIsSeparateFromLabel();
+    testHeaderBadgesSitOnBottomBorder();
     testBossActivityTabFlashesNearSpawnAndShowsHp();
+    testBossRewardRevealSequenceThenSkipShowsCloseButton();
+    testBossRewardRevealEmptyShowsCloseButtonImmediately();
+    testLeaveBossResultToZoneReturnsToFarm();
+    testPenMasteryListIncludesAllGearAndIsOrderedByTier();
     testChestLockedCellsUseBadgeConvention();
     testJewelryShowsGainInAutoOptList();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();

@@ -620,7 +620,9 @@ function bossRewardRulesHtml() {
 // roue de récompense rare (2026-07-08, demande explicite) : affichée en fin de combat quand le
 // boss a une table "rareLoot" définie (Vell → Coeur de Vell, 5%) — tourne toute seule et s'arrête
 // sur le lot RÉELLEMENT obtenu (déjà tiré au sort avant l'animation, la roue ne fait que le révéler).
-function renderBossRewardWheel(rareLoot, won) {
+// markup de la roue (extrait de l'ancien renderBossRewardWheel le 2026-07-08) -- au plus UNE roue
+// par combat (un seul b.rareLoot possible), donc IDs fixes réutilisables sans risque de collision
+function bossWheelMarkup(rareLoot) {
   const N = 12; // segments (1 rare + 11 "rien") — purement visuel, ne reflète pas le vrai % (5%)
   const segDeg = 360/N;
   // décoi neutre (2026-07-16) : "🌊" était codé en dur pour Vell (thème marin) -- cette même roue
@@ -630,29 +632,84 @@ function renderBossRewardWheel(rareLoot, won) {
   let iconsHtml = '';
   for (let i = 0; i < N; i++) {
     const centerDeg = i*segDeg + segDeg/2;
-    const isRare = i === 0;
-    iconsHtml += `<span class="bwIcon" style="transform:rotate(${centerDeg}deg) translate(0,-70px) rotate(${-centerDeg}deg)">${isRare?rareLoot.icon:commonIcon}</span>`;
+    iconsHtml += `<span class="bwIcon" style="transform:rotate(${centerDeg}deg) translate(0,-70px) rotate(${-centerDeg}deg)">${i===0?rareLoot.icon:commonIcon}</span>`;
   }
-  const wheelHtml = `<div class="bossWheelWrap"><div class="bossWheelPointer">▼</div>` +
-    `<div class="bossWheel" id="bossWheelEl" style="background:conic-gradient(${rareLoot.color} 0deg ${segDeg}deg, #232128 ${segDeg}deg 360deg)">${iconsHtml}</div></div>` +
-    `<div class="bossWheelResult" id="bossWheelResultEl">${LANG==='fr'?'🎡 Récompense rare...':'🎡 Rare reward...'}</div>`;
-  // lance l'animation juste après l'insertion dans le DOM (voir appel dans endBossFight)
-  setTimeout(() => {
-    const wheel = $a('bossWheelEl'); if (!wheel) return;
-    const spins = 5;
-    // atterrit au CENTRE du segment rare (15°) si gagné, sinon un point sûr dans la zone "rien"
-    // (60°-330°, loin des bords pour ne jamais sembler tomber sur le rare par erreur visuelle)
-    const targetDeg = won ? segDeg/2 : (60 + Math.random()*270);
-    const finalRotation = spins*360 - targetDeg;
-    wheel.style.transform = `rotate(${finalRotation}deg)`;
-    setTimeout(() => {
-      const res = $a('bossWheelResultEl'); if (!res) return;
-      res.innerHTML = won
-        ? `<span style="color:${rareLoot.color}">${rareLoot.icon} ${LANG==='fr'?'Obtenu' : 'Obtained'} : ${rareLoot.name} !</span>`
-        : (LANG==='fr' ? `Pas cette fois — ${rareLoot.icon} ${rareLoot.name} attend toujours` : `Not this time — ${rareLoot.icon} ${rareLoot.name} still awaits`);
-    }, 3600);
-  }, 50);
-  return wheelHtml;
+  return `<div class="bossWheelWrap"><div class="bossWheelPointer">▼</div>` +
+    `<div class="bossWheel" id="bossWheelEl" style="background:conic-gradient(${rareLoot.color} 0deg ${segDeg}deg, #232128 ${segDeg}deg 360deg)">${iconsHtml}</div></div>`;
+}
+// "lors de la fin du boss une roulette tourne ou un des se jette pour chaque recompense
+// aléatoire, le joueur peut passer puis un bouton quitter s'affiche (retour a zone)" (2026-07-08)
+// -- séquence de révélation : un dé (icône + résultat masqué) par récompense à quantité aléatoire,
+// une roue (bossWheelMarkup) par récompense à chance binaire (loot rarissime), révélés l'un après
+// l'autre. "Passer" révèle tout instantanément. Le bouton "Quitter" (retour DIRECT à la zone de
+// farm, plus au lobby boss comme avant) n'apparaît qu'une fois tout révélé (naturellement ou via
+// Passer) -- jamais avant, pour que le joueur voie au moins une fois ce qu'il a gagné.
+const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_DICE_MS = 650, BOSS_REVEAL_WHEEL_MS = 3600;
+function renderBossRewardReveal(items) {
+  if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
+  const itemsHtml = items.map((it,i) => {
+    const iconHtml = it.kind==='wheel' ? bossWheelMarkup(it.rareLoot)
+      : `<span class="brDiceIcon" id="brDiceIcon${i}" style="color:${it.color||'#e8c96a'}">${it.icon||'🎲'}</span>`;
+    return `<div class="brRevealItem" id="brRevealItem${i}">${iconHtml}<div class="brRevealResult" id="brRevealResult${i}">${LANG==='fr'?'…':'…'}</div></div>`;
+  }).join('');
+  return `<div class="brRevealList">${itemsHtml}</div>` +
+    `<button id="bossSkipBtn" class="bossSkipBtn">${LANG==='fr'?'⏭ Passer':'⏭ Skip'}</button>` +
+    `<button id="bossCloseBtn" style="display:none">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
+}
+// branche les timers de révélation + le bouton "Passer" -- appelé par l'appelant juste APRÈS avoir
+// inséré le HTML de renderBossRewardReveal() dans le DOM (jamais via un setTimeout interne : cette
+// assignation est déjà synchrone, un délai artificiel n'apportait rien et cassait les tests qui
+// déclenchent "Passer" immédiatement après le rendu).
+function wireBossRewardReveal(items) {
+  if (!items.length) return;
+  const done = new Array(items.length).fill(false);
+  let pendingTimers = [];
+  function finishIfAllDone() {
+    if (!done.every(Boolean)) return;
+    const skipBtn = $a('bossSkipBtn'); if (skipBtn) skipBtn.style.display = 'none';
+    const closeBtn = $a('bossCloseBtn'); if (closeBtn) closeBtn.style.display = '';
+  }
+  function revealOne(i, { instant } = {}) {
+    if (done[i]) return; done[i] = true;
+    const it = items[i], resEl = $a('brRevealResult'+i); if (!resEl) return;
+    if (it.kind === 'dice') {
+      const iconEl = $a('brDiceIcon'+i); if (iconEl) iconEl.classList.add('settled');
+      resEl.innerHTML = it.resultHtml;
+    } else {
+      const wheel = $a('bossWheelEl');
+      if (wheel) {
+        const segDeg = 360/12, spins = instant ? 0 : 5;
+        // atterrit au CENTRE du segment rare si gagné, sinon un point sûr dans la zone "rien"
+        // (60°-330°, loin des bords pour ne jamais sembler tomber sur le rare par erreur visuelle)
+        const targetDeg = it.won ? segDeg/2 : (60 + Math.random()*270);
+        if (instant) wheel.style.transition = 'none';
+        wheel.style.transform = `rotate(${spins*360 - targetDeg}deg)`;
+      }
+      resEl.innerHTML = it.won
+        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${LANG==='fr'?'Obtenu':'Obtained'} : ${it.rareLoot.name} !</span>`
+        : (LANG==='fr'?`Pas cette fois — ${it.rareLoot.icon} ${it.rareLoot.name} attend toujours`:`Not this time — ${it.rareLoot.icon} ${it.rareLoot.name} still awaits`);
+    }
+    finishIfAllDone();
+  }
+  items.forEach((it, i) => {
+    const startDelay = i*BOSS_REVEAL_STAGGER_MS;
+    const revealDelay = startDelay + (it.kind==='wheel' ? BOSS_REVEAL_WHEEL_MS : BOSS_REVEAL_DICE_MS);
+    pendingTimers.push(setTimeout(() => revealOne(i), revealDelay));
+  });
+  const skipBtn = $a('bossSkipBtn');
+  if (skipBtn) skipBtn.onclick = () => {
+    pendingTimers.forEach(t => clearTimeout(t)); pendingTimers = [];
+    items.forEach((_,i) => revealOne(i, { instant:true }));
+  };
+}
+// "un bouton quitter s'affiche (retour a zone)" (2026-07-08) -- avant, "Retour" ramenait toujours
+// au lobby Boss ; désormais un vrai retour direct au farm, cohérent avec la demande explicite.
+function leaveBossResultToZone() {
+  $('bossResult').classList.remove('show');
+  currentActivity = 'zone';
+  if (!bossState.active) $('bossRoom').classList.remove('open');
+  setFarmViewVisible(true);
+  renderActivityTabs();
 }
 async function endBossFight(win) {
   if (bossState.ended) return;
@@ -662,7 +719,10 @@ async function endBossFight(win) {
   leaveBossChannel();
   const b = bossState.boss;
   let rewardsHtml = '';
-  let wheelHtml = '';
+  // "lors de la fin du boss une roulette tourne ou un des se jette pour chaque recompense
+  // aléatoire" (2026-07-08) -- déclaré ici (pas dans le bloc if(win) plus bas) car utilisé
+  // inconditionnellement à la toute fin de cette fonction (reste vide sur une défaite/sortie).
+  let revealItems = [];
   // BUG D'EXPLOIT corrigé le 2026-07-08 ("quand un world boss meurt, plus moyen d'y retourner et
   // de récupérer 2x la récompense") : sur un boss PARTAGÉ, boss_claim() était déjà correctement
   // bloqué côté serveur pour une 2e réclamation (table boss_claims, contrainte par user+boss_key),
@@ -698,6 +758,11 @@ async function endBossFight(win) {
         else alreadyClaimed = true;
       } catch (e) { alreadyClaimed = true; } // en cas de doute (erreur réseau), ne JAMAIS accorder par défaut
     }
+    // chaque récompense qui a une part de hasard (silver/matériau/caphras/fragment : quantité
+    // aléatoire dans une fourchette -> dé ; bijou/loot rarissime : chance de tout ou rien -> roue
+    // déjà existante) alimente `revealItems` (déclaré plus haut) plutôt que du texte statique. Le
+    // tirage a lieu MAINTENANT comme avant (addSilver/invAdd non touchés), seule la RÉVÉLATION est
+    // différée/animée -- voir renderBossRewardReveal plus bas.
     if (alreadyClaimed) {
       rewardsHtml = `<div class="brRewards admHint">${LANG==='fr'
         ? 'Récompense déjà réclamée pour ce boss — chaque victoire ne peut être payée qu\'une seule fois.'
@@ -719,8 +784,12 @@ async function endBossFight(win) {
         addSilver(reward, 'boss', b.name.fr);
         invAdd({ key:'mat_'+CAPHRAS_NAME, name:CAPHRAS_NAME, kind:'material', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', qty:caphrasQty, stackable:true, weight:0.1, val:120 });
         invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
-        const rankHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
-        rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${caphrasQty} × ${tr(CAPHRAS_NAME)}<br>+${fragQty} × ${tr('Fragment de mémoire')}</div>`;
+        rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
+        revealItems.push(
+          { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', resultHtml:`+${fmt(reward)} 🪙` },
+          { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), resultHtml:`+${caphrasQty} × ${tr(CAPHRAS_NAME)}` },
+          { kind:'dice', icon:'✦', color:'#b48ce8', label:tr('Fragment de mémoire'), resultHtml:`+${fragQty} × ${tr('Fragment de mémoire')}` },
+        );
       } else {
         // Le loot des World Boss dépend de la MEILLEURE zone découverte, mais seulement si le joueur
         // n'est pas mort depuis au moins 3 minutes ("certifié sans mort") — demande explicite du
@@ -736,12 +805,13 @@ async function endBossFight(win) {
         // pierre d'optimisation de la meilleure zone difficile (garantie pour tous) + bijoux bonus
         // selon le rang, voir bossZoneMaterialItem/bossZoneJackpotItem/bestDifficileZoneIdx ci-dessus.
         const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
-        const zoneRewardLines = [];
+        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', resultHtml:`+${fmt(reward)} 🪙` });
         if (difficileZi != null) {
           const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
           const matItem = bossZoneMaterialItem(difficileZi, qty);
           invAdd(matItem);
-          zoneRewardLines.push(`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>`);
+          revealItems.push({ kind:'dice', icon:matItem.icon, color:matItem.color, label:tr(matItem.name),
+            resultHtml:`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>` });
         }
         const jewelZonesToGrant = [];
         if (rank === 1 && dangereuseZi != null) jewelZonesToGrant.push(dangereuseZi);
@@ -754,7 +824,8 @@ async function endBossFight(win) {
           const jItem = bossZoneJackpotItem(zi);
           if (invAdd(jItem)) {
             trackLoot(jItem.name);
-            zoneRewardLines.push(`+💎 ${tr(jItem.name)} <span class="admHint">(${tr(ZONES[zi].name)})</span>`);
+            revealItems.push({ kind:'dice', icon:jItem.icon, color:jItem.color, label:tr(jItem.name),
+              resultHtml:`+💎 ${tr(jItem.name)} <span class="admHint">(${tr(ZONES[zi].name)})</span>` });
             logToDiscord('💎 Bijou de World Boss', `**${myPseudo||'Joueur'}** obtient ${jItem.name} (rang #${rank}) sur ${b.name.fr}`, 0xb48ce8);
           }
         }
@@ -762,13 +833,13 @@ async function endBossFight(win) {
         const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
           ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
           : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
-        rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>${zoneRewardLines.join('<br>')}</div>` + zoneHtml;
+        rewardsHtml = rankHtml + zoneHtml;
       }
       pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
       logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
       if (bossState.bossId) markBossDefeated(bossState.bossId); // Compendium (2026-07-08)
       // roue de récompense rare (Coeur de Vell, etc.) : le tirage a lieu MAINTENANT, la roue ne fait
-      // que révéler ce qui a déjà été décidé
+      // que révéler ce qui a déjà été décidé -- intégrée à la même séquence que les dés ci-dessus
       if (b.rareLoot) {
         const won = Math.random() < b.rareLoot.ch;
         if (won) {
@@ -776,18 +847,20 @@ async function endBossFight(win) {
           trackLoot(b.rareLoot.name);
           logToDiscord('❤️‍🔥 Loot rarissime', `**${myPseudo||'Joueur'}** obtient ${b.rareLoot.name} sur ${b.name.fr} ! (${Math.round(b.rareLoot.ch*100)}% de chance)`, 0x5ec9e8);
         }
-        wheelHtml = renderBossRewardWheel(b.rareLoot, won);
+        revealItems.push({ kind:'wheel', rareLoot:b.rareLoot, won });
       }
       refreshStatsOnly(); hud();
     }
   }
   $('bossResult').innerHTML =
     `<div class="brTitle ${win?'win':''}">${win?(LANG==='fr'?'🏆 VICTOIRE':'🏆 VICTORY'):(LANG==='fr'?'Combat quitté':'Fight left')}</div>` +
-    rewardsHtml + wheelHtml +
-    `<button id="bossCloseBtn">${LANG==='fr'?'Retour':'Back'}</button>`;
+    rewardsHtml + renderBossRewardReveal(revealItems);
   $('bossResult').classList.add('show');
-  // au retour, on revient au lobby Boss (pas au farm) pour rester cohérent avec la nav par pages
-  $a('bossCloseBtn').onclick = () => { $('bossResult').classList.remove('show'); openBossLobby(); };
+  wireBossRewardReveal(revealItems);
+  // branché directement (pas de délégation document-level) : même convention que le reste du
+  // fichier -- le bouton existe déjà dans le DOM à ce stade (juste masqué tant que la révélation
+  // n'est pas terminée, voir renderBossRewardReveal), pas besoin de le re-brancher plus tard.
+  $a('bossCloseBtn').onclick = leaveBossResultToZone;
 }
 function bossLoop(now) {
   if (!bossState.active) return;
