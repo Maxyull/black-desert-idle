@@ -511,16 +511,26 @@ const POTION_ORDER = ['small','medium','large','mega','infinite'];
 
 // ==== src/classes/sorcier/skills-data.js ====
 const SKILLS = [
-  { id:'speed',   name:'Speed Spell',        ic:'✦', cd:26, prio:0, type:'buff', dur:9,  castT:.35, mp:15 },
-  { id:'meteor',  name:'Meteor Shower',      ic:'☄', cd:19, prio:1, dmg:8.5, castT:.85, vfx:'meteor', shake:8, mp:40 },
-  { id:'blizzard',name:'Blizzard',           ic:'❄', cd:15, prio:2, dmg:6.8, castT:.7,  vfx:'ice', mp:32 },
-  { id:'thunder', name:'Thunder Storm',      ic:'⚡', cd:12, prio:3, dmg:5.6, castT:.6,  vfx:'bolt', shake:4, mp:26 },
-  { id:'bolide',  name:'Bolide of Destr.',   ic:'✹', cd:10, prio:4, dmg:4.8, castT:.55, vfx:'fire', shake:3, mp:22 },
-  { id:'quake',   name:'Earthquake',         ic:'▲', cd:8,  prio:5, dmg:3.6, castT:.5,  vfx:'quake', shake:6, mp:18 },
-  { id:'lstorm',  name:'Lightning Storm',    ic:'☇', cd:6,  prio:6, dmg:2.9, castT:.45, vfx:'bolt', mp:14 },
-  { id:'equil',   name:'Equilibrium Break',  ic:'◉', cd:5,  prio:7, dmg:2.2, castT:.4,  vfx:'spark', mp:10 },
-  { id:'fireball',name:'Fireball Explosion', ic:'●', cd:2.2,prio:8, dmg:1.5, castT:.38, vfx:'fire', mp:6 },
-  { id:'voltaic', name:'Voltaic Pulse',      ic:'∿', cd:1.1,prio:9, dmg:1.0, castT:.32, vfx:'spark', mp:3 },
+  { id:'speed',   name:'Speed Spell',        ic:'✦', cd:26, prio:0, type:'buff', dur:9,  castT:.35, mp:15,
+    castColor:'#f0e6c0', castBurst:'shimmer', castJitter:.6 },
+  { id:'meteor',  name:'Meteor Shower',      ic:'☄', cd:19, prio:1, dmg:8.5, castT:.85, vfx:'meteor', shake:8, mp:40,
+    castColor:'#e8935a', castBurst:'ember', castJitter:.5 },
+  { id:'blizzard',name:'Blizzard',           ic:'❄', cd:15, prio:2, dmg:6.8, castT:.7,  vfx:'ice', mp:32,
+    castColor:'#9cd6e8', castBurst:'frost', castJitter:.8 },
+  { id:'thunder', name:'Thunder Storm',      ic:'⚡', cd:12, prio:3, dmg:5.6, castT:.6,  vfx:'bolt', shake:4, mp:26,
+    castColor:'#e8d95a', castBurst:'crackle', castJitter:1.6 },
+  { id:'bolide',  name:'Bolide of Destr.',   ic:'✹', cd:10, prio:4, dmg:4.8, castT:.55, vfx:'fire', shake:3, mp:22,
+    castColor:'#e8935a', castBurst:'orb', castJitter:1.0 },
+  { id:'quake',   name:'Earthquake',         ic:'▲', cd:8,  prio:5, dmg:3.6, castT:.5,  vfx:'quake', shake:6, mp:18,
+    castColor:'#a97a4a', castBurst:'dust', castJitter:.7 },
+  { id:'lstorm',  name:'Lightning Storm',    ic:'☇', cd:6,  prio:6, dmg:2.9, castT:.45, vfx:'bolt', mp:14,
+    castColor:'#f0e880', castBurst:'crackle', castJitter:1.8 },
+  { id:'equil',   name:'Equilibrium Break',  ic:'◉', cd:5,  prio:7, dmg:2.2, castT:.4,  vfx:'spark', mp:10,
+    castColor:'#b48ce8', castBurst:'flash', castJitter:1.3 },
+  { id:'fireball',name:'Fireball Explosion', ic:'●', cd:2.2,prio:8, dmg:1.5, castT:.38, vfx:'fire', mp:6,
+    castColor:'#e8935a', castBurst:'orb', castJitter:1.1 },
+  { id:'voltaic', name:'Voltaic Pulse',      ic:'∿', cd:1.1,prio:9, dmg:1.0, castT:.32, vfx:'spark', mp:3,
+    castColor:'#bfe8f0', castBurst:'flicker', castJitter:2.2 },
 ];
 const MANA_REGEN_PER_SEC = 8; 
 const MANA_POTION = { name:{fr:'Potion de mana',en:'Mana Potion'}, cost:110, restore:0.4, cd:4.5 };
@@ -1150,6 +1160,8 @@ function combatTick(dt) {
     P.mp = Math.max(0, P.mp - sk.mp); 
     cds[sk.id] = sk.cd * (mode==='overgeared'?.85:1);
     $('aiSkill').textContent = sk.name;
+    
+    spawnCastOriginVfx(sk);
   } else if (tier !== 'agressif' || mode === 'défensif') setState('kite');
 }
 
@@ -1852,7 +1864,7 @@ function drawWitchIso(t) {
   ctx.save();
   ctx.translate(c.sx,c.sy-24+bobY);
   if (P.faceX < 0) ctx.scale(-1,1);
-  witchBody(t, P.castingSkill != null);
+  witchBody(t, P.castingSkill);
   ctx.restore();
   
 }
@@ -1881,10 +1893,14 @@ function hexToRgba(hex, alpha) {
   return `rgba(${(num>>16)&0xff},${(num>>8)&0xff},${num&0xff},${alpha})`;
 }
 
-function witchBodyOn(g, t, casting) {
+function witchBodyOn(g, t, castingSkill) {
+  const casting = !!castingSkill;
   const sway = Math.sin(P.bob*.9)*2;
   const grade = gearVisualTier() || 'grey';
   const pal = CHAR_TIER_PALETTE[grade];
+  
+  const castColor = (castingSkill && castingSkill.castColor) || pal.trim;
+  const jitterMult = (castingSkill && castingSkill.castJitter) || 1;
   if (pal.cape) {
     g.fillStyle = hexToRgba(pal.hat,.9);
     g.beginPath();
@@ -1917,15 +1933,18 @@ function witchBodyOn(g, t, casting) {
     g.beginPath(); g.moveTo(-9,-32); g.quadraticCurveTo(-14,-40,-11,-48); g.quadraticCurveTo(-9,-40,-6,-33); g.closePath(); g.fill();
     g.beginPath(); g.moveTo(9,-32); g.quadraticCurveTo(14,-40,11,-48); g.quadraticCurveTo(9,-40,6,-33); g.closePath(); g.fill();
   }
-  const staffAng = casting ? -0.5+Math.sin(t*10)*.08 : 0.18;
+  
+  const staffAng = casting ? -0.5+Math.sin(t*10*jitterMult)*.08 : 0.18;
   g.save(); g.translate(9,-14); g.rotate(staffAng);
   g.strokeStyle='#6b5a42'; g.lineWidth=2.6; g.lineCap='round';
   g.beginPath(); g.moveTo(0,22); g.lineTo(0,-22); g.stroke();
-  const glow = casting ? .85+Math.sin(t*12)*.15 : .4;
-  g.fillStyle=hexToRgba(pal.trim, glow);
+  
+  const glowColor = casting ? castColor : pal.trim;
+  const glow = casting ? .85+Math.sin(t*12*jitterMult)*.15 : .4;
+  g.fillStyle=hexToRgba(glowColor, glow);
   g.beginPath(); g.moveTo(0,-30); g.lineTo(4,-23); g.lineTo(0,-19); g.lineTo(-4,-23); g.closePath(); g.fill();
-  if (casting) { g.fillStyle=hexToRgba(pal.trim,.25);
-    g.beginPath(); g.arc(0,-24,9+Math.sin(t*12)*2,0,7); g.fill(); }
+  if (casting) { g.fillStyle=hexToRgba(glowColor,.25);
+    g.beginPath(); g.arc(0,-24,9+Math.sin(t*12*jitterMult)*2,0,7); g.fill(); }
   g.restore();
   
   if (EQUIP.awakening) {
@@ -1936,7 +1955,7 @@ function witchBodyOn(g, t, casting) {
     });
   }
 }
-function witchBody(t,casting) { witchBodyOn(ctx, t, casting); }
+function witchBody(t,castingSkill) { witchBodyOn(ctx, t, castingSkill); }
 
 // ==== src/progression/achievements-data.js ====
 const ACHIEVEMENTS = [
@@ -3173,6 +3192,49 @@ function spawnVfx(sk,p) {
       break;
   }
 }
+
+function spawnCastOriginVfx(sk) {
+  const color = sk.castColor || '#c9a55a';
+  switch (sk.castBurst) {
+    case 'ember': 
+      for (let i=0;i<3;i++)
+        particles.push({type:'castOrigin',style:'ember',color,x:P.x+(Math.random()*16-8),y:P.y+(Math.random()*16-8),
+          z:Math.random()*10,vz:26+Math.random()*14,life:.7,max:.7});
+      break;
+    case 'frost': 
+      for (let i=0;i<6;i++) {
+        const a = i/6*Math.PI*2;
+        particles.push({type:'castOrigin',style:'frost',color,x:P.x+Math.cos(a)*14,y:P.y+Math.sin(a)*14,
+          ang:a,life:.5,max:.5});
+      }
+      break;
+    case 'crackle': 
+      for (let i=0;i<5;i++)
+        particles.push({type:'castOrigin',style:'crackle',color,x:P.x+(Math.random()*20-10),y:P.y+(Math.random()*20-10),
+          z:14+Math.random()*18,life:.22,max:.22});
+      break;
+    case 'orb': 
+      particles.push({type:'castOrigin',style:'orb',color,x:P.x,y:P.y,z:34,life:sk.castT,max:sk.castT});
+      break;
+    case 'dust': 
+      for (let i=0;i<4;i++)
+        particles.push({type:'castOrigin',style:'dust',color,x:P.x+(Math.random()*18-9),y:P.y+(Math.random()*10-5),
+          life:.5,max:.5});
+      break;
+    case 'flash': 
+      particles.push({type:'castOrigin',style:'flash',color,x:P.x,y:P.y,z:20,life:.18,max:.18});
+      break;
+    case 'flicker': 
+      particles.push({type:'castOrigin',style:'flicker',color,x:P.x+(Math.random()*8-4),y:P.y+(Math.random()*8-4),
+        z:20,life:.12,max:.12});
+      break;
+    case 'shimmer': 
+      for (let i=0;i<3;i++)
+        particles.push({type:'castOrigin',style:'shimmer',color,x:P.x+(Math.random()*20-10),y:P.y+(Math.random()*20-10),
+          z:8+Math.random()*10,vz:8,life:.9,max:.9});
+      break;
+  }
+}
 function particlesTick(dt) {
   for (const q of particles) {
     if (q.life !== undefined) q.life -= dt;
@@ -3182,6 +3244,7 @@ function particlesTick(dt) {
     }
     if (q.type==='spark') { q.z += q.vz*dt; q.vz -= 200*dt; if (q.z<0) q.z=0; }
     if (q.type==='quake') q.r += 210*dt;
+    if (q.type==='castOrigin' && (q.style==='ember'||q.style==='shimmer')) q.z += q.vz*dt;
     if (q.type==='fireOrb') {
       q.t += dt*3;
       if (q.t >= 1 && !q.done) {
@@ -6862,6 +6925,55 @@ function drawParticle(q) {
       ctx.beginPath(); ctx.arc(c.sx,c.sy,4.5,0,7); ctx.fill();
       ctx.fillStyle='rgba(255,150,70,.25)';
       ctx.beginPath(); ctx.arc(c.sx,c.sy,9,0,7); ctx.fill();
+      break;
+    }
+    case 'castOrigin': {
+      
+      const c = toScreen(q.x,q.y,q.z||0);
+      switch (q.style) {
+        case 'ember':
+          ctx.fillStyle=`rgba(232,147,90,${a})`;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy,2+2*(1-a),0,7); ctx.fill();
+          break;
+        case 'frost': {
+          const shrink = 1-a; 
+          const gx = P.x+Math.cos(q.ang)*14*shrink, gy = P.y+Math.sin(q.ang)*14*shrink;
+          const gc = toScreen(gx,gy);
+          ctx.fillStyle=`rgba(156,214,232,${a})`;
+          ctx.save(); ctx.translate(gc.sx,gc.sy); ctx.rotate(q.ang);
+          ctx.fillRect(-1,-4,2,8); ctx.restore();
+          break;
+        }
+        case 'crackle':
+          ctx.strokeStyle=`rgba(232,217,90,${a})`; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(c.sx-4,c.sy+3); ctx.lineTo(c.sx+1,c.sy-2); ctx.lineTo(c.sx-2,c.sy-1); ctx.lineTo(c.sx+4,c.sy-6); ctx.stroke();
+          break;
+        case 'orb': {
+          const grow = 1-a; 
+          ctx.fillStyle=q.color; ctx.globalAlpha=.85;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy-30,2.5+grow*3,0,7); ctx.fill();
+          ctx.globalAlpha=.3;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy-30,5+grow*6,0,7); ctx.fill();
+          ctx.globalAlpha=1;
+          break;
+        }
+        case 'dust':
+          ctx.fillStyle=`rgba(169,122,74,${a*.7})`;
+          ctx.beginPath(); ctx.ellipse(c.sx,c.sy+2,5*(1-a)+3,2,0,0,7); ctx.fill();
+          break;
+        case 'flash':
+          ctx.fillStyle=`rgba(180,140,232,${a*.6})`;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy-20,16*(1-a)+4,0,7); ctx.fill();
+          break;
+        case 'flicker':
+          ctx.fillStyle=`rgba(191,232,240,${a})`;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy,1.8,0,7); ctx.fill();
+          break;
+        case 'shimmer':
+          ctx.fillStyle=`rgba(240,230,192,${a*.8})`;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy,1.4,0,7); ctx.fill();
+          break;
+      }
       break;
     }
     case 'tpTrail': {

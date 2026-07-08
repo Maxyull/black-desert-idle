@@ -665,6 +665,52 @@
       assert(`Le Wiki (FR) mentionne le boss "${marker}"`, combat.fr.includes(marker), `boss=${bossId}`);
     }
   }
+  // "pense aux animations de sorts aussi" / "des effets un peu different pour chaque sort"
+  // (2026-07-18) -- chaque sort doit avoir sa propre identité visuelle de cast (castColor/
+  // castBurst/castJitter), sinon witchBodyOn retombe silencieusement sur la teinte du palier
+  // pour TOUS les sorts (comportement d'avant cette demande, jamais revenir en arrière sans
+  // s'en apercevoir). Vérifie aussi que spawnCastOriginVfx ne plante sur aucun sort du roster.
+  function testEverySkillHasDistinctCastIdentity() {
+    if (typeof SKILLS === 'undefined') return;
+    for (const sk of SKILLS) {
+      assert(`${sk.id} a un castColor`, !!sk.castColor, `sk=${sk.id}`);
+      assert(`${sk.id} a un castBurst`, !!sk.castBurst, `sk=${sk.id}`);
+      assert(`${sk.id} a un castJitter`, typeof sk.castJitter === 'number' && sk.castJitter > 0, `sk=${sk.id}`);
+    }
+    // pas 2 sorts avec exactement le même trio couleur+burst+jitter (identité vraiment distincte,
+    // pas juste des champs renseignés au hasard) -- une petite tolérance : 2 sorts peuvent
+    // légitimement partager un castBurst (ex: thunder/lstorm en 'crackle') tant que la couleur ou
+    // le jitter les distingue encore
+    const seen = new Set();
+    for (const sk of SKILLS) {
+      const key = `${sk.castColor}|${sk.castBurst}|${sk.castJitter}`;
+      assert(`${sk.id} a une identité de cast unique (pas un doublon exact)`, !seen.has(key), `key=${key}`);
+      seen.add(key);
+    }
+  }
+  function testSpawnCastOriginVfxNeverThrows() {
+    if (typeof spawnCastOriginVfx !== 'function' || typeof SKILLS === 'undefined' || typeof particles === 'undefined') return;
+    const before = particles.length;
+    for (const sk of SKILLS) {
+      let threw = false;
+      try { spawnCastOriginVfx(sk); } catch (e) { threw = true; }
+      assert(`spawnCastOriginVfx(${sk.id}) ne lève pas d'exception`, !threw);
+    }
+    particles.length = before; // nettoie les particules de test, ne pollue pas la partie réelle
+  }
+  // witchBodyOn ne doit jamais planter, que castingSkill soit un objet SKILLS, false, ou null --
+  // et doit refléter le castColor du sort passé plutôt que retomber sur la teinte du palier
+  function testWitchBodyOnAcceptsSkillObjectWithoutThrowing() {
+    if (typeof witchBodyOn === 'undefined' || typeof SKILLS === 'undefined' || typeof document === 'undefined') return;
+    const canvas = document.createElement('canvas'); canvas.width = 60; canvas.height = 60;
+    const g = canvas.getContext('2d'); if (!g) return;
+    let threw = false;
+    try {
+      witchBodyOn(g, 0, false);
+      witchBodyOn(g, 0, SKILLS[1]); // meteor, castColor défini
+    } catch (e) { threw = true; }
+    assert('witchBodyOn accepte false et un objet SKILLS sans exception', !threw);
+  }
   // "enleve le scroll affiche les 2 a 7 dernier note selon la taille et met un bouton vers le haut
   // pour voir les nouveau et vers le bas pour regarder les ancien" (2026-07-11) -- computePatchPages()
   // découpe PATCH_NOTES en pages contiguës de 2 à 7 entrées, sans trou ni chevauchement.
@@ -1562,6 +1608,9 @@
     testWikiTreasureCountMatchesRealArray();
     testWikiMentionsCronCostPerTier();
     testWikiMentionsBothWorldBosses();
+    testEverySkillHasDistinctCastIdentity();
+    testSpawnCastOriginVfxNeverThrows();
+    testWitchBodyOnAcceptsSkillObjectWithoutThrowing();
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();

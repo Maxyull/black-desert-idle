@@ -845,6 +845,56 @@ function drawParticle(q) {
       ctx.beginPath(); ctx.arc(c.sx,c.sy,9,0,7); ctx.fill();
       break;
     }
+    case 'castOrigin': {
+      // burst à l'origine du cast (sur le joueur), identité par sort -- voir spawnCastOriginVfx
+      // (combat/vfx.js) et castColor/castBurst dans SKILLS (classes/sorcier/skills-data.js)
+      const c = toScreen(q.x,q.y,q.z||0);
+      switch (q.style) {
+        case 'ember':
+          ctx.fillStyle=`rgba(232,147,90,${a})`;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy,2+2*(1-a),0,7); ctx.fill();
+          break;
+        case 'frost': {
+          const shrink = 1-a; // se resserre vers le centre à mesure que la vie diminue
+          const gx = P.x+Math.cos(q.ang)*14*shrink, gy = P.y+Math.sin(q.ang)*14*shrink;
+          const gc = toScreen(gx,gy);
+          ctx.fillStyle=`rgba(156,214,232,${a})`;
+          ctx.save(); ctx.translate(gc.sx,gc.sy); ctx.rotate(q.ang);
+          ctx.fillRect(-1,-4,2,8); ctx.restore();
+          break;
+        }
+        case 'crackle':
+          ctx.strokeStyle=`rgba(232,217,90,${a})`; ctx.lineWidth=1.5;
+          ctx.beginPath(); ctx.moveTo(c.sx-4,c.sy+3); ctx.lineTo(c.sx+1,c.sy-2); ctx.lineTo(c.sx-2,c.sy-1); ctx.lineTo(c.sx+4,c.sy-6); ctx.stroke();
+          break;
+        case 'orb': {
+          const grow = 1-a; // grossit à mesure que le cast avance (a part de 1 et descend vers 0)
+          ctx.fillStyle=q.color; ctx.globalAlpha=.85;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy-30,2.5+grow*3,0,7); ctx.fill();
+          ctx.globalAlpha=.3;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy-30,5+grow*6,0,7); ctx.fill();
+          ctx.globalAlpha=1;
+          break;
+        }
+        case 'dust':
+          ctx.fillStyle=`rgba(169,122,74,${a*.7})`;
+          ctx.beginPath(); ctx.ellipse(c.sx,c.sy+2,5*(1-a)+3,2,0,0,7); ctx.fill();
+          break;
+        case 'flash':
+          ctx.fillStyle=`rgba(180,140,232,${a*.6})`;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy-20,16*(1-a)+4,0,7); ctx.fill();
+          break;
+        case 'flicker':
+          ctx.fillStyle=`rgba(191,232,240,${a})`;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy,1.8,0,7); ctx.fill();
+          break;
+        case 'shimmer':
+          ctx.fillStyle=`rgba(240,230,192,${a*.8})`;
+          ctx.beginPath(); ctx.arc(c.sx,c.sy,1.4,0,7); ctx.fill();
+          break;
+      }
+      break;
+    }
     case 'tpTrail': {
       const a1=toScreen(q.x1,q.y1), a2=toScreen(q.x2,q.y2);
       ctx.strokeStyle=`rgba(140,200,255,${a*.7})`; ctx.lineWidth=8*a;

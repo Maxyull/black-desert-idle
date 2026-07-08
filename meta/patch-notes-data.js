@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V324', d:'18/07/2026 16:30', name:{fr:'Chaque sort a désormais sa propre identité visuelle de cast', en:'Every spell now has its own visual cast identity'}, fr:[
+      {t:'new', sub:'graphismes', severity:'major', tx:'Le cristal du bâton et son halo prennent désormais une couleur propre à chaque sort en cours de cast (orange pour Meteor Shower/Bolide/Fireball, cyan pour Blizzard, jaune pour Thunder Storm/Lightning Storm, violet pour Equilibrium Break, doré pâle pour Speed Spell, cyan clair pour Voltaic Pulse) — avant, le cristal restait toujours dans la couleur du palier d\'équipement, identique pour les 10 sorts.'},
+      {t:'new', sub:'graphismes', tx:'Le tremblement du bâton pendant le cast varie aussi en vitesse selon le sort : plus rapide pour les sorts au temps de cast court (Voltaic Pulse, Lightning Storm), plus posé pour les sorts lourds (Meteor Shower).'},
+      {t:'new', sub:'graphismes', tx:'Chaque sort déclenche désormais un petit effet visuel sur le personnage AU MOMENT DU CAST (braises montantes, anneau de givre qui se resserre, crépitement électrique, orbe qui se charge, poussière au sol, flash arcane...), en plus de l\'effet déjà existant à l\'impact sur la cible.'},
+    ], en:[
+      {t:'new', sub:'graphismes', severity:'major', tx:'The staff crystal and its glow now take on a color specific to whichever spell is being cast (orange for Meteor Shower/Bolide/Fireball, cyan for Blizzard, yellow for Thunder Storm/Lightning Storm, purple for Equilibrium Break, pale gold for Speed Spell, light cyan for Voltaic Pulse) — before, the crystal always stayed in the equipped gear tier color, identical for all 10 spells.'},
+      {t:'new', sub:'graphismes', tx:'The staff\'s cast tremble also varies in speed per spell: faster for short-cast spells (Voltaic Pulse, Lightning Storm), calmer for heavy spells (Meteor Shower).'},
+      {t:'new', sub:'graphismes', tx:'Every spell now triggers a small visual effect on the character AT THE MOMENT OF CASTING (rising embers, closing frost ring, electric crackle, charging orb, ground dust, arcane flash...), in addition to the existing impact effect on the target.'},
+    ] },
   { v:'V323', d:'18/07/2026 15:00', name:{fr:'Wiki : correction de plusieurs informations obsolètes', en:'Wiki: fixed several outdated facts'}, fr:[
       {t:'fix', sub:'interface', tx:'Le Wiki annonçait 4 objets de Trésor de Velia (0,5% à 0,00001%) — il n\'y en a en réalité que 2 (0,17% et 0,0005%). Corrigé.'},
       {t:'fix', sub:'interface', tx:'Le Wiki disait que la toute première zone d\'un palier n\'a jamais d\'arme garantie — c\'est en réalité la 2e zone du palier qui n\'en a aucune (la 1ère en garantit bien une). Corrigé.'},

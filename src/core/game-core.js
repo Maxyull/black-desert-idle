@@ -825,6 +825,13 @@ function combatTick(dt) {
     P.mp = Math.max(0, P.mp - sk.mp); // coût en mana prélevé au lancer, pas à la résolution
     cds[sk.id] = sk.cd * (mode==='overgeared'?.85:1);
     $('aiSkill').textContent = sk.name;
+    // burst visuel à l'ORIGINE du cast, propre à chaque sort (2026-07-18, demande explicite :
+    // "pense aux animations de sorts aussi") -- distinct du VFX d'impact (spawnVfx, à la
+    // résolution dans resolveSkill) : celui-ci accompagne le temps de cast lui-même. Référence en
+    // exécution (spawnCastOriginVfx vit dans combat/vfx.js, chargé après ce fichier) -- ne
+    // s'exécute qu'en jeu, bien après que tous les scripts soient chargés, comme spawnVfx()
+    // ci-dessous dans resolveSkill.
+    spawnCastOriginVfx(sk);
   } else if (tier !== 'agressif' || mode === 'défensif') setState('kite');
 }
 

@@ -33,6 +33,53 @@ function spawnVfx(sk,p) {
       break;
   }
 }
+// burst à l'ORIGINE (sur le joueur, au moment où le cast DÉMARRE) -- 2026-07-18, demande
+// explicite : "pense aux animations de sorts aussi" / "des effets un peu different pour chaque
+// sort". Distinct de spawnVfx ci-dessus (effet d'IMPACT sur la cible, à la résolution du sort) :
+// ici c'est ce qui accompagne visuellement le temps de cast, tout de suite quand P.castingSkill
+// est posé (voir game-core.js). sk.castBurst vient des données de SKILLS (skills-data.js).
+function spawnCastOriginVfx(sk) {
+  const color = sk.castColor || '#c9a55a';
+  switch (sk.castBurst) {
+    case 'ember': // meteor : quelques braises qui montent lentement, charge lourde
+      for (let i=0;i<3;i++)
+        particles.push({type:'castOrigin',style:'ember',color,x:P.x+(Math.random()*16-8),y:P.y+(Math.random()*16-8),
+          z:Math.random()*10,vz:26+Math.random()*14,life:.7,max:.7});
+      break;
+    case 'frost': // blizzard : petits éclats qui se resserrent en anneau
+      for (let i=0;i<6;i++) {
+        const a = i/6*Math.PI*2;
+        particles.push({type:'castOrigin',style:'frost',color,x:P.x+Math.cos(a)*14,y:P.y+Math.sin(a)*14,
+          ang:a,life:.5,max:.5});
+      }
+      break;
+    case 'crackle': // thunder/lstorm : crépitement nerveux, très bref
+      for (let i=0;i<5;i++)
+        particles.push({type:'castOrigin',style:'crackle',color,x:P.x+(Math.random()*20-10),y:P.y+(Math.random()*20-10),
+          z:14+Math.random()*18,life:.22,max:.22});
+      break;
+    case 'orb': // bolide/fireball : un seul orbe qui se charge au bout du bâton
+      particles.push({type:'castOrigin',style:'orb',color,x:P.x,y:P.y,z:34,life:sk.castT,max:sk.castT});
+      break;
+    case 'dust': // quake : petit nuage de poussière au sol, aux pieds
+      for (let i=0;i<4;i++)
+        particles.push({type:'castOrigin',style:'dust',color,x:P.x+(Math.random()*18-9),y:P.y+(Math.random()*10-5),
+          life:.5,max:.5});
+      break;
+    case 'flash': // equil : flash violet net et bref, arcane
+      particles.push({type:'castOrigin',style:'flash',color,x:P.x,y:P.y,z:20,life:.18,max:.18});
+      break;
+    case 'flicker': // voltaic : minuscule étincelle unique, quasi instantanée (sort le + rapide)
+      particles.push({type:'castOrigin',style:'flicker',color,x:P.x+(Math.random()*8-4),y:P.y+(Math.random()*8-4),
+        z:20,life:.12,max:.12});
+      break;
+    case 'shimmer': // speed : scintillement doux et calme (buff, pas d'agressivité visuelle)
+      for (let i=0;i<3;i++)
+        particles.push({type:'castOrigin',style:'shimmer',color,x:P.x+(Math.random()*20-10),y:P.y+(Math.random()*20-10),
+          z:8+Math.random()*10,vz:8,life:.9,max:.9});
+      break;
+  }
+}
 function particlesTick(dt) {
   for (const q of particles) {
     if (q.life !== undefined) q.life -= dt;
@@ -42,6 +89,7 @@ function particlesTick(dt) {
     }
     if (q.type==='spark') { q.z += q.vz*dt; q.vz -= 200*dt; if (q.z<0) q.z=0; }
     if (q.type==='quake') q.r += 210*dt;
+    if (q.type==='castOrigin' && (q.style==='ember'||q.style==='shimmer')) q.z += q.vz*dt;
     if (q.type==='fireOrb') {
       q.t += dt*3;
       if (q.t >= 1 && !q.done) {

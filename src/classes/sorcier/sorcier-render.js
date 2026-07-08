@@ -31,7 +31,7 @@ function drawWitchIso(t) {
   ctx.save();
   ctx.translate(c.sx,c.sy-24+bobY);
   if (P.faceX < 0) ctx.scale(-1,1);
-  witchBody(t, P.castingSkill != null);
+  witchBody(t, P.castingSkill);
   ctx.restore();
   // barre d'incantation et de PV retirées d'au-dessus du personnage (2026-07-05, demande
   // explicite) : la barre d'incantation vit désormais près de la barre de sorts (#castBar) et
@@ -69,10 +69,19 @@ function hexToRgba(hex, alpha) {
 // dessine le corps de la sorcière sur un contexte 2D donné (ctx global en jeu, ou un contexte de
 // prévisualisation dédié — voir drawWitchOn) : factorisé le 2026-07-08 pour que le personnage en
 // combat ET la prévisualisation de l'équipement partagent EXACTEMENT le même rendu par palier
-function witchBodyOn(g, t, casting) {
+// castingSkill : objet SKILLS en cours de cast, ou falsy (idle/K.O.) -- avant le 2026-07-18 ce
+// paramètre n'était qu'un booléen ; désormais l'objet skill lui-même pour lire castColor/
+// castBurst/castJitter et donner à chaque sort une identité visuelle propre côté personnage
+// (avant, bâton+cristal identiques pour les 10 sorts, seul le VFX d'IMPACT variait)
+function witchBodyOn(g, t, castingSkill) {
+  const casting = !!castingSkill;
   const sway = Math.sin(P.bob*.9)*2;
   const grade = gearVisualTier() || 'grey';
   const pal = CHAR_TIER_PALETTE[grade];
+  // repli sur la teinte du palier si le sort n'a pas (encore) de castColor propre -- ne devrait
+  // pas arriver (tous les SKILLS en ont un), garde-fou uniquement
+  const castColor = (castingSkill && castingSkill.castColor) || pal.trim;
+  const jitterMult = (castingSkill && castingSkill.castJitter) || 1;
   if (pal.cape) {
     g.fillStyle = hexToRgba(pal.hat,.9);
     g.beginPath();
@@ -105,15 +114,21 @@ function witchBodyOn(g, t, casting) {
     g.beginPath(); g.moveTo(-9,-32); g.quadraticCurveTo(-14,-40,-11,-48); g.quadraticCurveTo(-9,-40,-6,-33); g.closePath(); g.fill();
     g.beginPath(); g.moveTo(9,-32); g.quadraticCurveTo(14,-40,11,-48); g.quadraticCurveTo(9,-40,6,-33); g.closePath(); g.fill();
   }
-  const staffAng = casting ? -0.5+Math.sin(t*10)*.08 : 0.18;
+  // tremblement du bâton pendant le cast : vitesse propre à chaque sort (castJitter, 2026-07-18)
+  // -- un sort rapide à lancer (voltaic, castT .32) tremble plus nerveusement qu'un sort lent et
+  // lourd (meteor, castT .85), pour que la sensation de cast varie même sans regarder l'icône
+  const staffAng = casting ? -0.5+Math.sin(t*10*jitterMult)*.08 : 0.18;
   g.save(); g.translate(9,-14); g.rotate(staffAng);
   g.strokeStyle='#6b5a42'; g.lineWidth=2.6; g.lineCap='round';
   g.beginPath(); g.moveTo(0,22); g.lineTo(0,-22); g.stroke();
-  const glow = casting ? .85+Math.sin(t*12)*.15 : .4;
-  g.fillStyle=hexToRgba(pal.trim, glow);
+  // couleur du cristal pendant le cast = castColor du sort en cours (identité par sort), sinon
+  // la teinte du palier au repos (comportement d'origine, inchangé hors cast)
+  const glowColor = casting ? castColor : pal.trim;
+  const glow = casting ? .85+Math.sin(t*12*jitterMult)*.15 : .4;
+  g.fillStyle=hexToRgba(glowColor, glow);
   g.beginPath(); g.moveTo(0,-30); g.lineTo(4,-23); g.lineTo(0,-19); g.lineTo(-4,-23); g.closePath(); g.fill();
-  if (casting) { g.fillStyle=hexToRgba(pal.trim,.25);
-    g.beginPath(); g.arc(0,-24,9+Math.sin(t*12)*2,0,7); g.fill(); }
+  if (casting) { g.fillStyle=hexToRgba(glowColor,.25);
+    g.beginPath(); g.arc(0,-24,9+Math.sin(t*12*jitterMult)*2,0,7); g.fill(); }
   g.restore();
   // orbes d'éveil en orbite : uniquement si une pièce d'éveil est équipée (2026-07-08, demande
   // explicite, même esprit que orbPairIconForColor)
@@ -125,4 +140,4 @@ function witchBodyOn(g, t, casting) {
     });
   }
 }
-function witchBody(t,casting) { witchBodyOn(ctx, t, casting); }
+function witchBody(t,castingSkill) { witchBodyOn(ctx, t, castingSkill); }
