@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V296', d:'16/07/2026 18:00', name:{fr:'Fix : timer figé dans la page Boss', en:'Fixed: frozen timer on the Boss page'}, fr:[
+      {t:'fix', sub:'combat', severity:'major', tx:'Le compte à rebours du prochain boss, à l\'intérieur de la page Boss, restait figé tant qu\'on ne rechargeait pas la page — il se met désormais à jour chaque seconde comme partout ailleurs, et le bouton "Combattre" apparaît automatiquement au bon moment'},
+    ], en:[
+      {t:'fix', sub:'combat', severity:'major', tx:'The next-boss countdown inside the Boss page used to stay frozen until you reloaded — it now updates every second like everywhere else, and the "Fight" button appears automatically at the right time'},
+    ] },
   { v:'V295', d:'16/07/2026 17:00', name:{fr:'Marché fermé pour maintenance', en:'Market closed for maintenance'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Le Marché est temporairement fermé pour maintenance — tous les ordres ouverts ont été annulés et intégralement remboursés (silver ou objet) à leurs propriétaires. Réouverture à venir.'},
     ], en:[
