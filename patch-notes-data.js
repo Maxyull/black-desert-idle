@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V299', d:'16/07/2026 21:00', name:{fr:'Marché renommé "Marché commun", réouvert', en:'Market renamed "Common Market", reopened'}, fr:[
+      {t:'change', sub:'objets', severity:'major', tx:'Le Marché est renommé "Marché commun" et les anciens onglets Acheter/Vendre/Mes annonces (annonces à prix fixe) ont été retirés — on atterrit directement dans le carnet d\'ordres à l\'ouverture, plus léger et plus clair'},
+      {t:'change', sub:'objets', tx:'Dans le sous-onglet Matériaux, la pastille de l\'objet choisi se colore désormais avec sa propre couleur pour bien voir lequel est sélectionné'},
+      {t:'new', sub:'objets', severity:'major', tx:'Le Marché commun est réouvert à tous les joueurs !'},
+    ], en:[
+      {t:'change', sub:'objets', severity:'major', tx:'The Market is renamed "Common Market" and the old Buy/Sell/My listings tabs (fixed-price listings) were removed — you now land directly in the order book, lighter and clearer'},
+      {t:'change', sub:'objets', tx:'In the Materials sub-tab, the selected item\'s pill now fills with its own color so it\'s obvious which one is chosen'},
+      {t:'new', sub:'objets', severity:'major', tx:'The Common Market is reopened to all players!'},
+    ] },
   { v:'V298', d:'16/07/2026 20:00', name:{fr:'Marché : nouveau carnet d\'ordres et chandelier (matériaux)', en:'Market: new order book and candlestick chart (materials)'}, fr:[
       {t:'new', sub:'objets', tx:'Le sous-onglet "Matériaux" du Marché commun a été refait : carnet d\'ordres vente/achat avec barres de volume, meilleur prix mis en avant, spread, pression du marché et mini graphique chandelier sur les 20 dernières transactions. Le Marché reste fermé pour l\'instant (voir la note précédente) — prêt pour sa réouverture.'},
     ], en:[
