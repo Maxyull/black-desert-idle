@@ -48,6 +48,18 @@ const CHAR_TIER_PALETTE = {
   green: { robe:'#3d4a3a', hat:'#26301f', hatDark:'#182015', horn:true,  cape:false, trim:'#7aa35e' },
   blue:  { robe:'#20303c', hat:'#16232b', hatDark:'#0a1216', horn:true,  cape:true,  trim:'#6ea3c9' },
 };
+// "ornements" orbitaux par palier (2026-07-08, demande explicite : "créer des effet de plus en
+// plus visuel pour les sors avec des ornement... bleu = 5 ornement vert = 4 et le reste peu de
+// visuel moins flashy... bleu = tres flashy tres visuel") -- récompense visuelle progressive de
+// palier en palier : gris/blanc restent discrets (1-2 petits éclats ternes), vert en montre 4,
+// bleu en montre 5 nettement plus gros/lumineux/rapides -- surtout pendant un cast (voir `flash`,
+// multiplie taille/opacité, ajoute un halo supplémentaire aux 2 paliers hauts uniquement).
+const ORNAMENT_TIER = {
+  grey:  { n:1, flash:.28 },
+  white: { n:2, flash:.45 },
+  green: { n:4, flash:.72 },
+  blue:  { n:5, flash:1.0 },
+};
 // palier visuel = le plus HAUT palier de couleur présent parmi les pièces équipées (arme/armure) —
 // null si rien d'équipé, retombe alors sur le gris par défaut (voir witchBody/drawWitchOn)
 function gearVisualTier() {
@@ -150,6 +162,26 @@ function witchBodyOn(g, t, castingSkill) {
       g.fillStyle = hexToRgba(pal.trim,.9);
       g.beginPath(); g.arc(ox, oy-20, r, 0, 7); g.fill();
     });
+  }
+  // ornements de palier (voir ORNAMENT_TIER ci-dessus) : petits éclats en orbite autour du buste,
+  // couleur du sort en cours pendant un cast (comme le cristal), sinon la teinte du palier au repos
+  const orn = ORNAMENT_TIER[grade];
+  const ornColor = casting ? castColor : pal.trim;
+  const ornOrbitR = 19 + (casting ? 3 : 0);
+  for (let i=0;i<orn.n;i++) {
+    const ang = t*(1.3+jitterMult*.25) + i*(Math.PI*2/orn.n);
+    const ox = Math.cos(ang)*ornOrbitR, oy = Math.sin(ang)*ornOrbitR*.5 - 21;
+    const pulse = .5+.5*Math.sin(t*(casting?9*jitterMult:2.2)+i*1.7);
+    const size = (1+pulse*1.3) * orn.flash * (casting?1.35:1);
+    const alpha = Math.min(1, (.3+pulse*.4) * orn.flash * (casting?1.3:.8));
+    g.fillStyle = hexToRgba(ornColor, alpha);
+    g.beginPath(); g.arc(ox, oy, size, 0, 7); g.fill();
+    // halo supplémentaire réservé aux 2 paliers hauts (vert/bleu) pendant le cast -- "bleu = tres
+    // flashy tres visuel" : c'est CE halo, absent en gris/blanc, qui crée l'écart perçu de palier
+    if (casting && orn.flash >= .7) {
+      g.fillStyle = hexToRgba(ornColor, alpha*.3);
+      g.beginPath(); g.arc(ox, oy, size*2.2, 0, 7); g.fill();
+    }
   }
 }
 function witchBody(t,castingSkill) { witchBodyOn(ctx, t, castingSkill); }

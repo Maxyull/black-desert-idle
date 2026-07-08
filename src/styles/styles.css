@@ -637,12 +637,17 @@
      isolé) -- dans une grille dense de 192 cases, flotter au-dessus chevaucherait la rangée
      précédente */
   #veliaChestGrid .cell .zoneTierLock { position:absolute; top:2px; left:50%; transform:translateX(-50%); }
-  /* bascule 4/8 cases par ligne (2026-07-18, demande explicite) -- vue agrandie : cases ~2x plus
-     larges (aspect-ratio:1 sur .cell suit la largeur de colonne), icône/texte mis à l'échelle */
-  #veliaChestGrid.chestZoomed { grid-template-columns:repeat(4, 1fr); max-height:420px; }
-  #veliaChestGrid.chestZoomed .cell { font-size:28px; }
-  #veliaChestGrid.chestZoomed .cell .qty { font-size:12px; }
-  #veliaChestGrid.chestZoomed .cell .zoneTierLock { width:20px; height:20px; font-size:12px; }
+  /* bascule 5/8 cases par ligne (2026-07-18 puis 5/ligne le 2026-07-08, demande explicite : "Met 5
+     par ligne dans le coffre 5 ou 8 et bloque la carte elle dois pas s'agrandir") -- vue agrandie :
+     cases plus larges (aspect-ratio:1 sur .cell suit la largeur de colonne), icône/texte mis à
+     l'échelle. max-height VOLONTAIREMENT identique à la vue normale (260px, pas agrandie) : la
+     carte ne doit jamais grandir en bascultant, seul le défilement interne change de densité (même
+     contrainte que le commentaire "le coffre ne doit pas dépasser la taille de la carte" ci-dessus,
+     réaffirmée explicitement pour la vue zoomée qui l'avait régressée à 420px). */
+  #veliaChestGrid.chestZoomed { grid-template-columns:repeat(5, 1fr); max-height:260px; }
+  #veliaChestGrid.chestZoomed .cell { font-size:24px; }
+  #veliaChestGrid.chestZoomed .cell .qty { font-size:11px; }
+  #veliaChestGrid.chestZoomed .cell .zoneTierLock { width:18px; height:18px; font-size:11px; }
   #invGrid::-webkit-scrollbar { width:7px; }
   #invGrid::-webkit-scrollbar-thumb { background:#3a3742; }
   /* Compendium en onglet principal "en grand" (2026-07-14, demande explicite) -- plus de place
@@ -1589,7 +1594,6 @@
   .admHistBar .ahbFill { width:100%; background:linear-gradient(180deg,#c9a55a,#8a7038); border-radius:2px 2px 0 0; min-height:2px; }
   .admHistBar .ahbCount { font-size:10px; color:var(--gold); margin-bottom:2px; }
   .admHistBar .ahbLbl { font-size:9px; color:var(--ink-dim); margin-top:4px; text-align:center; }
-  .staleTag { font-size:10px; cursor:help; }
   /* registre de silver (onglet Silver, 2026-07-10, demande explicite : "je dois pouvoir traquer le
      moindre silver") : gagné en vert, dépensé en rouge, même code couleur partout (tableau par
      catégorie + graphique horaire) */

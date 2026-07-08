@@ -198,3 +198,20 @@ function migrateJewelryMatNameV239() {
   INV.forEach(fix);
   COMPENDIUM_BAG.forEach(fix);
 }
+// migration 2026-07-08 (bug trouvé : "Regarde le compendium retroactivement des objet PEN") --
+// la Maîtrise PEN (S.penMastery, voir markPenMastery dans core/game-core.js) n'existe que depuis
+// le 2026-07-08 et ne s'enregistre QUE sur un enchantement RÉUSSI vers PEN après cette date. Un
+// joueur qui avait déjà un objet à PEN AVANT cette date (equipé, en sac, ou dans le Compendium
+// protégé) ne le verrait donc jamais compté, sans backfill. Contrairement à markPenMastery(),
+// écrit directement dans S.penMastery : pas de floatTxt/log Discord pour chaque objet (spam au
+// premier chargement), un simple rattrapage silencieux de l'état déjà acquis.
+function migratePenMasteryV308() {
+  const maxLvl = ENH_NAMES.length - 1;
+  const check = it => {
+    if (!it || !it.optimizable || (it.enhLv||0) < maxLvl) return;
+    S.penMastery[it.name] = true;
+  };
+  Object.values(EQUIP).forEach(check);
+  INV.forEach(check);
+  COMPENDIUM_BAG.forEach(check);
+}

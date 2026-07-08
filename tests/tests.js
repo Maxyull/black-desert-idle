@@ -737,6 +737,78 @@
     assert('Le rendu en cast diffère du repos sur au moins 800 pixels (visible, pas juste techniquement présent)',
       diffCount >= 800, `diffCount=${diffCount}`);
   }
+  // "créer des effet de plus en plus visuel pour les sors avec des ornement... bleu = 5 ornement
+  // vert = 4 et le reste peu de visuel moins flashy... bleu = tres flashy tres visuel" (2026-07-08)
+  // -- verrouille l'ORDRE de flashiness entre paliers (isolé par diff avec/sans ornements, pas une
+  // simple luminosité de sprite qui serait faussée par la couleur de robe elle-même).
+  function testOrnamentFlashinessIncreasesByTier() {
+    if (typeof witchBodyOn === 'undefined' || typeof ORNAMENT_TIER === 'undefined' || typeof document === 'undefined') return;
+    const canvas = document.createElement('canvas'); canvas.width = 100; canvas.height = 100;
+    const g = canvas.getContext('2d'); if (!g) return;
+    const savedEquip = { ...EQUIP };
+    function renderDiff(grade) {
+      const tier = GEAR_TIERS.find(t => t.grade === grade);
+      EQUIP.armor = { color: tier.color, kind:'gear' };
+      function render() {
+        g.clearRect(0,0,100,100);
+        g.save(); g.translate(50,70);
+        witchBodyOn(g, 0.3, SKILLS.find(s=>s.id==='meteor'));
+        g.restore();
+        return g.getImageData(0,0,100,100).data;
+      }
+      const withOrn = render();
+      const savedN = ORNAMENT_TIER[grade].n;
+      ORNAMENT_TIER[grade].n = 0;
+      const withoutOrn = render();
+      ORNAMENT_TIER[grade].n = savedN;
+      let diffCount = 0;
+      for (let i=0;i<withOrn.length;i+=4) {
+        const d = Math.abs(withOrn[i]-withoutOrn[i])+Math.abs(withOrn[i+1]-withoutOrn[i+1])+Math.abs(withOrn[i+2]-withoutOrn[i+2]);
+        if (d>0) diffCount++;
+      }
+      return diffCount;
+    }
+    const grey = renderDiff('grey'), white = renderDiff('white'), green = renderDiff('green'), blue = renderDiff('blue');
+    Object.keys(EQUIP).forEach(k => EQUIP[k] = savedEquip[k]);
+    assert('Ornements : gris <= blanc (progression douce au bas de l\'échelle)', grey <= white, `grey=${grey} white=${white}`);
+    assert('Ornements : blanc < vert (net saut de flashiness)', white < green, `white=${white} green=${green}`);
+    assert('Ornements : vert < bleu (bleu le plus flashy de tous)', green < blue, `green=${green} blue=${blue}`);
+  }
+  // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
+  // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
+  // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
+  function testMigratePenMasteryV308MarksExistingPenItems() {
+    if (typeof migratePenMasteryV308 !== 'function') return;
+    const savedPenMastery = { ...S.penMastery };
+    const savedHelmet = EQUIP.helmet;
+    S.penMastery = {};
+    const maxLvl = ENH_NAMES.length - 1;
+    EQUIP.helmet = { name:'Test Helmet PEN Migration', kind:'gear', optimizable:true, enhLv:maxLvl };
+    migratePenMasteryV308();
+    assert('migratePenMasteryV308 marque un objet équipé déjà à PEN', S.penMastery['Test Helmet PEN Migration'] === true);
+    EQUIP.helmet = savedHelmet;
+    S.penMastery = savedPenMastery;
+  }
+  // "Classement public : meilleur uniquement pas en temps reel donc oublie la synchro, on veut
+  // juste le meilleur" (2026-07-08) -- Gearscore/PA/PD ACTUELS peuvent redescendre (rééquipement,
+  // outil admin de test...) : verrouille que les records bestGearscore/bestAp/bestDp ne redescendent
+  // JAMAIS même si l'équipement actuel régresse ensuite (même principe que bestKpm/bestSilverPerHour).
+  function testBestGearscoreApDpNeverDecrease() {
+    const savedEquip = { ...EQUIP };
+    const before = { bestGearscore: S.bestGearscore, bestAp: S.bestAp, bestDp: S.bestDp };
+    GEAR_SLOTS.forEach(slot => { EQUIP[slot] = { kind:'gear', ap:200, dp:200, hp:0, dodge:0, optimizable:true, enhLv:0 }; });
+    hud();
+    const highGearscore = S.bestGearscore, highAp = S.bestAp, highDp = S.bestDp;
+    assert('Un gros équipement fait bien monter les records', highGearscore > 0 && highAp > 0 && highDp > 0);
+    GEAR_SLOTS.forEach(slot => { EQUIP[slot] = null; });
+    hud();
+    assert('Déséquiper complètement ne fait PAS redescendre bestGearscore', S.bestGearscore === highGearscore, `avant=${highGearscore} apres=${S.bestGearscore}`);
+    assert('Déséquiper complètement ne fait PAS redescendre bestAp', S.bestAp === highAp, `avant=${highAp} apres=${S.bestAp}`);
+    assert('Déséquiper complètement ne fait PAS redescendre bestDp', S.bestDp === highDp, `avant=${highDp} apres=${S.bestDp}`);
+    Object.keys(EQUIP).forEach(k => EQUIP[k] = savedEquip[k]);
+    S.bestGearscore = before.bestGearscore; S.bestAp = before.bestAp; S.bestDp = before.bestDp;
+    hud();
+  }
   // "1M5/h alors que c'est faux" + "le classement... toujours le meilleur affiché" (2026-07-18) --
   // bestSilverPerHour ne doit JAMAIS redescendre (comme bestKpm), et seulement après 2 min de
   // session (jamais sur un pic de tout début de partie) -- garde-fou de régression contre un
@@ -1714,6 +1786,9 @@
     testSpawnCastOriginVfxNeverThrows();
     testWitchBodyOnAcceptsSkillObjectWithoutThrowing();
     testCastVisualDifferenceIsClearlyVisible();
+    testOrnamentFlashinessIncreasesByTier();
+    testMigratePenMasteryV308MarksExistingPenItems();
+    testBestGearscoreApDpNeverDecrease();
     testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes();
     testShRateDisplaysPerMinuteNotPerHour();
     testAdminEquipFullTierSetCoversAllFourTiers();

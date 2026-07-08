@@ -632,6 +632,8 @@ const S = {
   bestKpm: 0, 
   
   bestSilverPerHour: 0,
+  
+  bestGearscore: 0, bestAp: 0, bestDp: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
@@ -1606,6 +1608,11 @@ function refreshStatsOnly() {
   $('shRate').textContent = mins>.1
     ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
     : '— silver/min';
+  
+  const gsNow = GS(), apNow = apEff(), dpNow = totalDP();
+  if (gsNow > (S.bestGearscore||0)) S.bestGearscore = gsNow;
+  if (apNow > (S.bestAp||0)) S.bestAp = apNow;
+  if (dpNow > (S.bestDp||0)) S.bestDp = dpNow;
   const zb = $('zoneBadge');
   if (atVelia) {
     zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
@@ -1815,6 +1822,7 @@ function applySaveState(data) {
   if (!S.migratedJewelryMatNameV239) { migrateJewelryMatNameV239(); S.migratedJewelryMatNameV239 = true; }
   if (!S.migratedGearRescaleV243) { migrateGearRescaleV243(); S.migratedGearRescaleV243 = true; }
   if (!S.migratedGearRescaleV245) { migrateGearRescaleV245(); S.migratedGearRescaleV245 = true; }
+  if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); 
   S.xpNext = xpNeededFor(S.lvl); 
@@ -1885,6 +1893,13 @@ const CHAR_TIER_PALETTE = {
   white: { robe:'#c3c9cc', hat:'#9aa0a3', hatDark:'#7a8083', horn:false, cape:false, trim:'#e8e8e8' },
   green: { robe:'#3d4a3a', hat:'#26301f', hatDark:'#182015', horn:true,  cape:false, trim:'#7aa35e' },
   blue:  { robe:'#20303c', hat:'#16232b', hatDark:'#0a1216', horn:true,  cape:true,  trim:'#6ea3c9' },
+};
+
+const ORNAMENT_TIER = {
+  grey:  { n:1, flash:.28 },
+  white: { n:2, flash:.45 },
+  green: { n:4, flash:.72 },
+  blue:  { n:5, flash:1.0 },
 };
 
 function gearVisualTier() {
@@ -1972,6 +1987,24 @@ function witchBodyOn(g, t, castingSkill) {
       g.fillStyle = hexToRgba(pal.trim,.9);
       g.beginPath(); g.arc(ox, oy-20, r, 0, 7); g.fill();
     });
+  }
+  
+  const orn = ORNAMENT_TIER[grade];
+  const ornColor = casting ? castColor : pal.trim;
+  const ornOrbitR = 19 + (casting ? 3 : 0);
+  for (let i=0;i<orn.n;i++) {
+    const ang = t*(1.3+jitterMult*.25) + i*(Math.PI*2/orn.n);
+    const ox = Math.cos(ang)*ornOrbitR, oy = Math.sin(ang)*ornOrbitR*.5 - 21;
+    const pulse = .5+.5*Math.sin(t*(casting?9*jitterMult:2.2)+i*1.7);
+    const size = (1+pulse*1.3) * orn.flash * (casting?1.35:1);
+    const alpha = Math.min(1, (.3+pulse*.4) * orn.flash * (casting?1.3:.8));
+    g.fillStyle = hexToRgba(ornColor, alpha);
+    g.beginPath(); g.arc(ox, oy, size, 0, 7); g.fill();
+    
+    if (casting && orn.flash >= .7) {
+      g.fillStyle = hexToRgba(ornColor, alpha*.3);
+      g.beginPath(); g.arc(ox, oy, size*2.2, 0, 7); g.fill();
+    }
   }
 }
 function witchBody(t,castingSkill) { witchBodyOn(ctx, t, castingSkill); }
@@ -4907,7 +4940,7 @@ function updateChestZoomBtn() {
   const btn = $('btnChestZoom'); if (!btn) return;
   btn.textContent = chestZoomed
     ? (LANG==='fr' ? '🔎 Réduire (8/ligne)' : '🔎 Shrink (8/row)')
-    : (LANG==='fr' ? '🔍 Agrandir (4/ligne)' : '🔍 Enlarge (4/row)');
+    : (LANG==='fr' ? '🔍 Agrandir (5/ligne)' : '🔍 Enlarge (5/row)');
 }
 function renderVeliaChest() {
   const grid = $('veliaChestGrid'); if (!grid) return;
@@ -6065,6 +6098,17 @@ function migrateJewelryMatNameV239() {
   Object.values(EQUIP).forEach(fix);
   INV.forEach(fix);
   COMPENDIUM_BAG.forEach(fix);
+}
+
+function migratePenMasteryV308() {
+  const maxLvl = ENH_NAMES.length - 1;
+  const check = it => {
+    if (!it || !it.optimizable || (it.enhLv||0) < maxLvl) return;
+    S.penMastery[it.name] = true;
+  };
+  Object.values(EQUIP).forEach(check);
+  INV.forEach(check);
+  COMPENDIUM_BAG.forEach(check);
 }
 
 // ==== src/admin/enh-debug-tools.js ====
@@ -7426,14 +7470,15 @@ async function syncPlayerStats() {
   const best = bestFarmedItem();
   
   const treasureCount = treasureTotal(S);
+  
   try {
     await sb.from('player_stats').upsert({
       user_id: currentUser.id,
       display_name: myPseudo || (currentUser.email||'?').split('@')[0],
-      silver: Math.round(S.silver),
-      gearscore: Math.round(GS()),
-      ap: Math.round(apEff()*10)/10,
-      dp: Math.round(totalDP()*10)/10,
+      silver: Math.round(S.silverEarned||0),
+      gearscore: Math.round(S.bestGearscore||0),
+      ap: Math.round((S.bestAp||0)*10)/10,
+      dp: Math.round((S.bestDp||0)*10)/10,
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
@@ -7449,16 +7494,11 @@ async function syncPlayerStats() {
   } catch(e) {  }
 }
 
-const STALE_MS = 10 * 60 * 1000; 
-function isStale(r) { return !r.updated_at || (Date.now() - new Date(r.updated_at).getTime()) > STALE_MS; }
-function staleTag(r) {
-  return isStale(r) ? `<span class="staleTag" title="${LANG==='fr'?'Peut-être obsolète — pas de synchro récente (équipement possiblement changé depuis)':'Possibly outdated — no recent sync (gear may have changed since)'}">⚠️</span>` : '';
-}
 function rankRows(rows, valueFn, fmtFn) {
   const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
   return sorted.map((r,i) => `
     <tr class="${r.user_id===currentUser?.id ? 'isYou' : ''}">
-      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}</span> ${staleTag(r)}</td><td>${fmtFn(r)}</td>
+      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}</span></td><td>${fmtFn(r)}</td>
     </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 }
 
@@ -7615,9 +7655,9 @@ async function openLeaderboard() {
   const rows = data || [];
 
   const cats = [
-    { id:'silver', icon:'💰', label:{fr:'Silver',en:'Silver'}, col:{fr:'Silver',en:'Silver'},
+    { id:'silver', icon:'💰', label:{fr:'Silver',en:'Silver'}, col:{fr:'Silver (total à vie)',en:'Silver (lifetime total)'},
       rows: rankRows(rows, r => Number(r.silver||0), r => fmt(r.silver||0)) },
-    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'GS (PA/PD)',en:'GS (AP/DP)'},
+    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'Record GS (PA/PD)',en:'Record GS (AP/DP)'},
       rows: rankRows(rows, r => Number(r.gearscore||0), r => `${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})`) },
     { id:'zone', icon:'🗺️', label:{fr:'Meilleure zone',en:'Best zone'}, col:{fr:'Zone',en:'Zone'},
       rows: rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—')) },
@@ -7636,7 +7676,7 @@ async function openLeaderboard() {
       <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${c.col[LANG]}</th></tr></thead><tbody>${c.rows}</tbody></table>
     </div>`).join('');
   const html = `<div class="catTabs">${tabsHtml}</div>${panesHtml}` +
-    `<div class="admSummary">${LANG==='fr'?'⚠️ = pas de synchro depuis plus de 10 min, ces stats peuvent être obsolètes (équipement changé depuis)':'⚠️ = no sync for over 10 min, these stats may be outdated (gear may have changed since)'}</div>`;
+    `<div class="admSummary">${LANG==='fr'?'Classement des records personnels À VIE — jamais un instantané, ces valeurs ne redescendent jamais.':'Lifetime personal record leaderboard — never a live snapshot, these values never go down.'}</div>`;
   openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
   wireCatTabs();
   wirePlayerNameLinks();

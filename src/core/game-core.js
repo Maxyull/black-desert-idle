@@ -128,6 +128,13 @@ const S = {
   // envoyée au classement (voir syncPlayerStats, game-supabase.js) -- un record ne fait que monter,
   // aucune synchronisation temps réel n'est donc nécessaire côté classement.
   bestSilverPerHour: 0,
+  // records perso À VIE de Gearscore/PA/PD (2026-07-08, demande explicite : "Classement public :
+  // meilleur uniquement pas en temps reel donc oublie la synchro, on veut juste le meilleur") --
+  // GS()/apEff()/totalDP() reflètent l'équipement ACTUELLEMENT porté, qui peut redescendre (test
+  // d'un stuff inférieur, outil admin, désenchantement...) : le classement doit montrer le pic
+  // jamais atteint, pas un instantané qui pourrait fluctuer d'une synchro à l'autre. Voir hud()
+  // pour la mise à jour et syncPlayerStats() (game-supabase.js) pour l'envoi au classement.
+  bestGearscore: 0, bestAp: 0, bestDp: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
@@ -1447,6 +1454,14 @@ function refreshStatsOnly() {
   $('shRate').textContent = mins>.1
     ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
     : '— silver/min';
+  // records Gearscore/PA/PD à vie (voir S.bestGearscore ci-dessus) -- simple max courant, pas
+  // besoin du garde-fou "2 minutes" de bestKpm/bestSilverPerHour : ce ne sont pas des taux
+  // bruités sur une fenêtre courte, juste l'état d'équipement actuel, jamais faussé par un petit
+  // échantillon de temps.
+  const gsNow = GS(), apNow = apEff(), dpNow = totalDP();
+  if (gsNow > (S.bestGearscore||0)) S.bestGearscore = gsNow;
+  if (apNow > (S.bestAp||0)) S.bestAp = apNow;
+  if (dpNow > (S.bestDp||0)) S.bestDp = dpNow;
   const zb = $('zoneBadge');
   if (atVelia) {
     zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
@@ -1728,6 +1743,7 @@ function applySaveState(data) {
   if (!S.migratedJewelryMatNameV239) { migrateJewelryMatNameV239(); S.migratedJewelryMatNameV239 = true; }
   if (!S.migratedGearRescaleV243) { migrateGearRescaleV243(); S.migratedGearRescaleV243 = true; }
   if (!S.migratedGearRescaleV245) { migrateGearRescaleV245(); S.migratedGearRescaleV245 = true; }
+  if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO

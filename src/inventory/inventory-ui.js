@@ -577,15 +577,16 @@ function veliaChestStore(invIndex, n) {
   refreshInvUI(); renderVeliaChest();
   return true;
 }
-// bascule 4/8 cases par ligne (2026-07-18, demande explicite : "bouton qui agrandi le coffre 4 ou
-// 8 par ligne") -- préférence d'affichage pure, pas de persistance nécessaire (retombe sur la vue
-// dense par défaut à chaque rechargement, comme les autres onglets/filtres du jeu)
+// bascule 5/8 cases par ligne (2026-07-18, "bouton qui agrandi le coffre 4 ou 8 par ligne", passé
+// à 5/ligne le 2026-07-08, demande explicite : "Met 5 par ligne dans le coffre 5 ou 8") --
+// préférence d'affichage pure, pas de persistance nécessaire (retombe sur la vue dense par défaut
+// à chaque rechargement, comme les autres onglets/filtres du jeu)
 let chestZoomed = false;
 function updateChestZoomBtn() {
   const btn = $('btnChestZoom'); if (!btn) return;
   btn.textContent = chestZoomed
     ? (LANG==='fr' ? '🔎 Réduire (8/ligne)' : '🔎 Shrink (8/row)')
-    : (LANG==='fr' ? '🔍 Agrandir (4/ligne)' : '🔍 Enlarge (4/row)');
+    : (LANG==='fr' ? '🔍 Agrandir (5/ligne)' : '🔍 Enlarge (5/row)');
 }
 function renderVeliaChest() {
   const grid = $('veliaChestGrid'); if (!grid) return;

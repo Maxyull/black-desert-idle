@@ -377,14 +377,22 @@ async function syncPlayerStats() {
   const best = bestFarmedItem();
   // total de morceaux du "Trésor de Velia" ramassés À VIE — sert au classement dédié "🗺️ Trésors"
   const treasureCount = treasureTotal(S);
+  // colonnes silver/gearscore/ap/dp : envoient désormais des valeurs À VIE (S.silverEarned déjà
+  // monotone, toutes sources cumulées ; S.bestGearscore/bestAp/bestDp voir hud() dans
+  // core/game-core.js), pas l'état COURANT (2026-07-08, demande explicite : "Classement public :
+  // meilleur uniquement pas en temps reel donc oublie la synchro, on veut juste le meilleur") --
+  // S.silver (solde dépensable) redescend quand on dépense, GS()/apEff()/totalDP() redescendent si
+  // on rééquipe un stuff inférieur (test, outil admin...) : plus aucune de ces 4 colonnes ne doit
+  // pouvoir régresser d'une synchro à l'autre, même principe que best_kpm/best_zone_index déjà en
+  // place. Pas besoin de sync "temps réel" pour un record qui ne fait que monter.
   try {
     await sb.from('player_stats').upsert({
       user_id: currentUser.id,
       display_name: myPseudo || (currentUser.email||'?').split('@')[0],
-      silver: Math.round(S.silver),
-      gearscore: Math.round(GS()),
-      ap: Math.round(apEff()*10)/10,
-      dp: Math.round(totalDP()*10)/10,
+      silver: Math.round(S.silverEarned||0),
+      gearscore: Math.round(S.bestGearscore||0),
+      ap: Math.round((S.bestAp||0)*10)/10,
+      dp: Math.round((S.bestDp||0)*10)/10,
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
@@ -403,16 +411,18 @@ async function syncPlayerStats() {
 // Panneau Admin (reset demo/quetes/comptes, screenshot joueur, analytics) -> voir admin-panel.js (charge APRES ce fichier, voir index.html)
 
 // ---------- classement public (silver, gearscore, meilleure zone, silver/h, meilleur objet) ----------
-const STALE_MS = 10 * 60 * 1000; // au-delà de 10 min sans synchro, le stuff du joueur a pu changer entre-temps
-function isStale(r) { return !r.updated_at || (Date.now() - new Date(r.updated_at).getTime()) > STALE_MS; }
-function staleTag(r) {
-  return isStale(r) ? `<span class="staleTag" title="${LANG==='fr'?'Peut-être obsolète — pas de synchro récente (équipement possiblement changé depuis)':'Possibly outdated — no recent sync (gear may have changed since)'}">⚠️</span>` : '';
-}
+// badge "⚠️ possiblement obsolète" retiré (2026-07-08, demande explicite : "Classement public :
+// meilleur uniquement pas en temps reel donc oublie la synchro, on veut juste le meilleur") --
+// n'avait de sens QUE quand les colonnes reflétaient un état COURANT (solde/équipement pouvant
+// changer depuis la dernière synchro). Toutes les colonnes envoyées par syncPlayerStats sont
+// désormais des records À VIE qui ne redescendent jamais (voir le commentaire au-dessus de
+// syncPlayerStats) : une ligne n'est donc plus jamais "obsolète", juste éventuellement en retard
+// d'un record pas encore synchronisé, ce qui ne justifie plus un avertissement.
 function rankRows(rows, valueFn, fmtFn) {
   const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
   return sorted.map((r,i) => `
     <tr class="${r.user_id===currentUser?.id ? 'isYou' : ''}">
-      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}</span> ${staleTag(r)}</td><td>${fmtFn(r)}</td>
+      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}</span></td><td>${fmtFn(r)}</td>
     </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
 }
 // clic sur un pseudo du classement : ouvre son stuff en lecture seule (demande explicite — voir
@@ -576,9 +586,9 @@ async function openLeaderboard() {
   const rows = data || [];
 
   const cats = [
-    { id:'silver', icon:'💰', label:{fr:'Silver',en:'Silver'}, col:{fr:'Silver',en:'Silver'},
+    { id:'silver', icon:'💰', label:{fr:'Silver',en:'Silver'}, col:{fr:'Silver (total à vie)',en:'Silver (lifetime total)'},
       rows: rankRows(rows, r => Number(r.silver||0), r => fmt(r.silver||0)) },
-    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'GS (PA/PD)',en:'GS (AP/DP)'},
+    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'Record GS (PA/PD)',en:'Record GS (AP/DP)'},
       rows: rankRows(rows, r => Number(r.gearscore||0), r => `${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})`) },
     { id:'zone', icon:'🗺️', label:{fr:'Meilleure zone',en:'Best zone'}, col:{fr:'Zone',en:'Zone'},
       rows: rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—')) },
@@ -597,7 +607,7 @@ async function openLeaderboard() {
       <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${c.col[LANG]}</th></tr></thead><tbody>${c.rows}</tbody></table>
     </div>`).join('');
   const html = `<div class="catTabs">${tabsHtml}</div>${panesHtml}` +
-    `<div class="admSummary">${LANG==='fr'?'⚠️ = pas de synchro depuis plus de 10 min, ces stats peuvent être obsolètes (équipement changé depuis)':'⚠️ = no sync for over 10 min, these stats may be outdated (gear may have changed since)'}</div>`;
+    `<div class="admSummary">${LANG==='fr'?'Classement des records personnels À VIE — jamais un instantané, ces valeurs ne redescendent jamais.':'Lifetime personal record leaderboard — never a live snapshot, these values never go down.'}</div>`;
   openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
   wireCatTabs();
   wirePlayerNameLinks();
