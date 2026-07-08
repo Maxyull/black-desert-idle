@@ -8,8 +8,12 @@ const BOSS_ROSTER = {
     name:{fr:'Grand Seigneur de guerre de la corruption',en:'Great Warlord of Corruption'},
     short:{fr:'Seigneur de guerre',en:'Warlord'}, icon:'👹', color:'#7a2d33',
     hp: 400000,          // calibré pour ~5 min à PA "adaptée" (~250), clampé à [2,7] min
-    reward: 250000,      // silver de victoire
+    reward: 250000,      // silver de victoire (récompenses réelles désormais fixes par rang, voir KZARKA_REWARD_TIERS)
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[8,20],
+    // Pierre de sang de Kzarka (2026-07-16, demande explicite) : 1% de chance à la victoire — même
+    // mécanique de roue que Coeur de Vell (voir endBossFight/renderBossRewardWheel), entièrement
+    // générique via b.rareLoot, aucun code supplémentaire nécessaire pour la roulette.
+    rareLoot: { name:'Pierre de sang de Kzarka', icon:'🩸', color:'#c0524a', ch:0.01 },
   },
   // Vell : grand poisson/serpent des mers, boss hebdomadaire (bien plus rare que Kzarka dans le
   // vrai jeu) — silhouette originale provisoire en attendant la photo de référence promise par
@@ -25,6 +29,14 @@ const BOSS_ROSTER = {
     // en fin de combat (voir endBossFight/renderBossRewardWheel), qu'on l'obtienne ou non.
     rareLoot: { name:'Coeur de Vell', icon:ICO_COEUR_VELL, color:'#5ec9e8', ch:0.05 },
   },
+};
+// récompenses FIXES par rang de contribution, réservées à Kzarka (2026-07-16, demande explicite,
+// remplacent pour ce boss précis l'ancien système générique basé sur la zone de progression du
+// joueur, voir endBossFight — Vell garde ce système générique, aucune donnée fournie pour lui ici).
+const KZARKA_REWARD_TIERS = {
+  1: { caphras:[50,100], frag:[20,30], silver:1000000 },
+  2: { caphras:[35,75],  frag:[15,25], silver:100000 },
+  3: { caphras:[15,50],  frag:[10,20], silver:10000 },
 };
 // horaires hebdomadaires (heure locale, déjà "-15 min") — day: 0=dimanche..6=samedi, ou 'daily'
 // (Kzarka apparaît plusieurs fois par jour dans le vrai jeu ; sélection resserrée ici).
@@ -532,21 +544,37 @@ function bossRewardSelectorHtml() {
 // "podium world boss en dessous des horaire de boss") -- vivait avant entre le countdown (nextHtml)
 // et le calendrier hebdomadaire ; désormais après le calendrier complet (voir renderBossLobbyHtml).
 function bossRewardRulesHtml() {
-  const dZi = bestDifficileZoneIdx(), dgZi = nextDangereuseZoneIdx();
-  const dName = dZi != null ? tr(ZONES[dZi].name) : '—';
-  const dgName = dgZi != null ? tr(ZONES[dgZi].name) : '—';
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
     ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${LANG==='fr'?'de chance':'chance'} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>`
     : '';
-  return `<div class="bossRewardRules">
-    ${bossRewardSelectorHtml()}
-    <div class="bossRewardBase">🎁 ${LANG==='fr'?'Pour tous':'For everyone'} : ${LANG==='fr'?"pierre d'optimisation de ta meilleure zone difficile":'enhancement stone from your best hard zone'} (<b>${dName}</b>)</div>
-    <div class="bossPodium">
+  // Kzarka (2026-07-16, demande explicite) : podium à récompenses FIXES (silver + Caphras/Fragment
+  // de mémoire), voir KZARKA_REWARD_TIERS/endBossFight -- Vell garde le podium générique basé sur
+  // la zone de progression du joueur (bestDifficileZoneIdx/nextDangereuseZoneIdx).
+  let baseHtml, podiumHtml;
+  if (bossRewardPreviewBoss === 'kzarka') {
+    const t1 = KZARKA_REWARD_TIERS[1], t2 = KZARKA_REWARD_TIERS[2], t3 = KZARKA_REWARD_TIERS[3];
+    baseHtml = '';
+    podiumHtml = `<div class="bossPodium">
+      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">+${fmt(t2.silver)} 🪙<br>${t2.caphras[0]}-${t2.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t2.frag[0]}-${t2.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
+      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">+${fmt(t1.silver)} 🪙<br>${t1.caphras[0]}-${t1.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t1.frag[0]}-${t1.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
+      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">+${fmt(t3.silver)} 🪙<br>${t3.caphras[0]}-${t3.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t3.frag[0]}-${t3.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
+    </div>`;
+  } else {
+    const dZi = bestDifficileZoneIdx(), dgZi = nextDangereuseZoneIdx();
+    const dName = dZi != null ? tr(ZONES[dZi].name) : '—';
+    const dgName = dgZi != null ? tr(ZONES[dgZi].name) : '—';
+    baseHtml = `<div class="bossRewardBase">🎁 ${LANG==='fr'?'Pour tous':'For everyone'} : ${LANG==='fr'?"pierre d'optimisation de ta meilleure zone difficile":'enhancement stone from your best hard zone'} (<b>${dName}</b>)</div>`;
+    podiumHtml = `<div class="bossPodium">
       <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">${LANG==='fr'?'+1 bijou de ta zone difficile':'+1 jewel from your hard zone'} (<b>${dName}</b>)</div></div>
       <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">${LANG==='fr'?'+1 bijou de la prochaine zone dangereuse':'+1 jewel from the next dangerous zone'} (<b>${dgName}</b>)</div></div>
       <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">${LANG==='fr'?'20% bijou dangereuse + 30% bijou difficile':'20% dangerous jewel + 30% hard jewel'}</div></div>
-    </div>
+    </div>`;
+  }
+  return `<div class="bossRewardRules">
+    ${bossRewardSelectorHtml()}
+    ${baseHtml}
+    ${podiumHtml}
     ${rareLine}
   </div>`;
 }
@@ -556,7 +584,10 @@ function bossRewardRulesHtml() {
 function renderBossRewardWheel(rareLoot, won) {
   const N = 12; // segments (1 rare + 11 "rien") — purement visuel, ne reflète pas le vrai % (5%)
   const segDeg = 360/N;
-  const commonIcon = '🌊';
+  // décoi neutre (2026-07-16) : "🌊" était codé en dur pour Vell (thème marin) -- cette même roue
+  // sert désormais aussi à Kzarka (Pierre de sang), un décoi thématique unique n'a plus de sens
+  // pour les 2 -- remplacé par un symbole neutre, indépendant du boss.
+  const commonIcon = '⚫';
   let iconsHtml = '';
   for (let i = 0; i < N; i++) {
     const centerDeg = i*segDeg + segDeg/2;
@@ -633,50 +664,67 @@ async function endBossFight(win) {
         ? 'Récompense déjà réclamée pour ce boss — chaque victoire ne peut être payée qu\'une seule fois.'
         : 'Reward already claimed for this boss — each victory can only be paid out once.'}</div>`;
     } else {
-      // Le loot des World Boss dépend de la MEILLEURE zone découverte, mais seulement si le joueur
-      // n'est pas mort depuis au moins 3 minutes ("certifié sans mort") — demande explicite du
-      // 2026-07-08. Sans ce certificat, la récompense reste la valeur de base (aucun bonus de zone).
-      const deathFreeMs = Date.now() - (S.lastDeathAt || 0);
-      const deathFreeOk = deathFreeMs >= 3*60*1000;
-      const zoneMult = deathFreeOk ? 1 + (S.maxZoneIdx/(ZONES.length-1))*1.5 : 1;
-      const reward = Math.round(b.reward * mult * zoneMult);
-      addSilver(reward, 'boss', b.name.fr);
       // combat SOLO (pas de classement possible, instance perso) : traité comme rang #1, seul
       // participant -- il n'y a personne avec qui "partager" le meilleur lot (2026-07-15)
       if (!bossState.shared) rank = 1;
-      // récompenses par zone de progression (2026-07-15, demande explicite : "les recompense sont
-      // en fonction de ta meilleure zone difficile... + 1 bijou de la prochaine zone dangereuse si
-      // tu es premier...") -- remplace l'ancien matériau fixe du roster (matKey/matQty) par une
-      // pierre d'optimisation de la meilleure zone difficile (garantie pour tous) + bijoux bonus
-      // selon le rang, voir bossZoneMaterialItem/bossZoneJackpotItem/bestDifficileZoneIdx ci-dessus.
-      const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
-      const zoneRewardLines = [];
-      if (difficileZi != null) {
-        const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
-        const matItem = bossZoneMaterialItem(difficileZi, qty);
-        invAdd(matItem);
-        zoneRewardLines.push(`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>`);
-      }
-      const jewelZonesToGrant = [];
-      if (rank === 1 && dangereuseZi != null) jewelZonesToGrant.push(dangereuseZi);
-      else if (rank === 2 && difficileZi != null) jewelZonesToGrant.push(difficileZi);
-      else if (rank === 3) {
-        if (dangereuseZi != null && Math.random() < 0.20) jewelZonesToGrant.push(dangereuseZi);
-        if (difficileZi != null && Math.random() < 0.30) jewelZonesToGrant.push(difficileZi);
-      }
-      for (const zi of jewelZonesToGrant) {
-        const jItem = bossZoneJackpotItem(zi);
-        if (invAdd(jItem)) {
-          trackLoot(jItem.name);
-          zoneRewardLines.push(`+💎 ${tr(jItem.name)} <span class="admHint">(${tr(ZONES[zi].name)})</span>`);
-          logToDiscord('💎 Bijou de World Boss', `**${myPseudo||'Joueur'}** obtient ${jItem.name} (rang #${rank}) sur ${b.name.fr}`, 0xb48ce8);
+      let reward;
+      // Kzarka (2026-07-16, demande explicite) : récompenses FIXES par rang de contribution
+      // (silver + quantités aléatoires de Pierre de Caphras/Fragment de mémoire, voir
+      // KZARKA_REWARD_TIERS), remplace pour CE boss précis l'ancien système générique basé sur la
+      // zone de progression du joueur ci-dessous (conservé tel quel pour Vell/futurs boss).
+      if (bossState.bossId === 'kzarka' && rank) {
+        const tier = KZARKA_REWARD_TIERS[Math.min(rank, 3)];
+        const caphrasQty = Math.round(tier.caphras[0] + Math.random()*(tier.caphras[1]-tier.caphras[0]));
+        const fragQty = Math.round(tier.frag[0] + Math.random()*(tier.frag[1]-tier.frag[0]));
+        reward = tier.silver;
+        addSilver(reward, 'boss', b.name.fr);
+        invAdd({ key:'mat_'+CAPHRAS_NAME, name:CAPHRAS_NAME, kind:'material', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', qty:caphrasQty, stackable:true, weight:0.1, val:120 });
+        invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
+        const rankHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
+        rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${caphrasQty} × ${tr(CAPHRAS_NAME)}<br>+${fragQty} × ${tr('Fragment de mémoire')}</div>`;
+      } else {
+        // Le loot des World Boss dépend de la MEILLEURE zone découverte, mais seulement si le joueur
+        // n'est pas mort depuis au moins 3 minutes ("certifié sans mort") — demande explicite du
+        // 2026-07-08. Sans ce certificat, la récompense reste la valeur de base (aucun bonus de zone).
+        const deathFreeMs = Date.now() - (S.lastDeathAt || 0);
+        const deathFreeOk = deathFreeMs >= 3*60*1000;
+        const zoneMult = deathFreeOk ? 1 + (S.maxZoneIdx/(ZONES.length-1))*1.5 : 1;
+        reward = Math.round(b.reward * mult * zoneMult);
+        addSilver(reward, 'boss', b.name.fr);
+        // récompenses par zone de progression (2026-07-15, demande explicite : "les recompense sont
+        // en fonction de ta meilleure zone difficile... + 1 bijou de la prochaine zone dangereuse si
+        // tu es premier...") -- remplace l'ancien matériau fixe du roster (matKey/matQty) par une
+        // pierre d'optimisation de la meilleure zone difficile (garantie pour tous) + bijoux bonus
+        // selon le rang, voir bossZoneMaterialItem/bossZoneJackpotItem/bestDifficileZoneIdx ci-dessus.
+        const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
+        const zoneRewardLines = [];
+        if (difficileZi != null) {
+          const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
+          const matItem = bossZoneMaterialItem(difficileZi, qty);
+          invAdd(matItem);
+          zoneRewardLines.push(`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>`);
         }
+        const jewelZonesToGrant = [];
+        if (rank === 1 && dangereuseZi != null) jewelZonesToGrant.push(dangereuseZi);
+        else if (rank === 2 && difficileZi != null) jewelZonesToGrant.push(difficileZi);
+        else if (rank === 3) {
+          if (dangereuseZi != null && Math.random() < 0.20) jewelZonesToGrant.push(dangereuseZi);
+          if (difficileZi != null && Math.random() < 0.30) jewelZonesToGrant.push(difficileZi);
+        }
+        for (const zi of jewelZonesToGrant) {
+          const jItem = bossZoneJackpotItem(zi);
+          if (invAdd(jItem)) {
+            trackLoot(jItem.name);
+            zoneRewardLines.push(`+💎 ${tr(jItem.name)} <span class="admHint">(${tr(ZONES[zi].name)})</span>`);
+            logToDiscord('💎 Bijou de World Boss', `**${myPseudo||'Joueur'}** obtient ${jItem.name} (rang #${rank}) sur ${b.name.fr}`, 0xb48ce8);
+          }
+        }
+        const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
+        const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
+          ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
+          : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
+        rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>${zoneRewardLines.join('<br>')}</div>` + zoneHtml;
       }
-      const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
-      const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
-        ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
-        : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
-      rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>${zoneRewardLines.join('<br>')}</div>` + zoneHtml;
       pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
       logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
       if (bossState.bossId) markBossDefeated(bossState.bossId); // Compendium (2026-07-08)

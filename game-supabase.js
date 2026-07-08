@@ -651,9 +651,26 @@ updateNextBossMini();
 setInterval(updateNextBossMini, 1000);
 
 // ---------- présence : compteur "joueurs en ligne" (invités inclus) ----------
+// zone_idx = -1 pour Velia (2026-07-16, demande explicite : liste des joueurs en ville) -- avant,
+// NULL (aucune zone) ; -1 sert de sentinelle dédiée pour get_velia_players() côté serveur, sans
+// jamais entrer en collision avec un vrai index de zone (toujours >= 0).
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
-  try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? null : zoneIdx }); } catch(e) {}
+  try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+}
+// joueurs actuellement en ville (2026-07-16, demande explicite : "on peut voir la liste des
+// joueurs dans la ville a droite a la place du loot ticker") -- pseudos VISIBLES pour cette zone
+// sociale précisément (confirmé explicitement par l'utilisateur), contrairement au reste du jeu
+// (zonePlayerCounts, agrégé seulement). Affiché par updateVeliaPlayersTicker() (game-core.js).
+let veliaPlayers = [];
+async function refreshVeliaPlayers() {
+  if (!sb || !atVelia) return;
+  try {
+    const { data, error } = await sb.rpc('get_velia_players', { p_window_seconds: 90 });
+    if (error || !data) return;
+    veliaPlayers = data;
+    if (typeof updateVeliaPlayersTicker === 'function') updateVeliaPlayersTicker();
+  } catch(e) {}
 }
 // combien de joueurs sont actuellement dans chaque zone de farm (demande explicite du 2026-07-06)
 // -- affiché dans #zoneList (voir buildZoneList dans game-core.js), rafraîchi au même rythme que
@@ -713,6 +730,7 @@ setInterval(refreshOnlineCounter, 20000);
 setInterval(refreshZonePlayerCounts, 20000);
 setInterval(refreshAdminZone, 20000);
 refreshAdminZone();
+setInterval(refreshVeliaPlayers, 20000);
 setInterval(refreshLiveBoss, 20000);
 refreshRegisteredCounter();
 setInterval(refreshRegisteredCounter, 5 * 60000);
@@ -990,6 +1008,8 @@ const I18N = {
   btnPet: { fr:'🐾 Compagnon', en:'🐾 Companion' },
   btnSea: { fr:'🌊 Vie en mer', en:'🌊 Sea life' },
   btnDonation: { fr:'💖 Donation', en:'💖 Donation' },
+  lootPanelTabLoot: { fr:'🎒 Loot', en:'🎒 Loot' },
+  lootPanelTabChest: { fr:'🏛️ Coffre', en:'🏛️ Chest' },
   lblWeight: { fr:'Poids', en:'Weight' },
   cardOpt: { fr:'Optimisation', en:'Enhancement' },
   invModeInv: { fr:'🎒 Inventaire', en:'🎒 Inventory' },

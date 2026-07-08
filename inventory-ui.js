@@ -553,6 +553,81 @@ function renderCompendiumPane() {
   if (empty) empty.style.display = COMPENDIUM_BAG.some(Boolean) ? 'none' : '';
 }
 
+// ---------- coffre de ville (2026-07-16, demande explicite) ----------
+// premier emplacement UTILISABLE libre (les 172 au-delà de VELIA_CHEST_OPEN restent verrouillés,
+// jamais candidats) — même esprit que invAdd() pour le sac principal, mais borné aux 20 cases ouvertes
+function veliaChestFreeSlot() {
+  for (let i = 0; i < VELIA_CHEST_OPEN; i++) if (!VELIA_CHEST[i]) return i;
+  return -1;
+}
+// déplace N unités d'un objet du sac principal vers le coffre — empile d'abord sur une case déjà
+// identique si possible, sinon prend un emplacement libre ; ne retire du sac QUE si la place au
+// coffre est confirmée (jamais de perte si le coffre est plein)
+function veliaChestStore(invIndex, n) {
+  const s = INV[invIndex]; if (!s) return false;
+  const take = Math.min(n, s.qty || 1);
+  if (s.stackable) {
+    const slot = VELIA_CHEST.slice(0, VELIA_CHEST_OPEN).findIndex(c => c && c.key === s.key && c.qty < MAX_STACK);
+    if (slot !== -1) { VELIA_CHEST[slot].qty += take; invRemoveAt(invIndex, take); refreshInvUI(); renderVeliaChest(); return true; }
+  }
+  const free = veliaChestFreeSlot();
+  if (free === -1) return false;
+  VELIA_CHEST[free] = { ...s, qty: take };
+  invRemoveAt(invIndex, take);
+  refreshInvUI(); renderVeliaChest();
+  return true;
+}
+function renderVeliaChest() {
+  const grid = $('veliaChestGrid'); if (!grid) return;
+  grid.innerHTML = '';
+  for (let i = 0; i < INV_SIZE; i++) {
+    const locked = i >= VELIA_CHEST_OPEN;
+    const s = VELIA_CHEST[i];
+    const cell = document.createElement('div');
+    cell.className = 'cell' + (s ? ' has k-'+s.kind : '') + (locked ? ' locked' : '');
+    if (locked) {
+      cell.innerHTML = `<span class="zoneTierLock" style="position:static;background:none;border:none;color:var(--ink-dim);font-size:14px">🔒</span>`;
+      cell.style.opacity = '.4'; cell.style.cursor = 'not-allowed';
+    } else if (s) {
+      cell.innerHTML = `<span style="color:${s.color}">${s.icon || '❔'}</span>` +
+        (s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : '') +
+        `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button>`;
+      if (s.color) { cell.style.borderColor = s.color; cell.style.boxShadow = `inset 0 0 6px ${s.color}55`; }
+      cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
+      cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
+      cell.onmouseleave = () => hideItemTooltip();
+    }
+    grid.appendChild(cell);
+  }
+  grid.querySelectorAll('.compBagReturnBtn').forEach(btn => {
+    btn.onclick = e => {
+      e.stopPropagation();
+      const i = parseInt(btn.dataset.i, 10);
+      const it = VELIA_CHEST[i]; if (!it) return;
+      if (invAdd({ ...it })) { VELIA_CHEST[i] = null; renderVeliaChest(); refreshInvUI(); }
+      else floatTxt(P.x, P.y, 100, LANG==='fr'?'Sac principal plein':'Main bag full', { hurt:true });
+    };
+  });
+  const used = VELIA_CHEST.filter(Boolean).length;
+  const summary = $('veliaChestSummary');
+  if (summary) summary.textContent = `${used} / ${VELIA_CHEST_OPEN}`;
+}
+// bascule Loot/Coffre en haut de la carte "Loot de cette zone" (2026-07-16, demande explicite)
+// classe DÉDIÉE "lootPanelTab" (2026-07-16, bug corrigé) -- réutiliser .invModeTab entrait en
+// collision avec le câblage global de game-supabase.js (".invModeTab" y est aussi utilisé pour
+// Inventaire/Assemblage/Compendium, chargé APRÈS ce fichier -- son .onclick écrasait le nôtre sur
+// CES MÊMES boutons, puisque data-mode y valait undefined pour les nôtres, rien ne basculait jamais)
+document.querySelectorAll('#lootPanelTabs .lootPanelTab').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('#lootPanelTabs .lootPanelTab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const panel = btn.dataset.panel;
+    $('lootPanelLootPane').style.display = panel === 'loot' ? '' : 'none';
+    $('lootPanelChestPane').style.display = panel === 'chest' ? '' : 'none';
+    if (panel === 'chest') renderVeliaChest();
+  };
+});
+
 // double-clic = action rapide selon le type d'objet
 function quickAction(i) {
   const s = INV[i]; if (!s) return;
@@ -638,6 +713,11 @@ function showItemMenu(px, py, data) {
       addPopBtn(pop, L.sell1(fmt(s.val)), () => { if (confirm(L.confirmSell1(fmt(s.val)))) sellOne(data.invIndex); });
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
+    // coffre de ville (2026-07-16, demande explicite) : range 1 unité dans le coffre (même
+    // granularité que "Vendre 1"), désactivé si le coffre n'a plus de place libre
+    addPopBtn(pop, LANG==='fr'?'📦 Ranger au coffre (1)':'📦 Store in chest (1)', () => {
+      if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, LANG==='fr'?'Coffre plein':'Chest full', { hurt:true });
+    });
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
     // objet du Compendium (sac protégé) — seule action possible : équiper et cibler directement

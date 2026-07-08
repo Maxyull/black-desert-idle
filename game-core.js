@@ -734,6 +734,12 @@ const MAX_STACK = 9999;
 // principal — jamais perdu ni détruit.
 const COMPENDIUM_BAG = new Array(INV_SIZE).fill(null);
 function compendiumBagHasName(name) { return COMPENDIUM_BAG.some(s => s && s.name === name); }
+// Coffre de ville (2026-07-16, demande explicite : "on ajoute un onglet coffre lié a la ville
+// 20/192 emplacement le reste bloqué") -- rangement personnel séparé du sac principal, même taille
+// que lui pour une future extension, mais seuls les 20 premiers emplacements sont utilisables pour
+// l'instant (les suivants restent verrouillés 🔒, comme les futures cases RNG/Consommable ailleurs).
+const VELIA_CHEST = new Array(INV_SIZE).fill(null);
+const VELIA_CHEST_OPEN = 20;
 function compendiumBagAdd(obj) {
   const idx = COMPENDIUM_BAG.findIndex(s => s === null);
   if (idx === -1) return false;
@@ -3585,6 +3591,10 @@ function updateZoneTitleText() {
 }
 function travelTo(i) {
   atVelia = false;
+  // quitter Velia : efface la liste de joueurs éventuellement affichée dans #lootTicker (2026-07-16)
+  // -- sinon elle reste figée par-dessus le loot normal, qui s'ajoute juste après par appendChild
+  // (voir lootLine()) sans jamais vider le conteneur lui-même.
+  const lt = $('lootTicker'); if (lt) lt.innerHTML = '';
   // "pour le fun" (demande du 2026-07-08) : log Discord la 1ère fois qu'une zone est atteinte
   if (i > S.maxZoneIdx) logToDiscord('🗺️ Nouvelle zone', `**${myPseudo||'Joueur'}** atteint **${tr(ZONES[i].name)}** (${ZONES[i].tier}) pour la première fois`, 0x8fc98a);
   zoneIdx = i;
@@ -3604,6 +3614,17 @@ function travelTo(i) {
   // poupée, qui restait figée sur l'état de la zone précédente jusqu'au prochain loot/vente.
   renderEquipment();
 }
+// liste des joueurs en ville, affichée dans #lootTicker à la place du loot normal (2026-07-16,
+// demande explicite : "on peut voir la liste des joueurs dans la ville a droite a la place du loot
+// ticker") -- aucun monstre à Velia donc le ticker de loot y est de toute façon toujours vide
+// (lootLine() n'est jamais appelé sans pack), cette zone de l'écran est donc libre à réutiliser.
+function updateVeliaPlayersTicker() {
+  const t = $('lootTicker'); if (!t || !atVelia) return;
+  const label = LANG==='fr' ? `👥 En ville (${veliaPlayers.length})` : `👥 In town (${veliaPlayers.length})`;
+  const rows = veliaPlayers.map(p => `<div class="veliaPlayerRow">${p.is_guest?'🎭':'👤'} ${escapeHtml(p.pseudo)}</div>`).join('');
+  t.innerHTML = `<div class="veliaPlayersHead">${label}</div>` +
+    (rows || `<div class="admHint">${LANG==='fr'?"Personne d'autre pour l'instant":'Nobody else right now'}</div>`);
+}
 // Velia : zone paisible, aucun monstre — ne lance plus le tutoriel automatiquement (voir
 // demande du 2026-07-04), juste un endroit calme où se rendre (à la main ou après une mort)
 function goToVelia() {
@@ -3615,6 +3636,10 @@ function goToVelia() {
   hud();
   buildZoneList();
   renderEquipment(); // voir le commentaire équivalent dans travelTo()
+  // affichage immédiat (état vide le temps que le serveur réponde), sans attendre le prochain tick
+  // de refreshVeliaPlayers (20s, voir game-supabase.js)
+  updateVeliaPlayersTicker();
+  if (typeof refreshVeliaPlayers === 'function') refreshVeliaPlayers();
 }
 // mort au combat (PV à 0) : renvoie à Velia (zone paisible) avec un message d'avertissement —
 // demande explicite du 2026-07-05, remplace l'ancien "faint" qui soignait sur place. Ne renvoie
@@ -3947,6 +3972,7 @@ function getSaveState() {
     EQUIP: JSON.parse(JSON.stringify(EQUIP)),
     INV: JSON.parse(JSON.stringify(INV)),
     COMPENDIUM_BAG: JSON.parse(JSON.stringify(COMPENDIUM_BAG)),
+    VELIA_CHEST: JSON.parse(JSON.stringify(VELIA_CHEST)),
     zoneIdx,
     playerPos: { x: P.x, y: P.y },
     savedAt: new Date().toISOString(),
@@ -3967,6 +3993,8 @@ function applySaveState(data) {
   // sac "Compendium" (2026-07-08) : absent des sauvegardes antérieures à cette version, ?? null
   // migre proprement les anciennes sauvegardes (toutes les cases restent vides, rien à perdre)
   for (let i = 0; i < INV_SIZE; i++) COMPENDIUM_BAG[i] = data.COMPENDIUM_BAG?.[i] ?? null;
+  // coffre de ville (2026-07-16) : même migration douce que le sac Compendium ci-dessus
+  for (let i = 0; i < INV_SIZE; i++) VELIA_CHEST[i] = data.VELIA_CHEST?.[i] ?? null;
   if (!S.migratedGearRebalanceV158) { migrateGearRebalanceV158(); S.migratedGearRebalanceV158 = true; }
   if (!S.migratedEarringRebalanceV175) { migrateEarringRebalanceV175(); S.migratedEarringRebalanceV175 = true; }
   if (!S.migratedArmorNoApV192) { migrateArmorNoApV192(); S.migratedArmorNoApV192 = true; }
