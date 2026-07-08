@@ -214,4 +214,11 @@ function migratePenMasteryV308() {
   Object.values(EQUIP).forEach(check);
   INV.forEach(check);
   COMPENDIUM_BAG.forEach(check);
+  // rattrapage rétroactif (2026-07-08, demande explicite : "supprime l'item non pen du sac
+  // protégé... rétroactif") -- une fois S.penMastery rempli ci-dessus (y compris pour des noms
+  // marqués maîtrisés seulement AUJOURD'HUI par ce backfill), toute copie encore protégée dans
+  // COMPENDIUM_BAG pour un nom désormais maîtrisé n'a plus lieu d'y être : voir
+  // evictMasteredFromCompendiumBag (core/game-core.js), même fonction que celle appelée en jeu
+  // à chaque enchantement réussi vers PEN -- ici on la rejoue simplement pour tout l'historique.
+  new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
 }

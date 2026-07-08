@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V328', d:'18/07/2026 21:00', name:{fr:'Compendium : éviction PEN généralisée + rétroactive', en:'Compendium: generalized + retroactive PEN eviction'}, fr:[
+      {t:'fix', sub:'interface', severity:'major', tx:'Quand un exemplaire ÉQUIPÉ ou en sac atteignait PEN, une AUTRE copie non-PEN du même objet protégée dans le Compendium restait coincée là indéfiniment (l\'éviction ne gérait que le cas où c\'était CETTE copie précise qui montait à PEN). Corrigé : dès qu\'un nom d\'objet est maîtrisé PEN, peu importe quel exemplaire y est arrivé, la copie protégée devenue inutile rejoint le sac principal. Rattrapage rétroactif appliqué au premier chargement pour les cas déjà présents.'},
+      {t:'fix', sub:'interface', tx:'Le classement Gearscore/PA/PD a été réinitialisé côté serveur puis repeuplé automatiquement avec les vraies valeurs actuelles de chaque joueur (record à vie, voir V327) au lieu de garder d\'anciennes valeurs "en direct" obsolètes datant d\'avant ce changement.'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'major', tx:'When an EQUIPPED or bagged copy reached PEN, a DIFFERENT non-PEN copy of the same item protected in the Compendium stayed stuck there indefinitely (eviction only handled the case where that exact copy was the one reaching PEN). Fixed: as soon as an item name is PEN-mastered, regardless of which copy got there, the now-useless protected copy rejoins the main bag. Retroactive catch-up applied on first load for existing cases.'},
+      {t:'fix', sub:'interface', tx:'The Gearscore/AP/DP leaderboard was reset server-side then automatically repopulated with each player\'s real current values (lifetime record, see V327) instead of keeping old "live" values now stale from before that change.'},
+    ] },
   { v:'V327', d:'18/07/2026 20:00', name:{fr:'Ornements par palier, coffre 5/8, classement 100% records', en:'Tier ornaments, 5/8 chest, 100% record leaderboard'}, fr:[
       {t:'new', sub:'graphismes', severity:'major', tx:'Nouveaux ornements en orbite autour du personnage, avec une flashiness qui monte avec le palier de stuff : gris/blanc restent discrets, vert en montre 4 nettement visibles, bleu en montre 5 avec un halo supplémentaire pendant le cast — le palier le plus flashy du jeu.'},
       {t:'change', sub:'interface', tx:'Le bouton d\'agrandissement du Coffre de Velia passe de 4 à 5 objets par ligne, et ne fait plus grandir la carte en changeant de vue (défilement interne à taille fixe dans les deux modes).'},

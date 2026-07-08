@@ -873,6 +873,14 @@ function markPenMastery(name) {
 }
 function compendiumPenCount() { return Object.keys(S.penMastery||{}).length; }
 
+function evictMasteredFromCompendiumBag(name) {
+  if (!name || !S.penMastery[name]) return;
+  const idx = COMPENDIUM_BAG.findIndex(s => s && s.name === name);
+  if (idx === -1) return;
+  if (invAdd({ ...COMPENDIUM_BAG[idx] })) COMPENDIUM_BAG[idx] = null;
+  
+}
+
 function trackEnhPeak(name, lvl) {
   if (!S.enhPeakByName) S.enhPeakByName = {};
   if ((S.enhPeakByName[name]||0) < lvl) S.enhPeakByName[name] = lvl;
@@ -5492,11 +5500,7 @@ function attemptEnhance() {
     if (target.enhLv >= ENH_NAMES.length-1) {
       markPenMastery(target.name);
       
-      if (optTarget.loc === 'compendium') {
-        const compIdx = optTarget.key;
-        if (invAdd({ ...target })) COMPENDIUM_BAG[compIdx] = null;
-        
-      }
+      evictMasteredFromCompendiumBag(target.name);
     }
   } else {
     addItemFailstack(target, lvl+1); 
@@ -6109,6 +6113,8 @@ function migratePenMasteryV308() {
   Object.values(EQUIP).forEach(check);
   INV.forEach(check);
   COMPENDIUM_BAG.forEach(check);
+  
+  new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
 }
 
 // ==== src/admin/enh-debug-tools.js ====
