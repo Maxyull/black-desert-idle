@@ -36,15 +36,21 @@ rentables — la boucle centrale du jeu.
 
 ## Stack technique
 
-HTML/CSS/JS vanilla + Canvas 2D, aucune dépendance runtime. Un petit script Python local
-regroupe le code en un seul bundle avant chaque déploiement — pas de Node/npm/webpack.
+HTML/CSS/JS vanilla + Canvas 2D, aucune dépendance runtime (le jeu lui-même ne charge rien
+de Node/npm). Un script Python local regroupe le code en un seul bundle avant chaque
+déploiement, puis Node/Terser le minifie (outils de build/tests uniquement, jamais servis
+aux joueurs).
 
-- `index.html` — production, servi tel quel par GitHub Pages : charge un seul bundle généré
-  (`build/source.js`)
+- `index.html` — production, servi tel quel par GitHub Pages : charge un seul bundle minifié
+  (`build/source.min.js`)
 - `index.dev.html` — développement : charge chaque fichier individuellement (+ les tests),
   utilisé pour coder et tester
-- `scripts/build.py` — génère `build/source.js` (concaténation + retrait des commentaires)
-  et réécrit `index.html` à partir de `index.dev.html`
+- `scripts/build.py` — génère `build/source.js` (concaténation + retrait des commentaires),
+  le minifie avec Terser (`build/source.min.js`) et réécrit `index.html` à partir de
+  `index.dev.html`
+- Suite de régression Playwright (`npm test`, voir `tests/README.md`) : vérifie que
+  `index.dev.html` passe `window.runRegressionTests()` et que `index.html` charge bien le
+  bundle minifié sans erreur — en plus de `tests/tests.js`, jamais lancée automatiquement
 - `src/styles/styles.css` — toute la mise en forme
 - Code JS organisé par domaine sous `src/`, chacun avec son propre `README.md` détaillant son
   rôle : `core/` (état, boucle, HUD, combat), `classes/` (personnages jouables), `world/`

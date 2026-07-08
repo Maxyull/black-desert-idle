@@ -11,3 +11,8 @@ CLAUDE.md
 # cache Python (scripts/build.py)
 __pycache__/
 *.pyc
+
+# Node / Playwright (tests/regression.spec.js, tests/prod.spec.js -- voir tests/README.md)
+node_modules/
+playwright-report/
+test-results/

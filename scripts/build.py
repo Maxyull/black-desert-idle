@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Build local pour Black Desert Idle (2026-07-08).
+Build local pour Black Desert Idle (2026-07-08, Terser ajoute le 2026-07-17).
 
-Aucun Node/npm sur cette machine -- pas d'UglifyJS/Terser possible. Ce script fait donc :
+Ce script fait donc :
   1. lit l'ordre exact des <script src="src/..."> dans index.dev.html (source de verite
      unique pour l'ordre de dependance -- voir CLAUDE.md, section chargement) ;
   2. concatene ces fichiers dans cet ordre, en retirant les commentaires JS (// et /* */)
@@ -10,25 +10,36 @@ Aucun Node/npm sur cette machine -- pas d'UglifyJS/Terser possible. Ce script fa
      literals (y compris ${...} imbriques) -- PAS une regex naive qui casserait toute
      chaine contenant "//" (URLs, etc.) ;
   3. compacte les lignes vides ;
-  4. ecrit le resultat dans build/source.js ;
-  5. reecrit index.html (PROD, servi par GitHub Pages) pour ne plus charger que ce bundle
+  4. ecrit le bundle lisible (commentaires retires, pas de renommage de variables) dans
+     build/source.js ;
+  5. minifie avec Terser dans build/source.min.js (2026-07-17, Node desormais installe sur
+     cette machine -- voir PR #5) : compression + variables locales raccourcies, --compress
+     --mangle SANS --toplevel ni --mangle-props pour ne jamais renommer les globals lus
+     dynamiquement (fonctions appelees par les onclick inline de index.dev.html, callbacks
+     Supabase, proprietes des payloads RPC) ;
+  6. reecrit index.html (PROD, servi par GitHub Pages) pour ne charger que build/source.min.js
      (+ la balise Supabase CDN, le CSS, les patch notes en RPC -- pas de tests).
 
-"Compresse sans commentaires" au sens litteral de la demande -- PAS une minification
-agressive (pas de renommage de variables, pas d'elimination de code mort). Si Node devient
-disponible un jour, ce script peut etre remplace par un vrai Terser/esbuild.
+Necessite Node/npm (npx terser) -- installes via winget (OpenJS.NodeJS.LTS) le 2026-07-17,
+absents avant cette date sur cette machine (voir historique de ce fichier).
 
 Usage : python scripts/build.py
 """
 import re
+import subprocess
 import sys
 from pathlib import Path
+
+# sous Windows, "npx" est un script shell (.cmd/.ps1), pas un executable natif -- CreateProcess
+# (utilise par subprocess.run sans shell=True) ne sait le trouver que via son extension exacte
+NPX_CMD = "npx.cmd" if sys.platform == "win32" else "npx"
 
 ROOT = Path(__file__).resolve().parent.parent
 DEV_HTML = ROOT / "index.dev.html"
 PROD_HTML = ROOT / "index.html"
 BUILD_DIR = ROOT / "build"
 BUNDLE_PATH = BUILD_DIR / "source.js"
+MINIFIED_BUNDLE_PATH = BUILD_DIR / "source.min.js"
 
 # fichiers explicitement exclus du bundle prod meme s'ils apparaissent dans index.dev.html
 EXCLUDED_SUBSTRINGS = ("tests/tests.js", "meta/patch-notes-data.js", "supabase-js")
@@ -188,6 +199,34 @@ def compact_blank_lines(code):
     return "\n".join(out)
 
 
+def format_bytes(size):
+    if size >= 1024 * 1024:
+        return f"{size / (1024 * 1024):.1f} Mo"
+    if size >= 1024:
+        return f"{size / 1024:.1f} Ko"
+    return f"{size} o"
+
+
+def minify_bundle_with_terser():
+    """Minifie build/source.js avec Terser (npx, voir package.json). Mode "safe" : pas de
+    --toplevel (ne renomme jamais les identifiants de portee globale -- tout le jeu vit dans
+    un seul scope global partage entre scripts, voir CLAUDE.md), pas de --mangle-props (les
+    noms de proprietes sont lus dynamiquement un peu partout : payloads RPC Supabase,
+    save_data, INV/EQUIP...). --mangle reste actif pour les variables LOCALES uniquement."""
+    cmd = [
+        NPX_CMD, "--no-install", "terser", str(BUNDLE_PATH),
+        "--compress", "passes=2", "--mangle", "--output", str(MINIFIED_BUNDLE_PATH),
+    ]
+    try:
+        subprocess.run(cmd, cwd=ROOT, check=True)
+    except FileNotFoundError:
+        print("ERREUR: npx introuvable. Installe Node/npm, lance npm install, puis relance.", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as exc:
+        print("ERREUR: Terser a echoue. Lance npm install, puis relance le build.", file=sys.stderr)
+        sys.exit(exc.returncode)
+
+
 def main():
     if not DEV_HTML.exists():
         print(f"ERREUR: {DEV_HTML} introuvable", file=sys.stderr)
@@ -223,8 +262,14 @@ def main():
     pct = 100 * (1 - total_after / total_before) if total_before else 0
     print(f"\nbuild/source.js genere : {total_before} -> {total_after} octets ({pct:.1f}% de reduction)")
 
+    minify_bundle_with_terser()
+    readable_size = BUNDLE_PATH.stat().st_size
+    minified_size = MINIFIED_BUNDLE_PATH.stat().st_size
+    min_pct = 100 * (1 - minified_size / readable_size) if readable_size else 0
+    print(f"build/source.min.js genere : {format_bytes(readable_size)} -> {format_bytes(minified_size)} ({min_pct:.1f}% de reduction)")
+
     rewrite_prod_html(dev_html)
-    print("index.html (prod) reecrit pour charger build/source.js")
+    print("index.html (prod) reecrit pour charger build/source.min.js")
 
 
 def rewrite_prod_html(dev_html):
@@ -257,12 +302,15 @@ def rewrite_prod_html(dev_html):
             if not bundle_tag_inserted:
                 prod_lines.extend(meta_lines)
                 prod_lines.append(
-                    "<!-- build de production : un seul bundle concatene + commentaires retires --"
+                    "<!-- build de production : bundle concatene, commentaires retires, puis minifie -->"
                 )
                 prod_lines.append(
-                    "     genere par scripts/build.py depuis index.dev.html, jamais edite a la main -->"
+                    "     par Terser (build/source.min.js) -- genere par scripts/build.py depuis"
                 )
-                prod_lines.append(f'<script src="build/source.js?v={version}"></script>')
+                prod_lines.append(
+                    "     index.dev.html, jamais edite a la main -->"
+                )
+                prod_lines.append(f'<script src="build/source.min.js?v={version}"></script>')
                 bundle_tag_inserted = True
             continue  # les autres balises src/|meta/ sont sautees (deja placees ci-dessus)
         if re.search(r'<script src="tests/tests\.js', line):
