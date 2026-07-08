@@ -1224,12 +1224,12 @@ const WIKI_SECTIONS = [
       <p>Le Marché est encore <b>peu fonctionnel</b> : attends-toi à des bugs, des changements et des remises à zéro pendant son développement. Ne t'y fie pas encore pour ta progression.</p>
       <h3>Marché commun</h3>
       <p>Vrai carnet d'ordres : place un ordre d'achat ou de vente à ton prix, apparié automatiquement avec un ordre en face dès que les prix se croisent (pas de prix fixe imposé).</p>
-      <p><b>Taxe de vente : 20%</b> (le vrai BDO prend ~30%) — prélevée uniquement sur le vendeur, qui touche 80% du prix de vente ; l'acheteur paie toujours le prix affiché.</p>`,
+      <p><b>Taxe de vente : 35%</b> — prélevée uniquement sur le vendeur, qui touche 65% du prix de vente ; l'acheteur paie toujours le prix affiché.</p>`,
     en:`<h3>🚧 BETA — under construction</h3>
       <p>The Market is still <b>not very functional</b>: expect bugs, changes and resets while it's being developed. Don't rely on it for your progress yet.</p>
       <h3>Common market</h3>
       <p>A real order book: place a buy or sell order at your own price, automatically matched with an opposing order once prices cross (no fixed price imposed).</p>
-      <p><b>Sales tax: 20%</b> (real BDO takes ~30%) — charged only to the seller, who receives 80% of the sale price; the buyer always pays the listed price.</p>` },
+      <p><b>Sales tax: 35%</b> — charged only to the seller, who receives 65% of the sale price; the buyer always pays the listed price.</p>` },
   { id:'account', icon:'💾', label:{fr:'Compte & Sauvegarde',en:'Account & Save'},
     fr:`<h3>Sauvegarde</h3>
       <p>Sauvegarde cloud automatique toutes les 30 s, plus une sauvegarde locale de secours. En cas de déconnexion brutale, jusqu'à 30 s de progression peuvent être perdues.</p>
