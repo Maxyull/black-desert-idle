@@ -7,3 +7,7 @@ ancienne version/
 
 # instructions Claude Code locales (contexte pour l'assistant, pas pour le repo public)
 CLAUDE.md
+
+# cache Python (scripts/build.py)
+__pycache__/
+*.pyc
