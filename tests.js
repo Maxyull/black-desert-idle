@@ -461,6 +461,18 @@
     EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:0, optimizable:true, matName:'Pierre du Temps' }; // Tuvala
     INV[INV_SIZE-1] = null; INV[INV_SIZE-2] = null;
     forcedMatKey = null;
+    // isolation (2026-07-08, bug corrigé : "regarde les 3 echecs systematique") -- findEnhanceMaterial()
+    // cherche dans TOUT INV, pas seulement les 2 cases de test ci-dessous : un compte ayant déjà
+    // réellement looté "Pierre de Novice"/"Pierre du Temps" ailleurs dans son sac (cas normal en
+    // cours de partie) faisait échouer l'égalité stricte INV[...] === INV[INV_SIZE-2] même quand le
+    // COMPORTEMENT était parfaitement correct (l'index trouvé pointait juste vers une AUTRE case
+    // valide du même matériau). Ces éventuelles cases réelles sont neutralisées le temps du test,
+    // puis restaurées à l'identique -- vraie isolation, plus de dépendance à l'état du compte.
+    const stashed = [];
+    for (let i = 0; i < INV_SIZE - 2; i++) {
+      const it = INV[i];
+      if (it && (it.name === 'Pierre de Novice' || it.name === 'Pierre du Temps')) { stashed.push([i, it]); INV[i] = null; }
+    }
     // seule une pierre de Naru (mauvais palier) est en stock -> aucun matériau ne doit être trouvé
     INV[INV_SIZE-1] = { key:'mat_Pierre de Novice', name:'Pierre de Novice', kind:'material', qty:5, stackable:true, weight:0.1, val:1 };
     assert('findEnhanceMaterial refuse la pierre de Naru pour une pièce Tuvala', findEnhanceMaterial() === -1);
@@ -473,6 +485,7 @@
     assert('un matériau épinglé du mauvais palier est ignoré, jamais forcé', INV[findEnhanceMaterial()] === INV[INV_SIZE-2]);
     optTargetSlot = s.optTargetSlot; EQUIP.weapon = s.EQUIP_weapon; forcedMatKey = s.forcedMatKey;
     INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b;
+    for (const [i, it] of stashed) INV[i] = it;
   }
   // "strcitement, suit cette liste car aucune pierre ne se met dans le slot pour les bijou" (2026-07-11)
   // -- bug trouvé : les bijoux (jackpot) n'avaient JAMAIS de matName (contrairement au gear/armes),
@@ -557,6 +570,37 @@
       /@2\.\d+\.\d+/.test(tag.src), `src=${tag.src}`);
     assert('index.html charge supabase-js avec un attribut integrity (SRI)',
       !!tag.integrity && tag.integrity.startsWith('sha'), `integrity=${tag.integrity}`);
+  }
+  // check systématique (2026-07-08, demande explicite : "revois les dates des patchnote / ajoute
+  // check systematique") -- trouvé en vérifiant manuellement : plusieurs versions récentes
+  // (V283-V299) avaient été datées 15-16/07/2026 alors que l'horloge réelle (Supabase + timestamps
+  // git) était encore le 07-08/07/2026 -- aucun test n'aurait détecté cette dérive avant
+  // publication. Vérifie le format DD/MM/YYYY HH:MM de chaque entrée ET que les dates ne remontent
+  // JAMAIS en avançant dans PATCH_NOTES (index 0 = le plus récent, doit rester le plus récent).
+  function testPatchNotesDatesFormatAndOrder() {
+    const dateRe = /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/;
+    function toTimestamp(d) {
+      const m = d.match(/^(\d{2})\/(\d{2})\/(\d{4}) (\d{2}):(\d{2})$/);
+      if (!m) return null;
+      const [, dd, mm, yyyy, hh, min] = m;
+      return new Date(`${yyyy}-${mm}-${dd}T${hh}:${min}:00`).getTime();
+    }
+    // les entrées d'avant V53 (introduction du suivi de dates) n'ont pas de champ `d` du tout :
+    // légitime (pas une régression) -- on ne valide format/ordre que sur les entrées datées
+    let allValidFormat = true, badEntry = '';
+    for (const p of PATCH_NOTES) {
+      if (p.d === undefined) continue;
+      if (!dateRe.test(p.d)) { allValidFormat = false; badEntry = `${p.v} (d="${p.d}")`; break; }
+    }
+    assert('Chaque date renseignée de PATCH_NOTES suit le format DD/MM/YYYY HH:MM', allValidFormat, badEntry);
+    if (!allValidFormat) return; // pas de comparaison de timestamps si le format est déjà cassé
+    let ordered = true, badPair = '';
+    const dated = PATCH_NOTES.filter(p => p.d !== undefined);
+    for (let i = 1; i < dated.length; i++) {
+      const prev = toTimestamp(dated[i-1].d), cur = toTimestamp(dated[i].d);
+      if (cur > prev) { ordered = false; badPair = `${dated[i].v} (${dated[i].d}) est APRÈS ${dated[i-1].v} (${dated[i-1].d})`; break; }
+    }
+    assert('PATCH_NOTES reste trié du plus récent (index 0) au plus ancien, sans jamais remonter dans le temps', ordered, badPair);
   }
   function testPatchPagesCoverAllEntriesWithinBounds() {
     const pages = computePatchPages();
@@ -670,7 +714,13 @@
   // le remarquer) ; un objet ancien mais moins bon non plus ; seul un objet ancien ET meilleur doit
   const TEST_INV_SLOT = INV_SIZE - 1; // dernière case, réutilisée par les autres tests de la même façon
   function testNeglectedUpgradeHighlight() {
-    const s = { helmet: EQUIP.helmet, slot: INV[TEST_INV_SLOT] };
+    // isolation (2026-07-08) : hasNeglectedUpgradeInBag() scanne TOUT INV, pas seulement
+    // TEST_INV_SLOT -- un compte réel ayant déjà un vrai objet meilleur qui traîne ailleurs dans
+    // le sac (cas normal en cours de partie) déclenchait le halo indépendamment du fixture ci-dessous,
+    // faisant échouer les assertions "pas de halo" même quand le comportement était correct.
+    // Le sac entier est neutralisé le temps du test puis restauré à l'identique.
+    const s = { helmet: EQUIP.helmet, inv: INV.slice() };
+    for (let i = 0; i < INV_SIZE; i++) INV[i] = null;
     EQUIP.helmet = { name:'ref', kind:'gear', slot:'helmet', ap:0, dp:5, hp:0, color:GEAR_TIERS[0].color };
     INV[TEST_INV_SLOT] = { name:'better-fresh', kind:'gear', slot:'helmet', ap:0, dp:50, hp:0, color:GEAR_TIERS[3].color, pickedAt: Date.now() };
     assert('Pas de halo : objet meilleur mais looté à l\'instant (< 15s)', !hasNeglectedUpgradeInBag());
@@ -678,7 +728,8 @@
     assert('Pas de halo : objet ancien mais moins bon que l\'équipé', !hasNeglectedUpgradeInBag());
     INV[TEST_INV_SLOT] = { name:'better-old', kind:'gear', slot:'helmet', ap:0, dp:50, hp:0, color:GEAR_TIERS[3].color, pickedAt: Date.now() - 20000 };
     assert('Halo : objet ancien (>15s) ET meilleur que l\'équipé', hasNeglectedUpgradeInBag());
-    EQUIP.helmet = s.helmet; INV[TEST_INV_SLOT] = s.slot;
+    EQUIP.helmet = s.helmet;
+    for (let i = 0; i < INV_SIZE; i++) INV[i] = s.inv[i];
   }
   // badge ⬆️ sur les lignes de la liste de zones (2026-07-09, demande explicite) : agrège la même
   // logique d'upgrade que la poupée d'équipement sur TOUS les slots -- vérifie juste que la zone 4
@@ -1333,6 +1384,7 @@
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();
+    testPatchNotesDatesFormatAndOrder();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
     testCompendiumBackfillAfterSell();
