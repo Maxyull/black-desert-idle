@@ -630,6 +630,41 @@
     mktSide = s.side; $('mktPriceInput').value = s.price; $('mktQtyInput').value = s.qty;
     updateMktTaxHint();
   }
+  // "verifie le wiki de fond en comble" (2026-07-18) -- audit qui a trouvé le Wiki affirmant "4
+  // objets collectibles" pour le Trésor de Velia alors que VELIA_TREASURE n'en contient que 2.
+  // Garde-fou DYNAMIQUE (pas un nombre codé en dur) : compare le texte du Wiki au vrai tableau,
+  // pour attraper tout futur ajout d'un fragment (ex: le tresor "Sceau du Conclave") sans mise à
+  // jour du Wiki -- voir la règle mémoire "valeurs de stat figées = dérive silencieuse".
+  function testWikiTreasureCountMatchesRealArray() {
+    if (typeof WIKI_SECTIONS === 'undefined' || typeof VELIA_TREASURE === 'undefined') return;
+    const combat = WIKI_SECTIONS.find(s => s.id === 'combat'); if (!combat) return;
+    const n = VELIA_TREASURE.length;
+    assert(`Le Wiki (FR) mentionne bien ${n} objet(s) de Trésor de Velia (VELIA_TREASURE.length)`,
+      combat.fr.includes(`${n} objet`), `attendu "${n} objet", texte non trouvé`);
+    assert(`Le Wiki (EN) mentionne bien ${n} collectible(s)`,
+      combat.en.includes(`${n} very rare collectible`), `attendu "${n} very rare collectible", texte non trouvé`);
+  }
+  // le coût variable de la Pierre de Cron par palier (1/2/3/4, voir CRON_STONE_COST_BY_TIER)
+  // n'était mentionné nulle part dans le Wiki avant cet audit -- garde-fou : vérifie que les 4
+  // valeurs réelles apparaissent bien dans le texte, pour attraper un futur rééquilibrage oublié.
+  function testWikiMentionsCronCostPerTier() {
+    if (typeof WIKI_SECTIONS === 'undefined' || typeof CRON_STONE_COST_BY_TIER === 'undefined') return;
+    const enh = WIKI_SECTIONS.find(s => s.id === 'enh'); if (!enh) return;
+    for (const grade of ['grey','white','green','blue']) {
+      const cost = CRON_STONE_COST_BY_TIER[grade];
+      assert(`Le Wiki (FR) mentionne le coût Cron du palier ${grade} (${cost})`, enh.fr.includes(String(cost)), `coût=${cost}`);
+    }
+  }
+  // le Wiki ne mentionnait que le boss Kzarka (quotidien), omettant complètement Vell (boss
+  // hebdomadaire, ajouté le 2026-07-08) -- garde-fou contre un retour de cette omission.
+  function testWikiMentionsBothWorldBosses() {
+    if (typeof WIKI_SECTIONS === 'undefined' || typeof BOSS_ROSTER === 'undefined') return;
+    const combat = WIKI_SECTIONS.find(s => s.id === 'combat'); if (!combat) return;
+    for (const bossId of Object.keys(BOSS_ROSTER)) {
+      const marker = bossId === 'kzarka' ? 'Kzarka' : bossId === 'vell' ? 'Vell' : bossId;
+      assert(`Le Wiki (FR) mentionne le boss "${marker}"`, combat.fr.includes(marker), `boss=${bossId}`);
+    }
+  }
   // "enleve le scroll affiche les 2 a 7 dernier note selon la taille et met un bouton vers le haut
   // pour voir les nouveau et vers le bas pour regarder les ancien" (2026-07-11) -- computePatchPages()
   // découpe PATCH_NOTES en pages contiguës de 2 à 7 entrées, sans trou ni chevauchement.
@@ -1524,6 +1559,9 @@
     testCompendiumEvictsItemOnceItReachesPen();
     testMarketSellTaxRateMatchesServerFactor();
     testMarketTaxHintComputesNetAndOnlyShowsOnSell();
+    testWikiTreasureCountMatchesRealArray();
+    testWikiMentionsCronCostPerTier();
+    testWikiMentionsBothWorldBosses();
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();

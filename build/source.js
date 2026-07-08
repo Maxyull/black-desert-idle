@@ -7938,16 +7938,16 @@ const WIKI_SECTIONS = [
       <h3>Mana</h3>
       <p>Chaque sort coûte de la mana, qui se régénère passivement même hors combat. Une potion de mana (auto-bue sous 30%) complète la potion de PV si tu es à court.</p>
       <h3>Loot progressif</h3>
-      <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : très généreux en early (jusqu'à 55%), très rares en endgame (moins de 3%).</p>
+      <p>Les taux de drop sont <b>volontairement décroissants</b> zone par zone : le matériau d'optimisation passe d'environ 55% en toute première zone à environ 5-7% en fin de jeu, les composants de craft endgame (Fragment de mémoire, Marbre du Dieu déchu...) descendent eux sous 1%.</p>
       <h3>Sac plein (192/192)</h3>
       <p>Le silver n'occupe jamais de place (toujours ramassé). Un matériau/bijou déjà en stack dans ton sac continue lui aussi d'être ramassé tant que ce stack n'est pas à son maximum, même sac plein. Seuls les <b>nouveaux</b> objets qui auraient besoin d'une case libre restent au sol — un bandeau rouge ⚠ t'en avertit, sans jamais t'empêcher de continuer à farmer.</p>
       <h3>Zones groupées par palier de stuff</h3>
       <p>Les 16 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu — 4 zones chacun) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
-      <p>Chaque zone garantit une seule pièce d'équipement précise : casque/plastron/gants sur les 3 premières zones du palier, bottes sur la 4e, et une arme (arme principale/secondaire/éveil) sur les 3 <b>dernières</b> zones — la toute première zone d'un palier n'a donc aucune arme garantie. Clique l'icône 👁 d'une zone pour voir exactement laquelle.</p>
+      <p>Chaque zone garantit une seule pièce d'armure précise (casque/plastron/gants sur les 3 premières zones du palier, bottes sur la 4e) ; côté arme, 3 des 4 zones du palier garantissent chacune un type différent (arme principale/secondaire/éveil, jamais deux fois le même), seule la 2<sup>e</sup> zone du palier n'a aucune arme garantie. Clique l'icône 👁 d'une zone pour voir exactement laquelle.</p>
       <h3>Trésor de Velia (catégorie TEST)</h3>
-      <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 4 objets collectibles très rares (0,5% à 0,00001% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
-      <h3>Boss mondial partagé</h3>
-      <p>Le Kzarka du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a désormais des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène.</p>
+      <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 2 objets collectibles très rares (0,17% et 0,0005% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
+      <h3>Boss mondiaux partagés</h3>
+      <p>Le <b>Kzarka</b> du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène. Le <b>Vell</b>, boss hebdomadaire bien plus rare et plus coriace (jeudi 12h00 et dimanche 16h45), fonctionne sur le même principe.</p>
       <h3>Où farmer un socle vide ?</h3>
       <p>Clique un socle d'équipement <b>vide</b> sur la poupée : la ou les zones qui lootent cet objet s'illuminent d'un halo doré dans la liste des zones, et un bouton te téléporte directement dessus. Une zone dangereuse pour ton stuff actuel n'est jamais proposée tant qu'une alternative plus sûre existe.</p>`,
     en:`<h3>AP / DP per zone (like the real game)</h3>
@@ -7962,16 +7962,16 @@ const WIKI_SECTIONS = [
       <h3>Mana</h3>
       <p>Every skill costs mana, which regenerates passively even out of combat. A mana potion (auto-drunk under 30%) joins the HP potion if you run low.</p>
       <h3>Progressive loot</h3>
-      <p>Drop rates are <b>intentionally decreasing</b> zone by zone: very generous early (up to 55%), very rare at endgame (under 3%).</p>
+      <p>Drop rates are <b>intentionally decreasing</b> zone by zone: the enhancement material goes from about 55% in the very first zone down to about 5-7% at endgame, while endgame crafting components (Memory Fragment, Fallen God's Marble...) drop under 1%.</p>
       <h3>Full bag (192/192)</h3>
       <p>Silver never takes up space (always picked up). A material/jewelry already stacked in your bag keeps getting picked up as long as that stack isn't full, even with a full bag. Only <b>new</b> items that would need a free slot stay on the ground — a red ⚠ banner warns you, without ever stopping you from farming.</p>
       <h3>Zones grouped by gear tier</h3>
       <p>The 16 Velia zones are grouped by gear tier (Naru/grey, Tuvala/white, Yuria/green, Grunil/blue — 4 zones each) — the header and border color match the gear color found there, same as in the inventory.</p>
-      <p>Every zone guarantees exactly one specific gear piece: helmet/armor/gloves on the tier's first 3 zones, boots on the 4th, and a weapon (main/secondary/awakening) on the <b>last</b> 3 zones — the very first zone of a tier has no guaranteed weapon. Click a zone's 👁 icon to see exactly which one.</p>
+      <p>Every zone guarantees exactly one specific armor piece (helmet/armor/gloves on the tier's first 3 zones, boots on the 4th); for weapons, 3 of the tier's 4 zones each guarantee a different type (main/secondary/awakening, never the same type twice) — only the tier's 2<sup>nd</sup> zone has no guaranteed weapon. Click a zone's 👁 icon to see exactly which one.</p>
       <h3>Velia Treasure (TEST category)</h3>
-      <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 4 very rare collectibles (0.5% to 0.00001% per kill), stored in their own 🗺️ inventory tab. Still experimental: no recipe or use yet.</p>
-      <h3>Shared world boss</h3>
-      <p>The scheduled Kzarka (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) now has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena.</p>
+      <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 2 very rare collectibles (0.17% and 0.0005% per kill), stored in their own 🗺️ inventory tab. Still experimental: no recipe or use yet.</p>
+      <h3>Shared world bosses</h3>
+      <p>The scheduled <b>Kzarka</b> (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena. The <b>Vell</b>, a much rarer and tougher weekly boss (Thursday 12:00pm and Sunday 4:45pm), works the same way.</p>
       <h3>Where to farm an empty slot?</h3>
       <p>Click an <b>empty</b> equipment slot on the paperdoll: the zone(s) that drop that item light up with a gold halo in the zone list, plus a button teleports you there directly. A zone too dangerous for your current gear is never suggested while a safer alternative exists.</p>` },
   { id:'enh', icon:'✦', label:{fr:'Optimisation',en:'Enhancement'},
@@ -7980,14 +7980,14 @@ const WIKI_SECTIONS = [
       <p>Puis <b>PRI/DUO/TRI/TET/PEN</b> suivent des chances fixes (12%/9%/6%/3%/1,2%). À partir de PRI, un échec fait <b>rétrograder d'un palier</b> (ex : DUO → PRI) — mais <b>jamais sous PRI</b> : tu ne retombes plus jamais à +15.</p>
       <p>Pas de failstack caché : ce que tu vois à l'écran est la chance réelle. Chaque pièce a son propre niveau, indépendant.</p>
       <p>La <b>Poussière d'esprit ancien</b> ne sert pas à optimiser directement : c'est un composant pour fabriquer des Pierres de Caphras.</p>
-      <p>La <b>Pierre de Cron</b> (1% de drop, 1 à 3 unités, toutes zones) protège d'une rétrogradation en cas d'échec — à toi de décider si tu veux l'utiliser via la case à cocher à côté du matériau chargé, elle n'est plus consommée automatiquement.</p>
+      <p>La <b>Pierre de Cron</b> (1% de drop, 1 à 3 unités, toutes zones) protège d'une rétrogradation en cas d'échec — à toi de décider si tu veux l'utiliser via la case à cocher à côté du matériau chargé, elle n'est plus consommée automatiquement. Son coût dépend du palier de la pièce protégée : 1 (gris), 2 (blanc), 3 (vert), 4 (bleu).</p>
       <p>Astuce : clique le petit 🔧 sur une pièce équipée pour charger directement CETTE pièce dans le panneau d'optimisation.</p>`,
     en:`<h3>Enhancement</h3>
       <p>+1 to +7 always succeed. <b>+8 to +15</b> are probabilistic (45% → 5%) and can downgrade on failure, but never below +7.</p>
       <p>Then <b>PRI/DUO/TRI/TET/PEN</b> follow fixed chances (12%/9%/6%/3%/1.2%). From PRI, a failure <b>downgrades one tier</b> (e.g. DUO → PRI) — but <b>never below PRI</b>: you never drop back to +15.</p>
       <p>No hidden failstack: what you see is the real chance. Each piece has its own independent level.</p>
       <p><b>Ancient Spirit Dust</b> isn't used to enhance directly: it's a component to craft Caphras Stones.</p>
-      <p>The <b>Cron Stone</b> (1% drop rate, 1 to 3 units, every zone) protects against a downgrade on failure — you decide whether to use it via the checkbox next to the loaded material, it's no longer consumed automatically.</p>
+      <p>The <b>Cron Stone</b> (1% drop rate, 1 to 3 units, every zone) protects against a downgrade on failure — you decide whether to use it via the checkbox next to the loaded material, it's no longer consumed automatically. Its cost depends on the protected piece's tier: 1 (grey), 2 (white), 3 (green), 4 (blue).</p>
       <p>Tip: click the small 🔧 on an equipped piece to load THAT piece directly into the enhancement panel.</p>` },
   { id:'market', icon:'🏛️', label:{fr:'Marché',en:'Market'},
     fr:`<h3>🚧 BETA — en construction</h3>
