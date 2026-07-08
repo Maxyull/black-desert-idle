@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V326', d:'18/07/2026 19:00', name:{fr:'Animations de cast plus visibles, Wiki mis à jour', en:'More visible cast animations, Wiki updated'}, fr:[
+      {t:'fix', sub:'graphismes', severity:'major', tx:'Le cristal du bâton et les effets d\'origine du cast (introduits en V324) étaient techniquement corrects mais trop discrets pour être remarqués pendant le jeu (cristal minuscule, particules de 1 à 3 pixels, casts très brefs). Cristal agrandi de 60% pendant le cast, aura plus large et plus opaque avec un anneau de contour net, et toutes les particules de burst nettement plus grandes/opaques.'},
+      {t:'fix', sub:'interface', tx:'Le Wiki (À propos) avait une section vide de tout contenu descriptif sur le jeu actuel — ajout d\'un résumé à jour des fonctionnalités (marché, loyalty, boss mondiaux, Trésor de Velia, Compendium...).'},
+      {t:'fix', sub:'interface', tx:'Le Trésor de Velia était toujours marqué "catégorie TEST"/"expérimental" dans le Wiki alors qu\'il a sa vraie recette de craft depuis un moment — corrigé, avec la recette et la combinaison secrète expliquées.'},
+      {t:'fix', sub:'interface', tx:'Le seuil exact du loot progressif (90% du stuff requis suffit pour un loot à 100%, pas besoin d\'atteindre 100%) et le décalage -15min des horaires du boss Vell par rapport aux horaires réels sont désormais précisés dans le Wiki.'},
+      {t:'fix', sub:'interface', tx:'Le tutoriel du Compendium laissait entendre qu\'une zone "visitée" suffisait pour le bonus — précisé qu\'il faut les 4 objets de la zone (trash, matériau, bijou, craft), pas juste y être passé.'},
+    ], en:[
+      {t:'fix', sub:'graphismes', severity:'major', tx:'The staff crystal and cast-origin effects (introduced in V324) were technically correct but too subtle to notice during play (tiny crystal, 1-3 pixel particles, very brief casts). Crystal enlarged by 60% while casting, wider/more opaque aura with a crisp outline ring, and all burst particles noticeably bigger/more opaque.'},
+      {t:'fix', sub:'interface', tx:'The Wiki (About) had a section with no descriptive content about the current game — added an up-to-date feature summary (market, loyalty, world bosses, Velia Treasure, Compendium...).'},
+      {t:'fix', sub:'interface', tx:'The Velia Treasure was still marked "TEST category"/"experimental" in the Wiki even though it has had a real crafting recipe for a while — fixed, with the recipe and secret combo now explained.'},
+      {t:'fix', sub:'interface', tx:'The exact progressive loot threshold (90% of required gear is enough for 100% loot, no need to reach 100%) and the Vell boss schedule\'s -15min offset from the real schedule are now spelled out in the Wiki.'},
+      {t:'fix', sub:'interface', tx:'The Compendium tutorial implied a "visited" zone was enough for its bonus — clarified that all 4 zone items (trash, material, jewelry, craft) are required, not just passing through.'},
+    ] },
   { v:'V325', d:'18/07/2026 18:00', name:{fr:'Silver/h fiabilisé, coffre agrandissable', en:'Reliable silver/h, resizable chest'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Le compteur silver/h pouvait afficher des pics irréalistes (ex: "1,5M/h") en extrapolant un gros loot ramassé dès les premières secondes de session. Il affiche désormais le rythme réel en silver/MIN, accompagné du meilleur silver/h jamais atteint (record calculé uniquement après 2 minutes de session, jamais sur un coup de chance ponctuel).'},
       {t:'fix', sub:'interface', tx:'Le classement du silver/h reflète maintenant ce même record personnel à vie (comme le record de kills/min), au lieu d\'un instantané de la session en cours au moment de la synchronisation — un record ne redescend jamais.'},

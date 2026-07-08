@@ -125,10 +125,22 @@ function witchBodyOn(g, t, castingSkill) {
   // la teinte du palier au repos (comportement d'origine, inchangé hors cast)
   const glowColor = casting ? castColor : pal.trim;
   const glow = casting ? .85+Math.sin(t*12*jitterMult)*.15 : .4;
+  // "on voit rien des visuel animation du sorcier" (2026-07-08) -- le cristal (diamant ~8px) et
+  // son aura étaient trop discrets pour être perçus pendant un cast (souvent <0.5s) au milieu du
+  // reste du combat -- grossi de 60% + aura plus opaque/plus large + anneau de contour net pendant
+  // le cast, pour que l'identité visuelle par sort (déjà correcte en code, vérifié par diff de
+  // pixels) soit enfin repérable à l'oeil nu, pas seulement en inspectant les pixels.
+  const crystalScale = casting ? 1.6 : 1;
   g.fillStyle=hexToRgba(glowColor, glow);
-  g.beginPath(); g.moveTo(0,-30); g.lineTo(4,-23); g.lineTo(0,-19); g.lineTo(-4,-23); g.closePath(); g.fill();
-  if (casting) { g.fillStyle=hexToRgba(glowColor,.25);
-    g.beginPath(); g.arc(0,-24,9+Math.sin(t*12*jitterMult)*2,0,7); g.fill(); }
+  g.save(); g.translate(0,-24.5); g.scale(crystalScale,crystalScale);
+  g.beginPath(); g.moveTo(0,-5.5); g.lineTo(4,1.5); g.lineTo(0,5.5); g.lineTo(-4,1.5); g.closePath(); g.fill();
+  g.restore();
+  if (casting) {
+    g.fillStyle=hexToRgba(glowColor,.4);
+    g.beginPath(); g.arc(0,-24,13+Math.sin(t*12*jitterMult)*3,0,7); g.fill();
+    g.strokeStyle=hexToRgba(glowColor,.9); g.lineWidth=1.6;
+    g.beginPath(); g.arc(0,-24,6+Math.sin(t*12*jitterMult)*1.5,0,7); g.stroke();
+  }
   g.restore();
   // orbes d'éveil en orbite : uniquement si une pièce d'éveil est équipée (2026-07-08, demande
   // explicite, même esprit que orbPairIconForColor)

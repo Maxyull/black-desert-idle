@@ -711,6 +711,32 @@
     } catch (e) { threw = true; }
     assert('witchBodyOn accepte false et un objet SKILLS sans exception', !threw);
   }
+  // "on voit rien des visuel animation du sorcier" (2026-07-08) -- le rendu idle-vs-cast était
+  // techniquement différent (couleur du cristal) mais visuellement trop discret (~8.5% des pixels
+  // du sprite changeaient). Après agrandissement du cristal/aura, verrouille qu'un cast diffère
+  // du repos sur une portion largement plus visible du sprite -- empêche un futur "correctif" de
+  // rendu de re-réduire silencieusement la taille/opacité sous le seuil perceptible.
+  function testCastVisualDifferenceIsClearlyVisible() {
+    if (typeof witchBodyOn === 'undefined' || typeof SKILLS === 'undefined' || typeof document === 'undefined') return;
+    const canvas = document.createElement('canvas'); canvas.width = 80; canvas.height = 100;
+    const g = canvas.getContext('2d'); if (!g) return;
+    function render(skillOrFalse, t) {
+      g.clearRect(0,0,80,100);
+      g.save(); g.translate(40,70);
+      witchBodyOn(g, t, skillOrFalse);
+      g.restore();
+      return g.getImageData(0,0,80,100).data;
+    }
+    const idle = render(false, 0);
+    const meteor = render(SKILLS.find(s=>s.id==='meteor'), 0.1);
+    let diffCount = 0;
+    for (let i=0;i<idle.length;i+=4) {
+      const d = Math.abs(idle[i]-meteor[i]) + Math.abs(idle[i+1]-meteor[i+1]) + Math.abs(idle[i+2]-meteor[i+2]);
+      if (d > 10) diffCount++;
+    }
+    assert('Le rendu en cast diffère du repos sur au moins 800 pixels (visible, pas juste techniquement présent)',
+      diffCount >= 800, `diffCount=${diffCount}`);
+  }
   // "1M5/h alors que c'est faux" + "le classement... toujours le meilleur affiché" (2026-07-18) --
   // bestSilverPerHour ne doit JAMAIS redescendre (comme bestKpm), et seulement après 2 min de
   // session (jamais sur un pic de tout début de partie) -- garde-fou de régression contre un
@@ -1687,6 +1713,7 @@
     testEverySkillHasDistinctCastIdentity();
     testSpawnCastOriginVfxNeverThrows();
     testWitchBodyOnAcceptsSkillObjectWithoutThrowing();
+    testCastVisualDifferenceIsClearlyVisible();
     testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes();
     testShRateDisplaysPerMinuteNotPerHour();
     testAdminEquipFullTierSetCoversAllFourTiers();

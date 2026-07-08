@@ -1166,7 +1166,7 @@ const WIKI_SECTIONS = [
         <li><b>Pas assez de PA</b> → tes sorts infligent moins de dégâts (jusqu'à -75% si très sous-PA)</li>
         <li><b>Pas assez de PD</b> → tu encaisses beaucoup plus de dégâts (jusqu'à 4,5×), risque de K.O. élevé</li>
         <li>Au-dessus des deux → dégâts et réduction bonus, plafonnés pour éviter le farm abusif</li>
-        <li>Le loot suit le pire des deux ratios : ta pénalité de loot est calculée sur <b>le plus faible</b> de tes 2 ratios (PA effectif / PA requis, PD effectif / PD requis), jamais la moyenne ni le meilleur. Exemple : un PA parfait (ratio 1.5) mais un PD à moitié du requis (ratio 0.5) → ton loot est pénalisé <b>comme si tu étais à 0.5 partout</b>, le PA excédentaire ne compense rien. Pas assez de stuff → loot réduit (jusqu'à -70%) ; stuff adapté OU overstuff → loot toujours normal (100%), plus aucun bonus ni malus au-delà</li>
+        <li>Le loot suit le pire des deux ratios : ta pénalité de loot est calculée sur <b>le plus faible</b> de tes 2 ratios (PA effectif / PA requis, PD effectif / PD requis), jamais la moyenne ni le meilleur. Exemple : un PA parfait (ratio 1.5) mais un PD à moitié du requis (ratio 0.5) → ton loot est pénalisé <b>comme si tu étais à 0.5 partout</b>, le PA excédentaire ne compense rien. En dessous de <b>90%</b> du requis → loot réduit (jusqu'à -70%) ; dès <b>90%</b> du requis (pas besoin d'atteindre 100%) OU overstuff → loot toujours normal (100%), plus aucun bonus ni malus au-delà</li>
         <li><b>ZONE DANGEREUSE</b> (très sous-PA/PD) → tu es ralenti, et les monstres qui t'ont repéré deviennent plus rapides pour te rattraper</li>
       </ul>
       <h3>Mana</h3>
@@ -1178,10 +1178,10 @@ const WIKI_SECTIONS = [
       <h3>Zones groupées par palier de stuff</h3>
       <p>Les 16 zones de Velia sont regroupées par palier d'équipement (Naru/gris, Tuvala/blanc, Yuria/vert, Grunil/bleu — 4 zones chacun) — la couleur de l'en-tête et de la bordure correspond à la couleur du stuff qu'on y trouve, la même que dans l'inventaire.</p>
       <p>Chaque zone garantit une seule pièce d'armure précise (casque/plastron/gants sur les 3 premières zones du palier, bottes sur la 4e) ; côté arme, 3 des 4 zones du palier garantissent chacune un type différent (arme principale/secondaire/éveil, jamais deux fois le même), seule la 2<sup>e</sup> zone du palier n'a aucune arme garantie. Clique l'icône 👁 d'une zone pour voir exactement laquelle.</p>
-      <h3>Trésor de Velia (catégorie TEST)</h3>
-      <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 2 objets collectibles très rares (0,17% et 0,0005% par kill), rangés dans leur propre onglet d'inventaire 🗺️. Encore expérimental : pas de recette ni d'usage pour l'instant.</p>
+      <h3>Trésor de Velia</h3>
+      <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 2 objets collectibles très rares (0,17% et 0,0005% par kill), rangés dans leur propre onglet d'inventaire 🗺️. 100 "Bout du trésor de Velia" se combinent (onglet Assemblage) en 1 "Trésor de Velia" complet, revendable à très haute valeur. Une recette secrète existe aussi (1 Trésor de Velia + 1 de Heidel + 1 de Calpheon → coffret bonus), mais reste hors de portée tant que Heidel/Calpheon ne sont pas débloqués.</p>
       <h3>Boss mondiaux partagés</h3>
-      <p>Le <b>Kzarka</b> du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène. Le <b>Vell</b>, boss hebdomadaire bien plus rare et plus coriace (jeudi 12h00 et dimanche 16h45), fonctionne sur le même principe.</p>
+      <p>Le <b>Kzarka</b> du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène. Le <b>Vell</b>, boss hebdomadaire bien plus rare et plus coriace (jeudi 12h00 et dimanche 16h45 — horaires in-game, soit -15 min par rapport aux horaires réels garmoth.com de 12h15/17h00), fonctionne sur le même principe.</p>
       <h3>Où farmer un socle vide ?</h3>
       <p>Clique un socle d'équipement <b>vide</b> sur la poupée : la ou les zones qui lootent cet objet s'illuminent d'un halo doré dans la liste des zones, et un bouton te téléporte directement dessus. Une zone dangereuse pour ton stuff actuel n'est jamais proposée tant qu'une alternative plus sûre existe.</p>`,
     en:`<h3>AP / DP per zone (like the real game)</h3>
@@ -1190,7 +1190,7 @@ const WIKI_SECTIONS = [
         <li><b>Not enough AP</b> → your spells deal less damage (up to -75%)</li>
         <li><b>Not enough DP</b> → you take a lot more damage (up to 4.5×), high KO risk</li>
         <li>Above both → bonus damage and reduction, capped to prevent overfarming</li>
-        <li>Loot follows the worse of the two ratios: your loot penalty is calculated on <b>whichever is lowest</b> of your 2 ratios (effective AP / required AP, effective DP / required DP), never the average or the best one. Example: perfect AP (ratio 1.5) but DP at half the requirement (ratio 0.5) → your loot is penalized <b>as if you were at 0.5 everywhere</b>, the excess AP compensates for nothing. Not enough gear → reduced loot (up to -70%); adequate gear OR overgeared → loot always normal (100%), no bonus or penalty beyond that</li>
+        <li>Loot follows the worse of the two ratios: your loot penalty is calculated on <b>whichever is lowest</b> of your 2 ratios (effective AP / required AP, effective DP / required DP), never the average or the best one. Example: perfect AP (ratio 1.5) but DP at half the requirement (ratio 0.5) → your loot is penalized <b>as if you were at 0.5 everywhere</b>, the excess AP compensates for nothing. Below <b>90%</b> of the requirement → reduced loot (up to -70%); from <b>90%</b> of the requirement onward (no need to reach 100%) OR overgeared → loot always normal (100%), no bonus or penalty beyond that</li>
         <li><b>DANGEROUS ZONE</b> (very under-AP/DP) → you are slowed down, and monsters that spotted you become faster to catch up</li>
       </ul>
       <h3>Mana</h3>
@@ -1202,10 +1202,10 @@ const WIKI_SECTIONS = [
       <h3>Zones grouped by gear tier</h3>
       <p>The 16 Velia zones are grouped by gear tier (Naru/grey, Tuvala/white, Yuria/green, Grunil/blue — 4 zones each) — the header and border color match the gear color found there, same as in the inventory.</p>
       <p>Every zone guarantees exactly one specific armor piece (helmet/armor/gloves on the tier's first 3 zones, boots on the 4th); for weapons, 3 of the tier's 4 zones each guarantee a different type (main/secondary/awakening, never the same type twice) — only the tier's 2<sup>nd</sup> zone has no guaranteed weapon. Click a zone's 👁 icon to see exactly which one.</p>
-      <h3>Velia Treasure (TEST category)</h3>
-      <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 2 very rare collectibles (0.17% and 0.0005% per kill), stored in their own 🗺️ inventory tab. Still experimental: no recipe or use yet.</p>
+      <h3>Velia Treasure</h3>
+      <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 2 very rare collectibles (0.17% and 0.0005% per kill), stored in their own 🗺️ inventory tab. 100 "Velia Treasure Piece" combine (Assembly tab) into 1 complete "Velia Treasure", sellable for a very high value. A secret recipe also exists (1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → bonus chest), but stays out of reach until Heidel/Calpheon are unlocked.</p>
       <h3>Shared world bosses</h3>
-      <p>The scheduled <b>Kzarka</b> (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena. The <b>Vell</b>, a much rarer and tougher weekly boss (Thursday 12:00pm and Sunday 4:45pm), works the same way.</p>
+      <p>The scheduled <b>Kzarka</b> (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena. The <b>Vell</b>, a much rarer and tougher weekly boss (Thursday 12:00pm and Sunday 4:45pm in-game — 15 minutes earlier than the real garmoth.com schedule of 12:15pm/5:00pm), works the same way.</p>
       <h3>Where to farm an empty slot?</h3>
       <p>Click an <b>empty</b> equipment slot on the paperdoll: the zone(s) that drop that item light up with a gold halo in the zone list, plus a button teleports you there directly. A zone too dangerous for your current gear is never suggested while a safer alternative exists.</p>` },
   { id:'enh', icon:'✦', label:{fr:'Optimisation',en:'Enhancement'},
@@ -1244,10 +1244,19 @@ const WIKI_SECTIONS = [
       <h3>Loyalties & Mailbox</h3>
       <p>You get 200 Loyalties per day in your 📬 Mailbox — they stack there permanently and never get lost.</p>` },
   { id:'about', icon:'ℹ️', label:{fr:'À propos',en:'About'},
-    fr:`<h3>Noms & identité visuelle</h3>
+    // section relue et remise à jour le 2026-07-08 (demande explicite : "wiki = a propos a relire
+    // et modifier selon ce qu'on fait") -- l'ancienne version ne contenait que la mention légale/
+    // crédits, sans jamais décrire ce qu'est devenu le jeu depuis (marché, loyalty, boss Vell,
+    // Trésor de Velia, Compendium...). À maintenir à jour au même titre que les autres sections
+    // Wiki à chaque fonctionnalité majeure (voir mémoire "Mettre à jour Wiki/Succès/Compendium").
+    fr:`<h3>Le jeu en un coup d'œil</h3>
+      <p>Velia Idle est un jeu idle de farm automatique : ton personnage combat, loote et progresse seul dans des zones classées par palier de stuff (Naru/gris → Tuvala/blanc → Yuria/vert → Grunil/bleu), avec enchantement (+1 à PEN), un Compendium de collection à vie, 2 World Bosses partagés (Kzarka quotidien, Vell hebdomadaire), un Marché commun entre joueurs (taxe de vente 35%), un système de Loyalty (200/jour), un Trésor de Velia à assembler, une sauvegarde cloud, un classement et un chat — le tout géré par un backend Supabase.</p>
+      <h3>Noms & identité visuelle</h3>
       <p>Les noms de zones, monstres et objets sont inspirés de Black Desert Online pour l'ambiance, tout comme certains styles de jeu et mécaniques — ils restent, le cas échéant, la propriété de Pearl Abyss. Les icônes et visuels, eux, sont des créations originales de style fan : ils s'inspirent visuellement du jeu mais ne réutilisent aucun asset réel.</p>
       <p>Black Desert ainsi que toutes les images, illustrations, icônes, noms et données du jeu sont la propriété de Pearl Abyss. Projet de fan non officiel et gratuit, sans aucune affiliation ni partenariat avec Pearl Abyss.</p>`,
-    en:`<h3>Names & visual identity</h3>
+    en:`<h3>The game at a glance</h3>
+      <p>Velia Idle is an automatic idle-farming game: your character fights, loots and progresses on its own through zones ranked by gear tier (Naru/grey → Tuvala/white → Yuria/green → Grunil/blue), with enhancement (+1 to PEN), a lifetime-collection Compendium, 2 shared World Bosses (daily Kzarka, weekly Vell), a player-to-player Common Market (35% sales tax), a Loyalty system (200/day), an assemblable Velia Treasure, cloud saves, a leaderboard and chat — all backed by Supabase.</p>
+      <h3>Names & visual identity</h3>
       <p>Zone, monster and item names are inspired by Black Desert Online for atmosphere, as are some game styles and mechanics — these remain, where applicable, the property of Pearl Abyss. Icons and visuals, on the other hand, are original fan-style creations: visually inspired by the game but reusing no real assets.</p>
       <p>Black Desert, along with all in-game images, illustrations, icons, names and data, is the property of Pearl Abyss. Unofficial, free fan project, with no affiliation or partnership with Pearl Abyss.</p>` },
   { id:'tuto', icon:'🔰', label:{fr:'Tutoriel',en:'Tutorial'}, tuto:true },
@@ -1440,7 +1449,7 @@ const TUTORIAL_STEPS = [
 let tutCompTabSaved = 'zones'; // onglet à restaurer en quittant le tutoriel (celui d'avant son lancement)
 const COMPENDIUM_TUTORIAL_STEPS = [
   { title:{fr:'Le Compendium',en:'The Compendium'},
-    text:{fr:'Une collection à vie : chaque zone visitée et chaque World Boss vaincu (au moins une fois) t\'accorde un bonus PERMANENT et ADDITIF (jamais un multiplicateur).', en:'A lifetime collection: every zone visited and every World Boss defeated (at least once) grants you a PERMANENT, ADDITIVE bonus (never a multiplier).'} },
+    text:{fr:'Une collection à vie : chaque zone <b>entièrement collectée</b> (ses 4 objets : trash, matériau, bijou, craft — pas juste visitée) et chaque World Boss vaincu (au moins une fois) t\'accorde un bonus PERMANENT et ADDITIF (jamais un multiplicateur).', en:'A lifetime collection: every zone <b>fully collected</b> (its 4 items: trash, material, jewelry, craft — not just visited) and every World Boss defeated (at least once) grants you a PERMANENT, ADDITIVE bonus (never a multiplier).'} },
   { target:'#infoBody .admStatTiles', placement:'bottom',
     title:{fr:'Ta progression globale',en:'Your overall progress'},
     text:{fr:'+1% Vitesse, +1% Dégâts et +1% Esquive pour chaque zone visitée ou boss vaincu — visible ici en un coup d\'œil.', en:'+1% Speed, +1% Damage and +1% Dodge for every zone visited or boss defeated — visible here at a glance.'} },
@@ -1453,7 +1462,7 @@ const COMPENDIUM_TUTORIAL_STEPS = [
     before: () => { tutCompTabSaved = compendiumTab; compendiumTab = 'zones'; openCompendium(); } },
   { target:'#infoBody .compZoneRow', placement:'top',
     title:{fr:'Une zone, ses objets',en:'A zone, its items'},
-    text:{fr:'✓ = objet déjà obtenu au moins une fois. Clique sur un objet pour voir quelles zones le font dropper, puis clique une zone pour y lancer le farm directement (téléportation immédiate, sans confirmation).', en:'✓ = item already obtained at least once. Click an item to see which zones drop it, then click a zone to start farming there right away (instant teleport, no confirmation).'},
+    text:{fr:'✓ = objet déjà obtenu au moins une fois. Il faut les 4 ✓ de la zone (trash, matériau, bijou, craft) pour toucher son bonus. Clique sur un objet pour voir quelles zones le font dropper, puis clique une zone pour y lancer le farm directement (téléportation immédiate, sans confirmation).', en:'✓ = item already obtained at least once. You need all 4 ✓ for that zone (trash, material, jewelry, craft) to earn its bonus. Click an item to see which zones drop it, then click a zone to start farming there right away (instant teleport, no confirmation).'},
     before: () => { compendiumTab = 'zones'; openCompendium(); } },
   { target:'#infoBody .compPenGrid', placement:'top', final:true,
     title:{fr:'Maîtrise PEN',en:'PEN Mastery'},
