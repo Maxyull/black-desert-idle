@@ -36,17 +36,23 @@ rentables — la boucle centrale du jeu.
 
 ## Stack technique
 
-Aucune dépendance, aucun build : HTML/CSS/JS vanilla + Canvas 2D, déployé tel quel sur GitHub Pages.
+HTML/CSS/JS vanilla + Canvas 2D, aucune dépendance runtime. Un petit script Python local
+regroupe le code en un seul bundle avant chaque déploiement — pas de Node/npm/webpack.
 
-- `index.html` — structure de la page, charge tous les scripts dans un ordre précis (voir
-  commentaires dans le fichier)
-- `styles/styles.css` — toute la mise en forme
-- Code JS organisé par domaine, chacun avec son propre `README.md` détaillant son rôle :
-  `core/` (état, boucle, HUD, combat), `classes/` (personnages jouables), `world/` (zones,
-  paliers, rendu de scène), `combat/` (boss, loot, potions, IA), `inventory/` (équipement,
-  enchantement), `progression/` (succès, quêtes, courrier, compendium), `market/` (marché
-  commun), `social/` (chat), `admin/` (outils admin), `backend/` (Supabase), `meta/` (patch
-  notes), `tests/` (régression)
+- `index.html` — production, servi tel quel par GitHub Pages : charge un seul bundle généré
+  (`build/source.js`)
+- `index.dev.html` — développement : charge chaque fichier individuellement (+ les tests),
+  utilisé pour coder et tester
+- `scripts/build.py` — génère `build/source.js` (concaténation + retrait des commentaires)
+  et réécrit `index.html` à partir de `index.dev.html`
+- `src/styles/styles.css` — toute la mise en forme
+- Code JS organisé par domaine sous `src/`, chacun avec son propre `README.md` détaillant son
+  rôle : `core/` (état, boucle, HUD, combat), `classes/` (personnages jouables), `world/`
+  (zones, paliers, rendu de scène), `combat/` (boss, loot, potions, IA), `inventory/`
+  (équipement, enchantement), `progression/` (succès, quêtes, courrier, compendium),
+  `market/` (marché commun), `social/` (chat), `admin/` (outils admin), `backend/` (Supabase)
+- `meta/` (patch notes) et `tests/` (régression) restent hors de `src/` — jamais inclus dans
+  le bundle de production
 - Backend [Supabase](https://supabase.com) (Postgres + Auth + Edge Functions) pour tout ce qui est
   multijoueur ; migrations SQL suivies dans `supabase/migrations/`.
 

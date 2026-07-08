@@ -81,7 +81,8 @@ async function flushSilverLedger() {
 setInterval(flushSilverLedger, 25000);
 window.addEventListener('beforeunload', flushSilverLedger);
 
-const $a = id => document.getElementById(id);
+// $a est desormais declare dans game-core.js (evite un piege de zone morte temporelle une fois
+// le jeu regroupe en un seul fichier -- voir le commentaire a cote de sa declaration)
 
 function authShow(msg, isError) {
   $a('authError').textContent = isError ? msg : '';
@@ -662,7 +663,8 @@ async function heartbeatPresence() {
 // joueurs dans la ville a droite a la place du loot ticker") -- pseudos VISIBLES pour cette zone
 // sociale précisément (confirmé explicitement par l'utilisateur), contrairement au reste du jeu
 // (zonePlayerCounts, agrégé seulement). Affiché par updateVeliaPlayersTicker() (game-core.js).
-let veliaPlayers = [];
+// veliaPlayers est declare dans game-core.js (evite un piege de zone morte temporelle une fois
+// le jeu regroupe en un seul fichier -- voir le commentaire juste avant buildZoneList())
 async function refreshVeliaPlayers() {
   if (!sb || !atVelia) return;
   try {
@@ -675,7 +677,8 @@ async function refreshVeliaPlayers() {
 // combien de joueurs sont actuellement dans chaque zone de farm (demande explicite du 2026-07-06)
 // -- affiché dans #zoneList (voir buildZoneList dans game-core.js), rafraîchi au même rythme que
 // le heartbeat pour rester à jour sans spammer le serveur
-let zonePlayerCounts = {};
+// zonePlayerCounts est declare dans game-core.js (evite un piege de zone morte temporelle une
+// fois le jeu regroupe en un seul fichier -- voir le commentaire juste avant buildZoneList())
 async function refreshZonePlayerCounts() {
   if (!sb) return;
   try {
@@ -692,7 +695,8 @@ async function refreshZonePlayerCounts() {
 // (nouvelle fonction serveur, voir migration 20260716120000) renvoie l'index de zone où se trouve
 // le SEUL compte admin (ou null), sans exposer l'identité d'aucun autre joueur -- même rafraîchi
 // que zonePlayerCounts, ne reconstruit la liste de zones QUE si la valeur a changé.
-let adminZoneIdx = null;
+// adminZoneIdx est declare dans game-core.js (evite un piege de zone morte temporelle une fois
+// le jeu regroupe en un seul fichier -- voir le commentaire juste avant buildZoneList())
 async function refreshAdminZone() {
   if (!sb) return;
   try {
@@ -1576,9 +1580,10 @@ $a('tutPrevBtn').onclick = () => {
 // ---------- suivi des patch notes lus ----------
 // principe demandé : le tag NEW reste visible pendant TOUTE la session en cours (même après
 // avoir défilé dessus), et n'est retiré définitivement qu'à la fermeture de l'onglet — pas avant.
-let readPatches = new Set();          // patchs déjà lus lors de sessions PRÉCÉDENTES (persisté)
-try { readPatches = new Set(JSON.parse(localStorage.getItem('velia-patch-read') || '[]')); } catch(e) {}
-let seenThisSession = new Set();      // patchs vus pendant CETTE session (pas encore persistés)
+// readPatches/seenThisSession sont déclarés dans game-core.js (évite un piège de zone morte
+// temporelle une fois le jeu regroupé en un seul fichier -- unreadPatchCount() les lit dès le
+// tout premier hud() synchrone au démarrage, avant que CE fichier n'ait fini de charger -- voir
+// le commentaire juste avant buildZoneList() dans game-core.js).
 // index (dans PATCH_NOTES, 0 = le plus récent) du début de la page actuellement affichée
 // (2026-07-11, demande explicite : "enleve le scroll... met un bouton vers le haut/vers le bas")
 // -- persisté par joueur, remplace l'ancien "velia-patch-scroll" (position de pixels).

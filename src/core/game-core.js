@@ -3,6 +3,12 @@ const cv = document.getElementById('cv');
 const ctx = cv.getContext('2d');
 const W = cv.width, H = cv.height;
 const $ = id => document.getElementById(id);
+// $a est un alias identique de $ (historiquement introduit dans game-supabase.js) -- declare ICI
+// desormais (pas dans game-supabase.js) pour eviter un piege de zone morte temporelle une fois le
+// jeu regroupe en un seul fichier : des fonctions chargees AVANT game-supabase.js (ex: boss.js,
+// tickBossPanelCountdown -> setInterval au chargement) y accedent avant que sa ligne `const $a = `
+// (dans game-supabase.js) ne soit atteinte.
+const $a = id => document.getElementById(id);
 // le canvas a une résolution interne FIXE (1240×440, voir <canvas>) que le CSS (width:100%) réduit
 // pour tenir dans un téléphone — tout texte dessiné dessus (floatTxt : gains de loot/XP, dégâts...)
 // rétrécit donc dans les mêmes proportions et devient minuscule sur mobile (2026-07-05, demande
@@ -1131,6 +1137,25 @@ function renderZoneTierTabs() {
     btn.onclick = () => { zoneTier = btn.dataset.tier; buildZoneList(); };
   });
 }
+// zonePlayerCounts/adminZoneIdx/veliaPlayers : alimentes par game-supabase.js (heartbeat), mais
+// LUS ici des le tout premier hud() synchrone au demarrage (buildZoneList/updateVeliaPlayersTicker)
+// -- declares ICI (pas dans game-supabase.js) pour eviter une erreur de zone morte temporelle
+// (TDZ) une fois le jeu regroupe en un seul fichier (build/source.js) : un simple
+// "typeof zonePlayerCounts !== 'undefined'" protege bien contre un fichier separe PAS ENCORE
+// charge, mais PAS contre un `let` du MEME script pas encore atteint dans l'ordre d'execution
+// (bug reel constate le 2026-07-08 lors de la mise en place du build : zonePlayerCounts/
+// adminZoneIdx etaient declares dans game-supabase.js, qui charge apres game-core.js -- une fois
+// bundles en un seul <script>, y accéder avant la ligne `let zonePlayerCounts = {}` levait
+// "Cannot access before initialization" au lieu de simplement etre absent, gelant le jeu comme
+// le bug V317 witchBodyOn).
+let zonePlayerCounts = {};
+let adminZoneIdx = null;
+let veliaPlayers = [];
+// readPatches/seenThisSession : meme raison (unreadPatchCount(), lu par updatePatchBadge() ->
+// hud() des le demarrage, mais defini a l'origine dans game-supabase.js qui charge apres)
+let readPatches = new Set();
+try { readPatches = new Set(JSON.parse(localStorage.getItem('velia-patch-read') || '[]')); } catch(e) {}
+let seenThisSession = new Set();
 function buildZoneList() {
   renderZoneTierTabs();
   const list = $('zoneList');
