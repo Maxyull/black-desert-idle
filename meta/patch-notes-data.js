@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V317', d:'08/07/2026 10:11', name:{fr:'Fix critique : le jeu pouvait rester gelé au chargement', en:'Critical fix: the game could freeze on load'}, fr:[
+      {t:'fix', sub:'systeme', severity:'major', tx:'Correctif d\'une régression introduite lors d\'une réorganisation technique du code : dans certains cas, le personnage ne s\'affichait pas et toute la boucle de jeu (combat, loot, sauvegarde automatique) restait gelée dès le chargement de la page. Un simple rechargement ne suffisait pas à s\'en sortir tant que le correctif n\'était pas en place.'},
+    ], en:[
+      {t:'fix', sub:'systeme', severity:'major', tx:'Fixed a regression introduced during a technical code reorganization: in some cases the character wouldn\'t render and the entire game loop (combat, loot, auto-save) stayed frozen right from page load. A simple reload wasn\'t enough to recover until this fix landed.'},
+    ] },
   { v:'V316', d:'08/07/2026 10:00', name:{fr:'Le jeu s\'appelle désormais "Black Desert Idle"', en:'The game is now called "Black Desert Idle"'}, fr:[
       {t:'change', sub:'systeme', tx:'Renommage du jeu : "Velia Idle" devient "Black Desert Idle" (titre de la page, écran de connexion, pied de page en jeu, notes de version). Aucun impact sur ta progression, ta sauvegarde ou tes préférences.'},
     ], en:[
