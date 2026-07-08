@@ -4,3 +4,6 @@ ancienne version/
 
 # fichiers d'environnement/outils locaux
 .claude/
+
+# instructions Claude Code locales (contexte pour l'assistant, pas pour le repo public)
+CLAUDE.md
