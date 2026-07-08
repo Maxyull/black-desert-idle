@@ -620,6 +620,20 @@ async function openAdminPanel() {
         </div>
         <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels). Le boss disparaît de toute façon au bout de 9 minutes.':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation). The boss despawns after 9 minutes regardless.'}</div>
       </div>
+      <!-- fermeture d'urgence du marché + annulation en masse (2026-07-16, demande explicite :
+           "Annuler toute ordre au marché les rendre au joueurs. bloquer l'acces au marché laisse
+           lacces a admin") -- get_market_open()/admin_set_market_open()/admin_cancel_all_market_orders(),
+           voir la migration market_lockdown_and_cancel_all. L'admin garde toujours l'accès au
+           marché même quand il est "fermé" pour les autres (voir market_place_order côté serveur). -->
+      <div class="admSection riskGlobal">
+        <div class="admSectionTitle">🏛️ ${LANG==='fr'?'Marché':'Market'}</div>
+        <div class="admSectionSub">⚠️ ${LANG==='fr'?'Ferme l\'accès au Marché pour TOUT LE MONDE sauf toi ; l\'annulation rembourse chaque ordre ouvert (silver ou objet) à son propriétaire.':'Closes Market access for EVERYONE except you; cancelling refunds every open order (silver or item) to its owner.'}</div>
+        <div class="admActions">
+          <button id="btnMarketToggle">${LANG==='fr'?'Chargement…':'Loading…'}</button>
+          <button id="btnMarketCancelAll" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Annuler tous les ordres ouverts':'Cancel all open orders'}</button>
+        </div>
+        <div id="admMarketStatus" class="admHint"></div>
+      </div>
     </div>
 `;
   const statsTopPane = `<div class="admTopPane" data-top="stats" style="display:none"><div class="catTabs">${tabsHtml}</div>${panesHtml}</div>`;
@@ -712,6 +726,41 @@ async function openAdminPanel() {
     const { error } = await sb.rpc('admin_despawn_boss');
     if (!error) { await refreshLiveBoss(); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a fait disparaître le boss mondial`, 0x9cc9e8); }
     floatTxt(P.x, P.y, 100, !error ? (LANG==='fr'?'Boss disparu ✓':'Boss despawned ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+  };
+  // --- marché : toggle ouvert/fermé + annulation en masse ---
+  async function refreshMarketAdminStatus() {
+    const btn = $a('btnMarketToggle'); if (!btn) return;
+    const { data } = await sb.rpc('get_market_open');
+    const open = data !== false;
+    btn.textContent = open
+      ? (LANG==='fr'?'🔓 Marché ouvert (clique pour fermer)':'🔓 Market open (click to close)')
+      : (LANG==='fr'?'🔒 Marché fermé (clique pour rouvrir)':'🔒 Market closed (click to reopen)');
+    btn.style.borderColor = open ? '' : 'var(--danger)';
+    btn.style.color = open ? '' : '#e8a89f';
+  }
+  refreshMarketAdminStatus();
+  $a('btnMarketToggle').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    const { data } = await sb.rpc('get_market_open');
+    const nextOpen = data === false;
+    const { error } = await sb.rpc('admin_set_market_open', { p_open: nextOpen });
+    if (!error) {
+      logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ${nextOpen?'rouvert':'fermé'} le Marché`, 0x9cc9e8);
+      await refreshMarketAdminStatus();
+    }
+    floatTxt(P.x, P.y, 100, !error ? (nextOpen?(LANG==='fr'?'Marché rouvert ✓':'Market reopened ✓'):(LANG==='fr'?'Marché fermé ✓':'Market closed ✓')) : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+  };
+  $a('btnMarketCancelAll').onclick = async () => {
+    if (!isAdmin() || !sb) return;
+    if (!confirm(LANG==='fr'
+      ? '💥 Annuler TOUS les ordres ouverts du Marché ? Chaque ordre sera remboursé (silver ou objet) à son propriétaire. Irréversible.'
+      : '💥 Cancel ALL open Market orders? Each order will be refunded (silver or item) to its owner. Irreversible.')) return;
+    const { data, error } = await sb.rpc('admin_cancel_all_market_orders');
+    if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a annulé ${data} ordre(s) de marché (remboursés)`, 0xc05545);
+    const msg = error ? (LANG==='fr'?'Échec — '+error.message:'Failed — '+error.message)
+      : (LANG==='fr'?`${data} ordre(s) annulé(s) et remboursé(s) ✓`:`${data} order(s) cancelled and refunded ✓`);
+    $a('admMarketStatus').textContent = msg;
+    floatTxt(P.x, P.y, 100, msg, { gold:!error, hurt:!!error });
   };
   // --- modérateurs ---
   $a('btnAddRole').onclick = async () => {
