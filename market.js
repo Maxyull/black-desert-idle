@@ -55,20 +55,16 @@ const MARKET_MATERIALS = [
   { name:'Pierre concentrée',  icon:ICO_MAT_CONCENTREE, color:'#6ea3c9' },
   { name:'Pierre de Caphras',  icon:ICO_MAT_CAPHRAS,    color:'#c9a55a' },
 ];
-// clé de marché pour l'équipement/bijoux : regroupée par nom + niveau d'enchantement (comme le
-// vrai marché BDO), puisque chaque pièce a par ailleurs des PA/PD quasi identiques pour un même nom
-function marketKeyForGear(it) { return 'gear:' + it.name + '+' + (it.enhLv || 0); }
-
 async function refreshCommonMarket() {
   wireCmSubTabs();
   refreshCmBrowse();
-  refreshCmSellPicker();
   refreshMyMarketOrders();
   initMarketMaterials();
 }
 // sous-onglets du marché commun : Parcourir (vitrine, façon référence fournie le 2026-07-07) /
-// Vendre / Mes ordres
-const CM_TAB_PANES = { browse:'cmPaneBrowse', sell:'cmPaneSell', materials:'cmPaneMaterials', orders:'cmPaneOrders' };
+// Matériaux / Mes ordres -- "Vendre" (vente d'1 pièce de gear/bijou à prix fixe) retiré (2026-07-08,
+// demande explicite : "enleve vendre")
+const CM_TAB_PANES = { browse:'cmPaneBrowse', materials:'cmPaneMaterials', orders:'cmPaneOrders' };
 function wireCmSubTabs() {
   document.querySelectorAll('.cmSubTab').forEach(btn => {
     btn.onclick = () => {
@@ -463,23 +459,6 @@ async function placeMarketOrder(side, key, name, kind, priceStr, qtyStr, invInde
   await loadCloudSave();
   refreshCommonMarket();
 }
-// picker "vendre un objet de mon sac" : équipement/bijoux NON équipés uniquement (les matériaux se
-// vendent depuis la ligne du catalogue ci-dessus, pas ici)
-function refreshCmSellPicker() {
-  const sel = $a('cmSellItemSelect'); if (!sel) return;
-  const items = INV.map((s,i) => ({ s, i })).filter(x => x.s && (x.s.kind === 'gear' || x.s.kind === 'jackpot') && !x.s.equipped);
-  sel.innerHTML = items.length
-    ? items.map(x => `<option value="${x.i}">${tr(x.s.name)}${x.s.enhLv?' '+ENH_NAMES[x.s.enhLv]:''}</option>`).join('')
-    : `<option value="">${LANG==='fr'?'(Rien à vendre)':'(Nothing to sell)'}</option>`;
-}
-$a('btnCmListItem').onclick = () => {
-  const sel = $a('cmSellItemSelect');
-  const idx = Number(sel.value);
-  if (Number.isNaN(idx) || sel.value === '') return;
-  const it = INV[idx]; if (!it) return;
-  const price = $a('cmSellPriceInput').value;
-  placeMarketOrder('sell', marketKeyForGear(it), it.name, it.kind, price, 1, idx);
-};
 // mes ordres ouverts (achat + vente), avec bouton annuler qui rend le silver/objet bloqué
 async function refreshMyMarketOrders() {
   const box = $a('cmMyOrders'); if (!box) return;

@@ -1101,11 +1101,19 @@
   }
   #marketOverlay.open { display:flex; }
   #marketBox {
-    width:640px; max-width:94vw; max-height:80vh; display:flex; flex-direction:column;
+    /* hauteur FIXE, pas max-height (2026-07-08, demande explicite : "aucun choix ne dois faire
+       change la taille de la page") -- avant, la boîte rétrécissait/grandissait selon le contenu
+       du sous-onglet ou de l'item choisi (ex: "Aucun ordre" très court vs carnet+chandelier+
+       historique bien plus haut), donnant l'impression que la page "saute" à chaque clic. Hauteur
+       constante désormais, chaque sous-onglet défile en interne (voir .marketPane overflow-y). */
+    width:640px; max-width:94vw; height:80vh; display:flex; flex-direction:column;
     background:var(--panel); border:1px solid var(--gold-dim); box-shadow:0 20px 60px rgba(0,0,0,.7);
   }
   #marketHead {
-    display:flex; align-items:center; gap:14px; padding:12px 16px;
+    /* croix de fermeture à droite (2026-07-08, demande explicite : "met la croix de fermeture a
+       droite") -- avant, sans justify-content, le bouton flottait juste après le titre au lieu
+       d'être plaqué au bord droit du panneau. */
+    display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 16px;
     background:linear-gradient(180deg,#26313a,#1b232a); border-bottom:1px solid var(--gold-dim);
   }
   #marketHead h2 { font-size:15px; letter-spacing:1px; margin:0; }
