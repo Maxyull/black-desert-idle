@@ -641,6 +641,10 @@ document.querySelectorAll('#lootPanelTabs .lootPanelTab').forEach(btn => {
     $('lootPanelLootPane').style.display = panel === 'loot' ? '' : 'none';
     $('lootPanelChestPane').style.display = panel === 'chest' ? '' : 'none';
     if (panel === 'chest') renderVeliaChest();
+    // "borne la taille de la fiche coffre a une taille standard par rapport au autre" (2026-07-08)
+    // -- #veliaChestGrid n'est mesurable par syncFarmCardHeights() (core/game-core.js) que quand cet
+    // onglet vient de devenir visible (sinon hauteur 0) -- recalculé à chaque bascule Loot/Coffre.
+    if (typeof syncFarmCardHeights === 'function') syncFarmCardHeights();
   };
 });
 $('btnChestZoom').onclick = () => { chestZoomed = !chestZoomed; renderVeliaChest(); };

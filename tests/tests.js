@@ -549,6 +549,57 @@
       assert('Le badge n\'a pas de style inline qui casserait la convention visuelle', lock && !lock.getAttribute('style'));
     }
   }
+  // "toute item identique et quelque soit leurs provenance (meme nom) doit tenir sur un seul
+  // stack" (2026-07-08) -- invAdd() stackait par `key` (identifiant technique de provenance), pas
+  // par `name` (ce que le joueur voit). 2 objets de provenances différentes mais de même nom
+  // doivent fusionner dans le même stack, jamais en créer un second.
+  function testInvAddStacksByNameRegardlessOfKey() {
+    const freeIdx = INV.findIndex(s => s === null);
+    if (freeIdx === -1) return; // sac plein, non testable ici
+    const saved = INV[freeIdx];
+    INV[freeIdx] = { key:'mat_provenance_A', name:'Test Stack Par Nom', kind:'material', qty:5, stackable:true, weight:0.1, val:1 };
+    const ok = invAdd({ key:'mat_provenance_B_totalement_differente', name:'Test Stack Par Nom', kind:'material', qty:3, stackable:true, weight:0.1, val:1 });
+    assert('invAdd() réussit malgré une clé technique différente', ok === true);
+    assert('Les 2 provenances fusionnent en un seul stack (5+3=8)', INV[freeIdx] && INV[freeIdx].qty === 8, `qty=${INV[freeIdx] && INV[freeIdx].qty}`);
+    assert('Aucun second stack créé pour ce nom', INV.filter(s => s && s.name === 'Test Stack Par Nom').length === 1);
+    INV[freeIdx] = saved;
+  }
+  // "boss vaincu, on change la barre de vie et on ecris vaincu jusqu'au moment ou il aurai du
+  // despawn" (2026-07-08) -- le lobby (avant même d'entrer en combat) doit montrer une VRAIE barre
+  // de vie pour un boss partagé, à 0%/grisée avec "VAINCU" tant que la fenêtre de combat reste
+  // ouverte (occ.live), pas seulement le texte déjà existant.
+  function testBossLobbyShowsHpBarWhenAlreadyDefeated() {
+    if (typeof renderBossLobbyHtml !== 'function') return;
+    const savedLiveBoss = liveBoss;
+    liveBoss = { boss:'kzarka', time: Date.now()-1000, expires: Date.now()+5*60*1000, hp:0, maxHp:50000 };
+    const div = document.createElement('div'); div.innerHTML = renderBossLobbyHtml();
+    const bar = div.querySelector('.bossNextHpBar'), txt = div.querySelector('.bossNextHpTxt');
+    assert('Une barre de vie est bien présente dans le lobby', !!bar);
+    assert('La barre est à 0% (boss déjà vaincu)', bar && bar.style.width === '0%', `width=${bar && bar.style.width}`);
+    assert('La barre porte la classe "dead"', bar && bar.classList.contains('dead'));
+    assert('Le texte affiche "VAINCU"/"DEFEATED"', txt && /VAINCU|DEFEATED/.test(txt.textContent), `texte=${txt && txt.textContent}`);
+    liveBoss = { boss:'kzarka', time: Date.now()-1000, expires: Date.now()+5*60*1000, hp:25000, maxHp:50000 };
+    const div2 = document.createElement('div'); div2.innerHTML = renderBossLobbyHtml();
+    const bar2 = div2.querySelector('.bossNextHpBar');
+    assert('Boss encore en vie : la barre reflète le vrai %PV (50%)', bar2 && bar2.style.width === '50%', `width=${bar2 && bar2.style.width}`);
+    assert('Boss encore en vie : pas de classe "dead"', bar2 && !bar2.classList.contains('dead'));
+    liveBoss = savedLiveBoss;
+  }
+  // "borne la taille de la fiche coffre a une taille standard par rapport au autre" (2026-07-08) --
+  // #veliaChestGrid doit suivre le MÊME mécanisme de synchro de hauteur que zoneList/lootTable
+  // (syncFarmCardHeights, core/game-core.js), pas un max-height fixe indépendant des cartes voisines.
+  function testChestGridFollowsSameHeightSyncAsSiblingCards() {
+    if (typeof syncFarmCardHeights !== 'function' || !$('veliaChestGrid') || !$('lootPanelTabs')) return;
+    const chestTab = $('lootPanelTabs').querySelector('.lootPanelTab[data-panel="chest"]');
+    const lootTab = $('lootPanelTabs').querySelector('.lootPanelTab[data-panel="loot"]');
+    if (!chestTab || !lootTab) return;
+    chestTab.click();
+    const chestMax = parseFloat($('veliaChestGrid').style.maxHeight);
+    lootTab.click();
+    const lootMax = parseFloat($('lootTable').style.maxHeight);
+    assert('Le coffre reçoit un max-height calculé dynamiquement (pas le fixe 260px)', chestMax > 0 && chestMax !== 260, `chestMax=${chestMax}`);
+    assert('Le coffre et la table de loot suivent la même échelle (même carte statsCard de référence)', Math.abs(chestMax - lootMax) < 60, `chestMax=${chestMax} lootMax=${lootMax}`);
+  }
   // "l'anneau de yuria ne fournit pas les bonus +1 +2 dans la liste lors de l'opti automatique"
   // (2026-07-12) -- optAutoGainPrimaryPart() ne testait que WEAPON_SLOTS (PA) vs le reste (PD),
   // oubliant que les bijoux (JEWELRY_SLOTS) donnent de la PA eux aussi (jamais de PD) : le delta
@@ -1957,6 +2008,9 @@
     testLeaveBossResultToZoneReturnsToFarm();
     testPenMasteryListIncludesAllGearAndIsOrderedByTier();
     testChestLockedCellsUseBadgeConvention();
+    testInvAddStacksByNameRegardlessOfKey();
+    testBossLobbyShowsHpBarWhenAlreadyDefeated();
+    testChestGridFollowsSameHeightSyncAsSiblingCards();
     testJewelryShowsGainInAutoOptList();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();

@@ -267,8 +267,16 @@ function invUsed() { return INV.filter(s => s).length; }
 
 // ajoute un objet à l'inventaire (stack si possible). retourne false si plein.
 function invAdd(obj) {
+  // "toute item identique et quelque soit leurs provenance (meme nom) doit tenir sur un seul
+  // stack" (2026-07-08) -- avant, le stack était choisi par `key` (identifiant technique de la
+  // source du drop), pas par `name` (ce que le joueur voit réellement). Deux objets AFFICHÉS de
+  // façon identique pouvaient donc finir dans 2 stacks séparés si leur clé technique différait
+  // (générée différemment selon la provenance) -- aucune raison valable pour un objet stackable
+  // (matériau/craft/trash/trésor : jamais d'état individuel comme un enhLv à préserver par copie,
+  // contrairement au gear/bijoux qui restent stackable:false). Le nom est désormais la seule clé
+  // de fusion pour un stack, quelle que soit la provenance de l'objet.
   if (obj.stackable) {
-    const slot = INV.find(s => s && s.key === obj.key && s.qty < MAX_STACK);
+    const slot = INV.find(s => s && s.stackable && s.name === obj.name && s.qty < MAX_STACK);
     if (slot) { slot.qty += obj.qty; enforceTreasureStackCap(slot); return true; }
   }
   const idx = INV.findIndex(s => s === null);
@@ -1635,10 +1643,19 @@ function syncFarmCardHeights() {
   if (!statsCard) return;
   const targetH = statsCard.getBoundingClientRect().height;
   if (targetH < 50) return; // pas encore mis en page (ex: juste après le chargement)
-  [['zonesCard','zoneList'], ['lootCard','lootTable']].forEach(([cardId, listId]) => {
+  // coffre de ville (2026-07-08, demande explicite : "borne la taille de la fiche coffre a une
+  // taille standard par rapport au autre") -- vivait avec un max-height fixe (260px, sans rapport
+  // avec la hauteur réelle des cartes voisines) au lieu de suivre ce même mécanisme de synchro que
+  // zoneList/lootTable. #veliaChestGrid partage la carte #lootCard avec #lootTable (2 onglets
+  // mutuellement exclusifs, voir le bascule Loot/Coffre dans inventory-ui.js) -- son overhead n'est
+  // mesurable correctement que quand cet onglet est réellement visible (sinon hauteur 0, display:
+  // none), d'où le rappel explicite de syncFarmCardHeights() au moment du clic sur l'onglet Coffre.
+  [['zonesCard','zoneList'], ['lootCard','lootTable'], ['lootCard','veliaChestGrid']].forEach(([cardId, listId]) => {
     const card = $(cardId), list = $(listId);
     if (!card || !list) return;
-    const overhead = card.getBoundingClientRect().height - list.getBoundingClientRect().height; // en-tête/onglets/marges
+    const listH = list.getBoundingClientRect().height;
+    if (listH === 0) return; // onglet masqué (ex: Coffre pendant que Loot est affiché) -- pas mesurable maintenant, sera recalculé quand cet onglet redevient visible
+    const overhead = card.getBoundingClientRect().height - listH; // en-tête/onglets/marges
     const newListH = Math.max(80, Math.round(targetH - overhead));
     list.style.maxHeight = newListH + 'px';
   });

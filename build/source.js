@@ -725,8 +725,9 @@ const MAX_WEIGHT = () => 800;
 function invUsed() { return INV.filter(s => s).length; }
 
 function invAdd(obj) {
+  
   if (obj.stackable) {
-    const slot = INV.find(s => s && s.key === obj.key && s.qty < MAX_STACK);
+    const slot = INV.find(s => s && s.stackable && s.name === obj.name && s.qty < MAX_STACK);
     if (slot) { slot.qty += obj.qty; enforceTreasureStackCap(slot); return true; }
   }
   const idx = INV.findIndex(s => s === null);
@@ -1726,10 +1727,13 @@ function syncFarmCardHeights() {
   if (!statsCard) return;
   const targetH = statsCard.getBoundingClientRect().height;
   if (targetH < 50) return; 
-  [['zonesCard','zoneList'], ['lootCard','lootTable']].forEach(([cardId, listId]) => {
+  
+  [['zonesCard','zoneList'], ['lootCard','lootTable'], ['lootCard','veliaChestGrid']].forEach(([cardId, listId]) => {
     const card = $(cardId), list = $(listId);
     if (!card || !list) return;
-    const overhead = card.getBoundingClientRect().height - list.getBoundingClientRect().height; 
+    const listH = list.getBoundingClientRect().height;
+    if (listH === 0) return; 
+    const overhead = card.getBoundingClientRect().height - listH; 
     const newListH = Math.max(80, Math.round(targetH - overhead));
     list.style.maxHeight = newListH + 'px';
   });
@@ -3669,11 +3673,20 @@ function renderBossLobbyHtml() {
       ? `<div class="bossNextCountdown live">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : (LANG==='fr'?'EN COURS':'LIVE')}</div>`
       : `<div class="bossNextCountdown" id="bossPanelCountdown">${fmtBossCountdown(occ.time - now)}</div>`;
     const when = new Date(occ.time).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', hour:'2-digit', minute:'2-digit' });
+    
+    const hpBarHtml = (occ.live && occ.sharedHp && typeof occ.hp === 'number' && occ.maxHp > 0)
+      ? (() => {
+          const pct = Math.max(0, Math.min(100, occ.hp/occ.maxHp*100));
+          return `<div class="bossNextHpWrap"><div class="bossNextHpBar${alreadyDead?' dead':''}" style="width:${pct}%"></div>` +
+            `<span class="bossNextHpTxt">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : pct.toFixed(1)+'%'}</span></div>`;
+        })()
+      : '';
     nextHtml = `<div class="bossNext">
       <div class="bossNextIcon">${b.icon}</div>
       <div class="bossNextInfo">
         <div class="bossNextName">${b.name[LANG]}</div>
         <div class="bossNextTime">${alreadyDead ? (LANG==='fr'?'Déjà vaincu par d\'autres joueurs':'Already defeated by other players') : occ.live ? (LANG==='fr'?'Disponible maintenant !':'Available now!') : when}</div>
+        ${hpBarHtml}
       </div>
       ${cd}
     </div>` +
@@ -5096,6 +5109,8 @@ document.querySelectorAll('#lootPanelTabs .lootPanelTab').forEach(btn => {
     $('lootPanelLootPane').style.display = panel === 'loot' ? '' : 'none';
     $('lootPanelChestPane').style.display = panel === 'chest' ? '' : 'none';
     if (panel === 'chest') renderVeliaChest();
+    
+    if (typeof syncFarmCardHeights === 'function') syncFarmCardHeights();
   };
 });
 $('btnChestZoom').onclick = () => { chestZoomed = !chestZoomed; renderVeliaChest(); };

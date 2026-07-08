@@ -277,11 +277,24 @@ function renderBossLobbyHtml() {
       ? `<div class="bossNextCountdown live">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : (LANG==='fr'?'EN COURS':'LIVE')}</div>`
       : `<div class="bossNextCountdown" id="bossPanelCountdown">${fmtBossCountdown(occ.time - now)}</div>`;
     const when = new Date(occ.time).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', hour:'2-digit', minute:'2-digit' });
+    // "boss vaincu, on change la barre de vie et on ecris vaincu jusqu'au moment ou il aurait du
+    // despawn" (2026-07-08) -- avant, seul le texte "VAINCU"/"Déjà vaincu..." existait dans le
+    // lobby, sans aucune barre de vie (contrairement à l'arène, #bossHpBar). Ajoute une VRAIE barre
+    // ici, à 0% et grisée/rouge tant que alreadyDead, visible tant que occ.live (donc jusqu'à
+    // BOSS_WINDOW_MS après le spawn, le moment exact où il aurait normalement despawn).
+    const hpBarHtml = (occ.live && occ.sharedHp && typeof occ.hp === 'number' && occ.maxHp > 0)
+      ? (() => {
+          const pct = Math.max(0, Math.min(100, occ.hp/occ.maxHp*100));
+          return `<div class="bossNextHpWrap"><div class="bossNextHpBar${alreadyDead?' dead':''}" style="width:${pct}%"></div>` +
+            `<span class="bossNextHpTxt">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : pct.toFixed(1)+'%'}</span></div>`;
+        })()
+      : '';
     nextHtml = `<div class="bossNext">
       <div class="bossNextIcon">${b.icon}</div>
       <div class="bossNextInfo">
         <div class="bossNextName">${b.name[LANG]}</div>
         <div class="bossNextTime">${alreadyDead ? (LANG==='fr'?'Déjà vaincu par d\'autres joueurs':'Already defeated by other players') : occ.live ? (LANG==='fr'?'Disponible maintenant !':'Available now!') : when}</div>
+        ${hpBarHtml}
       </div>
       ${cd}
     </div>` +
