@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V298', d:'16/07/2026 20:00', name:{fr:'Marché : nouveau carnet d\'ordres et chandelier (matériaux)', en:'Market: new order book and candlestick chart (materials)'}, fr:[
+      {t:'new', sub:'objets', tx:'Le sous-onglet "Matériaux" du Marché commun a été refait : carnet d\'ordres vente/achat avec barres de volume, meilleur prix mis en avant, spread, pression du marché et mini graphique chandelier sur les 20 dernières transactions. Le Marché reste fermé pour l\'instant (voir la note précédente) — prêt pour sa réouverture.'},
+    ], en:[
+      {t:'new', sub:'objets', tx:'The "Materials" sub-tab of the Common Market was rebuilt: buy/sell order book with volume bars, best price highlighted, spread, market pressure indicator and a mini candlestick chart over the last 20 trades. The Market stays closed for now (see previous note) — ready for reopening.'},
+    ] },
   { v:'V297', d:'16/07/2026 19:00', name:{fr:'Joueurs en ville, Coffre, récompenses Kzarka repensées', en:'Players in town, Chest, reworked Kzarka rewards'}, fr:[
       {t:'new', sub:'interface', tx:'À Velia, la liste des joueurs présents en ville s\'affiche désormais en bas à droite, à la place du loot ticker (toujours vide là-bas)'},
       {t:'new', sub:'objets', tx:'Nouvel onglet "Coffre" en haut de la carte Loot : 20 emplacements de rangement personnel (le reste arrive plus tard), accessible sur n\'importe quelle pièce du sac via "Ranger au coffre"'},
