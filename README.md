@@ -36,10 +36,15 @@ rentables — la boucle centrale du jeu.
 
 Aucune dépendance, aucun build : HTML/CSS/JS vanilla + Canvas 2D, déployé tel quel sur GitHub Pages.
 
-- `index.html` — structure de la page
-- `styles.css` — toute la mise en forme
-- `game-core.js` — zones, combat, inventaire, boucle de jeu, rendu
-- `game-supabase.js` — comptes, sauvegarde cloud, marché, chat, notes de version
+- `index.html` — structure de la page, charge tous les scripts dans un ordre précis (voir
+  commentaires dans le fichier)
+- `styles/styles.css` — toute la mise en forme
+- Code JS organisé par domaine, chacun avec son propre `README.md` détaillant son rôle :
+  `core/` (état, boucle, HUD, combat), `classes/` (personnages jouables), `world/` (zones,
+  paliers, rendu de scène), `combat/` (boss, loot, potions, IA), `inventory/` (équipement,
+  enchantement), `progression/` (succès, quêtes, courrier, compendium), `market/` (marché
+  commun), `social/` (chat), `admin/` (outils admin), `backend/` (Supabase), `meta/` (patch
+  notes), `tests/` (régression)
 - Backend [Supabase](https://supabase.com) (Postgres + Auth + Edge Functions) pour tout ce qui est
   multijoueur ; migrations SQL suivies dans `supabase/migrations/`.
 
