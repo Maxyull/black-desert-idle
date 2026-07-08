@@ -1,4 +1,4 @@
-# Log Discord — Velia Idle
+# Log Discord — Black Desert Idle
 
 Deux salons Discord reçoivent des logs automatiques du jeu :
 

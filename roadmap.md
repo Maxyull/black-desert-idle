@@ -1,4 +1,4 @@
-# Feuille de route des zones — Velia Idle
+# Feuille de route des zones — Black Desert Idle
 
 Notation : `Nom de zone (Monstre, ...)` — si plusieurs monstres listés : un gros mob + un petit mob ;
 si 3 : un boss + un petit + un gros.

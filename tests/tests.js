@@ -1424,10 +1424,10 @@
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
-      console.error(`✖ Tests de régression Velia Idle : ${summary}`);
+      console.error(`✖ Tests de régression Black Desert Idle : ${summary}`);
       failed.forEach(r => console.error(`  ✖ ${r.name} — ${r.detail}`));
     } else {
-      console.log(`✓ Tests de régression Velia Idle : ${summary} — tout passe.`);
+      console.log(`✓ Tests de régression Black Desert Idle : ${summary} — tout passe.`);
     }
     return { total: results.length, passed: results.length - failed.length, failed: failed.map(r => ({ name:r.name, detail:r.detail })) };
   };

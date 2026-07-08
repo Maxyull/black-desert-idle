@@ -1,4 +1,4 @@
-# ⚔️ Velia Idle
+# ⚔️ Black Desert Idle
 
 Un jeu idle/incrémental dans le navigateur, inspiré de **Black Desert Online** — combat automatique,
 progression par zones, enchantement d'équipement, et une vraie couche multijoueur (comptes, sauvegarde

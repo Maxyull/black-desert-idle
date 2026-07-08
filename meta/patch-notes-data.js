@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V316', d:'08/07/2026 10:00', name:{fr:'Le jeu s\'appelle désormais "Black Desert Idle"', en:'The game is now called "Black Desert Idle"'}, fr:[
+      {t:'change', sub:'systeme', tx:'Renommage du jeu : "Velia Idle" devient "Black Desert Idle" (titre de la page, écran de connexion, pied de page en jeu, notes de version). Aucun impact sur ta progression, ta sauvegarde ou tes préférences.'},
+    ], en:[
+      {t:'change', sub:'systeme', tx:'Game renamed: "Velia Idle" becomes "Black Desert Idle" (page title, login screen, in-game footer, patch notes). No impact on your progress, save, or preferences.'},
+    ] },
   { v:'V300', d:'08/07/2026 07:24', name:{fr:'Marché commun : croix à droite, hauteur fixe, Vendre retiré', en:'Common Market: close button on the right, fixed height, Sell removed'}, fr:[
       {t:'change', sub:'objets', tx:'La croix de fermeture du Marché commun est maintenant bien alignée à droite du panneau'},
       {t:'change', sub:'objets', tx:'La fenêtre du Marché commun garde désormais une hauteur fixe : changer de sous-onglet ou sélectionner un objet ne fait plus jamais bouger la taille de la page'},
@@ -1670,12 +1675,12 @@ const PATCH_NOTES = [
       {t:'new', tx:'Clic sur une pièce d\'équipement : affiche jusqu\'à 5 objets du sac équipables dans ce slot (avec le gain/perte de PA/PD/PV), en plus du bouton Déséquiper'},
       {t:'fix', tx:'Le test de boss "Pour moi" dans le panneau Admin lance maintenant un VRAI boss partagé (PV communs, top 10, contribution %, joueurs en direct) au lieu d\'un combat solo'},
       {t:'new', tx:'Le stuff d\'un joueur consulté depuis le classement affiche maintenant le nom de chaque objet et son PA/PD/PV en clair, pas seulement au survol'},
-      {t:'change', tx:'Mention légale précisée : certains noms/styles de jeu/mécaniques s\'inspirent de Black Desert et restent la propriété de Pearl Abyss le cas échéant, mais les visuels de Velia Idle sont des créations originales de style fan, pas les mêmes assets'},
+      {t:'change', tx:'Mention légale précisée : certains noms/styles de jeu/mécaniques s\'inspirent de Black Desert et restent la propriété de Pearl Abyss le cas échéant, mais les visuels de Black Desert Idle sont des créations originales de style fan, pas les mêmes assets'},
     ], en:[
       {t:'new', tx:'Click a gear slot: shows up to 5 bag items equippable in that slot (with AP/DP/HP gain or loss), alongside the Unequip button'},
       {t:'fix', tx:'The "For me" boss test in the Admin panel now launches a REAL shared boss (common HP, top 10, contribution %, live fighters) instead of a solo fight'},
       {t:'new', tx:'A player\'s gear viewed from the leaderboard now shows each item\'s name and AP/DP/HP as plain text, not just on hover'},
-      {t:'change', tx:'Legal notice clarified: some names/game styles/mechanics are inspired by Black Desert and remain Pearl Abyss\'s property where applicable, but Velia Idle\'s visuals are original fan-style creations, not the same assets'},
+      {t:'change', tx:'Legal notice clarified: some names/game styles/mechanics are inspired by Black Desert and remain Pearl Abyss\'s property where applicable, but Black Desert Idle\'s visuals are original fan-style creations, not the same assets'},
     ] },
   { v:'V78', d:'04/07/2026 08:13', name:{fr:'Loot en bas à droite (15 entrées + effets), RNG/Consommable/Lifeskill verrouillés', en:'Bottom-right loot (15 entries + effects), locked RNG/Consumable/Lifeskill'}, fr:[
       {t:'change', tx:'Le butin en direct (loot ticker) passe en bas à droite du jeu (à la place de l\'ancien GS/Niveau, déjà visibles dans le panneau Statistiques et l\'inventaire) : il affiche maintenant 15 entrées, les nouvelles apparaissent en bas et poussent les anciennes vers le haut'},

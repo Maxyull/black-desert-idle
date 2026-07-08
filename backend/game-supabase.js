@@ -1641,7 +1641,7 @@ function updatePatchBadge() {
 }
 
 // catégories principales des notes de version (refonte du 2026-07-05, demande explicite) --
-// taxonomie standard adaptée à Velia Idle (les catégories sans équivalent dans ce jeu, ex.
+// taxonomie standard adaptée à Black Desert Idle (les catégories sans équivalent dans ce jeu, ex.
 // "Boutique"/devise premium, "Classes"/"Montures", ne sont pas utilisées ici)
 const PATCH_CATS = {
   new:     { fr:'Nouveautés',           en:'New',            icon:'🆕', color:'#8fc98a',
