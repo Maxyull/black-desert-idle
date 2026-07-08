@@ -783,39 +783,8 @@ function isZoneDangerous() { return bottleneck() < 0.6; }
 // vitesse plus élevée des monstres") -- étaient 0.7/1.35 à l'introduction de cette mécanique
 const DANGER_PLAYER_SPEED_MULT = 0.5;
 const DANGER_MOB_SPEED_MULT = 1.7;
-// mode de combat IA -- ÉTAIT auto-calculé depuis le ratio de gear (bottleneck()), REMPLACÉ le
-// 2026-07-14 (demande explicite, décision confirmée malgré la conception précédente) par un choix
-// manuel du joueur, voir S.aiCombatMode et AI_COMBAT_MODES/setAiCombatMode ci-dessous.
-function aiMode() {
-  return AI_COMBAT_MODES[S.aiCombatMode] ? S.aiCombatMode : 'équilibré';
-}
-const AI_COMBAT_MODES = {
-  'défensif':  { icon:'🛡️', name:{fr:'Défensif',  en:'Defensive'} },
-  'équilibré': { icon:'⚖️', name:{fr:'Équilibré', en:'Balanced'} },
-  'overgeared':{ icon:'⚔️', name:{fr:'Offensif',  en:'Overgeared'} },
-};
-const AI_COMBAT_MODE_ORDER = ['défensif','équilibré','overgeared'];
-function renderAiModeBtn() {
-  const el = $('aiModeSlider'); if (!el) return;
-  if (!AI_COMBAT_MODES[S.aiCombatMode]) S.aiCombatMode = 'équilibré';
-  const titles = {
-    'défensif':  LANG==='fr' ? 'IA défensive : esquive et soigne en priorité, quitte à moins attaquer' : 'Defensive AI: prioritizes dodging/healing over attacking',
-    'équilibré': LANG==='fr' ? 'IA équilibrée : alterne attaque et prudence selon la situation' : 'Balanced AI: alternates attack and caution based on the fight',
-    'overgeared':LANG==='fr' ? 'IA offensive : attaque sans relâche, ignore la plupart des esquives' : 'Overgeared AI: attacks relentlessly, skips most dodges',
-  };
-  el.querySelectorAll('.aiModeSeg').forEach(seg => {
-    const key = seg.dataset.mode, m = AI_COMBAT_MODES[key];
-    const active = S.aiCombatMode === key;
-    seg.classList.toggle('active', active);
-    seg.title = titles[key] || '';
-    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
-  });
-}
-function setAiCombatMode(key) {
-  if (!AI_COMBAT_MODES[key]) return;
-  S.aiCombatMode = key;
-  renderAiModeBtn();
-}
+// aiMode/AI_COMBAT_MODES/renderAiModeBtn/setAiCombatMode desormais dans combat/ai-mode.js
+// (extrait le 2026-07-08, reorganisation par dossiers) -- charge APRES ce fichier, voir index.html.
 // bascule Équipement/Cristal de la carte Équipement (2026-07-15, demande explicite : "un nouveau
 // slider a bulle... pour changer d'equipement a cristal") -- même pilule que le mode IA/farm, mais
 // dans le panneau latéral (pas sur le canvas). "Cristal" n'a qu'1 seul emplacement pour l'instant,
@@ -845,40 +814,5 @@ function setEquipMode(key) {
   equipMode = key;
   renderEquipModeBtn();
 }
-// mode de farm choisi par le joueur : "Loot" ramasse tout avant de passer au pack suivant (voir
-// killPack + case 'loot' du fsm), "XP" ignore le loot au sol et enchaîne les packs pour maximiser
-// les kills/xp par minute (demande : 2 IA différentes, une full-loot, une full-XP)
-// mode "Opti" (pack to pack rapide) retiré le 2026-07-14 (demande explicite) : un 3e emplacement
-// reste affiché dans le sélecteur, verrouillé (cadenas grisé), en attente d'un futur 3e mode.
-const FARM_MODES = {
-  loot: { icon:'🎒', name:{fr:'Loot', en:'Loot'} },
-  xp:   { icon:'⚡', name:{fr:'XP',   en:'XP'} },
-};
-const FARM_MODE_ORDER = ['loot','xp'];
-// sélecteur à bulles (2026-07-14, demande explicite : "petit selecteur a bulle") -- remplace le
-// slider <input type="range"> par une pilule segmentée : le mode actif s'affiche en capsule dorée
-// pleine (icône + texte), les autres modes en icône seule, et un 3e rond grisé/verrouillé (aucun
-// mode derrière pour l'instant) ferme la pilule.
-function renderFarmModeBtn() {
-  const el = $('farmModeSlider'); if (!el) return;
-  // repli (2026-07-14) : une sauvegarde existante peut encore avoir S.farmMode==='opti' (mode
-  // retiré) -- sans ce filet, aucune bulle ne s'affiche active tant que le joueur n'en reclique pas une
-  if (!FARM_MODES[S.farmMode]) S.farmMode = 'loot';
-  const titles = {
-    loot: LANG==='fr' ? 'IA "Loot" : ramasse tout le butin avant de passer au pack suivant' : 'Loot AI: picks up all drops before moving to the next pack',
-    xp:   LANG==='fr' ? 'IA "XP" : enchaîne les packs sans ramasser le butin au sol' : 'XP AI: chains packs without picking up ground loot',
-  };
-  el.querySelectorAll('.farmModeSeg').forEach(seg => {
-    const key = seg.dataset.mode, m = FARM_MODES[key];
-    const active = S.farmMode === key;
-    seg.classList.toggle('active', active);
-    seg.title = titles[key] || '';
-    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
-  });
-}
-function setFarmMode(key) {
-  if (!FARM_MODES[key]) return;
-  S.farmMode = key;
-  renderFarmModeBtn();
-}
-
+// FARM_MODES/renderFarmModeBtn/setFarmMode desormais dans combat/ai-mode.js (extrait le
+// 2026-07-08, reorganisation par dossiers) -- charge APRES ce fichier, voir index.html.

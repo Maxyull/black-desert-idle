@@ -10,7 +10,7 @@
      commit), pas juste copie depuis jsdelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"
   integrity="sha256-LbKRLxaTmjshtHKYCnradGszpqQHCLxVXLC+JVxutbE=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="styles/styles.css?v=419">
+<link rel="stylesheet" href="styles/styles.css?v=420">
 </head>
 <body>
 
@@ -605,89 +605,94 @@
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- module autonome, DOIT charger EN PREMIER : GEAR_TIERS
      (world/gear-tiers-data.js) lit ICO_MAT_* immédiatement au chargement -->
-<script src="inventory/gear-icons.js?v=419"></script>
+<script src="inventory/gear-icons.js?v=420"></script>
 <!-- données pures ZONES[] -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers) --
      DOIT charger AVANT game-core.js : resetWorld() (appelé au top-level de game-core.js) lit ZONES
      dès le premier chargement du script -->
-<script src="world/zones-data.js?v=419"></script>
+<script src="world/zones-data.js?v=420"></script>
 <!-- paliers de stuff (GEAR_TIERS, GEAR_ROLE...) -- extrait de game-core.js le 2026-07-08
      (réorganisation par dossiers) -- DOIT charger APRÈS inventory/gear-icons.js (lit ICO_MAT_*
      immédiatement) et AVANT game-core.js -->
-<script src="world/gear-tiers-data.js?v=419"></script>
+<script src="world/gear-tiers-data.js?v=420"></script>
 <!-- table d'XP par niveau, paliers de régions, potions de vie -- extraits de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- pure donnée, aucune dépendance, chargés AVANT
      game-core.js -->
-<script src="progression/level-xp-data.js?v=419"></script>
-<script src="world/region-tiers-data.js?v=419"></script>
-<script src="combat/potions-data.js?v=419"></script>
-<script src="core/game-core.js?v=419"></script>
+<script src="progression/level-xp-data.js?v=420"></script>
+<script src="world/region-tiers-data.js?v=420"></script>
+<script src="combat/potions-data.js?v=420"></script>
+<script src="core/game-core.js?v=420"></script>
 <!-- définitions des succès -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers)
      -- DOIT charger APRÈS core/game-core.js : target:ZONES.length/PRI_IDX/ENH_NAMES.length-1 sont
      évalués immédiatement au chargement -->
-<script src="progression/achievements-data.js?v=419"></script>
+<script src="progression/achievements-data.js?v=420"></script>
 <!-- Trésor de Velia (craft) -- extrait de game-core.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS core/game-core.js (utilise INV/addSilver/Z()/GEAR_ROLE...) -->
-<script src="progression/treasure-craft.js?v=419"></script>
+<script src="progression/treasure-craft.js?v=420"></script>
 <!-- notifications, succès (UI), courrier, compendium, quêtes -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- DOIT charger APRÈS core/game-core.js,
      progression/achievements-data.js et progression/treasure-craft.js -->
-<script src="progression/notifications-quests.js?v=419"></script>
+<script src="progression/notifications-quests.js?v=420"></script>
+<!-- modes IA (combat défensif/équilibré/overgeared + farm loot/xp) -- extrait de
+     progression/notifications-quests.js le 2026-07-08 (réorganisation par dossiers, correction :
+     ce n'est pas de la progression, c'est du comportement de combat/farm) -- charge APRÈS
+     core/game-core.js -->
+<script src="combat/ai-mode.js?v=420"></script>
 <!-- génération du loot & gain d'XP -- extrait de game-core.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS core/game-core.js et progression/notifications-quests.js
      (gainXp appelle pushNotif) -->
-<script src="combat/loot-rolls.js?v=419"></script>
+<script src="combat/loot-rolls.js?v=420"></script>
 <!-- VFX (particules de sorts) -- extrait de game-core.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS core/game-core.js -->
-<script src="combat/vfx.js?v=419"></script>
+<script src="combat/vfx.js?v=420"></script>
 <!-- utilisation des potions (cout dynamique + UI sélecteur) -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- DOIT charger APRÈS core/game-core.js et
      combat/potions-data.js -->
-<script src="combat/potions-logic.js?v=419"></script>
+<script src="combat/potions-logic.js?v=420"></script>
 <!-- World Boss (Kzarka/Vell : lobby, combat, rendu de la salle) -- extrait de game-core.js le
      2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà définies à ce stade
      ($, S, EQUIP, effHpMax, ZONES...) et le canvas #bossCv déjà présent dans le DOM -->
-<script src="combat/boss.js?v=419"></script>
+<script src="combat/boss.js?v=420"></script>
 <!-- rendu canvas de la salle de boss -- extrait de boss.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS boss.js (bossLoop() appelle drawBossRoom()) -->
-<script src="combat/boss-render.js?v=419"></script>
+<script src="combat/boss-render.js?v=420"></script>
 <!-- inventaire/équipement -- UI (paperdoll, grille, enchantement, auto-opti) -- extrait de
      game-core.js le 2026-07-14 -- DOIT charger AVANT render.js : le démarrage du jeu (à la fin de
      render.js) appelle hud(), qui appelle refreshInvUI()/hasNeglectedUpgradeInBag(), tous deux
      définis ici -->
-<script src="inventory/inventory-ui.js?v=419"></script>
+<script src="inventory/inventory-ui.js?v=420"></script>
 <!-- migrations rétroactives du stuff -- extrait de inventory-ui.js le 2026-07-08 (réorganisation
      par dossiers) -- appelées depuis applySaveState() (core/game-core.js), en exécution
      uniquement -- charge APRÈS inventory-ui.js -->
-<script src="inventory/gear-migrations.js?v=419"></script>
+<script src="inventory/gear-migrations.js?v=420"></script>
 <!-- outils debug admin d'enchantement (max/reset/±1 rang sur tout l'équipement) -- extrait de
      inventory-ui.js le 2026-07-08 (réorganisation par dossiers) -- DOIT charger APRÈS
      inventory-ui.js (refreshEquipSlot/renderOptimization/drawPreviewChar) -->
-<script src="admin/enh-debug-tools.js?v=419"></script>
+<script src="admin/enh-debug-tools.js?v=420"></script>
 <!-- rendu canvas (scène, sprites, particules) -- extrait de game-core.js le 2026-07-14 -- charge
      APRÈS game-core.js/boss.js/inventory-ui.js : hud() (dans game-core.js) appelle
      drawZoneMobIcon() (défini ici), donc ce fichier DOIT charger avant le tout premier hud(). C'est
      pourquoi le démarrage du jeu (renderInvCatTabs/hud/requestAnimationFrame(loop), avant à la toute
      fin de game-core.js) a été déplacé à la fin de CE fichier -- requestAnimationFrame(loop) doit
      rester le tout dernier appel synchrone du chargement, sinon la boucle de jeu ne démarre jamais -->
-<script src="world/render.js?v=419"></script>
+<script src="world/render.js?v=420"></script>
 <!-- données pures PATCH_NOTES (~2000 lignes, extraites de game-supabase.js le 2026-07-14 pour
      alléger le fichier) -- DOIT charger avant game-supabase.js, qui lit PATCH_NOTES[0].v au
      top-level dès son chargement (voir CURRENT_VERSION) -->
-<script src="meta/patch-notes-data.js?v=419"></script>
-<script src="backend/game-supabase.js?v=419"></script>
+<script src="meta/patch-notes-data.js?v=420"></script>
+<script src="backend/game-supabase.js?v=420"></script>
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->
-<script src="admin/admin-panel.js?v=419"></script>
+<script src="admin/admin-panel.js?v=420"></script>
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
-<script src="social/chat.js?v=419"></script>
+<script src="social/chat.js?v=420"></script>
 <!-- marché (Hôtel des ventes + Marché commun v2, carnet d'ordres) -- extrait de game-supabase.js
      le 2026-07-14 -- charge APRÈS lui : wiring $a('btnMarket').onclick etc au top-level -->
-<script src="market/market.js?v=419"></script>
+<script src="market/market.js?v=420"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests/tests.js?v=419"></script>
+<script src="tests/tests.js?v=420"></script>
 </body>
 </html>
