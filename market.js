@@ -12,8 +12,24 @@ function marketRequireAuth() {
   return true;
 }
 
-$a('btnMarket').onclick = () => {
+// fermeture d'urgence du marché (2026-07-16, demande explicite : "bloquer l'acces au marché laisse
+// lacces a admin") -- get_market_open() (côté serveur, voir la migration
+// market_lockdown_and_cancel_all) fait aussi foi côté RPC (market_place_order refuse tout nouvel
+// ordre si fermé) ; ce blocage client évite juste d'ouvrir le panneau pour rien et explique
+// pourquoi. L'admin garde toujours l'accès (même logique staff-only que le serveur).
+$a('btnMarket').onclick = async () => {
   if (!marketRequireAuth()) return;
+  if (!(typeof isAdmin === 'function' && isAdmin())) {
+    try {
+      const { data } = await sb.rpc('get_market_open');
+      if (data === false) {
+        alert(LANG==='fr'
+          ? '🏛️ Le Marché est actuellement fermé pour maintenance. Réessaie plus tard.'
+          : '🏛️ The Market is currently closed for maintenance. Try again later.');
+        return;
+      }
+    } catch(e) {}
+  }
   $a('marketOverlay').classList.add('open');
   refreshMarketBrowse();
   refreshSellTab();
