@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V321', d:'18/07/2026 12:30', name:{fr:'Taxe de vente Marché relevée à 35%', en:'Market sales tax raised to 35%'}, fr:[
+      {t:'change', sub:'economie', severity:'major', tx:'La taxe de vente du Marché commun (introduite en V320) passe de 20% à 35% : le vendeur touche désormais 65% du prix de vente. L\'acheteur n\'est toujours pas concerné, il paie toujours le prix affiché en entier.'},
+    ], en:[
+      {t:'change', sub:'economie', severity:'major', tx:'The Common Market sales tax (introduced in V320) goes from 20% to 35%: the seller now receives 65% of the sale price. The buyer is still unaffected, always paying the full listed price.'},
+    ] },
   { v:'V320', d:'18/07/2026 12:00', name:{fr:'Taxe de vente Marché : 20%', en:'Market sales tax: 20%'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le Marché commun applique désormais une taxe de vente de 20% (le vrai BDO prend ~30%) : le vendeur touche 80% du prix de vente, que ce soit via le carnet d\'ordres ou une vente instantanée — l\'acheteur, lui, paie toujours le prix affiché en entier. Un aperçu du montant net (après taxe) s\'affiche désormais avant de placer un ordre de vente.'},
     ], en:[

@@ -82,12 +82,12 @@ function wireCmSubTabs() {
 // fourchette min/max fictive (concepts spécifiques à la démo) -- prix validé comme partout
 // ailleurs (juste > 0 côté serveur, voir market_place_order).
 let mktSelectedIdx = 0, mktSide = 'buy';
-// taxe de vente Marché 20% (2026-07-18, demande explicite : "taxe market 20% dorénavant") --
+// taxe de vente Marché : 20% puis 35% (2026-07-18, demande explicite : "35% au market") --
 // prélevée côté serveur sur le VENDEUR (market_match_item, voir migration
-// 20260718110000_market_sales_tax_20pct.sql) : garder cette constante synchronisée avec le
-// facteur SQL (* 0.8) si le taux change un jour. Purement informatif ici (aperçu du net avant
+// 20260718130000_market_sales_tax_35pct.sql) : garder cette constante synchronisée avec le
+// facteur SQL (* 0.65) si le taux change encore. Purement informatif ici (aperçu du net avant
 // de placer un ordre) — le vrai calcul fait foi côté RPC.
-const MARKET_SELL_TAX_RATE = 0.20;
+const MARKET_SELL_TAX_RATE = 0.35;
 function mktKey(m) { return 'material:' + m.name; }
 function initMarketMaterials() {
   const pills = $a('mktItemPills'); if (!pills) return;

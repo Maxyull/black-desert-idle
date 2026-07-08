@@ -612,7 +612,7 @@
   // repéré au moins côté rappel (voir le commentaire au-dessus de MARKET_SELL_TAX_RATE).
   function testMarketSellTaxRateMatchesServerFactor() {
     if (typeof MARKET_SELL_TAX_RATE === 'undefined') return; // pas de DOM/module marché chargé
-    assert('MARKET_SELL_TAX_RATE vaut bien 20% (0.8 côté SQL)', MARKET_SELL_TAX_RATE === 0.20, `got=${MARKET_SELL_TAX_RATE}`);
+    assert('MARKET_SELL_TAX_RATE vaut bien 35% (0.65 côté SQL)', MARKET_SELL_TAX_RATE === 0.35, `got=${MARKET_SELL_TAX_RATE}`);
   }
   // aperçu "vous recevrez ~X après taxe" : calcul correct (prix*qty*80%, arrondi vers le bas),
   // jamais affiché en mode Achat (l'acheteur paie toujours le plein prix affiché)
@@ -626,7 +626,7 @@
     mktSide = 'sell';
     updateMktTaxHint();
     assert('Aperçu visible en mode Vente', $('mktSellTaxHint').style.display !== 'none');
-    assert('Aperçu affiche bien le net à 80% (100*10*0.8=800)', $('mktSellTaxHint').textContent.includes('800'), `texte=${$('mktSellTaxHint').textContent}`);
+    assert('Aperçu affiche bien le net à 65% (100*10*0.65=650)', $('mktSellTaxHint').textContent.includes('650'), `texte=${$('mktSellTaxHint').textContent}`);
     mktSide = s.side; $('mktPriceInput').value = s.price; $('mktQtyInput').value = s.qty;
     updateMktTaxHint();
   }
