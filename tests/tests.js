@@ -968,12 +968,14 @@
     assert('targetPackCount = 8 en palier blanc', targetPackCount() === 8, `got=${targetPackCount()}`);
     const whiteCount = targetPackCount();
     // "zone verte rajoute 2x le nombre de monstre actuel" (2026-07-12, précisé "2x la valeur du
-    // palier blanc") -- le vert est volontairement un PIC (16, plus que le bleu, 12), pas une
-    // simple progression monotone -- confirmé explicitement par le joueur.
+    // palier blanc") -- pas une simple progression monotone (le bleu, revu le 2026-07-18 à 28,
+    // dépasse maintenant le vert, 16 -- voir plus bas).
     zoneIdx = 6; // green
     assert('targetPackCount du palier vert = 2x le palier blanc (8*2=16)', targetPackCount() === whiteCount*2, `got=${targetPackCount()}`);
     zoneIdx = 9; // blue
-    assert('targetPackCount = 12 en palier bleu (inchangé, le vert reste un pic au-dessus)', targetPackCount() === 12, `got=${targetPackCount()}`);
+    // "zone bleu change le nombre de monstre a 2,3x plus que actuellement" (2026-07-18) --
+    // 12 -> 28 (12*2.3=27.6, arrondi), redevient le palier le plus dense (dépasse le vert, 16)
+    assert('targetPackCount = 28 en palier bleu (2.3x les 12 précédents)', targetPackCount() === 28, `got=${targetPackCount()}`);
     atVelia = true;
     assert('targetPackCount = 0 à Velia (zone paisible, aucun monstre)', targetPackCount() === 0);
     zoneIdx = s.zoneIdx; atVelia = s.atVelia;
