@@ -859,10 +859,29 @@ function compendiumTotalMax() { return ZONES.length + Object.keys(BOSS_ROSTER).l
 function compendiumPct() { return compendiumTotalCount() * 1; } 
 
 function penMasteryItemList() {
-  const names = [];
-  for (const tier of GEAR_TIERS) for (const slot of GEAR_SLOTS) names.push(tier.sets[slot]);
-  for (const z of ZONES) names.push(z.loot.jackpot.name);
-  return names; 
+  const entries = [];
+  for (const tier of GEAR_TIERS) {
+    
+    for (const slot of [...WEAPON_SLOTS, ...ARMOR_SLOTS]) {
+      entries.push({ name: tier.sets[slot], slot, grade: tier.grade, color: tier.color, kind:'gear' });
+    }
+    for (const zi of tier.zones) {
+      const jp = ZONES[zi].loot.jackpot;
+      entries.push({ name: jp.name, slot: accSlotFor(jp), grade: tier.grade, color: tier.color, kind:'jackpot' });
+    }
+  }
+  return entries; 
+}
+
+const PEN_GEAR_ICON_FOR_SLOT = {
+  weapon:staffIconForColor, awakening:orbPairIconForColor, secondary:daggerIconForColor,
+  helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor,
+};
+const PEN_JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+function penMasteryIcon(entry) {
+  if (entry.kind === 'gear') { const fn = PEN_GEAR_ICON_FOR_SLOT[entry.slot]; return fn ? fn(entry.color, entry.grade) : ''; }
+  const fn = PEN_JEWEL_ICON_FOR_SLOT[entry.slot] || ringIconForTier;
+  return fn(JEWEL_TIER_IDX[entry.grade] || 0, entry.color);
 }
 function markPenMastery(name) {
   if (S.penMastery[name]) return;
@@ -2488,13 +2507,22 @@ function renderCompendiumHtml() {
         `<div class="achReward">${unlocked?'+1% ✓':'🔒'}</div></div>`;
     }).join('');
   } else if (compendiumTab === 'pen') {
+    
     bodyHtml = `<div class="admHint">${LANG==='fr'
         ? 'Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.'
         : 'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.'}</div>` +
-      `<div class="compItems compPenGrid">` + penItems.map(name => {
-        const done = !!S.penMastery[name];
-        return `<span class="compItem compPenItem${done?' done':''}">${done?'✓':'○'} ${escapeHtml(tr(name))}</span>`;
-      }).join('') + `</div>`;
+      GEAR_TIERS.map(tier => {
+        const rowsHtml = penItems.filter(e => e.grade === tier.grade).map(entry => {
+          const done = !!S.penMastery[entry.name];
+          const peak = (S.enhPeakByName && S.enhPeakByName[entry.name]) || 0;
+          return `<span class="compItem compPenItem${done?' done':''}" title="${escapeHtml(tr(entry.name))}">` +
+            `<span class="compPenIcon${done?'':' notDone'}">${penMasteryIcon(entry)}</span>` +
+            `<span class="compPenName">${escapeHtml(tr(entry.name))}</span>` +
+            `<span class="compPenPeak">${peak>0?ENH_NAMES[peak]:'—'}</span></span>`;
+        }).join('');
+        return `<div class="zTierHead"><span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}</div>` +
+          `<div class="compItems compPenGrid">${rowsHtml}</div>`;
+      }).join('');
   } else {
     
     bodyHtml = GEAR_TIERS.map(tier => {
@@ -3924,7 +3952,7 @@ function bossRewardRulesHtml() {
   </div>`;
 }
 
-function renderBossRewardWheel(rareLoot, won) {
+function bossWheelMarkup(rareLoot) {
   const N = 12; 
   const segDeg = 360/N;
   
@@ -3932,28 +3960,73 @@ function renderBossRewardWheel(rareLoot, won) {
   let iconsHtml = '';
   for (let i = 0; i < N; i++) {
     const centerDeg = i*segDeg + segDeg/2;
-    const isRare = i === 0;
-    iconsHtml += `<span class="bwIcon" style="transform:rotate(${centerDeg}deg) translate(0,-70px) rotate(${-centerDeg}deg)">${isRare?rareLoot.icon:commonIcon}</span>`;
+    iconsHtml += `<span class="bwIcon" style="transform:rotate(${centerDeg}deg) translate(0,-70px) rotate(${-centerDeg}deg)">${i===0?rareLoot.icon:commonIcon}</span>`;
   }
-  const wheelHtml = `<div class="bossWheelWrap"><div class="bossWheelPointer">▼</div>` +
-    `<div class="bossWheel" id="bossWheelEl" style="background:conic-gradient(${rareLoot.color} 0deg ${segDeg}deg, #232128 ${segDeg}deg 360deg)">${iconsHtml}</div></div>` +
-    `<div class="bossWheelResult" id="bossWheelResultEl">${LANG==='fr'?'🎡 Récompense rare...':'🎡 Rare reward...'}</div>`;
-  
-  setTimeout(() => {
-    const wheel = $a('bossWheelEl'); if (!wheel) return;
-    const spins = 5;
-    
-    const targetDeg = won ? segDeg/2 : (60 + Math.random()*270);
-    const finalRotation = spins*360 - targetDeg;
-    wheel.style.transform = `rotate(${finalRotation}deg)`;
-    setTimeout(() => {
-      const res = $a('bossWheelResultEl'); if (!res) return;
-      res.innerHTML = won
-        ? `<span style="color:${rareLoot.color}">${rareLoot.icon} ${LANG==='fr'?'Obtenu' : 'Obtained'} : ${rareLoot.name} !</span>`
-        : (LANG==='fr' ? `Pas cette fois — ${rareLoot.icon} ${rareLoot.name} attend toujours` : `Not this time — ${rareLoot.icon} ${rareLoot.name} still awaits`);
-    }, 3600);
-  }, 50);
-  return wheelHtml;
+  return `<div class="bossWheelWrap"><div class="bossWheelPointer">▼</div>` +
+    `<div class="bossWheel" id="bossWheelEl" style="background:conic-gradient(${rareLoot.color} 0deg ${segDeg}deg, #232128 ${segDeg}deg 360deg)">${iconsHtml}</div></div>`;
+}
+
+const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_DICE_MS = 650, BOSS_REVEAL_WHEEL_MS = 3600;
+function renderBossRewardReveal(items) {
+  if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
+  const itemsHtml = items.map((it,i) => {
+    const iconHtml = it.kind==='wheel' ? bossWheelMarkup(it.rareLoot)
+      : `<span class="brDiceIcon" id="brDiceIcon${i}" style="color:${it.color||'#e8c96a'}">${it.icon||'🎲'}</span>`;
+    return `<div class="brRevealItem" id="brRevealItem${i}">${iconHtml}<div class="brRevealResult" id="brRevealResult${i}">${LANG==='fr'?'…':'…'}</div></div>`;
+  }).join('');
+  return `<div class="brRevealList">${itemsHtml}</div>` +
+    `<button id="bossSkipBtn" class="bossSkipBtn">${LANG==='fr'?'⏭ Passer':'⏭ Skip'}</button>` +
+    `<button id="bossCloseBtn" style="display:none">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
+}
+
+function wireBossRewardReveal(items) {
+  if (!items.length) return;
+  const done = new Array(items.length).fill(false);
+  let pendingTimers = [];
+  function finishIfAllDone() {
+    if (!done.every(Boolean)) return;
+    const skipBtn = $a('bossSkipBtn'); if (skipBtn) skipBtn.style.display = 'none';
+    const closeBtn = $a('bossCloseBtn'); if (closeBtn) closeBtn.style.display = '';
+  }
+  function revealOne(i, { instant } = {}) {
+    if (done[i]) return; done[i] = true;
+    const it = items[i], resEl = $a('brRevealResult'+i); if (!resEl) return;
+    if (it.kind === 'dice') {
+      const iconEl = $a('brDiceIcon'+i); if (iconEl) iconEl.classList.add('settled');
+      resEl.innerHTML = it.resultHtml;
+    } else {
+      const wheel = $a('bossWheelEl');
+      if (wheel) {
+        const segDeg = 360/12, spins = instant ? 0 : 5;
+        
+        const targetDeg = it.won ? segDeg/2 : (60 + Math.random()*270);
+        if (instant) wheel.style.transition = 'none';
+        wheel.style.transform = `rotate(${spins*360 - targetDeg}deg)`;
+      }
+      resEl.innerHTML = it.won
+        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${LANG==='fr'?'Obtenu':'Obtained'} : ${it.rareLoot.name} !</span>`
+        : (LANG==='fr'?`Pas cette fois — ${it.rareLoot.icon} ${it.rareLoot.name} attend toujours`:`Not this time — ${it.rareLoot.icon} ${it.rareLoot.name} still awaits`);
+    }
+    finishIfAllDone();
+  }
+  items.forEach((it, i) => {
+    const startDelay = i*BOSS_REVEAL_STAGGER_MS;
+    const revealDelay = startDelay + (it.kind==='wheel' ? BOSS_REVEAL_WHEEL_MS : BOSS_REVEAL_DICE_MS);
+    pendingTimers.push(setTimeout(() => revealOne(i), revealDelay));
+  });
+  const skipBtn = $a('bossSkipBtn');
+  if (skipBtn) skipBtn.onclick = () => {
+    pendingTimers.forEach(t => clearTimeout(t)); pendingTimers = [];
+    items.forEach((_,i) => revealOne(i, { instant:true }));
+  };
+}
+
+function leaveBossResultToZone() {
+  $('bossResult').classList.remove('show');
+  currentActivity = 'zone';
+  if (!bossState.active) $('bossRoom').classList.remove('open');
+  setFarmViewVisible(true);
+  renderActivityTabs();
 }
 async function endBossFight(win) {
   if (bossState.ended) return;
@@ -3963,7 +4036,8 @@ async function endBossFight(win) {
   leaveBossChannel();
   const b = bossState.boss;
   let rewardsHtml = '';
-  let wheelHtml = '';
+  
+  let revealItems = [];
   
   let alreadyClaimed = false;
   if (win) {
@@ -3981,6 +4055,7 @@ async function endBossFight(win) {
         else alreadyClaimed = true;
       } catch (e) { alreadyClaimed = true; } 
     }
+    
     if (alreadyClaimed) {
       rewardsHtml = `<div class="brRewards admHint">${LANG==='fr'
         ? 'Récompense déjà réclamée pour ce boss — chaque victoire ne peut être payée qu\'une seule fois.'
@@ -3998,8 +4073,12 @@ async function endBossFight(win) {
         addSilver(reward, 'boss', b.name.fr);
         invAdd({ key:'mat_'+CAPHRAS_NAME, name:CAPHRAS_NAME, kind:'material', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', qty:caphrasQty, stackable:true, weight:0.1, val:120 });
         invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
-        const rankHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
-        rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>+${caphrasQty} × ${tr(CAPHRAS_NAME)}<br>+${fragQty} × ${tr('Fragment de mémoire')}</div>`;
+        rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
+        revealItems.push(
+          { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', resultHtml:`+${fmt(reward)} 🪙` },
+          { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), resultHtml:`+${caphrasQty} × ${tr(CAPHRAS_NAME)}` },
+          { kind:'dice', icon:'✦', color:'#b48ce8', label:tr('Fragment de mémoire'), resultHtml:`+${fragQty} × ${tr('Fragment de mémoire')}` },
+        );
       } else {
         
         const deathFreeMs = Date.now() - (S.lastDeathAt || 0);
@@ -4009,12 +4088,13 @@ async function endBossFight(win) {
         addSilver(reward, 'boss', b.name.fr);
         
         const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
-        const zoneRewardLines = [];
+        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', resultHtml:`+${fmt(reward)} 🪙` });
         if (difficileZi != null) {
           const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
           const matItem = bossZoneMaterialItem(difficileZi, qty);
           invAdd(matItem);
-          zoneRewardLines.push(`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>`);
+          revealItems.push({ kind:'dice', icon:matItem.icon, color:matItem.color, label:tr(matItem.name),
+            resultHtml:`+${qty} × ${tr(matItem.name)} <span class="admHint">(${tr(ZONES[difficileZi].name)})</span>` });
         }
         const jewelZonesToGrant = [];
         if (rank === 1 && dangereuseZi != null) jewelZonesToGrant.push(dangereuseZi);
@@ -4027,7 +4107,8 @@ async function endBossFight(win) {
           const jItem = bossZoneJackpotItem(zi);
           if (invAdd(jItem)) {
             trackLoot(jItem.name);
-            zoneRewardLines.push(`+💎 ${tr(jItem.name)} <span class="admHint">(${tr(ZONES[zi].name)})</span>`);
+            revealItems.push({ kind:'dice', icon:jItem.icon, color:jItem.color, label:tr(jItem.name),
+              resultHtml:`+💎 ${tr(jItem.name)} <span class="admHint">(${tr(ZONES[zi].name)})</span>` });
             logToDiscord('💎 Bijou de World Boss', `**${myPseudo||'Joueur'}** obtient ${jItem.name} (rang #${rank}) sur ${b.name.fr}`, 0xb48ce8);
           }
         }
@@ -4035,7 +4116,7 @@ async function endBossFight(win) {
         const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
           ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
           : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
-        rewardsHtml = rankHtml + `<div class="brRewards">+${fmt(reward)} 🪙<br>${zoneRewardLines.join('<br>')}</div>` + zoneHtml;
+        rewardsHtml = rankHtml + zoneHtml;
       }
       pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
       logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
@@ -4048,18 +4129,18 @@ async function endBossFight(win) {
           trackLoot(b.rareLoot.name);
           logToDiscord('❤️‍🔥 Loot rarissime', `**${myPseudo||'Joueur'}** obtient ${b.rareLoot.name} sur ${b.name.fr} ! (${Math.round(b.rareLoot.ch*100)}% de chance)`, 0x5ec9e8);
         }
-        wheelHtml = renderBossRewardWheel(b.rareLoot, won);
+        revealItems.push({ kind:'wheel', rareLoot:b.rareLoot, won });
       }
       refreshStatsOnly(); hud();
     }
   }
   $('bossResult').innerHTML =
     `<div class="brTitle ${win?'win':''}">${win?(LANG==='fr'?'🏆 VICTOIRE':'🏆 VICTORY'):(LANG==='fr'?'Combat quitté':'Fight left')}</div>` +
-    rewardsHtml + wheelHtml +
-    `<button id="bossCloseBtn">${LANG==='fr'?'Retour':'Back'}</button>`;
+    rewardsHtml + renderBossRewardReveal(revealItems);
   $('bossResult').classList.add('show');
+  wireBossRewardReveal(revealItems);
   
-  $a('bossCloseBtn').onclick = () => { $('bossResult').classList.remove('show'); openBossLobby(); };
+  $a('bossCloseBtn').onclick = leaveBossResultToZone;
 }
 function bossLoop(now) {
   if (!bossState.active) return;

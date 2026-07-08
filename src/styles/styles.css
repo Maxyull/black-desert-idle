@@ -679,10 +679,22 @@
      poupée d'équipement que cette zone améliore réellement, jamais toute la poupée */
   .pdSlot.pdFarmZoneHalo { box-shadow:0 0 10px 2px rgba(201,165,90,.6); animation:patchHalo 1.6s infinite; }
   /* Compendium spécial "Maîtrise PEN" (2026-07-08) : grille compacte, pas de halo/clic ici (pur suivi) */
-  .compPenGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px 10px; padding-top:6px; }
-  .compPenItem { cursor:default; font-size:11px; }
+  .compPenGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:6px 10px; padding:2px 0 10px; }
+  .compPenItem { cursor:default; font-size:11px; display:flex; align-items:center; gap:5px; }
   .compPenItem:hover { text-decoration:none; color:inherit; }
   .compPenItem.done { color:#8fc98a; }
+  /* icône réelle de l'objet + grisée tant que jamais atteint PEN (2026-07-08, demande explicite :
+     "avec leurs icone... grisé si on a pas") -- filter plutôt que retoucher l'icône elle-même,
+     fonctionne sur n'importe quelle icône SVG générée sans dupliquer de code */
+  .compPenIcon { width:18px; height:18px; flex-shrink:0; }
+  .compPenIcon .gicon { width:100%; height:100%; }
+  .compPenIcon.notDone { filter:grayscale(1) brightness(.55); opacity:.7; }
+  .compPenName { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* pic d'enchantement JAMAIS redescendu (2026-07-08, demande explicite : "montrant le max qu'on a
+     eu jusqu'a present") -- affiché même pour un objet qui n'a pas encore atteint PEN, voir
+     S.enhPeakByName/trackEnhPeak (core/game-core.js) */
+  .compPenPeak { flex-shrink:0; font-size:9.5px; color:var(--ink-dim); font-weight:bold; }
+  .compPenItem.done .compPenPeak { color:#8fc98a; }
   /* sac "Compendium" (2026-07-08) : grille identique au sac principal, avec un bouton "renvoyer" par case */
   .compBagGrid { max-height:260px; margin-top:8px; }
   .compBagCell { font-size:15px; }
@@ -1834,18 +1846,22 @@
   }
   /* liste de pages dans le header : Zone / Boss / Compagnon / Vie en mer / activités verrouillées */
   #activityTabs { display:flex; flex-wrap:wrap; gap:5px; flex:1; }
-  /* nom et cadenas sur 2 lignes distinctes (2026-07-08, demande explicite : "remet les cadenas
-     dans le header sur la ligne du bas") -- avant, le 🔒 était collé en texte APRÈS le nom sur la
-     MÊME ligne ("🎣 Pêche 🔒"), ce qui allongeait le bouton inutilement dans une barre à 10
-     onglets. Colonne flex : libellé en haut, cadenas en dessous, sans badge flottant/absolu. */
+  /* cadenas EN BADGE sur le cadre (bordure) de la ligne du bas du bouton (2026-07-08, demande
+     explicite : "Cadenas dans le header sur le cadre de la ligne du bas") -- même convention que
+     .zoneTierLock (badge rond, fond/bordure, à cheval sur le cadre), mais en BAS plutôt qu'en haut
+     -- pas un 🔒 collé en texte après le nom (ancienne version), ni une simple 2e ligne interne
+     (version intermédiaire), mais un vrai badge qui chevauche la bordure inférieure du bouton. */
   .actTab {
-    width:auto; margin:0; padding:5px 11px; font-size:11.5px; font-weight:bold;
-    background:transparent; border:1px solid #3a3742;
-    display:flex; flex-direction:column; align-items:center; gap:2px; line-height:1.2;
+    position:relative; width:auto; margin:0; padding:5px 11px 9px; font-size:11.5px; font-weight:bold;
+    background:transparent; border:1px solid #3a3742; overflow:visible;
   }
   .actTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
   .actTab.locked { opacity:.4; cursor:not-allowed; }
-  .actTabLock { font-size:9px; opacity:.85; }
+  .actTabLock {
+    position:absolute; bottom:-8px; left:50%; transform:translateX(-50%);
+    font-size:9px; line-height:1; background:var(--panel-2); border:1px solid #3a3742; border-radius:50%;
+    width:14px; height:14px; display:flex; align-items:center; justify-content:center;
+  }
   /* "Créer un Flash lumineux sur la catégorie boss, qu'on le vois bien 5 min avant et pendant
      toute la durée du boss" (2026-07-08) -- allumé par updateBossActivityTabHot() (combat/boss.js)
      dès que le prochain spawn est à moins de 5 min, et tant que dure la fenêtre de combat. Glow +
@@ -1856,10 +1872,17 @@
     0%,100% { box-shadow:0 0 4px 1px rgba(224,96,80,.35); background:rgba(224,96,80,.08); }
     50%     { box-shadow:0 0 14px 5px rgba(224,96,80,.85); background:rgba(224,96,80,.22); }
   }
-  /* %PV du boss, bien visible à côté du nom (2026-07-08, demande explicite : "met y les % hp du
-     boss bien visible aussi") -- vide tant qu'aucun combat n'est identifiable (pas encore spawné,
-     ou spawné mais PV inconnus côté client avant d'entrer dans un boss solo) */
-  .actTabBossHp { font-size:10.5px; font-weight:bold; color:var(--danger); }
+  /* %PV du boss EN BULLE sur le cadre de la ligne du bas (2026-07-08, demande explicite : "les pv
+     du boss se retrouve dans une bulle sur la ligne du bas du rectangle dans le header") -- même
+     badge rond que .actTabLock (juste plus large pour accueillir "42%"), vide tant qu'aucun combat
+     n'est identifiable (pas encore spawné, ou spawné mais PV inconnus côté client avant d'entrer
+     dans un boss solo) -- gérée par updateBossActivityTabHot() (combat/boss.js). */
+  .actTabBossHp {
+    position:absolute; bottom:-9px; left:50%; transform:translateX(-50%);
+    font-size:9.5px; font-weight:bold; color:#ffd6cc; line-height:1; white-space:nowrap;
+    background:var(--danger); border:1px solid #7a2a20; border-radius:9px; padding:1px 6px;
+  }
+  .actTabBossHp:empty { display:none; }
   #nextBossMini { font-size:11px; color:var(--ink-dim); flex-shrink:0; }
   #nextBossMini b { color:var(--gold); }
   #nextBossMini .live { color:var(--danger); font-weight:bold; animation:patchNewFade 1.2s infinite; }
@@ -1988,13 +2011,23 @@
   #bossResult .brRewards { font-size:14px; color:var(--ink); }
   #bossResult button { width:auto; padding:8px 24px; font-size:13px; }
   /* roue de récompense rare (2026-07-08) : tourne toute seule en fin de combat, révèle le lot déjà tiré */
-  .bossWheelWrap { position:relative; width:180px; height:180px; margin:4px auto; }
-  .bossWheelPointer { position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:20px; color:var(--gold); z-index:2; }
-  .bossWheel { width:100%; height:100%; border-radius:50%; border:4px solid var(--gold-dim);
+  .bossWheelWrap { position:relative; width:120px; height:120px; margin:0 auto 4px; }
+  .bossWheelPointer { position:absolute; top:-11px; left:50%; transform:translateX(-50%); font-size:15px; color:var(--gold); z-index:2; }
+  .bossWheel { width:100%; height:100%; border-radius:50%; border:3px solid var(--gold-dim);
     box-shadow:0 0 16px rgba(0,0,0,.5); position:relative; transition:transform 3.5s cubic-bezier(.12,.65,.16,1); }
-  .bwIcon { position:absolute; top:50%; left:50%; width:26px; height:26px; margin:-13px; font-size:19px;
+  .bwIcon { position:absolute; top:50%; left:50%; width:18px; height:18px; margin:-9px; font-size:13px;
     display:flex; align-items:center; justify-content:center; }
-  .bossWheelResult { font-size:12.5px; color:var(--ink-dim); min-height:18px; }
+  /* "lors de la fin du boss une roulette tourne ou un des se jette pour chaque recompense
+     aléatoire" (2026-07-08) -- une carte par récompense (dé ou roue), révélées en séquence par
+     renderBossRewardReveal (combat/boss.js). Le dé "rebondit" (bounce) tant que non révélé, se fige
+     (.settled) au moment du résultat -- lisible même sans regarder l'animation en direct. */
+  .brRevealList { display:flex; flex-wrap:wrap; justify-content:center; gap:14px; margin:6px 0; max-width:440px; }
+  .brRevealItem { display:flex; flex-direction:column; align-items:center; gap:4px; min-width:90px; }
+  .brDiceIcon { font-size:30px; display:inline-block; animation:brDiceBounce .55s ease-in-out infinite; }
+  .brDiceIcon.settled { animation:none; transform:none; }
+  @keyframes brDiceBounce { 0%,100% { transform:translateY(0) rotate(-8deg); } 50% { transform:translateY(-6px) rotate(8deg); } }
+  .brRevealResult { font-size:11.5px; color:var(--ink-dim); min-height:16px; text-align:center; }
+  .bossSkipBtn { opacity:.8; }
 
   /* ===== tutoriel d'arrivée (Velia) : encadré + flèche pointant vers l'élément expliqué ===== */
   #tutorialOverlay { display:none; position:fixed; inset:0; z-index:900; }
