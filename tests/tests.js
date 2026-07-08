@@ -711,6 +711,82 @@
     } catch (e) { threw = true; }
     assert('witchBodyOn accepte false et un objet SKILLS sans exception', !threw);
   }
+  // "1M5/h alors que c'est faux" + "le classement... toujours le meilleur affiché" (2026-07-18) --
+  // bestSilverPerHour ne doit JAMAIS redescendre (comme bestKpm), et seulement après 2 min de
+  // session (jamais sur un pic de tout début de partie) -- garde-fou de régression contre un
+  // retour du bug (extrapolation directement en /h dès 6s de session).
+  function testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes() {
+    const s = { bestSilverPerHour: S.bestSilverPerHour, tokenSilverEarned: S.tokenSilverEarned,
+      tokenSilverEarnedAtLoad: S.tokenSilverEarnedAtLoad, startTime: S.startTime };
+    // simule une session de 30s avec un gros gain -> ne doit PAS mettre à jour le record (mins<2)
+    S.bestSilverPerHour = 1000;
+    S.tokenSilverEarnedAtLoad = 0;
+    S.tokenSilverEarned = 50000; // extrapolé sur 30s -> 6M/h, un pic exactement comme le bug d'origine
+    S.startTime = performance.now() - 30*1000;
+    hud();
+    assert('Un gros gain sur <2min de session ne modifie PAS le record (protège contre les pics)',
+      S.bestSilverPerHour === 1000, `bestSilverPerHour=${S.bestSilverPerHour}`);
+    // simule une session de 3 min avec un rythme réellement plus élevé -> le record doit monter
+    S.tokenSilverEarned = 100000;
+    S.startTime = performance.now() - 3*60*1000;
+    hud();
+    assert('Un rythme soutenu sur >2min de session met bien à jour le record (record monte)',
+      S.bestSilverPerHour > 1000, `bestSilverPerHour=${S.bestSilverPerHour}`);
+    const afterFirstUpdate = S.bestSilverPerHour;
+    // un rythme plus FAIBLE ensuite ne doit jamais faire REDESCENDRE le record (monotone)
+    S.tokenSilverEarnedAtLoad = 99000; S.tokenSilverEarned = 99100;
+    S.startTime = performance.now() - 3*60*1000;
+    hud();
+    assert('Le record ne redescend jamais (monotone, comme bestKpm)', S.bestSilverPerHour === afterFirstUpdate,
+      `avant=${afterFirstUpdate} apres=${S.bestSilverPerHour}`);
+    S.bestSilverPerHour = s.bestSilverPerHour; S.tokenSilverEarned = s.tokenSilverEarned;
+    S.tokenSilverEarnedAtLoad = s.tokenSilverEarnedAtLoad; S.startTime = s.startTime;
+  }
+  // "afficher valeur/min puis meilleure valeur/heure" (2026-07-18) -- #shRate doit afficher un
+  // format ".../min" (jamais "/h" pour la valeur instantanée, source du bug de pic irréaliste)
+  function testShRateDisplaysPerMinuteNotPerHour() {
+    if (!$('shRate')) return; // pas de DOM (contexte hors-jeu)
+    const s = { tokenSilverEarned: S.tokenSilverEarned, tokenSilverEarnedAtLoad: S.tokenSilverEarnedAtLoad, startTime: S.startTime };
+    S.tokenSilverEarnedAtLoad = 0; S.tokenSilverEarned = 1000;
+    S.startTime = performance.now() - 10*1000; // 10s de session
+    hud();
+    const txt = $('shRate').textContent;
+    assert('#shRate affiche bien "/min", jamais "/h" pour la valeur instantanée', txt.includes('/min') && !txt.includes(' silver/h'), `texte="${txt}"`);
+    S.tokenSilverEarned = s.tokenSilverEarned; S.tokenSilverEarnedAtLoad = s.tokenSilverEarnedAtLoad; S.startTime = s.startTime;
+  }
+  // "bouton admin changer tout le stuff d'un coup de tiers Bleu a vert et y mettre tout les tiers"
+  // (2026-07-18) -- vérifie que les 4 paliers (pas seulement bleu/vert) équipent bien un set
+  // complet (13 pièces : 7 armure/armes + 6 bijoux) sans planter, avec la bonne couleur de palier.
+  function testAdminEquipFullTierSetCoversAllFourTiers() {
+    if (typeof adminEquipFullTierSet !== 'function') return;
+    const savedEquip = { ...EQUIP };
+    for (const grade of ['grey','white','green','blue']) {
+      const tier = GEAR_TIERS.find(t => t.grade === grade);
+      const count = adminEquipFullTierSet(grade);
+      assert(`adminEquipFullTierSet('${grade}') équipe bien 13 pièces (7 armure/armes + 6 bijoux)`, count === 13, `count=${count}`);
+      for (const slot of ['helmet','armor','gloves','boots','weapon','awakening','secondary']) {
+        assert(`${grade}/${slot} a la couleur du palier`, EQUIP[slot] && EQUIP[slot].color === tier.color, `slot=${slot}`);
+        assert(`${grade}/${slot} est à +0 (set neuf)`, EQUIP[slot] && EQUIP[slot].enhLv === 0);
+      }
+      for (const slot of ['ring1','ring2','necklace','earring1','earring2','belt']) {
+        assert(`${grade}/${slot} est bien équipé`, !!EQUIP[slot], `slot=${slot}`);
+      }
+    }
+    Object.keys(EQUIP).forEach(k => { EQUIP[k] = savedEquip[k]; });
+  }
+  // "bouton qui agrandi le coffre 4 ou 8 par ligne" (2026-07-18) -- la bascule doit correctement
+  // (dés)appliquer la classe chestZoomed et mettre à jour le texte du bouton
+  function testChestZoomToggleWorks() {
+    if (!$('veliaChestGrid') || !$('btnChestZoom') || typeof chestZoomed === 'undefined') return;
+    const s = chestZoomed;
+    chestZoomed = false; renderVeliaChest();
+    assert('Vue normale : pas de classe chestZoomed', !$('veliaChestGrid').classList.contains('chestZoomed'));
+    assert('Bouton propose "Agrandir" en vue normale', $('btnChestZoom').textContent.includes('Agrandir') || $('btnChestZoom').textContent.includes('Enlarge'));
+    chestZoomed = true; renderVeliaChest();
+    assert('Vue agrandie : classe chestZoomed appliquée', $('veliaChestGrid').classList.contains('chestZoomed'));
+    assert('Bouton propose "Réduire" en vue agrandie', $('btnChestZoom').textContent.includes('Réduire') || $('btnChestZoom').textContent.includes('Shrink'));
+    chestZoomed = s; renderVeliaChest();
+  }
   // "enleve le scroll affiche les 2 a 7 dernier note selon la taille et met un bouton vers le haut
   // pour voir les nouveau et vers le bas pour regarder les ancien" (2026-07-11) -- computePatchPages()
   // découpe PATCH_NOTES en pages contiguës de 2 à 7 entrées, sans trou ni chevauchement.
@@ -1611,6 +1687,10 @@
     testEverySkillHasDistinctCastIdentity();
     testSpawnCastOriginVfxNeverThrows();
     testWitchBodyOnAcceptsSkillObjectWithoutThrowing();
+    testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes();
+    testShRateDisplaysPerMinuteNotPerHour();
+    testAdminEquipFullTierSetCoversAllFourTiers();
+    testChestZoomToggleWorks();
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();

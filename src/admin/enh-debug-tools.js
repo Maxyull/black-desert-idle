@@ -104,3 +104,78 @@ wireAdminEnhStepBtn('btnAdminEnhDown1', -1,
 wireAdminEnhStepBtn('btnAdminEnhUp1', 1,
   'pièce(s) augmentée(s) d\'1 rang', 'piece(s) upgraded by 1 rank',
   'Déjà toutes au maximum', 'Already all at max');
+
+// outil de debug admin (2026-07-18, demande explicite : "bouton admin changer tout le stuff d'un
+// coup de tiers Bleu a vert et y mettre tout les tiers") -- équipe INSTANTANÉMENT un set complet
+// (+0) du palier choisi : 7 pièces d'armure/armes générées avec les MÊMES formules que le vrai
+// drop (rollGearDrop/rollWeaponDrop dans combat/loot-rolls.js, basis = la dernière zone du palier,
+// la plus avancée) + les 6 bijoux (ring1/ring2/necklace/earring1/earring2/belt), reconstruits à
+// partir du jackpot de CHAQUE zone du palier (chaque zone ne garantit qu'un seul type de bijou,
+// voir ZONES -- ring1/ring2 et earring1/earring2 reçoivent donc 2 copies du même bijou, comme un
+// joueur qui a fini par looter un doublon). Outil de test pur : aucun effet sur les succès/logs,
+// pas de vraie "chute" de loot.
+function adminEquipFullTierSet(grade) {
+  const tier = GEAR_TIERS.find(t => t.grade === grade);
+  if (!tier) return 0;
+  const lastZone = ZONES[tier.zones[tier.zones.length-1]];
+  const basisAP = lastZone.gearBasisAP ?? lastZone.reqAP, basisDP = lastZone.gearBasisDP ?? lastZone.reqDP;
+  const TIER_COLORED_ICON = {
+    helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor,
+    weapon:staffIconForColor, secondary:daggerIconForColor, awakening:orbPairIconForColor,
+  };
+  let count = 0;
+  for (const slot of ['helmet','armor','gloves','boots','weapon','awakening','secondary']) {
+    const role = GEAR_ROLE[slot];
+    const ap = role.apShare ? gearFloor(basisAP * role.apShare) : 0;
+    const dp = role.dpShare ? gearFloor(basisDP * role.dpShare) : 0;
+    const hp = role.hpShare ? gearFloor(basisDP * role.hpShare * HP_GEAR_SCALE) : 0;
+    const dodge = Math.round(basisDP * (role.dodgeShare||0) * DODGE_GEAR_SCALE * 100) / 100;
+    EQUIP[slot] = {
+      name: tier.sets[slot], kind:'gear', slot, ap, dp, hp, dodge, enhLv:0, optimizable:true, fsByLevel:{},
+      key:'gear_'+tier.grade+'_'+slot+'_admin'+Math.random().toString(36).slice(2,7),
+      icon: TIER_COLORED_ICON[slot](tier.color, tier.grade), color:tier.color, stackable:false, weight:1.2,
+      matName: tier.material.name,
+      val: Math.round((ap*2 + dp + hp*0.5) * GEAR_SELL_MULT),
+    };
+    count++;
+  }
+  const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+  const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
+  const byBaseSlot = {};
+  for (const zi of tier.zones) {
+    const z = ZONES[zi], jp = z.loot.jackpot, baseSlot = accSlotFor(jp);
+    const zBasisAP = z.gearBasisAP ?? z.reqAP;
+    byBaseSlot[baseSlot] = {
+      name: jp.name, kind:'jackpot', ap: gearFloor(zBasisAP * GEAR_ROLE.jackpot.apShare), dp:0, hp:0, dodge:0,
+      enhLv:0, optimizable:true, fsByLevel:{}, color:tier.color, stackable:false, weight:0.5, matName:tier.material.name,
+      icon: (JEWEL_ICON_FOR_SLOT[baseSlot]||ringIconForTier)(jTierIdx, tier.color),
+      val: gearFloor(z.loot.trash.val * JACKPOT_VAL_TRASH_RATIO),
+    };
+  }
+  const place = (slot, baseSlot) => {
+    const tmpl = byBaseSlot[baseSlot]; if (!tmpl) return;
+    EQUIP[slot] = { ...tmpl, key:'acc_'+tier.grade+'_'+slot+'_admin'+Math.random().toString(36).slice(2,7) };
+    count++;
+  };
+  place('ring1','ring'); place('ring2','ring');
+  place('earring1','earring'); place('earring2','earring');
+  place('necklace','necklace'); place('belt','belt');
+  hud(); renderEquipment(); refreshInvUI(); drawPreviewChar();
+  return count;
+}
+const adminEquipTierBtnEl = $('btnAdminEquipTier');
+if (adminEquipTierBtnEl) adminEquipTierBtnEl.onclick = () => {
+  if (typeof isAdmin === 'function' && !isAdmin()) return; // filet de sécurité : jamais actif hors admin
+  const sel = $('admTierSelect'); if (!sel) return;
+  const count = adminEquipFullTierSet(sel.value);
+  const msg = $('equipBestMsg');
+  if (msg) {
+    const tierObj = GEAR_TIERS.find(t => t.grade === sel.value);
+    const tierName = tierObj ? tierObj.label[LANG] : sel.value;
+    msg.textContent = count > 0
+      ? (LANG==='fr' ? `Équipé : set complet ${tierName} (${count} pièces)` : `Equipped: full ${tierName} set (${count} pieces)`)
+      : (LANG==='fr' ? 'Palier introuvable' : 'Tier not found');
+    msg.className = 'ok';
+    setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
+  }
+};

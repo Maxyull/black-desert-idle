@@ -630,6 +630,8 @@ const S = {
   
   tokenSilverEarned: 0, tokenSilverEarnedAtLoad: 0,
   bestKpm: 0, 
+  
+  bestSilverPerHour: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
@@ -1594,7 +1596,16 @@ function refreshStatsOnly() {
     if (kpmNow - (S.bestKpm||0) > 0.5) logToDiscord('🏹 Record kills/min', `**${myPseudo||'Joueur'}** bat son record perso : **${kpmNow.toFixed(1)}** kills/min (${tr(Z().name)})`, 0xc9a55a);
     S.bestKpm = kpmNow;
   }
-  $('shRate').textContent = mins>.1 ? fmt((S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0))/(mins/60))+' silver/h' : '— silver/h';
+  
+  const tokenGain = S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0);
+  const silverPerMinNow = mins>.1 ? tokenGain/mins : 0;
+  if (mins > 2) {
+    const silverPerHourNow = tokenGain/(mins/60);
+    if (silverPerHourNow > (S.bestSilverPerHour||0)) S.bestSilverPerHour = silverPerHourNow;
+  }
+  $('shRate').textContent = mins>.1
+    ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
+    : '— silver/min';
   const zb = $('zoneBadge');
   if (atVelia) {
     zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
@@ -4882,8 +4893,18 @@ function veliaChestStore(invIndex, n) {
   refreshInvUI(); renderVeliaChest();
   return true;
 }
+
+let chestZoomed = false;
+function updateChestZoomBtn() {
+  const btn = $('btnChestZoom'); if (!btn) return;
+  btn.textContent = chestZoomed
+    ? (LANG==='fr' ? '🔎 Réduire (8/ligne)' : '🔎 Shrink (8/row)')
+    : (LANG==='fr' ? '🔍 Agrandir (4/ligne)' : '🔍 Enlarge (4/row)');
+}
 function renderVeliaChest() {
   const grid = $('veliaChestGrid'); if (!grid) return;
+  grid.classList.toggle('chestZoomed', chestZoomed);
+  updateChestZoomBtn();
   grid.innerHTML = '';
   for (let i = 0; i < INV_SIZE; i++) {
     const locked = i >= VELIA_CHEST_OPEN;
@@ -4929,6 +4950,7 @@ document.querySelectorAll('#lootPanelTabs .lootPanelTab').forEach(btn => {
     if (panel === 'chest') renderVeliaChest();
   };
 });
+$('btnChestZoom').onclick = () => { chestZoomed = !chestZoomed; renderVeliaChest(); };
 
 function quickAction(i) {
   const s = INV[i]; if (!s) return;
@@ -6130,6 +6152,72 @@ wireAdminEnhStepBtn('btnAdminEnhUp1', 1,
   'pièce(s) augmentée(s) d\'1 rang', 'piece(s) upgraded by 1 rank',
   'Déjà toutes au maximum', 'Already all at max');
 
+function adminEquipFullTierSet(grade) {
+  const tier = GEAR_TIERS.find(t => t.grade === grade);
+  if (!tier) return 0;
+  const lastZone = ZONES[tier.zones[tier.zones.length-1]];
+  const basisAP = lastZone.gearBasisAP ?? lastZone.reqAP, basisDP = lastZone.gearBasisDP ?? lastZone.reqDP;
+  const TIER_COLORED_ICON = {
+    helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor,
+    weapon:staffIconForColor, secondary:daggerIconForColor, awakening:orbPairIconForColor,
+  };
+  let count = 0;
+  for (const slot of ['helmet','armor','gloves','boots','weapon','awakening','secondary']) {
+    const role = GEAR_ROLE[slot];
+    const ap = role.apShare ? gearFloor(basisAP * role.apShare) : 0;
+    const dp = role.dpShare ? gearFloor(basisDP * role.dpShare) : 0;
+    const hp = role.hpShare ? gearFloor(basisDP * role.hpShare * HP_GEAR_SCALE) : 0;
+    const dodge = Math.round(basisDP * (role.dodgeShare||0) * DODGE_GEAR_SCALE * 100) / 100;
+    EQUIP[slot] = {
+      name: tier.sets[slot], kind:'gear', slot, ap, dp, hp, dodge, enhLv:0, optimizable:true, fsByLevel:{},
+      key:'gear_'+tier.grade+'_'+slot+'_admin'+Math.random().toString(36).slice(2,7),
+      icon: TIER_COLORED_ICON[slot](tier.color, tier.grade), color:tier.color, stackable:false, weight:1.2,
+      matName: tier.material.name,
+      val: Math.round((ap*2 + dp + hp*0.5) * GEAR_SELL_MULT),
+    };
+    count++;
+  }
+  const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+  const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
+  const byBaseSlot = {};
+  for (const zi of tier.zones) {
+    const z = ZONES[zi], jp = z.loot.jackpot, baseSlot = accSlotFor(jp);
+    const zBasisAP = z.gearBasisAP ?? z.reqAP;
+    byBaseSlot[baseSlot] = {
+      name: jp.name, kind:'jackpot', ap: gearFloor(zBasisAP * GEAR_ROLE.jackpot.apShare), dp:0, hp:0, dodge:0,
+      enhLv:0, optimizable:true, fsByLevel:{}, color:tier.color, stackable:false, weight:0.5, matName:tier.material.name,
+      icon: (JEWEL_ICON_FOR_SLOT[baseSlot]||ringIconForTier)(jTierIdx, tier.color),
+      val: gearFloor(z.loot.trash.val * JACKPOT_VAL_TRASH_RATIO),
+    };
+  }
+  const place = (slot, baseSlot) => {
+    const tmpl = byBaseSlot[baseSlot]; if (!tmpl) return;
+    EQUIP[slot] = { ...tmpl, key:'acc_'+tier.grade+'_'+slot+'_admin'+Math.random().toString(36).slice(2,7) };
+    count++;
+  };
+  place('ring1','ring'); place('ring2','ring');
+  place('earring1','earring'); place('earring2','earring');
+  place('necklace','necklace'); place('belt','belt');
+  hud(); renderEquipment(); refreshInvUI(); drawPreviewChar();
+  return count;
+}
+const adminEquipTierBtnEl = $('btnAdminEquipTier');
+if (adminEquipTierBtnEl) adminEquipTierBtnEl.onclick = () => {
+  if (typeof isAdmin === 'function' && !isAdmin()) return; 
+  const sel = $('admTierSelect'); if (!sel) return;
+  const count = adminEquipFullTierSet(sel.value);
+  const msg = $('equipBestMsg');
+  if (msg) {
+    const tierObj = GEAR_TIERS.find(t => t.grade === sel.value);
+    const tierName = tierObj ? tierObj.label[LANG] : sel.value;
+    msg.textContent = count > 0
+      ? (LANG==='fr' ? `Équipé : set complet ${tierName} (${count} pièces)` : `Equipped: full ${tierName} set (${count} pieces)`)
+      : (LANG==='fr' ? 'Palier introuvable' : 'Tier not found');
+    msg.className = 'ok';
+    setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
+  }
+};
+
 // ==== src/world/render.js ====
 function hash2(ix,iy){ let h=ix*374761393+iy*668265263; h=(h^(h>>13))*1274126177; return ((h^(h>>>16))>>>0)/4294967295; }
 
@@ -7115,6 +7203,7 @@ function updateUserBar() {
   const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminResetEnhBtn = $a('btnAdminResetEnh'); if (adminResetEnhBtn) adminResetEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminEnhStepRow = $a('adminEnhStepRow'); if (adminEnhStepRow) adminEnhStepRow.style.display = isAdmin() ? '' : 'none';
+  const adminTierRow = $a('adminTierRow'); if (adminTierRow) adminTierRow.style.display = isAdmin() ? '' : 'none';
   
   const uuidRow = $a('uuidRow');
   if (uuidRow) uuidRow.style.display = currentUser ? 'flex' : 'none';
@@ -7325,9 +7414,7 @@ async function saveToCloud() {
 
 async function syncPlayerStats() {
   if (!sb || !currentUser || isGuest()) return; 
-  const mins = (performance.now() - S.startTime) / 60000;
   
-  const silverPerHour = mins > .1 ? Math.round((S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0)) / (mins/60)) : 0;
   const best = bestFarmedItem();
   
   const treasureCount = treasureTotal(S);
@@ -7342,7 +7429,7 @@ async function syncPlayerStats() {
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
-      silver_per_hour: silverPerHour,
+      silver_per_hour: Math.round(S.bestSilverPerHour||0),
       playtime_sec: Math.round(S.playtimeSec),
       best_item_name: best ? best.name : '',
       best_item_count: best ? best.count : 0,
