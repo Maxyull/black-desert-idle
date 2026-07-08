@@ -417,16 +417,16 @@
     // pour isoler CE bug précis.
     const target = PRI_IDX;
     const ring = { name:'test', kind:'jackpot', slot:'ring', ap:10, dp:0, hp:0, enhLv:0, optimizable:true };
-    const gainRing = optAutoGainPrimaryPart(ring, target, 'ring1');
+    const gainRing = optAutoGainPrimaryPart(ring, target);
     assert('Un bijou (ring1) affiche bien un gain de PA dans la liste', gainRing.includes('PA') && gainRing !== '', `got="${gainRing}"`);
     // même vérification pour les 2 autres types de bijoux (boucle/collier/ceinture)
     const earring = { name:'test2', kind:'jackpot', slot:'earring', ap:8, dp:0, hp:0, enhLv:0, optimizable:true };
-    assert('Un bijou (earring1) affiche aussi un gain de PA', optAutoGainPrimaryPart(earring, target, 'earring1').includes('PA'));
+    assert('Un bijou (earring1) affiche aussi un gain de PA', optAutoGainPrimaryPart(earring, target).includes('PA'));
     // vérifie que ça ne casse pas le comportement existant pour armure (PD) et arme (PA)
     const helmet = { name:'test3', kind:'gear', slot:'helmet', ap:0, dp:10, hp:0, enhLv:0, optimizable:true };
-    assert('Une pièce d\'armure (helmet) affiche toujours un gain de PD', optAutoGainPrimaryPart(helmet, target, 'helmet').includes('PD'));
+    assert('Une pièce d\'armure (helmet) affiche toujours un gain de PD', optAutoGainPrimaryPart(helmet, target).includes('PD'));
     const weapon = { name:'test4', kind:'gear', slot:'weapon', ap:10, dp:0, hp:0, enhLv:0, optimizable:true };
-    assert('Une arme affiche toujours un gain de PA', optAutoGainPrimaryPart(weapon, target, 'weapon').includes('PA'));
+    assert('Une arme affiche toujours un gain de PA', optAutoGainPrimaryPart(weapon, target).includes('PA'));
   }
   // "la flèche qui affiche le stuff à farm sur la zone ne doit pas s'afficher si le stuff est dans
   // l'inventaire" (2026-07-11) -- zonesOfferingUpgrade() (badge ⬆️ sur les lignes de la liste de
@@ -456,8 +456,8 @@
   // retomber sur un matériau d'un autre palier, ni honorer un matériau épinglé (clic droit) qui ne
   // correspond pas au palier de la pièce ciblée.
   function testEnhanceMaterialNeverSubstitutesWrongTier() {
-    const s = { optTargetSlot, EQUIP_weapon: EQUIP.weapon, forcedMatKey, a: INV[INV_SIZE-1], b: INV[INV_SIZE-2] };
-    optTargetSlot = 'weapon';
+    const s = { optTarget, EQUIP_weapon: EQUIP.weapon, forcedMatKey, a: INV[INV_SIZE-1], b: INV[INV_SIZE-2] };
+    optTarget = { loc:'equip', key:'weapon' };
     EQUIP.weapon = { name:'test', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:0, optimizable:true, matName:'Pierre du Temps' }; // Tuvala
     INV[INV_SIZE-1] = null; INV[INV_SIZE-2] = null;
     forcedMatKey = null;
@@ -483,7 +483,7 @@
     // ignoré (mauvais palier), pas utilisé de force, retombe sur la pierre Tuvala correcte
     forcedMatKey = 'mat_Pierre de Novice';
     assert('un matériau épinglé du mauvais palier est ignoré, jamais forcé', INV[findEnhanceMaterial()] === INV[INV_SIZE-2]);
-    optTargetSlot = s.optTargetSlot; EQUIP.weapon = s.EQUIP_weapon; forcedMatKey = s.forcedMatKey;
+    optTarget = s.optTarget; EQUIP.weapon = s.EQUIP_weapon; forcedMatKey = s.forcedMatKey;
     INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b;
     for (const [i, it] of stashed) INV[i] = it;
   }
@@ -492,7 +492,7 @@
   // donc findEnhanceMaterial() retombait sur le matériau de la zone COURANTE au lieu de celui du
   // PALIER du bijou ciblé. Vérifie le drop (rollDrops) ET la rétroactivité (migrateJewelryMatNameV239).
   function testJewelryHasMatNameForEnhancement() {
-    const s = { zoneIdx, optTargetSlot, ring1: EQUIP.ring1, dropsLen: drops.length };
+    const s = { zoneIdx, optTarget, ring1: EQUIP.ring1, dropsLen: drops.length };
     // un bijou fraîchement dropé (zone 3, Camp Rhutum, palier blanc/Tuvala) doit porter le matName
     // de SON palier, exactement comme le gear/les armes (rollDrops, pas rollGearDrop)
     zoneIdx = 3;
@@ -517,11 +517,54 @@
       EQUIP.ring1.matName === 'Pierre du Temps', `got=${EQUIP.ring1.matName}`);
     // l'auto-sélection de matériau doit utiliser CE matName, jamais la zone où l'on farme
     // actuellement (ici zone 0, palier gris/Naru -- totalement différent du bijou Tuvala équipé)
-    optTargetSlot = 'ring1';
+    optTarget = { loc:'equip', key:'ring1' };
     zoneIdx = 0;
     assert('findEnhanceMaterial utilise le palier du BIJOU (Tuvala), pas la zone actuelle (gris)',
       (EQUIP.ring1.matName || Z().loot.mat.name) === 'Pierre du Temps');
-    zoneIdx = s.zoneIdx; optTargetSlot = s.optTargetSlot; EQUIP.ring1 = s.ring1;
+    zoneIdx = s.zoneIdx; optTarget = s.optTarget; EQUIP.ring1 = s.ring1;
+  }
+  // "lorsqu'on optimise un objet d'inventaire, il doit seulement se mettre en optimisation sans
+  // toucher a l'equipement équipé" (2026-07-17) -- avant ce correctif, "Mettre en optimisation"
+  // sur un objet du sac appelait equipItem() en plus de cibler l'optimisation, remplaçant ce qui
+  // était équipé. Vérifie que cibler un objet du sac (optTarget={loc:'inv',...}) ne touche jamais
+  // à EQUIP et que l'objet reste enchantable là où il est (getOptTargetItem() le résout).
+  function testInvOptTargetDoesNotEquip() {
+    const s = { optTarget, EQUIP_weapon: EQUIP.weapon, forcedMatKey, inv: INV[INV_SIZE-1] };
+    EQUIP.weapon = null;
+    const item = { name:'testBagOpt', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv:0, optimizable:true, matName:'Pierre du Temps' };
+    INV[INV_SIZE-1] = item;
+    forcedMatKey = null;
+    optTarget = { loc:'inv', key: INV_SIZE-1 };
+    assert('Cibler un objet du sac pour l\'optimisation ne l\'équipe pas', EQUIP.weapon === null);
+    assert('L\'objet ciblé reste dans le sac, à sa place', INV[INV_SIZE-1] === item);
+    assert('getOptTargetItem() résout bien vers l\'objet du sac ciblé', getOptTargetItem() === item);
+    optTarget = s.optTarget; EQUIP.weapon = s.EQUIP_weapon; forcedMatKey = s.forcedMatKey; INV[INV_SIZE-1] = s.inv;
+  }
+  // "on peut optimiser les item du compendium jusqu'à PEN, une fois PEN il disparaissent du
+  // compendium et on ne garde dans le compendium uniquement des item TET maximum" (2026-07-17) --
+  // garde-fou de régression : un objet du Compendium enchanté jusqu'à PEN (voir attemptEnhance)
+  // doit être évacué vers le sac principal, jamais laissé dans COMPENDIUM_BAG au-delà de TET.
+  function testCompendiumEvictsItemOnceItReachesPen() {
+    const s = { optTarget, forcedMatKey, comp: COMPENDIUM_BAG[INV_SIZE-1], inv: INV[INV_SIZE-1], hadMastery: !!(S.penMastery && S.penMastery['testCompPenItem']) };
+    const item = { name:'testCompPenItem', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv: ENH_NAMES.length-2, optimizable:true, matName:'Pierre du Temps' };
+    COMPENDIUM_BAG[INV_SIZE-1] = item;
+    INV[INV_SIZE-1] = { key:'mat_Pierre du Temps', name:'Pierre du Temps', kind:'material', qty:5, stackable:true, weight:0.1, val:1 };
+    if (!S.penMastery) S.penMastery = {};
+    delete S.penMastery['testCompPenItem'];
+    forcedMatKey = null;
+    optTarget = { loc:'compendium', key: INV_SIZE-1 };
+    const savedRandom = Math.random;
+    Math.random = () => 0; // force le succès (chance toujours strictement positive à ce palier)
+    attemptEnhance();
+    Math.random = savedRandom;
+    assert('L\'objet a bien atteint PEN', item.enhLv === ENH_NAMES.length-1, `enhLv=${item.enhLv}`);
+    assert('Compendium : l\'objet PEN est évacué, jamais gardé au-delà de TET', COMPENDIUM_BAG[INV_SIZE-1] === null);
+    const movedIdx = INV.findIndex(x => x && x.name === 'testCompPenItem');
+    assert('L\'objet évacué rejoint le sac principal, jamais perdu', movedIdx !== -1 && INV[movedIdx].enhLv === ENH_NAMES.length-1);
+    if (movedIdx !== -1) INV[movedIdx] = null;
+    optTarget = s.optTarget; forcedMatKey = s.forcedMatKey; COMPENDIUM_BAG[INV_SIZE-1] = s.comp; INV[INV_SIZE-1] = s.inv;
+    delete S.enhPeakByName['testCompPenItem'];
+    if (s.hadMastery) S.penMastery['testCompPenItem'] = true; else delete S.penMastery['testCompPenItem'];
   }
   // "enleve le scroll affiche les 2 a 7 dernier note selon la taille et met un bouton vers le haut
   // pour voir les nouveau et vers le bas pour regarder les ancien" (2026-07-11) -- computePatchPages()
@@ -798,13 +841,16 @@
   // voir capture jointe) -- une seule stat, la PRINCIPALE de la pièce (PA pour arme/éveil/dague, PD
   // pour casque/armure/gants/bottes), jamais l'autre même si elle change aussi
   function testOptDropdownShowsOnlyPrimaryStat() {
-    const helmet = { ap: 0, dp: 5, hp: 8, dodge: .2, enhLv: 0, fsByLevel: {} };
-    const weapon = { ap: 6, dp: 0, hp: 0, dodge: 0, enhLv: 0, fsByLevel: {} };
-    const helmetTxt = optAutoGainPrimaryPart(helmet, 5, 'helmet');
-    const weaponTxt = optAutoGainPrimaryPart(weapon, 5, 'weapon');
+    // kind/slot ajoutés (2026-07-17) -- optAutoGainPrimaryPart dérive désormais le stat principal
+    // directement de l'objet (targetPrimaryStat), plus d'un slotId externe passé en 3e argument
+    // (une cible sac/Compendium n'a pas de slot EQUIP), voir la généralisation de optTarget.
+    const helmet = { kind:'gear', slot:'helmet', ap: 0, dp: 5, hp: 8, dodge: .2, enhLv: 0, fsByLevel: {} };
+    const weapon = { kind:'gear', slot:'weapon', ap: 6, dp: 0, hp: 0, dodge: 0, enhLv: 0, fsByLevel: {} };
+    const helmetTxt = optAutoGainPrimaryPart(helmet, 5);
+    const weaponTxt = optAutoGainPrimaryPart(weapon, 5);
     assert('Casque : le menu ne montre que la PD, jamais PV/Esquive', helmetTxt.includes('PD') && !helmetTxt.includes('PV') && !helmetTxt.includes('Esq'));
     assert('Arme : le menu montre la PA, jamais la PD', weaponTxt.includes('PA') && !weaponTxt.includes('PD'));
-    assert('Aucun gain -> texte vide (pas de parenthèses vides)', optAutoGainPrimaryPart(helmet, 0, 'helmet') === '');
+    assert('Aucun gain -> texte vide (pas de parenthèses vides)', optAutoGainPrimaryPart(helmet, 0) === '');
   }
   // "revois le prix des potion en fonction de l'argent qu'on se fait en vendant les token en
   // instantané au jeu et uniquement par rapport a ça pas au vente de stuff" (2026-07-11), puis
@@ -1406,6 +1452,8 @@
     testZoneUpgradeArrowHiddenIfAlreadyInBag();
     testEnhanceMaterialNeverSubstitutesWrongTier();
     testJewelryHasMatNameForEnhancement();
+    testInvOptTargetDoesNotEquip();
+    testCompendiumEvictsItemOnceItReachesPen();
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();
