@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V329', d:'18/07/2026 22:00', name:{fr:'Flash boss dans le header, Compagnon/Vie en mer de retour', en:'Boss flash in the header, Companion/Sea life are back'}, fr:[
+      {t:'new', sub:'interface', severity:'major', tx:'L\'onglet Boss du header s\'illumine désormais d\'un flash bien visible dès que le prochain spawn est à moins de 5 minutes, et reste allumé pendant toute la fenêtre de combat (9 min) — impossible de rater un boss en farmant sur une autre page. Le %PV du boss s\'affiche aussi directement sur cet onglet pendant le combat.'},
+      {t:'change', sub:'interface', tx:'Compagnon et Vie en mer, qui vivaient dans la barre des régions (Velia/Heidel/Calpheon...), reviennent dans le header aux côtés de Zone/Boss/Pêche/Mine — plus cohérent avec les autres activités, toujours verrouillés en teaser.'},
+      {t:'fix', sub:'interface', tx:'Le cadenas des onglets verrouillés du header (Pêche, Mine, Compagnon...) était collé en texte après le nom sur la même ligne — il a désormais sa propre ligne, en dessous du nom, plus lisible dans une barre à 10 onglets.'},
+    ], en:[
+      {t:'new', sub:'interface', severity:'major', tx:'The Boss tab in the header now flashes clearly as soon as the next spawn is within 5 minutes, and stays lit for the whole fight window (9 min) — impossible to miss a boss while farming another page. The boss\'s HP% also shows directly on that tab during the fight.'},
+      {t:'change', sub:'interface', tx:'Companion and Sea life, which lived in the region tab bar (Velia/Heidel/Calpheon...), move back to the header alongside Zone/Boss/Fishing/Mining — a better fit with the other activities, still locked as teasers.'},
+      {t:'fix', sub:'interface', tx:'The lock icon on locked header tabs (Fishing, Mining, Companion...) used to be glued as text after the name on the same line — it now has its own line below the name, easier to read in a 10-tab bar.'},
+    ] },
   { v:'V328', d:'18/07/2026 21:00', name:{fr:'Compendium : éviction PEN généralisée + rétroactive', en:'Compendium: generalized + retroactive PEN eviction'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Quand un exemplaire ÉQUIPÉ ou en sac atteignait PEN, une AUTRE copie non-PEN du même objet protégée dans le Compendium restait coincée là indéfiniment (l\'éviction ne gérait que le cas où c\'était CETTE copie précise qui montait à PEN). Corrigé : dès qu\'un nom d\'objet est maîtrisé PEN, peu importe quel exemplaire y est arrivé, la copie protégée devenue inutile rejoint le sac principal. Rattrapage rétroactif appliqué au premier chargement pour les cas déjà présents.'},
       {t:'fix', sub:'interface', tx:'Le classement Gearscore/PA/PD a été réinitialisé côté serveur puis repeuplé automatiquement avec les vraies valeurs actuelles de chaque joueur (record à vie, voir V327) au lieu de garder d\'anciennes valeurs "en direct" obsolètes datant d\'avant ce changement.'},

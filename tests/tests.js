@@ -405,21 +405,59 @@
     heidelClone.querySelector('.zoneTierLock').remove();
     assert('Le texte du bouton (hors badge) ne contient plus le cadenas', !heidelClone.textContent.includes('🔒'), `texte=${heidelClone.textContent}`);
   }
-  // "les zone dans le header ont un cadenas au milieu en bas on y transvase du menu de gauche
-  // compagnon et vie en mer avec cadenas" (2026-07-17) -- Compagnon/Vie en mer déplacés du menu de
-  // gauche vers la barre d'onglets de région, toujours verrouillés, jamais mélangés à ZONE_TIERS
-  // (qui pilote buildZoneList()/zoneTier -- ces 2 teasers n'ont pas de data-tier).
-  function testZoneTierTabsIncludeLockedTeasers() {
-    if (!$('zoneTierTabs')) return; // pas de DOM (contexte hors-jeu)
-    renderZoneTierTabs();
-    const buttons = [...$('zoneTierTabs').querySelectorAll('.catTab')];
-    const teasers = buttons.filter(b => !b.dataset.tier);
-    assert('Les 2 onglets teasers (Compagnon, Vie en mer) sont bien présents', teasers.length === EXTRA_TEASER_TABS.length, `got=${teasers.length}`);
-    for (const b of teasers) {
-      assert('Chaque onglet teaser est verrouillé (classe locked)', b.classList.contains('locked'));
-      assert('Chaque onglet teaser porte le badge cadenas', !!b.querySelector('.zoneTierLock'));
-      assert('Chaque onglet teaser est désactivé (disabled)', b.disabled);
+  // "remet les categorie compagnon et vie en mer dans le header" (2026-07-08) -- déplacés de
+  // #zoneTierTabs (où ils vivaient depuis le 2026-07-17) vers #activityTabs, le vrai "header" du
+  // jeu (voir ACTIVITY_TABS, combat/boss.js) -- vérifie qu'ils y sont bien, verrouillés, et qu'ils
+  // ont disparu de la barre de région pour ne pas être dupliqués.
+  function testCompagnonSeaLifeLiveInHeaderNotZoneTierTabs() {
+    if (!$('activityTabs') || typeof renderActivityTabs !== 'function') return;
+    renderActivityTabs();
+    const headerBtns = [...$('activityTabs').querySelectorAll('.actTab')];
+    const pet = headerBtns.find(b => b.dataset.id === 'pet'), sea = headerBtns.find(b => b.dataset.id === 'sea');
+    assert('Compagnon est bien un onglet du header', !!pet);
+    assert('Vie en mer est bien un onglet du header', !!sea);
+    assert('Compagnon est verrouillé (locked + disabled)', pet && pet.classList.contains('locked') && pet.disabled);
+    assert('Vie en mer est verrouillé (locked + disabled)', sea && sea.classList.contains('locked') && sea.disabled);
+    if ($('zoneTierTabs') && typeof renderZoneTierTabs === 'function') {
+      renderZoneTierTabs();
+      const zoneBtns = [...$('zoneTierTabs').querySelectorAll('.catTab')];
+      assert('Compagnon/Vie en mer ne sont plus dupliqués dans la barre de région',
+        !zoneBtns.some(b => b.textContent.includes('Compagnon') || b.textContent.includes('Vie en mer')));
     }
+  }
+  // "remet les cadenas dans le header sur la ligne du bas" (2026-07-08) -- le cadenas d'un onglet
+  // verrouillé du header doit être un élément à part (.actTabLock), jamais concaténé dans le texte
+  // du libellé -- même esprit que testZoneTierLockIsSeparateFromLabel ci-dessus, pour #activityTabs.
+  function testActivityTabLockIsSeparateFromLabel() {
+    if (!$('activityTabs') || typeof renderActivityTabs !== 'function') return;
+    renderActivityTabs();
+    const fish = [...$('activityTabs').querySelectorAll('.actTab')].find(b => b.dataset.id === 'fish');
+    if (!fish) return;
+    assert('Onglet verrouillé du header a bien un badge cadenas séparé', !!fish.querySelector('.actTabLock'));
+    const clone = fish.cloneNode(true);
+    clone.querySelector('.actTabLock').remove();
+    assert('Le libellé (hors badge cadenas) ne contient plus le cadenas', !clone.querySelector('.actTabLabel').textContent.includes('🔒'));
+  }
+  // "Créer un Flash lumineux sur la catégorie boss, qu'on le vois bien 5 min avant et pendant toute
+  // la durée du boss, met y les % hp du boss bien visible aussi" (2026-07-08) -- verrouille le
+  // déclenchement du flash (bossHot) et l'affichage du %PV sur l'onglet Boss du header.
+  function testBossActivityTabFlashesNearSpawnAndShowsHp() {
+    if (typeof updateBossActivityTabHot !== 'function' || !$('activityTabs') || typeof renderActivityTabs !== 'function') return;
+    renderActivityTabs();
+    const btn = $('actTabBoss'); if (!btn) return;
+    const savedBossState = { active: bossState.active, hp: bossState.hp, maxHp: bossState.maxHp };
+    // combat en cours : le flash doit s'allumer et le %PV doit être calculé depuis bossState
+    bossState.active = true; bossState.hp = 30; bossState.maxHp = 100;
+    updateBossActivityTabHot();
+    assert('Onglet Boss flashe (bossHot) pendant un combat', btn.classList.contains('bossHot'));
+    assert('Onglet Boss affiche bien le %PV pendant un combat', $('actTabBossHp').textContent === '30%', `texte=${$('actTabBossHp').textContent}`);
+    // hors combat, sans occurrence proche : pas de flash, pas de %PV
+    bossState.active = false; bossState.hp = savedBossState.hp; bossState.maxHp = savedBossState.maxHp;
+    updateBossActivityTabHot();
+    const occNow = nextBossOccurrence();
+    const shouldBeHot = !!occNow && (occNow.live || (occNow.time - Date.now()) <= BOSS_TAB_FLASH_LEAD_MS);
+    assert('Hors combat, le flash suit exactement la fenêtre planifiée (5 min avant + durée live)', btn.classList.contains('bossHot') === shouldBeHot);
+    bossState.active = savedBossState.active;
   }
   // "le coffre ne doit pas dépasser la taille de la carte, les slots bloqué sont bloqué avec un
   // cadenas au dessus au milieu" (2026-07-17) -- avant, les cases verrouillées du coffre affichaient
@@ -1818,7 +1856,9 @@
     testFarmModeBubbleSelectorReflectsTwoModes();
     testSlotsUpgradedByZoneIsZoneSpecific();
     testZoneTierLockIsSeparateFromLabel();
-    testZoneTierTabsIncludeLockedTeasers();
+    testCompagnonSeaLifeLiveInHeaderNotZoneTierTabs();
+    testActivityTabLockIsSeparateFromLabel();
+    testBossActivityTabFlashesNearSpawnAndShowsHp();
     testChestLockedCellsUseBadgeConvention();
     testJewelryShowsGainInAutoOptList();
     testZoneUpgradeArrowHiddenIfAlreadyInBag();

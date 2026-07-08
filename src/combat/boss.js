@@ -152,6 +152,10 @@ function updateNextBossMini() {
 
 // liste des "pages" affichée en header au-dessus du jeu (demande utilisateur) : Zone / Boss +
 // activités verrouillées en teaser. Cliquer une page bascule la vue du jeu.
+// Compagnon/Vie en mer (2026-07-08, demande explicite : "remet les categorie compagnon et vie en
+// mer dans le header") -- vivaient ici à l'origine, déplacés le 2026-07-17 dans la barre d'onglets
+// de région (#zoneTierTabs, voir EXTRA_TEASER_TABS, core/game-core.js) ; remis ICI, dans le
+// header, à la demande explicite -- retirés de EXTRA_TEASER_TABS pour ne pas les dupliquer.
 const ACTIVITY_TABS = [
   { id:'zone', icon:'⚔️', name:{fr:'Zone',en:'Zone'},       locked:false },
   { id:'boss', icon:'🐍', name:{fr:'Boss',en:'Boss'},       locked:false },
@@ -161,17 +165,52 @@ const ACTIVITY_TABS = [
   { id:'field', icon:'🌾', name:{fr:'Champs',en:'Fields'},  locked:true },
   { id:'ranch', icon:'🐑', name:{fr:'Bergerie',en:'Ranch'}, locked:true },
   { id:'workshop', icon:'🏛️', name:{fr:'Atelier royal',en:'Royal Workshop'}, locked:true },
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:true },
+  { id:'sea', icon:'🌊', name:{fr:'Vie en mer',en:'Sea life'}, locked:true },
 ];
 let currentActivity = 'zone';
+// cadenas remis "sur la ligne du bas" (2026-07-08, demande explicite : "remet les cadenas dans le
+// header sur la ligne du bas") -- avant, le 🔒 était collé en texte APRÈS le nom sur la même ligne
+// ("🎣 Pêche 🔒"), ce qui allongeait le bouton et le faisait parfois passer à la ligne dans une
+// barre déjà chargée (10 onglets). Le nom et le cadenas sont maintenant 2 lignes distinctes dans
+// le même bouton (voir .actTab en flex-column dans styles.css), comme la convention .zoneTierLock
+// déjà utilisée ailleurs, mais ici SANS badge flottant/absolu -- juste 2 lignes empilées normales.
 function renderActivityTabs() {
   const el = $('activityTabs'); if (!el) return;
-  el.innerHTML = ACTIVITY_TABS.map(t =>
-    `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" data-id="${t.id}"${t.locked?' disabled':''}>${t.icon} ${t.name[LANG]}${t.locked?' 🔒':''}</button>`).join('');
+  el.innerHTML = ACTIVITY_TABS.map(t => {
+    // onglet Boss : badge %PV inséré ici, mis à jour en direct par updateBossActivityTabHot()
+    const hpBadge = t.id === 'boss' ? '<span class="actTabBossHp" id="actTabBossHp"></span>' : '';
+    return `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" id="${t.id==='boss'?'actTabBoss':''}" data-id="${t.id}"${t.locked?' disabled':''}>` +
+      `<span class="actTabLabel">${t.icon} ${t.name[LANG]}</span>${hpBadge}${t.locked?'<span class="actTabLock">🔒</span>':''}</button>`;
+  }).join('');
   el.querySelectorAll('.actTab').forEach(btn => {
     if (btn.classList.contains('locked')) return;
     btn.onclick = () => showActivityPage(btn.dataset.id);
   });
+  updateBossActivityTabHot();
 }
+// "Créer un Flash lumineux sur la catégorie boss, qu'on le vois bien 5 min avant et pendant toute
+// la durée du boss, met y les % hp du boss bien visible aussi" (2026-07-08) -- allume l'onglet
+// Boss du header dès que le prochain spawn est à moins de 5 min ET tant que la fenêtre de combat
+// (BOSS_WINDOW_MS, 9 min) reste ouverte -- ne touche PAS au DOM des autres onglets (léger, appelé
+// chaque seconde), contrairement à renderActivityTabs() qui régénère tout le innerHTML.
+const BOSS_TAB_FLASH_LEAD_MS = 5 * 60 * 1000;
+function updateBossActivityTabHot() {
+  const btn = $a('actTabBoss'); if (!btn) return;
+  const occ = nextBossOccurrence();
+  // combat RÉELLEMENT en cours (solo ou partagé) : bossState.hp/maxHp, plus précis/à jour que
+  // l'occurrence planifiée -- couvre aussi un boss solo (jamais dans occ.hp, seulement partagé)
+  const fighting = bossState.active && bossState.maxHp > 0;
+  const hot = fighting || (!!occ && (occ.live || (occ.time - Date.now()) <= BOSS_TAB_FLASH_LEAD_MS));
+  btn.classList.toggle('bossHot', hot);
+  const hpEl = $a('actTabBossHp');
+  if (hpEl) {
+    if (fighting) hpEl.textContent = Math.max(0, bossState.hp/bossState.maxHp*100).toFixed(0)+'%';
+    else if (occ && occ.live && typeof occ.hp === 'number' && occ.maxHp > 0) hpEl.textContent = Math.max(0, occ.hp/occ.maxHp*100).toFixed(0)+'%';
+    else hpEl.textContent = '';
+  }
+}
+setInterval(updateBossActivityTabHot, 1000);
 // affiche/masque la vue "farm" (canvas + panneaux) — le header (barre d'activités) n'est
 // JAMAIS masqué : le boss s'insère juste en dessous, dans le flux du jeu
 function setFarmViewVisible(v) {

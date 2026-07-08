@@ -10,7 +10,7 @@
      commit), pas juste copie depuis jsdelivr -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"
   integrity="sha256-LbKRLxaTmjshtHKYCnradGszpqQHCLxVXLC+JVxutbE=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=448">
+<link rel="stylesheet" href="src/styles/styles.css?v=451">
 </head>
 <body>
 
@@ -93,8 +93,9 @@
     <button id="btnAchievements"><span data-i18n="btnAchievements">🏅 Succès</span><span class="contentNewBadge" id="newBadgeAchievements">1</span></button>
     <button id="btnMarket" title="BETA — en construction, encore peu fonctionnel"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
     <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
-    <!-- Pet/Mer déplacés le 2026-07-17 (demande explicite) dans la barre d'onglets de région
-         (#zoneTierTabs, voir EXTRA_TEASER_TABS dans core/game-core.js) -- retirés d'ici -->
+    <!-- Pet/Mer déplacés le 2026-07-17 dans la barre d'onglets de région (#zoneTierTabs), puis
+         remis dans le header le 2026-07-08 (demande explicite : "remet les categorie compagnon et
+         vie en mer dans le header") -- voir ACTIVITY_TABS dans combat/boss.js, jamais ici -->
   </div>
 
   <div id="userBar">
@@ -624,11 +625,11 @@
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- module autonome, DOIT charger EN PREMIER : GEAR_TIERS
      (world/gear-tiers-data.js) lit ICO_MAT_* immédiatement au chargement -->
-<script src="meta/patch-notes-data.js?v=448"></script>
+<script src="meta/patch-notes-data.js?v=451"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=448"></script>
+<script src="build/source.min.js?v=451"></script>
 <!-- données pures ZONES[] -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers) --
      DOIT charger AVANT game-core.js : resetWorld() (appelé au top-level de game-core.js) lit ZONES
      dès le premier chargement du script -->

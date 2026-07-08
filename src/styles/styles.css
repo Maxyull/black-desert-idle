@@ -1541,9 +1541,9 @@
      ligne possible, contrairement à flex-wrap) + troncature (ellipsis) en dernier recours si un nom
      ne tient vraiment pas : garantit une seule ligne dans tous les cas, quitte à couper "Calpheon"
      en "Calphe…" dans les cartes les plus étroites plutôt que de repasser sur 2 rangées. */
-  /* passé à 7 colonnes le 2026-07-17 (demande explicite) : 2 onglets teasers supplémentaires
-     (Compagnon, Vie en mer) déplacés ici depuis le menu de gauche, voir EXTRA_TEASER_TABS */
-  #zoneTierTabs { display:grid; grid-template-columns:repeat(7, 1fr); gap:2px; margin-bottom:14px; }
+  /* repassé à 5 colonnes le 2026-07-08 : Compagnon/Vie en mer (ajoutés ici le 2026-07-17) remis
+     dans le header (#activityTabs, demande explicite) -- retour aux 5 vraies zones de ZONE_TIERS */
+  #zoneTierTabs { display:grid; grid-template-columns:repeat(5, 1fr); gap:2px; margin-bottom:14px; }
   #zoneTierTabs .catTab { position:relative; padding:6px 2px; font-size:9px; min-width:0; overflow:visible; }
   /* onglets d'inventaire (Normal/Opti/Trésors/Conso/RNG, 2026-07-14, demande explicite : "met sur
      la meme ligne... avec les cadenas au dessus au milieu") -- même grille stricte à 5 colonnes que
@@ -1832,14 +1832,34 @@
     display:flex; align-items:center; gap:12px; margin-bottom:8px; padding:7px 10px;
     background:var(--panel); border:1px solid #2c2a31; border-bottom:1px solid var(--gold-dim);
   }
-  /* liste de pages dans le header : Zone / Boss / activités verrouillées */
+  /* liste de pages dans le header : Zone / Boss / Compagnon / Vie en mer / activités verrouillées */
   #activityTabs { display:flex; flex-wrap:wrap; gap:5px; flex:1; }
+  /* nom et cadenas sur 2 lignes distinctes (2026-07-08, demande explicite : "remet les cadenas
+     dans le header sur la ligne du bas") -- avant, le 🔒 était collé en texte APRÈS le nom sur la
+     MÊME ligne ("🎣 Pêche 🔒"), ce qui allongeait le bouton inutilement dans une barre à 10
+     onglets. Colonne flex : libellé en haut, cadenas en dessous, sans badge flottant/absolu. */
   .actTab {
     width:auto; margin:0; padding:5px 11px; font-size:11.5px; font-weight:bold;
     background:transparent; border:1px solid #3a3742;
+    display:flex; flex-direction:column; align-items:center; gap:2px; line-height:1.2;
   }
   .actTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
   .actTab.locked { opacity:.4; cursor:not-allowed; }
+  .actTabLock { font-size:9px; opacity:.85; }
+  /* "Créer un Flash lumineux sur la catégorie boss, qu'on le vois bien 5 min avant et pendant
+     toute la durée du boss" (2026-07-08) -- allumé par updateBossActivityTabHot() (combat/boss.js)
+     dès que le prochain spawn est à moins de 5 min, et tant que dure la fenêtre de combat. Glow +
+     pulsation nette (contrairement à patchNewFade, plus discret) pour qu'il saute vraiment aux yeux
+     dans une barre de 10 onglets. */
+  .actTab.bossHot { border-color:var(--danger); color:#ffb0a0; animation:bossTabFlash 1.1s infinite; }
+  @keyframes bossTabFlash {
+    0%,100% { box-shadow:0 0 4px 1px rgba(224,96,80,.35); background:rgba(224,96,80,.08); }
+    50%     { box-shadow:0 0 14px 5px rgba(224,96,80,.85); background:rgba(224,96,80,.22); }
+  }
+  /* %PV du boss, bien visible à côté du nom (2026-07-08, demande explicite : "met y les % hp du
+     boss bien visible aussi") -- vide tant qu'aucun combat n'est identifiable (pas encore spawné,
+     ou spawné mais PV inconnus côté client avant d'entrer dans un boss solo) */
+  .actTabBossHp { font-size:10.5px; font-weight:bold; color:var(--danger); }
   #nextBossMini { font-size:11px; color:var(--ink-dim); flex-shrink:0; }
   #nextBossMini b { color:var(--gold); }
   #nextBossMini .live { color:var(--danger); font-weight:bold; animation:patchNewFade 1.2s infinite; }

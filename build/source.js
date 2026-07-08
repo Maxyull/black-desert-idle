@@ -1379,10 +1379,6 @@ function renderStatsLevelsPane() {
     : '5 levels before and after yours — base HP (gear excluded), Speed bonus, and XP required for THAT level.'}</div>` + rows;
 }
 
-const EXTRA_TEASER_TABS = [
-  { icon:'🐾', label:{fr:'Compagnon',en:'Companion'} },
-  { icon:'🌊', label:{fr:'Vie en mer',en:'Sea life'} },
-];
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
   
@@ -1394,10 +1390,7 @@ function renderZoneTierTabs() {
     return `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
     `${t.locked?' disabled title="'+lockedTitle+'"':''} data-tier="${t.id}">` +
     `${t.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`;
-  }).join('') + EXTRA_TEASER_TABS.map(t =>
-    `<button class="catTab locked" disabled title="${LANG==='fr'?'Bientôt disponible':'Coming soon'}">` +
-    `<span class="zoneTierLock">🔒</span><span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`
-  ).join('');
+  }).join('');
   el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
     btn.onclick = () => { zoneTier = btn.dataset.tier; buildZoneList(); };
   });
@@ -3562,17 +3555,42 @@ const ACTIVITY_TABS = [
   { id:'field', icon:'🌾', name:{fr:'Champs',en:'Fields'},  locked:true },
   { id:'ranch', icon:'🐑', name:{fr:'Bergerie',en:'Ranch'}, locked:true },
   { id:'workshop', icon:'🏛️', name:{fr:'Atelier royal',en:'Royal Workshop'}, locked:true },
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:true },
+  { id:'sea', icon:'🌊', name:{fr:'Vie en mer',en:'Sea life'}, locked:true },
 ];
 let currentActivity = 'zone';
+
 function renderActivityTabs() {
   const el = $('activityTabs'); if (!el) return;
-  el.innerHTML = ACTIVITY_TABS.map(t =>
-    `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" data-id="${t.id}"${t.locked?' disabled':''}>${t.icon} ${t.name[LANG]}${t.locked?' 🔒':''}</button>`).join('');
+  el.innerHTML = ACTIVITY_TABS.map(t => {
+    
+    const hpBadge = t.id === 'boss' ? '<span class="actTabBossHp" id="actTabBossHp"></span>' : '';
+    return `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" id="${t.id==='boss'?'actTabBoss':''}" data-id="${t.id}"${t.locked?' disabled':''}>` +
+      `<span class="actTabLabel">${t.icon} ${t.name[LANG]}</span>${hpBadge}${t.locked?'<span class="actTabLock">🔒</span>':''}</button>`;
+  }).join('');
   el.querySelectorAll('.actTab').forEach(btn => {
     if (btn.classList.contains('locked')) return;
     btn.onclick = () => showActivityPage(btn.dataset.id);
   });
+  updateBossActivityTabHot();
 }
+
+const BOSS_TAB_FLASH_LEAD_MS = 5 * 60 * 1000;
+function updateBossActivityTabHot() {
+  const btn = $a('actTabBoss'); if (!btn) return;
+  const occ = nextBossOccurrence();
+  
+  const fighting = bossState.active && bossState.maxHp > 0;
+  const hot = fighting || (!!occ && (occ.live || (occ.time - Date.now()) <= BOSS_TAB_FLASH_LEAD_MS));
+  btn.classList.toggle('bossHot', hot);
+  const hpEl = $a('actTabBossHp');
+  if (hpEl) {
+    if (fighting) hpEl.textContent = Math.max(0, bossState.hp/bossState.maxHp*100).toFixed(0)+'%';
+    else if (occ && occ.live && typeof occ.hp === 'number' && occ.maxHp > 0) hpEl.textContent = Math.max(0, occ.hp/occ.maxHp*100).toFixed(0)+'%';
+    else hpEl.textContent = '';
+  }
+}
+setInterval(updateBossActivityTabHot, 1000);
 
 function setFarmViewVisible(v) {
   ['gameFrame','panel','itemPop','itemTooltip'].forEach(id => {

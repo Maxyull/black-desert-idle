@@ -1030,8 +1030,8 @@ const I18N = {
   lblLevel: { fr:'Niv.', en:'Lvl' },
   btnAutoSellLoot: { fr:'Vente automatique', en:'Auto-sell' },
   btnEquipSellCompendium: { fr:'⚡ Équiper → 🗑️ Vendre → 📖 Compendium', en:'⚡ Equip → 🗑️ Sell → 📖 Compendium' },
-  // btnPet/btnSea retirés le 2026-07-17 (déplacés dans #zoneTierTabs, voir EXTRA_TEASER_TABS dans
-  // core/game-core.js -- rendus dynamiquement, plus besoin de ces clés i18n)
+  // btnPet/btnSea retirés le 2026-07-17 (rendus dynamiquement depuis ACTIVITY_TABS, combat/boss.js
+  // -- déplacés dans #zoneTierTabs puis dans le header le 2026-07-08 -- plus besoin de ces clés i18n)
   btnDonation: { fr:'💖 Soutenir', en:'💖 Support' },
   lootPanelTabLoot: { fr:'🎒 Loot', en:'🎒 Loot' },
   lootPanelTabChest: { fr:'🏛️ Coffre', en:'🏛️ Chest' },
