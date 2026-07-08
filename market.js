@@ -17,6 +17,10 @@ function marketRequireAuth() {
 // market_lockdown_and_cancel_all) fait aussi foi côté RPC (market_place_order refuse tout nouvel
 // ordre si fermé) ; ce blocage client évite juste d'ouvrir le panneau pour rien et explique
 // pourquoi. L'admin garde toujours l'accès (même logique staff-only que le serveur).
+// Renommé "Marché commun" (2026-07-16, demande explicite) : les anciens onglets de premier niveau
+// Acheter/Vendre/Mes annonces (annonces à prix fixe, table market_listings) sont retirés -- le
+// carnet d'ordres du Marché commun (market_orders) les remplace entièrement, on atterrit
+// directement dedans à l'ouverture, plus aucun onglet de premier niveau à choisir.
 $a('btnMarket').onclick = async () => {
   if (!marketRequireAuth()) return;
   if (!(typeof isAdmin === 'function' && isAdmin())) {
@@ -31,122 +35,12 @@ $a('btnMarket').onclick = async () => {
     } catch(e) {}
   }
   $a('marketOverlay').classList.add('open');
-  refreshMarketBrowse();
-  refreshSellTab();
-  refreshMarketMine();
+  refreshCommonMarket();
 };
 $a('closeMarket').onclick = () => $a('marketOverlay').classList.remove('open');
 let marketMouseDownOnBackdrop = false;
 $a('marketOverlay').addEventListener('mousedown', e => { marketMouseDownOnBackdrop = (e.target.id === 'marketOverlay'); });
 $a('marketOverlay').addEventListener('click', e => { if (e.target.id === 'marketOverlay' && marketMouseDownOnBackdrop) $a('marketOverlay').classList.remove('open'); });
-
-document.querySelectorAll('.mtab').forEach(btn => {
-  btn.onclick = () => {
-    document.querySelectorAll('.mtab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    ['browse','sell','mine','common'].forEach(t => { $a('market'+t[0].toUpperCase()+t.slice(1)).style.display = (t===btn.dataset.tab) ? 'block' : 'none'; });
-    if (btn.dataset.tab === 'browse') refreshMarketBrowse();
-    if (btn.dataset.tab === 'sell') refreshSellTab();
-    if (btn.dataset.tab === 'mine') refreshMarketMine();
-    if (btn.dataset.tab === 'common') refreshCommonMarket();
-  };
-});
-
-async function refreshMarketBrowse() {
-  const box = $a('marketList');
-  box.innerHTML = '<div class="mEmpty">Chargement...</div>';
-  const { data, error } = await sb.from('market_listings')
-    .select('id, item, price, seller_id, created_at')
-    .eq('status', 'active')
-    .order('created_at', { ascending: false })
-    .limit(100);
-  if (error) { box.innerHTML = '<div class="mEmpty">Erreur de chargement</div>'; return; }
-  if (!data || !data.length) { box.innerHTML = '<div class="mEmpty">Aucune annonce pour le moment</div>'; return; }
-  box.innerHTML = '';
-  for (const l of data) {
-    const it = l.item;
-    const mine = l.seller_id === currentUser.id;
-    const row = document.createElement('div');
-    row.className = 'mRow';
-    row.innerHTML = `
-      <div class="mIcon" style="color:${it.color||'#c9a55a'}">${it.icon||'❔'}</div>
-      <div class="mInfo"><div class="mName">${tr(it.name)}${it.qty>1?' ×'+it.qty:''}</div><div class="mSub">${it.kind||''}</div></div>
-      <div class="mPrice">${fmt(l.price)} 🪙</div>
-      ${mine ? '' : '<button data-id="'+l.id+'">Acheter</button>'}
-    `;
-    if (!mine) row.querySelector('button').onclick = () => buyListing(l.id);
-    box.appendChild(row);
-  }
-}
-
-async function buyListing(id) {
-  const { error } = await sb.rpc('buy_listing', { p_listing_id: id });
-  if (error) { alert('Achat impossible : ' + error.message); return; }
-  await loadCloudSave();       // resynchronise silver + inventaire depuis le serveur
-  await refreshMarketBrowse();
-  await refreshMarketMine();
-}
-
-function refreshSellTab() {
-  const sel = $a('sellItemSelect');
-  sel.innerHTML = '<option value="">— Choisir un objet —</option>';
-  for (let i = 0; i < INV_SIZE; i++) {
-    const s = INV[i];
-    if (!s || s.equipped) continue;
-    const opt = document.createElement('option');
-    opt.value = i;
-    opt.textContent = `${tr(s.name)}${s.qty>1?' (×'+s.qty+')':''} — ${s.kind}`;
-    sel.appendChild(opt);
-  }
-}
-$a('btnListItem').onclick = async () => {
-  const idx = $a('sellItemSelect').value;
-  const price = parseInt($a('sellPriceInput').value, 10);
-  const msg = $a('sellMsg');
-  if (idx === '') { msg.textContent = 'Choisis un objet.'; msg.className = 'fail'; return; }
-  if (!price || price <= 0) { msg.textContent = 'Prix invalide.'; msg.className = 'fail'; return; }
-  const { error } = await sb.rpc('list_item', { p_inv_index: parseInt(idx,10), p_price: price });
-  if (error) { msg.textContent = 'Échec : ' + error.message; msg.className = 'fail'; return; }
-  msg.textContent = 'Annonce publiée !'; msg.className = 'ok';
-  $a('sellPriceInput').value = '';
-  await loadCloudSave();
-  refreshSellTab();
-  refreshMarketMine();
-};
-
-async function refreshMarketMine() {
-  const box = $a('marketMineList');
-  box.innerHTML = '<div class="mEmpty">Chargement...</div>';
-  const { data, error } = await sb.from('market_listings')
-    .select('id, item, price, status, created_at')
-    .eq('seller_id', currentUser.id)
-    .order('created_at', { ascending: false })
-    .limit(50);
-  if (error) { box.innerHTML = '<div class="mEmpty">Erreur de chargement</div>'; return; }
-  if (!data || !data.length) { box.innerHTML = '<div class="mEmpty">Tu n\'as aucune annonce</div>'; return; }
-  box.innerHTML = '';
-  for (const l of data) {
-    const it = l.item;
-    const row = document.createElement('div');
-    row.className = 'mRow';
-    const statusLabel = l.status === 'active' ? (LANG==='fr'?'en vente':'active') : l.status === 'sold' ? (LANG==='fr'?'vendu ✓':'sold ✓') : (LANG==='fr'?'annulé':'cancelled');
-    row.innerHTML = `
-      <div class="mIcon" style="color:${it.color||'#c9a55a'}">${it.icon||'❔'}</div>
-      <div class="mInfo"><div class="mName">${tr(it.name)}</div><div class="mSub">${statusLabel}</div></div>
-      <div class="mPrice">${fmt(l.price)} 🪙</div>
-      ${l.status === 'active' ? '<button data-id="'+l.id+'">Annuler</button>' : ''}
-    `;
-    if (l.status === 'active') row.querySelector('button').onclick = () => cancelListing(l.id);
-    box.appendChild(row);
-  }
-}
-async function cancelListing(id) {
-  const { error } = await sb.rpc('cancel_listing', { p_listing_id: id });
-  if (error) { alert('Annulation impossible : ' + error.message); return; }
-  await loadCloudSave();
-  refreshMarketMine();
-  refreshSellTab();
-}
 
 // ============================================================
 // MARCHÉ COMMUN v2 — vrai carnet d'ordres entre joueurs (achat ET vente), matériaux + équipement/
@@ -195,7 +89,7 @@ let mktSelectedIdx = 0, mktSide = 'buy';
 function mktKey(m) { return 'material:' + m.name; }
 function initMarketMaterials() {
   const pills = $a('mktItemPills'); if (!pills) return;
-  pills.innerHTML = MARKET_MATERIALS.map((m,i) => `<button class="mktPill${i===mktSelectedIdx?' active':''}" data-i="${i}">${m.icon} ${tr(m.name)}</button>`).join('');
+  pills.innerHTML = MARKET_MATERIALS.map((m,i) => `<button class="mktPill" data-i="${i}">${m.icon} ${tr(m.name)}</button>`).join('');
   pills.querySelectorAll('.mktPill').forEach(btn => {
     btn.onclick = () => { mktSelectedIdx = Number(btn.dataset.i); refreshMarketMaterials(); };
   });
@@ -204,7 +98,27 @@ function initMarketMaterials() {
   $a('mktPlaceBtn').onclick = mktPlaceOrder;
   refreshMarketMaterials();
 }
+// met à jour l'état "actif" des pills à CHAQUE sélection (2026-07-16, bug corrigé : avant, seule
+// la pill de idx=0 recevait ".active" une fois à l'init -- cliquer une autre pill changeait bien
+// l'item affiché, mais plus rien n'indiquait visuellement laquelle était choisie). Demande
+// explicite : "je veux que quand on clique dans materiaux et qu'on choisi un item il se mette en
+// couleur choisi" -- la pill sélectionnée se remplit désormais de la couleur PROPRE du matériau
+// (pas une couleur générique), pour que le choix saute aux yeux.
+function updateMktPills() {
+  const pills = $a('mktItemPills'); if (!pills) return;
+  pills.querySelectorAll('.mktPill').forEach((btn,i) => {
+    const active = i === mktSelectedIdx;
+    btn.classList.toggle('active', active);
+    if (active) {
+      const color = MARKET_MATERIALS[i].color;
+      btn.style.background = color; btn.style.borderColor = color; btn.style.color = '#0d0f1a';
+    } else {
+      btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
+    }
+  });
+}
 async function refreshMarketMaterials() {
+  updateMktPills();
   const m = MARKET_MATERIALS[mktSelectedIdx];
   const key = mktKey(m);
   const [{ data: book }, { data: trades }] = await Promise.all([
