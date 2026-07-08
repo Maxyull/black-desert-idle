@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V323', d:'18/07/2026 15:00', name:{fr:'Wiki : correction de plusieurs informations obsolètes', en:'Wiki: fixed several outdated facts'}, fr:[
+      {t:'fix', sub:'interface', tx:'Le Wiki annonçait 4 objets de Trésor de Velia (0,5% à 0,00001%) — il n\'y en a en réalité que 2 (0,17% et 0,0005%). Corrigé.'},
+      {t:'fix', sub:'interface', tx:'Le Wiki disait que la toute première zone d\'un palier n\'a jamais d\'arme garantie — c\'est en réalité la 2e zone du palier qui n\'en a aucune (la 1ère en garantit bien une). Corrigé.'},
+      {t:'fix', sub:'interface', tx:'Le Wiki annonçait un taux de loot progressif "jusqu\'à 55%, moins de 3%" sans préciser de quel objet — reformulé : matériau d\'optimisation ~55% en début de jeu jusqu\'à ~5-7% en fin de jeu, composants de craft endgame sous 1%.'},
+      {t:'new', sub:'interface', tx:'Le Wiki ne mentionnait que le boss Kzarka (quotidien) — il mentionne désormais aussi Vell, le boss hebdomadaire (jeudi 12h00, dimanche 16h45).'},
+      {t:'new', sub:'interface', tx:'Ajout du coût variable de la Pierre de Cron par palier (1 gris / 2 blanc / 3 vert / 4 bleu), jusque-là absent du Wiki bien qu\'actif en jeu depuis un moment.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The Wiki claimed 4 Velia Treasure items (0.5% to 0.00001%) — there are actually only 2 (0.17% and 0.0005%). Fixed.'},
+      {t:'fix', sub:'interface', tx:'The Wiki said a tier\'s very first zone never has a guaranteed weapon — it\'s actually the tier\'s 2nd zone that has none (the 1st does guarantee one). Fixed.'},
+      {t:'fix', sub:'interface', tx:'The Wiki advertised a progressive loot rate of "up to 55%, under 3%" without specifying which item — reworded: enhancement material ~55% early game down to ~5-7% at endgame, endgame crafting components under 1%.'},
+      {t:'new', sub:'interface', tx:'The Wiki only mentioned the Kzarka boss (daily) — it now also mentions Vell, the weekly boss (Thursday 12:00pm, Sunday 4:45pm).'},
+      {t:'new', sub:'interface', tx:'Added the Cron Stone\'s variable cost per tier (1 grey / 2 white / 3 green / 4 blue), previously missing from the Wiki despite being active in-game for a while.'},
+    ] },
   { v:'V322', d:'18/07/2026 14:00', name:{fr:'Palier bleu : 2,3x plus de monstres', en:'Blue tier: 2.3x more monsters'}, fr:[
       {t:'change', sub:'combat', severity:'major', tx:'Le palier bleu (Ruines de Trent, Île d\'Iliya, Base de Bashim, Forêt de Polly) a désormais 28 groupes de monstres actifs en même temps (2,3× les 12 précédents), au lieu de 12 — redevient le palier le plus dense du jeu, devant le vert (16).'},
     ], en:[
