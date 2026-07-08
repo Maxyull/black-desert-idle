@@ -585,7 +585,9 @@ function targetPackCount() {
   // de monstre actuel", précisé "2x la valeur du palier blanc") -- 16 au lieu du +2 progressif
   // utilisé jusqu'ici (10), qui ne doublait rien
   if (zoneIdx===6 || zoneIdx===7 || zoneIdx===8 || zoneIdx===14) return 16; // green
-  return 12; // blue : 9,10,11,15
+  // bleu = 2.3x la valeur precedente (2026-07-18, demande explicite : "zone bleu change le
+  // nombre de monstre a 2,3x plus que actuellement") -- 12 -> 28 (12*2.3=27.6, arrondi)
+  return 28; // blue : 9,10,11,15
 }
 // keepPos (2026-07-15, demande explicite : "au reload, apres maj le joueur arrive dans une zone
 // vide, fais en sorte qu'il trouve rapidement des monstre") -- BUG trouvé : au chargement d'une

@@ -956,7 +956,8 @@ function targetPackCount() {
   if (zoneIdx===3 || zoneIdx===4 || zoneIdx===5 || zoneIdx===13) return 8;  
   
   if (zoneIdx===6 || zoneIdx===7 || zoneIdx===8 || zoneIdx===14) return 16; 
-  return 12; 
+  
+  return 28; 
 }
 
 function resetWorld(keepPos) {

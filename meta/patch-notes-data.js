@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V322', d:'18/07/2026 14:00', name:{fr:'Palier bleu : 2,3x plus de monstres', en:'Blue tier: 2.3x more monsters'}, fr:[
+      {t:'change', sub:'combat', severity:'major', tx:'Le palier bleu (Ruines de Trent, Île d\'Iliya, Base de Bashim, Forêt de Polly) a désormais 28 groupes de monstres actifs en même temps (2,3× les 12 précédents), au lieu de 12 — redevient le palier le plus dense du jeu, devant le vert (16).'},
+    ], en:[
+      {t:'change', sub:'combat', severity:'major', tx:'The blue tier (Trent Ruins, Iliya Island, Bashim Base, Polly Forest) now has 28 monster groups active at once (2.3× the previous 12), up from 12 — becomes the densest tier again, ahead of green (16).'},
+    ] },
   { v:'V321', d:'18/07/2026 12:30', name:{fr:'Taxe de vente Marché relevée à 35%', en:'Market sales tax raised to 35%'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'La taxe de vente du Marché commun (introduite en V320) passe de 20% à 35% : le vendeur touche désormais 65% du prix de vente. L\'acheteur n\'est toujours pas concerné, il paie toujours le prix affiché en entier.'},
     ], en:[
