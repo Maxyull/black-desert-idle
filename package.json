@@ -1,0 +1,18 @@
+{
+  "name": "black-desert-idle",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser-based idle game inspired by Black Desert Online.",
+  "scripts": {
+    "build": "python3 scripts/build.py",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0",
+    "terser": "^5.48.0"
+  }
+}
