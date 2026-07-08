@@ -637,6 +637,12 @@
      isolé) -- dans une grille dense de 192 cases, flotter au-dessus chevaucherait la rangée
      précédente */
   #veliaChestGrid .cell .zoneTierLock { position:absolute; top:2px; left:50%; transform:translateX(-50%); }
+  /* bascule 4/8 cases par ligne (2026-07-18, demande explicite) -- vue agrandie : cases ~2x plus
+     larges (aspect-ratio:1 sur .cell suit la largeur de colonne), icône/texte mis à l'échelle */
+  #veliaChestGrid.chestZoomed { grid-template-columns:repeat(4, 1fr); max-height:420px; }
+  #veliaChestGrid.chestZoomed .cell { font-size:28px; }
+  #veliaChestGrid.chestZoomed .cell .qty { font-size:12px; }
+  #veliaChestGrid.chestZoomed .cell .zoneTierLock { width:20px; height:20px; font-size:12px; }
   #invGrid::-webkit-scrollbar { width:7px; }
   #invGrid::-webkit-scrollbar-thumb { background:#3a3742; }
   /* Compendium en onglet principal "en grand" (2026-07-14, demande explicite) -- plus de place

@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V325', d:'18/07/2026 18:00', name:{fr:'Silver/h fiabilisé, coffre agrandissable', en:'Reliable silver/h, resizable chest'}, fr:[
+      {t:'fix', sub:'interface', severity:'major', tx:'Le compteur silver/h pouvait afficher des pics irréalistes (ex: "1,5M/h") en extrapolant un gros loot ramassé dès les premières secondes de session. Il affiche désormais le rythme réel en silver/MIN, accompagné du meilleur silver/h jamais atteint (record calculé uniquement après 2 minutes de session, jamais sur un coup de chance ponctuel).'},
+      {t:'fix', sub:'interface', tx:'Le classement du silver/h reflète maintenant ce même record personnel à vie (comme le record de kills/min), au lieu d\'un instantané de la session en cours au moment de la synchronisation — un record ne redescend jamais.'},
+      {t:'new', sub:'interface', tx:'Ajout d\'un bouton pour agrandir l\'affichage du Coffre de Velia (4 objets par ligne au lieu de 8), pratique pour repérer un objet précis parmi les 192 cases.'},
+    ], en:[
+      {t:'fix', sub:'interface', severity:'major', tx:'The silver/h counter could show unrealistic spikes (e.g. "1.5M/h") by extrapolating a big loot picked up within the first few seconds of a session. It now shows the actual pace in silver/MIN, alongside the best silver/h ever reached (record only computed after 2 minutes of session, never on a one-off lucky pickup).'},
+      {t:'fix', sub:'interface', tx:'The silver/h leaderboard now reflects this same lifetime personal record (like the kills/min record), instead of a snapshot of the current session at sync time — a record never goes down.'},
+      {t:'new', sub:'interface', tx:'Added a button to enlarge the Velia Chest display (4 items per row instead of 8), handy for spotting a specific item among the 192 slots.'},
+    ] },
   { v:'V324', d:'18/07/2026 16:30', name:{fr:'Chaque sort a désormais sa propre identité visuelle de cast', en:'Every spell now has its own visual cast identity'}, fr:[
       {t:'new', sub:'graphismes', severity:'major', tx:'Le cristal du bâton et son halo prennent désormais une couleur propre à chaque sort en cours de cast (orange pour Meteor Shower/Bolide/Fireball, cyan pour Blizzard, jaune pour Thunder Storm/Lightning Storm, violet pour Equilibrium Break, doré pâle pour Speed Spell, cyan clair pour Voltaic Pulse) — avant, le cristal restait toujours dans la couleur du palier d\'équipement, identique pour les 10 sorts.'},
       {t:'new', sub:'graphismes', tx:'Le tremblement du bâton pendant le cast varie aussi en vitesse selon le sort : plus rapide pour les sorts au temps de cast court (Voltaic Pulse, Lightning Storm), plus posé pour les sorts lourds (Meteor Shower).'},

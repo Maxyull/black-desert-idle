@@ -117,6 +117,7 @@ function updateUserBar() {
   const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminResetEnhBtn = $a('btnAdminResetEnh'); if (adminResetEnhBtn) adminResetEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminEnhStepRow = $a('adminEnhStepRow'); if (adminEnhStepRow) adminEnhStepRow.style.display = isAdmin() ? '' : 'none';
+  const adminTierRow = $a('adminTierRow'); if (adminTierRow) adminTierRow.style.display = isAdmin() ? '' : 'none';
   // UUID copiable (utile pour l'ajout de modérateurs) — affiché pour tout compte connecté
   const uuidRow = $a('uuidRow');
   if (uuidRow) uuidRow.style.display = currentUser ? 'flex' : 'none';
@@ -365,11 +366,14 @@ async function saveToCloud() {
 // ---------- classement : snapshot périodique des stats publiques dans player_stats ----------
 async function syncPlayerStats() {
   if (!sb || !currentUser || isGuest()) return; // classement réservé aux comptes vérifiés
-  const mins = (performance.now() - S.startTime) / 60000;
   // "silver par heure" (2026-07-12, demande explicite : "compté exclusivement par les silver
   // recolté grace au token vendu") -- reflète le rythme de FARM réel, pas un gros coup de chance
-  // ponctuel (succès/quête/boss/marché) qui gonflerait artificiellement ce classement
-  const silverPerHour = mins > .1 ? Math.round((S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0)) / (mins/60)) : 0;
+  // ponctuel (succès/quête/boss/marché) qui gonflerait artificiellement ce classement.
+  // Envoie désormais le RECORD PERSO à vie (S.bestSilverPerHour, voir hud() dans game-core.js) au
+  // lieu d'un recalcul à chaque sync (2026-07-18, demande explicite : "le classement... toujours
+  // le meilleur affiché... pas de synchro") -- l'ancien calcul reflétait juste le rythme instantané
+  // de LA session en cours au moment du sync (pouvait redescendre d'une sync à l'autre, incohérent
+  // avec best_kpm/best_zone_index ci-dessous qui sont déjà des records monotones).
   const best = bestFarmedItem();
   // total de morceaux du "Trésor de Velia" ramassés À VIE — sert au classement dédié "🗺️ Trésors"
   const treasureCount = treasureTotal(S);
@@ -384,7 +388,7 @@ async function syncPlayerStats() {
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
-      silver_per_hour: silverPerHour,
+      silver_per_hour: Math.round(S.bestSilverPerHour||0),
       playtime_sec: Math.round(S.playtimeSec),
       best_item_name: best ? best.name : '',
       best_item_count: best ? best.count : 0,

@@ -577,8 +577,20 @@ function veliaChestStore(invIndex, n) {
   refreshInvUI(); renderVeliaChest();
   return true;
 }
+// bascule 4/8 cases par ligne (2026-07-18, demande explicite : "bouton qui agrandi le coffre 4 ou
+// 8 par ligne") -- préférence d'affichage pure, pas de persistance nécessaire (retombe sur la vue
+// dense par défaut à chaque rechargement, comme les autres onglets/filtres du jeu)
+let chestZoomed = false;
+function updateChestZoomBtn() {
+  const btn = $('btnChestZoom'); if (!btn) return;
+  btn.textContent = chestZoomed
+    ? (LANG==='fr' ? '🔎 Réduire (8/ligne)' : '🔎 Shrink (8/row)')
+    : (LANG==='fr' ? '🔍 Agrandir (4/ligne)' : '🔍 Enlarge (4/row)');
+}
 function renderVeliaChest() {
   const grid = $('veliaChestGrid'); if (!grid) return;
+  grid.classList.toggle('chestZoomed', chestZoomed);
+  updateChestZoomBtn();
   grid.innerHTML = '';
   for (let i = 0; i < INV_SIZE; i++) {
     const locked = i >= VELIA_CHEST_OPEN;
@@ -630,6 +642,7 @@ document.querySelectorAll('#lootPanelTabs .lootPanelTab').forEach(btn => {
     if (panel === 'chest') renderVeliaChest();
   };
 });
+$('btnChestZoom').onclick = () => { chestZoomed = !chestZoomed; renderVeliaChest(); };
 
 // double-clic = action rapide selon le type d'objet
 function quickAction(i) {

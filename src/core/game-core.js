@@ -120,6 +120,14 @@ const S = {
   // addSilver(). tokenSilverEarnedAtLoad = même principe de baseline de session que silverEarnedAtLoad.
   tokenSilverEarned: 0, tokenSilverEarnedAtLoad: 0,
   bestKpm: 0, // record personnel de kills/min À VIE (voir refreshStatsOnly) — sert au classement "🏹 Record kills/min"
+  // record personnel de silver/h À VIE (2026-07-18, demande explicite : "le classement... toujours
+  // le meilleur affiché" + "afficher valeur/min puis meilleure valeur/heure") -- même principe que
+  // bestKpm : ne redescend jamais, calculé seulement au-delà de 2 min de session (voir hud()) pour
+  // ne jamais figer un pic irréaliste (ex: gros loot ramassé 3s après le chargement -> extrapolé à
+  // "1.5M/h", bug corrigé ce jour). C'est CETTE valeur (pas un recalcul à chaque sync) qui est
+  // envoyée au classement (voir syncPlayerStats, game-supabase.js) -- un record ne fait que monter,
+  // aucune synchronisation temps réel n'est donc nécessaire côté classement.
+  bestSilverPerHour: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
@@ -1424,7 +1432,21 @@ function refreshStatsOnly() {
     if (kpmNow - (S.bestKpm||0) > 0.5) logToDiscord('🏹 Record kills/min', `**${myPseudo||'Joueur'}** bat son record perso : **${kpmNow.toFixed(1)}** kills/min (${tr(Z().name)})`, 0xc9a55a);
     S.bestKpm = kpmNow;
   }
-  $('shRate').textContent = mins>.1 ? fmt((S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0))/(mins/60))+' silver/h' : '— silver/h';
+  // "1M5/h alors que c'est faux" (2026-07-18) -- l'ancien affichage extrapolait le gain sur une
+  // fenêtre dès 6s de session (mins>.1) directement en silver/HEURE (×60 sur cette fenêtre) : un
+  // seul gros loot juste après le chargement suffisait à afficher un chiffre absurde. Le chiffre
+  // affiché en direct est désormais silver/MIN (même fenêtre, mais sans le facteur ×60 qui
+  // amplifiait le bruit), et le silver/h projeté ne devient un RECORD (voir bestSilverPerHour
+  // ci-dessus) qu'après 2 min de session — même garde-fou que kpmNow/bestKpm juste au-dessus.
+  const tokenGain = S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0);
+  const silverPerMinNow = mins>.1 ? tokenGain/mins : 0;
+  if (mins > 2) {
+    const silverPerHourNow = tokenGain/(mins/60);
+    if (silverPerHourNow > (S.bestSilverPerHour||0)) S.bestSilverPerHour = silverPerHourNow;
+  }
+  $('shRate').textContent = mins>.1
+    ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
+    : '— silver/min';
   const zb = $('zoneBadge');
   if (atVelia) {
     zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
