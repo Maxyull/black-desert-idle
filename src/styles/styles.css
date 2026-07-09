@@ -1009,6 +1009,36 @@
   .admSection .admBossSpawn { border-bottom:none; padding-bottom:0; margin-bottom:0; }
   .admHint { font-size:10px; color:var(--ink-dim); font-style:italic; }
   .admHint.warn { color:var(--danger); }
+  /* palette du panneau admin (2026-07-19, demande explicite : "garde toute les couleurs et qu'on
+     poura modifier avec un slider") -- .admThemeRoot enveloppe TOUT le contenu généré par
+     openAdminPanel() (voir admin-panel.js) et REDÉFINIT localement les variables globales du jeu
+     (--gold/--panel/--ink/--danger...) : comme .admSection/.admTable/.catTab/.admStatTile etc.
+     lisent déjà ces variables via la cascade CSS normale, ce scoping retheme tout le panneau admin
+     sans toucher une seule règle existante ni affecter le reste du jeu (le reste du DOM continue de
+     résoudre ces variables depuis :root, jamais impacté). "gold" = thème par défaut du jeu, ne
+     redéfinit rien (hérite de :root) ; les 4 autres sont des palettes alternatives sélectionnables
+     via #admThemeSlider, persistées en localStorage (préférence purement locale à l'admin, ne
+     touche jamais l'état de sauvegarde joueur S/INV/EQUIP). */
+  .admThemeRoot[data-adm-theme="emerald"] {
+    --gold:#34D399; --gold-dim:#1f7a5c; --panel:#111827; --panel-2:#1a2236;
+    --ink:#E2E8F0; --ink-dim:#64748B; --danger:#EF4444;
+  }
+  .admThemeRoot[data-adm-theme="ruby"] {
+    --gold:#e05a6e; --gold-dim:#a83f52; --panel:#1a1216; --panel-2:#241a1f;
+    --ink:#f0e2e5; --ink-dim:#a5878e; --danger:#e0715a;
+  }
+  .admThemeRoot[data-adm-theme="royal"] {
+    --gold:#5a8fc8; --gold-dim:#3d6592; --panel:#0f1420; --panel-2:#182030;
+    --ink:#dce4f0; --ink-dim:#8492a8; --danger:#e0715a;
+  }
+  .admThemeRoot[data-adm-theme="violet"] {
+    --gold:#a578d8; --gold-dim:#75549c; --panel:#150f1e; --panel-2:#211729;
+    --ink:#ece2f5; --ink-dim:#96859e; --danger:#e0715a;
+  }
+  .admThemeSlider { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #2c2a33; }
+  .admThemeSlider label { font-size:10.5px; color:var(--ink-dim); white-space:nowrap; }
+  .admThemeSlider input[type=range] { flex:1; accent-color:var(--gold); }
+  .admThemeSlider .admThemeName { font-size:11px; color:var(--gold); font-weight:bold; min-width:80px; text-align:right; }
   /* règles de récompense World Boss, agrandies (2026-07-15, demande explicite : "recompense,
      affiche en plus gros en dessous des horaires de boss") -- carte dédiée au lieu d'un simple
      .admHint discret, toujours juste sous le bloc horaires/countdown du lobby */

@@ -33,6 +33,17 @@ Le panneau admin (`src/admin/admin-panel.js`, `src/admin/enh-debug-tools.js`, ou
 Ne pas re-développer ce qui précède — l'inventaire ci-dessus sert de référence pour ne pas
 dupliquer un onglet déjà fait sous un autre nom.
 
+### 0bis. Roadmap confirmée mais pas encore construite (2026-07-19)
+
+Contrairement à la lecture initiale de ce plan : **Donations, Guildes et potentiellement PvP sont
+des features de jeu réellement prévues**, pas écartées. Aucune des trois n'existe encore dans le
+code (pas de table `guilds`, pas de plateforme de dons connectée, pas de système PvP) — ce ne sont
+donc PAS des onglets admin à construire aujourd'hui, mais la navigation admin ne doit plus les
+barrer/exclure comme le reste du §4 : les prévoir comme emplacements réservés (grisés, "🔜 prévu"),
+pas comme définitivement hors périmètre. Revenir sur cette section une fois que chacune de ces
+features a un premier morceau de code réel côté jeu (table Supabase, système client) — c'est à ce
+moment-là que l'onglet admin correspondant devient pertinent à construire.
+
 ---
 
 ## 1. 🎨 Design System (adapté, zéro nouvelle dépendance)
@@ -186,7 +197,6 @@ définitif tant que le contexte ne change pas) :
 | RGPD complet (registre des traitements, délais légaux formels) | Projet non commercial, sans CGU formelles à ce jour — un export/suppression de compte simple (déjà couvert par `resetAllAccounts`/reset par UUID, qui efface la progression) suffit tant qu'il n'y a pas de structure légale derrière le projet |
 | CGU versionnées + tracking d'acceptation | Idem — pas de CGU publiées aujourd'hui, prématuré sans texte légal réel à faire accepter |
 | Équipe admin multi-niveaux (5 rôles, invitations par email) | Un seul admin identifié par email en dur (`maxime.lacoste@icloud.com`) — les rôles Modérateur/Testeur existants suffisent, pas besoin d'un système d'invitation/révocation tant qu'il n'y a qu'une seule personne au-dessus |
-| Donations & vote communautaire | Pas de plateforme de dons connectée au projet aujourd'hui |
 | Recherche globale `Cmd+K` | Utile seulement si le panel devient beaucoup plus dense qu'aujourd'hui (~15 onglets réels vs ~40 dans le plan initial) |
 | Dashboard "Santé économique" complet (Sankey, vélocité par segment, silver decay) | Le registre de silver par catégorie + richesses (Lorenz) existants couvrent déjà l'essentiel du signal utile ; un simulateur "what-if" complet est un projet à part entière, à reconsidérer si une vraie dérive inflationniste est constatée dans les données déjà collectées |
 | Open-source / GitHub dashboard intégré | `gh` CLI (déjà utilisé dans les sessions de code) couvre le besoin ponctuel de consulter issues/PRs — un dashboard dédié dans le jeu n'apporte rien de plus |

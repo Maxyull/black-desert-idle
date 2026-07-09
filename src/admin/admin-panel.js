@@ -6,6 +6,30 @@ function canBanUuid(targetUuid, myUuid) {
   return !!targetUuid && targetUuid !== myUuid;
 }
 
+// ---------- palette du panneau admin (2026-07-19, demande explicite : "garde toute les couleurs
+// et qu'on poura modifier avec un slider") ----------
+// ordre = position sur le slider (index). "gold" = thème actuel du jeu (par défaut). Les
+// définitions de couleurs vivent dans styles.css (.admThemeRoot[data-adm-theme="..."]) -- ce
+// tableau ne sert qu'à peupler le slider et son libellé, jamais les couleurs elles-mêmes.
+const ADMIN_THEMES = [
+  { id:'gold',    label:{fr:'Or (jeu)',en:'Gold (game)'} },
+  { id:'emerald', label:{fr:'Émeraude',en:'Emerald'} },
+  { id:'ruby',    label:{fr:'Rubis',en:'Ruby'} },
+  { id:'royal',   label:{fr:'Bleu royal',en:'Royal blue'} },
+  { id:'violet',  label:{fr:'Violet',en:'Violet'} },
+];
+const ADMIN_THEME_STORAGE_KEY = 'bdiAdminTheme';
+// lit la préférence de palette persistée -- purement locale à ce navigateur/admin, ne touche
+// jamais S/le compte (pas une donnée de jeu, pas besoin de sync/migration)
+function getAdminTheme() {
+  let saved = null;
+  try { saved = localStorage.getItem(ADMIN_THEME_STORAGE_KEY); } catch (e) {}
+  return ADMIN_THEMES.some(t => t.id === saved) ? saved : 'gold';
+}
+function setAdminTheme(id) {
+  try { localStorage.setItem(ADMIN_THEME_STORAGE_KEY, id); } catch (e) {}
+}
+
 // ---------- réinitialisation de la démo (réservée à l'admin, à tout moment) ----------
 async function resetDemo() {
   if (!isAdmin()) return; // double protection : même si le bouton est masqué, la fonction refuse
@@ -655,6 +679,14 @@ async function openAdminPanel() {
     { id:'stats', icon:'📊', label:{fr:'Stats',en:'Stats'} },
   ];
   const adminTopTabsHtml = adminTopTabs.map((t,i) => `<button class="catTab${i===0?' active':''}" data-top="${t.id}">${t.icon} ${t.label[LANG]}</button>`).join('');
+  const currentTheme = getAdminTheme();
+  const themeIdx = Math.max(0, ADMIN_THEMES.findIndex(t => t.id === currentTheme));
+  const themeSliderHtml = `
+    <div class="admThemeSlider">
+      <label for="admThemeSlider">🎨 ${LANG==='fr'?'Palette':'Palette'}</label>
+      <input type="range" id="admThemeSlider" min="0" max="${ADMIN_THEMES.length-1}" step="1" value="${themeIdx}">
+      <span class="admThemeName" id="admThemeName">${ADMIN_THEMES[themeIdx].label[LANG]}</span>
+    </div>`;
   const actionsHtml = `
     <div class="admRiskLegend">
       <span><i style="background:#5a8fc8"></i>${LANG==='fr'?'Bleu = sans risque, perso':'Blue = safe, personal'}</span>
@@ -743,9 +775,20 @@ async function openAdminPanel() {
     </div>
 `;
   const statsTopPane = `<div class="admTopPane" data-top="stats" style="display:none"><div class="catTabs">${tabsHtml}</div>${panesHtml}</div>`;
-  openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone', actionsHtml + statsTopPane);
+  openInfo(LANG==='fr' ? '🛠️ Zone Admin' : '🛠️ Admin Zone',
+    `<div class="admThemeRoot" data-adm-theme="${currentTheme}">${themeSliderHtml}${actionsHtml}${statsTopPane}</div>`);
   applyI18n();
   wireCatTabs();
+  // slider de palette (2026-07-19) : live, sans re-render du panneau -- change juste
+  // data-adm-theme sur le wrapper, la cascade CSS fait le reste (voir styles.css)
+  const themeSlider = $a('admThemeSlider');
+  if (themeSlider) themeSlider.oninput = () => {
+    const t = ADMIN_THEMES[Number(themeSlider.value)] || ADMIN_THEMES[0];
+    const root = $a('infoBody').querySelector('.admThemeRoot');
+    if (root) root.dataset.admTheme = t.id;
+    const nameEl = $a('admThemeName'); if (nameEl) nameEl.textContent = t.label[LANG];
+    setAdminTheme(t.id);
+  };
   // bascule V1/V2 de la table de loot (2026-07-15, demande explicite) -- re-render juste cet onglet
   // après le switch, pour refléter tout de suite quelle version est "ready" (surlignée)
   function wireLootVersionButtons() {

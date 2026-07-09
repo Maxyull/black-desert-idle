@@ -15,6 +15,13 @@ Sanctions (2026-07-18) : `admin_ban_player`/`admin_unban_player`/`admin_list_ban
 (`src/backend/game-supabase.js`, check bloquant au login via `get_my_ban_status`),
 `canBanUuid()` (`admin-panel.js`, empêche l'admin de se bannir lui-même).
 
+Palette du panneau admin (2026-07-19) : `ADMIN_THEMES`/`getAdminTheme()`/`setAdminTheme()`
+(`admin-panel.js`) + `.admThemeRoot[data-adm-theme="..."]` (`src/styles/styles.css`) — un slider
+en haut du panneau redéfinit localement `--gold`/`--panel`/`--ink`/`--danger` etc. pour retheme
+tout le contenu admin existant sans toucher une seule règle CSS (`.adm*` lit déjà ces variables
+via la cascade). Préférence purement locale à l'admin, persistée en `localStorage`
+(`bdiAdminTheme`), jamais dans `S`/le compte joueur. Aucun effet joueur, pas de patch note.
+
 Voir `ADMIN_MENU_PLAN.md` (racine du repo) pour l'état des lieux du panneau admin, les
 prochaines évolutions envisagées (mini-éditeur de patch notes) et pourquoi le reste d'un plan
 initial plus large (React, Sentry, i18n editor, staging, équipe multi-rôles...) a été

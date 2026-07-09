@@ -465,6 +465,28 @@
     assert('BAN_DURATIONS non vide', BAN_DURATIONS.length > 0);
     assert('Chaque durée a un nombre d\'heures positif', BAN_DURATIONS.every(d => Number.isFinite(d.hours) && d.hours > 0));
   }
+  // palette du panneau admin (2026-07-19, "garde toute les couleurs et qu'on poura modifier avec
+  // un slider") -- ADMIN_THEMES bien formé + getAdminTheme()/setAdminTheme() persistent et se
+  // rabattent sur 'gold' pour toute valeur invalide/absente (jamais un data-adm-theme orphelin
+  // sans règle CSS correspondante, voir styles.css .admThemeRoot[data-adm-theme="..."]).
+  function testAdminThemesWellFormedAndPersist() {
+    if (typeof ADMIN_THEMES === 'undefined' || typeof getAdminTheme !== 'function' || typeof setAdminTheme !== 'function') return;
+    assert('ADMIN_THEMES non vide', ADMIN_THEMES.length > 0);
+    assert('ADMIN_THEMES a des ids uniques', new Set(ADMIN_THEMES.map(t => t.id)).size === ADMIN_THEMES.length);
+    assert('Chaque thème a un libellé fr et en', ADMIN_THEMES.every(t => t.label && t.label.fr && t.label.en));
+    assert('"gold" existe bien dans ADMIN_THEMES (thème par défaut du jeu)', ADMIN_THEMES.some(t => t.id === 'gold'));
+    let saved = null;
+    try { saved = localStorage.getItem('bdiAdminTheme'); } catch(e) {}
+    try {
+      setAdminTheme('ruby');
+      assert('setAdminTheme puis getAdminTheme renvoie bien la valeur persistée', getAdminTheme() === 'ruby');
+      localStorage.setItem('bdiAdminTheme', 'un_theme_qui_nexiste_pas');
+      assert('getAdminTheme() se rabat sur "gold" si la valeur stockée est invalide', getAdminTheme() === 'gold');
+    } finally {
+      if (saved === null) { try { localStorage.removeItem('bdiAdminTheme'); } catch(e) {} }
+      else { try { localStorage.setItem('bdiAdminTheme', saved); } catch(e) {} }
+    }
+  }
   // "Cadenas dans le header sur le cadre de la ligne du bas" + "les pv du boss se retrouve dans une
   // bulle sur la ligne du bas du rectangle dans le header" (2026-07-08) -- les 2 badges doivent être
   // des overlays position:absolute à cheval sur la bordure inférieure du bouton (même convention que
@@ -2197,6 +2219,7 @@
     testIsBannedRespectsExpiry();
     testCanBanUuidBlocksSelfBan();
     testBanReasonsAndDurationsWellFormed();
+    testAdminThemesWellFormedAndPersist();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
