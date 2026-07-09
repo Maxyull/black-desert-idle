@@ -100,6 +100,12 @@ const S = {
   pa: 4, dp: 10,   // PA innée (le gros vient de l'arme équipée ci-dessous)
   castMult: 1, hpMax: 100, mpMax: 100, lootRadius: 26, // mpMax (2026-07-05) : réserve de mana, voir SKILLS[].mp et usePotionMana()
   bossesKilled: {}, // Compendium World Boss (2026-07-08) : { [bossId]: true } dès qu'un World Boss a été vaincu au moins une fois (voir compendiumBossCount)
+  // pity + bonus "premier kill de la semaine" par boss (2026-07-19, adaptation du prompt roulette) :
+  // bossPity = { [bossId]: nombre de kills consécutifs SANS drop rare (rareLoot) sur ce boss précis },
+  // remis à 0 dès qu'un rareLoot est effectivement gagné -- voir PITY_LEGENDARY_THRESHOLD (boss.js).
+  // bossLastKillWeek = { [bossId]: 'YYYY-Www' de la dernière semaine où CE boss a été tué } -- le
+  // bonus "+50% première victoire de la semaine" ne compare qu'à CE boss, pas tous les boss confondus.
+  bossPity: {}, bossLastKillWeek: {},
   penMastery: {}, // Compendium spécial "Maîtrise PEN" (2026-07-08) : { [itemName]: true } dès que cet objet a atteint PEN au moins une fois (voir markPenMastery)
   enhPeakByName: {}, // meilleur niveau d'optimisation JAMAIS atteint par nom d'objet (2026-07-15) : { [itemName]: enhLv }, voir trackEnhPeak -- survit à la vente de l'objet
   lootTableVersion: 'v2', // 'v1' (par zone, historique) ou 'v2' (taux fixe par palier, 2026-07-15) -- voir gearDropChance/jewelDropChance, réversible à tout moment via l'admin
@@ -1780,6 +1786,11 @@ function applySaveState(data) {
   S.silverEarnedAtLoad = S.silverEarned || 0;
   S.tokenSilverEarnedAtLoad = S.tokenSilverEarned || 0;
   S.killsAtLoad = S.kills || 0;
+  // absents des sauvegardes antérieures à cette feature (2026-07-19) -- filet défensif, pas besoin
+  // d'une migration dédiée (gear-migrations.js) puisqu'un objet vide est déjà l'état "jamais tué ce
+  // boss avec pity", identique à un vrai nouveau joueur -- aucune donnée existante à corriger.
+  S.bossPity = S.bossPity || {};
+  S.bossLastKillWeek = S.bossLastKillWeek || {};
   Object.keys(EQUIP).forEach(k => EQUIP[k] = data.EQUIP[k] ?? null);
   for (let i = 0; i < INV_SIZE; i++) INV[i] = data.INV[i] ?? null;
   // sac "Compendium" (2026-07-08) : absent des sauvegardes antérieures à cette version, ?? null

@@ -18,6 +18,11 @@ fonction vérifie `isAdmin()` avant d'agir).
   `refreshEquipSlot`/`renderOptimization`/`drawPreviewChar`). Reste intégré à l'inventaire, PAS
   dans `ADMIN_SECTIONS`.
 
+**Tutoriels d'objets — stats (2026-07-19)** : `renderAdminItemTutorials` (`Contenu → Tutoriels
+d'objets`) affiche qui a terminé/passé chaque tutoriel du nouveau système d'onboarding progressif
+(`ITEM_TUTORIALS`, `src/progression/notifications-quests.js`), via `admin_item_tutorial_stats()`
+(migration `20260719160000_item_tutorials.sql`). Lecture seule (pas d'éditeur, pas de reset).
+
 **Utilisation des Pierres de Cron (2026-07-19)** : jusqu'ici seul le ramassage était tracké côté
 serveur (`farm_events`, `kind='material'`) — la consommation pour protéger un enchantement
 (`invRemoveAt`, `src/inventory/inventory-ui.js`) ne touchait que l'inventaire local, invisible

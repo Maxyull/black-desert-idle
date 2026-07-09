@@ -658,6 +658,97 @@
     if (panelIdx === -1 || econIdx === -1) return; // fichier pas chargé dans ce contexte (bundle prod, tests...)
     assert('admin-economy.js charge APRÈS admin-panel.js (ADMIN_SECTIONS doit déjà exister)', econIdx > panelIdx);
   }
+  // pity/malus mort/bonus 1er kill semaine (2026-07-19, adaptation du prompt roulette React,
+  // "garde le casino, ajoute la logique") -- src/combat/boss.js
+  function testGetISOWeekStringKnownDates() {
+    if (typeof getISOWeekString !== 'function') return;
+    // vendredi 9 janvier 2026 -> semaine ISO 2 (le 1er janvier 2026 est un jeudi, donc semaine 1
+    // couvre le 29 déc.-4 jan., semaine 2 démarre le 5 janvier)
+    assert('getISOWeekString : 09/01/2026 (vendredi) -> 2026-W02', getISOWeekString(new Date(2026,0,9)) === '2026-W02');
+    // lundi 1er juin 2026
+    assert('getISOWeekString : 01/06/2026 (lundi) -> même semaine que le dimanche suivant',
+      getISOWeekString(new Date(2026,5,1)) === getISOWeekString(new Date(2026,5,7)));
+    assert('getISOWeekString : un lundi et le dimanche PRÉCÉDENT sont dans des semaines différentes',
+      getISOWeekString(new Date(2026,5,1)) !== getISOWeekString(new Date(2026,4,31)));
+  }
+  function testBossDeathPenaltyMultTable() {
+    if (typeof bossDeathPenaltyMult !== 'function') return;
+    assert('0 mort = ×1.0 (pas de malus)', bossDeathPenaltyMult(0) === 1);
+    assert('1 mort = ×0.9', bossDeathPenaltyMult(1) === 0.9);
+    assert('2 morts = ×0.75', bossDeathPenaltyMult(2) === 0.75);
+    assert('3 morts = ×0.5', bossDeathPenaltyMult(3) === 0.5);
+    assert('4 morts = ×0 (loot chiffré + rareLoot exclus)', bossDeathPenaltyMult(4) === 0);
+    assert('10 morts = toujours ×0 (jamais négatif ni undefined au-delà de la table)', bossDeathPenaltyMult(10) === 0);
+  }
+  function testBossFirstKillOfWeekPerBossNotGlobal() {
+    if (typeof bossFirstKillOfWeek !== 'function' || typeof S === 'undefined') return;
+    const saved = { ...S.bossLastKillWeek };
+    try {
+      S.bossLastKillWeek = {};
+      assert('Aucun kill enregistré -> premier kill de la semaine = true', bossFirstKillOfWeek('kzarka') === true);
+      S.bossLastKillWeek.kzarka = getISOWeekString(new Date());
+      assert('Kzarka déjà tué cette semaine -> false', bossFirstKillOfWeek('kzarka') === false);
+      assert('Vell PAS tué cette semaine (seul kzarka marqué) -> reste true (par boss, pas global)', bossFirstKillOfWeek('vell') === true);
+    } finally {
+      S.bossLastKillWeek = saved;
+    }
+  }
+  function testBossPityForcesWinAtThreshold() {
+    if (typeof BOSS_PITY_THRESHOLD === 'undefined') return;
+    assert('BOSS_PITY_THRESHOLD est un nombre positif raisonnable (filet de sécurité, pas un don)', typeof BOSS_PITY_THRESHOLD === 'number' && BOSS_PITY_THRESHOLD > 0 && BOSS_PITY_THRESHOLD < 100);
+  }
+  // tutoriels d'objets au premier obtain (2026-07-19) -- src/progression/notifications-quests.js
+  function testItemTutorialsWellFormedAndIndexed() {
+    if (typeof ITEM_TUTORIALS === 'undefined' || typeof ITEM_TUTORIAL_BY_NAME === 'undefined') return;
+    const ids = Object.keys(ITEM_TUTORIALS);
+    assert('ITEM_TUTORIALS non vide', ids.length > 0);
+    ids.forEach(id => {
+      const tuto = ITEM_TUTORIALS[id];
+      assert(`"${id}" a au moins 1 étape`, Array.isArray(tuto.steps) && tuto.steps.length > 0);
+      assert(`"${id}" a au moins 1 nom d'objet déclencheur`, tuto.itemNames instanceof Set && tuto.itemNames.size > 0);
+      assert(`"${id}" : la DERNIÈRE étape est marquée final:true (sinon endItemTutorial ne se déclenche jamais)`, !!tuto.steps[tuto.steps.length-1].final);
+      tuto.steps.forEach((step,i) => {
+        assert(`"${id}" étape ${i} a un titre fr et en`, step.title && step.title.fr && step.title.en);
+        assert(`"${id}" étape ${i} a un texte fr et en`, step.text && step.text.fr && step.text.en);
+      });
+    });
+    // index inverse cohérent : chaque nom d'objet de chaque tutoriel pointe bien vers le bon id
+    let indexOk = true;
+    ids.forEach(id => { ITEM_TUTORIALS[id].itemNames.forEach(name => { if (ITEM_TUTORIAL_BY_NAME[name] !== id) indexOk = false; }); });
+    assert('ITEM_TUTORIAL_BY_NAME reflète fidèlement ITEM_TUTORIALS (aucun nom mal indexé)', indexOk);
+    // pas de nom d'objet partagé entre 2 tutoriels différents (sinon l'index écraserait silencieusement)
+    const allNames = ids.flatMap(id => [...ITEM_TUTORIALS[id].itemNames]);
+    assert('Aucun nom d\'objet déclencheur partagé entre 2 tutoriels (l\'index écraserait silencieusement)', new Set(allNames).size === allNames.length);
+  }
+  function testMaybeQueueItemTutorialRespectsSeenAndCap() {
+    if (typeof maybeQueueItemTutorial !== 'function' || typeof ITEM_TUTORIAL_BY_NAME === 'undefined') return;
+    const anyName = Object.keys(ITEM_TUTORIAL_BY_NAME)[0];
+    if (!anyName) return;
+    const id = ITEM_TUTORIAL_BY_NAME[anyName];
+    const storageKey = 'velia-idle-item-tuto-seen-'+id;
+    let savedFlag = null;
+    try { savedFlag = localStorage.getItem(storageKey); } catch(e) {}
+    const savedActive = itemTutorialActive, savedQueue = itemTutorialQueue.slice(), savedActiveId = itemTutorialActiveId;
+    try {
+      try { localStorage.removeItem(storageKey); } catch(e) {}
+      // force le chemin "mise en FILE" plutôt que "jouer immédiatement" -- ce dernier appellerait
+      // playNextItemTutorial() -> setTimeout(startTutorial, 400) RÉEL et non annulable, ce qui
+      // ouvrirait un vrai overlay de tutoriel pendant la suite de tests et laisserait
+      // itemTutorialActive bloqué à true pour le reste de la session (bug détecté en vérifiant ce
+      // test manuellement en preview). itemTutorialActive=true simule "un tutoriel déjà affiché".
+      itemTutorialActive = true; itemTutorialQueue = [];
+      assert('Objet jamais vu, un tutoriel déjà actif -> mis en FILE (jamais rejoué immédiatement)', maybeQueueItemTutorial(anyName) === true);
+      assert('Le flag "vu" est bien posé dès la mise en file (pas seulement à la fermeture)', isItemTutorialSeen(id) === true);
+      assert('Objet déjà vu -> un 2e appel ne remet jamais en file', maybeQueueItemTutorial(anyName) === false);
+      assert('Un nom d\'objet sans tutoriel enregistré ne fait jamais planter la fonction', maybeQueueItemTutorial('ObjetSansTutorielXYZ') === false);
+    } finally {
+      itemTutorialActive = savedActive; itemTutorialQueue = savedQueue; itemTutorialActiveId = savedActiveId;
+      try {
+        if (savedFlag === null) localStorage.removeItem(storageKey);
+        else localStorage.setItem(storageKey, savedFlag);
+      } catch(e) {}
+    }
+  }
   // "Cadenas dans le header sur le cadre de la ligne du bas" + "les pv du boss se retrouve dans une
   // bulle sur la ligne du bas du rectangle dans le header" (2026-07-08) -- les 2 badges doivent être
   // des overlays position:absolute à cheval sur la bordure inférieure du bouton (même convention que
@@ -2401,6 +2492,12 @@
     testCloseAdminButtonSurvivesSectionSwitch();
     testLootRatesLiveMergeIsPartial();
     testAdminEconomyLoadsAfterAdminPanel();
+    testGetISOWeekStringKnownDates();
+    testBossDeathPenaltyMultTable();
+    testBossFirstKillOfWeekPerBossNotGlobal();
+    testBossPityForcesWinAtThreshold();
+    testItemTutorialsWellFormedAndIndexed();
+    testMaybeQueueItemTutorialRespectsSeenAndCap();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

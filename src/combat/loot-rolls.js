@@ -263,6 +263,11 @@ function dropsTick(dt) {
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,40,it.name,{blue:true});
+        // tutoriel d'objet au premier ramassage (2026-07-19) : Poussière d'esprit ancien/Fragment de
+        // mémoire/Marbre du Dieu déchu -- voir ITEM_TUTORIALS/maybeQueueItemTutorial (progression/
+        // notifications-quests.js). Fonction pure de décision, gère elle-même le flag "déjà vu" et
+        // la file d'attente -- rien à vérifier ici, simple point d'accroche au ramassage.
+        if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
       } else if (it.kind === 'treasure') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,50,'🗺️ '+it.name,{lvl:true});
@@ -279,6 +284,12 @@ function dropsTick(dt) {
           try { localStorage.setItem('velia-idle-cron-tuto-seen', '1'); } catch(e) {}
           setTimeout(startCronTutorial, 400);
         }
+        // tutoriel d'objet au premier ramassage (2026-07-19) : Pierre de Novice/du Temps/Noire/
+        // concentrée (les 4 matériaux d'optimisation par palier, kind:'material') -- voir
+        // ITEM_TUTORIALS/maybeQueueItemTutorial (progression/notifications-quests.js). N'a aucun
+        // effet sur la Pierre de Cron (pas dans ITEM_TUTORIAL_BY_NAME, déjà son propre tutoriel
+        // ci-dessus) ni sur les autres objets non enregistrés dans ITEM_TUTORIALS.
+        else if (it.kind === 'material' && typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
       }
       particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
       if (invPanelOpen) renderInventory();

@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V336', d:'19/07/2026 05:00', name:{fr:'Pity boss, bonus 1ère victoire de la semaine, tutoriels d\'objets', en:'Boss pity, first weekly kill bonus, item tutorials'}, fr:[
+      {t:'new', sub:'combat', tx:'World Boss : un compteur de "pity" garantit désormais un loot rarissime (Pierre de sang de Kzarka, Coeur de Vell...) au bout d\'un certain nombre de kills sans en obtenir — affiché dans le lobby du boss. Bonus "+50% première victoire de la semaine" par boss.'},
+      {t:'change', sub:'combat', tx:'Mourir pendant un combat de World Boss réduit désormais la récompense chiffrée (silver/matériaux/loot rarissime) : aucun malus à 0 mort ("Perfect Kill"), jusqu\'à une perte totale du loot bonus à 4 morts ou plus. Les drops garantis de base restent toujours acquis.'},
+      {t:'new', sub:'inventaire', tx:'Un court tutoriel s\'affiche désormais au premier ramassage de certains matériaux (pierres d\'optimisation par palier, composants de craft endgame comme le Fragment de mémoire) pour expliquer à quoi ils servent.'},
+    ], en:[
+      {t:'new', sub:'combat', tx:'World Boss: a "pity" counter now guarantees a rarissime drop (Kzarka\'s Blood Stone, Vell\'s Heart...) after enough kills without one — shown in the boss lobby. "+50% first weekly kill" bonus per boss.'},
+      {t:'change', sub:'combat', tx:'Dying during a World Boss fight now reduces the numeric reward (silver/materials/rare loot): no penalty at 0 deaths ("Perfect Kill"), up to a full loss of the bonus loot at 4+ deaths. Base guaranteed drops always remain.'},
+      {t:'new', sub:'inventaire', tx:'A short tutorial now appears the first time you pick up certain materials (per-tier enhancement stones, endgame crafting components like the Memory Fragment) to explain what they\'re for.'},
+    ] },
   { v:'V335', d:'19/07/2026 04:00', name:{fr:'Panneau admin : système de sanctions (ban temporaire)', en:'Admin panel: sanctions system (temporary ban)'}, fr:[
       {t:'new', sub:'admin', tx:'Nouvel onglet "🚫 Sanctions" dans le panneau admin : bannissement temporaire d\'un joueur (durée + motif prédéfini), avec liste des bannissements actifs et bouton de levée. Un compte banni est déconnecté et bloqué jusqu\'à expiration, avec un message clair indiquant la date de fin et le motif.'},
     ], en:[

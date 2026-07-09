@@ -57,6 +57,7 @@ const ADMIN_SECTIONS = [
     { id:'cron', icon:'⏳', label:{fr:'Pierres de Cron',en:'Cron Stones'}, render:renderAdminCron },
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:renderAdminTreasure },
     { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, render:renderAdminLoot },
+    { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
@@ -508,6 +509,54 @@ function renderAdminZoneProgression(el) {
         <div><h3 style="margin-top:0">${LANG==='fr'?'🗾 Par zone':'🗾 By zone'}</h3>${zonePie}</div>
         <div><h3 style="margin-top:0">${LANG==='fr'?'⚔️ Par Gearscore':'⚔️ By Gearscore'}</h3>${gsPie}</div>
       </div>`;
+  });
+}
+
+// ---------- section "Contenu → Tutoriels d'objets" (NOUVEAU, 2026-07-19) -- lecture seule (pas
+// d'éditeur, pas de bouton reset : demande explicite "voir qui a vu/pas vu") sur
+// item_tutorials_seen via l'agrégat admin_item_tutorial_stats() (SECURITY DEFINER, une ligne par
+// tutorial_id avec completed_count/skipped_count/total_count). La table démarre vide tant que le
+// système de tutoriel objet (en cours de build en parallèle côté progression) n'a pas encore été
+// traversé par un joueur -- même state vide que renderAdminSignups ("Aucune inscription..."), pas
+// une erreur. buildPieWithLegendHtml vient de admin-economy.js (chargé APRÈS ce fichier, guard
+// typeof identique à renderAdminLoot/renderAdminZoneProgression ci-dessus). ----------
+function renderAdminItemTutorials(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.rpc('admin_item_tutorial_stats').then(({data, error}) => {
+    if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+    const rows = data || [];
+    if (!rows.length) {
+      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun tutoriel vu pour l\'instant':'No tutorials seen yet'}</div>`;
+      return;
+    }
+    const totalCompleted = rows.reduce((a,r) => a + Number(r.completed_count||0), 0);
+    const totalSkipped = rows.reduce((a,r) => a + Number(r.skipped_count||0), 0);
+    const rowsHtml = rows.map(r => {
+      const completed = Number(r.completed_count||0), skipped = Number(r.skipped_count||0), total = Number(r.total_count||0);
+      const rate = (completed + skipped) > 0 ? Math.round(completed/(completed+skipped)*100) : 0;
+      return `<tr><td>${escapeHtml(r.tutorial_id)}</td><td>${fmt(completed)}</td><td>${fmt(skipped)}</td><td>${fmt(total)}</td><td>${rate}%</td></tr>`;
+    }).join('');
+    const pie = typeof buildPieWithLegendHtml === 'function'
+      ? buildPieWithLegendHtml([
+          { label: LANG==='fr'?'Terminés':'Completed', value: totalCompleted },
+          { label: LANG==='fr'?'Passés':'Skipped', value: totalSkipped },
+        ], { thresholdPct: 0 })
+      : '';
+    el.innerHTML = `<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">🎓 ${LANG==='fr'?'Tutoriels suivis':'Tutorials tracked'}</div><div class="astVal">${rows.length}</div></div>
+        <div class="admStatTile"><div class="astLbl">✅ ${LANG==='fr'?'Terminés (total)':'Completed (total)'}</div><div class="astVal">${fmt(totalCompleted)}</div></div>
+        <div class="admStatTile"><div class="astLbl">⏭️ ${LANG==='fr'?'Passés (total)':'Skipped (total)'}</div><div class="astVal">${fmt(totalSkipped)}</div></div>
+      </div>
+      <div class="admHint">${LANG==='fr'
+        ? 'Un tutoriel apparaît ici dès qu\'au moins un joueur l\'a terminé ou passé (mark_item_tutorial_seen). Taux = terminés / (terminés + passés).'
+        : 'A tutorial appears here as soon as at least one player has completed or skipped it (mark_item_tutorial_seen). Rate = completed / (completed + skipped).'}</div>
+      <h3>${LANG==='fr'?'⚖️ Terminés vs passés (tous tutoriels)':'⚖️ Completed vs skipped (all tutorials)'}</h3>
+      ${pie}
+      <h3>${LANG==='fr'?'Détail par tutoriel':'Detail by tutorial'}</h3>
+      <table class="admTable">
+        <thead><tr><th>${LANG==='fr'?'Tutoriel':'Tutorial'}</th><th>${LANG==='fr'?'Terminés':'Completed'}</th><th>${LANG==='fr'?'Passés':'Skipped'}</th><th>${LANG==='fr'?'Total':'Total'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>`;
   });
 }
 

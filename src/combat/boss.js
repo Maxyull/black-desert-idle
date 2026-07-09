@@ -376,7 +376,12 @@ const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:
   // ---- world boss PARTAGÉ (spawn admin) : PV communs à tous, contribution reportée au serveur ----
   shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0, presenceCd:0,
   // ---- effet de profondeur/immersion ("4D") : tremblement d'écran + braises de corruption en parallaxe ----
-  shakeT:0, embers:[] };
+  shakeT:0, embers:[],
+  // ---- pénalité de récompense sur mort pendant le combat (voir bossDeathPenaltyMult) : ce boss ne
+  // "wipe" jamais (bossLoop clampe playerHp à 1, "pas de wipe sur ce boss d'intro"), donc une "mort"
+  // ici = playerHp qui atteint 0 AVANT ce clamp -- comptée une seule fois par occurrence (deathFlag
+  // évite de recompter chaque frame tant que le joueur reste sous le seuil).
+  deathCount:0, deathFlag:false };
 // ---- présence en direct des autres joueurs dans la salle de boss PARTAGÉ (Supabase Realtime,
 // pas de table nécessaire) : chaque joueur diffuse sa position normalisée dans l'arène, on
 // affiche les autres comme de petites silhouettes + pseudo — demande explicite : "tous les
@@ -483,7 +488,7 @@ function startBossFight(bossId, isShared) {
     px:atkPos.x, py:atkPos.y, atkPos, pillars:spots.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
     shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
-    shakeT:0, embers:[],
+    shakeT:0, embers:[], deathCount:0, deathFlag:false,
   });
   currentActivity = 'boss'; renderActivityTabs();
   setFarmViewVisible(false);
@@ -537,6 +542,59 @@ function bossRankMultiplier(rank) {
   if (rank <= 3) return 2;
   if (rank <= 10) return 1.4;
   return 1; // hors du top 10 : récompense de base pour avoir participé
+}
+// semaine ISO 8601 ('YYYY-Www') d'une date -- pure, testable isolément. Utilisée pour le bonus
+// "premier kill de la semaine PAR BOSS" (S.bossLastKillWeek[bossId], voir endBossFight). ISO et non
+// un simple Date.now()/durée fixe : évite toute dérive de fuseau horaire aux limites de semaine,
+// cohérent avec le reste du fichier qui calcule déjà les horaires en Europe/Paris.
+function getISOWeekString(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7; // lundi=1..dimanche=7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum); // jeudi de la même semaine ISO
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+}
+// pity du loot rarissime (b.rareLoot, Kzarka/Vell uniquement) -- à 1%/5% de chance, l'espérance est
+// ~100/~20 kills avant un drop ; un palier de garantie à 25 reste un vrai filet de sécurité (couvre
+// la malchance extrême) sans devenir un "cadeau" qui casse la rareté voulue de l'objet.
+const BOSS_PITY_THRESHOLD = 25;
+// table de pénalité de récompense sur mort pendant le combat (voir bossState.deathCount) -- 0 mort
+// n'est PAS un bonus, juste l'absence de malus (badge "Perfect Kill" seul, voir bossPerfectKillHtml).
+// À 4+ morts : le loot chiffré (silver/matériau/Caphras/Fragment) tombe à 0, mais les drops garantis
+// (récompense de base) restent -- l'esprit de la pénalité est de retirer le "bonus" de performance,
+// jamais de punir une victoire chèrement acquise en la rendant totalement stérile.
+const BOSS_DEATH_PENALTY = [1, 0.9, 0.75, 0.5, 0];
+function bossDeathPenaltyMult(deathCount) {
+  return BOSS_DEATH_PENALTY[Math.min(deathCount, BOSS_DEATH_PENALTY.length - 1)];
+}
+// bonus "premier kill de la semaine" -- PAR BOSS (S.bossLastKillWeek[bossId]), pas global : tuer
+// Kzarka cette semaine ne "consomme" pas le bonus de Vell. Lit la semaine AVANT de la mettre à jour
+// (appelant : endBossFight), sinon le bonus ne se déclencherait jamais.
+const BOSS_FIRST_KILL_WEEK_BONUS = 1.5;
+function bossFirstKillOfWeek(bossId) {
+  return S.bossLastKillWeek[bossId] !== getISOWeekString(new Date());
+}
+// badges affichés dans l'écran de résultat (sous rewardsHtml) : "Perfect Kill" (0 mort, PAS un
+// bonus chiffré supplémentaire -- juste l'absence de malus, voir BOSS_DEATH_PENALTY[0]=1), la
+// pénalité de mort si elle a réduit le loot, et le bonus 1er kill de la semaine. Même idiome
+// LANG==='fr'?'...':'...' que le reste du fichier, pas de nouvelle classe CSS -- réutilise .brRewards.
+function bossMultBadgesHtml(deathCount, firstKillWeek) {
+  let html = '';
+  if (deathCount === 0) {
+    html += `<div class="brRewards admHint">✨ ${LANG==='fr'?'Perfect Kill — 0 mort':'Perfect Kill — 0 deaths'}</div>`;
+  } else {
+    const pct = Math.round((1 - bossDeathPenaltyMult(deathCount)) * 100);
+    html += `<div class="brRewards admHint">${LANG==='fr'
+      ? `💀 ${deathCount} mort${deathCount>1?'s':''} — récompense chiffrée réduite de ${pct}%${deathCount>=BOSS_DEATH_PENALTY.length-1?' (loot rarissime exclu)':''}`
+      : `💀 ${deathCount} death${deathCount>1?'s':''} — numeric reward reduced by ${pct}%${deathCount>=BOSS_DEATH_PENALTY.length-1?' (rare loot excluded)':''}`}</div>`;
+  }
+  if (firstKillWeek) {
+    html += `<div class="brRewards admHint" style="color:var(--gold)">🗓️ ${LANG==='fr'
+      ? `Premier kill de la semaine : +${Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100)}%`
+      : `First kill of the week: +${Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100)}%`}</div>`;
+  }
+  return html;
 }
 // récompenses de World Boss basées sur la PROGRESSION du joueur (2026-07-15, demande explicite) --
 // remplace l'ancien matériau fixe par palier (matKey/matQty du roster) par une pierre d'optimisation
@@ -599,10 +657,26 @@ function bossRewardSelectorHtml() {
 // (2e/1er/3e) avec un sélecteur de boss au-dessus. Repositionné le même jour (demande explicite :
 // "podium world boss en dessous des horaire de boss") -- vivait avant entre le countdown (nextHtml)
 // et le calendrier hebdomadaire ; désormais après le calendrier complet (voir renderBossLobbyHtml).
+// barre de progression du pity (voir BOSS_PITY_THRESHOLD/endBossFight) -- réutilise les classes
+// .admBars/.admBarRow/.admBarTrack/.admBar/.admBarVal déjà existantes (styles.css) plutôt que
+// d'introduire une nouvelle CSS, cohérent avec le thème sombre/or du reste du panneau.
+function bossPityBarHtml(bossId) {
+  const b = BOSS_ROSTER[bossId];
+  if (!b || !b.rareLoot) return '';
+  const count = S.bossPity[bossId] || 0;
+  const pct = Math.min(100, count / BOSS_PITY_THRESHOLD * 100);
+  return `<div class="admBars" style="margin:6px auto 0;max-width:260px">
+    <div class="admBarRow">
+      <span class="admBarLbl">${LANG==='fr'?'Pity':'Pity'}</span>
+      <span class="admBarTrack"><span class="admBar" style="width:${pct}%"></span></span>
+      <span class="admBarVal">${count}/${BOSS_PITY_THRESHOLD}</span>
+    </div>
+  </div>`;
+}
 function bossRewardRulesHtml() {
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
-    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${LANG==='fr'?'de chance':'chance'} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>`
+    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${LANG==='fr'?'de chance':'chance'} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
     : '';
   // Kzarka (2026-07-16, demande explicite) : podium à récompenses FIXES (silver + Caphras/Fragment
   // de mémoire), voir KZARKA_REWARD_TIERS/endBossFight -- Vell garde le podium générique basé sur
@@ -671,6 +745,11 @@ const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_WHEEL_MS = 3600;
 // que le révéler, comme la roue). Plus long qu'avant (2.2s de roulement contre 0.65s de rebond
 // fixe) pour laisser le temps de "voir" le ralentissement.
 const BOSS_ROLL_DURATION_MS = 2200, BOSS_ROLL_START_INTERVAL_MS = 40, BOSS_ROLL_GROWTH = 1.16;
+// near-miss de la roue de récompense rare (voir revealOne ci-dessous) : 18% des pertes atterrissent
+// volontairement à quelques degrés du segment rare plutôt qu'à un point uniforme de la zone sûre --
+// la marge (8°) doit rester nettement plus grande que la tolérance visuelle du pointeur/segment pour
+// ne jamais sembler tomber SUR le rare par erreur d'affichage.
+const BOSS_NEAR_MISS_CHANCE = 0.18, BOSS_NEAR_MISS_MARGIN_DEG = 8;
 function renderBossRewardReveal(items) {
   if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
   const itemsHtml = items.map((it,i) => {
@@ -739,9 +818,17 @@ function wireBossRewardReveal(items) {
       const wheel = $a('bossWheelEl');
       if (wheel) {
         const segDeg = 360/12, spins = instant ? 0 : 5;
-        // atterrit au CENTRE du segment rare si gagné, sinon un point sûr dans la zone "rien"
-        // (60°-330°, loin des bords pour ne jamais sembler tomber sur le rare par erreur visuelle)
-        const targetDeg = it.won ? segDeg/2 : (60 + Math.random()*270);
+        // atterrit au CENTRE du segment rare si gagné, sinon un point dans la zone "rien" (60°-330°)
+        // -- l'issue (it.won) est déjà tirée dans endBossFight, cette section ne fait QUE choisir
+        // l'angle d'atterrissage de l'animation, jamais l'issue elle-même.
+        // "near-miss" (2026-07-09, adapté de la référence roulette React) : sur une perte, BOSS_NEAR_MISS_CHANCE
+        // du temps on s'arrête volontairement TOUT PRÈS du bord du segment rare (juste après, jamais
+        // dessus) au lieu d'un point uniforme dans toute la zone sûre -- crée un vrai "si près !" sans
+        // jamais risquer de sembler tomber SUR le rare (BOSS_NEAR_MISS_MARGIN_DEG de marge de sécurité).
+        const targetDeg = it.won ? segDeg/2
+          : (Math.random() < BOSS_NEAR_MISS_CHANCE
+              ? (Math.random() < 0.5 ? BOSS_NEAR_MISS_MARGIN_DEG : 360 - BOSS_NEAR_MISS_MARGIN_DEG) + (Math.random()-0.5)*6
+              : (60 + Math.random()*270));
         if (instant) wheel.style.transition = 'none';
         wheel.style.transform = `rotate(${spins*360 - targetDeg}deg)`;
       }
@@ -801,6 +888,13 @@ async function endBossFight(win) {
   let alreadyClaimed = false;
   if (win) {
     let mult = 1, rank = null;
+    // pénalité de mort + bonus 1er kill de la semaine (PAR BOSS) -- calculés une seule fois ici,
+    // stackés MULTIPLICATIVEMENT dans le même `mult` que bossRankMultiplier(rank) ci-dessous, pour
+    // que tout le loot chiffré (Kzarka ET Vell/générique) passe par le même facteur unique au lieu
+    // d'un second chemin de calcul parallèle. La semaine est lue AVANT d'être écrite plus bas.
+    const deathMult = bossDeathPenaltyMult(bossState.deathCount);
+    const firstKillWeek = bossState.bossId ? bossFirstKillOfWeek(bossState.bossId) : false;
+    mult *= deathMult * (firstKillWeek ? BOSS_FIRST_KILL_WEEK_BONUS : 1);
     if (bossState.shared && sb) {
       try {
         // BUG corrigé le 2026-07-15 (demande explicite : "ça affiche victoire sans donner de loot
@@ -817,7 +911,9 @@ async function endBossFight(win) {
           try { await sb.rpc('boss_contribute', { p_damage: dmg, p_pseudo: myPseudo || null }); } catch (e) {}
         }
         const { data } = await sb.rpc('boss_claim');
-        if (typeof data === 'number' && data > 0) { rank = data; mult = bossRankMultiplier(rank); }
+        // *= et non = : ne doit pas écraser deathMult/firstKillWeek déjà appliqués au-dessus --
+        // tous les facteurs stackent dans le MÊME `mult`, un seul chemin de calcul (voir plus haut).
+        if (typeof data === 'number' && data > 0) { rank = data; mult *= bossRankMultiplier(rank); }
         // -1 : déjà réclamé, aucune contribution, ou boss pas encore à 0 PV. L'alerte Discord pour
         // le vrai cas de double réclamation part désormais depuis boss_claim() lui-même, côté
         // serveur, directement sur le salon "cheat" (déplacé le 2026-07-08 : elle partait avant sur
@@ -845,13 +941,16 @@ async function endBossFight(win) {
       // zone de progression du joueur ci-dessous (conservé tel quel pour Vell/futurs boss).
       if (bossState.bossId === 'kzarka' && rank) {
         const tier = KZARKA_REWARD_TIERS[Math.min(rank, 3)];
-        const caphrasQty = Math.round(tier.caphras[0] + Math.random()*(tier.caphras[1]-tier.caphras[0]));
-        const fragQty = Math.round(tier.frag[0] + Math.random()*(tier.frag[1]-tier.frag[0]));
-        reward = tier.silver;
+        // mult (rang × pénalité de mort × bonus 1er kill semaine) s'applique aussi aux quantités
+        // Caphras/Fragment, pas seulement au silver -- même esprit que le zoneMult du bloc générique
+        // ci-dessous, qui multiplie déjà la quantité de matériau (voir plus bas).
+        const caphrasQty = Math.max(0, Math.round((tier.caphras[0] + Math.random()*(tier.caphras[1]-tier.caphras[0])) * mult));
+        const fragQty = Math.max(0, Math.round((tier.frag[0] + Math.random()*(tier.frag[1]-tier.frag[0])) * mult));
+        reward = Math.round(tier.silver * mult);
         addSilver(reward, 'boss', b.name.fr);
         invAdd({ key:'mat_'+CAPHRAS_NAME, name:CAPHRAS_NAME, kind:'material', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', qty:caphrasQty, stackable:true, weight:0.1, val:120 });
         invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
-        rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
+        rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
         revealItems.push(
           { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` },
           { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), rollValue:caphrasQty, rollTemplate:n=>`+${n} × ${tr(CAPHRAS_NAME)}` },
@@ -900,21 +999,38 @@ async function endBossFight(win) {
         const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
           ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
           : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
-        rewardsHtml = rankHtml + zoneHtml;
+        rewardsHtml = rankHtml + zoneHtml + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
       }
       pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
       logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
       if (bossState.bossId) markBossDefeated(bossState.bossId); // Compendium (2026-07-08)
+      // "premier kill de la semaine PAR BOSS" : écrit APRÈS avoir lu firstKillWeek plus haut (sinon
+      // le bonus ne se déclencherait jamais) -- seulement une fois la victoire confirmée (pas déjà
+      // réclamée), sinon rentrer dans l'arène d'un boss déjà réclamé consommerait quand même le bonus.
+      if (bossState.bossId) S.bossLastKillWeek[bossState.bossId] = getISOWeekString(new Date());
       // roue de récompense rare (Coeur de Vell, etc.) : le tirage a lieu MAINTENANT, la roue ne fait
-      // que révéler ce qui a déjà été décidé -- intégrée à la même séquence que les dés ci-dessus
+      // que révéler ce qui a déjà été décidé -- intégrée à la même séquence que les dés ci-dessus.
+      // Pity (voir BOSS_PITY_THRESHOLD) : ne s'applique qu'aux boss qui ont un rareLoot -- au palier,
+      // le gain est FORCÉ (won=true) sans tirage, puis le compteur repart de 0 comme sur un vrai gain.
       if (b.rareLoot) {
-        const won = Math.random() < b.rareLoot.ch;
+        const bossId = bossState.bossId;
+        const pityCount = S.bossPity[bossId] || 0;
+        // 4+ morts (deathMult===0, voir BOSS_DEATH_PENALTY) : le loot rarissime est exclu, comme le
+        // reste du loot chiffré -- mais le pity NE PROGRESSE PAS sur ces tentatives (deathMult===0
+        // veut dire "kill chèrement acquis, sans le bonus", pas "kill qui ne compte pas du tout" --
+        // sinon un joueur enchaînant des kills à 4+ morts n'atteindrait jamais son pity légitime).
+        const rareLootExcluded = deathMult === 0;
+        const forcedByPity = !rareLootExcluded && pityCount >= BOSS_PITY_THRESHOLD;
+        const won = !rareLootExcluded && (forcedByPity || Math.random() < b.rareLoot.ch);
         if (won) {
           invAdd({ name:b.rareLoot.name, kind:'craft', icon:b.rareLoot.icon, color:b.rareLoot.color, key:'craft_'+b.rareLoot.name, qty:1, stackable:true, weight:0.3, val:0 });
           trackLoot(b.rareLoot.name);
-          logToDiscord('❤️‍🔥 Loot rarissime', `**${myPseudo||'Joueur'}** obtient ${b.rareLoot.name} sur ${b.name.fr} ! (${Math.round(b.rareLoot.ch*100)}% de chance)`, 0x5ec9e8);
+          S.bossPity[bossId] = 0;
+          logToDiscord('❤️‍🔥 Loot rarissime', `**${myPseudo||'Joueur'}** obtient ${b.rareLoot.name} sur ${b.name.fr}${forcedByPity?' (pity garanti)':''} ! (${Math.round(b.rareLoot.ch*100)}% de chance)`, 0x5ec9e8);
+        } else if (!rareLootExcluded) {
+          S.bossPity[bossId] = pityCount + 1;
         }
-        revealItems.push({ kind:'wheel', rareLoot:b.rareLoot, won });
+        revealItems.push({ kind:'wheel', rareLoot:b.rareLoot, won, pityCount:S.bossPity[bossId], pityThreshold:BOSS_PITY_THRESHOLD });
       }
       refreshStatsOnly(); hud();
     }
@@ -1028,6 +1144,12 @@ function bossLoop(now) {
     bossState.playerHp = Math.min(bossState.playerHpMax, bossState.playerHp + bossState.playerHpMax*0.5);
     bossState.potCd = 4.2;
   }
+  // compte une "mort" (voir bossDeathPenaltyMult) AVANT le clamp anti-wipe ci-dessous -- deathFlag
+  // évite de recompter chaque frame tant que le joueur reste à 0 PV, remis à false dès qu'il repasse
+  // au-dessus du seuil (une potion auto ou la fin de l'AoE peut le faire remonter)
+  if (bossState.playerHp <= 0) {
+    if (!bossState.deathFlag) { bossState.deathFlag = true; bossState.deathCount++; }
+  } else bossState.deathFlag = false;
   if (bossState.playerHp < 1) bossState.playerHp = 1; // pas de wipe sur ce boss d'intro
   bossState.hits.forEach(h => h.life -= dt*1.4);
   bossState.hits = bossState.hits.filter(h => h.life > 0);

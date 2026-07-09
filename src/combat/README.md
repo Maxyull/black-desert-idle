@@ -3,7 +3,10 @@
 Tout ce qui concerne le déroulement d'un combat et ses à-côtés : boss, loot, potions, VFX,
 comportement de l'IA.
 
-- `boss.js` — World Boss (Kzarka/Vell) : horaires, lobby, combat, récompenses.
+- `boss.js` — World Boss (Kzarka/Vell) : horaires, lobby, combat, récompenses. Depuis le
+  2026-07-19 : pity du loot rarissime (`BOSS_PITY_THRESHOLD`, `S.bossPity`), pénalité de
+  récompense sur mort (`bossDeathPenaltyMult`), bonus "1ère victoire de la semaine PAR boss"
+  (`bossFirstKillOfWeek`, `S.bossLastKillWeek`), near-miss sur la roue de loot rare.
 - `boss-render.js` — rendu canvas de la salle de boss (piliers, créature). Charge après
   `boss.js` (`bossLoop()` l'appelle).
 - `loot-rolls.js` — tirage du loot à la mort d'un monstre (`rollGearDrop`, `rollWeaponDrop`,

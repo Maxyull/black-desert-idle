@@ -835,5 +835,169 @@ function setEquipMode(key) {
   equipMode = key;
   renderEquipModeBtn();
 }
+
+// ============================================================
+// Tutoriels d'objets au premier obtain (2026-07-19, adaptation du prompt "item-tutorial-system")
+// -- même moteur/overlay que TUTORIAL_STEPS/COMPENDIUM_TUTORIAL_STEPS/CRON_TUTORIAL_STEPS
+// (startTutorial, game-supabase.js), même convention 1 flag localStorage par tutoriel que
+// compTutoSeen/cronTutoSeen ci-dessus (une seule fois "vu OU skip", pas de distinction côté client).
+// La Pierre de Cron, le Compendium, la Maîtrise PEN et le Trésor de Velia ont déjà leur propre
+// tutoriel/wiki dédié -- volontairement PAS dupliqués ici (voir audit dans le rapport de session).
+//
+// Objets choisis (audit du 2026-07-19, cf. src/inventory/gear-icons.js, src/world/zones-data.js,
+// src/combat/loot-rolls.js) :
+// - "mats" : Pierre de Novice/du Temps/Noire/concentrée -- les 4 matériaux d'optimisation PAR
+//   PALIER (gris/blanc/vert/bleu). Servent à charger le panneau d'optimisation (#optCard), mais
+//   rien n'explique explicitement QUEL matériau va avec QUELLE pièce avant ce tutoriel -- seul
+//   optCard affiche un aperçu une fois un objet sélectionné. Un seul flag pour les 4 nom
+//   (mécanique strictement identique quel que soit le palier), déclenché sur le tout premier
+//   matériau d'optimisation ramassé, quel qu'il soit.
+// - "craftMats" : Poussière d'esprit ancien / Fragment de mémoire / Marbre du Dieu déchu -- les 3
+//   composants de craft "endgame" (kind:'craft'). Le Wiki (section Optimisation) explique UNIQUEMENT
+//   la Poussière (convertible en Pierre de Caphras, 5:1, voir convertPoussiereToCaphras) ; Fragment
+//   de mémoire et Marbre du Dieu déchu n'ont AUCUNE explication nulle part dans le jeu (aucune
+//   recette de craft ne les consomme encore, contrairement à la Poussière) -- un joueur qui les
+//   loote n'a aucun moyen de savoir qu'ils n'ont pas encore d'utilité (mécanique à venir), d'où ce
+//   tutoriel pour éviter la confusion/l'inquiétude ("j'ai looté un truc et rien ne se passe").
+// Bijoux rares (jackpot) et pièces d'équipement (gear) restent volontairement HORS scope : déjà
+// couverts par TUTORIAL_STEPS (steps #invCard/#btnEquipBest) et par le tooltip d'objet au survol.
+const ITEM_TUTORIALS = {
+  mats: {
+    // les 4 noms déclenchent le MÊME tutoriel (voir justification ci-dessus) — Set pour un test O(1)
+    itemNames: new Set(['Pierre de Novice', 'Pierre du Temps', 'Pierre Noire', 'Pierre concentrée']),
+    steps: [
+      { target:'#optCard', placement:'left', final:true,
+        title:{fr:'Matériaux d\'optimisation', en:'Enhancement materials'},
+        text:{fr:'Cette pierre sert à optimiser une pièce d\'équipement du même palier (couleur de bordure identique). Charge-la dans ce panneau puis choisis la pièce à améliorer : plus le niveau visé est haut, plus le risque d\'échec est grand.', en:'This stone enhances a gear piece of the same tier (matching border color). Load it into this panel, then pick the piece to improve: the higher the target level, the higher the risk of failure.'} },
+    ],
+  },
+  craftMats: {
+    itemNames: new Set(['Poussière d\'esprit ancien', 'Fragment de mémoire', 'Marbre du Dieu déchu']),
+    steps: [
+      { title:{fr:'Composants de craft', en:'Crafting components'},
+        text:{fr:'Ces objets rares (Poussière d\'esprit ancien, Fragment de mémoire, Marbre du Dieu déchu) sont des composants endgame. Seule la Poussière a une utilité pour l\'instant : elle se convertit en Pierre de Caphras (5 pour 1, onglet 🎒 Inventaire). Les autres n\'ont pas encore de recette — garde-les, elles serviront avec de futures fonctionnalités de craft.', en:'These rare items (Ancient Spirit Dust, Memory Fragment, Fallen God\'s Marble) are endgame components. Only the Dust has a use for now: it converts into a Caphras Stone (5 for 1, 🎒 Inventory tab). The others have no recipe yet — keep them, they\'ll be used by future crafting features.'},
+        final:true },
+    ],
+  },
+};
+// index inverse nom d'objet -> id de tutoriel, construit une seule fois (évite de reparcourir
+// ITEM_TUTORIALS à chaque ramassage) -- fonction pure, testable isolément
+function buildItemTutorialIndex() {
+  const idx = {};
+  for (const id in ITEM_TUTORIALS) {
+    for (const name of ITEM_TUTORIALS[id].itemNames) idx[name] = id;
+  }
+  return idx;
+}
+const ITEM_TUTORIAL_BY_NAME = buildItemTutorialIndex();
+// branche endItemTutorial() sur le DERNIER step de chaque tutoriel d'objet (celui marqué final:true)
+// -- leaveTutorialStep() (game-supabase.js) appelle "after" du step courant à la fois quand on
+// quitte via "Terminer" (dernier step) ET via "Passer" (n'importe quel step, y compris avant le
+// dernier pour un tutoriel à plusieurs étapes) : on distingue les deux via tutSkipBtn/tutNextBtn,
+// voir isLeavingViaSkipBtn ci-dessous. Fait après la définition d'ITEM_TUTORIALS pour rester DRY
+// (pas de duplication de la logique "quel id pour ce step ?" dans chaque entrée du registre).
+for (const id in ITEM_TUTORIALS) {
+  const steps = ITEM_TUTORIALS[id].steps;
+  const lastStep = steps[steps.length - 1];
+  const prevAfter = lastStep.after; // pas de after existant sur nos steps actuels, mais robustesse si un futur step en gagne un
+  lastStep.after = () => { if (prevAfter) prevAfter(); endItemTutorial(isLeavingViaSkipBtn); };
+}
+// posée à true juste avant d'appeler endTutorial() depuis le bouton "Passer" (voir wiring plus bas),
+// remise à false immédiatement après -- seul moyen de distinguer "Passer" de "Terminer" sans toucher
+// à endTutorial()/leaveTutorialStep() (game-supabase.js, hors périmètre de cet agent)
+let isLeavingViaSkipBtn = false;
+// 1 flag localStorage par tutoriel (même convention que compTutoSeen/cronTutoSeen) -- fonction pure
+// séparée de l'écriture pour rester testable (voir consigne de la session : logique exposée,
+// pas enfouie dans une closure)
+function itemTutoStorageKey(id) { return 'velia-idle-item-tuto-seen-'+id; }
+function isItemTutorialSeen(id) {
+  try { return localStorage.getItem(itemTutoStorageKey(id)) === '1'; } catch(e) { return false; }
+}
+function markItemTutorialSeen(id, skipped) {
+  try { localStorage.setItem(itemTutoStorageKey(id), '1'); } catch(e) {}
+  // best-effort, ne bloque jamais le jeu (voir consigne : fire-and-forget, jamais await/bloquant) --
+  // même garde que queueFarmEvent (sb && currentUser && !isGuest()) : pas de compte vérifié → pas
+  // de journalisation, mais le flag localStorage ci-dessus suffit pour le "ne plus jamais montrer"
+  // côté client, indépendamment du compte
+  if (typeof sb !== 'undefined' && sb && typeof currentUser !== 'undefined' && currentUser && typeof isGuest === 'function' && !isGuest()) {
+    try { sb.rpc('mark_item_tutorial_seen', { p_tutorial_id: id, p_skipped: !!skipped }).catch(()=>{}); } catch(e) {}
+  }
+}
+// file d'attente (2026-07-19, demande explicite) : ne jamais interrompre un tutoriel déjà ouvert si
+// plusieurs objets déclenchants tombent coup sur coup (farm hors-ligne rattrapé d'un coup, packs de
+// mobs...) -- plafonnée à 5 (même raisonnement que le prompt de référence : le joueur peut être en
+// train de farmer loin de l'écran, inutile d'empiler des dizaines de tutoriels en attente).
+const ITEM_TUTORIAL_QUEUE_CAP = 5;
+let itemTutorialQueue = [];
+let itemTutorialActive = false;
+// point d'entrée appelé au ramassage d'un objet (voir dropsTick, combat/loot-rolls.js) — reste une
+// fonction pure de décision (que faire ?) séparée de la partie DOM (playNextItemTutorial), pour
+// rester testable sans dépendre du moteur de tutoriel/overlay
+function maybeQueueItemTutorial(itemName) {
+  const id = ITEM_TUTORIAL_BY_NAME[itemName];
+  if (!id || isItemTutorialSeen(id)) return false;
+  if (itemTutorialQueue.includes(id) || (itemTutorialActive && itemTutorialActiveId === id)) return false; // déjà en file/en cours
+  if (itemTutorialQueue.length >= ITEM_TUTORIAL_QUEUE_CAP) return false; // plafond silencieux, voir commentaire ci-dessus
+  itemTutorialQueue.push(id);
+  markItemTutorialSeen(id, false); // marqué "vu" dès la mise en file : ne redéclenche jamais même si le joueur ferme l'onglet avant l'affichage
+  if (typeof refreshItemTutorialBadge === 'function') refreshItemTutorialBadge();
+  if (!itemTutorialActive) playNextItemTutorial();
+  return true;
+}
+let itemTutorialActiveId = null;
+function playNextItemTutorial() {
+  if (itemTutorialActive) return; // un tutoriel est déjà affiché, endItemTutorial() rappellera cette fonction
+  const id = itemTutorialQueue.shift();
+  if (!id) { itemTutorialActiveId = null; return; }
+  itemTutorialActiveId = id;
+  itemTutorialActive = true;
+  // même délai (400ms) que startCronTutorial (loot-rolls.js) : laisse le temps au ramassage
+  // (particule, floatTxt, lootLine) de s'afficher avant que le spotlight ne prenne l'écran
+  setTimeout(() => startTutorial(ITEM_TUTORIALS[id].steps, { resetView:false }), 400);
+}
+// appelé via le "after" du dernier step de chaque ITEM_TUTORIALS[id] (voir boucle juste après la
+// définition du registre plus haut) -- skipped reflète isLeavingViaSkipBtn au moment de l'appel :
+// true seulement si fermé via "Passer", pour les stats admin (voir mark_item_tutorial_seen)
+function endItemTutorial(skipped) {
+  if (!itemTutorialActive) return;
+  markItemTutorialSeen(itemTutorialActiveId, !!skipped); // réenvoie avec le bon skipped final (l'appel de mise en file avait skipped=false par défaut)
+  itemTutorialActive = false;
+  itemTutorialActiveId = null;
+  if (typeof refreshItemTutorialBadge === 'function') refreshItemTutorialBadge();
+  playNextItemTutorial(); // enchaîne sur le suivant en file, s'il y en a un
+}
+// isLeavingViaSkipBtn : distingue "Passer" (skip) de "Terminer" (fin normale) SANS toucher à
+// endTutorial()/leaveTutorialStep() (game-supabase.js, hors périmètre de cet agent) -- écouteur en
+// phase de CAPTURE (3e argument true) sur #tutSkipBtn : se déclenche AVANT le .onclick posé par
+// game-supabase.js (la capture descend vers la cible avant la bulle où vit .onclick), donc le flag
+// est déjà à true quand endTutorial()/leaveTutorialStep()/le "after" de notre step s'exécutent.
+// Remis à false juste après (setTimeout 0) pour ne pas fausser un futur "Terminer" normal.
+(function wireItemTutorialSkipDetection() {
+  const btn = document.getElementById('tutSkipBtn');
+  if (!btn) return; // filet de sécurité si jamais le DOM n'est pas encore prêt (ne devrait pas arriver, script chargé après le HTML)
+  btn.addEventListener('click', () => {
+    isLeavingViaSkipBtn = true;
+    setTimeout(() => { isLeavingViaSkipBtn = false; }, 0);
+  }, true);
+})();
+// pastille "NEW" sur l'onglet 🎒 Inventaire tant qu'un tutoriel d'objet est en attente/affiché
+// (2026-07-19) -- réutilise TEL QUEL le style .contentNewBadge (styles.css, déjà utilisé pour
+// Wiki/Compendium/Codex/Succès), mais piloté indépendamment de refreshContentNewBadges/
+// CONTENT_UPDATE_VERSION (game-core.js, hors périmètre de cet agent) : le badge est injecté en JS
+// au premier appel plutôt qu'ajouté en dur dans index.dev.html (constrainte de cette session), donc
+// idempotent (ne recrée pas le <span> s'il existe déjà) pour être appelable à chaque renderInventory().
+function refreshItemTutorialBadge() {
+  const tabBtn = document.querySelector('.invModeTab[data-mode="inv"]');
+  if (!tabBtn) return;
+  let badge = tabBtn.querySelector('.contentNewBadge.itemTutoBadge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'contentNewBadge itemTutoBadge';
+    badge.textContent = '1';
+    tabBtn.appendChild(badge);
+  }
+  const pending = itemTutorialActive || itemTutorialQueue.length > 0;
+  badge.classList.toggle('show', pending);
+}
 // FARM_MODES/renderFarmModeBtn/setFarmMode desormais dans combat/ai-mode.js (extrait le
 // 2026-07-08, reorganisation par dossiers) -- charge APRES ce fichier, voir index.html.

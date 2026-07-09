@@ -3,10 +3,15 @@
 Tout ce qui fait avancer un compte au fil du temps, hors combat/loot brut : succès, quêtes,
 courrier, compendium, craft du Trésor de Velia.
 
-- `notifications-quests.js` — le plus gros fichier du dossier : centre de notifications,
-  panneau Succès (UI), courrier (mailbox, fidélité), Compendium (progression par
-  zone/boss/PEN), quêtes journalières/hebdomadaires. Charge après `core/game-core.js`,
-  `achievements-data.js` et `treasure-craft.js`.
+- `notifications-quests.js` — le plus gros fichier du dossier (~1000 lignes, seuil de
+  surveillance CLAUDE.md §16 dépassé de justesse) : centre de notifications, panneau Succès
+  (UI), courrier (mailbox, fidélité), Compendium (progression par zone/boss/PEN), quêtes
+  journalières/hebdomadaires, et depuis le 2026-07-19 les tutoriels d'objets au premier
+  obtain (`ITEM_TUTORIALS`, `maybeQueueItemTutorial`, réutilise `startTutorial()` de
+  `backend/game-supabase.js`). Charge après `core/game-core.js`, `achievements-data.js` et
+  `treasure-craft.js`. Si ce fichier continue de grossir, `item-tutorials.js` est le premier
+  candidat à en être extrait (aucune dépendance de chargement immédiat avec le reste du
+  fichier — juste après `notifications-quests.js` dans `index.dev.html` si extrait un jour).
 - `achievements-data.js` — les définitions des succès (`ACHIEVEMENTS`). Charge après
   `core/game-core.js` : certains objectifs (`target: ZONES.length`, `PRI_IDX`...) sont
   évalués immédiatement au chargement.

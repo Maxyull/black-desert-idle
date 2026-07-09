@@ -515,6 +515,12 @@ function renderInventory() {
   $('wTxt').classList.toggle('bad', overW);
   $('invSilver').textContent = fmt(S.silver);
   $('invLoyalty').textContent = '🏅 '+fmt(S.loyalty||0);
+  // pastille "NEW" sur l'onglet 🎒 Inventaire tant qu'un tutoriel d'objet (matériaux/composants de
+  // craft au premier obtain, voir ITEM_TUTORIALS dans progression/notifications-quests.js) est en
+  // attente ou affiché -- rafraîchie ici en plus des points de mise en file/fin (maybeQueueItemTutorial/
+  // endItemTutorial) pour garantir le <span> injecté même si renderInventory() tourne avant le tout
+  // premier ramassage déclenchant.
+  if (typeof refreshItemTutorialBadge === 'function') refreshItemTutorialBadge();
 }
 
 // onglet Compendium PRINCIPAL, au même niveau qu'Inventaire/Assemblage (2026-07-14, demande

@@ -622,6 +622,8 @@ const S = {
   pa: 4, dp: 10,   
   castMult: 1, hpMax: 100, mpMax: 100, lootRadius: 26, 
   bossesKilled: {}, 
+  
+  bossPity: {}, bossLastKillWeek: {},
   penMastery: {}, 
   enhPeakByName: {}, 
   lootTableVersion: 'v2', 
@@ -1833,6 +1835,9 @@ function applySaveState(data) {
   S.silverEarnedAtLoad = S.silverEarned || 0;
   S.tokenSilverEarnedAtLoad = S.tokenSilverEarned || 0;
   S.killsAtLoad = S.kills || 0;
+  
+  S.bossPity = S.bossPity || {};
+  S.bossLastKillWeek = S.bossLastKillWeek || {};
   Object.keys(EQUIP).forEach(k => EQUIP[k] = data.EQUIP[k] ?? null);
   for (let i = 0; i < INV_SIZE; i++) INV[i] = data.INV[i] ?? null;
   
@@ -2917,6 +2922,114 @@ function setEquipMode(key) {
   renderEquipModeBtn();
 }
 
+const ITEM_TUTORIALS = {
+  mats: {
+    
+    itemNames: new Set(['Pierre de Novice', 'Pierre du Temps', 'Pierre Noire', 'Pierre concentrée']),
+    steps: [
+      { target:'#optCard', placement:'left', final:true,
+        title:{fr:'Matériaux d\'optimisation', en:'Enhancement materials'},
+        text:{fr:'Cette pierre sert à optimiser une pièce d\'équipement du même palier (couleur de bordure identique). Charge-la dans ce panneau puis choisis la pièce à améliorer : plus le niveau visé est haut, plus le risque d\'échec est grand.', en:'This stone enhances a gear piece of the same tier (matching border color). Load it into this panel, then pick the piece to improve: the higher the target level, the higher the risk of failure.'} },
+    ],
+  },
+  craftMats: {
+    itemNames: new Set(['Poussière d\'esprit ancien', 'Fragment de mémoire', 'Marbre du Dieu déchu']),
+    steps: [
+      { title:{fr:'Composants de craft', en:'Crafting components'},
+        text:{fr:'Ces objets rares (Poussière d\'esprit ancien, Fragment de mémoire, Marbre du Dieu déchu) sont des composants endgame. Seule la Poussière a une utilité pour l\'instant : elle se convertit en Pierre de Caphras (5 pour 1, onglet 🎒 Inventaire). Les autres n\'ont pas encore de recette — garde-les, elles serviront avec de futures fonctionnalités de craft.', en:'These rare items (Ancient Spirit Dust, Memory Fragment, Fallen God\'s Marble) are endgame components. Only the Dust has a use for now: it converts into a Caphras Stone (5 for 1, 🎒 Inventory tab). The others have no recipe yet — keep them, they\'ll be used by future crafting features.'},
+        final:true },
+    ],
+  },
+};
+
+function buildItemTutorialIndex() {
+  const idx = {};
+  for (const id in ITEM_TUTORIALS) {
+    for (const name of ITEM_TUTORIALS[id].itemNames) idx[name] = id;
+  }
+  return idx;
+}
+const ITEM_TUTORIAL_BY_NAME = buildItemTutorialIndex();
+
+for (const id in ITEM_TUTORIALS) {
+  const steps = ITEM_TUTORIALS[id].steps;
+  const lastStep = steps[steps.length - 1];
+  const prevAfter = lastStep.after; 
+  lastStep.after = () => { if (prevAfter) prevAfter(); endItemTutorial(isLeavingViaSkipBtn); };
+}
+
+let isLeavingViaSkipBtn = false;
+
+function itemTutoStorageKey(id) { return 'velia-idle-item-tuto-seen-'+id; }
+function isItemTutorialSeen(id) {
+  try { return localStorage.getItem(itemTutoStorageKey(id)) === '1'; } catch(e) { return false; }
+}
+function markItemTutorialSeen(id, skipped) {
+  try { localStorage.setItem(itemTutoStorageKey(id), '1'); } catch(e) {}
+  
+  if (typeof sb !== 'undefined' && sb && typeof currentUser !== 'undefined' && currentUser && typeof isGuest === 'function' && !isGuest()) {
+    try { sb.rpc('mark_item_tutorial_seen', { p_tutorial_id: id, p_skipped: !!skipped }).catch(()=>{}); } catch(e) {}
+  }
+}
+
+const ITEM_TUTORIAL_QUEUE_CAP = 5;
+let itemTutorialQueue = [];
+let itemTutorialActive = false;
+
+function maybeQueueItemTutorial(itemName) {
+  const id = ITEM_TUTORIAL_BY_NAME[itemName];
+  if (!id || isItemTutorialSeen(id)) return false;
+  if (itemTutorialQueue.includes(id) || (itemTutorialActive && itemTutorialActiveId === id)) return false; 
+  if (itemTutorialQueue.length >= ITEM_TUTORIAL_QUEUE_CAP) return false; 
+  itemTutorialQueue.push(id);
+  markItemTutorialSeen(id, false); 
+  if (typeof refreshItemTutorialBadge === 'function') refreshItemTutorialBadge();
+  if (!itemTutorialActive) playNextItemTutorial();
+  return true;
+}
+let itemTutorialActiveId = null;
+function playNextItemTutorial() {
+  if (itemTutorialActive) return; 
+  const id = itemTutorialQueue.shift();
+  if (!id) { itemTutorialActiveId = null; return; }
+  itemTutorialActiveId = id;
+  itemTutorialActive = true;
+  
+  setTimeout(() => startTutorial(ITEM_TUTORIALS[id].steps, { resetView:false }), 400);
+}
+
+function endItemTutorial(skipped) {
+  if (!itemTutorialActive) return;
+  markItemTutorialSeen(itemTutorialActiveId, !!skipped); 
+  itemTutorialActive = false;
+  itemTutorialActiveId = null;
+  if (typeof refreshItemTutorialBadge === 'function') refreshItemTutorialBadge();
+  playNextItemTutorial(); 
+}
+
+(function wireItemTutorialSkipDetection() {
+  const btn = document.getElementById('tutSkipBtn');
+  if (!btn) return; 
+  btn.addEventListener('click', () => {
+    isLeavingViaSkipBtn = true;
+    setTimeout(() => { isLeavingViaSkipBtn = false; }, 0);
+  }, true);
+})();
+
+function refreshItemTutorialBadge() {
+  const tabBtn = document.querySelector('.invModeTab[data-mode="inv"]');
+  if (!tabBtn) return;
+  let badge = tabBtn.querySelector('.contentNewBadge.itemTutoBadge');
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'contentNewBadge itemTutoBadge';
+    badge.textContent = '1';
+    tabBtn.appendChild(badge);
+  }
+  const pending = itemTutorialActive || itemTutorialQueue.length > 0;
+  badge.classList.toggle('show', pending);
+}
+
 // ==== src/combat/ai-mode.js ====
 function aiMode() {
   return AI_COMBAT_MODES[S.aiCombatMode] ? S.aiCombatMode : 'équilibré';
@@ -3170,6 +3283,8 @@ function dropsTick(dt) {
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,40,it.name,{blue:true});
+        
+        if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
       } else if (it.kind === 'treasure') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,50,'🗺️ '+it.name,{lvl:true});
@@ -3184,6 +3299,8 @@ function dropsTick(dt) {
           try { localStorage.setItem('velia-idle-cron-tuto-seen', '1'); } catch(e) {}
           setTimeout(startCronTutorial, 400);
         }
+        
+        else if (it.kind === 'material' && typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
       }
       particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
       if (invPanelOpen) renderInventory();
@@ -3764,7 +3881,9 @@ const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:
   
   shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0, presenceCd:0,
   
-  shakeT:0, embers:[] };
+  shakeT:0, embers:[],
+  
+  deathCount:0, deathFlag:false };
 
 let bossChannel = null;
 let otherFighters = {}; 
@@ -3848,7 +3967,7 @@ function startBossFight(bossId, isShared) {
     px:atkPos.x, py:atkPos.y, atkPos, pillars:spots.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
     shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
-    shakeT:0, embers:[],
+    shakeT:0, embers:[], deathCount:0, deathFlag:false,
   });
   currentActivity = 'boss'; renderActivityTabs();
   setFarmViewVisible(false);
@@ -3901,6 +4020,45 @@ function bossRankMultiplier(rank) {
   return 1; 
 }
 
+function getISOWeekString(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7; 
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum); 
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return d.getUTCFullYear() + '-W' + String(weekNo).padStart(2, '0');
+}
+
+const BOSS_PITY_THRESHOLD = 25;
+
+const BOSS_DEATH_PENALTY = [1, 0.9, 0.75, 0.5, 0];
+function bossDeathPenaltyMult(deathCount) {
+  return BOSS_DEATH_PENALTY[Math.min(deathCount, BOSS_DEATH_PENALTY.length - 1)];
+}
+
+const BOSS_FIRST_KILL_WEEK_BONUS = 1.5;
+function bossFirstKillOfWeek(bossId) {
+  return S.bossLastKillWeek[bossId] !== getISOWeekString(new Date());
+}
+
+function bossMultBadgesHtml(deathCount, firstKillWeek) {
+  let html = '';
+  if (deathCount === 0) {
+    html += `<div class="brRewards admHint">✨ ${LANG==='fr'?'Perfect Kill — 0 mort':'Perfect Kill — 0 deaths'}</div>`;
+  } else {
+    const pct = Math.round((1 - bossDeathPenaltyMult(deathCount)) * 100);
+    html += `<div class="brRewards admHint">${LANG==='fr'
+      ? `💀 ${deathCount} mort${deathCount>1?'s':''} — récompense chiffrée réduite de ${pct}%${deathCount>=BOSS_DEATH_PENALTY.length-1?' (loot rarissime exclu)':''}`
+      : `💀 ${deathCount} death${deathCount>1?'s':''} — numeric reward reduced by ${pct}%${deathCount>=BOSS_DEATH_PENALTY.length-1?' (rare loot excluded)':''}`}</div>`;
+  }
+  if (firstKillWeek) {
+    html += `<div class="brRewards admHint" style="color:var(--gold)">🗓️ ${LANG==='fr'
+      ? `Premier kill de la semaine : +${Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100)}%`
+      : `First kill of the week: +${Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100)}%`}</div>`;
+  }
+  return html;
+}
+
 function bestDifficileZoneIdx() {
   let best = -1;
   for (let zi = 0; zi < ZONES.length; zi++) {
@@ -3939,10 +4097,23 @@ function bossRewardSelectorHtml() {
   }).join('') + `</div>`;
 }
 
+function bossPityBarHtml(bossId) {
+  const b = BOSS_ROSTER[bossId];
+  if (!b || !b.rareLoot) return '';
+  const count = S.bossPity[bossId] || 0;
+  const pct = Math.min(100, count / BOSS_PITY_THRESHOLD * 100);
+  return `<div class="admBars" style="margin:6px auto 0;max-width:260px">
+    <div class="admBarRow">
+      <span class="admBarLbl">${LANG==='fr'?'Pity':'Pity'}</span>
+      <span class="admBarTrack"><span class="admBar" style="width:${pct}%"></span></span>
+      <span class="admBarVal">${count}/${BOSS_PITY_THRESHOLD}</span>
+    </div>
+  </div>`;
+}
 function bossRewardRulesHtml() {
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
-    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${LANG==='fr'?'de chance':'chance'} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>`
+    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${LANG==='fr'?'de chance':'chance'} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
     : '';
   
   let baseHtml, podiumHtml;
@@ -3990,6 +4161,8 @@ function bossWheelMarkup(rareLoot) {
 const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_WHEEL_MS = 3600;
 
 const BOSS_ROLL_DURATION_MS = 2200, BOSS_ROLL_START_INTERVAL_MS = 40, BOSS_ROLL_GROWTH = 1.16;
+
+const BOSS_NEAR_MISS_CHANCE = 0.18, BOSS_NEAR_MISS_MARGIN_DEG = 8;
 function renderBossRewardReveal(items) {
   if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
   const itemsHtml = items.map((it,i) => {
@@ -4053,7 +4226,10 @@ function wireBossRewardReveal(items) {
       if (wheel) {
         const segDeg = 360/12, spins = instant ? 0 : 5;
         
-        const targetDeg = it.won ? segDeg/2 : (60 + Math.random()*270);
+        const targetDeg = it.won ? segDeg/2
+          : (Math.random() < BOSS_NEAR_MISS_CHANCE
+              ? (Math.random() < 0.5 ? BOSS_NEAR_MISS_MARGIN_DEG : 360 - BOSS_NEAR_MISS_MARGIN_DEG) + (Math.random()-0.5)*6
+              : (60 + Math.random()*270));
         if (instant) wheel.style.transition = 'none';
         wheel.style.transform = `rotate(${spins*360 - targetDeg}deg)`;
       }
@@ -4102,6 +4278,10 @@ async function endBossFight(win) {
   let alreadyClaimed = false;
   if (win) {
     let mult = 1, rank = null;
+    
+    const deathMult = bossDeathPenaltyMult(bossState.deathCount);
+    const firstKillWeek = bossState.bossId ? bossFirstKillOfWeek(bossState.bossId) : false;
+    mult *= deathMult * (firstKillWeek ? BOSS_FIRST_KILL_WEEK_BONUS : 1);
     if (bossState.shared && sb) {
       try {
         
@@ -4110,7 +4290,8 @@ async function endBossFight(win) {
           try { await sb.rpc('boss_contribute', { p_damage: dmg, p_pseudo: myPseudo || null }); } catch (e) {}
         }
         const { data } = await sb.rpc('boss_claim');
-        if (typeof data === 'number' && data > 0) { rank = data; mult = bossRankMultiplier(rank); }
+        
+        if (typeof data === 'number' && data > 0) { rank = data; mult *= bossRankMultiplier(rank); }
         
         else alreadyClaimed = true;
       } catch (e) { alreadyClaimed = true; } 
@@ -4127,13 +4308,14 @@ async function endBossFight(win) {
       
       if (bossState.bossId === 'kzarka' && rank) {
         const tier = KZARKA_REWARD_TIERS[Math.min(rank, 3)];
-        const caphrasQty = Math.round(tier.caphras[0] + Math.random()*(tier.caphras[1]-tier.caphras[0]));
-        const fragQty = Math.round(tier.frag[0] + Math.random()*(tier.frag[1]-tier.frag[0]));
-        reward = tier.silver;
+        
+        const caphrasQty = Math.max(0, Math.round((tier.caphras[0] + Math.random()*(tier.caphras[1]-tier.caphras[0])) * mult));
+        const fragQty = Math.max(0, Math.round((tier.frag[0] + Math.random()*(tier.frag[1]-tier.frag[0])) * mult));
+        reward = Math.round(tier.silver * mult);
         addSilver(reward, 'boss', b.name.fr);
         invAdd({ key:'mat_'+CAPHRAS_NAME, name:CAPHRAS_NAME, kind:'material', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', qty:caphrasQty, stackable:true, weight:0.1, val:120 });
         invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
-        rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>`;
+        rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
         revealItems.push(
           { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` },
           { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), rollValue:caphrasQty, rollTemplate:n=>`+${n} × ${tr(CAPHRAS_NAME)}` },
@@ -4176,20 +4358,30 @@ async function endBossFight(win) {
         const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
           ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
           : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
-        rewardsHtml = rankHtml + zoneHtml;
+        rewardsHtml = rankHtml + zoneHtml + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
       }
       pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
       logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
       if (bossState.bossId) markBossDefeated(bossState.bossId); 
       
+      if (bossState.bossId) S.bossLastKillWeek[bossState.bossId] = getISOWeekString(new Date());
+      
       if (b.rareLoot) {
-        const won = Math.random() < b.rareLoot.ch;
+        const bossId = bossState.bossId;
+        const pityCount = S.bossPity[bossId] || 0;
+        
+        const rareLootExcluded = deathMult === 0;
+        const forcedByPity = !rareLootExcluded && pityCount >= BOSS_PITY_THRESHOLD;
+        const won = !rareLootExcluded && (forcedByPity || Math.random() < b.rareLoot.ch);
         if (won) {
           invAdd({ name:b.rareLoot.name, kind:'craft', icon:b.rareLoot.icon, color:b.rareLoot.color, key:'craft_'+b.rareLoot.name, qty:1, stackable:true, weight:0.3, val:0 });
           trackLoot(b.rareLoot.name);
-          logToDiscord('❤️‍🔥 Loot rarissime', `**${myPseudo||'Joueur'}** obtient ${b.rareLoot.name} sur ${b.name.fr} ! (${Math.round(b.rareLoot.ch*100)}% de chance)`, 0x5ec9e8);
+          S.bossPity[bossId] = 0;
+          logToDiscord('❤️‍🔥 Loot rarissime', `**${myPseudo||'Joueur'}** obtient ${b.rareLoot.name} sur ${b.name.fr}${forcedByPity?' (pity garanti)':''} ! (${Math.round(b.rareLoot.ch*100)}% de chance)`, 0x5ec9e8);
+        } else if (!rareLootExcluded) {
+          S.bossPity[bossId] = pityCount + 1;
         }
-        revealItems.push({ kind:'wheel', rareLoot:b.rareLoot, won });
+        revealItems.push({ kind:'wheel', rareLoot:b.rareLoot, won, pityCount:S.bossPity[bossId], pityThreshold:BOSS_PITY_THRESHOLD });
       }
       refreshStatsOnly(); hud();
     }
@@ -4293,6 +4485,10 @@ function bossLoop(now) {
     bossState.playerHp = Math.min(bossState.playerHpMax, bossState.playerHp + bossState.playerHpMax*0.5);
     bossState.potCd = 4.2;
   }
+  
+  if (bossState.playerHp <= 0) {
+    if (!bossState.deathFlag) { bossState.deathFlag = true; bossState.deathCount++; }
+  } else bossState.deathFlag = false;
   if (bossState.playerHp < 1) bossState.playerHp = 1; 
   bossState.hits.forEach(h => h.life -= dt*1.4);
   bossState.hits = bossState.hits.filter(h => h.life > 0);
@@ -5052,6 +5248,8 @@ function renderInventory() {
   $('wTxt').classList.toggle('bad', overW);
   $('invSilver').textContent = fmt(S.silver);
   $('invLoyalty').textContent = '🏅 '+fmt(S.loyalty||0);
+  
+  if (typeof refreshItemTutorialBadge === 'function') refreshItemTutorialBadge();
 }
 
 function renderCompendiumPane() {
@@ -9054,6 +9252,7 @@ const ADMIN_SECTIONS = [
     { id:'cron', icon:'⏳', label:{fr:'Pierres de Cron',en:'Cron Stones'}, render:renderAdminCron },
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:renderAdminTreasure },
     { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, render:renderAdminLoot },
+    { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
@@ -9451,6 +9650,46 @@ function renderAdminZoneProgression(el) {
         <div><h3 style="margin-top:0">${LANG==='fr'?'🗾 Par zone':'🗾 By zone'}</h3>${zonePie}</div>
         <div><h3 style="margin-top:0">${LANG==='fr'?'⚔️ Par Gearscore':'⚔️ By Gearscore'}</h3>${gsPie}</div>
       </div>`;
+  });
+}
+
+function renderAdminItemTutorials(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.rpc('admin_item_tutorial_stats').then(({data, error}) => {
+    if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+    const rows = data || [];
+    if (!rows.length) {
+      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun tutoriel vu pour l\'instant':'No tutorials seen yet'}</div>`;
+      return;
+    }
+    const totalCompleted = rows.reduce((a,r) => a + Number(r.completed_count||0), 0);
+    const totalSkipped = rows.reduce((a,r) => a + Number(r.skipped_count||0), 0);
+    const rowsHtml = rows.map(r => {
+      const completed = Number(r.completed_count||0), skipped = Number(r.skipped_count||0), total = Number(r.total_count||0);
+      const rate = (completed + skipped) > 0 ? Math.round(completed/(completed+skipped)*100) : 0;
+      return `<tr><td>${escapeHtml(r.tutorial_id)}</td><td>${fmt(completed)}</td><td>${fmt(skipped)}</td><td>${fmt(total)}</td><td>${rate}%</td></tr>`;
+    }).join('');
+    const pie = typeof buildPieWithLegendHtml === 'function'
+      ? buildPieWithLegendHtml([
+          { label: LANG==='fr'?'Terminés':'Completed', value: totalCompleted },
+          { label: LANG==='fr'?'Passés':'Skipped', value: totalSkipped },
+        ], { thresholdPct: 0 })
+      : '';
+    el.innerHTML = `<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">🎓 ${LANG==='fr'?'Tutoriels suivis':'Tutorials tracked'}</div><div class="astVal">${rows.length}</div></div>
+        <div class="admStatTile"><div class="astLbl">✅ ${LANG==='fr'?'Terminés (total)':'Completed (total)'}</div><div class="astVal">${fmt(totalCompleted)}</div></div>
+        <div class="admStatTile"><div class="astLbl">⏭️ ${LANG==='fr'?'Passés (total)':'Skipped (total)'}</div><div class="astVal">${fmt(totalSkipped)}</div></div>
+      </div>
+      <div class="admHint">${LANG==='fr'
+        ? 'Un tutoriel apparaît ici dès qu\'au moins un joueur l\'a terminé ou passé (mark_item_tutorial_seen). Taux = terminés / (terminés + passés).'
+        : 'A tutorial appears here as soon as at least one player has completed or skipped it (mark_item_tutorial_seen). Rate = completed / (completed + skipped).'}</div>
+      <h3>${LANG==='fr'?'⚖️ Terminés vs passés (tous tutoriels)':'⚖️ Completed vs skipped (all tutorials)'}</h3>
+      ${pie}
+      <h3>${LANG==='fr'?'Détail par tutoriel':'Detail by tutorial'}</h3>
+      <table class="admTable">
+        <thead><tr><th>${LANG==='fr'?'Tutoriel':'Tutorial'}</th><th>${LANG==='fr'?'Terminés':'Completed'}</th><th>${LANG==='fr'?'Passés':'Skipped'}</th><th>${LANG==='fr'?'Total':'Total'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>`;
   });
 }
 
