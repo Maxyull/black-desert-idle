@@ -576,6 +576,59 @@
     const svg = buildBarSeriesSvg([{label:'a',value:1}], '#c9a55a');
     assert('buildBarSeriesSvg impose un max-width explicite (pas 100% seul)', svg.includes('max-width:420px'));
   }
+  // garde-fou (2026-07-19, bug réel signalé par l'utilisateur : "check ... bouton fermer") : le
+  // bouton #closeAdmin vivait dans #adminMainHead, réécrit intégralement par openAdminSection() à
+  // CHAQUE changement de section -- comme openAdminPanel() appelle openAdminSection() juste après
+  // avoir posé le bouton, celui-ci disparaissait dès l'ouverture du panneau, le rendant impossible
+  // à fermer sans recharger la page. Vérifie que le bouton existe ET reste présent après un
+  // changement de section (statique via document.scripts n'aurait pas suffi ici -- vrai test DOM).
+  function testCloseAdminButtonSurvivesSectionSwitch() {
+    if (typeof openAdminSection !== 'function' || typeof ADMIN_SECTIONS === 'undefined' || !$a('adminSidebar')) return;
+    const savedHead = $a('adminMainHead').innerHTML;
+    const savedSidebar = $a('adminSidebar').innerHTML;
+    try {
+      $a('adminSidebar').innerHTML = `<div class="admNavHead"><span class="admNavTitle">Admin</span><button id="closeAdmin">✕</button></div>`;
+      $a('adminMainHead').innerHTML = `<span id="adminMainTitle"></span>`;
+      openAdminSection('overview', 'dashboard');
+      assert('#closeAdmin existe toujours après un changement de section', !!$a('closeAdmin'));
+      const otherGroup = ADMIN_SECTIONS.find(g => g.items.some(i => i.id !== 'dashboard'));
+      if (otherGroup) {
+        const otherItem = otherGroup.items.find(i => i.id !== 'dashboard');
+        openAdminSection(otherGroup.cat, otherItem.id);
+        assert('#closeAdmin survit à un 2e changement de section', !!$a('closeAdmin'));
+      }
+    } finally {
+      $a('adminMainHead').innerHTML = savedHead;
+      $a('adminSidebar').innerHTML = savedSidebar;
+    }
+  }
+  // consommation des Pierres de Cron (2026-07-19, demande explicite : "je veux utilisation des
+  // cron ... comme les silver me le dire") -- jusqu'ici seul le ramassage était journalisé
+  // (farm_events, kind='material'), la consommation (protection d'enchantement) ne touchait que
+  // l'inventaire local, invisible côté admin. queueFarmEvent('cron_used', ...) réutilise farm_events
+  // avec un kind DISTINCT -- garde-fou : ne doit jamais utiliser le même kind que le ramassage,
+  // sinon admin_farm_by_item (qui groupe par item_name+item_kind) mélangerait farmé et consommé.
+  function testCronUsageLoggedWithDistinctKindFromPickup() {
+    if (typeof queueFarmEvent !== 'function' || typeof farmEventQueue === 'undefined' || typeof CRON_STONE === 'undefined') return;
+    // queueFarmEvent() se tait volontairement pour un invité/compte non connecté (pas de
+    // journalisation sans compte vérifié) -- ce test vérifie la DISTINCTION des kinds, pas ce
+    // garde-fou d'auth (déjà couvert ailleurs), donc on saute proprement si non applicable ici.
+    if (typeof currentUser === 'undefined' || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+    const saved = new Map(farmEventQueue);
+    farmEventQueue.clear();
+    try {
+      queueFarmEvent('material', CRON_STONE.name, 2, 0); // ramassage normal
+      queueFarmEvent('cron_used', CRON_STONE.name, 1, 0); // consommation pour protection
+      const keys = [...farmEventQueue.keys()];
+      const materialKey = keys.find(k => k.startsWith('material|'+CRON_STONE.name));
+      const usedKey = keys.find(k => k.startsWith('cron_used|'+CRON_STONE.name));
+      assert('Ramassage et consommation créent 2 entrées DISTINCTES dans la queue', !!materialKey && !!usedKey && materialKey !== usedKey);
+      assert('La quantité ramassée n\'est jamais mélangée à la quantité consommée', farmEventQueue.get(materialKey).qty === 2 && farmEventQueue.get(usedKey).qty === 1);
+    } finally {
+      farmEventQueue.clear();
+      saved.forEach((v,k) => farmEventQueue.set(k,v));
+    }
+  }
   // override admin des taux de loot (2026-07-19) : la fusion doit être PARTIELLE -- modifier un
   // seul palier ne doit jamais écraser les autres à undefined (bug réel qu'un simple
   // `LOOT_RATES_LIVE = data.value` aurait introduit si l'admin n'envoyait qu'un sous-ensemble).
@@ -2344,6 +2397,8 @@
     testBuildPieChartSvgNeverThrowsOnEmpty();
     testBuildBarSeriesSvgNeverThrowsOnEmpty();
     testChartsAreCappedNotFullWidth();
+    testCronUsageLoggedWithDistinctKindFromPickup();
+    testCloseAdminButtonSurvivesSectionSwitch();
     testLootRatesLiveMergeIsPartial();
     testAdminEconomyLoadsAfterAdminPanel();
     const failed = results.filter(r => !r.pass);
