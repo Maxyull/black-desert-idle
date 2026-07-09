@@ -7368,6 +7368,12 @@ async function refreshMyModStatus() {
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
 function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
 
+function isBanned(banStatus) {
+  if (!banStatus || !banStatus.banned_until) return false;
+  const t = new Date(banStatus.banned_until).getTime();
+  return !isNaN(t) && t > Date.now();
+}
+
 function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 
 let farmEventQueue = new Map();
@@ -7543,6 +7549,24 @@ async function onAuthed(user) {
 }
 async function onAuthedInner(user) {
   currentUser = user;
+  
+  if (!isGuest()) {
+    try {
+      const { data: banStatus } = await sb.rpc('get_my_ban_status');
+      const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
+      if (isBanned(row)) {
+        const until = new Date(row.banned_until).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US');
+        const reason = row.ban_reason || (LANG === 'fr' ? 'non précisé' : 'unspecified');
+        authShow(LANG === 'fr'
+          ? `Compte suspendu jusqu'au ${until} — Motif : ${reason}`
+          : `Account suspended until ${until} — Reason: ${reason}`, true);
+        await sb.auth.signOut();
+        currentUser = null;
+        showAuthOverlay(true);
+        return;
+      }
+    } catch (e) {}
+  }
   showAuthOverlay(false);
   updateUserBar();
   await refreshMyPseudo();
@@ -8972,6 +8996,10 @@ updatePatchBadge();
 applyI18n();
 
 // ==== src/admin/admin-panel.js ====
+function canBanUuid(targetUuid, myUuid) {
+  return !!targetUuid && targetUuid !== myUuid;
+}
+
 async function resetDemo() {
   if (!isAdmin()) return; 
   const msg = LANG === 'fr'
@@ -9118,6 +9146,78 @@ async function resetAccountByUuid() {
   logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé le compte du joueur \`${uuid}\``, 0xc05545);
   floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Compte réinitialisé ✓' : 'Account reset ✓', { gold:true });
   input.value = '';
+}
+
+const BAN_REASONS = [
+  { id:'cheat', label:{fr:'Triche',en:'Cheating'} },
+  { id:'exploit', label:{fr:'Exploit',en:'Exploit'} },
+  { id:'harassment', label:{fr:'Harcèlement',en:'Harassment'} },
+  { id:'other', label:{fr:'Autre',en:'Other'} },
+];
+const BAN_DURATIONS = [
+  { hours:1, label:{fr:'1 heure',en:'1 hour'} },
+  { hours:24, label:{fr:'24 heures',en:'24 hours'} },
+  { hours:72, label:{fr:'72 heures',en:'72 hours'} },
+  { hours:24*7, label:{fr:'7 jours',en:'7 days'} },
+  { hours:24*30, label:{fr:'30 jours',en:'30 days'} },
+];
+
+async function refreshBanList() {
+  const el = $a('admBanList'); if (!el || !sb) return;
+  const { data, error } = await sb.rpc('admin_list_bans');
+  if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+  const rows = data || [];
+  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun bannissement actif':'No active bans'}</div>`; return; }
+  el.innerHTML = `<table class="admTable">
+    <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Motif':'Reason'}</th><th>${LANG==='fr'?'Fin du ban':'Ban ends'}</th><th></th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td>${escapeHtml(r.pseudo || (r.user_id||'').slice(0,8)+'…')}</td>
+      <td>${escapeHtml(r.ban_reason || '—')}</td>
+      <td>${r.banned_until ? new Date(r.banned_until).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</td>
+      <td><button class="admUnbanBtn" data-uuid="${r.user_id}">${LANG==='fr'?'Lever':'Unban'}</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+  el.querySelectorAll('.admUnbanBtn').forEach(btn => {
+    btn.onclick = () => unbanPlayer(btn.dataset.uuid);
+  });
+}
+
+async function banPlayerByUuid() {
+  if (!isAdmin() || !sb) return;
+  const input = $a('admBanUuidInput');
+  const uuid = (input.value || '').trim();
+  const reasonId = $a('admBanReasonSelect').value;
+  const hours = Number($a('admBanDurationSelect').value) || 24;
+  const reasonLabel = (BAN_REASONS.find(r => r.id === reasonId) || BAN_REASONS[BAN_REASONS.length-1]).label[LANG];
+  if (!canBanUuid(uuid, currentUser && currentUser.id)) {
+    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'UUID invalide ou identique au tien — action bloquée' : 'Invalid UUID or same as yours — action blocked', { hurt:true });
+    return;
+  }
+  const msg = LANG === 'fr'
+    ? `🚫 Bannir le joueur ${uuid} pour ${hours}h (motif : ${reasonLabel}) ?`
+    : `🚫 Ban player ${uuid} for ${hours}h (reason: ${reasonLabel})?`;
+  if (!confirm(msg)) return;
+  const { error } = await sb.rpc('admin_ban_player', { p_user_id: uuid, p_duration_hours: hours, p_reason: reasonLabel });
+  if (error) {
+    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    return;
+  }
+  logToDiscord('🚫 Sanction', `**${myPseudo||'Admin'}** a banni le joueur \`${uuid}\` pour ${hours}h (motif : ${reasonLabel})`, 0xc05545);
+  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Joueur banni ✓' : 'Player banned ✓', { gold:true });
+  input.value = '';
+  refreshBanList();
+}
+
+async function unbanPlayer(uuid) {
+  if (!isAdmin() || !sb || !uuid) return;
+  const { error } = await sb.rpc('admin_unban_player', { p_user_id: uuid });
+  if (error) {
+    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    return;
+  }
+  logToDiscord('✅ Sanction levée', `**${myPseudo||'Admin'}** a levé le ban du joueur \`${uuid}\``, 0x8fc98a);
+  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Ban levé ✓' : 'Ban lifted ✓', { gold:true });
+  refreshBanList();
 }
 
 function fmtAdmPlaytime(sec) {
@@ -9400,6 +9500,25 @@ async function openAdminPanel() {
         : 'No Loyalties shop in game yet — nothing to spend it on, these stats track accumulation ahead of opening a shop.'}</div>` },
     
     { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, body: buildLootVersionTabHtml() },
+    
+    { id:'sanctions', icon:'🚫', label:{fr:'Sanctions',en:'Sanctions'},
+      body: `<div class="admSection">
+        <div class="admSectionTitle">🚫 ${LANG==='fr'?'Bannir un joueur':'Ban a player'}</div>
+        <div class="admSectionSub">${LANG==='fr'?'Bloque temporairement l\'accès au jeu pour ce joueur (durée + motif prédéfini).':'Temporarily blocks game access for this player (duration + predefined reason).'}</div>
+        <div class="admActions">
+          <input type="text" id="admBanUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
+          <select id="admBanReasonSelect">${BAN_REASONS.map(r => `<option value="${r.id}">${r.label[LANG]}</option>`).join('')}</select>
+          <select id="admBanDurationSelect">${BAN_DURATIONS.map(d => `<option value="${d.hours}"${d.hours===24?' selected':''}>${d.label[LANG]}</option>`).join('')}</select>
+          <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${LANG==='fr'?'Bannir':'Ban'}</button>
+        </div>
+        <div class="admHint warn">${LANG==='fr'
+          ? 'L\'admin ne peut jamais se bannir lui-même (vérifié côté client avant l\'appel serveur). Trouve l\'UUID via le Classement ou l\'onglet Joueurs.'
+          : 'The admin can never ban themselves (checked client-side before the server call). Find the UUID via the Leaderboard or the Players tab.'}</div>
+      </div>
+      <div class="admSection">
+        <div class="admSectionTitle">📋 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div>
+        <div id="admBanList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      </div>` },
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
@@ -9556,6 +9675,7 @@ async function openAdminPanel() {
     };
   });
   refreshRoleList();
+  refreshBanList();
   
   $a('infoBody').querySelectorAll('.admUuidBtn').forEach(btn => {
     btn.onclick = async e => {
@@ -9664,6 +9784,8 @@ async function openAdminPanel() {
     logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté le rôle ${role==='mod'?'Modérateur':'Testeur'} à \`${uuid}\``, 0x9cc9e8);
     $a('admRoleUuid').value = ''; refreshRoleList();
   };
+  
+  $a('btnBanPlayer').onclick = banPlayerByUuid;
 }
 
 async function refreshRoleList() {

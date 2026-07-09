@@ -43,6 +43,12 @@ async function refreshMyModStatus() {
 // ---------- admin (accès réservé à ce compte précis) ----------
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
 function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
+// système de sanctions (2026-07-18, voir ADMIN_MENU_PLAN.md §3.1) : banStatus = { banned_until, ban_reason } ou null
+function isBanned(banStatus) {
+  if (!banStatus || !banStatus.banned_until) return false;
+  const t = new Date(banStatus.banned_until).getTime();
+  return !isNaN(t) && t > Date.now();
+}
 // invité = session anonyme Supabase (pas d'email/mot de passe) — jeu jouable et sauvegardé,
 // mais aucun accès au marché/classement (surfaces les plus exposées à la triche multi-comptes)
 function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
@@ -261,6 +267,25 @@ async function onAuthed(user) {
 }
 async function onAuthedInner(user) {
   currentUser = user;
+  // check de bannissement (2026-07-18) : bloque l'accès avant tout autre effet de la connexion
+  // (chargement de sauvegarde, présence en ligne...) si le compte est banni.
+  if (!isGuest()) {
+    try {
+      const { data: banStatus } = await sb.rpc('get_my_ban_status');
+      const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
+      if (isBanned(row)) {
+        const until = new Date(row.banned_until).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US');
+        const reason = row.ban_reason || (LANG === 'fr' ? 'non précisé' : 'unspecified');
+        authShow(LANG === 'fr'
+          ? `Compte suspendu jusqu'au ${until} — Motif : ${reason}`
+          : `Account suspended until ${until} — Reason: ${reason}`, true);
+        await sb.auth.signOut();
+        currentUser = null;
+        showAuthOverlay(true);
+        return;
+      }
+    } catch (e) {}
+  }
   showAuthOverlay(false);
   updateUserBar();
   await refreshMyPseudo();

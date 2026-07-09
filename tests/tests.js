@@ -438,6 +438,33 @@
     clone.querySelector('.actTabLock').remove();
     assert('Le libellé (hors badge cadenas) ne contient plus le cadenas', !clone.querySelector('.actTabLabel').textContent.includes('🔒'));
   }
+  // système de sanctions (2026-07-18) — isBanned() doit respecter l'expiration exacte de banned_until
+  function testIsBannedRespectsExpiry() {
+    if (typeof isBanned !== 'function') return;
+    assert('Pas banni si banStatus est null', !isBanned(null));
+    assert('Pas banni si banned_until est null', !isBanned({ banned_until: null }));
+    assert('Banni si banned_until est dans le futur', isBanned({ banned_until: new Date(Date.now()+3600000).toISOString() }));
+    assert('Plus banni si banned_until est dans le passé', !isBanned({ banned_until: new Date(Date.now()-3600000).toISOString() }));
+  }
+  // l'admin ne doit jamais pouvoir se bannir lui-même par erreur (canBanUuid, garde-fou client
+  // avant tout appel RPC admin_ban_player) -- demande explicite du 2026-07-18
+  function testCanBanUuidBlocksSelfBan() {
+    if (typeof canBanUuid !== 'function') return;
+    assert('UUID vide toujours refusé', !canBanUuid('', 'admin-uuid'));
+    assert('UUID identique à celui de l\'admin refusé (anti-auto-ban)', !canBanUuid('admin-uuid', 'admin-uuid'));
+    assert('UUID différent et non vide accepté', canBanUuid('joueur-uuid', 'admin-uuid'));
+  }
+  // données du formulaire de ban bien formées (BAN_REASONS/BAN_DURATIONS) -- openAdminPanel()
+  // n'est pas appelable directement en test (gaté par isAdmin() + appels RPC réseau), donc on
+  // verrouille ici les données réellement utilisées pour construire le sous-onglet Sanctions.
+  function testBanReasonsAndDurationsWellFormed() {
+    if (typeof BAN_REASONS === 'undefined' || typeof BAN_DURATIONS === 'undefined') return;
+    assert('BAN_REASONS non vide', BAN_REASONS.length > 0);
+    assert('BAN_REASONS a des ids uniques', new Set(BAN_REASONS.map(r => r.id)).size === BAN_REASONS.length);
+    assert('Chaque motif a un libellé fr et en', BAN_REASONS.every(r => r.label && r.label.fr && r.label.en));
+    assert('BAN_DURATIONS non vide', BAN_DURATIONS.length > 0);
+    assert('Chaque durée a un nombre d\'heures positif', BAN_DURATIONS.every(d => Number.isFinite(d.hours) && d.hours > 0));
+  }
   // "Cadenas dans le header sur le cadre de la ligne du bas" + "les pv du boss se retrouve dans une
   // bulle sur la ligne du bas du rectangle dans le header" (2026-07-08) -- les 2 badges doivent être
   // des overlays position:absolute à cheval sur la bordure inférieure du bouton (même convention que
@@ -2136,6 +2163,9 @@
     testTreasurePricingIsMultipleOfReferenceGearVal();
     testTreasureStackCapAutoSellsSurplus();
     testTreasureCraftRecipeTargetsUnnumberedTreasure();
+    testIsBannedRespectsExpiry();
+    testCanBanUuidBlocksSelfBan();
+    testBanReasonsAndDurationsWellFormed();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

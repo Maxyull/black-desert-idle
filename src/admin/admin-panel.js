@@ -1,3 +1,11 @@
+// vérification anti-auto-ban (2026-07-18, demande explicite : "l'admin ne doit jamais pouvoir se
+// bannir lui-même par erreur") — fonction PURE, réutilisable telle quelle par un test unitaire
+// (pas de dépendance à sb/currentUser à l'intérieur, ceux-ci sont passés en paramètres par
+// l'appelant). Retourne false si l'UUID cible est vide OU identique à l'UUID de l'admin connecté.
+function canBanUuid(targetUuid, myUuid) {
+  return !!targetUuid && targetUuid !== myUuid;
+}
+
 // ---------- réinitialisation de la démo (réservée à l'admin, à tout moment) ----------
 async function resetDemo() {
   if (!isAdmin()) return; // double protection : même si le bouton est masqué, la fonction refuse
@@ -165,6 +173,83 @@ async function resetAccountByUuid() {
   logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé le compte du joueur \`${uuid}\``, 0xc05545);
   floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Compte réinitialisé ✓' : 'Account reset ✓', { gold:true });
   input.value = '';
+}
+
+// ---------- sanctions (ban/mute) — demande explicite du 2026-07-18 : jusqu'ici un joueur toxique
+// ne pouvait être que réinitialisé, jamais bloqué. Voir supabase/migrations/20260718140000_sanctions_ban_system.sql
+// pour le contrat RPC exact (admin_ban_player/admin_unban_player/admin_list_bans). ----------
+const BAN_REASONS = [
+  { id:'cheat', label:{fr:'Triche',en:'Cheating'} },
+  { id:'exploit', label:{fr:'Exploit',en:'Exploit'} },
+  { id:'harassment', label:{fr:'Harcèlement',en:'Harassment'} },
+  { id:'other', label:{fr:'Autre',en:'Other'} },
+];
+const BAN_DURATIONS = [
+  { hours:1, label:{fr:'1 heure',en:'1 hour'} },
+  { hours:24, label:{fr:'24 heures',en:'24 hours'} },
+  { hours:72, label:{fr:'72 heures',en:'72 hours'} },
+  { hours:24*7, label:{fr:'7 jours',en:'7 days'} },
+  { hours:24*30, label:{fr:'30 jours',en:'30 days'} },
+];
+// rafraîchit le tableau des bans actifs (suit le même pattern que refreshRoleList : appel RPC,
+// regénération complète du HTML, re-branchement des boutons de ligne à chaque appel)
+async function refreshBanList() {
+  const el = $a('admBanList'); if (!el || !sb) return;
+  const { data, error } = await sb.rpc('admin_list_bans');
+  if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+  const rows = data || [];
+  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun bannissement actif':'No active bans'}</div>`; return; }
+  el.innerHTML = `<table class="admTable">
+    <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Motif':'Reason'}</th><th>${LANG==='fr'?'Fin du ban':'Ban ends'}</th><th></th></tr></thead>
+    <tbody>${rows.map(r => `<tr>
+      <td>${escapeHtml(r.pseudo || (r.user_id||'').slice(0,8)+'…')}</td>
+      <td>${escapeHtml(r.ban_reason || '—')}</td>
+      <td>${r.banned_until ? new Date(r.banned_until).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</td>
+      <td><button class="admUnbanBtn" data-uuid="${r.user_id}">${LANG==='fr'?'Lever':'Unban'}</button></td>
+    </tr>`).join('')}</tbody>
+  </table>`;
+  el.querySelectorAll('.admUnbanBtn').forEach(btn => {
+    btn.onclick = () => unbanPlayer(btn.dataset.uuid);
+  });
+}
+// bannit un joueur par UUID pour une durée choisie avec un motif prédéfini — vérifie D'ABORD
+// (canBanUuid) que l'admin ne se bannit pas lui-même par erreur, AVANT tout appel RPC.
+async function banPlayerByUuid() {
+  if (!isAdmin() || !sb) return;
+  const input = $a('admBanUuidInput');
+  const uuid = (input.value || '').trim();
+  const reasonId = $a('admBanReasonSelect').value;
+  const hours = Number($a('admBanDurationSelect').value) || 24;
+  const reasonLabel = (BAN_REASONS.find(r => r.id === reasonId) || BAN_REASONS[BAN_REASONS.length-1]).label[LANG];
+  if (!canBanUuid(uuid, currentUser && currentUser.id)) {
+    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'UUID invalide ou identique au tien — action bloquée' : 'Invalid UUID or same as yours — action blocked', { hurt:true });
+    return;
+  }
+  const msg = LANG === 'fr'
+    ? `🚫 Bannir le joueur ${uuid} pour ${hours}h (motif : ${reasonLabel}) ?`
+    : `🚫 Ban player ${uuid} for ${hours}h (reason: ${reasonLabel})?`;
+  if (!confirm(msg)) return;
+  const { error } = await sb.rpc('admin_ban_player', { p_user_id: uuid, p_duration_hours: hours, p_reason: reasonLabel });
+  if (error) {
+    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    return;
+  }
+  logToDiscord('🚫 Sanction', `**${myPseudo||'Admin'}** a banni le joueur \`${uuid}\` pour ${hours}h (motif : ${reasonLabel})`, 0xc05545);
+  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Joueur banni ✓' : 'Player banned ✓', { gold:true });
+  input.value = '';
+  refreshBanList();
+}
+// lève un ban — appelée par le bouton "Lever" d'une ligne du tableau (admin_list_bans)
+async function unbanPlayer(uuid) {
+  if (!isAdmin() || !sb || !uuid) return;
+  const { error } = await sb.rpc('admin_unban_player', { p_user_id: uuid });
+  if (error) {
+    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    return;
+  }
+  logToDiscord('✅ Sanction levée', `**${myPseudo||'Admin'}** a levé le ban du joueur \`${uuid}\``, 0x8fc98a);
+  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Ban levé ✓' : 'Ban lifted ✓', { gold:true });
+  refreshBanList();
 }
 
 // ---------- zone admin : stats serveur (réservé au compte admin, via RLS côté base) ----------
@@ -489,6 +574,27 @@ async function openAdminPanel() {
     // repasse en v1") -- S.lootTableVersion pilote gearDropChance/jewelDropChance (game-core.js),
     // réversible en un clic, sans jamais perdre les valeurs V1 (toujours codées en dur à côté)
     { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, body: buildLootVersionTabHtml() },
+    // système de sanctions (2026-07-18, demande explicite) : jusqu'ici un joueur toxique ne
+    // pouvait être que réinitialisé, jamais bloqué — voir BAN_REASONS/BAN_DURATIONS/canBanUuid
+    // et supabase/migrations/20260718140000_sanctions_ban_system.sql pour le contrat RPC.
+    { id:'sanctions', icon:'🚫', label:{fr:'Sanctions',en:'Sanctions'},
+      body: `<div class="admSection">
+        <div class="admSectionTitle">🚫 ${LANG==='fr'?'Bannir un joueur':'Ban a player'}</div>
+        <div class="admSectionSub">${LANG==='fr'?'Bloque temporairement l\'accès au jeu pour ce joueur (durée + motif prédéfini).':'Temporarily blocks game access for this player (duration + predefined reason).'}</div>
+        <div class="admActions">
+          <input type="text" id="admBanUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
+          <select id="admBanReasonSelect">${BAN_REASONS.map(r => `<option value="${r.id}">${r.label[LANG]}</option>`).join('')}</select>
+          <select id="admBanDurationSelect">${BAN_DURATIONS.map(d => `<option value="${d.hours}"${d.hours===24?' selected':''}>${d.label[LANG]}</option>`).join('')}</select>
+          <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${LANG==='fr'?'Bannir':'Ban'}</button>
+        </div>
+        <div class="admHint warn">${LANG==='fr'
+          ? 'L\'admin ne peut jamais se bannir lui-même (vérifié côté client avant l\'appel serveur). Trouve l\'UUID via le Classement ou l\'onglet Joueurs.'
+          : 'The admin can never ban themselves (checked client-side before the server call). Find the UUID via the Leaderboard or the Players tab.'}</div>
+      </div>
+      <div class="admSection">
+        <div class="admSectionTitle">📋 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div>
+        <div id="admBanList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      </div>` },
   ];
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `<div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>${c.body}</div>`).join('');
@@ -658,6 +764,7 @@ async function openAdminPanel() {
     };
   });
   refreshRoleList();
+  refreshBanList();
   // bouton dédié "UUID" (onglet Joueurs) : copie l'UUID dans le presse-papiers
   $a('infoBody').querySelectorAll('.admUuidBtn').forEach(btn => {
     btn.onclick = async e => {
@@ -773,6 +880,8 @@ async function openAdminPanel() {
     logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ajouté le rôle ${role==='mod'?'Modérateur':'Testeur'} à \`${uuid}\``, 0x9cc9e8);
     $a('admRoleUuid').value = ''; refreshRoleList();
   };
+  // --- sanctions (ban/mute) ---
+  $a('btnBanPlayer').onclick = banPlayerByUuid;
 }
 // panneau unique "Rôles" : fusionne les listes Modérateur et Testeur (2 tables distinctes côté
 // serveur, chat_mods et testers) pour que l'admin ajoute/retire les deux rôles au même endroit,

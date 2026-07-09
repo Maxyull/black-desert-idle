@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V335', d:'19/07/2026 04:00', name:{fr:'Panneau admin : système de sanctions (ban temporaire)', en:'Admin panel: sanctions system (temporary ban)'}, fr:[
+      {t:'new', sub:'admin', tx:'Nouvel onglet "🚫 Sanctions" dans le panneau admin : bannissement temporaire d\'un joueur (durée + motif prédéfini), avec liste des bannissements actifs et bouton de levée. Un compte banni est déconnecté et bloqué jusqu\'à expiration, avec un message clair indiquant la date de fin et le motif.'},
+    ], en:[
+      {t:'new', sub:'admin', tx:'New "🚫 Sanctions" tab in the admin panel: temporary ban of a player (duration + predefined reason), with a list of active bans and an unban button. A banned account is signed out and blocked until expiry, with a clear message showing the end date and reason.'},
+    ] },
   { v:'V334', d:'19/07/2026 03:00', name:{fr:'Roulement "casino" pour toutes les récompenses chiffrées de boss', en:'"Casino" roll for all boss numeric rewards'}, fr:[
       {t:'new', sub:'graphismes', severity:'major', tx:'Les récompenses chiffrées de fin de boss (silver, Pierre de Caphras, Fragment de mémoire, matériau...) défilent maintenant comme une machine à sous : le nombre change rapidement puis ralentit de plus en plus, jusqu\'à s\'arrêter pile sur la vraie valeur déjà tirée. Le roulement dure aussi plus longtemps qu\'avant pour bien voir le ralentissement. "Passer" fait toujours tout atterrir instantanément.'},
     ], en:[
