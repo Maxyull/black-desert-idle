@@ -407,8 +407,9 @@
   }
   // "remet les categorie compagnon et vie en mer dans le header" (2026-07-08) -- déplacés de
   // #zoneTierTabs (où ils vivaient depuis le 2026-07-17) vers #activityTabs, le vrai "header" du
-  // jeu (voir ACTIVITY_TABS, combat/boss.js) -- vérifie qu'ils y sont bien, verrouillés, et qu'ils
-  // ont disparu de la barre de région pour ne pas être dupliqués.
+  // jeu (voir ACTIVITY_TABS, combat/boss.js) -- vérifie qu'ils y sont bien et qu'ils ont disparu
+  // de la barre de région pour ne pas être dupliqués. Compagnon débloqué le 2026-07-19 (module
+  // src/companions/ livré, voir openCompanionsModule) -- Vie en mer reste verrouillé.
   function testCompagnonSeaLifeLiveInHeaderNotZoneTierTabs() {
     if (!$('activityTabs') || typeof renderActivityTabs !== 'function') return;
     renderActivityTabs();
@@ -416,7 +417,7 @@
     const pet = headerBtns.find(b => b.dataset.id === 'pet'), sea = headerBtns.find(b => b.dataset.id === 'sea');
     assert('Compagnon est bien un onglet du header', !!pet);
     assert('Vie en mer est bien un onglet du header', !!sea);
-    assert('Compagnon est verrouillé (locked + disabled)', pet && pet.classList.contains('locked') && pet.disabled);
+    assert('Compagnon est débloqué (module livré, ni locked ni disabled)', pet && !pet.classList.contains('locked') && !pet.disabled);
     assert('Vie en mer est verrouillé (locked + disabled)', sea && sea.classList.contains('locked') && sea.disabled);
     if ($('zoneTierTabs') && typeof renderZoneTierTabs === 'function') {
       renderZoneTierTabs();
