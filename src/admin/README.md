@@ -22,6 +22,26 @@ fonction vérifie `isAdmin()` avant d'agir).
 d'objets`) affiche qui a terminé/passé chaque tutoriel du nouveau système d'onboarding progressif
 (`ITEM_TUTORIALS`, `src/progression/notifications-quests.js`), via `admin_item_tutorial_stats()`
 (migration `20260719160000_item_tutorials.sql`). Lecture seule (pas d'éditeur, pas de reset).
+Exclut désormais `tutorial_id='onboarding'` (voir juste en dessous) — sinon son calcul aurait
+compté à tort les tentatives "en cours" comme terminées (migration
+`20260719180100_exclude_onboarding_from_item_tutorial_stats.sql`).
+
+**Stats Onboarding (2026-07-19, demande explicite : "ajoute des stats sur l'onboarding")** :
+`renderAdminOnboarding` (`Contenu → Onboarding`), distincte de la section ci-dessus — suit
+spécifiquement le tutoriel d'arrivée (`TUTORIAL_STEPS`, 21 étapes, `src/backend/game-supabase.js`)
+via `admin_onboarding_stats()` (démarré/terminé/passé/en cours) et `admin_onboarding_dropoff()`
+(funnel : à quelle étape les joueurs restent bloqués). Migration
+`20260719180000_onboarding_stats.sql` : généralise `item_tutorials_seen` (colonnes `last_step`/
+`completed` ajoutées) et `mark_item_tutorial_seen` (2 nouveaux paramètres optionnels, DROP de
+l'ancienne signature à 2 arguments avant recréation). Le tutoriel d'arrivée n'a AUCUN
+déclenchement automatique à la 1ère connexion (seulement un bouton dans le Wiki) — ce panneau
+permet justement de mesurer ce taux de démarrage très faible, pas seulement le taux de complétion.
+
+**Nouveaux tutoriels d'objets/actions (2026-07-19)** : `ITEM_TUTORIALS.trash` (1 seul
+déclenchement pour toute la partie, au tout premier trash de zone ramassé — 16 objets différents
+unifiés) et `ITEM_TUTORIALS.enchant`/`.market`/`.boss` (tutoriels d'ACTION, déclenchés
+manuellement au premier usage réel via `maybeQueueTutorialById`, pas au ramassage d'un objet) —
+voir `src/progression/README.md` pour le détail.
 
 **Utilisation des Pierres de Cron (2026-07-19)** : jusqu'ici seul le ramassage était tracké côté
 serveur (`farm_events`, `kind='material'`) — la consommation pour protéger un enchantement
