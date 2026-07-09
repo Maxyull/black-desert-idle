@@ -9,7 +9,12 @@
      ne lit que index.dev.html), donc jamais téléchargé/exécuté tant que le joueur n'ouvre pas
      cet onglet. Voir README.md de ce dossier pour l'ordre de chargement des scripts. -->
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="companions.css">
+<!-- ?v=N : cache-busting manuel (py http.server/GitHub Pages n'envoient pas de cache-control
+     court) -- bump ce numéro sur CETTE ligne ET sur toutes les balises <script> ci-dessous à
+     chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
+     anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
+     index.dev.html) -->
+<link rel="stylesheet" href="companions.css?v=2">
 </head>
 <body>
 <div class="hdr">
@@ -278,23 +283,23 @@
 <!-- ordre de chargement documenté dans README.md de ce dossier — chaque fichier déclare des
      globals lus par les suivants (scope global partagé de ce document, isolé du jeu principal
      par l'iframe qui charge cette page) -->
-<script src="companions.pixelart.js"></script>
-<script src="companions.catalog.js"></script>
-<script src="companions.economy.js"></script>
-<script src="companions.tier.js"></script>
-<script src="companions.roster.js"></script>
-<script src="companions.hatch.js"></script>
-<script src="companions.pet-panel.js"></script>
-<script src="companions.sections.js"></script>
-<script src="companions.collection.js"></script>
-<script src="companions.fusion.js"></script>
-<script src="companions.feed.js"></script>
-<script src="companions.ticks.js"></script>
-<script src="companions.save.js"></script>
-<script src="companions.index.js"></script>
-<script src="companions.game-view.js"></script>
-<script src="companions.hardinage.js"></script>
-<script src="companions.achievements.js"></script>
-<script src="companions.main.js"></script>
+<script src="companions.pixelart.js?v=2"></script>
+<script src="companions.catalog.js?v=2"></script>
+<script src="companions.economy.js?v=2"></script>
+<script src="companions.tier.js?v=2"></script>
+<script src="companions.roster.js?v=2"></script>
+<script src="companions.hatch.js?v=2"></script>
+<script src="companions.pet-panel.js?v=2"></script>
+<script src="companions.sections.js?v=2"></script>
+<script src="companions.collection.js?v=2"></script>
+<script src="companions.fusion.js?v=2"></script>
+<script src="companions.feed.js?v=2"></script>
+<script src="companions.ticks.js?v=2"></script>
+<script src="companions.save.js?v=2"></script>
+<script src="companions.index.js?v=2"></script>
+<script src="companions.game-view.js?v=2"></script>
+<script src="companions.hardinage.js?v=2"></script>
+<script src="companions.achievements.js?v=2"></script>
+<script src="companions.main.js?v=2"></script>
 </body>
 </html>
