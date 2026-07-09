@@ -1,0 +1,66 @@
+// ═══ ACHIEVEMENTS & SCORE DE PRESTIGE ═══════════════════════════
+const ACHIEVEMENTS = [
+  {id:'first_pet',    ico:'🥚', name:'Premier familier',      desc:'Éclos ton premier familier',                        reward:500,   check:()=>PETS.length>=1},
+  {id:'collector_10',  ico:'📦', name:'Collectionneur',        desc:'Possède 10 familiers en même temps',                reward:2000,  check:()=>PETS.length>=10},
+  {id:'collector_24',  ico:'📚', name:'Grand collectionneur',  desc:'Possède 24 familiers en même temps',                reward:5000,  check:()=>PETS.length>=24},
+  {id:'all_sections',  ico:'🗺️', name:'Explorateur complet',   desc:'Un pet actif sur les 8 sections à la fois',         reward:3000,  check:()=>SECTIONS.every(s=>terrainPet(s.id))},
+  {id:'first_ancestral',ico:'🌟',name:'Première légende',      desc:'Obtiens un familier Ancestral',                     reward:8000,  check:()=>PETS.some(p=>p.rar===5)},
+  {id:'tier5',         ico:'⬆️', name:'Maître du Tier',        desc:'Amène un familier au Tier 5',                       reward:4000,  check:()=>PETS.some(p=>(p.tier||1)>=5)},
+  {id:'gs900',         ico:'💯', name:'Quasi-perfection',      desc:'Atteins un GS de 900+ sur un familier',             reward:6000,  check:()=>PETS.some(p=>normGS(p)>=900)},
+  {id:'gs_champion',   ico:'🏅', name:'Champion de section',   desc:'Un familier GS 950+ actif sur le terrain',          reward:7000,  check:()=>PETS.some(p=>p.terrain&&normGS(p)>=950)},
+  {id:'fusion_20',     ico:'⚗️', name:'Alchimiste des familiers',desc:'Réalise 20 fusions',                              reward:3000,  check:()=>fusionCount>=20},
+  {id:'caphras_10',    ico:'🔺', name:'Artisan de Caphras',     desc:"Utilise l'atelier de Caphras 10 fois",             reward:2500,  check:()=>caphrasUpgradeCount>=10},
+  {id:'boss_item',     ico:'💀', name:'Chasseur de Boss',       desc:'Loote un item de Boss (1 sur des millions)',        reward:15000, check:()=>bossItemFound},
+  {id:'pity',          ico:'🎁', name:'La chance sourit aux patients', desc:'Déclenche le pity counter Ancestral',        reward:1000,  check:()=>pityEverTriggered},
+  {id:'breakthrough',  ico:'💥', name:'Percée fulgurante',      desc:'Déclenche une percée de rareté (reset Tier)',       reward:4000,  check:()=>breakthroughCount>=1},
+  {id:'silver_rich',   ico:'💰', name:'Petit richissime',       desc:'Possède 100 000 Silver en même temps',              reward:5000,  check:()=>SILVER>=100000},
+  {id:'full_catalog',  ico:'📖', name:'Encyclopédiste',         desc:'Possède au moins une fois les 48 familiers du catalogue', reward:20000, check:()=>new Set(PETS.map(p=>p.cat.name)).size>=48},
+  {id:'egg_master',    ico:'🎯', name:'Maître des œufs',        desc:"Utilise chaque type d'œuf au moins une fois",       reward:3000,  check:()=>eggTypesUsed.size>=EGG_TYPES.length},
+];
+
+function checkAchievements(){
+  let newlyCompleted=[];
+  ACHIEVEMENTS.forEach(a=>{
+    if(!completedAchievements.has(a.id) && a.check()){
+      completedAchievements.add(a.id);
+      SILVER += a.reward;
+      newlyCompleted.push(a);
+    }
+  });
+  if(newlyCompleted.length){
+    updateSilverDisplay();
+    newlyCompleted.forEach(a=>{
+      toast('🏆', `Achievement débloqué : ${a.ico} ${a.name} (+${a.reward.toLocaleString('fr-FR')} Silver)`);
+      addGameLog(`🏆 <span style="color:var(--gold2)">Achievement : ${a.name}</span> — +${a.reward.toLocaleString('fr-FR')} Silver`);
+    });
+    const badge = document.getElementById('tb7');
+    if(badge) badge.textContent = `${completedAchievements.size}/${ACHIEVEMENTS.length}`;
+    if(document.getElementById('p7')?.classList.contains('active')) renderAchievements();
+  }
+}
+
+function prestigeScore(){
+  // Score composite : achievements (poids fort) + progression brute (GS cumulé, tiers, fusions...)
+  let score = completedAchievements.size*250;
+  PETS.forEach(p=>{ score += normGS(p); score += (p.tier||1)*20; });
+  score += fusionCount*15 + caphrasUpgradeCount*10 + breakthroughCount*100;
+  score += Math.floor(SILVER/100);
+  return Math.round(score);
+}
+
+function renderAchievements(){
+  document.getElementById('ach-count').textContent = `${completedAchievements.size} / ${ACHIEVEMENTS.length}`;
+  document.getElementById('prestige-score').textContent = prestigeScore().toLocaleString('fr-FR');
+  const el = document.getElementById('achievements-grid');
+  el.innerHTML = ACHIEVEMENTS.map(a=>{
+    const done = completedAchievements.has(a.id);
+    return `<div style="background:${done?'rgba(200,169,110,.08)':'var(--s2)'};border:1px solid ${done?'var(--gold-dim)':'var(--border)'};border-radius:9px;padding:11px 13px;display:flex;align-items:center;gap:11px;${done?'':'opacity:.65'}">
+      <span style="font-size:26px;${done?'':'filter:grayscale(1);opacity:.5'}">${a.ico}</span>
+      <div style="flex:1">
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:${done?'var(--gold2)':'var(--cream)'}">${a.name}</div>
+        <div style="font-size:10px;color:var(--cream2);margin-top:1px">${a.desc}</div>
+        <div style="font-size:9px;color:${done?'var(--green2)':'var(--cream3)'};margin-top:3px">${done?'✓ Débloqué':'Verrouillé'} · +${a.reward.toLocaleString('fr-FR')} Silver</div>
+      </div>
+    </div>`;
+  }).join('');
+}

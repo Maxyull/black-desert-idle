@@ -165,7 +165,7 @@ const ACTIVITY_TABS = [
   { id:'field', icon:'🌾', name:{fr:'Champs',en:'Fields'},  locked:true },
   { id:'ranch', icon:'🐑', name:{fr:'Bergerie',en:'Ranch'}, locked:true },
   { id:'workshop', icon:'🏛️', name:{fr:'Atelier royal',en:'Royal Workshop'}, locked:true },
-  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:true },
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false },
   { id:'sea', icon:'🌊', name:{fr:'Vie en mer',en:'Sea life'}, locked:true },
 ];
 let currentActivity = 'zone';
@@ -227,12 +227,53 @@ function showActivityPage(id) {
     currentActivity = 'boss';
     setFarmViewVisible(false);
     if (!bossState.active) openBossLobby();
+  } else if (id === 'pet') {
+    currentActivity = 'pet';
+    openCompanionsModule();
   } else { // zone = retour au farm
     currentActivity = 'zone';
     if (!bossState.active) $('bossRoom').classList.remove('open');
     setFarmViewVisible(true);
   }
   renderActivityTabs();
+}
+
+// Compagnon (2026-07-19, débloqué avec locked:false ci-dessus) : le module (src/companions/,
+// ~2900 lignes portées depuis une maquette validée) charge dans un iframe isolé, créé au tout
+// premier clic seulement -- jamais bundlé avec le jeu (scripts/build.py ne lit que les
+// <script src="src/..."> de index.dev.html, ce dossier n'y figure pas), donc jamais
+// téléchargé/exécuté tant que l'onglet n'est pas ouvert. Iframe plutôt que fusion au bundle :
+// le module réutilise des noms globaux génériques (SILVER, PETS, toast, ST, son propre :root
+// de couleurs...) qui entreraient en collision avec le scope global partagé du jeu -- voir
+// src/companions/README.md.
+function openCompanionsModule() {
+  let overlay = $a('companionsOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'companionsOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:950;background:#080810;display:flex;flex-direction:column';
+    const bar = document.createElement('div');
+    bar.style.cssText = 'flex-shrink:0;display:flex;justify-content:flex-end;padding:6px 10px;background:#10101e;border-bottom:1px solid #2a2a44';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ ' + (LANG === 'fr' ? 'Fermer' : 'Close');
+    closeBtn.style.cssText = 'font-family:Georgia,serif;font-size:12px;background:transparent;border:1px solid #3a3a58;color:#ddd0b8;border-radius:5px;padding:5px 12px;cursor:pointer';
+    closeBtn.onclick = closeCompanionsModule;
+    bar.appendChild(closeBtn);
+    const frame = document.createElement('iframe');
+    frame.id = 'companionsFrame';
+    frame.style.cssText = 'flex:1;border:0;width:100%';
+    frame.src = 'src/companions/companions.html';
+    overlay.appendChild(bar);
+    overlay.appendChild(frame);
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+function closeCompanionsModule() {
+  const overlay = $a('companionsOverlay');
+  if (overlay) overlay.style.display = 'none';
+  currentActivity = 'zone';
+  showActivityPage('zone');
 }
 
 // affiche la page Boss (lobby) : prochain boss + calendrier, dans la colonne du jeu, pleine hauteur
