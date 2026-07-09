@@ -402,30 +402,47 @@ function renderAdminItems(el) {
       </table>`;
   });
 }
+// section "Pierres de Cron" — farmé vs UTILISÉ (2026-07-19, demande explicite : "je veux
+// utilisation des cron ... comme les silver me le dire"). Jusqu'ici seul le ramassage était
+// tracké (farm_events, kind='material') ; la consommation pour protéger un enchantement
+// (invRemoveAt dans inventory-ui.js) ne touchait que l'inventaire local, invisible côté admin.
+// Corrigé en journalisant aussi la consommation via le MÊME queueFarmEvent()/farm_events déjà en
+// place (kind='cron_used', distinct de 'material' -- admin_farm_by_item groupe par les deux),
+// sans nouvelle table. Requête SANS .limit(20) ici (contrairement à "Ressources farmées") : on
+// filtre nommément sur la Pierre de Cron, pas besoin du top 20 par volume qui l'exclurait souvent.
 function renderAdminCron(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   Promise.all([
-    sb.from('admin_farm_by_item').select('*').limit(20),
+    sb.from('admin_farm_by_item').select('*'),
     sb.from('player_stats').select('user_id'),
   ]).then(([{data: byItem}, {data: playerStats}]) => {
-    const naTxt = LANG==='fr' ? 'Hors top 20' : 'Outside top 20';
-    const cronRow = (byItem||[]).find(r => r.item_name === CRON_STONE.name);
-    const cronTotalQty = cronRow ? Number(cronRow.total_qty||0) : null;
-    const cronPickups = cronRow ? Number(cronRow.pickups||0) : null;
+    const farmedRow = (byItem||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'material');
+    const usedRow = (byItem||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'cron_used');
+    const farmed = farmedRow ? Number(farmedRow.total_qty||0) : 0;
+    const used = usedRow ? Number(usedRow.total_qty||0) : 0;
+    const usedCount = usedRow ? Number(usedRow.pickups||0) : 0;
     const cronPlayerCount = (playerStats||[]).length;
-    const cronAvgPerPlayer = (cronTotalQty != null && cronPlayerCount) ? cronTotalQty/cronPlayerCount : null;
+    const avgFarmedPerPlayer = cronPlayerCount ? farmed/cronPlayerCount : 0;
     const CRON_TIER_LABEL = { grey:{fr:'Gris',en:'Grey'}, white:{fr:'Blanc',en:'White'}, green:{fr:'Vert',en:'Green'}, blue:{fr:'Bleu',en:'Blue'} };
     const cronCostRows = Object.entries(CRON_STONE_COST_BY_TIER).map(([grade,cost]) =>
       `<tr><td>${CRON_TIER_LABEL[grade][LANG]}</td><td>${cost}</td></tr>`).join('');
+    const balancePie = typeof buildPieWithLegendHtml === 'function'
+      ? buildPieWithLegendHtml([
+          { label: LANG==='fr'?'En stock (farmé - utilisé)':'In stock (farmed - used)', value: Math.max(0, farmed - used) },
+          { label: LANG==='fr'?'Utilisées (protection)':'Used (protection)', value: used },
+        ], { thresholdPct: 0 })
+      : '';
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'⏳ Farmées (tous joueurs)':'⏳ Farmed (all players)'}</div><div class="astVal">${cronTotalQty!=null?fmt(cronTotalQty):naTxt}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🎒 Ramassages':'🎒 Pickups'}</div><div class="astVal">${cronPickups!=null?fmt(cronPickups):naTxt}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${cronAvgPerPlayer!=null?fmt(Math.round(cronAvgPerPlayer)):naTxt}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🎲 Chance/kill':'🎲 Chance/kill'}</div><div class="astVal">${(CRON_STONE.ch*100).toFixed(1)}%</div></div>
+        <div class="admStatTile"><div class="astLbl">⏳ ${LANG==='fr'?'Farmées (30j)':'Farmed (30d)'}</div><div class="astVal">${fmt(farmed)}</div></div>
+        <div class="admStatTile"><div class="astLbl">💥 ${LANG==='fr'?'Utilisées (30j)':'Used (30d)'}</div><div class="astVal">${fmt(used)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🛡️ ${LANG==='fr'?'Protections (30j)':'Protections (30d)'}</div><div class="astVal">${fmt(usedCount)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📊 ${LANG==='fr'?'Farmées / joueur':'Farmed / player'}</div><div class="astVal">${fmt(Math.round(avgFarmedPerPlayer))}</div></div>
       </div>
       <div class="admHint">${LANG==='fr'
-        ? 'Taux de drop FIXE, identique dans toutes les zones du jeu (pas de décroissance par zone comme le trash/matériaux) — 1 à 3 unités par ramassage. Les 3 premières tuiles viennent du même top 20 que "Ressources farmées" : "Hors top 20" si la Pierre de Cron n\'y figure pas encore (volume trop faible face au trash).'
-        : 'FIXED drop rate, identical in every zone of the game (no per-zone decay like trash/materials) — 1 to 3 units per pickup. The first 3 tiles come from the same top 20 as "Farmed resources": "Outside top 20" if the Cron Stone isn\'t in it yet (too little volume next to trash).'}</div>
+        ? 'Taux de drop FIXE, identique dans toutes les zones (1 à 3 unités/ramassage). "Utilisées" = consommées pour protéger un enchantement d\'une rétrogradation (coût variable selon le palier, voir tableau plus bas). Fenêtre de 30 jours, comme le registre de silver.'
+        : 'FIXED drop rate, identical in every zone (1 to 3 units/pickup). "Used" = consumed to protect an enhancement from a downgrade (variable cost by tier, see table below). 30-day window, same as the silver ledger.'}</div>
+      <h3>${LANG==='fr'?'⚖️ Farmé vs utilisé':'⚖️ Farmed vs used'}</h3>
+      ${balancePie}
       <h3>${LANG==='fr'?'💎 Coût par palier de la pièce protégée':'💎 Cost by tier of the protected piece'}</h3>
       <table class="admTable">
         <thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Coût':'Cost'}</th></tr></thead>
@@ -762,7 +779,12 @@ function openAdminSection(cat, id) {
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
     el.classList.toggle('active', el.dataset.cat === cat && el.dataset.id === id);
   });
-  $a('adminMainHead').textContent = item.icon + ' ' + item.label[LANG];
+  // écrit UNIQUEMENT le titre (pas tout le header) -- corrige un bug réel signalé le 2026-07-19 :
+  // le bouton fermer vivait dans #adminMainHead, écrasé dès le premier appel à openAdminSection()
+  // (appelé par openAdminPanel() juste après avoir posé le bouton), le rendant inutilisable dès
+  // l'ouverture du panneau. Le bouton fermer vit désormais dans la sidebar (#closeAdmin,
+  // permanent, jamais réécrit par un changement de section) -- voir openAdminPanel() ci-dessous.
+  $a('adminMainTitle').textContent = item.icon + ' ' + item.label[LANG];
   const body = $a('adminMainBody');
   if (item.planned) {
     body.innerHTML = `<div class="admPlannedPane"><div class="admPlannedIcon">🔜</div>
@@ -779,9 +801,9 @@ async function openAdminPanel() {
   const overlay = $a('adminOverlay');
   overlay.classList.add('admThemeRoot');
   overlay.dataset.admTheme = currentTheme;
-  $a('adminMainHead').innerHTML = `<span style="flex:1">🛠️ ${LANG==='fr'?'Zone Admin':'Admin Zone'}</span><button id="closeAdmin">✕</button>`;
+  $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
+  $a('adminSidebar').innerHTML = `<div class="admNavHead"><span class="admNavTitle">🛠️ ${LANG==='fr'?'Admin':'Admin'}</span><button id="closeAdmin" title="${LANG==='fr'?'Fermer':'Close'}">✕</button></div>` + renderAdminSidebar('overview', 'dashboard');
   $a('closeAdmin').onclick = closeAdminPanel;
-  $a('adminSidebar').innerHTML = `<div class="admNavHead"><span class="admNavTitle">🛠️ ${LANG==='fr'?'Admin':'Admin'}</span></div>` + renderAdminSidebar('overview', 'dashboard');
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
     el.onclick = () => openAdminSection(el.dataset.cat, el.dataset.id);
   });

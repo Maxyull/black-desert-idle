@@ -18,6 +18,22 @@ fonction vérifie `isAdmin()` avant d'agir).
   `refreshEquipSlot`/`renderOptimization`/`drawPreviewChar`). Reste intégré à l'inventaire, PAS
   dans `ADMIN_SECTIONS`.
 
+**Utilisation des Pierres de Cron (2026-07-19)** : jusqu'ici seul le ramassage était tracké côté
+serveur (`farm_events`, `kind='material'`) — la consommation pour protéger un enchantement
+(`invRemoveAt`, `src/inventory/inventory-ui.js`) ne touchait que l'inventaire local, invisible
+côté admin. Corrigé en journalisant aussi la consommation via le même `queueFarmEvent()`/
+`farm_events` (kind `'cron_used'`, distinct du ramassage — `admin_farm_by_item` groupe par
+`item_name` ET `item_kind`, jamais mélangés). `Contenu → Pierres de Cron` affiche désormais
+farmé vs utilisé (camembert) sur 30 jours, même logique que le registre de silver.
+
+**Bug corrigé (2026-07-19)** : le bouton fermer (`#closeAdmin`) vivait dans `#adminMainHead`,
+réécrit intégralement par `openAdminSection()` à chaque changement de section — comme
+`openAdminPanel()` appelle `openAdminSection()` juste après avoir posé le bouton, celui-ci
+disparaissait dès l'ouverture du panneau (inutilisable sans recharger la page). Déplacé dans la
+sidebar (`.admNavHead`, jamais réécrit par un changement de section) ; `openAdminSection()` ne
+touche plus que `#adminMainTitle` (span dédié dans le header). Test de régression :
+`testCloseAdminButtonSurvivesSectionSwitch`.
+
 **Graphiques compacts (2026-07-19)** : `buildPieWithLegendHtml`/`buildPieChartSvg`/`mergeSmallSlices`
 (camemberts, fusionnent automatiquement les tranches sous 4% dans "Autres") et `buildBarSeriesSvg`
 (séries temporelles compactes) dans `admin-economy.js` — remplacent les anciennes piles de

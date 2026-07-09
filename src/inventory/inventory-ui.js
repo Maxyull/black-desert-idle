@@ -1251,6 +1251,14 @@ function attemptEnhance() {
     const cronIdx = (cronIdxRaw !== -1 && INV[cronIdxRaw].qty >= cronCost) ? cronIdxRaw : -1;
     if (cronIdx !== -1) {
       invRemoveAt(cronIdx, cronCost);
+      // journalise la CONSOMMATION de Pierres de Cron (2026-07-19, demande explicite : "je veux
+      // utilisation des cron ... comme les silver me le dire") -- jusqu'ici seul le ramassage
+      // (farm_events, kind='material') était tracké côté serveur ; la consommation (invRemoveAt
+      // ci-dessus) ne touchait QUE l'inventaire local, invisible pour l'admin. Réutilise le même
+      // queueFarmEvent()/farm_events déjà en place pour le ramassage (pas de nouvelle table), avec
+      // un kind DISTINCT ('cron_used') pour ne jamais se mélanger aux ramassages dans
+      // admin_farm_by_item (qui groupe par item_name ET item_kind).
+      if (typeof queueFarmEvent === 'function') queueFarmEvent('cron_used', CRON_STONE.name, cronCost, 0);
       r.textContent = (LANG==='fr'?'✖ ÉCHEC — protégé par '+cronCost+' Pierre'+(cronCost>1?'s':'')+' de Cron (':'✖ FAIL — protected by '+cronCost+' Cron Stone'+(cronCost>1?'s':'')+' (')+ENH_NAMES[target.enhLv]+')';
       floatTxt(P.x,P.y,100,LANG==='fr'?'⏳ Protégé !':'⏳ Protected!',{blue:true});
     } else if (lvl >= SAFE_IDX && lvl < PRI_IDX) { // +8 à +15 : peut rétrograder, jamais sous +7
