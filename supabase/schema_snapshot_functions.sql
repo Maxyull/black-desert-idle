@@ -1213,7 +1213,7 @@ begin
   if v_before is distinct from new.treasure_count then perform public.notify_cheat_discord(new.user_id, 'treasure_count', v_before, new.treasure_count); end if;
 
   v_before := coalesce(new.best_kpm,0);
-  new.best_kpm := least(greatest(coalesce(new.best_kpm,0), 0), 300);
+  new.best_kpm := least(greatest(coalesce(new.best_kpm,0), 0), 500);
   if v_before is distinct from new.best_kpm then perform public.notify_cheat_discord(new.user_id, 'best_kpm', v_before, new.best_kpm); end if;
 
   begin
