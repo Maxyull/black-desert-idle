@@ -58,6 +58,7 @@ const ADMIN_SECTIONS = [
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:renderAdminTreasure },
     { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, render:renderAdminLoot },
     { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
+    { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:renderAdminOnboarding },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
@@ -557,6 +558,55 @@ function renderAdminItemTutorials(el) {
         <thead><tr><th>${LANG==='fr'?'Tutoriel':'Tutorial'}</th><th>${LANG==='fr'?'Terminés':'Completed'}</th><th>${LANG==='fr'?'Passés':'Skipped'}</th><th>${LANG==='fr'?'Total':'Total'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>`;
+  });
+}
+
+// ---------- section "Contenu → Onboarding" (NOUVEAU, 2026-07-19, demande explicite : "ajoute des
+// stats sur l'onboarding") -- distincte de "Tutoriels d'objets" ci-dessus : suit spécifiquement le
+// tutoriel d'arrivée (TUTORIAL_STEPS, 21 étapes, tutorial_id='onboarding') via
+// admin_onboarding_stats()/admin_onboarding_dropoff() (migration 20260719180000_onboarding_stats.sql
+// + 20260719180100). Le tutoriel d'arrivée n'a AUCUN déclenchement automatique à la 1ère connexion
+// (seulement un bouton dans le Wiki, voir game-supabase.js) -- ce panneau permet justement de
+// constater ce faible taux de démarrage, pas seulement le taux de complétion une fois démarré. ----------
+function renderAdminOnboarding(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  Promise.all([sb.rpc('admin_onboarding_stats'), sb.rpc('admin_onboarding_dropoff')]).then(([statsRes, dropRes]) => {
+    if (statsRes.error) { el.innerHTML = `<div class="admHint">${escapeHtml(statsRes.error.message)}</div>`; return; }
+    const s = (statsRes.data && statsRes.data[0]) || { started:0, completed:0, skipped:0, in_progress:0 };
+    const started = Number(s.started||0), completed = Number(s.completed||0), skipped = Number(s.skipped||0), inProgress = Number(s.in_progress||0);
+    if (!started) {
+      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Personne n\'a encore démarré le tutoriel d\'arrivée (bouton dans le Wiki)':'No one has started the arrival tutorial yet (button in the Wiki)'}</div>`;
+      return;
+    }
+    const completedPct = started > 0 ? Math.round(completed/started*100) : 0;
+    const pie = typeof buildPieWithLegendHtml === 'function'
+      ? buildPieWithLegendHtml([
+          { label: LANG==='fr'?'Terminé':'Completed', value: completed },
+          { label: LANG==='fr'?'Passé':'Skipped', value: skipped },
+          { label: LANG==='fr'?'En cours / abandonné':'In progress / abandoned', value: inProgress },
+        ], { thresholdPct: 0 })
+      : '';
+    const dropRows = (dropRes.data || []);
+    const totalSteps = (typeof TUTORIAL_STEPS !== 'undefined' && TUTORIAL_STEPS.length) || 21;
+    const dropoffHtml = dropRows.length
+      ? `<table class="admTable">
+          <thead><tr><th>${LANG==='fr'?'Étape où bloqué':'Step reached'}</th><th>${LANG==='fr'?'Joueurs':'Players'}</th></tr></thead>
+          <tbody>${dropRows.map(r => `<tr><td>${Number(r.last_step)+1} / ${totalSteps}</td><td>${fmt(Number(r.user_count||0))}</td></tr>`).join('')}</tbody>
+        </table>`
+      : `<div class="admEmpty">${LANG==='fr'?'Aucun abandon en cours (tout le monde a terminé ou passé)':'No in-progress abandonment (everyone finished or skipped)'}</div>`;
+    el.innerHTML = `<div class="admSummary">${LANG==='fr'
+        ? 'Le tutoriel d\'arrivée ne se lance jamais automatiquement — seulement via le bouton dans le Wiki. "Démarré" = a cliqué ce bouton au moins une fois.'
+        : 'The arrival tutorial never launches automatically — only via the button in the Wiki. "Started" = clicked that button at least once.'}</div>
+      <div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">🧭 ${LANG==='fr'?'Démarré':'Started'}</div><div class="astVal">${fmt(started)}</div></div>
+        <div class="admStatTile"><div class="astLbl">✅ ${LANG==='fr'?'Terminé':'Completed'}</div><div class="astVal">${fmt(completed)} <span class="admHint">(${completedPct}%)</span></div></div>
+        <div class="admStatTile"><div class="astLbl">⏭️ ${LANG==='fr'?'Passé':'Skipped'}</div><div class="astVal">${fmt(skipped)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🚪 ${LANG==='fr'?'En cours / abandonné':'In progress / abandoned'}</div><div class="astVal">${fmt(inProgress)}</div></div>
+      </div>
+      <h3>${LANG==='fr'?'⚖️ Répartition':'⚖️ Breakdown'}</h3>
+      ${pie}
+      <h3>${LANG==='fr'?'📉 Funnel d\'abandon (étape où resté bloqué)':'📉 Drop-off funnel (step last seen)'}</h3>
+      ${dropoffHtml}`;
   });
 }
 

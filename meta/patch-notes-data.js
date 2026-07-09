@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V339', d:'19/07/2026 08:00', name:{fr:'Nouveaux tutoriels : objets de loot courant, marché, enchantement, boss', en:'New tutorials: common loot items, market, enhancement, boss'}, fr:[
+      {t:'new', sub:'inventaire', tx:'Un court tutoriel s\'affiche désormais au tout premier objet de loot courant ramassé (revendu automatiquement en silver), pour expliquer qu\'il n\'y a rien d\'autre à en faire.'},
+      {t:'new', sub:'combat', tx:'De nouveaux courts tutoriels s\'affichent désormais au premier accès au Marché commun, à la première utilisation de l\'Optimisation (enchantement) et au premier passage dans le lobby d\'un World Boss.'},
+    ], en:[
+      {t:'new', sub:'inventaire', tx:'A short tutorial now appears the very first time you pick up a common loot item (automatically sold for silver), explaining there\'s nothing else to do with it.'},
+      {t:'new', sub:'combat', tx:'New short tutorials now appear on first access to the Common Market, first use of Optimization (enhancement), and first visit to a World Boss lobby.'},
+    ] },
   { v:'V338', d:'19/07/2026 07:00', name:{fr:'Nouvelle roue de récompense boss (loot rarissime)', en:'New boss reward wheel (rarissime loot)'}, fr:[
       {t:'change', sub:'combat', tx:'La roue de récompense du loot rarissime de World Boss (Pierre de sang de Kzarka, Coeur de Vell) a été refaite entièrement : géométrie précise, plus aucun décalage visuel entre le pointeur et le lot obtenu.'},
     ], en:[

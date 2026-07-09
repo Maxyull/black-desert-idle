@@ -736,10 +736,15 @@
     if (typeof ITEM_TUTORIALS === 'undefined' || typeof ITEM_TUTORIAL_BY_NAME === 'undefined') return;
     const ids = Object.keys(ITEM_TUTORIALS);
     assert('ITEM_TUTORIALS non vide', ids.length > 0);
+    // itemNames peut être VIDE (2026-07-19) : les tutoriels d'ACTION (enchant/market/boss) sont
+    // déclenchés manuellement (maybeQueueTutorialById), jamais au ramassage d'un objet -- on
+    // vérifie juste qu'au moins UN tutoriel déclenché par objet existe toujours dans le registre.
+    assert('au moins un tutoriel déclenché par ramassage d\'objet (itemNames non vide)',
+      ids.some(id => ITEM_TUTORIALS[id].itemNames.size > 0));
     ids.forEach(id => {
       const tuto = ITEM_TUTORIALS[id];
       assert(`"${id}" a au moins 1 étape`, Array.isArray(tuto.steps) && tuto.steps.length > 0);
-      assert(`"${id}" a au moins 1 nom d'objet déclencheur`, tuto.itemNames instanceof Set && tuto.itemNames.size > 0);
+      assert(`"${id}" a un itemNames de type Set (vide ou non)`, tuto.itemNames instanceof Set);
       assert(`"${id}" : la DERNIÈRE étape est marquée final:true (sinon endItemTutorial ne se déclenche jamais)`, !!tuto.steps[tuto.steps.length-1].final);
       tuto.steps.forEach((step,i) => {
         assert(`"${id}" étape ${i} a un titre fr et en`, step.title && step.title.fr && step.title.en);
@@ -782,6 +787,69 @@
         else localStorage.setItem(storageKey, savedFlag);
       } catch(e) {}
     }
+  }
+  // trash de zone : tutoriel unique couvrant TOUS les noms de trash de ZONES (2026-07-19) --
+  // itemNames calculé dynamiquement (jamais codé en dur), donc doit toujours refléter ZONES.
+  function testTrashTutorialCoversEveryZoneTrashName() {
+    if (typeof ITEM_TUTORIALS === 'undefined' || !ITEM_TUTORIALS.trash || typeof ZONES === 'undefined') return;
+    const zoneTrashNames = new Set(ZONES.map(z => z.loot.trash.name));
+    assert('ITEM_TUTORIALS.trash couvre exactement les noms de trash de toutes les zones',
+      zoneTrashNames.size === ITEM_TUTORIALS.trash.itemNames.size
+      && [...zoneTrashNames].every(n => ITEM_TUTORIALS.trash.itemNames.has(n)));
+  }
+  // tutoriels d'ACTION (2026-07-19, demande explicite : "info... quand on va faire des nouveau
+  // truc") : enchant/market/boss, déclenchés manuellement (jamais par un ramassage d'objet).
+  function testActionTutorialsRegisteredWithEmptyItemNames() {
+    if (typeof ITEM_TUTORIALS === 'undefined') return;
+    ['enchant', 'market', 'boss'].forEach(id => {
+      const tuto = ITEM_TUTORIALS[id];
+      assert(`ITEM_TUTORIALS.${id} existe`, !!tuto);
+      if (!tuto) return;
+      assert(`ITEM_TUTORIALS.${id}.itemNames est vide (jamais déclenché par ramassage)`, tuto.itemNames.size === 0);
+    });
+  }
+  function testMaybeQueueTutorialByIdWorksForManualTrigger() {
+    if (typeof maybeQueueTutorialById !== 'function' || typeof ITEM_TUTORIALS === 'undefined' || !ITEM_TUTORIALS.enchant) return;
+    const id = 'enchant', storageKey = 'velia-idle-item-tuto-seen-'+id;
+    let savedFlag = null;
+    try { savedFlag = localStorage.getItem(storageKey); } catch(e) {}
+    const savedActive = itemTutorialActive, savedQueue = itemTutorialQueue.slice(), savedActiveId = itemTutorialActiveId;
+    try {
+      try { localStorage.removeItem(storageKey); } catch(e) {}
+      // même garde qu'au-dessus : force le chemin FILE, jamais le déclenchement réel du DOM --
+      // itemTutorialActiveId mis à une valeur DIFFÉRENTE de `id` (pas juste laissé tel quel) : sur
+      // un compte de test qui a déjà un matériau d'optimisation chargé, le vrai déclenchement
+      // (inventory-ui.js) a pu légitimement tourner AVANT ce test et laisser itemTutorialActiveId
+      // déjà égal à 'enchant' — sans ce reset explicite, la garde anti-doublon de
+      // maybeQueueTutorialById le prendrait alors à tort pour "déjà en cours" et le test échouerait.
+      itemTutorialActive = true; itemTutorialQueue = []; itemTutorialActiveId = '__test_other__';
+      assert('Tutoriel d\'action jamais vu -> mis en file', maybeQueueTutorialById(id) === true);
+      assert('Flag "vu" posé dès la mise en file', isItemTutorialSeen(id) === true);
+      assert('2e appel -> jamais remis en file', maybeQueueTutorialById(id) === false);
+      assert('Id inconnu -> false, ne plante jamais', maybeQueueTutorialById('IdInconnuXYZ') === false);
+    } finally {
+      itemTutorialActive = savedActive; itemTutorialQueue = savedQueue; itemTutorialActiveId = savedActiveId;
+      try {
+        if (savedFlag === null) localStorage.removeItem(storageKey);
+        else localStorage.setItem(storageKey, savedFlag);
+      } catch(e) {}
+    }
+  }
+  // suivi de progression admin de l'onboarding (2026-07-19) -- src/backend/game-supabase.js.
+  // reportTutorialProgress est fire-and-forget et gardée par sb/currentUser/isGuest -- sans compte
+  // connecté en environnement de test, elle doit rester un no-op silencieux (jamais d'exception).
+  function testOnboardingTrackingNeverThrowsWithoutTrackId() {
+    if (typeof startTutorial !== 'function' || typeof endTutorial !== 'function' || typeof TUTORIAL_STEPS === 'undefined') return;
+    const savedIdx = tutorialStepIdx, savedSteps = activeTutorialSteps, savedTrackId = typeof activeTutorialTrackId !== 'undefined' ? activeTutorialTrackId : undefined;
+    let threw = false;
+    try { startTutorial(TUTORIAL_STEPS, { resetView:false }); endTutorial(true); }
+    catch(e) { threw = true; }
+    finally {
+      tutorialStepIdx = savedIdx; activeTutorialSteps = savedSteps;
+      if (typeof activeTutorialTrackId !== 'undefined') activeTutorialTrackId = savedTrackId;
+      $a('tutorialOverlay').classList.remove('open');
+    }
+    assert('startTutorial/endTutorial sans trackId ne lève jamais d\'exception (pas de compte connecté en test)', !threw);
   }
   // "Cadenas dans le header sur le cadre de la ligne du bas" + "les pv du boss se retrouve dans une
   // bulle sur la ligne du bas du rectangle dans le header" (2026-07-08) -- les 2 badges doivent être
@@ -2555,6 +2623,10 @@
     testBossWheelReactSegmentCountMatchesRoster();
     testItemTutorialsWellFormedAndIndexed();
     testMaybeQueueItemTutorialRespectsSeenAndCap();
+    testTrashTutorialCoversEveryZoneTrashName();
+    testActionTutorialsRegisteredWithEmptyItemNames();
+    testMaybeQueueTutorialByIdWorksForManualTrigger();
+    testOnboardingTrackingNeverThrowsWithoutTrackId();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
