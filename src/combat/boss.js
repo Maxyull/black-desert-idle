@@ -711,23 +711,11 @@ function bossRewardRulesHtml() {
 // roue de récompense rare (2026-07-08, demande explicite) : affichée en fin de combat quand le
 // boss a une table "rareLoot" définie (Vell → Coeur de Vell, 5%) — tourne toute seule et s'arrête
 // sur le lot RÉELLEMENT obtenu (déjà tiré au sort avant l'animation, la roue ne fait que le révéler).
-// markup de la roue (extrait de l'ancien renderBossRewardWheel le 2026-07-08) -- au plus UNE roue
-// par combat (un seul b.rareLoot possible), donc IDs fixes réutilisables sans risque de collision
-function bossWheelMarkup(rareLoot) {
-  const N = 12; // segments (1 rare + 11 "rien") — purement visuel, ne reflète pas le vrai % (5%)
-  const segDeg = 360/N;
-  // décoi neutre (2026-07-16) : "🌊" était codé en dur pour Vell (thème marin) -- cette même roue
-  // sert désormais aussi à Kzarka (Pierre de sang), un décoi thématique unique n'a plus de sens
-  // pour les 2 -- remplacé par un symbole neutre, indépendant du boss.
-  const commonIcon = '⚫';
-  let iconsHtml = '';
-  for (let i = 0; i < N; i++) {
-    const centerDeg = i*segDeg + segDeg/2;
-    iconsHtml += `<span class="bwIcon" style="transform:rotate(${centerDeg}deg) translate(0,-70px) rotate(${-centerDeg}deg)">${i===0?rareLoot.icon:commonIcon}</span>`;
-  }
-  return `<div class="bossWheelWrap"><div class="bossWheelPointer">▼</div>` +
-    `<div class="bossWheel" id="bossWheelEl" style="background:conic-gradient(${rareLoot.color} 0deg ${segDeg}deg, #232128 ${segDeg}deg 360deg)">${iconsHtml}</div></div>`;
-}
+// Rendu en React depuis le 2026-07-19 (demande explicite : "je veux une roue react et que tout soit
+// aligné") -- voir src/combat/boss-wheel-react.js (BossWheelReact/mountBossWheelReact/
+// wheelLandingDeg). Ici, renderBossRewardReveal ne pose plus qu'un conteneur DOM vide par roue
+// (au plus une par combat, IDs indexés comme le reste de la liste de révélation), React prend le
+// relais entièrement pour le rendu ET l'animation.
 // "lors de la fin du boss une roulette tourne ou un des se jette pour chaque recompense
 // aléatoire, le joueur peut passer puis un bouton quitter s'affiche (retour a zone)" (2026-07-08)
 // -- séquence de révélation : un dé (icône + résultat masqué) par récompense à quantité aléatoire,
@@ -753,7 +741,7 @@ const BOSS_NEAR_MISS_CHANCE = 0.18, BOSS_NEAR_MISS_MARGIN_DEG = 8;
 function renderBossRewardReveal(items) {
   if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
   const itemsHtml = items.map((it,i) => {
-    const iconHtml = it.kind==='wheel' ? bossWheelMarkup(it.rareLoot)
+    const iconHtml = it.kind==='wheel' ? `<div class="bossWheelReactRoot" id="bossWheelReactRoot${i}"></div>`
       : `<span class="brDiceIcon" id="brDiceIcon${i}" style="color:${it.color||'#e8c96a'}">${it.icon||'🎲'}</span>`;
     return `<div class="brRevealItem" id="brRevealItem${i}">${iconHtml}<div class="brRevealResult" id="brRevealResult${i}">${LANG==='fr'?'…':'…'}</div></div>`;
   }).join('');
@@ -815,22 +803,12 @@ function wireBossRewardReveal(items) {
       const iconEl = $a('brDiceIcon'+i); if (iconEl) iconEl.classList.add('settled');
       resEl.innerHTML = it.resultHtml;
     } else {
-      const wheel = $a('bossWheelEl');
-      if (wheel) {
-        const segDeg = 360/12, spins = instant ? 0 : 5;
-        // atterrit au CENTRE du segment rare si gagné, sinon un point dans la zone "rien" (60°-330°)
-        // -- l'issue (it.won) est déjà tirée dans endBossFight, cette section ne fait QUE choisir
-        // l'angle d'atterrissage de l'animation, jamais l'issue elle-même.
-        // "near-miss" (2026-07-09, adapté de la référence roulette React) : sur une perte, BOSS_NEAR_MISS_CHANCE
-        // du temps on s'arrête volontairement TOUT PRÈS du bord du segment rare (juste après, jamais
-        // dessus) au lieu d'un point uniforme dans toute la zone sûre -- crée un vrai "si près !" sans
-        // jamais risquer de sembler tomber SUR le rare (BOSS_NEAR_MISS_MARGIN_DEG de marge de sécurité).
-        const targetDeg = it.won ? segDeg/2
-          : (Math.random() < BOSS_NEAR_MISS_CHANCE
-              ? (Math.random() < 0.5 ? BOSS_NEAR_MISS_MARGIN_DEG : 360 - BOSS_NEAR_MISS_MARGIN_DEG) + (Math.random()-0.5)*6
-              : (60 + Math.random()*270));
-        if (instant) wheel.style.transition = 'none';
-        wheel.style.transform = `rotate(${spins*360 - targetDeg}deg)`;
+      // roue React (voir combat/boss-wheel-react.js) : l'issue (it.won) est déjà tirée dans
+      // endBossFight, ce composant ne fait QUE choisir/animer l'angle d'atterrissage — jamais
+      // l'issue elle-même. `instant` (bouton Passer) est simplement repassé en prop.
+      const container = $a('bossWheelReactRoot'+i);
+      if (container && typeof mountBossWheelReact === 'function') {
+        mountBossWheelReact(container, { rareLoot: it.rareLoot, won: it.won, instant: !!instant });
       }
       resEl.innerHTML = it.won
         ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${LANG==='fr'?'Obtenu':'Obtained'} : ${it.rareLoot.name} !</span>`

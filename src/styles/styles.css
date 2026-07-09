@@ -2141,13 +2141,17 @@
   #bossResult .brTitle.win { color:var(--gold); }
   #bossResult .brRewards { font-size:14px; color:var(--ink); }
   #bossResult button { width:auto; padding:8px 24px; font-size:13px; }
-  /* roue de récompense rare (2026-07-08) : tourne toute seule en fin de combat, révèle le lot déjà tiré */
-  .bossWheelWrap { position:relative; width:120px; height:120px; margin:0 auto 4px; }
+  /* roue de récompense rare (2026-07-08, rendu React depuis 2026-07-19 -- voir
+     combat/boss-wheel-react.js) : tourne toute seule en fin de combat, révèle le lot déjà tiré.
+     Remplace l'ancienne roue conic-gradient + icônes .bwIcon en position:absolute/translate(-70px)
+     (débordaient du cercle visuel, rendu "tordu" signalé) par un <svg> à géométrie calculée --
+     .bossWheel cible directement l'élément <svg> rendu par React, plus de <div id="bossWheelEl">. */
+  .bossWheelWrap { position:relative; width:120px; height:120px; margin:0 auto; }
+  .bossWheelReactRoot { width:120px; height:120px; margin:0 auto 4px; }
   .bossWheelPointer { position:absolute; top:-11px; left:50%; transform:translateX(-50%); font-size:15px; color:var(--gold); z-index:2; }
-  .bossWheel { width:100%; height:100%; border-radius:50%; border:3px solid var(--gold-dim);
-    box-shadow:0 0 16px rgba(0,0,0,.5); position:relative; transition:transform 3.5s cubic-bezier(.12,.65,.16,1); }
-  .bwIcon { position:absolute; top:50%; left:50%; width:18px; height:18px; margin:-9px; font-size:13px;
-    display:flex; align-items:center; justify-content:center; }
+  .bossWheel { display:block; width:100%; height:100%; border-radius:50%; border:3px solid var(--gold-dim);
+    box-shadow:0 0 16px rgba(0,0,0,.5); transition:transform 3.5s cubic-bezier(.12,.65,.16,1); }
+  .bossWheel text { fill:var(--ink); font-family:inherit; }
   /* "lors de la fin du boss une roulette tourne ou un des se jette pour chaque recompense
      aléatoire" (2026-07-08) -- une carte par récompense (dé ou roue), révélées en séquence par
      renderBossRewardReveal (combat/boss.js). Le dé "rebondit" (bounce) tant que non révélé, se fige

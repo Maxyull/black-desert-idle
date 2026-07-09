@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V338', d:'19/07/2026 07:00', name:{fr:'Nouvelle roue de récompense boss (loot rarissime)', en:'New boss reward wheel (rarissime loot)'}, fr:[
+      {t:'change', sub:'combat', tx:'La roue de récompense du loot rarissime de World Boss (Pierre de sang de Kzarka, Coeur de Vell) a été refaite entièrement : géométrie précise, plus aucun décalage visuel entre le pointeur et le lot obtenu.'},
+    ], en:[
+      {t:'change', sub:'combat', tx:'The World Boss rarissime loot reward wheel (Kzarka\'s Blood Stone, Vell\'s Heart) was completely rebuilt: precise geometry, no more visual misalignment between the pointer and the actual result.'},
+    ] },
   { v:'V337', d:'19/07/2026 06:00', name:{fr:'Correctif : compteur Maîtrise PEN pouvait dépasser le maximum', en:'Fix: PEN Mastery counter could exceed the maximum'}, fr:[
       {t:'fix', sub:'compte', tx:'Le compteur "Maîtrise PEN (X/44)" pouvait afficher un total supérieur à 44 (ex: 45/44) si un ancien nom d\'objet, retiré depuis un rééquilibrage passé, était resté enregistré. Corrigé : seuls les 44 objets réellement suivis aujourd\'hui comptent.'},
     ], en:[

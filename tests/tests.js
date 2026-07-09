@@ -697,6 +697,40 @@
     if (typeof BOSS_PITY_THRESHOLD === 'undefined') return;
     assert('BOSS_PITY_THRESHOLD est un nombre positif raisonnable (filet de sécurité, pas un don)', typeof BOSS_PITY_THRESHOLD === 'number' && BOSS_PITY_THRESHOLD > 0 && BOSS_PITY_THRESHOLD < 100);
   }
+  // roue de récompense boss en React (2026-07-19) -- src/combat/boss-wheel-react.js. Les fonctions
+  // géométriques (wheelLandingDeg/wheelSegmentPath) restent de simples fonctions pures : testables
+  // sans monter le moindre composant React ni toucher au DOM.
+  function testWheelLandingDegWonIsSegmentCenter() {
+    if (typeof wheelLandingDeg !== 'function') return;
+    const n = 12, segDeg = 360/n;
+    assert('gagné -> atterrit exactement au centre du segment rare (segDeg/2)',
+      wheelLandingDeg({ n, won:true }) === segDeg/2);
+  }
+  function testWheelLandingDegLossNeverLandsInsideRareSegment() {
+    if (typeof wheelLandingDeg !== 'function') return;
+    const n = 12, segDeg = 360/n;
+    // 500 tirages, chance de near-miss forcée à 1 pour couvrir aussi cette branche -- dans les 2 cas
+    // (near-miss ou zone uniforme), une perte ne doit JAMAIS atterrir DANS le segment rare [0, segDeg[,
+    // sinon le pointeur semblerait désigner le lot rare alors que it.won est false (incohérence visuelle).
+    let ok = true;
+    for (let i = 0; i < 500; i++) {
+      const chance = i % 2 === 0 ? 1 : 0;
+      const deg = wheelLandingDeg({ n, won:false, marginDeg:8, chance });
+      if (deg >= 0 && deg < segDeg) { ok = false; break; }
+    }
+    assert('perte : jamais d\'atterrissage dans le segment rare (near-miss compris)', ok);
+  }
+  function testWheelSegmentPathIsWellFormedSvgPath() {
+    if (typeof wheelSegmentPath !== 'function') return;
+    const d = wheelSegmentPath(60, 60, 56, 0, 30);
+    assert('chemin SVG bien formé : commence par M, contient un arc A, se termine par Z',
+      /^M60,60/.test(d) && d.includes(' A') && d.trim().endsWith('Z'));
+  }
+  function testBossWheelReactSegmentCountMatchesRoster() {
+    if (typeof BOSS_WHEEL_SEGMENTS === 'undefined') return;
+    assert('au moins 2 segments (1 rare + au moins 1 "rien"), sinon la roue n\'a aucun sens visuel',
+      typeof BOSS_WHEEL_SEGMENTS === 'number' && BOSS_WHEEL_SEGMENTS >= 2);
+  }
   // tutoriels d'objets au premier obtain (2026-07-19) -- src/progression/notifications-quests.js
   function testItemTutorialsWellFormedAndIndexed() {
     if (typeof ITEM_TUTORIALS === 'undefined' || typeof ITEM_TUTORIAL_BY_NAME === 'undefined') return;
@@ -2515,6 +2549,10 @@
     testBossDeathPenaltyMultTable();
     testBossFirstKillOfWeekPerBossNotGlobal();
     testBossPityForcesWinAtThreshold();
+    testWheelLandingDegWonIsSegmentCenter();
+    testWheelLandingDegLossNeverLandsInsideRareSegment();
+    testWheelSegmentPathIsWellFormedSvgPath();
+    testBossWheelReactSegmentCountMatchesRoster();
     testItemTutorialsWellFormedAndIndexed();
     testMaybeQueueItemTutorialRespectsSeenAndCap();
     const failed = results.filter(r => !r.pass);
