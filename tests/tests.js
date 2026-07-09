@@ -487,6 +487,28 @@
       else { try { localStorage.setItem('bdiAdminTheme', saved); } catch(e) {} }
     }
   }
+  // refonte du panneau admin en sidebar plein écran (2026-07-19, "on va recréer un nouveau
+  // panneau admin") -- ADMIN_SECTIONS bien formé : ids uniques PAR groupe (data-cat+data-id
+  // ensemble forment la clé réelle utilisée par openAdminSection), chaque item a un render()
+  // OU planned:true mais jamais aucun des deux (sinon un clic sur cet item ne fait rien de
+  // visible, silencieusement) et jamais les deux à la fois.
+  function testAdminSectionsWellFormed() {
+    if (typeof ADMIN_SECTIONS === 'undefined') return;
+    assert('ADMIN_SECTIONS non vide', ADMIN_SECTIONS.length > 0);
+    const catIds = ADMIN_SECTIONS.map(g => g.cat);
+    assert('Catégories de sections avec des ids uniques', new Set(catIds).size === catIds.length);
+    ADMIN_SECTIONS.forEach(group => {
+      assert(`Groupe "${group.cat}" a un libellé fr et en`, group.label && group.label.fr && group.label.en);
+      const itemIds = group.items.map(i => i.id);
+      assert(`Groupe "${group.cat}" : items avec des ids uniques`, new Set(itemIds).size === itemIds.length);
+      group.items.forEach(item => {
+        assert(`"${group.cat}/${item.id}" a un libellé fr et en`, item.label && item.label.fr && item.label.en);
+        const hasRender = typeof item.render === 'function';
+        const isPlanned = !!item.planned;
+        assert(`"${group.cat}/${item.id}" a exactement un de render()/planned:true (jamais 0, jamais 2)`, hasRender !== isPlanned);
+      });
+    });
+  }
   // "Cadenas dans le header sur le cadre de la ligne du bas" + "les pv du boss se retrouve dans une
   // bulle sur la ligne du bas du rectangle dans le header" (2026-07-08) -- les 2 badges doivent être
   // des overlays position:absolute à cheval sur la bordure inférieure du bouton (même convention que
@@ -2220,6 +2242,7 @@
     testCanBanUuidBlocksSelfBan();
     testBanReasonsAndDurationsWellFormed();
     testAdminThemesWellFormedAndPersist();
+    testAdminSectionsWellFormed();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
