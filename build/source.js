@@ -9047,6 +9047,7 @@ const ADMIN_SECTIONS = [
   ]},
   { cat:'content', label:{fr:'Contenu',en:'Content'}, items:[
     { id:'boss', icon:'🌍', label:{fr:'Boss mondiaux',en:'World bosses'}, render:renderAdminBoss },
+    { id:'zones', icon:'🗾', label:{fr:'Progression par zone',en:'Zone progression'}, render:renderAdminZoneProgression },
     { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'}, render:renderAdminItems },
     { id:'cron', icon:'⏳', label:{fr:'Pierres de Cron',en:'Cron Stones'}, render:renderAdminCron },
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:renderAdminTreasure },
@@ -9404,6 +9405,29 @@ function renderAdminTreasure(el) {
           `<td>${fmt(avgKills)}</td><td>${fmtDurationMin(avgMin)}</td></tr>`;
       }).join('')}</tbody>
     </table>`;
+}
+
+function renderAdminZoneProgression(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.from('player_stats').select('best_zone_index').then(({data}) => {
+    const counts = new Map();
+    (data||[]).forEach(r => {
+      const zi = Number(r.best_zone_index||0);
+      counts.set(zi, (counts.get(zi)||0) + 1);
+    });
+    const rows = [...counts.entries()].sort((a,b) => a[0]-b[0]);
+    const maxCount = Math.max(1, ...rows.map(r => r[1]));
+    const html = rows.map(([zi, cnt]) => {
+      const zone = ZONES[zi];
+      const label = zone ? tr(zone.name) : `#${zi}`;
+      const pct = Math.round(cnt/maxCount*100);
+      return `<div class="admBarRow"><span class="admBarLbl">${escapeHtml(label)}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${cnt}</span></div>`;
+    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+    el.innerHTML = `<div class="admSummary">${LANG==='fr'
+      ? 'Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant.'
+      : 'Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed.'}</div>
+      <div class="admBars">${html}</div>`;
+  });
 }
 
 function renderAdminDashboard(el) {
@@ -9976,6 +10000,49 @@ function renderAdminMarket(el) {
   };
 }
 
+function renderAdminMarketVolume(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.rpc('admin_market_top_items', { p_days: 30 }).then(({data, error}) => {
+    if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+    const rows = data || [];
+    const totalVolume = rows.reduce((a,r) => a + Number(r.total_silver_value||0), 0);
+    const totalTrades = rows.reduce((a,r) => a + Number(r.trade_count||0), 0);
+    const itemHtml = rows.map((r,i) => `
+      <tr class="${i===0?'admTop':''}"><td>${tr(r.item_name) || escapeHtml(r.item_name)}</td>
+        <td>${fmt(r.trade_count)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver_value)}</td></tr>
+    `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun échange sur les 30 derniers jours':'No trades in the last 30 days'}</td></tr>`;
+    el.innerHTML = `<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">💱 ${LANG==='fr'?'Volume total (30j)':'Total volume (30d)'}</div><div class="astVal">${fmt(totalVolume)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔄 ${LANG==='fr'?'Échanges (30j)':'Trades (30d)'}</div><div class="astVal">${fmt(totalTrades)}</div></div>
+      </div>
+      <h3>${LANG==='fr'?'🏆 Objets les plus échangés':'🏆 Most traded items'}</h3>
+      <table class="admTable">
+        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Échanges':'Trades'}</th><th>Qté</th><th>${LANG==='fr'?'Valeur totale':'Total value'}</th></tr></thead>
+        <tbody>${itemHtml}</tbody>
+      </table>`;
+  });
+}
+
+function renderAdminSignups(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.rpc('admin_signups_by_day', { p_days: 30 }).then(({data, error}) => {
+    if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+    const rows = data || [];
+    const total = rows.reduce((a,r) => a + Number(r.signups||0), 0);
+    const maxCount = Math.max(1, ...rows.map(r => Number(r.signups||0)));
+    const html = rows.map(r => {
+      const label = new Date(r.day).toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { day:'2-digit', month:'2-digit' });
+      const pct = Math.round(Number(r.signups||0)/maxCount*100);
+      return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${r.signups}</span></div>`;
+    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Aucune inscription sur les 30 derniers jours':'No signups in the last 30 days'}</div>`;
+    el.innerHTML = `<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">🆕 ${LANG==='fr'?'Inscriptions (30j)':'Signups (30d)'}</div><div class="astVal">${total}</div></div>
+      </div>
+      <h3>${LANG==='fr'?'📅 Par jour':'📅 By day'}</h3>
+      <div class="admBars">${html}</div>`;
+  });
+}
+
 const LOOT_RATE_GRADES = [
   { grade:'grey', label:{fr:'Gris',en:'Grey'} }, { grade:'white', label:{fr:'Blanc',en:'White'} },
   { grade:'green', label:{fr:'Vert',en:'Green'} }, { grade:'blue', label:{fr:'Bleu',en:'Blue'} },
@@ -10034,8 +10101,14 @@ ADMIN_SECTIONS.splice(2, 0, { cat:'economy', label:{fr:'Économie',en:'Economy'}
   { id:'wealth', icon:'📈', label:{fr:'Richesse',en:'Wealth'}, render:renderAdminWealth },
   { id:'loyalty', icon:'🏅', label:{fr:'Loyalties',en:'Loyalties'}, render:renderAdminLoyalty },
   { id:'market', icon:'🏛️', label:{fr:'Marché',en:'Market'}, render:renderAdminMarket },
+  { id:'marketvolume', icon:'💱', label:{fr:'Volume du marché',en:'Market volume'}, render:renderAdminMarketVolume },
   { id:'donations', icon:'💝', label:{fr:'Donations',en:'Donations'}, planned:true },
 ]});
+
+const adminOverviewGroup = ADMIN_SECTIONS.find(g => g.cat === 'overview');
+if (adminOverviewGroup) adminOverviewGroup.items.push(
+  { id:'signups', icon:'🆕', label:{fr:'Inscriptions',en:'Signups'}, render:renderAdminSignups }
+);
 
 // ==== src/social/chat.js ====
 const CHAT_CHANNELS = [

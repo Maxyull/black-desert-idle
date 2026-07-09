@@ -9,8 +9,10 @@ fonction vérifie `isAdmin()` avant d'agir).
   farmées, cron, trésor, table de loot), Compte (tests perso), Système (palette, reset serveur).
 - `admin-economy.js` — section Économie (charge APRÈS `admin-panel.js`, s'insère dans
   `ADMIN_SECTIONS` au chargement immédiat) : santé économique, silver (registre + graphique SVG
-  `buildSilverChartSvg`), activité horaire, richesse, loyalties, marché, éditeur de la table de
-  loot en % (`admin_set_loot_rates`, table `game_config`), emplacement réservé Donations.
+  `buildSilverChartSvg`), activité horaire, richesse, loyalties, marché, volume du marché (top
+  objets échangés, `admin_market_top_items`), éditeur de la table de loot en %
+  (`admin_set_loot_rates`, table `game_config`), inscriptions par jour (`admin_signups_by_day`,
+  pousse dans le groupe "Vue d'ensemble"), emplacement réservé Donations.
 - `enh-debug-tools.js` — boutons de debug pour forcer l'enchantement de tout le stuff équipé
   (max/reset/±1 rang). Charge après `inventory/inventory-ui.js` (réutilise
   `refreshEquipSlot`/`renderOptimization`/`drawPreviewChar`). Reste intégré à l'inventaire, PAS

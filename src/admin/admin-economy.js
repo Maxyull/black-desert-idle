@@ -282,6 +282,56 @@ function renderAdminMarket(el) {
   };
 }
 
+// ---------- Économie → Volume du marché (NOUVEAU, 2026-07-19) — top objets échangés (30j) +
+// volume total. Distinct de la section "Marché" ci-dessus (lockdown/annulation) : ici c'est de la
+// lecture pure, aucune action. admin_market_top_items (SECURITY DEFINER) agrège côté serveur
+// plutôt que de renvoyer les lignes brutes de market_trades au client. ----------
+function renderAdminMarketVolume(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.rpc('admin_market_top_items', { p_days: 30 }).then(({data, error}) => {
+    if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+    const rows = data || [];
+    const totalVolume = rows.reduce((a,r) => a + Number(r.total_silver_value||0), 0);
+    const totalTrades = rows.reduce((a,r) => a + Number(r.trade_count||0), 0);
+    const itemHtml = rows.map((r,i) => `
+      <tr class="${i===0?'admTop':''}"><td>${tr(r.item_name) || escapeHtml(r.item_name)}</td>
+        <td>${fmt(r.trade_count)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver_value)}</td></tr>
+    `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun échange sur les 30 derniers jours':'No trades in the last 30 days'}</td></tr>`;
+    el.innerHTML = `<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">💱 ${LANG==='fr'?'Volume total (30j)':'Total volume (30d)'}</div><div class="astVal">${fmt(totalVolume)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔄 ${LANG==='fr'?'Échanges (30j)':'Trades (30d)'}</div><div class="astVal">${fmt(totalTrades)}</div></div>
+      </div>
+      <h3>${LANG==='fr'?'🏆 Objets les plus échangés':'🏆 Most traded items'}</h3>
+      <table class="admTable">
+        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Échanges':'Trades'}</th><th>Qté</th><th>${LANG==='fr'?'Valeur totale':'Total value'}</th></tr></thead>
+        <tbody>${itemHtml}</tbody>
+      </table>`;
+  });
+}
+
+// ---------- Vue d'ensemble → Inscriptions (NOUVEAU, 2026-07-19) — courbe des créations de compte
+// par jour (30j). auth.users n'est pas exposé via PostgREST, seule une RPC SECURITY DEFINER peut
+// y accéder -- admin_signups_by_day() (voir la migration). ----------
+function renderAdminSignups(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.rpc('admin_signups_by_day', { p_days: 30 }).then(({data, error}) => {
+    if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+    const rows = data || [];
+    const total = rows.reduce((a,r) => a + Number(r.signups||0), 0);
+    const maxCount = Math.max(1, ...rows.map(r => Number(r.signups||0)));
+    const html = rows.map(r => {
+      const label = new Date(r.day).toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { day:'2-digit', month:'2-digit' });
+      const pct = Math.round(Number(r.signups||0)/maxCount*100);
+      return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${r.signups}</span></div>`;
+    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Aucune inscription sur les 30 derniers jours':'No signups in the last 30 days'}</div>`;
+    el.innerHTML = `<div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">🆕 ${LANG==='fr'?'Inscriptions (30j)':'Signups (30d)'}</div><div class="astVal">${total}</div></div>
+      </div>
+      <h3>${LANG==='fr'?'📅 Par jour':'📅 By day'}</h3>
+      <div class="admBars">${html}</div>`;
+  });
+}
+
 // ---------- éditeur de la table de loot en % (NOUVEAU) — hook lu par renderAdminLoot()
 // (src/admin/admin-panel.js), jamais appelé directement par le shell ----------
 const LOOT_RATE_GRADES = [
@@ -346,5 +396,12 @@ ADMIN_SECTIONS.splice(2, 0, { cat:'economy', label:{fr:'Économie',en:'Economy'}
   { id:'wealth', icon:'📈', label:{fr:'Richesse',en:'Wealth'}, render:renderAdminWealth },
   { id:'loyalty', icon:'🏅', label:{fr:'Loyalties',en:'Loyalties'}, render:renderAdminLoyalty },
   { id:'market', icon:'🏛️', label:{fr:'Marché',en:'Market'}, render:renderAdminMarket },
+  { id:'marketvolume', icon:'💱', label:{fr:'Volume du marché',en:'Market volume'}, render:renderAdminMarketVolume },
   { id:'donations', icon:'💝', label:{fr:'Donations',en:'Donations'}, planned:true },
 ]});
+// "Inscriptions" rejoint "Vue d'ensemble" (groupe déjà déclaré dans admin-panel.js, qui charge
+// AVANT ce fichier) -- .push() sur son tableau items existant plutôt qu'un nouveau groupe pour 1 item.
+const adminOverviewGroup = ADMIN_SECTIONS.find(g => g.cat === 'overview');
+if (adminOverviewGroup) adminOverviewGroup.items.push(
+  { id:'signups', icon:'🆕', label:{fr:'Inscriptions',en:'Signups'}, render:renderAdminSignups }
+);

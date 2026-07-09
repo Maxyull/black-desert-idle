@@ -52,6 +52,7 @@ const ADMIN_SECTIONS = [
   ]},
   { cat:'content', label:{fr:'Contenu',en:'Content'}, items:[
     { id:'boss', icon:'🌍', label:{fr:'Boss mondiaux',en:'World bosses'}, render:renderAdminBoss },
+    { id:'zones', icon:'🗾', label:{fr:'Progression par zone',en:'Zone progression'}, render:renderAdminZoneProgression },
     { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'}, render:renderAdminItems },
     { id:'cron', icon:'⏳', label:{fr:'Pierres de Cron',en:'Cron Stones'}, render:renderAdminCron },
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:renderAdminTreasure },
@@ -446,6 +447,34 @@ function renderAdminTreasure(el) {
           `<td>${fmt(avgKills)}</td><td>${fmtDurationMin(avgMin)}</td></tr>`;
       }).join('')}</tbody>
     </table>`;
+}
+// ---------- section "Contenu → Progression par zone" (NOUVEAU, 2026-07-19, demande explicite :
+// "ajoute et modifie ce qui te semble manquant comme stats") -- best_zone_index (player_stats,
+// bornage anti-triche déjà en place, voir clamp_player_stats côté SQL) n'était affiché nulle part
+// dans l'admin ; permet de voir où les joueurs progressent réellement dans le contenu, pas juste
+// leur richesse. Même politique select-all déjà utilisée ailleurs dans ce fichier pour player_stats
+// (ex: playtimeByUser) -- aucune nouvelle RPC nécessaire, lecture directe.
+function renderAdminZoneProgression(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.from('player_stats').select('best_zone_index').then(({data}) => {
+    const counts = new Map();
+    (data||[]).forEach(r => {
+      const zi = Number(r.best_zone_index||0);
+      counts.set(zi, (counts.get(zi)||0) + 1);
+    });
+    const rows = [...counts.entries()].sort((a,b) => a[0]-b[0]);
+    const maxCount = Math.max(1, ...rows.map(r => r[1]));
+    const html = rows.map(([zi, cnt]) => {
+      const zone = ZONES[zi];
+      const label = zone ? tr(zone.name) : `#${zi}`;
+      const pct = Math.round(cnt/maxCount*100);
+      return `<div class="admBarRow"><span class="admBarLbl">${escapeHtml(label)}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${cnt}</span></div>`;
+    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+    el.innerHTML = `<div class="admSummary">${LANG==='fr'
+      ? 'Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant.'
+      : 'Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed.'}</div>
+      <div class="admBars">${html}</div>`;
+  });
 }
 
 // ---------- section "Vue d'ensemble" — dashboard synthétique (NOUVEAU, 2026-07-19) ----------
