@@ -43,6 +43,15 @@ unifiés) et `ITEM_TUTORIALS.enchant`/`.market`/`.boss` (tutoriels d'ACTION, dé
 manuellement au premier usage réel via `maybeQueueTutorialById`, pas au ramassage d'un objet) —
 voir `src/progression/README.md` pour le détail.
 
+**Stats Compagnons (2026-07-19, demande explicite)** : `renderAdminCompanions` (`Contenu →
+Compagnons`) — le module `src/companions/` (iframe isolée, 100% local jusqu'ici) pousse désormais
+un résumé de compteurs (familiers, Silver compagnon, œufs éclos, fusions, streak de connexion,
+pity déclenché, succès complétés) via `admin_companion_stats()` (migration
+`20260719190000_companion_stats.sql`), alimentée par `src/companions/companions.sync.js` toutes
+les 60s. "Joueurs synchronisés" ne compte QUE ceux ayant réellement ouvert l'onglet Compagnon au
+moins une fois — jamais les invités (RPC réservée aux comptes connectés, comme partout ailleurs).
+Lecture seule, pas d'éditeur.
+
 **Utilisation des Pierres de Cron (2026-07-19)** : jusqu'ici seul le ramassage était tracké côté
 serveur (`farm_events`, `kind='material'`) — la consommation pour protéger un enchantement
 (`invRemoveAt`, `src/inventory/inventory-ui.js`) ne touchait que l'inventaire local, invisible

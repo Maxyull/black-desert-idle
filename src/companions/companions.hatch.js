@@ -124,6 +124,7 @@ function rollAndCreatePet(eggType){
   const roll=Math.random()*100;let cum=0,rar=0;
   for(let i=0;i<odds.length;i++){cum+=odds[i];if(roll<=cum){rar=i;break;}}
   eggTypesUsed.add(eggType.id);
+  totalHatched++; // compteur à vie, jamais remis à 0 (voir companions.economy.js)
 
   // ═══ PITY COUNTER ═══ Garantit un Ancestral après trop de malchance cumulée
   hatchCountSincePity++;

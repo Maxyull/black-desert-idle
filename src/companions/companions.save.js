@@ -7,7 +7,7 @@ function saveGame(){
     const state = {
       PETS, SILVER, INVENTORY, incubSlots, eggTimer,
       petId, selFoodName, hatchCountSincePity,
-      fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount,
+      fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount, totalHatched,
       eggTypesUsed: Array.from(eggTypesUsed),
       completedAchievements: Array.from(completedAchievements),
       pityEverTriggered, loginStreak, lastLoginDate,
@@ -73,6 +73,7 @@ function loadGame(){
     caphrasUpgradeCount = state.caphrasUpgradeCount || 0;
     bossItemFound = state.bossItemFound || false;
     breakthroughCount = state.breakthroughCount || 0;
+    totalHatched = state.totalHatched || 0;
     eggTypesUsed = new Set(state.eggTypesUsed || []);
     completedAchievements = new Set(state.completedAchievements || []);
     pityEverTriggered = state.pityEverTriggered || false;

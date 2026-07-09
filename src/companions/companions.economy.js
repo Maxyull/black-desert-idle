@@ -70,6 +70,11 @@ let SILVER = 55000; // solde de départ pour tester les tiers d'œufs
 const PITY_THRESHOLD = 500;
 let hatchCountSincePity = 0;
 let pityEverTriggered = false;
+// compteur À VIE (2026-07-19, demande explicite : stats admin) -- distinct de
+// hatchCountSincePity (remis à 0 à chaque pity déclenché) : jamais réinitialisé, incrémenté
+// une seule fois par tirage réel dans rollAndCreatePet() (companions.hatch.js), peu importe le
+// chemin (slot d'incubation OU éclosion instantanée ×1/×5/×10).
+let totalHatched = 0;
 
 // ═══ TRACKING POUR ACHIEVEMENTS ═══
 let fusionCount = 0;
