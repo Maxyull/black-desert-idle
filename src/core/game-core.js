@@ -505,7 +505,16 @@ function markPenMastery(name) {
   floatTxt(P.x, P.y, 96, '🌟 PEN — '+tr(name), { gold:true });
   logToDiscord('🌟 Maîtrise PEN', `**${myPseudo||'Joueur'}** amène ${name} à PEN pour la première fois (${done}/${max}${done>=max?' — MAÎTRISE COMPLÈTE ✓':''})`, 0xffe9a8);
 }
-function compendiumPenCount() { return Object.keys(S.penMastery||{}).length; }
+// bug réel signalé le 2026-07-19 (capture d'écran : "Maîtrise PEN (45/44)", dépasse le maximum
+// théorique) -- l'ancienne version comptait TOUTES les clés jamais écrites dans S.penMastery, y
+// compris un nom d'objet qui ne fait PLUS partie de penMasteryItemList() aujourd'hui (renommage/
+// rééquilibrage passé laissant une entrée orpheline, jamais nettoyée). Filtre désormais sur les
+// noms RÉELLEMENT présents dans la liste actuelle -- une entrée orpheline reste en mémoire (aucune
+// perte de donnée si le nom revient un jour) mais ne gonfle plus le compteur affiché.
+function compendiumPenCount() {
+  const validNames = new Set(penMasteryItemList().map(e => e.name));
+  return Object.keys(S.penMastery||{}).filter(n => validNames.has(n)).length;
+}
 // "Un item qui passe pen... supprime l'item non pen du sac protégé spécial compendium" (2026-07-08)
 // -- ensureCompendiumProtection() protège toujours le PLUS ENCHANTÉ exemplaire d'un nom TANT QU'il
 // n'a jamais atteint PEN (voir plus haut). Une fois S.penMastery[name] vrai (peu importe QUEL

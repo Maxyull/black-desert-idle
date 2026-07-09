@@ -895,7 +895,11 @@ function markPenMastery(name) {
   floatTxt(P.x, P.y, 96, '🌟 PEN — '+tr(name), { gold:true });
   logToDiscord('🌟 Maîtrise PEN', `**${myPseudo||'Joueur'}** amène ${name} à PEN pour la première fois (${done}/${max}${done>=max?' — MAÎTRISE COMPLÈTE ✓':''})`, 0xffe9a8);
 }
-function compendiumPenCount() { return Object.keys(S.penMastery||{}).length; }
+
+function compendiumPenCount() {
+  const validNames = new Set(penMasteryItemList().map(e => e.name));
+  return Object.keys(S.penMastery||{}).filter(n => validNames.has(n)).length;
+}
 
 function evictMasteredFromCompendiumBag(name) {
   if (!name || !S.penMastery[name]) return;

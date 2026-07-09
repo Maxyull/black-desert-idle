@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V337', d:'19/07/2026 06:00', name:{fr:'Correctif : compteur Maîtrise PEN pouvait dépasser le maximum', en:'Fix: PEN Mastery counter could exceed the maximum'}, fr:[
+      {t:'fix', sub:'compte', tx:'Le compteur "Maîtrise PEN (X/44)" pouvait afficher un total supérieur à 44 (ex: 45/44) si un ancien nom d\'objet, retiré depuis un rééquilibrage passé, était resté enregistré. Corrigé : seuls les 44 objets réellement suivis aujourd\'hui comptent.'},
+    ], en:[
+      {t:'fix', sub:'compte', tx:'The "PEN Mastery (X/44)" counter could show a total above 44 (e.g. 45/44) if an old item name, removed by a past rebalance, was still recorded. Fixed: only the 44 items actually tracked today are counted.'},
+    ] },
   { v:'V336', d:'19/07/2026 05:00', name:{fr:'Pity boss, bonus 1ère victoire de la semaine, tutoriels d\'objets', en:'Boss pity, first weekly kill bonus, item tutorials'}, fr:[
       {t:'new', sub:'combat', tx:'World Boss : un compteur de "pity" garantit désormais un loot rarissime (Pierre de sang de Kzarka, Coeur de Vell...) au bout d\'un certain nombre de kills sans en obtenir — affiché dans le lobby du boss. Bonus "+50% première victoire de la semaine" par boss.'},
       {t:'change', sub:'combat', tx:'Mourir pendant un combat de World Boss réduit désormais la récompense chiffrée (silver/matériaux/loot rarissime) : aucun malus à 0 mort ("Perfect Kill"), jusqu\'à une perte totale du loot bonus à 4 morts ou plus. Les drops garantis de base restent toujours acquis.'},
