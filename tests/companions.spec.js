@@ -42,19 +42,28 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Velia Idle');
 
-  // roster de départ entièrement rendu (48 pets, voir companions.roster.js)
-  await expect(frame.locator('#tb2')).toHaveText('48');
+  // roster de départ : 0 pet (2026-07-10, demande explicite -- voir companions.roster.js)
+  await expect(frame.locator('#tb2')).toHaveText('0');
 
-  // onglet Collection : la grille de pets se peuple (locator scopé à la barre d'onglets, pour ne
-  // pas matcher aussi le texte d'un toast d'achievement contenant le même emoji/mot)
+  // onglet Collection : grille vide au départ (locator scopé à la barre d'onglets, pour ne pas
+  // matcher aussi le texte d'un toast d'achievement contenant le même emoji/mot)
   await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
-  await expect(frame.locator('.pet-card')).toHaveCount(48);
+  await expect(frame.locator('.pet-card')).toHaveCount(0);
 
-  // onglet Éclosion : le premier slot est prêt au démarrage, l'ouverture de la modale de choix d'œuf fonctionne
+  // onglet Éclosion : le premier slot est prêt au démarrage, l'ouverture de la modale de choix
+  // d'œuf fonctionne, et éclore l'œuf gratuit peuple bien la collection
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
   await frame.locator('.isl.ready button', { hasText: 'Éclore' }).click();
   await expect(frame.locator('#hatch-modal')).toHaveClass(/open/);
   await expect(frame.locator('#hatch-body .btn')).not.toHaveCount(0);
+
+  await frame.locator('#hatch-body .btn', { hasText: 'Utiliser' }).first().click();
+  await frame.locator('#hatch-body .btn', { hasText: 'Garder' }).click();
+  await expect(frame.locator('#hatch-modal')).not.toHaveClass(/open/);
+
+  await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
+  await expect(frame.locator('.pet-card')).toHaveCount(1);
+  await expect(frame.locator('#tb2')).toHaveText('1');
 
   // ferme le module : l'overlay disparaît et le jeu principal redevient visible
   await page.locator('#companionsOverlay button', { hasText: 'Fermer' }).click();

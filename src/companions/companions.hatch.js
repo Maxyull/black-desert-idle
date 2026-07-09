@@ -16,11 +16,11 @@ function fmtT(s){if(s<=0)return'PRÊT';return`${String(Math.floor(s/3600)).padSt
 function renderHatch(){
   // Slots
   document.getElementById('incub-slots').innerHTML=incubSlots.map((sl,i)=>{
-    if(sl.locked)return`<div class="isl locked"><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">500 Silver</div></div>`;
+    if(sl.locked)return`<div class="isl locked"><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(scaleCost(500))}</div></div>`;
     if(sl.ready)return`<div class="isl ready"><div style="position:relative"><span style="font-size:28px">🥚</span><div style="position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(68,176,96,.4),transparent);animation:eglaur 1s ease-in-out infinite"></div></div>${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(68,176,96,.1);border:1px solid rgba(68,176,96,.3);border-radius:3px;padding:1px 4px">✦ Gratuit</span>':''}<div class="itimer done">PRÊT!</div><button style="font-family:Cinzel,serif;font-size:9px;padding:4px 10px;border-radius:4px;border:1px solid var(--gold);background:linear-gradient(135deg,#5a3a10,#c8a96e);color:#080810;cursor:pointer" onclick="openEggChoice(${i})">Éclore</button></div>`;
     const pct=Math.round((1-sl.tl/sl.tot)*100);
     return`<div class="isl">${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(68,176,96,.1);border:1px solid rgba(68,176,96,.3);border-radius:3px;padding:1px 4px">✦ Gratuit</span>':''}<span style="font-size:28px">🥚</span><div class="itimer">${fmtT(sl.tl)}</div><div class="iprog"><div class="iprog-fill" style="width:${pct}%"></div></div></div>`;
-  }).join('')+`<div class="isl" style="opacity:.5;cursor:pointer" onclick="toast('💰','Slot premium — 1000 Silver')"><span style="font-size:28px">➕</span><div style="font-size:8px;color:var(--cream3)">1000 Silver</div></div>`;
+  }).join('')+`<div class="isl" style="opacity:.5;cursor:pointer" onclick="toast('💰','Slot premium — ${costLabelFor(scaleCost(1000))}')"><span style="font-size:28px">➕</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(scaleCost(1000))}</div></div>`;
   // Odds
   // Grille comparative : Rareté × Type d'œuf
   const PERIOD_DAYS = {2:7, 3:14, 4:21, 5:30}; // Rare→semaine, Épique→2sem, Légendaire→3sem, Ancestral→mois
@@ -165,13 +165,13 @@ function doHatch(slotIdx, eggTypeId){
     </div>
     <div style="margin-bottom:8px">${renderTierBlock(np)}${renderStatBars(np)}</div>
     <div style="display:flex;gap:7px;margin-top:12px">
-      <button class="btn btn-gold" onclick="window._np.terrain=false;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=21600;renderAll();CM('hatch-modal');toast('🥚','${cat.name} ajouté !')">Garder</button>
-      <button class="btn btn-ghost" onclick="PETS.forEach(p=>{if(p.cat.sec===window._np.cat.sec)p.terrain=false});window._np.terrain=true;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=21600;renderAll();CM('hatch-modal');toast('🌿','${cat.name} déployé !')">Déployer</button>
+      <button class="btn btn-gold" onclick="window._np.terrain=false;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🥚','${cat.name} ajouté !')">Garder</button>
+      <button class="btn btn-ghost" onclick="PETS.forEach(p=>{if(p.cat.sec===window._np.cat.sec)p.terrain=false});window._np.terrain=true;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🌿','${cat.name} déployé !')">Déployer</button>
     </div>`;
   window._np=np;
   OM('hatch-modal');
   setTimeout(()=>{const c=document.getElementById('hcv');if(c)drawPixelArt(c,cat.art,80,rc(rar),np.tier||1);},40);
-  incubSlots[slotIdx].ready=false;incubSlots[slotIdx].tl=21600;
+  incubSlots[slotIdx].ready=false;incubSlots[slotIdx].tl=scaleTimer(21600);
   renderHatch();
 }
 

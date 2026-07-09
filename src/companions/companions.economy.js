@@ -1,3 +1,12 @@
+// ═══ BALANCE DE TEST (2026-07-10, demande explicite) ═══
+// Tous les coûts Silver et timers (incubation, œuf gratuit) sont divisés par ce facteur pour
+// tester rapidement les flux -- repasser TEST_BALANCE_DIVISOR à 1 pour revenir aux vraies
+// valeurs (aucune autre ligne à toucher, tout est dérivé de cette seule constante).
+const TEST_BALANCE_DIVISOR = 1000;
+function scaleCost(v){ return v>0 ? Math.max(1, Math.round(v/TEST_BALANCE_DIVISOR)) : 0; }
+function scaleTimer(v){ return Math.max(1, Math.round(v/TEST_BALANCE_DIVISOR)); }
+function costLabelFor(v){ return v>0 ? `${v.toLocaleString('fr-FR')} Silver` : 'Gratuit'; }
+
 // ═══ TYPES D'ŒUFS — coût qui explose pour un gain d'odds marginal ═══
 // Cadence de référence : 1 œuf gratuit / 6h = 4/jour.
 // Odds calibrées pour offrir ~62-70% de chance d'obtenir au moins 1 pet de cette
@@ -7,10 +16,10 @@
 //   Légendaire → 1 par 3 semaines(n=84  tirages) → p≈1.19%
 //   Ancestral  → 1 par mois      (n=120 tirages) → p≈0.83%
 const EGG_TYPES=[
-  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:0,     costLabel:'Gratuit', odds:[55.57,37.05,3.57,1.79,1.19,0.83]},
-  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:800,   costLabel:'800 Silver',   odds:[54.78,36.52,3.96,2.04,1.45,1.25]},
-  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:8000,  costLabel:'8 000 Silver', odds:[53.49,35.66,4.43,2.56,1.89,1.97]},
-  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:40000, costLabel:'40 000 Silver',odds:[51.80,34.54,4.68,3.33,2.74,2.91]},
+  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),     costLabel:costLabelFor(scaleCost(0)), odds:[55.57,37.05,3.57,1.79,1.19,0.83]},
+  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(800),   costLabel:costLabelFor(scaleCost(800)),   odds:[54.78,36.52,3.96,2.04,1.45,1.25]},
+  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(8000),  costLabel:costLabelFor(scaleCost(8000)), odds:[53.49,35.66,4.43,2.56,1.89,1.97]},
+  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(40000), costLabel:costLabelFor(scaleCost(40000)),odds:[51.80,34.54,4.68,3.33,2.74,2.91]},
 ];
 
 // ═══ ŒUFS CIBLÉS PAR RARETÉ ═══════════════════════════════════════
@@ -32,18 +41,19 @@ function makeTargetedOdds(targetRar, targetPct){
 
 // Coût croissant avec la puissance de la rareté ciblée + le boost obtenu
 const TARGETED_EGG_DEFS = [
-  {rar:2, targetPct:14,  cost:6000,   costLabel:'6 000 Silver'},   // Rare
-  {rar:3, targetPct:7,   cost:20000,  costLabel:'20 000 Silver'},  // Épique
-  {rar:4, targetPct:3.5, cost:60000,  costLabel:'60 000 Silver'},  // Légendaire
-  {rar:5, targetPct:2,   cost:150000, costLabel:'150 000 Silver'}, // Ancestral
+  {rar:2, targetPct:14,  cost:6000},   // Rare
+  {rar:3, targetPct:7,   cost:20000},  // Épique
+  {rar:4, targetPct:3.5, cost:60000},  // Légendaire
+  {rar:5, targetPct:2,   cost:150000}, // Ancestral
 ];
 TARGETED_EGG_DEFS.forEach(def=>{
+  const cost = scaleCost(def.cost);
   EGG_TYPES.push({
     id:'target_'+def.rar,
     name:`Œuf ${RARITIES[def.rar].name}`,
     ico:'🎯',
-    cost:def.cost,
-    costLabel:def.costLabel,
+    cost,
+    costLabel:costLabelFor(cost),
     odds:makeTargetedOdds(def.rar, def.targetPct),
     targeted:true,
     targetRar:def.rar,

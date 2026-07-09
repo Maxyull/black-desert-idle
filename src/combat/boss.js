@@ -262,7 +262,7 @@ function openCompanionsModule() {
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'src/companions/companions.html';
+    frame.src = 'src/companions/companions.html?v=2'; // bump avec companions.html à chaque MAJ du module (cache-busting, voir companions.html)
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);
