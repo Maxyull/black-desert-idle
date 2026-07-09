@@ -454,26 +454,43 @@ function renderAdminTreasure(el) {
 // dans l'admin ; permet de voir où les joueurs progressent réellement dans le contenu, pas juste
 // leur richesse. Même politique select-all déjà utilisée ailleurs dans ce fichier pour player_stats
 // (ex: playtimeByUser) -- aucune nouvelle RPC nécessaire, lecture directe.
+// camembert (2026-07-19) + complément "Répartition par Gearscore" (demande explicite : "ajoute
+// en si necessaire") -- déjà dans la même requête player_stats, aucun coût réseau supplémentaire.
+// buildPieWithLegendHtml vient de admin-economy.js (chargé APRÈS ce fichier) -- appelé seulement
+// au clic sur la section, bien après le chargement des deux fichiers : aucun risque de TDZ, même
+// pattern que le hook buildLootRateEditorHtml() de renderAdminLoot() ci-dessus.
 function renderAdminZoneProgression(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
-  sb.from('player_stats').select('best_zone_index').then(({data}) => {
-    const counts = new Map();
+  sb.from('player_stats').select('best_zone_index, gearscore').then(({data}) => {
+    const zoneCounts = new Map();
     (data||[]).forEach(r => {
       const zi = Number(r.best_zone_index||0);
-      counts.set(zi, (counts.get(zi)||0) + 1);
+      zoneCounts.set(zi, (zoneCounts.get(zi)||0) + 1);
     });
-    const rows = [...counts.entries()].sort((a,b) => a[0]-b[0]);
-    const maxCount = Math.max(1, ...rows.map(r => r[1]));
-    const html = rows.map(([zi, cnt]) => {
+    const zoneItems = [...zoneCounts.entries()].sort((a,b) => a[0]-b[0]).map(([zi, cnt]) => {
       const zone = ZONES[zi];
-      const label = zone ? tr(zone.name) : `#${zi}`;
-      const pct = Math.round(cnt/maxCount*100);
-      return `<div class="admBarRow"><span class="admBarLbl">${escapeHtml(label)}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${cnt}</span></div>`;
-    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+      return { label: zone ? tr(zone.name) : `#${zi}`, value: cnt };
+    });
+    const GS_BRACKETS = [
+      { max:100, label:'< 100' }, { max:300, label:'100-300' }, { max:600, label:'300-600' },
+      { max:1200, label:'600-1200' }, { max:Infinity, label:'1200+' },
+    ];
+    const gsCounts = GS_BRACKETS.map(() => 0);
+    (data||[]).forEach(r => {
+      const gs = Number(r.gearscore||0);
+      const idx = GS_BRACKETS.findIndex(b => gs < b.max);
+      gsCounts[idx >= 0 ? idx : GS_BRACKETS.length-1]++;
+    });
+    const gsItems = GS_BRACKETS.map((b,i) => ({ label:b.label, value:gsCounts[i] }));
+    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(zoneItems) : `<div class="admEmpty">${LANG==='fr'?'Graphique indisponible':'Chart unavailable'}</div>`;
+    const gsPie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(gsItems, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : '';
     el.innerHTML = `<div class="admSummary">${LANG==='fr'
-      ? 'Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant.'
-      : 'Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed.'}</div>
-      <div class="admBars">${html}</div>`;
+      ? 'Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant. Catégories sous 4% fusionnées dans "Autres".'
+      : 'Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed. Categories under 4% merged into "Other".'}</div>
+      <div class="admChartsRow">
+        <div><h3 style="margin-top:0">${LANG==='fr'?'🗾 Par zone':'🗾 By zone'}</h3>${zonePie}</div>
+        <div><h3 style="margin-top:0">${LANG==='fr'?'⚔️ Par Gearscore':'⚔️ By Gearscore'}</h3>${gsPie}</div>
+      </div>`;
   });
 }
 

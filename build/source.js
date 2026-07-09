@@ -9409,24 +9409,36 @@ function renderAdminTreasure(el) {
 
 function renderAdminZoneProgression(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
-  sb.from('player_stats').select('best_zone_index').then(({data}) => {
-    const counts = new Map();
+  sb.from('player_stats').select('best_zone_index, gearscore').then(({data}) => {
+    const zoneCounts = new Map();
     (data||[]).forEach(r => {
       const zi = Number(r.best_zone_index||0);
-      counts.set(zi, (counts.get(zi)||0) + 1);
+      zoneCounts.set(zi, (zoneCounts.get(zi)||0) + 1);
     });
-    const rows = [...counts.entries()].sort((a,b) => a[0]-b[0]);
-    const maxCount = Math.max(1, ...rows.map(r => r[1]));
-    const html = rows.map(([zi, cnt]) => {
+    const zoneItems = [...zoneCounts.entries()].sort((a,b) => a[0]-b[0]).map(([zi, cnt]) => {
       const zone = ZONES[zi];
-      const label = zone ? tr(zone.name) : `#${zi}`;
-      const pct = Math.round(cnt/maxCount*100);
-      return `<div class="admBarRow"><span class="admBarLbl">${escapeHtml(label)}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${cnt}</span></div>`;
-    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+      return { label: zone ? tr(zone.name) : `#${zi}`, value: cnt };
+    });
+    const GS_BRACKETS = [
+      { max:100, label:'< 100' }, { max:300, label:'100-300' }, { max:600, label:'300-600' },
+      { max:1200, label:'600-1200' }, { max:Infinity, label:'1200+' },
+    ];
+    const gsCounts = GS_BRACKETS.map(() => 0);
+    (data||[]).forEach(r => {
+      const gs = Number(r.gearscore||0);
+      const idx = GS_BRACKETS.findIndex(b => gs < b.max);
+      gsCounts[idx >= 0 ? idx : GS_BRACKETS.length-1]++;
+    });
+    const gsItems = GS_BRACKETS.map((b,i) => ({ label:b.label, value:gsCounts[i] }));
+    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(zoneItems) : `<div class="admEmpty">${LANG==='fr'?'Graphique indisponible':'Chart unavailable'}</div>`;
+    const gsPie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(gsItems, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : '';
     el.innerHTML = `<div class="admSummary">${LANG==='fr'
-      ? 'Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant.'
-      : 'Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed.'}</div>
-      <div class="admBars">${html}</div>`;
+      ? 'Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant. Catégories sous 4% fusionnées dans "Autres".'
+      : 'Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed. Categories under 4% merged into "Other".'}</div>
+      <div class="admChartsRow">
+        <div><h3 style="margin-top:0">${LANG==='fr'?'🗾 Par zone':'🗾 By zone'}</h3>${zonePie}</div>
+        <div><h3 style="margin-top:0">${LANG==='fr'?'⚔️ Par Gearscore':'⚔️ By Gearscore'}</h3>${gsPie}</div>
+      </div>`;
   });
 }
 
@@ -9751,22 +9763,23 @@ const CATEGORY_LABEL = {
 };
 
 function buildSilverChartSvg(rows, accentColor, dangerColor) {
-  const w = 640, h = 140, padT = 6, padB = 20;
+  
+  const w = 400, h = 100, padT = 6, padB = 16;
   const midY = padT + (h - padT - padB) / 2;
   const sorted = (rows||[]).map(r => ({ hour:r.hour, net:Number(r.net_delta||0) }))
     .sort((a,b) => new Date(a.hour) - new Date(b.hour));
   const maxAbs = Math.max(1, ...sorted.map(r => Math.abs(r.net)));
-  const barW = sorted.length ? Math.max(2, (w - 20) / sorted.length - 3) : 0;
+  const barW = sorted.length ? Math.max(1.5, (w - 10) / sorted.length - 2) : 0;
   let bars = '';
   sorted.forEach((r, i) => {
-    const x = 10 + i * (barW + 3);
+    const x = 5 + i * (barW + 2);
     const bh = Math.abs(r.net) / maxAbs * (h - padT - padB) / 2;
     const y = r.net >= 0 ? midY - bh : midY;
     const col = r.net >= 0 ? accentColor : dangerColor;
     bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(bh,1).toFixed(1)}" rx="1.5" fill="${col}"></rect>`;
   });
-  return `<svg viewBox="0 0 ${w} ${h}" style="width:100%;height:140px;display:block">` +
-    `<line x1="10" y1="${midY}" x2="${w-10}" y2="${midY}" stroke="#2c2a33" stroke-width="1"></line>` +
+  return `<svg class="admBarSeriesSvg" viewBox="0 0 ${w} ${h}" style="width:100%;max-width:420px;height:100px;display:block">` +
+    `<line x1="5" y1="${midY}" x2="${w-5}" y2="${midY}" stroke="#2c2a33" stroke-width="1"></line>` +
     bars + `</svg>`;
 }
 function currentAdminAccentColors() {
@@ -9776,28 +9789,88 @@ function currentAdminAccentColors() {
   return { accent, danger };
 }
 
+const PIE_PALETTE = ['#c9a55a','#5a8fc8','#8fc98a','#e05a6e','#a578d8','#e8b45a','#5ac8b0','#c8785a'];
+
+function mergeSmallSlices(items, thresholdPct, otherLabel) {
+  const total = items.reduce((a,i) => a + Math.max(0, Number(i.value)||0), 0);
+  if (total <= 0) return [];
+  const big = [], smallSum = { value: 0 };
+  items.forEach(i => {
+    const v = Math.max(0, Number(i.value)||0);
+    if (v <= 0) return;
+    if (v / total * 100 < thresholdPct) smallSum.value += v;
+    else big.push({ label:i.label, value:v });
+  });
+  if (smallSum.value > 0) big.push({ label:otherLabel, value:smallSum.value });
+  return big;
+}
+
+function buildPieChartSvg(slices) {
+  const size = 110, r = 50, cx = size/2, cy = size/2;
+  const total = slices.reduce((a,s) => a + s.value, 0);
+  if (total <= 0) return `<svg viewBox="0 0 ${size} ${size}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="#2c2a33"></circle></svg>`;
+  let angle = -Math.PI/2, paths = '';
+  slices.forEach(s => {
+    const frac = s.value / total;
+    const a0 = angle, a1 = angle + frac * Math.PI * 2;
+    angle = a1;
+    if (frac >= 0.9999) { paths += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="${s.color}"></circle>`; return; }
+    const x0 = cx + r*Math.cos(a0), y0 = cy + r*Math.sin(a0);
+    const x1 = cx + r*Math.cos(a1), y1 = cy + r*Math.sin(a1);
+    const large = (a1 - a0) > Math.PI ? 1 : 0;
+    paths += `<path d="M${cx},${cy} L${x0.toFixed(2)},${y0.toFixed(2)} A${r},${r} 0 ${large} 1 ${x1.toFixed(2)},${y1.toFixed(2)} Z" fill="${s.color}"></path>`;
+  });
+  return `<svg viewBox="0 0 ${size} ${size}">${paths}</svg>`;
+}
+
+function buildPieWithLegendHtml(items, opts) {
+  opts = opts || {};
+  const otherLabel = LANG==='fr' ? 'Autres' : 'Other';
+  const merged = mergeSmallSlices(items, opts.thresholdPct != null ? opts.thresholdPct : 4, otherLabel);
+  if (!merged.length) return `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+  const total = merged.reduce((a,s) => a+s.value, 0);
+  const slices = merged.map((s,i) => ({ ...s, color: PIE_PALETTE[i % PIE_PALETTE.length] }));
+  const svg = buildPieChartSvg(slices);
+  const legend = slices.map(s => {
+    const pct = Math.round(s.value/total*100);
+    const val = opts.formatValue ? opts.formatValue(s.value) : fmt(Math.round(s.value));
+    return `<div class="lgRow"><span class="lgSwatch" style="background:${s.color}"></span><span class="lgLbl">${escapeHtml(s.label)} (${pct}%)</span><span class="lgVal">${val}</span></div>`;
+  }).join('');
+  return `<div class="admPieBlock">${svg}<div class="admPieLegend">${legend}</div></div>`;
+}
+
+function buildBarSeriesSvg(points, color) {
+  const w = 400, h = 90, padB = 16, padT = 4;
+  const maxV = Math.max(1, ...points.map(p => p.value));
+  const barW = points.length ? Math.max(1.5, (w - 10) / points.length - 2) : 0;
+  let bars = '';
+  points.forEach((p, i) => {
+    const x = 5 + i * (barW + 2);
+    const bh = p.value / maxV * (h - padT - padB);
+    const y = h - padB - bh;
+    bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(bh,1).toFixed(1)}" rx="1" fill="${color}"></rect>`;
+  });
+  return `<svg class="admBarSeriesSvg" viewBox="0 0 ${w} ${h}" style="width:100%;max-width:420px;height:90px;display:block">` +
+    `<line x1="5" y1="${h-padB}" x2="${w-5}" y2="${h-padB}" stroke="#2c2a33" stroke-width="1"></line>` +
+    bars + `</svg>`;
+}
+
 function renderAdminEconHealth(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   sb.from('admin_silver_ledger_by_category').select('*').then(({data}) => {
     const rows = (data||[]).map(r => ({
       category: r.category, gained: Number(r.total_gained||0), spent: Number(r.total_spent||0),
     }));
-    const maxVol = Math.max(1, ...rows.map(r => r.gained + r.spent));
-    const { accent, danger } = currentAdminAccentColors();
-    const bars = rows.map(r => {
-      const label = CATEGORY_LABEL[r.category] ? CATEGORY_LABEL[r.category][LANG] : r.category;
-      const isGain = r.gained > 0;
-      const pct = Math.round((r.gained + r.spent) / maxVol * 100);
-      const val = isGain ? '+' + fmt(r.gained) : '-' + fmt(r.spent);
-      const col = isGain ? accent : danger;
-      return `<div class="admBarRow"><span class="admBarLbl">${escapeHtml(label)}</span>` +
-        `<div class="admBarTrack"><div class="admBar" style="width:${pct}%;background:${col}"></div></div>` +
-        `<span class="admBarVal" style="color:${col}">${val}</span></div>`;
-    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+    const label = c => CATEGORY_LABEL[c] ? CATEGORY_LABEL[c][LANG] : c;
+    const sources = rows.filter(r => r.gained > 0).map(r => ({ label:label(r.category), value:r.gained }));
+    const sinks = rows.filter(r => r.spent > 0).map(r => ({ label:label(r.category), value:r.spent }));
     el.innerHTML = `<div class="admSummary">${LANG==='fr'
-        ? 'Sources (gagné) vs puits (dépensé), par catégorie — même registre que "Silver", vue centrée sur l\'équilibre entrées/sorties.'
-        : 'Sources (gained) vs sinks (spent), by category — same ledger as "Silver", view centered on inflow/outflow balance.'}</div>
-      <div class="admBars">${bars}</div>`;
+        ? 'Sources (gagné) vs puits (dépensé), par catégorie — même registre que "Silver", vue centrée sur l\'équilibre entrées/sorties. Catégories sous 4% du total fusionnées dans "Autres".'
+        : 'Sources (gained) vs sinks (spent), by category — same ledger as "Silver", view centered on inflow/outflow balance. Categories under 4% of the total are merged into "Other".'}</div>
+      <div class="admChartsRow">
+        <div><h3 style="margin-top:0">${LANG==='fr'?'📥 Sources (gagné)':'📥 Sources (gained)'}</h3>${buildPieWithLegendHtml(sources)}</div>
+        <div><h3 style="margin-top:0">${LANG==='fr'?'📤 Puits (dépensé)':'📤 Sinks (spent)'}</h3>${buildPieWithLegendHtml(sinks)}</div>
+      </div>`;
   });
 }
 
@@ -9820,13 +9893,11 @@ function renderAdminSilver(el) {
     const catRows = (silverByCategory||[]).map(r => ({
       category: r.category, gained: Number(r.total_gained||0), spent: Number(r.total_spent||0), tx: Number(r.tx_count||0),
     }));
-    const maxCatVolume = Math.max(1, ...catRows.map(r => r.gained + r.spent));
     const categoryHtml = catRows.map(r => {
       const label = CATEGORY_LABEL[r.category] ? CATEGORY_LABEL[r.category][LANG] : r.category;
-      const pct = Math.round((r.gained + r.spent) / maxCatVolume * 100);
       return `<tr><td>${escapeHtml(label)}</td><td class="admGain">+${fmt(r.gained)}</td><td class="admLoss">-${fmt(r.spent)}</td>` +
-        `<td>${fmt(r.tx)}</td><td><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div></td></tr>`;
-    }).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+        `<td>${fmt(r.tx)}</td></tr>`;
+    }).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
     const { accent, danger } = currentAdminAccentColors();
     const chartSvg = buildSilverChartSvg(silverByHour, accent, danger);
     const rateRows = (wealth||[]).map(r => {
@@ -9848,8 +9919,9 @@ function renderAdminSilver(el) {
       <h3>${LANG==='fr'?'📊 Flux net de silver par heure (48h)':'📊 Net silver flow per hour (48h)'}</h3>
       ${chartSvg}
       <h3>${LANG==='fr'?'🔍 Où partent les silver ? (registre détaillé)':'🔍 Where does the silver go? (detailed ledger)'}</h3>
+      <div class="admHint">${LANG==='fr'?'Répartition visuelle par catégorie : voir la section "Santé économique".':'Visual breakdown by category: see the "Economic health" section.'}</div>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Catégorie':'Category'}</th><th>${LANG==='fr'?'Gagné':'Gained'}</th><th>${LANG==='fr'?'Dépensé':'Spent'}</th><th>${LANG==='fr'?'Mouvements':'Transactions'}</th><th>${LANG==='fr'?'Volume':'Volume'}</th></tr></thead>
+        <thead><tr><th>${LANG==='fr'?'Catégorie':'Category'}</th><th>${LANG==='fr'?'Gagné':'Gained'}</th><th>${LANG==='fr'?'Dépensé':'Spent'}</th><th>${LANG==='fr'?'Mouvements':'Transactions'}</th></tr></thead>
         <tbody>${categoryHtml}</tbody>
       </table>
       <h3>${LANG==='fr'?'🏆 Qui gagne le plus vite ? (taux à vie)':'🏆 Who earns fastest? (lifetime rate)'}</h3>
@@ -9866,27 +9938,22 @@ function renderAdminHourly(el) {
     sb.from('admin_farm_by_hour').select('*'),
     sb.from('admin_playtime_by_hour').select('*'),
   ]).then(([{data: byHour}, {data: playtimeByHour}]) => {
+    const { accent } = currentAdminAccentColors();
     const hourMap = new Map();
     (byHour||[]).forEach(r => hourMap.set(r.hour, (hourMap.get(r.hour)||0) + Number(r.total_silver||0)));
-    const hours = [...hourMap.entries()].sort((a,b) => new Date(b[0]) - new Date(a[0])).slice(0,24);
-    const maxSilver = Math.max(1, ...hours.map(h => h[1]));
-    const hourHtml = hours.map(([h,v]) => {
-      const label = new Date(h).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { hour:'2-digit', day:'2-digit', month:'2-digit' });
-      const pct = Math.round(v/maxSilver*100);
-      return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${fmt(v)}</span></div>`;
-    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+    const hours = [...hourMap.entries()].sort((a,b) => new Date(a[0]) - new Date(b[0])).slice(-24);
+    const hourChart = buildBarSeriesSvg(hours.map(([h,v]) => ({ label:h, value:v })), accent);
     const ptRows = (playtimeByHour||[]).map(r => ({ hour:r.hour, players:Number(r.players||0), sec:Number(r.playtime_sec||0) }))
-      .sort((a,b) => new Date(b.hour) - new Date(a.hour)).slice(0,24);
-    const maxPlayers = Math.max(1, ...ptRows.map(r => r.players));
-    const ptHourHtml = ptRows.map(r => {
-      const label = new Date(r.hour).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { hour:'2-digit', day:'2-digit', month:'2-digit' });
-      const pct = Math.round(r.players/maxPlayers*100);
-      return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${r.players} · ${fmtAdmPlaytime(r.sec)}</span></div>`;
-    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+      .sort((a,b) => new Date(a.hour) - new Date(b.hour)).slice(-24);
+    const ptChart = buildBarSeriesSvg(ptRows.map(r => ({ label:r.hour, value:r.players })), accent);
+    const maxHourEntry = hours.length ? hours.reduce((m,h) => h[1]>m[1]?h:m) : null;
+    const maxPtEntry = ptRows.length ? ptRows.reduce((m,r) => r.players>m.players?r:m, ptRows[0]) : null;
     el.innerHTML = `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
-      <div class="admBars">${hourHtml}</div>
+      ${hourChart}
+      <div class="admHint">${LANG==='fr'?'Pic :':'Peak:'} ${maxHourEntry ? fmt(maxHourEntry[1]) : '—'}</div>
       <h3>${LANG==='fr'?'👥 Joueurs actifs par heure (48h)':'👥 Active players per hour (48h)'}</h3>
-      <div class="admBars">${ptHourHtml}</div>`;
+      ${ptChart}
+      <div class="admHint">${LANG==='fr'?'Pic :':'Peak:'} ${maxPtEntry ? maxPtEntry.players : '—'}</div>`;
   });
 }
 
@@ -9912,11 +9979,11 @@ function renderAdminWealth(el) {
       const idx = WEALTH_BRACKETS.findIndex(b => v < b.max);
       bracketCounts[idx >= 0 ? idx : WEALTH_BRACKETS.length-1]++;
     }
-    const maxBracketCount = Math.max(1, ...bracketCounts);
-    const histHtml = WEALTH_BRACKETS.map((b,i) => {
-      const pct = Math.max(2, Math.round(bracketCounts[i]/maxBracketCount*100));
-      return `<div class="admHistBar"><span class="ahbCount">${bracketCounts[i]}</span><div class="ahbFill" style="height:${pct}%"></div><span class="ahbLbl">${b.label}</span></div>`;
-    }).join('');
+    
+    const bracketPie = buildPieWithLegendHtml(
+      WEALTH_BRACKETS.map((b,i) => ({ label:b.label, value:bracketCounts[i] })),
+      { thresholdPct: 0, formatValue: v => String(Math.round(v)) }
+    );
     const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
       <tr><td>#${i+1}</td><td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtAdmPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
     `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
@@ -9927,7 +9994,7 @@ function renderAdminWealth(el) {
         <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${silvers.length}</div></div>
       </div>
       <h3>${LANG==='fr'?'📈 Répartition des joueurs par richesse':'📈 Players by wealth bracket'}</h3>
-      <div class="admHistBars">${histHtml}</div>
+      ${bracketPie}
       <table class="admTable">
         <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
         <tbody>${wealthHtml}</tbody>
@@ -10011,11 +10078,14 @@ function renderAdminMarketVolume(el) {
       <tr class="${i===0?'admTop':''}"><td>${tr(r.item_name) || escapeHtml(r.item_name)}</td>
         <td>${fmt(r.trade_count)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver_value)}</td></tr>
     `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun échange sur les 30 derniers jours':'No trades in the last 30 days'}</td></tr>`;
+    const pie = buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name) || r.item_name, value: Number(r.total_silver_value||0) })));
     el.innerHTML = `<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">💱 ${LANG==='fr'?'Volume total (30j)':'Total volume (30d)'}</div><div class="astVal">${fmt(totalVolume)}</div></div>
         <div class="admStatTile"><div class="astLbl">🔄 ${LANG==='fr'?'Échanges (30j)':'Trades (30d)'}</div><div class="astVal">${fmt(totalTrades)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'🏆 Objets les plus échangés':'🏆 Most traded items'}</h3>
+      <h3>${LANG==='fr'?'🏆 Part de valeur par objet':'🏆 Value share by item'}</h3>
+      ${pie}
+      <h3>${LANG==='fr'?'Détail':'Detail'}</h3>
       <table class="admTable">
         <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Échanges':'Trades'}</th><th>Qté</th><th>${LANG==='fr'?'Valeur totale':'Total value'}</th></tr></thead>
         <tbody>${itemHtml}</tbody>
@@ -10029,17 +10099,15 @@ function renderAdminSignups(el) {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
     const total = rows.reduce((a,r) => a + Number(r.signups||0), 0);
-    const maxCount = Math.max(1, ...rows.map(r => Number(r.signups||0)));
-    const html = rows.map(r => {
-      const label = new Date(r.day).toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { day:'2-digit', month:'2-digit' });
-      const pct = Math.round(Number(r.signups||0)/maxCount*100);
-      return `<div class="admBarRow"><span class="admBarLbl">${label}</span><div class="admBarTrack"><div class="admBar" style="width:${pct}%"></div></div><span class="admBarVal">${r.signups}</span></div>`;
-    }).join('') || `<div class="admEmpty">${LANG==='fr'?'Aucune inscription sur les 30 derniers jours':'No signups in the last 30 days'}</div>`;
+    const { accent } = currentAdminAccentColors();
+    const chart = rows.length
+      ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
+      : `<div class="admEmpty">${LANG==='fr'?'Aucune inscription sur les 30 derniers jours':'No signups in the last 30 days'}</div>`;
     el.innerHTML = `<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">🆕 ${LANG==='fr'?'Inscriptions (30j)':'Signups (30d)'}</div><div class="astVal">${total}</div></div>
       </div>
       <h3>${LANG==='fr'?'📅 Par jour':'📅 By day'}</h3>
-      <div class="admBars">${html}</div>`;
+      ${chart}`;
   });
 }
 

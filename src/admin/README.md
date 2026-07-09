@@ -18,6 +18,14 @@ fonction vérifie `isAdmin()` avant d'agir).
   `refreshEquipSlot`/`renderOptimization`/`drawPreviewChar`). Reste intégré à l'inventaire, PAS
   dans `ADMIN_SECTIONS`.
 
+**Graphiques compacts (2026-07-19)** : `buildPieWithLegendHtml`/`buildPieChartSvg`/`mergeSmallSlices`
+(camemberts, fusionnent automatiquement les tranches sous 4% dans "Autres") et `buildBarSeriesSvg`
+(séries temporelles compactes) dans `admin-economy.js` — remplacent les anciennes piles de
+`.admBarRow` qui s'étiraient sur toute la largeur du panneau (`flex:1` dans un conteneur plein
+écran). Utilisés par Santé économique (sources/puits), Progression par zone + Gearscore, Activité
+horaire, Richesse, Volume du marché, Inscriptions. `.admBars`/nouvelles classes plafonnées à
+420px en CSS pour ne plus jamais s'étirer bord à bord.
+
 **Panneau plein écran (2026-07-19)** : remplace l'ancienne modale à 4 onglets plats
 (`openInfo()`/`#infoOverlay`, toujours utilisée par Wiki/Compendium/Succès/Patch notes, non
 affectés). Nouveau conteneur `#adminOverlay` (sidebar + zone de contenu), voir `index.dev.html`.
