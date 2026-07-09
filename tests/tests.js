@@ -1303,6 +1303,26 @@
     }
     assert('PATCH_NOTES reste trié du plus récent (index 0) au plus ancien, sans jamais remonter dans le temps', ordered, badPair);
   }
+  // garde-fou (2026-07-19) : découvert qu'une ligne avec sub:'admin' (et sub:'compte') n'affichait
+  // AUCUNE étiquette de sous-catégorie car ces clés n'existaient pas dans PATCH_SUBCATS/
+  // PATCH_SUBCATS_EN -- silencieux, aucune erreur console, juste un badge manquant. Empêche tout
+  // futur `sub:'xxx'` orphelin de refaire la même chose.
+  function testEveryPatchSubHasALabel() {
+    if (typeof PATCH_SUBCATS === 'undefined' || typeof PATCH_SUBCATS_EN === 'undefined') return;
+    const used = new Set();
+    for (const p of PATCH_NOTES) {
+      for (const lang of ['fr', 'en']) {
+        if (!p[lang]) continue;
+        for (const line of p[lang]) { if (line.sub) used.add(line.sub); }
+      }
+    }
+    let missing = [];
+    used.forEach(sub => {
+      if (!PATCH_SUBCATS[sub]) missing.push(`${sub} (FR)`);
+      if (!PATCH_SUBCATS_EN[sub]) missing.push(`${sub} (EN)`);
+    });
+    assert('Chaque sous-catégorie utilisée dans PATCH_NOTES a un libellé dans PATCH_SUBCATS et PATCH_SUBCATS_EN', missing.length === 0, missing.join(', '));
+  }
   function testPatchPagesCoverAllEntriesWithinBounds() {
     const pages = computePatchPages();
     assert('computePatchPages : la 1ère page commence à l\'index 0 (le plus récent)', pages[0].start === 0);
@@ -2127,6 +2147,7 @@
     testSupabaseScriptIsPinnedWithIntegrity();
     testSorcierRenderLoadsBeforeSyncStartupCallers();
     testPatchNotesDatesFormatAndOrder();
+    testEveryPatchSubHasALabel();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
     testCompendiumBackfillAfterSell();
