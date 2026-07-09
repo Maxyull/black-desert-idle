@@ -39,6 +39,22 @@ async function refreshMyModStatus() {
   // le statut mod peut débloquer le canal "modéré" → on re-render les onglets du chat
   if (typeof renderChatTabs === 'function') renderChatTabs();
 }
+// override admin des taux de la table de loot V2 (2026-07-19, éditeur admin-economy.js) --
+// fusionne PAR-DESSUS LOOT_RATES_LIVE (jamais l'inverse, jamais sur LOOT_RATES_V2 qui reste la
+// référence par défaut) ; lecture publique (RLS select-all sur game_config), pas besoin de RPC.
+// Repli silencieux si la ligne n'existe pas encore ou si hors-ligne -- LOOT_RATES_LIVE garde alors
+// simplement sa valeur par défaut (copie de LOOT_RATES_V2), aucun risque de casser le loot normal.
+async function refreshLiveLootRates() {
+  if (!sb || typeof LOOT_RATES_LIVE === 'undefined') return;
+  try {
+    const { data } = await sb.from('game_config').select('value').eq('key', 'loot_rates_v2').maybeSingle();
+    if (!data || !data.value) return;
+    // fusion PARTIELLE : un override qui ne couvre qu'un palier ne doit jamais écraser les autres
+    for (const grade of Object.keys(LOOT_RATES_LIVE)) {
+      if (data.value[grade]) LOOT_RATES_LIVE[grade] = { ...LOOT_RATES_LIVE[grade], ...data.value[grade] };
+    }
+  } catch (e) {}
+}
 
 // ---------- admin (accès réservé à ce compte précis) ----------
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
@@ -291,6 +307,7 @@ async function onAuthedInner(user) {
   await refreshMyPseudo();
   refreshMyModStatus();
   refreshMyTesterStatus();
+  refreshLiveLootRates(); // charge un éventuel override admin des taux de loot (game_config)
   await loadCloudSave();
   startAutoCloudSave();
   heartbeatPresence();

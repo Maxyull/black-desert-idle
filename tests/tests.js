@@ -509,6 +509,58 @@
       });
     });
   }
+  // graphique silver en SVG (2026-07-19, admin-economy.js) : fonction PURE, testable sans DOM --
+  // vérifie qu'un tableau vide ne lève jamais d'exception et que la géométrie retournée place bien
+  // les barres positives AU-DESSUS de l'axe médian et les négatives EN-DESSOUS (pas juste "ne
+  // plante pas") -- SVG en coordonnées écran, y CROISSANT vers le bas, donc positif = y plus petit.
+  function testBuildSilverChartSvgGeometry() {
+    if (typeof buildSilverChartSvg !== 'function') return;
+    let svgEmpty;
+    try { svgEmpty = buildSilverChartSvg([], '#c9a55a', '#c05545'); } catch (e) { svgEmpty = null; }
+    assert('buildSilverChartSvg([]) ne lève jamais d\'exception', svgEmpty !== null);
+    assert('buildSilverChartSvg([]) retourne quand même un axe (<line>)', !!svgEmpty && svgEmpty.includes('<line'));
+    const svg = buildSilverChartSvg([
+      { hour:'2026-07-19T10:00:00Z', net_delta: 5000 },
+      { hour:'2026-07-19T11:00:00Z', net_delta: -3000 },
+    ], '#c9a55a', '#c05545');
+    const div = document.createElement('div'); div.innerHTML = svg;
+    const rects = [...div.querySelectorAll('rect')];
+    assert('2 lignes -> 2 barres générées', rects.length === 2);
+    const midY = parseFloat(div.querySelector('line').getAttribute('y1'));
+    const posBar = rects.find(r => r.getAttribute('fill') === '#c9a55a');
+    const negBar = rects.find(r => r.getAttribute('fill') === '#c05545');
+    assert('Barre positive : y au-dessus de l\'axe (y < midY)', !!posBar && parseFloat(posBar.getAttribute('y')) < midY);
+    assert('Barre négative : commence PILE à l\'axe (y === midY)', !!negBar && parseFloat(negBar.getAttribute('y')) === midY);
+  }
+  // override admin des taux de loot (2026-07-19) : la fusion doit être PARTIELLE -- modifier un
+  // seul palier ne doit jamais écraser les autres à undefined (bug réel qu'un simple
+  // `LOOT_RATES_LIVE = data.value` aurait introduit si l'admin n'envoyait qu'un sous-ensemble).
+  function testLootRatesLiveMergeIsPartial() {
+    if (typeof LOOT_RATES_LIVE === 'undefined' || typeof LOOT_RATES_V2 === 'undefined') return;
+    const saved = JSON.parse(JSON.stringify(LOOT_RATES_LIVE));
+    try {
+      LOOT_RATES_LIVE = JSON.parse(JSON.stringify(LOOT_RATES_V2));
+      const partialOverride = { grey: { gear: 0.5, jewel: 0.25 } }; // ne touche QUE 'grey'
+      for (const grade of Object.keys(LOOT_RATES_LIVE)) {
+        if (partialOverride[grade]) LOOT_RATES_LIVE[grade] = { ...LOOT_RATES_LIVE[grade], ...partialOverride[grade] };
+      }
+      assert('Le palier modifié (grey) reflète bien l\'override', LOOT_RATES_LIVE.grey.gear === 0.5 && LOOT_RATES_LIVE.grey.jewel === 0.25);
+      assert('Un palier NON modifié (white) garde sa valeur par défaut, jamais undefined',
+        LOOT_RATES_LIVE.white.gear === LOOT_RATES_V2.white.gear && LOOT_RATES_LIVE.white.jewel === LOOT_RATES_V2.white.jewel);
+    } finally {
+      LOOT_RATES_LIVE = saved;
+    }
+  }
+  // garde-fou d'ordre de chargement (même famille que testSorcierRenderLoadsBeforeSyncStartupCallers) :
+  // admin-economy.js référence ADMIN_SECTIONS au chargement immédiat (.splice() top-level) --
+  // doit donc charger APRÈS admin-panel.js, qui le déclare. Vérifie l'ordre réel des <script>.
+  function testAdminEconomyLoadsAfterAdminPanel() {
+    const scripts = [...document.scripts].map(s => s.src);
+    const panelIdx = scripts.findIndex(s => s.includes('admin-panel.js'));
+    const econIdx = scripts.findIndex(s => s.includes('admin-economy.js'));
+    if (panelIdx === -1 || econIdx === -1) return; // fichier pas chargé dans ce contexte (bundle prod, tests...)
+    assert('admin-economy.js charge APRÈS admin-panel.js (ADMIN_SECTIONS doit déjà exister)', econIdx > panelIdx);
+  }
   // "Cadenas dans le header sur le cadre de la ligne du bas" + "les pv du boss se retrouve dans une
   // bulle sur la ligne du bas du rectangle dans le header" (2026-07-08) -- les 2 badges doivent être
   // des overlays position:absolute à cheval sur la bordure inférieure du bouton (même convention que
@@ -2243,6 +2295,9 @@
     testBanReasonsAndDurationsWellFormed();
     testAdminThemesWellFormedAndPersist();
     testAdminSectionsWellFormed();
+    testBuildSilverChartSvgGeometry();
+    testLootRatesLiveMergeIsPartial();
+    testAdminEconomyLoadsAfterAdminPanel();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

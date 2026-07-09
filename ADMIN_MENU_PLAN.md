@@ -11,27 +11,37 @@
 
 ## 0. État des lieux — ce qui existe déjà
 
-Le panneau admin (`src/admin/admin-panel.js`, `src/admin/enh-debug-tools.js`, ouvert via
-`openTesterPanel()`) couvre déjà une bonne partie du plan initial :
+**Refonte complète le 2026-07-19** ("on va recréer un nouveau panneau admin") : l'ancienne modale
+à 4 onglets plats est remplacée par un panneau plein écran avec sidebar
+(`src/admin/admin-panel.js` = shell + registre `ADMIN_SECTIONS`, `src/admin/admin-economy.js` =
+section Économie, `src/admin/enh-debug-tools.js` inchangé — voir `src/admin/README.md` pour le
+détail exact fichier par fichier). Toutes les capacités ci-dessous ont été migrées à l'identique
+(RPC/logique inchangées, juste ré-agencées en sections `render(container)` chargées à la demande) :
 
-| Déjà en place | Où |
+| Déjà en place | Où (nouvelle sidebar) |
 |---|---|
-| Liste des joueurs (silver, GS, PA/PD, niveau, record kills/min) | onglet `Joueurs` (`Stats`) |
-| Screenshot lecture seule de l'équipement/sac d'un joueur par UUID | `Joueur précis` → `btnScreenshotPlayer` |
-| Reset d'un joueur précis / de tous les comptes (avec message expliqué au joueur) | `Joueur précis` / `Serveur` |
-| Reset des quêtes (perso / tous) | `Moi` / `Serveur` |
-| Rôles Modérateur (suppression de messages chat) / Testeur (accès anticipé) par UUID | `Joueur précis` → `admRoleList` |
-| Spawn/despawn de World Boss (perso ou global, durée ciblée) | `Moi` / `Serveur` |
-| Fermeture d'urgence du Marché + annulation en masse (remboursement) | `Serveur` → section `🏛️ Marché` |
-| Silver & temps de jeu / heure, registre de silver par catégorie, richesses (Lorenz-like) | onglets `Stats` |
-| Ressources farmées, Trésor de Velia (estimation de rareté), Pierres de Cron, Loyalties | onglets `Stats` |
-| Bascule table de loot V1 / V2 réversible en un clic | onglet `Stats → Table de loot` |
+| Liste des joueurs (silver, GS, PA/PD, niveau, record kills/min) | `Joueurs` → `Liste des joueurs` |
+| Screenshot lecture seule de l'équipement/sac d'un joueur par UUID | `Joueurs` → `Joueur précis` |
+| Reset d'un joueur précis / de tous les comptes (avec message expliqué au joueur) | `Joueurs` → `Joueur précis` / `Système` → `Zone danger` |
+| Reset des quêtes (perso / tous) | `Compte (Moi)` → `Tests perso` / `Système` → `Zone danger` |
+| Sanctions (ban/unban temporaire) | `Joueurs` → `Sanctions` |
+| Rôles Modérateur / Testeur par UUID | `Joueurs` → `Rôles` |
+| Spawn perso de World Boss / spawn+despawn global | `Compte (Moi)` → `Tests perso` / `Contenu` → `Boss mondiaux` |
+| Fermeture d'urgence du Marché + annulation en masse (remboursement) | `Économie` → `Marché` |
+| Santé économique (sources vs puits, NOUVEAU graphique SVG) | `Économie` → `Santé économique` |
+| Silver (registre par catégorie + graphique SVG net/heure, NOUVEAU) | `Économie` → `Silver` |
+| Silver & joueurs actifs / heure, richesses, Loyalties | `Économie` → `Activité horaire` / `Richesse` / `Loyalties` |
+| Ressources farmées, Trésor de Velia, Pierres de Cron | `Contenu` → sections dédiées |
+| Table de loot V1/V2 + éditeur de taux en % (NOUVEAU, `game_config`) | `Contenu` → `Table de loot` |
+| Palette du panneau (5 thèmes, slider) | `Système` → `Palette` |
 | Logs Discord de toutes les actions sensibles (`logToDiscord`) | partout, salon dédié |
 | Anti-triche : bornage automatique des champs `player_stats` + alerte Discord | `clamp_player_stats()` (Supabase), voir CLAUDE.md §12 |
-| Aperçu récompense Kzarka/Vell (rang, podium) | `bossRewardSelectorHtml` |
+| Aperçu récompense Kzarka/Vell (rang, podium) | `bossRewardSelectorHtml` (lobby boss, pas dans l'admin) |
+
+Emplacements réservés (sidebar, `planned:true`) : Guildes, PvP, Donations — voir §0bis.
 
 Ne pas re-développer ce qui précède — l'inventaire ci-dessus sert de référence pour ne pas
-dupliquer un onglet déjà fait sous un autre nom.
+dupliquer une section déjà faite sous un autre nom.
 
 ### 0bis. Roadmap confirmée mais pas encore construite (2026-07-19)
 
@@ -109,31 +119,43 @@ externe, latence de chargement, à peser).
 
 ---
 
-## 2. Menu adapté (arborescence réaliste)
+## 2. Menu adapté (arborescence réelle, refonte 2026-07-19)
 
 ```
-Panel Admin (openTesterPanel)
-├── Moi                          ← existe déjà
-├── Joueur précis                ← existe déjà (screenshot, reset, rôles)
-├── Serveur                      ← existe déjà (reset global, boss global, marché)
-└── Stats                        ← existe déjà (9 onglets analytics + loot version)
-    ├── Joueurs
-    ├── Silver & temps de jeu / heure
-    ├── Silver (registre)
-    ├── Ressources farmées
-    ├── Richesses
-    ├── Trésor de Velia
-    ├── Pierres de Cron
-    ├── Loyalties
-    ├── Table de loot (V1/V2)
-    ├── Sanctions                ← NOUVEAU (ban/mute, voir §3.1)
-    └── Patch notes              ← NOUVEAU (mini-éditeur, voir §3.2)
+Panel Admin (#adminOverlay, sidebar plein écran — ADMIN_SECTIONS)
+├── Vue d'ensemble
+│   └── Dashboard                    ← NOUVEAU (tuiles synthèse)
+├── Joueurs
+│   ├── Liste des joueurs
+│   ├── Joueur précis (screenshot, reset)
+│   ├── Sanctions                    (ban/mute, 2026-07-18)
+│   ├── Rôles (mod/testeur)
+│   ├── Guildes                      🔜 prévu, pas encore de code jeu (voir §0bis)
+│   └── PvP                          🔜 prévu, pas encore de code jeu (voir §0bis)
+├── Économie
+│   ├── Santé économique             ← NOUVEAU (SVG, sources vs puits)
+│   ├── Silver (registre)            ← graphique SVG (remplace les barres CSS)
+│   ├── Activité horaire
+│   ├── Richesse
+│   ├── Loyalties
+│   ├── Marché (lockdown/cancel)
+│   └── Donations                    🔜 prévu, pas encore de plateforme connectée
+├── Contenu
+│   ├── Boss mondiaux (spawn/despawn global)
+│   ├── Ressources farmées
+│   ├── Pierres de Cron
+│   ├── Trésor de Velia
+│   └── Table de loot (V1/V2 + éditeur de taux en % ← NOUVEAU, game_config)
+├── Compte (Moi)
+│   └── Tests perso (silver/loyalty/succès/quêtes/démo/boss perso)
+└── Système
+    ├── Palette (5 thèmes, slider, 2026-07-19)
+    └── Zone danger (reset quêtes/comptes de tous)
 ```
 
 Rien de plus n'est ajouté au premier niveau — le plan initial proposait ~40 pages organisées en
-7 catégories de sidebar ; ça suppose une équipe d'admins et un jeu à grande échelle. Ici, DEUX
-ajouts concrets suffisent à combler les vrais manques identifiés en §0 (pas de mécanisme de ban,
-pas d'éditeur de patch notes) — le reste de la liste originale est traité en §4 (cut list).
+7 catégories de sidebar ; ça suppose une équipe d'admins et un jeu à grande échelle. Le mini-
+éditeur de patch notes (§3.2) reste une idée basse priorité, pas construit dans cette refonte.
 
 ---
 

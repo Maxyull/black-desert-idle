@@ -52,18 +52,24 @@ const LOOT_RATES_V2 = {
   green: { gear:0.0144, jewel:0.0072 },
   blue:  { gear:0.0072, jewel:0.0036 },
 };
+// copie MUTABLE de LOOT_RATES_V2, éventuellement remplacée par un override admin chargé depuis
+// Supabase (table game_config, clé 'loot_rates_v2') -- voir refreshLiveLootRates() dans
+// src/backend/game-supabase.js et l'éditeur admin dans src/admin/admin-economy.js (2026-07-19).
+// gearDropChance/jewelDropChance lisent TOUJOURS cette copie, jamais LOOT_RATES_V2 directement --
+// LOOT_RATES_V2 reste la référence "valeurs par défaut du jeu", jamais mutée elle-même.
+let LOOT_RATES_LIVE = JSON.parse(JSON.stringify(LOOT_RATES_V2));
 // chance de drop d'armure/arme pour CE palier/CETTE zone, selon la version de table active
 // (S.lootTableVersion) -- zi explicite (pas juste zoneIdx global) pour rester utilisable aussi
 // bien lors d'un vrai tirage (zone actuellement farmée) que pour l'AFFICHAGE de la table de loot
 // d'une zone PRÉVISUALISÉE (zoneLootRowsHtml peut montrer une zone différente de celle qu'on farme)
 function gearDropChance(tier, zi) {
-  if (S.lootTableVersion === 'v2') return LOOT_RATES_V2[tier.grade].gear;
+  if (S.lootTableVersion === 'v2') return LOOT_RATES_LIVE[tier.grade].gear;
   return tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zi] ?? .002);
 }
 // chance de drop de bijou pour CE palier -- v1FallbackCh = la valeur V1 propre à CETTE zone (celle
 // déjà stockée dans ZONES[zi].loot.jackpot.ch), utilisée telle quelle quand la V1 est active
 function jewelDropChance(tier, v1FallbackCh) {
-  if (S.lootTableVersion === 'v2') return LOOT_RATES_V2[tier.grade].jewel;
+  if (S.lootTableVersion === 'v2') return LOOT_RATES_LIVE[tier.grade].jewel;
   return v1FallbackCh;
 }
 // rééquilibrage du 2026-07-05 (demande explicite) : les armes (weapon/awakening/secondary) ne
