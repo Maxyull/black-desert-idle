@@ -1323,6 +1323,24 @@
       if (weaponSlots.includes(e.slot)) assert(`Arme "${e.name}" n'apparaît jamais après une armure du même palier`, !sawArmorInTier);
     }
   }
+  // bug réel signalé le 2026-07-19 (capture d'écran : "Maîtrise PEN (45/44)") -- compendiumPenCount()
+  // comptait TOUTES les clés de S.penMastery, y compris un nom orphelin qui ne fait plus partie de
+  // penMasteryItemList() (renommage/rééquilibrage passé jamais nettoyé) -- ne doit JAMAIS dépasser
+  // penMasteryItemList().length, même avec une entrée obsolète dans la sauvegarde.
+  function testCompendiumPenCountNeverExceedsMaxEvenWithStaleEntry() {
+    if (typeof compendiumPenCount !== 'function' || typeof penMasteryItemList !== 'function' || typeof S === 'undefined') return;
+    const saved = { ...S.penMastery };
+    try {
+      const max = penMasteryItemList().length;
+      S.penMastery = {};
+      penMasteryItemList().forEach(e => { S.penMastery[e.name] = true; }); // les 44 entrées valides
+      assert('Toutes les entrées valides marquées -> compteur = max exact', compendiumPenCount() === max, `got=${compendiumPenCount()}, max=${max}`);
+      S.penMastery['UnAncienNomObsoleteQuiNexistePlus'] = true; // simule une entrée orpheline (renommage passé)
+      assert('Une entrée orpheline ne doit JAMAIS faire dépasser le max affiché (bug réel : "45/44")', compendiumPenCount() === max, `got=${compendiumPenCount()}, max=${max}`);
+    } finally {
+      S.penMastery = saved;
+    }
+  }
   // "Maitrise pen ajoute a cote de chaque categorie ?/11 et montre que c'est fais si c'est 11/11"
   // (2026-07-09) -- chaque en-tête de palier (.zTierHead) doit porter un compteur exact X/11, et
   // la classe "done" uniquement quand X===11 (jamais avant, jamais pour un autre palier).
@@ -2407,6 +2425,7 @@
     testBossRewardRevealEmptyShowsCloseButtonImmediately();
     testLeaveBossResultToZoneReturnsToFarm();
     testPenMasteryListIncludesAllGearAndIsOrderedByTier();
+    testCompendiumPenCountNeverExceedsMaxEvenWithStaleEntry();
     testPenMasteryTierHeadersShowCountAndDoneAt11();
     testChestLockedCellsUseBadgeConvention();
     testInvAddStacksByNameRegardlessOfKey();
