@@ -532,6 +532,50 @@
     assert('Barre positive : y au-dessus de l\'axe (y < midY)', !!posBar && parseFloat(posBar.getAttribute('y')) < midY);
     assert('Barre négative : commence PILE à l\'axe (y === midY)', !!negBar && parseFloat(negBar.getAttribute('y')) === midY);
   }
+  // graphiques compacts en camembert (2026-07-19, "modifie tout les graphique qu'il soit lisible
+  // avec camember ... merge les categorie si besoin") -- mergeSmallSlices fusionne les tranches
+  // sous le seuil dans un bucket "Autres", jamais de perte de valeur totale (juste redistribuée).
+  function testMergeSmallSlicesPreservesTotalAndMergesTail() {
+    if (typeof mergeSmallSlices !== 'function') return;
+    const items = [
+      { label:'A', value:80 }, { label:'B', value:15 }, { label:'C', value:3 }, { label:'D', value:2 },
+    ];
+    const merged = mergeSmallSlices(items, 4, 'Autres');
+    const totalIn = items.reduce((a,i) => a+i.value, 0);
+    const totalOut = merged.reduce((a,i) => a+i.value, 0);
+    assert('mergeSmallSlices préserve le total (rien perdu, juste redistribué)', totalIn === totalOut, `in=${totalIn} out=${totalOut}`);
+    assert('Les tranches sous 4% (C=3%, D=2%) sont fusionnées dans "Autres"', merged.some(s => s.label === 'Autres' && s.value === 5));
+    assert('Les grosses tranches (A, B) restent distinctes, pas fusionnées à tort', merged.some(s => s.label === 'A') && merged.some(s => s.label === 'B'));
+    assert('mergeSmallSlices([]) ne lève jamais d\'exception et renvoie un tableau vide', JSON.stringify(mergeSmallSlices([], 4, 'Autres')) === '[]');
+  }
+  // buildPieChartSvg : fonction PURE, testable sans DOM -- un total nul ne doit jamais lever
+  // d'exception (piège réel : division par zéro dans le calcul d'angle si total===0).
+  function testBuildPieChartSvgNeverThrowsOnEmpty() {
+    if (typeof buildPieChartSvg !== 'function') return;
+    let svg;
+    try { svg = buildPieChartSvg([]); } catch (e) { svg = null; }
+    assert('buildPieChartSvg([]) ne lève jamais d\'exception', svg !== null);
+    assert('buildPieChartSvg([]) retourne quand même un SVG valide', !!svg && svg.includes('<svg'));
+    const svgOneSlice = buildPieChartSvg([{ label:'A', value:10, color:'#c9a55a' }]);
+    const div = document.createElement('div'); div.innerHTML = svgOneSlice;
+    assert('Une seule tranche à 100% -> un cercle plein (pas un path d\'arc dégénéré)', !!div.querySelector('circle'));
+  }
+  // buildBarSeriesSvg : jamais d'exception sur un tableau vide (même famille que buildSilverChartSvg)
+  function testBuildBarSeriesSvgNeverThrowsOnEmpty() {
+    if (typeof buildBarSeriesSvg !== 'function') return;
+    let svg;
+    try { svg = buildBarSeriesSvg([], '#c9a55a'); } catch (e) { svg = null; }
+    assert('buildBarSeriesSvg([]) ne lève jamais d\'exception', svg !== null);
+    assert('buildBarSeriesSvg([]) retourne quand même l\'axe (<line>)', !!svg && svg.includes('<line'));
+  }
+  // garde-fou : les graphiques ne doivent plus s'étirer sur toute la largeur du panneau (2026-07-19,
+  // demande explicite "rapetisi pour eviter d'avoir des barre avec info a gauche et a droite de
+  // lecran") -- verrouille une valeur max-width concrète pour empêcher toute régression silencieuse.
+  function testChartsAreCappedNotFullWidth() {
+    if (typeof buildBarSeriesSvg !== 'function') return;
+    const svg = buildBarSeriesSvg([{label:'a',value:1}], '#c9a55a');
+    assert('buildBarSeriesSvg impose un max-width explicite (pas 100% seul)', svg.includes('max-width:420px'));
+  }
   // override admin des taux de loot (2026-07-19) : la fusion doit être PARTIELLE -- modifier un
   // seul palier ne doit jamais écraser les autres à undefined (bug réel qu'un simple
   // `LOOT_RATES_LIVE = data.value` aurait introduit si l'admin n'envoyait qu'un sous-ensemble).
@@ -2296,6 +2340,10 @@
     testAdminThemesWellFormedAndPersist();
     testAdminSectionsWellFormed();
     testBuildSilverChartSvgGeometry();
+    testMergeSmallSlicesPreservesTotalAndMergesTail();
+    testBuildPieChartSvgNeverThrowsOnEmpty();
+    testBuildBarSeriesSvgNeverThrowsOnEmpty();
+    testChartsAreCappedNotFullWidth();
     testLootRatesLiveMergeIsPartial();
     testAdminEconomyLoadsAfterAdminPanel();
     const failed = results.filter(r => !r.pass);

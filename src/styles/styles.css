@@ -1628,12 +1628,30 @@
   }
 
   /* ===== tableau de bord admin ===== */
-  .admBars { display:flex; flex-direction:column; gap:3px; margin-bottom:6px; }
+  /* plafonnées à 420px (2026-07-19, demande explicite : "rapetisi pour eviter d'avoir des barre
+     avec info a gauche et a droite de lecran") -- avant, .admBarTrack en flex:1 dans un panneau
+     admin plein écran (donc très large) étirait chaque barre d'un bord à l'autre du contenu, avec
+     le libellé et la valeur collés aux extrémités opposées de l'écran. Les séries temporelles
+     longues (24h, 30j) sont désormais des graphiques SVG compacts (buildBarSeriesSvg) plutôt que
+     des piles de .admBarRow -- cette classe ne sert plus qu'aux quelques listes courtes restantes. */
+  .admBars { display:flex; flex-direction:column; gap:3px; margin-bottom:6px; max-width:420px; }
   .admBarRow { display:flex; align-items:center; gap:8px; font-size:10.5px; }
   .admBarLbl { width:80px; flex-shrink:0; color:var(--ink-dim); }
   .admBarTrack { flex:1; height:11px; background:#0d0c11; border:1px solid #2c2a33; overflow:hidden; }
   .admBar { height:100%; background:linear-gradient(90deg,#8a7038,#c9a55a); }
   .admBarVal { width:64px; flex-shrink:0; text-align:right; color:var(--gold); }
+  /* graphiques compacts (camemberts + séries temporelles), 2026-07-19 -- voir buildPieWithLegendHtml/
+     buildBarSeriesSvg dans admin-economy.js. Les camemberts sont posés côte à côte (flex-wrap) au
+     lieu de s'étirer sur toute la largeur du panneau. */
+  .admChartsRow { display:flex; flex-wrap:wrap; gap:20px; margin-bottom:10px; }
+  .admPieBlock { display:flex; align-items:center; gap:12px; max-width:340px; }
+  .admPieBlock svg { flex-shrink:0; width:110px; height:110px; }
+  .admPieLegend { display:flex; flex-direction:column; gap:3px; font-size:10.5px; min-width:0; }
+  .admPieLegend .lgRow { display:flex; align-items:center; gap:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .admPieLegend .lgSwatch { width:9px; height:9px; border-radius:2px; flex-shrink:0; }
+  .admPieLegend .lgLbl { color:var(--ink-dim); overflow:hidden; text-overflow:ellipsis; }
+  .admPieLegend .lgVal { margin-left:auto; color:var(--ink); flex-shrink:0; padding-left:6px; }
+  .admBarSeriesSvg { max-width:420px; }
   .admTable { width:100%; border-collapse:collapse; font-size:11px; margin-bottom:4px; }
   .admTable th { text-align:left; color:var(--ink-dim); font-weight:normal; font-size:9.5px;
     letter-spacing:.5px; text-transform:uppercase; padding:4px 6px; border-bottom:1px solid #2c2a33; }
