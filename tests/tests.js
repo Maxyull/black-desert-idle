@@ -804,7 +804,12 @@
   // garde-fou de régression : un objet du Compendium enchanté jusqu'à PEN (voir attemptEnhance)
   // doit être évacué vers le sac principal, jamais laissé dans COMPENDIUM_BAG au-delà de TET.
   function testCompendiumEvictsItemOnceItReachesPen() {
-    const s = { optTarget, forcedMatKey, comp: COMPENDIUM_BAG[INV_SIZE-1], inv: INV[INV_SIZE-1], hadMastery: !!(S.penMastery && S.penMastery['testCompPenItem']) };
+    // garantit un slot libre pour l'évacuation (invAdd retourne false si INV.findIndex(null)===-1)
+    // -- sans ça, ce test dépend silencieusement de l'état du sac du compte démo (192/192 = échec
+    // à tort, sans rapport avec la logique testée -- piège connu, voir CLAUDE.md section 11)
+    const freeIdx = INV_SIZE-2;
+    const s = { optTarget, forcedMatKey, comp: COMPENDIUM_BAG[INV_SIZE-1], inv: INV[INV_SIZE-1], freeSlot: INV[freeIdx], hadMastery: !!(S.penMastery && S.penMastery['testCompPenItem']) };
+    INV[freeIdx] = null;
     const item = { name:'testCompPenItem', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv: ENH_NAMES.length-2, optimizable:true, matName:'Pierre du Temps' };
     COMPENDIUM_BAG[INV_SIZE-1] = item;
     INV[INV_SIZE-1] = { key:'mat_Pierre du Temps', name:'Pierre du Temps', kind:'material', qty:5, stackable:true, weight:0.1, val:1 };
@@ -821,7 +826,7 @@
     const movedIdx = INV.findIndex(x => x && x.name === 'testCompPenItem');
     assert('L\'objet évacué rejoint le sac principal, jamais perdu', movedIdx !== -1 && INV[movedIdx].enhLv === ENH_NAMES.length-1);
     if (movedIdx !== -1) INV[movedIdx] = null;
-    optTarget = s.optTarget; forcedMatKey = s.forcedMatKey; COMPENDIUM_BAG[INV_SIZE-1] = s.comp; INV[INV_SIZE-1] = s.inv;
+    optTarget = s.optTarget; forcedMatKey = s.forcedMatKey; COMPENDIUM_BAG[INV_SIZE-1] = s.comp; INV[INV_SIZE-1] = s.inv; INV[freeIdx] = s.freeSlot;
     delete S.enhPeakByName['testCompPenItem'];
     if (s.hadMastery) S.penMastery['testCompPenItem'] = true; else delete S.penMastery['testCompPenItem'];
   }
@@ -1879,8 +1884,13 @@
   // Un doublon plus enchanté (même socle de base) ne remplaçait donc jamais l'exemplaire équipé
   // moins monté. isStrictlyBetterGear() corrige ça pour tous les cas (slot simple + paire anneau/boucle).
   function testAutoEquipPrefersMoreEnhancedOnTiedBaseScore() {
+    // garantit un slot libre pour recevoir l'ancien ring1 délogé (invAdd retourne false sinon,
+    // et tryAutoEquipIfBetter annule tout l'échange) -- sans ça, dépend silencieusement de l'état
+    // du sac du compte démo (192/192 = échec à tort, voir CLAUDE.md section 11)
+    const freeIdx = INV_SIZE-2;
     const TEST_NAME = 'TestAutoEquipTieBreak';
-    const s = { ring1: EQUIP.ring1, ring2: EQUIP.ring2, a: INV[INV_SIZE-1] };
+    const s = { ring1: EQUIP.ring1, ring2: EQUIP.ring2, a: INV[INV_SIZE-1], freeSlot: INV[freeIdx] };
+    INV[freeIdx] = null;
     const clearName = () => {
       for (let k=0;k<INV_SIZE;k++) if (INV[k] && INV[k].name===TEST_NAME) INV[k]=null;
       if (EQUIP.ring1 && EQUIP.ring1.name===TEST_NAME) EQUIP.ring1=null;
@@ -1901,7 +1911,7 @@
     // l'ancien ring1 (enhLv 2) doit être revenu dans le sac, jamais perdu
     assert('L\'ancien ring1 délogé revient dans le sac', INV.some(it => it && it.name===TEST_NAME && it.enhLv===2));
     clearName();
-    EQUIP.ring1 = s.ring1; EQUIP.ring2 = s.ring2; INV[INV_SIZE-1] = s.a;
+    EQUIP.ring1 = s.ring1; EQUIP.ring2 = s.ring2; INV[INV_SIZE-1] = s.a; INV[freeIdx] = s.freeSlot;
   }
   // "fais un carré autour du niveau et % d'xp qui s'illumine quand on gagne de l'xp" (2026-07-10) :
   // gainXp(n>0) doit ajouter la classe .xpFlash à #lvlXpRow ; un gain nul ou négatif ne doit rien
