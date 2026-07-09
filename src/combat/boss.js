@@ -243,6 +243,9 @@ async function openBossLobby() {
   await refreshLiveBoss();
   $('bossLobbyBody').innerHTML = renderBossLobbyHtml();
   wireBossLobby();
+  // tutoriel d'action au tout premier accès au lobby boss (2026-07-19) -- voir
+  // ITEM_TUTORIALS.boss/maybeQueueTutorialById (progression/notifications-quests.js)
+  if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('boss');
 }
 // BUG trouvé le 2026-07-16 (demande explicite : "le timer se met pas a jour dans boss") : le
 // commentaire ci-dessus promettait un "tick de polling (20s)" qui n'existait NULLE PART dans le

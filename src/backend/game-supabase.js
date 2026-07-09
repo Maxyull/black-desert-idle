@@ -1405,7 +1405,12 @@ $a('btnWiki').onclick = () => {
     btn.onclick = () => { wikiSection = btn.dataset.sec; $a('btnWiki').onclick(); };
   });
   const tutoBtn = $a('btnStartTutoWiki');
-  if (tutoBtn) tutoBtn.onclick = () => { $a('infoOverlay').classList.remove('open'); startTutorial(); };
+  // trackId:'onboarding' (2026-07-19, demande explicite : stats admin sur l'onboarding) -- SEUL
+  // point d'entrée du tutoriel d'arrivée (TUTORIAL_STEPS, 21 étapes) : il n'existe aucun
+  // déclenchement automatique à la 1ère connexion, uniquement ce bouton dans le Wiki -- voir
+  // reportTutorialProgress plus bas et admin_onboarding_stats/admin_onboarding_dropoff (migration
+  // 20260719180000_onboarding_stats.sql) pour voir combien de joueurs le démarrent réellement.
+  if (tutoBtn) tutoBtn.onclick = () => { $a('infoOverlay').classList.remove('open'); startTutorial(TUTORIAL_STEPS, { trackId:'onboarding' }); };
 };
 
 // ============================================================
@@ -1632,26 +1637,48 @@ function tutorialTrackLoop() {
 // steps : liste d'étapes à jouer (par défaut le tutoriel d'arrivée) ; resetView : si true (défaut),
 // ferme les panneaux ouverts et repart sur la vue Zone — mis à false pour le tutoriel du Compendium
 // qui doit au contraire rester affiché derrière le spotlight pour pouvoir en montrer les éléments
-function startTutorial(steps = TUTORIAL_STEPS, { resetView = true } = {}) {
+// suivi de progression admin (2026-07-19, demande explicite) : optionnel, réservé au tutoriel
+// d'arrivée (trackId:'onboarding') -- les autres tutoriels (Compendium/Cron/objets) ont déjà leur
+// propre suivi via markItemTutorialSeen (progression/notifications-quests.js) et ne passent jamais
+// trackId, donc ce mécanisme reste totalement inerte pour eux (activeTutorialTrackId reste null).
+let activeTutorialTrackId = null;
+// fire-and-forget, même garde que markItemTutorialSeen (sb && currentUser && !isGuest()) -- réutilise
+// la RPC mark_item_tutorial_seen (généralisée le 2026-07-19 avec p_last_step/p_completed, voir
+// migration 20260719180000_onboarding_stats.sql) plutôt qu'une RPC dédiée en double.
+function reportTutorialProgress(completed, skipped) {
+  if (!activeTutorialTrackId) return;
+  if (!sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+  try {
+    sb.rpc('mark_item_tutorial_seen', {
+      p_tutorial_id: activeTutorialTrackId, p_skipped: !!skipped, p_last_step: tutorialStepIdx, p_completed: !!completed,
+    }).catch(()=>{});
+  } catch(e) {}
+}
+function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = null } = {}) {
   activeTutorialSteps = steps;
+  activeTutorialTrackId = trackId;
   if (resetView) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); currentActivity = 'zone'; showActivityPage('zone'); }
   tutorialStepIdx = 0;
   $a('tutorialOverlay').classList.add('open');
   showTutorialStep();
+  reportTutorialProgress(false, false); // démarré (last_step=0, ni terminé ni passé)
   if (!tutorialRafId) tutorialRafId = requestAnimationFrame(tutorialTrackLoop);
 }
-function endTutorial() {
+function endTutorial(skipped) {
   leaveTutorialStep();
+  reportTutorialProgress(!skipped, !!skipped);
+  activeTutorialTrackId = null;
   tutorialStepIdx = -1;
   $a('tutorialOverlay').classList.remove('open');
 }
 $a('tutNextBtn').onclick = () => {
   const step = activeTutorialSteps[tutorialStepIdx];
   leaveTutorialStep();
-  if (step.final) { endTutorial(); return; }
+  if (step.final) { endTutorial(false); return; }
   tutorialStepIdx++; showTutorialStep();
+  reportTutorialProgress(false, false); // progression normale (Suivant), pas encore terminé
 };
-$a('tutSkipBtn').onclick = endTutorial;
+$a('tutSkipBtn').onclick = () => endTutorial(true);
 $a('tutPrevBtn').onclick = () => {
   if (tutorialStepIdx <= 0) return;
   leaveTutorialStep();

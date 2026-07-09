@@ -879,6 +879,55 @@ const ITEM_TUTORIALS = {
         final:true },
     ],
   },
+  // trash de zone (2026-07-19, demande explicite : "info a chaque ptit objet qu'on loot") : 16 noms
+  // DIFFÉRENTS (1 par zone, kind:'trash', voir ZONES[].loot.trash.name), jamais expliqués nulle
+  // part avant ce tutoriel — un SEUL déclenchement pour toute la partie (peu importe la zone), pas
+  // un par zone (décision explicite : éviter le spam de 16 popups au fil de la progression).
+  // itemNames calculé dynamiquement depuis ZONES (jamais codé en dur) : reste correct si une zone
+  // est ajoutée/renommée sans avoir à toucher ce fichier. ZONES charge AVANT ce fichier (voir
+  // index.dev.html, world/zones-data.js avant core/game-core.js avant progression/*), donc déjà
+  // disponible ici au chargement immédiat.
+  trash: {
+    itemNames: new Set(ZONES.map(z => z.loot.trash.name)),
+    steps: [
+      { title:{fr:'Objets de loot courant', en:'Common loot items'},
+        text:{fr:'Ces petits objets (looté à 100% sur chaque monstre, un nom différent par zone) n\'ont qu\'une seule utilité : ils se revendent automatiquement en silver au ramassage. Rien à en faire, rien à garder.', en:'These small items (100% drop from every monster, a different name per zone) have a single use: they\'re automatically sold for silver on pickup. Nothing to do with them, nothing to keep.'},
+        final:true },
+    ],
+  },
+};
+// tutoriels d'ACTION (2026-07-19, demande explicite : "info... quand on va faire des nouveau truc
+// dans le jeu") : contrairement à ITEM_TUTORIALS ci-dessus (déclenchés au ramassage d'un objet),
+// ceux-ci sont déclenchés manuellement au premier usage RÉEL d'une fonctionnalité à risque/enjeu
+// pour un nouveau joueur (enchantement : risque de perte de rangs ; marché : argent bloqué tant que
+// l'ordre n'est pas exécuté ; boss : combat partagé, mourir réduit la récompense). Rejoignent
+// ITEM_TUTORIALS (même objet, mêmes clés `steps`) pour réutiliser TOUT le moteur existant (file
+// d'attente, flag "vu", stats admin) via maybeQueueTutorialById — voir combat/boss.js (openBossLobby),
+// market/market.js (btnMarket.onclick), inventory/inventory-ui.js (renderOptimization, 1er matériau
+// chargé). itemNames vide : jamais déclenchés par un ramassage, uniquement par ces appels directs.
+ITEM_TUTORIALS.enchant = {
+  itemNames: new Set(),
+  steps: [
+    { target:'#optCard', placement:'left', final:true,
+      title:{fr:'Optimisation (enchantement)', en:'Optimization (enhancement)'},
+      text:{fr:'Tenter d\'optimiser une pièce peut échouer et la faire RÉTROGRADER — plus le palier visé est haut, plus le risque est grand. Utilise des Pierres de Cron pour te protéger d\'un échec (ni gain ni perte de rang cette fois-là).', en:'Attempting to enhance a piece can fail and make it LOSE a rank — the higher the target tier, the bigger the risk. Use Cron Stones to protect yourself from a failure (no rank gained or lost that time).'} },
+  ],
+};
+ITEM_TUTORIALS.market = {
+  itemNames: new Set(),
+  steps: [
+    { target:'#marketBox', placement:'bottom', final:true,
+      title:{fr:'Marché commun', en:'Common Market'},
+      text:{fr:'Un vrai carnet d\'ordres entre joueurs : ton argent (achat) ou ton objet (vente) reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé — tu peux annuler à tout moment depuis "Mes ordres".', en:'A real order book between players: your money (buy) or your item (sell) stays locked until the order is filled or cancelled — you can cancel anytime from "My orders".'} },
+  ],
+};
+ITEM_TUTORIALS.boss = {
+  itemNames: new Set(),
+  steps: [
+    { target:'#bossLobbyBody', placement:'bottom', final:true,
+      title:{fr:'World Boss', en:'World Boss'},
+      text:{fr:'Combat partagé par tous les joueurs en ligne : ta récompense dépend de ton rang de contribution aux dégâts. Reste vivant si possible — mourir pendant le combat réduit le loot chiffré gagné à la victoire.', en:'A fight shared by every online player: your reward depends on your damage contribution rank. Try to stay alive — dying during the fight reduces the numeric loot you earn on victory.'} },
+  ],
 };
 // index inverse nom d'objet -> id de tutoriel, construit une seule fois (évite de reparcourir
 // ITEM_TUTORIALS à chaque ramassage) -- fonction pure, testable isolément
@@ -932,10 +981,19 @@ let itemTutorialQueue = [];
 let itemTutorialActive = false;
 // point d'entrée appelé au ramassage d'un objet (voir dropsTick, combat/loot-rolls.js) — reste une
 // fonction pure de décision (que faire ?) séparée de la partie DOM (playNextItemTutorial), pour
-// rester testable sans dépendre du moteur de tutoriel/overlay
+// rester testable sans dépendre du moteur de tutoriel/overlay. Simple lookup nom->id puis délègue
+// à maybeQueueTutorialById (2026-07-19, refactor) : le reste (file d'attente/plafond/flag vu) est
+// IDENTIQUE qu'un tutoriel soit déclenché par un ramassage d'objet ou manuellement (voir
+// ACTION_TUTORIALS ci-dessous — marché/enchantement/boss, déclenchés au premier usage réel).
 function maybeQueueItemTutorial(itemName) {
   const id = ITEM_TUTORIAL_BY_NAME[itemName];
-  if (!id || isItemTutorialSeen(id)) return false;
+  return id ? maybeQueueTutorialById(id) : false;
+}
+// coeur de la décision (2026-07-19, extrait de maybeQueueItemTutorial) : id direct dans
+// ITEM_TUTORIALS (via un nom d'objet OU appelé directement pour un déclenchement manuel, voir
+// ACTION_TUTORIALS). File d'attente/plafond/flag "déjà vu" partagés, aucune distinction de source.
+function maybeQueueTutorialById(id) {
+  if (!ITEM_TUTORIALS[id] || isItemTutorialSeen(id)) return false;
   if (itemTutorialQueue.includes(id) || (itemTutorialActive && itemTutorialActiveId === id)) return false; // déjà en file/en cours
   if (itemTutorialQueue.length >= ITEM_TUTORIAL_QUEUE_CAP) return false; // plafond silencieux, voir commentaire ci-dessus
   itemTutorialQueue.push(id);

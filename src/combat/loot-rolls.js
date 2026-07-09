@@ -218,6 +218,9 @@ function dropsTick(dt) {
         const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
         trackLoot(it.name);
         checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
+        // tutoriel d'objet au tout premier trash ramassé, toutes zones confondues (2026-07-19) --
+        // voir ITEM_TUTORIALS.trash/maybeQueueItemTutorial (progression/notifications-quests.js)
+        if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
         continue;
       }
 

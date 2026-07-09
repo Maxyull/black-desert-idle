@@ -2944,6 +2944,40 @@ const ITEM_TUTORIALS = {
         final:true },
     ],
   },
+  
+  trash: {
+    itemNames: new Set(ZONES.map(z => z.loot.trash.name)),
+    steps: [
+      { title:{fr:'Objets de loot courant', en:'Common loot items'},
+        text:{fr:'Ces petits objets (looté à 100% sur chaque monstre, un nom différent par zone) n\'ont qu\'une seule utilité : ils se revendent automatiquement en silver au ramassage. Rien à en faire, rien à garder.', en:'These small items (100% drop from every monster, a different name per zone) have a single use: they\'re automatically sold for silver on pickup. Nothing to do with them, nothing to keep.'},
+        final:true },
+    ],
+  },
+};
+
+ITEM_TUTORIALS.enchant = {
+  itemNames: new Set(),
+  steps: [
+    { target:'#optCard', placement:'left', final:true,
+      title:{fr:'Optimisation (enchantement)', en:'Optimization (enhancement)'},
+      text:{fr:'Tenter d\'optimiser une pièce peut échouer et la faire RÉTROGRADER — plus le palier visé est haut, plus le risque est grand. Utilise des Pierres de Cron pour te protéger d\'un échec (ni gain ni perte de rang cette fois-là).', en:'Attempting to enhance a piece can fail and make it LOSE a rank — the higher the target tier, the bigger the risk. Use Cron Stones to protect yourself from a failure (no rank gained or lost that time).'} },
+  ],
+};
+ITEM_TUTORIALS.market = {
+  itemNames: new Set(),
+  steps: [
+    { target:'#marketBox', placement:'bottom', final:true,
+      title:{fr:'Marché commun', en:'Common Market'},
+      text:{fr:'Un vrai carnet d\'ordres entre joueurs : ton argent (achat) ou ton objet (vente) reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé — tu peux annuler à tout moment depuis "Mes ordres".', en:'A real order book between players: your money (buy) or your item (sell) stays locked until the order is filled or cancelled — you can cancel anytime from "My orders".'} },
+  ],
+};
+ITEM_TUTORIALS.boss = {
+  itemNames: new Set(),
+  steps: [
+    { target:'#bossLobbyBody', placement:'bottom', final:true,
+      title:{fr:'World Boss', en:'World Boss'},
+      text:{fr:'Combat partagé par tous les joueurs en ligne : ta récompense dépend de ton rang de contribution aux dégâts. Reste vivant si possible — mourir pendant le combat réduit le loot chiffré gagné à la victoire.', en:'A fight shared by every online player: your reward depends on your damage contribution rank. Try to stay alive — dying during the fight reduces the numeric loot you earn on victory.'} },
+  ],
 };
 
 function buildItemTutorialIndex() {
@@ -2982,7 +3016,11 @@ let itemTutorialActive = false;
 
 function maybeQueueItemTutorial(itemName) {
   const id = ITEM_TUTORIAL_BY_NAME[itemName];
-  if (!id || isItemTutorialSeen(id)) return false;
+  return id ? maybeQueueTutorialById(id) : false;
+}
+
+function maybeQueueTutorialById(id) {
+  if (!ITEM_TUTORIALS[id] || isItemTutorialSeen(id)) return false;
   if (itemTutorialQueue.includes(id) || (itemTutorialActive && itemTutorialActiveId === id)) return false; 
   if (itemTutorialQueue.length >= ITEM_TUTORIAL_QUEUE_CAP) return false; 
   itemTutorialQueue.push(id);
@@ -3248,6 +3286,8 @@ function dropsTick(dt) {
         const zoneWasDone = zoneFullyCollected(zoneIdx); 
         trackLoot(it.name);
         checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
+        
+        if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
         continue;
       }
 
@@ -3777,6 +3817,8 @@ async function openBossLobby() {
   await refreshLiveBoss();
   $('bossLobbyBody').innerHTML = renderBossLobbyHtml();
   wireBossLobby();
+  
+  if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('boss');
 }
 
 function tickBossPanelCountdown() {
@@ -5884,6 +5926,8 @@ function renderOptimization() {
     matSlotEl.innerHTML = `<span style="color:${it.color}">${it.icon}</span>` + (it.qty>1?`<span class="matQty">${fmt(it.qty)}</span>`:'');
     matSlotEl.style.boxShadow = it.color ? `0 0 8px 2px ${it.color}66` : '';
     $('btnOpt').disabled = maxed;
+    
+    if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('enchant');
     const fsTxt = fsCount > 0 ? ` <span style="color:#8fc9e8">(+${fsCount} ${LANG==='fr'?'échecs sur ce palier':'fails on this tier'})</span>` : '';
     $('optChanceTxt').innerHTML = maxed ? maxedTxt
       : `${LANG==='fr'?'Matériau':'Material'} : ${tr(it.name)} · ${LANG==='fr'?'Chance':'Chance'} : ${(parts.total*100).toFixed(1)}% → ${ENH_NAMES[lvl+1]}${fsTxt}`;
@@ -8839,7 +8883,8 @@ $a('btnWiki').onclick = () => {
     btn.onclick = () => { wikiSection = btn.dataset.sec; $a('btnWiki').onclick(); };
   });
   const tutoBtn = $a('btnStartTutoWiki');
-  if (tutoBtn) tutoBtn.onclick = () => { $a('infoOverlay').classList.remove('open'); startTutorial(); };
+  
+  if (tutoBtn) tutoBtn.onclick = () => { $a('infoOverlay').classList.remove('open'); startTutorial(TUTORIAL_STEPS, { trackId:'onboarding' }); };
 };
 
 let tutTrackerWasOn = false, tutTrackerForced = false;
@@ -9033,26 +9078,42 @@ function tutorialTrackLoop() {
   tutorialRafId = requestAnimationFrame(tutorialTrackLoop);
 }
 
-function startTutorial(steps = TUTORIAL_STEPS, { resetView = true } = {}) {
+let activeTutorialTrackId = null;
+
+function reportTutorialProgress(completed, skipped) {
+  if (!activeTutorialTrackId) return;
+  if (!sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+  try {
+    sb.rpc('mark_item_tutorial_seen', {
+      p_tutorial_id: activeTutorialTrackId, p_skipped: !!skipped, p_last_step: tutorialStepIdx, p_completed: !!completed,
+    }).catch(()=>{});
+  } catch(e) {}
+}
+function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = null } = {}) {
   activeTutorialSteps = steps;
+  activeTutorialTrackId = trackId;
   if (resetView) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); currentActivity = 'zone'; showActivityPage('zone'); }
   tutorialStepIdx = 0;
   $a('tutorialOverlay').classList.add('open');
   showTutorialStep();
+  reportTutorialProgress(false, false); 
   if (!tutorialRafId) tutorialRafId = requestAnimationFrame(tutorialTrackLoop);
 }
-function endTutorial() {
+function endTutorial(skipped) {
   leaveTutorialStep();
+  reportTutorialProgress(!skipped, !!skipped);
+  activeTutorialTrackId = null;
   tutorialStepIdx = -1;
   $a('tutorialOverlay').classList.remove('open');
 }
 $a('tutNextBtn').onclick = () => {
   const step = activeTutorialSteps[tutorialStepIdx];
   leaveTutorialStep();
-  if (step.final) { endTutorial(); return; }
+  if (step.final) { endTutorial(false); return; }
   tutorialStepIdx++; showTutorialStep();
+  reportTutorialProgress(false, false); 
 };
-$a('tutSkipBtn').onclick = endTutorial;
+$a('tutSkipBtn').onclick = () => endTutorial(true);
 $a('tutPrevBtn').onclick = () => {
   if (tutorialStepIdx <= 0) return;
   leaveTutorialStep();
@@ -9335,6 +9396,7 @@ const ADMIN_SECTIONS = [
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:renderAdminTreasure },
     { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, render:renderAdminLoot },
     { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
+    { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:renderAdminOnboarding },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
@@ -9772,6 +9834,48 @@ function renderAdminItemTutorials(el) {
         <thead><tr><th>${LANG==='fr'?'Tutoriel':'Tutorial'}</th><th>${LANG==='fr'?'Terminés':'Completed'}</th><th>${LANG==='fr'?'Passés':'Skipped'}</th><th>${LANG==='fr'?'Total':'Total'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>`;
+  });
+}
+
+function renderAdminOnboarding(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  Promise.all([sb.rpc('admin_onboarding_stats'), sb.rpc('admin_onboarding_dropoff')]).then(([statsRes, dropRes]) => {
+    if (statsRes.error) { el.innerHTML = `<div class="admHint">${escapeHtml(statsRes.error.message)}</div>`; return; }
+    const s = (statsRes.data && statsRes.data[0]) || { started:0, completed:0, skipped:0, in_progress:0 };
+    const started = Number(s.started||0), completed = Number(s.completed||0), skipped = Number(s.skipped||0), inProgress = Number(s.in_progress||0);
+    if (!started) {
+      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Personne n\'a encore démarré le tutoriel d\'arrivée (bouton dans le Wiki)':'No one has started the arrival tutorial yet (button in the Wiki)'}</div>`;
+      return;
+    }
+    const completedPct = started > 0 ? Math.round(completed/started*100) : 0;
+    const pie = typeof buildPieWithLegendHtml === 'function'
+      ? buildPieWithLegendHtml([
+          { label: LANG==='fr'?'Terminé':'Completed', value: completed },
+          { label: LANG==='fr'?'Passé':'Skipped', value: skipped },
+          { label: LANG==='fr'?'En cours / abandonné':'In progress / abandoned', value: inProgress },
+        ], { thresholdPct: 0 })
+      : '';
+    const dropRows = (dropRes.data || []);
+    const totalSteps = (typeof TUTORIAL_STEPS !== 'undefined' && TUTORIAL_STEPS.length) || 21;
+    const dropoffHtml = dropRows.length
+      ? `<table class="admTable">
+          <thead><tr><th>${LANG==='fr'?'Étape où bloqué':'Step reached'}</th><th>${LANG==='fr'?'Joueurs':'Players'}</th></tr></thead>
+          <tbody>${dropRows.map(r => `<tr><td>${Number(r.last_step)+1} / ${totalSteps}</td><td>${fmt(Number(r.user_count||0))}</td></tr>`).join('')}</tbody>
+        </table>`
+      : `<div class="admEmpty">${LANG==='fr'?'Aucun abandon en cours (tout le monde a terminé ou passé)':'No in-progress abandonment (everyone finished or skipped)'}</div>`;
+    el.innerHTML = `<div class="admSummary">${LANG==='fr'
+        ? 'Le tutoriel d\'arrivée ne se lance jamais automatiquement — seulement via le bouton dans le Wiki. "Démarré" = a cliqué ce bouton au moins une fois.'
+        : 'The arrival tutorial never launches automatically — only via the button in the Wiki. "Started" = clicked that button at least once.'}</div>
+      <div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">🧭 ${LANG==='fr'?'Démarré':'Started'}</div><div class="astVal">${fmt(started)}</div></div>
+        <div class="admStatTile"><div class="astLbl">✅ ${LANG==='fr'?'Terminé':'Completed'}</div><div class="astVal">${fmt(completed)} <span class="admHint">(${completedPct}%)</span></div></div>
+        <div class="admStatTile"><div class="astLbl">⏭️ ${LANG==='fr'?'Passé':'Skipped'}</div><div class="astVal">${fmt(skipped)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🚪 ${LANG==='fr'?'En cours / abandonné':'In progress / abandoned'}</div><div class="astVal">${fmt(inProgress)}</div></div>
+      </div>
+      <h3>${LANG==='fr'?'⚖️ Répartition':'⚖️ Breakdown'}</h3>
+      ${pie}
+      <h3>${LANG==='fr'?'📉 Funnel d\'abandon (étape où resté bloqué)':'📉 Drop-off funnel (step last seen)'}</h3>
+      ${dropoffHtml}`;
   });
 }
 
@@ -10851,6 +10955,8 @@ $a('btnMarket').onclick = async () => {
   }
   $a('marketOverlay').classList.add('open');
   refreshCommonMarket();
+  
+  if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('market');
 };
 $a('closeMarket').onclick = () => $a('marketOverlay').classList.remove('open');
 let marketMouseDownOnBackdrop = false;

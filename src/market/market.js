@@ -36,6 +36,9 @@ $a('btnMarket').onclick = async () => {
   }
   $a('marketOverlay').classList.add('open');
   refreshCommonMarket();
+  // tutoriel d'action au tout premier accès au marché (2026-07-19) -- voir
+  // ITEM_TUTORIALS.market/maybeQueueTutorialById (progression/notifications-quests.js)
+  if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('market');
 };
 $a('closeMarket').onclick = () => $a('marketOverlay').classList.remove('open');
 let marketMouseDownOnBackdrop = false;

@@ -1166,6 +1166,10 @@ function renderOptimization() {
     matSlotEl.innerHTML = `<span style="color:${it.color}">${it.icon}</span>` + (it.qty>1?`<span class="matQty">${fmt(it.qty)}</span>`:'');
     matSlotEl.style.boxShadow = it.color ? `0 0 8px 2px ${it.color}66` : '';
     $('btnOpt').disabled = maxed;
+    // tutoriel d'action la 1ère fois qu'un matériau est chargé (juste AVANT le risque, pas après le
+    // clic sur "Tenter") -- 2026-07-19, voir ITEM_TUTORIALS.enchant/maybeQueueTutorialById
+    // (progression/notifications-quests.js)
+    if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('enchant');
     const fsTxt = fsCount > 0 ? ` <span style="color:#8fc9e8">(+${fsCount} ${LANG==='fr'?'échecs sur ce palier':'fails on this tier'})</span>` : '';
     $('optChanceTxt').innerHTML = maxed ? maxedTxt
       : `${LANG==='fr'?'Matériau':'Material'} : ${tr(it.name)} · ${LANG==='fr'?'Chance':'Chance'} : ${(parts.total*100).toFixed(1)}% → ${ENH_NAMES[lvl+1]}${fsTxt}`;
