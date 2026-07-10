@@ -146,11 +146,30 @@ moyenne doeuf eclos/jour, stats entiere liste des fusion et grph completion inde
   même esprit que `admin_list_players`/`admin_wealth` séparés.
 - Migration : `supabase/migrations/20260720130000_companion_stats_egg_and_index.sql`.
 
-**Classement cross-joueurs (2026-07-20)** : `companion_leaderboard()` — SEULE RPC de ce module SANS
-garde email (accessible à tout compte authentifié non-invité, même pattern que
-`get_online_players()`) — classe par `pet_count` décroissant, résout le pseudo via
+**Classement cross-joueurs (2026-07-20, refonte "Classement Public" 2026-07-21)** :
+`companion_leaderboard()` — SEULE RPC de ce module SANS garde email (accessible à tout compte
+authentifié non-invité, même pattern que `get_online_players()`) — résout le pseudo via
 `profiles.pseudo` en priorité puis `player_stats.display_name`. Migration
 `supabase/migrations/20260720140000_companion_leaderboard.sql`.
+- **Refonte 2026-07-21 (port à l'identique d'un mockup externe `classement-public.html` fourni par
+  l'utilisateur, voir CLAUDE.md §30)** : 4 catégories (Prestige/Gearscore/Fusions/Achievements,
+  onglets), podium top 3, recherche par pseudo, pagination (15/page), toggle "Ma position"
+  (voisinage de rang) — tout re-trié CÔTÉ CLIENT sur les mêmes 100 lignes de `companion_leaderboard()`
+  (pas de 2e round-trip par catégorie). Onglet Guildes du mockup RETIRÉ (aucun système de guilde en
+  jeu, voir `src/social/chat.js`) ; pas de segmented control saison/all-time (le jeu n'a pas de
+  notion de saison) ; pas d'indicateur de mouvement ▲▼ (nécessiterait un rang précédent stocké par
+  snapshot, inexistant — un delta inventé serait trompeur).
+- **`prestige_score`/`gs_max` calculés côté serveur (migration
+  `supabase/migrations/20260721100000_companion_leaderboard_prestige.sql`)** : `companion_stats`
+  gagne 2 colonnes agrégées, `gs_sum_with_tier` (Σ `normGS(p) + tier×20` sur tout le roster,
+  poussée par `computeCompanionGsAggregates()` dans `companions.sync.js`) et `gs_max` (le plus haut
+  `normGS` du roster). `companion_leaderboard()` calcule `prestige_score` à partir de ces agrégats
+  EXACTEMENT comme `prestigeScore()` (`companions.achievements.js`) — même formule, deux endroits,
+  à garder synchronisés si la formule change un jour. `sync_companion_stats()` passe de 15 à 17
+  paramètres (DROP obligatoire de l'ancienne signature, règle du projet section 12).
+  ⚠️ **Migration écrite mais pas encore appliquée en base au moment de ce commit** (pas d'accès
+  Supabase authentifié dans cette session) — `companion_leaderboard()` échouera (colonnes/paramètres
+  manquants) tant qu'elle n'est pas exécutée sur le vrai projet Supabase.
 
 **Bug corrigé — le panneau admin réapparaissait pendant une session Compagnon (2026-07-20,
 rapporté explicitement : "quand je reste longtemps dans compagnon le dashboard s'affiche")** :
@@ -452,11 +471,13 @@ par Supabase le temps de la transaction.
 18. `companions.achievements.js` — définitions des achievements, score de prestige.
 19. `companions.pvp.js` — onglet PvP (classement LOCAL par puissance, bandeau verrouillé). Charge
     après `tier.js`/`roster.js` par lisibilité, aucune contrainte d'ordre réelle (appelée via `ST(8)`).
-20. `companions.leaderboard.js` (2026-07-20) — onglet "Tes stats" + Classement (tab 9, `ST(9)`),
-    distinct du classement PvP LOCAL ci-dessus : "Tes stats" (100% local, œufs ouverts/argent
-    dépensé/fusions/index) + un vrai classement CROSS-JOUEURS via la RPC publique
-    `companion_leaderboard()` (voir `supabase/migrations/20260720140000_companion_leaderboard.sql`),
-    même pattern `window.parent.getSbClient()` que `companions.sync.js`.
+20. `companions.leaderboard.js` (2026-07-20, refonte "Classement Public" 2026-07-21) — onglet "Tes
+    stats" + Classement (tab 9, `ST(9)`), distinct du classement PvP LOCAL ci-dessus : "Tes stats"
+    (100% local, œufs ouverts/argent dépensé/fusions/index/Score Prestige) + un vrai classement
+    CROSS-JOUEURS via la RPC publique `companion_leaderboard()` (voir
+    `supabase/migrations/20260721100000_companion_leaderboard_prestige.sql`), même pattern
+    `window.parent.getSbClient()` que `companions.sync.js` — 4 catégories, podium, recherche,
+    pagination, "Ma position" (voir plus haut pour le détail).
 21. `companions.viewer3d.js` (2026-07-10) — écran de test du viewer 3D GLB (voir plus haut). Lit
     `window.THREE`/`window.GLTFLoader`/`window.OrbitControls` posés par
     `vendor/three/three-bridge.js` (module, asynchrone — géré via l'event `three-ready`). Ordre
