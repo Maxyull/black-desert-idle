@@ -229,6 +229,35 @@ async function linkDiscordAccount() {
   if (error) alert('Erreur : ' + error.message);
 }
 
+// connexion via Google/GitHub (2026-07-20, demande explicite : "ajoute inscription google,
+// github") — même pattern que Discord ci-dessus, sans scope additionnel (pas de bot à rejoindre
+// pour ces deux-là). ⚠️ Ces deux providers doivent être activés avec un Client ID/Secret OAuth
+// côté Dashboard Supabase (Authentication > Providers) avant de fonctionner — action externe,
+// impossible à faire depuis ce fichier.
+async function doSignInGoogle() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href } });
+}
+async function doSignInGithub() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: location.href } });
+}
+// lie Google/GitHub à un compte déjà existant (panneau "Mon compte") — même pattern que
+// linkDiscordAccount ci-dessus.
+async function linkGoogleAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+async function linkGithubAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'github', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+function providerIdentity(user, provider) {
+  return user?.identities?.find(i => i.provider === provider) || null;
+}
+
 function discordIdentity(user) {
   return user?.identities?.find(i => i.provider === 'discord') || null;
 }
@@ -353,18 +382,17 @@ async function refreshMyPseudo() {
   updatePseudoDisplay();
 }
 
-// point d'entrée unique au chargement (et après déconnexion) : tente une session invité automatique.
-// si l'anonymat n'est pas activé côté Supabase (ou hors-ligne), on retombe sur le formulaire classique.
+// point d'entrée unique au chargement (et après déconnexion) — DÉSACTIVÉ le 2026-07-20 (demande
+// explicite : "Désactive les invité") : n'ouvre plus de session anonyme automatique pour un
+// nouveau visiteur, affiche directement le formulaire de connexion/inscription. Le nom de la
+// fonction reste inchangé (appelée depuis doLogout()/l'IIFE de démarrage plus bas) pour limiter le
+// diff — seul son comportement change. Les sessions invité créées AVANT ce changement continuent
+// de fonctionner normalement (isGuest() reste vrai pour elles, rien n'est supprimé côté serveur) ;
+// seule la création de NOUVELLES sessions anonymes est coupée.
 async function startGuestOrShowAuth() {
-  if (!sb) { showAuthOverlay(false); updateUserBar(); return; }
-  try {
-    const { data, error } = await sb.auth.signInAnonymously();
-    if (error) throw error;
-    onAuthed(data.user);
-  } catch (e) {
-    showAuthOverlay(true);
-    authShow('');
-  }
+  if (!sb) { showAuthOverlay(false); updateUserBar(); return; } // Supabase pas configuré → mode local, inchangé
+  showAuthOverlay(true);
+  authShow('');
 }
 
 let tutorialAutoShown = false; // évite de relancer le tuto auto plusieurs fois si loadCloudSave est rappelé
@@ -855,6 +883,8 @@ async function openAccountPanel() {
   ];
 
   const hasDiscord = !!discordIdentity(currentUser);
+  const hasGoogle = !!providerIdentity(currentUser, 'google');
+  const hasGithub = !!providerIdentity(currentUser, 'github');
 
   const html = `
     <div class="admSummary">${LANG==='fr'?'Compte':'Account'} : <b>${currentUser.email || '—'}</b></div>
@@ -871,6 +901,16 @@ async function openAccountPanel() {
     ${hasDiscord
       ? `<p class="mHint">${LANG==='fr'?'✅ Compte Discord connecté.':'✅ Discord account connected.'}</p>`
       : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${LANG==='fr'?'Connecter Discord':'Connect Discord'}</button>`}
+
+    <h3>🔵 Google</h3>
+    ${hasGoogle
+      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Google connecté.':'✅ Google account connected.'}</p>`
+      : `<button id="btnLinkGoogle" class="googleBtn">🔵 ${LANG==='fr'?'Connecter Google':'Connect Google'}</button>`}
+
+    <h3>🐙 GitHub</h3>
+    ${hasGithub
+      ? `<p class="mHint">${LANG==='fr'?'✅ Compte GitHub connecté.':'✅ GitHub account connected.'}</p>`
+      : `<button id="btnLinkGithub" class="githubBtn">🐙 ${LANG==='fr'?'Connecter GitHub':'Connect GitHub'}</button>`}
 
     <h3>${LANG==='fr'?'🎁 Parrainage':'🎁 Referrals'}</h3>
     <div id="refCodeBox">${code}</div>
@@ -907,6 +947,8 @@ async function openAccountPanel() {
     syncPlayerStats(); // propage immédiatement au classement, sans attendre la prochaine synchro
   };
   if (!hasDiscord) $a('btnLinkDiscord').onclick = linkDiscordAccount;
+  if (!hasGoogle) $a('btnLinkGoogle').onclick = linkGoogleAccount;
+  if (!hasGithub) $a('btnLinkGithub').onclick = linkGithubAccount;
   $a('btnCopyRefCode').onclick = async () => {
     try { await navigator.clipboard.writeText(code); } catch(e) {}
     $a('btnCopyRefCode').textContent = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
@@ -946,6 +988,8 @@ document.querySelectorAll('.authLangBtn').forEach(b => {
   };
 });
 $a('btnSignInDiscord').onclick = doSignInDiscord;
+$a('btnSignInGoogle').onclick = doSignInGoogle;
+$a('btnSignInGithub').onclick = doSignInGithub;
 $a('btnClearCacheAuth').onclick = clearGameCache;
 $a('btnLogout').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {
@@ -1010,6 +1054,8 @@ const I18N = {
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
   btnSignInDiscord: { fr:'🎮 Se connecter avec Discord', en:'🎮 Sign in with Discord' },
+  btnSignInGoogle: { fr:'🔵 Se connecter avec Google', en:'🔵 Sign in with Google' },
+  btnSignInGithub: { fr:'🐙 Se connecter avec GitHub', en:'🐙 Sign in with GitHub' },
   btnClearCacheAuth: { fr:'🧹 Vider le cache du jeu', en:'🧹 Clear game cache' },
   btnCodex: { fr:'📚 Codex', en:'📚 Codex' },
   tabCommon: { fr:'Marché commun', en:'Common Market' },
