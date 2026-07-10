@@ -59,6 +59,7 @@ const ADMIN_SECTIONS = [
   { cat:'content', label:{fr:'Contenu',en:'Content'}, items:[
     { id:'boss', icon:'🌍', label:{fr:'Boss mondiaux',en:'World bosses'}, render:renderAdminBoss },
     { id:'zones', icon:'🗾', label:{fr:'Progression par zone',en:'Zone progression'}, render:renderAdminZoneProgression },
+    { id:'compendium', icon:'📖', label:{fr:'Compendium',en:'Compendium'}, render:renderAdminCompendium },
     { id:'items', icon:'📦', label:{fr:'Ressources farmées',en:'Farmed resources'}, render:renderAdminItems },
     { id:'cron', icon:'⏳', label:{fr:'Pierres de Cron',en:'Cron Stones'}, render:renderAdminCron },
     { id:'treasure', icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'}, render:renderAdminTreasure },
@@ -517,6 +518,35 @@ function renderAdminZoneProgression(el) {
         <div><h3 style="margin-top:0">${LANG==='fr'?'🗾 Par zone':'🗾 By zone'}</h3>${zonePie}</div>
         <div><h3 style="margin-top:0">${LANG==='fr'?'⚔️ Par Gearscore':'⚔️ By Gearscore'}</h3>${gsPie}</div>
       </div>`;
+  });
+}
+
+// ---------- section "Contenu → Compendium" (2026-07-10, demande explicite : "ajoute au panneau
+// admin ce qui manque") -- distribution de player_stats.compendium_pct (alimenté par
+// compendiumOverallPct(), core/game-core.js, à chaque syncPlayerStats()) -- même pattern que
+// renderAdminZoneProgression juste au-dessus (placeholder synchrone, requête async, buckets +
+// buildPieWithLegendHtml). Lecture seule, aucune action admin ici.
+function renderAdminCompendium(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.from('player_stats').select('compendium_pct').then(({data}) => {
+    const rows = data||[];
+    const PCT_BRACKETS = [
+      { max:10, label:'0-10%' }, { max:30, label:'10-30%' }, { max:60, label:'30-60%' },
+      { max:90, label:'60-90%' }, { max:Infinity, label:'90-100%' },
+    ];
+    const counts = PCT_BRACKETS.map(() => 0);
+    rows.forEach(r => {
+      const pct = Number(r.compendium_pct||0);
+      const idx = PCT_BRACKETS.findIndex(b => pct < b.max);
+      counts[idx >= 0 ? idx : PCT_BRACKETS.length-1]++;
+    });
+    const items = PCT_BRACKETS.map((b,i) => ({ label:b.label, value:counts[i] }));
+    const avg = rows.length ? Math.round(rows.reduce((s,r) => s + Number(r.compendium_pct||0), 0) / rows.length) : 0;
+    const pie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(items, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${LANG==='fr'?'Graphique indisponible':'Chart unavailable'}</div>`;
+    el.innerHTML = `<div class="admSummary">${LANG==='fr'
+      ? `Moyenne : ${avg}% de complétion (zones + World Bosses + Maîtrise PEN combinés) sur ${rows.length} joueur(s) suivi(s).`
+      : `Average: ${avg}% completion (zones + World Bosses + PEN Mastery combined) across ${rows.length} tracked player(s).`}</div>
+      <div class="admChartsRow"><div><h3 style="margin-top:0">${LANG==='fr'?'📖 Répartition':'📖 Distribution'}</h3>${pie}</div></div>`;
   });
 }
 

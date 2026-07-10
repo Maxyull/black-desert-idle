@@ -593,6 +593,11 @@ async function syncPlayerStats() {
       treasure_count: treasureCount,
       loyalty: Math.round(S.loyalty||0),
       best_kpm: Math.round((S.bestKpm||0)*10)/10,
+      // % de complétion GLOBALE du Compendium -- zones+boss+PEN (2026-07-10, demande explicite :
+      // "ajoute au panneau admin ce qui manque"), voir compendiumOverallPct() (core/game-core.js).
+      // Jamais recalculé côté serveur : zones/boss/PEN ne font QUE monter (jamais de retrait), donc
+      // pas besoin d'un record séparé comme best_kpm -- la valeur courante EST déjà monotone.
+      compendium_pct: typeof compendiumOverallPct === 'function' ? compendiumOverallPct() : 0,
       updated_at: new Date().toISOString(),
     });
   } catch(e) { /* pas grave, prochaine synchro rattrapera */ }
@@ -817,8 +822,11 @@ $a('btnLeaderboard').onclick = openLeaderboard;
 $a('btnNotifCenter').onclick = openNotifCenter;
 updateNotifBadge();
 $a('btnAchievements').onclick = openAchievements;
-$a('btnCompendium').onclick = openCompendium;
-$a('ztCompendium').onclick = openCompendium;
+// 2026-07-10 : remplace l'ancienne modale texte (openCompendium(), progression/notifications-quests.js,
+// toujours utilisée comme repli si React est indisponible) par le nouveau Compendium React (3e
+// exception React du projet, voir src/progression/compendium-react.js et CLAUDE.md §7).
+$a('btnCompendium').onclick = openCompendiumReact;
+$a('ztCompendium').onclick = openCompendiumReact;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 // bascule Inventaire/Assemblage dans la carte Inventaire (2026-07-06, demande explicite : "on va

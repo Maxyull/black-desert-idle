@@ -2868,6 +2868,55 @@
       awayLevelBefore = savedLevelBefore; awayPercentBefore = savedPercentBefore;
     }
   }
+  // compendiumOverallPct() : combine zones + boss + PEN (core/game-core.js) -- distinct de
+  // compendiumPct() (points de bonus de stat, PEN exclu) : régression possible si quelqu'un
+  // confond les deux un jour (voir CLAUDE.md §7, 3e exception React, Compendium).
+  function testCompendiumOverallPctCombinesAllThreeSources() {
+    if (typeof compendiumOverallPct !== 'function') return;
+    const savedLoot = { ...S.lootByItem }, savedBosses = { ...S.bossesKilled }, savedPen = { ...S.penMastery };
+    try {
+      S.lootByItem = {}; S.bossesKilled = {}; S.penMastery = {};
+      assert('0% quand rien n\'est fait', compendiumOverallPct() === 0, `pct=${compendiumOverallPct()}`);
+      // débloque tout : chaque zone (ses 4 objets), tous les boss, tous les items PEN
+      ZONES.forEach((z, zi) => { zoneItemNames(zi).forEach(n => { S.lootByItem[n] = 1; }); });
+      Object.keys(BOSS_ROSTER).forEach(id => { S.bossesKilled[id] = Date.now(); });
+      penMasteryItemList().forEach(e => { S.penMastery[e.name] = true; });
+      assert('100% quand tout est fait (zones+boss+PEN)', compendiumOverallPct() === 100, `pct=${compendiumOverallPct()}`);
+    } finally {
+      S.lootByItem = savedLoot; S.bossesKilled = savedBosses; S.penMastery = savedPen;
+    }
+  }
+  // registre monde/boss du Compendium React (src/progression/compendium-react.js) -- même famille
+  // de garde-fou que testAdminSectionsWellFormed : un monde ou un boss ajouté côté data sans être
+  // reflété ici afficherait silencieusement rien (pas de couleur / boss orphelin d'aucun monde).
+  function testCompendiumWorldAndBossRegistriesAreComplete() {
+    if (typeof CMP_WORLD_COLOR === 'undefined' || typeof CMP_BOSS_WORLD === 'undefined') return;
+    ZONE_TIERS.forEach(w => assert(`CMP_WORLD_COLOR couvre le monde "${w.id}"`, !!CMP_WORLD_COLOR[w.id]));
+    Object.keys(BOSS_ROSTER).forEach(id => {
+      assert(`CMP_BOSS_WORLD couvre le boss "${id}"`, !!CMP_BOSS_WORLD[id]);
+      assert(`CMP_BOSS_WORLD["${id}"] pointe vers un monde réel de ZONE_TIERS`, ZONE_TIERS.some(w => w.id === CMP_BOSS_WORLD[id]));
+    });
+  }
+  // cmpMastered() : fonction PURE (src/progression/compendium-react.js), distingue "PEN (V)" des
+  // niveaux intermédiaires ("+9", "TRI (III)"...) affichés dans l'onglet Maîtrise PEN.
+  function testCmpMasteredDetectsOnlyPenLevel() {
+    if (typeof cmpMastered !== 'function') return;
+    assert('"PEN (V)" est détecté comme maîtrisé', cmpMastered('PEN (V)') === true);
+    assert('"+9" n\'est pas maîtrisé', cmpMastered('+9') === false);
+    assert('"TRI (III)" n\'est pas maîtrisé', cmpMastered('TRI (III)') === false);
+    assert('"—" (jamais possédé) n\'est pas maîtrisé', cmpMastered('—') === false);
+  }
+  // openCompendiumReact()/closeCompendiumReact() : montent/démontent bien le modal React dans
+  // #compendiumModalRoot -- même garde-fou que le modal de reconnexion (regression 2026-07-10).
+  function testCompendiumReactOpensAndClosesInDom() {
+    if (typeof openCompendiumReact !== 'function' || typeof closeCompendiumReact !== 'function') return;
+    const root = document.getElementById('compendiumModalRoot');
+    root.innerHTML = '';
+    openCompendiumReact();
+    assert('openCompendiumReact() monte le Compendium dans #compendiumModalRoot', root.innerHTML.includes('Compendium'), root.innerHTML.slice(0,120));
+    closeCompendiumReact();
+    assert('closeCompendiumReact() démonte le contenu', root.innerHTML === '', root.innerHTML.slice(0,120));
+  }
   // reconnectDurationLabel() : fonction PURE (src/core/reconnect-modal-react.js), formate la durée
   // d'absence affichée dans "Absent pendant" / l'historique -- testable sans DOM ni React.
   function testReconnectDurationLabelFormatsHoursAndMinutes() {
@@ -3080,6 +3129,10 @@
     testAwayLevelSnapshotCapturedOnHide();
     testReconnectDurationLabelFormatsHoursAndMinutes();
     testBestAfkSessionSilverIsMonotone();
+    testCompendiumOverallPctCombinesAllThreeSources();
+    testCompendiumWorldAndBossRegistriesAreComplete();
+    testCmpMasteredDetectsOnlyPenLevel();
+    testCompendiumReactOpensAndClosesInDom();
     testInvAddMergesPastOldMaxStackThreshold();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;

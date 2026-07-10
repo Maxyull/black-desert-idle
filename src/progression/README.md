@@ -52,6 +52,18 @@ courrier, compendium, craft du Trésor de Velia.
   évalués immédiatement au chargement.
 - `treasure-craft.js` — le Trésor de Velia : drop, craft des morceaux, coffret secret.
 - `level-xp-data.js` — la table d'XP requise par niveau (pure donnée).
+- `compendium-react.js` — **NOUVEAU (2026-07-10)**, remplace la modale texte `openCompendium()`
+  (toujours présente dans `notifications-quests.js` comme repli si React est indisponible). 3e
+  fichier React du projet (exception documentée CLAUDE.md §7), port de la maquette JSX fournie par
+  l'utilisateur. Ne lit QUE des données réelles : `ZONE_TIERS` (les "mondes" du jeu, avec leur vrai
+  flag `locked`) comme groupement haut niveau, `GEAR_TIERS` en sous-groupe (comme l'ancienne
+  modale), `penMasteryItemList()`/`S.penMastery`/`S.enhPeakByName` pour la Maîtrise PEN. **Ne
+  reproduit PAS** le bonus de stat par "maîtrise de set" inventé par la maquette (fictif, absent du
+  vrai jeu — voir le commentaire en tête de fichier). Clic sur un objet → zones où le farmer → clic
+  sur une zone → vraie téléportation (`travelTo`) + confirmation (`floatTxt` + toast temporaire).
+  Ouvert via `openCompendiumReact()` (`#btnCompendium`/`#ztCompendium`, `backend/game-supabase.js`),
+  monté dans `#compendiumModalRoot` (`index.dev.html`). Alimente aussi `player_stats.compendium_pct`
+  (`compendiumOverallPct()`, `core/game-core.js`) pour le suivi admin agrégé.
 
 Attention : ce dossier ne contient PAS les modes de comportement de l'IA (combat/farm) —
 ils vivent dans `combat/ai-mode.js` malgré une confusion historique (ils avaient atterri ici

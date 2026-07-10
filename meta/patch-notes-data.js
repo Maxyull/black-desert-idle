@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V365', d:'20/07/2026 19:30', name:{fr:'Compendium refait : mondes, recherche, téléportation directe', en:'Compendium redesigned: worlds, search, direct teleport'}, fr:[
+      {t:'change', tx:'Le Compendium a été entièrement refait : organisé par monde (Velia débloqué, Heidel/Calpheon/Valencia/Edana verrouillés), avec une barre de progression combinée (zones + World Bosses + Maîtrise PEN).'},
+      {t:'new', tx:'Recherche et tri (A→Z / % de complétion) dans l\'onglet Zones du Compendium.'},
+      {t:'new', tx:'Cliquer sur un objet montre désormais dans quelles zones le trouver ; cliquer sur "Lancer le farm ici" (ou sur une zone de la liste) t\'y téléporte directement avec un message de confirmation.'},
+      {t:'new', sub:'admin', tx:'Admin : nouvelle section "Compendium" (Contenu) avec la répartition de complétion des joueurs.'},
+    ], en:[
+      {t:'change', tx:'The Compendium has been completely redesigned: organized by world (Velia unlocked, Heidel/Calpheon/Valencia/Edana locked), with a combined progress bar (zones + World Bosses + PEN Mastery).'},
+      {t:'new', tx:'Search and sort (A→Z / % complete) in the Compendium\'s Zones tab.'},
+      {t:'new', tx:'Clicking an item now shows which zones carry it; clicking "Start farming here" (or a zone in the list) teleports you there directly with a confirmation message.'},
+      {t:'new', sub:'admin', tx:'Admin: new "Compendium" section (Content) showing players\' completion distribution.'},
+    ] },
   { v:'V364', d:'20/07/2026 19:00', name:{fr:'Nouveau modal de reconnexion "Bon retour"', en:'New "Welcome back" reconnect modal'}, fr:[
       {t:'new', tx:'De retour après une absence, un nouveau modal "Bon retour" récapitule ta session : progression de niveau avant/après, silver et objets trouvés (avec le meilleur mis en avant), et ton record personnel de silver en une session.'},
       {t:'new', tx:'Un historique de tes dernières sessions d\'absence est désormais consultable directement dans ce modal, filtrable par palier de zone.'},

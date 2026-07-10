@@ -549,6 +549,15 @@ function compendiumBossCount() { return Object.keys(S.bossesKilled||{}).length; 
 function compendiumTotalCount() { return compendiumZoneCount() + compendiumBossCount(); }
 function compendiumTotalMax() { return ZONES.length + Object.keys(BOSS_ROSTER).length; }
 function compendiumPct() { return compendiumTotalCount() * 1; } // points de %, 1 par zone OU par boss
+// % de complétion GLOBALE du Compendium, toutes sources confondues (zones + boss + Maîtrise PEN) --
+// distinct de compendiumPct() ci-dessus (qui n'est PAS un vrai pourcentage de complétion mais le
+// nombre de points de bonus de stat, zones+boss uniquement, PEN exclu). Utilisé par la barre de
+// progression combinée du Compendium et par le suivi admin (player_stats.compendium_pct).
+function compendiumOverallPct() {
+  const done = compendiumTotalCount() + compendiumPenCount();
+  const max = compendiumTotalMax() + penMasteryItemList().length;
+  return max > 0 ? Math.round(done / max * 100) : 0;
+}
 
 // ---- Compendium spécial "Maîtrise PEN" (2026-07-08, demande explicite) : liste TOUS les objets
 // optimisables du jeu (7 pièces × 4 paliers de stuff + 1 bijou par zone) et suit lesquels ont déjà
