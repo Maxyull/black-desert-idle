@@ -22,6 +22,20 @@ function computeCompanionBreakdowns() {
   });
   return { rarity, tier, section };
 }
+// Agrégats GS pour le Classement Public (2026-07-21, catégorie "Prestige"/"Gearscore" du mockup
+// classement-public.html — voir migration 20260721100000_companion_leaderboard_prestige.sql).
+// gsSumWithTier reproduit EXACTEMENT le terme par-pet de prestigeScore() (companions.achievements.js:
+// `score += normGS(p); score += (p.tier||1)*20;`) pour que le prestige_score calculé côté serveur
+// corresponde au vrai prestigeScore() affiché localement au joueur. Fonction pure, testable isolément.
+function computeCompanionGsAggregates() {
+  let gsSumWithTier = 0, gsMax = 0;
+  (Array.isArray(PETS) ? PETS : []).forEach(p => {
+    const gs = normGS(p);
+    gsSumWithTier += gs + (p.tier || 1) * 20;
+    if (gs > gsMax) gsMax = gs;
+  });
+  return { gsSumWithTier, gsMax };
+}
 
 async function syncCompanionStatsToServer() {
   try {
@@ -48,6 +62,7 @@ async function syncCompanionStatsToServer() {
     // -- seule la sémantique du nombre envoyé change, pas le schéma. Les valeurs déjà en base sous
     // l'ancien calcul (max 48) se corrigent d'elles-mêmes au prochain sync de chaque joueur.
     const uniqueSpeciesCount = companionIndexProgress(Array.isArray(PETS) ? PETS : []);
+    const { gsSumWithTier, gsMax } = computeCompanionGsAggregates();
     // bug corrigé #2 (2026-07-20) : le builder Postgrest renvoyé par sb.rpc(...) n'implémente QUE
     // `.then()` (thenable), pas `.catch()` -- l'ancien `.catch(()=>{})` levait silencieusement
     // "TypeError: ...catch is not a function", avalée par le try/catch englobant, AVANT même que
@@ -71,6 +86,8 @@ async function syncCompanionStatsToServer() {
       p_hard_achievements_count: hardAchCount,
       p_fusion_downgrade_count: fusionLostHighRarityCount || 0,
       p_unique_species_count: uniqueSpeciesCount,
+      p_gs_sum_with_tier: gsSumWithTier,
+      p_gs_max: gsMax,
     });
   } catch(e) {}
 }
