@@ -120,18 +120,18 @@ function renderGrid(){
       </div>`;
     }
 
-    const cardGlow = isTop1 ? 'box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(200,169,110,.35)'
+    const cardGlow = isTop1 ? 'box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(212,169,85,.35)'
       : isTop2 ? 'box-shadow:0 0 0 2px #b8bcc4,0 0 14px rgba(184,188,196,.3)'
       : isTop3 ? 'box-shadow:0 0 0 2px #cd7f32,0 0 14px rgba(205,127,50,.3)'
-      : (bothSelected && isF) ? 'box-shadow:0 0 0 3px var(--green2),0 0 18px rgba(68,176,96,.5)'
+      : (bothSelected && isF) ? 'box-shadow:0 0 0 3px var(--green2),0 0 18px rgba(111,220,111,.5)'
       : '';
 
     return`<div class="pet-card ${p.terrain?'terrain':''} ${isF?'fusion-sel':''}" style="${cardGlow}${isDimmed?'filter:grayscale(0.9) brightness(.55);opacity:.55':''}" onclick="addToFusion(${p.id})" id="card${p.id}">
       <div class="rstrip" style="background:${rc(p.rar)}"></div>
-      ${isTop1?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--gold);color:#080810;font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(200,169,110,.5);white-space:nowrap">🥇 TOP1</div>`:''}
-      ${isTop2?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#b8bcc4;color:#080810;font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(184,188,196,.5);white-space:nowrap">🥈 TOP2</div>`:''}
-      ${isTop3?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#cd7f32;color:#080810;font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(205,127,50,.5);white-space:nowrap">🥉 TOP3</div>`:''}
-      ${bothSelected&&isF?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--green2);color:#080810;font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(68,176,96,.5);white-space:nowrap">✓ Choisi</div>`:''}
+      ${isTop1?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(200,169,110,.5);white-space:nowrap">🥇 TOP1</div>`:''}
+      ${isTop2?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#b8bcc4;color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(184,188,196,.5);white-space:nowrap">🥈 TOP2</div>`:''}
+      ${isTop3?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#cd7f32;color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(205,127,50,.5);white-space:nowrap">🥉 TOP3</div>`:''}
+      ${bothSelected&&isF?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--green2);color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(68,176,96,.5);white-space:nowrap">✓ Choisi</div>`:''}
       <div class="card-art">
         <canvas id="ca${p.id}" width="56" height="56" style="width:56px;height:56px;image-rendering:pixelated"></canvas>
         ${p.terrain?'<div class="terrain-dot"></div>':''}

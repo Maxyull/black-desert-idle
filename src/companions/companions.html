@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=8">
+<link rel="stylesheet" href="companions.css?v=9">
 </head>
 <body>
 <!-- bandeau "test en cours" (2026-07-20, demande explicite) : rappelle à chaque ouverture que ce
@@ -75,7 +75,7 @@
   <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
 
     <!-- Scène : personnage + pets à côté -->
-    <div style="background:linear-gradient(180deg,#14142a,#0d0d1a);border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;min-height:200px;display:flex;align-items:flex-end;justify-content:center;gap:24px">
+    <div style="background:linear-gradient(180deg,var(--s3),var(--bg));border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;min-height:200px;display:flex;align-items:flex-end;justify-content:center;gap:24px">
       <div style="position:absolute;top:12px;left:16px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">🌲 Zone actuelle — Forêt de Hexe</div>
       <!-- Perso -->
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
@@ -125,7 +125,7 @@
       <div style="font-size:10px;color:var(--cream3);margin-bottom:10px">Base : 1 œuf gratuit / 6h (~4 par jour). Les % entre parenthèses = chance d'obtenir ≥1 pet de cette rareté sur la période cible.</div>
       <!-- 2026-07-20, demande explicite : rappel que les boutons x1/x5/x10 (achat instantané, sous
            chaque nom d'oeuf ci-dessous) sont un outil de TEST -- pas la mécanique finale prévue -->
-      <div style="font-size:9.5px;color:#e8a860;margin-bottom:10px">🧪 Les boutons ×1/×5/×10 (achat instantané) sont un raccourci de TEST — ils seront retirés d'ici la fin des tests.</div>
+      <div style="font-size:9.5px;color:var(--gold2);margin-bottom:10px">🧪 Les boutons ×1/×5/×10 (achat instantané) sont un raccourci de TEST — ils seront retirés d'ici la fin des tests.</div>
       <div id="egg-odds-table" style="overflow-x:auto"></div>
     </div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
@@ -267,10 +267,10 @@
 <!-- TAB 6 HARDINAGE -->
 <div class="panel" id="p6">
   <div style="flex:1;display:grid;grid-template-columns:1fr 300px;overflow:hidden">
-    <div style="position:relative;overflow:hidden;background:#080810" id="hard-field-wrap">
+    <div style="position:relative;overflow:hidden;background:var(--bg)" id="hard-field-wrap">
       <canvas id="hard-field-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
       <div id="hard-drop-layer" style="position:absolute;inset:0;pointer-events:none"></div>
-      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(8,8,16,.85);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:.06em;white-space:nowrap">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(11,15,26,.85);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:.06em;white-space:nowrap">
         🌿 Forêt de Hexe — pets actifs en action
       </div>
     </div>
@@ -292,7 +292,7 @@
 <div class="panel" id="p7">
   <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:20px">
 
-    <div style="background:linear-gradient(135deg,#1a1408,#14142a);border:1px solid var(--gold-dim);border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:20px">
+    <div style="background:linear-gradient(135deg,var(--gold-dim),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:20px">
       <div style="font-size:40px">🏆</div>
       <div style="flex:1">
         <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">Score de Prestige</div>
@@ -319,7 +319,7 @@
      familiers par puissance (GS) l'est déjà, base du futur matchmaking. -->
 <div class="panel" id="p8">
   <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
-    <div style="background:linear-gradient(135deg,#1a0808,#14142a);border:1px solid var(--red);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
+    <div style="background:linear-gradient(135deg,rgba(192,80,60,.18),var(--s3));border:1px solid var(--red);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
       <span style="font-size:26px">🔒</span>
       <div>
         <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--red2)">PvP — Bientôt disponible</div>
@@ -368,11 +368,11 @@
 <script src="companions.economy.js?v=7"></script>
 <script src="companions.tier.js?v=6"></script>
 <script src="companions.roster.js?v=6"></script>
-<script src="companions.hatch.js?v=8"></script>
+<script src="companions.hatch.js?v=9"></script>
 <script src="companions.pet-panel.js?v=6"></script>
 <script src="companions.sections.js?v=6"></script>
-<script src="companions.collection.js?v=7"></script>
-<script src="companions.fusion.js?v=7"></script>
+<script src="companions.collection.js?v=8"></script>
+<script src="companions.fusion.js?v=8"></script>
 <script src="companions.feed.js?v=6"></script>
 <script src="companions.ticks.js?v=6"></script>
 <script src="companions.save.js?v=8"></script>

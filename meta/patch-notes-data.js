@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V349', d:'20/07/2026 10:00', name:{fr:'Compagnon : nouvelle palette de couleurs', en:'Companion: new color palette'}, fr:[
+      {t:'change', sub:'compagnon', tx:'Le module Compagnon adopte la palette de couleurs officielle du jeu (fonds bleu-nuit profond, accents or/bleu/vert/rouge) — jusqu\'ici il utilisait un thème doré à part, jamais aligné avec le reste.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'The Companion module now uses the game\'s official color palette (deep navy backgrounds, gold/blue/green/red accents) — until now it used a separate gold theme, never aligned with the rest.'},
+    ] },
   { v:'V348', d:'20/07/2026 09:00', name:{fr:'Compagnon : achat des slots d\'œuf corrigé · Header : badge NOUVEAU sur Compagnon, cadenas coupés réparés', en:'Companion: egg slot purchase fixed · Header: NEW badge on Companion, fixed clipped locks'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Impossible d\'acheter le 3ème slot d\'incubation ni le slot supplémentaire ("➕") — les deux boutons ne faisaient rien. Corrigé, les deux débitent bien du Silver et débloquent le slot immédiatement.'},
       {t:'change', sub:'compagnon', tx:'Le fil d\'Ariane du module affichait encore "Familiers" — remplacé par "Compagnon".'},

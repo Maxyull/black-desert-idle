@@ -174,6 +174,20 @@ démarre `ready:true` (gratification immédiate, pas un nouveau minuteur à atte
 "Black Desert Idle Compagnon › FAMILIERS" affichait encore l'ancien mot "Familiers" — remplacé par
 "COMPAGNON" (même style inline conservé, `companions.html`).
 
+**Palette officielle DA appliquée (2026-07-20, demande explicite : "regarde claude.md et change la
+palette de couleurs")** : `companions.css` (`:root`) suit désormais exactement CLAUDE.md §29
+(fonds `#0b0f1a`/`#0e1422`/`#131a29`, bordures `#263049`/`#3a4665`, texte `#c7d0e6`/`#8a95b3`/
+`#5c6785`, accents `#d4a955` or/`#7ea6ff` bleu/`#6fdc6f` vert/`#c0503c`+`#e08070` rouge) — remplace
+l'ancien thème doré fantasy ad hoc (`#c8a96e`, fond `#080810`) qui n'avait jamais été aligné sur
+cette DA. `--r0..--r5` (couleurs de rareté Commun→Ancestral) et les palettes pixel-art
+(`companions.pixelart.js`)/scène isométrique (`companions.hardinage.js`) sont volontairement PAS
+touchées — elles codent un sens (rareté=couleur) ou sont du contenu artistique, hors périmètre
+d'une DA structurelle (fonds/bordures/texte/accents). Les couleurs médaille 🥈/🥉 (argent `#b8bcc4`/
+bronze `#cd7f32`, badges TOP2/TOP3 de fusion) restent aussi inchangées, distinctes de l'accent or
+par nature (médailles, pas identité de marque). Comparatif avant/après vu par l'utilisateur avant
+implémentation (Artifact, 3 propositions présentées, celle-ci — "officielle CLAUDE.md" — retenue
+directement une fois trouvée dans le fichier).
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2

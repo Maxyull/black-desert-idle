@@ -190,15 +190,15 @@ function openFusionPreviewModal(){
       </span>
     </div>
 
-    <div style="background:var(--s3);border:1.5px solid #b8bcc4;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+    <div style="background:var(--s3);border:1.5px solid var(--cream2);border-radius:8px;padding:10px 12px;margin-bottom:10px">
       <div style="margin-bottom:7px">
-        <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:#b8bcc4">📍 Section${sameSec?' — même section, pas de tirage':' — même rareté, mais pas même catégorie'}</span>
+        <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--cream2)">📍 Section${sameSec?' — même section, pas de tirage':' — même rareté, mais pas même catégorie'}</span>
       </div>
       ${sameSec
         ? `<div style="font-size:11px;color:var(--green2)">✓ 100% — ${secById(a.cat.sec)?.name} (même section, pas de tirage nécessaire)</div>`
         : `<div style="display:flex;flex-direction:column;gap:4px">
-             <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--cream2);width:120px">${secById(a.cat.sec)?.ico} ${secById(a.cat.sec)?.name}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:#b8bcc4"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3)">50%</span></div>
-             <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--cream2);width:120px">${secById(b.cat.sec)?.ico} ${secById(b.cat.sec)?.name}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:#b8bcc4"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3)">50%</span></div>
+             <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--cream2);width:120px">${secById(a.cat.sec)?.ico} ${secById(a.cat.sec)?.name}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:var(--cream2)"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3)">50%</span></div>
+             <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--cream2);width:120px">${secById(b.cat.sec)?.ico} ${secById(b.cat.sec)?.name}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:var(--cream2)"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3)">50%</span></div>
            </div>`}
     </div>
 
