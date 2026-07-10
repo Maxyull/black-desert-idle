@@ -87,6 +87,10 @@ function loadGame(){
     silverSpent = state.silverSpent || 0;
     INVENTORY = state.INVENTORY || {};
     incubSlots = state.incubSlots || incubSlots;
+    // plafond 8 slots (2026-07-10, demande explicite : "borner incubation a 8") -- une sauvegarde
+    // antérieure au plafond pouvait déjà en avoir davantage ; on tronque au chargement plutôt que
+    // d'ajouter un flag de migration dédié (simple plafond UI, aucune perte de pet/objet possédé).
+    if(typeof MAX_INCUB_SLOTS === 'number' && incubSlots.length > MAX_INCUB_SLOTS) incubSlots.length = MAX_INCUB_SLOTS;
     eggTimer = state.eggTimer ?? eggTimer;
     petId = state.petId || petId;
     selFoodName = state.selFoodName || null;

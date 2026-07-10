@@ -35,6 +35,10 @@ function fmtT(s){if(s<=0)return'PRÊT';return`${String(Math.floor(s/3600)).padSt
 // premium" ne faisait qu'un toast() factice sans jamais rien acheter. Les deux appellent
 // maintenant spendSilver() (companions.economy.js) puis déclenchent une vraie action.
 const UNLOCK_SLOT_COST = 500, EXTRA_SLOT_COST = 1000; // avant scaleCost(), voir TEST_BALANCE_DIVISOR
+// plafond de slots d'incubation (2026-07-10, demande explicite : "borner incubation a 8") --
+// jusqu'ici buyExtraIncubSlot() poussait dans incubSlots sans aucune limite, un joueur pouvait en
+// acheter à l'infini.
+const MAX_INCUB_SLOTS = 8;
 function unlockIncubSlot(i){
   const cost = scaleCost(UNLOCK_SLOT_COST);
   if(SILVER < cost){ toast('❌','Silver insuffisant'); return; }
@@ -44,6 +48,7 @@ function unlockIncubSlot(i){
   renderHatch();
 }
 function buyExtraIncubSlot(){
+  if(incubSlots.length >= MAX_INCUB_SLOTS){ toast('❌','Plafond de slots atteint (8)'); return; }
   const cost = scaleCost(EXTRA_SLOT_COST);
   if(SILVER < cost){ toast('❌','Silver insuffisant'); return; }
   spendSilver(cost);
@@ -62,6 +67,11 @@ function renderHatch(){
     const pct=Math.round((1-sl.tl/sl.tot)*100);
     return`<div class="isl">${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">✦ Gratuit</span>':''}<span style="font-size:28px">🥚</span><div class="itimer">${fmtT(sl.tl)}</div><div class="iprog"><div class="iprog-fill" style="width:${pct}%"></div></div></div>`;
   }).join('')+(()=>{
+    // plafond 8 (2026-07-10, demande explicite) : plus de bouton "+" une fois le plafond atteint,
+    // remplacé par un état figé qui explique pourquoi.
+    if(incubSlots.length >= MAX_INCUB_SLOTS){
+      return `<div class="isl locked" style="cursor:not-allowed;opacity:.5"><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">Max ${MAX_INCUB_SLOTS}</div></div>`;
+    }
     const cost=scaleCost(EXTRA_SLOT_COST), affordable=SILVER>=cost;
     return `<div class="isl" style="cursor:${affordable?'pointer':'not-allowed'};opacity:${affordable?.85:.5}" onclick="buyExtraIncubSlot()"><span style="font-size:28px">➕</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(cost)}</div></div>`;
   })();

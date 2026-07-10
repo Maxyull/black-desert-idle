@@ -585,6 +585,43 @@ test('both egg-slot purchase buttons (unlock the 3rd slot, buy an extra slot) ac
   expect(pageErrors).toEqual([]);
 });
 
+// plafond de slots d'incubation (2026-07-10, demande explicite : "borner incubation a 8") --
+// buyExtraIncubSlot() poussait dans incubSlots sans aucune limite auparavant. Vérifie que le
+// plafond bloque bien l'achat ET le débit de silver une fois atteint (pas juste visuel), et que
+// le bouton "➕" est remplacé par un état figé dans le DOM.
+test('incubation slot purchases are capped at 8, both server-side (silver never spent past the cap) and in the DOM', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
+
+  const result = await frame.locator('body').evaluate(() => {
+    SILVER = 10_000_000;
+    // pousse déjà au plafond (partant du roster de départ, 3 slots) pour isoler le comportement
+    // AU plafond sans dépendre du nombre d'achats nécessaires pour l'atteindre.
+    while (incubSlots.length < MAX_INCUB_SLOTS) incubSlots.push({ free: false, tl: 0, tot: 1, ready: true });
+    renderHatch();
+    const spentAtCap = silverSpent, countAtCap = incubSlots.length;
+    buyExtraIncubSlot(); // doit être un no-op complet
+    return {
+      countAtCap, spentAtCap,
+      countAfter: incubSlots.length, spentAfter: silverSpent,
+      lockedPlaceholder: document.querySelectorAll('#incub-slots .isl.locked').length,
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.countAtCap).toBe(8);
+  expect(result.countAfter).toBe(8); // aucun slot ajouté au-delà du plafond
+  expect(result.spentAfter).toBe(result.spentAtCap); // et aucun silver dépensé pour rien
+  expect(result.lockedPlaceholder).toBeGreaterThan(0); // le "+" est remplacé par un état figé
+});
+
 // garde-fou (2026-07-20, "ajouter classement, oeuf ouvert, argent depensé...") -- nouvel onglet
 // "Tes stats" + "Classement" (tab 9, panel p9) : "Tes stats" reste 100% local (aucun réseau),
 // vérifie que les compteurs déjà suivis ailleurs (totalHatched, silverSpent) s'affichent
