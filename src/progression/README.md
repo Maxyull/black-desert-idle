@@ -22,6 +22,13 @@ courrier, compendium, craft du Trésor de Velia.
   voir `inventory/inventory-ui.js` (renderOptimization), `market/market.js` (btnMarket),
   `combat/boss.js` (openBossLobby). `maybeQueueItemTutorial(itemName)` reste l'entrée
   publique pour les déclenchements par objet, délègue maintenant à `maybeQueueTutorialById`.
+  **Bug corrigé (2026-07-10, récupéré le 2026-07-20 depuis la branche
+  `claude/onboarding-issue-fix-861c40` — voir aussi `backend/README.md`)** :
+  `ITEM_TUTORIALS.market` ciblait `#marketBox` (le panneau entier, `height:80vh`, voir
+  `styles.css`), dont le bord bas est déjà proche du bas de l'écran — la bulle
+  `placement:'bottom'` se retrouvait poussée hors du viewport, coupée. Cible désormais
+  `#marketHead` (petit bandeau de titre fixe en haut du panneau). Test de régression :
+  `testMarketTutorialTargetsMarketHeadNotFullPanel` (`tests/tests.js`).
 - `achievements-data.js` — les définitions des succès (`ACHIEVEMENTS`). Charge après
   `core/game-core.js` : certains objectifs (`target: ZONES.length`, `PRI_IDX`...) sont
   évalués immédiatement au chargement.
