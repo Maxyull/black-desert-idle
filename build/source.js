@@ -5257,9 +5257,14 @@ function ReconnectModal(props) {
             }) : h(RcEmptyRow, { text: 'Aucun objet trouvé pendant cette session — retente ta chance !' }))),
 
         h('div', { style: { padding: '20px 28px 8px' } },
-          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 } },
+          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' } },
             h('span', { style: { color: RECONNECT_V.cream3 } }, '📜'),
-            h('h2', { style: { ...RC_INTER, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: RECONNECT_V.cream3, margin: 0 } }, 'Historique des sessions')),
+            h('h2', { style: { ...RC_INTER, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: RECONNECT_V.cream3, margin: 0 } }, 'Historique des sessions'),
+            
+            h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto', flexWrap: 'wrap' } },
+              grades.map(g => h('div', { key: g, style: { display: 'flex', alignItems: 'center', gap: 3 } },
+                h('span', { style: { width: 6, height: 6, borderRadius: 999, flexShrink: 0, background: rcGearGradeColor(g) } }),
+                h('span', { style: { ...RC_INTER, fontSize: 8, color: RECONNECT_V.cream3 } }, rcGearGradeLabel(g)))))),
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, flexWrap: 'wrap' } },
             ['Tous', ...grades].map(grade => {
               const on = tierFilter === grade;
