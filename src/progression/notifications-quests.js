@@ -1004,6 +1004,17 @@ function maybeQueueItemTutorial(itemName) {
 // ACTION_TUTORIALS). File d'attente/plafond/flag "déjà vu" partagés, aucune distinction de source.
 function maybeQueueTutorialById(id) {
   if (!ITEM_TUTORIALS[id] || isItemTutorialSeen(id)) return false;
+  // bug corrigé (2026-07-20, rapporté explicitement : "l'onboarding ne dois pas s'enclencher si on
+  // ne s'est pas inscrit/connecté = jeu non lance arriere plan") -- requestAnimationFrame(loop)
+  // (world/render.js) démarre sans condition dès le chargement du script, AVANT même que le joueur
+  // ait pu s'authentifier (#authOverlay encore ouvert) : le jeu simule déjà combat/loot en
+  // arrière-plan sur DEFAULT_SAVE pendant cette fenêtre. Sans cette garde, un ramassage simulé
+  // marquait le tutoriel "vu" (markItemTutorialSeen ci-dessous, appelé DÈS la mise en file, pas
+  // après affichage réel) avant même que le vrai joueur ne l'ait jamais vu -- le privant
+  // définitivement de ce tutoriel une fois réellement connecté. Retourne juste false (aucun effet
+  // de bord) plutôt que de mettre en file : le même événement redéclenchera normalement l'appel
+  // une fois authentifié (ex: le prochain ramassage du même objet).
+  if (!currentUser) return false;
   if (itemTutorialQueue.includes(id) || (itemTutorialActive && itemTutorialActiveId === id)) return false; // déjà en file/en cours
   if (itemTutorialQueue.length >= ITEM_TUTORIAL_QUEUE_CAP) return false; // plafond silencieux, voir commentaire ci-dessus
   itemTutorialQueue.push(id);

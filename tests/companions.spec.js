@@ -97,7 +97,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   await expect(overlay).toBeVisible();
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // roster de départ : 0 pet (2026-07-10, demande explicite -- voir companions.roster.js)
   await expect(frame.locator('#tb2')).toHaveText('0');
@@ -167,7 +167,7 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
@@ -187,7 +187,10 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
     };
   });
   expect(pageErrors).toEqual([]);
-  expect(result.cardWidth).toBeLessThan(140);
+  // 120px CSS (COLL_ZOOM_STEPS[0]) x zoom:1.25 (2026-07-20, "zommer 25%+ dans compagnon",
+  // companions.css) ≈ 150px mesurés -- seuil relevé en conséquence, reste très en dessous du
+  // cran le plus large (200px x 1.25 = 250px).
+  expect(result.cardWidth).toBeLessThan(175);
   expect(result.hasCompact).toBe(true);
   expect(result.hasVerboseMeta).toBe(false); // pas les deux affichages à la fois
   expect(result.overflowsCard).toBe(false);
@@ -220,7 +223,7 @@ test('both egg-slot purchase buttons (unlock the 3rd slot, buy an extra slot) ac
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   const result = await frame.locator('body').evaluate(() => {
@@ -272,7 +275,7 @@ test('companion "Tes stats" tab shows real eggs-opened/money-spent counters and 
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // dépense réelle : achète un œuf pour que "Œufs ouverts"/"Argent dépensé" ne soient pas juste 0 par défaut
   const before = await frame.locator('body').evaluate(() => {
@@ -326,7 +329,7 @@ test('syncCompanionStatsToServer reaches the RPC call and never throws with a ca
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   const result = await page.evaluate(async () => {
     const origGetSb = window.getSbClient;
@@ -373,7 +376,7 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
   // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (companions.roster.js) -- ne prouve
   // pas à lui seul que loadGame()/la migration ont fini de tourner, donc pas fiable comme seule
   // condition d'attente. On poll directement petsRosterResetV1 (posé synchroneement à la toute fin
@@ -411,7 +414,7 @@ test('header shows WIP banner, new title, close button, and collection legend/so
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // bandeau "test en cours" (2026-07-20) -- toujours visible, pas de bouton pour le masquer
   await expect(frame.locator('#wipBanner')).toBeVisible();
@@ -487,7 +490,7 @@ test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard ach
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   const result = await frame.locator('body').evaluate(() => {
     const origRandom = Math.random;
@@ -537,7 +540,7 @@ test('fusion result modal shows a green up arrow on gain and a red down arrow on
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // Le tier grimpe toujours d'au moins 1 cran par rapport au meilleur parent (baseTier =
   // max(tiers)+1, jamais moins), donc le sens du Tier est déterministe -> ⬆️ vert garanti.
@@ -592,7 +595,7 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG.find(c => c.rar === 0);

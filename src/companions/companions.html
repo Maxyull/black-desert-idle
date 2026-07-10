@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=9">
+<link rel="stylesheet" href="companions.css?v=10">
 </head>
 <body>
 <!-- bandeau "test en cours" (2026-07-20, demande explicite) : rappelle à chaque ouverture que ce
@@ -26,7 +26,7 @@
   ⚠️ Module en test — rien n'est relié au jeu principal, tous les prix/temps sont divisés par 1000 à 1 000 000 pour tester vite. Merci de tester un maximum et de faire un retour !
 </div>
 <div class="hdr">
-  <span class="hdr-logo">Black Desert Idle Compagnon</span>
+  <span class="hdr-logo">Black Desert Idle</span>
   <span style="color:var(--border2)">›</span>
   <span style="font-size:11px;color:var(--cream2)">COMPAGNON</span>
   <!-- bouton de fermeture DANS le module (2026-07-20, demande explicite : "bouton de fermeture
@@ -149,7 +149,13 @@
 <div class="panel" id="p2">
   <div class="coll-wrap">
     <div class="coll-main">
-      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px 0">
+      <!-- filtres repassés à droite de la barre de recherche (2026-07-20, demande explicite :
+           "repasser les filtre a droite de la barre de recherche") -- même ligne que
+           .coll-controls, plus une rangée séparée au-dessus. -->
+      <div class="coll-controls">
+        <span class="coll-title">Collection</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 12px">💰 <span id="coll-silver">55 000</span></span>
+        <input class="search-box" id="search-box" placeholder="🔍 Rechercher…" oninput="renderGrid()">
         <div class="chip" onclick="clearAllFilters()" title="Effacer tous les filtres" style="color:var(--red2);font-weight:700">✕</div>
         <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
         <div style="display:flex;gap:3px;flex-wrap:wrap" id="sec-filter-chips"></div>
@@ -157,11 +163,6 @@
         <div style="display:flex;gap:3px;flex-wrap:wrap" id="rar-filter-chips"></div>
         <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
         <div style="display:flex;gap:3px;flex-wrap:wrap" id="tier-filter-chips"></div>
-      </div>
-      <div class="coll-controls">
-        <span class="coll-title">Collection</span>
-        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 12px">💰 <span id="coll-silver">55 000</span></span>
-        <input class="search-box" id="search-box" placeholder="🔍 Rechercher…" oninput="renderGrid()">
         <div style="margin-left:auto;display:flex;gap:3px;align-items:center">
           <button class="schip on" id="sort-gs"  onclick="setSort('gs',this)">GS↓</button>
           <button class="schip" id="sort-rar" onclick="setSort('rar',this)">Rareté</button>

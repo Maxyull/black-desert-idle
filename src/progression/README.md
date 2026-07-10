@@ -34,6 +34,19 @@ courrier, compendium, craft du Trésor de Velia.
   `.catch()` direct (voir `backend/README.md` pour le détail complet, même piège que
   `log_playtime_ping`) — l'exception était avalée silencieusement, la RPC ne partait jamais.
   Remplacé par `.then(null, ()=>{})`, reste fire-and-forget (aucun `await` ajouté).
+  **Bug de fond corrigé (2026-07-20, rapporté explicitement : "L'onboarding ne dois pas s'enclencher
+  si on ne s'est pas inscrit/connecté = jeu non lance arriere plan")** : `requestAnimationFrame(loop)`
+  (`world/render.js`) démarre sans condition dès le chargement du script, AVANT même que le joueur
+  ait pu s'authentifier (`#authOverlay` encore ouvert) — le jeu simule déjà combat/loot sur
+  `DEFAULT_SAVE` pendant cette fenêtre. `maybeQueueTutorialById()` appelait `markItemTutorialSeen()`
+  DÈS la mise en file (pas seulement à l'affichage réel, voir le commentaire au-dessus de
+  `ITEM_TUTORIAL_QUEUE_CAP`) — un ramassage simulé pendant la fenêtre pré-auth marquait donc un
+  tutoriel "vu" pour de vrai, privant DÉFINITIVEMENT le joueur de ce tutoriel une fois réellement
+  connecté. Garde ajoutée : `if (!currentUser) return false;` en tout début de fonction — sans
+  effet de bord (ni mise en file, ni flag posé) tant qu'aucune session n'existe ; le même
+  événement redéclenchera normalement l'appel une fois authentifié (ex: prochain ramassage du même
+  objet). Même garde en défense sur `startTutorial()` (`backend/game-supabase.js`). Tests :
+  `testTutorialNeverQueuesOrMarksSeenWithoutAuthenticatedUser` (`tests/tests.js`).
 - `achievements-data.js` — les définitions des succès (`ACHIEVEMENTS`). Charge après
   `core/game-core.js` : certains objectifs (`target: ZONES.length`, `PRI_IDX`...) sont
   évalués immédiatement au chargement.

@@ -43,6 +43,17 @@ nouvelle version.
   n'est le souci (ça, c'est valide : `.catch` est appelé sur le vrai Promise renvoyé PAR `.then()`,
   pas sur le builder brut — voir `boss.js:boss_contribute` pour un exemple correct de ce pattern).
   Garde-fou : `testRpcFireAndForgetCallsNeverUseBareCatch` (`tests/tests.js`).
+  **`startTutorial()` — garde ajoutée (2026-07-20, rapporté explicitement : "l'onboarding ne dois
+  pas s'enclencher si on ne s'est pas inscrit/connecté")** : `if (!currentUser) return;` en tout
+  premier — défense en profondeur, le vrai correctif vit dans `maybeQueueTutorialById()`
+  (`progression/notifications-quests.js`, voir son README pour le détail complet : le jeu tourne
+  déjà en arrière-plan avant authentification via `requestAnimationFrame(loop)`, sans garde un
+  tutoriel pouvait être marqué "vu" avant même que le vrai joueur ne l'ait vu).
+  **Écran de connexion — Discord/Google/GitHub/Twitter (2026-07-20, demande explicite : "enlever
+  les emoji laisser discord en gros et mettre dessous divisé en 3 les 3 autre")** : `I18N.btnSignInDiscord`
+  reste le texte complet ("Se connecter avec Discord", sans emoji), Google/GitHub/Twitter réduits
+  au seul nom de marque — regroupés dans `#authSocialRow` (`index.dev.html`, flex 3 colonnes
+  égales, `styles.css`), sous le bouton Discord qui reste seul en pleine largeur (CTA principal).
   **`showPlayerInventoryWindow()` — bug corrigé (2026-07-20, rapporté explicitement : "quand je
   reste longtemps dans compagnon le dashboard s'affiche")** : cette fonction ouvre une popup
   "Inventaire joueur" (bouton 🎒 de la liste des joueurs, panneau admin) et sondait toutes les

@@ -857,7 +857,14 @@
     let savedFlag = null;
     try { savedFlag = localStorage.getItem(storageKey); } catch(e) {}
     const savedActive = itemTutorialActive, savedQueue = itemTutorialQueue.slice(), savedActiveId = itemTutorialActiveId;
+    // bug corrigé le 2026-07-20 ("l'onboarding ne dois pas s'enclencher si on ne s'est pas
+    // inscrit/connecté") : maybeQueueTutorialById() exige désormais un currentUser réel avant de
+    // mettre quoi que ce soit en file -- simuler une session le temps du test, comme le vrai jeu
+    // en environnement normal (l'ancien comportement de ce test, sans compte, testait justement le
+    // cas maintenant bloqué par construction).
+    const savedUser = typeof currentUser !== 'undefined' ? currentUser : undefined;
     try {
+      if (typeof currentUser !== 'undefined') currentUser = { id:'test-tutorial-queue', email:'test@test.local' };
       try { localStorage.removeItem(storageKey); } catch(e) {}
       // force le chemin "mise en FILE" plutôt que "jouer immédiatement" -- ce dernier appellerait
       // playNextItemTutorial() -> setTimeout(startTutorial, 400) RÉEL et non annulable, ce qui
@@ -871,6 +878,33 @@
       assert('Un nom d\'objet sans tutoriel enregistré ne fait jamais planter la fonction', maybeQueueItemTutorial('ObjetSansTutorielXYZ') === false);
     } finally {
       itemTutorialActive = savedActive; itemTutorialQueue = savedQueue; itemTutorialActiveId = savedActiveId;
+      if (typeof currentUser !== 'undefined') currentUser = savedUser;
+      try {
+        if (savedFlag === null) localStorage.removeItem(storageKey);
+        else localStorage.setItem(storageKey, savedFlag);
+      } catch(e) {}
+    }
+  }
+  // garde-fou dédié (2026-07-20, rapporté explicitement : "l'onboarding ne dois pas s'enclencher
+  // si on ne s'est pas inscrit/connecté = jeu non lance arriere plan") -- SANS compte connecté,
+  // maybeQueueTutorialById() ne doit RIEN faire (pas de mise en file, pas de flag "vu" posé) --
+  // sinon un joueur perdrait définitivement un tutoriel avant même de s'être authentifié, puisque
+  // markItemTutorialSeen() est appelé DÈS la mise en file (pas seulement à l'affichage réel).
+  function testTutorialNeverQueuesOrMarksSeenWithoutAuthenticatedUser() {
+    if (typeof maybeQueueTutorialById !== 'function' || typeof ITEM_TUTORIALS === 'undefined' || !ITEM_TUTORIALS.enchant || typeof currentUser === 'undefined') return;
+    const id = 'enchant', storageKey = 'velia-idle-item-tuto-seen-'+id;
+    let savedFlag = null;
+    try { savedFlag = localStorage.getItem(storageKey); } catch(e) {}
+    const savedActive = itemTutorialActive, savedQueue = itemTutorialQueue.slice(), savedActiveId = itemTutorialActiveId, savedUser = currentUser;
+    try {
+      try { localStorage.removeItem(storageKey); } catch(e) {}
+      itemTutorialActive = false; itemTutorialQueue = []; itemTutorialActiveId = null;
+      currentUser = null; // simule le jeu tournant en arrière-plan AVANT authentification
+      assert('Sans compte connecté, maybeQueueTutorialById ne met jamais rien en file', maybeQueueTutorialById(id) === false);
+      assert('Sans compte connecté, le flag "vu" n\'est JAMAIS posé (le joueur pourra encore le voir une fois connecté)', isItemTutorialSeen(id) === false);
+      assert('La file reste vide (aucun effet de bord malgré l\'appel)', itemTutorialQueue.length === 0);
+    } finally {
+      itemTutorialActive = savedActive; itemTutorialQueue = savedQueue; itemTutorialActiveId = savedActiveId; currentUser = savedUser;
       try {
         if (savedFlag === null) localStorage.removeItem(storageKey);
         else localStorage.setItem(storageKey, savedFlag);
@@ -940,7 +974,11 @@
     let savedFlag = null;
     try { savedFlag = localStorage.getItem(storageKey); } catch(e) {}
     const savedActive = itemTutorialActive, savedQueue = itemTutorialQueue.slice(), savedActiveId = itemTutorialActiveId;
+    const savedUser = typeof currentUser !== 'undefined' ? currentUser : undefined;
     try {
+      // même correctif que testMaybeQueueItemTutorialRespectsSeenAndCap ci-dessus (2026-07-20) :
+      // simule une session pour tester le chemin "normal" (compte connecté).
+      if (typeof currentUser !== 'undefined') currentUser = { id:'test-tutorial-action', email:'test@test.local' };
       try { localStorage.removeItem(storageKey); } catch(e) {}
       // même garde qu'au-dessus : force le chemin FILE, jamais le déclenchement réel du DOM --
       // itemTutorialActiveId mis à une valeur DIFFÉRENTE de `id` (pas juste laissé tel quel) : sur
@@ -955,6 +993,7 @@
       assert('Id inconnu -> false, ne plante jamais', maybeQueueTutorialById('IdInconnuXYZ') === false);
     } finally {
       itemTutorialActive = savedActive; itemTutorialQueue = savedQueue; itemTutorialActiveId = savedActiveId;
+      if (typeof currentUser !== 'undefined') currentUser = savedUser;
       try {
         if (savedFlag === null) localStorage.removeItem(storageKey);
         else localStorage.setItem(storageKey, savedFlag);
@@ -2830,6 +2869,7 @@
     testBossWheelReactSegmentCountMatchesRoster();
     testItemTutorialsWellFormedAndIndexed();
     testMaybeQueueItemTutorialRespectsSeenAndCap();
+    testTutorialNeverQueuesOrMarksSeenWithoutAuthenticatedUser();
     testMarketTutorialTargetsMarketHeadNotFullPanel();
     testTutorialBoxClampsToRealHeightNeverOverflowsBottom();
     testTrashTutorialCoversEveryZoneTrashName();

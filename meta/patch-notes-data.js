@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V350', d:'20/07/2026 11:00', name:{fr:'Correctif tutoriel + connexion allégée + Compagnon : filtres, zoom, titre', en:'Tutorial fix + lighter sign-in + Companion: filters, zoom, title'}, fr:[
+      {t:'fix', tx:'Corrigé : un tutoriel pouvait être marqué "vu" avant même que tu ne te sois connecté, te privant définitivement de son affichage réel une fois ton compte créé.'},
+      {t:'change', sub:'connexion', tx:'Écran de connexion simplifié : Discord reste le bouton principal, Google/GitHub/Twitter sont regroupés en dessous sur une seule ligne.'},
+      {t:'change', sub:'compagnon', tx:'Le titre du module n\'affiche plus "Compagnon" en double (à gauche ET à droite) — ne reste qu\'à droite.'},
+      {t:'change', sub:'compagnon', tx:'Collection : les filtres sont repassés à droite de la barre de recherche.'},
+      {t:'new', sub:'compagnon', tx:'Tout le module Compagnon est affiché 25% plus grand.'},
+    ], en:[
+      {t:'fix', tx:'Fixed: a tutorial could be marked "seen" before you even signed in, permanently depriving you of seeing it for real once your account was created.'},
+      {t:'change', sub:'connexion', tx:'Sign-in screen simplified: Discord remains the primary button, Google/GitHub/Twitter are grouped below on a single row.'},
+      {t:'change', sub:'compagnon', tx:'The module title no longer shows "Companion" twice (left AND right) — only remains on the right.'},
+      {t:'change', sub:'compagnon', tx:'Collection: filters moved back to the right of the search bar.'},
+      {t:'new', sub:'compagnon', tx:'The whole Companion module is now displayed 25% bigger.'},
+    ] },
   { v:'V349', d:'20/07/2026 10:00', name:{fr:'Compagnon : nouvelle palette de couleurs', en:'Companion: new color palette'}, fr:[
       {t:'change', sub:'compagnon', tx:'Le module Compagnon adopte la palette de couleurs officielle du jeu (fonds bleu-nuit profond, accents or/bleu/vert/rouge) — jusqu\'ici il utilisait un thème doré à part, jamais aligné avec le reste.'},
     ], en:[

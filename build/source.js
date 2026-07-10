@@ -3023,6 +3023,8 @@ function maybeQueueItemTutorial(itemName) {
 
 function maybeQueueTutorialById(id) {
   if (!ITEM_TUTORIALS[id] || isItemTutorialSeen(id)) return false;
+  
+  if (!currentUser) return false;
   if (itemTutorialQueue.includes(id) || (itemTutorialActive && itemTutorialActiveId === id)) return false; 
   if (itemTutorialQueue.length >= ITEM_TUTORIAL_QUEUE_CAP) return false; 
   itemTutorialQueue.push(id);
@@ -3836,7 +3838,7 @@ function openCompanionsModule() {
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'src/companions/companions.html?v=8'; 
+    frame.src = 'src/companions/companions.html?v=9'; 
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);
@@ -8620,10 +8622,10 @@ const I18N = {
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
-  btnSignInDiscord: { fr:'🎮 Se connecter avec Discord', en:'🎮 Sign in with Discord' },
-  btnSignInGoogle: { fr:'🔵 Se connecter avec Google', en:'🔵 Sign in with Google' },
-  btnSignInGithub: { fr:'🐙 Se connecter avec GitHub', en:'🐙 Sign in with GitHub' },
-  btnSignInTwitter: { fr:'🐦 Se connecter avec Twitter/X', en:'🐦 Sign in with Twitter/X' },
+  btnSignInDiscord: { fr:'Se connecter avec Discord', en:'Sign in with Discord' },
+  btnSignInGoogle: { fr:'Google', en:'Google' },
+  btnSignInGithub: { fr:'GitHub', en:'GitHub' },
+  btnSignInTwitter: { fr:'Twitter/X', en:'Twitter/X' },
   btnClearCacheAuth: { fr:'🧹 Vider le cache du jeu', en:'🧹 Clear game cache' },
   btnCodex: { fr:'📚 Codex', en:'📚 Codex' },
   tabCommon: { fr:'Marché commun', en:'Common Market' },
@@ -9192,6 +9194,8 @@ function reportTutorialProgress(completed, skipped) {
   } catch(e) {}
 }
 function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = null } = {}) {
+  
+  if (!currentUser) return;
   activeTutorialSteps = steps;
   activeTutorialTrackId = trackId;
   if (resetView) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); currentActivity = 'zone'; showActivityPage('zone'); }

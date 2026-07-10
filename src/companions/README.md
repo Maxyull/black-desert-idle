@@ -188,6 +188,29 @@ par nature (médailles, pas identité de marque). Comparatif avant/après vu par
 implémentation (Artifact, 3 propositions présentées, celle-ci — "officielle CLAUDE.md" — retenue
 directement une fois trouvée dans le fichier).
 
+**Bug de fond corrigé — tutoriels perdus avant même la connexion (2026-07-20, rapporté
+explicitement : "L'onboarding ne dois pas s'enclencher si on ne s'est pas inscrit/connecté = jeu
+non lancé arriere plan")** : `requestAnimationFrame(loop)` (`world/render.js`, jeu PRINCIPAL, pas
+ce module) démarre sans condition dès le chargement du script, avant même que le joueur ait pu
+s'authentifier (`#authOverlay` encore ouvert) — le jeu simule déjà combat/loot sur `DEFAULT_SAVE`
+pendant cette fenêtre. `maybeQueueTutorialById()` (`progression/notifications-quests.js`) marquait
+un tutoriel "vu" DÈS sa mise en file (pas après affichage réel) — un ramassage simulé pendant cette
+fenêtre pré-auth privait donc DÉFINITIVEMENT le vrai joueur de ce tutoriel une fois connecté.
+Corrigé par une garde `if (!currentUser) return false` (+ même garde en défense sur `startTutorial()`,
+`backend/game-supabase.js`) — sans effet de bord tant qu'aucune session n'existe, le même événement
+redéclenche normalement l'appel une fois authentifié. Sans rapport direct avec ce module (le bug
+vit dans le jeu principal), documenté ici car explicitement rapporté depuis une session de test du
+module Compagnon.
+
+**Refonte visuelle (2026-07-20, demande explicite)** :
+- Titre du header : "Black Desert Idle Compagnon" → "Black Desert Idle" (le mot "Compagnon" ne
+  reste que dans le fil d'Ariane à droite, `COMPAGNON`, jamais dupliqué).
+- Filtres de la Collection (section/rareté/tier) déplacés dans `.coll-controls`, directement à
+  droite de la barre de recherche — auparavant sur leur propre rangée au-dessus.
+- `zoom:1.25` sur `body` (`companions.css`) — agrandit tout le module (police, paddings, cartes,
+  icônes) d'un coup, sans retoucher chaque mesure en dur. `zoom` plutôt que `transform:scale`
+  (qui ne recalcule pas layout/scrollbars) — support universel sur Chromium, cible de ce jeu.
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2
