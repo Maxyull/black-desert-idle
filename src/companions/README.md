@@ -313,6 +313,18 @@ boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()`
 - Complétion Index 48×5=240 (voir plus haut, `companionIndexProgress()`).
 - `zoom:1.25` (ajouté plus tôt le même jour, "zommer 25%+") retiré — entrait en conflit avec le
   contrôle de colonnes plus fin de la Collection (5-9 exactes).
+- **Ré-agrandi ensuite via `transform:scale()`, PAS `zoom` (2026-07-20, "agrandi de 25%
+  l'inferface pas de zoom compagnon")** : `body{width:80%;height:80vh;transform:scale(1.25);
+  transform-origin:top left}` (`companions.css`) — mathématiquement équivalent à `zoom:1.25` pour
+  le rendu final (même facteur d'agrandissement), mais SANS toucher la mise en page/la résolution
+  des `<canvas>` (`zoom` change la taille effective du pixel CSS utilisée pour la mise en page ET
+  la peinture, avec un risque de flou/désalignement des `<canvas>` pixel-art ET des canvas WebGL
+  du viewer 3D selon le moteur — `transform` ne touche que la peinture finale). Piège vérifié :
+  un ancêtre `transform` devient le containing block des descendants `position:fixed`
+  (`.modal-bg`, `.toast-wrap`) — testé explicitement qu'ils couvrent quand même tout le viewport
+  de l'iframe (pas seulement le body pré-scale à 80%). Le plancher `minmax(90px,1fr)` de la
+  Collection protège contre le même risque de carte trop étroite qui avait justifié le retrait du
+  `zoom`. Test : `body is scaled 1.25x via transform (not CSS zoom)...` (`tests/companions.spec.js`).
 - `#updateToast` (jeu principal, `src/styles/styles.css`) : z-index relevé de 200 à 960, au-dessus
   de `#companionsOverlay` (950) — la popup de mise à jour restait invisible derrière le module
   Compagnon plein écran.

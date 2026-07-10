@@ -952,3 +952,43 @@ test('COMPANION_MODEL_MAP covers all 11 loot/combat species at every tier, and t
 
   expect(pageErrors).toEqual([]);
 });
+
+// Agrandissement 25% sans `zoom` CSS (2026-07-20, demande explicite : "agrandi de 25%
+// l'inferface pas de zoom compagnon") -- `transform:scale(1.25)` sur body (width/height
+// compensés à 80%) au lieu de `zoom:1.25` (retiré plus tôt le même jour). Piège à couvrir : un
+// ancêtre avec `transform` devient le containing block des descendants `position:fixed`
+// (.modal-bg, .toast-wrap) -- doivent quand même couvrir tout le viewport de l'iframe, pas
+// seulement le body pré-scale (80% de la taille).
+test('body is scaled 1.25x via transform (not CSS zoom) and fixed-position modals still cover the full iframe viewport', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const bodyStyle = await frame.locator('body').evaluate(el => {
+    const cs = getComputedStyle(el);
+    return { transform: cs.transform, usesZoom: cs.zoom !== '1' && cs.zoom !== '' && cs.zoom !== 'normal', rect: el.getBoundingClientRect() };
+  });
+  // matrix(1.25, 0, 0, 1.25, 0, 0) -- scale 1.25 sur les deux axes, aucun autre terme
+  expect(bodyStyle.transform).toBe('matrix(1.25, 0, 0, 1.25, 0, 0)');
+  expect(bodyStyle.usesZoom).toBe(false);
+
+  const iframeBox = await page.locator('#companionsFrame').boundingBox();
+  // body (scale compensé) doit couvrir tout le viewport RENDU de l'iframe, pas 80% de sa taille
+  expect(Math.round(bodyStyle.rect.width)).toBe(Math.round(iframeBox.width));
+  expect(Math.round(bodyStyle.rect.height)).toBe(Math.round(iframeBox.height));
+
+  await frame.locator('body').evaluate(() => { OM('hatch-modal'); });
+  const modalRect = await frame.locator('#hatch-modal').evaluate(el => el.getBoundingClientRect());
+  expect(Math.round(modalRect.width)).toBe(Math.round(iframeBox.width));
+  expect(Math.round(modalRect.height)).toBe(Math.round(iframeBox.height));
+  expect(Math.round(modalRect.top)).toBe(0);
+  expect(Math.round(modalRect.left)).toBe(0);
+
+  expect(pageErrors).toEqual([]);
+});

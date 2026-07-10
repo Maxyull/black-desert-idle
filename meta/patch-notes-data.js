@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V359', d:'20/07/2026 17:00', name:{fr:'Compagnon : module agrandi de 25% en douceur', en:'Companion: module enlarged 25% more smoothly'}, fr:[
+      {t:'change', sub:'compagnon', tx:'Le module est de nouveau affiché 25% plus grand, mais avec une méthode plus fiable qu\'avant (évite le flou sur les icônes et les aperçus 3D).'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'The module is displayed 25% bigger again, using a more reliable method than before (avoids blur on icons and 3D previews).'},
+    ] },
   { v:'V358', d:'20/07/2026 16:30', name:{fr:'Compagnon : plafond de collection, complétion 240, 3D partout', en:'Companion: collection cap, 240 completion, 3D everywhere'}, fr:[
       {t:'change', sub:'compagnon', tx:'La Collection est plafonnée à 96 familiers (avec de la marge prévue pour un futur système d\'échange).'},
       {t:'change', sub:'compagnon', tx:'La Complétion de l\'Index compte maintenant chaque palier (48 espèces × 5 tiers = 240), pas juste l\'espèce possédée.'},

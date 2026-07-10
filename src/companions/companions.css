@@ -17,11 +17,19 @@
   --cream:#c7d0e6;--cream2:#8a95b3;--cream3:#5c6785;
   --r0:#888;--r1:#44b060;--r2:#4488cc;--r3:#9944cc;--r4:#cc8820;--r5:#cc3030;
 }
-/* zoom du module retiré (2026-07-20, demande explicite : "retire le zoom 25%") -- avait été ajouté
-   plus tôt le même jour ("zommer 25%+ dans compagnon", zoom:1.25 sur body), retiré depuis : gênait
-   plus qu'il n'aidait une fois la Collection densifiable (5-9 colonnes exactes, voir
-   companions.collection.js) -- le zoom CSS global entrait en conflit avec ce contrôle plus fin. */
-body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+html{overflow:hidden;height:100%}
+/* Agrandissement 25% du module SANS `zoom` CSS (2026-07-20, demande explicite : "agrandi de 25%
+   l'inferface pas de zoom compagnon") -- `zoom:1.25` avait déjà été essayé puis retiré le même
+   jour ("retire le zoom 25%"). `zoom` change la taille effective du pixel CSS utilisée pour la
+   mise en page ET la peinture -- sur Chromium, ça inclut aussi la résolution du backing store des
+   <canvas> (pixel-art ET les canvas WebGL de l'écran 3D, companions.viewer3d.js), avec un risque de
+   flou/désalignement de coordonnées de clic selon le moteur. `transform:scale()` ne touche QUE la
+   peinture finale (jamais la mise en page ni la résolution des canvas), donc pas ce risque -- au
+   prix de devoir compenser la taille du conteneur pour continuer à remplir tout le viewport
+   (width/height à 100/1.25=80%, puis remis à l'échelle visuellement à 100% par le scale). Le
+   plancher minmax(90px,1fr) de la Collection (companions.collection.js) protège déjà contre le
+   même risque de carte trop étroite qui avait justifié le retrait du zoom -- reste valable ici. */
+body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;width:80%;height:80vh;display:flex;flex-direction:column;overflow:hidden;transform:scale(1.25);transform-origin:top left}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .hdr{background:linear-gradient(180deg,var(--s1),transparent);border-bottom:1px solid var(--border);padding:8px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0}
 .hdr-logo{font-family:'Cinzel',serif;font-size:15px;color:var(--gold);letter-spacing:.08em}
