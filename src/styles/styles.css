@@ -1760,6 +1760,24 @@
   .admStatTile { flex:1; background:rgba(201,165,90,.06); border:1px solid var(--gold-dim); border-radius:5px; padding:9px 12px; }
   .admStatTile .astLbl { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:3px; }
   .admStatTile .astVal { font-size:17px; color:var(--gold); font-weight:bold; }
+  /* Dashboard consolidé (2026-07-20, demande explicite : "ajoute toutes les graphique de tout les
+     panel dans dashboard avec des voyant vert rouge pour plus dinfos") -- grille de cartes
+     cliquables, une par section du panneau admin, chacune avec son mini graphique (réutilise les
+     mêmes builders que la section complète) + un voyant 🟢/🔴 de synthèse. Clique -> ouvre la
+     section complète (openAdminSection). */
+  .admDashGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; }
+  .admDashCard {
+    background:rgba(255,255,255,.03); border:1px solid #2c2a33; border-radius:7px; padding:10px 12px;
+    cursor:pointer; transition:background .15s, border-color .15s; display:flex; flex-direction:column; gap:6px;
+  }
+  .admDashCard:hover { background:rgba(201,165,90,.07); border-color:var(--gold-dim); }
+  .admDashCardHead { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .admDashCardTitle { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.03em; color:var(--ink); }
+  .admDashLight { font-size:13px; line-height:1; flex-shrink:0; }
+  .admDashCardBody { min-height:70px; display:flex; align-items:center; justify-content:center; }
+  .admDashCardBody .admPieBlock { max-width:100%; }
+  .admDashCardBody svg { max-width:100%; }
+  .admDashCardNote { font-size:10px; color:var(--ink-dim); line-height:1.4; }
   .admHistBars { display:flex; align-items:flex-end; gap:6px; height:110px; margin-bottom:6px; padding-top:6px; }
   .admHistBar { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
   .admHistBar .ahbFill { width:100%; background:linear-gradient(180deg,#c9a55a,#8a7038); border-radius:2px 2px 0 0; min-height:2px; }

@@ -29,6 +29,11 @@ courrier, compendium, craft du Trésor de Velia.
   `placement:'bottom'` se retrouvait poussée hors du viewport, coupée. Cible désormais
   `#marketHead` (petit bandeau de titre fixe en haut du panneau). Test de régression :
   `testMarketTutorialTargetsMarketHeadNotFullPanel` (`tests/tests.js`).
+  **Bug corrigé (2026-07-20)** : `markItemTutorialSeen()` appelait
+  `sb.rpc('mark_item_tutorial_seen', ...).catch(()=>{})` — le builder Postgrest n'a pas de
+  `.catch()` direct (voir `backend/README.md` pour le détail complet, même piège que
+  `log_playtime_ping`) — l'exception était avalée silencieusement, la RPC ne partait jamais.
+  Remplacé par `.then(null, ()=>{})`, reste fire-and-forget (aucun `await` ajouté).
 - `achievements-data.js` — les définitions des succès (`ACHIEVEMENTS`). Charge après
   `core/game-core.js` : certains objectifs (`target: ZONES.length`, `PRI_IDX`...) sont
   évalués immédiatement au chargement.

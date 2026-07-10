@@ -157,6 +157,24 @@ provider Supabase Auth `'twitter'` (nom conservé malgré le rebranding "X"). `P
 `raw_app_meta_data`. ⚠️ Même limite que Google/GitHub : à activer côté Dashboard Supabase
 (Authentication > Providers) avec un Client ID/Secret OAuth.
 
+**Dashboard consolidé (2026-07-20, demande explicite : "ajoute toutes les graphique de tout les
+panel dans dashboard avec des voyant vert rouge pour plus dinfos")** : `renderAdminDashboard`
+(`Vue d'ensemble → Dashboard`, `admin-panel.js`) réécrit — garde les 4 tuiles + alertes existantes
+en haut, ajoute une grille de 11 cartes cliquables (`DASHBOARD_WIDGETS`), une par section à
+graphique du panneau (Santé économique, Silver, Richesse, Marché, Inscriptions, Sanctions,
+Onboarding, Tutoriels d'objets, Compagnons, Progression par zone, Pierres de Cron). Chaque widget
+fetch ses propres données et réutilise TELS QUELS les mêmes helpers de graphique que la section
+complète (`buildPieWithLegendHtml`/`buildBarSeriesSvg`/`buildSilverChartSvg`, `admin-economy.js`)
+— aucune logique de rendu dupliquée. `dashboardLight(healthy)` calcule un voyant 🟢/🔴 par carte
+(seuils simples : alertes économiques actives, marché fermé/mort, bans>0, richesse très concentrée,
+onboarding <40% de complétion, tutoriels >50% passés, 0 joueur Compagnon synchronisé...) — cliquer
+une carte appelle `openAdminSection(cat, sec)` pour ouvrir le détail complet. `Promise.allSettled`
+sur tous les widgets : un widget en échec (RPC absente, réseau...) affiche juste "Indisponible" à
+sa place, sans jamais bloquer les 10 autres. Test de régression `testDashboardWidgetsPointToRealSections`
+(`tests/tests.js`) garantit que chaque `{cat,sec}` référencé existe bien dans `ADMIN_SECTIONS`
+(sinon un clic sur la carte ne ferait rien, silencieusement — même piège que
+`testAdminSectionsWellFormed`).
+
 Voir `ADMIN_MENU_PLAN.md` (racine du repo) pour l'état des lieux du panneau admin et pourquoi le
 reste d'un plan initial plus large (React, Sentry, i18n editor, staging, équipe multi-rôles...) a
 été volontairement écarté à l'échelle actuelle du projet.

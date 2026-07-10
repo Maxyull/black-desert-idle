@@ -84,6 +84,34 @@ categorie pvp")** :
   verrouillé, même convention que Pêche/Mine/etc. — distinct du classement ci-dessus (celui-là est
   le PvP joueur-contre-joueur du jeu principal, pas les familiers).
 
+**Bugs corrigés — sync admin totalement muette depuis sa création (2026-07-20, "toujours aucunes
+stats declosion... verifie si tout est connecté a supabase")** : DEUX bugs cumulés dans
+`companions.sync.js` empêchaient TOUTE synchro vers `companion_stats`, pour tous les comptes
+(invité ou non), depuis la création du module :
+1. `hostWin.sb`/`hostWin.currentUser` (lus via `window.parent`) étaient TOUJOURS `undefined` —
+   `sb`/`currentUser` sont des `let` top-level dans `game-supabase.js`, et contrairement à `var` ou
+   à une déclaration `function`, `let` au top-level d'un script classique NE devient PAS une
+   propriété de `window`. Corrigé en ajoutant `getSbClient()`/`getCurrentUserForSync()` (des
+   déclarations `function`, elles bien attachées à `window`) dans `game-supabase.js`, utilisées par
+   `companions.sync.js` à la place d'un accès direct.
+2. Même une fois (1) corrigé, `sb.rpc(...).catch(()=>{})` levait silencieusement
+   `TypeError: ...catch is not a function` — le builder Postgrest renvoyé par `sb.rpc(...)`
+   n'implémente QUE `.then()` (thenable), jamais `.catch()` directement (déjà rencontré une fois
+   côté jeu principal, `log_playtime_ping`, `game-supabase.js` ~ligne 1004 — mais jamais généralisé
+   aux 2 autres occurrences de `mark_item_tutorial_seen`, corrigées dans la même passe). L'exception
+   était avalée par le `try/catch` englobant AVANT même que la requête HTTP ne parte. Corrigé en
+   passant `await`/`.then(null, cb)` au lieu de `.catch()` direct.
+Les deux bugs confirmés en conditions réelles (RPC appelée manuellement en direct, ligne insérée en
+base, puis nettoyée) — voir tests `testRpcFireAndForgetCallsNeverUseBareCatch` (`tests/tests.js`)
+et `syncCompanionStatsToServer reaches the RPC call and never throws...` (`tests/companions.spec.js`).
+
+**Export/Import de sauvegarde JSON retirés (2026-07-20, demande explicite : "enlever import
+export")** : `exportSave()`/`importSave()` (`companions.save.js`) et leurs boutons 💾/📥
+(`companions.html`) supprimés — ne restait qu'un filet de sécurité local jamais relié à la
+sauvegarde cloud (module 100% `localStorage`), source de confusion vu qu'aucune autre partie du jeu
+principal n'expose ce genre de bouton. `resetSave()` (🗑️ Reset) reste seul mécanisme de remise à
+zéro locale.
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2

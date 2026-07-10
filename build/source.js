@@ -3007,7 +3007,8 @@ function markItemTutorialSeen(id, skipped) {
   try { localStorage.setItem(itemTutoStorageKey(id), '1'); } catch(e) {}
   
   if (typeof sb !== 'undefined' && sb && typeof currentUser !== 'undefined' && currentUser && typeof isGuest === 'function' && !isGuest()) {
-    try { sb.rpc('mark_item_tutorial_seen', { p_tutorial_id: id, p_skipped: !!skipped }).catch(()=>{}); } catch(e) {}
+    
+    try { sb.rpc('mark_item_tutorial_seen', { p_tutorial_id: id, p_skipped: !!skipped }).then(null, ()=>{}); } catch(e) {}
   }
 }
 
@@ -3834,7 +3835,7 @@ function openCompanionsModule() {
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'src/companions/companions.html?v=2'; 
+    frame.src = 'src/companions/companions.html?v=4'; 
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);
@@ -7753,6 +7754,9 @@ function isBanned(banStatus) {
 
 function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 
+function getSbClient() { return sb; }
+function getCurrentUserForSync() { return currentUser; }
+
 let farmEventQueue = new Map();
 function queueFarmEvent(kind, name, qty, silverVal) {
   if (!sb || !currentUser || isGuest()) return; 
@@ -9176,9 +9180,10 @@ function reportTutorialProgress(completed, skipped) {
   if (!activeTutorialTrackId) return;
   if (!sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
   try {
+    
     sb.rpc('mark_item_tutorial_seen', {
       p_tutorial_id: activeTutorialTrackId, p_skipped: !!skipped, p_last_step: tutorialStepIdx, p_completed: !!completed,
-    }).catch(()=>{});
+    }).then(null, ()=>{});
   } catch(e) {}
 }
 function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = null } = {}) {
@@ -10051,9 +10056,190 @@ function renderAdminCompanions(el) {
   });
 }
 
+function dashboardLight(healthy) {
+  return healthy
+    ? { dot:'🟢', label: LANG==='fr'?'OK':'OK' }
+    : { dot:'🔴', label: LANG==='fr'?'À surveiller':'Needs attention' };
+}
+
+const DASHBOARD_WIDGETS = [
+  { id:'dw-econ', cat:'economy', sec:'health', icon:'💹', title:{fr:'Santé économique',en:'Economic health'},
+    fetch: () => sb.from('admin_silver_ledger_by_category').select('*'),
+    build: ({ data }) => {
+      const rows = (data||[]).map(r => ({ category:r.category, gained:Number(r.total_gained||0), spent:Number(r.total_spent||0) }));
+      const alerts = computeEconAlerts(rows);
+      const label = c => CATEGORY_LABEL[c] ? CATEGORY_LABEL[c][LANG] : c;
+      const sources = rows.filter(r=>r.gained>0).map(r=>({label:label(r.category), value:r.gained}));
+      return {
+        light: dashboardLight(alerts.length===0),
+        chart: buildPieWithLegendHtml(sources, { thresholdPct:6 }),
+        note: alerts.length ? alerts[0].text : (LANG==='fr'?'Équilibre sources/puits sain':'Healthy source/sink balance'),
+      };
+    } },
+  { id:'dw-silver', cat:'economy', sec:'silver', icon:'🏦', title:{fr:'Flux de silver (48h)',en:'Silver flow (48h)'},
+    fetch: () => sb.from('admin_silver_ledger_by_hour').select('*'),
+    build: ({ data }) => {
+      const rows = data || [];
+      const netTotal = rows.reduce((a,r) => a + Number(r.net_delta||0), 0);
+      const { accent, danger } = currentAdminAccentColors();
+      return {
+        light: dashboardLight(netTotal >= 0),
+        chart: buildSilverChartSvg(rows, accent, danger),
+        note: (LANG==='fr'?'Solde net 48h : ':'48h net: ') + (netTotal>=0?'+':'') + fmt(Math.round(netTotal)),
+      };
+    } },
+  { id:'dw-wealth', cat:'economy', sec:'wealth', icon:'📈', title:{fr:'Richesse des joueurs',en:'Player wealth'},
+    fetch: () => sb.from('admin_wealth').select('silver'),
+    build: ({ data }) => {
+      const silvers = (data||[]).map(r => Number(r.silver||0)).sort((a,b)=>a-b);
+      const total = silvers.reduce((a,b)=>a+b,0);
+      const avg = silvers.length ? total/silvers.length : 0;
+      const med = silvers.length ? silvers[Math.floor(silvers.length/2)] : 0;
+      const brackets = [
+        { max:10000, label:'< 10k' }, { max:100000, label:'10k-100k' }, { max:1000000, label:'100k-1M' },
+        { max:10000000, label:'1M-10M' }, { max:Infinity, label:'10M+' },
+      ];
+      const counts = brackets.map(() => 0);
+      silvers.forEach(v => { const idx = brackets.findIndex(b=>v<b.max); counts[idx>=0?idx:brackets.length-1]++; });
+      
+      const skewed = med > 0 && avg > med * 4;
+      return {
+        light: dashboardLight(!skewed),
+        chart: buildPieWithLegendHtml(brackets.map((b,i)=>({label:b.label, value:counts[i]})), { thresholdPct:0, formatValue:v=>String(Math.round(v)) }),
+        note: skewed ? (LANG==='fr'?'Richesse très concentrée (moyenne ≫ médiane)':'Wealth highly concentrated (mean ≫ median)') : (LANG==='fr'?'Répartition raisonnable':'Reasonable spread'),
+      };
+    } },
+  { id:'dw-market', cat:'economy', sec:'market', icon:'🏛️', title:{fr:'Marché',en:'Market'},
+    fetch: () => Promise.all([sb.rpc('get_market_open'), sb.rpc('admin_market_top_items', { p_days:30 })]),
+    build: ([{ data: openData }, { data: topItems }]) => {
+      const open = openData !== false;
+      const rows = topItems || [];
+      return {
+        light: dashboardLight(open && rows.length > 0),
+        chart: buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) }))),
+        note: !open ? (LANG==='fr'?'Marché FERMÉ':'Market CLOSED') : (rows.length ? (LANG==='fr'?'Marché actif (30j)':'Market active (30d)') : (LANG==='fr'?'Aucun échange (30j)':'No trades (30d)')),
+      };
+    } },
+  { id:'dw-signups', cat:'overview', sec:'signups', icon:'📈', title:{fr:'Inscriptions (30j)',en:'Signups (30d)'},
+    fetch: () => Promise.all([sb.rpc('admin_signups_by_day', { p_days:30 }), sb.rpc('admin_signups_by_provider')]),
+    build: ([{ data: byDay }, { data: byProvider }]) => {
+      const rows = byDay || [];
+      const { accent } = currentAdminAccentColors();
+      const last7 = rows.slice(-7).reduce((a,r) => a + Number(r.signups||0), 0);
+      const chart = rows.length
+        ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
+        : buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon+' '+providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 });
+      return {
+        light: dashboardLight(last7 > 0),
+        chart,
+        note: (LANG==='fr'?`${last7} inscription(s) sur 7 jours`:`${last7} signup(s) in 7 days`),
+      };
+    } },
+  { id:'dw-bans', cat:'players', sec:'sanctions', icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
+    fetch: () => sb.rpc('admin_list_bans'),
+    build: ({ data }) => {
+      const count = (data||[]).length;
+      return {
+        light: dashboardLight(count === 0),
+        chart: `<div style="text-align:center"><div style="font-size:34px;font-weight:bold;color:${count===0?'var(--gold)':'var(--danger)'}">${count}</div><div class="admHint">${LANG==='fr'?'Bannissement(s) actif(s)':'Active ban(s)'}</div></div>`,
+        note: count === 0 ? (LANG==='fr'?'Aucune sanction active':'No active sanction') : (LANG==='fr'?`${count} joueur(s) actuellement banni(s)`:`${count} player(s) currently banned`),
+      };
+    } },
+  { id:'dw-onboarding', cat:'content', sec:'onboarding', icon:'🧭', title:{fr:'Onboarding',en:'Onboarding'},
+    fetch: () => sb.rpc('admin_onboarding_stats'),
+    build: ({ data }) => {
+      const s = (data && data[0]) || { started:0, completed:0, skipped:0, in_progress:0 };
+      const started = Number(s.started||0), completed = Number(s.completed||0), skipped = Number(s.skipped||0), inProgress = Number(s.in_progress||0);
+      const pct = started ? Math.round(completed/started*100) : 0;
+      return {
+        light: dashboardLight(!started || pct >= 40),
+        chart: started ? buildPieWithLegendHtml([
+          { label: LANG==='fr'?'Terminé':'Completed', value: completed },
+          { label: LANG==='fr'?'Passé':'Skipped', value: skipped },
+          { label: LANG==='fr'?'En cours':'In progress', value: inProgress },
+        ], { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Personne n\'a démarré le tutoriel':'No one started the tutorial'}</div>`,
+        note: started ? (LANG==='fr'?`${pct}% de complétion`:`${pct}% completion`) : '',
+      };
+    } },
+  { id:'dw-tutorials', cat:'content', sec:'tutorials', icon:'🎓', title:{fr:'Tutoriels d\'objets',en:'Item tutorials'},
+    fetch: () => sb.rpc('admin_item_tutorial_stats'),
+    build: ({ data }) => {
+      const rows = data || [];
+      const completed = rows.reduce((a,r)=>a+Number(r.completed_count||0),0);
+      const skipped = rows.reduce((a,r)=>a+Number(r.skipped_count||0),0);
+      const total = completed + skipped;
+      const skipRate = total ? skipped/total : 0;
+      return {
+        light: dashboardLight(!total || skipRate < 0.5),
+        chart: total ? buildPieWithLegendHtml([
+          { label: LANG==='fr'?'Terminés':'Completed', value: completed },
+          { label: LANG==='fr'?'Passés':'Skipped', value: skipped },
+        ], { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Aucun tutoriel vu':'No tutorials seen'}</div>`,
+        note: total ? (LANG==='fr'?`${Math.round(skipRate*100)}% passés`:`${Math.round(skipRate*100)}% skipped`) : '',
+      };
+    } },
+  { id:'dw-companions', cat:'content', sec:'companions', icon:'🐾', title:{fr:'Compagnons',en:'Companions'},
+    fetch: () => Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown')]),
+    build: ([{ data: statsData }, { data: breakdownData }]) => {
+      const s = (statsData && statsData[0]) || {};
+      const playersSynced = Number(s.players_synced||0);
+      const rows = breakdownData || [];
+      const rarityTotals = sumCompanionBreakdown(rows, 'rarity_breakdown');
+      const rarityItems = COMPANION_RARITY_LABELS.filter(r => rarityTotals[r.id]).map(r => ({ label:r.name, value:rarityTotals[r.id] }));
+      return {
+        light: dashboardLight(playersSynced > 0),
+        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Aucun joueur synchronisé':'No player synced'}</div>`,
+        note: (LANG==='fr'?`${playersSynced} joueur(s) synchronisé(s)`:`${playersSynced} player(s) synced`),
+      };
+    } },
+  { id:'dw-zones', cat:'content', sec:'zones', icon:'🗾', title:{fr:'Progression par zone',en:'Zone progression'},
+    fetch: () => sb.from('player_stats').select('best_zone_index'),
+    build: ({ data }) => {
+      const zoneCounts = new Map();
+      (data||[]).forEach(r => { const zi = Number(r.best_zone_index||0); zoneCounts.set(zi, (zoneCounts.get(zi)||0)+1); });
+      const items = [...zoneCounts.entries()].sort((a,b)=>a[0]-b[0]).map(([zi,cnt]) => ({ label: ZONES[zi] ? tr(ZONES[zi].name) : `#${zi}`, value: cnt }));
+      return {
+        light: dashboardLight(items.length > 0),
+        chart: buildPieWithLegendHtml(items),
+        note: (LANG==='fr'?`${(data||[]).length} joueur(s)`:`${(data||[]).length} player(s)`),
+      };
+    } },
+  { id:'dw-cron', cat:'content', sec:'cron', icon:'⏳', title:{fr:'Pierres de Cron',en:'Cron Stones'},
+    fetch: () => sb.from('admin_farm_by_item').select('*'),
+    build: ({ data }) => {
+      const farmedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'material');
+      const usedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'cron_used');
+      const farmed = farmedRow ? Number(farmedRow.total_qty||0) : 0;
+      const used = usedRow ? Number(usedRow.total_qty||0) : 0;
+      return {
+        light: dashboardLight(farmed >= used),
+        chart: buildPieWithLegendHtml([
+          { label: LANG==='fr'?'En stock':'In stock', value: Math.max(0, farmed-used) },
+          { label: LANG==='fr'?'Utilisées':'Used', value: used },
+        ], { thresholdPct:0 }),
+        note: (LANG==='fr'?`${fmt(farmed)} farmées / ${fmt(used)} utilisées`:`${fmt(farmed)} farmed / ${fmt(used)} used`),
+      };
+    } },
+];
+function buildDashboardCard(widget, result) {
+  return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
+      <div class="admDashCardHead">
+        <span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span>
+        <span class="admDashLight" title="${result.light.label}">${result.light.dot}</span>
+      </div>
+      <div class="admDashCardBody">${result.chart}</div>
+      <div class="admDashCardNote">${escapeHtml(result.note||'')}</div>
+    </div>`;
+}
+function buildDashboardCardError(widget) {
+  return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
+      <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${LANG==='fr'?'Indisponible':'Unavailable'}">⚪</span></div>
+      <div class="admDashCardBody"><div class="admEmpty">${LANG==='fr'?'Indisponible':'Unavailable'}</div></div>
+    </div>`;
+}
 function renderAdminDashboard(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
-  Promise.all([
+  const topPromise = Promise.all([
     sb.rpc('admin_list_players'),
     sb.from('admin_wealth').select('silver'),
     sb.rpc('admin_list_bans'),
@@ -10064,16 +10250,29 @@ function renderAdminDashboard(el) {
     const totalSilver = (wealth||[]).reduce((a,r) => a + Number(r.silver||0), 0);
     const activeBans = (bans||[]).length;
     const open = marketOpen !== false;
-    
     const alerts = typeof computeEconAlerts === 'function' ? computeEconAlerts(ledgerByCat) : [];
     const alertsHtml = typeof buildEconAlertsHtml === 'function' ? buildEconAlertsHtml(alerts) : '';
-    el.innerHTML = `${alertsHtml}<div class="admStatTiles">
+    return `${alertsHtml}<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">🟢 ${LANG==='fr'?'Joueurs en ligne':'Players online'}</div><div class="astVal">${online}</div></div>
         <div class="admStatTile"><div class="astLbl">🏦 ${LANG==='fr'?'Silver total en jeu':'Total silver in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
         <div class="admStatTile"><div class="astLbl">🚫 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div><div class="astVal">${activeBans}</div></div>
         <div class="admStatTile"><div class="astLbl">🏛️ ${LANG==='fr'?'Marché':'Market'}</div><div class="astVal" style="${open?'':'color:var(--danger)'}">${open?(LANG==='fr'?'Ouvert':'Open'):(LANG==='fr'?'Fermé':'Closed')}</div></div>
-      </div>
-      <div class="admHint">${LANG==='fr'?'Vue d\'ensemble rapide — pour le détail, utilise les sections de la sidebar.':'Quick overview — for details, use the sidebar sections.'}</div>`;
+      </div>`;
+  });
+  
+  const widgetPromises = DASHBOARD_WIDGETS.map(w =>
+    Promise.resolve(w.fetch()).then(res => buildDashboardCard(w, w.build(res))).catch(() => buildDashboardCardError(w))
+  );
+  Promise.all([topPromise, Promise.allSettled(widgetPromises)]).then(([topHtml, settled]) => {
+    const cards = settled.map(s => s.status === 'fulfilled' ? s.value : '').join('');
+    el.innerHTML = `${topHtml}
+      <div class="admHint" style="margin:10px 0 12px">${LANG==='fr'
+        ? 'Vue d\'ensemble de tous les panneaux — 🟢 rien à signaler, 🔴 à surveiller. Clique une carte pour ouvrir le détail complet.'
+        : 'Overview of every panel — 🟢 nothing to flag, 🔴 needs attention. Click a card to open the full detail.'}</div>
+      <div class="admDashGrid">${cards}</div>`;
+    el.querySelectorAll('.admDashCard').forEach(card => {
+      card.onclick = () => openAdminSection(card.dataset.cat, card.dataset.id);
+    });
   });
 }
 

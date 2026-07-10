@@ -974,7 +974,12 @@ function markItemTutorialSeen(id, skipped) {
   // de journalisation, mais le flag localStorage ci-dessus suffit pour le "ne plus jamais montrer"
   // côté client, indépendamment du compte
   if (typeof sb !== 'undefined' && sb && typeof currentUser !== 'undefined' && currentUser && typeof isGuest === 'function' && !isGuest()) {
-    try { sb.rpc('mark_item_tutorial_seen', { p_tutorial_id: id, p_skipped: !!skipped }).catch(()=>{}); } catch(e) {}
+    // bug déjà rencontré ailleurs (voir game-supabase.js:1004, log_playtime_ping) : le builder
+    // Postgrest renvoyé par sb.rpc(...) n'implémente QUE .then() (thenable), pas .catch() — appeler
+    // .catch() dessus levait silencieusement "TypeError: ...catch is not a function", AVANT même que
+    // la requête ne parte (le thenable ne s'exécute qu'au premier .then()). .then(null, cb) reste
+    // fire-and-forget (pas d'await ici, ne bloque jamais l'appelant) tout en restant valide.
+    try { sb.rpc('mark_item_tutorial_seen', { p_tutorial_id: id, p_skipped: !!skipped }).then(null, ()=>{}); } catch(e) {}
   }
 }
 // file d'attente (2026-07-19, demande explicite) : ne jamais interrompre un tutoriel déjà ouvert si

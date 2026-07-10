@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V346', d:'20/07/2026 07:00', name:{fr:'Compagnon : résultat de fusion clarifié, export/import retiré · Admin : dashboard consolidé', en:'Companion: clearer fusion result, export/import removed · Admin: consolidated dashboard'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Le résultat d\'une fusion affiche désormais clairement le changement de Rang (Tier) et de Score, avec une flèche verte ⬆️ en cas de gain et rouge ⬇️ en cas de perte, comparé au meilleur des 2 parents.'},
+      {t:'change', sub:'compagnon', tx:'Boutons d\'export/import de sauvegarde JSON retirés du module Compagnon (ne restait qu\'un filet de sécurité local, jamais relié à la sauvegarde cloud).'},
+      {t:'fix', sub:'compagnon', tx:'La synchronisation des statistiques du module Compagnon vers le panneau admin ne fonctionnait jamais depuis sa création (bug technique côté connexion au serveur) — corrigé, les stats remontent désormais correctement.'},
+      {t:'new', sub:'admin', tx:'Le Dashboard admin (Vue d\'ensemble) affiche désormais un aperçu de TOUS les panneaux (économie, marché, sanctions, onboarding, compagnons, zones...) avec un voyant 🟢/🔴 par section — clique une carte pour ouvrir le détail complet.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'A fusion result now clearly shows the Rank (Tier) and Score change, with a green ⬆️ arrow on gain and a red ⬇️ arrow on loss, compared to the best of the 2 parents.'},
+      {t:'change', sub:'compagnon', tx:'JSON save export/import buttons removed from the Companion module (was just a local safety net, never linked to cloud save).'},
+      {t:'fix', sub:'compagnon', tx:'Syncing Companion module stats to the admin panel never worked since it was created (server-connection technical bug) — fixed, stats now come through correctly.'},
+      {t:'new', sub:'admin', tx:'The admin Dashboard (Overview) now shows a preview of EVERY panel (economy, market, sanctions, onboarding, companions, zones...) with a 🟢/🔴 light per section — click a card to open the full detail.'},
+    ] },
   { v:'V345', d:'20/07/2026 06:00', name:{fr:'Admin : publication de notes de version sur Discord', en:'Admin: publish patch notes to Discord'}, fr:[
       {t:'new', sub:'admin', tx:'Nouvelle section admin "Notes de version → Discord" : choisir une version et la publier en un clic dans le salon Discord de log, avec les icônes 🆕/🔄/🛠️/🔒 par ligne conservées.'},
     ], en:[

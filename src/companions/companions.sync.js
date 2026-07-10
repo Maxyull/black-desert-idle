@@ -23,11 +23,16 @@ function computeCompanionBreakdowns() {
   return { rarity, tier, section };
 }
 
-function syncCompanionStatsToServer() {
+async function syncCompanionStatsToServer() {
   try {
     const hostWin = window.parent;
     if (!hostWin || hostWin === window) return; // ouvert hors iframe (ex: fichier local direct) -- no-op
-    const sb = hostWin.sb, currentUser = hostWin.currentUser;
+    // bug corrigé #1 (2026-07-20) : `hostWin.sb`/`hostWin.currentUser` étaient TOUJOURS undefined
+    // (déclarations `let` top-level, jamais attachées à `window` -- voir getSbClient()/
+    // getCurrentUserForSync() dans game-supabase.js pour le détail). Passer par ces accesseurs
+    // `function` (eux bien attachés à `window`) au lieu de lire les variables directement.
+    const sb = typeof hostWin.getSbClient === 'function' ? hostWin.getSbClient() : null;
+    const currentUser = typeof hostWin.getCurrentUserForSync === 'function' ? hostWin.getCurrentUserForSync() : null;
     const isGuestFn = hostWin.isGuest;
     if (!sb || !currentUser || (typeof isGuestFn === 'function' && isGuestFn())) return;
     const breakdowns = computeCompanionBreakdowns();
@@ -35,7 +40,14 @@ function syncCompanionStatsToServer() {
     if (completedAchievements && typeof ACHIEVEMENTS !== 'undefined') {
       ACHIEVEMENTS.forEach(a => { if (a.hard && completedAchievements.has(a.id)) hardAchCount++; });
     }
-    sb.rpc('sync_companion_stats', {
+    // bug corrigé #2 (2026-07-20) : le builder Postgrest renvoyé par sb.rpc(...) n'implémente QUE
+    // `.then()` (thenable), pas `.catch()` -- l'ancien `.catch(()=>{})` levait silencieusement
+    // "TypeError: ...catch is not a function", avalée par le try/catch englobant, AVANT même que
+    // la requête HTTP ne parte (le thenable ne s'exécute qu'au premier `.then()`/`await`). Combiné
+    // au bug #1 ci-dessus, ces deux bugs empêchaient TOUTE synchronisation depuis la création de ce
+    // fichier, pour tous les comptes (invité ou non) -- confirmé en observant zéro requête réseau
+    // sortante malgré des appels répétés. `await` déclenche correctement l'exécution réelle.
+    await sb.rpc('sync_companion_stats', {
       p_pet_count: Array.isArray(PETS) ? PETS.length : 0,
       p_silver: SILVER || 0,
       p_hatch_count: totalHatched || 0,
@@ -50,7 +62,7 @@ function syncCompanionStatsToServer() {
       p_section_breakdown: breakdowns.section,
       p_hard_achievements_count: hardAchCount,
       p_fusion_downgrade_count: fusionLostHighRarityCount || 0,
-    }).catch(()=>{});
+    });
   } catch(e) {}
 }
 // throttlé à 60s (pas à chaque autosave de 5s, voir companions.save.js) : ce sont des compteurs

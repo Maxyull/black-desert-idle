@@ -95,67 +95,13 @@ function loadGame(){
 }
 setInterval(saveGame, 5000); // autosave toutes les 5s
 
-// ═══ EXPORT / IMPORT DE SAUVEGARDE (filet de sécurité) ═══
+// ═══ RESET DE SAUVEGARDE ═══
+// Export/Import JSON retirés (2026-07-20, demande explicite : "enlever import export") -- ne
+// restait qu'un filet de sécurité local, jamais relié à la sauvegarde cloud (module 100%
+// localStorage, voir CLAUDE.md §28), et source de confusion pour les joueurs vu qu'aucune autre
+// partie du jeu principal n'expose ce genre de bouton.
 function resetSave(){
-  if(!confirm('Effacer la sauvegarde et recharger le roster de départ (0 pet) ?\n\nTa progression actuelle sera définitivement perdue. Exporte-la avant si tu veux la garder.')) return;
+  if(!confirm('Effacer la sauvegarde et recharger le roster de départ (0 pet) ?\n\nTa progression actuelle sera définitivement perdue.')) return;
   localStorage.removeItem('velia_idle_pets_save');
   location.reload();
-}
-
-function exportSave(){
-  const state = {
-    PETS, SILVER, INVENTORY, incubSlots, eggTimer, petId, selFoodName, hatchCountSincePity,
-    fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount, totalHatched,
-    eggTypesUsed: Array.from(eggTypesUsed),
-    completedAchievements: Array.from(completedAchievements),
-    pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1,
-    savedAt: Date.now()
-  };
-  const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `velia-idle-save-${Date.now()}.json`;
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('💾','Sauvegarde exportée !');
-}
-
-function importSave(input){
-  const file = input.files?.[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = (e)=>{
-    try{
-      const state = JSON.parse(e.target.result);
-      // même migration rétroactive qu'au chargement normal (voir loadGame ci-dessus) : un import
-      // d'une sauvegarde EXPORTÉE AVANT ce changement ne doit pas permettre de contourner le reset.
-      const needsRosterReset = !state.petsRosterResetV1;
-      PETS = needsRosterReset ? [] : (state.PETS || PETS);
-      SILVER = state.SILVER ?? SILVER;
-      INVENTORY = state.INVENTORY || {};
-      incubSlots = state.incubSlots || incubSlots;
-      eggTimer = state.eggTimer ?? eggTimer;
-      petId = state.petId || petId;
-      selFoodName = state.selFoodName || null;
-      hatchCountSincePity = state.hatchCountSincePity || 0;
-      fusionCount = state.fusionCount || 0;
-      caphrasUpgradeCount = state.caphrasUpgradeCount || 0;
-      bossItemFound = state.bossItemFound || false;
-      breakthroughCount = state.breakthroughCount || 0;
-      totalHatched = state.totalHatched || 0;
-    fusionLostHighRarityCount = state.fusionLostHighRarityCount || 0;
-      eggTypesUsed = new Set(state.eggTypesUsed || []);
-      completedAchievements = new Set(state.completedAchievements || []);
-      pityEverTriggered = state.pityEverTriggered || false;
-      loginStreak = state.loginStreak || 0;
-      lastLoginDate = state.lastLoginDate || null;
-      petsRosterResetV1 = true;
-      saveGame();
-      renderAll();
-      toast('📥','Sauvegarde importée avec succès !');
-    }catch(err){
-      toast('❌','Fichier de sauvegarde invalide');
-    }
-  };
-  reader.readAsText(file);
-  input.value=''; // reset pour pouvoir réimporter le même fichier si besoin
 }

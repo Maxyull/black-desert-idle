@@ -22,3 +22,24 @@ nouvelle version.
   Marché commun, voir `progression/README.md`) ET une cible proche du bord bas de l'écran
   produisait une boîte coupée hors du viewport. Test de régression :
   `testTutorialBoxClampsToRealHeightNeverOverflowsBottom` (`tests/tests.js`).
+  **`getSbClient()`/`getCurrentUserForSync()` (2026-07-20, bug corrigé)** : `sb`/`currentUser`
+  sont des `let` top-level — contrairement à `var` ou à une déclaration `function`, `let` au
+  top-level d'un script classique NE devient PAS une propriété de `window`. Le module Compagnon
+  (`src/companions/`, iframe same-origin) lisait `window.parent.sb`/`.currentUser`, TOUJOURS
+  `undefined` — sa synchro admin ne s'est jamais déclenchée depuis sa création. Ces deux
+  accesseurs (déclarations `function`, bien attachées à `window`) exposent la valeur COURANTE de
+  `sb`/`currentUser` à tout code cross-window qui en a besoin — à réutiliser pour tout futur
+  module en iframe qui doit lire ces globals depuis `window.parent`, plutôt que de les lire
+  directement (voir aussi `companions/README.md` pour le 2e bug cumulé de ce correctif :
+  `.catch()` direct sur un builder Postgrest).
+  **`.catch()` direct sur `sb.rpc(...)` — piège récurrent (2026-07-20)** : le builder Postgrest
+  renvoyé par `sb.rpc(...)` n'implémente QUE `.then()` (thenable), jamais `.catch()` directement —
+  l'appeler lève silencieusement `TypeError: ...catch is not a function`, AVANT même que la requête
+  ne parte (le thenable ne s'exécute qu'au premier `.then()`/`await`). Déjà corrigé une fois pour
+  `log_playtime_ping` (2026-07-08, commentaire juste au-dessus de son `setInterval`) mais jamais
+  généralisé — retrouvé dans `mark_item_tutorial_seen` (×2, `markItemTutorialSeen`/
+  `reportTutorialProgress`) et `companions/companions.sync.js`. Toujours utiliser `await`
+  (fonction bloquante OK) ou `.then(null, cb)` (fire-and-forget) — jamais `.then(cb).catch(errCb)`
+  n'est le souci (ça, c'est valide : `.catch` est appelé sur le vrai Promise renvoyé PAR `.then()`,
+  pas sur le builder brut — voir `boss.js:boss_contribute` pour un exemple correct de ce pattern).
+  Garde-fou : `testRpcFireAndForgetCallsNeverUseBareCatch` (`tests/tests.js`).

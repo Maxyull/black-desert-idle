@@ -510,6 +510,35 @@
       });
     });
   }
+  // dashboard consolidé (2026-07-20, demande explicite : "ajoute toutes les graphique de tout les
+  // panel dans dashboard avec des voyant vert rouge pour plus dinfos") -- chaque widget doit
+  // pointer vers une VRAIE section du registre ADMIN_SECTIONS (sinon un clic sur la carte ne ferait
+  // rien, silencieusement, même piège que testAdminSectionsWellFormed ci-dessus) et exposer
+  // fetch()/build() en fonctions.
+  function testDashboardWidgetsPointToRealSections() {
+    if (typeof DASHBOARD_WIDGETS === 'undefined' || typeof ADMIN_SECTIONS === 'undefined') return;
+    assert('DASHBOARD_WIDGETS non vide', DASHBOARD_WIDGETS.length > 0);
+    const widgetIds = DASHBOARD_WIDGETS.map(w => w.id);
+    assert('DASHBOARD_WIDGETS : ids uniques', new Set(widgetIds).size === widgetIds.length);
+    DASHBOARD_WIDGETS.forEach(w => {
+      const group = ADMIN_SECTIONS.find(g => g.cat === w.cat);
+      assert(`Widget "${w.id}" : la catégorie "${w.cat}" existe dans ADMIN_SECTIONS`, !!group);
+      const item = group && group.items.find(i => i.id === w.sec);
+      assert(`Widget "${w.id}" : la section "${w.cat}/${w.sec}" existe et a un vrai render()`, !!item && typeof item.render === 'function');
+      assert(`Widget "${w.id}" a un titre fr et en`, w.title && w.title.fr && w.title.en);
+      assert(`Widget "${w.id}" expose fetch() et build() en fonctions`, typeof w.fetch === 'function' && typeof w.build === 'function');
+    });
+  }
+  // dashboardLight() : fonction PURE, juste une projection booléen -> {dot,label} -- vérifie que
+  // les deux issues sont bien distinctes (jamais le même émoji pour sain/à surveiller, sinon le
+  // voyant perd tout son sens visuel).
+  function testDashboardLightDistinguishesHealthy() {
+    if (typeof dashboardLight === 'undefined') return;
+    const healthy = dashboardLight(true), unhealthy = dashboardLight(false);
+    assert('dashboardLight(true) renvoie le voyant vert', healthy.dot === '🟢');
+    assert('dashboardLight(false) renvoie le voyant rouge', unhealthy.dot === '🔴');
+    assert('Les deux voyants sont visuellement distincts', healthy.dot !== unhealthy.dot);
+  }
   // graphique silver en SVG (2026-07-19, admin-economy.js) : fonction PURE, testable sans DOM --
   // vérifie qu'un tableau vide ne lève jamais d'exception et que la géométrie retournée place bien
   // les barres positives AU-DESSUS de l'axe médian et les négatives EN-DESSOUS (pas juste "ne
@@ -1820,6 +1849,40 @@
     const enResult = formatPatchNoteForDiscord(enOnly, 'en');
     assert('Repli correct sur les lignes en quand lang="en"', enResult.description.indexOf('English only line') !== -1, enResult.description);
   }
+  // garde-fou (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
+  // supabase") : bug rencontré 3 FOIS dans ce repo (log_playtime_ping le 2026-07-08,
+  // mark_item_tutorial_seen ×2 et sync_companion_stats le 2026-07-20) -- le builder Postgrest
+  // renvoyé PAR sb.rpc(...) directement n'implémente QUE .then() (thenable), jamais .catch().
+  // Appeler .catch() dessus AVANT tout .then()/await lève "TypeError: ...catch is not a function"
+  // -- silencieusement avalée par le try/catch englobant dans chaque cas réel, empêchant TOUTE
+  // requête réseau de partir (le thenable ne s'exécute qu'au premier .then()). Reproduit le bug
+  // avec un mock volontairement dépourvu de .catch() (comme le vrai builder) pour prouver que le
+  // code appelant ne s'appuie plus sur .catch() direct.
+  function testRpcFireAndForgetCallsNeverUseBareCatch() {
+    if (typeof markItemTutorialSeen !== 'function' || typeof sb === 'undefined') return; // hors contexte navigateur
+    function makeCatchlessBuilder(onThen) {
+      // reproduit fidèlement le vrai PostgrestFilterBuilder : .then() existe, .catch() n'existe PAS.
+      return { then(onFulfilled) { onThen(); if (onFulfilled) onFulfilled({ data: null, error: null }); return this; } };
+    }
+    const origSb = sb, origCurrentUser = currentUser, origTrackId = (typeof activeTutorialTrackId !== 'undefined' ? activeTutorialTrackId : undefined);
+    let thenCalled = false;
+    sb = { rpc() { return makeCatchlessBuilder(() => { thenCalled = true; }); } };
+    currentUser = { id: 'test-rpc-fire-and-forget', email: 'test@test.local' };
+    let threwOnTutorialSeen = false;
+    try { markItemTutorialSeen('test_tuto_id_regression', false); } catch(e) { threwOnTutorialSeen = true; }
+    assert('markItemTutorialSeen ne plante jamais avec un builder RPC sans .catch() (régression 2026-07-20)', !threwOnTutorialSeen);
+    assert('markItemTutorialSeen appelle bien .then() sur le builder (pas juste bloqué par le guard)', thenCalled);
+    if (typeof reportTutorialProgress === 'function' && typeof activeTutorialTrackId !== 'undefined') {
+      thenCalled = false;
+      activeTutorialTrackId = 'onboarding';
+      let threwOnProgress = false;
+      try { reportTutorialProgress(false, false); } catch(e) { threwOnProgress = true; }
+      assert('reportTutorialProgress ne plante jamais avec un builder RPC sans .catch() (régression 2026-07-20)', !threwOnProgress);
+      assert('reportTutorialProgress appelle bien .then() sur le builder', thenCalled);
+      activeTutorialTrackId = origTrackId;
+    }
+    sb = origSb; currentUser = origCurrentUser;
+  }
   function testPatchPagesCoverAllEntriesWithinBounds() {
     const pages = computePatchPages();
     assert('computePatchPages : la 1ère page commence à l\'index 0 (le plus récent)', pages[0].start === 0);
@@ -2652,6 +2715,7 @@
     testPatchNotesDatesFormatAndOrder();
     testEveryPatchSubHasALabel();
     testFormatPatchNoteForDiscord();
+    testRpcFireAndForgetCallsNeverUseBareCatch();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
     testCompendiumBackfillAfterSell();
@@ -2693,6 +2757,8 @@
     testBanReasonsAndDurationsWellFormed();
     testAdminThemesWellFormedAndPersist();
     testAdminSectionsWellFormed();
+    testDashboardWidgetsPointToRealSections();
+    testDashboardLightDistinguishesHealthy();
     testBuildSilverChartSvgGeometry();
     testMergeSmallSlicesPreservesTotalAndMergesTail();
     testBuildPieChartSvgNeverThrowsOnEmpty();

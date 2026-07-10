@@ -152,6 +152,47 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   expect(pageErrors).toEqual([]);
 });
 
+// garde-fou (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
+// supabase") : DEUX bugs cumulés empêchaient TOUTE synchro admin depuis la création du module,
+// pour tous les comptes (invité ou non) -- (1) window.parent.sb/currentUser étaient TOUJOURS
+// undefined (déclarations `let` top-level, jamais attachées à `window` -- voir getSbClient()/
+// getCurrentUserForSync(), game-supabase.js), corrigé en passant par ces accesseurs `function` ;
+// (2) même une fois (1) corrigé, le builder Postgrest renvoyé par sb.rpc(...) n'a QUE .then(),
+// jamais .catch() -- l'ancien `.catch(()=>{})` levait une TypeError AVANT que la requête ne parte,
+// silencieusement avalée par le try/catch englobant (donc jamais visible comme pageerror). Un mock
+// volontairement dépourvu de .catch() (comme le vrai builder) reproduit fidèlement (2) : le test
+// vérifie à la fois l'absence de throw ET que .then() est bien atteint (pas juste bloqué par la garde).
+test('syncCompanionStatsToServer reaches the RPC call and never throws with a catchless (real-shaped) Postgrest builder', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page); // currentUser non-guest (is_anonymous:false) -- la garde sb/currentUser/isGuest doit laisser passer
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+
+  const result = await page.evaluate(async () => {
+    const origGetSb = window.getSbClient;
+    let thenReached = false;
+    window.getSbClient = () => ({
+      rpc() {
+        // reproduit fidèlement le vrai PostgrestFilterBuilder : .then() existe, .catch() n'existe PAS
+        return { then(onFulfilled) { thenReached = true; if (onFulfilled) onFulfilled({ data: null, error: null }); return this; } };
+      },
+    });
+    const frameEl = document.getElementById('companionsFrame');
+    let threw = false;
+    try { await frameEl.contentWindow.syncCompanionStatsToServer(); } catch (e) { threw = true; }
+    window.getSbClient = origGetSb;
+    return { threw, thenReached };
+  });
+  expect(result.threw).toBe(false);
+  expect(result.thenReached).toBe(true);
+  expect(pageErrors).toEqual([]);
+});
+
 // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
 // monde") -- une sauvegarde antérieure au passage du roster de départ à 0 pet (companions.roster.js,
 // 2026-07-10) n'a jamais son flag petsRosterResetV1 : simule ce cas en injectant directement une

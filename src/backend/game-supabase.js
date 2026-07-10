@@ -69,6 +69,17 @@ function isBanned(banStatus) {
 // mais aucun accès au marché/classement (surfaces les plus exposées à la triche multi-comptes)
 function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 
+// bug corrigé (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
+// supabase") : `sb`/`currentUser` sont déclarés en `let` top-level -- contrairement à `var` ou à
+// une déclaration `function`, `let` au top-level d'un script classique NE devient PAS une
+// propriété de `window`. companions.sync.js (module Compagnon, iframe same-origin) lisait
+// `window.parent.sb`/`window.parent.currentUser`, qui étaient donc TOUJOURS `undefined` -- le
+// sync ne s'est jamais déclenché, pour aucun compte (invité ou non). Ces deux accesseurs sont des
+// déclarations `function`, qui elles SONT attachées à `window` automatiquement -- toujours à jour
+// car elles lisent `sb`/`currentUser` au moment de l'appel, pas une copie figée.
+function getSbClient() { return sb; }
+function getCurrentUserForSync() { return currentUser; }
+
 // ---------- journal de farm (pour les stats admin) : queue légère, envoyée par lots ----------
 // Agrégée en mémoire (clé = objet+zone) plutôt qu'une ligne par ramassage individuel : le combat
 // automatique loot plusieurs fois par seconde, une ligne par pickup faisait exploser farm_events
@@ -1719,9 +1730,11 @@ function reportTutorialProgress(completed, skipped) {
   if (!activeTutorialTrackId) return;
   if (!sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
   try {
+    // même bug que log_playtime_ping ci-dessus (ligne ~1004) : le builder Postgrest n'a pas de
+    // .catch(), seulement .then() -- .then(null, cb) reste fire-and-forget sans planter silencieusement.
     sb.rpc('mark_item_tutorial_seen', {
       p_tutorial_id: activeTutorialTrackId, p_skipped: !!skipped, p_last_step: tutorialStepIdx, p_completed: !!completed,
-    }).catch(()=>{});
+    }).then(null, ()=>{});
   } catch(e) {}
 }
 function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = null } = {}) {

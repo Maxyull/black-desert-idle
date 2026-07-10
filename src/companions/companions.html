@@ -47,10 +47,6 @@
     <div class="hdr-pill">💰 <strong id="h-silver">55 000</strong></div>
     <div class="hdr-pill">🥚 <strong id="h-egg">05:42:18</strong></div>
     <div class="hdr-pill" title="Connexions consécutives">🔥 <strong id="h-streak">0/7</strong></div>
-    <button style="font-family:'Cinzel',serif;font-size:9px;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--cream2);cursor:pointer" onclick="exportSave()" title="Exporter la sauvegarde en fichier JSON">💾 Export</button>
-    <label style="font-family:'Cinzel',serif;font-size:9px;padding:5px 10px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--cream2);cursor:pointer" title="Importer une sauvegarde depuis un fichier JSON">
-      📥 Import<input type="file" accept=".json" style="display:none" onchange="importSave(this)">
-    </label>
     <button style="font-family:'Cinzel',serif;font-size:9px;padding:5px 10px;border-radius:5px;border:1px solid var(--red);background:transparent;color:var(--red2);cursor:pointer" onclick="resetSave()" title="Efface la sauvegarde et recharge le roster de départ">🗑️ Reset</button>
   </div>
 </div>
@@ -357,11 +353,11 @@
 <script src="companions.fusion.js?v=7"></script>
 <script src="companions.feed.js?v=6"></script>
 <script src="companions.ticks.js?v=6"></script>
-<script src="companions.save.js?v=6"></script>
+<script src="companions.save.js?v=7"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="companions.sync.js?v=6"></script>
+<script src="companions.sync.js?v=8"></script>
 <script src="companions.index.js?v=6"></script>
 <script src="companions.game-view.js?v=6"></script>
 <script src="companions.hardinage.js?v=6"></script>
