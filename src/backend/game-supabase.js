@@ -944,6 +944,33 @@ async function refreshAdminZone() {
     }
   } catch(e) {}
 }
+// Modal de reconnexion (2026-07-10) : enregistre une session AFK/hors-ligne terminée (fire-and-
+// forget, l'affichage du modal ne doit jamais dépendre du succès de cet appel) + lit l'historique
+// perso pour l'onglet "Historique des sessions" (voir src/core/reconnect-modal-react.js).
+async function recordAfkSession(payload) {
+  if (!sb || !currentUser) return;
+  try {
+    await sb.rpc('record_afk_session', {
+      p_started_at: payload.startedAt,
+      p_ended_at: payload.endedAt,
+      p_silver_gained: payload.silver,
+      p_xp_gained: payload.xp,
+      p_level_before: payload.levelBefore,
+      p_level_after: payload.levelNow,
+      p_zone_name: payload.zoneName,
+      p_gear_grade: payload.gearGrade,
+      p_items: payload.items,
+      p_best_drop_name: payload.bestDropName,
+      p_best_drop_color: payload.bestDropColor,
+    });
+  } catch (e) {}
+}
+async function fetchAfkHistory() {
+  if (!sb || !currentUser) return [];
+  const { data, error } = await sb.rpc('get_afk_history', { p_limit: 12 });
+  if (error) throw error;
+  return data || [];
+}
 async function refreshOnlineCounter() {
   if (!sb) return;
   try {

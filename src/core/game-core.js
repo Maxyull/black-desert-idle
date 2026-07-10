@@ -141,6 +141,10 @@ const S = {
   // jamais atteint, pas un instantané qui pourrait fluctuer d'une synchro à l'autre. Voir hud()
   // pour la mise à jour et syncPlayerStats() (game-supabase.js) pour l'envoi au classement.
   bestGearscore: 0, bestAp: 0, bestDp: 0,
+  // record perso À VIE de silver gagné en UNE session AFK (2026-07-10, modal de reconnexion) --
+  // même principe "record monotone" que bestKpm/bestSilverPerHour : ne redescend jamais, mis à
+  // jour uniquement dans showAwayLootSummaryIfAny() au moment de fermer une session.
+  bestAfkSessionSilver: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
@@ -178,9 +182,13 @@ function addSilver(delta, category, note) {
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
-function trackLoot(name) {
+function trackLoot(name, color, val, kind) {
   S.lootByItem[name] = (S.lootByItem[name]||0) + 1;
-  if (document.hidden) awayLootCounts[name] = (awayLootCounts[name]||0) + 1;
+  if (document.hidden) {
+    if (!awayLootCounts[name]) awayLootCounts[name] = { qty: 0, color: color || '#c9a55a', val: val||0, kind };
+    awayLootCounts[name].qty++;
+    if ((val||0) > awayLootCounts[name].val) awayLootCounts[name].val = val;
+  }
 }
 function bestFarmedItem() {
   let best = null, bestN = 0;
@@ -198,30 +206,66 @@ function bestFarmedItem() {
 // même sans coupure réseau, "au retour" = retour sur l'onglet, pas forcément retour du réseau.
 let awaySilverGained = 0;
 let awayLootCounts = {};
+let awayXpGained = 0;
+let awaySessionStartedAt = null;
+let awayLevelBefore = 1, awayPercentBefore = 0;
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { awaySilverGained = 0; awayLootCounts = {}; }
-  else showAwayLootSummaryIfAny();
+  if (document.hidden) {
+    awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0;
+    awaySessionStartedAt = Date.now();
+    awayLevelBefore = S.lvl; awayPercentBefore = Math.round(S.xp / S.xpNext * 100);
+  } else showAwayLootSummaryIfAny();
 });
+// 2026-07-10 : remplace l'ancien toast/modale texte (showResetNotice) par le vrai modal de
+// reconnexion React (src/core/reconnect-modal-react.js, exception documentée CLAUDE.md §7) --
+// même déclencheur (visibilitychange), mais montre désormais niveau avant/après, détail des
+// objets (couleur réelle par palier), record perso À VIE (bestAfkSessionSilver) et l'historique
+// des sessions passées (Supabase, get_afk_history). Ne se déclenche que s'il s'est VRAIMENT passé
+// quelque chose (silver ou item), comme avant.
 function showAwayLootSummaryIfAny() {
   if (awaySilverGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
-  const itemsHtml = Object.entries(awayLootCounts)
-    .sort((a,b) => b[1]-a[1])
-    .slice(0, 6)
-    .map(([n,q]) => `<b>${q}×</b> ${n}`)
-    .join('<br>');
-  const silverHtml = awaySilverGained > 0 ? `<b>+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver</b>` : '';
-  const body = [silverHtml, itemsHtml].filter(Boolean).join('<br><br>');
-  // bug corrigé (2026-07-10, rapporté explicitement : "je vois pas le message de retour", puis
-  // "le message de retour se met dans un modal en plein ecran") -- d'abord un toast discret
-  // (#achToastStack), passé en vraie modale plein écran sur demande explicite. Réutilise
-  // showResetNotice()/#resetNoticeOverlay (notifications-quests.js) — même mécanisme déjà en
-  // place pour les annonces importantes (ex: reset de compte), pas une nouvelle modale dupliquée.
-  // showResetNotice() alimente aussi le centre de notifications (🔔) elle-même — pas besoin d'un
-  // second pushNotif() ici.
-  if (typeof showResetNotice === 'function') {
-    showResetNotice('🎁', LANG==='fr'?'Pendant ton absence':'While you were away', body);
+  if (typeof openReconnectModal !== 'function' || !$a('reconnectModalRoot')) {
+    // repli si le fichier React n'a pas pu charger (CDN indispo) -- garde un minimum d'info visible
+    if (typeof showResetNotice === 'function') {
+      showResetNotice('🎁', LANG==='fr'?'Pendant ton absence':'While you were away',
+        `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver`);
+    }
+    awaySilverGained = 0; awayLootCounts = {}; return;
   }
-  awaySilverGained = 0; awayLootCounts = {};
+  const items = Object.entries(awayLootCounts)
+    .sort((a,b) => b[1].qty - a[1].qty)
+    .map(([name, v]) => ({ name, qty: v.qty, color: v.color, val: v.val, kind: v.kind }));
+  let bestDrop = null;
+  for (const it of items) if (it.kind !== 'trash' && (!bestDrop || it.val > bestDrop.val)) bestDrop = it;
+  const grade = (typeof GEAR_TIERS !== 'undefined' && GEAR_TIERS.find(g => g.zones.includes(zoneIdx))?.grade) || 'grey';
+  const percentNow = Math.round(S.xp / S.xpNext * 100);
+  if (awaySilverGained > S.bestAfkSessionSilver) S.bestAfkSessionSilver = awaySilverGained;
+
+  openReconnectModal({
+    pseudo: (typeof myPseudo !== 'undefined' && myPseudo) || (LANG==='fr'?'Joueur':'Player'),
+    streak: 0, streakGoal: 7, // streak de connexion : hors périmètre du jeu principal (voir module Compagnons pour l'équivalent existant)
+    awayLabel: reconnectDurationLabel(new Date(awaySessionStartedAt || Date.now()), new Date()),
+    silver: awaySilverGained, xp: awayXpGained,
+    levelBefore: awayLevelBefore, percentBefore: awayPercentBefore,
+    levelNow: S.lvl, percentNow,
+    items, bestDropName: bestDrop ? bestDrop.name : null, bestDropColor: bestDrop ? bestDrop.color : null,
+    personalRecordSilver: S.bestAfkSessionSilver,
+  });
+
+  if (typeof recordAfkSession === 'function') {
+    recordAfkSession({
+      startedAt: new Date(awaySessionStartedAt || Date.now()).toISOString(),
+      endedAt: new Date().toISOString(),
+      silver: awaySilverGained, xp: awayXpGained,
+      levelBefore: awayLevelBefore, levelNow: S.lvl,
+      zoneName: (typeof ZONES !== 'undefined' && ZONES[zoneIdx] && ZONES[zoneIdx].name) || null,
+      gearGrade: grade,
+      items: items.map(it => ({ name: it.name, color: it.color, qty: it.qty })),
+      bestDropName: bestDrop ? bestDrop.name : null, bestDropColor: bestDrop ? bestDrop.color : null,
+    });
+  }
+
+  awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0;
 }
 
 // Icones SVG (svgIcon, shadeHex, ICO_MAT_*, ICO_CRON_STONE, CRON_STONE, JEWEL_TIER_IDX,

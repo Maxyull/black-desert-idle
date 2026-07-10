@@ -52,6 +52,7 @@ const ADMIN_SECTIONS = [
     { id:'target', icon:'🎯', label:{fr:'Joueur précis',en:'Specific player'}, render:renderAdminTargetPlayer },
     { id:'sanctions', icon:'🚫', label:{fr:'Sanctions',en:'Sanctions'}, render:renderAdminSanctions },
     { id:'roles', icon:'🧑‍🤝‍🧑', label:{fr:'Rôles',en:'Roles'}, render:renderAdminRoles },
+    { id:'reconnect', icon:'🔄', label:{fr:'Reconnexion',en:'Reconnect'}, render:renderAdminReconnect },
     { id:'guilds', icon:'👑', label:{fr:'Guildes',en:'Guilds'}, planned:true },
     { id:'pvp', icon:'⚔️', label:{fr:'PvP',en:'PvP'}, planned:true },
   ]},
@@ -1102,6 +1103,54 @@ function renderAdminRoles(el) {
     $a('admRoleUuid').value = ''; refreshRoleList();
   };
   refreshRoleList();
+}
+
+// ---------- section "Joueurs → Reconnexion" (2026-07-10, demande explicite : "suivit admin") ----------
+// vue d'ensemble agrégée des sessions AFK/hors-ligne journalisées par le modal de reconnexion
+// (src/core/reconnect-modal-react.js, table player_afk_sessions) -- lecture seule, RPC dédiée
+// admin_afk_sessions_summary (gate email staff côté serveur, voir migration correspondante).
+function renderAdminReconnect(el) {
+  el.innerHTML = `
+    <div class="admSection">
+      <div class="admSectionTitle">🔄 ${LANG==='fr'?'Sessions de reconnexion':'Reconnect sessions'}</div>
+      <div class="admSectionSub">${LANG==='fr'?'Volume agrégé du modal "Bon retour" — silver récupéré pendant les absences, tous joueurs confondus.':'Aggregate view of the "Welcome back" modal — silver recovered while away, across all players.'}</div>
+      <div id="admReconnectStats"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+    </div>
+    <div class="admSection">
+      <div class="admSectionTitle">🏆 ${LANG==='fr'?'Top 10 sessions (par silver)':'Top 10 sessions (by silver)'}</div>
+      <div id="admReconnectTop"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+    </div>`;
+  refreshAdminReconnect();
+}
+async function refreshAdminReconnect() {
+  if (!isAdmin() || !sb) return;
+  const statsEl = $a('admReconnectStats'), topEl = $a('admReconnectTop');
+  if (!statsEl || !topEl) return;
+  const { data, error } = await sb.rpc('admin_afk_sessions_summary');
+  if (error || !data || !data[0]) {
+    statsEl.innerHTML = `<div class="admHint">${escapeHtml(error ? error.message : 'no data')}</div>`;
+    topEl.innerHTML = '';
+    return;
+  }
+  const s = data[0];
+  statsEl.innerHTML = `
+    <div class="admStatsGrid">
+      <div class="admStatCard"><b>${(s.total_sessions||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Sessions journalisées':'Logged sessions'}</span></div>
+      <div class="admStatCard"><b>${(s.total_players||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Joueurs concernés':'Players involved'}</span></div>
+      <div class="admStatCard"><b>${Math.round(s.total_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Silver total récupéré':'Total silver recovered'}</span></div>
+      <div class="admStatCard"><b>${Math.round(s.avg_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Moyenne / session':'Avg / session'}</span></div>
+    </div>`;
+  const top = Array.isArray(s.top_sessions) ? s.top_sessions : [];
+  topEl.innerHTML = top.length === 0
+    ? `<div class="admEmpty">${LANG==='fr'?'Aucune session pour le moment.':'No session yet.'}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${LANG==='fr'?'Silver':'Silver'}</th><th>${LANG==='fr'?'Zone':'Zone'}</th><th>${LANG==='fr'?'Date':'Date'}</th><th>${LANG==='fr'?'Joueur (UUID)':'Player (UUID)'}</th>
+      </tr></thead><tbody>${top.map(t => `<tr>
+        <td>${Math.round(t.silver_gained||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
+        <td>${escapeHtml(t.zone_name||'—')}</td>
+        <td>${new Date(t.ended_at).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
+        <td style="font-family:monospace;font-size:10px">${escapeHtml((t.user_id||'').slice(0,8))}…</td>
+      </tr>`).join('')}</tbody></table>`;
 }
 
 // ---------- section "Contenu → Boss mondiaux" (gestion globale — spawn/despawn pour TOUS) ----------

@@ -216,7 +216,7 @@ function dropsTick(dt) {
         particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
         queueFarmEvent(it.kind, it.name, 1, l.silver);
         const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
-        trackLoot(it.name);
+        trackLoot(it.name, it.color, l.silver, it.kind);
         checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
         // tutoriel d'objet au tout premier trash ramassé, toutes zones confondues (2026-07-19) --
         // voir ITEM_TUTORIALS.trash/maybeQueueItemTutorial (progression/notifications-quests.js)
@@ -245,7 +245,7 @@ function dropsTick(dt) {
       S.lootCount++;
       queueFarmEvent(it.kind, it.name, 1, l.silver);
       const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
-      trackLoot(it.name);
+      trackLoot(it.name, it.color, l.silver, it.kind);
       checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
       if (it.kind === 'jackpot') {
         S.jackpotCount = (S.jackpotCount||0) + 1;
@@ -357,6 +357,7 @@ function flashXpGain() {
 }
 function gainXp(n) {
   if (n > 0) flashXpGain();
+  if (n > 0 && document.hidden) awayXpGained += n;
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;

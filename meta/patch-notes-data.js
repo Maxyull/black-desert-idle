@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V364', d:'20/07/2026 19:00', name:{fr:'Nouveau modal de reconnexion "Bon retour"', en:'New "Welcome back" reconnect modal'}, fr:[
+      {t:'new', tx:'De retour après une absence, un nouveau modal "Bon retour" récapitule ta session : progression de niveau avant/après, silver et objets trouvés (avec le meilleur mis en avant), et ton record personnel de silver en une session.'},
+      {t:'new', tx:'Un historique de tes dernières sessions d\'absence est désormais consultable directement dans ce modal, filtrable par palier de zone.'},
+      {t:'new', sub:'admin', tx:'Admin : nouvelle section "Reconnexion" (Joueurs) avec le volume agrégé de silver récupéré pendant les absences, tous joueurs confondus.'},
+    ], en:[
+      {t:'new', tx:'When you return after being away, a new "Welcome back" modal recaps your session: level progress before/after, silver and items found (with the best one highlighted), and your personal best silver for a single session.'},
+      {t:'new', tx:'A history of your recent away sessions is now viewable directly in this modal, filterable by zone tier.'},
+      {t:'new', sub:'admin', tx:'Admin: new "Reconnect" section (Players) showing the aggregate silver recovered from away sessions across all players.'},
+    ] },
   { v:'V363', d:'20/07/2026 18:30', name:{fr:'Compagnon : réserve triée par Tier par défaut', en:'Companion: reserve sorted by Tier by default'}, fr:[
       {t:'change', sub:'compagnon', tx:'La réserve (onglet Sections) est maintenant triée par Tier par défaut (puis GS en cas d\'égalité), au lieu de l\'ordre d\'obtention.'},
     ], en:[

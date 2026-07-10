@@ -15,18 +15,23 @@ chargement (`resetWorld()`, `DEFAULT_SAVE`, la construction de la barre de sorts
 Fortement découpé cette session (4045 → ~1700 lignes) ; ce qui reste est volontairement
 resté ensemble car trop imbriqué (état lu/écrit à chaque frame) pour être séparé sans risque.
 
-**Résumé du loot au retour (2026-07-10, demande explicite : "Afficher un résumé du loot, au
-retour")** : `addSilver()`/`trackLoot()` accumulent `awaySilverGained`/`awayLootCounts` tant que
-`document.hidden` est vrai (le jeu continue de simuler en arrière-plan, décision V317/2026-07-15) ;
-`showAwayLootSummaryIfAny()` (déclenchée par `visibilitychange` → visible) affiche le total puis
-remet les compteurs à 0. Signal `document.hidden`, pas `isOffline` (`backend/game-supabase.js`) :
-la simulation ne s'arrête jamais avec le réseau, "au retour" = retour sur l'onglet.
-**Bug corrigé (2026-07-10, rapporté explicitement : "je vois pas le message de retour" puis "le
-message de retour se met dans un modal en plein ecran")** : d'abord corrigé avec un toast
-(`#achToastStack`), puis passé en vraie modale plein écran sur demande explicite — réutilise
-`showResetNotice()`/`#resetNoticeOverlay` (`progression/notifications-quests.js`), déjà en place
-pour les annonces importantes (ex: reset de compte) plutôt que dupliquer une nouvelle modale.
-Test : `testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets` (`tests/tests.js`).
+**Résumé du loot au retour → modal de reconnexion (2026-07-10)** : `addSilver()`/`gainXp()`/
+`trackLoot()` accumulent `awaySilverGained`/`awayXpGained`/`awayLootCounts` (avec couleur/valeur
+par objet) tant que `document.hidden` est vrai (le jeu continue de simuler en arrière-plan,
+décision V317/2026-07-15) ; le niveau/% XP sont aussi capturés au moment où l'onglet passe caché
+(`awayLevelBefore`/`awayPercentBefore`). `showAwayLootSummaryIfAny()` (déclenchée par
+`visibilitychange` → visible) construit le payload complet et appelle `openReconnectModal()`
+(`src/core/reconnect-modal-react.js`, **React**, 2e exception documentée CLAUDE.md §7 — port de
+la maquette JSX fournie par l'utilisateur, plafond d'AFK volontairement retiré) qui affiche le
+récap + niveau avant/après + historique réel des sessions (Supabase, `get_afk_history`) + record
+perso `S.bestAfkSessionSilver` (pattern "record monotone", jamais recalculé). `recordAfkSession()`
+(`backend/game-supabase.js`) journalise la session côté serveur (table `player_afk_sessions`,
+fire-and-forget). Repli : si React/le point de montage `#reconnectModalRoot` sont indisponibles,
+retombe sur l'ancien `showResetNotice()` (texte simple). Signal `document.hidden`, pas `isOffline`
+(`backend/game-supabase.js`) : la simulation ne s'arrête jamais avec le réseau, "au retour" =
+retour sur l'onglet.
+Tests : `testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets`, `testAwayLevelSnapshotCapturedOnHide`,
+`testBestAfkSessionSilverIsMonotone` (`tests/tests.js`).
 
 **`MAX_STACK` relevé 9999 → 999999 (2026-07-10, rapporté explicitement : "pourquoi on peut se
 retrouver avec plusieurs stack d'une meme ressources")** : `invAdd()` ne fusionne dans un stack

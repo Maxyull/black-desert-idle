@@ -2825,26 +2825,74 @@
       Object.defineProperty(document, 'hidden', { value: true, configurable: true });
       awaySilverGained = 0; awayLootCounts = {};
       addSilver(50, 'loot');
-      trackLoot('Test Item Away Regression');
+      trackLoot('Test Item Away Regression', '#7aa35e', 50, 'material');
       assert('addSilver() accumule dans awaySilverGained pendant document.hidden', awaySilverGained === 50, `awaySilverGained=${awaySilverGained}`);
-      assert('trackLoot() accumule dans awayLootCounts pendant document.hidden', awayLootCounts['Test Item Away Regression'] === 1);
+      assert('trackLoot() accumule dans awayLootCounts pendant document.hidden', awayLootCounts['Test Item Away Regression'] && awayLootCounts['Test Item Away Regression'].qty === 1);
       Object.defineProperty(document, 'hidden', { value: false, configurable: true });
       addSilver(30, 'loot'); // ne doit PAS s'ajouter à awaySilverGained : onglet redevenu visible
       assert('addSilver() n\'accumule plus une fois document.hidden repassé à false', awaySilverGained === 50, `awaySilverGained=${awaySilverGained}`);
-      // bug corrigé (2026-07-10, "je vois pas le message de retour" puis "le message de retour se
-      // met dans un modal en plein ecran") : réutilise showResetNotice()/#resetNoticeOverlay
-      // (même modale plein écran que les annonces importantes, ex: reset de compte) -- doit
-      // s'ouvrir (classe "show") avec le bon contenu.
-      const overlay = document.getElementById('resetNoticeOverlay');
-      overlay.classList.remove('show'); // état initial connu
+      // 2026-07-10 : remplace l'ancien showResetNotice()/#resetNoticeOverlay par le modal de
+      // reconnexion React (src/core/reconnect-modal-react.js, #reconnectModalRoot) -- doit rendre
+      // "Bon retour" avec le silver de l'absence dedans.
+      const root = document.getElementById('reconnectModalRoot');
+      root.innerHTML = ''; // état initial connu
       showAwayLootSummaryIfAny();
-      assert('showAwayLootSummaryIfAny() ouvre #resetNoticeOverlay en modale plein écran', overlay.classList.contains('show'));
-      assert('La modale contient bien le silver accumulé pendant l\'absence', document.getElementById('resetNoticeBody').innerHTML.includes('50'), document.getElementById('resetNoticeBody').innerHTML);
-      overlay.classList.remove('show'); // referme pour ne pas polluer les tests suivants
+      assert('showAwayLootSummaryIfAny() monte le modal de reconnexion React dans #reconnectModalRoot', root.innerHTML.includes('Bon retour'), root.innerHTML.slice(0,120));
+      assert('Le modal contient bien le silver accumulé pendant l\'absence', root.innerHTML.includes('50'));
       assert('showAwayLootSummaryIfAny() remet les compteurs à 0 après affichage', awaySilverGained === 0 && Object.keys(awayLootCounts).length === 0);
     } finally {
       if (desc) Object.defineProperty(document, 'hidden', desc);
       S.silver = savedSilver; S.silverEarned = savedEarned; S.lootByItem = savedLoot;
+      awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
+  // niveau/% XP capturés au moment où l'onglet passe caché (2026-07-10, modal de reconnexion --
+  // "Progression de niveau" avant/après) -- sans ça, "avant" ne pourrait jamais différer de
+  // "maintenant" puisque S.lvl/S.xp auraient déjà bougé pendant l'absence au moment de la lecture.
+  function testAwayLevelSnapshotCapturedOnHide() {
+    if (typeof S === 'undefined') return;
+    const savedLvl = S.lvl, savedXp = S.xp, savedXpNext = S.xpNext;
+    const savedLevelBefore = awayLevelBefore, savedPercentBefore = awayPercentBefore;
+    const desc = Object.getOwnPropertyDescriptor(Document.prototype, 'hidden');
+    try {
+      S.lvl = 12; S.xp = 40; S.xpNext = 100; // 40%
+      Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+      assert('awayLevelBefore capture S.lvl au moment où l\'onglet passe caché', awayLevelBefore === 12, `awayLevelBefore=${awayLevelBefore}`);
+      assert('awayPercentBefore capture le % XP au moment où l\'onglet passe caché', awayPercentBefore === 40, `awayPercentBefore=${awayPercentBefore}`);
+      S.lvl = 13; S.xp = 5; // le joueur progresse pendant l'absence -- awayLevelBefore ne doit PAS bouger
+      assert('awayLevelBefore reste figé pendant l\'absence, indépendant de S.lvl qui continue', awayLevelBefore === 12);
+    } finally {
+      if (desc) Object.defineProperty(document, 'hidden', desc);
+      S.lvl = savedLvl; S.xp = savedXp; S.xpNext = savedXpNext;
+      awayLevelBefore = savedLevelBefore; awayPercentBefore = savedPercentBefore;
+    }
+  }
+  // reconnectDurationLabel() : fonction PURE (src/core/reconnect-modal-react.js), formate la durée
+  // d'absence affichée dans "Absent pendant" / l'historique -- testable sans DOM ni React.
+  function testReconnectDurationLabelFormatsHoursAndMinutes() {
+    if (typeof reconnectDurationLabel !== 'function') return;
+    assert('Moins d\'1h : minutes seules', reconnectDurationLabel(new Date(0), new Date(45*60000)) === '45min');
+    assert('Plusieurs heures : "Xh MMmin"', reconnectDurationLabel(new Date(0), new Date((3*60+7)*60000)) === '3h 07min');
+    assert('Arrondi au minimum à 1 minute (jamais 0min)', reconnectDurationLabel(new Date(0), new Date(10000)) === '1min');
+  }
+  // record perso À VIE de silver/session AFK (2026-07-10) -- même famille que bestKpm/
+  // bestSilverPerHour (CLAUDE.md "record monotone") : ne doit jamais redescendre, même si une
+  // session suivante rapporte moins.
+  function testBestAfkSessionSilverIsMonotone() {
+    if (typeof showAwayLootSummaryIfAny !== 'function') return;
+    const savedBest = S.bestAfkSessionSilver;
+    const savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    try {
+      S.bestAfkSessionSilver = 100;
+      awaySilverGained = 500; awayLootCounts = {};
+      showAwayLootSummaryIfAny();
+      assert('Une session plus généreuse relève le record', S.bestAfkSessionSilver === 500, `bestAfkSessionSilver=${S.bestAfkSessionSilver}`);
+      awaySilverGained = 10; awayLootCounts = {};
+      showAwayLootSummaryIfAny();
+      assert('Une session plus faible ne fait jamais redescendre le record', S.bestAfkSessionSilver === 500, `bestAfkSessionSilver=${S.bestAfkSessionSilver}`);
+    } finally {
+      S.bestAfkSessionSilver = savedBest;
       awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
     }
   }
@@ -3029,6 +3077,9 @@
     testCheckPlayerSessionNeverLocksOnNetworkFailure();
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
+    testAwayLevelSnapshotCapturedOnHide();
+    testReconnectDurationLabelFormatsHoursAndMinutes();
+    testBestAfkSessionSilverIsMonotone();
     testInvAddMergesPastOldMaxStackThreshold();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
