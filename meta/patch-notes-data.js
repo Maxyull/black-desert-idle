@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V362', d:'20/07/2026 18:15', name:{fr:'Compagnon : numéro de version affiché', en:'Companion: version number displayed'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Le numéro de version du module s\'affiche maintenant discrètement en bas à gauche.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'The module\'s version number is now discreetly displayed at the bottom left.'},
+    ] },
   { v:'V361', d:'20/07/2026 18:00', name:{fr:'Compagnon : réserve à côté du terrain', en:'Companion: reserve next to terrain'}, fr:[
       {t:'change', sub:'compagnon', tx:'Sections : la réserve s\'affiche maintenant à droite du familier déployé (au lieu d\'en dessous), avec plusieurs cartes par ligne.'},
     ], en:[
