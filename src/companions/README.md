@@ -162,6 +162,18 @@ le panneau admin réapparaissait de force en pleine session Compagnon. Corrigé 
 si `#adminOverlay` a encore la classe `open` au moment de la fermeture de la popup. Voir
 `backend/README.md` pour le détail technique complet.
 
+**Achat des slots d'œuf corrigé (2026-07-20, rapporté explicitement : "impossible d'acheter les
+slots d'oeuf")** : `companions.hatch.js` avait DEUX impasses — le slot verrouillé de départ
+(`incubSlots[2].locked`, voir `companions.roster.js`) n'avait AUCUN `onclick`, et le bouton "➕ slot
+premium" ne faisait qu'un `toast()` factice sans jamais rien acheter. `unlockIncubSlot(i)`/
+`buyExtraIncubSlot()` (nouveau, `companions.hatch.js`) appellent réellement `spendSilver()` puis
+mettent à jour l'état réel des slots (`incubSlots[i]`/`.push(...)`) — le slot débloqué/acheté
+démarre `ready:true` (gratification immédiate, pas un nouveau minuteur à attendre).
+
+**Breadcrumb du header (2026-07-20, demande explicite : "supprime familier")** : le fil d'Ariane
+"Black Desert Idle Compagnon › FAMILIERS" affichait encore l'ancien mot "Familiers" — remplacé par
+"COMPAGNON" (même style inline conservé, `companions.html`).
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2

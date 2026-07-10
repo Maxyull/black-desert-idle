@@ -3751,7 +3751,7 @@ const ACTIVITY_TABS = [
   { id:'zone', icon:'⚔️', name:{fr:'Zone',en:'Zone'},       locked:false },
   { id:'boss', icon:'🐍', name:{fr:'Boss',en:'Boss'},       locked:false },
   
-  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false },
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:true },
   
   { id:'pvp', icon:'🗡️', name:{fr:'PvP',en:'PvP'}, locked:true },
   { id:'fish', icon:'🎣', name:{fr:'Pêche',en:'Fishing'},   locked:true },
@@ -3769,8 +3769,9 @@ function renderActivityTabs() {
   el.innerHTML = ACTIVITY_TABS.map(t => {
     
     const hpBadge = t.id === 'boss' ? '<span class="actTabBossHp" id="actTabBossHp"></span>' : '';
+    const newBadge = (!t.locked && t.isNew) ? `<span class="actTabNew">${LANG==='fr'?'NOUVEAU':'NEW'}</span>` : '';
     return `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" id="${t.id==='boss'?'actTabBoss':''}" data-id="${t.id}"${t.locked?' disabled':''}>` +
-      `<span class="actTabLabel">${t.icon} ${t.name[LANG]}</span>${hpBadge}${t.locked?'<span class="actTabLock">🔒</span>':''}</button>`;
+      `<span class="actTabLabel">${t.icon} ${t.name[LANG]}</span>${hpBadge}${t.locked?'<span class="actTabLock">🔒</span>':newBadge}</button>`;
   }).join('');
   el.querySelectorAll('.actTab').forEach(btn => {
     if (btn.classList.contains('locked')) return;
@@ -3835,7 +3836,7 @@ function openCompanionsModule() {
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'src/companions/companions.html?v=6'; 
+    frame.src = 'src/companions/companions.html?v=7'; 
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);

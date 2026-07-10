@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V348', d:'20/07/2026 09:00', name:{fr:'Compagnon : achat des slots d\'œuf corrigé · Header : badge NOUVEAU sur Compagnon, cadenas coupés réparés', en:'Companion: egg slot purchase fixed · Header: NEW badge on Companion, fixed clipped locks'}, fr:[
+      {t:'fix', sub:'compagnon', tx:'Impossible d\'acheter le 3ème slot d\'incubation ni le slot supplémentaire ("➕") — les deux boutons ne faisaient rien. Corrigé, les deux débitent bien du Silver et débloquent le slot immédiatement.'},
+      {t:'change', sub:'compagnon', tx:'Le fil d\'Ariane du module affichait encore "Familiers" — remplacé par "Compagnon".'},
+      {t:'new', tx:'L\'onglet Compagnon du header principal affiche désormais un badge "NOUVEAU" plutôt qu\'un cadenas.'},
+      {t:'fix', sub:'ux', tx:'Les badges (cadenas, % de vie du boss, nouveau) du header principal étaient parfois coupés en bas — corrigé.'},
+    ], en:[
+      {t:'fix', sub:'compagnon', tx:'Couldn\'t buy the 3rd incubation slot nor the extra slot ("➕") — both buttons did nothing. Fixed, both now correctly spend Silver and unlock the slot immediately.'},
+      {t:'change', sub:'compagnon', tx:'The module\'s breadcrumb still showed "Familiers" — replaced with "Compagnon".'},
+      {t:'new', tx:'The Companion tab in the main header now shows a "NEW" badge instead of a lock.'},
+      {t:'fix', sub:'ux', tx:'Main header badges (lock, boss HP%, new) were sometimes clipped at the bottom — fixed.'},
+    ] },
   { v:'V347', d:'20/07/2026 08:00', name:{fr:'Compagnon : classement cross-joueurs, tes stats, cartes Collection compactes · Admin : stats œufs/index/fusions', en:'Companion: cross-player leaderboard, your stats, compact Collection cards · Admin: egg/index/fusion stats'}, fr:[
       {t:'new', sub:'compagnon', tx:'Nouvel onglet "🏆 Classement" : tes stats persos (œufs ouverts, argent dépensé, fusions, complétion Index...) + un vrai classement comparé à tous les autres joueurs.'},
       {t:'fix', sub:'compagnon', tx:'Au zoom le plus dense de la Collection, les cartes affichaient uniquement le nom — rareté/tier/section/GS étaient invisibles (coupés silencieusement). Un format compact garde désormais ces infos visibles à toutes les tailles.'},

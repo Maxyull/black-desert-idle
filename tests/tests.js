@@ -439,6 +439,35 @@
     clone.querySelector('.actTabLock').remove();
     assert('Le libellé (hors badge cadenas) ne contient plus le cadenas', !clone.querySelector('.actTabLabel').textContent.includes('🔒'));
   }
+  // badge "NEW" sur l'onglet Compagnon (2026-07-20, demande explicite : "met NEW sur compagnon a
+  // la place du cadenas") -- Compagnon n'est pas verrouillé (locked:false), donc n'a jamais eu de
+  // .actTabLock ; le badge "NEW"/"NOUVEAU" doit apparaître à sa place dans le même emplacement
+  // bulle (.actTabNew), et jamais un cadenas sur un onglet débloqué.
+  function testCompanionTabShowsNewBadgeInsteadOfLock() {
+    if (!$('activityTabs') || typeof renderActivityTabs !== 'function' || typeof ACTIVITY_TABS === 'undefined') return;
+    const pet = ACTIVITY_TABS.find(t => t.id === 'pet');
+    if (!pet) return;
+    assert('ACTIVITY_TABS.pet est marqué isNew (sinon ce test est obsolète)', !!pet.isNew);
+    renderActivityTabs();
+    const btn = [...$('activityTabs').querySelectorAll('.actTab')].find(b => b.dataset.id === 'pet');
+    assert('Onglet Compagnon trouvé dans le header', !!btn);
+    if (!btn) return;
+    assert('Onglet Compagnon affiche un badge "NEW"', !!btn.querySelector('.actTabNew'));
+    assert('Onglet Compagnon n\'affiche jamais de cadenas (débloqué)', !btn.querySelector('.actTabLock'));
+  }
+  // débordement des badges cadenas/PV/NEW du header corrigé (2026-07-20, rapporté explicitement :
+  // "regtarde aussi pourquoi les cadenas sont coupé") -- ces badges débordent volontairement sous
+  // le bouton (.actTabLock/.actTabBossHp/.actTabNew, bottom négatif, effet "bulle à cheval sur le
+  // cadre") ; #activityTabs a overflow-y:hidden (nécessaire pour empêcher tout retour à la ligne
+  // vertical dans la barre à défilement horizontal) qui les rognait sans laisser de place. Garde-
+  // fou : #activityTabs doit réserver assez de padding-bottom pour ne pas les couper.
+  function testActivityTabsReservesRoomForOverflowingBadges() {
+    if (typeof document === 'undefined') return;
+    const el = $('activityTabs');
+    if (!el) return;
+    const padBottom = parseFloat(getComputedStyle(el).paddingBottom) || 0;
+    assert('#activityTabs réserve au moins 8px de padding-bottom pour les badges qui débordent (cadenas/PV/NEW)', padBottom >= 8, `padding-bottom=${padBottom}px`);
+  }
   // système de sanctions (2026-07-18) — isBanned() doit respecter l'expiration exacte de banned_until
   function testIsBannedRespectsExpiry() {
     if (typeof isBanned !== 'function') return;
@@ -2687,6 +2716,8 @@
     testZoneTierLockIsSeparateFromLabel();
     testCompagnonSeaLifeLiveInHeaderNotZoneTierTabs();
     testActivityTabLockIsSeparateFromLabel();
+    testCompanionTabShowsNewBadgeInsteadOfLock();
+    testActivityTabsReservesRoomForOverflowingBadges();
     testHeaderBadgesSitOnBottomBorder();
     testBossActivityTabFlashesNearSpawnAndShowsHp();
     testBossActivityTabShowsDefeatedTextAtZeroHp();

@@ -26,3 +26,15 @@ comportement de l'IA.
 - `ai-mode.js` — les 2 sélecteurs de comportement IA : mode de combat
   (défensif/équilibré/overgeared) et mode de farm (loot/xp). Charge après `core/game-core.js`.
 - `vfx.js` — particules visuelles des sorts (météore, glace, éclair...).
+
+**Header du jeu (`ACTIVITY_TABS`/`renderActivityTabs()`, dans `boss.js`)** : liste des onglets
+d'activité (Zone/Boss/Compagnon/PvP/Pêche/Mine...). Chaque onglet a soit `locked:true` (affiche
+`.actTabLock` 🔒, désactivé) soit `isNew:true` (affiche `.actTabNew` "NEW", débloqué) — jamais les
+deux, même emplacement bulle à cheval sur le cadre du bas du bouton. `isNew:true` sur `pet`
+(Compagnon) depuis le 2026-07-20 (demande explicite : "met NEW sur compagnon a la place du
+cadenas") — à retirer manuellement (`isNew:false`) une fois le module hors phase de test, aucune
+péremption automatique. **Bug corrigé (2026-07-20, rapporté explicitement : "les cadenas sont
+coupé")** : ces badges débordent volontairement sous le bouton (`bottom` négatif) — `#activityTabs`
+a `overflow-y:hidden` (nécessaire contre tout retour à la ligne vertical dans la barre à défilement
+horizontal) qui les rognait faute de place réservée. `padding-bottom:10px` ajouté sur
+`#activityTabs` (`styles.css`) pour laisser la place au débordement sans le couper.

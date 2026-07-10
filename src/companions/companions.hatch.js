@@ -25,14 +25,42 @@ function CM(id){document.getElementById(id).classList.remove('open');}
 function fmtT(s){if(s<=0)return'PRÊT';return`${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
 
 // ═══ HATCH ═══════════════════════════════════════════════════════
+// achat/déblocage de slot d'incubation (2026-07-20, bug rapporté explicitement : "impossible
+// d'acheter les slots d'oeuf") -- DEUX boutons étaient des impasses : le slot verrouillé
+// (incubSlots[2].locked, voir companions.roster.js) n'avait AUCUN onclick, et le bouton "➕ slot
+// premium" ne faisait qu'un toast() factice sans jamais rien acheter. Les deux appellent
+// maintenant spendSilver() (companions.economy.js) puis déclenchent une vraie action.
+const UNLOCK_SLOT_COST = 500, EXTRA_SLOT_COST = 1000; // avant scaleCost(), voir TEST_BALANCE_DIVISOR
+function unlockIncubSlot(i){
+  const cost = scaleCost(UNLOCK_SLOT_COST);
+  if(SILVER < cost){ toast('❌','Silver insuffisant'); return; }
+  spendSilver(cost);
+  incubSlots[i] = { free:false, tl:0, tot:scaleTimer(21600), ready:true };
+  toast('🔓','Slot débloqué !');
+  renderHatch();
+}
+function buyExtraIncubSlot(){
+  const cost = scaleCost(EXTRA_SLOT_COST);
+  if(SILVER < cost){ toast('❌','Silver insuffisant'); return; }
+  spendSilver(cost);
+  incubSlots.push({ free:false, tl:0, tot:scaleTimer(21600), ready:true });
+  toast('➕','Nouveau slot acheté !');
+  renderHatch();
+}
 function renderHatch(){
   // Slots
   document.getElementById('incub-slots').innerHTML=incubSlots.map((sl,i)=>{
-    if(sl.locked)return`<div class="isl locked"><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(scaleCost(500))}</div></div>`;
+    if(sl.locked){
+      const cost=scaleCost(UNLOCK_SLOT_COST), affordable=SILVER>=cost;
+      return`<div class="isl locked" style="cursor:${affordable?'pointer':'not-allowed'};opacity:${affordable?1:.6}" onclick="unlockIncubSlot(${i})"><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(cost)}</div></div>`;
+    }
     if(sl.ready)return`<div class="isl ready"><div style="position:relative"><span style="font-size:28px">🥚</span><div style="position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(68,176,96,.4),transparent);animation:eglaur 1s ease-in-out infinite"></div></div>${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(68,176,96,.1);border:1px solid rgba(68,176,96,.3);border-radius:3px;padding:1px 4px">✦ Gratuit</span>':''}<div class="itimer done">PRÊT!</div><button style="font-family:Cinzel,serif;font-size:9px;padding:4px 10px;border-radius:4px;border:1px solid var(--gold);background:linear-gradient(135deg,#5a3a10,#c8a96e);color:#080810;cursor:pointer" onclick="openEggChoice(${i})">Éclore</button></div>`;
     const pct=Math.round((1-sl.tl/sl.tot)*100);
     return`<div class="isl">${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(68,176,96,.1);border:1px solid rgba(68,176,96,.3);border-radius:3px;padding:1px 4px">✦ Gratuit</span>':''}<span style="font-size:28px">🥚</span><div class="itimer">${fmtT(sl.tl)}</div><div class="iprog"><div class="iprog-fill" style="width:${pct}%"></div></div></div>`;
-  }).join('')+`<div class="isl" style="opacity:.5;cursor:pointer" onclick="toast('💰','Slot premium — ${costLabelFor(scaleCost(1000))}')"><span style="font-size:28px">➕</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(scaleCost(1000))}</div></div>`;
+  }).join('')+(()=>{
+    const cost=scaleCost(EXTRA_SLOT_COST), affordable=SILVER>=cost;
+    return `<div class="isl" style="cursor:${affordable?'pointer':'not-allowed'};opacity:${affordable?.85:.5}" onclick="buyExtraIncubSlot()"><span style="font-size:28px">➕</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(cost)}</div></div>`;
+  })();
   // Odds
   // Grille comparative : Rareté × Type d'œuf
   const PERIOD_DAYS = {2:7, 3:14, 4:21, 5:30}; // Rare→semaine, Épique→2sem, Légendaire→3sem, Ancestral→mois

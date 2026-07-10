@@ -206,6 +206,56 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
   expect(pageErrors).toEqual([]);
 });
 
+// garde-fou (2026-07-20, rapporté explicitement : "impossible d'acheter les slots d'oeuf") --
+// DEUX boutons d'achat de slot d'incubation étaient des impasses : le slot verrouillé
+// (incubSlots[2].locked) n'avait AUCUN onclick, et le bouton "➕ slot premium" ne faisait qu'un
+// toast() factice sans jamais rien acheter. Vérifie que les deux débitent réellement SILVER
+// (via spendSilver(), donc silverSpent aussi) et changent l'état réel des slots.
+test('both egg-slot purchase buttons (unlock the 3rd slot, buy an extra slot) actually spend silver and change slot state', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+  await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
+
+  const result = await frame.locator('body').evaluate(() => {
+    SILVER = 1_000_000; // largement assez pour les 2 achats
+    const spentBefore = silverSpent;
+    const slotsBefore = incubSlots.length;
+    const wasLocked = incubSlots[2] && incubSlots[2].locked === true;
+
+    unlockIncubSlot(2);
+    const afterUnlock = { silverSpent, stillLocked: !!(incubSlots[2] && incubSlots[2].locked), ready: incubSlots[2] && incubSlots[2].ready };
+
+    buyExtraIncubSlot();
+    const afterExtra = { silverSpent, slotCount: incubSlots.length };
+
+    return { wasLocked, spentBefore, slotsBefore, afterUnlock, afterExtra };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.wasLocked).toBe(true); // précondition : le roster de départ a bien un 3e slot verrouillé
+  expect(result.afterUnlock.silverSpent).toBeGreaterThan(result.spentBefore);
+  expect(result.afterUnlock.stillLocked).toBe(false);
+  expect(result.afterUnlock.ready).toBe(true);
+  expect(result.afterExtra.silverSpent).toBeGreaterThan(result.afterUnlock.silverSpent);
+  expect(result.afterExtra.slotCount).toBe(result.slotsBefore + 1);
+
+  // le DOM reflète bien le nouvel état (pas juste les variables JS) : le bouton "➕" doit toujours
+  // exister après l'achat (on peut en acheter un autre), et il ne doit plus rester de slot .locked.
+  const domState = await frame.locator('body').evaluate(() => ({
+    lockedCount: document.querySelectorAll('#incub-slots .isl.locked').length,
+    hasExtraButton: !!document.querySelector('#incub-slots .isl span'),
+  }));
+  expect(domState.lockedCount).toBe(0);
+  expect(domState.hasExtraButton).toBe(true);
+  expect(pageErrors).toEqual([]);
+});
+
 // garde-fou (2026-07-20, "ajouter classement, oeuf ouvert, argent depensé...") -- nouvel onglet
 // "Tes stats" + "Classement" (tab 9, panel p9) : "Tes stats" reste 100% local (aucun réseau),
 // vérifie que les compteurs déjà suivis ailleurs (totalHatched, silverSpent) s'affichent

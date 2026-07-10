@@ -159,8 +159,12 @@ function updateNextBossMini() {
 const ACTIVITY_TABS = [
   { id:'zone', icon:'⚔️', name:{fr:'Zone',en:'Zone'},       locked:false },
   { id:'boss', icon:'🐍', name:{fr:'Boss',en:'Boss'},       locked:false },
-  // Compagnon juste après Boss (2026-07-10, demande explicite : "compagnon a droite de boss")
-  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false },
+  // Compagnon juste après Boss (2026-07-10, demande explicite : "compagnon a droite de boss") --
+  // badge "NEW" (2026-07-20, demande explicite : "met NEW sur compagnon a la place du cadenas")
+  // dans le même emplacement bulle que .actTabLock/.actTabBossHp, tant que le module reste en
+  // phase de test (voir #wipBanner, companions.html) -- à retirer manuellement (isNew:false) le
+  // jour où le module sort de test, pas de logique de péremption automatique.
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:true },
   // PvP (2026-07-20, demande explicite : "header : PVP bloqué") -- teaser verrouillé, même
   // convention que les autres activités pas encore implémentées ci-dessous. Distinct du classement
   // "PvP" DÉJÀ jouable dans le module Compagnon (onglet ⚔️ PvP, companions.pvp.js) qui, lui, classe
@@ -186,8 +190,9 @@ function renderActivityTabs() {
   el.innerHTML = ACTIVITY_TABS.map(t => {
     // onglet Boss : badge %PV inséré ici, mis à jour en direct par updateBossActivityTabHot()
     const hpBadge = t.id === 'boss' ? '<span class="actTabBossHp" id="actTabBossHp"></span>' : '';
+    const newBadge = (!t.locked && t.isNew) ? `<span class="actTabNew">${LANG==='fr'?'NOUVEAU':'NEW'}</span>` : '';
     return `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" id="${t.id==='boss'?'actTabBoss':''}" data-id="${t.id}"${t.locked?' disabled':''}>` +
-      `<span class="actTabLabel">${t.icon} ${t.name[LANG]}</span>${hpBadge}${t.locked?'<span class="actTabLock">🔒</span>':''}</button>`;
+      `<span class="actTabLabel">${t.icon} ${t.name[LANG]}</span>${hpBadge}${t.locked?'<span class="actTabLock">🔒</span>':newBadge}</button>`;
   }).join('');
   el.querySelectorAll('.actTab').forEach(btn => {
     if (btn.classList.contains('locked')) return;
@@ -268,7 +273,7 @@ function openCompanionsModule() {
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'src/companions/companions.html?v=6'; // bump avec companions.html à chaque MAJ du module (cache-busting, voir companions.html)
+    frame.src = 'src/companions/companions.html?v=7'; // bump avec companions.html à chaque MAJ du module (cache-busting, voir companions.html)
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);

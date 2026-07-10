@@ -2025,7 +2025,13 @@
      2026-07-10 (demande explicite : "tout dois tenir sur la meme ligne") -- ne wrap plus jamais sur
      une 2e/3e ligne (nowrap) ; s'il manque quelques px sur un écran étroit, la barre défile
      horizontalement (overflow-x:auto) plutôt que de casser sur plusieurs lignes. */
-  #activityTabs { display:flex; flex-wrap:nowrap; gap:4px; flex:1; overflow-x:auto; overflow-y:hidden; }
+  /* padding-bottom:10px (2026-07-20, bug rapporté explicitement : "les cadenas sont coupé") :
+     .actTabLock/.actTabBossHp débordent volontairement sous le bouton (bottom:-8px, effet "bulle
+     à cheval sur le cadre") -- avec overflow-y:hidden nécessaire pour empêcher tout retour à la
+     ligne vertical, ce débordement se faisait couper net en bas, sans jamais avoir été remarqué en
+     dev (les badges restent lisibles à l'oeil même tronqués de quelques px). Ce padding réserve la
+     place que prend le débordement, pour que overflow-y:hidden ne le rogne plus. */
+  #activityTabs { display:flex; flex-wrap:nowrap; gap:4px; flex:1; overflow-x:auto; overflow-y:hidden; padding-bottom:10px; }
   #activityTabs::-webkit-scrollbar { height:4px; }
   #activityTabs::-webkit-scrollbar-thumb { background:#3a3742; }
   /* cadenas EN BADGE sur le cadre (bordure) de la ligne du bas du bouton (2026-07-08, demande
@@ -2043,6 +2049,16 @@
     position:absolute; bottom:-8px; left:50%; transform:translateX(-50%);
     font-size:9px; line-height:1; background:var(--panel-2); border:1px solid #3a3742; border-radius:50%;
     width:14px; height:14px; display:flex; align-items:center; justify-content:center;
+  }
+  /* badge "NEW" (2026-07-20, demande explicite : "met NEW sur compagnon a la place du cadenas") --
+     même emplacement/forme bulle que .actTabLock (à cheval sur le cadre du bas), juste plus large
+     pour accueillir le mot et coloré en or plutôt que neutre, avec le même effet de pulsation que
+     les autres indicateurs "nouveau"/"en direct" du jeu (patchNewFade). */
+  .actTabNew {
+    position:absolute; bottom:-9px; left:50%; transform:translateX(-50%);
+    font-size:8.5px; font-weight:bold; letter-spacing:.03em; color:#2a1f08; line-height:1; white-space:nowrap;
+    background:var(--gold); border:1px solid var(--gold-dim); border-radius:9px; padding:1px 6px;
+    animation:patchNewFade 1.6s infinite;
   }
   /* "Créer un Flash lumineux sur la catégorie boss, qu'on le vois bien 5 min avant et pendant
      toute la durée du boss" (2026-07-08) -- allumé par updateBossActivityTabHot() (combat/boss.js)
