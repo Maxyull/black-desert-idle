@@ -92,6 +92,9 @@ function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 // car elles lisent `sb`/`currentUser` au moment de l'appel, pas une copie figée.
 function getSbClient() { return sb; }
 function getCurrentUserForSync() { return currentUser; }
+// même besoin que ci-dessus, pour le Marché Compagnon (2026-07-10) : les offres/contre-offres
+// affichent un pseudo lisible, `myPseudo` (let top-level) n'était pas accessible depuis l'iframe.
+function getMyPseudoForSync() { return myPseudo || (currentUser && (currentUser.email || '?').split('@')[0]) || 'Joueur'; }
 
 // ---------- journal de farm (pour les stats admin) : queue légère, envoyée par lots ----------
 // Agrégée en mémoire (clé = objet+zone) plutôt qu'une ligne par ramassage individuel : le combat

@@ -8699,6 +8699,8 @@ function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 function getSbClient() { return sb; }
 function getCurrentUserForSync() { return currentUser; }
 
+function getMyPseudoForSync() { return myPseudo || (currentUser && (currentUser.email || '?').split('@')[0]) || 'Joueur'; }
+
 let farmEventQueue = new Map();
 function queueFarmEvent(kind, name, qty, silverVal) {
   if (!sb || !currentUser || isGuest()) return; 

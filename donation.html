@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Soutenir le projet — Black Desert Idle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0A0C14;
+    --panel: #12141f;
+    --panel-border: #232739;
+    --gold: #c9a15a;
+    --gold-bright: #f0c976;
+    --ember: #8b3a2b;
+    --text: #e8e6df;
+    --text-dim: #8a8a99;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 100px 24px 120px;
+  }
+
+  /* ===== HERO ===== */
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: clamp(28px, 5vw, 42px);
+    text-align: center;
+    color: var(--gold-bright);
+    letter-spacing: 0.02em;
+    margin-bottom: 24px;
+  }
+
+  .intro {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 520px;
+    margin: 0 auto 56px;
+  }
+
+  .intro strong { color: var(--text); font-weight: 600; }
+
+  /* ===== DONATE CTA ===== */
+  .cta-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 88px;
+  }
+
+  .donate-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 44px;
+    background: linear-gradient(180deg, #241d16 0%, #150f0b 100%);
+    border: 1px solid #3a2f22;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 17px;
+    letter-spacing: 0.04em;
+    color: var(--gold-bright);
+    isolation: isolate;
+    overflow: hidden;
+    transition: border-color 0.35s ease, transform 0.15s ease;
+  }
+  .donate-btn::before {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border: 1px solid rgba(201, 161, 90, 0.35);
+    border-radius: 2px;
+    pointer-events: none;
+    transition: border-color 0.35s ease;
+  }
+  .donate-btn::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(240, 201, 118, 0.18), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.8s ease;
+    z-index: -1;
+  }
+  .donate-btn:hover { border-color: var(--gold); transform: translateY(-1px); }
+  .donate-btn:hover::before { border-color: rgba(240, 201, 118, 0.7); }
+  .donate-btn:hover::after { left: 130%; }
+  .donate-btn svg { width: 18px; height: 18px; filter: drop-shadow(0 0 3px rgba(240,201,118,0.5)); }
+
+  .cta-note {
+    margin-top: 16px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* ===== COST LEDGER (signature element) ===== */
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .ledger {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 8px;
+    margin-bottom: 20px;
+  }
+
+  .ledger-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--panel-border);
+  }
+  .ledger-row:last-child { border-bottom: none; }
+
+  .ledger-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .ledger-icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #1a1712;
+    border: 1px solid rgba(201, 161, 90, 0.3);
+    color: var(--gold);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    flex-shrink: 0;
+  }
+
+  .ledger-name { font-weight: 500; font-size: 15px; color: var(--text); }
+  .ledger-desc { font-size: 12.5px; color: var(--text-dim); margin-top: 2px; }
+
+  .ledger-cost {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    color: var(--gold-bright);
+    white-space: nowrap;
+  }
+
+  .ledger-total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 20px 10px;
+    font-family: 'Cinzel', serif;
+  }
+  .ledger-total .label { color: var(--text-dim); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+  .ledger-total .value { color: var(--gold-bright); font-size: 22px; font-weight: 600; }
+
+  /* ===== WHY SECTION ===== */
+  .why {
+    margin: 72px 0;
+  }
+
+  .why p {
+    color: var(--text-dim);
+    font-size: 15px;
+    margin-bottom: 16px;
+  }
+  .why p strong { color: var(--text); }
+
+  /* ===== TRANSPARENCY NOTE ===== */
+  .transparency {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+    padding: 20px 24px;
+    font-size: 14px;
+    color: var(--text-dim);
+    margin: 56px 0;
+  }
+  .transparency strong { color: var(--gold-bright); }
+
+  /* ===== FOOTER NOTE ===== */
+  .footer-note {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    margin-top: 72px;
+  }
+  .footer-note .heart { color: var(--ember); }
+
+  .footnote {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 11.5px;
+    opacity: 0.7;
+    margin-top: 40px;
+  }
+  .footnote a { color: var(--text-dim); }
+  .footnote a:hover { color: var(--gold); }
+
+  /* ===== TOTAL COLLECTED (lifetime) ===== */
+  .total-collected {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px;
+    margin-bottom: 40px;
+    border-top: 1px solid var(--panel-border);
+    border-bottom: 1px solid var(--panel-border);
+  }
+
+  .total-collected .amount {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 34px;
+    color: var(--gold-bright);
+    letter-spacing: 0.02em;
+  }
+
+  .total-collected .amount span {
+    font-size: 16px;
+    color: var(--text-dim);
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+    margin-left: 4px;
+  }
+
+  .total-collected .caption {
+    margin-top: 6px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* ===== PROGRESS BAR ===== */
+  .progress-block {
+    margin-bottom: 64px;
+  }
+
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+
+  .progress-labels .current {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    color: var(--gold-bright);
+  }
+
+  .progress-labels .goal {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .progress-track {
+    position: relative;
+    height: 12px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    position: relative;
+    height: 100%;
+    background: linear-gradient(90deg, #8b3a2b, var(--gold), var(--gold-bright));
+    border-radius: 6px 0 0 6px;
+    transition: width 0.6s ease;
+  }
+
+  .progress-fill::after {
+    /* ambient shimmer, echoes the button's enchant sweep */
+    content: "";
+    position: absolute;
+    top: 0; right: 0;
+    width: 30px; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35));
+    filter: blur(2px);
+  }
+
+  .progress-caption {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--text-dim);
+    text-align: center;
+  }
+
+  /* ===== DONOR WALL ===== */
+  .donors {
+    margin: 64px 0;
+  }
+
+  .donor-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+
+  .donor-chip {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12.5px;
+    padding: 7px 14px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 999px;
+    color: var(--text-dim);
+  }
+
+  .donor-chip.top {
+    color: var(--gold-bright);
+    border-color: rgba(201, 161, 90, 0.4);
+  }
+
+  .donors-caption {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-dim);
+    margin-top: 16px;
+  }
+
+  /* ===== COST TREND ===== */
+  .trend {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 60px;
+    margin: 20px 0 8px;
+    padding: 0 4px;
+  }
+
+  .trend-bar {
+    flex: 1;
+    background: linear-gradient(180deg, var(--gold-bright), var(--gold));
+    border-radius: 2px 2px 0 0;
+    opacity: 0.55;
+    position: relative;
+  }
+
+  .trend-bar.current {
+    opacity: 1;
+  }
+
+  .trend-labels {
+    display: flex;
+    gap: 8px;
+    padding: 0 4px;
+  }
+
+  .trend-labels span {
+    flex: 1;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Black Desert Idle</div>
+  <h1>Soutenir le projet</h1>
+  <p class="intro">
+    BDI est <strong>100% gratuit et open-source</strong>, et le restera toujours.
+    Aucune fonctionnalité payante, aucun avantage compétitif à acheter — jamais*.
+  </p>
+
+  <div class="total-collected">
+    <div class="amount">1 240 $<span>collectés depuis le lancement</span></div>
+    <div class="caption">Merci à chaque contributeur</div>
+  </div>
+
+  <div class="cta-block">
+    <a href="https://www.paypal.com/donate/?hosted_button_id=TON_ID_ICI" class="donate-btn" target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 2 L19 8 L19 16 L12 22 L5 16 L5 8 Z" stroke-linejoin="round"/>
+        <path d="M12 2 L12 22 M5 8 L19 8 M5 16 L19 16" stroke-opacity="0.4"/>
+      </svg>
+      Faire un don
+    </a>
+    <div class="cta-note">Via PayPal · montant libre · aucune contrepartie in-game</div>
+  </div>
+
+  <div class="progress-block">
+    <div class="progress-labels">
+      <span class="current">180 $ collectés</span>
+      <span class="goal">objectif : 250 $ / mois</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" style="width: 72%;"></div>
+    </div>
+    <div class="progress-caption">72% des coûts de ce mois-ci couverts — merci !</div>
+  </div>
+
+  <div class="why">
+    <p>
+      Développer et faire tourner BDI a un <strong>coût réel</strong>, payé de ma poche
+      depuis le début du projet. Ce n'est pas juste du temps libre : c'est de l'infrastructure,
+      des outils, des services qui tournent chaque mois, que le jeu ait 10 ou 10 000 joueurs.
+    </p>
+    <p>
+      Les dons ne débloquent rien, n'accélèrent rien, n'avantagent personne en jeu.
+      Ils servent uniquement à garder le projet en vie sur la durée, sans avoir à
+      compromettre ce qui fait que BDI reste gratuit et ouvert.
+    </p>
+  </div>
+
+  <div class="section-title">Coûts mensuels actuels</div>
+
+  <div class="ledger">
+    <div class="ledger-row">
+      <div class="ledger-item">
+        <div class="ledger-icon">AI</div>
+        <div>
+          <div class="ledger-name">Claude</div>
+          <div class="ledger-desc">Assistant de développement</div>
+        </div>
+      </div>
+      <div class="ledger-cost">200 $ / mois</div>
+    </div>
+
+    <div class="ledger-row">
+      <div class="ledger-item">
+        <div class="ledger-icon">3D</div>
+        <div>
+          <div class="ledger-name">Meshy</div>
+          <div class="ledger-desc">Génération d'assets 3D</div>
+        </div>
+      </div>
+      <div class="ledger-cost">25 $ / mois</div>
+    </div>
+
+    <div class="ledger-row">
+      <div class="ledger-item">
+        <div class="ledger-icon">DB</div>
+        <div>
+          <div class="ledger-name">Supabase</div>
+          <div class="ledger-desc">Base de données & hébergement</div>
+        </div>
+      </div>
+      <div class="ledger-cost">25 $ / mois</div>
+    </div>
+
+    <div class="ledger-row" style="border-bottom: none; flex-direction: column; align-items: stretch;">
+      <div class="ledger-desc" style="margin-bottom: 6px;">Tendance sur 4 mois</div>
+      <div class="trend">
+        <div class="trend-bar" style="height: 60%;"></div>
+        <div class="trend-bar" style="height: 68%;"></div>
+        <div class="trend-bar" style="height: 75%;"></div>
+        <div class="trend-bar current" style="height: 100%;"></div>
+      </div>
+      <div class="trend-labels">
+        <span>Avr</span><span>Mai</span><span>Juin</span><span>Juil</span>
+      </div>
+    </div>
+
+    <div class="ledger-total">
+      <div class="label">Total</div>
+      <div class="value">250 $ / mois</div>
+    </div>
+  </div>
+
+  <div class="transparency">
+    <strong>Transparence totale :</strong> ces montants sont mis à jour à mesure que
+    les coûts évoluent (nouveaux outils, montée en charge, joueurs en plus).
+    Si les dons dépassent un jour les coûts réels, ce sera à la communauté de
+    décider ensemble comment cet excédent est utilisé.
+  </div>
+
+  <div class="donors">
+    <div class="section-title">Merci à eux</div>
+    <div class="donor-list">
+      <span class="donor-chip top">Kaelthorne</span>
+      <span class="donor-chip">Wyrmshade</span>
+      <span class="donor-chip">Nocturia</span>
+      <span class="donor-chip">Aelindra</span>
+      <span class="donor-chip">Draukin</span>
+      <span class="donor-chip">+ 12 autres</span>
+    </div>
+    <div class="donors-caption">Pseudos affichés uniquement avec l'accord du donateur</div>
+  </div>
+
+  <div class="footer-note">
+    Merci à tous ceux qui jouent, testent et font vivre ce projet depuis le début <span class="heart">❤</span>
+  </div>
+
+  <div class="footnote">
+    *Sauf décision contraire, votée par la communauté. — <a href="donation-policy.html">Politique de don complète</a>
+  </div>
+
+</div>
+</body>
+</html>

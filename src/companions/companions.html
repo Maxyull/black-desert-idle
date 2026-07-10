@@ -78,6 +78,10 @@
        classement CROSS-JOUEURS réel (companion_leaderboard(), Supabase), distinct du classement
        LOCAL de tes propres pets déjà présent dans l'onglet PvP ci-dessus. -->
   <div class="tab" onclick="ST(9)">🏆 Classement</div>
+  <!-- 2026-07-10, demande explicite : "vrai backend d'échange" -- marché réel de compagnons entre
+       joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
+       sync). Voir companions.market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
+  <div class="tab" onclick="ST(11)">🔄 Marché</div>
   <!-- 2026-07-10, demande explicite : "on va integrer des model gbl" -- écran de test isolé pour
        valider le pipeline Three.js/GLB avant tout remplacement des icônes 2D existantes (roster,
        collection, incubation...). Charge un unique modèle de test depuis Supabase Storage. -->
@@ -397,6 +401,17 @@
     <div id="viewer3d-canvas-wrap" style="width:100%;height:440px;background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden"></div>
   </div>
 </div>
+
+<!-- TAB 11 MARCHÉ (2026-07-10, demande explicite : "vrai backend d'échange") -->
+<div class="panel" id="p11">
+  <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+    <div style="background:linear-gradient(135deg,rgba(212,169,85,.14),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:12px 16px;font-size:10.5px;color:var(--cream2)">
+      🔄 Échange réel entre joueurs — un familier mis en vente ici quitte ta sauvegarde locale le temps de la transaction, tout est vérifié côté serveur.
+    </div>
+    <div style="display:flex;gap:6px" id="market-nav"></div>
+    <div id="market-body"></div>
+  </div>
+</div>
 </div>
 <div class="modal-bg" id="hatch-modal">
   <div class="modal"><button class="mcl" onclick="closeHatchModal()">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px">✨ Familier éclos !</div><div id="hatch-body"></div></div>
@@ -415,6 +430,9 @@
     <div id="pet3d-canvas-wrap" style="width:420px;max-width:80vw;height:360px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden"></div>
   </div>
 </div>
+<div class="modal-bg" id="market-modal">
+  <div class="modal"><button class="mcl" onclick="CM('market-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="market-modal-title">Marché</div><div id="market-modal-body"></div></div>
+</div>
 <div class="modal-bg" id="fusion-modal">
   <div class="modal"><button class="mcl" onclick="CM('fusion-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="fusion-modal-title">⚗️ Fusion</div><div id="fusion-modal-body"></div></div>
 </div>
@@ -429,21 +447,27 @@
      par l'iframe qui charge cette page) -->
 <script src="companions.pixelart.js?v=6"></script>
 <script src="companions.catalog.js?v=7"></script>
-<script src="companions.economy.js?v=9"></script>
+<script src="companions.economy.js?v=10"></script>
 <script src="companions.tier.js?v=6"></script>
 <script src="companions.roster.js?v=7"></script>
-<script src="companions.hatch.js?v=13"></script>
+<script src="companions.hatch.js?v=14"></script>
 <script src="companions.pet-panel.js?v=6"></script>
 <script src="companions.sections.js?v=13"></script>
 <script src="companions.collection.js?v=10"></script>
 <script src="companions.fusion.js?v=8"></script>
 <script src="companions.feed.js?v=6"></script>
 <script src="companions.ticks.js?v=6"></script>
-<script src="companions.save.js?v=10"></script>
+<script src="companions.save.js?v=11"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
 <script src="companions.sync.js?v=10"></script>
+<!-- marché d'échange réel (2026-07-10, demande explicite) : lit PETS/petId/PET_CATALOG/RARITIES/
+     rc/rn/tierMultOf/rollTierMult/drawPixelArt/toast/CM/petRosterRoomLeft déjà déclarés plus haut,
+     appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
+     strictement requis vis-à-vis de ces globals (aucune lecture immédiate), placé ici par
+     lisibilité juste après le sync admin (même famille : accès à window.parent.getSbClient()). -->
+<script src="companions.market.js?v=1"></script>
 <script src="companions.index.js?v=6"></script>
 <script src="companions.game-view.js?v=6"></script>
 <script src="companions.hardinage.js?v=6"></script>
