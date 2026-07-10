@@ -9431,6 +9431,7 @@ const ADMIN_SECTIONS = [
     { id:'loot', icon:'🎲', label:{fr:'Table de loot',en:'Loot table'}, render:renderAdminLoot },
     { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
     { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:renderAdminOnboarding },
+    { id:'companions', icon:'🐾', label:{fr:'Compagnons',en:'Companions'}, render:renderAdminCompanions },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
@@ -9910,6 +9911,35 @@ function renderAdminOnboarding(el) {
       ${pie}
       <h3>${LANG==='fr'?'📉 Funnel d\'abandon (étape où resté bloqué)':'📉 Drop-off funnel (step last seen)'}</h3>
       ${dropoffHtml}`;
+  });
+}
+
+function renderAdminCompanions(el) {
+  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  sb.rpc('admin_companion_stats').then(({data, error}) => {
+    if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
+    const s = (data && data[0]) || {};
+    const playersSynced = Number(s.players_synced||0);
+    if (!playersSynced) {
+      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun joueur n\'a encore ouvert le module Compagnons':'No player has opened the Companions module yet'}</div>`;
+      return;
+    }
+    const totalPet = Number(s.total_pet_count||0), avgPet = Number(s.avg_pet_count||0);
+    const totalSilver = Number(s.total_silver||0), totalHatch = Number(s.total_hatch_count||0), totalFusion = Number(s.total_fusion_count||0);
+    const avgStreak = Number(s.avg_login_streak||0), playersWithPity = Number(s.players_with_pity||0), avgAch = Number(s.avg_achievements||0);
+    el.innerHTML = `<div class="admSummary">${LANG==='fr'
+        ? 'Module 100% local jusqu\'ici (localStorage, économie fermée, indépendante du Silver principal) — "Joueurs synchronisés" compte ceux qui ont ouvert l\'onglet Compagnon au moins une fois (le module envoie ses compteurs toutes les 60s en arrière-plan).'
+        : 'Module was 100% local until now (localStorage, closed economy, independent from the main Silver) — "Players synced" counts those who opened the Companion tab at least once (the module pushes its counters every 60s in the background).'}</div>
+      <div class="admStatTiles">
+        <div class="admStatTile"><div class="astLbl">🐾 ${LANG==='fr'?'Joueurs synchronisés':'Players synced'}</div><div class="astVal">${fmt(playersSynced)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📦 ${LANG==='fr'?'Familiers (total / moy.)':'Pets (total / avg)'}</div><div class="astVal">${fmt(totalPet)} <span class="admHint">(${avgPet.toFixed(1)})</span></div></div>
+        <div class="admStatTile"><div class="astLbl">💰 ${LANG==='fr'?'Silver compagnon (total)':'Companion Silver (total)'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🥚 ${LANG==='fr'?'Œufs éclos (total)':'Eggs hatched (total)'}</div><div class="astVal">${fmt(totalHatch)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔗 ${LANG==='fr'?'Fusions (total)':'Fusions (total)'}</div><div class="astVal">${fmt(totalFusion)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔥 ${LANG==='fr'?'Streak connexion (moy.)':'Login streak (avg)'}</div><div class="astVal">${avgStreak.toFixed(1)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🎁 ${LANG==='fr'?'Ont déclenché le pity':'Triggered pity'}</div><div class="astVal">${fmt(playersWithPity)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏆 ${LANG==='fr'?'Succès complétés (moy.)':'Achievements done (avg)'}</div><div class="astVal">${avgAch.toFixed(1)} <span class="admHint">/16</span></div></div>
+      </div>`;
   });
 }
 

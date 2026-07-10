@@ -19,6 +19,19 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
 - Chargement paresseux garanti : tant que le joueur n'a pas cliqué sur l'onglet, aucun de
   ces fichiers n'est téléchargé ni exécuté.
 
+**Sync admin (2026-07-19, demande explicite)** : la sauvegarde reste 100% locale, mais
+`companions.sync.js` pousse désormais un RÉSUMÉ de compteurs (jamais le roster/inventaire
+complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir
+`supabase/migrations/20260719190000_companion_stats.sql`) — pour alimenter le panneau admin
+`Contenu → Compagnons`. Comme l'iframe est **same-origin** (pas de `sandbox`, voir
+`combat/boss.js:openCompanionsModule`), le module réutilise directement le client
+`sb`/`currentUser`/`isGuest()` déjà authentifié de la page hôte via `window.parent` — pas de
+second SDK Supabase ni d'auth séparée dans l'iframe. Fire-and-forget, jamais bloquant, no-op
+silencieux sans compte connecté (même garde que `queueFarmEvent`/`markItemTutorialSeen`
+ailleurs dans le jeu). Nouveau compteur à vie `totalHatched` (`companions.economy.js`,
+incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
+`hatchCountSincePity` qui se remet à 0 à chaque pity déclenché.
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2
@@ -51,11 +64,14 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
     1s : faim, XP de tier, loot en tâche de fond, drops spéciaux, achievements).
 13. `companions.save.js` — sauvegarde/chargement localStorage, rattrapage hors-ligne,
     export/import/reset.
-14. `companions.index.js` — onglet Index (matrice Rareté×Tier + catalogue complet).
-15. `companions.game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
-16. `companions.hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
-17. `companions.achievements.js` — définitions des achievements, score de prestige.
-18. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
+14. `companions.sync.js` — pousse un résumé de compteurs vers Supabase toutes les 60s
+    (stats admin, voir plus haut) via `window.parent.sb`. Charge après `save.js` par
+    lisibilité, aucune contrainte d'ordre réelle (appelée via `setTimeout`/`setInterval`).
+15. `companions.index.js` — onglet Index (matrice Rareté×Tier + catalogue complet).
+16. `companions.game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
+17. `companions.hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
+18. `companions.achievements.js` — définitions des achievements, score de prestige.
+19. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
     (`loadGame()` puis `checkDailyStreak()`/`renderAll()`).
 
 Comme pour le jeu principal, tout ce document vit dans un seul scope global partagé entre

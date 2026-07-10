@@ -101,6 +101,19 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   await expect(frame.locator('.pet-card')).toHaveCount(1);
   await expect(frame.locator('#tb2')).toHaveText('1');
 
+  // sync admin (2026-07-19) : totalHatched est un compteur À VIE (jamais remis à 0 par le pity,
+  // contrairement à hatchCountSincePity) -- incrémenté une fois par tirage réel dans
+  // rollAndCreatePet() (companions.hatch.js), donc doit valoir 1 après l'unique éclosion ci-dessus.
+  // syncCompanionStatsToServer doit exister et ne jamais lever (no-op silencieux ici : pas de
+  // compte connecté dans ce contexte de test, la garde sb/currentUser/isGuest doit l'arrêter tôt).
+  const syncState = await frame.locator('body').evaluate(() => ({
+    totalHatched: typeof totalHatched !== 'undefined' ? totalHatched : null,
+    hasSync: typeof syncCompanionStatsToServer === 'function',
+  }));
+  expect(syncState.totalHatched).toBe(1);
+  expect(syncState.hasSync).toBe(true);
+  await frame.locator('body').evaluate(() => { syncCompanionStatsToServer(); });
+
   // ferme le module : l'overlay disparaît et le jeu principal redevient visible
   await page.locator('#companionsOverlay button', { hasText: 'Fermer' }).click();
   await expect(overlay).toBeHidden();
