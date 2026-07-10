@@ -142,6 +142,14 @@ pattern que `doSignInDiscord()`. ⚠️ Les providers Google/GitHub doivent êtr
 Client ID/Secret OAuth côté Dashboard Supabase (Authentication > Providers) -- action externe,
 impossible à faire depuis le code.
 
+**Twitter/X ajouté (2026-07-20, demande explicite : "peux tu ajouter twitter aussi")** :
+`doSignInTwitter()`/`linkTwitterAccount()` (game-supabase.js), même pattern que Google/GitHub --
+provider Supabase Auth `'twitter'` (nom conservé malgré le rebranding "X"). `PROVIDER_INFO.twitter`
+(admin-panel.js) s'affiche automatiquement dans la colonne "Plate-forme" et le camembert
+"Inscriptions" -- aucune migration nécessaire, `provider` était déjà lu génériquement depuis
+`raw_app_meta_data`. ⚠️ Même limite que Google/GitHub : à activer côté Dashboard Supabase
+(Authentication > Providers) avec un Client ID/Secret OAuth.
+
 Voir `ADMIN_MENU_PLAN.md` (racine du repo) pour l'état des lieux du panneau admin et pourquoi le
 reste d'un plan initial plus large (React, Sentry, i18n editor, staging, équipe multi-rôles...) a
 été volontairement écarté à l'échelle actuelle du projet.

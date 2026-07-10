@@ -1161,6 +1161,10 @@
     background:rgba(255,255,255,.1) !important; border:1px solid #6e7681 !important; color:#e6edf3 !important;
   }
   .githubBtn:hover { background:rgba(255,255,255,.18) !important; }
+  .twitterBtn {
+    background:rgba(29,155,240,.18) !important; border:1px solid #1D9BF0 !important; color:#bfe4ff !important;
+  }
+  .twitterBtn:hover { background:rgba(29,155,240,.32) !important; }
 
   /* slider position du menu (gauche/droite) */
   #menuSideToggle {
