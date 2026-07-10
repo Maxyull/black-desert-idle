@@ -98,3 +98,20 @@ multi navigateur and multidevice" + "Mode hors ligne")** :
   classe `open` au moment de la fermeture (l'admin n'a pas explicitement quitté le panneau entre-
   temps via `closeAdminPanel()`, qui retire cette classe). Garde-fou statique :
   `testPopupCloseOnlyReopensAdminPanelIfStillOpen` (`tests/tests.js`).
+
+**Wiki — panneau plein écran (2026-07-11, demande explicite : port à l'identique d'un mockup
+externe fourni, sidebar/breadcrumb/article/infobox/sommaire/recherche — voir CLAUDE.md §30
+"Maquettes externes")** :
+- `wiki-panel.js` (même dossier) remplace l'ancienne modale à onglets plats (`openInfo()` +
+  ex-`renderWikiHtml()`, supprimée) par `openWikiPanel()`/`#wikiOverlay` — charge APRÈS ce fichier,
+  câblé sur `$a('btnWiki').onclick`. `WIKI_SECTIONS`/`renderCodexHtml()`/`renderTutoPageHtml()`
+  restent définis ICI et sont réutilisés tels quels par le nouveau panneau (aucune duplication de
+  contenu) ; `startTutorial(TUTORIAL_STEPS, {trackId:'onboarding'})` reste le seul point d'entrée
+  du tutoriel d'arrivée, préservé dans `wiki-panel.js`.
+- Le mockup fourni mélangeait des sujets qui vivent réellement dans des panneaux séparés
+  (Compagnons = iframe isolée §28, Compendium Zones/Boss/PEN = `compendium-react.js`) : la sidebar
+  du nouveau Wiki les référence comme des raccourcis (`openCompanionsModule()`/
+  `openCompendiumReact()`/`openPatchNotesReact()`), jamais comme du contenu Wiki dupliqué/inventé.
+- Palette : couleurs du mockup reprises à l'identique (demande explicite), pas la palette
+  officielle §29 — scopées sous `#wikiOverlay` uniquement (CSS injectée en JS à la première
+  ouverture), même logique que le `:root` propre au module Compagnons.
