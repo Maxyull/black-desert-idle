@@ -129,6 +129,36 @@ function buildBarSeriesSvg(points, color) {
     bars + `</svg>`;
 }
 
+// ---------- Alertes économiques (2026-07-20, demande explicite : "ajoute dans le dashboard tout,
+// et surtout des alerte sil y a trop de quelque chose et qu'il faut créer un puit rapidement") --
+// fonction PURE (aucune dépendance DOM/réseau) : prend les lignes déjà chargées de
+// admin_silver_ledger_by_category ({category, gained, spent}) et retourne une liste d'alertes
+// {icon, text} à afficher, jamais d'action automatique (juste un signal pour l'admin). Seuil de
+// 500k gagné avant de se déclencher : évite le bruit sur un serveur de test avec très peu de
+// données (un seul joueur qui gagne 200 silver ne doit pas déjà crier à l'inflation).
+const ECON_ALERT_MIN_GAINED = 500000;
+const ECON_ALERT_SINK_RATIO = 0.35;
+function computeEconAlerts(categoryRows) {
+  const rows = (categoryRows||[]).map(r => ({ gained:Number(r.total_gained||r.gained||0), spent:Number(r.total_spent||r.spent||0) }));
+  const totalGained = rows.reduce((a,r) => a+r.gained, 0);
+  const totalSpent = rows.reduce((a,r) => a+r.spent, 0);
+  const alerts = [];
+  if (totalGained >= ECON_ALERT_MIN_GAINED) {
+    const ratio = totalGained > 0 ? totalSpent / totalGained : 0;
+    if (ratio < ECON_ALERT_SINK_RATIO) {
+      const pct = Math.round(ratio*100);
+      alerts.push({ icon:'⚠️', text: LANG==='fr'
+        ? `Seulement ${pct}% du silver gagné est réellement dépensé (sorti du jeu) — trop peu de puits, risque d'inflation. Envisage d'ajouter un puits (boutique, coût, sink) rapidement.`
+        : `Only ${pct}% of gained silver is actually spent (sunk out of the game) — too few sinks, inflation risk. Consider adding a sink (shop, cost, drain) soon.` });
+    }
+  }
+  return alerts;
+}
+function buildEconAlertsHtml(alerts) {
+  if (!alerts.length) return '';
+  return `<div class="admAlerts">${alerts.map(a => `<div class="admAlertBox">${a.icon} ${escapeHtml(a.text)}</div>`).join('')}</div>`;
+}
+
 // ---------- Économie → Santé économique (2 camemberts : sources / puits, par catégorie) ----------
 function renderAdminEconHealth(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
@@ -139,7 +169,8 @@ function renderAdminEconHealth(el) {
     const label = c => CATEGORY_LABEL[c] ? CATEGORY_LABEL[c][LANG] : c;
     const sources = rows.filter(r => r.gained > 0).map(r => ({ label:label(r.category), value:r.gained }));
     const sinks = rows.filter(r => r.spent > 0).map(r => ({ label:label(r.category), value:r.spent }));
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
+    el.innerHTML = `${buildEconAlertsHtml(computeEconAlerts(rows))}
+      <div class="admSummary">${LANG==='fr'
         ? 'Sources (gagné) vs puits (dépensé), par catégorie — même registre que "Silver", vue centrée sur l\'équilibre entrées/sorties. Catégories sous 4% du total fusionnées dans "Autres".'
         : 'Sources (gained) vs sinks (spent), by category — same ledger as "Silver", view centered on inflow/outflow balance. Categories under 4% of the total are merged into "Other".'}</div>
       <div class="admChartsRow">
@@ -384,7 +415,10 @@ function renderAdminMarketVolume(el) {
 // y accéder -- admin_signups_by_day() (voir la migration). ----------
 function renderAdminSignups(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
-  sb.rpc('admin_signups_by_day', { p_days: 30 }).then(({data, error}) => {
+  Promise.all([
+    sb.rpc('admin_signups_by_day', { p_days: 30 }),
+    sb.rpc('admin_signups_by_provider'),
+  ]).then(([{data, error}, { data: byProvider, error: provError }]) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
     const total = rows.reduce((a,r) => a + Number(r.signups||0), 0);
@@ -392,11 +426,19 @@ function renderAdminSignups(el) {
     const chart = rows.length
       ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
       : `<div class="admEmpty">${LANG==='fr'?'Aucune inscription sur les 30 derniers jours':'No signups in the last 30 days'}</div>`;
+    // camembert par plateforme (2026-07-20, demande explicite : "montre avec quoi les joueur se
+    // sont inscrit comme plateforme ... et tu peux créer un graph aussi") -- providerInfo() vient
+    // de admin-panel.js, chargé AVANT ce fichier (voir index.dev.html), donc jamais de risque de TDZ.
+    const providerPie = !provError && (byProvider||[]).length
+      ? buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon + ' ' + providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 })
+      : `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
     el.innerHTML = `<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">🆕 ${LANG==='fr'?'Inscriptions (30j)':'Signups (30d)'}</div><div class="astVal">${total}</div></div>
       </div>
       <h3>${LANG==='fr'?'📅 Par jour':'📅 By day'}</h3>
-      ${chart}`;
+      ${chart}
+      <h3>${LANG==='fr'?'🧩 Par plateforme (tous comptes)':'🧩 By platform (all accounts)'}</h3>
+      ${providerPie}`;
   });
 }
 

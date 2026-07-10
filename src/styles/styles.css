@@ -1017,8 +1017,9 @@
      sans toucher une seule règle existante ni affecter le reste du jeu (le reste du DOM continue de
      résoudre ces variables depuis :root, jamais impacté). "gold" = thème par défaut du jeu, ne
      redéfinit rien (hérite de :root) ; les 4 autres sont des palettes alternatives sélectionnables
-     via #admThemeSlider, persistées en localStorage (préférence purement locale à l'admin, ne
-     touche jamais l'état de sauvegarde joueur S/INV/EQUIP). */
+     via les pastilles .admSwatchBtn en haut à gauche du panneau (2026-07-20, voir plus bas dans ce
+     fichier), persistées en localStorage (préférence purement locale à l'admin, ne touche jamais
+     l'état de sauvegarde joueur S/INV/EQUIP). */
   .admThemeRoot[data-adm-theme="emerald"] {
     --gold:#34D399; --gold-dim:#1f7a5c; --panel:#111827; --panel-2:#1a2236;
     --ink:#E2E8F0; --ink-dim:#64748B; --danger:#EF4444;
@@ -1035,10 +1036,33 @@
     --gold:#a578d8; --gold-dim:#75549c; --panel:#150f1e; --panel-2:#211729;
     --ink:#ece2f5; --ink-dim:#96859e; --danger:#e0715a;
   }
-  .admThemeSlider { display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #2c2a33; }
-  .admThemeSlider label { font-size:10.5px; color:var(--ink-dim); white-space:nowrap; }
-  .admThemeSlider input[type=range] { flex:1; accent-color:var(--gold); }
-  .admThemeSlider .admThemeName { font-size:11px; color:var(--gold); font-weight:bold; min-width:80px; text-align:right; }
+  /* pastilles de palette en haut à gauche (2026-07-20, demande explicite : "palette de couleurs e
+     mettre en haut a gauche") -- remplace l'ancien slider .admThemeSlider (Système>Palette),
+     vivent désormais dans .admNavHead, voir renderAdminThemeSwatchesHtml()/wireAdminThemeSwatches()
+     dans admin-panel.js. Couleur de fond fixe par pastille (posée en inline style, une par thème),
+     jamais lue depuis --gold : sinon les 5 pastilles afficheraient toutes la même couleur (celle du
+     thème actuellement actif) au lieu de montrer les 5 choix possibles. */
+  .admThemeSwatches { display:flex; gap:6px; align-items:center; }
+  .admSwatchBtn {
+    width:15px; height:15px; border-radius:50%; padding:0; cursor:pointer;
+    border:2px solid transparent; box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);
+  }
+  .admSwatchBtn.active { border-color:var(--ink); }
+  /* barre de recherche de la sidebar (2026-07-20, demande explicite : "ajoute moi une barre de
+     recherceh") -- juste sous .admNavHead, filtre les items via wireAdminSidebarSearch(). */
+  .admNavSearch {
+    width:100%; margin:0 0 8px; padding:6px 9px; font-size:11.5px;
+    background:#0d0c11; border:1px solid #333; color:var(--ink); border-radius:5px;
+  }
+  .admNavSearch::placeholder { color:var(--ink-dim); }
+  /* alertes économiques (2026-07-20, demande explicite : "des alerte sil y a trop de quelque
+     chose et qu'il faut créer un puit rapidement") -- computeEconAlerts()/buildEconAlertsHtml()
+     dans admin-economy.js, purement informatif (aucune action automatique déclenchée). */
+  .admAlerts { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  .admAlertBox {
+    background:rgba(224,90,110,.12); border:1px solid var(--danger); color:#e8a89f;
+    border-radius:5px; padding:9px 12px; font-size:11.5px; line-height:1.5;
+  }
   /* règles de récompense World Boss, agrandies (2026-07-15, demande explicite : "recompense,
      affiche en plus gros en dessous des horaires de boss") -- carte dédiée au lieu d'un simple
      .admHint discret, toujours juste sous le bloc horaires/countdown du lobby */
@@ -1127,6 +1151,20 @@
     background:rgba(88,101,242,.18) !important; border:1px solid #5865F2 !important; color:#c9cdff !important;
   }
   .discordBtn:hover { background:rgba(88,101,242,.32) !important; }
+  /* boutons Google/GitHub (2026-07-20, demande explicite : "ajoute inscription google, github") --
+     mêmes conventions que .discordBtn ci-dessus (couleur de marque en fond translucide + bordure). */
+  .googleBtn {
+    background:rgba(66,133,244,.18) !important; border:1px solid #4285F4 !important; color:#c9dcff !important;
+  }
+  .googleBtn:hover { background:rgba(66,133,244,.32) !important; }
+  .githubBtn {
+    background:rgba(255,255,255,.1) !important; border:1px solid #6e7681 !important; color:#e6edf3 !important;
+  }
+  .githubBtn:hover { background:rgba(255,255,255,.18) !important; }
+  .twitterBtn {
+    background:rgba(29,155,240,.18) !important; border:1px solid #1D9BF0 !important; color:#bfe4ff !important;
+  }
+  .twitterBtn:hover { background:rgba(29,155,240,.32) !important; }
 
   /* slider position du menu (gauche/droite) */
   #menuSideToggle {

@@ -37,12 +37,27 @@ async function dismissTutorialIfPresent(page) {
   }
 }
 
-// l'auto-connexion invité/démo (#authOverlay) fait un vrai aller-retour réseau (Supabase) avant de
-// se fermer -- délai variable et parfois > 5s (timeout par défaut de expect()) selon la charge du
-// projet Supabase. 20s laisse une vraie marge sans pour autant masquer un blocage réel (le timeout
-// global du test, 60s, reste le vrai filet de sécurité).
-async function waitForAuthOverlayClosed(page) {
-  await expect(page.locator('#authOverlay')).toHaveClass(/hidden/, { timeout: 30000 });
+// startGuestOrShowAuth() n'ouvre plus de session anonyme automatique depuis le 2026-07-20
+// (invités désactivés pour les vrais joueurs, voir CLAUDE.md/admin/README.md) -- #authOverlay
+// reste donc affiché et bloque tous les clics tant qu'aucune session n'est établie. Vérifié :
+// "Anonymous sign-ins" est maintenant refusé aussi côté serveur Supabase (422 "Anonymous
+// sign-ins are disabled"), donc sb.auth.signInAnonymously() ne peut plus servir ici non plus
+// (remplace l'ancien waitForAuthOverlayClosed() qui attendait cet ancien flux automatique).
+// Ce test n'exerce que l'UI du jeu principal derrière la connexion (pas le formulaire lui-même,
+// déjà couvert visuellement en manuel) : plutôt que de créer un vrai compte de test dans la base
+// de données de production pour un simple test UI, on appelle directement onAuthed() avec un
+// utilisateur fabriqué localement -- tous les appels réseau qu'il déclenche (get_my_ban_status,
+// profiles, game_saves...) sont déjà protégés par des try/catch ou des repli silencieux dans
+// game-supabase.js (aucun accès valide de toute façon, faute de vraie session), donc ça ne fait
+// que débloquer l'UI sans jamais écrire quoi que ce soit côté serveur.
+async function signInForTest(page) {
+  await expect
+    .poll(() => page.evaluate(() => typeof onAuthed), { timeout: 10_000 })
+    .toBe('function');
+  await page.evaluate(async () => {
+    await onAuthed({ id:'00000000-0000-4000-8000-000000000001', email:'playwright-test@local.invalid', is_anonymous:false, identities:[] });
+  });
+  await expect(page.locator('#authOverlay')).toBeHidden({ timeout: 10_000 });
 }
 
 // clique en tolérant qu'un tutoriel (onboarding, ou un tutoriel d'objet/action déclenché par le
@@ -66,7 +81,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   page.on('pageerror', error => pageErrors.push(error.message));
 
   await page.goto('/index.dev.html', { waitUntil: 'load' });
-  await waitForAuthOverlayClosed(page);
+  await signInForTest(page);
   await dismissTutorialIfPresent(page);
 
   const companionTab = page.locator('.actTab[data-id="pet"]');
@@ -158,7 +173,7 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
   });
 
   await page.goto('/index.dev.html', { waitUntil: 'load' });
-  await waitForAuthOverlayClosed(page);
+  await signInForTest(page);
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
