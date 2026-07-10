@@ -251,6 +251,11 @@ module Compagnon.
   bouton "🧊 Voir en 3D" apparaît maintenant aussi sur les cartes de la Collection et de la réserve
   (Sections), pas seulement le pet déployé sur le terrain — toujours conditionné à
   `companionModelUrlFor(pet)` (jamais affiché pour un pet/tier sans fichier réellement uploadé).
+  **Upload terminé (2026-07-20)** : les 60 fichiers canoniques (11 espèces × 5 tiers, hors les 2
+  fichiers hors convention exclus) sont en ligne dans le bucket `companion-models`, vérifiés
+  accessibles publiquement et chargeables (test réel : `young_black_dragon_T3.glb` chargé en
+  687 ms). Upload fait via script `curl` local (clé `service_role` jamais committée, lue depuis un
+  fichier temporaire supprimé immédiatement après usage).
 - Écran isolé : nouvel onglet "🧊 Viewer 3D (TEST)" (tab 10, `ST(10)`, panel `#p10`,
   `companions.html`) — contexte WebGL créé/détruit à l'ouverture/fermeture de l'onglet
   (`initViewer3dIfNeeded()`/`disposeViewer3dIfActive()`, `companions.viewer3d.js`) plutôt que
