@@ -3,6 +3,39 @@
 Tout ce qui parle à Supabase : authentification, sauvegarde cloud, classement, détection de
 nouvelle version.
 
+**Verrou multi-session + mode hors ligne (2026-07-10, demande explicite : "Interdire multionglet,
+multi navigateur and multidevice" + "Mode hors ligne")** :
+- Un seul onglet/navigateur/appareil actif par compte. `mySessionId` (UUID généré une fois par
+  chargement de page, jamais persisté) est envoyé à `claim_player_session()` (RPC, appelée à la
+  connexion) — insère/écrase la ligne `player_sessions.session_id` de ce compte, la dernière
+  session à claim gagne. `checkPlayerSession()` (appelée à chaque `heartbeatPresence()`, 20s) lit
+  `check_player_session()` : si le `session_id` en base a changé, `sessionLocked = true` et
+  `#sessionLockOverlay` s'affiche (bloquant, bouton "Reprendre ici" rappelle `claimPlayerSession()`
+  pour reprendre la main depuis cet onglet). `advanceSim()` (`game-core.js`) et `saveToCloud()`
+  (ce fichier) sont gatés sur `sessionLocked` — la session évincée ne farm plus ET n'écrase jamais
+  la sauvegarde de la session active. Migration : `supabase/migrations/20260710075021_single_session_lock.sql`.
+- Mode hors ligne : `isOffline` (`navigator.onLine` + events `online`/`offline`) fait basculer
+  `saveToCloud()` sur `saveToLocalOfflineCache()` (localStorage, clé par `currentUser.id` via
+  `offlineSaveKey()`) plutôt que d'échouer silencieusement. `pendingOfflineSync` suit s'il reste une
+  sauvegarde locale à pousser ; `flushOfflineSaveIfNeeded()` la pousse au retour réseau (event
+  `online`). `loadCloudSave()` retombe aussi sur ce cache si la page charge déjà hors ligne (rejoue
+  une session déjà jouée en ligne au moins une fois sur cet appareil — ne couvre pas un tout premier
+  chargement jamais authentifié en ligne, hors périmètre). `#offlineBanner` (non bloquant) informe le
+  joueur. `checkPlayerSession()` ignore l'appel tant qu'`isOffline` est vrai — jamais de faux verrou
+  posé sur une simple coupure réseau (seul un vrai `data === false` renvoyé par le serveur verrouille).
+- **Bug corrigé (2026-07-10, trouvé par `tests/companions.spec.js`)** : `signInForTest()` fabrique
+  `currentUser` localement sans vraie session Supabase (voir ce fichier de test) — `auth.uid()`
+  était donc NULL côté serveur, faisant échouer `claim_player_session()` silencieusement puis
+  `check_player_session()` renvoyait `false` par sécurité, verrouillant à tort TOUTE l'UI de test
+  (`#sessionLockOverlay` intercepte tous les clics). Corrigé par `sessionClaimOk` : `checkPlayerSession()`
+  ne peut plus poser `sessionLocked=true` tant qu'un `claim_player_session()` n'a pas d'abord
+  réussi sans erreur. Test : `testCheckPlayerSessionRequiresSuccessfulClaimFirst` (`tests/tests.js`).
+- Politique de test : voir CLAUDE.md §11 "Politique tests en ligne + hors ligne" — tout nouveau test
+  réseau doit désormais couvrir les deux scénarios, rétroactivement aussi pour le code réseau déjà
+  existant. Tests : `testAdvanceSimSkipsAllEffectsWhenSessionLocked`,
+  `testOfflineCacheRoundTripsPerUserAndTracksPendingSync`, `testSaveToCloudGuardsSessionLockAndOffline`,
+  `testCheckPlayerSessionNeverLocksOnNetworkFailure` (`tests/tests.js`).
+
 - `game-supabase.js` — client Supabase, auth (email + Discord), chargement/sauvegarde de la
   partie, `syncPlayerStats()` (classement), `checkForUpdate()` (détecte une nouvelle version
   en fetchant `meta/patch-notes-data.js`), dictionnaire i18n (`I18N`). Charge après

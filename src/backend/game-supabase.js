@@ -7,6 +7,19 @@ const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 
 let sb = null, currentUser = null;
+// verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
+// and multidevice") -- identifiant unique généré UNE FOIS par chargement de page (jamais persisté
+// en localStorage : deux onglets du même navigateur doivent avoir 2 ID différents). sessionLocked
+// est lu par advanceSim() (game-core.js, gate le farm) et saveToCloud() (gate la sauvegarde, pour
+// qu'une session évincée n'écrase jamais la progression de la session active).
+let mySessionId = null;
+try { mySessionId = crypto.randomUUID(); } catch(e) { mySessionId = 'sess-' + Date.now() + '-' + Math.random().toString(36).slice(2); }
+let sessionLocked = false;
+// mode hors ligne (2026-07-10, demande explicite) -- navigator.onLine + events 'online'/'offline'
+// détectent la coupure réseau ; isOffline gate saveToCloud() vers le fallback localStorage
+// (saveToLocalOfflineCache) plutôt que de laisser échouer silencieusement l'upsert Supabase.
+let isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+let pendingOfflineSync = false;
 try {
   if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('TON-PROJET')) {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -355,6 +368,8 @@ async function onAuthedInner(user) {
   }
   showAuthOverlay(false);
   updateUserBar();
+  claimPlayerSession(); // fire-and-forget : cette session prend la main, évince toute autre session active
+  if (isOffline) showOfflineBanner();
   await refreshMyPseudo();
   refreshMyModStatus();
   refreshMyTesterStatus();
@@ -421,6 +436,20 @@ let tutorialAutoShown = false; // évite de relancer le tuto auto plusieurs fois
 async function loadCloudSave() {
   if (!sb || !currentUser) return;
   $a('saveStatus').textContent = 'Chargement...';
+  // hors ligne dès le chargement (2026-07-10) : si une sauvegarde locale existe (rechargement de
+  // page pendant une coupure réseau, après avoir déjà joué en ligne au moins une fois sur cet
+  // appareil), on la charge directement plutôt que d'attendre l'échec réseau du fetch Supabase.
+  if (isOffline) {
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(offlineSaveKey())); } catch(e) {}
+    if (cached && cached.save_data && Object.keys(cached.save_data).length) {
+      applySaveState(cached.save_data);
+      $a('saveStatus').textContent = '🔌 Sauvegarde locale chargée (hors ligne)';
+      showOfflineBanner();
+      saveReady = true;
+      return;
+    }
+  }
   const { data, error } = await sb.from('game_saves').select('save_data').eq('user_id', currentUser.id).single();
   if (data && data.save_data && Object.keys(data.save_data).length) {
     applySaveState(data.save_data);
@@ -447,12 +476,81 @@ async function loadCloudSave() {
   saveReady = true; // la vraie sauvegarde (ou l'absence confirmée de sauvegarde) est connue désormais
 }
 
-async function saveToCloud() {
+// ---------- mode hors ligne : fallback localStorage + resync au retour réseau ----------
+// clé par currentUser.id (2026-07-10) : évite qu'une sauvegarde offline d'un compte fuite vers un
+// autre compte sur un navigateur/appareil partagé.
+function offlineSaveKey() { return 'velia-idle-offline-save-' + (currentUser ? currentUser.id : ''); }
+function saveToLocalOfflineCache() {
+  if (!currentUser) return;
+  try { localStorage.setItem(offlineSaveKey(), JSON.stringify({ save_data: getSaveState(), savedAt: Date.now() })); } catch(e) {}
+  pendingOfflineSync = true;
+}
+function clearLocalOfflineCache() {
+  if (!currentUser) return;
+  try { localStorage.removeItem(offlineSaveKey()); } catch(e) {}
+}
+// pousse la dernière sauvegarde locale vers le cloud une fois le réseau revenu -- ne réécrit RIEN
+// si aucune sauvegarde offline n'était en attente (pendingOfflineSync reste false par défaut).
+async function flushOfflineSaveIfNeeded() {
+  if (!pendingOfflineSync || !sb || !currentUser) return;
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(offlineSaveKey())); } catch(e) {}
+  if (!cached || !cached.save_data) { pendingOfflineSync = false; return; }
+  const { error } = await sb.from('game_saves').upsert({ user_id: currentUser.id, save_data: cached.save_data });
+  if (!error) { pendingOfflineSync = false; clearLocalOfflineCache(); }
+}
+function showOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.remove('hidden'); }
+function hideOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.add('hidden'); }
+window.addEventListener('offline', () => { isOffline = true; showOfflineBanner(); });
+window.addEventListener('online', () => { isOffline = false; hideOfflineBanner(); flushOfflineSaveIfNeeded(); });
+
+// ---------- verrou multi-session : un seul onglet/navigateur/appareil actif par compte ----------
+function showSessionLockOverlay() { const el = $a('sessionLockOverlay'); if (el) el.classList.remove('hidden'); }
+function hideSessionLockOverlay() { const el = $a('sessionLockOverlay'); if (el) el.classList.add('hidden'); }
+// vrai seulement après un claim_player_session() réussi (pas d'erreur réseau/auth) -- garde le
+// verrou de checkPlayerSession() désarmé tant qu'on n'a pas nous-mêmes établi une vraie session
+// serveur. Sans ça, check_player_session() renvoie `false` par sécurité dès que auth.uid() est
+// NULL côté serveur (pas de vraie session Supabase active), et le client l'interprétait à tort
+// comme "évincé par une autre session" -- bug trouvé via testFait dans tests/companions.spec.js
+// (currentUser y est fabriqué localement, sans vrai JWT Supabase, voir signInForTest()).
+let sessionClaimOk = false;
+// prend la main sur ce compte (appelé à la connexion, et par le bouton "Reprendre ici" de
+// sessionLockOverlay) -- toute AUTRE session active sur ce compte se fera évincer à son prochain
+// checkPlayerSession() (20s max, même cadence que heartbeatPresence).
+async function claimPlayerSession() {
   if (!sb || !currentUser) return;
+  try {
+    const { error } = await sb.rpc('claim_player_session', { p_session_id: mySessionId });
+    sessionClaimOk = !error;
+  } catch(e) { sessionClaimOk = false; }
+  sessionLocked = false;
+  hideSessionLockOverlay();
+}
+// vérifie que CETTE session est toujours celle active côté serveur -- si une autre session a pris
+// le relais depuis (claim_player_session appelé ailleurs), passe en pause locale sans jamais
+// forcer de déconnexion (le joueur peut reprendre la main via le bouton, pas de perte de contexte).
+async function checkPlayerSession() {
+  if (!sb || !currentUser || isOffline || !sessionClaimOk) return; // pas de faux-positif pendant une coupure réseau, ou sans vrai claim préalable
+  try {
+    const { data, error } = await sb.rpc('check_player_session', { p_session_id: mySessionId });
+    if (error) return;
+    if (data === false && !sessionLocked) { sessionLocked = true; showSessionLockOverlay(); }
+    else if (data === true && sessionLocked) { sessionLocked = false; hideSessionLockOverlay(); }
+  } catch(e) {}
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = $a('sessionLockResumeBtn');
+  if (btn) btn.onclick = claimPlayerSession;
+});
+
+async function saveToCloud() {
+  if (!sb || !currentUser || sessionLocked) return; // une session évincée n'écrase jamais la sauvegarde de la session active
+  if (isOffline) { saveToLocalOfflineCache(); $a('saveStatus').textContent = '🔌 hors ligne (local)'; setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 2000); return; }
   const { error } = await sb.from('game_saves').upsert({ user_id: currentUser.id, save_data: getSaveState() });
-  $a('saveStatus').textContent = error ? '✗ échec sauvegarde' : '✓ sauvegardé';
+  if (error) { saveToLocalOfflineCache(); } else { pendingOfflineSync = false; clearLocalOfflineCache(); }
+  $a('saveStatus').textContent = error ? '✗ échec sauvegarde (local)' : '✓ sauvegardé';
   setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 2000);
-  syncPlayerStats();
+  if (!error) syncPlayerStats();
 }
 
 // ---------- classement : snapshot périodique des stats publiques dans player_stats ----------
@@ -794,6 +892,7 @@ setInterval(updateNextBossMini, 1000);
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
   try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+  checkPlayerSession(); // même cadence (20s, voir setInterval(heartbeatPresence,20000) plus bas)
 }
 // joueurs actuellement en ville (2026-07-16, demande explicite : "on peut voir la liste des
 // joueurs dans la ville a droite a la place du loot ticker") -- pseudos VISIBLES pour cette zone
@@ -1068,6 +1167,10 @@ $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignI
 // ============================================================
 // dictionnaire des textes statiques de l'UI (clé data-i18n → {fr, en})
 const I18N = {
+  sessionLockTitle: { fr:'Jeu en pause', en:'Game paused' },
+  sessionLockMsg: { fr:'Une autre session est active sur ce compte (autre onglet, navigateur ou appareil). Un seul endroit à la fois peut jouer.', en:'Another session is active on this account (another tab, browser or device). Only one place can play at a time.' },
+  sessionLockResume: { fr:'Reprendre ici', en:'Resume here' },
+  offlineBannerMsg: { fr:'Hors ligne — ta progression est sauvegardée localement, synchronisation dès le retour du réseau.', en:'Offline — your progress is saved locally, syncing as soon as the network is back.' },
   btnWiki: { fr:'📖 Wiki', en:'📖 Wiki' },
   btnNotifCenter: { fr:'🔔 Notifications', en:'🔔 Notifications' },
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },

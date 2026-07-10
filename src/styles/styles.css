@@ -904,6 +904,31 @@
     display:flex; align-items:center; justify-content:center; z-index:100;
   }
   #authOverlay.hidden { display:none; }
+  /* verrou multi-session (2026-07-10) -- z-index 150 : au-dessus de #authOverlay (100), sous
+     #tutorialOverlay (900, sans objet ici puisque plus rien ne se joue tant que verrouillé) */
+  #sessionLockOverlay {
+    position:fixed; inset:0; z-index:150; background:rgba(8,7,10,.92);
+    display:flex; align-items:center; justify-content:center;
+  }
+  #sessionLockOverlay.hidden { display:none; }
+  #sessionLockBox {
+    width:360px; max-width:92vw; background:var(--panel); border:1px solid var(--gold-dim);
+    padding:30px 26px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.7);
+  }
+  #sessionLockIcon { font-size:38px; margin-bottom:10px; }
+  #sessionLockBox h1 { font-size:18px; color:var(--gold); margin-bottom:10px; letter-spacing:1px; }
+  #sessionLockBox p { font-size:12.5px; color:var(--ink-dim); line-height:1.5; margin-bottom:18px; }
+  #sessionLockResumeBtn {
+    font-family:'Cinzel',serif; font-size:12px; padding:9px 18px; border-radius:4px;
+    border:1px solid var(--gold-dim); background:var(--gold); color:#1a1409; cursor:pointer;
+  }
+  /* bandeau hors ligne (2026-07-10) -- non bloquant, discret, en haut de l'écran */
+  #offlineBanner {
+    position:fixed; top:0; left:0; right:0; z-index:120; text-align:center;
+    background:#3a2408; border-bottom:1px solid #c0503c; color:#ffcf9e;
+    font-size:11px; padding:5px 10px;
+  }
+  #offlineBanner.hidden { display:none; }
   #authBox {
     position:relative; width:320px; max-width:92vw; background:var(--panel); border:1px solid var(--gold-dim);
     padding:28px 26px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.7);

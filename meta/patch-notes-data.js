@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V352', d:'20/07/2026 13:00', name:{fr:'Un seul appareil à la fois + mode hors ligne', en:'One device at a time + offline mode'}, fr:[
+      {t:'new', tx:'Ton compte ne peut plus jouer sur 2 onglets/navigateurs/appareils en même temps : la dernière connexion prend la main, les autres se mettent en pause avec un bouton pour reprendre.'},
+      {t:'new', tx:'Mode hors ligne : si ta connexion coupe en pleine partie, le jeu continue et ta progression est sauvegardée localement, puis synchronisée automatiquement dès que le réseau revient.'},
+    ], en:[
+      {t:'new', tx:'Your account can no longer play on 2 tabs/browsers/devices at the same time: the latest sign-in takes over, others pause with a button to resume.'},
+      {t:'new', tx:'Offline mode: if your connection drops mid-session, the game keeps going and your progress is saved locally, then synced automatically once the network is back.'},
+    ] },
   { v:'V351', d:'20/07/2026 12:00', name:{fr:'Compagnon : premier écran de test en 3D', en:'Companion: first 3D test screen'}, fr:[
       {t:'new', sub:'compagnon', tx:'Nouvel onglet "Viewer 3D (TEST)" dans le module Compagnon : premier essai de rendu 3D réel des familiers, un seul modèle chargé pour l\'instant, purement expérimental.'},
     ], en:[

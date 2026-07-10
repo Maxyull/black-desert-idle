@@ -1792,6 +1792,8 @@ function advanceSim(now) {
   const dt = Math.min(2, (now-last)/1000); last = now;
   if (dt <= 0) return;
   
+  if (typeof sessionLocked !== 'undefined' && sessionLocked) return;
+  
   if (bossState.active) return;
   
   if (!atVelia && packs.filter(p=>!p.dead).length < targetPackCount()) spawnPackNear();
@@ -7705,6 +7707,13 @@ const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
 
 let sb = null, currentUser = null;
+
+let mySessionId = null;
+try { mySessionId = crypto.randomUUID(); } catch(e) { mySessionId = 'sess-' + Date.now() + '-' + Math.random().toString(36).slice(2); }
+let sessionLocked = false;
+
+let isOffline = typeof navigator !== 'undefined' && navigator.onLine === false;
+let pendingOfflineSync = false;
 try {
   if (window.supabase && SUPABASE_URL.startsWith('https://') && !SUPABASE_URL.includes('TON-PROJET')) {
     sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -7986,6 +7995,8 @@ async function onAuthedInner(user) {
   }
   showAuthOverlay(false);
   updateUserBar();
+  claimPlayerSession(); 
+  if (isOffline) showOfflineBanner();
   await refreshMyPseudo();
   refreshMyModStatus();
   refreshMyTesterStatus();
@@ -8037,6 +8048,18 @@ let tutorialAutoShown = false;
 async function loadCloudSave() {
   if (!sb || !currentUser) return;
   $a('saveStatus').textContent = 'Chargement...';
+  
+  if (isOffline) {
+    let cached = null;
+    try { cached = JSON.parse(localStorage.getItem(offlineSaveKey())); } catch(e) {}
+    if (cached && cached.save_data && Object.keys(cached.save_data).length) {
+      applySaveState(cached.save_data);
+      $a('saveStatus').textContent = '🔌 Sauvegarde locale chargée (hors ligne)';
+      showOfflineBanner();
+      saveReady = true;
+      return;
+    }
+  }
   const { data, error } = await sb.from('game_saves').select('save_data').eq('user_id', currentUser.id).single();
   if (data && data.save_data && Object.keys(data.save_data).length) {
     applySaveState(data.save_data);
@@ -8057,12 +8080,67 @@ async function loadCloudSave() {
   saveReady = true; 
 }
 
-async function saveToCloud() {
+function offlineSaveKey() { return 'velia-idle-offline-save-' + (currentUser ? currentUser.id : ''); }
+function saveToLocalOfflineCache() {
+  if (!currentUser) return;
+  try { localStorage.setItem(offlineSaveKey(), JSON.stringify({ save_data: getSaveState(), savedAt: Date.now() })); } catch(e) {}
+  pendingOfflineSync = true;
+}
+function clearLocalOfflineCache() {
+  if (!currentUser) return;
+  try { localStorage.removeItem(offlineSaveKey()); } catch(e) {}
+}
+
+async function flushOfflineSaveIfNeeded() {
+  if (!pendingOfflineSync || !sb || !currentUser) return;
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem(offlineSaveKey())); } catch(e) {}
+  if (!cached || !cached.save_data) { pendingOfflineSync = false; return; }
+  const { error } = await sb.from('game_saves').upsert({ user_id: currentUser.id, save_data: cached.save_data });
+  if (!error) { pendingOfflineSync = false; clearLocalOfflineCache(); }
+}
+function showOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.remove('hidden'); }
+function hideOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.add('hidden'); }
+window.addEventListener('offline', () => { isOffline = true; showOfflineBanner(); });
+window.addEventListener('online', () => { isOffline = false; hideOfflineBanner(); flushOfflineSaveIfNeeded(); });
+
+function showSessionLockOverlay() { const el = $a('sessionLockOverlay'); if (el) el.classList.remove('hidden'); }
+function hideSessionLockOverlay() { const el = $a('sessionLockOverlay'); if (el) el.classList.add('hidden'); }
+
+let sessionClaimOk = false;
+
+async function claimPlayerSession() {
   if (!sb || !currentUser) return;
+  try {
+    const { error } = await sb.rpc('claim_player_session', { p_session_id: mySessionId });
+    sessionClaimOk = !error;
+  } catch(e) { sessionClaimOk = false; }
+  sessionLocked = false;
+  hideSessionLockOverlay();
+}
+
+async function checkPlayerSession() {
+  if (!sb || !currentUser || isOffline || !sessionClaimOk) return; 
+  try {
+    const { data, error } = await sb.rpc('check_player_session', { p_session_id: mySessionId });
+    if (error) return;
+    if (data === false && !sessionLocked) { sessionLocked = true; showSessionLockOverlay(); }
+    else if (data === true && sessionLocked) { sessionLocked = false; hideSessionLockOverlay(); }
+  } catch(e) {}
+}
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = $a('sessionLockResumeBtn');
+  if (btn) btn.onclick = claimPlayerSession;
+});
+
+async function saveToCloud() {
+  if (!sb || !currentUser || sessionLocked) return; 
+  if (isOffline) { saveToLocalOfflineCache(); $a('saveStatus').textContent = '🔌 hors ligne (local)'; setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 2000); return; }
   const { error } = await sb.from('game_saves').upsert({ user_id: currentUser.id, save_data: getSaveState() });
-  $a('saveStatus').textContent = error ? '✗ échec sauvegarde' : '✓ sauvegardé';
+  if (error) { saveToLocalOfflineCache(); } else { pendingOfflineSync = false; clearLocalOfflineCache(); }
+  $a('saveStatus').textContent = error ? '✗ échec sauvegarde (local)' : '✓ sauvegardé';
   setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 2000);
-  syncPlayerStats();
+  if (!error) syncPlayerStats();
 }
 
 async function syncPlayerStats() {
@@ -8351,6 +8429,7 @@ setInterval(updateNextBossMini, 1000);
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
   try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
+  checkPlayerSession(); 
 }
 
 async function refreshVeliaPlayers() {
@@ -8596,6 +8675,10 @@ $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignI
 })();
 
 const I18N = {
+  sessionLockTitle: { fr:'Jeu en pause', en:'Game paused' },
+  sessionLockMsg: { fr:'Une autre session est active sur ce compte (autre onglet, navigateur ou appareil). Un seul endroit à la fois peut jouer.', en:'Another session is active on this account (another tab, browser or device). Only one place can play at a time.' },
+  sessionLockResume: { fr:'Reprendre ici', en:'Resume here' },
+  offlineBannerMsg: { fr:'Hors ligne — ta progression est sauvegardée localement, synchronisation dès le retour du réseau.', en:'Offline — your progress is saved locally, syncing as soon as the network is back.' },
   btnWiki: { fr:'📖 Wiki', en:'📖 Wiki' },
   btnNotifCenter: { fr:'🔔 Notifications', en:'🔔 Notifications' },
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },

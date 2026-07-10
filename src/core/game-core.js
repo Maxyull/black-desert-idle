@@ -1733,6 +1733,12 @@ let last = performance.now();
 function advanceSim(now) {
   const dt = Math.min(2, (now-last)/1000); last = now;
   if (dt <= 0) return;
+  // verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
+  // and multidevice") -- sessionLocked posé par checkPlayerSession() (game-supabase.js) dès qu'une
+  // AUTRE session a pris le relais sur ce compte. Bloque ICI (avant tout effet de bord : spawn,
+  // fsm, drops...) plutôt qu'au niveau du rAF/setInterval qui l'appellent, pour couvrir les deux
+  // chemins d'un coup (onglet visible ET filet de secours en arrière-plan, voir plus bas).
+  if (typeof sessionLocked !== 'undefined' && sessionLocked) return;
   // pendant un combat de boss (plein écran), on met le farm en pause : la salle de boss couvre
   // tout l'écran, inutile de continuer à simuler la zone de farm derrière
   if (bossState.active) return;

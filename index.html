@@ -18,10 +18,28 @@
   integrity="sha256-2Unxw2h67a3O2shSYYZfKbF80nOZfn9rK/xTsvnUxN0=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"
   integrity="sha256-NfT5dPSyvNRNpzljNH+JUuNB+DkJ5EmCJ9Tia5j2bw0=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=501">
+<link rel="stylesheet" href="src/styles/styles.css?v=502">
 </head>
 <body>
 
+<!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
+     and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
+     rythme que heartbeatPresence, 20s) détecte qu'une AUTRE session a pris le relais sur ce compte.
+     Bloque tout (position:fixed, z-index au-dessus de #authOverlay) sans fermer la session : le
+     bouton permet de reprendre la main depuis CET onglet si le joueur le souhaite. -->
+<!-- mode hors ligne (2026-07-10, demande explicite) -- bandeau discret, jamais bloquant
+     (contrairement à sessionLockOverlay) : le joueur continue de jouer normalement pendant une
+     coupure réseau (save locale, voir saveToLocalOfflineCache(), game-supabase.js), synchronisée
+     dès le retour en ligne. -->
+<div id="offlineBanner" class="hidden">🔌 <span data-i18n="offlineBannerMsg">Hors ligne — ta progression est sauvegardée localement, synchronisation dès le retour du réseau.</span></div>
+<div id="sessionLockOverlay" class="hidden">
+  <div id="sessionLockBox">
+    <div id="sessionLockIcon">⏸️</div>
+    <h1 data-i18n="sessionLockTitle">Jeu en pause</h1>
+    <p data-i18n="sessionLockMsg">Une autre session est active sur ce compte (autre onglet, navigateur ou appareil). Un seul endroit à la fois peut jouer.</p>
+    <button id="sessionLockResumeBtn" data-i18n="sessionLockResume">Reprendre ici</button>
+  </div>
+</div>
 <div id="authOverlay" class="hidden">
   <div id="authBox">
     <button id="closeAuth">✕</button>
@@ -652,11 +670,11 @@
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- module autonome, DOIT charger EN PREMIER : GEAR_TIERS
      (world/gear-tiers-data.js) lit ICO_MAT_* immédiatement au chargement -->
-<script src="meta/patch-notes-data.js?v=501"></script>
+<script src="meta/patch-notes-data.js?v=502"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=501"></script>
+<script src="build/source.min.js?v=502"></script>
 <!-- données pures ZONES[] -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers) --
      DOIT charger AVANT game-core.js : resetWorld() (appelé au top-level de game-core.js) lit ZONES
      dès le premier chargement du script -->

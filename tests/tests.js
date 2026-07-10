@@ -2729,6 +2729,98 @@
     target = s.target; packs = s.packs; buffTimer = s.buffTimer;
   }
 
+  // Verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
+  // and multidevice") -- advanceSim() (game-core.js) doit ignorer TOUT effet de bord (spawn, fsm,
+  // caméra...) tant que sessionLocked est vrai (posé par checkPlayerSession(), game-supabase.js,
+  // dès qu'une AUTRE session a pris le relais sur ce compte). Test dynamique via le mouvement de
+  // caméra (cam.x suit P.x avec un lerp) plutôt que le spawn de packs (dépendrait de
+  // targetPackCount()/zoneIdx, plus fragile).
+  function testAdvanceSimSkipsAllEffectsWhenSessionLocked() {
+    if (typeof advanceSim !== 'function' || typeof sessionLocked === 'undefined') return;
+    const savedLocked = sessionLocked, savedCamX = cam.x, savedPx = P.x, savedLast = last;
+    try {
+      P.x = 500; cam.x = 0; sessionLocked = true;
+      advanceSim(performance.now() + 50);
+      assert('advanceSim() ne bouge pas la caméra tant que sessionLocked est vrai (verrou multi-session)', cam.x === 0, `cam.x=${cam.x}`);
+      sessionLocked = false;
+      advanceSim(performance.now() + 150);
+      assert('advanceSim() reprend normalement une fois sessionLocked repassé à false', cam.x > 0, `cam.x=${cam.x}`);
+    } finally {
+      sessionLocked = savedLocked; cam.x = savedCamX; P.x = savedPx; last = savedLast;
+    }
+  }
+
+  // Mode hors ligne (2026-07-10, demande explicite) : saveToLocalOfflineCache()/
+  // clearLocalOfflineCache() doivent utiliser une clé PAR COMPTE (offlineSaveKey(), basée sur
+  // currentUser.id) -- sinon une sauvegarde offline d'un compte fuiterait vers un autre compte sur
+  // un navigateur/appareil partagé. Vérifie aussi que pendingOfflineSync (lu par
+  // flushOfflineSaveIfNeeded() au retour réseau) suit bien l'état réel du cache.
+  function testOfflineCacheRoundTripsPerUserAndTracksPendingSync() {
+    if (typeof saveToLocalOfflineCache !== 'function' || typeof offlineSaveKey !== 'function') return;
+    const savedUser = currentUser, savedPending = pendingOfflineSync;
+    currentUser = { id: 'test-offline-user-regression' };
+    const key = offlineSaveKey();
+    let savedRaw = null;
+    try { savedRaw = localStorage.getItem(key); } catch(e) {}
+    try {
+      try { localStorage.removeItem(key); } catch(e) {}
+      pendingOfflineSync = false;
+      saveToLocalOfflineCache();
+      let raw = null;
+      try { raw = localStorage.getItem(key); } catch(e) {}
+      assert('saveToLocalOfflineCache() écrit une entrée localStorage propre à currentUser.id', !!raw, `raw=${raw}`);
+      const parsed = raw ? JSON.parse(raw) : null;
+      assert('La sauvegarde locale contient bien save_data', !!(parsed && parsed.save_data));
+      assert('pendingOfflineSync passe à true après une sauvegarde offline', pendingOfflineSync === true);
+      clearLocalOfflineCache();
+      let raw2 = 'not-null';
+      try { raw2 = localStorage.getItem(key); } catch(e) {}
+      assert('clearLocalOfflineCache() supprime l\'entrée du compte courant uniquement', raw2 === null, `raw2=${raw2}`);
+    } finally {
+      currentUser = savedUser; pendingOfflineSync = savedPending;
+      try {
+        if (savedRaw === null) localStorage.removeItem(key); else localStorage.setItem(key, savedRaw);
+      } catch(e) {}
+    }
+  }
+
+  // Garde-fous statiques (2026-07-10) : saveToCloud() ne doit JAMAIS écraser la sauvegarde cloud
+  // depuis une session évincée (sessionLocked), et doit retomber sur le cache local dès que la
+  // coupure réseau est détectée (isOffline) -- même famille de garde-fou statique que
+  // testMarketTutorialTargetsMarketHeadNotFullPanel (inspection du code source plutôt qu'un appel
+  // réseau réel dans la suite de tests).
+  function testSaveToCloudGuardsSessionLockAndOffline() {
+    if (typeof saveToCloud !== 'function') return;
+    const src = saveToCloud.toString();
+    assert('saveToCloud() retourne immédiatement si sessionLocked est vrai (jamais d\'écrasement par une session évincée)',
+      src.includes('sessionLocked'), `src=${src.slice(0,200)}`);
+    assert('saveToCloud() bascule sur le cache local (saveToLocalOfflineCache) si isOffline est vrai',
+      src.includes('isOffline') && src.includes('saveToLocalOfflineCache'));
+  }
+  // checkPlayerSession() ne doit JAMAIS verrouiller la session sur un simple échec réseau (offline
+  // ou RPC en erreur) -- seul un vrai `data === false` renvoyé par le serveur doit déclencher
+  // sessionLocked=true, sinon un joueur perdrait l'accès à son propre jeu à chaque coupure réseau.
+  // Bug trouvé le 2026-07-10 (tests/companions.spec.js) : un currentUser fabriqué localement sans
+  // vrai JWT Supabase (signInForTest()) faisait échouer claim_player_session() côté serveur
+  // (auth.uid() NULL) -- check_player_session() renvoyait alors `false` par sécurité, que le
+  // client interprétait à tort comme "évincé par une autre session", verrouillant l'UI entière
+  // (#sessionLockOverlay intercepte tous les clics). checkPlayerSession() ne doit JAMAIS pouvoir
+  // poser sessionLocked=true tant qu'un claim_player_session() n'a pas d'abord réussi.
+  function testCheckPlayerSessionRequiresSuccessfulClaimFirst() {
+    if (typeof checkPlayerSession !== 'function') return;
+    const src = checkPlayerSession.toString();
+    assert('checkPlayerSession() ne fait rien tant que sessionClaimOk n\'est pas vrai (pas de faux verrou sans claim réussi au préalable)',
+      src.includes('sessionClaimOk'), `src=${src.slice(0,200)}`);
+  }
+  function testCheckPlayerSessionNeverLocksOnNetworkFailure() {
+    if (typeof checkPlayerSession !== 'function') return;
+    const src = checkPlayerSession.toString();
+    assert('checkPlayerSession() ignore l\'appel tant que isOffline est vrai (pas de faux-positif de verrouillage)',
+      src.includes('isOffline'), `src=${src.slice(0,200)}`);
+    assert('checkPlayerSession() ne pose sessionLocked=true que sur data===false explicite (jamais sur error)',
+      /if\s*\(error\)\s*return/.test(src) && src.includes('data === false'));
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -2876,6 +2968,11 @@
     testActionTutorialsRegisteredWithEmptyItemNames();
     testMaybeQueueTutorialByIdWorksForManualTrigger();
     testOnboardingTrackingNeverThrowsWithoutTrackId();
+    testAdvanceSimSkipsAllEffectsWhenSessionLocked();
+    testOfflineCacheRoundTripsPerUserAndTracksPendingSync();
+    testSaveToCloudGuardsSessionLockAndOffline();
+    testCheckPlayerSessionNeverLocksOnNetworkFailure();
+    testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
