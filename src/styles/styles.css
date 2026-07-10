@@ -1965,15 +1965,20 @@
     display:flex; align-items:center; gap:12px; margin-bottom:8px; padding:7px 10px;
     background:var(--panel); border:1px solid #2c2a31; border-bottom:1px solid var(--gold-dim);
   }
-  /* liste de pages dans le header : Zone / Boss / Compagnon / Vie en mer / activités verrouillées */
-  #activityTabs { display:flex; flex-wrap:wrap; gap:5px; flex:1; }
+  /* liste de pages dans le header : Zone / Boss / Compagnon / Vie en mer / activités verrouillées --
+     2026-07-10 (demande explicite : "tout dois tenir sur la meme ligne") -- ne wrap plus jamais sur
+     une 2e/3e ligne (nowrap) ; s'il manque quelques px sur un écran étroit, la barre défile
+     horizontalement (overflow-x:auto) plutôt que de casser sur plusieurs lignes. */
+  #activityTabs { display:flex; flex-wrap:nowrap; gap:4px; flex:1; overflow-x:auto; overflow-y:hidden; }
+  #activityTabs::-webkit-scrollbar { height:4px; }
+  #activityTabs::-webkit-scrollbar-thumb { background:#3a3742; }
   /* cadenas EN BADGE sur le cadre (bordure) de la ligne du bas du bouton (2026-07-08, demande
      explicite : "Cadenas dans le header sur le cadre de la ligne du bas") -- même convention que
      .zoneTierLock (badge rond, fond/bordure, à cheval sur le cadre), mais en BAS plutôt qu'en haut
      -- pas un 🔒 collé en texte après le nom (ancienne version), ni une simple 2e ligne interne
      (version intermédiaire), mais un vrai badge qui chevauche la bordure inférieure du bouton. */
   .actTab {
-    position:relative; width:auto; margin:0; padding:5px 11px 9px; font-size:11.5px; font-weight:bold;
+    position:relative; width:auto; flex-shrink:0; margin:0; padding:5px 7px 9px; font-size:11.5px; font-weight:bold;
     background:transparent; border:1px solid #3a3742; overflow:visible;
   }
   .actTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }

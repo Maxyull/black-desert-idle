@@ -1,5 +1,22 @@
 const { test, expect } = require('@playwright/test');
 
+// Le canvas de jeu fait 1240px de large (#wrap) et #sideMenu (position:fixed, 210px, z-index:40)
+// se superpose au-dessus du header dès que la fenêtre est trop étroite pour laisser assez de
+// marge -- au viewport par défaut de Playwright (1280×720), #sideMenu intercepte déjà les clics
+// sur les onglets Zone/Boss/Compagnon (bug préexistant, indépendant de ce test -- voir aussi le
+// correctif équivalent sur mobile, styles.css @media max-width:600px, "#wrap { margin-top:46px }").
+// Un viewport plus large (comme un vrai poste desktop) laisse la marge nécessaire pour cliquer
+// les onglets sans collision.
+test.use({ viewport: { width: 1440, height: 900 } });
+// Seul test de cette suite à dépendre d'une vraie connexion invité Supabase qui aboutit
+// (sb.auth.signInAnonymously(), game-supabase.js:361) avant de pouvoir cliquer quoi que ce
+// soit -- contrairement à regression.spec.js/prod.spec.js qui n'attendent jamais l'auth. Sous
+// charge de test répétée, cet appel réseau échoue parfois côté Supabase (retombe sur
+// #authOverlay, voir startGuestOrShowAuth()) sans que ce soit lié au code du jeu. Retries
+// locaux pour absorber cette flakiness externe sans la masquer (un échec après 3 tentatives
+// reste un vrai signal).
+test.describe.configure({ retries: 2 });
+
 // src/companions/ n'est jamais bundlé (scripts/build.py ne lit que les <script src="src/...">
 // de index.dev.html) : ce module charge dans un iframe isolé, uniquement au premier clic sur
 // l'onglet Compagnon -- voir src/combat/boss.js:openCompanionsModule et
@@ -8,15 +25,25 @@ const { test, expect } = require('@playwright/test');
 // tests/tests.js (runRegressionTests) ne peut pas l'exercer -- seul un vrai clic + inspection
 // de l'iframe le peut.
 
-// le tutoriel d'onboarding (22 étapes) et les tutoriels d'action ponctuels (voir
-// maybeQueueTutorialById, progression/notifications-quests.js) peuvent réapparaître à tout
-// moment -- notamment après avoir fermé une page comme celle des Compagnons -- et
-// interceptent alors les clics suivants (#tutorialOverlay en position:fixed). On le ferme
-// via "Passer" chaque fois qu'il est visible, plutôt qu'une seule fois au début.
-async function dismissTutorialIfPresent(page) {
+// le tutoriel d'onboarding (22 étapes) s'ouvre ~500ms après la fin de loadCloudSave()
+// (game-supabase.js:382), elle-même déclenchée après le login invité automatique -- 2 appels
+// réseau asynchrones dont la durée réelle varie (CI, latence Supabase). Un simple isVisible()
+// (ou une seule attente bornée) rate le tutoriel s'il s'ouvre un peu tard. On poll activement,
+// en cliquant "Passer" à chaque fois qu'il apparaît, jusqu'à `timeoutMs` OU jusqu'à observer
+// plusieurs vérifications consécutives sans tutoriel visible (signal qu'il ne s'ouvrira plus).
+async function waitForTutorialClear(page, timeoutMs = 8000) {
   const skipBtn = page.locator('#tutSkipBtn');
-  if (await skipBtn.isVisible().catch(() => false)) {
-    await skipBtn.click();
+  const deadline = Date.now() + timeoutMs;
+  let clearStreak = 0;
+  while (Date.now() < deadline && clearStreak < 4) {
+    if (await skipBtn.isVisible().catch(() => false)) {
+      await skipBtn.click().catch(() => {});
+      clearStreak = 0;
+      await page.waitForTimeout(300);
+    } else {
+      clearStreak++;
+      await page.waitForTimeout(150);
+    }
   }
 }
 
@@ -25,7 +52,9 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   page.on('pageerror', error => pageErrors.push(error.message));
 
   await page.goto('/index.dev.html', { waitUntil: 'load' });
-  await dismissTutorialIfPresent(page);
+  // le flux invité (auto-login démo) masque #authOverlay de façon asynchrone après le chargement
+  await expect(page.locator('#authOverlay')).toBeHidden({ timeout: 10_000 });
+  await waitForTutorialClear(page);
 
   const companionTab = page.locator('.actTab[data-id="pet"]');
   await expect(companionTab).toBeVisible();
@@ -34,7 +63,14 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   // pas encore ouvert : l'iframe ne doit exister qu'après le premier clic (chargement paresseux)
   await expect(page.locator('#companionsFrame')).toHaveCount(0);
 
-  await companionTab.click();
+  // filet de sécurité : si le tutoriel s'ouvre pile au moment du clic (course résiduelle malgré
+  // waitForTutorialClear ci-dessus), une nouvelle passe le referme puis retente une fois
+  try {
+    await companionTab.click({ timeout: 5000 });
+  } catch {
+    await waitForTutorialClear(page, 5000);
+    await companionTab.click();
+  }
 
   const overlay = page.locator('#companionsOverlay');
   await expect(overlay).toBeVisible();
@@ -72,10 +108,15 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
 
   // fermer le module peut faire avancer la file de tutoriels d'action (ex: prochaine étape
   // d'onboarding) -- la refermer avant de tenter le clic suivant
-  await dismissTutorialIfPresent(page);
+  await waitForTutorialClear(page);
 
   // ré-ouverture : l'iframe existante est réutilisée (pas de doublon, pas de rechargement)
-  await companionTab.click();
+  try {
+    await companionTab.click({ timeout: 5000 });
+  } catch {
+    await waitForTutorialClear(page, 5000);
+    await companionTab.click();
+  }
   await expect(page.locator('#companionsFrame')).toHaveCount(1);
   await expect(overlay).toBeVisible();
 

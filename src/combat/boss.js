@@ -159,13 +159,14 @@ function updateNextBossMini() {
 const ACTIVITY_TABS = [
   { id:'zone', icon:'⚔️', name:{fr:'Zone',en:'Zone'},       locked:false },
   { id:'boss', icon:'🐍', name:{fr:'Boss',en:'Boss'},       locked:false },
+  // Compagnon juste après Boss (2026-07-10, demande explicite : "compagnon a droite de boss")
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false },
   { id:'fish', icon:'🎣', name:{fr:'Pêche',en:'Fishing'},   locked:true },
   { id:'mine', icon:'⛏️', name:{fr:'Mine',en:'Mining'},     locked:true },
   { id:'forest', icon:'🌲', name:{fr:'Forêt',en:'Forest'},  locked:true },
   { id:'field', icon:'🌾', name:{fr:'Champs',en:'Fields'},  locked:true },
   { id:'ranch', icon:'🐑', name:{fr:'Bergerie',en:'Ranch'}, locked:true },
   { id:'workshop', icon:'🏛️', name:{fr:'Atelier royal',en:'Royal Workshop'}, locked:true },
-  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false },
   { id:'sea', icon:'🌊', name:{fr:'Vie en mer',en:'Sea life'}, locked:true },
 ];
 let currentActivity = 'zone';
