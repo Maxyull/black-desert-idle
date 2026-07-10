@@ -25,24 +25,38 @@ test.describe.configure({ retries: 2 });
 // tests/tests.js (runRegressionTests) ne peut pas l'exercer -- seul un vrai clic + inspection
 // de l'iframe le peut.
 
-// le tutoriel d'onboarding (22 étapes) s'ouvre ~500ms après la fin de loadCloudSave()
-// (game-supabase.js:382), elle-même déclenchée après le login invité automatique -- 2 appels
-// réseau asynchrones dont la durée réelle varie (CI, latence Supabase). Un simple isVisible()
-// (ou une seule attente bornée) rate le tutoriel s'il s'ouvre un peu tard. On poll activement,
-// en cliquant "Passer" à chaque fois qu'il apparaît, jusqu'à `timeoutMs` OU jusqu'à observer
-// plusieurs vérifications consécutives sans tutoriel visible (signal qu'il ne s'ouvrira plus).
-async function waitForTutorialClear(page, timeoutMs = 8000) {
+// le tutoriel d'onboarding (22 étapes) et les tutoriels d'action ponctuels (voir
+// maybeQueueTutorialById, progression/notifications-quests.js) peuvent réapparaître à tout
+// moment -- notamment après avoir fermé une page comme celle des Compagnons -- et
+// interceptent alors les clics suivants (#tutorialOverlay en position:fixed). On le ferme
+// via "Passer" chaque fois qu'il est visible, plutôt qu'une seule fois au début.
+async function dismissTutorialIfPresent(page) {
   const skipBtn = page.locator('#tutSkipBtn');
-  const deadline = Date.now() + timeoutMs;
-  let clearStreak = 0;
-  while (Date.now() < deadline && clearStreak < 4) {
-    if (await skipBtn.isVisible().catch(() => false)) {
-      await skipBtn.click().catch(() => {});
-      clearStreak = 0;
-      await page.waitForTimeout(300);
-    } else {
-      clearStreak++;
-      await page.waitForTimeout(150);
+  if (await skipBtn.isVisible().catch(() => false)) {
+    await skipBtn.click();
+  }
+}
+
+// l'auto-connexion invité/démo (#authOverlay) fait un vrai aller-retour réseau (Supabase) avant de
+// se fermer -- délai variable et parfois > 5s (timeout par défaut de expect()) selon la charge du
+// projet Supabase. 20s laisse une vraie marge sans pour autant masquer un blocage réel (le timeout
+// global du test, 60s, reste le vrai filet de sécurité).
+async function waitForAuthOverlayClosed(page) {
+  await expect(page.locator('#authOverlay')).toHaveClass(/hidden/, { timeout: 30000 });
+}
+
+// clique en tolérant qu'un tutoriel (onboarding, ou un tutoriel d'objet/action déclenché par le
+// jeu qui continue de tourner en arrière-plan pendant les assertions précédentes -- ex: le
+// tutoriel "trash de zone", voir ITEM_TUTORIALS, progression/notifications-quests.js) rouvre
+// #tutorialOverlay juste avant le clic -- retente en le fermant à nouveau plutôt qu'un seul essai.
+async function dismissTutorialsAndClick(page, locator, attempts = 5) {
+  for (let i = 0; i < attempts; i++) {
+    await dismissTutorialIfPresent(page);
+    try {
+      await locator.click({ timeout: 8000 });
+      return;
+    } catch (e) {
+      if (i === attempts - 1) throw e;
     }
   }
 }
@@ -52,9 +66,8 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   page.on('pageerror', error => pageErrors.push(error.message));
 
   await page.goto('/index.dev.html', { waitUntil: 'load' });
-  // le flux invité (auto-login démo) masque #authOverlay de façon asynchrone après le chargement
-  await expect(page.locator('#authOverlay')).toBeHidden({ timeout: 10_000 });
-  await waitForTutorialClear(page);
+  await waitForAuthOverlayClosed(page);
+  await dismissTutorialIfPresent(page);
 
   const companionTab = page.locator('.actTab[data-id="pet"]');
   await expect(companionTab).toBeVisible();
@@ -63,14 +76,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   // pas encore ouvert : l'iframe ne doit exister qu'après le premier clic (chargement paresseux)
   await expect(page.locator('#companionsFrame')).toHaveCount(0);
 
-  // filet de sécurité : si le tutoriel s'ouvre pile au moment du clic (course résiduelle malgré
-  // waitForTutorialClear ci-dessus), une nouvelle passe le referme puis retente une fois
-  try {
-    await companionTab.click({ timeout: 5000 });
-  } catch {
-    await waitForTutorialClear(page, 5000);
-    await companionTab.click();
-  }
+  await dismissTutorialsAndClick(page, companionTab);
 
   const overlay = page.locator('#companionsOverlay');
   await expect(overlay).toBeVisible();
@@ -121,17 +127,64 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
 
   // fermer le module peut faire avancer la file de tutoriels d'action (ex: prochaine étape
   // d'onboarding) -- la refermer avant de tenter le clic suivant
-  await waitForTutorialClear(page);
+  await dismissTutorialIfPresent(page);
 
   // ré-ouverture : l'iframe existante est réutilisée (pas de doublon, pas de rechargement)
-  try {
-    await companionTab.click({ timeout: 5000 });
-  } catch {
-    await waitForTutorialClear(page, 5000);
-    await companionTab.click();
-  }
+  await dismissTutorialsAndClick(page, companionTab);
   await expect(page.locator('#companionsFrame')).toHaveCount(1);
   await expect(overlay).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});
+
+// migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
+// monde") -- une sauvegarde antérieure au passage du roster de départ à 0 pet (companions.roster.js,
+// 2026-07-10) n'a jamais son flag petsRosterResetV1 : simule ce cas en injectant directement une
+// sauvegarde localStorage AVANT le premier chargement (localStorage est partagé entre la page hôte
+// et l'iframe, même origine -- voir companions.save.js).
+test('retroactive migration clears a pre-existing roster and never repeats', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.addInitScript(() => {
+    localStorage.setItem('velia_idle_pets_save', JSON.stringify({
+      PETS: [{ id: 1 }, { id: 2 }, { id: 3 }], SILVER: 12345, INVENTORY: {}, incubSlots: [],
+      eggTimer: 0, petId: 4, hatchCountSincePity: 0, fusionCount: 2, caphrasUpgradeCount: 0,
+      bossItemFound: false, breakthroughCount: 0, totalHatched: 3, eggTypesUsed: [],
+      completedAchievements: [], pityEverTriggered: false, loginStreak: 1, lastLoginDate: null,
+      savedAt: Date.now(),
+      // pas de petsRosterResetV1 -- exactement l'état d'une sauvegarde jamais migrée
+    }));
+  });
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await waitForAuthOverlayClosed(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Velia Idle');
+  // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (companions.roster.js) -- ne prouve
+  // pas à lui seul que loadGame()/la migration ont fini de tourner, donc pas fiable comme seule
+  // condition d'attente. On poll directement petsRosterResetV1 (posé synchroneement à la toute fin
+  // de loadGame(), voir companions.save.js) jusqu'à ce qu'il devienne true.
+  await expect.poll(() => frame.locator('body').evaluate(() => petsRosterResetV1)).toBe(true);
+  const afterMigration = await frame.locator('body').evaluate(() => ({
+    petsLen: PETS.length, flag: petsRosterResetV1, silverKept: SILVER, fusionKept: fusionCount,
+  }));
+  expect(afterMigration.petsLen).toBe(0);
+  expect(afterMigration.flag).toBe(true);
+  // >= et non === : checkDailyStreak() (appelé juste après la migration dans loadGame()) peut
+  // accorder un bonus de connexion sur ce même chargement (lastLoginDate:null dans la fixture) --
+  // ce qui compte ici est que le silver n'a pas été REMIS À ZÉRO par la migration, pas sa valeur exacte.
+  expect(afterMigration.silverKept).toBeGreaterThanOrEqual(12345);
+  expect(afterMigration.fusionKept).toBe(2);
+
+  // la migration a persisté (saveGame() appelé immédiatement dans loadGame()) -- lire directement
+  // localStorage confirme que le flag est bien écrit, pas seulement en mémoire
+  const persisted = await frame.locator('body').evaluate(() =>
+    JSON.parse(localStorage.getItem('velia_idle_pets_save')));
+  expect(persisted.petsRosterResetV1).toBe(true);
+  expect(persisted.PETS).toEqual([]);
 
   expect(pageErrors).toEqual([]);
 });
