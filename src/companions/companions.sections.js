@@ -53,7 +53,9 @@ function renderSecDetail(){
   const terrainHtml=tp?`
     <div class="terrain-slot occ" style="--pcard-color:${rc(tp.rar)}">
       <div class="pcard-art">
-        <canvas id="ts-cv" width="140" height="140" style="width:140px;height:140px;image-rendering:pixelated"></canvas>
+        ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(tp)
+          ?`<div id="ts-cv3d-anchor" style="width:140px;height:140px"></div>`
+          :`<canvas id="ts-cv" width="140" height="140" style="width:140px;height:140px;image-rendering:pixelated"></canvas>`}
         <span style="position:absolute;top:8px;left:8px;font-family:'Cinzel',serif;font-size:10px;color:var(--gold);background:rgba(0,0,0,.5);border-radius:4px;padding:1px 6px">T${tp.tier||1}</span>
         <span class="gs-badge ${gsCls(gsPct(tp))}" style="position:absolute;top:8px;right:8px">GS ${normGS(tp)}</span>
       </div>
@@ -149,6 +151,45 @@ function renderSecDetail(){
 
   if(tp){setTimeout(()=>{const cv=document.getElementById('ts-cv');if(cv)drawPixelArt(cv,tp.cat.art,140,rc(tp.rar),tp.tier||1);},30);}
   reserves.forEach(p=>{setTimeout(()=>{const cv=document.getElementById('rv'+p.id);if(cv)drawPixelArt(cv,p.cat.art,18,null,p.tier||1);},30);});
+  updateTerrainViewer3d(tp);
+}
+
+// carte terrain en 3D (2026-07-10, demande explicite : les 2 premières idées listées -- "carte
+// terrain en 3D" pour les 12 espèces modélisées) -- remplace le pixel art de la grande carte
+// "Pokémon" par le modèle GLB en rotation quand le pet déployé en a un (companionModelUrlFor).
+// ATTENTION perf/leak : companions.ticks.js appelle renderSecDetail() CHAQUE SECONDE tant que cet
+// onglet est ouvert (voir tickHunger) -- créer un nouveau contexte WebGL à chaque appel aurait
+// reproduit exactement le bug de fuite déjà corrigé pour la modale 3D (2026-07-20, "je ne vois pas
+// mes model que le premier"). Le viewer est donc mis en cache par (id pet + tier) et son `wrap`
+// (contenant le <canvas> WebGL déjà initialisé) est simplement RÉ-ATTACHÉ dans le nouvel ancrage
+// généré par innerHTML, jamais recréé tant que le pet affiché ne change pas.
+let terrainViewer3dState = null; // { key, wrap, viewer }
+function disposeTerrainViewer3dIfActive(){
+  if(!terrainViewer3dState) return;
+  terrainViewer3dState.viewer.dispose();
+  terrainViewer3dState = null;
+}
+function updateTerrainViewer3d(tp){
+  const modelUrl = tp && typeof companionModelUrlFor==='function' ? companionModelUrlFor(tp) : null;
+  if(!modelUrl){ disposeTerrainViewer3dIfActive(); return; }
+  const key = tp.id+'_'+tp.tier;
+  const anchor = document.getElementById('ts-cv3d-anchor');
+  if(!anchor) return; // ce pet/section n'est plus affiché (re-render entre-temps) -- rien à faire
+  if(terrainViewer3dState && terrainViewer3dState.key===key){
+    anchor.appendChild(terrainViewer3dState.wrap); // même pet/tier : réutilise le contexte WebGL déjà chargé
+    return;
+  }
+  disposeTerrainViewer3dIfActive();
+  const mount = () => {
+    const wrap = document.createElement('div');
+    wrap.style.width='140px'; wrap.style.height='140px';
+    anchor.appendChild(wrap);
+    const viewer = createThreeViewer(wrap, () => {});
+    viewer.loadModel(modelUrl);
+    terrainViewer3dState = { key, wrap, viewer };
+  };
+  if(typeof window.THREE==='undefined') window.addEventListener('three-ready', mount, { once:true });
+  else mount();
 }
 
 function deployPet(id){

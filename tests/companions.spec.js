@@ -622,6 +622,84 @@ test('incubation slot purchases are capped at 8, both server-side (silver never 
   expect(result.lockedPlaceholder).toBeGreaterThan(0); // le "+" est remplacé par un état figé
 });
 
+// carte terrain en 3D (2026-07-10, demande explicite) -- pour les espèces avec un modèle GLB,
+// updateTerrainViewer3d() doit RÉUTILISER le contexte WebGL déjà créé sur un re-render du même pet
+// (companions.ticks.js appelle renderSecDetail() chaque seconde tant que l'onglet Sections est
+// ouvert -- recréer le contexte à chaque tick reproduirait le bug de fuite déjà corrigé pour la
+// modale 3D), et le LIBÉRER en quittant l'onglet.
+test('terrain 3D viewer reuses its WebGL context across re-renders of the same pet and disposes when leaving the Sections tab', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(async () => {
+    const cat = PET_CATALOG.find(c => typeof companionModelUrlFor === 'function' && companionModelUrlFor({ cat: c, tier: 3 }));
+    if (!cat) return { skip: true };
+    if (typeof window.THREE === 'undefined') await new Promise(r => window.addEventListener('three-ready', r, { once: true }));
+    const pet = { id: 999001, cat, rar: cat.rar, stats: mkStats(cat.rar), hunger: 100, terrain: true, tier: 3, tierXp: 0, tierMult: 1 };
+    PETS.forEach(p => { if (p.cat.sec === cat.sec) p.terrain = false; });
+    PETS.push(pet);
+    activeSecIdx = SECTIONS.findIndex(s => s.id === cat.sec);
+    ST(2); // onglet Sections -- ne rend PAS lui-même (seul companions.ticks.js le fait, chaque
+    // seconde tant que l'onglet reste actif) : appel explicite ici pour le premier rendu.
+    renderSecDetail();
+    await new Promise(r => setTimeout(r, 50)); // laisse mount() (async, attend 'three-ready') tourner
+    const firstWrap = terrainViewer3dState ? terrainViewer3dState.wrap : null;
+    renderSecDetail(); // simule le re-render déclenché chaque seconde par companions.ticks.js
+    const sameWrapReused = !!firstWrap && terrainViewer3dState && terrainViewer3dState.wrap === firstWrap;
+    const anchorHasWrap = !!document.getElementById('ts-cv3d-anchor') && document.getElementById('ts-cv3d-anchor').contains(terrainViewer3dState.wrap);
+    ST(3); // quitte l'onglet Sections -> doit libérer le contexte WebGL
+    return { skip: false, hadState: !!firstWrap, sameWrapReused, anchorHasWrap, disposedOnLeave: terrainViewer3dState === null };
+  });
+  expect(pageErrors).toEqual([]);
+  if (result.skip) return; // aucune espèce modélisée dans PET_CATALOG (ne devrait pas arriver)
+  expect(result.hadState).toBe(true);
+  expect(result.sameWrapReused).toBe(true);
+  expect(result.anchorHasWrap).toBe(true);
+  expect(result.disposedOnLeave).toBe(true);
+});
+
+// reveal 3D à l'éclosion (2026-07-10, demande explicite) -- pour une espèce avec modèle GLB, le
+// viewer doit être libéré à la fermeture de la modale (bouton "Garder"/"Déployer" ou "✕"), jamais
+// laissé vivre en arrière-plan.
+test('hatch reveal 3D viewer is disposed when the modal closes', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(async () => {
+    const cat = PET_CATALOG.find(c => typeof companionModelUrlFor === 'function' && companionModelUrlFor({ cat: c, tier: 1 }));
+    if (!cat) return { skip: true };
+    if (typeof window.THREE === 'undefined') await new Promise(r => window.addEventListener('three-ready', r, { once: true }));
+    const np = { id: 999002, cat, rar: cat.rar, stats: mkStats(cat.rar), hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    window._np = np;
+    document.getElementById('hatch-body').innerHTML = '<div id="hcv3d-anchor" style="width:120px;height:120px"></div>';
+    OM('hatch-modal');
+    const anchor = document.getElementById('hcv3d-anchor');
+    const wrap = document.createElement('div'); wrap.style.width = '120px'; wrap.style.height = '120px';
+    anchor.appendChild(wrap);
+    hatchReveal3dState = createThreeViewer(wrap, () => {});
+    hatchReveal3dState.loadModel(companionModelUrlFor(np));
+    const mountedBefore = !!hatchReveal3dState;
+    closeHatchModal();
+    return { skip: false, mountedBefore, disposedAfterClose: hatchReveal3dState === null };
+  });
+  expect(pageErrors).toEqual([]);
+  if (result.skip) return;
+  expect(result.mountedBefore).toBe(true);
+  expect(result.disposedAfterClose).toBe(true);
+});
+
 // garde-fou (2026-07-20, "ajouter classement, oeuf ouvert, argent depensé...") -- nouvel onglet
 // "Tes stats" + "Classement" (tab 9, panel p9) : "Tes stats" reste 100% local (aucun réseau),
 // vérifie que les compteurs déjà suivis ailleurs (totalHatched, silverSpent) s'affichent
