@@ -15,3 +15,10 @@ nouvelle version.
   passé) via la RPC `mark_item_tutorial_seen` (généralisée, voir
   `supabase/migrations/20260719180000_onboarding_stats.sql`) — fire-and-forget, jamais
   bloquant, no-op sans compte connecté.
+  **Bug corrigé (2026-07-10, récupéré le 2026-07-20 depuis la branche
+  `claude/onboarding-issue-fix-861c40`)** : `positionTutorialStep()` clampait la position
+  verticale de `#tutorialBox` sur une hauteur SUPPOSÉE fixe (`window.innerHeight-160`) au lieu
+  de sa hauteur réelle (`box.offsetHeight`) — un step avec un texte assez long (ex: tutoriel
+  Marché commun, voir `progression/README.md`) ET une cible proche du bord bas de l'écran
+  produisait une boîte coupée hors du viewport. Test de régression :
+  `testTutorialBoxClampsToRealHeightNeverOverflowsBottom` (`tests/tests.js`).
