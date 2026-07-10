@@ -20,11 +20,34 @@ async function dismissTutorialIfPresent(page) {
   }
 }
 
+// startGuestOrShowAuth() n'ouvre plus de session anonyme automatique depuis le 2026-07-20
+// (invités désactivés pour les vrais joueurs, voir CLAUDE.md/admin/README.md) -- #authOverlay
+// reste donc affiché et bloque tous les clics tant qu'aucune session n'est établie. Vérifié :
+// "Anonymous sign-ins" est maintenant refusé aussi côté serveur Supabase (422 "Anonymous
+// sign-ins are disabled"), donc sb.auth.signInAnonymously() ne peut plus servir ici non plus.
+// Ce test n'exerce que l'UI du jeu principal derrière la connexion (pas le formulaire lui-même,
+// déjà couvert visuellement en manuel) : plutôt que de créer un vrai compte de test dans la base
+// de données de production pour un simple test UI, on appelle directement onAuthed() avec un
+// utilisateur fabriqué localement -- tous les appels réseau qu'il déclenche (get_my_ban_status,
+// profiles, game_saves...) sont déjà protégés par des try/catch ou des repli silencieux dans
+// game-supabase.js (aucun accès valide de toute façon, faute de vraie session), donc ça ne fait
+// que débloquer l'UI sans jamais écrire quoi que ce soit côté serveur.
+async function signInForTest(page) {
+  await expect
+    .poll(() => page.evaluate(() => typeof onAuthed), { timeout: 10_000 })
+    .toBe('function');
+  await page.evaluate(async () => {
+    await onAuthed({ id:'00000000-0000-4000-8000-000000000001', email:'playwright-test@local.invalid', is_anonymous:false, identities:[] });
+  });
+  await expect(page.locator('#authOverlay')).toBeHidden({ timeout: 10_000 });
+}
+
 test('companion module opens in an isolated iframe, renders, and closes cleanly', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
   await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
   await dismissTutorialIfPresent(page);
 
   const companionTab = page.locator('.actTab[data-id="pet"]');
