@@ -185,13 +185,21 @@
           <button class="schip" id="sort-nom" onclick="setSort('nom',this)">Nom</button>
           <button class="schip" id="sort-sec" onclick="setSort('sec',this)">Section</button>
           <button class="schip" id="sort-typ" onclick="setSort('typ',this)">Type</button>
-          <!-- zoom grille (2026-07-20, demande explicite) : change la largeur mini des cartes de
-               .pet-grid (voir setCollZoom(), companions.collection.js), donc le nb de cartes par
-               ligne -- 3 crans, persisté en mémoire seulement (pas dans la sauvegarde, préférence
-               d'affichage pas une donnée de progression). -->
+          <!-- colonnes par ligne (2026-07-20, demande explicite : "ajout d'un bouton choix combien
+               par ligne 5 a 9") -- remplace l'ancien zoom à 3 crans (largeur mini approximative,
+               setCollZoom()) par un choix EXACT du nombre de colonnes (repeat(N,1fr), voir
+               setCollColsPerRow(), companions.collection.js). Préférence d'affichage pure,
+               en mémoire seulement, jamais dans la sauvegarde. -->
           <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
-          <button class="schip" id="zoom-out" onclick="setCollZoom(-1)" title="Cartes plus petites (plus par ligne)">🔍－</button>
-          <button class="schip" id="zoom-in" onclick="setCollZoom(1)" title="Cartes plus grandes (moins par ligne)">🔍＋</button>
+          <span style="font-size:9px;color:var(--cream3)">Colonnes</span>
+          <div style="display:flex;gap:2px" id="coll-cols-chips"></div>
+          <!-- pagination on/off (2026-07-20, demande explicite : "turn on of pagination") -- OFF
+               par défaut (grille scrollable classique, .pet-grid a déjà overflow-y:auto) ; ON
+               découpe la liste filtrée/triée en pages de collColsPerRow×4 cartes (voir
+               toggleCollPagination()/collPageDelta(), companions.collection.js — le pager lui-même
+               est rendu directement dans renderGrid()). -->
+          <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
+          <button class="schip" id="pagination-toggle" onclick="toggleCollPagination()" title="Basculer entre défilement continu et pages">📄 Pagination : OFF</button>
         </div>
       </div>
       <!-- légende des badges de fusion (2026-07-20, demande explicite) : explique 🥇🥈🥉, visibles
@@ -203,6 +211,11 @@
         <span style="color:var(--cream3)">— badges affichés pendant la sélection d'un pet à fusionner</span>
       </div>
       <div class="pet-grid" id="pet-grid"></div>
+      <div id="coll-pager" style="display:none;align-items:center;justify-content:center;gap:10px;padding:8px;border-top:1px solid var(--border)">
+        <button class="schip" onclick="collPageDelta(-1)">◀ Précédent</button>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cream2)" id="coll-pager-label"></span>
+        <button class="schip" onclick="collPageDelta(1)">Suivant ▶</button>
+      </div>
     </div>
     <div class="fusion-panel">
       <div style="background:var(--s2);border:1px solid var(--gold-dim);border-radius:9px;padding:10px 12px">
@@ -417,8 +430,8 @@
 <script src="companions.roster.js?v=6"></script>
 <script src="companions.hatch.js?v=10"></script>
 <script src="companions.pet-panel.js?v=6"></script>
-<script src="companions.sections.js?v=7"></script>
-<script src="companions.collection.js?v=8"></script>
+<script src="companions.sections.js?v=8"></script>
+<script src="companions.collection.js?v=9"></script>
 <script src="companions.fusion.js?v=8"></script>
 <script src="companions.feed.js?v=6"></script>
 <script src="companions.ticks.js?v=6"></script>

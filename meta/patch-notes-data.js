@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V357', d:'20/07/2026 16:00', name:{fr:'Compagnon : colonnes/pagination Collection, réserve triable', en:'Companion: Collection columns/pagination, sortable reserve'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Collection : choisis exactement le nombre de cartes par ligne (5 à 9), et active la pagination si tu préfères des pages plutôt que le défilement.'},
+      {t:'change', sub:'compagnon', tx:'Sections : les cartes de la réserve sont encore plus compactes, et peuvent être triées par GS ou par Tier.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'Collection: choose exactly how many cards per row (5 to 9), and turn on pagination if you prefer pages over scrolling.'},
+      {t:'change', sub:'compagnon', tx:'Sections: reserve cards are even more compact, and can be sorted by GS or Tier.'},
+    ] },
   { v:'V356', d:'20/07/2026 15:30', name:{fr:'Plafond de stack des matériaux relevé', en:'Material stack cap raised'}, fr:[
       {t:'change', tx:'Le plafond d\'un stack de matériau/craft passe de 9 999 à 999 999 — un stack plein ne se scinde plus en plusieurs cases sur une longue session de farm.'},
     ], en:[

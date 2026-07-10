@@ -5,24 +5,51 @@ function setSort(mode,el){
   el.classList.add('on');renderGrid();
 }
 
-// ═══ ZOOM DE LA GRILLE (2026-07-20, demande explicite) ═══
-// Largeur minimale des cartes de .pet-grid (repeat(auto-fill,minmax(Npx,1fr)), voir
-// companions.css) -- 3 crans, préférence d'affichage pure, jamais persistée dans la sauvegarde.
-const COLL_ZOOM_STEPS = [120, 160, 200]; // px, du plus dense (plus par ligne) au plus large
-let collZoomIdx = 1; // index de départ = valeur actuelle de companions.css (160px)
-function setCollZoom(delta){
-  const prevIdx = collZoomIdx;
-  collZoomIdx = Math.max(0, Math.min(COLL_ZOOM_STEPS.length-1, collZoomIdx+delta));
+// ═══ COLONNES PAR LIGNE (2026-07-20, demande explicite : "ajout d'un bouton choix combien par
+// ligne 5 a 9") ═══
+// Remplace l'ancien zoom à 3 crans (largeur mini approximative, repeat(auto-fill,minmax(Npx,1fr)))
+// par un choix EXACT du nombre de colonnes -- repeat(N,1fr), N de 5 à 9. Préférence d'affichage
+// pure, jamais persistée dans la sauvegarde. Le cran le plus dense (7-9 colonnes) bascule sur la
+// variante compacte de carte (même logique qu'avant, voir renderGrid() plus bas) : au-delà de
+// 6 colonnes, la carte est trop étroite pour la ligne meta verbeuse (rareté en toutes lettres).
+const COLL_COLS_MIN = 5, COLL_COLS_MAX = 9, COLL_COLS_COMPACT_FROM = 7;
+let collColsPerRow = 6; // valeur de départ, proche de l'ancien cran par défaut (160px ≈ 6 colonnes à largeur normale)
+function renderCollColsChips(){
+  const el = document.getElementById('coll-cols-chips');
+  if(!el) return;
+  el.innerHTML = Array.from({length:COLL_COLS_MAX-COLL_COLS_MIN+1},(_,i)=>COLL_COLS_MIN+i)
+    .map(n=>`<button class="schip ${n===collColsPerRow?'on':''}" onclick="setCollColsPerRow(${n})">${n}</button>`).join('');
+}
+function setCollColsPerRow(n){
+  const prevCompact = collColsPerRow>=COLL_COLS_COMPACT_FROM;
+  collColsPerRow = Math.max(COLL_COLS_MIN, Math.min(COLL_COLS_MAX, n));
   const grid = document.getElementById('pet-grid');
-  if(grid) grid.style.gridTemplateColumns = `repeat(auto-fill,minmax(${COLL_ZOOM_STEPS[collZoomIdx]}px,1fr))`;
-  const outBtn = document.getElementById('zoom-out'), inBtn = document.getElementById('zoom-in');
-  if(outBtn) outBtn.disabled = collZoomIdx===0;
-  if(inBtn) inBtn.disabled = collZoomIdx===COLL_ZOOM_STEPS.length-1;
-  // bug corrigé (2026-07-20) : changer de cran ne re-rendait jamais les cartes -- seule la largeur
-  // de colonne CSS changeait. Nécessaire maintenant que le contenu de la carte lui-même dépend du
-  // cran (variante compacte au cran le plus dense, voir renderGrid() ci-dessous).
-  const wasCompact = prevIdx===0, isCompact = collZoomIdx===0;
-  if(wasCompact !== isCompact) renderGrid();
+  if(grid) grid.style.gridTemplateColumns = `repeat(${collColsPerRow},minmax(90px,1fr))`;
+  renderCollColsChips();
+  const nowCompact = collColsPerRow>=COLL_COLS_COMPACT_FROM;
+  // changer le nombre de colonnes change aussi la pagination (taille de page dépend des colonnes) --
+  // revient à la page 0 pour éviter une page hors-limites après le changement
+  collPage = 0;
+  renderGrid();
+  if(prevCompact !== nowCompact) { /* renderGrid() ci-dessus régénère déjà les cartes avec la bonne variante */ }
+}
+
+// ═══ PAGINATION (2026-07-20, demande explicite : "turn on of pagination") ═══
+// OFF par défaut : .pet-grid garde son défilement continu habituel (overflow-y:auto, déjà en
+// place). ON : découpe la liste filtrée/triée en pages de collColsPerRow×4 cartes (4 lignes par
+// page), avec un pager Précédent/Suivant sous la grille -- jamais persisté dans la sauvegarde.
+let collPaginationOn = false;
+let collPage = 0;
+function toggleCollPagination(){
+  collPaginationOn = !collPaginationOn;
+  collPage = 0;
+  const btn = document.getElementById('pagination-toggle');
+  if(btn) btn.textContent = collPaginationOn ? '📄 Pagination : ON' : '📄 Pagination : OFF';
+  renderGrid();
+}
+function collPageDelta(delta){
+  collPage = Math.max(0, collPage + delta); // le clamp haut se fait dans renderGrid() (dépend du nombre de résultats filtrés)
+  renderGrid();
 }
 
 // ═══ BADGE FUSION CENTRÉ DANS LE HEADER (2026-07-20, demande explicite) ═══
@@ -55,6 +82,8 @@ function renderFilters(){
 
 function renderGrid(){
   document.getElementById('tb2').textContent=PETS.length;
+  const gridEl = document.getElementById('pet-grid');
+  if(gridEl) gridEl.style.gridTemplateColumns = `repeat(${collColsPerRow},minmax(90px,1fr))`;
   const q=document.getElementById('search-box')?.value.toLowerCase()||'';
   let list=[...PETS];
   if(filterSec.size) list=list.filter(p=>filterSec.has(p.cat.sec));
@@ -73,6 +102,23 @@ function renderGrid(){
     return v*sortDir;
   });
 
+  // pagination (2026-07-20, demande explicite) : découpe list APRÈS filtre/tri, jamais avant --
+  // sinon la pagination porterait sur un ordre incohérent avec ce que le joueur voit dans les
+  // filtres/tri actifs. bestInSec/fusionBadgeCounts restent calculés sur TOUTE la collection
+  // (PETS), pas seulement la page affichée -- "meilleur de la section" doit rester vrai même si
+  // ce pet n'est pas sur la page courante.
+  const collPageSize = collColsPerRow * 4; // 4 lignes par page
+  const pageCount = collPaginationOn ? Math.max(1, Math.ceil(list.length / collPageSize)) : 1;
+  if(collPage > pageCount-1) collPage = pageCount-1; // clamp après un changement de filtre qui réduit le total
+  const pageList = collPaginationOn ? list.slice(collPage*collPageSize, (collPage+1)*collPageSize) : list;
+  const pagerEl = document.getElementById('coll-pager');
+  if(pagerEl){
+    pagerEl.style.display = collPaginationOn ? 'flex' : 'none';
+    const lbl = document.getElementById('coll-pager-label');
+    if(lbl) lbl.textContent = `Page ${collPage+1} / ${pageCount} (${list.length} familiers)`;
+  }
+  renderCollColsChips();
+
   const bestInSec={};
   SECTIONS.forEach(s=>{
     const inSec=PETS.filter(p=>p.cat.sec===s.id);
@@ -87,7 +133,7 @@ function renderGrid(){
   // compteurs pour le badge fusion du header (2026-07-20, demande explicite) -- accumulés pendant
   // le même passage que le rendu des cartes ci-dessous, jamais un second calcul séparé.
   const fusionBadgeCounts = {top1:0, top2:0, top3:0};
-  document.getElementById('pet-grid').innerHTML=list.map(p=>{
+  document.getElementById('pet-grid').innerHTML=pageList.map(p=>{
     const pct=gsPct(p),gs=normGS(p);
     const isBest=bestInSec[p.cat.sec]===p.id;
     const isF=inF.includes(p.id);
@@ -138,7 +184,7 @@ function renderGrid(){
       </div>
       <div class="card-body">
         <div class="card-name">${p.cat.name}</div>
-        ${collZoomIdx===0 ? `
+        ${collColsPerRow>=COLL_COLS_COMPACT_FROM ? `
         <div class="card-meta-compact" title="${rn(p.rar)} · T${p.tier||1} (${tierMultPct(p)}%) · ${sec?.name} · ${p.cat.typ}">
           <span class="cmcDot" style="background:${rc(p.rar)}"></span>
           <span class="cmcTier">T${p.tier||1}</span>
@@ -170,7 +216,7 @@ function renderGrid(){
       ${previewHtml}
     </div>`;
   }).join('');
-  list.forEach(p=>{
+  pageList.forEach(p=>{
     const c=document.getElementById('ca'+p.id);
     if(c) drawPixelArt(c,p.cat.art,56,p.terrain?'#44b06033':null,p.tier||1);
   });

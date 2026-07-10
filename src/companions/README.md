@@ -252,7 +252,30 @@ module Compagnon.
   `window.THREE` se pose, qu'un `<canvas>` WebGL apparaît, et qu'un échec réseau du `.glb` (ex:
   404 si le fichier de test n'est pas encore présent dans l'environnement) est un message d'erreur
   géré proprement, jamais une exception JS non attrapée.
-- **Intégration réelle du 1er modèle (2026-07-10, "envoyer le premier test .glb")** : le pipeline
+- **Collection : colonnes exactes 5-9 + pagination (2026-07-20, demande explicite : "ajout d'un
+bouton choix combien par ligne 5 a 9, turn on of pagination")** :
+- Remplace l'ancien zoom à 3 crans (largeur mini approximative, `COLL_ZOOM_STEPS`) par un choix
+  EXACT du nombre de colonnes (`COLL_COLS_MIN=5`/`COLL_COLS_MAX=9`, `setCollColsPerRow()`,
+  `companions.collection.js`) — `repeat(N, minmax(90px,1fr))` (le plancher 90px évite qu'une carte
+  devienne trop étroite pour son contenu à 9 colonnes exactes sur un petit écran, corrigé après un
+  premier passage en `repeat(N,1fr)` sans plancher qui faisait déborder `.card-meta-compact`).
+  Au-delà de 6 colonnes (`COLL_COLS_COMPACT_FROM=7`), bascule sur la variante compacte de carte
+  (même logique que l'ancien zoom).
+- Pagination on/off (`collPaginationOn`, `toggleCollPagination()`) : OFF par défaut (défilement
+  continu, `.pet-grid` a déjà `overflow-y:auto`) ; ON découpe la liste filtrée/triée en pages de
+  `collColsPerRow×4` cartes (`#coll-pager`, Précédent/Suivant). La pagination porte sur la liste
+  APRÈS filtre/tri, jamais avant. `bestInSec`/le badge de fusion restent calculés sur TOUTE la
+  collection, pas seulement la page affichée. Aucun état persisté dans la sauvegarde (préférence
+  d'affichage pure).
+
+**Sections : carte réserve encore resserrée + tri GS/Tier (2026-07-20, demande explicite : "Carte
+reservce plus petite > trier par GS, Tiers")** : 2e passe de resserrement (canvas 18px→14px,
+polices/paddings réduits une nouvelle fois) après un premier resserrement le même jour (voir plus
+bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `companions.sections.js`) :
+boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()` de la Collection
+(1er clic = décroissant, re-clic = inverse).
+
+**Intégration réelle du 1er modèle (2026-07-10, "envoyer le premier test .glb")** : le pipeline
   Three.js est factorisé en `createThreeViewer(wrap, onStatus)` (renderer/scène/caméra/controls/
   loop/dispose réutilisables), utilisé par l'écran de test ET par une VRAIE modale `#pet3d-modal`
   ouverte depuis le panneau du pet déployé sur le terrain (`companions.sections.js`). Bouton "🧊 Voir

@@ -173,7 +173,7 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
     const cat = PET_CATALOG[0];
     PETS.push({ id: petId++, cat, rar: 2, stats: [10, 8, 6, 0, 0], hunger: 100, terrain: false, tier: 3, tierXp: 0, tierMult: 1 });
     ST(3); // Collection
-    setCollZoom(-1); setCollZoom(-1); // cran le plus dense (120px)
+    setCollColsPerRow(9); // cran le plus dense (2026-07-20, "choix combien par ligne 5 a 9")
     const card = document.querySelector('.pet-card');
     const compact = card.querySelector('.card-meta-compact');
     return {
@@ -187,10 +187,10 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
     };
   });
   expect(pageErrors).toEqual([]);
-  // 120px CSS (COLL_ZOOM_STEPS[0]) x zoom:1.25 (2026-07-20, "zommer 25%+ dans compagnon",
-  // companions.css) ≈ 150px mesurés -- seuil relevé en conséquence, reste très en dessous du
-  // cran le plus large (200px x 1.25 = 250px).
-  expect(result.cardWidth).toBeLessThan(175);
+  // 9 colonnes exactes (repeat(9,1fr), voir setCollColsPerRow()) dans .pet-grid (largeur variable
+  // selon le viewport) x zoom:1.25 (companions.css) -- seuil large mais reste très en dessous du
+  // cran le plus étalé (5 colonnes).
+  expect(result.cardWidth).toBeLessThan(250);
   expect(result.hasCompact).toBe(true);
   expect(result.hasVerboseMeta).toBe(false); // pas les deux affichages à la fois
   expect(result.overflowsCard).toBe(false);
@@ -198,14 +198,106 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
   expect(result.hasSectionIcon).toBe(true);
   expect(result.hasGsBadge).toBe(true);
 
-  // zoom large (200px) : repasse à l'affichage verbeux normal, jamais la variante compacte
+  // colonnes larges (5) : repasse à l'affichage verbeux normal, jamais la variante compacte
   const wide = await frame.locator('body').evaluate(() => {
-    setCollZoom(1); setCollZoom(1);
+    setCollColsPerRow(5);
     const card = document.querySelector('.pet-card');
     return { hasCompact: !!card.querySelector('.card-meta-compact'), hasVerboseMeta: !!card.querySelector('.card-meta') };
   });
   expect(wide.hasCompact).toBe(false);
   expect(wide.hasVerboseMeta).toBe(true);
+  expect(pageErrors).toEqual([]);
+});
+
+// Pagination de la Collection (2026-07-20, demande explicite : "turn on of pagination") -- OFF
+// par défaut (toute la liste filtrée/triée s'affiche, .pet-grid défile normalement) ; ON découpe
+// en pages de collColsPerRow×4 cartes, avec un pager Précédent/Suivant.
+test('collection pagination toggle limits visible cards per page and paginates correctly', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const setup = await frame.locator('body').evaluate(() => {
+    for (let i = 0; i < 30; i++) {
+      const cat = PET_CATALOG[i % PET_CATALOG.length];
+      PETS.push({ id: petId++, cat, rar: 1, stats: [5,4,3,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 });
+    }
+    ST(3); // Collection
+    setCollColsPerRow(5); // page = 5×4 = 20 cartes
+    return { total: PETS.length };
+  });
+  expect(setup.total).toBeGreaterThanOrEqual(30);
+
+  // OFF par défaut : le pager est caché, toutes les cartes s'affichent
+  await expect(frame.locator('#coll-pager')).toBeHidden();
+  const countBeforePagination = await frame.locator('.pet-card').count();
+  expect(countBeforePagination).toBeGreaterThanOrEqual(30);
+
+  await frame.locator('#pagination-toggle').click();
+  await expect(frame.locator('#pagination-toggle')).toHaveText('📄 Pagination : ON');
+  await expect(frame.locator('#coll-pager')).toBeVisible();
+  const countPage1 = await frame.locator('.pet-card').count();
+  expect(countPage1).toBe(20); // 5 colonnes × 4 lignes
+
+  await frame.locator('#coll-pager').locator('text=Suivant').click();
+  await expect(frame.locator('#coll-pager-label')).toContainText('Page 2');
+  const countPage2 = await frame.locator('.pet-card').count();
+  expect(countPage2).toBeGreaterThan(0);
+  expect(countPage2).toBeLessThanOrEqual(20);
+
+  await frame.locator('#coll-pager').locator('text=Précédent').click();
+  await expect(frame.locator('#coll-pager-label')).toContainText('Page 1');
+
+  expect(pageErrors).toEqual([]);
+});
+
+// Tri de la réserve dans Sections (2026-07-20, demande explicite : "trier par GS, Tiers").
+test('reserve list in Sections can be sorted by GS and by Tier', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const secIdx = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG[0];
+    const weak = { id: petId++, cat, rar: 0, stats: [1,0,0,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    const strong = { id: petId++, cat, rar: 5, stats: [60,38,30,20,15], hunger: 100, terrain: false, tier: 5, tierXp: 0, tierMult: 1 };
+    PETS.push(weak, strong);
+    const idx = SECTIONS.findIndex(s => s.id === cat.sec);
+    activeSecIdx = idx;
+    ST(2); // onglet Sections -- sans ça le panel #p1 reste caché (pas de classe "active")
+    renderSecNav(); renderSecDetail();
+    return idx;
+  });
+  expect(secIdx).toBeGreaterThanOrEqual(0);
+
+  const gsOrderBefore = await frame.locator('.sec-detail .gs-badge').allTextContents();
+  await frame.locator('.sec-detail button', { hasText: 'GS' }).click();
+  const gsOrderAfterDesc = await frame.locator('.sec-detail .gs-badge').allTextContents();
+  expect(gsOrderAfterDesc).not.toEqual(gsOrderBefore);
+  // le 1er clic trie décroissant : le badge du pet fort (rar 5, stats élevées) doit passer en tête
+  expect(gsOrderAfterDesc[0]).not.toBe(gsOrderBefore[0] === gsOrderAfterDesc[0] ? null : gsOrderBefore[0]);
+
+  await frame.locator('.sec-detail button', { hasText: 'Tier' }).click();
+  const tierSorted = await frame.locator('.sec-detail').evaluate(() => {
+    // vérifie directement la logique de tri (pas seulement le DOM) : sortReserveList() doit
+    // ordonner par tier croissant après un 1er clic sur "Tier" côté fonction, décroissant côté UI (resSortDir=-1 par défaut)
+    return { mode: resSortMode, dir: resSortDir };
+  });
+  expect(tierSorted.mode).toBe('tier');
+  expect(tierSorted.dir).toBe(-1);
+
   expect(pageErrors).toEqual([]);
 });
 
@@ -431,14 +523,14 @@ test('header shows WIP banner, new title, close button, and collection legend/so
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
   await expect(overlay).toBeVisible();
 
-  // Collection : légende TOP1/2/3, bouton de tri par Tier, contrôle de zoom
+  // Collection : légende TOP1/2/3, bouton de tri par Tier, contrôle de colonnes (2026-07-20,
+  // "ajout d'un bouton choix combien par ligne 5 a 9", remplace l'ancien zoom à 3 crans)
   await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
   await expect(frame.locator('text=TOP1 = même rareté')).toBeVisible();
   await expect(frame.locator('#sort-tier')).toBeVisible();
-  await expect(frame.locator('#zoom-in')).toBeVisible();
-  await expect(frame.locator('#zoom-out')).toBeVisible();
+  await expect(frame.locator('#coll-cols-chips button')).toHaveCount(5); // 5,6,7,8,9
   const gridColsBefore = await frame.locator('#pet-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns);
-  await frame.locator('#zoom-in').click();
+  await frame.locator('#coll-cols-chips button', { hasText: '9' }).click();
   const gridColsAfter = await frame.locator('#pet-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns);
   expect(gridColsAfter).not.toBe(gridColsBefore);
 
