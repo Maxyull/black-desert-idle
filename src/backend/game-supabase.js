@@ -1589,14 +1589,9 @@ function renderTutoPageHtml() {
     : 'The tutorial walks you through Velia, the peaceful town, and explains the basics of the game (zones, automatic skills, stats, quests, chat). You can replay it here anytime.'}</div>
     <button id="btnStartTutoWiki" style="width:auto;margin-top:10px;padding:8px 18px;">${LANG==='fr'?'▶ Relancer le tutoriel':'▶ Replay the tutorial'}</button>`;
 }
-let wikiSection = 'combat';
-function renderWikiHtml() {
-  const tabsHtml = WIKI_SECTIONS.map(s =>
-    `<button class="catTab wikiTab${s.id===wikiSection?' active':''}" data-sec="${s.id}">${s.icon} ${s.label[LANG]}</button>`).join('');
-  const sec = WIKI_SECTIONS.find(s => s.id === wikiSection) || WIKI_SECTIONS[0];
-  const body = sec.codex ? renderCodexHtml() : sec.tuto ? renderTutoPageHtml() : sec[LANG];
-  return `<div class="catTabs">${tabsHtml}</div><div class="wikiBody">${body}</div>`;
-}
+// renderWikiHtml()/wikiSection (rendu à onglets plats) retirés le 2026-07-11 : le panneau Wiki
+// est désormais src/backend/wiki-panel.js (openWikiPanel()) — WIKI_SECTIONS/renderCodexHtml/
+// renderTutoPageHtml restent ici, réutilisés tels quels par le nouveau panneau.
 
 // ============================================================
 // Ouverture des modals Wiki / Patch Notes
@@ -1626,21 +1621,11 @@ $a('btnCodex').onclick = () => {
   openInfo(LANG === 'fr' ? '📚 Codex des objets' : '📚 Item Codex', callout + renderCodexHtml());
   markContentSeen('codex');
 };
-$a('btnWiki').onclick = () => {
-  const callout = contentChangeCalloutHtml('wiki');
-  openInfo(LANG === 'fr' ? '📖 Wiki' : '📖 Wiki', callout + renderWikiHtml());
-  markContentSeen('wiki');
-  $a('infoBody').querySelectorAll('.wikiTab').forEach(btn => {
-    btn.onclick = () => { wikiSection = btn.dataset.sec; $a('btnWiki').onclick(); };
-  });
-  const tutoBtn = $a('btnStartTutoWiki');
-  // trackId:'onboarding' (2026-07-19, demande explicite : stats admin sur l'onboarding) -- SEUL
-  // point d'entrée du tutoriel d'arrivée (TUTORIAL_STEPS, 21 étapes) : il n'existe aucun
-  // déclenchement automatique à la 1ère connexion, uniquement ce bouton dans le Wiki -- voir
-  // reportTutorialProgress plus bas et admin_onboarding_stats/admin_onboarding_dropoff (migration
-  // 20260719180000_onboarding_stats.sql) pour voir combien de joueurs le démarrent réellement.
-  if (tutoBtn) tutoBtn.onclick = () => { $a('infoOverlay').classList.remove('open'); startTutorial(TUTORIAL_STEPS, { trackId:'onboarding' }); };
-};
+// 2026-07-11 : remplace l'ancienne modale à onglets plats (openInfo()/renderWikiHtml()) par le
+// panneau plein écran src/backend/wiki-panel.js (openWikiPanel(), sidebar/article/infobox, port
+// à l'identique du mockup fourni — voir CLAUDE.md §30). renderWikiHtml()/WIKI_SECTIONS restent la
+// source de contenu réutilisée par le nouveau panneau, jamais dupliquées.
+$a('btnWiki').onclick = () => openWikiPanel();
 
 // ============================================================
 // Tutoriel d'arrivée à Velia — encadrés + flèche pointant vers l'élément expliqué. Se lance

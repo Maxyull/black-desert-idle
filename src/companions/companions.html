@@ -377,8 +377,10 @@
       <div id="my-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px"></div>
     </div>
     <div>
-      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:6px">🏆 Classement (tous les joueurs)</div>
-      <div style="font-size:10px;color:var(--cream3);margin-bottom:10px">Classé par nombre de familiers — nécessite d'avoir ouvert ce module au moins une fois (les stats se synchronisent toutes les 60s).</div>
+      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:6px">🏆 Classement Public (tous les joueurs)</div>
+      <div style="font-size:10px;color:var(--cream3);margin-bottom:10px">Nécessite d'avoir ouvert ce module au moins une fois (les stats se synchronisent toutes les 60s).</div>
+      <div id="lb-podium"></div>
+      <div id="lb-controls"></div>
       <div id="companion-leaderboard"></div>
     </div>
   </div>
@@ -461,7 +463,7 @@
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="companions.sync.js?v=10"></script>
+<script src="companions.sync.js?v=11"></script>
 <!-- marché d'échange réel (2026-07-10, demande explicite) : lit PETS/petId/PET_CATALOG/RARITIES/
      rc/rn/tierMultOf/rollTierMult/drawPixelArt/toast/CM/petRosterRoomLeft déjà déclarés plus haut,
      appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
@@ -480,7 +482,7 @@
      PETS/totalHatched/silverSpent/fusionCount/PET_CATALOG/ACHIEVEMENTS/completedAchievements déjà
      déclarés plus haut, appelée uniquement via ST(9) -- ordre non strictement requis, placé ici par
      lisibilité (même famille que companions.pvp.js juste au-dessus). -->
-<script src="companions.leaderboard.js?v=2"></script>
+<script src="companions.leaderboard.js?v=3"></script>
 <!-- écran de test viewer 3D GLB (2026-07-10) : script classique, lit window.THREE/GLTFLoader/
      OrbitControls posés par vendor/three/three-bridge.js (module, résolu de façon asynchrone —
      voir l'event 'three-ready' géré dans ce fichier). Ordre non strictement requis vis-à-vis des

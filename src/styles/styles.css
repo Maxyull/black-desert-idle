@@ -1861,7 +1861,6 @@
   .codexIcon { font-size:20px; width:28px; text-align:center; flex-shrink:0; }
   .codexName { font-size:12px; font-weight:bold; color:var(--ink); }
   .codexDesc { font-size:10.5px; color:var(--ink-dim); }
-  .wikiTab { display:inline-flex; align-items:center; gap:4px; }
   .achRow {
     display:flex; align-items:center; gap:10px; padding:8px 6px;
     border-bottom:1px solid #201f26; opacity:.72;
