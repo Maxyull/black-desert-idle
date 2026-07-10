@@ -22,6 +22,10 @@ function ST(i){
   // réelle de l'onglet, le libère à la fermeture (évite de garder un renderer actif en arrière-plan
   // pendant que le joueur navigue ailleurs dans le module)
   if(i===10) initViewer3dIfNeeded(); else if(typeof disposeViewer3dIfActive==='function') disposeViewer3dIfActive();
+  // carte terrain en 3D (2026-07-10) : même principe -- libère le contexte WebGL dès qu'on quitte
+  // l'onglet Sections (i===2), voir updateTerrainViewer3d()/disposeTerrainViewer3dIfActive()
+  // (companions.sections.js).
+  if(i!==2 && typeof disposeTerrainViewer3dIfActive==='function') disposeTerrainViewer3dIfActive();
 }
 function toast(ico,msg){const w=document.getElementById('toast-wrap');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span style="font-size:15px">${ico}</span><span>${msg}</span>`;w.appendChild(t);setTimeout(()=>t.remove(),2900);}
 function OM(id){document.getElementById(id).classList.add('open');}
@@ -210,9 +214,15 @@ function doHatch(slotIdx, eggTypeId){
   const gs=normGS(np),pct=gsPct(np);
   const titleEl2 = document.querySelector('#hatch-modal .modal > div[style*="Cinzel"]');
   if(titleEl2) titleEl2.textContent = pityTriggered ? '🎁 Pity déclenché — Ancestral garanti !' : '✨ Familier éclos !';
+  // reveal 3D (2026-07-10, demande explicite : "les 2 premières" idées listées -- "reveal à
+  // l'éclosion") : les 12 espèces avec un modèle GLB (companionModelUrlFor) l'affichent en direct
+  // à la place du pixel art, comme moment fort. Fallback pixel art inchangé pour les 36 autres.
+  const modelUrl = typeof companionModelUrlFor==='function' ? companionModelUrlFor(np) : null;
   document.getElementById('hatch-body').innerHTML=`
     <div style="text-align:center;margin-bottom:12px">
-      <canvas id="hcv" width="80" height="80" style="width:80px;height:80px;image-rendering:pixelated"></canvas>
+      ${modelUrl
+        ? `<div id="hcv3d-anchor" style="width:120px;height:120px;margin:0 auto"></div>`
+        : `<canvas id="hcv" width="80" height="80" style="width:80px;height:80px;image-rendering:pixelated"></canvas>`}
     </div>
     <div style="text-align:center;font-size:9px;color:${rc(rar)};letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px">${cat.orig.toUpperCase()} · ${cat.typ} · ${eggType.ico} ${eggType.name}</div>
     <div style="text-align:center;font-family:'Cinzel',serif;font-size:19px;color:var(--cream);margin-bottom:2px">${cat.name}</div>
@@ -223,14 +233,39 @@ function doHatch(slotIdx, eggTypeId){
     </div>
     <div style="margin-bottom:8px">${renderTierBlock(np)}${renderStatBars(np)}</div>
     <div style="display:flex;gap:7px;margin-top:12px">
-      <button class="btn btn-gold" onclick="window._np.terrain=false;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🥚','${cat.name} ajouté !')">Garder</button>
-      <button class="btn btn-ghost" onclick="PETS.forEach(p=>{if(p.cat.sec===window._np.cat.sec)p.terrain=false});window._np.terrain=true;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🌿','${cat.name} déployé !')">Déployer</button>
+      <button class="btn btn-gold" onclick="disposeHatchReveal3d();window._np.terrain=false;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🥚','${cat.name} ajouté !')">Garder</button>
+      <button class="btn btn-ghost" onclick="disposeHatchReveal3d();PETS.forEach(p=>{if(p.cat.sec===window._np.cat.sec)p.terrain=false});window._np.terrain=true;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🌿','${cat.name} déployé !')">Déployer</button>
     </div>`;
   window._np=np;
   OM('hatch-modal');
-  setTimeout(()=>{const c=document.getElementById('hcv');if(c)drawPixelArt(c,cat.art,80,rc(rar),np.tier||1);},40);
+  if(modelUrl){
+    const mount=()=>{
+      const anchor=document.getElementById('hcv3d-anchor'); if(!anchor) return;
+      const wrap=document.createElement('div'); wrap.style.width='120px'; wrap.style.height='120px';
+      anchor.appendChild(wrap);
+      hatchReveal3dState=createThreeViewer(wrap, ()=>{});
+      hatchReveal3dState.loadModel(modelUrl);
+    };
+    if(typeof window.THREE==='undefined') window.addEventListener('three-ready', mount, { once:true });
+    else mount();
+  } else {
+    setTimeout(()=>{const c=document.getElementById('hcv');if(c)drawPixelArt(c,cat.art,80,rc(rar),np.tier||1);},40);
+  }
   incubSlots[slotIdx].ready=false;incubSlots[slotIdx].tl=scaleTimer(21600);
   renderHatch();
+}
+// viewer 3D de la modale de reveal -- une seule éclosion à la fois (pas de tick qui réappelle
+// doHatch en boucle contrairement à renderSecDetail, donc pas besoin du cache par clé de
+// updateTerrainViewer3d() : juste un dispose propre à la fermeture, voir closeHatchModal().
+let hatchReveal3dState = null;
+function disposeHatchReveal3d(){
+  if(!hatchReveal3dState) return;
+  hatchReveal3dState.dispose();
+  hatchReveal3dState = null;
+}
+function closeHatchModal(){
+  disposeHatchReveal3d();
+  CM('hatch-modal');
 }
 
 // ═══ ÉCLOSION INSTANTANÉE — ×1/×5/×10, indépendant des créneaux d'incubation ═══
@@ -282,8 +317,12 @@ function showBulkHatchModal(eggType, results, tally, anyPity){
           <div style="font-size:8px;color:${rc(p.rar)};margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.cat.name}</div>
         </div>`).join('')}
     </div>
-    <button class="btn btn-gold" style="width:100%" onclick="CM('hatch-modal')">Continuer</button>
+    <button class="btn btn-gold" style="width:100%" onclick="closeHatchModal()">Continuer</button>
   `;
+  // pas de reveal 3D ici volontairement (2026-07-10) : jusqu'à 10 pets affichés EN MÊME TEMPS dans
+  // cette grille -- un contexte WebGL par carte dépasserait vite la limite du navigateur (~16, même
+  // classe de bug que la Collection, voir CLAUDE.md companions §pièges). Le reveal 3D reste réservé
+  // à doHatch() (une seule éclosion à la fois, voir hatchReveal3dState).
   OM('hatch-modal');
   results.forEach((p,i)=>{
     setTimeout(()=>{const c=document.getElementById('bh-cv-'+i);if(c)drawPixelArt(c,p.cat.art,44,rc(p.rar),p.tier||1);},30);
