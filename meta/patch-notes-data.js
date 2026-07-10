@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V366', d:'20/07/2026 20:00', name:{fr:'Notes de version : vote et commentaires', en:'Patch notes: voting and comments'}, fr:[
+      {t:'new', tx:'Chaque ligne des notes de version peut désormais être votée (👍/👎) et commentée — les commentaires passent par un filtre anti-contenu inapproprié côté serveur.'},
+      {t:'new', tx:'Recherche et filtre par catégorie ajoutés au panneau des notes de version.'},
+      {t:'change', tx:'Compendium : les zones s\'affichent maintenant en rangée compacte (au lieu d\'une liste empilée), avec un bouton "Farmer ici" plus discret.'},
+      {t:'new', sub:'admin', tx:'Admin : nouvelle section de modération pour les commentaires signalés/retirés des notes de version.'},
+    ], en:[
+      {t:'new', tx:'Every patch note line can now be voted (👍/👎) and commented on — comments go through a server-side inappropriate-content filter.'},
+      {t:'new', tx:'Search and category filter added to the patch notes panel.'},
+      {t:'change', tx:'Compendium: zones now display in a compact row (instead of a stacked list), with a smaller "Farm here" button.'},
+      {t:'new', sub:'admin', tx:'Admin: new moderation section for reported/removed patch note comments.'},
+    ] },
   { v:'V365', d:'20/07/2026 19:30', name:{fr:'Compendium refait : mondes, recherche, téléportation directe', en:'Compendium redesigned: worlds, search, direct teleport'}, fr:[
       {t:'change', tx:'Le Compendium a été entièrement refait : organisé par monde (Velia débloqué, Heidel/Calpheon/Valencia/Edana verrouillés), avec une barre de progression combinée (zones + World Bosses + Maîtrise PEN).'},
       {t:'new', tx:'Recherche et tri (A→Z / % de complétion) dans l\'onglet Zones du Compendium.'},

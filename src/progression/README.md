@@ -64,6 +64,18 @@ courrier, compendium, craft du Trésor de Velia.
   Ouvert via `openCompendiumReact()` (`#btnCompendium`/`#ztCompendium`, `backend/game-supabase.js`),
   monté dans `#compendiumModalRoot` (`index.dev.html`). Alimente aussi `player_stats.compendium_pct`
   (`compendiumOverallPct()`, `core/game-core.js`) pour le suivi admin agrégé.
+- `patch-notes-engage-react.js` — **NOUVEAU (2026-07-10)**, 4e fichier React du projet (exception
+  documentée CLAUDE.md §7), port SCOPÉ de `patch-notes-system.jsx`/`patch-notes-pipeline.md`
+  fournis par l'utilisateur. Contrairement aux 3 autres exceptions React, celle-ci ne remplace PAS
+  un panneau entier : le panneau Notes de version (`renderPatchNotesPanel`/`renderPatchEntryHtml`,
+  `backend/game-supabase.js`) reste du HTML classique volontairement inchangé (pagination par
+  taille, tags sévérité/plateforme/nature, comparateur avant/après — déjà réel et testé). React ne
+  monte qu'un petit widget vote+commentaires par ligne (`mountPatchEngageWidgets()`, dans chaque
+  `.patchEntryEngage[data-eid]` déjà généré). Recherche/filtre/vue-controverse
+  (`applyPatchFilters`/`applyPatchControversySort`, `backend/game-supabase.js`) restent en JS
+  classique. Backend : `patch_note_votes`/`patch_note_comments`/`patch_note_comment_reports`
+  (RPC-only, filtre anti-insulte serveur via l'extension `unaccent`, jamais contournable comme un
+  filtre client seul) — voir `supabase/migrations/20260710140000_patch_notes_votes_comments.sql`.
 
 Attention : ce dossier ne contient PAS les modes de comportement de l'IA (combat/farm) —
 ils vivent dans `combat/ai-mode.js` malgré une confusion historique (ils avaient atterri ici

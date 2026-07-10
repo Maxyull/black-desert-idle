@@ -1635,6 +1635,32 @@
   .patchNavBtn:disabled { opacity:.35; cursor:default; }
   .patchNavPos { font-size:10.5px; color:var(--ink-dim); }
 
+  /* recherche/filtre/controverse (2026-07-10, port de patch-notes-system.jsx) -- palette officielle
+     CLAUDE.md §29 (fonds #0e1422/#131a29, bordures #263049/#3a4665, or #d4a955) plutôt que les
+     tokens --panel-2/--gold du reste du panneau Info, pour rester fidèle à la maquette fournie. */
+  .patchToolbar { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:0 0 10px; }
+  .patchSearchBox { flex:1 1 160px; min-width:120px; }
+  .patchSearchBox input {
+    width:100%; box-sizing:border-box; background:#0e1422; border:1px solid #263049; color:#c7d0e6;
+    border-radius:6px; padding:6px 10px; font-size:11.5px; outline:none;
+  }
+  .patchSearchBox input:focus { border-color:#3a4665; }
+  .patchCatChips { display:flex; flex-wrap:wrap; gap:4px; }
+  .patchCatChip {
+    display:inline-flex; align-items:center; gap:3px; font-size:9.5px; font-weight:600;
+    padding:3px 8px; border-radius:999px; cursor:pointer; background:transparent;
+    border:1px solid #263049; color:#5c6785; transition:border-color .15s,color .15s;
+  }
+  .patchCatChip.active { border-color:var(--cat-color,#d4a955); color:var(--cat-color,#d4a955); background:color-mix(in srgb, var(--cat-color,#d4a955) 13%, transparent); }
+  .patchCatChipClear { border-color:#263049; color:#5c6785; }
+  .patchControversyBtn {
+    width:auto; display:flex; align-items:center; gap:4px; font-size:10px; font-weight:600;
+    padding:4px 9px; border-radius:6px; cursor:pointer; background:transparent;
+    border:1px solid #263049; color:#5c6785;
+  }
+  .patchControversyBtn.active { border-color:#c0503c; color:#e08070; background:rgba(192,80,60,.13); }
+  .patchEntryEngage { min-height:20px; }
+
   #infoBody .patchEntry {
     border-left:2px solid #2c2a33; padding:12px 14px 12px 16px; margin-bottom:10px; position:relative;
     background:rgba(255,255,255,.02); border-radius:0 6px 6px 0; transition:background .15s;

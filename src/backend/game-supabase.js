@@ -2136,9 +2136,15 @@ function renderPatchEntryHtml(p, absIdx) {
               // bouton avant/après (2026-07-05, demande explicite) : ouvre un comparateur d'images
               // quand la ligne référence des captures d'écran (voir line.img.before/after)
               const imgBtn = line.img ? `<button class="patchImgBtn" data-before="${escapeHtml(line.img.before)}" data-after="${escapeHtml(line.img.after)}" title="${LANG==='fr'?'Voir avant/après':'See before/after'}">🖼️</button>` : '';
-              return `<li class="${line.removed?'patchLineRemoved':''}">
+              // entry_id STABLE pour le vote/commentaire (2026-07-10) : position de cette ligne dans
+              // le tableau CANONIQUE p[LANG] (indépendant du regroupement par catégorie ci-dessus,
+              // qui réordonne l'affichage mais pas le tableau source) -- voir
+              // src/progression/patch-notes-engage-react.js, 4e exception React (CLAUDE.md §7).
+              const eid = `${p.v}-${p[LANG].indexOf(line)}`;
+              return `<li class="${line.removed?'patchLineRemoved':''}" data-eid="${eid}" data-cat="${g.key}">
                 <div class="patchLineMain"><span class="patchLineText">${line.tx}${removedTag}</span>${imgBtn}</div>
                 ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
+                <div class="patchEntryEngage" data-eid="${eid}"></div>
               </li>`;
             }).join('')}</ul>
           </div>`;
@@ -2165,6 +2171,19 @@ function renderPatchNotesPanel() {
     `<span id="patchUnreadBannerNum">${unreadNow}</span> ` +
     `<span>${LANG==='fr'?'note(s) de version non lue(s) — clique pour remonter':'unread patch note(s) — click to jump to newest'}</span></div>`;
 
+  // recherche + filtre par catégorie + vue controverse (2026-07-10, demande explicite, port de
+  // patch-notes-system.jsx) -- opère sur la page COURANTE uniquement (pas de re-rendu à plat de
+  // tout l'historique), voir applyPatchFilters()/toggleControversyView() plus bas. Vue controverse
+  // réservée admin/modérateur (recommandation explicite du pipeline doc §9 : "réservée à toi, pas
+  // un simple toggle visible de tous les joueurs").
+  const isStaff = (typeof isAdmin === 'function' && isAdmin()) || (typeof myIsMod !== 'undefined' && myIsMod);
+  const toolbarHtml = `<div class="patchToolbar">
+      <div class="patchSearchBox"><input type="text" id="patchSearchInput" placeholder="${LANG==='fr'?'Rechercher dans cette page':'Search this page'}" value="${escapeHtml(patchSearchQuery)}"></div>
+      <div class="patchCatChips">${Object.entries(PATCH_CATS).map(([key,cat]) => `<button class="patchCatChip${patchCatFilter===key?' active':''}" data-cat="${key}" style="--cat-color:${cat.color}">${cat.icon} ${cat[LANG]}</button>`).join('')}
+        ${patchCatFilter ? `<button class="patchCatChip patchCatChipClear" id="patchCatClear">✕ ${LANG==='fr'?'Effacer':'Clear'}</button>` : ''}</div>
+      ${isStaff ? `<button id="patchControversyBtn" class="patchControversyBtn${patchControversyView?' active':''}" title="${LANG==='fr'?'Trier les lignes les plus contestées en premier':'Sort most contested lines first'}">📉 ${LANG==='fr'?'Controverse':'Controversy'}</button>` : ''}
+    </div>`;
+
   const navHtml = `<div class="patchNavRow">
       <button id="patchNavUp" class="patchNavBtn"${pageIdx===0?' disabled':''} title="${LANG==='fr'?'Notes plus récentes':'Newer notes'}">▲ ${LANG==='fr'?'Plus récent':'Newer'}</button>
       <span class="patchNavPos">${page.start+1}–${page.start+entries.length} / ${PATCH_NOTES.length}</span>
@@ -2172,7 +2191,7 @@ function renderPatchNotesPanel() {
     </div>`;
 
   const entriesHtml = entries.map((p,k) => renderPatchEntryHtml(p, page.start+k)).join('');
-  openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', unreadBannerHtml + navHtml + entriesHtml);
+  openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', unreadBannerHtml + toolbarHtml + navHtml + entriesHtml);
 
   // toute la page affichée est immédiatement marquée "vue" (plus besoin de défiler dessus,
   // contrairement à l'ancien système) -- le tag "NEW" par entrée reste basé sur readPatches
@@ -2193,8 +2212,68 @@ function renderPatchNotesPanel() {
   $a('infoBody').querySelectorAll('.patchImgBtn').forEach(btn => {
     btn.onclick = () => openPatchImgCompare(btn.dataset.before, btn.dataset.after);
   });
+
+  // recherche/filtre/controverse (2026-07-10) : câblage + application immédiate de l'état courant
+  const searchInput = $a('patchSearchInput');
+  if (searchInput) {
+    searchInput.oninput = () => { patchSearchQuery = searchInput.value; applyPatchFilters(); };
+    searchInput.focus(); searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length);
+  }
+  $a('infoBody').querySelectorAll('.patchCatChip:not(.patchCatChipClear)').forEach(chip => {
+    chip.onclick = () => { patchCatFilter = patchCatFilter === chip.dataset.cat ? null : chip.dataset.cat; renderPatchNotesPanel(); };
+  });
+  const catClearBtn = $a('patchCatClear');
+  if (catClearBtn) catClearBtn.onclick = () => { patchCatFilter = null; renderPatchNotesPanel(); };
+  const controversyBtn = $a('patchControversyBtn');
+  if (controversyBtn) controversyBtn.onclick = () => { patchControversyView = !patchControversyView; renderPatchNotesPanel(); };
+  applyPatchFilters();
+
+  // karma/commentaires/modération (2026-07-10, port de patch-notes-system.jsx + pipeline.md,
+  // demande explicite) -- widget React monté par ligne (4e exception, voir CLAUDE.md §7 et
+  // src/progression/patch-notes-engage-react.js) : un seul appel batché pour le karma + mes votes
+  // de TOUTE la page, puis un mini-root React par `.patchEntryEngage[data-eid]`.
+  if (typeof mountPatchEngageWidgets === 'function') mountPatchEngageWidgets();
+  if (patchControversyView && typeof applyPatchControversySort === 'function') applyPatchControversySort();
 }
 $a('btnPatch').onclick = renderPatchNotesPanel;
+// état de recherche/filtre/controverse -- volontairement NON persisté (réinitialisé à chaque
+// ouverture du panneau, contrairement à patchPageStart), pour ne jamais surprendre le joueur avec
+// un filtre oublié d'une session précédente qui masquerait silencieusement des notes.
+let patchSearchQuery = '';
+let patchCatFilter = null;
+let patchControversyView = false;
+// filtre texte + catégorie sur la page COURANTE uniquement (pas de re-rendu à plat de tout
+// l'historique -- recherche volontairement scopée à la page affichée, le joueur navigue avec
+// Plus récent/Plus ancien pour chercher au-delà, voir renderPatchNotesPanel).
+function applyPatchFilters() {
+  const q = (patchSearchQuery || '').toLowerCase().trim();
+  document.querySelectorAll('#infoBody .patchEntry').forEach(entryEl => {
+    let entryHasMatch = false;
+    entryEl.querySelectorAll('.patchGroup').forEach(groupEl => {
+      let groupHasMatch = false;
+      groupEl.querySelectorAll('li[data-eid]').forEach(li => {
+        const matchesCat = !patchCatFilter || li.dataset.cat === patchCatFilter;
+        const matchesQuery = !q || li.textContent.toLowerCase().includes(q);
+        const show = matchesCat && matchesQuery;
+        li.style.display = show ? '' : 'none';
+        if (show) groupHasMatch = true;
+      });
+      groupEl.style.display = groupHasMatch ? '' : 'none';
+      if (groupHasMatch) entryHasMatch = true;
+    });
+    entryEl.style.display = entryHasMatch ? '' : 'none';
+  });
+}
+// vue controverse (admin/modérateur uniquement, voir isStaff dans renderPatchNotesPanel) : trie
+// les lignes de CHAQUE groupe par karma croissant (les plus mal reçues en premier) -- réordonne le
+// DOM (pas juste un style), le karma vient du cache alimenté par mountPatchEngageWidgets().
+function applyPatchControversySort() {
+  document.querySelectorAll('#infoBody .patchGroup ul').forEach(ul => {
+    const lis = [...ul.querySelectorAll('li[data-eid]')];
+    lis.sort((a,b) => (patchKarmaCache[a.dataset.eid]||0) - (patchKarmaCache[b.dataset.eid]||0));
+    lis.forEach(li => ul.appendChild(li));
+  });
+}
 function openPatchImgCompare(before, after) {
   $a('patchImgLblBefore').textContent = LANG==='fr' ? 'Avant' : 'Before';
   $a('patchImgLblAfter').textContent = LANG==='fr' ? 'Après' : 'After';

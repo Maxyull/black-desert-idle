@@ -68,6 +68,7 @@ const ADMIN_SECTIONS = [
     { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:renderAdminOnboarding },
     { id:'companions', icon:'🐾', label:{fr:'Compagnons',en:'Companions'}, render:renderAdminCompanions },
     { id:'patchnotes', icon:'📜', label:{fr:'Notes de version → Discord',en:'Patch notes → Discord'}, render:renderAdminPatchNotesDiscord },
+    { id:'patchnotesmod', icon:'🚩', label:{fr:'Notes de version : modération',en:'Patch notes: moderation'}, render:renderAdminPatchNotesModeration },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
@@ -1279,6 +1280,53 @@ function renderAdminPatchNotesDiscord(el) {
     const ok = await publishPatchNoteToDiscord(version);
     floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Note publiée sur Discord ✓':'Note published to Discord ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:ok, hurt:!ok });
   };
+}
+
+// ---------- section "Contenu → Notes de version : modération" (2026-07-10, demande explicite,
+// port de patch-notes-pipeline.md §12-13) -- commentaires retirés (restaurables) + signalements en
+// attente sur les commentaires encore visibles. Réservé admin/modérateur côté serveur (même gate
+// que remove_patch_note_comment, voir la migration) -- ce panneau n'est de toute façon accessible
+// que via le panneau admin lui-même (isAdmin() déjà requis pour l'ouvrir).
+function renderAdminPatchNotesModeration(el) {
+  el.innerHTML = `
+    <div class="admSection">
+      <div class="admSectionTitle">🚩 ${LANG==='fr'?'Signalements en attente':'Pending reports'}</div>
+      <div id="admPatchReports"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+    </div>
+    <div class="admSection">
+      <div class="admSectionTitle">🗑️ ${LANG==='fr'?'Commentaires retirés (restaurables)':'Removed comments (restorable)'}</div>
+      <div id="admPatchRemoved"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+    </div>`;
+  refreshAdminPatchNotesModeration();
+}
+async function refreshAdminPatchNotesModeration() {
+  if (!sb) return;
+  const reportsEl = $a('admPatchReports'), removedEl = $a('admPatchRemoved');
+  if (!reportsEl || !removedEl) return;
+
+  const { data: reports, error: reportsErr } = await sb.rpc('admin_patch_note_pending_reports');
+  reportsEl.innerHTML = reportsErr ? `<div class="admHint">${escapeHtml(reportsErr.message)}</div>`
+    : (!reports || reports.length === 0) ? `<div class="admEmpty">${LANG==='fr'?'Aucun signalement en attente.':'No pending reports.'}</div>`
+    : reports.map(r => `<div class="achRow">
+        <div class="achInfo"><div class="achName">${escapeHtml(r.author)} — ${escapeHtml(r.entry_id)}</div>
+        <div class="achDesc">${escapeHtml(r.text)}</div></div>
+        <div class="achReward">🚩 ${r.report_count}</div>
+      </div>`).join('');
+
+  const { data: removed, error: removedErr } = await sb.rpc('admin_list_removed_patch_note_comments');
+  removedEl.innerHTML = removedErr ? `<div class="admHint">${escapeHtml(removedErr.message)}</div>`
+    : (!removed || removed.length === 0) ? `<div class="admEmpty">${LANG==='fr'?'Aucun commentaire retiré.':'No removed comments.'}</div>`
+    : removed.map(c => `<div class="achRow" data-cid="${c.id}">
+        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)}</div>
+        <div class="achDesc">${escapeHtml(c.text)}</div></div>
+        <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${LANG==='fr'?'Restaurer':'Restore'}</button></div>
+      </div>`).join('');
+  removedEl.querySelectorAll('.admPatchRestoreBtn').forEach(btn => {
+    btn.onclick = async () => {
+      await sb.rpc('restore_patch_note_comment', { p_comment_id: parseInt(btn.dataset.cid, 10) });
+      refreshAdminPatchNotesModeration();
+    };
+  });
 }
 
 // ---------- section "Compte (Moi)" ----------
