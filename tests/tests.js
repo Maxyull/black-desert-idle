@@ -2848,6 +2848,25 @@
       awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
     }
   }
+  // MAX_STACK relevé de 9999 à 999999 (2026-07-10, rapporté explicitement : "pourquoi on peut se
+  // retrouver avec plusieurs stack d'une meme ressources") -- invAdd() ne fusionne dans un stack
+  // existant que si qty < MAX_STACK ; un stack déjà à l'ancien plafond (9999) doit désormais
+  // continuer à absorber de nouveaux ramassages du même nom plutôt que de créer un 2e stack.
+  function testInvAddMergesPastOldMaxStackThreshold() {
+    if (typeof invAdd !== 'function') return;
+    const savedInv = INV.slice();
+    try {
+      for (let i = 0; i < INV_SIZE; i++) INV[i] = null;
+      INV[0] = { key:'mat_test', name:'Test Stack Regression', kind:'material', icon:'✦', color:'#fff', qty:9999, stackable:true, weight:0.1, val:1 };
+      const ok = invAdd({ key:'mat_test', name:'Test Stack Regression', kind:'material', icon:'✦', color:'#fff', qty:50, stackable:true, weight:0.1, val:1 });
+      assert('invAdd() fusionne dans le stack existant même au-delà de l\'ancien plafond 9999', ok === true);
+      const slots = INV.filter(s => s && s.name === 'Test Stack Regression');
+      assert('Un SEUL stack pour cette ressource, pas 2', slots.length === 1, `slots=${slots.length}`);
+      assert('La quantité fusionnée est correcte', slots[0] && slots[0].qty === 10049, `qty=${slots[0] && slots[0].qty}`);
+    } finally {
+      for (let i = 0; i < INV_SIZE; i++) INV[i] = savedInv[i];
+    }
+  }
   function testCheckPlayerSessionNeverLocksOnNetworkFailure() {
     if (typeof checkPlayerSession !== 'function') return;
     const src = checkPlayerSession.toString();
@@ -3010,6 +3029,7 @@
     testCheckPlayerSessionNeverLocksOnNetworkFailure();
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
+    testInvAddMergesPastOldMaxStackThreshold();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

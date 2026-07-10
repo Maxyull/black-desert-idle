@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V356', d:'20/07/2026 15:30', name:{fr:'Plafond de stack des matériaux relevé', en:'Material stack cap raised'}, fr:[
+      {t:'change', tx:'Le plafond d\'un stack de matériau/craft passe de 9 999 à 999 999 — un stack plein ne se scinde plus en plusieurs cases sur une longue session de farm.'},
+    ], en:[
+      {t:'change', tx:'The material/craft stack cap goes from 9,999 to 999,999 — a full stack no longer splits into multiple bag slots over a long farming session.'},
+    ] },
   { v:'V355', d:'20/07/2026 15:00', name:{fr:'Message de retour de loot en grand', en:'Loot-return message, bigger'}, fr:[
       {t:'change', tx:'Le résumé du loot au retour d\'absence s\'affiche maintenant dans une vraie fenêtre plein écran, plus visible qu\'avant.'},
     ], en:[

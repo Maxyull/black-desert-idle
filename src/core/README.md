@@ -27,3 +27,12 @@ message de retour se met dans un modal en plein ecran")** : d'abord corrigé ave
 `showResetNotice()`/`#resetNoticeOverlay` (`progression/notifications-quests.js`), déjà en place
 pour les annonces importantes (ex: reset de compte) plutôt que dupliquer une nouvelle modale.
 Test : `testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets` (`tests/tests.js`).
+
+**`MAX_STACK` relevé 9999 → 999999 (2026-07-10, rapporté explicitement : "pourquoi on peut se
+retrouver avec plusieurs stack d'une meme ressources")** : `invAdd()` ne fusionne dans un stack
+existant que si `qty < MAX_STACK` — un stack plein forçait la création d'un nouveau stack séparé
+pour le même nom, consommant des cases du sac (192 max) sans raison sur une session de farm
+longue. Contrairement au Trésor de Velia (`TREASURE_STACK_CAP`/`enforceTreasureStackCap`,
+`progression/treasure-craft.js`, qui auto-vend l'excédent), les matériaux/craft normaux n'ont pas
+de filet équivalent — relever le plafond plutôt qu'ajouter un mécanisme de vente auto (décision
+explicite). Test : `testInvAddMergesPastOldMaxStackThreshold` (`tests/tests.js`).

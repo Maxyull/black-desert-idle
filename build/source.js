@@ -696,7 +696,8 @@ function showAwayLootSummaryIfAny() {
 
 const INV_SIZE = 192;
 const INV = new Array(INV_SIZE).fill(null);   
-const MAX_STACK = 9999;
+
+const MAX_STACK = 999999;
 
 const COMPENDIUM_BAG = new Array(INV_SIZE).fill(null);
 function compendiumBagHasName(name) { return COMPENDIUM_BAG.some(s => s && s.name === name); }

@@ -231,7 +231,14 @@ function showAwayLootSummaryIfAny() {
 // ==================== INVENTAIRE (192 slots) & ÉQUIPEMENT ====================
 const INV_SIZE = 192;
 const INV = new Array(INV_SIZE).fill(null);   // chaque slot : null | { key, name, kind, icon, color, qty, unit, val, weight, ap, dp }
-const MAX_STACK = 9999;
+// relevé de 9999 à 999999 (2026-07-10, rapporté explicitement : "pourquoi on peut se retrouver
+// avec plusieurs stack d'une meme ressources") -- invAdd() (plus bas) ne fusionne dans un stack
+// existant que si qty < MAX_STACK ; contrairement au Trésor de Velia (TREASURE_STACK_CAP +
+// enforceTreasureStackCap, treasure-craft.js, qui auto-vend l'excédent), les matériaux/craft
+// normaux (Pierre de Novice, Fragment de mémoire...) n'ont aucun filet — sur une session de farm
+// longue, un stack plein forçait la création d'un 2e/3e stack séparé, consommant des cases du sac
+// (192 max) sans raison. fmt() (plus bas) affiche déjà correctement les grands nombres (suffixe k/M).
+const MAX_STACK = 999999;
 // Sac "Compendium" (2026-07-08, demande explicite) : même taille que le sac principal (192 cases).
 // Quand "Vendre" s'apprête à vendre une pièce d'équipement/bijou dont ce TYPE n'a JAMAIS atteint
 // PEN (voir S.penMastery), un exemplaire est déposé ici au lieu d'être vendu — pour ne jamais perdre
