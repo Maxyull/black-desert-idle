@@ -683,3 +683,61 @@ test('3D viewer tab loads Three.js locally (no CDN) and creates a WebGL canvas w
   // jamais d'exception JS non gérée, même si le chargement réseau du .glb échoue (404)
   expect(pageErrors).toEqual([]);
 });
+
+// Intégration réelle du 1er modèle GLB (2026-07-10, demande explicite : "envoyer le premier test
+// .glb") -- le bouton "🧊 Voir en 3D" (panneau du pet déployé sur le terrain,
+// companions.sections.js) ne doit apparaître QUE pour un pet dont companionModelUrlFor() renvoie
+// une URL réelle (COMPANION_MODEL_MAP, companions.viewer3d.js) -- seul "Black Mask Cat" T5 est
+// câblé pour l'instant (seul fichier uploadé dans le bucket). Vérifie l'affichage conditionnel ET
+// que la modale réutilise bien le même pipeline Three.js déjà validé par l'écran de test.
+test('"Voir en 3D" button only appears for a pet with an uploaded model, and opens a working Three.js modal', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Sections' }).click();
+
+  const noModelState = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.name === 'Black Mask Cat');
+    const secIdx = SECTIONS.findIndex(s => s.id === cat.sec);
+    const noModelPet = { id: petId++, cat: PET_CATALOG.find(c => c.name !== 'Black Mask Cat' && c.sec === cat.sec) || PET_CATALOG[0], rar: 1, stats: [5,4,3,0,0], hunger: 100, terrain: true, tier: 5, tierXp: 0, tierMult: 1 };
+    PETS.push(noModelPet);
+    activeSecIdx = secIdx;
+    renderSecNav(); renderSecDetail();
+    // .btn-ghost existe déjà ailleurs dans ce panneau (boutons Caphras, renderCaphrasWorkshop) —
+    // cibler le texte exact du bouton 3D, pas juste la classe
+    return { hasButton: Array.from(document.querySelectorAll('.terrain-slot.occ button')).some(b => b.textContent.includes('Voir en 3D')) };
+  });
+  expect(noModelState.hasButton).toBe(false); // pas de bouton pour un pet sans modèle uploadé
+
+  const withModelState = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.name === 'Black Mask Cat');
+    PETS.forEach(p => { if (p.cat.sec === cat.sec) p.terrain = false; }); // libère le slot terrain de la section
+    const modelPet = { id: petId++, cat, rar: 0, stats: [5,4,3,0,0], hunger: 100, terrain: true, tier: 5, tierXp: 0, tierMult: 1 };
+    PETS.push(modelPet);
+    renderSecDetail();
+    return { hasButton: Array.from(document.querySelectorAll('.terrain-slot.occ button')).some(b => b.textContent.includes('Voir en 3D')), petId: modelPet.id };
+  });
+  expect(withModelState.hasButton).toBe(true);
+
+  await frame.locator('.terrain-slot.occ button', { hasText: 'Voir en 3D' }).click();
+  await expect(frame.locator('#pet3d-modal')).toHaveClass(/open/);
+  await expect(frame.locator('#pet3d-modal-title')).toContainText('Black Mask Cat');
+
+  await expect
+    .poll(() => frame.locator('body').evaluate(() => typeof window.THREE), { timeout: 15_000 })
+    .toBe('object');
+  await expect(frame.locator('#pet3d-canvas-wrap canvas')).toHaveCount(1, { timeout: 10_000 });
+  await expect
+    .poll(() => frame.locator('#pet3d-status').textContent(), { timeout: 15_000 })
+    .not.toBe('En attente…');
+
+  await frame.locator('#pet3d-modal .mcl').click();
+  await expect(frame.locator('#pet3d-modal')).not.toHaveClass(/open/);
+
+  expect(pageErrors).toEqual([]);
+});

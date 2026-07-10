@@ -388,6 +388,20 @@
 <div class="modal-bg" id="hatch-modal">
   <div class="modal"><button class="mcl" onclick="CM('hatch-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px">✨ Familier éclos !</div><div id="hatch-body"></div></div>
 </div>
+<!-- modale "Voir en 3D" (2026-07-10, "envoyer le premier test .glb") : réutilise le pipeline
+     Three.js déjà validé par l'écran de test (p10), câblée sur companionModelUrlFor() /
+     open3dPreviewModal() (companions.viewer3d.js) -- ouverte depuis le panneau du pet déployé sur
+     le terrain (companions.sections.js), seulement si un modèle existe réellement pour ce pet/tier. -->
+<div class="modal-bg" id="pet3d-modal">
+  <div class="modal"><button class="mcl" onclick="close3dPreviewModal()">✕</button>
+    <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:10px" id="pet3d-modal-title">🧊 Aperçu 3D</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+      <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">Statut</span>
+      <span id="pet3d-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">En attente…</span>
+    </div>
+    <div id="pet3d-canvas-wrap" style="width:420px;max-width:80vw;height:360px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden"></div>
+  </div>
+</div>
 <div class="modal-bg" id="fusion-modal">
   <div class="modal"><button class="mcl" onclick="CM('fusion-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="fusion-modal-title">⚗️ Fusion</div><div id="fusion-modal-body"></div></div>
 </div>
@@ -403,7 +417,7 @@
 <script src="companions.roster.js?v=6"></script>
 <script src="companions.hatch.js?v=10"></script>
 <script src="companions.pet-panel.js?v=6"></script>
-<script src="companions.sections.js?v=6"></script>
+<script src="companions.sections.js?v=7"></script>
 <script src="companions.collection.js?v=8"></script>
 <script src="companions.fusion.js?v=8"></script>
 <script src="companions.feed.js?v=6"></script>
@@ -431,7 +445,7 @@
      voir l'event 'three-ready' géré dans ce fichier). Ordre non strictement requis vis-à-vis des
      autres scripts classiques (aucune lecture immédiate d'un global déclaré ailleurs), placé ici
      par lisibilité, juste avant main.js. -->
-<script src="companions.viewer3d.js?v=1"></script>
+<script src="companions.viewer3d.js?v=2"></script>
 <script src="companions.main.js?v=6"></script>
 </body>
 </html>

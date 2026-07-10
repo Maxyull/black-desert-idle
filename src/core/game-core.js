@@ -167,6 +167,7 @@ function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
   if (delta > 0) S.silverEarned += delta;
+  if (delta > 0 && document.hidden) awaySilverGained += delta;
   // "silver par heure" (2026-07-12, demande explicite : "compté exclusivement par les silver
   // recolté grace au token vendu") -- S.silverEarned (au-dessus) reste un compteur GLOBAL À VIE
   // (toutes sources : quêtes, succès, boss, marché...), utilisé pour les succès/classements. Le
@@ -177,11 +178,43 @@ function addSilver(delta, category, note) {
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }
 // suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
-function trackLoot(name) { S.lootByItem[name] = (S.lootByItem[name]||0) + 1; }
+function trackLoot(name) {
+  S.lootByItem[name] = (S.lootByItem[name]||0) + 1;
+  if (document.hidden) awayLootCounts[name] = (awayLootCounts[name]||0) + 1;
+}
 function bestFarmedItem() {
   let best = null, bestN = 0;
   for (const name in S.lootByItem) if (S.lootByItem[name] > bestN) { best = name; bestN = S.lootByItem[name]; }
   return best ? { name: best, count: bestN } : null;
+}
+
+// Résumé du loot au retour (2026-07-10, demande explicite : "Afficher un résumé du loot, au
+// retour") -- le jeu continue de simuler farm/loot pendant que l'onglet est en arrière-plan
+// (setInterval de secours, voir plus bas dans ce fichier — décision V317/V-2026-07-15), mais
+// jusqu'ici rien ne récapitulait ce qui s'était passé pendant l'absence. awaySilverGained/
+// awayLootCounts accumulent UNIQUEMENT pendant document.hidden (remis à 0 à chaque nouvelle
+// mise en arrière-plan), affichés dans le centre de notifications dès que l'onglet redevient
+// visible. `document.hidden` (pas isOffline) est le bon signal ici : la simulation continue
+// même sans coupure réseau, "au retour" = retour sur l'onglet, pas forcément retour du réseau.
+let awaySilverGained = 0;
+let awayLootCounts = {};
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { awaySilverGained = 0; awayLootCounts = {}; }
+  else showAwayLootSummaryIfAny();
+});
+function showAwayLootSummaryIfAny() {
+  if (awaySilverGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
+  const itemsText = Object.entries(awayLootCounts)
+    .sort((a,b) => b[1]-a[1])
+    .slice(0, 6)
+    .map(([n,q]) => `${q}× ${n}`)
+    .join(', ');
+  const silverTxt = awaySilverGained > 0 ? `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver` : '';
+  const msg = [silverTxt, itemsText].filter(Boolean).join(' — ');
+  if (typeof pushNotif === 'function') {
+    pushNotif('🎁', LANG==='fr'?'Résumé du loot (absence)':'Loot summary (away)', msg, 'info');
+  }
+  awaySilverGained = 0; awayLootCounts = {};
 }
 
 // Icones SVG (svgIcon, shadeHex, ICO_MAT_*, ICO_CRON_STONE, CRON_STONE, JEWEL_TIER_IDX,

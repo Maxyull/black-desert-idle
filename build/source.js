@@ -656,16 +656,41 @@ function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
   if (delta > 0) S.silverEarned += delta;
+  if (delta > 0 && document.hidden) awaySilverGained += delta;
   
   if (delta > 0 && category === 'loot') S.tokenSilverEarned = (S.tokenSilverEarned||0) + delta;
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }
 
-function trackLoot(name) { S.lootByItem[name] = (S.lootByItem[name]||0) + 1; }
+function trackLoot(name) {
+  S.lootByItem[name] = (S.lootByItem[name]||0) + 1;
+  if (document.hidden) awayLootCounts[name] = (awayLootCounts[name]||0) + 1;
+}
 function bestFarmedItem() {
   let best = null, bestN = 0;
   for (const name in S.lootByItem) if (S.lootByItem[name] > bestN) { best = name; bestN = S.lootByItem[name]; }
   return best ? { name: best, count: bestN } : null;
+}
+
+let awaySilverGained = 0;
+let awayLootCounts = {};
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { awaySilverGained = 0; awayLootCounts = {}; }
+  else showAwayLootSummaryIfAny();
+});
+function showAwayLootSummaryIfAny() {
+  if (awaySilverGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
+  const itemsText = Object.entries(awayLootCounts)
+    .sort((a,b) => b[1]-a[1])
+    .slice(0, 6)
+    .map(([n,q]) => `${q}× ${n}`)
+    .join(', ');
+  const silverTxt = awaySilverGained > 0 ? `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver` : '';
+  const msg = [silverTxt, itemsText].filter(Boolean).join(' — ');
+  if (typeof pushNotif === 'function') {
+    pushNotif('🎁', LANG==='fr'?'Résumé du loot (absence)':'Loot summary (away)', msg, 'info');
+  }
+  awaySilverGained = 0; awayLootCounts = {};
 }
 
 const INV_SIZE = 192;

@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V353', d:'20/07/2026 14:00', name:{fr:'Résumé du loot au retour + 1er aperçu 3D compagnon', en:'Loot summary on return + 1st companion 3D preview'}, fr:[
+      {t:'new', tx:'Quand tu reviens sur l\'onglet du jeu après une absence, un résumé du loot ramassé pendant ce temps s\'affiche dans les notifications.'},
+      {t:'new', sub:'compagnon', tx:'Premier aperçu 3D réel d\'un familier : bouton "Voir en 3D" sur le Chat masqué noir déployé (T5), pour tester le rendu en conditions réelles.'},
+    ], en:[
+      {t:'new', tx:'When you come back to the game tab after being away, a summary of the loot gathered during that time shows up in notifications.'},
+      {t:'new', sub:'compagnon', tx:'First real 3D preview of a companion: "View in 3D" button on the deployed Black Mask Cat (T5), to test the render under real conditions.'},
+    ] },
   { v:'V352', d:'20/07/2026 13:00', name:{fr:'Un seul appareil à la fois + mode hors ligne', en:'One device at a time + offline mode'}, fr:[
       {t:'new', tx:'Ton compte ne peut plus jouer sur 2 onglets/navigateurs/appareils en même temps : la dernière connexion prend la main, les autres se mettent en pause avec un bouton pour reprendre.'},
       {t:'new', tx:'Mode hors ligne : si ta connexion coupe en pleine partie, le jeu continue et ta progression est sauvegardée localement, puis synchronisée automatiquement dès que le réseau revient.'},
