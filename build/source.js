@@ -7878,6 +7878,39 @@ async function linkDiscordAccount() {
   if (error) alert('Erreur : ' + error.message);
 }
 
+async function doSignInGoogle() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href } });
+}
+async function doSignInGithub() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: location.href } });
+}
+
+async function doSignInTwitter() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'twitter', options: { redirectTo: location.href } });
+}
+
+async function linkGoogleAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+async function linkGithubAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'github', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+async function linkTwitterAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'twitter', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+function providerIdentity(user, provider) {
+  return user?.identities?.find(i => i.provider === provider) || null;
+}
+
 function discordIdentity(user) {
   return user?.identities?.find(i => i.provider === 'discord') || null;
 }
@@ -7985,15 +8018,9 @@ async function refreshMyPseudo() {
 }
 
 async function startGuestOrShowAuth() {
-  if (!sb) { showAuthOverlay(false); updateUserBar(); return; }
-  try {
-    const { data, error } = await sb.auth.signInAnonymously();
-    if (error) throw error;
-    onAuthed(data.user);
-  } catch (e) {
-    showAuthOverlay(true);
-    authShow('');
-  }
+  if (!sb) { showAuthOverlay(false); updateUserBar(); return; } 
+  showAuthOverlay(true);
+  authShow('');
 }
 
 let tutorialAutoShown = false; 
@@ -8414,6 +8441,9 @@ async function openAccountPanel() {
   ];
 
   const hasDiscord = !!discordIdentity(currentUser);
+  const hasGoogle = !!providerIdentity(currentUser, 'google');
+  const hasGithub = !!providerIdentity(currentUser, 'github');
+  const hasTwitter = !!providerIdentity(currentUser, 'twitter');
 
   const html = `
     <div class="admSummary">${LANG==='fr'?'Compte':'Account'} : <b>${currentUser.email || '—'}</b></div>
@@ -8430,6 +8460,21 @@ async function openAccountPanel() {
     ${hasDiscord
       ? `<p class="mHint">${LANG==='fr'?'✅ Compte Discord connecté.':'✅ Discord account connected.'}</p>`
       : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${LANG==='fr'?'Connecter Discord':'Connect Discord'}</button>`}
+
+    <h3>🔵 Google</h3>
+    ${hasGoogle
+      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Google connecté.':'✅ Google account connected.'}</p>`
+      : `<button id="btnLinkGoogle" class="googleBtn">🔵 ${LANG==='fr'?'Connecter Google':'Connect Google'}</button>`}
+
+    <h3>🐙 GitHub</h3>
+    ${hasGithub
+      ? `<p class="mHint">${LANG==='fr'?'✅ Compte GitHub connecté.':'✅ GitHub account connected.'}</p>`
+      : `<button id="btnLinkGithub" class="githubBtn">🐙 ${LANG==='fr'?'Connecter GitHub':'Connect GitHub'}</button>`}
+
+    <h3>🐦 Twitter/X</h3>
+    ${hasTwitter
+      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Twitter/X connecté.':'✅ Twitter/X account connected.'}</p>`
+      : `<button id="btnLinkTwitter" class="twitterBtn">🐦 ${LANG==='fr'?'Connecter Twitter/X':'Connect Twitter/X'}</button>`}
 
     <h3>${LANG==='fr'?'🎁 Parrainage':'🎁 Referrals'}</h3>
     <div id="refCodeBox">${code}</div>
@@ -8466,6 +8511,9 @@ async function openAccountPanel() {
     syncPlayerStats(); 
   };
   if (!hasDiscord) $a('btnLinkDiscord').onclick = linkDiscordAccount;
+  if (!hasGoogle) $a('btnLinkGoogle').onclick = linkGoogleAccount;
+  if (!hasGithub) $a('btnLinkGithub').onclick = linkGithubAccount;
+  if (!hasTwitter) $a('btnLinkTwitter').onclick = linkTwitterAccount;
   $a('btnCopyRefCode').onclick = async () => {
     try { await navigator.clipboard.writeText(code); } catch(e) {}
     $a('btnCopyRefCode').textContent = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
@@ -8501,6 +8549,9 @@ document.querySelectorAll('.authLangBtn').forEach(b => {
   };
 });
 $a('btnSignInDiscord').onclick = doSignInDiscord;
+$a('btnSignInGoogle').onclick = doSignInGoogle;
+$a('btnSignInGithub').onclick = doSignInGithub;
+$a('btnSignInTwitter').onclick = doSignInTwitter;
 $a('btnClearCacheAuth').onclick = clearGameCache;
 $a('btnLogout').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {
@@ -8558,6 +8609,9 @@ const I18N = {
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
   btnSignInDiscord: { fr:'🎮 Se connecter avec Discord', en:'🎮 Sign in with Discord' },
+  btnSignInGoogle: { fr:'🔵 Se connecter avec Google', en:'🔵 Sign in with Google' },
+  btnSignInGithub: { fr:'🐙 Se connecter avec GitHub', en:'🐙 Sign in with GitHub' },
+  btnSignInTwitter: { fr:'🐦 Se connecter avec Twitter/X', en:'🐦 Sign in with Twitter/X' },
   btnClearCacheAuth: { fr:'🧹 Vider le cache du jeu', en:'🧹 Clear game cache' },
   btnCodex: { fr:'📚 Codex', en:'📚 Codex' },
   tabCommon: { fr:'Marché commun', en:'Common Market' },
@@ -9394,11 +9448,11 @@ function canBanUuid(targetUuid, myUuid) {
 }
 
 const ADMIN_THEMES = [
-  { id:'gold',    label:{fr:'Or (jeu)',en:'Gold (game)'} },
-  { id:'emerald', label:{fr:'Émeraude',en:'Emerald'} },
-  { id:'ruby',    label:{fr:'Rubis',en:'Ruby'} },
-  { id:'royal',   label:{fr:'Bleu royal',en:'Royal blue'} },
-  { id:'violet',  label:{fr:'Violet',en:'Violet'} },
+  { id:'gold',    label:{fr:'Or (jeu)',en:'Gold (game)'}, color:'#c9a55a' },
+  { id:'emerald', label:{fr:'Émeraude',en:'Emerald'}, color:'#34D399' },
+  { id:'ruby',    label:{fr:'Rubis',en:'Ruby'}, color:'#e05a6e' },
+  { id:'royal',   label:{fr:'Bleu royal',en:'Royal blue'}, color:'#5a8fc8' },
+  { id:'violet',  label:{fr:'Violet',en:'Violet'}, color:'#a578d8' },
 ];
 const ADMIN_THEME_STORAGE_KEY = 'bdiAdminTheme';
 
@@ -9438,7 +9492,6 @@ const ADMIN_SECTIONS = [
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
   ]},
   { cat:'system', label:{fr:'Système',en:'System'}, items:[
-    { id:'theme', icon:'🎨', label:{fr:'Palette',en:'Palette'}, render:renderAdminTheme },
     { id:'danger', icon:'⚙️', label:{fr:'Zone danger',en:'Danger zone'}, render:renderAdminServerDanger },
   ]},
 ];
@@ -9951,12 +10004,16 @@ function renderAdminDashboard(el) {
     sb.from('admin_wealth').select('silver'),
     sb.rpc('admin_list_bans'),
     sb.rpc('get_market_open'),
-  ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}]) => {
+    sb.from('admin_silver_ledger_by_category').select('*'),
+  ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}, {data: ledgerByCat}]) => {
     const online = (players||[]).filter(p => p.online).length;
     const totalSilver = (wealth||[]).reduce((a,r) => a + Number(r.silver||0), 0);
     const activeBans = (bans||[]).length;
     const open = marketOpen !== false;
-    el.innerHTML = `<div class="admStatTiles">
+    
+    const alerts = typeof computeEconAlerts === 'function' ? computeEconAlerts(ledgerByCat) : [];
+    const alertsHtml = typeof buildEconAlertsHtml === 'function' ? buildEconAlertsHtml(alerts) : '';
+    el.innerHTML = `${alertsHtml}<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">🟢 ${LANG==='fr'?'Joueurs en ligne':'Players online'}</div><div class="astVal">${online}</div></div>
         <div class="admStatTile"><div class="astLbl">🏦 ${LANG==='fr'?'Silver total en jeu':'Total silver in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
         <div class="admStatTile"><div class="astLbl">🚫 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div><div class="astVal">${activeBans}</div></div>
@@ -9966,12 +10023,27 @@ function renderAdminDashboard(el) {
   });
 }
 
+const PROVIDER_INFO = {
+  email: { icon:'📧', label:{fr:'Email',en:'Email'} },
+  discord: { icon:'🎮', label:{fr:'Discord',en:'Discord'} },
+  google: { icon:'🔵', label:{fr:'Google',en:'Google'} },
+  github: { icon:'🐙', label:{fr:'GitHub',en:'GitHub'} },
+  twitter: { icon:'🐦', label:{fr:'Twitter/X',en:'Twitter/X'} },
+  anonymous: { icon:'🎭', label:{fr:'Invité',en:'Guest'} },
+};
+function providerInfo(provider) {
+  return PROVIDER_INFO[provider] || { icon:'❔', label:{fr:provider||'?',en:provider||'?'} };
+}
+
 function renderAdminPlayerList(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   sb.rpc('admin_list_players').then(({data: playersList}) => {
-    const playersHtml = (playersList||[]).map(p => `
+    const playersHtml = (playersList||[]).map(p => {
+      const prov = providerInfo(p.provider);
+      return `
       <tr>
         <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
+        <td title="${escapeHtml(prov.label[LANG])}">${prov.icon}</td>
         <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td>
         <td title="${LANG==='fr'?'PA (Puissance d\'Attaque)':'AP (Attack Power)'}">${(p.ap||0).toFixed(1)}</td>
         <td title="${LANG==='fr'?'PD (Puissance de Défense)':'DP (Defense Power)'}">${(p.dp||0).toFixed(1)}</td>
@@ -9979,10 +10051,11 @@ function renderAdminPlayerList(el) {
         <td title="${LANG==='fr'?'Record personnel de kills/min (à vie)':'Personal kills/min record (lifetime)'}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
         <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
         <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${LANG==='fr'?'Ouvre l\'équipement porté et le sac complet (192 cases) de ce joueur, en lecture seule, dans une nouvelle fenêtre':'Opens this player\'s equipped gear and full bag (192 slots), read-only, in a new window'}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
-      </tr>`).join('') || `<tr><td colspan="10" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+      </tr>`;
+    }).join('') || `<tr><td colspan="11" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
     el.innerHTML = `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered`}</div>
       <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th title="${LANG==='fr'?'PA':'AP'}">PA</th><th title="${LANG==='fr'?'PD':'DP'}">PD</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
+        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th title="${LANG==='fr'?'Plateforme d\'inscription':'Signup platform'}">${LANG==='fr'?'Plate-forme':'Platform'}</th><th>Silver</th><th>GS</th><th title="${LANG==='fr'?'PA':'AP'}">PA</th><th title="${LANG==='fr'?'PD':'DP'}">PD</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>`;
     el.querySelectorAll('.admUuidBtn').forEach(btn => {
@@ -10144,24 +10217,21 @@ function renderAdminMyTests(el) {
   };
 }
 
-function renderAdminTheme(el) {
-  const currentTheme = getAdminTheme();
-  const themeIdx = Math.max(0, ADMIN_THEMES.findIndex(t => t.id === currentTheme));
-  el.innerHTML = `
-    <div class="admThemeSlider">
-      <label for="admThemeSlider">🎨 ${LANG==='fr'?'Palette':'Palette'}</label>
-      <input type="range" id="admThemeSlider" min="0" max="${ADMIN_THEMES.length-1}" step="1" value="${themeIdx}">
-      <span class="admThemeName" id="admThemeName">${ADMIN_THEMES[themeIdx].label[LANG]}</span>
-    </div>
-    <div class="admHint">${LANG==='fr'?'Change instantanément la couleur d\'accent de tout le panneau admin (thème persisté sur ce navigateur, aucun effet joueur).':'Instantly changes the accent color of the whole admin panel (theme persisted on this browser, no player effect).'}</div>`;
-  const themeSlider = $a('admThemeSlider');
-  themeSlider.oninput = () => {
-    const t = ADMIN_THEMES[Number(themeSlider.value)] || ADMIN_THEMES[0];
-    const root = $a('adminOverlay');
-    if (root) root.dataset.admTheme = t.id;
-    const nameEl = $a('admThemeName'); if (nameEl) nameEl.textContent = t.label[LANG];
-    setAdminTheme(t.id);
-  };
+function renderAdminThemeSwatchesHtml(currentTheme) {
+  return `<div class="admThemeSwatches" title="🎨 ${LANG==='fr'?'Palette':'Palette'}">${ADMIN_THEMES.map(t =>
+    `<button class="admSwatchBtn${t.id===currentTheme?' active':''}" data-theme="${t.id}" style="background:${t.color}" title="${escapeHtml(t.label[LANG])}"></button>`
+  ).join('')}</div>`;
+}
+function wireAdminThemeSwatches() {
+  $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(btn => {
+    btn.onclick = () => {
+      const t = ADMIN_THEMES.find(x => x.id === btn.dataset.theme) || ADMIN_THEMES[0];
+      const root = $a('adminOverlay');
+      if (root) root.dataset.admTheme = t.id;
+      $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(b => b.classList.toggle('active', b === btn));
+      setAdminTheme(t.id);
+    };
+  });
 }
 function renderAdminServerDanger(el) {
   el.innerHTML = `
@@ -10213,6 +10283,26 @@ function openAdminSection(cat, id) {
   }
   item.render(body);
 }
+
+function wireAdminSidebarSearch() {
+  const input = $a('admNavSearch'); if (!input) return;
+  input.oninput = () => {
+    const q = input.value.trim().toLowerCase();
+    const rows = [...$a('adminSidebar').children].filter(c => c.classList.contains('admNavCatLabel') || c.classList.contains('admNavItem'));
+    let lastCatLabel = null, catHasVisible = false;
+    rows.forEach(el => {
+      if (el.classList.contains('admNavCatLabel')) {
+        if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
+        lastCatLabel = el; catHasVisible = false;
+        return;
+      }
+      const match = !q || el.textContent.toLowerCase().includes(q);
+      el.style.display = match ? '' : 'none';
+      if (match) catHasVisible = true;
+    });
+    if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
+  };
+}
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
   const currentTheme = getAdminTheme();
@@ -10220,11 +10310,18 @@ async function openAdminPanel() {
   overlay.classList.add('admThemeRoot');
   overlay.dataset.admTheme = currentTheme;
   $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
-  $a('adminSidebar').innerHTML = `<div class="admNavHead"><span class="admNavTitle">🛠️ ${LANG==='fr'?'Admin':'Admin'}</span><button id="closeAdmin" title="${LANG==='fr'?'Fermer':'Close'}">✕</button></div>` + renderAdminSidebar('overview', 'dashboard');
+  $a('adminSidebar').innerHTML = `<div class="admNavHead">` +
+      `<span class="admNavTitle">🛠️ ${LANG==='fr'?'Admin':'Admin'}</span>` +
+      renderAdminThemeSwatchesHtml(currentTheme) +
+      `<button id="closeAdmin" title="${LANG==='fr'?'Fermer':'Close'}">✕</button></div>` +
+    `<input type="text" id="admNavSearch" class="admNavSearch" placeholder="🔍 ${LANG==='fr'?'Rechercher…':'Search…'}">` +
+    renderAdminSidebar('overview', 'dashboard');
   $a('closeAdmin').onclick = closeAdminPanel;
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
     el.onclick = () => openAdminSection(el.dataset.cat, el.dataset.id);
   });
+  wireAdminThemeSwatches();
+  wireAdminSidebarSearch();
   overlay.classList.add('open');
   openAdminSection('overview', 'dashboard');
 }
@@ -10358,6 +10455,29 @@ function buildBarSeriesSvg(points, color) {
     bars + `</svg>`;
 }
 
+const ECON_ALERT_MIN_GAINED = 500000;
+const ECON_ALERT_SINK_RATIO = 0.35;
+function computeEconAlerts(categoryRows) {
+  const rows = (categoryRows||[]).map(r => ({ gained:Number(r.total_gained||r.gained||0), spent:Number(r.total_spent||r.spent||0) }));
+  const totalGained = rows.reduce((a,r) => a+r.gained, 0);
+  const totalSpent = rows.reduce((a,r) => a+r.spent, 0);
+  const alerts = [];
+  if (totalGained >= ECON_ALERT_MIN_GAINED) {
+    const ratio = totalGained > 0 ? totalSpent / totalGained : 0;
+    if (ratio < ECON_ALERT_SINK_RATIO) {
+      const pct = Math.round(ratio*100);
+      alerts.push({ icon:'⚠️', text: LANG==='fr'
+        ? `Seulement ${pct}% du silver gagné est réellement dépensé (sorti du jeu) — trop peu de puits, risque d'inflation. Envisage d'ajouter un puits (boutique, coût, sink) rapidement.`
+        : `Only ${pct}% of gained silver is actually spent (sunk out of the game) — too few sinks, inflation risk. Consider adding a sink (shop, cost, drain) soon.` });
+    }
+  }
+  return alerts;
+}
+function buildEconAlertsHtml(alerts) {
+  if (!alerts.length) return '';
+  return `<div class="admAlerts">${alerts.map(a => `<div class="admAlertBox">${a.icon} ${escapeHtml(a.text)}</div>`).join('')}</div>`;
+}
+
 function renderAdminEconHealth(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   sb.from('admin_silver_ledger_by_category').select('*').then(({data}) => {
@@ -10367,7 +10487,8 @@ function renderAdminEconHealth(el) {
     const label = c => CATEGORY_LABEL[c] ? CATEGORY_LABEL[c][LANG] : c;
     const sources = rows.filter(r => r.gained > 0).map(r => ({ label:label(r.category), value:r.gained }));
     const sinks = rows.filter(r => r.spent > 0).map(r => ({ label:label(r.category), value:r.spent }));
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
+    el.innerHTML = `${buildEconAlertsHtml(computeEconAlerts(rows))}
+      <div class="admSummary">${LANG==='fr'
         ? 'Sources (gagné) vs puits (dépensé), par catégorie — même registre que "Silver", vue centrée sur l\'équilibre entrées/sorties. Catégories sous 4% du total fusionnées dans "Autres".'
         : 'Sources (gained) vs sinks (spent), by category — same ledger as "Silver", view centered on inflow/outflow balance. Categories under 4% of the total are merged into "Other".'}</div>
       <div class="admChartsRow">
@@ -10598,7 +10719,10 @@ function renderAdminMarketVolume(el) {
 
 function renderAdminSignups(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
-  sb.rpc('admin_signups_by_day', { p_days: 30 }).then(({data, error}) => {
+  Promise.all([
+    sb.rpc('admin_signups_by_day', { p_days: 30 }),
+    sb.rpc('admin_signups_by_provider'),
+  ]).then(([{data, error}, { data: byProvider, error: provError }]) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
     const total = rows.reduce((a,r) => a + Number(r.signups||0), 0);
@@ -10606,11 +10730,17 @@ function renderAdminSignups(el) {
     const chart = rows.length
       ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
       : `<div class="admEmpty">${LANG==='fr'?'Aucune inscription sur les 30 derniers jours':'No signups in the last 30 days'}</div>`;
+    
+    const providerPie = !provError && (byProvider||[]).length
+      ? buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon + ' ' + providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 })
+      : `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
     el.innerHTML = `<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">🆕 ${LANG==='fr'?'Inscriptions (30j)':'Signups (30d)'}</div><div class="astVal">${total}</div></div>
       </div>
       <h3>${LANG==='fr'?'📅 Par jour':'📅 By day'}</h3>
-      ${chart}`;
+      ${chart}
+      <h3>${LANG==='fr'?'🧩 Par plateforme (tous comptes)':'🧩 By platform (all accounts)'}</h3>
+      ${providerPie}`;
   });
 }
 

@@ -11,12 +11,17 @@ function canBanUuid(targetUuid, myUuid) {
 // ordre = position sur le slider (index). "gold" = thème actuel du jeu (par défaut). Les
 // définitions de couleurs vivent dans styles.css (.admThemeRoot[data-adm-theme="..."]) -- ce
 // tableau ne sert qu'à peupler le slider et son libellé, jamais les couleurs elles-mêmes.
+// "color" = teinte fixe utilisée UNIQUEMENT pour dessiner la pastille du sélecteur lui-même
+// (2026-07-20, palette déplacée en haut à gauche, voir renderAdminThemeSwatchesHtml) -- ne
+// remplace pas .admThemeRoot[data-adm-theme] dans styles.css (source de vérité pour le reste du
+// panneau), juste une copie inerte de ces mêmes --gold pour pouvoir montrer les 5 couleurs à la
+// fois quel que soit le thème actuellement actif.
 const ADMIN_THEMES = [
-  { id:'gold',    label:{fr:'Or (jeu)',en:'Gold (game)'} },
-  { id:'emerald', label:{fr:'Émeraude',en:'Emerald'} },
-  { id:'ruby',    label:{fr:'Rubis',en:'Ruby'} },
-  { id:'royal',   label:{fr:'Bleu royal',en:'Royal blue'} },
-  { id:'violet',  label:{fr:'Violet',en:'Violet'} },
+  { id:'gold',    label:{fr:'Or (jeu)',en:'Gold (game)'}, color:'#c9a55a' },
+  { id:'emerald', label:{fr:'Émeraude',en:'Emerald'}, color:'#34D399' },
+  { id:'ruby',    label:{fr:'Rubis',en:'Ruby'}, color:'#e05a6e' },
+  { id:'royal',   label:{fr:'Bleu royal',en:'Royal blue'}, color:'#5a8fc8' },
+  { id:'violet',  label:{fr:'Violet',en:'Violet'}, color:'#a578d8' },
 ];
 const ADMIN_THEME_STORAGE_KEY = 'bdiAdminTheme';
 // lit la préférence de palette persistée -- purement locale à ce navigateur/admin, ne touche
@@ -65,7 +70,6 @@ const ADMIN_SECTIONS = [
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
   ]},
   { cat:'system', label:{fr:'Système',en:'System'}, items:[
-    { id:'theme', icon:'🎨', label:{fr:'Palette',en:'Palette'}, render:renderAdminTheme },
     { id:'danger', icon:'⚙️', label:{fr:'Zone danger',en:'Danger zone'}, render:renderAdminServerDanger },
   ]},
 ];
@@ -648,7 +652,9 @@ function renderAdminCompanions(el) {
   });
 }
 
-// ---------- section "Vue d'ensemble" — dashboard synthétique (NOUVEAU, 2026-07-19) ----------
+// ---------- section "Vue d'ensemble" — dashboard synthétique (NOUVEAU, 2026-07-19, alertes
+// ajoutées le 2026-07-20 -- demande explicite : "ajoute dans le dashboard tout, et surtout des
+// alerte sil y a trop de quelque chose") ----------
 function renderAdminDashboard(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   Promise.all([
@@ -656,12 +662,18 @@ function renderAdminDashboard(el) {
     sb.from('admin_wealth').select('silver'),
     sb.rpc('admin_list_bans'),
     sb.rpc('get_market_open'),
-  ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}]) => {
+    sb.from('admin_silver_ledger_by_category').select('*'),
+  ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}, {data: ledgerByCat}]) => {
     const online = (players||[]).filter(p => p.online).length;
     const totalSilver = (wealth||[]).reduce((a,r) => a + Number(r.silver||0), 0);
     const activeBans = (bans||[]).length;
     const open = marketOpen !== false;
-    el.innerHTML = `<div class="admStatTiles">
+    // computeEconAlerts vient de admin-economy.js, chargé APRÈS ce fichier (même garde typeof que
+    // buildLootRateEditorHtml/buildPieWithLegendHtml ailleurs dans ce fichier) -- appelé seulement
+    // au rendu, bien après le chargement des deux fichiers, donc aucun risque de TDZ en pratique.
+    const alerts = typeof computeEconAlerts === 'function' ? computeEconAlerts(ledgerByCat) : [];
+    const alertsHtml = typeof buildEconAlertsHtml === 'function' ? buildEconAlertsHtml(alerts) : '';
+    el.innerHTML = `${alertsHtml}<div class="admStatTiles">
         <div class="admStatTile"><div class="astLbl">🟢 ${LANG==='fr'?'Joueurs en ligne':'Players online'}</div><div class="astVal">${online}</div></div>
         <div class="admStatTile"><div class="astLbl">🏦 ${LANG==='fr'?'Silver total en jeu':'Total silver in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
         <div class="admStatTile"><div class="astLbl">🚫 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div><div class="astVal">${activeBans}</div></div>
@@ -671,13 +683,33 @@ function renderAdminDashboard(el) {
   });
 }
 
+// ---------- plateforme d'inscription (2026-07-20, demande explicite : "montre avec quoi les
+// joueur se sont inscrit comme plateforme") -- provider vient de admin_list_players()/
+// admin_signups_by_provider() (auth.users.raw_app_meta_data->>'provider', migration
+// 20260719210000_admin_list_players_provider.sql). Fonction PURE, réutilisée par la liste des
+// joueurs (icône) et par le camembert des inscriptions (admin-economy.js, label complet).
+const PROVIDER_INFO = {
+  email: { icon:'📧', label:{fr:'Email',en:'Email'} },
+  discord: { icon:'🎮', label:{fr:'Discord',en:'Discord'} },
+  google: { icon:'🔵', label:{fr:'Google',en:'Google'} },
+  github: { icon:'🐙', label:{fr:'GitHub',en:'GitHub'} },
+  twitter: { icon:'🐦', label:{fr:'Twitter/X',en:'Twitter/X'} },
+  anonymous: { icon:'🎭', label:{fr:'Invité',en:'Guest'} },
+};
+function providerInfo(provider) {
+  return PROVIDER_INFO[provider] || { icon:'❔', label:{fr:provider||'?',en:provider||'?'} };
+}
+
 // ---------- section "Joueurs" ----------
 function renderAdminPlayerList(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   sb.rpc('admin_list_players').then(({data: playersList}) => {
-    const playersHtml = (playersList||[]).map(p => `
+    const playersHtml = (playersList||[]).map(p => {
+      const prov = providerInfo(p.provider);
+      return `
       <tr>
         <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
+        <td title="${escapeHtml(prov.label[LANG])}">${prov.icon}</td>
         <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td>
         <td title="${LANG==='fr'?'PA (Puissance d\'Attaque)':'AP (Attack Power)'}">${(p.ap||0).toFixed(1)}</td>
         <td title="${LANG==='fr'?'PD (Puissance de Défense)':'DP (Defense Power)'}">${(p.dp||0).toFixed(1)}</td>
@@ -685,10 +717,11 @@ function renderAdminPlayerList(el) {
         <td title="${LANG==='fr'?'Record personnel de kills/min (à vie)':'Personal kills/min record (lifetime)'}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
         <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
         <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${LANG==='fr'?'Ouvre l\'équipement porté et le sac complet (192 cases) de ce joueur, en lecture seule, dans une nouvelle fenêtre':'Opens this player\'s equipped gear and full bag (192 slots), read-only, in a new window'}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
-      </tr>`).join('') || `<tr><td colspan="10" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+      </tr>`;
+    }).join('') || `<tr><td colspan="11" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
     el.innerHTML = `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered`}</div>
       <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>GS</th><th title="${LANG==='fr'?'PA':'AP'}">PA</th><th title="${LANG==='fr'?'PD':'DP'}">PD</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
+        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th title="${LANG==='fr'?'Plateforme d\'inscription':'Signup platform'}">${LANG==='fr'?'Plate-forme':'Platform'}</th><th>Silver</th><th>GS</th><th title="${LANG==='fr'?'PA':'AP'}">PA</th><th title="${LANG==='fr'?'PD':'DP'}">PD</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>`;
     el.querySelectorAll('.admUuidBtn').forEach(btn => {
@@ -855,25 +888,27 @@ function renderAdminMyTests(el) {
   };
 }
 
-// ---------- section "Système" ----------
-function renderAdminTheme(el) {
-  const currentTheme = getAdminTheme();
-  const themeIdx = Math.max(0, ADMIN_THEMES.findIndex(t => t.id === currentTheme));
-  el.innerHTML = `
-    <div class="admThemeSlider">
-      <label for="admThemeSlider">🎨 ${LANG==='fr'?'Palette':'Palette'}</label>
-      <input type="range" id="admThemeSlider" min="0" max="${ADMIN_THEMES.length-1}" step="1" value="${themeIdx}">
-      <span class="admThemeName" id="admThemeName">${ADMIN_THEMES[themeIdx].label[LANG]}</span>
-    </div>
-    <div class="admHint">${LANG==='fr'?'Change instantanément la couleur d\'accent de tout le panneau admin (thème persisté sur ce navigateur, aucun effet joueur).':'Instantly changes the accent color of the whole admin panel (theme persisted on this browser, no player effect).'}</div>`;
-  const themeSlider = $a('admThemeSlider');
-  themeSlider.oninput = () => {
-    const t = ADMIN_THEMES[Number(themeSlider.value)] || ADMIN_THEMES[0];
-    const root = $a('adminOverlay');
-    if (root) root.dataset.admTheme = t.id;
-    const nameEl = $a('admThemeName'); if (nameEl) nameEl.textContent = t.label[LANG];
-    setAdminTheme(t.id);
-  };
+// ---------- palette, en haut à gauche du panneau (2026-07-20, demande explicite : "palette de
+// couleurs e mettre en haut a gauche") -- remplace l'ancien slider planqué sous Système>Palette
+// (il fallait naviguer jusque là juste pour changer de couleur) par des pastilles cliquables
+// directement dans .admNavHead, donc visibles en permanence dès l'ouverture du panneau, quelle
+// que soit la section affichée. Même storage/effet (setAdminTheme/data-adm-theme) que l'ancien
+// slider, juste un contrôle différent. ----------
+function renderAdminThemeSwatchesHtml(currentTheme) {
+  return `<div class="admThemeSwatches" title="🎨 ${LANG==='fr'?'Palette':'Palette'}">${ADMIN_THEMES.map(t =>
+    `<button class="admSwatchBtn${t.id===currentTheme?' active':''}" data-theme="${t.id}" style="background:${t.color}" title="${escapeHtml(t.label[LANG])}"></button>`
+  ).join('')}</div>`;
+}
+function wireAdminThemeSwatches() {
+  $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(btn => {
+    btn.onclick = () => {
+      const t = ADMIN_THEMES.find(x => x.id === btn.dataset.theme) || ADMIN_THEMES[0];
+      const root = $a('adminOverlay');
+      if (root) root.dataset.admTheme = t.id;
+      $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(b => b.classList.toggle('active', b === btn));
+      setAdminTheme(t.id);
+    };
+  });
 }
 function renderAdminServerDanger(el) {
   el.innerHTML = `
@@ -932,6 +967,29 @@ function openAdminSection(cat, id) {
   }
   item.render(body);
 }
+// ---------- barre de recherche de la sidebar (2026-07-20, demande explicite : "ajoute moi une
+// barre de recherceh") -- filtre en direct les items de ADMIN_SECTIONS par libellé (fr/en),
+// masque aussi l'en-tête de catégorie d'un groupe devenu entièrement vide. Pure manipulation DOM,
+// aucun re-render de renderAdminSidebar() (garde la sélection "active" intacte pendant la frappe).
+function wireAdminSidebarSearch() {
+  const input = $a('admNavSearch'); if (!input) return;
+  input.oninput = () => {
+    const q = input.value.trim().toLowerCase();
+    const rows = [...$a('adminSidebar').children].filter(c => c.classList.contains('admNavCatLabel') || c.classList.contains('admNavItem'));
+    let lastCatLabel = null, catHasVisible = false;
+    rows.forEach(el => {
+      if (el.classList.contains('admNavCatLabel')) {
+        if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
+        lastCatLabel = el; catHasVisible = false;
+        return;
+      }
+      const match = !q || el.textContent.toLowerCase().includes(q);
+      el.style.display = match ? '' : 'none';
+      if (match) catHasVisible = true;
+    });
+    if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
+  };
+}
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
   const currentTheme = getAdminTheme();
@@ -939,11 +997,18 @@ async function openAdminPanel() {
   overlay.classList.add('admThemeRoot');
   overlay.dataset.admTheme = currentTheme;
   $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
-  $a('adminSidebar').innerHTML = `<div class="admNavHead"><span class="admNavTitle">🛠️ ${LANG==='fr'?'Admin':'Admin'}</span><button id="closeAdmin" title="${LANG==='fr'?'Fermer':'Close'}">✕</button></div>` + renderAdminSidebar('overview', 'dashboard');
+  $a('adminSidebar').innerHTML = `<div class="admNavHead">` +
+      `<span class="admNavTitle">🛠️ ${LANG==='fr'?'Admin':'Admin'}</span>` +
+      renderAdminThemeSwatchesHtml(currentTheme) +
+      `<button id="closeAdmin" title="${LANG==='fr'?'Fermer':'Close'}">✕</button></div>` +
+    `<input type="text" id="admNavSearch" class="admNavSearch" placeholder="🔍 ${LANG==='fr'?'Rechercher…':'Search…'}">` +
+    renderAdminSidebar('overview', 'dashboard');
   $a('closeAdmin').onclick = closeAdminPanel;
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
     el.onclick = () => openAdminSection(el.dataset.cat, el.dataset.id);
   });
+  wireAdminThemeSwatches();
+  wireAdminSidebarSearch();
   overlay.classList.add('open');
   openAdminSection('overview', 'dashboard');
 }
