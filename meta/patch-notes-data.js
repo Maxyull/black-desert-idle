@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V351', d:'20/07/2026 12:00', name:{fr:'Compagnon : premier écran de test en 3D', en:'Companion: first 3D test screen'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Nouvel onglet "Viewer 3D (TEST)" dans le module Compagnon : premier essai de rendu 3D réel des familiers, un seul modèle chargé pour l\'instant, purement expérimental.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'New "3D Viewer (TEST)" tab in the Companion module: first real 3D rendering test for pets, only one model loaded for now, purely experimental.'},
+    ] },
   { v:'V350', d:'20/07/2026 11:00', name:{fr:'Correctif tutoriel + connexion allégée + Compagnon : filtres, zoom, titre', en:'Tutorial fix + lighter sign-in + Companion: filters, zoom, title'}, fr:[
       {t:'fix', tx:'Corrigé : un tutoriel pouvait être marqué "vu" avant même que tu ne te sois connecté, te privant définitivement de son affichage réel une fois ton compte créé.'},
       {t:'change', sub:'connexion', tx:'Écran de connexion simplifié : Discord reste le bouton principal, Google/GitHub/Twitter sont regroupés en dessous sur une seule ligne.'},

@@ -641,3 +641,45 @@ test('PvP tab shows a locked banner and a real GS-sorted ranking of owned pets',
 
   expect(pageErrors).toEqual([]);
 });
+
+// Viewer 3D GLB (2026-07-10, demande explicite : "on va integrer des model gbl") -- écran de test
+// isolé qui charge Three.js vendorisé en local (vendor/three/, jamais de CDN, voir README.md) via
+// un pont module->global (vendor/three/three-bridge.js, event 'three-ready') puis un .glb hébergé
+// sur Supabase Storage (bucket public "companion-models", voir supabase/migrations/
+// 20260710072116_companion_models_bucket.sql). Ce test couvre le PIPELINE (THREE chargé, canvas
+// WebGL créé, statut mis à jour), pas le contenu du modèle lui-même -- le fichier de test
+// (loot/black_mask_cat_T5.glb) est uploadé manuellement via le Dashboard Supabase (pas dans ce
+// repo, ~31 Mo), donc peut être absent selon l'environnement ; un 404 réseau est un échec de
+// CHARGEMENT géré proprement (message d'erreur affiché), jamais une exception JS -- distinction
+// vérifiée explicitement ci-dessous.
+test('3D viewer tab loads Three.js locally (no CDN) and creates a WebGL canvas without throwing', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Viewer 3D' }).click();
+  await expect(frame.locator('#viewer3d-canvas-wrap')).toBeVisible();
+
+  // three-bridge.js est un <script type="module">, chargé de façon asynchrone -- on attend
+  // l'event 'three-ready' déjà géré par companions.viewer3d.js (initViewer3dIfNeeded réessaie
+  // via window.addEventListener('three-ready', ...) s'il tourne avant que le bridge soit prêt).
+  await expect
+    .poll(() => frame.locator('body').evaluate(() => typeof window.THREE), { timeout: 15_000 })
+    .toBe('object');
+
+  // un <canvas> WebGL doit apparaître dans le conteneur dédié une fois le renderer créé
+  await expect(frame.locator('#viewer3d-canvas-wrap canvas')).toHaveCount(1, { timeout: 10_000 });
+
+  // le statut doit sortir de l'état initial ("En attente…"), que le .glb charge ou échoue
+  // (404 si le fichier de test n'a pas encore été uploadé dans ce bucket dans cet environnement)
+  await expect
+    .poll(() => frame.locator('#viewer3d-status').textContent(), { timeout: 15_000 })
+    .not.toBe('En attente…');
+
+  // jamais d'exception JS non gérée, même si le chargement réseau du .glb échoue (404)
+  expect(pageErrors).toEqual([]);
+});

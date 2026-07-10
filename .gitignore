@@ -16,3 +16,8 @@ __pycache__/
 node_modules/
 playwright-report/
 test-results/
+
+# modèles 3D source des compagnons (.glb + textures, ~1,8 Go, 2026-07-10) -- jamais commités,
+# hébergés sur Supabase Storage (bucket "companion-models", voir
+# supabase/migrations/20260710072116_companion_models_bucket.sql et src/companions/README.md)
+output/

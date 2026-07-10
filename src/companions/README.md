@@ -211,6 +211,53 @@ module Compagnon.
   icônes) d'un coup, sans retoucher chaque mesure en dur. `zoom` plutôt que `transform:scale`
   (qui ne recalcule pas layout/scrollbars) — support universel sur Chromium, cible de ce jeu.
 
+**Viewer 3D GLB — écran de test (2026-07-10, demande explicite : "on va integrer des model gbl" +
+"a terme on va utiliser l'entièreté de ces fichier")** :
+- Contexte : `output/loot/tiers/` (32 fichiers, 900 Mo) et `output/combat/tiers/` (30 fichiers,
+  922 Mo) contiennent un `.glb` + textures par palier (T1→T5) pour chaque compagnon `sec:'loot'`
+  (chats/oiseaux) et `sec:'combat'` (chiens/dragons) de `companions.catalog.js` — noms de fichiers
+  déjà alignés sur `art`/le nom des espèces. `output/` n'est pas suivi par git (~1,8 Go au total,
+  bien au-dessus de la limite GitHub de 100 Mo/fichier de toute façon pour les plus gros T5).
+- Hébergement : bucket Supabase Storage public **`companion-models`** (lecture publique, écriture
+  réservée à l'admin — `auth.jwt()->>'email' = 'maxime.lacoste@icloud.com'`, même convention que
+  les RPC `admin_*` du jeu principal), voir
+  `supabase/migrations/20260710072116_companion_models_bucket.sql`. Convention de chemin :
+  `{section}/{artKey}_{tier}.glb` (ex: `loot/black_mask_cat_T5.glb`), reprend directement la
+  structure de `output/`. Upload fait manuellement via le Dashboard Supabase (pas d'accès à la clé
+  `service_role` depuis les outils MCP disponibles ici — volontairement masquée) ; seul
+  `loot/black_mask_cat_T5.glb` (31 Mo) est uploadé pour l'instant, comme fichier de test.
+- Rendu : **Three.js**, vendorisé en local dans `vendor/three/`/`vendor/utils/` (jamais de CDN à
+  l'exécution, même convention que React figé en SRI pour `boss-wheel-react.js`, voir CLAUDE.md
+  §7). `vendor/three/three-bridge.js` est le SEUL fichier `type="module"` de ce dossier — il
+  importe `three.module.min.js`/`GLTFLoader.js`/`OrbitControls.js` (imports ES imposés par la lib
+  elle-même) et attache `window.THREE`/`window.GLTFLoader`/`window.OrbitControls`, pour que
+  `companions.viewer3d.js` (script CLASSIQUE, scope global partagé comme le reste du module) les
+  lise normalement — pont documenté dans le fichier lui-même. Un `<script type="importmap">`
+  (`companions.html`, dans `<head>`) résout le spécificateur nu `"three"` que `GLTFLoader.js`/
+  `OrbitControls.js` importent en interne.
+  - **Piège de chemin relatif rencontré** : `GLTFLoader.js` importe `../utils/BufferGeometryUtils.js`
+    (chemin relatif à SA PROPRE position). Comme `GLTFLoader.js` vit directement dans
+    `vendor/three/` (pas dans un sous-dossier `loaders/` comme dans le paquet npm d'origine,
+    `examples/jsm/loaders/GLTFLoader.js`), ce chemin résout vers `vendor/utils/`, PAS
+    `vendor/three/utils/` — `BufferGeometryUtils.js` doit donc vivre à `vendor/utils/`, un niveau
+    au-dessus de `vendor/three/`. Erreur silencieuse sinon : 404 réseau, `window.THREE` jamais
+    posé, aucune exception JS visible sans inspecter la console réseau.
+- Écran isolé : nouvel onglet "🧊 Viewer 3D (TEST)" (tab 10, `ST(10)`, panel `#p10`,
+  `companions.html`) — contexte WebGL créé/détruit à l'ouverture/fermeture de l'onglet
+  (`initViewer3dIfNeeded()`/`disposeViewer3dIfActive()`, `companions.viewer3d.js`) plutôt que
+  gardé actif en arrière-plan pendant que le joueur navigue ailleurs dans le module. Portée
+  VOLONTAIREMENT limitée à cet écran de test — aucune icône 2D existante (roster/collection/
+  incubation/hardinage) n'est remplacée tant que le pipeline n'est pas validé à plus large échelle.
+  Tests : `tests/companions.spec.js` (`3D viewer tab loads Three.js locally...`) — vérifie que
+  `window.THREE` se pose, qu'un `<canvas>` WebGL apparaît, et qu'un échec réseau du `.glb` (ex:
+  404 si le fichier de test n'est pas encore présent dans l'environnement) est un message d'erreur
+  géré proprement, jamais une exception JS non attrapée.
+- **Mise à jour de version de three.js** : retélécharger les 4 fichiers vendorisés depuis
+  `https://unpkg.com/three@X.Y.Z/...` (`build/three.module.min.js`,
+  `examples/jsm/loaders/GLTFLoader.js`, `examples/jsm/controls/OrbitControls.js`,
+  `examples/jsm/utils/BufferGeometryUtils.js`), les replacer aux MÊMES chemins relatifs que
+  ci-dessus (le piège de chemin relatif décrit plus haut reste valable à chaque mise à jour).
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2
@@ -257,8 +304,22 @@ module Compagnon.
     dépensé/fusions/index) + un vrai classement CROSS-JOUEURS via la RPC publique
     `companion_leaderboard()` (voir `supabase/migrations/20260720140000_companion_leaderboard.sql`),
     même pattern `window.parent.getSbClient()` que `companions.sync.js`.
-21. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
+21. `companions.viewer3d.js` (2026-07-10) — écran de test du viewer 3D GLB (voir plus haut). Lit
+    `window.THREE`/`window.GLTFLoader`/`window.OrbitControls` posés par
+    `vendor/three/three-bridge.js` (module, asynchrone — géré via l'event `three-ready`). Ordre
+    non strictement requis vis-à-vis des autres scripts classiques, placé par lisibilité juste
+    avant `main.js`.
+22. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
     (`loadGame()` puis `checkDailyStreak()`/`renderAll()`).
+
+### `vendor/three/` — Three.js vendorisé en local (pas de CDN, voir plus haut)
+
+- `three.module.min.js` — build ES module de three.js (v0.160.0).
+- `GLTFLoader.js` / `OrbitControls.js` — modules additionnels officiels (`examples/jsm/`).
+- `three-bridge.js` — SEUL fichier `type="module"` de ce dossier, pont vers les globals classiques
+  (`window.THREE`/`GLTFLoader`/`OrbitControls`, event `three-ready`).
+- `vendor/utils/BufferGeometryUtils.js` — dépendance de `GLTFLoader.js` (voir le piège de chemin
+  relatif documenté plus haut : doit vivre ICI, pas dans `vendor/three/utils/`).
 
 Comme pour le jeu principal, tout ce document vit dans un seul scope global partagé entre
 scripts (pas de modules ES) — l'ordre ci-dessus n'a d'importance que pour le code exécuté

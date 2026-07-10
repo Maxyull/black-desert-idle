@@ -15,6 +15,17 @@
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
 <link rel="stylesheet" href="companions.css?v=10">
+<!-- three.js vendorisé en local, jamais de CDN (2026-07-10, viewer 3D compagnons GLB) --
+     three.module.min.js/GLTFLoader.js/OrbitControls.js sont des modules ES (import/export imposé
+     par la lib), l'importmap ci-dessous résout le spécificateur nu "three" ; vendor/three/three-
+     bridge.js (seul <script type="module"> de ce dossier) attache THREE/GLTFLoader/OrbitControls
+     sur window pour que companions.viewer3d.js (script classique, scope global partagé comme le
+     reste du module) les lise normalement. Voir vendor/three/README.md pour la procédure de mise
+     à jour de version. -->
+<script type="importmap">
+{ "imports": { "three": "./vendor/three/three.module.min.js" } }
+</script>
+<script type="module" src="vendor/three/three-bridge.js"></script>
 </head>
 <body>
 <!-- bandeau "test en cours" (2026-07-20, demande explicite) : rappelle à chaque ouverture que ce
@@ -67,6 +78,10 @@
        classement CROSS-JOUEURS réel (companion_leaderboard(), Supabase), distinct du classement
        LOCAL de tes propres pets déjà présent dans l'onglet PvP ci-dessus. -->
   <div class="tab" onclick="ST(9)">🏆 Classement</div>
+  <!-- 2026-07-10, demande explicite : "on va integrer des model gbl" -- écran de test isolé pour
+       valider le pipeline Three.js/GLB avant tout remplacement des icônes 2D existantes (roster,
+       collection, incubation...). Charge un unique modèle de test depuis Supabase Storage. -->
+  <div class="tab" onclick="ST(10)">🧊 Viewer 3D <span class="tbadge">TEST</span></div>
 </div>
 <div class="content">
 
@@ -352,6 +367,23 @@
   </div>
 </div>
 
+<!-- TAB 10 VIEWER 3D (TEST) -->
+<div class="panel" id="p10">
+  <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+    <div style="background:linear-gradient(135deg,rgba(212,169,85,.14),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
+      <span style="font-size:26px">🧪</span>
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold)">Viewer 3D — écran de test</div>
+        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px">Valide le pipeline de chargement des modèles .glb (Three.js) avant tout remplacement des icônes 2D existantes. Un seul modèle chargé pour l'instant, depuis Supabase Storage.</div>
+      </div>
+    </div>
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+      <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">Statut</span>
+      <span id="viewer3d-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">En attente…</span>
+    </div>
+    <div id="viewer3d-canvas-wrap" style="width:100%;height:440px;background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden"></div>
+  </div>
+</div>
 </div>
 <div class="modal-bg" id="hatch-modal">
   <div class="modal"><button class="mcl" onclick="CM('hatch-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px">✨ Familier éclos !</div><div id="hatch-body"></div></div>
@@ -369,7 +401,7 @@
 <script src="companions.economy.js?v=7"></script>
 <script src="companions.tier.js?v=6"></script>
 <script src="companions.roster.js?v=6"></script>
-<script src="companions.hatch.js?v=9"></script>
+<script src="companions.hatch.js?v=10"></script>
 <script src="companions.pet-panel.js?v=6"></script>
 <script src="companions.sections.js?v=6"></script>
 <script src="companions.collection.js?v=8"></script>
@@ -394,6 +426,12 @@
      déclarés plus haut, appelée uniquement via ST(9) -- ordre non strictement requis, placé ici par
      lisibilité (même famille que companions.pvp.js juste au-dessus). -->
 <script src="companions.leaderboard.js?v=1"></script>
+<!-- écran de test viewer 3D GLB (2026-07-10) : script classique, lit window.THREE/GLTFLoader/
+     OrbitControls posés par vendor/three/three-bridge.js (module, résolu de façon asynchrone —
+     voir l'event 'three-ready' géré dans ce fichier). Ordre non strictement requis vis-à-vis des
+     autres scripts classiques (aucune lecture immédiate d'un global déclaré ailleurs), placé ici
+     par lisibilité, juste avant main.js. -->
+<script src="companions.viewer3d.js?v=1"></script>
 <script src="companions.main.js?v=6"></script>
 </body>
 </html>

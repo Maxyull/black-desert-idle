@@ -1,7 +1,7 @@
 // ═══ TABS & PETITS UTILITAIRES D'UI ═════════════════════════════
 function ST(i){
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
-  ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
+  ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
   // bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut
   // pas acheter les oeufs") -- ST(1) (onglet Éclosion) n'appelait jamais renderHatch() : le tick
   // (companions.ticks.js) décrémente bien sl.tl/passe sl.ready à true en mémoire chaque seconde,
@@ -18,6 +18,10 @@ function ST(i){
   if(i===7) renderAchievements();
   if(i===8) renderPvp();
   if(i===9) renderMyStatsAndLeaderboard();
+  // écran de test viewer 3D GLB (2026-07-10) : n'initialise le contexte WebGL qu'à l'ouverture
+  // réelle de l'onglet, le libère à la fermeture (évite de garder un renderer actif en arrière-plan
+  // pendant que le joueur navigue ailleurs dans le module)
+  if(i===10) initViewer3dIfNeeded(); else if(typeof disposeViewer3dIfActive==='function') disposeViewer3dIfActive();
 }
 function toast(ico,msg){const w=document.getElementById('toast-wrap');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span style="font-size:15px">${ico}</span><span>${msg}</span>`;w.appendChild(t);setTimeout(()=>t.remove(),2900);}
 function OM(id){document.getElementById(id).classList.add('open');}
