@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V344', d:'20/07/2026 05:00', name:{fr:'Correctif : bulle du tutoriel Marché commun coupée en bas d\'écran', en:'Fix: Common Market tutorial bubble cut off at the bottom of the screen'}, fr:[
+      {t:'fix', sub:'ux', tx:'Le tutoriel affiché à la première ouverture du Marché commun visait le panneau entier (très haut à l\'écran), poussant sa bulle d\'explication hors de l\'écran, coupée en bas. Elle vise désormais le petit bandeau de titre du panneau et reste toujours entièrement visible.'},
+    ], en:[
+      {t:'fix', sub:'ux', tx:'The tutorial shown on first opening the Common Market targeted the entire panel (very tall on screen), pushing its explanation bubble off-screen, cut off at the bottom. It now targets the panel\'s small title bar and always stays fully visible.'},
+    ] },
   { v:'V343', d:'20/07/2026 04:00', name:{fr:'Onglet PvP (verrouillé) + classement Compagnon', en:'PvP tab (locked) + Companion ranking'}, fr:[
       {t:'new', sub:'compagnon', tx:'Nouvel onglet PvP dans le module Compagnon (test) : bandeau "bientôt disponible" + un vrai classement de tes familiers triés par puissance (GS), toutes sections confondues.'},
       {t:'new', tx:'Nouvel onglet "PvP" dans le header du jeu (verrouillé, comme Pêche/Mine/Forêt...) — activité à venir.'},

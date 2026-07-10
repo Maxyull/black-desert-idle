@@ -819,6 +819,43 @@
       } catch(e) {}
     }
   }
+  // garde-fou contre le retour du bug marché (2026-07-10, récupéré depuis la branche
+  // claude/onboarding-issue-fix-861c40) : #marketBox est le panneau ENTIER (height:80vh,
+  // styles.css), son bord bas est déjà proche du bas de l'écran -- si ce step recible ce
+  // conteneur, la bulle 'bottom' redéborde du viewport (voir clamp ci-dessous). La cible doit
+  // rester un petit élément fixe en haut du panneau (#marketHead).
+  function testMarketTutorialTargetsMarketHeadNotFullPanel() {
+    if (typeof ITEM_TUTORIALS === 'undefined' || !ITEM_TUTORIALS.market) return;
+    const step = ITEM_TUTORIALS.market.steps[0];
+    assert('tutoriel Marché cible #marketHead (petit bandeau), pas #marketBox (panneau entier)',
+      step.target === '#marketHead');
+  }
+  // clamp de positionTutorialStep sur la hauteur RÉELLE de la boîte, pas une valeur fixe
+  // (2026-07-10, bug corrigé) : une cible proche du bas du viewport ET un texte assez long pour
+  // dépasser l'ancienne supposition de 160px faisait déborder #tutorialBox hors de l'écran, coupé
+  // (constaté sur le tutoriel Marché commun, ciblait alors #marketBox). Test synthétique : cible
+  // factice collée au bas du viewport + texte volontairement long.
+  function testTutorialBoxClampsToRealHeightNeverOverflowsBottom() {
+    if (typeof startTutorial !== 'function' || typeof endTutorial !== 'function') return;
+    const target = document.createElement('div');
+    target.id = 'testTutorialOverflowTarget';
+    target.style.cssText = 'position:fixed; left:20px; bottom:4px; width:100px; height:20px;';
+    document.body.appendChild(target);
+    try {
+      const longText = 'x '.repeat(200); // assez long pour rendre #tutorialBox bien plus haut que 160px
+      startTutorial([{ target:'#testTutorialOverflowTarget', placement:'bottom', final:true,
+        title:{fr:'Test', en:'Test'}, text:{fr:longText, en:longText} }], { resetView:false });
+      const box = document.getElementById('tutorialBox');
+      const r = box.getBoundingClientRect();
+      assert('#tutorialBox ne déborde jamais sous le bas du viewport, même avec un texte long près du bord bas',
+        r.bottom <= window.innerHeight);
+      endTutorial(true);
+    } finally {
+      target.remove();
+      const overlay = document.getElementById('tutorialOverlay');
+      if (overlay) overlay.classList.remove('open');
+    }
+  }
   // trash de zone : tutoriel unique couvrant TOUS les noms de trash de ZONES (2026-07-19) --
   // itemNames calculé dynamiquement (jamais codé en dur), donc doit toujours refléter ZONES.
   function testTrashTutorialCoversEveryZoneTrashName() {
@@ -2657,6 +2694,8 @@
     testBossWheelReactSegmentCountMatchesRoster();
     testItemTutorialsWellFormedAndIndexed();
     testMaybeQueueItemTutorialRespectsSeenAndCap();
+    testMarketTutorialTargetsMarketHeadNotFullPanel();
+    testTutorialBoxClampsToRealHeightNeverOverflowsBottom();
     testTrashTutorialCoversEveryZoneTrashName();
     testActionTutorialsRegisteredWithEmptyItemNames();
     testMaybeQueueTutorialByIdWorksForManualTrigger();
