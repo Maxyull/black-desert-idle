@@ -114,6 +114,10 @@ function ReconnectModal(props) {
       .rcHistScroll::-webkit-scrollbar { width:4px; }
       .rcHistScroll::-webkit-scrollbar-thumb { background:${RECONNECT_V.border}; border-radius:2px; }
       .rcBtn:focus-visible { outline: 2px solid ${RECONNECT_V.gold}; outline-offset: 2px; }
+      /* même piège que patch-notes-engage-react.js : la règle globale "button { width:100%;
+         margin-top:4px; ... }" (src/styles/styles.css) s'applique aussi ici -- les chips de
+         palier (Tous/Mid/End/...) n'avaient pas de width explicite. */
+      #reconnectModalRoot button { width: auto; margin: 0; }
     `),
     h('div', { className: 'rcRiseIn', style: { position: 'relative', width: '100%', maxWidth: 520 } },
       h('div', { style: { borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,.6)', overflow: 'hidden', background: RECONNECT_V.s2, border: `1px solid ${RECONNECT_V.border2}` } },

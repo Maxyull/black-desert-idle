@@ -2876,6 +2876,26 @@
       awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
     }
   }
+  // même bug que testPatchNotesCategoryChipsWrapOnSameRowInsteadOfStacking, autre fichier React
+  // touché par la même règle globale "button { width:100% }" -- chips de palier (Tous/Mid/End/...)
+  // de l'historique du modal de reconnexion.
+  function testReconnectModalTierChipsWrapOnSameRowInsteadOfStacking() {
+    if (typeof showAwayLootSummaryIfAny !== 'function') return;
+    const savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    const root = document.getElementById('reconnectModalRoot');
+    try {
+      awaySilverGained = 100; awayLootCounts = {};
+      showAwayLootSummaryIfAny();
+      const chips = Array.from(root.querySelectorAll('.rcBtn')).filter(b => b.textContent && (b.textContent === 'Tous' || (typeof GEAR_TIERS !== 'undefined' && GEAR_TIERS.some(g => (g.label[LANG]||g.label.fr) === b.textContent))));
+      assert('Au moins 2 chips de palier affichées', chips.length >= 2, String(chips.length));
+      if (chips.length >= 2) {
+        assert('Les 2 premières chips de palier sont sur la même ligne (wrap horizontal, pas empilées verticalement)',
+          chips[0].offsetTop === chips[1].offsetTop, `top0=${chips[0].offsetTop} top1=${chips[1].offsetTop}`);
+      }
+    } finally {
+      awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
   // niveau/% XP capturés au moment où l'onglet passe caché (2026-07-10, modal de reconnexion --
   // "Progression de niveau" avant/après) -- sans ça, "avant" ne pourrait jamais différer de
   // "maintenant" puisque S.lvl/S.xp auraient déjà bougé pendant l'absence au moment de la lecture.
@@ -2980,6 +3000,26 @@
     assert('openPatchNotesReact() monte le panneau dans #patchNotesModalRoot', root.innerHTML.includes(LANG === 'fr' ? 'Notes de mise à jour' : 'Patch notes'), root.innerHTML.slice(0,150));
     closePatchNotesReact();
     assert('closePatchNotesReact() démonte le contenu', root.innerHTML === '', root.innerHTML.slice(0,120));
+  }
+  // bug corrigé (2026-07-11, rapporté explicitement avec capture d'écran) : la règle globale
+  // "button { width:100%; margin-top:4px; ... }" (src/styles/styles.css) s'applique à TOUT
+  // <button> du document -- aucune chip de catégorie ne fixait explicitement width/margin, donc
+  // elles s'empilaient en pleine largeur au lieu de wrapper comme la maquette. Corrigé par un
+  // reset scopé "#patchNotesModalRoot button { width:auto; margin:0; }" -- ce test vérifie que
+  // 2 chips consécutives retombent bien sur la MÊME ligne (même offsetTop), pas empilées.
+  function testPatchNotesCategoryChipsWrapOnSameRowInsteadOfStacking() {
+    if (typeof openPatchNotesReact !== 'function' || typeof closePatchNotesReact !== 'function') return;
+    const root = document.getElementById('patchNotesModalRoot');
+    if (!root) return;
+    root.innerHTML = '';
+    openPatchNotesReact();
+    const chips = Array.from(root.querySelectorAll('.pneChip'));
+    assert('Au moins 2 chips de catégorie affichées', chips.length >= 2, String(chips.length));
+    if (chips.length >= 2) {
+      assert('Les 2 premières chips de catégorie sont sur la même ligne (wrap horizontal, pas empilées verticalement)',
+        chips[0].offsetTop === chips[1].offsetTop, `top0=${chips[0].offsetTop} top1=${chips[1].offsetTop}`);
+    }
+    closePatchNotesReact();
   }
   // reconnectDurationLabel() : fonction PURE (src/core/reconnect-modal-react.js), formate la durée
   // d'absence affichée dans "Absent pendant" / l'historique -- testable sans DOM ni React.
@@ -3191,12 +3231,14 @@
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
     testReconnectModalWrapperScrollsInsteadOfClipping();
+    testReconnectModalTierChipsWrapOnSameRowInsteadOfStacking();
     testAwayLevelSnapshotCapturedOnHide();
     testReconnectDurationLabelFormatsHoursAndMinutes();
     testBestAfkSessionSilverIsMonotone();
     testPneFlattenPageProducesStableUniqueEntryIds();
     testPneContainsBannedWordDetectsAccentedVariants();
     testPatchNotesReactOpensAndClosesInDom();
+    testPatchNotesCategoryChipsWrapOnSameRowInsteadOfStacking();
     testCompendiumOverallPctCombinesAllThreeSources();
     testCompendiumWorldAndBossRegistriesAreComplete();
     testCmpMasteredDetectsOnlyPenLevel();

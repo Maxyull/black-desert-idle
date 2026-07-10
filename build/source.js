@@ -5203,6 +5203,10 @@ function ReconnectModal(props) {
       .rcHistScroll::-webkit-scrollbar { width:4px; }
       .rcHistScroll::-webkit-scrollbar-thumb { background:${RECONNECT_V.border}; border-radius:2px; }
       .rcBtn:focus-visible { outline: 2px solid ${RECONNECT_V.gold}; outline-offset: 2px; }
+      /* même piège que patch-notes-engage-react.js : la règle globale "button { width:100%;
+         margin-top:4px; ... }" (src/styles/styles.css) s'applique aussi ici -- les chips de
+         palier (Tous/Mid/End/...) n'avaient pas de width explicite. */
+      #reconnectModalRoot button { width: auto; margin: 0; }
     `),
     h('div', { className: 'rcRiseIn', style: { position: 'relative', width: '100%', maxWidth: 520 } },
       h('div', { style: { borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,.6)', overflow: 'hidden', background: RECONNECT_V.s2, border: `1px solid ${RECONNECT_V.border2}` } },
@@ -5913,6 +5917,12 @@ function PatchNotesApp(props) {
       .pnePulseDot { animation: pnePulse 1.4s ease-in-out infinite; }
       .pneBtn:focus-visible { outline: 2px solid ${PNE_V.gold}; outline-offset: 2px; }
       .pneChip:focus-visible { outline: 2px solid ${PNE_V.gold}; outline-offset: 2px; }
+      /* le jeu principal a une règle globale "button { width:100%; margin-top:4px; ... }"
+         (src/styles/styles.css) qui s'applique à TOUT <button> du document, y compris ceux de ce
+         portail React -- aucun bouton ci-dessous ne fixait explicitement width/margin (rapporté le
+         2026-07-11 : les chips de catégorie s'empilaient en pleine largeur au lieu de wrapper comme
+         la maquette). Neutralisé ici plutôt que sur chaque bouton un par un. */
+      #patchNotesModalRoot button { width: auto; margin: 0; }
     `),
     pneH('div', { style: { width: '100%', maxWidth: 640, borderRadius: 10, border: `1px solid ${PNE_V.border}`, background: PNE_V.card, overflow: 'hidden', display: 'flex', flexDirection: 'column' } },
       
