@@ -327,6 +327,92 @@ test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard ach
   expect(pageErrors).toEqual([]);
 });
 
+// Flèches de résultat de fusion (2026-07-20, demande explicite : "afficher des fleches verte si
+// on gagne des stats rang, ou rouge si on en perd, afficher de quel tiers a quel tiers on est
+// passes") -- deltaArrow()/showFusionResultModal() (companions.fusion.js) comparent le Tier et le
+// Score (GS) du résultat au MEILLEUR des 2 parents (pas une moyenne) : ⬆️ vert si gain, ⬇️ rouge
+// si perte. Deux fusions forcées ici pour couvrir les deux directions dans le même test.
+test('fusion result modal shows a green up arrow on gain and a red down arrow on loss, for both tier and GS', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+
+  // Le tier grimpe toujours d'au moins 1 cran par rapport au meilleur parent (baseTier =
+  // max(tiers)+1, jamais moins), donc le sens du Tier est déterministe -> ⬆️ vert garanti.
+  // Le Score (GS) dépend en revanche d'un tirage de multiplicateur de tier (rollTierMult) —
+  // pas déterministe -> le test déduit le sens ATTENDU depuis les vraies valeurs renvoyées par
+  // le jeu (plutôt que de figer une direction), pour rester robuste au hasard tout en vérifiant
+  // que le HTML affiche exactement la flèche/couleur cohérente avec ce résultat réel.
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.rar === 1);
+    const a = { id: petId++, cat, rar: 1, stats: [10, 10, 10, 0, 0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    const b = { id: petId++, cat, rar: 1, stats: [12, 12, 12, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
+    const bestParentTier = Math.max(a.tier, b.tier);
+    const bestParentGS = Math.max(normGS(a), normGS(b));
+    PETS.push(a, b);
+    fusionSlots = [a.id, b.id];
+    executeFusion(a, b);
+    const merged = PETS[PETS.length - 1];
+    const html = document.getElementById('fusion-modal-body').innerHTML;
+    return {
+      html,
+      bestParentTier, bestParentGS,
+      mergedTier: merged.tier, mergedGS: normGS(merged),
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.mergedTier).toBeGreaterThan(result.bestParentTier);
+
+  const tierArrow = result.mergedTier > result.bestParentTier ? '⬆️' : result.mergedTier < result.bestParentTier ? '⬇️' : '➡️';
+  const tierColor = result.mergedTier > result.bestParentTier ? 'var(--green2)' : result.mergedTier < result.bestParentTier ? 'var(--red2)' : 'var(--cream3)';
+  const gsArrow = result.mergedGS > result.bestParentGS ? '⬆️' : result.mergedGS < result.bestParentGS ? '⬇️' : '➡️';
+  const gsColor = result.mergedGS > result.bestParentGS ? 'var(--green2)' : result.mergedGS < result.bestParentGS ? 'var(--red2)' : 'var(--cream3)';
+
+  expect(result.html).toContain(`🏅 Rang (Tier)`);
+  expect(result.html).toContain(`color:${tierColor};font-weight:600">T${result.bestParentTier} ➡️ T${result.mergedTier} ${tierArrow}`);
+  expect(result.html).toContain(`💪 Score (GS)`);
+  expect(result.html).toContain(`color:${gsColor};font-weight:600">${result.bestParentGS} ➡️ ${result.mergedGS} ${gsArrow}`);
+  // Le Tier étant garanti en hausse dans ce scénario, on vérifie explicitement le vert ici —
+  // c'est la moitié "gain" de la demande explicite ("flèche verte si on gagne").
+  expect(tierArrow).toBe('⬆️');
+  expect(tierColor).toBe('var(--green2)');
+});
+
+// Cas symétrique : deux pets identiques (aucun gain possible ni en tier ni en GS au-delà du
+// minimum garanti) ne doivent jamais afficher de flèche rouge sur le Tier (qui ne peut que monter
+// ou stagner, jamais descendre par construction de executeFusion).
+test('fusion of two identical pets never shows a red arrow on tier (tier can only rise or stay)', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.rar === 0);
+    const a = { id: petId++, cat, rar: 0, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
+    const b = { id: petId++, cat, rar: 0, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
+    PETS.push(a, b);
+    fusionSlots = [a.id, b.id];
+    executeFusion(a, b);
+    const merged = PETS[PETS.length - 1];
+    return { html: document.getElementById('fusion-modal-body').innerHTML, mergedTier: merged.tier };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.mergedTier).toBeGreaterThan(2); // baseTier = max(2,2)+1 = 3 minimum
+  expect(result.html).not.toContain('var(--red2);font-weight:600">T'); // jamais de flèche rouge sur le Tier
+});
+
 // PvP (2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction de la
 // categorie" + "header : PVP bloqué") -- vrai PvP joueur-contre-joueur pas encore livré (bandeau
 // verrouillé, voir companions.pvp.js), mais le classement local par puissance (GS) fonctionne

@@ -327,12 +327,26 @@ function executeFusion(a,b){
   showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec);
 }
 
+// Flèche colorée compréhensible d'un coup d'œil : ⬆️ vert = gain, ⬇️ rouge = perte, ➡️ gris = inchangé
+function deltaArrow(delta){
+  if(delta>0) return {ico:'⬆️', color:'var(--green2)'};
+  if(delta<0) return {ico:'⬇️', color:'var(--red2)'};
+  return {ico:'➡️', color:'var(--cream3)'};
+}
+
 function showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec){
   document.getElementById('fusion-modal-title').textContent = rarityIncreased ? '🌟 Percée de rareté !' : '⚗️ Fusion réussie !';
 
   const gs = normGS(merged), pct = gsPct(merged);
   const sec = secById(merged.cat.sec);
   const gainA = gs - normGS(a), gainB = gs - normGS(b);
+
+  // Rang (Tier) et Score (GS) comparés au MEILLEUR des 2 parents — c'est la vraie question du
+  // joueur ("est-ce que j'ai progressé ?"), pas une moyenne des deux.
+  const bestParentTier = Math.max(a.tier||1, b.tier||1);
+  const bestParentGS = Math.max(normGS(a), normGS(b));
+  const tierArrow = deltaArrow(merged.tier - bestParentTier);
+  const gsArrow = deltaArrow(gs - bestParentGS);
 
   document.getElementById('fusion-modal-body').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:14px">
@@ -363,7 +377,18 @@ function showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec
       <span class="gs-badge ${gsCls(pct)}">GS ${gs} / 1000</span>
       <span style="font-size:10px;color:var(--cream2)">${pct}% du max ${rn(merged.rar)}</span>
     </div>
-    <div style="text-align:center;font-size:10px;color:var(--green2);margin-bottom:12px">${gainA>=0?'+':''}${gainA} vs ${a.cat.name.split(' ')[0]} · ${gainB>=0?'+':''}${gainB} vs ${b.cat.name.split(' ')[0]}</div>
+
+    <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:11px;color:var(--cream2)">🏅 Rang (Tier)</span>
+        <span style="font-size:12px;color:${tierArrow.color};font-weight:600">T${bestParentTier} ➡️ T${merged.tier} ${tierArrow.ico}</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:11px;color:var(--cream2)">💪 Score (GS)</span>
+        <span style="font-size:12px;color:${gsArrow.color};font-weight:600">${bestParentGS} ➡️ ${gs} ${gsArrow.ico}</span>
+      </div>
+    </div>
+    <div style="text-align:center;font-size:10px;color:var(--cream3);margin-bottom:12px">${gainA>=0?'+':''}${gainA} vs ${a.cat.name.split(' ')[0]} · ${gainB>=0?'+':''}${gainB} vs ${b.cat.name.split(' ')[0]}</div>
 
     <div style="margin-bottom:8px">${renderTierBlock(merged)}${renderStatBars(merged)}</div>
     <div style="display:flex;gap:8px;margin-top:8px">
@@ -379,6 +404,6 @@ function showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec
     const cm=document.getElementById('fr-merged'); if(cm) drawPixelArt(cm, merged.cat.art, 70, rc(merged.rar), merged.tier||1);
   }, 40);
 
-  if(rarityIncreased) toast('🌟',`PERCÉE ! ${merged.cat.name} → ${rn(merged.rar)} (Tier reset à T1)`);
-  else toast('⚗️',`${merged.cat.name} fusionné → ${rn(merged.rar)} T${merged.tier} · GS ${gs}`);
+  if(rarityIncreased) toast('🌟',`PERCÉE ! ${merged.cat.name} → ${rn(merged.rar)} (Tier reset à T1) · Score ${bestParentGS}➡️${gs}${gsArrow.ico}`);
+  else toast('⚗️',`${merged.cat.name} → T${bestParentTier}➡️T${merged.tier}${tierArrow.ico} · Score ${bestParentGS}➡️${gs}${gsArrow.ico}`);
 }
