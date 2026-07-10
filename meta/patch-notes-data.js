@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V368', d:'21/07/2026 09:00', name:{fr:'Wiki refait + Classement Public Compagnons', en:'Wiki redesigned + Companion Public Leaderboard'}, fr:[
+      {t:'change', tx:'Le Wiki a été entièrement refait en panneau plein écran, à l\'identique d\'une maquette fournie : navigation par catégories, fil d\'Ariane, sommaire de section et recherche live. Le contenu reste le même (Combat & Zones, Optimisation, Marché, Compte & Sauvegarde, À propos, Codex des objets, Tutoriel), avec des raccourcis directs vers le Compendium et le module Compagnons.'},
+      {t:'new', sub:'compagnon', tx:'L\'onglet "🏆 Classement" du module Compagnon devient un vrai Classement Public : podium des 3 premiers, 4 catégories (Score Prestige, Gearscore Max, Fusions, Achievements), recherche par pseudo, pagination et "Ma position" pour retrouver ton rang directement.'},
+    ], en:[
+      {t:'change', tx:'The Wiki has been completely redesigned as a fullscreen panel, matching a provided mockup: category navigation, breadcrumb, section table of contents, and live search. Content stays the same (Combat & Zones, Enhancement, Market, Account & Save, About, Item Codex, Tutorial), with direct shortcuts to the Compendium and Companion module.'},
+      {t:'new', sub:'compagnon', tx:'The Companion module\'s "🏆 Leaderboard" tab becomes a real Public Leaderboard: top-3 podium, 4 categories (Prestige Score, Max Gearscore, Fusions, Achievements), search by name, pagination, and "My Position" to jump straight to your rank.'},
+    ] },
   { v:'V367', d:'20/07/2026 20:30', name:{fr:'Notes de version refaites selon la maquette', en:'Patch notes redesigned to match the mockup'}, fr:[
       {t:'change', tx:'Le panneau des notes de version a été entièrement refait pour ressembler à la maquette fournie : timeline par version, recherche, filtres par catégorie et vue controverse (admin/modérateur).'},
     ], en:[
