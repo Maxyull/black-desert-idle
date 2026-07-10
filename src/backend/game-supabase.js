@@ -1592,7 +1592,11 @@ function positionTutorialStep() {
     else if (step.placement === 'right') { bx = r.right+pad+gap; by = r.top+r.height/2-70; arrowCls='left'; }
     else { bx = r.left-pad-gap-boxW; by = r.top+r.height/2-70; arrowCls='right'; } // 'left' par défaut
     bx = Math.max(10, Math.min(window.innerWidth-boxW-10, bx));
-    by = Math.max(10, Math.min(window.innerHeight-160, by));
+    // clamp sur la hauteur RÉELLE de la boîte (2026-07-10, bug corrigé) : l'ancien clamp supposait
+    // une hauteur fixe de 160 (comme l'ancien bug de placement 'top' corrigé le 2026-07-08, voir
+    // commentaire ci-dessus) -- un step avec un texte long (ex: tutoriel Marché commun) ET une
+    // cible proche du bord bas de l'écran produisait alors une boîte coupée hors du viewport.
+    by = Math.max(10, Math.min(window.innerHeight-box.offsetHeight-10, by));
     box.style.left = bx+'px'; box.style.top = by+'px';
     arrow.style.display = '';
     arrow.className = arrowCls;

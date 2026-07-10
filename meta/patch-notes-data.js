@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V343', d:'20/07/2026 03:00', name:{fr:'Correctif : bulle du tutoriel Marché commun coupée en bas d\'écran', en:'Fix: Common Market tutorial bubble cut off at the bottom of the screen'}, fr:[
+      {t:'fix', sub:'ux', tx:'Le tutoriel affiché à la première ouverture du Marché commun visait le panneau entier (très haut à l\'écran), poussant sa bulle d\'explication hors de l\'écran, coupée en bas. Elle vise désormais le petit bandeau de titre du panneau et reste toujours entièrement visible.'},
+    ], en:[
+      {t:'fix', sub:'ux', tx:'The tutorial shown on first opening the Common Market targeted the entire panel (very tall on screen), pushing its explanation bubble off-screen, cut off at the bottom. It now targets the panel\'s small title bar and always stays fully visible.'},
+    ] },
   { v:'V339', d:'19/07/2026 08:00', name:{fr:'Nouveaux tutoriels : objets de loot courant, marché, enchantement, boss', en:'New tutorials: common loot items, market, enhancement, boss'}, fr:[
       {t:'new', sub:'inventaire', tx:'Un court tutoriel s\'affiche désormais au tout premier objet de loot courant ramassé (revendu automatiquement en silver), pour expliquer qu\'il n\'y a rien d\'autre à en faire.'},
       {t:'new', sub:'combat', tx:'De nouveaux courts tutoriels s\'affichent désormais au premier accès au Marché commun, à la première utilisation de l\'Optimisation (enchantement) et au premier passage dans le lobby d\'un World Boss.'},
