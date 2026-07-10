@@ -204,21 +204,23 @@ document.addEventListener('visibilitychange', () => {
 });
 function showAwayLootSummaryIfAny() {
   if (awaySilverGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
-  const itemsText = Object.entries(awayLootCounts)
+  const itemsHtml = Object.entries(awayLootCounts)
     .sort((a,b) => b[1]-a[1])
     .slice(0, 6)
-    .map(([n,q]) => `${q}× ${n}`)
-    .join(', ');
-  const silverTxt = awaySilverGained > 0 ? `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver` : '';
-  const msg = [silverTxt, itemsText].filter(Boolean).join(' — ');
-  if (typeof pushNotif === 'function') {
-    pushNotif('🎁', LANG==='fr'?'Résumé du loot (absence)':'Loot summary (away)', msg, 'info');
+    .map(([n,q]) => `<b>${q}×</b> ${n}`)
+    .join('<br>');
+  const silverHtml = awaySilverGained > 0 ? `<b>+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver</b>` : '';
+  const body = [silverHtml, itemsHtml].filter(Boolean).join('<br><br>');
+  // bug corrigé (2026-07-10, rapporté explicitement : "je vois pas le message de retour", puis
+  // "le message de retour se met dans un modal en plein ecran") -- d'abord un toast discret
+  // (#achToastStack), passé en vraie modale plein écran sur demande explicite. Réutilise
+  // showResetNotice()/#resetNoticeOverlay (notifications-quests.js) — même mécanisme déjà en
+  // place pour les annonces importantes (ex: reset de compte), pas une nouvelle modale dupliquée.
+  // showResetNotice() alimente aussi le centre de notifications (🔔) elle-même — pas besoin d'un
+  // second pushNotif() ici.
+  if (typeof showResetNotice === 'function') {
+    showResetNotice('🎁', LANG==='fr'?'Pendant ton absence':'While you were away', body);
   }
-  // bug corrigé (2026-07-10, rapporté explicitement : "je vois pas le message de retour") --
-  // pushNotif() est SILENCIEUX : il alimente seulement le centre de notifications (🔔), aucun
-  // popup visible. Réutilise #achToastStack (même mécanisme que showAchToast/showMailToast,
-  // notifications-quests.js) pour un vrai toast à l'écran, sans dupliquer le centre de notifs.
-  if (typeof showAwayLootToast === 'function') showAwayLootToast(msg);
   awaySilverGained = 0; awayLootCounts = {};
 }
 

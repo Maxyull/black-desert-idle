@@ -200,21 +200,6 @@ function showMailToast(icon, name, qty) {
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4500);
 }
-// résumé du loot au retour (2026-07-10, rapporté explicitement : "je vois pas le message de
-// retour") -- appelé par showAwayLootSummaryIfAny() (game-core.js), même mécanisme visuel que
-// showAchToast/showMailToast ci-dessus (pushNotif() seul est silencieux, centre de notifs
-// uniquement, jamais un popup visible).
-function showAwayLootToast(msg) {
-  const stack = $('achToastStack'); if (!stack) return;
-  const el = document.createElement('div');
-  el.className = 'achToast';
-  el.innerHTML = `<div class="achToastIcon">🎁</div>` +
-    `<div><div class="achToastTitle">${LANG==='fr'?'Pendant ton absence':'While you were away'}</div>` +
-    `<div class="achToastName">${msg}</div></div>`;
-  stack.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 5500);
-}
 // 200 points de fidélité par jour, livrés dans le courrier — appelé depuis hud() (cheap check).
 // Depuis le 2026-07-11 (demande explicite) : le gain quotidien ne rejoint plus S.loyalty tout
 // seul, il s'accumule dans le courrier (sans limite, tant que le joueur ne les récupère pas) —

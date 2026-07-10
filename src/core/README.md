@@ -21,9 +21,9 @@ retour")** : `addSilver()`/`trackLoot()` accumulent `awaySilverGained`/`awayLoot
 `showAwayLootSummaryIfAny()` (déclenchée par `visibilitychange` → visible) affiche le total puis
 remet les compteurs à 0. Signal `document.hidden`, pas `isOffline` (`backend/game-supabase.js`) :
 la simulation ne s'arrête jamais avec le réseau, "au retour" = retour sur l'onglet.
-**Bug corrigé (2026-07-10, rapporté explicitement : "je vois pas le message de retour")** :
-`showAwayLootSummaryIfAny()` n'appelait que `pushNotif()` (centre de notifications 🔔,
-silencieux) — aucun popup visible. Affiche désormais aussi un vrai toast via
-`showAwayLootToast()` (`progression/notifications-quests.js`, même mécanisme que `showAchToast`/
-`showMailToast`, `#achToastStack`). Test :
-`testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets` (`tests/tests.js`).
+**Bug corrigé (2026-07-10, rapporté explicitement : "je vois pas le message de retour" puis "le
+message de retour se met dans un modal en plein ecran")** : d'abord corrigé avec un toast
+(`#achToastStack`), puis passé en vraie modale plein écran sur demande explicite — réutilise
+`showResetNotice()`/`#resetNoticeOverlay` (`progression/notifications-quests.js`), déjà en place
+pour les annonces importantes (ex: reset de compte) plutôt que dupliquer une nouvelle modale.
+Test : `testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets` (`tests/tests.js`).

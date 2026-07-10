@@ -680,18 +680,17 @@ document.addEventListener('visibilitychange', () => {
 });
 function showAwayLootSummaryIfAny() {
   if (awaySilverGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
-  const itemsText = Object.entries(awayLootCounts)
+  const itemsHtml = Object.entries(awayLootCounts)
     .sort((a,b) => b[1]-a[1])
     .slice(0, 6)
-    .map(([n,q]) => `${q}× ${n}`)
-    .join(', ');
-  const silverTxt = awaySilverGained > 0 ? `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver` : '';
-  const msg = [silverTxt, itemsText].filter(Boolean).join(' — ');
-  if (typeof pushNotif === 'function') {
-    pushNotif('🎁', LANG==='fr'?'Résumé du loot (absence)':'Loot summary (away)', msg, 'info');
-  }
+    .map(([n,q]) => `<b>${q}×</b> ${n}`)
+    .join('<br>');
+  const silverHtml = awaySilverGained > 0 ? `<b>+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver</b>` : '';
+  const body = [silverHtml, itemsHtml].filter(Boolean).join('<br><br>');
   
-  if (typeof showAwayLootToast === 'function') showAwayLootToast(msg);
+  if (typeof showResetNotice === 'function') {
+    showResetNotice('🎁', LANG==='fr'?'Pendant ton absence':'While you were away', body);
+  }
   awaySilverGained = 0; awayLootCounts = {};
 }
 
@@ -2396,18 +2395,6 @@ function showMailToast(icon, name, qty) {
   stack.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4500);
-}
-
-function showAwayLootToast(msg) {
-  const stack = $('achToastStack'); if (!stack) return;
-  const el = document.createElement('div');
-  el.className = 'achToast';
-  el.innerHTML = `<div class="achToastIcon">🎁</div>` +
-    `<div><div class="achToastTitle">${LANG==='fr'?'Pendant ton absence':'While you were away'}</div>` +
-    `<div class="achToastName">${msg}</div></div>`;
-  stack.appendChild(el);
-  requestAnimationFrame(() => el.classList.add('show'));
-  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 5500);
 }
 
 function ensureLoyaltyGrant() {
