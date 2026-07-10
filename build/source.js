@@ -5731,10 +5731,15 @@ function PneCommentThread(props) {
   async function submit() {
     const text = draft.trim();
     if (!text || !loggedIn || !sb || busy) return;
-    if (pneContainsBannedWord(text)) { setDraftError(true); return; }
+    if (pneContainsBannedWord(text)) { setDraftError('content'); return; }
     setBusy(true);
-    try { await sb.rpc('add_patch_note_comment', { p_entry_id: props.entryId, p_text: text }); setDraft(''); setDraftError(false); await load(); }
-    catch (e) { setDraftError(true); } 
+    try {
+      
+      const { error } = await sb.rpc('add_patch_note_comment', { p_entry_id: props.entryId, p_text: text });
+      if (error) { setDraftError(error.message && error.message.indexOf('rate_limited') !== -1 ? 'rate' : 'content'); }
+      else { setDraft(''); setDraftError(false); await load(); }
+    }
+    catch (e) { setDraftError('content'); }
     finally { setBusy(false); }
   }
   async function remove(id) { if (!sb) return; await sb.rpc('remove_patch_note_comment', { p_comment_id: id }); load(); }
@@ -5763,7 +5768,10 @@ function PneCommentThread(props) {
           style: { flex: 1, fontSize: 10.5, padding: '4px 6px', borderRadius: 4, border: `1px solid ${draftError ? PNE_V.red : PNE_V.border}`, background: PNE_V.card, color: PNE_V.textMain, outline: 'none' },
         }),
         pneH('button', { className: 'pneBtn', onClick: submit, disabled: busy, style: { fontSize: 10.5, border: `1px solid ${PNE_V.border2}`, background: 'none', color: PNE_V.blue, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' } }, '➤')),
-      draftError ? pneH('p', { style: { fontSize: 9.5, color: PNE_V.red2, margin: '4px 0 0' } }, LANG === 'fr' ? 'Merci de rester respectueux — commentaire bloqué.' : 'Please stay respectful — comment blocked.') : null)
+      draftError ? pneH('p', { style: { fontSize: 9.5, color: PNE_V.red2, margin: '4px 0 0' } },
+        draftError === 'rate'
+          ? (LANG === 'fr' ? 'Tu commentes trop vite — réessaie dans une minute.' : 'You\'re commenting too fast — try again in a minute.')
+          : (LANG === 'fr' ? 'Merci de rester respectueux — commentaire bloqué.' : 'Please stay respectful — comment blocked.')) : null)
       : pneH('p', { style: { fontSize: 9.5, color: PNE_V.muted2, fontStyle: 'italic', margin: '6px 0 0' } }, LANG === 'fr' ? 'Connecte-toi pour commenter.' : 'Log in to comment.'));
 }
 
@@ -5786,10 +5794,14 @@ function PneEntryCard(props) {
     if (!sb || typeof currentUser === 'undefined' || !currentUser) return;
     const next = myVote === value ? 0 : value;
     const delta = next - myVote;
+    const prevVote = myVote, prevScore = score;
     setMyVote(next); setScore(s => s + delta);
     patchMyVoteCache[row.entryId] = next; patchKarmaCache[row.entryId] = score + delta;
-    try { await sb.rpc('vote_patch_note', { p_entry_id: row.entryId, p_value: next }); }
-    catch (e) { setMyVote(myVote); setScore(s => s - delta); }
+    try {
+      
+      const { error } = await sb.rpc('vote_patch_note', { p_entry_id: row.entryId, p_value: next });
+      if (error) { setMyVote(prevVote); setScore(prevScore); patchMyVoteCache[row.entryId] = prevVote; patchKarmaCache[row.entryId] = prevScore; }
+    } catch (e) { setMyVote(prevVote); setScore(prevScore); patchMyVoteCache[row.entryId] = prevVote; patchKarmaCache[row.entryId] = prevScore; }
   }
   async function toggleComments() {
     const next = !commentsOpen;
@@ -5814,6 +5826,10 @@ function PneEntryCard(props) {
       pneH('span', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 4, flexShrink: 0, fontSize: 11, background: cat.color + '22', border: `1px solid ${cat.color}55` } }, cat.icon),
       pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: cat.color } }, cat[LANG]),
       pneH('span', { style: { fontSize: 12, fontWeight: 700, color: PNE_V.cream, flex: 1 } }, line.tx, line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2 } }, LANG === 'fr' ? '🗑 Supprimé' : '🗑 Removed') : null),
+      
+      !readPatches.has(p.v)
+        ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2, flexShrink: 0 }, title: LANG === 'fr' ? 'Nouveau' : 'New' })
+        : pneH('span', { style: { fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, flexShrink: 0, color: PNE_V.red, border: `1.5px solid ${PNE_V.red}`, transform: 'rotate(-8deg)', fontFamily: 'monospace', opacity: 0.6 }, title: LANG === 'fr' ? 'Déjà lu' : 'Already read' }, LANG === 'fr' ? 'Lu' : 'Read'),
       line.img ? pneH('button', { className: 'pneBtn', onClick: () => openPatchImgCompare(line.img.before, line.img.after), title: LANG === 'fr' ? 'Voir avant/après' : 'See before/after', style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 } }, '🖼️') : null),
     tags.length > 0 ? pneH('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } },
       tags.map((t, i) => pneH('span', { key: i, title: t.title, style: { fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 999, border: `1px solid ${t.color}`, color: t.color } }, t.label))) : null,
@@ -5827,7 +5843,7 @@ function PneEntryCard(props) {
 function PneVersionBlock(props) {
   const { p, absIdx, rows } = props;
   const isNew = !readPatches.has(p.v);
-  return pneH('div', { style: { position: 'relative', paddingLeft: 20, paddingBottom: 20 } },
+  return pneH('div', { id: 'pne-version-' + p.v, style: { position: 'relative', paddingLeft: 20, paddingBottom: 20 } },
     props.notLast ? pneH('div', { style: { position: 'absolute', left: 6, top: 20, bottom: 0, width: 1, background: PNE_V.border } }) : null,
     pneH('div', { style: { position: 'absolute', left: 0, top: 4, width: 14, height: 14, borderRadius: 999, border: `2px solid ${absIdx === 0 ? PNE_V.gold : PNE_V.border}`, background: PNE_V.bg } }),
     pneH('div', { style: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' } },
@@ -5841,20 +5857,58 @@ function PneVersionBlock(props) {
       rows.map(row => pneH(PneEntryCard, { key: row.entryId, row, controversial: props.controversyView && (patchKarmaCache[row.entryId] || 0) < 0 }))));
 }
 
+function pneResolveInitialPageStart() {
+  try {
+    const hash = (typeof location !== 'undefined' && location.hash) || '';
+    const m = hash.match(/^#patch-(.+)$/);
+    if (!m) return patchPageStart;
+    const version = decodeURIComponent(m[1]);
+    const idx = PATCH_NOTES.findIndex(p => p.v === version);
+    if (idx === -1) return patchPageStart;
+    const pg = computePatchPages().find(pg => idx >= pg.start && idx < pg.start + pg.count);
+    return pg ? pg.start : patchPageStart;
+  } catch (e) { return patchPageStart; }
+}
+
 function PatchNotesApp(props) {
   const [, forceTick] = React.useState(0);
   const [query, setQuery] = React.useState('');
   const [catFilter, setCatFilter] = React.useState(null);
   const [controversyView, setControversyView] = React.useState(false);
-  const [pageStart, setPageStart] = React.useState(patchPageStart);
+  const [pageStart, setPageStart] = React.useState(pneResolveInitialPageStart);
+  const dialogRef = React.useRef(null);
 
   const isStaff = (typeof isAdmin === 'function' && isAdmin()) || (typeof myIsMod !== 'undefined' && myIsMod);
 
   React.useEffect(() => {
-    const onKey = e => e.key === 'Escape' && props.onClose();
+    const el = dialogRef.current;
+    const focusables = () => el ? Array.from(el.querySelectorAll('button:not(:disabled), input, [tabindex]:not([tabindex="-1"])')) : [];
+    const first = focusables()[0];
+    if (first) first.focus();
+    function onKey(e) {
+      if (e.key === 'Escape') { props.onClose(); return; }
+      if (e.key !== 'Tab') return;
+      const items = focusables();
+      if (!items.length) return;
+      const firstEl = items[0], lastEl = items[items.length - 1];
+      if (e.shiftKey && document.activeElement === firstEl) { e.preventDefault(); lastEl.focus(); }
+      else if (!e.shiftKey && document.activeElement === lastEl) { e.preventDefault(); firstEl.focus(); }
+    }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [props.onClose]);
+
+  React.useEffect(() => {
+    try {
+      const hash = (typeof location !== 'undefined' && location.hash) || '';
+      const m = hash.match(/^#patch-(.+)$/);
+      if (!m) return;
+      const version = decodeURIComponent(m[1]);
+      const target = document.getElementById('pne-version-' + version);
+      if (target) setTimeout(() => target.scrollIntoView({ block: 'start' }), 0);
+    } catch (e) {}
+    
+  }, []);
 
   const pages = computePatchPages();
   let pageIdx = pages.findIndex(pg => pg.start === pageStart);
@@ -5924,7 +5978,7 @@ function PatchNotesApp(props) {
          la maquette). Neutralisé ici plutôt que sur chaque bouton un par un. */
       #patchNotesModalRoot button { width: auto; margin: 0; }
     `),
-    pneH('div', { style: { width: '100%', maxWidth: 640, borderRadius: 10, border: `1px solid ${PNE_V.border}`, background: PNE_V.card, overflow: 'hidden', display: 'flex', flexDirection: 'column' } },
+    pneH('div', { ref: dialogRef, style: { width: '100%', maxWidth: 640, borderRadius: 10, border: `1px solid ${PNE_V.border}`, background: PNE_V.card, overflow: 'hidden', display: 'flex', flexDirection: 'column' } },
       
       pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${PNE_V.border}` } },
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
@@ -11680,7 +11734,7 @@ async function refreshAdminPatchNotesModeration() {
   removedEl.innerHTML = removedErr ? `<div class="admHint">${escapeHtml(removedErr.message)}</div>`
     : (!removed || removed.length === 0) ? `<div class="admEmpty">${LANG==='fr'?'Aucun commentaire retiré.':'No removed comments.'}</div>`
     : removed.map(c => `<div class="achRow" data-cid="${c.id}">
-        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)}</div>
+        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)} ${c.status==='pending_review'?`<span style="color:var(--red2,#e08070)">🚩 ${LANG==='fr'?'Auto-masqué (signalements)':'Auto-hidden (reports)'}</span>`:''}</div>
         <div class="achDesc">${escapeHtml(c.text)}</div></div>
         <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${LANG==='fr'?'Restaurer':'Restore'}</button></div>
       </div>`).join('');

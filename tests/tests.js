@@ -3021,6 +3021,85 @@
     }
     closePatchNotesReact();
   }
+  // audit du 2026-07-11 (patch-notes-pipeline.md §5) : pneResolveInitialPageStart() lit
+  // "#patch-{version}" au montage et retourne le pageStart de la page contenant cette version --
+  // fonction PURE, testable sans DOM/React.
+  function testPneResolveInitialPageStartFromHash() {
+    if (typeof pneResolveInitialPageStart !== 'function' || typeof computePatchPages !== 'function') return;
+    const savedHash = location.hash;
+    try {
+      const targetVersion = PATCH_NOTES[PATCH_NOTES.length - 1].v; // la plus ancienne -- garantie sur une page différente de la première si computePatchPages() pagine
+      location.hash = '#patch-' + encodeURIComponent(targetVersion);
+      const idx = PATCH_NOTES.findIndex(p => p.v === targetVersion);
+      const expectedPage = computePatchPages().find(pg => idx >= pg.start && idx < pg.start + pg.count);
+      assert('pneResolveInitialPageStart() retrouve la bonne page pour un hash de version valide',
+        pneResolveInitialPageStart() === expectedPage.start, `got=${pneResolveInitialPageStart()} expected=${expectedPage.start}`);
+      location.hash = '#patch-ce-numero-nexiste-pas-9999';
+      assert('pneResolveInitialPageStart() retombe sur patchPageStart si le hash ne matche aucune version',
+        pneResolveInitialPageStart() === patchPageStart);
+      location.hash = '';
+      assert('pneResolveInitialPageStart() retombe sur patchPageStart sans hash', pneResolveInitialPageStart() === patchPageStart);
+    } finally {
+      location.hash = savedHash;
+    }
+  }
+  // audit du 2026-07-11 (pipeline doc §7 : "focus trap... le focus clavier ne doit pas sortir du
+  // dialog") -- Tab sur le dernier élément focusable doit revenir au premier, jamais sortir du
+  // panneau React.
+  function testPatchNotesFocusTrapKeepsTabWithinDialog() {
+    if (typeof openPatchNotesReact !== 'function' || typeof closePatchNotesReact !== 'function') return;
+    const root = document.getElementById('patchNotesModalRoot');
+    if (!root) return;
+    root.innerHTML = '';
+    openPatchNotesReact();
+    const dialog = root.querySelector('[role="dialog"] > div');
+    if (!dialog) { closePatchNotesReact(); return; }
+    const focusables = Array.from(dialog.querySelectorAll('button:not(:disabled), input, [tabindex]:not([tabindex="-1"])'));
+    assert('Au moins 2 éléments focusables dans le panneau', focusables.length >= 2, String(focusables.length));
+    if (focusables.length >= 2) {
+      const first = focusables[0], last = focusables[focusables.length - 1];
+      last.focus();
+      assert('Le dernier élément a bien le focus avant le test', document.activeElement === last);
+      const ev = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+      window.dispatchEvent(ev);
+      assert('Tab depuis le dernier élément focusable revient au premier (piège de focus, pas de sortie du dialog)',
+        document.activeElement === first, `activeElement=${document.activeElement && document.activeElement.tagName}`);
+    }
+    closePatchNotesReact();
+  }
+  // audit du 2026-07-11 (fidélité maquette : tampon "Lu" par entrée) -- une entrée dont la version
+  // est déjà dans readPatches affiche le tampon "Lu", jamais le point "Nouveau".
+  function testPatchNotesEntryShowsReadStampForAlreadySeenVersion() {
+    if (typeof openPatchNotesReact !== 'function' || typeof closePatchNotesReact !== 'function') return;
+    const root = document.getElementById('patchNotesModalRoot');
+    if (!root || PATCH_NOTES.length === 0) return;
+    const targetVersion = PATCH_NOTES[0].v;
+    const wasRead = readPatches.has(targetVersion);
+    try {
+      readPatches.add(targetVersion);
+      root.innerHTML = '';
+      openPatchNotesReact();
+      const versionBlock = document.getElementById('pne-version-' + targetVersion);
+      assert('Le bloc de version cible est bien rendu (id pne-version-*, requis par le deep link)', !!versionBlock);
+      if (versionBlock) {
+        assert('Une version déjà lue affiche le tampon "Lu" sur ses entrées, pas le point "Nouveau"',
+          versionBlock.textContent.indexOf('Lu') !== -1 && !versionBlock.querySelector('.pnePulseDot'),
+          versionBlock.textContent.slice(0, 80));
+      }
+    } finally {
+      if (!wasRead) readPatches.delete(targetVersion);
+      closePatchNotesReact();
+    }
+  }
+  // audit du 2026-07-11 (pipeline doc §7 : "aria-live='polite' sur le badge de compteur... pour
+  // que les lecteurs d'écran annoncent les nouveautés") -- garde-fou statique sur le HTML source
+  // (pas besoin de DOM navigateur), même famille que les autres tests d'ordre de chargement.
+  function testPatchBadgeHasAriaLive() {
+    if (typeof document === 'undefined') return;
+    const badge = document.getElementById('patchBadge');
+    if (!badge) return; // hors contexte page réelle
+    assert('#patchBadge porte aria-live="polite" (annonce des nouveautés aux lecteurs d\'écran)', badge.getAttribute('aria-live') === 'polite');
+  }
   // reconnectDurationLabel() : fonction PURE (src/core/reconnect-modal-react.js), formate la durée
   // d'absence affichée dans "Absent pendant" / l'historique -- testable sans DOM ni React.
   function testReconnectDurationLabelFormatsHoursAndMinutes() {
@@ -3239,6 +3318,10 @@
     testPneContainsBannedWordDetectsAccentedVariants();
     testPatchNotesReactOpensAndClosesInDom();
     testPatchNotesCategoryChipsWrapOnSameRowInsteadOfStacking();
+    testPneResolveInitialPageStartFromHash();
+    testPatchNotesFocusTrapKeepsTabWithinDialog();
+    testPatchNotesEntryShowsReadStampForAlreadySeenVersion();
+    testPatchBadgeHasAriaLive();
     testCompendiumOverallPctCombinesAllThreeSources();
     testCompendiumWorldAndBossRegistriesAreComplete();
     testCmpMasteredDetectsOnlyPenLevel();
