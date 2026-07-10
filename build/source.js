@@ -3751,6 +3751,8 @@ const ACTIVITY_TABS = [
   { id:'boss', icon:'🐍', name:{fr:'Boss',en:'Boss'},       locked:false },
   
   { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false },
+  
+  { id:'pvp', icon:'🗡️', name:{fr:'PvP',en:'PvP'}, locked:true },
   { id:'fish', icon:'🎣', name:{fr:'Pêche',en:'Fishing'},   locked:true },
   { id:'mine', icon:'⛏️', name:{fr:'Mine',en:'Mining'},     locked:true },
   { id:'forest', icon:'🌲', name:{fr:'Forêt',en:'Forest'},  locked:true },
@@ -9318,7 +9320,7 @@ const PATCH_SUBCATS = {
   eventTemp:'Événements temporaires', bonusXp:'Bonus XP', bonusDrop:'Bonus Drop',
   cadeaux:'Cadeaux', calendrier:'Calendrier',
   annonces:'Annonces', roadmap:'Feuille de route', prochaines:'Prochaines mises à jour',
-  connus:'Problèmes connus', tresors:'Trésors',
+  connus:'Problèmes connus', tresors:'Trésors', compagnon:'Compagnon',
 };
 const PATCH_SUBCATS_EN = {
   boss:'Boss', monstres:'Monsters', zones:'Zones', quetes:'Quests', pnj:'NPC', objets:'Items',
@@ -9336,7 +9338,7 @@ const PATCH_SUBCATS_EN = {
   eventTemp:'Time-limited events', bonusXp:'XP bonus', bonusDrop:'Drop bonus',
   cadeaux:'Gifts', calendrier:'Calendar',
   annonces:'Announcements', roadmap:'Roadmap', prochaines:'Upcoming updates',
-  connus:'Known issues', tresors:'Treasures',
+  connus:'Known issues', tresors:'Treasures', compagnon:'Companion',
 };
 
 function renderPatchEntryHtml(p, absIdx) {
@@ -9969,11 +9971,33 @@ function renderAdminOnboarding(el) {
   });
 }
 
+const COMPANION_RARITY_LABELS = [
+  { id:0, name:'Commun',     color:'#888' },
+  { id:1, name:'Peu commun', color:'#44b060' },
+  { id:2, name:'Rare',       color:'#4488cc' },
+  { id:3, name:'Épique',     color:'#9944cc' },
+  { id:4, name:'Légendaire', color:'#cc8820' },
+  { id:5, name:'Ancestral',  color:'#cc3030' },
+];
+const COMPANION_SECTION_LABELS = {
+  loot:'💎 Collecte', xp:'✨ Expérience', minage:'⛏️ Minage', bucheron:'🪓 Bûcheron',
+  peche:'🎣 Pêche', farming:'🌾 Farming', alchimie:'⚗️ Alchimie', combat:'⚔️ Combat',
+};
+
+function sumCompanionBreakdown(rows, field) {
+  const totals = {};
+  (rows||[]).forEach(r => {
+    const obj = r && r[field];
+    if (!obj || typeof obj !== 'object') return;
+    Object.entries(obj).forEach(([k,v]) => { totals[k] = (totals[k]||0) + Number(v||0); });
+  });
+  return totals;
+}
 function renderAdminCompanions(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
-  sb.rpc('admin_companion_stats').then(({data, error}) => {
-    if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
-    const s = (data && data[0]) || {};
+  Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown')]).then(([statsRes, breakdownRes]) => {
+    if (statsRes.error) { el.innerHTML = `<div class="admHint">${escapeHtml(statsRes.error.message)}</div>`; return; }
+    const s = (statsRes.data && statsRes.data[0]) || {};
     const playersSynced = Number(s.players_synced||0);
     if (!playersSynced) {
       el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun joueur n\'a encore ouvert le module Compagnons':'No player has opened the Companions module yet'}</div>`;
@@ -9982,6 +10006,26 @@ function renderAdminCompanions(el) {
     const totalPet = Number(s.total_pet_count||0), avgPet = Number(s.avg_pet_count||0);
     const totalSilver = Number(s.total_silver||0), totalHatch = Number(s.total_hatch_count||0), totalFusion = Number(s.total_fusion_count||0);
     const avgStreak = Number(s.avg_login_streak||0), playersWithPity = Number(s.players_with_pity||0), avgAch = Number(s.avg_achievements||0);
+    const avgHardAch = Number(s.avg_hard_achievements||0), totalFusionDowngrade = Number(s.total_fusion_downgrade||0);
+
+    const rows = breakdownRes.error ? [] : (breakdownRes.data || []);
+    const rarityTotals = sumCompanionBreakdown(rows, 'rarity_breakdown');
+    const tierTotals = sumCompanionBreakdown(rows, 'tier_breakdown');
+    const sectionTotals = sumCompanionBreakdown(rows, 'section_breakdown');
+
+    const rarityItems = COMPANION_RARITY_LABELS
+      .filter(r => rarityTotals[r.id])
+      .map(r => ({ label:r.name, value:rarityTotals[r.id] }));
+    const sectionItems = Object.entries(sectionTotals)
+      .map(([id,v]) => ({ label: COMPANION_SECTION_LABELS[id] || id, value:v }));
+    const rarityPie = typeof buildPieWithLegendHtml === 'function'
+      ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : '';
+    const sectionPie = typeof buildPieWithLegendHtml === 'function'
+      ? buildPieWithLegendHtml(sectionItems, { thresholdPct:0 }) : '';
+    const tierPoints = [1,2,3,4,5].map(t => ({ label:'T'+t, value:tierTotals[t]||0 }));
+    const tierBar = typeof buildBarSeriesSvg === 'function'
+      ? buildBarSeriesSvg(tierPoints, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
+
     el.innerHTML = `<div class="admSummary">${LANG==='fr'
         ? 'Module 100% local jusqu\'ici (localStorage, économie fermée, indépendante du Silver principal) — "Joueurs synchronisés" compte ceux qui ont ouvert l\'onglet Compagnon au moins une fois (le module envoie ses compteurs toutes les 60s en arrière-plan).'
         : 'Module was 100% local until now (localStorage, closed economy, independent from the main Silver) — "Players synced" counts those who opened the Companion tab at least once (the module pushes its counters every 60s in the background).'}</div>
@@ -9991,10 +10035,18 @@ function renderAdminCompanions(el) {
         <div class="admStatTile"><div class="astLbl">💰 ${LANG==='fr'?'Silver compagnon (total)':'Companion Silver (total)'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
         <div class="admStatTile"><div class="astLbl">🥚 ${LANG==='fr'?'Œufs éclos (total)':'Eggs hatched (total)'}</div><div class="astVal">${fmt(totalHatch)}</div></div>
         <div class="admStatTile"><div class="astLbl">🔗 ${LANG==='fr'?'Fusions (total)':'Fusions (total)'}</div><div class="astVal">${fmt(totalFusion)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🎰 ${LANG==='fr'?'Fusions perdantes (total)':'Downgrade fusions (total)'}</div><div class="astVal">${fmt(totalFusionDowngrade)}</div></div>
         <div class="admStatTile"><div class="astLbl">🔥 ${LANG==='fr'?'Streak connexion (moy.)':'Login streak (avg)'}</div><div class="astVal">${avgStreak.toFixed(1)}</div></div>
         <div class="admStatTile"><div class="astLbl">🎁 ${LANG==='fr'?'Ont déclenché le pity':'Triggered pity'}</div><div class="astVal">${fmt(playersWithPity)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏆 ${LANG==='fr'?'Succès complétés (moy.)':'Achievements done (avg)'}</div><div class="astVal">${avgAch.toFixed(1)} <span class="admHint">/16</span></div></div>
-      </div>`;
+        <div class="admStatTile"><div class="astLbl">🏆 ${LANG==='fr'?'Succès complétés (moy.)':'Achievements done (avg)'}</div><div class="astVal">${avgAch.toFixed(1)} <span class="admHint">/17</span></div></div>
+        <div class="admStatTile"><div class="astLbl">🔥 ${LANG==='fr'?'Succès "difficiles" (moy.)':'"Hard" achievements (avg)'}</div><div class="astVal">${avgHardAch.toFixed(1)} <span class="admHint">/4</span></div></div>
+      </div>
+      <div class="admChartsRow">
+        <div><h3 style="margin-top:0">${LANG==='fr'?'🎲 Par rareté':'🎲 By rarity'}</h3>${rarityPie}</div>
+        <div><h3 style="margin-top:0">${LANG==='fr'?'🗺️ Par section':'🗺️ By section'}</h3>${sectionPie}</div>
+      </div>
+      <h3>${LANG==='fr'?'⬆️ Par Tier (tous joueurs confondus)':'⬆️ By Tier (all players)'}</h3>
+      ${tierBar}`;
   });
 }
 

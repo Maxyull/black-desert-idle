@@ -326,3 +326,33 @@ test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard ach
 
   expect(pageErrors).toEqual([]);
 });
+
+// PvP (2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction de la
+// categorie" + "header : PVP bloqué") -- vrai PvP joueur-contre-joueur pas encore livré (bandeau
+// verrouillé, voir companions.pvp.js), mais le classement local par puissance (GS) fonctionne
+// réellement -- vérifie les deux : l'UI verrouillée ET le tri correct du classement.
+test('PvP tab shows a locked banner and a real GS-sorted ranking of owned pets', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'PvP' }).click();
+  await expect(frame.locator('text=PvP — Bientôt disponible')).toBeVisible();
+
+  // injecte 3 pets de puissances connues et vérifie que computePvpRanking() les trie du plus fort
+  // au plus faible (pure, testable sans dépendre du tirage aléatoire de rollAndCreatePet)
+  const ranking = await frame.locator('body').evaluate(() => {
+    const weak = { id: 901, cat: PET_CATALOG.find(c => c.rar === 0), rar: 0, stats: [1,0,0,0,0], tier: 1 };
+    const strong = { id: 902, cat: PET_CATALOG.find(c => c.rar === 5), rar: 5, stats: [60,38,30,20,15], tier: 5 };
+    const mid = { id: 903, cat: PET_CATALOG.find(c => c.rar === 2), rar: 2, stats: [14,7,6,0,0], tier: 3 };
+    const ranked = computePvpRanking([weak, strong, mid]);
+    return ranked.map(p => p.id);
+  });
+  expect(ranking).toEqual([902, 903, 901]); // strong > mid > weak
+
+  expect(pageErrors).toEqual([]);
+});

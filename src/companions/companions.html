@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=5">
+<link rel="stylesheet" href="companions.css?v=6">
 </head>
 <body>
 <!-- bandeau "test en cours" (2026-07-20, demande explicite) : rappelle à chaque ouverture que ce
@@ -63,6 +63,10 @@
   <div class="tab" onclick="ST(5)">📖 Index <span class="tbadge">48</span></div>
   <div class="tab" onclick="ST(6)">🌿 Hardinage</div>
   <div class="tab" onclick="ST(7)">🏆 Progression <span class="tbadge" id="tb7">0/17</span></div>
+  <!-- 2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction de la
+       categorie" -- vrai PvP joueur-contre-joueur pas encore livré (nécessite un serveur
+       autoritaire, voir companions.pvp.js), mais le classement local par puissance (GS) l'est. -->
+  <div class="tab" onclick="ST(8)">⚔️ PvP <span class="tbadge">🔒</span></div>
 </div>
 <div class="content">
 
@@ -309,6 +313,26 @@
   </div>
 </div>
 
+<!-- TAB 8 PVP (2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction
+     de la categorie" + "header : PVP bloque") -- vrai PvP joueur-contre-joueur pas encore livré
+     (nécessite un serveur autoritaire, voir companions.pvp.js), mais un classement RÉEL des
+     familiers par puissance (GS) l'est déjà, base du futur matchmaking. -->
+<div class="panel" id="p8">
+  <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+    <div style="background:linear-gradient(135deg,#1a0808,#14142a);border:1px solid var(--red);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
+      <span style="font-size:26px">🔒</span>
+      <div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--red2)">PvP — Bientôt disponible</div>
+        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px">Les vrais combats joueur-contre-joueur nécessitent un serveur (matchmaking + résolution) pas encore construit. En attendant, voici le classement de tes familiers par puissance — la base sur laquelle le futur PvP s'appuiera.</div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:10px">⚔️ Classement (puissance GS, toutes sections confondues)</div>
+      <div id="pvp-ranking"></div>
+    </div>
+  </div>
+</div>
+
 </div>
 <div class="modal-bg" id="hatch-modal">
   <div class="modal"><button class="mcl" onclick="CM('hatch-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px">✨ Familier éclos !</div><div id="hatch-body"></div></div>
@@ -321,27 +345,31 @@
 <!-- ordre de chargement documenté dans README.md de ce dossier — chaque fichier déclare des
      globals lus par les suivants (scope global partagé de ce document, isolé du jeu principal
      par l'iframe qui charge cette page) -->
-<script src="companions.pixelart.js?v=5"></script>
-<script src="companions.catalog.js?v=5"></script>
-<script src="companions.economy.js?v=5"></script>
-<script src="companions.tier.js?v=5"></script>
-<script src="companions.roster.js?v=5"></script>
-<script src="companions.hatch.js?v=5"></script>
-<script src="companions.pet-panel.js?v=5"></script>
-<script src="companions.sections.js?v=5"></script>
-<script src="companions.collection.js?v=5"></script>
-<script src="companions.fusion.js?v=5"></script>
-<script src="companions.feed.js?v=5"></script>
-<script src="companions.ticks.js?v=5"></script>
-<script src="companions.save.js?v=5"></script>
+<script src="companions.pixelart.js?v=6"></script>
+<script src="companions.catalog.js?v=6"></script>
+<script src="companions.economy.js?v=6"></script>
+<script src="companions.tier.js?v=6"></script>
+<script src="companions.roster.js?v=6"></script>
+<script src="companions.hatch.js?v=6"></script>
+<script src="companions.pet-panel.js?v=6"></script>
+<script src="companions.sections.js?v=6"></script>
+<script src="companions.collection.js?v=6"></script>
+<script src="companions.fusion.js?v=6"></script>
+<script src="companions.feed.js?v=6"></script>
+<script src="companions.ticks.js?v=6"></script>
+<script src="companions.save.js?v=6"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="companions.sync.js?v=5"></script>
-<script src="companions.index.js?v=5"></script>
-<script src="companions.game-view.js?v=5"></script>
-<script src="companions.hardinage.js?v=5"></script>
-<script src="companions.achievements.js?v=5"></script>
-<script src="companions.main.js?v=5"></script>
+<script src="companions.sync.js?v=6"></script>
+<script src="companions.index.js?v=6"></script>
+<script src="companions.game-view.js?v=6"></script>
+<script src="companions.hardinage.js?v=6"></script>
+<script src="companions.achievements.js?v=6"></script>
+<!-- classement PvP (2026-07-20, demande explicite) : lit PETS/normGS/rc/rn/secById/gsCls/gsPct
+     déjà déclarés plus haut, appelée uniquement via ST(8) -- ordre non strictement requis (aucune
+     lecture au chargement immédiat), placé ici par lisibilité (juste avant main.js). -->
+<script src="companions.pvp.js?v=6"></script>
+<script src="companions.main.js?v=6"></script>
 </body>
 </html>

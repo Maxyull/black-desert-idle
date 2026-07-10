@@ -577,6 +577,36 @@
     const svg = buildBarSeriesSvg([{label:'a',value:1}], '#c9a55a');
     assert('buildBarSeriesSvg impose un max-width explicite (pas 100% seul)', svg.includes('max-width:420px'));
   }
+  // agrégation des répartitions Compagnons (2026-07-20, demande explicite : "ajouter des compteur
+  // graphic lié supabase, pet par tier, rareté, catégorie") -- fonction pure, sans réseau/DOM.
+  function testSumCompanionBreakdownAggregatesAcrossPlayers() {
+    if (typeof sumCompanionBreakdown !== 'function') return;
+    const rows = [
+      { rarity_breakdown: { '0': 3, '5': 1 } },
+      { rarity_breakdown: { '0': 2, '2': 4 } },
+      { rarity_breakdown: null }, // ligne mal formée -- ne doit jamais planter
+    ];
+    const totals = sumCompanionBreakdown(rows, 'rarity_breakdown');
+    assert('rareté 0 additionnée sur les 2 lignes qui l\'ont (3+2=5)', totals['0'] === 5);
+    assert('rareté 5 présente une seule fois (1)', totals['5'] === 1);
+    assert('rareté 2 présente une seule fois (4)', totals['2'] === 4);
+    assert('ligne rarity_breakdown:null ignorée sans exception', Object.keys(totals).length === 3);
+  }
+  function testSumCompanionBreakdownEmptyRowsNeverThrows() {
+    if (typeof sumCompanionBreakdown !== 'function') return;
+    let threw = false;
+    try { sumCompanionBreakdown([], 'tier_breakdown'); sumCompanionBreakdown(null, 'tier_breakdown'); }
+    catch(e) { threw = true; }
+    assert('tableau vide/null ne lève jamais', !threw);
+  }
+  // header principal : PvP verrouillé (2026-07-20, demande explicite : "header : PVP bloqué") --
+  // même convention que les autres activités pas encore livrées (Pêche/Mine/...).
+  function testActivityTabsHasLockedPvpEntry() {
+    if (typeof ACTIVITY_TABS === 'undefined') return;
+    const pvp = ACTIVITY_TABS.find(t => t.id === 'pvp');
+    assert('ACTIVITY_TABS contient une entrée "pvp"', !!pvp);
+    if (pvp) assert('l\'onglet PvP du header est verrouillé', pvp.locked === true);
+  }
   // garde-fou (2026-07-19, bug réel signalé par l'utilisateur : "check ... bouton fermer") : le
   // bouton #closeAdmin vivait dans #adminMainHead, réécrit intégralement par openAdminSection() à
   // CHAQUE changement de section -- comme openAdminPanel() appelle openAdminSection() juste après
@@ -2612,6 +2642,9 @@
     testChartsAreCappedNotFullWidth();
     testCronUsageLoggedWithDistinctKindFromPickup();
     testCloseAdminButtonSurvivesSectionSwitch();
+    testSumCompanionBreakdownAggregatesAcrossPlayers();
+    testSumCompanionBreakdownEmptyRowsNeverThrows();
+    testActivityTabsHasLockedPvpEntry();
     testLootRatesLiveMergeIsPartial();
     testAdminEconomyLoadsAfterAdminPanel();
     testGetISOWeekStringKnownDates();

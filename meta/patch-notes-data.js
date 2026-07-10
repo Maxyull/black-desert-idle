@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V343', d:'20/07/2026 04:00', name:{fr:'Onglet PvP (verrouillé) + classement Compagnon', en:'PvP tab (locked) + Companion ranking'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Nouvel onglet PvP dans le module Compagnon (test) : bandeau "bientôt disponible" + un vrai classement de tes familiers triés par puissance (GS), toutes sections confondues.'},
+      {t:'new', tx:'Nouvel onglet "PvP" dans le header du jeu (verrouillé, comme Pêche/Mine/Forêt...) — activité à venir.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'New PvP tab in the (test) Companion module: "coming soon" banner + a real ranking of your pets sorted by power (GS), across all sections.'},
+      {t:'new', tx:'New "PvP" tab in the game header (locked, like Fishing/Mining/Forest...) — upcoming activity.'},
+    ] },
   { v:'V342', d:'20/07/2026 02:00', name:{fr:'Invités désactivés, connexion Google/GitHub/Twitter', en:'Guests disabled, Google/GitHub/Twitter sign-in'}, fr:[
       {t:'change', sub:'connexion', severity:'major', tx:'Le mode invité (session anonyme, sans compte) est désactivé pour les nouveaux joueurs : il faut désormais créer un compte ou se connecter pour jouer. Les sessions invité créées avant ce changement continuent de fonctionner normalement.'},
       {t:'new', sub:'connexion', tx:'Connexion possible avec Google et GitHub, en plus d\'Email/mot de passe et Discord déjà existants.'},

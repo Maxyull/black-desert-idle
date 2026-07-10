@@ -51,6 +51,13 @@ pity déclenché, succès complétés) via `admin_companion_stats()` (migration
 les 60s. "Joueurs synchronisés" ne compte QUE ceux ayant réellement ouvert l'onglet Compagnon au
 moins une fois — jamais les invités (RPC réservée aux comptes connectés, comme partout ailleurs).
 Lecture seule, pas d'éditeur.
+Enrichi le 2026-07-20 (demande explicite : "remplir le dashboard de tout ce que contient en
+graph") : 2 camemberts (rareté, section) + 1 graphique en barres (Tier), alimentés par
+`admin_companion_breakdown()` (une ligne JSONB par joueur, agrégée côté client via
+`sumCompanionBreakdown()`) — voir migration `20260720100000_companion_stats_breakdowns.sql`.
+Libellés rareté/section recopiés en dur (`COMPANION_RARITY_LABELS`/`COMPANION_SECTION_LABELS`,
+`admin-panel.js`) car `RARITIES`/`SECTIONS` vivent dans `companions.catalog.js`, jamais chargé
+dans le bundle principal — à tenir à jour à la main si le catalogue du module change.
 
 **Utilisation des Pierres de Cron (2026-07-19)** : jusqu'ici seul le ramassage était tracké côté
 serveur (`farm_events`, `kind='material'`) — la consommation pour protéger un enchantement

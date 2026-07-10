@@ -69,6 +69,21 @@ incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
   `companions.economy.js`, incrémenté dans `executeFusion`, `companions.fusion.js` — voir
   CLAUDE.md §28 pour le piège `bestRar` vs meilleur parent réel).
 
+**Admin/PvP (2026-07-20, demande explicite : "creer les module d'admin... remplir le dashboard...
+categorie pvp")** :
+- `companions.sync.js` envoie désormais aussi des répartitions par rareté/tier/section
+  (`computeCompanionBreakdowns()`, objets `{clé:compte}`) + `hard_achievements_count`/
+  `fusion_downgrade_count` — voir `supabase/migrations/20260720100000_companion_stats_breakdowns.sql`.
+  Le panneau admin (`Contenu → Compagnons`, `src/admin/admin-panel.js`) les agrège
+  (`sumCompanionBreakdown`) en 2 camemberts (rareté, section) + 1 graphique en barres (Tier).
+- `companions.pvp.js` (nouveau) — onglet ⚔️ PvP (9e tab) : bandeau verrouillé (🔒 vrai PvP
+  joueur-contre-joueur pas encore livré, nécessite un serveur autoritaire) + un CLASSEMENT réel des
+  familiers du joueur par puissance (`computePvpRanking`/`pvpPower`, alias de `normGS`). Base du
+  futur matchmaking, fonctionne dès aujourd'hui sans dépendre du serveur PvP à venir.
+- Le header du jeu principal (`ACTIVITY_TABS`, `src/combat/boss.js`) a désormais un onglet "PvP"
+  verrouillé, même convention que Pêche/Mine/etc. — distinct du classement ci-dessus (celui-là est
+  le PvP joueur-contre-joueur du jeu principal, pas les familiers).
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2
@@ -108,7 +123,9 @@ incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
 16. `companions.game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
 17. `companions.hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
 18. `companions.achievements.js` — définitions des achievements, score de prestige.
-19. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
+19. `companions.pvp.js` — onglet PvP (classement par puissance, bandeau verrouillé). Charge après
+    `tier.js`/`roster.js` par lisibilité, aucune contrainte d'ordre réelle (appelée via `ST(8)`).
+20. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
     (`loadGame()` puis `checkDailyStreak()`/`renderAll()`).
 
 Comme pour le jeu principal, tout ce document vit dans un seul scope global partagé entre

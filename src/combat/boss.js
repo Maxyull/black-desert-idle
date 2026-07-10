@@ -161,6 +161,11 @@ const ACTIVITY_TABS = [
   { id:'boss', icon:'🐍', name:{fr:'Boss',en:'Boss'},       locked:false },
   // Compagnon juste après Boss (2026-07-10, demande explicite : "compagnon a droite de boss")
   { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false },
+  // PvP (2026-07-20, demande explicite : "header : PVP bloqué") -- teaser verrouillé, même
+  // convention que les autres activités pas encore implémentées ci-dessous. Distinct du classement
+  // "PvP" DÉJÀ jouable dans le module Compagnon (onglet ⚔️ PvP, companions.pvp.js) qui, lui, classe
+  // les familiers du joueur par puissance -- ceci est le PvP joueur-contre-joueur du jeu principal.
+  { id:'pvp', icon:'🗡️', name:{fr:'PvP',en:'PvP'}, locked:true },
   { id:'fish', icon:'🎣', name:{fr:'Pêche',en:'Fishing'},   locked:true },
   { id:'mine', icon:'⛏️', name:{fr:'Mine',en:'Mining'},     locked:true },
   { id:'forest', icon:'🌲', name:{fr:'Forêt',en:'Forest'},  locked:true },
