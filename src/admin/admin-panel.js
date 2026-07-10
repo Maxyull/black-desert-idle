@@ -652,9 +652,13 @@ function sumCompanionBreakdown(rows, field) {
   });
   return totals;
 }
+// taille totale du catalogue (2026-07-20) -- recopiée en dur, même limite que COMPANION_RARITY_LABELS/
+// COMPANION_SECTION_LABELS ci-dessus : le panneau admin (bundle principal) ne peut jamais charger
+// companions.catalog.js (jamais bundlé). À tenir à jour si le catalogue du module change.
+const COMPANION_CATALOG_SIZE = 48;
 function renderAdminCompanions(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
-  Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown')]).then(([statsRes, breakdownRes]) => {
+  Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown'), sb.rpc('admin_companion_player_list'), sb.rpc('admin_list_players')]).then(([statsRes, breakdownRes, playerListRes, allPlayersRes]) => {
     if (statsRes.error) { el.innerHTML = `<div class="admHint">${escapeHtml(statsRes.error.message)}</div>`; return; }
     const s = (statsRes.data && statsRes.data[0]) || {};
     const playersSynced = Number(s.players_synced||0);
@@ -666,6 +670,33 @@ function renderAdminCompanions(el) {
     const totalSilver = Number(s.total_silver||0), totalHatch = Number(s.total_hatch_count||0), totalFusion = Number(s.total_fusion_count||0);
     const avgStreak = Number(s.avg_login_streak||0), playersWithPity = Number(s.players_with_pity||0), avgAch = Number(s.avg_achievements||0);
     const avgHardAch = Number(s.avg_hard_achievements||0), totalFusionDowngrade = Number(s.total_fusion_downgrade||0);
+    // NOUVEAU (2026-07-20, demande explicite : "stats pour oeuf, moyenne doeuf eclos/jour, stats
+    // entiere liste des fusion et grph completion index") -- avg_hatch_per_day/avg_unique_species
+    // viennent de admin_companion_stats() enrichi (migration 20260720130000_companion_stats_egg_and_index.sql).
+    const avgHatchPerDay = Number(s.avg_hatch_per_day||0), avgUniqueSpecies = Number(s.avg_unique_species||0);
+    const avgCompletionPct = Math.round(avgUniqueSpecies/COMPANION_CATALOG_SIZE*100);
+
+    const nameByUser = new Map((allPlayersRes.data||[]).map(p => [p.user_id, p.display_name||'?']));
+    const playerRows = (playerListRes.error ? [] : (playerListRes.data||[])).filter(r => r.fusion_count > 0 || r.hatch_count > 0);
+    const fusionListHtml = playerRows.length
+      ? `<table class="admTable">
+          <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>🔗 ${LANG==='fr'?'Fusions':'Fusions'}</th><th>🌟 ${LANG==='fr'?'Percées':'Breakthroughs'}</th><th>🎰 ${LANG==='fr'?'Perdantes':'Downgrades'}</th><th>🥚 ${LANG==='fr'?'Œufs':'Eggs'}</th><th>📖 ${LANG==='fr'?'Index':'Index'}</th></tr></thead>
+          <tbody>${playerRows.map((r,i) => `
+            <tr class="${i===0&&r.fusion_count>0?'admTop':''}">
+              <td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td>
+              <td>${fmt(r.fusion_count||0)}</td><td>${fmt(r.breakthrough_count||0)}</td><td>${fmt(r.fusion_downgrade_count||0)}</td>
+              <td>${fmt(r.hatch_count||0)}</td><td>${r.unique_species_count||0}/${COMPANION_CATALOG_SIZE}</td>
+            </tr>`).join('')}</tbody>
+        </table>`
+      : `<div class="admEmpty">${LANG==='fr'?'Aucune fusion ni éclosion pour l\'instant':'No fusion or hatch yet'}</div>`;
+    const completionBuckets = [0,25,50,75,100].map((min,i,arr) => {
+      const max = arr[i+1] ?? 101;
+      const label = i===arr.length-1 ? '100%' : `${min}-${arr[i+1]-1}%`;
+      const count = playerRows.filter(r => { const pct = Math.round((r.unique_species_count||0)/COMPANION_CATALOG_SIZE*100); return pct>=min && pct<max; }).length;
+      return { label, value:count };
+    });
+    const completionChart = typeof buildBarSeriesSvg === 'function'
+      ? buildBarSeriesSvg(completionBuckets, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
 
     const rows = breakdownRes.error ? [] : (breakdownRes.data || []);
     const rarityTotals = sumCompanionBreakdown(rows, 'rarity_breakdown');
@@ -699,13 +730,19 @@ function renderAdminCompanions(el) {
         <div class="admStatTile"><div class="astLbl">🎁 ${LANG==='fr'?'Ont déclenché le pity':'Triggered pity'}</div><div class="astVal">${fmt(playersWithPity)}</div></div>
         <div class="admStatTile"><div class="astLbl">🏆 ${LANG==='fr'?'Succès complétés (moy.)':'Achievements done (avg)'}</div><div class="astVal">${avgAch.toFixed(1)} <span class="admHint">/17</span></div></div>
         <div class="admStatTile"><div class="astLbl">🔥 ${LANG==='fr'?'Succès "difficiles" (moy.)':'"Hard" achievements (avg)'}</div><div class="astVal">${avgHardAch.toFixed(1)} <span class="admHint">/4</span></div></div>
+        <div class="admStatTile"><div class="astLbl">📈 ${LANG==='fr'?'Éclosions / jour (moy.)':'Hatches / day (avg)'}</div><div class="astVal">${avgHatchPerDay.toFixed(2)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📖 ${LANG==='fr'?'Complétion Index (moy.)':'Index completion (avg)'}</div><div class="astVal">${avgCompletionPct}% <span class="admHint">(${avgUniqueSpecies.toFixed(1)}/${COMPANION_CATALOG_SIZE})</span></div></div>
       </div>
       <div class="admChartsRow">
         <div><h3 style="margin-top:0">${LANG==='fr'?'🎲 Par rareté':'🎲 By rarity'}</h3>${rarityPie}</div>
         <div><h3 style="margin-top:0">${LANG==='fr'?'🗺️ Par section':'🗺️ By section'}</h3>${sectionPie}</div>
       </div>
       <h3>${LANG==='fr'?'⬆️ Par Tier (tous joueurs confondus)':'⬆️ By Tier (all players)'}</h3>
-      ${tierBar}`;
+      ${tierBar}
+      <h3>${LANG==='fr'?'📖 Répartition de la complétion Index':'📖 Index completion breakdown'}</h3>
+      ${completionChart}
+      <h3>${LANG==='fr'?'🔗 Liste des fusions par joueur':'🔗 Fusion list by player'}</h3>
+      ${fusionListHtml}`;
   });
 }
 

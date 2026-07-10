@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=6">
+<link rel="stylesheet" href="companions.css?v=8">
 </head>
 <body>
 <!-- bandeau "test en cours" (2026-07-20, demande explicite) : rappelle à chaque ouverture que ce
@@ -63,6 +63,10 @@
        categorie" -- vrai PvP joueur-contre-joueur pas encore livré (nécessite un serveur
        autoritaire, voir companions.pvp.js), mais le classement local par puissance (GS) l'est. -->
   <div class="tab" onclick="ST(8)">⚔️ PvP <span class="tbadge">🔒</span></div>
+  <!-- 2026-07-20, demande explicite : "ajouter classement, oeuf ouvert, argent depensé..." --
+       classement CROSS-JOUEURS réel (companion_leaderboard(), Supabase), distinct du classement
+       LOCAL de tes propres pets déjà présent dans l'onglet PvP ci-dessus. -->
+  <div class="tab" onclick="ST(9)">🏆 Classement</div>
 </div>
 <div class="content">
 
@@ -329,6 +333,24 @@
   </div>
 </div>
 
+<!-- TAB 9 CLASSEMENT + STATS PERSO (2026-07-20, demande explicite : "ajouter classement, oeuf
+     ouvert, argent depensé...") -- combine le classement cross-joueurs réel (companion_leaderboard(),
+     Supabase, voir companions.leaderboard.js) ET un résumé perso (œufs ouverts, argent dépensé...)
+     en un seul onglet plutôt que d'en fragmenter deux quasi-vides séparément. -->
+<div class="panel" id="p9">
+  <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
+    <div>
+      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:10px">📊 Tes stats</div>
+      <div id="my-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px"></div>
+    </div>
+    <div>
+      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:6px">🏆 Classement (tous les joueurs)</div>
+      <div style="font-size:10px;color:var(--cream3);margin-bottom:10px">Classé par nombre de familiers — nécessite d'avoir ouvert ce module au moins une fois (les stats se synchronisent toutes les 60s).</div>
+      <div id="companion-leaderboard"></div>
+    </div>
+  </div>
+</div>
+
 </div>
 <div class="modal-bg" id="hatch-modal">
   <div class="modal"><button class="mcl" onclick="CM('hatch-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px">✨ Familier éclos !</div><div id="hatch-body"></div></div>
@@ -343,21 +365,21 @@
      par l'iframe qui charge cette page) -->
 <script src="companions.pixelart.js?v=6"></script>
 <script src="companions.catalog.js?v=6"></script>
-<script src="companions.economy.js?v=6"></script>
+<script src="companions.economy.js?v=7"></script>
 <script src="companions.tier.js?v=6"></script>
 <script src="companions.roster.js?v=6"></script>
-<script src="companions.hatch.js?v=6"></script>
+<script src="companions.hatch.js?v=7"></script>
 <script src="companions.pet-panel.js?v=6"></script>
 <script src="companions.sections.js?v=6"></script>
-<script src="companions.collection.js?v=6"></script>
+<script src="companions.collection.js?v=7"></script>
 <script src="companions.fusion.js?v=7"></script>
 <script src="companions.feed.js?v=6"></script>
 <script src="companions.ticks.js?v=6"></script>
-<script src="companions.save.js?v=7"></script>
+<script src="companions.save.js?v=8"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="companions.sync.js?v=8"></script>
+<script src="companions.sync.js?v=9"></script>
 <script src="companions.index.js?v=6"></script>
 <script src="companions.game-view.js?v=6"></script>
 <script src="companions.hardinage.js?v=6"></script>
@@ -366,6 +388,11 @@
      déjà déclarés plus haut, appelée uniquement via ST(8) -- ordre non strictement requis (aucune
      lecture au chargement immédiat), placé ici par lisibilité (juste avant main.js). -->
 <script src="companions.pvp.js?v=6"></script>
+<!-- tes stats + classement cross-joueurs (2026-07-20, demande explicite) : lit
+     PETS/totalHatched/silverSpent/fusionCount/PET_CATALOG/ACHIEVEMENTS/completedAchievements déjà
+     déclarés plus haut, appelée uniquement via ST(9) -- ordre non strictement requis, placé ici par
+     lisibilité (même famille que companions.pvp.js juste au-dessus). -->
+<script src="companions.leaderboard.js?v=1"></script>
 <script src="companions.main.js?v=6"></script>
 </body>
 </html>

@@ -11,12 +11,18 @@ function setSort(mode,el){
 const COLL_ZOOM_STEPS = [120, 160, 200]; // px, du plus dense (plus par ligne) au plus large
 let collZoomIdx = 1; // index de départ = valeur actuelle de companions.css (160px)
 function setCollZoom(delta){
+  const prevIdx = collZoomIdx;
   collZoomIdx = Math.max(0, Math.min(COLL_ZOOM_STEPS.length-1, collZoomIdx+delta));
   const grid = document.getElementById('pet-grid');
   if(grid) grid.style.gridTemplateColumns = `repeat(auto-fill,minmax(${COLL_ZOOM_STEPS[collZoomIdx]}px,1fr))`;
   const outBtn = document.getElementById('zoom-out'), inBtn = document.getElementById('zoom-in');
   if(outBtn) outBtn.disabled = collZoomIdx===0;
   if(inBtn) inBtn.disabled = collZoomIdx===COLL_ZOOM_STEPS.length-1;
+  // bug corrigé (2026-07-20) : changer de cran ne re-rendait jamais les cartes -- seule la largeur
+  // de colonne CSS changeait. Nécessaire maintenant que le contenu de la carte lui-même dépend du
+  // cran (variante compacte au cran le plus dense, voir renderGrid() ci-dessous).
+  const wasCompact = prevIdx===0, isCompact = collZoomIdx===0;
+  if(wasCompact !== isCompact) renderGrid();
 }
 
 // ═══ BADGE FUSION CENTRÉ DANS LE HEADER (2026-07-20, demande explicite) ═══
@@ -132,6 +138,13 @@ function renderGrid(){
       </div>
       <div class="card-body">
         <div class="card-name">${p.cat.name}</div>
+        ${collZoomIdx===0 ? `
+        <div class="card-meta-compact" title="${rn(p.rar)} · T${p.tier||1} (${tierMultPct(p)}%) · ${sec?.name} · ${p.cat.typ}">
+          <span class="cmcDot" style="background:${rc(p.rar)}"></span>
+          <span class="cmcTier">T${p.tier||1}</span>
+          <span class="cmcSec">${sec?.ico}</span>
+          <span class="gs-badge ${gsCls(pct)}">GS ${gs}</span>
+        </div>` : `
         <div class="card-meta">
           <span style="color:${rc(p.rar)};font-size:9px">${rn(p.rar)}</span>
           <span style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold)" title="Multiplicateur ×${tierMultOf(p).toFixed(3)}">T${p.tier||1} <span style="color:var(--cream3)">(${tierMultPct(p)}%)</span></span>
@@ -144,7 +157,7 @@ function renderGrid(){
           <span class="gs-badge ${gsCls(pct)}" style="font-size:9px;padding:1px 5px">GS ${gs}</span>
           <div class="gs-bar"><div class="gs-bar-fill" style="width:${pct}%;background:${rc(p.rar)}"></div></div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cream3)">${pct}%</span>
-        </div>
+        </div>`}
         ${(()=>{const cmp=comparisonBadge(p);return cmp?`<div style="font-size:9px;color:${cmp.beats?'var(--green2)':'var(--red2)'};margin-top:2px">${cmp.text}</div>`:'';})()}
         ${isBest&&!p.terrain?'<div style="font-size:9px;color:var(--gold);margin-top:1px">⭐ Meilleur de la section</div>':''}
         <div class="card-actions">

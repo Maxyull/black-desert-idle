@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V347', d:'20/07/2026 08:00', name:{fr:'Compagnon : classement cross-joueurs, tes stats, cartes Collection compactes · Admin : stats œufs/index/fusions', en:'Companion: cross-player leaderboard, your stats, compact Collection cards · Admin: egg/index/fusion stats'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Nouvel onglet "🏆 Classement" : tes stats persos (œufs ouverts, argent dépensé, fusions, complétion Index...) + un vrai classement comparé à tous les autres joueurs.'},
+      {t:'fix', sub:'compagnon', tx:'Au zoom le plus dense de la Collection, les cartes affichaient uniquement le nom — rareté/tier/section/GS étaient invisibles (coupés silencieusement). Un format compact garde désormais ces infos visibles à toutes les tailles.'},
+      {t:'fix', sub:'admin', tx:'En de rares occasions, le panneau admin pouvait se rouvrir tout seul pendant une autre activité (ex: en pleine session du module Compagnon) — corrigé.'},
+      {t:'new', sub:'admin', tx:'Stats Compagnon enrichies : moyenne d\'éclosions par jour, complétion moyenne de l\'Index, et une liste par joueur de leurs fusions/percées.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'New "🏆 Leaderboard" tab: your personal stats (eggs opened, money spent, fusions, Index completion...) + a real leaderboard compared to every other player.'},
+      {t:'fix', sub:'compagnon', tx:'At the densest Collection zoom, cards only showed the name — rarity/tier/section/GS were invisible (silently clipped). A compact layout now keeps this info visible at every size.'},
+      {t:'fix', sub:'admin', tx:'In rare cases the admin panel could reopen on its own during another activity (e.g. mid-session in the Companion module) — fixed.'},
+      {t:'new', sub:'admin', tx:'Enriched Companion stats: average hatches per day, average Index completion, and a per-player list of their fusions/breakthroughs.'},
+    ] },
   { v:'V346', d:'20/07/2026 07:00', name:{fr:'Compagnon : résultat de fusion clarifié, export/import retiré · Admin : dashboard consolidé', en:'Companion: clearer fusion result, export/import removed · Admin: consolidated dashboard'}, fr:[
       {t:'new', sub:'compagnon', tx:'Le résultat d\'une fusion affiche désormais clairement le changement de Rang (Tier) et de Score, avec une flèche verte ⬆️ en cas de gain et rouge ⬇️ en cas de perte, comparé au meilleur des 2 parents.'},
       {t:'change', sub:'compagnon', tx:'Boutons d\'export/import de sauvegarde JSON retirés du module Compagnon (ne restait qu\'un filet de sécurité local, jamais relié à la sauvegarde cloud).'},

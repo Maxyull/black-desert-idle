@@ -112,6 +112,56 @@ sauvegarde cloud (module 100% `localStorage`), source de confusion vu qu'aucune 
 principal n'expose ce genre de bouton. `resetSave()` (🗑️ Reset) reste seul mécanisme de remise à
 zéro locale.
 
+**Carte Collection compacte au zoom le plus dense (2026-07-20, demande explicite : "Colllection si
+petite carte alors afficher tiers rareté et section et gs")** : au cran de zoom 120px, la ligne meta
+verbeuse (rareté en toutes lettres + tier + section + type) débordait de la carte et se faisait
+tronquer silencieusement par `.pet-card{overflow:hidden}` — perdant section/type/parfois GS sans
+erreur visible. `renderGrid()` (`companions.collection.js`) bascule désormais sur `.card-meta-compact`
+(pastille de rareté, `T{n}`, icône de section, badge GS) quand `collZoomIdx===0`, garanti de tenir
+dans la largeur (vérifié via `scrollWidth<=clientWidth`). `setCollZoom()` re-render la grille au
+changement de cran (bug annexe corrigé au passage : il ne changeait avant que la largeur CSS des
+colonnes, jamais le contenu des cartes).
+
+**Argent dépensé — compteur à vie (2026-07-20)** : `silverSpent` (`companions.economy.js`), jamais
+remis à 0 contrairement à `SILVER`. Seul point d'incrément : `spendSilver(amount)` — TOUJOURS
+utiliser cette fonction plutôt que `SILVER -=` directement pour toute future dépense (2 occurrences
+actuelles, `companions.hatch.js:doHatch`/`bulkHatch`), sinon le compteur dérive silencieusement.
+
+**Stats admin œufs/index/fusions (2026-07-20, demande explicite : "affichger stats pour oeuf,
+moyenne doeuf eclos/jour, stats entiere liste des fusion et grph completion index")** :
+- `created_at` (nouvelle colonne, jamais réécrite après le tout premier sync d'un joueur —
+  contrairement à `updated_at`) sert de référence temporelle pour `avg_hatch_per_day`
+  (`admin_companion_stats()`, moyenne PAR joueur puis moyennée, pas un total global/jours qui
+  écraserait les joueurs récents).
+- `unique_species_count` (nouvelle colonne) = nombre d'ESPÈCES distinctes du catalogue possédées
+  (pas le nombre de pets) — calculé côté client (`new Set(PETS.map(p=>p.cat.name)).size`,
+  `companions.sync.js`) et transmis à chaque sync. Alimente "Complétion Index" (admin) ET l'onglet
+  "Tes stats" (joueur), comparé à `PET_CATALOG.length` (48, recopié en dur côté admin sous
+  `COMPANION_CATALOG_SIZE` — même limite que `COMPANION_RARITY_LABELS`/`COMPANION_SECTION_LABELS`,
+  admin-panel.js ne peut jamais charger `companions.catalog.js`).
+- `admin_companion_player_list()` (nouvelle RPC, admin uniquement) — une ligne par joueur
+  (fusions/percées/perdantes/œufs/index), affichée en table triée par fusions décroissantes dans
+  `Contenu → Compagnons` (panneau admin). Distincte de `admin_companion_breakdown()` (répartitions
+  agrégées rareté/tier/section, sans identité de joueur) — RPC dédiée plutôt qu'élargir celle-ci,
+  même esprit que `admin_list_players`/`admin_wealth` séparés.
+- Migration : `supabase/migrations/20260720130000_companion_stats_egg_and_index.sql`.
+
+**Classement cross-joueurs (2026-07-20)** : `companion_leaderboard()` — SEULE RPC de ce module SANS
+garde email (accessible à tout compte authentifié non-invité, même pattern que
+`get_online_players()`) — classe par `pet_count` décroissant, résout le pseudo via
+`profiles.pseudo` en priorité puis `player_stats.display_name`. Migration
+`supabase/migrations/20260720140000_companion_leaderboard.sql`.
+
+**Bug corrigé — le panneau admin réapparaissait pendant une session Compagnon (2026-07-20,
+rapporté explicitement : "quand je reste longtemps dans compagnon le dashboard s'affiche")** :
+sans rapport avec ce module lui-même — `showPlayerInventoryWindow()` (`game-supabase.js`, panneau
+admin) ouvre une popup "Inventaire joueur" et sondait toutes les 400ms si elle était fermée pour
+rappeler `openAdminPanel()`. Si cette popup restait ouverte en arrière-plan longtemps (l'admin
+quitte le panneau admin pour aller tester Compagnon sans la fermer), puis finissait par se fermer,
+le panneau admin réapparaissait de force en pleine session Compagnon. Corrigé : ne rouvre plus que
+si `#adminOverlay` a encore la classe `open` au moment de la fermeture de la popup. Voir
+`backend/README.md` pour le détail technique complet.
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2
@@ -142,8 +192,8 @@ zéro locale.
 11. `companions.feed.js` — liste de nourrissage, nourrir un/tous.
 12. `companions.ticks.js` — header en direct + la boucle de jeu principale (`setInterval`
     1s : faim, XP de tier, loot en tâche de fond, drops spéciaux, achievements).
-13. `companions.save.js` — sauvegarde/chargement localStorage, rattrapage hors-ligne,
-    export/import/reset.
+13. `companions.save.js` — sauvegarde/chargement localStorage, rattrapage hors-ligne, reset
+    (export/import JSON retirés le 2026-07-20, voir plus haut).
 14. `companions.sync.js` — pousse un résumé de compteurs vers Supabase toutes les 60s
     (stats admin, voir plus haut) via `window.parent.sb`. Charge après `save.js` par
     lisibilité, aucune contrainte d'ordre réelle (appelée via `setTimeout`/`setInterval`).
@@ -151,9 +201,14 @@ zéro locale.
 16. `companions.game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
 17. `companions.hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
 18. `companions.achievements.js` — définitions des achievements, score de prestige.
-19. `companions.pvp.js` — onglet PvP (classement par puissance, bandeau verrouillé). Charge après
-    `tier.js`/`roster.js` par lisibilité, aucune contrainte d'ordre réelle (appelée via `ST(8)`).
-20. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
+19. `companions.pvp.js` — onglet PvP (classement LOCAL par puissance, bandeau verrouillé). Charge
+    après `tier.js`/`roster.js` par lisibilité, aucune contrainte d'ordre réelle (appelée via `ST(8)`).
+20. `companions.leaderboard.js` (2026-07-20) — onglet "Tes stats" + Classement (tab 9, `ST(9)`),
+    distinct du classement PvP LOCAL ci-dessus : "Tes stats" (100% local, œufs ouverts/argent
+    dépensé/fusions/index) + un vrai classement CROSS-JOUEURS via la RPC publique
+    `companion_leaderboard()` (voir `supabase/migrations/20260720140000_companion_leaderboard.sql`),
+    même pattern `window.parent.getSbClient()` que `companions.sync.js`.
+21. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
     (`loadGame()` puis `checkDailyStreak()`/`renderAll()`).
 
 Comme pour le jeu principal, tout ce document vit dans un seul scope global partagé entre

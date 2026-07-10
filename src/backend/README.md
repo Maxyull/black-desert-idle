@@ -43,3 +43,14 @@ nouvelle version.
   n'est le souci (ça, c'est valide : `.catch` est appelé sur le vrai Promise renvoyé PAR `.then()`,
   pas sur le builder brut — voir `boss.js:boss_contribute` pour un exemple correct de ce pattern).
   Garde-fou : `testRpcFireAndForgetCallsNeverUseBareCatch` (`tests/tests.js`).
+  **`showPlayerInventoryWindow()` — bug corrigé (2026-07-20, rapporté explicitement : "quand je
+  reste longtemps dans compagnon le dashboard s'affiche")** : cette fonction ouvre une popup
+  "Inventaire joueur" (bouton 🎒 de la liste des joueurs, panneau admin) et sondait toutes les
+  400ms (`setInterval`) si `win.closed` pour rappeler `openAdminPanel()` à la fermeture. Ce
+  sondage survit tant que la popup reste ouverte, MÊME si l'admin a depuis navigué ailleurs (ex:
+  fermé le panneau admin pour aller tester le module Compagnon) — si la popup traînait longtemps
+  en arrière-plan avant d'être fermée, `openAdminPanel()` se déclenchait sans prévenir, en pleine
+  autre session. Corrigé : ne rappelle `openAdminPanel()` que si `$a('adminOverlay')` a encore la
+  classe `open` au moment de la fermeture (l'admin n'a pas explicitement quitté le panneau entre-
+  temps via `closeAdminPanel()`, qui retire cette classe). Garde-fou statique :
+  `testPopupCloseOnlyReopensAdminPanelIfStillOpen` (`tests/tests.js`).

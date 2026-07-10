@@ -1883,6 +1883,23 @@
     }
     sb = origSb; currentUser = origCurrentUser;
   }
+  // garde-fou (2026-07-20, "quand je reste longtemps dans compagnon le dashboard s'affiche") :
+  // showPlayerInventoryWindow() ouvre une popup "Inventaire joueur" depuis le panneau admin, et
+  // sondait toutes les 400ms si elle était fermée pour rouvrir openAdminPanel() -- MÊME si l'admin
+  // avait depuis quitté le panneau (ex: parti tester le module Compagnon). Une popup laissée
+  // ouverte en arrière-plan longtemps, puis fermée (manuellement ou par le navigateur), forçait le
+  // panneau admin à réapparaître en pleine session Compagnon, sans prévenir. Garde-fou statique
+  // (function.toString(), même pattern que testSorcierRenderLoadsBeforeSyncStartupCallers) : le
+  // code doit vérifier l'état de #adminOverlay avant de rappeler openAdminPanel().
+  function testPopupCloseOnlyReopensAdminPanelIfStillOpen() {
+    if (typeof showPlayerInventoryWindow !== 'function') return;
+    const src = showPlayerInventoryWindow.toString();
+    const hasReopenCall = src.includes('openAdminPanel()');
+    assert('showPlayerInventoryWindow rouvre bien le panneau admin quelque part (sinon ce test est obsolète)', hasReopenCall);
+    if (!hasReopenCall) return;
+    assert('Le rappel à openAdminPanel() est conditionné à adminOverlay encore "open" (régression 2026-07-20)',
+      /classList\.contains\(['"]open['"]\)[\s\S]{0,80}openAdminPanel\(\)/.test(src));
+  }
   function testPatchPagesCoverAllEntriesWithinBounds() {
     const pages = computePatchPages();
     assert('computePatchPages : la 1ère page commence à l\'index 0 (le plus récent)', pages[0].start === 0);
@@ -2716,6 +2733,7 @@
     testEveryPatchSubHasALabel();
     testFormatPatchNoteForDiscord();
     testRpcFireAndForgetCallsNeverUseBareCatch();
+    testPopupCloseOnlyReopensAdminPanelIfStillOpen();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
     testCompendiumBackfillAfterSell();
