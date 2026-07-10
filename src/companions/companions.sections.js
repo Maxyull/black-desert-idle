@@ -49,26 +49,33 @@ function renderSecDetail(){
       </div>
     </div>`;
 
+  // carte de réserve resserrée (2026-07-20, demande explicite : "carte de reserve plus petite
+  // avec info") -- canvas/paddings réduits, mais le GS/Tier/section restent visibles SANS avoir à
+  // déplier (contrairement à avant où seul le nom était garanti visible en un coup d'œil) ; le
+  // détail complet (stats/atelier Caphras) reste replié derrière le clic, comme avant.
   const resHtml=reserves.length?`
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:9px;overflow:hidden">
-      <div style="padding:6px 10px;border-bottom:1px solid var(--border);font-family:'Cinzel',serif;font-size:9px;letter-spacing:.08em;color:var(--cream2)">📦 Réserve (${reserves.length}) — clique pour voir les stats</div>
-      <div style="padding:6px;display:flex;flex-direction:column;gap:4px">
+      <div style="padding:5px 9px;border-bottom:1px solid var(--border);font-family:'Cinzel',serif;font-size:8.5px;letter-spacing:.08em;color:var(--cream2)">📦 Réserve (${reserves.length}) — clique pour voir les stats</div>
+      <div style="padding:4px;display:flex;flex-direction:column;gap:3px">
         ${reserves.map(p=>{
           const expanded = expandedResPets.has(p.id);
-          return `<div style="background:var(--s3);border:1px solid var(--border);border-radius:6px;overflow:hidden">
-            <div style="padding:5px 7px;display:flex;align-items:center;gap:6px;cursor:pointer" onclick="toggleResPetExpand(${p.id})">
-              <canvas id="rv${p.id}" width="24" height="24" style="width:24px;height:24px;image-rendering:pixelated;flex-shrink:0"></canvas>
+          const sec=secById(p.cat.sec);
+          return `<div style="background:var(--s3);border:1px solid var(--border);border-radius:5px;overflow:hidden">
+            <div style="padding:3px 6px;display:flex;align-items:center;gap:5px;cursor:pointer" onclick="toggleResPetExpand(${p.id})">
+              <canvas id="rv${p.id}" width="18" height="18" style="width:18px;height:18px;image-rendering:pixelated;flex-shrink:0"></canvas>
               <div style="flex:1;min-width:0">
-                <div style="font-size:9px;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.cat.name}</div>
-                <div style="display:flex;align-items:center;gap:4px;margin-top:1px">
-                  <span class="gs-badge ${gsCls(gsPct(p))}" style="font-size:7px;padding:0 3px">GS ${normGS(p)}</span>
-                  <span style="font-size:7px;color:var(--gold);font-family:'Cinzel',serif">T${p.tier||1}</span>
+                <div style="font-size:8.5px;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.cat.name}</div>
+                <div style="display:flex;align-items:center;gap:3px;margin-top:1px">
+                  <span class="gs-badge ${gsCls(gsPct(p))}" style="font-size:6.5px;padding:0 2px">GS ${normGS(p)}</span>
+                  <span style="font-size:6.5px;color:var(--gold);font-family:'Cinzel',serif">T${p.tier||1}</span>
+                  <span style="font-size:6.5px;color:${rc(p.rar)}">${rn(p.rar)}</span>
+                  <span style="font-size:9px;color:var(--cream3)" title="${sec?.name||''}">${sec?.ico||''}</span>
                 </div>
               </div>
-              <span style="font-size:9px;color:var(--cream3);transform:rotate(${expanded?'90deg':'0deg'});transition:transform .15s;flex-shrink:0">▶</span>
-              <button style="font-size:7px;padding:2px 4px;border-radius:3px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);cursor:pointer;font-family:'Cinzel',serif;flex-shrink:0" onclick="event.stopPropagation();deployPet(${p.id})">Déployer</button>
+              <span style="font-size:8px;color:var(--cream3);transform:rotate(${expanded?'90deg':'0deg'});transition:transform .15s;flex-shrink:0">▶</span>
+              <button style="font-size:6.5px;padding:1px 3px;border-radius:3px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);cursor:pointer;font-family:'Cinzel',serif;flex-shrink:0" onclick="event.stopPropagation();deployPet(${p.id})">Déployer</button>
             </div>
-            ${expanded?`<div style="padding:0 7px 7px 7px;border-top:1px solid var(--border);font-size:.82em;transform-origin:top left">${renderTierBlock(p)}${renderStatBars(p)}</div>`:''}
+            ${expanded?`<div style="padding:0 6px 6px 6px;border-top:1px solid var(--border);font-size:.78em;transform-origin:top left">${renderTierBlock(p)}${renderStatBars(p)}</div>`:''}
           </div>`;
         }).join('')}
       </div>

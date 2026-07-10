@@ -42,6 +42,33 @@ ailleurs dans le jeu). Nouveau compteur à vie `totalHatched` (`companions.econo
 incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
 `hatchCountSincePity` qui se remet à 0 à chaque pity déclenché.
 
+**Passe UI/QoL + bug d'éclosion (2026-07-20, demande explicite)** :
+- Bandeau `#wipBanner` (toujours visible, `companions.html`) rappelant que le module est en test
+  (`TEST_BALANCE_DIVISOR`, voir CLAUDE.md §28) et que rien n'est relié au jeu principal.
+- Titre du header changé en "Black Desert Idle Compagnon" ; bouton de fermeture `#hdrCloseBtn`
+  ajouté DANS le module à côté de "FAMILIERS" (en plus du bouton "Fermer" déjà injecté par
+  `combat/boss.js:openCompanionsModule` au-dessus de l'iframe) — appelle
+  `window.parent.closeCompanionsModule()`.
+- Collection : légende des badges 🥇🥈🥉ᵀᴼᴾ (indicateurs de candidat de fusion, pas un classement
+  joueurs), tri par Tier (`sort-tier`), zoom de grille (`setCollZoom`, 3 crans) —
+  `companions.collection.js`. Badge fusion centré dans le header (`#hdr-fusion-badge`,
+  `updateHeaderFusionBadge()`), visible uniquement pendant une sélection de fusion.
+- Disclaimer dans l'onglet Éclosion : les boutons ×1/×5/×10 (`bulkHatch`) sont un raccourci de
+  TEST, seront retirés d'ici la fin des tests.
+- Carte de réserve (`companions.sections.js:renderSecDetail`) resserrée (canvas 24px→18px,
+  paddings réduits) mais avec Rareté+section ajoutées en aperçu (avant, seuls GS/Tier étaient
+  visibles sans déplier).
+- **Bug corrigé** : le compte à rebours d'incubation ne se mettait jamais à jour à l'écran (le
+  tick décrémentait bien `incubSlots[].tl` en mémoire, mais rien ne rappelait `renderHatch()` — ni
+  `ST()` au changement d'onglet, ni le tick lui-même) — symptôme rapporté : "le timer ne bouge
+  pas, on ne peut pas acheter les œufs" (le bouton "Éclore" n'apparaissait jamais si le slot
+  devenait prêt onglet déjà ouvert). Voir CLAUDE.md §28 "Pièges déjà rencontrés".
+- Achievement "dur" `fusion_downgrade` (+ champ `hard:true` sur les achievements les plus
+  exigeants) : se déclenche en fusionnant un Légendaire/Ancestral avec un pet plus faible ET en
+  obtenant un résultat de rareté inférieure au meilleur des deux parents (`fusionLostHighRarityCount`,
+  `companions.economy.js`, incrémenté dans `executeFusion`, `companions.fusion.js` — voir
+  CLAUDE.md §28 pour le piège `bestRar` vs meilleur parent réel).
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2
@@ -61,8 +88,8 @@ incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
    de tracking pour achievements, streak de connexion quotidienne, inventaire + journal.
 4. `companions.tier.js` — système de Tier (multiplicateur, XP requis), Gearscore
    (`curGS`/`normGS`/`gsPct`...), helpers rareté (`rc`/`rn`/`secById`...).
-5. `companions.roster.js` — roster de départ (40 pets), slots d'incubation, filtres de
-   collection.
+5. `companions.roster.js` — roster de départ (0 pet depuis le 2026-07-10, voir migration
+   `petsRosterResetV1` plus haut), slots d'incubation, filtres de collection.
 6. `companions.hatch.js` — utilitaires UI partagés (`ST`/`toast`/`OM`/`CM`/`fmtT`) + tout le
    flux d'éclosion (choix d'œuf, tirage, éclosion ×1/×5/×10).
 7. `companions.pet-panel.js` — barres de stats, atelier de Caphras, bloc Tier détaillé.

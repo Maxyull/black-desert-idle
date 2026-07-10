@@ -5,6 +5,36 @@ function setSort(mode,el){
   el.classList.add('on');renderGrid();
 }
 
+// ═══ ZOOM DE LA GRILLE (2026-07-20, demande explicite) ═══
+// Largeur minimale des cartes de .pet-grid (repeat(auto-fill,minmax(Npx,1fr)), voir
+// companions.css) -- 3 crans, préférence d'affichage pure, jamais persistée dans la sauvegarde.
+const COLL_ZOOM_STEPS = [120, 160, 200]; // px, du plus dense (plus par ligne) au plus large
+let collZoomIdx = 1; // index de départ = valeur actuelle de companions.css (160px)
+function setCollZoom(delta){
+  collZoomIdx = Math.max(0, Math.min(COLL_ZOOM_STEPS.length-1, collZoomIdx+delta));
+  const grid = document.getElementById('pet-grid');
+  if(grid) grid.style.gridTemplateColumns = `repeat(auto-fill,minmax(${COLL_ZOOM_STEPS[collZoomIdx]}px,1fr))`;
+  const outBtn = document.getElementById('zoom-out'), inBtn = document.getElementById('zoom-in');
+  if(outBtn) outBtn.disabled = collZoomIdx===0;
+  if(inBtn) inBtn.disabled = collZoomIdx===COLL_ZOOM_STEPS.length-1;
+}
+
+// ═══ BADGE FUSION CENTRÉ DANS LE HEADER (2026-07-20, demande explicite) ═══
+// Reflète le même calcul TOP1/TOP2/TOP3 que renderGrid() ci-dessous (compte des candidats
+// actuellement affichés dans la grille) -- appelée à chaque renderGrid(), visible seulement
+// pendant une sélection de fusion (1 pet choisi, 2e slot vide).
+function updateHeaderFusionBadge(counts){
+  const el = document.getElementById('hdr-fusion-badge');
+  if(!el) return;
+  if(!counts){ el.style.display='none'; return; }
+  const parts=[];
+  if(counts.top1) parts.push(`🥇×${counts.top1}`);
+  if(counts.top2) parts.push(`🥈×${counts.top2}`);
+  if(counts.top3) parts.push(`🥉×${counts.top3}`);
+  el.textContent = parts.length ? `Candidats fusion : ${parts.join(' ')}` : 'Aucun candidat de fusion trouvé';
+  el.style.display = '';
+}
+
 function renderFilters(){
   document.getElementById('sec-filter-chips').innerHTML=
     SECTIONS.map(s=>`<div class="chip ${filterSec.has(s.id)?'on':''}" onclick="toggleFilter(filterSec,'${s.id}')">${s.ico}</div>`).join('');
@@ -30,6 +60,7 @@ function renderGrid(){
     let v=0;
     if(sortMode==='gs')v=normGS(a)-normGS(b);
     else if(sortMode==='rar')v=a.rar-b.rar;
+    else if(sortMode==='tier')v=(a.tier||1)-(b.tier||1);
     else if(sortMode==='nom')v=a.cat.name.localeCompare(b.cat.name);
     else if(sortMode==='sec')v=a.cat.sec.localeCompare(b.cat.sec);
     else if(sortMode==='typ')v=a.cat.typ.localeCompare(b.cat.typ);
@@ -47,6 +78,9 @@ function renderGrid(){
   const showMergeHints = firstSelected && inF[1]===null; // un seul pet choisi -> on aide à voir quoi merger
   const bothSelected = inF[0]!==null && inF[1]!==null; // les 2 slots sont remplis -> on isole les 2 choisis
   const absMax = maxGS(5,5);
+  // compteurs pour le badge fusion du header (2026-07-20, demande explicite) -- accumulés pendant
+  // le même passage que le rendu des cartes ci-dessous, jamais un second calcul séparé.
+  const fusionBadgeCounts = {top1:0, top2:0, top3:0};
   document.getElementById('pet-grid').innerHTML=list.map(p=>{
     const pct=gsPct(p),gs=normGS(p);
     const isBest=bestInSec[p.cat.sec]===p.id;
@@ -61,6 +95,9 @@ function renderGrid(){
     const isTop2 = sameRarAsFirst && sameTierAsFirst && !sameSecAsFirst;
     const isTop3 = sameRarAsFirst && !sameSecAsFirst && !sameTierAsFirst;
     const isMergeCandidate = isTop1 || isTop2 || isTop3;
+    if(isTop1) fusionBadgeCounts.top1++;
+    else if(isTop2) fusionBadgeCounts.top2++;
+    else if(isTop3) fusionBadgeCounts.top3++;
     const isDimmed = (showMergeHints && p.id!==firstSelected.id && !isMergeCandidate) || (bothSelected && !isF);
 
     // Mini-aperçu de fusion : meilleur des stats + rareté/tier probables
@@ -124,4 +161,5 @@ function renderGrid(){
     const c=document.getElementById('ca'+p.id);
     if(c) drawPixelArt(c,p.cat.art,56,p.terrain?'#44b06033':null,p.tier||1);
   });
+  updateHeaderFusionBadge(showMergeHints ? fusionBadgeCounts : null);
 }

@@ -274,6 +274,15 @@ function executeFusion(a,b){
   const {bestRar, newRar, rarityIncreased} = rollFusionRarity(a, b, odds.gapFactor);
   fusionCount++;
   if(rarityIncreased) breakthroughCount++;
+  // achievement "dur" (2026-07-20, demande explicite) : compare au meilleur des 2 PARENTS
+  // d'ORIGINE (Math.max(a.rar,b.rar)), PAS à `bestRar` ci-dessus -- `bestRar` est déjà le résultat
+  // du tirage de base (baseRarityDraw, qui favorise la rareté BASSE des deux parents jusqu'à
+  // 90/10), donc `newRar` ne peut structurellement jamais descendre sous `bestRar`
+  // (rollFusionRarity n'AJOUTE qu'une escalade +0/+1/+2/+3, jamais de malus). La vraie "perte" se
+  // joue DANS baseRarityDraw : fusionner un Ancestral avec un pet plus faible peut retomber sur la
+  // rareté du parent le plus faible -- c'est CE cas qu'on veut détecter ici.
+  const bestParentRar = Math.max(a.rar, b.rar);
+  if(bestParentRar>=4 && newRar<bestParentRar) fusionLostHighRarityCount++;
 
   // 3. Tier — si la rareté a bondi, reset systématique à T1.
   //    Sinon, la fusion progresse d'au moins 1 cran, avec une chance de sauter plus loin

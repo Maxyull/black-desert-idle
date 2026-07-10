@@ -97,7 +97,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   await expect(overlay).toBeVisible();
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Velia Idle');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
 
   // roster de départ : 0 pet (2026-07-10, demande explicite -- voir companions.roster.js)
   await expect(frame.locator('#tb2')).toHaveText('0');
@@ -177,7 +177,7 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
   await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
 
   const frame = page.frameLocator('#companionsFrame');
-  await expect(frame.locator('.hdr-logo')).toHaveText('Velia Idle');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
   // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (companions.roster.js) -- ne prouve
   // pas à lui seul que loadGame()/la migration ont fini de tourner, donc pas fiable comme seule
   // condition d'attente. On poll directement petsRosterResetV1 (posé synchroneement à la toute fin
@@ -200,6 +200,129 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
     JSON.parse(localStorage.getItem('velia_idle_pets_save')));
   expect(persisted.petsRosterResetV1).toBe(true);
   expect(persisted.PETS).toEqual([]);
+
+  expect(pageErrors).toEqual([]);
+});
+
+// 2026-07-20, demande explicite (bandeau/titre/bouton fermer/légende/tri/zoom) : couvre la
+// présence de chaque élément UI ajouté, pas leur comportement détaillé (déjà couvert ailleurs).
+test('header shows WIP banner, new title, close button, and collection legend/sort/zoom controls', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+
+  // bandeau "test en cours" (2026-07-20) -- toujours visible, pas de bouton pour le masquer
+  await expect(frame.locator('#wipBanner')).toBeVisible();
+  await expect(frame.locator('#wipBanner')).toContainText('test');
+
+  // bouton de fermeture DANS le module, à côté de "FAMILIERS" -- appelle bien closeCompanionsModule
+  // de la page hôte (vérifié via l'overlay principal qui se cache après le clic)
+  await expect(frame.locator('#hdrCloseBtn')).toBeVisible();
+  const overlay = page.locator('#companionsOverlay');
+  await expect(overlay).toBeVisible();
+  await frame.locator('#hdrCloseBtn').click();
+  await expect(overlay).toBeHidden();
+  await dismissTutorialIfPresent(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+  await expect(overlay).toBeVisible();
+
+  // Collection : légende TOP1/2/3, bouton de tri par Tier, contrôle de zoom
+  await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
+  await expect(frame.locator('text=TOP1 = même rareté')).toBeVisible();
+  await expect(frame.locator('#sort-tier')).toBeVisible();
+  await expect(frame.locator('#zoom-in')).toBeVisible();
+  await expect(frame.locator('#zoom-out')).toBeVisible();
+  const gridColsBefore = await frame.locator('#pet-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns);
+  await frame.locator('#zoom-in').click();
+  const gridColsAfter = await frame.locator('#pet-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns);
+  expect(gridColsAfter).not.toBe(gridColsBefore);
+
+  // disclaimer "achat instantané de test" près des boutons ×1/×5/×10
+  await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
+  await expect(frame.locator('text=raccourci de TEST')).toBeVisible();
+
+  expect(pageErrors).toEqual([]);
+});
+
+// bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut pas
+// acheter les oeufs") -- ST(1) n'appelait jamais renderHatch(), et le tick ne rafraîchissait pas
+// le panel Éclosion même quand il restait ouvert. Vérifie que le texte du compte à rebours change
+// tout seul, SANS changer d'onglet, entre deux lectures espacées de plus d'1s (companions.ticks.js
+// tourne toutes les 1000ms).
+test('hatch countdown keeps updating live while the tab stays open', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
+
+  // le 2e slot (non gratuit, non prêt au démarrage) affiche un vrai compte à rebours -- on lit son
+  // texte deux fois avec >1.2s d'écart, sans jamais quitter l'onglet Éclosion entre les deux lectures
+  const timerEl = frame.locator('.isl:not(.ready):not(.locked) .itimer').first();
+  await expect(timerEl).toBeVisible();
+  const before = await timerEl.textContent();
+  await page.waitForTimeout(1200);
+  const after = await timerEl.textContent();
+  expect(after).not.toBe(before);
+
+  expect(pageErrors).toEqual([]);
+});
+
+// achievement "dur" (2026-07-20, demande explicite : "succes dure genre fusionner pour perdre des
+// legendaire/ancestral") -- force le tirage (Math.random mocké à 0 dans le contexte de l'iframe)
+// pour garantir un résultat de rareté inférieure au meilleur des 2 parents (voir le commentaire
+// détaillé dans executeFusion, companions.fusion.js, sur pourquoi bestParentRar et pas bestRar).
+test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard achievement', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const origRandom = Math.random;
+    Math.random = () => 0; // force le tirage de base vers la rareté BASSE (baseRarityDraw) + escalade min
+    try {
+      const ancestralCat = PET_CATALOG.find(c => c.rar === 5);
+      const commonCat = PET_CATALOG.find(c => c.rar === 0);
+      const a = { id: petId++, cat: ancestralCat, rar: 5, stats: mkStats(5), hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+      const b = { id: petId++, cat: commonCat, rar: 0, stats: mkStats(0), hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+      PETS.push(a, b);
+      const beforeCount = fusionLostHighRarityCount;
+      executeFusion(a, b);
+      checkAchievements();
+      return {
+        counterIncremented: fusionLostHighRarityCount > beforeCount,
+        achievementUnlocked: completedAchievements.has('fusion_downgrade'),
+        petsLenAfter: PETS.length, // les 2 parents consommés, 1 seul résultat -> +1 net (0 -> 1 ici)
+      };
+    } finally {
+      Math.random = origRandom;
+    }
+  });
+  expect(result.counterIncremented).toBe(true);
+  expect(result.achievementUnlocked).toBe(true);
+  expect(result.petsLenAfter).toBe(1);
+
+  // le nouvel achievement existe bien dans le registre, marqué "hard"
+  const achDef = await frame.locator('body').evaluate(() =>
+    ACHIEVEMENTS.find(a => a.id === 'fusion_downgrade'));
+  expect(achDef).toBeTruthy();
+  expect(achDef.hard).toBe(true);
 
   expect(pageErrors).toEqual([]);
 });

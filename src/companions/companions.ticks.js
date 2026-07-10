@@ -24,6 +24,11 @@ setInterval(()=>{
   document.getElementById('h-egg').textContent=fmtT(eggTimer);
   const rdy=incubSlots.filter(s=>s.ready).length;
   document.getElementById('tb0').textContent=rdy?rdy+' prêt':'En cours';
+  // bug corrigé (2026-07-20) : renderHatch() ne tournait qu'à l'ouverture de l'onglet (ST()) ou
+  // après une éclosion -- le compte à rebours affiché restait figé et le bouton "Éclore" pouvait
+  // ne jamais apparaître si le slot passait "prêt" pendant que l'onglet était déjà ouvert. Même
+  // idiome que p5/p2 plus bas dans ce fichier (re-render seulement si le panel concerné est actif).
+  if(document.getElementById('p0')?.classList.contains('active')) renderHatch();
   if(document.getElementById('autotog')?.classList.contains('on')){
     PETS.forEach(p=>{
       if(!p.terrain||p.hunger>=30) return;

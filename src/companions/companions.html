@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Velia Idle — Familiers</title>
+<title>Black Desert Idle — Compagnon</title>
 <!-- module autonome, chargé dans un iframe uniquement au clic sur l'onglet Compagnon (voir
      src/combat/boss.js:openCompanionsModule) -- jamais bundlé avec le jeu principal (scripts.py
      ne lit que index.dev.html), donc jamais téléchargé/exécuté tant que le joueur n'ouvre pas
@@ -14,13 +14,32 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=4">
+<link rel="stylesheet" href="companions.css?v=5">
 </head>
 <body>
+<!-- bandeau "test en cours" (2026-07-20, demande explicite) : rappelle à chaque ouverture que ce
+     module est isolé du jeu principal ET que ses valeurs (Silver/timers) sont divisées par
+     TEST_BALANCE_DIVISOR (voir companions.economy.js) pour permettre de tester vite -- jamais les
+     vraies valeurs finales. Toujours visible, pas de bouton pour le masquer : le but est un rappel
+     permanent tant que le module reste en phase de test, pas un message qu'on ferme une fois. -->
+<div id="wipBanner" style="background:linear-gradient(90deg,#3a1808,#4a2408);border-bottom:1px solid var(--red);padding:6px 16px;font-size:10.5px;color:#ffcf9e;text-align:center;flex-shrink:0">
+  ⚠️ Module en test — rien n'est relié au jeu principal, tous les prix/temps sont divisés par 1000 à 1 000 000 pour tester vite. Merci de tester un maximum et de faire un retour !
+</div>
 <div class="hdr">
-  <span class="hdr-logo">Velia Idle</span>
+  <span class="hdr-logo">Black Desert Idle Compagnon</span>
   <span style="color:var(--border2)">›</span>
   <span style="font-size:11px;color:var(--cream2)">FAMILIERS</span>
+  <!-- bouton de fermeture DANS le module (2026-07-20, demande explicite : "bouton de fermeture
+       fenetre a coté de familier") -- s'ajoute au bouton "Fermer" déjà présent dans la barre au-
+       dessus de l'iframe (src/combat/boss.js:openCompanionsModule), qui reste inchangé. Appelle le
+       même closeCompanionsModule() de la page hôte via window.parent (iframe same-origin, voir
+       companions.sync.js pour le même pattern d'accès à window.parent). -->
+  <button id="hdrCloseBtn" onclick="if(window.parent&&window.parent.closeCompanionsModule)window.parent.closeCompanionsModule();" title="Fermer" style="font-family:'Cinzel',serif;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--cream2);cursor:pointer">✕</button>
+  <!-- badge fusion top1/2/3 centré (2026-07-20, demande explicite) : reflète EXACTEMENT le même
+       indicateur que les badges 🥇🥈🥉 des cartes de la Collection (voir companions.collection.js,
+       isTop1/isTop2/isTop3) -- visible UNIQUEMENT pendant une sélection de fusion (1 pet choisi,
+       2e slot vide), mis à jour par updateHeaderFusionBadge() (appelée depuis renderGrid()). -->
+  <div id="hdr-fusion-badge" style="display:none;margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream2);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;white-space:nowrap"></div>
   <div class="hdr-right">
     <div class="hdr-pill">💎 Collecte <strong id="h-col">—</strong></div>
     <div class="hdr-pill">⚔️ PA <strong id="h-pa">—</strong></div>
@@ -43,7 +62,7 @@
   <div class="tab" onclick="ST(4)">🍖 Nourrir <span class="tbadge" id="tb3">✓</span></div>
   <div class="tab" onclick="ST(5)">📖 Index <span class="tbadge">48</span></div>
   <div class="tab" onclick="ST(6)">🌿 Hardinage</div>
-  <div class="tab" onclick="ST(7)">🏆 Progression <span class="tbadge" id="tb7">0/16</span></div>
+  <div class="tab" onclick="ST(7)">🏆 Progression <span class="tbadge" id="tb7">0/17</span></div>
 </div>
 <div class="content">
 
@@ -100,6 +119,9 @@
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--s1)">
       <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:3px">📊 Chances par type d'œuf</div>
       <div style="font-size:10px;color:var(--cream3);margin-bottom:10px">Base : 1 œuf gratuit / 6h (~4 par jour). Les % entre parenthèses = chance d'obtenir ≥1 pet de cette rareté sur la période cible.</div>
+      <!-- 2026-07-20, demande explicite : rappel que les boutons x1/x5/x10 (achat instantané, sous
+           chaque nom d'oeuf ci-dessous) sont un outil de TEST -- pas la mécanique finale prévue -->
+      <div style="font-size:9.5px;color:#e8a860;margin-bottom:10px">🧪 Les boutons ×1/×5/×10 (achat instantané) sont un raccourci de TEST — ils seront retirés d'ici la fin des tests.</div>
       <div id="egg-odds-table" style="overflow-x:auto"></div>
     </div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
@@ -136,13 +158,29 @@
         <span class="coll-title">Collection</span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 12px">💰 <span id="coll-silver">55 000</span></span>
         <input class="search-box" id="search-box" placeholder="🔍 Rechercher…" oninput="renderGrid()">
-        <div style="margin-left:auto;display:flex;gap:3px">
+        <div style="margin-left:auto;display:flex;gap:3px;align-items:center">
           <button class="schip on" id="sort-gs"  onclick="setSort('gs',this)">GS↓</button>
           <button class="schip" id="sort-rar" onclick="setSort('rar',this)">Rareté</button>
+          <button class="schip" id="sort-tier" onclick="setSort('tier',this)">Tier</button>
           <button class="schip" id="sort-nom" onclick="setSort('nom',this)">Nom</button>
           <button class="schip" id="sort-sec" onclick="setSort('sec',this)">Section</button>
           <button class="schip" id="sort-typ" onclick="setSort('typ',this)">Type</button>
+          <!-- zoom grille (2026-07-20, demande explicite) : change la largeur mini des cartes de
+               .pet-grid (voir setCollZoom(), companions.collection.js), donc le nb de cartes par
+               ligne -- 3 crans, persisté en mémoire seulement (pas dans la sauvegarde, préférence
+               d'affichage pas une donnée de progression). -->
+          <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
+          <button class="schip" id="zoom-out" onclick="setCollZoom(-1)" title="Cartes plus petites (plus par ligne)">🔍－</button>
+          <button class="schip" id="zoom-in" onclick="setCollZoom(1)" title="Cartes plus grandes (moins par ligne)">🔍＋</button>
         </div>
+      </div>
+      <!-- légende des badges de fusion (2026-07-20, demande explicite) : explique 🥇🥈🥉, visibles
+           uniquement pendant une sélection de fusion (voir isTop1/isTop2/isTop3, companions.collection.js) -->
+      <div style="padding:4px 16px;font-size:9px;color:var(--cream3);display:flex;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
+        <span>🥇 TOP1 = même rareté + section + tier (meilleur candidat)</span>
+        <span>🥈 TOP2 = même rareté + tier, section différente</span>
+        <span>🥉 TOP3 = même rareté seulement</span>
+        <span style="color:var(--cream3)">— badges affichés pendant la sélection d'un pet à fusionner</span>
       </div>
       <div class="pet-grid" id="pet-grid"></div>
     </div>
@@ -259,7 +297,7 @@
       </div>
       <div style="text-align:right">
         <div style="font-size:10px;color:var(--cream2)">Achievements</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--green2)" id="ach-count">0 / 16</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--green2)" id="ach-count">0 / 17</div>
       </div>
     </div>
 
@@ -283,27 +321,27 @@
 <!-- ordre de chargement documenté dans README.md de ce dossier — chaque fichier déclare des
      globals lus par les suivants (scope global partagé de ce document, isolé du jeu principal
      par l'iframe qui charge cette page) -->
-<script src="companions.pixelart.js?v=4"></script>
-<script src="companions.catalog.js?v=4"></script>
-<script src="companions.economy.js?v=4"></script>
-<script src="companions.tier.js?v=4"></script>
-<script src="companions.roster.js?v=4"></script>
-<script src="companions.hatch.js?v=4"></script>
-<script src="companions.pet-panel.js?v=4"></script>
-<script src="companions.sections.js?v=4"></script>
-<script src="companions.collection.js?v=4"></script>
-<script src="companions.fusion.js?v=4"></script>
-<script src="companions.feed.js?v=4"></script>
-<script src="companions.ticks.js?v=4"></script>
-<script src="companions.save.js?v=4"></script>
+<script src="companions.pixelart.js?v=5"></script>
+<script src="companions.catalog.js?v=5"></script>
+<script src="companions.economy.js?v=5"></script>
+<script src="companions.tier.js?v=5"></script>
+<script src="companions.roster.js?v=5"></script>
+<script src="companions.hatch.js?v=5"></script>
+<script src="companions.pet-panel.js?v=5"></script>
+<script src="companions.sections.js?v=5"></script>
+<script src="companions.collection.js?v=5"></script>
+<script src="companions.fusion.js?v=5"></script>
+<script src="companions.feed.js?v=5"></script>
+<script src="companions.ticks.js?v=5"></script>
+<script src="companions.save.js?v=5"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="companions.sync.js?v=4"></script>
-<script src="companions.index.js?v=4"></script>
-<script src="companions.game-view.js?v=4"></script>
-<script src="companions.hardinage.js?v=4"></script>
-<script src="companions.achievements.js?v=4"></script>
-<script src="companions.main.js?v=4"></script>
+<script src="companions.sync.js?v=5"></script>
+<script src="companions.index.js?v=5"></script>
+<script src="companions.game-view.js?v=5"></script>
+<script src="companions.hardinage.js?v=5"></script>
+<script src="companions.achievements.js?v=5"></script>
+<script src="companions.main.js?v=5"></script>
 </body>
 </html>

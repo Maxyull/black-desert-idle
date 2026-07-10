@@ -91,6 +91,13 @@ let bossItemFound = false;
 let breakthroughCount = 0;
 let eggTypesUsed = new Set();
 let completedAchievements = new Set();
+// achievement "dur" (2026-07-20, demande explicite : "succes dure genre fusionner pour perdre
+// des legendaire/ancestral") -- la fusion ne DÉTRUIT jamais un pet (executeFusion, companions.fusion.js,
+// consomme toujours 2 pets pour en recréer 1), mais peut faire RETOMBER la rareté du résultat sous
+// celle du meilleur des deux parents (tirage défavorable). Incrémenté dans executeFusion() quand le
+// meilleur parent était Légendaire(4)/Ancestral(5) ET que le résultat sort à une rareté inférieure --
+// jamais remis à 0, achievement "hard" débloqué à la 1ère occurrence (voir companions.achievements.js).
+let fusionLostHighRarityCount = 0;
 
 // ═══ STREAK DE CONNEXION QUOTIDIENNE ═══
 // Récompense croissante sur 7 jours consécutifs, reset si un jour est manqué.
