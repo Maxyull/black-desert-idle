@@ -44,22 +44,27 @@ function renderSecDetail(){
   const reserves=PETS.filter(p=>p.cat.sec===s.id&&!p.terrain);
   const c=document.getElementById('sec-detail');
   const terrainHtml=tp?`
-    <div class="terrain-slot occ">
-      <canvas id="ts-cv" width="70" height="70" style="width:70px;height:70px;image-rendering:pixelated;flex-shrink:0"></canvas>
-      <div style="flex:1">
-        <div style="font-size:9px;color:${rc(tp.rar)};margin-bottom:2px">${rn(tp.rar)} · ${tp.cat.typ}</div>
-        <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--cream);margin-bottom:4px">${tp.cat.name}</div>
-        <div style="display:flex;align-items:center;gap:7px;margin-bottom:8px">
-          <span class="gs-badge ${gsCls(gsPct(tp))}">GS ${normGS(tp)} / 1000</span>
-          <span style="font-size:10px;color:var(--cream2)">${gsPct(tp)}% du max</span>
+    <div class="terrain-slot occ" style="--pcard-color:${rc(tp.rar)}">
+      <div class="pcard-art">
+        <canvas id="ts-cv" width="140" height="140" style="width:140px;height:140px;image-rendering:pixelated"></canvas>
+        <span style="position:absolute;top:8px;left:8px;font-family:'Cinzel',serif;font-size:10px;color:var(--gold);background:rgba(0,0,0,.5);border-radius:4px;padding:1px 6px">T${tp.tier||1}</span>
+        <span class="gs-badge ${gsCls(gsPct(tp))}" style="position:absolute;top:8px;right:8px">GS ${normGS(tp)}</span>
+      </div>
+      <div class="pcard-name">
+        <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--cream)">${tp.cat.name}</div>
+        <div style="font-size:9px;color:${rc(tp.rar)};margin-top:2px">${rn(tp.rar)} · ${tp.cat.typ}</div>
+      </div>
+      <div class="pcard-body">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="font-size:10px;color:var(--cream2)">${gsPct(tp)}% du max ${rn(tp.rar)}</span>
         </div>
         ${renderTierBlock(tp)}
         ${renderStatBars(tp)}
         ${renderCaphrasWorkshop(tp)}
       </div>
-      <div style="display:flex;flex-direction:column;gap:6px">
-        ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(tp)?`<button class="btn btn-ghost" style="font-size:9px;padding:4px 9px" onclick="open3dPreviewModal(PETS.find(p=>p.id===${tp.id}))">🧊 Voir en 3D</button>`:''}
-        <button class="btn btn-red" style="font-size:9px;padding:4px 9px" onclick="PETS.find(p=>p.id===${tp.id}).terrain=false;renderAll()">Retirer</button>
+      <div class="pcard-actions">
+        ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(tp)?`<button class="btn btn-ghost" style="font-size:9px;padding:4px 9px;flex:1" onclick="open3dPreviewModal(PETS.find(p=>p.id===${tp.id}))">🧊 Voir en 3D</button>`:''}
+        <button class="btn btn-red" style="font-size:9px;padding:4px 9px;flex:1" onclick="PETS.find(p=>p.id===${tp.id}).terrain=false;renderAll()">Retirer</button>
       </div>
     </div>`:`
     <div class="terrain-slot">
@@ -122,7 +127,7 @@ function renderSecDetail(){
     </div>
     ${resHtml}`;
 
-  if(tp){setTimeout(()=>{const cv=document.getElementById('ts-cv');if(cv)drawPixelArt(cv,tp.cat.art,70,rc(tp.rar),tp.tier||1);},30);}
+  if(tp){setTimeout(()=>{const cv=document.getElementById('ts-cv');if(cv)drawPixelArt(cv,tp.cat.art,140,rc(tp.rar),tp.tier||1);},30);}
   reserves.forEach(p=>{setTimeout(()=>{const cv=document.getElementById('rv'+p.id);if(cv)drawPixelArt(cv,p.cat.art,24,null,p.tier||1);},30);});
 }
 

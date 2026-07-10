@@ -10,7 +10,7 @@ function saveGame(){
       fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount, totalHatched, fusionLostHighRarityCount,
       eggTypesUsed: Array.from(eggTypesUsed),
       completedAchievements: Array.from(completedAchievements),
-      pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1,
+      pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1, petsRosterCapV1,
       savedAt: Date.now()
     };
     localStorage.setItem('velia_idle_pets_save', JSON.stringify(state));
@@ -56,6 +56,21 @@ function applyOfflineProgress(savedAt){
   }
 }
 
+// migration rétroactive (2026-07-20, demande explicite : "supprime tout compagnon au dessus de la
+// limite") -- purge l'excédent au-delà de PET_ROSTER_CAP (96, companions.roster.js). Garde TOUJOURS
+// les pets actuellement déployés sur le terrain (quel que soit leur GS -- jamais casser une
+// configuration active), puis complète avec les meilleurs GS parmi le reste jusqu'au plafond.
+function trimRosterToCapIfNeeded(){
+  if(PETS.length <= PET_ROSTER_CAP) return;
+  const deployed = PETS.filter(p=>p.terrain);
+  const others = PETS.filter(p=>!p.terrain).sort((a,b)=>normGS(b)-normGS(a));
+  const keepOthersCount = Math.max(0, PET_ROSTER_CAP - deployed.length);
+  const removedCount = PETS.length - (deployed.length + Math.min(keepOthersCount, others.length));
+  PETS = [...deployed, ...others.slice(0, keepOthersCount)];
+  if(removedCount>0 && typeof toast==='function'){
+    toast('📦', `${removedCount} familier${removedCount>1?'s':''} en trop supprimé${removedCount>1?'s':''} (plafond ${PET_ROSTER_CAP}) — les moins bien roulés retirés en premier`);
+  }
+}
 function loadGame(){
   try{
     const raw = localStorage.getItem('velia_idle_pets_save');
@@ -88,7 +103,12 @@ function loadGame(){
     loginStreak = state.loginStreak || 0;
     lastLoginDate = state.lastLoginDate || null;
     petsRosterResetV1 = true; // posé qu'une migration ait eu lieu ou non -- ne redéclenche jamais
-    if(needsRosterReset) saveGame(); // persiste immédiatement (roster vidé + flag), avant l'autosave 5s
+    // migration rétroactive (2026-07-20, "supprime tout compagnon au dessus de la limite") --
+    // purge l'excédent au-delà de PET_ROSTER_CAP (96) une seule fois, voir trimRosterToCapIfNeeded()
+    const needsRosterCap = !state.petsRosterCapV1;
+    if(needsRosterCap) trimRosterToCapIfNeeded();
+    petsRosterCapV1 = true;
+    if(needsRosterReset || needsRosterCap) saveGame(); // persiste immédiatement (roster modifié + flag), avant l'autosave 5s
     applyOfflineProgress(state.savedAt);
     checkDailyStreak();
     return true;

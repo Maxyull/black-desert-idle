@@ -83,6 +83,12 @@ let pityEverTriggered = false;
 // esprit que les migrations rétroactives du jeu principal (S.migratedXxxVNNN, CLAUDE.md §13),
 // adapté ici puisque ce module n'a pas de compte Supabase (sauvegarde 100% locale).
 let petsRosterResetV1 = false;
+// migration rétroactive (2026-07-20, demande explicite : "supprime tout compagnon au dessus de la
+// limite") -- PET_ROSTER_CAP=96 (companions.roster.js) bloque désormais tout NOUVEL hatch au-delà,
+// mais une sauvegarde déjà constituée AVANT ce plafond pouvait dépasser 96 -- ce flag, posé UNE
+// SEULE FOIS (voir trimRosterToCapIfNeeded()/loadGame(), companions.save.js), purge l'excédent au
+// premier chargement suivant l'ajout du plafond. Même esprit que petsRosterResetV1 ci-dessus.
+let petsRosterCapV1 = false;
 // compteur À VIE (2026-07-19, demande explicite : stats admin) -- distinct de
 // hatchCountSincePity (remis à 0 à chaque pity déclenché) : jamais réinitialisé, incrémenté
 // une seule fois par tirage réel dans rollAndCreatePet() (companions.hatch.js), peu importe le

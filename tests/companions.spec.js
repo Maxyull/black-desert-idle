@@ -338,6 +338,51 @@ test('companion index completion counts distinct species×tier combos, capped at
   expect(pageErrors).toEqual([]);
 });
 
+// Purge rétroactive (2026-07-20, demande explicite : "supprime tout compagnon au dessus de la
+// limite") -- trimRosterToCapIfNeeded() doit ramener une collection surchargée (sauvegarde
+// antérieure au plafond) à 96 pets, en gardant TOUJOURS les pets déployés sur le terrain (même
+// mal roulés) et en préférant les meilleurs GS parmi le reste.
+test('trimRosterToCapIfNeeded() prunes an oversized roster to 96, always keeping deployed pets', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const savedPets = PETS;
+    try {
+      const cat = PET_CATALOG[0];
+      // 1 pet déployé, volontairement le PLUS FAIBLE (doit survivre quand même)
+      const deployedWeak = { id: petId++, cat, rar: 0, stats: [0.1,0,0,0,0], hunger: 100, terrain: true, tier: 1, tierXp: 0, tierMult: 1 };
+      const others = [];
+      for (let i = 0; i < 110; i++) {
+        others.push({ id: petId++, cat: PET_CATALOG[i % PET_CATALOG.length], rar: 1, stats: [i,0,0,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 });
+      }
+      PETS = [deployedWeak, ...others];
+      const totalBefore = PETS.length;
+      trimRosterToCapIfNeeded();
+      return {
+        totalBefore, totalAfter: PETS.length,
+        deployedSurvived: PETS.some(p => p.id === deployedWeak.id),
+        highestKeptStat0: Math.max(...PETS.filter(p => !p.terrain).map(p => p.stats[0])),
+      };
+    } finally {
+      PETS = savedPets;
+    }
+  });
+  expect(result.totalBefore).toBe(111);
+  expect(result.totalAfter).toBe(96); // PET_ROSTER_CAP
+  expect(result.deployedSurvived).toBe(true); // jamais retiré, même mal roulé
+  expect(result.highestKeptStat0).toBe(109); // les mieux roulés (stat la plus haute) gardés en priorité
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('hatching is blocked once the collection reaches the 96-pet cap, silver is never spent', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -989,6 +1034,53 @@ test('body is scaled 1.25x via transform (not CSS zoom) and fixed-position modal
   expect(Math.round(modalRect.height)).toBe(Math.round(iframeBox.height));
   expect(Math.round(modalRect.top)).toBe(0);
   expect(Math.round(modalRect.left)).toBe(0);
+
+  expect(pageErrors).toEqual([]);
+});
+
+// Bug corrigé (2026-07-20, rapporté explicitement : "je ne vois pas mes model que le premier") --
+// renderer.dispose() (Three.js) libère les ressources GPU mais PAS le contexte WebGL lui-même,
+// repris seulement au ramassage mémoire du <canvas> sans garantie de timing. Les navigateurs
+// plafonnent le nombre de contextes WebGL VIVANTS simultanément (souvent ~16) -- en ouvrant la
+// modale 3D sur plusieurs familiers d'affilée SANS que les anciens contextes soient vraiment
+// libérés, les nouveaux finissaient par échouer silencieusement (canvas vide). Vérifie qu'ouvrir
+// bien plus de modèles que la limite classique de contextes WebGL fonctionne toujours à la fin.
+test('opening the 3D preview for many companions in a row never fails to render (WebGL context leak)', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
+
+  const results = await frame.locator('body').evaluate(async () => {
+    // > 16 ouvertures (plafond typique de contextes WebGL vivants) pour dépasser franchement la limite
+    const names = Object.keys(COMPANION_MODEL_MAP);
+    const rounds = [...names, ...names]; // 22 espèces -> 22 ouvertures, largement > 16
+    const out = [];
+    for (const name of rounds) {
+      const cat = PET_CATALOG.find(c => c.name === name);
+      const p = { id: petId++, cat, rar: 0, stats: [5,4,3,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+      PETS.push(p);
+      open3dPreviewModal(p);
+      await new Promise(r => {
+        const check = () => {
+          const s = document.getElementById('pet3d-status').textContent;
+          if (s.startsWith('Chargé') || s.startsWith('Erreur')) r(); else setTimeout(check, 100);
+        };
+        check();
+      });
+      out.push({ name, status: document.getElementById('pet3d-status').textContent, hasCanvas: !!document.querySelector('#pet3d-canvas-wrap canvas') });
+    }
+    close3dPreviewModal();
+    return out;
+  });
+
+  const failures = results.filter(r => !r.status.startsWith('Chargé') || !r.hasCanvas);
+  expect(failures).toEqual([]);
 
   expect(pageErrors).toEqual([]);
 });

@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V360', d:'20/07/2026 17:30', name:{fr:'Compagnon : aperçus 3D fiabilisés, carte terrain façon Pokémon', en:'Companion: reliable 3D previews, Pokémon-style terrain card'}, fr:[
+      {t:'fix', sub:'compagnon', tx:'Corrigé : après avoir ouvert l\'aperçu 3D de plusieurs familiers d\'affilée, seul le tout premier s\'affichait vraiment — les suivants restaient vides.'},
+      {t:'change', sub:'compagnon', tx:'Une collection qui dépassait 96 familiers (avant l\'ajout du plafond) est automatiquement ramenée à 96 — les familiers déployés sont toujours conservés.'},
+      {t:'change', sub:'compagnon', tx:'La carte du familier déployé sur le terrain (onglet Sections) a été refaite en grand format portrait, façon carte à collectionner.'},
+    ], en:[
+      {t:'fix', sub:'compagnon', tx:'Fixed: after opening the 3D preview for several companions in a row, only the very first one actually showed — the rest stayed blank.'},
+      {t:'change', sub:'compagnon', tx:'A collection that exceeded 96 companions (before the cap was added) is now automatically trimmed down to 96 — deployed companions are always kept.'},
+      {t:'change', sub:'compagnon', tx:'The deployed companion card (Sections tab) was redesigned as a large portrait card, trading-card style.'},
+    ] },
   { v:'V359', d:'20/07/2026 17:00', name:{fr:'Compagnon : module agrandi de 25% en douceur', en:'Companion: module enlarged 25% more smoothly'}, fr:[
       {t:'change', sub:'compagnon', tx:'Le module est de nouveau affiché 25% plus grand, mais avec une méthode plus fiable qu\'avant (évite le flou sur les icônes et les aperçus 3D).'},
     ], en:[

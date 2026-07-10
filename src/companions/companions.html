@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=12">
+<link rel="stylesheet" href="companions.css?v=13">
 <!-- three.js vendorisé en local, jamais de CDN (2026-07-10, viewer 3D compagnons GLB) --
      three.module.min.js/GLTFLoader.js/OrbitControls.js sont des modules ES (import/export imposé
      par la lib), l'importmap ci-dessous résout le spécificateur nu "three" ; vendor/three/three-
@@ -425,17 +425,17 @@
      par l'iframe qui charge cette page) -->
 <script src="companions.pixelart.js?v=6"></script>
 <script src="companions.catalog.js?v=7"></script>
-<script src="companions.economy.js?v=7"></script>
+<script src="companions.economy.js?v=8"></script>
 <script src="companions.tier.js?v=6"></script>
 <script src="companions.roster.js?v=7"></script>
 <script src="companions.hatch.js?v=11"></script>
 <script src="companions.pet-panel.js?v=6"></script>
-<script src="companions.sections.js?v=9"></script>
+<script src="companions.sections.js?v=10"></script>
 <script src="companions.collection.js?v=10"></script>
 <script src="companions.fusion.js?v=8"></script>
 <script src="companions.feed.js?v=6"></script>
 <script src="companions.ticks.js?v=6"></script>
-<script src="companions.save.js?v=8"></script>
+<script src="companions.save.js?v=9"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
@@ -458,7 +458,7 @@
      voir l'event 'three-ready' géré dans ce fichier). Ordre non strictement requis vis-à-vis des
      autres scripts classiques (aucune lecture immédiate d'un global déclaré ailleurs), placé ici
      par lisibilité, juste avant main.js. -->
-<script src="companions.viewer3d.js?v=3"></script>
+<script src="companions.viewer3d.js?v=4"></script>
 <script src="companions.main.js?v=6"></script>
 </body>
 </html>

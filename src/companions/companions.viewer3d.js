@@ -128,6 +128,15 @@ function createThreeViewer(wrap, onStatus) {
     cancelAnimationFrame(state.raf);
     window.removeEventListener('resize', onResize);
     renderer.dispose();
+    // bug corrigé (2026-07-20, rapporté explicitement : "je ne vois pas mes model que le
+    // premier") -- renderer.dispose() libère les ressources GPU (buffers/textures) MAIS PAS le
+    // contexte WebGL lui-même : celui-ci n'est repris par le navigateur qu'au ramassage mémoire
+    // du <canvas>, sans garantie de timing. Les navigateurs plafonnent le nombre de contextes
+    // WebGL VIVANTS simultanément (souvent ~16) -- en ouvrant/fermant la modale 3D sur plusieurs
+    // familiers d'affilée, les anciens contextes s'accumulaient sans être vraiment libérés,
+    // jusqu'à ce que de nouveaux contextes échouent silencieusement (canvas noir/vide) : "seul le
+    // premier modèle" s'affichait vraiment. forceContextLoss() force la libération immédiate.
+    renderer.forceContextLoss();
   }
 
   return { loadModel, dispose };

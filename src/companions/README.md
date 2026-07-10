@@ -289,6 +289,30 @@ bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `companio
 boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()` de la Collection
 (1er clic = décroissant, re-clic = inverse).
 
+**Bug corrigé — un seul modèle 3D s'affichait vraiment (2026-07-20, rapporté explicitement : "je ne
+vois pas mes model que le premier")** : `renderer.dispose()` (Three.js, `createThreeViewer()`,
+`companions.viewer3d.js`) libère les ressources GPU mais PAS le contexte WebGL lui-même — repris
+seulement au ramassage mémoire du `<canvas>`, sans garantie de timing. Les navigateurs plafonnent
+le nombre de contextes WebGL VIVANTS simultanément (souvent ~16) : en ouvrant la modale 3D sur
+plusieurs familiers d'affilée, les anciens contextes n'étaient jamais vraiment libérés, jusqu'à ce
+que de nouveaux contextes échouent silencieusement (canvas vide). Corrigé en appelant aussi
+`renderer.forceContextLoss()` dans `dispose()`. Test : `opening the 3D preview for many companions
+in a row never fails to render (WebGL context leak)` (`tests/companions.spec.js`, 22 ouvertures
+consécutives, largement au-dessus de la limite typique).
+
+**Purge rétroactive du plafond de collection (2026-07-20, demande explicite : "supprime tout
+compagnon au dessus de la limite")** : `trimRosterToCapIfNeeded()` (`companions.save.js`), migration
+rétroactive `petsRosterCapV1` (même pattern que `petsRosterResetV1`) — au premier chargement suivant
+l'ajout de `PET_ROSTER_CAP` (96), purge l'excédent d'une sauvegarde antérieure au plafond. Garde
+TOUJOURS les pets déployés sur le terrain (même mal roulés — jamais casser une configuration
+active), complète avec les meilleurs GS parmi le reste. Toast informatif si une purge a eu lieu.
+
+**Sections : carte terrain format "carte à collectionner" (2026-07-20, demande explicite : "met les
+pete taille carte pokemon")** : remplace la ligne horizontale compacte par une vraie carte portrait
+(`.terrain-slot.occ`, `companions.css`) — grand art (140×140) en haut avec badges Tier/GS incrustés,
+bandeau nom/rareté, corps stats/atelier Caphras, actions en bas. Bordure teintée par la couleur de
+rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une couleur ad hoc.
+
 **Intégration réelle du 1er modèle (2026-07-10, "envoyer le premier test .glb")** : le pipeline
   Three.js est factorisé en `createThreeViewer(wrap, onStatus)` (renderer/scène/caméra/controls/
   loop/dispose réutilisables), utilisé par l'écran de test ET par une VRAIE modale `#pet3d-modal`
