@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V369', d:'21/07/2026 11:00', name:{fr:'Notes de version : accessibilité, lien direct et anti-abus', en:'Patch notes: accessibility, deep link and anti-abuse'}, fr:[
+      {t:'fix', tx:'Corrigé : les chips de filtre (catégorie dans les notes de version, palier dans le modal de reconnexion) s\'empilaient en pleine largeur au lieu de s\'aligner côte à côte.'},
+      {t:'new', sub:'accessibilite', tx:'Panneau des notes de version : le focus clavier reste désormais dans la fenêtre (Tab ne peut plus en sortir), et le badge de nouveautés est annoncé aux lecteurs d\'écran.'},
+      {t:'new', tx:'Lien direct vers une version précise des notes de version (utile pour partager un patch précis), et un tampon "Lu" apparaît sur les entrées déjà consultées.'},
+      {t:'change', sub:'securite', tx:'Votes et commentaires des notes de version : limite de fréquence par joueur (anti-spam), et un commentaire massivement signalé est masqué automatiquement en attendant une revue par un modérateur.'},
+      {t:'new', tx:'Modal de reconnexion : légende des paliers ajoutée à côté de l\'historique des sessions.'},
+    ], en:[
+      {t:'fix', tx:'Fixed: filter chips (category in patch notes, tier in the reconnect modal) stacked full-width instead of sitting side by side.'},
+      {t:'new', sub:'accessibilite', tx:'Patch notes panel: keyboard focus now stays within the window (Tab can\'t escape it anymore), and the unread badge is announced to screen readers.'},
+      {t:'new', tx:'Direct link to a specific patch notes version (handy for sharing a specific patch), and an "Already read" stamp now appears on entries you\'ve already seen.'},
+      {t:'change', sub:'securite', tx:'Patch notes votes and comments: per-player rate limiting (anti-spam), and a heavily-reported comment is now auto-hidden pending moderator review.'},
+      {t:'new', tx:'Reconnect modal: tier legend added next to the session history.'},
+    ] },
   { v:'V368', d:'21/07/2026 09:00', name:{fr:'Wiki refait + Classement Public Compagnons', en:'Wiki redesigned + Companion Public Leaderboard'}, fr:[
       {t:'change', tx:'Le Wiki a été entièrement refait en panneau plein écran, à l\'identique d\'une maquette fournie : navigation par catégories, fil d\'Ariane, sommaire de section et recherche live. Le contenu reste le même (Combat & Zones, Optimisation, Marché, Compte & Sauvegarde, À propos, Codex des objets, Tutoriel), avec des raccourcis directs vers le Compendium et le module Compagnons.'},
       {t:'new', sub:'compagnon', tx:'L\'onglet "🏆 Classement" du module Compagnon devient un vrai Classement Public : podium des 3 premiers, 4 catégories (Score Prestige, Gearscore Max, Fusions, Achievements), recherche par pseudo, pagination et "Ma position" pour retrouver ton rang directement.'},
