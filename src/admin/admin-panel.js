@@ -1313,11 +1313,15 @@ async function refreshAdminPatchNotesModeration() {
         <div class="achReward">🚩 ${r.report_count}</div>
       </div>`).join('');
 
+  // depuis le 2026-07-11 (audit vs patch-notes-pipeline.md §13, "auto-masquage au-delà d'un seuil
+  // de signalements"), cette RPC couvre aussi les commentaires auto-masqués (status='pending_review',
+  // ≥5 signalements) en plus des retirés manuellement (status='removed') -- distingués ici par un
+  // badge, même file de restauration pour les deux.
   const { data: removed, error: removedErr } = await sb.rpc('admin_list_removed_patch_note_comments');
   removedEl.innerHTML = removedErr ? `<div class="admHint">${escapeHtml(removedErr.message)}</div>`
     : (!removed || removed.length === 0) ? `<div class="admEmpty">${LANG==='fr'?'Aucun commentaire retiré.':'No removed comments.'}</div>`
     : removed.map(c => `<div class="achRow" data-cid="${c.id}">
-        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)}</div>
+        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)} ${c.status==='pending_review'?`<span style="color:var(--red2,#e08070)">🚩 ${LANG==='fr'?'Auto-masqué (signalements)':'Auto-hidden (reports)'}</span>`:''}</div>
         <div class="achDesc">${escapeHtml(c.text)}</div></div>
         <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${LANG==='fr'?'Restaurer':'Restore'}</button></div>
       </div>`).join('');
