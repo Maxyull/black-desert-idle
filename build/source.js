@@ -5546,34 +5546,32 @@ function CmpZonesTab(props) {
           done === tierZoneIdxs.length ? cmpH(CmpBadge, { small: true }) : null,
           cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3, marginLeft: 'auto' } }, `${done}/${tierZoneIdxs.length}`)),
         
-        cmpH('div', { style: { display: 'flex', flexDirection: 'row', flexWrap: 'wrap', gap: 8, borderLeft: `2px solid ${tier.color}55`, paddingLeft: 12 } },
+        cmpH('div', { style: { display: 'flex', flexDirection: 'column', gap: 8, borderLeft: `2px solid ${tier.color}55`, paddingLeft: 12 } },
           tierZoneIdxs.map(zi => {
             const z = ZONES[zi], names = zoneItemNames(zi), zDone = zoneFullyCollected(zi);
             const isHighlighted = props.highlightedItem && names.some(n => tr(n) === props.highlightedItem);
             return cmpH('div', {
-              key: zi, className: 'cmpZoneCard', style: { flex: '1 1 240px', minWidth: 220, maxWidth: 280, background: CMP_V.bg1, border: `1px solid ${isHighlighted ? CMP_V.gold : zDone ? tier.color + '44' : CMP_V.border}`, borderRadius: 4, padding: '8px 10px' },
+              key: zi, className: 'cmpRow', style: { background: CMP_V.bg1, border: `1px solid ${isHighlighted ? CMP_V.gold : zDone ? tier.color + '44' : CMP_V.border}`, borderRadius: 4, padding: '10px 14px' },
             },
-              cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 } },
-                cmpH('span', { style: { fontSize: 11, color: zDone ? tier.color : CMP_V.muted3 } }, '📖'),
-                cmpH('span', { className: 'cinzelC', style: { fontSize: 12, fontWeight: 700, color: zDone ? CMP_V.cream : CMP_V.muted, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, tr(z.name)),
-                cmpH('div', { style: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 } },
+              cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 } },
+                cmpH('span', { style: { color: zDone ? tier.color : CMP_V.muted3 } }, '📖'),
+                cmpH('span', { className: 'cinzelC', style: { fontSize: 13, fontWeight: 700, color: zDone ? CMP_V.cream : CMP_V.muted } }, tr(z.name)),
+                cmpH('div', { style: { marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 } },
                   zDone ? cmpH(CmpBadge, { small: true }) : null,
-                  cmpH('span', { style: { fontSize: 10, color: zDone ? CMP_V.gold : CMP_V.border2 } }, '+1%'))),
-              
-              cmpH('div', { style: { fontSize: 10, color: CMP_V.muted, marginBottom: 6, display: 'flex', flexWrap: 'nowrap', gap: 6, overflowX: 'auto', paddingBottom: 2 } },
+                  cmpH('span', { style: { fontSize: 11, color: zDone ? CMP_V.gold : CMP_V.border2 } }, '+1%'))),
+              cmpH('div', { style: { fontSize: 10.5, color: CMP_V.muted, marginBottom: 8, display: 'flex', flexWrap: 'wrap', gap: 4 } },
                 names.map((n, ii) => {
                   const label = tr(n), obtained = compendiumItemDone(n);
                   return cmpH('button', {
                     key: ii, className: 'cmpItemChip', onClick: () => props.setHighlightedItem(props.highlightedItem === label ? null : label),
                     'aria-pressed': props.highlightedItem === label, 'aria-label': (LANG === 'fr' ? 'Voir les zones où trouver ' : 'See zones where to find ') + label,
-                    style: { background: 'none', border: 'none', cursor: 'pointer', padding: 0, flexShrink: 0, whiteSpace: 'nowrap', color: props.highlightedItem === label ? CMP_V.gold : obtained ? '#6b9c6b' : CMP_V.muted3, textDecoration: 'underline dotted', fontSize: 10, fontFamily: 'inherit' },
+                    style: { background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: props.highlightedItem === label ? CMP_V.gold : obtained ? '#6b9c6b' : CMP_V.muted3, textDecoration: 'underline dotted', fontSize: 10.5, fontFamily: 'inherit' },
                   }, (obtained ? '✓ ' : '· ') + label);
                 })),
-              
               cmpH('button', {
                 className: 'cmpBtn', onClick: () => props.launchFarm(zi),
-                style: { alignSelf: 'flex-start', fontSize: 9, color: CMP_V.gold, background: 'none', border: `1px solid ${CMP_V.gold}44`, borderRadius: 4, padding: '2px 7px', cursor: 'pointer' },
-              }, LANG === 'fr' ? 'Farmer ici' : 'Farm here'));
+                style: { fontSize: 10.5, color: CMP_V.gold, background: 'none', border: `1px solid ${CMP_V.gold}44`, borderRadius: 20, padding: '4px 10px', cursor: 'pointer' },
+              }, LANG === 'fr' ? 'Lancer le farm ici' : 'Start farming here'));
           })));
     }));
 }
