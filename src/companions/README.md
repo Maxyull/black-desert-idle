@@ -252,6 +252,16 @@ module Compagnon.
   `window.THREE` se pose, qu'un `<canvas>` WebGL apparaît, et qu'un échec réseau du `.glb` (ex:
   404 si le fichier de test n'est pas encore présent dans l'environnement) est un message d'erreur
   géré proprement, jamais une exception JS non attrapée.
+- **Intégration réelle du 1er modèle (2026-07-10, "envoyer le premier test .glb")** : le pipeline
+  Three.js est factorisé en `createThreeViewer(wrap, onStatus)` (renderer/scène/caméra/controls/
+  loop/dispose réutilisables), utilisé par l'écran de test ET par une VRAIE modale `#pet3d-modal`
+  ouverte depuis le panneau du pet déployé sur le terrain (`companions.sections.js`). Bouton "🧊 Voir
+  en 3D" affiché UNIQUEMENT si `companionModelUrlFor(pet)` renvoie une URL — `COMPANION_MODEL_MAP`
+  (`companions.viewer3d.js`) liste les paires nom-de-pet/tier réellement uploadées (seul "Black Mask
+  Cat" T5 pour l'instant) ; ne jamais deviner une URL non confirmée dans le bucket (404 silencieux
+  géré proprement par `loadModel()`, mais autant ne pas afficher un bouton mort). Ajouter une entrée
+  à `COMPANION_MODEL_MAP` dès qu'un nouveau `.glb` est uploadé. Test :
+  `"Voir en 3D" button only appears for a pet with an uploaded model...` (`tests/companions.spec.js`).
 - **Mise à jour de version de three.js** : retélécharger les 4 fichiers vendorisés depuis
   `https://unpkg.com/three@X.Y.Z/...` (`build/three.module.min.js`,
   `examples/jsm/loaders/GLTFLoader.js`, `examples/jsm/controls/OrbitControls.js`,

@@ -39,7 +39,10 @@ function renderSecDetail(){
         ${renderStatBars(tp)}
         ${renderCaphrasWorkshop(tp)}
       </div>
-      <button class="btn btn-red" style="font-size:9px;padding:4px 9px" onclick="PETS.find(p=>p.id===${tp.id}).terrain=false;renderAll()">Retirer</button>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(tp)?`<button class="btn btn-ghost" style="font-size:9px;padding:4px 9px" onclick="open3dPreviewModal(PETS.find(p=>p.id===${tp.id}))">🧊 Voir en 3D</button>`:''}
+        <button class="btn btn-red" style="font-size:9px;padding:4px 9px" onclick="PETS.find(p=>p.id===${tp.id}).terrain=false;renderAll()">Retirer</button>
+      </div>
     </div>`:`
     <div class="terrain-slot">
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;flex:1;color:var(--cream3)">

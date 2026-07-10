@@ -2812,6 +2812,33 @@
     assert('checkPlayerSession() ne fait rien tant que sessionClaimOk n\'est pas vrai (pas de faux verrou sans claim réussi au préalable)',
       src.includes('sessionClaimOk'), `src=${src.slice(0,200)}`);
   }
+  // Résumé du loot au retour (2026-07-10, demande explicite) : awaySilverGained/awayLootCounts
+  // (game-core.js) ne doivent accumuler QUE pendant document.hidden, et showAwayLootSummaryIfAny()
+  // doit les remettre à 0 après affichage (sinon un joueur verrait le même résumé se répéter au
+  // prochain retour).
+  function testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets() {
+    if (typeof addSilver !== 'function' || typeof trackLoot !== 'function' || typeof showAwayLootSummaryIfAny !== 'function') return;
+    const savedSilver = S.silver, savedEarned = S.silverEarned, savedLoot = { ...S.lootByItem };
+    const savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    const desc = Object.getOwnPropertyDescriptor(Document.prototype, 'hidden');
+    try {
+      Object.defineProperty(document, 'hidden', { value: true, configurable: true });
+      awaySilverGained = 0; awayLootCounts = {};
+      addSilver(50, 'loot');
+      trackLoot('Test Item Away Regression');
+      assert('addSilver() accumule dans awaySilverGained pendant document.hidden', awaySilverGained === 50, `awaySilverGained=${awaySilverGained}`);
+      assert('trackLoot() accumule dans awayLootCounts pendant document.hidden', awayLootCounts['Test Item Away Regression'] === 1);
+      Object.defineProperty(document, 'hidden', { value: false, configurable: true });
+      addSilver(30, 'loot'); // ne doit PAS s'ajouter à awaySilverGained : onglet redevenu visible
+      assert('addSilver() n\'accumule plus une fois document.hidden repassé à false', awaySilverGained === 50, `awaySilverGained=${awaySilverGained}`);
+      showAwayLootSummaryIfAny();
+      assert('showAwayLootSummaryIfAny() remet les compteurs à 0 après affichage', awaySilverGained === 0 && Object.keys(awayLootCounts).length === 0);
+    } finally {
+      if (desc) Object.defineProperty(document, 'hidden', desc);
+      S.silver = savedSilver; S.silverEarned = savedEarned; S.lootByItem = savedLoot;
+      awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
   function testCheckPlayerSessionNeverLocksOnNetworkFailure() {
     if (typeof checkPlayerSession !== 'function') return;
     const src = checkPlayerSession.toString();
@@ -2973,6 +3000,7 @@
     testSaveToCloudGuardsSessionLockAndOffline();
     testCheckPlayerSessionNeverLocksOnNetworkFailure();
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
+    testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
