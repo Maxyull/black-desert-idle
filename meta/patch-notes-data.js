@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V355', d:'20/07/2026 15:00', name:{fr:'Message de retour de loot en grand', en:'Loot-return message, bigger'}, fr:[
+      {t:'change', tx:'Le résumé du loot au retour d\'absence s\'affiche maintenant dans une vraie fenêtre plein écran, plus visible qu\'avant.'},
+    ], en:[
+      {t:'change', tx:'The away-loot summary now shows up in a real fullscreen window, more visible than before.'},
+    ] },
   { v:'V354', d:'20/07/2026 14:30', name:{fr:'Correctif : message de retour de loot invisible', en:'Fix: invisible loot-return message'}, fr:[
       {t:'fix', tx:'Le résumé du loot au retour d\'absence (ajouté juste avant) ne s\'affichait nulle part à l\'écran — corrigé, un vrai popup apparaît maintenant.'},
     ], en:[
