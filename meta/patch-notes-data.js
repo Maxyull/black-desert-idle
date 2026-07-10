@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V363', d:'20/07/2026 18:30', name:{fr:'Compagnon : réserve triée par Tier par défaut', en:'Companion: reserve sorted by Tier by default'}, fr:[
+      {t:'change', sub:'compagnon', tx:'La réserve (onglet Sections) est maintenant triée par Tier par défaut (puis GS en cas d\'égalité), au lieu de l\'ordre d\'obtention.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'The reserve (Sections tab) is now sorted by Tier by default (then GS as a tiebreak), instead of pickup order.'},
+    ] },
   { v:'V362', d:'20/07/2026 18:15', name:{fr:'Compagnon : numéro de version affiché', en:'Companion: version number displayed'}, fr:[
       {t:'new', sub:'compagnon', tx:'Le numéro de version du module s\'affiche maintenant discrètement en bas à gauche.'},
     ], en:[

@@ -258,6 +258,39 @@ test('collection pagination toggle limits visible cards per page and paginates c
 });
 
 // Tri de la réserve dans Sections (2026-07-20, demande explicite : "trier par GS, Tiers").
+// Tri par défaut = Tier (2026-07-20, demande explicite : "Tier par Tiers/GS") -- resSortMode doit
+// démarrer sur 'tier' (Tier décroissant, GS en départage à Tier égal), pas 'default' (ordre
+// d'obtention). Vérifie directement l'ordre produit par sortReserveList() sur un jeu de pets
+// avec des tiers ET des GS variés, pour couvrir le départage GS à Tier égal.
+test('reserve defaults to sorting by Tier (GS as tiebreak), not insertion order', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG[0];
+    const low = { id: 1, cat, rar: 0, stats: [1,0,0,0,0], tier: 1 };
+    const highTierLowGs = { id: 2, cat, rar: 0, stats: [1,0,0,0,0], tier: 5 };
+    const highTierHighGs = { id: 3, cat, rar: 5, stats: [60,38,30,20,15], tier: 5 };
+    const mid = { id: 4, cat, rar: 0, stats: [1,0,0,0,0], tier: 3 };
+    const order = sortReserveList([low, highTierLowGs, mid, highTierHighGs]).map(p => p.id);
+    return { defaultMode: resSortMode, defaultDir: resSortDir, order };
+  });
+  expect(result.defaultMode).toBe('tier');
+  expect(result.defaultDir).toBe(-1);
+  // Tier décroissant : highTierHighGs/highTierLowGs (T5) avant mid (T3) avant low (T1) ;
+  // à Tier égal (les 2 T5), le meilleur GS passe en premier
+  expect(result.order).toEqual([3, 2, 4, 1]);
+
+  expect(pageErrors).toEqual([]);
+});
+
 test('reserve list in Sections can be sorted by GS and by Tier', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -277,6 +310,10 @@ test('reserve list in Sections can be sorted by GS and by Tier', async ({ page }
     const idx = SECTIONS.findIndex(s => s.id === cat.sec);
     activeSecIdx = idx;
     ST(2); // onglet Sections -- sans ça le panel #p1 reste caché (pas de classe "active")
+    // le tri par défaut est désormais 'tier' (2026-07-20, "Tier par Tiers/GS") -- reparti sur
+    // 'default' (ordre d'obtention) pour que "avant tri GS" soit un vrai état neutre, sinon
+    // Tier-desc et GS-desc produiraient le même ordre sur ces 2 pets (T1 faible vs T5 fort)
+    resSortMode='default'; resSortDir=-1;
     renderSecNav(); renderSecDetail();
     return idx;
   });

@@ -23,7 +23,9 @@ function toggleResPetExpand(id){
 // tri de la réserve (2026-07-20, demande explicite : "trier par GS, Tiers") -- 'default' = ordre
 // d'obtention (aucun tri), sinon décroissant au premier clic, réinverse au clic suivant sur le
 // même mode (même pattern que setSort() de la Collection, companions.collection.js).
-let resSortMode='default', resSortDir=-1;
+// Tri par défaut = Tier (2026-07-20, demande explicite : "Tier par Tiers/GS") -- Tier décroissant
+// en priorité, GS décroissant en cas d'égalité de Tier (plutôt que l'ordre d'obtention par défaut).
+let resSortMode='tier', resSortDir=-1;
 function setResSort(mode){
   if(resSortMode===mode) resSortDir*=-1; else { resSortMode=mode; resSortDir=-1; }
   renderSecDetail();
@@ -32,7 +34,12 @@ function sortReserveList(list){
   if(resSortMode==='default') return list;
   const sorted=[...list];
   sorted.sort((a,b)=>{
-    const v = resSortMode==='gs' ? normGS(a)-normGS(b) : (a.tier||1)-(b.tier||1);
+    let v;
+    if(resSortMode==='gs') v = normGS(a)-normGS(b);
+    else { // 'tier' : Tier en priorité, GS en départage à Tier égal
+      v = (a.tier||1)-(b.tier||1);
+      if(v===0) v = normGS(a)-normGS(b);
+    }
     return v*resSortDir;
   });
   return sorted;

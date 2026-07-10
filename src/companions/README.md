@@ -289,6 +289,15 @@ bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `companio
 boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()` de la Collection
 (1er clic = décroissant, re-clic = inverse).
 
+**Tri par défaut de la réserve = Tier (2026-07-20, demande explicite : "Tier par Tiers/GS")** :
+`resSortMode` démarre sur `'tier'` (au lieu de `'default'`, ordre d'obtention) — Tier décroissant
+en priorité, GS décroissant en départage à Tier égal (`sortReserveList()`, `companions.sections.js`).
+Test : `reserve defaults to sorting by Tier (GS as tiebreak)...` (`tests/companions.spec.js`).
+Confirmé au passage : la modale "Voir en 3D" (`#pet3d-modal`) est un seul élément DOM partagé,
+donc DÉJÀ de taille identique qu'elle soit ouverte depuis le terrain ou depuis la réserve — pas de
+changement nécessaire pour la 2e demande de cette même série ("Sur terrain et reserve = meme taille
+de modal").
+
 **Version affichée bas gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche")** :
 `COMPANION_MODULE_VERSION` (`companions.economy.js`) réutilise la MÊME numérotation `VNNN` que le
 jeu principal (`meta/patch-notes-data.js`) plutôt qu'un compteur séparé — ce module ne peut pas
