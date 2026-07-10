@@ -63,23 +63,12 @@ pas importer une palette SaaS froide (bleu/émeraude, Cinzel/Inter/JetBrains Mon
 avec le reste du jeu et ajouterait une dépendance Google Fonts inexistante aujourd'hui (aucun
 `<link>` de police externe dans `index.dev.html`).
 
-### Palette (réutilise les variables CSS existantes)
+### Palette
 
-| Rôle | Variable existante | Valeur |
-|---|---|---|
-| Fond | `body` | `#0b0a0e` |
-| Surface (cards) | `--panel` | `#16151a` |
-| Surface secondaire | `--panel-2` | `#1e1c22` |
-| Accent principal (or, positif) | `--gold` | `#c9a55a` |
-| Accent atténué | `--gold-dim` | `#8a7038` |
-| Danger / ban / alerte critique | `--danger` | `#c05545` |
-| Texte principal | `--ink` | `#e8e0cf` |
-| Texte atténué | `--ink-dim` | `#9a917e` |
-| Positif secondaire (déjà utilisé : succès, "en ligne") | — | `#8fc98a` (à promouvoir en variable `--ok` si réutilisé souvent) |
-| Info / neutre (déjà utilisé pour "Évasion", liens) | — | `#5a8fc8` / `#9cc9e8` |
-
-Ne PAS introduire de nouvelle couleur froide type émeraude/bleu SaaS — réutiliser `#8fc98a` (déjà
-la couleur "succès" du jeu, ex. Compendium complet) comme équivalent du "positif" du plan initial.
+Retirée d'ici (2026-07-10) — la palette officielle de référence vit désormais dans `CLAUDE.md`
+§29 (Palette de couleurs officielle), seule source à jour pour toute nouvelle DA. Ne pas
+redupliquer de table de couleurs ici : renvoyer vers CLAUDE.md si une future section de ce
+document a besoin de citer une couleur.
 
 ### Typographie (aucune police externe)
 
