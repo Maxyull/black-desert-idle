@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V354', d:'20/07/2026 14:30', name:{fr:'Correctif : message de retour de loot invisible', en:'Fix: invisible loot-return message'}, fr:[
+      {t:'fix', tx:'Le résumé du loot au retour d\'absence (ajouté juste avant) ne s\'affichait nulle part à l\'écran — corrigé, un vrai popup apparaît maintenant.'},
+    ], en:[
+      {t:'fix', tx:'The away-loot summary (added right before) wasn\'t showing up on screen anywhere — fixed, a real popup now appears.'},
+    ] },
   { v:'V353', d:'20/07/2026 14:00', name:{fr:'Résumé du loot au retour + 1er aperçu 3D compagnon', en:'Loot summary on return + 1st companion 3D preview'}, fr:[
       {t:'new', tx:'Quand tu reviens sur l\'onglet du jeu après une absence, un résumé du loot ramassé pendant ce temps s\'affiche dans les notifications.'},
       {t:'new', sub:'compagnon', tx:'Premier aperçu 3D réel d\'un familier : bouton "Voir en 3D" sur le Chat masqué noir déployé (T5), pour tester le rendu en conditions réelles.'},

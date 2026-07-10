@@ -690,6 +690,8 @@ function showAwayLootSummaryIfAny() {
   if (typeof pushNotif === 'function') {
     pushNotif('🎁', LANG==='fr'?'Résumé du loot (absence)':'Loot summary (away)', msg, 'info');
   }
+  
+  if (typeof showAwayLootToast === 'function') showAwayLootToast(msg);
   awaySilverGained = 0; awayLootCounts = {};
 }
 
@@ -2394,6 +2396,18 @@ function showMailToast(icon, name, qty) {
   stack.appendChild(el);
   requestAnimationFrame(() => el.classList.add('show'));
   setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 4500);
+}
+
+function showAwayLootToast(msg) {
+  const stack = $('achToastStack'); if (!stack) return;
+  const el = document.createElement('div');
+  el.className = 'achToast';
+  el.innerHTML = `<div class="achToastIcon">🎁</div>` +
+    `<div><div class="achToastTitle">${LANG==='fr'?'Pendant ton absence':'While you were away'}</div>` +
+    `<div class="achToastName">${msg}</div></div>`;
+  stack.appendChild(el);
+  requestAnimationFrame(() => el.classList.add('show'));
+  setTimeout(() => { el.classList.remove('show'); setTimeout(() => el.remove(), 400); }, 5500);
 }
 
 function ensureLoyaltyGrant() {

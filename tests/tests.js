@@ -2831,7 +2831,14 @@
       Object.defineProperty(document, 'hidden', { value: false, configurable: true });
       addSilver(30, 'loot'); // ne doit PAS s'ajouter à awaySilverGained : onglet redevenu visible
       assert('addSilver() n\'accumule plus une fois document.hidden repassé à false', awaySilverGained === 50, `awaySilverGained=${awaySilverGained}`);
+      // bug corrigé (2026-07-10, "je vois pas le message de retour") : pushNotif() seul est
+      // silencieux (centre de notifs uniquement) -- un vrai toast visible (#achToastStack, même
+      // mécanisme que showAchToast/showMailToast) doit apparaître aussi.
+      const stack = document.getElementById('achToastStack');
+      const toastsBefore = stack ? stack.children.length : 0;
       showAwayLootSummaryIfAny();
+      const toastsAfter = stack ? stack.children.length : 0;
+      assert('showAwayLootSummaryIfAny() affiche un vrai toast visible (#achToastStack), pas seulement le centre de notifications silencieux', toastsAfter === toastsBefore + 1, `before=${toastsBefore} after=${toastsAfter}`);
       assert('showAwayLootSummaryIfAny() remet les compteurs à 0 après affichage', awaySilverGained === 0 && Object.keys(awayLootCounts).length === 0);
     } finally {
       if (desc) Object.defineProperty(document, 'hidden', desc);
