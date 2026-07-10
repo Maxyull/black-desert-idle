@@ -2831,14 +2831,16 @@
       Object.defineProperty(document, 'hidden', { value: false, configurable: true });
       addSilver(30, 'loot'); // ne doit PAS s'ajouter à awaySilverGained : onglet redevenu visible
       assert('addSilver() n\'accumule plus une fois document.hidden repassé à false', awaySilverGained === 50, `awaySilverGained=${awaySilverGained}`);
-      // bug corrigé (2026-07-10, "je vois pas le message de retour") : pushNotif() seul est
-      // silencieux (centre de notifs uniquement) -- un vrai toast visible (#achToastStack, même
-      // mécanisme que showAchToast/showMailToast) doit apparaître aussi.
-      const stack = document.getElementById('achToastStack');
-      const toastsBefore = stack ? stack.children.length : 0;
+      // bug corrigé (2026-07-10, "je vois pas le message de retour" puis "le message de retour se
+      // met dans un modal en plein ecran") : réutilise showResetNotice()/#resetNoticeOverlay
+      // (même modale plein écran que les annonces importantes, ex: reset de compte) -- doit
+      // s'ouvrir (classe "show") avec le bon contenu.
+      const overlay = document.getElementById('resetNoticeOverlay');
+      overlay.classList.remove('show'); // état initial connu
       showAwayLootSummaryIfAny();
-      const toastsAfter = stack ? stack.children.length : 0;
-      assert('showAwayLootSummaryIfAny() affiche un vrai toast visible (#achToastStack), pas seulement le centre de notifications silencieux', toastsAfter === toastsBefore + 1, `before=${toastsBefore} after=${toastsAfter}`);
+      assert('showAwayLootSummaryIfAny() ouvre #resetNoticeOverlay en modale plein écran', overlay.classList.contains('show'));
+      assert('La modale contient bien le silver accumulé pendant l\'absence', document.getElementById('resetNoticeBody').innerHTML.includes('50'), document.getElementById('resetNoticeBody').innerHTML);
+      overlay.classList.remove('show'); // referme pour ne pas polluer les tests suivants
       assert('showAwayLootSummaryIfAny() remet les compteurs à 0 après affichage', awaySilverGained === 0 && Object.keys(awayLootCounts).length === 0);
     } finally {
       if (desc) Object.defineProperty(document, 'hidden', desc);
