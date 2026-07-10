@@ -693,6 +693,7 @@ const PROVIDER_INFO = {
   discord: { icon:'🎮', label:{fr:'Discord',en:'Discord'} },
   google: { icon:'🔵', label:{fr:'Google',en:'Google'} },
   github: { icon:'🐙', label:{fr:'GitHub',en:'GitHub'} },
+  twitter: { icon:'🐦', label:{fr:'Twitter/X',en:'Twitter/X'} },
   anonymous: { icon:'🎭', label:{fr:'Invité',en:'Guest'} },
 };
 function providerInfo(provider) {

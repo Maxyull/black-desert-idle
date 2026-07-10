@@ -7886,6 +7886,11 @@ async function doSignInGithub() {
   await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: location.href } });
 }
 
+async function doSignInTwitter() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'twitter', options: { redirectTo: location.href } });
+}
+
 async function linkGoogleAccount() {
   if (!sb || !currentUser) return;
   const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.href } });
@@ -7894,6 +7899,11 @@ async function linkGoogleAccount() {
 async function linkGithubAccount() {
   if (!sb || !currentUser) return;
   const { error } = await sb.auth.linkIdentity({ provider: 'github', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+async function linkTwitterAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'twitter', options: { redirectTo: location.href } });
   if (error) alert('Erreur : ' + error.message);
 }
 function providerIdentity(user, provider) {
@@ -8432,6 +8442,7 @@ async function openAccountPanel() {
   const hasDiscord = !!discordIdentity(currentUser);
   const hasGoogle = !!providerIdentity(currentUser, 'google');
   const hasGithub = !!providerIdentity(currentUser, 'github');
+  const hasTwitter = !!providerIdentity(currentUser, 'twitter');
 
   const html = `
     <div class="admSummary">${LANG==='fr'?'Compte':'Account'} : <b>${currentUser.email || '—'}</b></div>
@@ -8458,6 +8469,11 @@ async function openAccountPanel() {
     ${hasGithub
       ? `<p class="mHint">${LANG==='fr'?'✅ Compte GitHub connecté.':'✅ GitHub account connected.'}</p>`
       : `<button id="btnLinkGithub" class="githubBtn">🐙 ${LANG==='fr'?'Connecter GitHub':'Connect GitHub'}</button>`}
+
+    <h3>🐦 Twitter/X</h3>
+    ${hasTwitter
+      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Twitter/X connecté.':'✅ Twitter/X account connected.'}</p>`
+      : `<button id="btnLinkTwitter" class="twitterBtn">🐦 ${LANG==='fr'?'Connecter Twitter/X':'Connect Twitter/X'}</button>`}
 
     <h3>${LANG==='fr'?'🎁 Parrainage':'🎁 Referrals'}</h3>
     <div id="refCodeBox">${code}</div>
@@ -8496,6 +8512,7 @@ async function openAccountPanel() {
   if (!hasDiscord) $a('btnLinkDiscord').onclick = linkDiscordAccount;
   if (!hasGoogle) $a('btnLinkGoogle').onclick = linkGoogleAccount;
   if (!hasGithub) $a('btnLinkGithub').onclick = linkGithubAccount;
+  if (!hasTwitter) $a('btnLinkTwitter').onclick = linkTwitterAccount;
   $a('btnCopyRefCode').onclick = async () => {
     try { await navigator.clipboard.writeText(code); } catch(e) {}
     $a('btnCopyRefCode').textContent = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
@@ -8533,6 +8550,7 @@ document.querySelectorAll('.authLangBtn').forEach(b => {
 $a('btnSignInDiscord').onclick = doSignInDiscord;
 $a('btnSignInGoogle').onclick = doSignInGoogle;
 $a('btnSignInGithub').onclick = doSignInGithub;
+$a('btnSignInTwitter').onclick = doSignInTwitter;
 $a('btnClearCacheAuth').onclick = clearGameCache;
 $a('btnLogout').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {
@@ -8592,6 +8610,7 @@ const I18N = {
   btnSignInDiscord: { fr:'🎮 Se connecter avec Discord', en:'🎮 Sign in with Discord' },
   btnSignInGoogle: { fr:'🔵 Se connecter avec Google', en:'🔵 Sign in with Google' },
   btnSignInGithub: { fr:'🐙 Se connecter avec GitHub', en:'🐙 Sign in with GitHub' },
+  btnSignInTwitter: { fr:'🐦 Se connecter avec Twitter/X', en:'🐦 Sign in with Twitter/X' },
   btnClearCacheAuth: { fr:'🧹 Vider le cache du jeu', en:'🧹 Clear game cache' },
   btnCodex: { fr:'📚 Codex', en:'📚 Codex' },
   tabCommon: { fr:'Marché commun', en:'Common Market' },
@@ -10007,6 +10026,7 @@ const PROVIDER_INFO = {
   discord: { icon:'🎮', label:{fr:'Discord',en:'Discord'} },
   google: { icon:'🔵', label:{fr:'Google',en:'Google'} },
   github: { icon:'🐙', label:{fr:'GitHub',en:'GitHub'} },
+  twitter: { icon:'🐦', label:{fr:'Twitter/X',en:'Twitter/X'} },
   anonymous: { icon:'🎭', label:{fr:'Invité',en:'Guest'} },
 };
 function providerInfo(provider) {
