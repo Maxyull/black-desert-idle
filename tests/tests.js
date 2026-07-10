@@ -2846,6 +2846,36 @@
       awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
     }
   }
+  // bug corrigé (2026-07-10, rapporté explicitement : "modal de retour invisible") : le wrapper du
+  // modal centrait son contenu SANS overflowY -- un contenu plus haut que le viewport (fréquent :
+  // niveau + stats + objets + historique + bouton) débordait des deux côtés du conteneur fixed,
+  // rendant l'en-tête/le bouton "fermer" et le bouton "Récupérer le butin" inatteignables (ni
+  // visibles, ni scrollables). Garde-fou statique sur les styles réels appliqués, pas seulement
+  // "ne plante pas" : overflowY doit permettre le scroll, alignItems ne doit plus centrer un
+  // contenu potentiellement plus grand que l'écran.
+  function testReconnectModalWrapperScrollsInsteadOfClipping() {
+    if (typeof showAwayLootSummaryIfAny !== 'function') return;
+    const savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    const root = document.getElementById('reconnectModalRoot');
+    try {
+      awaySilverGained = 100; awayLootCounts = {};
+      // pas de root.innerHTML='' ici : le root React existe déjà (créé par le test précédent) --
+      // vider le DOM à la main corromprait le suivi interne des fibers de React (le prochain
+      // render planterait sur un removeChild sur un noeud qui n'existe plus), même piège que
+      // testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets ne rencontre PAS lui puisqu'il
+      // s'exécute avant que le root existe. openReconnectModal() gère lui-même le remplacement.
+      showAwayLootSummaryIfAny();
+      const wrapper = root.firstElementChild;
+      assert('#reconnectModalRoot a bien un wrapper monté', !!wrapper);
+      if (wrapper) {
+        const cs = getComputedStyle(wrapper);
+        assert('Le wrapper du modal de reconnexion est scrollable verticalement (overflowY: auto)', cs.overflowY === 'auto', `overflowY=${cs.overflowY}`);
+        assert('Le wrapper du modal de reconnexion aligne le contenu en haut, pas centré (évite le clip)', cs.alignItems === 'flex-start', `alignItems=${cs.alignItems}`);
+      }
+    } finally {
+      awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
   // niveau/% XP capturés au moment où l'onglet passe caché (2026-07-10, modal de reconnexion --
   // "Progression de niveau" avant/après) -- sans ça, "avant" ne pourrait jamais différer de
   // "maintenant" puisque S.lvl/S.xp auraient déjà bougé pendant l'absence au moment de la lecture.
@@ -3126,6 +3156,7 @@
     testCheckPlayerSessionNeverLocksOnNetworkFailure();
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
+    testReconnectModalWrapperScrollsInsteadOfClipping();
     testAwayLevelSnapshotCapturedOnHide();
     testReconnectDurationLabelFormatsHoursAndMinutes();
     testBestAfkSessionSilverIsMonotone();

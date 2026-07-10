@@ -5190,7 +5190,7 @@ function ReconnectModal(props) {
 
   if (!open) return null;
 
-  return h('div', { style: { position: 'fixed', inset: 0, zIndex: 970, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(4,4,8,.72)' } },
+  return h('div', { style: { position: 'fixed', inset: 0, zIndex: 970, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '30px 16px', overflowY: 'auto', background: 'rgba(4,4,8,.72)' } },
     h('style', null, `
       @keyframes rcRiseIn { from { opacity:0; transform:translateY(10px);} to { opacity:1; transform:translateY(0);} }
       @keyframes rcFadeSlide { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }

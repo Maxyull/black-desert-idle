@@ -92,7 +92,16 @@ function ReconnectModal(props) {
 
   if (!open) return null;
 
-  return h('div', { style: { position: 'fixed', inset: 0, zIndex: 970, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, background: 'rgba(4,4,8,.72)' } },
+  // bug corrigé (2026-07-10, rapporté explicitement : "modal de retour invisible") : le wrapper
+  // n'avait ni overflowY ni alignItems:'flex-start' -- avec un contenu plus haut que le viewport
+  // (fréquent : progression de niveau + 3 stats + objets + historique + bouton), align-items:center
+  // sans scroll centrait la carte en la faisant déborder DES DEUX côtés du conteneur fixed (inset:0,
+  // donc borné à la fenêtre) SANS aucun moyen d'atteindre le haut (en-tête/titre "Bon retour"/bouton
+  // fermer) ni le bas (bouton "Récupérer le butin") -- rendait le modal effectivement invisible/
+  // inutilisable dès que la fenêtre était plus courte que le contenu. overflowY:'auto' +
+  // alignItems:'flex-start' (comme le Compendium, compendium-react.js) corrige ça : le contenu
+  // démarre en haut et devient scrollable plutôt que clippé sans recours.
+  return h('div', { style: { position: 'fixed', inset: 0, zIndex: 970, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '30px 16px', overflowY: 'auto', background: 'rgba(4,4,8,.72)' } },
     h('style', null, `
       @keyframes rcRiseIn { from { opacity:0; transform:translateY(10px);} to { opacity:1; transform:translateY(0);} }
       @keyframes rcFadeSlide { from { opacity:0; transform:translateY(6px);} to { opacity:1; transform:translateY(0);} }
