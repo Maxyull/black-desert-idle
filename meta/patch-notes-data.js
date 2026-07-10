@@ -5,6 +5,31 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V342', d:'20/07/2026 02:00', name:{fr:'Invités désactivés, connexion Google/GitHub/Twitter', en:'Guests disabled, Google/GitHub/Twitter sign-in'}, fr:[
+      {t:'change', sub:'connexion', severity:'major', tx:'Le mode invité (session anonyme, sans compte) est désactivé pour les nouveaux joueurs : il faut désormais créer un compte ou se connecter pour jouer. Les sessions invité créées avant ce changement continuent de fonctionner normalement.'},
+      {t:'new', sub:'connexion', tx:'Connexion possible avec Google et GitHub, en plus d\'Email/mot de passe et Discord déjà existants.'},
+      {t:'new', sub:'connexion', tx:'Connexion avec Twitter/X ajoutée également.'},
+    ], en:[
+      {t:'change', sub:'connexion', severity:'major', tx:'Guest mode (anonymous session, no account) is disabled for new players: an account is now required (sign up or sign in) to play. Guest sessions created before this change keep working normally.'},
+      {t:'new', sub:'connexion', tx:'Sign-in with Google and GitHub is now available, alongside the existing Email/password and Discord.'},
+      {t:'new', sub:'connexion', tx:'Sign-in with Twitter/X was added as well.'},
+    ] },
+  { v:'V341', d:'20/07/2026 01:00', name:{fr:'Panneau admin : recherche, palette en haut à gauche, alerte économique, plateforme d\'inscription', en:'Admin panel: search, top-left palette, economy alert, signup platform'}, fr:[
+      {t:'new', sub:'admin', tx:'Barre de recherche dans la sidebar du panneau admin, pour filtrer les sections en direct.'},
+      {t:'change', sub:'admin', tx:'La palette de couleurs du panneau admin est désormais accessible directement en haut à gauche (pastilles cliquables), au lieu d\'une page dédiée sous "Système".'},
+      {t:'new', sub:'admin', tx:'Le Dashboard et la Santé économique affichent désormais une alerte quand trop peu de silver gagné est réellement dépensé (risque d\'inflation, besoin d\'un puits).'},
+      {t:'new', sub:'admin', tx:'La liste des joueurs affiche désormais la plateforme d\'inscription de chacun (email/Discord/Google/GitHub/invité), avec un camembert de répartition dans "Inscriptions".'},
+    ], en:[
+      {t:'new', sub:'admin', tx:'Search bar in the admin panel sidebar, to filter sections live.'},
+      {t:'change', sub:'admin', tx:'The admin panel\'s color palette is now directly accessible top-left (clickable swatches), instead of a dedicated page under "System".'},
+      {t:'new', sub:'admin', tx:'The Dashboard and Economic Health now show an alert when too little of the gained silver is actually spent (inflation risk, sink needed).'},
+      {t:'new', sub:'admin', tx:'The player list now shows each player\'s signup platform (email/Discord/Google/GitHub/guest), with a breakdown pie chart in "Signups".'},
+    ] },
+  { v:'V340', d:'20/07/2026 00:00', name:{fr:'Correctif : stats d\'onboarding faussées par une relance du tutoriel', en:'Fix: onboarding stats corrupted by replaying the tutorial'}, fr:[
+      {t:'fix', sub:'admin', tx:'Relancer le tutoriel d\'arrivée après l\'avoir déjà terminé effaçait à tort sa complétion dans les stats admin (le faisant réapparaître comme "abandonné"). Une complétion ne peut désormais plus régresser.'},
+    ], en:[
+      {t:'fix', sub:'admin', tx:'Replaying the arrival tutorial after already finishing it used to wrongly erase its completion in the admin stats (making it reappear as "abandoned"). A completed run can no longer regress.'},
+    ] },
   { v:'V339', d:'19/07/2026 08:00', name:{fr:'Nouveaux tutoriels : objets de loot courant, marché, enchantement, boss', en:'New tutorials: common loot items, market, enhancement, boss'}, fr:[
       {t:'new', sub:'inventaire', tx:'Un court tutoriel s\'affiche désormais au tout premier objet de loot courant ramassé (revendu automatiquement en silver), pour expliquer qu\'il n\'y a rien d\'autre à en faire.'},
       {t:'new', sub:'combat', tx:'De nouveaux courts tutoriels s\'affichent désormais au premier accès au Marché commun, à la première utilisation de l\'Optimisation (enchantement) et au premier passage dans le lobby d\'un World Boss.'},
