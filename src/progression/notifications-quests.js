@@ -916,7 +916,12 @@ ITEM_TUTORIALS.enchant = {
 ITEM_TUTORIALS.market = {
   itemNames: new Set(),
   steps: [
-    { target:'#marketBox', placement:'bottom', final:true,
+    // target #marketHead (petit bandeau de titre), PAS #marketBox (2026-07-10, bug corrigé) :
+    // #marketBox est le panneau entier (height:80vh, voir styles.css), donc son bord bas est déjà
+    // près du bas de l'écran -- la bulle placement:'bottom' se retrouvait poussée hors du viewport
+    // et coupée. #marketHead reste petit et fixe en haut du panneau, laissant toujours assez de
+    // place sous lui pour la bulle.
+    { target:'#marketHead', placement:'bottom', final:true,
       title:{fr:'Marché commun', en:'Common Market'},
       text:{fr:'Un vrai carnet d\'ordres entre joueurs : ton argent (achat) ou ton objet (vente) reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé — tu peux annuler à tout moment depuis "Mes ordres".', en:'A real order book between players: your money (buy) or your item (sell) stays locked until the order is filled or cancelled — you can cancel anytime from "My orders".'} },
   ],
