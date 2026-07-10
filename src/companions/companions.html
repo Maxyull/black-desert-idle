@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=3">
+<link rel="stylesheet" href="companions.css?v=4">
 </head>
 <body>
 <div class="hdr">
@@ -283,27 +283,27 @@
 <!-- ordre de chargement documenté dans README.md de ce dossier — chaque fichier déclare des
      globals lus par les suivants (scope global partagé de ce document, isolé du jeu principal
      par l'iframe qui charge cette page) -->
-<script src="companions.pixelart.js?v=3"></script>
-<script src="companions.catalog.js?v=3"></script>
-<script src="companions.economy.js?v=3"></script>
-<script src="companions.tier.js?v=3"></script>
-<script src="companions.roster.js?v=3"></script>
-<script src="companions.hatch.js?v=3"></script>
-<script src="companions.pet-panel.js?v=3"></script>
-<script src="companions.sections.js?v=3"></script>
-<script src="companions.collection.js?v=3"></script>
-<script src="companions.fusion.js?v=3"></script>
-<script src="companions.feed.js?v=3"></script>
-<script src="companions.ticks.js?v=3"></script>
-<script src="companions.save.js?v=3"></script>
+<script src="companions.pixelart.js?v=4"></script>
+<script src="companions.catalog.js?v=4"></script>
+<script src="companions.economy.js?v=4"></script>
+<script src="companions.tier.js?v=4"></script>
+<script src="companions.roster.js?v=4"></script>
+<script src="companions.hatch.js?v=4"></script>
+<script src="companions.pet-panel.js?v=4"></script>
+<script src="companions.sections.js?v=4"></script>
+<script src="companions.collection.js?v=4"></script>
+<script src="companions.fusion.js?v=4"></script>
+<script src="companions.feed.js?v=4"></script>
+<script src="companions.ticks.js?v=4"></script>
+<script src="companions.save.js?v=4"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="companions.sync.js?v=3"></script>
-<script src="companions.index.js?v=3"></script>
-<script src="companions.game-view.js?v=3"></script>
-<script src="companions.hardinage.js?v=3"></script>
-<script src="companions.achievements.js?v=3"></script>
-<script src="companions.main.js?v=3"></script>
+<script src="companions.sync.js?v=4"></script>
+<script src="companions.index.js?v=4"></script>
+<script src="companions.game-view.js?v=4"></script>
+<script src="companions.hardinage.js?v=4"></script>
+<script src="companions.achievements.js?v=4"></script>
+<script src="companions.main.js?v=4"></script>
 </body>
 </html>

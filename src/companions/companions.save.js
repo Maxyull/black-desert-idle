@@ -10,7 +10,7 @@ function saveGame(){
       fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount, totalHatched,
       eggTypesUsed: Array.from(eggTypesUsed),
       completedAchievements: Array.from(completedAchievements),
-      pityEverTriggered, loginStreak, lastLoginDate,
+      pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1,
       savedAt: Date.now()
     };
     localStorage.setItem('velia_idle_pets_save', JSON.stringify(state));
@@ -59,9 +59,15 @@ function applyOfflineProgress(savedAt){
 function loadGame(){
   try{
     const raw = localStorage.getItem('velia_idle_pets_save');
-    if(!raw) return false;
+    // nouveau joueur (aucune sauvegarde) : PETS=[] déjà par défaut (companions.roster.js), rien à
+    // migrer -- marque directement le flag pour ne jamais redéclencher la migration plus tard.
+    if(!raw){ petsRosterResetV1 = true; return false; }
     const state = JSON.parse(raw);
-    PETS = state.PETS || PETS;
+    // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
+    // monde") -- voir petsRosterResetV1 (companions.economy.js). Vide le roster UNE SEULE FOIS
+    // pour toute sauvegarde antérieure à ce changement, jamais plus ensuite.
+    const needsRosterReset = !state.petsRosterResetV1;
+    PETS = needsRosterReset ? [] : (state.PETS || PETS);
     SILVER = state.SILVER ?? SILVER;
     INVENTORY = state.INVENTORY || {};
     incubSlots = state.incubSlots || incubSlots;
@@ -79,6 +85,8 @@ function loadGame(){
     pityEverTriggered = state.pityEverTriggered || false;
     loginStreak = state.loginStreak || 0;
     lastLoginDate = state.lastLoginDate || null;
+    petsRosterResetV1 = true; // posé qu'une migration ait eu lieu ou non -- ne redéclenche jamais
+    if(needsRosterReset) saveGame(); // persiste immédiatement (roster vidé + flag), avant l'autosave 5s
     applyOfflineProgress(state.savedAt);
     checkDailyStreak();
     return true;
@@ -88,7 +96,7 @@ setInterval(saveGame, 5000); // autosave toutes les 5s
 
 // ═══ EXPORT / IMPORT DE SAUVEGARDE (filet de sécurité) ═══
 function resetSave(){
-  if(!confirm('Effacer la sauvegarde et recharger le roster de départ (40 pets) ?\n\nTa progression actuelle sera définitivement perdue. Exporte-la avant si tu veux la garder.')) return;
+  if(!confirm('Effacer la sauvegarde et recharger le roster de départ (0 pet) ?\n\nTa progression actuelle sera définitivement perdue. Exporte-la avant si tu veux la garder.')) return;
   localStorage.removeItem('velia_idle_pets_save');
   location.reload();
 }
@@ -96,10 +104,10 @@ function resetSave(){
 function exportSave(){
   const state = {
     PETS, SILVER, INVENTORY, incubSlots, eggTimer, petId, selFoodName, hatchCountSincePity,
-    fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount,
+    fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount, totalHatched,
     eggTypesUsed: Array.from(eggTypesUsed),
     completedAchievements: Array.from(completedAchievements),
-    pityEverTriggered, loginStreak, lastLoginDate,
+    pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1,
     savedAt: Date.now()
   };
   const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
@@ -117,7 +125,10 @@ function importSave(input){
   reader.onload = (e)=>{
     try{
       const state = JSON.parse(e.target.result);
-      PETS = state.PETS || PETS;
+      // même migration rétroactive qu'au chargement normal (voir loadGame ci-dessus) : un import
+      // d'une sauvegarde EXPORTÉE AVANT ce changement ne doit pas permettre de contourner le reset.
+      const needsRosterReset = !state.petsRosterResetV1;
+      PETS = needsRosterReset ? [] : (state.PETS || PETS);
       SILVER = state.SILVER ?? SILVER;
       INVENTORY = state.INVENTORY || {};
       incubSlots = state.incubSlots || incubSlots;
@@ -129,11 +140,13 @@ function importSave(input){
       caphrasUpgradeCount = state.caphrasUpgradeCount || 0;
       bossItemFound = state.bossItemFound || false;
       breakthroughCount = state.breakthroughCount || 0;
+      totalHatched = state.totalHatched || 0;
       eggTypesUsed = new Set(state.eggTypesUsed || []);
       completedAchievements = new Set(state.completedAchievements || []);
       pityEverTriggered = state.pityEverTriggered || false;
       loginStreak = state.loginStreak || 0;
       lastLoginDate = state.lastLoginDate || null;
+      petsRosterResetV1 = true;
       saveGame();
       renderAll();
       toast('📥','Sauvegarde importée avec succès !');

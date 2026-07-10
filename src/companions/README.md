@@ -19,6 +19,16 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
 - Chargement paresseux garanti : tant que le joueur n'a pas cliqué sur l'onglet, aucun de
   ces fichiers n'est téléchargé ni exécuté.
 
+**Migration rétroactive du roster (2026-07-19, demande explicite : "supprime les 48 pet pour tout
+le monde")** : le roster de départ est passé à 0 pet le 2026-07-10 (`companions.roster.js`), mais
+les sauvegardes locales déjà existantes gardaient leur roster antérieur — `localStorage` n'est
+jamais réécrit tout seul. `petsRosterResetV1` (`companions.economy.js`) est un flag persisté qui
+vide le roster UNE SEULE FOIS par sauvegarde, au premier `loadGame()` suivant ce changement (et au
+premier `importSave()` d'un export antérieur) — silver/inventaire/progression restent intacts.
+Même esprit que les migrations rétroactives du jeu principal (`S.migratedXxxVNNN`, CLAUDE.md §13),
+adapté ici puisque ce module n'a pas de compte Supabase (sauvegarde 100% locale, pas de
+`applySaveState()` central à brancher).
+
 **Sync admin (2026-07-19, demande explicite)** : la sauvegarde reste 100% locale, mais
 `companions.sync.js` pousse désormais un RÉSUMÉ de compteurs (jamais le roster/inventaire
 complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir

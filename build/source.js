@@ -2966,7 +2966,8 @@ ITEM_TUTORIALS.enchant = {
 ITEM_TUTORIALS.market = {
   itemNames: new Set(),
   steps: [
-    { target:'#marketBox', placement:'bottom', final:true,
+    
+    { target:'#marketHead', placement:'bottom', final:true,
       title:{fr:'Marché commun', en:'Common Market'},
       text:{fr:'Un vrai carnet d\'ordres entre joueurs : ton argent (achat) ou ton objet (vente) reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé — tu peux annuler à tout moment depuis "Mes ordres".', en:'A real order book between players: your money (buy) or your item (sell) stays locked until the order is filled or cancelled — you can cancel anytime from "My orders".'} },
   ],
@@ -9072,7 +9073,8 @@ function positionTutorialStep() {
     else if (step.placement === 'right') { bx = r.right+pad+gap; by = r.top+r.height/2-70; arrowCls='left'; }
     else { bx = r.left-pad-gap-boxW; by = r.top+r.height/2-70; arrowCls='right'; } 
     bx = Math.max(10, Math.min(window.innerWidth-boxW-10, bx));
-    by = Math.max(10, Math.min(window.innerHeight-160, by));
+    
+    by = Math.max(10, Math.min(window.innerHeight-box.offsetHeight-10, by));
     box.style.left = bx+'px'; box.style.top = by+'px';
     arrow.style.display = '';
     arrow.className = arrowCls;
