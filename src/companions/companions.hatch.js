@@ -186,6 +186,9 @@ function rollAndCreatePet(eggType){
 }
 
 function doHatch(slotIdx, eggTypeId){
+  // plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets") --
+  // bloque AVANT de dépenser le silver, pas après (voir petRosterRoomLeft(), companions.roster.js)
+  if(petRosterRoomLeft()<=0){ toast('📦',`Collection pleine (${PET_ROSTER_CAP}/${PET_ROSTER_CAP})`); return; }
   const eggType = EGG_TYPES.find(e=>e.id===eggTypeId) || EGG_TYPES[0];
   if(SILVER < eggType.cost){ toast('❌','Silver insuffisant'); return; }
   spendSilver(eggType.cost);
@@ -222,6 +225,12 @@ function doHatch(slotIdx, eggTypeId){
 
 // ═══ ÉCLOSION INSTANTANÉE — ×1/×5/×10, indépendant des créneaux d'incubation ═══
 function bulkHatch(eggTypeId, qty){
+  // plafond de collection (2026-07-20, demande explicite) -- exige la place pour TOUT le lot avant
+  // de dépenser quoi que ce soit, pas un remboursement partiel après coup (plus simple, plus clair
+  // pour le joueur : soit le lot entier passe, soit rien).
+  const room = petRosterRoomLeft();
+  if(room<=0){ toast('📦',`Collection pleine (${PET_ROSTER_CAP}/${PET_ROSTER_CAP})`); return; }
+  if(room<qty){ toast('📦',`Plus assez de place (${room} place${room>1?'s':''} restante${room>1?'s':''}, ${qty} demandés)`); return; }
   const eggType = EGG_TYPES.find(e=>e.id===eggTypeId) || EGG_TYPES[0];
   const totalCost = eggType.cost * qty;
   if(SILVER < totalCost){ toast('❌',`Silver insuffisant (${totalCost.toLocaleString('fr-FR')} requis)`); return; }

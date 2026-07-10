@@ -17,12 +17,11 @@
   --cream:#c7d0e6;--cream2:#8a95b3;--cream3:#5c6785;
   --r0:#888;--r1:#44b060;--r2:#4488cc;--r3:#9944cc;--r4:#cc8820;--r5:#cc3030;
 }
-/* zoom du module entier (2026-07-20, demande explicite : "zommer 25%+ dans compagnon") -- `zoom`
-   (pas `transform:scale`, qui ne recalcule pas le layout/les scrollbars) agrandit tout d'un coup :
-   police, paddings, cartes, icônes -- sans devoir retoucher chaque mesure en dur du module. Support
-   universel sur Chromium (cible de ce jeu, voir CLAUDE.md), ce module vit dans sa propre iframe donc
-   aucun risque d'affecter le rendu du jeu principal. */
-body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden;zoom:1.25}
+/* zoom du module retiré (2026-07-20, demande explicite : "retire le zoom 25%") -- avait été ajouté
+   plus tôt le même jour ("zommer 25%+ dans compagnon", zoom:1.25 sur body), retiré depuis : gênait
+   plus qu'il n'aidait une fois la Collection densifiable (5-9 colonnes exactes, voir
+   companions.collection.js) -- le zoom CSS global entrait en conflit avec ce contrôle plus fin. */
+body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 .hdr{background:linear-gradient(180deg,var(--s1),transparent);border-bottom:1px solid var(--border);padding:8px 18px;display:flex;align-items:center;gap:14px;flex-shrink:0}
 .hdr-logo{font-family:'Cinzel',serif;font-size:15px;color:var(--gold);letter-spacing:.08em}

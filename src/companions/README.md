@@ -242,6 +242,15 @@ module Compagnon.
     `vendor/three/utils/` — `BufferGeometryUtils.js` doit donc vivre à `vendor/utils/`, un niveau
     au-dessus de `vendor/three/`. Erreur silencieuse sinon : 404 réseau, `window.THREE` jamais
     posé, aucune exception JS visible sans inspecter la console réseau.
+- **Extension aux 11 espèces (2026-07-20, "integre les menu 3D de la phase 1" = output/loot/tiers +
+  output/combat/tiers)** : `COMPANION_MODEL_MAP` couvre désormais les 6 espèces `sec:'loot'`
+  (Black Mask/Cloaked/Karlstein Cat, Grey Moon Cat, Sky Hawk, Golden Crow Sovereign) et les 6
+  espèces `sec:'combat'` (Brown Fighting/Black Cloaked/Snow Wolfdog, Helter-Skelter Ceros, Young
+  Black/Newborn Crimson Dragon), T1 à T5 chacune (55 combos). Les 2 fichiers hors convention
+  (`sky_hawk_T3_preview_only.glb`, `grey_moon_cat_T5_v2.glb`) restent volontairement exclus. Le
+  bouton "🧊 Voir en 3D" apparaît maintenant aussi sur les cartes de la Collection et de la réserve
+  (Sections), pas seulement le pet déployé sur le terrain — toujours conditionné à
+  `companionModelUrlFor(pet)` (jamais affiché pour un pet/tier sans fichier réellement uploadé).
 - Écran isolé : nouvel onglet "🧊 Viewer 3D (TEST)" (tab 10, `ST(10)`, panel `#p10`,
   `companions.html`) — contexte WebGL créé/détruit à l'ouverture/fermeture de l'onglet
   (`initViewer3dIfNeeded()`/`disposeViewer3dIfActive()`, `companions.viewer3d.js`) plutôt que
@@ -290,6 +299,18 @@ boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()`
   `examples/jsm/loaders/GLTFLoader.js`, `examples/jsm/controls/OrbitControls.js`,
   `examples/jsm/utils/BufferGeometryUtils.js`), les replacer aux MÊMES chemins relatifs que
   ci-dessus (le piège de chemin relatif décrit plus haut reste valable à chaque mise à jour).
+
+**Plafond de collection 96 (+4 buffer trade), complétion 240, retrait du zoom (2026-07-20)** :
+- `PET_ROSTER_CAP = 96` (`companions.roster.js`) : `doHatch()`/`bulkHatch()` refusent tout nouvel
+  hatch au-delà (`petRosterRoomLeft()`), AVANT de dépenser le silver. `PET_ROSTER_CAP_WITH_TRADE_BUFFER
+  = 100` documente 4 slots réservés à un futur système de trade — aucun code ne les consomme
+  encore (pas de feature trade construite), volontairement laissés en headroom.
+- Complétion Index 48×5=240 (voir plus haut, `companionIndexProgress()`).
+- `zoom:1.25` (ajouté plus tôt le même jour, "zommer 25%+") retiré — entrait en conflit avec le
+  contrôle de colonnes plus fin de la Collection (5-9 exactes).
+- `#updateToast` (jeu principal, `src/styles/styles.css`) : z-index relevé de 200 à 960, au-dessus
+  de `#companionsOverlay` (950) — la popup de mise à jour restait invisible derrière le module
+  Compagnon plein écran.
 
 ## Fichiers
 

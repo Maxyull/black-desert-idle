@@ -102,6 +102,7 @@ function renderSecDetail(){
                 </div>
               </div>
               <span style="font-size:7px;color:var(--cream3);transform:rotate(${expanded?'90deg':'0deg'});transition:transform .15s;flex-shrink:0">▶</span>
+              ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(p)?`<button style="font-size:6px;padding:1px 3px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--cream2);cursor:pointer;flex-shrink:0" title="Voir en 3D" onclick="event.stopPropagation();open3dPreviewModal(PETS.find(pp=>pp.id===${p.id}))">🧊</button>`:''}
               <button style="font-size:6px;padding:1px 3px;border-radius:3px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold);cursor:pointer;font-family:'Cinzel',serif;flex-shrink:0" onclick="event.stopPropagation();deployPet(${p.id})">Déployer</button>
             </div>
             ${expanded?`<div style="padding:0 5px 5px 5px;border-top:1px solid var(--border);font-size:.75em;transform-origin:top left">${renderTierBlock(p)}${renderStatBars(p)}</div>`:''}

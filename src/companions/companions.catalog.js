@@ -130,3 +130,16 @@ const PET_CATALOG=[
   {name:'Young Black Dragon',     art:'dragon_black',  rar:4,sec:'combat', typ:'Dragon',   orig:'rare'},
   {name:'Newborn Crimson Dragon', art:'dragon_crim',   rar:5,sec:'combat', typ:'Dragon',   orig:'rare'},
 ];
+
+// Complétion Index (2026-07-20, demande explicite : "Completion 48pet * 5 tier pour l'index et
+// classement") -- avant, la complétion comptait seulement l'ESPÈCE possédée (48 max, indifférent
+// au palier). Désormais compte chaque combo ESPÈCE×TIER distinct réellement possédé (48×5=240
+// max) : avoir juste "1 Rock Mole T1" ne compte plus comme "Rock Mole complet", il faut l'avoir
+// possédé à CHAQUE palier (T1 à T5) pour que les 5 combos de cette espèce soient acquis.
+// Réutilisé par companions.leaderboard.js ("Tes stats") ET companions.sync.js (stat envoyée à
+// l'admin) — un seul point de calcul, jamais dupliqué.
+const COMPANION_INDEX_MAX = PET_CATALOG.length * 5; // 240
+function companionIndexSpeciesTierKey(p){ return p.cat.name + '_T' + (p.tier||1); }
+function companionIndexProgress(petsList){
+  return new Set((petsList||[]).map(companionIndexSpeciesTierKey)).size;
+}

@@ -14,13 +14,15 @@ function renderMyStatsAndLeaderboard(){
 function renderMyStatsGrid(){
   const el = document.getElementById('my-stats-grid');
   if(!el) return;
-  const uniqueSpecies = new Set(PETS.map(p=>p.cat.name)).size;
+  const indexProgress = companionIndexProgress(PETS);
   const tiles = [
     { ico:'🥚', lbl:'Œufs ouverts', val: fmtN(totalHatched||0) },
     { ico:'💰', lbl:'Argent dépensé', val: fmtN(silverSpent||0) },
     { ico:'🔗', lbl:'Fusions', val: fmtN(fusionCount||0) },
     { ico:'🌟', lbl:'Percées', val: fmtN(breakthroughCount||0) },
-    { ico:'📖', lbl:'Complétion Index', val: `${uniqueSpecies}/${PET_CATALOG.length}` },
+    // 2026-07-20, "Completion 48pet * 5 tier" -- espèce×tier distincts possédés / 240 (voir
+    // companionIndexProgress()/COMPANION_INDEX_MAX, companions.catalog.js)
+    { ico:'📖', lbl:'Complétion Index', val: `${indexProgress}/${COMPANION_INDEX_MAX}` },
     { ico:'🏆', lbl:'Succès', val: `${completedAchievements.size}/${ACHIEVEMENTS.length}` },
   ];
   el.innerHTML = tiles.map(t=>`
@@ -62,7 +64,7 @@ async function fetchAndRenderCompanionLeaderboard(){
           <td style="padding:5px 8px;border-bottom:1px solid var(--border);color:${isYou?'var(--gold)':'var(--cream)'}">${escapeHtmlLb(r.display_name||'?')}${isYou?' (toi)':''}</td>
           <td style="text-align:right;padding:5px 8px;border-bottom:1px solid var(--border)">${fmtN(r.pet_count||0)}</td>
           <td style="text-align:right;padding:5px 8px;border-bottom:1px solid var(--border)">${fmtN(r.fusion_count||0)}</td>
-          <td style="text-align:right;padding:5px 8px;border-bottom:1px solid var(--border)">${r.unique_species_count||0}/${PET_CATALOG.length}</td>
+          <td style="text-align:right;padding:5px 8px;border-bottom:1px solid var(--border)">${r.unique_species_count||0}/${COMPANION_INDEX_MAX}</td>
         </tr>`;
       }).join('')}</tbody>
     </table>`;

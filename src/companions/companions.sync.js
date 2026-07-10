@@ -40,11 +40,14 @@ async function syncCompanionStatsToServer() {
     if (completedAchievements && typeof ACHIEVEMENTS !== 'undefined') {
       ACHIEVEMENTS.forEach(a => { if (a.hard && completedAchievements.has(a.id)) hardAchCount++; });
     }
-    // complétion Index (2026-07-20, demande explicite : "grph completion index") : nombre
-    // d'ESPÈCES distinctes du catalogue possédées (pas le nombre de pets, un joueur peut avoir
-    // plusieurs individus de la même espèce) -- jamais transmis avant cette date, voir migration
-    // 20260720130000_companion_stats_egg_and_index.sql pour la colonne unique_species_count.
-    const uniqueSpeciesCount = new Set((Array.isArray(PETS) ? PETS : []).map(p => p.cat && p.cat.name)).size;
+    // complétion Index (2026-07-20, demande explicite : "Completion 48pet * 5 tier pour l'index et
+    // classement") -- comptait initialement l'ESPÈCE seule (48 max, indifférent au palier) ;
+    // compte désormais chaque combo ESPÈCE×TIER distinct (48×5=240 max, voir
+    // companionIndexProgress()/COMPANION_INDEX_MAX, companions.catalog.js). Colonne serveur
+    // inchangée (unique_species_count, migration 20260720130000_companion_stats_egg_and_index.sql)
+    // -- seule la sémantique du nombre envoyé change, pas le schéma. Les valeurs déjà en base sous
+    // l'ancien calcul (max 48) se corrigent d'elles-mêmes au prochain sync de chaque joueur.
+    const uniqueSpeciesCount = companionIndexProgress(Array.isArray(PETS) ? PETS : []);
     // bug corrigé #2 (2026-07-20) : le builder Postgrest renvoyé par sb.rpc(...) n'implémente QUE
     // `.then()` (thenable), pas `.catch()` -- l'ancien `.catch(()=>{})` levait silencieusement
     // "TypeError: ...catch is not a function", avalée par le try/catch englobant, AVANT même que

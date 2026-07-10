@@ -2,6 +2,16 @@
 // son premier familier via le slot gratuit déjà prêt ci-dessous.
 let PETS=[];
 
+// Plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets prévoir 4
+// depaçable pour recuperer des pet venant d'un trade") -- 96 = plafond normal (hatching), bloqué
+// dans doHatch()/bulkHatch() (companions.hatch.js) via petRosterRoomLeft(). Les 4 slots
+// supplémentaires (jusqu'à 100) sont réservés pour un futur système de trade -- AUCUN code ne les
+// consomme encore (pas de feature trade construite), volontairement laissés en headroom plutôt que
+// consommés par le hatching normal.
+const PET_ROSTER_CAP = 96;
+const PET_ROSTER_CAP_WITH_TRADE_BUFFER = 100;
+function petRosterRoomLeft(){ return Math.max(0, PET_ROSTER_CAP - PETS.length); }
+
 // Timers d'incubation (voir TEST_BALANCE_DIVISOR, companions.economy.js) : 21600s (6h) et
 // 13800s de base, réduits pour tester le flux rapidement -- repasser TEST_BALANCE_DIVISOR à 1
 // dans companions.economy.js pour revenir aux vrais timers.

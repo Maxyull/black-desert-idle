@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V358', d:'20/07/2026 16:30', name:{fr:'Compagnon : plafond de collection, complétion 240, 3D partout', en:'Companion: collection cap, 240 completion, 3D everywhere'}, fr:[
+      {t:'change', sub:'compagnon', tx:'La Collection est plafonnée à 96 familiers (avec de la marge prévue pour un futur système d\'échange).'},
+      {t:'change', sub:'compagnon', tx:'La Complétion de l\'Index compte maintenant chaque palier (48 espèces × 5 tiers = 240), pas juste l\'espèce possédée.'},
+      {t:'change', sub:'compagnon', tx:'Le zoom 25% du module a été retiré.'},
+      {t:'new', sub:'compagnon', tx:'Aperçu 3D étendu aux 11 familiers déjà modélisés (au lieu d\'un seul), accessible aussi depuis la Collection et la réserve.'},
+      {t:'fix', tx:'La popup "nouvelle version disponible" s\'affiche maintenant même par-dessus le module Compagnon.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'The Collection is capped at 96 companions (with headroom planned for a future trading system).'},
+      {t:'change', sub:'compagnon', tx:'Index completion now counts each tier (48 species × 5 tiers = 240), not just species owned.'},
+      {t:'change', sub:'compagnon', tx:'The module\'s 25% zoom has been removed.'},
+      {t:'new', sub:'compagnon', tx:'3D preview extended to the 11 already-modeled companions (instead of just one), also available from the Collection and reserve.'},
+      {t:'fix', tx:'The "new version available" popup now shows even over the Companion module.'},
+    ] },
   { v:'V357', d:'20/07/2026 16:00', name:{fr:'Compagnon : colonnes/pagination Collection, réserve triable', en:'Companion: Collection columns/pagination, sortable reserve'}, fr:[
       {t:'new', sub:'compagnon', tx:'Collection : choisis exactement le nombre de cartes par ligne (5 à 9), et active la pagination si tu préfères des pages plutôt que le défilement.'},
       {t:'change', sub:'compagnon', tx:'Sections : les cartes de la réserve sont encore plus compactes, et peuvent être triées par GS ou par Tier.'},

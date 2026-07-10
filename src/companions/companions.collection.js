@@ -210,6 +210,7 @@ function renderGrid(){
           ${p.terrain
             ?`<button class="btn btn-red" style="font-size:9px;padding:3px 7px;flex:1" onclick="event.stopPropagation();PETS.find(pp=>pp.id===${p.id}).terrain=false;renderAll()">Retirer</button>`
             :`<button class="btn btn-gold" style="font-size:9px;padding:3px 7px;flex:1" onclick="event.stopPropagation();deployPet(${p.id})">Déployer</button>`}
+          ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(p)?`<button class="btn btn-ghost" style="font-size:9px;padding:3px 7px" title="Voir en 3D" onclick="event.stopPropagation();open3dPreviewModal(PETS.find(pp=>pp.id===${p.id}))">🧊</button>`:''}
           <button class="btn ${isF?'btn-red':'btn-ghost'}" style="font-size:9px;padding:3px 7px" onclick="event.stopPropagation();addToFusion(${p.id})">${isF?'✕FS':'⚗️'}</button>
         </div>
       </div>

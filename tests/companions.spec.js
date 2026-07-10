@@ -188,8 +188,8 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
   });
   expect(pageErrors).toEqual([]);
   // 9 colonnes exactes (repeat(9,1fr), voir setCollColsPerRow()) dans .pet-grid (largeur variable
-  // selon le viewport) x zoom:1.25 (companions.css) -- seuil large mais reste très en dessous du
-  // cran le plus étalé (5 colonnes).
+  // selon le viewport, plus de zoom CSS global depuis le 2026-07-20 "retire le zoom 25%") --
+  // seuil large mais reste très en dessous du cran le plus étalé (5 colonnes).
   expect(result.cardWidth).toBeLessThan(250);
   expect(result.hasCompact).toBe(true);
   expect(result.hasVerboseMeta).toBe(false); // pas les deux affichages à la fois
@@ -297,6 +297,78 @@ test('reserve list in Sections can be sorted by GS and by Tier', async ({ page }
   });
   expect(tierSorted.mode).toBe('tier');
   expect(tierSorted.dir).toBe(-1);
+
+  expect(pageErrors).toEqual([]);
+});
+
+// Plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets prévoir 4
+// depaçable pour recuperer des pet venant d'un trade") -- doHatch()/bulkHatch() doivent refuser
+// tout nouvel hatch une fois PETS.length >= PET_ROSTER_CAP (96), AVANT de dépenser le silver.
+// Complétion Index 48×5=240 (2026-07-20, demande explicite : "Completion 48pet * 5 tier pour
+// l'index et classement") -- companionIndexProgress() doit compter des combos ESPÈCE×TIER
+// distincts, PAS juste des espèces : 2 pets de la MÊME espèce au MÊME tier ne comptent qu'une
+// fois, mais la même espèce à 2 tiers DIFFÉRENTS compte 2 fois.
+test('companion index completion counts distinct species×tier combos, capped at 48×5=240', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG[0];
+    const sameSpeciesSameTierA = { id: petId++, cat, rar: 0, stats: [1,0,0,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    const sameSpeciesSameTierB = { id: petId++, cat, rar: 0, stats: [2,0,0,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 }; // même espèce/tier -- ne doit PAS compter 2 fois
+    const sameSpeciesOtherTier = { id: petId++, cat, rar: 0, stats: [1,0,0,0,0], hunger: 100, terrain: false, tier: 3, tierXp: 0, tierMult: 1 }; // même espèce, tier différent -- doit compter en plus
+    const otherSpecies = { id: petId++, cat: PET_CATALOG[1], rar: 0, stats: [1,0,0,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    return {
+      max: COMPANION_INDEX_MAX,
+      catalogLen: PET_CATALOG.length,
+      progress: companionIndexProgress([sameSpeciesSameTierA, sameSpeciesSameTierB, sameSpeciesOtherTier, otherSpecies]),
+    };
+  });
+  expect(result.catalogLen).toBe(48);
+  expect(result.max).toBe(240);
+  expect(result.progress).toBe(3); // (cat0,T1) + (cat0,T3) + (cat1,T1) -- pas 4
+
+  expect(pageErrors).toEqual([]);
+});
+
+test('hatching is blocked once the collection reaches the 96-pet cap, silver is never spent', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    // remplit la collection jusqu'au plafond
+    while (PETS.length < PET_ROSTER_CAP) {
+      const cat = PET_CATALOG[PETS.length % PET_CATALOG.length];
+      PETS.push({ id: petId++, cat, rar: 1, stats: [5,4,3,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 });
+    }
+    const savedSilver = SILVER;
+    SILVER = 999999999; // jamais bloqué par manque de silver, seulement par le plafond
+    const roomBefore = petRosterRoomLeft();
+    const countBefore = PETS.length;
+    bulkHatch('basic', 1); // 1er type d'œuf standard, peu importe lequel
+    const countAfter = PETS.length;
+    const silverAfter = SILVER;
+    SILVER = savedSilver; // restaure (pas de vraie sauvegarde dans ce contexte de test de toute façon)
+    return { roomBefore, countBefore, countAfter, silverSpent: 999999999 - silverAfter };
+  });
+  expect(result.roomBefore).toBe(0);
+  expect(result.countBefore).toBe(96);
+  expect(result.countAfter).toBe(96); // bulkHatch() n'a RIEN ajouté, refusé par le plafond
+  expect(result.silverSpent).toBe(0); // et n'a jamais débité le silver
 
   expect(pageErrors).toEqual([]);
 });
@@ -794,9 +866,12 @@ test('"Voir en 3D" button only appears for a pet with an uploaded model, and ope
   await frame.locator('.tabs .tab', { hasText: 'Sections' }).click();
 
   const noModelState = await frame.locator('body').evaluate(() => {
-    const cat = PET_CATALOG.find(c => c.name === 'Black Mask Cat');
+    // 2026-07-20 ("integre les menu 3D de la phase 1") : COMPANION_MODEL_MAP couvre désormais les
+    // 11 espèces des sections loot/combat (55 combos) -- un pet SANS modèle doit venir d'une AUTRE
+    // section (ex: minage), plus aucune espèce loot/combat n'en est dépourvue.
+    const cat = PET_CATALOG.find(c => c.sec === 'minage');
     const secIdx = SECTIONS.findIndex(s => s.id === cat.sec);
-    const noModelPet = { id: petId++, cat: PET_CATALOG.find(c => c.name !== 'Black Mask Cat' && c.sec === cat.sec) || PET_CATALOG[0], rar: 1, stats: [5,4,3,0,0], hunger: 100, terrain: true, tier: 5, tierXp: 0, tierMult: 1 };
+    const noModelPet = { id: petId++, cat, rar: 1, stats: [5,4,3,0,0], hunger: 100, terrain: true, tier: 5, tierXp: 0, tierMult: 1 };
     PETS.push(noModelPet);
     activeSecIdx = secIdx;
     renderSecNav(); renderSecDetail();
@@ -811,7 +886,8 @@ test('"Voir en 3D" button only appears for a pet with an uploaded model, and ope
     PETS.forEach(p => { if (p.cat.sec === cat.sec) p.terrain = false; }); // libère le slot terrain de la section
     const modelPet = { id: petId++, cat, rar: 0, stats: [5,4,3,0,0], hunger: 100, terrain: true, tier: 5, tierXp: 0, tierMult: 1 };
     PETS.push(modelPet);
-    renderSecDetail();
+    activeSecIdx = SECTIONS.findIndex(s => s.id === cat.sec); // le bloc précédent a pu la laisser sur une AUTRE section (minage)
+    renderSecNav(); renderSecDetail();
     return { hasButton: Array.from(document.querySelectorAll('.terrain-slot.occ button')).some(b => b.textContent.includes('Voir en 3D')), petId: modelPet.id };
   });
   expect(withModelState.hasButton).toBe(true);
@@ -830,6 +906,49 @@ test('"Voir en 3D" button only appears for a pet with an uploaded model, and ope
 
   await frame.locator('#pet3d-modal .mcl').click();
   await expect(frame.locator('#pet3d-modal')).not.toHaveClass(/open/);
+
+  expect(pageErrors).toEqual([]);
+});
+
+// COMPANION_MODEL_MAP étendu (2026-07-20, "integre les menu 3D de la phase 1" = output/loot/tiers
+// + output/combat/tiers) : couvre désormais les 11 espèces des 2 sections avec modèle 3D
+// (loot: 6, combat: 6 -- Black Cloaked Dog compte dans les 2 comptages ci-dessous seulement une
+// fois par section), T1 à T5 chacune. Garde-fou statique + le bouton 3D apparaît aussi dans la
+// Collection (pas seulement le panneau terrain de Sections).
+test('COMPANION_MODEL_MAP covers all 11 loot/combat species at every tier, and the 3D button appears on Collection cards too', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const mapCheck = await frame.locator('body').evaluate(() => {
+    const lootSpecies = PET_CATALOG.filter(c => c.sec === 'loot').map(c => c.name);
+    const combatSpecies = PET_CATALOG.filter(c => c.sec === 'combat').map(c => c.name);
+    const allCovered = [...lootSpecies, ...combatSpecies].every(name => {
+      const m = COMPANION_MODEL_MAP[name];
+      return m && [1,2,3,4,5].every(t => m.tiers.includes(t));
+    });
+    return { lootCount: lootSpecies.length, combatCount: combatSpecies.length, allCovered };
+  });
+  expect(mapCheck.lootCount).toBe(6);
+  expect(mapCheck.combatCount).toBe(6);
+  expect(mapCheck.allCovered).toBe(true);
+
+  // le bouton 3D doit aussi apparaître sur une carte de Collection (pas juste le panneau terrain)
+  const collCheck = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.name === 'Black Mask Cat');
+    PETS.push({ id: petId++, cat, rar: 0, stats: [5,4,3,0,0], hunger: 100, terrain: false, tier: 5, tierXp: 0, tierMult: 1 });
+    ST(3); // Collection -- ST() n'appelle pas renderGrid() lui-même (contrairement à d'autres onglets)
+    renderGrid();
+    const card = document.querySelector('.pet-card');
+    return { hasButton: card ? Array.from(card.querySelectorAll('button')).some(b => b.title === 'Voir en 3D') : false };
+  });
+  expect(collCheck.hasButton).toBe(true);
 
   expect(pageErrors).toEqual([]);
 });

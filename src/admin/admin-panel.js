@@ -652,10 +652,13 @@ function sumCompanionBreakdown(rows, field) {
   });
   return totals;
 }
-// taille totale du catalogue (2026-07-20) -- recopiée en dur, même limite que COMPANION_RARITY_LABELS/
-// COMPANION_SECTION_LABELS ci-dessus : le panneau admin (bundle principal) ne peut jamais charger
-// companions.catalog.js (jamais bundlé). À tenir à jour si le catalogue du module change.
-const COMPANION_CATALOG_SIZE = 48;
+// taille totale de la complétion Index (2026-07-20, "Completion 48pet * 5 tier pour l'index et
+// classement") -- 48 espèces × 5 tiers = 240, recopiée en dur (même limite que
+// COMPANION_RARITY_LABELS/COMPANION_SECTION_LABELS ci-dessus : le panneau admin, bundle principal,
+// ne peut jamais charger companions.catalog.js, jamais bundlé). À tenir à jour si le catalogue
+// du module change. unique_species_count (RPC) compte désormais des combos espèce×tier, pas
+// juste des espèces — voir companionIndexProgress(), companions.catalog.js.
+const COMPANION_CATALOG_SIZE = 48 * 5;
 function renderAdminCompanions(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown'), sb.rpc('admin_companion_player_list'), sb.rpc('admin_list_players')]).then(([statsRes, breakdownRes, playerListRes, allPlayersRes]) => {

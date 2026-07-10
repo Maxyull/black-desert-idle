@@ -147,8 +147,13 @@
     position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-20px);
     background:var(--panel-2); border:1px solid var(--gold); color:var(--ink);
     padding:12px 16px; display:none; align-items:center; gap:14px;
-    box-shadow:0 8px 28px rgba(0,0,0,.6); z-index:200; font-size:13px;
+    box-shadow:0 8px 28px rgba(0,0,0,.6); font-size:13px;
     opacity:0; transition:opacity .25s ease, transform .25s ease;
+    /* z-index relevé de 200 à 960 (2026-07-20, demande explicite : "met la pop up de mise a jour
+       par dessus le menu Compagnon") -- #companionsOverlay (src/combat/boss.js) est à 950, la popup
+       de MAJ restait donc invisible derrière tant que le module Compagnon (plein écran) était ouvert.
+       960 reste sous #lootIconZoom (9999, tooltip pointer-events:none, sans rapport). */
+    z-index:960;
   }
   #updateToast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
   #updateToast .updVer { color:var(--gold); font-weight:bold; }

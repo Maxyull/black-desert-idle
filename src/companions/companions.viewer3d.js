@@ -19,8 +19,29 @@ const VIEWER3D_TEST_MODEL = COMPANION_MODELS_BASE + '/loot/black_mask_cat_T5.glb
 // nom de pet (companions.catalog.js) -> { section, slug } ; l'URL finale est construite comme
 // {BASE}/{section}/{slug}_T{tier}.glb, tier venant de pet.tier (1-5, companions.tier.js) — mais
 // seuls les tiers listés dans `tiers` existent réellement dans le bucket, jamais deviner au-delà.
+// 2026-07-20 ("integre les menu 3D de la phase 1" = output/loot/tiers + output/combat/tiers,
+// les 2 dossiers déjà générés) : passe de 1 seul modèle de test (Black Mask Cat T5) aux 11
+// espèces (sections loot/combat du catalogue), T1 à T5 chacune -- 55 combos au total. Les 2
+// fichiers hors convention (sky_hawk_T3_preview_only.glb, grey_moon_cat_T5_v2.glb) sont
+// volontairement exclus, jamais uploadés (voir tâche d'upload Supabase Storage). N'ajouter une
+// entrée ici QUE pour un fichier réellement uploadé dans le bucket (404 sinon, géré proprement par
+// loadModel() mais autant ne pas promettre un modèle absent).
+const COMPANION_MODEL_TIERS_ALL = [1,2,3,4,5];
 const COMPANION_MODEL_MAP = {
-  'Black Mask Cat': { section: 'loot', slug: 'black_mask_cat', tiers: [5] },
+  // sec:'loot' (companions.catalog.js) — output/loot/tiers/
+  'Black Mask Cat':          { section: 'loot', slug: 'black_mask_cat',         tiers: COMPANION_MODEL_TIERS_ALL },
+  'Grey Moon Cat':           { section: 'loot', slug: 'grey_moon_cat',          tiers: COMPANION_MODEL_TIERS_ALL },
+  'Black Cloaked Cat':       { section: 'loot', slug: 'black_cloaked_cat',      tiers: COMPANION_MODEL_TIERS_ALL },
+  'Karlstein Cat':           { section: 'loot', slug: 'karlstein_cat',          tiers: COMPANION_MODEL_TIERS_ALL },
+  'Sky Hawk':                { section: 'loot', slug: 'sky_hawk',               tiers: COMPANION_MODEL_TIERS_ALL },
+  'Golden Crow Sovereign':   { section: 'loot', slug: 'golden_crow_sovereign',  tiers: COMPANION_MODEL_TIERS_ALL },
+  // sec:'combat' (companions.catalog.js) — output/combat/tiers/
+  'Brown Fighting Dog':      { section: 'combat', slug: 'brown_fighting_dog',      tiers: COMPANION_MODEL_TIERS_ALL },
+  'Snow Wolfdog':            { section: 'combat', slug: 'snow_wolfdog',            tiers: COMPANION_MODEL_TIERS_ALL },
+  'Black Cloaked Dog':       { section: 'combat', slug: 'black_cloaked_dog',       tiers: COMPANION_MODEL_TIERS_ALL },
+  'Helter-Skelter Ceros':    { section: 'combat', slug: 'helter_skelter_ceros',    tiers: COMPANION_MODEL_TIERS_ALL },
+  'Young Black Dragon':      { section: 'combat', slug: 'young_black_dragon',      tiers: COMPANION_MODEL_TIERS_ALL },
+  'Newborn Crimson Dragon':  { section: 'combat', slug: 'newborn_crimson_dragon',  tiers: COMPANION_MODEL_TIERS_ALL },
 };
 function companionModelUrlFor(pet) {
   const m = pet && pet.cat && COMPANION_MODEL_MAP[pet.cat.name];

@@ -10119,7 +10119,7 @@ function sumCompanionBreakdown(rows, field) {
   return totals;
 }
 
-const COMPANION_CATALOG_SIZE = 48;
+const COMPANION_CATALOG_SIZE = 48 * 5;
 function renderAdminCompanions(el) {
   el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
   Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown'), sb.rpc('admin_companion_player_list'), sb.rpc('admin_list_players')]).then(([statsRes, breakdownRes, playerListRes, allPlayersRes]) => {
