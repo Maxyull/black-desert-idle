@@ -9490,6 +9490,7 @@ const ADMIN_SECTIONS = [
     { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
     { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:renderAdminOnboarding },
     { id:'companions', icon:'🐾', label:{fr:'Compagnons',en:'Companions'}, render:renderAdminCompanions },
+    { id:'patchnotes', icon:'📜', label:{fr:'Notes de version → Discord',en:'Patch notes → Discord'}, render:renderAdminPatchNotesDiscord },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
     { id:'tests', icon:'🧪', label:{fr:'Tests perso',en:'Personal tests'}, render:renderAdminMyTests },
@@ -10232,6 +10233,46 @@ function renderAdminBoss(el) {
     const { error } = await sb.rpc('admin_despawn_boss');
     if (!error) { await refreshLiveBoss(); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a fait disparaître le boss mondial`, 0x9cc9e8); }
     floatTxt(P.x, P.y, 100, !error ? (LANG==='fr'?'Boss disparu ✓':'Boss despawned ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+  };
+}
+
+const PATCH_NOTE_DISCORD_TYPE_ICON = { new:'🆕', change:'🔄', fix:'🛠️', exploit:'🔒' };
+
+function formatPatchNoteForDiscord(note, lang) {
+  lang = (note[lang] ? lang : null) || 'fr';
+  const name = (note.name && (note.name[lang] || note.name.fr)) || note.v;
+  const lines = (note[lang] || note.fr || []).map(l => `${PATCH_NOTE_DISCORD_TYPE_ICON[l.t] || '•'} ${l.tx}`);
+  return {
+    title: `📜 Mise à jour ${note.v} — ${name}`,
+    description: lines.join('\n') || (lang==='fr' ? '(note vide)' : '(empty note)'),
+  };
+}
+async function publishPatchNoteToDiscord(version) {
+  if (!isAdmin()) return false;
+  const note = PATCH_NOTES.find(n => n.v === version) || PATCH_NOTES[0];
+  if (!note) return false;
+  const { title, description } = formatPatchNoteForDiscord(note, 'fr');
+  await logToDiscord(title, description, 0xc9a55a);
+  return true;
+}
+function renderAdminPatchNotesDiscord(el) {
+  const options = PATCH_NOTES.slice(0, 20).map(n => `<option value="${n.v}">${n.v} — ${n.name.fr}</option>`).join('');
+  el.innerHTML = `
+    <div class="admSection riskSafe">
+      <div class="admSectionTitle">📜 ${LANG==='fr'?'Publier une note de version sur Discord':'Publish a patch note to Discord'}</div>
+      <div class="admSectionSub">${LANG==='fr'?'Poste le contenu de la note choisie dans le salon Discord "log général" (même webhook que les autres actions admin).':'Posts the chosen note into the "general log" Discord channel (same webhook as other admin actions).'}</div>
+      <div class="admBossSpawn">
+        <span>${LANG==='fr'?'📜 Version :':'📜 Version:'}</span>
+        <select id="admPatchNoteSelect">${options}</select>
+        <button id="btnAdmPublishPatchNote">🚀 ${LANG==='fr'?'Publier sur Discord':'Publish to Discord'}</button>
+      </div>
+      <div class="admHint">${LANG==='fr'?'La dernière version est sélectionnée par défaut. Chaque ligne garde son icône (🆕 nouveauté, 🔄 changement, 🛠️ correctif, 🔒 faille corrigée).':'Latest version selected by default. Each line keeps its icon (🆕 new, 🔄 change, 🛠️ fix, 🔒 patched exploit).'}</div>
+    </div>`;
+  $a('btnAdmPublishPatchNote').onclick = async () => {
+    if (!isAdmin()) return;
+    const version = $a('admPatchNoteSelect').value;
+    const ok = await publishPatchNoteToDiscord(version);
+    floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Note publiée sur Discord ✓':'Note published to Discord ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:ok, hurt:!ok });
   };
 }
 

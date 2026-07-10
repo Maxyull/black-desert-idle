@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V345', d:'20/07/2026 06:00', name:{fr:'Admin : publication de notes de version sur Discord', en:'Admin: publish patch notes to Discord'}, fr:[
+      {t:'new', sub:'admin', tx:'Nouvelle section admin "Notes de version → Discord" : choisir une version et la publier en un clic dans le salon Discord de log, avec les icônes 🆕/🔄/🛠️/🔒 par ligne conservées.'},
+    ], en:[
+      {t:'new', sub:'admin', tx:'New admin section "Patch notes → Discord": pick a version and publish it in one click to the log Discord channel, keeping the 🆕/🔄/🛠️/🔒 icon per line.'},
+    ] },
   { v:'V344', d:'20/07/2026 05:00', name:{fr:'Correctif : bulle du tutoriel Marché commun coupée en bas d\'écran', en:'Fix: Common Market tutorial bubble cut off at the bottom of the screen'}, fr:[
       {t:'fix', sub:'ux', tx:'Le tutoriel affiché à la première ouverture du Marché commun visait le panneau entier (très haut à l\'écran), poussant sa bulle d\'explication hors de l\'écran, coupée en bas. Elle vise désormais le petit bandeau de titre du panneau et reste toujours entièrement visible.'},
     ], en:[

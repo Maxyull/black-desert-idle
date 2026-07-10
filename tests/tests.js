@@ -1800,6 +1800,26 @@
     });
     assert('Chaque sous-catégorie utilisée dans PATCH_NOTES a un libellé dans PATCH_SUBCATS et PATCH_SUBCATS_EN', missing.length === 0, missing.join(', '));
   }
+  // publication de note de version sur Discord (2026-07-20, demande explicite : "ajoute la
+  // publication de patchnote directement sur discord") -- formatPatchNoteForDiscord() est PURE
+  // (aucun réseau/DOM), testable directement sur une vraie entrée de PATCH_NOTES.
+  function testFormatPatchNoteForDiscord() {
+    if (typeof formatPatchNoteForDiscord === 'undefined' || typeof PATCH_NOTES === 'undefined') return;
+    const note = PATCH_NOTES[0];
+    const { title, description } = formatPatchNoteForDiscord(note, 'fr');
+    assert('Le titre Discord contient le numéro de version', title.indexOf(note.v) !== -1, title);
+    assert('Le titre Discord contient le nom fr de la note', title.indexOf(note.name.fr) !== -1, title);
+    assert('La description Discord contient une ligne par entrée fr', description.split('\n').length === note.fr.length, description);
+    const icons = { new:'🆕', change:'🔄', fix:'🛠️', exploit:'🔒' };
+    note.fr.forEach(line => {
+      const icon = icons[line.t] || '•';
+      assert(`La ligne "${line.tx.slice(0,30)}..." garde son icône ${icon} et son texte`, description.indexOf(`${icon} ${line.tx}`) !== -1);
+    });
+    // cas limite : version inconnue -> repli sur l'anglais géré par formatPatchNoteForDiscord lui-même
+    const enOnly = { v:'V0', name:{en:'Test only'}, en:[{t:'new', tx:'English only line'}] };
+    const enResult = formatPatchNoteForDiscord(enOnly, 'en');
+    assert('Repli correct sur les lignes en quand lang="en"', enResult.description.indexOf('English only line') !== -1, enResult.description);
+  }
   function testPatchPagesCoverAllEntriesWithinBounds() {
     const pages = computePatchPages();
     assert('computePatchPages : la 1ère page commence à l\'index 0 (le plus récent)', pages[0].start === 0);
@@ -2631,6 +2651,7 @@
     testSorcierRenderLoadsBeforeSyncStartupCallers();
     testPatchNotesDatesFormatAndOrder();
     testEveryPatchSubHasALabel();
+    testFormatPatchNoteForDiscord();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
     testCompendiumBackfillAfterSell();
