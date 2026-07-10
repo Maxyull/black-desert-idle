@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V367', d:'20/07/2026 20:30', name:{fr:'Notes de version refaites selon la maquette', en:'Patch notes redesigned to match the mockup'}, fr:[
+      {t:'change', tx:'Le panneau des notes de version a été entièrement refait pour ressembler à la maquette fournie : timeline par version, recherche, filtres par catégorie et vue controverse (admin/modérateur).'},
+    ], en:[
+      {t:'change', tx:'The patch notes panel has been completely redesigned to match the provided mockup: version timeline, search, category filters, and controversy view (admin/moderator).'},
+    ] },
   { v:'V366', d:'20/07/2026 20:00', name:{fr:'Notes de version : vote et commentaires', en:'Patch notes: voting and comments'}, fr:[
       {t:'new', tx:'Chaque ligne des notes de version peut désormais être votée (👍/👎) et commentée — les commentaires passent par un filtre anti-contenu inapproprié côté serveur.'},
       {t:'new', tx:'Recherche et filtre par catégorie ajoutés au panneau des notes de version.'},

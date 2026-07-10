@@ -2948,17 +2948,16 @@
     assert('closeCompendiumReact() démonte le contenu', root.innerHTML === '', root.innerHTML.slice(0,120));
   }
   // entry_id des lignes de patch note (2026-07-10, karma/commentaires) doit rester STABLE et
-  // unique -- il dérive de la position dans p[LANG], pas de l'ordre d'affichage (regroupé par
-  // catégorie) -- garde-fou : chaque ligne rendue produit un data-eid unique par version.
-  function testPatchNoteEntryIdsAreUniquePerVersion() {
-    if (typeof renderPatchEntryHtml !== 'function' || typeof PATCH_NOTES === 'undefined' || !PATCH_NOTES[0]) return;
-    const html = renderPatchEntryHtml(PATCH_NOTES[0], 0);
-    // chaque ligne porte data-eid deux fois (le <li> ET son .patchEntryEngage imbriqué, même
-    // valeur) -- ne matcher que le <li> pour éviter un faux doublon dans ce test.
-    const ids = [...html.matchAll(/<li[^>]*\bdata-eid="([^"]+)"/g)].map(m => m[1]);
-    assert('renderPatchEntryHtml produit au moins un data-eid', ids.length > 0);
-    assert('Les data-eid de la dernière version sont tous uniques', new Set(ids).size === ids.length, ids.join(','));
-    assert('Chaque data-eid commence bien par le numéro de version', ids.every(id => id.startsWith(PATCH_NOTES[0].v + '-')), ids.join(','));
+  // unique -- il dérive de la position dans p[LANG], pas de l'ordre d'affichage. pneFlattenPage()
+  // (src/progression/patch-notes-engage-react.js) est la SEULE source de cette dérivation
+  // maintenant que le panneau React remplace entièrement l'ancien rendu HTML.
+  function testPneFlattenPageProducesStableUniqueEntryIds() {
+    if (typeof pneFlattenPage !== 'function' || typeof PATCH_NOTES === 'undefined' || !PATCH_NOTES[0]) return;
+    const rows = pneFlattenPage([PATCH_NOTES[0]], 0);
+    const ids = rows.map(r => r.entryId);
+    assert('pneFlattenPage() produit au moins une entrée', ids.length > 0);
+    assert('Les entry_id de la dernière version sont tous uniques', new Set(ids).size === ids.length, ids.join(','));
+    assert('Chaque entry_id commence bien par le numéro de version', ids.every(id => id.startsWith(PATCH_NOTES[0].v + '-')), ids.join(','));
   }
   // pneContainsBannedWord() : fonction PURE (src/progression/patch-notes-engage-react.js), garde-fou
   // UX client -- le vrai blocage non contournable vit côté serveur (add_patch_note_comment RPC).
@@ -2968,28 +2967,19 @@
     assert('Détecte une variante accentuée', pneContainsBannedWord('espèce de débile') === true);
     assert('Un commentaire normal n\'est pas bloqué', pneContainsBannedWord('merci pour cette mise à jour !') === false);
   }
-  // applyPatchFilters() : recherche + filtre catégorie sur la page COURANTE du panneau notes de
-  // version (2026-07-10) -- vérifie que le filtrage cache/affiche les bonnes lignes sans jamais
-  // toucher au HTML sous-jacent (juste display:none), pour ne pas perdre le contenu.
-  function testApplyPatchFiltersHidesNonMatchingLines() {
-    if (typeof applyPatchFilters !== 'function' || typeof renderPatchNotesPanel !== 'function') return;
-    const savedQuery = patchSearchQuery, savedCat = patchCatFilter;
-    try {
-      renderPatchNotesPanel();
-      const lis = document.querySelectorAll('#infoBody li[data-eid]');
-      if (lis.length === 0) return; // rien à tester si la page est vide (ne devrait pas arriver)
-      const targetText = lis[0].querySelector('.patchLineText').textContent.slice(0, 8);
-      patchSearchQuery = '§§§inexistant§§§'; patchCatFilter = null;
-      applyPatchFilters();
-      const visibleNone = [...lis].every(li => li.style.display === 'none');
-      assert('Une recherche sans correspondance masque toutes les lignes de la page', visibleNone);
-      patchSearchQuery = targetText;
-      applyPatchFilters();
-      assert('La ligne dont le texte correspond à la recherche redevient visible', lis[0].style.display !== 'none');
-    } finally {
-      patchSearchQuery = savedQuery; patchCatFilter = savedCat;
-      if (typeof applyPatchFilters === 'function') applyPatchFilters();
-    }
+  // openPatchNotesReact()/closePatchNotesReact() : montent/démontent bien le panneau React dans
+  // #patchNotesModalRoot -- même garde-fou que le modal de reconnexion/le Compendium (2026-07-10,
+  // "comme la maquette" -- remplace entièrement renderPatchNotesPanel() côté React, celle-ci ne
+  // reste qu'un repli si React est indisponible).
+  function testPatchNotesReactOpensAndClosesInDom() {
+    if (typeof openPatchNotesReact !== 'function' || typeof closePatchNotesReact !== 'function') return;
+    const root = document.getElementById('patchNotesModalRoot');
+    if (!root) return;
+    root.innerHTML = '';
+    openPatchNotesReact();
+    assert('openPatchNotesReact() monte le panneau dans #patchNotesModalRoot', root.innerHTML.includes(LANG === 'fr' ? 'Notes de mise à jour' : 'Patch notes'), root.innerHTML.slice(0,150));
+    closePatchNotesReact();
+    assert('closePatchNotesReact() démonte le contenu', root.innerHTML === '', root.innerHTML.slice(0,120));
   }
   // reconnectDurationLabel() : fonction PURE (src/core/reconnect-modal-react.js), formate la durée
   // d'absence affichée dans "Absent pendant" / l'historique -- testable sans DOM ni React.
@@ -3204,9 +3194,9 @@
     testAwayLevelSnapshotCapturedOnHide();
     testReconnectDurationLabelFormatsHoursAndMinutes();
     testBestAfkSessionSilverIsMonotone();
-    testPatchNoteEntryIdsAreUniquePerVersion();
+    testPneFlattenPageProducesStableUniqueEntryIds();
     testPneContainsBannedWordDetectsAccentedVariants();
-    testApplyPatchFiltersHidesNonMatchingLines();
+    testPatchNotesReactOpensAndClosesInDom();
     testCompendiumOverallPctCombinesAllThreeSources();
     testCompendiumWorldAndBossRegistriesAreComplete();
     testCmpMasteredDetectsOnlyPenLevel();

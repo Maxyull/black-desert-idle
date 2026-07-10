@@ -1,26 +1,40 @@
-// ==================== ENGAGEMENT DES NOTES DE VERSION (karma + commentaires, React) ====================
+// ==================== NOTES DE VERSION (React) ====================
 // 4e fichier du projet à utiliser React (React.createElement pur, sans JSX ni bundler -- voir
-// CLAUDE.md §7, exception documentée pour ce fichier précis, même famille que boss-wheel-react.js/
-// reconnect-modal-react.js/compendium-react.js). Port SCOPÉ de patch-notes-system.jsx +
-// patch-notes-pipeline.md fournis par l'utilisateur : contrairement au reste du panneau Notes de
-// version (renderPatchNotesPanel/renderPatchEntryHtml, backend/game-supabase.js -- HTML classique,
-// volontairement INCHANGÉ : pagination par taille, tags sévérité/plateforme/nature, comparateur
-// avant/après, tout ce système est déjà réel et testé), CE fichier n'ajoute qu'un petit widget
-// (vote + fil de commentaires) monté par LIGNE de patch note, dans le `<div class="patchEntryEngage"
-// data-eid="...">` déjà présent dans le HTML généré. Recherche/filtre/vue-controverse restent en
-// JS classique (applyPatchFilters/applyPatchControversySort, game-supabase.js) -- pas de raison
-// d'étendre le périmètre React à de la simple manipulation de visibilité DOM.
+// CLAUDE.md §7, exception documentée pour ce fichier précis, même famille que
+// boss-wheel-react.js/reconnect-modal-react.js/compendium-react.js). Port de la maquette fournie
+// par l'utilisateur (patch-notes-system.jsx + patch-notes-pipeline.md, "comme la maquette") --
+// remplace ENTIÈREMENT l'affichage de renderPatchNotesPanel()/renderPatchEntryHtml()
+// (backend/game-supabase.js, gardées comme repli si React est indisponible, même pattern que
+// Compendium/modal de reconnexion).
+//
+// Données réelles réutilisées telles quelles (aucune donnée de démo) : PATCH_NOTES (append-only,
+// meta/patch-notes-data.js), PATCH_CATS/PATCH_SUBCATS(_EN)/PATCH_PLATFORMS/PATCH_NATURE/
+// PATCH_SEVERITY (game-supabase.js) pour les tags, readPatches/seenThisSession/commitPatchRead/
+// unreadPatchCount()/computePatchPages()/patchPageStart pour le suivi de lecture + la pagination
+// déjà réels et testés -- ce fichier ne fait QUE le rendu visuel + karma/commentaires/recherche/
+// filtre/vue-controverse, jamais une 2e source de vérité pour "lu"/pagination.
+//
+// entry_id STABLE pour le vote/commentaire : "{version}-{index dans p[LANG]}" -- voir
+// meta/README.md pour la contrainte (ne jamais réordonner/insérer une ligne au milieu d'un
+// tableau déjà publié).
+//
+// Non repris de la maquette (périmètre volontaire) : toggle de langue dédié (LANG est déjà global
+// au jeu entier, un 2e sélecteur local serait incohérent), panneau de modération intégré (déjà une
+// section admin dédiée, src/admin/admin-panel.js:renderAdminPatchNotesModeration -- pas besoin de
+// le dupliquer ici), sidebar de commentaires flottante (remplacée par un expand inline sous la
+// ligne, plus simple, même information).
 
 const PNE_V = {
   bg: '#0e1422', card: '#131a29', border: '#263049', border2: '#3a4665',
   gold: '#d4a955', gold2: '#e8a355', pink: '#e8698f', green: '#6fdc6f', blue: '#7ea6ff',
-  red: '#c0503c', red2: '#e08070', textMain: '#c7d0e6', text2: '#aab4d4', muted: '#5c6785', muted2: '#4a5674',
+  red: '#c0503c', red2: '#e08070', cream: '#f0e8d0', textMain: '#c7d0e6', text2: '#aab4d4',
+  text3: '#8a95b3', muted: '#5c6785', muted2: '#4a5674', italic: '#7c8aa8',
 };
+const PNE_BASE_FONT = { fontFamily: "'Inter', system-ui, sans-serif" };
 const pneH = React.createElement;
 
-let patchKarmaCache = {};   // entry_id -> score (partagé avec applyPatchControversySort, game-supabase.js)
+let patchKarmaCache = {};   // entry_id -> score (aussi lu par le tri "controverse")
 let patchMyVoteCache = {};  // entry_id -> -1|1
-let pneRoots = new Map();   // container DOM -> React root (jamais recréé pour le même container)
 
 // filtre anti-insulte client -- UNIQUEMENT un garde-fou UX (retour immédiat sans aller-retour
 // réseau) : le vrai blocage non contournable vit côté serveur (add_patch_note_comment, voir
@@ -32,137 +46,296 @@ function pneContainsBannedWord(text) {
   return PNE_BANNED_WORDS_CLIENT.some(w => normalized.includes(w));
 }
 
-function PatchEngageWidget(props) {
-  const [score, setScore] = React.useState(props.initialScore || 0);
-  const [myVote, setMyVote] = React.useState(props.initialMyVote || 0);
-  const [open, setOpen] = React.useState(false);
-  const [comments, setComments] = React.useState(null); // null = pas encore chargé
+// entrées à plat de la page courante -- une entrée par LIGNE (pas groupée par catégorie comme
+// l'ancien panneau HTML, chaque ligne porte sa propre carte comme dans la maquette), avec son
+// entry_id stable et toutes les métadonnées optionnelles déjà réelles du jeu.
+function pneFlattenPage(entries, pageStart) {
+  const out = [];
+  entries.forEach((p, k) => {
+    (p[LANG] || []).forEach((line, idx) => {
+      out.push({ version: p, absIdx: pageStart + k, entryId: p.v + '-' + idx, line });
+    });
+  });
+  return out;
+}
+
+function PneVoteBadge(props) {
+  const loggedIn = typeof currentUser !== 'undefined' && !!currentUser;
+  return pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 2, borderRadius: 4, border: `1px solid ${PNE_V.border2}`, padding: '1px 4px', flexShrink: 0 } },
+    pneH('button', { className: 'pneBtn', onClick: () => props.onVote(-1), disabled: !loggedIn, 'aria-label': 'Downvote',
+      style: { width: 18, height: 18, border: 'none', background: 'none', cursor: loggedIn ? 'pointer' : 'default', color: props.myVote === -1 ? PNE_V.blue : PNE_V.border2, fontSize: 12 } }, '−'),
+    pneH('span', { style: { fontSize: 10, fontWeight: 700, width: 22, textAlign: 'center', color: props.score > 0 ? PNE_V.gold2 : props.score < 0 ? PNE_V.blue : PNE_V.muted } }, props.score),
+    pneH('button', { className: 'pneBtn', onClick: () => props.onVote(1), disabled: !loggedIn, 'aria-label': 'Upvote',
+      style: { width: 18, height: 18, border: 'none', background: 'none', cursor: loggedIn ? 'pointer' : 'default', color: props.myVote === 1 ? PNE_V.gold2 : PNE_V.border2, fontSize: 12 } }, '+'));
+}
+
+function PneCommentThread(props) {
+  const [comments, setComments] = React.useState(null);
   const [draft, setDraft] = React.useState('');
   const [draftError, setDraftError] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
-
   const loggedIn = typeof currentUser !== 'undefined' && !!currentUser;
   const isStaff = (typeof isAdmin === 'function' && isAdmin()) || (typeof myIsMod !== 'undefined' && myIsMod);
 
-  async function loadComments() {
+  const load = React.useCallback(async () => {
     if (!sb) { setComments([]); return; }
     const { data } = await sb.from('patch_note_comments').select('id,user_id,author,created_at,text')
       .eq('entry_id', props.entryId).eq('status', 'visible').order('created_at', { ascending: true });
     setComments(data || []);
-  }
-  function toggleOpen() {
-    setOpen(o => { const next = !o; if (next && comments === null) loadComments(); return next; });
-  }
+  }, [props.entryId]);
+  React.useEffect(() => { load(); }, [load]);
 
-  async function vote(value) {
-    if (!loggedIn || !sb || busy) return;
-    const next = myVote === value ? 0 : value;
-    const delta = next - myVote;
-    setMyVote(next); setScore(s => s + delta); // optimiste
-    patchMyVoteCache[props.entryId] = next; patchKarmaCache[props.entryId] = score + delta;
-    setBusy(true);
-    try { await sb.rpc('vote_patch_note', { p_entry_id: props.entryId, p_value: next }); }
-    catch (e) { setMyVote(myVote); setScore(s => s - delta); } // repli si l'appel échoue
-    finally { setBusy(false); }
-  }
-
-  async function submitComment() {
+  async function submit() {
     const text = draft.trim();
-    if (!text || !loggedIn || !sb) return;
+    if (!text || !loggedIn || !sb || busy) return;
     if (pneContainsBannedWord(text)) { setDraftError(true); return; }
     setBusy(true);
-    try {
-      await sb.rpc('add_patch_note_comment', { p_entry_id: props.entryId, p_text: text });
-      setDraft(''); setDraftError(false);
-      await loadComments();
-    } catch (e) {
-      // le serveur bloque aussi le contenu inapproprié (contournement du filtre client) --
-      // message générique volontaire, ne pas exposer la liste de mots bannis dans l'erreur.
-      setDraftError(true);
-    } finally { setBusy(false); }
+    try { await sb.rpc('add_patch_note_comment', { p_entry_id: props.entryId, p_text: text }); setDraft(''); setDraftError(false); await load(); }
+    catch (e) { setDraftError(true); } // le serveur bloque aussi le contenu inapproprié -- message générique volontaire
+    finally { setBusy(false); }
   }
-  async function removeComment(id) {
-    if (!sb) return;
-    await sb.rpc('remove_patch_note_comment', { p_comment_id: id });
-    loadComments();
-  }
-  async function reportComment(id) {
-    if (!sb) return;
-    try { await sb.rpc('report_patch_note_comment', { p_comment_id: id }); } catch (e) {}
-  }
+  async function remove(id) { if (!sb) return; await sb.rpc('remove_patch_note_comment', { p_comment_id: id }); load(); }
+  async function report(id) { if (!sb) return; try { await sb.rpc('report_patch_note_comment', { p_comment_id: id }); } catch (e) {} }
 
-  return pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 } },
-    pneH('style', null, `
-      .pneBtn:focus-visible { outline: 2px solid ${PNE_V.gold}; outline-offset: 2px; }
-    `),
-    pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-      pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 2, borderRadius: 4, border: `1px solid ${PNE_V.border2}`, padding: '1px 4px' } },
-        pneH('button', { className: 'pneBtn', onClick: () => vote(-1), disabled: !loggedIn, 'aria-label': 'Downvote',
-          style: { width: 18, height: 18, border: 'none', background: 'none', cursor: loggedIn ? 'pointer' : 'default', color: myVote === -1 ? PNE_V.blue : PNE_V.border2, fontSize: 11 } }, '−'),
-        pneH('span', { style: { fontSize: 10, fontWeight: 700, width: 20, textAlign: 'center', color: score > 0 ? PNE_V.gold2 : score < 0 ? PNE_V.blue : PNE_V.muted } }, score),
-        pneH('button', { className: 'pneBtn', onClick: () => vote(1), disabled: !loggedIn, 'aria-label': 'Upvote',
-          style: { width: 18, height: 18, border: 'none', background: 'none', cursor: loggedIn ? 'pointer' : 'default', color: myVote === 1 ? PNE_V.gold2 : PNE_V.border2, fontSize: 11 } }, '+')),
-      pneH('button', { className: 'pneBtn', onClick: toggleOpen, style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, border: `1px solid ${open ? PNE_V.pink + '55' : PNE_V.border}`, color: open ? PNE_V.pink : PNE_V.muted, background: 'none', borderRadius: 4, padding: '2px 6px', cursor: 'pointer' } },
-        '💬', comments && comments.length > 0 ? comments.length : '')),
-
-    open ? pneH('div', { style: { background: PNE_V.bg, border: `1px solid ${PNE_V.border}`, borderRadius: 6, padding: 8, maxWidth: 420 } },
-      comments === null ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted, fontStyle: 'italic', margin: 0 } }, LANG === 'fr' ? 'Chargement…' : 'Loading…') :
+  return pneH('div', { style: { background: PNE_V.bg, border: `1px solid ${PNE_V.border}`, borderRadius: 6, padding: 8, marginTop: 6 } },
+    comments === null ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted, fontStyle: 'italic', margin: 0 } }, LANG === 'fr' ? 'Chargement…' : 'Loading…') :
       pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
         comments.length === 0 ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted2, fontStyle: 'italic', margin: 0 } }, LANG === 'fr' ? 'Aucun commentaire pour l\'instant.' : 'No comments yet.') :
-        comments.map(c => {
-          const mine = loggedIn && c.user_id === currentUser.id;
-          return pneH('div', { key: c.id, style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 } },
-            pneH('p', { style: { fontSize: 10.5, color: PNE_V.text2, margin: 0, wordBreak: 'break-word' } },
-              pneH('span', { style: { fontWeight: 600, color: mine ? PNE_V.gold2 : PNE_V.blue } }, c.author), ' ',
-              pneH('span', { style: { color: PNE_V.muted } }, new Date(c.created_at).toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-US')),
-              pneH('br'), c.text),
-            pneH('div', { style: { display: 'flex', gap: 4, flexShrink: 0 } },
-              !mine ? pneH('button', { className: 'pneBtn', onClick: () => reportComment(c.id), title: LANG === 'fr' ? 'Signaler' : 'Report', style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
-              (mine || isStaff) ? pneH('button', { className: 'pneBtn', onClick: () => removeComment(c.id), title: LANG === 'fr' ? 'Supprimer' : 'Delete', style: { background: 'none', border: 'none', color: mine ? PNE_V.muted2 : PNE_V.red, cursor: 'pointer', fontSize: 10 } }, '🗑') : null));
-        })),
-      loggedIn ? pneH('div', { style: { marginTop: 6 } },
-        pneH('div', { style: { display: 'flex', gap: 4 } },
-          pneH('input', {
-            value: draft, onChange: e => { setDraft(e.target.value); setDraftError(false); },
-            onKeyDown: e => e.key === 'Enter' && submitComment(),
-            placeholder: LANG === 'fr' ? 'Ajouter un commentaire' : 'Add a comment', disabled: busy,
-            style: { flex: 1, fontSize: 10.5, padding: '4px 6px', borderRadius: 4, border: `1px solid ${draftError ? PNE_V.red : PNE_V.border}`, background: PNE_V.card, color: PNE_V.textMain, outline: 'none' },
-          }),
-          pneH('button', { className: 'pneBtn', onClick: submitComment, disabled: busy, style: { fontSize: 10.5, border: `1px solid ${PNE_V.border2}`, background: 'none', color: PNE_V.blue, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' } }, '➤')),
-        draftError ? pneH('p', { style: { fontSize: 9.5, color: PNE_V.red2, margin: '4px 0 0' } }, LANG === 'fr' ? 'Merci de rester respectueux — commentaire bloqué.' : 'Please stay respectful — comment blocked.') : null)
-        : pneH('p', { style: { fontSize: 9.5, color: PNE_V.muted2, fontStyle: 'italic', margin: '6px 0 0' } }, LANG === 'fr' ? 'Connecte-toi pour commenter.' : 'Log in to comment.'))
-      : null);
+          comments.map(c => {
+            const mine = loggedIn && c.user_id === currentUser.id;
+            return pneH('div', { key: c.id, style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 } },
+              pneH('p', { style: { fontSize: 10.5, color: PNE_V.text2, margin: 0, wordBreak: 'break-word' } },
+                pneH('span', { style: { fontWeight: 600, color: mine ? PNE_V.gold2 : PNE_V.blue } }, c.author), ' ',
+                pneH('span', { style: { color: PNE_V.muted } }, new Date(c.created_at).toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-US')),
+                pneH('br'), c.text),
+              pneH('div', { style: { display: 'flex', gap: 4, flexShrink: 0 } },
+                !mine ? pneH('button', { className: 'pneBtn', onClick: () => report(c.id), title: LANG === 'fr' ? 'Signaler' : 'Report', style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
+                (mine || isStaff) ? pneH('button', { className: 'pneBtn', onClick: () => remove(c.id), title: LANG === 'fr' ? 'Supprimer' : 'Delete', style: { background: 'none', border: 'none', color: mine ? PNE_V.muted2 : PNE_V.red, cursor: 'pointer', fontSize: 10 } }, '🗑') : null));
+          })),
+    loggedIn ? pneH('div', { style: { marginTop: 6 } },
+      pneH('div', { style: { display: 'flex', gap: 4 } },
+        pneH('input', {
+          value: draft, onChange: e => { setDraft(e.target.value); setDraftError(false); }, onKeyDown: e => e.key === 'Enter' && submit(),
+          placeholder: LANG === 'fr' ? 'Ajouter un commentaire' : 'Add a comment', disabled: busy,
+          style: { flex: 1, fontSize: 10.5, padding: '4px 6px', borderRadius: 4, border: `1px solid ${draftError ? PNE_V.red : PNE_V.border}`, background: PNE_V.card, color: PNE_V.textMain, outline: 'none' },
+        }),
+        pneH('button', { className: 'pneBtn', onClick: submit, disabled: busy, style: { fontSize: 10.5, border: `1px solid ${PNE_V.border2}`, background: 'none', color: PNE_V.blue, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' } }, '➤')),
+      draftError ? pneH('p', { style: { fontSize: 9.5, color: PNE_V.red2, margin: '4px 0 0' } }, LANG === 'fr' ? 'Merci de rester respectueux — commentaire bloqué.' : 'Please stay respectful — comment blocked.') : null)
+      : pneH('p', { style: { fontSize: 9.5, color: PNE_V.muted2, fontStyle: 'italic', margin: '6px 0 0' } }, LANG === 'fr' ? 'Connecte-toi pour commenter.' : 'Log in to comment.'));
 }
 
-// monte un mini-root React par `.patchEntryEngage[data-eid]` de la page COURANTE -- appelé depuis
-// renderPatchNotesPanel() (game-supabase.js) après insertion du HTML. Un seul aller-retour réseau
-// pour le karma + mes votes de TOUTE la page (pas un appel par ligne).
-async function mountPatchEngageWidgets() {
-  // openInfo() remplace le contenu de #infoBody en entier à chaque navigation de page (pagination
-  // Plus récent/Plus ancien) -- les anciens conteneurs `.patchEntryEngage` deviennent orphelins
-  // (détachés du document) mais leurs racines React restent référencées dans pneRoots ; les
-  // démonter explicitement évite de les laisser vivre indéfiniment pour rien.
-  pneRoots.forEach((root, container) => {
-    if (!container.isConnected) { root.unmount(); pneRoots.delete(container); }
-  });
-  const containers = document.querySelectorAll('#infoBody .patchEntryEngage[data-eid]');
-  if (containers.length === 0) return;
-  if (sb) {
-    try {
-      const { data: karmaRows } = await sb.rpc('get_patch_note_karma');
-      (karmaRows || []).forEach(r => { patchKarmaCache[r.entry_id] = Number(r.score) || 0; });
-    } catch (e) {}
-    if (typeof currentUser !== 'undefined' && currentUser) {
-      try {
-        const { data: voteRows } = await sb.rpc('get_my_patch_note_votes');
-        (voteRows || []).forEach(r => { patchMyVoteCache[r.entry_id] = r.value; });
-      } catch (e) {}
+function PneEntryCard(props) {
+  const { row } = props;
+  const line = row.line, p = row.version;
+  const cat = PATCH_CATS[line.t] || PATCH_CATS.change;
+  const subMap = LANG === 'fr' ? PATCH_SUBCATS : PATCH_SUBCATS_EN;
+  const sev = line.severity ? PATCH_SEVERITY[line.severity] : null;
+  const plat = line.plat ? PATCH_PLATFORMS[line.plat] : null;
+  const nature = line.nature ? PATCH_NATURE[line.nature] : null;
+  const sub = line.sub ? subMap[line.sub] : null;
+
+  const [score, setScore] = React.useState(patchKarmaCache[row.entryId] || 0);
+  const [myVote, setMyVote] = React.useState(patchMyVoteCache[row.entryId] || 0);
+  const [commentsOpen, setCommentsOpen] = React.useState(false);
+  const [commentCount, setCommentCount] = React.useState(null);
+
+  async function vote(value) {
+    if (!sb || typeof currentUser === 'undefined' || !currentUser) return;
+    const next = myVote === value ? 0 : value;
+    const delta = next - myVote;
+    setMyVote(next); setScore(s => s + delta);
+    patchMyVoteCache[row.entryId] = next; patchKarmaCache[row.entryId] = score + delta;
+    try { await sb.rpc('vote_patch_note', { p_entry_id: row.entryId, p_value: next }); }
+    catch (e) { setMyVote(myVote); setScore(s => s - delta); }
+  }
+  async function toggleComments() {
+    const next = !commentsOpen;
+    setCommentsOpen(next);
+    if (next && commentCount === null && sb) {
+      const { count } = await sb.from('patch_note_comments').select('id', { count: 'exact', head: true }).eq('entry_id', row.entryId).eq('status', 'visible');
+      setCommentCount(count || 0);
     }
   }
-  containers.forEach(container => {
-    const eid = container.dataset.eid;
-    let root = pneRoots.get(container);
-    if (!root) { root = ReactDOM.createRoot(container); pneRoots.set(container, root); }
-    root.render(pneH(PatchEngageWidget, { entryId: eid, initialScore: patchKarmaCache[eid] || 0, initialMyVote: patchMyVoteCache[eid] || 0 }));
+
+  const tags = [
+    sub ? { label: sub, color: cat.color } : null,
+    sev ? { label: sev[LANG], color: sev.color, title: sev.desc[LANG] } : null,
+    plat ? { label: plat.icon + ' ' + plat[LANG], color: plat.color, title: plat.desc[LANG] } : null,
+    nature ? { label: nature.icon + ' ' + nature[LANG], color: nature.color, title: nature.desc[LANG] } : null,
+  ].filter(Boolean);
+
+  return pneH('div', {
+    className: 'rounded-md', style: { borderRadius: 6, border: `1px solid ${props.controversial ? PNE_V.red : PNE_V.border}`, padding: 10, display: 'flex', flexDirection: 'column', gap: 6, background: props.controversial ? 'rgba(192,80,60,.08)' : 'transparent' },
+  },
+    pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
+      pneH('span', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 4, flexShrink: 0, fontSize: 11, background: cat.color + '22', border: `1px solid ${cat.color}55` } }, cat.icon),
+      pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: cat.color } }, cat[LANG]),
+      pneH('span', { style: { fontSize: 12, fontWeight: 700, color: PNE_V.cream, flex: 1 } }, line.tx, line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2 } }, LANG === 'fr' ? '🗑 Supprimé' : '🗑 Removed') : null),
+      line.img ? pneH('button', { className: 'pneBtn', onClick: () => openPatchImgCompare(line.img.before, line.img.after), title: LANG === 'fr' ? 'Voir avant/après' : 'See before/after', style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 } }, '🖼️') : null),
+    tags.length > 0 ? pneH('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } },
+      tags.map((t, i) => pneH('span', { key: i, title: t.title, style: { fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 999, border: `1px solid ${t.color}`, color: t.color } }, t.label))) : null,
+    pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 } },
+      pneH(PneVoteBadge, { score, myVote, onVote: vote }),
+      pneH('button', { className: 'pneBtn', onClick: toggleComments, style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, border: `1px solid ${commentsOpen ? PNE_V.pink + '55' : PNE_V.border}`, color: commentsOpen ? PNE_V.pink : PNE_V.muted, background: 'none', borderRadius: 4, padding: '2px 8px', cursor: 'pointer' } },
+        '💬', commentCount != null && commentCount > 0 ? commentCount : '')),
+    commentsOpen ? pneH(PneCommentThread, { entryId: row.entryId }) : null);
+}
+
+function PneVersionBlock(props) {
+  const { p, absIdx, rows } = props;
+  const isNew = !readPatches.has(p.v);
+  return pneH('div', { style: { position: 'relative', paddingLeft: 20, paddingBottom: 20 } },
+    props.notLast ? pneH('div', { style: { position: 'absolute', left: 6, top: 20, bottom: 0, width: 1, background: PNE_V.border } }) : null,
+    pneH('div', { style: { position: 'absolute', left: 0, top: 4, width: 14, height: 14, borderRadius: 999, border: `2px solid ${absIdx === 0 ? PNE_V.gold : PNE_V.border}`, background: PNE_V.bg } }),
+    pneH('div', { style: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' } },
+      pneH('span', { style: { fontSize: 13, fontWeight: 700, color: PNE_V.cream } }, 'v' + p.v),
+      pneH('span', { style: { fontSize: 10, color: PNE_V.muted } }, p.d),
+      absIdx === 0 ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', background: '#4a3a20', color: '#e8c876' } }, LANG === 'fr' ? 'Récent' : 'Latest')
+        : isNew ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2 }, title: LANG === 'fr' ? 'Nouveau' : 'New' }) : null,
+      pneH('span', { style: { fontSize: 10, color: PNE_V.muted2, marginLeft: 'auto' } }, rows.length + (LANG === 'fr' ? ' changements' : ' changes'))),
+    p.name ? pneH('p', { style: { fontSize: 11, fontStyle: 'italic', color: PNE_V.italic, margin: '0 0 8px' } }, p.name[LANG]) : null,
+    pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
+      rows.map(row => pneH(PneEntryCard, { key: row.entryId, row, controversial: props.controversyView && (patchKarmaCache[row.entryId] || 0) < 0 }))));
+}
+
+function PatchNotesApp(props) {
+  const [, forceTick] = React.useState(0);
+  const [query, setQuery] = React.useState('');
+  const [catFilter, setCatFilter] = React.useState(null);
+  const [controversyView, setControversyView] = React.useState(false);
+  const [pageStart, setPageStart] = React.useState(patchPageStart);
+
+  const isStaff = (typeof isAdmin === 'function' && isAdmin()) || (typeof myIsMod !== 'undefined' && myIsMod);
+
+  React.useEffect(() => {
+    const onKey = e => e.key === 'Escape' && props.onClose();
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [props.onClose]);
+
+  const pages = computePatchPages();
+  let pageIdx = pages.findIndex(pg => pg.start === pageStart);
+  if (pageIdx === -1) pageIdx = 0;
+  const page = pages[pageIdx];
+  const entries = PATCH_NOTES.slice(page.start, page.start + page.count);
+
+  // marque la page affichée comme vue (même règle que l'ancien panneau HTML : dès l'affichage,
+  // pas besoin de scroller dessus) -- une seule fois par changement de page.
+  React.useEffect(() => {
+    let changed = false;
+    entries.forEach(p => { if (!seenThisSession.has(p.v)) { seenThisSession.add(p.v); changed = true; } });
+    if (changed && typeof updatePatchBadge === 'function') updatePatchBadge();
+    try { localStorage.setItem('velia-patch-page', String(pageStart)); } catch (e) {}
+  }, [pageStart]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!sb) return;
+      try {
+        const { data } = await sb.rpc('get_patch_note_karma');
+        (data || []).forEach(r => { patchKarmaCache[r.entry_id] = Number(r.score) || 0; });
+      } catch (e) {}
+      if (typeof currentUser !== 'undefined' && currentUser) {
+        try {
+          const { data } = await sb.rpc('get_my_patch_note_votes');
+          (data || []).forEach(r => { patchMyVoteCache[r.entry_id] = r.value; });
+        } catch (e) {}
+      }
+      if (!cancelled) forceTick(t => t + 1); // relance un rendu une fois le karma/mes votes connus
+    })();
+    return () => { cancelled = true; };
+  }, [pageStart]);
+
+  function goto(newStart) { patchPageStart = newStart; setPageStart(newStart); }
+  function markAllRead() {
+    PATCH_NOTES.forEach(p => { readPatches.add(p.v); seenThisSession.add(p.v); });
+    if (typeof commitPatchRead === 'function') commitPatchRead();
+    if (typeof updatePatchBadge === 'function') updatePatchBadge();
+    forceTick(t => t + 1);
+  }
+
+  const q = query.toLowerCase().trim();
+  const blocks = entries.map((p, k) => {
+    let rows = pneFlattenPage([p], page.start + k);
+    if (catFilter) rows = rows.filter(r => r.line.t === catFilter);
+    if (q) rows = rows.filter(r => r.line.tx.toLowerCase().includes(q));
+    if (controversyView) rows = [...rows].sort((a, b) => (patchKarmaCache[a.entryId] || 0) - (patchKarmaCache[b.entryId] || 0));
+    return { p, absIdx: page.start + k, rows };
+  }).filter(b => b.rows.length > 0);
+
+  const unreadNow = typeof unreadPatchCount === 'function' ? unreadPatchCount() : 0;
+
+  return pneH('div', {
+    role: 'dialog', 'aria-modal': 'true',
+    onClick: e => { if (e.target === e.currentTarget) props.onClose(); },
+    style: { position: 'fixed', inset: 0, zIndex: 975, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '30px 16px', overflowY: 'auto', background: 'rgba(6,9,16,.72)', ...PNE_BASE_FONT, color: PNE_V.textMain },
+  },
+    pneH('style', null, `
+      @keyframes pnePulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+      .pnePulseDot { animation: pnePulse 1.4s ease-in-out infinite; }
+      .pneBtn:focus-visible { outline: 2px solid ${PNE_V.gold}; outline-offset: 2px; }
+      .pneChip:focus-visible { outline: 2px solid ${PNE_V.gold}; outline-offset: 2px; }
+    `),
+    pneH('div', { style: { width: '100%', maxWidth: 640, borderRadius: 10, border: `1px solid ${PNE_V.border}`, background: PNE_V.card, overflow: 'hidden', display: 'flex', flexDirection: 'column' } },
+      // ---- en-tête ----
+      pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${PNE_V.border}` } },
+        pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+          pneH('span', { style: { display: 'inline-block', width: 4, height: 16, borderRadius: 2, background: PNE_V.pink } }),
+          pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, LANG === 'fr' ? 'Notes de mise à jour' : 'Patch notes')),
+        pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
+          isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setControversyView(v => !v), title: LANG === 'fr' ? 'Trier les lignes les plus contestées en premier' : 'Sort most contested lines first',
+            style: { fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', border: `1px solid ${controversyView ? PNE_V.red : PNE_V.border}`, background: controversyView ? 'rgba(192,80,60,.13)' : 'transparent', color: controversyView ? PNE_V.red2 : PNE_V.muted } }, '📉 ' + (LANG === 'fr' ? 'Controverse' : 'Controversy')) : null,
+          unreadNow > 0 ? pneH('button', { className: 'pneBtn', onClick: markAllRead, style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: PNE_V.green, cursor: 'pointer' } }, LANG === 'fr' ? 'Marquer comme lu' : 'Mark all read') : null,
+          pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': LANG === 'fr' ? 'Fermer' : 'Close', style: { width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 14 } }, '✕'))),
+
+      // ---- recherche ----
+      pneH('div', { style: { padding: '12px 16px 0' } },
+        pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, border: `1px solid ${PNE_V.border}`, background: PNE_V.bg } },
+          pneH('span', { style: { fontSize: 12, color: PNE_V.muted } }, '🔎'),
+          pneH('input', { value: query, onChange: e => setQuery(e.target.value), placeholder: LANG === 'fr' ? 'Rechercher dans cette page' : 'Search this page',
+            style: { flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: PNE_V.textMain } }))),
+
+      // ---- filtres catégorie ----
+      pneH('div', { style: { padding: '10px 16px 8px', display: 'flex', flexWrap: 'wrap', gap: 6 } },
+        Object.entries(PATCH_CATS).map(([key, cat]) => {
+          const active = catFilter === key;
+          return pneH('button', { key, className: 'pneChip', onClick: () => setCatFilter(active ? null : key),
+            style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 999, cursor: 'pointer', border: `1px solid ${active ? cat.color : PNE_V.border}`, background: active ? cat.color + '22' : 'transparent', color: active ? cat.color : PNE_V.muted } },
+            cat.icon + ' ' + cat[LANG], active ? ' ✕' : '');
+        }),
+        catFilter ? pneH('button', { className: 'pneChip', onClick: () => setCatFilter(null), style: { fontSize: 10, background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer' } }, '✕ ' + (LANG === 'fr' ? 'Tout effacer' : 'Clear all')) : null),
+
+      // ---- timeline ----
+      pneH('div', { className: 'pneScroll', style: { padding: '0 16px 12px', maxHeight: '55vh', overflowY: 'auto' } },
+        blocks.length === 0
+          ? pneH('div', { style: { textAlign: 'center', padding: '24px 0', color: PNE_V.muted } }, pneH('p', { style: { fontSize: 11 } }, LANG === 'fr' ? 'Aucune entrée ne correspond.' : 'No entries match.'))
+          : blocks.map((b, i) => pneH(PneVersionBlock, { key: b.p.v, p: b.p, absIdx: b.absIdx, rows: b.rows, notLast: i !== blocks.length - 1, controversyView }))),
+
+      // ---- pagination ----
+      pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 16px', borderTop: `1px solid ${PNE_V.border}` } },
+        pneH('button', { className: 'pneBtn', disabled: pageIdx === 0, onClick: () => goto(pages[pageIdx - 1].start), title: LANG === 'fr' ? 'Notes plus récentes' : 'Newer notes',
+          style: { background: 'none', border: 'none', cursor: pageIdx === 0 ? 'default' : 'pointer', color: pageIdx === 0 ? PNE_V.border2 : PNE_V.blue, fontSize: 15 } }, '‹'),
+        pneH('span', { style: { fontSize: 10, color: PNE_V.muted } }, (page.start + 1) + '–' + (page.start + entries.length) + ' / ' + PATCH_NOTES.length),
+        pneH('button', { className: 'pneBtn', disabled: pageIdx === pages.length - 1, onClick: () => goto(pages[pageIdx + 1].start), title: LANG === 'fr' ? 'Notes plus anciennes' : 'Older notes',
+          style: { background: 'none', border: 'none', cursor: pageIdx === pages.length - 1 ? 'default' : 'pointer', color: pageIdx === pages.length - 1 ? PNE_V.border2 : PNE_V.blue, fontSize: 15 } }, '›'))));
+}
+
+let patchNotesRoot = null;
+let patchNotesSession = 0;
+function openPatchNotesReact() {
+  const container = document.getElementById('patchNotesModalRoot');
+  if (!container || typeof React === 'undefined' || typeof ReactDOM === 'undefined') { if (typeof renderPatchNotesPanel === 'function') renderPatchNotesPanel(); return; }
+  patchNotesSession++;
+  if (!patchNotesRoot) patchNotesRoot = ReactDOM.createRoot(container);
+  // flushSync : force un commit DOM synchrone -- sans ça React 18 (createRoot) peut batcher le
+  // rendu au tick suivant, et un code appelant qui lit le DOM juste après (tests, ou tout autre
+  // wiring synchrone) verrait encore l'ancien contenu (même piège déjà rencontré et corrigé sur
+  // le modal de reconnexion, voir src/core/reconnect-modal-react.js).
+  ReactDOM.flushSync(() => {
+    patchNotesRoot.render(pneH(PatchNotesApp, { key: patchNotesSession, onClose: closePatchNotesReact }));
   });
+}
+function closePatchNotesReact() {
+  if (patchNotesRoot) ReactDOM.flushSync(() => patchNotesRoot.render(null));
 }
