@@ -175,6 +175,23 @@ sa place, sans jamais bloquer les 10 autres. Test de régression `testDashboardW
 (sinon un clic sur la carte ne ferait rien, silencieusement — même piège que
 `testAdminSectionsWellFormed`).
 
+**Stats Compagnon enrichies (2026-07-20, demande explicite : "affichger stats pour oeuf, moyenne
+doeuf eclos/jour, stats entiere liste des fusion et grph completion index")** :
+`renderAdminCompanions` (`Contenu → Compagnons`) affiche désormais aussi éclosions/jour (moyenne
+par joueur, `created_at` comme référence temporelle — jamais réécrite après le 1er sync, contrairement
+à `updated_at`), complétion Index (moyenne + répartition en barres par tranche de %), et une liste
+par joueur de leurs fusions/percées/perdantes/œufs/index (`admin_companion_player_list()`, nouvelle
+RPC dédiée). `COMPANION_CATALOG_SIZE = 48` recopié en dur (même limite que
+`COMPANION_RARITY_LABELS`). Migration `20260720130000_companion_stats_egg_and_index.sql` — voir
+`companions/README.md` pour le détail complet côté client.
+
+**Bug corrigé — le panneau admin réapparaissait pendant une autre activité (2026-07-20, rapporté
+explicitement : "quand je reste longtemps dans compagnon le dashboard s'affiche")** :
+`showPlayerInventoryWindow()` (`game-supabase.js`) sondait la fermeture de sa popup "Inventaire
+joueur" toutes les 400ms pour rappeler `openAdminPanel()`, MÊME si l'admin avait depuis fermé le
+panneau admin lui-même (ex: parti tester le module Compagnon). Ne rouvre désormais que si
+`#adminOverlay` a encore la classe `open` au moment de la fermeture de la popup.
+
 Voir `ADMIN_MENU_PLAN.md` (racine du repo) pour l'état des lieux du panneau admin et pourquoi le
 reste d'un plan initial plus large (React, Sentry, i18n editor, staging, équipe multi-rôles...) a
 été volontairement écarté à l'échelle actuelle du projet.

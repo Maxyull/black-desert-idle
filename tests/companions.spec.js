@@ -152,6 +152,111 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   expect(pageErrors).toEqual([]);
 });
 
+// garde-fou (2026-07-20, "Colllection si petite carte alors afficher tiers rareté et section et
+// gs") -- au cran de zoom le plus dense (120px), la ligne meta normale (rareté en toutes lettres +
+// tier + section + type, séparés par "·") déborde largement de la carte et se fait tronquer
+// silencieusement par .pet-card{overflow:hidden}, perdant section/type/GS sans qu'aucune erreur ne
+// s'affiche. Une variante compacte (.card-meta-compact : pastille de rareté, T{n}, icône de
+// section, badge GS) doit apparaître à ce cran ET tenir sans déborder.
+test('collection cards show a compact tier/rarity/section/GS summary that never overflows at the densest zoom', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG[0];
+    PETS.push({ id: petId++, cat, rar: 2, stats: [10, 8, 6, 0, 0], hunger: 100, terrain: false, tier: 3, tierXp: 0, tierMult: 1 });
+    ST(3); // Collection
+    setCollZoom(-1); setCollZoom(-1); // cran le plus dense (120px)
+    const card = document.querySelector('.pet-card');
+    const compact = card.querySelector('.card-meta-compact');
+    return {
+      cardWidth: card.getBoundingClientRect().width,
+      hasCompact: !!compact,
+      hasVerboseMeta: !!card.querySelector('.card-meta'),
+      overflowsCard: compact ? compact.scrollWidth > compact.clientWidth : null,
+      hasTierDot: compact ? !!compact.querySelector('.cmcDot') : false,
+      hasSectionIcon: compact ? !!compact.querySelector('.cmcSec') : false,
+      hasGsBadge: compact ? !!compact.querySelector('.gs-badge') : false,
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.cardWidth).toBeLessThan(140);
+  expect(result.hasCompact).toBe(true);
+  expect(result.hasVerboseMeta).toBe(false); // pas les deux affichages à la fois
+  expect(result.overflowsCard).toBe(false);
+  expect(result.hasTierDot).toBe(true);
+  expect(result.hasSectionIcon).toBe(true);
+  expect(result.hasGsBadge).toBe(true);
+
+  // zoom large (200px) : repasse à l'affichage verbeux normal, jamais la variante compacte
+  const wide = await frame.locator('body').evaluate(() => {
+    setCollZoom(1); setCollZoom(1);
+    const card = document.querySelector('.pet-card');
+    return { hasCompact: !!card.querySelector('.card-meta-compact'), hasVerboseMeta: !!card.querySelector('.card-meta') };
+  });
+  expect(wide.hasCompact).toBe(false);
+  expect(wide.hasVerboseMeta).toBe(true);
+  expect(pageErrors).toEqual([]);
+});
+
+// garde-fou (2026-07-20, "ajouter classement, oeuf ouvert, argent depensé...") -- nouvel onglet
+// "Tes stats" + "Classement" (tab 9, panel p9) : "Tes stats" reste 100% local (aucun réseau),
+// vérifie que les compteurs déjà suivis ailleurs (totalHatched, silverSpent) s'affichent
+// correctement après une dépense réelle. Le classement appelle une vraie RPC réseau
+// (companion_leaderboard) -- ce test vérifie seulement qu'il ne plante jamais (page invitée fake,
+// isGuest()===true dans ce contexte de test -- voir signInForTest -- donc le message "compte
+// invité" attendu, pas un vrai classement réseau).
+test('companion "Tes stats" tab shows real eggs-opened/money-spent counters and the leaderboard container never throws', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle Compagnon');
+
+  // dépense réelle : achète un œuf pour que "Œufs ouverts"/"Argent dépensé" ne soient pas juste 0 par défaut
+  const before = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG[0];
+    const eggType = EGG_TYPES[0];
+    SILVER = eggType.cost + 1000; // assez pour payer
+    doHatch(0, eggType.id);
+    return { totalHatched, silverSpent, eggCost: eggType.cost };
+  });
+  expect(before.totalHatched).toBeGreaterThan(0);
+  expect(before.silverSpent).toBe(before.eggCost);
+
+  // doHatch() ouvre #hatch-modal (choix Garder/Déployer) -- le fermer avant de cliquer l'onglet,
+  // sinon il intercepte le clic (modal-bg plein écran).
+  await frame.locator('body').evaluate(() => { CM('hatch-modal'); });
+  await frame.locator('.tabs .tab', { hasText: 'Classement' }).click();
+  const result = await frame.locator('body').evaluate(async () => {
+    // laisse fetchAndRenderCompanionLeaderboard() (appelée par ST(9)) se résoudre
+    await new Promise(r => setTimeout(r, 800));
+    const tiles = Array.from(document.querySelectorAll('#my-stats-grid > div')).map(d => d.textContent);
+    return {
+      tileCount: tiles.length,
+      hasEggTile: tiles.some(t => t.includes('Œufs ouverts')),
+      hasSpentTile: tiles.some(t => t.includes('Argent dépensé')),
+      leaderboardHTML: document.getElementById('companion-leaderboard').innerHTML,
+    };
+  });
+  expect(result.tileCount).toBeGreaterThan(0);
+  expect(result.hasEggTile).toBe(true);
+  expect(result.hasSpentTile).toBe(true);
+  expect(result.leaderboardHTML.length).toBeGreaterThan(0); // un état quelconque affiché, jamais resté vide/"Chargement…" figé
+  expect(pageErrors).toEqual([]);
+});
+
 // garde-fou (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
 // supabase") : DEUX bugs cumulés empêchaient TOUTE synchro admin depuis la création du module,
 // pour tous les comptes (invité ou non) -- (1) window.parent.sb/currentUser étaient TOUJOURS

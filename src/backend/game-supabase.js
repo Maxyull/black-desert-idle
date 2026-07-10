@@ -604,8 +604,19 @@ async function showPlayerInventoryWindow(userId, displayName) {
   </style></head><body><h2>🎒 ${safeName}</h2><div id="body"><div class="admEmpty">Chargement…</div></div></body></html>`);
   win.document.close();
   // à la fermeture de cette fenêtre popup, on revient sur le panneau admin dans la fenêtre principale
+  // -- bug corrigé (2026-07-20, "quand je reste longtemps dans compagnon le dashboard s'affiche") :
+  // ce setInterval survit tant que le popup n'est pas fermé, MÊME si l'admin a depuis quitté le
+  // panneau admin (ex: parti tester le module Compagnon) -- si le popup traîne longtemps en arrière-
+  // plan avant d'être fermé (manuellement ou par le navigateur), openAdminPanel() se déclenchait
+  // sans prévenir, en pleine session Compagnon. Ne rouvre désormais QUE si le panneau admin était
+  // encore affiché au moment de la fermeture du popup (l'admin n'a pas explicitement navigué
+  // ailleurs entre-temps via closeAdminPanel(), qui retire la classe 'open').
   const checkClosed = setInterval(() => {
-    if (win.closed) { clearInterval(checkClosed); openAdminPanel(); }
+    if (win.closed) {
+      clearInterval(checkClosed);
+      const overlay = $a('adminOverlay');
+      if (overlay && overlay.classList.contains('open')) openAdminPanel();
+    }
   }, 400);
   const [{ data: gear, error: gearErr }, { data: inv0, error: invErr }] = await Promise.all([
     sb.rpc('get_player_gear', { p_user_id: userId }),

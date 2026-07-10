@@ -5,7 +5,7 @@
 function saveGame(){
   try{
     const state = {
-      PETS, SILVER, INVENTORY, incubSlots, eggTimer,
+      PETS, SILVER, silverSpent, INVENTORY, incubSlots, eggTimer,
       petId, selFoodName, hatchCountSincePity,
       fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount, totalHatched, fusionLostHighRarityCount,
       eggTypesUsed: Array.from(eggTypesUsed),
@@ -69,6 +69,7 @@ function loadGame(){
     const needsRosterReset = !state.petsRosterResetV1;
     PETS = needsRosterReset ? [] : (state.PETS || PETS);
     SILVER = state.SILVER ?? SILVER;
+    silverSpent = state.silverSpent || 0;
     INVENTORY = state.INVENTORY || {};
     incubSlots = state.incubSlots || incubSlots;
     eggTimer = state.eggTimer ?? eggTimer;

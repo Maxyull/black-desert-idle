@@ -63,6 +63,11 @@ TARGETED_EGG_DEFS.forEach(def=>{
 // Économie fermée (2026-07-19, demande explicite) : ce Silver/inventaire est propre
 // au module Compagnons, totalement indépendant du Silver/inventaire du jeu principal.
 let SILVER = 55000; // solde de départ pour tester les tiers d'œufs
+// compteur À VIE (2026-07-20, demande explicite : "argent depensé") -- jamais remis à 0, contraire
+// à SILVER qui peut monter et descendre. Incrémenté à chaque dépense réelle (achat d'œuf,
+// companions.hatch.js) -- voir sumSpent() plus bas pour le seul point d'entrée d'incrément.
+let silverSpent = 0;
+function spendSilver(amount){ SILVER -= amount; silverSpent += amount; }
 
 // ═══ PITY COUNTER ═══ Garantit un Ancestral après trop d'éclosions sans en avoir eu
 // (protection contre la malchance extrême — sans ça, en pur RNG, un joueur pourrait

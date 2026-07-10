@@ -61,6 +61,17 @@ body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;heig
 .card-name{font-size:11px;font-weight:500;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card-meta{font-size:9px;color:var(--cream2);display:flex;align-items:center;gap:4px}
 .card-gs-row{display:flex;align-items:center;gap:5px}
+/* variante compacte des petites cartes (zoom le plus dense, 120px, 2026-07-20 demande explicite :
+   "si petite carte alors afficher tiers rareté et section et gs") -- la ligne meta normale (rareté
+   en toutes lettres + tier + section + type, séparés par "·") déborde largement de 120px et se
+   fait tronquer silencieusement par .pet-card{overflow:hidden}, perdant section/type/parfois GS.
+   Un seul rang condensé (pastille de rareté, T{n}, icône de section, badge GS) reste toujours
+   lisible à cette largeur. */
+.card-meta-compact{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--cream2)}
+.card-meta-compact .cmcDot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.card-meta-compact .cmcTier{font-family:'Cinzel',serif;color:var(--gold);flex-shrink:0}
+.card-meta-compact .cmcSec{flex-shrink:0}
+.card-meta-compact .gs-badge{margin-left:auto;font-size:8px;padding:1px 4px}
 .gs-bar{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
 .gs-bar-fill{height:100%;border-radius:2px;transition:width .4s}
 .card-actions{display:flex;gap:4px;margin-top:2px}
