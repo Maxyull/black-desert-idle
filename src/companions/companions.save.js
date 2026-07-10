@@ -10,7 +10,7 @@ function saveGame(){
       fusionCount, caphrasUpgradeCount, bossItemFound, breakthroughCount, totalHatched, fusionLostHighRarityCount,
       eggTypesUsed: Array.from(eggTypesUsed),
       completedAchievements: Array.from(completedAchievements),
-      pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1, petsRosterCapV1,
+      pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1, petsRosterCapV1, petsUidV1,
       savedAt: Date.now()
     };
     localStorage.setItem('velia_idle_pets_save', JSON.stringify(state));
@@ -71,6 +71,13 @@ function trimRosterToCapIfNeeded(){
     toast('📦', `${removedCount} familier${removedCount>1?'s':''} en trop supprimé${removedCount>1?'s':''} (plafond ${PET_ROSTER_CAP}) — les moins bien roulés retirés en premier`);
   }
 }
+// migration rétroactive (2026-07-10, marché d'échange) -- tout pet créé avant l'ajout de `uid`
+// (rollAndCreatePet, companions.hatch.js) n'en a pas : indispensable avant de pouvoir le mettre en
+// vente (pet_uid est la clé serveur). Gatée par petsUidV1 (pas de flag par pet -- un seul passage
+// suffit, générer un uid à un pet qui en a déjà un ne se produit jamais après ce passage).
+function migratePetUidV1(){
+  PETS.forEach(p=>{ if(!p.uid) p.uid = crypto.randomUUID(); });
+}
 function loadGame(){
   try{
     const raw = localStorage.getItem('velia_idle_pets_save');
@@ -112,7 +119,10 @@ function loadGame(){
     const needsRosterCap = !state.petsRosterCapV1;
     if(needsRosterCap) trimRosterToCapIfNeeded();
     petsRosterCapV1 = true;
-    if(needsRosterReset || needsRosterCap) saveGame(); // persiste immédiatement (roster modifié + flag), avant l'autosave 5s
+    const needsPetUid = !state.petsUidV1;
+    if(needsPetUid) migratePetUidV1();
+    petsUidV1 = true;
+    if(needsRosterReset || needsRosterCap || needsPetUid) saveGame(); // persiste immédiatement (roster modifié + flag), avant l'autosave 5s
     applyOfflineProgress(state.savedAt);
     checkDailyStreak();
     return true;

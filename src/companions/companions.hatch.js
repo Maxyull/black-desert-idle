@@ -1,7 +1,7 @@
 // ═══ TABS & PETITS UTILITAIRES D'UI ═════════════════════════════
 function ST(i){
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
-  ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
+  ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10','p11'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
   // bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut
   // pas acheter les oeufs") -- ST(1) (onglet Éclosion) n'appelait jamais renderHatch() : le tick
   // (companions.ticks.js) décrémente bien sl.tl/passe sl.ready à true en mémoire chaque seconde,
@@ -18,6 +18,7 @@ function ST(i){
   if(i===7) renderAchievements();
   if(i===8) renderPvp();
   if(i===9) renderMyStatsAndLeaderboard();
+  if(i===11 && typeof renderMarketTab==='function') renderMarketTab();
   // écran de test viewer 3D GLB (2026-07-10) : n'initialise le contexte WebGL qu'à l'ouverture
   // réelle de l'onglet, le libère à la fermeture (évite de garder un renderer actif en arrière-plan
   // pendant que le joueur navigue ailleurs dans le module)
@@ -195,7 +196,10 @@ function rollAndCreatePet(eggType){
   const candidates=PET_CATALOG.filter(c=>Math.abs(c.rar-rar)<=1);
   const cat=candidates[Math.floor(Math.random()*candidates.length)];
   const stats=mkStats(rar);
-  const np={id:petId++,cat,rar,stats,hunger:100,terrain:false,tier:1,tierXp:0,tierMult:rollTierMult(1)};
+  // uid stable cross-compte (2026-07-10, marché d'échange) -- distinct de `id` (local, jamais
+  // envoyé au serveur) : c'est la clé qui identifie ce pet précis dans pet_trade_offers/deliveries,
+  // doit survivre à un transfert d'un compte à l'autre (voir migratePetUidV1, companions.save.js).
+  const np={id:petId++,uid:crypto.randomUUID(),cat,rar,stats,hunger:100,terrain:false,tier:1,tierXp:0,tierMult:rollTierMult(1)};
   return {pet:np, pityTriggered};
 }
 

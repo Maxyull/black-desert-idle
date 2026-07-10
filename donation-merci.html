@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merci — Black Desert Idle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0A0C14;
+    --panel: #12141f;
+    --panel-border: #232739;
+    --gold: #c9a15a;
+    --gold-bright: #f0c976;
+    --text: #e8e6df;
+    --text-dim: #8a8a99;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .card {
+    max-width: 440px;
+    text-align: center;
+    padding: 48px 36px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+  }
+
+  .glyph {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 24px;
+    border: 1px solid rgba(201,161,90,0.4);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gold-bright);
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+  }
+  .glyph::after {
+    content: "";
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(240,201,118,0.4), transparent);
+    transform: skewX(-20deg);
+    animation: sweep 2.4s ease-in-out 0.3s;
+  }
+  @keyframes sweep {
+    to { left: 130%; }
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: 24px;
+    color: var(--gold-bright);
+    margin-bottom: 14px;
+  }
+
+  p {
+    color: var(--text-dim);
+    font-size: 14.5px;
+    margin-bottom: 10px;
+  }
+
+  .back {
+    display: inline-block;
+    margin-top: 24px;
+    color: var(--gold);
+    font-size: 13.5px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(201,161,90,0.3);
+  }
+  .back:hover { color: var(--gold-bright); border-bottom-color: var(--gold-bright); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="glyph">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M20 6L9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </div>
+    <h1>Merci du fond du cœur</h1>
+    <p>Ton don aide directement à garder Black Desert Idle en ligne, gratuit et ouvert pour tout le monde.</p>
+    <p>Un reçu de confirmation t'a été envoyé par PayPal.</p>
+    <a href="index.html" class="back">← Retourner au jeu</a>
+  </div>
+</body>
+</html>

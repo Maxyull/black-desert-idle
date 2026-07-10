@@ -379,6 +379,38 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
   de `#companionsOverlay` (950) — la popup de mise à jour restait invisible derrière le module
   Compagnon plein écran.
 
+**Marché d'échange réel entre joueurs (2026-07-10, demande explicite : "vrai backend d'échange...
+c'est fini la sauvegarde locale c'est sur supabase déjà")** : premier point de ce module qui fait
+vraiment traverser un PET (pas juste des compteurs comme `companions.sync.js`) d'un compte à
+l'autre — le reste de la sauvegarde (roster non mis en vente, inventaire, progression) reste
+100% `localStorage` comme avant, seuls les pets IMPLIQUÉS dans une offre/contre-offre transitent
+par Supabase le temps de la transaction.
+- Schéma complet : `supabase/migrations/20260710150000_companion_pet_trade_market.sql` —
+  `pet_trade_offers`/`pet_trade_counters`/`pet_trade_history`/`pet_trade_deliveries`/
+  `pet_trade_notifications`, RLS par table, RPC `create_pet_trade_offer`/`cancel_pet_trade_offer`/
+  `submit_pet_trade_counter`/`withdraw_pet_trade_counter`/`decline_pet_trade_counter`/
+  `accept_pet_trade_counter` (transaction atomique : ferme l'offre, enregistre l'historique, crée
+  2 livraisons, invalide AVEC notification les autres contre-offres pendantes)/
+  `claim_pet_trade_delivery`/`mark_pet_trade_notifications_read`/`expire_pet_trade_offers` (prêt
+  pour `pg_cron`, pas encore branché).
+- `pet.uid` (UUID stable, `companions.hatch.js:rollAndCreatePet`) — clé serveur, DISTINCTE de
+  `pet.id` (compteur local, jamais envoyé). Migration rétroactive `migratePetUidV1()`
+  (`companions.save.js`, gatée par `petsUidV1`) attribue un `uid` à tout pet créé avant son ajout.
+- `companions.market.js` (nouveau, onglet 🔄 Marché, tab 11) — 3 sous-onglets (Marché/Mes
+  contrats/Historique). Accès Supabase EXCLUSIVEMENT via `window.parent.getSbClient()`/
+  `getCurrentUserForSync()`/`getMyPseudoForSync()` (ce dernier ajouté dans `game-supabase.js` pour
+  ce besoin — même pattern que les deux premiers, `myPseudo` était un `let` top-level jamais
+  attaché à `window`) — jamais `window.parent.sb` directement (même piège déjà corrigé dans
+  `companions.sync.js`). `claimMarketDeliveries()`/`pollMarketNotifications()` tournent en
+  arrière-plan (`setTimeout`/`setInterval`, indépendant de l'onglet ouvert) pour qu'un joueur
+  reçoive son pet gagné même s'il ne rouvre pas l'onglet Marché tout de suite.
+- Portée volontairement scopée à ce qui bloquait (schéma+RLS, transaction atomique, notification
+  de contre-offre invalidée) — anti-abus avancé (wash-trading, cooldown création/annulation, limite
+  quotidienne) et édition de contrat NON construits, voir
+  `echange-compagnons-todo-backend.md` (fourni par l'utilisateur) pour le reste de la roadmap.
+- Tests : `tests/companions.spec.js` (`rollAndCreatePet assigns a stable uid...`,
+  `migratePetUidV1 assigns a uid to legacy pets...`, `Marché tab renders its 3 sub-tabs...`).
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2

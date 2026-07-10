@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de don — Black Desert Idle</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #0A0C14;
+    --panel: #12141f;
+    --panel-border: #232739;
+    --gold: #c9a15a;
+    --gold-bright: #f0c976;
+    --text: #e8e6df;
+    --text-dim: #8a8a99;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    line-height: 1.65;
+  }
+
+  .wrap {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 80px 24px 100px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 28px;
+    color: var(--gold-bright);
+    margin-bottom: 40px;
+  }
+
+  h2 {
+    font-family: 'Cinzel', serif;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--gold-bright);
+    margin: 40px 0 12px;
+  }
+
+  p, li { color: var(--text-dim); font-size: 14.5px; margin-bottom: 10px; }
+  strong { color: var(--text); font-weight: 600; }
+  ul { margin: 0 0 12px 20px; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 20px;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 13.5px;
+  }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--panel-border); }
+  th { color: var(--gold); font-family: 'Cinzel', serif; font-weight: 600; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; }
+  td { color: var(--text-dim); }
+  tr:last-child td { border-bottom: none; font-weight: 600; color: var(--gold-bright); }
+
+  .warn {
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-left: 3px solid #8b3a2b;
+    border-radius: 4px;
+    padding: 16px 20px;
+    font-size: 13.5px;
+    margin: 16px 0;
+  }
+  .warn strong { color: #e08a70; }
+
+  .back {
+    display: inline-block;
+    margin-top: 48px;
+    color: var(--gold);
+    font-size: 13.5px;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(201,161,90,0.3);
+  }
+  .back:hover { color: var(--gold-bright); border-bottom-color: var(--gold-bright); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Black Desert Idle</div>
+  <h1>Politique de donation</h1>
+
+  <h2>Principe</h2>
+  <p>BDI reste 100% gratuit et open-source. Les dons sont volontaires, sans contrepartie
+  in-game, et servent uniquement à couvrir les coûts d'infrastructure et de
+  développement du projet.</p>
+
+  <h2>Coûts actuels</h2>
+  <table>
+    <thead><tr><th>Service</th><th>Usage</th><th>Coût / mois</th></tr></thead>
+    <tbody>
+      <tr><td>Claude</td><td>Assistant de développement</td><td>200 $</td></tr>
+      <tr><td>Meshy</td><td>Génération d'assets 3D</td><td>25 $</td></tr>
+      <tr><td>Supabase</td><td>Base de données &amp; hébergement</td><td>25 $</td></tr>
+      <tr><td><strong>Total</strong></td><td></td><td><strong>250 $</strong></td></tr>
+    </tbody>
+  </table>
+  <p><strong>Fréquence de mise à jour :</strong> ce tableau est révisé à chaque changement d'outil,
+  ou au minimum une fois par mois. Toute variation significative (+/- 20%) est
+  communiquée sur Discord.</p>
+
+  <h2>Que se passe-t-il si les dons dépassent les coûts ?</h2>
+  <p>Aucune décision unilatérale de ma part. L'excédent fait l'objet d'un <strong>vote
+  communautaire sur Discord</strong>, avec des options proposées à l'avance (ex. :
+  réserve pour coups durs, nouveaux outils/features, réduction ponctuelle de
+  l'appel aux dons, don à une association liée au gaming).</p>
+
+  <h2>Politique de remboursement</h2>
+  <ul>
+    <li>Les dons sont <strong>non remboursables</strong>, sauf erreur manifeste (montant en double,
+    erreur de saisie signalée sous 48h).</li>
+    <li>En cas d'erreur confirmée, le remboursement se fait via PayPal directement,
+    sous 5 jours ouvrés.</li>
+  </ul>
+
+  <h2>Statut fiscal / légal</h2>
+  <ul>
+    <li>Les dons sont traités comme des dons personnels volontaires, sans contrepartie.</li>
+  </ul>
+  <div class="warn">
+    <strong>⚠️ À vérifier avec un professionnel (comptable/juriste)</strong> si le volume de
+    dons devient significatif — statut fiscal des revenus, obligation de
+    déclaration, seuils légaux selon le pays de résidence. Ne pas se fier à ce
+    document pour des questions fiscales réelles.
+  </div>
+
+  <h2>Transparence</h2>
+  <ul>
+    <li>Le tableau des coûts ci-dessus est affiché publiquement sur la page de don.</li>
+    <li>Aucun montant individuel de don n'est communiqué publiquement sans accord
+    explicite du donateur (ex. mur des donateurs = pseudo uniquement, opt-in).</li>
+  </ul>
+
+  <h2>Mur des donateurs (opt-in)</h2>
+  <ul>
+    <li>Après un don via PayPal, une case ou un lien Discord permet au donateur de
+    <strong>choisir volontairement</strong> d'apparaître sur le mur des donateurs (pseudo
+    uniquement, jamais le montant).</li>
+    <li>Sans action du donateur, il reste <strong>anonyme</strong> par défaut (opt-in, pas opt-out).</li>
+    <li>Un donateur peut demander le retrait de son pseudo à tout moment.</li>
+  </ul>
+
+  <h2>Barre de progression mensuelle</h2>
+  <ul>
+    <li>Le montant affiché ("X$ collectés ce mois-ci") est mis à jour manuellement
+    au minimum une fois par semaine, ou automatiquement si branché sur les
+    webhooks PayPal + Supabase.</li>
+    <li>La barre se réinitialise à 0 au 1er de chaque mois.</li>
+  </ul>
+
+  <a href="donation.html" class="back">← Retour à la page de don</a>
+</div>
+</body>
+</html>

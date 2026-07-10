@@ -1316,3 +1316,98 @@ test('opening the 3D preview for many companions in a row never fails to render 
 
   expect(pageErrors).toEqual([]);
 });
+
+// ═══ MARCHÉ D'ÉCHANGE (2026-07-10, demande explicite : "vrai backend d'échange") ═══════════════
+// pet.uid stable + companions.market.js -- voir supabase/migrations/20260710150000_companion_pet_trade_market.sql
+
+test('rollAndCreatePet assigns a stable uid, and petSnapshotOf/petFromSnapshot round-trip preserves it', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const { pet } = rollAndCreatePet(EGG_TYPES[0]);
+    const hasUid = typeof pet.uid === 'string' && pet.uid.length > 10;
+    const snap = petSnapshotOf(pet);
+    const revived = petFromSnapshot(snap);
+    return {
+      hasUid,
+      uidPreserved: revived.uid === pet.uid,
+      nameMatches: revived.cat.name === pet.cat.name,
+      catIsCanonicalCatalogEntry: revived.cat === PET_CATALOG.find(c => c.name === pet.cat.name),
+      statsMatch: JSON.stringify(revived.stats) === JSON.stringify(pet.stats),
+      idDiffersFromUid: revived.id !== revived.uid, // `id` local reste distinct de `uid` (clé serveur)
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.hasUid).toBe(true);
+  expect(result.uidPreserved).toBe(true);
+  expect(result.nameMatches).toBe(true);
+  expect(result.catIsCanonicalCatalogEntry).toBe(true);
+  expect(result.statsMatch).toBe(true);
+  expect(result.idDiffersFromUid).toBe(true);
+});
+
+// migration rétroactive : une sauvegarde antérieure à l'ajout de `uid` (2026-07-10) a des pets
+// sans ce champ -- migratePetUidV1() doit leur en attribuer un, une seule fois, sans jamais
+// écraser un uid déjà présent sur un autre pet (voir loadGame(), companions.save.js).
+test('migratePetUidV1 assigns a uid to legacy pets missing one, without touching pets that already have one', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG[0];
+    const legacyPet = { id: petId++, cat, rar: 1, stats: [3, 1, 0, 0, 0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 }; // pas de `uid` -- simule une sauvegarde antérieure
+    const alreadyMigrated = { id: petId++, uid: 'keep-me', cat, rar: 1, stats: [3, 1, 0, 0, 0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(legacyPet, alreadyMigrated);
+    migratePetUidV1();
+    return {
+      legacyGotUid: typeof legacyPet.uid === 'string' && legacyPet.uid.length > 10,
+      untouchedUidKept: alreadyMigrated.uid === 'keep-me',
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.legacyGotUid).toBe(true);
+  expect(result.untouchedUidKept).toBe(true);
+});
+
+// Onglet Marché : rendu de la nav (Marché/Mes contrats/Historique) sans crash, même quand aucune
+// vraie session Supabase n'est disponible (signInForTest fabrique un utilisateur local, voir
+// commentaire en tête de fichier -- les appels réseau réels échouent silencieusement, gérés en
+// try/catch dans companions.market.js, jamais une exception qui remonte au navigateur).
+test('Marché tab renders its 3 sub-tabs and never throws even without a real Supabase session', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  await frame.locator('.tabs .tab', { hasText: 'Marché' }).click();
+  await expect(frame.locator('#market-body')).toBeVisible();
+
+  const navLabels = await frame.locator('#market-nav .schip').allTextContents();
+  expect(navLabels).toEqual(['🛒 Marché', '📜 Mes contrats', '📚 Historique']);
+
+  await frame.locator('#market-nav .schip', { hasText: 'Mes contrats' }).click();
+  await frame.locator('#market-nav .schip', { hasText: 'Historique' }).click();
+  await frame.locator('#market-nav .schip', { hasText: 'Marché' }).click();
+
+  expect(pageErrors).toEqual([]);
+});
