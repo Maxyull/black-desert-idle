@@ -289,6 +289,14 @@ bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `companio
 boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()` de la Collection
 (1er clic = décroissant, re-clic = inverse).
 
+**Version affichée bas gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche")** :
+`COMPANION_MODULE_VERSION` (`companions.economy.js`) réutilise la MÊME numérotation `VNNN` que le
+jeu principal (`meta/patch-notes-data.js`) plutôt qu'un compteur séparé — ce module ne peut pas
+charger `meta/patch-notes-data.js` (scope global distinct, iframe isolée), donc pas de lecture
+automatique possible : à bumper à la main à chaque patch note qui touche `sub:'compagnon'`. Affiché
+via `#companion-version` (position:fixed bas gauche, même esprit que `#clientVersion` du jeu
+principal). Test : `module version is displayed bottom-left...` (`tests/companions.spec.js`).
+
 **Réserve à droite du terrain (2026-07-20, demande explicite : "afficher les pet en reserve a
 droite du sur le terrain borner la taille de l'interface sur le terrain pour laisser placer a des
 nouvelle carte en reserve de loger a coter")** : la carte terrain (`.terrain-slot.occ`) est bornée

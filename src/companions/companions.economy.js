@@ -1,3 +1,10 @@
+// Version affichée en bas à gauche du module (2026-07-20, demande explicite : "ajoute version en
+// bas a gauche") -- réutilise la MÊME numérotation "VNNN" que le reste du jeu (meta/patch-notes-
+// data.js), plutôt qu'un compteur séparé propre à ce module : ce dossier ne peut pas charger
+// meta/patch-notes-data.js (scope global distinct, iframe isolée), donc pas de lecture automatique
+// possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
+const COMPANION_MODULE_VERSION = 'V362';
+
 // ═══ BALANCE DE TEST (2026-07-10, demande explicite) ═══
 // Tous les coûts Silver et timers (incubation, œuf gratuit) sont divisés par ce facteur pour
 // tester rapidement les flux -- repasser TEST_BALANCE_DIVISOR à 1 pour revenir aux vraies

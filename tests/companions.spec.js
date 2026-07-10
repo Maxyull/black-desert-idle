@@ -351,6 +351,36 @@ test('terrain card is width-capped and the reserve sits to its right with room f
   expect(pageErrors).toEqual([]);
 });
 
+// Version bas gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche") -- réutilise
+// la numérotation VNNN partagée avec le jeu principal (COMPANION_MODULE_VERSION,
+// companions.economy.js), affichée via #companion-version, position:fixed bottom-left.
+test('module version is displayed bottom-left, reusing the shared VNNN numbering', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const versionEl = frame.locator('#companion-version');
+  await expect(versionEl).toBeVisible();
+  await expect(versionEl).toHaveText(/^Compagnon — V\d+$/);
+
+  const check = await versionEl.evaluate(el => {
+    const cs = getComputedStyle(el);
+    const r = el.getBoundingClientRect();
+    return { position: cs.position, left: r.left, bottomGap: window.innerHeight - r.bottom };
+  });
+  expect(check.position).toBe('fixed');
+  expect(check.left).toBeLessThan(60); // collé au bord gauche
+  expect(check.bottomGap).toBeLessThan(60); // collé au bord bas
+
+  expect(pageErrors).toEqual([]);
+});
+
 // Plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets prévoir 4
 // depaçable pour recuperer des pet venant d'un trade") -- doHatch()/bulkHatch() doivent refuser
 // tout nouvel hatch une fois PETS.length >= PET_ROSTER_CAP (96), AVANT de dépenser le silver.

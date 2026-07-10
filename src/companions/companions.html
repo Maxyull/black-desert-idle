@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=13">
+<link rel="stylesheet" href="companions.css?v=14">
 <!-- three.js vendorisé en local, jamais de CDN (2026-07-10, viewer 3D compagnons GLB) --
      three.module.min.js/GLTFLoader.js/OrbitControls.js sont des modules ES (import/export imposé
      par la lib), l'importmap ci-dessous résout le spécificateur nu "three" ; vendor/three/three-
@@ -419,13 +419,17 @@
   <div class="modal"><button class="mcl" onclick="CM('fusion-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="fusion-modal-title">⚗️ Fusion</div><div id="fusion-modal-body"></div></div>
 </div>
 <div class="toast-wrap" id="toast-wrap"></div>
+<!-- version en bas à gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche") --
+     réutilise la numérotation VNNN partagée avec le jeu principal (COMPANION_MODULE_VERSION,
+     companions.economy.js), même esprit que #clientVersion (index.dev.html) côté jeu principal. -->
+<div id="companion-version"></div>
 
 <!-- ordre de chargement documenté dans README.md de ce dossier — chaque fichier déclare des
      globals lus par les suivants (scope global partagé de ce document, isolé du jeu principal
      par l'iframe qui charge cette page) -->
 <script src="companions.pixelart.js?v=6"></script>
 <script src="companions.catalog.js?v=7"></script>
-<script src="companions.economy.js?v=8"></script>
+<script src="companions.economy.js?v=9"></script>
 <script src="companions.tier.js?v=6"></script>
 <script src="companions.roster.js?v=7"></script>
 <script src="companions.hatch.js?v=11"></script>
@@ -459,6 +463,6 @@
      autres scripts classiques (aucune lecture immédiate d'un global déclaré ailleurs), placé ici
      par lisibilité, juste avant main.js. -->
 <script src="companions.viewer3d.js?v=4"></script>
-<script src="companions.main.js?v=6"></script>
+<script src="companions.main.js?v=7"></script>
 </body>
 </html>
