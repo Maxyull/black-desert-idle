@@ -214,6 +214,11 @@ function showAwayLootSummaryIfAny() {
   if (typeof pushNotif === 'function') {
     pushNotif('🎁', LANG==='fr'?'Résumé du loot (absence)':'Loot summary (away)', msg, 'info');
   }
+  // bug corrigé (2026-07-10, rapporté explicitement : "je vois pas le message de retour") --
+  // pushNotif() est SILENCIEUX : il alimente seulement le centre de notifications (🔔), aucun
+  // popup visible. Réutilise #achToastStack (même mécanisme que showAchToast/showMailToast,
+  // notifications-quests.js) pour un vrai toast à l'écran, sans dupliquer le centre de notifs.
+  if (typeof showAwayLootToast === 'function') showAwayLootToast(msg);
   awaySilverGained = 0; awayLootCounts = {};
 }
 
