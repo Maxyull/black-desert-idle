@@ -301,6 +301,56 @@ test('reserve list in Sections can be sorted by GS and by Tier', async ({ page }
   expect(pageErrors).toEqual([]);
 });
 
+// Réserve à droite du terrain (2026-07-20, demande explicite : "afficher les pet en reserve a
+// droite du sur le terrain borner la taille de l'interface sur le terrain pour laisser placer a
+// des nouvelle carte en reserve de loger a coter") -- la carte terrain doit avoir une largeur
+// bornée (pas toute la largeur du panneau) et la réserve doit être positionnée à sa DROITE
+// (même ligne, pas en dessous), avec assez de place pour plusieurs cartes de réserve par ligne.
+test('terrain card is width-capped and the reserve sits to its right with room for multiple cards per row', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Sections' }).click();
+
+  await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.sec === 'combat');
+    const deployed = { id: petId++, cat, rar: 0, stats: [5,4,3,0,0], hunger: 100, terrain: true, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(deployed);
+    for (let i = 0; i < 6; i++) {
+      PETS.push({ id: petId++, cat, rar: 0, stats: [5,4,3,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 });
+    }
+    activeSecIdx = SECTIONS.findIndex(s => s.id === cat.sec);
+    renderSecNav(); renderSecDetail();
+  });
+
+  const terrainBox = await frame.locator('.terrain-slot.occ').boundingBox();
+  const reserveHeaderBox = await frame.locator('.sec-detail').locator('text=Réserve').first().boundingBox();
+  // la carte terrain reste étroite (bornée), pas étalée sur toute la largeur du panneau -- 260px
+  // CSS + bordure, x1.25 (transform:scale du module, voir companions.css) ≈ 330px mesurés
+  expect(terrainBox.width).toBeLessThan(345);
+  // la réserve démarre bien à DROITE de la carte terrain (pas en dessous : même hauteur de départ)
+  expect(reserveHeaderBox.x).toBeGreaterThan(terrainBox.x + terrainBox.width);
+  expect(Math.abs(reserveHeaderBox.y - terrainBox.y)).toBeLessThan(60);
+
+  // au moins 2 cartes de réserve tiennent sur la même ligne (grille, pas une colonne unique)
+  const reserveCardsInFirstRow = await frame.locator('body').evaluate(() => {
+    const grid = document.querySelector('.sec-detail [style*="grid-template-columns"]');
+    if (!grid) return 0;
+    const cards = Array.from(grid.children);
+    if (cards.length < 2) return cards.length;
+    const firstTop = cards[0].getBoundingClientRect().top;
+    return cards.filter(c => Math.abs(c.getBoundingClientRect().top - firstTop) < 5).length;
+  });
+  expect(reserveCardsInFirstRow).toBeGreaterThanOrEqual(2);
+
+  expect(pageErrors).toEqual([]);
+});
+
 // Plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets prévoir 4
 // depaçable pour recuperer des pet venant d'un trade") -- doHatch()/bulkHatch() doivent refuser
 // tout nouvel hatch une fois PETS.length >= PET_ROSTER_CAP (96), AVANT de dépenser le silver.

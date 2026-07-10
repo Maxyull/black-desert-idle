@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V361', d:'20/07/2026 18:00', name:{fr:'Compagnon : réserve à côté du terrain', en:'Companion: reserve next to terrain'}, fr:[
+      {t:'change', sub:'compagnon', tx:'Sections : la réserve s\'affiche maintenant à droite du familier déployé (au lieu d\'en dessous), avec plusieurs cartes par ligne.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'Sections: the reserve now shows to the right of the deployed companion (instead of below), with several cards per row.'},
+    ] },
   { v:'V360', d:'20/07/2026 17:30', name:{fr:'Compagnon : aperçus 3D fiabilisés, carte terrain façon Pokémon', en:'Companion: reliable 3D previews, Pokémon-style terrain card'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Corrigé : après avoir ouvert l\'aperçu 3D de plusieurs familiers d\'affilée, seul le tout premier s\'affichait vraiment — les suivants restaient vides.'},
       {t:'change', sub:'compagnon', tx:'Une collection qui dépassait 96 familiers (avant l\'ajout du plafond) est automatiquement ramenée à 96 — les familiers déployés sont toujours conservés.'},

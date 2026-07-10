@@ -289,6 +289,15 @@ bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `companio
 boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()` de la Collection
 (1er clic = décroissant, re-clic = inverse).
 
+**Réserve à droite du terrain (2026-07-20, demande explicite : "afficher les pet en reserve a
+droite du sur le terrain borner la taille de l'interface sur le terrain pour laisser placer a des
+nouvelle carte en reserve de loger a coter")** : la carte terrain (`.terrain-slot.occ`) est bornée
+à 260px de large, positionnée à gauche ; la réserve occupe l'espace restant à SA DROITE (plus en
+dessous), en grille responsive (`repeat(auto-fill,minmax(150px,1fr))`) qui accueille naturellement
+plusieurs cartes de réserve par ligne. Cartes de réserve réorganisées en 2 lignes (identité, puis
+badges+actions) pour rester lisibles à cette largeur réduite. Test : `terrain card is width-capped
+and the reserve sits to its right with room for multiple cards per row` (`tests/companions.spec.js`).
+
 **Bug corrigé — un seul modèle 3D s'affichait vraiment (2026-07-20, rapporté explicitement : "je ne
 vois pas mes model que le premier")** : `renderer.dispose()` (Three.js, `createThreeViewer()`,
 `companions.viewer3d.js`) libère les ressources GPU mais PAS le contexte WebGL lui-même — repris
