@@ -803,6 +803,11 @@
      top-level dès son chargement (voir CURRENT_VERSION) -->
 <script src="meta/patch-notes-data.js?v=516"></script>
 <script src="src/backend/game-supabase.js?v=516"></script>
+<!-- panneau Wiki plein écran (2026-07-11, port à l'identique du mockup fourni, voir CLAUDE.md §30)
+     -- charge APRÈS game-supabase.js : lit WIKI_SECTIONS/renderCodexHtml/renderTutoPageHtml/
+     PATCH_NOTES au moment de l'ouverture (jamais au chargement immédiat), donc l'ordre exact avec
+     admin-panel.js/chat.js qui suivent n'a pas d'importance -->
+<script src="src/backend/wiki-panel.js?v=516"></script>
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->
