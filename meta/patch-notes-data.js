@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V382', d:'22/07/2026 03:00', name:{fr:'Écran de verrou multi-session : même reskin que Zone/Boss/Classement', en:'Multi-session lock screen: same reskin as Zone/Boss/Leaderboard'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'écran "Jeu en pause" affiché quand une autre session prend le relais (autre onglet, navigateur ou appareil) a reçu le même reskin visuel que le reste du jeu : fond et bordure assortis aux autres panneaux, titre en Cinzel, texte plus lisible, bouton "Reprendre ici" au même arrondi que les autres boutons.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The "Game paused" screen shown when another session takes over (another tab, browser or device) received the same visual reskin as the rest of the game: background and border matching the other panels, Cinzel title, more readable text, "Resume here" button with the same corner rounding as other buttons.'},
+    ] },
   { v:'V381', d:'22/07/2026 02:00', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
       {t:'new', sub:'interface', tx:'Le Classement (🏆) a une 8e catégorie : "🧭 Compendium", basée sur ta complétion globale (zones + boss + Maîtrise PEN).'},
       {t:'new', sub:'interface', tx:'Si ton rang réel dans une catégorie est en dehors du top 20, une barre "Ta position" apparaît avec ton rang exact, ta valeur et le nombre total de joueurs classés.'},

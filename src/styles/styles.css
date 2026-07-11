@@ -2857,3 +2857,29 @@
     .achOverviewRing { width:60px; height:60px; }
     .achCatCard { min-width:64px; }
   }
+
+  /* =====================================================================
+     Reskin #sessionLockBox (2026-07-12, mockup validé par l'utilisateur :
+     claude.ai/code/artifact/c6ea1bee-8162-4705-a9f4-cb5c5649fa84) --
+     #sessionLockBox n'avait jamais suivi la refonte "Zone" (§ ci-dessus) :
+     héritait encore de body{font-family:Georgia}, fond var(--panel),
+     bordure var(--gold-dim), border-radius:0. Seul #sessionLockResumeBtn
+     était déjà en Cinzel, avec un radius 4px isolé (différent du 8-14px
+     utilisé partout ailleurs dans la refonte).
+     Additif uniquement : mêmes sélecteurs, règles ajoutées APRÈS les
+     originales (~lignes 910-920) donc gagnantes par ordre à spécificité
+     égale -- aucune règle existante retirée. Mêmes tokens que
+     #authBox/.confirmModal (fond --s1, bordure --dbBorder, radius 14px) ;
+     h1 en Cinzel/--gold comme les autres titres de panneau ; texte en
+     Inter/--cream2 ; bouton harmonisé au radius 8px des autres CTA du jeu
+     (Cinzel + fond --gold conservés, seul le radius change).
+     ===================================================================== */
+  #sessionLockBox {
+    background:var(--s1); border:1px solid var(--dbBorder); border-radius:14px;
+    font-family:'Inter',sans-serif;
+  }
+  #sessionLockBox h1 {
+    font-family:'Cinzel',serif; font-weight:600; font-size:17px; color:var(--gold); letter-spacing:.04em;
+  }
+  #sessionLockBox p { font-family:'Inter',sans-serif; color:var(--cream2); line-height:1.6; }
+  #sessionLockResumeBtn { border-radius:8px; }
