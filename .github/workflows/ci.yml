@@ -11,6 +11,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2 # necessaire pour scripts/announce-patch-note.js (diff HEAD~1)
 
       - uses: actions/setup-node@v4
         with:
@@ -43,3 +45,13 @@ jobs:
       # tests/companions.spec.js (module isole) n'etaient jamais lances qu'en local
       - name: Run Playwright tests
         run: npm test
+
+      # 2026-07-21, demande explicite : "on va arreter de passer par le bot pour les patchnote" --
+      # remplace la suggestion initiale de repo-audit-todo.md (route sur le bot Discord Render) par
+      # un appel direct a l'Edge Function Supabase "discord-log" (deja deployee, generique).
+      # Uniquement sur push vers main (jamais sur une PR), et apres que les tests soient verts.
+      # Le script lui-meme est idempotent (compare PATCH_NOTES[0].v a HEAD~1, ne poste que si la
+      # derniere version a change) -- pas besoin de filtrer sur les fichiers modifies ici.
+      - name: Announce new patch note on Discord
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: node scripts/announce-patch-note.js

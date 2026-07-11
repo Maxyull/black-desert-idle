@@ -19,6 +19,18 @@ Deux salons Discord reçoivent des logs automatiques du jeu :
 - Succès débloqué, boss vaincu, bijou/équipement rare trouvé (déclenchés côté client)
 - Actions admin : ajout mod/testeur, remboursement "Vendre mat", lancement boss pour tous,
   réinitialisation des quêtes de tous, réévaluation forcée du marché
+- **Nouveau patch note publié** (2026-07-21, demande explicite : "on va arreter de passer par le
+  bot pour les patchnote" -- remplace la suggestion initiale de `repo-audit-todo.md` d'ajouter une
+  route sur le bot Discord Render). Déclenché depuis **CI** (`.github/workflows/ci.yml`, étape
+  "Announce new patch note on Discord"), uniquement sur push vers `main` et après que les tests
+  soient verts -- appelle `scripts/announce-patch-note.js`, qui compare `PATCH_NOTES[0].v` entre
+  le commit courant et `HEAD~1` (checkout avec `fetch-depth: 2`) : si la version la plus récente
+  n'a pas changé, le script sort sans rien poster (idempotent, ne spamme jamais deux fois la même
+  version même si `meta/patch-notes-data.js` a changé pour une autre raison, ex: correction de
+  typo sur une ancienne entrée). Utilise la même Edge Function `discord-log` que le reste du log
+  général, avec la clé publique déjà embarquée côté client (`SUPABASE_ANON_KEY`,
+  `src/backend/game-supabase.js`) -- pas un secret, protégée par RLS, aucun secret GitHub Actions
+  à configurer.
 
 Pour ajouter un ping @mention sur les alertes triche (ex: ping le dev), fournir l'ID utilisateur
 Discord à ajouter dans `notify_cheat_discord` (format `<@ID>` dans le contenu du message).
