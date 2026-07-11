@@ -19,10 +19,15 @@
 // tableau déjà publié).
 //
 // Non repris de la maquette (périmètre volontaire) : toggle de langue dédié (LANG est déjà global
-// au jeu entier, un 2e sélecteur local serait incohérent), panneau de modération intégré (déjà une
-// section admin dédiée, src/admin/admin-panel.js:renderAdminPatchNotesModeration -- pas besoin de
-// le dupliquer ici), sidebar de commentaires flottante (remplacée par un expand inline sous la
-// ligne, plus simple, même information).
+// au jeu entier, un 2e sélecteur local serait incohérent), sidebar de commentaires flottante
+// (remplacée par un expand inline sous la ligne, plus simple, même information).
+//
+// Mini-panneau de modération (2026-07-11, demande explicite : "lié badge admin a petit panel admin
+// pour supprimer message") -- le badge "Admin" est un vrai bouton qui ouvre PneAdminReportsPanel
+// (signalements en attente + suppression directe), en plus de la section admin dédiée déjà
+// existante (src/admin/admin-panel.js:renderAdminPatchNotesModeration, gardée pour la vue complète/
+// les commentaires déjà retirés/auto-masqués) -- ce mini-panneau ne fait QUE les signalements en
+// attente, pas de duplication de la liste "retirés" ni de restauration.
 
 const PNE_V = {
   bg: '#0e1422', card: '#131a29', border: '#263049', border2: '#3a4665',
@@ -57,6 +62,53 @@ function pneFlattenPage(entries, pageStart) {
     });
   });
   return out;
+}
+
+// horodatage relatif (2026-07-11, demande explicite "fiare un horodatage reel maintenant et
+// rétroactif") -- "réel" au sens du pipeline doc : à l'instant/il y a Xmin/Xh/Xj, calculé à partir
+// de `created_at` déjà stocké -- fonctionne aussi bien pour un commentaire tout juste posté
+// ("maintenant") que pour un commentaire ancien déjà en base ("rétroactif", aucune donnée à migrer,
+// c'est une fonction pure du temps écoulé). Au-delà d'une semaine, repli sur fmtNotifTime() (date
+// exacte), même limite que le reste du jeu (notifications-quests.js).
+function pneRelativeTime(ts) {
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return i18next.t('progression:progression.patch_notes.time_just_now');
+  const mins = Math.floor(diffSec / 60);
+  if (mins < 60) return i18next.t('progression:progression.patch_notes.time_minutes_ago', { count: mins });
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return i18next.t('progression:progression.patch_notes.time_hours_ago', { count: hours });
+  const days = Math.floor(hours / 24);
+  if (days < 7) return i18next.t('progression:progression.patch_notes.time_days_ago', { count: days });
+  return typeof fmtNotifTime === 'function' ? fmtNotifTime(ts) : new Date(ts).toLocaleDateString();
+}
+
+// mini-panneau de modération (2026-07-11, demande explicite : "lié badge admin a petit panel admin
+// pour supprimer message") -- ouvert en cliquant le badge "Admin", liste les signalements en
+// attente (admin_patch_note_pending_reports(), déjà utilisée par la section admin dédiée) et
+// permet de supprimer directement (remove_patch_note_comment(), même RPC que le fil de
+// commentaires) sans quitter le panneau des notes de version.
+function PneAdminReportsPanel(props) {
+  const [rows, setRows] = React.useState(null);
+  const load = React.useCallback(async () => {
+    if (!sb) { setRows([]); return; }
+    const { data } = await sb.rpc('admin_patch_note_pending_reports');
+    setRows(data || []);
+  }, []);
+  React.useEffect(() => { load(); }, [load]);
+  async function del(id) { if (!sb) return; await sb.rpc('remove_patch_note_comment', { p_comment_id: id }); load(); }
+  return pneH('div', { style: { margin: '0 16px 10px', background: PNE_V.bg, border: `1px solid ${PNE_V.gold}55`, borderRadius: 6, padding: 8 } },
+    pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 } },
+      pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: PNE_V.gold } }, i18next.t('progression:progression.patch_notes.admin_reports_title')),
+      pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.patch_notes.close_aria'), style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 12 } }, '✕')),
+    rows === null ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted, fontStyle: 'italic', margin: 0 } }, i18next.t('progression:progression.patch_notes.loading')) :
+      rows.length === 0 ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted2, fontStyle: 'italic', margin: 0 } }, i18next.t('progression:progression.patch_notes.admin_reports_empty')) :
+        pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 160, overflowY: 'auto' } },
+          rows.map(r => pneH('div', { key: r.comment_id, style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 } },
+            pneH('p', { style: { fontSize: 10, color: PNE_V.text2, margin: 0, wordBreak: 'break-word', flex: 1 } },
+              pneH('span', { style: { fontWeight: 600, color: PNE_V.blue } }, r.author), ' · ', r.entry_id,
+              pneH('span', { style: { color: PNE_V.red2, marginLeft: 6 } }, '🚩 ' + r.report_count),
+              pneH('br'), r.text),
+            pneH('button', { className: 'pneBtn', onClick: () => del(r.comment_id), title: i18next.t('progression:progression.patch_notes.delete_title'), style: { background: 'none', border: 'none', color: PNE_V.red, cursor: 'pointer', fontSize: 11, flexShrink: 0 } }, '🗑')))));
 }
 
 function PneVoteBadge(props) {
@@ -114,11 +166,9 @@ function PneCommentThread(props) {
             return pneH('div', { key: c.id, style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 } },
               pneH('p', { style: { fontSize: 10.5, color: PNE_V.text2, margin: 0, wordBreak: 'break-word' } },
                 pneH('span', { style: { fontWeight: 600, color: mine ? PNE_V.gold2 : PNE_V.blue } }, c.author), ' ',
-                // horodatage réel (2026-07-11, demande explicite "system d'horodatge fonctionnel
-                // avec appel") -- réutilise fmtNotifTime() (progression/notifications-quests.js,
-                // déjà appelée pour l'historique du modal de reconnexion) au lieu d'un
-                // toLocaleDateString ad hoc qui n'affichait que la date, jamais l'heure.
-                pneH('span', { style: { color: PNE_V.muted } }, typeof fmtNotifTime === 'function' ? fmtNotifTime(new Date(c.created_at).getTime()) : new Date(c.created_at).toLocaleDateString(i18next.t('progression:progression.patch_notes.date_locale'))),
+                // horodatage relatif réel (2026-07-11, demande explicite "fiare un horodatage reel
+                // maintenant et rétroactif") -- voir pneRelativeTime() en tête de fichier.
+                pneH('span', { style: { color: PNE_V.muted } }, pneRelativeTime(new Date(c.created_at).getTime())),
                 pneH('br'), c.text),
               pneH('div', { style: { display: 'flex', gap: 4, flexShrink: 0 } },
                 !mine ? pneH('button', { className: 'pneBtn', onClick: () => report(c.id), title: i18next.t('progression:progression.patch_notes.report_title'), style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
@@ -220,7 +270,10 @@ function PneVersionBlock(props) {
     props.notLast ? pneH('div', { style: { position: 'absolute', left: 6, top: 20, bottom: 0, width: 1, background: PNE_V.border } }) : null,
     pneH('div', { style: { position: 'absolute', left: 0, top: 4, width: 14, height: 14, borderRadius: 999, border: `2px solid ${absIdx === 0 ? PNE_V.gold : PNE_V.border}`, background: PNE_V.bg } }),
     pneH('div', { style: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' } },
-      pneH('span', { style: { fontSize: 13, fontWeight: 700, color: PNE_V.cream } }, 'v' + p.v),
+      // bug corrigé (2026-07-11, rapporté explicitement "noter version vXXX pas vVXXX") --
+      // p.v vaut déjà "V369" (meta/patch-notes-data.js), lui préfixer un 'v' minuscule produisait
+      // "vV369". Affiché tel quel, en gras -- le titre de chaque bloc de version.
+      pneH('span', { style: { fontSize: 13, fontWeight: 700, color: PNE_V.cream } }, p.v),
       pneH('span', { style: { fontSize: 10, color: PNE_V.muted } }, p.d),
       absIdx === 0 ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', background: '#4a3a20', color: '#e8c876' } }, i18next.t('progression:progression.patch_notes.latest_badge'))
         : isNew ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2 }, title: i18next.t('progression:progression.patch_notes.new_badge_title') }) : null,
@@ -252,6 +305,7 @@ function PatchNotesApp(props) {
   const [query, setQuery] = React.useState('');
   const [catFilter, setCatFilter] = React.useState(null);
   const [controversyView, setControversyView] = React.useState(false);
+  const [showAdminPanel, setShowAdminPanel] = React.useState(false);
   const [pageStart, setPageStart] = React.useState(pneResolveInitialPageStart);
   const dialogRef = React.useRef(null);
 
@@ -378,18 +432,23 @@ function PatchNotesApp(props) {
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
           pneH('span', { style: { display: 'inline-block', width: 4, height: 16, borderRadius: 2, background: PNE_V.pink } }),
           pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, i18next.t('progression:progression.patch_notes.panel_title')),
-          // badge "Admin" (2026-07-11, demande explicite) -- indique la casquette staff active,
-          // basé sur le VRAI rôle serveur (isStaff, déjà utilisé pour Controverse), jamais un
-          // toggle de démo comme dans la maquette (décision déjà documentée en tête de fichier).
-          isStaff ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '.03em', color: PNE_V.gold, border: `1px solid ${PNE_V.gold}55`, background: PNE_V.gold + '1a' } }, i18next.t('progression:progression.patch_notes.admin_badge')) : null),
+          // badge "Admin" (2026-07-11, demande explicite -- devenu un vrai bouton le même jour :
+          // "lié badge admin a petit panel admin pour supprimer message") -- basé sur le VRAI rôle
+          // serveur (isStaff, déjà utilisé pour Controverse), jamais un toggle de démo comme dans
+          // la maquette. Ouvre/ferme PneAdminReportsPanel (signalements en attente + suppression).
+          isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setShowAdminPanel(v => !v),
+            style: { fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '.03em', cursor: 'pointer', color: PNE_V.gold, border: `1px solid ${PNE_V.gold}55`, background: showAdminPanel ? PNE_V.gold + '33' : PNE_V.gold + '1a' } }, i18next.t('progression:progression.patch_notes.admin_badge')) : null),
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
           isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setControversyView(v => !v), title: i18next.t('progression:progression.patch_notes.controversy_sort_title'),
             style: { fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', border: `1px solid ${controversyView ? PNE_V.red : PNE_V.border}`, background: controversyView ? 'rgba(192,80,60,.13)' : 'transparent', color: controversyView ? PNE_V.red2 : PNE_V.muted } }, '📉 ' + i18next.t('progression:progression.patch_notes.controversy_label')) : null,
-          // toujours affiché (2026-07-11, demande explicite "ajoute Marquer comme lu") -- juste
-          // désactivé/grisé s'il n'y a rien à marquer, au lieu de disparaître entièrement.
+          // toujours affiché (2026-07-11, demande explicite "ajoute Marquer comme lu") -- reste
+          // désactivé s'il n'y a rien à marquer, mais garde la couleur verte de la maquette (au
+          // lieu de virer gris) : "eMarquer comme lu de la couleur du mockup".
           pneH('button', { className: 'pneBtn', onClick: markAllRead, disabled: unreadNow === 0,
-            style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', cursor: unreadNow > 0 ? 'pointer' : 'default', color: unreadNow > 0 ? PNE_V.green : PNE_V.muted2 } }, i18next.t('progression:progression.patch_notes.mark_all_read')),
+            style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', cursor: unreadNow > 0 ? 'pointer' : 'default', color: PNE_V.green, opacity: unreadNow > 0 ? 1 : 0.45 } }, i18next.t('progression:progression.patch_notes.mark_all_read')),
           pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.patch_notes.close_aria'), style: { width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 14 } }, '✕'))),
+
+      showAdminPanel ? pneH(PneAdminReportsPanel, { onClose: () => setShowAdminPanel(false) }) : null,
 
       // ---- recherche ----
       pneH('div', { style: { padding: '12px 16px 0' } },
@@ -407,7 +466,10 @@ function PatchNotesApp(props) {
           const active = catFilter === key;
           return pneH('button', { key, className: 'pneChip', onClick: () => setCatFilter(active ? null : key),
             style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 999, cursor: 'pointer', border: `1px solid ${active ? cat.color : PNE_V.border}`, background: active ? cat.color + '22' : 'transparent', color: active ? cat.color : PNE_V.muted } },
-            cat.icon + ' ' + cat[LANG], active ? ' ✕' : '');
+            // icône monochrome (2026-07-11, demande explicite "emoji monochrome en dessous de
+            // recherche") -- même traitement que la loupe : grayscale plutôt que l'emoji couleur
+            // natif, la couleur de catégorie reste portée par le texte du label, pas l'icône.
+            pneH('span', { style: { filter: 'grayscale(1)' } }, cat.icon), ' ' + cat[LANG], active ? ' ✕' : '');
         }),
         catFilter ? pneH('button', { className: 'pneChip', onClick: () => setCatFilter(null), style: { fontSize: 10, background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer' } }, '✕ ' + i18next.t('progression:progression.patch_notes.clear_all_filters')) : null),
 

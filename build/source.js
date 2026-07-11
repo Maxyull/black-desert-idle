@@ -801,6 +801,15 @@ const I18N_RESOURCES = {
       "progression.patch_notes.removed_badge": "🗑 Supprimé",
       "progression.patch_notes.report_title": "Signaler",
       "progression.patch_notes.search_placeholder": "Rechercher dans cette page",
+      "progression.patch_notes.admin_reports_title": "Signalements en attente",
+      "progression.patch_notes.admin_reports_empty": "Aucun signalement en attente.",
+      "progression.patch_notes.time_just_now": "à l'instant",
+      "progression.patch_notes.time_minutes_ago_one": "il y a {{count}}min",
+      "progression.patch_notes.time_minutes_ago_other": "il y a {{count}}min",
+      "progression.patch_notes.time_hours_ago_one": "il y a {{count}}h",
+      "progression.patch_notes.time_hours_ago_other": "il y a {{count}}h",
+      "progression.patch_notes.time_days_ago_one": "il y a {{count}}j",
+      "progression.patch_notes.time_days_ago_other": "il y a {{count}}j",
       "progression.quests.all_achievements_done": "🏅 Vous avez fini les succès !",
       "progression.quests.all_claimed": "Tout est réclamé !",
       "progression.quests.claim_button": "Réclamer",
@@ -1648,6 +1657,15 @@ const I18N_RESOURCES = {
       "progression.patch_notes.removed_badge": "🗑 Removed",
       "progression.patch_notes.report_title": "Report",
       "progression.patch_notes.search_placeholder": "Search this page",
+      "progression.patch_notes.admin_reports_title": "Pending reports",
+      "progression.patch_notes.admin_reports_empty": "No pending reports.",
+      "progression.patch_notes.time_just_now": "just now",
+      "progression.patch_notes.time_minutes_ago_one": "{{count}}min ago",
+      "progression.patch_notes.time_minutes_ago_other": "{{count}}min ago",
+      "progression.patch_notes.time_hours_ago_one": "{{count}}h ago",
+      "progression.patch_notes.time_hours_ago_other": "{{count}}h ago",
+      "progression.patch_notes.time_days_ago_one": "{{count}}d ago",
+      "progression.patch_notes.time_days_ago_other": "{{count}}d ago",
       "progression.quests.all_achievements_done": "🏅 You've finished all achievements!",
       "progression.quests.all_claimed": "Everything is claimed!",
       "progression.quests.claim_button": "Claim",
@@ -7398,6 +7416,42 @@ function pneFlattenPage(entries, pageStart) {
   return out;
 }
 
+function pneRelativeTime(ts) {
+  const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
+  if (diffSec < 60) return i18next.t('progression:progression.patch_notes.time_just_now');
+  const mins = Math.floor(diffSec / 60);
+  if (mins < 60) return i18next.t('progression:progression.patch_notes.time_minutes_ago', { count: mins });
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return i18next.t('progression:progression.patch_notes.time_hours_ago', { count: hours });
+  const days = Math.floor(hours / 24);
+  if (days < 7) return i18next.t('progression:progression.patch_notes.time_days_ago', { count: days });
+  return typeof fmtNotifTime === 'function' ? fmtNotifTime(ts) : new Date(ts).toLocaleDateString();
+}
+
+function PneAdminReportsPanel(props) {
+  const [rows, setRows] = React.useState(null);
+  const load = React.useCallback(async () => {
+    if (!sb) { setRows([]); return; }
+    const { data } = await sb.rpc('admin_patch_note_pending_reports');
+    setRows(data || []);
+  }, []);
+  React.useEffect(() => { load(); }, [load]);
+  async function del(id) { if (!sb) return; await sb.rpc('remove_patch_note_comment', { p_comment_id: id }); load(); }
+  return pneH('div', { style: { margin: '0 16px 10px', background: PNE_V.bg, border: `1px solid ${PNE_V.gold}55`, borderRadius: 6, padding: 8 } },
+    pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 } },
+      pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: PNE_V.gold } }, i18next.t('progression:progression.patch_notes.admin_reports_title')),
+      pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.patch_notes.close_aria'), style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 12 } }, '✕')),
+    rows === null ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted, fontStyle: 'italic', margin: 0 } }, i18next.t('progression:progression.patch_notes.loading')) :
+      rows.length === 0 ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted2, fontStyle: 'italic', margin: 0 } }, i18next.t('progression:progression.patch_notes.admin_reports_empty')) :
+        pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 160, overflowY: 'auto' } },
+          rows.map(r => pneH('div', { key: r.comment_id, style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 } },
+            pneH('p', { style: { fontSize: 10, color: PNE_V.text2, margin: 0, wordBreak: 'break-word', flex: 1 } },
+              pneH('span', { style: { fontWeight: 600, color: PNE_V.blue } }, r.author), ' · ', r.entry_id,
+              pneH('span', { style: { color: PNE_V.red2, marginLeft: 6 } }, '🚩 ' + r.report_count),
+              pneH('br'), r.text),
+            pneH('button', { className: 'pneBtn', onClick: () => del(r.comment_id), title: i18next.t('progression:progression.patch_notes.delete_title'), style: { background: 'none', border: 'none', color: PNE_V.red, cursor: 'pointer', fontSize: 11, flexShrink: 0 } }, '🗑')))));
+}
+
 function PneVoteBadge(props) {
   const loggedIn = typeof currentUser !== 'undefined' && !!currentUser;
   return pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 2, borderRadius: 4, border: `1px solid ${PNE_V.border2}`, padding: '1px 4px', flexShrink: 0 } },
@@ -7451,7 +7505,7 @@ function PneCommentThread(props) {
               pneH('p', { style: { fontSize: 10.5, color: PNE_V.text2, margin: 0, wordBreak: 'break-word' } },
                 pneH('span', { style: { fontWeight: 600, color: mine ? PNE_V.gold2 : PNE_V.blue } }, c.author), ' ',
                 
-                pneH('span', { style: { color: PNE_V.muted } }, typeof fmtNotifTime === 'function' ? fmtNotifTime(new Date(c.created_at).getTime()) : new Date(c.created_at).toLocaleDateString(i18next.t('progression:progression.patch_notes.date_locale'))),
+                pneH('span', { style: { color: PNE_V.muted } }, pneRelativeTime(new Date(c.created_at).getTime())),
                 pneH('br'), c.text),
               pneH('div', { style: { display: 'flex', gap: 4, flexShrink: 0 } },
                 !mine ? pneH('button', { className: 'pneBtn', onClick: () => report(c.id), title: i18next.t('progression:progression.patch_notes.report_title'), style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
@@ -7545,7 +7599,8 @@ function PneVersionBlock(props) {
     props.notLast ? pneH('div', { style: { position: 'absolute', left: 6, top: 20, bottom: 0, width: 1, background: PNE_V.border } }) : null,
     pneH('div', { style: { position: 'absolute', left: 0, top: 4, width: 14, height: 14, borderRadius: 999, border: `2px solid ${absIdx === 0 ? PNE_V.gold : PNE_V.border}`, background: PNE_V.bg } }),
     pneH('div', { style: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' } },
-      pneH('span', { style: { fontSize: 13, fontWeight: 700, color: PNE_V.cream } }, 'v' + p.v),
+      
+      pneH('span', { style: { fontSize: 13, fontWeight: 700, color: PNE_V.cream } }, p.v),
       pneH('span', { style: { fontSize: 10, color: PNE_V.muted } }, p.d),
       absIdx === 0 ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', background: '#4a3a20', color: '#e8c876' } }, i18next.t('progression:progression.patch_notes.latest_badge'))
         : isNew ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2 }, title: i18next.t('progression:progression.patch_notes.new_badge_title') }) : null,
@@ -7573,6 +7628,7 @@ function PatchNotesApp(props) {
   const [query, setQuery] = React.useState('');
   const [catFilter, setCatFilter] = React.useState(null);
   const [controversyView, setControversyView] = React.useState(false);
+  const [showAdminPanel, setShowAdminPanel] = React.useState(false);
   const [pageStart, setPageStart] = React.useState(pneResolveInitialPageStart);
   const dialogRef = React.useRef(null);
 
@@ -7691,14 +7747,17 @@ function PatchNotesApp(props) {
           pneH('span', { style: { display: 'inline-block', width: 4, height: 16, borderRadius: 2, background: PNE_V.pink } }),
           pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, i18next.t('progression:progression.patch_notes.panel_title')),
           
-          isStaff ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '.03em', color: PNE_V.gold, border: `1px solid ${PNE_V.gold}55`, background: PNE_V.gold + '1a' } }, i18next.t('progression:progression.patch_notes.admin_badge')) : null),
+          isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setShowAdminPanel(v => !v),
+            style: { fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '.03em', cursor: 'pointer', color: PNE_V.gold, border: `1px solid ${PNE_V.gold}55`, background: showAdminPanel ? PNE_V.gold + '33' : PNE_V.gold + '1a' } }, i18next.t('progression:progression.patch_notes.admin_badge')) : null),
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
           isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setControversyView(v => !v), title: i18next.t('progression:progression.patch_notes.controversy_sort_title'),
             style: { fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', border: `1px solid ${controversyView ? PNE_V.red : PNE_V.border}`, background: controversyView ? 'rgba(192,80,60,.13)' : 'transparent', color: controversyView ? PNE_V.red2 : PNE_V.muted } }, '📉 ' + i18next.t('progression:progression.patch_notes.controversy_label')) : null,
           
           pneH('button', { className: 'pneBtn', onClick: markAllRead, disabled: unreadNow === 0,
-            style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', cursor: unreadNow > 0 ? 'pointer' : 'default', color: unreadNow > 0 ? PNE_V.green : PNE_V.muted2 } }, i18next.t('progression:progression.patch_notes.mark_all_read')),
+            style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', cursor: unreadNow > 0 ? 'pointer' : 'default', color: PNE_V.green, opacity: unreadNow > 0 ? 1 : 0.45 } }, i18next.t('progression:progression.patch_notes.mark_all_read')),
           pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.patch_notes.close_aria'), style: { width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 14 } }, '✕'))),
+
+      showAdminPanel ? pneH(PneAdminReportsPanel, { onClose: () => setShowAdminPanel(false) }) : null,
 
       pneH('div', { style: { padding: '12px 16px 0' } },
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, border: `1px solid ${PNE_V.border}`, background: 'transparent' } },
@@ -7713,7 +7772,8 @@ function PatchNotesApp(props) {
           const active = catFilter === key;
           return pneH('button', { key, className: 'pneChip', onClick: () => setCatFilter(active ? null : key),
             style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 999, cursor: 'pointer', border: `1px solid ${active ? cat.color : PNE_V.border}`, background: active ? cat.color + '22' : 'transparent', color: active ? cat.color : PNE_V.muted } },
-            cat.icon + ' ' + cat[LANG], active ? ' ✕' : '');
+            
+            pneH('span', { style: { filter: 'grayscale(1)' } }, cat.icon), ' ' + cat[LANG], active ? ' ✕' : '');
         }),
         catFilter ? pneH('button', { className: 'pneChip', onClick: () => setCatFilter(null), style: { fontSize: 10, background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer' } }, '✕ ' + i18next.t('progression:progression.patch_notes.clear_all_filters')) : null),
 
