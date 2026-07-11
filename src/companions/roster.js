@@ -4,7 +4,7 @@ let PETS=[];
 
 // Plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets prévoir 4
 // depaçable pour recuperer des pet venant d'un trade") -- 96 = plafond normal (hatching), bloqué
-// dans doHatch()/bulkHatch() (companions.hatch.js) via petRosterRoomLeft(). Les 4 slots
+// dans doHatch()/bulkHatch() (hatch.js) via petRosterRoomLeft(). Les 4 slots
 // supplémentaires (jusqu'à 100) sont réservés pour un futur système de trade -- AUCUN code ne les
 // consomme encore (pas de feature trade construite), volontairement laissés en headroom plutôt que
 // consommés par le hatching normal.

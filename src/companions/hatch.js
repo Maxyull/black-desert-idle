@@ -36,7 +36,7 @@ function fmtT(s){if(s<=0)return'PRÊT';return`${String(Math.floor(s/3600)).padSt
 // ═══ HATCH ═══════════════════════════════════════════════════════
 // achat/déblocage de slot d'incubation (2026-07-20, bug rapporté explicitement : "impossible
 // d'acheter les slots d'oeuf") -- DEUX boutons étaient des impasses : le slot verrouillé
-// (incubSlots[2].locked, voir companions.roster.js) n'avait AUCUN onclick, et le bouton "➕ slot
+// (incubSlots[2].locked, voir roster.js) n'avait AUCUN onclick, et le bouton "➕ slot
 // premium" ne faisait qu'un toast() factice sans jamais rien acheter. Les deux appellent
 // maintenant spendSilver() (economy.js) puis déclenchent une vraie action.
 const UNLOCK_SLOT_COST = 500, EXTRA_SLOT_COST = 1000; // avant scaleCost(), voir TEST_BALANCE_DIVISOR
@@ -205,7 +205,7 @@ function rollAndCreatePet(eggType){
 
 function doHatch(slotIdx, eggTypeId){
   // plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets") --
-  // bloque AVANT de dépenser le silver, pas après (voir petRosterRoomLeft(), companions.roster.js)
+  // bloque AVANT de dépenser le silver, pas après (voir petRosterRoomLeft(), roster.js)
   if(petRosterRoomLeft()<=0){ toast('📦',`Collection pleine (${PET_ROSTER_CAP}/${PET_ROSTER_CAP})`); return; }
   const eggType = EGG_TYPES.find(e=>e.id===eggTypeId) || EGG_TYPES[0];
   if(SILVER < eggType.cost){ toast('❌','Silver insuffisant'); return; }

@@ -72,7 +72,7 @@ TARGETED_EGG_DEFS.forEach(def=>{
 let SILVER = 55000; // solde de départ pour tester les tiers d'œufs
 // compteur À VIE (2026-07-20, demande explicite : "argent depensé") -- jamais remis à 0, contraire
 // à SILVER qui peut monter et descendre. Incrémenté à chaque dépense réelle (achat d'œuf,
-// companions.hatch.js) -- voir sumSpent() plus bas pour le seul point d'entrée d'incrément.
+// hatch.js) -- voir sumSpent() plus bas pour le seul point d'entrée d'incrément.
 let silverSpent = 0;
 function spendSilver(amount){ SILVER -= amount; silverSpent += amount; }
 
@@ -83,7 +83,7 @@ const PITY_THRESHOLD = 500;
 let hatchCountSincePity = 0;
 let pityEverTriggered = false;
 // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
-// monde") -- le roster de départ est passé de X pets à 0 (voir companions.roster.js, 2026-07-10),
+// monde") -- le roster de départ est passé de X pets à 0 (voir roster.js, 2026-07-10),
 // mais les sauvegardes locales déjà existantes gardaient leur roster antérieur (localStorage n'est
 // jamais réécrit tout seul). Ce flag, posé UNE SEULE FOIS par joueur (voir loadGame/importSave,
 // companions.save.js), vide le roster au tout premier chargement suivant ce changement -- même
@@ -91,7 +91,7 @@ let pityEverTriggered = false;
 // adapté ici puisque ce module n'a pas de compte Supabase (sauvegarde 100% locale).
 let petsRosterResetV1 = false;
 // migration rétroactive (2026-07-20, demande explicite : "supprime tout compagnon au dessus de la
-// limite") -- PET_ROSTER_CAP=96 (companions.roster.js) bloque désormais tout NOUVEL hatch au-delà,
+// limite") -- PET_ROSTER_CAP=96 (roster.js) bloque désormais tout NOUVEL hatch au-delà,
 // mais une sauvegarde déjà constituée AVANT ce plafond pouvait dépasser 96 -- ce flag, posé UNE
 // SEULE FOIS (voir trimRosterToCapIfNeeded()/loadGame(), companions.save.js), purge l'excédent au
 // premier chargement suivant l'ajout du plafond. Même esprit que petsRosterResetV1 ci-dessus.
@@ -100,7 +100,7 @@ let petsRosterCapV1 = false;
 let petsUidV1 = false;
 // compteur À VIE (2026-07-19, demande explicite : stats admin) -- distinct de
 // hatchCountSincePity (remis à 0 à chaque pity déclenché) : jamais réinitialisé, incrémenté
-// une seule fois par tirage réel dans rollAndCreatePet() (companions.hatch.js), peu importe le
+// une seule fois par tirage réel dans rollAndCreatePet() (hatch.js), peu importe le
 // chemin (slot d'incubation OU éclosion instantanée ×1/×5/×10).
 let totalHatched = 0;
 

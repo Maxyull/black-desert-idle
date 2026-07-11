@@ -20,7 +20,7 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
   ces fichiers n'est téléchargé ni exécuté.
 
 **Migration rétroactive du roster (2026-07-19, demande explicite : "supprime les 48 pet pour tout
-le monde")** : le roster de départ est passé à 0 pet le 2026-07-10 (`companions.roster.js`), mais
+le monde")** : le roster de départ est passé à 0 pet le 2026-07-10 (`roster.js`), mais
 les sauvegardes locales déjà existantes gardaient leur roster antérieur — `localStorage` n'est
 jamais réécrit tout seul. `petsRosterResetV1` (`economy.js`) est un flag persisté qui
 vide le roster UNE SEULE FOIS par sauvegarde, au premier `loadGame()` suivant ce changement (et au
@@ -39,7 +39,7 @@ complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir
 second SDK Supabase ni d'auth séparée dans l'iframe. Fire-and-forget, jamais bloquant, no-op
 silencieux sans compte connecté (même garde que `queueFarmEvent`/`markItemTutorialSeen`
 ailleurs dans le jeu). Nouveau compteur à vie `totalHatched` (`economy.js`,
-incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
+incrémenté dans `rollAndCreatePet()`, `hatch.js`) — distinct de
 `hatchCountSincePity` qui se remet à 0 à chaque pity déclenché.
 
 **Passe UI/QoL + bug d'éclosion (2026-07-20, demande explicite)** :
@@ -125,7 +125,7 @@ colonnes, jamais le contenu des cartes).
 **Argent dépensé — compteur à vie (2026-07-20)** : `silverSpent` (`economy.js`), jamais
 remis à 0 contrairement à `SILVER`. Seul point d'incrément : `spendSilver(amount)` — TOUJOURS
 utiliser cette fonction plutôt que `SILVER -=` directement pour toute future dépense (2 occurrences
-actuelles, `companions.hatch.js:doHatch`/`bulkHatch`), sinon le compteur dérive silencieusement.
+actuelles, `hatch.js:doHatch`/`bulkHatch`), sinon le compteur dérive silencieusement.
 
 **Stats admin œufs/index/fusions (2026-07-20, demande explicite : "affichger stats pour oeuf,
 moyenne doeuf eclos/jour, stats entiere liste des fusion et grph completion index")** :
@@ -182,10 +182,10 @@ si `#adminOverlay` a encore la classe `open` au moment de la fermeture de la pop
 `backend/README.md` pour le détail technique complet.
 
 **Achat des slots d'œuf corrigé (2026-07-20, rapporté explicitement : "impossible d'acheter les
-slots d'oeuf")** : `companions.hatch.js` avait DEUX impasses — le slot verrouillé de départ
-(`incubSlots[2].locked`, voir `companions.roster.js`) n'avait AUCUN `onclick`, et le bouton "➕ slot
+slots d'oeuf")** : `hatch.js` avait DEUX impasses — le slot verrouillé de départ
+(`incubSlots[2].locked`, voir `roster.js`) n'avait AUCUN `onclick`, et le bouton "➕ slot
 premium" ne faisait qu'un `toast()` factice sans jamais rien acheter. `unlockIncubSlot(i)`/
-`buyExtraIncubSlot()` (nouveau, `companions.hatch.js`) appellent réellement `spendSilver()` puis
+`buyExtraIncubSlot()` (nouveau, `hatch.js`) appellent réellement `spendSilver()` puis
 mettent à jour l'état réel des slots (`incubSlots[i]`/`.push(...)`) — le slot débloqué/acheté
 démarre `ready:true` (gratification immédiate, pas un nouveau minuteur à attendre).
 
@@ -375,7 +375,7 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
   ci-dessus (le piège de chemin relatif décrit plus haut reste valable à chaque mise à jour).
 
 **Plafond de collection 96 (+4 buffer trade), complétion 240, retrait du zoom (2026-07-20)** :
-- `PET_ROSTER_CAP = 96` (`companions.roster.js`) : `doHatch()`/`bulkHatch()` refusent tout nouvel
+- `PET_ROSTER_CAP = 96` (`roster.js`) : `doHatch()`/`bulkHatch()` refusent tout nouvel
   hatch au-delà (`petRosterRoomLeft()`), AVANT de dépenser le silver. `PET_ROSTER_CAP_WITH_TRADE_BUFFER
   = 100` documente 4 slots réservés à un futur système de trade — aucun code ne les consomme
   encore (pas de feature trade construite), volontairement laissés en headroom.
@@ -412,7 +412,7 @@ par Supabase le temps de la transaction.
   2 livraisons, invalide AVEC notification les autres contre-offres pendantes)/
   `claim_pet_trade_delivery`/`mark_pet_trade_notifications_read`/`expire_pet_trade_offers` (prêt
   pour `pg_cron`, pas encore branché).
-- `pet.uid` (UUID stable, `companions.hatch.js:rollAndCreatePet`) — clé serveur, DISTINCTE de
+- `pet.uid` (UUID stable, `hatch.js:rollAndCreatePet`) — clé serveur, DISTINCTE de
   `pet.id` (compteur local, jamais envoyé). Migration rétroactive `migratePetUidV1()`
   (`companions.save.js`, gatée par `petsUidV1`) attribue un `uid` à tout pet créé avant son ajout.
 - `companions.market.js` (nouveau, onglet 🔄 Marché, tab 11) — 3 sous-onglets (Marché/Mes
@@ -447,11 +447,11 @@ par Supabase le temps de la transaction.
    loot spécial (Caphras/Dopi/items de Boss), `PET_CATALOG` (48 familiers).
 3. `economy.js` — types d'œufs + œufs ciblés, `SILVER`, pity counter, compteurs
    de tracking pour achievements, streak de connexion quotidienne, inventaire + journal.
-4. `companions.tier.js` — système de Tier (multiplicateur, XP requis), Gearscore
+4. `tier.js` — système de Tier (multiplicateur, XP requis), Gearscore
    (`curGS`/`normGS`/`gsPct`...), helpers rareté (`rc`/`rn`/`secById`...).
-5. `companions.roster.js` — roster de départ (0 pet depuis le 2026-07-10, voir migration
+5. `roster.js` — roster de départ (0 pet depuis le 2026-07-10, voir migration
    `petsRosterResetV1` plus haut), slots d'incubation, filtres de collection.
-6. `companions.hatch.js` — utilitaires UI partagés (`ST`/`toast`/`OM`/`CM`/`fmtT`) + tout le
+6. `hatch.js` — utilitaires UI partagés (`ST`/`toast`/`OM`/`CM`/`fmtT`) + tout le
    flux d'éclosion (choix d'œuf, tirage, éclosion ×1/×5/×10).
 7. `companions.pet-panel.js` — barres de stats, atelier de Caphras, bloc Tier détaillé.
 8. `companions.sections.js` — navigation par section, slot terrain + réserve, déploiement.

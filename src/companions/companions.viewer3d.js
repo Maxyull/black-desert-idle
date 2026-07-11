@@ -17,7 +17,7 @@ const COMPANION_MODELS_BASE = 'https://mkwwvzbjtyawpcyrnybk.supabase.co/storage/
 const VIEWER3D_TEST_MODEL = COMPANION_MODELS_BASE + '/loot/black_mask_cat_T5.glb';
 
 // nom de pet (catalog.js) -> { section, slug } ; l'URL finale est construite comme
-// {BASE}/{section}/{slug}_T{tier}.glb, tier venant de pet.tier (1-5, companions.tier.js) — mais
+// {BASE}/{section}/{slug}_T{tier}.glb, tier venant de pet.tier (1-5, tier.js) — mais
 // seuls les tiers listés dans `tiers` existent réellement dans le bucket, jamais deviner au-delà.
 // 2026-07-20 ("integre les menu 3D de la phase 1" = output/loot/tiers + output/combat/tiers,
 // les 2 dossiers déjà générés) : passe de 1 seul modèle de test (Black Mask Cat T5) aux 11

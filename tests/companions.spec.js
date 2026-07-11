@@ -99,7 +99,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
-  // roster de départ : 0 pet (2026-07-10, demande explicite -- voir companions.roster.js)
+  // roster de départ : 0 pet (2026-07-10, demande explicite -- voir roster.js)
   await expect(frame.locator('#tb2')).toHaveText('0');
 
   // onglet Collection : grille vide au départ (locator scopé à la barre d'onglets, pour ne pas
@@ -124,7 +124,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
 
   // sync admin (2026-07-19) : totalHatched est un compteur À VIE (jamais remis à 0 par le pity,
   // contrairement à hatchCountSincePity) -- incrémenté une fois par tirage réel dans
-  // rollAndCreatePet() (companions.hatch.js), donc doit valoir 1 après l'unique éclosion ci-dessus.
+  // rollAndCreatePet() (hatch.js), donc doit valoir 1 après l'unique éclosion ci-dessus.
   // syncCompanionStatsToServer doit exister et ne jamais lever (no-op silencieux ici : pas de
   // compte connecté dans ce contexte de test, la garde sb/currentUser/isGuest doit l'arrêter tôt).
   const syncState = await frame.locator('body').evaluate(() => ({
@@ -793,7 +793,7 @@ test('syncCompanionStatsToServer reaches the RPC call and never throws with a ca
 });
 
 // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
-// monde") -- une sauvegarde antérieure au passage du roster de départ à 0 pet (companions.roster.js,
+// monde") -- une sauvegarde antérieure au passage du roster de départ à 0 pet (roster.js,
 // 2026-07-10) n'a jamais son flag petsRosterResetV1 : simule ce cas en injectant directement une
 // sauvegarde localStorage AVANT le premier chargement (localStorage est partagé entre la page hôte
 // et l'iframe, même origine -- voir companions.save.js).
@@ -818,7 +818,7 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
 
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
-  // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (companions.roster.js) -- ne prouve
+  // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (roster.js) -- ne prouve
   // pas à lui seul que loadGame()/la migration ont fini de tourner, donc pas fiable comme seule
   // condition d'attente. On poll directement petsRosterResetV1 (posé synchroneement à la toute fin
   // de loadGame(), voir companions.save.js) jusqu'à ce qu'il devienne true.
