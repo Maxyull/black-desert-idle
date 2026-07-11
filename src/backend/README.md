@@ -115,3 +115,31 @@ externe fourni, sidebar/breadcrumb/article/infobox/sommaire/recherche — voir C
 - Palette : couleurs du mockup reprises à l'identique (demande explicite), pas la palette
   officielle §29 — scopées sous `#wikiOverlay` uniquement (CSS injectée en JS à la première
   ouverture), même logique que le `:root` propre au module Compagnons.
+
+**Classement (jeu principal) — `leaderboard-panel.js` (même dossier)** : `openLeaderboard2()`
+(câblé sur `$a('btnLeaderboard')`, `game-supabase.js`) ouvre le panneau via `openInfo()`/
+`#infoOverlay` — podium des 3 premiers + tableau paginé + recherche + "Ma position", sur la table
+`player_stats` (déjà alimentée par `syncPlayerStats()`, ce fichier-ci). Catégories définies dans
+`LB2_CATS_()` (fonction, pas un objet figé, car labels/tips passent par `i18next.t()` à chaque
+appel) : `silver`/`gs`/`zone`/`sh`/`kpm`/`item`/`treasure` + **`compendium`** (2026-07-11,
+`r.compendium_pct`, déjà calculé par `compendiumOverallPct()`/`core/game-core.js` et déjà envoyé à
+chaque sync — jamais utilisé par un classement avant ce jour).
+- **Reskin "Zone" + refonte (2026-07-11, mockup validé itérativement avec l'utilisateur, voir
+  CLAUDE.md §30)** : podium/tableau réutilisent toujours `.bossPodium`/`.bossPodiumStep`/
+  `.admTable`/`.catTab` (aucune nouvelle palette, uniquement les tokens déjà posés par la refonte
+  Zone/Boss — `--s1`/`--s2`/`--dbBorder`/`--gold`/`--gold2`/`--green2`/`--cream2`/`--cream3`).
+- **"Ta position"** (`.lb2YourRankBar`) : quand le rang réel du joueur (`lb2ComputeYourRankInfo()`,
+  fonction PURE, testable indépendamment de l'état du module) dépasse `LB2_TOP_N` (20), une barre
+  affiche son rang exact + sa valeur + le total de joueurs classés dans la catégorie — calculé sur
+  les lignes déjà chargées (`.select('*').limit(500)`, aucune requête supplémentaire). Masquée en
+  mode "Ma position" (`lb2ShowMeOnly`, montre déjà le voisinage du rang).
+- **"vu il y a Xmin/Xj"** (`lb2SeenInfo()`, podium ET tableau) : calcul pur depuis
+  `player_stats.updated_at`, réutilise `pneRelativeTime()` (`progression/patch-notes-engage-
+  react.js`, charge avant ce fichier) plutôt que dupliquer un formatage relatif de plus. Vert
+  (`--green2`) si vu il y a moins d'1h.
+- **Panneau invité stylé** (`lb2GuestGateHtml()`) : remplace l'`alert()` brut de
+  `marketRequireAuth()` (`market/market.js`, non modifié) pour ce point d'entrée précis — réutilise
+  le texte EXACT de `market:market.auth_verified_required` et le VRAI bouton `#btnLinkAccount`
+  (déjà câblé plus haut dans ce fichier) plutôt que de dupliquer le flux de liaison de compte.
+  `openLeaderboard2()` ne bloque avec l'`alert()` historique que si `!sb || !currentUser` (aucune
+  session du tout, cas rare) — jamais pour un simple compte invité.

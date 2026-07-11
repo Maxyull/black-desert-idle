@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V380', d:'22/07/2026 01:00', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
+      {t:'new', sub:'interface', tx:'Le Classement (🏆) a une 8e catégorie : "🧭 Compendium", basée sur ta complétion globale (zones + boss + Maîtrise PEN).'},
+      {t:'new', sub:'interface', tx:'Si ton rang réel dans une catégorie est en dehors du top 20, une barre "Ta position" apparaît avec ton rang exact, ta valeur et le nombre total de joueurs classés.'},
+      {t:'new', sub:'interface', tx:'Chaque joueur affiché (podium et tableau) montre désormais depuis combien de temps il a été vu pour la dernière fois ("vu il y a...").'},
+      {t:'change', sub:'interface', tx:'Le Classement a reçu le même reskin visuel que l\'écran Zone (podium, cartes, typographies).'},
+      {t:'change', sub:'interface', tx:'Un compte invité qui ouvre le Classement voit désormais un message explicatif stylé avec un bouton "🔗 Lier un compte" direct, au lieu d\'une alerte de navigateur brute.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The Leaderboard (🏆) has an 8th category: "🧭 Compendium", based on your overall completion (zones + bosses + PEN Mastery).'},
+      {t:'new', sub:'interface', tx:'If your real rank in a category is outside the top 20, a "Your position" bar shows your exact rank, your value, and the total number of ranked players.'},
+      {t:'new', sub:'interface', tx:'Every player shown (podium and table) now shows how long ago they were last seen ("seen...").'},
+      {t:'change', sub:'interface', tx:'The Leaderboard received the same visual reskin as the Zone screen (podium, cards, typography).'},
+      {t:'change', sub:'interface', tx:'A guest account opening the Leaderboard now sees a styled explanatory message with a direct "🔗 Link account" button, instead of a raw browser alert.'},
+    ] },
   { v:'V379', d:'22/07/2026 00:00', name:{fr:'Rattrapage hors-ligne réel pour le modal "Bon retour"', en:'Real offline catch-up for the "Welcome back" modal'}, fr:[
       {t:'fix', sub:'systeme', tx:'Corrigé : le modal "Bon retour" (résumé du silver/loot gagné pendant ton absence) ne s\'affichait que si l\'onglet était resté ouvert quelque part — fermer le navigateur ou une mise en veille faisait disparaître tout rattrapage, même après une vraie longue absence.'},
       {t:'new', sub:'systeme', tx:'Le silver gagné pendant une absence réelle (navigateur fermé, PC en veille...) est désormais rattrapé au rechargement, basé sur ton meilleur taux de farm connu, plafonné à 24h d\'absence.'},
