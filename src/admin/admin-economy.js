@@ -98,9 +98,9 @@ function buildPieChartSvg(slices) {
 // fuse automatiquement les petites tranches (<4% par défaut) dans "Autres"/"Other".
 function buildPieWithLegendHtml(items, opts) {
   opts = opts || {};
-  const otherLabel = LANG==='fr' ? 'Autres' : 'Other';
+  const otherLabel = i18next.t('admin:admin.economy.pie_other');
   const merged = mergeSmallSlices(items, opts.thresholdPct != null ? opts.thresholdPct : 4, otherLabel);
-  if (!merged.length) return `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+  if (!merged.length) return `<div class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</div>`;
   const total = merged.reduce((a,s) => a+s.value, 0);
   const slices = merged.map((s,i) => ({ ...s, color: PIE_PALETTE[i % PIE_PALETTE.length] }));
   const svg = buildPieChartSvg(slices);
@@ -147,9 +147,7 @@ function computeEconAlerts(categoryRows) {
     const ratio = totalGained > 0 ? totalSpent / totalGained : 0;
     if (ratio < ECON_ALERT_SINK_RATIO) {
       const pct = Math.round(ratio*100);
-      alerts.push({ icon:'⚠️', text: LANG==='fr'
-        ? `Seulement ${pct}% du silver gagné est réellement dépensé (sorti du jeu) — trop peu de puits, risque d'inflation. Envisage d'ajouter un puits (boutique, coût, sink) rapidement.`
-        : `Only ${pct}% of gained silver is actually spent (sunk out of the game) — too few sinks, inflation risk. Consider adding a sink (shop, cost, drain) soon.` });
+      alerts.push({ icon:'⚠️', text: i18next.t('admin:admin.economy.sink_alert', { pct }) });
     }
   }
   return alerts;
@@ -161,7 +159,7 @@ function buildEconAlertsHtml(alerts) {
 
 // ---------- Économie → Santé économique (2 camemberts : sources / puits, par catégorie) ----------
 function renderAdminEconHealth(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.from('admin_silver_ledger_by_category').select('*').then(({data}) => {
     const rows = (data||[]).map(r => ({
       category: r.category, gained: Number(r.total_gained||0), spent: Number(r.total_spent||0),
@@ -170,19 +168,17 @@ function renderAdminEconHealth(el) {
     const sources = rows.filter(r => r.gained > 0).map(r => ({ label:label(r.category), value:r.gained }));
     const sinks = rows.filter(r => r.spent > 0).map(r => ({ label:label(r.category), value:r.spent }));
     el.innerHTML = `${buildEconAlertsHtml(computeEconAlerts(rows))}
-      <div class="admSummary">${LANG==='fr'
-        ? 'Sources (gagné) vs puits (dépensé), par catégorie — même registre que "Silver", vue centrée sur l\'équilibre entrées/sorties. Catégories sous 4% du total fusionnées dans "Autres".'
-        : 'Sources (gained) vs sinks (spent), by category — same ledger as "Silver", view centered on inflow/outflow balance. Categories under 4% of the total are merged into "Other".'}</div>
+      <div class="admSummary">${i18next.t('admin:admin.economy.health_summary')}</div>
       <div class="admChartsRow">
-        <div><h3 style="margin-top:0">${LANG==='fr'?'📥 Sources (gagné)':'📥 Sources (gained)'}</h3>${buildPieWithLegendHtml(sources)}</div>
-        <div><h3 style="margin-top:0">${LANG==='fr'?'📤 Puits (dépensé)':'📤 Sinks (spent)'}</h3>${buildPieWithLegendHtml(sinks)}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sources_title')}</h3>${buildPieWithLegendHtml(sources)}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sinks_title')}</h3>${buildPieWithLegendHtml(sinks)}</div>
       </div>`;
   });
 }
 
 // ---------- Économie → Silver (registre détaillé + graphique SVG + taux de gain) ----------
 function renderAdminSilver(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
     sb.from('admin_wealth').select('*'),
     sb.from('admin_silver_ledger_by_category').select('*'),
@@ -204,7 +200,7 @@ function renderAdminSilver(el) {
       const label = CATEGORY_LABEL[r.category] ? CATEGORY_LABEL[r.category][LANG] : r.category;
       return `<tr><td>${escapeHtml(label)}</td><td class="admGain">+${fmt(r.gained)}</td><td class="admLoss">-${fmt(r.spent)}</td>` +
         `<td>${fmt(r.tx)}</td></tr>`;
-    }).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+    }).join('') || `<tr><td colspan="4" class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</td></tr>`;
     const { accent, danger } = currentAdminAccentColors();
     const chartSvg = buildSilverChartSvg(silverByHour, accent, danger);
     const rateRows = (wealth||[]).map(r => {
@@ -216,24 +212,24 @@ function renderAdminSilver(el) {
     const rateHtml = rateRows.map((r,i) => `
       <tr class="${i===0?'admTop':''}"><td>#${i+1}</td><td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td>
         <td>${fmt(r.earned)}</td><td>${fmtAdmPlaytime(r.sec)}</td><td>${fmt(Math.round(r.rate))}/h</td></tr>
-    `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données (au moins 3 min de jeu requises)':'No data yet (at least 3 min playtime required)'}</td></tr>`;
+    `).join('') || `<tr><td colspan="5" class="admEmpty">${i18next.t('admin:admin.economy.no_data_playtime')}</td></tr>`;
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🏦 Stocké (chez les joueurs)':'🏦 Stored (with players)'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📈 Gagné à vie':'📈 Lifetime earned'}</div><div class="astVal">${fmt(totalEarned)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🔻 Dépensé (sorti du jeu)':'🔻 Spent (sunk)'}</div><div class="astVal">${fmt(totalSpent)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.silver_stat_stored')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.silver_stat_lifetime_earned')}</div><div class="astVal">${fmt(totalEarned)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.silver_stat_spent')}</div><div class="astVal">${fmt(totalSpent)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.avg_per_player')}</div><div class="astVal">${fmt(avgSilver)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'📊 Flux net de silver par heure (48h)':'📊 Net silver flow per hour (48h)'}</h3>
+      <h3>${i18next.t('admin:admin.economy.silver_chart_title')}</h3>
       ${chartSvg}
-      <h3>${LANG==='fr'?'🔍 Où partent les silver ? (registre détaillé)':'🔍 Where does the silver go? (detailed ledger)'}</h3>
-      <div class="admHint">${LANG==='fr'?'Répartition visuelle par catégorie : voir la section "Santé économique".':'Visual breakdown by category: see the "Economic health" section.'}</div>
+      <h3>${i18next.t('admin:admin.economy.silver_ledger_title')}</h3>
+      <div class="admHint">${i18next.t('admin:admin.economy.silver_ledger_hint')}</div>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Catégorie':'Category'}</th><th>${LANG==='fr'?'Gagné':'Gained'}</th><th>${LANG==='fr'?'Dépensé':'Spent'}</th><th>${LANG==='fr'?'Mouvements':'Transactions'}</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.economy.table_category')}</th><th>${i18next.t('admin:admin.economy.table_gained')}</th><th>${i18next.t('admin:admin.economy.table_spent')}</th><th>${i18next.t('admin:admin.economy.table_transactions')}</th></tr></thead>
         <tbody>${categoryHtml}</tbody>
       </table>
-      <h3>${LANG==='fr'?'🏆 Qui gagne le plus vite ? (taux à vie)':'🏆 Who earns fastest? (lifetime rate)'}</h3>
+      <h3>${i18next.t('admin:admin.economy.silver_rate_title')}</h3>
       <table class="admTable">
-        <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Gagné à vie':'Lifetime earned'}</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
+        <thead><tr><th>#</th><th>${i18next.t('admin:admin.economy.table_player')}</th><th>${i18next.t('admin:admin.economy.table_lifetime_earned')}</th><th>${i18next.t('admin:admin.economy.table_playtime')}</th><th>${i18next.t('admin:admin.economy.table_rate')}</th></tr></thead>
         <tbody>${rateHtml}</tbody>
       </table>`;
   });
@@ -241,7 +237,7 @@ function renderAdminSilver(el) {
 
 // ---------- Économie → Activité horaire ----------
 function renderAdminHourly(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
     sb.from('admin_farm_by_hour').select('*'),
     sb.from('admin_playtime_by_hour').select('*'),
@@ -256,18 +252,18 @@ function renderAdminHourly(el) {
     const ptChart = buildBarSeriesSvg(ptRows.map(r => ({ label:r.hour, value:r.players })), accent);
     const maxHourEntry = hours.length ? hours.reduce((m,h) => h[1]>m[1]?h:m) : null;
     const maxPtEntry = ptRows.length ? ptRows.reduce((m,r) => r.players>m.players?r:m, ptRows[0]) : null;
-    el.innerHTML = `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
+    el.innerHTML = `<h3>${i18next.t('admin:admin.economy.hourly_farmed_title')}</h3>
       ${hourChart}
-      <div class="admHint">${LANG==='fr'?'Pic :':'Peak:'} ${maxHourEntry ? fmt(maxHourEntry[1]) : '—'}</div>
-      <h3>${LANG==='fr'?'👥 Joueurs actifs par heure (48h)':'👥 Active players per hour (48h)'}</h3>
+      <div class="admHint">${i18next.t('admin:admin.economy.hourly_peak_label')} ${maxHourEntry ? fmt(maxHourEntry[1]) : '—'}</div>
+      <h3>${i18next.t('admin:admin.economy.hourly_active_title')}</h3>
       ${ptChart}
-      <div class="admHint">${LANG==='fr'?'Pic :':'Peak:'} ${maxPtEntry ? maxPtEntry.players : '—'}</div>`;
+      <div class="admHint">${i18next.t('admin:admin.economy.hourly_peak_label')} ${maxPtEntry ? maxPtEntry.players : '—'}</div>`;
   });
 }
 
 // ---------- Économie → Richesse ----------
 function renderAdminWealth(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
     sb.from('admin_wealth').select('*'),
     sb.from('player_stats').select('user_id, playtime_sec'),
@@ -297,17 +293,17 @@ function renderAdminWealth(el) {
     );
     const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
       <tr><td>#${i+1}</td><td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtAdmPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
-    `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+    `).join('') || `<tr><td colspan="5" class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</td></tr>`;
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'💰 Total en jeu':'💰 Total in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📍 Médiane':'📍 Median'}</div><div class="astVal">${fmt(medSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${silvers.length}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.wealth_stat_total')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.avg_per_player')}</div><div class="astVal">${fmt(avgSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.wealth_stat_median')}</div><div class="astVal">${fmt(medSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.stat_players')}</div><div class="astVal">${silvers.length}</div></div>
       </div>
-      <h3>${LANG==='fr'?'📈 Répartition des joueurs par richesse':'📈 Players by wealth bracket'}</h3>
+      <h3>${i18next.t('admin:admin.economy.wealth_bracket_title')}</h3>
       ${bracketPie}
       <table class="admTable">
-        <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
+        <thead><tr><th>#</th><th>${i18next.t('admin:admin.economy.table_player')}</th><th>Silver</th><th>Niv.</th><th>${i18next.t('admin:admin.economy.table_playtime')}</th></tr></thead>
         <tbody>${wealthHtml}</tbody>
       </table>`;
   });
@@ -315,20 +311,18 @@ function renderAdminWealth(el) {
 
 // ---------- Économie → Loyalties ----------
 function renderAdminLoyalty(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.from('player_stats').select('loyalty').then(({data: stats}) => {
     const loyaltyVals = (stats||[]).map(r => Number(r.loyalty||0));
     const loyaltyTotal = loyaltyVals.reduce((a,b) => a+b, 0);
     const loyaltyAvg = loyaltyVals.length ? Math.round(loyaltyTotal/loyaltyVals.length) : 0;
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🏅 Total en jeu':'🏅 Total in game'}</div><div class="astVal">${fmt(loyaltyTotal)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(loyaltyAvg)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${loyaltyVals.length}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.loyalty_stat_total')}</div><div class="astVal">${fmt(loyaltyTotal)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.avg_per_player')}</div><div class="astVal">${fmt(loyaltyAvg)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.stat_players')}</div><div class="astVal">${loyaltyVals.length}</div></div>
       </div>
-      <h3>${LANG==='fr'?'🛍️ Utilisées pour':'🛍️ Used to buy'}</h3>
-      <div class="admEmpty">${LANG==='fr'
-        ? 'Aucune boutique Loyalties en jeu pour l\'instant — rien à dépenser, ces stats servent à suivre l\'accumulation avant d\'ouvrir une boutique.'
-        : 'No Loyalties shop in game yet — nothing to spend it on, these stats track accumulation ahead of opening a shop.'}</div>`;
+      <h3>${i18next.t('admin:admin.economy.loyalty_used_title')}</h3>
+      <div class="admEmpty">${i18next.t('admin:admin.economy.loyalty_no_shop')}</div>`;
   });
 }
 
@@ -336,11 +330,11 @@ function renderAdminLoyalty(el) {
 function renderAdminMarket(el) {
   el.innerHTML = `
     <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🏛️ ${LANG==='fr'?'Marché':'Market'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Ferme l\'accès au Marché pour TOUT LE MONDE sauf toi ; l\'annulation rembourse chaque ordre ouvert (silver ou objet) à son propriétaire.':'Closes Market access for EVERYONE except you; cancelling refunds every open order (silver or item) to its owner.'}</div>
+      <div class="admSectionTitle">🏛️ ${i18next.t('admin:admin.economy.market_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.economy.market_sub')}</div>
       <div class="admActions">
-        <button id="btnMarketToggle">${LANG==='fr'?'Chargement…':'Loading…'}</button>
-        <button id="btnMarketCancelAll" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Annuler tous les ordres ouverts':'Cancel all open orders'}</button>
+        <button id="btnMarketToggle">${i18next.t('admin:admin.economy.loading')}</button>
+        <button id="btnMarketCancelAll" style="border-color:var(--danger);color:#e8a89f">💥 ${i18next.t('admin:admin.economy.market_cancel_all_btn')}</button>
       </div>
       <div id="admMarketStatus" class="admHint"></div>
     </div>`;
@@ -349,8 +343,8 @@ function renderAdminMarket(el) {
     const { data } = await sb.rpc('get_market_open');
     const open = data !== false;
     btn.textContent = open
-      ? (LANG==='fr'?'🔓 Marché ouvert (clique pour fermer)':'🔓 Market open (click to close)')
-      : (LANG==='fr'?'🔒 Marché fermé (clique pour rouvrir)':'🔒 Market closed (click to reopen)');
+      ? i18next.t('admin:admin.economy.market_open_btn')
+      : i18next.t('admin:admin.economy.market_closed_btn');
     btn.style.borderColor = open ? '' : 'var(--danger)';
     btn.style.color = open ? '' : '#e8a89f';
   }
@@ -364,17 +358,15 @@ function renderAdminMarket(el) {
       logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ${nextOpen?'rouvert':'fermé'} le Marché`, 0x9cc9e8);
       await refreshMarketAdminStatus();
     }
-    floatTxt(P.x, P.y, 100, !error ? (nextOpen?(LANG==='fr'?'Marché rouvert ✓':'Market reopened ✓'):(LANG==='fr'?'Marché fermé ✓':'Market closed ✓')) : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+    floatTxt(P.x, P.y, 100, !error ? (nextOpen ? i18next.t('admin:admin.economy.market_reopened_toast') : i18next.t('admin:admin.economy.market_closed_toast')) : i18next.t('admin:admin.economy.failed_short'), { gold:!error, hurt:!!error });
   };
   $a('btnMarketCancelAll').onclick = async () => {
     if (!isAdmin() || !sb) return;
-    if (!confirm(LANG==='fr'
-      ? '💥 Annuler TOUS les ordres ouverts du Marché ? Chaque ordre sera remboursé (silver ou objet) à son propriétaire. Irréversible.'
-      : '💥 Cancel ALL open Market orders? Each order will be refunded (silver or item) to its owner. Irreversible.')) return;
+    if (!confirm(i18next.t('admin:admin.economy.market_cancel_confirm'))) return;
     const { data, error } = await sb.rpc('admin_cancel_all_market_orders');
     if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a annulé ${data} ordre(s) de marché (remboursés)`, 0xc05545);
-    const msg = error ? (LANG==='fr'?'Échec — '+error.message:'Failed — '+error.message)
-      : (LANG==='fr'?`${data} ordre(s) annulé(s) et remboursé(s) ✓`:`${data} order(s) cancelled and refunded ✓`);
+    const msg = error ? i18next.t('admin:admin.economy.failed_prefix') + error.message
+      : i18next.t('admin:admin.economy.market_cancel_result', { data });
     $a('admMarketStatus').textContent = msg;
     floatTxt(P.x, P.y, 100, msg, { gold:!error, hurt:!!error });
   };
@@ -385,7 +377,7 @@ function renderAdminMarket(el) {
 // lecture pure, aucune action. admin_market_top_items (SECURITY DEFINER) agrège côté serveur
 // plutôt que de renvoyer les lignes brutes de market_trades au client. ----------
 function renderAdminMarketVolume(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.rpc('admin_market_top_items', { p_days: 30 }).then(({data, error}) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
@@ -394,17 +386,17 @@ function renderAdminMarketVolume(el) {
     const itemHtml = rows.map((r,i) => `
       <tr class="${i===0?'admTop':''}"><td>${tr(r.item_name) || escapeHtml(r.item_name)}</td>
         <td>${fmt(r.trade_count)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver_value)}</td></tr>
-    `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun échange sur les 30 derniers jours':'No trades in the last 30 days'}</td></tr>`;
+    `).join('') || `<tr><td colspan="4" class="admEmpty">${i18next.t('admin:admin.economy.marketvolume_no_trades')}</td></tr>`;
     const pie = buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name) || r.item_name, value: Number(r.total_silver_value||0) })));
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">💱 ${LANG==='fr'?'Volume total (30j)':'Total volume (30d)'}</div><div class="astVal">${fmt(totalVolume)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🔄 ${LANG==='fr'?'Échanges (30j)':'Trades (30d)'}</div><div class="astVal">${fmt(totalTrades)}</div></div>
+        <div class="admStatTile"><div class="astLbl">💱 ${i18next.t('admin:admin.economy.marketvolume_stat_volume')}</div><div class="astVal">${fmt(totalVolume)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔄 ${i18next.t('admin:admin.economy.marketvolume_stat_trades')}</div><div class="astVal">${fmt(totalTrades)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'🏆 Part de valeur par objet':'🏆 Value share by item'}</h3>
+      <h3>${i18next.t('admin:admin.economy.marketvolume_value_share_title')}</h3>
       ${pie}
-      <h3>${LANG==='fr'?'Détail':'Detail'}</h3>
+      <h3>${i18next.t('admin:admin.economy.marketvolume_detail_title')}</h3>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Échanges':'Trades'}</th><th>Qté</th><th>${LANG==='fr'?'Valeur totale':'Total value'}</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.economy.table_item')}</th><th>${i18next.t('admin:admin.economy.table_trades')}</th><th>Qté</th><th>${i18next.t('admin:admin.economy.table_total_value')}</th></tr></thead>
         <tbody>${itemHtml}</tbody>
       </table>`;
   });
@@ -414,7 +406,7 @@ function renderAdminMarketVolume(el) {
 // par jour (30j). auth.users n'est pas exposé via PostgREST, seule une RPC SECURITY DEFINER peut
 // y accéder -- admin_signups_by_day() (voir la migration). ----------
 function renderAdminSignups(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
     sb.rpc('admin_signups_by_day', { p_days: 30 }),
     sb.rpc('admin_signups_by_provider'),
@@ -425,19 +417,19 @@ function renderAdminSignups(el) {
     const { accent } = currentAdminAccentColors();
     const chart = rows.length
       ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
-      : `<div class="admEmpty">${LANG==='fr'?'Aucune inscription sur les 30 derniers jours':'No signups in the last 30 days'}</div>`;
+      : `<div class="admEmpty">${i18next.t('admin:admin.economy.signups_no_signups')}</div>`;
     // camembert par plateforme (2026-07-20, demande explicite : "montre avec quoi les joueur se
     // sont inscrit comme plateforme ... et tu peux créer un graph aussi") -- providerInfo() vient
     // de admin-panel.js, chargé AVANT ce fichier (voir index.dev.html), donc jamais de risque de TDZ.
     const providerPie = !provError && (byProvider||[]).length
       ? buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon + ' ' + providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 })
-      : `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+      : `<div class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</div>`;
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🆕 ${LANG==='fr'?'Inscriptions (30j)':'Signups (30d)'}</div><div class="astVal">${total}</div></div>
+        <div class="admStatTile"><div class="astLbl">🆕 ${i18next.t('admin:admin.economy.signups_stat_title')}</div><div class="astVal">${total}</div></div>
       </div>
-      <h3>${LANG==='fr'?'📅 Par jour':'📅 By day'}</h3>
+      <h3>${i18next.t('admin:admin.economy.signups_by_day_title')}</h3>
       ${chart}
-      <h3>${LANG==='fr'?'🧩 Par plateforme (tous comptes)':'🧩 By platform (all accounts)'}</h3>
+      <h3>${i18next.t('admin:admin.economy.signups_by_platform_title')}</h3>
       ${providerPie}`;
   });
 }
@@ -449,11 +441,9 @@ const LOOT_RATE_GRADES = [
   { grade:'green', label:{fr:'Vert',en:'Green'} }, { grade:'blue', label:{fr:'Bleu',en:'Blue'} },
 ];
 function buildLootRateEditorHtml() {
-  return `<h3>${LANG==='fr'?'🛠️ Éditeur de taux (V2, en direct)':'🛠️ Rate editor (V2, live)'}</h3>
-    <div class="admHint">${LANG==='fr'
-      ? 'Modifie les taux réellement utilisés par TOUS les joueurs (si la table de loot est en V2), rechargés à la connexion. Les valeurs par défaut du jeu restent inchangées en dur — "Réinitialiser" les restaure à tout moment.'
-      : 'Changes the rates actually used by ALL players (while the loot table is on V2), reloaded on login. The game\'s default values stay unchanged in code — "Reset" restores them anytime.'}</div>
-    <table class="admTable"><thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Armure/Arme (%)':'Armor/Weapon (%)'}</th><th>${LANG==='fr'?'Bijou (%)':'Jewel (%)'}</th></tr></thead>
+  return `<h3>${i18next.t('admin:admin.economy.loot_editor_title')}</h3>
+    <div class="admHint">${i18next.t('admin:admin.economy.loot_editor_hint')}</div>
+    <table class="admTable"><thead><tr><th>${i18next.t('admin:admin.economy.table_tier')}</th><th>${i18next.t('admin:admin.economy.table_gear_pct')}</th><th>${i18next.t('admin:admin.economy.table_jewel_pct')}</th></tr></thead>
       <tbody>${LOOT_RATE_GRADES.map(g => `<tr>
         <td>${g.label[LANG]}</td>
         <td><input type="number" step="0.01" min="0" max="100" id="admLootGear_${g.grade}" value="${(LOOT_RATES_LIVE[g.grade].gear*100).toFixed(2)}" style="width:80px"></td>
@@ -461,8 +451,8 @@ function buildLootRateEditorHtml() {
       </tr>`).join('')}</tbody>
     </table>
     <div class="admActions">
-      <button id="btnSaveLootRates">💾 ${LANG==='fr'?'Enregistrer (tous les joueurs)':'Save (all players)'}</button>
-      <button id="btnResetLootRates">🔄 ${LANG==='fr'?'Réinitialiser aux valeurs du jeu':'Reset to game defaults'}</button>
+      <button id="btnSaveLootRates">💾 ${i18next.t('admin:admin.economy.loot_save_btn')}</button>
+      <button id="btnResetLootRates">🔄 ${i18next.t('admin:admin.economy.loot_reset_btn')}</button>
     </div>
     <div id="admLootRateStatus" class="admHint"></div>`;
 }
@@ -477,21 +467,21 @@ function wireLootRateEditor() {
     }
     const { error } = await sb.rpc('admin_set_loot_rates', { p_rates: rates });
     const statusEl = $a('admLootRateStatus');
-    if (error) { statusEl.textContent = (LANG==='fr'?'Échec — ':'Failed — ') + error.message; statusEl.classList.add('warn'); return; }
+    if (error) { statusEl.textContent = i18next.t('admin:admin.economy.failed_prefix') + error.message; statusEl.classList.add('warn'); return; }
     for (const g of LOOT_RATE_GRADES) LOOT_RATES_LIVE[g.grade] = rates[g.grade];
     logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a modifié les taux de la table de loot V2`, 0x9cc9e8);
     statusEl.classList.remove('warn');
-    statusEl.textContent = LANG==='fr' ? 'Enregistré — appliqué immédiatement à tous les joueurs ✓' : 'Saved — applied immediately to all players ✓';
-    floatTxt(P.x, P.y, 100, LANG==='fr'?'Taux de loot mis à jour ✓':'Loot rates updated ✓', { gold:true });
+    statusEl.textContent = i18next.t('admin:admin.economy.loot_save_success');
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.economy.loot_save_toast'), { gold:true });
   };
   const resetBtn = $a('btnResetLootRates');
   if (resetBtn) resetBtn.onclick = async () => {
     if (!isAdmin() || !sb) return;
-    if (!confirm(LANG==='fr' ? 'Réinitialiser les taux aux valeurs par défaut du jeu, pour TOUS les joueurs ?' : 'Reset rates to the game\'s default values, for ALL players?')) return;
+    if (!confirm(i18next.t('admin:admin.economy.loot_reset_confirm'))) return;
     const defaults = JSON.parse(JSON.stringify(LOOT_RATES_V2));
     const { error } = await sb.rpc('admin_set_loot_rates', { p_rates: defaults });
     if (!error) { LOOT_RATES_LIVE = defaults; renderAdminLoot($a('adminMainBody')); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé les taux de la table de loot V2`, 0x9cc9e8); }
-    floatTxt(P.x, P.y, 100, !error ? (LANG==='fr'?'Taux réinitialisés ✓':'Rates reset ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+    floatTxt(P.x, P.y, 100, !error ? i18next.t('admin:admin.economy.loot_reset_toast') : i18next.t('admin:admin.economy.failed_short'), { gold:!error, hurt:!!error });
   };
 }
 

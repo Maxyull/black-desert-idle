@@ -33,6 +33,9 @@ from pathlib import Path
 # sous Windows, "npx" est un script shell (.cmd/.ps1), pas un executable natif -- CreateProcess
 # (utilise par subprocess.run sans shell=True) ne sait le trouver que via son extension exacte
 NPX_CMD = "npx.cmd" if sys.platform == "win32" else "npx"
+# node.exe est un executable natif (contrairement a npx, un script shell) : CreateProcess le
+# resout sans probleme sous Windows meme sans shell=True, pas besoin d'un NODE_CMD distinct par OS.
+NODE_CMD = "node"
 
 ROOT = Path(__file__).resolve().parent.parent
 DEV_HTML = ROOT / "index.dev.html"
@@ -227,10 +230,29 @@ def minify_bundle_with_terser():
         sys.exit(exc.returncode)
 
 
+def gen_locales():
+    """Recompile /locales/{fr,en}/*.json en src/core/i18n-resources.generated.js (voir
+    I18N_PLAN.md §5, CLAUDE.md §31) -- lance AVANT la concatenation, pour que le fichier genere
+    soit a jour dans le bundle. Meme piege Windows npx que Terser : script Node via npx-like direct
+    call ici, mais gen-locales.js n'a pas de dependance npm, donc appele directement via NODE_CMD."""
+    script = ROOT / "scripts" / "gen-locales.js"
+    cmd = [NODE_CMD, str(script)]
+    try:
+        subprocess.run(cmd, cwd=ROOT, check=True)
+    except FileNotFoundError:
+        print("ERREUR: node introuvable. Installe Node.js, puis relance.", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as exc:
+        print("ERREUR: scripts/gen-locales.js a echoue.", file=sys.stderr)
+        sys.exit(exc.returncode)
+
+
 def main():
     if not DEV_HTML.exists():
         print(f"ERREUR: {DEV_HTML} introuvable", file=sys.stderr)
         sys.exit(1)
+
+    gen_locales()
 
     dev_html = DEV_HTML.read_text(encoding="utf-8")
     files = extract_script_order(dev_html)

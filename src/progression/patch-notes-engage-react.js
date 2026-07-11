@@ -106,33 +106,33 @@ function PneCommentThread(props) {
   async function report(id) { if (!sb) return; try { await sb.rpc('report_patch_note_comment', { p_comment_id: id }); } catch (e) {} }
 
   return pneH('div', { style: { background: PNE_V.bg, border: `1px solid ${PNE_V.border}`, borderRadius: 6, padding: 8, marginTop: 6 } },
-    comments === null ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted, fontStyle: 'italic', margin: 0 } }, LANG === 'fr' ? 'Chargement…' : 'Loading…') :
+    comments === null ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted, fontStyle: 'italic', margin: 0 } }, i18next.t('progression:progression.patch_notes.loading')) :
       pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-        comments.length === 0 ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted2, fontStyle: 'italic', margin: 0 } }, LANG === 'fr' ? 'Aucun commentaire pour l\'instant.' : 'No comments yet.') :
+        comments.length === 0 ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted2, fontStyle: 'italic', margin: 0 } }, i18next.t('progression:progression.patch_notes.no_comments')) :
           comments.map(c => {
             const mine = loggedIn && c.user_id === currentUser.id;
             return pneH('div', { key: c.id, style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 } },
               pneH('p', { style: { fontSize: 10.5, color: PNE_V.text2, margin: 0, wordBreak: 'break-word' } },
                 pneH('span', { style: { fontWeight: 600, color: mine ? PNE_V.gold2 : PNE_V.blue } }, c.author), ' ',
-                pneH('span', { style: { color: PNE_V.muted } }, new Date(c.created_at).toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-US')),
+                pneH('span', { style: { color: PNE_V.muted } }, new Date(c.created_at).toLocaleDateString(i18next.t('progression:progression.patch_notes.date_locale'))),
                 pneH('br'), c.text),
               pneH('div', { style: { display: 'flex', gap: 4, flexShrink: 0 } },
-                !mine ? pneH('button', { className: 'pneBtn', onClick: () => report(c.id), title: LANG === 'fr' ? 'Signaler' : 'Report', style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
-                (mine || isStaff) ? pneH('button', { className: 'pneBtn', onClick: () => remove(c.id), title: LANG === 'fr' ? 'Supprimer' : 'Delete', style: { background: 'none', border: 'none', color: mine ? PNE_V.muted2 : PNE_V.red, cursor: 'pointer', fontSize: 10 } }, '🗑') : null));
+                !mine ? pneH('button', { className: 'pneBtn', onClick: () => report(c.id), title: i18next.t('progression:progression.patch_notes.report_title'), style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
+                (mine || isStaff) ? pneH('button', { className: 'pneBtn', onClick: () => remove(c.id), title: i18next.t('progression:progression.patch_notes.delete_title'), style: { background: 'none', border: 'none', color: mine ? PNE_V.muted2 : PNE_V.red, cursor: 'pointer', fontSize: 10 } }, '🗑') : null));
           })),
     loggedIn ? pneH('div', { style: { marginTop: 6 } },
       pneH('div', { style: { display: 'flex', gap: 4 } },
         pneH('input', {
           value: draft, onChange: e => { setDraft(e.target.value); setDraftError(false); }, onKeyDown: e => e.key === 'Enter' && submit(),
-          placeholder: LANG === 'fr' ? 'Ajouter un commentaire' : 'Add a comment', disabled: busy,
+          placeholder: i18next.t('progression:progression.patch_notes.comment_placeholder'), disabled: busy,
           style: { flex: 1, fontSize: 10.5, padding: '4px 6px', borderRadius: 4, border: `1px solid ${draftError ? PNE_V.red : PNE_V.border}`, background: PNE_V.card, color: PNE_V.textMain, outline: 'none' },
         }),
         pneH('button', { className: 'pneBtn', onClick: submit, disabled: busy, style: { fontSize: 10.5, border: `1px solid ${PNE_V.border2}`, background: 'none', color: PNE_V.blue, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' } }, '➤')),
       draftError ? pneH('p', { style: { fontSize: 9.5, color: PNE_V.red2, margin: '4px 0 0' } },
         draftError === 'rate'
-          ? (LANG === 'fr' ? 'Tu commentes trop vite — réessaie dans une minute.' : 'You\'re commenting too fast — try again in a minute.')
-          : (LANG === 'fr' ? 'Merci de rester respectueux — commentaire bloqué.' : 'Please stay respectful — comment blocked.')) : null)
-      : pneH('p', { style: { fontSize: 9.5, color: PNE_V.muted2, fontStyle: 'italic', margin: '6px 0 0' } }, LANG === 'fr' ? 'Connecte-toi pour commenter.' : 'Log in to comment.'));
+          ? i18next.t('progression:progression.patch_notes.rate_limited_error')
+          : i18next.t('progression:progression.patch_notes.content_blocked_error')) : null)
+      : pneH('p', { style: { fontSize: 9.5, color: PNE_V.muted2, fontStyle: 'italic', margin: '6px 0 0' } }, i18next.t('progression:progression.patch_notes.login_to_comment')));
 }
 
 function PneEntryCard(props) {
@@ -186,14 +186,14 @@ function PneEntryCard(props) {
     pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
       pneH('span', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 4, flexShrink: 0, fontSize: 11, background: cat.color + '22', border: `1px solid ${cat.color}55` } }, cat.icon),
       pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: cat.color } }, cat[LANG]),
-      pneH('span', { style: { fontSize: 12, fontWeight: 700, color: PNE_V.cream, flex: 1 } }, line.tx, line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2 } }, LANG === 'fr' ? '🗑 Supprimé' : '🗑 Removed') : null),
+      pneH('span', { style: { fontSize: 12, fontWeight: 700, color: PNE_V.cream, flex: 1 } }, line.tx, line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2 } }, i18next.t('progression:progression.patch_notes.removed_badge')) : null),
       // point "Nouveau"/tampon "Lu" PAR ENTRÉE (2026-07-11, fidélité maquette : la maquette calcule
       // ce badge par ligne, pas seulement une fois par version comme le point déjà affiché dans
       // PneVersionBlock) -- réutilise readPatches (déjà la source de vérité "lu", jamais dupliquée).
       !readPatches.has(p.v)
-        ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2, flexShrink: 0 }, title: LANG === 'fr' ? 'Nouveau' : 'New' })
-        : pneH('span', { style: { fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, flexShrink: 0, color: PNE_V.red, border: `1.5px solid ${PNE_V.red}`, transform: 'rotate(-8deg)', fontFamily: 'monospace', opacity: 0.6 }, title: LANG === 'fr' ? 'Déjà lu' : 'Already read' }, LANG === 'fr' ? 'Lu' : 'Read'),
-      line.img ? pneH('button', { className: 'pneBtn', onClick: () => openPatchImgCompare(line.img.before, line.img.after), title: LANG === 'fr' ? 'Voir avant/après' : 'See before/after', style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 } }, '🖼️') : null),
+        ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2, flexShrink: 0 }, title: i18next.t('progression:progression.patch_notes.new_badge_title') })
+        : pneH('span', { style: { fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, flexShrink: 0, color: PNE_V.red, border: `1.5px solid ${PNE_V.red}`, transform: 'rotate(-8deg)', fontFamily: 'monospace', opacity: 0.6 }, title: i18next.t('progression:progression.patch_notes.already_read_title') }, i18next.t('progression:progression.patch_notes.read_badge')),
+      line.img ? pneH('button', { className: 'pneBtn', onClick: () => openPatchImgCompare(line.img.before, line.img.after), title: i18next.t('progression:progression.patch_notes.before_after_title'), style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 } }, '🖼️') : null),
     tags.length > 0 ? pneH('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } },
       tags.map((t, i) => pneH('span', { key: i, title: t.title, style: { fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 999, border: `1px solid ${t.color}`, color: t.color } }, t.label))) : null,
     pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 } },
@@ -212,9 +212,9 @@ function PneVersionBlock(props) {
     pneH('div', { style: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' } },
       pneH('span', { style: { fontSize: 13, fontWeight: 700, color: PNE_V.cream } }, 'v' + p.v),
       pneH('span', { style: { fontSize: 10, color: PNE_V.muted } }, p.d),
-      absIdx === 0 ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', background: '#4a3a20', color: '#e8c876' } }, LANG === 'fr' ? 'Récent' : 'Latest')
-        : isNew ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2 }, title: LANG === 'fr' ? 'Nouveau' : 'New' }) : null,
-      pneH('span', { style: { fontSize: 10, color: PNE_V.muted2, marginLeft: 'auto' } }, rows.length + (LANG === 'fr' ? ' changements' : ' changes'))),
+      absIdx === 0 ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', background: '#4a3a20', color: '#e8c876' } }, i18next.t('progression:progression.patch_notes.latest_badge'))
+        : isNew ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2 }, title: i18next.t('progression:progression.patch_notes.new_badge_title') }) : null,
+      pneH('span', { style: { fontSize: 10, color: PNE_V.muted2, marginLeft: 'auto' } }, rows.length + i18next.t('progression:progression.patch_notes.changes_count_suffix'))),
     p.name ? pneH('p', { style: { fontSize: 11, fontStyle: 'italic', color: PNE_V.italic, margin: '0 0 8px' } }, p.name[LANG]) : null,
     pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
       rows.map(row => pneH(PneEntryCard, { key: row.entryId, row, controversial: props.controversyView && (patchKarmaCache[row.entryId] || 0) < 0 }))));
@@ -359,18 +359,18 @@ function PatchNotesApp(props) {
       pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${PNE_V.border}` } },
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
           pneH('span', { style: { display: 'inline-block', width: 4, height: 16, borderRadius: 2, background: PNE_V.pink } }),
-          pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, LANG === 'fr' ? 'Notes de mise à jour' : 'Patch notes')),
+          pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, i18next.t('progression:progression.patch_notes.panel_title'))),
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-          isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setControversyView(v => !v), title: LANG === 'fr' ? 'Trier les lignes les plus contestées en premier' : 'Sort most contested lines first',
-            style: { fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', border: `1px solid ${controversyView ? PNE_V.red : PNE_V.border}`, background: controversyView ? 'rgba(192,80,60,.13)' : 'transparent', color: controversyView ? PNE_V.red2 : PNE_V.muted } }, '📉 ' + (LANG === 'fr' ? 'Controverse' : 'Controversy')) : null,
-          unreadNow > 0 ? pneH('button', { className: 'pneBtn', onClick: markAllRead, style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: PNE_V.green, cursor: 'pointer' } }, LANG === 'fr' ? 'Marquer comme lu' : 'Mark all read') : null,
-          pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': LANG === 'fr' ? 'Fermer' : 'Close', style: { width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 14 } }, '✕'))),
+          isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setControversyView(v => !v), title: i18next.t('progression:progression.patch_notes.controversy_sort_title'),
+            style: { fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', border: `1px solid ${controversyView ? PNE_V.red : PNE_V.border}`, background: controversyView ? 'rgba(192,80,60,.13)' : 'transparent', color: controversyView ? PNE_V.red2 : PNE_V.muted } }, '📉 ' + i18next.t('progression:progression.patch_notes.controversy_label')) : null,
+          unreadNow > 0 ? pneH('button', { className: 'pneBtn', onClick: markAllRead, style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: PNE_V.green, cursor: 'pointer' } }, i18next.t('progression:progression.patch_notes.mark_all_read')) : null,
+          pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.patch_notes.close_aria'), style: { width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 14 } }, '✕'))),
 
       // ---- recherche ----
       pneH('div', { style: { padding: '12px 16px 0' } },
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, border: `1px solid ${PNE_V.border}`, background: PNE_V.bg } },
           pneH('span', { style: { fontSize: 12, color: PNE_V.muted } }, '🔎'),
-          pneH('input', { value: query, onChange: e => setQuery(e.target.value), placeholder: LANG === 'fr' ? 'Rechercher dans cette page' : 'Search this page',
+          pneH('input', { value: query, onChange: e => setQuery(e.target.value), placeholder: i18next.t('progression:progression.patch_notes.search_placeholder'),
             style: { flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: PNE_V.textMain } }))),
 
       // ---- filtres catégorie ----
@@ -381,20 +381,20 @@ function PatchNotesApp(props) {
             style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 999, cursor: 'pointer', border: `1px solid ${active ? cat.color : PNE_V.border}`, background: active ? cat.color + '22' : 'transparent', color: active ? cat.color : PNE_V.muted } },
             cat.icon + ' ' + cat[LANG], active ? ' ✕' : '');
         }),
-        catFilter ? pneH('button', { className: 'pneChip', onClick: () => setCatFilter(null), style: { fontSize: 10, background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer' } }, '✕ ' + (LANG === 'fr' ? 'Tout effacer' : 'Clear all')) : null),
+        catFilter ? pneH('button', { className: 'pneChip', onClick: () => setCatFilter(null), style: { fontSize: 10, background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer' } }, '✕ ' + i18next.t('progression:progression.patch_notes.clear_all_filters')) : null),
 
       // ---- timeline ----
       pneH('div', { className: 'pneScroll', style: { padding: '0 16px 12px', maxHeight: '55vh', overflowY: 'auto' } },
         blocks.length === 0
-          ? pneH('div', { style: { textAlign: 'center', padding: '24px 0', color: PNE_V.muted } }, pneH('p', { style: { fontSize: 11 } }, LANG === 'fr' ? 'Aucune entrée ne correspond.' : 'No entries match.'))
+          ? pneH('div', { style: { textAlign: 'center', padding: '24px 0', color: PNE_V.muted } }, pneH('p', { style: { fontSize: 11 } }, i18next.t('progression:progression.patch_notes.no_entries_match')))
           : blocks.map((b, i) => pneH(PneVersionBlock, { key: b.p.v, p: b.p, absIdx: b.absIdx, rows: b.rows, notLast: i !== blocks.length - 1, controversyView }))),
 
       // ---- pagination ----
       pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 16px', borderTop: `1px solid ${PNE_V.border}` } },
-        pneH('button', { className: 'pneBtn', disabled: pageIdx === 0, onClick: () => goto(pages[pageIdx - 1].start), title: LANG === 'fr' ? 'Notes plus récentes' : 'Newer notes',
+        pneH('button', { className: 'pneBtn', disabled: pageIdx === 0, onClick: () => goto(pages[pageIdx - 1].start), title: i18next.t('progression:progression.patch_notes.newer_notes_title'),
           style: { background: 'none', border: 'none', cursor: pageIdx === 0 ? 'default' : 'pointer', color: pageIdx === 0 ? PNE_V.border2 : PNE_V.blue, fontSize: 15 } }, '‹'),
         pneH('span', { style: { fontSize: 10, color: PNE_V.muted } }, (page.start + 1) + '–' + (page.start + entries.length) + ' / ' + PATCH_NOTES.length),
-        pneH('button', { className: 'pneBtn', disabled: pageIdx === pages.length - 1, onClick: () => goto(pages[pageIdx + 1].start), title: LANG === 'fr' ? 'Notes plus anciennes' : 'Older notes',
+        pneH('button', { className: 'pneBtn', disabled: pageIdx === pages.length - 1, onClick: () => goto(pages[pageIdx + 1].start), title: i18next.t('progression:progression.patch_notes.older_notes_title'),
           style: { background: 'none', border: 'none', cursor: pageIdx === pages.length - 1 ? 'default' : 'pointer', color: pageIdx === pages.length - 1 ? PNE_V.border2 : PNE_V.blue, fontSize: 15 } }, '›'))));
 }
 

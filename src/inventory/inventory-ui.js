@@ -39,8 +39,8 @@ function renderEquipment() {
   // le bas — 2026-07-08, voir le commentaire sur $('stPA') plus haut)
   // préfixe PA/PD codé en dur en français jusqu'ici, même en anglais (2026-07-14, découvert lors
   // d'une vérif des stats) -- corrigé pour suivre LANG, comme le préfixe "Niv."/"Lvl" juste au-dessus
-  $('eqSumAp').textContent = (LANG==='fr'?'PA ':'AP ') + Math.floor(apEff());
-  $('eqSumDp').textContent = (LANG==='fr'?'PD ':'DP ') + Math.floor(totalDP());
+  $('eqSumAp').textContent = i18next.t('inventory:inventory.eq_sum_ap_prefix') + Math.floor(apEff());
+  $('eqSumDp').textContent = i18next.t('inventory:inventory.eq_sum_dp_prefix') + Math.floor(totalDP());
   $('eqSumGs').textContent = 'GS ' + Math.round(GS());
 }
 // libellé court du niveau d'optimisation : "+N" jusqu'à +15, puis chiffres romains I..V pour PRI..PEN
@@ -70,7 +70,7 @@ function pdSlotInnerHtmlFor(id, e) {
   }
   // petit bouton "optimiser" directement sur la pièce équipée (2026-07-05, demande explicite :
   // "petit mais visible") -- raccourci vers le panneau d'optimisation, en plus du menu au clic
-  const optBadge = (e && e.optimizable) ? `<span class="pdOptBtn" title="${LANG==='fr'?'Optimiser':'Enhance'}">🔧</span>` : '';
+  const optBadge = (e && e.optimizable) ? `<span class="pdOptBtn" title="${i18next.t('inventory:inventory.tooltip_enhance')}">🔧</span>` : '';
   // icône "aller à la zone" en coin, EMPILÉE sous 🔧 (2026-07-09, demande explicite : "opti en
   // haut à droite, upgrade sous l'icone d'opti") : ⬆️ sur une case remplie, UNIQUEMENT s'il existe
   // un vrai stuff meilleur à trouver (voir upgradeZonesForEquippedSlot : palier de la pièce
@@ -81,19 +81,19 @@ function pdSlotInnerHtmlFor(id, e) {
   // recours faute d'alternative ; 🔒 sur les 3 slots sans aucune source en jeu (artéfacts/pierre)
   let goBadge = '';
   if (e) {
-    if (upgradeZonesForEquippedSlot(id, e).length) goBadge = `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>`;
+    if (upgradeZonesForEquippedSlot(id, e).length) goBadge = `<span class="pdUpgradeBtn" title="${i18next.t('inventory:inventory.tooltip_zone_to_upgrade')}">⬆️</span>`;
   } else if (NO_SOURCE_SLOTS.includes(id)) {
-    goBadge = `<span class="pdLockBtn" title="${LANG==='fr'?'Pas encore disponible':'Not available yet'}">🔒</span>`;
+    goBadge = `<span class="pdLockBtn" title="${i18next.t('inventory:inventory.tooltip_not_available_yet')}">🔒</span>`;
   } else if (zonesForSlot(id).length) {
     // même icône ⬆️ que pour un socle rempli (2026-07-09, demande explicite : "ajoute l'icone
     // d'upgrade sur les case vide") -- un socle vide EST par définition à améliorer, même symbole
     // pour un langage visuel cohérent dans toute l'interface
-    goBadge = `<span class="pdFarmBtn" title="${LANG==='fr'?'Zone pour trouver ce stuff':'Zone to find this gear'}">⬆️</span>`;
+    goBadge = `<span class="pdFarmBtn" title="${i18next.t('inventory:inventory.tooltip_zone_to_find_gear')}">⬆️</span>`;
   }
   const cornerHtml = (optBadge || goBadge) ? `<span class="pdCorner">${optBadge}${goBadge}</span>` : '';
   // croix de déséquipement en bas-droite (2026-07-09, demande explicite) — raccourci direct en
   // plus du double-clic déjà existant sur la case
-  const unequipBadge = e ? `<span class="pdUnequipBtn" title="${LANG==='fr'?'Déséquiper':'Unequip'}">✕</span>` : '';
+  const unequipBadge = e ? `<span class="pdUnequipBtn" title="${i18next.t('inventory:inventory.action_unequip')}">✕</span>` : '';
   return icon + badge + apDpBadge + cornerHtml + unequipBadge;
 }
 function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
@@ -269,8 +269,8 @@ function showEquipSlotMenu(cell, slotId) {
   const pop = $('itemPop');
   let html = `<div class="ipName gear">${SLOT_LABEL[slotId] || slotId}</div>`;
   const emptyTxt = NO_SOURCE_SLOTS.includes(slotId)
-    ? (LANG==='fr'?'🔒 Pas encore disponible':'🔒 Not available yet')
-    : (LANG==='fr'?'Rien d\'équipé':'Nothing equipped');
+    ? i18next.t('inventory:inventory.slot_locked_not_available')
+    : i18next.t('inventory:inventory.slot_empty_nothing_equipped');
   html += `<div class="ipDesc">${e ? (escapeHtml(e.name)+pdStatSuffix(e)) : emptyTxt}</div>`;
   pop.innerHTML = html;
   let farmZones = [];
@@ -280,7 +280,7 @@ function showEquipSlotMenu(cell, slotId) {
       const box = document.createElement('div');
       box.className = 'ipDesc';
       box.style.marginTop = '6px';
-      box.innerHTML = (LANG==='fr' ? '📍 Où farmer : ' : '📍 Where to farm: ') +
+      box.innerHTML = i18next.t('inventory:inventory.where_to_farm_label') +
         farmZones.map(zi => `<button class="eqFarmZoneBtn" data-zi="${zi}">${tr(ZONES[zi].name)}</button>`).join(' ');
       pop.appendChild(box);
       box.querySelectorAll('.eqFarmZoneBtn').forEach(btn => {
@@ -414,7 +414,7 @@ let invCategory = 'normal';
 function renderInvCatTabs() {
   const el = $('invCatTabs'); if (!el) return;
   el.innerHTML = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCategory?' active':''}${c.locked?' locked':''}"` +
-    `${c.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-cat="${c.id}">` +
+    `${c.locked?' disabled title="'+i18next.t('inventory:inventory.category_coming_soon')+'"':''} data-cat="${c.id}">` +
     `${c.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${c.icon} ${c.label[LANG]}</span></button>`).join('');
   el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
     btn.onclick = () => {
@@ -491,8 +491,8 @@ function renderInventory() {
     const empty = document.createElement('div');
     empty.className = 'invCatEmpty';
     empty.textContent = cat.id === 'rng'
-      ? (LANG==='fr'?'Aucun coffre RNG pour l\'instant':'No RNG box yet')
-      : (LANG==='fr'?'Vide':'Empty');
+      ? i18next.t('inventory:inventory.category_empty_rng')
+      : i18next.t('inventory:inventory.category_empty_generic');
     grid.appendChild(empty);
   }
   // la grille vient d'être reconstruite : le DOM survolé a été détruit sans mouseleave —
@@ -542,7 +542,7 @@ function renderCompendiumPane() {
         cellEnhBadgeHtml(s) +
         (cellApDp && cellApDp.ap ? `<span class="cellAp">${cellApDp.ap}</span>` : '') +
         (cellApDp && cellApDp.dp ? `<span class="cellDp">${cellApDp.dp}</span>` : '') +
-        `<span class="compOptBtn" title="${LANG==='fr'?'Équiper et optimiser':'Equip and optimize'}">✦</span>`;
+        `<span class="compOptBtn" title="${i18next.t('inventory:inventory.compendium_equip_and_optimize')}">✦</span>`;
       if (s.color) { cell.style.borderColor = s.color; cell.style.boxShadow = `inset 0 0 6px ${s.color}55`; }
       cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
       cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
@@ -591,8 +591,8 @@ let chestZoomed = false;
 function updateChestZoomBtn() {
   const btn = $('btnChestZoom'); if (!btn) return;
   btn.textContent = chestZoomed
-    ? (LANG==='fr' ? '🔎 Réduire (8/ligne)' : '🔎 Shrink (8/row)')
-    : (LANG==='fr' ? '🔍 Agrandir (5/ligne)' : '🔍 Enlarge (5/row)');
+    ? i18next.t('inventory:inventory.chest_zoom_shrink')
+    : i18next.t('inventory:inventory.chest_zoom_enlarge');
 }
 function renderVeliaChest() {
   const grid = $('veliaChestGrid'); if (!grid) return;
@@ -613,7 +613,7 @@ function renderVeliaChest() {
     } else if (s) {
       cell.innerHTML = `<span style="color:${s.color}">${s.icon || '❔'}</span>` +
         (s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : '') +
-        `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button>`;
+        `<button class="compBagReturnBtn" data-i="${i}" title="${i18next.t('inventory:inventory.chest_return_to_bag')}">↩️</button>`;
       if (s.color) { cell.style.borderColor = s.color; cell.style.boxShadow = `inset 0 0 6px ${s.color}55`; }
       cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
       cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
@@ -627,7 +627,7 @@ function renderVeliaChest() {
       const i = parseInt(btn.dataset.i, 10);
       const it = VELIA_CHEST[i]; if (!it) return;
       if (invAdd({ ...it })) { VELIA_CHEST[i] = null; renderVeliaChest(); refreshInvUI(); }
-      else floatTxt(P.x, P.y, 100, LANG==='fr'?'Sac principal plein':'Main bag full', { hurt:true });
+      else floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.main_bag_full'), { hurt:true });
     };
   });
   const used = VELIA_CHEST.filter(Boolean).length;
@@ -691,7 +691,7 @@ function statDeltaHtml(item) {
   d('PA', cur.ap, refStats.ap); d('PD', cur.dp, refStats.dp); d('PV', cur.hp, refStats.hp);
   d('% Esq.', cur.dodge, refStats.dodge, true);
   if (!parts.length) return '';
-  return `<div class="ipDelta">${ref ? (LANG==='fr'?'vs équipé : ':'vs equipped: ') : (LANG==='fr'?'rien d\'équipé — ':'nothing equipped — ')}${parts.join(' ')}</div>`;
+  return `<div class="ipDelta">${ref ? i18next.t('inventory:inventory.stat_delta_vs_equipped') : i18next.t('inventory:inventory.stat_delta_nothing_equipped')}${parts.join(' ')}</div>`;
 }
 // version texte brut (sans HTML) du delta — utilisée dans les libellés de bouton (textContent)
 function statDeltaShortText(item) {
@@ -721,11 +721,16 @@ function showItemMenu(px, py, data) {
   pop.innerHTML = html + `<div class="ipDesc">${desc.join('<br>')}</div>` + delta;
 
   // actions (libellés bilingues)
-  const L = LANG === 'fr'
-    ? { unequip:'Déséquiper', equip:'Équiper', toOpt:'Mettre en optimisation', sell1:n=>'Vendre 1 ('+n+')', sellAll:n=>'Vendre tout ('+n+')', drop:'Jeter',
-        confirmSell1:n=>'Vendre 1 objet pour '+n+' silver ?', confirmSellAll:n=>'Vendre tout le tas pour '+n+' silver ?' }
-    : { unequip:'Unequip', equip:'Equip', toOpt:'Load into enhancement', sell1:n=>'Sell 1 ('+n+')', sellAll:n=>'Sell all ('+n+')', drop:'Drop',
-        confirmSell1:n=>'Sell 1 item for '+n+' silver?', confirmSellAll:n=>'Sell the whole stack for '+n+' silver?' };
+  const L = {
+    unequip: i18next.t('inventory:inventory.action_unequip'),
+    equip: i18next.t('inventory:inventory.action_equip'),
+    toOpt: i18next.t('inventory:inventory.action_to_opt'),
+    sell1: n => i18next.t('inventory:inventory.action_sell_one', { n }),
+    sellAll: n => i18next.t('inventory:inventory.action_sell_all', { n }),
+    drop: i18next.t('inventory:inventory.action_drop'),
+    confirmSell1: n => i18next.t('inventory:inventory.confirm_sell_one', { n }),
+    confirmSellAll: n => i18next.t('inventory:inventory.confirm_sell_all', { n }),
+  };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
     if (data.kind === 'gear' || data.kind === 'jackpot') addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'equip', key:data.slotId }; });
@@ -744,8 +749,8 @@ function showItemMenu(px, py, data) {
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
     // coffre de ville (2026-07-16, demande explicite) : range 1 unité dans le coffre (même
     // granularité que "Vendre 1"), désactivé si le coffre n'a plus de place libre
-    addPopBtn(pop, LANG==='fr'?'📦 Ranger au coffre (1)':'📦 Store in chest (1)', () => {
-      if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, LANG==='fr'?'Coffre plein':'Chest full', { hurt:true });
+    addPopBtn(pop, i18next.t('inventory:inventory.action_store_in_chest'), () => {
+      if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
     });
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
@@ -969,8 +974,8 @@ $('btnEquipBest').onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = n > 0
-      ? (LANG==='fr' ? `${n} pièce${n>1?'s':''} remplacée${n>1?'s':''} (meilleur socle)` : `${n} piece${n>1?'s':''} swapped (better base stats)`)
-      : (LANG==='fr' ? 'Déjà optimal — rien à changer' : 'Already optimal — nothing to change');
+      ? i18next.t('inventory:inventory.equip_best_result', { count: n })
+      : i18next.t('inventory:inventory.equip_best_already_optimal');
     msg.className = n > 0 ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -1054,11 +1059,11 @@ $('btnSellWorse').onclick = () => {
   if (msg) {
     const soldCount = count - divertedCount;
     const divertedTxt = divertedCount > 0
-      ? (LANG==='fr' ? ` · +${divertedCount} protégé${divertedCount>1?'s':''} dans le sac 📖 Compendium` : ` · +${divertedCount} protected in the 📖 Compendium bag`)
+      ? i18next.t('inventory:inventory.sell_worse_diverted', { count: divertedCount })
       : '';
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `${soldCount} objet${soldCount>1?'s':''} vendu${soldCount>1?'s':''} (+${fmt(total)} silver)${divertedTxt}` : `${soldCount} item${soldCount>1?'s':''} sold (+${fmt(total)} silver)${divertedTxt}`)
-      : (LANG==='fr' ? 'Rien à vendre — tout est déjà au-dessus de l\'équipé' : 'Nothing to sell — everything already beats what\'s equipped');
+      ? i18next.t('inventory:inventory.sell_worse_result', { count: soldCount, total: fmt(total), divertedTxt })
+      : i18next.t('inventory:inventory.sell_worse_nothing');
     msg.className = count > 0 ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -1069,8 +1074,8 @@ $('btnBuyBackWorse').onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = ok
-      ? (LANG==='fr' ? 'Objets rachetés ✓' : 'Items bought back ✓')
-      : (LANG==='fr' ? 'Rien à racheter (ou sac plein / silver insuffisant)' : 'Nothing to buy back (or bag full / not enough silver)');
+      ? i18next.t('inventory:inventory.buyback_success')
+      : i18next.t('inventory:inventory.buyback_nothing');
     msg.className = ok ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -1151,14 +1156,14 @@ function renderOptimization() {
   const fsCount = target ? itemFailstack(target, lvl+1) : 0;
   $('optItem').innerHTML = target ? (target.icon || (optTarget.loc==='equip' ? SLOT_ICON[optTarget.key] : '❔')) : '—';
   $('optItem').style.boxShadow = (target && target.color) ? `0 0 8px 2px ${target.color}66` : '';
-  $('optLevelLbl').innerHTML = (target ? tr(target.name) : (LANG==='fr'?'Aucune pièce équipée':'No piece equipped')) + ' <b id="optLevelVal">' + (target ? ENH_NAMES[lvl] : '—') + '</b>';
+  $('optLevelLbl').innerHTML = (target ? tr(target.name) : i18next.t('inventory:inventory.opt_no_piece_equipped')) + ' <b id="optLevelVal">' + (target ? ENH_NAMES[lvl] : '—') + '</b>';
 
   const matIdx = findEnhanceMaterial(), matSlotEl = $('optMat');
-  const maxedTxt = LANG==='fr' ? 'PEN atteint — niveau maximum' : 'PEN reached — max level';
-  if (!target) { matSlotEl.className='empty'; matSlotEl.innerHTML='＋'; matSlotEl.style.boxShadow=''; $('optChanceTxt').textContent = LANG==='fr'?'Équipez une pièce à optimiser':'Equip a piece to enhance'; $('btnOpt').disabled=true; }
+  const maxedTxt = i18next.t('inventory:inventory.opt_max_level_reached');
+  if (!target) { matSlotEl.className='empty'; matSlotEl.innerHTML='＋'; matSlotEl.style.boxShadow=''; $('optChanceTxt').textContent = i18next.t('inventory:inventory.opt_equip_a_piece'); $('btnOpt').disabled=true; }
   else if (matIdx === -1) {
     matSlotEl.className = 'empty'; matSlotEl.innerHTML = '＋'; matSlotEl.title = ''; matSlotEl.style.boxShadow = '';
-    $('optChanceTxt').textContent = maxed ? maxedTxt : (LANG==='fr'?'Aucun matériau en sac — farmez du loot':'No material in bag — go loot some');
+    $('optChanceTxt').textContent = maxed ? maxedTxt : i18next.t('inventory:inventory.opt_no_material');
     $('btnOpt').disabled = true;
   } else {
     const it = INV[matIdx];
@@ -1170,9 +1175,9 @@ function renderOptimization() {
     // clic sur "Tenter") -- 2026-07-19, voir ITEM_TUTORIALS.enchant/maybeQueueTutorialById
     // (progression/notifications-quests.js)
     if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('enchant');
-    const fsTxt = fsCount > 0 ? ` <span style="color:#8fc9e8">(+${fsCount} ${LANG==='fr'?'échecs sur ce palier':'fails on this tier'})</span>` : '';
+    const fsTxt = fsCount > 0 ? ` <span style="color:#8fc9e8">(+${fsCount} ${i18next.t('inventory:inventory.opt_fails_on_tier')})</span>` : '';
     $('optChanceTxt').innerHTML = maxed ? maxedTxt
-      : `${LANG==='fr'?'Matériau':'Material'} : ${tr(it.name)} · ${LANG==='fr'?'Chance':'Chance'} : ${(parts.total*100).toFixed(1)}% → ${ENH_NAMES[lvl+1]}${fsTxt}`;
+      : `${i18next.t('inventory:inventory.opt_material_label')} : ${tr(it.name)} · ${i18next.t('inventory:inventory.opt_chance_label')} : ${(parts.total*100).toFixed(1)}% → ${ENH_NAMES[lvl+1]}${fsTxt}`;
   }
   // barre à deux tons : chance de base (or) + bonus du failstack accumulé sur CE palier (bleu)
   $('optChanceFill').style.width = (parts.base*100)+'%';
@@ -1190,14 +1195,14 @@ function renderOptimization() {
   const cronCost = cronStoneCostForItem(target);
   const cronHave = cronIdx === -1 ? 0 : INV[cronIdx].qty;
   if (cronIdx === -1) {
-    cronSlotEl.className = 'empty' + cronOffCls; cronSlotEl.title = LANG==='fr'?'Aucune Pierre de Cron en sac':'No Cron Stone in bag';
+    cronSlotEl.className = 'empty' + cronOffCls; cronSlotEl.title = i18next.t('inventory:inventory.opt_no_cron_stone');
     $('optCronQty').textContent = target ? `0/${cronCost}` : '';
     cronSlotEl.style.boxShadow = '';
   } else {
     cronSlotEl.className = cronOffCls.trim(); cronSlotEl.title = CRON_STONE.name + ' — ' +
-      (S.useCronStone ? (LANG==='fr'?'utilisée (clique pour désactiver)':'in use (click to disable)')
-                      : (LANG==='fr'?'non utilisée (clique pour activer)':'not used (click to enable)')) +
-      (target ? (LANG==='fr'?` · coût pour cette pièce : ${cronCost}`:` · cost for this piece: ${cronCost}`) : '');
+      (S.useCronStone ? i18next.t('inventory:inventory.opt_cron_in_use')
+                      : i18next.t('inventory:inventory.opt_cron_not_used')) +
+      (target ? i18next.t('inventory:inventory.opt_cron_cost_suffix', { cronCost }) : '');
     $('optCronQty').innerHTML = target
       ? `<span class="${cronHave >= cronCost ? '' : 'bad'}">${fmt(cronHave)}/${cronCost}</span>`
       : fmt(cronHave);
@@ -1228,7 +1233,7 @@ function attemptEnhance() {
     S.enhSuccess = (S.enhSuccess||0) + 1;
     // le failstack déjà acquis sur les AUTRES paliers reste acquis (rien n'est effacé) — seul le
     // palier qu'on vient de passer n'a plus besoin d'être suivi, il reste stocké mais inutilisé
-    r.textContent = (LANG==='fr'?'✦ SUCCÈS — ':'✦ SUCCESS — ') + ENH_NAMES[target.enhLv]; r.className = 'ok';
+    r.textContent = i18next.t('inventory:inventory.opt_success_prefix') + ENH_NAMES[target.enhLv]; r.className = 'ok';
     floatTxt(P.x,P.y,100,'✦ '+ENH_NAMES[target.enhLv],{gold:true});
     // Compendium : trace le meilleur niveau jamais atteint pour ce nom (2026-07-15), survit à une
     // vente ultérieure -- avant, seul le passage à PEN précis était retenu (S.penMastery)
@@ -1269,16 +1274,16 @@ function attemptEnhance() {
       // un kind DISTINCT ('cron_used') pour ne jamais se mélanger aux ramassages dans
       // admin_farm_by_item (qui groupe par item_name ET item_kind).
       if (typeof queueFarmEvent === 'function') queueFarmEvent('cron_used', CRON_STONE.name, cronCost, 0);
-      r.textContent = (LANG==='fr'?'✖ ÉCHEC — protégé par '+cronCost+' Pierre'+(cronCost>1?'s':'')+' de Cron (':'✖ FAIL — protected by '+cronCost+' Cron Stone'+(cronCost>1?'s':'')+' (')+ENH_NAMES[target.enhLv]+')';
-      floatTxt(P.x,P.y,100,LANG==='fr'?'⏳ Protégé !':'⏳ Protected!',{blue:true});
+      r.textContent = i18next.t('inventory:inventory.opt_fail_protected_prefix', { count: cronCost }) + ENH_NAMES[target.enhLv] + ')';
+      floatTxt(P.x,P.y,100,i18next.t('inventory:inventory.opt_protected_floattxt'),{blue:true});
     } else if (lvl >= SAFE_IDX && lvl < PRI_IDX) { // +8 à +15 : peut rétrograder, jamais sous +7
       target.enhLv = Math.max(SAFE_IDX-1, lvl-1);
-      r.textContent = (LANG==='fr'?'✖ ÉCHEC — rétrogradé à ':'✖ FAIL — downgraded to ') + ENH_NAMES[target.enhLv];
+      r.textContent = i18next.t('inventory:inventory.opt_fail_downgraded_prefix') + ENH_NAMES[target.enhLv];
     } else if (lvl >= PRI_IDX) { // PRI et plus : rétrograde d'un palier, mais jamais sous PRI (pas de retour à +15)
       target.enhLv = Math.max(PRI_IDX, lvl-1);
-      r.textContent = (LANG==='fr'?'✖ ÉCHEC — rétrogradé à ':'✖ FAIL — downgraded to ') + ENH_NAMES[target.enhLv];
+      r.textContent = i18next.t('inventory:inventory.opt_fail_downgraded_prefix') + ENH_NAMES[target.enhLv];
     } else {
-      r.textContent = LANG==='fr' ? '✖ ÉCHEC — matériau perdu' : '✖ FAIL — material lost';
+      r.textContent = i18next.t('inventory:inventory.opt_fail_material_lost');
     }
     r.className = 'fail';
     // redémarre l'animation sans lecture forcée de layout (offsetWidth) — un simple retrait/ajout
@@ -1320,7 +1325,7 @@ function optAutoGainParts(target, targetLvl) {
   if (proj.ap > cur.ap) parts.push('+' + (proj.ap-cur.ap) + ' PA');
   if (proj.dp > cur.dp) parts.push('+' + (proj.dp-cur.dp) + ' PD');
   if (proj.hp > cur.hp) parts.push('+' + (proj.hp-cur.hp) + ' PV');
-  if (proj.dodge > cur.dodge) parts.push('+' + (proj.dodge-cur.dodge).toFixed(2) + '% ' + (LANG==='fr'?'Esq.':'Dodge'));
+  if (proj.dodge > cur.dodge) parts.push('+' + (proj.dodge-cur.dodge).toFixed(2) + '% ' + i18next.t('inventory:inventory.stat_dodge_abbr'));
   return parts;
 }
 // version compacte du gain, un SEUL stat (le principal de la pièce : PA pour arme/éveil/dague, PD
@@ -1368,7 +1373,7 @@ function renderOptAutoTargetSelect() {
     const showGain = gainTxt !== lastGainTxt;
     if (gainTxt) lastGainTxt = gainTxt;
     return `<option value="${i}">${ENH_NAMES[i]}${(showGain && gainTxt) ? ' (' + gainTxt + ')' : ''}</option>`;
-  }).join('') || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
+  }).join('') || `<option value="">${i18next.t('inventory:inventory.opt_auto_max_level')}</option>`;
   sel.disabled = !options.length;
   // restaure le palier précédemment choisi par le joueur, s'il est toujours une option valide
   // (2026-07-16, bug corrigé : "je choisis qqch dans la liste pour opti auto et ça le choisit pas,
@@ -1387,7 +1392,7 @@ function renderOptAutoGain() {
   const targetLvl = sel ? parseInt(sel.value, 10) : NaN;
   const parts = optAutoGainParts(target, targetLvl);
   el.textContent = parts.length
-    ? (LANG==='fr' ? `À ${ENH_NAMES[targetLvl]} : ` : `At ${ENH_NAMES[targetLvl]}: `) + parts.join(' · ')
+    ? i18next.t('inventory:inventory.opt_auto_gain_at', { level: ENH_NAMES[targetLvl] }) + parts.join(' · ')
     : '';
 }
 $('optAutoTarget').onchange = renderOptAutoGain;
@@ -1398,7 +1403,7 @@ function stopAutoOpt() {
   autoOptTargetLvl = null;
   const btn = $('btnOptAuto'); if (!btn) return;
   btn.classList.remove('running');
-  btn.textContent = LANG==='fr' ? "▶ Auto jusqu'à" : '▶ Auto to';
+  btn.textContent = i18next.t('inventory:inventory.opt_auto_btn_start');
   $('optAutoTarget').disabled = false;
   $('optAutoMode').disabled = false;
 }
@@ -1433,14 +1438,14 @@ function startAutoOpt() {
   $('optAutoMode').disabled = true;
   const btn = $('btnOptAuto');
   btn.classList.add('running');
-  btn.textContent = LANG==='fr' ? '⏸ Arrêter' : '⏸ Stop';
+  btn.textContent = i18next.t('inventory:inventory.opt_auto_btn_stop');
   autoOptTimer = setInterval(() => {
     const target = getOptTargetItem();
     if (!target) { stopAutoOpt(); return; }
     if (mode === 'target' && (target.enhLv||0) >= autoOptTargetLvl) { stopAutoOpt(); return; }
     if ((target.enhLv||0) >= ENH_NAMES.length-1) { stopAutoOpt(); return; } // niveau max déjà atteint
     if (findEnhanceMaterial() === -1) {
-      $('optResult').textContent = LANG==='fr' ? 'Auto arrêté — plus de matériau' : 'Auto stopped — out of material';
+      $('optResult').textContent = i18next.t('inventory:inventory.opt_auto_stopped_no_material');
       stopAutoOpt();
       return;
     }
@@ -1448,7 +1453,7 @@ function startAutoOpt() {
     // n'a plus de quoi protéger la prochaine rétrogradation — utile pour pousser un palier risqué
     // (+8 et au-delà) sans jamais tenter "à découvert" une fois le stock de protection épuisé
     if (mode === 'cron' && findCronStone() === -1) {
-      $('optResult').textContent = LANG==='fr' ? 'Auto arrêté — plus de Pierre de Cron' : 'Auto stopped — out of Cron Stones';
+      $('optResult').textContent = i18next.t('inventory:inventory.opt_auto_stopped_no_cron');
       stopAutoOpt();
       return;
     }
@@ -1468,7 +1473,7 @@ function startAutoOpt() {
       if (!target3) { stopAutoOpt(); return; }
       const cur = effectiveApDp(target3);
       if (cur.ap > startAp || cur.dp > startDp) {
-        $('optResult').textContent = LANG==='fr' ? `Auto arrêté — gain obtenu (${ENH_NAMES[target3.enhLv||0]})` : `Auto stopped — gain reached (${ENH_NAMES[target3.enhLv||0]})`;
+        $('optResult').textContent = i18next.t('inventory:inventory.opt_auto_stopped_gain', { level: ENH_NAMES[target3.enhLv||0] });
         stopAutoOpt();
         return;
       }
@@ -1492,7 +1497,7 @@ function poussiereCount() {
 function renderCapConvertRow() {
   const lbl = $('capConvertLbl'), btn = $('btnConvertCaphras'); if (!lbl || !btn) return;
   const n = poussiereCount();
-  lbl.textContent = (LANG==='fr' ? `${fmt(n)} poussière → ${Math.floor(n/5)} pierre de Caphras` : `${fmt(n)} dust → ${Math.floor(n/5)} Caphras stone`);
+  lbl.textContent = i18next.t('inventory:inventory.caphras_convert_label', { n: fmt(n), caphras: Math.floor(n/5) });
   btn.disabled = n < 5;
 }
 function convertPoussiereToCaphras() {
@@ -1505,7 +1510,7 @@ function convertPoussiereToCaphras() {
     // sac plein : annule le prélèvement de poussière
     const s = INV[idx];
     if (s) s.qty += 5; else INV[idx] = { key:'craft_'+POUSSIERE_NAME, name:POUSSIERE_NAME, kind:'craft', icon:'✦', color:'#b48ce8', qty:5, stackable:true, weight:0.2, val:0 };
-    floatTxt(P.x, P.y, 100, LANG==='fr'?'Sac plein':'Bag full', { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.bag_full'), { hurt:true });
     return;
   }
   floatTxt(P.x, P.y, 100, '+1 '+CAPHRAS_NAME, { gold:true });
@@ -1543,7 +1548,7 @@ function renderOptSuggestions() {
   if (!best || bestGain <= 0) { box.innerHTML = ''; return; }
 
   const arrow = ENH_NAMES[best.lvl] + '→' + ENH_NAMES[best.lvl+1];
-  const lbl = LANG==='fr' ? 'Recommandé' : 'Recommended';
+  const lbl = i18next.t('inventory:inventory.opt_suggest_recommended');
   box.innerHTML = `<div class="optSuggestLbl">${lbl} :</div><div class="optSuggestPick">${tr(best.e.name)} <span class="optSuggestArrow">${arrow}</span></div>`;
 }
 
@@ -1554,7 +1559,7 @@ const LOOT_ICONS = { trash:'▬', material:'◈', jackpot:'💍', craft:'✦', g
 // que #btnAutoSellLoot (global, voir index.html) : cadenas TOUJOURS en badge au-dessus, centré
 // (.zoneTierLock/.lockedFeatureBtn), jamais inline dans le bouton
 function lootAutoSellLockHtml() {
-  return `<button class="lootAutoSellBtn" disabled title="${LANG==='fr'?'Vente automatique (bientôt disponible)':'Auto-sell (coming soon)'}"><span class="zoneTierLock">🔒</span>🗑️</button>`;
+  return `<button class="lootAutoSellBtn" disabled title="${i18next.t('inventory:inventory.loot_autosell_coming_soon')}"><span class="zoneTierLock">🔒</span>🗑️</button>`;
 }
 // aperçu agrandi au survol d'une icône de la table de loot (2026-07-08, demande explicite : "qu'on
 // puisse agrandir l'icone pour mieux la voir en tooltip en auto en passant dessus") -- écoute
@@ -1589,9 +1594,9 @@ function zoneLootRowsHtml(idx) {
   const z = ZONES[idx], L = z.loot;
   const tier = gearTierForZone(idx);
   const gearCh = gearDropChance(tier, idx);
-  const equippedWord = LANG === 'fr' ? 'PA équipé' : 'AP equipped';
-  const armorPieceNote = LANG==='fr' ? 'armure — cette zone uniquement' : 'armor — this zone only';
-  const weaponPieceNote = LANG==='fr' ? 'arme — cette zone uniquement' : 'weapon — this zone only';
+  const equippedWord = i18next.t('inventory:inventory.loot_ap_equipped');
+  const armorPieceNote = i18next.t('inventory:inventory.loot_armor_zone_only');
+  const weaponPieceNote = i18next.t('inventory:inventory.loot_weapon_zone_only');
   const rows = [
     { kind:'trash',    it:L.trash,   note:'revenu de base' },
     { kind:'material', it:{name:tier.material.name, icon:tier.material.icon}, ch:L.mat.ch, note:'optimisation' },
@@ -1661,7 +1666,7 @@ function zoneLootRowsHtml(idx) {
     // jackpot -> n'importe quel slot de bijou de la même base (bague/collier/boucle/ceinture)
     const isUpgrade = r.slot ? upgradedSlots.includes(r.slot)
       : r.baseSlot ? upgradedSlots.some(s => accBaseSlot(s) === r.baseSlot) : false;
-    const upgradeHtml = isUpgrade ? `<span class="lootUpgradeArrow" title="${LANG==='fr'?'Améliore ton stuff actuel':'Upgrades your current gear'}">⬆️</span>` : '';
+    const upgradeHtml = isUpgrade ? `<span class="lootUpgradeArrow" title="${i18next.t('inventory:inventory.loot_upgrade_tooltip')}">⬆️</span>` : '';
     return { cat: LOOT_CATS[r.kind] || { fr:'Autre', en:'Other', order:9 }, html: `
     <div class="lootRow${isUpgrade?' lootRowUpgrade':''}">
       ${upgradeHtml}
@@ -1704,13 +1709,9 @@ function showFarmGuide() {
     .filter(r => r.zi <= S.maxZoneIdx && !r.dangerous);
   const html = rows.length ? rows.map(r =>
     `${zoneLootCompactRowHtml(r.zi)}<div class="lootZoneDetail" id="farmGuideDetail${r.zi}" style="display:none">${zoneLootRowsHtml(r.zi)}</div>`
-  ).join('') : `<div class="admHint">${LANG==='fr'
-    ? 'Aucune zone débloquée n\'est actuellement sûre pour toi — améliore ton stuff ou explore prudemment.'
-    : 'No unlocked zone is currently safe for you — improve your gear or explore carefully.'}</div>`;
-  const banner = `<div class="admHint">${LANG==='fr'
-    ? '🗺️ Où farmer ? Zones débloquées, hors zones trop dangereuses pour ton stuff actuel — clique une zone pour voir le détail complet :'
-    : '🗺️ Where to farm? Unlocked zones, excluding ones currently too dangerous for your gear — click a zone to see the full detail:'}</div>`;
-  openInfo(LANG==='fr' ? '🗺️ Où farmer ?' : '🗺️ Where to farm?', banner + html);
+  ).join('') : `<div class="admHint">${i18next.t('inventory:inventory.farm_guide_no_safe_zone')}</div>`;
+  const banner = `<div class="admHint">${i18next.t('inventory:inventory.farm_guide_banner')}</div>`;
+  openInfo(i18next.t('inventory:inventory.farm_guide_title'), banner + html);
   $a('infoBody').querySelectorAll('.lootZoneCompact').forEach(row => {
     row.onclick = () => {
       const detail = $a('farmGuideDetail'+row.dataset.zi);
@@ -1729,10 +1730,8 @@ function renderLootTable(previewIdx) {
   if (atVelia && previewIdx == null) {
     lootPreviewIdx = null;
     updateZoneViewHalo();
-    $('lootZoneName').textContent = LANG==='fr' ? 'Velia — zone paisible' : 'Velia — peaceful zone';
-    const banner = `<div class="admHint">${LANG==='fr'
-      ? '🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :'
-      : '🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:'}</div>`;
+    $('lootZoneName').textContent = i18next.t('inventory:inventory.velia_peaceful_zone');
+    const banner = `<div class="admHint">${i18next.t('inventory:inventory.velia_loot_banner')}</div>`;
     const allZonesHtml = ZONES.map((z,zi) =>
       `${zoneLootCompactRowHtml(zi)}<div class="lootZoneDetail" id="lootDetail${zi}" style="display:none">${zoneLootRowsHtml(zi)}</div>`
     ).join('');
@@ -1752,7 +1751,7 @@ function renderLootTable(previewIdx) {
   updateZoneViewHalo();
   const z = ZONES[idx];
   const previewTag = previewIdx != null && previewIdx !== zoneIdx
-    ? (LANG==='fr' ? '👁 Aperçu — ' : '👁 Preview — ') : '';
+    ? i18next.t('inventory:inventory.loot_preview_tag') : '';
   $('lootZoneName').textContent = previewTag + tr(z.mob);
   const mainRowsHtml = zoneLootRowsHtml(idx);
   // catégorie "Trésor de Velia" : identique dans toutes les zones du jeu (sortie du statut
@@ -1765,7 +1764,7 @@ function renderLootTable(previewIdx) {
       ${lootAutoSellLockHtml()}
     </div>`).join('');
   $('lootTable').innerHTML = mainRowsHtml +
-    `<div class="lootCatHead">🗺️ ${LANG==='fr'?'Trésor de Velia':'Velia Treasure'}</div>` + treasureRowsHtml;
+    `<div class="lootCatHead">🗺️ ${i18next.t('inventory:inventory.velia_treasure_label')}</div>` + treasureRowsHtml;
 }
 function dropItem(i) {
   const s = INV[i]; if (!s) return;
@@ -1819,10 +1818,10 @@ $('btnEquipSellCompendium').onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     const parts = [];
-    if (equipped > 0) parts.push(LANG==='fr' ? `${equipped} équipée${equipped>1?'s':''}` : `${equipped} equipped`);
-    if (sold > 0) parts.push(LANG==='fr' ? `${sold} vendue${sold>1?'s':''} (+${fmt(total)} silver)` : `${sold} sold (+${fmt(total)} silver)`);
-    if (diverted > 0) parts.push(LANG==='fr' ? `${diverted} protégée${diverted>1?'s':''} 📖` : `${diverted} protected 📖`);
-    msg.textContent = parts.length ? parts.join(' · ') : (LANG==='fr' ? 'Déjà optimal — rien à faire' : 'Already optimal — nothing to do');
+    if (equipped > 0) parts.push(i18next.t('inventory:inventory.equip_sell_comp_equipped', { count: equipped }));
+    if (sold > 0) parts.push(i18next.t('inventory:inventory.equip_sell_comp_sold', { count: sold, total: fmt(total) }));
+    if (diverted > 0) parts.push(i18next.t('inventory:inventory.equip_sell_comp_diverted', { count: diverted }));
+    msg.textContent = parts.length ? parts.join(' · ') : i18next.t('inventory:inventory.equip_sell_comp_nothing');
     msg.className = parts.length ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }

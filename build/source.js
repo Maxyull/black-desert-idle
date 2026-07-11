@@ -1,3 +1,1668 @@
+// ==== src/core/i18n-resources.generated.js ====
+const I18N_NAMESPACES = ["admin","backend","combat","common","core","inventory","market","progression","social"];
+const I18N_RESOURCES = {
+  "fr": {
+    "admin": {
+      "admin.common.chart_unavailable": "Graphique indisponible",
+      "admin.common.failed": "Échec",
+      "admin.common.failed_prefix": "Échec — ",
+      "admin.common.loading": "Chargement…",
+      "admin.common.no_data": "Pas encore de données",
+      "admin.content.boss_danger_sub": "Danger : ces actions touchent TOUS les joueurs connectés.",
+      "admin.content.boss_despawn_btn": "Faire disparaître",
+      "admin.content.boss_despawn_confirm": "Faire disparaître le boss mondial pour TOUS les joueurs ?",
+      "admin.content.boss_despawned_toast": "Boss disparu ✓",
+      "admin.content.boss_duration_option": "~{{m}} min à tuer",
+      "admin.content.boss_hint": "Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels). Le boss disparaît de toute façon au bout de 9 minutes.",
+      "admin.content.boss_label": "🌍 Boss :",
+      "admin.content.boss_launch_btn": "Lancer (9 min)",
+      "admin.content.boss_launch_failed_toast": "Échec du lancement",
+      "admin.content.boss_launch_title": "Lancer un boss pour TOUS",
+      "admin.content.boss_launched_toast": "Boss lancé pour tous ✓",
+      "admin.content.breakdown_title": "⚖️ Répartition",
+      "admin.content.by_gearscore_title": "⚔️ Par Gearscore",
+      "admin.content.by_rarity_title": "🎲 Par rareté",
+      "admin.content.by_section_title": "🗺️ Par section",
+      "admin.content.by_tier_title": "⬆️ Par Tier (tous joueurs confondus)",
+      "admin.content.by_zone_title": "🗾 Par zone",
+      "admin.content.companions_achievements_avg": "Succès complétés (moy.)",
+      "admin.content.companions_downgrade_fusions": "Fusions perdantes (total)",
+      "admin.content.companions_eggs_hatched": "Œufs éclos (total)",
+      "admin.content.companions_fusions_total": "Fusions (total)",
+      "admin.content.companions_hard_achievements_avg": "Succès \"difficiles\" (moy.)",
+      "admin.content.companions_hatches_per_day": "Éclosions / jour (moy.)",
+      "admin.content.companions_index_completion": "Complétion Index (moy.)",
+      "admin.content.companions_login_streak": "Streak connexion (moy.)",
+      "admin.content.companions_no_data": "Aucun joueur n'a encore ouvert le module Compagnons",
+      "admin.content.companions_no_fusion": "Aucune fusion ni éclosion pour l'instant",
+      "admin.content.companions_pets": "Familiers (total / moy.)",
+      "admin.content.companions_silver": "Silver compagnon (total)",
+      "admin.content.companions_summary": "Module 100% local jusqu'ici (localStorage, économie fermée, indépendante du Silver principal) — \"Joueurs synchronisés\" compte ceux qui ont ouvert l'onglet Compagnon au moins une fois (le module envoie ses compteurs toutes les 60s en arrière-plan).",
+      "admin.content.companions_synced": "Joueurs synchronisés",
+      "admin.content.companions_triggered_pity": "Ont déclenché le pity",
+      "admin.content.compendium_distribution_title": "📖 Répartition",
+      "admin.content.compendium_summary": "Moyenne : {{avg}}% de complétion (zones + World Bosses + Maîtrise PEN combinés) sur {{count}} joueur(s) suivi(s).",
+      "admin.content.completed_label": "Terminés",
+      "admin.content.completed_total": "Terminés (total)",
+      "admin.content.cron_balance_title": "⚖️ Farmé vs utilisé",
+      "admin.content.cron_cost_title": "💎 Coût par palier de la pièce protégée",
+      "admin.content.cron_farmed_30d": "Farmées (30j)",
+      "admin.content.cron_farmed_per_player": "Farmées / joueur",
+      "admin.content.cron_hint": "Taux de drop FIXE, identique dans toutes les zones (1 à 3 unités/ramassage). \"Utilisées\" = consommées pour protéger un enchantement d'une rétrogradation (coût variable selon le palier, voir tableau plus bas). Fenêtre de 30 jours, comme le registre de silver.",
+      "admin.content.cron_protections_30d": "Protections (30j)",
+      "admin.content.cron_stock_label": "En stock (farmé - utilisé)",
+      "admin.content.cron_used_30d": "Utilisées (30j)",
+      "admin.content.cron_used_label": "Utilisées (protection)",
+      "admin.content.dropoff_funnel_title": "📉 Funnel d'abandon (étape où resté bloqué)",
+      "admin.content.fusion_list_title": "🔗 Liste des fusions par joueur",
+      "admin.content.in_progress_abandoned_label": "En cours / abandonné",
+      "admin.content.index_completion_breakdown_title": "📖 Répartition de la complétion Index",
+      "admin.content.onboarding_completed_label": "Terminé",
+      "admin.content.onboarding_no_data": "Personne n'a encore démarré le tutoriel d'arrivée (bouton dans le Wiki)",
+      "admin.content.onboarding_no_dropoff": "Aucun abandon en cours (tout le monde a terminé ou passé)",
+      "admin.content.onboarding_skipped_label": "Passé",
+      "admin.content.onboarding_summary": "Le tutoriel d'arrivée ne se lance jamais automatiquement — seulement via le bouton dans le Wiki. \"Démarré\" = a cliqué ce bouton au moins une fois.",
+      "admin.content.skipped_label": "Passés",
+      "admin.content.skipped_total": "Passés (total)",
+      "admin.content.started_label": "Démarré",
+      "admin.content.table_avg_kills": "Kills en moyenne",
+      "admin.content.table_breakthroughs": "Percées",
+      "admin.content.table_chance_per_kill": "Chance/kill",
+      "admin.content.table_cost": "Coût",
+      "admin.content.table_downgrades": "Perdantes",
+      "admin.content.table_eggs": "Œufs",
+      "admin.content.table_est_time": "Temps estimé",
+      "admin.content.table_fusions": "Fusions",
+      "admin.content.table_index": "Index",
+      "admin.content.table_item": "Objet",
+      "admin.content.table_kind": "Type",
+      "admin.content.table_pickups": "Ramassages",
+      "admin.content.table_player": "Joueur",
+      "admin.content.table_players": "Joueurs",
+      "admin.content.table_rate": "Taux",
+      "admin.content.table_step_reached": "Étape où bloqué",
+      "admin.content.table_tier": "Palier",
+      "admin.content.table_total": "Total",
+      "admin.content.table_tutorial": "Tutoriel",
+      "admin.content.treasure_estimate": "Estimation à {{kpm}} kills/min (compare à ton propre \"Kills/min\" affiché en jeu)",
+      "admin.content.tutorials_completed_vs_skipped_title": "⚖️ Terminés vs passés (tous tutoriels)",
+      "admin.content.tutorials_detail_title": "Détail par tutoriel",
+      "admin.content.tutorials_hint": "Un tutoriel apparaît ici dès qu'au moins un joueur l'a terminé ou passé (mark_item_tutorial_seen). Taux = terminés / (terminés + passés).",
+      "admin.content.tutorials_no_data": "Aucun tutoriel vu pour l'instant",
+      "admin.content.tutorials_tracked": "Tutoriels suivis",
+      "admin.content.zone_progression_summary": "Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant. Catégories sous 4% fusionnées dans \"Autres\".",
+      "admin.dashboard.active_bans_label": "Bannissement(s) actif(s)",
+      "admin.dashboard.active_bans_stat": "Bannissements actifs",
+      "admin.dashboard.companions_none_synced": "Aucun joueur synchronisé",
+      "admin.dashboard.companions_synced_note": "{{count}} joueur(s) synchronisé(s)",
+      "admin.dashboard.completion_pct_note": "{{pct}}% de complétion",
+      "admin.dashboard.cron_farmed_used_note": "{{farmed}} farmées / {{used}} utilisées",
+      "admin.dashboard.cron_in_stock_label": "En stock",
+      "admin.dashboard.cron_used_label": "Utilisées",
+      "admin.dashboard.econ_healthy_note": "Équilibre sources/puits sain",
+      "admin.dashboard.light_needs_attention": "À surveiller",
+      "admin.dashboard.light_ok": "OK",
+      "admin.dashboard.market_active_note": "Marché actif (30j)",
+      "admin.dashboard.market_closed_note": "Marché FERMÉ",
+      "admin.dashboard.market_label": "Marché",
+      "admin.dashboard.market_no_trades_note": "Aucun échange (30j)",
+      "admin.dashboard.market_state_closed": "Fermé",
+      "admin.dashboard.market_state_open": "Ouvert",
+      "admin.dashboard.no_active_sanction_note": "Aucune sanction active",
+      "admin.dashboard.onboarding_completed_label": "Terminé",
+      "admin.dashboard.onboarding_in_progress_label": "En cours",
+      "admin.dashboard.onboarding_none_started": "Personne n'a démarré le tutoriel",
+      "admin.dashboard.onboarding_skipped_label": "Passé",
+      "admin.dashboard.overview_hint": "Vue d'ensemble de tous les panneaux — 🟢 rien à signaler, 🔴 à surveiller. Clique une carte pour ouvrir le détail complet.",
+      "admin.dashboard.players_banned_note": "{{count}} joueur(s) actuellement banni(s)",
+      "admin.dashboard.players_count_note": "{{count}} joueur(s)",
+      "admin.dashboard.players_online": "Joueurs en ligne",
+      "admin.dashboard.signups_note": "{{count}} inscription(s) sur 7 jours",
+      "admin.dashboard.silver_net_48h_prefix": "Solde net 48h : ",
+      "admin.dashboard.skipped_pct_note": "{{pct}}% passés",
+      "admin.dashboard.total_silver_in_game": "Silver total en jeu",
+      "admin.dashboard.tutorials_none_seen": "Aucun tutoriel vu",
+      "admin.dashboard.unavailable": "Indisponible",
+      "admin.dashboard.wealth_reasonable_note": "Répartition raisonnable",
+      "admin.dashboard.wealth_skewed_note": "Richesse très concentrée (moyenne ≫ médiane)",
+      "admin.economy.avg_per_player": "📊 Moyenne / joueur",
+      "admin.economy.failed_prefix": "Échec — ",
+      "admin.economy.failed_short": "Échec",
+      "admin.economy.health_sinks_title": "📤 Puits (dépensé)",
+      "admin.economy.health_sources_title": "📥 Sources (gagné)",
+      "admin.economy.health_summary": "Sources (gagné) vs puits (dépensé), par catégorie — même registre que \"Silver\", vue centrée sur l'équilibre entrées/sorties. Catégories sous 4% du total fusionnées dans \"Autres\".",
+      "admin.economy.hourly_active_title": "👥 Joueurs actifs par heure (48h)",
+      "admin.economy.hourly_farmed_title": "💰 Silver farmé par heure (48h)",
+      "admin.economy.hourly_peak_label": "Pic :",
+      "admin.economy.loading": "Chargement…",
+      "admin.economy.loot_editor_hint": "Modifie les taux réellement utilisés par TOUS les joueurs (si la table de loot est en V2), rechargés à la connexion. Les valeurs par défaut du jeu restent inchangées en dur — \"Réinitialiser\" les restaure à tout moment.",
+      "admin.economy.loot_editor_title": "🛠️ Éditeur de taux (V2, en direct)",
+      "admin.economy.loot_reset_btn": "Réinitialiser aux valeurs du jeu",
+      "admin.economy.loot_reset_confirm": "Réinitialiser les taux aux valeurs par défaut du jeu, pour TOUS les joueurs ?",
+      "admin.economy.loot_reset_toast": "Taux réinitialisés ✓",
+      "admin.economy.loot_save_btn": "Enregistrer (tous les joueurs)",
+      "admin.economy.loot_save_success": "Enregistré — appliqué immédiatement à tous les joueurs ✓",
+      "admin.economy.loot_save_toast": "Taux de loot mis à jour ✓",
+      "admin.economy.loyalty_no_shop": "Aucune boutique Loyalties en jeu pour l'instant — rien à dépenser, ces stats servent à suivre l'accumulation avant d'ouvrir une boutique.",
+      "admin.economy.loyalty_stat_total": "🏅 Total en jeu",
+      "admin.economy.loyalty_used_title": "🛍️ Utilisées pour",
+      "admin.economy.market_cancel_all_btn": "Annuler tous les ordres ouverts",
+      "admin.economy.market_cancel_confirm": "💥 Annuler TOUS les ordres ouverts du Marché ? Chaque ordre sera remboursé (silver ou objet) à son propriétaire. Irréversible.",
+      "admin.economy.market_cancel_result": "{{data}} ordre(s) annulé(s) et remboursé(s) ✓",
+      "admin.economy.market_closed_btn": "🔒 Marché fermé (clique pour rouvrir)",
+      "admin.economy.market_closed_toast": "Marché fermé ✓",
+      "admin.economy.market_open_btn": "🔓 Marché ouvert (clique pour fermer)",
+      "admin.economy.market_reopened_toast": "Marché rouvert ✓",
+      "admin.economy.market_sub": "Ferme l'accès au Marché pour TOUT LE MONDE sauf toi ; l'annulation rembourse chaque ordre ouvert (silver ou objet) à son propriétaire.",
+      "admin.economy.market_title": "Marché",
+      "admin.economy.marketvolume_detail_title": "Détail",
+      "admin.economy.marketvolume_no_trades": "Aucun échange sur les 30 derniers jours",
+      "admin.economy.marketvolume_stat_trades": "Échanges (30j)",
+      "admin.economy.marketvolume_stat_volume": "Volume total (30j)",
+      "admin.economy.marketvolume_value_share_title": "🏆 Part de valeur par objet",
+      "admin.economy.no_data": "Pas encore de données",
+      "admin.economy.no_data_playtime": "Pas encore de données (au moins 3 min de jeu requises)",
+      "admin.economy.pie_other": "Autres",
+      "admin.economy.signups_by_day_title": "📅 Par jour",
+      "admin.economy.signups_by_platform_title": "🧩 Par plateforme (tous comptes)",
+      "admin.economy.signups_no_signups": "Aucune inscription sur les 30 derniers jours",
+      "admin.economy.signups_stat_title": "Inscriptions (30j)",
+      "admin.economy.silver_chart_title": "📊 Flux net de silver par heure (48h)",
+      "admin.economy.silver_ledger_hint": "Répartition visuelle par catégorie : voir la section \"Santé économique\".",
+      "admin.economy.silver_ledger_title": "🔍 Où partent les silver ? (registre détaillé)",
+      "admin.economy.silver_rate_title": "🏆 Qui gagne le plus vite ? (taux à vie)",
+      "admin.economy.silver_stat_lifetime_earned": "📈 Gagné à vie",
+      "admin.economy.silver_stat_spent": "🔻 Dépensé (sorti du jeu)",
+      "admin.economy.silver_stat_stored": "🏦 Stocké (chez les joueurs)",
+      "admin.economy.sink_alert": "Seulement {{pct}}% du silver gagné est réellement dépensé (sorti du jeu) — trop peu de puits, risque d'inflation. Envisage d'ajouter un puits (boutique, coût, sink) rapidement.",
+      "admin.economy.stat_players": "👥 Joueurs",
+      "admin.economy.table_category": "Catégorie",
+      "admin.economy.table_gained": "Gagné",
+      "admin.economy.table_gear_pct": "Armure/Arme (%)",
+      "admin.economy.table_item": "Objet",
+      "admin.economy.table_jewel_pct": "Bijou (%)",
+      "admin.economy.table_lifetime_earned": "Gagné à vie",
+      "admin.economy.table_player": "Joueur",
+      "admin.economy.table_playtime": "Temps de jeu",
+      "admin.economy.table_rate": "Taux",
+      "admin.economy.table_spent": "Dépensé",
+      "admin.economy.table_tier": "Palier",
+      "admin.economy.table_total_value": "Valeur totale",
+      "admin.economy.table_trades": "Échanges",
+      "admin.economy.table_transactions": "Mouvements",
+      "admin.economy.wealth_bracket_title": "📈 Répartition des joueurs par richesse",
+      "admin.economy.wealth_stat_median": "📍 Médiane",
+      "admin.economy.wealth_stat_total": "💰 Total en jeu",
+      "admin.enh_debug.already_max": "Déjà toutes au maximum",
+      "admin.enh_debug.already_zero": "Déjà toutes à +0",
+      "admin.enh_debug.equip_tier_success": "Équipé : set complet {{tierName}} ({{count}} pièces)",
+      "admin.enh_debug.max_all_one": "{{count}} pièce passée en Optimisation max",
+      "admin.enh_debug.max_all_other": "{{count}} pièces passées en Optimisation max",
+      "admin.enh_debug.reset_all_one": "{{count}} pièce rétrogradée à +0",
+      "admin.enh_debug.reset_all_other": "{{count}} pièces rétrogradées à +0",
+      "admin.enh_debug.step_down_count": "{{count}} pièce(s) rétrogradée(s) d'1 rang",
+      "admin.enh_debug.step_up_count": "{{count}} pièce(s) augmentée(s) d'1 rang",
+      "admin.enh_debug.tier_not_found": "Palier introuvable",
+      "admin.loot.active_version": "Version active :",
+      "admin.loot.table_gear": "Armure/Arme",
+      "admin.loot.table_jewel": "Bijou",
+      "admin.loot.table_tier": "Palier",
+      "admin.loot.v1_btn": "V1 — taux par zone (historique)",
+      "admin.loot.v2_btn": "V2 — taux fixe par palier",
+      "admin.loot.v2_table_title": "📋 Table V2",
+      "admin.loot.version_hint": "V1 : chaque zone a son propre taux (décroissant zone après zone, voir GEAR_CHANCE). V2 : un seul taux par palier, appliqué à ses 4 zones. Change instantanément, réversible à tout moment, aucune donnée perdue.",
+      "admin.patchnotes.auto_hidden_label": "Auto-masqué (signalements)",
+      "admin.patchnotes.no_pending_reports": "Aucun signalement en attente.",
+      "admin.patchnotes.no_removed_comments": "Aucun commentaire retiré.",
+      "admin.patchnotes.pending_reports_title": "Signalements en attente",
+      "admin.patchnotes.publish_btn": "Publier sur Discord",
+      "admin.patchnotes.publish_hint": "La dernière version est sélectionnée par défaut. Chaque ligne garde son icône (🆕 nouveauté, 🔄 changement, 🛠️ correctif, 🔒 faille corrigée).",
+      "admin.patchnotes.publish_sub": "Poste le contenu de la note choisie dans le salon Discord \"log général\" (même webhook que les autres actions admin).",
+      "admin.patchnotes.publish_title": "Publier une note de version sur Discord",
+      "admin.patchnotes.published_toast": "Note publiée sur Discord ✓",
+      "admin.patchnotes.removed_comments_title": "Commentaires retirés (restaurables)",
+      "admin.patchnotes.restore_btn": "Restaurer",
+      "admin.patchnotes.version_label": "📜 Version :",
+      "admin.players.ap_title": "PA (Puissance d'Attaque)",
+      "admin.players.best_kpm_title": "Record personnel de kills/min (à vie)",
+      "admin.players.dp_title": "PD (Puissance de Défense)",
+      "admin.players.inventory_btn": "Inventaire",
+      "admin.players.inventory_btn_title": "Ouvre l'équipement porté et le sac complet (192 cases) de ce joueur, en lecture seule, dans une nouvelle fenêtre",
+      "admin.players.kpm_record_title": "Record kills/min",
+      "admin.players.reset_this_player_btn": "Réinitialiser ce joueur",
+      "admin.players.screenshot_btn": "Screenshot",
+      "admin.players.signup_platform_title": "Plateforme d'inscription",
+      "admin.players.summary_online_registered": "{{online}} en ligne · {{total}} inscrits",
+      "admin.players.table_platform": "Plate-forme",
+      "admin.players.table_player": "Joueur",
+      "admin.players.target_hint": "Trouve l'UUID d'un joueur via le Classement ou ses messages en jeu (bouton \"Copier UUID\" dans son propre menu). \"Screenshot\" affiche son équipement/inventaire en lecture seule (aucune modification). Le reset envoie le même message d'explication que le reset global, mais montré UNIQUEMENT à ce joueur.",
+      "admin.players.target_sub": "Efface silver/équipement/niveau/sac de CE joueur uniquement.",
+      "admin.players.target_title": "Un joueur précis — par UUID",
+      "admin.players.uuid_copied": "UUID copié ✓",
+      "admin.players.uuid_placeholder": "UUID du joueur",
+      "admin.reconnect.avg_per_session": "Moyenne / session",
+      "admin.reconnect.logged_sessions": "Sessions journalisées",
+      "admin.reconnect.no_session_yet": "Aucune session pour le moment.",
+      "admin.reconnect.players_involved": "Joueurs concernés",
+      "admin.reconnect.sub": "Volume agrégé du modal \"Bon retour\" — silver récupéré pendant les absences, tous joueurs confondus.",
+      "admin.reconnect.table_date": "Date",
+      "admin.reconnect.table_player_uuid": "Joueur (UUID)",
+      "admin.reconnect.table_zone": "Zone",
+      "admin.reconnect.title": "Sessions de reconnexion",
+      "admin.reconnect.top10_title": "Top 10 sessions (par silver)",
+      "admin.reconnect.total_silver_recovered": "Silver total récupéré",
+      "admin.reset.confirm_all_accounts_1": "💥 Réinitialiser TOUS les comptes de TOUS les joueurs (silver, équipement, niveau, sac) ? Un message d'explication leur sera montré à leur prochaine connexion. Action IRRÉVERSIBLE.",
+      "admin.reset.confirm_all_accounts_2": "Es-tu VRAIMENT sûr ? Il n'y a aucun moyen de récupérer la progression perdue.",
+      "admin.reset.confirm_all_quests": "Réinitialiser les quêtes de TOUS les joueurs ? Chacun se verra retirer sa progression de quêtes en cours (journalières et hebdomadaires) et de nouvelles seront tirées à leur prochaine connexion. Action irréversible.",
+      "admin.reset.confirm_demo": "Réinitialiser la démo ? Toute ta progression (silver, équipement, niveau, sac) sera perdue et remise à zéro. Cette action est irréversible.",
+      "admin.reset.confirm_reset_uuid": "🔄 Réinitialiser le compte du joueur {{uuid}} (silver, équipement, niveau, sac) ? Un message d'explication lui sera montré à sa prochaine connexion. Action IRRÉVERSIBLE.",
+      "admin.reset.default_zone_name": "Velia",
+      "admin.reset.empty_bag": "Sac vide",
+      "admin.reset.no_gear": "Aucun équipement",
+      "admin.reset.no_player_for_uuid": "Aucun joueur trouvé avec cet UUID",
+      "admin.reset.no_save_for_uuid": "Aucune sauvegarde pour cet UUID",
+      "admin.reset.online_warn": "\n\n⚠️ CE JOUEUR EST ACTUELLEMENT EN LIGNE : sa propre sauvegarde automatique (toutes les 30s environ) risque de RÉÉCRIRE son ancien état par-dessus ce reset dans les secondes qui suivent, l'annulant silencieusement. Pour un reset fiable, attends qu'il soit déconnecté.",
+      "admin.reset.saved_on": "Sauvegardé le",
+      "admin.reset.screenshot_title_prefix": "📸 Screenshot — ",
+      "admin.reset.section_equipment": "Équipement",
+      "admin.reset.section_inventory": "Inventaire",
+      "admin.reset.stat_level": "Niveau",
+      "admin.reset.stat_silver": "Silver",
+      "admin.reset.stat_zone": "Zone",
+      "admin.reset.toast_account_reset": "Compte réinitialisé ✓",
+      "admin.reset.toast_all_accounts_reset": "{{data}} comptes réinitialisés ✓",
+      "admin.reset.toast_all_quests_reset": "Quêtes de tous les joueurs réinitialisées ✓",
+      "admin.reset.toast_demo_reset": "Démo réinitialisée",
+      "admin.reset.toast_my_quests_reset": "Quêtes réinitialisées",
+      "admin.roles.add_btn": "➕ Ajouter",
+      "admin.roles.moderator_label": "Modérateur",
+      "admin.roles.no_nickname": "(sans pseudo)",
+      "admin.roles.no_roles": "Aucun rôle attribué",
+      "admin.roles.remove_mod_btn": "Retirer MOD",
+      "admin.roles.remove_tester_btn": "Retirer Testeur",
+      "admin.roles.sub": "🛡️ Modérateur : peut supprimer des messages de chat. 🧪 Testeur : accès en avant-première aux fonctionnalités pas encore publiques. Un joueur peut cumuler les deux.",
+      "admin.roles.tester_label": "Testeur",
+      "admin.roles.title": "Rôles (Modérateur / Testeur)",
+      "admin.sanctions.active_bans_title": "Bannissements actifs",
+      "admin.sanctions.ban_a_player_sub": "Bloque temporairement l'accès au jeu pour ce joueur (durée + motif prédéfini).",
+      "admin.sanctions.ban_a_player_title": "Bannir un joueur",
+      "admin.sanctions.ban_btn": "Bannir",
+      "admin.sanctions.ban_hint": "L'admin ne peut jamais se bannir lui-même (vérifié côté client avant l'appel serveur). Trouve l'UUID via le Classement ou la section Joueurs.",
+      "admin.sanctions.confirm_ban": "🚫 Bannir le joueur {{uuid}} pour {{hours}}h (motif : {{reasonLabel}}) ?",
+      "admin.sanctions.invalid_uuid": "UUID invalide ou identique au tien — action bloquée",
+      "admin.sanctions.no_active_bans": "Aucun bannissement actif",
+      "admin.sanctions.table_ban_ends": "Fin du ban",
+      "admin.sanctions.table_player": "Joueur",
+      "admin.sanctions.table_reason": "Motif",
+      "admin.sanctions.toast_banned": "Joueur banni ✓",
+      "admin.sanctions.toast_unbanned": "Ban levé ✓",
+      "admin.sanctions.unban_btn": "Lever",
+      "admin.system.close_btn_title": "Fermer",
+      "admin.system.danger_title": "Pour les joueurs — actions serveur",
+      "admin.system.palette_label": "Palette",
+      "admin.system.planned_badge": "🔜 prévu",
+      "admin.system.planned_pane_text": "Prévu sur la roadmap, mais aucun code jeu derrière pour l'instant (pas de table, pas de mécanique côté client). Cet onglet deviendra utile une fois qu'une première brique réelle existera — voir ADMIN_MENU_PLAN.md.",
+      "admin.system.reset_all_accounts_btn": "Réinitialiser TOUS les comptes",
+      "admin.system.reset_all_accounts_hint": "\"Réinitialiser TOUS les comptes\" efface silver/équipement/niveau/sac de TOUT LE MONDE et affiche un message d'explication à chaque joueur à sa prochaine connexion. Irréversible.",
+      "admin.system.reset_all_quests_btn": "Réinitialiser les quêtes de tous",
+      "admin.system.search_placeholder": "Rechercher…",
+      "admin.tests.fight_boss_label": "⚔️ Combattre un World Boss :",
+      "admin.tests.fight_now_btn": "Combattre maintenant",
+      "admin.tests.hint": "Lance un vrai boss partagé (PV communs) rien que pour toi, pour tester sans attendre le planning ni prévenir personne.",
+      "admin.tests.reset_demo_btn": "Réinitialiser la démo",
+      "admin.tests.reset_my_quests_btn": "Réinitialiser mes quêtes",
+      "admin.tests.sub": "Sans danger : ça ne touche que TON propre personnage.",
+      "admin.tests.tester_panel_intro": "Merci de tester Black Desert Idle ! Ce panneau te donnera accès aux nouveautés en avant-première (sans aucun avantage en jeu — c'est du test pur). Rien à tester pour l'instant, mais voici ce qui arrive :",
+      "admin.tests.tester_panel_title": "🧪 Panneau Testeur",
+      "admin.tests.title": "Pour moi — test sur mon compte",
+      "admin.tests.unlock_achievements_btn": "Débloquer tous les succès",
+      "admin.tests.upcoming_in_dev": "En développement — bientôt en test"
+    },
+    "backend": {
+      "backend.account.apply_button": "Valider",
+      "backend.account.cache_clear_button": "Vider le cache et recharger",
+      "backend.account.cache_hint": "En cas d'affichage étrange après une mise à jour, ce bouton vide le cache du navigateur pour les fichiers du jeu puis recharge la page. Ta progression n'est jamais touchée.",
+      "backend.account.cache_title": "Cache du jeu",
+      "backend.account.code_applied": "Code appliqué !",
+      "backend.account.code_copied": "✓ Copié !",
+      "backend.account.copy_code_button": "📋 Copier le code",
+      "backend.account.copy_label": "Copier",
+      "backend.account.discord_connect_button": "Connecter Discord",
+      "backend.account.discord_connected": "✅ Compte Discord connecté.",
+      "backend.account.enter_code_prompt": "Entre un code.",
+      "backend.account.github_connect_button": "Connecter GitHub",
+      "backend.account.github_connected": "✅ Compte GitHub connecté.",
+      "backend.account.google_connect_button": "Connecter Google",
+      "backend.account.google_connected": "✅ Compte Google connecté.",
+      "backend.account.guest_intro": "Tu joues en mode invité. Lie un compte vérifié (bouton \"🔗 Lier un compte\") pour accéder au parrainage, au marché et au classement — ta progression actuelle sera conservée.",
+      "backend.account.has_code_prompt": "Tu as un code d'un autre joueur ?",
+      "backend.account.level_label": "Niv.",
+      "backend.account.link_account_prompt": "Compte existant ? clique \"Se connecter\". Sinon \"Créer un compte\" (remplace ta progression invité).",
+      "backend.account.nickname_hint": "Visible partout dans le classement. Le changer met à jour la même ligne, ça n'en recrée jamais une nouvelle.",
+      "backend.account.nickname_saved": "Pseudo enregistré !",
+      "backend.account.nickname_title": "📛 Pseudo",
+      "backend.account.no_referrals": "Aucun filleul pour l'instant",
+      "backend.account.panel_title": "👤 Mon compte",
+      "backend.account.referral_code_placeholder": "Code de parrainage",
+      "backend.account.referral_rules": [
+        "Un compte ne peut être parrainé qu'une seule fois.",
+        "Le parrainage doit se faire dans les 3 jours suivant la création du compte du filleul — impossible passé ce délai.",
+        "Impossible d'utiliser ton propre code.",
+        "Impossible de parrainer ton propre parrain.",
+        "Pas de récompense pour l'instant — juste un suivi de qui tu as parrainé."
+      ],
+      "backend.account.referrals_title": "🎁 Parrainage",
+      "backend.account.save_button": "Enregistrer",
+      "backend.account.summary_label": "Compte",
+      "backend.account.twitter_connect_button": "Connecter Twitter/X",
+      "backend.account.twitter_connected": "✅ Compte Twitter/X connecté.",
+      "backend.account.uuid_copied_msg": "✓ UUID copié !",
+      "backend.account.your_referrals_title": "👥 Tes filleuls",
+      "backend.auth.ban_reason_unspecified": "non précisé",
+      "backend.auth.ban_suspended": "Compte suspendu jusqu'au {{until}} — Motif : {{reason}}",
+      "backend.auth.email_first": "Entre ton email d'abord, puis clique à nouveau.",
+      "backend.auth.guest_badge": "🎭 Invité",
+      "backend.auth.guest_mode_body": "Ta progression n'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur \"🔗 Lier un compte\" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.",
+      "backend.auth.guest_mode_title": "Tu joues en mode invité",
+      "backend.auth.reset_email_sent": "Email envoyé — vérifie ta boîte mail pour réinitialiser ton mot de passe.",
+      "backend.auth.sending": "Envoi en cours…",
+      "backend.codex.all_zones": "Toutes zones",
+      "backend.codex.craft_component_desc": "Composant de craft endgame",
+      "backend.codex.material_desc": "Matériau d'optimisation",
+      "backend.codex.panel_title": "📚 Codex des objets",
+      "backend.codex.section_base_loot": "▬ Butin de base",
+      "backend.codex.section_crafts": "✦ Composants de craft",
+      "backend.codex.section_jewelry": "💎 Bijoux rares",
+      "backend.codex.section_materials": "◈ Matériaux d'optimisation",
+      "backend.codex.section_treasure": "🗺️ Trésor de Velia",
+      "backend.codex.summary": "Tous les objets actuellement présents dans le jeu.",
+      "backend.codex.zone_word": "zone",
+      "backend.common.date_locale": "fr-FR",
+      "backend.common.player_label": "Joueur",
+      "backend.gear.copy_uuid_button": "Copier UUID",
+      "backend.gear.item_header": "Objet",
+      "backend.gear.loading": "Chargement…",
+      "backend.gear.no_gear": "Aucun équipement",
+      "backend.gear.panel_title_prefix": "⚔️ Stuff de ",
+      "backend.gear.popup_blocked": "Popup bloquée par le navigateur",
+      "backend.gear.slot_empty": "vide",
+      "backend.gear.slot_header": "Emplacement",
+      "backend.gear.uuid_copied": "UUID copié ✓",
+      "backend.inventory_window.bag_title": "Sac",
+      "backend.inventory_window.coming_soon": "Bientôt disponible",
+      "backend.inventory_window.gear_title": "Équipement",
+      "backend.inventory_window.slots_used": "cases utilisées",
+      "backend.leaderboard.no_data": "Pas encore de données",
+      "backend.leaderboard.panel_title": "🏆 Classement",
+      "backend.leaderboard.summary": "Classement des records personnels À VIE — jamais un instantané, ces valeurs ne redescendent jamais.",
+      "backend.patch_notes.before_after_title": "Voir avant/après",
+      "backend.patch_notes.compare_after_label": "Après",
+      "backend.patch_notes.compare_before_label": "Avant",
+      "backend.patch_notes.newer_label": "Plus récent",
+      "backend.patch_notes.newer_notes_title": "Notes plus récentes",
+      "backend.patch_notes.older_label": "Plus ancien",
+      "backend.patch_notes.older_notes_title": "Notes plus anciennes",
+      "backend.patch_notes.panel_title": "📜 Notes de version",
+      "backend.patch_notes.removed_tag": "🗑 Supprimé",
+      "backend.patch_notes.subcategory_label": "Sous-catégorie",
+      "backend.patch_notes.unread_banner": "note(s) de version non lue(s) — clique pour remonter",
+      "backend.presence.guests_suffix": "invités",
+      "backend.tuto_page.intro": "Le tutoriel te fait visiter Velia, la ville paisible, et t'explique les bases du jeu (zones, sorts automatiques, statistiques, quêtes, chat). Tu peux le relancer ici quand tu veux.",
+      "backend.tuto_page.replay_button": "▶ Relancer le tutoriel",
+      "backend.tutorial.finish": "Terminer",
+      "backend.tutorial.next": "Suivant →",
+      "backend.tutorial.prev": "← Précédent",
+      "backend.tutorial.skip": "Passer",
+      "backend.tutorial.step_label": "Étape",
+      "backend.wiki.close_button": "Fermer",
+      "backend.wiki.discord_placeholder": "Pas encore de serveur Discord officiel pour le moment — cette section sera complétée dès qu'un lien existera.",
+      "backend.wiki.home_lead": "Bienvenue sur le Wiki de Velia Idle — jeu idle de farm automatique inspiré de Black Desert Online. Retrouve ici les règles de combat/zones, l'optimisation, le marché, ainsi que des raccourcis vers le Compendium et le module Compagnons.",
+      "backend.wiki.home_system_combat_desc": "PA/PD requis, loot progressif",
+      "backend.wiki.home_system_companions_desc": "collection, fusion et classement (module dédié)",
+      "backend.wiki.home_system_companions_title": "Compagnons",
+      "backend.wiki.home_system_market_desc": "carnet d'ordres joueur à joueur",
+      "backend.wiki.home_system_pen_word": "à",
+      "backend.wiki.home_systems_title": "Systèmes principaux",
+      "backend.wiki.infobox_developer_label": "Développeur",
+      "backend.wiki.infobox_engine_label": "Moteur",
+      "backend.wiki.infobox_license_label": "Licence",
+      "backend.wiki.infobox_license_value": "Fan gratuit",
+      "backend.wiki.infobox_related_title": "Voir aussi",
+      "backend.wiki.infobox_toc_title": "Sommaire",
+      "backend.wiki.infobox_version_label": "Version",
+      "backend.wiki.nav_about": "À propos",
+      "backend.wiki.nav_account": "Compte & Sauvegarde",
+      "backend.wiki.nav_codex": "Codex des objets",
+      "backend.wiki.nav_combat": "Combat & Zones",
+      "backend.wiki.nav_companions": "Familiers (fusion, catalogue…)",
+      "backend.wiki.nav_compendium": "Zones, Boss & Maîtrise PEN",
+      "backend.wiki.nav_discord": "Discord",
+      "backend.wiki.nav_enh": "Optimisation",
+      "backend.wiki.nav_group_community": "Communauté",
+      "backend.wiki.nav_group_companions_world": "Compagnons & Monde",
+      "backend.wiki.nav_group_general": "Général",
+      "backend.wiki.nav_group_guides": "Guides de jeu",
+      "backend.wiki.nav_group_items": "Objets",
+      "backend.wiki.nav_home": "Accueil",
+      "backend.wiki.nav_market": "Marché",
+      "backend.wiki.nav_patchnotes": "Notes de version",
+      "backend.wiki.nav_tuto": "Tutoriel",
+      "backend.wiki.search_no_results": "Aucun résultat pour",
+      "backend.wiki.search_placeholder": "Rechercher…"
+    },
+    "combat": {
+      "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
+      "combat.ai_mode.defensive_title": "IA défensive : esquive et soigne en priorité, quitte à moins attaquer",
+      "combat.ai_mode.farm_loot_title": "IA \"Loot\" : ramasse tout le butin avant de passer au pack suivant",
+      "combat.ai_mode.farm_xp_title": "IA \"XP\" : enchaîne les packs sans ramasser le butin au sol",
+      "combat.ai_mode.overgeared_title": "IA offensive : attaque sans relâche, ignore la plupart des esquives",
+      "combat.boss.already_defeated_button": "💀 Déjà vaincu",
+      "combat.boss.already_defeated_by_others": "Déjà vaincu par d'autres joueurs",
+      "combat.boss.already_defeated_hint": "Ce boss a déjà été vaincu — reviens plus tard, au prochain spawn.",
+      "combat.boss.available_now": "Disponible maintenant !",
+      "combat.boss.be_first": "Sois le premier !",
+      "combat.boss.blocked_msg": "PARÉ !",
+      "combat.boss.boss_defeated_notif": "Boss vaincu",
+      "combat.boss.caphras_label": "Caphras",
+      "combat.boss.chance_label": "de chance",
+      "combat.boss.close_button": "Fermer",
+      "combat.boss.contribution_rank": "Rang de contribution",
+      "combat.boss.death_penalty": "💀 {{deathCount}} mort{{s}} — récompense chiffrée réduite de {{pct}}%{{excludedNote}}",
+      "combat.boss.death_penalty_rare_excluded": " (loot rarissime exclu)",
+      "combat.boss.dived_msg": "PLONGÉ !",
+      "combat.boss.fight_button": "⚔️ Combattre",
+      "combat.boss.fight_left_title": "Combat quitté",
+      "combat.boss.first_kill_week_bonus": "Premier kill de la semaine : +{{bonusPct}}%",
+      "combat.boss.for_everyone": "Pour tous",
+      "combat.boss.hard_zone_stone": "pierre d'optimisation de ta meilleure zone difficile",
+      "combat.boss.in_label": "dans",
+      "combat.boss.leave_button": "🚪 Quitter",
+      "combat.boss.memory_frag_label": "Frag. mémoire",
+      "combat.boss.new_badge": "NOUVEAU",
+      "combat.boss.next_boss_label": "Prochain boss",
+      "combat.boss.no_boss_scheduled": "Aucun boss programmé",
+      "combat.boss.not_spawned_yet": "⏳ Pas encore apparu",
+      "combat.boss.nothing_scheduled": "Rien de programmé",
+      "combat.boss.perfect_kill": "Perfect Kill — 0 mort",
+      "combat.boss.pity_label": "Pity",
+      "combat.boss.players_fighting": "{{n}} joueur{{s}} combattent",
+      "combat.boss.rank1_reward_generic": "+1 bijou de la prochaine zone dangereuse",
+      "combat.boss.rank2_reward_generic": "+1 bijou de ta zone difficile",
+      "combat.boss.rank3_reward_generic": "20% bijou dangereuse + 30% bijou difficile",
+      "combat.boss.reveal_placeholder": "…",
+      "combat.boss.reward_already_claimed": "Récompense déjà réclamée pour ce boss — chaque victoire ne peut être payée qu'une seule fois.",
+      "combat.boss.schedule_note": "Horaires calqués sur le vrai BDO −15 min. Heure locale.",
+      "combat.boss.silver_label": "Silver",
+      "combat.boss.skip_button": "⏭ Passer",
+      "combat.boss.status_defeated": "VAINCU",
+      "combat.boss.status_live": "EN COURS",
+      "combat.boss.victory_title": "🏆 VICTOIRE",
+      "combat.boss.waiting_for_fighters": "En attente de combattants",
+      "combat.boss.wave_msg": "VAGUE !",
+      "combat.boss.weekly_calendar_title": "📅 Calendrier de la semaine",
+      "combat.boss.wheel_not_this_time": "Pas cette fois — {{icon}} {{name}} attend toujours",
+      "combat.boss.wheel_obtained": "Obtenu",
+      "combat.boss.zone_bonus_active": "Bonus de zone ({{zoneName}}) : certifié sans mort ✓ ×{{mult}}",
+      "combat.boss.zone_bonus_inactive": "Pas de bonus de zone : mort il y a moins de 3 min",
+      "combat.loot.bag_full": "SAC PLEIN !",
+      "combat.loot.level_reached": "Niveau {{lvl}}",
+      "combat.loot.level_up_notif_title": "Niveau supérieur",
+      "combat.potion.coming_soon": "Bientôt disponible",
+      "combat.potion.drink_under": "Boire sous",
+      "combat.potion.free_label": "Gratuite",
+      "combat.potion.hp_potion_section": "Potion de vie",
+      "combat.potion.mana_potion_section": "Potion de mana (auto sous 30%)",
+      "combat.potion.no_silver_warning": "Pas assez de silver pour la potion !"
+    },
+    "common": {},
+    "core": {
+      "core.away.title": "Pendant ton absence",
+      "core.combat.dodge": "Esquivé !",
+      "core.death.got_back_up": "⚠ Tu t'es relevé — tu as changé de zone pendant le K.O.",
+      "core.death.killed_by_monsters": "⚠ Les monstres t'ont tué ! Choisis une zone plus adaptée à ton niveau ou améliore ton stuff.",
+      "core.default_pseudo": "Joueur",
+      "core.equip_summary.lvl_prefix": "Niv. ",
+      "core.potions.free_suffix": " — gratuite (CD {{cd}}s)",
+      "core.potions.usage_word": "usage",
+      "core.stats_levels.hint": "5 niveaux avant et après le tien — PV de base (hors équipement), bonus de Vitesse et XP requise pour CE niveau.",
+      "core.stats_levels.hp_label": "PV",
+      "core.stats_levels.lvl_label": "Niv.",
+      "core.stats_levels.you_suffix": " — toi",
+      "core.stats_reco.best_kills_min": "⚔️ Meilleurs kills/min",
+      "core.stats_reco.best_silver_hour": "💰 Meilleur silver/h",
+      "core.stats_reco.best_xp_hour": "⭐ Meilleur XP/h",
+      "core.stats_reco.construction_banner": "🚧 En construction — calculs et présentation encore amenés à changer",
+      "core.stats_reco.hint": "Classement théorique (stuff idéal, indépendant de ta survie actuelle) — clique une zone pour t'y rendre.",
+      "core.velia.in_town_label": "👥 En ville ({{count}})",
+      "core.velia.nobody_else": "Personne d'autre pour l'instant",
+      "core.velia.title": "Velia — zone paisible",
+      "core.velia.zone_type_label": "Zone paisible",
+      "core.zone.admin_tag_title": "Un admin est ici",
+      "core.zone.better_gear_title": "Meilleur stuff à trouver ici",
+      "core.zone.no_monsters": "Aucun monstre",
+      "core.zone.peaceful_badge": "ZONE PAISIBLE",
+      "core.zone.players_here_title": "Joueurs actuellement sur cette zone",
+      "core.zone.too_hard_warning": "⚠️ Zone trop dure pour ton stuff : tu es ralenti, les monstres qui t'ont repéré sont plus rapides",
+      "core.zone.view_loot_title": "Voir le loot",
+      "core.zone_tier.locked_title": "Bientôt disponible",
+      "core.zone_tier.locked_title_with_drop": "Bientôt disponible — droppera : {{icon}} {{name}}"
+    },
+    "inventory": {
+      "inventory.action_drop": "Jeter",
+      "inventory.action_equip": "Équiper",
+      "inventory.action_sell_all": "Vendre tout ({{n}})",
+      "inventory.action_sell_one": "Vendre 1 ({{n}})",
+      "inventory.action_store_in_chest": "📦 Ranger au coffre (1)",
+      "inventory.action_to_opt": "Mettre en optimisation",
+      "inventory.action_unequip": "Déséquiper",
+      "inventory.bag_full": "Sac plein",
+      "inventory.buyback_nothing": "Rien à racheter (ou sac plein / silver insuffisant)",
+      "inventory.buyback_success": "Objets rachetés ✓",
+      "inventory.caphras_convert_label": "{{n}} poussière → {{caphras}} pierre de Caphras",
+      "inventory.category_coming_soon": "Bientôt disponible",
+      "inventory.category_empty_generic": "Vide",
+      "inventory.category_empty_rng": "Aucun coffre RNG pour l'instant",
+      "inventory.chest_full": "Coffre plein",
+      "inventory.chest_return_to_bag": "Renvoyer au sac principal",
+      "inventory.chest_zoom_enlarge": "🔍 Agrandir (5/ligne)",
+      "inventory.chest_zoom_shrink": "🔎 Réduire (8/ligne)",
+      "inventory.compendium_equip_and_optimize": "Équiper et optimiser",
+      "inventory.confirm_sell_all": "Vendre tout le tas pour {{n}} silver ?",
+      "inventory.confirm_sell_one": "Vendre 1 objet pour {{n}} silver ?",
+      "inventory.eq_sum_ap_prefix": "PA ",
+      "inventory.eq_sum_dp_prefix": "PD ",
+      "inventory.equip_best_already_optimal": "Déjà optimal — rien à changer",
+      "inventory.equip_best_result_one": "1 pièce remplacée (meilleur socle)",
+      "inventory.equip_best_result_other": "{{count}} pièces remplacées (meilleur socle)",
+      "inventory.equip_sell_comp_diverted_one": "1 protégée 📖",
+      "inventory.equip_sell_comp_diverted_other": "{{count}} protégées 📖",
+      "inventory.equip_sell_comp_equipped_one": "1 équipée",
+      "inventory.equip_sell_comp_equipped_other": "{{count}} équipées",
+      "inventory.equip_sell_comp_nothing": "Déjà optimal — rien à faire",
+      "inventory.equip_sell_comp_sold_one": "1 vendue (+{{total}} silver)",
+      "inventory.equip_sell_comp_sold_other": "{{count}} vendues (+{{total}} silver)",
+      "inventory.farm_guide_banner": "🗺️ Où farmer ? Zones débloquées, hors zones trop dangereuses pour ton stuff actuel — clique une zone pour voir le détail complet :",
+      "inventory.farm_guide_no_safe_zone": "Aucune zone débloquée n'est actuellement sûre pour toi — améliore ton stuff ou explore prudemment.",
+      "inventory.farm_guide_title": "🗺️ Où farmer ?",
+      "inventory.loot_ap_equipped": "PA équipé",
+      "inventory.loot_armor_zone_only": "armure — cette zone uniquement",
+      "inventory.loot_autosell_coming_soon": "Vente automatique (bientôt disponible)",
+      "inventory.loot_preview_tag": "👁 Aperçu — ",
+      "inventory.loot_upgrade_tooltip": "Améliore ton stuff actuel",
+      "inventory.loot_weapon_zone_only": "arme — cette zone uniquement",
+      "inventory.main_bag_full": "Sac principal plein",
+      "inventory.opt_auto_btn_start": "▶ Auto jusqu'à",
+      "inventory.opt_auto_btn_stop": "⏸ Arrêter",
+      "inventory.opt_auto_gain_at": "À {{level}} : ",
+      "inventory.opt_auto_max_level": "Niveau max atteint",
+      "inventory.opt_auto_stopped_gain": "Auto arrêté — gain obtenu ({{level}})",
+      "inventory.opt_auto_stopped_no_cron": "Auto arrêté — plus de Pierre de Cron",
+      "inventory.opt_auto_stopped_no_material": "Auto arrêté — plus de matériau",
+      "inventory.opt_chance_label": "Chance",
+      "inventory.opt_cron_cost_suffix": " · coût pour cette pièce : {{cronCost}}",
+      "inventory.opt_cron_in_use": "utilisée (clique pour désactiver)",
+      "inventory.opt_cron_not_used": "non utilisée (clique pour activer)",
+      "inventory.opt_equip_a_piece": "Équipez une pièce à optimiser",
+      "inventory.opt_fail_downgraded_prefix": "✖ ÉCHEC — rétrogradé à ",
+      "inventory.opt_fail_material_lost": "✖ ÉCHEC — matériau perdu",
+      "inventory.opt_fail_protected_prefix_one": "✖ ÉCHEC — protégé par 1 Pierre de Cron (",
+      "inventory.opt_fail_protected_prefix_other": "✖ ÉCHEC — protégé par {{count}} Pierres de Cron (",
+      "inventory.opt_fails_on_tier": "échecs sur ce palier",
+      "inventory.opt_material_label": "Matériau",
+      "inventory.opt_max_level_reached": "PEN atteint — niveau maximum",
+      "inventory.opt_no_cron_stone": "Aucune Pierre de Cron en sac",
+      "inventory.opt_no_material": "Aucun matériau en sac — farmez du loot",
+      "inventory.opt_no_piece_equipped": "Aucune pièce équipée",
+      "inventory.opt_protected_floattxt": "⏳ Protégé !",
+      "inventory.opt_success_prefix": "✦ SUCCÈS — ",
+      "inventory.opt_suggest_recommended": "Recommandé",
+      "inventory.sell_worse_diverted_one": " · +1 protégé dans le sac 📖 Compendium",
+      "inventory.sell_worse_diverted_other": " · +{{count}} protégés dans le sac 📖 Compendium",
+      "inventory.sell_worse_nothing": "Rien à vendre — tout est déjà au-dessus de l'équipé",
+      "inventory.sell_worse_result_one": "{{count}} objet vendu (+{{total}} silver){{divertedTxt}}",
+      "inventory.sell_worse_result_other": "{{count}} objets vendus (+{{total}} silver){{divertedTxt}}",
+      "inventory.slot_empty_nothing_equipped": "Rien d'équipé",
+      "inventory.slot_locked_not_available": "🔒 Pas encore disponible",
+      "inventory.stat_delta_nothing_equipped": "rien d'équipé — ",
+      "inventory.stat_delta_vs_equipped": "vs équipé : ",
+      "inventory.stat_dodge_abbr": "Esq.",
+      "inventory.tooltip_enhance": "Optimiser",
+      "inventory.tooltip_not_available_yet": "Pas encore disponible",
+      "inventory.tooltip_zone_to_find_gear": "Zone pour trouver ce stuff",
+      "inventory.tooltip_zone_to_upgrade": "Zone pour améliorer",
+      "inventory.velia_loot_banner": "🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :",
+      "inventory.velia_peaceful_zone": "Velia — zone paisible",
+      "inventory.velia_treasure_label": "Trésor de Velia",
+      "inventory.where_to_farm_label": "📍 Où farmer : "
+    },
+    "market": {
+      "market.auth_verified_required": "Le Marché et le Classement sont réservés aux comptes vérifiés (protection anti-triche). Clique sur \"🔗 Lier un compte\" pour en créer un — ta progression actuelle sera conservée.",
+      "market.available_qty_label": "Quantité disponible",
+      "market.back_btn": "Retour",
+      "market.best_buy_label": "Meilleur achat",
+      "market.best_sell_label": "Meilleure vente",
+      "market.buy_btn": "Acheter",
+      "market.buy_label": "Achat",
+      "market.buy_orders_label": "Ordres d'achat",
+      "market.cancel_btn": "Annuler",
+      "market.closed_for_maintenance": "🏛️ Le Marché est actuellement fermé pour maintenance. Réessaie plus tard.",
+      "market.equipped_label": "Équipé",
+      "market.failed_with_reason": "Échec : {{reason}}",
+      "market.from_price_label": "dès",
+      "market.in_stock_label": "En stock",
+      "market.invalid_price": "Prix invalide.",
+      "market.level_label": "Niveau",
+      "market.levels_label": "niveaux",
+      "market.loading_error": "Erreur de chargement",
+      "market.market_pressure_label": "Pression marché",
+      "market.no_item_owned": "Tu n'en as pas.",
+      "market.no_listings": "Aucune vente en cours",
+      "market.no_orders_label": "Aucun ordre",
+      "market.no_transactions_label": "Aucune transaction",
+      "market.not_enough_transactions": "Pas assez de transactions",
+      "market.order_placed": "Ordre posé ✓ (exécuté immédiatement si un ordre opposé compatible existait)",
+      "market.place_buy_order_btn": "Placer l'ordre d'achat",
+      "market.place_order_title": "Placer un ordre — {{itemName}} · possédé : {{owned}}",
+      "market.place_sell_order_btn": "Placer l'ordre de vente",
+      "market.purchase_complete": "Achat effectué ✓",
+      "market.select_item_hint": "Clique un objet pour voir le détail",
+      "market.sell_label": "Vente",
+      "market.sell_orders_label": "Ordres de vente",
+      "market.sell_tax_hint": "Tu recevras ~{{net}} silver après taxe de vente ({{taxPct}}%)",
+      "market.sold_by_label": "Vendu par",
+      "market.spread_label": "Spread",
+      "market.status_done": "terminé",
+      "market.status_open": "ouvert",
+      "market.this_one_label": "Celui-ci",
+      "market.time_locale": "fr-FR",
+      "market.trend_falling": "BAISSE",
+      "market.trend_neutral": "NEUTRE",
+      "market.trend_rising": "HAUSSE",
+      "market.vs_label": "Face à"
+    },
+    "progression": {
+      "progression.achievements.completed": "Terminé ✓",
+      "progression.achievements.empty": "Rien à afficher ici",
+      "progression.achievements.filter_unfinished_off": "☐ Pas fini",
+      "progression.achievements.filter_unfinished_on": "☑ Pas fini",
+      "progression.achievements.panel_title": "🏅 Succès",
+      "progression.achievements.toast_title": "🏅 Succès débloqué",
+      "progression.compendium.boss_defeated": "Vaincu au moins une fois",
+      "progression.compendium.boss_not_defeated": "Pas encore vaincu",
+      "progression.compendium.dmg_label": "Dégâts",
+      "progression.compendium.dodge_label": "Esquive",
+      "progression.compendium.go_zone_title": "Lance le farm dans cette zone immédiatement",
+      "progression.compendium.hint": "Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif, jamais un multiplicateur). Clique sur un objet ci-dessous pour voir dans quelles zones le farmer, puis clique une zone pour y lancer le farm directement (aucune confirmation, tu y es téléporté aussitôt).",
+      "progression.compendium.missing_item": "Objet manquant",
+      "progression.compendium.no_zone_found": "Aucune zone trouvée pour cet objet",
+      "progression.compendium.panel_title": "📖 Compendium",
+      "progression.compendium.pen_hint": "Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.",
+      "progression.compendium.pick_zone_hint": "— clique une zone pour y farmer directement :",
+      "progression.compendium.progress_label": "Progression",
+      "progression.compendium.summary_line": "{{zc}}/{{zonesTotal}} zones · {{bc}}/{{bossMax}} World Boss · {{penDone}}/{{penTotal}} PEN",
+      "progression.compendium.tab_pen": "Maîtrise PEN",
+      "progression.compendium.tab_zones": "Zones",
+      "progression.compendium.tutorial_button_title": "Lancer le tutoriel du Compendium",
+      "progression.compendium_react.at_pen_label": "au PEN",
+      "progression.compendium_react.available_in_label": "disponible dans : ",
+      "progression.compendium_react.boss_defeated_full": "Vaincu au moins une fois",
+      "progression.compendium_react.boss_defeated_short": "vaincu",
+      "progression.compendium_react.boss_not_defeated_full": "Pas encore vaincu",
+      "progression.compendium_react.boss_not_defeated_short": "pas encore vaincu",
+      "progression.compendium_react.clear_highlight_aria": "Effacer la mise en évidence",
+      "progression.compendium_react.clear_search_aria": "Effacer la recherche",
+      "progression.compendium_react.close_aria": "Fermer",
+      "progression.compendium_react.dmg_label": "Dégâts",
+      "progression.compendium_react.dodge_label": "Esquive",
+      "progression.compendium_react.in_progress_label": "en cours",
+      "progression.compendium_react.intro_text": "Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif). Clique sur un objet pour voir dans quelles zones le farmer, puis clique une zone pour y lancer le farm directement.",
+      "progression.compendium_react.mastered_badge": "Maîtrisé",
+      "progression.compendium_react.no_gear_tier_text": "Aucun palier d'équipement dans ce monde pour l'instant.",
+      "progression.compendium_react.overall_progress_label": "Progression globale (zones + boss + PEN)",
+      "progression.compendium_react.pen_hint_text": "Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.",
+      "progression.compendium_react.progress_label": "Progression",
+      "progression.compendium_react.search_aria": "Rechercher une zone ou un objet",
+      "progression.compendium_react.search_placeholder": "Rechercher une zone ou un objet...",
+      "progression.compendium_react.see_zones_aria": "Voir les zones où trouver {{item}}",
+      "progression.compendium_react.sort_az": "A → Z",
+      "progression.compendium_react.sort_default": "Défaut",
+      "progression.compendium_react.sort_label": "Trier :",
+      "progression.compendium_react.sort_progress": "% complétion",
+      "progression.compendium_react.speed_label": "Vitesse",
+      "progression.compendium_react.start_farm_button": "Lancer le farm ici",
+      "progression.compendium_react.tab_pen_label": "Maîtrise PEN",
+      "progression.compendium_react.tab_zones_label": "Zones",
+      "progression.compendium_react.teleporting_label": "Téléportation vers ",
+      "progression.compendium_react.title": "Compendium",
+      "progression.compendium_react.world_locked_text": "Ce monde n'est pas encore accessible.",
+      "progression.equip.crystal_coming_soon": "Bientôt disponible",
+      "progression.mailbox.claim_button": "Récupérer",
+      "progression.mailbox.claimed_stock_label": "Stock de Loyalties déjà récupéré",
+      "progression.mailbox.empty": "Ton courrier est vide",
+      "progression.mailbox.panel_title": "📬 Courrier",
+      "progression.mailbox.permanent_note": "Ces objets restent ici en permanence tant qu'ils ne sont pas récupérés — ils ne se perdent jamais et s'empilent sans limite.",
+      "progression.mailbox.toast_title": "📬 Nouveau courrier",
+      "progression.notifications.achievement_unlocked": "Succès débloqué",
+      "progression.notifications.delete": "Supprimer",
+      "progression.notifications.empty": "Aucune notification pour l'instant",
+      "progression.notifications.empty_category": "Rien dans cette catégorie",
+      "progression.notifications.summary_one": "{{count}} affichée (sur {{total}}) · auto-supprimées après 7 jours",
+      "progression.notifications.summary_other": "{{count}} affichées (sur {{total}}) · auto-supprimées après 7 jours",
+      "progression.notifications.tab_all": "Tout",
+      "progression.notifications.title": "🔔 Notifications",
+      "progression.patch_notes.already_read_title": "Déjà lu",
+      "progression.patch_notes.before_after_title": "Voir avant/après",
+      "progression.patch_notes.changes_count_suffix": " changements",
+      "progression.patch_notes.clear_all_filters": "Tout effacer",
+      "progression.patch_notes.close_aria": "Fermer",
+      "progression.patch_notes.comment_placeholder": "Ajouter un commentaire",
+      "progression.patch_notes.content_blocked_error": "Merci de rester respectueux — commentaire bloqué.",
+      "progression.patch_notes.controversy_label": "Controverse",
+      "progression.patch_notes.controversy_sort_title": "Trier les lignes les plus contestées en premier",
+      "progression.patch_notes.date_locale": "fr-FR",
+      "progression.patch_notes.delete_title": "Supprimer",
+      "progression.patch_notes.latest_badge": "Récent",
+      "progression.patch_notes.loading": "Chargement…",
+      "progression.patch_notes.login_to_comment": "Connecte-toi pour commenter.",
+      "progression.patch_notes.mark_all_read": "Marquer comme lu",
+      "progression.patch_notes.new_badge_title": "Nouveau",
+      "progression.patch_notes.newer_notes_title": "Notes plus récentes",
+      "progression.patch_notes.no_comments": "Aucun commentaire pour l'instant.",
+      "progression.patch_notes.no_entries_match": "Aucune entrée ne correspond.",
+      "progression.patch_notes.older_notes_title": "Notes plus anciennes",
+      "progression.patch_notes.panel_title": "Notes de mise à jour",
+      "progression.patch_notes.rate_limited_error": "Tu commentes trop vite — réessaie dans une minute.",
+      "progression.patch_notes.read_badge": "Lu",
+      "progression.patch_notes.removed_badge": "🗑 Supprimé",
+      "progression.patch_notes.report_title": "Signaler",
+      "progression.patch_notes.search_placeholder": "Rechercher dans cette page",
+      "progression.quests.all_achievements_done": "🏅 Vous avez fini les succès !",
+      "progression.quests.all_claimed": "Tout est réclamé !",
+      "progression.quests.claim_button": "Réclamer",
+      "progression.quests.claimed": "Réclamé ✓",
+      "progression.quests.daily_reset_note": "Se réinitialise chaque jour à minuit (heure locale)",
+      "progression.quests.daily_tip": "Temps restant avant la remise à zéro des quêtes journalières",
+      "progression.quests.duration_day_suffix": "j ",
+      "progression.quests.not_active": "Pas tirée ce cycle",
+      "progression.quests.panel_title": "🗒️ Quêtes",
+      "progression.quests.playtime_label": "⏱️ Temps de jeu",
+      "progression.quests.tab_daily": "Journalières",
+      "progression.quests.tab_weekly": "Hebdomadaires",
+      "progression.quests.today_label": "Aujourd'hui",
+      "progression.quests.total_label": "Total",
+      "progression.quests.tracked_daily_label": "📅 Journalières",
+      "progression.quests.tracked_weekly_label": "🗓️ Hebdo",
+      "progression.quests.tracked_widget_title": "🔖 Quêtes suivies",
+      "progression.quests.tracker_start": "🔖 Suivre les quêtes restantes",
+      "progression.quests.tracker_stop": "🔖 Ne plus suivre",
+      "progression.quests.weekly_reset_note": "Se réinitialise chaque lundi à minuit (heure locale)",
+      "progression.quests.weekly_tip": "Temps restant avant la remise à zéro des quêtes hebdomadaires",
+      "progression.quests.widget_daily_label": "🗒️ Journ.",
+      "progression.quests.widget_title": "🗒️ Suivi",
+      "progression.quests.widget_weekly_label": "🗓️ Hebdo",
+      "progression.treasure_craft.bag_full": "Sac plein !",
+      "progression.treasure_craft.panel_title": "🔧 Combiner",
+      "progression.treasure_craft.secret_box_label": "Coffret secret",
+      "progression.treasure_craft.secret_combo_hint": "1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon → silver (Heidel/Calpheon pas encore débloqués)",
+      "progression.treasure_craft.upcoming_tier_hint": "Bientôt disponible — palier {{tier}} pas encore ouvert"
+    },
+    "social": {
+      "social.chat_day_today": "Aujourd'hui",
+      "social.chat_day_yesterday": "Hier",
+      "social.chat_default_pseudo": "Joueur",
+      "social.chat_delete_failed": "Suppression échouée : {{error}}",
+      "social.chat_empty": "Aucun message pour l'instant",
+      "social.chat_mod_access_denied": "Accès refusé ou schéma non exécuté",
+      "social.chat_mod_deleted_on": "Supprimé le {{time}}",
+      "social.chat_mod_empty": "Aucun message supprimé",
+      "social.chat_mod_restore_btn": "↩ Renvoyer",
+      "social.chat_mod_restore_title": "Renvoyer ce message dans son canal",
+      "social.chat_note_moderated_log": "🛡️ Journal des messages supprimés (staff)",
+      "social.chat_note_signin_required": "🔒 Connecte-toi avec un compte vérifié pour discuter",
+      "social.chat_note_staff_only": "Seul le staff peut poster ici",
+      "social.chat_restore_failed": "Renvoi échoué : {{error}}"
+    }
+  },
+  "en": {
+    "admin": {
+      "admin.common.chart_unavailable": "Chart unavailable",
+      "admin.common.failed": "Failed",
+      "admin.common.failed_prefix": "Failed — ",
+      "admin.common.loading": "Loading…",
+      "admin.common.no_data": "No data yet",
+      "admin.content.boss_danger_sub": "Danger: these actions affect ALL connected players.",
+      "admin.content.boss_despawn_btn": "Despawn",
+      "admin.content.boss_despawn_confirm": "Despawn the world boss for ALL players?",
+      "admin.content.boss_despawned_toast": "Boss despawned ✓",
+      "admin.content.boss_duration_option": "~{{m}} min to kill",
+      "admin.content.boss_hint": "HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation). The boss despawns after 9 minutes regardless.",
+      "admin.content.boss_label": "🌍 Boss:",
+      "admin.content.boss_launch_btn": "Launch (9 min)",
+      "admin.content.boss_launch_failed_toast": "Failed to launch",
+      "admin.content.boss_launch_title": "Launch a boss for ALL",
+      "admin.content.boss_launched_toast": "Boss launched for all ✓",
+      "admin.content.breakdown_title": "⚖️ Breakdown",
+      "admin.content.by_gearscore_title": "⚔️ By Gearscore",
+      "admin.content.by_rarity_title": "🎲 By rarity",
+      "admin.content.by_section_title": "🗺️ By section",
+      "admin.content.by_tier_title": "⬆️ By Tier (all players)",
+      "admin.content.by_zone_title": "🗾 By zone",
+      "admin.content.companions_achievements_avg": "Achievements done (avg)",
+      "admin.content.companions_downgrade_fusions": "Downgrade fusions (total)",
+      "admin.content.companions_eggs_hatched": "Eggs hatched (total)",
+      "admin.content.companions_fusions_total": "Fusions (total)",
+      "admin.content.companions_hard_achievements_avg": "\"Hard\" achievements (avg)",
+      "admin.content.companions_hatches_per_day": "Hatches / day (avg)",
+      "admin.content.companions_index_completion": "Index completion (avg)",
+      "admin.content.companions_login_streak": "Login streak (avg)",
+      "admin.content.companions_no_data": "No player has opened the Companions module yet",
+      "admin.content.companions_no_fusion": "No fusion or hatch yet",
+      "admin.content.companions_pets": "Pets (total / avg)",
+      "admin.content.companions_silver": "Companion Silver (total)",
+      "admin.content.companions_summary": "Module was 100% local until now (localStorage, closed economy, independent from the main Silver) — \"Players synced\" counts those who opened the Companion tab at least once (the module pushes its counters every 60s in the background).",
+      "admin.content.companions_synced": "Players synced",
+      "admin.content.companions_triggered_pity": "Triggered pity",
+      "admin.content.compendium_distribution_title": "📖 Distribution",
+      "admin.content.compendium_summary": "Average: {{avg}}% completion (zones + World Bosses + PEN Mastery combined) across {{count}} tracked player(s).",
+      "admin.content.completed_label": "Completed",
+      "admin.content.completed_total": "Completed (total)",
+      "admin.content.cron_balance_title": "⚖️ Farmed vs used",
+      "admin.content.cron_cost_title": "💎 Cost by tier of the protected piece",
+      "admin.content.cron_farmed_30d": "Farmed (30d)",
+      "admin.content.cron_farmed_per_player": "Farmed / player",
+      "admin.content.cron_hint": "FIXED drop rate, identical in every zone (1 to 3 units/pickup). \"Used\" = consumed to protect an enhancement from a downgrade (variable cost by tier, see table below). 30-day window, same as the silver ledger.",
+      "admin.content.cron_protections_30d": "Protections (30d)",
+      "admin.content.cron_stock_label": "In stock (farmed - used)",
+      "admin.content.cron_used_30d": "Used (30d)",
+      "admin.content.cron_used_label": "Used (protection)",
+      "admin.content.dropoff_funnel_title": "📉 Drop-off funnel (step last seen)",
+      "admin.content.fusion_list_title": "🔗 Fusion list by player",
+      "admin.content.in_progress_abandoned_label": "In progress / abandoned",
+      "admin.content.index_completion_breakdown_title": "📖 Index completion breakdown",
+      "admin.content.onboarding_completed_label": "Completed",
+      "admin.content.onboarding_no_data": "No one has started the arrival tutorial yet (button in the Wiki)",
+      "admin.content.onboarding_no_dropoff": "No in-progress abandonment (everyone finished or skipped)",
+      "admin.content.onboarding_skipped_label": "Skipped",
+      "admin.content.onboarding_summary": "The arrival tutorial never launches automatically — only via the button in the Wiki. \"Started\" = clicked that button at least once.",
+      "admin.content.skipped_label": "Skipped",
+      "admin.content.skipped_total": "Skipped (total)",
+      "admin.content.started_label": "Started",
+      "admin.content.table_avg_kills": "Avg kills",
+      "admin.content.table_breakthroughs": "Breakthroughs",
+      "admin.content.table_chance_per_kill": "Chance/kill",
+      "admin.content.table_cost": "Cost",
+      "admin.content.table_downgrades": "Downgrades",
+      "admin.content.table_eggs": "Eggs",
+      "admin.content.table_est_time": "Est. time",
+      "admin.content.table_fusions": "Fusions",
+      "admin.content.table_index": "Index",
+      "admin.content.table_item": "Item",
+      "admin.content.table_kind": "Kind",
+      "admin.content.table_pickups": "Pickups",
+      "admin.content.table_player": "Player",
+      "admin.content.table_players": "Players",
+      "admin.content.table_rate": "Rate",
+      "admin.content.table_step_reached": "Step reached",
+      "admin.content.table_tier": "Tier",
+      "admin.content.table_total": "Total",
+      "admin.content.table_tutorial": "Tutorial",
+      "admin.content.treasure_estimate": "Estimate at {{kpm}} kills/min (compare to your own in-game \"Kills/min\")",
+      "admin.content.tutorials_completed_vs_skipped_title": "⚖️ Completed vs skipped (all tutorials)",
+      "admin.content.tutorials_detail_title": "Detail by tutorial",
+      "admin.content.tutorials_hint": "A tutorial appears here as soon as at least one player has completed or skipped it (mark_item_tutorial_seen). Rate = completed / (completed + skipped).",
+      "admin.content.tutorials_no_data": "No tutorials seen yet",
+      "admin.content.tutorials_tracked": "Tutorials tracked",
+      "admin.content.zone_progression_summary": "Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed. Categories under 4% merged into \"Other\".",
+      "admin.dashboard.active_bans_label": "Active ban(s)",
+      "admin.dashboard.active_bans_stat": "Active bans",
+      "admin.dashboard.companions_none_synced": "No player synced",
+      "admin.dashboard.companions_synced_note": "{{count}} player(s) synced",
+      "admin.dashboard.completion_pct_note": "{{pct}}% completion",
+      "admin.dashboard.cron_farmed_used_note": "{{farmed}} farmed / {{used}} used",
+      "admin.dashboard.cron_in_stock_label": "In stock",
+      "admin.dashboard.cron_used_label": "Used",
+      "admin.dashboard.econ_healthy_note": "Healthy source/sink balance",
+      "admin.dashboard.light_needs_attention": "Needs attention",
+      "admin.dashboard.light_ok": "OK",
+      "admin.dashboard.market_active_note": "Market active (30d)",
+      "admin.dashboard.market_closed_note": "Market CLOSED",
+      "admin.dashboard.market_label": "Market",
+      "admin.dashboard.market_no_trades_note": "No trades (30d)",
+      "admin.dashboard.market_state_closed": "Closed",
+      "admin.dashboard.market_state_open": "Open",
+      "admin.dashboard.no_active_sanction_note": "No active sanction",
+      "admin.dashboard.onboarding_completed_label": "Completed",
+      "admin.dashboard.onboarding_in_progress_label": "In progress",
+      "admin.dashboard.onboarding_none_started": "No one started the tutorial",
+      "admin.dashboard.onboarding_skipped_label": "Skipped",
+      "admin.dashboard.overview_hint": "Overview of every panel — 🟢 nothing to flag, 🔴 needs attention. Click a card to open the full detail.",
+      "admin.dashboard.players_banned_note": "{{count}} player(s) currently banned",
+      "admin.dashboard.players_count_note": "{{count}} player(s)",
+      "admin.dashboard.players_online": "Players online",
+      "admin.dashboard.signups_note": "{{count}} signup(s) in 7 days",
+      "admin.dashboard.silver_net_48h_prefix": "48h net: ",
+      "admin.dashboard.skipped_pct_note": "{{pct}}% skipped",
+      "admin.dashboard.total_silver_in_game": "Total silver in game",
+      "admin.dashboard.tutorials_none_seen": "No tutorials seen",
+      "admin.dashboard.unavailable": "Unavailable",
+      "admin.dashboard.wealth_reasonable_note": "Reasonable spread",
+      "admin.dashboard.wealth_skewed_note": "Wealth highly concentrated (mean ≫ median)",
+      "admin.economy.avg_per_player": "📊 Average / player",
+      "admin.economy.failed_prefix": "Failed — ",
+      "admin.economy.failed_short": "Failed",
+      "admin.economy.health_sinks_title": "📤 Sinks (spent)",
+      "admin.economy.health_sources_title": "📥 Sources (gained)",
+      "admin.economy.health_summary": "Sources (gained) vs sinks (spent), by category — same ledger as \"Silver\", view centered on inflow/outflow balance. Categories under 4% of the total are merged into \"Other\".",
+      "admin.economy.hourly_active_title": "👥 Active players per hour (48h)",
+      "admin.economy.hourly_farmed_title": "💰 Silver farmed per hour (48h)",
+      "admin.economy.hourly_peak_label": "Peak:",
+      "admin.economy.loading": "Loading…",
+      "admin.economy.loot_editor_hint": "Changes the rates actually used by ALL players (while the loot table is on V2), reloaded on login. The game's default values stay unchanged in code — \"Reset\" restores them anytime.",
+      "admin.economy.loot_editor_title": "🛠️ Rate editor (V2, live)",
+      "admin.economy.loot_reset_btn": "Reset to game defaults",
+      "admin.economy.loot_reset_confirm": "Reset rates to the game's default values, for ALL players?",
+      "admin.economy.loot_reset_toast": "Rates reset ✓",
+      "admin.economy.loot_save_btn": "Save (all players)",
+      "admin.economy.loot_save_success": "Saved — applied immediately to all players ✓",
+      "admin.economy.loot_save_toast": "Loot rates updated ✓",
+      "admin.economy.loyalty_no_shop": "No Loyalties shop in game yet — nothing to spend it on, these stats track accumulation ahead of opening a shop.",
+      "admin.economy.loyalty_stat_total": "🏅 Total in game",
+      "admin.economy.loyalty_used_title": "🛍️ Used to buy",
+      "admin.economy.market_cancel_all_btn": "Cancel all open orders",
+      "admin.economy.market_cancel_confirm": "💥 Cancel ALL open Market orders? Each order will be refunded (silver or item) to its owner. Irreversible.",
+      "admin.economy.market_cancel_result": "{{data}} order(s) cancelled and refunded ✓",
+      "admin.economy.market_closed_btn": "🔒 Market closed (click to reopen)",
+      "admin.economy.market_closed_toast": "Market closed ✓",
+      "admin.economy.market_open_btn": "🔓 Market open (click to close)",
+      "admin.economy.market_reopened_toast": "Market reopened ✓",
+      "admin.economy.market_sub": "Closes Market access for EVERYONE except you; cancelling refunds every open order (silver or item) to its owner.",
+      "admin.economy.market_title": "Market",
+      "admin.economy.marketvolume_detail_title": "Detail",
+      "admin.economy.marketvolume_no_trades": "No trades in the last 30 days",
+      "admin.economy.marketvolume_stat_trades": "Trades (30d)",
+      "admin.economy.marketvolume_stat_volume": "Total volume (30d)",
+      "admin.economy.marketvolume_value_share_title": "🏆 Value share by item",
+      "admin.economy.no_data": "No data yet",
+      "admin.economy.no_data_playtime": "No data yet (at least 3 min playtime required)",
+      "admin.economy.pie_other": "Other",
+      "admin.economy.signups_by_day_title": "📅 By day",
+      "admin.economy.signups_by_platform_title": "🧩 By platform (all accounts)",
+      "admin.economy.signups_no_signups": "No signups in the last 30 days",
+      "admin.economy.signups_stat_title": "Signups (30d)",
+      "admin.economy.silver_chart_title": "📊 Net silver flow per hour (48h)",
+      "admin.economy.silver_ledger_hint": "Visual breakdown by category: see the \"Economic health\" section.",
+      "admin.economy.silver_ledger_title": "🔍 Where does the silver go? (detailed ledger)",
+      "admin.economy.silver_rate_title": "🏆 Who earns fastest? (lifetime rate)",
+      "admin.economy.silver_stat_lifetime_earned": "📈 Lifetime earned",
+      "admin.economy.silver_stat_spent": "🔻 Spent (sunk)",
+      "admin.economy.silver_stat_stored": "🏦 Stored (with players)",
+      "admin.economy.sink_alert": "Only {{pct}}% of gained silver is actually spent (sunk out of the game) — too few sinks, inflation risk. Consider adding a sink (shop, cost, drain) soon.",
+      "admin.economy.stat_players": "👥 Players",
+      "admin.economy.table_category": "Category",
+      "admin.economy.table_gained": "Gained",
+      "admin.economy.table_gear_pct": "Armor/Weapon (%)",
+      "admin.economy.table_item": "Item",
+      "admin.economy.table_jewel_pct": "Jewel (%)",
+      "admin.economy.table_lifetime_earned": "Lifetime earned",
+      "admin.economy.table_player": "Player",
+      "admin.economy.table_playtime": "Playtime",
+      "admin.economy.table_rate": "Rate",
+      "admin.economy.table_spent": "Spent",
+      "admin.economy.table_tier": "Tier",
+      "admin.economy.table_total_value": "Total value",
+      "admin.economy.table_trades": "Trades",
+      "admin.economy.table_transactions": "Transactions",
+      "admin.economy.wealth_bracket_title": "📈 Players by wealth bracket",
+      "admin.economy.wealth_stat_median": "📍 Median",
+      "admin.economy.wealth_stat_total": "💰 Total in game",
+      "admin.enh_debug.already_max": "Already all at max",
+      "admin.enh_debug.already_zero": "Already all at +0",
+      "admin.enh_debug.equip_tier_success": "Equipped: full {{tierName}} set ({{count}} pieces)",
+      "admin.enh_debug.max_all_one": "{{count}} piece set to max Enhancement",
+      "admin.enh_debug.max_all_other": "{{count}} pieces set to max Enhancement",
+      "admin.enh_debug.reset_all_one": "{{count}} piece reset to +0",
+      "admin.enh_debug.reset_all_other": "{{count}} pieces reset to +0",
+      "admin.enh_debug.step_down_count": "{{count}} piece(s) downgraded by 1 rank",
+      "admin.enh_debug.step_up_count": "{{count}} piece(s) upgraded by 1 rank",
+      "admin.enh_debug.tier_not_found": "Tier not found",
+      "admin.loot.active_version": "Active version:",
+      "admin.loot.table_gear": "Armor/Weapon",
+      "admin.loot.table_jewel": "Jewel",
+      "admin.loot.table_tier": "Tier",
+      "admin.loot.v1_btn": "V1 — per-zone rates (legacy)",
+      "admin.loot.v2_btn": "V2 — flat per-tier rate",
+      "admin.loot.v2_table_title": "📋 V2 table",
+      "admin.loot.version_hint": "V1: each zone has its own rate (decreasing zone after zone, see GEAR_CHANCE). V2: a single rate per tier, applied to its 4 zones. Switches instantly, reversible anytime, no data lost.",
+      "admin.patchnotes.auto_hidden_label": "Auto-hidden (reports)",
+      "admin.patchnotes.no_pending_reports": "No pending reports.",
+      "admin.patchnotes.no_removed_comments": "No removed comments.",
+      "admin.patchnotes.pending_reports_title": "Pending reports",
+      "admin.patchnotes.publish_btn": "Publish to Discord",
+      "admin.patchnotes.publish_hint": "Latest version selected by default. Each line keeps its icon (🆕 new, 🔄 change, 🛠️ fix, 🔒 patched exploit).",
+      "admin.patchnotes.publish_sub": "Posts the chosen note into the \"general log\" Discord channel (same webhook as other admin actions).",
+      "admin.patchnotes.publish_title": "Publish a patch note to Discord",
+      "admin.patchnotes.published_toast": "Note published to Discord ✓",
+      "admin.patchnotes.removed_comments_title": "Removed comments (restorable)",
+      "admin.patchnotes.restore_btn": "Restore",
+      "admin.patchnotes.version_label": "📜 Version:",
+      "admin.players.ap_title": "AP (Attack Power)",
+      "admin.players.best_kpm_title": "Personal kills/min record (lifetime)",
+      "admin.players.dp_title": "DP (Defense Power)",
+      "admin.players.inventory_btn": "Inventory",
+      "admin.players.inventory_btn_title": "Opens this player's equipped gear and full bag (192 slots), read-only, in a new window",
+      "admin.players.kpm_record_title": "Kills/min record",
+      "admin.players.reset_this_player_btn": "Reset this player",
+      "admin.players.screenshot_btn": "Screenshot",
+      "admin.players.signup_platform_title": "Signup platform",
+      "admin.players.summary_online_registered": "{{online}} online · {{total}} registered",
+      "admin.players.table_platform": "Platform",
+      "admin.players.table_player": "Player",
+      "admin.players.target_hint": "Find a player's UUID via the Leaderboard or their in-game messages (the \"Copy UUID\" button in their own menu). \"Screenshot\" shows their gear/inventory read-only (no changes made). The reset sends the same explanation message as the global reset, but shown ONLY to that player.",
+      "admin.players.target_sub": "Wipes silver/gear/level/bag for THAT player only.",
+      "admin.players.target_title": "A specific player — by UUID",
+      "admin.players.uuid_copied": "UUID copied ✓",
+      "admin.players.uuid_placeholder": "Player UUID",
+      "admin.reconnect.avg_per_session": "Avg / session",
+      "admin.reconnect.logged_sessions": "Logged sessions",
+      "admin.reconnect.no_session_yet": "No session yet.",
+      "admin.reconnect.players_involved": "Players involved",
+      "admin.reconnect.sub": "Aggregate view of the \"Welcome back\" modal — silver recovered while away, across all players.",
+      "admin.reconnect.table_date": "Date",
+      "admin.reconnect.table_player_uuid": "Player (UUID)",
+      "admin.reconnect.table_zone": "Zone",
+      "admin.reconnect.title": "Reconnect sessions",
+      "admin.reconnect.top10_title": "Top 10 sessions (by silver)",
+      "admin.reconnect.total_silver_recovered": "Total silver recovered",
+      "admin.reset.confirm_all_accounts_1": "💥 Reset ALL accounts of ALL players (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.",
+      "admin.reset.confirm_all_accounts_2": "Are you REALLY sure? There is no way to recover the lost progress.",
+      "admin.reset.confirm_all_quests": "Reset quests for ALL players? Everyone's in-progress quests (daily and weekly) will be cleared and new ones drawn on their next login. This action is irreversible.",
+      "admin.reset.confirm_demo": "Reset the demo? All your progress (silver, gear, level, bag) will be lost and set back to zero. This action is irreversible.",
+      "admin.reset.confirm_reset_uuid": "🔄 Reset player {{uuid}}'s account (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.",
+      "admin.reset.default_zone_name": "Velia",
+      "admin.reset.empty_bag": "Empty bag",
+      "admin.reset.no_gear": "No gear",
+      "admin.reset.no_player_for_uuid": "No player found with that UUID",
+      "admin.reset.no_save_for_uuid": "No save found for that UUID",
+      "admin.reset.online_warn": "\n\n⚠️ THIS PLAYER IS CURRENTLY ONLINE: their own autosave (roughly every 30s) may OVERWRITE their old state back over this reset within seconds, silently undoing it. For a reliable reset, wait until they're disconnected.",
+      "admin.reset.saved_on": "Saved on",
+      "admin.reset.screenshot_title_prefix": "📸 Screenshot — ",
+      "admin.reset.section_equipment": "Equipment",
+      "admin.reset.section_inventory": "Inventory",
+      "admin.reset.stat_level": "Level",
+      "admin.reset.stat_silver": "Silver",
+      "admin.reset.stat_zone": "Zone",
+      "admin.reset.toast_account_reset": "Account reset ✓",
+      "admin.reset.toast_all_accounts_reset": "{{data}} accounts reset ✓",
+      "admin.reset.toast_all_quests_reset": "All players' quests reset ✓",
+      "admin.reset.toast_demo_reset": "Demo reset",
+      "admin.reset.toast_my_quests_reset": "Quests reset",
+      "admin.roles.add_btn": "➕ Add",
+      "admin.roles.moderator_label": "Moderator",
+      "admin.roles.no_nickname": "(no nickname)",
+      "admin.roles.no_roles": "No roles assigned",
+      "admin.roles.remove_mod_btn": "Remove MOD",
+      "admin.roles.remove_tester_btn": "Remove Tester",
+      "admin.roles.sub": "🛡️ Moderator: can delete chat messages. 🧪 Tester: early access to not-yet-public features. A player can hold both roles.",
+      "admin.roles.tester_label": "Tester",
+      "admin.roles.title": "Roles (Moderator / Tester)",
+      "admin.sanctions.active_bans_title": "Active bans",
+      "admin.sanctions.ban_a_player_sub": "Temporarily blocks game access for this player (duration + predefined reason).",
+      "admin.sanctions.ban_a_player_title": "Ban a player",
+      "admin.sanctions.ban_btn": "Ban",
+      "admin.sanctions.ban_hint": "The admin can never ban themselves (checked client-side before the server call). Find the UUID via the Leaderboard or the Players section.",
+      "admin.sanctions.confirm_ban": "🚫 Ban player {{uuid}} for {{hours}}h (reason: {{reasonLabel}})?",
+      "admin.sanctions.invalid_uuid": "Invalid UUID or same as yours — action blocked",
+      "admin.sanctions.no_active_bans": "No active bans",
+      "admin.sanctions.table_ban_ends": "Ban ends",
+      "admin.sanctions.table_player": "Player",
+      "admin.sanctions.table_reason": "Reason",
+      "admin.sanctions.toast_banned": "Player banned ✓",
+      "admin.sanctions.toast_unbanned": "Ban lifted ✓",
+      "admin.sanctions.unban_btn": "Unban",
+      "admin.system.close_btn_title": "Close",
+      "admin.system.danger_title": "For players — server-wide",
+      "admin.system.palette_label": "Palette",
+      "admin.system.planned_badge": "🔜 planned",
+      "admin.system.planned_pane_text": "On the roadmap, but no game code behind it yet (no table, no client-side mechanic). This tab becomes useful once a first real piece exists — see ADMIN_MENU_PLAN.md.",
+      "admin.system.reset_all_accounts_btn": "Reset ALL accounts",
+      "admin.system.reset_all_accounts_hint": "\"Reset ALL accounts\" wipes silver/gear/level/bag for EVERYONE and shows an explanation message to each player on their next login. Irreversible.",
+      "admin.system.reset_all_quests_btn": "Reset everyone's quests",
+      "admin.system.search_placeholder": "Search…",
+      "admin.tests.fight_boss_label": "⚔️ Fight a World Boss:",
+      "admin.tests.fight_now_btn": "Fight now",
+      "admin.tests.hint": "Spawns a real shared boss (common HP) just for you, to test without waiting for the schedule or notifying anyone.",
+      "admin.tests.reset_demo_btn": "Reset the demo",
+      "admin.tests.reset_my_quests_btn": "Reset my quests",
+      "admin.tests.sub": "Safe: only affects YOUR own character.",
+      "admin.tests.tester_panel_intro": "Thanks for testing Black Desert Idle! This panel gives you early access to new features (no in-game advantage — pure testing). Nothing to test yet, but here's what's coming:",
+      "admin.tests.tester_panel_title": "🧪 Tester Panel",
+      "admin.tests.title": "For me — test on my account",
+      "admin.tests.unlock_achievements_btn": "Unlock all achievements",
+      "admin.tests.upcoming_in_dev": "In development — testable soon"
+    },
+    "backend": {
+      "backend.account.apply_button": "Apply",
+      "backend.account.cache_clear_button": "Clear cache and reload",
+      "backend.account.cache_hint": "If something looks wrong after an update, this button clears the browser's cache for the game's files then reloads the page. Your progress is never affected.",
+      "backend.account.cache_title": "Game cache",
+      "backend.account.code_applied": "Code applied!",
+      "backend.account.code_copied": "✓ Copied!",
+      "backend.account.copy_code_button": "📋 Copy code",
+      "backend.account.copy_label": "Copy",
+      "backend.account.discord_connect_button": "Connect Discord",
+      "backend.account.discord_connected": "✅ Discord account connected.",
+      "backend.account.enter_code_prompt": "Enter a code.",
+      "backend.account.github_connect_button": "Connect GitHub",
+      "backend.account.github_connected": "✅ GitHub account connected.",
+      "backend.account.google_connect_button": "Connect Google",
+      "backend.account.google_connected": "✅ Google account connected.",
+      "backend.account.guest_intro": "You're playing as a guest. Link a verified account (the \"🔗 Link account\" button) to access referrals, the market and the leaderboard — your current progress will be kept.",
+      "backend.account.has_code_prompt": "Got someone else's code?",
+      "backend.account.level_label": "Lvl",
+      "backend.account.link_account_prompt": "Existing account? click \"Sign in\". Otherwise \"Create account\" (replaces your guest progress).",
+      "backend.account.nickname_hint": "Shown everywhere in the leaderboard. Changing it updates the same row, it never creates a new one.",
+      "backend.account.nickname_saved": "Nickname saved!",
+      "backend.account.nickname_title": "📛 Nickname",
+      "backend.account.no_referrals": "No referrals yet",
+      "backend.account.panel_title": "👤 My account",
+      "backend.account.referral_code_placeholder": "Referral code",
+      "backend.account.referral_rules": [
+        "An account can only be referred once.",
+        "Referring must happen within 3 days of the referred account's creation — impossible afterward.",
+        "You cannot use your own code.",
+        "You cannot refer your own referrer.",
+        "No reward for now — this is just a tracker of who you've referred."
+      ],
+      "backend.account.referrals_title": "🎁 Referrals",
+      "backend.account.save_button": "Save",
+      "backend.account.summary_label": "Account",
+      "backend.account.twitter_connect_button": "Connect Twitter/X",
+      "backend.account.twitter_connected": "✅ Twitter/X account connected.",
+      "backend.account.uuid_copied_msg": "✓ UUID copied!",
+      "backend.account.your_referrals_title": "👥 Your referrals",
+      "backend.auth.ban_reason_unspecified": "unspecified",
+      "backend.auth.ban_suspended": "Account suspended until {{until}} — Reason: {{reason}}",
+      "backend.auth.email_first": "Enter your email first, then click again.",
+      "backend.auth.guest_badge": "🎭 Guest",
+      "backend.auth.guest_mode_body": "Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click \"🔗 Link account\" to create an account (your current progress is kept) or sign back into an existing one.",
+      "backend.auth.guest_mode_title": "You're playing as a guest",
+      "backend.auth.reset_email_sent": "Email sent — check your inbox to reset your password.",
+      "backend.auth.sending": "Sending…",
+      "backend.codex.all_zones": "All zones",
+      "backend.codex.craft_component_desc": "Endgame crafting component",
+      "backend.codex.material_desc": "Enhancement material",
+      "backend.codex.panel_title": "📚 Item Codex",
+      "backend.codex.section_base_loot": "▬ Base loot",
+      "backend.codex.section_crafts": "✦ Crafting components",
+      "backend.codex.section_jewelry": "💎 Rare jewelry",
+      "backend.codex.section_materials": "◈ Enhancement materials",
+      "backend.codex.section_treasure": "🗺️ Velia Treasure",
+      "backend.codex.summary": "All items currently in the game.",
+      "backend.codex.zone_word": "zone",
+      "backend.common.date_locale": "en-US",
+      "backend.common.player_label": "Player",
+      "backend.gear.copy_uuid_button": "Copy UUID",
+      "backend.gear.item_header": "Item",
+      "backend.gear.loading": "Loading…",
+      "backend.gear.no_gear": "No gear equipped",
+      "backend.gear.panel_title_prefix": "⚔️ Gear of ",
+      "backend.gear.popup_blocked": "Popup blocked by browser",
+      "backend.gear.slot_empty": "empty",
+      "backend.gear.slot_header": "Slot",
+      "backend.gear.uuid_copied": "UUID copied ✓",
+      "backend.inventory_window.bag_title": "Bag",
+      "backend.inventory_window.coming_soon": "Coming soon",
+      "backend.inventory_window.gear_title": "Gear",
+      "backend.inventory_window.slots_used": "slots used",
+      "backend.leaderboard.no_data": "No data yet",
+      "backend.leaderboard.panel_title": "🏆 Leaderboard",
+      "backend.leaderboard.summary": "Lifetime personal record leaderboard — never a live snapshot, these values never go down.",
+      "backend.patch_notes.before_after_title": "See before/after",
+      "backend.patch_notes.compare_after_label": "After",
+      "backend.patch_notes.compare_before_label": "Before",
+      "backend.patch_notes.newer_label": "Newer",
+      "backend.patch_notes.newer_notes_title": "Newer notes",
+      "backend.patch_notes.older_label": "Older",
+      "backend.patch_notes.older_notes_title": "Older notes",
+      "backend.patch_notes.panel_title": "📜 Patch Notes",
+      "backend.patch_notes.removed_tag": "🗑 Removed",
+      "backend.patch_notes.subcategory_label": "Subcategory",
+      "backend.patch_notes.unread_banner": "unread patch note(s) — click to jump to newest",
+      "backend.presence.guests_suffix": "guests",
+      "backend.tuto_page.intro": "The tutorial walks you through Velia, the peaceful town, and explains the basics of the game (zones, automatic skills, stats, quests, chat). You can replay it here anytime.",
+      "backend.tuto_page.replay_button": "▶ Replay the tutorial",
+      "backend.tutorial.finish": "Finish",
+      "backend.tutorial.next": "Next →",
+      "backend.tutorial.prev": "← Back",
+      "backend.tutorial.skip": "Skip",
+      "backend.tutorial.step_label": "Step",
+      "backend.wiki.close_button": "Close",
+      "backend.wiki.discord_placeholder": "No official Discord server yet — this section will be filled in once a link exists.",
+      "backend.wiki.home_lead": "Welcome to the Velia Idle Wiki — an automatic idle-farming game inspired by Black Desert Online. Here you'll find combat/zone rules, enhancement, the market, plus shortcuts to the Compendium and Companions module.",
+      "backend.wiki.home_system_combat_desc": "required AP/DP, progressive loot",
+      "backend.wiki.home_system_companions_desc": "collection, fusion and leaderboard (dedicated module)",
+      "backend.wiki.home_system_companions_title": "Companions",
+      "backend.wiki.home_system_market_desc": "player-to-player order book",
+      "backend.wiki.home_system_pen_word": "to",
+      "backend.wiki.home_systems_title": "Main systems",
+      "backend.wiki.infobox_developer_label": "Developer",
+      "backend.wiki.infobox_engine_label": "Engine",
+      "backend.wiki.infobox_license_label": "License",
+      "backend.wiki.infobox_license_value": "Free fan project",
+      "backend.wiki.infobox_related_title": "See also",
+      "backend.wiki.infobox_toc_title": "Contents",
+      "backend.wiki.infobox_version_label": "Version",
+      "backend.wiki.nav_about": "About",
+      "backend.wiki.nav_account": "Account & Save",
+      "backend.wiki.nav_codex": "Item codex",
+      "backend.wiki.nav_combat": "Combat & Zones",
+      "backend.wiki.nav_companions": "Companions (fusion, catalog…)",
+      "backend.wiki.nav_compendium": "Zones, Bosses & PEN Mastery",
+      "backend.wiki.nav_discord": "Discord",
+      "backend.wiki.nav_enh": "Enhancement",
+      "backend.wiki.nav_group_community": "Community",
+      "backend.wiki.nav_group_companions_world": "Companions & World",
+      "backend.wiki.nav_group_general": "General",
+      "backend.wiki.nav_group_guides": "Game guides",
+      "backend.wiki.nav_group_items": "Items",
+      "backend.wiki.nav_home": "Home",
+      "backend.wiki.nav_market": "Market",
+      "backend.wiki.nav_patchnotes": "Patch notes",
+      "backend.wiki.nav_tuto": "Tutorial",
+      "backend.wiki.search_no_results": "No results for",
+      "backend.wiki.search_placeholder": "Search…"
+    },
+    "combat": {
+      "combat.ai_mode.balanced_title": "Balanced AI: alternates attack and caution based on the fight",
+      "combat.ai_mode.defensive_title": "Defensive AI: prioritizes dodging/healing over attacking",
+      "combat.ai_mode.farm_loot_title": "Loot AI: picks up all drops before moving to the next pack",
+      "combat.ai_mode.farm_xp_title": "XP AI: chains packs without picking up ground loot",
+      "combat.ai_mode.overgeared_title": "Overgeared AI: attacks relentlessly, skips most dodges",
+      "combat.boss.already_defeated_button": "💀 Already defeated",
+      "combat.boss.already_defeated_by_others": "Already defeated by other players",
+      "combat.boss.already_defeated_hint": "This boss has already been defeated — come back later, at the next spawn.",
+      "combat.boss.available_now": "Available now!",
+      "combat.boss.be_first": "Be the first!",
+      "combat.boss.blocked_msg": "BLOCKED!",
+      "combat.boss.boss_defeated_notif": "Boss defeated",
+      "combat.boss.caphras_label": "Caphras",
+      "combat.boss.chance_label": "chance",
+      "combat.boss.close_button": "Close",
+      "combat.boss.contribution_rank": "Contribution rank",
+      "combat.boss.death_penalty": "💀 {{deathCount}} death{{s}} — numeric reward reduced by {{pct}}%{{excludedNote}}",
+      "combat.boss.death_penalty_rare_excluded": " (rare loot excluded)",
+      "combat.boss.dived_msg": "DIVED!",
+      "combat.boss.fight_button": "⚔️ Fight",
+      "combat.boss.fight_left_title": "Fight left",
+      "combat.boss.first_kill_week_bonus": "First kill of the week: +{{bonusPct}}%",
+      "combat.boss.for_everyone": "For everyone",
+      "combat.boss.hard_zone_stone": "enhancement stone from your best hard zone",
+      "combat.boss.in_label": "in",
+      "combat.boss.leave_button": "🚪 Leave",
+      "combat.boss.memory_frag_label": "Memory frag.",
+      "combat.boss.new_badge": "NEW",
+      "combat.boss.next_boss_label": "Next boss",
+      "combat.boss.no_boss_scheduled": "No boss scheduled",
+      "combat.boss.not_spawned_yet": "⏳ Not spawned yet",
+      "combat.boss.nothing_scheduled": "Nothing scheduled",
+      "combat.boss.perfect_kill": "Perfect Kill — 0 deaths",
+      "combat.boss.pity_label": "Pity",
+      "combat.boss.players_fighting": "{{n}} player{{s}} fighting",
+      "combat.boss.rank1_reward_generic": "+1 jewel from the next dangerous zone",
+      "combat.boss.rank2_reward_generic": "+1 jewel from your hard zone",
+      "combat.boss.rank3_reward_generic": "20% dangerous jewel + 30% hard jewel",
+      "combat.boss.reveal_placeholder": "…",
+      "combat.boss.reward_already_claimed": "Reward already claimed for this boss — each victory can only be paid out once.",
+      "combat.boss.schedule_note": "Times mirror real BDO −15 min. Local time.",
+      "combat.boss.silver_label": "Silver",
+      "combat.boss.skip_button": "⏭ Skip",
+      "combat.boss.status_defeated": "DEFEATED",
+      "combat.boss.status_live": "LIVE",
+      "combat.boss.victory_title": "🏆 VICTORY",
+      "combat.boss.waiting_for_fighters": "Waiting for fighters",
+      "combat.boss.wave_msg": "WAVE!",
+      "combat.boss.weekly_calendar_title": "📅 Weekly calendar",
+      "combat.boss.wheel_not_this_time": "Not this time — {{icon}} {{name}} still awaits",
+      "combat.boss.wheel_obtained": "Obtained",
+      "combat.boss.zone_bonus_active": "Zone bonus ({{zoneName}}): death-free certified ✓ ×{{mult}}",
+      "combat.boss.zone_bonus_inactive": "No zone bonus: died less than 3 min ago",
+      "combat.loot.bag_full": "BAG FULL!",
+      "combat.loot.level_reached": "Level {{lvl}}",
+      "combat.loot.level_up_notif_title": "Level up",
+      "combat.potion.coming_soon": "Coming soon",
+      "combat.potion.drink_under": "Drink under",
+      "combat.potion.free_label": "Free",
+      "combat.potion.hp_potion_section": "HP Potion",
+      "combat.potion.mana_potion_section": "Mana Potion (auto under 30%)",
+      "combat.potion.no_silver_warning": "Not enough silver for a potion!"
+    },
+    "common": {},
+    "core": {
+      "core.away.title": "While you were away",
+      "core.combat.dodge": "Dodged!",
+      "core.death.got_back_up": "⚠ You got back up — you changed zone during the K.O.",
+      "core.death.killed_by_monsters": "⚠ The monsters killed you! Pick a zone better suited to your level or improve your gear.",
+      "core.default_pseudo": "Player",
+      "core.equip_summary.lvl_prefix": "Lvl ",
+      "core.potions.free_suffix": " — free (CD {{cd}}s)",
+      "core.potions.usage_word": "use",
+      "core.stats_levels.hint": "5 levels before and after yours — base HP (gear excluded), Speed bonus, and XP required for THAT level.",
+      "core.stats_levels.hp_label": "HP",
+      "core.stats_levels.lvl_label": "Lvl",
+      "core.stats_levels.you_suffix": " — you",
+      "core.stats_reco.best_kills_min": "⚔️ Best kills/min",
+      "core.stats_reco.best_silver_hour": "💰 Best silver/h",
+      "core.stats_reco.best_xp_hour": "⭐ Best XP/h",
+      "core.stats_reco.construction_banner": "🚧 Under construction — calculations and presentation still subject to change",
+      "core.stats_reco.hint": "Theoretical ranking (ideal gear, independent of your current survival) — click a zone to go there.",
+      "core.velia.in_town_label": "👥 In town ({{count}})",
+      "core.velia.nobody_else": "Nobody else right now",
+      "core.velia.title": "Velia — peaceful zone",
+      "core.velia.zone_type_label": "Peaceful zone",
+      "core.zone.admin_tag_title": "An admin is here",
+      "core.zone.better_gear_title": "Better gear to find here",
+      "core.zone.no_monsters": "No monsters",
+      "core.zone.peaceful_badge": "PEACEFUL ZONE",
+      "core.zone.players_here_title": "Players currently on this zone",
+      "core.zone.too_hard_warning": "⚠️ Zone too hard for your gear: you are slowed down, monsters that spotted you are faster",
+      "core.zone.view_loot_title": "View loot",
+      "core.zone_tier.locked_title": "Coming soon",
+      "core.zone_tier.locked_title_with_drop": "Coming soon: will drop {{icon}} {{name}}"
+    },
+    "inventory": {
+      "inventory.action_drop": "Drop",
+      "inventory.action_equip": "Equip",
+      "inventory.action_sell_all": "Sell all ({{n}})",
+      "inventory.action_sell_one": "Sell 1 ({{n}})",
+      "inventory.action_store_in_chest": "📦 Store in chest (1)",
+      "inventory.action_to_opt": "Load into enhancement",
+      "inventory.action_unequip": "Unequip",
+      "inventory.bag_full": "Bag full",
+      "inventory.buyback_nothing": "Nothing to buy back (or bag full / not enough silver)",
+      "inventory.buyback_success": "Items bought back ✓",
+      "inventory.caphras_convert_label": "{{n}} dust → {{caphras}} Caphras stone",
+      "inventory.category_coming_soon": "Coming soon",
+      "inventory.category_empty_generic": "Empty",
+      "inventory.category_empty_rng": "No RNG box yet",
+      "inventory.chest_full": "Chest full",
+      "inventory.chest_return_to_bag": "Send back to main bag",
+      "inventory.chest_zoom_enlarge": "🔍 Enlarge (5/row)",
+      "inventory.chest_zoom_shrink": "🔎 Shrink (8/row)",
+      "inventory.compendium_equip_and_optimize": "Equip and optimize",
+      "inventory.confirm_sell_all": "Sell the whole stack for {{n}} silver?",
+      "inventory.confirm_sell_one": "Sell 1 item for {{n}} silver?",
+      "inventory.eq_sum_ap_prefix": "AP ",
+      "inventory.eq_sum_dp_prefix": "DP ",
+      "inventory.equip_best_already_optimal": "Already optimal — nothing to change",
+      "inventory.equip_best_result_one": "1 piece swapped (better base stats)",
+      "inventory.equip_best_result_other": "{{count}} pieces swapped (better base stats)",
+      "inventory.equip_sell_comp_diverted_one": "1 protected 📖",
+      "inventory.equip_sell_comp_diverted_other": "{{count}} protected 📖",
+      "inventory.equip_sell_comp_equipped_one": "1 equipped",
+      "inventory.equip_sell_comp_equipped_other": "{{count}} equipped",
+      "inventory.equip_sell_comp_nothing": "Already optimal — nothing to do",
+      "inventory.equip_sell_comp_sold_one": "1 sold (+{{total}} silver)",
+      "inventory.equip_sell_comp_sold_other": "{{count}} sold (+{{total}} silver)",
+      "inventory.farm_guide_banner": "🗺️ Where to farm? Unlocked zones, excluding ones currently too dangerous for your gear — click a zone to see the full detail:",
+      "inventory.farm_guide_no_safe_zone": "No unlocked zone is currently safe for you — improve your gear or explore carefully.",
+      "inventory.farm_guide_title": "🗺️ Where to farm?",
+      "inventory.loot_ap_equipped": "AP equipped",
+      "inventory.loot_armor_zone_only": "armor — this zone only",
+      "inventory.loot_autosell_coming_soon": "Auto-sell (coming soon)",
+      "inventory.loot_preview_tag": "👁 Preview — ",
+      "inventory.loot_upgrade_tooltip": "Upgrades your current gear",
+      "inventory.loot_weapon_zone_only": "weapon — this zone only",
+      "inventory.main_bag_full": "Main bag full",
+      "inventory.opt_auto_btn_start": "▶ Auto to",
+      "inventory.opt_auto_btn_stop": "⏸ Stop",
+      "inventory.opt_auto_gain_at": "At {{level}}: ",
+      "inventory.opt_auto_max_level": "Max level reached",
+      "inventory.opt_auto_stopped_gain": "Auto stopped — gain reached ({{level}})",
+      "inventory.opt_auto_stopped_no_cron": "Auto stopped — out of Cron Stones",
+      "inventory.opt_auto_stopped_no_material": "Auto stopped — out of material",
+      "inventory.opt_chance_label": "Chance",
+      "inventory.opt_cron_cost_suffix": " · cost for this piece: {{cronCost}}",
+      "inventory.opt_cron_in_use": "in use (click to disable)",
+      "inventory.opt_cron_not_used": "not used (click to enable)",
+      "inventory.opt_equip_a_piece": "Equip a piece to enhance",
+      "inventory.opt_fail_downgraded_prefix": "✖ FAIL — downgraded to ",
+      "inventory.opt_fail_material_lost": "✖ FAIL — material lost",
+      "inventory.opt_fail_protected_prefix_one": "✖ FAIL — protected by 1 Cron Stone (",
+      "inventory.opt_fail_protected_prefix_other": "✖ FAIL — protected by {{count}} Cron Stones (",
+      "inventory.opt_fails_on_tier": "fails on this tier",
+      "inventory.opt_material_label": "Material",
+      "inventory.opt_max_level_reached": "PEN reached — max level",
+      "inventory.opt_no_cron_stone": "No Cron Stone in bag",
+      "inventory.opt_no_material": "No material in bag — go loot some",
+      "inventory.opt_no_piece_equipped": "No piece equipped",
+      "inventory.opt_protected_floattxt": "⏳ Protected!",
+      "inventory.opt_success_prefix": "✦ SUCCESS — ",
+      "inventory.opt_suggest_recommended": "Recommended",
+      "inventory.sell_worse_diverted_one": " · +1 protected in the 📖 Compendium bag",
+      "inventory.sell_worse_diverted_other": " · +{{count}} protected in the 📖 Compendium bag",
+      "inventory.sell_worse_nothing": "Nothing to sell — everything already beats what's equipped",
+      "inventory.sell_worse_result_one": "{{count}} item sold (+{{total}} silver){{divertedTxt}}",
+      "inventory.sell_worse_result_other": "{{count}} items sold (+{{total}} silver){{divertedTxt}}",
+      "inventory.slot_empty_nothing_equipped": "Nothing equipped",
+      "inventory.slot_locked_not_available": "🔒 Not available yet",
+      "inventory.stat_delta_nothing_equipped": "nothing equipped — ",
+      "inventory.stat_delta_vs_equipped": "vs equipped: ",
+      "inventory.stat_dodge_abbr": "Dodge",
+      "inventory.tooltip_enhance": "Enhance",
+      "inventory.tooltip_not_available_yet": "Not available yet",
+      "inventory.tooltip_zone_to_find_gear": "Zone to find this gear",
+      "inventory.tooltip_zone_to_upgrade": "Zone to upgrade",
+      "inventory.velia_loot_banner": "🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:",
+      "inventory.velia_peaceful_zone": "Velia — peaceful zone",
+      "inventory.velia_treasure_label": "Velia Treasure",
+      "inventory.where_to_farm_label": "📍 Where to farm: "
+    },
+    "market": {
+      "market.auth_verified_required": "The Market and Leaderboard are restricted to verified accounts (anti-cheat protection). Click \"🔗 Link account\" to create one — your current progress will be kept.",
+      "market.available_qty_label": "Available qty",
+      "market.back_btn": "Back",
+      "market.best_buy_label": "Best buy",
+      "market.best_sell_label": "Best sell",
+      "market.buy_btn": "Buy",
+      "market.buy_label": "Buy",
+      "market.buy_orders_label": "Buy orders",
+      "market.cancel_btn": "Cancel",
+      "market.closed_for_maintenance": "🏛️ The Market is currently closed for maintenance. Try again later.",
+      "market.equipped_label": "Equipped",
+      "market.failed_with_reason": "Failed: {{reason}}",
+      "market.from_price_label": "from",
+      "market.in_stock_label": "In stock",
+      "market.invalid_price": "Invalid price.",
+      "market.level_label": "Level",
+      "market.levels_label": "levels",
+      "market.loading_error": "Loading error",
+      "market.market_pressure_label": "Market pressure",
+      "market.no_item_owned": "You don't have any.",
+      "market.no_listings": "No listings right now",
+      "market.no_orders_label": "No orders",
+      "market.no_transactions_label": "No transactions",
+      "market.not_enough_transactions": "Not enough transactions",
+      "market.order_placed": "Order placed ✓ (filled immediately if a compatible opposite order existed)",
+      "market.place_buy_order_btn": "Place buy order",
+      "market.place_order_title": "Place an order — {{itemName}} · owned : {{owned}}",
+      "market.place_sell_order_btn": "Place sell order",
+      "market.purchase_complete": "Purchase complete ✓",
+      "market.select_item_hint": "Click an item to see the detail",
+      "market.sell_label": "Sell",
+      "market.sell_orders_label": "Sell orders",
+      "market.sell_tax_hint": "You'll receive ~{{net}} silver after sale tax ({{taxPct}}%)",
+      "market.sold_by_label": "Sold by",
+      "market.spread_label": "Spread",
+      "market.status_done": "done",
+      "market.status_open": "open",
+      "market.this_one_label": "This one",
+      "market.time_locale": "en-US",
+      "market.trend_falling": "FALLING",
+      "market.trend_neutral": "NEUTRAL",
+      "market.trend_rising": "RISING",
+      "market.vs_label": "Vs"
+    },
+    "progression": {
+      "progression.achievements.completed": "Completed ✓",
+      "progression.achievements.empty": "Nothing to show here",
+      "progression.achievements.filter_unfinished_off": "☐ Unfinished",
+      "progression.achievements.filter_unfinished_on": "☑ Unfinished",
+      "progression.achievements.panel_title": "🏅 Achievements",
+      "progression.achievements.toast_title": "🏅 Achievement unlocked",
+      "progression.compendium.boss_defeated": "Defeated at least once",
+      "progression.compendium.boss_not_defeated": "Not defeated yet",
+      "progression.compendium.dmg_label": "DMG",
+      "progression.compendium.dodge_label": "Dodge",
+      "progression.compendium.go_zone_title": "Starts farming in this zone immediately",
+      "progression.compendium.hint": "Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive, never a multiplier). Click an item below to see which zones farm it, then click a zone to start farming there right away (no confirmation, you're sent there instantly).",
+      "progression.compendium.missing_item": "Missing item",
+      "progression.compendium.no_zone_found": "No zone found for this item",
+      "progression.compendium.panel_title": "📖 Compendium",
+      "progression.compendium.pen_hint": "Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.",
+      "progression.compendium.pick_zone_hint": "— click a zone to go farm there directly:",
+      "progression.compendium.progress_label": "Progress",
+      "progression.compendium.summary_line": "{{zc}}/{{zonesTotal}} zones · {{bc}}/{{bossMax}} World Bosses · {{penDone}}/{{penTotal}} PEN",
+      "progression.compendium.tab_pen": "PEN Mastery",
+      "progression.compendium.tab_zones": "Zones",
+      "progression.compendium.tutorial_button_title": "Start the Compendium tutorial",
+      "progression.compendium_react.at_pen_label": "at PEN",
+      "progression.compendium_react.available_in_label": "available in: ",
+      "progression.compendium_react.boss_defeated_full": "Defeated at least once",
+      "progression.compendium_react.boss_defeated_short": "defeated",
+      "progression.compendium_react.boss_not_defeated_full": "Not defeated yet",
+      "progression.compendium_react.boss_not_defeated_short": "not defeated yet",
+      "progression.compendium_react.clear_highlight_aria": "Clear highlight",
+      "progression.compendium_react.clear_search_aria": "Clear search",
+      "progression.compendium_react.close_aria": "Close",
+      "progression.compendium_react.dmg_label": "DMG",
+      "progression.compendium_react.dodge_label": "Dodge",
+      "progression.compendium_react.in_progress_label": "in progress",
+      "progression.compendium_react.intro_text": "Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive). Click an item to see which zones farm it, then click a zone to start farming there right away.",
+      "progression.compendium_react.mastered_badge": "Mastered",
+      "progression.compendium_react.no_gear_tier_text": "No gear tier in this world yet.",
+      "progression.compendium_react.overall_progress_label": "Overall progress (zones + boss + PEN)",
+      "progression.compendium_react.pen_hint_text": "Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once.",
+      "progression.compendium_react.progress_label": "Progress",
+      "progression.compendium_react.search_aria": "Search a zone or item",
+      "progression.compendium_react.search_placeholder": "Search a zone or item...",
+      "progression.compendium_react.see_zones_aria": "See zones where to find {{item}}",
+      "progression.compendium_react.sort_az": "A → Z",
+      "progression.compendium_react.sort_default": "Default",
+      "progression.compendium_react.sort_label": "Sort:",
+      "progression.compendium_react.sort_progress": "% complete",
+      "progression.compendium_react.speed_label": "SPD",
+      "progression.compendium_react.start_farm_button": "Start farming here",
+      "progression.compendium_react.tab_pen_label": "PEN Mastery",
+      "progression.compendium_react.tab_zones_label": "Zones",
+      "progression.compendium_react.teleporting_label": "Teleporting to ",
+      "progression.compendium_react.title": "Compendium",
+      "progression.compendium_react.world_locked_text": "This world is not accessible yet.",
+      "progression.equip.crystal_coming_soon": "Coming soon",
+      "progression.mailbox.claim_button": "Claim",
+      "progression.mailbox.claimed_stock_label": "Already claimed Loyalty stock",
+      "progression.mailbox.empty": "Your mailbox is empty",
+      "progression.mailbox.panel_title": "📬 Mailbox",
+      "progression.mailbox.permanent_note": "These items stay here permanently until claimed — they never get lost and stack without limit.",
+      "progression.mailbox.toast_title": "📬 New mail",
+      "progression.notifications.achievement_unlocked": "Achievement unlocked",
+      "progression.notifications.delete": "Delete",
+      "progression.notifications.empty": "No notifications yet",
+      "progression.notifications.empty_category": "Nothing in this category",
+      "progression.notifications.summary_one": "{{count}} shown (of {{total}}) · auto-deleted after 7 days",
+      "progression.notifications.summary_other": "{{count}} shown (of {{total}}) · auto-deleted after 7 days",
+      "progression.notifications.tab_all": "All",
+      "progression.notifications.title": "🔔 Notifications",
+      "progression.patch_notes.already_read_title": "Already read",
+      "progression.patch_notes.before_after_title": "See before/after",
+      "progression.patch_notes.changes_count_suffix": " changes",
+      "progression.patch_notes.clear_all_filters": "Clear all",
+      "progression.patch_notes.close_aria": "Close",
+      "progression.patch_notes.comment_placeholder": "Add a comment",
+      "progression.patch_notes.content_blocked_error": "Please stay respectful — comment blocked.",
+      "progression.patch_notes.controversy_label": "Controversy",
+      "progression.patch_notes.controversy_sort_title": "Sort most contested lines first",
+      "progression.patch_notes.date_locale": "en-US",
+      "progression.patch_notes.delete_title": "Delete",
+      "progression.patch_notes.latest_badge": "Latest",
+      "progression.patch_notes.loading": "Loading…",
+      "progression.patch_notes.login_to_comment": "Log in to comment.",
+      "progression.patch_notes.mark_all_read": "Mark all read",
+      "progression.patch_notes.new_badge_title": "New",
+      "progression.patch_notes.newer_notes_title": "Newer notes",
+      "progression.patch_notes.no_comments": "No comments yet.",
+      "progression.patch_notes.no_entries_match": "No entries match.",
+      "progression.patch_notes.older_notes_title": "Older notes",
+      "progression.patch_notes.panel_title": "Patch notes",
+      "progression.patch_notes.rate_limited_error": "You're commenting too fast — try again in a minute.",
+      "progression.patch_notes.read_badge": "Read",
+      "progression.patch_notes.removed_badge": "🗑 Removed",
+      "progression.patch_notes.report_title": "Report",
+      "progression.patch_notes.search_placeholder": "Search this page",
+      "progression.quests.all_achievements_done": "🏅 You've finished all achievements!",
+      "progression.quests.all_claimed": "Everything is claimed!",
+      "progression.quests.claim_button": "Claim",
+      "progression.quests.claimed": "Claimed ✓",
+      "progression.quests.daily_reset_note": "Resets every day at midnight (local time)",
+      "progression.quests.daily_tip": "Time left before daily quests reset",
+      "progression.quests.duration_day_suffix": "d ",
+      "progression.quests.not_active": "Not active this cycle",
+      "progression.quests.panel_title": "🗒️ Quests",
+      "progression.quests.playtime_label": "⏱️ Playtime",
+      "progression.quests.tab_daily": "Daily",
+      "progression.quests.tab_weekly": "Weekly",
+      "progression.quests.today_label": "Today",
+      "progression.quests.total_label": "Total",
+      "progression.quests.tracked_daily_label": "📅 Daily",
+      "progression.quests.tracked_weekly_label": "🗓️ Weekly",
+      "progression.quests.tracked_widget_title": "🔖 Tracked quests",
+      "progression.quests.tracker_start": "🔖 Track remaining quests",
+      "progression.quests.tracker_stop": "🔖 Stop tracking",
+      "progression.quests.weekly_reset_note": "Resets every Monday at midnight (local time)",
+      "progression.quests.weekly_tip": "Time left before weekly quests reset",
+      "progression.quests.widget_daily_label": "🗒️ Daily",
+      "progression.quests.widget_title": "🗒️ Tracker",
+      "progression.quests.widget_weekly_label": "🗓️ Weekly",
+      "progression.treasure_craft.bag_full": "Bag full!",
+      "progression.treasure_craft.panel_title": "🔧 Combine",
+      "progression.treasure_craft.secret_box_label": "Secret box",
+      "progression.treasure_craft.secret_combo_hint": "1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → silver (Heidel/Calpheon not unlocked yet)",
+      "progression.treasure_craft.upcoming_tier_hint": "Coming soon — {{tier}} tier not yet open"
+    },
+    "social": {
+      "social.chat_day_today": "Today",
+      "social.chat_day_yesterday": "Yesterday",
+      "social.chat_default_pseudo": "Player",
+      "social.chat_delete_failed": "Delete failed: {{error}}",
+      "social.chat_empty": "No messages yet",
+      "social.chat_mod_access_denied": "Access denied or schema not run",
+      "social.chat_mod_deleted_on": "Deleted on {{time}}",
+      "social.chat_mod_empty": "No deleted messages",
+      "social.chat_mod_restore_btn": "↩ Restore",
+      "social.chat_mod_restore_title": "Repost this message to its channel",
+      "social.chat_note_moderated_log": "🛡️ Deleted-message log (staff)",
+      "social.chat_note_signin_required": "🔒 Sign in with a verified account to chat",
+      "social.chat_note_staff_only": "Only staff can post here",
+      "social.chat_restore_failed": "Restore failed: {{error}}"
+    }
+  }
+};
+
+// ==== src/core/i18n-init.js ====
+let _i18nBootLang = 'fr';
+try { _i18nBootLang = localStorage.getItem('velia-idle-lang') || 'fr'; } catch (e) {}
+
+const SUPPORTED_LANGS = ['fr', 'en'];
+
+i18next.init({
+  lng: _i18nBootLang,
+  fallbackLng: 'en',
+  supportedLngs: SUPPORTED_LANGS,
+  resources: I18N_RESOURCES,   
+  ns: I18N_NAMESPACES,
+  defaultNS: 'common',
+  interpolation: { escapeValue: false } 
+});
+
 // ==== src/inventory/gear-icons.js ====
 function svgIcon(inner) { return `<svg class="gicon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`; }
 
@@ -696,7 +2361,7 @@ function showAwayLootSummaryIfAny() {
   if (typeof openReconnectModal !== 'function' || !$a('reconnectModalRoot')) {
     
     if (typeof showResetNotice === 'function') {
-      showResetNotice('🎁', LANG==='fr'?'Pendant ton absence':'While you were away',
+      showResetNotice('🎁', i18next.t('core:core.away.title'),
         `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver`);
     }
     awaySilverGained = 0; awayLootCounts = {}; return;
@@ -711,7 +2376,7 @@ function showAwayLootSummaryIfAny() {
   if (awaySilverGained > S.bestAfkSessionSilver) S.bestAfkSessionSilver = awaySilverGained;
 
   openReconnectModal({
-    pseudo: (typeof myPseudo !== 'undefined' && myPseudo) || (LANG==='fr'?'Joueur':'Player'),
+    pseudo: (typeof myPseudo !== 'undefined' && myPseudo) || i18next.t('core:core.default_pseudo'),
     streak: 0, streakGoal: 7, 
     awayLabel: reconnectDurationLabel(new Date(awaySessionStartedAt || Date.now()), new Date()),
     silver: awaySilverGained, xp: awayXpGained,
@@ -1342,7 +3007,7 @@ function wolvesTick(dt) {
           const wp = wolfPos(p,w);
           if (dist(P.x,P.y,wp.x,wp.y) < 95) {
             if (Math.random() < dodgeChance) {
-              floatTxt(P.x,P.y,80,LANG==='fr'?'Esquivé !':'Dodged!',{blue:true});
+              floatTxt(P.x,P.y,80,i18next.t('core:core.combat.dodge'),{blue:true});
             } else {
               const dmgRaw = p.dmg*(0.8+Math.random()*.4)*mitig;
               let dmg;
@@ -1450,16 +3115,12 @@ function renderStatsTabs() {
 function renderStatsRecoPane() {
   const el = $('statsRecoPane'); if (!el) return;
   const rows = [
-    { label: LANG==='fr'?'💰 Meilleur silver/h':'💰 Best silver/h', best: bestZoneForMetric(zoneSilverPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
-    { label: LANG==='fr'?'⭐ Meilleur XP/h':'⭐ Best XP/h', best: bestZoneForMetric(zoneXpPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
-    { label: LANG==='fr'?'⚔️ Meilleurs kills/min':'⚔️ Best kills/min', best: bestZoneForMetric(zoneKillsPerMin), fmtV: v => v.toFixed(1)+'/min' },
+    { label: i18next.t('core:core.stats_reco.best_silver_hour'), best: bestZoneForMetric(zoneSilverPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
+    { label: i18next.t('core:core.stats_reco.best_xp_hour'), best: bestZoneForMetric(zoneXpPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
+    { label: i18next.t('core:core.stats_reco.best_kills_min'), best: bestZoneForMetric(zoneKillsPerMin), fmtV: v => v.toFixed(1)+'/min' },
   ];
-  el.innerHTML = `<div class="constructionBanner">${LANG==='fr'
-      ? '🚧 En construction — calculs et présentation encore amenés à changer'
-      : '🚧 Under construction — calculations and presentation still subject to change'}</div>` +
-    `<div class="admHint">${LANG==='fr'
-      ? 'Classement théorique (stuff idéal, indépendant de ta survie actuelle) — clique une zone pour t\'y rendre.'
-      : 'Theoretical ranking (ideal gear, independent of your current survival) — click a zone to go there.'}</div>` +
+  el.innerHTML = `<div class="constructionBanner">${i18next.t('core:core.stats_reco.construction_banner')}</div>` +
+    `<div class="admHint">${i18next.t('core:core.stats_reco.hint')}</div>` +
     rows.map((r,ri) => `<div class="row statsRecoRow" data-zi="${r.best.i}" data-ri="${ri}">` +
       `<span>${r.label}</span><span class="v">${tr(ZONES[r.best.i].name)} · ${r.fmtV(r.best.v)}</span></div>`).join('');
   el.querySelectorAll('.statsRecoRow').forEach(row => {
@@ -1475,12 +3136,10 @@ function renderStatsLevelsPane() {
   for (let lvl = from; lvl <= to; lvl++) {
     const isCur = lvl === cur;
     rows += `<div class="row statsLevelRow${isCur?' current':''}">` +
-      `<span>${LANG==='fr'?'Niv.':'Lvl'} ${lvl}${isCur?(LANG==='fr'?' — toi':' — you'):''}</span>` +
-      `<span class="v">${LANG==='fr'?'PV':'HP'} ${fmt(hpMaxFor(lvl))} · SPD +${Math.round(levelSpdPctFor(lvl))}% · XP ${fmt(xpNeededFor(lvl))}</span></div>`;
+      `<span>${i18next.t('core:core.stats_levels.lvl_label')} ${lvl}${isCur?i18next.t('core:core.stats_levels.you_suffix'):''}</span>` +
+      `<span class="v">${i18next.t('core:core.stats_levels.hp_label')} ${fmt(hpMaxFor(lvl))} · SPD +${Math.round(levelSpdPctFor(lvl))}% · XP ${fmt(xpNeededFor(lvl))}</span></div>`;
   }
-  el.innerHTML = `<div class="admHint">${LANG==='fr'
-    ? '5 niveaux avant et après le tien — PV de base (hors équipement), bonus de Vitesse et XP requise pour CE niveau.'
-    : '5 levels before and after yours — base HP (gear excluded), Speed bonus, and XP required for THAT level.'}</div>` + rows;
+  el.innerHTML = `<div class="admHint">${i18next.t('core:core.stats_levels.hint')}</div>` + rows;
 }
 
 function renderZoneTierTabs() {
@@ -1489,8 +3148,8 @@ function renderZoneTierTabs() {
   el.innerHTML = ZONE_TIERS.map(t => {
     const card = TIER_PREVIEW_CARD[t.id];
     const lockedTitle = card
-      ? (LANG==='fr' ? `Bientôt disponible — droppera : ${card.icon} ${tr(card.name)}` : `Coming soon — will drop: ${card.icon} ${tr(card.name)}`)
-      : (LANG==='fr' ? 'Bientôt disponible' : 'Coming soon');
+      ? i18next.t('core:core.zone_tier.locked_title_with_drop', { icon: card.icon, name: tr(card.name) })
+      : i18next.t('core:core.zone_tier.locked_title');
     return `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
     `${t.locked?' disabled title="'+lockedTitle+'"':''} data-tier="${t.id}">` +
     `${t.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`;
@@ -1514,11 +3173,11 @@ function buildZoneList() {
   
   const veliaRow = document.createElement('div');
   veliaRow.className = 'zRow veliaRow' + (atVelia ? ' current' : '');
-  veliaRow.title = LANG==='fr' ? 'Velia — zone paisible' : 'Velia — peaceful zone';
+  veliaRow.title = i18next.t('core:core.velia.title');
   veliaRow.innerHTML =
     `<span class="zname">🏘️ Velia</span>` +
-    `<span class="zBadge">${LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE'}</span>` +
-    `<span class="zreq" style="width:auto">${LANG==='fr'?'Aucun monstre':'No monsters'}</span>`;
+    `<span class="zBadge">${i18next.t('core:core.zone.peaceful_badge')}</span>` +
+    `<span class="zreq" style="width:auto">${i18next.t('core:core.zone.no_monsters')}</span>`;
   veliaRow.onclick = () => { if (!atVelia) goToVelia(); };
   list.appendChild(veliaRow);
   
@@ -1544,15 +3203,15 @@ function buildZoneList() {
       const hasUpgrade = upgradeZones.has(i);
       
       const adminHereTag = (typeof adminZoneIdx !== 'undefined' && adminZoneIdx === i)
-        ? `<span class="zAdminTag" title="${LANG==='fr'?'Un admin est ici':'An admin is here'}">ADMIN</span>` : '';
+        ? `<span class="zAdminTag" title="${i18next.t('core:core.zone.admin_tag_title')}">ADMIN</span>` : '';
       row.innerHTML =
         `<span class="zname">${tr(z.name)}</span>` +
         `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
         `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
-        `<span class="zUpgradeIcon"${hasUpgrade?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Meilleur stuff à trouver ici':'Better gear to find here'}">⬆️</span>` +
+        `<span class="zUpgradeIcon"${hasUpgrade?'':' style="visibility:hidden"'} title="${i18next.t('core:core.zone.better_gear_title')}">⬆️</span>` +
         
-        `<span class="zPlayerCountWrap">${adminHereTag}<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span></span>` +
-        `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
+        `<span class="zPlayerCountWrap">${adminHereTag}<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${i18next.t('core:core.zone.players_here_title')}">👥 ${pCount}</span></span>` +
+        `<button class="zBtnView${previewed?' active':''}" title="${i18next.t('core:core.zone.view_loot_title')}">👁</button>`;
       row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
       row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
       
@@ -1584,8 +3243,8 @@ function updateZoneViewHalo() {
 
 function updateZoneTitleText() {
   if (atVelia) {
-    $('ztName').textContent = LANG==='fr' ? 'Velia' : 'Velia';
-    $('ztTier').textContent = LANG==='fr' ? 'Zone paisible' : 'Peaceful zone';
+    $('ztName').textContent = 'Velia'; 
+    $('ztTier').textContent = i18next.t('core:core.velia.zone_type_label');
   } else {
     $('ztName').textContent = tr(Z().name);
     $('ztTier').textContent = Z().tier;
@@ -1612,10 +3271,10 @@ function travelTo(i) {
 
 function updateVeliaPlayersTicker() {
   const t = $('lootTicker'); if (!t || !atVelia) return;
-  const label = LANG==='fr' ? `👥 En ville (${veliaPlayers.length})` : `👥 In town (${veliaPlayers.length})`;
+  const label = i18next.t('core:core.velia.in_town_label', { count: veliaPlayers.length });
   const rows = veliaPlayers.map(p => `<div class="veliaPlayerRow">${p.is_guest?'🎭':'👤'} ${escapeHtml(p.pseudo)}</div>`).join('');
   t.innerHTML = `<div class="veliaPlayersHead">${label}</div>` +
-    (rows || `<div class="admHint">${LANG==='fr'?"Personne d'autre pour l'instant":'Nobody else right now'}</div>`);
+    (rows || `<div class="admHint">${i18next.t('core:core.velia.nobody_else')}</div>`);
 }
 
 function goToVelia() {
@@ -1640,12 +3299,8 @@ function die() {
   const banner = $('deathBanner');
   if (banner) {
     banner.textContent = stayedPut
-      ? (LANG==='fr'
-        ? '⚠ Les monstres t\'ont tué ! Choisis une zone plus adaptée à ton niveau ou améliore ton stuff.'
-        : '⚠ The monsters killed you! Pick a zone better suited to your level or improve your gear.')
-      : (LANG==='fr'
-        ? '⚠ Tu t\'es relevé — tu as changé de zone pendant le K.O.'
-        : '⚠ You got back up — you changed zone during the K.O.');
+      ? i18next.t('core:core.death.killed_by_monsters')
+      : i18next.t('core:core.death.got_back_up');
     banner.classList.add('show');
     clearTimeout(die._t);
     die._t = setTimeout(() => banner.classList.remove('show'), 6000);
@@ -1663,7 +3318,7 @@ function refreshStatsOnly() {
   $('invXpPct').textContent = fmtXpPct(S.xp / S.xpNext * 100);
   
   const eqSumLvlEl = $('eqSumLvl'), eqSumXpEl = $('eqSumXp');
-  if (eqSumLvlEl) eqSumLvlEl.textContent = (LANG==='fr'?'Niv. ':'Lvl ') + S.lvl;
+  if (eqSumLvlEl) eqSumLvlEl.textContent = i18next.t('core:core.equip_summary.lvl_prefix') + S.lvl;
   if (eqSumXpEl) eqSumXpEl.textContent = fmtXpPct(S.xp / S.xpNext * 100);
   $('stPS').textContent = Math.round(GS());
   
@@ -1683,7 +3338,7 @@ function refreshStatsOnly() {
   const apEl = $('stApZone');
   const dpEl = $('stDpZone');
   if (atVelia) {
-    apEl.textContent = LANG==='fr' ? '—' : '—'; apEl.className = 'v';
+    apEl.textContent = '—'; apEl.className = 'v'; 
     dpEl.textContent = '—'; dpEl.className = 'v';
   } else {
     apEl.textContent = Math.floor(apEff()) + ' / ' + z.reqAP;
@@ -1720,14 +3375,14 @@ function refreshStatsOnly() {
   if (dpNow > (S.bestDp||0)) S.bestDp = dpNow;
   const zb = $('zoneBadge');
   if (atVelia) {
-    zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
-    $('ztReq').textContent = LANG==='fr' ? 'Aucun monstre' : 'No monsters';
+    zb.className = 'b-green'; zb.textContent = i18next.t('core:core.zone.peaceful_badge');
+    $('ztReq').textContent = i18next.t('core:core.zone.no_monsters');
   } else {
     const b = badgeOf(bottleneck());
     zb.className = b.cls; zb.textContent = tr(b.txt);
     
     zb.title = b.cls === 'b-red'
-      ? (LANG==='fr' ? '⚠️ Zone trop dure pour ton stuff : tu es ralenti, les monstres qui t\'ont repéré sont plus rapides' : '⚠️ Zone too hard for your gear: you are slowed down, monsters that spotted you are faster')
+      ? i18next.t('core:core.zone.too_hard_warning')
       : '';
     $('ztReq').innerHTML = `<span class="${apR>=1?'ok':'bad'}">${Math.floor(apEff())}/${z.reqAP} PA</span> · <span class="${dpR>=1?'ok':'bad'}">${Math.floor(totalDP())}/${z.reqDP} PD</span>`;
   }
@@ -1841,8 +3496,8 @@ function hudFast() {
   const dualIcon = $('potDualIcon');
   if (dualIcon && !dualIcon.dataset.set) { dualIcon.innerHTML = ICO_POTION_DUO; dualIcon.dataset.set = '1'; }
   const potCostNow = potionCost(pot.cost), manaCostNow = potionCost(MANA_POTION.cost);
-  $('potSlot').title = pot.name[LANG] + (potCostNow>0 ? ` — ${fmt(potCostNow)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : (LANG==='fr'?` — gratuite (CD ${pot.cd}s)`:` — free (CD ${pot.cd}s)`)) +
-    ' · ' + MANA_POTION.name[LANG] + ` — ${fmt(manaCostNow)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(MANA_POTION.restore*100)}% MP, CD ${MANA_POTION.cd}s, auto)`;
+  $('potSlot').title = pot.name[LANG] + (potCostNow>0 ? ` — ${fmt(potCostNow)} silver/${i18next.t('core:core.potions.usage_word')} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : i18next.t('core:core.potions.free_suffix', { cd: pot.cd })) +
+    ' · ' + MANA_POTION.name[LANG] + ` — ${fmt(manaCostNow)} silver/${i18next.t('core:core.potions.usage_word')} (+${Math.round(MANA_POTION.restore*100)}% MP, CD ${MANA_POTION.cd}s, auto)`;
   for (const s of SKILLS) {
     const el = skEls[s.id];
     el.querySelector('.cd').style.height = (cds[s.id]/s.cd*100)+'%';
@@ -2213,7 +3868,7 @@ function invQtyByKey(key) { const i = invSlotByKey(key); return i===-1 ? 0 : INV
 function invHasRoomFor(key) { return invSlotByKey(key) !== -1 || invUsed() < INV_SIZE; }
 function craftTreasurePiece(recipe) {
   if (invQtyByKey(recipe.needKey) < recipe.needQty) return false;
-  if (!invHasRoomFor(recipe.giveKey)) { floatTxt(P.x,P.y,90,LANG==='fr'?'Sac plein !':'Bag full!',{hurt:true}); return false; }
+  if (!invHasRoomFor(recipe.giveKey)) { floatTxt(P.x,P.y,90,i18next.t('progression:progression.treasure_craft.bag_full'),{hurt:true}); return false; }
   invRemoveAt(invSlotByKey(recipe.needKey), recipe.needQty);
   invAdd({ name:recipe.giveName, kind:'treasure', icon:'🗺️', color:'#e8c96a', key:recipe.giveKey, qty:1, stackable:true, weight:0.05, val:referenceGearVal()*10000, ap:0, dp:0, hp:0, dodge:0 });
   trackLoot(recipe.giveName);
@@ -2255,15 +3910,15 @@ function renderTreasureCraftPanel() {
   }).join('');
   const secretOk = secretComboReady();
   const secretRow = `<button class="craftRecipeBtn${secretOk?' ready':''}" data-kind="secret" ${secretOk?'':'disabled'} ` +
-    `title="${LANG==='fr'?'1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon → silver (Heidel/Calpheon pas encore débloqués)':'1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → silver (Heidel/Calpheon not unlocked yet)'}">` +
-    `🗺️+🗺️+🗺️ → 🎁 ${LANG==='fr'?'Coffret secret':'Secret box'}</button>`;
+    `title="${i18next.t('progression:progression.treasure_craft.secret_combo_hint')}">` +
+    `🗺️+🗺️+🗺️ → 🎁 ${i18next.t('progression:progression.treasure_craft.secret_box_label')}</button>`;
   
   const upcomingRows = Object.entries(TIER_PREVIEW_CARD).map(([tierId, card]) => {
     const tierLabel = ZONE_TIERS.find(t => t.id === tierId).label[LANG];
-    return `<button class="craftRecipeBtn" disabled title="${LANG==='fr'?'Bientôt disponible — palier '+tierLabel+' pas encore ouvert':'Coming soon — '+tierLabel+' tier not yet open'}">` +
+    return `<button class="craftRecipeBtn" disabled title="${i18next.t('progression:progression.treasure_craft.upcoming_tier_hint', { tier: tierLabel })}">` +
       `🔒 🧩 0/100 → ${card.icon} ${escapeHtml(tr(card.name))}</button>`;
   }).join('');
-  el.innerHTML = `<div class="craftPanelTitle">${LANG==='fr'?'🔧 Combiner':'🔧 Combine'}</div>` +
+  el.innerHTML = `<div class="craftPanelTitle">${i18next.t('progression:progression.treasure_craft.panel_title')}</div>` +
     `<div class="craftRecipes">${pieceRows}${secretRow}${upcomingRows}</div>`;
   el.querySelectorAll('.craftRecipeBtn[data-kind="piece"]').forEach(btn => {
     btn.onclick = () => { const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === btn.dataset.key); if (r) craftTreasurePiece(r); renderTreasureCraftPanel(); };
@@ -2356,7 +4011,7 @@ function notifRowHtml(n) {
     <div class="notifIcon">${n.icon}</div>
     <div class="notifBody"><div class="notifTitle">${escapeHtml(n.title)}</div><div class="notifText">${escapeHtml(n.text)}</div></div>
     <div class="notifTime">${fmtNotifTime(n.t)}</div>
-    <button class="notifDelBtn" data-id="${n.id}" title="${LANG==='fr'?'Supprimer':'Delete'}">✕</button>
+    <button class="notifDelBtn" data-id="${n.id}" title="${i18next.t('progression:progression.notifications.delete')}">✕</button>
   </div>`;
 }
 let notifCatFilter = 'all'; 
@@ -2366,8 +4021,8 @@ function openNotifCenter() {
   pruneNotifLog(); 
   const log = S.notifLog||[];
   if (!log.length) {
-    openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications',
-      `<div class="admEmpty">${LANG==='fr'?'Aucune notification pour l\'instant':'No notifications yet'}</div>`);
+    openInfo(i18next.t('progression:progression.notifications.title'),
+      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty')}</div>`);
     return;
   }
   
@@ -2377,7 +4032,7 @@ function openNotifCenter() {
   const info = shown.filter(n => n.cat === 'info');
   if (!['all','important','success','info'].includes(notifCatFilter)) notifCatFilter = 'all';
   const tabsHtml = `<div class="catTabs">
-    <button class="catTab notifCatTab${notifCatFilter==='all'?' active':''}" data-cat="all">${LANG==='fr'?'Tout':'All'} <span class="notifSectionCount">${shown.length}</span></button>
+    <button class="catTab notifCatTab${notifCatFilter==='all'?' active':''}" data-cat="all">${i18next.t('progression:progression.notifications.tab_all')} <span class="notifSectionCount">${shown.length}</span></button>
     <button class="catTab notifCatTab${notifCatFilter==='important'?' active':''}" data-cat="important">${NOTIF_CAT_META.important[LANG]} <span class="notifSectionCount">${important.length}</span></button>
     <button class="catTab notifCatTab${notifCatFilter==='success'?' active':''}" data-cat="success">${NOTIF_CAT_META.success[LANG]} <span class="notifSectionCount">${success.length}</span></button>
     <button class="catTab notifCatTab${notifCatFilter==='info'?' active':''}" data-cat="info">${NOTIF_CAT_META.info[LANG]} <span class="notifSectionCount">${info.length}</span></button>
@@ -2388,11 +4043,9 @@ function openNotifCenter() {
   const html = notifCatFilter === 'all'
     ? section('important', important) + section('success', success) + section('info', info)
     : (notifCatFilter === 'important' ? important : notifCatFilter === 'success' ? success : info).map(notifRowHtml).join('') ||
-      `<div class="admEmpty">${LANG==='fr'?'Rien dans cette catégorie':'Nothing in this category'}</div>`;
-  const summary = `<div class="notifSummary">${LANG==='fr'
-    ? `${shown.length} affichée${shown.length>1?'s':''} (sur ${log.length}) · auto-supprimées après 7 jours`
-    : `${shown.length} shown (of ${log.length}) · auto-deleted after 7 days`}</div>`;
-  openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications', summary + tabsHtml + `<div class="notifScroll">${html}</div>`);
+      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty_category')}</div>`;
+  const summary = `<div class="notifSummary">${i18next.t('progression:progression.notifications.summary', { count: shown.length, total: log.length })}</div>`;
+  openInfo(i18next.t('progression:progression.notifications.title'), summary + tabsHtml + `<div class="notifScroll">${html}</div>`);
   $a('infoBody').querySelectorAll('.notifCatTab').forEach(btn => {
     btn.onclick = () => { notifCatFilter = btn.dataset.cat; openNotifCenter(); };
   });
@@ -2409,7 +4062,7 @@ function checkAchievements() {
       S.achUnlocked[a.id] = Date.now();
       addSilver(a.reward, 'achievement', a.name.fr);
       showAchToast(a);
-      pushNotif('🏅', LANG==='fr'?'Succès débloqué':'Achievement unlocked', a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)', 'success');
+      pushNotif('🏅', i18next.t('progression:progression.notifications.achievement_unlocked'), a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)', 'success');
       logToDiscord('🏅 Succès débloqué', `**${myPseudo||'Joueur'}** — ${a.name.fr} (+${fmt(a.reward)} 🪙)`, 0xc9a55a);
       unlocked = true;
     }
@@ -2421,7 +4074,7 @@ function showAchToast(a) {
   const el = document.createElement('div');
   el.className = 'achToast';
   el.innerHTML = `<div class="achToastIcon">${a.icon}</div>` +
-    `<div><div class="achToastTitle">${LANG==='fr'?'🏅 Succès débloqué':'🏅 Achievement unlocked'}</div>` +
+    `<div><div class="achToastTitle">${i18next.t('progression:progression.achievements.toast_title')}</div>` +
     `<div class="achToastName">${a.name[LANG]}</div>` +
     `<div class="achToastReward">+${fmt(a.reward)} 🪙</div></div>`;
   stack.appendChild(el);
@@ -2439,7 +4092,7 @@ function showMailToast(icon, name, qty) {
   const el = document.createElement('div');
   el.className = 'achToast';
   el.innerHTML = `<div class="achToastIcon">${icon}</div>` +
-    `<div><div class="achToastTitle">${LANG==='fr'?'📬 Nouveau courrier':'📬 New mail'}</div>` +
+    `<div><div class="achToastTitle">${i18next.t('progression:progression.mailbox.toast_title')}</div>` +
     `<div class="achToastName">${name}</div>` +
     `<div class="achToastReward">+${fmt(qty)}</div></div>`;
   stack.appendChild(el);
@@ -2480,20 +4133,20 @@ function updateMailBadge() {
   badge.classList.toggle('show', n > 0);
 }
 function renderMailboxHtml() {
-  const stockRow = `<div class="admSummary">${LANG==='fr'?'Stock de Loyalties déjà récupéré':'Already claimed Loyalty stock'} : <b>${fmt(S.loyalty||0)}</b> 🏅</div>`;
+  const stockRow = `<div class="admSummary">${i18next.t('progression:progression.mailbox.claimed_stock_label')} : <b>${fmt(S.loyalty||0)}</b> 🏅</div>`;
   if (!S.mailbox.length || !S.mailbox.some(m => m.qty > 0)) {
-    return stockRow + `<div class="admEmpty">${LANG==='fr'?'Ton courrier est vide':'Your mailbox is empty'}</div>`;
+    return stockRow + `<div class="admEmpty">${i18next.t('progression:progression.mailbox.empty')}</div>`;
   }
   return stockRow + S.mailbox.filter(m => m.qty > 0).map(m => `<div class="achRow">` +
     `<div class="achIcon">${m.icon}</div>` +
     `<div class="achInfo"><div class="achName">${m.name}</div></div>` +
     `<div class="achReward">×${fmt(m.qty)}</div>` +
-    (m.key === 'loyalty' ? `<button class="mailClaimBtn" data-key="${m.key}">${LANG==='fr'?'Récupérer':'Claim'}</button>` : '') +
+    (m.key === 'loyalty' ? `<button class="mailClaimBtn" data-key="${m.key}">${i18next.t('progression:progression.mailbox.claim_button')}</button>` : '') +
     `</div>`).join('') +
-    `<div class="admSummary">${LANG==='fr'?'Ces objets restent ici en permanence tant qu\'ils ne sont pas récupérés — ils ne se perdent jamais et s\'empilent sans limite.':'These items stay here permanently until claimed — they never get lost and stack without limit.'}</div>`;
+    `<div class="admSummary">${i18next.t('progression:progression.mailbox.permanent_note')}</div>`;
 }
 function openMailbox() {
-  openInfo(LANG==='fr' ? '📬 Courrier' : '📬 Mailbox', renderMailboxHtml());
+  openInfo(i18next.t('progression:progression.mailbox.panel_title'), renderMailboxHtml());
   $a('infoBody').querySelectorAll('.mailClaimBtn').forEach(btn => {
     btn.onclick = () => { if (btn.dataset.key === 'loyalty') claimLoyalty(); openMailbox(); };
   });
@@ -2508,7 +4161,7 @@ function achRowHtml(a) {
     `<div class="achIcon">${a.icon}</div>` +
     `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${a.desc[LANG]}</div>` +
     `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div>` +
-    `<div class="achProgress">${done ? (LANG==='fr'?'Terminé ✓':'Completed ✓') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
+    `<div class="achProgress">${done ? i18next.t('progression:progression.achievements.completed') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
     `<div class="achReward">+${fmt(a.reward)} 🪙</div></div>`;
 }
 function renderAchievementsHtml() {
@@ -2522,17 +4175,17 @@ function renderAchievementsHtml() {
     return `<button class="catTab achCatTab${id===achPanelCat?' active':''}" data-cat="${id}">${meta.icon} ${meta.label[LANG]} ${badge}</button>`;
   }).join('');
   
-  const filterBtn = `<button id="achUnfinishedBtn" class="achFilterBtn${achOnlyUnfinished?' on':''}">${achOnlyUnfinished?(LANG==='fr'?'☑ Pas fini':'☑ Unfinished'):(LANG==='fr'?'☐ Pas fini':'☐ Unfinished')}</button>`;
+  const filterBtn = `<button id="achUnfinishedBtn" class="achFilterBtn${achOnlyUnfinished?' on':''}">${achOnlyUnfinished?i18next.t('progression:progression.achievements.filter_unfinished_on'):i18next.t('progression:progression.achievements.filter_unfinished_off')}</button>`;
   let list = achPanelCat==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===achPanelCat);
   if (achOnlyUnfinished) list = list.filter(a => !S.achUnlocked[a.id]);
   const rows = list.length ? list.map(achRowHtml).join('')
-    : `<div class="admEmpty">${LANG==='fr'?'Rien à afficher ici':'Nothing to show here'}</div>`;
+    : `<div class="admEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
   return `<div class="achSummary">${doneCount} / ${ACHIEVEMENTS.length}</div>` +
     `<div class="catTabs">${tabsHtml}</div>${filterBtn}${rows}`;
 }
 function openAchievements() {
   const callout = contentChangeCalloutHtml('achievements');
-  openInfo(LANG==='fr'?'🏅 Succès':'🏅 Achievements', callout + renderAchievementsHtml());
+  openInfo(i18next.t('progression:progression.achievements.panel_title'), callout + renderAchievementsHtml());
   markContentSeen('achievements');
   $a('infoBody').querySelectorAll('.achCatTab').forEach(btn => {
     btn.onclick = () => { achPanelCat = btn.dataset.cat; openAchievements(); };
@@ -2554,9 +4207,9 @@ function compendiumHighlightItem(name) {
   matches.forEach(zi => { const row = document.querySelector(`.compZoneRow[data-zi="${zi}"]`); if (row) row.classList.add('compHalo'); });
   const picker = $a('compZonePicker'); if (!picker) return;
   picker.innerHTML = matches.length
-    ? `<b>${escapeHtml(name)}</b> ${LANG==='fr'?'— clique une zone pour y farmer directement :':'— click a zone to go farm there directly:'} ` +
-      matches.map(zi => `<button class="compGoZoneBtn" data-zi="${zi}" title="${LANG==='fr'?'Lance le farm dans cette zone immédiatement':'Starts farming in this zone immediately'}">${tr(ZONES[zi].name)}</button>`).join('')
-    : `<span class="admEmpty">${LANG==='fr'?'Aucune zone trouvée pour cet objet':'No zone found for this item'}</span>`;
+    ? `<b>${escapeHtml(name)}</b> ${i18next.t('progression:progression.compendium.pick_zone_hint')} ` +
+      matches.map(zi => `<button class="compGoZoneBtn" data-zi="${zi}" title="${i18next.t('progression:progression.compendium.go_zone_title')}">${tr(ZONES[zi].name)}</button>`).join('')
+    : `<span class="admEmpty">${i18next.t('progression:progression.compendium.no_zone_found')}</span>`;
   picker.querySelectorAll('.compGoZoneBtn').forEach(btn => {
     btn.onclick = () => {
       const zi = parseInt(btn.dataset.zi,10);
@@ -2572,22 +4225,20 @@ function renderCompendiumHtml() {
   const total = compendiumTotalCount(), max = compendiumTotalMax(), pct = compendiumPct();
   const bossCountMax = Object.keys(BOSS_ROSTER).length;
   const penItems = penMasteryItemList(), penDone = compendiumPenCount();
-  const summaryCard = `<button id="compTutoBtn" class="compTutoBtn" title="${LANG==='fr'?'Lancer le tutoriel du Compendium':'Start the Compendium tutorial'}">?</button>
+  const summaryCard = `<button id="compTutoBtn" class="compTutoBtn" title="${i18next.t('progression:progression.compendium.tutorial_button_title')}">?</button>
     <div class="admStatTiles">
-      <div class="admStatTile"><div class="astLbl">📖 ${LANG==='fr'?'Progression':'Progress'}</div><div class="astVal">${total} / ${max}</div></div>
+      <div class="admStatTile"><div class="astLbl">📖 ${i18next.t('progression:progression.compendium.progress_label')}</div><div class="astVal">${total} / ${max}</div></div>
       <div class="admStatTile"><div class="astLbl">🏃 SPD</div><div class="astVal">+${pct}%</div></div>
-      <div class="admStatTile"><div class="astLbl">⚔️ ${LANG==='fr'?'Dégâts':'DMG'}</div><div class="astVal">+${pct}%</div></div>
-      <div class="admStatTile"><div class="astLbl">🛡️ ${LANG==='fr'?'Esquive':'Dodge'}</div><div class="astVal">+${pct}%</div></div>
+      <div class="admStatTile"><div class="astLbl">⚔️ ${i18next.t('progression:progression.compendium.dmg_label')}</div><div class="astVal">+${pct}%</div></div>
+      <div class="admStatTile"><div class="astLbl">🛡️ ${i18next.t('progression:progression.compendium.dodge_label')}</div><div class="astVal">+${pct}%</div></div>
     </div>
-    <div class="admSummary">${LANG==='fr'?`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Boss · ${penDone}/${penItems.length} PEN`:`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Bosses · ${penDone}/${penItems.length} PEN`}</div>
-    <div class="admHint">${LANG==='fr'
-      ? 'Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif, jamais un multiplicateur). Clique sur un objet ci-dessous pour voir dans quelles zones le farmer, puis clique une zone pour y lancer le farm directement (aucune confirmation, tu y es téléporté aussitôt).'
-      : 'Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive, never a multiplier). Click an item below to see which zones farm it, then click a zone to start farming there right away (no confirmation, you\'re sent there instantly).'}</div>
+    <div class="admSummary">${i18next.t('progression:progression.compendium.summary_line', { zc, zonesTotal: ZONES.length, bc, bossMax: bossCountMax, penDone, penTotal: penItems.length })}</div>
+    <div class="admHint">${i18next.t('progression:progression.compendium.hint')}</div>
     <div id="compZonePicker" class="compZonePicker"></div>
     <div class="catTabs">
-      <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${LANG==='fr'?'Zones':'Zones'} (${zc}/${ZONES.length})</button>
+      <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${i18next.t('progression:progression.compendium.tab_zones')} (${zc}/${ZONES.length})</button>
       <button class="catTab compTab${compendiumTab==='bosses'?' active':''}" data-tab="bosses">🐋 World Bosses (${bc}/${bossCountMax})</button>
-      <button class="catTab compTab${compendiumTab==='pen'?' active':''}" data-tab="pen">🌟 ${LANG==='fr'?'Maîtrise PEN':'PEN Mastery'} (${penDone}/${penItems.length})</button>
+      <button class="catTab compTab${compendiumTab==='pen'?' active':''}" data-tab="pen">🌟 ${i18next.t('progression:progression.compendium.tab_pen')} (${penDone}/${penItems.length})</button>
     </div>`;
   let bodyHtml;
   if (compendiumTab === 'bosses') {
@@ -2596,14 +4247,12 @@ function renderCompendiumHtml() {
       return `<div class="achRow${unlocked?' done':''}">` +
         `<div class="achIcon">${b.icon}</div>` +
         `<div class="achInfo"><div class="achName">${b.name[LANG]}</div>` +
-        `<div class="achDesc">${unlocked?(LANG==='fr'?'Vaincu au moins une fois':'Defeated at least once'):(LANG==='fr'?'Pas encore vaincu':'Not defeated yet')}</div></div>` +
+        `<div class="achDesc">${unlocked?i18next.t('progression:progression.compendium.boss_defeated'):i18next.t('progression:progression.compendium.boss_not_defeated')}</div></div>` +
         `<div class="achReward">${unlocked?'+1% ✓':'🔒'}</div></div>`;
     }).join('');
   } else if (compendiumTab === 'pen') {
     
-    bodyHtml = `<div class="admHint">${LANG==='fr'
-        ? 'Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.'
-        : 'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.'}</div>` +
+    bodyHtml = `<div class="admHint">${i18next.t('progression:progression.compendium.pen_hint')}</div>` +
       GEAR_TIERS.map(tier => {
         const tierItems = penItems.filter(e => e.grade === tier.grade);
         const tierDone = tierItems.filter(e => S.penMastery[e.name]).length;
@@ -2632,7 +4281,7 @@ function renderCompendiumHtml() {
           `<div class="achIcon">${unlocked?'📖':'🔒'}</div>` +
           `<div class="achInfo"><div class="achName">${tr(z.name)}</div>` +
           `<div class="achDesc compItems">${itemsHtml}</div></div>` +
-          `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Objet manquant':'Missing item')}</div></div>`;
+          `<div class="achReward">${unlocked?'+1% ✓':i18next.t('progression:progression.compendium.missing_item')}</div></div>`;
       }).join('');
       return `<div class="zTierHead"><span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}</div>${rowsHtml}`;
     }).join('');
@@ -2647,7 +4296,7 @@ let cronTutoSeen = false;
 try { cronTutoSeen = localStorage.getItem('velia-idle-cron-tuto-seen') === '1'; } catch(e) {}
 function openCompendium() {
   const callout = contentChangeCalloutHtml('compendium');
-  openInfo(LANG==='fr'?'📖 Compendium':'📖 Compendium', callout + renderCompendiumHtml());
+  openInfo(i18next.t('progression:progression.compendium.panel_title'), callout + renderCompendiumHtml());
   markContentSeen('compendium');
   const tutoBtn = $a('compTutoBtn');
   if (tutoBtn) tutoBtn.onclick = () => startCompendiumTutorial();
@@ -2757,7 +4406,7 @@ function renderQuestSectionHtml(scope) {
       return `<div class="achRow inactive">` +
         `<div class="achIcon">${def.icon}</div>` +
         `<div class="achInfo"><div class="achName">${def.name[LANG]}</div><div class="achDesc">${rangeTxt}</div></div>` +
-        `<div class="achReward">${LANG==='fr'?'Pas tirée ce cycle':'Not active this cycle'}</div>` +
+        `<div class="achReward">${i18next.t('progression:progression.quests.not_active')}</div>` +
       `</div>`;
     }
     const q = st.quests[i];
@@ -2769,8 +4418,8 @@ function renderQuestSectionHtml(scope) {
       `<div class="achInfo"><div class="achName">${def.name[LANG]}</div>` +
       `<div class="achDesc">${fmt(Math.floor(val/dv))} / ${fmt(Math.floor(q.target/dv))} ${def.unit[LANG]}</div>` +
       `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div>` +
-      (q.claimed ? `<div class="achReward">${LANG==='fr'?'Réclamé ✓':'Claimed ✓'}</div>`
-        : doneNotClaimed ? `<button class="questClaimBtn" data-scope="${scope}" data-i="${i}">${LANG==='fr'?'Réclamer':'Claim'} +${fmt(q.reward)}🪙</button>`
+      (q.claimed ? `<div class="achReward">${i18next.t('progression:progression.quests.claimed')}</div>`
+        : doneNotClaimed ? `<button class="questClaimBtn" data-scope="${scope}" data-i="${i}">${i18next.t('progression:progression.quests.claim_button')} +${fmt(q.reward)}🪙</button>`
         : `<div class="achReward">+${fmt(q.reward)} 🪙</div>`) +
       `</div>`;
   }).join('');
@@ -2788,11 +4437,11 @@ function questScopeCounts(scope) {
 }
 let questPanelScope = 'daily'; 
 function renderDailyQuestsHtml() {
-  const dailyNote = LANG==='fr' ? 'Se réinitialise chaque jour à minuit (heure locale)' : 'Resets every day at midnight (local time)';
-  const weeklyNote = LANG==='fr' ? 'Se réinitialise chaque lundi à minuit (heure locale)' : 'Resets every Monday at midnight (local time)';
+  const dailyNote = i18next.t('progression:progression.quests.daily_reset_note');
+  const weeklyNote = i18next.t('progression:progression.quests.weekly_reset_note');
   const trackLabel = S.questTrackerOn
-    ? (LANG==='fr'?'🔖 Ne plus suivre':'🔖 Stop tracking')
-    : (LANG==='fr'?'🔖 Suivre les quêtes restantes':'🔖 Track remaining quests');
+    ? i18next.t('progression:progression.quests.tracker_stop')
+    : i18next.t('progression:progression.quests.tracker_start');
   
   const tabBtn = (scope, icon, label) => {
     const c = questScopeCounts(scope);
@@ -2804,14 +4453,14 @@ function renderDailyQuestsHtml() {
   const note = questPanelScope==='daily' ? dailyNote : weeklyNote;
   return `<button id="btnToggleTracker" onclick="toggleQuestTracker()">${trackLabel}</button>` +
     `<div class="catTabs">` +
-      tabBtn('daily', '📅', LANG==='fr'?'Journalières':'Daily') +
-      tabBtn('weekly', '🗓️', LANG==='fr'?'Hebdomadaires':'Weekly') +
+      tabBtn('daily', '📅', i18next.t('progression:progression.quests.tab_daily')) +
+      tabBtn('weekly', '🗓️', i18next.t('progression:progression.quests.tab_weekly')) +
     `</div>` +
     `<div id="questScopeBody">${renderQuestSectionHtml(questPanelScope)}<div class="admSummary">${note}</div></div>`;
 }
 let questsPanelOpen = false; 
 function openDailyQuests() {
-  openInfo(LANG==='fr'?'🗒️ Quêtes':'🗒️ Quests', renderDailyQuestsHtml());
+  openInfo(i18next.t('progression:progression.quests.panel_title'), renderDailyQuestsHtml());
   questsPanelOpen = true; 
   $a('infoBody').querySelectorAll('.qScopeTab').forEach(btn => {
     btn.onclick = () => { questPanelScope = btn.dataset.scope; openDailyQuests(); };
@@ -2843,7 +4492,7 @@ function fmtDuration(ms) {
   const h = Math.floor(s/3600); s -= h*3600;
   const m = Math.floor(s/60); s -= m*60;
   const pad = n => String(n).padStart(2,'0');
-  return (days>0 ? days+(LANG==='fr'?'j ':'d ') : '') + pad(h)+':'+pad(m)+':'+pad(s);
+  return (days>0 ? days+i18next.t('progression:progression.quests.duration_day_suffix') : '') + pad(h)+':'+pad(m)+':'+pad(s);
 }
 function msToNextDailyReset() {
   const now = new Date();
@@ -2870,24 +4519,24 @@ function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; try {
 function renderQuestWidget() {
   const el = $('questWidget'); if (!el) return;
   ensureQuests('daily'); ensureQuests('weekly');
-  const header = `<div class="qwHeaderRow"><span class="qwTitle">${LANG==='fr'?'🗒️ Suivi':'🗒️ Tracker'}</span>` +
+  const header = `<div class="qwHeaderRow"><span class="qwTitle">${i18next.t('progression:progression.quests.widget_title')}</span>` +
     `<button class="qwFoldBtn" onclick="toggleResetFold()">${resetWidgetFolded?'▸':'▾'}</button></div>`;
   if (resetWidgetFolded) { el.innerHTML = header; return; }
   const next = nextAchievement();
   const todayPlaytime = S.playtimeSec - (S.dq && S.dq.base ? S.dq.base.playtime : 0);
-  const dailyTip = LANG==='fr' ? 'Temps restant avant la remise à zéro des quêtes journalières' : 'Time left before daily quests reset';
-  const weeklyTip = LANG==='fr' ? 'Temps restant avant la remise à zéro des quêtes hebdomadaires' : 'Time left before weekly quests reset';
+  const dailyTip = i18next.t('progression:progression.quests.daily_tip');
+  const weeklyTip = i18next.t('progression:progression.quests.weekly_tip');
   el.innerHTML = header + `<div class="qwBody">` +
-    `<div class="qwRow" title="${dailyTip}"><span class="qwLbl">${LANG==='fr'?'🗒️ Journ.':'🗒️ Daily'}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
-    `<div class="qwRow" title="${weeklyTip}"><span class="qwLbl">${LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly'}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
-    `<div class="qwSep">${LANG==='fr'?'⏱️ Temps de jeu':'⏱️ Playtime'}</div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'Total':'Total'}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'Aujourd\'hui':'Today'}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
+    `<div class="qwRow" title="${dailyTip}"><span class="qwLbl">${i18next.t('progression:progression.quests.widget_daily_label')}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
+    `<div class="qwRow" title="${weeklyTip}"><span class="qwLbl">${i18next.t('progression:progression.quests.widget_weekly_label')}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
+    `<div class="qwSep">${i18next.t('progression:progression.quests.playtime_label')}</div>` +
+    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.total_label')}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
+    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.today_label')}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
     (next
       ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
         `<div class="qwNextName">${next.a.name[LANG]}</div>` +
         `<div class="achBarWrap"><div class="achBar" style="width:${Math.round(next.pct)}%"></div></div></div></div>`
-      : `<div class="qwNext qwAllDone">${LANG==='fr'?'🏅 Vous avez fini les succès !':'🏅 You\'ve finished all achievements!'}</div>`) +
+      : `<div class="qwNext qwAllDone">${i18next.t('progression:progression.quests.all_achievements_done')}</div>`) +
     `</div>`;
 }
 
@@ -2895,7 +4544,7 @@ function renderQuestTrackerWidget() {
   const el = $('questTrackerWidget'); if (!el) return;
   if (!S.questTrackerOn) { el.style.display = 'none'; el.innerHTML = ''; return; }
   el.style.display = '';
-  const header = `<div class="qwHeaderRow"><span class="qwTitle">${LANG==='fr'?'🔖 Quêtes suivies':'🔖 Tracked quests'}</span>` +
+  const header = `<div class="qwHeaderRow"><span class="qwTitle">${i18next.t('progression:progression.quests.tracked_widget_title')}</span>` +
     `<button class="qwFoldBtn" onclick="toggleTrackerFold()">${trackerWidgetFolded?'▸':'▾'}</button></div>`;
   if (trackerWidgetFolded) { el.innerHTML = header; return; }
   ensureQuests('daily'); ensureQuests('weekly');
@@ -2920,11 +4569,11 @@ function renderQuestTrackerWidget() {
         `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div>${right}</div>`);
     });
     if (rows.length) {
-      body += `<div class="qwScopeLbl">${scope==='daily'?(LANG==='fr'?'📅 Journalières':'📅 Daily'):(LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly')}</div>` + rows.join('');
+      body += `<div class="qwScopeLbl">${scope==='daily'?i18next.t('progression:progression.quests.tracked_daily_label'):i18next.t('progression:progression.quests.tracked_weekly_label')}</div>` + rows.join('');
     }
   }
   el.innerHTML = header + `<div class="qwBody">` +
-    (body || `<div class="qwEmpty">${LANG==='fr'?'Tout est réclamé !':'Everything is claimed!'}</div>`) +
+    (body || `<div class="qwEmpty">${i18next.t('progression:progression.quests.all_claimed')}</div>`) +
     `</div>`;
   el.querySelectorAll('.qwClaimBtn').forEach(btn => {
     
@@ -2996,7 +4645,7 @@ function renderEquipModeBtn() {
   if (gearPane) gearPane.style.display = equipMode === 'gear' ? '' : 'none';
   if (crystalPane) crystalPane.style.display = equipMode === 'crystal' ? '' : 'none';
   const crystalSlot = $('crystalSlotCenter');
-  if (crystalSlot) crystalSlot.title = LANG==='fr' ? 'Bientôt disponible' : 'Coming soon';
+  if (crystalSlot) crystalSlot.title = i18next.t('progression:progression.equip.crystal_coming_soon');
 }
 function setEquipMode(key) {
   if (!EQUIP_MODES[key]) return;
@@ -3168,9 +4817,9 @@ function renderAiModeBtn() {
   const el = $('aiModeSlider'); if (!el) return;
   if (!AI_COMBAT_MODES[S.aiCombatMode]) S.aiCombatMode = 'équilibré';
   const titles = {
-    'défensif':  LANG==='fr' ? 'IA défensive : esquive et soigne en priorité, quitte à moins attaquer' : 'Defensive AI: prioritizes dodging/healing over attacking',
-    'équilibré': LANG==='fr' ? 'IA équilibrée : alterne attaque et prudence selon la situation' : 'Balanced AI: alternates attack and caution based on the fight',
-    'overgeared':LANG==='fr' ? 'IA offensive : attaque sans relâche, ignore la plupart des esquives' : 'Overgeared AI: attacks relentlessly, skips most dodges',
+    'défensif':  i18next.t('combat:combat.ai_mode.defensive_title'),
+    'équilibré': i18next.t('combat:combat.ai_mode.balanced_title'),
+    'overgeared':i18next.t('combat:combat.ai_mode.overgeared_title'),
   };
   el.querySelectorAll('.aiModeSeg').forEach(seg => {
     const key = seg.dataset.mode, m = AI_COMBAT_MODES[key];
@@ -3197,8 +4846,8 @@ function renderFarmModeBtn() {
   
   if (!FARM_MODES[S.farmMode]) S.farmMode = 'loot';
   const titles = {
-    loot: LANG==='fr' ? 'IA "Loot" : ramasse tout le butin avant de passer au pack suivant' : 'Loot AI: picks up all drops before moving to the next pack',
-    xp:   LANG==='fr' ? 'IA "XP" : enchaîne les packs sans ramasser le butin au sol' : 'XP AI: chains packs without picking up ground loot',
+    loot: i18next.t('combat:combat.ai_mode.farm_loot_title'),
+    xp:   i18next.t('combat:combat.ai_mode.farm_xp_title'),
   };
   el.querySelectorAll('.farmModeSeg').forEach(seg => {
     const key = seg.dataset.mode, m = FARM_MODES[key];
@@ -3348,7 +4997,7 @@ function showInvFullWarning() {
   const now = performance.now();
   if (now - lastInvFullToast > 4000) { 
     lastInvFullToast = now;
-    floatTxt(P.x, P.y-20, 70, LANG==='fr' ? 'SAC PLEIN !' : 'BAG FULL!', {hurt:true});
+    floatTxt(P.x, P.y-20, 70, i18next.t('combat:combat.loot.bag_full'), {hurt:true});
   }
 }
 function dropsTick(dt) {
@@ -3486,7 +5135,7 @@ function gainXp(n) {
     S.xpNext = xpNeededFor(S.lvl);
     S.hpMax += 8; P.hp = effHpMax();
     floatTxt(P.x,P.y,115,'NIVEAU '+S.lvl,{lvl:true});
-    pushNotif('⭐', LANG==='fr'?'Niveau supérieur':'Level up', (LANG==='fr'?'Niveau ':'Level ')+S.lvl, 'info');
+    pushNotif('⭐', i18next.t('combat:combat.loot.level_up_notif_title'), i18next.t('combat:combat.loot.level_reached', { lvl: S.lvl }), 'info');
     
     logToDiscord('⭐ Niveau supérieur', `**${myPseudo||'Joueur'}** passe niveau **${S.lvl}** (SPD +${Math.round(levelSpdPct())}%)`, 0x9cc9e8);
     
@@ -3636,7 +5285,7 @@ function warnPotionNoSilver() {
   const now = performance.now();
   if (now - lastPotionSilverWarn < 3000) return;
   lastPotionSilverWarn = now;
-  floatTxt(P.x, P.y-15, 75, LANG==='fr' ? 'Pas assez de silver pour la potion !' : 'Not enough silver for a potion!', {hurt:true});
+  floatTxt(P.x, P.y-15, 75, i18next.t('combat:combat.potion.no_silver_warning'), {hurt:true});
 }
 function usePotion() {
   const pot = POTIONS[S.potionType] || POTIONS.medium;
@@ -3664,17 +5313,17 @@ function usePotionMana() {
 function renderPotSelect() {
   const el = $('potSelect'); if (!el) return;
   const threshPct = Math.round((S.potionThreshold ?? 0.5) * 100);
-  const threshRow = `<div id="potThreshRow"><span>${LANG==='fr'?'Boire sous':'Drink under'}</span>` +
+  const threshRow = `<div id="potThreshRow"><span>${i18next.t('combat:combat.potion.drink_under')}</span>` +
     `<input type="range" id="potThreshSlider" min="5" max="95" step="5" value="${threshPct}">` +
     `<span id="potThreshVal">${threshPct}%</span></div>`;
   const rows = POTION_ORDER.map(key => {
     const p = POTIONS[key];
     const healHp = Math.round(effHpMax()*p.heal);
     if (p.locked) {
-      return `<div class="psRow locked" title="${LANG==='fr'?'Bientôt disponible':'Coming soon'}">` +
+      return `<div class="psRow locked" title="${i18next.t('combat:combat.potion.coming_soon')}">` +
         `<span class="psIcon">🔒</span>` +
         `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${Math.round(p.heal*100)}% PV · CD ${p.cd}s</span></span>` +
-        `<span class="psCost">${LANG==='fr'?'Gratuite':'Free'}</span></div>`;
+        `<span class="psCost">${i18next.t('combat:combat.potion.free_label')}</span></div>`;
     }
     return `<div class="psRow${S.potionType===key?' sel':''}" data-pot="${key}">` +
       `<span class="psIcon">${p.icon}</span>` +
@@ -3682,9 +5331,9 @@ function renderPotSelect() {
       `<span class="psCost">${fmt(potionCost(p.cost))} 🪙</span></div>`;
   }).join('');
   
-  const manaSection = `<div class="psSectionLabel">${LANG==='fr'?'Potion de vie':'HP Potion'}</div>` +
+  const manaSection = `<div class="psSectionLabel">${i18next.t('combat:combat.potion.hp_potion_section')}</div>` +
     rows +
-    `<div class="psSectionLabel">${LANG==='fr'?'Potion de mana (auto sous 30%)':'Mana Potion (auto under 30%)'}</div>` +
+    `<div class="psSectionLabel">${i18next.t('combat:combat.potion.mana_potion_section')}</div>` +
     `<div class="psRow psRowInfo">` +
       `<span class="psIcon">🔷</span>` +
       `<span class="psInfo"><span class="psName">${MANA_POTION.name[LANG]}</span><br><span class="psHeal">+${Math.round(MANA_POTION.restore*100)}% MP · CD ${MANA_POTION.cd}s</span></span>` +
@@ -3822,9 +5471,9 @@ function updateNextBossMini() {
   if (!occ) { el.innerHTML = ''; return; }
   const b = BOSS_ROSTER[occ.boss];
   if (occ.live) {
-    el.innerHTML = `<span class="live">${b.icon} ${b.short[LANG]} ${LANG==='fr'?'EN COURS':'LIVE'}</span>`;
+    el.innerHTML = `<span class="live">${b.icon} ${b.short[LANG]} ${i18next.t('combat:combat.boss.status_live')}</span>`;
   } else {
-    el.innerHTML = `${LANG==='fr'?'Prochain boss':'Next boss'} : <b>${b.icon} ${b.short[LANG]}</b> ${LANG==='fr'?'dans':'in'} <b>${fmtBossCountdown(occ.time - Date.now())}</b>`;
+    el.innerHTML = `${i18next.t('combat:combat.boss.next_boss_label')} : <b>${b.icon} ${b.short[LANG]}</b> ${i18next.t('combat:combat.boss.in_label')} <b>${fmtBossCountdown(occ.time - Date.now())}</b>`;
   }
 }
 
@@ -3850,7 +5499,7 @@ function renderActivityTabs() {
   el.innerHTML = ACTIVITY_TABS.map(t => {
     
     const hpBadge = t.id === 'boss' ? '<span class="actTabBossHp" id="actTabBossHp"></span>' : '';
-    const newBadge = (!t.locked && t.isNew) ? `<span class="actTabNew">${LANG==='fr'?'NOUVEAU':'NEW'}</span>` : '';
+    const newBadge = (!t.locked && t.isNew) ? `<span class="actTabNew">${i18next.t('combat:combat.boss.new_badge')}</span>` : '';
     return `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" id="${t.id==='boss'?'actTabBoss':''}" data-id="${t.id}"${t.locked?' disabled':''}>` +
       `<span class="actTabLabel">${t.icon} ${t.name[LANG]}</span>${hpBadge}${t.locked?'<span class="actTabLock">🔒</span>':newBadge}</button>`;
   }).join('');
@@ -3870,7 +5519,7 @@ function updateBossActivityTabHot() {
   const hot = fighting || (!!occ && (occ.live || (occ.time - Date.now()) <= BOSS_TAB_FLASH_LEAD_MS));
   btn.classList.toggle('bossHot', hot);
   
-  const defeatedTxt = LANG==='fr' ? 'VAINCU' : 'DEFEATED';
+  const defeatedTxt = i18next.t('combat:combat.boss.status_defeated');
   const hpEl = $a('actTabBossHp');
   if (hpEl) {
     if (fighting) hpEl.textContent = bossState.hp <= 0 ? defeatedTxt : (bossState.hp/bossState.maxHp*100).toFixed(0)+'%';
@@ -3910,14 +5559,14 @@ function openCompanionsModule() {
     const bar = document.createElement('div');
     bar.style.cssText = 'flex-shrink:0;display:flex;justify-content:flex-end;padding:6px 10px;background:#10101e;border-bottom:1px solid #2a2a44';
     const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕ ' + (LANG === 'fr' ? 'Fermer' : 'Close');
+    closeBtn.textContent = '✕ ' + i18next.t('combat:combat.boss.close_button');
     closeBtn.style.cssText = 'font-family:Georgia,serif;font-size:12px;background:transparent;border:1px solid #3a3a58;color:#ddd0b8;border-radius:5px;padding:5px 12px;cursor:pointer';
     closeBtn.onclick = closeCompanionsModule;
     bar.appendChild(closeBtn);
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'src/companions/companions.html?v=9'; 
+    frame.src = 'src/companions/companions.html?v=10'; 
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);
@@ -3955,13 +5604,13 @@ setInterval(() => {
 function renderBossLobbyHtml() {
   const occ = nextBossOccurrence();
   const now = Date.now();
-  let nextHtml = `<div class="admEmpty">${LANG==='fr'?'Aucun boss programmé':'No boss scheduled'}</div>`;
+  let nextHtml = `<div class="admEmpty">${i18next.t('combat:combat.boss.no_boss_scheduled')}</div>`;
   if (occ) {
     const b = BOSS_ROSTER[occ.boss];
     
     const alreadyDead = occ.live && occ.sharedHp && typeof occ.hp === 'number' && occ.hp <= 0;
     const cd = occ.live
-      ? `<div class="bossNextCountdown live">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : (LANG==='fr'?'EN COURS':'LIVE')}</div>`
+      ? `<div class="bossNextCountdown live">${alreadyDead ? i18next.t('combat:combat.boss.status_defeated') : i18next.t('combat:combat.boss.status_live')}</div>`
       : `<div class="bossNextCountdown" id="bossPanelCountdown">${fmtBossCountdown(occ.time - now)}</div>`;
     const when = new Date(occ.time).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', hour:'2-digit', minute:'2-digit' });
     
@@ -3969,22 +5618,22 @@ function renderBossLobbyHtml() {
       ? (() => {
           const pct = Math.max(0, Math.min(100, occ.hp/occ.maxHp*100));
           return `<div class="bossNextHpWrap"><div class="bossNextHpBar${alreadyDead?' dead':''}" style="width:${pct}%"></div>` +
-            `<span class="bossNextHpTxt">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : pct.toFixed(1)+'%'}</span></div>`;
+            `<span class="bossNextHpTxt">${alreadyDead ? i18next.t('combat:combat.boss.status_defeated') : pct.toFixed(1)+'%'}</span></div>`;
         })()
       : '';
     nextHtml = `<div class="bossNext">
       <div class="bossNextIcon">${b.icon}</div>
       <div class="bossNextInfo">
         <div class="bossNextName">${b.name[LANG]}</div>
-        <div class="bossNextTime">${alreadyDead ? (LANG==='fr'?'Déjà vaincu par d\'autres joueurs':'Already defeated by other players') : occ.live ? (LANG==='fr'?'Disponible maintenant !':'Available now!') : when}</div>
+        <div class="bossNextTime">${alreadyDead ? i18next.t('combat:combat.boss.already_defeated_by_others') : occ.live ? i18next.t('combat:combat.boss.available_now') : when}</div>
         ${hpBarHtml}
       </div>
       ${cd}
     </div>` +
     (alreadyDead
-      ? `<div class="admHint">${LANG==='fr'?'Ce boss a déjà été vaincu — reviens plus tard, au prochain spawn.':'This boss has already been defeated — come back later, at the next spawn.'}</div>` +
-        `<button class="bossFightBtn" id="bossFightBtn" disabled>${LANG==='fr'?'💀 Déjà vaincu':'💀 Already defeated'}</button>`
-      : `<button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?(LANG==='fr'?'⚔️ Combattre':'⚔️ Fight'):(LANG==='fr'?'⏳ Pas encore apparu':'⏳ Not spawned yet')}</button>`);
+      ? `<div class="admHint">${i18next.t('combat:combat.boss.already_defeated_hint')}</div>` +
+        `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.already_defeated_button')}</button>`
+      : `<button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?i18next.t('combat:combat.boss.fight_button'):i18next.t('combat:combat.boss.not_spawned_yet')}</button>`);
   }
   
   const weekOcc = bossOccurrences(new Date()).filter(o => o.time < now + 7*24*3600*1000);
@@ -4001,7 +5650,7 @@ function renderBossLobbyHtml() {
   weekOcc.forEach(o => { const d=new Date(o.time); cellMap.set(dayKey(d)+'@'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'), o); });
   let calHtml;
   if (!times.length) {
-    calHtml = `<div class="admEmpty">${LANG==='fr'?'Rien de programmé':'Nothing scheduled'}</div>`;
+    calHtml = `<div class="admEmpty">${i18next.t('combat:combat.boss.nothing_scheduled')}</div>`;
   } else {
     calHtml = `<div class="bossCal" style="grid-template-columns:44px repeat(7,1fr)">`;
     calHtml += `<div class="bcCorner"></div>`;
@@ -4012,7 +5661,7 @@ function renderBossLobbyHtml() {
       days.forEach(d => {
         const o = cellMap.get(dayKey(d)+'@'+tm);
         if (o) { const b=BOSS_ROSTER[o.boss];
-          calHtml += `<div class="bcCell${o.live?' bcLive':''}" title="${b.name[LANG]}">${b.icon}<span class="bcName">${o.live?(LANG==='fr'?'EN COURS':'LIVE'):b.short[LANG]}</span></div>`; }
+          calHtml += `<div class="bcCell${o.live?' bcLive':''}" title="${b.name[LANG]}">${b.icon}<span class="bcName">${o.live?i18next.t('combat:combat.boss.status_live'):b.short[LANG]}</span></div>`; }
         else calHtml += `<div class="bcCell bcEmpty"></div>`;
       });
     });
@@ -4022,10 +5671,10 @@ function renderBossLobbyHtml() {
   const legend = Object.values(BOSS_ROSTER).map(b => `<span class="bcLegend">${b.icon} ${b.name[LANG]}</span>`).join('');
   
   return `${nextHtml}
-    <h3>${LANG==='fr'?'📅 Calendrier de la semaine':'📅 Weekly calendar'}</h3>
+    <h3>${i18next.t('combat:combat.boss.weekly_calendar_title')}</h3>
     ${calHtml}
     <div class="bcLegendRow">${legend}</div>
-    <div class="admSummary">${LANG==='fr'?'Horaires calqués sur le vrai BDO −15 min. Heure locale.':'Times mirror real BDO −15 min. Local time.'}</div>
+    <div class="admSummary">${i18next.t('combat:combat.boss.schedule_note')}</div>
     ${bossRewardRulesHtml()}`;
 }
 function wireBossLobby() {
@@ -4163,11 +5812,11 @@ function renderBossTop() {
   if (liveEl) {
     const n = bossState.activeFighters || 0;
     liveEl.textContent = n > 0
-      ? (LANG==='fr' ? `${n} joueur${n>1?'s':''} combattent` : `${n} player${n>1?'s':''} fighting`)
-      : (LANG==='fr' ? 'En attente de combattants' : 'Waiting for fighters');
+      ? i18next.t('combat:combat.boss.players_fighting', { n, s: n>1?'s':'' })
+      : i18next.t('combat:combat.boss.waiting_for_fighters');
   }
   const list = bossState.topList.slice(0, 10);
-  if (!list.length) { el.innerHTML = `<div class="btpRow">${LANG==='fr'?'Sois le premier !':'Be the first!'}</div>`; return; }
+  if (!list.length) { el.innerHTML = `<div class="btpRow">${i18next.t('combat:combat.boss.be_first')}</div>`; return; }
   el.innerHTML = list.map((r,i) =>
     `<div class="btpRow${currentUser && r.user_id===currentUser.id?' me':''}"><span class="btpRank">#${i+1}</span>` +
     `<span class="btpPseudo">${r.active?'<span class="btpActiveDot"></span>':''}${escapeHtml(r.pseudo||'?')}</span>` +
@@ -4210,17 +5859,15 @@ function bossFirstKillOfWeek(bossId) {
 function bossMultBadgesHtml(deathCount, firstKillWeek) {
   let html = '';
   if (deathCount === 0) {
-    html += `<div class="brRewards admHint">✨ ${LANG==='fr'?'Perfect Kill — 0 mort':'Perfect Kill — 0 deaths'}</div>`;
+    html += `<div class="brRewards admHint">✨ ${i18next.t('combat:combat.boss.perfect_kill')}</div>`;
   } else {
     const pct = Math.round((1 - bossDeathPenaltyMult(deathCount)) * 100);
-    html += `<div class="brRewards admHint">${LANG==='fr'
-      ? `💀 ${deathCount} mort${deathCount>1?'s':''} — récompense chiffrée réduite de ${pct}%${deathCount>=BOSS_DEATH_PENALTY.length-1?' (loot rarissime exclu)':''}`
-      : `💀 ${deathCount} death${deathCount>1?'s':''} — numeric reward reduced by ${pct}%${deathCount>=BOSS_DEATH_PENALTY.length-1?' (rare loot excluded)':''}`}</div>`;
+    const s = deathCount>1?'s':'';
+    const excludedNote = deathCount>=BOSS_DEATH_PENALTY.length-1 ? i18next.t('combat:combat.boss.death_penalty_rare_excluded') : '';
+    html += `<div class="brRewards admHint">${i18next.t('combat:combat.boss.death_penalty', { deathCount, s, pct, excludedNote })}</div>`;
   }
   if (firstKillWeek) {
-    html += `<div class="brRewards admHint" style="color:var(--gold)">🗓️ ${LANG==='fr'
-      ? `Premier kill de la semaine : +${Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100)}%`
-      : `First kill of the week: +${Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100)}%`}</div>`;
+    html += `<div class="brRewards admHint" style="color:var(--gold)">🗓️ ${i18next.t('combat:combat.boss.first_kill_week_bonus', { bonusPct: Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100) })}</div>`;
   }
   return html;
 }
@@ -4270,7 +5917,7 @@ function bossPityBarHtml(bossId) {
   const pct = Math.min(100, count / BOSS_PITY_THRESHOLD * 100);
   return `<div class="admBars" style="margin:6px auto 0;max-width:260px">
     <div class="admBarRow">
-      <span class="admBarLbl">${LANG==='fr'?'Pity':'Pity'}</span>
+      <span class="admBarLbl">${i18next.t('combat:combat.boss.pity_label')}</span>
       <span class="admBarTrack"><span class="admBar" style="width:${pct}%"></span></span>
       <span class="admBarVal">${count}/${BOSS_PITY_THRESHOLD}</span>
     </div>
@@ -4279,7 +5926,7 @@ function bossPityBarHtml(bossId) {
 function bossRewardRulesHtml() {
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
-    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${LANG==='fr'?'de chance':'chance'} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
+    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${i18next.t('combat:combat.boss.chance_label')} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
     : '';
   
   let baseHtml, podiumHtml;
@@ -4287,19 +5934,19 @@ function bossRewardRulesHtml() {
     const t1 = KZARKA_REWARD_TIERS[1], t2 = KZARKA_REWARD_TIERS[2], t3 = KZARKA_REWARD_TIERS[3];
     baseHtml = '';
     podiumHtml = `<div class="bossPodium">
-      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">+${fmt(t2.silver)} 🪙<br>${t2.caphras[0]}-${t2.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t2.frag[0]}-${t2.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
-      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">+${fmt(t1.silver)} 🪙<br>${t1.caphras[0]}-${t1.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t1.frag[0]}-${t1.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
-      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">+${fmt(t3.silver)} 🪙<br>${t3.caphras[0]}-${t3.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t3.frag[0]}-${t3.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
+      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">+${fmt(t2.silver)} 🪙<br>${t2.caphras[0]}-${t2.caphras[1]} ${i18next.t('combat:combat.boss.caphras_label')} · ${t2.frag[0]}-${t2.frag[1]} ${i18next.t('combat:combat.boss.memory_frag_label')}</div></div>
+      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">+${fmt(t1.silver)} 🪙<br>${t1.caphras[0]}-${t1.caphras[1]} ${i18next.t('combat:combat.boss.caphras_label')} · ${t1.frag[0]}-${t1.frag[1]} ${i18next.t('combat:combat.boss.memory_frag_label')}</div></div>
+      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">+${fmt(t3.silver)} 🪙<br>${t3.caphras[0]}-${t3.caphras[1]} ${i18next.t('combat:combat.boss.caphras_label')} · ${t3.frag[0]}-${t3.frag[1]} ${i18next.t('combat:combat.boss.memory_frag_label')}</div></div>
     </div>`;
   } else {
     const dZi = bestDifficileZoneIdx(), dgZi = nextDangereuseZoneIdx();
     const dName = dZi != null ? tr(ZONES[dZi].name) : '—';
     const dgName = dgZi != null ? tr(ZONES[dgZi].name) : '—';
-    baseHtml = `<div class="bossRewardBase">🎁 ${LANG==='fr'?'Pour tous':'For everyone'} : ${LANG==='fr'?"pierre d'optimisation de ta meilleure zone difficile":'enhancement stone from your best hard zone'} (<b>${dName}</b>)</div>`;
+    baseHtml = `<div class="bossRewardBase">🎁 ${i18next.t('combat:combat.boss.for_everyone')} : ${i18next.t('combat:combat.boss.hard_zone_stone')} (<b>${dName}</b>)</div>`;
     podiumHtml = `<div class="bossPodium">
-      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">${LANG==='fr'?'+1 bijou de ta zone difficile':'+1 jewel from your hard zone'} (<b>${dName}</b>)</div></div>
-      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">${LANG==='fr'?'+1 bijou de la prochaine zone dangereuse':'+1 jewel from the next dangerous zone'} (<b>${dgName}</b>)</div></div>
-      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">${LANG==='fr'?'20% bijou dangereuse + 30% bijou difficile':'20% dangerous jewel + 30% hard jewel'}</div></div>
+      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">${i18next.t('combat:combat.boss.rank2_reward_generic')} (<b>${dName}</b>)</div></div>
+      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">${i18next.t('combat:combat.boss.rank1_reward_generic')} (<b>${dgName}</b>)</div></div>
+      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">${i18next.t('combat:combat.boss.rank3_reward_generic')}</div></div>
     </div>`;
   }
   return `<div class="bossRewardRules">
@@ -4316,15 +5963,15 @@ const BOSS_ROLL_DURATION_MS = 2200, BOSS_ROLL_START_INTERVAL_MS = 40, BOSS_ROLL_
 
 const BOSS_NEAR_MISS_CHANCE = 0.18, BOSS_NEAR_MISS_MARGIN_DEG = 8;
 function renderBossRewardReveal(items) {
-  if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
+  if (!items.length) return `<button id="bossCloseBtn">${i18next.t('combat:combat.boss.leave_button')}</button>`;
   const itemsHtml = items.map((it,i) => {
     const iconHtml = it.kind==='wheel' ? `<div class="bossWheelReactRoot" id="bossWheelReactRoot${i}"></div>`
       : `<span class="brDiceIcon" id="brDiceIcon${i}" style="color:${it.color||'#e8c96a'}">${it.icon||'🎲'}</span>`;
-    return `<div class="brRevealItem" id="brRevealItem${i}">${iconHtml}<div class="brRevealResult" id="brRevealResult${i}">${LANG==='fr'?'…':'…'}</div></div>`;
+    return `<div class="brRevealItem" id="brRevealItem${i}">${iconHtml}<div class="brRevealResult" id="brRevealResult${i}">${i18next.t('combat:combat.boss.reveal_placeholder')}</div></div>`;
   }).join('');
   return `<div class="brRevealList">${itemsHtml}</div>` +
-    `<button id="bossSkipBtn" class="bossSkipBtn">${LANG==='fr'?'⏭ Passer':'⏭ Skip'}</button>` +
-    `<button id="bossCloseBtn" style="display:none">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
+    `<button id="bossSkipBtn" class="bossSkipBtn">${i18next.t('combat:combat.boss.skip_button')}</button>` +
+    `<button id="bossCloseBtn" style="display:none">${i18next.t('combat:combat.boss.leave_button')}</button>`;
 }
 
 function wireBossRewardReveal(items) {
@@ -4380,8 +6027,8 @@ function wireBossRewardReveal(items) {
         mountBossWheelReact(container, { rareLoot: it.rareLoot, won: it.won, instant: !!instant });
       }
       resEl.innerHTML = it.won
-        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${LANG==='fr'?'Obtenu':'Obtained'} : ${it.rareLoot.name} !</span>`
-        : (LANG==='fr'?`Pas cette fois — ${it.rareLoot.icon} ${it.rareLoot.name} attend toujours`:`Not this time — ${it.rareLoot.icon} ${it.rareLoot.name} still awaits`);
+        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${i18next.t('combat:combat.boss.wheel_obtained')} : ${it.rareLoot.name} !</span>`
+        : i18next.t('combat:combat.boss.wheel_not_this_time', { icon: it.rareLoot.icon, name: it.rareLoot.name });
     }
     finishIfAllDone();
   }
@@ -4444,9 +6091,7 @@ async function endBossFight(win) {
     }
     
     if (alreadyClaimed) {
-      rewardsHtml = `<div class="brRewards admHint">${LANG==='fr'
-        ? 'Récompense déjà réclamée pour ce boss — chaque victoire ne peut être payée qu\'une seule fois.'
-        : 'Reward already claimed for this boss — each victory can only be paid out once.'}</div>`;
+      rewardsHtml = `<div class="brRewards admHint">${i18next.t('combat:combat.boss.reward_already_claimed')}</div>`;
     } else {
       
       if (!bossState.shared) rank = 1;
@@ -4461,9 +6106,9 @@ async function endBossFight(win) {
         addSilver(reward, 'boss', b.name.fr);
         invAdd({ key:'mat_'+CAPHRAS_NAME, name:CAPHRAS_NAME, kind:'material', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', qty:caphrasQty, stackable:true, weight:0.1, val:120 });
         invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
-        rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
+        rewardsHtml = `<div class="brRewards">${i18next.t('combat:combat.boss.contribution_rank')} : <b>#${rank}</b></div>` + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
         revealItems.push(
-          { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` },
+          { kind:'dice', icon:'🪙', color:'#e8c96a', label:i18next.t('combat:combat.boss.silver_label'), rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` },
           { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), rollValue:caphrasQty, rollTemplate:n=>`+${n} × ${tr(CAPHRAS_NAME)}` },
           { kind:'dice', icon:'✦', color:'#b48ce8', label:tr('Fragment de mémoire'), rollValue:fragQty, rollTemplate:n=>`+${n} × ${tr('Fragment de mémoire')}` },
         );
@@ -4476,7 +6121,7 @@ async function endBossFight(win) {
         addSilver(reward, 'boss', b.name.fr);
         
         const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
-        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` });
+        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:i18next.t('combat:combat.boss.silver_label'), rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` });
         if (difficileZi != null) {
           const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
           const matItem = bossZoneMaterialItem(difficileZi, qty);
@@ -4500,13 +6145,13 @@ async function endBossFight(win) {
             logToDiscord('💎 Bijou de World Boss', `**${myPseudo||'Joueur'}** obtient ${jItem.name} (rang #${rank}) sur ${b.name.fr}`, 0xb48ce8);
           }
         }
-        const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
+        const rankHtml = rank ? `<div class="brRewards">${i18next.t('combat:combat.boss.contribution_rank')} : <b>#${rank}</b></div>` : '';
         const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
-          ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
-          : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
+          ? i18next.t('combat:combat.boss.zone_bonus_active', { zoneName: tr(ZONES[S.maxZoneIdx].name), mult: zoneMult.toFixed(2) })
+          : i18next.t('combat:combat.boss.zone_bonus_inactive')}</div>`;
         rewardsHtml = rankHtml + zoneHtml + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
       }
-      pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
+      pushNotif('🏆', i18next.t('combat:combat.boss.boss_defeated_notif'), b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
       logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
       if (bossState.bossId) markBossDefeated(bossState.bossId); 
       
@@ -4533,7 +6178,7 @@ async function endBossFight(win) {
     }
   }
   $('bossResult').innerHTML =
-    `<div class="brTitle ${win?'win':''}">${win?(LANG==='fr'?'🏆 VICTOIRE':'🏆 VICTORY'):(LANG==='fr'?'Combat quitté':'Fight left')}</div>` +
+    `<div class="brTitle ${win?'win':''}">${win?i18next.t('combat:combat.boss.victory_title'):i18next.t('combat:combat.boss.fight_left_title')}</div>` +
     rewardsHtml + renderBossRewardReveal(revealItems);
   $('bossResult').classList.add('show');
   wireBossRewardReveal(revealItems);
@@ -4615,10 +6260,10 @@ function bossLoop(now) {
     const isVell = bs.boss === BOSS_ROSTER.vell;
     if (safe) {
       bs.blockFlash = 0.6; bs.shakeT = 6;
-      bs.floatMsgs.push({txt: isVell ? (LANG==='fr'?'PLONGÉ !':'DIVED!') : (LANG==='fr'?'PARÉ !':'BLOCKED!'), life:1, color:'#8cc8ff'});
+      bs.floatMsgs.push({txt: isVell ? i18next.t('combat:combat.boss.dived_msg') : i18next.t('combat:combat.boss.blocked_msg'), life:1, color:'#8cc8ff'});
     } else {
       bs.playerHp -= bs.playerHpMax*0.30; bs.hurtFlash = 0.6; bs.shakeT = 20;
-      bs.floatMsgs.push({txt: isVell ? (LANG==='fr'?'VAGUE !':'WAVE!') : 'AoE !', life:1, color:'#e05050'});
+      bs.floatMsgs.push({txt: isVell ? i18next.t('combat:combat.boss.wave_msg') : 'AoE !', life:1, color:'#e05050'});
     }
   }
   else if (bs.aoePhase==='blast' && bs.aoeT >= 0.45) { bs.aoePhase='idle'; bs.aoeT=0; bs.aoeInterval = 7 + Math.random()*4; }
@@ -5375,7 +7020,7 @@ const CMP_BOSS_WORLD = { kzarka: 'early', vell: 'early' };
 function cmpMastered(val) { return typeof val === 'string' && val.indexOf('PEN') === 0; }
 
 function CmpBadge(props) {
-  return cmpH('span', { className: 'cinzelC', style: { display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: props.small ? 8.5 : 9.5, fontWeight: 700, letterSpacing: 1, color: CMP_V.bg0, background: CMP_V.gold, padding: props.small ? '1px 6px' : '2px 8px', borderRadius: 3, textTransform: 'uppercase', ...CMP_CINZEL } }, '✓ ', LANG === 'fr' ? 'Maîtrisé' : 'Mastered');
+  return cmpH('span', { className: 'cinzelC', style: { display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: props.small ? 8.5 : 9.5, fontWeight: 700, letterSpacing: 1, color: CMP_V.bg0, background: CMP_V.gold, padding: props.small ? '1px 6px' : '2px 8px', borderRadius: 3, textTransform: 'uppercase', ...CMP_CINZEL } }, '✓ ', i18next.t('progression:progression.compendium_react.mastered_badge'));
 }
 
 function CmpStatPlate(props) {
@@ -5472,65 +7117,63 @@ function CompendiumApp(props) {
     cmpH('div', {
       style: { maxWidth: 720, width: '100%', background: 'radial-gradient(ellipse at 20% 0%, #1c1712 0%, #0d0b08 45%, #060504 100%)', color: CMP_V.cream2, fontFamily: "'EB Garamond', Georgia, serif", borderRadius: 10, border: `1px solid ${CMP_V.border2}`, padding: '30px 24px 44px', position: 'relative' },
     },
-      cmpH('button', { className: 'cmpBtn', onClick: props.onClose, 'aria-label': LANG === 'fr' ? 'Fermer' : 'Close', style: { position: 'absolute', top: 14, right: 16, background: 'none', border: 'none', color: CMP_V.muted2, fontSize: 18, cursor: 'pointer' } }, '✕'),
+      cmpH('button', { className: 'cmpBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.compendium_react.close_aria'), style: { position: 'absolute', top: 14, right: 16, background: 'none', border: 'none', color: CMP_V.muted2, fontSize: 18, cursor: 'pointer' } }, '✕'),
 
       cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 } },
         cmpH('span', { style: { fontSize: 20, color: CMP_V.gold } }, '📖'),
         cmpH('div', null,
           cmpH('div', { className: 'cinzelC', style: { fontSize: 10, letterSpacing: 3, color: CMP_V.muted2, textTransform: 'uppercase' } }, 'Black Desert Idle'),
-          cmpH('h1', { className: 'cinzelC', style: { fontSize: 22, fontWeight: 700, margin: 0, color: CMP_V.cream } }, LANG === 'fr' ? 'Compendium' : 'Compendium'))),
+          cmpH('h1', { className: 'cinzelC', style: { fontSize: 22, fontWeight: 700, margin: 0, color: CMP_V.cream } }, i18next.t('progression:progression.compendium_react.title')))),
 
       cmpH('div', { className: 'cmpStatGrid', style: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 } },
-        cmpH(CmpStatPlate, { icon: '📖', label: LANG === 'fr' ? 'Progression' : 'Progress', value: `${zc + bc}/${ZONES.length + bossMax}`, accent: CMP_V.cream }),
-        cmpH(CmpStatPlate, { icon: '⚡', label: LANG === 'fr' ? 'Vitesse' : 'SPD', value: `+${baseBonus}%`, accent: CMP_V.gold }),
-        cmpH(CmpStatPlate, { icon: '⚔️', label: LANG === 'fr' ? 'Dégâts' : 'DMG', value: `+${baseBonus}%`, accent: CMP_V.gold }),
-        cmpH(CmpStatPlate, { icon: '💧', label: LANG === 'fr' ? 'Esquive' : 'Dodge', value: `+${baseBonus}%`, accent: CMP_V.gold })),
+        cmpH(CmpStatPlate, { icon: '📖', label: i18next.t('progression:progression.compendium_react.progress_label'), value: `${zc + bc}/${ZONES.length + bossMax}`, accent: CMP_V.cream }),
+        cmpH(CmpStatPlate, { icon: '⚡', label: i18next.t('progression:progression.compendium_react.speed_label'), value: `+${baseBonus}%`, accent: CMP_V.gold }),
+        cmpH(CmpStatPlate, { icon: '⚔️', label: i18next.t('progression:progression.compendium_react.dmg_label'), value: `+${baseBonus}%`, accent: CMP_V.gold }),
+        cmpH(CmpStatPlate, { icon: '💧', label: i18next.t('progression:progression.compendium_react.dodge_label'), value: `+${baseBonus}%`, accent: CMP_V.gold })),
 
       cmpH('div', { style: { marginBottom: 14 } },
         cmpH('div', { style: { display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: CMP_V.muted2, marginBottom: 4 } },
-          cmpH('span', null, LANG === 'fr' ? 'Progression globale (zones + boss + PEN)' : 'Overall progress (zones + boss + PEN)'),
+          cmpH('span', null, i18next.t('progression:progression.compendium_react.overall_progress_label')),
           cmpH('span', null, `${grandDone}/${grandMax}`)),
         cmpH('div', { style: { height: 5, background: CMP_V.border, borderRadius: 3, overflow: 'hidden' } },
           cmpH('div', { style: { height: '100%', width: (grandMax > 0 ? grandDone / grandMax * 100 : 0) + '%', background: CMP_V.gold } }))),
 
       cmpH('p', { style: { fontSize: 11.5, fontStyle: 'italic', color: CMP_V.muted3, marginBottom: 16, lineHeight: 1.5 } },
-        LANG === 'fr'
-          ? 'Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif). Clique sur un objet pour voir dans quelles zones le farmer, puis clique une zone pour y lancer le farm directement.'
-          : 'Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive). Click an item to see which zones farm it, then click a zone to start farming there right away.'),
+        i18next.t('progression:progression.compendium_react.intro_text')),
 
       tab === 'zones' ? cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' } },
         cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${CMP_V.border2}`, borderRadius: 20, padding: '6px 12px', maxWidth: 260 } },
           cmpH('span', { style: { fontSize: 12, color: CMP_V.muted2 } }, '🔎'),
           cmpH('input', {
-            value: query, onChange: e => setQuery(e.target.value), placeholder: LANG === 'fr' ? 'Rechercher une zone ou un objet...' : 'Search a zone or item...',
-            'aria-label': LANG === 'fr' ? 'Rechercher une zone ou un objet' : 'Search a zone or item',
+            value: query, onChange: e => setQuery(e.target.value), placeholder: i18next.t('progression:progression.compendium_react.search_placeholder'),
+            'aria-label': i18next.t('progression:progression.compendium_react.search_aria'),
             style: { background: 'none', border: 'none', outline: 'none', color: CMP_V.cream2, fontSize: 12.5, fontFamily: 'inherit', width: '100%' },
           }),
-          query ? cmpH('button', { onClick: () => setQuery(''), 'aria-label': LANG === 'fr' ? 'Effacer la recherche' : 'Clear search', style: { background: 'none', border: 'none', color: CMP_V.muted3, cursor: 'pointer' } }, '✕') : null),
+          query ? cmpH('button', { onClick: () => setQuery(''), 'aria-label': i18next.t('progression:progression.compendium_react.clear_search_aria'), style: { background: 'none', border: 'none', color: CMP_V.muted3, cursor: 'pointer' } }, '✕') : null),
         cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
-          cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3 } }, LANG === 'fr' ? 'Trier :' : 'Sort:'),
-          [{ id: 'default', fr: 'Défaut', en: 'Default' }, { id: 'az', fr: 'A → Z', en: 'A → Z' }, { id: 'progress', fr: '% complétion', en: '% complete' }].map(opt =>
+          cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3 } }, i18next.t('progression:progression.compendium_react.sort_label')),
+          [{ id: 'default', label: i18next.t('progression:progression.compendium_react.sort_default') }, { id: 'az', label: i18next.t('progression:progression.compendium_react.sort_az') }, { id: 'progress', label: i18next.t('progression:progression.compendium_react.sort_progress') }].map(opt =>
             cmpH('button', {
               key: opt.id, className: 'cmpBtn', onClick: () => setSortMode(opt.id), 'aria-pressed': sortMode === opt.id,
               style: { fontSize: 10.5, padding: '4px 10px', borderRadius: 20, cursor: 'pointer', border: `1px solid ${sortMode === opt.id ? CMP_V.gold : CMP_V.border2}`, background: sortMode === opt.id ? CMP_V.gold + '22' : 'transparent', color: sortMode === opt.id ? CMP_V.gold : CMP_V.muted2 },
-            }, LANG === 'fr' ? opt.fr : opt.en))) ) : null,
+            }, opt.label))) ) : null,
 
       highlightedItem ? cmpH('div', { style: { background: CMP_V.bg1, border: `1px solid ${CMP_V.gold}44`, borderRadius: 4, padding: '8px 12px', marginBottom: 16, fontSize: 11.5 } },
         cmpH('span', { style: { color: CMP_V.gold } }, highlightedItem),
-        cmpH('span', { style: { color: CMP_V.muted } }, ' — ' + (LANG === 'fr' ? 'disponible dans : ' : 'available in: ') + zonesForHighlight.map(zi => tr(ZONES[zi].name)).join(', ')),
-        cmpH('button', { onClick: () => setHighlightedItem(null), 'aria-label': LANG === 'fr' ? 'Effacer la mise en évidence' : 'Clear highlight', style: { marginLeft: 8, background: 'none', border: 'none', color: CMP_V.muted3, cursor: 'pointer' } }, '✕')) : null,
+        cmpH('span', { style: { color: CMP_V.muted } }, ' — ' + i18next.t('progression:progression.compendium_react.available_in_label') + zonesForHighlight.map(zi => tr(ZONES[zi].name)).join(', ')),
+        cmpH('button', { onClick: () => setHighlightedItem(null), 'aria-label': i18next.t('progression:progression.compendium_react.clear_highlight_aria'), style: { marginLeft: 8, background: 'none', border: 'none', color: CMP_V.muted3, cursor: 'pointer' } }, '✕')) : null,
 
       cmpH('div', { style: { display: 'flex', gap: 8, marginBottom: 18, borderBottom: `1px solid ${CMP_V.border}` } },
-        cmpH(CmpTabButton, { active: tab === 'zones', onClick: () => setTab('zones'), icon: '🗺️', label: `${LANG === 'fr' ? 'Zones' : 'Zones'} (${zc}/${ZONES.length})` }),
+        cmpH(CmpTabButton, { active: tab === 'zones', onClick: () => setTab('zones'), icon: '🗺️', label: `${i18next.t('progression:progression.compendium_react.tab_zones_label')} (${zc}/${ZONES.length})` }),
         cmpH(CmpTabButton, { active: tab === 'bosses', onClick: () => setTab('bosses'), icon: '💀', label: `World Bosses (${bc}/${bossMax})` }),
-        cmpH(CmpTabButton, { active: tab === 'pen', onClick: () => setTab('pen'), icon: '💎', label: `${LANG === 'fr' ? 'Maîtrise PEN' : 'PEN Mastery'} (${penDone}/${penItems.length})` })),
+        cmpH(CmpTabButton, { active: tab === 'pen', onClick: () => setTab('pen'), icon: '💎', label: `${i18next.t('progression:progression.compendium_react.tab_pen_label')} (${penDone}/${penItems.length})` })),
 
       tab === 'zones' ? cmpH(CmpZonesTab, {
         activeWorld, setActiveWorld, filteredZoneIdxs, sortMode, highlightedItem, setHighlightedItem, launchFarm,
       }) : tab === 'bosses' ? cmpH(CmpBossesTab, { activeWorld, setActiveWorld }) : cmpH(CmpPenTab, { activeWorld, setActiveWorld }),
 
       teleportMsg ? cmpH('div', { className: 'cmpTeleportToast', style: { position: 'fixed', bottom: 30, left: '50%', transform: 'translateX(-50%)', background: CMP_V.bg1, border: `1px solid ${CMP_V.gold}`, borderRadius: 6, padding: '12px 20px', fontSize: 12, color: CMP_V.cream, zIndex: 980 } },
-        (LANG === 'fr' ? 'Téléportation vers ' : 'Teleporting to '), cmpH('span', { className: 'cinzelC', style: { color: CMP_V.gold, fontWeight: 700 } }, teleportMsg), '...') : null));
+        i18next.t('progression:progression.compendium_react.teleporting_label'), cmpH('span', { className: 'cinzelC', style: { color: CMP_V.gold, fontWeight: 700 } }, teleportMsg), '...') : null));
 }
 
 function CmpZonesTab(props) {
@@ -5543,7 +7186,7 @@ function CmpZonesTab(props) {
       activeWorld: props.activeWorld, setActiveWorld: props.setActiveWorld,
       getStats: worldId => worldId === 'early' ? { done: compendiumZoneCount(), total: ZONES.length } : { done: 0, total: 0 },
     }),
-    props.activeWorld !== 'early' ? cmpH('p', { style: { fontSize: 12, fontStyle: 'italic', color: CMP_V.muted3, padding: '16px 0' } }, LANG === 'fr' ? 'Ce monde n\'est pas encore accessible.' : 'This world is not accessible yet.') :
+    props.activeWorld !== 'early' ? cmpH('p', { style: { fontSize: 12, fontStyle: 'italic', color: CMP_V.muted3, padding: '16px 0' } }, i18next.t('progression:progression.compendium_react.world_locked_text')) :
     GEAR_TIERS.map(tier => {
       const tierZoneIdxs = tier.zones.filter(zi => idxs.indexOf(zi) !== -1);
       if (tierZoneIdxs.length === 0) return null;
@@ -5573,14 +7216,14 @@ function CmpZonesTab(props) {
                   const label = tr(n), obtained = compendiumItemDone(n);
                   return cmpH('button', {
                     key: ii, className: 'cmpItemChip', onClick: () => props.setHighlightedItem(props.highlightedItem === label ? null : label),
-                    'aria-pressed': props.highlightedItem === label, 'aria-label': (LANG === 'fr' ? 'Voir les zones où trouver ' : 'See zones where to find ') + label,
+                    'aria-pressed': props.highlightedItem === label, 'aria-label': i18next.t('progression:progression.compendium_react.see_zones_aria', { item: label }),
                     style: { background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: props.highlightedItem === label ? CMP_V.gold : obtained ? '#6b9c6b' : CMP_V.muted3, textDecoration: 'underline dotted', fontSize: 10.5, fontFamily: 'inherit' },
                   }, (obtained ? '✓ ' : '· ') + label);
                 })),
               cmpH('button', {
                 className: 'cmpBtn', onClick: () => props.launchFarm(zi),
                 style: { fontSize: 10.5, color: CMP_V.gold, background: 'none', border: `1px solid ${CMP_V.gold}44`, borderRadius: 20, padding: '4px 10px', cursor: 'pointer' },
-              }, LANG === 'fr' ? 'Lancer le farm ici' : 'Start farming here'));
+              }, i18next.t('progression:progression.compendium_react.start_farm_button')));
           })));
     }));
 }
@@ -5599,13 +7242,13 @@ function CmpBossesTab(props) {
         const defeated = !!S.bossesKilled[id];
         return cmpH('div', {
           key: id, className: 'cmpRow', role: 'button', tabIndex: 0, 'aria-pressed': defeated,
-          'aria-label': `${b.name[LANG]} — ${defeated ? (LANG === 'fr' ? 'vaincu' : 'defeated') : (LANG === 'fr' ? 'pas encore vaincu' : 'not defeated yet')}`,
+          'aria-label': `${b.name[LANG]} — ${defeated ? i18next.t('progression:progression.compendium_react.boss_defeated_short') : i18next.t('progression:progression.compendium_react.boss_not_defeated_short')}`,
           style: { display: 'flex', alignItems: 'center', gap: 12, background: CMP_V.bg1, border: `1px solid ${defeated ? CMP_V.gold + '44' : CMP_V.border}`, borderRadius: 4, padding: '12px 14px' },
         },
           cmpH('span', { style: { fontSize: 20, color: defeated ? CMP_V.gold : CMP_V.muted3 } }, b.icon),
           cmpH('div', null,
             cmpH('div', { className: 'cinzelC', style: { fontSize: 13, fontWeight: 700, color: defeated ? CMP_V.cream : CMP_V.muted } }, b.name[LANG]),
-            cmpH('div', { style: { fontSize: 10.5, color: CMP_V.muted3 } }, defeated ? (LANG === 'fr' ? 'Vaincu au moins une fois' : 'Defeated at least once') : (LANG === 'fr' ? 'Pas encore vaincu' : 'Not defeated yet'))),
+            cmpH('div', { style: { fontSize: 10.5, color: CMP_V.muted3 } }, defeated ? i18next.t('progression:progression.compendium_react.boss_defeated_full') : i18next.t('progression:progression.compendium_react.boss_not_defeated_full'))),
           cmpH('div', { style: { marginLeft: 'auto' } }, defeated
             ? cmpH('span', { style: { fontSize: 11, color: CMP_V.gold, display: 'flex', alignItems: 'center', gap: 3 } }, '+1% ✓')
             : cmpH('span', { style: { color: CMP_V.muted3 } }, '🔒')));
@@ -5615,7 +7258,7 @@ function CmpBossesTab(props) {
 function CmpPenTab(props) {
   return cmpH('div', null,
     cmpH('div', { style: { marginBottom: 18, background: CMP_V.bg1, border: `1px solid ${CMP_V.border}`, borderRadius: 4, padding: '10px 14px', fontSize: 10.5, color: CMP_V.muted3, fontStyle: 'italic' } },
-      LANG === 'fr' ? 'Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.' : 'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once.'),
+      i18next.t('progression:progression.compendium_react.pen_hint_text')),
     cmpH(CmpWorldSelector, {
       activeWorld: props.activeWorld, setActiveWorld: props.setActiveWorld,
       getStats: worldId => {
@@ -5624,7 +7267,7 @@ function CmpPenTab(props) {
         return { done: items.filter(e => S.penMastery[e.name]).length, total: items.length };
       },
     }),
-    props.activeWorld !== 'early' ? cmpH('p', { style: { fontSize: 12, fontStyle: 'italic', color: CMP_V.muted3, padding: '16px 0' } }, LANG === 'fr' ? 'Aucun palier d\'équipement dans ce monde pour l\'instant.' : 'No gear tier in this world yet.') :
+    props.activeWorld !== 'early' ? cmpH('p', { style: { fontSize: 12, fontStyle: 'italic', color: CMP_V.muted3, padding: '16px 0' } }, i18next.t('progression:progression.compendium_react.no_gear_tier_text')) :
     GEAR_TIERS.map(tier => {
       const tierItems = penMasteryItemList().filter(e => e.grade === tier.grade);
       const tierDone = tierItems.filter(e => S.penMastery[e.name]).length;
@@ -5633,7 +7276,7 @@ function CmpPenTab(props) {
           cmpH('span', { style: { width: 8, height: 8, borderRadius: '50%', background: tier.color } }),
           cmpH('span', { className: 'cinzelC', style: { fontSize: 12, fontWeight: 700, letterSpacing: 1, color: tier.color, textTransform: 'uppercase' } }, tier.label[LANG]),
           tierDone === tierItems.length ? cmpH(CmpBadge, { small: true }) : null,
-          cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3, marginLeft: 'auto' } }, `${tierDone}/${tierItems.length} ${LANG === 'fr' ? 'au PEN' : 'at PEN'}`)),
+          cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3, marginLeft: 'auto' } }, `${tierDone}/${tierItems.length} ${i18next.t('progression:progression.compendium_react.at_pen_label')}`)),
         cmpH('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 } },
           tierItems.map(entry => {
             const mastered = !!S.penMastery[entry.name];
@@ -5646,7 +7289,7 @@ function CmpPenTab(props) {
               mastered ? cmpH('span', { style: { position: 'absolute', top: 4, right: 4, fontSize: 9, color: CMP_V.gold } }, '✓') : null,
               cmpH('div', { style: { fontSize: 10, color: CMP_V.muted2, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, tr(entry.name)),
               cmpH('div', { className: 'cinzelC', style: { fontSize: 12.5, fontWeight: 700, color: mastered ? CMP_V.gold : owned ? '#9c927c' : CMP_V.border2 } }, label),
-              owned && !mastered ? cmpH('div', { style: { fontSize: 8.5, color: CMP_V.muted3, marginTop: 2, fontStyle: 'italic' } }, LANG === 'fr' ? 'en cours' : 'in progress') : null);
+              owned && !mastered ? cmpH('div', { style: { fontSize: 8.5, color: CMP_V.muted3, marginTop: 2, fontStyle: 'italic' } }, i18next.t('progression:progression.compendium_react.in_progress_label')) : null);
           }))); }));
 }
 
@@ -5746,33 +7389,33 @@ function PneCommentThread(props) {
   async function report(id) { if (!sb) return; try { await sb.rpc('report_patch_note_comment', { p_comment_id: id }); } catch (e) {} }
 
   return pneH('div', { style: { background: PNE_V.bg, border: `1px solid ${PNE_V.border}`, borderRadius: 6, padding: 8, marginTop: 6 } },
-    comments === null ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted, fontStyle: 'italic', margin: 0 } }, LANG === 'fr' ? 'Chargement…' : 'Loading…') :
+    comments === null ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted, fontStyle: 'italic', margin: 0 } }, i18next.t('progression:progression.patch_notes.loading')) :
       pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-        comments.length === 0 ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted2, fontStyle: 'italic', margin: 0 } }, LANG === 'fr' ? 'Aucun commentaire pour l\'instant.' : 'No comments yet.') :
+        comments.length === 0 ? pneH('p', { style: { fontSize: 10.5, color: PNE_V.muted2, fontStyle: 'italic', margin: 0 } }, i18next.t('progression:progression.patch_notes.no_comments')) :
           comments.map(c => {
             const mine = loggedIn && c.user_id === currentUser.id;
             return pneH('div', { key: c.id, style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 } },
               pneH('p', { style: { fontSize: 10.5, color: PNE_V.text2, margin: 0, wordBreak: 'break-word' } },
                 pneH('span', { style: { fontWeight: 600, color: mine ? PNE_V.gold2 : PNE_V.blue } }, c.author), ' ',
-                pneH('span', { style: { color: PNE_V.muted } }, new Date(c.created_at).toLocaleDateString(LANG === 'fr' ? 'fr-FR' : 'en-US')),
+                pneH('span', { style: { color: PNE_V.muted } }, new Date(c.created_at).toLocaleDateString(i18next.t('progression:progression.patch_notes.date_locale'))),
                 pneH('br'), c.text),
               pneH('div', { style: { display: 'flex', gap: 4, flexShrink: 0 } },
-                !mine ? pneH('button', { className: 'pneBtn', onClick: () => report(c.id), title: LANG === 'fr' ? 'Signaler' : 'Report', style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
-                (mine || isStaff) ? pneH('button', { className: 'pneBtn', onClick: () => remove(c.id), title: LANG === 'fr' ? 'Supprimer' : 'Delete', style: { background: 'none', border: 'none', color: mine ? PNE_V.muted2 : PNE_V.red, cursor: 'pointer', fontSize: 10 } }, '🗑') : null));
+                !mine ? pneH('button', { className: 'pneBtn', onClick: () => report(c.id), title: i18next.t('progression:progression.patch_notes.report_title'), style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
+                (mine || isStaff) ? pneH('button', { className: 'pneBtn', onClick: () => remove(c.id), title: i18next.t('progression:progression.patch_notes.delete_title'), style: { background: 'none', border: 'none', color: mine ? PNE_V.muted2 : PNE_V.red, cursor: 'pointer', fontSize: 10 } }, '🗑') : null));
           })),
     loggedIn ? pneH('div', { style: { marginTop: 6 } },
       pneH('div', { style: { display: 'flex', gap: 4 } },
         pneH('input', {
           value: draft, onChange: e => { setDraft(e.target.value); setDraftError(false); }, onKeyDown: e => e.key === 'Enter' && submit(),
-          placeholder: LANG === 'fr' ? 'Ajouter un commentaire' : 'Add a comment', disabled: busy,
+          placeholder: i18next.t('progression:progression.patch_notes.comment_placeholder'), disabled: busy,
           style: { flex: 1, fontSize: 10.5, padding: '4px 6px', borderRadius: 4, border: `1px solid ${draftError ? PNE_V.red : PNE_V.border}`, background: PNE_V.card, color: PNE_V.textMain, outline: 'none' },
         }),
         pneH('button', { className: 'pneBtn', onClick: submit, disabled: busy, style: { fontSize: 10.5, border: `1px solid ${PNE_V.border2}`, background: 'none', color: PNE_V.blue, borderRadius: 4, padding: '2px 8px', cursor: 'pointer' } }, '➤')),
       draftError ? pneH('p', { style: { fontSize: 9.5, color: PNE_V.red2, margin: '4px 0 0' } },
         draftError === 'rate'
-          ? (LANG === 'fr' ? 'Tu commentes trop vite — réessaie dans une minute.' : 'You\'re commenting too fast — try again in a minute.')
-          : (LANG === 'fr' ? 'Merci de rester respectueux — commentaire bloqué.' : 'Please stay respectful — comment blocked.')) : null)
-      : pneH('p', { style: { fontSize: 9.5, color: PNE_V.muted2, fontStyle: 'italic', margin: '6px 0 0' } }, LANG === 'fr' ? 'Connecte-toi pour commenter.' : 'Log in to comment.'));
+          ? i18next.t('progression:progression.patch_notes.rate_limited_error')
+          : i18next.t('progression:progression.patch_notes.content_blocked_error')) : null)
+      : pneH('p', { style: { fontSize: 9.5, color: PNE_V.muted2, fontStyle: 'italic', margin: '6px 0 0' } }, i18next.t('progression:progression.patch_notes.login_to_comment')));
 }
 
 function PneEntryCard(props) {
@@ -5825,12 +7468,12 @@ function PneEntryCard(props) {
     pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
       pneH('span', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 4, flexShrink: 0, fontSize: 11, background: cat.color + '22', border: `1px solid ${cat.color}55` } }, cat.icon),
       pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: cat.color } }, cat[LANG]),
-      pneH('span', { style: { fontSize: 12, fontWeight: 700, color: PNE_V.cream, flex: 1 } }, line.tx, line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2 } }, LANG === 'fr' ? '🗑 Supprimé' : '🗑 Removed') : null),
+      pneH('span', { style: { fontSize: 12, fontWeight: 700, color: PNE_V.cream, flex: 1 } }, line.tx, line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2 } }, i18next.t('progression:progression.patch_notes.removed_badge')) : null),
       
       !readPatches.has(p.v)
-        ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2, flexShrink: 0 }, title: LANG === 'fr' ? 'Nouveau' : 'New' })
-        : pneH('span', { style: { fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, flexShrink: 0, color: PNE_V.red, border: `1.5px solid ${PNE_V.red}`, transform: 'rotate(-8deg)', fontFamily: 'monospace', opacity: 0.6 }, title: LANG === 'fr' ? 'Déjà lu' : 'Already read' }, LANG === 'fr' ? 'Lu' : 'Read'),
-      line.img ? pneH('button', { className: 'pneBtn', onClick: () => openPatchImgCompare(line.img.before, line.img.after), title: LANG === 'fr' ? 'Voir avant/après' : 'See before/after', style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 } }, '🖼️') : null),
+        ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2, flexShrink: 0 }, title: i18next.t('progression:progression.patch_notes.new_badge_title') })
+        : pneH('span', { style: { fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, flexShrink: 0, color: PNE_V.red, border: `1.5px solid ${PNE_V.red}`, transform: 'rotate(-8deg)', fontFamily: 'monospace', opacity: 0.6 }, title: i18next.t('progression:progression.patch_notes.already_read_title') }, i18next.t('progression:progression.patch_notes.read_badge')),
+      line.img ? pneH('button', { className: 'pneBtn', onClick: () => openPatchImgCompare(line.img.before, line.img.after), title: i18next.t('progression:progression.patch_notes.before_after_title'), style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 } }, '🖼️') : null),
     tags.length > 0 ? pneH('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } },
       tags.map((t, i) => pneH('span', { key: i, title: t.title, style: { fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 999, border: `1px solid ${t.color}`, color: t.color } }, t.label))) : null,
     pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 } },
@@ -5849,9 +7492,9 @@ function PneVersionBlock(props) {
     pneH('div', { style: { display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 4, flexWrap: 'wrap' } },
       pneH('span', { style: { fontSize: 13, fontWeight: 700, color: PNE_V.cream } }, 'v' + p.v),
       pneH('span', { style: { fontSize: 10, color: PNE_V.muted } }, p.d),
-      absIdx === 0 ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', background: '#4a3a20', color: '#e8c876' } }, LANG === 'fr' ? 'Récent' : 'Latest')
-        : isNew ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2 }, title: LANG === 'fr' ? 'Nouveau' : 'New' }) : null,
-      pneH('span', { style: { fontSize: 10, color: PNE_V.muted2, marginLeft: 'auto' } }, rows.length + (LANG === 'fr' ? ' changements' : ' changes'))),
+      absIdx === 0 ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', background: '#4a3a20', color: '#e8c876' } }, i18next.t('progression:progression.patch_notes.latest_badge'))
+        : isNew ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2 }, title: i18next.t('progression:progression.patch_notes.new_badge_title') }) : null,
+      pneH('span', { style: { fontSize: 10, color: PNE_V.muted2, marginLeft: 'auto' } }, rows.length + i18next.t('progression:progression.patch_notes.changes_count_suffix'))),
     p.name ? pneH('p', { style: { fontSize: 11, fontStyle: 'italic', color: PNE_V.italic, margin: '0 0 8px' } }, p.name[LANG]) : null,
     pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
       rows.map(row => pneH(PneEntryCard, { key: row.entryId, row, controversial: props.controversyView && (patchKarmaCache[row.entryId] || 0) < 0 }))));
@@ -5983,17 +7626,17 @@ function PatchNotesApp(props) {
       pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${PNE_V.border}` } },
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
           pneH('span', { style: { display: 'inline-block', width: 4, height: 16, borderRadius: 2, background: PNE_V.pink } }),
-          pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, LANG === 'fr' ? 'Notes de mise à jour' : 'Patch notes')),
+          pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, i18next.t('progression:progression.patch_notes.panel_title'))),
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
-          isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setControversyView(v => !v), title: LANG === 'fr' ? 'Trier les lignes les plus contestées en premier' : 'Sort most contested lines first',
-            style: { fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', border: `1px solid ${controversyView ? PNE_V.red : PNE_V.border}`, background: controversyView ? 'rgba(192,80,60,.13)' : 'transparent', color: controversyView ? PNE_V.red2 : PNE_V.muted } }, '📉 ' + (LANG === 'fr' ? 'Controverse' : 'Controversy')) : null,
-          unreadNow > 0 ? pneH('button', { className: 'pneBtn', onClick: markAllRead, style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: PNE_V.green, cursor: 'pointer' } }, LANG === 'fr' ? 'Marquer comme lu' : 'Mark all read') : null,
-          pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': LANG === 'fr' ? 'Fermer' : 'Close', style: { width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 14 } }, '✕'))),
+          isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setControversyView(v => !v), title: i18next.t('progression:progression.patch_notes.controversy_sort_title'),
+            style: { fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', border: `1px solid ${controversyView ? PNE_V.red : PNE_V.border}`, background: controversyView ? 'rgba(192,80,60,.13)' : 'transparent', color: controversyView ? PNE_V.red2 : PNE_V.muted } }, '📉 ' + i18next.t('progression:progression.patch_notes.controversy_label')) : null,
+          unreadNow > 0 ? pneH('button', { className: 'pneBtn', onClick: markAllRead, style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: PNE_V.green, cursor: 'pointer' } }, i18next.t('progression:progression.patch_notes.mark_all_read')) : null,
+          pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.patch_notes.close_aria'), style: { width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 14 } }, '✕'))),
 
       pneH('div', { style: { padding: '12px 16px 0' } },
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, border: `1px solid ${PNE_V.border}`, background: PNE_V.bg } },
           pneH('span', { style: { fontSize: 12, color: PNE_V.muted } }, '🔎'),
-          pneH('input', { value: query, onChange: e => setQuery(e.target.value), placeholder: LANG === 'fr' ? 'Rechercher dans cette page' : 'Search this page',
+          pneH('input', { value: query, onChange: e => setQuery(e.target.value), placeholder: i18next.t('progression:progression.patch_notes.search_placeholder'),
             style: { flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: PNE_V.textMain } }))),
 
       pneH('div', { style: { padding: '10px 16px 8px', display: 'flex', flexWrap: 'wrap', gap: 6 } },
@@ -6003,18 +7646,18 @@ function PatchNotesApp(props) {
             style: { display: 'flex', alignItems: 'center', gap: 4, fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 999, cursor: 'pointer', border: `1px solid ${active ? cat.color : PNE_V.border}`, background: active ? cat.color + '22' : 'transparent', color: active ? cat.color : PNE_V.muted } },
             cat.icon + ' ' + cat[LANG], active ? ' ✕' : '');
         }),
-        catFilter ? pneH('button', { className: 'pneChip', onClick: () => setCatFilter(null), style: { fontSize: 10, background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer' } }, '✕ ' + (LANG === 'fr' ? 'Tout effacer' : 'Clear all')) : null),
+        catFilter ? pneH('button', { className: 'pneChip', onClick: () => setCatFilter(null), style: { fontSize: 10, background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer' } }, '✕ ' + i18next.t('progression:progression.patch_notes.clear_all_filters')) : null),
 
       pneH('div', { className: 'pneScroll', style: { padding: '0 16px 12px', maxHeight: '55vh', overflowY: 'auto' } },
         blocks.length === 0
-          ? pneH('div', { style: { textAlign: 'center', padding: '24px 0', color: PNE_V.muted } }, pneH('p', { style: { fontSize: 11 } }, LANG === 'fr' ? 'Aucune entrée ne correspond.' : 'No entries match.'))
+          ? pneH('div', { style: { textAlign: 'center', padding: '24px 0', color: PNE_V.muted } }, pneH('p', { style: { fontSize: 11 } }, i18next.t('progression:progression.patch_notes.no_entries_match')))
           : blocks.map((b, i) => pneH(PneVersionBlock, { key: b.p.v, p: b.p, absIdx: b.absIdx, rows: b.rows, notLast: i !== blocks.length - 1, controversyView }))),
 
       pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '10px 16px', borderTop: `1px solid ${PNE_V.border}` } },
-        pneH('button', { className: 'pneBtn', disabled: pageIdx === 0, onClick: () => goto(pages[pageIdx - 1].start), title: LANG === 'fr' ? 'Notes plus récentes' : 'Newer notes',
+        pneH('button', { className: 'pneBtn', disabled: pageIdx === 0, onClick: () => goto(pages[pageIdx - 1].start), title: i18next.t('progression:progression.patch_notes.newer_notes_title'),
           style: { background: 'none', border: 'none', cursor: pageIdx === 0 ? 'default' : 'pointer', color: pageIdx === 0 ? PNE_V.border2 : PNE_V.blue, fontSize: 15 } }, '‹'),
         pneH('span', { style: { fontSize: 10, color: PNE_V.muted } }, (page.start + 1) + '–' + (page.start + entries.length) + ' / ' + PATCH_NOTES.length),
-        pneH('button', { className: 'pneBtn', disabled: pageIdx === pages.length - 1, onClick: () => goto(pages[pageIdx + 1].start), title: LANG === 'fr' ? 'Notes plus anciennes' : 'Older notes',
+        pneH('button', { className: 'pneBtn', disabled: pageIdx === pages.length - 1, onClick: () => goto(pages[pageIdx + 1].start), title: i18next.t('progression:progression.patch_notes.older_notes_title'),
           style: { background: 'none', border: 'none', cursor: pageIdx === pages.length - 1 ? 'default' : 'pointer', color: pageIdx === pages.length - 1 ? PNE_V.border2 : PNE_V.blue, fontSize: 15 } }, '›'))));
 }
 
@@ -6065,8 +7708,8 @@ function renderEquipment() {
   $('stWeaponBonus').textContent = '+' + Math.round(enhBonus(EQUIP.weapon ? EQUIP.weapon.enhLv : 0) * 100) + '%';
   $('stArmorBonus').textContent = '+' + Math.round(armorBonusAvg() * 100) + '%';
   
-  $('eqSumAp').textContent = (LANG==='fr'?'PA ':'AP ') + Math.floor(apEff());
-  $('eqSumDp').textContent = (LANG==='fr'?'PD ':'DP ') + Math.floor(totalDP());
+  $('eqSumAp').textContent = i18next.t('inventory:inventory.eq_sum_ap_prefix') + Math.floor(apEff());
+  $('eqSumDp').textContent = i18next.t('inventory:inventory.eq_sum_dp_prefix') + Math.floor(totalDP());
   $('eqSumGs').textContent = 'GS ' + Math.round(GS());
 }
 
@@ -6091,20 +7734,20 @@ function pdSlotInnerHtmlFor(id, e) {
     if (dp) apDpBadge += `<span class="pdDp">${dp}</span>`;
   }
   
-  const optBadge = (e && e.optimizable) ? `<span class="pdOptBtn" title="${LANG==='fr'?'Optimiser':'Enhance'}">🔧</span>` : '';
+  const optBadge = (e && e.optimizable) ? `<span class="pdOptBtn" title="${i18next.t('inventory:inventory.tooltip_enhance')}">🔧</span>` : '';
   
   let goBadge = '';
   if (e) {
-    if (upgradeZonesForEquippedSlot(id, e).length) goBadge = `<span class="pdUpgradeBtn" title="${LANG==='fr'?'Zone pour améliorer':'Zone to upgrade'}">⬆️</span>`;
+    if (upgradeZonesForEquippedSlot(id, e).length) goBadge = `<span class="pdUpgradeBtn" title="${i18next.t('inventory:inventory.tooltip_zone_to_upgrade')}">⬆️</span>`;
   } else if (NO_SOURCE_SLOTS.includes(id)) {
-    goBadge = `<span class="pdLockBtn" title="${LANG==='fr'?'Pas encore disponible':'Not available yet'}">🔒</span>`;
+    goBadge = `<span class="pdLockBtn" title="${i18next.t('inventory:inventory.tooltip_not_available_yet')}">🔒</span>`;
   } else if (zonesForSlot(id).length) {
     
-    goBadge = `<span class="pdFarmBtn" title="${LANG==='fr'?'Zone pour trouver ce stuff':'Zone to find this gear'}">⬆️</span>`;
+    goBadge = `<span class="pdFarmBtn" title="${i18next.t('inventory:inventory.tooltip_zone_to_find_gear')}">⬆️</span>`;
   }
   const cornerHtml = (optBadge || goBadge) ? `<span class="pdCorner">${optBadge}${goBadge}</span>` : '';
   
-  const unequipBadge = e ? `<span class="pdUnequipBtn" title="${LANG==='fr'?'Déséquiper':'Unequip'}">✕</span>` : '';
+  const unequipBadge = e ? `<span class="pdUnequipBtn" title="${i18next.t('inventory:inventory.action_unequip')}">✕</span>` : '';
   return icon + badge + apDpBadge + cornerHtml + unequipBadge;
 }
 function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
@@ -6217,8 +7860,8 @@ function showEquipSlotMenu(cell, slotId) {
   const pop = $('itemPop');
   let html = `<div class="ipName gear">${SLOT_LABEL[slotId] || slotId}</div>`;
   const emptyTxt = NO_SOURCE_SLOTS.includes(slotId)
-    ? (LANG==='fr'?'🔒 Pas encore disponible':'🔒 Not available yet')
-    : (LANG==='fr'?'Rien d\'équipé':'Nothing equipped');
+    ? i18next.t('inventory:inventory.slot_locked_not_available')
+    : i18next.t('inventory:inventory.slot_empty_nothing_equipped');
   html += `<div class="ipDesc">${e ? (escapeHtml(e.name)+pdStatSuffix(e)) : emptyTxt}</div>`;
   pop.innerHTML = html;
   let farmZones = [];
@@ -6228,7 +7871,7 @@ function showEquipSlotMenu(cell, slotId) {
       const box = document.createElement('div');
       box.className = 'ipDesc';
       box.style.marginTop = '6px';
-      box.innerHTML = (LANG==='fr' ? '📍 Où farmer : ' : '📍 Where to farm: ') +
+      box.innerHTML = i18next.t('inventory:inventory.where_to_farm_label') +
         farmZones.map(zi => `<button class="eqFarmZoneBtn" data-zi="${zi}">${tr(ZONES[zi].name)}</button>`).join(' ');
       pop.appendChild(box);
       box.querySelectorAll('.eqFarmZoneBtn').forEach(btn => {
@@ -6329,7 +7972,7 @@ let invCategory = 'normal';
 function renderInvCatTabs() {
   const el = $('invCatTabs'); if (!el) return;
   el.innerHTML = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCategory?' active':''}${c.locked?' locked':''}"` +
-    `${c.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-cat="${c.id}">` +
+    `${c.locked?' disabled title="'+i18next.t('inventory:inventory.category_coming_soon')+'"':''} data-cat="${c.id}">` +
     `${c.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${c.icon} ${c.label[LANG]}</span></button>`).join('');
   el.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
     btn.onclick = () => {
@@ -6393,8 +8036,8 @@ function renderInventory() {
     const empty = document.createElement('div');
     empty.className = 'invCatEmpty';
     empty.textContent = cat.id === 'rng'
-      ? (LANG==='fr'?'Aucun coffre RNG pour l\'instant':'No RNG box yet')
-      : (LANG==='fr'?'Vide':'Empty');
+      ? i18next.t('inventory:inventory.category_empty_rng')
+      : i18next.t('inventory:inventory.category_empty_generic');
     grid.appendChild(empty);
   }
   
@@ -6432,7 +8075,7 @@ function renderCompendiumPane() {
         cellEnhBadgeHtml(s) +
         (cellApDp && cellApDp.ap ? `<span class="cellAp">${cellApDp.ap}</span>` : '') +
         (cellApDp && cellApDp.dp ? `<span class="cellDp">${cellApDp.dp}</span>` : '') +
-        `<span class="compOptBtn" title="${LANG==='fr'?'Équiper et optimiser':'Equip and optimize'}">✦</span>`;
+        `<span class="compOptBtn" title="${i18next.t('inventory:inventory.compendium_equip_and_optimize')}">✦</span>`;
       if (s.color) { cell.style.borderColor = s.color; cell.style.boxShadow = `inset 0 0 6px ${s.color}55`; }
       cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
       cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
@@ -6470,8 +8113,8 @@ let chestZoomed = false;
 function updateChestZoomBtn() {
   const btn = $('btnChestZoom'); if (!btn) return;
   btn.textContent = chestZoomed
-    ? (LANG==='fr' ? '🔎 Réduire (8/ligne)' : '🔎 Shrink (8/row)')
-    : (LANG==='fr' ? '🔍 Agrandir (5/ligne)' : '🔍 Enlarge (5/row)');
+    ? i18next.t('inventory:inventory.chest_zoom_shrink')
+    : i18next.t('inventory:inventory.chest_zoom_enlarge');
 }
 function renderVeliaChest() {
   const grid = $('veliaChestGrid'); if (!grid) return;
@@ -6490,7 +8133,7 @@ function renderVeliaChest() {
     } else if (s) {
       cell.innerHTML = `<span style="color:${s.color}">${s.icon || '❔'}</span>` +
         (s.qty > 1 ? `<span class="qty">${fmt(s.qty)}</span>` : '') +
-        `<button class="compBagReturnBtn" data-i="${i}" title="${LANG==='fr'?'Renvoyer au sac principal':'Send back to main bag'}">↩️</button>`;
+        `<button class="compBagReturnBtn" data-i="${i}" title="${i18next.t('inventory:inventory.chest_return_to_bag')}">↩️</button>`;
       if (s.color) { cell.style.borderColor = s.color; cell.style.boxShadow = `inset 0 0 6px ${s.color}55`; }
       cell.onmouseenter = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; showItemTooltip(ev.clientX, ev.clientY, s); };
       cell.onmousemove  = ev => { lastMouseX = ev.clientX; lastMouseY = ev.clientY; moveItemTooltip(ev.clientX, ev.clientY); };
@@ -6504,7 +8147,7 @@ function renderVeliaChest() {
       const i = parseInt(btn.dataset.i, 10);
       const it = VELIA_CHEST[i]; if (!it) return;
       if (invAdd({ ...it })) { VELIA_CHEST[i] = null; renderVeliaChest(); refreshInvUI(); }
-      else floatTxt(P.x, P.y, 100, LANG==='fr'?'Sac principal plein':'Main bag full', { hurt:true });
+      else floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.main_bag_full'), { hurt:true });
     };
   });
   const used = VELIA_CHEST.filter(Boolean).length;
@@ -6558,7 +8201,7 @@ function statDeltaHtml(item) {
   d('PA', cur.ap, refStats.ap); d('PD', cur.dp, refStats.dp); d('PV', cur.hp, refStats.hp);
   d('% Esq.', cur.dodge, refStats.dodge, true);
   if (!parts.length) return '';
-  return `<div class="ipDelta">${ref ? (LANG==='fr'?'vs équipé : ':'vs equipped: ') : (LANG==='fr'?'rien d\'équipé — ':'nothing equipped — ')}${parts.join(' ')}</div>`;
+  return `<div class="ipDelta">${ref ? i18next.t('inventory:inventory.stat_delta_vs_equipped') : i18next.t('inventory:inventory.stat_delta_nothing_equipped')}${parts.join(' ')}</div>`;
 }
 
 function statDeltaShortText(item) {
@@ -6586,11 +8229,16 @@ function showItemMenu(px, py, data) {
   const delta = (!data.equipped && (data.kind === 'gear' || data.kind === 'jackpot')) ? statDeltaHtml(data) : '';
   pop.innerHTML = html + `<div class="ipDesc">${desc.join('<br>')}</div>` + delta;
 
-  const L = LANG === 'fr'
-    ? { unequip:'Déséquiper', equip:'Équiper', toOpt:'Mettre en optimisation', sell1:n=>'Vendre 1 ('+n+')', sellAll:n=>'Vendre tout ('+n+')', drop:'Jeter',
-        confirmSell1:n=>'Vendre 1 objet pour '+n+' silver ?', confirmSellAll:n=>'Vendre tout le tas pour '+n+' silver ?' }
-    : { unequip:'Unequip', equip:'Equip', toOpt:'Load into enhancement', sell1:n=>'Sell 1 ('+n+')', sellAll:n=>'Sell all ('+n+')', drop:'Drop',
-        confirmSell1:n=>'Sell 1 item for '+n+' silver?', confirmSellAll:n=>'Sell the whole stack for '+n+' silver?' };
+  const L = {
+    unequip: i18next.t('inventory:inventory.action_unequip'),
+    equip: i18next.t('inventory:inventory.action_equip'),
+    toOpt: i18next.t('inventory:inventory.action_to_opt'),
+    sell1: n => i18next.t('inventory:inventory.action_sell_one', { n }),
+    sellAll: n => i18next.t('inventory:inventory.action_sell_all', { n }),
+    drop: i18next.t('inventory:inventory.action_drop'),
+    confirmSell1: n => i18next.t('inventory:inventory.confirm_sell_one', { n }),
+    confirmSellAll: n => i18next.t('inventory:inventory.confirm_sell_all', { n }),
+  };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
     if (data.kind === 'gear' || data.kind === 'jackpot') addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'equip', key:data.slotId }; });
@@ -6607,8 +8255,8 @@ function showItemMenu(px, py, data) {
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
     
-    addPopBtn(pop, LANG==='fr'?'📦 Ranger au coffre (1)':'📦 Store in chest (1)', () => {
-      if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, LANG==='fr'?'Coffre plein':'Chest full', { hurt:true });
+    addPopBtn(pop, i18next.t('inventory:inventory.action_store_in_chest'), () => {
+      if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
     });
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
@@ -6798,8 +8446,8 @@ $('btnEquipBest').onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = n > 0
-      ? (LANG==='fr' ? `${n} pièce${n>1?'s':''} remplacée${n>1?'s':''} (meilleur socle)` : `${n} piece${n>1?'s':''} swapped (better base stats)`)
-      : (LANG==='fr' ? 'Déjà optimal — rien à changer' : 'Already optimal — nothing to change');
+      ? i18next.t('inventory:inventory.equip_best_result', { count: n })
+      : i18next.t('inventory:inventory.equip_best_already_optimal');
     msg.className = n > 0 ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -6871,11 +8519,11 @@ $('btnSellWorse').onclick = () => {
   if (msg) {
     const soldCount = count - divertedCount;
     const divertedTxt = divertedCount > 0
-      ? (LANG==='fr' ? ` · +${divertedCount} protégé${divertedCount>1?'s':''} dans le sac 📖 Compendium` : ` · +${divertedCount} protected in the 📖 Compendium bag`)
+      ? i18next.t('inventory:inventory.sell_worse_diverted', { count: divertedCount })
       : '';
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `${soldCount} objet${soldCount>1?'s':''} vendu${soldCount>1?'s':''} (+${fmt(total)} silver)${divertedTxt}` : `${soldCount} item${soldCount>1?'s':''} sold (+${fmt(total)} silver)${divertedTxt}`)
-      : (LANG==='fr' ? 'Rien à vendre — tout est déjà au-dessus de l\'équipé' : 'Nothing to sell — everything already beats what\'s equipped');
+      ? i18next.t('inventory:inventory.sell_worse_result', { count: soldCount, total: fmt(total), divertedTxt })
+      : i18next.t('inventory:inventory.sell_worse_nothing');
     msg.className = count > 0 ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -6886,8 +8534,8 @@ $('btnBuyBackWorse').onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = ok
-      ? (LANG==='fr' ? 'Objets rachetés ✓' : 'Items bought back ✓')
-      : (LANG==='fr' ? 'Rien à racheter (ou sac plein / silver insuffisant)' : 'Nothing to buy back (or bag full / not enough silver)');
+      ? i18next.t('inventory:inventory.buyback_success')
+      : i18next.t('inventory:inventory.buyback_nothing');
     msg.className = ok ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -6953,14 +8601,14 @@ function renderOptimization() {
   const fsCount = target ? itemFailstack(target, lvl+1) : 0;
   $('optItem').innerHTML = target ? (target.icon || (optTarget.loc==='equip' ? SLOT_ICON[optTarget.key] : '❔')) : '—';
   $('optItem').style.boxShadow = (target && target.color) ? `0 0 8px 2px ${target.color}66` : '';
-  $('optLevelLbl').innerHTML = (target ? tr(target.name) : (LANG==='fr'?'Aucune pièce équipée':'No piece equipped')) + ' <b id="optLevelVal">' + (target ? ENH_NAMES[lvl] : '—') + '</b>';
+  $('optLevelLbl').innerHTML = (target ? tr(target.name) : i18next.t('inventory:inventory.opt_no_piece_equipped')) + ' <b id="optLevelVal">' + (target ? ENH_NAMES[lvl] : '—') + '</b>';
 
   const matIdx = findEnhanceMaterial(), matSlotEl = $('optMat');
-  const maxedTxt = LANG==='fr' ? 'PEN atteint — niveau maximum' : 'PEN reached — max level';
-  if (!target) { matSlotEl.className='empty'; matSlotEl.innerHTML='＋'; matSlotEl.style.boxShadow=''; $('optChanceTxt').textContent = LANG==='fr'?'Équipez une pièce à optimiser':'Equip a piece to enhance'; $('btnOpt').disabled=true; }
+  const maxedTxt = i18next.t('inventory:inventory.opt_max_level_reached');
+  if (!target) { matSlotEl.className='empty'; matSlotEl.innerHTML='＋'; matSlotEl.style.boxShadow=''; $('optChanceTxt').textContent = i18next.t('inventory:inventory.opt_equip_a_piece'); $('btnOpt').disabled=true; }
   else if (matIdx === -1) {
     matSlotEl.className = 'empty'; matSlotEl.innerHTML = '＋'; matSlotEl.title = ''; matSlotEl.style.boxShadow = '';
-    $('optChanceTxt').textContent = maxed ? maxedTxt : (LANG==='fr'?'Aucun matériau en sac — farmez du loot':'No material in bag — go loot some');
+    $('optChanceTxt').textContent = maxed ? maxedTxt : i18next.t('inventory:inventory.opt_no_material');
     $('btnOpt').disabled = true;
   } else {
     const it = INV[matIdx];
@@ -6970,9 +8618,9 @@ function renderOptimization() {
     $('btnOpt').disabled = maxed;
     
     if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('enchant');
-    const fsTxt = fsCount > 0 ? ` <span style="color:#8fc9e8">(+${fsCount} ${LANG==='fr'?'échecs sur ce palier':'fails on this tier'})</span>` : '';
+    const fsTxt = fsCount > 0 ? ` <span style="color:#8fc9e8">(+${fsCount} ${i18next.t('inventory:inventory.opt_fails_on_tier')})</span>` : '';
     $('optChanceTxt').innerHTML = maxed ? maxedTxt
-      : `${LANG==='fr'?'Matériau':'Material'} : ${tr(it.name)} · ${LANG==='fr'?'Chance':'Chance'} : ${(parts.total*100).toFixed(1)}% → ${ENH_NAMES[lvl+1]}${fsTxt}`;
+      : `${i18next.t('inventory:inventory.opt_material_label')} : ${tr(it.name)} · ${i18next.t('inventory:inventory.opt_chance_label')} : ${(parts.total*100).toFixed(1)}% → ${ENH_NAMES[lvl+1]}${fsTxt}`;
   }
   
   $('optChanceFill').style.width = (parts.base*100)+'%';
@@ -6985,14 +8633,14 @@ function renderOptimization() {
   const cronCost = cronStoneCostForItem(target);
   const cronHave = cronIdx === -1 ? 0 : INV[cronIdx].qty;
   if (cronIdx === -1) {
-    cronSlotEl.className = 'empty' + cronOffCls; cronSlotEl.title = LANG==='fr'?'Aucune Pierre de Cron en sac':'No Cron Stone in bag';
+    cronSlotEl.className = 'empty' + cronOffCls; cronSlotEl.title = i18next.t('inventory:inventory.opt_no_cron_stone');
     $('optCronQty').textContent = target ? `0/${cronCost}` : '';
     cronSlotEl.style.boxShadow = '';
   } else {
     cronSlotEl.className = cronOffCls.trim(); cronSlotEl.title = CRON_STONE.name + ' — ' +
-      (S.useCronStone ? (LANG==='fr'?'utilisée (clique pour désactiver)':'in use (click to disable)')
-                      : (LANG==='fr'?'non utilisée (clique pour activer)':'not used (click to enable)')) +
-      (target ? (LANG==='fr'?` · coût pour cette pièce : ${cronCost}`:` · cost for this piece: ${cronCost}`) : '');
+      (S.useCronStone ? i18next.t('inventory:inventory.opt_cron_in_use')
+                      : i18next.t('inventory:inventory.opt_cron_not_used')) +
+      (target ? i18next.t('inventory:inventory.opt_cron_cost_suffix', { cronCost }) : '');
     $('optCronQty').innerHTML = target
       ? `<span class="${cronHave >= cronCost ? '' : 'bad'}">${fmt(cronHave)}/${cronCost}</span>`
       : fmt(cronHave);
@@ -7019,7 +8667,7 @@ function attemptEnhance() {
     target.enhLv = lvl+1;
     S.enhSuccess = (S.enhSuccess||0) + 1;
     
-    r.textContent = (LANG==='fr'?'✦ SUCCÈS — ':'✦ SUCCESS — ') + ENH_NAMES[target.enhLv]; r.className = 'ok';
+    r.textContent = i18next.t('inventory:inventory.opt_success_prefix') + ENH_NAMES[target.enhLv]; r.className = 'ok';
     floatTxt(P.x,P.y,100,'✦ '+ENH_NAMES[target.enhLv],{gold:true});
     
     trackEnhPeak(target.name, target.enhLv);
@@ -7041,16 +8689,16 @@ function attemptEnhance() {
       invRemoveAt(cronIdx, cronCost);
       
       if (typeof queueFarmEvent === 'function') queueFarmEvent('cron_used', CRON_STONE.name, cronCost, 0);
-      r.textContent = (LANG==='fr'?'✖ ÉCHEC — protégé par '+cronCost+' Pierre'+(cronCost>1?'s':'')+' de Cron (':'✖ FAIL — protected by '+cronCost+' Cron Stone'+(cronCost>1?'s':'')+' (')+ENH_NAMES[target.enhLv]+')';
-      floatTxt(P.x,P.y,100,LANG==='fr'?'⏳ Protégé !':'⏳ Protected!',{blue:true});
+      r.textContent = i18next.t('inventory:inventory.opt_fail_protected_prefix', { count: cronCost }) + ENH_NAMES[target.enhLv] + ')';
+      floatTxt(P.x,P.y,100,i18next.t('inventory:inventory.opt_protected_floattxt'),{blue:true});
     } else if (lvl >= SAFE_IDX && lvl < PRI_IDX) { 
       target.enhLv = Math.max(SAFE_IDX-1, lvl-1);
-      r.textContent = (LANG==='fr'?'✖ ÉCHEC — rétrogradé à ':'✖ FAIL — downgraded to ') + ENH_NAMES[target.enhLv];
+      r.textContent = i18next.t('inventory:inventory.opt_fail_downgraded_prefix') + ENH_NAMES[target.enhLv];
     } else if (lvl >= PRI_IDX) { 
       target.enhLv = Math.max(PRI_IDX, lvl-1);
-      r.textContent = (LANG==='fr'?'✖ ÉCHEC — rétrogradé à ':'✖ FAIL — downgraded to ') + ENH_NAMES[target.enhLv];
+      r.textContent = i18next.t('inventory:inventory.opt_fail_downgraded_prefix') + ENH_NAMES[target.enhLv];
     } else {
-      r.textContent = LANG==='fr' ? '✖ ÉCHEC — matériau perdu' : '✖ FAIL — material lost';
+      r.textContent = i18next.t('inventory:inventory.opt_fail_material_lost');
     }
     r.className = 'fail';
     
@@ -7080,7 +8728,7 @@ function optAutoGainParts(target, targetLvl) {
   if (proj.ap > cur.ap) parts.push('+' + (proj.ap-cur.ap) + ' PA');
   if (proj.dp > cur.dp) parts.push('+' + (proj.dp-cur.dp) + ' PD');
   if (proj.hp > cur.hp) parts.push('+' + (proj.hp-cur.hp) + ' PV');
-  if (proj.dodge > cur.dodge) parts.push('+' + (proj.dodge-cur.dodge).toFixed(2) + '% ' + (LANG==='fr'?'Esq.':'Dodge'));
+  if (proj.dodge > cur.dodge) parts.push('+' + (proj.dodge-cur.dodge).toFixed(2) + '% ' + i18next.t('inventory:inventory.stat_dodge_abbr'));
   return parts;
 }
 
@@ -7109,7 +8757,7 @@ function renderOptAutoTargetSelect() {
     const showGain = gainTxt !== lastGainTxt;
     if (gainTxt) lastGainTxt = gainTxt;
     return `<option value="${i}">${ENH_NAMES[i]}${(showGain && gainTxt) ? ' (' + gainTxt + ')' : ''}</option>`;
-  }).join('') || `<option value="">${LANG==='fr'?'Niveau max atteint':'Max level reached'}</option>`;
+  }).join('') || `<option value="">${i18next.t('inventory:inventory.opt_auto_max_level')}</option>`;
   sel.disabled = !options.length;
   
   if (options.some(i => String(i) === prevVal)) sel.value = prevVal;
@@ -7123,7 +8771,7 @@ function renderOptAutoGain() {
   const targetLvl = sel ? parseInt(sel.value, 10) : NaN;
   const parts = optAutoGainParts(target, targetLvl);
   el.textContent = parts.length
-    ? (LANG==='fr' ? `À ${ENH_NAMES[targetLvl]} : ` : `At ${ENH_NAMES[targetLvl]}: `) + parts.join(' · ')
+    ? i18next.t('inventory:inventory.opt_auto_gain_at', { level: ENH_NAMES[targetLvl] }) + parts.join(' · ')
     : '';
 }
 $('optAutoTarget').onchange = renderOptAutoGain;
@@ -7134,7 +8782,7 @@ function stopAutoOpt() {
   autoOptTargetLvl = null;
   const btn = $('btnOptAuto'); if (!btn) return;
   btn.classList.remove('running');
-  btn.textContent = LANG==='fr' ? "▶ Auto jusqu'à" : '▶ Auto to';
+  btn.textContent = i18next.t('inventory:inventory.opt_auto_btn_start');
   $('optAutoTarget').disabled = false;
   $('optAutoMode').disabled = false;
 }
@@ -7165,20 +8813,20 @@ function startAutoOpt() {
   $('optAutoMode').disabled = true;
   const btn = $('btnOptAuto');
   btn.classList.add('running');
-  btn.textContent = LANG==='fr' ? '⏸ Arrêter' : '⏸ Stop';
+  btn.textContent = i18next.t('inventory:inventory.opt_auto_btn_stop');
   autoOptTimer = setInterval(() => {
     const target = getOptTargetItem();
     if (!target) { stopAutoOpt(); return; }
     if (mode === 'target' && (target.enhLv||0) >= autoOptTargetLvl) { stopAutoOpt(); return; }
     if ((target.enhLv||0) >= ENH_NAMES.length-1) { stopAutoOpt(); return; } 
     if (findEnhanceMaterial() === -1) {
-      $('optResult').textContent = LANG==='fr' ? 'Auto arrêté — plus de matériau' : 'Auto stopped — out of material';
+      $('optResult').textContent = i18next.t('inventory:inventory.opt_auto_stopped_no_material');
       stopAutoOpt();
       return;
     }
     
     if (mode === 'cron' && findCronStone() === -1) {
-      $('optResult').textContent = LANG==='fr' ? 'Auto arrêté — plus de Pierre de Cron' : 'Auto stopped — out of Cron Stones';
+      $('optResult').textContent = i18next.t('inventory:inventory.opt_auto_stopped_no_cron');
       stopAutoOpt();
       return;
     }
@@ -7195,7 +8843,7 @@ function startAutoOpt() {
       if (!target3) { stopAutoOpt(); return; }
       const cur = effectiveApDp(target3);
       if (cur.ap > startAp || cur.dp > startDp) {
-        $('optResult').textContent = LANG==='fr' ? `Auto arrêté — gain obtenu (${ENH_NAMES[target3.enhLv||0]})` : `Auto stopped — gain reached (${ENH_NAMES[target3.enhLv||0]})`;
+        $('optResult').textContent = i18next.t('inventory:inventory.opt_auto_stopped_gain', { level: ENH_NAMES[target3.enhLv||0] });
         stopAutoOpt();
         return;
       }
@@ -7214,7 +8862,7 @@ function poussiereCount() {
 function renderCapConvertRow() {
   const lbl = $('capConvertLbl'), btn = $('btnConvertCaphras'); if (!lbl || !btn) return;
   const n = poussiereCount();
-  lbl.textContent = (LANG==='fr' ? `${fmt(n)} poussière → ${Math.floor(n/5)} pierre de Caphras` : `${fmt(n)} dust → ${Math.floor(n/5)} Caphras stone`);
+  lbl.textContent = i18next.t('inventory:inventory.caphras_convert_label', { n: fmt(n), caphras: Math.floor(n/5) });
   btn.disabled = n < 5;
 }
 function convertPoussiereToCaphras() {
@@ -7227,7 +8875,7 @@ function convertPoussiereToCaphras() {
     
     const s = INV[idx];
     if (s) s.qty += 5; else INV[idx] = { key:'craft_'+POUSSIERE_NAME, name:POUSSIERE_NAME, kind:'craft', icon:'✦', color:'#b48ce8', qty:5, stackable:true, weight:0.2, val:0 };
-    floatTxt(P.x, P.y, 100, LANG==='fr'?'Sac plein':'Bag full', { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.bag_full'), { hurt:true });
     return;
   }
   floatTxt(P.x, P.y, 100, '+1 '+CAPHRAS_NAME, { gold:true });
@@ -7260,14 +8908,14 @@ function renderOptSuggestions() {
   if (!best || bestGain <= 0) { box.innerHTML = ''; return; }
 
   const arrow = ENH_NAMES[best.lvl] + '→' + ENH_NAMES[best.lvl+1];
-  const lbl = LANG==='fr' ? 'Recommandé' : 'Recommended';
+  const lbl = i18next.t('inventory:inventory.opt_suggest_recommended');
   box.innerHTML = `<div class="optSuggestLbl">${lbl} :</div><div class="optSuggestPick">${tr(best.e.name)} <span class="optSuggestArrow">${arrow}</span></div>`;
 }
 
 const LOOT_ICONS = { trash:'▬', material:'◈', jackpot:'💍', craft:'✦', gear:'⚔️' };
 
 function lootAutoSellLockHtml() {
-  return `<button class="lootAutoSellBtn" disabled title="${LANG==='fr'?'Vente automatique (bientôt disponible)':'Auto-sell (coming soon)'}"><span class="zoneTierLock">🔒</span>🗑️</button>`;
+  return `<button class="lootAutoSellBtn" disabled title="${i18next.t('inventory:inventory.loot_autosell_coming_soon')}"><span class="zoneTierLock">🔒</span>🗑️</button>`;
 }
 
 (function initLootIconZoom() {
@@ -7297,9 +8945,9 @@ function zoneLootRowsHtml(idx) {
   const z = ZONES[idx], L = z.loot;
   const tier = gearTierForZone(idx);
   const gearCh = gearDropChance(tier, idx);
-  const equippedWord = LANG === 'fr' ? 'PA équipé' : 'AP equipped';
-  const armorPieceNote = LANG==='fr' ? 'armure — cette zone uniquement' : 'armor — this zone only';
-  const weaponPieceNote = LANG==='fr' ? 'arme — cette zone uniquement' : 'weapon — this zone only';
+  const equippedWord = i18next.t('inventory:inventory.loot_ap_equipped');
+  const armorPieceNote = i18next.t('inventory:inventory.loot_armor_zone_only');
+  const weaponPieceNote = i18next.t('inventory:inventory.loot_weapon_zone_only');
   const rows = [
     { kind:'trash',    it:L.trash,   note:'revenu de base' },
     { kind:'material', it:{name:tier.material.name, icon:tier.material.icon}, ch:L.mat.ch, note:'optimisation' },
@@ -7345,7 +8993,7 @@ function zoneLootRowsHtml(idx) {
     
     const isUpgrade = r.slot ? upgradedSlots.includes(r.slot)
       : r.baseSlot ? upgradedSlots.some(s => accBaseSlot(s) === r.baseSlot) : false;
-    const upgradeHtml = isUpgrade ? `<span class="lootUpgradeArrow" title="${LANG==='fr'?'Améliore ton stuff actuel':'Upgrades your current gear'}">⬆️</span>` : '';
+    const upgradeHtml = isUpgrade ? `<span class="lootUpgradeArrow" title="${i18next.t('inventory:inventory.loot_upgrade_tooltip')}">⬆️</span>` : '';
     return { cat: LOOT_CATS[r.kind] || { fr:'Autre', en:'Other', order:9 }, html: `
     <div class="lootRow${isUpgrade?' lootRowUpgrade':''}">
       ${upgradeHtml}
@@ -7382,13 +9030,9 @@ function showFarmGuide() {
     .filter(r => r.zi <= S.maxZoneIdx && !r.dangerous);
   const html = rows.length ? rows.map(r =>
     `${zoneLootCompactRowHtml(r.zi)}<div class="lootZoneDetail" id="farmGuideDetail${r.zi}" style="display:none">${zoneLootRowsHtml(r.zi)}</div>`
-  ).join('') : `<div class="admHint">${LANG==='fr'
-    ? 'Aucune zone débloquée n\'est actuellement sûre pour toi — améliore ton stuff ou explore prudemment.'
-    : 'No unlocked zone is currently safe for you — improve your gear or explore carefully.'}</div>`;
-  const banner = `<div class="admHint">${LANG==='fr'
-    ? '🗺️ Où farmer ? Zones débloquées, hors zones trop dangereuses pour ton stuff actuel — clique une zone pour voir le détail complet :'
-    : '🗺️ Where to farm? Unlocked zones, excluding ones currently too dangerous for your gear — click a zone to see the full detail:'}</div>`;
-  openInfo(LANG==='fr' ? '🗺️ Où farmer ?' : '🗺️ Where to farm?', banner + html);
+  ).join('') : `<div class="admHint">${i18next.t('inventory:inventory.farm_guide_no_safe_zone')}</div>`;
+  const banner = `<div class="admHint">${i18next.t('inventory:inventory.farm_guide_banner')}</div>`;
+  openInfo(i18next.t('inventory:inventory.farm_guide_title'), banner + html);
   $a('infoBody').querySelectorAll('.lootZoneCompact').forEach(row => {
     row.onclick = () => {
       const detail = $a('farmGuideDetail'+row.dataset.zi);
@@ -7403,10 +9047,8 @@ function renderLootTable(previewIdx) {
   if (atVelia && previewIdx == null) {
     lootPreviewIdx = null;
     updateZoneViewHalo();
-    $('lootZoneName').textContent = LANG==='fr' ? 'Velia — zone paisible' : 'Velia — peaceful zone';
-    const banner = `<div class="admHint">${LANG==='fr'
-      ? '🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :'
-      : '🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:'}</div>`;
+    $('lootZoneName').textContent = i18next.t('inventory:inventory.velia_peaceful_zone');
+    const banner = `<div class="admHint">${i18next.t('inventory:inventory.velia_loot_banner')}</div>`;
     const allZonesHtml = ZONES.map((z,zi) =>
       `${zoneLootCompactRowHtml(zi)}<div class="lootZoneDetail" id="lootDetail${zi}" style="display:none">${zoneLootRowsHtml(zi)}</div>`
     ).join('');
@@ -7426,7 +9068,7 @@ function renderLootTable(previewIdx) {
   updateZoneViewHalo();
   const z = ZONES[idx];
   const previewTag = previewIdx != null && previewIdx !== zoneIdx
-    ? (LANG==='fr' ? '👁 Aperçu — ' : '👁 Preview — ') : '';
+    ? i18next.t('inventory:inventory.loot_preview_tag') : '';
   $('lootZoneName').textContent = previewTag + tr(z.mob);
   const mainRowsHtml = zoneLootRowsHtml(idx);
   
@@ -7438,7 +9080,7 @@ function renderLootTable(previewIdx) {
       ${lootAutoSellLockHtml()}
     </div>`).join('');
   $('lootTable').innerHTML = mainRowsHtml +
-    `<div class="lootCatHead">🗺️ ${LANG==='fr'?'Trésor de Velia':'Velia Treasure'}</div>` + treasureRowsHtml;
+    `<div class="lootCatHead">🗺️ ${i18next.t('inventory:inventory.velia_treasure_label')}</div>` + treasureRowsHtml;
 }
 function dropItem(i) {
   const s = INV[i]; if (!s) return;
@@ -7480,10 +9122,10 @@ $('btnEquipSellCompendium').onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     const parts = [];
-    if (equipped > 0) parts.push(LANG==='fr' ? `${equipped} équipée${equipped>1?'s':''}` : `${equipped} equipped`);
-    if (sold > 0) parts.push(LANG==='fr' ? `${sold} vendue${sold>1?'s':''} (+${fmt(total)} silver)` : `${sold} sold (+${fmt(total)} silver)`);
-    if (diverted > 0) parts.push(LANG==='fr' ? `${diverted} protégée${diverted>1?'s':''} 📖` : `${diverted} protected 📖`);
-    msg.textContent = parts.length ? parts.join(' · ') : (LANG==='fr' ? 'Déjà optimal — rien à faire' : 'Already optimal — nothing to do');
+    if (equipped > 0) parts.push(i18next.t('inventory:inventory.equip_sell_comp_equipped', { count: equipped }));
+    if (sold > 0) parts.push(i18next.t('inventory:inventory.equip_sell_comp_sold', { count: sold, total: fmt(total) }));
+    if (diverted > 0) parts.push(i18next.t('inventory:inventory.equip_sell_comp_diverted', { count: diverted }));
+    msg.textContent = parts.length ? parts.join(' · ') : i18next.t('inventory:inventory.equip_sell_comp_nothing');
     msg.className = parts.length ? 'ok' : '';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -7668,8 +9310,8 @@ if (adminMaxEnhBtnEl) adminMaxEnhBtnEl.onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `${count} pièce${count>1?'s':''} passée${count>1?'s':''} en Optimisation max` : `${count} piece${count>1?'s':''} set to max Enhancement`)
-      : (LANG==='fr' ? 'Déjà toutes au maximum' : 'Already all at max');
+      ? i18next.t('admin:admin.enh_debug.max_all', { count })
+      : i18next.t('admin:admin.enh_debug.already_max');
     msg.className = 'ok';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -7695,8 +9337,8 @@ if (adminResetEnhBtnEl) adminResetEnhBtnEl.onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `${count} pièce${count>1?'s':''} rétrogradée${count>1?'s':''} à +0` : `${count} piece${count>1?'s':''} reset to +0`)
-      : (LANG==='fr' ? 'Déjà toutes à +0' : 'Already all at +0');
+      ? i18next.t('admin:admin.enh_debug.reset_all', { count })
+      : i18next.t('admin:admin.enh_debug.already_zero');
     msg.className = 'ok';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -7717,7 +9359,7 @@ function adminStepEnhAllEquipped(delta) {
   if (count > 0) { hud(); renderOptimization(); drawPreviewChar(); }
   return count;
 }
-function wireAdminEnhStepBtn(id, delta, msgUpFr, msgUpEn, msgNoneFr, msgNoneEn) {
+function wireAdminEnhStepBtn(id, delta, msgUpKey, msgNoneKey) {
   const el = $(id); if (!el) return;
   el.onclick = () => {
     if (typeof isAdmin === 'function' && !isAdmin()) return;
@@ -7725,19 +9367,17 @@ function wireAdminEnhStepBtn(id, delta, msgUpFr, msgUpEn, msgNoneFr, msgNoneEn) 
     const msg = $('equipBestMsg');
     if (msg) {
       msg.textContent = count > 0
-        ? (LANG==='fr' ? `${count} ${msgUpFr}` : `${count} ${msgUpEn}`)
-        : (LANG==='fr' ? msgNoneFr : msgNoneEn);
+        ? i18next.t(msgUpKey, { count })
+        : i18next.t(msgNoneKey);
       msg.className = 'ok';
       setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
     }
   };
 }
 wireAdminEnhStepBtn('btnAdminEnhDown1', -1,
-  'pièce(s) rétrogradée(s) d\'1 rang', 'piece(s) downgraded by 1 rank',
-  'Déjà toutes à +0', 'Already all at +0');
+  'admin:admin.enh_debug.step_down_count', 'admin:admin.enh_debug.already_zero');
 wireAdminEnhStepBtn('btnAdminEnhUp1', 1,
-  'pièce(s) augmentée(s) d\'1 rang', 'piece(s) upgraded by 1 rank',
-  'Déjà toutes au maximum', 'Already all at max');
+  'admin:admin.enh_debug.step_up_count', 'admin:admin.enh_debug.already_max');
 
 function adminEquipFullTierSet(grade) {
   const tier = GEAR_TIERS.find(t => t.grade === grade);
@@ -7798,8 +9438,8 @@ if (adminEquipTierBtnEl) adminEquipTierBtnEl.onclick = () => {
     const tierObj = GEAR_TIERS.find(t => t.grade === sel.value);
     const tierName = tierObj ? tierObj.label[LANG] : sel.value;
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `Équipé : set complet ${tierName} (${count} pièces)` : `Equipped: full ${tierName} set (${count} pieces)`)
-      : (LANG==='fr' ? 'Palier introuvable' : 'Tier not found');
+      ? i18next.t('admin:admin.enh_debug.equip_tier_success', { tierName, count })
+      : i18next.t('admin:admin.enh_debug.tier_not_found');
     msg.className = 'ok';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -8831,7 +10471,7 @@ function updateUserBar() {
 function updatePseudoDisplay() {
   const el = $a('userPseudo');
   if (!el) return;
-  if (isGuest()) el.textContent = LANG==='fr'?'🎭 Invité':'🎭 Guest';
+  if (isGuest()) el.textContent = i18next.t('backend:backend.auth.guest_badge');
   else el.textContent = (currentUser && myPseudo) ? myPseudo : '';
 }
 
@@ -8869,11 +10509,11 @@ async function doSignIn() {
 async function doForgotPassword() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim();
-  if (!email) { authShow(LANG==='fr' ? 'Entre ton email d\'abord, puis clique à nouveau.' : 'Enter your email first, then click again.', true); return; }
-  authShow(LANG==='fr' ? 'Envoi en cours…' : 'Sending…');
+  if (!email) { authShow(i18next.t('backend:backend.auth.email_first'), true); return; }
+  authShow(i18next.t('backend:backend.auth.sending'));
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href });
   if (error) { authShow(error.message, true); return; }
-  authShow(LANG==='fr' ? 'Email envoyé — vérifie ta boîte mail pour réinitialiser ton mot de passe.' : 'Email sent — check your inbox to reset your password.');
+  authShow(i18next.t('backend:backend.auth.reset_email_sent'));
 }
 async function doLogout() {
   if (sb) await sb.auth.signOut();
@@ -8982,11 +10622,9 @@ async function onAuthedInner(user) {
       const { data: banStatus } = await sb.rpc('get_my_ban_status');
       const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
       if (isBanned(row)) {
-        const until = new Date(row.banned_until).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US');
-        const reason = row.ban_reason || (LANG === 'fr' ? 'non précisé' : 'unspecified');
-        authShow(LANG === 'fr'
-          ? `Compte suspendu jusqu'au ${until} — Motif : ${reason}`
-          : `Account suspended until ${until} — Reason: ${reason}`, true);
+        const until = new Date(row.banned_until).toLocaleString(i18next.t('backend:backend.common.date_locale'));
+        const reason = row.ban_reason || i18next.t('backend:backend.auth.ban_reason_unspecified');
+        authShow(i18next.t('backend:backend.auth.ban_suspended', { until, reason }), true);
         await sb.auth.signOut();
         currentUser = null;
         showAuthOverlay(true);
@@ -9010,10 +10648,8 @@ async function onAuthedInner(user) {
   
   if (isGuest()) {
     setTimeout(() => {
-      pushNotif('🎭', LANG==='fr'?'Tu joues en mode invité':'You\'re playing as a guest',
-        LANG==='fr'
-          ? 'Ta progression n\'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur "🔗 Lier un compte" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.'
-          : 'Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click "🔗 Link account" to create an account (your current progress is kept) or sign back into an existing one.',
+      pushNotif('🎭', i18next.t('backend:backend.auth.guest_mode_title'),
+        i18next.t('backend:backend.auth.guest_mode_body'),
         'info');
     }, 3000);
   }
@@ -9181,7 +10817,7 @@ function rankRows(rows, valueFn, fmtFn) {
   return sorted.map((r,i) => `
     <tr class="${r.user_id===currentUser?.id ? 'isYou' : ''}">
       <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}</span></td><td>${fmtFn(r)}</td>
-    </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${i18next.t('backend:backend.leaderboard.no_data')}</td></tr>`;
 }
 
 function wirePlayerNameLinks() {
@@ -9192,7 +10828,7 @@ function wirePlayerNameLinks() {
 function readonlyPdSlotsHtml(equip, ids) {
   return ids.map(id => {
     const e = equip ? equip[id] : null;
-    return `<div class="pdSlot ${e?'filled':'empty'}" title="${escapeHtml(SLOT_LABEL[id]||'')}${e ? ' — '+escapeHtml(e.name||'')+pdStatSuffix(e) : ' ('+(LANG==='fr'?'vide':'empty')+')'}">${pdSlotInnerHtmlFor(id, e)}</div>`;
+    return `<div class="pdSlot ${e?'filled':'empty'}" title="${escapeHtml(SLOT_LABEL[id]||'')}${e ? ' — '+escapeHtml(e.name||'')+pdStatSuffix(e) : ' ('+i18next.t('backend:backend.gear.slot_empty')+')'}">${pdSlotInnerHtmlFor(id, e)}</div>`;
   }).join('');
 }
 
@@ -9203,17 +10839,17 @@ function readonlyGearListHtml(equip) {
     if (!e) return '';
     return `<tr><td>${escapeHtml(SLOT_LABEL[id]||id)}</td><td>${escapeHtml(e.name||'?')}</td><td>${pdStatSuffix(e).replace(/^ \(|\)$/g,'') || '—'}</td></tr>`;
   }).filter(Boolean).join('');
-  if (!rows) return `<div class="admEmpty">${LANG==='fr'?'Aucun équipement':'No gear equipped'}</div>`;
-  return `<table class="admTable"><thead><tr><th>${LANG==='fr'?'Emplacement':'Slot'}</th><th>${LANG==='fr'?'Objet':'Item'}</th><th>PA/PD/PV</th></tr></thead><tbody>${rows}</tbody></table>`;
+  if (!rows) return `<div class="admEmpty">${i18next.t('backend:backend.gear.no_gear')}</div>`;
+  return `<table class="admTable"><thead><tr><th>${i18next.t('backend:backend.gear.slot_header')}</th><th>${i18next.t('backend:backend.gear.item_header')}</th><th>PA/PD/PV</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 async function showPlayerGear(userId, displayName) {
   if (!sb) return;
-  openInfo((LANG==='fr'?'⚔️ Stuff de ':'⚔️ Gear of ')+displayName,
-    `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`);
+  openInfo(i18next.t('backend:backend.gear.panel_title_prefix')+displayName,
+    `<div class="admEmpty">${i18next.t('backend:backend.gear.loading')}</div>`);
   const { data, error } = await sb.rpc('get_player_gear', { p_user_id: userId });
   if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${escapeHtml(error.message)}</div>`; return; }
   
-  const copyBtn = isAdmin() ? `<button id="btnCopyGearUuid" style="margin-bottom:8px">📋 ${LANG==='fr'?'Copier UUID':'Copy UUID'}</button>` : '';
+  const copyBtn = isAdmin() ? `<button id="btnCopyGearUuid" style="margin-bottom:8px">📋 ${i18next.t('backend:backend.gear.copy_uuid_button')}</button>` : '';
   $a('infoBody').innerHTML = copyBtn +
     `<div id="pdWeapons">${readonlyPdSlotsHtml(data, PD_BOTTOM)}</div>` +
     `<div id="paperdoll"><div class="pdCol">${readonlyPdSlotsHtml(data, PD_LEFT)}</div>` +
@@ -9222,7 +10858,7 @@ async function showPlayerGear(userId, displayName) {
   if (isAdmin()) {
     $a('btnCopyGearUuid').onclick = async () => {
       try { await navigator.clipboard.writeText(userId); } catch(e) {}
-      floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
+      floatTxt(P.x, P.y, 100, i18next.t('backend:backend.gear.uuid_copied'), { gold:true });
     };
   }
 }
@@ -9230,7 +10866,7 @@ async function showPlayerGear(userId, displayName) {
 async function showPlayerInventoryWindow(userId, displayName) {
   if (!isAdmin() || !sb) return;
   const win = window.open('', '_blank', 'width=620,height=760');
-  if (!win) { floatTxt(P.x, P.y, 100, LANG==='fr'?'Popup bloquée par le navigateur':'Popup blocked by browser', { hurt:true }); return; }
+  if (!win) { floatTxt(P.x, P.y, 100, i18next.t('backend:backend.gear.popup_blocked'), { hurt:true }); return; }
   const safeName = escapeHtml(displayName || '?');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>🎒 ${safeName}</title><style>
     body{background:#141319;color:#e8e3d8;font-family:Georgia,serif;padding:14px;margin:0;}
@@ -9303,15 +10939,15 @@ async function showPlayerInventoryWindow(userId, displayName) {
     gridEl.innerHTML = inv.map(s => cellHtml(s, !s || cat.kinds.includes(s.kind))).join('');
   }
   const tabsHtml = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCat?' active':''}${c.locked?' locked':''}"` +
-    `${c.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-cat="${c.id}">${c.locked?'🔒 ':''}${c.icon} ${c.label[LANG]}</button>`).join('');
+    `${c.locked?' disabled title="'+i18next.t('backend:backend.inventory_window.coming_soon')+'"':''} data-cat="${c.id}">${c.locked?'🔒 ':''}${c.icon} ${c.label[LANG]}</button>`).join('');
   bodyEl.innerHTML =
-    `<h3>${LANG==='fr'?'Équipement':'Gear'}</h3>` +
+    `<h3>${i18next.t('backend:backend.inventory_window.gear_title')}</h3>` +
     `<div id="pdWeapons">${readonlyPdSlotsHtml(gear, PD_BOTTOM)}</div>` +
     `<div class="paperdollBox"><div class="pdCol">${readonlyPdSlotsHtml(gear, PD_LEFT)}</div>` +
     `<div class="pdCol" id="pdRight">${readonlyPdSlotsHtml(gear, PD_RIGHT)}</div></div>` +
     readonlyGearListHtml(gear) +
-    `<h3>${LANG==='fr'?'Sac':'Bag'}</h3>` +
-    `<div class="admSummary">${used} / ${inv.length || INV_SIZE} ${LANG==='fr'?'cases utilisées':'slots used'}</div>` +
+    `<h3>${i18next.t('backend:backend.inventory_window.bag_title')}</h3>` +
+    `<div class="admSummary">${used} / ${inv.length || INV_SIZE} ${i18next.t('backend:backend.inventory_window.slots_used')}</div>` +
     `<div class="catTabs">${tabsHtml}</div>` +
     `<div class="admInvGrid" id="admGrid"></div>`;
   win.document.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
@@ -9359,11 +10995,11 @@ async function openLeaderboard() {
   const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
   const panesHtml = cats.map((c,i) => `
     <div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>
-      <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${c.col[LANG]}</th></tr></thead><tbody>${c.rows}</tbody></table>
+      <table class="admTable"><thead><tr><th>#</th><th>${i18next.t('backend:backend.common.player_label')}</th><th>${c.col[LANG]}</th></tr></thead><tbody>${c.rows}</tbody></table>
     </div>`).join('');
   const html = `<div class="catTabs">${tabsHtml}</div>${panesHtml}` +
-    `<div class="admSummary">${LANG==='fr'?'Classement des records personnels À VIE — jamais un instantané, ces valeurs ne redescendent jamais.':'Lifetime personal record leaderboard — never a live snapshot, these values never go down.'}</div>`;
-  openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
+    `<div class="admSummary">${i18next.t('backend:backend.leaderboard.summary')}</div>`;
+  openInfo(i18next.t('backend:backend.leaderboard.panel_title'), html);
   wireCatTabs();
   wirePlayerNameLinks();
 }
@@ -9501,7 +11137,7 @@ async function refreshOnlineCounter() {
     if (error || !data || !data[0]) return;
     const { total, guests } = data[0];
     $a('onlineTotal').textContent = total;
-    $a('onlineGuests').textContent = guests > 0 ? ` (${guests} ${LANG==='fr'?'invités':'guests'})` : '';
+    $a('onlineGuests').textContent = guests > 0 ? ` (${guests} ${i18next.t('backend:backend.presence.guests_suffix')})` : '';
   } catch(e) {}
 }
 
@@ -9526,15 +11162,11 @@ setInterval(refreshRegisteredCounter, 5 * 60000);
 async function openAccountPanel() {
   if (!sb || !currentUser) return;
   if (isGuest()) {
-    openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', `
-      <p>${LANG==='fr'
-        ? 'Tu joues en mode invité. Lie un compte vérifié (bouton "🔗 Lier un compte") pour accéder au parrainage, au marché et au classement — ta progression actuelle sera conservée.'
-        : 'You\'re playing as a guest. Link a verified account (the "🔗 Link account" button) to access referrals, the market and the leaderboard — your current progress will be kept.'}</p>
-      <h3>🧹 ${LANG==='fr'?'Cache du jeu':'Game cache'}</h3>
-      <p class="mHint">${LANG==='fr'
-        ? 'En cas d\'affichage étrange après une mise à jour, ce bouton vide le cache du navigateur pour les fichiers du jeu puis recharge la page. Ta progression n\'est jamais touchée.'
-        : 'If something looks wrong after an update, this button clears the browser\'s cache for the game\'s files then reloads the page. Your progress is never affected.'}</p>
-      <button id="btnClearCache">🧹 ${LANG==='fr'?'Vider le cache et recharger':'Clear cache and reload'}</button>
+    openInfo(i18next.t('backend:backend.account.panel_title'), `
+      <p>${i18next.t('backend:backend.account.guest_intro')}</p>
+      <h3>🧹 ${i18next.t('backend:backend.account.cache_title')}</h3>
+      <p class="mHint">${i18next.t('backend:backend.account.cache_hint')}</p>
+      <button id="btnClearCache">🧹 ${i18next.t('backend:backend.account.cache_clear_button')}</button>
     `);
     $a('btnClearCache').onclick = clearGameCache;
     return;
@@ -9546,21 +11178,9 @@ async function openAccountPanel() {
 
   const refRows = referrals.map(r => `
     <tr><td>${escapeHtml(r.display_name||'?')}</td><td>${r.lvl}</td><td>${fmt(r.gearscore)}</td><td>${fmt(r.silver)}</td></tr>
-  `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun filleul pour l\'instant':'No referrals yet'}</td></tr>`;
+  `).join('') || `<tr><td colspan="4" class="admEmpty">${i18next.t('backend:backend.account.no_referrals')}</td></tr>`;
 
-  const rules = LANG==='fr' ? [
-    'Un compte ne peut être parrainé qu\'une seule fois.',
-    'Le parrainage doit se faire dans les 3 jours suivant la création du compte du filleul — impossible passé ce délai.',
-    'Impossible d\'utiliser ton propre code.',
-    'Impossible de parrainer ton propre parrain.',
-    'Pas de récompense pour l\'instant — juste un suivi de qui tu as parrainé.',
-  ] : [
-    'An account can only be referred once.',
-    'Referring must happen within 3 days of the referred account\'s creation — impossible afterward.',
-    'You cannot use your own code.',
-    'You cannot refer your own referrer.',
-    'No reward for now — this is just a tracker of who you\'ve referred.',
-  ];
+  const rules = i18next.t('backend:backend.account.referral_rules', { returnObjects: true });
 
   const hasDiscord = !!discordIdentity(currentUser);
   const hasGoogle = !!providerIdentity(currentUser, 'google');
@@ -9568,59 +11188,55 @@ async function openAccountPanel() {
   const hasTwitter = !!providerIdentity(currentUser, 'twitter');
 
   const html = `
-    <div class="admSummary">${LANG==='fr'?'Compte':'Account'} : <b>${currentUser.email || '—'}</b></div>
+    <div class="admSummary">${i18next.t('backend:backend.account.summary_label')} : <b>${currentUser.email || '—'}</b></div>
 
-    <h3>${LANG==='fr'?'📛 Pseudo':'📛 Nickname'}</h3>
-    <p class="mHint">${LANG==='fr'
-      ? 'Visible partout dans le classement. Le changer met à jour la même ligne, ça n\'en recrée jamais une nouvelle.'
-      : 'Shown everywhere in the leaderboard. Changing it updates the same row, it never creates a new one.'}</p>
+    <h3>${i18next.t('backend:backend.account.nickname_title')}</h3>
+    <p class="mHint">${i18next.t('backend:backend.account.nickname_hint')}</p>
     <input type="text" id="pseudoInput" value="${myPseudo || ''}" maxlength="20">
-    <button id="btnSavePseudo">${LANG==='fr'?'Enregistrer':'Save'}</button>
+    <button id="btnSavePseudo">${i18next.t('backend:backend.account.save_button')}</button>
     <div id="pseudoMsg"></div>
 
     <h3>💬 Discord</h3>
     ${hasDiscord
-      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Discord connecté.':'✅ Discord account connected.'}</p>`
-      : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${LANG==='fr'?'Connecter Discord':'Connect Discord'}</button>`}
+      ? `<p class="mHint">${i18next.t('backend:backend.account.discord_connected')}</p>`
+      : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${i18next.t('backend:backend.account.discord_connect_button')}</button>`}
 
     <h3>🔵 Google</h3>
     ${hasGoogle
-      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Google connecté.':'✅ Google account connected.'}</p>`
-      : `<button id="btnLinkGoogle" class="googleBtn">🔵 ${LANG==='fr'?'Connecter Google':'Connect Google'}</button>`}
+      ? `<p class="mHint">${i18next.t('backend:backend.account.google_connected')}</p>`
+      : `<button id="btnLinkGoogle" class="googleBtn">🔵 ${i18next.t('backend:backend.account.google_connect_button')}</button>`}
 
     <h3>🐙 GitHub</h3>
     ${hasGithub
-      ? `<p class="mHint">${LANG==='fr'?'✅ Compte GitHub connecté.':'✅ GitHub account connected.'}</p>`
-      : `<button id="btnLinkGithub" class="githubBtn">🐙 ${LANG==='fr'?'Connecter GitHub':'Connect GitHub'}</button>`}
+      ? `<p class="mHint">${i18next.t('backend:backend.account.github_connected')}</p>`
+      : `<button id="btnLinkGithub" class="githubBtn">🐙 ${i18next.t('backend:backend.account.github_connect_button')}</button>`}
 
     <h3>🐦 Twitter/X</h3>
     ${hasTwitter
-      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Twitter/X connecté.':'✅ Twitter/X account connected.'}</p>`
-      : `<button id="btnLinkTwitter" class="twitterBtn">🐦 ${LANG==='fr'?'Connecter Twitter/X':'Connect Twitter/X'}</button>`}
+      ? `<p class="mHint">${i18next.t('backend:backend.account.twitter_connected')}</p>`
+      : `<button id="btnLinkTwitter" class="twitterBtn">🐦 ${i18next.t('backend:backend.account.twitter_connect_button')}</button>`}
 
-    <h3>${LANG==='fr'?'🎁 Parrainage':'🎁 Referrals'}</h3>
+    <h3>${i18next.t('backend:backend.account.referrals_title')}</h3>
     <div id="refCodeBox">${code}</div>
-    <button id="btnCopyRefCode">${LANG==='fr'?'📋 Copier le code':'📋 Copy code'}</button>
-    <div class="admSummary" style="margin-top:14px">${LANG==='fr'?'Tu as un code d\'un autre joueur ?':'Got someone else\'s code?'}</div>
-    <input type="text" id="refCodeInput" placeholder="${LANG==='fr'?'Code de parrainage':'Referral code'}" maxlength="12">
-    <button id="btnApplyRefCode">${LANG==='fr'?'Valider':'Apply'}</button>
+    <button id="btnCopyRefCode">${i18next.t('backend:backend.account.copy_code_button')}</button>
+    <div class="admSummary" style="margin-top:14px">${i18next.t('backend:backend.account.has_code_prompt')}</div>
+    <input type="text" id="refCodeInput" placeholder="${i18next.t('backend:backend.account.referral_code_placeholder')}" maxlength="12">
+    <button id="btnApplyRefCode">${i18next.t('backend:backend.account.apply_button')}</button>
     <div id="refMsg"></div>
     <ul class="refRules">${rules.map(r => `<li>${r}</li>`).join('')}</ul>
 
-    <h3>${LANG==='fr'?'👥 Tes filleuls':'👥 Your referrals'} (<span style="color:var(--gold)">${count}</span>)</h3>
+    <h3>${i18next.t('backend:backend.account.your_referrals_title')} (<span style="color:var(--gold)">${count}</span>)</h3>
     <table class="admTable">
-      <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Niv.':'Lvl'}</th><th>GS</th><th>Silver</th></tr></thead>
+      <thead><tr><th>${i18next.t('backend:backend.common.player_label')}</th><th>${i18next.t('backend:backend.account.level_label')}</th><th>GS</th><th>Silver</th></tr></thead>
       <tbody>${refRows}</tbody>
     </table>
 
-    <h3>🧹 ${LANG==='fr'?'Cache du jeu':'Game cache'}</h3>
-    <p class="mHint">${LANG==='fr'
-      ? 'En cas d\'affichage étrange après une mise à jour, ce bouton vide le cache du navigateur pour les fichiers du jeu puis recharge la page. Ta progression n\'est jamais touchée.'
-      : 'If something looks wrong after an update, this button clears the browser\'s cache for the game\'s files then reloads the page. Your progress is never affected.'}</p>
-    <button id="btnClearCache">🧹 ${LANG==='fr'?'Vider le cache et recharger':'Clear cache and reload'}</button>
+    <h3>🧹 ${i18next.t('backend:backend.account.cache_title')}</h3>
+    <p class="mHint">${i18next.t('backend:backend.account.cache_hint')}</p>
+    <button id="btnClearCache">🧹 ${i18next.t('backend:backend.account.cache_clear_button')}</button>
 
   `;
-  openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', html);
+  openInfo(i18next.t('backend:backend.account.panel_title'), html);
   $a('btnClearCache').onclick = clearGameCache;
   $a('btnSavePseudo').onclick = async () => {
     const val = $a('pseudoInput').value.trim();
@@ -9629,7 +11245,7 @@ async function openAccountPanel() {
     if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
     myPseudo = val;
     updatePseudoDisplay();
-    msg.textContent = LANG==='fr'?'Pseudo enregistré !':'Nickname saved!'; msg.className = 'ok';
+    msg.textContent = i18next.t('backend:backend.account.nickname_saved'); msg.className = 'ok';
     syncPlayerStats(); 
   };
   if (!hasDiscord) $a('btnLinkDiscord').onclick = linkDiscordAccount;
@@ -9638,15 +11254,15 @@ async function openAccountPanel() {
   if (!hasTwitter) $a('btnLinkTwitter').onclick = linkTwitterAccount;
   $a('btnCopyRefCode').onclick = async () => {
     try { await navigator.clipboard.writeText(code); } catch(e) {}
-    $a('btnCopyRefCode').textContent = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
+    $a('btnCopyRefCode').textContent = i18next.t('backend:backend.account.code_copied');
   };
   $a('btnApplyRefCode').onclick = async () => {
     const val = $a('refCodeInput').value.trim();
     const msg = $a('refMsg');
-    if (!val) { msg.textContent = LANG==='fr'?'Entre un code.':'Enter a code.'; msg.className = 'fail'; return; }
+    if (!val) { msg.textContent = i18next.t('backend:backend.account.enter_code_prompt'); msg.className = 'fail'; return; }
     const { error } = await sb.rpc('apply_referral_code', { p_code: val });
     if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
-    msg.textContent = LANG==='fr'?'Code appliqué !':'Code applied!'; msg.className = 'ok';
+    msg.textContent = i18next.t('backend:backend.account.code_applied'); msg.className = 'ok';
   };
 }
 $a('btnAccount').onclick = openAccountPanel;
@@ -9680,14 +11296,12 @@ $a('btnCopyUuid').onclick = async () => {
   if (!currentUser) return;
   try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
   const hint = $a('uuidCopyHint'); if (!hint) return;
-  hint.innerHTML = LANG==='fr' ? '✓ UUID copié !' : '✓ UUID copied!';
-  setTimeout(() => { hint.innerHTML = '📋 ' + (LANG==='fr'?'Copier':'Copy') + ' UUID'; }, 1200);
+  hint.innerHTML = i18next.t('backend:backend.account.uuid_copied_msg');
+  setTimeout(() => { hint.innerHTML = '📋 ' + i18next.t('backend:backend.account.copy_label') + ' UUID'; }, 1200);
 };
 $a('btnLinkAccount').onclick = () => {
   
-  $a('authSub').textContent = LANG==='fr'
-    ? 'Compte existant ? clique "Se connecter". Sinon "Créer un compte" (remplace ta progression invité).'
-    : 'Existing account? click "Sign in". Otherwise "Create account" (replaces your guest progress).';
+  $a('authSub').textContent = i18next.t('backend:backend.account.link_account_prompt');
   showAuthOverlay(true);
 };
 $a('closeAuth').onclick = () => showAuthOverlay(false);
@@ -9843,6 +11457,7 @@ function applyI18n() {
 }
 $a('langToggle').onclick = () => {
   LANG = LANG === 'fr' ? 'en' : 'fr';
+  if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG); 
   try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
   applyI18n();
 };
@@ -10029,7 +11644,7 @@ function renderCodexHtml() {
     const t = gearTierForZone(i), slot = accSlotFor(z.loot.jackpot), tIdx = JEWEL_TIER_IDX[t.grade] ?? 0;
     const iconFn = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier }[slot] || ringIconForTier;
     return { icon: iconFn(tIdx, t.color), name:tr(z.loot.jackpot.name),
-      desc:`+${z.loot.jackpot.ap} PA · ${LANG==='fr'?'zone':'zone'} ${i+1} (${tr(z.name)})` };
+      desc:`+${z.loot.jackpot.ap} PA · ${i18next.t('backend:backend.codex.zone_word')} ${i+1} (${tr(z.name)})` };
   });
   
   const matSet = new Map();
@@ -10037,29 +11652,27 @@ function renderCodexHtml() {
   const MAT_ICON_BY_NAME = { 'Pierre de Novice':ICO_MAT_NOVICE, 'Pierre du Temps':ICO_MAT_TEMPS,
     'Pierre Noire':ICO_MAT_NOIRE, 'Pierre noire':ICO_MAT_NOIRE, 'Pierre concentrée':ICO_MAT_CONCENTREE,
     'Pierre de Caphras':ICO_MAT_CAPHRAS };
-  const mats = [...matSet.values()].map(m => ({ icon:MAT_ICON_BY_NAME[m.name]||ICO_MAT_NOVICE, name:tr(m.name), desc:LANG==='fr'?'Matériau d\'optimisation':'Enhancement material' }));
+  const mats = [...matSet.values()].map(m => ({ icon:MAT_ICON_BY_NAME[m.name]||ICO_MAT_NOVICE, name:tr(m.name), desc:i18next.t('backend:backend.codex.material_desc') }));
   
   const craftSet = new Map();
   ZONES.forEach(z => { const c = z.loot.craft; if (!craftSet.has(c.name)) craftSet.set(c.name, c); });
-  const crafts = [...craftSet.values()].map(c => ({ icon:'✦', name:tr(c.name), desc:LANG==='fr'?'Composant de craft endgame':'Endgame crafting component' }));
+  const crafts = [...craftSet.values()].map(c => ({ icon:'✦', name:tr(c.name), desc:i18next.t('backend:backend.codex.craft_component_desc') }));
   
   const trash = ZONES.map((z,i) => ({ icon:'▬', name:tr(z.loot.trash.name), desc:`${fmt(z.loot.trash.val)} silver · ${tr(z.mob)}` }));
   
   const treasures = VELIA_TREASURE.map(t =>
-    ({ icon:t.icon, name:tr(t.name), desc:`${LANG==='fr'?'Toutes zones':'All zones'} · ${fmtTinyPct(t.ch)}` }));
-  return `<div class="admSummary">${LANG==='fr'?'Tous les objets actuellement présents dans le jeu.':'All items currently in the game.'}</div>` +
-    section(LANG==='fr'?'💎 Bijoux rares':'💎 Rare jewelry', jewels) +
-    section(LANG==='fr'?'◈ Matériaux d\'optimisation':'◈ Enhancement materials', mats) +
-    section(LANG==='fr'?'✦ Composants de craft':'✦ Crafting components', crafts) +
-    section(LANG==='fr'?'🗺️ Trésor de Velia':'🗺️ Velia Treasure', treasures) +
-    section(LANG==='fr'?'▬ Butin de base':'▬ Base loot', trash);
+    ({ icon:t.icon, name:tr(t.name), desc:`${i18next.t('backend:backend.codex.all_zones')} · ${fmtTinyPct(t.ch)}` }));
+  return `<div class="admSummary">${i18next.t('backend:backend.codex.summary')}</div>` +
+    section(i18next.t('backend:backend.codex.section_jewelry'), jewels) +
+    section(i18next.t('backend:backend.codex.section_materials'), mats) +
+    section(i18next.t('backend:backend.codex.section_crafts'), crafts) +
+    section(i18next.t('backend:backend.codex.section_treasure'), treasures) +
+    section(i18next.t('backend:backend.codex.section_base_loot'), trash);
 }
 
 function renderTutoPageHtml() {
-  return `<div class="admSummary">${LANG==='fr'
-    ? 'Le tutoriel te fait visiter Velia, la ville paisible, et t\'explique les bases du jeu (zones, sorts automatiques, statistiques, quêtes, chat). Tu peux le relancer ici quand tu veux.'
-    : 'The tutorial walks you through Velia, the peaceful town, and explains the basics of the game (zones, automatic skills, stats, quests, chat). You can replay it here anytime.'}</div>
-    <button id="btnStartTutoWiki" style="width:auto;margin-top:10px;padding:8px 18px;">${LANG==='fr'?'▶ Relancer le tutoriel':'▶ Replay the tutorial'}</button>`;
+  return `<div class="admSummary">${i18next.t('backend:backend.tuto_page.intro')}</div>
+    <button id="btnStartTutoWiki" style="width:auto;margin-top:10px;padding:8px 18px;">${i18next.t('backend:backend.tuto_page.replay_button')}</button>`;
 }
 
 function openInfo(title, bodyHtml) {
@@ -10078,7 +11691,7 @@ $a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOver
 
 $a('btnCodex').onclick = () => {
   const callout = contentChangeCalloutHtml('codex');
-  openInfo(LANG === 'fr' ? '📚 Codex des objets' : '📚 Item Codex', callout + renderCodexHtml());
+  openInfo(i18next.t('backend:backend.codex.panel_title'), callout + renderCodexHtml());
   markContentSeen('codex');
 };
 
@@ -10252,13 +11865,13 @@ function positionTutorialStep() {
 }
 function showTutorialStep() {
   const step = activeTutorialSteps[tutorialStepIdx];
-  $a('tutStepLbl').textContent = `${LANG==='fr'?'Étape':'Step'} ${tutorialStepIdx+1} / ${activeTutorialSteps.length}`;
+  $a('tutStepLbl').textContent = `${i18next.t('backend:backend.tutorial.step_label')} ${tutorialStepIdx+1} / ${activeTutorialSteps.length}`;
   $a('tutTitle').textContent = step.title[LANG];
   $a('tutText').textContent = step.text[LANG];
-  $a('tutSkipBtn').textContent = LANG==='fr'?'Passer':'Skip';
-  $a('tutPrevBtn').textContent = LANG==='fr'?'← Précédent':'← Back';
+  $a('tutSkipBtn').textContent = i18next.t('backend:backend.tutorial.skip');
+  $a('tutPrevBtn').textContent = i18next.t('backend:backend.tutorial.prev');
   $a('tutPrevBtn').disabled = tutorialStepIdx <= 0;
-  $a('tutNextBtn').textContent = step.final ? (LANG==='fr'?'Terminer':'Finish') : (LANG==='fr'?'Suivant →':'Next →');
+  $a('tutNextBtn').textContent = step.final ? i18next.t('backend:backend.tutorial.finish') : i18next.t('backend:backend.tutorial.next');
   
   if (step.before) step.before();
   positionTutorialStep();
@@ -10485,11 +12098,11 @@ function renderPatchEntryHtml(p, absIdx) {
               const platTag = plat ? `<span class="patchCat" style="color:${plat.color};border-color:${plat.color}" title="${escapeHtml(plat.desc[LANG])}">${plat.icon} ${plat[LANG]}</span>` : '';
               const natureTag = nature ? `<span class="patchCat" style="color:${nature.color};border-color:${nature.color}" title="${escapeHtml(nature.desc[LANG])}">${nature.icon} ${nature[LANG]}</span>` : '';
               
-              const subTag = sub ? `<span class="patchSub" style="color:${cat.color};border-color:${cat.color}55" title="${LANG==='fr'?'Sous-catégorie':'Subcategory'} : ${escapeHtml(sub)}">${sub}</span>` : '';
+              const subTag = sub ? `<span class="patchSub" style="color:${cat.color};border-color:${cat.color}55" title="${i18next.t('backend:backend.patch_notes.subcategory_label')} : ${escapeHtml(sub)}">${sub}</span>` : '';
               const extraTags = sevTag + subTag + platTag + natureTag;
-              const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
+              const removedTag = line.removed ? `<span class="patchRemoved">${i18next.t('backend:backend.patch_notes.removed_tag')}</span>` : '';
               
-              const imgBtn = line.img ? `<button class="patchImgBtn" data-before="${escapeHtml(line.img.before)}" data-after="${escapeHtml(line.img.after)}" title="${LANG==='fr'?'Voir avant/après':'See before/after'}">🖼️</button>` : '';
+              const imgBtn = line.img ? `<button class="patchImgBtn" data-before="${escapeHtml(line.img.before)}" data-after="${escapeHtml(line.img.after)}" title="${i18next.t('backend:backend.patch_notes.before_after_title')}">🖼️</button>` : '';
               return `<li class="${line.removed?'patchLineRemoved':''}">
                 <div class="patchLineMain"><span class="patchLineText">${line.tx}${removedTag}</span>${imgBtn}</div>
                 ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
@@ -10511,16 +12124,16 @@ function renderPatchNotesPanel() {
   const unreadNow = unreadPatchCount();
   const unreadBannerHtml = `<div id="patchUnreadBanner" class="${unreadNow>0?'show':''}">` +
     `<span id="patchUnreadBannerNum">${unreadNow}</span> ` +
-    `<span>${LANG==='fr'?'note(s) de version non lue(s) — clique pour remonter':'unread patch note(s) — click to jump to newest'}</span></div>`;
+    `<span>${i18next.t('backend:backend.patch_notes.unread_banner')}</span></div>`;
 
   const navHtml = `<div class="patchNavRow">
-      <button id="patchNavUp" class="patchNavBtn"${pageIdx===0?' disabled':''} title="${LANG==='fr'?'Notes plus récentes':'Newer notes'}">▲ ${LANG==='fr'?'Plus récent':'Newer'}</button>
+      <button id="patchNavUp" class="patchNavBtn"${pageIdx===0?' disabled':''} title="${i18next.t('backend:backend.patch_notes.newer_notes_title')}">▲ ${i18next.t('backend:backend.patch_notes.newer_label')}</button>
       <span class="patchNavPos">${page.start+1}–${page.start+entries.length} / ${PATCH_NOTES.length}</span>
-      <button id="patchNavDown" class="patchNavBtn"${pageIdx===pages.length-1?' disabled':''} title="${LANG==='fr'?'Notes plus anciennes':'Older notes'}">${LANG==='fr'?'Plus ancien':'Older'} ▼</button>
+      <button id="patchNavDown" class="patchNavBtn"${pageIdx===pages.length-1?' disabled':''} title="${i18next.t('backend:backend.patch_notes.older_notes_title')}">${i18next.t('backend:backend.patch_notes.older_label')} ▼</button>
     </div>`;
 
   const entriesHtml = entries.map((p,k) => renderPatchEntryHtml(p, page.start+k)).join('');
-  openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', unreadBannerHtml + navHtml + entriesHtml);
+  openInfo(i18next.t('backend:backend.patch_notes.panel_title'), unreadBannerHtml + navHtml + entriesHtml);
 
   let changed = false;
   entries.forEach(p => { if (!seenThisSession.has(p.v)) { seenThisSession.add(p.v); changed = true; } });
@@ -10544,8 +12157,8 @@ $a('btnPatch').onclick = () => {
   else renderPatchNotesPanel();
 };
 function openPatchImgCompare(before, after) {
-  $a('patchImgLblBefore').textContent = LANG==='fr' ? 'Avant' : 'Before';
-  $a('patchImgLblAfter').textContent = LANG==='fr' ? 'Après' : 'After';
+  $a('patchImgLblBefore').textContent = i18next.t('backend:backend.patch_notes.compare_before_label');
+  $a('patchImgLblAfter').textContent = i18next.t('backend:backend.patch_notes.compare_after_label');
   $a('patchImgBefore').src = before;
   $a('patchImgAfter').src = after;
   $a('patchImgOverlay').classList.add('open');
@@ -10572,34 +12185,32 @@ const WK_V = {
 let wkCurrentId = 'accueil';
 let wkScrollHandler = null;
 
-function wkT(fr, en) { return LANG === 'fr' ? fr : en; }
-
 function wkNavGroups() {
   return [
-    { title: wkT('Général', 'General'), items: [
-      { id:'accueil', ico:'🏠', label:wkT('Accueil','Home'), kind:'home' },
-      { id:'tuto', ico:'🔰', label:wkT('Tutoriel','Tutorial'), kind:'tuto' },
-      { id:'patchnotes', ico:'📜', label:wkT('Notes de version','Patch notes'), kind:'link',
+    { title: i18next.t('backend:backend.wiki.nav_group_general'), items: [
+      { id:'accueil', ico:'🏠', label:i18next.t('backend:backend.wiki.nav_home'), kind:'home' },
+      { id:'tuto', ico:'🔰', label:i18next.t('backend:backend.wiki.nav_tuto'), kind:'tuto' },
+      { id:'patchnotes', ico:'📜', label:i18next.t('backend:backend.wiki.nav_patchnotes'), kind:'link',
         open:()=>{ if (typeof openPatchNotesReact === 'function') openPatchNotesReact(); } },
     ]},
-    { title: wkT('Guides de jeu', 'Game guides'), items: [
-      { id:'combat', ico:'⚔️', label:wkT('Combat & Zones','Combat & Zones'), kind:'section', sec:'combat' },
-      { id:'enh', ico:'✦', label:wkT('Optimisation','Enhancement'), kind:'section', sec:'enh' },
-      { id:'market', ico:'🏛️', label:wkT('Marché','Market'), kind:'section', sec:'market' },
-      { id:'account', ico:'💾', label:wkT('Compte & Sauvegarde','Account & Save'), kind:'section', sec:'account' },
+    { title: i18next.t('backend:backend.wiki.nav_group_guides'), items: [
+      { id:'combat', ico:'⚔️', label:i18next.t('backend:backend.wiki.nav_combat'), kind:'section', sec:'combat' },
+      { id:'enh', ico:'✦', label:i18next.t('backend:backend.wiki.nav_enh'), kind:'section', sec:'enh' },
+      { id:'market', ico:'🏛️', label:i18next.t('backend:backend.wiki.nav_market'), kind:'section', sec:'market' },
+      { id:'account', ico:'💾', label:i18next.t('backend:backend.wiki.nav_account'), kind:'section', sec:'account' },
     ]},
-    { title: wkT('Objets', 'Items'), items: [
-      { id:'codex', ico:'📖', label:wkT('Codex des objets','Item codex'), kind:'codex' },
+    { title: i18next.t('backend:backend.wiki.nav_group_items'), items: [
+      { id:'codex', ico:'📖', label:i18next.t('backend:backend.wiki.nav_codex'), kind:'codex' },
     ]},
-    { title: wkT('Compagnons & Monde', 'Companions & World'), items: [
-      { id:'companions', ico:'🐾', label:wkT('Familiers (fusion, catalogue…)','Companions (fusion, catalog…)'), kind:'link',
+    { title: i18next.t('backend:backend.wiki.nav_group_companions_world'), items: [
+      { id:'companions', ico:'🐾', label:i18next.t('backend:backend.wiki.nav_companions'), kind:'link',
         open:()=>{ if (typeof openCompanionsModule === 'function') openCompanionsModule(); } },
-      { id:'compendium', ico:'🗺️', label:wkT('Zones, Boss & Maîtrise PEN','Zones, Bosses & PEN Mastery'), kind:'link',
+      { id:'compendium', ico:'🗺️', label:i18next.t('backend:backend.wiki.nav_compendium'), kind:'link',
         open:()=>{ if (typeof openCompendiumReact === 'function') openCompendiumReact(); } },
     ]},
-    { title: wkT('Communauté', 'Community'), items: [
-      { id:'about', ico:'ℹ️', label:wkT('À propos','About'), kind:'section', sec:'about' },
-      { id:'discord', ico:'💬', label:wkT('Discord','Discord'), kind:'discord' },
+    { title: i18next.t('backend:backend.wiki.nav_group_community'), items: [
+      { id:'about', ico:'ℹ️', label:i18next.t('backend:backend.wiki.nav_about'), kind:'section', sec:'about' },
+      { id:'discord', ico:'💬', label:i18next.t('backend:backend.wiki.nav_discord'), kind:'discord' },
     ]},
   ];
 }
@@ -10630,15 +12241,13 @@ function wkArticleHtml(item) {
 }
 function wkHomeHtml() {
   const version = (typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES[0]) ? PATCH_NOTES[0].v : '';
-  return `<p class="wk-lead">${wkT(
-    'Bienvenue sur le Wiki de Velia Idle — jeu idle de farm automatique inspiré de Black Desert Online. Retrouve ici les règles de combat/zones, l\'optimisation, le marché, ainsi que des raccourcis vers le Compendium et le module Compagnons.',
-    'Welcome to the Velia Idle Wiki — an automatic idle-farming game inspired by Black Desert Online. Here you\'ll find combat/zone rules, enhancement, the market, plus shortcuts to the Compendium and Companions module.')}</p>
-    <h3>${wkT('Systèmes principaux','Main systems')}</h3>
+  return `<p class="wk-lead">${i18next.t('backend:backend.wiki.home_lead')}</p>
+    <h3>${i18next.t('backend:backend.wiki.home_systems_title')}</h3>
     <ul>
-      <li><b>${wkT('Combat & Zones','Combat & Zones')}</b> — ${wkT('PA/PD requis, loot progressif','required AP/DP, progressive loot')}</li>
-      <li><b>${wkT('Optimisation','Enhancement')}</b> — +1 ${wkT('à','to')} PEN, Pierre de Cron</li>
-      <li><b>${wkT('Marché','Market')}</b> — ${wkT('carnet d\'ordres joueur à joueur','player-to-player order book')}</li>
-      <li><b>${wkT('Compagnons','Companions')}</b> — ${wkT('collection, fusion et classement (module dédié)','collection, fusion and leaderboard (dedicated module)')}</li>
+      <li><b>${i18next.t('backend:backend.wiki.nav_combat')}</b> — ${i18next.t('backend:backend.wiki.home_system_combat_desc')}</li>
+      <li><b>${i18next.t('backend:backend.wiki.nav_enh')}</b> — +1 ${i18next.t('backend:backend.wiki.home_system_pen_word')} PEN, Pierre de Cron</li>
+      <li><b>${i18next.t('backend:backend.wiki.nav_market')}</b> — ${i18next.t('backend:backend.wiki.home_system_market_desc')}</li>
+      <li><b>${i18next.t('backend:backend.wiki.home_system_companions_title')}</b> — ${i18next.t('backend:backend.wiki.home_system_companions_desc')}</li>
     </ul>`;
 }
 // réutilise le vrai renderTutoPageHtml() (game-supabase.js) — pas de duplication du texte, et le
@@ -10647,9 +12256,7 @@ function wkTutoHtml() {
   return typeof renderTutoPageHtml === 'function' ? renderTutoPageHtml() : '';
 }
 function wkDiscordHtml() {
-  return `<div class="wk-callout" style="border-left-color:${WK_V.blue}">💬 ${wkT(
-    'Pas encore de serveur Discord officiel pour le moment — cette section sera complétée dès qu\'un lien existera.',
-    'No official Discord server yet — this section will be filled in once a link exists.')}</div>`;
+  return `<div class="wk-callout" style="border-left-color:${WK_V.blue}">💬 ${i18next.t('backend:backend.wiki.discord_placeholder')}</div>`;
 }
 
 // ---- headings -> ancres pour le sommaire (les articles réels utilisent <h3>, pas <h2>) ----
@@ -10670,18 +12277,18 @@ function wkRelated(item) {
 function wkRenderInfobox(item, headings) {
   const isHome = item.kind === 'home';
   const rowsHtml = isHome ? `
-      <div class="wk-ib-row"><span class="wk-ib-label">${wkT('Développeur','Developer')}</span><span class="wk-ib-val">Maxyull</span></div>
-      <div class="wk-ib-row"><span class="wk-ib-label">${wkT('Version','Version')}</span><span class="wk-ib-val wk-gold">${wkEscape((typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES[0]) ? PATCH_NOTES[0].v : '—')}</span></div>
-      <div class="wk-ib-row"><span class="wk-ib-label">${wkT('Moteur','Engine')}</span><span class="wk-ib-val">JS + Supabase</span></div>
-      <div class="wk-ib-row"><span class="wk-ib-label">${wkT('Licence','License')}</span><span class="wk-ib-val">${wkT('Fan gratuit','Free fan project')}</span></div>` : '';
+      <div class="wk-ib-row"><span class="wk-ib-label">${i18next.t('backend:backend.wiki.infobox_developer_label')}</span><span class="wk-ib-val">Maxyull</span></div>
+      <div class="wk-ib-row"><span class="wk-ib-label">${i18next.t('backend:backend.wiki.infobox_version_label')}</span><span class="wk-ib-val wk-gold">${wkEscape((typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES[0]) ? PATCH_NOTES[0].v : '—')}</span></div>
+      <div class="wk-ib-row"><span class="wk-ib-label">${i18next.t('backend:backend.wiki.infobox_engine_label')}</span><span class="wk-ib-val">JS + Supabase</span></div>
+      <div class="wk-ib-row"><span class="wk-ib-label">${i18next.t('backend:backend.wiki.infobox_license_label')}</span><span class="wk-ib-val">${i18next.t('backend:backend.wiki.infobox_license_value')}</span></div>` : '';
   const tocHtml = headings.length ? `
     <div class="wk-toc">
-      <div class="wk-toc-title">${wkT('Sommaire','Contents')}</div>
+      <div class="wk-toc-title">${i18next.t('backend:backend.wiki.infobox_toc_title')}</div>
       ${headings.map(h => `<div class="wk-toc-item" data-id="${h.id}">${wkEscape(h.txt)}</div>`).join('')}
     </div>` : '';
   const related = wkRelated(item);
   const relatedHtml = related.length ? `
-    <div class="wk-related-title">${wkT('Voir aussi','See also')}</div>
+    <div class="wk-related-title">${i18next.t('backend:backend.wiki.infobox_related_title')}</div>
     ${related.map(it => `<div class="wk-related-item" data-nav="${it.id}"><span class="wk-related-ico">${it.ico}</span><span class="wk-related-name">${wkEscape(it.label)}</span></div>`).join('')}` : '';
   return `<div class="wk-infobox">
       <div class="wk-infobox-art">${item.ico}</div>
@@ -10765,7 +12372,7 @@ function wkRunSearch(q) {
   wrap.className = 'wk-search-results'; wrap.id = 'wkSearchResults';
   wrap.innerHTML = matches.length
     ? matches.map(it => `<div class="wk-sr-item" data-nav="${it.id}"><span class="wk-sr-ico">${it.ico}</span><span>${wkEscape(it.label)}${it.kind === 'link' ? ' ↗' : ''}</span></div>`).join('')
-    : `<div class="wk-no-results">${wkT('Aucun résultat pour','No results for')} « ${wkEscape(q)} »</div>`;
+    : `<div class="wk-no-results">${i18next.t('backend:backend.wiki.search_no_results')} « ${wkEscape(q)} »</div>`;
   wrap.querySelectorAll('.wk-sr-item').forEach(el => { el.onmousedown = () => wkNavigate(el.dataset.nav); });
   document.getElementById('wkSearchWrap').appendChild(wrap);
 }
@@ -10778,9 +12385,9 @@ function wkBuildOverlay() {
       <div class="wk-logo">◈ Velia Idle <span>Wiki</span></div>
       <div class="wk-search-wrap" id="wkSearchWrap">
         <span class="wk-search-ico">🔍</span>
-        <input class="wk-search-box" id="wkSearchBox" placeholder="${wkT('Rechercher…','Search…')}">
+        <input class="wk-search-box" id="wkSearchBox" placeholder="${i18next.t('backend:backend.wiki.search_placeholder')}">
       </div>
-      <button class="wk-close" id="wkClose">✕ ${wkT('Fermer','Close')}</button>
+      <button class="wk-close" id="wkClose">✕ ${i18next.t('backend:backend.wiki.close_button')}</button>
     </div>
     <div class="wk-crumb" id="wkCrumb"></div>
     <div class="wk-wrap">
@@ -10982,15 +12589,13 @@ const ADMIN_SECTIONS = [
 
 async function resetDemo() {
   if (!isAdmin()) return; 
-  const msg = LANG === 'fr'
-    ? "Réinitialiser la démo ? Toute ta progression (silver, équipement, niveau, sac) sera perdue et remise à zéro. Cette action est irréversible."
-    : "Reset the demo? All your progress (silver, gear, level, bag) will be lost and set back to zero. This action is irreversible.";
+  const msg = i18next.t('admin:admin.reset.confirm_demo');
   if (!confirm(msg)) return;
   applySaveState(JSON.parse(JSON.stringify(DEFAULT_SAVE)));
   suppressLoyaltyGrantForToday();
   if (sb && currentUser) await saveToCloud(); 
   try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {}
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Démo réinitialisée' : 'Demo reset', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_demo_reset'), { gold:true });
 }
 
 function resetMyQuests() {
@@ -11001,34 +12606,28 @@ function resetMyQuests() {
   if ($a('infoOverlay').classList.contains('open')) openDailyQuests();
   if (sb && currentUser) saveToCloud();
   try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {}
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes réinitialisées' : 'Quests reset', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_my_quests_reset'), { gold:true });
 }
 
 async function resetAllQuests() {
   if (!isAdmin() || !sb) return;
-  const msg = LANG === 'fr'
-    ? "Réinitialiser les quêtes de TOUS les joueurs ? Chacun se verra retirer sa progression de quêtes en cours (journalières et hebdomadaires) et de nouvelles seront tirées à leur prochaine connexion. Action irréversible."
-    : "Reset quests for ALL players? Everyone's in-progress quests (daily and weekly) will be cleared and new ones drawn on their next login. This action is irreversible.";
+  const msg = i18next.t('admin:admin.reset.confirm_all_quests');
   if (!confirm(msg)) return;
   const { error } = await sb.rpc('admin_reset_all_quests');
   if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé les quêtes de tous les joueurs`, 0x9cc9e8);
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   resetMyQuests(); 
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes de tous les joueurs réinitialisées ✓' : "All players' quests reset ✓", { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_all_quests_reset'), { gold:true });
 }
 
 async function resetAllAccounts() {
   if (!isAdmin() || !sb) return;
-  const msg1 = LANG === 'fr'
-    ? '💥 Réinitialiser TOUS les comptes de TOUS les joueurs (silver, équipement, niveau, sac) ? Un message d\'explication leur sera montré à leur prochaine connexion. Action IRRÉVERSIBLE.'
-    : '💥 Reset ALL accounts of ALL players (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.';
+  const msg1 = i18next.t('admin:admin.reset.confirm_all_accounts_1');
   if (!confirm(msg1)) return;
-  const msg2 = LANG === 'fr'
-    ? 'Es-tu VRAIMENT sûr ? Il n\'y a aucun moyen de récupérer la progression perdue.'
-    : 'Are you REALLY sure? There is no way to recover the lost progress.';
+  const msg2 = i18next.t('admin:admin.reset.confirm_all_accounts_2');
   if (!confirm(msg2)) return;
   const title_fr = '🔄 Remise à zéro de tous les comptes';
   const title_en = '🔄 All accounts have been reset';
@@ -11040,11 +12639,11 @@ async function resetAllAccounts() {
     'Note: the game is in <b>constant development</b>, more resets may happen at any time while we\'re in testing.';
   const { data, error } = await sb.rpc('admin_reset_all_accounts', { p_title_fr: title_fr, p_title_en: title_en, p_body_fr: body_fr, p_body_en: body_en });
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé TOUS les comptes (${data} comptes)`, 0xc05545);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? `${data} comptes réinitialisés ✓` : `${data} accounts reset ✓`, { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_all_accounts_reset', { data }), { gold:true });
   
   applySaveState(JSON.parse(JSON.stringify(DEFAULT_SAVE)));
   suppressLoyaltyGrantForToday();
@@ -11057,32 +12656,32 @@ async function adminScreenshotPlayer() {
   const uuid = ($a('admResetUuidInput').value || '').trim();
   if (!uuid) return;
   const { data, error } = await sb.rpc('admin_get_player_save', { p_user_id: uuid });
-  if (error) { floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true }); return; }
-  if (!data) { floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Aucune sauvegarde pour cet UUID' : 'No save found for that UUID', { hurt:true }); return; }
-  openInfo((LANG==='fr'?'📸 Screenshot — ':'📸 Screenshot — ') + escapeHtml(data._pseudo||'?'), renderAdminScreenshotHtml(data));
+  if (error) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true }); return; }
+  if (!data) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.no_save_for_uuid'), { hurt:true }); return; }
+  openInfo(i18next.t('admin:admin.reset.screenshot_title_prefix') + escapeHtml(data._pseudo||'?'), renderAdminScreenshotHtml(data));
 }
 function renderAdminScreenshotHtml(save) {
   const s = save.S || {};
   const eq = save.EQUIP || {};
   const inv = (save.INV || []).filter(Boolean);
   const zone = ZONES[save.zoneIdx];
-  const zoneName = zone ? tr(zone.name) : (LANG==='fr'?'Velia':'Velia');
+  const zoneName = zone ? tr(zone.name) : i18next.t('admin:admin.reset.default_zone_name');
   const eqRows = Object.entries(eq).filter(([,v]) => v).map(([slot,it]) => {
     const lvl = it.optimizable ? (ENH_NAMES[it.enhLv||0] || '+0') : '';
     return `<div class="row"><span>${it.icon||'▪'} ${SLOT_LABEL[slot]||slot}</span><span class="v">${escapeHtml(it.name)}${lvl?' ('+lvl+')':''}</span></div>`;
-  }).join('') || `<div class="admEmpty">${LANG==='fr'?'Aucun équipement':'No gear'}</div>`;
+  }).join('') || `<div class="admEmpty">${i18next.t('admin:admin.reset.no_gear')}</div>`;
   const invRows = inv.map(it =>
     `<div class="row"><span>${it.icon||'▪'} ${escapeHtml(it.name)}</span><span class="v">${it.stackable ? 'x'+it.qty : (it.optimizable ? (ENH_NAMES[it.enhLv||0]||'+0') : '')}</span></div>`
-  ).join('') || `<div class="admEmpty">${LANG==='fr'?'Sac vide':'Empty bag'}</div>`;
+  ).join('') || `<div class="admEmpty">${i18next.t('admin:admin.reset.empty_bag')}</div>`;
   return `
     <div class="admStatTiles">
-      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Niveau':'Level'}</div><div class="astVal">${s.lvl||1}</div></div>
-      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Silver':'Silver'}</div><div class="astVal">${fmt(Math.round(s.silver||0))}</div></div>
-      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Zone':'Zone'}</div><div class="astVal">${escapeHtml(zoneName)}</div></div>
+      <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.reset.stat_level')}</div><div class="astVal">${s.lvl||1}</div></div>
+      <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.reset.stat_silver')}</div><div class="astVal">${fmt(Math.round(s.silver||0))}</div></div>
+      <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.reset.stat_zone')}</div><div class="astVal">${escapeHtml(zoneName)}</div></div>
     </div>
-    <div class="admSummary">${LANG==='fr'?'Sauvegardé le':'Saved on'} ${save.savedAt ? new Date(save.savedAt).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</div>
-    <h3>${LANG==='fr'?'Équipement':'Equipment'}</h3>${eqRows}
-    <h3>${LANG==='fr'?'Inventaire':'Inventory'} (${inv.length}/${INV_SIZE})</h3>${invRows}
+    <div class="admSummary">${i18next.t('admin:admin.reset.saved_on')} ${save.savedAt ? new Date(save.savedAt).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</div>
+    <h3>${i18next.t('admin:admin.reset.section_equipment')}</h3>${eqRows}
+    <h3>${i18next.t('admin:admin.reset.section_inventory')} (${inv.length}/${INV_SIZE})</h3>${invRows}
   `;
 }
 
@@ -11098,13 +12697,9 @@ async function resetAccountByUuid() {
     online = !!data;
   } catch(e) {}
   const onlineWarn = online
-    ? (LANG === 'fr'
-        ? '\n\n⚠️ CE JOUEUR EST ACTUELLEMENT EN LIGNE : sa propre sauvegarde automatique (toutes les 30s environ) risque de RÉÉCRIRE son ancien état par-dessus ce reset dans les secondes qui suivent, l\'annulant silencieusement. Pour un reset fiable, attends qu\'il soit déconnecté.'
-        : '\n\n⚠️ THIS PLAYER IS CURRENTLY ONLINE: their own autosave (roughly every 30s) may OVERWRITE their old state back over this reset within seconds, silently undoing it. For a reliable reset, wait until they\'re disconnected.')
+    ? i18next.t('admin:admin.reset.online_warn')
     : '';
-  const msg = (LANG === 'fr'
-    ? `🔄 Réinitialiser le compte du joueur ${uuid} (silver, équipement, niveau, sac) ? Un message d'explication lui sera montré à sa prochaine connexion. Action IRRÉVERSIBLE.`
-    : `🔄 Reset player ${uuid}'s account (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.`) + onlineWarn;
+  const msg = i18next.t('admin:admin.reset.confirm_reset_uuid', { uuid }) + onlineWarn;
   if (!confirm(msg)) return;
   const title_fr = '🔄 Ton compte a été réinitialisé';
   const title_en = '🔄 Your account has been reset';
@@ -11116,15 +12711,15 @@ async function resetAccountByUuid() {
     p_user_id: uuid, p_title_fr: title_fr, p_title_en: title_en, p_body_fr: body_fr, p_body_en: body_en
   });
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   if (!data) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Aucun joueur trouvé avec cet UUID' : 'No player found with that UUID', { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.no_player_for_uuid'), { hurt:true });
     return;
   }
   logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé le compte du joueur \`${uuid}\``, 0xc05545);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Compte réinitialisé ✓' : 'Account reset ✓', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_account_reset'), { gold:true });
   input.value = '';
 }
 
@@ -11147,14 +12742,14 @@ async function refreshBanList() {
   const { data, error } = await sb.rpc('admin_list_bans');
   if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
   const rows = data || [];
-  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun bannissement actif':'No active bans'}</div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.sanctions.no_active_bans')}</div>`; return; }
   el.innerHTML = `<table class="admTable">
-    <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Motif':'Reason'}</th><th>${LANG==='fr'?'Fin du ban':'Ban ends'}</th><th></th></tr></thead>
+    <thead><tr><th>${i18next.t('admin:admin.sanctions.table_player')}</th><th>${i18next.t('admin:admin.sanctions.table_reason')}</th><th>${i18next.t('admin:admin.sanctions.table_ban_ends')}</th><th></th></tr></thead>
     <tbody>${rows.map(r => `<tr>
       <td>${escapeHtml(r.pseudo || (r.user_id||'').slice(0,8)+'…')}</td>
       <td>${escapeHtml(r.ban_reason || '—')}</td>
       <td>${r.banned_until ? new Date(r.banned_until).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</td>
-      <td><button class="admUnbanBtn" data-uuid="${r.user_id}">${LANG==='fr'?'Lever':'Unban'}</button></td>
+      <td><button class="admUnbanBtn" data-uuid="${r.user_id}">${i18next.t('admin:admin.sanctions.unban_btn')}</button></td>
     </tr>`).join('')}</tbody>
   </table>`;
   el.querySelectorAll('.admUnbanBtn').forEach(btn => {
@@ -11170,20 +12765,18 @@ async function banPlayerByUuid() {
   const hours = Number($a('admBanDurationSelect').value) || 24;
   const reasonLabel = (BAN_REASONS.find(r => r.id === reasonId) || BAN_REASONS[BAN_REASONS.length-1]).label[LANG];
   if (!canBanUuid(uuid, currentUser && currentUser.id)) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'UUID invalide ou identique au tien — action bloquée' : 'Invalid UUID or same as yours — action blocked', { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.invalid_uuid'), { hurt:true });
     return;
   }
-  const msg = LANG === 'fr'
-    ? `🚫 Bannir le joueur ${uuid} pour ${hours}h (motif : ${reasonLabel}) ?`
-    : `🚫 Ban player ${uuid} for ${hours}h (reason: ${reasonLabel})?`;
+  const msg = i18next.t('admin:admin.sanctions.confirm_ban', { uuid, hours, reasonLabel });
   if (!confirm(msg)) return;
   const { error } = await sb.rpc('admin_ban_player', { p_user_id: uuid, p_duration_hours: hours, p_reason: reasonLabel });
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   logToDiscord('🚫 Sanction', `**${myPseudo||'Admin'}** a banni le joueur \`${uuid}\` pour ${hours}h (motif : ${reasonLabel})`, 0xc05545);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Joueur banni ✓' : 'Player banned ✓', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.toast_banned'), { gold:true });
   input.value = '';
   refreshBanList();
 }
@@ -11192,11 +12785,11 @@ async function unbanPlayer(uuid) {
   if (!isAdmin() || !sb || !uuid) return;
   const { error } = await sb.rpc('admin_unban_player', { p_user_id: uuid });
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   logToDiscord('✅ Sanction levée', `**${myPseudo||'Admin'}** a levé le ban du joueur \`${uuid}\``, 0x8fc98a);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Ban levé ✓' : 'Ban lifted ✓', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.toast_unbanned'), { gold:true });
   refreshBanList();
 }
 function fmtAdmPlaytime(sec) {
@@ -11214,13 +12807,13 @@ async function refreshRoleList() {
   (mods || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, mod:true }));
   (testers || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, tester:true }));
   const rows = [...byUser.values()];
-  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun rôle attribué':'No roles assigned'}</div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.roles.no_roles')}</div>`; return; }
   el.innerHTML = rows.map(r => `<div class="modRow">` +
-    `<span class="modPseudo">${escapeHtml(r.pseudo || (LANG==='fr'?'(sans pseudo)':'(no nickname)'))}</span>` +
+    `<span class="modPseudo">${escapeHtml(r.pseudo || i18next.t('admin:admin.roles.no_nickname'))}</span>` +
     `<code class="modUuid">${r.user_id}</code>` +
     `<span class="roleBadges">${r.mod?'🛡️ MOD':''}${r.mod&&r.tester?' · ':''}${r.tester?'🧪 Testeur':''}</span>` +
-    `${r.mod?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="mod">${LANG==='fr'?'Retirer MOD':'Remove MOD'}</button>`:''}` +
-    `${r.tester?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="tester">${LANG==='fr'?'Retirer Testeur':'Remove Tester'}</button>`:''}` +
+    `${r.mod?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="mod">${i18next.t('admin:admin.roles.remove_mod_btn')}</button>`:''}` +
+    `${r.tester?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="tester">${i18next.t('admin:admin.roles.remove_tester_btn')}</button>`:''}` +
     `</div>`).join('');
   el.querySelectorAll('.modRemBtn').forEach(btn => {
     btn.onclick = async () => {
@@ -11237,18 +12830,16 @@ function buildLootVersionTabHtml() {
     { grade:'grey', label:{fr:'Gris',en:'Grey'} }, { grade:'white', label:{fr:'Blanc',en:'White'} },
     { grade:'green', label:{fr:'Vert',en:'Green'} }, { grade:'blue', label:{fr:'Bleu',en:'Blue'} },
   ];
-  const v2Table = `<table class="admTable"><thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Armure/Arme':'Armor/Weapon'}</th><th>${LANG==='fr'?'Bijou':'Jewel'}</th></tr></thead><tbody>` +
+  const v2Table = `<table class="admTable"><thead><tr><th>${i18next.t('admin:admin.loot.table_tier')}</th><th>${i18next.t('admin:admin.loot.table_gear')}</th><th>${i18next.t('admin:admin.loot.table_jewel')}</th></tr></thead><tbody>` +
     rows.map(r => `<tr><td>${r.label[LANG]}</td><td>${(LOOT_RATES_V2[r.grade].gear*100).toFixed(2)}%</td><td>${(LOOT_RATES_V2[r.grade].jewel*100).toFixed(3)}%</td></tr>`).join('') +
     `</tbody></table>`;
-  return `<div class="admSummary">${LANG==='fr'?'Version active :':'Active version:'} <b>${v.toUpperCase()}</b></div>
+  return `<div class="admSummary">${i18next.t('admin:admin.loot.active_version')} <b>${v.toUpperCase()}</b></div>
     <div class="admActions">
-      <button id="btnLootVerV1" class="${v==='v1'?'ready':''}">${LANG==='fr'?'V1 — taux par zone (historique)':'V1 — per-zone rates (legacy)'}</button>
-      <button id="btnLootVerV2" class="${v==='v2'?'ready':''}">${LANG==='fr'?'V2 — taux fixe par palier':'V2 — flat per-tier rate'}</button>
+      <button id="btnLootVerV1" class="${v==='v1'?'ready':''}">${i18next.t('admin:admin.loot.v1_btn')}</button>
+      <button id="btnLootVerV2" class="${v==='v2'?'ready':''}">${i18next.t('admin:admin.loot.v2_btn')}</button>
     </div>
-    <div class="admHint">${LANG==='fr'
-      ? 'V1 : chaque zone a son propre taux (décroissant zone après zone, voir GEAR_CHANCE). V2 : un seul taux par palier, appliqué à ses 4 zones. Change instantanément, réversible à tout moment, aucune donnée perdue.'
-      : 'V1: each zone has its own rate (decreasing zone after zone, see GEAR_CHANCE). V2: a single rate per tier, applied to its 4 zones. Switches instantly, reversible anytime, no data lost.'}</div>
-    <h3>${LANG==='fr'?'📋 Table V2':'📋 V2 table'}</h3>
+    <div class="admHint">${i18next.t('admin:admin.loot.version_hint')}</div>
+    <h3>${i18next.t('admin:admin.loot.v2_table_title')}</h3>
     ${v2Table}`;
 }
 function wireLootVersionButtons() {
@@ -11264,23 +12855,23 @@ function renderAdminLoot(el) {
 }
 
 function renderAdminItems(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.from('admin_farm_by_item').select('*').limit(20).then(({data}) => {
     const rows = data || [];
     const itemHtml = rows.map((r,i) => `
       <tr class="${i===0?'admTop':''}">
         <td>${i===0?'🔥 ':''}${tr(r.item_name)}</td><td>${r.item_kind}</td>
         <td>${fmt(r.pickups)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver)}</td>
-      </tr>`).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+      </tr>`).join('') || `<tr><td colspan="5" class="admEmpty">${i18next.t('admin:admin.common.no_data')}</td></tr>`;
     el.innerHTML = `<table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Type':'Kind'}</th><th>${LANG==='fr'?'Ramassages':'Pickups'}</th><th>Qté</th><th>Silver</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.content.table_item')}</th><th>${i18next.t('admin:admin.content.table_kind')}</th><th>${i18next.t('admin:admin.content.table_pickups')}</th><th>Qté</th><th>Silver</th></tr></thead>
         <tbody>${itemHtml}</tbody>
       </table>`;
   });
 }
 
 function renderAdminCron(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([
     sb.from('admin_farm_by_item').select('*'),
     sb.from('player_stats').select('user_id'),
@@ -11297,35 +12888,31 @@ function renderAdminCron(el) {
       `<tr><td>${CRON_TIER_LABEL[grade][LANG]}</td><td>${cost}</td></tr>`).join('');
     const balancePie = typeof buildPieWithLegendHtml === 'function'
       ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'En stock (farmé - utilisé)':'In stock (farmed - used)', value: Math.max(0, farmed - used) },
-          { label: LANG==='fr'?'Utilisées (protection)':'Used (protection)', value: used },
+          { label: i18next.t('admin:admin.content.cron_stock_label'), value: Math.max(0, farmed - used) },
+          { label: i18next.t('admin:admin.content.cron_used_label'), value: used },
         ], { thresholdPct: 0 })
       : '';
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">⏳ ${LANG==='fr'?'Farmées (30j)':'Farmed (30d)'}</div><div class="astVal">${fmt(farmed)}</div></div>
-        <div class="admStatTile"><div class="astLbl">💥 ${LANG==='fr'?'Utilisées (30j)':'Used (30d)'}</div><div class="astVal">${fmt(used)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🛡️ ${LANG==='fr'?'Protections (30j)':'Protections (30d)'}</div><div class="astVal">${fmt(usedCount)}</div></div>
-        <div class="admStatTile"><div class="astLbl">📊 ${LANG==='fr'?'Farmées / joueur':'Farmed / player'}</div><div class="astVal">${fmt(Math.round(avgFarmedPerPlayer))}</div></div>
+        <div class="admStatTile"><div class="astLbl">⏳ ${i18next.t('admin:admin.content.cron_farmed_30d')}</div><div class="astVal">${fmt(farmed)}</div></div>
+        <div class="admStatTile"><div class="astLbl">💥 ${i18next.t('admin:admin.content.cron_used_30d')}</div><div class="astVal">${fmt(used)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🛡️ ${i18next.t('admin:admin.content.cron_protections_30d')}</div><div class="astVal">${fmt(usedCount)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📊 ${i18next.t('admin:admin.content.cron_farmed_per_player')}</div><div class="astVal">${fmt(Math.round(avgFarmedPerPlayer))}</div></div>
       </div>
-      <div class="admHint">${LANG==='fr'
-        ? 'Taux de drop FIXE, identique dans toutes les zones (1 à 3 unités/ramassage). "Utilisées" = consommées pour protéger un enchantement d\'une rétrogradation (coût variable selon le palier, voir tableau plus bas). Fenêtre de 30 jours, comme le registre de silver.'
-        : 'FIXED drop rate, identical in every zone (1 to 3 units/pickup). "Used" = consumed to protect an enhancement from a downgrade (variable cost by tier, see table below). 30-day window, same as the silver ledger.'}</div>
-      <h3>${LANG==='fr'?'⚖️ Farmé vs utilisé':'⚖️ Farmed vs used'}</h3>
+      <div class="admHint">${i18next.t('admin:admin.content.cron_hint')}</div>
+      <h3>${i18next.t('admin:admin.content.cron_balance_title')}</h3>
       ${balancePie}
-      <h3>${LANG==='fr'?'💎 Coût par palier de la pièce protégée':'💎 Cost by tier of the protected piece'}</h3>
+      <h3>${i18next.t('admin:admin.content.cron_cost_title')}</h3>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Coût':'Cost'}</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.content.table_tier')}</th><th>${i18next.t('admin:admin.content.table_cost')}</th></tr></thead>
         <tbody>${cronCostRows}</tbody>
       </table>`;
   });
 }
 function renderAdminTreasure(el) {
-  el.innerHTML = `<div class="admSummary">${LANG==='fr'
-    ? `Estimation à ${ADMIN_TREASURE_KPM_REF} kills/min (compare à ton propre "Kills/min" affiché en jeu)`
-    : `Estimate at ${ADMIN_TREASURE_KPM_REF} kills/min (compare to your own in-game "Kills/min")`}</div>
+  el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.treasure_estimate', { kpm: ADMIN_TREASURE_KPM_REF })}</div>
     <table class="admTable">
-      <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Chance/kill':'Chance/kill'}</th>
-        <th>${LANG==='fr'?'Kills en moyenne':'Avg kills'}</th><th>${LANG==='fr'?'Temps estimé':'Est. time'}</th></tr></thead>
+      <thead><tr><th>${i18next.t('admin:admin.content.table_item')}</th><th>${i18next.t('admin:admin.content.table_chance_per_kill')}</th>
+        <th>${i18next.t('admin:admin.content.table_avg_kills')}</th><th>${i18next.t('admin:admin.content.table_est_time')}</th></tr></thead>
       <tbody>${VELIA_TREASURE.map(t => {
         const avgKills = Math.round(1/t.ch);
         const avgMin = avgKills / ADMIN_TREASURE_KPM_REF;
@@ -11336,7 +12923,7 @@ function renderAdminTreasure(el) {
 }
 
 function renderAdminZoneProgression(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.from('player_stats').select('best_zone_index, gearscore').then(({data}) => {
     const zoneCounts = new Map();
     (data||[]).forEach(r => {
@@ -11358,20 +12945,18 @@ function renderAdminZoneProgression(el) {
       gsCounts[idx >= 0 ? idx : GS_BRACKETS.length-1]++;
     });
     const gsItems = GS_BRACKETS.map((b,i) => ({ label:b.label, value:gsCounts[i] }));
-    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(zoneItems) : `<div class="admEmpty">${LANG==='fr'?'Graphique indisponible':'Chart unavailable'}</div>`;
+    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(zoneItems) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
     const gsPie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(gsItems, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : '';
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
-      ? 'Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant. Catégories sous 4% fusionnées dans "Autres".'
-      : 'Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed. Categories under 4% merged into "Other".'}</div>
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.zone_progression_summary')}</div>
       <div class="admChartsRow">
-        <div><h3 style="margin-top:0">${LANG==='fr'?'🗾 Par zone':'🗾 By zone'}</h3>${zonePie}</div>
-        <div><h3 style="margin-top:0">${LANG==='fr'?'⚔️ Par Gearscore':'⚔️ By Gearscore'}</h3>${gsPie}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_zone_title')}</h3>${zonePie}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_gearscore_title')}</h3>${gsPie}</div>
       </div>`;
   });
 }
 
 function renderAdminCompendium(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.from('player_stats').select('compendium_pct').then(({data}) => {
     const rows = data||[];
     const PCT_BRACKETS = [
@@ -11386,21 +12971,19 @@ function renderAdminCompendium(el) {
     });
     const items = PCT_BRACKETS.map((b,i) => ({ label:b.label, value:counts[i] }));
     const avg = rows.length ? Math.round(rows.reduce((s,r) => s + Number(r.compendium_pct||0), 0) / rows.length) : 0;
-    const pie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(items, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${LANG==='fr'?'Graphique indisponible':'Chart unavailable'}</div>`;
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
-      ? `Moyenne : ${avg}% de complétion (zones + World Bosses + Maîtrise PEN combinés) sur ${rows.length} joueur(s) suivi(s).`
-      : `Average: ${avg}% completion (zones + World Bosses + PEN Mastery combined) across ${rows.length} tracked player(s).`}</div>
-      <div class="admChartsRow"><div><h3 style="margin-top:0">${LANG==='fr'?'📖 Répartition':'📖 Distribution'}</h3>${pie}</div></div>`;
+    const pie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(items, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.compendium_summary', { avg, count: rows.length })}</div>
+      <div class="admChartsRow"><div><h3 style="margin-top:0">${i18next.t('admin:admin.content.compendium_distribution_title')}</h3>${pie}</div></div>`;
   });
 }
 
 function renderAdminItemTutorials(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.rpc('admin_item_tutorial_stats').then(({data, error}) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
     if (!rows.length) {
-      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun tutoriel vu pour l\'instant':'No tutorials seen yet'}</div>`;
+      el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.content.tutorials_no_data')}</div>`;
       return;
     }
     const totalCompleted = rows.reduce((a,r) => a + Number(r.completed_count||0), 0);
@@ -11412,66 +12995,62 @@ function renderAdminItemTutorials(el) {
     }).join('');
     const pie = typeof buildPieWithLegendHtml === 'function'
       ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'Terminés':'Completed', value: totalCompleted },
-          { label: LANG==='fr'?'Passés':'Skipped', value: totalSkipped },
+          { label: i18next.t('admin:admin.content.completed_label'), value: totalCompleted },
+          { label: i18next.t('admin:admin.content.skipped_label'), value: totalSkipped },
         ], { thresholdPct: 0 })
       : '';
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🎓 ${LANG==='fr'?'Tutoriels suivis':'Tutorials tracked'}</div><div class="astVal">${rows.length}</div></div>
-        <div class="admStatTile"><div class="astLbl">✅ ${LANG==='fr'?'Terminés (total)':'Completed (total)'}</div><div class="astVal">${fmt(totalCompleted)}</div></div>
-        <div class="admStatTile"><div class="astLbl">⏭️ ${LANG==='fr'?'Passés (total)':'Skipped (total)'}</div><div class="astVal">${fmt(totalSkipped)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🎓 ${i18next.t('admin:admin.content.tutorials_tracked')}</div><div class="astVal">${rows.length}</div></div>
+        <div class="admStatTile"><div class="astLbl">✅ ${i18next.t('admin:admin.content.completed_total')}</div><div class="astVal">${fmt(totalCompleted)}</div></div>
+        <div class="admStatTile"><div class="astLbl">⏭️ ${i18next.t('admin:admin.content.skipped_total')}</div><div class="astVal">${fmt(totalSkipped)}</div></div>
       </div>
-      <div class="admHint">${LANG==='fr'
-        ? 'Un tutoriel apparaît ici dès qu\'au moins un joueur l\'a terminé ou passé (mark_item_tutorial_seen). Taux = terminés / (terminés + passés).'
-        : 'A tutorial appears here as soon as at least one player has completed or skipped it (mark_item_tutorial_seen). Rate = completed / (completed + skipped).'}</div>
-      <h3>${LANG==='fr'?'⚖️ Terminés vs passés (tous tutoriels)':'⚖️ Completed vs skipped (all tutorials)'}</h3>
+      <div class="admHint">${i18next.t('admin:admin.content.tutorials_hint')}</div>
+      <h3>${i18next.t('admin:admin.content.tutorials_completed_vs_skipped_title')}</h3>
       ${pie}
-      <h3>${LANG==='fr'?'Détail par tutoriel':'Detail by tutorial'}</h3>
+      <h3>${i18next.t('admin:admin.content.tutorials_detail_title')}</h3>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Tutoriel':'Tutorial'}</th><th>${LANG==='fr'?'Terminés':'Completed'}</th><th>${LANG==='fr'?'Passés':'Skipped'}</th><th>${LANG==='fr'?'Total':'Total'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.content.table_tutorial')}</th><th>${i18next.t('admin:admin.content.completed_label')}</th><th>${i18next.t('admin:admin.content.skipped_label')}</th><th>${i18next.t('admin:admin.content.table_total')}</th><th>${i18next.t('admin:admin.content.table_rate')}</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>`;
   });
 }
 
 function renderAdminOnboarding(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([sb.rpc('admin_onboarding_stats'), sb.rpc('admin_onboarding_dropoff')]).then(([statsRes, dropRes]) => {
     if (statsRes.error) { el.innerHTML = `<div class="admHint">${escapeHtml(statsRes.error.message)}</div>`; return; }
     const s = (statsRes.data && statsRes.data[0]) || { started:0, completed:0, skipped:0, in_progress:0 };
     const started = Number(s.started||0), completed = Number(s.completed||0), skipped = Number(s.skipped||0), inProgress = Number(s.in_progress||0);
     if (!started) {
-      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Personne n\'a encore démarré le tutoriel d\'arrivée (bouton dans le Wiki)':'No one has started the arrival tutorial yet (button in the Wiki)'}</div>`;
+      el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.content.onboarding_no_data')}</div>`;
       return;
     }
     const completedPct = started > 0 ? Math.round(completed/started*100) : 0;
     const pie = typeof buildPieWithLegendHtml === 'function'
       ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'Terminé':'Completed', value: completed },
-          { label: LANG==='fr'?'Passé':'Skipped', value: skipped },
-          { label: LANG==='fr'?'En cours / abandonné':'In progress / abandoned', value: inProgress },
+          { label: i18next.t('admin:admin.content.onboarding_completed_label'), value: completed },
+          { label: i18next.t('admin:admin.content.onboarding_skipped_label'), value: skipped },
+          { label: i18next.t('admin:admin.content.in_progress_abandoned_label'), value: inProgress },
         ], { thresholdPct: 0 })
       : '';
     const dropRows = (dropRes.data || []);
     const totalSteps = (typeof TUTORIAL_STEPS !== 'undefined' && TUTORIAL_STEPS.length) || 21;
     const dropoffHtml = dropRows.length
       ? `<table class="admTable">
-          <thead><tr><th>${LANG==='fr'?'Étape où bloqué':'Step reached'}</th><th>${LANG==='fr'?'Joueurs':'Players'}</th></tr></thead>
+          <thead><tr><th>${i18next.t('admin:admin.content.table_step_reached')}</th><th>${i18next.t('admin:admin.content.table_players')}</th></tr></thead>
           <tbody>${dropRows.map(r => `<tr><td>${Number(r.last_step)+1} / ${totalSteps}</td><td>${fmt(Number(r.user_count||0))}</td></tr>`).join('')}</tbody>
         </table>`
-      : `<div class="admEmpty">${LANG==='fr'?'Aucun abandon en cours (tout le monde a terminé ou passé)':'No in-progress abandonment (everyone finished or skipped)'}</div>`;
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
-        ? 'Le tutoriel d\'arrivée ne se lance jamais automatiquement — seulement via le bouton dans le Wiki. "Démarré" = a cliqué ce bouton au moins une fois.'
-        : 'The arrival tutorial never launches automatically — only via the button in the Wiki. "Started" = clicked that button at least once.'}</div>
+      : `<div class="admEmpty">${i18next.t('admin:admin.content.onboarding_no_dropoff')}</div>`;
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.onboarding_summary')}</div>
       <div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🧭 ${LANG==='fr'?'Démarré':'Started'}</div><div class="astVal">${fmt(started)}</div></div>
-        <div class="admStatTile"><div class="astLbl">✅ ${LANG==='fr'?'Terminé':'Completed'}</div><div class="astVal">${fmt(completed)} <span class="admHint">(${completedPct}%)</span></div></div>
-        <div class="admStatTile"><div class="astLbl">⏭️ ${LANG==='fr'?'Passé':'Skipped'}</div><div class="astVal">${fmt(skipped)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🚪 ${LANG==='fr'?'En cours / abandonné':'In progress / abandoned'}</div><div class="astVal">${fmt(inProgress)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🧭 ${i18next.t('admin:admin.content.started_label')}</div><div class="astVal">${fmt(started)}</div></div>
+        <div class="admStatTile"><div class="astLbl">✅ ${i18next.t('admin:admin.content.onboarding_completed_label')}</div><div class="astVal">${fmt(completed)} <span class="admHint">(${completedPct}%)</span></div></div>
+        <div class="admStatTile"><div class="astLbl">⏭️ ${i18next.t('admin:admin.content.onboarding_skipped_label')}</div><div class="astVal">${fmt(skipped)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🚪 ${i18next.t('admin:admin.content.in_progress_abandoned_label')}</div><div class="astVal">${fmt(inProgress)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'⚖️ Répartition':'⚖️ Breakdown'}</h3>
+      <h3>${i18next.t('admin:admin.content.breakdown_title')}</h3>
       ${pie}
-      <h3>${LANG==='fr'?'📉 Funnel d\'abandon (étape où resté bloqué)':'📉 Drop-off funnel (step last seen)'}</h3>
+      <h3>${i18next.t('admin:admin.content.dropoff_funnel_title')}</h3>
       ${dropoffHtml}`;
   });
 }
@@ -11501,13 +13080,13 @@ function sumCompanionBreakdown(rows, field) {
 
 const COMPANION_CATALOG_SIZE = 48 * 5;
 function renderAdminCompanions(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown'), sb.rpc('admin_companion_player_list'), sb.rpc('admin_list_players')]).then(([statsRes, breakdownRes, playerListRes, allPlayersRes]) => {
     if (statsRes.error) { el.innerHTML = `<div class="admHint">${escapeHtml(statsRes.error.message)}</div>`; return; }
     const s = (statsRes.data && statsRes.data[0]) || {};
     const playersSynced = Number(s.players_synced||0);
     if (!playersSynced) {
-      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun joueur n\'a encore ouvert le module Compagnons':'No player has opened the Companions module yet'}</div>`;
+      el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.content.companions_no_data')}</div>`;
       return;
     }
     const totalPet = Number(s.total_pet_count||0), avgPet = Number(s.avg_pet_count||0);
@@ -11522,7 +13101,7 @@ function renderAdminCompanions(el) {
     const playerRows = (playerListRes.error ? [] : (playerListRes.data||[])).filter(r => r.fusion_count > 0 || r.hatch_count > 0);
     const fusionListHtml = playerRows.length
       ? `<table class="admTable">
-          <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>🔗 ${LANG==='fr'?'Fusions':'Fusions'}</th><th>🌟 ${LANG==='fr'?'Percées':'Breakthroughs'}</th><th>🎰 ${LANG==='fr'?'Perdantes':'Downgrades'}</th><th>🥚 ${LANG==='fr'?'Œufs':'Eggs'}</th><th>📖 ${LANG==='fr'?'Index':'Index'}</th></tr></thead>
+          <thead><tr><th>${i18next.t('admin:admin.content.table_player')}</th><th>🔗 ${i18next.t('admin:admin.content.table_fusions')}</th><th>🌟 ${i18next.t('admin:admin.content.table_breakthroughs')}</th><th>🎰 ${i18next.t('admin:admin.content.table_downgrades')}</th><th>🥚 ${i18next.t('admin:admin.content.table_eggs')}</th><th>📖 ${i18next.t('admin:admin.content.table_index')}</th></tr></thead>
           <tbody>${playerRows.map((r,i) => `
             <tr class="${i===0&&r.fusion_count>0?'admTop':''}">
               <td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td>
@@ -11530,7 +13109,7 @@ function renderAdminCompanions(el) {
               <td>${fmt(r.hatch_count||0)}</td><td>${r.unique_species_count||0}/${COMPANION_CATALOG_SIZE}</td>
             </tr>`).join('')}</tbody>
         </table>`
-      : `<div class="admEmpty">${LANG==='fr'?'Aucune fusion ni éclosion pour l\'instant':'No fusion or hatch yet'}</div>`;
+      : `<div class="admEmpty">${i18next.t('admin:admin.content.companions_no_fusion')}</div>`;
     const completionBuckets = [0,25,50,75,100].map((min,i,arr) => {
       const max = arr[i+1] ?? 101;
       const label = i===arr.length-1 ? '100%' : `${min}-${arr[i+1]-1}%`;
@@ -11558,40 +13137,38 @@ function renderAdminCompanions(el) {
     const tierBar = typeof buildBarSeriesSvg === 'function'
       ? buildBarSeriesSvg(tierPoints, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
 
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
-        ? 'Module 100% local jusqu\'ici (localStorage, économie fermée, indépendante du Silver principal) — "Joueurs synchronisés" compte ceux qui ont ouvert l\'onglet Compagnon au moins une fois (le module envoie ses compteurs toutes les 60s en arrière-plan).'
-        : 'Module was 100% local until now (localStorage, closed economy, independent from the main Silver) — "Players synced" counts those who opened the Companion tab at least once (the module pushes its counters every 60s in the background).'}</div>
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.companions_summary')}</div>
       <div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🐾 ${LANG==='fr'?'Joueurs synchronisés':'Players synced'}</div><div class="astVal">${fmt(playersSynced)}</div></div>
-        <div class="admStatTile"><div class="astLbl">📦 ${LANG==='fr'?'Familiers (total / moy.)':'Pets (total / avg)'}</div><div class="astVal">${fmt(totalPet)} <span class="admHint">(${avgPet.toFixed(1)})</span></div></div>
-        <div class="admStatTile"><div class="astLbl">💰 ${LANG==='fr'?'Silver compagnon (total)':'Companion Silver (total)'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🥚 ${LANG==='fr'?'Œufs éclos (total)':'Eggs hatched (total)'}</div><div class="astVal">${fmt(totalHatch)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🔗 ${LANG==='fr'?'Fusions (total)':'Fusions (total)'}</div><div class="astVal">${fmt(totalFusion)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🎰 ${LANG==='fr'?'Fusions perdantes (total)':'Downgrade fusions (total)'}</div><div class="astVal">${fmt(totalFusionDowngrade)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🔥 ${LANG==='fr'?'Streak connexion (moy.)':'Login streak (avg)'}</div><div class="astVal">${avgStreak.toFixed(1)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🎁 ${LANG==='fr'?'Ont déclenché le pity':'Triggered pity'}</div><div class="astVal">${fmt(playersWithPity)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏆 ${LANG==='fr'?'Succès complétés (moy.)':'Achievements done (avg)'}</div><div class="astVal">${avgAch.toFixed(1)} <span class="admHint">/17</span></div></div>
-        <div class="admStatTile"><div class="astLbl">🔥 ${LANG==='fr'?'Succès "difficiles" (moy.)':'"Hard" achievements (avg)'}</div><div class="astVal">${avgHardAch.toFixed(1)} <span class="admHint">/4</span></div></div>
-        <div class="admStatTile"><div class="astLbl">📈 ${LANG==='fr'?'Éclosions / jour (moy.)':'Hatches / day (avg)'}</div><div class="astVal">${avgHatchPerDay.toFixed(2)}</div></div>
-        <div class="admStatTile"><div class="astLbl">📖 ${LANG==='fr'?'Complétion Index (moy.)':'Index completion (avg)'}</div><div class="astVal">${avgCompletionPct}% <span class="admHint">(${avgUniqueSpecies.toFixed(1)}/${COMPANION_CATALOG_SIZE})</span></div></div>
+        <div class="admStatTile"><div class="astLbl">🐾 ${i18next.t('admin:admin.content.companions_synced')}</div><div class="astVal">${fmt(playersSynced)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📦 ${i18next.t('admin:admin.content.companions_pets')}</div><div class="astVal">${fmt(totalPet)} <span class="admHint">(${avgPet.toFixed(1)})</span></div></div>
+        <div class="admStatTile"><div class="astLbl">💰 ${i18next.t('admin:admin.content.companions_silver')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🥚 ${i18next.t('admin:admin.content.companions_eggs_hatched')}</div><div class="astVal">${fmt(totalHatch)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔗 ${i18next.t('admin:admin.content.companions_fusions_total')}</div><div class="astVal">${fmt(totalFusion)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🎰 ${i18next.t('admin:admin.content.companions_downgrade_fusions')}</div><div class="astVal">${fmt(totalFusionDowngrade)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔥 ${i18next.t('admin:admin.content.companions_login_streak')}</div><div class="astVal">${avgStreak.toFixed(1)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🎁 ${i18next.t('admin:admin.content.companions_triggered_pity')}</div><div class="astVal">${fmt(playersWithPity)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏆 ${i18next.t('admin:admin.content.companions_achievements_avg')}</div><div class="astVal">${avgAch.toFixed(1)} <span class="admHint">/17</span></div></div>
+        <div class="admStatTile"><div class="astLbl">🔥 ${i18next.t('admin:admin.content.companions_hard_achievements_avg')}</div><div class="astVal">${avgHardAch.toFixed(1)} <span class="admHint">/4</span></div></div>
+        <div class="admStatTile"><div class="astLbl">📈 ${i18next.t('admin:admin.content.companions_hatches_per_day')}</div><div class="astVal">${avgHatchPerDay.toFixed(2)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📖 ${i18next.t('admin:admin.content.companions_index_completion')}</div><div class="astVal">${avgCompletionPct}% <span class="admHint">(${avgUniqueSpecies.toFixed(1)}/${COMPANION_CATALOG_SIZE})</span></div></div>
       </div>
       <div class="admChartsRow">
-        <div><h3 style="margin-top:0">${LANG==='fr'?'🎲 Par rareté':'🎲 By rarity'}</h3>${rarityPie}</div>
-        <div><h3 style="margin-top:0">${LANG==='fr'?'🗺️ Par section':'🗺️ By section'}</h3>${sectionPie}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_rarity_title')}</h3>${rarityPie}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_section_title')}</h3>${sectionPie}</div>
       </div>
-      <h3>${LANG==='fr'?'⬆️ Par Tier (tous joueurs confondus)':'⬆️ By Tier (all players)'}</h3>
+      <h3>${i18next.t('admin:admin.content.by_tier_title')}</h3>
       ${tierBar}
-      <h3>${LANG==='fr'?'📖 Répartition de la complétion Index':'📖 Index completion breakdown'}</h3>
+      <h3>${i18next.t('admin:admin.content.index_completion_breakdown_title')}</h3>
       ${completionChart}
-      <h3>${LANG==='fr'?'🔗 Liste des fusions par joueur':'🔗 Fusion list by player'}</h3>
+      <h3>${i18next.t('admin:admin.content.fusion_list_title')}</h3>
       ${fusionListHtml}`;
   });
 }
 
 function dashboardLight(healthy) {
   return healthy
-    ? { dot:'🟢', label: LANG==='fr'?'OK':'OK' }
-    : { dot:'🔴', label: LANG==='fr'?'À surveiller':'Needs attention' };
+    ? { dot:'🟢', label: i18next.t('admin:admin.dashboard.light_ok') }
+    : { dot:'🔴', label: i18next.t('admin:admin.dashboard.light_needs_attention') };
 }
 
 const DASHBOARD_WIDGETS = [
@@ -11605,7 +13182,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(alerts.length===0),
         chart: buildPieWithLegendHtml(sources, { thresholdPct:6 }),
-        note: alerts.length ? alerts[0].text : (LANG==='fr'?'Équilibre sources/puits sain':'Healthy source/sink balance'),
+        note: alerts.length ? alerts[0].text : i18next.t('admin:admin.dashboard.econ_healthy_note'),
       };
     } },
   { id:'dw-silver', cat:'economy', sec:'silver', icon:'🏦', title:{fr:'Flux de silver (48h)',en:'Silver flow (48h)'},
@@ -11617,7 +13194,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(netTotal >= 0),
         chart: buildSilverChartSvg(rows, accent, danger),
-        note: (LANG==='fr'?'Solde net 48h : ':'48h net: ') + (netTotal>=0?'+':'') + fmt(Math.round(netTotal)),
+        note: i18next.t('admin:admin.dashboard.silver_net_48h_prefix') + (netTotal>=0?'+':'') + fmt(Math.round(netTotal)),
       };
     } },
   { id:'dw-wealth', cat:'economy', sec:'wealth', icon:'📈', title:{fr:'Richesse des joueurs',en:'Player wealth'},
@@ -11638,7 +13215,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(!skewed),
         chart: buildPieWithLegendHtml(brackets.map((b,i)=>({label:b.label, value:counts[i]})), { thresholdPct:0, formatValue:v=>String(Math.round(v)) }),
-        note: skewed ? (LANG==='fr'?'Richesse très concentrée (moyenne ≫ médiane)':'Wealth highly concentrated (mean ≫ median)') : (LANG==='fr'?'Répartition raisonnable':'Reasonable spread'),
+        note: skewed ? i18next.t('admin:admin.dashboard.wealth_skewed_note') : i18next.t('admin:admin.dashboard.wealth_reasonable_note'),
       };
     } },
   { id:'dw-market', cat:'economy', sec:'market', icon:'🏛️', title:{fr:'Marché',en:'Market'},
@@ -11649,7 +13226,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(open && rows.length > 0),
         chart: buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) }))),
-        note: !open ? (LANG==='fr'?'Marché FERMÉ':'Market CLOSED') : (rows.length ? (LANG==='fr'?'Marché actif (30j)':'Market active (30d)') : (LANG==='fr'?'Aucun échange (30j)':'No trades (30d)')),
+        note: !open ? i18next.t('admin:admin.dashboard.market_closed_note') : (rows.length ? i18next.t('admin:admin.dashboard.market_active_note') : i18next.t('admin:admin.dashboard.market_no_trades_note')),
       };
     } },
   { id:'dw-signups', cat:'overview', sec:'signups', icon:'📈', title:{fr:'Inscriptions (30j)',en:'Signups (30d)'},
@@ -11664,7 +13241,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(last7 > 0),
         chart,
-        note: (LANG==='fr'?`${last7} inscription(s) sur 7 jours`:`${last7} signup(s) in 7 days`),
+        note: i18next.t('admin:admin.dashboard.signups_note', { count: last7 }),
       };
     } },
   { id:'dw-bans', cat:'players', sec:'sanctions', icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
@@ -11673,8 +13250,8 @@ const DASHBOARD_WIDGETS = [
       const count = (data||[]).length;
       return {
         light: dashboardLight(count === 0),
-        chart: `<div style="text-align:center"><div style="font-size:34px;font-weight:bold;color:${count===0?'var(--gold)':'var(--danger)'}">${count}</div><div class="admHint">${LANG==='fr'?'Bannissement(s) actif(s)':'Active ban(s)'}</div></div>`,
-        note: count === 0 ? (LANG==='fr'?'Aucune sanction active':'No active sanction') : (LANG==='fr'?`${count} joueur(s) actuellement banni(s)`:`${count} player(s) currently banned`),
+        chart: `<div style="text-align:center"><div style="font-size:34px;font-weight:bold;color:${count===0?'var(--gold)':'var(--danger)'}">${count}</div><div class="admHint">${i18next.t('admin:admin.dashboard.active_bans_label')}</div></div>`,
+        note: count === 0 ? i18next.t('admin:admin.dashboard.no_active_sanction_note') : i18next.t('admin:admin.dashboard.players_banned_note', { count }),
       };
     } },
   { id:'dw-onboarding', cat:'content', sec:'onboarding', icon:'🧭', title:{fr:'Onboarding',en:'Onboarding'},
@@ -11686,11 +13263,11 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(!started || pct >= 40),
         chart: started ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'Terminé':'Completed', value: completed },
-          { label: LANG==='fr'?'Passé':'Skipped', value: skipped },
-          { label: LANG==='fr'?'En cours':'In progress', value: inProgress },
-        ], { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Personne n\'a démarré le tutoriel':'No one started the tutorial'}</div>`,
-        note: started ? (LANG==='fr'?`${pct}% de complétion`:`${pct}% completion`) : '',
+          { label: i18next.t('admin:admin.dashboard.onboarding_completed_label'), value: completed },
+          { label: i18next.t('admin:admin.dashboard.onboarding_skipped_label'), value: skipped },
+          { label: i18next.t('admin:admin.dashboard.onboarding_in_progress_label'), value: inProgress },
+        ], { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.onboarding_none_started')}</div>`,
+        note: started ? i18next.t('admin:admin.dashboard.completion_pct_note', { pct }) : '',
       };
     } },
   { id:'dw-tutorials', cat:'content', sec:'tutorials', icon:'🎓', title:{fr:'Tutoriels d\'objets',en:'Item tutorials'},
@@ -11704,10 +13281,10 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(!total || skipRate < 0.5),
         chart: total ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'Terminés':'Completed', value: completed },
-          { label: LANG==='fr'?'Passés':'Skipped', value: skipped },
-        ], { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Aucun tutoriel vu':'No tutorials seen'}</div>`,
-        note: total ? (LANG==='fr'?`${Math.round(skipRate*100)}% passés`:`${Math.round(skipRate*100)}% skipped`) : '',
+          { label: i18next.t('admin:admin.content.completed_label'), value: completed },
+          { label: i18next.t('admin:admin.content.skipped_label'), value: skipped },
+        ], { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.tutorials_none_seen')}</div>`,
+        note: total ? i18next.t('admin:admin.dashboard.skipped_pct_note', { pct: Math.round(skipRate*100) }) : '',
       };
     } },
   { id:'dw-companions', cat:'content', sec:'companions', icon:'🐾', title:{fr:'Compagnons',en:'Companions'},
@@ -11720,8 +13297,8 @@ const DASHBOARD_WIDGETS = [
       const rarityItems = COMPANION_RARITY_LABELS.filter(r => rarityTotals[r.id]).map(r => ({ label:r.name, value:rarityTotals[r.id] }));
       return {
         light: dashboardLight(playersSynced > 0),
-        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Aucun joueur synchronisé':'No player synced'}</div>`,
-        note: (LANG==='fr'?`${playersSynced} joueur(s) synchronisé(s)`:`${playersSynced} player(s) synced`),
+        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.companions_none_synced')}</div>`,
+        note: i18next.t('admin:admin.dashboard.companions_synced_note', { count: playersSynced }),
       };
     } },
   { id:'dw-zones', cat:'content', sec:'zones', icon:'🗾', title:{fr:'Progression par zone',en:'Zone progression'},
@@ -11733,7 +13310,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(items.length > 0),
         chart: buildPieWithLegendHtml(items),
-        note: (LANG==='fr'?`${(data||[]).length} joueur(s)`:`${(data||[]).length} player(s)`),
+        note: i18next.t('admin:admin.dashboard.players_count_note', { count: (data||[]).length }),
       };
     } },
   { id:'dw-cron', cat:'content', sec:'cron', icon:'⏳', title:{fr:'Pierres de Cron',en:'Cron Stones'},
@@ -11746,10 +13323,10 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(farmed >= used),
         chart: buildPieWithLegendHtml([
-          { label: LANG==='fr'?'En stock':'In stock', value: Math.max(0, farmed-used) },
-          { label: LANG==='fr'?'Utilisées':'Used', value: used },
+          { label: i18next.t('admin:admin.dashboard.cron_in_stock_label'), value: Math.max(0, farmed-used) },
+          { label: i18next.t('admin:admin.dashboard.cron_used_label'), value: used },
         ], { thresholdPct:0 }),
-        note: (LANG==='fr'?`${fmt(farmed)} farmées / ${fmt(used)} utilisées`:`${fmt(farmed)} farmed / ${fmt(used)} used`),
+        note: i18next.t('admin:admin.dashboard.cron_farmed_used_note', { farmed: fmt(farmed), used: fmt(used) }),
       };
     } },
 ];
@@ -11765,12 +13342,12 @@ function buildDashboardCard(widget, result) {
 }
 function buildDashboardCardError(widget) {
   return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
-      <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${LANG==='fr'?'Indisponible':'Unavailable'}">⚪</span></div>
-      <div class="admDashCardBody"><div class="admEmpty">${LANG==='fr'?'Indisponible':'Unavailable'}</div></div>
+      <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${i18next.t('admin:admin.dashboard.unavailable')}">⚪</span></div>
+      <div class="admDashCardBody"><div class="admEmpty">${i18next.t('admin:admin.dashboard.unavailable')}</div></div>
     </div>`;
 }
 function renderAdminDashboard(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   const topPromise = Promise.all([
     sb.rpc('admin_list_players'),
     sb.from('admin_wealth').select('silver'),
@@ -11785,10 +13362,10 @@ function renderAdminDashboard(el) {
     const alerts = typeof computeEconAlerts === 'function' ? computeEconAlerts(ledgerByCat) : [];
     const alertsHtml = typeof buildEconAlertsHtml === 'function' ? buildEconAlertsHtml(alerts) : '';
     return `${alertsHtml}<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🟢 ${LANG==='fr'?'Joueurs en ligne':'Players online'}</div><div class="astVal">${online}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏦 ${LANG==='fr'?'Silver total en jeu':'Total silver in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🚫 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div><div class="astVal">${activeBans}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏛️ ${LANG==='fr'?'Marché':'Market'}</div><div class="astVal" style="${open?'':'color:var(--danger)'}">${open?(LANG==='fr'?'Ouvert':'Open'):(LANG==='fr'?'Fermé':'Closed')}</div></div>
+        <div class="admStatTile"><div class="astLbl">🟢 ${i18next.t('admin:admin.dashboard.players_online')}</div><div class="astVal">${online}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏦 ${i18next.t('admin:admin.dashboard.total_silver_in_game')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🚫 ${i18next.t('admin:admin.dashboard.active_bans_stat')}</div><div class="astVal">${activeBans}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏛️ ${i18next.t('admin:admin.dashboard.market_label')}</div><div class="astVal" style="${open?'':'color:var(--danger)'}">${open?i18next.t('admin:admin.dashboard.market_state_open'):i18next.t('admin:admin.dashboard.market_state_closed')}</div></div>
       </div>`;
   });
   
@@ -11798,9 +13375,7 @@ function renderAdminDashboard(el) {
   Promise.all([topPromise, Promise.allSettled(widgetPromises)]).then(([topHtml, settled]) => {
     const cards = settled.map(s => s.status === 'fulfilled' ? s.value : '').join('');
     el.innerHTML = `${topHtml}
-      <div class="admHint" style="margin:10px 0 12px">${LANG==='fr'
-        ? 'Vue d\'ensemble de tous les panneaux — 🟢 rien à signaler, 🔴 à surveiller. Clique une carte pour ouvrir le détail complet.'
-        : 'Overview of every panel — 🟢 nothing to flag, 🔴 needs attention. Click a card to open the full detail.'}</div>
+      <div class="admHint" style="margin:10px 0 12px">${i18next.t('admin:admin.dashboard.overview_hint')}</div>
       <div class="admDashGrid">${cards}</div>`;
     el.querySelectorAll('.admDashCard').forEach(card => {
       card.onclick = () => openAdminSection(card.dataset.cat, card.dataset.id);
@@ -11821,7 +13396,7 @@ function providerInfo(provider) {
 }
 
 function renderAdminPlayerList(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.rpc('admin_list_players').then(({data: playersList}) => {
     const playersHtml = (playersList||[]).map(p => {
       const prov = providerInfo(p.provider);
@@ -11830,24 +13405,24 @@ function renderAdminPlayerList(el) {
         <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
         <td title="${escapeHtml(prov.label[LANG])}">${prov.icon}</td>
         <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td>
-        <td title="${LANG==='fr'?'PA (Puissance d\'Attaque)':'AP (Attack Power)'}">${(p.ap||0).toFixed(1)}</td>
-        <td title="${LANG==='fr'?'PD (Puissance de Défense)':'DP (Defense Power)'}">${(p.dp||0).toFixed(1)}</td>
+        <td title="${i18next.t('admin:admin.players.ap_title')}">${(p.ap||0).toFixed(1)}</td>
+        <td title="${i18next.t('admin:admin.players.dp_title')}">${(p.dp||0).toFixed(1)}</td>
         <td>${p.lvl||1}</td>
-        <td title="${LANG==='fr'?'Record personnel de kills/min (à vie)':'Personal kills/min record (lifetime)'}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
+        <td title="${i18next.t('admin:admin.players.best_kpm_title')}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
         <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
-        <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${LANG==='fr'?'Ouvre l\'équipement porté et le sac complet (192 cases) de ce joueur, en lecture seule, dans une nouvelle fenêtre':'Opens this player\'s equipped gear and full bag (192 slots), read-only, in a new window'}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
+        <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${i18next.t('admin:admin.players.inventory_btn_title')}">🎒 ${i18next.t('admin:admin.players.inventory_btn')}</button></td>
       </tr>`;
-    }).join('') || `<tr><td colspan="11" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered`}</div>
+    }).join('') || `<tr><td colspan="11" class="admEmpty">${i18next.t('admin:admin.common.no_data')}</td></tr>`;
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.players.summary_online_registered', { online: (playersList||[]).filter(p=>p.online).length, total: (playersList||[]).length })}</div>
       <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th title="${LANG==='fr'?'Plateforme d\'inscription':'Signup platform'}">${LANG==='fr'?'Plate-forme':'Platform'}</th><th>Silver</th><th>GS</th><th title="${LANG==='fr'?'PA':'AP'}">PA</th><th title="${LANG==='fr'?'PD':'DP'}">PD</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
+        <thead><tr><th></th><th>${i18next.t('admin:admin.players.table_player')}</th><th title="${i18next.t('admin:admin.players.signup_platform_title')}">${i18next.t('admin:admin.players.table_platform')}</th><th>Silver</th><th>GS</th><th title="${i18next.t('admin:admin.players.ap_title')}">PA</th><th title="${i18next.t('admin:admin.players.dp_title')}">PD</th><th>Niv.</th><th title="${i18next.t('admin:admin.players.kpm_record_title')}">🏹</th><th></th><th></th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>`;
     el.querySelectorAll('.admUuidBtn').forEach(btn => {
       btn.onclick = async e => {
         e.stopPropagation();
         try { await navigator.clipboard.writeText(btn.dataset.uuid); } catch(e) {}
-        floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
+        floatTxt(P.x, P.y, 100, i18next.t('admin:admin.players.uuid_copied'), { gold:true });
       };
     });
     el.querySelectorAll('.admInvBtn').forEach(btn => {
@@ -11858,14 +13433,14 @@ function renderAdminPlayerList(el) {
 function renderAdminTargetPlayer(el) {
   el.innerHTML = `
     <div class="admSection riskSingle">
-      <div class="admSectionTitle">🎯 ${LANG==='fr'?'Un joueur précis — par UUID':'A specific player — by UUID'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Efface silver/équipement/niveau/sac de CE joueur uniquement.':'Wipes silver/gear/level/bag for THAT player only.'}</div>
+      <div class="admSectionTitle">🎯 ${i18next.t('admin:admin.players.target_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.players.target_sub')}</div>
       <div class="admActions">
-        <input type="text" id="admResetUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
-        <button id="btnScreenshotPlayer">📸 ${LANG==='fr'?'Screenshot':'Screenshot'}</button>
-        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${LANG==='fr'?'Réinitialiser ce joueur':'Reset this player'}</button>
+        <input type="text" id="admResetUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
+        <button id="btnScreenshotPlayer">📸 ${i18next.t('admin:admin.players.screenshot_btn')}</button>
+        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${i18next.t('admin:admin.players.reset_this_player_btn')}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Trouve l\'UUID d\'un joueur via le Classement ou ses messages en jeu (bouton "Copier UUID" dans son propre menu). "Screenshot" affiche son équipement/inventaire en lecture seule (aucune modification). Le reset envoie le même message d\'explication que le reset global, mais montré UNIQUEMENT à ce joueur.':'Find a player\'s UUID via the Leaderboard or their in-game messages (the "Copy UUID" button in their own menu). "Screenshot" shows their gear/inventory read-only (no changes made). The reset sends the same explanation message as the global reset, but shown ONLY to that player.'}</div>
+      <div class="admHint">${i18next.t('admin:admin.players.target_hint')}</div>
     </div>`;
   $a('btnScreenshotPlayer').onclick = adminScreenshotPlayer;
   $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
@@ -11873,21 +13448,19 @@ function renderAdminTargetPlayer(el) {
 function renderAdminSanctions(el) {
   el.innerHTML = `
     <div class="admSection">
-      <div class="admSectionTitle">🚫 ${LANG==='fr'?'Bannir un joueur':'Ban a player'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Bloque temporairement l\'accès au jeu pour ce joueur (durée + motif prédéfini).':'Temporarily blocks game access for this player (duration + predefined reason).'}</div>
+      <div class="admSectionTitle">🚫 ${i18next.t('admin:admin.sanctions.ban_a_player_title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.sanctions.ban_a_player_sub')}</div>
       <div class="admActions">
-        <input type="text" id="admBanUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
+        <input type="text" id="admBanUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
         <select id="admBanReasonSelect">${BAN_REASONS.map(r => `<option value="${r.id}">${r.label[LANG]}</option>`).join('')}</select>
         <select id="admBanDurationSelect">${BAN_DURATIONS.map(d => `<option value="${d.hours}"${d.hours===24?' selected':''}>${d.label[LANG]}</option>`).join('')}</select>
-        <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${LANG==='fr'?'Bannir':'Ban'}</button>
+        <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${i18next.t('admin:admin.sanctions.ban_btn')}</button>
       </div>
-      <div class="admHint warn">${LANG==='fr'
-        ? 'L\'admin ne peut jamais se bannir lui-même (vérifié côté client avant l\'appel serveur). Trouve l\'UUID via le Classement ou la section Joueurs.'
-        : 'The admin can never ban themselves (checked client-side before the server call). Find the UUID via the Leaderboard or the Players section.'}</div>
+      <div class="admHint warn">${i18next.t('admin:admin.sanctions.ban_hint')}</div>
     </div>
     <div class="admSection">
-      <div class="admSectionTitle">📋 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div>
-      <div id="admBanList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">📋 ${i18next.t('admin:admin.sanctions.active_bans_title')}</div>
+      <div id="admBanList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>`;
   $a('btnBanPlayer').onclick = banPlayerByUuid;
   refreshBanList();
@@ -11895,17 +13468,17 @@ function renderAdminSanctions(el) {
 function renderAdminRoles(el) {
   el.innerHTML = `
     <div class="admSection riskMgmt">
-      <div class="admSectionTitle">🎭 ${LANG==='fr'?'Rôles (Modérateur / Testeur)':'Roles (Moderator / Tester)'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'🛡️ Modérateur : peut supprimer des messages de chat. 🧪 Testeur : accès en avant-première aux fonctionnalités pas encore publiques. Un joueur peut cumuler les deux.':'🛡️ Moderator: can delete chat messages. 🧪 Tester: early access to not-yet-public features. A player can hold both roles.'}</div>
+      <div class="admSectionTitle">🎭 ${i18next.t('admin:admin.roles.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.roles.sub')}</div>
       <div class="admBossSpawn">
-        <input type="text" id="admRoleUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
+        <input type="text" id="admRoleUuid" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
         <select id="admRoleSelect" style="flex:0 0 auto;width:auto;">
-          <option value="mod">🛡️ ${LANG==='fr'?'Modérateur':'Moderator'}</option>
-          <option value="tester">🧪 ${LANG==='fr'?'Testeur':'Tester'}</option>
+          <option value="mod">🛡️ ${i18next.t('admin:admin.roles.moderator_label')}</option>
+          <option value="tester">🧪 ${i18next.t('admin:admin.roles.tester_label')}</option>
         </select>
-        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${LANG==='fr'?'➕ Ajouter':'➕ Add'}</button>
+        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${i18next.t('admin:admin.roles.add_btn')}</button>
       </div>
-      <div id="admRoleList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div id="admRoleList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>`;
   $a('btnAddRole').onclick = async () => {
     if (!isAdmin() || !sb) return;
@@ -11923,13 +13496,13 @@ function renderAdminRoles(el) {
 function renderAdminReconnect(el) {
   el.innerHTML = `
     <div class="admSection">
-      <div class="admSectionTitle">🔄 ${LANG==='fr'?'Sessions de reconnexion':'Reconnect sessions'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Volume agrégé du modal "Bon retour" — silver récupéré pendant les absences, tous joueurs confondus.':'Aggregate view of the "Welcome back" modal — silver recovered while away, across all players.'}</div>
-      <div id="admReconnectStats"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">🔄 ${i18next.t('admin:admin.reconnect.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.reconnect.sub')}</div>
+      <div id="admReconnectStats"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>
     <div class="admSection">
-      <div class="admSectionTitle">🏆 ${LANG==='fr'?'Top 10 sessions (par silver)':'Top 10 sessions (by silver)'}</div>
-      <div id="admReconnectTop"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">🏆 ${i18next.t('admin:admin.reconnect.top10_title')}</div>
+      <div id="admReconnectTop"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>`;
   refreshAdminReconnect();
 }
@@ -11946,16 +13519,16 @@ async function refreshAdminReconnect() {
   const s = data[0];
   statsEl.innerHTML = `
     <div class="admStatsGrid">
-      <div class="admStatCard"><b>${(s.total_sessions||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Sessions journalisées':'Logged sessions'}</span></div>
-      <div class="admStatCard"><b>${(s.total_players||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Joueurs concernés':'Players involved'}</span></div>
-      <div class="admStatCard"><b>${Math.round(s.total_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Silver total récupéré':'Total silver recovered'}</span></div>
-      <div class="admStatCard"><b>${Math.round(s.avg_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Moyenne / session':'Avg / session'}</span></div>
+      <div class="admStatCard"><b>${(s.total_sessions||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.logged_sessions')}</span></div>
+      <div class="admStatCard"><b>${(s.total_players||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.players_involved')}</span></div>
+      <div class="admStatCard"><b>${Math.round(s.total_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.total_silver_recovered')}</span></div>
+      <div class="admStatCard"><b>${Math.round(s.avg_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.avg_per_session')}</span></div>
     </div>`;
   const top = Array.isArray(s.top_sessions) ? s.top_sessions : [];
   topEl.innerHTML = top.length === 0
-    ? `<div class="admEmpty">${LANG==='fr'?'Aucune session pour le moment.':'No session yet.'}</div>`
+    ? `<div class="admEmpty">${i18next.t('admin:admin.reconnect.no_session_yet')}</div>`
     : `<table class="admTable"><thead><tr>
-        <th>${LANG==='fr'?'Silver':'Silver'}</th><th>${LANG==='fr'?'Zone':'Zone'}</th><th>${LANG==='fr'?'Date':'Date'}</th><th>${LANG==='fr'?'Joueur (UUID)':'Player (UUID)'}</th>
+        <th>Silver</th><th>${i18next.t('admin:admin.reconnect.table_zone')}</th><th>${i18next.t('admin:admin.reconnect.table_date')}</th><th>${i18next.t('admin:admin.reconnect.table_player_uuid')}</th>
       </tr></thead><tbody>${top.map(t => `<tr>
         <td>${Math.round(t.silver_gained||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
         <td>${escapeHtml(t.zone_name||'—')}</td>
@@ -11981,18 +13554,18 @@ function renderAdminBoss(el) {
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
   el.innerHTML = `
     <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🌍 ${LANG==='fr'?'Lancer un boss pour TOUS':'Launch a boss for ALL'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
+      <div class="admSectionTitle">🌍 ${i18next.t('admin:admin.content.boss_launch_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.content.boss_danger_sub')}</div>
       <div class="admBossSpawn">
-        <span>${LANG==='fr'?'🌍 Boss :':'🌍 Boss:'}</span>
+        <span>${i18next.t('admin:admin.content.boss_label')}</span>
         <select id="admGlobalBossSelect">${bossOptions}</select>
         <select id="admBossDurationSelect">
-          ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${LANG==='fr'?`~${m} min à tuer`:`~${m} min to kill`}</option>`).join('')}
+          ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${i18next.t('admin:admin.content.boss_duration_option', { m })}</option>`).join('')}
         </select>
-        <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (9 min)':'Launch (9 min)'}</button>
-        <button id="btnAdmDespawnBoss">🛑 ${LANG==='fr'?'Faire disparaître':'Despawn'}</button>
+        <button id="btnAdmSpawnGlobal">${i18next.t('admin:admin.content.boss_launch_btn')}</button>
+        <button id="btnAdmDespawnBoss">🛑 ${i18next.t('admin:admin.content.boss_despawn_btn')}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels). Le boss disparaît de toute façon au bout de 9 minutes.':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation). The boss despawns after 9 minutes regardless.'}</div>
+      <div class="admHint">${i18next.t('admin:admin.content.boss_hint')}</div>
     </div>`;
   $a('btnAdmSpawnGlobal').onclick = async () => {
     if (!isAdmin() || !sb) return;
@@ -12000,14 +13573,14 @@ function renderAdminBoss(el) {
     const targetMin = Number($a('admBossDurationSelect').value) || 4;
     const ok = await adminSpawnSharedBoss(id, targetMin);
     if (ok) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a lancé ${BOSS_ROSTER[id].name.fr} pour tous (~${targetMin} min)`, 0x9cc9e8);
-    floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓') : (LANG==='fr'?'Échec du lancement':'Failed to launch'), { gold:ok, hurt:!ok });
+    floatTxt(P.x, P.y, 100, ok ? i18next.t('admin:admin.content.boss_launched_toast') : i18next.t('admin:admin.content.boss_launch_failed_toast'), { gold:ok, hurt:!ok });
   };
   $a('btnAdmDespawnBoss').onclick = async () => {
     if (!isAdmin() || !sb) return;
-    if (!confirm(LANG==='fr'?'Faire disparaître le boss mondial pour TOUS les joueurs ?':'Despawn the world boss for ALL players?')) return;
+    if (!confirm(i18next.t('admin:admin.content.boss_despawn_confirm'))) return;
     const { error } = await sb.rpc('admin_despawn_boss');
     if (!error) { await refreshLiveBoss(); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a fait disparaître le boss mondial`, 0x9cc9e8); }
-    floatTxt(P.x, P.y, 100, !error ? (LANG==='fr'?'Boss disparu ✓':'Boss despawned ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+    floatTxt(P.x, P.y, 100, !error ? i18next.t('admin:admin.content.boss_despawned_toast') : i18next.t('admin:admin.common.failed'), { gold:!error, hurt:!!error });
   };
 }
 
@@ -12034,32 +13607,32 @@ function renderAdminPatchNotesDiscord(el) {
   const options = PATCH_NOTES.slice(0, 20).map(n => `<option value="${n.v}">${n.v} — ${n.name.fr}</option>`).join('');
   el.innerHTML = `
     <div class="admSection riskSafe">
-      <div class="admSectionTitle">📜 ${LANG==='fr'?'Publier une note de version sur Discord':'Publish a patch note to Discord'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Poste le contenu de la note choisie dans le salon Discord "log général" (même webhook que les autres actions admin).':'Posts the chosen note into the "general log" Discord channel (same webhook as other admin actions).'}</div>
+      <div class="admSectionTitle">📜 ${i18next.t('admin:admin.patchnotes.publish_title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.patchnotes.publish_sub')}</div>
       <div class="admBossSpawn">
-        <span>${LANG==='fr'?'📜 Version :':'📜 Version:'}</span>
+        <span>${i18next.t('admin:admin.patchnotes.version_label')}</span>
         <select id="admPatchNoteSelect">${options}</select>
-        <button id="btnAdmPublishPatchNote">🚀 ${LANG==='fr'?'Publier sur Discord':'Publish to Discord'}</button>
+        <button id="btnAdmPublishPatchNote">🚀 ${i18next.t('admin:admin.patchnotes.publish_btn')}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'La dernière version est sélectionnée par défaut. Chaque ligne garde son icône (🆕 nouveauté, 🔄 changement, 🛠️ correctif, 🔒 faille corrigée).':'Latest version selected by default. Each line keeps its icon (🆕 new, 🔄 change, 🛠️ fix, 🔒 patched exploit).'}</div>
+      <div class="admHint">${i18next.t('admin:admin.patchnotes.publish_hint')}</div>
     </div>`;
   $a('btnAdmPublishPatchNote').onclick = async () => {
     if (!isAdmin()) return;
     const version = $a('admPatchNoteSelect').value;
     const ok = await publishPatchNoteToDiscord(version);
-    floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Note publiée sur Discord ✓':'Note published to Discord ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:ok, hurt:!ok });
+    floatTxt(P.x, P.y, 100, ok ? i18next.t('admin:admin.patchnotes.published_toast') : i18next.t('admin:admin.common.failed'), { gold:ok, hurt:!ok });
   };
 }
 
 function renderAdminPatchNotesModeration(el) {
   el.innerHTML = `
     <div class="admSection">
-      <div class="admSectionTitle">🚩 ${LANG==='fr'?'Signalements en attente':'Pending reports'}</div>
-      <div id="admPatchReports"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">🚩 ${i18next.t('admin:admin.patchnotes.pending_reports_title')}</div>
+      <div id="admPatchReports"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>
     <div class="admSection">
-      <div class="admSectionTitle">🗑️ ${LANG==='fr'?'Commentaires retirés (restaurables)':'Removed comments (restorable)'}</div>
-      <div id="admPatchRemoved"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">🗑️ ${i18next.t('admin:admin.patchnotes.removed_comments_title')}</div>
+      <div id="admPatchRemoved"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>`;
   refreshAdminPatchNotesModeration();
 }
@@ -12070,7 +13643,7 @@ async function refreshAdminPatchNotesModeration() {
 
   const { data: reports, error: reportsErr } = await sb.rpc('admin_patch_note_pending_reports');
   reportsEl.innerHTML = reportsErr ? `<div class="admHint">${escapeHtml(reportsErr.message)}</div>`
-    : (!reports || reports.length === 0) ? `<div class="admEmpty">${LANG==='fr'?'Aucun signalement en attente.':'No pending reports.'}</div>`
+    : (!reports || reports.length === 0) ? `<div class="admEmpty">${i18next.t('admin:admin.patchnotes.no_pending_reports')}</div>`
     : reports.map(r => `<div class="achRow">
         <div class="achInfo"><div class="achName">${escapeHtml(r.author)} — ${escapeHtml(r.entry_id)}</div>
         <div class="achDesc">${escapeHtml(r.text)}</div></div>
@@ -12079,11 +13652,11 @@ async function refreshAdminPatchNotesModeration() {
 
   const { data: removed, error: removedErr } = await sb.rpc('admin_list_removed_patch_note_comments');
   removedEl.innerHTML = removedErr ? `<div class="admHint">${escapeHtml(removedErr.message)}</div>`
-    : (!removed || removed.length === 0) ? `<div class="admEmpty">${LANG==='fr'?'Aucun commentaire retiré.':'No removed comments.'}</div>`
+    : (!removed || removed.length === 0) ? `<div class="admEmpty">${i18next.t('admin:admin.patchnotes.no_removed_comments')}</div>`
     : removed.map(c => `<div class="achRow" data-cid="${c.id}">
-        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)} ${c.status==='pending_review'?`<span style="color:var(--red2,#e08070)">🚩 ${LANG==='fr'?'Auto-masqué (signalements)':'Auto-hidden (reports)'}</span>`:''}</div>
+        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)} ${c.status==='pending_review'?`<span style="color:var(--red2,#e08070)">🚩 ${i18next.t('admin:admin.patchnotes.auto_hidden_label')}</span>`:''}</div>
         <div class="achDesc">${escapeHtml(c.text)}</div></div>
-        <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${LANG==='fr'?'Restaurer':'Restore'}</button></div>
+        <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${i18next.t('admin:admin.patchnotes.restore_btn')}</button></div>
       </div>`).join('');
   removedEl.querySelectorAll('.admPatchRestoreBtn').forEach(btn => {
     btn.onclick = async () => {
@@ -12097,21 +13670,21 @@ function renderAdminMyTests(el) {
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
   el.innerHTML = `
     <div class="admSection riskSafe">
-      <div class="admSectionTitle">👤 ${LANG==='fr'?'Pour moi — test sur mon compte':'For me — test on my account'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Sans danger : ça ne touche que TON propre personnage.':'Safe: only affects YOUR own character.'}</div>
+      <div class="admSectionTitle">👤 ${i18next.t('admin:admin.tests.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.tests.sub')}</div>
       <div class="admActions">
         <button id="btnTestSilver">💰 +1M silver</button>
         <button id="btnTestLoyalty">📬 +200 Loyalties</button>
-        <button id="btnTestAch">🏅 ${LANG==='fr'?'Débloquer tous les succès':'Unlock all achievements'}</button>
-        <button id="btnResetMyQuests">🔄 ${LANG==='fr'?'Réinitialiser mes quêtes':'Reset my quests'}</button>
-        <button id="btnResetDemo">🔄 ${LANG==='fr'?'Réinitialiser la démo':'Reset the demo'}</button>
+        <button id="btnTestAch">🏅 ${i18next.t('admin:admin.tests.unlock_achievements_btn')}</button>
+        <button id="btnResetMyQuests">🔄 ${i18next.t('admin:admin.tests.reset_my_quests_btn')}</button>
+        <button id="btnResetDemo">🔄 ${i18next.t('admin:admin.tests.reset_demo_btn')}</button>
       </div>
       <div class="admBossSpawn">
-        <span>${LANG==='fr'?'⚔️ Combattre un World Boss :':'⚔️ Fight a World Boss:'}</span>
+        <span>${i18next.t('admin:admin.tests.fight_boss_label')}</span>
         <select id="admBossSelect">${bossOptions}</select>
-        <button id="btnAdmSpawnBoss">${LANG==='fr'?'Combattre maintenant':'Fight now'}</button>
+        <button id="btnAdmSpawnBoss">${i18next.t('admin:admin.tests.fight_now_btn')}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Lance un vrai boss partagé (PV communs) rien que pour toi, pour tester sans attendre le planning ni prévenir personne.':'Spawns a real shared boss (common HP) just for you, to test without waiting for the schedule or notifying anyone.'}</div>
+      <div class="admHint">${i18next.t('admin:admin.tests.hint')}</div>
     </div>`;
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; addSilver(1000000, 'admin_test'); refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
   $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); floatTxt(P.x,P.y,100,'+200 🏅 (courrier)',{gold:true}); };
@@ -12122,14 +13695,14 @@ function renderAdminMyTests(el) {
     if (!isAdmin() || !sb) return;
     const id = $a('admBossSelect').value;
     const ok = await adminSpawnSharedBoss(id, 4);
-    if (!ok) { floatTxt(P.x, P.y, 100, LANG==='fr'?'Échec du lancement':'Failed to launch', { hurt:true }); return; }
+    if (!ok) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.content.boss_launch_failed_toast'), { hurt:true }); return; }
     closeAdminPanel();
     startBossFight(id, true); 
   };
 }
 
 function renderAdminThemeSwatchesHtml(currentTheme) {
-  return `<div class="admThemeSwatches" title="🎨 ${LANG==='fr'?'Palette':'Palette'}">${ADMIN_THEMES.map(t =>
+  return `<div class="admThemeSwatches" title="🎨 ${i18next.t('admin:admin.system.palette_label')}">${ADMIN_THEMES.map(t =>
     `<button class="admSwatchBtn${t.id===currentTheme?' active':''}" data-theme="${t.id}" style="background:${t.color}" title="${escapeHtml(t.label[LANG])}"></button>`
   ).join('')}</div>`;
 }
@@ -12147,13 +13720,13 @@ function wireAdminThemeSwatches() {
 function renderAdminServerDanger(el) {
   el.innerHTML = `
     <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🌍 ${LANG==='fr'?'Pour les joueurs — actions serveur':'For players — server-wide'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
+      <div class="admSectionTitle">🌍 ${i18next.t('admin:admin.system.danger_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.content.boss_danger_sub')}</div>
       <div class="admActions">
-        <button id="btnResetAllQuests">⚠️ ${LANG==='fr'?'Réinitialiser les quêtes de tous':'Reset everyone\'s quests'}</button>
-        <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Réinitialiser TOUS les comptes':'Reset ALL accounts'}</button>
+        <button id="btnResetAllQuests">⚠️ ${i18next.t('admin:admin.system.reset_all_quests_btn')}</button>
+        <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${i18next.t('admin:admin.system.reset_all_accounts_btn')}</button>
       </div>
-      <div class="admHint warn">${LANG==='fr'?'"Réinitialiser TOUS les comptes" efface silver/équipement/niveau/sac de TOUT LE MONDE et affiche un message d\'explication à chaque joueur à sa prochaine connexion. Irréversible.':'"Reset ALL accounts" wipes silver/gear/level/bag for EVERYONE and shows an explanation message to each player on their next login. Irreversible.'}</div>
+      <div class="admHint warn">${i18next.t('admin:admin.system.reset_all_accounts_hint')}</div>
     </div>`;
   $a('btnResetAllQuests').onclick = resetAllQuests;
   $a('btnResetAllAccounts').onclick = resetAllAccounts;
@@ -12168,7 +13741,7 @@ function renderAdminSidebar(activeCat, activeId) {
     ${group.items.map(item => `
       <div class="admNavItem${activeCat===group.cat&&activeId===item.id?' active':''}${item.planned?' planned':''}" data-cat="${group.cat}" data-id="${item.id}">
         <span class="admNavIcon">${item.icon}</span><span>${item.label[LANG]}</span>
-        ${item.planned?`<span class="admNavBadge">${LANG==='fr'?'🔜 prévu':'🔜 planned'}</span>`:''}
+        ${item.planned?`<span class="admNavBadge">${i18next.t('admin:admin.system.planned_badge')}</span>`:''}
       </div>`).join('')}
   `).join('');
 }
@@ -12187,9 +13760,7 @@ function openAdminSection(cat, id) {
   const body = $a('adminMainBody');
   if (item.planned) {
     body.innerHTML = `<div class="admPlannedPane"><div class="admPlannedIcon">🔜</div>
-      ${LANG==='fr'
-        ? 'Prévu sur la roadmap, mais aucun code jeu derrière pour l\'instant (pas de table, pas de mécanique côté client). Cet onglet deviendra utile une fois qu\'une première brique réelle existera — voir ADMIN_MENU_PLAN.md.'
-        : 'On the roadmap, but no game code behind it yet (no table, no client-side mechanic). This tab becomes useful once a first real piece exists — see ADMIN_MENU_PLAN.md.'}</div>`;
+      ${i18next.t('admin:admin.system.planned_pane_text')}</div>`;
     return;
   }
   item.render(body);
@@ -12222,10 +13793,10 @@ async function openAdminPanel() {
   overlay.dataset.admTheme = currentTheme;
   $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
   $a('adminSidebar').innerHTML = `<div class="admNavHead">` +
-      `<span class="admNavTitle">🛠️ ${LANG==='fr'?'Admin':'Admin'}</span>` +
+      `<span class="admNavTitle">🛠️ Admin</span>` +
       renderAdminThemeSwatchesHtml(currentTheme) +
-      `<button id="closeAdmin" title="${LANG==='fr'?'Fermer':'Close'}">✕</button></div>` +
-    `<input type="text" id="admNavSearch" class="admNavSearch" placeholder="🔍 ${LANG==='fr'?'Rechercher…':'Search…'}">` +
+      `<button id="closeAdmin" title="${i18next.t('admin:admin.system.close_btn_title')}">✕</button></div>` +
+    `<input type="text" id="admNavSearch" class="admNavSearch" placeholder="🔍 ${i18next.t('admin:admin.system.search_placeholder')}">` +
     renderAdminSidebar('overview', 'dashboard');
   $a('closeAdmin').onclick = closeAdminPanel;
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
@@ -12248,11 +13819,9 @@ function openTesterPanel() {
     { icon:'🐑', name:{fr:'Bergerie',en:'Ranch'} },
   ];
   const list = upcoming.map(a => `<div class="achRow inactive"><div class="achIcon">${a.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${LANG==='fr'?'En développement — bientôt en test':'In development — testable soon'}</div></div></div>`).join('');
-  openInfo(LANG==='fr'?'🧪 Panneau Testeur':'🧪 Tester Panel',
-    `<div class="admSummary">${LANG==='fr'
-      ? 'Merci de tester Black Desert Idle ! Ce panneau te donnera accès aux nouveautés en avant-première (sans aucun avantage en jeu — c\'est du test pur). Rien à tester pour l\'instant, mais voici ce qui arrive :'
-      : 'Thanks for testing Black Desert Idle! This panel gives you early access to new features (no in-game advantage — pure testing). Nothing to test yet, but here\'s what\'s coming:'}</div>` +
+    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${i18next.t('admin:admin.tests.upcoming_in_dev')}</div></div></div>`).join('');
+  openInfo(i18next.t('admin:admin.tests.tester_panel_title'),
+    `<div class="admSummary">${i18next.t('admin:admin.tests.tester_panel_intro')}</div>` +
     list);
 }
 $a('btnTester').onclick = openTesterPanel;
@@ -12336,9 +13905,9 @@ function buildPieChartSvg(slices) {
 
 function buildPieWithLegendHtml(items, opts) {
   opts = opts || {};
-  const otherLabel = LANG==='fr' ? 'Autres' : 'Other';
+  const otherLabel = i18next.t('admin:admin.economy.pie_other');
   const merged = mergeSmallSlices(items, opts.thresholdPct != null ? opts.thresholdPct : 4, otherLabel);
-  if (!merged.length) return `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+  if (!merged.length) return `<div class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</div>`;
   const total = merged.reduce((a,s) => a+s.value, 0);
   const slices = merged.map((s,i) => ({ ...s, color: PIE_PALETTE[i % PIE_PALETTE.length] }));
   const svg = buildPieChartSvg(slices);
@@ -12377,9 +13946,7 @@ function computeEconAlerts(categoryRows) {
     const ratio = totalGained > 0 ? totalSpent / totalGained : 0;
     if (ratio < ECON_ALERT_SINK_RATIO) {
       const pct = Math.round(ratio*100);
-      alerts.push({ icon:'⚠️', text: LANG==='fr'
-        ? `Seulement ${pct}% du silver gagné est réellement dépensé (sorti du jeu) — trop peu de puits, risque d'inflation. Envisage d'ajouter un puits (boutique, coût, sink) rapidement.`
-        : `Only ${pct}% of gained silver is actually spent (sunk out of the game) — too few sinks, inflation risk. Consider adding a sink (shop, cost, drain) soon.` });
+      alerts.push({ icon:'⚠️', text: i18next.t('admin:admin.economy.sink_alert', { pct }) });
     }
   }
   return alerts;
@@ -12390,7 +13957,7 @@ function buildEconAlertsHtml(alerts) {
 }
 
 function renderAdminEconHealth(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.from('admin_silver_ledger_by_category').select('*').then(({data}) => {
     const rows = (data||[]).map(r => ({
       category: r.category, gained: Number(r.total_gained||0), spent: Number(r.total_spent||0),
@@ -12399,18 +13966,16 @@ function renderAdminEconHealth(el) {
     const sources = rows.filter(r => r.gained > 0).map(r => ({ label:label(r.category), value:r.gained }));
     const sinks = rows.filter(r => r.spent > 0).map(r => ({ label:label(r.category), value:r.spent }));
     el.innerHTML = `${buildEconAlertsHtml(computeEconAlerts(rows))}
-      <div class="admSummary">${LANG==='fr'
-        ? 'Sources (gagné) vs puits (dépensé), par catégorie — même registre que "Silver", vue centrée sur l\'équilibre entrées/sorties. Catégories sous 4% du total fusionnées dans "Autres".'
-        : 'Sources (gained) vs sinks (spent), by category — same ledger as "Silver", view centered on inflow/outflow balance. Categories under 4% of the total are merged into "Other".'}</div>
+      <div class="admSummary">${i18next.t('admin:admin.economy.health_summary')}</div>
       <div class="admChartsRow">
-        <div><h3 style="margin-top:0">${LANG==='fr'?'📥 Sources (gagné)':'📥 Sources (gained)'}</h3>${buildPieWithLegendHtml(sources)}</div>
-        <div><h3 style="margin-top:0">${LANG==='fr'?'📤 Puits (dépensé)':'📤 Sinks (spent)'}</h3>${buildPieWithLegendHtml(sinks)}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sources_title')}</h3>${buildPieWithLegendHtml(sources)}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.economy.health_sinks_title')}</h3>${buildPieWithLegendHtml(sinks)}</div>
       </div>`;
   });
 }
 
 function renderAdminSilver(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
     sb.from('admin_wealth').select('*'),
     sb.from('admin_silver_ledger_by_category').select('*'),
@@ -12432,7 +13997,7 @@ function renderAdminSilver(el) {
       const label = CATEGORY_LABEL[r.category] ? CATEGORY_LABEL[r.category][LANG] : r.category;
       return `<tr><td>${escapeHtml(label)}</td><td class="admGain">+${fmt(r.gained)}</td><td class="admLoss">-${fmt(r.spent)}</td>` +
         `<td>${fmt(r.tx)}</td></tr>`;
-    }).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+    }).join('') || `<tr><td colspan="4" class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</td></tr>`;
     const { accent, danger } = currentAdminAccentColors();
     const chartSvg = buildSilverChartSvg(silverByHour, accent, danger);
     const rateRows = (wealth||[]).map(r => {
@@ -12444,31 +14009,31 @@ function renderAdminSilver(el) {
     const rateHtml = rateRows.map((r,i) => `
       <tr class="${i===0?'admTop':''}"><td>#${i+1}</td><td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td>
         <td>${fmt(r.earned)}</td><td>${fmtAdmPlaytime(r.sec)}</td><td>${fmt(Math.round(r.rate))}/h</td></tr>
-    `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données (au moins 3 min de jeu requises)':'No data yet (at least 3 min playtime required)'}</td></tr>`;
+    `).join('') || `<tr><td colspan="5" class="admEmpty">${i18next.t('admin:admin.economy.no_data_playtime')}</td></tr>`;
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🏦 Stocké (chez les joueurs)':'🏦 Stored (with players)'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📈 Gagné à vie':'📈 Lifetime earned'}</div><div class="astVal">${fmt(totalEarned)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🔻 Dépensé (sorti du jeu)':'🔻 Spent (sunk)'}</div><div class="astVal">${fmt(totalSpent)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.silver_stat_stored')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.silver_stat_lifetime_earned')}</div><div class="astVal">${fmt(totalEarned)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.silver_stat_spent')}</div><div class="astVal">${fmt(totalSpent)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.avg_per_player')}</div><div class="astVal">${fmt(avgSilver)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'📊 Flux net de silver par heure (48h)':'📊 Net silver flow per hour (48h)'}</h3>
+      <h3>${i18next.t('admin:admin.economy.silver_chart_title')}</h3>
       ${chartSvg}
-      <h3>${LANG==='fr'?'🔍 Où partent les silver ? (registre détaillé)':'🔍 Where does the silver go? (detailed ledger)'}</h3>
-      <div class="admHint">${LANG==='fr'?'Répartition visuelle par catégorie : voir la section "Santé économique".':'Visual breakdown by category: see the "Economic health" section.'}</div>
+      <h3>${i18next.t('admin:admin.economy.silver_ledger_title')}</h3>
+      <div class="admHint">${i18next.t('admin:admin.economy.silver_ledger_hint')}</div>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Catégorie':'Category'}</th><th>${LANG==='fr'?'Gagné':'Gained'}</th><th>${LANG==='fr'?'Dépensé':'Spent'}</th><th>${LANG==='fr'?'Mouvements':'Transactions'}</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.economy.table_category')}</th><th>${i18next.t('admin:admin.economy.table_gained')}</th><th>${i18next.t('admin:admin.economy.table_spent')}</th><th>${i18next.t('admin:admin.economy.table_transactions')}</th></tr></thead>
         <tbody>${categoryHtml}</tbody>
       </table>
-      <h3>${LANG==='fr'?'🏆 Qui gagne le plus vite ? (taux à vie)':'🏆 Who earns fastest? (lifetime rate)'}</h3>
+      <h3>${i18next.t('admin:admin.economy.silver_rate_title')}</h3>
       <table class="admTable">
-        <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Gagné à vie':'Lifetime earned'}</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
+        <thead><tr><th>#</th><th>${i18next.t('admin:admin.economy.table_player')}</th><th>${i18next.t('admin:admin.economy.table_lifetime_earned')}</th><th>${i18next.t('admin:admin.economy.table_playtime')}</th><th>${i18next.t('admin:admin.economy.table_rate')}</th></tr></thead>
         <tbody>${rateHtml}</tbody>
       </table>`;
   });
 }
 
 function renderAdminHourly(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
     sb.from('admin_farm_by_hour').select('*'),
     sb.from('admin_playtime_by_hour').select('*'),
@@ -12483,17 +14048,17 @@ function renderAdminHourly(el) {
     const ptChart = buildBarSeriesSvg(ptRows.map(r => ({ label:r.hour, value:r.players })), accent);
     const maxHourEntry = hours.length ? hours.reduce((m,h) => h[1]>m[1]?h:m) : null;
     const maxPtEntry = ptRows.length ? ptRows.reduce((m,r) => r.players>m.players?r:m, ptRows[0]) : null;
-    el.innerHTML = `<h3>${LANG==='fr'?'💰 Silver farmé par heure (48h)':'💰 Silver farmed per hour (48h)'}</h3>
+    el.innerHTML = `<h3>${i18next.t('admin:admin.economy.hourly_farmed_title')}</h3>
       ${hourChart}
-      <div class="admHint">${LANG==='fr'?'Pic :':'Peak:'} ${maxHourEntry ? fmt(maxHourEntry[1]) : '—'}</div>
-      <h3>${LANG==='fr'?'👥 Joueurs actifs par heure (48h)':'👥 Active players per hour (48h)'}</h3>
+      <div class="admHint">${i18next.t('admin:admin.economy.hourly_peak_label')} ${maxHourEntry ? fmt(maxHourEntry[1]) : '—'}</div>
+      <h3>${i18next.t('admin:admin.economy.hourly_active_title')}</h3>
       ${ptChart}
-      <div class="admHint">${LANG==='fr'?'Pic :':'Peak:'} ${maxPtEntry ? maxPtEntry.players : '—'}</div>`;
+      <div class="admHint">${i18next.t('admin:admin.economy.hourly_peak_label')} ${maxPtEntry ? maxPtEntry.players : '—'}</div>`;
   });
 }
 
 function renderAdminWealth(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
     sb.from('admin_wealth').select('*'),
     sb.from('player_stats').select('user_id, playtime_sec'),
@@ -12521,48 +14086,46 @@ function renderAdminWealth(el) {
     );
     const wealthHtml = (wealth||[]).slice(0,20).map((r,i) => `
       <tr><td>#${i+1}</td><td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td><td>${fmt(r.silver||0)}</td><td>${r.lvl||1}</td><td>${fmtAdmPlaytime(playtimeByUser.get(r.user_id)||0)}</td></tr>
-    `).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+    `).join('') || `<tr><td colspan="5" class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</td></tr>`;
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'💰 Total en jeu':'💰 Total in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(avgSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📍 Médiane':'📍 Median'}</div><div class="astVal">${fmt(medSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${silvers.length}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.wealth_stat_total')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.avg_per_player')}</div><div class="astVal">${fmt(avgSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.wealth_stat_median')}</div><div class="astVal">${fmt(medSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.stat_players')}</div><div class="astVal">${silvers.length}</div></div>
       </div>
-      <h3>${LANG==='fr'?'📈 Répartition des joueurs par richesse':'📈 Players by wealth bracket'}</h3>
+      <h3>${i18next.t('admin:admin.economy.wealth_bracket_title')}</h3>
       ${bracketPie}
       <table class="admTable">
-        <thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>Silver</th><th>Niv.</th><th>${LANG==='fr'?'Temps de jeu':'Playtime'}</th></tr></thead>
+        <thead><tr><th>#</th><th>${i18next.t('admin:admin.economy.table_player')}</th><th>Silver</th><th>Niv.</th><th>${i18next.t('admin:admin.economy.table_playtime')}</th></tr></thead>
         <tbody>${wealthHtml}</tbody>
       </table>`;
   });
 }
 
 function renderAdminLoyalty(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.from('player_stats').select('loyalty').then(({data: stats}) => {
     const loyaltyVals = (stats||[]).map(r => Number(r.loyalty||0));
     const loyaltyTotal = loyaltyVals.reduce((a,b) => a+b, 0);
     const loyaltyAvg = loyaltyVals.length ? Math.round(loyaltyTotal/loyaltyVals.length) : 0;
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'🏅 Total en jeu':'🏅 Total in game'}</div><div class="astVal">${fmt(loyaltyTotal)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'📊 Moyenne / joueur':'📊 Average / player'}</div><div class="astVal">${fmt(loyaltyAvg)}</div></div>
-        <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'👥 Joueurs':'👥 Players'}</div><div class="astVal">${loyaltyVals.length}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.loyalty_stat_total')}</div><div class="astVal">${fmt(loyaltyTotal)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.avg_per_player')}</div><div class="astVal">${fmt(loyaltyAvg)}</div></div>
+        <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.economy.stat_players')}</div><div class="astVal">${loyaltyVals.length}</div></div>
       </div>
-      <h3>${LANG==='fr'?'🛍️ Utilisées pour':'🛍️ Used to buy'}</h3>
-      <div class="admEmpty">${LANG==='fr'
-        ? 'Aucune boutique Loyalties en jeu pour l\'instant — rien à dépenser, ces stats servent à suivre l\'accumulation avant d\'ouvrir une boutique.'
-        : 'No Loyalties shop in game yet — nothing to spend it on, these stats track accumulation ahead of opening a shop.'}</div>`;
+      <h3>${i18next.t('admin:admin.economy.loyalty_used_title')}</h3>
+      <div class="admEmpty">${i18next.t('admin:admin.economy.loyalty_no_shop')}</div>`;
   });
 }
 
 function renderAdminMarket(el) {
   el.innerHTML = `
     <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🏛️ ${LANG==='fr'?'Marché':'Market'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Ferme l\'accès au Marché pour TOUT LE MONDE sauf toi ; l\'annulation rembourse chaque ordre ouvert (silver ou objet) à son propriétaire.':'Closes Market access for EVERYONE except you; cancelling refunds every open order (silver or item) to its owner.'}</div>
+      <div class="admSectionTitle">🏛️ ${i18next.t('admin:admin.economy.market_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.economy.market_sub')}</div>
       <div class="admActions">
-        <button id="btnMarketToggle">${LANG==='fr'?'Chargement…':'Loading…'}</button>
-        <button id="btnMarketCancelAll" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Annuler tous les ordres ouverts':'Cancel all open orders'}</button>
+        <button id="btnMarketToggle">${i18next.t('admin:admin.economy.loading')}</button>
+        <button id="btnMarketCancelAll" style="border-color:var(--danger);color:#e8a89f">💥 ${i18next.t('admin:admin.economy.market_cancel_all_btn')}</button>
       </div>
       <div id="admMarketStatus" class="admHint"></div>
     </div>`;
@@ -12571,8 +14134,8 @@ function renderAdminMarket(el) {
     const { data } = await sb.rpc('get_market_open');
     const open = data !== false;
     btn.textContent = open
-      ? (LANG==='fr'?'🔓 Marché ouvert (clique pour fermer)':'🔓 Market open (click to close)')
-      : (LANG==='fr'?'🔒 Marché fermé (clique pour rouvrir)':'🔒 Market closed (click to reopen)');
+      ? i18next.t('admin:admin.economy.market_open_btn')
+      : i18next.t('admin:admin.economy.market_closed_btn');
     btn.style.borderColor = open ? '' : 'var(--danger)';
     btn.style.color = open ? '' : '#e8a89f';
   }
@@ -12586,24 +14149,22 @@ function renderAdminMarket(el) {
       logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a ${nextOpen?'rouvert':'fermé'} le Marché`, 0x9cc9e8);
       await refreshMarketAdminStatus();
     }
-    floatTxt(P.x, P.y, 100, !error ? (nextOpen?(LANG==='fr'?'Marché rouvert ✓':'Market reopened ✓'):(LANG==='fr'?'Marché fermé ✓':'Market closed ✓')) : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+    floatTxt(P.x, P.y, 100, !error ? (nextOpen ? i18next.t('admin:admin.economy.market_reopened_toast') : i18next.t('admin:admin.economy.market_closed_toast')) : i18next.t('admin:admin.economy.failed_short'), { gold:!error, hurt:!!error });
   };
   $a('btnMarketCancelAll').onclick = async () => {
     if (!isAdmin() || !sb) return;
-    if (!confirm(LANG==='fr'
-      ? '💥 Annuler TOUS les ordres ouverts du Marché ? Chaque ordre sera remboursé (silver ou objet) à son propriétaire. Irréversible.'
-      : '💥 Cancel ALL open Market orders? Each order will be refunded (silver or item) to its owner. Irreversible.')) return;
+    if (!confirm(i18next.t('admin:admin.economy.market_cancel_confirm'))) return;
     const { data, error } = await sb.rpc('admin_cancel_all_market_orders');
     if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a annulé ${data} ordre(s) de marché (remboursés)`, 0xc05545);
-    const msg = error ? (LANG==='fr'?'Échec — '+error.message:'Failed — '+error.message)
-      : (LANG==='fr'?`${data} ordre(s) annulé(s) et remboursé(s) ✓`:`${data} order(s) cancelled and refunded ✓`);
+    const msg = error ? i18next.t('admin:admin.economy.failed_prefix') + error.message
+      : i18next.t('admin:admin.economy.market_cancel_result', { data });
     $a('admMarketStatus').textContent = msg;
     floatTxt(P.x, P.y, 100, msg, { gold:!error, hurt:!!error });
   };
 }
 
 function renderAdminMarketVolume(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.rpc('admin_market_top_items', { p_days: 30 }).then(({data, error}) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
@@ -12612,24 +14173,24 @@ function renderAdminMarketVolume(el) {
     const itemHtml = rows.map((r,i) => `
       <tr class="${i===0?'admTop':''}"><td>${tr(r.item_name) || escapeHtml(r.item_name)}</td>
         <td>${fmt(r.trade_count)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver_value)}</td></tr>
-    `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun échange sur les 30 derniers jours':'No trades in the last 30 days'}</td></tr>`;
+    `).join('') || `<tr><td colspan="4" class="admEmpty">${i18next.t('admin:admin.economy.marketvolume_no_trades')}</td></tr>`;
     const pie = buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name) || r.item_name, value: Number(r.total_silver_value||0) })));
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">💱 ${LANG==='fr'?'Volume total (30j)':'Total volume (30d)'}</div><div class="astVal">${fmt(totalVolume)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🔄 ${LANG==='fr'?'Échanges (30j)':'Trades (30d)'}</div><div class="astVal">${fmt(totalTrades)}</div></div>
+        <div class="admStatTile"><div class="astLbl">💱 ${i18next.t('admin:admin.economy.marketvolume_stat_volume')}</div><div class="astVal">${fmt(totalVolume)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔄 ${i18next.t('admin:admin.economy.marketvolume_stat_trades')}</div><div class="astVal">${fmt(totalTrades)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'🏆 Part de valeur par objet':'🏆 Value share by item'}</h3>
+      <h3>${i18next.t('admin:admin.economy.marketvolume_value_share_title')}</h3>
       ${pie}
-      <h3>${LANG==='fr'?'Détail':'Detail'}</h3>
+      <h3>${i18next.t('admin:admin.economy.marketvolume_detail_title')}</h3>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Échanges':'Trades'}</th><th>Qté</th><th>${LANG==='fr'?'Valeur totale':'Total value'}</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.economy.table_item')}</th><th>${i18next.t('admin:admin.economy.table_trades')}</th><th>Qté</th><th>${i18next.t('admin:admin.economy.table_total_value')}</th></tr></thead>
         <tbody>${itemHtml}</tbody>
       </table>`;
   });
 }
 
 function renderAdminSignups(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
     sb.rpc('admin_signups_by_day', { p_days: 30 }),
     sb.rpc('admin_signups_by_provider'),
@@ -12640,17 +14201,17 @@ function renderAdminSignups(el) {
     const { accent } = currentAdminAccentColors();
     const chart = rows.length
       ? buildBarSeriesSvg(rows.map(r => ({ label:r.day, value:Number(r.signups||0) })), accent)
-      : `<div class="admEmpty">${LANG==='fr'?'Aucune inscription sur les 30 derniers jours':'No signups in the last 30 days'}</div>`;
+      : `<div class="admEmpty">${i18next.t('admin:admin.economy.signups_no_signups')}</div>`;
     
     const providerPie = !provError && (byProvider||[]).length
       ? buildPieWithLegendHtml((byProvider||[]).map(r => ({ label: providerInfo(r.provider).icon + ' ' + providerInfo(r.provider).label[LANG], value: Number(r.signups||0) })), { thresholdPct:0 })
-      : `<div class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</div>`;
+      : `<div class="admEmpty">${i18next.t('admin:admin.economy.no_data')}</div>`;
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🆕 ${LANG==='fr'?'Inscriptions (30j)':'Signups (30d)'}</div><div class="astVal">${total}</div></div>
+        <div class="admStatTile"><div class="astLbl">🆕 ${i18next.t('admin:admin.economy.signups_stat_title')}</div><div class="astVal">${total}</div></div>
       </div>
-      <h3>${LANG==='fr'?'📅 Par jour':'📅 By day'}</h3>
+      <h3>${i18next.t('admin:admin.economy.signups_by_day_title')}</h3>
       ${chart}
-      <h3>${LANG==='fr'?'🧩 Par plateforme (tous comptes)':'🧩 By platform (all accounts)'}</h3>
+      <h3>${i18next.t('admin:admin.economy.signups_by_platform_title')}</h3>
       ${providerPie}`;
   });
 }
@@ -12660,11 +14221,9 @@ const LOOT_RATE_GRADES = [
   { grade:'green', label:{fr:'Vert',en:'Green'} }, { grade:'blue', label:{fr:'Bleu',en:'Blue'} },
 ];
 function buildLootRateEditorHtml() {
-  return `<h3>${LANG==='fr'?'🛠️ Éditeur de taux (V2, en direct)':'🛠️ Rate editor (V2, live)'}</h3>
-    <div class="admHint">${LANG==='fr'
-      ? 'Modifie les taux réellement utilisés par TOUS les joueurs (si la table de loot est en V2), rechargés à la connexion. Les valeurs par défaut du jeu restent inchangées en dur — "Réinitialiser" les restaure à tout moment.'
-      : 'Changes the rates actually used by ALL players (while the loot table is on V2), reloaded on login. The game\'s default values stay unchanged in code — "Reset" restores them anytime.'}</div>
-    <table class="admTable"><thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Armure/Arme (%)':'Armor/Weapon (%)'}</th><th>${LANG==='fr'?'Bijou (%)':'Jewel (%)'}</th></tr></thead>
+  return `<h3>${i18next.t('admin:admin.economy.loot_editor_title')}</h3>
+    <div class="admHint">${i18next.t('admin:admin.economy.loot_editor_hint')}</div>
+    <table class="admTable"><thead><tr><th>${i18next.t('admin:admin.economy.table_tier')}</th><th>${i18next.t('admin:admin.economy.table_gear_pct')}</th><th>${i18next.t('admin:admin.economy.table_jewel_pct')}</th></tr></thead>
       <tbody>${LOOT_RATE_GRADES.map(g => `<tr>
         <td>${g.label[LANG]}</td>
         <td><input type="number" step="0.01" min="0" max="100" id="admLootGear_${g.grade}" value="${(LOOT_RATES_LIVE[g.grade].gear*100).toFixed(2)}" style="width:80px"></td>
@@ -12672,8 +14231,8 @@ function buildLootRateEditorHtml() {
       </tr>`).join('')}</tbody>
     </table>
     <div class="admActions">
-      <button id="btnSaveLootRates">💾 ${LANG==='fr'?'Enregistrer (tous les joueurs)':'Save (all players)'}</button>
-      <button id="btnResetLootRates">🔄 ${LANG==='fr'?'Réinitialiser aux valeurs du jeu':'Reset to game defaults'}</button>
+      <button id="btnSaveLootRates">💾 ${i18next.t('admin:admin.economy.loot_save_btn')}</button>
+      <button id="btnResetLootRates">🔄 ${i18next.t('admin:admin.economy.loot_reset_btn')}</button>
     </div>
     <div id="admLootRateStatus" class="admHint"></div>`;
 }
@@ -12688,21 +14247,21 @@ function wireLootRateEditor() {
     }
     const { error } = await sb.rpc('admin_set_loot_rates', { p_rates: rates });
     const statusEl = $a('admLootRateStatus');
-    if (error) { statusEl.textContent = (LANG==='fr'?'Échec — ':'Failed — ') + error.message; statusEl.classList.add('warn'); return; }
+    if (error) { statusEl.textContent = i18next.t('admin:admin.economy.failed_prefix') + error.message; statusEl.classList.add('warn'); return; }
     for (const g of LOOT_RATE_GRADES) LOOT_RATES_LIVE[g.grade] = rates[g.grade];
     logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a modifié les taux de la table de loot V2`, 0x9cc9e8);
     statusEl.classList.remove('warn');
-    statusEl.textContent = LANG==='fr' ? 'Enregistré — appliqué immédiatement à tous les joueurs ✓' : 'Saved — applied immediately to all players ✓';
-    floatTxt(P.x, P.y, 100, LANG==='fr'?'Taux de loot mis à jour ✓':'Loot rates updated ✓', { gold:true });
+    statusEl.textContent = i18next.t('admin:admin.economy.loot_save_success');
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.economy.loot_save_toast'), { gold:true });
   };
   const resetBtn = $a('btnResetLootRates');
   if (resetBtn) resetBtn.onclick = async () => {
     if (!isAdmin() || !sb) return;
-    if (!confirm(LANG==='fr' ? 'Réinitialiser les taux aux valeurs par défaut du jeu, pour TOUS les joueurs ?' : 'Reset rates to the game\'s default values, for ALL players?')) return;
+    if (!confirm(i18next.t('admin:admin.economy.loot_reset_confirm'))) return;
     const defaults = JSON.parse(JSON.stringify(LOOT_RATES_V2));
     const { error } = await sb.rpc('admin_set_loot_rates', { p_rates: defaults });
     if (!error) { LOOT_RATES_LIVE = defaults; renderAdminLoot($a('adminMainBody')); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé les taux de la table de loot V2`, 0x9cc9e8); }
-    floatTxt(P.x, P.y, 100, !error ? (LANG==='fr'?'Taux réinitialisés ✓':'Rates reset ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+    floatTxt(P.x, P.y, 100, !error ? i18next.t('admin:admin.economy.loot_reset_toast') : i18next.t('admin:admin.economy.failed_short'), { gold:!error, hurt:!!error });
   };
 }
 
@@ -12769,13 +14328,13 @@ function updateChatInputVisibility() {
   const row = $a('chatInputRow'), note = $a('chatNote');
   if (chatChannel === 'modéré') {
     row.style.display = 'none';
-    note.textContent = LANG==='fr' ? '🛡️ Journal des messages supprimés (staff)' : '🛡️ Deleted-message log (staff)';
+    note.textContent = i18next.t('social:social.chat_note_moderated_log');
   } else if (!currentUser || isGuest()) {
     row.style.display = 'none';
-    note.textContent = LANG==='fr' ? '🔒 Connecte-toi avec un compte vérifié pour discuter' : '🔒 Sign in with a verified account to chat';
+    note.textContent = i18next.t('social:social.chat_note_signin_required');
   } else if (chatChannel === 'annonce' && !isAdmin()) {
     row.style.display = 'none';
-    note.textContent = LANG==='fr' ? 'Seul le staff peut poster ici' : 'Only staff can post here';
+    note.textContent = i18next.t('social:social.chat_note_staff_only');
   } else {
     row.style.display = '';
     note.textContent = '';
@@ -12794,14 +14353,14 @@ let chatExpandedDays = new Set();
 function dayKeyOf(iso) { const d = new Date(iso); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
 function fmtDaySeparator(iso) {
   const d = new Date(iso), now = new Date(), yest = new Date(now); yest.setDate(yest.getDate()-1);
-  if (dayKeyOf(iso) === dayKeyOf(now.toISOString())) return LANG==='fr' ? "Aujourd'hui" : 'Today';
-  if (dayKeyOf(iso) === dayKeyOf(yest.toISOString())) return LANG==='fr' ? 'Hier' : 'Yesterday';
+  if (dayKeyOf(iso) === dayKeyOf(now.toISOString())) return i18next.t('social:social.chat_day_today');
+  if (dayKeyOf(iso) === dayKeyOf(yest.toISOString())) return i18next.t('social:social.chat_day_yesterday');
   return d.toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', day:'numeric', month:'long' });
 }
 function renderChatMessages(msgs, sinceTs) {
   const el = $a('chatMessages'); if (!el) return;
   const canDelete = isAdmin() || myIsMod; 
-  if (!msgs.length) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`; return; }
+  if (!msgs.length) { el.innerHTML = `<div class="chatEmpty">${i18next.t('social:social.chat_empty')}</div>`; return; }
   
   const dayGroups = [];
   for (const m of msgs) {
@@ -12824,7 +14383,7 @@ function renderChatMessages(msgs, sinceTs) {
       const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
       
       const pseudoHtml = chatChannel === 'annonce' ? '' :
-        `<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':(LANG==='fr'?'Joueur':'Player')))}</span> `;
+        `<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':i18next.t('social:social.chat_default_pseudo')))}</span> `;
       
       const isNew = sinceTs && new Date(m.created_at) > new Date(sinceTs);
       
@@ -12849,7 +14408,7 @@ function renderChatMessages(msgs, sinceTs) {
       if (!sb) return;
       const { error } = await sb.rpc('delete_chat_message', { p_id: parseInt(btn.dataset.id,10) });
       
-      if (error) { $a('chatNote').textContent = (LANG==='fr'?'Suppression échouée : ':'Delete failed: ') + error.message; return; }
+      if (error) { $a('chatNote').textContent = i18next.t('social:social.chat_delete_failed', { error: error.message }); return; }
       fetchChatMessages();
     };
   });
@@ -12897,22 +14456,22 @@ async function fetchModeratedLog() {
   const el = $a('chatMessages'); if (!el) return;
   const { data, error } = await sb.from('chat_deleted').select('id, channel, author_id, author_pseudo, message, deleted_at')
     .order('deleted_at', { ascending:false }).limit(50);
-  if (error) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Accès refusé ou schéma non exécuté':'Access denied or schema not run'}</div>`; return; }
-  if (!data || !data.length) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Aucun message supprimé':'No deleted messages'}</div>`; return; }
+  if (error) { el.innerHTML = `<div class="chatEmpty">${i18next.t('social:social.chat_mod_access_denied')}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = `<div class="chatEmpty">${i18next.t('social:social.chat_mod_empty')}</div>`; return; }
   el.innerHTML = data.map(m =>
     `<div class="chatMsg chan-annonce modMsg">` +
     `<div class="modTop"><span><span class="chatPseudo">${escapeHtml(m.author_pseudo||'?')}</span> <span class="modChan">[${escapeHtml(m.channel||'')}]</span></span>` +
-    `<button class="modRestoreBtn" data-id="${m.id}" title="${LANG==='fr'?'Renvoyer ce message dans son canal':'Repost this message to its channel'}">${LANG==='fr'?'↩ Renvoyer':'↩ Restore'}</button></div>` +
+    `<button class="modRestoreBtn" data-id="${m.id}" title="${i18next.t('social:social.chat_mod_restore_title')}">${i18next.t('social:social.chat_mod_restore_btn')}</button></div>` +
     `<code class="modUuidLine">${m.author_id||''}</code>` +
     `<div class="chatText">${escapeHtml(m.message||'')}</div>` +
-    `<div class="modDeletedAt">${LANG==='fr'?'Supprimé le':'Deleted on'} ${fmtChatTimestamp(m.deleted_at)}</div></div>`).join('');
+    `<div class="modDeletedAt">${i18next.t('social:social.chat_mod_deleted_on', { time: fmtChatTimestamp(m.deleted_at) })}</div></div>`).join('');
   el.scrollTop = 0;
   el.querySelectorAll('.modRestoreBtn').forEach(btn => {
     btn.onclick = async () => {
       if (!sb) return;
       btn.disabled = true;
       const { error } = await sb.rpc('restore_chat_message', { p_deleted_id: parseInt(btn.dataset.id,10) });
-      if (error) { $a('chatNote').textContent = (LANG==='fr'?'Renvoi échoué : ':'Restore failed: ') + error.message; btn.disabled = false; return; }
+      if (error) { $a('chatNote').textContent = i18next.t('social:social.chat_restore_failed', { error: error.message }); btn.disabled = false; return; }
       fetchModeratedLog();
     };
   });
@@ -13038,9 +14597,7 @@ pollChatUnread();
 function marketRequireAuth() {
   if (!sb || !currentUser) { alert('Connecte-toi pour accéder au marché.'); return false; }
   if (isGuest()) {
-    alert(LANG==='fr'
-      ? 'Le Marché et le Classement sont réservés aux comptes vérifiés (protection anti-triche). Clique sur "🔗 Lier un compte" pour en créer un — ta progression actuelle sera conservée.'
-      : 'The Market and Leaderboard are restricted to verified accounts (anti-cheat protection). Click "🔗 Link account" to create one — your current progress will be kept.');
+    alert(i18next.t('market:market.auth_verified_required'));
     return false;
   }
   return true;
@@ -13052,9 +14609,7 @@ $a('btnMarket').onclick = async () => {
     try {
       const { data } = await sb.rpc('get_market_open');
       if (data === false) {
-        alert(LANG==='fr'
-          ? '🏛️ Le Marché est actuellement fermé pour maintenance. Réessaie plus tard.'
-          : '🏛️ The Market is currently closed for maintenance. Try again later.');
+        alert(i18next.t('market:market.closed_for_maintenance'));
         return;
       }
     } catch(e) {}
@@ -13120,9 +14675,7 @@ function updateMktTaxHint() {
   const qty = parseInt($a('mktQtyInput').value, 10) || 0;
   hint.style.display = '';
   const net = Math.floor(price * qty * (1 - MARKET_SELL_TAX_RATE));
-  hint.textContent = LANG==='fr'
-    ? `Tu recevras ~${fmt(net)} silver après taxe de vente (${Math.round(MARKET_SELL_TAX_RATE*100)}%)`
-    : `You'll receive ~${fmt(net)} silver after sale tax (${Math.round(MARKET_SELL_TAX_RATE*100)}%)`;
+  hint.textContent = i18next.t('market:market.sell_tax_hint', { net: fmt(net), taxPct: Math.round(MARKET_SELL_TAX_RATE*100) });
 }
 
 function updateMktPills() {
@@ -13157,34 +14710,34 @@ async function refreshMarketMaterials() {
     if (recentTrades[i].price > recentTrades[i-1].price) up++;
     else if (recentTrades[i].price < recentTrades[i-1].price) down++;
   }
-  const pressure = recentTrades.length < 2 ? { icon:'➡️', label: LANG==='fr'?'NEUTRE':'NEUTRAL', cls:'' }
-    : up > down ? { icon:'🔺', label: LANG==='fr'?'HAUSSE':'RISING', cls:'up' }
-    : down > up ? { icon:'🔻', label: LANG==='fr'?'BAISSE':'FALLING', cls:'down' }
-    : { icon:'➡️', label: LANG==='fr'?'NEUTRE':'NEUTRAL', cls:'' };
+  const pressure = recentTrades.length < 2 ? { icon:'➡️', label: i18next.t('market:market.trend_neutral'), cls:'' }
+    : up > down ? { icon:'🔺', label: i18next.t('market:market.trend_rising'), cls:'up' }
+    : down > up ? { icon:'🔻', label: i18next.t('market:market.trend_falling'), cls:'down' }
+    : { icon:'➡️', label: i18next.t('market:market.trend_neutral'), cls:'' };
 
   $a('mktMetaRow').innerHTML = `
-    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Meilleure vente':'Best sell'}</div><div class="mktMetaVal sell">${bestSell?fmt(bestSell.price):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Spread':'Spread'}</div><div class="mktMetaVal">${spread!=null?fmt(spread):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Meilleur achat':'Best buy'}</div><div class="mktMetaVal buy">${bestBuy?fmt(bestBuy.price):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Pression marché':'Market pressure'}</div><div class="mktMetaVal ${pressure.cls}">${pressure.icon} ${pressure.label}</div></div>`;
+    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.best_sell_label')}</div><div class="mktMetaVal sell">${bestSell?fmt(bestSell.price):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.spread_label')}</div><div class="mktMetaVal">${spread!=null?fmt(spread):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.best_buy_label')}</div><div class="mktMetaVal buy">${bestBuy?fmt(bestBuy.price):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.market_pressure_label')}</div><div class="mktMetaVal ${pressure.cls}">${pressure.icon} ${pressure.label}</div></div>`;
 
-  $a('mktSellCol').innerHTML = `<div class="mktColHead sell"><span>${LANG==='fr'?'Ordres de vente':'Sell orders'}</span><span>${sells.length}</span></div>` +
+  $a('mktSellCol').innerHTML = `<div class="mktColHead sell"><span>${i18next.t('market:market.sell_orders_label')}</span><span>${sells.length}</span></div>` +
     `<div class="mktRowsWrap">${mktOrderRowsHtml(sells, 'sell')}</div>`;
-  $a('mktBuyCol').innerHTML = `<div class="mktColHead buy"><span>${LANG==='fr'?'Ordres d\'achat':'Buy orders'}</span><span>${buys.length}</span></div>` +
+  $a('mktBuyCol').innerHTML = `<div class="mktColHead buy"><span>${i18next.t('market:market.buy_orders_label')}</span><span>${buys.length}</span></div>` +
     `<div class="mktRowsWrap">${mktOrderRowsHtml(buys, 'buy')}</div>`;
 
   const histRows = (trades || []).slice().reverse().map(t => `
     <div class="mktHistRow">
       <span>${tr(m.name)}</span><span>${fmt(t.price)}</span><span>×${fmt(t.qty)}</span>
-      <span class="mktHistTime">${new Date(t.created_at).toLocaleTimeString(LANG==='fr'?'fr-FR':'en-US')}</span>
+      <span class="mktHistTime">${new Date(t.created_at).toLocaleTimeString(i18next.t('market:market.time_locale'))}</span>
     </div>`).join('');
-  $a('mktHistRows').innerHTML = histRows || `<div class="mEmpty">${LANG==='fr'?'Aucune transaction':'No transactions'}</div>`;
+  $a('mktHistRows').innerHTML = histRows || `<div class="mEmpty">${i18next.t('market:market.no_transactions_label')}</div>`;
 
   drawMktCandles(trades || []);
   updateMktForm();
 }
 function mktOrderRowsHtml(orders, side) {
-  if (!orders.length) return `<div class="mEmpty">${LANG==='fr'?'Aucun ordre':'No orders'}</div>`;
+  if (!orders.length) return `<div class="mEmpty">${i18next.t('market:market.no_orders_label')}</div>`;
   const maxQty = Math.max(...orders.map(o => o.qty));
   return orders.map((o,i) => `
     <div class="mktOrderRow ${side}${i===0?' best':''}">
@@ -13195,12 +14748,12 @@ function mktOrderRowsHtml(orders, side) {
 function updateMktForm() {
   const m = MARKET_MATERIALS[mktSelectedIdx];
   const owned = INV.filter(s => s && s.kind === 'material' && s.name === m.name).reduce((n,s) => n + s.qty, 0);
-  $a('mktFormTitle').textContent = (LANG==='fr'?'Placer un ordre — ':'Place an order — ') + tr(m.name) + ' · ' + (LANG==='fr'?'possédé':'owned') + ' : ' + fmt(owned);
+  $a('mktFormTitle').textContent = i18next.t('market:market.place_order_title', { itemName: tr(m.name), owned: fmt(owned) });
   $a('mktSideBuy').classList.toggle('active', mktSide==='buy');
   $a('mktSideSell').classList.toggle('active', mktSide==='sell');
   const btn = $a('mktPlaceBtn');
   btn.className = 'mktPlaceBtn ' + mktSide;
-  btn.textContent = mktSide === 'buy' ? (LANG==='fr'?"Placer l'ordre d'achat":'Place buy order') : (LANG==='fr'?"Placer l'ordre de vente":'Place sell order');
+  btn.textContent = mktSide === 'buy' ? i18next.t('market:market.place_buy_order_btn') : i18next.t('market:market.place_sell_order_btn');
   updateMktTaxHint();
   $a('mktFormMsg').textContent = '';
 }
@@ -13208,17 +14761,17 @@ async function mktPlaceOrder() {
   const m = MARKET_MATERIALS[mktSelectedIdx];
   const price = Number($a('mktPriceInput').value), qty = parseInt($a('mktQtyInput').value, 10) || 1;
   const msg = $a('mktFormMsg');
-  if (!price || price <= 0) { msg.textContent = LANG==='fr'?'Prix invalide.':'Invalid price.'; return; }
+  if (!price || price <= 0) { msg.textContent = i18next.t('market:market.invalid_price'); return; }
   let invIndex = null;
   if (mktSide === 'sell') {
     invIndex = INV.findIndex(s => s && s.kind === 'material' && s.name === m.name);
-    if (invIndex === -1) { msg.textContent = LANG==='fr'?'Tu n\'en as pas.':'You don\'t have any.'; return; }
+    if (invIndex === -1) { msg.textContent = i18next.t('market:market.no_item_owned'); return; }
   }
   const { error } = await sb.rpc('market_place_order', {
     p_side: mktSide, p_item_key: mktKey(m), p_item_name: m.name, p_item_kind: 'material',
     p_price: price, p_qty: qty, p_inv_index: invIndex,
   });
-  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; return; }
+  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); return; }
   msg.textContent = '';
   $a('mktPriceInput').value = ''; $a('mktQtyInput').value = '1';
   await loadCloudSave();
@@ -13233,7 +14786,7 @@ function drawMktCandles(trades) {
   ctx.clearRect(0,0,W,H);
   if (trades.length < 2) {
     ctx.fillStyle = '#5a5f74'; ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(LANG==='fr'?'Pas assez de transactions':'Not enough transactions', W/2, H/2);
+    ctx.fillText(i18next.t('market:market.not_enough_transactions'), W/2, H/2);
     return;
   }
   const candles = [];
@@ -13296,7 +14849,7 @@ async function refreshCmBrowse() {
   let rows = data || [];
   if (cat.slots) rows = rows.filter(l => l.item_snapshot && cat.slots.includes(l.item_snapshot.slot));
   cmListings = rows;
-  if (error) { list.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Erreur de chargement':'Loading error'}</div>`; return; }
+  if (error) { list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.loading_error')}</div>`; return; }
   renderCmListingsList();
 }
 function cmListingIcon(l) {
@@ -13339,16 +14892,16 @@ function renderCmListingsList() {
     return { ...g, best, stock, drilldown: enhLvs.size > 1, latest: g.items.reduce((a,b) => new Date(a.created_at)>new Date(b.created_at)?a:b).created_at };
   });
   rows = cmApplySearchSort(rows, r => r.best.price, r => r.latest);
-  if (!rows.length) { list.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Aucune vente en cours':'No listings right now'}</div>`; return; }
+  if (!rows.length) { list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.no_listings')}</div>`; return; }
   list.innerHTML = rows.map(g => {
     const color = cmListingColor(g.best);
     return `<div class="cmListCard" data-name="${escapeHtml(g.name)}">
       <div class="cmListIcon" style="color:${color}">${cmListingIcon(g.best)}</div>
       <div class="cmListInfo">
         <div class="cmListName" style="color:${color}">${tr(g.name)}</div>
-        <div class="cmListSub">${LANG==='fr'?'En stock':'In stock'} : ${fmt(g.stock)}${g.drilldown?` · ${g.items.length} ${LANG==='fr'?'niveaux':'levels'}`:''}</div>
+        <div class="cmListSub">${i18next.t('market:market.in_stock_label')} : ${fmt(g.stock)}${g.drilldown?` · ${g.items.length} ${i18next.t('market:market.levels_label')}`:''}</div>
       </div>
-      <div class="cmListPrice"><div class="price">${LANG==='fr'?'dès':'from'} ${fmt(g.best.price)} 🪙</div></div>
+      <div class="cmListPrice"><div class="price">${i18next.t('market:market.from_price_label')} ${fmt(g.best.price)} 🪙</div></div>
     </div>`;
   }).join('');
   list.querySelectorAll('.cmListCard').forEach(card => {
@@ -13375,16 +14928,16 @@ function renderCmDrilldown() {
   }));
   rows.sort((a,b) => a.lv - b.lv);
   rows = cmApplySearchSort(rows.map(r => ({...r, name:cmDrilldownName})), r => r.best.price, r => r.latest);
-  const backBtn = `<button class="cmBackBtn" id="cmBackBtn">← ${LANG==='fr'?'Retour':'Back'}</button>`;
+  const backBtn = `<button class="cmBackBtn" id="cmBackBtn">← ${i18next.t('market:market.back_btn')}</button>`;
   list.innerHTML = backBtn + rows.map(r => {
     const color = cmListingColor(r.best);
     return `<div class="cmListCard" data-lv="${r.lv}">
       <div class="cmListIcon" style="color:${color}">${cmListingIcon(r.best)}</div>
       <div class="cmListInfo">
         <div class="cmListName" style="color:${color}">${ENH_NAMES[r.lv]} ${tr(cmDrilldownName)}</div>
-        <div class="cmListSub">${LANG==='fr'?'En stock':'In stock'} : ${fmt(r.stock)}</div>
+        <div class="cmListSub">${i18next.t('market:market.in_stock_label')} : ${fmt(r.stock)}</div>
       </div>
-      <div class="cmListPrice"><div class="price">${LANG==='fr'?'dès':'from'} ${fmt(r.best.price)} 🪙</div></div>
+      <div class="cmListPrice"><div class="price">${i18next.t('market:market.from_price_label')} ${fmt(r.best.price)} 🪙</div></div>
     </div>`;
   }).join('');
   $a('cmBackBtn').onclick = () => { cmDrilldownName = null; renderCmListingsList(); };
@@ -13397,7 +14950,7 @@ function renderCmDrilldown() {
 function renderCmDetailPanel() {
   const panel = $a('cmDetailPanel'); if (!panel) return;
   const l = cmListings.find(x => x.id === cmSelectedId);
-  if (!l) { panel.innerHTML = `<div class="mEmpty" data-i18n="cmSelectItemHint">${LANG==='fr'?'Clique un objet pour voir le détail':'Click an item to see the detail'}</div>`; return; }
+  if (!l) { panel.innerHTML = `<div class="mEmpty" data-i18n="cmSelectItemHint">${i18next.t('market:market.select_item_hint')}</div>`; return; }
   const color = cmListingColor(l);
   let statsHtml = '', compareHtml = '';
   if (l.item_kind === 'gear' || l.item_kind === 'jackpot') {
@@ -13407,7 +14960,7 @@ function renderCmDetailPanel() {
     if (eff.ap) rows.push(['PA', '+'+eff.ap]);
     if (eff.dp) rows.push(['PD', '+'+eff.dp]);
     if (eff.hp) rows.push(['PV', '+'+eff.hp]);
-    if (snap.enhLv) rows.push([LANG==='fr'?'Niveau':'Level', ENH_NAMES[snap.enhLv]]);
+    if (snap.enhLv) rows.push([i18next.t('market:market.level_label'), ENH_NAMES[snap.enhLv]]);
     statsHtml = `<div class="cmDetailStats">${rows.map(([k,v]) => `<div class="srow"><span>${k}</span><b>${v}</b></div>`).join('')}</div>`;
     
     const slotId = l.item_kind === 'jackpot' ? accSlotFor(snap) : snap.slot;
@@ -13419,23 +14972,23 @@ function renderCmDetailPanel() {
       const effEq = effectiveApDp(equipped);
       const cmpRows = [['PA', effEq.ap||0, eff.ap||0], ['PD', effEq.dp||0, eff.dp||0], ['PV', effEq.hp||0, eff.hp||0]]
         .filter(([,a,b]) => a || b);
-      compareHtml = `<div class="cmDetailSub">${LANG==='fr'?'Face à':'Vs'} <b style="color:${equipped.color||'#c9a55a'}">${tr(equipped.name)}</b></div>
-        <table class="cmCompareTable"><thead><tr><th></th><th>${LANG==='fr'?'Équipé':'Equipped'}</th><th>${LANG==='fr'?'Celui-ci':'This one'}</th><th>Δ</th></tr></thead>
+      compareHtml = `<div class="cmDetailSub">${i18next.t('market:market.vs_label')} <b style="color:${equipped.color||'#c9a55a'}">${tr(equipped.name)}</b></div>
+        <table class="cmCompareTable"><thead><tr><th></th><th>${i18next.t('market:market.equipped_label')}</th><th>${i18next.t('market:market.this_one_label')}</th><th>Δ</th></tr></thead>
         <tbody>${cmpRows.map(([k,a,b]) => {
           const delta = b - a; const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : '';
           return `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td class="cmDelta ${cls}">${delta>0?'+':''}${delta}</td></tr>`;
         }).join('')}</tbody></table>`;
     }
   } else {
-    statsHtml = `<div class="cmDetailStats"><div class="srow"><span>${LANG==='fr'?'Quantité disponible':'Available qty'}</span><b>${fmt(l.qty)}</b></div></div>`;
+    statsHtml = `<div class="cmDetailStats"><div class="srow"><span>${i18next.t('market:market.available_qty_label')}</span><b>${fmt(l.qty)}</b></div></div>`;
   }
   panel.innerHTML = `
     <div class="cmDetailIcon" style="border-color:${color};color:${color}">${cmListingIcon(l)}</div>
     <div class="cmDetailTitle" style="color:${color}">${tr(l.item_name)}</div>
-    <div class="cmDetailSub">${LANG==='fr'?'Vendu par':'Sold by'} ${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}</div>
+    <div class="cmDetailSub">${i18next.t('market:market.sold_by_label')} ${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}</div>
     ${statsHtml}${compareHtml}
     <div class="cmDetailSub" style="margin-top:8px">${fmt(l.price)} 🪙${l.item_kind==='material'?(' × '+fmt(l.qty)):''}</div>
-    <button class="btnBuyListing">${LANG==='fr'?'Acheter':'Buy'}</button>`;
+    <button class="btnBuyListing">${i18next.t('market:market.buy_btn')}</button>`;
   panel.querySelector('.btnBuyListing').onclick = () => buyCmListing(l);
 }
 
@@ -13445,8 +14998,8 @@ async function buyCmListing(l) {
     p_side: 'buy', p_item_key: l.item_key, p_item_name: l.item_name, p_item_kind: l.item_kind,
     p_price: l.price, p_qty: l.item_kind === 'material' ? l.qty : 1, p_inv_index: null,
   });
-  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
-  msg.textContent = LANG==='fr'?'Achat effectué ✓':'Purchase complete ✓'; msg.className = 'ok';
+  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); msg.className = 'fail'; return; }
+  msg.textContent = i18next.t('market:market.purchase_complete'); msg.className = 'ok';
   await loadCloudSave();
   updateCmWallet();
   refreshCmBrowse();
@@ -13458,17 +15011,17 @@ $a('cmSort').onchange = () => renderCmListingsList();
 async function placeMarketOrder(side, key, name, kind, priceStr, qtyStr, invIndex) {
   const msg = $a('commonMsg');
   const price = Number(priceStr), qty = parseInt(qtyStr, 10) || 1;
-  if (!price || price <= 0) { msg.textContent = LANG==='fr'?'Prix invalide.':'Invalid price.'; msg.className = 'fail'; return; }
+  if (!price || price <= 0) { msg.textContent = i18next.t('market:market.invalid_price'); msg.className = 'fail'; return; }
   if (side === 'sell' && invIndex == null) {
     invIndex = INV.findIndex(s => s && s.kind === kind && s.name === name);
-    if (invIndex === -1) { msg.textContent = LANG==='fr'?'Tu n\'en as pas.':'You don\'t have any.'; msg.className = 'fail'; return; }
+    if (invIndex === -1) { msg.textContent = i18next.t('market:market.no_item_owned'); msg.className = 'fail'; return; }
   }
   const { error } = await sb.rpc('market_place_order', {
     p_side: side, p_item_key: key, p_item_name: name, p_item_kind: kind,
     p_price: price, p_qty: kind === 'material' ? qty : 1, p_inv_index: side==='sell' ? invIndex : null,
   });
-  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
-  msg.textContent = LANG==='fr'?'Ordre posé ✓ (exécuté immédiatement si un ordre opposé compatible existait)':'Order placed ✓ (filled immediately if a compatible opposite order existed)';
+  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); msg.className = 'fail'; return; }
+  msg.textContent = i18next.t('market:market.order_placed');
   msg.className = 'ok';
   await loadCloudSave();
   refreshCommonMarket();
@@ -13477,12 +15030,12 @@ async function placeMarketOrder(side, key, name, kind, priceStr, qtyStr, invInde
 async function refreshMyMarketOrders() {
   const box = $a('cmMyOrders'); if (!box) return;
   const { data, error } = await sb.rpc('market_my_orders');
-  if (error || !data || !data.length) { box.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Aucun ordre':'No orders'}</div>`; return; }
+  if (error || !data || !data.length) { box.innerHTML = `<div class="mEmpty">${i18next.t('market:market.no_orders_label')}</div>`; return; }
   box.innerHTML = data.map(o => `
     <div class="cmRow">
       <div class="cmInfo"><div class="mName">${o.side==='buy'?'🛒':'🏷️'} ${tr(o.item_name)}</div>
-        <div class="cmOwned">${o.side==='buy'?(LANG==='fr'?'Achat':'Buy'):(LANG==='fr'?'Vente':'Sell')} · ${fmt(o.price)} 🪙 × ${fmt(o.qty)}/${fmt(o.qty_original)} · ${o.status==='open'?(LANG==='fr'?'ouvert':'open'):(LANG==='fr'?'terminé':'done')}</div></div>
-      ${o.status==='open' ? `<button class="cmCancelOrder" data-id="${o.id}">${LANG==='fr'?'Annuler':'Cancel'}</button>` : ''}
+        <div class="cmOwned">${o.side==='buy'?i18next.t('market:market.buy_label'):i18next.t('market:market.sell_label')} · ${fmt(o.price)} 🪙 × ${fmt(o.qty)}/${fmt(o.qty_original)} · ${o.status==='open'?i18next.t('market:market.status_open'):i18next.t('market:market.status_done')}</div></div>
+      ${o.status==='open' ? `<button class="cmCancelOrder" data-id="${o.id}">${i18next.t('market:market.cancel_btn')}</button>` : ''}
     </div>`).join('');
   box.querySelectorAll('.cmCancelOrder').forEach(btn => {
     btn.onclick = async () => {

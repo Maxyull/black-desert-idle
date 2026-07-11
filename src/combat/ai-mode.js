@@ -20,9 +20,9 @@ function renderAiModeBtn() {
   const el = $('aiModeSlider'); if (!el) return;
   if (!AI_COMBAT_MODES[S.aiCombatMode]) S.aiCombatMode = 'équilibré';
   const titles = {
-    'défensif':  LANG==='fr' ? 'IA défensive : esquive et soigne en priorité, quitte à moins attaquer' : 'Defensive AI: prioritizes dodging/healing over attacking',
-    'équilibré': LANG==='fr' ? 'IA équilibrée : alterne attaque et prudence selon la situation' : 'Balanced AI: alternates attack and caution based on the fight',
-    'overgeared':LANG==='fr' ? 'IA offensive : attaque sans relâche, ignore la plupart des esquives' : 'Overgeared AI: attacks relentlessly, skips most dodges',
+    'défensif':  i18next.t('combat:combat.ai_mode.defensive_title'),
+    'équilibré': i18next.t('combat:combat.ai_mode.balanced_title'),
+    'overgeared':i18next.t('combat:combat.ai_mode.overgeared_title'),
   };
   el.querySelectorAll('.aiModeSeg').forEach(seg => {
     const key = seg.dataset.mode, m = AI_COMBAT_MODES[key];
@@ -58,8 +58,8 @@ function renderFarmModeBtn() {
   // retiré) -- sans ce filet, aucune bulle ne s'affiche active tant que le joueur n'en reclique pas une
   if (!FARM_MODES[S.farmMode]) S.farmMode = 'loot';
   const titles = {
-    loot: LANG==='fr' ? 'IA "Loot" : ramasse tout le butin avant de passer au pack suivant' : 'Loot AI: picks up all drops before moving to the next pack',
-    xp:   LANG==='fr' ? 'IA "XP" : enchaîne les packs sans ramasser le butin au sol' : 'XP AI: chains packs without picking up ground loot',
+    loot: i18next.t('combat:combat.ai_mode.farm_loot_title'),
+    xp:   i18next.t('combat:combat.ai_mode.farm_xp_title'),
   };
   el.querySelectorAll('.farmModeSeg').forEach(seg => {
     const key = seg.dataset.mode, m = FARM_MODES[key];

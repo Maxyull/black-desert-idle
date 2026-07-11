@@ -29,8 +29,8 @@ if (adminMaxEnhBtnEl) adminMaxEnhBtnEl.onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `${count} pièce${count>1?'s':''} passée${count>1?'s':''} en Optimisation max` : `${count} piece${count>1?'s':''} set to max Enhancement`)
-      : (LANG==='fr' ? 'Déjà toutes au maximum' : 'Already all at max');
+      ? i18next.t('admin:admin.enh_debug.max_all', { count })
+      : i18next.t('admin:admin.enh_debug.already_max');
     msg.className = 'ok';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -59,8 +59,8 @@ if (adminResetEnhBtnEl) adminResetEnhBtnEl.onclick = () => {
   const msg = $('equipBestMsg');
   if (msg) {
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `${count} pièce${count>1?'s':''} rétrogradée${count>1?'s':''} à +0` : `${count} piece${count>1?'s':''} reset to +0`)
-      : (LANG==='fr' ? 'Déjà toutes à +0' : 'Already all at +0');
+      ? i18next.t('admin:admin.enh_debug.reset_all', { count })
+      : i18next.t('admin:admin.enh_debug.already_zero');
     msg.className = 'ok';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }
@@ -83,7 +83,7 @@ function adminStepEnhAllEquipped(delta) {
   if (count > 0) { hud(); renderOptimization(); drawPreviewChar(); }
   return count;
 }
-function wireAdminEnhStepBtn(id, delta, msgUpFr, msgUpEn, msgNoneFr, msgNoneEn) {
+function wireAdminEnhStepBtn(id, delta, msgUpKey, msgNoneKey) {
   const el = $(id); if (!el) return;
   el.onclick = () => {
     if (typeof isAdmin === 'function' && !isAdmin()) return;
@@ -91,19 +91,17 @@ function wireAdminEnhStepBtn(id, delta, msgUpFr, msgUpEn, msgNoneFr, msgNoneEn) 
     const msg = $('equipBestMsg');
     if (msg) {
       msg.textContent = count > 0
-        ? (LANG==='fr' ? `${count} ${msgUpFr}` : `${count} ${msgUpEn}`)
-        : (LANG==='fr' ? msgNoneFr : msgNoneEn);
+        ? i18next.t(msgUpKey, { count })
+        : i18next.t(msgNoneKey);
       msg.className = 'ok';
       setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
     }
   };
 }
 wireAdminEnhStepBtn('btnAdminEnhDown1', -1,
-  'pièce(s) rétrogradée(s) d\'1 rang', 'piece(s) downgraded by 1 rank',
-  'Déjà toutes à +0', 'Already all at +0');
+  'admin:admin.enh_debug.step_down_count', 'admin:admin.enh_debug.already_zero');
 wireAdminEnhStepBtn('btnAdminEnhUp1', 1,
-  'pièce(s) augmentée(s) d\'1 rang', 'piece(s) upgraded by 1 rank',
-  'Déjà toutes au maximum', 'Already all at max');
+  'admin:admin.enh_debug.step_up_count', 'admin:admin.enh_debug.already_max');
 
 // outil de debug admin (2026-07-18, demande explicite : "bouton admin changer tout le stuff d'un
 // coup de tiers Bleu a vert et y mettre tout les tiers") -- équipe INSTANTANÉMENT un set complet
@@ -173,8 +171,8 @@ if (adminEquipTierBtnEl) adminEquipTierBtnEl.onclick = () => {
     const tierObj = GEAR_TIERS.find(t => t.grade === sel.value);
     const tierName = tierObj ? tierObj.label[LANG] : sel.value;
     msg.textContent = count > 0
-      ? (LANG==='fr' ? `Équipé : set complet ${tierName} (${count} pièces)` : `Equipped: full ${tierName} set (${count} pieces)`)
-      : (LANG==='fr' ? 'Palier introuvable' : 'Tier not found');
+      ? i18next.t('admin:admin.enh_debug.equip_tier_success', { tierName, count })
+      : i18next.t('admin:admin.enh_debug.tier_not_found');
     msg.className = 'ok';
     setTimeout(() => { if ($('equipBestMsg')) $('equipBestMsg').textContent = ''; }, 3000);
   }

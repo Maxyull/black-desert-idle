@@ -1,0 +1,16 @@
+{
+  "social.chat_day_today": "Aujourd'hui",
+  "social.chat_day_yesterday": "Hier",
+  "social.chat_default_pseudo": "Joueur",
+  "social.chat_delete_failed": "Suppression échouée : {{error}}",
+  "social.chat_empty": "Aucun message pour l'instant",
+  "social.chat_mod_access_denied": "Accès refusé ou schéma non exécuté",
+  "social.chat_mod_deleted_on": "Supprimé le {{time}}",
+  "social.chat_mod_empty": "Aucun message supprimé",
+  "social.chat_mod_restore_btn": "↩ Renvoyer",
+  "social.chat_mod_restore_title": "Renvoyer ce message dans son canal",
+  "social.chat_note_moderated_log": "🛡️ Journal des messages supprimés (staff)",
+  "social.chat_note_signin_required": "🔒 Connecte-toi avec un compte vérifié pour discuter",
+  "social.chat_note_staff_only": "Seul le staff peut poster ici",
+  "social.chat_restore_failed": "Renvoi échoué : {{error}}"
+}

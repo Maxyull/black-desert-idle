@@ -5,6 +5,13 @@ Le noyau du jeu : état global, boucle principale, rendu HUD, FSM de combat, sau
 - `game-core.js` — `S` (état persistant), `EQUIP`/`INV` (équipement/inventaire), la FSM de
   combat (`fsm`, `combatTick`, `wolvesTick`), le HUD, la boucle (`loop`/`advanceSim`), et la
   sérialisation de sauvegarde (`getSaveState`/`applySaveState`).
+- `i18n-resources.generated.js` — FICHIER GÉNÉRÉ (ne pas éditer à la main, même règle que
+  `build/source.js`) : compile `/locales/{fr,en}/*.json` en `I18N_RESOURCES`/`I18N_NAMESPACES`.
+  Régénéré par `scripts/gen-locales.js` (appelé automatiquement par `scripts/build.py`).
+- `i18n-init.js` — initialise i18next (voir `I18N_PLAN.md`, `CLAUDE.md` §31). Charge EN PREMIER,
+  avant `gear-icons.js` : `I18N_RESOURCES` doit déjà être là, et des fonctions comme `hud()`
+  peuvent appeler `i18next.t()` de façon synchrone très tôt au chargement (même piège que celui
+  documenté en section 8 de `CLAUDE.md`).
 
 C'est le fichier central duquel dépendent presque tous les autres — il doit charger après
 les fichiers de données pures (`world/zones-data.js`, `world/gear-tiers-data.js`,

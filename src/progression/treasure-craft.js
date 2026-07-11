@@ -54,7 +54,7 @@ function invQtyByKey(key) { const i = invSlotByKey(key); return i===-1 ? 0 : INV
 function invHasRoomFor(key) { return invSlotByKey(key) !== -1 || invUsed() < INV_SIZE; }
 function craftTreasurePiece(recipe) {
   if (invQtyByKey(recipe.needKey) < recipe.needQty) return false;
-  if (!invHasRoomFor(recipe.giveKey)) { floatTxt(P.x,P.y,90,LANG==='fr'?'Sac plein !':'Bag full!',{hurt:true}); return false; }
+  if (!invHasRoomFor(recipe.giveKey)) { floatTxt(P.x,P.y,90,i18next.t('progression:progression.treasure_craft.bag_full'),{hurt:true}); return false; }
   invRemoveAt(invSlotByKey(recipe.needKey), recipe.needQty);
   invAdd({ name:recipe.giveName, kind:'treasure', icon:'🗺️', color:'#e8c96a', key:recipe.giveKey, qty:1, stackable:true, weight:0.05, val:referenceGearVal()*10000, ap:0, dp:0, hp:0, dodge:0 });
   trackLoot(recipe.giveName);
@@ -112,8 +112,8 @@ function renderTreasureCraftPanel() {
   }).join('');
   const secretOk = secretComboReady();
   const secretRow = `<button class="craftRecipeBtn${secretOk?' ready':''}" data-kind="secret" ${secretOk?'':'disabled'} ` +
-    `title="${LANG==='fr'?'1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon → silver (Heidel/Calpheon pas encore débloqués)':'1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → silver (Heidel/Calpheon not unlocked yet)'}">` +
-    `🗺️+🗺️+🗺️ → 🎁 ${LANG==='fr'?'Coffret secret':'Secret box'}</button>`;
+    `title="${i18next.t('progression:progression.treasure_craft.secret_combo_hint')}">` +
+    `🗺️+🗺️+🗺️ → 🎁 ${i18next.t('progression:progression.treasure_craft.secret_box_label')}</button>`;
   // recettes verrouillées "100 fragment → 1 carte" pour Heidel/Calpheon (2026-07-15, demande
   // explicite : "ajoute 2 crafte /100 > carte") -- aucun fragment n'est obtenable tant que ces
   // paliers restent verrouillés (voir TIER_PREVIEW_CARD/ZONE_TIERS), donc affichées grisées comme
@@ -121,10 +121,10 @@ function renderTreasureCraftPanel() {
   // palier ouvrira -- toujours "0/100", jamais cliquables.
   const upcomingRows = Object.entries(TIER_PREVIEW_CARD).map(([tierId, card]) => {
     const tierLabel = ZONE_TIERS.find(t => t.id === tierId).label[LANG];
-    return `<button class="craftRecipeBtn" disabled title="${LANG==='fr'?'Bientôt disponible — palier '+tierLabel+' pas encore ouvert':'Coming soon — '+tierLabel+' tier not yet open'}">` +
+    return `<button class="craftRecipeBtn" disabled title="${i18next.t('progression:progression.treasure_craft.upcoming_tier_hint', { tier: tierLabel })}">` +
       `🔒 🧩 0/100 → ${card.icon} ${escapeHtml(tr(card.name))}</button>`;
   }).join('');
-  el.innerHTML = `<div class="craftPanelTitle">${LANG==='fr'?'🔧 Combiner':'🔧 Combine'}</div>` +
+  el.innerHTML = `<div class="craftPanelTitle">${i18next.t('progression:progression.treasure_craft.panel_title')}</div>` +
     `<div class="craftRecipes">${pieceRows}${secretRow}${upcomingRows}</div>`;
   el.querySelectorAll('.craftRecipeBtn[data-kind="piece"]').forEach(btn => {
     btn.onclick = () => { const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === btn.dataset.key); if (r) craftTreasurePiece(r); renderTreasureCraftPanel(); };

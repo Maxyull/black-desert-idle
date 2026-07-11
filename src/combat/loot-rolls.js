@@ -197,7 +197,7 @@ function showInvFullWarning() {
   const now = performance.now();
   if (now - lastInvFullToast > 4000) { // pas plus d'1 toast/4s pour ne pas spammer
     lastInvFullToast = now;
-    floatTxt(P.x, P.y-20, 70, LANG==='fr' ? 'SAC PLEIN !' : 'BAG FULL!', {hurt:true});
+    floatTxt(P.x, P.y-20, 70, i18next.t('combat:combat.loot.bag_full'), {hurt:true});
   }
 }
 function dropsTick(dt) {
@@ -364,7 +364,7 @@ function gainXp(n) {
     S.xpNext = xpNeededFor(S.lvl);
     S.hpMax += 8; P.hp = effHpMax();
     floatTxt(P.x,P.y,115,'NIVEAU '+S.lvl,{lvl:true});
-    pushNotif('⭐', LANG==='fr'?'Niveau supérieur':'Level up', (LANG==='fr'?'Niveau ':'Level ')+S.lvl, 'info');
+    pushNotif('⭐', i18next.t('combat:combat.loot.level_up_notif_title'), i18next.t('combat:combat.loot.level_reached', { lvl: S.lvl }), 'info');
     // log "pour le fun" (demande explicite du 2026-07-08 : "spam le channel, fais toi plaisir")
     logToDiscord('⭐ Niveau supérieur', `**${myPseudo||'Joueur'}** passe niveau **${S.lvl}** (SPD +${Math.round(levelSpdPct())}%)`, 0x9cc9e8);
     // onglet Statistiques > Niveaux (2026-07-15, demande explicite : "des qu'on prend un lvl les

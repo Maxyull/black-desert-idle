@@ -3156,6 +3156,67 @@
       /if\s*\(error\)\s*return/.test(src) && src.includes('data === false'));
   }
 
+  // ---------- i18n (2026-07-11, voir I18N_PLAN.md/CLAUDE.md §31) ----------
+  // Garde-fous complémentaires à scripts/check-missing-translations.js (qui tourne côté Node, hors
+  // navigateur) : ici on vérifie l'état RÉEL de i18next une fois chargé dans la page.
+  function testI18nextInitializedWithSupportedLangs() {
+    assert('i18next existe globalement', typeof i18next !== 'undefined');
+    if (typeof i18next === 'undefined') return;
+    assert('i18next est initialisé au moment où les tests tournent', i18next.isInitialized === true);
+    assert('SUPPORTED_LANGS contient fr et en', typeof SUPPORTED_LANGS !== 'undefined' && SUPPORTED_LANGS.includes('fr') && SUPPORTED_LANGS.includes('en'));
+  }
+  // ordre de chargement critique (même famille de piège que testSorcierRenderLoadsBeforeSyncStartupCallers,
+  // section 8 CLAUDE.md) : i18n-resources.generated.js et i18n-init.js DOIVENT charger avant tout
+  // fichier de gameplay, sinon un appel i18next.t() invoqué tôt au chargement (ex: hud() synchrone)
+  // planterait ou afficherait une clé brute.
+  function testI18nResourcesLoadBeforeGameplayFiles() {
+    if (typeof document === 'undefined') return; // hors-contexte navigateur
+    const srcIndexOf = needle => Array.from(document.scripts).findIndex(s => s.src.includes(needle));
+    const resourcesIdx = srcIndexOf('core/i18n-resources.generated.js');
+    const initIdx = srcIndexOf('core/i18n-init.js');
+    const gearIconsIdx = srcIndexOf('inventory/gear-icons.js');
+    const coreIdx = srcIndexOf('core/game-core.js');
+    assert('i18n-resources.generated.js est chargé (balise trouvée dans le DOM)', resourcesIdx !== -1);
+    assert('i18n-init.js est chargé (balise trouvée dans le DOM)', initIdx !== -1);
+    if (resourcesIdx === -1 || initIdx === -1 || gearIconsIdx === -1 || coreIdx === -1) return;
+    assert('i18n-resources.generated.js charge AVANT i18n-init.js', resourcesIdx < initIdx, `resourcesIdx=${resourcesIdx}, initIdx=${initIdx}`);
+    assert('i18n-init.js charge AVANT gear-icons.js (1er fichier de gameplay)', initIdx < gearIconsIdx, `initIdx=${initIdx}, gearIconsIdx=${gearIconsIdx}`);
+    assert('i18n-init.js charge AVANT game-core.js', initIdx < coreIdx, `initIdx=${initIdx}, coreIdx=${coreIdx}`);
+  }
+  // clé brute affichée au joueur = régression silencieuse (voir I18N_PLAN.md §7 "Clé manquante") --
+  // échantillon de clés réellement migrées (domaine core, migré manuellement) pour détecter une
+  // régression de chargement des ressources sans dépendre du contenu exact de chaque domaine.
+  function testI18nextResolvesKnownKeysNotRawKey() {
+    if (typeof i18next === 'undefined' || !i18next.isInitialized) return;
+    const sampleKeys = ['core:core.combat.dodge', 'core:core.zone.no_monsters', 'core:core.default_pseudo'];
+    sampleKeys.forEach(k => {
+      assert(`i18next.exists('${k}') est vrai (clé fr/en réellement définie)`, i18next.exists(k));
+    });
+  }
+  // le toggle #langToggle (game-supabase.js) doit garder i18next.language synchronisé avec LANG --
+  // sinon les nouveaux textes migrés (i18next.t) et les anciens ternaires LANG=== restant à migrer
+  // afficheraient deux langues différentes en même temps après un clic sur le toggle.
+  function testChangeLanguageStaysInSyncWithGlobalLang() {
+    if (typeof i18next === 'undefined' || !i18next.isInitialized || typeof LANG === 'undefined') return;
+    const before = LANG;
+    i18next.changeLanguage(before === 'fr' ? 'en' : 'fr');
+    assert('i18next.language suit un changeLanguage() explicite', i18next.language === (before === 'fr' ? 'en' : 'fr'), `attendu=${before === 'fr' ? 'en' : 'fr'}, obtenu=${i18next.language}`);
+    i18next.changeLanguage(before); // restaure l'état pour ne pas polluer les tests suivants / la session réelle
+  }
+  // toutes les ressources chargées doivent avoir EXACTEMENT le même jeu de domaines et de clés en
+  // fr et en -- même vérification que scripts/check-missing-translations.js (§8bis) mais côté
+  // navigateur, sur les ressources RÉELLEMENT chargées par i18next (pas juste les fichiers sources).
+  function testI18nResourcesFrEnKeyParity() {
+    if (typeof I18N_RESOURCES === 'undefined') return;
+    const domains = Object.keys(I18N_RESOURCES.fr || {});
+    assert('I18N_RESOURCES contient au moins un domaine', domains.length > 0);
+    domains.forEach(domain => {
+      const frKeys = Object.keys((I18N_RESOURCES.fr || {})[domain] || {}).sort();
+      const enKeys = Object.keys((I18N_RESOURCES.en || {})[domain] || {}).sort();
+      assert(`${domain}.json : mêmes clés en fr et en (${frKeys.length} clés)`, JSON.stringify(frKeys) === JSON.stringify(enKeys), `fr-only ou en-only détecté dans ${domain}`);
+    });
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -3327,6 +3388,11 @@
     testCmpMasteredDetectsOnlyPenLevel();
     testCompendiumReactOpensAndClosesInDom();
     testInvAddMergesPastOldMaxStackThreshold();
+    testI18nextInitializedWithSupportedLangs();
+    testI18nResourcesLoadBeforeGameplayFiles();
+    testI18nextResolvesKnownKeysNotRawKey();
+    testChangeLanguageStaysInSyncWithGlobalLang();
+    testI18nResourcesFrEnKeyParity();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

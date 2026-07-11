@@ -33,37 +33,35 @@ const WK_V = { // variables couleur copiées à l'identique depuis classement-pu
 let wkCurrentId = 'accueil';
 let wkScrollHandler = null;
 
-function wkT(fr, en) { return LANG === 'fr' ? fr : en; }
-
 // Structure de nav groupée, comme le mockup — chaque item est soit un article réel (WIKI_SECTIONS
 // / renderCodexHtml), soit un raccourci vers un autre panneau du jeu (openCompanionsModule /
 // openCompendiumReact / openPatchNotesReact), jamais un contenu inventé.
 function wkNavGroups() {
   return [
-    { title: wkT('Général', 'General'), items: [
-      { id:'accueil', ico:'🏠', label:wkT('Accueil','Home'), kind:'home' },
-      { id:'tuto', ico:'🔰', label:wkT('Tutoriel','Tutorial'), kind:'tuto' },
-      { id:'patchnotes', ico:'📜', label:wkT('Notes de version','Patch notes'), kind:'link',
+    { title: i18next.t('backend:backend.wiki.nav_group_general'), items: [
+      { id:'accueil', ico:'🏠', label:i18next.t('backend:backend.wiki.nav_home'), kind:'home' },
+      { id:'tuto', ico:'🔰', label:i18next.t('backend:backend.wiki.nav_tuto'), kind:'tuto' },
+      { id:'patchnotes', ico:'📜', label:i18next.t('backend:backend.wiki.nav_patchnotes'), kind:'link',
         open:()=>{ if (typeof openPatchNotesReact === 'function') openPatchNotesReact(); } },
     ]},
-    { title: wkT('Guides de jeu', 'Game guides'), items: [
-      { id:'combat', ico:'⚔️', label:wkT('Combat & Zones','Combat & Zones'), kind:'section', sec:'combat' },
-      { id:'enh', ico:'✦', label:wkT('Optimisation','Enhancement'), kind:'section', sec:'enh' },
-      { id:'market', ico:'🏛️', label:wkT('Marché','Market'), kind:'section', sec:'market' },
-      { id:'account', ico:'💾', label:wkT('Compte & Sauvegarde','Account & Save'), kind:'section', sec:'account' },
+    { title: i18next.t('backend:backend.wiki.nav_group_guides'), items: [
+      { id:'combat', ico:'⚔️', label:i18next.t('backend:backend.wiki.nav_combat'), kind:'section', sec:'combat' },
+      { id:'enh', ico:'✦', label:i18next.t('backend:backend.wiki.nav_enh'), kind:'section', sec:'enh' },
+      { id:'market', ico:'🏛️', label:i18next.t('backend:backend.wiki.nav_market'), kind:'section', sec:'market' },
+      { id:'account', ico:'💾', label:i18next.t('backend:backend.wiki.nav_account'), kind:'section', sec:'account' },
     ]},
-    { title: wkT('Objets', 'Items'), items: [
-      { id:'codex', ico:'📖', label:wkT('Codex des objets','Item codex'), kind:'codex' },
+    { title: i18next.t('backend:backend.wiki.nav_group_items'), items: [
+      { id:'codex', ico:'📖', label:i18next.t('backend:backend.wiki.nav_codex'), kind:'codex' },
     ]},
-    { title: wkT('Compagnons & Monde', 'Companions & World'), items: [
-      { id:'companions', ico:'🐾', label:wkT('Familiers (fusion, catalogue…)','Companions (fusion, catalog…)'), kind:'link',
+    { title: i18next.t('backend:backend.wiki.nav_group_companions_world'), items: [
+      { id:'companions', ico:'🐾', label:i18next.t('backend:backend.wiki.nav_companions'), kind:'link',
         open:()=>{ if (typeof openCompanionsModule === 'function') openCompanionsModule(); } },
-      { id:'compendium', ico:'🗺️', label:wkT('Zones, Boss & Maîtrise PEN','Zones, Bosses & PEN Mastery'), kind:'link',
+      { id:'compendium', ico:'🗺️', label:i18next.t('backend:backend.wiki.nav_compendium'), kind:'link',
         open:()=>{ if (typeof openCompendiumReact === 'function') openCompendiumReact(); } },
     ]},
-    { title: wkT('Communauté', 'Community'), items: [
-      { id:'about', ico:'ℹ️', label:wkT('À propos','About'), kind:'section', sec:'about' },
-      { id:'discord', ico:'💬', label:wkT('Discord','Discord'), kind:'discord' },
+    { title: i18next.t('backend:backend.wiki.nav_group_community'), items: [
+      { id:'about', ico:'ℹ️', label:i18next.t('backend:backend.wiki.nav_about'), kind:'section', sec:'about' },
+      { id:'discord', ico:'💬', label:i18next.t('backend:backend.wiki.nav_discord'), kind:'discord' },
     ]},
   ];
 }
@@ -94,15 +92,13 @@ function wkArticleHtml(item) {
 }
 function wkHomeHtml() {
   const version = (typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES[0]) ? PATCH_NOTES[0].v : '';
-  return `<p class="wk-lead">${wkT(
-    'Bienvenue sur le Wiki de Velia Idle — jeu idle de farm automatique inspiré de Black Desert Online. Retrouve ici les règles de combat/zones, l\'optimisation, le marché, ainsi que des raccourcis vers le Compendium et le module Compagnons.',
-    'Welcome to the Velia Idle Wiki — an automatic idle-farming game inspired by Black Desert Online. Here you\'ll find combat/zone rules, enhancement, the market, plus shortcuts to the Compendium and Companions module.')}</p>
-    <h3>${wkT('Systèmes principaux','Main systems')}</h3>
+  return `<p class="wk-lead">${i18next.t('backend:backend.wiki.home_lead')}</p>
+    <h3>${i18next.t('backend:backend.wiki.home_systems_title')}</h3>
     <ul>
-      <li><b>${wkT('Combat & Zones','Combat & Zones')}</b> — ${wkT('PA/PD requis, loot progressif','required AP/DP, progressive loot')}</li>
-      <li><b>${wkT('Optimisation','Enhancement')}</b> — +1 ${wkT('à','to')} PEN, Pierre de Cron</li>
-      <li><b>${wkT('Marché','Market')}</b> — ${wkT('carnet d\'ordres joueur à joueur','player-to-player order book')}</li>
-      <li><b>${wkT('Compagnons','Companions')}</b> — ${wkT('collection, fusion et classement (module dédié)','collection, fusion and leaderboard (dedicated module)')}</li>
+      <li><b>${i18next.t('backend:backend.wiki.nav_combat')}</b> — ${i18next.t('backend:backend.wiki.home_system_combat_desc')}</li>
+      <li><b>${i18next.t('backend:backend.wiki.nav_enh')}</b> — +1 ${i18next.t('backend:backend.wiki.home_system_pen_word')} PEN, Pierre de Cron</li>
+      <li><b>${i18next.t('backend:backend.wiki.nav_market')}</b> — ${i18next.t('backend:backend.wiki.home_system_market_desc')}</li>
+      <li><b>${i18next.t('backend:backend.wiki.home_system_companions_title')}</b> — ${i18next.t('backend:backend.wiki.home_system_companions_desc')}</li>
     </ul>`;
 }
 // réutilise le vrai renderTutoPageHtml() (game-supabase.js) — pas de duplication du texte, et le
@@ -111,9 +107,7 @@ function wkTutoHtml() {
   return typeof renderTutoPageHtml === 'function' ? renderTutoPageHtml() : '';
 }
 function wkDiscordHtml() {
-  return `<div class="wk-callout" style="border-left-color:${WK_V.blue}">💬 ${wkT(
-    'Pas encore de serveur Discord officiel pour le moment — cette section sera complétée dès qu\'un lien existera.',
-    'No official Discord server yet — this section will be filled in once a link exists.')}</div>`;
+  return `<div class="wk-callout" style="border-left-color:${WK_V.blue}">💬 ${i18next.t('backend:backend.wiki.discord_placeholder')}</div>`;
 }
 
 // ---- headings -> ancres pour le sommaire (les articles réels utilisent <h3>, pas <h2>) ----
@@ -134,18 +128,18 @@ function wkRelated(item) {
 function wkRenderInfobox(item, headings) {
   const isHome = item.kind === 'home';
   const rowsHtml = isHome ? `
-      <div class="wk-ib-row"><span class="wk-ib-label">${wkT('Développeur','Developer')}</span><span class="wk-ib-val">Maxyull</span></div>
-      <div class="wk-ib-row"><span class="wk-ib-label">${wkT('Version','Version')}</span><span class="wk-ib-val wk-gold">${wkEscape((typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES[0]) ? PATCH_NOTES[0].v : '—')}</span></div>
-      <div class="wk-ib-row"><span class="wk-ib-label">${wkT('Moteur','Engine')}</span><span class="wk-ib-val">JS + Supabase</span></div>
-      <div class="wk-ib-row"><span class="wk-ib-label">${wkT('Licence','License')}</span><span class="wk-ib-val">${wkT('Fan gratuit','Free fan project')}</span></div>` : '';
+      <div class="wk-ib-row"><span class="wk-ib-label">${i18next.t('backend:backend.wiki.infobox_developer_label')}</span><span class="wk-ib-val">Maxyull</span></div>
+      <div class="wk-ib-row"><span class="wk-ib-label">${i18next.t('backend:backend.wiki.infobox_version_label')}</span><span class="wk-ib-val wk-gold">${wkEscape((typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES[0]) ? PATCH_NOTES[0].v : '—')}</span></div>
+      <div class="wk-ib-row"><span class="wk-ib-label">${i18next.t('backend:backend.wiki.infobox_engine_label')}</span><span class="wk-ib-val">JS + Supabase</span></div>
+      <div class="wk-ib-row"><span class="wk-ib-label">${i18next.t('backend:backend.wiki.infobox_license_label')}</span><span class="wk-ib-val">${i18next.t('backend:backend.wiki.infobox_license_value')}</span></div>` : '';
   const tocHtml = headings.length ? `
     <div class="wk-toc">
-      <div class="wk-toc-title">${wkT('Sommaire','Contents')}</div>
+      <div class="wk-toc-title">${i18next.t('backend:backend.wiki.infobox_toc_title')}</div>
       ${headings.map(h => `<div class="wk-toc-item" data-id="${h.id}">${wkEscape(h.txt)}</div>`).join('')}
     </div>` : '';
   const related = wkRelated(item);
   const relatedHtml = related.length ? `
-    <div class="wk-related-title">${wkT('Voir aussi','See also')}</div>
+    <div class="wk-related-title">${i18next.t('backend:backend.wiki.infobox_related_title')}</div>
     ${related.map(it => `<div class="wk-related-item" data-nav="${it.id}"><span class="wk-related-ico">${it.ico}</span><span class="wk-related-name">${wkEscape(it.label)}</span></div>`).join('')}` : '';
   return `<div class="wk-infobox">
       <div class="wk-infobox-art">${item.ico}</div>
@@ -231,7 +225,7 @@ function wkRunSearch(q) {
   wrap.className = 'wk-search-results'; wrap.id = 'wkSearchResults';
   wrap.innerHTML = matches.length
     ? matches.map(it => `<div class="wk-sr-item" data-nav="${it.id}"><span class="wk-sr-ico">${it.ico}</span><span>${wkEscape(it.label)}${it.kind === 'link' ? ' ↗' : ''}</span></div>`).join('')
-    : `<div class="wk-no-results">${wkT('Aucun résultat pour','No results for')} « ${wkEscape(q)} »</div>`;
+    : `<div class="wk-no-results">${i18next.t('backend:backend.wiki.search_no_results')} « ${wkEscape(q)} »</div>`;
   wrap.querySelectorAll('.wk-sr-item').forEach(el => { el.onmousedown = () => wkNavigate(el.dataset.nav); });
   document.getElementById('wkSearchWrap').appendChild(wrap);
 }
@@ -244,9 +238,9 @@ function wkBuildOverlay() {
       <div class="wk-logo">◈ Velia Idle <span>Wiki</span></div>
       <div class="wk-search-wrap" id="wkSearchWrap">
         <span class="wk-search-ico">🔍</span>
-        <input class="wk-search-box" id="wkSearchBox" placeholder="${wkT('Rechercher…','Search…')}">
+        <input class="wk-search-box" id="wkSearchBox" placeholder="${i18next.t('backend:backend.wiki.search_placeholder')}">
       </div>
-      <button class="wk-close" id="wkClose">✕ ${wkT('Fermer','Close')}</button>
+      <button class="wk-close" id="wkClose">✕ ${i18next.t('backend:backend.wiki.close_button')}</button>
     </div>
     <div class="wk-crumb" id="wkCrumb"></div>
     <div class="wk-wrap">

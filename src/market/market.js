@@ -4,9 +4,7 @@
 function marketRequireAuth() {
   if (!sb || !currentUser) { alert('Connecte-toi pour accéder au marché.'); return false; }
   if (isGuest()) {
-    alert(LANG==='fr'
-      ? 'Le Marché et le Classement sont réservés aux comptes vérifiés (protection anti-triche). Clique sur "🔗 Lier un compte" pour en créer un — ta progression actuelle sera conservée.'
-      : 'The Market and Leaderboard are restricted to verified accounts (anti-cheat protection). Click "🔗 Link account" to create one — your current progress will be kept.');
+    alert(i18next.t('market:market.auth_verified_required'));
     return false;
   }
   return true;
@@ -27,9 +25,7 @@ $a('btnMarket').onclick = async () => {
     try {
       const { data } = await sb.rpc('get_market_open');
       if (data === false) {
-        alert(LANG==='fr'
-          ? '🏛️ Le Marché est actuellement fermé pour maintenance. Réessaie plus tard.'
-          : '🏛️ The Market is currently closed for maintenance. Try again later.');
+        alert(i18next.t('market:market.closed_for_maintenance'));
         return;
       }
     } catch(e) {}
@@ -115,9 +111,7 @@ function updateMktTaxHint() {
   const qty = parseInt($a('mktQtyInput').value, 10) || 0;
   hint.style.display = '';
   const net = Math.floor(price * qty * (1 - MARKET_SELL_TAX_RATE));
-  hint.textContent = LANG==='fr'
-    ? `Tu recevras ~${fmt(net)} silver après taxe de vente (${Math.round(MARKET_SELL_TAX_RATE*100)}%)`
-    : `You'll receive ~${fmt(net)} silver after sale tax (${Math.round(MARKET_SELL_TAX_RATE*100)}%)`;
+  hint.textContent = i18next.t('market:market.sell_tax_hint', { net: fmt(net), taxPct: Math.round(MARKET_SELL_TAX_RATE*100) });
 }
 // met à jour l'état "actif" des pills à CHAQUE sélection (2026-07-16, bug corrigé : avant, seule
 // la pill de idx=0 recevait ".active" une fois à l'init -- cliquer une autre pill changeait bien
@@ -158,34 +152,34 @@ async function refreshMarketMaterials() {
     if (recentTrades[i].price > recentTrades[i-1].price) up++;
     else if (recentTrades[i].price < recentTrades[i-1].price) down++;
   }
-  const pressure = recentTrades.length < 2 ? { icon:'➡️', label: LANG==='fr'?'NEUTRE':'NEUTRAL', cls:'' }
-    : up > down ? { icon:'🔺', label: LANG==='fr'?'HAUSSE':'RISING', cls:'up' }
-    : down > up ? { icon:'🔻', label: LANG==='fr'?'BAISSE':'FALLING', cls:'down' }
-    : { icon:'➡️', label: LANG==='fr'?'NEUTRE':'NEUTRAL', cls:'' };
+  const pressure = recentTrades.length < 2 ? { icon:'➡️', label: i18next.t('market:market.trend_neutral'), cls:'' }
+    : up > down ? { icon:'🔺', label: i18next.t('market:market.trend_rising'), cls:'up' }
+    : down > up ? { icon:'🔻', label: i18next.t('market:market.trend_falling'), cls:'down' }
+    : { icon:'➡️', label: i18next.t('market:market.trend_neutral'), cls:'' };
 
   $a('mktMetaRow').innerHTML = `
-    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Meilleure vente':'Best sell'}</div><div class="mktMetaVal sell">${bestSell?fmt(bestSell.price):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Spread':'Spread'}</div><div class="mktMetaVal">${spread!=null?fmt(spread):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Meilleur achat':'Best buy'}</div><div class="mktMetaVal buy">${bestBuy?fmt(bestBuy.price):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${LANG==='fr'?'Pression marché':'Market pressure'}</div><div class="mktMetaVal ${pressure.cls}">${pressure.icon} ${pressure.label}</div></div>`;
+    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.best_sell_label')}</div><div class="mktMetaVal sell">${bestSell?fmt(bestSell.price):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.spread_label')}</div><div class="mktMetaVal">${spread!=null?fmt(spread):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.best_buy_label')}</div><div class="mktMetaVal buy">${bestBuy?fmt(bestBuy.price):'—'}</div></div>
+    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.market_pressure_label')}</div><div class="mktMetaVal ${pressure.cls}">${pressure.icon} ${pressure.label}</div></div>`;
 
-  $a('mktSellCol').innerHTML = `<div class="mktColHead sell"><span>${LANG==='fr'?'Ordres de vente':'Sell orders'}</span><span>${sells.length}</span></div>` +
+  $a('mktSellCol').innerHTML = `<div class="mktColHead sell"><span>${i18next.t('market:market.sell_orders_label')}</span><span>${sells.length}</span></div>` +
     `<div class="mktRowsWrap">${mktOrderRowsHtml(sells, 'sell')}</div>`;
-  $a('mktBuyCol').innerHTML = `<div class="mktColHead buy"><span>${LANG==='fr'?'Ordres d\'achat':'Buy orders'}</span><span>${buys.length}</span></div>` +
+  $a('mktBuyCol').innerHTML = `<div class="mktColHead buy"><span>${i18next.t('market:market.buy_orders_label')}</span><span>${buys.length}</span></div>` +
     `<div class="mktRowsWrap">${mktOrderRowsHtml(buys, 'buy')}</div>`;
 
   const histRows = (trades || []).slice().reverse().map(t => `
     <div class="mktHistRow">
       <span>${tr(m.name)}</span><span>${fmt(t.price)}</span><span>×${fmt(t.qty)}</span>
-      <span class="mktHistTime">${new Date(t.created_at).toLocaleTimeString(LANG==='fr'?'fr-FR':'en-US')}</span>
+      <span class="mktHistTime">${new Date(t.created_at).toLocaleTimeString(i18next.t('market:market.time_locale'))}</span>
     </div>`).join('');
-  $a('mktHistRows').innerHTML = histRows || `<div class="mEmpty">${LANG==='fr'?'Aucune transaction':'No transactions'}</div>`;
+  $a('mktHistRows').innerHTML = histRows || `<div class="mEmpty">${i18next.t('market:market.no_transactions_label')}</div>`;
 
   drawMktCandles(trades || []);
   updateMktForm();
 }
 function mktOrderRowsHtml(orders, side) {
-  if (!orders.length) return `<div class="mEmpty">${LANG==='fr'?'Aucun ordre':'No orders'}</div>`;
+  if (!orders.length) return `<div class="mEmpty">${i18next.t('market:market.no_orders_label')}</div>`;
   const maxQty = Math.max(...orders.map(o => o.qty));
   return orders.map((o,i) => `
     <div class="mktOrderRow ${side}${i===0?' best':''}">
@@ -196,12 +190,12 @@ function mktOrderRowsHtml(orders, side) {
 function updateMktForm() {
   const m = MARKET_MATERIALS[mktSelectedIdx];
   const owned = INV.filter(s => s && s.kind === 'material' && s.name === m.name).reduce((n,s) => n + s.qty, 0);
-  $a('mktFormTitle').textContent = (LANG==='fr'?'Placer un ordre — ':'Place an order — ') + tr(m.name) + ' · ' + (LANG==='fr'?'possédé':'owned') + ' : ' + fmt(owned);
+  $a('mktFormTitle').textContent = i18next.t('market:market.place_order_title', { itemName: tr(m.name), owned: fmt(owned) });
   $a('mktSideBuy').classList.toggle('active', mktSide==='buy');
   $a('mktSideSell').classList.toggle('active', mktSide==='sell');
   const btn = $a('mktPlaceBtn');
   btn.className = 'mktPlaceBtn ' + mktSide;
-  btn.textContent = mktSide === 'buy' ? (LANG==='fr'?"Placer l'ordre d'achat":'Place buy order') : (LANG==='fr'?"Placer l'ordre de vente":'Place sell order');
+  btn.textContent = mktSide === 'buy' ? i18next.t('market:market.place_buy_order_btn') : i18next.t('market:market.place_sell_order_btn');
   updateMktTaxHint();
   $a('mktFormMsg').textContent = '';
 }
@@ -209,17 +203,17 @@ async function mktPlaceOrder() {
   const m = MARKET_MATERIALS[mktSelectedIdx];
   const price = Number($a('mktPriceInput').value), qty = parseInt($a('mktQtyInput').value, 10) || 1;
   const msg = $a('mktFormMsg');
-  if (!price || price <= 0) { msg.textContent = LANG==='fr'?'Prix invalide.':'Invalid price.'; return; }
+  if (!price || price <= 0) { msg.textContent = i18next.t('market:market.invalid_price'); return; }
   let invIndex = null;
   if (mktSide === 'sell') {
     invIndex = INV.findIndex(s => s && s.kind === 'material' && s.name === m.name);
-    if (invIndex === -1) { msg.textContent = LANG==='fr'?'Tu n\'en as pas.':'You don\'t have any.'; return; }
+    if (invIndex === -1) { msg.textContent = i18next.t('market:market.no_item_owned'); return; }
   }
   const { error } = await sb.rpc('market_place_order', {
     p_side: mktSide, p_item_key: mktKey(m), p_item_name: m.name, p_item_kind: 'material',
     p_price: price, p_qty: qty, p_inv_index: invIndex,
   });
-  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; return; }
+  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); return; }
   msg.textContent = '';
   $a('mktPriceInput').value = ''; $a('mktQtyInput').value = '1';
   await loadCloudSave();
@@ -236,7 +230,7 @@ function drawMktCandles(trades) {
   ctx.clearRect(0,0,W,H);
   if (trades.length < 2) {
     ctx.fillStyle = '#5a5f74'; ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(LANG==='fr'?'Pas assez de transactions':'Not enough transactions', W/2, H/2);
+    ctx.fillText(i18next.t('market:market.not_enough_transactions'), W/2, H/2);
     return;
   }
   const candles = [];
@@ -302,7 +296,7 @@ async function refreshCmBrowse() {
   let rows = data || [];
   if (cat.slots) rows = rows.filter(l => l.item_snapshot && cat.slots.includes(l.item_snapshot.slot));
   cmListings = rows;
-  if (error) { list.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Erreur de chargement':'Loading error'}</div>`; return; }
+  if (error) { list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.loading_error')}</div>`; return; }
   renderCmListingsList();
 }
 function cmListingIcon(l) {
@@ -347,16 +341,16 @@ function renderCmListingsList() {
     return { ...g, best, stock, drilldown: enhLvs.size > 1, latest: g.items.reduce((a,b) => new Date(a.created_at)>new Date(b.created_at)?a:b).created_at };
   });
   rows = cmApplySearchSort(rows, r => r.best.price, r => r.latest);
-  if (!rows.length) { list.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Aucune vente en cours':'No listings right now'}</div>`; return; }
+  if (!rows.length) { list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.no_listings')}</div>`; return; }
   list.innerHTML = rows.map(g => {
     const color = cmListingColor(g.best);
     return `<div class="cmListCard" data-name="${escapeHtml(g.name)}">
       <div class="cmListIcon" style="color:${color}">${cmListingIcon(g.best)}</div>
       <div class="cmListInfo">
         <div class="cmListName" style="color:${color}">${tr(g.name)}</div>
-        <div class="cmListSub">${LANG==='fr'?'En stock':'In stock'} : ${fmt(g.stock)}${g.drilldown?` · ${g.items.length} ${LANG==='fr'?'niveaux':'levels'}`:''}</div>
+        <div class="cmListSub">${i18next.t('market:market.in_stock_label')} : ${fmt(g.stock)}${g.drilldown?` · ${g.items.length} ${i18next.t('market:market.levels_label')}`:''}</div>
       </div>
-      <div class="cmListPrice"><div class="price">${LANG==='fr'?'dès':'from'} ${fmt(g.best.price)} 🪙</div></div>
+      <div class="cmListPrice"><div class="price">${i18next.t('market:market.from_price_label')} ${fmt(g.best.price)} 🪙</div></div>
     </div>`;
   }).join('');
   list.querySelectorAll('.cmListCard').forEach(card => {
@@ -384,16 +378,16 @@ function renderCmDrilldown() {
   }));
   rows.sort((a,b) => a.lv - b.lv);
   rows = cmApplySearchSort(rows.map(r => ({...r, name:cmDrilldownName})), r => r.best.price, r => r.latest);
-  const backBtn = `<button class="cmBackBtn" id="cmBackBtn">← ${LANG==='fr'?'Retour':'Back'}</button>`;
+  const backBtn = `<button class="cmBackBtn" id="cmBackBtn">← ${i18next.t('market:market.back_btn')}</button>`;
   list.innerHTML = backBtn + rows.map(r => {
     const color = cmListingColor(r.best);
     return `<div class="cmListCard" data-lv="${r.lv}">
       <div class="cmListIcon" style="color:${color}">${cmListingIcon(r.best)}</div>
       <div class="cmListInfo">
         <div class="cmListName" style="color:${color}">${ENH_NAMES[r.lv]} ${tr(cmDrilldownName)}</div>
-        <div class="cmListSub">${LANG==='fr'?'En stock':'In stock'} : ${fmt(r.stock)}</div>
+        <div class="cmListSub">${i18next.t('market:market.in_stock_label')} : ${fmt(r.stock)}</div>
       </div>
-      <div class="cmListPrice"><div class="price">${LANG==='fr'?'dès':'from'} ${fmt(r.best.price)} 🪙</div></div>
+      <div class="cmListPrice"><div class="price">${i18next.t('market:market.from_price_label')} ${fmt(r.best.price)} 🪙</div></div>
     </div>`;
   }).join('');
   $a('cmBackBtn').onclick = () => { cmDrilldownName = null; renderCmListingsList(); };
@@ -406,7 +400,7 @@ function renderCmDrilldown() {
 function renderCmDetailPanel() {
   const panel = $a('cmDetailPanel'); if (!panel) return;
   const l = cmListings.find(x => x.id === cmSelectedId);
-  if (!l) { panel.innerHTML = `<div class="mEmpty" data-i18n="cmSelectItemHint">${LANG==='fr'?'Clique un objet pour voir le détail':'Click an item to see the detail'}</div>`; return; }
+  if (!l) { panel.innerHTML = `<div class="mEmpty" data-i18n="cmSelectItemHint">${i18next.t('market:market.select_item_hint')}</div>`; return; }
   const color = cmListingColor(l);
   let statsHtml = '', compareHtml = '';
   if (l.item_kind === 'gear' || l.item_kind === 'jackpot') {
@@ -416,7 +410,7 @@ function renderCmDetailPanel() {
     if (eff.ap) rows.push(['PA', '+'+eff.ap]);
     if (eff.dp) rows.push(['PD', '+'+eff.dp]);
     if (eff.hp) rows.push(['PV', '+'+eff.hp]);
-    if (snap.enhLv) rows.push([LANG==='fr'?'Niveau':'Level', ENH_NAMES[snap.enhLv]]);
+    if (snap.enhLv) rows.push([i18next.t('market:market.level_label'), ENH_NAMES[snap.enhLv]]);
     statsHtml = `<div class="cmDetailStats">${rows.map(([k,v]) => `<div class="srow"><span>${k}</span><b>${v}</b></div>`).join('')}</div>`;
     // comparaison face à ce qui est déjà équipé dans ce slot (ou la meilleure des 2 bagues/boucles)
     const slotId = l.item_kind === 'jackpot' ? accSlotFor(snap) : snap.slot;
@@ -428,23 +422,23 @@ function renderCmDetailPanel() {
       const effEq = effectiveApDp(equipped);
       const cmpRows = [['PA', effEq.ap||0, eff.ap||0], ['PD', effEq.dp||0, eff.dp||0], ['PV', effEq.hp||0, eff.hp||0]]
         .filter(([,a,b]) => a || b);
-      compareHtml = `<div class="cmDetailSub">${LANG==='fr'?'Face à':'Vs'} <b style="color:${equipped.color||'#c9a55a'}">${tr(equipped.name)}</b></div>
-        <table class="cmCompareTable"><thead><tr><th></th><th>${LANG==='fr'?'Équipé':'Equipped'}</th><th>${LANG==='fr'?'Celui-ci':'This one'}</th><th>Δ</th></tr></thead>
+      compareHtml = `<div class="cmDetailSub">${i18next.t('market:market.vs_label')} <b style="color:${equipped.color||'#c9a55a'}">${tr(equipped.name)}</b></div>
+        <table class="cmCompareTable"><thead><tr><th></th><th>${i18next.t('market:market.equipped_label')}</th><th>${i18next.t('market:market.this_one_label')}</th><th>Δ</th></tr></thead>
         <tbody>${cmpRows.map(([k,a,b]) => {
           const delta = b - a; const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : '';
           return `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td class="cmDelta ${cls}">${delta>0?'+':''}${delta}</td></tr>`;
         }).join('')}</tbody></table>`;
     }
   } else {
-    statsHtml = `<div class="cmDetailStats"><div class="srow"><span>${LANG==='fr'?'Quantité disponible':'Available qty'}</span><b>${fmt(l.qty)}</b></div></div>`;
+    statsHtml = `<div class="cmDetailStats"><div class="srow"><span>${i18next.t('market:market.available_qty_label')}</span><b>${fmt(l.qty)}</b></div></div>`;
   }
   panel.innerHTML = `
     <div class="cmDetailIcon" style="border-color:${color};color:${color}">${cmListingIcon(l)}</div>
     <div class="cmDetailTitle" style="color:${color}">${tr(l.item_name)}</div>
-    <div class="cmDetailSub">${LANG==='fr'?'Vendu par':'Sold by'} ${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}</div>
+    <div class="cmDetailSub">${i18next.t('market:market.sold_by_label')} ${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}</div>
     ${statsHtml}${compareHtml}
     <div class="cmDetailSub" style="margin-top:8px">${fmt(l.price)} 🪙${l.item_kind==='material'?(' × '+fmt(l.qty)):''}</div>
-    <button class="btnBuyListing">${LANG==='fr'?'Acheter':'Buy'}</button>`;
+    <button class="btnBuyListing">${i18next.t('market:market.buy_btn')}</button>`;
   panel.querySelector('.btnBuyListing').onclick = () => buyCmListing(l);
 }
 // achat en un clic : pose un ordre d'achat EXACTEMENT au prix/quantité de l'annonce → correspond
@@ -455,8 +449,8 @@ async function buyCmListing(l) {
     p_side: 'buy', p_item_key: l.item_key, p_item_name: l.item_name, p_item_kind: l.item_kind,
     p_price: l.price, p_qty: l.item_kind === 'material' ? l.qty : 1, p_inv_index: null,
   });
-  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
-  msg.textContent = LANG==='fr'?'Achat effectué ✓':'Purchase complete ✓'; msg.className = 'ok';
+  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); msg.className = 'fail'; return; }
+  msg.textContent = i18next.t('market:market.purchase_complete'); msg.className = 'ok';
   await loadCloudSave();
   updateCmWallet();
   refreshCmBrowse();
@@ -470,17 +464,17 @@ $a('cmSort').onchange = () => renderCmListingsList();
 async function placeMarketOrder(side, key, name, kind, priceStr, qtyStr, invIndex) {
   const msg = $a('commonMsg');
   const price = Number(priceStr), qty = parseInt(qtyStr, 10) || 1;
-  if (!price || price <= 0) { msg.textContent = LANG==='fr'?'Prix invalide.':'Invalid price.'; msg.className = 'fail'; return; }
+  if (!price || price <= 0) { msg.textContent = i18next.t('market:market.invalid_price'); msg.className = 'fail'; return; }
   if (side === 'sell' && invIndex == null) {
     invIndex = INV.findIndex(s => s && s.kind === kind && s.name === name);
-    if (invIndex === -1) { msg.textContent = LANG==='fr'?'Tu n\'en as pas.':'You don\'t have any.'; msg.className = 'fail'; return; }
+    if (invIndex === -1) { msg.textContent = i18next.t('market:market.no_item_owned'); msg.className = 'fail'; return; }
   }
   const { error } = await sb.rpc('market_place_order', {
     p_side: side, p_item_key: key, p_item_name: name, p_item_kind: kind,
     p_price: price, p_qty: kind === 'material' ? qty : 1, p_inv_index: side==='sell' ? invIndex : null,
   });
-  if (error) { msg.textContent = (LANG==='fr'?'Échec : ':'Failed: ') + error.message; msg.className = 'fail'; return; }
-  msg.textContent = LANG==='fr'?'Ordre posé ✓ (exécuté immédiatement si un ordre opposé compatible existait)':'Order placed ✓ (filled immediately if a compatible opposite order existed)';
+  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); msg.className = 'fail'; return; }
+  msg.textContent = i18next.t('market:market.order_placed');
   msg.className = 'ok';
   await loadCloudSave();
   refreshCommonMarket();
@@ -489,12 +483,12 @@ async function placeMarketOrder(side, key, name, kind, priceStr, qtyStr, invInde
 async function refreshMyMarketOrders() {
   const box = $a('cmMyOrders'); if (!box) return;
   const { data, error } = await sb.rpc('market_my_orders');
-  if (error || !data || !data.length) { box.innerHTML = `<div class="mEmpty">${LANG==='fr'?'Aucun ordre':'No orders'}</div>`; return; }
+  if (error || !data || !data.length) { box.innerHTML = `<div class="mEmpty">${i18next.t('market:market.no_orders_label')}</div>`; return; }
   box.innerHTML = data.map(o => `
     <div class="cmRow">
       <div class="cmInfo"><div class="mName">${o.side==='buy'?'🛒':'🏷️'} ${tr(o.item_name)}</div>
-        <div class="cmOwned">${o.side==='buy'?(LANG==='fr'?'Achat':'Buy'):(LANG==='fr'?'Vente':'Sell')} · ${fmt(o.price)} 🪙 × ${fmt(o.qty)}/${fmt(o.qty_original)} · ${o.status==='open'?(LANG==='fr'?'ouvert':'open'):(LANG==='fr'?'terminé':'done')}</div></div>
-      ${o.status==='open' ? `<button class="cmCancelOrder" data-id="${o.id}">${LANG==='fr'?'Annuler':'Cancel'}</button>` : ''}
+        <div class="cmOwned">${o.side==='buy'?i18next.t('market:market.buy_label'):i18next.t('market:market.sell_label')} · ${fmt(o.price)} 🪙 × ${fmt(o.qty)}/${fmt(o.qty_original)} · ${o.status==='open'?i18next.t('market:market.status_open'):i18next.t('market:market.status_done')}</div></div>
+      ${o.status==='open' ? `<button class="cmCancelOrder" data-id="${o.id}">${i18next.t('market:market.cancel_btn')}</button>` : ''}
     </div>`).join('');
   box.querySelectorAll('.cmCancelOrder').forEach(btn => {
     btn.onclick = async () => {

@@ -63,7 +63,7 @@ function warnPotionNoSilver() {
   const now = performance.now();
   if (now - lastPotionSilverWarn < 3000) return;
   lastPotionSilverWarn = now;
-  floatTxt(P.x, P.y-15, 75, LANG==='fr' ? 'Pas assez de silver pour la potion !' : 'Not enough silver for a potion!', {hurt:true});
+  floatTxt(P.x, P.y-15, 75, i18next.t('combat:combat.potion.no_silver_warning'), {hurt:true});
 }
 function usePotion() {
   const pot = POTIONS[S.potionType] || POTIONS.medium;
@@ -93,17 +93,17 @@ function usePotionMana() {
 function renderPotSelect() {
   const el = $('potSelect'); if (!el) return;
   const threshPct = Math.round((S.potionThreshold ?? 0.5) * 100);
-  const threshRow = `<div id="potThreshRow"><span>${LANG==='fr'?'Boire sous':'Drink under'}</span>` +
+  const threshRow = `<div id="potThreshRow"><span>${i18next.t('combat:combat.potion.drink_under')}</span>` +
     `<input type="range" id="potThreshSlider" min="5" max="95" step="5" value="${threshPct}">` +
     `<span id="potThreshVal">${threshPct}%</span></div>`;
   const rows = POTION_ORDER.map(key => {
     const p = POTIONS[key];
     const healHp = Math.round(effHpMax()*p.heal);
     if (p.locked) {
-      return `<div class="psRow locked" title="${LANG==='fr'?'Bientôt disponible':'Coming soon'}">` +
+      return `<div class="psRow locked" title="${i18next.t('combat:combat.potion.coming_soon')}">` +
         `<span class="psIcon">🔒</span>` +
         `<span class="psInfo"><span class="psName">${p.name[LANG]}</span><br><span class="psHeal">+${Math.round(p.heal*100)}% PV · CD ${p.cd}s</span></span>` +
-        `<span class="psCost">${LANG==='fr'?'Gratuite':'Free'}</span></div>`;
+        `<span class="psCost">${i18next.t('combat:combat.potion.free_label')}</span></div>`;
     }
     return `<div class="psRow${S.potionType===key?' sel':''}" data-pot="${key}">` +
       `<span class="psIcon">${p.icon}</span>` +
@@ -113,9 +113,9 @@ function renderPotSelect() {
   // section mana (2026-07-08, demande explicite : "qui ouvre le pannel de potion vie et mana") --
   // un seul palier pour l'instant (pas de choix de taille comme les potions de vie), donc juste
   // informatif : boit automatiquement sous 30% de mana, pas de sélection à faire ici
-  const manaSection = `<div class="psSectionLabel">${LANG==='fr'?'Potion de vie':'HP Potion'}</div>` +
+  const manaSection = `<div class="psSectionLabel">${i18next.t('combat:combat.potion.hp_potion_section')}</div>` +
     rows +
-    `<div class="psSectionLabel">${LANG==='fr'?'Potion de mana (auto sous 30%)':'Mana Potion (auto under 30%)'}</div>` +
+    `<div class="psSectionLabel">${i18next.t('combat:combat.potion.mana_potion_section')}</div>` +
     `<div class="psRow psRowInfo">` +
       `<span class="psIcon">🔷</span>` +
       `<span class="psInfo"><span class="psName">${MANA_POTION.name[LANG]}</span><br><span class="psHeal">+${Math.round(MANA_POTION.restore*100)}% MP · CD ${MANA_POTION.cd}s</span></span>` +
