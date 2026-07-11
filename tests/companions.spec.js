@@ -1106,7 +1106,7 @@ test('3D viewer tab loads Three.js locally (no CDN) and creates a WebGL canvas w
   await expect(frame.locator('#viewer3d-canvas-wrap')).toBeVisible();
 
   // three-bridge.js est un <script type="module">, chargé de façon asynchrone -- on attend
-  // l'event 'three-ready' déjà géré par companions.viewer3d.js (initViewer3dIfNeeded réessaie
+  // l'event 'three-ready' déjà géré par viewer3d.js (initViewer3dIfNeeded réessaie
   // via window.addEventListener('three-ready', ...) s'il tourne avant que le bridge soit prêt).
   await expect
     .poll(() => frame.locator('body').evaluate(() => typeof window.THREE), { timeout: 15_000 })
@@ -1128,7 +1128,7 @@ test('3D viewer tab loads Three.js locally (no CDN) and creates a WebGL canvas w
 // Intégration réelle du 1er modèle GLB (2026-07-10, demande explicite : "envoyer le premier test
 // .glb") -- le bouton "🧊 Voir en 3D" (panneau du pet déployé sur le terrain,
 // sections.js) ne doit apparaître QUE pour un pet dont companionModelUrlFor() renvoie
-// une URL réelle (COMPANION_MODEL_MAP, companions.viewer3d.js) -- seul "Black Mask Cat" T5 est
+// une URL réelle (COMPANION_MODEL_MAP, viewer3d.js) -- seul "Black Mask Cat" T5 est
 // câblé pour l'instant (seul fichier uploadé dans le bucket). Vérifie l'affichage conditionnel ET
 // que la modale réutilise bien le même pipeline Three.js déjà validé par l'écran de test.
 test('"Voir en 3D" button only appears for a pet with an uploaded model, and opens a working Three.js modal', async ({ page }) => {

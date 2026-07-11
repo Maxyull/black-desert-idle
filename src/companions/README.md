@@ -250,7 +250,7 @@ module Compagnon.
   §7). `vendor/three/three-bridge.js` est le SEUL fichier `type="module"` de ce dossier — il
   importe `three.module.min.js`/`GLTFLoader.js`/`OrbitControls.js` (imports ES imposés par la lib
   elle-même) et attache `window.THREE`/`window.GLTFLoader`/`window.OrbitControls`, pour que
-  `companions.viewer3d.js` (script CLASSIQUE, scope global partagé comme le reste du module) les
+  `viewer3d.js` (script CLASSIQUE, scope global partagé comme le reste du module) les
   lise normalement — pont documenté dans le fichier lui-même. Un `<script type="importmap">`
   (`companions.html`, dans `<head>`) résout le spécificateur nu `"three"` que `GLTFLoader.js`/
   `OrbitControls.js` importent en interne.
@@ -277,7 +277,7 @@ module Compagnon.
   fichier temporaire supprimé immédiatement après usage).
 - Écran isolé : nouvel onglet "🧊 Viewer 3D (TEST)" (tab 10, `ST(10)`, panel `#p10`,
   `companions.html`) — contexte WebGL créé/détruit à l'ouverture/fermeture de l'onglet
-  (`initViewer3dIfNeeded()`/`disposeViewer3dIfActive()`, `companions.viewer3d.js`) plutôt que
+  (`initViewer3dIfNeeded()`/`disposeViewer3dIfActive()`, `viewer3d.js`) plutôt que
   gardé actif en arrière-plan pendant que le joueur navigue ailleurs dans le module. Portée
   VOLONTAIREMENT limitée à cet écran de test — aucune icône 2D existante (roster/collection/
   incubation/hardinage) n'est remplacée tant que le pipeline n'est pas validé à plus large échelle.
@@ -336,7 +336,7 @@ and the reserve sits to its right with room for multiple cards per row` (`tests/
 
 **Bug corrigé — un seul modèle 3D s'affichait vraiment (2026-07-20, rapporté explicitement : "je ne
 vois pas mes model que le premier")** : `renderer.dispose()` (Three.js, `createThreeViewer()`,
-`companions.viewer3d.js`) libère les ressources GPU mais PAS le contexte WebGL lui-même — repris
+`viewer3d.js`) libère les ressources GPU mais PAS le contexte WebGL lui-même — repris
 seulement au ramassage mémoire du `<canvas>`, sans garantie de timing. Les navigateurs plafonnent
 le nombre de contextes WebGL VIVANTS simultanément (souvent ~16) : en ouvrant la modale 3D sur
 plusieurs familiers d'affilée, les anciens contextes n'étaient jamais vraiment libérés, jusqu'à ce
@@ -363,7 +363,7 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
   loop/dispose réutilisables), utilisé par l'écran de test ET par une VRAIE modale `#pet3d-modal`
   ouverte depuis le panneau du pet déployé sur le terrain (`sections.js`). Bouton "🧊 Voir
   en 3D" affiché UNIQUEMENT si `companionModelUrlFor(pet)` renvoie une URL — `COMPANION_MODEL_MAP`
-  (`companions.viewer3d.js`) liste les paires nom-de-pet/tier réellement uploadées (seul "Black Mask
+  (`viewer3d.js`) liste les paires nom-de-pet/tier réellement uploadées (seul "Black Mask
   Cat" T5 pour l'instant) ; ne jamais deviner une URL non confirmée dans le bucket (404 silencieux
   géré proprement par `loadModel()`, mais autant ne pas afficher un bouton mort). Ajouter une entrée
   à `COMPANION_MODEL_MAP` dès qu'un nouveau `.glb` est uploadé. Test :
@@ -478,12 +478,12 @@ par Supabase le temps de la transaction.
     `supabase/migrations/20260721100000_companion_leaderboard_prestige.sql`), même pattern
     `window.parent.getSbClient()` que `sync.js` — 4 catégories, podium, recherche,
     pagination, "Ma position" (voir plus haut pour le détail).
-21. `companions.viewer3d.js` (2026-07-10) — écran de test du viewer 3D GLB (voir plus haut). Lit
+21. `viewer3d.js` (2026-07-10) — écran de test du viewer 3D GLB (voir plus haut). Lit
     `window.THREE`/`window.GLTFLoader`/`window.OrbitControls` posés par
     `vendor/three/three-bridge.js` (module, asynchrone — géré via l'event `three-ready`). Ordre
     non strictement requis vis-à-vis des autres scripts classiques, placé par lisibilité juste
     avant `main.js`.
-22. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
+22. `main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
     (`loadGame()` puis `checkDailyStreak()`/`renderAll()`).
 
 ### `vendor/three/` — Three.js vendorisé en local (pas de CDN, voir plus haut)
