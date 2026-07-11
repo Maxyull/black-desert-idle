@@ -25,7 +25,7 @@ function ST(i){
   if(i===10) initViewer3dIfNeeded(); else if(typeof disposeViewer3dIfActive==='function') disposeViewer3dIfActive();
   // carte terrain en 3D (2026-07-10) : même principe -- libère le contexte WebGL dès qu'on quitte
   // l'onglet Sections (i===2), voir updateTerrainViewer3d()/disposeTerrainViewer3dIfActive()
-  // (companions.sections.js).
+  // (sections.js).
   if(i!==2 && typeof disposeTerrainViewer3dIfActive==='function') disposeTerrainViewer3dIfActive();
 }
 function toast(ico,msg){const w=document.getElementById('toast-wrap');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span style="font-size:15px">${ico}</span><span>${msg}</span>`;w.appendChild(t);setTimeout(()=>t.remove(),2900);}

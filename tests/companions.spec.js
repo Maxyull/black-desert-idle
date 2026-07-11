@@ -1127,7 +1127,7 @@ test('3D viewer tab loads Three.js locally (no CDN) and creates a WebGL canvas w
 
 // Intégration réelle du 1er modèle GLB (2026-07-10, demande explicite : "envoyer le premier test
 // .glb") -- le bouton "🧊 Voir en 3D" (panneau du pet déployé sur le terrain,
-// companions.sections.js) ne doit apparaître QUE pour un pet dont companionModelUrlFor() renvoie
+// sections.js) ne doit apparaître QUE pour un pet dont companionModelUrlFor() renvoie
 // une URL réelle (COMPANION_MODEL_MAP, companions.viewer3d.js) -- seul "Black Mask Cat" T5 est
 // câblé pour l'instant (seul fichier uploadé dans le bucket). Vérifie l'affichage conditionnel ET
 // que la modale réutilise bien le même pipeline Three.js déjà validé par l'écran de test.

@@ -8,7 +8,7 @@
 // 1. Écran de test isolé (onglet "🧊 Viewer 3D", ST(10)) — un seul modèle fixe, pour valider le
 //    pipeline avant tout usage réel.
 // 2. Bouton "🧊 Voir en 3D" (2026-07-10, "envoyer le premier test .glb") dans le panneau du pet
-//    déployé sur le terrain (companions.sections.js) — SEUL "Black Mask Cat" tier 5 est câblé
+//    déployé sur le terrain (sections.js) — SEUL "Black Mask Cat" tier 5 est câblé
 //    (COMPANION_MODEL_MAP), seul fichier réellement uploadé dans le bucket pour l'instant. Ajouter
 //    une entrée ici dès qu'un nouveau .glb est uploadé — ne jamais deviner une URL non confirmée
 //    (404 silencieux sinon, voir gestion d'erreur de loadModel()).
@@ -168,7 +168,7 @@ function disposeViewer3dIfActive() {
   viewer3dState = null;
 }
 
-// ---------- modale "Voir en 3D" pour un pet réel (companions.sections.js) ----------
+// ---------- modale "Voir en 3D" pour un pet réel (sections.js) ----------
 let pet3dModalState = null; // { dispose }
 
 function open3dPreviewModal(pet) {

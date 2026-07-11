@@ -22,7 +22,7 @@ function toggleResPetExpand(id){
 
 // tri de la réserve (2026-07-20, demande explicite : "trier par GS, Tiers") -- 'default' = ordre
 // d'obtention (aucun tri), sinon décroissant au premier clic, réinverse au clic suivant sur le
-// même mode (même pattern que setSort() de la Collection, companions.collection.js).
+// même mode (même pattern que setSort() de la Collection, collection.js).
 // Tri par défaut = Tier (2026-07-20, demande explicite : "Tier par Tiers/GS") -- Tier décroissant
 // en priorité, GS décroissant en cas d'égalité de Tier (plutôt que l'ordre d'obtention par défaut).
 let resSortMode='tier', resSortDir=-1;

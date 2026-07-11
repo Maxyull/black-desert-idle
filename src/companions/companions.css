@@ -27,7 +27,7 @@ html{overflow:hidden;height:100%}
    peinture finale (jamais la mise en page ni la résolution des canvas), donc pas ce risque -- au
    prix de devoir compenser la taille du conteneur pour continuer à remplir tout le viewport
    (width/height à 100/1.25=80%, puis remis à l'échelle visuellement à 100% par le scale). Le
-   plancher minmax(90px,1fr) de la Collection (companions.collection.js) protège déjà contre le
+   plancher minmax(90px,1fr) de la Collection (collection.js) protège déjà contre le
    même risque de carte trop étroite qui avait justifié le retrait du zoom -- reste valable ici. */
 body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;width:80%;height:80vh;display:flex;flex-direction:column;overflow:hidden;transform:scale(1.25);transform-origin:top left}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}

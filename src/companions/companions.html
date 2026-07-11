@@ -47,7 +47,7 @@
        companions.sync.js pour le même pattern d'accès à window.parent). -->
   <button id="hdrCloseBtn" onclick="if(window.parent&&window.parent.closeCompanionsModule)window.parent.closeCompanionsModule();" title="Fermer" style="font-family:'Cinzel',serif;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--cream2);cursor:pointer">✕</button>
   <!-- badge fusion top1/2/3 centré (2026-07-20, demande explicite) : reflète EXACTEMENT le même
-       indicateur que les badges 🥇🥈🥉 des cartes de la Collection (voir companions.collection.js,
+       indicateur que les badges 🥇🥈🥉 des cartes de la Collection (voir collection.js,
        isTop1/isTop2/isTop3) -- visible UNIQUEMENT pendant une sélection de fusion (1 pet choisi,
        2e slot vide), mis à jour par updateHeaderFusionBadge() (appelée depuis renderGrid()). -->
   <div id="hdr-fusion-badge" style="display:none;margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream2);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;white-space:nowrap"></div>
@@ -192,7 +192,7 @@
           <!-- colonnes par ligne (2026-07-20, demande explicite : "ajout d'un bouton choix combien
                par ligne 5 a 9") -- remplace l'ancien zoom à 3 crans (largeur mini approximative,
                setCollZoom()) par un choix EXACT du nombre de colonnes (repeat(N,1fr), voir
-               setCollColsPerRow(), companions.collection.js). Préférence d'affichage pure,
+               setCollColsPerRow(), collection.js). Préférence d'affichage pure,
                en mémoire seulement, jamais dans la sauvegarde. -->
           <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
           <span style="font-size:9px;color:var(--cream3)">Colonnes</span>
@@ -200,14 +200,14 @@
           <!-- pagination on/off (2026-07-20, demande explicite : "turn on of pagination") -- OFF
                par défaut (grille scrollable classique, .pet-grid a déjà overflow-y:auto) ; ON
                découpe la liste filtrée/triée en pages de collColsPerRow×4 cartes (voir
-               toggleCollPagination()/collPageDelta(), companions.collection.js — le pager lui-même
+               toggleCollPagination()/collPageDelta(), collection.js — le pager lui-même
                est rendu directement dans renderGrid()). -->
           <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
           <button class="schip" id="pagination-toggle" onclick="toggleCollPagination()" title="Basculer entre défilement continu et pages">📄 Pagination : OFF</button>
         </div>
       </div>
       <!-- légende des badges de fusion (2026-07-20, demande explicite) : explique 🥇🥈🥉, visibles
-           uniquement pendant une sélection de fusion (voir isTop1/isTop2/isTop3, companions.collection.js) -->
+           uniquement pendant une sélection de fusion (voir isTop1/isTop2/isTop3, collection.js) -->
       <div style="padding:4px 16px;font-size:9px;color:var(--cream3);display:flex;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
         <span>🥇 TOP1 = même rareté + section + tier (meilleur candidat)</span>
         <span>🥈 TOP2 = même rareté + tier, section différente</span>
@@ -421,7 +421,7 @@
 <!-- modale "Voir en 3D" (2026-07-10, "envoyer le premier test .glb") : réutilise le pipeline
      Three.js déjà validé par l'écran de test (p10), câblée sur companionModelUrlFor() /
      open3dPreviewModal() (companions.viewer3d.js) -- ouverte depuis le panneau du pet déployé sur
-     le terrain (companions.sections.js), seulement si un modèle existe réellement pour ce pet/tier. -->
+     le terrain (sections.js), seulement si un modèle existe réellement pour ce pet/tier. -->
 <div class="modal-bg" id="pet3d-modal">
   <div class="modal"><button class="mcl" onclick="close3dPreviewModal()">✕</button>
     <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:10px" id="pet3d-modal-title">🧊 Aperçu 3D</div>
@@ -457,9 +457,10 @@
 <script src="tier.js?v=7"></script>
 <script src="roster.js?v=8"></script>
 <script src="hatch.js?v=15"></script>
-<script src="companions.pet-panel.js?v=6"></script>
-<script src="companions.sections.js?v=13"></script>
-<script src="companions.collection.js?v=10"></script>
+<!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
+<script src="pet-panel.js?v=7"></script>
+<script src="sections.js?v=14"></script>
+<script src="collection.js?v=11"></script>
 <script src="companions.fusion.js?v=8"></script>
 <script src="companions.feed.js?v=6"></script>
 <script src="companions.ticks.js?v=6"></script>

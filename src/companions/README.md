@@ -51,11 +51,11 @@ incrémenté dans `rollAndCreatePet()`, `hatch.js`) — distinct de
   `window.parent.closeCompanionsModule()`.
 - Collection : légende des badges 🥇🥈🥉ᵀᴼᴾ (indicateurs de candidat de fusion, pas un classement
   joueurs), tri par Tier (`sort-tier`), zoom de grille (`setCollZoom`, 3 crans) —
-  `companions.collection.js`. Badge fusion centré dans le header (`#hdr-fusion-badge`,
+  `collection.js`. Badge fusion centré dans le header (`#hdr-fusion-badge`,
   `updateHeaderFusionBadge()`), visible uniquement pendant une sélection de fusion.
 - Disclaimer dans l'onglet Éclosion : les boutons ×1/×5/×10 (`bulkHatch`) sont un raccourci de
   TEST, seront retirés d'ici la fin des tests.
-- Carte de réserve (`companions.sections.js:renderSecDetail`) resserrée (canvas 24px→18px,
+- Carte de réserve (`sections.js:renderSecDetail`) resserrée (canvas 24px→18px,
   paddings réduits) mais avec Rareté+section ajoutées en aperçu (avant, seuls GS/Tier étaient
   visibles sans déplier).
 - **Bug corrigé** : le compte à rebours d'incubation ne se mettait jamais à jour à l'écran (le
@@ -116,7 +116,7 @@ zéro locale.
 petite carte alors afficher tiers rareté et section et gs")** : au cran de zoom 120px, la ligne meta
 verbeuse (rareté en toutes lettres + tier + section + type) débordait de la carte et se faisait
 tronquer silencieusement par `.pet-card{overflow:hidden}` — perdant section/type/parfois GS sans
-erreur visible. `renderGrid()` (`companions.collection.js`) bascule désormais sur `.card-meta-compact`
+erreur visible. `renderGrid()` (`collection.js`) bascule désormais sur `.card-meta-compact`
 (pastille de rareté, `T{n}`, icône de section, badge GS) quand `collZoomIdx===0`, garanti de tenir
 dans la largeur (vérifié via `scrollWidth<=clientWidth`). `setCollZoom()` re-render la grille au
 changement de cran (bug annexe corrigé au passage : il ne changeait avant que la largeur CSS des
@@ -289,7 +289,7 @@ module Compagnon.
 bouton choix combien par ligne 5 a 9, turn on of pagination")** :
 - Remplace l'ancien zoom à 3 crans (largeur mini approximative, `COLL_ZOOM_STEPS`) par un choix
   EXACT du nombre de colonnes (`COLL_COLS_MIN=5`/`COLL_COLS_MAX=9`, `setCollColsPerRow()`,
-  `companions.collection.js`) — `repeat(N, minmax(90px,1fr))` (le plancher 90px évite qu'une carte
+  `collection.js`) — `repeat(N, minmax(90px,1fr))` (le plancher 90px évite qu'une carte
   devienne trop étroite pour son contenu à 9 colonnes exactes sur un petit écran, corrigé après un
   premier passage en `repeat(N,1fr)` sans plancher qui faisait déborder `.card-meta-compact`).
   Au-delà de 6 colonnes (`COLL_COLS_COMPACT_FROM=7`), bascule sur la variante compacte de carte
@@ -304,13 +304,13 @@ bouton choix combien par ligne 5 a 9, turn on of pagination")** :
 **Sections : carte réserve encore resserrée + tri GS/Tier (2026-07-20, demande explicite : "Carte
 reservce plus petite > trier par GS, Tiers")** : 2e passe de resserrement (canvas 18px→14px,
 polices/paddings réduits une nouvelle fois) après un premier resserrement le même jour (voir plus
-bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `companions.sections.js`) :
+bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `sections.js`) :
 boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()` de la Collection
 (1er clic = décroissant, re-clic = inverse).
 
 **Tri par défaut de la réserve = Tier (2026-07-20, demande explicite : "Tier par Tiers/GS")** :
 `resSortMode` démarre sur `'tier'` (au lieu de `'default'`, ordre d'obtention) — Tier décroissant
-en priorité, GS décroissant en départage à Tier égal (`sortReserveList()`, `companions.sections.js`).
+en priorité, GS décroissant en départage à Tier égal (`sortReserveList()`, `sections.js`).
 Test : `reserve defaults to sorting by Tier (GS as tiebreak)...` (`tests/companions.spec.js`).
 Confirmé au passage : la modale "Voir en 3D" (`#pet3d-modal`) est un seul élément DOM partagé,
 donc DÉJÀ de taille identique qu'elle soit ouverte depuis le terrain ou depuis la réserve — pas de
@@ -361,7 +361,7 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
 **Intégration réelle du 1er modèle (2026-07-10, "envoyer le premier test .glb")** : le pipeline
   Three.js est factorisé en `createThreeViewer(wrap, onStatus)` (renderer/scène/caméra/controls/
   loop/dispose réutilisables), utilisé par l'écran de test ET par une VRAIE modale `#pet3d-modal`
-  ouverte depuis le panneau du pet déployé sur le terrain (`companions.sections.js`). Bouton "🧊 Voir
+  ouverte depuis le panneau du pet déployé sur le terrain (`sections.js`). Bouton "🧊 Voir
   en 3D" affiché UNIQUEMENT si `companionModelUrlFor(pet)` renvoie une URL — `COMPANION_MODEL_MAP`
   (`companions.viewer3d.js`) liste les paires nom-de-pet/tier réellement uploadées (seul "Black Mask
   Cat" T5 pour l'instant) ; ne jamais deviner une URL non confirmée dans le bucket (404 silencieux
@@ -453,9 +453,9 @@ par Supabase le temps de la transaction.
    `petsRosterResetV1` plus haut), slots d'incubation, filtres de collection.
 6. `hatch.js` — utilitaires UI partagés (`ST`/`toast`/`OM`/`CM`/`fmtT`) + tout le
    flux d'éclosion (choix d'œuf, tirage, éclosion ×1/×5/×10).
-7. `companions.pet-panel.js` — barres de stats, atelier de Caphras, bloc Tier détaillé.
-8. `companions.sections.js` — navigation par section, slot terrain + réserve, déploiement.
-9. `companions.collection.js` — tri/filtre/recherche, rendu de la grille de collection.
+7. `pet-panel.js` — barres de stats, atelier de Caphras, bloc Tier détaillé.
+8. `sections.js` — navigation par section, slot terrain + réserve, déploiement.
+9. `collection.js` — tri/filtre/recherche, rendu de la grille de collection.
 10. `companions.fusion.js` — calcul des odds de fusion, aperçu, exécution, modal résultat.
 11. `companions.feed.js` — liste de nourrissage, nourrir un/tous.
 12. `companions.ticks.js` — header en direct + la boucle de jeu principale (`setInterval`
