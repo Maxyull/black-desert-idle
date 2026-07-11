@@ -30,16 +30,33 @@ setInterval(()=>{
   // idiome que p5/p2 plus bas dans ce fichier (re-render seulement si le panel concerné est actif).
   if(document.getElementById('p0')?.classList.contains('active')) renderHatch();
   if(document.getElementById('autotog')?.classList.contains('on')){
+    // bug corrigé (2026-07-11, rapporté explicitement : "Auto nourrissage non fonctionnel") --
+    // DEUX défauts cumulés :
+    // 1. le filtre `d.feed>0` seul incluait Pierre de Caphras/Dopi (feed:14-45, catalog.js) --
+    //    l'auto-nourrissage pouvait silencieusement griller ces ressources rares dès que la
+    //    nourriture commune venait à manquer, contrairement au nourrissage manuel (feed.js) qui les
+    //    exclut déjà explicitement via `specialResourceNames`. Même exclusion reprise ici.
+    // 2. aucun re-render de l'onglet Nourrir : `renderFeed()` n'était jamais rappelée depuis ce
+    //    tick, donc la barre de faim affichée restait figée tant que l'onglet ne se rouvrait pas
+    //    autrement (même famille de bug que le correctif ST(1)/ST(2)/ST(3), hatch.js).
+    const specialResourceNames = new Set([
+      CAPHRAS_ITEM.n,
+      ...DOPI_ITEMS.map(d=>d.n),
+      ...Object.values(BOSS_ITEMS).map(b=>b.n),
+    ]);
+    let autoFed=false;
     PETS.forEach(p=>{
       if(!p.terrain||p.hunger>=30) return;
       // Prend le premier objet nourrissant disponible dans l'inventaire, en priorité les plus faibles (économise les rares)
-      const cheapestFood = Object.entries(INVENTORY).filter(([n,d])=>d.feed>0).sort((a,b)=>a[1].feed-b[1].feed)[0];
+      const cheapestFood = Object.entries(INVENTORY).filter(([n,d])=>d.feed>0 && !specialResourceNames.has(n)).sort((a,b)=>a[1].feed-b[1].feed)[0];
       if(!cheapestFood) return;
       const [name,food] = cheapestFood;
       p.hunger=Math.min(100,p.hunger+food.feed);
       food.qty--;
       if(food.qty<=0) delete INVENTORY[name];
+      autoFed=true;
     });
+    if(autoFed && document.getElementById('p3')?.classList.contains('active')) renderFeed();
   }
   // Gain d'XP de Tier — seuls les pets sur le terrain, bien nourris, progressent
   PETS.forEach(p=>{

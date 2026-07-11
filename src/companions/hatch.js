@@ -12,6 +12,15 @@ function ST(i){
   // d'œuf"). Voir aussi ticks.js qui appelle désormais renderHatch() en direct tant que
   // cet onglet reste actif, pour que le compte à rebours bouge vraiment sans changer d'onglet.
   if(i===1) renderHatch();
+  // bug corrigé (2026-07-11, rapporté explicitement : "GS different entre deploye sur le terrain
+  // et en Reserve") -- même classe de bug que le correctif ST(1) ci-dessus : ST(2)/ST(3) ne
+  // rappelaient JAMAIS renderSecDetail()/renderGrid() au changement d'onglet. Un tier-up (donc un
+  // nouveau GS) qui arrive dans ticks.js pendant que Sections/Collection n'est PAS l'onglet actif
+  // ne re-rend que l'onglet réellement actif à ce moment-là (voir ticks.js) -- revenir sur
+  // Sections/Collection ensuite affichait donc un GS périmé jusqu'à la prochaine action qui
+  // déclenche un renderAll() complet (déployer/fusionner...).
+  if(i===2){ renderSecNav(); renderSecDetail(); }
+  if(i===3){ renderFilters(); renderGrid(); }
   if(i===5) renderIndex();
   if(i===0) renderGameView();
   if(i===6) startHardinage();

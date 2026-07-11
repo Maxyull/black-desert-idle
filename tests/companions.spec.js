@@ -58,6 +58,11 @@ async function signInForTest(page) {
     await onAuthed({ id:'00000000-0000-4000-8000-000000000001', email:'playwright-test@local.invalid', is_anonymous:false, identities:[] });
   });
   await expect(page.locator('#authOverlay')).toBeHidden({ timeout: 10_000 });
+  // pré-marque l'onboarding du module Compagnon comme vu (2026-07-11) -- l'iframe est same-origin,
+  // localStorage est donc PARTAGÉ avec la page hôte (voir onboarding.js) : sans ça, la modale
+  // d'onboarding s'ouvre au tout premier chargement du module dans CHAQUE test (contexte de test
+  // neuf = jamais vue avant) et bloque tous les clics suivants dans l'iframe.
+  await page.evaluate(() => { try { localStorage.setItem('velia_idle_pets_onboarding_seen_v1', '1'); } catch (e) {} });
 }
 
 // clique en tolérant qu'un tutoriel (onboarding, ou un tutoriel d'objet/action déclenché par le
@@ -1408,6 +1413,150 @@ test('Marché tab renders its 3 sub-tabs and never throws even without a real Su
   await frame.locator('#market-nav .schip', { hasText: 'Mes contrats' }).click();
   await frame.locator('#market-nav .schip', { hasText: 'Historique' }).click();
   await frame.locator('#market-nav .schip', { hasText: 'Marché' }).click();
+
+  expect(pageErrors).toEqual([]);
+});
+
+// bug corrigé (2026-07-11, rapporté explicitement : "Auto nourrissage non fonctionnel") -- l'auto-
+// nourrissage grillait silencieusement les ressources spéciales (Caphras/Dopi) au lieu de la
+// nourriture commune (même filtre que le nourrissage manuel, feed.js), et ne rafraîchissait jamais
+// l'onglet Nourrir. Vérifie les deux sur un vrai tick (ticks.js tourne toutes les 1000ms).
+test('auto-feed only spends common food (never Caphras/Dopi stones) and refreshes the Feed tab live', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Nourrir' }).click();
+
+  const setup = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.sec === 'loot');
+    const pet = { id: petId++, uid: 'autofeed-uid', cat, rar: 1, stats: mkStats(1), hunger: 5, terrain: true, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(pet);
+    // inventaire ne contient QUE des ressources spéciales -- si l'auto-nourrissage les consomme,
+    // c'est le bug ; s'il n'y touche pas (les exclut), la faim ne doit PAS monter.
+    INVENTORY[CAPHRAS_ITEM.n] = { icon: CAPHRAS_ITEM.e, feed: CAPHRAS_ITEM.feed, qty: 5 };
+    document.getElementById('autotog').classList.add('on');
+    return { petId: pet.id, caphrasQtyBefore: INVENTORY[CAPHRAS_ITEM.n].qty };
+  });
+
+  await page.waitForTimeout(1300); // laisse au moins 1 tick réel s'exécuter
+
+  const after = await frame.locator('body').evaluate((el, id) => {
+    const p = PETS.find(pp => pp.id === id);
+    return { hunger: p.hunger, caphrasQty: INVENTORY[CAPHRAS_ITEM.n] ? INVENTORY[CAPHRAS_ITEM.n].qty : 0 };
+  }, setup.petId);
+
+  expect(after.caphrasQty).toBe(setup.caphrasQtyBefore); // jamais consommée
+  expect(after.hunger).toBeLessThan(30); // pas nourri faute de vraie nourriture disponible
+
+  // ajoute maintenant de la vraie nourriture commune -- l'auto-nourrissage doit s'en servir ET
+  // rafraîchir l'onglet Nourrir tout seul (barre de faim visible mise à jour sans action manuelle)
+  await frame.locator('body').evaluate((el, id) => {
+    addToInventory('Butin', '🏺', 10, 12);
+    PETS.find(pp => pp.id === id).hunger = 5;
+  }, setup.petId);
+  await page.waitForTimeout(1300);
+  const afterFood = await frame.locator('body').evaluate((el, id) => PETS.find(pp => pp.id === id).hunger, setup.petId);
+  expect(afterFood).toBeGreaterThan(5);
+
+  expect(pageErrors).toEqual([]);
+});
+
+// bug corrigé (2026-07-11, rapporté explicitement : "GS different entre deploye sur le terrain et
+// en Reserve") -- ST(2)/ST(3) ne rappelaient jamais renderSecDetail()/renderGrid() au changement
+// d'onglet -- un tier-up (donc un nouveau GS) survenu pendant qu'on est sur un AUTRE onglet restait
+// invisible en revenant sur Sections tant qu'aucune autre action ne forçait un renderAll() complet.
+test('switching to Sections/Collection tabs always re-renders the current GS (no stale badge)', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Nourrir' }).click(); // onglet quelconque, PAS Sections/Collection
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.sec === 'loot');
+    const pet = { id: petId++, uid: 'st-rerender-uid', cat, rar: 2, stats: mkStats(2), hunger: 100, terrain: true, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(pet);
+    activeSecIdx = SECTIONS.findIndex(s => s.id === cat.sec);
+    // simule un changement de GS survenu "en arrière-plan" (hors onglets Sections/Collection) --
+    // sans jamais appeler renderAll()/renderSecDetail()/renderGrid() nous-mêmes.
+    pet.tier = 4; pet.tierMult = 1.6;
+    const expectedGs = normGS(pet);
+    ST(2); // bascule vers Sections -- doit re-rendre avec le NOUVEAU GS, pas un ancien DOM figé
+    const terrainBadge = document.querySelector('.terrain-slot.occ .gs-badge');
+    const sectionsGs = terrainBadge ? terrainBadge.textContent : 'not-found';
+    ST(3); // bascule vers Collection -- même vérification
+    const gridBadge = document.querySelector('.pet-card .gs-badge');
+    const collectionGs = gridBadge ? gridBadge.textContent : 'not-found';
+    return { expectedGs, sectionsGs, collectionGs };
+  });
+
+  expect(result.sectionsGs).toBe(`GS ${result.expectedGs}`);
+  expect(result.collectionGs).toContain(String(result.expectedGs));
+  expect(pageErrors).toEqual([]);
+});
+
+// bug corrigé (2026-07-11, rapporté explicitement : "Fenetre hors ligne non affichée au retour
+// d'un jour... verifier si le farm est bien calculé") -- applyOfflineProgress() n'était appelée
+// qu'au chargement de l'iframe (loadGame()) -- un onglet resté ouvert/caché longtemps sans jamais
+// recharger la page n'avait aucun moyen de déclencher le rattrapage. Simule un visibilitychange
+// après une longue absence et vérifie que le rattrapage (silver + toast) se déclenche bien.
+test('offline catch-up fires on visibilitychange after a long hidden gap, not just on page load', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.sec === 'loot');
+    const pet = { id: petId++, uid: 'vis-offline-uid', cat, rar: 1, stats: mkStats(1), hunger: 100, terrain: true, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(pet);
+    const silverBefore = SILVER;
+    // recule lastVisibleTs de 5h (bien au-delà du garde-fou "moins de 3 minutes" d'applyOfflineProgress)
+    lastVisibleTs = Date.now() - 5 * 3600 * 1000;
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+    return { silverBefore, silverAfter: SILVER, toastHTML: document.getElementById('toast-wrap').innerHTML };
+  });
+
+  expect(result.silverAfter).toBeGreaterThan(result.silverBefore);
+  expect(result.toastHTML).toContain('Retour après');
+  expect(pageErrors).toEqual([]);
+});
+
+// onboarding (2026-07-11, demande explicite : "Onboarding pour le menu Compagnon") -- s'affiche une
+// seule fois par navigateur (localStorage dédié), jamais si déjà vu. signInForTest() pré-marque ce
+// flag pour tous les AUTRES tests (voir son commentaire) -- celui-ci l'efface exprès pour vérifier
+// le comportement "première visite".
+test('onboarding modal shows on first visit only, and never reopens once dismissed', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await page.evaluate(() => { try { localStorage.removeItem('velia_idle_pets_onboarding_seen_v1'); } catch (e) {} });
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('#onboarding-modal')).toHaveClass(/open/);
+  await frame.locator('#onboarding-body button', { hasText: 'Passer' }).click();
+  await expect(frame.locator('#onboarding-modal')).not.toHaveClass(/open/);
+
+  const seenFlag = await page.evaluate(() => localStorage.getItem('velia_idle_pets_onboarding_seen_v1'));
+  expect(seenFlag).toBe('1');
 
   expect(pageErrors).toEqual([]);
 });
