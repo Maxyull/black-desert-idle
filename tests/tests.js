@@ -1217,6 +1217,46 @@
     assert('Boss encore en vie : pas de classe "dead"', bar2 && !bar2.classList.contains('dead'));
     liveBoss = savedLiveBoss;
   }
+  // reskin visuel du lobby Boss (2026-07-11, voir CLAUDE.md) : chaque boss du roster doit avoir une
+  // réplique d'ambiance (lore.fr/lore.en) affichée dans la carte "prochain boss" -- une entrée sans
+  // lore casserait silencieusement l'affichage prévu (bloc vide) sans qu'aucun test ne le détecte.
+  function testAllBossesHaveLoreInBothLangs() {
+    if (typeof BOSS_ROSTER === 'undefined') return;
+    Object.keys(BOSS_ROSTER).forEach(id => {
+      const b = BOSS_ROSTER[id];
+      assert(`BOSS_ROSTER["${id}"] a un champ lore`, !!b.lore, `boss=${id}`);
+      assert(`BOSS_ROSTER["${id}"].lore a un texte FR non vide`, !!(b.lore && b.lore.fr && b.lore.fr.trim()), `boss=${id}`);
+      assert(`BOSS_ROSTER["${id}"].lore a un texte EN non vide`, !!(b.lore && b.lore.en && b.lore.en.trim()), `boss=${id}`);
+    });
+  }
+  // quantité de matériau déjà en poche (bossMatInHand, voir combat/boss.js) affichée dans le lobby
+  // à côté de la fourchette de drop -- doit sommer sur tous les slots INV partageant la même clé
+  // (pas juste le premier trouvé) et ne jamais lever si INV est vide/non initialisé.
+  function testBossMatInHandSumsAcrossSlotsAndHandlesEmptyInv() {
+    if (typeof bossMatInHand !== 'function') return;
+    assert('INV vide/sans le matériau -> 0, pas de throw', bossMatInHand('mat_Pierre noire test inexistant') === 0);
+    const savedInv = INV.slice();
+    const freeIdx = INV.findIndex(s => s === null);
+    if (freeIdx === -1) return; // sac plein dans l'état de test courant : rien à vérifier ici
+    INV[freeIdx] = { key:'mat_Test Boss Have', name:'Test Boss Have', kind:'material', icon:'x', color:'#fff', qty:7, stackable:true, weight:0.1, val:1 };
+    const freeIdx2 = INV.findIndex((s,i) => s === null && i !== freeIdx);
+    let usedSecondSlot = false;
+    if (freeIdx2 !== -1) { INV[freeIdx2] = { key:'mat_Test Boss Have', name:'Test Boss Have', kind:'material', icon:'x', color:'#fff', qty:3, stackable:true, weight:0.1, val:1 }; usedSecondSlot = true; }
+    assert('Somme correcte sur 1 ou 2 slots partageant la même clé', bossMatInHand('mat_Test Boss Have') === (usedSecondSlot ? 10 : 7), `have=${bossMatInHand('mat_Test Boss Have')}`);
+    for (let i = 0; i < INV.length; i++) INV[i] = savedInv[i];
+  }
+  // la ligne récompense du lobby (rewardLineHtml, renderBossLobbyHtml) doit afficher cette quantité
+  // sans jamais lever, y compris quand le prochain boss connu n'a jamais été rencontré (matKey neuf).
+  function testBossLobbyRewardLineShowsMatInHandWithoutThrow() {
+    if (typeof renderBossLobbyHtml !== 'function') return;
+    const savedLiveBoss = liveBoss;
+    liveBoss = { boss:'kzarka', time: Date.now()-1000, expires: Date.now()+5*60*1000, hp:50000, maxHp:50000 };
+    let html; try { html = renderBossLobbyHtml(); } catch (e) { html = null; }
+    assert('renderBossLobbyHtml() ne lève pas même sans avoir combattu ce boss avant', html !== null);
+    const div = document.createElement('div'); div.innerHTML = html || '';
+    assert('La carte "prochain boss" affiche la ligne récompense (quantité en poche)', !!div.querySelector('.bossNextReward'));
+    liveBoss = savedLiveBoss;
+  }
   // "borne la taille de la fiche coffre a une taille standard par rapport au autre" (2026-07-08) --
   // #veliaChestGrid doit suivre le MÊME mécanisme de synchro de hauteur que zoneList/lootTable
   // (syncFarmCardHeights, core/game-core.js), pas un max-height fixe indépendant des cartes voisines.
@@ -3483,6 +3523,9 @@
     testI18nextResolvesKnownKeysNotRawKey();
     testChangeLanguageStaysInSyncWithGlobalLang();
     testI18nResourcesFrEnKeyParity();
+    testAllBossesHaveLoreInBothLangs();
+    testBossMatInHandSumsAcrossSlotsAndHandlesEmptyInv();
+    testBossLobbyRewardLineShowsMatInHandWithoutThrow();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
