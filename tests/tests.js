@@ -635,6 +635,23 @@
     const svg = buildBarSeriesSvg([{label:'a',value:1}], '#c9a55a');
     assert('buildBarSeriesSvg impose un max-width explicite (pas 100% seul)', svg.includes('max-width:420px'));
   }
+  // garde-fou (2026-07-21, repo-audit-todo.md point 3 + audit admin_playtime_by_hour) : le graphique
+  // "joueurs actifs par heure" lisait r.players/r.playtime_sec alors que la vue admin_playtime_by_hour
+  // (schéma live vérifié via Supabase MCP) ne renvoyait que (hour, total_playtime_sec) -- r.players
+  // était donc toujours undefined -> Number(undefined||0) -> 0, graphique silencieusement à 0 depuis
+  // sa création. Corrigé en ajoutant la colonne players (count distinct user_id) à la vue (migration
+  // 20260711145847) et en alignant le select() JS dessus. Garde-fou statique (function.toString(),
+  // pas de vrai réseau/DOM ici) contre une régression du nom de colonne ou un retour à select('*').
+  function testAdminHourlyReadsRealPlaytimeColumns() {
+    if (typeof renderAdminHourly !== 'function') return;
+    const src = renderAdminHourly.toString();
+    assert('renderAdminHourly ne fait plus de select(\'*\') sur admin_farm_by_hour/admin_playtime_by_hour',
+      !/\.select\(\s*['"]\*['"]\s*\)/.test(src), src);
+    assert('renderAdminHourly lit bien la colonne "players" de admin_playtime_by_hour (schéma live vérifié)',
+      /select\(['"]hour,\s*players['"]\)/.test(src), src);
+    assert('renderAdminHourly ne lit plus r.playtime_sec (colonne inexistante, toujours undefined -> bug à 0)',
+      !/r\.playtime_sec/.test(src), src);
+  }
   // agrégation des répartitions Compagnons (2026-07-20, demande explicite : "ajouter des compteur
   // graphic lié supabase, pet par tier, rareté, catégorie") -- fonction pure, sans réseau/DOM.
   function testSumCompanionBreakdownAggregatesAcrossPlayers() {
@@ -3361,6 +3378,7 @@
     testEveryPatchSubHasALabel();
     testFormatPatchNoteForDiscord();
     testRpcFireAndForgetCallsNeverUseBareCatch();
+    testAdminHourlyReadsRealPlaytimeColumns();
     testPopupCloseOnlyReopensAdminPanelIfStillOpen();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
