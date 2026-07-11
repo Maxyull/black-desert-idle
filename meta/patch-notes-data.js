@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V370', d:'21/07/2026 11:30', name:{fr:'Classement principal refait : podium, catégories, recherche', en:'Main leaderboard redesigned: podium, categories, search'}, fr:[
+      {t:'change', tx:'Le Classement (🏆, en haut du menu) a été entièrement refait : podium des 3 premiers, 7 catégories en onglets (Silver, Gearscore, Meilleure zone, Silver/heure, Kills/min, Meilleur objet, Trésors), recherche par pseudo, pagination et bouton "Ma position" pour retrouver ton rang directement. Toujours les mêmes records personnels à vie, jamais un instantané.'},
+    ], en:[
+      {t:'change', tx:'The Leaderboard (🏆, top menu) has been completely redesigned: top-3 podium, 7 category tabs (Silver, Gearscore, Best zone, Silver/hour, Kills/min, Best item, Treasures), search by name, pagination and a "My position" button to jump straight to your rank. Still the same lifetime personal records, never a live snapshot.'},
+    ] },
   { v:'V369', d:'21/07/2026 11:00', name:{fr:'Notes de version : accessibilité, lien direct et anti-abus', en:'Patch notes: accessibility, deep link and anti-abuse'}, fr:[
       {t:'fix', tx:'Corrigé : les chips de filtre (catégorie dans les notes de version, palier dans le modal de reconnexion) s\'empilaient en pleine largeur au lieu de s\'aligner côte à côte.'},
       {t:'new', sub:'accessibilite', tx:'Panneau des notes de version : le focus clavier reste désormais dans la fenêtre (Tab ne peut plus en sortir), et le badge de nouveautés est annoncé aux lecteurs d\'écran.'},

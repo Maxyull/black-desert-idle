@@ -1766,6 +1766,22 @@
   .catTab { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; }
   .catTab.active { border-color:var(--gold); color:var(--gold); }
   .catTab.locked { opacity:.45; cursor:not-allowed; }
+  /* Classement (jeu principal) — podium/onglets/recherche/pagination (2026-07-11, même traitement
+     que le Classement Public Compagnons) : réutilise .bossPodium/.bossPodiumStep/.admTable/.catTab
+     déjà en place, seuls les éléments de recherche/pagination/toggle "Ma position" sont nouveaux. */
+  .lb2ToolRow { display:flex; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .lb2SearchBox { flex:1; min-width:140px; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
+    font-family:inherit; font-size:12px; padding:6px 9px; margin:0; border-radius:3px; }
+  .lb2SearchBox::placeholder { color:var(--ink-dim); }
+  .lb2MeToggle { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent;
+    border:1px solid #3a3742; color:var(--ink-dim); flex-shrink:0; }
+  .lb2MeToggle.on, .lb2MeToggle:hover { border-color:var(--gold); color:var(--gold); }
+  .bossPodiumStep.lb2You { outline:1px solid var(--gold); border-radius:4px; }
+  .lb2Pager { display:flex; align-items:center; justify-content:center; gap:10px; padding:8px 0 2px; }
+  .lb2PagerBtn { width:auto; margin:0; padding:5px 12px; font-size:11px; background:transparent; border:1px solid #3a3742; }
+  .lb2PagerBtn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
+  .lb2PagerBtn:disabled { opacity:.35; cursor:default; }
+  .lb2PagerNum { font-size:10.5px; color:var(--ink-dim); }
   /* onglets de région Velia->Edana (2026-07-12) : le cadenas passe AU-DESSUS, centré, plutôt que
      dans le texte du bouton -- libère de la largeur, mais 5 boutons "flex + flex-wrap" restaient
      tout de même sur 2 rangées dans une carte étroite (le mot "Calpheon" à lui seul dépasse la
