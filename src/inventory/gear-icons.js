@@ -13,6 +13,7 @@ const ICO_BOOK = svgIcon(
   '<path d="M12 5v15" stroke="#274a6e" stroke-width="1.4"/><path d="M14 8h4M14 11h4M6 8h4M6 11h4" stroke="#dfeaf5" stroke-width="0.9"/>');
 // éclaircit/assombrit une couleur hex (amt en [-255,255]) — sert à générer les tons d'ombre/lumière
 // des icônes teintées par palier de stuff ci-dessous
+/** @param {string} hex - couleur #rgb ou #rrggbb. @param {number} amt - décalage par canal, en [-255,255]. @returns {string} couleur hex éclaircie (amt>0) ou assombrie (amt<0), clampée. */
 function shadeHex(hex, amt) {
   const h = hex.replace('#','');
   const num = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
@@ -24,6 +25,7 @@ function shadeHex(hex, amt) {
 // 2026-07-08 : "enleve le halo et met un fond de couleur plus ou moins abouti selon la rareté") —
 // rien pour gris/blanc, teinte + coins marqués au vert, teinte + coins ornés de losanges au bleu.
 // tierIdx : 0=gris/blanc, 1=vert, 2=bleu (voir JEWEL_TIER_IDX plus bas)
+/** @param {number} tierIdx - 0=gris/blanc, 1=vert, 2+=bleu (JEWEL_TIER_IDX). @param {string} color. @returns {string} SVG du fond de case selon la rareté (rien au gris/blanc, teinte+coins au vert, teinte+coins+losanges au bleu). */
 function rarityBackdrop(tierIdx, color) {
   if (tierIdx === 1) return `<rect x="1" y="1" width="22" height="22" rx="4" fill="${color}" opacity=".14"/>` +
     `<path d="M2 6.5l4.5-4.5M22 6.5l-4.5-4.5M2 17.5l4.5 4.5M22 17.5l-4.5 4.5" stroke="${color}" stroke-width="1" opacity=".5"/>`;
@@ -35,6 +37,7 @@ function rarityBackdrop(tierIdx, color) {
 // ornements communs à toute pièce de stuff (armes, armure, bijoux) : rien au gris/blanc, 4 rivets
 // pleins au vert, 4 gemmes claires + 1 losange central (5e ornement) au bleu — demande explicite du
 // 2026-07-08 : "ornement 5 pour la bleu et 4 pour la verte", appliqué de façon cohérente partout
+/** @param {number} tierIdx - 0=gris/blanc (rien), 1=vert (rivets pleins), 2+=bleu (gemmes + losange central). @param {[number,number][]} positions - coordonnées des rivets/gemmes. @param {string} color. @param {[number,number]} [center] - position du 5e ornement (losange), bleu uniquement. @returns {string} SVG des ornements. */
 function gearOrnaments(tierIdx, positions, color, center) {
   if (tierIdx === 1) return positions.map(([x,y]) => `<circle cx="${x}" cy="${y}" r=".6" fill="${color}"/>`).join('');
   if (tierIdx >= 2) {
@@ -47,6 +50,7 @@ function gearOrnaments(tierIdx, positions, color, center) {
 }
 // arme principale : bâton de sorcier (manche + tête sertie d'un cristal), teinté par palier —
 // remplace l'ancienne arme fixe (2026-07-08, demande explicite : "l'arme c'est un baton de sorcier")
+/** @param {string} color @param {string} grade - 'grey'/'white'/'green'/'blue'. @returns {string} SVG de l'arme principale (bâton de sorcier), teintée par palier. */
 function staffIconForColor(color, grade) {
   const t = JEWEL_TIER_IDX[grade] || 0;
   const wood = grade==='grey' ? '#6b5030' : grade==='white' ? '#7a8083' : grade==='green' ? '#26301f' : '#0a1216';
@@ -67,6 +71,7 @@ function staffIconForColor(color, grade) {
     rivets);
 }
 // arme secondaire : dague, teintée par palier — remplace l'ancienne dague fixe
+/** @param {string} color @param {string} grade. @returns {string} SVG de l'arme secondaire (dague), teintée par palier. */
 function daggerIconForColor(color, grade) {
   const t = JEWEL_TIER_IDX[grade] || 0;
   const blade = grade==='grey' ? '#8f9aa6' : grade==='white' ? '#e8e8e8' : grade==='green' ? '#3d4a3a' : '#20303c';
@@ -86,6 +91,7 @@ function daggerIconForColor(color, grade) {
 }
 // éveil : deux sphères Aad flottant en lévitation (remplace l'ancienne grande épée dorée, 2026-07-08
 // demande explicite : "l'eveil c'est 2 boules flottante" / "que les 2 boules ce sont des sphere aad")
+/** @param {string} color @param {string} grade. @returns {string} SVG de l'arme d'éveil (2 sphères Aad flottantes), teintée par palier. */
 function orbPairIconForColor(color, grade) {
   const t = JEWEL_TIER_IDX[grade] || 0;
   const stone = grade==='grey' ? '#6b6f74' : grade==='white' ? '#cfd8dc' : grade==='green' ? '#182015' : '#0f1a20';
@@ -110,6 +116,7 @@ function orbPairIconForColor(color, grade) {
     rivets);
 }
 // casque : heaume avec fente en Y, teinté par palier — cornes qui apparaissent au vert/bleu
+/** @param {string} color @param {string} grade. @returns {string} SVG du casque, teinté par palier (cornes au vert/bleu). */
 function helmetIconForColor(color, grade) {
   const t = JEWEL_TIER_IDX[grade] || 0;
   const base = (grade==='green'||grade==='blue') ? shadeHex(color,-95) : color;
@@ -128,6 +135,7 @@ function helmetIconForColor(color, grade) {
 }
 // armure : cuirasse cintrée avec épaulières, teintée par palier — redessinée le 2026-07-08 pour
 // mieux lire comme une armure (col en V, taille marquée, panneaux abdominaux)
+/** @param {string} color @param {string} grade. @returns {string} SVG de l'armure (cuirasse + épaulières), teintée par palier. */
 function armorIconForColor(color, grade) {
   const t = JEWEL_TIER_IDX[grade] || 0;
   const base = (grade==='green'||grade==='blue') ? shadeHex(color,-95) : color;
@@ -146,6 +154,7 @@ function armorIconForColor(color, grade) {
 }
 // gants : moufle d'armure vue de dos avec doigts segmentés — redessinés le 2026-07-08 (griffes au
 // vert/bleu, plus lisibles que l'ancien gantelet trop simple)
+/** @param {string} color @param {string} grade. @returns {string} SVG des gants, teintés par palier (griffes au vert/bleu). */
 function glovesIconForColor(color, grade) {
   const t = JEWEL_TIER_IDX[grade] || 0;
   const base = (grade==='green'||grade==='blue') ? shadeHex(color,-95) : color;
@@ -161,6 +170,7 @@ function glovesIconForColor(color, grade) {
     rivets);
 }
 // bottes : tige haute + pied, genouillère pointue au vert/bleu — redessinées le 2026-07-08
+/** @param {string} color @param {string} grade. @returns {string} SVG des bottes, teintées par palier (genouillère pointue au vert/bleu). */
 function bootsIconForColor(color, grade) {
   const t = JEWEL_TIER_IDX[grade] || 0;
   const base = (grade==='green'||grade==='blue') ? shadeHex(color,-95) : color;
@@ -203,6 +213,7 @@ const ICO_EQSTONE = svgIcon(
 // diamants arrivé au stuff ultime orné de diamants et de couleur". tierIdx : 0=gris/blanc (anneau
 // nu), 1=vert (un diamant), 2=bleu (plusieurs diamants + couleur du palier), 3=palier ultime
 // (jaune/orange/rouge, pas encore en jeu — orné, plus gros, couleur dominante).
+/** @param {number} tierIdx - 0=anneau nu, 1=un diamant, 2=plusieurs diamants+couleur, 3+=palier ultime (halo, plus gros). @param {string} color @param {number} cx @param {number} cy - centre du cluster. @returns {string} SVG de la progression visuelle de bijou par palier. */
 function jewelGemCluster(tierIdx, color, cx, cy) {
   if (tierIdx <= 0) return '';
   if (tierIdx === 1) return `<path d="M${cx} ${cy-3.5}l2 3-2 3-2-3z" fill="#bfe4ff"/><path d="M${cx} ${cy-3.5}l2 3-2 3z" fill="#8cc8ff"/>`;
@@ -218,6 +229,7 @@ function jewelGemCluster(tierIdx, color, cx, cy) {
 // même règle d'ornements que les armes/armure : 0 au gris/blanc, 4 rivets au vert, 4 gemmes + 1
 // losange (5e ornement) au bleu (voir gearOrnaments) ; le tierIdx (0/1/2) reste celui de
 // JEWEL_TIER_IDX, la couleur elle-même distingue déjà gris de blanc
+/** @param {number} tierIdx - JEWEL_TIER_IDX. @param {string} color. @returns {string} SVG de l'anneau, progression visuelle par palier (voir jewelGemCluster/gearOrnaments). */
 function ringIconForTier(tierIdx, color) {
   // contour dans la couleur du palier (2026-07-08, demande explicite : "contour des bijou =
   // couleurs de la zone") -- remplace l'ancien contour sombre/noir au vert et au bleu
@@ -233,6 +245,7 @@ function ringIconForTier(tierIdx, color) {
     `<circle cx="12" cy="14" r="6" fill="none" stroke="${bandLine}" stroke-width=".9"/>` +
     gem + rivets);
 }
+/** @param {number} tierIdx - JEWEL_TIER_IDX. @param {string} color. @returns {string} SVG du collier, progression visuelle par palier. */
 function necklaceIconForTier(tierIdx, color) {
   const chain = color;
   let pend = '';
@@ -245,6 +258,7 @@ function necklaceIconForTier(tierIdx, color) {
     `<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="${tierIdx<=0?shadeHex(chain,40):shadeHex(chain,60)}" stroke-width="1.8"/>` +
     pend + rivets);
 }
+/** @param {number} tierIdx - JEWEL_TIER_IDX. @param {string} color. @returns {string} SVG des boucles d'oreille (paire), progression visuelle par palier. */
 function earringIconForTier(tierIdx, color) {
   const ring = color;
   let drop = '', drop2 = '';
@@ -265,6 +279,7 @@ function earringIconForTier(tierIdx, color) {
 // ceinture redessinée le 2026-07-08 (demande explicite, même style que le reste du set) : sangle
 // teintée par palier, boucle au contour dans la couleur de la zone (comme bague/collier/boucles
 // d'oreille), même règle de rivets/gemmes que le reste (voir gearOrnaments)
+/** @param {number} tierIdx - JEWEL_TIER_IDX. @param {string} color. @returns {string} SVG de la ceinture, progression visuelle par palier. */
 function beltIconForTier(tierIdx, color) {
   const strap = tierIdx<=0 ? color : shadeHex(color,-90);
   const strapLine = tierIdx<=0 ? shadeHex(color,60) : shadeHex(color,60);
@@ -326,6 +341,7 @@ const CRON_STONE = { name:'Pierre de Cron', key:'mat_cron_stone', icon:ICO_CRON_
 const CRON_STONE_COST_BY_TIER = { grey:1, white:2, green:3, blue:4 };
 // coût pour protéger CET objet (déduit de sa couleur de palier, comme itemTierIdx) -- 1 par défaut
 // si la couleur ne correspond à aucun palier connu (filet de sécurité, ne devrait pas arriver)
+/** @param {object} item - lit .color pour déduire son palier (comme itemTierIdx). @returns {number} coût en Pierres de Cron pour protéger cet objet (1 par défaut si palier inconnu). */
 function cronStoneCostForItem(item) {
   if (!item) return 1;
   const tier = GEAR_TIERS.find(t => t.color === item.color);

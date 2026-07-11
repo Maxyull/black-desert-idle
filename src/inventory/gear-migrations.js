@@ -27,6 +27,7 @@ const JEWELRY_NEW_AP = {
   'Anneau Asula':4, 'Collier Asula':7, 'Ceinture Asula':10,
   'Anneau de Cadry':8, "Serap's Necklace":13,
 };
+/** Migration rétroactive V158 : réapplique le rééquilibrage PA/PD des armes/armures (ratio) et bijoux (valeur figée par nom) à tout objet déjà possédé (équipé/sac/Compendium). */
 function migrateGearRebalanceV158() {
   const rescaleOne = it => {
     if (!it) return;
@@ -53,6 +54,7 @@ const JEWELRY_NEW_AP_V175 = {
   'Anneau Asula':2, 'Collier Asula':4, 'Ceinture Asula':6,
   'Anneau de Cadry':6, "Serap's Necklace":9, "Orkinrad's Belt":10,
 };
+/** Migration rétroactive V175 : redistribue le PA des bijoux déjà possédés (ajout des boucles d'oreille, total PA du palier inchangé). */
 function migrateEarringRebalanceV175() {
   const rescaleOne = it => { if (it && it.kind === 'jackpot' && JEWELRY_NEW_AP_V175[it.name] != null) it.ap = JEWELRY_NEW_AP_V175[it.name]; };
   Object.values(EQUIP).forEach(rescaleOne);
@@ -66,6 +68,7 @@ const GEAR_RESCALE_RATIO_AP_V192 = {
   weapon: 1.271, awakening: 1.271, secondary: 1.271,
   helmet: 0, armor: 0, gloves: 0, boots: 0,
 };
+/** Migration rétroactive V192 : retire l'AP des armures déjà possédées (mis à 0) et le redistribue aux armes (×1.271, préserve le total AP du stuff). */
 function migrateArmorNoApV192() {
   const rescaleOne = it => {
     if (!it || it.kind !== 'gear' || !it.slot) return;
@@ -91,6 +94,7 @@ const JACKPOT_NAME_TO_ZONE = {
 // l'ancien chiffre pour toujours, désynchronisé du stuff nouvellement dropé (qui, lui, utilise
 // désormais gearFloor(gearBasisAP*apShare), voir rollDrops). Recalcule l'AP de BASE (avant
 // enchantement, qui reste géré par enhBonus/itemMult comme d'habitude) de tout bijou déjà possédé.
+/** Migration rétroactive V207 : recalcule l'AP de base de tout bijou déjà possédé depuis le reqAP actuel de sa zone d'origine (JACKPOT_NAME_TO_ZONE), au lieu d'une valeur figée au moment du drop. */
 function migrateJewelryApV207() {
   const rescaleOne = it => {
     if (!it || it.kind !== 'jackpot') return;
@@ -108,6 +112,7 @@ function migrateJewelryApV207() {
 // JACKPOT_NAME_TO_ZONE), un nom de gear est partagé par tout un palier ; mais chaque (palier,slot)
 // ne correspond qu'à UNE SEULE zone (voir ZONE_ARMOR_SLOTS/ZONE_WEAPON_SLOTS, 1 pièce garantie par
 // zone), donc la paire reste sans ambiguïté.
+/** @param {object} item - pièce de gear (armure/arme) déjà possédée, lit .color et .slot. @returns {number|null} index de la zone d'origine (palier+slot est sans ambiguïté, voir ZONE_ARMOR_SLOTS/ZONE_WEAPON_SLOTS), null si introuvable. */
 function zoneForGearPiece(item) {
   const tierIdx = GEAR_TIERS.findIndex(t => t.color === item.color);
   if (tierIdx === -1) return null;
@@ -126,6 +131,7 @@ function zoneForGearPiece(item) {
 // migration recalcule les 2 pour tout gear/bijou déjà en sac/équipé/protégé, avec EXACTEMENT la
 // même formule que rollGearDrop/rollWeaponDrop/rollDrops (jamais dupliquée à la main) — seul
 // l'enchantement (enhLv, géré séparément par enhBonus/itemMult) reste inchangé.
+/** Migration rétroactive V226 : recalcule ap/dp/hp/dodge/val de tout gear/bijou déjà possédé avec EXACTEMENT la formule de rollGearDrop/rollDrops (stats fixes, plus d'aléatoire ±15%, prix de revente réduit). */
 function migrateGearFixedStatsV226() {
   const rescaleOne = it => {
     if (!it) return;
@@ -159,6 +165,7 @@ function migrateGearFixedStatsV226() {
 // existantes (mêmes formules, jamais dupliquées) pour rattraper tout le monde une fois de plus.
 // À REFAIRE (nouveau flag S.migratedGearRescaleVxxx) à chaque future modification de reqAP/reqDP/
 // gearBasisAP/DP d'une zone, sans quoi le stuff déjà dropé reste sur l'ancien calcul pour toujours.
+/** Migration rétroactive V235 : relance migrateGearFixedStatsV226()+migrateJewelryApV207() (mêmes formules) pour rattraper les changements de reqAP/reqDP de zones survenus depuis leur premier passage. */
 function migrateGearRescaleV235() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
@@ -169,6 +176,7 @@ function migrateGearRescaleV235() {
 // migrateGearRescaleV235 ci-dessus), le stuff déjà dropé de cette zone AVANT ce changement doit être
 // rattrapé. Nouveau flag dédié plutôt que réutiliser migratedGearRescaleV235 (déjà consommé par les
 // comptes qui ont chargé une sauvegarde depuis le 2026-07-11).
+/** Migration rétroactive V243 : relance les mêmes formules que V235, pour le rééquilibrage gearBasisDP de Colonie Sausan. */
 function migrateGearRescaleV243() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
@@ -177,6 +185,7 @@ function migrateGearRescaleV243() {
 // les 4 zones du palier vert (Mine de Fer/Poste Helm/Repaire Bandits Gahaz/Base de Bashim) ont vu
 // leur reqAP/reqDP abaissés ×0.80 -- comme à chaque changement de reqAP/reqDP/gearBasisAP/DP de
 // zone (voir les migrations ci-dessus), le stuff déjà dropé de ces 4 zones doit être rattrapé.
+/** Migration rétroactive V245 : relance les mêmes formules que V235, pour l'abaissement ×0.80 des reqAP/reqDP du palier vert. */
 function migrateGearRescaleV245() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
@@ -187,6 +196,7 @@ function migrateGearRescaleV245() {
 // COURANTE au lieu de celui du PALIER du bijou lui-même. Backfill pour tout bijou déjà possédé
 // (équipé/sac/protégé), à partir de SA PROPRE zone d'origine (JACKPOT_NAME_TO_ZONE, jamais celle
 // où l'on farme actuellement).
+/** Migration rétroactive V239 : backfill matName sur tout bijou déjà possédé, depuis sa zone d'origine (JACKPOT_NAME_TO_ZONE) — corrige findEnhanceMaterial() qui retombait sur le matériau de la zone courante. */
 function migrateJewelryMatNameV239() {
   const fix = it => {
     if (!it || it.kind !== 'jackpot' || it.matName) return;

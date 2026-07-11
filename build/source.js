@@ -1975,6 +1975,7 @@ function ringIconForTier(tierIdx, color) {
     `<circle cx="12" cy="14" r="6" fill="none" stroke="${bandLine}" stroke-width=".9"/>` +
     gem + rivets);
 }
+
 function necklaceIconForTier(tierIdx, color) {
   const chain = color;
   let pend = '';
@@ -1987,6 +1988,7 @@ function necklaceIconForTier(tierIdx, color) {
     `<path d="M4 5c0 6.5 4 10 8 10" fill="none" stroke="${tierIdx<=0?shadeHex(chain,40):shadeHex(chain,60)}" stroke-width="1.8"/>` +
     pend + rivets);
 }
+
 function earringIconForTier(tierIdx, color) {
   const ring = color;
   let drop = '', drop2 = '';
@@ -9556,6 +9558,7 @@ const JEWELRY_NEW_AP = {
   'Anneau Asula':4, 'Collier Asula':7, 'Ceinture Asula':10,
   'Anneau de Cadry':8, "Serap's Necklace":13,
 };
+
 function migrateGearRebalanceV158() {
   const rescaleOne = it => {
     if (!it) return;
@@ -9579,6 +9582,7 @@ const JEWELRY_NEW_AP_V175 = {
   'Anneau Asula':2, 'Collier Asula':4, 'Ceinture Asula':6,
   'Anneau de Cadry':6, "Serap's Necklace":9, "Orkinrad's Belt":10,
 };
+
 function migrateEarringRebalanceV175() {
   const rescaleOne = it => { if (it && it.kind === 'jackpot' && JEWELRY_NEW_AP_V175[it.name] != null) it.ap = JEWELRY_NEW_AP_V175[it.name]; };
   Object.values(EQUIP).forEach(rescaleOne);
@@ -9590,6 +9594,7 @@ const GEAR_RESCALE_RATIO_AP_V192 = {
   weapon: 1.271, awakening: 1.271, secondary: 1.271,
   helmet: 0, armor: 0, gloves: 0, boots: 0,
 };
+
 function migrateArmorNoApV192() {
   const rescaleOne = it => {
     if (!it || it.kind !== 'gear' || !it.slot) return;
