@@ -3112,6 +3112,7 @@ function wolfPos(p,w){
   return { x:p.x + w.ox*(1-p.gathered) + w.gx*p.gathered,
            y:p.y + w.oy*(1-p.gathered) + w.gy*p.gathered };
 }
+
 function wolvesTick(dt) {
   
   if (P.faint > 0) return;
@@ -3195,6 +3196,7 @@ function killWolf(p, w) {
   hud();
   if (p.wolves.every(ww => ww.dead)) killPack(p);
 }
+
 function killPack(p) {
   p.dead = true;
   $('aiSkill').textContent = '—';
@@ -3697,6 +3699,7 @@ function getSaveState() {
     savedAt: new Date().toISOString(),
   };
 }
+
 function applySaveState(data) {
   if (!data || data.version !== 1) return false;
   
