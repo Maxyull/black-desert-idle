@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V380', d:'22/07/2026 01:00', name:{fr:'Succès refaits : chaînes de paliers, même style que Zone/Boss', en:'Achievements redesigned: tiered chains, same look as Zone/Boss'}, fr:[
+      {t:'change', sub:'interface', tx:'Panneau Succès entièrement refait à l\'identique d\'une maquette fournie, avec la même palette que les écrans Zone et Boss. Les succès à paliers (ex : Premier sang → Chasseur → Exterminateur → Faucheur) sont désormais regroupés en une seule carte par chaîne, avec des puces montrant combien de paliers sont débloqués — le check vert n\'apparaît que quand toute la chaîne est terminée, plus sur un palier isolé.'},
+      {t:'new', sub:'interface', tx:'Nouvelle vue d\'ensemble en haut du panneau : anneau de progression globale, silver déjà gagné en récompenses de succès et silver restant à débloquer, tous calculés en direct.'},
+      {t:'new', sub:'interface', tx:'Nouvelle bande "derniers débloqués" avec horodatage relatif (ex : "il y a 6h") et un badge "NOUVEAU" sur le succès obtenu dans les dernières 24h.'},
+      {t:'change', sub:'interface', tx:'Filtre par catégorie : remplacé par des tuiles avec anneau de complétion par catégorie, au lieu de simples onglets texte. Le filtre "Non terminés seulement" s\'applique désormais à la chaîne entière plutôt qu\'à un palier isolé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'Achievements panel completely redesigned to match a provided mockup, with the same palette as the Zone and Boss screens. Tiered achievements (e.g. First blood → Hunter → Exterminator → Reaper) are now grouped into a single card per chain, with pips showing how many tiers are unlocked — the green check only appears once the whole chain is complete, never on a single tier.'},
+      {t:'new', sub:'interface', tx:'New overview at the top of the panel: overall progress ring, silver already earned from achievement rewards, and silver still left to unlock, all computed live.'},
+      {t:'new', sub:'interface', tx:'New "recently unlocked" strip with relative timestamps (e.g. "6h ago") and a "NEW" badge on the achievement unlocked within the last 24h.'},
+      {t:'change', sub:'interface', tx:'Category filter: replaced with tiles showing a completion ring per category, instead of plain text tabs. The "unfinished only" filter now applies to the whole chain rather than a single tier.'},
+    ] },
   { v:'V379', d:'22/07/2026 00:00', name:{fr:'Rattrapage hors-ligne réel pour le modal "Bon retour"', en:'Real offline catch-up for the "Welcome back" modal'}, fr:[
       {t:'fix', sub:'systeme', tx:'Corrigé : le modal "Bon retour" (résumé du silver/loot gagné pendant ton absence) ne s\'affichait que si l\'onglet était resté ouvert quelque part — fermer le navigateur ou une mise en veille faisait disparaître tout rattrapage, même après une vraie longue absence.'},
       {t:'new', sub:'systeme', tx:'Le silver gagné pendant une absence réelle (navigateur fermé, PC en veille...) est désormais rattrapé au rechargement, basé sur ton meilleur taux de farm connu, plafonné à 24h d\'absence.'},

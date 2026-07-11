@@ -263,42 +263,143 @@ function openMailbox() {
 // World Boss (Kzarka/Vell : lobby, combat, rendu de la salle) -> voir boss.js (charge APRES ce fichier, voir index.html)
 
 let achPanelCat = 'all';       // catégorie affichée dans le panneau Succès
-let achOnlyUnfinished = false; // filtre "pas fini"
-function achRowHtml(a) {
-  const val = a.statFn(S), done = !!S.achUnlocked[a.id];
-  const pct = Math.max(0, Math.min(100, Math.round((val/a.target)*100)));
-  return `<div class="achRow${done?' done':''}">` +
-    `<div class="achIcon">${a.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${a.desc[LANG]}</div>` +
-    `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div>` +
-    `<div class="achProgress">${done ? i18next.t('progression:progression.achievements.completed') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
-    `<div class="achReward">+${fmt(a.reward)} 🪙</div></div>`;
+let achOnlyUnfinished = false; // filtre "pas fini" (s'applique désormais à la CHAÎNE entière)
+
+// petit anneau de progression SVG (barre circulaire), partagé par la vue d'ensemble (76px) et les
+// tuiles de catégorie (36px) -- même formule que les anneaux du mockup fourni (stroke-dasharray/
+// dashoffset sur un cercle tourné de -90deg pour démarrer en haut).
+function achRingSvg(pct, size, strokeW) {
+  const r = (size - strokeW) / 2, c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  const off = c * (1 - clamped / 100);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
+    `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--s3)" stroke-width="${strokeW}"/>` +
+    `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--gold)" stroke-width="${strokeW}" ` +
+    `stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" stroke-linecap="round" ` +
+    `transform="rotate(-90 ${size/2} ${size/2})"/></svg>`;
+}
+// carte de vue d'ensemble : anneau global, débloqués/restants, silver déjà gagné en récompenses de
+// succès vs silver encore à débloquer -- tout calculé en direct depuis S.achUnlocked, jamais figé.
+function achOverviewHtml(S) {
+  const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
+  const totalCount = ACHIEVEMENTS.length;
+  const overallPct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+  const { earned, remaining } = achievementSilverTotals(S);
+  return `<div class="achOverviewCard">` +
+    `<div class="achOverviewRing">${achRingSvg(overallPct, 76, 7)}<span class="achRingPct">${overallPct}%</span></div>` +
+    `<div class="achOverviewBody">` +
+      `<div class="achOverviewTitle">${i18next.t('progression:progression.achievements.overview_title')}</div>` +
+      `<div class="achOverviewSub">${i18next.t('progression:progression.achievements.overview_summary', { done: fmt(doneCount), total: fmt(totalCount), earned: fmt(earned) })}</div>` +
+    `</div>` +
+    `<div class="achOverviewStats">` +
+      `<div class="achOStat"><div class="v">${fmt(doneCount)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_unlocked')}</div></div>` +
+      `<div class="achOStat"><div class="v">${fmt(totalCount - doneCount)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_remaining')}</div></div>` +
+      `<div class="achOStat"><div class="v" style="color:var(--green2)">${fmt(remaining)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_silver_to_unlock')}</div></div>` +
+    `</div>` +
+  `</div>`;
+}
+// bandeau "Presque là" : réutilise TEL QUEL nextAchievement() (déjà utilisée par l'encart de suivi
+// permanent en haut à droite) -- juste reskinné ici, aucune nouvelle logique de calcul du succès le
+// plus proche n'est réintroduite.
+function achSpotlightHtml(S) {
+  const next = nextAchievement();
+  if (!next) return `<div class="achSpotlightBox achSpotlightDone">${i18next.t('progression:progression.quests.all_achievements_done')}</div>`;
+  const { a, pct } = next;
+  const pctRound = Math.round(pct);
+  return `<div class="achSpotlightBox">` +
+    `<div class="achSpotlightIcon">${a.icon}</div>` +
+    `<div class="achSpotlightBody">` +
+      `<div class="achSpotlightLbl">${i18next.t('progression:progression.achievements.spotlight_label')}</div>` +
+      `<div class="achSpotlightName"><b>${a.name[LANG]}</b> — ${a.desc[LANG]}</div>` +
+      `<div class="achSpotlightBar"><div class="achSpotlightBarFill" style="width:${pctRound}%"></div></div>` +
+    `</div>` +
+    `<div class="achSpotlightPct">${pctRound}%</div>` +
+  `</div>`;
+}
+// tuile de filtre par catégorie ('all' inclus) : anneau + icône + libellé + compteur réel --
+// remplace les anciens onglets texte .catTab/.achCatTab.
+function achCatCardHtml(catId, meta, S) {
+  const { done, total, pct } = achCatCompletion(catId, S);
+  return `<div class="achCatCard${catId===achPanelCat?' on':''}" data-cat="${catId}">` +
+    `<div class="achCatRing">${achRingSvg(pct, 36, 4)}<span class="achCatIc">${meta.icon}</span></div>` +
+    `<div class="achCatNm">${meta.label[LANG]}</div>` +
+    `<div class="achCatCnt">${done}/${total}</div>` +
+  `</div>`;
+}
+// une carte par CHAÎNE (pas par palier) : icône/nom/description du palier actif, puces de
+// progression (X/N paliers débloqués), barre + récompense du palier actif si pas encore terminé,
+// check vert UNIQUEMENT si toute la chaîne est à 100% (jamais sur un palier intermédiaire déjà
+// débloqué tant que la chaîne continue).
+function achChainCardHtml(entry) {
+  const { chain, progress } = entry;
+  const { tier, unlockedCount, totalTiers, done, pct, val } = progress;
+  const pipsHtml = totalTiers > 1
+    ? `<div class="achTierPips">${chain.tiers.map((_, i) => `<span class="achPip${i < unlockedCount ? ' on' : ''}"></span>`).join('')}` +
+      `<span class="achPipLbl">${unlockedCount}/${totalTiers}</span></div>`
+    : '';
+  const progressHtml = done ? '' :
+    `<div class="achChainProgRow"><span>${fmt(Math.min(val, tier.target))} / ${fmt(tier.target)}</span><span>${Math.round(pct)}%</span></div>` +
+    `<div class="achChainBar"><div class="achChainBarFill" style="width:${Math.round(pct)}%"></div></div>`;
+  return `<div class="achChainCard${done?' done':''}" data-cat="${chain.cat}">` +
+    `<div class="achChainIcon">${tier.icon}</div>` +
+    `<div class="achChainBody">` +
+      `<div class="achChainName">${tier.name[LANG]}</div>` +
+      `<div class="achChainDesc">${tier.desc[LANG]}</div>` +
+      pipsHtml + progressHtml +
+      `<div class="achChainReward">+${fmt(tier.reward)} 🪙</div>` +
+    `</div>` +
+    (done ? `<div class="achChainDoneBadge">✓</div>` : '') +
+  `</div>`;
+}
+// bande "derniers débloqués" : s'appuie sur le vrai horodatage S.achUnlocked[a.id] -- réutilise
+// pneRelativeTime() (progression/patch-notes-engage-react.js, charge APRÈS ce fichier mais appelé
+// seulement au clic joueur donc déjà défini à ce moment-là, voir CLAUDE.md section 7 "référence en
+// exécution") plutôt que dupliquer un 2e formateur de temps relatif identique dans ce fichier.
+function achRecentRowHtml(S) {
+  const recent = recentlyUnlockedAchievements(S, 4);
+  if (!recent.length) return '';
+  const now = Date.now();
+  const items = recent.map((a, i) => {
+    const ts = S.achUnlocked[a.id];
+    const isNew = i === 0 && (now - ts) < 24*3600*1000;
+    const rel = typeof pneRelativeTime === 'function' ? pneRelativeTime(ts) : new Date(ts).toLocaleDateString();
+    return `<div class="achRecentItem">` +
+      (isNew ? `<div class="achRecentBadge">${i18next.t('progression:progression.achievements.recent_new_badge')}</div>` : '') +
+      `<div class="achRecentIc">${a.icon}</div>` +
+      `<div class="achRecentNm">${a.name[LANG]}</div>` +
+      `<div class="achRecentDt">${rel}</div>` +
+    `</div>`;
+  }).join('');
+  return `<div class="achRecentRow">${items}</div>`;
 }
 function renderAchievementsHtml() {
-  const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
-  // onglets : Tout + une catégorie par famille (avec compteur restant en badge)
-  const cats = [['all', {icon:'🏅', label:{fr:'Tout',en:'All'}}], ...Object.entries(ACH_CATS)];
-  const tabsHtml = cats.map(([id, meta]) => {
-    const list = id==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===id);
-    const remaining = list.filter(a => !S.achUnlocked[a.id]).length;
-    const badge = remaining>0 ? `<span class="qCountBadge">${remaining}</span>` : `<span class="qCountBadge done">✓</span>`;
-    return `<button class="catTab achCatTab${id===achPanelCat?' active':''}" data-cat="${id}">${meta.icon} ${meta.label[LANG]} ${badge}</button>`;
-  }).join('');
-  // filtre "pas fini"
-  const filterBtn = `<button id="achUnfinishedBtn" class="achFilterBtn${achOnlyUnfinished?' on':''}">${achOnlyUnfinished?i18next.t('progression:progression.achievements.filter_unfinished_on'):i18next.t('progression:progression.achievements.filter_unfinished_off')}</button>`;
-  let list = achPanelCat==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===achPanelCat);
-  if (achOnlyUnfinished) list = list.filter(a => !S.achUnlocked[a.id]);
-  const rows = list.length ? list.map(achRowHtml).join('')
-    : `<div class="admEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
-  return `<div class="achSummary">${doneCount} / ${ACHIEVEMENTS.length}</div>` +
-    `<div class="catTabs">${tabsHtml}</div>${filterBtn}${rows}`;
+  const overview = achOverviewHtml(S);
+  const spotlight = achSpotlightHtml(S);
+  // pseudo-catégorie 'all' : ACH_CATS stocke des libellés {fr,en} en dur (donnée de jeu, pas migrée
+  // vers i18next -- voir en-tête du fichier), donc on résout la même chaîne i18next une fois et on
+  // la pose sous les deux clés pour rester compatible avec achCatCardHtml() qui lit meta.label[LANG].
+  const allLabel = i18next.t('progression:progression.achievements.cat_all_label');
+  const cats = [['all', {icon:'🏅', label:{fr:allLabel, en:allLabel}}], ...Object.entries(ACH_CATS)];
+  const catRow = `<div class="achCatRow">${cats.map(([id, meta]) => achCatCardHtml(id, meta, S)).join('')}</div>`;
+  const toggleRow = `<div class="achToggleRow"><div class="achToggle" id="achUnfinishedBtn">` +
+    `<div class="achToggleSwitch${achOnlyUnfinished?' on':''}"><div class="achKnob"></div></div>` +
+    `${i18next.t('progression:progression.achievements.filter_unfinished_label')}</div></div>`;
+  const recentRow = achRecentRowHtml(S);
+  const chains = groupAchievementsIntoChains();
+  const visibleChains = achPanelCat === 'all' ? chains : chains.filter(c => c.cat === achPanelCat);
+  let ordered = sortChainsForDisplay(visibleChains, S);
+  if (achOnlyUnfinished) ordered = ordered.filter(entry => !entry.progress.done);
+  const grid = ordered.length
+    ? `<div class="achChainGrid">${ordered.map(achChainCardHtml).join('')}</div>`
+    : `<div class="achEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
+  return `<div class="achPanel">${overview}${spotlight}${catRow}${toggleRow}${recentRow}${grid}</div>`;
 }
 function openAchievements() {
   const callout = contentChangeCalloutHtml('achievements');
   openInfo(i18next.t('progression:progression.achievements.panel_title'), callout + renderAchievementsHtml());
   markContentSeen('achievements');
-  $a('infoBody').querySelectorAll('.achCatTab').forEach(btn => {
-    btn.onclick = () => { achPanelCat = btn.dataset.cat; openAchievements(); };
+  $a('infoBody').querySelectorAll('.achCatCard').forEach(card => {
+    card.onclick = () => { achPanelCat = card.dataset.cat; openAchievements(); };
   });
   const fb = $a('achUnfinishedBtn');
   if (fb) fb.onclick = () => { achOnlyUnfinished = !achOnlyUnfinished; openAchievements(); };

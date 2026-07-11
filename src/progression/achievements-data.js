@@ -49,3 +49,81 @@ function achCat(id) {
   if (id.startsWith('zone')) return 'exploration';
   return 'equipment'; // gs_*, enh_*, jackpot_1, gear_1
 }
+
+// ==================== SUCCES : chaînes de paliers (refonte visuelle 2026-07-11) ====================
+// Port fidèle du mockup validé par l'utilisateur (voir CLAUDE.md section mockups) : le panneau
+// Succès affiche désormais UNE carte par "chaîne" de paliers (ex: Premier sang -> Chasseur ->
+// Exterminateur -> Faucheur, tous statFn:S=>S.kills) au lieu d'une ligne par palier individuel.
+// Regroupement purement dérivé côté client -- ACHIEVEMENTS/ACH_CATS/achCat() ci-dessus restent la
+// seule source de vérité, rien n'est dupliqué ni modifié ici.
+//
+// Clé de chaîne = catégorie + identité textuelle du statFn : deux succès qui suivent EXACTEMENT la
+// même formule de progression appartiennent à la même chaîne. Les succès sans palier frère
+// (jackpot_1, gear_1) ressortent naturellement en chaîne à 1 seul élément -- aucun cas particulier
+// nécessaire, une Map préserve l'ordre d'insertion == ordre de ACHIEVEMENTS (donc l'ordre des
+// paliers dans chaque chaîne reste croissant, comme le tableau source).
+function groupAchievementsIntoChains() {
+  const chains = new Map();
+  for (const a of ACHIEVEMENTS) {
+    const key = achCat(a.id) + '::' + a.statFn.toString();
+    if (!chains.has(key)) chains.set(key, { key, cat: achCat(a.id), tiers: [] });
+    chains.get(key).tiers.push(a);
+  }
+  return Array.from(chains.values());
+}
+// progression d'une chaîne pour un état de sauvegarde `S` donné. Le palier "actif" retourné est
+// TOUJOURS le premier palier pas encore débloqué -- ou le DERNIER palier si la chaîne est déjà
+// entièrement débloquée (jamais un palier intermédiaire une fois que tous ses successeurs sont eux
+// aussi débloqués : règle explicite du mockup -- un check vert n'apparaît que quand TOUTE la chaîne
+// est à 100%, jamais sur un palier isolé). `pct` suit le même calcul que nextAchievement()
+// (notifications-quests.js) : statFn(S)/target, borné à 99% tant que non débloqué, fixé à 100 une
+// fois la chaîne terminée (jamais recalculé au-delà).
+function chainProgress(chain, S) {
+  const tiers = chain.tiers;
+  const unlockedCount = tiers.filter(a => !!S.achUnlocked[a.id]).length;
+  const done = unlockedCount === tiers.length;
+  const tierIndex = done ? tiers.length - 1 : tiers.findIndex(a => !S.achUnlocked[a.id]);
+  const tier = tiers[tierIndex];
+  const val = tier.statFn(S);
+  const pct = done ? 100 : Math.max(0, Math.min(99, (val / tier.target) * 100));
+  return { tier, tierIndex, unlockedCount, totalTiers: tiers.length, done, pct, val };
+}
+// tri d'affichage des cartes du panneau Succès : chaînes en cours d'abord (triées par % décroissant,
+// même formule que nextAchievement()), chaînes 100% terminées reléguées en fin de liste.
+function sortChainsForDisplay(chains, S) {
+  const withProgress = chains.map(chain => ({ chain, progress: chainProgress(chain, S) }));
+  withProgress.sort((x, y) => {
+    if (x.progress.done !== y.progress.done) return x.progress.done ? 1 : -1;
+    return y.progress.pct - x.progress.pct;
+  });
+  return withProgress;
+}
+// répartition du silver de récompense déjà gagné (succès débloqués) vs encore à débloquer --
+// alimente la carte de vue d'ensemble du panneau Succès, calculée en direct depuis S.achUnlocked
+// (jamais une valeur figée) pour ne jamais dériver du vrai état du joueur.
+function achievementSilverTotals(S) {
+  let earned = 0, remaining = 0;
+  for (const a of ACHIEVEMENTS) {
+    if (S.achUnlocked[a.id]) earned += a.reward; else remaining += a.reward;
+  }
+  return { earned, remaining };
+}
+// complétion réelle (débloqués/total) d'une catégorie donnée ('all' = toutes) -- alimente les
+// tuiles de filtre par catégorie (anneau de progression), toujours calculée depuis le vrai état,
+// jamais une valeur inventée.
+function achCatCompletion(catId, S) {
+  const list = catId === 'all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id) === catId);
+  const done = list.filter(a => S.achUnlocked[a.id]).length;
+  return { done, total: list.length, pct: list.length ? Math.round((done / list.length) * 100) : 0 };
+}
+// derniers succès débloqués, triés du plus récent au plus ancien, limités à `limit` -- s'appuie sur
+// l'horodatage réel déjà stocké dans S.achUnlocked[a.id] = Date.now() (checkAchievements(),
+// notifications-quests.js). Filtre défensif sur `typeof === 'number'` : cet horodatage a TOUJOURS
+// été un Date.now() depuis son introduction (jamais un simple booléen `true`), mais on ignore toute
+// entrée qui ne serait pas un timestamp valide plutôt que d'afficher un "il y a NaN" au joueur.
+function recentlyUnlockedAchievements(S, limit) {
+  return ACHIEVEMENTS
+    .filter(a => typeof S.achUnlocked[a.id] === 'number' && S.achUnlocked[a.id] > 0)
+    .sort((a, b) => S.achUnlocked[b.id] - S.achUnlocked[a.id])
+    .slice(0, limit);
+}
