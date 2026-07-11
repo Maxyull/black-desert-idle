@@ -199,7 +199,7 @@ palette de couleurs")** : `companions.css` (`:root`) suit désormais exactement 
 `#5c6785`, accents `#d4a955` or/`#7ea6ff` bleu/`#6fdc6f` vert/`#c0503c`+`#e08070` rouge) — remplace
 l'ancien thème doré fantasy ad hoc (`#c8a96e`, fond `#080810`) qui n'avait jamais été aligné sur
 cette DA. `--r0..--r5` (couleurs de rareté Commun→Ancestral) et les palettes pixel-art
-(`pixelart.js`)/scène isométrique (`companions.hardinage.js`) sont volontairement PAS
+(`pixelart.js`)/scène isométrique (`hardinage.js`) sont volontairement PAS
 touchées — elles codent un sens (rareté=couleur) ou sont du contenu artistique, hors périmètre
 d'une DA structurelle (fonds/bordures/texte/accents). Les couleurs médaille 🥈/🥉 (argent `#b8bcc4`/
 bronze `#cd7f32`, badges TOP2/TOP3 de fusion) restent aussi inchangées, distinctes de l'accent or
@@ -465,9 +465,9 @@ par Supabase le temps de la transaction.
 14. `sync.js` — pousse un résumé de compteurs vers Supabase toutes les 60s
     (stats admin, voir plus haut) via `window.parent.sb`. Charge après `save.js` par
     lisibilité, aucune contrainte d'ordre réelle (appelée via `setTimeout`/`setInterval`).
-15. `companions.index.js` — onglet Index (matrice Rareté×Tier + catalogue complet).
-16. `companions.game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
-17. `companions.hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
+15. `index.js` — onglet Index (matrice Rareté×Tier + catalogue complet).
+16. `game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
+17. `hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
 18. `companions.achievements.js` — définitions des achievements, score de prestige.
 19. `companions.pvp.js` — onglet PvP (classement LOCAL par puissance, bandeau verrouillé). Charge
     après `tier.js`/`roster.js` par lisibilité, aucune contrainte d'ordre réelle (appelée via `ST(8)`).
