@@ -3543,8 +3543,27 @@
     assert('recentlyUnlockedAchievements() ignore une entrée achUnlocked non numérique', recent.map(a => a.id).join(',') === 'kills_100', recent.map(a => a.id).join(','));
   }
 
+  // garde-fou du reskin #sessionLockBox (2026-07-12, mockup validé : claude.ai/code/artifact/
+  // c6ea1bee-8162-4705-a9f4-cb5c5649fa84) -- vérifie le rendu RÉEL via getComputedStyle (résolu
+  // même sur un ancêtre display:none, seules les valeurs dépendant du layout comme offsetWidth ne
+  // le seraient pas) plutôt qu'une simple relecture du CSS source, pour ne pas revenir aux
+  // anciens tokens (fond var(--panel), radius:0, Georgia hérité, bouton radius:4px) sans qu'aucun
+  // test ne le détecte.
+  function testSessionLockBoxUsesZoneRedesignTokens() {
+    const box = document.getElementById('sessionLockBox');
+    const h1 = box && box.querySelector('h1');
+    const btn = document.getElementById('sessionLockResumeBtn');
+    if (!box || !h1 || !btn) { assert('sessionLockBox reskin : markup présent', false, 'élément(s) manquant(s)'); return; }
+    const cs = getComputedStyle(box), csh1 = getComputedStyle(h1), csbtn = getComputedStyle(btn);
+    assert('sessionLockBox : radius 14px (mêmes tokens que #authBox/.confirmModal)', cs.borderRadius === '14px', `borderRadius=${cs.borderRadius}`);
+    assert('sessionLockBox : police Inter (plus Georgia hérité de body)', /Inter/.test(cs.fontFamily), `fontFamily=${cs.fontFamily}`);
+    assert('sessionLockBox h1 : police Cinzel (comme les autres titres de panneau)', /Cinzel/.test(csh1.fontFamily), `fontFamily=${csh1.fontFamily}`);
+    assert('sessionLockResumeBtn : radius 8px (cohérent avec les autres CTA, plus 4px isolé)', csbtn.borderRadius === '8px', `borderRadius=${csbtn.borderRadius}`);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
+    testSessionLockBoxUsesZoneRedesignTokens();
     testZoneMonotonicity();
     testZoneWeaponArmorSlotsComplete();
     testGearRoleSanity();
