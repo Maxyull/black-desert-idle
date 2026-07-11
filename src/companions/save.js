@@ -54,7 +54,31 @@ function applyOfflineProgress(savedAt){
     toast('🎁', `Retour après ${hLabel} — +${totalSilver.toLocaleString('fr-FR')} Silver, ${itemsText}`);
     addGameLog(`🎁 Rattrapage hors-ligne (${hLabel}) : +${totalSilver.toLocaleString('fr-FR')} Silver, ${itemsText}`);
   }
+  saveGame(); // persiste immédiatement le rattrapage (silver/items/hunger), avant l'autosave 5s
+  if(document.getElementById('p5')?.classList.contains('active')){ renderGameInventory(); renderGameLog(); updateSilverDisplay(); }
+  if(document.getElementById('p1')?.classList.contains('active')) renderSecDetail();
 }
+
+// bug corrigé (2026-07-11, rapporté explicitement : "Fenetre hors ligne non affichée au retour
+// d'un jour") -- applyOfflineProgress() n'était appelée QU'à loadGame() (chargement de l'iframe).
+// Si le joueur laisse l'onglet ouvert (ordinateur en veille, ou juste l'onglet en arrière-plan
+// longtemps) sans jamais recharger la page, l'iframe reste chargée en mémoire et loadGame() ne
+// re-tourne jamais -- le rattrapage hors-ligne n'avait donc AUCUN moyen de se déclencher après une
+// vraie absence d'une journée sans fermeture du navigateur. Même pattern que le jeu principal
+// (showAwayLootSummaryIfAny() sur visibilitychange, core/game-core.js) : marque le moment où
+// l'onglet passe caché, applique le rattrapage au retour visible. applyOfflineProgress() a déjà
+// son propre garde-fou (hours<0.05 ~3min) qui absorbe les changements d'onglet courts sans rien
+// déclencher -- pas de risque de double-comptage avec le tick temps réel (ticks.js), qui de toute
+// façon ne tourne plus une fois l'onglet vraiment suspendu (veille système).
+let lastVisibleTs = Date.now();
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden){
+    lastVisibleTs = Date.now();
+  } else {
+    applyOfflineProgress(lastVisibleTs);
+    lastVisibleTs = Date.now();
+  }
+});
 
 // migration rétroactive (2026-07-20, demande explicite : "supprime tout compagnon au dessus de la
 // limite") -- purge l'excédent au-delà de PET_ROSTER_CAP (96, roster.js). Garde TOUJOURS

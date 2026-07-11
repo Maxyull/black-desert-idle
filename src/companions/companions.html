@@ -81,7 +81,7 @@
   <!-- 2026-07-10, demande explicite : "vrai backend d'échange" -- marché réel de compagnons entre
        joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
        sync). Voir market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
-  <div class="tab" onclick="ST(11)">🔄 Marché</div>
+  <div class="tab" onclick="ST(11)">🔄 Marché <span class="tbadge" id="tb-market"></span></div>
   <!-- 2026-07-10, demande explicite : "on va integrer des model gbl" -- écran de test isolé pour
        valider le pipeline Three.js/GLB avant tout remplacement des icônes 2D existantes (roster,
        collection, incubation...). Charge un unique modèle de test depuis Supabase Storage. -->
@@ -438,6 +438,11 @@
 <div class="modal-bg" id="fusion-modal">
   <div class="modal"><button class="mcl" onclick="CM('fusion-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="fusion-modal-title">⚗️ Fusion</div><div id="fusion-modal-body"></div></div>
 </div>
+<!-- onboarding (2026-07-11, demande explicite) -- voir onboarding.js, affiché une seule fois par
+     navigateur (localStorage dédié, indépendant de la sauvegarde de progression) -->
+<div class="modal-bg" id="onboarding-modal">
+  <div class="modal" style="max-width:380px"><button class="mcl" onclick="onbSkip()">✕</button><div id="onboarding-body"></div></div>
+</div>
 <div class="toast-wrap" id="toast-wrap"></div>
 <!-- version en bas à gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche") --
      réutilise la numérotation VNNN partagée avec le jeu principal (COMPANION_MODULE_VERSION,
@@ -456,7 +461,7 @@
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
 <script src="tier.js?v=7"></script>
 <script src="roster.js?v=8"></script>
-<script src="hatch.js?v=15"></script>
+<script src="hatch.js?v=16"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=7"></script>
 <script src="sections.js?v=14"></script>
@@ -464,9 +469,9 @@
 <!-- renommés le 2026-07-21 (lot 4/~8, même renommage progressif que ci-dessus) -->
 <script src="fusion.js?v=9"></script>
 <script src="feed.js?v=7"></script>
-<script src="ticks.js?v=7"></script>
+<script src="ticks.js?v=8"></script>
 <!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
-<script src="save.js?v=12"></script>
+<script src="save.js?v=13"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
@@ -476,7 +481,7 @@
      appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
      strictement requis vis-à-vis de ces globals (aucune lecture immédiate), placé ici par
      lisibilité juste après le sync admin (même famille : accès à window.parent.getSbClient()). -->
-<script src="market.js?v=3"></script>
+<script src="market.js?v=4"></script>
 <!-- renommés le 2026-07-21 (lot 6/~8, même renommage progressif que ci-dessus) -->
 <script src="index.js?v=7"></script>
 <script src="game-view.js?v=7"></script>
@@ -499,6 +504,10 @@
      par lisibilité, juste avant main.js. -->
 <!-- renommés le 2026-07-21 (lot 8/8, dernier lot du renommage progressif -- voir CLAUDE.md §15) -->
 <script src="viewer3d.js?v=5"></script>
-<script src="main.js?v=8"></script>
+<!-- onboarding (2026-07-11, demande explicite) : n'a besoin que de OM()/CM() (hatch.js, déjà
+     chargé) et de localStorage -- ordre non strictement requis, placé juste avant main.js qui
+     l'appelle (maybeShowOnboarding()) après le premier renderAll(). -->
+<script src="onboarding.js?v=1"></script>
+<script src="main.js?v=9"></script>
 </body>
 </html>
