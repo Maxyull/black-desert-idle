@@ -49,7 +49,17 @@ courrier, compendium, craft du Trésor de Velia.
   `testTutorialNeverQueuesOrMarksSeenWithoutAuthenticatedUser` (`tests/tests.js`).
 - `achievements-data.js` — les définitions des succès (`ACHIEVEMENTS`). Charge après
   `core/game-core.js` : certains objectifs (`target: ZONES.length`, `PRI_IDX`...) sont
-  évalués immédiatement au chargement.
+  évalués immédiatement au chargement. **Refonte visuelle du panneau Succès (2026-07-11,
+  port fidèle d'un mockup validé, même DA que les écrans Zone/Boss)** : `groupAchievementsIntoChains()`
+  regroupe les succès à paliers (même catégorie + même `statFn`, ex. Premier sang → Chasseur →
+  Exterminateur → Faucheur) en une seule "chaîne" ; `chainProgress(chain, S)` calcule le palier
+  actif (premier non débloqué, ou le DERNIER si la chaîne est 100% terminée — jamais un check vert
+  sur un palier intermédiaire) ; `sortChainsForDisplay()` trie par % décroissant, chaînes finies en
+  dernier ; `achievementSilverTotals()`/`achCatCompletion()`/`recentlyUnlockedAchievements()`
+  alimentent la vue d'ensemble, les tuiles de catégorie et la bande "derniers débloqués". Le rendu
+  HTML (`renderAchievementsHtml()` et ses helpers `ach*Html`) reste dans `notifications-quests.js` ;
+  CSS dans `styles/styles.css` (section "Reskin visuel panneau Succès", classes `.achOverview*`/
+  `.achSpotlight*`/`.achCatCard`/`.achToggle*`/`.achRecent*`/`.achChain*`, nouveau token `--s3`).
 - `treasure-craft.js` — le Trésor de Velia : drop, craft des morceaux, coffret secret.
 - `level-xp-data.js` — la table d'XP requise par niveau (pure donnée).
 - `compendium-react.js` — **NOUVEAU (2026-07-10)**, remplace la modale texte `openCompendium()`

@@ -1790,6 +1790,34 @@
   .lb2PagerBtn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
   .lb2PagerBtn:disabled { opacity:.35; cursor:default; }
   .lb2PagerNum { font-size:10.5px; color:var(--ink-dim); }
+  /* Classement — reskin "Zone" (2026-07-11, mockup validé itérativement avec l'utilisateur, voir
+     CLAUDE.md §30) : podium split + catégorie Compendium + barre "Ta position" + horodatage "vu
+     il y a..." + panneau invité stylé. Additif uniquement, réutilise EXCLUSIVEMENT les tokens déjà
+     posés par la refonte Zone/Boss (--s1/--s2/--dbBorder/--dbBorder2/--gold/--gold2/--green2/
+     --cream2/--cream3, voir plus haut dans ce fichier + CLAUDE.md §29) -- aucune nouvelle teinte. */
+  .lb2Summary { font-size:11px; color:var(--cream3); margin-bottom:10px; line-height:1.4; }
+  .lb2RankedCount { font-size:10px; color:var(--cream3); margin:6px 0 10px; }
+  /* "Ta position" : n'apparaît que si le joueur est hors du top LB2_TOP_N (voir lb2RenderBody,
+     leaderboard-panel.js) -- même famille visuelle que .weekBanner (bandeau or discret). */
+  .lb2YourRankBar {
+    margin:10px 0; padding:9px 12px; background:rgba(201,165,90,.08); border:1px solid var(--gold-dim);
+    border-radius:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    font-size:11.5px; color:var(--gold2);
+  }
+  .lb2YourRankBar .rk { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--gold); font-weight:600; }
+  .lb2YourRankBar .hint { margin-left:auto; color:var(--cream3); font-size:10px; }
+  /* "vu il y a Xmin/Xj" (podium ET tableau, voir lb2SeenInfo()) -- vert (--green2) si <1h, sinon
+     discret (--ink-dim), même logique de couleur que .podSeen.recent du mockup. */
+  .lb2Seen { display:block; font-size:9px; color:var(--ink-dim); margin-top:1px; }
+  .lb2Seen.recent { color:var(--green2); }
+  .lb2PodSeen { margin-top:2px; }
+  /* panneau invité (2026-07-11) : remplace l'alert() brut de marketRequireAuth() pour ce point
+     d'entrée précis -- voir lb2GuestGateHtml()/openLeaderboard2(), market.js non modifié. */
+  .lb2GuestGate { margin:16px 0; padding:22px 20px; background:var(--s2); border:1px solid var(--dbBorder); border-radius:10px; text-align:center; }
+  .lb2GuestIcon { font-size:26px; margin-bottom:8px; }
+  .lb2GuestTxt { font-size:12px; color:var(--cream2); max-width:380px; margin:0 auto 14px; line-height:1.5; }
+  .lb2GuestBtn { width:auto; background:var(--gold); color:#1a1712; border:none; border-radius:7px; padding:9px 18px; font-size:12px; font-weight:600; }
+  .lb2GuestBtn:hover { transform:translateY(-1px); filter:brightness(1.08); }
   /* onglets de région Velia->Edana (2026-07-12) : le cadenas passe AU-DESSUS, centré, plutôt que
      dans le texte du bouton -- libère de la largeur, mais 5 boutons "flex + flex-wrap" restaient
      tout de même sur 2 rangées dans une carte étroite (le mot "Calpheon" à lui seul dépasse la
@@ -2633,4 +2661,202 @@
     .layout, .layout:has(#sideMenu.collapsed) { grid-template-columns:1fr; }
     #sideMenu, .side-right { position:static; width:100%; max-width:none; }
     #sideMenu.onRight, #sideMenu.onRight ~ .side-right { order:0; }
+  }
+
+  /* =====================================================================
+     Reskin visuel écran Boss (2026-07-11, port fidèle d'un mockup validé --
+     voir CLAUDE.md). Même démarche que la refonte Zone (§32) : additif
+     uniquement, structure HTML de renderBossLobbyHtml()/#bossArena
+     INCHANGÉE (voir combat/boss.js pour les 2 seuls ajouts de contenu :
+     lore par boss + quantité de matériau déjà en poche), seules les
+     couleurs/typo changent ici, plus quelques classes neuves pour le
+     lore/bandeau/récompense qui n'existaient pas avant. Réutilise les
+     tokens --s1/--s2/--dbBorder/--dbBorder2/--gold2/--green2/--red2/
+     --cream2/--cream3 déjà posés par la refonte Zone plutôt que d'en
+     introduire de nouveaux (voir palette officielle §29/§32).
+     ===================================================================== */
+  .bossHeroCard { padding:0; overflow:hidden; }
+  .bossHeroCard .bossNext {
+    border:none; border-radius:0; margin-bottom:0; padding:20px;
+    background:radial-gradient(ellipse at top left, rgba(192,64,64,.08), transparent 60%);
+  }
+  .bossHeroCard .bossNextIcon { font-size:44px; filter:drop-shadow(0 0 14px rgba(192,64,64,.35)); }
+  .bossHeroCard .bossNextName { font-family:'Cinzel',serif; font-size:16px; color:var(--gold2); }
+  /* réplique d'ambiance (BOSS_ROSTER.*.lore, voir combat/boss.js) -- purement cosmétique */
+  .bossNextLore { font-family:'Cinzel',serif; font-style:italic; font-size:11px; color:var(--cream3); margin:3px 0 4px; line-height:1.4; }
+  .bossHeroCard .bossNextTime { color:var(--cream2); }
+  /* ligne récompense garantie + quantité déjà en poche + loot rarissime (bossMatInHand, boss.js) */
+  .bossNextReward { display:flex; flex-wrap:wrap; gap:14px; font-size:11px; color:var(--cream2); margin-top:6px; }
+  .bossNextReward b { font-family:'JetBrains Mono',monospace; color:var(--gold2); font-weight:500; }
+  .bossNextReward .have { color:var(--cream3); font-size:10px; }
+  .bossHeroCard .bossNextCountdown { font-family:'JetBrains Mono',monospace; color:var(--gold2); }
+  .bossHeroCard .bossNextCountdown.live { color:var(--red2); }
+  /* bandeau "premier kill de la semaine encore disponible", désormais visible AVANT le combat
+     (voir bossFirstKillOfWeek() appelé depuis renderBossLobbyHtml, combat/boss.js) */
+  .weekBanner {
+    margin:0 20px 14px; padding:9px 14px; background:rgba(200,169,110,.1); border:1px solid var(--gold-dim);
+    border-radius:8px; font-size:11.5px; color:var(--gold2);
+  }
+  .weekBanner b { font-family:'JetBrains Mono',monospace; color:var(--gold); }
+  .bossHeroCard .bossFightBtn { margin:0 20px 20px; width:calc(100% - 40px); }
+  .bossHeroCard .admHint { margin:0 20px 12px; }
+
+  /* calendrier hebdomadaire : recoloration des classes existantes, structure inchangée */
+  .card .bossCal { margin:0 0 8px; }
+  .card .bcHead, .card .bcCell { background:var(--s2); }
+  .card .bcCell.bcEmpty { background:#141322; }
+  .card .bcHead.bcToday { background:rgba(200,169,110,.12); }
+  .card .bcCell.bcLive { background:rgba(224,80,80,.16); }
+
+  /* barre de pity (bossPityBarHtml, réutilise .admBars/.admBarRow/.admBarTrack/.admBar/.admBarVal
+     partagés avec l'admin) : scoping sous .bossRewardRules pour la rendre plus visible SEULEMENT
+     dans le lobby Boss, sans toucher au rendu .admBars par défaut utilisé ailleurs (admin). */
+  .bossRewardRules .admBars { max-width:100%; margin:10px 0 0; }
+  .bossRewardRules .admBarTrack { height:7px; background:var(--s2); border:none; border-radius:4px; }
+  .bossRewardRules .admBar { background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:4px; }
+  .bossRewardRules .admBarLbl { width:auto; flex:1; color:var(--cream2); }
+  .bossRewardRules .admBarVal { color:var(--gold2); font-family:'JetBrains Mono',monospace; }
+
+  /* ===== arène : recoloration seule, layout HP bar/canvas/top panel INCHANGÉ (demande explicite,
+     voir CLAUDE.md -- pas de restructuration du combat) ===== */
+  #bossTopBar { background:var(--s1); border-bottom:1px solid var(--dbBorder); }
+  #bossName { color:var(--red2); }
+  #bossHpBarWrap { background:var(--s2); border-color:var(--dbBorder2); }
+  #bossTimer { color:var(--gold2); }
+  #bossLeaveBtn { color:var(--cream3); }
+  #bossLeaveBtn:hover { color:var(--ink); }
+  #bossPlayerHpWrap { background:var(--s1); border-color:var(--dbBorder); }
+  #bossTopPanel { background:rgba(16,16,30,.9); border-color:var(--dbBorder2); }
+  #bossTopPanel h4 { color:var(--gold2); }
+  #bossTopPanel .btpRow.me { color:var(--gold2); }
+  #bossTopPanel .btpRank { color:var(--cream3); }
+  #bossTopPanel .btpPct { color:var(--gold2); }
+  #bossTopPanel .btpDmg { color:var(--cream3); }
+
+  /* =====================================================================
+     Reskin visuel panneau Succès (2026-07-11, port fidèle d'un mockup validé
+     par l'utilisateur -- voir CLAUDE.md section mockups). Même démarche que
+     les refontes Zone/Boss ci-dessus : additif uniquement, réutilise les
+     tokens --s1/--s2/--dbBorder/--dbBorder2/--gold/--gold2/--gold-dim/
+     --green2/--cream2/--cream3/--ink/--danger déjà posés -- seul --s3 est
+     nouveau (3e niveau de surface du mockup, ni la refonte Zone ni Boss n'en
+     avaient eu besoin jusqu'ici). Classes toutes préfixées "ach" + un nom
+     distinct de l'existant (achOverview-, achSpotlight-, achCatCard,
+     achToggle-, achRecent-, achChain-) pour ne JAMAIS entrer en collision avec
+     .achRow/.achIcon/.achName/.achDesc/.achBarWrap/.achBar/.achProgress/
+     .achReward/.catTab/.achFilterBtn/.achSummary/.qCountBadge -- toujours
+     utilisés tels quels par le Compendium (.compZoneRow réutilise .achRow)
+     et par renderMailboxHtml() (courrier) ; aucune règle existante n'est
+     retirée ni modifiée ici. Structure HTML produite par
+     renderAchievementsHtml() (progression/notifications-quests.js) :
+     vue d'ensemble -> spotlight "presque là" -> tuiles de catégorie ->
+     bascule "non terminés" -> bande "derniers débloqués" -> grille de
+     cartes-chaînes (une carte par chaîne de paliers, pas par palier). */
+  :root { --s3:#202038; }
+
+  .achPanel { font-family:'Inter',sans-serif; }
+
+  .achOverviewCard { display:flex; align-items:center; gap:20px; flex-wrap:wrap; padding:2px 0 16px; }
+  .achOverviewRing { position:relative; width:76px; height:76px; flex-shrink:0; }
+  .achOverviewRing svg { display:block; width:100%; height:100%; }
+  .achOverviewRing .achRingPct {
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-size:16px; color:var(--gold2);
+  }
+  .achOverviewBody { flex:1; min-width:160px; }
+  .achOverviewTitle { font-family:'Cinzel',serif; font-size:15px; color:var(--gold2); margin-bottom:4px; }
+  .achOverviewSub { font-size:11px; color:var(--cream2); }
+  .achOverviewStats { display:flex; gap:20px; flex-shrink:0; }
+  .achOStat { text-align:center; }
+  .achOStat .v { font-family:'JetBrains Mono',monospace; font-size:18px; color:var(--gold2); }
+  .achOStat .k { font-size:9px; letter-spacing:.08em; text-transform:uppercase; color:var(--cream3); margin-top:2px; }
+
+  .achSpotlightBox {
+    margin:0 0 14px; padding:12px 14px; background:rgba(201,165,90,.08);
+    border:1px solid var(--gold-dim); border-radius:9px; display:flex; align-items:center; gap:12px;
+  }
+  .achSpotlightBox.achSpotlightDone { color:var(--gold2); font-weight:bold; }
+  .achSpotlightIcon { font-size:26px; flex-shrink:0; }
+  .achSpotlightBody { flex:1; min-width:0; }
+  .achSpotlightLbl { font-family:'Cinzel',serif; font-size:9px; letter-spacing:.1em; text-transform:uppercase; color:var(--gold); margin-bottom:3px; }
+  .achSpotlightName { font-size:12.5px; color:var(--ink); margin-bottom:5px; }
+  .achSpotlightName b { color:var(--gold2); }
+  .achSpotlightBar { height:6px; background:var(--s2); border-radius:3px; overflow:hidden; }
+  .achSpotlightBarFill { height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); }
+  .achSpotlightPct { font-family:'JetBrains Mono',monospace; font-size:15px; color:var(--gold2); flex-shrink:0; }
+
+  .achCatRow { display:flex; gap:8px; padding:2px 0 14px; overflow-x:auto; }
+  .achCatCard {
+    flex:1; min-width:78px; background:var(--s2); border:1px solid var(--dbBorder); border-radius:10px;
+    padding:10px 6px 9px; display:flex; flex-direction:column; align-items:center; gap:6px; cursor:pointer;
+    text-align:center; transition:border-color .15s,background .15s;
+  }
+  .achCatCard:hover { border-color:var(--dbBorder2); }
+  .achCatCard.on { border-color:var(--gold); background:rgba(201,165,90,.09); }
+  .achCatCard .achCatRing { position:relative; width:36px; height:36px; }
+  .achCatCard .achCatRing svg { display:block; width:36px; height:36px; }
+  .achCatCard .achCatRing .achCatIc { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:15px; }
+  .achCatCard .achCatNm { font-size:9px; color:var(--cream3); font-family:'Cinzel',serif; letter-spacing:.02em; line-height:1.2; }
+  .achCatCard.on .achCatNm { color:var(--gold2); }
+  .achCatCard .achCatCnt { font-size:8px; color:var(--cream3); font-family:'JetBrains Mono',monospace; }
+  .achCatCard.on .achCatCnt { color:var(--gold); }
+
+  .achToggleRow { display:flex; padding:0 0 10px; }
+  .achToggle { margin-left:auto; font-size:10px; color:var(--cream2); display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .achToggleSwitch { width:30px; height:16px; border-radius:8px; background:var(--s3); border:1px solid var(--dbBorder); position:relative; flex-shrink:0; }
+  .achToggleSwitch.on { background:var(--gold-dim); border-color:var(--gold); }
+  .achToggleSwitch .achKnob { position:absolute; top:1px; left:1px; width:12px; height:12px; border-radius:50%; background:var(--cream3); transition:left .15s,background .15s; }
+  .achToggleSwitch.on .achKnob { left:15px; background:var(--gold2); }
+
+  /* bande "derniers débloqués" : le badge NOUVEAU dépasse volontairement du haut de la carte
+     (top:-7px) -- piège connu (2026-07-11) : mettre overflow-x:auto SANS marge de respiration en
+     haut du conteneur clippe le badge, car le calcul CSS force overflow-y à "auto" dès que
+     overflow-x n'est pas "visible" (même en écrivant overflow-y:visible explicitement, il est
+     recalculé en auto -- règle du modèle de boîte, pas un bug navigateur). Le vrai correctif est le
+     padding-top:7px sur .achRecentRow ci-dessous : le badge à -7px atterrit alors exactement dans
+     cette marge de padding (jamais clippé, la zone de clip d'un overflow:auto s'arrête à la bordure,
+     pas au padding). Ne jamais retirer ce padding sans repenser le badge. */
+  .achRecentRow { display:flex; gap:8px; padding:7px 0 14px; overflow-x:auto; overflow-y:visible; }
+  .achRecentItem { flex-shrink:0; width:120px; background:var(--s2); border:1px solid var(--dbBorder); border-radius:8px; padding:9px 10px; position:relative; }
+  .achRecentItem .achRecentBadge {
+    position:absolute; top:-7px; right:6px; background:var(--gold); color:#2a1f08; font-size:7.5px;
+    font-weight:700; letter-spacing:.04em; padding:2px 5px; border-radius:6px; line-height:1.2; white-space:nowrap;
+  }
+  .achRecentItem .achRecentIc { font-size:18px; margin-bottom:4px; }
+  .achRecentItem .achRecentNm { font-size:10.5px; color:var(--gold2); margin-bottom:2px; }
+  .achRecentItem .achRecentDt { font-size:9px; color:var(--cream3); }
+
+  .achChainGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
+  .achChainCard { background:var(--s2); border:1px solid var(--dbBorder); border-radius:9px; padding:11px 13px; display:flex; gap:10px; }
+  .achChainCard.done { border-color:var(--gold-dim); }
+  .achChainIcon {
+    font-size:22px; flex-shrink:0; width:34px; height:34px; display:flex; align-items:center;
+    justify-content:center; background:var(--s3); border-radius:7px;
+  }
+  .achChainCard.done .achChainIcon { background:rgba(201,165,90,.12); }
+  .achChainBody { flex:1; min-width:0; }
+  .achChainName { font-size:12px; color:var(--ink); font-weight:500; margin-bottom:2px; }
+  .achChainCard.done .achChainName { color:var(--gold2); }
+  .achChainDesc { font-size:10px; color:var(--cream3); margin-bottom:7px; }
+  .achTierPips { display:flex; align-items:center; gap:3px; margin:6px 0 7px; }
+  .achTierPips .achPip { width:5px; height:5px; border-radius:50%; background:var(--s3); border:1px solid var(--dbBorder); }
+  .achTierPips .achPip.on { background:var(--gold); border-color:var(--gold); }
+  .achTierPips .achPipLbl { font-size:8px; color:var(--cream3); margin-left:4px; font-family:'JetBrains Mono',monospace; }
+  .achChainProgRow { display:flex; justify-content:space-between; font-size:9.5px; color:var(--cream3); margin-bottom:3px; font-family:'JetBrains Mono',monospace; }
+  .achChainBar { height:5px; background:var(--s3); border-radius:3px; overflow:hidden; }
+  .achChainBarFill { height:100%; background:linear-gradient(90deg,var(--gold-dim),var(--gold)); }
+  .achChainCard.done .achChainBarFill { background:var(--gold); }
+  .achChainReward { font-size:9.5px; color:var(--gold2); margin-top:5px; font-family:'JetBrains Mono',monospace; }
+  .achChainDoneBadge { margin-left:auto; flex-shrink:0; font-size:9px; color:var(--green2); align-self:flex-start; }
+
+  .achEmpty { padding:20px 6px; text-align:center; color:var(--cream3); font-size:11px; }
+
+  /* adaptation mobile (~375-390px, voir CLAUDE.md §14) : grille de chaînes en 1 colonne, anneau de
+     vue d'ensemble un peu réduit, tuiles de catégorie plus étroites -- pas de canvas ici, juste du
+     HTML dans #infoBody, donc libre d'adapter la mise en page directement. */
+  @media (max-width:600px) {
+    .achChainGrid { grid-template-columns:1fr; }
+    .achOverviewCard { gap:14px; }
+    .achOverviewRing { width:60px; height:60px; }
+    .achCatCard { min-width:64px; }
   }

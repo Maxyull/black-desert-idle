@@ -209,6 +209,34 @@ let awayLootCounts = {};
 let awayXpGained = 0;
 let awaySessionStartedAt = null;
 let awayLevelBefore = 1, awayPercentBefore = 0;
+// rattrapage hors-ligne "réel" (2026-07-11, demande explicite : "le modal qui calcule le farm hors
+// ligne, je le vois pas quand on se reconnecte") -- awaySilverGained/awayLootCounts ci-dessus
+// n'avancent QUE tant que l'onglet reste ouvert quelque part (rAF visible + le setInterval de
+// secours en arrière-plan, voir plus bas dans ce fichier) : fermer le navigateur ou une mise en
+// veille OS arrête ces timers, donc au chargement suivant ces variables valent encore 0 et le
+// modal ne s'affichait JAMAIS, même après une vraie absence. computeOfflineCatchupSilver()
+// (appelée depuis applySaveState) comble ce cas précis avec un taux plat (pas de simulation tick
+// par tick), même principe que le rattrapage hors-ligne du module Compagnons
+// (src/companions/save.js, applyOfflineProgress/OFFLINE_CAP_HOURS) : plafonné à
+// OFFLINE_CATCHUP_CAP_HOURS, ignoré sous OFFLINE_CATCHUP_MIN_HOURS (bruit d'un simple changement
+// d'onglet, déjà couvert par visibilitychange ci-dessous). Utilise S.bestSilverPerHour DE LA
+// SAUVEGARDE CHARGÉE (record perso à vie, déjà isolé au seul revenu du trash au sol -- voir son
+// commentaire plus bas, section hud()) comme taux -- XP/loot volontairement PAS simulés ici (pas
+// de taux fiable équivalent pour l'XP), cohérent avec la simplicité du même mécanisme côté
+// Compagnons. Le clamp anti-triche serveur (clamp_player_stats(), CLAUDE.md §12) reste le filet de
+// sécurité si ce taux était anormalement élevé.
+const OFFLINE_CATCHUP_CAP_HOURS = 24;
+const OFFLINE_CATCHUP_MIN_HOURS = 0.05; // ~3 min
+function computeOfflineCatchupSilver(data) {
+  if (!data || !data.savedAt) return 0;
+  const rate = (data.S && data.S.bestSilverPerHour) || 0;
+  if (rate <= 0) return 0;
+  const elapsedMs = Date.now() - Date.parse(data.savedAt);
+  if (!(elapsedMs > 0)) return 0;
+  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
+  if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  return Math.round(rate * hours);
+}
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0;
@@ -1671,7 +1699,7 @@ const CONTENT_UPDATE_VERSION = {
   wiki:         { v:2, desc:{fr:'1 arme garantie sur les 3 dernières zones de chaque palier (plus rien sur la 1ère)',en:'1 guaranteed weapon on a tier\'s last 3 zones (none on the 1st)'} },
   compendium:   { v:1, desc:{fr:'Clique un objet pour voir dans quelles zones le farmer',en:'Click an item to see which zones farm it'} },
   codex:        { v:1, desc:{fr:'Liste à jour de tous les objets du jeu',en:'Up to date list of every item in the game'} },
-  achievements: { v:1, desc:{fr:'Filtres par catégorie et "pas fini" disponibles',en:'Category and "unfinished" filters available'} },
+  achievements: { v:2, desc:{fr:'Nouveau visuel : succès groupés par chaîne de paliers, vue d\'ensemble et derniers débloqués',en:'New look: achievements grouped into tiered chains, overview and recent unlocks'} },
 };
 function contentSeenKey(panel) { return 'velia-idle-seenv-'+panel; }
 function contentLastSeenVersion(panel) {
@@ -1890,6 +1918,13 @@ function getSaveState() {
 }
 function applySaveState(data) {
   if (!data || data.version !== 1) return false;
+  // calculé AVANT Object.assign : le taux/niveau "avant" doivent venir de la sauvegarde chargée
+  // (data.S), pas de l'état par défaut encore présent dans S à cet instant (voir
+  // computeOfflineCatchupSilver ci-dessus).
+  const offlineSilverGain = computeOfflineCatchupSilver(data);
+  const offlineLevelBefore = data.S ? data.S.lvl : 1;
+  const offlinePercentBefore = data.S ? Math.round((data.S.xp||0) / xpNeededFor(data.S.lvl||1) * 100) : 0;
+  const offlineSavedAtMs = data.savedAt ? Date.parse(data.savedAt) : Date.now();
   Object.assign(S, data.S);
   // repart sur une base FRAÎCHE pour les stats de SESSION (silver/h, kills/min) — voir le
   // commentaire sur silverEarnedAtLoad/killsAtLoad plus haut ; corrige le faux positif anti-triche
@@ -1935,6 +1970,18 @@ function applySaveState(data) {
   resetWorld(true); // recrée les packs autour de la vraie position du joueur (keepPos, voir commentaire sur resetWorld)
   updateZoneTitleText(); // voir son commentaire -- sans cet appel, le nom de zone affiché restait figé au placeholder HTML
   hud();
+  // rattrapage hors-ligne réel (voir computeOfflineCatchupSilver ci-dessus) : appliqué ICI, APRÈS
+  // Object.assign(S,...) pour que addSilver() s'applique bien au silver fraîchement restauré (pas
+  // à un état par défaut qui serait de toute façon écrasé). Réutilise le mécanisme d'affichage déjà
+  // en place (awaySilverGained/showAwayLootSummaryIfAny, voir plus haut) au lieu d'un chemin séparé.
+  if (offlineSilverGain > 0) {
+    addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
+    awaySilverGained = offlineSilverGain;
+    awaySessionStartedAt = offlineSavedAtMs;
+    awayLevelBefore = offlineLevelBefore;
+    awayPercentBefore = offlinePercentBefore;
+    showAwayLootSummaryIfAny();
+  }
   return true;
 }
 // Export manuel (bouton à brancher si besoin) : télécharge un .json local

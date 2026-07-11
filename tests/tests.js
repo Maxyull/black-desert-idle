@@ -1217,6 +1217,46 @@
     assert('Boss encore en vie : pas de classe "dead"', bar2 && !bar2.classList.contains('dead'));
     liveBoss = savedLiveBoss;
   }
+  // reskin visuel du lobby Boss (2026-07-11, voir CLAUDE.md) : chaque boss du roster doit avoir une
+  // réplique d'ambiance (lore.fr/lore.en) affichée dans la carte "prochain boss" -- une entrée sans
+  // lore casserait silencieusement l'affichage prévu (bloc vide) sans qu'aucun test ne le détecte.
+  function testAllBossesHaveLoreInBothLangs() {
+    if (typeof BOSS_ROSTER === 'undefined') return;
+    Object.keys(BOSS_ROSTER).forEach(id => {
+      const b = BOSS_ROSTER[id];
+      assert(`BOSS_ROSTER["${id}"] a un champ lore`, !!b.lore, `boss=${id}`);
+      assert(`BOSS_ROSTER["${id}"].lore a un texte FR non vide`, !!(b.lore && b.lore.fr && b.lore.fr.trim()), `boss=${id}`);
+      assert(`BOSS_ROSTER["${id}"].lore a un texte EN non vide`, !!(b.lore && b.lore.en && b.lore.en.trim()), `boss=${id}`);
+    });
+  }
+  // quantité de matériau déjà en poche (bossMatInHand, voir combat/boss.js) affichée dans le lobby
+  // à côté de la fourchette de drop -- doit sommer sur tous les slots INV partageant la même clé
+  // (pas juste le premier trouvé) et ne jamais lever si INV est vide/non initialisé.
+  function testBossMatInHandSumsAcrossSlotsAndHandlesEmptyInv() {
+    if (typeof bossMatInHand !== 'function') return;
+    assert('INV vide/sans le matériau -> 0, pas de throw', bossMatInHand('mat_Pierre noire test inexistant') === 0);
+    const savedInv = INV.slice();
+    const freeIdx = INV.findIndex(s => s === null);
+    if (freeIdx === -1) return; // sac plein dans l'état de test courant : rien à vérifier ici
+    INV[freeIdx] = { key:'mat_Test Boss Have', name:'Test Boss Have', kind:'material', icon:'x', color:'#fff', qty:7, stackable:true, weight:0.1, val:1 };
+    const freeIdx2 = INV.findIndex((s,i) => s === null && i !== freeIdx);
+    let usedSecondSlot = false;
+    if (freeIdx2 !== -1) { INV[freeIdx2] = { key:'mat_Test Boss Have', name:'Test Boss Have', kind:'material', icon:'x', color:'#fff', qty:3, stackable:true, weight:0.1, val:1 }; usedSecondSlot = true; }
+    assert('Somme correcte sur 1 ou 2 slots partageant la même clé', bossMatInHand('mat_Test Boss Have') === (usedSecondSlot ? 10 : 7), `have=${bossMatInHand('mat_Test Boss Have')}`);
+    for (let i = 0; i < INV.length; i++) INV[i] = savedInv[i];
+  }
+  // la ligne récompense du lobby (rewardLineHtml, renderBossLobbyHtml) doit afficher cette quantité
+  // sans jamais lever, y compris quand le prochain boss connu n'a jamais été rencontré (matKey neuf).
+  function testBossLobbyRewardLineShowsMatInHandWithoutThrow() {
+    if (typeof renderBossLobbyHtml !== 'function') return;
+    const savedLiveBoss = liveBoss;
+    liveBoss = { boss:'kzarka', time: Date.now()-1000, expires: Date.now()+5*60*1000, hp:50000, maxHp:50000 };
+    let html; try { html = renderBossLobbyHtml(); } catch (e) { html = null; }
+    assert('renderBossLobbyHtml() ne lève pas même sans avoir combattu ce boss avant', html !== null);
+    const div = document.createElement('div'); div.innerHTML = html || '';
+    assert('La carte "prochain boss" affiche la ligne récompense (quantité en poche)', !!div.querySelector('.bossNextReward'));
+    liveBoss = savedLiveBoss;
+  }
   // "borne la taille de la fiche coffre a une taille standard par rapport au autre" (2026-07-08) --
   // #veliaChestGrid doit suivre le MÊME mécanisme de synchro de hauteur que zoneList/lootTable
   // (syncFarmCardHeights, core/game-core.js), pas un max-height fixe indépendant des cartes voisines.
@@ -1478,9 +1518,70 @@
     // chargement du script) -- garder ce test à jour avec le nom réel, sinon il devient un no-op
     // silencieux (typeof sur un nom qui n'existe plus == 'undefined' == condition jamais vraie).
     if (typeof LB2_CATS_ === 'function') {
-      assert('LB2_CATS_() couvre les 7 catégories du classement principal',
-        ['silver','gs','zone','sh','kpm','item','treasure'].every(k => LB2_CATS_()[k]));
+      // 8e catégorie "compendium" ajoutée le 2026-07-11 (r.compendium_pct, jamais utilisé par un
+      // classement avant) -- garder cette liste à jour à chaque nouvelle catégorie, sinon ce test
+      // devient silencieusement incomplet plutôt que de détecter une régression.
+      assert('LB2_CATS_() couvre les 8 catégories du classement principal (dont Compendium)',
+        ['silver','gs','zone','sh','kpm','item','treasure','compendium'].every(k => LB2_CATS_()[k]));
     }
+  }
+  // ---------- Classement : catégorie Compendium (2026-07-11, r.compendium_pct) ----------
+  function testLb2CompendiumCategoryUsesRealPct() {
+    if (typeof LB2_CATS_ !== 'function') return;
+    const cat = LB2_CATS_().compendium;
+    assert('Catégorie Compendium définie dans LB2_CATS_()', !!cat);
+    if (!cat) return;
+    const row = { compendium_pct: 42.7 };
+    assert('LB2_CATS_().compendium.val() lit bien r.compendium_pct', cat.val(row) === 42.7, `val=${cat.val(row)}`);
+    assert('LB2_CATS_().compendium.fmt() affiche un pourcentage arrondi', cat.fmt(row) === '43%', `fmt=${cat.fmt(row)}`);
+    assert('LB2_CATS_().compendium.val() ne plante pas sans compendium_pct (undefined -> 0)', cat.val({}) === 0);
+  }
+  // ---------- Classement : "Ta position" hors du top LB2_TOP_N ----------
+  // garde-fou (2026-07-11, demande explicite) : le rang réel doit être calculé sur TOUTES les
+  // lignes déjà chargées (jusqu'à 500 via .select('*').limit(500), aucune requête supplémentaire),
+  // pas seulement la page affichée -- lb2ComputeYourRankInfo() est une fonction PURE (ne lit aucun
+  // état module), testable directement avec des lignes fabriquées.
+  function testLb2ComputeYourRankInfoFindsRealRankOutsideTop20() {
+    if (typeof lb2ComputeYourRankInfo !== 'function') return;
+    const rows = [];
+    for (let i = 0; i < 30; i++) rows.push({ user_id: 'lb2test-u'+i, silver: (30-i)*1000 });
+    // u0 a le plus de silver (rang 1) ; la valeur décroît strictement avec i -> rang == i+1
+    const info = lb2ComputeYourRankInfo(rows, 'silver', 'lb2test-u24');
+    assert('lb2ComputeYourRankInfo calcule le bon rang réel, hors du top 20', info && info.rank === 25, `rank=${info&&info.rank}`);
+    assert('lb2ComputeYourRankInfo renvoie le nombre total de joueurs classés dans la catégorie', info && info.total === 30, `total=${info&&info.total}`);
+    const top = lb2ComputeYourRankInfo(rows, 'silver', 'lb2test-u0');
+    assert('lb2ComputeYourRankInfo fonctionne aussi pour un rang dans le top (pas réservé au hors-top)', top && top.rank === 1, `rank=${top&&top.rank}`);
+    const missing = lb2ComputeYourRankInfo(rows, 'silver', 'lb2test-unknown-user');
+    assert('lb2ComputeYourRankInfo renvoie null si le joueur n\'a pas encore de record synchronisé', missing === null);
+    assert('lb2ComputeYourRankInfo renvoie null sans userId (invité/déconnecté)', lb2ComputeYourRankInfo(rows, 'silver', null) === null);
+  }
+  // seuil "top" utilisé par lb2RenderBody() pour décider d'afficher la barre "Ta position" --
+  // garde-fou pour qu'un futur changement du seuil soit un choix explicite, pas un oubli.
+  function testLb2YourRankBarThresholdIsTop20() {
+    if (typeof LB2_TOP_N === 'undefined') return;
+    assert('Le seuil "top" de la barre "Ta position" du Classement est bien 20 (podium 1-3 + tableau 4-20)',
+      LB2_TOP_N === 20, `LB2_TOP_N=${LB2_TOP_N}`);
+  }
+  // ---------- Classement : panneau invité stylé (remplace l'alert() brut, 2026-07-11) ----------
+  function testLb2GuestGateReusesMarketCopyAndRealLinkButton() {
+    if (typeof lb2GuestGateHtml !== 'function') return;
+    const html = lb2GuestGateHtml();
+    // le HTML rendu passe par escapeHtml() (échappe les guillemets du texte source) -- comparer à
+    // la même version échappée, pas au texte brut de i18next.t(), sinon faux négatif systématique.
+    assert('Le panneau invité du Classement réutilise le texte EXACT de market:market.auth_verified_required (pas un texte dupliqué)',
+      html.includes(escapeHtml(i18next.t('market:market.auth_verified_required'))));
+    assert('Le panneau invité du Classement contient bien le bouton de liaison de compte (id lb2LinkAccountBtn)',
+      html.includes('id="lb2LinkAccountBtn"'));
+  }
+  // garde-fou statique (voir CLAUDE.md §11, "inspection du code source via .toString()") : vérifie
+  // que openLeaderboard2() affiche le panneau invité stylé pour un compte invité plutôt qu'un
+  // alert() brut -- seul le cas "aucune session du tout" (!sb || !currentUser) garde l'alerte
+  // historique de marketRequireAuth(), jamais appelée dans la branche isGuest().
+  function testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert() {
+    if (typeof openLeaderboard2 !== 'function') return;
+    const src = openLeaderboard2.toString();
+    assert('openLeaderboard2 affiche lb2GuestGateHtml() pour un compte invité, plutôt qu\'un alert() natif',
+      src.includes('lb2GuestGateHtml'));
   }
   // garde-fou (2026-07-21, bug réel trouvé en buildant le panneau Donation) : un "https://" brut au
   // milieu d'un template literal MULTI-LIGNE a fait planter le strip de commentaires du build
@@ -2471,6 +2572,60 @@
       el.textContent === tr(ZONES[5].name), `got=${el.textContent}`);
     zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
   }
+  // rattrapage hors-ligne "réel" (2026-07-11, demande explicite : "le modal qui calcule le farm
+  // hors ligne, je le vois pas quand on se reconnecte") -- computeOfflineCatchupSilver()
+  // (game-core.js) doit : ignorer une sauvegarde sans savedAt/taux, ignorer une absence sous le
+  // seuil minimum (bruit d'un simple changement d'onglet, déjà couvert par visibilitychange),
+  // calculer un gain proportionnel au temps réel écoulé, et plafonner à OFFLINE_CATCHUP_CAP_HOURS
+  // même pour une absence bien plus longue.
+  function testComputeOfflineCatchupSilverCapsAndThresholds() {
+    if (typeof computeOfflineCatchupSilver !== 'function') return;
+    const rate = 3600; // valeur ronde : 3600 silver/h = 1 silver/s
+    assert('Sans savedAt -> 0, pas de throw', computeOfflineCatchupSilver({ S:{ bestSilverPerHour: rate } }) === 0);
+    assert('Sans taux connu (bestSilverPerHour=0) -> 0', computeOfflineCatchupSilver({ savedAt: new Date(Date.now()-3600000).toISOString(), S:{ bestSilverPerHour:0 } }) === 0);
+    const oneMinuteAgo = new Date(Date.now() - 60*1000).toISOString();
+    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> 0', computeOfflineCatchupSilver({ savedAt: oneMinuteAgo, S:{ bestSilverPerHour: rate } }) === 0);
+    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
+    const gain1h = computeOfflineCatchupSilver({ savedAt: oneHourAgo, S:{ bestSilverPerHour: rate } });
+    assert('1h d\'absence à 3600 silver/h -> ~3600 silver', Math.abs(gain1h - rate) <= 2, `gain=${gain1h}`);
+    const fortyEightHoursAgo = new Date(Date.now() - 48*3600*1000).toISOString();
+    const gainCapped = computeOfflineCatchupSilver({ savedAt: fortyEightHoursAgo, S:{ bestSilverPerHour: rate } });
+    assert('Plafonné à OFFLINE_CATCHUP_CAP_HOURS (24h) même après 48h d\'absence', Math.abs(gainCapped - rate*OFFLINE_CATCHUP_CAP_HOURS) <= 2, `gain=${gainCapped}`);
+  }
+  // vérifie l'intégration bout-en-bout : applySaveState() sur une sauvegarde dont savedAt est
+  // ancien doit créditer le silver de rattrapage ET déclencher le modal "Bon retour" (auparavant :
+  // rien ne s'affichait, awaySilverGained/awayLootCounts restaient à 0 après un vrai rechargement
+  // sans que l'onglet n'ait jamais été mis en arrière-plan dans CETTE session). Vérifie aussi que
+  // le rattrapage n'alimente PAS tokenSilverEarned (category 'offline_catchup', pas 'loot') --
+  // sinon le taux servant de base au PROCHAIN rattrapage s'auto-inflaterait à chaque reconnexion.
+  function testApplySaveStateOfflineCatchupCreditsSilverAndShowsReconnectModal() {
+    if (typeof applySaveState !== 'function' || typeof showAwayLootSummaryIfAny !== 'function') return;
+    const root = document.getElementById('reconnectModalRoot'); if (!root) return;
+    const s = { zoneIdx, atVelia, silver: S.silver, silverEarned: S.silverEarned, tokenSilverEarned: S.tokenSilverEarned, bestSilverPerHour: S.bestSilverPerHour };
+    const savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    try {
+      atVelia = false;
+      const save = getSaveState();
+      save.S.bestSilverPerHour = 7200; // 2 silver/s pile, pour un calcul exact
+      save.savedAt = new Date(Date.now() - 2*3600*1000).toISOString(); // 2h d'absence réelle
+      const silverBefore = save.S.silver;
+      const tokenBefore = save.S.tokenSilverEarned || 0;
+      // PAS de root.innerHTML='' ici (piège documenté CLAUDE.md §32 -- une fois le root React
+      // déjà monté par un test antérieur, vider le DOM à la main corrompt le suivi des fibers et
+      // fait planter le PROCHAIN rendu sur un removeChild) : openReconnectModal() gère lui-même le
+      // remplacement, que le root existe déjà ou non.
+      applySaveState(save);
+      assert('applySaveState() crédite le silver de rattrapage hors-ligne (2h × 7200/h = 14400)',
+        Math.abs(S.silver - (silverBefore + 14400)) <= 2, `silver=${S.silver}, attendu≈${silverBefore+14400}`);
+      assert('Le rattrapage n\'alimente PAS tokenSilverEarned (évite l\'auto-inflation du taux)', S.tokenSilverEarned === tokenBefore, `tokenSilverEarned=${S.tokenSilverEarned}`);
+      assert('Le modal "Bon retour" s\'affiche après un rattrapage hors-ligne réel (pas seulement un changement d\'onglet)',
+        root.innerHTML.includes('Bon retour'), root.innerHTML.slice(0,120));
+    } finally {
+      zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
+      S.silver = s.silver; S.silverEarned = s.silverEarned; S.tokenSilverEarned = s.tokenSilverEarned; S.bestSilverPerHour = s.bestSilverPerHour;
+      awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
   // "vérifie les info de la table de loot (couleurs cadre)" (2026-07-10) : la ligne dépliée du
   // bijou (kind jackpot) doit être colorée à la couleur du palier, comme les lignes gear/matériau
   // et comme la ligne condensée (zoneLootCompactRowHtml) — bug trouvé en vérification : "jackpot"
@@ -3302,6 +3457,92 @@
     });
   }
 
+  // ---------- refonte visuelle Succès (2026-07-11) : chaînes de paliers ----------
+  // testé avec un état de sauvegarde FICTIF passé directement en argument (jamais le vrai S global)
+  // -- possible car statFn:S=>S.kills etc. lisent explicitement le paramètre reçu plutôt qu'une
+  // fermeture sur le S global, comme nextAchievement()/checkAchievements() le font déjà.
+  function testGroupAchievementsIntoChainsGroupsByStatFnIdentity() {
+    const chains = groupAchievementsIntoChains();
+    const totalTiers = chains.reduce((sum, c) => sum + c.tiers.length, 0);
+    assert('groupAchievementsIntoChains() ne perd ni ne duplique aucun succès', totalTiers === ACHIEVEMENTS.length, `total=${totalTiers}, attendu=${ACHIEVEMENTS.length}`);
+    const killsChain = chains.find(c => c.tiers.some(a => a.id === 'first_kill'));
+    assert('la chaîne "kills" regroupe les 4 paliers, dans l\'ordre du tableau source',
+      !!killsChain && killsChain.tiers.map(a => a.id).join(',') === 'first_kill,kills_100,kills_1000,kills_10000',
+      JSON.stringify(killsChain && killsChain.tiers.map(a => a.id)));
+    const silverChain = chains.find(c => c.tiers.some(a => a.id === 'silver_10k'));
+    assert('la chaîne "silver" regroupe les 4 paliers silver_10k->10m',
+      !!silverChain && silverChain.tiers.length === 4, silverChain && silverChain.tiers.length);
+    const jackpotChain = chains.find(c => c.tiers.some(a => a.id === 'jackpot_1'));
+    assert('jackpot_1 forme sa propre chaîne à 1 palier (pas de palier frère)', !!jackpotChain && jackpotChain.tiers.length === 1);
+    const gearChain = chains.find(c => c.tiers.some(a => a.id === 'gear_1'));
+    assert('gear_1 forme aussi sa propre chaîne à 1 palier (statFn distinct de jackpot_1)', !!gearChain && gearChain.tiers.length === 1 && gearChain !== jackpotChain);
+  }
+  // garde-fou (régression) : un check vert ne doit JAMAIS apparaître tant qu'un palier de la chaîne
+  // reste verrouillé -- même si des paliers intermédiaires sont déjà débloqués individuellement.
+  function testChainProgressNeverMarksIntermediateTierDoneAheadOfChain() {
+    const killsChain = groupAchievementsIntoChains().find(c => c.tiers.some(a => a.id === 'first_kill'));
+    // kills_10000 pas encore débloqué -- 3 paliers sur 4 le sont
+    const partialS = { kills: 1500, achUnlocked: { first_kill: 1, kills_100: 2, kills_1000: 3 } };
+    const partial = chainProgress(killsChain, partialS);
+    assert('chaîne en cours : le palier actif est le 1er palier NON débloqué (kills_10000)', partial.tier.id === 'kills_10000', partial.tier.id);
+    assert('chaîne en cours : done=false tant qu\'un palier reste verrouillé (pas de check vert prématuré)', partial.done === false);
+    assert('chaîne en cours : unlockedCount reflète bien les 3 paliers réellement débloqués', partial.unlockedCount === 3, partial.unlockedCount);
+    // les 4 paliers sont débloqués
+    const fullS = { kills: 99999, achUnlocked: { first_kill: 1, kills_100: 2, kills_1000: 3, kills_10000: 4 } };
+    const full = chainProgress(killsChain, fullS);
+    assert('chaîne 100% débloquée : le palier actif est le DERNIER palier (jamais un intermédiaire)', full.tier.id === 'kills_10000');
+    assert('chaîne 100% débloquée : done=true (seul cas où le check vert doit apparaître)', full.done === true);
+    assert('chaîne 100% débloquée : pct fixé à 100, jamais recalculé au-delà', full.pct === 100, full.pct);
+  }
+  function testSortChainsForDisplayPushesCompletedChainsToEnd() {
+    // état minimal mais safe pour TOUTES les chaînes (y compris gs_*/enh_*/treasure_* qui lisent
+    // GS()/maxEnhLv()/treasureTotal() -- treasureTotal() accède à S.lootByItem[...], doit exister)
+    const fakeS = {
+      kills: 0, lootCount: 0, silverEarned: 0, maxZoneIdx: 0, jackpotCount: 1, gearDropCount: 1,
+      playtimeSec: 0, lootByItem: {}, achUnlocked: { jackpot_1: 1, gear_1: 2 },
+    };
+    const chains = groupAchievementsIntoChains();
+    const ordered = sortChainsForDisplay(chains, fakeS);
+    assert('sortChainsForDisplay() retourne toutes les chaînes (aucune perdue)', ordered.length === chains.length, `${ordered.length} vs ${chains.length}`);
+    assert('sortChainsForDisplay() : une chaîne encore en cours passe en premier', !ordered[0].progress.done, JSON.stringify(ordered[0].chain.tiers.map(a=>a.id)));
+    const doneChains = ordered.filter(e => e.progress.done);
+    assert('sortChainsForDisplay() : jackpot_1 et gear_1 (seules chaînes débloquées ici) sont bien poussées en fin de liste',
+      doneChains.length > 0 && ordered.slice(ordered.length - doneChains.length).every(e => e.progress.done));
+  }
+  function testAchievementSilverTotalsSplitsEarnedAndRemaining() {
+    const fakeS = { achUnlocked: {} };
+    ACHIEVEMENTS.forEach((a, i) => { if (i % 2 === 0) fakeS.achUnlocked[a.id] = 1; });
+    const { earned, remaining } = achievementSilverTotals(fakeS);
+    const expectedEarned = ACHIEVEMENTS.filter((a, i) => i % 2 === 0).reduce((s, a) => s + a.reward, 0);
+    const expectedRemaining = ACHIEVEMENTS.filter((a, i) => i % 2 !== 0).reduce((s, a) => s + a.reward, 0);
+    assert('achievementSilverTotals() : silver déjà gagné = somme des reward des succès débloqués', earned === expectedEarned, `${earned} vs ${expectedEarned}`);
+    assert('achievementSilverTotals() : silver restant = somme des reward des succès verrouillés', remaining === expectedRemaining, `${remaining} vs ${expectedRemaining}`);
+    assert('achievementSilverTotals() : la somme des deux couvre bien tous les succès', earned + remaining === ACHIEVEMENTS.reduce((s,a)=>s+a.reward,0));
+  }
+  function testAchCatCompletionUsesRealUnlockedCounts() {
+    const fakeS = { achUnlocked: {} };
+    const combatIds = ACHIEVEMENTS.filter(a => achCat(a.id) === 'combat').map(a => a.id);
+    fakeS.achUnlocked[combatIds[0]] = 1; // 1 seul débloqué sur la catégorie combat
+    const combat = achCatCompletion('combat', fakeS);
+    assert('achCatCompletion() : total = nombre réel de succès de la catégorie', combat.total === combatIds.length, combat.total);
+    assert('achCatCompletion() : done reflète le vrai nombre débloqué (1 ici)', combat.done === 1, combat.done);
+    const all = achCatCompletion('all', fakeS);
+    assert('achCatCompletion(\'all\') : total = ACHIEVEMENTS.length', all.total === ACHIEVEMENTS.length, all.total);
+  }
+  function testRecentlyUnlockedAchievementsSortsByTimestampDescendingAndRespectsLimit() {
+    const fakeS = { achUnlocked: { first_kill: 1000, kills_100: 3000, loot_1: 2000 } };
+    const recent = recentlyUnlockedAchievements(fakeS, 2);
+    assert('recentlyUnlockedAchievements() trie du plus récent au plus ancien', recent.map(a => a.id).join(',') === 'kills_100,loot_1', recent.map(a => a.id).join(','));
+    assert('recentlyUnlockedAchievements() respecte la limite demandée', recent.length === 2, recent.length);
+  }
+  // défensif : une entrée non numérique (sauvegarde très ancienne hypothétique) ne doit jamais
+  // remonter dans la liste plutôt que d'afficher un horodatage cassé au joueur.
+  function testRecentlyUnlockedAchievementsIgnoresNonNumericTimestamps() {
+    const fakeS = { achUnlocked: { first_kill: true, kills_100: 3000 } };
+    const recent = recentlyUnlockedAchievements(fakeS, 5);
+    assert('recentlyUnlockedAchievements() ignore une entrée achUnlocked non numérique', recent.map(a => a.id).join(',') === 'kills_100', recent.map(a => a.id).join(','));
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -3401,6 +3642,7 @@
     testGearRetroactiveMigration();
     testGearRescaleV235RetroactiveOnZoneReqChange();
     testApplySaveStateUpdatesZoneTitleText();
+    testComputeOfflineCatchupSilverCapsAndThresholds();
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();
     testSellOnePriorityEquipCompendiumSell();
@@ -3461,6 +3703,7 @@
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
     testReconnectModalWrapperScrollsInsteadOfClipping();
+    testApplySaveStateOfflineCatchupCreditsSilverAndShowsReconnectModal();
     testReconnectModalTierChipsWrapOnSameRowInsteadOfStacking();
     testAwayLevelSnapshotCapturedOnHide();
     testReconnectDurationLabelFormatsHoursAndMinutes();
@@ -3483,6 +3726,21 @@
     testI18nextResolvesKnownKeysNotRawKey();
     testChangeLanguageStaysInSyncWithGlobalLang();
     testI18nResourcesFrEnKeyParity();
+    testAllBossesHaveLoreInBothLangs();
+    testBossMatInHandSumsAcrossSlotsAndHandlesEmptyInv();
+    testBossLobbyRewardLineShowsMatInHandWithoutThrow();
+    testGroupAchievementsIntoChainsGroupsByStatFnIdentity();
+    testChainProgressNeverMarksIntermediateTierDoneAheadOfChain();
+    testSortChainsForDisplayPushesCompletedChainsToEnd();
+    testAchievementSilverTotalsSplitsEarnedAndRemaining();
+    testAchCatCompletionUsesRealUnlockedCounts();
+    testRecentlyUnlockedAchievementsSortsByTimestampDescendingAndRespectsLimit();
+    testRecentlyUnlockedAchievementsIgnoresNonNumericTimestamps();
+    testLb2CompendiumCategoryUsesRealPct();
+    testLb2ComputeYourRankInfoFindsRealRankOutsideTop20();
+    testLb2YourRankBarThresholdIsTop20();
+    testLb2GuestGateReusesMarketCopyAndRealLinkButton();
+    testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

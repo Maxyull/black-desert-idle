@@ -7,6 +7,10 @@ const BOSS_ROSTER = {
   kzarka: {
     name:{fr:'Grand Seigneur de guerre de la corruption',en:'Great Warlord of Corruption'},
     short:{fr:'Seigneur de guerre',en:'Warlord'}, icon:'👹', color:'#7a2d33',
+    // réplique d'ambiance affichée sous le nom dans la carte "prochain boss" du lobby (2026-07-11,
+    // reskin visuel du lobby Boss, voir CLAUDE.md) -- purement cosmétique, aucune mécanique dessus.
+    lore:{fr:'« Sa colère a réduit trois royaumes en cendres avant qu\'on ne le scelle sous Valencia. »',
+          en:'"His wrath reduced three kingdoms to ashes before he was sealed beneath Valencia."'},
     hp: 400000,          // calibré pour ~5 min à PA "adaptée" (~250), clampé à [2,7] min
     reward: 250000,      // silver de victoire (récompenses réelles désormais fixes par rang, voir KZARKA_REWARD_TIERS)
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[8,20],
@@ -22,6 +26,8 @@ const BOSS_ROSTER = {
   vell: {
     name:{fr:'Vell, la Terreur des Flots',en:'Vell, Terror of the Tides'},
     short:{fr:'Vell',en:'Vell'}, icon:'🐋', color:'#2a5a78',
+    lore:{fr:'« Les pêcheurs disent qu\'elle chante encore, quelque part sous les vagues, pour appeler les navires vers le fond. »',
+          en:'"Sailors say she still sings somewhere beneath the waves, calling ships down to the deep."'},
     hp: 550000,
     reward: 400000,
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[12,28],
@@ -320,6 +326,14 @@ setInterval(() => {
   const room = $a('bossRoom');
   if (room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active) refreshLiveBoss();
 }, 20000);
+// quantité déjà en poche du matériau garanti du boss (b.matKey) -- affichée à côté de la fourchette
+// de drop dans la carte "prochain boss" du lobby (2026-07-11, reskin visuel, voir CLAUDE.md).
+// INV peut contenir plusieurs slots de la même clé en théorie (voir invAdd/MAX_STACK) -- somme sur
+// tous les slots plutôt qu'un simple find, jamais de throw si INV est vide/non initialisé.
+function bossMatInHand(matKey) {
+  if (!matKey || !Array.isArray(INV)) return 0;
+  return INV.reduce((sum, s) => s && s.key === matKey ? sum + (s.qty || 0) : sum, 0);
+}
 function renderBossLobbyHtml() {
   const occ = nextBossOccurrence();
   const now = Date.now();
@@ -348,15 +362,33 @@ function renderBossLobbyHtml() {
             `<span class="bossNextHpTxt">${alreadyDead ? i18next.t('combat:combat.boss.status_defeated') : pct.toFixed(1)+'%'}</span></div>`;
         })()
       : '';
+    // ligne récompense garantie (+ quantité déjà en poche, voir bossMatInHand) et loot rarissime
+    // (2026-07-11, reskin visuel du lobby Boss -- voir CLAUDE.md) : rendait auparavant visible
+    // seulement APRÈS combat (bossRewardRulesHtml plus bas reste la source de vérité des règles
+    // détaillées) -- ici juste un résumé compact dans la carte "prochain boss".
+    const haveQty = bossMatInHand(b.matKey);
+    const rewardLineHtml = `<div class="bossNextReward">` +
+      `<span>${b.matIcon ? b.matIcon+' ' : ''}${tr(b.matName)} · <b>${b.matQty[0]}-${b.matQty[1]}</b> <span class="have">${i18next.t('combat:combat.boss.have_qty', { qty: haveQty })}</span></span>` +
+      (b.rareLoot ? `<span>${b.rareLoot.icon} ${tr(b.rareLoot.name)} · <b>${Math.round(b.rareLoot.ch*100)}%</b></span>` : '') +
+      `</div>`;
+    // bandeau "premier kill de la semaine" (2026-07-11, reskin lobby) : le bonus n'était visible
+    // qu'une fois le combat terminé (voir bossMultBadgesHtml/endBossFight) -- rendu visible ICI,
+    // avant même de combattre, pour CE boss précis (bonus par boss, pas global, voir bossFirstKillOfWeek).
+    const weekBannerHtml = bossFirstKillOfWeek(occ.boss)
+      ? `<div class="weekBanner">${i18next.t('combat:combat.boss.week_bonus_available')} · ${i18next.t('combat:combat.boss.first_kill_week_bonus', { bonusPct: Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100) })}</div>`
+      : '';
     nextHtml = `<div class="bossNext">
       <div class="bossNextIcon">${b.icon}</div>
       <div class="bossNextInfo">
         <div class="bossNextName">${b.name[LANG]}</div>
+        ${b.lore ? `<div class="bossNextLore">${b.lore[LANG]}</div>` : ''}
         <div class="bossNextTime">${alreadyDead ? i18next.t('combat:combat.boss.already_defeated_by_others') : occ.live ? i18next.t('combat:combat.boss.available_now') : when}</div>
+        ${rewardLineHtml}
         ${hpBarHtml}
       </div>
       ${cd}
-    </div>` +
+    </div>
+    ${weekBannerHtml}` +
     (alreadyDead
       ? `<div class="admHint">${i18next.t('combat:combat.boss.already_defeated_hint')}</div>` +
         `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.already_defeated_button')}</button>`
@@ -403,12 +435,19 @@ function renderBossLobbyHtml() {
   // Repositionnées le 2026-07-16 (demande explicite : "podium world boss en dessous des horaire de
   // boss") -- vivaient avant juste sous le countdown/prochain spawn (nextHtml) et AVANT le calendrier
   // hebdomadaire ; désormais après le calendrier complet, qui compte comme "les horaires de boss".
-  return `${nextHtml}
-    <h3>${i18next.t('combat:combat.boss.weekly_calendar_title')}</h3>
-    ${calHtml}
-    <div class="bcLegendRow">${legend}</div>
-    <div class="admSummary">${i18next.t('combat:combat.boss.schedule_note')}</div>
-    ${bossRewardRulesHtml()}`;
+  // reskin visuel (2026-07-11, voir CLAUDE.md) : chaque section du lobby devient une carte ".card"
+  // (même convention que la refonte Zone, voir styles.css) au lieu d'un long bloc plat -- purement
+  // additif côté HTML, aucune des fonctions génératrices ci-dessus n'est modifiée dans sa logique.
+  return `<div class="card bossHeroCard">${nextHtml}</div>
+    <div class="card" style="margin-top:14px">
+      <h3>${i18next.t('combat:combat.boss.weekly_calendar_title')}</h3>
+      ${calHtml}
+      <div class="bcLegendRow">${legend}</div>
+      <div class="admSummary">${i18next.t('combat:combat.boss.schedule_note')}</div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      ${bossRewardRulesHtml()}
+    </div>`;
 }
 function wireBossLobby() {
   const btn = $a('bossFightBtn');

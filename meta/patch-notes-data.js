@@ -5,6 +5,50 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V381', d:'22/07/2026 02:00', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
+      {t:'new', sub:'interface', tx:'Le Classement (🏆) a une 8e catégorie : "🧭 Compendium", basée sur ta complétion globale (zones + boss + Maîtrise PEN).'},
+      {t:'new', sub:'interface', tx:'Si ton rang réel dans une catégorie est en dehors du top 20, une barre "Ta position" apparaît avec ton rang exact, ta valeur et le nombre total de joueurs classés.'},
+      {t:'new', sub:'interface', tx:'Chaque joueur affiché (podium et tableau) montre désormais depuis combien de temps il a été vu pour la dernière fois ("vu il y a...").'},
+      {t:'change', sub:'interface', tx:'Le Classement a reçu le même reskin visuel que l\'écran Zone (podium, cartes, typographies).'},
+      {t:'change', sub:'interface', tx:'Un compte invité qui ouvre le Classement voit désormais un message explicatif stylé avec un bouton "🔗 Lier un compte" direct, au lieu d\'une alerte de navigateur brute.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The Leaderboard (🏆) has an 8th category: "🧭 Compendium", based on your overall completion (zones + bosses + PEN Mastery).'},
+      {t:'new', sub:'interface', tx:'If your real rank in a category is outside the top 20, a "Your position" bar shows your exact rank, your value, and the total number of ranked players.'},
+      {t:'new', sub:'interface', tx:'Every player shown (podium and table) now shows how long ago they were last seen ("seen...").'},
+      {t:'change', sub:'interface', tx:'The Leaderboard received the same visual reskin as the Zone screen (podium, cards, typography).'},
+      {t:'change', sub:'interface', tx:'A guest account opening the Leaderboard now sees a styled explanatory message with a direct "🔗 Link account" button, instead of a raw browser alert.'},
+    ] },
+  { v:'V380', d:'22/07/2026 01:00', name:{fr:'Succès refaits : chaînes de paliers, même style que Zone/Boss', en:'Achievements redesigned: tiered chains, same look as Zone/Boss'}, fr:[
+      {t:'change', sub:'interface', tx:'Panneau Succès entièrement refait à l\'identique d\'une maquette fournie, avec la même palette que les écrans Zone et Boss. Les succès à paliers (ex : Premier sang → Chasseur → Exterminateur → Faucheur) sont désormais regroupés en une seule carte par chaîne, avec des puces montrant combien de paliers sont débloqués — le check vert n\'apparaît que quand toute la chaîne est terminée, plus sur un palier isolé.'},
+      {t:'new', sub:'interface', tx:'Nouvelle vue d\'ensemble en haut du panneau : anneau de progression globale, silver déjà gagné en récompenses de succès et silver restant à débloquer, tous calculés en direct.'},
+      {t:'new', sub:'interface', tx:'Nouvelle bande "derniers débloqués" avec horodatage relatif (ex : "il y a 6h") et un badge "NOUVEAU" sur le succès obtenu dans les dernières 24h.'},
+      {t:'change', sub:'interface', tx:'Filtre par catégorie : remplacé par des tuiles avec anneau de complétion par catégorie, au lieu de simples onglets texte. Le filtre "Non terminés seulement" s\'applique désormais à la chaîne entière plutôt qu\'à un palier isolé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'Achievements panel completely redesigned to match a provided mockup, with the same palette as the Zone and Boss screens. Tiered achievements (e.g. First blood → Hunter → Exterminator → Reaper) are now grouped into a single card per chain, with pips showing how many tiers are unlocked — the green check only appears once the whole chain is complete, never on a single tier.'},
+      {t:'new', sub:'interface', tx:'New overview at the top of the panel: overall progress ring, silver already earned from achievement rewards, and silver still left to unlock, all computed live.'},
+      {t:'new', sub:'interface', tx:'New "recently unlocked" strip with relative timestamps (e.g. "6h ago") and a "NEW" badge on the achievement unlocked within the last 24h.'},
+      {t:'change', sub:'interface', tx:'Category filter: replaced with tiles showing a completion ring per category, instead of plain text tabs. The "unfinished only" filter now applies to the whole chain rather than a single tier.'},
+    ] },
+  { v:'V379', d:'22/07/2026 00:00', name:{fr:'Rattrapage hors-ligne réel pour le modal "Bon retour"', en:'Real offline catch-up for the "Welcome back" modal'}, fr:[
+      {t:'fix', sub:'systeme', tx:'Corrigé : le modal "Bon retour" (résumé du silver/loot gagné pendant ton absence) ne s\'affichait que si l\'onglet était resté ouvert quelque part — fermer le navigateur ou une mise en veille faisait disparaître tout rattrapage, même après une vraie longue absence.'},
+      {t:'new', sub:'systeme', tx:'Le silver gagné pendant une absence réelle (navigateur fermé, PC en veille...) est désormais rattrapé au rechargement, basé sur ton meilleur taux de farm connu, plafonné à 24h d\'absence.'},
+    ], en:[
+      {t:'fix', sub:'systeme', tx:'Fixed: the "Welcome back" modal (summary of silver/loot earned while away) only showed if the tab had stayed open somewhere — closing the browser or a sleep/wake cycle made any catch-up vanish, even after a long real absence.'},
+      {t:'new', sub:'systeme', tx:'Silver earned during a real absence (browser closed, PC asleep...) is now caught up on reload, based on your best known farm rate, capped at 24h of absence.'},
+    ] },
+  { v:'V378', d:'21/07/2026 23:00', name:{fr:'Écran Boss refait : même style que l\'écran Zone', en:'Boss screen redesigned: same look as the Zone screen'}, fr:[
+      {t:'change', sub:'combat', tx:'L\'écran Boss (lobby et arène) a été redessiné avec le même style visuel que l\'écran Zone : carte "prochain boss" mise en avant, calendrier hebdomadaire et récompenses par rang recolorés, aucun changement de fonctionnement.'},
+      {t:'new', sub:'combat', tx:'Chaque World Boss a désormais une courte réplique d\'ambiance affichée dans le lobby.'},
+      {t:'new', sub:'combat', tx:'Le lobby affiche maintenant la quantité de matériau garanti déjà en poche à côté de sa fourchette de drop.'},
+      {t:'new', sub:'combat', tx:'Le bonus "premier kill de la semaine" (quand encore disponible) est désormais visible dans le lobby, avant même de combattre.'},
+      {t:'change', sub:'combat', tx:'La barre de progression du pity (loot rarissime) est plus visible dans le lobby.'},
+    ], en:[
+      {t:'change', sub:'combat', tx:'The Boss screen (lobby and arena) has been redesigned with the same visual style as the Zone screen: featured "next boss" card, recolored weekly calendar and rank rewards, no gameplay change.'},
+      {t:'new', sub:'combat', tx:'Every World Boss now has a short flavor line shown in the lobby.'},
+      {t:'new', sub:'combat', tx:'The lobby now shows how much of the guaranteed material you already have next to its drop range.'},
+      {t:'new', sub:'combat', tx:'The "first kill of the week" bonus (when still available) is now shown in the lobby, before you even fight.'},
+      {t:'change', sub:'combat', tx:'The pity progress bar (rare loot) is more visible in the lobby.'},
+    ] },
   { v:'V377', d:'21/07/2026 22:00', name:{fr:'Module Compagnons : une percée de rareté change aussi le nom', en:'Companion module: a rarity breakthrough now changes the name too'}, fr:[
       {t:'change', sub:'compagnon', tx:'Une percée de rareté (Tier 5 → rareté supérieure) fait désormais changer le familier d\'espèce, en prenant le nom correspondant à sa nouvelle rareté — au lieu de garder son ancien nom malgré une rareté supérieure.'},
       {t:'fix', sub:'compagnon', tx:'Corrigé rétroactivement pour tout familier ayant déjà percé avant ce changement.'},

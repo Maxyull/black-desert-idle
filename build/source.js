@@ -392,6 +392,8 @@ const I18N_RESOURCES = {
       "backend.inventory_window.coming_soon": "Bientôt disponible",
       "backend.inventory_window.gear_title": "Équipement",
       "backend.inventory_window.slots_used": "cases utilisées",
+      "backend.leaderboard.cat_compendium_label": "Compendium",
+      "backend.leaderboard.cat_compendium_tip": "Complétion globale du Compendium (zones + boss + Maîtrise PEN), déjà calculée et synchronisée à chaque sauvegarde.",
       "backend.leaderboard.cat_gs_label": "Gearscore",
       "backend.leaderboard.cat_gs_tip": "Record de Gearscore (PA/PD affichés entre parenthèses).",
       "backend.leaderboard.cat_item_label": "Meilleur objet",
@@ -406,7 +408,9 @@ const I18N_RESOURCES = {
       "backend.leaderboard.cat_treasure_tip": "Morceaux du Trésor de Velia ramassés à vie.",
       "backend.leaderboard.cat_zone_label": "Meilleure zone",
       "backend.leaderboard.cat_zone_tip": "Zone la plus avancée jamais atteinte.",
+      "backend.leaderboard.link_account_button": "🔗 Lier un compte",
       "backend.leaderboard.me_toggle": "📍 Ma position",
+      "backend.leaderboard.new_tag": "NOUVEAU",
       "backend.leaderboard.no_data": "Pas encore de données",
       "backend.leaderboard.no_record_yet": "Pas encore de record synchronisé pour cette catégorie.",
       "backend.leaderboard.no_search_match": "Aucun joueur ne correspond à cette recherche.",
@@ -415,9 +419,15 @@ const I18N_RESOURCES = {
       "backend.leaderboard.pager_prev": "‹ Précédent",
       "backend.leaderboard.panel_title": "🏆 Classement",
       "backend.leaderboard.rank_neighborhood": "Voisinage de ton rang",
+      "backend.leaderboard.ranked_count_one": "{{count}} joueur classé dans cette catégorie",
+      "backend.leaderboard.ranked_count_other": "{{count}} joueurs classés dans cette catégorie",
       "backend.leaderboard.search_placeholder": "Rechercher un joueur…",
+      "backend.leaderboard.seen_label": "vu {{time}}",
       "backend.leaderboard.summary": "Classement des records personnels À VIE — jamais un instantané, ces valeurs ne redescendent jamais.",
       "backend.leaderboard.you_suffix": "(toi)",
+      "backend.leaderboard.your_position_hint_one": "calculé sur {{count}} joueur classé",
+      "backend.leaderboard.your_position_hint_other": "calculé sur {{count}} joueurs classés",
+      "backend.leaderboard.your_position_label": "Ta position :",
       "backend.patch_notes.before_after_title": "Voir avant/après",
       "backend.patch_notes.compare_after_label": "Après",
       "backend.patch_notes.compare_before_label": "Avant",
@@ -499,6 +509,7 @@ const I18N_RESOURCES = {
       "combat.boss.first_kill_week_bonus": "Premier kill de la semaine : +{{bonusPct}}%",
       "combat.boss.for_everyone": "Pour tous",
       "combat.boss.hard_zone_stone": "pierre d'optimisation de ta meilleure zone difficile",
+      "combat.boss.have_qty": "(tu en as {{qty}})",
       "combat.boss.in_label": "dans",
       "combat.boss.leave_button": "🚪 Quitter",
       "combat.boss.memory_frag_label": "Frag. mémoire",
@@ -523,6 +534,7 @@ const I18N_RESOURCES = {
       "combat.boss.victory_title": "🏆 VICTOIRE",
       "combat.boss.waiting_for_fighters": "En attente de combattants",
       "combat.boss.wave_msg": "VAGUE !",
+      "combat.boss.week_bonus_available": "📅 Premier kill de la semaine encore disponible",
       "combat.boss.weekly_calendar_title": "📅 Calendrier de la semaine",
       "combat.boss.wheel_not_this_time": "Pas cette fois — {{icon}} {{name}} attend toujours",
       "combat.boss.wheel_obtained": "Obtenu",
@@ -705,11 +717,17 @@ const I18N_RESOURCES = {
       "market.vs_label": "Face à"
     },
     "progression": {
-      "progression.achievements.completed": "Terminé ✓",
+      "progression.achievements.cat_all_label": "Tous",
       "progression.achievements.empty": "Rien à afficher ici",
-      "progression.achievements.filter_unfinished_off": "☐ Pas fini",
-      "progression.achievements.filter_unfinished_on": "☑ Pas fini",
+      "progression.achievements.filter_unfinished_label": "Non terminés seulement",
+      "progression.achievements.overview_summary": "{{done}} / {{total}} débloqués · {{earned}} silver déjà gagné en récompenses",
+      "progression.achievements.overview_title": "Succès",
       "progression.achievements.panel_title": "🏅 Succès",
+      "progression.achievements.recent_new_badge": "NOUVEAU",
+      "progression.achievements.spotlight_label": "Presque là",
+      "progression.achievements.stat_remaining": "Restants",
+      "progression.achievements.stat_silver_to_unlock": "Silver à débloquer",
+      "progression.achievements.stat_unlocked": "Débloqués",
       "progression.achievements.toast_title": "🏅 Succès débloqué",
       "progression.compendium.boss_defeated": "Vaincu au moins une fois",
       "progression.compendium.boss_not_defeated": "Pas encore vaincu",
@@ -1248,6 +1266,8 @@ const I18N_RESOURCES = {
       "backend.inventory_window.coming_soon": "Coming soon",
       "backend.inventory_window.gear_title": "Gear",
       "backend.inventory_window.slots_used": "slots used",
+      "backend.leaderboard.cat_compendium_label": "Compendium",
+      "backend.leaderboard.cat_compendium_tip": "Overall Compendium completion (zones + bosses + PEN Mastery), already computed and synced on every save.",
       "backend.leaderboard.cat_gs_label": "Gearscore",
       "backend.leaderboard.cat_gs_tip": "Gearscore record (AP/DP shown in parentheses).",
       "backend.leaderboard.cat_item_label": "Best item",
@@ -1262,7 +1282,9 @@ const I18N_RESOURCES = {
       "backend.leaderboard.cat_treasure_tip": "Lifetime Velia Treasure pieces picked up.",
       "backend.leaderboard.cat_zone_label": "Best zone",
       "backend.leaderboard.cat_zone_tip": "Furthest zone ever reached.",
+      "backend.leaderboard.link_account_button": "🔗 Link account",
       "backend.leaderboard.me_toggle": "📍 My position",
+      "backend.leaderboard.new_tag": "NEW",
       "backend.leaderboard.no_data": "No data yet",
       "backend.leaderboard.no_record_yet": "No synced record yet for this category.",
       "backend.leaderboard.no_search_match": "No player matches this search.",
@@ -1271,9 +1293,15 @@ const I18N_RESOURCES = {
       "backend.leaderboard.pager_prev": "‹ Previous",
       "backend.leaderboard.panel_title": "🏆 Leaderboard",
       "backend.leaderboard.rank_neighborhood": "Neighborhood of your rank",
+      "backend.leaderboard.ranked_count_one": "{{count}} player ranked in this category",
+      "backend.leaderboard.ranked_count_other": "{{count}} players ranked in this category",
       "backend.leaderboard.search_placeholder": "Search a player…",
+      "backend.leaderboard.seen_label": "seen {{time}}",
       "backend.leaderboard.summary": "Lifetime personal record leaderboard — never a live snapshot, these values never go down.",
       "backend.leaderboard.you_suffix": "(you)",
+      "backend.leaderboard.your_position_hint_one": "computed over {{count}} ranked player",
+      "backend.leaderboard.your_position_hint_other": "computed over {{count}} ranked players",
+      "backend.leaderboard.your_position_label": "Your position:",
       "backend.patch_notes.before_after_title": "See before/after",
       "backend.patch_notes.compare_after_label": "After",
       "backend.patch_notes.compare_before_label": "Before",
@@ -1355,6 +1383,7 @@ const I18N_RESOURCES = {
       "combat.boss.first_kill_week_bonus": "First kill of the week: +{{bonusPct}}%",
       "combat.boss.for_everyone": "For everyone",
       "combat.boss.hard_zone_stone": "enhancement stone from your best hard zone",
+      "combat.boss.have_qty": "(you have {{qty}})",
       "combat.boss.in_label": "in",
       "combat.boss.leave_button": "🚪 Leave",
       "combat.boss.memory_frag_label": "Memory frag.",
@@ -1379,6 +1408,7 @@ const I18N_RESOURCES = {
       "combat.boss.victory_title": "🏆 VICTORY",
       "combat.boss.waiting_for_fighters": "Waiting for fighters",
       "combat.boss.wave_msg": "WAVE!",
+      "combat.boss.week_bonus_available": "📅 First kill of the week still available",
       "combat.boss.weekly_calendar_title": "📅 Weekly calendar",
       "combat.boss.wheel_not_this_time": "Not this time — {{icon}} {{name}} still awaits",
       "combat.boss.wheel_obtained": "Obtained",
@@ -1561,11 +1591,17 @@ const I18N_RESOURCES = {
       "market.vs_label": "Vs"
     },
     "progression": {
-      "progression.achievements.completed": "Completed ✓",
+      "progression.achievements.cat_all_label": "All",
       "progression.achievements.empty": "Nothing to show here",
-      "progression.achievements.filter_unfinished_off": "☐ Unfinished",
-      "progression.achievements.filter_unfinished_on": "☑ Unfinished",
+      "progression.achievements.filter_unfinished_label": "Unfinished only",
+      "progression.achievements.overview_summary": "{{done}} / {{total}} unlocked · {{earned}} silver already earned in rewards",
+      "progression.achievements.overview_title": "Achievements",
       "progression.achievements.panel_title": "🏅 Achievements",
+      "progression.achievements.recent_new_badge": "NEW",
+      "progression.achievements.spotlight_label": "Almost there",
+      "progression.achievements.stat_remaining": "Remaining",
+      "progression.achievements.stat_silver_to_unlock": "Silver to unlock",
+      "progression.achievements.stat_unlocked": "Unlocked",
       "progression.achievements.toast_title": "🏅 Achievement unlocked",
       "progression.compendium.boss_defeated": "Defeated at least once",
       "progression.compendium.boss_not_defeated": "Not defeated yet",
@@ -2416,6 +2452,19 @@ let awayLootCounts = {};
 let awayXpGained = 0;
 let awaySessionStartedAt = null;
 let awayLevelBefore = 1, awayPercentBefore = 0;
+
+const OFFLINE_CATCHUP_CAP_HOURS = 24;
+const OFFLINE_CATCHUP_MIN_HOURS = 0.05; 
+function computeOfflineCatchupSilver(data) {
+  if (!data || !data.savedAt) return 0;
+  const rate = (data.S && data.S.bestSilverPerHour) || 0;
+  if (rate <= 0) return 0;
+  const elapsedMs = Date.now() - Date.parse(data.savedAt);
+  if (!(elapsedMs > 0)) return 0;
+  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
+  if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  return Math.round(rate * hours);
+}
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0;
@@ -3470,7 +3519,7 @@ const CONTENT_UPDATE_VERSION = {
   wiki:         { v:2, desc:{fr:'1 arme garantie sur les 3 dernières zones de chaque palier (plus rien sur la 1ère)',en:'1 guaranteed weapon on a tier\'s last 3 zones (none on the 1st)'} },
   compendium:   { v:1, desc:{fr:'Clique un objet pour voir dans quelles zones le farmer',en:'Click an item to see which zones farm it'} },
   codex:        { v:1, desc:{fr:'Liste à jour de tous les objets du jeu',en:'Up to date list of every item in the game'} },
-  achievements: { v:1, desc:{fr:'Filtres par catégorie et "pas fini" disponibles',en:'Category and "unfinished" filters available'} },
+  achievements: { v:2, desc:{fr:'Nouveau visuel : succès groupés par chaîne de paliers, vue d\'ensemble et derniers débloqués',en:'New look: achievements grouped into tiered chains, overview and recent unlocks'} },
 };
 function contentSeenKey(panel) { return 'velia-idle-seenv-'+panel; }
 function contentLastSeenVersion(panel) {
@@ -3634,6 +3683,11 @@ function getSaveState() {
 }
 function applySaveState(data) {
   if (!data || data.version !== 1) return false;
+  
+  const offlineSilverGain = computeOfflineCatchupSilver(data);
+  const offlineLevelBefore = data.S ? data.S.lvl : 1;
+  const offlinePercentBefore = data.S ? Math.round((data.S.xp||0) / xpNeededFor(data.S.lvl||1) * 100) : 0;
+  const offlineSavedAtMs = data.savedAt ? Date.parse(data.savedAt) : Date.now();
   Object.assign(S, data.S);
   
   S.startTime = performance.now();
@@ -3668,6 +3722,15 @@ function applySaveState(data) {
   resetWorld(true); 
   updateZoneTitleText(); 
   hud();
+  
+  if (offlineSilverGain > 0) {
+    addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
+    awaySilverGained = offlineSilverGain;
+    awaySessionStartedAt = offlineSavedAtMs;
+    awayLevelBefore = offlineLevelBefore;
+    awayPercentBefore = offlinePercentBefore;
+    showAwayLootSummaryIfAny();
+  }
   return true;
 }
 
@@ -3891,6 +3954,57 @@ function achCat(id) {
   if (id.startsWith('treasure')) return 'treasure';
   if (id.startsWith('zone')) return 'exploration';
   return 'equipment'; 
+}
+
+function groupAchievementsIntoChains() {
+  const chains = new Map();
+  for (const a of ACHIEVEMENTS) {
+    const key = achCat(a.id) + '::' + a.statFn.toString();
+    if (!chains.has(key)) chains.set(key, { key, cat: achCat(a.id), tiers: [] });
+    chains.get(key).tiers.push(a);
+  }
+  return Array.from(chains.values());
+}
+
+function chainProgress(chain, S) {
+  const tiers = chain.tiers;
+  const unlockedCount = tiers.filter(a => !!S.achUnlocked[a.id]).length;
+  const done = unlockedCount === tiers.length;
+  const tierIndex = done ? tiers.length - 1 : tiers.findIndex(a => !S.achUnlocked[a.id]);
+  const tier = tiers[tierIndex];
+  const val = tier.statFn(S);
+  const pct = done ? 100 : Math.max(0, Math.min(99, (val / tier.target) * 100));
+  return { tier, tierIndex, unlockedCount, totalTiers: tiers.length, done, pct, val };
+}
+
+function sortChainsForDisplay(chains, S) {
+  const withProgress = chains.map(chain => ({ chain, progress: chainProgress(chain, S) }));
+  withProgress.sort((x, y) => {
+    if (x.progress.done !== y.progress.done) return x.progress.done ? 1 : -1;
+    return y.progress.pct - x.progress.pct;
+  });
+  return withProgress;
+}
+
+function achievementSilverTotals(S) {
+  let earned = 0, remaining = 0;
+  for (const a of ACHIEVEMENTS) {
+    if (S.achUnlocked[a.id]) earned += a.reward; else remaining += a.reward;
+  }
+  return { earned, remaining };
+}
+
+function achCatCompletion(catId, S) {
+  const list = catId === 'all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id) === catId);
+  const done = list.filter(a => S.achUnlocked[a.id]).length;
+  return { done, total: list.length, pct: list.length ? Math.round((done / list.length) * 100) : 0 };
+}
+
+function recentlyUnlockedAchievements(S, limit) {
+  return ACHIEVEMENTS
+    .filter(a => typeof S.achUnlocked[a.id] === 'number' && S.achUnlocked[a.id] > 0)
+    .sort((a, b) => S.achUnlocked[b.id] - S.achUnlocked[a.id])
+    .slice(0, limit);
 }
 
 // ==== src/progression/treasure-craft.js ====
@@ -4222,41 +4336,127 @@ function openMailbox() {
 
 let achPanelCat = 'all';       
 let achOnlyUnfinished = false; 
-function achRowHtml(a) {
-  const val = a.statFn(S), done = !!S.achUnlocked[a.id];
-  const pct = Math.max(0, Math.min(100, Math.round((val/a.target)*100)));
-  return `<div class="achRow${done?' done':''}">` +
-    `<div class="achIcon">${a.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${a.desc[LANG]}</div>` +
-    `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div>` +
-    `<div class="achProgress">${done ? i18next.t('progression:progression.achievements.completed') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
-    `<div class="achReward">+${fmt(a.reward)} 🪙</div></div>`;
+
+function achRingSvg(pct, size, strokeW) {
+  const r = (size - strokeW) / 2, c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  const off = c * (1 - clamped / 100);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
+    `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--s3)" stroke-width="${strokeW}"/>` +
+    `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--gold)" stroke-width="${strokeW}" ` +
+    `stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" stroke-linecap="round" ` +
+    `transform="rotate(-90 ${size/2} ${size/2})"/></svg>`;
+}
+
+function achOverviewHtml(S) {
+  const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
+  const totalCount = ACHIEVEMENTS.length;
+  const overallPct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+  const { earned, remaining } = achievementSilverTotals(S);
+  return `<div class="achOverviewCard">` +
+    `<div class="achOverviewRing">${achRingSvg(overallPct, 76, 7)}<span class="achRingPct">${overallPct}%</span></div>` +
+    `<div class="achOverviewBody">` +
+      `<div class="achOverviewTitle">${i18next.t('progression:progression.achievements.overview_title')}</div>` +
+      `<div class="achOverviewSub">${i18next.t('progression:progression.achievements.overview_summary', { done: fmt(doneCount), total: fmt(totalCount), earned: fmt(earned) })}</div>` +
+    `</div>` +
+    `<div class="achOverviewStats">` +
+      `<div class="achOStat"><div class="v">${fmt(doneCount)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_unlocked')}</div></div>` +
+      `<div class="achOStat"><div class="v">${fmt(totalCount - doneCount)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_remaining')}</div></div>` +
+      `<div class="achOStat"><div class="v" style="color:var(--green2)">${fmt(remaining)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_silver_to_unlock')}</div></div>` +
+    `</div>` +
+  `</div>`;
+}
+
+function achSpotlightHtml(S) {
+  const next = nextAchievement();
+  if (!next) return `<div class="achSpotlightBox achSpotlightDone">${i18next.t('progression:progression.quests.all_achievements_done')}</div>`;
+  const { a, pct } = next;
+  const pctRound = Math.round(pct);
+  return `<div class="achSpotlightBox">` +
+    `<div class="achSpotlightIcon">${a.icon}</div>` +
+    `<div class="achSpotlightBody">` +
+      `<div class="achSpotlightLbl">${i18next.t('progression:progression.achievements.spotlight_label')}</div>` +
+      `<div class="achSpotlightName"><b>${a.name[LANG]}</b> — ${a.desc[LANG]}</div>` +
+      `<div class="achSpotlightBar"><div class="achSpotlightBarFill" style="width:${pctRound}%"></div></div>` +
+    `</div>` +
+    `<div class="achSpotlightPct">${pctRound}%</div>` +
+  `</div>`;
+}
+
+function achCatCardHtml(catId, meta, S) {
+  const { done, total, pct } = achCatCompletion(catId, S);
+  return `<div class="achCatCard${catId===achPanelCat?' on':''}" data-cat="${catId}">` +
+    `<div class="achCatRing">${achRingSvg(pct, 36, 4)}<span class="achCatIc">${meta.icon}</span></div>` +
+    `<div class="achCatNm">${meta.label[LANG]}</div>` +
+    `<div class="achCatCnt">${done}/${total}</div>` +
+  `</div>`;
+}
+
+function achChainCardHtml(entry) {
+  const { chain, progress } = entry;
+  const { tier, unlockedCount, totalTiers, done, pct, val } = progress;
+  const pipsHtml = totalTiers > 1
+    ? `<div class="achTierPips">${chain.tiers.map((_, i) => `<span class="achPip${i < unlockedCount ? ' on' : ''}"></span>`).join('')}` +
+      `<span class="achPipLbl">${unlockedCount}/${totalTiers}</span></div>`
+    : '';
+  const progressHtml = done ? '' :
+    `<div class="achChainProgRow"><span>${fmt(Math.min(val, tier.target))} / ${fmt(tier.target)}</span><span>${Math.round(pct)}%</span></div>` +
+    `<div class="achChainBar"><div class="achChainBarFill" style="width:${Math.round(pct)}%"></div></div>`;
+  return `<div class="achChainCard${done?' done':''}" data-cat="${chain.cat}">` +
+    `<div class="achChainIcon">${tier.icon}</div>` +
+    `<div class="achChainBody">` +
+      `<div class="achChainName">${tier.name[LANG]}</div>` +
+      `<div class="achChainDesc">${tier.desc[LANG]}</div>` +
+      pipsHtml + progressHtml +
+      `<div class="achChainReward">+${fmt(tier.reward)} 🪙</div>` +
+    `</div>` +
+    (done ? `<div class="achChainDoneBadge">✓</div>` : '') +
+  `</div>`;
+}
+
+function achRecentRowHtml(S) {
+  const recent = recentlyUnlockedAchievements(S, 4);
+  if (!recent.length) return '';
+  const now = Date.now();
+  const items = recent.map((a, i) => {
+    const ts = S.achUnlocked[a.id];
+    const isNew = i === 0 && (now - ts) < 24*3600*1000;
+    const rel = typeof pneRelativeTime === 'function' ? pneRelativeTime(ts) : new Date(ts).toLocaleDateString();
+    return `<div class="achRecentItem">` +
+      (isNew ? `<div class="achRecentBadge">${i18next.t('progression:progression.achievements.recent_new_badge')}</div>` : '') +
+      `<div class="achRecentIc">${a.icon}</div>` +
+      `<div class="achRecentNm">${a.name[LANG]}</div>` +
+      `<div class="achRecentDt">${rel}</div>` +
+    `</div>`;
+  }).join('');
+  return `<div class="achRecentRow">${items}</div>`;
 }
 function renderAchievementsHtml() {
-  const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
+  const overview = achOverviewHtml(S);
+  const spotlight = achSpotlightHtml(S);
   
-  const cats = [['all', {icon:'🏅', label:{fr:'Tout',en:'All'}}], ...Object.entries(ACH_CATS)];
-  const tabsHtml = cats.map(([id, meta]) => {
-    const list = id==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===id);
-    const remaining = list.filter(a => !S.achUnlocked[a.id]).length;
-    const badge = remaining>0 ? `<span class="qCountBadge">${remaining}</span>` : `<span class="qCountBadge done">✓</span>`;
-    return `<button class="catTab achCatTab${id===achPanelCat?' active':''}" data-cat="${id}">${meta.icon} ${meta.label[LANG]} ${badge}</button>`;
-  }).join('');
-  
-  const filterBtn = `<button id="achUnfinishedBtn" class="achFilterBtn${achOnlyUnfinished?' on':''}">${achOnlyUnfinished?i18next.t('progression:progression.achievements.filter_unfinished_on'):i18next.t('progression:progression.achievements.filter_unfinished_off')}</button>`;
-  let list = achPanelCat==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===achPanelCat);
-  if (achOnlyUnfinished) list = list.filter(a => !S.achUnlocked[a.id]);
-  const rows = list.length ? list.map(achRowHtml).join('')
-    : `<div class="admEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
-  return `<div class="achSummary">${doneCount} / ${ACHIEVEMENTS.length}</div>` +
-    `<div class="catTabs">${tabsHtml}</div>${filterBtn}${rows}`;
+  const allLabel = i18next.t('progression:progression.achievements.cat_all_label');
+  const cats = [['all', {icon:'🏅', label:{fr:allLabel, en:allLabel}}], ...Object.entries(ACH_CATS)];
+  const catRow = `<div class="achCatRow">${cats.map(([id, meta]) => achCatCardHtml(id, meta, S)).join('')}</div>`;
+  const toggleRow = `<div class="achToggleRow"><div class="achToggle" id="achUnfinishedBtn">` +
+    `<div class="achToggleSwitch${achOnlyUnfinished?' on':''}"><div class="achKnob"></div></div>` +
+    `${i18next.t('progression:progression.achievements.filter_unfinished_label')}</div></div>`;
+  const recentRow = achRecentRowHtml(S);
+  const chains = groupAchievementsIntoChains();
+  const visibleChains = achPanelCat === 'all' ? chains : chains.filter(c => c.cat === achPanelCat);
+  let ordered = sortChainsForDisplay(visibleChains, S);
+  if (achOnlyUnfinished) ordered = ordered.filter(entry => !entry.progress.done);
+  const grid = ordered.length
+    ? `<div class="achChainGrid">${ordered.map(achChainCardHtml).join('')}</div>`
+    : `<div class="achEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
+  return `<div class="achPanel">${overview}${spotlight}${catRow}${toggleRow}${recentRow}${grid}</div>`;
 }
 function openAchievements() {
   const callout = contentChangeCalloutHtml('achievements');
   openInfo(i18next.t('progression:progression.achievements.panel_title'), callout + renderAchievementsHtml());
   markContentSeen('achievements');
-  $a('infoBody').querySelectorAll('.achCatTab').forEach(btn => {
-    btn.onclick = () => { achPanelCat = btn.dataset.cat; openAchievements(); };
+  $a('infoBody').querySelectorAll('.achCatCard').forEach(card => {
+    card.onclick = () => { achPanelCat = card.dataset.cat; openAchievements(); };
   });
   const fb = $a('achUnfinishedBtn');
   if (fb) fb.onclick = () => { achOnlyUnfinished = !achOnlyUnfinished; openAchievements(); };
@@ -5431,6 +5631,9 @@ const BOSS_ROSTER = {
   kzarka: {
     name:{fr:'Grand Seigneur de guerre de la corruption',en:'Great Warlord of Corruption'},
     short:{fr:'Seigneur de guerre',en:'Warlord'}, icon:'👹', color:'#7a2d33',
+    
+    lore:{fr:'« Sa colère a réduit trois royaumes en cendres avant qu\'on ne le scelle sous Valencia. »',
+          en:'"His wrath reduced three kingdoms to ashes before he was sealed beneath Valencia."'},
     hp: 400000,          
     reward: 250000,      
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[8,20],
@@ -5441,6 +5644,8 @@ const BOSS_ROSTER = {
   vell: {
     name:{fr:'Vell, la Terreur des Flots',en:'Vell, Terror of the Tides'},
     short:{fr:'Vell',en:'Vell'}, icon:'🐋', color:'#2a5a78',
+    lore:{fr:'« Les pêcheurs disent qu\'elle chante encore, quelque part sous les vagues, pour appeler les navires vers le fond. »',
+          en:'"Sailors say she still sings somewhere beneath the waves, calling ships down to the deep."'},
     hp: 550000,
     reward: 400000,
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[12,28],
@@ -5672,6 +5877,11 @@ setInterval(() => {
   const room = $a('bossRoom');
   if (room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active) refreshLiveBoss();
 }, 20000);
+
+function bossMatInHand(matKey) {
+  if (!matKey || !Array.isArray(INV)) return 0;
+  return INV.reduce((sum, s) => s && s.key === matKey ? sum + (s.qty || 0) : sum, 0);
+}
 function renderBossLobbyHtml() {
   const occ = nextBossOccurrence();
   const now = Date.now();
@@ -5692,15 +5902,28 @@ function renderBossLobbyHtml() {
             `<span class="bossNextHpTxt">${alreadyDead ? i18next.t('combat:combat.boss.status_defeated') : pct.toFixed(1)+'%'}</span></div>`;
         })()
       : '';
+    
+    const haveQty = bossMatInHand(b.matKey);
+    const rewardLineHtml = `<div class="bossNextReward">` +
+      `<span>${b.matIcon ? b.matIcon+' ' : ''}${tr(b.matName)} · <b>${b.matQty[0]}-${b.matQty[1]}</b> <span class="have">${i18next.t('combat:combat.boss.have_qty', { qty: haveQty })}</span></span>` +
+      (b.rareLoot ? `<span>${b.rareLoot.icon} ${tr(b.rareLoot.name)} · <b>${Math.round(b.rareLoot.ch*100)}%</b></span>` : '') +
+      `</div>`;
+    
+    const weekBannerHtml = bossFirstKillOfWeek(occ.boss)
+      ? `<div class="weekBanner">${i18next.t('combat:combat.boss.week_bonus_available')} · ${i18next.t('combat:combat.boss.first_kill_week_bonus', { bonusPct: Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100) })}</div>`
+      : '';
     nextHtml = `<div class="bossNext">
       <div class="bossNextIcon">${b.icon}</div>
       <div class="bossNextInfo">
         <div class="bossNextName">${b.name[LANG]}</div>
+        ${b.lore ? `<div class="bossNextLore">${b.lore[LANG]}</div>` : ''}
         <div class="bossNextTime">${alreadyDead ? i18next.t('combat:combat.boss.already_defeated_by_others') : occ.live ? i18next.t('combat:combat.boss.available_now') : when}</div>
+        ${rewardLineHtml}
         ${hpBarHtml}
       </div>
       ${cd}
-    </div>` +
+    </div>
+    ${weekBannerHtml}` +
     (alreadyDead
       ? `<div class="admHint">${i18next.t('combat:combat.boss.already_defeated_hint')}</div>` +
         `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.already_defeated_button')}</button>`
@@ -5741,12 +5964,16 @@ function renderBossLobbyHtml() {
   
   const legend = Object.values(BOSS_ROSTER).map(b => `<span class="bcLegend">${b.icon} ${b.name[LANG]}</span>`).join('');
   
-  return `${nextHtml}
-    <h3>${i18next.t('combat:combat.boss.weekly_calendar_title')}</h3>
-    ${calHtml}
-    <div class="bcLegendRow">${legend}</div>
-    <div class="admSummary">${i18next.t('combat:combat.boss.schedule_note')}</div>
-    ${bossRewardRulesHtml()}`;
+  return `<div class="card bossHeroCard">${nextHtml}</div>
+    <div class="card" style="margin-top:14px">
+      <h3>${i18next.t('combat:combat.boss.weekly_calendar_title')}</h3>
+      ${calHtml}
+      <div class="bcLegendRow">${legend}</div>
+      <div class="admSummary">${i18next.t('combat:combat.boss.schedule_note')}</div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      ${bossRewardRulesHtml()}
+    </div>`;
 }
 function wireBossLobby() {
   const btn = $a('bossFightBtn');
@@ -12687,9 +12914,14 @@ function LB2_CATS_() {
       val:r=>Number(r.best_item_count||0), fmt:r=>`${tr(r.best_item_name||'—')} (${fmt(r.best_item_count||0)})`, filter:r=>!!r.best_item_name },
     treasure: { icon:'🗺️', label:i18next.t('backend:backend.leaderboard.cat_treasure_label'), tip:i18next.t('backend:backend.leaderboard.cat_treasure_tip'),
       val:r=>Number(r.treasure_count||0), fmt:r=>fmt(r.treasure_count||0) },
+    
+    compendium: { icon:'🧭', label:i18next.t('backend:backend.leaderboard.cat_compendium_label'), tip:i18next.t('backend:backend.leaderboard.cat_compendium_tip'),
+      val:r=>Number(r.compendium_pct||0), fmt:r=>`${Math.round(r.compendium_pct||0)}%`, isNew:true },
   };
 }
 const LB2_PAGE_SIZE = 15;
+
+const LB2_TOP_N = 20;
 let lb2Rows = null;
 let lb2Cat = 'silver';
 let lb2Search = '';
@@ -12698,14 +12930,51 @@ let lb2Page = 1;
 let lb2Error = null;
 
 function lb2Medal(rank) { return rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':''; }
-function lb2Sorted(cat) {
+
+function lb2Sorted(cat, rows) {
   const info = LB2_CATS_()[cat];
-  const rows = info.filter ? lb2Rows.filter(info.filter) : lb2Rows;
-  return [...rows].sort((a,b) => info.val(b) - info.val(a));
+  const source = rows || lb2Rows;
+  const filtered = info.filter ? source.filter(info.filter) : source;
+  return [...filtered].sort((a,b) => info.val(b) - info.val(a));
+}
+
+function lb2ComputeYourRankInfo(rows, cat, userId) {
+  if (!userId) return null;
+  const sorted = lb2Sorted(cat, rows);
+  const idx = sorted.findIndex(r => r.user_id === userId);
+  if (idx === -1) return null;
+  return { rank: idx+1, total: sorted.length };
+}
+
+function lb2SeenInfo(updatedAtIso) {
+  if (!updatedAtIso) return null;
+  const ts = new Date(updatedAtIso).getTime();
+  if (Number.isNaN(ts)) return null;
+  const recent = (Date.now() - ts) < 3600000; 
+  const time = typeof pneRelativeTime === 'function' ? pneRelativeTime(ts) : '';
+  return { text: i18next.t('backend:backend.leaderboard.seen_label', { time }), recent };
+}
+
+function lb2GuestGateHtml() {
+  return `<div class="lb2GuestGate">
+    <div class="lb2GuestIcon">🔒</div>
+    <div class="lb2GuestTxt">${escapeHtml(i18next.t('market:market.auth_verified_required'))}</div>
+    <button class="lb2GuestBtn" id="lb2LinkAccountBtn">${escapeHtml(i18next.t('backend:backend.leaderboard.link_account_button'))}</button>
+  </div>`;
+}
+function lb2WireGuestGate() {
+  const btn = $a('lb2LinkAccountBtn');
+  
+  if (btn) btn.onclick = () => { const real = $a('btnLinkAccount'); if (real) real.click(); };
 }
 
 async function openLeaderboard2() {
-  if (!marketRequireAuth()) return;
+  if (!sb || !currentUser) { marketRequireAuth(); return; } 
+  if (isGuest()) {
+    openInfo(i18next.t('backend:backend.leaderboard.panel_title'), lb2GuestGateHtml());
+    lb2WireGuestGate();
+    return;
+  }
   lb2Error = null;
   openInfo(i18next.t('backend:backend.leaderboard.panel_title'), lb2ShellHtml());
   const { data, error } = await sb.from('player_stats').select('*').limit(500);
@@ -12715,16 +12984,19 @@ async function openLeaderboard2() {
 }
 
 function lb2ShellHtml() {
-  return `<div id="lb2Podium"></div>
+  return `<div class="lb2Summary">${escapeHtml(i18next.t('backend:backend.leaderboard.summary'))}</div>
+    <div id="lb2Podium"></div>
+    <div id="lb2YourRank"></div>
     <div id="lb2Controls"></div>
     <div id="lb2Body"><div class="admEmpty">${escapeHtml(i18next.t('backend:backend.gear.loading'))}</div></div>`;
 }
 
-function lb2ControlsHtml() {
+function lb2ControlsHtml(total) {
   const cats = LB2_CATS_();
   const tabs = Object.entries(cats).map(([k,c]) =>
-    `<button class="catTab${k===lb2Cat?' active':''}" data-lb2cat="${k}" title="${escapeHtml(c.tip)}">${c.icon} ${escapeHtml(c.label)}</button>`).join('');
+    `<button class="catTab${k===lb2Cat?' active':''}" data-lb2cat="${k}" title="${escapeHtml(c.tip)}">${c.icon} ${escapeHtml(c.label)}${c.isNew?` <span class="patchNewTag">${escapeHtml(i18next.t('backend:backend.leaderboard.new_tag'))}</span>`:''}</button>`).join('');
   return `<div class="catTabs">${tabs}</div>
+    <div class="lb2RankedCount">${escapeHtml(i18next.t('backend:backend.leaderboard.ranked_count', { count: total }))}</div>
     <div class="lb2ToolRow">
       <input type="text" id="lb2Search" class="lb2SearchBox" placeholder="${escapeHtml(i18next.t('backend:backend.leaderboard.search_placeholder'))}" value="${escapeHtml(lb2Search)}">
       <button class="lb2MeToggle${lb2ShowMeOnly?' on':''}" id="lb2MeToggle">${escapeHtml(i18next.t('backend:backend.leaderboard.me_toggle'))}</button>
@@ -12732,22 +13004,39 @@ function lb2ControlsHtml() {
 }
 
 function lb2RenderBody() {
-  const podiumEl = $a('lb2Podium'), controlsEl = $a('lb2Controls'), bodyEl = $a('lb2Body');
+  const podiumEl = $a('lb2Podium'), yourRankEl = $a('lb2YourRank'), controlsEl = $a('lb2Controls'), bodyEl = $a('lb2Body');
   if (!bodyEl) return; 
   if (lb2Error) {
-    podiumEl.innerHTML = ''; controlsEl.innerHTML = '';
+    podiumEl.innerHTML = ''; if (yourRankEl) yourRankEl.innerHTML = ''; controlsEl.innerHTML = '';
     bodyEl.innerHTML = `<div class="admEmpty">${escapeHtml(lb2Error)}</div>`;
     return;
   }
   if (!lb2Rows) { bodyEl.innerHTML = `<div class="admEmpty">${escapeHtml(i18next.t('backend:backend.gear.loading'))}</div>`; return; }
 
-  controlsEl.innerHTML = lb2ControlsHtml();
-  lb2WireControls();
-
   const fullSorted = lb2Sorted(lb2Cat);
   const rankMap = new Map(fullSorted.map((r,i) => [r.user_id, i+1]));
+
+  controlsEl.innerHTML = lb2ControlsHtml(fullSorted.length);
+  lb2WireControls();
+
   podiumEl.innerHTML = lb2PodiumHtml(fullSorted.slice(0,3));
   wirePlayerNameLinks();
+
+  if (yourRankEl) {
+    const myRankInfo = lb2ComputeYourRankInfo(lb2Rows, lb2Cat, currentUser?.id);
+    if (!lb2ShowMeOnly && myRankInfo && myRankInfo.rank > LB2_TOP_N) {
+      const info = LB2_CATS_()[lb2Cat];
+      const myRow = fullSorted[myRankInfo.rank-1];
+      yourRankEl.innerHTML = `<div class="lb2YourRankBar">
+        <span>${escapeHtml(i18next.t('backend:backend.leaderboard.your_position_label'))}</span>
+        <span class="rk">#${myRankInfo.rank}</span>
+        <span>· ${escapeHtml(info.fmt(myRow))}</span>
+        <span class="hint">${escapeHtml(i18next.t('backend:backend.leaderboard.your_position_hint', { count: myRankInfo.total }))}</span>
+      </div>`;
+    } else {
+      yourRankEl.innerHTML = '';
+    }
+  }
 
   let list = fullSorted;
   if (lb2Search.trim()) {
@@ -12796,10 +13085,12 @@ function lb2PodiumHtml(top3) {
     const r = top3[i]; if (!r) return '';
     const rank = i+1;
     const isYou = r.user_id === currentUser?.id;
+    const seen = lb2SeenInfo(r.updated_at);
     return `<div class="bossPodiumStep rank${rank}${isYou?' lb2You':''}">
       <div class="bossPodiumMedal">${lb2Medal(rank)}</div>
       <div class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}" style="font-size:11px;color:var(--ink);cursor:pointer">${escapeHtml(r.display_name||'?')}${isYou?` ${escapeHtml(i18next.t('backend:backend.leaderboard.you_suffix'))}`:''}</div>
       <div class="bossPodiumReward" style="color:var(--gold)">${escapeHtml(info.fmt(r))}</div>
+      ${seen ? `<div class="lb2Seen lb2PodSeen${seen.recent?' recent':''}">${escapeHtml(seen.text)}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
 }
@@ -12810,9 +13101,10 @@ function lb2TableHtml(rows, rankMap) {
     <tbody>${rows.map(r => {
       const rank = rankMap.get(r.user_id);
       const isYou = r.user_id === currentUser?.id;
+      const seen = lb2SeenInfo(r.updated_at);
       return `<tr class="admPlayerRow${isYou?' isYou':''}${rank<=3?' admTop':''}">
         <td>${lb2Medal(rank)||('#'+rank)}</td>
-        <td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}${isYou?` ${escapeHtml(i18next.t('backend:backend.leaderboard.you_suffix'))}`:''}</span></td>
+        <td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}${isYou?` ${escapeHtml(i18next.t('backend:backend.leaderboard.you_suffix'))}`:''}</span>${seen?`<span class="lb2Seen${seen.recent?' recent':''}">${escapeHtml(seen.text)}</span>`:''}</td>
         <td>${info.fmt(r)}</td>
       </tr>`;
     }).join('')}</tbody></table>`;
