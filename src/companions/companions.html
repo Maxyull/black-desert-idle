@@ -19,7 +19,7 @@
      three.module.min.js/GLTFLoader.js/OrbitControls.js sont des modules ES (import/export imposé
      par la lib), l'importmap ci-dessous résout le spécificateur nu "three" ; vendor/three/three-
      bridge.js (seul <script type="module"> de ce dossier) attache THREE/GLTFLoader/OrbitControls
-     sur window pour que companions.viewer3d.js (script classique, scope global partagé comme le
+     sur window pour que viewer3d.js (script classique, scope global partagé comme le
      reste du module) les lise normalement. Voir vendor/three/README.md pour la procédure de mise
      à jour de version. -->
 <script type="importmap">
@@ -420,7 +420,7 @@
 </div>
 <!-- modale "Voir en 3D" (2026-07-10, "envoyer le premier test .glb") : réutilise le pipeline
      Three.js déjà validé par l'écran de test (p10), câblée sur companionModelUrlFor() /
-     open3dPreviewModal() (companions.viewer3d.js) -- ouverte depuis le panneau du pet déployé sur
+     open3dPreviewModal() (viewer3d.js) -- ouverte depuis le panneau du pet déployé sur
      le terrain (sections.js), seulement si un modèle existe réellement pour ce pet/tier. -->
 <div class="modal-bg" id="pet3d-modal">
   <div class="modal"><button class="mcl" onclick="close3dPreviewModal()">✕</button>
@@ -497,7 +497,8 @@
      voir l'event 'three-ready' géré dans ce fichier). Ordre non strictement requis vis-à-vis des
      autres scripts classiques (aucune lecture immédiate d'un global déclaré ailleurs), placé ici
      par lisibilité, juste avant main.js. -->
-<script src="companions.viewer3d.js?v=4"></script>
-<script src="companions.main.js?v=7"></script>
+<!-- renommés le 2026-07-21 (lot 8/8, dernier lot du renommage progressif -- voir CLAUDE.md §15) -->
+<script src="viewer3d.js?v=5"></script>
+<script src="main.js?v=8"></script>
 </body>
 </html>
