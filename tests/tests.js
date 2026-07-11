@@ -3195,7 +3195,7 @@
       /if\s*\(error\)\s*return/.test(src) && src.includes('data === false'));
   }
 
-  // ---------- i18n (2026-07-11, voir I18N_PLAN.md/CLAUDE.md §31) ----------
+  // ---------- i18n (2026-07-11, voir docs/I18N_PLAN.md/CLAUDE.md §31) ----------
   // Garde-fous complémentaires à scripts/check-missing-translations.js (qui tourne côté Node, hors
   // navigateur) : ici on vérifie l'état RÉEL de i18next une fois chargé dans la page.
   function testI18nextInitializedWithSupportedLangs() {
@@ -3222,7 +3222,7 @@
     assert('i18n-init.js charge AVANT gear-icons.js (1er fichier de gameplay)', initIdx < gearIconsIdx, `initIdx=${initIdx}, gearIconsIdx=${gearIconsIdx}`);
     assert('i18n-init.js charge AVANT game-core.js', initIdx < coreIdx, `initIdx=${initIdx}, coreIdx=${coreIdx}`);
   }
-  // clé brute affichée au joueur = régression silencieuse (voir I18N_PLAN.md §7 "Clé manquante") --
+  // clé brute affichée au joueur = régression silencieuse (voir docs/I18N_PLAN.md §7 "Clé manquante") --
   // échantillon de clés réellement migrées (domaine core, migré manuellement) pour détecter une
   // régression de chargement des ressources sans dépendre du contenu exact de chaque domaine.
   function testI18nextResolvesKnownKeysNotRawKey() {

@@ -1,6 +1,6 @@
 // FICHIER GENERE -- ne pas editer a la main.
 // Source : /locales/{fr,en}/*.json -- editer ces JSON puis relancer `node scripts/gen-locales.js`
-// (appele automatiquement par `python scripts/build.py`). Voir I18N_PLAN.md §5, CLAUDE.md §31.
+// (appele automatiquement par `python scripts/build.py`). Voir docs/I18N_PLAN.md §5, CLAUDE.md §31.
 const I18N_NAMESPACES = ["admin","backend","combat","common","core","inventory","market","progression","social"];
 const I18N_RESOURCES = {
   "fr": {
