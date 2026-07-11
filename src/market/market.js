@@ -15,10 +15,6 @@ function marketRequireAuth() {
 // market_lockdown_and_cancel_all) fait aussi foi côté RPC (market_place_order refuse tout nouvel
 // ordre si fermé) ; ce blocage client évite juste d'ouvrir le panneau pour rien et explique
 // pourquoi. L'admin garde toujours l'accès (même logique staff-only que le serveur).
-// Renommé "Marché commun" (2026-07-16, demande explicite) : les anciens onglets de premier niveau
-// Acheter/Vendre/Mes annonces (annonces à prix fixe, table market_listings) sont retirés -- le
-// carnet d'ordres du Marché commun (market_orders) les remplace entièrement, on atterrit
-// directement dedans à l'ouverture, plus aucun onglet de premier niveau à choisir.
 $a('btnMarket').onclick = async () => {
   if (!marketRequireAuth()) return;
   if (!(typeof isAdmin === 'function' && isAdmin())) {
@@ -42,11 +38,33 @@ $a('marketOverlay').addEventListener('mousedown', e => { marketMouseDownOnBackdr
 $a('marketOverlay').addEventListener('click', e => { if (e.target.id === 'marketOverlay' && marketMouseDownOnBackdrop) $a('marketOverlay').classList.remove('open'); });
 
 // ============================================================
-// MARCHÉ COMMUN v2 — vrai carnet d'ordres entre joueurs (achat ET vente), matériaux + équipement/
-// bijoux. Chaque ordre bloque le silver (achat) ou l'objet (vente) jusqu'à exécution/annulation.
-// Demande explicite du 2026-07-07.
-// ============================================================
-// catalogue des matériaux échangeables (clé stable = 'material:<nom>')
+// MARCHÉ COMMUN v3 (2026-07-22) — port fidèle du mockup fourni (voir CLAUDE.md §30) : catalogue
+// UNIFIÉ équipement + matériaux (les objets sans vente en cours restent visibles, grisés), popup
+// "Acheter" façon Marché Central BDO, panneau "Mes ordres" ancré à droite en permanence. Remplace
+// l'ancien 3e sous-onglet "Matériaux" (carnet d'ordres/chandelier séparé, v2 du 2026-07-16) : les
+// matériaux vivent désormais dans le MÊME catalogue/popup que le reste (market_listings les
+// renvoie déjà avec les autres kinds quand p_kind est null).
+//
+// Décision importante (mécanique d'inflation/déflation du mockup) : le mockup fabrique côté client
+// une échelle de prix fixe + des fonctions applyDemandInflation()/applySupplyDeflation() car il n'a
+// pas de backend. Le VRAI marché a déjà un carnet d'ordres multi-prix authentique
+// (market_order_book RPC) + un matching serveur qui sert TOUJOURS le meilleur acheteur en premier
+// (market_match_item, order by price desc) et rembourse la différence si le prix réel est plus bas
+// que le prix établi -- exactement la dynamique visée par le mockup, mais RÉELLE et sans risque de
+// désync entre joueurs (aucun état economique n'est simulé côté client). La popup "Acheter" affiche
+// donc l'échelle de prix RÉELLE (market_order_book, group by price) au lieu d'un pas de prix
+// inventé -- voir openBuyModal/priceLadderFromOrderBook.
+//
+// Catalogue "objets sans vente en cours" : construit depuis les VRAIES tables de données du jeu
+// (GEAR_TIERS pour l'armure/les armes, ZONES pour les bijoux par zone, MARKET_MATERIALS pour les
+// matériaux) -- voir marketCatalog(). Le mockup fourni utilisait des noms d'objets fictifs
+// (Kzarka/Kutum/Nouver/Ogre, noms de boss BDO qui n'existent PAS dans CE jeu, qui utilise ses
+// propres paliers Naru/Tuvala/Yuria/Grunil puis Asula/Cadry/Serap's/Orkinrad's/Tungrad's pour les
+// bijoux endgame) -- ces noms fictifs ne sont PAS repris, conformément à CLAUDE.md §30 point 5.
+// La catégorie "Artéfact / Pierre" (slots artifact1/artifact2/eqStone) n'a AUCUNE source de drop
+// dans le jeu actuel (voir NO_SOURCE_SLOTS, inventory-ui.js) -- aucune entrée catalogue générée
+// pour elle, elle reste vide tant qu'aucun système ne l'alimente (pas une régression : elle était
+// déjà vide avant cette refonte).
 const MARKET_MATERIALS = [
   { name:'Pierre de Novice',   icon:ICO_MAT_NOVICE,     color:'#b8b8b8' },
   { name:'Pierre du Temps',    icon:ICO_MAT_TEMPS,      color:'#cfd8dc' },
@@ -54,219 +72,47 @@ const MARKET_MATERIALS = [
   { name:'Pierre concentrée',  icon:ICO_MAT_CONCENTREE, color:'#6ea3c9' },
   { name:'Pierre de Caphras',  icon:ICO_MAT_CAPHRAS,    color:'#c9a55a' },
 ];
+// taxe de vente Marché : 35% (2026-07-18, demande explicite : "35% au market") -- prélevée côté
+// serveur sur le VENDEUR (market_match_item, voir migration 20260718130000_market_sales_tax_35pct.sql)
+// : garder cette constante synchronisée avec le facteur SQL (* 0.65) si le taux change encore.
+// Purement informatif ici (bandeau + aperçu net) -- le vrai calcul fait foi côté RPC.
+const MARKET_SELL_TAX_RATE = 0.35;
+
 async function refreshCommonMarket() {
-  wireCmSubTabs();
+  applyMarketStaticI18n();
+  updateCmWallet();
+  wireCmMyOrdersTabs();
   refreshCmBrowse();
   refreshMyMarketOrders();
-  initMarketMaterials();
 }
-// sous-onglets du marché commun : Parcourir (vitrine, façon référence fournie le 2026-07-07) /
-// Matériaux / Mes ordres -- "Vendre" (vente d'1 pièce de gear/bijou à prix fixe) retiré (2026-07-08,
-// demande explicite : "enleve vendre")
-const CM_TAB_PANES = { browse:'cmPaneBrowse', materials:'cmPaneMaterials', orders:'cmPaneOrders' };
-function wireCmSubTabs() {
-  document.querySelectorAll('.cmSubTab').forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll('.cmSubTab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      Object.entries(CM_TAB_PANES).forEach(([tab, paneId]) => { $a(paneId).style.display = (tab === btn.dataset.cmtab) ? '' : 'none'; });
-    };
-  });
-}
-// ---------- carnet d'ordres + graphique chandelier pour les matériaux (2026-07-16, demande
-// explicite : "envoyer le nouveau marché") -- reprend le design de l'artefact de démo (carnet à 2
-// colonnes avec barres de volume, meilleur prix mis en avant, spread, chandelier sur les 20
-// dernières transactions), branché sur les VRAIES données : market_order_book (RPC déjà
-// existante) et market_trades (table déjà existante, RLS SELECT publique). Pas de bots ni de
-// fourchette min/max fictive (concepts spécifiques à la démo) -- prix validé comme partout
-// ailleurs (juste > 0 côté serveur, voir market_place_order).
-let mktSelectedIdx = 0, mktSide = 'buy';
-// taxe de vente Marché : 20% puis 35% (2026-07-18, demande explicite : "35% au market") --
-// prélevée côté serveur sur le VENDEUR (market_match_item, voir migration
-// 20260718130000_market_sales_tax_35pct.sql) : garder cette constante synchronisée avec le
-// facteur SQL (* 0.65) si le taux change encore. Purement informatif ici (aperçu du net avant
-// de placer un ordre) — le vrai calcul fait foi côté RPC.
-const MARKET_SELL_TAX_RATE = 0.35;
-function mktKey(m) { return 'material:' + m.name; }
-function initMarketMaterials() {
-  const pills = $a('mktItemPills'); if (!pills) return;
-  pills.innerHTML = MARKET_MATERIALS.map((m,i) => `<button class="mktPill" data-i="${i}">${m.icon} ${tr(m.name)}</button>`).join('');
-  pills.querySelectorAll('.mktPill').forEach(btn => {
-    btn.onclick = () => { mktSelectedIdx = Number(btn.dataset.i); refreshMarketMaterials(); };
-  });
-  $a('mktSideBuy').onclick = () => { mktSide = 'buy'; updateMktForm(); };
-  $a('mktSideSell').onclick = () => { mktSide = 'sell'; updateMktForm(); };
-  $a('mktPlaceBtn').onclick = mktPlaceOrder;
-  // aperçu du net après taxe (côté vente uniquement) mis à jour à la volée pendant la saisie
-  $a('mktPriceInput').addEventListener('input', updateMktTaxHint);
-  $a('mktQtyInput').addEventListener('input', updateMktTaxHint);
-  refreshMarketMaterials();
-}
-// aperçu "vous recevrez ~X après taxe (20%)" -- affiché uniquement en mode Vente, jamais en
-// Achat (l'acheteur paie toujours le plein prix affiché, seul le vendeur est taxé)
-function updateMktTaxHint() {
-  const hint = $a('mktSellTaxHint'); if (!hint) return;
-  if (mktSide !== 'sell') { hint.style.display = 'none'; return; }
-  const price = Number($a('mktPriceInput').value) || 0;
-  const qty = parseInt($a('mktQtyInput').value, 10) || 0;
-  hint.style.display = '';
-  const net = Math.floor(price * qty * (1 - MARKET_SELL_TAX_RATE));
-  hint.textContent = i18next.t('market:market.sell_tax_hint', { net: fmt(net), taxPct: Math.round(MARKET_SELL_TAX_RATE*100) });
-}
-// met à jour l'état "actif" des pills à CHAQUE sélection (2026-07-16, bug corrigé : avant, seule
-// la pill de idx=0 recevait ".active" une fois à l'init -- cliquer une autre pill changeait bien
-// l'item affiché, mais plus rien n'indiquait visuellement laquelle était choisie). Demande
-// explicite : "je veux que quand on clique dans materiaux et qu'on choisi un item il se mette en
-// couleur choisi" -- la pill sélectionnée se remplit désormais de la couleur PROPRE du matériau
-// (pas une couleur générique), pour que le choix saute aux yeux.
-function updateMktPills() {
-  const pills = $a('mktItemPills'); if (!pills) return;
-  pills.querySelectorAll('.mktPill').forEach((btn,i) => {
-    const active = i === mktSelectedIdx;
-    btn.classList.toggle('active', active);
-    if (active) {
-      const color = MARKET_MATERIALS[i].color;
-      btn.style.background = color; btn.style.borderColor = color; btn.style.color = '#0d0f1a';
-    } else {
-      btn.style.background = ''; btn.style.borderColor = ''; btn.style.color = '';
-    }
-  });
-}
-async function refreshMarketMaterials() {
-  updateMktPills();
-  const m = MARKET_MATERIALS[mktSelectedIdx];
-  const key = mktKey(m);
-  const [{ data: book }, { data: trades }] = await Promise.all([
-    sb.rpc('market_order_book', { p_item_key: key }),
-    sb.from('market_trades').select('price, qty, created_at').eq('item_key', key).order('created_at', { ascending: true }).limit(20),
-  ]);
-  const sells = (book || []).filter(o => o.side === 'sell').sort((a,b) => a.price - b.price);
-  const buys = (book || []).filter(o => o.side === 'buy').sort((a,b) => b.price - a.price);
-  const bestSell = sells[0], bestBuy = buys[0];
-  const spread = (bestSell && bestBuy) ? (bestSell.price - bestBuy.price) : null;
-
-  // pression du marché : tendance des 10 dernières transactions (2026-07-16, demande explicite)
-  const recentTrades = (trades || []).slice(-10);
-  let up = 0, down = 0;
-  for (let i = 1; i < recentTrades.length; i++) {
-    if (recentTrades[i].price > recentTrades[i-1].price) up++;
-    else if (recentTrades[i].price < recentTrades[i-1].price) down++;
-  }
-  const pressure = recentTrades.length < 2 ? { icon:'➡️', label: i18next.t('market:market.trend_neutral'), cls:'' }
-    : up > down ? { icon:'🔺', label: i18next.t('market:market.trend_rising'), cls:'up' }
-    : down > up ? { icon:'🔻', label: i18next.t('market:market.trend_falling'), cls:'down' }
-    : { icon:'➡️', label: i18next.t('market:market.trend_neutral'), cls:'' };
-
-  $a('mktMetaRow').innerHTML = `
-    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.best_sell_label')}</div><div class="mktMetaVal sell">${bestSell?fmt(bestSell.price):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.spread_label')}</div><div class="mktMetaVal">${spread!=null?fmt(spread):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.best_buy_label')}</div><div class="mktMetaVal buy">${bestBuy?fmt(bestBuy.price):'—'}</div></div>
-    <div class="mktMetaCard"><div class="mktMetaLbl">${i18next.t('market:market.market_pressure_label')}</div><div class="mktMetaVal ${pressure.cls}">${pressure.icon} ${pressure.label}</div></div>`;
-
-  $a('mktSellCol').innerHTML = `<div class="mktColHead sell"><span>${i18next.t('market:market.sell_orders_label')}</span><span>${sells.length}</span></div>` +
-    `<div class="mktRowsWrap">${mktOrderRowsHtml(sells, 'sell')}</div>`;
-  $a('mktBuyCol').innerHTML = `<div class="mktColHead buy"><span>${i18next.t('market:market.buy_orders_label')}</span><span>${buys.length}</span></div>` +
-    `<div class="mktRowsWrap">${mktOrderRowsHtml(buys, 'buy')}</div>`;
-
-  const histRows = (trades || []).slice().reverse().map(t => `
-    <div class="mktHistRow">
-      <span>${tr(m.name)}</span><span>${fmt(t.price)}</span><span>×${fmt(t.qty)}</span>
-      <span class="mktHistTime">${new Date(t.created_at).toLocaleTimeString(i18next.t('market:market.time_locale'))}</span>
-    </div>`).join('');
-  $a('mktHistRows').innerHTML = histRows || `<div class="mEmpty">${i18next.t('market:market.no_transactions_label')}</div>`;
-
-  drawMktCandles(trades || []);
-  updateMktForm();
-}
-function mktOrderRowsHtml(orders, side) {
-  if (!orders.length) return `<div class="mEmpty">${i18next.t('market:market.no_orders_label')}</div>`;
-  const maxQty = Math.max(...orders.map(o => o.qty));
-  return orders.map((o,i) => `
-    <div class="mktOrderRow ${side}${i===0?' best':''}">
-      <div class="mktVol" style="width:${Math.round(o.qty/maxQty*100)}%"></div>
-      <span class="mktPrice">${fmt(o.price)}</span><span class="mktQty">${o.qty}</span><span class="mktTotal">${fmt(o.price*o.qty)}</span>
-    </div>`).join('');
-}
-function updateMktForm() {
-  const m = MARKET_MATERIALS[mktSelectedIdx];
-  const owned = INV.filter(s => s && s.kind === 'material' && s.name === m.name).reduce((n,s) => n + s.qty, 0);
-  $a('mktFormTitle').textContent = i18next.t('market:market.place_order_title', { itemName: tr(m.name), owned: fmt(owned) });
-  $a('mktSideBuy').classList.toggle('active', mktSide==='buy');
-  $a('mktSideSell').classList.toggle('active', mktSide==='sell');
-  const btn = $a('mktPlaceBtn');
-  btn.className = 'mktPlaceBtn ' + mktSide;
-  btn.textContent = mktSide === 'buy' ? i18next.t('market:market.place_buy_order_btn') : i18next.t('market:market.place_sell_order_btn');
-  updateMktTaxHint();
-  $a('mktFormMsg').textContent = '';
-}
-async function mktPlaceOrder() {
-  const m = MARKET_MATERIALS[mktSelectedIdx];
-  const price = Number($a('mktPriceInput').value), qty = parseInt($a('mktQtyInput').value, 10) || 1;
-  const msg = $a('mktFormMsg');
-  if (!price || price <= 0) { msg.textContent = i18next.t('market:market.invalid_price'); return; }
-  let invIndex = null;
-  if (mktSide === 'sell') {
-    invIndex = INV.findIndex(s => s && s.kind === 'material' && s.name === m.name);
-    if (invIndex === -1) { msg.textContent = i18next.t('market:market.no_item_owned'); return; }
-  }
-  const { error } = await sb.rpc('market_place_order', {
-    p_side: mktSide, p_item_key: mktKey(m), p_item_name: m.name, p_item_kind: 'material',
-    p_price: price, p_qty: qty, p_inv_index: invIndex,
-  });
-  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); return; }
-  msg.textContent = '';
-  $a('mktPriceInput').value = ''; $a('mktQtyInput').value = '1';
-  await loadCloudSave();
-  refreshMarketMaterials();
-}
-// chandelier canvas (2026-07-16) : chaque transaction = 1 bougie (open = prix de la transaction
-// précédente, close = son propre prix), même logique que l'artefact de démo -- fidèle aux VRAIES
-// transactions, sans inventer de mèche haute/basse intra-transaction
-function drawMktCandles(trades) {
-  const canvas = $a('mktCandleCv'); if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width = canvas.clientWidth * 2;
-  const H = canvas.height = 220 * 2;
-  ctx.clearRect(0,0,W,H);
-  if (trades.length < 2) {
-    ctx.fillStyle = '#5a5f74'; ctx.font = '20px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(i18next.t('market:market.not_enough_transactions'), W/2, H/2);
-    return;
-  }
-  const candles = [];
-  for (let i = 1; i < trades.length; i++) {
-    const open = Number(trades[i-1].price), close = Number(trades[i].price);
-    candles.push({ open, close, high: Math.max(open,close), low: Math.min(open,close) });
-  }
-  const padL = 70, padR = 16, padT = 16, padB = 16;
-  const plotW = W - padL - padR, plotH = H - padT - padB;
-  const allPrices = candles.flatMap(c => [c.high, c.low]);
-  let pMin = Math.min(...allPrices), pMax = Math.max(...allPrices);
-  if (pMin === pMax) { pMin *= 0.98; pMax *= 1.02; }
-  const pad = (pMax-pMin)*0.08; pMin -= pad; pMax += pad;
-  const y = p => padT + plotH - ((p-pMin)/(pMax-pMin))*plotH;
-  const cw = plotW/candles.length;
-  ctx.strokeStyle = '#2c2a33'; ctx.lineWidth = 1; ctx.font = '18px sans-serif'; ctx.fillStyle = '#9a917e'; ctx.textAlign = 'right';
-  for (let i = 0; i <= 4; i++) {
-    const py = padT + plotH*i/4;
-    ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(W-padR,py); ctx.stroke();
-    ctx.fillText(fmt(pMax - (pMax-pMin)*i/4), padL-8, py+6);
-  }
-  candles.forEach((c,i) => {
-    const cx = padL + cw*i + cw/2;
-    const up = c.close >= c.open;
-    ctx.strokeStyle = ctx.fillStyle = up ? '#7aa35e' : '#c05545';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(cx, y(c.high)); ctx.lineTo(cx, y(c.low)); ctx.stroke();
-    const bodyTop = y(Math.max(c.open,c.close)), bodyBot = y(Math.min(c.open,c.close));
-    const bw = Math.max(4, cw*0.55);
-    ctx.fillRect(cx-bw/2, bodyTop, bw, Math.max(2, bodyBot-bodyTop));
-  });
+// libellés statiques de la refonte v3 appliqués via i18next (2026-07-22) -- PAS le vieux
+// dictionnaire I18N/data-i18n (game-supabase.js), qui est un système bilingue ad hoc antérieur à
+// i18next : CLAUDE.md §31 est explicite, tout texte NOUVEAU passe par i18next.t() dès l'écriture.
+// Appelé à chaque ouverture du panneau (refreshCommonMarket) -- suffisant pour ce panneau (pas
+// besoin d'un hook global de changement de langue, le panneau est toujours refermé/rouvert avant
+// d'être revu après un changement de langue dans la pratique de ce jeu).
+function applyMarketStaticI18n() {
+  const set = (id, key) => { const el = $a(id); if (el) el.textContent = i18next.t(key); };
+  set('cmMyOrdersHdr', 'market:market.my_orders_hdr');
+  set('cmBuyTabLbl', 'market:market.buy_label');
+  set('cmSellTabLbl', 'market:market.sell_label');
+  set('cmBuyModalTitle', 'market:market.buy_modal_title');
+  set('cmBmBalanceLbl', 'market:market.balance_label');
+  set('cmBmTotalCostLbl', 'market:market.total_cost_label');
+  set('cmBmAfterBalanceLbl', 'market:market.after_balance_label');
+  set('cmBmSetPriceLbl', 'market:market.set_buy_price_label');
+  set('cmBmQtyLbl', 'market:market.qty_bought_label');
+  set('cmBmTierLbl', 'market:market.choose_tier_label');
+  set('cmBmBuyBtn', 'market:market.buy_btn');
+  set('cmBmColStock', 'market:market.col_stock');
+  set('cmBmColPrice', 'market:market.col_price');
+  set('cmBmColOrders', 'market:market.col_orders');
+  const disc = $a('cmBmDisclaimer');
+  if (disc) disc.innerHTML = i18next.t('market:market.disclaimer_refund') + '<br>' +
+    i18next.t('market:market.disclaimer_pending') + '<br>' + i18next.t('market:market.disclaimer_see_orders');
 }
 
-// ---------- vitrine "Parcourir" : arbre de catégories, cartes groupées par objet avec tirage par
-// niveau d'enchantement, panneau de détail avec comparaison — inspirée d'une référence visuelle du
-// Marché Central de BDO fournie par l'utilisateur le 2026-07-07 ----------
+// ---------- catalogue unifié : catégories façon Marché Central de BDO ----------
 const CM_CATEGORIES = [
   { id:'all',       label:{fr:'★ Tout',en:'★ All'},                          kind:null,      slots:null },
   { id:'weapon',    label:{fr:'⚔️ Arme principale',en:'⚔️ Main weapon'},      kind:'gear',    slots:['weapon'] },
@@ -277,20 +123,82 @@ const CM_CATEGORIES = [
   { id:'artifact',  label:{fr:'🔮 Artéfact / Pierre',en:'🔮 Artifact / Stone'}, kind:'gear',   slots:['artifact1','artifact2','eqStone'] },
   { id:'material',  label:{fr:'◈ Matériaux',en:'◈ Materials'},               kind:'material', slots:null },
 ];
-let cmActiveCat = 'all', cmListings = [], cmSelectedId = null, cmDrilldownName = null;
+// mapping slot d'armure/arme -> catégorie catalogue (pour les entrées SANS vente en cours, voir
+// marketCatalog() -- les entrées AVEC vente en cours utilisent déjà item_snapshot.slot)
+const CM_SLOT_TO_CAT = { weapon:'weapon', secondary:'secondary', awakening:'awakening',
+  helmet:'armor', armor:'armor', gloves:'armor', boots:'armor' };
+
+let cmActiveCat = 'all', cmListings = [], cmSelectedKey = null, cmDrilldownName = null;
+let cmMyOrdersTab = 'buy', cmMyOrdersData = [];
+
+// clé d'objet cohérente avec le serveur (market_place_order) : 'material:<nom>' pour les
+// matériaux, 'gear:<nom>+<enhLv>' pour TOUT le reste (gear ET bijoux -- le serveur ne distingue
+// pas les deux dans son calcul de clé, voir v_real_key dans market_place_order)
+function cmItemKey(kind, name, enhLv) {
+  return kind === 'material' ? ('material:' + name) : ('gear:' + name + '+' + (enhLv || 0));
+}
+
+// ---------- catalogue "objets du jeu", même sans vente en cours (2026-07-22) ----------
+// construit une seule fois (donnée statique du jeu, ne change pas en cours de partie) à partir des
+// VRAIES tables de données (GEAR_TIERS/ZONES/MARKET_MATERIALS) -- fonction, pas un littéral
+// top-level, pour ne dépendre d'aucun ordre de chargement (voir CLAUDE.md §7-8).
+let MARKET_CATALOG_CACHE = null;
+function marketCatalog() {
+  if (MARKET_CATALOG_CACHE) return MARKET_CATALOG_CACHE;
+  const catalog = [];
+  const ARMOR_ICON_FOR = { helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor };
+  const WEAPON_ICON_FOR = { weapon:staffIconForColor, secondary:daggerIconForColor, awakening:orbPairIconForColor };
+  GEAR_TIERS.forEach(tier => {
+    Object.entries(tier.sets).forEach(([slot, name]) => {
+      const iconFn = ARMOR_ICON_FOR[slot] || WEAPON_ICON_FOR[slot];
+      catalog.push({ name, kind:'gear', enhLv:0, slot, catId: CM_SLOT_TO_CAT[slot] || 'armor',
+        icon: iconFn ? iconFn(tier.color, tier.grade) : '📦', color: tier.color });
+    });
+  });
+  const seenJewel = new Set();
+  const JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+  ZONES.forEach((z, zi) => {
+    const j = z.loot && z.loot.jackpot;
+    if (!j || seenJewel.has(j.name)) return;
+    seenJewel.add(j.name);
+    const tier = gearTierForZone(zi);
+    const jSlot = accSlotFor(j);
+    const jTierIdx = JEWEL_TIER_IDX[tier.grade] ?? 0;
+    const iconFn = JEWEL_ICON_FOR_SLOT[jSlot] || ringIconForTier;
+    catalog.push({ name:j.name, kind:'jackpot', enhLv:0, slot:jSlot, catId:'accessory',
+      icon: iconFn(jTierIdx, tier.color), color: tier.color });
+  });
+  MARKET_MATERIALS.forEach(m => catalog.push({ name:m.name, kind:'material', enhLv:0, slot:null, catId:'material', icon:m.icon, color:m.color }));
+  MARKET_CATALOG_CACHE = catalog;
+  return catalog;
+}
+function catalogEntriesForCat(cat) {
+  if (cat.id === 'all') return marketCatalog();
+  return marketCatalog().filter(c => c.catId === cat.id);
+}
+
 function renderCmCategoryTree() {
   const el = $a('cmCategoryTree'); if (!el) return;
   el.innerHTML = CM_CATEGORIES.map(c => `<button class="cmCatBtn${c.id===cmActiveCat?' active':''}" data-cat="${c.id}">${c.label[LANG]}</button>`).join('');
   el.querySelectorAll('.cmCatBtn').forEach(btn => {
-    btn.onclick = () => { cmActiveCat = btn.dataset.cat; cmDrilldownName = null; cmSelectedId = null; refreshCmBrowse(); };
+    btn.onclick = () => { cmActiveCat = btn.dataset.cat; cmDrilldownName = null; refreshCmBrowse(); };
   });
 }
-function updateCmWallet() { const el = $a('cmWalletVal'); if (el) el.textContent = fmt(Math.round(S.silver)) + ' 🪙'; }
+function updateCmWallet() {
+  const el = $a('cmWalletVal'); if (el) el.textContent = fmt(Math.round(S.silver)) + ' 🪙';
+  const locked = (cmMyOrdersData || []).filter(o => o.side === 'buy' && o.status === 'open')
+    .reduce((n,o) => n + o.price * o.qty, 0);
+  const hint = $a('cmLockedHint');
+  if (hint) {
+    if (locked > 0) { hint.style.display = ''; hint.textContent = i18next.t('market:market.locked_hint', { amount: fmt(Math.round(locked)) }); }
+    else hint.style.display = 'none';
+  }
+}
 async function refreshCmBrowse() {
   renderCmCategoryTree();
   updateCmWallet();
   const list = $a('cmListingsList'); if (!list) return;
-  list.innerHTML = '<div class="mEmpty">Chargement...</div>';
+  list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.loading_label')}</div>`;
   const cat = CM_CATEGORIES.find(c => c.id === cmActiveCat) || CM_CATEGORIES[0];
   const { data, error } = await sb.rpc('market_listings', { p_kind: cat.kind });
   let rows = data || [];
@@ -313,22 +221,26 @@ function cmTimeAgo(iso) {
   if (sec < 86400) return Math.round(sec/3600) + 'h';
   return Math.round(sec/86400) + 'j';
 }
-// applique recherche + tri à un tableau d'annonces (utilisé pour les 2 niveaux : vue groupée et
-// vue détaillée par niveau d'enchantement)
+// applique recherche + tri à un tableau de lignes déjà construites (utilisé par la vue groupée et
+// la vue détaillée par niveau d'enchantement) -- priceOf renvoie Infinity pour une ligne "sans
+// vente" (jamais triée artificiellement en tête par prix croissant)
 function cmApplySearchSort(items, priceOf, timeOf) {
   const search = ($a('cmSearch').value || '').toLowerCase().trim();
   const sort = $a('cmSort').value;
-  let rows = items.filter(x => !search || tr(x.name || x.item_name).toLowerCase().includes(search));
+  let rows = items.filter(x => !search || tr(x.name).toLowerCase().includes(search));
   if (sort === 'price_asc') rows.sort((a,b) => priceOf(a) - priceOf(b));
-  else if (sort === 'price_desc') rows.sort((a,b) => priceOf(b) - priceOf(a));
-  else rows.sort((a,b) => new Date(timeOf(b)) - new Date(timeOf(a)));
+  else if (sort === 'price_desc') rows.sort((a,b) => { const pb = priceOf(b), pa = priceOf(a); return (pb===Infinity?-1:pb) - (pa===Infinity?-1:pa); });
+  else rows.sort((a,b) => new Date(timeOf(b)||0) - new Date(timeOf(a)||0));
   return rows;
 }
 function renderCmListingsList() {
   const list = $a('cmListingsList'); if (!list) return;
   if (cmDrilldownName) { renderCmDrilldown(); return; }
+  const cat = CM_CATEGORIES.find(c => c.id === cmActiveCat) || CM_CATEGORIES[0];
   // vue groupée par NOM d'objet (comme le Marché Central de BDO) : une ligne par objet, prix le
-  // plus bas / stock total ; si plusieurs niveaux d'enchantement existent, clic = tiroir détaillé
+  // plus bas / stock total ; si plusieurs niveaux d'enchantement existent, clic = tiroir détaillé.
+  // Les entrées du catalogue SANS aucune vente en cours restent affichées (grisées) -- navigation
+  // "catalogue complet", pas juste "ce qui est en vente" (demande explicite du mockup fourni).
   const groups = new Map();
   for (const l of cmListings) {
     if (!groups.has(l.item_name)) groups.set(l.item_name, { name: l.item_name, kind: l.item_kind, items: [] });
@@ -338,31 +250,41 @@ function renderCmListingsList() {
     const best = g.items.reduce((a,b) => a.price < b.price ? a : b);
     const stock = g.items.reduce((n,x) => n + (x.item_kind === 'material' ? x.qty : 1), 0);
     const enhLvs = new Set(g.items.map(x => (x.item_snapshot && x.item_snapshot.enhLv) || 0));
-    return { ...g, best, stock, drilldown: enhLvs.size > 1, latest: g.items.reduce((a,b) => new Date(a.created_at)>new Date(b.created_at)?a:b).created_at };
+    return { ...g, best, stock, unlisted:false, drilldown: enhLvs.size > 1,
+      latest: g.items.reduce((a,b) => new Date(a.created_at)>new Date(b.created_at)?a:b).created_at };
   });
-  rows = cmApplySearchSort(rows, r => r.best.price, r => r.latest);
+  const listedNames = new Set(rows.map(r => r.name));
+  catalogEntriesForCat(cat).forEach(c => {
+    if (listedNames.has(c.name)) return;
+    rows.push({ name:c.name, kind:c.kind, items:[], best:null, stock:0, unlisted:true, drilldown:false, latest:null, catalogEntry:c });
+  });
+  rows = cmApplySearchSort(rows, r => r.unlisted ? Infinity : r.best.price, r => r.latest);
   if (!rows.length) { list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.no_listings')}</div>`; return; }
   list.innerHTML = rows.map(g => {
-    const color = cmListingColor(g.best);
-    return `<div class="cmListCard" data-name="${escapeHtml(g.name)}">
-      <div class="cmListIcon" style="color:${color}">${cmListingIcon(g.best)}</div>
+    const color = g.unlisted ? g.catalogEntry.color : cmListingColor(g.best);
+    const icon = g.unlisted ? g.catalogEntry.icon : cmListingIcon(g.best);
+    const key = g.unlisted ? cmItemKey(g.kind, g.name, 0) : cmItemKey(g.kind, g.name, g.best.item_snapshot ? g.best.item_snapshot.enhLv : 0);
+    return `<div class="cmListCard${g.unlisted?' noListing':''}${key===cmSelectedKey?' selected':''}" data-name="${escapeHtml(g.name)}">
+      <div class="cmListIcon" style="color:${color}">${icon}</div>
       <div class="cmListInfo">
         <div class="cmListName" style="color:${color}">${tr(g.name)}</div>
-        <div class="cmListSub">${i18next.t('market:market.in_stock_label')} : ${fmt(g.stock)}${g.drilldown?` · ${g.items.length} ${i18next.t('market:market.levels_label')}`:''}</div>
+        <div class="cmListSub">${g.unlisted ? i18next.t('market:market.no_active_sale') : `${i18next.t('market:market.in_stock_label')} : ${fmt(g.stock)}${g.drilldown?` · ${g.items.length} ${i18next.t('market:market.levels_label')}`:''}`}</div>
       </div>
-      <div class="cmListPrice"><div class="price">${i18next.t('market:market.from_price_label')} ${fmt(g.best.price)} 🪙</div></div>
+      <div class="cmListPrice"><div class="price">${g.unlisted ? '—' : `${i18next.t('market:market.from_price_label')} ${fmt(g.best.price)} 🪙`}</div></div>
     </div>`;
   }).join('');
   list.querySelectorAll('.cmListCard').forEach(card => {
     const g = rows.find(r => r.name === card.dataset.name);
     card.onclick = () => {
-      if (g.drilldown) { cmDrilldownName = g.name; renderCmListingsList(); }
-      else { cmSelectedId = g.best.id; renderCmDetailPanel(); }
+      if (g.drilldown) { cmDrilldownName = g.name; renderCmListingsList(); return; }
+      cmSelectedKey = g.unlisted ? cmItemKey(g.kind, g.name, 0) : cmItemKey(g.kind, g.name, g.best.item_snapshot ? g.best.item_snapshot.enhLv : 0);
+      renderCmListingsList();
+      renderCmDetailPanel(g);
     };
   });
 }
 // tiroir détaillé par niveau d'enchantement (façon "+13/+14/+15/PRI/DUO..." du vrai marché BDO) —
-// une ligne par niveau présent, avec son propre prix le plus bas et son stock
+// une ligne par niveau RÉELLEMENT en vente, avec son propre prix le plus bas et son stock
 function renderCmDrilldown() {
   const list = $a('cmListingsList'); if (!list) return;
   const items = cmListings.filter(l => l.item_name === cmDrilldownName);
@@ -373,7 +295,7 @@ function renderCmDrilldown() {
     byLv.get(lv).push(l);
   }
   let rows = [...byLv.entries()].map(([lv, arr]) => ({
-    lv, best: arr.reduce((a,b) => a.price < b.price ? a : b), stock: arr.length,
+    lv, kind: arr[0].item_kind, best: arr.reduce((a,b) => a.price < b.price ? a : b), stock: arr.length,
     latest: arr.reduce((a,b) => new Date(a.created_at)>new Date(b.created_at)?a:b).created_at,
   }));
   rows.sort((a,b) => a.lv - b.lv);
@@ -381,7 +303,8 @@ function renderCmDrilldown() {
   const backBtn = `<button class="cmBackBtn" id="cmBackBtn">← ${i18next.t('market:market.back_btn')}</button>`;
   list.innerHTML = backBtn + rows.map(r => {
     const color = cmListingColor(r.best);
-    return `<div class="cmListCard" data-lv="${r.lv}">
+    const key = cmItemKey(r.kind, cmDrilldownName, r.lv);
+    return `<div class="cmListCard${key===cmSelectedKey?' selected':''}" data-lv="${r.lv}">
       <div class="cmListIcon" style="color:${color}">${cmListingIcon(r.best)}</div>
       <div class="cmListInfo">
         <div class="cmListName" style="color:${color}">${ENH_NAMES[r.lv]} ${tr(cmDrilldownName)}</div>
@@ -393,17 +316,33 @@ function renderCmDrilldown() {
   $a('cmBackBtn').onclick = () => { cmDrilldownName = null; renderCmListingsList(); };
   list.querySelectorAll('.cmListCard').forEach(card => {
     const r = rows.find(x => x.lv === Number(card.dataset.lv));
-    card.onclick = () => { cmSelectedId = r.best.id; renderCmDetailPanel(); };
+    card.onclick = () => { cmSelectedKey = cmItemKey(r.kind, cmDrilldownName, r.lv); renderCmListingsList(); renderCmDetailPanel(r); };
   });
 }
-// panneau de détail : stats complètes + comparaison face à l'équipement actuel (si gear/bijou)
-function renderCmDetailPanel() {
+// possédé (INV) par nom+kind+enhLv EXACT -- corrige un flou de l'ancien placeMarketOrder (ne
+// filtrait jamais par enhLv, risquait de vendre par erreur une autre variante du même objet)
+function ownedQtyFor(name, kind, enhLv) {
+  if (kind === 'material') return INV.filter(s => s && s.kind === 'material' && s.name === name).reduce((n,s) => n + s.qty, 0);
+  return INV.some(s => s && s.kind === kind && s.name === name && (s.enhLv||0) === (enhLv||0)) ? 1 : 0;
+}
+function findInvIndexForSell(name, kind, enhLv) {
+  if (kind === 'material') return INV.findIndex(s => s && s.kind === 'material' && s.name === name);
+  return INV.findIndex(s => s && s.kind === kind && s.name === name && (s.enhLv||0) === (enhLv||0));
+}
+// panneau de détail : stats + comparaison (objets réellement en vente) ou état "non listé" +
+// offres d'achat/de vente (2026-07-22, port du mockup)
+function renderCmDetailPanel(g) {
   const panel = $a('cmDetailPanel'); if (!panel) return;
-  const l = cmListings.find(x => x.id === cmSelectedId);
-  if (!l) { panel.innerHTML = `<div class="mEmpty" data-i18n="cmSelectItemHint">${i18next.t('market:market.select_item_hint')}</div>`; return; }
-  const color = cmListingColor(l);
+  if (!g) { panel.innerHTML = `<div class="mEmpty">${i18next.t('market:market.select_item_hint')}</div>`; return; }
+  const l = g.best; // ligne "réelle" (item_snapshot) si en vente, sinon null
+  const catalogEntry = g.catalogEntry || marketCatalog().find(c => c.name === g.name && c.kind === g.kind);
+  const kind = g.kind || (catalogEntry && catalogEntry.kind) || 'material';
+  const enhLv = l ? ((l.item_snapshot && l.item_snapshot.enhLv) || 0) : (g.lv || 0);
+  const color = l ? cmListingColor(l) : (catalogEntry ? catalogEntry.color : '#c9a55a');
+  const icon = l ? cmListingIcon(l) : (catalogEntry ? catalogEntry.icon : '◈');
+
   let statsHtml = '', compareHtml = '';
-  if (l.item_kind === 'gear' || l.item_kind === 'jackpot') {
+  if (l && (kind === 'gear' || kind === 'jackpot')) {
     const snap = l.item_snapshot || {};
     const eff = effectiveApDp(snap);
     const rows = [];
@@ -412,82 +351,296 @@ function renderCmDetailPanel() {
     if (eff.hp) rows.push(['PV', '+'+eff.hp]);
     if (snap.enhLv) rows.push([i18next.t('market:market.level_label'), ENH_NAMES[snap.enhLv]]);
     statsHtml = `<div class="cmDetailStats">${rows.map(([k,v]) => `<div class="srow"><span>${k}</span><b>${v}</b></div>`).join('')}</div>`;
-    // comparaison face à ce qui est déjà équipé dans ce slot (ou la meilleure des 2 bagues/boucles)
-    const slotId = l.item_kind === 'jackpot' ? accSlotFor(snap) : snap.slot;
-    const accSlot = l.item_kind === 'jackpot' ? accSlotFor(snap) : null;
+    const slotId = kind === 'jackpot' ? accSlotFor(snap) : snap.slot;
     let equipped = slotId ? EQUIP[slotId] : null;
-    if (accSlot === 'ring') equipped = itemScore(EQUIP.ring1) <= itemScore(EQUIP.ring2) ? EQUIP.ring1 : EQUIP.ring2;
-    if (accSlot === 'earring') equipped = itemScore(EQUIP.earring1) <= itemScore(EQUIP.earring2) ? EQUIP.earring1 : EQUIP.earring2;
+    if (slotId === 'ring') equipped = itemScore(EQUIP.ring1) <= itemScore(EQUIP.ring2) ? EQUIP.ring1 : EQUIP.ring2;
+    if (slotId === 'earring') equipped = itemScore(EQUIP.earring1) <= itemScore(EQUIP.earring2) ? EQUIP.earring1 : EQUIP.earring2;
     if (equipped) {
       const effEq = effectiveApDp(equipped);
-      const cmpRows = [['PA', effEq.ap||0, eff.ap||0], ['PD', effEq.dp||0, eff.dp||0], ['PV', effEq.hp||0, eff.hp||0]]
-        .filter(([,a,b]) => a || b);
-      compareHtml = `<div class="cmDetailSub">${i18next.t('market:market.vs_label')} <b style="color:${equipped.color||'#c9a55a'}">${tr(equipped.name)}</b></div>
+      const cmpRows = [['PA', effEq.ap||0, eff.ap||0], ['PD', effEq.dp||0, eff.dp||0], ['PV', effEq.hp||0, eff.hp||0]].filter(([,a,b]) => a || b);
+      compareHtml = `<div class="cmDetailSub cmCompareTitle">${i18next.t('market:market.vs_label')} <b style="color:${equipped.color||'#c9a55a'}">${tr(equipped.name)}</b></div>
         <table class="cmCompareTable"><thead><tr><th></th><th>${i18next.t('market:market.equipped_label')}</th><th>${i18next.t('market:market.this_one_label')}</th><th>Δ</th></tr></thead>
-        <tbody>${cmpRows.map(([k,a,b]) => {
-          const delta = b - a; const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : '';
-          return `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td class="cmDelta ${cls}">${delta>0?'+':''}${delta}</td></tr>`;
-        }).join('')}</tbody></table>`;
+        <tbody>${cmpRows.map(([k,a,b]) => { const delta = b - a; const cls = delta > 0 ? 'up' : delta < 0 ? 'down' : ''; return `<tr><td>${k}</td><td>${a}</td><td>${b}</td><td class="cmDelta ${cls}">${delta>0?'+':''}${delta}</td></tr>`; }).join('')}</tbody></table>`;
     }
-  } else {
+  } else if (l) {
     statsHtml = `<div class="cmDetailStats"><div class="srow"><span>${i18next.t('market:market.available_qty_label')}</span><b>${fmt(l.qty)}</b></div></div>`;
   }
+
+  const owned = ownedQtyFor(g.name, kind, enhLv);
+  const displayName = (enhLv ? ENH_NAMES[enhLv]+' ' : '') + tr(g.name);
   panel.innerHTML = `
-    <div class="cmDetailIcon" style="border-color:${color};color:${color}">${cmListingIcon(l)}</div>
-    <div class="cmDetailTitle" style="color:${color}">${tr(l.item_name)}</div>
-    <div class="cmDetailSub">${i18next.t('market:market.sold_by_label')} ${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}</div>
+    <div class="cmDetailIcon" style="border-color:${color};color:${color}">${icon}</div>
+    <div class="cmDetailTitle" style="color:${color}">${displayName}</div>
+    <div class="cmDetailSub">${l ? `${i18next.t('market:market.sold_by_label')} ${escapeHtml(l.pseudo||'?')} · ${cmTimeAgo(l.created_at)}` : i18next.t('market:market.no_active_sale')}</div>
     ${statsHtml}${compareHtml}
-    <div class="cmDetailSub" style="margin-top:8px">${fmt(l.price)} 🪙${l.item_kind==='material'?(' × '+fmt(l.qty)):''}</div>
-    <button class="btnBuyListing">${i18next.t('market:market.buy_btn')}</button>`;
-  panel.querySelector('.btnBuyListing').onclick = () => buyCmListing(l);
+    ${l ? `<div class="cmPriceBig">${fmt(l.price)} 🪙${kind==='material'?(' × '+fmt(l.qty)):''}</div><button class="btnBuyListing">${i18next.t('market:market.buy_btn')}</button>`
+        : `<div class="cmDetailSub">${i18next.t('market:market.no_seller_hint')}</div>`}
+    <button class="cmOfferBtn" id="cmOfferBtn">📝 ${i18next.t('market:market.offer_buy_btn')}</button>
+    <div class="cmOfferForm" id="cmOfferForm">
+      <div class="cmOfferLbl">${i18next.t('market:market.offer_qty_label')}</div>
+      <div class="cmOfferStepRow"><input id="cmOfferQty" type="number" min="1" value="1"><button type="button" id="cmOfferQtyMinus">−</button><button type="button" id="cmOfferQtyPlus">+</button></div>
+      <div class="cmOfferLbl">${i18next.t('market:market.offer_buy_price_label')}</div>
+      <input id="cmOfferPrice" type="number" placeholder="${l ? Math.round(l.price*0.9) : 500000}">
+      <button id="cmOfferSubmitBtn">${i18next.t('market:market.offer_submit_btn')}</button>
+    </div>
+    <button class="cmOfferBtn" id="cmSellOfferBtn">🏷️ ${i18next.t('market:market.offer_sell_btn')}${owned>0?` (${i18next.t('market:market.owned_label')} : ${fmt(owned)})`:''}</button>
+    <div class="cmOfferForm" id="cmSellOfferForm">
+      ${owned>0 ? `<div class="cmOfferLbl">${i18next.t('market:market.offer_qty_label')} (/${fmt(owned)})</div>
+      <div class="cmOfferStepRow"><input id="cmSellOfferQty" type="number" min="1" max="${owned}" value="1"><button type="button" id="cmSellOfferQtyMinus">−</button><button type="button" id="cmSellOfferQtyPlus">+</button></div>` : ''}
+      <div class="cmOfferLbl">${owned>0 ? i18next.t('market:market.offer_sell_price_label') : i18next.t('market:market.not_owned_label', { name: tr(g.name) })}</div>
+      <input id="cmSellOfferPrice" type="number" placeholder="${l ? Math.round(l.price*1.05) : 550000}" ${owned>0?'':'disabled'}>
+      <button id="cmSellOfferSubmitBtn" ${owned>0?'':'disabled'}>${i18next.t('market:market.offer_sell_submit_btn')}</button>
+    </div>
+    <div id="cmBuyMsg"></div>`;
+
+  if (l) panel.querySelector('.btnBuyListing').onclick = () => openBuyModal(g);
+  wireCmOfferForms(panel, g, kind, enhLv, owned);
 }
-// achat en un clic : pose un ordre d'achat EXACTEMENT au prix/quantité de l'annonce → correspond
-// forcément (le vendeur a déjà posé son ordre à ce prix), donc exécution immédiate garantie
-async function buyCmListing(l) {
-  const msg = $a('commonMsg');
-  const { error } = await sb.rpc('market_place_order', {
-    p_side: 'buy', p_item_key: l.item_key, p_item_name: l.item_name, p_item_kind: l.item_kind,
-    p_price: l.price, p_qty: l.item_kind === 'material' ? l.qty : 1, p_inv_index: null,
-  });
-  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); msg.className = 'fail'; return; }
-  msg.textContent = i18next.t('market:market.purchase_complete'); msg.className = 'ok';
-  await loadCloudSave();
-  updateCmWallet();
-  refreshCmBrowse();
-  refreshMyMarketOrders();
+function wireCmOfferForms(panel, g, kind, enhLv, owned) {
+  const msg = () => $a('cmBuyMsg');
+  panel.querySelector('#cmOfferBtn').onclick = () => panel.querySelector('#cmOfferForm').classList.toggle('open');
+  const qtyEl = panel.querySelector('#cmOfferQty');
+  panel.querySelector('#cmOfferQtyMinus').onclick = () => { qtyEl.value = Math.max(1, (parseInt(qtyEl.value,10)||1)-1); };
+  panel.querySelector('#cmOfferQtyPlus').onclick = () => { qtyEl.value = (parseInt(qtyEl.value,10)||1)+1; };
+  panel.querySelector('#cmOfferSubmitBtn').onclick = async () => {
+    const m = msg();
+    const price = Number(panel.querySelector('#cmOfferPrice').value);
+    const qty = kind === 'material' ? Math.max(1, parseInt(qtyEl.value,10)||1) : 1;
+    if (!price || price <= 0) { m.className='fail'; m.textContent = i18next.t('market:market.invalid_price'); return; }
+    const { error } = await sb.rpc('market_place_order', {
+      p_side:'buy', p_item_key: cmItemKey(kind, g.name, enhLv), p_item_name: g.name, p_item_kind: kind,
+      p_price: price, p_qty: qty, p_inv_index: null,
+    });
+    if (error) { m.className='fail'; m.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); return; }
+    m.className='ok'; m.textContent = i18next.t('market:market.offer_placed');
+    await loadCloudSave();
+    updateCmWallet(); refreshCmBrowse(); refreshMyMarketOrders();
+  };
+  panel.querySelector('#cmSellOfferBtn').onclick = () => panel.querySelector('#cmSellOfferForm').classList.toggle('open');
+  const sellSubmit = panel.querySelector('#cmSellOfferSubmitBtn');
+  if (owned > 0) {
+    const sellQtyEl = panel.querySelector('#cmSellOfferQty');
+    if (sellQtyEl) {
+      panel.querySelector('#cmSellOfferQtyMinus').onclick = () => { sellQtyEl.value = Math.max(1, (parseInt(sellQtyEl.value,10)||1)-1); };
+      panel.querySelector('#cmSellOfferQtyPlus').onclick = () => { sellQtyEl.value = Math.min(owned, (parseInt(sellQtyEl.value,10)||1)+1); };
+    }
+    sellSubmit.onclick = async () => {
+      const m = msg();
+      const price = Number(panel.querySelector('#cmSellOfferPrice').value);
+      const qty = kind === 'material' ? Math.max(1, Math.min(owned, parseInt(sellQtyEl.value,10)||1)) : 1;
+      if (!price || price <= 0) { m.className='fail'; m.textContent = i18next.t('market:market.invalid_price'); return; }
+      const invIndex = findInvIndexForSell(g.name, kind, enhLv);
+      if (invIndex === -1) { m.className='fail'; m.textContent = i18next.t('market:market.no_item_owned'); return; }
+      const { error } = await sb.rpc('market_place_order', {
+        p_side:'sell', p_item_key: cmItemKey(kind, g.name, enhLv), p_item_name: g.name, p_item_kind: kind,
+        p_price: price, p_qty: qty, p_inv_index: invIndex,
+      });
+      if (error) { m.className='fail'; m.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); return; }
+      m.className='ok'; m.textContent = i18next.t('market:market.sell_offer_placed');
+      await loadCloudSave();
+      updateCmWallet(); refreshCmBrowse(); refreshMyMarketOrders();
+    };
+  }
 }
 $a('cmSearch').oninput = () => renderCmListingsList();
 $a('cmSort').onchange = () => renderCmListingsList();
-// pose un ordre d'achat ou de vente ; p_inv_index n'est nécessaire QUE pour une vente (matériau =
-// trouvé automatiquement par nom puisqu'il tient en un seul emplacement empilé ; équipement/bijou =
-// passé explicitement par le picker "Vendre un objet de mon sac")
-async function placeMarketOrder(side, key, name, kind, priceStr, qtyStr, invIndex) {
-  const msg = $a('commonMsg');
-  const price = Number(priceStr), qty = parseInt(qtyStr, 10) || 1;
-  if (!price || price <= 0) { msg.textContent = i18next.t('market:market.invalid_price'); msg.className = 'fail'; return; }
-  if (side === 'sell' && invIndex == null) {
-    invIndex = INV.findIndex(s => s && s.kind === kind && s.name === name);
-    if (invIndex === -1) { msg.textContent = i18next.t('market:market.no_item_owned'); msg.className = 'fail'; return; }
-  }
-  const { error } = await sb.rpc('market_place_order', {
-    p_side: side, p_item_key: key, p_item_name: name, p_item_kind: kind,
-    p_price: price, p_qty: kind === 'material' ? qty : 1, p_inv_index: side==='sell' ? invIndex : null,
-  });
-  if (error) { msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); msg.className = 'fail'; return; }
-  msg.textContent = i18next.t('market:market.order_placed');
-  msg.className = 'ok';
-  await loadCloudSave();
-  refreshCommonMarket();
+
+// ============================================================
+// popup "Acheter" façon Marché Central BDO (2026-07-22) : échelle de prix RÉELLE
+// (market_order_book, regroupée par prix), stepper quantité, cycle de niveau d'optimisation
+// (variantes enhLv réellement en vente), graphique (market_trades réel), coût total.
+// ============================================================
+let cmBmEntry = null; // { name, kind } de l'objet actuellement affiché dans la popup
+let cmBmEnhLv = 0;
+let cmBmLadder = []; // [{price, stock, orders}] -- construit depuis market_order_book, PAS inventé
+async function openBuyModal(g) {
+  cmBmEntry = { name: g.name, kind: g.kind };
+  cmBmEnhLv = g.best ? ((g.best.item_snapshot && g.best.item_snapshot.enhLv) || 0) : (g.lv || 0);
+  const icon = g.best ? cmListingIcon(g.best) : (g.catalogEntry ? g.catalogEntry.icon : '◈');
+  const color = g.best ? cmListingColor(g.best) : (g.catalogEntry ? g.catalogEntry.color : '#c9a55a');
+  $a('cmBmIcon').innerHTML = icon; $a('cmBmIcon').style.color = color;
+  $a('cmBmName').textContent = (cmBmEnhLv ? ENH_NAMES[cmBmEnhLv]+' ' : '') + tr(g.name);
+  $a('cmBmPrice').value = g.best ? g.best.price : '';
+  $a('cmBmQty').value = 1;
+  $a('cmBmSolde').textContent = fmt(Math.round(S.silver)) + ' 🪙';
+  $a('cmBmMsg').textContent = ''; $a('cmBmMsg').className = 'cmBmMsg';
+  await refreshBuyModalLadderAndStats();
+  updateBmCost();
+  $a('cmBuyModalBg').classList.add('open');
 }
-// mes ordres ouverts (achat + vente), avec bouton annuler qui rend le silver/objet bloqué
+function bmItemKey() { return cmItemKey(cmBmEntry.kind, cmBmEntry.name, cmBmEnhLv); }
+async function refreshBuyModalLadderAndStats() {
+  const key = bmItemKey();
+  const [{ data: book }, { data: trades }] = await Promise.all([
+    sb.rpc('market_order_book', { p_item_key: key }),
+    sb.from('market_trades').select('price, qty, created_at').eq('item_key', key).order('created_at', { ascending:true }).limit(20),
+  ]);
+  const stockByPrice = new Map(), ordersByPrice = new Map();
+  (book || []).forEach(r => {
+    if (r.side === 'sell') stockByPrice.set(Number(r.price), (stockByPrice.get(Number(r.price))||0) + Number(r.qty));
+    else ordersByPrice.set(Number(r.price), (ordersByPrice.get(Number(r.price))||0) + Number(r.qty));
+  });
+  const prices = new Set([...stockByPrice.keys(), ...ordersByPrice.keys()]);
+  cmBmLadder = [...prices].sort((a,b) => b - a).map(price => ({
+    price, stock: stockByPrice.get(price) || 0, orders: ordersByPrice.get(price) || 0,
+  }));
+  renderBmTierList();
+  const totalStock = [...stockByPrice.values()].reduce((n,q) => n+q, 0);
+  const lastTrade = (trades && trades.length) ? trades[trades.length-1] : null;
+  $a('cmBmStatsGrid').innerHTML = `
+    <div class="cmBmStat"><div class="cmBmLbl">${i18next.t('market:market.col_stock')}</div><div class="cmBmStatVal">${fmt(totalStock)}</div></div>
+    <div class="cmBmStat"><div class="cmBmLbl">${i18next.t('market:market.recent_price_label')}</div><div class="cmBmStatVal">${lastTrade?fmt(lastTrade.price):'—'}</div></div>
+    <div class="cmBmStat"><div class="cmBmLbl">${i18next.t('market:market.transactions_label')}</div><div class="cmBmStatVal">${(trades||[]).length}${(trades||[]).length===20?'+':''}</div></div>
+    <div class="cmBmStat"><div class="cmBmLbl">${i18next.t('market:market.last_transaction_label')}</div><div class="cmBmStatVal">${lastTrade?cmTimeAgo(lastTrade.created_at):'—'}</div></div>`;
+  drawItemPriceChart('cmBmChart', trades || []);
+  const group = cmListings.filter(l => l.item_name === cmBmEntry.name && l.item_kind === cmBmEntry.kind);
+  const enhLvs = [...new Set(group.map(l => (l.item_snapshot && l.item_snapshot.enhLv) || 0))].sort((a,b) => a-b);
+  const tierWrap = $a('cmBmTierRowWrap');
+  if (enhLvs.length > 1) { tierWrap.style.display = ''; $a('cmBmTierVal').textContent = ENH_NAMES[cmBmEnhLv]; }
+  else tierWrap.style.display = 'none';
+}
+function renderBmTierList() {
+  const list = $a('cmBmTierList');
+  const selectedPrice = Number($a('cmBmPrice').value) || null;
+  if (!cmBmLadder.length) { list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.no_orders_label')}</div>`; return; }
+  list.innerHTML = cmBmLadder.map(r => `<div class="cmBmTierRow${r.stock>0?' hasStock':''}${r.price===selectedPrice?' sel':''}" data-price="${r.price}">
+    <span>${r.stock>0?fmt(r.stock):'—'}</span><span class="p">${fmt(r.price)}</span><span>${r.orders>0?fmt(r.orders):'—'}</span></div>`).join('');
+  list.querySelectorAll('.cmBmTierRow').forEach(row => {
+    row.onclick = () => { $a('cmBmPrice').value = row.dataset.price; renderBmTierList(); updateBmCost(); };
+  });
+}
+function updateBmCost() {
+  const price = Number($a('cmBmPrice').value) || 0;
+  const qty = parseInt($a('cmBmQty').value, 10) || 1;
+  const total = price * qty;
+  $a('cmBmCostBig').textContent = fmt(total) + ' 🪙';
+  $a('cmBmAfter').textContent = fmt(Math.round(S.silver) - total) + ' 🪙';
+}
+async function cycleBmTier(dir) {
+  const group = cmListings.filter(l => l.item_name === cmBmEntry.name && l.item_kind === cmBmEntry.kind);
+  const enhLvs = [...new Set(group.map(l => (l.item_snapshot && l.item_snapshot.enhLv) || 0))].sort((a,b) => a-b);
+  const idx = enhLvs.indexOf(cmBmEnhLv);
+  if (idx === -1 || enhLvs.length < 2) return;
+  cmBmEnhLv = enhLvs[(idx + dir + enhLvs.length) % enhLvs.length];
+  const best = group.filter(l => ((l.item_snapshot && l.item_snapshot.enhLv)||0) === cmBmEnhLv).reduce((a,b) => a.price < b.price ? a : b);
+  $a('cmBmName').textContent = (cmBmEnhLv ? ENH_NAMES[cmBmEnhLv]+' ' : '') + tr(cmBmEntry.name);
+  $a('cmBmPrice').value = best.price;
+  await refreshBuyModalLadderAndStats();
+  updateBmCost();
+}
+$a('cmBmClose').onclick = () => $a('cmBuyModalBg').classList.remove('open');
+$a('cmBmPrice').addEventListener('input', () => { renderBmTierList(); updateBmCost(); });
+$a('cmBmQty').addEventListener('input', updateBmCost);
+$a('cmBmQtyPlus').onclick = () => { $a('cmBmQty').value = (parseInt($a('cmBmQty').value,10)||1)+1; updateBmCost(); };
+$a('cmBmQtyMinus').onclick = () => { $a('cmBmQty').value = Math.max(1,(parseInt($a('cmBmQty').value,10)||1)-1); updateBmCost(); };
+$a('cmBmMax').onclick = () => { if (cmBmLadder.length) { $a('cmBmPrice').value = Math.max(...cmBmLadder.map(r=>r.price)); renderBmTierList(); updateBmCost(); } };
+$a('cmBmMin').onclick = () => { if (cmBmLadder.length) { $a('cmBmPrice').value = Math.min(...cmBmLadder.map(r=>r.price)); renderBmTierList(); updateBmCost(); } };
+$a('cmBmTierPlus').onclick = () => cycleBmTier(1);
+$a('cmBmTierMinus').onclick = () => cycleBmTier(-1);
+$a('cmBmBuyBtn').onclick = async () => {
+  const price = Number($a('cmBmPrice').value);
+  const qty = cmBmEntry.kind === 'material' ? (parseInt($a('cmBmQty').value,10) || 1) : 1;
+  const msg = $a('cmBmMsg');
+  if (!price || price <= 0) { msg.className='cmBmMsg fail'; msg.textContent = i18next.t('market:market.invalid_price'); return; }
+  const { data: orderId, error } = await sb.rpc('market_place_order', {
+    p_side:'buy', p_item_key: bmItemKey(), p_item_name: cmBmEntry.name, p_item_kind: cmBmEntry.kind,
+    p_price: price, p_qty: qty, p_inv_index: null,
+  });
+  if (error) { msg.className='cmBmMsg fail'; msg.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); return; }
+  await loadCloudSave();
+  // détermine si l'achat a été exécuté immédiatement (matché serveur) ou reste en attente, en
+  // relisant le VRAI statut de l'ordre -- jamais deviné/simulé côté client
+  const { data: myOrders } = await sb.rpc('market_my_orders');
+  const placed = (myOrders || []).find(o => o.id === orderId);
+  msg.className = 'cmBmMsg ok';
+  msg.textContent = (placed && placed.status === 'filled')
+    ? i18next.t('market:market.instant_buy_done', { price: fmt(placed.price) })
+    : i18next.t('market:market.pending_order_created');
+  $a('cmBmSolde').textContent = fmt(Math.round(S.silver)) + ' 🪙';
+  updateBmCost();
+  await refreshBuyModalLadderAndStats();
+  updateCmWallet();
+  refreshCmBrowse();
+  refreshMyMarketOrders();
+};
+let cmBmMouseDownOnBackdrop = false;
+$a('cmBuyModalBg').addEventListener('mousedown', e => { cmBmMouseDownOnBackdrop = (e.target.id === 'cmBuyModalBg'); });
+$a('cmBuyModalBg').addEventListener('click', e => { if (e.target.id === 'cmBuyModalBg' && cmBmMouseDownOnBackdrop) $a('cmBuyModalBg').classList.remove('open'); });
+
+// chandelier canvas générique (2026-07-16, généralisé le 2026-07-22 pour marcher sur N'IMPORTE
+// QUEL item_key, pas seulement les matériaux) : chaque transaction = 1 bougie (open = prix de la
+// transaction précédente, close = son propre prix) -- fidèle aux VRAIES transactions, sans
+// inventer de mèche haute/basse intra-transaction
+function drawItemPriceChart(canvasId, trades) {
+  const canvas = $a(canvasId); if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width = canvas.clientWidth * 2;
+  const H = canvas.height = 110 * 2;
+  ctx.clearRect(0,0,W,H);
+  if (trades.length < 2) {
+    ctx.fillStyle = '#5a5f74'; ctx.font = '18px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(i18next.t('market:market.not_enough_transactions'), W/2, H/2);
+    return;
+  }
+  const candles = [];
+  for (let i = 1; i < trades.length; i++) {
+    const open = Number(trades[i-1].price), close = Number(trades[i].price);
+    candles.push({ open, close, high: Math.max(open,close), low: Math.min(open,close) });
+  }
+  const padL = 60, padR = 12, padT = 12, padB = 12;
+  const plotW = W - padL - padR, plotH = H - padT - padB;
+  const allPrices = candles.flatMap(c => [c.high, c.low]);
+  let pMin = Math.min(...allPrices), pMax = Math.max(...allPrices);
+  if (pMin === pMax) { pMin *= 0.98; pMax *= 1.02; }
+  const pad = (pMax-pMin)*0.08; pMin -= pad; pMax += pad;
+  const y = p => padT + plotH - ((p-pMin)/(pMax-pMin))*plotH;
+  const cw = plotW/candles.length;
+  ctx.strokeStyle = '#2c2a33'; ctx.lineWidth = 1; ctx.font = '16px sans-serif'; ctx.fillStyle = '#9a917e'; ctx.textAlign = 'right';
+  for (let i = 0; i <= 4; i++) {
+    const py = padT + plotH*i/4;
+    ctx.beginPath(); ctx.moveTo(padL,py); ctx.lineTo(W-padR,py); ctx.stroke();
+    ctx.fillText(fmt(pMax - (pMax-pMin)*i/4), padL-8, py+5);
+  }
+  candles.forEach((c,i) => {
+    const cx = padL + cw*i + cw/2;
+    const up = c.close >= c.open;
+    ctx.strokeStyle = ctx.fillStyle = up ? '#70d890' : '#e06060';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(cx, y(c.high)); ctx.lineTo(cx, y(c.low)); ctx.stroke();
+    const bodyTop = y(Math.max(c.open,c.close)), bodyBot = y(Math.min(c.open,c.close));
+    const bw = Math.max(3, cw*0.55);
+    ctx.fillRect(cx-bw/2, bodyTop, bw, Math.max(2, bodyBot-bodyTop));
+  });
+}
+
+// ============================================================
+// "Mes ordres" ancré à droite en permanence (2026-07-22) : onglets Achat/Vente séparés, remplace
+// l'ancien 3e sous-onglet. Cancel = rend le silver/objet bloqué (market_cancel_order, inchangé).
+// ============================================================
+function wireCmMyOrdersTabs() {
+  document.querySelectorAll('.cmMyOrdersTab').forEach(btn => {
+    btn.onclick = () => { cmMyOrdersTab = btn.dataset.side; renderCmMyOrdersList(); };
+  });
+}
 async function refreshMyMarketOrders() {
+  const { data } = await sb.rpc('market_my_orders');
+  cmMyOrdersData = data || [];
+  updateCmWallet();
+  renderCmMyOrdersList();
+}
+function renderCmMyOrdersList() {
   const box = $a('cmMyOrders'); if (!box) return;
-  const { data, error } = await sb.rpc('market_my_orders');
-  if (error || !data || !data.length) { box.innerHTML = `<div class="mEmpty">${i18next.t('market:market.no_orders_label')}</div>`; return; }
-  box.innerHTML = data.map(o => `
+  document.querySelectorAll('.cmMyOrdersTab').forEach(btn => btn.classList.toggle('active', btn.dataset.side === cmMyOrdersTab));
+  const buyCount = cmMyOrdersData.filter(o => o.side === 'buy').length;
+  const sellCount = cmMyOrdersData.filter(o => o.side === 'sell').length;
+  if ($a('cmOrdersCountBuy')) $a('cmOrdersCountBuy').textContent = fmt(buyCount);
+  if ($a('cmOrdersCountSell')) $a('cmOrdersCountSell').textContent = fmt(sellCount);
+  const rows = cmMyOrdersData.filter(o => o.side === cmMyOrdersTab);
+  if (!rows.length) { box.innerHTML = `<div class="mEmpty">${i18next.t('market:market.no_orders_label')}</div>`; return; }
+  box.innerHTML = rows.map(o => `
     <div class="cmRow">
-      <div class="cmInfo"><div class="mName">${o.side==='buy'?'🛒':'🏷️'} ${tr(o.item_name)}</div>
-        <div class="cmOwned">${o.side==='buy'?i18next.t('market:market.buy_label'):i18next.t('market:market.sell_label')} · ${fmt(o.price)} 🪙 × ${fmt(o.qty)}/${fmt(o.qty_original)} · ${o.status==='open'?i18next.t('market:market.status_open'):i18next.t('market:market.status_done')}</div></div>
+      <div class="cmInfo"><div class="mName">${o.side==='buy'?'🛒':'🏷️'} ${o.item_snapshot&&o.item_snapshot.enhLv?ENH_NAMES[o.item_snapshot.enhLv]+' ':''}${tr(o.item_name)}</div>
+        <div class="cmOwned">${fmt(o.price)} 🪙 × ${fmt(o.qty)}/${fmt(o.qty_original)} · ${o.status==='open'?i18next.t('market:market.status_open'):i18next.t('market:market.status_done')}</div></div>
       ${o.status==='open' ? `<button class="cmCancelOrder" data-id="${o.id}">${i18next.t('market:market.cancel_btn')}</button>` : ''}
     </div>`).join('');
   box.querySelectorAll('.cmCancelOrder').forEach(btn => {
@@ -497,4 +650,3 @@ async function refreshMyMarketOrders() {
     };
   });
 }
-

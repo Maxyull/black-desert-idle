@@ -1449,21 +1449,100 @@
     if (typeof MARKET_SELL_TAX_RATE === 'undefined') return; // pas de DOM/module marché chargé
     assert('MARKET_SELL_TAX_RATE vaut bien 35% (0.65 côté SQL)', MARKET_SELL_TAX_RATE === 0.35, `got=${MARKET_SELL_TAX_RATE}`);
   }
-  // aperçu "vous recevrez ~X après taxe" : calcul correct (prix*qty*80%, arrondi vers le bas),
-  // jamais affiché en mode Achat (l'acheteur paie toujours le plein prix affiché)
-  function testMarketTaxHintComputesNetAndOnlyShowsOnSell() {
-    if (!$('mktSellTaxHint') || !$('mktPriceInput') || !$('mktQtyInput')) return; // pas de DOM marché
-    const s = { side: mktSide, price: $('mktPriceInput').value, qty: $('mktQtyInput').value };
-    mktSide = 'buy';
-    $('mktPriceInput').value = '100'; $('mktQtyInput').value = '10';
-    updateMktTaxHint();
-    assert('Aperçu masqué en mode Achat', $('mktSellTaxHint').style.display === 'none');
-    mktSide = 'sell';
-    updateMktTaxHint();
-    assert('Aperçu visible en mode Vente', $('mktSellTaxHint').style.display !== 'none');
-    assert('Aperçu affiche bien le net à 65% (100*10*0.65=650)', $('mktSellTaxHint').textContent.includes('650'), `texte=${$('mktSellTaxHint').textContent}`);
-    mktSide = s.side; $('mktPriceInput').value = s.price; $('mktQtyInput').value = s.qty;
-    updateMktTaxHint();
+  // ---------- refonte "Marché commun" v3 (2026-07-22) : catalogue unifié + popup Acheter ----------
+  // Le catalogue "objets sans vente en cours" (marketCatalog()) DOIT être construit depuis les
+  // VRAIES données du jeu (GEAR_TIERS/ZONES/MARKET_MATERIALS), jamais depuis des noms inventés --
+  // le mockup fourni utilisait des noms de boss BDO réels mais absents de CE jeu (Kzarka/Kutum/
+  // Nouver/Ogre pour du gear, alors que Kzarka n'existe ici que comme WORLD BOSS et que le gear
+  // suit ses propres paliers Naru/Tuvala/Yuria/Grunil). Garde-fou : chaque entrée catalogue doit
+  // pouvoir être retracée jusqu'à sa source réelle.
+  function testMarketCatalogUsesOnlyRealGameNames() {
+    if (typeof marketCatalog === 'undefined') return;
+    const catalog = marketCatalog();
+    assert('marketCatalog() renvoie au moins une entrée', catalog.length > 0);
+    const gearNames = new Set();
+    GEAR_TIERS.forEach(t => Object.values(t.sets).forEach(n => gearNames.add(n)));
+    const jewelNames = new Set(ZONES.map(z => z.loot && z.loot.jackpot && z.loot.jackpot.name).filter(Boolean));
+    const matNames = new Set(MARKET_MATERIALS.map(m => m.name));
+    const bogus = catalog.filter(c => !gearNames.has(c.name) && !jewelNames.has(c.name) && !matNames.has(c.name));
+    assert('Chaque entrée du catalogue vient d\'une VRAIE source de données (GEAR_TIERS/ZONES/MARKET_MATERIALS), aucun nom inventé façon mockup',
+      bogus.length === 0, `noms non traçables=${bogus.map(c=>c.name).join(', ')}`);
+    assert('Le catalogue ne contient PAS de noms fictifs du mockup (Kzarka/Kutum/Nouver en tant que gear)',
+      !catalog.some(c => /Kzarka|Kutum|Nouver/.test(c.name)));
+  }
+  // GEAR_TIERS × 7 slots = toute l'armure/les armes early-game ; la catégorie "artifact" (slots
+  // artifact1/artifact2/eqStone) n'a AUCUNE source de drop dans ce jeu (voir NO_SOURCE_SLOTS,
+  // inventory-ui.js) -- décision documentée : aucune entrée catalogue générée pour elle.
+  function testMarketCatalogCoversGearSlotsAndSkipsArtifactDeadCategory() {
+    if (typeof marketCatalog === 'undefined') return;
+    const catalog = marketCatalog();
+    const expectedGear = GEAR_TIERS.length * 7;
+    const gearCount = catalog.filter(c => c.kind === 'gear').length;
+    assert(`Catalogue : ${expectedGear} entrées gear (GEAR_TIERS × 7 slots)`, gearCount === expectedGear, `got=${gearCount}`);
+    assert('Catalogue : au moins un matériau par MARKET_MATERIALS', catalog.filter(c => c.kind === 'material').length === MARKET_MATERIALS.length);
+    assert('Catalogue : aucune entrée catégorie "artifact" (aucune source de drop réelle, voir NO_SOURCE_SLOTS)',
+      !catalog.some(c => c.catId === 'artifact'));
+    if (typeof NO_SOURCE_SLOTS !== 'undefined') {
+      assert('Hypothèse encore vraie : artifact1/artifact2/eqStone toujours sans source de drop (sinon revoir marketCatalog())',
+        ['artifact1','artifact2','eqStone'].every(s => NO_SOURCE_SLOTS.includes(s)));
+    }
+  }
+  // clé d'objet cohérente avec le serveur (market_place_order/v_real_key) : 'material:<nom>' pour
+  // les matériaux, 'gear:<nom>+<enhLv>' pour TOUT le reste (gear ET bijoux, le serveur ne distingue
+  // pas les deux dans son calcul de clé) -- toute divergence casserait market_order_book/market_trades.
+  function testCmItemKeyMatchesServerKeyFormat() {
+    if (typeof cmItemKey === 'undefined') return;
+    assert('clé matériau = material:<nom>', cmItemKey('material', 'Pierre de Novice', 0) === 'material:Pierre de Novice');
+    assert('clé gear = gear:<nom>+<enhLv>', cmItemKey('gear', 'Bâton Naru', 5) === 'gear:Bâton Naru+5');
+    assert('clé bijou (jackpot) utilise aussi le préfixe gear: comme le serveur (v_real_key)', cmItemKey('jackpot', 'Anneau Naru', 0) === 'gear:Anneau Naru+0');
+    assert('enhLv manquant retombe sur 0', cmItemKey('gear', 'Bâton Naru', undefined) === 'gear:Bâton Naru+0');
+  }
+  // bug réel corrigé le 2026-07-22 : l'ancien placeMarketOrder() (mort depuis le retrait de l'onglet
+  // "Vendre" le 2026-07-08, jamais appelé) résolvait l'emplacement à vendre par SEUL nom+kind, sans
+  // filtrer par enhLv -- avec 2 exemplaires du même objet à des paliers différents dans le sac, il
+  // pouvait vendre le MAUVAIS. findInvIndexForSell()/ownedQtyFor() (nouvelle popup Acheter/offre de
+  // vente) DOIVENT filtrer sur le enhLv exact.
+  function testFindInvIndexForSellMatchesExactEnhLv() {
+    if (typeof findInvIndexForSell === 'undefined') return;
+    const s = { a: INV[INV_SIZE-1], b: INV[INV_SIZE-2] };
+    INV[INV_SIZE-1] = { name:'Bâton Naru', kind:'gear', slot:'weapon', ap:10, dp:0, hp:0, enhLv:3, key:'t_low' };
+    INV[INV_SIZE-2] = { name:'Bâton Naru', kind:'gear', slot:'weapon', ap:20, dp:0, hp:0, enhLv:12, key:'t_high' };
+    const idxLow = findInvIndexForSell('Bâton Naru', 'gear', 3);
+    const idxHigh = findInvIndexForSell('Bâton Naru', 'gear', 12);
+    assert('findInvIndexForSell retrouve le bon exemplaire à enhLv=3 (pas l\'autre variante)', idxLow === INV_SIZE-1, `got=${idxLow}`);
+    assert('findInvIndexForSell retrouve le bon exemplaire à enhLv=12 (pas l\'autre variante)', idxHigh === INV_SIZE-2, `got=${idxHigh}`);
+    assert('findInvIndexForSell renvoie -1 si aucun exemplaire à ce enhLv exact', findInvIndexForSell('Bâton Naru', 'gear', 7) === -1);
+    INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b;
+  }
+  // ownedQtyFor : les matériaux s'empilent (somme des qty sur tous les slots), le gear/bijou est
+  // toujours binaire (0 ou 1) MÊME s'il existe d'autres exemplaires du même nom à un autre enhLv
+  // (ils ne comptent PAS comme "possédé" pour CE niveau précis consulté dans le détail/la popup).
+  function testOwnedQtyForMaterialsSumsButGearIsBinaryPerEnhLv() {
+    if (typeof ownedQtyFor === 'undefined') return;
+    const s = { a: INV[INV_SIZE-1], b: INV[INV_SIZE-2], c: INV[INV_SIZE-3] };
+    INV[INV_SIZE-1] = { name:'Pierre de Novice', kind:'material', qty:12, stackable:true, key:'m1' };
+    INV[INV_SIZE-2] = { name:'Pierre de Novice', kind:'material', qty:5, stackable:true, key:'m2' };
+    INV[INV_SIZE-3] = { name:'Bâton Naru', kind:'gear', slot:'weapon', enhLv:9, key:'g1' };
+    assert('ownedQtyFor matériau = somme des stacks (12+5=17)', ownedQtyFor('Pierre de Novice', 'material', 0) === 17, `got=${ownedQtyFor('Pierre de Novice','material',0)}`);
+    assert('ownedQtyFor gear au enhLv réellement possédé = 1', ownedQtyFor('Bâton Naru', 'gear', 9) === 1);
+    assert('ownedQtyFor gear à un AUTRE enhLv (non possédé) = 0, même si le nom existe ailleurs dans le sac', ownedQtyFor('Bâton Naru', 'gear', 3) === 0);
+    INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b; INV[INV_SIZE-3] = s.c;
+  }
+  // garde-fou d'ordre de chargement (même famille que testSorcierRenderLoadsBeforeSyncStartupCallers) :
+  // market.js appelle marketCatalog() qui lit GEAR_TIERS/ZONES/MARKET_MATERIALS et des fonctions
+  // d'icônes (gear-icons.js) -- uniquement DANS des corps de fonction (jamais au chargement
+  // immédiat), donc l'ordre relatif n'a normalement pas d'importance (voir CLAUDE.md §7). Ce test
+  // fige quand même market.js APRÈS ces fichiers dans index.dev.html, pour que ça reste vrai si un
+  // jour un appel top-level y est ajouté par erreur.
+  function testMarketScriptLoadsAfterGearZoneAndIconData() {
+    const scripts = [...document.scripts].map(s => s.src);
+    const idxOf = frag => scripts.findIndex(s => s.includes(frag));
+    const idxMarket = idxOf('src/market/market.js');
+    if (idxMarket === -1) return; // pas chargé dans ce contexte (ex: bundle prod sans tests)
+    ['src/inventory/gear-icons.js', 'src/world/zones-data.js', 'src/world/gear-tiers-data.js', 'src/inventory/inventory-ui.js'].forEach(frag => {
+      const idx = idxOf(frag);
+      assert(`market.js charge après ${frag} (marketCatalog() lit ces données/fonctions)`, idx !== -1 && idx < idxMarket, `idx(${frag})=${idx} idxMarket=${idxMarket}`);
+    });
   }
   // "verifie le wiki de fond en comble" (2026-07-18) -- audit qui a trouvé le Wiki affirmant "4
   // objets collectibles" pour le Trésor de Velia alors que VELIA_TREASURE n'en contient que 2.
@@ -3592,7 +3671,12 @@
     testInvOptTargetDoesNotEquip();
     testCompendiumEvictsItemOnceItReachesPen();
     testMarketSellTaxRateMatchesServerFactor();
-    testMarketTaxHintComputesNetAndOnlyShowsOnSell();
+    testMarketCatalogUsesOnlyRealGameNames();
+    testMarketCatalogCoversGearSlotsAndSkipsArtifactDeadCategory();
+    testCmItemKeyMatchesServerKeyFormat();
+    testFindInvIndexForSellMatchesExactEnhLv();
+    testOwnedQtyForMaterialsSumsButGearIsBinaryPerEnhLv();
+    testMarketScriptLoadsAfterGearZoneAndIconData();
     testWikiTreasureCountMatchesRealArray();
     testWikiMentionsCronCostPerTier();
     testWikiMentionsBothWorldBosses();
