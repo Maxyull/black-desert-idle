@@ -43,6 +43,8 @@ PROD_HTML = ROOT / "index.html"
 BUILD_DIR = ROOT / "build"
 BUNDLE_PATH = BUILD_DIR / "source.js"
 MINIFIED_BUNDLE_PATH = BUILD_DIR / "source.min.js"
+CSS_PATH = ROOT / "src" / "styles" / "styles.css"
+MINIFIED_CSS_PATH = BUILD_DIR / "styles.min.css"
 
 # fichiers explicitement exclus du bundle prod meme s'ils apparaissent dans index.dev.html
 EXCLUDED_SUBSTRINGS = ("tests/tests.js", "meta/patch-notes-data.js", "supabase-js")
@@ -230,6 +232,24 @@ def minify_bundle_with_terser():
         sys.exit(exc.returncode)
 
 
+def minify_css_with_csso():
+    """Minifie src/styles/styles.css avec csso (2026-07-21, repo-audit-todo.md point 5) --
+    equivalent CSS de minify_bundle_with_terser() ci-dessus, meme convention npx.cmd Windows.
+    csso-cli est un simple wrapper CLI autour de csso (compression + suppression de doublons),
+    pas de renommage de selecteurs/variables (rien d'equivalent aux risques de --toplevel cote JS :
+    le CSS n'a pas de scope global partage a casser)."""
+    BUILD_DIR.mkdir(exist_ok=True)
+    cmd = [NPX_CMD, "--no-install", "csso", str(CSS_PATH), "-o", str(MINIFIED_CSS_PATH)]
+    try:
+        subprocess.run(cmd, cwd=ROOT, check=True)
+    except FileNotFoundError:
+        print("ERREUR: npx introuvable. Installe Node/npm, lance npm install, puis relance.", file=sys.stderr)
+        sys.exit(1)
+    except subprocess.CalledProcessError as exc:
+        print("ERREUR: csso a echoue. Lance npm install, puis relance le build.", file=sys.stderr)
+        sys.exit(exc.returncode)
+
+
 def gen_locales():
     """Recompile /locales/{fr,en}/*.json en src/core/i18n-resources.generated.js (voir
     docs/I18N_PLAN.md §5, CLAUDE.md §31) -- lance AVANT la concatenation, pour que le fichier genere
@@ -290,8 +310,14 @@ def main():
     min_pct = 100 * (1 - minified_size / readable_size) if readable_size else 0
     print(f"build/source.min.js genere : {format_bytes(readable_size)} -> {format_bytes(minified_size)} ({min_pct:.1f}% de reduction)")
 
+    minify_css_with_csso()
+    css_size = CSS_PATH.stat().st_size
+    min_css_size = MINIFIED_CSS_PATH.stat().st_size
+    css_pct = 100 * (1 - min_css_size / css_size) if css_size else 0
+    print(f"build/styles.min.css genere : {format_bytes(css_size)} -> {format_bytes(min_css_size)} ({css_pct:.1f}% de reduction)")
+
     rewrite_prod_html(dev_html)
-    print("index.html (prod) reecrit pour charger build/source.min.js")
+    print("index.html (prod) reecrit pour charger build/source.min.js + build/styles.min.css")
 
 
 def rewrite_prod_html(dev_html):
@@ -306,7 +332,9 @@ def rewrite_prod_html(dev_html):
         separement (pas migree vers Supabase -- Phase 2) : sans elle, CURRENT_VERSION =
         PATCH_NOTES[0].v (top-level dans game-supabase.js, donc dans le bundle) plante au
         chargement ;
-      - <script src="tests/tests.js...> -> retiree entierement, jamais chargee en prod."""
+      - <script src="tests/tests.js...> -> retiree entierement, jamais chargee en prod ;
+      - <link rel="stylesheet" href="src/styles/styles.css...> -> pointe vers build/styles.min.css
+        a la place (2026-07-21, repo-audit-todo.md point 5)."""
     m = re.search(r"\?v=(\d+)", dev_html)
     version = m.group(1) if m else "1"
 
@@ -337,6 +365,9 @@ def rewrite_prod_html(dev_html):
             continue  # les autres balises src/|meta/ sont sautees (deja placees ci-dessus)
         if re.search(r'<script src="tests/tests\.js', line):
             continue  # jamais charge en prod
+        if re.search(r'<link rel="stylesheet" href="src/styles/styles\.css', line):
+            prod_lines.append(f'<link rel="stylesheet" href="build/styles.min.css?v={version}">')
+            continue
         prod_lines.append(line)
 
     if not bundle_tag_inserted:

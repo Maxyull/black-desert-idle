@@ -95,6 +95,16 @@ function mergeDupOutcomes(arr, key){
   },[]);
 }
 
+/**
+ * Détermine quelle rareté (basse ou haute des 2 parents) sert de base au tirage de fusion.
+ * Toujours l'un des 2, jamais une 3e valeur — l'"amélioration" éventuelle (+1/+2/+3) est un
+ * tirage séparé fait ensuite par computeFusionOdds()/rollFusionRarity().
+ * @param {object} a - pet parent 1 (lit .rar).
+ * @param {object} b - pet parent 2 (lit .rar).
+ * @returns {{rarGap:number, outcomes:{rar:number,pct:number}[]}} rarGap = écart absolu de rareté ;
+ *   outcomes = 1 entrée à 100% si même rareté, sinon 2 entrées (basse/haute) dont les % somment à
+ *   100 — la rareté BASSE est favorisée, de 58/42 (écart 1) à 90/10 (écart maximal, 5).
+ */
 function baseRarityDraw(a, b){
   const rarGap = Math.abs(a.rar-b.rar);
   if(rarGap===0) return {rarGap, outcomes:[{rar:a.rar, pct:100}]};
@@ -104,9 +114,20 @@ function baseRarityDraw(a, b){
   return {rarGap, outcomes:[{rar:lo, pct:100-pctHigher},{rar:hi, pct:pctHigher}]};
 }
 
+/**
+ * Calcule la distribution COMPLÈTE des résultats possibles d'une fusion (affichage préview, pas
+ * le tirage réel — voir rollFusionRarity() pour le tirage effectif au moment de fusionner).
+ * @param {object} a - pet parent 1 (lit .rar, .tier).
+ * @param {object} b - pet parent 2 (lit .rar, .tier).
+ * @returns {object} { tierGap, gapFactor, rarGap, baseRarityOutcomes, baseTier, rarOutcomes,
+ *   tierOutcomes } — rarOutcomes/tierOutcomes sont déjà fusionnés (mergeDupOutcomes) et sommables
+ *   à 100% chacun.
+ */
 function computeFusionOdds(a, b){
   const tierGap = Math.abs((a.tier||1)-(b.tier||1));
-  // gapFactor : 1.0 si même tier (gap=0), descend jusqu'à un plancher de 0.15 si l'écart est grand (T1 vs T5 = gap 4)
+  // gapFactor : 1.0 si même tier (gap=0), descend jusqu'à un plancher de 0.15 si l'écart est grand
+  // (T1 vs T5 = gap 4) -- plus l'écart de tier entre les 2 parents est grand, moins la fusion a de
+  // chances de faire monter la rareté/le tier au-delà du résultat de base (voir up1/up2/up3 plus bas).
   const gapFactor = Math.max(0.15, 1 - tierGap*0.18);
 
   const {rarGap, outcomes:baseRarityOutcomes} = baseRarityDraw(a,b);
@@ -141,7 +162,20 @@ function computeFusionOdds(a, b){
   };
 }
 
-// Tirage RÉEL en 2 étapes (rareté de base, puis escalade) — n'appeler qu'à la confirmation
+/**
+ * Tirage RÉEL en 2 étapes (rareté de base via baseRarityDraw(), puis escalade +1/+2/+3 pondérée
+ * par gapFactor) — n'appeler qu'à la confirmation de fusion, jamais pour un aperçu (voir
+ * computeFusionOdds() pour la distribution complète sans tirer). Ne peut QUE faire monter la
+ * rareté depuis bestRar (jamais descendre) ; la vraie "perte" possible se joue dans
+ * baseRarityDraw() en amont (favorise la rareté basse des 2 parents).
+ * @param {object} a - pet parent 1.
+ * @param {object} b - pet parent 2.
+ * @param {number} gapFactor - voir computeFusionOdds(), réduit les chances d'escalade si les
+ *   parents ont des tiers très différents.
+ * @returns {{bestRar:number, newRar:number, rarityIncreased:boolean}} bestRar = rareté de base
+ *   tirée (avant escalade), newRar = rareté finale (0 à 5, ≥ bestRar), rarityIncreased = vrai si
+ *   l'escalade a eu lieu.
+ */
 function rollFusionRarity(a, b, gapFactor){
   const {outcomes} = baseRarityDraw(a,b);
   let bestRar;

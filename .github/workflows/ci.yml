@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      # audit repo-audit-todo.md point 2 : echoue si build/source.js, build/source.min.js,
+      # build/styles.min.css, index.html ou src/core/i18n-resources.generated.js divergent du
+      # resultat d'un rebuild frais -- CI ne commit jamais a la place du dev (voir
+      # scripts/check_build_freshness.py, meme logique qu'en local via `npm run check-build`)
+      - name: Verify build is up to date
+        run: npm run check-build
+
+      # audit repo-audit-todo.md point 17 : scripts/check-missing-translations.js existait deja
+      # mais n'etait jamais lance automatiquement
+      - name: Verify i18n keys (FR/EN parity)
+        run: npm run check-i18n
+
+      # audit repo-audit-todo.md point 14 : tests/regression.spec.js (index.dev.html +
+      # window.runRegressionTests()), tests/prod.spec.js (bundle minifie) et
+      # tests/companions.spec.js (module isole) n'etaient jamais lances qu'en local
+      - name: Run Playwright tests
+        run: npm test

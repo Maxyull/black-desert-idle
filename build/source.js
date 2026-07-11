@@ -4919,6 +4919,7 @@ const GEAR_SELL_MULT = 2.2;
 const JACKPOT_VAL_TRASH_RATIO = 20;
 
 const ALPHA_LOOT_CHANCE_MULT = 2;
+
 function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = gearDropChance(tier, zoneIdx);
@@ -4984,6 +4985,7 @@ function fmtDurationMin(min) {
   if (hours < 24) return hours.toFixed(1) + ' h';
   return (hours/24).toFixed(1) + ' j';
 }
+
 function rollDrops(wp, alpha, lm) {
   const zone = Z(), L = zone.loot;
   const zk = zoneIdx; 
@@ -5176,6 +5178,7 @@ function flashXpGain() {
   clearTimeout(flashXpGain._t);
   flashXpGain._t = setTimeout(() => el.classList.remove('xpFlash'), 500);
 }
+
 function gainXp(n) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
@@ -11539,6 +11542,30 @@ applyMenuCollapse();
 
 const CURRENT_VERSION = PATCH_NOTES[0].v;
 $a('clientVersionNum').textContent = CURRENT_VERSION;
+
+const CLIENT_ERROR_MAX_PER_SESSION = 5;
+let clientErrorCount = 0;
+function reportClientError(message, stack) {
+  if (isOffline || !sb || clientErrorCount >= CLIENT_ERROR_MAX_PER_SESSION) return;
+  clientErrorCount++;
+  try {
+    sb.from('client_errors').insert({
+      message: String(message || '').slice(0, 2000),
+      stack: stack ? String(stack).slice(0, 4000) : null,
+      url: location.href,
+      game_version: typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : null,
+      user_agent: navigator.userAgent,
+    }).then(() => {}, () => {});
+  } catch (e) {}
+}
+window.addEventListener('error', e => {
+  reportClientError(e.message, e.error && e.error.stack);
+});
+window.addEventListener('unhandledrejection', e => {
+  const reason = e.reason;
+  reportClientError(reason && reason.message ? reason.message : String(reason), reason && reason.stack);
+});
+
 let updateToastShown = false;
 async function checkForUpdate() {
   if (updateToastShown) return;
