@@ -983,13 +983,13 @@
     position:fixed; top:14px; left:14px; z-index:40;
     display:flex; flex-direction:column; gap:10px; width:210px;
   }
-  #gameBar, #userBar, #metaBar {
+  #gameBar, #userBar, #metaBar, #econBar, #communityBar {
     display:flex; flex-direction:column; gap:7px;
     background:rgba(10,9,12,.88); border:1px solid #2c2a33; padding:10px;
   }
   #userBar { display:none; }
   #userBar.show { display:flex; }
-  #gameBar button, #userBar button, #metaBar button {
+  #gameBar button, #userBar button, #metaBar button, #econBar button, #communityBar button {
     width:100%; margin:0; padding:11px 14px; font-size:13.5px; text-align:left;
   }
   /* convention UNIQUE pour tout bouton verrouillé "bientôt disponible" (2026-07-16, demande
@@ -2392,7 +2392,7 @@
        petites pastilles compactes ; forcé à gauche sur petit écran pour éviter ce chevauchement,
        la préférence "droite" reste respectée telle quelle au-dessus de 1024px */
     #sideMenu.onRight { left:14px !important; right:auto !important; }
-    #gameBar, #userBar, #metaBar { width:min(210px, calc(100vw - 20px)); }
+    #gameBar, #userBar, #metaBar, #econBar, #communityBar { width:min(210px, calc(100vw - 20px)); }
     #rightWidgets { max-width:min(260px, calc(100vw - 20px)) !important; }
     /* le chat gardait une largeur fixe de 440px, bien plus large que n'importe quel téléphone */
     #chatWidget { width:min(400px, calc(100vw - 20px)) !important; }
@@ -2550,3 +2550,15 @@
   }
   .actTab:hover:not(.locked) { color:var(--cream2); }
   .actTab.active { color:var(--gold); border-color:var(--gold); background:rgba(201,165,90,.08); }
+
+  /* ===== Phase 2 (2026-07-11) : regroupement visuel de la sidebar gauche en 4 groupes
+     (Progression/Économie/Communauté/Compte), voir index.dev.html #sideMenu. Purement additif :
+     #gameBar/#userBar/#metaBar/#econBar/#communityBar gardent leur CSS existante (fond/padding/
+     boutons, règle juste au-dessus), .sideGroup ne fait qu'empiler les groupes avec un label
+     Cinzel au-dessus, comme .side-group-label du mockup. Pas de découpe icône/label dans les
+     boutons eux-mêmes ici (voir commentaire HTML) -- juste le regroupement + la coloration. */
+  .sideGroup + .sideGroup { margin-top:12px; }
+  .sideGroupLabel {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--cream3); padding:0 2px; margin-bottom:6px;
+  }
