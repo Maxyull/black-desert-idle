@@ -40,6 +40,7 @@ const ACH_CATS = {
   equipment:   { icon:'🛡️', label:{fr:'Équipement',en:'Equipment'} },
   treasure:    { icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'} },
 };
+/** @param {string} id - id de succès. @returns {string} clé ACH_CATS déduite du préfixe de l'id. */
 function achCat(id) {
   if (id === 'first_kill' || id.startsWith('kills')) return 'combat';
   if (id.startsWith('loot')) return 'butin';
@@ -62,6 +63,11 @@ function achCat(id) {
 // (jackpot_1, gear_1) ressortent naturellement en chaîne à 1 seul élément -- aucun cas particulier
 // nécessaire, une Map préserve l'ordre d'insertion == ordre de ACHIEVEMENTS (donc l'ordre des
 // paliers dans chaque chaîne reste croissant, comme le tableau source).
+/**
+ * Regroupe ACHIEVEMENTS en chaînes de paliers (même catégorie + même statFn.toString()) pour
+ * l'affichage en cartes du panneau Succès. Purement dérivé, aucune donnée dupliquée.
+ * @returns {Array<{key:string, cat:string, tiers:object[]}>} chaînes dans l'ordre d'insertion de ACHIEVEMENTS.
+ */
 function groupAchievementsIntoChains() {
   const chains = new Map();
   for (const a of ACHIEVEMENTS) {
@@ -78,6 +84,13 @@ function groupAchievementsIntoChains() {
 // est à 100%, jamais sur un palier isolé). `pct` suit le même calcul que nextAchievement()
 // (notifications-quests.js) : statFn(S)/target, borné à 99% tant que non débloqué, fixé à 100 une
 // fois la chaîne terminée (jamais recalculé au-delà).
+/**
+ * Progression d'une chaîne : le palier "actif" est toujours le premier non débloqué, ou le
+ * dernier si la chaîne est entièrement débloquée (jamais un palier intermédiaire).
+ * @param {{tiers:object[]}} chain - chaîne (voir groupAchievementsIntoChains).
+ * @param {object} S - état de sauvegarde.
+ * @returns {{tier:object, tierIndex:number, unlockedCount:number, totalTiers:number, done:boolean, pct:number, val:number}}
+ */
 function chainProgress(chain, S) {
   const tiers = chain.tiers;
   const unlockedCount = tiers.filter(a => !!S.achUnlocked[a.id]).length;
@@ -90,6 +103,7 @@ function chainProgress(chain, S) {
 }
 // tri d'affichage des cartes du panneau Succès : chaînes en cours d'abord (triées par % décroissant,
 // même formule que nextAchievement()), chaînes 100% terminées reléguées en fin de liste.
+/** @param {object[]} chains - chaînes (groupAchievementsIntoChains). @param {object} S - état de sauvegarde. @returns {{chain:object, progress:object}[]} chaînes en cours d'abord (% décroissant), terminées en fin de liste. */
 function sortChainsForDisplay(chains, S) {
   const withProgress = chains.map(chain => ({ chain, progress: chainProgress(chain, S) }));
   withProgress.sort((x, y) => {
@@ -101,6 +115,7 @@ function sortChainsForDisplay(chains, S) {
 // répartition du silver de récompense déjà gagné (succès débloqués) vs encore à débloquer --
 // alimente la carte de vue d'ensemble du panneau Succès, calculée en direct depuis S.achUnlocked
 // (jamais une valeur figée) pour ne jamais dériver du vrai état du joueur.
+/** @param {object} S - état de sauvegarde. @returns {{earned:number, remaining:number}} silver de récompense déjà gagné vs encore à débloquer, calculé en direct depuis S.achUnlocked. */
 function achievementSilverTotals(S) {
   let earned = 0, remaining = 0;
   for (const a of ACHIEVEMENTS) {
@@ -111,6 +126,7 @@ function achievementSilverTotals(S) {
 // complétion réelle (débloqués/total) d'une catégorie donnée ('all' = toutes) -- alimente les
 // tuiles de filtre par catégorie (anneau de progression), toujours calculée depuis le vrai état,
 // jamais une valeur inventée.
+/** @param {string} catId - clé ACH_CATS ou 'all'. @param {object} S - état de sauvegarde. @returns {{done:number, total:number, pct:number}} complétion réelle de la catégorie. */
 function achCatCompletion(catId, S) {
   const list = catId === 'all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id) === catId);
   const done = list.filter(a => S.achUnlocked[a.id]).length;
@@ -121,6 +137,7 @@ function achCatCompletion(catId, S) {
 // notifications-quests.js). Filtre défensif sur `typeof === 'number'` : cet horodatage a TOUJOURS
 // été un Date.now() depuis son introduction (jamais un simple booléen `true`), mais on ignore toute
 // entrée qui ne serait pas un timestamp valide plutôt que d'afficher un "il y a NaN" au joueur.
+/** @param {object} S - état de sauvegarde. @param {number} limit - nombre max retourné. @returns {object[]} succès débloqués triés du plus récent au plus ancien (S.achUnlocked[id] = timestamp). */
 function recentlyUnlockedAchievements(S, limit) {
   return ACHIEVEMENTS
     .filter(a => typeof S.achUnlocked[a.id] === 'number' && S.achUnlocked[a.id] > 0)

@@ -38,6 +38,7 @@ function referenceGearVal() {
 // automatiquement (voir enforceTreasureStackCap, appelé depuis invAdd) plutôt que de bloquer le
 // ramassage ou de remplir le sac indéfiniment.
 const TREASURE_STACK_CAP = { treasure_bout_velia:100, treasure_velia:1 };
+/** @param {object} slot - slot d'inventaire (kind:'treasure'). Vend automatiquement le surplus au-delà de TREASURE_STACK_CAP au lieu de bloquer le ramassage ou de remplir le sac. Appelé depuis invAdd. */
 function enforceTreasureStackCap(slot) {
   if (!slot || slot.kind !== 'treasure') return;
   const cap = TREASURE_STACK_CAP[slot.key]; if (!cap) return;
@@ -53,11 +54,15 @@ function enforceTreasureStackCap(slot) {
 const TREASURE_PIECE_RECIPES = [
   { needKey:'treasure_bout_velia', needQty:100, giveName:'Trésor de Velia', giveKey:'treasure_velia' },
 ];
+/** @param {string} key - clé d'item. @returns {number} index du slot INV portant cette clé, -1 si absent. */
 function invSlotByKey(key) { return INV.findIndex(s => s && s.key === key); }
+/** @param {string} key - clé d'item. @returns {number} quantité possédée (0 si absent). */
 function invQtyByKey(key) { const i = invSlotByKey(key); return i===-1 ? 0 : INV[i].qty; }
 // une place est déjà garantie si l'objet résultant a déjà un stack existant (il fusionne dedans) —
 // sinon il faut une case vide, comme n'importe quel nouvel objet
+/** @param {string} key - clé d'item résultant du craft. @returns {boolean} vrai si un stack existant ou une case vide est disponible. */
 function invHasRoomFor(key) { return invSlotByKey(key) !== -1 || invUsed() < INV_SIZE; }
+/** @param {object} recipe - entrée de TREASURE_PIECE_RECIPES. @returns {boolean} vrai si craft effectué (retire needQty, ajoute 1 giveName), false si ingrédients insuffisants ou sac plein. */
 function craftTreasurePiece(recipe) {
   if (invQtyByKey(recipe.needKey) < recipe.needQty) return false;
   if (!invHasRoomFor(recipe.giveKey)) { floatTxt(P.x,P.y,90,i18next.t('progression:progression.treasure_craft.bag_full'),{hurt:true}); return false; }
@@ -83,11 +88,13 @@ function craftTreasurePiece(recipe) {
 // TIER_PREVIEW_CARD), cette recette reste non complétable EN PRATIQUE -- ce n'est pas un bug, ces 2
 // ingrédients n'existent tout simplement pas encore en jeu.
 const SECRET_COMBO_SILVER_MULT = 300;
+/** @returns {boolean} vrai si le joueur possède les 3 Trésors régionaux (Velia/Heidel/Calpheon) nécessaires au coffret secret. */
 function secretComboReady() {
   return invSlotByKey('treasure_velia') !== -1
     && invSlotByKey('treasure_heidel') !== -1
     && invSlotByKey('treasure_calpheon') !== -1;
 }
+/** @returns {boolean} vrai si combiné (consomme les 3 Trésors régionaux, verse referenceGearVal()×SECRET_COMBO_SILVER_MULT en silver), false si ingrédients manquants. */
 function craftSecretCombo() {
   const vIdx = invSlotByKey('treasure_velia');
   const hIdx = invSlotByKey('treasure_heidel');
@@ -105,6 +112,7 @@ function craftSecretCombo() {
   return true;
 }
 // panneau de craft affiché SEULEMENT dans l'onglet "Trésors" de l'inventaire (voir renderInventory)
+/** Reconstruit le panneau de craft (onglet Trésors) : recettes disponibles, coffret secret, emplacements verrouillés Heidel/Calpheon — câble les clics. */
 function renderTreasureCraftPanel() {
   // affiché en permanence dans la carte "Optimisation & Craft" (2026-07-08) — avant ce correctif,
   // ce panneau ne s'affichait QUE quand l'onglet "Trésors" de l'inventaire était ouvert, un reste

@@ -3967,6 +3967,7 @@ const ACH_CATS = {
   equipment:   { icon:'🛡️', label:{fr:'Équipement',en:'Equipment'} },
   treasure:    { icon:'🗺️', label:{fr:'Trésor de Velia',en:'Velia Treasure'} },
 };
+
 function achCat(id) {
   if (id === 'first_kill' || id.startsWith('kills')) return 'combat';
   if (id.startsWith('loot')) return 'butin';
@@ -4052,6 +4053,7 @@ function referenceGearVal() {
 }
 
 const TREASURE_STACK_CAP = { treasure_bout_velia:100, treasure_velia:1 };
+
 function enforceTreasureStackCap(slot) {
   if (!slot || slot.kind !== 'treasure') return;
   const cap = TREASURE_STACK_CAP[slot.key]; if (!cap) return;
@@ -4065,10 +4067,13 @@ function enforceTreasureStackCap(slot) {
 const TREASURE_PIECE_RECIPES = [
   { needKey:'treasure_bout_velia', needQty:100, giveName:'Trésor de Velia', giveKey:'treasure_velia' },
 ];
+
 function invSlotByKey(key) { return INV.findIndex(s => s && s.key === key); }
+
 function invQtyByKey(key) { const i = invSlotByKey(key); return i===-1 ? 0 : INV[i].qty; }
 
 function invHasRoomFor(key) { return invSlotByKey(key) !== -1 || invUsed() < INV_SIZE; }
+
 function craftTreasurePiece(recipe) {
   if (invQtyByKey(recipe.needKey) < recipe.needQty) return false;
   if (!invHasRoomFor(recipe.giveKey)) { floatTxt(P.x,P.y,90,i18next.t('progression:progression.treasure_craft.bag_full'),{hurt:true}); return false; }
@@ -4082,11 +4087,13 @@ function craftTreasurePiece(recipe) {
 }
 
 const SECRET_COMBO_SILVER_MULT = 300;
+
 function secretComboReady() {
   return invSlotByKey('treasure_velia') !== -1
     && invSlotByKey('treasure_heidel') !== -1
     && invSlotByKey('treasure_calpheon') !== -1;
 }
+
 function craftSecretCombo() {
   const vIdx = invSlotByKey('treasure_velia');
   const hIdx = invSlotByKey('treasure_heidel');
