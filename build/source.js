@@ -4140,10 +4140,12 @@ let notifSerial = 0;
 
 const NOTIF_MAX_AGE_MS = 7 * 24 * 3600 * 1000; 
 const NOTIF_SHOW_LIMIT = 20; 
+
 function pruneNotifLog() {
   const cutoff = Date.now() - NOTIF_MAX_AGE_MS;
   S.notifLog = (S.notifLog||[]).filter(n => n.t >= cutoff);
 }
+
 function pushNotif(icon, title, text, cat) {
   pruneNotifLog();
   S.notifLog.unshift({ id: ++notifSerial + '_' + Date.now(), icon, title, text, t: Date.now(), cat: cat || 'info' });
@@ -4151,6 +4153,7 @@ function pushNotif(icon, title, text, cat) {
   notifUnread++;
   updateNotifBadge();
 }
+
 function deleteNotif(id) {
   S.notifLog = (S.notifLog||[]).filter(n => n.id !== id);
   openNotifCenter(); 
@@ -4621,7 +4624,9 @@ const QUEST_SCOPES = {
   daily:  { stateKey:'dq', kinds:QUEST_KINDS_DAILY,  count:3, keyFn:d => d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate() },
   weekly: { stateKey:'wq', kinds:QUEST_KINDS_WEEKLY, count:3, keyFn:d => { const m = mondayOf(d); return m.getFullYear()+'-'+(m.getMonth()+1)+'-'+m.getDate(); } },
 };
+
 function mondayOf(d) { const day = (d.getDay()+6)%7; return new Date(d.getFullYear(), d.getMonth(), d.getDate()-day); }
+
 function questStatValue(kind) {
   switch (kind) {
     case 'kills': case 'killsBig': return S.kills;
@@ -4636,6 +4641,7 @@ function questStatValue(kind) {
   }
   return 0;
 }
+
 function ensureQuests(scope) {
   const cfg = QUEST_SCOPES[scope];
   const key = cfg.keyFn(new Date());
@@ -4651,10 +4657,12 @@ function ensureQuests(scope) {
   for (const k of Object.keys(cfg.kinds)) base[k] = questStatValue(k);
   S[cfg.stateKey] = { date:key, quests, base };
 }
+
 function questProgress(scope, q) {
   const st = S[QUEST_SCOPES[scope].stateKey];
   return Math.max(0, questStatValue(q.kind) - st.base[q.kind]);
 }
+
 function claimQuest(scope, i) {
   ensureQuests(scope);
   const st = S[QUEST_SCOPES[scope].stateKey];
@@ -4781,10 +4789,12 @@ function fmtDuration(ms) {
   const pad = n => String(n).padStart(2,'0');
   return (days>0 ? days+i18next.t('progression:progression.quests.duration_day_suffix') : '') + pad(h)+':'+pad(m)+':'+pad(s);
 }
+
 function msToNextDailyReset() {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0,0,0,0) - now;
 }
+
 function msToNextWeeklyReset() {
   const now = new Date();
   const day = (now.getDay()+6)%7; 
@@ -4901,6 +4911,7 @@ function bestZoneForMetric(metricFn) {
   }
   return { i: bestI, v: bestV };
 }
+
 function badgeOf(r) {
   if (r < 0.6)  return { cls:'b-red',    txt:'ZONE DANGEREUSE' };
   if (r < 0.9)  return { cls:'b-orange', txt:'ZONE DIFFICILE' };
@@ -4934,6 +4945,7 @@ function renderEquipModeBtn() {
   const crystalSlot = $('crystalSlotCenter');
   if (crystalSlot) crystalSlot.title = i18next.t('progression:progression.equip.crystal_coming_soon');
 }
+
 function setEquipMode(key) {
   if (!EQUIP_MODES[key]) return;
   equipMode = key;
@@ -5014,9 +5026,11 @@ for (const id in ITEM_TUTORIALS) {
 let isLeavingViaSkipBtn = false;
 
 function itemTutoStorageKey(id) { return 'velia-idle-item-tuto-seen-'+id; }
+
 function isItemTutorialSeen(id) {
   try { return localStorage.getItem(itemTutoStorageKey(id)) === '1'; } catch(e) { return false; }
 }
+
 function markItemTutorialSeen(id, skipped) {
   try { localStorage.setItem(itemTutoStorageKey(id), '1'); } catch(e) {}
   
@@ -5048,6 +5062,7 @@ function maybeQueueTutorialById(id) {
   return true;
 }
 let itemTutorialActiveId = null;
+
 function playNextItemTutorial() {
   if (itemTutorialActive) return; 
   const id = itemTutorialQueue.shift();
