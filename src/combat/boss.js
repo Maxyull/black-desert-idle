@@ -61,6 +61,7 @@ const BOSS_WINDOW_MS = 9 * 60 * 1000; // fenêtre pendant laquelle le boss reste
 
 // décalage UTC actuel de Paris, en minutes (ex: +60 en hiver/CET, +120 en été/CEST) — calculé via
 // Intl plutôt que codé en dur pour suivre automatiquement les changements d'heure
+/** @param {Date} date @returns {number} décalage UTC actuel de Paris en minutes (calculé via Intl, suit automatiquement les changements d'heure été/hiver). */
 function parisOffsetMinutes(date) {
   const parts = Object.fromEntries(new Intl.DateTimeFormat('en-US', { timeZone:'Europe/Paris',
     hour12:false, year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit'
@@ -72,6 +73,14 @@ function parisOffsetMinutes(date) {
 // — les horaires de BOSS_SCHEDULE sont ceux de garmoth.com, donc de l'heure FRANÇAISE (Europe/Paris),
 // pas l'heure locale du navigateur du joueur (2026-07-08 : bug corrigé, un joueur hors de France
 // voyait un planning décalé de son propre fuseau)
+/**
+ * Prochaine occurrence (ou occurrence en cours) de chaque entrée de BOSS_SCHEDULE, sur 7 jours
+ * glissants — les horaires sont en heure de Paris (garmoth.com), convertis vers l'heure du
+ * navigateur du joueur peu importe son fuseau.
+ * @param {Date} fromDate - instant de référence.
+ * @returns {{boss:string, time:number, live:boolean}[]} occurrences triées par heure croissante,
+ *   `live` = vrai si dans la fenêtre de combat (BOSS_WINDOW_MS) actuellement.
+ */
 function bossOccurrences(fromDate) {
   const now = fromDate.getTime();
   const offsetMin = parisOffsetMinutes(fromDate);
@@ -127,6 +136,7 @@ async function refreshLiveBoss() {
     wireBossLobby();
   }
 }
+/** @returns {{boss:string, time:number, live:boolean, sharedHp?:boolean, hp?:number, maxHp?:number}|null} prochaine occurrence de boss — un spawn global admin (liveBoss) encore valide passe avant le planning horaire. */
 function nextBossOccurrence() {
   // un spawn global admin encore valide passe avant tout -- hp/maxHp exposés (2026-07-15, demande
   // explicite : "si tu arrive trop tard et que le boss a été tué tu as un message... revenir plus
@@ -330,6 +340,7 @@ setInterval(() => {
 // de drop dans la carte "prochain boss" du lobby (2026-07-11, reskin visuel, voir CLAUDE.md).
 // INV peut contenir plusieurs slots de la même clé en théorie (voir invAdd/MAX_STACK) -- somme sur
 // tous les slots plutôt qu'un simple find, jamais de throw si INV est vide/non initialisé.
+/** @param {string} matKey - clé du matériau garanti d'un boss. @returns {number} quantité déjà en poche (somme sur tous les slots INV partageant cette clé). */
 function bossMatInHand(matKey) {
   if (!matKey || !Array.isArray(INV)) return 0;
   return INV.reduce((sum, s) => s && s.key === matKey ? sum + (s.qty || 0) : sum, 0);
@@ -488,6 +499,7 @@ let otherFightersPos = {}; // uid -> { x, y } — position lissée affichée à 
 // ce canal de présence Realtime — ces logs préfixés [BossPresence] permettent de vérifier, la
 // prochaine fois que ça se reproduit, si les 2 joueurs rejoignent bien le MÊME topic, si le
 // statut passe à SUBSCRIBED, et si l'event 'sync' renvoie bien l'autre joueur
+/** @param {string} bossKey - clé BOSS_ROSTER. Rejoint le canal Supabase Realtime Presence de ce boss (topic 'boss_'+bossKey), diffuse la position du joueur, se reconnecte automatiquement en cas de coupure du canal pendant que le combat partagé est actif. */
 function joinBossChannel(bossKey) {
   leaveBossChannel();
   if (!sb || !currentUser) { console.debug('[BossPresence] abandon (pas de sb ou pas connecté)'); return; }
@@ -521,6 +533,7 @@ function joinBossChannel(bossKey) {
     }
   });
 }
+/** Quitte le canal Presence du boss en cours (bossChannel), vide otherFighters/otherFightersPos. */
 function leaveBossChannel() {
   if (bossChannel) console.debug('[BossPresence] leave', { topic: bossChannel.topic });
   if (bossChannel && sb) { try { sb.removeChannel(bossChannel); } catch(e) {} }
@@ -556,10 +569,18 @@ let _skillDpsSum = 0;
 // DPS de référence pour un joueur à PA "adaptée" (~250) : sert à calibrer les PV du boss partagé
 // (400000 PV / 300s = ~5 min pour ce stuff, cf commentaire du roster) sans dépendre du stuff de l'admin
 const BOSS_REF_DPS = 1333;
+/** @returns {number} DPS nominal estimé du joueur contre un boss (PA effective × somme dmg/cd des sorts), utilisé pour calibrer la durée du combat solo. */
 function playerBossDps() {
   if (!_skillDpsSum) _skillDpsSum = SKILLS.filter(s => s.dmg).reduce((a,s) => a + s.dmg/s.cd, 0);
   return Math.max(1, apEff() * _skillDpsSum);
 }
+/**
+ * Démarre un combat de boss : bascule sur PV/durée du serveur si partagé (liveBoss, PV communs),
+ * sinon calcule une durée solo depuis playerBossDps() (clampée 2-7 min). Tire un spot d'attaque
+ * fixe au hasard, rejoint le canal Presence si partagé, lance la boucle bossLoop.
+ * @param {string} bossId - clé BOSS_ROSTER.
+ * @param {boolean} [isShared] - vrai si le joueur rejoint un combat partagé (spawn admin/planning).
+ */
 function startBossFight(bossId, isShared) {
   const b = BOSS_ROSTER[bossId];
   // boss PARTAGÉ (spawn admin, PV communs) : les PV/durée viennent du serveur (liveBoss), pas du stuff perso
@@ -708,6 +729,7 @@ function bossMultBadgesHtml(deathCount, firstKillWeek) {
 // avec le loot normal de ces zones.
 // "meilleure zone difficile" = parmi les zones classées ZONE DIFFICILE (bottleneck 0.6-0.9), la
 // plus avancée (reqAP le plus haut) -- celle qui représente le mieux sa progression actuelle.
+/** @returns {number|null} index de la zone "ZONE DIFFICILE" la plus avancée (reqAP le plus haut), ou null si aucune. */
 function bestDifficileZoneIdx() {
   let best = -1;
   for (let zi = 0; zi < ZONES.length; zi++) {
@@ -718,6 +740,7 @@ function bestDifficileZoneIdx() {
 // "prochaine zone dangereuse" = parmi les zones classées ZONE DANGEREUSE (bottleneck < 0.6), la
 // moins hors de portée (reqAP le plus bas) -- celle juste au-dessus de ce que le joueur peut
 // actuellement gérer, pas une zone endgame totalement hors d'atteinte.
+/** @returns {number|null} index de la zone "ZONE DANGEREUSE" la moins hors de portée (reqAP le plus bas), ou null si aucune. */
 function nextDangereuseZoneIdx() {
   let best = -1;
   for (let zi = 0; zi < ZONES.length; zi++) {
@@ -725,6 +748,7 @@ function nextDangereuseZoneIdx() {
   }
   return best === -1 ? null : best;
 }
+/** @param {number} zi - index de zone. @returns {object} item bijou (jackpot) reconstitué pour l'aperçu de récompense boss — mêmes formules que rollDrops (GEAR_ROLE.jackpot.apShare, JACKPOT_VAL_TRASH_RATIO). */
 function bossZoneJackpotItem(zi) {
   const z = ZONES[zi], tier = gearTierForZone(zi);
   const jSlot = accSlotFor(z.loot.jackpot);
@@ -735,6 +759,7 @@ function bossZoneJackpotItem(zi) {
   const val = gearFloor(z.loot.trash.val * JACKPOT_VAL_TRASH_RATIO);
   return { ...z.loot.jackpot, ap, val, kind:'jackpot', color:tier.color, key:'acc_boss_'+zi+'_'+Math.random().toString(36).slice(2,7), icon, stackable:false, weight:0.5, matName:tier.material.name };
 }
+/** @param {number} zi - index de zone. @param {number} qty. @returns {object} item matériau du palier de cette zone, pour l'aperçu de récompense boss. */
 function bossZoneMaterialItem(zi, qty) {
   const tier = gearTierForZone(zi), z = ZONES[zi];
   return { name:tier.material.name, kind:'material', icon:tier.material.icon, color:tier.material.color, key:'mat_'+tier.material.name, qty, stackable:true, weight:0.1, val:z.loot.mat.val };
@@ -1123,6 +1148,12 @@ async function endBossFight(win) {
   // n'est pas terminée, voir renderBossRewardReveal), pas besoin de le re-brancher plus tard.
   $a('bossCloseBtn').onclick = leaveBossResultToZone;
 }
+/**
+ * Boucle de rendu/simulation du combat de boss (requestAnimationFrame) : dégâts du joueur au fil
+ * du temps (playerBossDps), timers d'AoE et blocage, PV du boss (partagés ou solo), position des
+ * autres joueurs (Presence), fin de combat (victoire/temps écoulé) qui déclenche endBossFight.
+ * @param {number} now - timestamp performance.now() de la frame courante.
+ */
 function bossLoop(now) {
   if (!bossState.active) return;
   const dt = Math.min(.05, (now - bossState.last)/1000); bossState.last = now;

@@ -5746,6 +5746,7 @@ async function refreshLiveBoss() {
     wireBossLobby();
   }
 }
+
 function nextBossOccurrence() {
   
   if (liveBoss && liveBoss.expires > Date.now()) return { boss: liveBoss.boss, time: liveBoss.time, live: true, sharedHp: true, hp: liveBoss.hp, maxHp: liveBoss.maxHp };
@@ -6050,6 +6051,7 @@ function joinBossChannel(bossKey) {
     }
   });
 }
+
 function leaveBossChannel() {
   if (bossChannel) console.debug('[BossPresence] leave', { topic: bossChannel.topic });
   if (bossChannel && sb) { try { sb.removeChannel(bossChannel); } catch(e) {} }
@@ -6076,10 +6078,12 @@ const bossCtx = document.getElementById('bossCv').getContext('2d');
 let _skillDpsSum = 0;
 
 const BOSS_REF_DPS = 1333;
+
 function playerBossDps() {
   if (!_skillDpsSum) _skillDpsSum = SKILLS.filter(s => s.dmg).reduce((a,s) => a + s.dmg/s.cd, 0);
   return Math.max(1, apEff() * _skillDpsSum);
 }
+
 function startBossFight(bossId, isShared) {
   const b = BOSS_ROSTER[bossId];
   
@@ -6205,6 +6209,7 @@ function nextDangereuseZoneIdx() {
   }
   return best === -1 ? null : best;
 }
+
 function bossZoneJackpotItem(zi) {
   const z = ZONES[zi], tier = gearTierForZone(zi);
   const jSlot = accSlotFor(z.loot.jackpot);
@@ -6215,6 +6220,7 @@ function bossZoneJackpotItem(zi) {
   const val = gearFloor(z.loot.trash.val * JACKPOT_VAL_TRASH_RATIO);
   return { ...z.loot.jackpot, ap, val, kind:'jackpot', color:tier.color, key:'acc_boss_'+zi+'_'+Math.random().toString(36).slice(2,7), icon, stackable:false, weight:0.5, matName:tier.material.name };
 }
+
 function bossZoneMaterialItem(zi, qty) {
   const tier = gearTierForZone(zi), z = ZONES[zi];
   return { name:tier.material.name, kind:'material', icon:tier.material.icon, color:tier.material.color, key:'mat_'+tier.material.name, qty, stackable:true, weight:0.1, val:z.loot.mat.val };
@@ -6503,6 +6509,7 @@ async function endBossFight(win) {
   
   $a('bossCloseBtn').onclick = leaveBossResultToZone;
 }
+
 function bossLoop(now) {
   if (!bossState.active) return;
   const dt = Math.min(.05, (now - bossState.last)/1000); bossState.last = now;
