@@ -12,6 +12,9 @@ const PATCH_NOTES = [
       {t:'change', sub:'securite', tx:'Votes et commentaires des notes de version : limite de fréquence par joueur (anti-spam), et un commentaire massivement signalé est masqué automatiquement en attendant une revue par un modérateur.'},
       {t:'new', tx:'Modal de reconnexion : légende des paliers ajoutée à côté de l\'historique des sessions.'},
       {t:'fix', tx:'Corrigé : le texte complet d\'une ligne de notes de version s\'affichait en gras dans l\'en-tête au lieu d\'un vrai paragraphe lisible en dessous.'},
+      {t:'fix', sub:'interface', tx:'Panneau des notes de version : "Marquer comme lu" reste désormais affiché en permanence (grisé s\'il n\'y a rien à marquer) au lieu de disparaître entièrement, la loupe de recherche est monochrome et transparente, et la barre de défilement suit enfin le thème sombre du panneau au lieu de la scrollbar par défaut du navigateur.'},
+      {t:'new', sub:'admin', tx:'Panneau des notes de version : badge "Admin" affiché à côté du titre pour les modérateurs/admins.'},
+      {t:'fix', tx:'Corrigé : l\'horodatage des commentaires des notes de version n\'affichait que la date, jamais l\'heure.'},
     ], en:[
       {t:'fix', tx:'Fixed: filter chips (category in patch notes, tier in the reconnect modal) stacked full-width instead of sitting side by side.'},
       {t:'new', sub:'accessibilite', tx:'Patch notes panel: keyboard focus now stays within the window (Tab can\'t escape it anymore), and the unread badge is announced to screen readers.'},
@@ -19,6 +22,9 @@ const PATCH_NOTES = [
       {t:'change', sub:'securite', tx:'Patch notes votes and comments: per-player rate limiting (anti-spam), and a heavily-reported comment is now auto-hidden pending moderator review.'},
       {t:'new', tx:'Reconnect modal: tier legend added next to the session history.'},
       {t:'fix', tx:'Fixed: the full text of a patch note line displayed bold in the header instead of a readable paragraph below.'},
+      {t:'fix', sub:'interface', tx:'Patch notes panel: "Mark all read" now stays visible at all times (greyed out when there\'s nothing to mark) instead of disappearing entirely, the search magnifier is now monochrome and transparent, and the scrollbar finally follows the panel\'s dark theme instead of the browser default.'},
+      {t:'new', sub:'admin', tx:'Patch notes panel: "Admin" badge now shown next to the title for moderators/admins.'},
+      {t:'fix', tx:'Fixed: patch notes comment timestamps only showed the date, never the time.'},
     ] },
   { v:'V368', d:'21/07/2026 09:00', name:{fr:'Wiki refait + Classement Public Compagnons', en:'Wiki redesigned + Companion Public Leaderboard'}, fr:[
       {t:'change', tx:'Le Wiki a été entièrement refait en panneau plein écran, à l\'identique d\'une maquette fournie : navigation par catégories, fil d\'Ariane, sommaire de section et recherche live. Le contenu reste le même (Combat & Zones, Optimisation, Marché, Compte & Sauvegarde, À propos, Codex des objets, Tutoriel), avec des raccourcis directs vers le Compendium et le module Compagnons.'},
