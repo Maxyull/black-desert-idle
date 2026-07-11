@@ -72,7 +72,7 @@ async function refreshLiveLootRates() {
 // ---------- admin (accès réservé à ce compte précis) ----------
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
 function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
-// système de sanctions (2026-07-18, voir ADMIN_MENU_PLAN.md §3.1) : banStatus = { banned_until, ban_reason } ou null
+// système de sanctions (2026-07-18, voir docs/ADMIN_MENU_PLAN.md §3.1) : banStatus = { banned_until, ban_reason } ou null
 function isBanned(banStatus) {
   if (!banStatus || !banStatus.banned_until) return false;
   const t = new Date(banStatus.banned_until).getTime();
@@ -85,7 +85,7 @@ function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 // bug corrigé (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
 // supabase") : `sb`/`currentUser` sont déclarés en `let` top-level -- contrairement à `var` ou à
 // une déclaration `function`, `let` au top-level d'un script classique NE devient PAS une
-// propriété de `window`. companions.sync.js (module Compagnon, iframe same-origin) lisait
+// propriété de `window`. sync.js (module Compagnon, iframe same-origin) lisait
 // `window.parent.sb`/`window.parent.currentUser`, qui étaient donc TOUJOURS `undefined` -- le
 // sync ne s'est jamais déclenché, pour aucun compte (invité ou non). Ces deux accesseurs sont des
 // déclarations `function`, qui elles SONT attachées à `window` automatiquement -- toujours à jour
@@ -177,7 +177,7 @@ function updateUserBar() {
 function updatePseudoDisplay() {
   const el = $a('userPseudo');
   if (!el) return;
-  if (isGuest()) el.textContent = LANG==='fr'?'🎭 Invité':'🎭 Guest';
+  if (isGuest()) el.textContent = i18next.t('backend:backend.auth.guest_badge');
   else el.textContent = (currentUser && myPseudo) ? myPseudo : '';
 }
 
@@ -224,11 +224,11 @@ async function doSignIn() {
 async function doForgotPassword() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim();
-  if (!email) { authShow(LANG==='fr' ? 'Entre ton email d\'abord, puis clique à nouveau.' : 'Enter your email first, then click again.', true); return; }
-  authShow(LANG==='fr' ? 'Envoi en cours…' : 'Sending…');
+  if (!email) { authShow(i18next.t('backend:backend.auth.email_first'), true); return; }
+  authShow(i18next.t('backend:backend.auth.sending'));
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href });
   if (error) { authShow(error.message, true); return; }
-  authShow(LANG==='fr' ? 'Email envoyé — vérifie ta boîte mail pour réinitialiser ton mot de passe.' : 'Email sent — check your inbox to reset your password.');
+  authShow(i18next.t('backend:backend.auth.reset_email_sent'));
 }
 async function doLogout() {
   if (sb) await sb.auth.signOut();
@@ -357,11 +357,9 @@ async function onAuthedInner(user) {
       const { data: banStatus } = await sb.rpc('get_my_ban_status');
       const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
       if (isBanned(row)) {
-        const until = new Date(row.banned_until).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US');
-        const reason = row.ban_reason || (LANG === 'fr' ? 'non précisé' : 'unspecified');
-        authShow(LANG === 'fr'
-          ? `Compte suspendu jusqu'au ${until} — Motif : ${reason}`
-          : `Account suspended until ${until} — Reason: ${reason}`, true);
+        const until = new Date(row.banned_until).toLocaleString(i18next.t('backend:backend.common.date_locale'));
+        const reason = row.ban_reason || i18next.t('backend:backend.auth.ban_reason_unspecified');
+        authShow(i18next.t('backend:backend.auth.ban_suspended', { until, reason }), true);
         await sb.auth.signOut();
         currentUser = null;
         showAuthOverlay(true);
@@ -391,10 +389,8 @@ async function onAuthedInner(user) {
   // session, avec un léger délai pour ne pas se mélanger aux autres popups de démarrage.
   if (isGuest()) {
     setTimeout(() => {
-      pushNotif('🎭', LANG==='fr'?'Tu joues en mode invité':'You\'re playing as a guest',
-        LANG==='fr'
-          ? 'Ta progression n\'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur "🔗 Lier un compte" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.'
-          : 'Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click "🔗 Link account" to create an account (your current progress is kept) or sign back into an existing one.',
+      pushNotif('🎭', i18next.t('backend:backend.auth.guest_mode_title'),
+        i18next.t('backend:backend.auth.guest_mode_body'),
         'info');
     }, 3000);
   }
@@ -609,20 +605,14 @@ async function syncPlayerStats() {
 // Panneau Admin (reset demo/quetes/comptes, screenshot joueur, analytics) -> voir admin-panel.js (charge APRES ce fichier, voir index.html)
 
 // ---------- classement public (silver, gearscore, meilleure zone, silver/h, meilleur objet) ----------
-// badge "⚠️ possiblement obsolète" retiré (2026-07-08, demande explicite : "Classement public :
-// meilleur uniquement pas en temps reel donc oublie la synchro, on veut juste le meilleur") --
-// n'avait de sens QUE quand les colonnes reflétaient un état COURANT (solde/équipement pouvant
-// changer depuis la dernière synchro). Toutes les colonnes envoyées par syncPlayerStats sont
-// désormais des records À VIE qui ne redescendent jamais (voir le commentaire au-dessus de
-// syncPlayerStats) : une ligne n'est donc plus jamais "obsolète", juste éventuellement en retard
-// d'un record pas encore synchronisé, ce qui ne justifie plus un avertissement.
-function rankRows(rows, valueFn, fmtFn) {
-  const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
-  return sorted.map((r,i) => `
-    <tr class="${r.user_id===currentUser?.id ? 'isYou' : ''}">
-      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}</span></td><td>${fmtFn(r)}</td>
-    </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-}
+// 2026-07-11 : panneau enrichi (podium/onglets/recherche/pagination/"Ma position") déplacé dans
+// src/backend/leaderboard-panel.js (openLeaderboard2()) — même traitement que le Classement Public
+// Compagnons, sur les mêmes 7 catégories déjà alimentées par syncPlayerStats() ci-dessus (records
+// À VIE, jamais un instantané). wirePlayerNameLinks()/showPlayerGear() restent ici, réutilisés par
+// le nouveau panneau (clic sur un pseudo -> stuff en lecture seule). L'ancien rankRows()/
+// openLeaderboard() (retirés ici) n'avaient été QUE traduits via i18next par la branche i18n,
+// jamais fonctionnellement conservés -- leaderboard-panel.js reste à traduire vers i18next dans un
+// prochain passage (actuellement LANG==='fr' ternaire, voir CLAUDE.md §31 si applicable).
 // clic sur un pseudo du classement : ouvre son stuff en lecture seule (demande explicite — voir
 // get_player_gear côté serveur, n'expose QUE l'équipement, jamais le silver/inventaire complet)
 function wirePlayerNameLinks() {
@@ -633,7 +623,7 @@ function wirePlayerNameLinks() {
 function readonlyPdSlotsHtml(equip, ids) {
   return ids.map(id => {
     const e = equip ? equip[id] : null;
-    return `<div class="pdSlot ${e?'filled':'empty'}" title="${escapeHtml(SLOT_LABEL[id]||'')}${e ? ' — '+escapeHtml(e.name||'')+pdStatSuffix(e) : ' ('+(LANG==='fr'?'vide':'empty')+')'}">${pdSlotInnerHtmlFor(id, e)}</div>`;
+    return `<div class="pdSlot ${e?'filled':'empty'}" title="${escapeHtml(SLOT_LABEL[id]||'')}${e ? ' — '+escapeHtml(e.name||'')+pdStatSuffix(e) : ' ('+i18next.t('backend:backend.gear.slot_empty')+')'}">${pdSlotInnerHtmlFor(id, e)}</div>`;
   }).join('');
 }
 // liste TEXTE (nom + PA/PD/PV) de chaque pièce équipée — demande explicite : voir le nom de
@@ -645,17 +635,17 @@ function readonlyGearListHtml(equip) {
     if (!e) return '';
     return `<tr><td>${escapeHtml(SLOT_LABEL[id]||id)}</td><td>${escapeHtml(e.name||'?')}</td><td>${pdStatSuffix(e).replace(/^ \(|\)$/g,'') || '—'}</td></tr>`;
   }).filter(Boolean).join('');
-  if (!rows) return `<div class="admEmpty">${LANG==='fr'?'Aucun équipement':'No gear equipped'}</div>`;
-  return `<table class="admTable"><thead><tr><th>${LANG==='fr'?'Emplacement':'Slot'}</th><th>${LANG==='fr'?'Objet':'Item'}</th><th>PA/PD/PV</th></tr></thead><tbody>${rows}</tbody></table>`;
+  if (!rows) return `<div class="admEmpty">${i18next.t('backend:backend.gear.no_gear')}</div>`;
+  return `<table class="admTable"><thead><tr><th>${i18next.t('backend:backend.gear.slot_header')}</th><th>${i18next.t('backend:backend.gear.item_header')}</th><th>PA/PD/PV</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 async function showPlayerGear(userId, displayName) {
   if (!sb) return;
-  openInfo((LANG==='fr'?'⚔️ Stuff de ':'⚔️ Gear of ')+displayName,
-    `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`);
+  openInfo(i18next.t('backend:backend.gear.panel_title_prefix')+displayName,
+    `<div class="admEmpty">${i18next.t('backend:backend.gear.loading')}</div>`);
   const { data, error } = await sb.rpc('get_player_gear', { p_user_id: userId });
   if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${escapeHtml(error.message)}</div>`; return; }
   // bouton "Copier UUID" réservé à l'admin — demande explicite du 2026-07-05
-  const copyBtn = isAdmin() ? `<button id="btnCopyGearUuid" style="margin-bottom:8px">📋 ${LANG==='fr'?'Copier UUID':'Copy UUID'}</button>` : '';
+  const copyBtn = isAdmin() ? `<button id="btnCopyGearUuid" style="margin-bottom:8px">📋 ${i18next.t('backend:backend.gear.copy_uuid_button')}</button>` : '';
   $a('infoBody').innerHTML = copyBtn +
     `<div id="pdWeapons">${readonlyPdSlotsHtml(data, PD_BOTTOM)}</div>` +
     `<div id="paperdoll"><div class="pdCol">${readonlyPdSlotsHtml(data, PD_LEFT)}</div>` +
@@ -664,7 +654,7 @@ async function showPlayerGear(userId, displayName) {
   if (isAdmin()) {
     $a('btnCopyGearUuid').onclick = async () => {
       try { await navigator.clipboard.writeText(userId); } catch(e) {}
-      floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
+      floatTxt(P.x, P.y, 100, i18next.t('backend:backend.gear.uuid_copied'), { gold:true });
     };
   }
 }
@@ -675,7 +665,7 @@ async function showPlayerGear(userId, displayName) {
 async function showPlayerInventoryWindow(userId, displayName) {
   if (!isAdmin() || !sb) return;
   const win = window.open('', '_blank', 'width=620,height=760');
-  if (!win) { floatTxt(P.x, P.y, 100, LANG==='fr'?'Popup bloquée par le navigateur':'Popup blocked by browser', { hurt:true }); return; }
+  if (!win) { floatTxt(P.x, P.y, 100, i18next.t('backend:backend.gear.popup_blocked'), { hurt:true }); return; }
   const safeName = escapeHtml(displayName || '?');
   win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>🎒 ${safeName}</title><style>
     body{background:#141319;color:#e8e3d8;font-family:Georgia,serif;padding:14px;margin:0;}
@@ -755,15 +745,15 @@ async function showPlayerInventoryWindow(userId, displayName) {
     gridEl.innerHTML = inv.map(s => cellHtml(s, !s || cat.kinds.includes(s.kind))).join('');
   }
   const tabsHtml = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCat?' active':''}${c.locked?' locked':''}"` +
-    `${c.locked?' disabled title="'+(LANG==='fr'?'Bientôt disponible':'Coming soon')+'"':''} data-cat="${c.id}">${c.locked?'🔒 ':''}${c.icon} ${c.label[LANG]}</button>`).join('');
+    `${c.locked?' disabled title="'+i18next.t('backend:backend.inventory_window.coming_soon')+'"':''} data-cat="${c.id}">${c.locked?'🔒 ':''}${c.icon} ${c.label[LANG]}</button>`).join('');
   bodyEl.innerHTML =
-    `<h3>${LANG==='fr'?'Équipement':'Gear'}</h3>` +
+    `<h3>${i18next.t('backend:backend.inventory_window.gear_title')}</h3>` +
     `<div id="pdWeapons">${readonlyPdSlotsHtml(gear, PD_BOTTOM)}</div>` +
     `<div class="paperdollBox"><div class="pdCol">${readonlyPdSlotsHtml(gear, PD_LEFT)}</div>` +
     `<div class="pdCol" id="pdRight">${readonlyPdSlotsHtml(gear, PD_RIGHT)}</div></div>` +
     readonlyGearListHtml(gear) +
-    `<h3>${LANG==='fr'?'Sac':'Bag'}</h3>` +
-    `<div class="admSummary">${used} / ${inv.length || INV_SIZE} ${LANG==='fr'?'cases utilisées':'slots used'}</div>` +
+    `<h3>${i18next.t('backend:backend.inventory_window.bag_title')}</h3>` +
+    `<div class="admSummary">${used} / ${inv.length || INV_SIZE} ${i18next.t('backend:backend.inventory_window.slots_used')}</div>` +
     `<div class="catTabs">${tabsHtml}</div>` +
     `<div class="admInvGrid" id="admGrid"></div>`;
   win.document.querySelectorAll('.catTab:not(.locked)').forEach(btn => {
@@ -776,52 +766,9 @@ async function showPlayerInventoryWindow(userId, displayName) {
   });
   renderInvPane();
 }
-// bascule entre onglets de catégorie repliés dans un même panneau (openInfo) — n'affiche
-// qu'une seule catégorie à la fois, les autres restent en mémoire (display:none)
-function wireCatTabs() {
-  $a('infoBody').querySelectorAll('.catTab').forEach(btn => {
-    btn.onclick = () => {
-      $a('infoBody').querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      $a('infoBody').querySelectorAll('.catPane').forEach(p => p.style.display = p.dataset.cat === btn.dataset.cat ? '' : 'none');
-    };
-  });
-}
 
 // Chat (mondial/trade/annonce + mentions @joueur) -> voir chat.js (charge APRES ce fichier, voir index.html)
-async function openLeaderboard() {
-  if (!marketRequireAuth()) return;
-  const { data, error } = await sb.from('player_stats').select('*').limit(500);
-  const rows = data || [];
-
-  const cats = [
-    { id:'silver', icon:'💰', label:{fr:'Silver',en:'Silver'}, col:{fr:'Silver (total à vie)',en:'Silver (lifetime total)'},
-      rows: rankRows(rows, r => Number(r.silver||0), r => fmt(r.silver||0)) },
-    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'Record GS (PA/PD)',en:'Record GS (AP/DP)'},
-      rows: rankRows(rows, r => Number(r.gearscore||0), r => `${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})`) },
-    { id:'zone', icon:'🗺️', label:{fr:'Meilleure zone',en:'Best zone'}, col:{fr:'Zone',en:'Zone'},
-      rows: rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—')) },
-    { id:'sh', icon:'⏱️', label:{fr:'Silver/heure',en:'Silver/hour'}, col:{fr:'Taux (zone)',en:'Rate (zone)'},
-      rows: rankRows(rows, r => Number(r.silver_per_hour||0), r => `${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}`) },
-    { id:'kpm', icon:'🏹', label:{fr:'Record kills/min',en:'Kills/min record'}, col:{fr:'Kills/min',en:'Kills/min'},
-      rows: rankRows(rows, r => Number(r.best_kpm||0), r => `${(r.best_kpm||0).toFixed(1)}/min · ${tr(r.best_zone_name||'—')}`) },
-    { id:'item', icon:'🎯', label:{fr:'Meilleur objet',en:'Best item'}, col:{fr:'Objet (qté)',en:'Item (qty)'},
-      rows: rankRows(rows.filter(r => r.best_item_name), r => Number(r.best_item_count||0), r => `${tr(r.best_item_name)} (${fmt(r.best_item_count||0)})`) },
-    { id:'treasure', icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, col:{fr:'Morceaux',en:'Pieces'},
-      rows: rankRows(rows, r => Number(r.treasure_count||0), r => fmt(r.treasure_count||0)) },
-  ];
-  const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
-  const panesHtml = cats.map((c,i) => `
-    <div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>
-      <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${c.col[LANG]}</th></tr></thead><tbody>${c.rows}</tbody></table>
-    </div>`).join('');
-  const html = `<div class="catTabs">${tabsHtml}</div>${panesHtml}` +
-    `<div class="admSummary">${LANG==='fr'?'Classement des records personnels À VIE — jamais un instantané, ces valeurs ne redescendent jamais.':'Lifetime personal record leaderboard — never a live snapshot, these values never go down.'}</div>`;
-  openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
-  wireCatTabs();
-  wirePlayerNameLinks();
-}
-$a('btnLeaderboard').onclick = openLeaderboard;
+$a('btnLeaderboard').onclick = () => openLeaderboard2();
 $a('btnNotifCenter').onclick = openNotifCenter;
 updateNotifBadge();
 $a('btnAchievements').onclick = openAchievements;
@@ -830,6 +777,48 @@ $a('btnAchievements').onclick = openAchievements;
 // exception React du projet, voir src/progression/compendium-react.js et CLAUDE.md §7).
 $a('btnCompendium').onclick = openCompendiumReact;
 $a('ztCompendium').onclick = openCompendiumReact;
+// Donation (2026-07-21, demande explicite : "ouvre soutenir et on y met les page de donation
+// dedans") -- déverrouille #btnDonation (jusque-là lockedFeatureBtn) et ouvre donation/index.html
+// (page autonome déjà réelle : lien PayPal.me configuré, voir commit bc3a40c) dans un panneau
+// iframe, même pattern que openCompanionsModule()/closeCompanionsModule() (combat/boss.js) --
+// iframe plutôt que fusion HTML : index.html a son propre :root de couleurs et aucune dépendance
+// au scope global du jeu, pas besoin de partager quoi que ce soit avec lui.
+// 2026-07-21 (tri de la racine, voir docs/) : donation.html/donation-merci.html/donation-policy.html
+// déplacés à la racine du dossier donation/ -- chemin mis à jour ici en conséquence.
+// 2026-07-21 (repo-audit-todo.md point 7) : donation.html renommé en index.html pour une URL
+// propre (tonsite.com/donation/ au lieu de .../donation/donation.html), chemin mis à jour ici.
+// ⚠️ Le total collecté/la barre de progression/le mur de donateurs affichés dans donation/index.html
+// sont des VALEURS FIXES (jamais branchées à un vrai suivi des dons) -- pas touché ici, mais à
+// garder en tête si un vrai suivi est demandé un jour (voir aussi donation-policy.html, lien déjà
+// en place).
+function openDonationPanel() {
+  let overlay = $a('donationOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'donationOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:953;background:#0A0C14;display:flex;flex-direction:column';
+    const bar = document.createElement('div');
+    bar.style.cssText = 'flex-shrink:0;display:flex;justify-content:flex-end;padding:6px 10px;background:#12141f;border-bottom:1px solid #232739';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ ' + (LANG==='fr'?'Fermer':'Close');
+    closeBtn.style.cssText = 'font-family:Georgia,serif;font-size:12px;background:transparent;border:1px solid #3a2f22;color:#e8e6df;border-radius:5px;padding:5px 12px;cursor:pointer';
+    closeBtn.onclick = closeDonationPanel;
+    bar.appendChild(closeBtn);
+    const frame = document.createElement('iframe');
+    frame.id = 'donationFrame';
+    frame.style.cssText = 'flex:1;border:0;width:100%';
+    frame.src = 'donation/index.html';
+    overlay.appendChild(bar);
+    overlay.appendChild(frame);
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+function closeDonationPanel() {
+  const overlay = $a('donationOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+$a('btnDonation').onclick = openDonationPanel;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 // bascule Inventaire/Assemblage dans la carte Inventaire (2026-07-06, demande explicite : "on va
@@ -989,7 +978,7 @@ async function refreshOnlineCounter() {
     if (error || !data || !data[0]) return;
     const { total, guests } = data[0];
     $a('onlineTotal').textContent = total;
-    $a('onlineGuests').textContent = guests > 0 ? ` (${guests} ${LANG==='fr'?'invités':'guests'})` : '';
+    $a('onlineGuests').textContent = guests > 0 ? ` (${guests} ${i18next.t('backend:backend.presence.guests_suffix')})` : '';
   } catch(e) {}
 }
 // nombre total de comptes inscrits (2026-07-05, demande explicite) : change rarement, pas besoin
@@ -1016,15 +1005,11 @@ setInterval(refreshRegisteredCounter, 5 * 60000);
 async function openAccountPanel() {
   if (!sb || !currentUser) return;
   if (isGuest()) {
-    openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', `
-      <p>${LANG==='fr'
-        ? 'Tu joues en mode invité. Lie un compte vérifié (bouton "🔗 Lier un compte") pour accéder au parrainage, au marché et au classement — ta progression actuelle sera conservée.'
-        : 'You\'re playing as a guest. Link a verified account (the "🔗 Link account" button) to access referrals, the market and the leaderboard — your current progress will be kept.'}</p>
-      <h3>🧹 ${LANG==='fr'?'Cache du jeu':'Game cache'}</h3>
-      <p class="mHint">${LANG==='fr'
-        ? 'En cas d\'affichage étrange après une mise à jour, ce bouton vide le cache du navigateur pour les fichiers du jeu puis recharge la page. Ta progression n\'est jamais touchée.'
-        : 'If something looks wrong after an update, this button clears the browser\'s cache for the game\'s files then reloads the page. Your progress is never affected.'}</p>
-      <button id="btnClearCache">🧹 ${LANG==='fr'?'Vider le cache et recharger':'Clear cache and reload'}</button>
+    openInfo(i18next.t('backend:backend.account.panel_title'), `
+      <p>${i18next.t('backend:backend.account.guest_intro')}</p>
+      <h3>🧹 ${i18next.t('backend:backend.account.cache_title')}</h3>
+      <p class="mHint">${i18next.t('backend:backend.account.cache_hint')}</p>
+      <button id="btnClearCache">🧹 ${i18next.t('backend:backend.account.cache_clear_button')}</button>
     `);
     $a('btnClearCache').onclick = clearGameCache;
     return;
@@ -1036,21 +1021,9 @@ async function openAccountPanel() {
 
   const refRows = referrals.map(r => `
     <tr><td>${escapeHtml(r.display_name||'?')}</td><td>${r.lvl}</td><td>${fmt(r.gearscore)}</td><td>${fmt(r.silver)}</td></tr>
-  `).join('') || `<tr><td colspan="4" class="admEmpty">${LANG==='fr'?'Aucun filleul pour l\'instant':'No referrals yet'}</td></tr>`;
+  `).join('') || `<tr><td colspan="4" class="admEmpty">${i18next.t('backend:backend.account.no_referrals')}</td></tr>`;
 
-  const rules = LANG==='fr' ? [
-    'Un compte ne peut être parrainé qu\'une seule fois.',
-    'Le parrainage doit se faire dans les 3 jours suivant la création du compte du filleul — impossible passé ce délai.',
-    'Impossible d\'utiliser ton propre code.',
-    'Impossible de parrainer ton propre parrain.',
-    'Pas de récompense pour l\'instant — juste un suivi de qui tu as parrainé.',
-  ] : [
-    'An account can only be referred once.',
-    'Referring must happen within 3 days of the referred account\'s creation — impossible afterward.',
-    'You cannot use your own code.',
-    'You cannot refer your own referrer.',
-    'No reward for now — this is just a tracker of who you\'ve referred.',
-  ];
+  const rules = i18next.t('backend:backend.account.referral_rules', { returnObjects: true });
 
   const hasDiscord = !!discordIdentity(currentUser);
   const hasGoogle = !!providerIdentity(currentUser, 'google');
@@ -1058,59 +1031,55 @@ async function openAccountPanel() {
   const hasTwitter = !!providerIdentity(currentUser, 'twitter');
 
   const html = `
-    <div class="admSummary">${LANG==='fr'?'Compte':'Account'} : <b>${currentUser.email || '—'}</b></div>
+    <div class="admSummary">${i18next.t('backend:backend.account.summary_label')} : <b>${currentUser.email || '—'}</b></div>
 
-    <h3>${LANG==='fr'?'📛 Pseudo':'📛 Nickname'}</h3>
-    <p class="mHint">${LANG==='fr'
-      ? 'Visible partout dans le classement. Le changer met à jour la même ligne, ça n\'en recrée jamais une nouvelle.'
-      : 'Shown everywhere in the leaderboard. Changing it updates the same row, it never creates a new one.'}</p>
+    <h3>${i18next.t('backend:backend.account.nickname_title')}</h3>
+    <p class="mHint">${i18next.t('backend:backend.account.nickname_hint')}</p>
     <input type="text" id="pseudoInput" value="${myPseudo || ''}" maxlength="20">
-    <button id="btnSavePseudo">${LANG==='fr'?'Enregistrer':'Save'}</button>
+    <button id="btnSavePseudo">${i18next.t('backend:backend.account.save_button')}</button>
     <div id="pseudoMsg"></div>
 
     <h3>💬 Discord</h3>
     ${hasDiscord
-      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Discord connecté.':'✅ Discord account connected.'}</p>`
-      : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${LANG==='fr'?'Connecter Discord':'Connect Discord'}</button>`}
+      ? `<p class="mHint">${i18next.t('backend:backend.account.discord_connected')}</p>`
+      : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${i18next.t('backend:backend.account.discord_connect_button')}</button>`}
 
     <h3>🔵 Google</h3>
     ${hasGoogle
-      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Google connecté.':'✅ Google account connected.'}</p>`
-      : `<button id="btnLinkGoogle" class="googleBtn">🔵 ${LANG==='fr'?'Connecter Google':'Connect Google'}</button>`}
+      ? `<p class="mHint">${i18next.t('backend:backend.account.google_connected')}</p>`
+      : `<button id="btnLinkGoogle" class="googleBtn">🔵 ${i18next.t('backend:backend.account.google_connect_button')}</button>`}
 
     <h3>🐙 GitHub</h3>
     ${hasGithub
-      ? `<p class="mHint">${LANG==='fr'?'✅ Compte GitHub connecté.':'✅ GitHub account connected.'}</p>`
-      : `<button id="btnLinkGithub" class="githubBtn">🐙 ${LANG==='fr'?'Connecter GitHub':'Connect GitHub'}</button>`}
+      ? `<p class="mHint">${i18next.t('backend:backend.account.github_connected')}</p>`
+      : `<button id="btnLinkGithub" class="githubBtn">🐙 ${i18next.t('backend:backend.account.github_connect_button')}</button>`}
 
     <h3>🐦 Twitter/X</h3>
     ${hasTwitter
-      ? `<p class="mHint">${LANG==='fr'?'✅ Compte Twitter/X connecté.':'✅ Twitter/X account connected.'}</p>`
-      : `<button id="btnLinkTwitter" class="twitterBtn">🐦 ${LANG==='fr'?'Connecter Twitter/X':'Connect Twitter/X'}</button>`}
+      ? `<p class="mHint">${i18next.t('backend:backend.account.twitter_connected')}</p>`
+      : `<button id="btnLinkTwitter" class="twitterBtn">🐦 ${i18next.t('backend:backend.account.twitter_connect_button')}</button>`}
 
-    <h3>${LANG==='fr'?'🎁 Parrainage':'🎁 Referrals'}</h3>
+    <h3>${i18next.t('backend:backend.account.referrals_title')}</h3>
     <div id="refCodeBox">${code}</div>
-    <button id="btnCopyRefCode">${LANG==='fr'?'📋 Copier le code':'📋 Copy code'}</button>
-    <div class="admSummary" style="margin-top:14px">${LANG==='fr'?'Tu as un code d\'un autre joueur ?':'Got someone else\'s code?'}</div>
-    <input type="text" id="refCodeInput" placeholder="${LANG==='fr'?'Code de parrainage':'Referral code'}" maxlength="12">
-    <button id="btnApplyRefCode">${LANG==='fr'?'Valider':'Apply'}</button>
+    <button id="btnCopyRefCode">${i18next.t('backend:backend.account.copy_code_button')}</button>
+    <div class="admSummary" style="margin-top:14px">${i18next.t('backend:backend.account.has_code_prompt')}</div>
+    <input type="text" id="refCodeInput" placeholder="${i18next.t('backend:backend.account.referral_code_placeholder')}" maxlength="12">
+    <button id="btnApplyRefCode">${i18next.t('backend:backend.account.apply_button')}</button>
     <div id="refMsg"></div>
     <ul class="refRules">${rules.map(r => `<li>${r}</li>`).join('')}</ul>
 
-    <h3>${LANG==='fr'?'👥 Tes filleuls':'👥 Your referrals'} (<span style="color:var(--gold)">${count}</span>)</h3>
+    <h3>${i18next.t('backend:backend.account.your_referrals_title')} (<span style="color:var(--gold)">${count}</span>)</h3>
     <table class="admTable">
-      <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Niv.':'Lvl'}</th><th>GS</th><th>Silver</th></tr></thead>
+      <thead><tr><th>${i18next.t('backend:backend.common.player_label')}</th><th>${i18next.t('backend:backend.account.level_label')}</th><th>GS</th><th>Silver</th></tr></thead>
       <tbody>${refRows}</tbody>
     </table>
 
-    <h3>🧹 ${LANG==='fr'?'Cache du jeu':'Game cache'}</h3>
-    <p class="mHint">${LANG==='fr'
-      ? 'En cas d\'affichage étrange après une mise à jour, ce bouton vide le cache du navigateur pour les fichiers du jeu puis recharge la page. Ta progression n\'est jamais touchée.'
-      : 'If something looks wrong after an update, this button clears the browser\'s cache for the game\'s files then reloads the page. Your progress is never affected.'}</p>
-    <button id="btnClearCache">🧹 ${LANG==='fr'?'Vider le cache et recharger':'Clear cache and reload'}</button>
+    <h3>🧹 ${i18next.t('backend:backend.account.cache_title')}</h3>
+    <p class="mHint">${i18next.t('backend:backend.account.cache_hint')}</p>
+    <button id="btnClearCache">🧹 ${i18next.t('backend:backend.account.cache_clear_button')}</button>
 
   `;
-  openInfo(LANG==='fr' ? '👤 Mon compte' : '👤 My account', html);
+  openInfo(i18next.t('backend:backend.account.panel_title'), html);
   $a('btnClearCache').onclick = clearGameCache;
   $a('btnSavePseudo').onclick = async () => {
     const val = $a('pseudoInput').value.trim();
@@ -1119,7 +1088,7 @@ async function openAccountPanel() {
     if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
     myPseudo = val;
     updatePseudoDisplay();
-    msg.textContent = LANG==='fr'?'Pseudo enregistré !':'Nickname saved!'; msg.className = 'ok';
+    msg.textContent = i18next.t('backend:backend.account.nickname_saved'); msg.className = 'ok';
     syncPlayerStats(); // propage immédiatement au classement, sans attendre la prochaine synchro
   };
   if (!hasDiscord) $a('btnLinkDiscord').onclick = linkDiscordAccount;
@@ -1128,15 +1097,15 @@ async function openAccountPanel() {
   if (!hasTwitter) $a('btnLinkTwitter').onclick = linkTwitterAccount;
   $a('btnCopyRefCode').onclick = async () => {
     try { await navigator.clipboard.writeText(code); } catch(e) {}
-    $a('btnCopyRefCode').textContent = LANG==='fr' ? '✓ Copié !' : '✓ Copied!';
+    $a('btnCopyRefCode').textContent = i18next.t('backend:backend.account.code_copied');
   };
   $a('btnApplyRefCode').onclick = async () => {
     const val = $a('refCodeInput').value.trim();
     const msg = $a('refMsg');
-    if (!val) { msg.textContent = LANG==='fr'?'Entre un code.':'Enter a code.'; msg.className = 'fail'; return; }
+    if (!val) { msg.textContent = i18next.t('backend:backend.account.enter_code_prompt'); msg.className = 'fail'; return; }
     const { error } = await sb.rpc('apply_referral_code', { p_code: val });
     if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
-    msg.textContent = LANG==='fr'?'Code appliqué !':'Code applied!'; msg.className = 'ok';
+    msg.textContent = i18next.t('backend:backend.account.code_applied'); msg.className = 'ok';
   };
 }
 $a('btnAccount').onclick = openAccountPanel;
@@ -1174,15 +1143,13 @@ $a('btnCopyUuid').onclick = async () => {
   if (!currentUser) return;
   try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
   const hint = $a('uuidCopyHint'); if (!hint) return;
-  hint.innerHTML = LANG==='fr' ? '✓ UUID copié !' : '✓ UUID copied!';
-  setTimeout(() => { hint.innerHTML = '📋 ' + (LANG==='fr'?'Copier':'Copy') + ' UUID'; }, 1200);
+  hint.innerHTML = i18next.t('backend:backend.account.uuid_copied_msg');
+  setTimeout(() => { hint.innerHTML = '📋 ' + i18next.t('backend:backend.account.copy_label') + ' UUID'; }, 1200);
 };
 $a('btnLinkAccount').onclick = () => {
   // précise que "Se connecter" reprend un compte EXISTANT (contrairement à "Créer un
   // compte" qui démarre une nouvelle progression) — source de confusion signalée en test
-  $a('authSub').textContent = LANG==='fr'
-    ? 'Compte existant ? clique "Se connecter". Sinon "Créer un compte" (remplace ta progression invité).'
-    : 'Existing account? click "Sign in". Otherwise "Create account" (replaces your guest progress).';
+  $a('authSub').textContent = i18next.t('backend:backend.account.link_account_prompt');
   showAuthOverlay(true);
 };
 $a('closeAuth').onclick = () => showAuthOverlay(false);
@@ -1350,6 +1317,7 @@ function applyI18n() {
 }
 $a('langToggle').onclick = () => {
   LANG = LANG === 'fr' ? 'en' : 'fr';
+  if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG); // garde i18next synchronise avec LANG, voir docs/I18N_PLAN.md §8
   try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
   applyI18n();
 };
@@ -1396,6 +1364,39 @@ applyMenuCollapse();
 // ============================================================
 const CURRENT_VERSION = PATCH_NOTES[0].v;
 $a('clientVersionNum').textContent = CURRENT_VERSION;
+
+// ============================================================
+// MONITORING D'ERREURS CLIENT (2026-07-21, repo-audit-todo.md point 18) — sans dépendance
+// externe (pas de Sentry, option minimale) : logue les erreurs JS/promesses rejetées non gérées
+// dans public.client_errors (supabase/migrations/20260721150000_client_error_logging.sql),
+// jusque-là invisible côté développeur sauf signalement manuel Discord. Throttlé à
+// CLIENT_ERROR_MAX_PER_SESSION (évite qu'une boucle d'erreur répétée spamme la table) ; hors
+// ligne/sans sb : no-op silencieux (même pattern que les autres appels réseau du fichier, voir
+// CLAUDE.md §11 politique tests en ligne + hors ligne).
+// ============================================================
+const CLIENT_ERROR_MAX_PER_SESSION = 5;
+let clientErrorCount = 0;
+function reportClientError(message, stack) {
+  if (isOffline || !sb || clientErrorCount >= CLIENT_ERROR_MAX_PER_SESSION) return;
+  clientErrorCount++;
+  try {
+    sb.from('client_errors').insert({
+      message: String(message || '').slice(0, 2000),
+      stack: stack ? String(stack).slice(0, 4000) : null,
+      url: location.href,
+      game_version: typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : null,
+      user_agent: navigator.userAgent,
+    }).then(() => {}, () => {});
+  } catch (e) {}
+}
+window.addEventListener('error', e => {
+  reportClientError(e.message, e.error && e.error.stack);
+});
+window.addEventListener('unhandledrejection', e => {
+  const reason = e.reason;
+  reportClientError(reason && reason.message ? reason.message : String(reason), reason && reason.stack);
+});
+
 let updateToastShown = false;
 async function checkForUpdate() {
   if (updateToastShown) return;
@@ -1557,7 +1558,7 @@ function renderCodexHtml() {
     const t = gearTierForZone(i), slot = accSlotFor(z.loot.jackpot), tIdx = JEWEL_TIER_IDX[t.grade] ?? 0;
     const iconFn = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier }[slot] || ringIconForTier;
     return { icon: iconFn(tIdx, t.color), name:tr(z.loot.jackpot.name),
-      desc:`+${z.loot.jackpot.ap} PA · ${LANG==='fr'?'zone':'zone'} ${i+1} (${tr(z.name)})` };
+      desc:`+${z.loot.jackpot.ap} PA · ${i18next.t('backend:backend.codex.zone_word')} ${i+1} (${tr(z.name)})` };
   });
   // matériaux d'optimisation
   const matSet = new Map();
@@ -1565,29 +1566,27 @@ function renderCodexHtml() {
   const MAT_ICON_BY_NAME = { 'Pierre de Novice':ICO_MAT_NOVICE, 'Pierre du Temps':ICO_MAT_TEMPS,
     'Pierre Noire':ICO_MAT_NOIRE, 'Pierre noire':ICO_MAT_NOIRE, 'Pierre concentrée':ICO_MAT_CONCENTREE,
     'Pierre de Caphras':ICO_MAT_CAPHRAS };
-  const mats = [...matSet.values()].map(m => ({ icon:MAT_ICON_BY_NAME[m.name]||ICO_MAT_NOVICE, name:tr(m.name), desc:LANG==='fr'?'Matériau d\'optimisation':'Enhancement material' }));
+  const mats = [...matSet.values()].map(m => ({ icon:MAT_ICON_BY_NAME[m.name]||ICO_MAT_NOVICE, name:tr(m.name), desc:i18next.t('backend:backend.codex.material_desc') }));
   // composants de craft
   const craftSet = new Map();
   ZONES.forEach(z => { const c = z.loot.craft; if (!craftSet.has(c.name)) craftSet.set(c.name, c); });
-  const crafts = [...craftSet.values()].map(c => ({ icon:'✦', name:tr(c.name), desc:LANG==='fr'?'Composant de craft endgame':'Endgame crafting component' }));
+  const crafts = [...craftSet.values()].map(c => ({ icon:'✦', name:tr(c.name), desc:i18next.t('backend:backend.codex.craft_component_desc') }));
   // butin de base (trash → silver)
   const trash = ZONES.map((z,i) => ({ icon:'▬', name:tr(z.loot.trash.name), desc:`${fmt(z.loot.trash.val)} silver · ${tr(z.mob)}` }));
   // Trésor de Velia (2026-07-13, sorti du statut expérimental "TEST", demande explicite)
   const treasures = VELIA_TREASURE.map(t =>
-    ({ icon:t.icon, name:tr(t.name), desc:`${LANG==='fr'?'Toutes zones':'All zones'} · ${fmtTinyPct(t.ch)}` }));
-  return `<div class="admSummary">${LANG==='fr'?'Tous les objets actuellement présents dans le jeu.':'All items currently in the game.'}</div>` +
-    section(LANG==='fr'?'💎 Bijoux rares':'💎 Rare jewelry', jewels) +
-    section(LANG==='fr'?'◈ Matériaux d\'optimisation':'◈ Enhancement materials', mats) +
-    section(LANG==='fr'?'✦ Composants de craft':'✦ Crafting components', crafts) +
-    section(LANG==='fr'?'🗺️ Trésor de Velia':'🗺️ Velia Treasure', treasures) +
-    section(LANG==='fr'?'▬ Butin de base':'▬ Base loot', trash);
+    ({ icon:t.icon, name:tr(t.name), desc:`${i18next.t('backend:backend.codex.all_zones')} · ${fmtTinyPct(t.ch)}` }));
+  return `<div class="admSummary">${i18next.t('backend:backend.codex.summary')}</div>` +
+    section(i18next.t('backend:backend.codex.section_jewelry'), jewels) +
+    section(i18next.t('backend:backend.codex.section_materials'), mats) +
+    section(i18next.t('backend:backend.codex.section_crafts'), crafts) +
+    section(i18next.t('backend:backend.codex.section_treasure'), treasures) +
+    section(i18next.t('backend:backend.codex.section_base_loot'), trash);
 }
 // page Wiki "Tutoriel" : résumé + bouton pour relancer le tutoriel d'arrivée à Velia à tout moment
 function renderTutoPageHtml() {
-  return `<div class="admSummary">${LANG==='fr'
-    ? 'Le tutoriel te fait visiter Velia, la ville paisible, et t\'explique les bases du jeu (zones, sorts automatiques, statistiques, quêtes, chat). Tu peux le relancer ici quand tu veux.'
-    : 'The tutorial walks you through Velia, the peaceful town, and explains the basics of the game (zones, automatic skills, stats, quests, chat). You can replay it here anytime.'}</div>
-    <button id="btnStartTutoWiki" style="width:auto;margin-top:10px;padding:8px 18px;">${LANG==='fr'?'▶ Relancer le tutoriel':'▶ Replay the tutorial'}</button>`;
+  return `<div class="admSummary">${i18next.t('backend:backend.tuto_page.intro')}</div>
+    <button id="btnStartTutoWiki" style="width:auto;margin-top:10px;padding:8px 18px;">${i18next.t('backend:backend.tuto_page.replay_button')}</button>`;
 }
 // renderWikiHtml()/wikiSection (rendu à onglets plats) retirés le 2026-07-11 : le panneau Wiki
 // est désormais src/backend/wiki-panel.js (openWikiPanel()) — WIKI_SECTIONS/renderCodexHtml/
@@ -1618,7 +1617,7 @@ $a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOver
 // plus visible, directement accessible depuis le menu de gauche
 $a('btnCodex').onclick = () => {
   const callout = contentChangeCalloutHtml('codex');
-  openInfo(LANG === 'fr' ? '📚 Codex des objets' : '📚 Item Codex', callout + renderCodexHtml());
+  openInfo(i18next.t('backend:backend.codex.panel_title'), callout + renderCodexHtml());
   markContentSeen('codex');
 };
 // 2026-07-11 : remplace l'ancienne modale à onglets plats (openInfo()/renderWikiHtml()) par le
@@ -1825,13 +1824,13 @@ function positionTutorialStep() {
 }
 function showTutorialStep() {
   const step = activeTutorialSteps[tutorialStepIdx];
-  $a('tutStepLbl').textContent = `${LANG==='fr'?'Étape':'Step'} ${tutorialStepIdx+1} / ${activeTutorialSteps.length}`;
+  $a('tutStepLbl').textContent = `${i18next.t('backend:backend.tutorial.step_label')} ${tutorialStepIdx+1} / ${activeTutorialSteps.length}`;
   $a('tutTitle').textContent = step.title[LANG];
   $a('tutText').textContent = step.text[LANG];
-  $a('tutSkipBtn').textContent = LANG==='fr'?'Passer':'Skip';
-  $a('tutPrevBtn').textContent = LANG==='fr'?'← Précédent':'← Back';
+  $a('tutSkipBtn').textContent = i18next.t('backend:backend.tutorial.skip');
+  $a('tutPrevBtn').textContent = i18next.t('backend:backend.tutorial.prev');
   $a('tutPrevBtn').disabled = tutorialStepIdx <= 0;
-  $a('tutNextBtn').textContent = step.final ? (LANG==='fr'?'Terminer':'Finish') : (LANG==='fr'?'Suivant →':'Next →');
+  $a('tutNextBtn').textContent = step.final ? i18next.t('backend:backend.tutorial.finish') : i18next.t('backend:backend.tutorial.next');
   // certains steps ont besoin de forcer temporairement un état pour être visibles (ex: le suivi de
   // quêtes) — voir tutTrackerForced. Le nettoyage correspondant (after) est appelé en quittant le step.
   if (step.before) step.before();
@@ -2118,12 +2117,12 @@ function renderPatchEntryHtml(p, absIdx) {
               // sous-catégorie (2026-07-05, demande explicite : "marquer chaque grosse catégorie ET
               // sous-catégorie mais plus finement") -- reprend la couleur de la catégorie parente au
               // lieu d'un gris neutre, pour bien montrer le lien de parenté tout en restant plus discret
-              const subTag = sub ? `<span class="patchSub" style="color:${cat.color};border-color:${cat.color}55" title="${LANG==='fr'?'Sous-catégorie':'Subcategory'} : ${escapeHtml(sub)}">${sub}</span>` : '';
+              const subTag = sub ? `<span class="patchSub" style="color:${cat.color};border-color:${cat.color}55" title="${i18next.t('backend:backend.patch_notes.subcategory_label')} : ${escapeHtml(sub)}">${sub}</span>` : '';
               const extraTags = sevTag + subTag + platTag + natureTag;
-              const removedTag = line.removed ? `<span class="patchRemoved">${LANG==='fr'?'🗑 Supprimé':'🗑 Removed'}</span>` : '';
+              const removedTag = line.removed ? `<span class="patchRemoved">${i18next.t('backend:backend.patch_notes.removed_tag')}</span>` : '';
               // bouton avant/après (2026-07-05, demande explicite) : ouvre un comparateur d'images
               // quand la ligne référence des captures d'écran (voir line.img.before/after)
-              const imgBtn = line.img ? `<button class="patchImgBtn" data-before="${escapeHtml(line.img.before)}" data-after="${escapeHtml(line.img.after)}" title="${LANG==='fr'?'Voir avant/après':'See before/after'}">🖼️</button>` : '';
+              const imgBtn = line.img ? `<button class="patchImgBtn" data-before="${escapeHtml(line.img.before)}" data-after="${escapeHtml(line.img.after)}" title="${i18next.t('backend:backend.patch_notes.before_after_title')}">🖼️</button>` : '';
               return `<li class="${line.removed?'patchLineRemoved':''}">
                 <div class="patchLineMain"><span class="patchLineText">${line.tx}${removedTag}</span>${imgBtn}</div>
                 ${extraTags ? `<div class="patchLineExtra">${extraTags}</div>` : ''}
@@ -2151,16 +2150,16 @@ function renderPatchNotesPanel() {
   const unreadNow = unreadPatchCount();
   const unreadBannerHtml = `<div id="patchUnreadBanner" class="${unreadNow>0?'show':''}">` +
     `<span id="patchUnreadBannerNum">${unreadNow}</span> ` +
-    `<span>${LANG==='fr'?'note(s) de version non lue(s) — clique pour remonter':'unread patch note(s) — click to jump to newest'}</span></div>`;
+    `<span>${i18next.t('backend:backend.patch_notes.unread_banner')}</span></div>`;
 
   const navHtml = `<div class="patchNavRow">
-      <button id="patchNavUp" class="patchNavBtn"${pageIdx===0?' disabled':''} title="${LANG==='fr'?'Notes plus récentes':'Newer notes'}">▲ ${LANG==='fr'?'Plus récent':'Newer'}</button>
+      <button id="patchNavUp" class="patchNavBtn"${pageIdx===0?' disabled':''} title="${i18next.t('backend:backend.patch_notes.newer_notes_title')}">▲ ${i18next.t('backend:backend.patch_notes.newer_label')}</button>
       <span class="patchNavPos">${page.start+1}–${page.start+entries.length} / ${PATCH_NOTES.length}</span>
-      <button id="patchNavDown" class="patchNavBtn"${pageIdx===pages.length-1?' disabled':''} title="${LANG==='fr'?'Notes plus anciennes':'Older notes'}">${LANG==='fr'?'Plus ancien':'Older'} ▼</button>
+      <button id="patchNavDown" class="patchNavBtn"${pageIdx===pages.length-1?' disabled':''} title="${i18next.t('backend:backend.patch_notes.older_notes_title')}">${i18next.t('backend:backend.patch_notes.older_label')} ▼</button>
     </div>`;
 
   const entriesHtml = entries.map((p,k) => renderPatchEntryHtml(p, page.start+k)).join('');
-  openInfo(LANG === 'fr' ? '📜 Notes de version' : '📜 Patch Notes', unreadBannerHtml + navHtml + entriesHtml);
+  openInfo(i18next.t('backend:backend.patch_notes.panel_title'), unreadBannerHtml + navHtml + entriesHtml);
 
   // toute la page affichée est immédiatement marquée "vue" (plus besoin de défiler dessus,
   // contrairement à l'ancien système) -- le tag "NEW" par entrée reste basé sur readPatches
@@ -2191,8 +2190,8 @@ $a('btnPatch').onclick = () => {
   else renderPatchNotesPanel();
 };
 function openPatchImgCompare(before, after) {
-  $a('patchImgLblBefore').textContent = LANG==='fr' ? 'Avant' : 'Before';
-  $a('patchImgLblAfter').textContent = LANG==='fr' ? 'Après' : 'After';
+  $a('patchImgLblBefore').textContent = i18next.t('backend:backend.patch_notes.compare_before_label');
+  $a('patchImgLblAfter').textContent = i18next.t('backend:backend.patch_notes.compare_after_label');
   $a('patchImgBefore').src = before;
   $a('patchImgAfter').src = after;
   $a('patchImgOverlay').classList.add('open');

@@ -8,7 +8,7 @@
 // matchmaking PvP pourra directement s'appuyer.
 
 // puissance de combat utilisée pour classer les familiers en PvP -- volontairement le même normGS
-// que partout ailleurs dans le module (companions.tier.js), pas une formule séparée : un pet fort
+// que partout ailleurs dans le module (tier.js), pas une formule séparée : un pet fort
 // en Collection doit rester fort en PvP, pas de double calibration à maintenir.
 function pvpPower(p) { return normGS(p); }
 

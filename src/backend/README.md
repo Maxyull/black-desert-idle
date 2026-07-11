@@ -71,7 +71,7 @@ multi navigateur and multidevice" + "Mode hors ligne")** :
   ne parte (le thenable ne s'exécute qu'au premier `.then()`/`await`). Déjà corrigé une fois pour
   `log_playtime_ping` (2026-07-08, commentaire juste au-dessus de son `setInterval`) mais jamais
   généralisé — retrouvé dans `mark_item_tutorial_seen` (×2, `markItemTutorialSeen`/
-  `reportTutorialProgress`) et `companions/companions.sync.js`. Toujours utiliser `await`
+  `reportTutorialProgress`) et `companions/sync.js`. Toujours utiliser `await`
   (fonction bloquante OK) ou `.then(null, cb)` (fire-and-forget) — jamais `.then(cb).catch(errCb)`
   n'est le souci (ça, c'est valide : `.catch` est appelé sur le vrai Promise renvoyé PAR `.then()`,
   pas sur le builder brut — voir `boss.js:boss_contribute` pour un exemple correct de ce pattern).

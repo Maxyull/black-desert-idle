@@ -57,7 +57,7 @@ function applyOfflineProgress(savedAt){
 }
 
 // migration rétroactive (2026-07-20, demande explicite : "supprime tout compagnon au dessus de la
-// limite") -- purge l'excédent au-delà de PET_ROSTER_CAP (96, companions.roster.js). Garde TOUJOURS
+// limite") -- purge l'excédent au-delà de PET_ROSTER_CAP (96, roster.js). Garde TOUJOURS
 // les pets actuellement déployés sur le terrain (quel que soit leur GS -- jamais casser une
 // configuration active), puis complète avec les meilleurs GS parmi le reste jusqu'au plafond.
 function trimRosterToCapIfNeeded(){
@@ -72,7 +72,7 @@ function trimRosterToCapIfNeeded(){
   }
 }
 // migration rétroactive (2026-07-10, marché d'échange) -- tout pet créé avant l'ajout de `uid`
-// (rollAndCreatePet, companions.hatch.js) n'en a pas : indispensable avant de pouvoir le mettre en
+// (rollAndCreatePet, hatch.js) n'en a pas : indispensable avant de pouvoir le mettre en
 // vente (pet_uid est la clé serveur). Gatée par petsUidV1 (pas de flag par pet -- un seul passage
 // suffit, générer un uid à un pet qui en a déjà un ne se produit jamais après ce passage).
 function migratePetUidV1(){
@@ -81,12 +81,12 @@ function migratePetUidV1(){
 function loadGame(){
   try{
     const raw = localStorage.getItem('velia_idle_pets_save');
-    // nouveau joueur (aucune sauvegarde) : PETS=[] déjà par défaut (companions.roster.js), rien à
+    // nouveau joueur (aucune sauvegarde) : PETS=[] déjà par défaut (roster.js), rien à
     // migrer -- marque directement le flag pour ne jamais redéclencher la migration plus tard.
     if(!raw){ petsRosterResetV1 = true; return false; }
     const state = JSON.parse(raw);
     // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
-    // monde") -- voir petsRosterResetV1 (companions.economy.js). Vide le roster UNE SEULE FOIS
+    // monde") -- voir petsRosterResetV1 (economy.js). Vide le roster UNE SEULE FOIS
     // pour toute sauvegarde antérieure à ce changement, jamais plus ensuite.
     const needsRosterReset = !state.petsRosterResetV1;
     PETS = needsRosterReset ? [] : (state.PETS || PETS);

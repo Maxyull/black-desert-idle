@@ -22,7 +22,7 @@ function toggleResPetExpand(id){
 
 // tri de la réserve (2026-07-20, demande explicite : "trier par GS, Tiers") -- 'default' = ordre
 // d'obtention (aucun tri), sinon décroissant au premier clic, réinverse au clic suivant sur le
-// même mode (même pattern que setSort() de la Collection, companions.collection.js).
+// même mode (même pattern que setSort() de la Collection, collection.js).
 // Tri par défaut = Tier (2026-07-20, demande explicite : "Tier par Tiers/GS") -- Tier décroissant
 // en priorité, GS décroissant en cas d'égalité de Tier (plutôt que l'ordre d'obtention par défaut).
 let resSortMode='tier', resSortDir=-1;
@@ -157,7 +157,7 @@ function renderSecDetail(){
 // carte terrain en 3D (2026-07-10, demande explicite : les 2 premières idées listées -- "carte
 // terrain en 3D" pour les 12 espèces modélisées) -- remplace le pixel art de la grande carte
 // "Pokémon" par le modèle GLB en rotation quand le pet déployé en a un (companionModelUrlFor).
-// ATTENTION perf/leak : companions.ticks.js appelle renderSecDetail() CHAQUE SECONDE tant que cet
+// ATTENTION perf/leak : ticks.js appelle renderSecDetail() CHAQUE SECONDE tant que cet
 // onglet est ouvert (voir tickHunger) -- créer un nouveau contexte WebGL à chaque appel aurait
 // reproduit exactement le bug de fuite déjà corrigé pour la modale 3D (2026-07-20, "je ne vois pas
 // mes model que le premier"). Le viewer est donc mis en cache par (id pet + tier) et son `wrap`

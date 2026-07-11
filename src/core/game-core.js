@@ -227,7 +227,7 @@ function showAwayLootSummaryIfAny() {
   if (typeof openReconnectModal !== 'function' || !$a('reconnectModalRoot')) {
     // repli si le fichier React n'a pas pu charger (CDN indispo) -- garde un minimum d'info visible
     if (typeof showResetNotice === 'function') {
-      showResetNotice('🎁', LANG==='fr'?'Pendant ton absence':'While you were away',
+      showResetNotice('🎁', i18next.t('core:core.away.title'),
         `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver`);
     }
     awaySilverGained = 0; awayLootCounts = {}; return;
@@ -242,7 +242,7 @@ function showAwayLootSummaryIfAny() {
   if (awaySilverGained > S.bestAfkSessionSilver) S.bestAfkSessionSilver = awaySilverGained;
 
   openReconnectModal({
-    pseudo: (typeof myPseudo !== 'undefined' && myPseudo) || (LANG==='fr'?'Joueur':'Player'),
+    pseudo: (typeof myPseudo !== 'undefined' && myPseudo) || i18next.t('core:core.default_pseudo'),
     streak: 0, streakGoal: 7, // streak de connexion : hors périmètre du jeu principal (voir module Compagnons pour l'équivalent existant)
     awayLabel: reconnectDurationLabel(new Date(awaySessionStartedAt || Date.now()), new Date()),
     silver: awaySilverGained, xp: awayXpGained,
@@ -456,7 +456,14 @@ function addItemFailstack(item, level) {
   if (!item.fsByLevel) item.fsByLevel = {};
   item.fsByLevel[level] = (item.fsByLevel[level] || 0) + 1;
 }
-// renvoie {base, bonus, total} — base = chance fixe, bonus = apport du failstack (affichés séparément sur la barre)
+/**
+ * Chance de succès d'une tentative d'optimisation vers `level`, décomposée en base fixe et bonus
+ * failstack (affichés séparément sur la barre de progression).
+ * @param {number} level - palier visé (index dans ENH_NAMES ; < SAFE_IDX = toujours 100%).
+ * @param {object} item - objet ciblé, lit item.fsByLevel[level] (échecs déjà accumulés à CE
+ *   niveau précis, sur CET objet précis — jamais partagé entre objets ni entre niveaux).
+ * @returns {{base:number, bonus:number, total:number}} total = base + bonus, plafonné à 90%.
+ */
 function enhChanceParts(level, item) {
   if (level < SAFE_IDX) return { base:1, bonus:0, total:1 };
   const base = ENH_CHANCE_FLAT[level] ?? .01;
@@ -832,7 +839,7 @@ function doTeleport(dirX, dirY) {
 // restent un luxe) et le temps de recharge grandit avec le soin apporté, pour qu'aucune taille
 // ne soit "abusable" (spam en boucle) ni trop faible pour être utile.
 // Recalibré le 2026-07-08 par rapport à la courbe de gains des zones de Velia (~3 000 silver/h en
-// zone 1 jusqu'à ~100 000 silver/h en zone 11, voir roadmap.md) : même utilisée en continu à
+// zone 1 jusqu'à ~100 000 silver/h en zone 11, voir docs/roadmap.md) : même utilisée en continu à
 // son propre CD, la potion la plus chère (mega) ne dépasse jamais ~15% du revenu horaire d'une
 // zone adaptée à son coût — un vrai sink sans jamais casser l'économie du joueur qui progresse.
 // "Potion de vie" (infinite, cost:0) : verrouillée 🔒 en bas du sélecteur, réservée à un futur
@@ -1112,7 +1119,7 @@ function wolvesTick(dt) {
           const wp = wolfPos(p,w);
           if (dist(P.x,P.y,wp.x,wp.y) < 95) {
             if (Math.random() < dodgeChance) {
-              floatTxt(P.x,P.y,80,LANG==='fr'?'Esquivé !':'Dodged!',{blue:true});
+              floatTxt(P.x,P.y,80,i18next.t('core:core.combat.dodge'),{blue:true});
             } else {
               const dmgRaw = p.dmg*(0.8+Math.random()*.4)*mitig;
               let dmg;
@@ -1235,7 +1242,7 @@ let lootPreviewIdx = null; // null = suit la zone qu'on farm ; sinon index de la
 // paliers de zones : pour l'instant tout ZONES[] est "Early" (jusqu'au niveau ~31) — Mid et End
 // arriveront dans une future mise à jour, d'où le verrou 🔒 (demande explicite du 2026-07-05)
 let zoneTier = 'early';
-// 5 paliers de régions (voir roadmap.md pour le détail des zones prévues par palier) —
+// 5 paliers de régions (voir docs/roadmap.md pour le détail des zones prévues par palier) —
 // seul "Early / Velia" est en jeu pour l'instant, les autres sont verrouillés en attendant
 // d'être construits (demande explicite du 2026-07-05)
 // TIER_PREVIEW_CARD/ZONE_TIERS desormais dans world/region-tiers-data.js (extrait le
@@ -1268,16 +1275,12 @@ function renderStatsTabs() {
 function renderStatsRecoPane() {
   const el = $('statsRecoPane'); if (!el) return;
   const rows = [
-    { label: LANG==='fr'?'💰 Meilleur silver/h':'💰 Best silver/h', best: bestZoneForMetric(zoneSilverPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
-    { label: LANG==='fr'?'⭐ Meilleur XP/h':'⭐ Best XP/h', best: bestZoneForMetric(zoneXpPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
-    { label: LANG==='fr'?'⚔️ Meilleurs kills/min':'⚔️ Best kills/min', best: bestZoneForMetric(zoneKillsPerMin), fmtV: v => v.toFixed(1)+'/min' },
+    { label: i18next.t('core:core.stats_reco.best_silver_hour'), best: bestZoneForMetric(zoneSilverPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
+    { label: i18next.t('core:core.stats_reco.best_xp_hour'), best: bestZoneForMetric(zoneXpPerHour), fmtV: v => fmt(Math.round(v))+'/h' },
+    { label: i18next.t('core:core.stats_reco.best_kills_min'), best: bestZoneForMetric(zoneKillsPerMin), fmtV: v => v.toFixed(1)+'/min' },
   ];
-  el.innerHTML = `<div class="constructionBanner">${LANG==='fr'
-      ? '🚧 En construction — calculs et présentation encore amenés à changer'
-      : '🚧 Under construction — calculations and presentation still subject to change'}</div>` +
-    `<div class="admHint">${LANG==='fr'
-      ? 'Classement théorique (stuff idéal, indépendant de ta survie actuelle) — clique une zone pour t\'y rendre.'
-      : 'Theoretical ranking (ideal gear, independent of your current survival) — click a zone to go there.'}</div>` +
+  el.innerHTML = `<div class="constructionBanner">${i18next.t('core:core.stats_reco.construction_banner')}</div>` +
+    `<div class="admHint">${i18next.t('core:core.stats_reco.hint')}</div>` +
     rows.map((r,ri) => `<div class="row statsRecoRow" data-zi="${r.best.i}" data-ri="${ri}">` +
       `<span>${r.label}</span><span class="v">${tr(ZONES[r.best.i].name)} · ${r.fmtV(r.best.v)}</span></div>`).join('');
   el.querySelectorAll('.statsRecoRow').forEach(row => {
@@ -1298,12 +1301,10 @@ function renderStatsLevelsPane() {
   for (let lvl = from; lvl <= to; lvl++) {
     const isCur = lvl === cur;
     rows += `<div class="row statsLevelRow${isCur?' current':''}">` +
-      `<span>${LANG==='fr'?'Niv.':'Lvl'} ${lvl}${isCur?(LANG==='fr'?' — toi':' — you'):''}</span>` +
-      `<span class="v">${LANG==='fr'?'PV':'HP'} ${fmt(hpMaxFor(lvl))} · SPD +${Math.round(levelSpdPctFor(lvl))}% · XP ${fmt(xpNeededFor(lvl))}</span></div>`;
+      `<span>${i18next.t('core:core.stats_levels.lvl_label')} ${lvl}${isCur?i18next.t('core:core.stats_levels.you_suffix'):''}</span>` +
+      `<span class="v">${i18next.t('core:core.stats_levels.hp_label')} ${fmt(hpMaxFor(lvl))} · SPD +${Math.round(levelSpdPctFor(lvl))}% · XP ${fmt(xpNeededFor(lvl))}</span></div>`;
   }
-  el.innerHTML = `<div class="admHint">${LANG==='fr'
-    ? '5 niveaux avant et après le tien — PV de base (hors équipement), bonus de Vitesse et XP requise pour CE niveau.'
-    : '5 levels before and after yours — base HP (gear excluded), Speed bonus, and XP required for THAT level.'}</div>` + rows;
+  el.innerHTML = `<div class="admHint">${i18next.t('core:core.stats_levels.hint')}</div>` + rows;
 }
 // Compagnon/Vie en mer (2026-07-17, "on y transvase du menu de gauche compagnon et vie en mer
 // avec cadenas") vivaient ici, dans la barre d'onglets de région -- remis dans le header
@@ -1322,8 +1323,8 @@ function renderZoneTierTabs() {
   el.innerHTML = ZONE_TIERS.map(t => {
     const card = TIER_PREVIEW_CARD[t.id];
     const lockedTitle = card
-      ? (LANG==='fr' ? `Bientôt disponible — droppera : ${card.icon} ${tr(card.name)}` : `Coming soon — will drop: ${card.icon} ${tr(card.name)}`)
-      : (LANG==='fr' ? 'Bientôt disponible' : 'Coming soon');
+      ? i18next.t('core:core.zone_tier.locked_title_with_drop', { icon: card.icon, name: tr(card.name) })
+      : i18next.t('core:core.zone_tier.locked_title');
     return `<button class="catTab${t.id===zoneTier?' active':''}${t.locked?' locked':''}"` +
     `${t.locked?' disabled title="'+lockedTitle+'"':''} data-tier="${t.id}">` +
     `${t.locked?'<span class="zoneTierLock">🔒</span>':''}<span class="zoneTierLabel">${t.icon} ${t.label[LANG]}</span></button>`;
@@ -1359,11 +1360,11 @@ function buildZoneList() {
   // rapide pour revoir le tutoriel de bienvenue à tout moment
   const veliaRow = document.createElement('div');
   veliaRow.className = 'zRow veliaRow' + (atVelia ? ' current' : '');
-  veliaRow.title = LANG==='fr' ? 'Velia — zone paisible' : 'Velia — peaceful zone';
+  veliaRow.title = i18next.t('core:core.velia.title');
   veliaRow.innerHTML =
     `<span class="zname">🏘️ Velia</span>` +
-    `<span class="zBadge">${LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE'}</span>` +
-    `<span class="zreq" style="width:auto">${LANG==='fr'?'Aucun monstre':'No monsters'}</span>`;
+    `<span class="zBadge">${i18next.t('core:core.zone.peaceful_badge')}</span>` +
+    `<span class="zreq" style="width:auto">${i18next.t('core:core.zone.no_monsters')}</span>`;
   veliaRow.onclick = () => { if (!atVelia) goToVelia(); };
   list.appendChild(veliaRow);
   // zones regroupées par palier de stuff (armure + bijou) — demande explicite du 2026-07-06 :
@@ -1405,20 +1406,20 @@ function buildZoneList() {
       // migration) renvoie l'index de zone où se trouve le SEUL compte admin, sans exposer
       // l'identité d'aucun autre joueur — même principe de minimisation que zonePlayerCounts.
       const adminHereTag = (typeof adminZoneIdx !== 'undefined' && adminZoneIdx === i)
-        ? `<span class="zAdminTag" title="${LANG==='fr'?'Un admin est ici':'An admin is here'}">ADMIN</span>` : '';
+        ? `<span class="zAdminTag" title="${i18next.t('core:core.zone.admin_tag_title')}">ADMIN</span>` : '';
       row.innerHTML =
         `<span class="zname">${tr(z.name)}</span>` +
         `<span class="zBadge ${b.cls}">${tr(b.txt.replace('ZONE ',''))}</span>` +
         `<span class="zreq"><span class="${apOk?'ok':'bad'}">${z.reqAP} PA</span> · <span class="${dpOk?'ok':'bad'}">${z.reqDP} PD</span></span>` +
-        `<span class="zUpgradeIcon"${hasUpgrade?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Meilleur stuff à trouver ici':'Better gear to find here'}">⬆️</span>` +
+        `<span class="zUpgradeIcon"${hasUpgrade?'':' style="visibility:hidden"'} title="${i18next.t('core:core.zone.better_gear_title')}">⬆️</span>` +
         // étiquette ADMIN désormais ancrée au-dessus du compteur de joueurs spécifiquement (2026-07-16,
         // demande explicite : "met le admin absolu au dessus du nombre des joueurs sur la zone") --
         // avant, positionnée en absolu par rapport à TOUTE la ligne (top-right), elle atterrissait
         // au-dessus du bouton 👁 (largeur variable des autres éléments avant elle) plutôt qu'au-dessus
         // du nombre lui-même ; sibling de zPlayerCount dans un wrapper dédié, jamais couplée à sa
         // visibilité (reste visible même si pCount vaut encore 0 au moment du rendu)
-        `<span class="zPlayerCountWrap">${adminHereTag}<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${LANG==='fr'?'Joueurs actuellement sur cette zone':'Players currently on this zone'}">👥 ${pCount}</span></span>` +
-        `<button class="zBtnView${previewed?' active':''}" title="${LANG==='fr'?'Voir le loot':'View loot'}">👁</button>`;
+        `<span class="zPlayerCountWrap">${adminHereTag}<span class="zPlayerCount"${pCount?'':' style="visibility:hidden"'} title="${i18next.t('core:core.zone.players_here_title')}">👥 ${pCount}</span></span>` +
+        `<button class="zBtnView${previewed?' active':''}" title="${i18next.t('core:core.zone.view_loot_title')}">👁</button>`;
       row.querySelector('.zBtnView').onclick = e => { e.stopPropagation(); renderLootTable(i); };
       row.onclick = () => { if (atVelia || i !== zoneIdx) travelTo(i); };
       // survol d'une zone -> surligne UNIQUEMENT les cases de la poupée que CETTE zone améliore
@@ -1458,8 +1459,8 @@ function updateZoneViewHalo() {
 // texte statique du HTML ("Camp des Loups") tant que le joueur ne voyageait pas manuellement.
 function updateZoneTitleText() {
   if (atVelia) {
-    $('ztName').textContent = LANG==='fr' ? 'Velia' : 'Velia';
-    $('ztTier').textContent = LANG==='fr' ? 'Zone paisible' : 'Peaceful zone';
+    $('ztName').textContent = 'Velia'; // nom propre, identique dans toutes les langues -- ternaire d'origine n'avait aucune variante EN
+    $('ztTier').textContent = i18next.t('core:core.velia.zone_type_label');
   } else {
     $('ztName').textContent = tr(Z().name);
     $('ztTier').textContent = Z().tier;
@@ -1496,10 +1497,10 @@ function travelTo(i) {
 // (lootLine() n'est jamais appelé sans pack), cette zone de l'écran est donc libre à réutiliser.
 function updateVeliaPlayersTicker() {
   const t = $('lootTicker'); if (!t || !atVelia) return;
-  const label = LANG==='fr' ? `👥 En ville (${veliaPlayers.length})` : `👥 In town (${veliaPlayers.length})`;
+  const label = i18next.t('core:core.velia.in_town_label', { count: veliaPlayers.length });
   const rows = veliaPlayers.map(p => `<div class="veliaPlayerRow">${p.is_guest?'🎭':'👤'} ${escapeHtml(p.pseudo)}</div>`).join('');
   t.innerHTML = `<div class="veliaPlayersHead">${label}</div>` +
-    (rows || `<div class="admHint">${LANG==='fr'?"Personne d'autre pour l'instant":'Nobody else right now'}</div>`);
+    (rows || `<div class="admHint">${i18next.t('core:core.velia.nobody_else')}</div>`);
 }
 // Velia : zone paisible, aucun monstre — ne lance plus le tutoriel automatiquement (voir
 // demande du 2026-07-04), juste un endroit calme où se rendre (à la main ou après une mort)
@@ -1529,12 +1530,8 @@ function die() {
   const banner = $('deathBanner');
   if (banner) {
     banner.textContent = stayedPut
-      ? (LANG==='fr'
-        ? '⚠ Les monstres t\'ont tué ! Choisis une zone plus adaptée à ton niveau ou améliore ton stuff.'
-        : '⚠ The monsters killed you! Pick a zone better suited to your level or improve your gear.')
-      : (LANG==='fr'
-        ? '⚠ Tu t\'es relevé — tu as changé de zone pendant le K.O.'
-        : '⚠ You got back up — you changed zone during the K.O.');
+      ? i18next.t('core:core.death.killed_by_monsters')
+      : i18next.t('core:core.death.got_back_up');
     banner.classList.add('show');
     clearTimeout(die._t);
     die._t = setTimeout(() => banner.classList.remove('show'), 6000);
@@ -1555,7 +1552,7 @@ function refreshStatsOnly() {
   // niveau/XP fusionnés sur la même ligne que PA/PD/GS de l'équipement (demande explicite du
   // 2026-07-06) — mêmes valeurs que le HUD au-dessus de la vie, juste un 2e affichage
   const eqSumLvlEl = $('eqSumLvl'), eqSumXpEl = $('eqSumXp');
-  if (eqSumLvlEl) eqSumLvlEl.textContent = (LANG==='fr'?'Niv. ':'Lvl ') + S.lvl;
+  if (eqSumLvlEl) eqSumLvlEl.textContent = i18next.t('core:core.equip_summary.lvl_prefix') + S.lvl;
   if (eqSumXpEl) eqSumXpEl.textContent = fmtXpPct(S.xp / S.xpNext * 100);
   $('stPS').textContent = Math.round(GS());
   // PA/PD affichés en entier, arrondis vers le bas (2026-07-08, demande explicite : "enleve toute
@@ -1576,7 +1573,7 @@ function refreshStatsOnly() {
   const apEl = $('stApZone');
   const dpEl = $('stDpZone');
   if (atVelia) {
-    apEl.textContent = LANG==='fr' ? '—' : '—'; apEl.className = 'v';
+    apEl.textContent = '—'; apEl.className = 'v'; // identique dans toutes les langues -- ternaire d'origine n'avait aucune variante EN
     dpEl.textContent = '—'; dpEl.className = 'v';
   } else {
     apEl.textContent = Math.floor(apEff()) + ' / ' + z.reqAP;
@@ -1623,15 +1620,15 @@ function refreshStatsOnly() {
   if (dpNow > (S.bestDp||0)) S.bestDp = dpNow;
   const zb = $('zoneBadge');
   if (atVelia) {
-    zb.className = 'b-green'; zb.textContent = LANG==='fr'?'ZONE PAISIBLE':'PEACEFUL ZONE';
-    $('ztReq').textContent = LANG==='fr' ? 'Aucun monstre' : 'No monsters';
+    zb.className = 'b-green'; zb.textContent = i18next.t('core:core.zone.peaceful_badge');
+    $('ztReq').textContent = i18next.t('core:core.zone.no_monsters');
   } else {
     const b = badgeOf(bottleneck());
     zb.className = b.cls; zb.textContent = tr(b.txt);
     // rend le danger tangible (2026-07-05, demande explicite) : rappel au survol de la pénalité de
     // vitesse (toi) / bonus de vitesse (monstres aggro) en zone dangereuse -- voir isZoneDangerous()
     zb.title = b.cls === 'b-red'
-      ? (LANG==='fr' ? '⚠️ Zone trop dure pour ton stuff : tu es ralenti, les monstres qui t\'ont repéré sont plus rapides' : '⚠️ Zone too hard for your gear: you are slowed down, monsters that spotted you are faster')
+      ? i18next.t('core:core.zone.too_hard_warning')
       : '';
     $('ztReq').innerHTML = `<span class="${apR>=1?'ok':'bad'}">${Math.floor(apEff())}/${z.reqAP} PA</span> · <span class="${dpR>=1?'ok':'bad'}">${Math.floor(totalDP())}/${z.reqDP} PD</span>`;
   }
@@ -1796,8 +1793,8 @@ function hudFast() {
   const dualIcon = $('potDualIcon');
   if (dualIcon && !dualIcon.dataset.set) { dualIcon.innerHTML = ICO_POTION_DUO; dualIcon.dataset.set = '1'; }
   const potCostNow = potionCost(pot.cost), manaCostNow = potionCost(MANA_POTION.cost);
-  $('potSlot').title = pot.name[LANG] + (potCostNow>0 ? ` — ${fmt(potCostNow)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : (LANG==='fr'?` — gratuite (CD ${pot.cd}s)`:` — free (CD ${pot.cd}s)`)) +
-    ' · ' + MANA_POTION.name[LANG] + ` — ${fmt(manaCostNow)} silver/${LANG==='fr'?'usage':'use'} (+${Math.round(MANA_POTION.restore*100)}% MP, CD ${MANA_POTION.cd}s, auto)`;
+  $('potSlot').title = pot.name[LANG] + (potCostNow>0 ? ` — ${fmt(potCostNow)} silver/${i18next.t('core:core.potions.usage_word')} (+${Math.round(effHpMax()*pot.heal)} PV, ${Math.round(pot.heal*100)}%, CD ${pot.cd}s)` : i18next.t('core:core.potions.free_suffix', { cd: pot.cd })) +
+    ' · ' + MANA_POTION.name[LANG] + ` — ${fmt(manaCostNow)} silver/${i18next.t('core:core.potions.usage_word')} (+${Math.round(MANA_POTION.restore*100)}% MP, CD ${MANA_POTION.cd}s, auto)`;
   for (const s of SKILLS) {
     const el = skEls[s.id];
     el.querySelector('.cd').style.height = (cds[s.id]/s.cd*100)+'%';

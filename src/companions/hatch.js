@@ -4,12 +4,12 @@ function ST(i){
   ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10','p11'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
   // bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut
   // pas acheter les oeufs") -- ST(1) (onglet Éclosion) n'appelait jamais renderHatch() : le tick
-  // (companions.ticks.js) décrémente bien sl.tl/passe sl.ready à true en mémoire chaque seconde,
+  // (ticks.js) décrémente bien sl.tl/passe sl.ready à true en mémoire chaque seconde,
   // mais SEUL renderHatch() régénère le DOM de #incub-slots (compte à rebours affiché + bouton
   // "Éclore" qui n'apparaît que si sl.ready). Sans cet appel, un joueur qui ouvrait l'onglet AVANT
   // qu'un slot devienne prêt ne voyait jamais le bouton apparaître (il fallait quitter l'onglet et
   // y revenir -- ce qui ne redéclenchait rien non plus, d'où le symptôme "je ne peux pas acheter
-  // d'œuf"). Voir aussi companions.ticks.js qui appelle désormais renderHatch() en direct tant que
+  // d'œuf"). Voir aussi ticks.js qui appelle désormais renderHatch() en direct tant que
   // cet onglet reste actif, pour que le compte à rebours bouge vraiment sans changer d'onglet.
   if(i===1) renderHatch();
   if(i===5) renderIndex();
@@ -25,7 +25,7 @@ function ST(i){
   if(i===10) initViewer3dIfNeeded(); else if(typeof disposeViewer3dIfActive==='function') disposeViewer3dIfActive();
   // carte terrain en 3D (2026-07-10) : même principe -- libère le contexte WebGL dès qu'on quitte
   // l'onglet Sections (i===2), voir updateTerrainViewer3d()/disposeTerrainViewer3dIfActive()
-  // (companions.sections.js).
+  // (sections.js).
   if(i!==2 && typeof disposeTerrainViewer3dIfActive==='function') disposeTerrainViewer3dIfActive();
 }
 function toast(ico,msg){const w=document.getElementById('toast-wrap');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span style="font-size:15px">${ico}</span><span>${msg}</span>`;w.appendChild(t);setTimeout(()=>t.remove(),2900);}
@@ -36,9 +36,9 @@ function fmtT(s){if(s<=0)return'PRÊT';return`${String(Math.floor(s/3600)).padSt
 // ═══ HATCH ═══════════════════════════════════════════════════════
 // achat/déblocage de slot d'incubation (2026-07-20, bug rapporté explicitement : "impossible
 // d'acheter les slots d'oeuf") -- DEUX boutons étaient des impasses : le slot verrouillé
-// (incubSlots[2].locked, voir companions.roster.js) n'avait AUCUN onclick, et le bouton "➕ slot
+// (incubSlots[2].locked, voir roster.js) n'avait AUCUN onclick, et le bouton "➕ slot
 // premium" ne faisait qu'un toast() factice sans jamais rien acheter. Les deux appellent
-// maintenant spendSilver() (companions.economy.js) puis déclenchent une vraie action.
+// maintenant spendSilver() (economy.js) puis déclenchent une vraie action.
 const UNLOCK_SLOT_COST = 500, EXTRA_SLOT_COST = 1000; // avant scaleCost(), voir TEST_BALANCE_DIVISOR
 // plafond de slots d'incubation (2026-07-10, demande explicite : "borner incubation a 8") --
 // jusqu'ici buyExtraIncubSlot() poussait dans incubSlots sans aucune limite, un joueur pouvait en
@@ -183,7 +183,7 @@ function rollAndCreatePet(eggType){
   const roll=Math.random()*100;let cum=0,rar=0;
   for(let i=0;i<odds.length;i++){cum+=odds[i];if(roll<=cum){rar=i;break;}}
   eggTypesUsed.add(eggType.id);
-  totalHatched++; // compteur à vie, jamais remis à 0 (voir companions.economy.js)
+  totalHatched++; // compteur à vie, jamais remis à 0 (voir economy.js)
 
   // ═══ PITY COUNTER ═══ Garantit un Ancestral après trop de malchance cumulée
   hatchCountSincePity++;
@@ -198,14 +198,14 @@ function rollAndCreatePet(eggType){
   const stats=mkStats(rar);
   // uid stable cross-compte (2026-07-10, marché d'échange) -- distinct de `id` (local, jamais
   // envoyé au serveur) : c'est la clé qui identifie ce pet précis dans pet_trade_offers/deliveries,
-  // doit survivre à un transfert d'un compte à l'autre (voir migratePetUidV1, companions.save.js).
+  // doit survivre à un transfert d'un compte à l'autre (voir migratePetUidV1, save.js).
   const np={id:petId++,uid:crypto.randomUUID(),cat,rar,stats,hunger:100,terrain:false,tier:1,tierXp:0,tierMult:rollTierMult(1)};
   return {pet:np, pityTriggered};
 }
 
 function doHatch(slotIdx, eggTypeId){
   // plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets") --
-  // bloque AVANT de dépenser le silver, pas après (voir petRosterRoomLeft(), companions.roster.js)
+  // bloque AVANT de dépenser le silver, pas après (voir petRosterRoomLeft(), roster.js)
   if(petRosterRoomLeft()<=0){ toast('📦',`Collection pleine (${PET_ROSTER_CAP}/${PET_ROSTER_CAP})`); return; }
   const eggType = EGG_TYPES.find(e=>e.id===eggTypeId) || EGG_TYPES[0];
   if(SILVER < eggType.cost){ toast('❌','Silver insuffisant'); return; }

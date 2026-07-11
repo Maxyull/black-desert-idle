@@ -22,12 +22,12 @@ html{overflow:hidden;height:100%}
    l'inferface pas de zoom compagnon") -- `zoom:1.25` avait déjà été essayé puis retiré le même
    jour ("retire le zoom 25%"). `zoom` change la taille effective du pixel CSS utilisée pour la
    mise en page ET la peinture -- sur Chromium, ça inclut aussi la résolution du backing store des
-   <canvas> (pixel-art ET les canvas WebGL de l'écran 3D, companions.viewer3d.js), avec un risque de
+   <canvas> (pixel-art ET les canvas WebGL de l'écran 3D, viewer3d.js), avec un risque de
    flou/désalignement de coordonnées de clic selon le moteur. `transform:scale()` ne touche QUE la
    peinture finale (jamais la mise en page ni la résolution des canvas), donc pas ce risque -- au
    prix de devoir compenser la taille du conteneur pour continuer à remplir tout le viewport
    (width/height à 100/1.25=80%, puis remis à l'échelle visuellement à 100% par le scale). Le
-   plancher minmax(90px,1fr) de la Collection (companions.collection.js) protège déjà contre le
+   plancher minmax(90px,1fr) de la Collection (collection.js) protège déjà contre le
    même risque de carte trop étroite qui avait justifié le retrait du zoom -- reste valable ici. */
 body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;width:80%;height:80vh;display:flex;flex-direction:column;overflow:hidden;transform:scale(1.25);transform-origin:top left}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}

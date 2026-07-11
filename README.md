@@ -6,7 +6,7 @@ cloud, marché, chat, classement, boss mondial).
 
 🎮 **Jouer :** https://maxyull.github.io/black-desert-idle/
 💬 **Discord :** https://discord.gg/fEubtqMjtP
-💛 **Soutenir le projet :** [donation.html](donation.html) — 100% gratuit, les dons couvrent juste les coûts d'infra (voir [politique de don](donation-policy.html))
+💛 **Soutenir le projet :** [page de don](donation/index.html) — 100% gratuit, les dons couvrent juste les coûts d'infra (voir [politique de don](donation/donation-policy.html))
 
 > Projet de fan gratuit, non officiel, sans aucune affiliation ni partenariat avec Pearl Abyss. Les
 > noms/styles s'inspirent de Black Desert Online pour l'ambiance ; tous les visuels (icônes, sprites)
@@ -84,7 +84,7 @@ Quelques convictions qui guident les choix :
 ### Ce qui arrive
 
 - Extension du contenu vers les régions suivantes (Heidel → Calpheon → Valencia → Edana), voir le
-  détail zone par zone et l'économie visée dans [`roadmap.md`](roadmap.md).
+  détail zone par zone et l'économie visée dans [`roadmap.md`](docs/roadmap.md).
 - Poursuite de l'équilibrage PA/PD/loot au fil des retours joueurs.
 - Amélioration continue de l'expérience mobile/tablette.
 - Poursuite du découpage du code par domaine (voir `core/`, seul dossier encore volumineux) à
@@ -95,4 +95,12 @@ Quelques convictions qui guident les choix :
 
 Le plus efficace : passer par le [Discord](https://discord.gg/fEubtqMjtP) ou ouvrir une
 [issue GitHub](https://github.com/Maxyull/black-desert-idle/issues). Tout retour est lu — bug,
-suggestion d'équilibrage, idée de fonctionnalité.
+suggestion d'équilibrage, idée de fonctionnalité. Voir [`CONTRIBUTING.md`](CONTRIBUTING.md) pour
+lancer le projet en local et les conventions de code.
+
+## Licence
+
+Code sous licence [MIT](LICENSE) — libre de fork/modifier/redistribuer. "Black Desert Online" et
+les noms associés restent la propriété de Pearl Abyss ; ce projet est un fan-game non officiel,
+sans affiliation (voir avertissement en haut de ce fichier), et tous les visuels sont des
+créations originales.

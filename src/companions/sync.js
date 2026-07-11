@@ -1,6 +1,6 @@
 // ═══ SYNC ADMIN (2026-07-19, demande explicite : "branche des stats sur toutes les nouvelle
 // fonctionnalité de compagnons dans menu admin") ═══════════════════════════════════════════
-// Ce module est 100% local (localStorage, voir companions.save.js) : rien n'en sortait jusqu'ici,
+// Ce module est 100% local (localStorage, voir save.js) : rien n'en sortait jusqu'ici,
 // donc aucune stat cross-joueurs n'était possible côté admin. Ce fichier pousse un petit résumé
 // de compteurs (jamais l'état complet du roster/inventaire) vers Supabase, en réutilisant EXACTEMENT
 // le client déjà authentifié de la page hôte (iframe SAME-ORIGIN, voir combat/boss.js:
@@ -24,7 +24,7 @@ function computeCompanionBreakdowns() {
 }
 // Agrégats GS pour le Classement Public (2026-07-21, catégorie "Prestige"/"Gearscore" du mockup
 // classement-public.html — voir migration 20260721100000_companion_leaderboard_prestige.sql).
-// gsSumWithTier reproduit EXACTEMENT le terme par-pet de prestigeScore() (companions.achievements.js:
+// gsSumWithTier reproduit EXACTEMENT le terme par-pet de prestigeScore() (achievements.js:
 // `score += normGS(p); score += (p.tier||1)*20;`) pour que le prestige_score calculé côté serveur
 // corresponde au vrai prestigeScore() affiché localement au joueur. Fonction pure, testable isolément.
 function computeCompanionGsAggregates() {
@@ -57,7 +57,7 @@ async function syncCompanionStatsToServer() {
     // complétion Index (2026-07-20, demande explicite : "Completion 48pet * 5 tier pour l'index et
     // classement") -- comptait initialement l'ESPÈCE seule (48 max, indifférent au palier) ;
     // compte désormais chaque combo ESPÈCE×TIER distinct (48×5=240 max, voir
-    // companionIndexProgress()/COMPANION_INDEX_MAX, companions.catalog.js). Colonne serveur
+    // companionIndexProgress()/COMPANION_INDEX_MAX, catalog.js). Colonne serveur
     // inchangée (unique_species_count, migration 20260720130000_companion_stats_egg_and_index.sql)
     // -- seule la sémantique du nombre envoyé change, pas le schéma. Les valeurs déjà en base sous
     // l'ancien calcul (max 48) se corrigent d'elles-mêmes au prochain sync de chaque joueur.
@@ -91,7 +91,7 @@ async function syncCompanionStatsToServer() {
     });
   } catch(e) {}
 }
-// throttlé à 60s (pas à chaque autosave de 5s, voir companions.save.js) : ce sont des compteurs
+// throttlé à 60s (pas à chaque autosave de 5s, voir save.js) : ce sont des compteurs
 // admin, pas une sauvegarde temps réel -- inutile de spammer la RPC. 1er envoi après 5s (laisse
 // loadGame() terminer), pour qu'un joueur qui ouvre puis referme vite le module soit quand même compté.
 setTimeout(syncCompanionStatsToServer, 5000);

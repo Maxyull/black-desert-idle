@@ -37,7 +37,7 @@ const CMP_BOSS_WORLD = { kzarka: 'early', vell: 'early' };
 function cmpMastered(val) { return typeof val === 'string' && val.indexOf('PEN') === 0; }
 
 function CmpBadge(props) {
-  return cmpH('span', { className: 'cinzelC', style: { display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: props.small ? 8.5 : 9.5, fontWeight: 700, letterSpacing: 1, color: CMP_V.bg0, background: CMP_V.gold, padding: props.small ? '1px 6px' : '2px 8px', borderRadius: 3, textTransform: 'uppercase', ...CMP_CINZEL } }, '✓ ', LANG === 'fr' ? 'Maîtrisé' : 'Mastered');
+  return cmpH('span', { className: 'cinzelC', style: { display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: props.small ? 8.5 : 9.5, fontWeight: 700, letterSpacing: 1, color: CMP_V.bg0, background: CMP_V.gold, padding: props.small ? '1px 6px' : '2px 8px', borderRadius: 3, textTransform: 'uppercase', ...CMP_CINZEL } }, '✓ ', i18next.t('progression:progression.compendium_react.mastered_badge'));
 }
 
 function CmpStatPlate(props) {
@@ -137,65 +137,63 @@ function CompendiumApp(props) {
     cmpH('div', {
       style: { maxWidth: 720, width: '100%', background: 'radial-gradient(ellipse at 20% 0%, #1c1712 0%, #0d0b08 45%, #060504 100%)', color: CMP_V.cream2, fontFamily: "'EB Garamond', Georgia, serif", borderRadius: 10, border: `1px solid ${CMP_V.border2}`, padding: '30px 24px 44px', position: 'relative' },
     },
-      cmpH('button', { className: 'cmpBtn', onClick: props.onClose, 'aria-label': LANG === 'fr' ? 'Fermer' : 'Close', style: { position: 'absolute', top: 14, right: 16, background: 'none', border: 'none', color: CMP_V.muted2, fontSize: 18, cursor: 'pointer' } }, '✕'),
+      cmpH('button', { className: 'cmpBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.compendium_react.close_aria'), style: { position: 'absolute', top: 14, right: 16, background: 'none', border: 'none', color: CMP_V.muted2, fontSize: 18, cursor: 'pointer' } }, '✕'),
 
       cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 } },
         cmpH('span', { style: { fontSize: 20, color: CMP_V.gold } }, '📖'),
         cmpH('div', null,
           cmpH('div', { className: 'cinzelC', style: { fontSize: 10, letterSpacing: 3, color: CMP_V.muted2, textTransform: 'uppercase' } }, 'Black Desert Idle'),
-          cmpH('h1', { className: 'cinzelC', style: { fontSize: 22, fontWeight: 700, margin: 0, color: CMP_V.cream } }, LANG === 'fr' ? 'Compendium' : 'Compendium'))),
+          cmpH('h1', { className: 'cinzelC', style: { fontSize: 22, fontWeight: 700, margin: 0, color: CMP_V.cream } }, i18next.t('progression:progression.compendium_react.title')))),
 
       cmpH('div', { className: 'cmpStatGrid', style: { display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10, marginBottom: 14 } },
-        cmpH(CmpStatPlate, { icon: '📖', label: LANG === 'fr' ? 'Progression' : 'Progress', value: `${zc + bc}/${ZONES.length + bossMax}`, accent: CMP_V.cream }),
-        cmpH(CmpStatPlate, { icon: '⚡', label: LANG === 'fr' ? 'Vitesse' : 'SPD', value: `+${baseBonus}%`, accent: CMP_V.gold }),
-        cmpH(CmpStatPlate, { icon: '⚔️', label: LANG === 'fr' ? 'Dégâts' : 'DMG', value: `+${baseBonus}%`, accent: CMP_V.gold }),
-        cmpH(CmpStatPlate, { icon: '💧', label: LANG === 'fr' ? 'Esquive' : 'Dodge', value: `+${baseBonus}%`, accent: CMP_V.gold })),
+        cmpH(CmpStatPlate, { icon: '📖', label: i18next.t('progression:progression.compendium_react.progress_label'), value: `${zc + bc}/${ZONES.length + bossMax}`, accent: CMP_V.cream }),
+        cmpH(CmpStatPlate, { icon: '⚡', label: i18next.t('progression:progression.compendium_react.speed_label'), value: `+${baseBonus}%`, accent: CMP_V.gold }),
+        cmpH(CmpStatPlate, { icon: '⚔️', label: i18next.t('progression:progression.compendium_react.dmg_label'), value: `+${baseBonus}%`, accent: CMP_V.gold }),
+        cmpH(CmpStatPlate, { icon: '💧', label: i18next.t('progression:progression.compendium_react.dodge_label'), value: `+${baseBonus}%`, accent: CMP_V.gold })),
 
       cmpH('div', { style: { marginBottom: 14 } },
         cmpH('div', { style: { display: 'flex', justifyContent: 'space-between', fontSize: 10.5, color: CMP_V.muted2, marginBottom: 4 } },
-          cmpH('span', null, LANG === 'fr' ? 'Progression globale (zones + boss + PEN)' : 'Overall progress (zones + boss + PEN)'),
+          cmpH('span', null, i18next.t('progression:progression.compendium_react.overall_progress_label')),
           cmpH('span', null, `${grandDone}/${grandMax}`)),
         cmpH('div', { style: { height: 5, background: CMP_V.border, borderRadius: 3, overflow: 'hidden' } },
           cmpH('div', { style: { height: '100%', width: (grandMax > 0 ? grandDone / grandMax * 100 : 0) + '%', background: CMP_V.gold } }))),
 
       cmpH('p', { style: { fontSize: 11.5, fontStyle: 'italic', color: CMP_V.muted3, marginBottom: 16, lineHeight: 1.5 } },
-        LANG === 'fr'
-          ? 'Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif). Clique sur un objet pour voir dans quelles zones le farmer, puis clique une zone pour y lancer le farm directement.'
-          : 'Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive). Click an item to see which zones farm it, then click a zone to start farming there right away.'),
+        i18next.t('progression:progression.compendium_react.intro_text')),
 
       tab === 'zones' ? cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap' } },
         cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${CMP_V.border2}`, borderRadius: 20, padding: '6px 12px', maxWidth: 260 } },
           cmpH('span', { style: { fontSize: 12, color: CMP_V.muted2 } }, '🔎'),
           cmpH('input', {
-            value: query, onChange: e => setQuery(e.target.value), placeholder: LANG === 'fr' ? 'Rechercher une zone ou un objet...' : 'Search a zone or item...',
-            'aria-label': LANG === 'fr' ? 'Rechercher une zone ou un objet' : 'Search a zone or item',
+            value: query, onChange: e => setQuery(e.target.value), placeholder: i18next.t('progression:progression.compendium_react.search_placeholder'),
+            'aria-label': i18next.t('progression:progression.compendium_react.search_aria'),
             style: { background: 'none', border: 'none', outline: 'none', color: CMP_V.cream2, fontSize: 12.5, fontFamily: 'inherit', width: '100%' },
           }),
-          query ? cmpH('button', { onClick: () => setQuery(''), 'aria-label': LANG === 'fr' ? 'Effacer la recherche' : 'Clear search', style: { background: 'none', border: 'none', color: CMP_V.muted3, cursor: 'pointer' } }, '✕') : null),
+          query ? cmpH('button', { onClick: () => setQuery(''), 'aria-label': i18next.t('progression:progression.compendium_react.clear_search_aria'), style: { background: 'none', border: 'none', color: CMP_V.muted3, cursor: 'pointer' } }, '✕') : null),
         cmpH('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
-          cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3 } }, LANG === 'fr' ? 'Trier :' : 'Sort:'),
-          [{ id: 'default', fr: 'Défaut', en: 'Default' }, { id: 'az', fr: 'A → Z', en: 'A → Z' }, { id: 'progress', fr: '% complétion', en: '% complete' }].map(opt =>
+          cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3 } }, i18next.t('progression:progression.compendium_react.sort_label')),
+          [{ id: 'default', label: i18next.t('progression:progression.compendium_react.sort_default') }, { id: 'az', label: i18next.t('progression:progression.compendium_react.sort_az') }, { id: 'progress', label: i18next.t('progression:progression.compendium_react.sort_progress') }].map(opt =>
             cmpH('button', {
               key: opt.id, className: 'cmpBtn', onClick: () => setSortMode(opt.id), 'aria-pressed': sortMode === opt.id,
               style: { fontSize: 10.5, padding: '4px 10px', borderRadius: 20, cursor: 'pointer', border: `1px solid ${sortMode === opt.id ? CMP_V.gold : CMP_V.border2}`, background: sortMode === opt.id ? CMP_V.gold + '22' : 'transparent', color: sortMode === opt.id ? CMP_V.gold : CMP_V.muted2 },
-            }, LANG === 'fr' ? opt.fr : opt.en))) ) : null,
+            }, opt.label))) ) : null,
 
       highlightedItem ? cmpH('div', { style: { background: CMP_V.bg1, border: `1px solid ${CMP_V.gold}44`, borderRadius: 4, padding: '8px 12px', marginBottom: 16, fontSize: 11.5 } },
         cmpH('span', { style: { color: CMP_V.gold } }, highlightedItem),
-        cmpH('span', { style: { color: CMP_V.muted } }, ' — ' + (LANG === 'fr' ? 'disponible dans : ' : 'available in: ') + zonesForHighlight.map(zi => tr(ZONES[zi].name)).join(', ')),
-        cmpH('button', { onClick: () => setHighlightedItem(null), 'aria-label': LANG === 'fr' ? 'Effacer la mise en évidence' : 'Clear highlight', style: { marginLeft: 8, background: 'none', border: 'none', color: CMP_V.muted3, cursor: 'pointer' } }, '✕')) : null,
+        cmpH('span', { style: { color: CMP_V.muted } }, ' — ' + i18next.t('progression:progression.compendium_react.available_in_label') + zonesForHighlight.map(zi => tr(ZONES[zi].name)).join(', ')),
+        cmpH('button', { onClick: () => setHighlightedItem(null), 'aria-label': i18next.t('progression:progression.compendium_react.clear_highlight_aria'), style: { marginLeft: 8, background: 'none', border: 'none', color: CMP_V.muted3, cursor: 'pointer' } }, '✕')) : null,
 
       cmpH('div', { style: { display: 'flex', gap: 8, marginBottom: 18, borderBottom: `1px solid ${CMP_V.border}` } },
-        cmpH(CmpTabButton, { active: tab === 'zones', onClick: () => setTab('zones'), icon: '🗺️', label: `${LANG === 'fr' ? 'Zones' : 'Zones'} (${zc}/${ZONES.length})` }),
+        cmpH(CmpTabButton, { active: tab === 'zones', onClick: () => setTab('zones'), icon: '🗺️', label: `${i18next.t('progression:progression.compendium_react.tab_zones_label')} (${zc}/${ZONES.length})` }),
         cmpH(CmpTabButton, { active: tab === 'bosses', onClick: () => setTab('bosses'), icon: '💀', label: `World Bosses (${bc}/${bossMax})` }),
-        cmpH(CmpTabButton, { active: tab === 'pen', onClick: () => setTab('pen'), icon: '💎', label: `${LANG === 'fr' ? 'Maîtrise PEN' : 'PEN Mastery'} (${penDone}/${penItems.length})` })),
+        cmpH(CmpTabButton, { active: tab === 'pen', onClick: () => setTab('pen'), icon: '💎', label: `${i18next.t('progression:progression.compendium_react.tab_pen_label')} (${penDone}/${penItems.length})` })),
 
       tab === 'zones' ? cmpH(CmpZonesTab, {
         activeWorld, setActiveWorld, filteredZoneIdxs, sortMode, highlightedItem, setHighlightedItem, launchFarm,
       }) : tab === 'bosses' ? cmpH(CmpBossesTab, { activeWorld, setActiveWorld }) : cmpH(CmpPenTab, { activeWorld, setActiveWorld }),
 
       teleportMsg ? cmpH('div', { className: 'cmpTeleportToast', style: { position: 'fixed', bottom: 30, left: '50%', transform: 'translateX(-50%)', background: CMP_V.bg1, border: `1px solid ${CMP_V.gold}`, borderRadius: 6, padding: '12px 20px', fontSize: 12, color: CMP_V.cream, zIndex: 980 } },
-        (LANG === 'fr' ? 'Téléportation vers ' : 'Teleporting to '), cmpH('span', { className: 'cinzelC', style: { color: CMP_V.gold, fontWeight: 700 } }, teleportMsg), '...') : null));
+        i18next.t('progression:progression.compendium_react.teleporting_label'), cmpH('span', { className: 'cinzelC', style: { color: CMP_V.gold, fontWeight: 700 } }, teleportMsg), '...') : null));
 }
 
 function CmpZonesTab(props) {
@@ -208,7 +206,7 @@ function CmpZonesTab(props) {
       activeWorld: props.activeWorld, setActiveWorld: props.setActiveWorld,
       getStats: worldId => worldId === 'early' ? { done: compendiumZoneCount(), total: ZONES.length } : { done: 0, total: 0 },
     }),
-    props.activeWorld !== 'early' ? cmpH('p', { style: { fontSize: 12, fontStyle: 'italic', color: CMP_V.muted3, padding: '16px 0' } }, LANG === 'fr' ? 'Ce monde n\'est pas encore accessible.' : 'This world is not accessible yet.') :
+    props.activeWorld !== 'early' ? cmpH('p', { style: { fontSize: 12, fontStyle: 'italic', color: CMP_V.muted3, padding: '16px 0' } }, i18next.t('progression:progression.compendium_react.world_locked_text')) :
     GEAR_TIERS.map(tier => {
       const tierZoneIdxs = tier.zones.filter(zi => idxs.indexOf(zi) !== -1);
       if (tierZoneIdxs.length === 0) return null;
@@ -242,14 +240,14 @@ function CmpZonesTab(props) {
                   const label = tr(n), obtained = compendiumItemDone(n);
                   return cmpH('button', {
                     key: ii, className: 'cmpItemChip', onClick: () => props.setHighlightedItem(props.highlightedItem === label ? null : label),
-                    'aria-pressed': props.highlightedItem === label, 'aria-label': (LANG === 'fr' ? 'Voir les zones où trouver ' : 'See zones where to find ') + label,
+                    'aria-pressed': props.highlightedItem === label, 'aria-label': i18next.t('progression:progression.compendium_react.see_zones_aria', { item: label }),
                     style: { background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: props.highlightedItem === label ? CMP_V.gold : obtained ? '#6b9c6b' : CMP_V.muted3, textDecoration: 'underline dotted', fontSize: 10.5, fontFamily: 'inherit' },
                   }, (obtained ? '✓ ' : '· ') + label);
                 })),
               cmpH('button', {
                 className: 'cmpBtn', onClick: () => props.launchFarm(zi),
                 style: { fontSize: 10.5, color: CMP_V.gold, background: 'none', border: `1px solid ${CMP_V.gold}44`, borderRadius: 20, padding: '4px 10px', cursor: 'pointer' },
-              }, LANG === 'fr' ? 'Lancer le farm ici' : 'Start farming here'));
+              }, i18next.t('progression:progression.compendium_react.start_farm_button')));
           })));
     }));
 }
@@ -268,13 +266,13 @@ function CmpBossesTab(props) {
         const defeated = !!S.bossesKilled[id];
         return cmpH('div', {
           key: id, className: 'cmpRow', role: 'button', tabIndex: 0, 'aria-pressed': defeated,
-          'aria-label': `${b.name[LANG]} — ${defeated ? (LANG === 'fr' ? 'vaincu' : 'defeated') : (LANG === 'fr' ? 'pas encore vaincu' : 'not defeated yet')}`,
+          'aria-label': `${b.name[LANG]} — ${defeated ? i18next.t('progression:progression.compendium_react.boss_defeated_short') : i18next.t('progression:progression.compendium_react.boss_not_defeated_short')}`,
           style: { display: 'flex', alignItems: 'center', gap: 12, background: CMP_V.bg1, border: `1px solid ${defeated ? CMP_V.gold + '44' : CMP_V.border}`, borderRadius: 4, padding: '12px 14px' },
         },
           cmpH('span', { style: { fontSize: 20, color: defeated ? CMP_V.gold : CMP_V.muted3 } }, b.icon),
           cmpH('div', null,
             cmpH('div', { className: 'cinzelC', style: { fontSize: 13, fontWeight: 700, color: defeated ? CMP_V.cream : CMP_V.muted } }, b.name[LANG]),
-            cmpH('div', { style: { fontSize: 10.5, color: CMP_V.muted3 } }, defeated ? (LANG === 'fr' ? 'Vaincu au moins une fois' : 'Defeated at least once') : (LANG === 'fr' ? 'Pas encore vaincu' : 'Not defeated yet'))),
+            cmpH('div', { style: { fontSize: 10.5, color: CMP_V.muted3 } }, defeated ? i18next.t('progression:progression.compendium_react.boss_defeated_full') : i18next.t('progression:progression.compendium_react.boss_not_defeated_full'))),
           cmpH('div', { style: { marginLeft: 'auto' } }, defeated
             ? cmpH('span', { style: { fontSize: 11, color: CMP_V.gold, display: 'flex', alignItems: 'center', gap: 3 } }, '+1% ✓')
             : cmpH('span', { style: { color: CMP_V.muted3 } }, '🔒')));
@@ -284,7 +282,7 @@ function CmpBossesTab(props) {
 function CmpPenTab(props) {
   return cmpH('div', null,
     cmpH('div', { style: { marginBottom: 18, background: CMP_V.bg1, border: `1px solid ${CMP_V.border}`, borderRadius: 4, padding: '10px 14px', fontSize: 10.5, color: CMP_V.muted3, fontStyle: 'italic' } },
-      LANG === 'fr' ? 'Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.' : 'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once.'),
+      i18next.t('progression:progression.compendium_react.pen_hint_text')),
     cmpH(CmpWorldSelector, {
       activeWorld: props.activeWorld, setActiveWorld: props.setActiveWorld,
       getStats: worldId => {
@@ -293,7 +291,7 @@ function CmpPenTab(props) {
         return { done: items.filter(e => S.penMastery[e.name]).length, total: items.length };
       },
     }),
-    props.activeWorld !== 'early' ? cmpH('p', { style: { fontSize: 12, fontStyle: 'italic', color: CMP_V.muted3, padding: '16px 0' } }, LANG === 'fr' ? 'Aucun palier d\'équipement dans ce monde pour l\'instant.' : 'No gear tier in this world yet.') :
+    props.activeWorld !== 'early' ? cmpH('p', { style: { fontSize: 12, fontStyle: 'italic', color: CMP_V.muted3, padding: '16px 0' } }, i18next.t('progression:progression.compendium_react.no_gear_tier_text')) :
     GEAR_TIERS.map(tier => {
       const tierItems = penMasteryItemList().filter(e => e.grade === tier.grade);
       const tierDone = tierItems.filter(e => S.penMastery[e.name]).length;
@@ -302,7 +300,7 @@ function CmpPenTab(props) {
           cmpH('span', { style: { width: 8, height: 8, borderRadius: '50%', background: tier.color } }),
           cmpH('span', { className: 'cinzelC', style: { fontSize: 12, fontWeight: 700, letterSpacing: 1, color: tier.color, textTransform: 'uppercase' } }, tier.label[LANG]),
           tierDone === tierItems.length ? cmpH(CmpBadge, { small: true }) : null,
-          cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3, marginLeft: 'auto' } }, `${tierDone}/${tierItems.length} ${LANG === 'fr' ? 'au PEN' : 'at PEN'}`)),
+          cmpH('span', { style: { fontSize: 10.5, color: CMP_V.muted3, marginLeft: 'auto' } }, `${tierDone}/${tierItems.length} ${i18next.t('progression:progression.compendium_react.at_pen_label')}`)),
         cmpH('div', { style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 8 } },
           tierItems.map(entry => {
             const mastered = !!S.penMastery[entry.name];
@@ -315,7 +313,7 @@ function CmpPenTab(props) {
               mastered ? cmpH('span', { style: { position: 'absolute', top: 4, right: 4, fontSize: 9, color: CMP_V.gold } }, '✓') : null,
               cmpH('div', { style: { fontSize: 10, color: CMP_V.muted2, marginBottom: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, tr(entry.name)),
               cmpH('div', { className: 'cinzelC', style: { fontSize: 12.5, fontWeight: 700, color: mastered ? CMP_V.gold : owned ? '#9c927c' : CMP_V.border2 } }, label),
-              owned && !mastered ? cmpH('div', { style: { fontSize: 8.5, color: CMP_V.muted3, marginTop: 2, fontStyle: 'italic' } }, LANG === 'fr' ? 'en cours' : 'in progress') : null);
+              owned && !mastered ? cmpH('div', { style: { fontSize: 8.5, color: CMP_V.muted3, marginTop: 2, fontStyle: 'italic' } }, i18next.t('progression:progression.compendium_react.in_progress_label')) : null);
           }))); }));
 }
 

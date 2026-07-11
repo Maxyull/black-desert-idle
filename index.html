@@ -4,6 +4,76 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Black Desert Idle — Progression & Zones</title>
+<!-- CSP (2026-07-21, repo-audit-todo.md point 16) : meta tag (GitHub Pages ne permet pas de header
+     custom, seule option possible). Domaines audites un par un dans le code reel avant d'ecrire
+     cette liste (pas de generalisation) :
+     - connect-src : SUPABASE_URL (auth/DB/realtime, game-supabase.js) + BOT_API_URL (webhook
+       Discord bot, meme fichier) -- les 2 SEULS fetch() vers un domaine externe du jeu principal.
+     - script-src : cdn.jsdelivr.net (Supabase JS/React/ReactDOM/i18next, seuls CDN charges).
+       'unsafe-inline' necessaire : 3 attributs onclick="..." dans
+       src/progression/notifications-quests.js (toggleQuestTracker/toggleResetFold/
+       toggleTrackerFold) -- seul fichier du jeu principal a utiliser ce pattern (tout le reste,
+       wiki-panel.js/leaderboard-panel.js/etc, utilise deja .onclick=fn/addEventListener, CSP-safe
+       sans 'unsafe-inline'). Retrait possible si ces 3 boutons sont un jour convertis au meme
+       pattern -- pas fait ici pour eviter un refactor a risque sur un fichier deja dense un jour
+       ou l'objectif etait le CSP, pas ce fichier.
+     - style-src : 'unsafe-inline' necessaire, attributs style="..." utilises massivement dans TOUT
+       le jeu (index.dev.html lui-meme, wiki-panel.js, leaderboard-panel.js, etc.) -- retirer cassait
+       la quasi-totalite de l'UI, hors de portee raisonnable ici.
+     - img-src/font-src : data: uniquement (icones/canvas, aucune police/image externe -- aucun
+       @font-face ni url() externe dans styles.css).
+     - frame-src 'self' : donation/companions.html s'ouvrent en iframe SAME-ORIGIN uniquement.
+     - object-src none, base-uri/form-action 'self' : aucun plugin, aucun <base>/<form> externe.
+     src/companions/ (module isole, iframe, fonts.googleapis.com pour ses propres polices) et les
+     pages donation/ NE sont PAS couvertes par cette CSP -- chaque document a la sienne (une CSP
+     meta ne s'applique qu'au document qui la porte, jamais a un iframe cross-document). Teste
+     avant commit : connexion Supabase, panneaux React (boss wheel/reconnect/compendium/patch
+     notes), i18next, aucune violation CSP en console. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://mkwwvzbjtyawpcyrnybk.supabase.co wss://mkwwvzbjtyawpcyrnybk.supabase.co https://black-desert-idle-discord-bot.onrender.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
+<!-- favicon (2026-07-21, repo-audit-todo.md point 9) : SVG, palette officielle (CLAUDE.md §29,
+     fond #0b0f1a / accent or #d4a955) -- pas de fallback PNG/ICO, pas d'outil de rasterisation
+     disponible sur cette machine ; le SVG seul couvre tous les navigateurs modernes (Chrome/
+     Firefox/Edge, Safari 16+). -->
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<!-- meta/patch-notes-data.js (432 Ko, repo-audit-todo.md point 4) : demarre le telechargement en
+     parallele dans <head>, plutot que d'attendre que le parseur atteigne le <script> tout en bas
+     du <body> (ligne ~850). Un vrai chargement PARESSEUX (fetch uniquement a l'ouverture du
+     panneau patch notes) casserait CURRENT_VERSION (= PATCH_NOTES[0].v, lu au top-level par
+     game-supabase.js, affiche immediatement dans #clientVersionNum) et le badge "non lu" du
+     header (unreadPatchCount(), appele des le tout debut du HUD) -- les deux sont deja des
+     dependances synchrones documentees (CLAUDE.md §6), les decoupler serait un vrai refactor a
+     risque (badge/version-mismatch deja fragiles historiquement, voir CLAUDE.md §8) pour un gain
+     marginal vu que ce script est deja tout en bas du <body> (le HTML/CSS a deja fini de peindre
+     avant de l'atteindre). Le preload reduit le delai avant que le bundle jeu (juste apres) puisse
+     demarrer, sans toucher a l'ordre d'execution ni au comportement -- optimisation pure, zero
+     risque. -->
+<link rel="preload" href="meta/patch-notes-data.js" as="script">
+<!-- PWA manifest (2026-07-21, repo-audit-todo.md point 12) : installable sur mobile (icone ecran
+     d'accueil, mode standalone). Icone SVG uniquement (meme contrainte que le favicon, pas d'outil
+     de rasterisation PNG 192x192/512x512 disponible) -- fonctionne pour l'installation sur Chrome/
+     Edge desktop et Android recents ; iOS Safari (ajout a l'ecran d'accueil) ignore le manifest et
+     utilisera l'icone par defaut tant qu'aucun PNG dedie n'est fourni. Pas de service worker (pas
+     de cache offline pour l'instant, hors scope de ce point d'audit). -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0f1a">
+<!-- Open Graph / Twitter Card (2026-07-21, repo-audit-todo.md point 8) : sans ca, un lien partage
+     sur Discord/Twitter n'affichait que l'URL brute -- assets/og-preview.png genere via Meshy
+     (nano-banana, cout 3 credits, prompt/generation approuves par l'utilisateur), 1344x768, proche
+     du ratio recommande 1200x630. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Black Desert Idle">
+<meta property="og:description" content="Jeu idle/incremental gratuit inspire de Black Desert Online -- combat automatique, enchantement, marche entre joueurs, boss mondial, classement.">
+<meta property="og:image" content="https://maxyull.github.io/black-desert-idle/assets/og-preview.png">
+<meta property="og:url" content="https://maxyull.github.io/black-desert-idle/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Black Desert Idle">
+<meta name="twitter:description" content="Jeu idle/incremental gratuit inspire de Black Desert Online -- combat automatique, enchantement, marche entre joueurs, boss mondial, classement.">
+<meta name="twitter:image" content="https://maxyull.github.io/black-desert-idle/assets/og-preview.png">
+<!-- preconnect CDN (2026-07-21, repo-audit-todo.md point 15) : ouvre la connexion TCP/TLS vers
+     jsdelivr en avance, avant le premier <script src> qui en depend (Supabase/React/i18next
+     ci-dessous) -- gain de quelques centaines de ms sur le premier chargement. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <!-- version figee + integrite verifiee (2026-07-14, issue GitHub #4 finding M1) : "@2" flottant sans
      SRI aurait execute silencieusement tout code servi par jsdelivr/npm sous ce nom, y compris en
      cas de compromission de la chaine d'approvisionnement -- hash recalcule independamment (voir
@@ -21,7 +91,12 @@
   integrity="sha256-2Unxw2h67a3O2shSYYZfKbF80nOZfn9rK/xTsvnUxN0=" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.production.min.js"
   integrity="sha256-NfT5dPSyvNRNpzljNH+JUuNB+DkJ5EmCJ9Tia5j2bw0=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=521">
+<!-- i18next UMD (2026-07-11, voir I18N_PLAN.md et CLAUDE.md §31) -- coeur seulement, PAS
+     react-i18next (pas de bundler runtime, i18next.t() s'appelle pareil en vanilla JS et dans les
+     4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
+<script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
+  integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="build/styles.min.css?v=531">
 <!-- refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-redesign.html fourni par
      l'utilisateur, voir CLAUDE.md) : Cinzel déjà référencé dans styles.css mais jamais chargé
      jusqu'ici (retombait en serif silencieusement) -- Inter/JetBrains Mono nouvellement introduits
@@ -334,7 +409,12 @@
         <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
         <button id="btnWiki"><span data-i18n="btnWiki">📖 Wiki</span><span class="contentNewBadge" id="newBadgeWiki">1</span></button>
         <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge" aria-live="polite"></span></button>
-        <button id="btnDonation" class="lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnDonation">💖 Soutenir</span></button>
+        <!-- Donation (2026-07-16, demande explicite : "ajoute un bouton Donation bloque cadenas") --
+             déverrouillée le 2026-07-21 (demande explicite : "ouvre soutenir et on y met les page de
+             donation dedans") : ouvre donation/index.html (page autonome déjà réelle, lien PayPal.me
+             configuré, déplacée dans son propre dossier puis renommée donation.html -> index.html le
+             2026-07-21 pour une URL propre, voir openDonationPanel() (game-supabase.js)) -->
+        <button id="btnDonation" data-i18n="btnDonation">💖 Soutenir</button>
       </div>
     </div>
 
@@ -724,14 +804,21 @@
   </aside>
 </div>
 
-<!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
-     2026-07-08 (réorganisation par dossiers) -- module autonome, DOIT charger EN PREMIER : GEAR_TIERS
-     (world/gear-tiers-data.js) lit ICO_MAT_* immédiatement au chargement -->
-<script src="meta/patch-notes-data.js?v=521"></script>
+<!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
+     compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
+     (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
+<script src="meta/patch-notes-data.js?v=531"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=521"></script>
+<script src="build/source.min.js?v=531"></script>
+<!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier
+     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone
+     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
+     localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
+<!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
+     2026-07-08 (réorganisation par dossiers) -- module autonome, DOIT charger EN PREMIER : GEAR_TIERS
+     (world/gear-tiers-data.js) lit ICO_MAT_* immédiatement au chargement -->
 <!-- données pures ZONES[] -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers) --
      DOIT charger AVANT game-core.js : resetWorld() (appelé au top-level de game-core.js) lit ZONES
      dès le premier chargement du script -->
@@ -827,6 +914,10 @@
      -- charge APRÈS game-supabase.js : lit WIKI_SECTIONS/renderCodexHtml/renderTutoPageHtml/
      PATCH_NOTES au moment de l'ouverture (jamais au chargement immédiat), donc l'ordre exact avec
      admin-panel.js/chat.js qui suivent n'a pas d'importance -->
+<!-- panneau Classement (jeu principal) enrichi (2026-07-11, même traitement que le Classement
+     Public Compagnons — podium/onglets/recherche/pagination) -- charge APRÈS game-supabase.js :
+     lit $a/sb/currentUser/marketRequireAuth/tr/fmt/escapeHtml/openInfo/wirePlayerNameLinks au
+     moment de l'ouverture, jamais au chargement immédiat -->
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->

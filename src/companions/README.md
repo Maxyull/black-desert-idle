@@ -20,9 +20,9 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
   ces fichiers n'est téléchargé ni exécuté.
 
 **Migration rétroactive du roster (2026-07-19, demande explicite : "supprime les 48 pet pour tout
-le monde")** : le roster de départ est passé à 0 pet le 2026-07-10 (`companions.roster.js`), mais
+le monde")** : le roster de départ est passé à 0 pet le 2026-07-10 (`roster.js`), mais
 les sauvegardes locales déjà existantes gardaient leur roster antérieur — `localStorage` n'est
-jamais réécrit tout seul. `petsRosterResetV1` (`companions.economy.js`) est un flag persisté qui
+jamais réécrit tout seul. `petsRosterResetV1` (`economy.js`) est un flag persisté qui
 vide le roster UNE SEULE FOIS par sauvegarde, au premier `loadGame()` suivant ce changement (et au
 premier `importSave()` d'un export antérieur) — silver/inventaire/progression restent intacts.
 Même esprit que les migrations rétroactives du jeu principal (`S.migratedXxxVNNN`, CLAUDE.md §13),
@@ -30,7 +30,7 @@ adapté ici puisque ce module n'a pas de compte Supabase (sauvegarde 100% locale
 `applySaveState()` central à brancher).
 
 **Sync admin (2026-07-19, demande explicite)** : la sauvegarde reste 100% locale, mais
-`companions.sync.js` pousse désormais un RÉSUMÉ de compteurs (jamais le roster/inventaire
+`sync.js` pousse désormais un RÉSUMÉ de compteurs (jamais le roster/inventaire
 complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir
 `supabase/migrations/20260719190000_companion_stats.sql`) — pour alimenter le panneau admin
 `Contenu → Compagnons`. Comme l'iframe est **same-origin** (pas de `sandbox`, voir
@@ -38,8 +38,8 @@ complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir
 `sb`/`currentUser`/`isGuest()` déjà authentifié de la page hôte via `window.parent` — pas de
 second SDK Supabase ni d'auth séparée dans l'iframe. Fire-and-forget, jamais bloquant, no-op
 silencieux sans compte connecté (même garde que `queueFarmEvent`/`markItemTutorialSeen`
-ailleurs dans le jeu). Nouveau compteur à vie `totalHatched` (`companions.economy.js`,
-incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
+ailleurs dans le jeu). Nouveau compteur à vie `totalHatched` (`economy.js`,
+incrémenté dans `rollAndCreatePet()`, `hatch.js`) — distinct de
 `hatchCountSincePity` qui se remet à 0 à chaque pity déclenché.
 
 **Passe UI/QoL + bug d'éclosion (2026-07-20, demande explicite)** :
@@ -51,11 +51,11 @@ incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
   `window.parent.closeCompanionsModule()`.
 - Collection : légende des badges 🥇🥈🥉ᵀᴼᴾ (indicateurs de candidat de fusion, pas un classement
   joueurs), tri par Tier (`sort-tier`), zoom de grille (`setCollZoom`, 3 crans) —
-  `companions.collection.js`. Badge fusion centré dans le header (`#hdr-fusion-badge`,
+  `collection.js`. Badge fusion centré dans le header (`#hdr-fusion-badge`,
   `updateHeaderFusionBadge()`), visible uniquement pendant une sélection de fusion.
 - Disclaimer dans l'onglet Éclosion : les boutons ×1/×5/×10 (`bulkHatch`) sont un raccourci de
   TEST, seront retirés d'ici la fin des tests.
-- Carte de réserve (`companions.sections.js:renderSecDetail`) resserrée (canvas 24px→18px,
+- Carte de réserve (`sections.js:renderSecDetail`) resserrée (canvas 24px→18px,
   paddings réduits) mais avec Rareté+section ajoutées en aperçu (avant, seuls GS/Tier étaient
   visibles sans déplier).
 - **Bug corrigé** : le compte à rebours d'incubation ne se mettait jamais à jour à l'écran (le
@@ -66,17 +66,17 @@ incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
 - Achievement "dur" `fusion_downgrade` (+ champ `hard:true` sur les achievements les plus
   exigeants) : se déclenche en fusionnant un Légendaire/Ancestral avec un pet plus faible ET en
   obtenant un résultat de rareté inférieure au meilleur des deux parents (`fusionLostHighRarityCount`,
-  `companions.economy.js`, incrémenté dans `executeFusion`, `companions.fusion.js` — voir
+  `economy.js`, incrémenté dans `executeFusion`, `fusion.js` — voir
   CLAUDE.md §28 pour le piège `bestRar` vs meilleur parent réel).
 
 **Admin/PvP (2026-07-20, demande explicite : "creer les module d'admin... remplir le dashboard...
 categorie pvp")** :
-- `companions.sync.js` envoie désormais aussi des répartitions par rareté/tier/section
+- `sync.js` envoie désormais aussi des répartitions par rareté/tier/section
   (`computeCompanionBreakdowns()`, objets `{clé:compte}`) + `hard_achievements_count`/
   `fusion_downgrade_count` — voir `supabase/migrations/20260720100000_companion_stats_breakdowns.sql`.
   Le panneau admin (`Contenu → Compagnons`, `src/admin/admin-panel.js`) les agrège
   (`sumCompanionBreakdown`) en 2 camemberts (rareté, section) + 1 graphique en barres (Tier).
-- `companions.pvp.js` (nouveau) — onglet ⚔️ PvP (9e tab) : bandeau verrouillé (🔒 vrai PvP
+- `pvp.js` (nouveau) — onglet ⚔️ PvP (9e tab) : bandeau verrouillé (🔒 vrai PvP
   joueur-contre-joueur pas encore livré, nécessite un serveur autoritaire) + un CLASSEMENT réel des
   familiers du joueur par puissance (`computePvpRanking`/`pvpPower`, alias de `normGS`). Base du
   futur matchmaking, fonctionne dès aujourd'hui sans dépendre du serveur PvP à venir.
@@ -86,14 +86,14 @@ categorie pvp")** :
 
 **Bugs corrigés — sync admin totalement muette depuis sa création (2026-07-20, "toujours aucunes
 stats declosion... verifie si tout est connecté a supabase")** : DEUX bugs cumulés dans
-`companions.sync.js` empêchaient TOUTE synchro vers `companion_stats`, pour tous les comptes
+`sync.js` empêchaient TOUTE synchro vers `companion_stats`, pour tous les comptes
 (invité ou non), depuis la création du module :
 1. `hostWin.sb`/`hostWin.currentUser` (lus via `window.parent`) étaient TOUJOURS `undefined` —
    `sb`/`currentUser` sont des `let` top-level dans `game-supabase.js`, et contrairement à `var` ou
    à une déclaration `function`, `let` au top-level d'un script classique NE devient PAS une
    propriété de `window`. Corrigé en ajoutant `getSbClient()`/`getCurrentUserForSync()` (des
    déclarations `function`, elles bien attachées à `window`) dans `game-supabase.js`, utilisées par
-   `companions.sync.js` à la place d'un accès direct.
+   `sync.js` à la place d'un accès direct.
 2. Même une fois (1) corrigé, `sb.rpc(...).catch(()=>{})` levait silencieusement
    `TypeError: ...catch is not a function` — le builder Postgrest renvoyé par `sb.rpc(...)`
    n'implémente QUE `.then()` (thenable), jamais `.catch()` directement (déjà rencontré une fois
@@ -106,7 +106,7 @@ base, puis nettoyée) — voir tests `testRpcFireAndForgetCallsNeverUseBareCatch
 et `syncCompanionStatsToServer reaches the RPC call and never throws...` (`tests/companions.spec.js`).
 
 **Export/Import de sauvegarde JSON retirés (2026-07-20, demande explicite : "enlever import
-export")** : `exportSave()`/`importSave()` (`companions.save.js`) et leurs boutons 💾/📥
+export")** : `exportSave()`/`importSave()` (`save.js`) et leurs boutons 💾/📥
 (`companions.html`) supprimés — ne restait qu'un filet de sécurité local jamais relié à la
 sauvegarde cloud (module 100% `localStorage`), source de confusion vu qu'aucune autre partie du jeu
 principal n'expose ce genre de bouton. `resetSave()` (🗑️ Reset) reste seul mécanisme de remise à
@@ -116,16 +116,16 @@ zéro locale.
 petite carte alors afficher tiers rareté et section et gs")** : au cran de zoom 120px, la ligne meta
 verbeuse (rareté en toutes lettres + tier + section + type) débordait de la carte et se faisait
 tronquer silencieusement par `.pet-card{overflow:hidden}` — perdant section/type/parfois GS sans
-erreur visible. `renderGrid()` (`companions.collection.js`) bascule désormais sur `.card-meta-compact`
+erreur visible. `renderGrid()` (`collection.js`) bascule désormais sur `.card-meta-compact`
 (pastille de rareté, `T{n}`, icône de section, badge GS) quand `collZoomIdx===0`, garanti de tenir
 dans la largeur (vérifié via `scrollWidth<=clientWidth`). `setCollZoom()` re-render la grille au
 changement de cran (bug annexe corrigé au passage : il ne changeait avant que la largeur CSS des
 colonnes, jamais le contenu des cartes).
 
-**Argent dépensé — compteur à vie (2026-07-20)** : `silverSpent` (`companions.economy.js`), jamais
+**Argent dépensé — compteur à vie (2026-07-20)** : `silverSpent` (`economy.js`), jamais
 remis à 0 contrairement à `SILVER`. Seul point d'incrément : `spendSilver(amount)` — TOUJOURS
 utiliser cette fonction plutôt que `SILVER -=` directement pour toute future dépense (2 occurrences
-actuelles, `companions.hatch.js:doHatch`/`bulkHatch`), sinon le compteur dérive silencieusement.
+actuelles, `hatch.js:doHatch`/`bulkHatch`), sinon le compteur dérive silencieusement.
 
 **Stats admin œufs/index/fusions (2026-07-20, demande explicite : "affichger stats pour oeuf,
 moyenne doeuf eclos/jour, stats entiere liste des fusion et grph completion index")** :
@@ -135,10 +135,10 @@ moyenne doeuf eclos/jour, stats entiere liste des fusion et grph completion inde
   écraserait les joueurs récents).
 - `unique_species_count` (nouvelle colonne) = nombre d'ESPÈCES distinctes du catalogue possédées
   (pas le nombre de pets) — calculé côté client (`new Set(PETS.map(p=>p.cat.name)).size`,
-  `companions.sync.js`) et transmis à chaque sync. Alimente "Complétion Index" (admin) ET l'onglet
+  `sync.js`) et transmis à chaque sync. Alimente "Complétion Index" (admin) ET l'onglet
   "Tes stats" (joueur), comparé à `PET_CATALOG.length` (48, recopié en dur côté admin sous
   `COMPANION_CATALOG_SIZE` — même limite que `COMPANION_RARITY_LABELS`/`COMPANION_SECTION_LABELS`,
-  admin-panel.js ne peut jamais charger `companions.catalog.js`).
+  admin-panel.js ne peut jamais charger `catalog.js`).
 - `admin_companion_player_list()` (nouvelle RPC, admin uniquement) — une ligne par joueur
   (fusions/percées/perdantes/œufs/index), affichée en table triée par fusions décroissantes dans
   `Contenu → Compagnons` (panneau admin). Distincte de `admin_companion_breakdown()` (répartitions
@@ -162,9 +162,9 @@ authentifié non-invité, même pattern que `get_online_players()`) — résout 
 - **`prestige_score`/`gs_max` calculés côté serveur (migration
   `supabase/migrations/20260721100000_companion_leaderboard_prestige.sql`)** : `companion_stats`
   gagne 2 colonnes agrégées, `gs_sum_with_tier` (Σ `normGS(p) + tier×20` sur tout le roster,
-  poussée par `computeCompanionGsAggregates()` dans `companions.sync.js`) et `gs_max` (le plus haut
+  poussée par `computeCompanionGsAggregates()` dans `sync.js`) et `gs_max` (le plus haut
   `normGS` du roster). `companion_leaderboard()` calcule `prestige_score` à partir de ces agrégats
-  EXACTEMENT comme `prestigeScore()` (`companions.achievements.js`) — même formule, deux endroits,
+  EXACTEMENT comme `prestigeScore()` (`achievements.js`) — même formule, deux endroits,
   à garder synchronisés si la formule change un jour. `sync_companion_stats()` passe de 15 à 17
   paramètres (DROP obligatoire de l'ancienne signature, règle du projet section 12).
   ⚠️ **Migration écrite mais pas encore appliquée en base au moment de ce commit** (pas d'accès
@@ -182,10 +182,10 @@ si `#adminOverlay` a encore la classe `open` au moment de la fermeture de la pop
 `backend/README.md` pour le détail technique complet.
 
 **Achat des slots d'œuf corrigé (2026-07-20, rapporté explicitement : "impossible d'acheter les
-slots d'oeuf")** : `companions.hatch.js` avait DEUX impasses — le slot verrouillé de départ
-(`incubSlots[2].locked`, voir `companions.roster.js`) n'avait AUCUN `onclick`, et le bouton "➕ slot
+slots d'oeuf")** : `hatch.js` avait DEUX impasses — le slot verrouillé de départ
+(`incubSlots[2].locked`, voir `roster.js`) n'avait AUCUN `onclick`, et le bouton "➕ slot
 premium" ne faisait qu'un `toast()` factice sans jamais rien acheter. `unlockIncubSlot(i)`/
-`buyExtraIncubSlot()` (nouveau, `companions.hatch.js`) appellent réellement `spendSilver()` puis
+`buyExtraIncubSlot()` (nouveau, `hatch.js`) appellent réellement `spendSilver()` puis
 mettent à jour l'état réel des slots (`incubSlots[i]`/`.push(...)`) — le slot débloqué/acheté
 démarre `ready:true` (gratification immédiate, pas un nouveau minuteur à attendre).
 
@@ -199,7 +199,7 @@ palette de couleurs")** : `companions.css` (`:root`) suit désormais exactement 
 `#5c6785`, accents `#d4a955` or/`#7ea6ff` bleu/`#6fdc6f` vert/`#c0503c`+`#e08070` rouge) — remplace
 l'ancien thème doré fantasy ad hoc (`#c8a96e`, fond `#080810`) qui n'avait jamais été aligné sur
 cette DA. `--r0..--r5` (couleurs de rareté Commun→Ancestral) et les palettes pixel-art
-(`companions.pixelart.js`)/scène isométrique (`companions.hardinage.js`) sont volontairement PAS
+(`pixelart.js`)/scène isométrique (`hardinage.js`) sont volontairement PAS
 touchées — elles codent un sens (rareté=couleur) ou sont du contenu artistique, hors périmètre
 d'une DA structurelle (fonds/bordures/texte/accents). Les couleurs médaille 🥈/🥉 (argent `#b8bcc4`/
 bronze `#cd7f32`, badges TOP2/TOP3 de fusion) restent aussi inchangées, distinctes de l'accent or
@@ -234,7 +234,7 @@ module Compagnon.
 "a terme on va utiliser l'entièreté de ces fichier")** :
 - Contexte : `output/loot/tiers/` (32 fichiers, 900 Mo) et `output/combat/tiers/` (30 fichiers,
   922 Mo) contiennent un `.glb` + textures par palier (T1→T5) pour chaque compagnon `sec:'loot'`
-  (chats/oiseaux) et `sec:'combat'` (chiens/dragons) de `companions.catalog.js` — noms de fichiers
+  (chats/oiseaux) et `sec:'combat'` (chiens/dragons) de `catalog.js` — noms de fichiers
   déjà alignés sur `art`/le nom des espèces. `output/` n'est pas suivi par git (~1,8 Go au total,
   bien au-dessus de la limite GitHub de 100 Mo/fichier de toute façon pour les plus gros T5).
 - Hébergement : bucket Supabase Storage public **`companion-models`** (lecture publique, écriture
@@ -250,7 +250,7 @@ module Compagnon.
   §7). `vendor/three/three-bridge.js` est le SEUL fichier `type="module"` de ce dossier — il
   importe `three.module.min.js`/`GLTFLoader.js`/`OrbitControls.js` (imports ES imposés par la lib
   elle-même) et attache `window.THREE`/`window.GLTFLoader`/`window.OrbitControls`, pour que
-  `companions.viewer3d.js` (script CLASSIQUE, scope global partagé comme le reste du module) les
+  `viewer3d.js` (script CLASSIQUE, scope global partagé comme le reste du module) les
   lise normalement — pont documenté dans le fichier lui-même. Un `<script type="importmap">`
   (`companions.html`, dans `<head>`) résout le spécificateur nu `"three"` que `GLTFLoader.js`/
   `OrbitControls.js` importent en interne.
@@ -277,7 +277,7 @@ module Compagnon.
   fichier temporaire supprimé immédiatement après usage).
 - Écran isolé : nouvel onglet "🧊 Viewer 3D (TEST)" (tab 10, `ST(10)`, panel `#p10`,
   `companions.html`) — contexte WebGL créé/détruit à l'ouverture/fermeture de l'onglet
-  (`initViewer3dIfNeeded()`/`disposeViewer3dIfActive()`, `companions.viewer3d.js`) plutôt que
+  (`initViewer3dIfNeeded()`/`disposeViewer3dIfActive()`, `viewer3d.js`) plutôt que
   gardé actif en arrière-plan pendant que le joueur navigue ailleurs dans le module. Portée
   VOLONTAIREMENT limitée à cet écran de test — aucune icône 2D existante (roster/collection/
   incubation/hardinage) n'est remplacée tant que le pipeline n'est pas validé à plus large échelle.
@@ -289,7 +289,7 @@ module Compagnon.
 bouton choix combien par ligne 5 a 9, turn on of pagination")** :
 - Remplace l'ancien zoom à 3 crans (largeur mini approximative, `COLL_ZOOM_STEPS`) par un choix
   EXACT du nombre de colonnes (`COLL_COLS_MIN=5`/`COLL_COLS_MAX=9`, `setCollColsPerRow()`,
-  `companions.collection.js`) — `repeat(N, minmax(90px,1fr))` (le plancher 90px évite qu'une carte
+  `collection.js`) — `repeat(N, minmax(90px,1fr))` (le plancher 90px évite qu'une carte
   devienne trop étroite pour son contenu à 9 colonnes exactes sur un petit écran, corrigé après un
   premier passage en `repeat(N,1fr)` sans plancher qui faisait déborder `.card-meta-compact`).
   Au-delà de 6 colonnes (`COLL_COLS_COMPACT_FROM=7`), bascule sur la variante compacte de carte
@@ -304,13 +304,13 @@ bouton choix combien par ligne 5 a 9, turn on of pagination")** :
 **Sections : carte réserve encore resserrée + tri GS/Tier (2026-07-20, demande explicite : "Carte
 reservce plus petite > trier par GS, Tiers")** : 2e passe de resserrement (canvas 18px→14px,
 polices/paddings réduits une nouvelle fois) après un premier resserrement le même jour (voir plus
-bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `companions.sections.js`) :
+bas dans ce fichier). Tri ajouté (`setResSort()`/`sortReserveList()`, `sections.js`) :
 boutons GS/Tier au-dessus de la liste de réserve, même pattern que `setSort()` de la Collection
 (1er clic = décroissant, re-clic = inverse).
 
 **Tri par défaut de la réserve = Tier (2026-07-20, demande explicite : "Tier par Tiers/GS")** :
 `resSortMode` démarre sur `'tier'` (au lieu de `'default'`, ordre d'obtention) — Tier décroissant
-en priorité, GS décroissant en départage à Tier égal (`sortReserveList()`, `companions.sections.js`).
+en priorité, GS décroissant en départage à Tier égal (`sortReserveList()`, `sections.js`).
 Test : `reserve defaults to sorting by Tier (GS as tiebreak)...` (`tests/companions.spec.js`).
 Confirmé au passage : la modale "Voir en 3D" (`#pet3d-modal`) est un seul élément DOM partagé,
 donc DÉJÀ de taille identique qu'elle soit ouverte depuis le terrain ou depuis la réserve — pas de
@@ -318,7 +318,7 @@ changement nécessaire pour la 2e demande de cette même série ("Sur terrain et
 de modal").
 
 **Version affichée bas gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche")** :
-`COMPANION_MODULE_VERSION` (`companions.economy.js`) réutilise la MÊME numérotation `VNNN` que le
+`COMPANION_MODULE_VERSION` (`economy.js`) réutilise la MÊME numérotation `VNNN` que le
 jeu principal (`meta/patch-notes-data.js`) plutôt qu'un compteur séparé — ce module ne peut pas
 charger `meta/patch-notes-data.js` (scope global distinct, iframe isolée), donc pas de lecture
 automatique possible : à bumper à la main à chaque patch note qui touche `sub:'compagnon'`. Affiché
@@ -336,7 +336,7 @@ and the reserve sits to its right with room for multiple cards per row` (`tests/
 
 **Bug corrigé — un seul modèle 3D s'affichait vraiment (2026-07-20, rapporté explicitement : "je ne
 vois pas mes model que le premier")** : `renderer.dispose()` (Three.js, `createThreeViewer()`,
-`companions.viewer3d.js`) libère les ressources GPU mais PAS le contexte WebGL lui-même — repris
+`viewer3d.js`) libère les ressources GPU mais PAS le contexte WebGL lui-même — repris
 seulement au ramassage mémoire du `<canvas>`, sans garantie de timing. Les navigateurs plafonnent
 le nombre de contextes WebGL VIVANTS simultanément (souvent ~16) : en ouvrant la modale 3D sur
 plusieurs familiers d'affilée, les anciens contextes n'étaient jamais vraiment libérés, jusqu'à ce
@@ -346,7 +346,7 @@ in a row never fails to render (WebGL context leak)` (`tests/companions.spec.js`
 consécutives, largement au-dessus de la limite typique).
 
 **Purge rétroactive du plafond de collection (2026-07-20, demande explicite : "supprime tout
-compagnon au dessus de la limite")** : `trimRosterToCapIfNeeded()` (`companions.save.js`), migration
+compagnon au dessus de la limite")** : `trimRosterToCapIfNeeded()` (`save.js`), migration
 rétroactive `petsRosterCapV1` (même pattern que `petsRosterResetV1`) — au premier chargement suivant
 l'ajout de `PET_ROSTER_CAP` (96), purge l'excédent d'une sauvegarde antérieure au plafond. Garde
 TOUJOURS les pets déployés sur le terrain (même mal roulés — jamais casser une configuration
@@ -361,9 +361,9 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
 **Intégration réelle du 1er modèle (2026-07-10, "envoyer le premier test .glb")** : le pipeline
   Three.js est factorisé en `createThreeViewer(wrap, onStatus)` (renderer/scène/caméra/controls/
   loop/dispose réutilisables), utilisé par l'écran de test ET par une VRAIE modale `#pet3d-modal`
-  ouverte depuis le panneau du pet déployé sur le terrain (`companions.sections.js`). Bouton "🧊 Voir
+  ouverte depuis le panneau du pet déployé sur le terrain (`sections.js`). Bouton "🧊 Voir
   en 3D" affiché UNIQUEMENT si `companionModelUrlFor(pet)` renvoie une URL — `COMPANION_MODEL_MAP`
-  (`companions.viewer3d.js`) liste les paires nom-de-pet/tier réellement uploadées (seul "Black Mask
+  (`viewer3d.js`) liste les paires nom-de-pet/tier réellement uploadées (seul "Black Mask
   Cat" T5 pour l'instant) ; ne jamais deviner une URL non confirmée dans le bucket (404 silencieux
   géré proprement par `loadModel()`, mais autant ne pas afficher un bouton mort). Ajouter une entrée
   à `COMPANION_MODEL_MAP` dès qu'un nouveau `.glb` est uploadé. Test :
@@ -375,7 +375,7 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
   ci-dessus (le piège de chemin relatif décrit plus haut reste valable à chaque mise à jour).
 
 **Plafond de collection 96 (+4 buffer trade), complétion 240, retrait du zoom (2026-07-20)** :
-- `PET_ROSTER_CAP = 96` (`companions.roster.js`) : `doHatch()`/`bulkHatch()` refusent tout nouvel
+- `PET_ROSTER_CAP = 96` (`roster.js`) : `doHatch()`/`bulkHatch()` refusent tout nouvel
   hatch au-delà (`petRosterRoomLeft()`), AVANT de dépenser le silver. `PET_ROSTER_CAP_WITH_TRADE_BUFFER
   = 100` documente 4 slots réservés à un futur système de trade — aucun code ne les consomme
   encore (pas de feature trade construite), volontairement laissés en headroom.
@@ -400,7 +400,7 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
 
 **Marché d'échange réel entre joueurs (2026-07-10, demande explicite : "vrai backend d'échange...
 c'est fini la sauvegarde locale c'est sur supabase déjà")** : premier point de ce module qui fait
-vraiment traverser un PET (pas juste des compteurs comme `companions.sync.js`) d'un compte à
+vraiment traverser un PET (pas juste des compteurs comme `sync.js`) d'un compte à
 l'autre — le reste de la sauvegarde (roster non mis en vente, inventaire, progression) reste
 100% `localStorage` comme avant, seuls les pets IMPLIQUÉS dans une offre/contre-offre transitent
 par Supabase le temps de la transaction.
@@ -412,15 +412,15 @@ par Supabase le temps de la transaction.
   2 livraisons, invalide AVEC notification les autres contre-offres pendantes)/
   `claim_pet_trade_delivery`/`mark_pet_trade_notifications_read`/`expire_pet_trade_offers` (prêt
   pour `pg_cron`, pas encore branché).
-- `pet.uid` (UUID stable, `companions.hatch.js:rollAndCreatePet`) — clé serveur, DISTINCTE de
+- `pet.uid` (UUID stable, `hatch.js:rollAndCreatePet`) — clé serveur, DISTINCTE de
   `pet.id` (compteur local, jamais envoyé). Migration rétroactive `migratePetUidV1()`
-  (`companions.save.js`, gatée par `petsUidV1`) attribue un `uid` à tout pet créé avant son ajout.
-- `companions.market.js` (nouveau, onglet 🔄 Marché, tab 11) — 3 sous-onglets (Marché/Mes
+  (`save.js`, gatée par `petsUidV1`) attribue un `uid` à tout pet créé avant son ajout.
+- `market.js` (nouveau, onglet 🔄 Marché, tab 11) — 3 sous-onglets (Marché/Mes
   contrats/Historique). Accès Supabase EXCLUSIVEMENT via `window.parent.getSbClient()`/
   `getCurrentUserForSync()`/`getMyPseudoForSync()` (ce dernier ajouté dans `game-supabase.js` pour
   ce besoin — même pattern que les deux premiers, `myPseudo` était un `let` top-level jamais
   attaché à `window`) — jamais `window.parent.sb` directement (même piège déjà corrigé dans
-  `companions.sync.js`). `claimMarketDeliveries()`/`pollMarketNotifications()` tournent en
+  `sync.js`). `claimMarketDeliveries()`/`pollMarketNotifications()` tournent en
   arrière-plan (`setTimeout`/`setInterval`, indépendant de l'onglet ouvert) pour qu'un joueur
   reçoive son pet gagné même s'il ne rouvre pas l'onglet Marché tout de suite.
 - Portée volontairement scopée à ce qui bloquait (schéma+RLS, transaction atomique, notification
@@ -442,48 +442,48 @@ par Supabase le temps de la transaction.
 
 ### Scripts JS (ordre de chargement = ordre ci-dessous)
 
-1. `companions.pixelart.js` — palettes/formes pixel-art (`PA`) + `drawPixelArt()`.
-2. `companions.catalog.js` — `RARITIES`, `STAT_RANGES`, `SECTIONS` (drops par section),
+1. `pixelart.js` — palettes/formes pixel-art (`PA`) + `drawPixelArt()`.
+2. `catalog.js` — `RARITIES`, `STAT_RANGES`, `SECTIONS` (drops par section),
    loot spécial (Caphras/Dopi/items de Boss), `PET_CATALOG` (48 familiers).
-3. `companions.economy.js` — types d'œufs + œufs ciblés, `SILVER`, pity counter, compteurs
+3. `economy.js` — types d'œufs + œufs ciblés, `SILVER`, pity counter, compteurs
    de tracking pour achievements, streak de connexion quotidienne, inventaire + journal.
-4. `companions.tier.js` — système de Tier (multiplicateur, XP requis), Gearscore
+4. `tier.js` — système de Tier (multiplicateur, XP requis), Gearscore
    (`curGS`/`normGS`/`gsPct`...), helpers rareté (`rc`/`rn`/`secById`...).
-5. `companions.roster.js` — roster de départ (0 pet depuis le 2026-07-10, voir migration
+5. `roster.js` — roster de départ (0 pet depuis le 2026-07-10, voir migration
    `petsRosterResetV1` plus haut), slots d'incubation, filtres de collection.
-6. `companions.hatch.js` — utilitaires UI partagés (`ST`/`toast`/`OM`/`CM`/`fmtT`) + tout le
+6. `hatch.js` — utilitaires UI partagés (`ST`/`toast`/`OM`/`CM`/`fmtT`) + tout le
    flux d'éclosion (choix d'œuf, tirage, éclosion ×1/×5/×10).
-7. `companions.pet-panel.js` — barres de stats, atelier de Caphras, bloc Tier détaillé.
-8. `companions.sections.js` — navigation par section, slot terrain + réserve, déploiement.
-9. `companions.collection.js` — tri/filtre/recherche, rendu de la grille de collection.
-10. `companions.fusion.js` — calcul des odds de fusion, aperçu, exécution, modal résultat.
-11. `companions.feed.js` — liste de nourrissage, nourrir un/tous.
-12. `companions.ticks.js` — header en direct + la boucle de jeu principale (`setInterval`
+7. `pet-panel.js` — barres de stats, atelier de Caphras, bloc Tier détaillé.
+8. `sections.js` — navigation par section, slot terrain + réserve, déploiement.
+9. `collection.js` — tri/filtre/recherche, rendu de la grille de collection.
+10. `fusion.js` — calcul des odds de fusion, aperçu, exécution, modal résultat.
+11. `feed.js` — liste de nourrissage, nourrir un/tous.
+12. `ticks.js` — header en direct + la boucle de jeu principale (`setInterval`
     1s : faim, XP de tier, loot en tâche de fond, drops spéciaux, achievements).
-13. `companions.save.js` — sauvegarde/chargement localStorage, rattrapage hors-ligne, reset
+13. `save.js` — sauvegarde/chargement localStorage, rattrapage hors-ligne, reset
     (export/import JSON retirés le 2026-07-20, voir plus haut).
-14. `companions.sync.js` — pousse un résumé de compteurs vers Supabase toutes les 60s
+14. `sync.js` — pousse un résumé de compteurs vers Supabase toutes les 60s
     (stats admin, voir plus haut) via `window.parent.sb`. Charge après `save.js` par
     lisibilité, aucune contrainte d'ordre réelle (appelée via `setTimeout`/`setInterval`).
-15. `companions.index.js` — onglet Index (matrice Rareté×Tier + catalogue complet).
-16. `companions.game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
-17. `companions.hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
-18. `companions.achievements.js` — définitions des achievements, score de prestige.
-19. `companions.pvp.js` — onglet PvP (classement LOCAL par puissance, bandeau verrouillé). Charge
+15. `index.js` — onglet Index (matrice Rareté×Tier + catalogue complet).
+16. `game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
+17. `hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
+18. `achievements.js` — définitions des achievements, score de prestige.
+19. `pvp.js` — onglet PvP (classement LOCAL par puissance, bandeau verrouillé). Charge
     après `tier.js`/`roster.js` par lisibilité, aucune contrainte d'ordre réelle (appelée via `ST(8)`).
-20. `companions.leaderboard.js` (2026-07-20, refonte "Classement Public" 2026-07-21) — onglet "Tes
+20. `leaderboard.js` (2026-07-20, refonte "Classement Public" 2026-07-21) — onglet "Tes
     stats" + Classement (tab 9, `ST(9)`), distinct du classement PvP LOCAL ci-dessus : "Tes stats"
     (100% local, œufs ouverts/argent dépensé/fusions/index/Score Prestige) + un vrai classement
     CROSS-JOUEURS via la RPC publique `companion_leaderboard()` (voir
     `supabase/migrations/20260721100000_companion_leaderboard_prestige.sql`), même pattern
-    `window.parent.getSbClient()` que `companions.sync.js` — 4 catégories, podium, recherche,
+    `window.parent.getSbClient()` que `sync.js` — 4 catégories, podium, recherche,
     pagination, "Ma position" (voir plus haut pour le détail).
-21. `companions.viewer3d.js` (2026-07-10) — écran de test du viewer 3D GLB (voir plus haut). Lit
+21. `viewer3d.js` (2026-07-10) — écran de test du viewer 3D GLB (voir plus haut). Lit
     `window.THREE`/`window.GLTFLoader`/`window.OrbitControls` posés par
     `vendor/three/three-bridge.js` (module, asynchrone — géré via l'event `three-ready`). Ordre
     non strictement requis vis-à-vis des autres scripts classiques, placé par lisibilité juste
     avant `main.js`.
-22. `companions.main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
+22. `main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
     (`loadGame()` puis `checkDailyStreak()`/`renderAll()`).
 
 ### `vendor/three/` — Three.js vendorisé en local (pas de CDN, voir plus haut)

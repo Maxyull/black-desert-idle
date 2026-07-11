@@ -8,7 +8,7 @@
 // 1. Écran de test isolé (onglet "🧊 Viewer 3D", ST(10)) — un seul modèle fixe, pour valider le
 //    pipeline avant tout usage réel.
 // 2. Bouton "🧊 Voir en 3D" (2026-07-10, "envoyer le premier test .glb") dans le panneau du pet
-//    déployé sur le terrain (companions.sections.js) — SEUL "Black Mask Cat" tier 5 est câblé
+//    déployé sur le terrain (sections.js) — SEUL "Black Mask Cat" tier 5 est câblé
 //    (COMPANION_MODEL_MAP), seul fichier réellement uploadé dans le bucket pour l'instant. Ajouter
 //    une entrée ici dès qu'un nouveau .glb est uploadé — ne jamais deviner une URL non confirmée
 //    (404 silencieux sinon, voir gestion d'erreur de loadModel()).
@@ -16,8 +16,8 @@
 const COMPANION_MODELS_BASE = 'https://mkwwvzbjtyawpcyrnybk.supabase.co/storage/v1/object/public/companion-models';
 const VIEWER3D_TEST_MODEL = COMPANION_MODELS_BASE + '/loot/black_mask_cat_T5.glb';
 
-// nom de pet (companions.catalog.js) -> { section, slug } ; l'URL finale est construite comme
-// {BASE}/{section}/{slug}_T{tier}.glb, tier venant de pet.tier (1-5, companions.tier.js) — mais
+// nom de pet (catalog.js) -> { section, slug } ; l'URL finale est construite comme
+// {BASE}/{section}/{slug}_T{tier}.glb, tier venant de pet.tier (1-5, tier.js) — mais
 // seuls les tiers listés dans `tiers` existent réellement dans le bucket, jamais deviner au-delà.
 // 2026-07-20 ("integre les menu 3D de la phase 1" = output/loot/tiers + output/combat/tiers,
 // les 2 dossiers déjà générés) : passe de 1 seul modèle de test (Black Mask Cat T5) aux 11
@@ -28,14 +28,14 @@ const VIEWER3D_TEST_MODEL = COMPANION_MODELS_BASE + '/loot/black_mask_cat_T5.glb
 // loadModel() mais autant ne pas promettre un modèle absent).
 const COMPANION_MODEL_TIERS_ALL = [1,2,3,4,5];
 const COMPANION_MODEL_MAP = {
-  // sec:'loot' (companions.catalog.js) — output/loot/tiers/
+  // sec:'loot' (catalog.js) — output/loot/tiers/
   'Black Mask Cat':          { section: 'loot', slug: 'black_mask_cat',         tiers: COMPANION_MODEL_TIERS_ALL },
   'Grey Moon Cat':           { section: 'loot', slug: 'grey_moon_cat',          tiers: COMPANION_MODEL_TIERS_ALL },
   'Black Cloaked Cat':       { section: 'loot', slug: 'black_cloaked_cat',      tiers: COMPANION_MODEL_TIERS_ALL },
   'Karlstein Cat':           { section: 'loot', slug: 'karlstein_cat',          tiers: COMPANION_MODEL_TIERS_ALL },
   'Sky Hawk':                { section: 'loot', slug: 'sky_hawk',               tiers: COMPANION_MODEL_TIERS_ALL },
   'Golden Crow Sovereign':   { section: 'loot', slug: 'golden_crow_sovereign',  tiers: COMPANION_MODEL_TIERS_ALL },
-  // sec:'combat' (companions.catalog.js) — output/combat/tiers/
+  // sec:'combat' (catalog.js) — output/combat/tiers/
   'Brown Fighting Dog':      { section: 'combat', slug: 'brown_fighting_dog',      tiers: COMPANION_MODEL_TIERS_ALL },
   'Snow Wolfdog':            { section: 'combat', slug: 'snow_wolfdog',            tiers: COMPANION_MODEL_TIERS_ALL },
   'Black Cloaked Dog':       { section: 'combat', slug: 'black_cloaked_dog',       tiers: COMPANION_MODEL_TIERS_ALL },
@@ -168,7 +168,7 @@ function disposeViewer3dIfActive() {
   viewer3dState = null;
 }
 
-// ---------- modale "Voir en 3D" pour un pet réel (companions.sections.js) ----------
+// ---------- modale "Voir en 3D" pour un pet réel (sections.js) ----------
 let pet3dModalState = null; // { dispose }
 
 function open3dPreviewModal(pet) {

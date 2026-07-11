@@ -17,6 +17,14 @@ const JACKPOT_VAL_TRASH_RATIO = 20;
 // gear/arme). Ne touche PAS au multiplicateur de VALEUR silver (×1.6, inchangé, un concept séparé
 // du taux de drop).
 const ALPHA_LOOT_CHANCE_MULT = 2;
+/**
+ * Tire (ou non) la pièce d'armure garantie de la zone (voir ZONE_ARMOR_SLOTS). Stats FIXES
+ * (aucun jet aléatoire, 2026-07-09) — dérivées de gearBasisAP/DP de la zone et du rôle du slot,
+ * jamais de la puissance de combat aléatoire.
+ * @param {object} zone - entrée de ZONES (lit gearBasisAP/DP ?? reqAP/reqDP, sets[slot]...).
+ * @param {boolean} alpha - vrai si c'est un pack alpha (boss de pack) : chance ×ALPHA_LOOT_CHANCE_MULT.
+ * @returns {object|null} un item gear complet (voir la forme retournée) ou null si le jet échoue.
+ */
 function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = gearDropChance(tier, zoneIdx);
@@ -53,6 +61,13 @@ function rollGearDrop(zone, alpha) {
 // remplace l'ancien tirage au hasard partagé avec l'armure : chaque zone a un jet INDÉPENDANT (même
 // taux que l'armure) pour son ou ses types d'arme désignés (voir ZONE_WEAPON_SLOTS). Renvoie un
 // tableau (0, 1 ou 2 armes selon la zone et la chance).
+/**
+ * Tire la ou les armes garanties de la zone (voir ZONE_WEAPON_SLOTS) — jet INDÉPENDANT du drop
+ * d'armure, même taux de base. Comme rollGearDrop(), stats fixes par palier/slot/zone.
+ * @param {object} zone - entrée de ZONES.
+ * @param {boolean} alpha - vrai si pack alpha : chance ×ALPHA_LOOT_CHANCE_MULT.
+ * @returns {object[]} tableau de 0, 1 ou 2 items arme selon la zone et le jet.
+ */
 function rollWeaponDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = gearDropChance(tier, zoneIdx);
@@ -109,6 +124,15 @@ function fmtDurationMin(min) {
   if (hours < 24) return hours.toFixed(1) + ' h';
   return (hours/24).toFixed(1) + ' j';
 }
+/**
+ * Génère tout le loot d'un kill (trash, matériau, bijou rare, composant de craft, + rollGearDrop/
+ * rollWeaponDrop pour les packs qui en portent) — le cœur de la boucle de combat côté récompenses.
+ * @param {object} wp - pack de monstres tué (weightedPack), fournit son propre alpha/composition.
+ * @param {boolean} alpha - vrai si pack alpha (boss de pack) : ×ALPHA_LOOT_CHANCE_MULT sur les
+ *   chances de drop (jamais sur la valeur silver, voir JACKPOT_VAL_TRASH_RATIO/GEAR_SELL_MULT).
+ * @param {number} lm - multiplicateur de loot courant (buffs actifs, potions...).
+ * @returns {void} pousse directement dans INV/S (silver) et déclenche les floatTxt/notifications.
+ */
 function rollDrops(wp, alpha, lm) {
   const zone = Z(), L = zone.loot;
   const zk = zoneIdx; // pour rendre les clés uniques par zone
@@ -197,7 +221,7 @@ function showInvFullWarning() {
   const now = performance.now();
   if (now - lastInvFullToast > 4000) { // pas plus d'1 toast/4s pour ne pas spammer
     lastInvFullToast = now;
-    floatTxt(P.x, P.y-20, 70, LANG==='fr' ? 'SAC PLEIN !' : 'BAG FULL!', {hurt:true});
+    floatTxt(P.x, P.y-20, 70, i18next.t('combat:combat.loot.bag_full'), {hurt:true});
   }
 }
 function dropsTick(dt) {
@@ -338,6 +362,13 @@ function lootLine(item, val, cls) {
 
 // LEVEL_XP_TABLE desormais dans progression/level-xp-data.js (extrait le 2026-07-08,
 // reorganisation par dossiers) -- charge AVANT ce fichier, voir index.html.
+/**
+ * XP totale requise pour passer du niveau `lvl` au suivant (table fixe, pas de formule —
+ * LEVEL_XP_TABLE, progression/level-xp-data.js). Clampe au dernier palier défini si `lvl` le
+ * dépasse (pas de niveau infini au-delà de la table).
+ * @param {number} lvl - niveau actuel du joueur.
+ * @returns {number} XP nécessaire pour ce palier.
+ */
 function xpNeededFor(lvl) { return LEVEL_XP_TABLE[Math.min(lvl, LEVEL_XP_TABLE.length-1)]; }
 // affichage façon BDO : pourcentage à 3 décimales, toujours 2 chiffres avant la virgule (00.000%)
 function fmtXpPct(pct) {
@@ -355,6 +386,14 @@ function flashXpGain() {
   clearTimeout(flashXpGain._t);
   flashXpGain._t = setTimeout(() => el.classList.remove('xpFlash'), 500);
 }
+/**
+ * Ajoute `n` XP au joueur et gère le(s) passage(s) de niveau en cascade (une boucle `while`, pas
+ * un `if` — un gros gain d'XP peut faire monter plusieurs niveaux d'un coup). Effets de bord :
+ * HP max +8/niveau, floatTxt/notification à chaque niveau, tracking awayXpGained si l'onglet est
+ * caché (résumé AFK au retour, voir showAwayLootSummaryIfAny).
+ * @param {number} n - XP gagnée (peut être 0 ou négative selon l'appelant, seul n>0 déclenche le flash visuel).
+ * @returns {void} mute S.xp/S.lvl/S.xpNext/S.hpMax/P.hp en place.
+ */
 function gainXp(n) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
@@ -364,7 +403,7 @@ function gainXp(n) {
     S.xpNext = xpNeededFor(S.lvl);
     S.hpMax += 8; P.hp = effHpMax();
     floatTxt(P.x,P.y,115,'NIVEAU '+S.lvl,{lvl:true});
-    pushNotif('⭐', LANG==='fr'?'Niveau supérieur':'Level up', (LANG==='fr'?'Niveau ':'Level ')+S.lvl, 'info');
+    pushNotif('⭐', i18next.t('combat:combat.loot.level_up_notif_title'), i18next.t('combat:combat.loot.level_reached', { lvl: S.lvl }), 'info');
     // log "pour le fun" (demande explicite du 2026-07-08 : "spam le channel, fais toi plaisir")
     logToDiscord('⭐ Niveau supérieur', `**${myPseudo||'Joueur'}** passe niveau **${S.lvl}** (SPD +${Math.round(levelSpdPct())}%)`, 0x9cc9e8);
     // onglet Statistiques > Niveaux (2026-07-15, demande explicite : "des qu'on prend un lvl les

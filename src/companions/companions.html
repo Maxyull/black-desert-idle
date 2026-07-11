@@ -19,7 +19,7 @@
      three.module.min.js/GLTFLoader.js/OrbitControls.js sont des modules ES (import/export imposé
      par la lib), l'importmap ci-dessous résout le spécificateur nu "three" ; vendor/three/three-
      bridge.js (seul <script type="module"> de ce dossier) attache THREE/GLTFLoader/OrbitControls
-     sur window pour que companions.viewer3d.js (script classique, scope global partagé comme le
+     sur window pour que viewer3d.js (script classique, scope global partagé comme le
      reste du module) les lise normalement. Voir vendor/three/README.md pour la procédure de mise
      à jour de version. -->
 <script type="importmap">
@@ -30,7 +30,7 @@
 <body>
 <!-- bandeau "test en cours" (2026-07-20, demande explicite) : rappelle à chaque ouverture que ce
      module est isolé du jeu principal ET que ses valeurs (Silver/timers) sont divisées par
-     TEST_BALANCE_DIVISOR (voir companions.economy.js) pour permettre de tester vite -- jamais les
+     TEST_BALANCE_DIVISOR (voir economy.js) pour permettre de tester vite -- jamais les
      vraies valeurs finales. Toujours visible, pas de bouton pour le masquer : le but est un rappel
      permanent tant que le module reste en phase de test, pas un message qu'on ferme une fois. -->
 <div id="wipBanner" style="background:linear-gradient(90deg,#3a1808,#4a2408);border-bottom:1px solid var(--red);padding:6px 16px;font-size:10.5px;color:#ffcf9e;text-align:center;flex-shrink:0">
@@ -44,10 +44,10 @@
        fenetre a coté de familier") -- s'ajoute au bouton "Fermer" déjà présent dans la barre au-
        dessus de l'iframe (src/combat/boss.js:openCompanionsModule), qui reste inchangé. Appelle le
        même closeCompanionsModule() de la page hôte via window.parent (iframe same-origin, voir
-       companions.sync.js pour le même pattern d'accès à window.parent). -->
+       sync.js pour le même pattern d'accès à window.parent). -->
   <button id="hdrCloseBtn" onclick="if(window.parent&&window.parent.closeCompanionsModule)window.parent.closeCompanionsModule();" title="Fermer" style="font-family:'Cinzel',serif;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--cream2);cursor:pointer">✕</button>
   <!-- badge fusion top1/2/3 centré (2026-07-20, demande explicite) : reflète EXACTEMENT le même
-       indicateur que les badges 🥇🥈🥉 des cartes de la Collection (voir companions.collection.js,
+       indicateur que les badges 🥇🥈🥉 des cartes de la Collection (voir collection.js,
        isTop1/isTop2/isTop3) -- visible UNIQUEMENT pendant une sélection de fusion (1 pet choisi,
        2e slot vide), mis à jour par updateHeaderFusionBadge() (appelée depuis renderGrid()). -->
   <div id="hdr-fusion-badge" style="display:none;margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream2);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;white-space:nowrap"></div>
@@ -72,7 +72,7 @@
   <div class="tab" onclick="ST(7)">🏆 Progression <span class="tbadge" id="tb7">0/17</span></div>
   <!-- 2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction de la
        categorie" -- vrai PvP joueur-contre-joueur pas encore livré (nécessite un serveur
-       autoritaire, voir companions.pvp.js), mais le classement local par puissance (GS) l'est. -->
+       autoritaire, voir pvp.js), mais le classement local par puissance (GS) l'est. -->
   <div class="tab" onclick="ST(8)">⚔️ PvP <span class="tbadge">🔒</span></div>
   <!-- 2026-07-20, demande explicite : "ajouter classement, oeuf ouvert, argent depensé..." --
        classement CROSS-JOUEURS réel (companion_leaderboard(), Supabase), distinct du classement
@@ -80,7 +80,7 @@
   <div class="tab" onclick="ST(9)">🏆 Classement</div>
   <!-- 2026-07-10, demande explicite : "vrai backend d'échange" -- marché réel de compagnons entre
        joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
-       sync). Voir companions.market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
+       sync). Voir market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
   <div class="tab" onclick="ST(11)">🔄 Marché</div>
   <!-- 2026-07-10, demande explicite : "on va integrer des model gbl" -- écran de test isolé pour
        valider le pipeline Three.js/GLB avant tout remplacement des icônes 2D existantes (roster,
@@ -192,7 +192,7 @@
           <!-- colonnes par ligne (2026-07-20, demande explicite : "ajout d'un bouton choix combien
                par ligne 5 a 9") -- remplace l'ancien zoom à 3 crans (largeur mini approximative,
                setCollZoom()) par un choix EXACT du nombre de colonnes (repeat(N,1fr), voir
-               setCollColsPerRow(), companions.collection.js). Préférence d'affichage pure,
+               setCollColsPerRow(), collection.js). Préférence d'affichage pure,
                en mémoire seulement, jamais dans la sauvegarde. -->
           <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
           <span style="font-size:9px;color:var(--cream3)">Colonnes</span>
@@ -200,14 +200,14 @@
           <!-- pagination on/off (2026-07-20, demande explicite : "turn on of pagination") -- OFF
                par défaut (grille scrollable classique, .pet-grid a déjà overflow-y:auto) ; ON
                découpe la liste filtrée/triée en pages de collColsPerRow×4 cartes (voir
-               toggleCollPagination()/collPageDelta(), companions.collection.js — le pager lui-même
+               toggleCollPagination()/collPageDelta(), collection.js — le pager lui-même
                est rendu directement dans renderGrid()). -->
           <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
           <button class="schip" id="pagination-toggle" onclick="toggleCollPagination()" title="Basculer entre défilement continu et pages">📄 Pagination : OFF</button>
         </div>
       </div>
       <!-- légende des badges de fusion (2026-07-20, demande explicite) : explique 🥇🥈🥉, visibles
-           uniquement pendant une sélection de fusion (voir isTop1/isTop2/isTop3, companions.collection.js) -->
+           uniquement pendant une sélection de fusion (voir isTop1/isTop2/isTop3, collection.js) -->
       <div style="padding:4px 16px;font-size:9px;color:var(--cream3);display:flex;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
         <span>🥇 TOP1 = même rareté + section + tier (meilleur candidat)</span>
         <span>🥈 TOP2 = même rareté + tier, section différente</span>
@@ -348,7 +348,7 @@
 
 <!-- TAB 8 PVP (2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction
      de la categorie" + "header : PVP bloque") -- vrai PvP joueur-contre-joueur pas encore livré
-     (nécessite un serveur autoritaire, voir companions.pvp.js), mais un classement RÉEL des
+     (nécessite un serveur autoritaire, voir pvp.js), mais un classement RÉEL des
      familiers par puissance (GS) l'est déjà, base du futur matchmaking. -->
 <div class="panel" id="p8">
   <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
@@ -368,7 +368,7 @@
 
 <!-- TAB 9 CLASSEMENT + STATS PERSO (2026-07-20, demande explicite : "ajouter classement, oeuf
      ouvert, argent depensé...") -- combine le classement cross-joueurs réel (companion_leaderboard(),
-     Supabase, voir companions.leaderboard.js) ET un résumé perso (œufs ouverts, argent dépensé...)
+     Supabase, voir leaderboard.js) ET un résumé perso (œufs ouverts, argent dépensé...)
      en un seul onglet plutôt que d'en fragmenter deux quasi-vides séparément. -->
 <div class="panel" id="p9">
   <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
@@ -420,8 +420,8 @@
 </div>
 <!-- modale "Voir en 3D" (2026-07-10, "envoyer le premier test .glb") : réutilise le pipeline
      Three.js déjà validé par l'écran de test (p10), câblée sur companionModelUrlFor() /
-     open3dPreviewModal() (companions.viewer3d.js) -- ouverte depuis le panneau du pet déployé sur
-     le terrain (companions.sections.js), seulement si un modèle existe réellement pour ce pet/tier. -->
+     open3dPreviewModal() (viewer3d.js) -- ouverte depuis le panneau du pet déployé sur
+     le terrain (sections.js), seulement si un modèle existe réellement pour ce pet/tier. -->
 <div class="modal-bg" id="pet3d-modal">
   <div class="modal"><button class="mcl" onclick="close3dPreviewModal()">✕</button>
     <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:10px" id="pet3d-modal-title">🧊 Aperçu 3D</div>
@@ -441,54 +441,64 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 <!-- version en bas à gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche") --
      réutilise la numérotation VNNN partagée avec le jeu principal (COMPANION_MODULE_VERSION,
-     companions.economy.js), même esprit que #clientVersion (index.dev.html) côté jeu principal. -->
+     economy.js), même esprit que #clientVersion (index.dev.html) côté jeu principal. -->
 <div id="companion-version"></div>
 
 <!-- ordre de chargement documenté dans README.md de ce dossier — chaque fichier déclare des
      globals lus par les suivants (scope global partagé de ce document, isolé du jeu principal
      par l'iframe qui charge cette page) -->
-<script src="companions.pixelart.js?v=6"></script>
-<script src="companions.catalog.js?v=7"></script>
-<script src="companions.economy.js?v=10"></script>
-<script src="companions.tier.js?v=6"></script>
-<script src="companions.roster.js?v=7"></script>
-<script src="companions.hatch.js?v=14"></script>
-<script src="companions.pet-panel.js?v=6"></script>
-<script src="companions.sections.js?v=13"></script>
-<script src="companions.collection.js?v=10"></script>
-<script src="companions.fusion.js?v=8"></script>
-<script src="companions.feed.js?v=6"></script>
-<script src="companions.ticks.js?v=6"></script>
-<script src="companions.save.js?v=11"></script>
+<!-- renommés le 2026-07-21 (retrait du préfixe companions. -- kebab-case simple, cohérent avec les
+     9 autres dossiers de src/, voir CLAUDE.md §15 -- renommage progressif "petit à petit", ce lot
+     est le premier des ~22 fichiers du module, voir repo-audit-todo.md point 1) -->
+<script src="pixelart.js?v=6"></script>
+<script src="catalog.js?v=7"></script>
+<script src="economy.js?v=10"></script>
+<!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
+<script src="tier.js?v=7"></script>
+<script src="roster.js?v=8"></script>
+<script src="hatch.js?v=15"></script>
+<!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
+<script src="pet-panel.js?v=7"></script>
+<script src="sections.js?v=14"></script>
+<script src="collection.js?v=11"></script>
+<!-- renommés le 2026-07-21 (lot 4/~8, même renommage progressif que ci-dessus) -->
+<script src="fusion.js?v=9"></script>
+<script src="feed.js?v=7"></script>
+<script src="ticks.js?v=7"></script>
+<!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
+<script src="save.js?v=12"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="companions.sync.js?v=11"></script>
+<script src="sync.js?v=12"></script>
 <!-- marché d'échange réel (2026-07-10, demande explicite) : lit PETS/petId/PET_CATALOG/RARITIES/
      rc/rn/tierMultOf/rollTierMult/drawPixelArt/toast/CM/petRosterRoomLeft déjà déclarés plus haut,
      appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
      strictement requis vis-à-vis de ces globals (aucune lecture immédiate), placé ici par
      lisibilité juste après le sync admin (même famille : accès à window.parent.getSbClient()). -->
-<script src="companions.market.js?v=1"></script>
-<script src="companions.index.js?v=6"></script>
-<script src="companions.game-view.js?v=6"></script>
-<script src="companions.hardinage.js?v=6"></script>
-<script src="companions.achievements.js?v=6"></script>
+<script src="market.js?v=3"></script>
+<!-- renommés le 2026-07-21 (lot 6/~8, même renommage progressif que ci-dessus) -->
+<script src="index.js?v=7"></script>
+<script src="game-view.js?v=7"></script>
+<script src="hardinage.js?v=7"></script>
+<!-- renommés le 2026-07-21 (lot 7/~8, même renommage progressif que ci-dessus) -->
+<script src="achievements.js?v=7"></script>
 <!-- classement PvP (2026-07-20, demande explicite) : lit PETS/normGS/rc/rn/secById/gsCls/gsPct
      déjà déclarés plus haut, appelée uniquement via ST(8) -- ordre non strictement requis (aucune
      lecture au chargement immédiat), placé ici par lisibilité (juste avant main.js). -->
-<script src="companions.pvp.js?v=6"></script>
+<script src="pvp.js?v=7"></script>
 <!-- tes stats + classement cross-joueurs (2026-07-20, demande explicite) : lit
      PETS/totalHatched/silverSpent/fusionCount/PET_CATALOG/ACHIEVEMENTS/completedAchievements déjà
      déclarés plus haut, appelée uniquement via ST(9) -- ordre non strictement requis, placé ici par
-     lisibilité (même famille que companions.pvp.js juste au-dessus). -->
-<script src="companions.leaderboard.js?v=3"></script>
+     lisibilité (même famille que pvp.js juste au-dessus). -->
+<script src="leaderboard.js?v=4"></script>
 <!-- écran de test viewer 3D GLB (2026-07-10) : script classique, lit window.THREE/GLTFLoader/
      OrbitControls posés par vendor/three/three-bridge.js (module, résolu de façon asynchrone —
      voir l'event 'three-ready' géré dans ce fichier). Ordre non strictement requis vis-à-vis des
      autres scripts classiques (aucune lecture immédiate d'un global déclaré ailleurs), placé ici
      par lisibilité, juste avant main.js. -->
-<script src="companions.viewer3d.js?v=4"></script>
-<script src="companions.main.js?v=7"></script>
+<!-- renommés le 2026-07-21 (lot 8/8, dernier lot du renommage progressif -- voir CLAUDE.md §15) -->
+<script src="viewer3d.js?v=5"></script>
+<script src="main.js?v=8"></script>
 </body>
 </html>

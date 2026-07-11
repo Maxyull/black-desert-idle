@@ -5,7 +5,7 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
-  { v:'V370', d:'21/07/2026 18:00', name:{fr:'Écran Zone refait : nouvel en-tête, sidebar réorganisée, colonnes redessinées', en:'Zone screen redesigned: new header, reorganized sidebar, redesigned columns'}, fr:[
+  { v:'V372', d:'21/07/2026 18:00', name:{fr:'Écran Zone refait : nouvel en-tête, sidebar réorganisée, colonnes redessinées', en:'Zone screen redesigned: new header, reorganized sidebar, redesigned columns'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran principal (Zone) a été entièrement refait à l\'identique d\'une maquette fournie : nouvel en-tête avec logo, silver/taux et prochain boss, onglets d\'activité redessinés, panneau latéral regroupé en 4 sections (Progression, Économie, Communauté, Compte), cartes de statistiques/zones/loot/équipement/optimisation/inventaire redessinées, et le panneau de droite (suivi, quêtes, chat) devient une vraie colonne.'},
       {t:'change', sub:'interface', tx:'La préférence "menu à gauche/droite" et le repli du menu latéral fonctionnent toujours, avec le même comportement qu\'avant.'},
       {t:'fix', tx:'Corrigé : replier le menu latéral ne masquait plus les sections Économie/Communauté (seulement Progression/Compte) depuis leur récente réorganisation en 4 groupes.'},
@@ -14,6 +14,18 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'The "menu left/right" preference and sidebar collapse still work exactly as before.'},
       {t:'fix', tx:'Fixed: collapsing the sidebar no longer hid the Economy/Community sections (only Progression/Account) since their recent reorganization into 4 groups.'},
     ] },
+  { v:'V371', d:'21/07/2026 12:00', name:{fr:'Bouton "Soutenir" débloqué', en:'"Support" button unlocked'}, fr:[
+      {t:'new', tx:'Le bouton "💖 Soutenir" (menu principal) n\'est plus verrouillé : il ouvre désormais la page de don (lien PayPal, détail des coûts mensuels du projet) directement dans le jeu.'},
+      {t:'fix', tx:'Le Wiki (section Discord) affichait à tort "pas encore de serveur Discord" — il pointe maintenant vers le vrai serveur.'},
+    ], en:[
+      {t:'new', tx:'The "💖 Support" button (main menu) is no longer locked: it now opens the donation page (PayPal link, monthly project cost breakdown) directly in the game.'},
+      {t:'fix', tx:'The Wiki (Discord section) wrongly said "no Discord server yet" — it now points to the real server.'},
+    ] },
+  { v:'V370', d:'21/07/2026 11:30', name:{fr:'Classement principal refait : podium, catégories, recherche', en:'Main leaderboard redesigned: podium, categories, search'}, fr:[
+      {t:'change', tx:'Le Classement (🏆, en haut du menu) a été entièrement refait : podium des 3 premiers, 7 catégories en onglets (Silver, Gearscore, Meilleure zone, Silver/heure, Kills/min, Meilleur objet, Trésors), recherche par pseudo, pagination et bouton "Ma position" pour retrouver ton rang directement. Toujours les mêmes records personnels à vie, jamais un instantané.'},
+    ], en:[
+      {t:'change', tx:'The Leaderboard (🏆, top menu) has been completely redesigned: top-3 podium, 7 category tabs (Silver, Gearscore, Best zone, Silver/hour, Kills/min, Best item, Treasures), search by name, pagination and a "My position" button to jump straight to your rank. Still the same lifetime personal records, never a live snapshot.'},
+    ] },
   { v:'V369', d:'21/07/2026 11:00', name:{fr:'Notes de version : accessibilité, lien direct et anti-abus', en:'Patch notes: accessibility, deep link and anti-abuse'}, fr:[
       {t:'fix', tx:'Corrigé : les chips de filtre (catégorie dans les notes de version, palier dans le modal de reconnexion) s\'empilaient en pleine largeur au lieu de s\'aligner côte à côte.'},
       {t:'new', sub:'accessibilite', tx:'Panneau des notes de version : le focus clavier reste désormais dans la fenêtre (Tab ne peut plus en sortir), et le badge de nouveautés est annoncé aux lecteurs d\'écran.'},
@@ -21,6 +33,9 @@ const PATCH_NOTES = [
       {t:'change', sub:'securite', tx:'Votes et commentaires des notes de version : limite de fréquence par joueur (anti-spam), et un commentaire massivement signalé est masqué automatiquement en attendant une revue par un modérateur.'},
       {t:'new', tx:'Modal de reconnexion : légende des paliers ajoutée à côté de l\'historique des sessions.'},
       {t:'fix', tx:'Corrigé : le texte complet d\'une ligne de notes de version s\'affichait en gras dans l\'en-tête au lieu d\'un vrai paragraphe lisible en dessous.'},
+      {t:'fix', sub:'interface', tx:'Panneau des notes de version : "Marquer comme lu" reste désormais affiché en permanence (grisé s\'il n\'y a rien à marquer) au lieu de disparaître entièrement, la loupe de recherche est monochrome et transparente, et la barre de défilement suit enfin le thème sombre du panneau au lieu de la scrollbar par défaut du navigateur.'},
+      {t:'new', sub:'admin', tx:'Panneau des notes de version : badge "Admin" affiché à côté du titre pour les modérateurs/admins.'},
+      {t:'fix', tx:'Corrigé : l\'horodatage des commentaires des notes de version n\'affichait que la date, jamais l\'heure.'},
     ], en:[
       {t:'fix', tx:'Fixed: filter chips (category in patch notes, tier in the reconnect modal) stacked full-width instead of sitting side by side.'},
       {t:'new', sub:'accessibilite', tx:'Patch notes panel: keyboard focus now stays within the window (Tab can\'t escape it anymore), and the unread badge is announced to screen readers.'},
@@ -28,6 +43,9 @@ const PATCH_NOTES = [
       {t:'change', sub:'securite', tx:'Patch notes votes and comments: per-player rate limiting (anti-spam), and a heavily-reported comment is now auto-hidden pending moderator review.'},
       {t:'new', tx:'Reconnect modal: tier legend added next to the session history.'},
       {t:'fix', tx:'Fixed: the full text of a patch note line displayed bold in the header instead of a readable paragraph below.'},
+      {t:'fix', sub:'interface', tx:'Patch notes panel: "Mark all read" now stays visible at all times (greyed out when there\'s nothing to mark) instead of disappearing entirely, the search magnifier is now monochrome and transparent, and the scrollbar finally follows the panel\'s dark theme instead of the browser default.'},
+      {t:'new', sub:'admin', tx:'Patch notes panel: "Admin" badge now shown next to the title for moderators/admins.'},
+      {t:'fix', tx:'Fixed: patch notes comment timestamps only showed the date, never the time.'},
     ] },
   { v:'V368', d:'21/07/2026 09:00', name:{fr:'Wiki refait + Classement Public Compagnons', en:'Wiki redesigned + Companion Public Leaderboard'}, fr:[
       {t:'change', tx:'Le Wiki a été entièrement refait en panneau plein écran, à l\'identique d\'une maquette fournie : navigation par catégories, fil d\'Ariane, sommaire de section et recherche live. Le contenu reste le même (Combat & Zones, Optimisation, Marché, Compte & Sauvegarde, À propos, Codex des objets, Tutoriel), avec des raccourcis directs vers le Compendium et le module Compagnons.'},

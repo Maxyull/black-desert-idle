@@ -635,6 +635,23 @@
     const svg = buildBarSeriesSvg([{label:'a',value:1}], '#c9a55a');
     assert('buildBarSeriesSvg impose un max-width explicite (pas 100% seul)', svg.includes('max-width:420px'));
   }
+  // garde-fou (2026-07-21, repo-audit-todo.md point 3 + audit admin_playtime_by_hour) : le graphique
+  // "joueurs actifs par heure" lisait r.players/r.playtime_sec alors que la vue admin_playtime_by_hour
+  // (schéma live vérifié via Supabase MCP) ne renvoyait que (hour, total_playtime_sec) -- r.players
+  // était donc toujours undefined -> Number(undefined||0) -> 0, graphique silencieusement à 0 depuis
+  // sa création. Corrigé en ajoutant la colonne players (count distinct user_id) à la vue (migration
+  // 20260711145847) et en alignant le select() JS dessus. Garde-fou statique (function.toString(),
+  // pas de vrai réseau/DOM ici) contre une régression du nom de colonne ou un retour à select('*').
+  function testAdminHourlyReadsRealPlaytimeColumns() {
+    if (typeof renderAdminHourly !== 'function') return;
+    const src = renderAdminHourly.toString();
+    assert('renderAdminHourly ne fait plus de select(\'*\') sur admin_farm_by_hour/admin_playtime_by_hour',
+      !/\.select\(\s*['"]\*['"]\s*\)/.test(src), src);
+    assert('renderAdminHourly lit bien la colonne "players" de admin_playtime_by_hour (schéma live vérifié)',
+      /select\(['"]hour,\s*players['"]\)/.test(src), src);
+    assert('renderAdminHourly ne lit plus r.playtime_sec (colonne inexistante, toujours undefined -> bug à 0)',
+      !/r\.playtime_sec/.test(src), src);
+  }
   // agrégation des répartitions Compagnons (2026-07-20, demande explicite : "ajouter des compteur
   // graphic lié supabase, pet par tier, rareté, catégorie") -- fonction pure, sans réseau/DOM.
   function testSumCompanionBreakdownAggregatesAcrossPlayers() {
@@ -1442,6 +1459,45 @@
       const marker = bossId === 'kzarka' ? 'Kzarka' : bossId === 'vell' ? 'Vell' : bossId;
       assert(`Le Wiki (FR) mentionne le boss "${marker}"`, combat.fr.includes(marker), `boss=${bossId}`);
     }
+  }
+  // garde-fou (2026-07-11, bug réel trouvé en testant leaderboard-panel.js) : `$a('btnXxx').onclick
+  // = maFonctionDansUnAutreFichier;` (SANS closure) évalue le nom immédiatement, à l'exécution de
+  // CE script -- si la fonction vit dans un fichier chargé PLUS TARD (ex: leaderboard-panel.js
+  // après game-supabase.js), ça lève un ReferenceError qui coupe le script EN PLEIN MILIEU. Tout ce
+  // qui est déclaré plus loin dans CE MÊME fichier (WIKI_SECTIONS etc., même les fonctions à cause
+  // du point d'arrêt) ne s'exécute alors jamais -- symptôme sournois : les `function` déclarées
+  // AVANT le point de coupure restent hoistées et semblent fonctionner, seuls les `const`/`let`
+  // déclarés APRÈS restent inaccessibles, imitant une TDZ. Toujours passer par une closure
+  // (`() => maFonction()`) quand le handler vit dans un fichier qui charge après (voir §6-8).
+  function testLateScriptGlobalsSurviveButtonWiring() {
+    assert('WIKI_SECTIONS accessible (game-supabase.js s\'est exécuté jusqu\'au bout, pas coupé par une réf. anticipée)',
+      typeof WIKI_SECTIONS !== 'undefined');
+    assert('PATCH_NOTES accessible', typeof PATCH_NOTES !== 'undefined');
+    // LB2_CATS_() : renommé de const objet vers fonction le 2026-07-11 (migration i18next, les
+    // labels/tips doivent se relire à chaque appel i18next.t(), pas figés une seule fois au
+    // chargement du script) -- garder ce test à jour avec le nom réel, sinon il devient un no-op
+    // silencieux (typeof sur un nom qui n'existe plus == 'undefined' == condition jamais vraie).
+    if (typeof LB2_CATS_ === 'function') {
+      assert('LB2_CATS_() couvre les 7 catégories du classement principal',
+        ['silver','gs','zone','sh','kpm','item','treasure'].every(k => LB2_CATS_()[k]));
+    }
+  }
+  // garde-fou (2026-07-21, bug réel trouvé en buildant le panneau Donation) : un "https://" brut au
+  // milieu d'un template literal MULTI-LIGNE a fait planter le strip de commentaires du build
+  // (scripts/build.py, strip_js_comments_safe) -- le "//" de l'URL a été avalé comme un commentaire
+  // de ligne, tronquant la fonction en plein milieu et cassant tout ce qui suivait dans le fichier
+  // (Terser a heureusement échoué fort plutôt que de générer un bundle silencieusement corrompu).
+  // Corrigé en sortant l'URL du template literal ('https:' + '//...'). Ce test vérifie que le lien
+  // Discord réel du Wiki reste bien présent ET que le fichier ne s'est pas fait tronquer autour
+  // (wkInjectHeadingIds, défini juste après wkDiscordHtml, doit rester une fonction).
+  function testWikiDiscordLinkNeverTruncatesTheFile() {
+    if (typeof wkDiscordHtml !== 'function') return;
+    const html = wkDiscordHtml();
+    assert('Le Wiki (section Discord) contient le vrai lien d\'invitation, pas un placeholder',
+      html.includes('discord.gg/fEubtqMjtP'));
+    assert('wkInjectHeadingIds (défini juste après wkDiscordHtml dans le fichier) est bien accessible -- ' +
+      'si ce n\'est pas le cas, le fichier a probablement été tronqué par le build',
+      typeof wkInjectHeadingIds === 'function');
   }
   // "pense aux animations de sorts aussi" / "des effets un peu different pour chaque sort"
   // (2026-07-18) -- chaque sort doit avoir sa propre identité visuelle de cast (castColor/
@@ -3155,6 +3211,96 @@
     assert('checkPlayerSession() ne pose sessionLocked=true que sur data===false explicite (jamais sur error)',
       /if\s*\(error\)\s*return/.test(src) && src.includes('data === false'));
   }
+  // reportClientError() (2026-07-21, repo-audit-todo.md point 18) : monitoring d'erreurs client
+  // minimal (window.onerror/unhandledrejection -> public.client_errors). Garde-fou statique
+  // (isOffline/!sb) même pattern que les autres fonctions réseau ci-dessus, + test dynamique du
+  // throttle (jamais plus de CLIENT_ERROR_MAX_PER_SESSION tentatives réseau par session, sinon une
+  // boucle d'erreur répétée spammerait la table).
+  function testReportClientErrorGuardsOfflineAndMissingClient() {
+    if (typeof reportClientError !== 'function') return;
+    const src = reportClientError.toString();
+    assert('reportClientError() ignore l\'appel si isOffline est vrai', src.includes('isOffline'));
+    assert('reportClientError() ignore l\'appel si sb est absent (pas encore initialisé)', src.includes('!sb'));
+    assert('reportClientError() respecte un plafond par session (CLIENT_ERROR_MAX_PER_SESSION)',
+      src.includes('CLIENT_ERROR_MAX_PER_SESSION'));
+  }
+  function testReportClientErrorThrottlesAfterMaxPerSession() {
+    if (typeof reportClientError !== 'function' || typeof CLIENT_ERROR_MAX_PER_SESSION === 'undefined') return;
+    const savedCount = clientErrorCount, savedOffline = isOffline, savedSb = sb;
+    let insertCalls = 0;
+    isOffline = false;
+    sb = { from: () => ({ insert: () => { insertCalls++; return { then: (res) => { res && res(); return { catch: () => {} }; } }; } }) };
+    try {
+      clientErrorCount = CLIENT_ERROR_MAX_PER_SESSION - 1;
+      reportClientError('test error 1'); // dernier appel autorisé (compteur atteint le plafond)
+      reportClientError('test error 2'); // doit être ignoré (plafond déjà atteint)
+      assert('reportClientError() n\'insère plus une fois CLIENT_ERROR_MAX_PER_SESSION atteint',
+        insertCalls === 1, `insertCalls=${insertCalls}`);
+    } finally {
+      clientErrorCount = savedCount; isOffline = savedOffline; sb = savedSb;
+    }
+  }
+
+  // ---------- i18n (2026-07-11, voir docs/I18N_PLAN.md/CLAUDE.md §31) ----------
+  // Garde-fous complémentaires à scripts/check-missing-translations.js (qui tourne côté Node, hors
+  // navigateur) : ici on vérifie l'état RÉEL de i18next une fois chargé dans la page.
+  function testI18nextInitializedWithSupportedLangs() {
+    assert('i18next existe globalement', typeof i18next !== 'undefined');
+    if (typeof i18next === 'undefined') return;
+    assert('i18next est initialisé au moment où les tests tournent', i18next.isInitialized === true);
+    assert('SUPPORTED_LANGS contient fr et en', typeof SUPPORTED_LANGS !== 'undefined' && SUPPORTED_LANGS.includes('fr') && SUPPORTED_LANGS.includes('en'));
+  }
+  // ordre de chargement critique (même famille de piège que testSorcierRenderLoadsBeforeSyncStartupCallers,
+  // section 8 CLAUDE.md) : i18n-resources.generated.js et i18n-init.js DOIVENT charger avant tout
+  // fichier de gameplay, sinon un appel i18next.t() invoqué tôt au chargement (ex: hud() synchrone)
+  // planterait ou afficherait une clé brute.
+  function testI18nResourcesLoadBeforeGameplayFiles() {
+    if (typeof document === 'undefined') return; // hors-contexte navigateur
+    const srcIndexOf = needle => Array.from(document.scripts).findIndex(s => s.src.includes(needle));
+    const resourcesIdx = srcIndexOf('core/i18n-resources.generated.js');
+    const initIdx = srcIndexOf('core/i18n-init.js');
+    const gearIconsIdx = srcIndexOf('inventory/gear-icons.js');
+    const coreIdx = srcIndexOf('core/game-core.js');
+    assert('i18n-resources.generated.js est chargé (balise trouvée dans le DOM)', resourcesIdx !== -1);
+    assert('i18n-init.js est chargé (balise trouvée dans le DOM)', initIdx !== -1);
+    if (resourcesIdx === -1 || initIdx === -1 || gearIconsIdx === -1 || coreIdx === -1) return;
+    assert('i18n-resources.generated.js charge AVANT i18n-init.js', resourcesIdx < initIdx, `resourcesIdx=${resourcesIdx}, initIdx=${initIdx}`);
+    assert('i18n-init.js charge AVANT gear-icons.js (1er fichier de gameplay)', initIdx < gearIconsIdx, `initIdx=${initIdx}, gearIconsIdx=${gearIconsIdx}`);
+    assert('i18n-init.js charge AVANT game-core.js', initIdx < coreIdx, `initIdx=${initIdx}, coreIdx=${coreIdx}`);
+  }
+  // clé brute affichée au joueur = régression silencieuse (voir docs/I18N_PLAN.md §7 "Clé manquante") --
+  // échantillon de clés réellement migrées (domaine core, migré manuellement) pour détecter une
+  // régression de chargement des ressources sans dépendre du contenu exact de chaque domaine.
+  function testI18nextResolvesKnownKeysNotRawKey() {
+    if (typeof i18next === 'undefined' || !i18next.isInitialized) return;
+    const sampleKeys = ['core:core.combat.dodge', 'core:core.zone.no_monsters', 'core:core.default_pseudo'];
+    sampleKeys.forEach(k => {
+      assert(`i18next.exists('${k}') est vrai (clé fr/en réellement définie)`, i18next.exists(k));
+    });
+  }
+  // le toggle #langToggle (game-supabase.js) doit garder i18next.language synchronisé avec LANG --
+  // sinon les nouveaux textes migrés (i18next.t) et les anciens ternaires LANG=== restant à migrer
+  // afficheraient deux langues différentes en même temps après un clic sur le toggle.
+  function testChangeLanguageStaysInSyncWithGlobalLang() {
+    if (typeof i18next === 'undefined' || !i18next.isInitialized || typeof LANG === 'undefined') return;
+    const before = LANG;
+    i18next.changeLanguage(before === 'fr' ? 'en' : 'fr');
+    assert('i18next.language suit un changeLanguage() explicite', i18next.language === (before === 'fr' ? 'en' : 'fr'), `attendu=${before === 'fr' ? 'en' : 'fr'}, obtenu=${i18next.language}`);
+    i18next.changeLanguage(before); // restaure l'état pour ne pas polluer les tests suivants / la session réelle
+  }
+  // toutes les ressources chargées doivent avoir EXACTEMENT le même jeu de domaines et de clés en
+  // fr et en -- même vérification que scripts/check-missing-translations.js (§8bis) mais côté
+  // navigateur, sur les ressources RÉELLEMENT chargées par i18next (pas juste les fichiers sources).
+  function testI18nResourcesFrEnKeyParity() {
+    if (typeof I18N_RESOURCES === 'undefined') return;
+    const domains = Object.keys(I18N_RESOURCES.fr || {});
+    assert('I18N_RESOURCES contient au moins un domaine', domains.length > 0);
+    domains.forEach(domain => {
+      const frKeys = Object.keys((I18N_RESOURCES.fr || {})[domain] || {}).sort();
+      const enKeys = Object.keys((I18N_RESOURCES.en || {})[domain] || {}).sort();
+      assert(`${domain}.json : mêmes clés en fr et en (${frKeys.length} clés)`, JSON.stringify(frKeys) === JSON.stringify(enKeys), `fr-only ou en-only détecté dans ${domain}`);
+    });
+  }
 
   window.runRegressionTests = function() {
     results.length = 0;
@@ -3209,6 +3355,8 @@
     testWikiTreasureCountMatchesRealArray();
     testWikiMentionsCronCostPerTier();
     testWikiMentionsBothWorldBosses();
+    testLateScriptGlobalsSurviveButtonWiring();
+    testWikiDiscordLinkNeverTruncatesTheFile();
     testEverySkillHasDistinctCastIdentity();
     testSpawnCastOriginVfxNeverThrows();
     testWitchBodyOnAcceptsSkillObjectWithoutThrowing();
@@ -3230,6 +3378,7 @@
     testEveryPatchSubHasALabel();
     testFormatPatchNoteForDiscord();
     testRpcFireAndForgetCallsNeverUseBareCatch();
+    testAdminHourlyReadsRealPlaytimeColumns();
     testPopupCloseOnlyReopensAdminPanelIfStillOpen();
     testPatchPagesCoverAllEntriesWithinBounds();
     testPatchNotesNavButtons();
@@ -3307,6 +3456,8 @@
     testOfflineCacheRoundTripsPerUserAndTracksPendingSync();
     testSaveToCloudGuardsSessionLockAndOffline();
     testCheckPlayerSessionNeverLocksOnNetworkFailure();
+    testReportClientErrorGuardsOfflineAndMissingClient();
+    testReportClientErrorThrottlesAfterMaxPerSession();
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
     testReconnectModalWrapperScrollsInsteadOfClipping();
@@ -3327,6 +3478,11 @@
     testCmpMasteredDetectsOnlyPenLevel();
     testCompendiumReactOpensAndClosesInDom();
     testInvAddMergesPastOldMaxStackThreshold();
+    testI18nextInitializedWithSupportedLangs();
+    testI18nResourcesLoadBeforeGameplayFiles();
+    testI18nextResolvesKnownKeysNotRawKey();
+    testChangeLanguageStaysInSyncWithGlobalLang();
+    testI18nResourcesFrEnKeyParity();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

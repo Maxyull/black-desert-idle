@@ -1,0 +1,16 @@
+{
+  "social.chat_day_today": "Today",
+  "social.chat_day_yesterday": "Yesterday",
+  "social.chat_default_pseudo": "Player",
+  "social.chat_delete_failed": "Delete failed: {{error}}",
+  "social.chat_empty": "No messages yet",
+  "social.chat_mod_access_denied": "Access denied or schema not run",
+  "social.chat_mod_deleted_on": "Deleted on {{time}}",
+  "social.chat_mod_empty": "No deleted messages",
+  "social.chat_mod_restore_btn": "↩ Restore",
+  "social.chat_mod_restore_title": "Repost this message to its channel",
+  "social.chat_note_moderated_log": "🛡️ Deleted-message log (staff)",
+  "social.chat_note_signin_required": "🔒 Sign in with a verified account to chat",
+  "social.chat_note_staff_only": "Only staff can post here",
+  "social.chat_restore_failed": "Restore failed: {{error}}"
+}

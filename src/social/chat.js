@@ -51,13 +51,13 @@ function updateChatInputVisibility() {
   const row = $a('chatInputRow'), note = $a('chatNote');
   if (chatChannel === 'modéré') {
     row.style.display = 'none';
-    note.textContent = LANG==='fr' ? '🛡️ Journal des messages supprimés (staff)' : '🛡️ Deleted-message log (staff)';
+    note.textContent = i18next.t('social:social.chat_note_moderated_log');
   } else if (!currentUser || isGuest()) {
     row.style.display = 'none';
-    note.textContent = LANG==='fr' ? '🔒 Connecte-toi avec un compte vérifié pour discuter' : '🔒 Sign in with a verified account to chat';
+    note.textContent = i18next.t('social:social.chat_note_signin_required');
   } else if (chatChannel === 'annonce' && !isAdmin()) {
     row.style.display = 'none';
-    note.textContent = LANG==='fr' ? 'Seul le staff peut poster ici' : 'Only staff can post here';
+    note.textContent = i18next.t('social:social.chat_note_staff_only');
   } else {
     row.style.display = '';
     note.textContent = '';
@@ -79,14 +79,14 @@ let chatExpandedDays = new Set();
 function dayKeyOf(iso) { const d = new Date(iso); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
 function fmtDaySeparator(iso) {
   const d = new Date(iso), now = new Date(), yest = new Date(now); yest.setDate(yest.getDate()-1);
-  if (dayKeyOf(iso) === dayKeyOf(now.toISOString())) return LANG==='fr' ? "Aujourd'hui" : 'Today';
-  if (dayKeyOf(iso) === dayKeyOf(yest.toISOString())) return LANG==='fr' ? 'Hier' : 'Yesterday';
+  if (dayKeyOf(iso) === dayKeyOf(now.toISOString())) return i18next.t('social:social.chat_day_today');
+  if (dayKeyOf(iso) === dayKeyOf(yest.toISOString())) return i18next.t('social:social.chat_day_yesterday');
   return d.toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', day:'numeric', month:'long' });
 }
 function renderChatMessages(msgs, sinceTs) {
   const el = $a('chatMessages'); if (!el) return;
   const canDelete = isAdmin() || myIsMod; // admin ET modérateurs peuvent supprimer
-  if (!msgs.length) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Aucun message pour l\'instant':'No messages yet'}</div>`; return; }
+  if (!msgs.length) { el.innerHTML = `<div class="chatEmpty">${i18next.t('social:social.chat_empty')}</div>`; return; }
   // regroupe les messages par jour, dans l'ordre chronologique — seul le DERNIER groupe (le plus
   // récent) est déplié par défaut, les précédents sont repliés sous leur barre dorée
   const dayGroups = [];
@@ -111,7 +111,7 @@ function renderChatMessages(msgs, sinceTs) {
       const del = (canDelete && m.id != null) ? `<button class="chatDelBtn" data-id="${m.id}" title="Supprimer">✕</button>` : '';
       // canal Annonce : seulement le rôle (badge), pas de pseudo — juste le message en rouge
       const pseudoHtml = chatChannel === 'annonce' ? '' :
-        `<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':(LANG==='fr'?'Joueur':'Player')))}</span> `;
+        `<span class="chatPseudo">${escapeHtml(m.pseudo || (m.role==='admin'?'Admin':i18next.t('social:social.chat_default_pseudo')))}</span> `;
       // halo temporaire sur les messages arrivés depuis la dernière lecture de CE canal —
       // demande explicite : "un halo sur le message que tu n'as pas encore lu"
       const isNew = sinceTs && new Date(m.created_at) > new Date(sinceTs);
@@ -140,7 +140,7 @@ function renderChatMessages(msgs, sinceTs) {
       const { error } = await sb.rpc('delete_chat_message', { p_id: parseInt(btn.dataset.id,10) });
       // remonte l'erreur au lieu de l'avaler silencieusement (aide à diagnostiquer, ex: schéma
       // SQL pas encore exécuté → "function ... does not exist")
-      if (error) { $a('chatNote').textContent = (LANG==='fr'?'Suppression échouée : ':'Delete failed: ') + error.message; return; }
+      if (error) { $a('chatNote').textContent = i18next.t('social:social.chat_delete_failed', { error: error.message }); return; }
       fetchChatMessages();
     };
   });
@@ -194,22 +194,22 @@ async function fetchModeratedLog() {
   const el = $a('chatMessages'); if (!el) return;
   const { data, error } = await sb.from('chat_deleted').select('id, channel, author_id, author_pseudo, message, deleted_at')
     .order('deleted_at', { ascending:false }).limit(50);
-  if (error) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Accès refusé ou schéma non exécuté':'Access denied or schema not run'}</div>`; return; }
-  if (!data || !data.length) { el.innerHTML = `<div class="chatEmpty">${LANG==='fr'?'Aucun message supprimé':'No deleted messages'}</div>`; return; }
+  if (error) { el.innerHTML = `<div class="chatEmpty">${i18next.t('social:social.chat_mod_access_denied')}</div>`; return; }
+  if (!data || !data.length) { el.innerHTML = `<div class="chatEmpty">${i18next.t('social:social.chat_mod_empty')}</div>`; return; }
   el.innerHTML = data.map(m =>
     `<div class="chatMsg chan-annonce modMsg">` +
     `<div class="modTop"><span><span class="chatPseudo">${escapeHtml(m.author_pseudo||'?')}</span> <span class="modChan">[${escapeHtml(m.channel||'')}]</span></span>` +
-    `<button class="modRestoreBtn" data-id="${m.id}" title="${LANG==='fr'?'Renvoyer ce message dans son canal':'Repost this message to its channel'}">${LANG==='fr'?'↩ Renvoyer':'↩ Restore'}</button></div>` +
+    `<button class="modRestoreBtn" data-id="${m.id}" title="${i18next.t('social:social.chat_mod_restore_title')}">${i18next.t('social:social.chat_mod_restore_btn')}</button></div>` +
     `<code class="modUuidLine">${m.author_id||''}</code>` +
     `<div class="chatText">${escapeHtml(m.message||'')}</div>` +
-    `<div class="modDeletedAt">${LANG==='fr'?'Supprimé le':'Deleted on'} ${fmtChatTimestamp(m.deleted_at)}</div></div>`).join('');
+    `<div class="modDeletedAt">${i18next.t('social:social.chat_mod_deleted_on', { time: fmtChatTimestamp(m.deleted_at) })}</div></div>`).join('');
   el.scrollTop = 0;
   el.querySelectorAll('.modRestoreBtn').forEach(btn => {
     btn.onclick = async () => {
       if (!sb) return;
       btn.disabled = true;
       const { error } = await sb.rpc('restore_chat_message', { p_deleted_id: parseInt(btn.dataset.id,10) });
-      if (error) { $a('chatNote').textContent = (LANG==='fr'?'Renvoi échoué : ':'Restore failed: ') + error.message; btn.disabled = false; return; }
+      if (error) { $a('chatNote').textContent = i18next.t('social:social.chat_restore_failed', { error: error.message }); btn.disabled = false; return; }
       fetchModeratedLog();
     };
   });

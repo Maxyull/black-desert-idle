@@ -104,7 +104,7 @@ function notifRowHtml(n) {
     <div class="notifIcon">${n.icon}</div>
     <div class="notifBody"><div class="notifTitle">${escapeHtml(n.title)}</div><div class="notifText">${escapeHtml(n.text)}</div></div>
     <div class="notifTime">${fmtNotifTime(n.t)}</div>
-    <button class="notifDelBtn" data-id="${n.id}" title="${LANG==='fr'?'Supprimer':'Delete'}">✕</button>
+    <button class="notifDelBtn" data-id="${n.id}" title="${i18next.t('progression:progression.notifications.delete')}">✕</button>
   </div>`;
 }
 let notifCatFilter = 'all'; // 'all' | 'important' | 'success' | 'info' — demande explicite du 2026-07-08 ("les catégories doivent être en haut")
@@ -114,8 +114,8 @@ function openNotifCenter() {
   pruneNotifLog(); // purge les entrées de plus de 7 jours avant d'afficher
   const log = S.notifLog||[];
   if (!log.length) {
-    openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications',
-      `<div class="admEmpty">${LANG==='fr'?'Aucune notification pour l\'instant':'No notifications yet'}</div>`);
+    openInfo(i18next.t('progression:progression.notifications.title'),
+      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty')}</div>`);
     return;
   }
   // "affiche les 20 dernières entrées" (demande explicite du 2026-07-08) : on ne garde QUE les 20
@@ -129,7 +129,7 @@ function openNotifCenter() {
   const info = shown.filter(n => n.cat === 'info');
   if (!['all','important','success','info'].includes(notifCatFilter)) notifCatFilter = 'all';
   const tabsHtml = `<div class="catTabs">
-    <button class="catTab notifCatTab${notifCatFilter==='all'?' active':''}" data-cat="all">${LANG==='fr'?'Tout':'All'} <span class="notifSectionCount">${shown.length}</span></button>
+    <button class="catTab notifCatTab${notifCatFilter==='all'?' active':''}" data-cat="all">${i18next.t('progression:progression.notifications.tab_all')} <span class="notifSectionCount">${shown.length}</span></button>
     <button class="catTab notifCatTab${notifCatFilter==='important'?' active':''}" data-cat="important">${NOTIF_CAT_META.important[LANG]} <span class="notifSectionCount">${important.length}</span></button>
     <button class="catTab notifCatTab${notifCatFilter==='success'?' active':''}" data-cat="success">${NOTIF_CAT_META.success[LANG]} <span class="notifSectionCount">${success.length}</span></button>
     <button class="catTab notifCatTab${notifCatFilter==='info'?' active':''}" data-cat="info">${NOTIF_CAT_META.info[LANG]} <span class="notifSectionCount">${info.length}</span></button>
@@ -140,11 +140,9 @@ function openNotifCenter() {
   const html = notifCatFilter === 'all'
     ? section('important', important) + section('success', success) + section('info', info)
     : (notifCatFilter === 'important' ? important : notifCatFilter === 'success' ? success : info).map(notifRowHtml).join('') ||
-      `<div class="admEmpty">${LANG==='fr'?'Rien dans cette catégorie':'Nothing in this category'}</div>`;
-  const summary = `<div class="notifSummary">${LANG==='fr'
-    ? `${shown.length} affichée${shown.length>1?'s':''} (sur ${log.length}) · auto-supprimées après 7 jours`
-    : `${shown.length} shown (of ${log.length}) · auto-deleted after 7 days`}</div>`;
-  openInfo(LANG==='fr' ? '🔔 Notifications' : '🔔 Notifications', summary + tabsHtml + `<div class="notifScroll">${html}</div>`);
+      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty_category')}</div>`;
+  const summary = `<div class="notifSummary">${i18next.t('progression:progression.notifications.summary', { count: shown.length, total: log.length })}</div>`;
+  openInfo(i18next.t('progression:progression.notifications.title'), summary + tabsHtml + `<div class="notifScroll">${html}</div>`);
   $a('infoBody').querySelectorAll('.notifCatTab').forEach(btn => {
     btn.onclick = () => { notifCatFilter = btn.dataset.cat; openNotifCenter(); };
   });
@@ -161,7 +159,7 @@ function checkAchievements() {
       S.achUnlocked[a.id] = Date.now();
       addSilver(a.reward, 'achievement', a.name.fr);
       showAchToast(a);
-      pushNotif('🏅', LANG==='fr'?'Succès débloqué':'Achievement unlocked', a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)', 'success');
+      pushNotif('🏅', i18next.t('progression:progression.notifications.achievement_unlocked'), a.name[LANG]+' (+'+fmt(a.reward)+' 🪙)', 'success');
       logToDiscord('🏅 Succès débloqué', `**${myPseudo||'Joueur'}** — ${a.name.fr} (+${fmt(a.reward)} 🪙)`, 0xc9a55a);
       unlocked = true;
     }
@@ -173,7 +171,7 @@ function showAchToast(a) {
   const el = document.createElement('div');
   el.className = 'achToast';
   el.innerHTML = `<div class="achToastIcon">${a.icon}</div>` +
-    `<div><div class="achToastTitle">${LANG==='fr'?'🏅 Succès débloqué':'🏅 Achievement unlocked'}</div>` +
+    `<div><div class="achToastTitle">${i18next.t('progression:progression.achievements.toast_title')}</div>` +
     `<div class="achToastName">${a.name[LANG]}</div>` +
     `<div class="achToastReward">+${fmt(a.reward)} 🪙</div></div>`;
   stack.appendChild(el);
@@ -193,7 +191,7 @@ function showMailToast(icon, name, qty) {
   const el = document.createElement('div');
   el.className = 'achToast';
   el.innerHTML = `<div class="achToastIcon">${icon}</div>` +
-    `<div><div class="achToastTitle">${LANG==='fr'?'📬 Nouveau courrier':'📬 New mail'}</div>` +
+    `<div><div class="achToastTitle">${i18next.t('progression:progression.mailbox.toast_title')}</div>` +
     `<div class="achToastName">${name}</div>` +
     `<div class="achToastReward">+${fmt(qty)}</div></div>`;
   stack.appendChild(el);
@@ -243,20 +241,20 @@ function updateMailBadge() {
   badge.classList.toggle('show', n > 0);
 }
 function renderMailboxHtml() {
-  const stockRow = `<div class="admSummary">${LANG==='fr'?'Stock de Loyalties déjà récupéré':'Already claimed Loyalty stock'} : <b>${fmt(S.loyalty||0)}</b> 🏅</div>`;
+  const stockRow = `<div class="admSummary">${i18next.t('progression:progression.mailbox.claimed_stock_label')} : <b>${fmt(S.loyalty||0)}</b> 🏅</div>`;
   if (!S.mailbox.length || !S.mailbox.some(m => m.qty > 0)) {
-    return stockRow + `<div class="admEmpty">${LANG==='fr'?'Ton courrier est vide':'Your mailbox is empty'}</div>`;
+    return stockRow + `<div class="admEmpty">${i18next.t('progression:progression.mailbox.empty')}</div>`;
   }
   return stockRow + S.mailbox.filter(m => m.qty > 0).map(m => `<div class="achRow">` +
     `<div class="achIcon">${m.icon}</div>` +
     `<div class="achInfo"><div class="achName">${m.name}</div></div>` +
     `<div class="achReward">×${fmt(m.qty)}</div>` +
-    (m.key === 'loyalty' ? `<button class="mailClaimBtn" data-key="${m.key}">${LANG==='fr'?'Récupérer':'Claim'}</button>` : '') +
+    (m.key === 'loyalty' ? `<button class="mailClaimBtn" data-key="${m.key}">${i18next.t('progression:progression.mailbox.claim_button')}</button>` : '') +
     `</div>`).join('') +
-    `<div class="admSummary">${LANG==='fr'?'Ces objets restent ici en permanence tant qu\'ils ne sont pas récupérés — ils ne se perdent jamais et s\'empilent sans limite.':'These items stay here permanently until claimed — they never get lost and stack without limit.'}</div>`;
+    `<div class="admSummary">${i18next.t('progression:progression.mailbox.permanent_note')}</div>`;
 }
 function openMailbox() {
-  openInfo(LANG==='fr' ? '📬 Courrier' : '📬 Mailbox', renderMailboxHtml());
+  openInfo(i18next.t('progression:progression.mailbox.panel_title'), renderMailboxHtml());
   $a('infoBody').querySelectorAll('.mailClaimBtn').forEach(btn => {
     btn.onclick = () => { if (btn.dataset.key === 'loyalty') claimLoyalty(); openMailbox(); };
   });
@@ -273,7 +271,7 @@ function achRowHtml(a) {
     `<div class="achIcon">${a.icon}</div>` +
     `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${a.desc[LANG]}</div>` +
     `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div>` +
-    `<div class="achProgress">${done ? (LANG==='fr'?'Terminé ✓':'Completed ✓') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
+    `<div class="achProgress">${done ? i18next.t('progression:progression.achievements.completed') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
     `<div class="achReward">+${fmt(a.reward)} 🪙</div></div>`;
 }
 function renderAchievementsHtml() {
@@ -287,17 +285,17 @@ function renderAchievementsHtml() {
     return `<button class="catTab achCatTab${id===achPanelCat?' active':''}" data-cat="${id}">${meta.icon} ${meta.label[LANG]} ${badge}</button>`;
   }).join('');
   // filtre "pas fini"
-  const filterBtn = `<button id="achUnfinishedBtn" class="achFilterBtn${achOnlyUnfinished?' on':''}">${achOnlyUnfinished?(LANG==='fr'?'☑ Pas fini':'☑ Unfinished'):(LANG==='fr'?'☐ Pas fini':'☐ Unfinished')}</button>`;
+  const filterBtn = `<button id="achUnfinishedBtn" class="achFilterBtn${achOnlyUnfinished?' on':''}">${achOnlyUnfinished?i18next.t('progression:progression.achievements.filter_unfinished_on'):i18next.t('progression:progression.achievements.filter_unfinished_off')}</button>`;
   let list = achPanelCat==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===achPanelCat);
   if (achOnlyUnfinished) list = list.filter(a => !S.achUnlocked[a.id]);
   const rows = list.length ? list.map(achRowHtml).join('')
-    : `<div class="admEmpty">${LANG==='fr'?'Rien à afficher ici':'Nothing to show here'}</div>`;
+    : `<div class="admEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
   return `<div class="achSummary">${doneCount} / ${ACHIEVEMENTS.length}</div>` +
     `<div class="catTabs">${tabsHtml}</div>${filterBtn}${rows}`;
 }
 function openAchievements() {
   const callout = contentChangeCalloutHtml('achievements');
-  openInfo(LANG==='fr'?'🏅 Succès':'🏅 Achievements', callout + renderAchievementsHtml());
+  openInfo(i18next.t('progression:progression.achievements.panel_title'), callout + renderAchievementsHtml());
   markContentSeen('achievements');
   $a('infoBody').querySelectorAll('.achCatTab').forEach(btn => {
     btn.onclick = () => { achPanelCat = btn.dataset.cat; openAchievements(); };
@@ -324,9 +322,9 @@ function compendiumHighlightItem(name) {
   matches.forEach(zi => { const row = document.querySelector(`.compZoneRow[data-zi="${zi}"]`); if (row) row.classList.add('compHalo'); });
   const picker = $a('compZonePicker'); if (!picker) return;
   picker.innerHTML = matches.length
-    ? `<b>${escapeHtml(name)}</b> ${LANG==='fr'?'— clique une zone pour y farmer directement :':'— click a zone to go farm there directly:'} ` +
-      matches.map(zi => `<button class="compGoZoneBtn" data-zi="${zi}" title="${LANG==='fr'?'Lance le farm dans cette zone immédiatement':'Starts farming in this zone immediately'}">${tr(ZONES[zi].name)}</button>`).join('')
-    : `<span class="admEmpty">${LANG==='fr'?'Aucune zone trouvée pour cet objet':'No zone found for this item'}</span>`;
+    ? `<b>${escapeHtml(name)}</b> ${i18next.t('progression:progression.compendium.pick_zone_hint')} ` +
+      matches.map(zi => `<button class="compGoZoneBtn" data-zi="${zi}" title="${i18next.t('progression:progression.compendium.go_zone_title')}">${tr(ZONES[zi].name)}</button>`).join('')
+    : `<span class="admEmpty">${i18next.t('progression:progression.compendium.no_zone_found')}</span>`;
   picker.querySelectorAll('.compGoZoneBtn').forEach(btn => {
     btn.onclick = () => {
       const zi = parseInt(btn.dataset.zi,10);
@@ -345,22 +343,20 @@ function renderCompendiumHtml() {
   const total = compendiumTotalCount(), max = compendiumTotalMax(), pct = compendiumPct();
   const bossCountMax = Object.keys(BOSS_ROSTER).length;
   const penItems = penMasteryItemList(), penDone = compendiumPenCount();
-  const summaryCard = `<button id="compTutoBtn" class="compTutoBtn" title="${LANG==='fr'?'Lancer le tutoriel du Compendium':'Start the Compendium tutorial'}">?</button>
+  const summaryCard = `<button id="compTutoBtn" class="compTutoBtn" title="${i18next.t('progression:progression.compendium.tutorial_button_title')}">?</button>
     <div class="admStatTiles">
-      <div class="admStatTile"><div class="astLbl">📖 ${LANG==='fr'?'Progression':'Progress'}</div><div class="astVal">${total} / ${max}</div></div>
+      <div class="admStatTile"><div class="astLbl">📖 ${i18next.t('progression:progression.compendium.progress_label')}</div><div class="astVal">${total} / ${max}</div></div>
       <div class="admStatTile"><div class="astLbl">🏃 SPD</div><div class="astVal">+${pct}%</div></div>
-      <div class="admStatTile"><div class="astLbl">⚔️ ${LANG==='fr'?'Dégâts':'DMG'}</div><div class="astVal">+${pct}%</div></div>
-      <div class="admStatTile"><div class="astLbl">🛡️ ${LANG==='fr'?'Esquive':'Dodge'}</div><div class="astVal">+${pct}%</div></div>
+      <div class="admStatTile"><div class="astLbl">⚔️ ${i18next.t('progression:progression.compendium.dmg_label')}</div><div class="astVal">+${pct}%</div></div>
+      <div class="admStatTile"><div class="astLbl">🛡️ ${i18next.t('progression:progression.compendium.dodge_label')}</div><div class="astVal">+${pct}%</div></div>
     </div>
-    <div class="admSummary">${LANG==='fr'?`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Boss · ${penDone}/${penItems.length} PEN`:`${zc}/${ZONES.length} zones · ${bc}/${bossCountMax} World Bosses · ${penDone}/${penItems.length} PEN`}</div>
-    <div class="admHint">${LANG==='fr'
-      ? 'Chaque zone visitée (au moins 1 objet ramassé) ET chaque World Boss vaincu débloque +1% Vitesse, +1% Dégâts, +1% Esquive (additif, jamais un multiplicateur). Clique sur un objet ci-dessous pour voir dans quelles zones le farmer, puis clique une zone pour y lancer le farm directement (aucune confirmation, tu y es téléporté aussitôt).'
-      : 'Every visited zone (at least 1 item looted) AND every defeated World Boss unlocks +1% Speed, +1% Damage, +1% Dodge (additive, never a multiplier). Click an item below to see which zones farm it, then click a zone to start farming there right away (no confirmation, you\'re sent there instantly).'}</div>
+    <div class="admSummary">${i18next.t('progression:progression.compendium.summary_line', { zc, zonesTotal: ZONES.length, bc, bossMax: bossCountMax, penDone, penTotal: penItems.length })}</div>
+    <div class="admHint">${i18next.t('progression:progression.compendium.hint')}</div>
     <div id="compZonePicker" class="compZonePicker"></div>
     <div class="catTabs">
-      <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${LANG==='fr'?'Zones':'Zones'} (${zc}/${ZONES.length})</button>
+      <button class="catTab compTab${compendiumTab==='zones'?' active':''}" data-tab="zones">🗺️ ${i18next.t('progression:progression.compendium.tab_zones')} (${zc}/${ZONES.length})</button>
       <button class="catTab compTab${compendiumTab==='bosses'?' active':''}" data-tab="bosses">🐋 World Bosses (${bc}/${bossCountMax})</button>
-      <button class="catTab compTab${compendiumTab==='pen'?' active':''}" data-tab="pen">🌟 ${LANG==='fr'?'Maîtrise PEN':'PEN Mastery'} (${penDone}/${penItems.length})</button>
+      <button class="catTab compTab${compendiumTab==='pen'?' active':''}" data-tab="pen">🌟 ${i18next.t('progression:progression.compendium.tab_pen')} (${penDone}/${penItems.length})</button>
     </div>`;
   let bodyHtml;
   if (compendiumTab === 'bosses') {
@@ -369,7 +365,7 @@ function renderCompendiumHtml() {
       return `<div class="achRow${unlocked?' done':''}">` +
         `<div class="achIcon">${b.icon}</div>` +
         `<div class="achInfo"><div class="achName">${b.name[LANG]}</div>` +
-        `<div class="achDesc">${unlocked?(LANG==='fr'?'Vaincu au moins une fois':'Defeated at least once'):(LANG==='fr'?'Pas encore vaincu':'Not defeated yet')}</div></div>` +
+        `<div class="achDesc">${unlocked?i18next.t('progression:progression.compendium.boss_defeated'):i18next.t('progression:progression.compendium.boss_not_defeated')}</div></div>` +
         `<div class="achReward">${unlocked?'+1% ✓':'🔒'}</div></div>`;
     }).join('');
   } else if (compendiumTab === 'pen') {
@@ -379,9 +375,7 @@ function renderCompendiumHtml() {
     // Zones (.zTierHead/.zTierDot), icône réelle de l'objet (penMasteryIcon, core/game-core.js,
     // grisée en CSS si jamais atteint PEN), pic d'enchantement jamais atteint (S.enhPeakByName,
     // voir trackEnhPeak) affiché même pour un objet qui n'a pas (encore) touché PEN.
-    bodyHtml = `<div class="admHint">${LANG==='fr'
-        ? 'Suivi de complétion pur (pas de bonus de stats) : amène chaque pièce d\'équipement et chaque bijou à PEN (niveau max) au moins une fois dans ton inventaire.'
-        : 'Pure completion tracker (no stat bonus): bring every gear piece and every jewel to PEN (max level) at least once in your inventory.'}</div>` +
+    bodyHtml = `<div class="admHint">${i18next.t('progression:progression.compendium.pen_hint')}</div>` +
       GEAR_TIERS.map(tier => {
         const tierItems = penItems.filter(e => e.grade === tier.grade);
         const tierDone = tierItems.filter(e => S.penMastery[e.name]).length;
@@ -419,7 +413,7 @@ function renderCompendiumHtml() {
           `<div class="achIcon">${unlocked?'📖':'🔒'}</div>` +
           `<div class="achInfo"><div class="achName">${tr(z.name)}</div>` +
           `<div class="achDesc compItems">${itemsHtml}</div></div>` +
-          `<div class="achReward">${unlocked?'+1% ✓':(LANG==='fr'?'Objet manquant':'Missing item')}</div></div>`;
+          `<div class="achReward">${unlocked?'+1% ✓':i18next.t('progression:progression.compendium.missing_item')}</div></div>`;
       }).join('');
       return `<div class="zTierHead"><span class="zTierDot" style="background:${tier.color}"></span>${tier.label[LANG]}</div>${rowsHtml}`;
     }).join('');
@@ -437,7 +431,7 @@ let cronTutoSeen = false;
 try { cronTutoSeen = localStorage.getItem('velia-idle-cron-tuto-seen') === '1'; } catch(e) {}
 function openCompendium() {
   const callout = contentChangeCalloutHtml('compendium');
-  openInfo(LANG==='fr'?'📖 Compendium':'📖 Compendium', callout + renderCompendiumHtml());
+  openInfo(i18next.t('progression:progression.compendium.panel_title'), callout + renderCompendiumHtml());
   markContentSeen('compendium');
   const tutoBtn = $a('compTutoBtn');
   if (tutoBtn) tutoBtn.onclick = () => startCompendiumTutorial();
@@ -557,7 +551,7 @@ function renderQuestSectionHtml(scope) {
       return `<div class="achRow inactive">` +
         `<div class="achIcon">${def.icon}</div>` +
         `<div class="achInfo"><div class="achName">${def.name[LANG]}</div><div class="achDesc">${rangeTxt}</div></div>` +
-        `<div class="achReward">${LANG==='fr'?'Pas tirée ce cycle':'Not active this cycle'}</div>` +
+        `<div class="achReward">${i18next.t('progression:progression.quests.not_active')}</div>` +
       `</div>`;
     }
     const q = st.quests[i];
@@ -569,8 +563,8 @@ function renderQuestSectionHtml(scope) {
       `<div class="achInfo"><div class="achName">${def.name[LANG]}</div>` +
       `<div class="achDesc">${fmt(Math.floor(val/dv))} / ${fmt(Math.floor(q.target/dv))} ${def.unit[LANG]}</div>` +
       `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div>` +
-      (q.claimed ? `<div class="achReward">${LANG==='fr'?'Réclamé ✓':'Claimed ✓'}</div>`
-        : doneNotClaimed ? `<button class="questClaimBtn" data-scope="${scope}" data-i="${i}">${LANG==='fr'?'Réclamer':'Claim'} +${fmt(q.reward)}🪙</button>`
+      (q.claimed ? `<div class="achReward">${i18next.t('progression:progression.quests.claimed')}</div>`
+        : doneNotClaimed ? `<button class="questClaimBtn" data-scope="${scope}" data-i="${i}">${i18next.t('progression:progression.quests.claim_button')} +${fmt(q.reward)}🪙</button>`
         : `<div class="achReward">+${fmt(q.reward)} 🪙</div>`) +
       `</div>`;
   }).join('');
@@ -588,11 +582,11 @@ function questScopeCounts(scope) {
 }
 let questPanelScope = 'daily'; // scope actuellement affiché dans le panneau Quêtes
 function renderDailyQuestsHtml() {
-  const dailyNote = LANG==='fr' ? 'Se réinitialise chaque jour à minuit (heure locale)' : 'Resets every day at midnight (local time)';
-  const weeklyNote = LANG==='fr' ? 'Se réinitialise chaque lundi à minuit (heure locale)' : 'Resets every Monday at midnight (local time)';
+  const dailyNote = i18next.t('progression:progression.quests.daily_reset_note');
+  const weeklyNote = i18next.t('progression:progression.quests.weekly_reset_note');
   const trackLabel = S.questTrackerOn
-    ? (LANG==='fr'?'🔖 Ne plus suivre':'🔖 Stop tracking')
-    : (LANG==='fr'?'🔖 Suivre les quêtes restantes':'🔖 Track remaining quests');
+    ? i18next.t('progression:progression.quests.tracker_stop')
+    : i18next.t('progression:progression.quests.tracker_start');
   // un badge par onglet : ✅ = prêtes à réclamer (pastille dorée), sinon le nombre restant en gris —
   // permet de voir d'un coup d'œil, sans ouvrir l'onglet, s'il reste quelque chose à faire/réclamer
   const tabBtn = (scope, icon, label) => {
@@ -605,14 +599,14 @@ function renderDailyQuestsHtml() {
   const note = questPanelScope==='daily' ? dailyNote : weeklyNote;
   return `<button id="btnToggleTracker" onclick="toggleQuestTracker()">${trackLabel}</button>` +
     `<div class="catTabs">` +
-      tabBtn('daily', '📅', LANG==='fr'?'Journalières':'Daily') +
-      tabBtn('weekly', '🗓️', LANG==='fr'?'Hebdomadaires':'Weekly') +
+      tabBtn('daily', '📅', i18next.t('progression:progression.quests.tab_daily')) +
+      tabBtn('weekly', '🗓️', i18next.t('progression:progression.quests.tab_weekly')) +
     `</div>` +
     `<div id="questScopeBody">${renderQuestSectionHtml(questPanelScope)}<div class="admSummary">${note}</div></div>`;
 }
 let questsPanelOpen = false; // le panneau Quêtes est-il ouvert ? (pour re-rendre après une réclamation)
 function openDailyQuests() {
-  openInfo(LANG==='fr'?'🗒️ Quêtes':'🗒️ Quests', renderDailyQuestsHtml());
+  openInfo(i18next.t('progression:progression.quests.panel_title'), renderDailyQuestsHtml());
   questsPanelOpen = true; // openInfo l'a remis à false ; on le repasse à true APRÈS
   $a('infoBody').querySelectorAll('.qScopeTab').forEach(btn => {
     btn.onclick = () => { questPanelScope = btn.dataset.scope; openDailyQuests(); };
@@ -645,7 +639,7 @@ function fmtDuration(ms) {
   const h = Math.floor(s/3600); s -= h*3600;
   const m = Math.floor(s/60); s -= m*60;
   const pad = n => String(n).padStart(2,'0');
-  return (days>0 ? days+(LANG==='fr'?'j ':'d ') : '') + pad(h)+':'+pad(m)+':'+pad(s);
+  return (days>0 ? days+i18next.t('progression:progression.quests.duration_day_suffix') : '') + pad(h)+':'+pad(m)+':'+pad(s);
 }
 function msToNextDailyReset() {
   const now = new Date();
@@ -676,24 +670,24 @@ function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; try {
 function renderQuestWidget() {
   const el = $('questWidget'); if (!el) return;
   ensureQuests('daily'); ensureQuests('weekly');
-  const header = `<div class="qwHeaderRow"><span class="qwTitle">${LANG==='fr'?'🗒️ Suivi':'🗒️ Tracker'}</span>` +
+  const header = `<div class="qwHeaderRow"><span class="qwTitle">${i18next.t('progression:progression.quests.widget_title')}</span>` +
     `<button class="qwFoldBtn" onclick="toggleResetFold()">${resetWidgetFolded?'▸':'▾'}</button></div>`;
   if (resetWidgetFolded) { el.innerHTML = header; return; }
   const next = nextAchievement();
   const todayPlaytime = S.playtimeSec - (S.dq && S.dq.base ? S.dq.base.playtime : 0);
-  const dailyTip = LANG==='fr' ? 'Temps restant avant la remise à zéro des quêtes journalières' : 'Time left before daily quests reset';
-  const weeklyTip = LANG==='fr' ? 'Temps restant avant la remise à zéro des quêtes hebdomadaires' : 'Time left before weekly quests reset';
+  const dailyTip = i18next.t('progression:progression.quests.daily_tip');
+  const weeklyTip = i18next.t('progression:progression.quests.weekly_tip');
   el.innerHTML = header + `<div class="qwBody">` +
-    `<div class="qwRow" title="${dailyTip}"><span class="qwLbl">${LANG==='fr'?'🗒️ Journ.':'🗒️ Daily'}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
-    `<div class="qwRow" title="${weeklyTip}"><span class="qwLbl">${LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly'}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
-    `<div class="qwSep">${LANG==='fr'?'⏱️ Temps de jeu':'⏱️ Playtime'}</div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'Total':'Total'}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
-    `<div class="qwRow"><span class="qwLbl">${LANG==='fr'?'Aujourd\'hui':'Today'}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
+    `<div class="qwRow" title="${dailyTip}"><span class="qwLbl">${i18next.t('progression:progression.quests.widget_daily_label')}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
+    `<div class="qwRow" title="${weeklyTip}"><span class="qwLbl">${i18next.t('progression:progression.quests.widget_weekly_label')}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
+    `<div class="qwSep">${i18next.t('progression:progression.quests.playtime_label')}</div>` +
+    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.total_label')}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
+    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.today_label')}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
     (next
       ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
         `<div class="qwNextName">${next.a.name[LANG]}</div>` +
         `<div class="achBarWrap"><div class="achBar" style="width:${Math.round(next.pct)}%"></div></div></div></div>`
-      : `<div class="qwNext qwAllDone">${LANG==='fr'?'🏅 Vous avez fini les succès !':'🏅 You\'ve finished all achievements!'}</div>`) +
+      : `<div class="qwNext qwAllDone">${i18next.t('progression:progression.quests.all_achievements_done')}</div>`) +
     `</div>`;
 }
 // encart de suivi des quêtes restantes (activé via le bouton "Suivre" du panneau Quêtes) —
@@ -702,7 +696,7 @@ function renderQuestTrackerWidget() {
   const el = $('questTrackerWidget'); if (!el) return;
   if (!S.questTrackerOn) { el.style.display = 'none'; el.innerHTML = ''; return; }
   el.style.display = '';
-  const header = `<div class="qwHeaderRow"><span class="qwTitle">${LANG==='fr'?'🔖 Quêtes suivies':'🔖 Tracked quests'}</span>` +
+  const header = `<div class="qwHeaderRow"><span class="qwTitle">${i18next.t('progression:progression.quests.tracked_widget_title')}</span>` +
     `<button class="qwFoldBtn" onclick="toggleTrackerFold()">${trackerWidgetFolded?'▸':'▾'}</button></div>`;
   if (trackerWidgetFolded) { el.innerHTML = header; return; }
   ensureQuests('daily'); ensureQuests('weekly');
@@ -727,11 +721,11 @@ function renderQuestTrackerWidget() {
         `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div></div>${right}</div>`);
     });
     if (rows.length) {
-      body += `<div class="qwScopeLbl">${scope==='daily'?(LANG==='fr'?'📅 Journalières':'📅 Daily'):(LANG==='fr'?'🗓️ Hebdo':'🗓️ Weekly')}</div>` + rows.join('');
+      body += `<div class="qwScopeLbl">${scope==='daily'?i18next.t('progression:progression.quests.tracked_daily_label'):i18next.t('progression:progression.quests.tracked_weekly_label')}</div>` + rows.join('');
     }
   }
   el.innerHTML = header + `<div class="qwBody">` +
-    (body || `<div class="qwEmpty">${LANG==='fr'?'Tout est réclamé !':'Everything is claimed!'}</div>`) +
+    (body || `<div class="qwEmpty">${i18next.t('progression:progression.quests.all_claimed')}</div>`) +
     `</div>`;
   el.querySelectorAll('.qwClaimBtn').forEach(btn => {
     // claimQuest rafraîchit lui-même le suivi ET le panneau — pas de double appel
@@ -765,7 +759,7 @@ function lootMult(r) {
 // valeurs THÉORIQUES, indépendantes du stuff actuel du joueur (demande explicite : "silver/h, xp/h,
 // kills/min théoriques par zone") -- comparent les zones entre elles à armes égales, sans se
 // soucier de si le joueur peut y survivre aujourd'hui.
-const REF_KPM_FOR_STATS = 15; // kills/min de référence (voir roadmap.md, même valeur que le calibrage économique des zones)
+const REF_KPM_FOR_STATS = 15; // kills/min de référence (voir docs/roadmap.md, même valeur que le calibrage économique des zones)
 const REF_DPS_FOR_STATS = 900; // dégâts/min de référence PUREMENT relatif : seul hpPer varie d'une zone à l'autre, donc le classement (et le ratio entre zones) ne dépend pas de la valeur choisie ici
 // UNIQUEMENT le trash (2026-07-09, demande explicite : "le calcul de silver/h se fait uniquement
 // sur les silver looté au sol grâce au token qui doivent être la principale source de revenu") --
@@ -828,7 +822,7 @@ function renderEquipModeBtn() {
   if (gearPane) gearPane.style.display = equipMode === 'gear' ? '' : 'none';
   if (crystalPane) crystalPane.style.display = equipMode === 'crystal' ? '' : 'none';
   const crystalSlot = $('crystalSlotCenter');
-  if (crystalSlot) crystalSlot.title = LANG==='fr' ? 'Bientôt disponible' : 'Coming soon';
+  if (crystalSlot) crystalSlot.title = i18next.t('progression:progression.equip.crystal_coming_soon');
 }
 function setEquipMode(key) {
   if (!EQUIP_MODES[key]) return;

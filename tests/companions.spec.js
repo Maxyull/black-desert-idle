@@ -99,7 +99,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
-  // roster de départ : 0 pet (2026-07-10, demande explicite -- voir companions.roster.js)
+  // roster de départ : 0 pet (2026-07-10, demande explicite -- voir roster.js)
   await expect(frame.locator('#tb2')).toHaveText('0');
 
   // onglet Collection : grille vide au départ (locator scopé à la barre d'onglets, pour ne pas
@@ -124,7 +124,7 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
 
   // sync admin (2026-07-19) : totalHatched est un compteur À VIE (jamais remis à 0 par le pity,
   // contrairement à hatchCountSincePity) -- incrémenté une fois par tirage réel dans
-  // rollAndCreatePet() (companions.hatch.js), donc doit valoir 1 après l'unique éclosion ci-dessus.
+  // rollAndCreatePet() (hatch.js), donc doit valoir 1 après l'unique éclosion ci-dessus.
   // syncCompanionStatsToServer doit exister et ne jamais lever (no-op silencieux ici : pas de
   // compte connecté dans ce contexte de test, la garde sb/currentUser/isGuest doit l'arrêter tôt).
   const syncState = await frame.locator('body').evaluate(() => ({
@@ -390,7 +390,7 @@ test('terrain card is width-capped and the reserve sits to its right with room f
 
 // Version bas gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche") -- réutilise
 // la numérotation VNNN partagée avec le jeu principal (COMPANION_MODULE_VERSION,
-// companions.economy.js), affichée via #companion-version, position:fixed bottom-left.
+// economy.js), affichée via #companion-version, position:fixed bottom-left.
 test('module version is displayed bottom-left, reusing the shared VNNN numbering', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -624,7 +624,7 @@ test('incubation slot purchases are capped at 8, both server-side (silver never 
 
 // carte terrain en 3D (2026-07-10, demande explicite) -- pour les espèces avec un modèle GLB,
 // updateTerrainViewer3d() doit RÉUTILISER le contexte WebGL déjà créé sur un re-render du même pet
-// (companions.ticks.js appelle renderSecDetail() chaque seconde tant que l'onglet Sections est
+// (ticks.js appelle renderSecDetail() chaque seconde tant que l'onglet Sections est
 // ouvert -- recréer le contexte à chaque tick reproduirait le bug de fuite déjà corrigé pour la
 // modale 3D), et le LIBÉRER en quittant l'onglet.
 test('terrain 3D viewer reuses its WebGL context across re-renders of the same pet and disposes when leaving the Sections tab', async ({ page }) => {
@@ -645,12 +645,12 @@ test('terrain 3D viewer reuses its WebGL context across re-renders of the same p
     PETS.forEach(p => { if (p.cat.sec === cat.sec) p.terrain = false; });
     PETS.push(pet);
     activeSecIdx = SECTIONS.findIndex(s => s.id === cat.sec);
-    ST(2); // onglet Sections -- ne rend PAS lui-même (seul companions.ticks.js le fait, chaque
+    ST(2); // onglet Sections -- ne rend PAS lui-même (seul ticks.js le fait, chaque
     // seconde tant que l'onglet reste actif) : appel explicite ici pour le premier rendu.
     renderSecDetail();
     await new Promise(r => setTimeout(r, 50)); // laisse mount() (async, attend 'three-ready') tourner
     const firstWrap = terrainViewer3dState ? terrainViewer3dState.wrap : null;
-    renderSecDetail(); // simule le re-render déclenché chaque seconde par companions.ticks.js
+    renderSecDetail(); // simule le re-render déclenché chaque seconde par ticks.js
     const sameWrapReused = !!firstWrap && terrainViewer3dState && terrainViewer3dState.wrap === firstWrap;
     const anchorHasWrap = !!document.getElementById('ts-cv3d-anchor') && document.getElementById('ts-cv3d-anchor').contains(terrainViewer3dState.wrap);
     ST(3); // quitte l'onglet Sections -> doit libérer le contexte WebGL
@@ -793,10 +793,10 @@ test('syncCompanionStatsToServer reaches the RPC call and never throws with a ca
 });
 
 // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
-// monde") -- une sauvegarde antérieure au passage du roster de départ à 0 pet (companions.roster.js,
+// monde") -- une sauvegarde antérieure au passage du roster de départ à 0 pet (roster.js,
 // 2026-07-10) n'a jamais son flag petsRosterResetV1 : simule ce cas en injectant directement une
 // sauvegarde localStorage AVANT le premier chargement (localStorage est partagé entre la page hôte
-// et l'iframe, même origine -- voir companions.save.js).
+// et l'iframe, même origine -- voir save.js).
 test('retroactive migration clears a pre-existing roster and never repeats', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -818,10 +818,10 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
 
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
-  // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (companions.roster.js) -- ne prouve
+  // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (roster.js) -- ne prouve
   // pas à lui seul que loadGame()/la migration ont fini de tourner, donc pas fiable comme seule
   // condition d'attente. On poll directement petsRosterResetV1 (posé synchroneement à la toute fin
-  // de loadGame(), voir companions.save.js) jusqu'à ce qu'il devienne true.
+  // de loadGame(), voir save.js) jusqu'à ce qu'il devienne true.
   await expect.poll(() => frame.locator('body').evaluate(() => petsRosterResetV1)).toBe(true);
   const afterMigration = await frame.locator('body').evaluate(() => ({
     petsLen: PETS.length, flag: petsRosterResetV1, silverKept: SILVER, fusionKept: fusionCount,
@@ -893,7 +893,7 @@ test('header shows WIP banner, new title, close button, and collection legend/so
 // bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut pas
 // acheter les oeufs") -- ST(1) n'appelait jamais renderHatch(), et le tick ne rafraîchissait pas
 // le panel Éclosion même quand il restait ouvert. Vérifie que le texte du compte à rebours change
-// tout seul, SANS changer d'onglet, entre deux lectures espacées de plus d'1s (companions.ticks.js
+// tout seul, SANS changer d'onglet, entre deux lectures espacées de plus d'1s (ticks.js
 // tourne toutes les 1000ms).
 test('hatch countdown keeps updating live while the tab stays open', async ({ page }) => {
   const pageErrors = [];
@@ -921,7 +921,7 @@ test('hatch countdown keeps updating live while the tab stays open', async ({ pa
 // achievement "dur" (2026-07-20, demande explicite : "succes dure genre fusionner pour perdre des
 // legendaire/ancestral") -- force le tirage (Math.random mocké à 0 dans le contexte de l'iframe)
 // pour garantir un résultat de rareté inférieure au meilleur des 2 parents (voir le commentaire
-// détaillé dans executeFusion, companions.fusion.js, sur pourquoi bestParentRar et pas bestRar).
+// détaillé dans executeFusion, fusion.js, sur pourquoi bestParentRar et pas bestRar).
 test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard achievement', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -969,7 +969,7 @@ test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard ach
 
 // Flèches de résultat de fusion (2026-07-20, demande explicite : "afficher des fleches verte si
 // on gagne des stats rang, ou rouge si on en perd, afficher de quel tiers a quel tiers on est
-// passes") -- deltaArrow()/showFusionResultModal() (companions.fusion.js) comparent le Tier et le
+// passes") -- deltaArrow()/showFusionResultModal() (fusion.js) comparent le Tier et le
 // Score (GS) du résultat au MEILLEUR des 2 parents (pas une moyenne) : ⬆️ vert si gain, ⬇️ rouge
 // si perte. Deux fusions forcées ici pour couvrir les deux directions dans le même test.
 test('fusion result modal shows a green up arrow on gain and a red down arrow on loss, for both tier and GS', async ({ page }) => {
@@ -1055,7 +1055,7 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
 
 // PvP (2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction de la
 // categorie" + "header : PVP bloqué") -- vrai PvP joueur-contre-joueur pas encore livré (bandeau
-// verrouillé, voir companions.pvp.js), mais le classement local par puissance (GS) fonctionne
+// verrouillé, voir pvp.js), mais le classement local par puissance (GS) fonctionne
 // réellement -- vérifie les deux : l'UI verrouillée ET le tri correct du classement.
 test('PvP tab shows a locked banner and a real GS-sorted ranking of owned pets', async ({ page }) => {
   const pageErrors = [];
@@ -1106,7 +1106,7 @@ test('3D viewer tab loads Three.js locally (no CDN) and creates a WebGL canvas w
   await expect(frame.locator('#viewer3d-canvas-wrap')).toBeVisible();
 
   // three-bridge.js est un <script type="module">, chargé de façon asynchrone -- on attend
-  // l'event 'three-ready' déjà géré par companions.viewer3d.js (initViewer3dIfNeeded réessaie
+  // l'event 'three-ready' déjà géré par viewer3d.js (initViewer3dIfNeeded réessaie
   // via window.addEventListener('three-ready', ...) s'il tourne avant que le bridge soit prêt).
   await expect
     .poll(() => frame.locator('body').evaluate(() => typeof window.THREE), { timeout: 15_000 })
@@ -1127,8 +1127,8 @@ test('3D viewer tab loads Three.js locally (no CDN) and creates a WebGL canvas w
 
 // Intégration réelle du 1er modèle GLB (2026-07-10, demande explicite : "envoyer le premier test
 // .glb") -- le bouton "🧊 Voir en 3D" (panneau du pet déployé sur le terrain,
-// companions.sections.js) ne doit apparaître QUE pour un pet dont companionModelUrlFor() renvoie
-// une URL réelle (COMPANION_MODEL_MAP, companions.viewer3d.js) -- seul "Black Mask Cat" T5 est
+// sections.js) ne doit apparaître QUE pour un pet dont companionModelUrlFor() renvoie
+// une URL réelle (COMPANION_MODEL_MAP, viewer3d.js) -- seul "Black Mask Cat" T5 est
 // câblé pour l'instant (seul fichier uploadé dans le bucket). Vérifie l'affichage conditionnel ET
 // que la modale réutilise bien le même pipeline Three.js déjà validé par l'écran de test.
 test('"Voir en 3D" button only appears for a pet with an uploaded model, and opens a working Three.js modal', async ({ page }) => {
@@ -1318,7 +1318,7 @@ test('opening the 3D preview for many companions in a row never fails to render 
 });
 
 // ═══ MARCHÉ D'ÉCHANGE (2026-07-10, demande explicite : "vrai backend d'échange") ═══════════════
-// pet.uid stable + companions.market.js -- voir supabase/migrations/20260710150000_companion_pet_trade_market.sql
+// pet.uid stable + market.js -- voir supabase/migrations/20260710150000_companion_pet_trade_market.sql
 
 test('rollAndCreatePet assigns a stable uid, and petSnapshotOf/petFromSnapshot round-trip preserves it', async ({ page }) => {
   const pageErrors = [];
@@ -1356,7 +1356,7 @@ test('rollAndCreatePet assigns a stable uid, and petSnapshotOf/petFromSnapshot r
 
 // migration rétroactive : une sauvegarde antérieure à l'ajout de `uid` (2026-07-10) a des pets
 // sans ce champ -- migratePetUidV1() doit leur en attribuer un, une seule fois, sans jamais
-// écraser un uid déjà présent sur un autre pet (voir loadGame(), companions.save.js).
+// écraser un uid déjà présent sur un autre pet (voir loadGame(), save.js).
 test('migratePetUidV1 assigns a uid to legacy pets missing one, without touching pets that already have one', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -1387,7 +1387,7 @@ test('migratePetUidV1 assigns a uid to legacy pets missing one, without touching
 // Onglet Marché : rendu de la nav (Marché/Mes contrats/Historique) sans crash, même quand aucune
 // vraie session Supabase n'est disponible (signInForTest fabrique un utilisateur local, voir
 // commentaire en tête de fichier -- les appels réseau réels échouent silencieusement, gérés en
-// try/catch dans companions.market.js, jamais une exception qui remonte au navigateur).
+// try/catch dans market.js, jamais une exception qui remonte au navigateur).
 test('Marché tab renders its 3 sub-tabs and never throws even without a real Supabase session', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));

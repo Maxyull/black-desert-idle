@@ -5,7 +5,7 @@
 // "Tes stats" reste 100% local (aucun appel réseau) -- juste une lecture groupée de compteurs déjà
 // suivis ailleurs (totalHatched, silverSpent, fusionCount...). Le classement, lui, appelle la RPC
 // publique companion_leaderboard() (voir supabase/migrations/20260721100000_companion_leaderboard_prestige.sql)
-// via le même pattern cross-window que companions.sync.js (getSbClient()/getCurrentUserForSync()/
+// via le même pattern cross-window que sync.js (getSbClient()/getCurrentUserForSync()/
 // isGuest() sur window.parent -- jamais de 2e SDK Supabase dans l'iframe).
 //
 // Écarts assumés par rapport au mockup fourni :
@@ -51,7 +51,7 @@ function renderMyStatsGrid(){
     { ico:'🔗', lbl:'Fusions', val: fmtN(fusionCount||0) },
     { ico:'🌟', lbl:'Percées', val: fmtN(breakthroughCount||0) },
     // 2026-07-20, "Completion 48pet * 5 tier" -- espèce×tier distincts possédés / 240 (voir
-    // companionIndexProgress()/COMPANION_INDEX_MAX, companions.catalog.js)
+    // companionIndexProgress()/COMPANION_INDEX_MAX, catalog.js)
     { ico:'📖', lbl:'Complétion Index', val: `${indexProgress}/${COMPANION_INDEX_MAX}` },
     { ico:'🏆', lbl:'Succès', val: `${completedAchievements.size}/${ACHIEVEMENTS.length}` },
     { ico:'👑', lbl:'Score Prestige', val: fmtN(typeof prestigeScore==='function' ? prestigeScore() : 0) },

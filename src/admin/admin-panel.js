@@ -41,7 +41,7 @@ function setAdminTheme(id) {
 // pilotée par le registre ADMIN_SECTIONS ci-dessous -- chaque item a soit un render(container)
 // (charge ses propres données au clic, jamais tout d'un coup), soit planned:true (emplacement
 // réservé Guildes/PvP/Donations -- roadmap confirmée mais aucun code jeu derrière aujourd'hui,
-// voir ADMIN_MENU_PLAN.md §0bis). AUCUNE RPC n'est réécrite ici -- uniquement réorganisées.
+// voir docs/ADMIN_MENU_PLAN.md §0bis). AUCUNE RPC n'est réécrite ici -- uniquement réorganisées.
 // ============================================================
 const ADMIN_SECTIONS = [
   { cat:'overview', label:{fr:'Vue d\'ensemble',en:'Overview'}, items:[
@@ -81,15 +81,13 @@ const ADMIN_SECTIONS = [
 // ---------- réinitialisation de la démo (réservée à l'admin, à tout moment) ----------
 async function resetDemo() {
   if (!isAdmin()) return; // double protection : même si le bouton est masqué, la fonction refuse
-  const msg = LANG === 'fr'
-    ? "Réinitialiser la démo ? Toute ta progression (silver, équipement, niveau, sac) sera perdue et remise à zéro. Cette action est irréversible."
-    : "Reset the demo? All your progress (silver, gear, level, bag) will be lost and set back to zero. This action is irreversible.";
+  const msg = i18next.t('admin:admin.reset.confirm_demo');
   if (!confirm(msg)) return;
   applySaveState(JSON.parse(JSON.stringify(DEFAULT_SAVE)));
   suppressLoyaltyGrantForToday();
   if (sb && currentUser) await saveToCloud(); // écrase aussi la sauvegarde cloud avec l'état neuf
   try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {}
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Démo réinitialisée' : 'Demo reset', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_demo_reset'), { gold:true });
 }
 
 // ---------- reset des quêtes (admin) : juste pour soi, ou pour tout le monde ----------
@@ -102,7 +100,7 @@ function resetMyQuests() {
   if ($a('infoOverlay').classList.contains('open')) openDailyQuests();
   if (sb && currentUser) saveToCloud();
   try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {}
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes réinitialisées' : 'Quests reset', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_my_quests_reset'), { gold:true });
 }
 // "pour tout le monde" appelle une fonction SECURITY DEFINER côté Supabase qui remet à null
 // dq/wq dans TOUTES les sauvegardes cloud — celle-ci vérifie elle-même l'email admin côté
@@ -110,31 +108,25 @@ function resetMyQuests() {
 // qu'une protection de confort, pas la vraie barrière de sécurité.
 async function resetAllQuests() {
   if (!isAdmin() || !sb) return;
-  const msg = LANG === 'fr'
-    ? "Réinitialiser les quêtes de TOUS les joueurs ? Chacun se verra retirer sa progression de quêtes en cours (journalières et hebdomadaires) et de nouvelles seront tirées à leur prochaine connexion. Action irréversible."
-    : "Reset quests for ALL players? Everyone's in-progress quests (daily and weekly) will be cleared and new ones drawn on their next login. This action is irreversible.";
+  const msg = i18next.t('admin:admin.reset.confirm_all_quests');
   if (!confirm(msg)) return;
   const { error } = await sb.rpc('admin_reset_all_quests');
   if (!error) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé les quêtes de tous les joueurs`, 0x9cc9e8);
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   resetMyQuests(); // applique aussi l'effet immédiatement à l'admin lui-même
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Quêtes de tous les joueurs réinitialisées ✓' : "All players' quests reset ✓", { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_all_quests_reset'), { gold:true });
 }
 // remise à zéro COMPLÈTE de TOUS les comptes (silver/équipement/niveau/sac), avec diffusion d'un
 // message d'explication livré à chaque joueur (bannière stylée + notification) à sa prochaine
 // connexion — demande explicite du 2026-07-06, deux confirmations vu la gravité de l'action
 async function resetAllAccounts() {
   if (!isAdmin() || !sb) return;
-  const msg1 = LANG === 'fr'
-    ? '💥 Réinitialiser TOUS les comptes de TOUS les joueurs (silver, équipement, niveau, sac) ? Un message d\'explication leur sera montré à leur prochaine connexion. Action IRRÉVERSIBLE.'
-    : '💥 Reset ALL accounts of ALL players (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.';
+  const msg1 = i18next.t('admin:admin.reset.confirm_all_accounts_1');
   if (!confirm(msg1)) return;
-  const msg2 = LANG === 'fr'
-    ? 'Es-tu VRAIMENT sûr ? Il n\'y a aucun moyen de récupérer la progression perdue.'
-    : 'Are you REALLY sure? There is no way to recover the lost progress.';
+  const msg2 = i18next.t('admin:admin.reset.confirm_all_accounts_2');
   if (!confirm(msg2)) return;
   const title_fr = '🔄 Remise à zéro de tous les comptes';
   const title_en = '🔄 All accounts have been reset';
@@ -146,11 +138,11 @@ async function resetAllAccounts() {
     'Note: the game is in <b>constant development</b>, more resets may happen at any time while we\'re in testing.';
   const { data, error } = await sb.rpc('admin_reset_all_accounts', { p_title_fr: title_fr, p_title_en: title_en, p_body_fr: body_fr, p_body_en: body_en });
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé TOUS les comptes (${data} comptes)`, 0xc05545);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? `${data} comptes réinitialisés ✓` : `${data} accounts reset ✓`, { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_all_accounts_reset', { data }), { gold:true });
   // applique aussi l'effet immédiatement à l'admin lui-même + montre la même bannière que les joueurs
   applySaveState(JSON.parse(JSON.stringify(DEFAULT_SAVE)));
   suppressLoyaltyGrantForToday();
@@ -167,32 +159,32 @@ async function adminScreenshotPlayer() {
   const uuid = ($a('admResetUuidInput').value || '').trim();
   if (!uuid) return;
   const { data, error } = await sb.rpc('admin_get_player_save', { p_user_id: uuid });
-  if (error) { floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true }); return; }
-  if (!data) { floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Aucune sauvegarde pour cet UUID' : 'No save found for that UUID', { hurt:true }); return; }
-  openInfo((LANG==='fr'?'📸 Screenshot — ':'📸 Screenshot — ') + escapeHtml(data._pseudo||'?'), renderAdminScreenshotHtml(data));
+  if (error) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true }); return; }
+  if (!data) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.no_save_for_uuid'), { hurt:true }); return; }
+  openInfo(i18next.t('admin:admin.reset.screenshot_title_prefix') + escapeHtml(data._pseudo||'?'), renderAdminScreenshotHtml(data));
 }
 function renderAdminScreenshotHtml(save) {
   const s = save.S || {};
   const eq = save.EQUIP || {};
   const inv = (save.INV || []).filter(Boolean);
   const zone = ZONES[save.zoneIdx];
-  const zoneName = zone ? tr(zone.name) : (LANG==='fr'?'Velia':'Velia');
+  const zoneName = zone ? tr(zone.name) : i18next.t('admin:admin.reset.default_zone_name');
   const eqRows = Object.entries(eq).filter(([,v]) => v).map(([slot,it]) => {
     const lvl = it.optimizable ? (ENH_NAMES[it.enhLv||0] || '+0') : '';
     return `<div class="row"><span>${it.icon||'▪'} ${SLOT_LABEL[slot]||slot}</span><span class="v">${escapeHtml(it.name)}${lvl?' ('+lvl+')':''}</span></div>`;
-  }).join('') || `<div class="admEmpty">${LANG==='fr'?'Aucun équipement':'No gear'}</div>`;
+  }).join('') || `<div class="admEmpty">${i18next.t('admin:admin.reset.no_gear')}</div>`;
   const invRows = inv.map(it =>
     `<div class="row"><span>${it.icon||'▪'} ${escapeHtml(it.name)}</span><span class="v">${it.stackable ? 'x'+it.qty : (it.optimizable ? (ENH_NAMES[it.enhLv||0]||'+0') : '')}</span></div>`
-  ).join('') || `<div class="admEmpty">${LANG==='fr'?'Sac vide':'Empty bag'}</div>`;
+  ).join('') || `<div class="admEmpty">${i18next.t('admin:admin.reset.empty_bag')}</div>`;
   return `
     <div class="admStatTiles">
-      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Niveau':'Level'}</div><div class="astVal">${s.lvl||1}</div></div>
-      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Silver':'Silver'}</div><div class="astVal">${fmt(Math.round(s.silver||0))}</div></div>
-      <div class="admStatTile"><div class="astLbl">${LANG==='fr'?'Zone':'Zone'}</div><div class="astVal">${escapeHtml(zoneName)}</div></div>
+      <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.reset.stat_level')}</div><div class="astVal">${s.lvl||1}</div></div>
+      <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.reset.stat_silver')}</div><div class="astVal">${fmt(Math.round(s.silver||0))}</div></div>
+      <div class="admStatTile"><div class="astLbl">${i18next.t('admin:admin.reset.stat_zone')}</div><div class="astVal">${escapeHtml(zoneName)}</div></div>
     </div>
-    <div class="admSummary">${LANG==='fr'?'Sauvegardé le':'Saved on'} ${save.savedAt ? new Date(save.savedAt).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</div>
-    <h3>${LANG==='fr'?'Équipement':'Equipment'}</h3>${eqRows}
-    <h3>${LANG==='fr'?'Inventaire':'Inventory'} (${inv.length}/${INV_SIZE})</h3>${invRows}
+    <div class="admSummary">${i18next.t('admin:admin.reset.saved_on')} ${save.savedAt ? new Date(save.savedAt).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</div>
+    <h3>${i18next.t('admin:admin.reset.section_equipment')}</h3>${eqRows}
+    <h3>${i18next.t('admin:admin.reset.section_inventory')} (${inv.length}/${INV_SIZE})</h3>${invRows}
   `;
 }
 // remise à zéro CIBLÉE d'UN SEUL joueur par UUID (demande explicite du 2026-07-06 : "ajoute côté
@@ -217,13 +209,9 @@ async function resetAccountByUuid() {
     online = !!data;
   } catch(e) {}
   const onlineWarn = online
-    ? (LANG === 'fr'
-        ? '\n\n⚠️ CE JOUEUR EST ACTUELLEMENT EN LIGNE : sa propre sauvegarde automatique (toutes les 30s environ) risque de RÉÉCRIRE son ancien état par-dessus ce reset dans les secondes qui suivent, l\'annulant silencieusement. Pour un reset fiable, attends qu\'il soit déconnecté.'
-        : '\n\n⚠️ THIS PLAYER IS CURRENTLY ONLINE: their own autosave (roughly every 30s) may OVERWRITE their old state back over this reset within seconds, silently undoing it. For a reliable reset, wait until they\'re disconnected.')
+    ? i18next.t('admin:admin.reset.online_warn')
     : '';
-  const msg = (LANG === 'fr'
-    ? `🔄 Réinitialiser le compte du joueur ${uuid} (silver, équipement, niveau, sac) ? Un message d'explication lui sera montré à sa prochaine connexion. Action IRRÉVERSIBLE.`
-    : `🔄 Reset player ${uuid}'s account (silver, gear, level, bag)? An explanation message will be shown to them on their next login. This action is IRREVERSIBLE.`) + onlineWarn;
+  const msg = i18next.t('admin:admin.reset.confirm_reset_uuid', { uuid }) + onlineWarn;
   if (!confirm(msg)) return;
   const title_fr = '🔄 Ton compte a été réinitialisé';
   const title_en = '🔄 Your account has been reset';
@@ -235,15 +223,15 @@ async function resetAccountByUuid() {
     p_user_id: uuid, p_title_fr: title_fr, p_title_en: title_en, p_body_fr: body_fr, p_body_en: body_en
   });
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   if (!data) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Aucun joueur trouvé avec cet UUID' : 'No player found with that UUID', { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.no_player_for_uuid'), { hurt:true });
     return;
   }
   logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a réinitialisé le compte du joueur \`${uuid}\``, 0xc05545);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Compte réinitialisé ✓' : 'Account reset ✓', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.toast_account_reset'), { gold:true });
   input.value = '';
 }
 
@@ -270,14 +258,14 @@ async function refreshBanList() {
   const { data, error } = await sb.rpc('admin_list_bans');
   if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
   const rows = data || [];
-  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun bannissement actif':'No active bans'}</div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.sanctions.no_active_bans')}</div>`; return; }
   el.innerHTML = `<table class="admTable">
-    <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${LANG==='fr'?'Motif':'Reason'}</th><th>${LANG==='fr'?'Fin du ban':'Ban ends'}</th><th></th></tr></thead>
+    <thead><tr><th>${i18next.t('admin:admin.sanctions.table_player')}</th><th>${i18next.t('admin:admin.sanctions.table_reason')}</th><th>${i18next.t('admin:admin.sanctions.table_ban_ends')}</th><th></th></tr></thead>
     <tbody>${rows.map(r => `<tr>
       <td>${escapeHtml(r.pseudo || (r.user_id||'').slice(0,8)+'…')}</td>
       <td>${escapeHtml(r.ban_reason || '—')}</td>
       <td>${r.banned_until ? new Date(r.banned_until).toLocaleString(LANG==='fr'?'fr-FR':'en-US') : '—'}</td>
-      <td><button class="admUnbanBtn" data-uuid="${r.user_id}">${LANG==='fr'?'Lever':'Unban'}</button></td>
+      <td><button class="admUnbanBtn" data-uuid="${r.user_id}">${i18next.t('admin:admin.sanctions.unban_btn')}</button></td>
     </tr>`).join('')}</tbody>
   </table>`;
   el.querySelectorAll('.admUnbanBtn').forEach(btn => {
@@ -294,20 +282,18 @@ async function banPlayerByUuid() {
   const hours = Number($a('admBanDurationSelect').value) || 24;
   const reasonLabel = (BAN_REASONS.find(r => r.id === reasonId) || BAN_REASONS[BAN_REASONS.length-1]).label[LANG];
   if (!canBanUuid(uuid, currentUser && currentUser.id)) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'UUID invalide ou identique au tien — action bloquée' : 'Invalid UUID or same as yours — action blocked', { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.invalid_uuid'), { hurt:true });
     return;
   }
-  const msg = LANG === 'fr'
-    ? `🚫 Bannir le joueur ${uuid} pour ${hours}h (motif : ${reasonLabel}) ?`
-    : `🚫 Ban player ${uuid} for ${hours}h (reason: ${reasonLabel})?`;
+  const msg = i18next.t('admin:admin.sanctions.confirm_ban', { uuid, hours, reasonLabel });
   if (!confirm(msg)) return;
   const { error } = await sb.rpc('admin_ban_player', { p_user_id: uuid, p_duration_hours: hours, p_reason: reasonLabel });
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   logToDiscord('🚫 Sanction', `**${myPseudo||'Admin'}** a banni le joueur \`${uuid}\` pour ${hours}h (motif : ${reasonLabel})`, 0xc05545);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Joueur banni ✓' : 'Player banned ✓', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.toast_banned'), { gold:true });
   input.value = '';
   refreshBanList();
 }
@@ -316,11 +302,11 @@ async function unbanPlayer(uuid) {
   if (!isAdmin() || !sb || !uuid) return;
   const { error } = await sb.rpc('admin_unban_player', { p_user_id: uuid });
   if (error) {
-    floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Échec — ' + error.message : 'Failed — ' + error.message, { hurt:true });
+    floatTxt(P.x, P.y, 100, i18next.t('admin:admin.common.failed_prefix') + error.message, { hurt:true });
     return;
   }
   logToDiscord('✅ Sanction levée', `**${myPseudo||'Admin'}** a levé le ban du joueur \`${uuid}\``, 0x8fc98a);
-  floatTxt(P.x, P.y, 100, LANG==='fr' ? 'Ban levé ✓' : 'Ban lifted ✓', { gold:true });
+  floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.toast_unbanned'), { gold:true });
   refreshBanList();
 }
 function fmtAdmPlaytime(sec) {
@@ -341,13 +327,13 @@ async function refreshRoleList() {
   (mods || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, mod:true }));
   (testers || []).forEach(m => byUser.set(m.user_id, { ...(byUser.get(m.user_id)||{}), user_id:m.user_id, pseudo:m.pseudo, tester:true }));
   const rows = [...byUser.values()];
-  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun rôle attribué':'No roles assigned'}</div>`; return; }
+  if (!rows.length) { el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.roles.no_roles')}</div>`; return; }
   el.innerHTML = rows.map(r => `<div class="modRow">` +
-    `<span class="modPseudo">${escapeHtml(r.pseudo || (LANG==='fr'?'(sans pseudo)':'(no nickname)'))}</span>` +
+    `<span class="modPseudo">${escapeHtml(r.pseudo || i18next.t('admin:admin.roles.no_nickname'))}</span>` +
     `<code class="modUuid">${r.user_id}</code>` +
     `<span class="roleBadges">${r.mod?'🛡️ MOD':''}${r.mod&&r.tester?' · ':''}${r.tester?'🧪 Testeur':''}</span>` +
-    `${r.mod?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="mod">${LANG==='fr'?'Retirer MOD':'Remove MOD'}</button>`:''}` +
-    `${r.tester?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="tester">${LANG==='fr'?'Retirer Testeur':'Remove Tester'}</button>`:''}` +
+    `${r.mod?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="mod">${i18next.t('admin:admin.roles.remove_mod_btn')}</button>`:''}` +
+    `${r.tester?`<button class="modRemBtn" data-uuid="${r.user_id}" data-role="tester">${i18next.t('admin:admin.roles.remove_tester_btn')}</button>`:''}` +
     `</div>`).join('');
   el.querySelectorAll('.modRemBtn').forEach(btn => {
     btn.onclick = async () => {
@@ -368,18 +354,16 @@ function buildLootVersionTabHtml() {
     { grade:'grey', label:{fr:'Gris',en:'Grey'} }, { grade:'white', label:{fr:'Blanc',en:'White'} },
     { grade:'green', label:{fr:'Vert',en:'Green'} }, { grade:'blue', label:{fr:'Bleu',en:'Blue'} },
   ];
-  const v2Table = `<table class="admTable"><thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Armure/Arme':'Armor/Weapon'}</th><th>${LANG==='fr'?'Bijou':'Jewel'}</th></tr></thead><tbody>` +
+  const v2Table = `<table class="admTable"><thead><tr><th>${i18next.t('admin:admin.loot.table_tier')}</th><th>${i18next.t('admin:admin.loot.table_gear')}</th><th>${i18next.t('admin:admin.loot.table_jewel')}</th></tr></thead><tbody>` +
     rows.map(r => `<tr><td>${r.label[LANG]}</td><td>${(LOOT_RATES_V2[r.grade].gear*100).toFixed(2)}%</td><td>${(LOOT_RATES_V2[r.grade].jewel*100).toFixed(3)}%</td></tr>`).join('') +
     `</tbody></table>`;
-  return `<div class="admSummary">${LANG==='fr'?'Version active :':'Active version:'} <b>${v.toUpperCase()}</b></div>
+  return `<div class="admSummary">${i18next.t('admin:admin.loot.active_version')} <b>${v.toUpperCase()}</b></div>
     <div class="admActions">
-      <button id="btnLootVerV1" class="${v==='v1'?'ready':''}">${LANG==='fr'?'V1 — taux par zone (historique)':'V1 — per-zone rates (legacy)'}</button>
-      <button id="btnLootVerV2" class="${v==='v2'?'ready':''}">${LANG==='fr'?'V2 — taux fixe par palier':'V2 — flat per-tier rate'}</button>
+      <button id="btnLootVerV1" class="${v==='v1'?'ready':''}">${i18next.t('admin:admin.loot.v1_btn')}</button>
+      <button id="btnLootVerV2" class="${v==='v2'?'ready':''}">${i18next.t('admin:admin.loot.v2_btn')}</button>
     </div>
-    <div class="admHint">${LANG==='fr'
-      ? 'V1 : chaque zone a son propre taux (décroissant zone après zone, voir GEAR_CHANCE). V2 : un seul taux par palier, appliqué à ses 4 zones. Change instantanément, réversible à tout moment, aucune donnée perdue.'
-      : 'V1: each zone has its own rate (decreasing zone after zone, see GEAR_CHANCE). V2: a single rate per tier, applied to its 4 zones. Switches instantly, reversible anytime, no data lost.'}</div>
-    <h3>${LANG==='fr'?'📋 Table V2':'📋 V2 table'}</h3>
+    <div class="admHint">${i18next.t('admin:admin.loot.version_hint')}</div>
+    <h3>${i18next.t('admin:admin.loot.v2_table_title')}</h3>
     ${v2Table}`;
 }
 function wireLootVersionButtons() {
@@ -399,16 +383,16 @@ function renderAdminLoot(el) {
 // ---------- sections "Contenu" réutilisant les données déjà chargées côté serveur (RPC/tables
 // identiques à l'ancien panneau, juste ré-agencées en render(container) indépendants) ----------
 function renderAdminItems(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
-  sb.from('admin_farm_by_item').select('*').limit(20).then(({data}) => {
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
+  sb.from('admin_farm_by_item').select('item_name, item_kind, pickups, total_qty, total_silver').limit(20).then(({data}) => {
     const rows = data || [];
     const itemHtml = rows.map((r,i) => `
       <tr class="${i===0?'admTop':''}">
         <td>${i===0?'🔥 ':''}${tr(r.item_name)}</td><td>${r.item_kind}</td>
         <td>${fmt(r.pickups)}</td><td>${fmt(r.total_qty)}</td><td>${fmt(r.total_silver)}</td>
-      </tr>`).join('') || `<tr><td colspan="5" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
+      </tr>`).join('') || `<tr><td colspan="5" class="admEmpty">${i18next.t('admin:admin.common.no_data')}</td></tr>`;
     el.innerHTML = `<table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Type':'Kind'}</th><th>${LANG==='fr'?'Ramassages':'Pickups'}</th><th>Qté</th><th>Silver</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.content.table_item')}</th><th>${i18next.t('admin:admin.content.table_kind')}</th><th>${i18next.t('admin:admin.content.table_pickups')}</th><th>Qté</th><th>Silver</th></tr></thead>
         <tbody>${itemHtml}</tbody>
       </table>`;
   });
@@ -422,9 +406,9 @@ function renderAdminItems(el) {
 // sans nouvelle table. Requête SANS .limit(20) ici (contrairement à "Ressources farmées") : on
 // filtre nommément sur la Pierre de Cron, pas besoin du top 20 par volume qui l'exclurait souvent.
 function renderAdminCron(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([
-    sb.from('admin_farm_by_item').select('*'),
+    sb.from('admin_farm_by_item').select('item_name, item_kind, pickups, total_qty'),
     sb.from('player_stats').select('user_id'),
   ]).then(([{data: byItem}, {data: playerStats}]) => {
     const farmedRow = (byItem||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'material');
@@ -439,35 +423,31 @@ function renderAdminCron(el) {
       `<tr><td>${CRON_TIER_LABEL[grade][LANG]}</td><td>${cost}</td></tr>`).join('');
     const balancePie = typeof buildPieWithLegendHtml === 'function'
       ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'En stock (farmé - utilisé)':'In stock (farmed - used)', value: Math.max(0, farmed - used) },
-          { label: LANG==='fr'?'Utilisées (protection)':'Used (protection)', value: used },
+          { label: i18next.t('admin:admin.content.cron_stock_label'), value: Math.max(0, farmed - used) },
+          { label: i18next.t('admin:admin.content.cron_used_label'), value: used },
         ], { thresholdPct: 0 })
       : '';
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">⏳ ${LANG==='fr'?'Farmées (30j)':'Farmed (30d)'}</div><div class="astVal">${fmt(farmed)}</div></div>
-        <div class="admStatTile"><div class="astLbl">💥 ${LANG==='fr'?'Utilisées (30j)':'Used (30d)'}</div><div class="astVal">${fmt(used)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🛡️ ${LANG==='fr'?'Protections (30j)':'Protections (30d)'}</div><div class="astVal">${fmt(usedCount)}</div></div>
-        <div class="admStatTile"><div class="astLbl">📊 ${LANG==='fr'?'Farmées / joueur':'Farmed / player'}</div><div class="astVal">${fmt(Math.round(avgFarmedPerPlayer))}</div></div>
+        <div class="admStatTile"><div class="astLbl">⏳ ${i18next.t('admin:admin.content.cron_farmed_30d')}</div><div class="astVal">${fmt(farmed)}</div></div>
+        <div class="admStatTile"><div class="astLbl">💥 ${i18next.t('admin:admin.content.cron_used_30d')}</div><div class="astVal">${fmt(used)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🛡️ ${i18next.t('admin:admin.content.cron_protections_30d')}</div><div class="astVal">${fmt(usedCount)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📊 ${i18next.t('admin:admin.content.cron_farmed_per_player')}</div><div class="astVal">${fmt(Math.round(avgFarmedPerPlayer))}</div></div>
       </div>
-      <div class="admHint">${LANG==='fr'
-        ? 'Taux de drop FIXE, identique dans toutes les zones (1 à 3 unités/ramassage). "Utilisées" = consommées pour protéger un enchantement d\'une rétrogradation (coût variable selon le palier, voir tableau plus bas). Fenêtre de 30 jours, comme le registre de silver.'
-        : 'FIXED drop rate, identical in every zone (1 to 3 units/pickup). "Used" = consumed to protect an enhancement from a downgrade (variable cost by tier, see table below). 30-day window, same as the silver ledger.'}</div>
-      <h3>${LANG==='fr'?'⚖️ Farmé vs utilisé':'⚖️ Farmed vs used'}</h3>
+      <div class="admHint">${i18next.t('admin:admin.content.cron_hint')}</div>
+      <h3>${i18next.t('admin:admin.content.cron_balance_title')}</h3>
       ${balancePie}
-      <h3>${LANG==='fr'?'💎 Coût par palier de la pièce protégée':'💎 Cost by tier of the protected piece'}</h3>
+      <h3>${i18next.t('admin:admin.content.cron_cost_title')}</h3>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Palier':'Tier'}</th><th>${LANG==='fr'?'Coût':'Cost'}</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.content.table_tier')}</th><th>${i18next.t('admin:admin.content.table_cost')}</th></tr></thead>
         <tbody>${cronCostRows}</tbody>
       </table>`;
   });
 }
 function renderAdminTreasure(el) {
-  el.innerHTML = `<div class="admSummary">${LANG==='fr'
-    ? `Estimation à ${ADMIN_TREASURE_KPM_REF} kills/min (compare à ton propre "Kills/min" affiché en jeu)`
-    : `Estimate at ${ADMIN_TREASURE_KPM_REF} kills/min (compare to your own in-game "Kills/min")`}</div>
+  el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.treasure_estimate', { kpm: ADMIN_TREASURE_KPM_REF })}</div>
     <table class="admTable">
-      <thead><tr><th>${LANG==='fr'?'Objet':'Item'}</th><th>${LANG==='fr'?'Chance/kill':'Chance/kill'}</th>
-        <th>${LANG==='fr'?'Kills en moyenne':'Avg kills'}</th><th>${LANG==='fr'?'Temps estimé':'Est. time'}</th></tr></thead>
+      <thead><tr><th>${i18next.t('admin:admin.content.table_item')}</th><th>${i18next.t('admin:admin.content.table_chance_per_kill')}</th>
+        <th>${i18next.t('admin:admin.content.table_avg_kills')}</th><th>${i18next.t('admin:admin.content.table_est_time')}</th></tr></thead>
       <tbody>${VELIA_TREASURE.map(t => {
         const avgKills = Math.round(1/t.ch);
         const avgMin = avgKills / ADMIN_TREASURE_KPM_REF;
@@ -488,7 +468,7 @@ function renderAdminTreasure(el) {
 // au clic sur la section, bien après le chargement des deux fichiers : aucun risque de TDZ, même
 // pattern que le hook buildLootRateEditorHtml() de renderAdminLoot() ci-dessus.
 function renderAdminZoneProgression(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.from('player_stats').select('best_zone_index, gearscore').then(({data}) => {
     const zoneCounts = new Map();
     (data||[]).forEach(r => {
@@ -510,14 +490,12 @@ function renderAdminZoneProgression(el) {
       gsCounts[idx >= 0 ? idx : GS_BRACKETS.length-1]++;
     });
     const gsItems = GS_BRACKETS.map((b,i) => ({ label:b.label, value:gsCounts[i] }));
-    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(zoneItems) : `<div class="admEmpty">${LANG==='fr'?'Graphique indisponible':'Chart unavailable'}</div>`;
+    const zonePie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(zoneItems) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
     const gsPie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(gsItems, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : '';
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
-      ? 'Zone la plus avancée atteinte par chaque joueur (best_zone_index, borné côté anti-triche) — pas la zone farmée maintenant. Catégories sous 4% fusionnées dans "Autres".'
-      : 'Furthest zone reached by each player (best_zone_index, anti-cheat bounded) — not the zone currently being farmed. Categories under 4% merged into "Other".'}</div>
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.zone_progression_summary')}</div>
       <div class="admChartsRow">
-        <div><h3 style="margin-top:0">${LANG==='fr'?'🗾 Par zone':'🗾 By zone'}</h3>${zonePie}</div>
-        <div><h3 style="margin-top:0">${LANG==='fr'?'⚔️ Par Gearscore':'⚔️ By Gearscore'}</h3>${gsPie}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_zone_title')}</h3>${zonePie}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_gearscore_title')}</h3>${gsPie}</div>
       </div>`;
   });
 }
@@ -528,7 +506,7 @@ function renderAdminZoneProgression(el) {
 // renderAdminZoneProgression juste au-dessus (placeholder synchrone, requête async, buckets +
 // buildPieWithLegendHtml). Lecture seule, aucune action admin ici.
 function renderAdminCompendium(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.from('player_stats').select('compendium_pct').then(({data}) => {
     const rows = data||[];
     const PCT_BRACKETS = [
@@ -543,11 +521,9 @@ function renderAdminCompendium(el) {
     });
     const items = PCT_BRACKETS.map((b,i) => ({ label:b.label, value:counts[i] }));
     const avg = rows.length ? Math.round(rows.reduce((s,r) => s + Number(r.compendium_pct||0), 0) / rows.length) : 0;
-    const pie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(items, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${LANG==='fr'?'Graphique indisponible':'Chart unavailable'}</div>`;
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
-      ? `Moyenne : ${avg}% de complétion (zones + World Bosses + Maîtrise PEN combinés) sur ${rows.length} joueur(s) suivi(s).`
-      : `Average: ${avg}% completion (zones + World Bosses + PEN Mastery combined) across ${rows.length} tracked player(s).`}</div>
-      <div class="admChartsRow"><div><h3 style="margin-top:0">${LANG==='fr'?'📖 Répartition':'📖 Distribution'}</h3>${pie}</div></div>`;
+    const pie = typeof buildPieWithLegendHtml === 'function' ? buildPieWithLegendHtml(items, { thresholdPct:0, formatValue: v => String(Math.round(v)) }) : `<div class="admEmpty">${i18next.t('admin:admin.common.chart_unavailable')}</div>`;
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.compendium_summary', { avg, count: rows.length })}</div>
+      <div class="admChartsRow"><div><h3 style="margin-top:0">${i18next.t('admin:admin.content.compendium_distribution_title')}</h3>${pie}</div></div>`;
   });
 }
 
@@ -560,12 +536,12 @@ function renderAdminCompendium(el) {
 // une erreur. buildPieWithLegendHtml vient de admin-economy.js (chargé APRÈS ce fichier, guard
 // typeof identique à renderAdminLoot/renderAdminZoneProgression ci-dessus). ----------
 function renderAdminItemTutorials(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.rpc('admin_item_tutorial_stats').then(({data, error}) => {
     if (error) { el.innerHTML = `<div class="admHint">${escapeHtml(error.message)}</div>`; return; }
     const rows = data || [];
     if (!rows.length) {
-      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun tutoriel vu pour l\'instant':'No tutorials seen yet'}</div>`;
+      el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.content.tutorials_no_data')}</div>`;
       return;
     }
     const totalCompleted = rows.reduce((a,r) => a + Number(r.completed_count||0), 0);
@@ -577,23 +553,21 @@ function renderAdminItemTutorials(el) {
     }).join('');
     const pie = typeof buildPieWithLegendHtml === 'function'
       ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'Terminés':'Completed', value: totalCompleted },
-          { label: LANG==='fr'?'Passés':'Skipped', value: totalSkipped },
+          { label: i18next.t('admin:admin.content.completed_label'), value: totalCompleted },
+          { label: i18next.t('admin:admin.content.skipped_label'), value: totalSkipped },
         ], { thresholdPct: 0 })
       : '';
     el.innerHTML = `<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🎓 ${LANG==='fr'?'Tutoriels suivis':'Tutorials tracked'}</div><div class="astVal">${rows.length}</div></div>
-        <div class="admStatTile"><div class="astLbl">✅ ${LANG==='fr'?'Terminés (total)':'Completed (total)'}</div><div class="astVal">${fmt(totalCompleted)}</div></div>
-        <div class="admStatTile"><div class="astLbl">⏭️ ${LANG==='fr'?'Passés (total)':'Skipped (total)'}</div><div class="astVal">${fmt(totalSkipped)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🎓 ${i18next.t('admin:admin.content.tutorials_tracked')}</div><div class="astVal">${rows.length}</div></div>
+        <div class="admStatTile"><div class="astLbl">✅ ${i18next.t('admin:admin.content.completed_total')}</div><div class="astVal">${fmt(totalCompleted)}</div></div>
+        <div class="admStatTile"><div class="astLbl">⏭️ ${i18next.t('admin:admin.content.skipped_total')}</div><div class="astVal">${fmt(totalSkipped)}</div></div>
       </div>
-      <div class="admHint">${LANG==='fr'
-        ? 'Un tutoriel apparaît ici dès qu\'au moins un joueur l\'a terminé ou passé (mark_item_tutorial_seen). Taux = terminés / (terminés + passés).'
-        : 'A tutorial appears here as soon as at least one player has completed or skipped it (mark_item_tutorial_seen). Rate = completed / (completed + skipped).'}</div>
-      <h3>${LANG==='fr'?'⚖️ Terminés vs passés (tous tutoriels)':'⚖️ Completed vs skipped (all tutorials)'}</h3>
+      <div class="admHint">${i18next.t('admin:admin.content.tutorials_hint')}</div>
+      <h3>${i18next.t('admin:admin.content.tutorials_completed_vs_skipped_title')}</h3>
       ${pie}
-      <h3>${LANG==='fr'?'Détail par tutoriel':'Detail by tutorial'}</h3>
+      <h3>${i18next.t('admin:admin.content.tutorials_detail_title')}</h3>
       <table class="admTable">
-        <thead><tr><th>${LANG==='fr'?'Tutoriel':'Tutorial'}</th><th>${LANG==='fr'?'Terminés':'Completed'}</th><th>${LANG==='fr'?'Passés':'Skipped'}</th><th>${LANG==='fr'?'Total':'Total'}</th><th>${LANG==='fr'?'Taux':'Rate'}</th></tr></thead>
+        <thead><tr><th>${i18next.t('admin:admin.content.table_tutorial')}</th><th>${i18next.t('admin:admin.content.completed_label')}</th><th>${i18next.t('admin:admin.content.skipped_label')}</th><th>${i18next.t('admin:admin.content.table_total')}</th><th>${i18next.t('admin:admin.content.table_rate')}</th></tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>`;
   });
@@ -607,43 +581,41 @@ function renderAdminItemTutorials(el) {
 // (seulement un bouton dans le Wiki, voir game-supabase.js) -- ce panneau permet justement de
 // constater ce faible taux de démarrage, pas seulement le taux de complétion une fois démarré. ----------
 function renderAdminOnboarding(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([sb.rpc('admin_onboarding_stats'), sb.rpc('admin_onboarding_dropoff')]).then(([statsRes, dropRes]) => {
     if (statsRes.error) { el.innerHTML = `<div class="admHint">${escapeHtml(statsRes.error.message)}</div>`; return; }
     const s = (statsRes.data && statsRes.data[0]) || { started:0, completed:0, skipped:0, in_progress:0 };
     const started = Number(s.started||0), completed = Number(s.completed||0), skipped = Number(s.skipped||0), inProgress = Number(s.in_progress||0);
     if (!started) {
-      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Personne n\'a encore démarré le tutoriel d\'arrivée (bouton dans le Wiki)':'No one has started the arrival tutorial yet (button in the Wiki)'}</div>`;
+      el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.content.onboarding_no_data')}</div>`;
       return;
     }
     const completedPct = started > 0 ? Math.round(completed/started*100) : 0;
     const pie = typeof buildPieWithLegendHtml === 'function'
       ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'Terminé':'Completed', value: completed },
-          { label: LANG==='fr'?'Passé':'Skipped', value: skipped },
-          { label: LANG==='fr'?'En cours / abandonné':'In progress / abandoned', value: inProgress },
+          { label: i18next.t('admin:admin.content.onboarding_completed_label'), value: completed },
+          { label: i18next.t('admin:admin.content.onboarding_skipped_label'), value: skipped },
+          { label: i18next.t('admin:admin.content.in_progress_abandoned_label'), value: inProgress },
         ], { thresholdPct: 0 })
       : '';
     const dropRows = (dropRes.data || []);
     const totalSteps = (typeof TUTORIAL_STEPS !== 'undefined' && TUTORIAL_STEPS.length) || 21;
     const dropoffHtml = dropRows.length
       ? `<table class="admTable">
-          <thead><tr><th>${LANG==='fr'?'Étape où bloqué':'Step reached'}</th><th>${LANG==='fr'?'Joueurs':'Players'}</th></tr></thead>
+          <thead><tr><th>${i18next.t('admin:admin.content.table_step_reached')}</th><th>${i18next.t('admin:admin.content.table_players')}</th></tr></thead>
           <tbody>${dropRows.map(r => `<tr><td>${Number(r.last_step)+1} / ${totalSteps}</td><td>${fmt(Number(r.user_count||0))}</td></tr>`).join('')}</tbody>
         </table>`
-      : `<div class="admEmpty">${LANG==='fr'?'Aucun abandon en cours (tout le monde a terminé ou passé)':'No in-progress abandonment (everyone finished or skipped)'}</div>`;
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
-        ? 'Le tutoriel d\'arrivée ne se lance jamais automatiquement — seulement via le bouton dans le Wiki. "Démarré" = a cliqué ce bouton au moins une fois.'
-        : 'The arrival tutorial never launches automatically — only via the button in the Wiki. "Started" = clicked that button at least once.'}</div>
+      : `<div class="admEmpty">${i18next.t('admin:admin.content.onboarding_no_dropoff')}</div>`;
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.onboarding_summary')}</div>
       <div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🧭 ${LANG==='fr'?'Démarré':'Started'}</div><div class="astVal">${fmt(started)}</div></div>
-        <div class="admStatTile"><div class="astLbl">✅ ${LANG==='fr'?'Terminé':'Completed'}</div><div class="astVal">${fmt(completed)} <span class="admHint">(${completedPct}%)</span></div></div>
-        <div class="admStatTile"><div class="astLbl">⏭️ ${LANG==='fr'?'Passé':'Skipped'}</div><div class="astVal">${fmt(skipped)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🚪 ${LANG==='fr'?'En cours / abandonné':'In progress / abandoned'}</div><div class="astVal">${fmt(inProgress)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🧭 ${i18next.t('admin:admin.content.started_label')}</div><div class="astVal">${fmt(started)}</div></div>
+        <div class="admStatTile"><div class="astLbl">✅ ${i18next.t('admin:admin.content.onboarding_completed_label')}</div><div class="astVal">${fmt(completed)} <span class="admHint">(${completedPct}%)</span></div></div>
+        <div class="admStatTile"><div class="astLbl">⏭️ ${i18next.t('admin:admin.content.onboarding_skipped_label')}</div><div class="astVal">${fmt(skipped)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🚪 ${i18next.t('admin:admin.content.in_progress_abandoned_label')}</div><div class="astVal">${fmt(inProgress)}</div></div>
       </div>
-      <h3>${LANG==='fr'?'⚖️ Répartition':'⚖️ Breakdown'}</h3>
+      <h3>${i18next.t('admin:admin.content.breakdown_title')}</h3>
       ${pie}
-      <h3>${LANG==='fr'?'📉 Funnel d\'abandon (étape où resté bloqué)':'📉 Drop-off funnel (step last seen)'}</h3>
+      <h3>${i18next.t('admin:admin.content.dropoff_funnel_title')}</h3>
       ${dropoffHtml}`;
   });
 }
@@ -652,11 +624,11 @@ function renderAdminOnboarding(el) {
 // des stats sur toutes les nouvelle fonctionnalité de compagnons") -- le module (src/companions/,
 // iframe isolée, voir combat/boss.js) était 100% local jusqu'ici (localStorage, aucune sync
 // serveur) : ce panneau lit companion_stats via admin_companion_stats() (migration
-// 20260719190000_companion_stats.sql), alimentée par companions/companions.sync.js (poussé toutes
+// 20260719190000_companion_stats.sql), alimentée par companions/sync.js (poussé toutes
 // les 60s, réutilise le client sb/currentUser déjà authentifié de la page hôte via window.parent,
 // iframe same-origin). "players_synced" = a ouvert le module au moins une fois ET a un compte
 // (jamais les invités, ni les joueurs qui n'ont jamais cliqué l'onglet Compagnon). ----------
-// libellés/icônes en dur (2026-07-20) : RARITIES/SECTIONS vivent dans companions.catalog.js,
+// libellés/icônes en dur (2026-07-20) : RARITIES/SECTIONS vivent dans catalog.js,
 // chargé UNIQUEMENT dans l'iframe du module (jamais dans le bundle principal) -- le panneau admin
 // ne peut pas les lire directement. Recopie minimale (id/nom/couleur/icône), tenue à jour à la
 // main si le catalogue change -- même limite que toute donnée d'un module non bundlé.
@@ -687,18 +659,18 @@ function sumCompanionBreakdown(rows, field) {
 // taille totale de la complétion Index (2026-07-20, "Completion 48pet * 5 tier pour l'index et
 // classement") -- 48 espèces × 5 tiers = 240, recopiée en dur (même limite que
 // COMPANION_RARITY_LABELS/COMPANION_SECTION_LABELS ci-dessus : le panneau admin, bundle principal,
-// ne peut jamais charger companions.catalog.js, jamais bundlé). À tenir à jour si le catalogue
+// ne peut jamais charger catalog.js, jamais bundlé). À tenir à jour si le catalogue
 // du module change. unique_species_count (RPC) compte désormais des combos espèce×tier, pas
-// juste des espèces — voir companionIndexProgress(), companions.catalog.js.
+// juste des espèces — voir companionIndexProgress(), catalog.js.
 const COMPANION_CATALOG_SIZE = 48 * 5;
 function renderAdminCompanions(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown'), sb.rpc('admin_companion_player_list'), sb.rpc('admin_list_players')]).then(([statsRes, breakdownRes, playerListRes, allPlayersRes]) => {
     if (statsRes.error) { el.innerHTML = `<div class="admHint">${escapeHtml(statsRes.error.message)}</div>`; return; }
     const s = (statsRes.data && statsRes.data[0]) || {};
     const playersSynced = Number(s.players_synced||0);
     if (!playersSynced) {
-      el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Aucun joueur n\'a encore ouvert le module Compagnons':'No player has opened the Companions module yet'}</div>`;
+      el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.content.companions_no_data')}</div>`;
       return;
     }
     const totalPet = Number(s.total_pet_count||0), avgPet = Number(s.avg_pet_count||0);
@@ -715,7 +687,7 @@ function renderAdminCompanions(el) {
     const playerRows = (playerListRes.error ? [] : (playerListRes.data||[])).filter(r => r.fusion_count > 0 || r.hatch_count > 0);
     const fusionListHtml = playerRows.length
       ? `<table class="admTable">
-          <thead><tr><th>${LANG==='fr'?'Joueur':'Player'}</th><th>🔗 ${LANG==='fr'?'Fusions':'Fusions'}</th><th>🌟 ${LANG==='fr'?'Percées':'Breakthroughs'}</th><th>🎰 ${LANG==='fr'?'Perdantes':'Downgrades'}</th><th>🥚 ${LANG==='fr'?'Œufs':'Eggs'}</th><th>📖 ${LANG==='fr'?'Index':'Index'}</th></tr></thead>
+          <thead><tr><th>${i18next.t('admin:admin.content.table_player')}</th><th>🔗 ${i18next.t('admin:admin.content.table_fusions')}</th><th>🌟 ${i18next.t('admin:admin.content.table_breakthroughs')}</th><th>🎰 ${i18next.t('admin:admin.content.table_downgrades')}</th><th>🥚 ${i18next.t('admin:admin.content.table_eggs')}</th><th>📖 ${i18next.t('admin:admin.content.table_index')}</th></tr></thead>
           <tbody>${playerRows.map((r,i) => `
             <tr class="${i===0&&r.fusion_count>0?'admTop':''}">
               <td>${escapeHtml(nameByUser.get(r.user_id) || (r.user_id||'').slice(0,8)+'…')}</td>
@@ -723,7 +695,7 @@ function renderAdminCompanions(el) {
               <td>${fmt(r.hatch_count||0)}</td><td>${r.unique_species_count||0}/${COMPANION_CATALOG_SIZE}</td>
             </tr>`).join('')}</tbody>
         </table>`
-      : `<div class="admEmpty">${LANG==='fr'?'Aucune fusion ni éclosion pour l\'instant':'No fusion or hatch yet'}</div>`;
+      : `<div class="admEmpty">${i18next.t('admin:admin.content.companions_no_fusion')}</div>`;
     const completionBuckets = [0,25,50,75,100].map((min,i,arr) => {
       const max = arr[i+1] ?? 101;
       const label = i===arr.length-1 ? '100%' : `${min}-${arr[i+1]-1}%`;
@@ -751,32 +723,30 @@ function renderAdminCompanions(el) {
     const tierBar = typeof buildBarSeriesSvg === 'function'
       ? buildBarSeriesSvg(tierPoints, (typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors().accent : '#c9a55a')) : '';
 
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'
-        ? 'Module 100% local jusqu\'ici (localStorage, économie fermée, indépendante du Silver principal) — "Joueurs synchronisés" compte ceux qui ont ouvert l\'onglet Compagnon au moins une fois (le module envoie ses compteurs toutes les 60s en arrière-plan).'
-        : 'Module was 100% local until now (localStorage, closed economy, independent from the main Silver) — "Players synced" counts those who opened the Companion tab at least once (the module pushes its counters every 60s in the background).'}</div>
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.companions_summary')}</div>
       <div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🐾 ${LANG==='fr'?'Joueurs synchronisés':'Players synced'}</div><div class="astVal">${fmt(playersSynced)}</div></div>
-        <div class="admStatTile"><div class="astLbl">📦 ${LANG==='fr'?'Familiers (total / moy.)':'Pets (total / avg)'}</div><div class="astVal">${fmt(totalPet)} <span class="admHint">(${avgPet.toFixed(1)})</span></div></div>
-        <div class="admStatTile"><div class="astLbl">💰 ${LANG==='fr'?'Silver compagnon (total)':'Companion Silver (total)'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🥚 ${LANG==='fr'?'Œufs éclos (total)':'Eggs hatched (total)'}</div><div class="astVal">${fmt(totalHatch)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🔗 ${LANG==='fr'?'Fusions (total)':'Fusions (total)'}</div><div class="astVal">${fmt(totalFusion)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🎰 ${LANG==='fr'?'Fusions perdantes (total)':'Downgrade fusions (total)'}</div><div class="astVal">${fmt(totalFusionDowngrade)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🔥 ${LANG==='fr'?'Streak connexion (moy.)':'Login streak (avg)'}</div><div class="astVal">${avgStreak.toFixed(1)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🎁 ${LANG==='fr'?'Ont déclenché le pity':'Triggered pity'}</div><div class="astVal">${fmt(playersWithPity)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏆 ${LANG==='fr'?'Succès complétés (moy.)':'Achievements done (avg)'}</div><div class="astVal">${avgAch.toFixed(1)} <span class="admHint">/17</span></div></div>
-        <div class="admStatTile"><div class="astLbl">🔥 ${LANG==='fr'?'Succès "difficiles" (moy.)':'"Hard" achievements (avg)'}</div><div class="astVal">${avgHardAch.toFixed(1)} <span class="admHint">/4</span></div></div>
-        <div class="admStatTile"><div class="astLbl">📈 ${LANG==='fr'?'Éclosions / jour (moy.)':'Hatches / day (avg)'}</div><div class="astVal">${avgHatchPerDay.toFixed(2)}</div></div>
-        <div class="admStatTile"><div class="astLbl">📖 ${LANG==='fr'?'Complétion Index (moy.)':'Index completion (avg)'}</div><div class="astVal">${avgCompletionPct}% <span class="admHint">(${avgUniqueSpecies.toFixed(1)}/${COMPANION_CATALOG_SIZE})</span></div></div>
+        <div class="admStatTile"><div class="astLbl">🐾 ${i18next.t('admin:admin.content.companions_synced')}</div><div class="astVal">${fmt(playersSynced)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📦 ${i18next.t('admin:admin.content.companions_pets')}</div><div class="astVal">${fmt(totalPet)} <span class="admHint">(${avgPet.toFixed(1)})</span></div></div>
+        <div class="admStatTile"><div class="astLbl">💰 ${i18next.t('admin:admin.content.companions_silver')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🥚 ${i18next.t('admin:admin.content.companions_eggs_hatched')}</div><div class="astVal">${fmt(totalHatch)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔗 ${i18next.t('admin:admin.content.companions_fusions_total')}</div><div class="astVal">${fmt(totalFusion)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🎰 ${i18next.t('admin:admin.content.companions_downgrade_fusions')}</div><div class="astVal">${fmt(totalFusionDowngrade)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🔥 ${i18next.t('admin:admin.content.companions_login_streak')}</div><div class="astVal">${avgStreak.toFixed(1)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🎁 ${i18next.t('admin:admin.content.companions_triggered_pity')}</div><div class="astVal">${fmt(playersWithPity)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏆 ${i18next.t('admin:admin.content.companions_achievements_avg')}</div><div class="astVal">${avgAch.toFixed(1)} <span class="admHint">/17</span></div></div>
+        <div class="admStatTile"><div class="astLbl">🔥 ${i18next.t('admin:admin.content.companions_hard_achievements_avg')}</div><div class="astVal">${avgHardAch.toFixed(1)} <span class="admHint">/4</span></div></div>
+        <div class="admStatTile"><div class="astLbl">📈 ${i18next.t('admin:admin.content.companions_hatches_per_day')}</div><div class="astVal">${avgHatchPerDay.toFixed(2)}</div></div>
+        <div class="admStatTile"><div class="astLbl">📖 ${i18next.t('admin:admin.content.companions_index_completion')}</div><div class="astVal">${avgCompletionPct}% <span class="admHint">(${avgUniqueSpecies.toFixed(1)}/${COMPANION_CATALOG_SIZE})</span></div></div>
       </div>
       <div class="admChartsRow">
-        <div><h3 style="margin-top:0">${LANG==='fr'?'🎲 Par rareté':'🎲 By rarity'}</h3>${rarityPie}</div>
-        <div><h3 style="margin-top:0">${LANG==='fr'?'🗺️ Par section':'🗺️ By section'}</h3>${sectionPie}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_rarity_title')}</h3>${rarityPie}</div>
+        <div><h3 style="margin-top:0">${i18next.t('admin:admin.content.by_section_title')}</h3>${sectionPie}</div>
       </div>
-      <h3>${LANG==='fr'?'⬆️ Par Tier (tous joueurs confondus)':'⬆️ By Tier (all players)'}</h3>
+      <h3>${i18next.t('admin:admin.content.by_tier_title')}</h3>
       ${tierBar}
-      <h3>${LANG==='fr'?'📖 Répartition de la complétion Index':'📖 Index completion breakdown'}</h3>
+      <h3>${i18next.t('admin:admin.content.index_completion_breakdown_title')}</h3>
       ${completionChart}
-      <h3>${LANG==='fr'?'🔗 Liste des fusions par joueur':'🔗 Fusion list by player'}</h3>
+      <h3>${i18next.t('admin:admin.content.fusion_list_title')}</h3>
       ${fusionListHtml}`;
   });
 }
@@ -790,8 +760,8 @@ function renderAdminCompanions(el) {
 // voyant vert/rouge -- fonction PURE (juste une projection booléen -> {dot,label}), testable isolément
 function dashboardLight(healthy) {
   return healthy
-    ? { dot:'🟢', label: LANG==='fr'?'OK':'OK' }
-    : { dot:'🔴', label: LANG==='fr'?'À surveiller':'Needs attention' };
+    ? { dot:'🟢', label: i18next.t('admin:admin.dashboard.light_ok') }
+    : { dot:'🔴', label: i18next.t('admin:admin.dashboard.light_needs_attention') };
 }
 
 // Registre des widgets du dashboard : un par section "à graphique" du panneau. Chaque widget fetch
@@ -805,7 +775,7 @@ function dashboardLight(healthy) {
 // complète correspondante via openAdminSection(cat, sec).
 const DASHBOARD_WIDGETS = [
   { id:'dw-econ', cat:'economy', sec:'health', icon:'💹', title:{fr:'Santé économique',en:'Economic health'},
-    fetch: () => sb.from('admin_silver_ledger_by_category').select('*'),
+    fetch: () => sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent'),
     build: ({ data }) => {
       const rows = (data||[]).map(r => ({ category:r.category, gained:Number(r.total_gained||0), spent:Number(r.total_spent||0) }));
       const alerts = computeEconAlerts(rows);
@@ -814,11 +784,11 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(alerts.length===0),
         chart: buildPieWithLegendHtml(sources, { thresholdPct:6 }),
-        note: alerts.length ? alerts[0].text : (LANG==='fr'?'Équilibre sources/puits sain':'Healthy source/sink balance'),
+        note: alerts.length ? alerts[0].text : i18next.t('admin:admin.dashboard.econ_healthy_note'),
       };
     } },
   { id:'dw-silver', cat:'economy', sec:'silver', icon:'🏦', title:{fr:'Flux de silver (48h)',en:'Silver flow (48h)'},
-    fetch: () => sb.from('admin_silver_ledger_by_hour').select('*'),
+    fetch: () => sb.from('admin_silver_ledger_by_hour').select('hour, net_delta'),
     build: ({ data }) => {
       const rows = data || [];
       const netTotal = rows.reduce((a,r) => a + Number(r.net_delta||0), 0);
@@ -826,7 +796,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(netTotal >= 0),
         chart: buildSilverChartSvg(rows, accent, danger),
-        note: (LANG==='fr'?'Solde net 48h : ':'48h net: ') + (netTotal>=0?'+':'') + fmt(Math.round(netTotal)),
+        note: i18next.t('admin:admin.dashboard.silver_net_48h_prefix') + (netTotal>=0?'+':'') + fmt(Math.round(netTotal)),
       };
     } },
   { id:'dw-wealth', cat:'economy', sec:'wealth', icon:'📈', title:{fr:'Richesse des joueurs',en:'Player wealth'},
@@ -847,7 +817,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(!skewed),
         chart: buildPieWithLegendHtml(brackets.map((b,i)=>({label:b.label, value:counts[i]})), { thresholdPct:0, formatValue:v=>String(Math.round(v)) }),
-        note: skewed ? (LANG==='fr'?'Richesse très concentrée (moyenne ≫ médiane)':'Wealth highly concentrated (mean ≫ median)') : (LANG==='fr'?'Répartition raisonnable':'Reasonable spread'),
+        note: skewed ? i18next.t('admin:admin.dashboard.wealth_skewed_note') : i18next.t('admin:admin.dashboard.wealth_reasonable_note'),
       };
     } },
   { id:'dw-market', cat:'economy', sec:'market', icon:'🏛️', title:{fr:'Marché',en:'Market'},
@@ -858,7 +828,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(open && rows.length > 0),
         chart: buildPieWithLegendHtml(rows.map(r => ({ label: tr(r.item_name)||r.item_name, value: Number(r.total_silver_value||0) }))),
-        note: !open ? (LANG==='fr'?'Marché FERMÉ':'Market CLOSED') : (rows.length ? (LANG==='fr'?'Marché actif (30j)':'Market active (30d)') : (LANG==='fr'?'Aucun échange (30j)':'No trades (30d)')),
+        note: !open ? i18next.t('admin:admin.dashboard.market_closed_note') : (rows.length ? i18next.t('admin:admin.dashboard.market_active_note') : i18next.t('admin:admin.dashboard.market_no_trades_note')),
       };
     } },
   { id:'dw-signups', cat:'overview', sec:'signups', icon:'📈', title:{fr:'Inscriptions (30j)',en:'Signups (30d)'},
@@ -873,7 +843,7 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(last7 > 0),
         chart,
-        note: (LANG==='fr'?`${last7} inscription(s) sur 7 jours`:`${last7} signup(s) in 7 days`),
+        note: i18next.t('admin:admin.dashboard.signups_note', { count: last7 }),
       };
     } },
   { id:'dw-bans', cat:'players', sec:'sanctions', icon:'🚫', title:{fr:'Sanctions actives',en:'Active sanctions'},
@@ -882,8 +852,8 @@ const DASHBOARD_WIDGETS = [
       const count = (data||[]).length;
       return {
         light: dashboardLight(count === 0),
-        chart: `<div style="text-align:center"><div style="font-size:34px;font-weight:bold;color:${count===0?'var(--gold)':'var(--danger)'}">${count}</div><div class="admHint">${LANG==='fr'?'Bannissement(s) actif(s)':'Active ban(s)'}</div></div>`,
-        note: count === 0 ? (LANG==='fr'?'Aucune sanction active':'No active sanction') : (LANG==='fr'?`${count} joueur(s) actuellement banni(s)`:`${count} player(s) currently banned`),
+        chart: `<div style="text-align:center"><div style="font-size:34px;font-weight:bold;color:${count===0?'var(--gold)':'var(--danger)'}">${count}</div><div class="admHint">${i18next.t('admin:admin.dashboard.active_bans_label')}</div></div>`,
+        note: count === 0 ? i18next.t('admin:admin.dashboard.no_active_sanction_note') : i18next.t('admin:admin.dashboard.players_banned_note', { count }),
       };
     } },
   { id:'dw-onboarding', cat:'content', sec:'onboarding', icon:'🧭', title:{fr:'Onboarding',en:'Onboarding'},
@@ -895,11 +865,11 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(!started || pct >= 40),
         chart: started ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'Terminé':'Completed', value: completed },
-          { label: LANG==='fr'?'Passé':'Skipped', value: skipped },
-          { label: LANG==='fr'?'En cours':'In progress', value: inProgress },
-        ], { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Personne n\'a démarré le tutoriel':'No one started the tutorial'}</div>`,
-        note: started ? (LANG==='fr'?`${pct}% de complétion`:`${pct}% completion`) : '',
+          { label: i18next.t('admin:admin.dashboard.onboarding_completed_label'), value: completed },
+          { label: i18next.t('admin:admin.dashboard.onboarding_skipped_label'), value: skipped },
+          { label: i18next.t('admin:admin.dashboard.onboarding_in_progress_label'), value: inProgress },
+        ], { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.onboarding_none_started')}</div>`,
+        note: started ? i18next.t('admin:admin.dashboard.completion_pct_note', { pct }) : '',
       };
     } },
   { id:'dw-tutorials', cat:'content', sec:'tutorials', icon:'🎓', title:{fr:'Tutoriels d\'objets',en:'Item tutorials'},
@@ -913,10 +883,10 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(!total || skipRate < 0.5),
         chart: total ? buildPieWithLegendHtml([
-          { label: LANG==='fr'?'Terminés':'Completed', value: completed },
-          { label: LANG==='fr'?'Passés':'Skipped', value: skipped },
-        ], { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Aucun tutoriel vu':'No tutorials seen'}</div>`,
-        note: total ? (LANG==='fr'?`${Math.round(skipRate*100)}% passés`:`${Math.round(skipRate*100)}% skipped`) : '',
+          { label: i18next.t('admin:admin.content.completed_label'), value: completed },
+          { label: i18next.t('admin:admin.content.skipped_label'), value: skipped },
+        ], { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.tutorials_none_seen')}</div>`,
+        note: total ? i18next.t('admin:admin.dashboard.skipped_pct_note', { pct: Math.round(skipRate*100) }) : '',
       };
     } },
   { id:'dw-companions', cat:'content', sec:'companions', icon:'🐾', title:{fr:'Compagnons',en:'Companions'},
@@ -929,8 +899,8 @@ const DASHBOARD_WIDGETS = [
       const rarityItems = COMPANION_RARITY_LABELS.filter(r => rarityTotals[r.id]).map(r => ({ label:r.name, value:rarityTotals[r.id] }));
       return {
         light: dashboardLight(playersSynced > 0),
-        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${LANG==='fr'?'Aucun joueur synchronisé':'No player synced'}</div>`,
-        note: (LANG==='fr'?`${playersSynced} joueur(s) synchronisé(s)`:`${playersSynced} player(s) synced`),
+        chart: playersSynced ? buildPieWithLegendHtml(rarityItems, { thresholdPct:0 }) : `<div class="admEmpty">${i18next.t('admin:admin.dashboard.companions_none_synced')}</div>`,
+        note: i18next.t('admin:admin.dashboard.companions_synced_note', { count: playersSynced }),
       };
     } },
   { id:'dw-zones', cat:'content', sec:'zones', icon:'🗾', title:{fr:'Progression par zone',en:'Zone progression'},
@@ -942,11 +912,11 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(items.length > 0),
         chart: buildPieWithLegendHtml(items),
-        note: (LANG==='fr'?`${(data||[]).length} joueur(s)`:`${(data||[]).length} player(s)`),
+        note: i18next.t('admin:admin.dashboard.players_count_note', { count: (data||[]).length }),
       };
     } },
   { id:'dw-cron', cat:'content', sec:'cron', icon:'⏳', title:{fr:'Pierres de Cron',en:'Cron Stones'},
-    fetch: () => sb.from('admin_farm_by_item').select('*'),
+    fetch: () => sb.from('admin_farm_by_item').select('item_name, item_kind, total_qty'),
     build: ({ data }) => {
       const farmedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'material');
       const usedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'cron_used');
@@ -955,10 +925,10 @@ const DASHBOARD_WIDGETS = [
       return {
         light: dashboardLight(farmed >= used),
         chart: buildPieWithLegendHtml([
-          { label: LANG==='fr'?'En stock':'In stock', value: Math.max(0, farmed-used) },
-          { label: LANG==='fr'?'Utilisées':'Used', value: used },
+          { label: i18next.t('admin:admin.dashboard.cron_in_stock_label'), value: Math.max(0, farmed-used) },
+          { label: i18next.t('admin:admin.dashboard.cron_used_label'), value: used },
         ], { thresholdPct:0 }),
-        note: (LANG==='fr'?`${fmt(farmed)} farmées / ${fmt(used)} utilisées`:`${fmt(farmed)} farmed / ${fmt(used)} used`),
+        note: i18next.t('admin:admin.dashboard.cron_farmed_used_note', { farmed: fmt(farmed), used: fmt(used) }),
       };
     } },
 ];
@@ -974,18 +944,18 @@ function buildDashboardCard(widget, result) {
 }
 function buildDashboardCardError(widget) {
   return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
-      <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${LANG==='fr'?'Indisponible':'Unavailable'}">⚪</span></div>
-      <div class="admDashCardBody"><div class="admEmpty">${LANG==='fr'?'Indisponible':'Unavailable'}</div></div>
+      <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${i18next.t('admin:admin.dashboard.unavailable')}">⚪</span></div>
+      <div class="admDashCardBody"><div class="admEmpty">${i18next.t('admin:admin.dashboard.unavailable')}</div></div>
     </div>`;
 }
 function renderAdminDashboard(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   const topPromise = Promise.all([
     sb.rpc('admin_list_players'),
     sb.from('admin_wealth').select('silver'),
     sb.rpc('admin_list_bans'),
     sb.rpc('get_market_open'),
-    sb.from('admin_silver_ledger_by_category').select('*'),
+    sb.from('admin_silver_ledger_by_category').select('total_gained, total_spent'),
   ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}, {data: ledgerByCat}]) => {
     const online = (players||[]).filter(p => p.online).length;
     const totalSilver = (wealth||[]).reduce((a,r) => a + Number(r.silver||0), 0);
@@ -994,10 +964,10 @@ function renderAdminDashboard(el) {
     const alerts = typeof computeEconAlerts === 'function' ? computeEconAlerts(ledgerByCat) : [];
     const alertsHtml = typeof buildEconAlertsHtml === 'function' ? buildEconAlertsHtml(alerts) : '';
     return `${alertsHtml}<div class="admStatTiles">
-        <div class="admStatTile"><div class="astLbl">🟢 ${LANG==='fr'?'Joueurs en ligne':'Players online'}</div><div class="astVal">${online}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏦 ${LANG==='fr'?'Silver total en jeu':'Total silver in game'}</div><div class="astVal">${fmt(totalSilver)}</div></div>
-        <div class="admStatTile"><div class="astLbl">🚫 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div><div class="astVal">${activeBans}</div></div>
-        <div class="admStatTile"><div class="astLbl">🏛️ ${LANG==='fr'?'Marché':'Market'}</div><div class="astVal" style="${open?'':'color:var(--danger)'}">${open?(LANG==='fr'?'Ouvert':'Open'):(LANG==='fr'?'Fermé':'Closed')}</div></div>
+        <div class="admStatTile"><div class="astLbl">🟢 ${i18next.t('admin:admin.dashboard.players_online')}</div><div class="astVal">${online}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏦 ${i18next.t('admin:admin.dashboard.total_silver_in_game')}</div><div class="astVal">${fmt(totalSilver)}</div></div>
+        <div class="admStatTile"><div class="astLbl">🚫 ${i18next.t('admin:admin.dashboard.active_bans_stat')}</div><div class="astVal">${activeBans}</div></div>
+        <div class="admStatTile"><div class="astLbl">🏛️ ${i18next.t('admin:admin.dashboard.market_label')}</div><div class="astVal" style="${open?'':'color:var(--danger)'}">${open?i18next.t('admin:admin.dashboard.market_state_open'):i18next.t('admin:admin.dashboard.market_state_closed')}</div></div>
       </div>`;
   });
   // Promise.allSettled : un widget qui échoue (RPC manquante, réseau...) ne doit jamais empêcher
@@ -1008,9 +978,7 @@ function renderAdminDashboard(el) {
   Promise.all([topPromise, Promise.allSettled(widgetPromises)]).then(([topHtml, settled]) => {
     const cards = settled.map(s => s.status === 'fulfilled' ? s.value : '').join('');
     el.innerHTML = `${topHtml}
-      <div class="admHint" style="margin:10px 0 12px">${LANG==='fr'
-        ? 'Vue d\'ensemble de tous les panneaux — 🟢 rien à signaler, 🔴 à surveiller. Clique une carte pour ouvrir le détail complet.'
-        : 'Overview of every panel — 🟢 nothing to flag, 🔴 needs attention. Click a card to open the full detail.'}</div>
+      <div class="admHint" style="margin:10px 0 12px">${i18next.t('admin:admin.dashboard.overview_hint')}</div>
       <div class="admDashGrid">${cards}</div>`;
     el.querySelectorAll('.admDashCard').forEach(card => {
       card.onclick = () => openAdminSection(card.dataset.cat, card.dataset.id);
@@ -1037,7 +1005,7 @@ function providerInfo(provider) {
 
 // ---------- section "Joueurs" ----------
 function renderAdminPlayerList(el) {
-  el.innerHTML = `<div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div>`;
+  el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.rpc('admin_list_players').then(({data: playersList}) => {
     const playersHtml = (playersList||[]).map(p => {
       const prov = providerInfo(p.provider);
@@ -1046,24 +1014,24 @@ function renderAdminPlayerList(el) {
         <td>${p.online ? '🟢' : '⚪'}</td><td>${escapeHtml(p.display_name||'?')}</td>
         <td title="${escapeHtml(prov.label[LANG])}">${prov.icon}</td>
         <td>${fmt(p.silver||0)}</td><td>${p.gearscore||0}</td>
-        <td title="${LANG==='fr'?'PA (Puissance d\'Attaque)':'AP (Attack Power)'}">${(p.ap||0).toFixed(1)}</td>
-        <td title="${LANG==='fr'?'PD (Puissance de Défense)':'DP (Defense Power)'}">${(p.dp||0).toFixed(1)}</td>
+        <td title="${i18next.t('admin:admin.players.ap_title')}">${(p.ap||0).toFixed(1)}</td>
+        <td title="${i18next.t('admin:admin.players.dp_title')}">${(p.dp||0).toFixed(1)}</td>
         <td>${p.lvl||1}</td>
-        <td title="${LANG==='fr'?'Record personnel de kills/min (à vie)':'Personal kills/min record (lifetime)'}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
+        <td title="${i18next.t('admin:admin.players.best_kpm_title')}">🏹 ${(p.best_kpm||0).toFixed(1)}</td>
         <td><button class="admUuidBtn" data-uuid="${p.user_id}">📋 UUID</button></td>
-        <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${LANG==='fr'?'Ouvre l\'équipement porté et le sac complet (192 cases) de ce joueur, en lecture seule, dans une nouvelle fenêtre':'Opens this player\'s equipped gear and full bag (192 slots), read-only, in a new window'}">🎒 ${LANG==='fr'?'Inventaire':'Inventory'}</button></td>
+        <td><button class="admInvBtn" data-uuid="${p.user_id}" data-name="${escapeHtml(p.display_name||'?')}" title="${i18next.t('admin:admin.players.inventory_btn_title')}">🎒 ${i18next.t('admin:admin.players.inventory_btn')}</button></td>
       </tr>`;
-    }).join('') || `<tr><td colspan="11" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-    el.innerHTML = `<div class="admSummary">${LANG==='fr'?`${(playersList||[]).filter(p=>p.online).length} en ligne · ${(playersList||[]).length} inscrits`:`${(playersList||[]).filter(p=>p.online).length} online · ${(playersList||[]).length} registered`}</div>
+    }).join('') || `<tr><td colspan="11" class="admEmpty">${i18next.t('admin:admin.common.no_data')}</td></tr>`;
+    el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.players.summary_online_registered', { online: (playersList||[]).filter(p=>p.online).length, total: (playersList||[]).length })}</div>
       <table class="admTable">
-        <thead><tr><th></th><th>${LANG==='fr'?'Joueur':'Player'}</th><th title="${LANG==='fr'?'Plateforme d\'inscription':'Signup platform'}">${LANG==='fr'?'Plate-forme':'Platform'}</th><th>Silver</th><th>GS</th><th title="${LANG==='fr'?'PA':'AP'}">PA</th><th title="${LANG==='fr'?'PD':'DP'}">PD</th><th>Niv.</th><th title="${LANG==='fr'?'Record kills/min':'Kills/min record'}">🏹</th><th></th><th></th></tr></thead>
+        <thead><tr><th></th><th>${i18next.t('admin:admin.players.table_player')}</th><th title="${i18next.t('admin:admin.players.signup_platform_title')}">${i18next.t('admin:admin.players.table_platform')}</th><th>Silver</th><th>GS</th><th title="${i18next.t('admin:admin.players.ap_title')}">PA</th><th title="${i18next.t('admin:admin.players.dp_title')}">PD</th><th>Niv.</th><th title="${i18next.t('admin:admin.players.kpm_record_title')}">🏹</th><th></th><th></th></tr></thead>
         <tbody>${playersHtml}</tbody>
       </table>`;
     el.querySelectorAll('.admUuidBtn').forEach(btn => {
       btn.onclick = async e => {
         e.stopPropagation();
         try { await navigator.clipboard.writeText(btn.dataset.uuid); } catch(e) {}
-        floatTxt(P.x, P.y, 100, LANG==='fr'?'UUID copié ✓':'UUID copied ✓', { gold:true });
+        floatTxt(P.x, P.y, 100, i18next.t('admin:admin.players.uuid_copied'), { gold:true });
       };
     });
     el.querySelectorAll('.admInvBtn').forEach(btn => {
@@ -1074,14 +1042,14 @@ function renderAdminPlayerList(el) {
 function renderAdminTargetPlayer(el) {
   el.innerHTML = `
     <div class="admSection riskSingle">
-      <div class="admSectionTitle">🎯 ${LANG==='fr'?'Un joueur précis — par UUID':'A specific player — by UUID'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Efface silver/équipement/niveau/sac de CE joueur uniquement.':'Wipes silver/gear/level/bag for THAT player only.'}</div>
+      <div class="admSectionTitle">🎯 ${i18next.t('admin:admin.players.target_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.players.target_sub')}</div>
       <div class="admActions">
-        <input type="text" id="admResetUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
-        <button id="btnScreenshotPlayer">📸 ${LANG==='fr'?'Screenshot':'Screenshot'}</button>
-        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${LANG==='fr'?'Réinitialiser ce joueur':'Reset this player'}</button>
+        <input type="text" id="admResetUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
+        <button id="btnScreenshotPlayer">📸 ${i18next.t('admin:admin.players.screenshot_btn')}</button>
+        <button id="btnResetAccountByUuid" style="border-color:var(--danger);color:#e8a89f">🔄 ${i18next.t('admin:admin.players.reset_this_player_btn')}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Trouve l\'UUID d\'un joueur via le Classement ou ses messages en jeu (bouton "Copier UUID" dans son propre menu). "Screenshot" affiche son équipement/inventaire en lecture seule (aucune modification). Le reset envoie le même message d\'explication que le reset global, mais montré UNIQUEMENT à ce joueur.':'Find a player\'s UUID via the Leaderboard or their in-game messages (the "Copy UUID" button in their own menu). "Screenshot" shows their gear/inventory read-only (no changes made). The reset sends the same explanation message as the global reset, but shown ONLY to that player.'}</div>
+      <div class="admHint">${i18next.t('admin:admin.players.target_hint')}</div>
     </div>`;
   $a('btnScreenshotPlayer').onclick = adminScreenshotPlayer;
   $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
@@ -1089,21 +1057,19 @@ function renderAdminTargetPlayer(el) {
 function renderAdminSanctions(el) {
   el.innerHTML = `
     <div class="admSection">
-      <div class="admSectionTitle">🚫 ${LANG==='fr'?'Bannir un joueur':'Ban a player'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Bloque temporairement l\'accès au jeu pour ce joueur (durée + motif prédéfini).':'Temporarily blocks game access for this player (duration + predefined reason).'}</div>
+      <div class="admSectionTitle">🚫 ${i18next.t('admin:admin.sanctions.ban_a_player_title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.sanctions.ban_a_player_sub')}</div>
       <div class="admActions">
-        <input type="text" id="admBanUuidInput" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="width:230px">
+        <input type="text" id="admBanUuidInput" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="width:230px">
         <select id="admBanReasonSelect">${BAN_REASONS.map(r => `<option value="${r.id}">${r.label[LANG]}</option>`).join('')}</select>
         <select id="admBanDurationSelect">${BAN_DURATIONS.map(d => `<option value="${d.hours}"${d.hours===24?' selected':''}>${d.label[LANG]}</option>`).join('')}</select>
-        <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${LANG==='fr'?'Bannir':'Ban'}</button>
+        <button id="btnBanPlayer" style="border-color:var(--danger);color:#e8a89f">🚫 ${i18next.t('admin:admin.sanctions.ban_btn')}</button>
       </div>
-      <div class="admHint warn">${LANG==='fr'
-        ? 'L\'admin ne peut jamais se bannir lui-même (vérifié côté client avant l\'appel serveur). Trouve l\'UUID via le Classement ou la section Joueurs.'
-        : 'The admin can never ban themselves (checked client-side before the server call). Find the UUID via the Leaderboard or the Players section.'}</div>
+      <div class="admHint warn">${i18next.t('admin:admin.sanctions.ban_hint')}</div>
     </div>
     <div class="admSection">
-      <div class="admSectionTitle">📋 ${LANG==='fr'?'Bannissements actifs':'Active bans'}</div>
-      <div id="admBanList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">📋 ${i18next.t('admin:admin.sanctions.active_bans_title')}</div>
+      <div id="admBanList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>`;
   $a('btnBanPlayer').onclick = banPlayerByUuid;
   refreshBanList();
@@ -1111,17 +1077,17 @@ function renderAdminSanctions(el) {
 function renderAdminRoles(el) {
   el.innerHTML = `
     <div class="admSection riskMgmt">
-      <div class="admSectionTitle">🎭 ${LANG==='fr'?'Rôles (Modérateur / Testeur)':'Roles (Moderator / Tester)'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'🛡️ Modérateur : peut supprimer des messages de chat. 🧪 Testeur : accès en avant-première aux fonctionnalités pas encore publiques. Un joueur peut cumuler les deux.':'🛡️ Moderator: can delete chat messages. 🧪 Tester: early access to not-yet-public features. A player can hold both roles.'}</div>
+      <div class="admSectionTitle">🎭 ${i18next.t('admin:admin.roles.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.roles.sub')}</div>
       <div class="admBossSpawn">
-        <input type="text" id="admRoleUuid" placeholder="${LANG==='fr'?'UUID du joueur':'Player UUID'}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
+        <input type="text" id="admRoleUuid" placeholder="${i18next.t('admin:admin.players.uuid_placeholder')}" style="flex:1;min-width:180px;background:#0d0c11;border:1px solid #333;color:var(--ink);padding:5px 7px;font-family:monospace;font-size:11px;border-radius:3px;">
         <select id="admRoleSelect" style="flex:0 0 auto;width:auto;">
-          <option value="mod">🛡️ ${LANG==='fr'?'Modérateur':'Moderator'}</option>
-          <option value="tester">🧪 ${LANG==='fr'?'Testeur':'Tester'}</option>
+          <option value="mod">🛡️ ${i18next.t('admin:admin.roles.moderator_label')}</option>
+          <option value="tester">🧪 ${i18next.t('admin:admin.roles.tester_label')}</option>
         </select>
-        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${LANG==='fr'?'➕ Ajouter':'➕ Add'}</button>
+        <button id="btnAddRole" style="flex:0 0 auto;width:auto;">${i18next.t('admin:admin.roles.add_btn')}</button>
       </div>
-      <div id="admRoleList"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div id="admRoleList"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>`;
   $a('btnAddRole').onclick = async () => {
     if (!isAdmin() || !sb) return;
@@ -1143,13 +1109,13 @@ function renderAdminRoles(el) {
 function renderAdminReconnect(el) {
   el.innerHTML = `
     <div class="admSection">
-      <div class="admSectionTitle">🔄 ${LANG==='fr'?'Sessions de reconnexion':'Reconnect sessions'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Volume agrégé du modal "Bon retour" — silver récupéré pendant les absences, tous joueurs confondus.':'Aggregate view of the "Welcome back" modal — silver recovered while away, across all players.'}</div>
-      <div id="admReconnectStats"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">🔄 ${i18next.t('admin:admin.reconnect.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.reconnect.sub')}</div>
+      <div id="admReconnectStats"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>
     <div class="admSection">
-      <div class="admSectionTitle">🏆 ${LANG==='fr'?'Top 10 sessions (par silver)':'Top 10 sessions (by silver)'}</div>
-      <div id="admReconnectTop"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">🏆 ${i18next.t('admin:admin.reconnect.top10_title')}</div>
+      <div id="admReconnectTop"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>`;
   refreshAdminReconnect();
 }
@@ -1166,16 +1132,16 @@ async function refreshAdminReconnect() {
   const s = data[0];
   statsEl.innerHTML = `
     <div class="admStatsGrid">
-      <div class="admStatCard"><b>${(s.total_sessions||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Sessions journalisées':'Logged sessions'}</span></div>
-      <div class="admStatCard"><b>${(s.total_players||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Joueurs concernés':'Players involved'}</span></div>
-      <div class="admStatCard"><b>${Math.round(s.total_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Silver total récupéré':'Total silver recovered'}</span></div>
-      <div class="admStatCard"><b>${Math.round(s.avg_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${LANG==='fr'?'Moyenne / session':'Avg / session'}</span></div>
+      <div class="admStatCard"><b>${(s.total_sessions||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.logged_sessions')}</span></div>
+      <div class="admStatCard"><b>${(s.total_players||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.players_involved')}</span></div>
+      <div class="admStatCard"><b>${Math.round(s.total_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.total_silver_recovered')}</span></div>
+      <div class="admStatCard"><b>${Math.round(s.avg_silver||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</b><span>${i18next.t('admin:admin.reconnect.avg_per_session')}</span></div>
     </div>`;
   const top = Array.isArray(s.top_sessions) ? s.top_sessions : [];
   topEl.innerHTML = top.length === 0
-    ? `<div class="admEmpty">${LANG==='fr'?'Aucune session pour le moment.':'No session yet.'}</div>`
+    ? `<div class="admEmpty">${i18next.t('admin:admin.reconnect.no_session_yet')}</div>`
     : `<table class="admTable"><thead><tr>
-        <th>${LANG==='fr'?'Silver':'Silver'}</th><th>${LANG==='fr'?'Zone':'Zone'}</th><th>${LANG==='fr'?'Date':'Date'}</th><th>${LANG==='fr'?'Joueur (UUID)':'Player (UUID)'}</th>
+        <th>Silver</th><th>${i18next.t('admin:admin.reconnect.table_zone')}</th><th>${i18next.t('admin:admin.reconnect.table_date')}</th><th>${i18next.t('admin:admin.reconnect.table_player_uuid')}</th>
       </tr></thead><tbody>${top.map(t => `<tr>
         <td>${Math.round(t.silver_gained||0).toLocaleString(LANG==='fr'?'fr-FR':'en-US')}</td>
         <td>${escapeHtml(t.zone_name||'—')}</td>
@@ -1205,18 +1171,18 @@ function renderAdminBoss(el) {
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
   el.innerHTML = `
     <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🌍 ${LANG==='fr'?'Lancer un boss pour TOUS':'Launch a boss for ALL'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
+      <div class="admSectionTitle">🌍 ${i18next.t('admin:admin.content.boss_launch_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.content.boss_danger_sub')}</div>
       <div class="admBossSpawn">
-        <span>${LANG==='fr'?'🌍 Boss :':'🌍 Boss:'}</span>
+        <span>${i18next.t('admin:admin.content.boss_label')}</span>
         <select id="admGlobalBossSelect">${bossOptions}</select>
         <select id="admBossDurationSelect">
-          ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${LANG==='fr'?`~${m} min à tuer`:`~${m} min to kill`}</option>`).join('')}
+          ${[2,3,4,5,6,7].map(m => `<option value="${m}"${m===4?' selected':''}>${i18next.t('admin:admin.content.boss_duration_option', { m })}</option>`).join('')}
         </select>
-        <button id="btnAdmSpawnGlobal">${LANG==='fr'?'Lancer (9 min)':'Launch (9 min)'}</button>
-        <button id="btnAdmDespawnBoss">🛑 ${LANG==='fr'?'Faire disparaître':'Despawn'}</button>
+        <button id="btnAdmSpawnGlobal">${i18next.t('admin:admin.content.boss_launch_btn')}</button>
+        <button id="btnAdmDespawnBoss">🛑 ${i18next.t('admin:admin.content.boss_despawn_btn')}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Les PV sont calculés selon le nombre de joueurs en ligne pour viser la durée choisie (la durée réelle dépendra du stuff et du nombre de participants réels). Le boss disparaît de toute façon au bout de 9 minutes.':'HP is calculated from current online players to target the chosen duration (actual time will depend on gear and real participation). The boss despawns after 9 minutes regardless.'}</div>
+      <div class="admHint">${i18next.t('admin:admin.content.boss_hint')}</div>
     </div>`;
   $a('btnAdmSpawnGlobal').onclick = async () => {
     if (!isAdmin() || !sb) return;
@@ -1224,14 +1190,14 @@ function renderAdminBoss(el) {
     const targetMin = Number($a('admBossDurationSelect').value) || 4;
     const ok = await adminSpawnSharedBoss(id, targetMin);
     if (ok) logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a lancé ${BOSS_ROSTER[id].name.fr} pour tous (~${targetMin} min)`, 0x9cc9e8);
-    floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Boss lancé pour tous ✓':'Boss launched for all ✓') : (LANG==='fr'?'Échec du lancement':'Failed to launch'), { gold:ok, hurt:!ok });
+    floatTxt(P.x, P.y, 100, ok ? i18next.t('admin:admin.content.boss_launched_toast') : i18next.t('admin:admin.content.boss_launch_failed_toast'), { gold:ok, hurt:!ok });
   };
   $a('btnAdmDespawnBoss').onclick = async () => {
     if (!isAdmin() || !sb) return;
-    if (!confirm(LANG==='fr'?'Faire disparaître le boss mondial pour TOUS les joueurs ?':'Despawn the world boss for ALL players?')) return;
+    if (!confirm(i18next.t('admin:admin.content.boss_despawn_confirm'))) return;
     const { error } = await sb.rpc('admin_despawn_boss');
     if (!error) { await refreshLiveBoss(); logToDiscord('🛠️ Admin', `**${myPseudo||'Admin'}** a fait disparaître le boss mondial`, 0x9cc9e8); }
-    floatTxt(P.x, P.y, 100, !error ? (LANG==='fr'?'Boss disparu ✓':'Boss despawned ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:!error, hurt:!!error });
+    floatTxt(P.x, P.y, 100, !error ? i18next.t('admin:admin.content.boss_despawned_toast') : i18next.t('admin:admin.common.failed'), { gold:!error, hurt:!!error });
   };
 }
 
@@ -1265,20 +1231,20 @@ function renderAdminPatchNotesDiscord(el) {
   const options = PATCH_NOTES.slice(0, 20).map(n => `<option value="${n.v}">${n.v} — ${n.name.fr}</option>`).join('');
   el.innerHTML = `
     <div class="admSection riskSafe">
-      <div class="admSectionTitle">📜 ${LANG==='fr'?'Publier une note de version sur Discord':'Publish a patch note to Discord'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Poste le contenu de la note choisie dans le salon Discord "log général" (même webhook que les autres actions admin).':'Posts the chosen note into the "general log" Discord channel (same webhook as other admin actions).'}</div>
+      <div class="admSectionTitle">📜 ${i18next.t('admin:admin.patchnotes.publish_title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.patchnotes.publish_sub')}</div>
       <div class="admBossSpawn">
-        <span>${LANG==='fr'?'📜 Version :':'📜 Version:'}</span>
+        <span>${i18next.t('admin:admin.patchnotes.version_label')}</span>
         <select id="admPatchNoteSelect">${options}</select>
-        <button id="btnAdmPublishPatchNote">🚀 ${LANG==='fr'?'Publier sur Discord':'Publish to Discord'}</button>
+        <button id="btnAdmPublishPatchNote">🚀 ${i18next.t('admin:admin.patchnotes.publish_btn')}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'La dernière version est sélectionnée par défaut. Chaque ligne garde son icône (🆕 nouveauté, 🔄 changement, 🛠️ correctif, 🔒 faille corrigée).':'Latest version selected by default. Each line keeps its icon (🆕 new, 🔄 change, 🛠️ fix, 🔒 patched exploit).'}</div>
+      <div class="admHint">${i18next.t('admin:admin.patchnotes.publish_hint')}</div>
     </div>`;
   $a('btnAdmPublishPatchNote').onclick = async () => {
     if (!isAdmin()) return;
     const version = $a('admPatchNoteSelect').value;
     const ok = await publishPatchNoteToDiscord(version);
-    floatTxt(P.x, P.y, 100, ok ? (LANG==='fr'?'Note publiée sur Discord ✓':'Note published to Discord ✓') : (LANG==='fr'?'Échec':'Failed'), { gold:ok, hurt:!ok });
+    floatTxt(P.x, P.y, 100, ok ? i18next.t('admin:admin.patchnotes.published_toast') : i18next.t('admin:admin.common.failed'), { gold:ok, hurt:!ok });
   };
 }
 
@@ -1290,12 +1256,12 @@ function renderAdminPatchNotesDiscord(el) {
 function renderAdminPatchNotesModeration(el) {
   el.innerHTML = `
     <div class="admSection">
-      <div class="admSectionTitle">🚩 ${LANG==='fr'?'Signalements en attente':'Pending reports'}</div>
-      <div id="admPatchReports"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">🚩 ${i18next.t('admin:admin.patchnotes.pending_reports_title')}</div>
+      <div id="admPatchReports"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>
     <div class="admSection">
-      <div class="admSectionTitle">🗑️ ${LANG==='fr'?'Commentaires retirés (restaurables)':'Removed comments (restorable)'}</div>
-      <div id="admPatchRemoved"><div class="admEmpty">${LANG==='fr'?'Chargement…':'Loading…'}</div></div>
+      <div class="admSectionTitle">🗑️ ${i18next.t('admin:admin.patchnotes.removed_comments_title')}</div>
+      <div id="admPatchRemoved"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
     </div>`;
   refreshAdminPatchNotesModeration();
 }
@@ -1306,7 +1272,7 @@ async function refreshAdminPatchNotesModeration() {
 
   const { data: reports, error: reportsErr } = await sb.rpc('admin_patch_note_pending_reports');
   reportsEl.innerHTML = reportsErr ? `<div class="admHint">${escapeHtml(reportsErr.message)}</div>`
-    : (!reports || reports.length === 0) ? `<div class="admEmpty">${LANG==='fr'?'Aucun signalement en attente.':'No pending reports.'}</div>`
+    : (!reports || reports.length === 0) ? `<div class="admEmpty">${i18next.t('admin:admin.patchnotes.no_pending_reports')}</div>`
     : reports.map(r => `<div class="achRow">
         <div class="achInfo"><div class="achName">${escapeHtml(r.author)} — ${escapeHtml(r.entry_id)}</div>
         <div class="achDesc">${escapeHtml(r.text)}</div></div>
@@ -1319,11 +1285,11 @@ async function refreshAdminPatchNotesModeration() {
   // badge, même file de restauration pour les deux.
   const { data: removed, error: removedErr } = await sb.rpc('admin_list_removed_patch_note_comments');
   removedEl.innerHTML = removedErr ? `<div class="admHint">${escapeHtml(removedErr.message)}</div>`
-    : (!removed || removed.length === 0) ? `<div class="admEmpty">${LANG==='fr'?'Aucun commentaire retiré.':'No removed comments.'}</div>`
+    : (!removed || removed.length === 0) ? `<div class="admEmpty">${i18next.t('admin:admin.patchnotes.no_removed_comments')}</div>`
     : removed.map(c => `<div class="achRow" data-cid="${c.id}">
-        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)} ${c.status==='pending_review'?`<span style="color:var(--red2,#e08070)">🚩 ${LANG==='fr'?'Auto-masqué (signalements)':'Auto-hidden (reports)'}</span>`:''}</div>
+        <div class="achInfo"><div class="achName">${escapeHtml(c.author)} — ${escapeHtml(c.entry_id)} ${c.status==='pending_review'?`<span style="color:var(--red2,#e08070)">🚩 ${i18next.t('admin:admin.patchnotes.auto_hidden_label')}</span>`:''}</div>
         <div class="achDesc">${escapeHtml(c.text)}</div></div>
-        <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${LANG==='fr'?'Restaurer':'Restore'}</button></div>
+        <div class="achReward"><button class="admPatchRestoreBtn" data-cid="${c.id}">↩️ ${i18next.t('admin:admin.patchnotes.restore_btn')}</button></div>
       </div>`).join('');
   removedEl.querySelectorAll('.admPatchRestoreBtn').forEach(btn => {
     btn.onclick = async () => {
@@ -1338,21 +1304,21 @@ function renderAdminMyTests(el) {
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
   el.innerHTML = `
     <div class="admSection riskSafe">
-      <div class="admSectionTitle">👤 ${LANG==='fr'?'Pour moi — test sur mon compte':'For me — test on my account'}</div>
-      <div class="admSectionSub">${LANG==='fr'?'Sans danger : ça ne touche que TON propre personnage.':'Safe: only affects YOUR own character.'}</div>
+      <div class="admSectionTitle">👤 ${i18next.t('admin:admin.tests.title')}</div>
+      <div class="admSectionSub">${i18next.t('admin:admin.tests.sub')}</div>
       <div class="admActions">
         <button id="btnTestSilver">💰 +1M silver</button>
         <button id="btnTestLoyalty">📬 +200 Loyalties</button>
-        <button id="btnTestAch">🏅 ${LANG==='fr'?'Débloquer tous les succès':'Unlock all achievements'}</button>
-        <button id="btnResetMyQuests">🔄 ${LANG==='fr'?'Réinitialiser mes quêtes':'Reset my quests'}</button>
-        <button id="btnResetDemo">🔄 ${LANG==='fr'?'Réinitialiser la démo':'Reset the demo'}</button>
+        <button id="btnTestAch">🏅 ${i18next.t('admin:admin.tests.unlock_achievements_btn')}</button>
+        <button id="btnResetMyQuests">🔄 ${i18next.t('admin:admin.tests.reset_my_quests_btn')}</button>
+        <button id="btnResetDemo">🔄 ${i18next.t('admin:admin.tests.reset_demo_btn')}</button>
       </div>
       <div class="admBossSpawn">
-        <span>${LANG==='fr'?'⚔️ Combattre un World Boss :':'⚔️ Fight a World Boss:'}</span>
+        <span>${i18next.t('admin:admin.tests.fight_boss_label')}</span>
         <select id="admBossSelect">${bossOptions}</select>
-        <button id="btnAdmSpawnBoss">${LANG==='fr'?'Combattre maintenant':'Fight now'}</button>
+        <button id="btnAdmSpawnBoss">${i18next.t('admin:admin.tests.fight_now_btn')}</button>
       </div>
-      <div class="admHint">${LANG==='fr'?'Lance un vrai boss partagé (PV communs) rien que pour toi, pour tester sans attendre le planning ni prévenir personne.':'Spawns a real shared boss (common HP) just for you, to test without waiting for the schedule or notifying anyone.'}</div>
+      <div class="admHint">${i18next.t('admin:admin.tests.hint')}</div>
     </div>`;
   $a('btnTestSilver').onclick = () => { if(!isAdmin())return; addSilver(1000000, 'admin_test'); refreshStatsOnly(); floatTxt(P.x,P.y,100,'+1M 🪙',{gold:true}); };
   $a('btnTestLoyalty').onclick = () => { if(!isAdmin())return; mailboxAdd('loyalty', 'Loyalties', '🏅', 200); updateMailBadge(); floatTxt(P.x,P.y,100,'+200 🏅 (courrier)',{gold:true}); };
@@ -1363,7 +1329,7 @@ function renderAdminMyTests(el) {
     if (!isAdmin() || !sb) return;
     const id = $a('admBossSelect').value;
     const ok = await adminSpawnSharedBoss(id, 4);
-    if (!ok) { floatTxt(P.x, P.y, 100, LANG==='fr'?'Échec du lancement':'Failed to launch', { hurt:true }); return; }
+    if (!ok) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.content.boss_launch_failed_toast'), { hurt:true }); return; }
     closeAdminPanel();
     startBossFight(id, true); // true = rejoint le boss PARTAGÉ qu'on vient de lancer (PV communs, top10...)
   };
@@ -1376,7 +1342,7 @@ function renderAdminMyTests(el) {
 // que soit la section affichée. Même storage/effet (setAdminTheme/data-adm-theme) que l'ancien
 // slider, juste un contrôle différent. ----------
 function renderAdminThemeSwatchesHtml(currentTheme) {
-  return `<div class="admThemeSwatches" title="🎨 ${LANG==='fr'?'Palette':'Palette'}">${ADMIN_THEMES.map(t =>
+  return `<div class="admThemeSwatches" title="🎨 ${i18next.t('admin:admin.system.palette_label')}">${ADMIN_THEMES.map(t =>
     `<button class="admSwatchBtn${t.id===currentTheme?' active':''}" data-theme="${t.id}" style="background:${t.color}" title="${escapeHtml(t.label[LANG])}"></button>`
   ).join('')}</div>`;
 }
@@ -1394,13 +1360,13 @@ function wireAdminThemeSwatches() {
 function renderAdminServerDanger(el) {
   el.innerHTML = `
     <div class="admSection riskGlobal">
-      <div class="admSectionTitle">🌍 ${LANG==='fr'?'Pour les joueurs — actions serveur':'For players — server-wide'}</div>
-      <div class="admSectionSub">⚠️ ${LANG==='fr'?'Danger : ces actions touchent TOUS les joueurs connectés.':'Danger: these actions affect ALL connected players.'}</div>
+      <div class="admSectionTitle">🌍 ${i18next.t('admin:admin.system.danger_title')}</div>
+      <div class="admSectionSub">⚠️ ${i18next.t('admin:admin.content.boss_danger_sub')}</div>
       <div class="admActions">
-        <button id="btnResetAllQuests">⚠️ ${LANG==='fr'?'Réinitialiser les quêtes de tous':'Reset everyone\'s quests'}</button>
-        <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${LANG==='fr'?'Réinitialiser TOUS les comptes':'Reset ALL accounts'}</button>
+        <button id="btnResetAllQuests">⚠️ ${i18next.t('admin:admin.system.reset_all_quests_btn')}</button>
+        <button id="btnResetAllAccounts" style="border-color:var(--danger);color:#e8a89f">💥 ${i18next.t('admin:admin.system.reset_all_accounts_btn')}</button>
       </div>
-      <div class="admHint warn">${LANG==='fr'?'"Réinitialiser TOUS les comptes" efface silver/équipement/niveau/sac de TOUT LE MONDE et affiche un message d\'explication à chaque joueur à sa prochaine connexion. Irréversible.':'"Reset ALL accounts" wipes silver/gear/level/bag for EVERYONE and shows an explanation message to each player on their next login. Irreversible.'}</div>
+      <div class="admHint warn">${i18next.t('admin:admin.system.reset_all_accounts_hint')}</div>
     </div>`;
   $a('btnResetAllQuests').onclick = resetAllQuests;
   $a('btnResetAllAccounts').onclick = resetAllAccounts;
@@ -1418,7 +1384,7 @@ function renderAdminSidebar(activeCat, activeId) {
     ${group.items.map(item => `
       <div class="admNavItem${activeCat===group.cat&&activeId===item.id?' active':''}${item.planned?' planned':''}" data-cat="${group.cat}" data-id="${item.id}">
         <span class="admNavIcon">${item.icon}</span><span>${item.label[LANG]}</span>
-        ${item.planned?`<span class="admNavBadge">${LANG==='fr'?'🔜 prévu':'🔜 planned'}</span>`:''}
+        ${item.planned?`<span class="admNavBadge">${i18next.t('admin:admin.system.planned_badge')}</span>`:''}
       </div>`).join('')}
   `).join('');
 }
@@ -1441,9 +1407,7 @@ function openAdminSection(cat, id) {
   const body = $a('adminMainBody');
   if (item.planned) {
     body.innerHTML = `<div class="admPlannedPane"><div class="admPlannedIcon">🔜</div>
-      ${LANG==='fr'
-        ? 'Prévu sur la roadmap, mais aucun code jeu derrière pour l\'instant (pas de table, pas de mécanique côté client). Cet onglet deviendra utile une fois qu\'une première brique réelle existera — voir ADMIN_MENU_PLAN.md.'
-        : 'On the roadmap, but no game code behind it yet (no table, no client-side mechanic). This tab becomes useful once a first real piece exists — see ADMIN_MENU_PLAN.md.'}</div>`;
+      ${i18next.t('admin:admin.system.planned_pane_text')}</div>`;
     return;
   }
   item.render(body);
@@ -1479,10 +1443,10 @@ async function openAdminPanel() {
   overlay.dataset.admTheme = currentTheme;
   $a('adminMainHead').innerHTML = `<span id="adminMainTitle" style="flex:1"></span>`;
   $a('adminSidebar').innerHTML = `<div class="admNavHead">` +
-      `<span class="admNavTitle">🛠️ ${LANG==='fr'?'Admin':'Admin'}</span>` +
+      `<span class="admNavTitle">🛠️ Admin</span>` +
       renderAdminThemeSwatchesHtml(currentTheme) +
-      `<button id="closeAdmin" title="${LANG==='fr'?'Fermer':'Close'}">✕</button></div>` +
-    `<input type="text" id="admNavSearch" class="admNavSearch" placeholder="🔍 ${LANG==='fr'?'Rechercher…':'Search…'}">` +
+      `<button id="closeAdmin" title="${i18next.t('admin:admin.system.close_btn_title')}">✕</button></div>` +
+    `<input type="text" id="admNavSearch" class="admNavSearch" placeholder="🔍 ${i18next.t('admin:admin.system.search_placeholder')}">` +
     renderAdminSidebar('overview', 'dashboard');
   $a('closeAdmin').onclick = closeAdminPanel;
   $a('adminSidebar').querySelectorAll('.admNavItem').forEach(el => {
@@ -1509,11 +1473,9 @@ function openTesterPanel() {
     { icon:'🐑', name:{fr:'Bergerie',en:'Ranch'} },
   ];
   const list = upcoming.map(a => `<div class="achRow inactive"><div class="achIcon">${a.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${LANG==='fr'?'En développement — bientôt en test':'In development — testable soon'}</div></div></div>`).join('');
-  openInfo(LANG==='fr'?'🧪 Panneau Testeur':'🧪 Tester Panel',
-    `<div class="admSummary">${LANG==='fr'
-      ? 'Merci de tester Black Desert Idle ! Ce panneau te donnera accès aux nouveautés en avant-première (sans aucun avantage en jeu — c\'est du test pur). Rien à tester pour l\'instant, mais voici ce qui arrive :'
-      : 'Thanks for testing Black Desert Idle! This panel gives you early access to new features (no in-game advantage — pure testing). Nothing to test yet, but here\'s what\'s coming:'}</div>` +
+    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${i18next.t('admin:admin.tests.upcoming_in_dev')}</div></div></div>`).join('');
+  openInfo(i18next.t('admin:admin.tests.tester_panel_title'),
+    `<div class="admSummary">${i18next.t('admin:admin.tests.tester_panel_intro')}</div>` +
     list);
 }
 $a('btnTester').onclick = openTesterPanel;

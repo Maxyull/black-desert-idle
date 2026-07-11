@@ -47,7 +47,7 @@ voir `src/progression/README.md` pour le détail.
 Compagnons`) — le module `src/companions/` (iframe isolée, 100% local jusqu'ici) pousse désormais
 un résumé de compteurs (familiers, Silver compagnon, œufs éclos, fusions, streak de connexion,
 pity déclenché, succès complétés) via `admin_companion_stats()` (migration
-`20260719190000_companion_stats.sql`), alimentée par `src/companions/companions.sync.js` toutes
+`20260719190000_companion_stats.sql`), alimentée par `src/companions/sync.js` toutes
 les 60s. "Joueurs synchronisés" ne compte QUE ceux ayant réellement ouvert l'onglet Compagnon au
 moins une fois — jamais les invités (RPC réservée aux comptes connectés, comme partout ailleurs).
 Lecture seule, pas d'éditeur.
@@ -56,7 +56,7 @@ graph") : 2 camemberts (rareté, section) + 1 graphique en barres (Tier), alimen
 `admin_companion_breakdown()` (une ligne JSONB par joueur, agrégée côté client via
 `sumCompanionBreakdown()`) — voir migration `20260720100000_companion_stats_breakdowns.sql`.
 Libellés rareté/section recopiés en dur (`COMPANION_RARITY_LABELS`/`COMPANION_SECTION_LABELS`,
-`admin-panel.js`) car `RARITIES`/`SECTIONS` vivent dans `companions.catalog.js`, jamais chargé
+`admin-panel.js`) car `RARITIES`/`SECTIONS` vivent dans `catalog.js`, jamais chargé
 dans le bundle principal — à tenir à jour à la main si le catalogue du module change.
 
 **Utilisation des Pierres de Cron (2026-07-19)** : jusqu'ici seul le ramassage était tracké côté
@@ -88,7 +88,7 @@ horaire, Richesse, Volume du marché, Inscriptions. `.admBars`/nouvelles classes
 affectés). Nouveau conteneur `#adminOverlay` (sidebar + zone de contenu), voir `index.dev.html`.
 Chaque item de `ADMIN_SECTIONS` a soit `render(container)` (charge ses propres données au clic),
 soit `planned:true` (Guildes/PvP/Donations — roadmap confirmée, pas encore de code jeu derrière,
-voir `ADMIN_MENU_PLAN.md` §0bis). Repli mobile : sidebar → barre horizontale scrollable
+voir `docs/ADMIN_MENU_PLAN.md` §0bis). Repli mobile : sidebar → barre horizontale scrollable
 (`max-width:1024px`, même convention que `.catTabs` ailleurs dans le jeu).
 
 **Taux de loot en direct (2026-07-19)** : `LOOT_RATES_LIVE` (`src/world/gear-tiers-data.js`) est
@@ -192,6 +192,6 @@ joueur" toutes les 400ms pour rappeler `openAdminPanel()`, MÊME si l'admin avai
 panneau admin lui-même (ex: parti tester le module Compagnon). Ne rouvre désormais que si
 `#adminOverlay` a encore la classe `open` au moment de la fermeture de la popup.
 
-Voir `ADMIN_MENU_PLAN.md` (racine du repo) pour l'état des lieux du panneau admin et pourquoi le
+Voir `docs/ADMIN_MENU_PLAN.md` (racine du repo) pour l'état des lieux du panneau admin et pourquoi le
 reste d'un plan initial plus large (React, Sentry, i18n editor, staging, équipe multi-rôles...) a
 été volontairement écarté à l'échelle actuelle du projet.

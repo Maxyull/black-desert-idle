@@ -144,9 +144,9 @@ function updateNextBossMini() {
   if (!occ) { el.innerHTML = ''; return; }
   const b = BOSS_ROSTER[occ.boss];
   if (occ.live) {
-    el.innerHTML = `<span class="live">${b.icon} ${b.short[LANG]} ${LANG==='fr'?'EN COURS':'LIVE'}</span>`;
+    el.innerHTML = `<span class="live">${b.icon} ${b.short[LANG]} ${i18next.t('combat:combat.boss.status_live')}</span>`;
   } else {
-    el.innerHTML = `${LANG==='fr'?'Prochain boss':'Next boss'} : <b>${b.icon} ${b.short[LANG]}</b> ${LANG==='fr'?'dans':'in'} <b>${fmtBossCountdown(occ.time - Date.now())}</b>`;
+    el.innerHTML = `${i18next.t('combat:combat.boss.next_boss_label')} : <b>${b.icon} ${b.short[LANG]}</b> ${i18next.t('combat:combat.boss.in_label')} <b>${fmtBossCountdown(occ.time - Date.now())}</b>`;
   }
 }
 
@@ -167,7 +167,7 @@ const ACTIVITY_TABS = [
   { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:true },
   // PvP (2026-07-20, demande explicite : "header : PVP bloqué") -- teaser verrouillé, même
   // convention que les autres activités pas encore implémentées ci-dessous. Distinct du classement
-  // "PvP" DÉJÀ jouable dans le module Compagnon (onglet ⚔️ PvP, companions.pvp.js) qui, lui, classe
+  // "PvP" DÉJÀ jouable dans le module Compagnon (onglet ⚔️ PvP, pvp.js) qui, lui, classe
   // les familiers du joueur par puissance -- ceci est le PvP joueur-contre-joueur du jeu principal.
   { id:'pvp', icon:'🗡️', name:{fr:'PvP',en:'PvP'}, locked:true },
   { id:'fish', icon:'🎣', name:{fr:'Pêche',en:'Fishing'},   locked:true },
@@ -190,7 +190,7 @@ function renderActivityTabs() {
   el.innerHTML = ACTIVITY_TABS.map(t => {
     // onglet Boss : badge %PV inséré ici, mis à jour en direct par updateBossActivityTabHot()
     const hpBadge = t.id === 'boss' ? '<span class="actTabBossHp" id="actTabBossHp"></span>' : '';
-    const newBadge = (!t.locked && t.isNew) ? `<span class="actTabNew">${LANG==='fr'?'NOUVEAU':'NEW'}</span>` : '';
+    const newBadge = (!t.locked && t.isNew) ? `<span class="actTabNew">${i18next.t('combat:combat.boss.new_badge')}</span>` : '';
     return `<button class="actTab${t.locked?' locked':''}${t.id===currentActivity?' active':''}" id="${t.id==='boss'?'actTabBoss':''}" data-id="${t.id}"${t.locked?' disabled':''}>` +
       `<span class="actTabLabel">${t.icon} ${t.name[LANG]}</span>${hpBadge}${t.locked?'<span class="actTabLock">🔒</span>':newBadge}</button>`;
   }).join('');
@@ -217,7 +217,7 @@ function updateBossActivityTabHot() {
   // "une fois que le boss est vaincu ecrire vaincu a la place des %" (2026-07-09) -- même mot que
   // le lobby (.bossNextHpTxt quand alreadyDead) plutôt qu'un "0%" qui laisse croire que le combat
   // continue.
-  const defeatedTxt = LANG==='fr' ? 'VAINCU' : 'DEFEATED';
+  const defeatedTxt = i18next.t('combat:combat.boss.status_defeated');
   const hpEl = $a('actTabBossHp');
   if (hpEl) {
     if (fighting) hpEl.textContent = bossState.hp <= 0 ? defeatedTxt : (bossState.hp/bossState.maxHp*100).toFixed(0)+'%';
@@ -266,7 +266,7 @@ function openCompanionsModule() {
     const bar = document.createElement('div');
     bar.style.cssText = 'flex-shrink:0;display:flex;justify-content:flex-end;padding:6px 10px;background:#10101e;border-bottom:1px solid #2a2a44';
     const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕ ' + (LANG === 'fr' ? 'Fermer' : 'Close');
+    closeBtn.textContent = '✕ ' + i18next.t('combat:combat.boss.close_button');
     closeBtn.style.cssText = 'font-family:Georgia,serif;font-size:12px;background:transparent;border:1px solid #3a3a58;color:#ddd0b8;border-radius:5px;padding:5px 12px;cursor:pointer';
     closeBtn.onclick = closeCompanionsModule;
     bar.appendChild(closeBtn);
@@ -323,7 +323,7 @@ setInterval(() => {
 function renderBossLobbyHtml() {
   const occ = nextBossOccurrence();
   const now = Date.now();
-  let nextHtml = `<div class="admEmpty">${LANG==='fr'?'Aucun boss programmé':'No boss scheduled'}</div>`;
+  let nextHtml = `<div class="admEmpty">${i18next.t('combat:combat.boss.no_boss_scheduled')}</div>`;
   if (occ) {
     const b = BOSS_ROSTER[occ.boss];
     // boss partagé déjà à 0 PV mais fenêtre de 9 min encore ouverte (2026-07-15, demande explicite :
@@ -333,7 +333,7 @@ function renderBossLobbyHtml() {
     // endBossFight/boss_claim, -1 = aucune contribution). Bloqué en amont, avant même d'entrer.
     const alreadyDead = occ.live && occ.sharedHp && typeof occ.hp === 'number' && occ.hp <= 0;
     const cd = occ.live
-      ? `<div class="bossNextCountdown live">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : (LANG==='fr'?'EN COURS':'LIVE')}</div>`
+      ? `<div class="bossNextCountdown live">${alreadyDead ? i18next.t('combat:combat.boss.status_defeated') : i18next.t('combat:combat.boss.status_live')}</div>`
       : `<div class="bossNextCountdown" id="bossPanelCountdown">${fmtBossCountdown(occ.time - now)}</div>`;
     const when = new Date(occ.time).toLocaleString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', hour:'2-digit', minute:'2-digit' });
     // "boss vaincu, on change la barre de vie et on ecris vaincu jusqu'au moment ou il aurait du
@@ -345,22 +345,22 @@ function renderBossLobbyHtml() {
       ? (() => {
           const pct = Math.max(0, Math.min(100, occ.hp/occ.maxHp*100));
           return `<div class="bossNextHpWrap"><div class="bossNextHpBar${alreadyDead?' dead':''}" style="width:${pct}%"></div>` +
-            `<span class="bossNextHpTxt">${alreadyDead ? (LANG==='fr'?'VAINCU':'DEFEATED') : pct.toFixed(1)+'%'}</span></div>`;
+            `<span class="bossNextHpTxt">${alreadyDead ? i18next.t('combat:combat.boss.status_defeated') : pct.toFixed(1)+'%'}</span></div>`;
         })()
       : '';
     nextHtml = `<div class="bossNext">
       <div class="bossNextIcon">${b.icon}</div>
       <div class="bossNextInfo">
         <div class="bossNextName">${b.name[LANG]}</div>
-        <div class="bossNextTime">${alreadyDead ? (LANG==='fr'?'Déjà vaincu par d\'autres joueurs':'Already defeated by other players') : occ.live ? (LANG==='fr'?'Disponible maintenant !':'Available now!') : when}</div>
+        <div class="bossNextTime">${alreadyDead ? i18next.t('combat:combat.boss.already_defeated_by_others') : occ.live ? i18next.t('combat:combat.boss.available_now') : when}</div>
         ${hpBarHtml}
       </div>
       ${cd}
     </div>` +
     (alreadyDead
-      ? `<div class="admHint">${LANG==='fr'?'Ce boss a déjà été vaincu — reviens plus tard, au prochain spawn.':'This boss has already been defeated — come back later, at the next spawn.'}</div>` +
-        `<button class="bossFightBtn" id="bossFightBtn" disabled>${LANG==='fr'?'💀 Déjà vaincu':'💀 Already defeated'}</button>`
-      : `<button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?(LANG==='fr'?'⚔️ Combattre':'⚔️ Fight'):(LANG==='fr'?'⏳ Pas encore apparu':'⏳ Not spawned yet')}</button>`);
+      ? `<div class="admHint">${i18next.t('combat:combat.boss.already_defeated_hint')}</div>` +
+        `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.already_defeated_button')}</button>`
+      : `<button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?i18next.t('combat:combat.boss.fight_button'):i18next.t('combat:combat.boss.not_spawned_yet')}</button>`);
   }
   // VRAI calendrier hebdomadaire : grille jours (colonnes) × heures de spawn (lignes), le nom du
   // boss dans chaque case. Seuls les boss implémentés (BOSS_ROSTER) apparaissent.
@@ -378,7 +378,7 @@ function renderBossLobbyHtml() {
   weekOcc.forEach(o => { const d=new Date(o.time); cellMap.set(dayKey(d)+'@'+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'), o); });
   let calHtml;
   if (!times.length) {
-    calHtml = `<div class="admEmpty">${LANG==='fr'?'Rien de programmé':'Nothing scheduled'}</div>`;
+    calHtml = `<div class="admEmpty">${i18next.t('combat:combat.boss.nothing_scheduled')}</div>`;
   } else {
     calHtml = `<div class="bossCal" style="grid-template-columns:44px repeat(7,1fr)">`;
     calHtml += `<div class="bcCorner"></div>`;
@@ -389,7 +389,7 @@ function renderBossLobbyHtml() {
       days.forEach(d => {
         const o = cellMap.get(dayKey(d)+'@'+tm);
         if (o) { const b=BOSS_ROSTER[o.boss];
-          calHtml += `<div class="bcCell${o.live?' bcLive':''}" title="${b.name[LANG]}">${b.icon}<span class="bcName">${o.live?(LANG==='fr'?'EN COURS':'LIVE'):b.short[LANG]}</span></div>`; }
+          calHtml += `<div class="bcCell${o.live?' bcLive':''}" title="${b.name[LANG]}">${b.icon}<span class="bcName">${o.live?i18next.t('combat:combat.boss.status_live'):b.short[LANG]}</span></div>`; }
         else calHtml += `<div class="bcCell bcEmpty"></div>`;
       });
     });
@@ -404,10 +404,10 @@ function renderBossLobbyHtml() {
   // boss") -- vivaient avant juste sous le countdown/prochain spawn (nextHtml) et AVANT le calendrier
   // hebdomadaire ; désormais après le calendrier complet, qui compte comme "les horaires de boss".
   return `${nextHtml}
-    <h3>${LANG==='fr'?'📅 Calendrier de la semaine':'📅 Weekly calendar'}</h3>
+    <h3>${i18next.t('combat:combat.boss.weekly_calendar_title')}</h3>
     ${calHtml}
     <div class="bcLegendRow">${legend}</div>
-    <div class="admSummary">${LANG==='fr'?'Horaires calqués sur le vrai BDO −15 min. Heure locale.':'Times mirror real BDO −15 min. Local time.'}</div>
+    <div class="admSummary">${i18next.t('combat:combat.boss.schedule_note')}</div>
     ${bossRewardRulesHtml()}`;
 }
 function wireBossLobby() {
@@ -575,11 +575,11 @@ function renderBossTop() {
   if (liveEl) {
     const n = bossState.activeFighters || 0;
     liveEl.textContent = n > 0
-      ? (LANG==='fr' ? `${n} joueur${n>1?'s':''} combattent` : `${n} player${n>1?'s':''} fighting`)
-      : (LANG==='fr' ? 'En attente de combattants' : 'Waiting for fighters');
+      ? i18next.t('combat:combat.boss.players_fighting', { n, s: n>1?'s':'' })
+      : i18next.t('combat:combat.boss.waiting_for_fighters');
   }
   const list = bossState.topList.slice(0, 10);
-  if (!list.length) { el.innerHTML = `<div class="btpRow">${LANG==='fr'?'Sois le premier !':'Be the first!'}</div>`; return; }
+  if (!list.length) { el.innerHTML = `<div class="btpRow">${i18next.t('combat:combat.boss.be_first')}</div>`; return; }
   el.innerHTML = list.map((r,i) =>
     `<div class="btpRow${currentUser && r.user_id===currentUser.id?' me':''}"><span class="btpRank">#${i+1}</span>` +
     `<span class="btpPseudo">${r.active?'<span class="btpActiveDot"></span>':''}${escapeHtml(r.pseudo||'?')}</span>` +
@@ -637,17 +637,15 @@ function bossFirstKillOfWeek(bossId) {
 function bossMultBadgesHtml(deathCount, firstKillWeek) {
   let html = '';
   if (deathCount === 0) {
-    html += `<div class="brRewards admHint">✨ ${LANG==='fr'?'Perfect Kill — 0 mort':'Perfect Kill — 0 deaths'}</div>`;
+    html += `<div class="brRewards admHint">✨ ${i18next.t('combat:combat.boss.perfect_kill')}</div>`;
   } else {
     const pct = Math.round((1 - bossDeathPenaltyMult(deathCount)) * 100);
-    html += `<div class="brRewards admHint">${LANG==='fr'
-      ? `💀 ${deathCount} mort${deathCount>1?'s':''} — récompense chiffrée réduite de ${pct}%${deathCount>=BOSS_DEATH_PENALTY.length-1?' (loot rarissime exclu)':''}`
-      : `💀 ${deathCount} death${deathCount>1?'s':''} — numeric reward reduced by ${pct}%${deathCount>=BOSS_DEATH_PENALTY.length-1?' (rare loot excluded)':''}`}</div>`;
+    const s = deathCount>1?'s':'';
+    const excludedNote = deathCount>=BOSS_DEATH_PENALTY.length-1 ? i18next.t('combat:combat.boss.death_penalty_rare_excluded') : '';
+    html += `<div class="brRewards admHint">${i18next.t('combat:combat.boss.death_penalty', { deathCount, s, pct, excludedNote })}</div>`;
   }
   if (firstKillWeek) {
-    html += `<div class="brRewards admHint" style="color:var(--gold)">🗓️ ${LANG==='fr'
-      ? `Premier kill de la semaine : +${Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100)}%`
-      : `First kill of the week: +${Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100)}%`}</div>`;
+    html += `<div class="brRewards admHint" style="color:var(--gold)">🗓️ ${i18next.t('combat:combat.boss.first_kill_week_bonus', { bonusPct: Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100) })}</div>`;
   }
   return html;
 }
@@ -722,7 +720,7 @@ function bossPityBarHtml(bossId) {
   const pct = Math.min(100, count / BOSS_PITY_THRESHOLD * 100);
   return `<div class="admBars" style="margin:6px auto 0;max-width:260px">
     <div class="admBarRow">
-      <span class="admBarLbl">${LANG==='fr'?'Pity':'Pity'}</span>
+      <span class="admBarLbl">${i18next.t('combat:combat.boss.pity_label')}</span>
       <span class="admBarTrack"><span class="admBar" style="width:${pct}%"></span></span>
       <span class="admBarVal">${count}/${BOSS_PITY_THRESHOLD}</span>
     </div>
@@ -731,7 +729,7 @@ function bossPityBarHtml(bossId) {
 function bossRewardRulesHtml() {
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
-    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${LANG==='fr'?'de chance':'chance'} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
+    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${i18next.t('combat:combat.boss.chance_label')} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
     : '';
   // Kzarka (2026-07-16, demande explicite) : podium à récompenses FIXES (silver + Caphras/Fragment
   // de mémoire), voir KZARKA_REWARD_TIERS/endBossFight -- Vell garde le podium générique basé sur
@@ -741,19 +739,19 @@ function bossRewardRulesHtml() {
     const t1 = KZARKA_REWARD_TIERS[1], t2 = KZARKA_REWARD_TIERS[2], t3 = KZARKA_REWARD_TIERS[3];
     baseHtml = '';
     podiumHtml = `<div class="bossPodium">
-      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">+${fmt(t2.silver)} 🪙<br>${t2.caphras[0]}-${t2.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t2.frag[0]}-${t2.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
-      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">+${fmt(t1.silver)} 🪙<br>${t1.caphras[0]}-${t1.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t1.frag[0]}-${t1.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
-      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">+${fmt(t3.silver)} 🪙<br>${t3.caphras[0]}-${t3.caphras[1]} ${LANG==='fr'?'Caphras':'Caphras'} · ${t3.frag[0]}-${t3.frag[1]} ${LANG==='fr'?'Frag. mémoire':'Memory frag.'}</div></div>
+      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">+${fmt(t2.silver)} 🪙<br>${t2.caphras[0]}-${t2.caphras[1]} ${i18next.t('combat:combat.boss.caphras_label')} · ${t2.frag[0]}-${t2.frag[1]} ${i18next.t('combat:combat.boss.memory_frag_label')}</div></div>
+      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">+${fmt(t1.silver)} 🪙<br>${t1.caphras[0]}-${t1.caphras[1]} ${i18next.t('combat:combat.boss.caphras_label')} · ${t1.frag[0]}-${t1.frag[1]} ${i18next.t('combat:combat.boss.memory_frag_label')}</div></div>
+      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">+${fmt(t3.silver)} 🪙<br>${t3.caphras[0]}-${t3.caphras[1]} ${i18next.t('combat:combat.boss.caphras_label')} · ${t3.frag[0]}-${t3.frag[1]} ${i18next.t('combat:combat.boss.memory_frag_label')}</div></div>
     </div>`;
   } else {
     const dZi = bestDifficileZoneIdx(), dgZi = nextDangereuseZoneIdx();
     const dName = dZi != null ? tr(ZONES[dZi].name) : '—';
     const dgName = dgZi != null ? tr(ZONES[dgZi].name) : '—';
-    baseHtml = `<div class="bossRewardBase">🎁 ${LANG==='fr'?'Pour tous':'For everyone'} : ${LANG==='fr'?"pierre d'optimisation de ta meilleure zone difficile":'enhancement stone from your best hard zone'} (<b>${dName}</b>)</div>`;
+    baseHtml = `<div class="bossRewardBase">🎁 ${i18next.t('combat:combat.boss.for_everyone')} : ${i18next.t('combat:combat.boss.hard_zone_stone')} (<b>${dName}</b>)</div>`;
     podiumHtml = `<div class="bossPodium">
-      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">${LANG==='fr'?'+1 bijou de ta zone difficile':'+1 jewel from your hard zone'} (<b>${dName}</b>)</div></div>
-      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">${LANG==='fr'?'+1 bijou de la prochaine zone dangereuse':'+1 jewel from the next dangerous zone'} (<b>${dgName}</b>)</div></div>
-      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">${LANG==='fr'?'20% bijou dangereuse + 30% bijou difficile':'20% dangerous jewel + 30% hard jewel'}</div></div>
+      <div class="bossPodiumStep rank2"><div class="bossPodiumMedal">🥈</div><div class="bossPodiumReward">${i18next.t('combat:combat.boss.rank2_reward_generic')} (<b>${dName}</b>)</div></div>
+      <div class="bossPodiumStep rank1"><div class="bossPodiumMedal">🥇</div><div class="bossPodiumReward">${i18next.t('combat:combat.boss.rank1_reward_generic')} (<b>${dgName}</b>)</div></div>
+      <div class="bossPodiumStep rank3"><div class="bossPodiumMedal">🥉</div><div class="bossPodiumReward">${i18next.t('combat:combat.boss.rank3_reward_generic')}</div></div>
     </div>`;
   }
   return `<div class="bossRewardRules">
@@ -794,15 +792,15 @@ const BOSS_ROLL_DURATION_MS = 2200, BOSS_ROLL_START_INTERVAL_MS = 40, BOSS_ROLL_
 // ne jamais sembler tomber SUR le rare par erreur d'affichage.
 const BOSS_NEAR_MISS_CHANCE = 0.18, BOSS_NEAR_MISS_MARGIN_DEG = 8;
 function renderBossRewardReveal(items) {
-  if (!items.length) return `<button id="bossCloseBtn">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
+  if (!items.length) return `<button id="bossCloseBtn">${i18next.t('combat:combat.boss.leave_button')}</button>`;
   const itemsHtml = items.map((it,i) => {
     const iconHtml = it.kind==='wheel' ? `<div class="bossWheelReactRoot" id="bossWheelReactRoot${i}"></div>`
       : `<span class="brDiceIcon" id="brDiceIcon${i}" style="color:${it.color||'#e8c96a'}">${it.icon||'🎲'}</span>`;
-    return `<div class="brRevealItem" id="brRevealItem${i}">${iconHtml}<div class="brRevealResult" id="brRevealResult${i}">${LANG==='fr'?'…':'…'}</div></div>`;
+    return `<div class="brRevealItem" id="brRevealItem${i}">${iconHtml}<div class="brRevealResult" id="brRevealResult${i}">${i18next.t('combat:combat.boss.reveal_placeholder')}</div></div>`;
   }).join('');
   return `<div class="brRevealList">${itemsHtml}</div>` +
-    `<button id="bossSkipBtn" class="bossSkipBtn">${LANG==='fr'?'⏭ Passer':'⏭ Skip'}</button>` +
-    `<button id="bossCloseBtn" style="display:none">${LANG==='fr'?'🚪 Quitter':'🚪 Leave'}</button>`;
+    `<button id="bossSkipBtn" class="bossSkipBtn">${i18next.t('combat:combat.boss.skip_button')}</button>` +
+    `<button id="bossCloseBtn" style="display:none">${i18next.t('combat:combat.boss.leave_button')}</button>`;
 }
 // branche les timers de révélation + le bouton "Passer" -- appelé par l'appelant juste APRÈS avoir
 // inséré le HTML de renderBossRewardReveal() dans le DOM (jamais via un setTimeout interne : cette
@@ -866,8 +864,8 @@ function wireBossRewardReveal(items) {
         mountBossWheelReact(container, { rareLoot: it.rareLoot, won: it.won, instant: !!instant });
       }
       resEl.innerHTML = it.won
-        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${LANG==='fr'?'Obtenu':'Obtained'} : ${it.rareLoot.name} !</span>`
-        : (LANG==='fr'?`Pas cette fois — ${it.rareLoot.icon} ${it.rareLoot.name} attend toujours`:`Not this time — ${it.rareLoot.icon} ${it.rareLoot.name} still awaits`);
+        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${i18next.t('combat:combat.boss.wheel_obtained')} : ${it.rareLoot.name} !</span>`
+        : i18next.t('combat:combat.boss.wheel_not_this_time', { icon: it.rareLoot.icon, name: it.rareLoot.name });
     }
     finishIfAllDone();
   }
@@ -960,9 +958,7 @@ async function endBossFight(win) {
     // tirage a lieu MAINTENANT comme avant (addSilver/invAdd non touchés), seule la RÉVÉLATION est
     // différée/animée -- voir renderBossRewardReveal plus bas.
     if (alreadyClaimed) {
-      rewardsHtml = `<div class="brRewards admHint">${LANG==='fr'
-        ? 'Récompense déjà réclamée pour ce boss — chaque victoire ne peut être payée qu\'une seule fois.'
-        : 'Reward already claimed for this boss — each victory can only be paid out once.'}</div>`;
+      rewardsHtml = `<div class="brRewards admHint">${i18next.t('combat:combat.boss.reward_already_claimed')}</div>`;
     } else {
       // combat SOLO (pas de classement possible, instance perso) : traité comme rang #1, seul
       // participant -- il n'y a personne avec qui "partager" le meilleur lot (2026-07-15)
@@ -983,9 +979,9 @@ async function endBossFight(win) {
         addSilver(reward, 'boss', b.name.fr);
         invAdd({ key:'mat_'+CAPHRAS_NAME, name:CAPHRAS_NAME, kind:'material', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', qty:caphrasQty, stackable:true, weight:0.1, val:120 });
         invAdd({ name:'Fragment de mémoire', kind:'craft', icon:'✦', color:'#b48ce8', key:'craft_Fragment de mémoire', qty:fragQty, stackable:true, weight:0.2, val:0 });
-        rewardsHtml = `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
+        rewardsHtml = `<div class="brRewards">${i18next.t('combat:combat.boss.contribution_rank')} : <b>#${rank}</b></div>` + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
         revealItems.push(
-          { kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` },
+          { kind:'dice', icon:'🪙', color:'#e8c96a', label:i18next.t('combat:combat.boss.silver_label'), rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` },
           { kind:'dice', icon:ICO_MAT_CAPHRAS, color:'#c9a55a', label:tr(CAPHRAS_NAME), rollValue:caphrasQty, rollTemplate:n=>`+${n} × ${tr(CAPHRAS_NAME)}` },
           { kind:'dice', icon:'✦', color:'#b48ce8', label:tr('Fragment de mémoire'), rollValue:fragQty, rollTemplate:n=>`+${n} × ${tr('Fragment de mémoire')}` },
         );
@@ -1004,7 +1000,7 @@ async function endBossFight(win) {
         // pierre d'optimisation de la meilleure zone difficile (garantie pour tous) + bijoux bonus
         // selon le rang, voir bossZoneMaterialItem/bossZoneJackpotItem/bestDifficileZoneIdx ci-dessus.
         const difficileZi = bestDifficileZoneIdx(), dangereuseZi = nextDangereuseZoneIdx();
-        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:LANG==='fr'?'Silver':'Silver', rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` });
+        revealItems.push({ kind:'dice', icon:'🪙', color:'#e8c96a', label:i18next.t('combat:combat.boss.silver_label'), rollValue:reward, rollTemplate:n=>`+${fmt(n)} 🪙` });
         if (difficileZi != null) {
           const qty = Math.max(1, Math.round((3 + Math.random()*5) * mult * zoneMult));
           const matItem = bossZoneMaterialItem(difficileZi, qty);
@@ -1028,13 +1024,13 @@ async function endBossFight(win) {
             logToDiscord('💎 Bijou de World Boss', `**${myPseudo||'Joueur'}** obtient ${jItem.name} (rang #${rank}) sur ${b.name.fr}`, 0xb48ce8);
           }
         }
-        const rankHtml = rank ? `<div class="brRewards">${LANG==='fr'?'Rang de contribution':'Contribution rank'} : <b>#${rank}</b></div>` : '';
+        const rankHtml = rank ? `<div class="brRewards">${i18next.t('combat:combat.boss.contribution_rank')} : <b>#${rank}</b></div>` : '';
         const zoneHtml = `<div class="brRewards admHint">${deathFreeOk
-          ? (LANG==='fr'?`Bonus de zone (${tr(ZONES[S.maxZoneIdx].name)}) : certifié sans mort ✓ ×${zoneMult.toFixed(2)}`:`Zone bonus (${tr(ZONES[S.maxZoneIdx].name)}): death-free certified ✓ ×${zoneMult.toFixed(2)}`)
-          : (LANG==='fr'?'Pas de bonus de zone : mort il y a moins de 3 min':'No zone bonus: died less than 3 min ago')}</div>`;
+          ? i18next.t('combat:combat.boss.zone_bonus_active', { zoneName: tr(ZONES[S.maxZoneIdx].name), mult: zoneMult.toFixed(2) })
+          : i18next.t('combat:combat.boss.zone_bonus_inactive')}</div>`;
         rewardsHtml = rankHtml + zoneHtml + bossMultBadgesHtml(bossState.deathCount, firstKillWeek);
       }
-      pushNotif('🏆', LANG==='fr'?'Boss vaincu':'Boss defeated', b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
+      pushNotif('🏆', i18next.t('combat:combat.boss.boss_defeated_notif'), b.name[LANG]+' — +'+fmt(reward)+' 🪙', 'success');
       logToDiscord('🏆 Boss vaincu', `**${myPseudo||'Joueur'}** a vaincu ${b.name.fr}${rank?' (rang #'+rank+')':''} — +${fmt(reward)} 🪙`, 0xe8b84a);
       if (bossState.bossId) markBossDefeated(bossState.bossId); // Compendium (2026-07-08)
       // "premier kill de la semaine PAR BOSS" : écrit APRÈS avoir lu firstKillWeek plus haut (sinon
@@ -1069,7 +1065,7 @@ async function endBossFight(win) {
     }
   }
   $('bossResult').innerHTML =
-    `<div class="brTitle ${win?'win':''}">${win?(LANG==='fr'?'🏆 VICTOIRE':'🏆 VICTORY'):(LANG==='fr'?'Combat quitté':'Fight left')}</div>` +
+    `<div class="brTitle ${win?'win':''}">${win?i18next.t('combat:combat.boss.victory_title'):i18next.t('combat:combat.boss.fight_left_title')}</div>` +
     rewardsHtml + renderBossRewardReveal(revealItems);
   $('bossResult').classList.add('show');
   wireBossRewardReveal(revealItems);
@@ -1161,10 +1157,10 @@ function bossLoop(now) {
     const isVell = bs.boss === BOSS_ROSTER.vell;
     if (safe) {
       bs.blockFlash = 0.6; bs.shakeT = 6;
-      bs.floatMsgs.push({txt: isVell ? (LANG==='fr'?'PLONGÉ !':'DIVED!') : (LANG==='fr'?'PARÉ !':'BLOCKED!'), life:1, color:'#8cc8ff'});
+      bs.floatMsgs.push({txt: isVell ? i18next.t('combat:combat.boss.dived_msg') : i18next.t('combat:combat.boss.blocked_msg'), life:1, color:'#8cc8ff'});
     } else {
       bs.playerHp -= bs.playerHpMax*0.30; bs.hurtFlash = 0.6; bs.shakeT = 20;
-      bs.floatMsgs.push({txt: isVell ? (LANG==='fr'?'VAGUE !':'WAVE!') : 'AoE !', life:1, color:'#e05050'});
+      bs.floatMsgs.push({txt: isVell ? i18next.t('combat:combat.boss.wave_msg') : 'AoE !', life:1, color:'#e05050'});
     }
   }
   else if (bs.aoePhase==='blast' && bs.aoeT >= 0.45) { bs.aoePhase='idle'; bs.aoeT=0; bs.aoeInterval = 7 + Math.random()*4; }
