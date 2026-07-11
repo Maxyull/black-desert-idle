@@ -980,7 +980,7 @@
 
   /* ===== menu latéral (fusion topBar + userBar en une colonne) ===== */
   #sideMenu {
-    position:fixed; top:14px; left:14px; z-index:40;
+    position:sticky; top:14px; z-index:40;
     display:flex; flex-direction:column; gap:10px; width:210px;
   }
   #gameBar, #userBar, #metaBar, #econBar, #communityBar {
@@ -2586,4 +2586,62 @@
   .catTab:hover, .invModeTab:hover, .lootPanelTab:hover { border-color:var(--dbBorder2); color:var(--cream2); }
   .catTab.active, .invModeTab.active, .lootPanelTab.active {
     border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08);
+  }
+
+  /* =====================================================================
+     Phase 4 (2026-07-11) : migration de tout le shell vers une vraie grille CSS
+     3 colonnes (#sideMenu | #wrap | .side-right), comme la maquette -- décision
+     explicite de l'utilisateur (fidélité totale plutôt que garder position:fixed).
+     #sideMenu et #rightWidgets/#chatWidget étaient en position:fixed (superposés,
+     hors du flux) ; ils sont maintenant de vrais enfants de .layout. Modèle de
+     scroll de PAGE gardé inchangé (pas le lockdown 100vh;overflow:hidden de la
+     maquette, qui aurait cascadé sur tous les overlays absolus du canvas) --
+     l'effet "colonnes toujours visibles" vient de position:sticky plutôt que
+     position:fixed, même résultat perçu, vraie grille en dessous.
+     ===================================================================== */
+  #activitiesBar, .layout {
+    width:1240px; max-width:100%; margin:0 auto; box-sizing:border-box;
+  }
+  #activitiesBar { margin-bottom:10px; }
+  .layout {
+    display:grid; grid-template-columns:210px 1fr 300px; gap:14px; align-items:start;
+  }
+  /* #wrap contenait auparavant #activitiesBar (retiré ci-dessus) ET portait sa propre
+     largeur fixe (1240px, voir règle plus haut dans ce fichier) -- devenu simple item
+     de grille (.game-main conceptuel), sa largeur doit suivre la colonne 1fr, pas
+     rester figée à 1240px (qui débordait sa nouvelle colonne, bien plus étroite). */
+  .layout #wrap { width:auto; max-width:none; }
+  /* #sideMenu.onRight (préférence gauche/droite, voir menuSide dans game-supabase.js) :
+     un simple flip left/right suffisait en position:fixed -- remplacé par un flip
+     d'ORDRE de grille, la classe togglée par le JS existant reste la même. */
+  #sideMenu.onRight { left:auto; right:auto; order:2; }
+  #sideMenu.onRight ~ .side-right { order:-1; }
+  /* #sideMenu.collapsed{width:auto} (règle plus haut dans ce fichier) ne changeait rien en dur
+     dans l'ancien modèle position:fixed -- en grille, la largeur d'un item suit sa PISTE de
+     colonne (210px fixe), pas sa propre largeur CSS : replier le menu ne libérait donc plus
+     d'espace. :has() permet de rétrécir la piste elle-même sans toucher au JS existant
+     (sideMenuCollapsed/#btnCollapseMenu, game-supabase.js) qui ne togglait que la classe. */
+  .layout:has(#sideMenu.collapsed) { grid-template-columns:56px 1fr 300px; }
+  .side-right {
+    display:flex; flex-direction:column; gap:10px;
+    position:sticky; top:14px;
+  }
+  #rightWidgets { position:static; display:flex; flex-direction:column; gap:8px; max-width:none; align-items:stretch; }
+  .floatWidget { width:auto; }
+  #chatWidget { position:static; width:auto; bottom:auto; right:auto; }
+
+  /* #bossRoom{height:calc(100vh - 62px)} (règle plus haut dans ce fichier) supposait
+     l'ancien header (juste #activitiesBar, ~62px) -- le nouveau chrome (.topbar +
+     #activitiesBar pleine largeur, tous deux au-dessus de .layout) prend plus de
+     hauteur ; recalibré empiriquement (voir vérification en conditions réelles). */
+  #bossRoom { height:calc(100vh - 145px); }
+
+  /* repli mobile minimal (pas le polish complet, prévu dans une phase ultérieure --
+     voir CLAUDE.md §14, "ne pas livrer une UI non responsive") : sous 1024px, la
+     grille 3 colonnes fixe (210px/1fr/300px) n'a plus la place de respirer --
+     empilée en 1 seule colonne plutôt que compressée/superposée. */
+  @media (max-width:1024px) {
+    .layout { grid-template-columns:1fr; }
+    #sideMenu, .side-right { position:static; width:100%; max-width:none; }
+    #sideMenu.onRight, #sideMenu.onRight ~ .side-right { order:0; }
   }

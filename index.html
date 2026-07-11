@@ -105,126 +105,10 @@
      src/progression/patch-notes-engage-react.js, openPatchNotesReact() (#btnPatch,
      backend/game-supabase.js). -->
 <div id="patchNotesModalRoot"></div>
-<div id="rightWidgets">
-  <div id="questWidget" class="floatWidget"></div>
-  <div id="questTrackerWidget" class="floatWidget" style="display:none"></div>
-</div>
-
-<div id="chatWidget" class="floatWidget">
-  <div class="qwHeaderRow">
-    <span class="qwTitle">💬 Chat</span>
-    <button class="qwFoldBtn" onclick="toggleChatFold()" id="chatFoldBtn">▾</button>
-  </div>
-  <div id="chatBody">
-    <div class="catTabs" id="chatTabs"></div>
-    <div id="chatMessages"></div>
-    <div id="chatInputRow">
-      <!-- liste de suggestions pour les mentions @joueur (2026-07-05, demande explicite) -->
-      <div id="chatMentionList"></div>
-      <input type="text" id="chatInput" maxlength="300" placeholder="…">
-      <button id="chatSendBtn">➤</button>
-    </div>
-    <div id="chatNote"></div>
-  </div>
-</div>
 
 <div id="updateToast">
   <span><span data-i18n="updateAvailableMsg">🔄 Une nouvelle version du jeu est disponible.</span> <span class="updVer" id="updToastVer"></span></span>
   <button id="btnReloadUpdate" data-i18n="btnReloadUpdate">Recharger</button>
-</div>
-
-<div id="sideMenu">
-  <button id="btnCollapseMenu" title="Replier/déplier le menu">◀</button>
-
-  <!-- refonte visuelle (2026-07-11, port fidèle de bdi-dashboard-redesign.html, Phase 2, voir
-       CLAUDE.md) : #gameBar/#userBar/#metaBar regroupés visuellement en 4 groupes façon mockup
-       (Progression/Économie/Communauté/Compte), via .sideGroup/.sideGroupLabel -- ids/boutons/
-       badges/data-i18n INCHANGÉS (aucune texte splitté icône/label ici : ce découpage toucherait
-       le dictionnaire i18n, en cours de migration en parallèle par une autre session -- voir
-       CLAUDE.md §24/30 -- reporté à une phase ultérieure une fois cette migration terminée). -->
-  <div class="sideGroup">
-    <div class="sideGroupLabel" data-i18n="sideGroupProgression">Progression</div>
-    <!-- le vrai jeu en premier (2026-07-05, demande explicite) : ce qu'on utilise le plus souvent
-         pendant une session -->
-    <div id="gameBar">
-      <button id="btnDailyQuests"><span data-i18n="btnDailyQuests">🗒️ Quêtes</span><span id="questBadge"></span></button>
-      <button id="btnMailbox"><span data-i18n="btnMailbox">📬 Courrier</span><span id="mailBadge"></span></button>
-      <button id="btnCompendium"><span data-i18n="btnCompendium">📖 Compendium</span><span class="contentNewBadge" id="newBadgeCompendium">1</span></button>
-      <button id="btnCodex"><span data-i18n="btnCodex">📚 Codex</span><span class="contentNewBadge" id="newBadgeCodex">1</span></button>
-      <button id="btnAchievements"><span data-i18n="btnAchievements">🏅 Succès</span><span class="contentNewBadge" id="newBadgeAchievements">1</span></button>
-      <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
-      <!-- Pet/Mer déplacés le 2026-07-17 dans la barre d'onglets de région (#zoneTierTabs), puis
-           remis dans le header le 2026-07-08 (demande explicite : "remet les categorie compagnon et
-           vie en mer dans le header") -- voir ACTIVITY_TABS dans combat/boss.js, jamais ici -->
-    </div>
-  </div>
-
-  <div class="sideGroup">
-    <div class="sideGroupLabel" data-i18n="sideGroupEconomie">Économie</div>
-    <div id="econBar">
-      <button id="btnMarket" title="BETA — en construction, encore peu fonctionnel"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
-    </div>
-  </div>
-
-  <div class="sideGroup">
-    <div class="sideGroupLabel" data-i18n="sideGroupCommunaute">Communauté</div>
-    <div id="communityBar">
-      <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
-      <button id="btnWiki"><span data-i18n="btnWiki">📖 Wiki</span><span class="contentNewBadge" id="newBadgeWiki">1</span></button>
-      <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge" aria-live="polite"></span></button>
-      <!-- Donation (2026-07-16, demande explicite : "ajoute un bouton Donation bloque cadenas") --
-           verrouillée, en attente d'une future intégration (ex: Ko-fi/Patreon) ; renommée "Soutenir"
-           le 2026-07-17 (demande explicite) -->
-      <button id="btnDonation" class="lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnDonation">💖 Soutenir</span></button>
-    </div>
-  </div>
-
-  <div class="sideGroup">
-    <div class="sideGroupLabel" data-i18n="sideGroupCompte">Compte</div>
-    <div id="userBar">
-      <div id="userBarTop">
-        <span id="demoTag" data-i18n="demoTag">DÉMO</span>
-        <span id="userPseudo"></span>
-        <span id="userEmail"></span>
-      </div>
-      <button id="btnAccount" data-i18n="btnAccount">👤 Mon compte</button>
-      <button id="btnLinkAccount" data-i18n="btnLinkAccount" style="display:none">🔗 Lier un compte</button>
-      <div id="adminBox" style="display:none">
-        <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
-      </div>
-      <button id="btnLogout" data-i18n="btnLogout">🚪 Déconnexion</button>
-      <span id="saveStatus"></span>
-      <div id="uuidRow" style="display:none">
-        <button id="btnCopyUuid" title="Cliquer pour copier ton UUID">
-          <span id="uuidCopyHint">📋 <span data-i18n="copyLabel">Copier</span> UUID</span>
-        </button>
-      </div>
-      <button id="btnTester" style="display:none">🧪 <span data-i18n="btnTester">Tester</span></button>
-    </div>
-    <!-- infos moins utiles au quotidien, reléguées en bas (2026-07-05, demande explicite) --
-         compteur en ligne/inscrits gardé ici (même groupe Compte que le mockup) -->
-    <div id="onlineStatsBox">
-      <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
-      <div id="registeredCounter">👤 <b id="registeredTotal">—</b> <span data-i18n="registeredLbl">inscrits</span></div>
-    </div>
-  </div>
-
-  <!-- reste de #metaBar : préférences d'affichage (langue, côté du menu), pas un groupe de nav du
-       mockup -- gardées ensemble en pied de menu, juste au-dessus de la version -->
-  <div id="metaBar">
-    <div id="langToggle">
-      <span class="langOpt" data-lang="fr">🇫🇷 FR</span>
-      <span class="langOpt" data-lang="en">🇬🇧 EN</span>
-      <div id="langThumb"></div>
-    </div>
-    <div id="menuSideToggle">
-      <span class="menuSideOpt" data-side="left" data-i18n="menuSideLeft">◀ Gauche</span>
-      <span class="menuSideOpt" data-side="right" data-i18n="menuSideRight">Droite ▶</span>
-      <div id="menuSideThumb"></div>
-    </div>
-  </div>
-
-  <div id="clientVersion">Black Desert Idle — <span id="clientVersionNum"></span></div>
 </div>
 
 <div id="siteFooter">
@@ -405,12 +289,101 @@
   </div>
 </div>
 
-<div id="wrap">
-  <div id="activitiesBar">
-    <div id="activityTabs"></div>
+<!-- refonte visuelle (2026-07-11, Phase 4, port fidèle de bdi-dashboard-redesign.html, voir
+     CLAUDE.md) : #activitiesBar sorti de #wrap pour devenir plein-largeur au-dessus de la
+     grille 3 colonnes (.layout), comme .tabs dans la maquette -- même id #activityTabs, même
+     renderActivityTabs() (combat/boss.js), insensible au parent. -->
+<div id="activitiesBar">
+  <div id="activityTabs"></div>
+</div>
+
+<!-- migration layout (Phase 4) : #sideMenu et la nouvelle colonne #sideRight passent de
+     position:fixed (superposés) à de vrais items de grille CSS (.layout), comme la maquette.
+     #wrap devient la colonne centrale (.game-main) -- CONTENU INCHANGÉ (bossRoom/gameFrame/
+     panel restent siblings, setFarmViewVisible()/showActivityPage() les togglent par id,
+     indifférents à leur parent). -->
+<div class="layout" id="gameLayout">
+  <div id="sideMenu">
+    <button id="btnCollapseMenu" title="Replier/déplier le menu">◀</button>
+
+    <!-- refonte visuelle Phase 2 : #gameBar/#userBar/#metaBar regroupés en 4 groupes façon
+         mockup (Progression/Économie/Communauté/Compte), via .sideGroup/.sideGroupLabel --
+         ids/boutons/badges/data-i18n INCHANGÉS. -->
+    <div class="sideGroup">
+      <div class="sideGroupLabel" data-i18n="sideGroupProgression">Progression</div>
+      <div id="gameBar">
+        <button id="btnDailyQuests"><span data-i18n="btnDailyQuests">🗒️ Quêtes</span><span id="questBadge"></span></button>
+        <button id="btnMailbox"><span data-i18n="btnMailbox">📬 Courrier</span><span id="mailBadge"></span></button>
+        <button id="btnCompendium"><span data-i18n="btnCompendium">📖 Compendium</span><span class="contentNewBadge" id="newBadgeCompendium">1</span></button>
+        <button id="btnCodex"><span data-i18n="btnCodex">📚 Codex</span><span class="contentNewBadge" id="newBadgeCodex">1</span></button>
+        <button id="btnAchievements"><span data-i18n="btnAchievements">🏅 Succès</span><span class="contentNewBadge" id="newBadgeAchievements">1</span></button>
+        <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
+      </div>
+    </div>
+
+    <div class="sideGroup">
+      <div class="sideGroupLabel" data-i18n="sideGroupEconomie">Économie</div>
+      <div id="econBar">
+        <button id="btnMarket" title="BETA — en construction, encore peu fonctionnel"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
+      </div>
+    </div>
+
+    <div class="sideGroup">
+      <div class="sideGroupLabel" data-i18n="sideGroupCommunaute">Communauté</div>
+      <div id="communityBar">
+        <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
+        <button id="btnWiki"><span data-i18n="btnWiki">📖 Wiki</span><span class="contentNewBadge" id="newBadgeWiki">1</span></button>
+        <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge" aria-live="polite"></span></button>
+        <button id="btnDonation" class="lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnDonation">💖 Soutenir</span></button>
+      </div>
+    </div>
+
+    <div class="sideGroup">
+      <div class="sideGroupLabel" data-i18n="sideGroupCompte">Compte</div>
+      <div id="userBar">
+        <div id="userBarTop">
+          <span id="demoTag" data-i18n="demoTag">DÉMO</span>
+          <span id="userPseudo"></span>
+          <span id="userEmail"></span>
+        </div>
+        <button id="btnAccount" data-i18n="btnAccount">👤 Mon compte</button>
+        <button id="btnLinkAccount" data-i18n="btnLinkAccount" style="display:none">🔗 Lier un compte</button>
+        <div id="adminBox" style="display:none">
+          <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
+        </div>
+        <button id="btnLogout" data-i18n="btnLogout">🚪 Déconnexion</button>
+        <span id="saveStatus"></span>
+        <div id="uuidRow" style="display:none">
+          <button id="btnCopyUuid" title="Cliquer pour copier ton UUID">
+            <span id="uuidCopyHint">📋 <span data-i18n="copyLabel">Copier</span> UUID</span>
+          </button>
+        </div>
+        <button id="btnTester" style="display:none">🧪 <span data-i18n="btnTester">Tester</span></button>
+      </div>
+      <div id="onlineStatsBox">
+        <div id="onlineCounter">🟢 <b id="onlineTotal">—</b> <span data-i18n="onlineLbl">en ligne</span><span id="onlineGuests"></span></div>
+        <div id="registeredCounter">👤 <b id="registeredTotal">—</b> <span data-i18n="registeredLbl">inscrits</span></div>
+      </div>
+    </div>
+
+    <div id="metaBar">
+      <div id="langToggle">
+        <span class="langOpt" data-lang="fr">🇫🇷 FR</span>
+        <span class="langOpt" data-lang="en">🇬🇧 EN</span>
+        <div id="langThumb"></div>
+      </div>
+      <div id="menuSideToggle">
+        <span class="menuSideOpt" data-side="left" data-i18n="menuSideLeft">◀ Gauche</span>
+        <span class="menuSideOpt" data-side="right" data-i18n="menuSideRight">Droite ▶</span>
+        <div id="menuSideThumb"></div>
+      </div>
+    </div>
+
+    <div id="clientVersion">Black Desert Idle — <span id="clientVersionNum"></span></div>
   </div>
 
-  <div id="bossRoom">
+  <div id="wrap">
+    <div id="bossRoom">
     <div id="bossLobby">
       <div id="bossLobbyHead">
         <h2>🐍 <span data-i18n="bossPageTitle">World Boss</span></h2>
@@ -723,6 +696,32 @@
       <div id="optResult"></div>
     </div>
   </div>
+  </div>
+
+  <aside class="side-right" id="sideRight">
+    <div id="rightWidgets">
+      <div id="questWidget" class="floatWidget"></div>
+      <div id="questTrackerWidget" class="floatWidget" style="display:none"></div>
+    </div>
+
+    <div id="chatWidget" class="floatWidget">
+      <div class="qwHeaderRow">
+        <span class="qwTitle">💬 Chat</span>
+        <button class="qwFoldBtn" onclick="toggleChatFold()" id="chatFoldBtn">▾</button>
+      </div>
+      <div id="chatBody">
+        <div class="catTabs" id="chatTabs"></div>
+        <div id="chatMessages"></div>
+        <div id="chatInputRow">
+          <!-- liste de suggestions pour les mentions @joueur (2026-07-05, demande explicite) -->
+          <div id="chatMentionList"></div>
+          <input type="text" id="chatInput" maxlength="300" placeholder="…">
+          <button id="chatSendBtn">➤</button>
+        </div>
+        <div id="chatNote"></div>
+      </div>
+    </div>
+  </aside>
 </div>
 
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
