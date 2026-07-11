@@ -14249,17 +14249,16 @@ function renderAdminSilver(el) {
 
 function renderAdminHourly(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
-  
   Promise.all([
-    sb.from('admin_farm_by_hour').select('*'),
-    sb.from('admin_playtime_by_hour').select('*'),
+    sb.from('admin_farm_by_hour').select('hour, total_silver'),
+    sb.from('admin_playtime_by_hour').select('hour, players'),
   ]).then(([{data: byHour}, {data: playtimeByHour}]) => {
     const { accent } = currentAdminAccentColors();
     const hourMap = new Map();
     (byHour||[]).forEach(r => hourMap.set(r.hour, (hourMap.get(r.hour)||0) + Number(r.total_silver||0)));
     const hours = [...hourMap.entries()].sort((a,b) => new Date(a[0]) - new Date(b[0])).slice(-24);
     const hourChart = buildBarSeriesSvg(hours.map(([h,v]) => ({ label:h, value:v })), accent);
-    const ptRows = (playtimeByHour||[]).map(r => ({ hour:r.hour, players:Number(r.players||0), sec:Number(r.playtime_sec||0) }))
+    const ptRows = (playtimeByHour||[]).map(r => ({ hour:r.hour, players:Number(r.players||0) }))
       .sort((a,b) => new Date(a.hour) - new Date(b.hour)).slice(-24);
     const ptChart = buildBarSeriesSvg(ptRows.map(r => ({ label:r.hour, value:r.players })), accent);
     const maxHourEntry = hours.length ? hours.reduce((m,h) => h[1]>m[1]?h:m) : null;

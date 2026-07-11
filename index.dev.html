@@ -880,7 +880,7 @@
 <script src="src/admin/admin-panel.js?v=527"></script>
 <!-- charge APRÈS admin-panel.js (lit ADMIN_SECTIONS au chargement immédiat via .splice()) --
      voir src/admin/admin-economy.js -->
-<script src="src/admin/admin-economy.js?v=527"></script>
+<script src="src/admin/admin-economy.js?v=528"></script>
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
@@ -890,6 +890,6 @@
 <script src="src/market/market.js?v=527"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests/tests.js?v=527"></script>
+<script src="tests/tests.js?v=528"></script>
 </body>
 </html>
