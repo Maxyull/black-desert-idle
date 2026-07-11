@@ -2472,3 +2472,81 @@
     #shRate { font-size:9.5px; }
     #lootTicker { font-size:9.5px; max-height:70px; }
   }
+
+  /* =====================================================================
+     Refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-
+     redesign.html + dashboard-full-reference.md fournis par l'utilisateur,
+     voir CLAUDE.md section mockups) — Phase 1 : topbar + tabs.
+     Règles additives uniquement, aucune règle existante retirée. Thème du
+     mockup gardé tel quel (demande explicite) : très proche du thème doré
+     déjà en place (--gold/--gold-dim réutilisés directement), quelques
+     teintes en plus pour les surfaces/textes à plusieurs niveaux que le
+     mockup utilise et qui n'ont pas d'équivalent direct ici.
+     ===================================================================== */
+  :root {
+    --s1:#10101e; --s2:#181828;
+    --dbBorder:#2a2a44; --dbBorder2:#3a3a58;
+    --gold2:#e8c880; --green2:#70d890; --red2:#e06060;
+    --cream2:#9a8e78; --cream3:#585040;
+  }
+
+  .topbar {
+    width:1240px; max-width:100%; margin:0 auto 10px; box-sizing:border-box;
+    background:linear-gradient(180deg,#0c0c1a,#0a0a14); border:1px solid var(--dbBorder);
+    border-radius:8px; padding:8px 16px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px;
+    font-family:'Inter',sans-serif;
+  }
+  /* flex-shrink:0 + white-space:nowrap partout ci-dessous (2026-07-11, bug constaté en test
+     desktop réel) : sans ça, flexbox comprime .res-pills/.pill/#nextBossMini au lieu de laisser
+     .topbar passer sur 2 lignes (flex-wrap ci-dessus) -- le texte ("record .../h", countdown boss)
+     se retrouvait à la retour à la ligne À L'INTÉRIEUR d'une pilule écrasée à quelques px de large,
+     illisible. flex-wrap sur le conteneur + flex-shrink:0 sur les enfants = le bon combo. */
+  .topbar .logo { flex-shrink:0; white-space:nowrap; font-family:'Cinzel',serif; font-size:15px; color:var(--gold); letter-spacing:.1em; display:flex; align-items:center; gap:7px; }
+  .topbar .logo .mark { flex-shrink:0; width:20px; height:20px; border:1px solid var(--gold-dim); border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:11px; color:var(--gold2); }
+  .topbar .res-pills { display:flex; flex-shrink:0; gap:6px; margin-left:6px; }
+  .topbar .pill {
+    flex-shrink:0; white-space:nowrap; background:var(--s2); border:1px solid var(--dbBorder);
+    border-radius:20px; padding:3px 10px; font-size:11px; display:flex; align-items:center;
+    gap:5px; color:var(--cream2);
+  }
+  .topbar .pill strong { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; color:var(--gold2); }
+  .topbar .pill#shRate { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; color:var(--green2); }
+  .topbar .topbar-right { flex-shrink:0; margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .topbar #nextBossMini {
+    flex-shrink:0; background:rgba(192,64,64,.08); border:1px solid #3a1818; border-radius:20px;
+    padding:4px 12px; font-size:11px; color:var(--cream2); white-space:nowrap;
+  }
+  .topbar #nextBossMini b { color:var(--gold2); }
+  .topbar #nextBossMini .live { color:var(--red2); }
+  .topbar .icon-btn {
+    width:28px; height:28px; border-radius:6px; border:1px solid var(--dbBorder); background:var(--s2);
+    display:flex; align-items:center; justify-content:center; color:var(--cream2); font-size:13px;
+    cursor:pointer; position:relative; padding:0; flex-shrink:0;
+  }
+  .topbar .icon-btn:hover { border-color:var(--dbBorder2); color:var(--ink); }
+  /* #btnNotifCenter garde son label i18n complet ("🔔 Notifications") pour le reste du jeu -- ici,
+     dans le rail d'icônes compact du topbar, le texte est masqué (taille 0) et remplacé par une
+     icône décorative (::before) ; #notifBadge (compteur réel, voir updateNotifBadge()) devient le
+     petit badge rond superposé, même convention que .icon-dot du mockup. */
+  .topbar #btnNotifCenter { font-size:0; }
+  .topbar #btnNotifCenter::before { content:'🔔'; font-size:14px; }
+  .topbar #notifBadge {
+    position:absolute; top:-3px; right:-3px; background:var(--danger); color:#fff; font-size:8px;
+    font-family:'JetBrains Mono',monospace; border-radius:8px; padding:1px 4px; line-height:1; display:none;
+  }
+  .topbar #notifBadge.show { display:inline-flex; }
+
+  /* ===== tabs (reskin visuel de #activitiesBar/.actTab — structure, JS (renderActivityTabs(),
+     combat/boss.js) et mécanique des badges .actTabLock/.actTabNew/.actTabBossHp INCHANGÉS ;
+     ces badges chevauchent volontairement le bord inférieur du bouton, voir les commentaires
+     historiques sur .actTab plus haut dans ce fichier — ne pas toucher à leur position/padding ici) ===== */
+  #activitiesBar {
+    background:var(--s1); border:1px solid var(--dbBorder); border-bottom:1px solid var(--dbBorder);
+    border-radius:8px;
+  }
+  .actTab {
+    font-family:'Cinzel',serif; font-weight:600; letter-spacing:.06em; text-transform:uppercase;
+    border-color:transparent; border-radius:6px 6px 0 0; color:var(--cream3); background:transparent;
+  }
+  .actTab:hover:not(.locked) { color:var(--cream2); }
+  .actTab.active { color:var(--gold); border-color:var(--gold); background:rgba(201,165,90,.08); }
