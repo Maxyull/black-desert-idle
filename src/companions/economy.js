@@ -3,7 +3,7 @@
 // data.js), plutôt qu'un compteur séparé propre à ce module : ce dossier ne peut pas charger
 // meta/patch-notes-data.js (scope global distinct, iframe isolée), donc pas de lecture automatique
 // possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
-const COMPANION_MODULE_VERSION = 'V375';
+const COMPANION_MODULE_VERSION = 'V377';
 
 // ═══ BALANCE DE TEST (2026-07-10, demande explicite) ═══
 // Tous les coûts Silver et timers (incubation, œuf gratuit) sont divisés par ce facteur pour
@@ -98,6 +98,15 @@ let petsRosterResetV1 = false;
 let petsRosterCapV1 = false;
 // migration rétroactive (2026-07-10, marché d'échange) -- voir migratePetUidV1(), save.js
 let petsUidV1 = false;
+// migration rétroactive (2026-07-21, demande explicite : "lorsqu'on passe a la rareté superieur,
+// on change de nom et on prend les noms de la rareté superieur") -- avant ce changement,
+// BREAKTHROUGH (ticks.js) augmentait p.rar SANS jamais réassigner p.cat (espèce/nom), laissant
+// un pet affiché sous un nom d'espèce qui ne correspondait plus à sa vraie rareté (source de la
+// confusion Index/Sections/Collection corrigée juste avant). Ce flag, posé UNE SEULE FOIS (voir
+// migratePetSpeciesRarityV1()/loadGame(), save.js), réaligne p.cat sur la bonne espèce (même
+// section, rareté = p.rar réel -- structure 1 espèce par section×rareté, voir catalog.js) pour
+// tout pet déjà "percé" avant ce correctif.
+let petsSpeciesRarityV1 = false;
 // compteur À VIE (2026-07-19, demande explicite : stats admin) -- distinct de
 // hatchCountSincePity (remis à 0 à chaque pity déclenché) : jamais réinitialisé, incrémenté
 // une seule fois par tirage réel dans rollAndCreatePet() (hatch.js), peu importe le

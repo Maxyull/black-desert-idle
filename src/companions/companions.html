@@ -78,14 +78,23 @@
        classement CROSS-JOUEURS réel (companion_leaderboard(), Supabase), distinct du classement
        LOCAL de tes propres pets déjà présent dans l'onglet PvP ci-dessus. -->
   <div class="tab" onclick="ST(9)">🏆 Classement</div>
-  <!-- 2026-07-10, demande explicite : "vrai backend d'échange" -- marché réel de compagnons entre
-       joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
-       sync). Voir market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
-  <div class="tab" onclick="ST(11)">🔄 Marché <span class="tbadge" id="tb-market"></span></div>
+  <!-- bug corrigé (2026-07-21, rapporté explicitement : "lorsque je suis au market c'est le
+       viewer 3D qui montre actif et vis a versa") -- ST() surligne l'onglet actif par POSITION
+       DOM (`document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j))`),
+       PAS par l'argument passé à onclick="ST(i)". Marché (onclick=ST(11)) et Viewer 3D
+       (onclick=ST(10)) étaient déclarés dans l'ordre INVERSE de leurs propres indices --
+       Marché en position DOM 10 mais i=11, Viewer 3D en position DOM 11 mais i=10 -- donc
+       cliquer Marché surlignait l'onglet Viewer 3D (et vice versa) alors que le contenu affiché
+       (panels p10/p11, indexés par tableau, pas par position DOM) restait correct. Fix : ordre DOM
+       remis dans le même ordre que les indices ST(), comme tous les autres onglets. -->
   <!-- 2026-07-10, demande explicite : "on va integrer des model gbl" -- écran de test isolé pour
        valider le pipeline Three.js/GLB avant tout remplacement des icônes 2D existantes (roster,
        collection, incubation...). Charge un unique modèle de test depuis Supabase Storage. -->
   <div class="tab" onclick="ST(10)">🧊 Viewer 3D <span class="tbadge">TEST</span></div>
+  <!-- 2026-07-10, demande explicite : "vrai backend d'échange" -- marché réel de compagnons entre
+       joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
+       sync). Voir market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
+  <div class="tab" onclick="ST(11)">🔄 Marché <span class="tbadge" id="tb-market"></span></div>
 </div>
 <div class="content">
 
@@ -457,31 +466,31 @@
      est le premier des ~22 fichiers du module, voir repo-audit-todo.md point 1) -->
 <script src="pixelart.js?v=6"></script>
 <script src="catalog.js?v=7"></script>
-<script src="economy.js?v=11"></script>
+<script src="economy.js?v=14"></script>
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
-<script src="tier.js?v=7"></script>
+<script src="tier.js?v=8"></script>
 <script src="roster.js?v=8"></script>
 <script src="hatch.js?v=16"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=7"></script>
 <script src="sections.js?v=15"></script>
-<script src="collection.js?v=11"></script>
+<script src="collection.js?v=12"></script>
 <!-- renommés le 2026-07-21 (lot 4/~8, même renommage progressif que ci-dessus) -->
 <script src="fusion.js?v=9"></script>
 <script src="feed.js?v=7"></script>
-<script src="ticks.js?v=9"></script>
+<script src="ticks.js?v=10"></script>
 <!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
-<script src="save.js?v=13"></script>
+<script src="save.js?v=14"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="sync.js?v=12"></script>
+<script src="sync.js?v=13"></script>
 <!-- marché d'échange réel (2026-07-10, demande explicite) : lit PETS/petId/PET_CATALOG/RARITIES/
      rc/rn/tierMultOf/rollTierMult/drawPixelArt/toast/CM/petRosterRoomLeft déjà déclarés plus haut,
      appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
      strictement requis vis-à-vis de ces globals (aucune lecture immédiate), placé ici par
      lisibilité juste après le sync admin (même famille : accès à window.parent.getSbClient()). -->
-<script src="market.js?v=4"></script>
+<script src="market.js?v=5"></script>
 <!-- renommés le 2026-07-21 (lot 6/~8, même renommage progressif que ci-dessus) -->
 <script src="index.js?v=8"></script>
 <script src="game-view.js?v=7"></script>
@@ -507,7 +516,7 @@
 <!-- onboarding (2026-07-11, demande explicite) : n'a besoin que de OM()/CM() (hatch.js, déjà
      chargé) et de localStorage -- ordre non strictement requis, placé juste avant main.js qui
      l'appelle (maybeShowOnboarding()) après le premier renderAll(). -->
-<script src="onboarding.js?v=1"></script>
+<script src="onboarding.js?v=2"></script>
 <script src="main.js?v=9"></script>
 </body>
 </html>

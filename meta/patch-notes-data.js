@@ -5,7 +5,7 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
-  { v:'V376', d:'21/07/2026 21:00', name:{fr:'Écran Boss refait : même style que l\'écran Zone', en:'Boss screen redesigned: same look as the Zone screen'}, fr:[
+  { v:'V378', d:'21/07/2026 23:00', name:{fr:'Écran Boss refait : même style que l\'écran Zone', en:'Boss screen redesigned: same look as the Zone screen'}, fr:[
       {t:'change', sub:'combat', tx:'L\'écran Boss (lobby et arène) a été redessiné avec le même style visuel que l\'écran Zone : carte "prochain boss" mise en avant, calendrier hebdomadaire et récompenses par rang recolorés, aucun changement de fonctionnement.'},
       {t:'new', sub:'combat', tx:'Chaque World Boss a désormais une courte réplique d\'ambiance affichée dans le lobby.'},
       {t:'new', sub:'combat', tx:'Le lobby affiche maintenant la quantité de matériau garanti déjà en poche à côté de sa fourchette de drop.'},
@@ -17,6 +17,24 @@ const PATCH_NOTES = [
       {t:'new', sub:'combat', tx:'The lobby now shows how much of the guaranteed material you already have next to its drop range.'},
       {t:'new', sub:'combat', tx:'The "first kill of the week" bonus (when still available) is now shown in the lobby, before you even fight.'},
       {t:'change', sub:'combat', tx:'The pity progress bar (rare loot) is more visible in the lobby.'},
+    ] },
+  { v:'V377', d:'21/07/2026 22:00', name:{fr:'Module Compagnons : une percée de rareté change aussi le nom', en:'Companion module: a rarity breakthrough now changes the name too'}, fr:[
+      {t:'change', sub:'compagnon', tx:'Une percée de rareté (Tier 5 → rareté supérieure) fait désormais changer le familier d\'espèce, en prenant le nom correspondant à sa nouvelle rareté — au lieu de garder son ancien nom malgré une rareté supérieure.'},
+      {t:'fix', sub:'compagnon', tx:'Corrigé rétroactivement pour tout familier ayant déjà percé avant ce changement.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'A rarity breakthrough (Tier 5 → higher rarity) now changes the pet\'s species, taking on the name matching its new rarity — instead of keeping its old name despite a higher rarity.'},
+      {t:'fix', sub:'compagnon', tx:'Retroactively fixed for any pet that had already broken through before this change.'},
+    ] },
+  { v:'V376', d:'21/07/2026 21:00', name:{fr:'Module Compagnons : Marché (contre-offres, suggestions) + correctif onglets', en:'Companion module: Market (counter-offers, suggestions) + tab fix'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Marché : raccourci "🔄 Ajouter au marché" directement depuis une carte de la Collection.'},
+      {t:'new', sub:'compagnon', tx:'Marché : lors d\'une contre-offre, un badge "🆕" indique les familiers de ta Collection que le créateur de l\'offre ne possède pas encore.'},
+      {t:'fix', sub:'compagnon', tx:'Corrigé : cliquer sur l\'onglet Marché surlignait à tort l\'onglet Viewer 3D (et vice versa) — le contenu affiché était le bon, seul le surlignage de l\'onglet était inversé.'},
+      {t:'change', sub:'compagnon', tx:'Onboarding : la pagination en bas des étapes est plus discrète (points plus petits, couleur adoucie).'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'Market: "🔄 Add to Market" shortcut directly from a Collection card.'},
+      {t:'new', sub:'compagnon', tx:'Market: when making a counter-offer, a "🆕" badge marks pets from your Collection the offer creator doesn\'t own yet.'},
+      {t:'fix', sub:'compagnon', tx:'Fixed: clicking the Market tab wrongly highlighted the 3D Viewer tab (and vice versa) — the displayed content was correct, only the tab highlight was swapped.'},
+      {t:'change', sub:'compagnon', tx:'Onboarding: the step pagination dots are now more discreet (smaller, softer color).'},
     ] },
   { v:'V375', d:'21/07/2026 20:00', name:{fr:'Module Compagnons : rareté après une percée corrigée', en:'Companion module: rarity after a breakthrough fixed'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Corrigé : un pet ayant "percé" en rareté (Tier→rareté supérieure) pouvait afficher une rareté différente selon l\'onglet (Index figé sur la rareté de base de l\'espèce, Sections périmée si l\'onglet était déjà ouvert au moment de la percée) au lieu de sa rareté réelle, correctement affichée dans la Collection.'},

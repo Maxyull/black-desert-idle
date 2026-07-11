@@ -96,3 +96,9 @@ function rn(r){return RARITIES[r].name;}
 function secById(id){return SECTIONS.find(s=>s.id===id);}
 function petSec(p){return p.cat.sec;}
 function terrainPet(secId){return PETS.find(p=>p.cat.sec===secId&&p.terrain);}
+// espèce pour une section+rareté donnée (2026-07-21, demande explicite : "lorsqu'on passe a la
+// rareté superieur, on change de nom et on prend les noms de la rareté superieur") -- PET_CATALOG
+// a EXACTEMENT une espèce par section×rareté (voir catalog.js), match déterministe garanti.
+// Partagée entre ticks.js (BREAKTHROUGH, temps réel) et save.js (migratePetSpeciesRarityV1,
+// rétroactif) pour ne jamais dupliquer cette règle à deux endroits.
+function speciesForSectionAndRarity(sec,rar){return PET_CATALOG.find(c=>c.sec===sec&&c.rar===rar);}

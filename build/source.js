@@ -5646,7 +5646,7 @@ function openCompanionsModule() {
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'src/companions/companions.html?v=12'; 
+    frame.src = 'src/companions/companions.html?v=14'; 
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);

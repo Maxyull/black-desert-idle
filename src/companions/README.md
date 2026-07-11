@@ -29,6 +29,56 @@ Même esprit que les migrations rétroactives du jeu principal (`S.migratedXxxVN
 adapté ici puisque ce module n'a pas de compte Supabase (sauvegarde 100% locale, pas de
 `applySaveState()` central à brancher).
 
+**Une percée de rareté change aussi le nom (2026-07-21, demande explicite : "lorsqu'on passe a la
+rareté superieur, on change de nom et on prend les noms de la rareté superieur")** : avant ce
+changement, BREAKTHROUGH (`ticks.js`) augmentait `p.rar` SANS jamais réassigner `p.cat`
+(espèce/nom/art) — un pet gardait son ancien nom malgré une rareté supérieure, ce qui était la
+VRAIE cause de fond de toute la confusion Index/Sections/Collection déjà corrigée juste avant
+(l'Index affichait la rareté de base figée sur ce nom d'espèce, qui ne correspondait plus à rien
+de réel une fois le pet "percé"). PET_CATALOG a EXACTEMENT une espèce par section×rareté (voir
+`catalog.js`) — nouvelle fonction pure partagée `speciesForSectionAndRarity(sec, rar)` (`tier.js`),
+match déterministe garanti, utilisée par :
+- `ticks.js` (BREAKTHROUGH, temps réel) : réassigne `p.cat` à la bonne espèce (même section,
+  nouvelle rareté) au moment de la percée — le toast/log annoncent le changement de nom
+  ("X PERCE À TRAVERS ET DEVIENT Y !").
+- `save.js` (`migratePetSpeciesRarityV1()`, rétroactif, gaté par le flag `petsSpeciesRarityV1`
+  comme les autres migrations de ce module) : corrige tout pet déjà "percé" AVANT ce correctif.
+  Ne touche PAS un pet fraîchement éclos dont l'écart voulu de 1 entre `p.rar`/`p.cat.rar`
+  (`rollAndCreatePet`, fuzzy match ±1, hatch.js) est un mécanisme de jeu distinct — seul un écart
+  de 2 ou plus prouve une percée historique, jamais un simple hatch.
+- Voir `tests/companions.spec.js` ("speciesForSectionAndRarity returns...", "migratePetSpeciesRarityV1
+  fixes...").
+
+**Marché : contre-offres suggérées + correctif onglets (2026-07-21, demande explicite : "Ajouter
+au market faire une contre offre et montrer ce que le joueurs en face n'a pas" + "lorsque je suis
+au market c'est vbiewer 3D qui montre actif et vis a versa" + "Le slider en bas du nom du menu
+dois etre un peu moin present plus discret")** :
+- **"🔄 Ajouter au marché"** : bouton raccourci sur chaque carte Collection (`collection.js`),
+  ouvre directement `openCreateOfferModal()` sur l'onglet Marché avec ce familier pré-sélectionné
+  (`quickAddToMarket()`, `market.js`).
+- **Suggestion de contre-offre** : nouvelle colonne `companion_stats.owned_species` (jsonb, liste
+  dédupliquée des noms d'espèces possédées, synchronisée par `sync.js` toutes les 60s comme les
+  autres compteurs). Nouvelle RPC `get_player_owned_species(p_user_id, p_offer_id)` — **restreinte
+  au contexte d'une offre OUVERTE et RÉELLE** appartenant à `p_user_id` (jamais un UUID arbitraire
+  sans lien avec un échange en cours, voir migration
+  `restrict_get_player_owned_species_to_open_offer.sql` — la première version, plus permissive,
+  a été resserrée avant même sa première utilisation client, suite à un refus du classificateur
+  auto-mode signalant l'exposition cross-joueur trop large). Dans la modale de contre-offre
+  (`openCounterModal()`/`renderCounterPetList()`), chaque familier candidat dont l'espèce n'est PAS
+  dans la liste retournée affiche un badge "🆕" (nouveau pour le créateur de l'offre).
+- **Bug corrigé — onglets Marché/Viewer 3D inversés** : `ST()` (`hatch.js`) surligne l'onglet actif
+  par POSITION DOM parmi les `.tab`, pas par l'argument `i` passé à `onclick="ST(i)"`. Les deux
+  onglets étaient déclarés dans l'ordre INVERSE de leurs propres indices (Marché en position DOM
+  10 avec `onclick="ST(11)"`, Viewer 3D en position 11 avec `onclick="ST(10)"`) — cliquer Marché
+  surlignait Viewer 3D et vice versa, alors que le CONTENU affiché (panels indexés par tableau,
+  pas par position DOM) restait correct. Corrigé en réordonnant les `<div class="tab">` dans
+  `companions.html`.
+- **Onboarding plus discret** : les points de pagination sous chaque étape (`onboarding.js`)
+  réduits (6px→4px) et couleur adoucie (`--gold-dim` au lieu de `--gold` plein) — moins voyants
+  que le titre de l'étape juste au-dessus.
+- Voir `tests/companions.spec.js` ("clicking Marché highlights...", "quickAddToMarket switches...",
+  "counter-offer pet list badges...").
+
 **Bug corrigé — rareté incohérente entre onglets après une percée (2026-07-21, rapporté
 explicitement : "dans l'index il est noté comme épique, dans sections il est noté comme
 légendaire et dans la collection il est noté comme ancestral")** : une percée de rareté

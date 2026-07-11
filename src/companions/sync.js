@@ -63,6 +63,11 @@ async function syncCompanionStatsToServer() {
     // l'ancien calcul (max 48) se corrigent d'elles-mêmes au prochain sync de chaque joueur.
     const uniqueSpeciesCount = companionIndexProgress(Array.isArray(PETS) ? PETS : []);
     const { gsSumWithTier, gsMax } = computeCompanionGsAggregates();
+    // Marché — "montrer ce que le joueur en face n'a pas" (2026-07-21, demande explicite) : liste
+    // (dédupliquée) des noms d'espèces possédées, lue par get_player_owned_species() côté serveur
+    // -- accès restreint au contexte d'une offre ouverte réelle, jamais un UUID arbitraire (voir
+    // la migration companion_stats_owned_species / restrict_get_player_owned_species_to_open_offer).
+    const ownedSpecies = Array.isArray(PETS) ? [...new Set(PETS.map(p => p.cat.name))] : [];
     // bug corrigé #2 (2026-07-20) : le builder Postgrest renvoyé par sb.rpc(...) n'implémente QUE
     // `.then()` (thenable), pas `.catch()` -- l'ancien `.catch(()=>{})` levait silencieusement
     // "TypeError: ...catch is not a function", avalée par le try/catch englobant, AVANT même que
@@ -88,6 +93,7 @@ async function syncCompanionStatsToServer() {
       p_unique_species_count: uniqueSpeciesCount,
       p_gs_sum_with_tier: gsSumWithTier,
       p_gs_max: gsMax,
+      p_owned_species: ownedSpecies,
     });
   } catch(e) {}
 }
