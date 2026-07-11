@@ -205,6 +205,14 @@ function migrateJewelryMatNameV239() {
 // protégé) ne le verrait donc jamais compté, sans backfill. Contrairement à markPenMastery(),
 // écrit directement dans S.penMastery : pas de floatTxt/log Discord pour chaque objet (spam au
 // premier chargement), un simple rattrapage silencieux de l'état déjà acquis.
+/**
+ * Migration rétroactive : rattrape S.penMastery pour tout objet déjà à PEN AVANT le 2026-07-08
+ * (voir contexte complet juste au-dessus). Pattern de référence pour toute nouvelle migration
+ * rétroactive de ce fichier (CLAUDE.md §13) : écrit DIRECTEMENT dans la structure de données,
+ * jamais via les fonctions "normales" (markPenMastery) qui logueraient/notifieraient à tort.
+ * Gatée par S.migratedPenMasteryV308 dans applySaveState() (core/game-core.js) — exécution unique.
+ * @returns {void} mute S.penMastery et COMPENDIUM_BAG en place, aucune valeur de retour.
+ */
 function migratePenMasteryV308() {
   const maxLvl = ENH_NAMES.length - 1;
   const check = it => {

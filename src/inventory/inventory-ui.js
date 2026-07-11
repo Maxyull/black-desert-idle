@@ -1217,8 +1217,15 @@ $('optTarget').onchange = e => { optTarget = { loc:'equip', key:e.target.value }
 // remplace l'ancienne case à cocher #optCronToggle
 $('optCronSlot').onclick = () => { S.useCronStone = !S.useCronStone; renderOptimization(); };
 
-// une tentative d'optimisation (succès/échec/rétrogradation) — factorisée pour être appelée
-// aussi bien par le bouton manuel que par la boucle "Auto jusqu'à" (voir plus bas)
+/**
+ * Une tentative d'optimisation (succès/échec/rétrogradation) sur l'objet ciblé par
+ * getOptTargetItem() — factorisée pour être appelée aussi bien par le bouton manuel que par la
+ * boucle "Auto jusqu'à" (voir plus bas). Consomme 1 pierre d'optimisation (findEnhanceMaterial())
+ * et, si activée, la Pierre de Cron (S.useCronStone) pour protéger contre la rétrogradation.
+ * Chance de succès : voir enhChance()/enhChanceParts() (game-core.js).
+ * @returns {boolean} true si une tentative a bien eu lieu (matériau consommé), false si bloquée
+ *   (pas de cible, pas de matériau, ou déjà au palier maximum).
+ */
 function attemptEnhance() {
   const target = getOptTargetItem();
   const idx = findEnhanceMaterial();

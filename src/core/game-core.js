@@ -456,7 +456,14 @@ function addItemFailstack(item, level) {
   if (!item.fsByLevel) item.fsByLevel = {};
   item.fsByLevel[level] = (item.fsByLevel[level] || 0) + 1;
 }
-// renvoie {base, bonus, total} — base = chance fixe, bonus = apport du failstack (affichés séparément sur la barre)
+/**
+ * Chance de succès d'une tentative d'optimisation vers `level`, décomposée en base fixe et bonus
+ * failstack (affichés séparément sur la barre de progression).
+ * @param {number} level - palier visé (index dans ENH_NAMES ; < SAFE_IDX = toujours 100%).
+ * @param {object} item - objet ciblé, lit item.fsByLevel[level] (échecs déjà accumulés à CE
+ *   niveau précis, sur CET objet précis — jamais partagé entre objets ni entre niveaux).
+ * @returns {{base:number, bonus:number, total:number}} total = base + bonus, plafonné à 90%.
+ */
 function enhChanceParts(level, item) {
   if (level < SAFE_IDX) return { base:1, bonus:0, total:1 };
   const base = ENH_CHANCE_FLAT[level] ?? .01;

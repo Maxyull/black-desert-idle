@@ -4919,6 +4919,7 @@ const GEAR_SELL_MULT = 2.2;
 const JACKPOT_VAL_TRASH_RATIO = 20;
 
 const ALPHA_LOOT_CHANCE_MULT = 2;
+
 function rollGearDrop(zone, alpha) {
   const tier = gearTierForZone(zoneIdx);
   const chance = gearDropChance(tier, zoneIdx);
@@ -4984,6 +4985,7 @@ function fmtDurationMin(min) {
   if (hours < 24) return hours.toFixed(1) + ' h';
   return (hours/24).toFixed(1) + ' j';
 }
+
 function rollDrops(wp, alpha, lm) {
   const zone = Z(), L = zone.loot;
   const zk = zoneIdx; 
@@ -5176,6 +5178,7 @@ function flashXpGain() {
   clearTimeout(flashXpGain._t);
   flashXpGain._t = setTimeout(() => el.classList.remove('xpFlash'), 500);
 }
+
 function gainXp(n) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
