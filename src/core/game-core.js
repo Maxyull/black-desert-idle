@@ -972,6 +972,13 @@ function doTeleport(dirX, dirY) {
 // desormais dans combat/potions-logic.js (extrait le 2026-07-08, reorganisation par dossiers) --
 // charge APRES ce fichier, voir index.html.
 
+/**
+ * Machine à états du joueur (IA), appelée chaque frame (voir advanceSim). États : search (cherche
+ * un pack) → move (approche) → gather (contact, temporisation avant combat) → combat (délègue à
+ * combatTick) → kite (esquive à distance, IA défensive) → loot (ramasse le loot du pack tué) →
+ * search. faint (K.O.) court-circuite tout le reste et appelle die().
+ * @param {number} dt - delta-temps en secondes depuis la frame précédente.
+ */
 function fsm(dt) {
   P.stateT += dt;
   if (P.faint > 0) {
@@ -1083,6 +1090,7 @@ function fsm(dt) {
   P.tpFlash = Math.max(0,P.tpFlash-dt*3);
 }
 
+/** @returns {object|null} prochain sort à lancer selon priorité/cooldown/mana disponible (buff en priorité si prêt), null si aucun n'est castable — l'appelant (combatTick) bascule alors en kite. */
 function pickSkill() {
   const buff = SKILLS.find(s=>s.type==='buff');
   if (buffTimer <= 0 && cds[buff.id] <= 0 && P.mp >= buff.mp) return buff;
@@ -1098,6 +1106,13 @@ function pickSkill() {
   return best;
 }
 
+/**
+ * Logique de combat par frame (état 'combat' de fsm()) : maintient la distance d'engagement selon
+ * hpTier(), orbite autour de la cible, esquive défensive hors zone dangereuse, gère le cast en
+ * cours (résolution via resolveSkill) ou en lance un nouveau (pickSkill) — retombe en 'kite' si
+ * rien n'est castable et que le mode/palier de PV l'exige.
+ * @param {number} dt - delta-temps en secondes.
+ */
 function combatTick(dt) {
   const mode = aiMode(), tier = hpTier();
   const wantDist = tier==='agressif' ? 75 : tier==='normal' ? 100 : 130;
@@ -1151,6 +1166,12 @@ function combatTick(dt) {
 // de vider une seule barre agrégée pour tout le pack d'un coup)
 function currentWolf(p) { return p.wolves.find(w => !w.dead) || null; }
 
+/**
+ * Applique les effets d'un sort dont le cast vient de se terminer : dégâts de zone répartis sur
+ * TOUS les monstres vivants des packs qui se chevauchent avec la cible (voir commentaires
+ * ci-dessous pour le détail du splitFactor), VFX, écran de secousse.
+ * @param {object} sk - sort résolu (SKILLS), lit .type, .dmg, .shake, .dur.
+ */
 function resolveSkill(sk) {
   P.castingSkill = null;
   if (sk.type === 'buff') { buffTimer = sk.dur; floatTxt(P.x,P.y,98,'✦ Speed Spell',{gold:true}); return; }
@@ -1194,10 +1215,12 @@ function resolveSkill(sk) {
 }
 
 // ---------- loups ----------
+/** @param {object} p - pack. @param {object} w - monstre du pack. @returns {{x:number,y:number}} position monde du monstre, interpolée entre dispersion (ox/oy) et regroupement (gx/gy) selon p.gathered. */
 function wolfPos(p,w){
   return { x:p.x + w.ox*(1-p.gathered) + w.gx*p.gathered,
            y:p.y + w.oy*(1-p.gathered) + w.gy*p.gathered };
 }
+/** @param {number} dt - delta-temps en secondes. Fait attaquer les monstres du pack ciblé (lunge/dégâts sur le joueur), gère le K.O. et la fenêtre glissante de dégâts encaissés (voir P.dmgBurstAccum). */
 function wolvesTick(dt) {
   // K.O. (2026-07-09, demande explicite : "quand tu meurs, les monstres ne t'attaquent plus") --
   // sans cette garde, les loups continuaient de charger et de toucher le joueur déjà à 0 PV
@@ -1298,6 +1321,12 @@ function wolvesTick(dt) {
 // agrégée du pack tombait à 0 ; désormais chaque monstre meurt et loot individuellement dès que SON
 // PROPRE PV atteint 0 (voir currentWolf/resolveSkill), et killPack ne fait plus que la finalisation
 // une fois le DERNIER monstre du pack tombé.
+/**
+ * Mort d'UN monstre du pack : incrémente kills/XP, spawn le loot (rollDrops), et finalise le pack
+ * entier (killPack) si c'était le dernier monstre vivant.
+ * @param {object} p - pack contenant le monstre.
+ * @param {object} w - monstre tué.
+ */
 function killWolf(p, w) {
   w.dead = true;
   const z = Z(), lm = lootMult(bottleneck());
@@ -1314,6 +1343,7 @@ function killWolf(p, w) {
   hud();
   if (p.wolves.every(ww => ww.dead)) killPack(p);
 }
+/** @param {object} p - pack dont le dernier monstre vient de mourir. Finalise le pack (marque dead), enchaîne vers 'search' (mode XP) ou 'loot' (nettoie la zone avant de repartir). */
 function killPack(p) {
   p.dead = true;
   $('aiSkill').textContent = '—';
@@ -1997,6 +2027,7 @@ setInterval(() => { if (document.hidden) advanceSim(performance.now()); }, 1000)
 // ==================== SAUVEGARDE (prêt pour Supabase) ====================
 // Rassemble tout l'état du joueur en un objet JSON sérialisable.
 // C'est CE bloc qui doit être envoyé/lu depuis la table Supabase "game_saves".
+/** @returns {object} instantané JSON-sérialisable de tout l'état joueur (S, EQUIP, INV, sacs spéciaux, zone, position) — c'est ce bloc qui est envoyé/lu depuis Supabase (table game_saves). */
 function getSaveState() {
   return {
     version: 1,
@@ -2010,6 +2041,15 @@ function getSaveState() {
     savedAt: new Date().toISOString(),
   };
 }
+/**
+ * Restaure un instantané de getSaveState() dans l'état live du jeu : S/EQUIP/INV/sacs spéciaux,
+ * zone/position (playerPos restauré AVANT resetWorld() pour que les packs spawnent au bon
+ * endroit), lance toutes les migrations rétroactives gear-migrations.js (une seule fois chacune,
+ * gatées par leur flag S.migratedXxxVNNN), puis calcule et applique le rattrapage hors-ligne
+ * (computeOfflineCatchupSilver) avant d'afficher le résumé au retour si applicable.
+ * @param {object} data - instantané produit par getSaveState() (ou chargé depuis Supabase/fichier).
+ * @returns {boolean} vrai si appliqué, faux si `data` est absent ou d'une version incompatible.
+ */
 function applySaveState(data) {
   if (!data || data.version !== 1) return false;
   // calculé AVANT Object.assign : le taux/niveau "avant" doivent venir de la sauvegarde chargée
