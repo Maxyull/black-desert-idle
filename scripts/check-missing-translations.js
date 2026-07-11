@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /*
- * Valide les traductions i18next du jeu (voir I18N_PLAN.md §8bis, CLAUDE.md §31).
+ * Valide les traductions i18next du jeu (voir docs/I18N_PLAN.md §8bis, CLAUDE.md §31).
  *
  * Trois choses verifiees :
  *   1. Toute cle presente dans locales/en/<domaine>.json existe dans locales/fr/<domaine>.json
@@ -8,7 +8,7 @@
  *   2. Les variables d'interpolation ({{var}}) sont identiques entre fr et en pour une meme cle.
  *   3. Tout appel `i18next.t('domaine:cle', ...)` trouve dans src/**\/*.js reference une cle qui
  *      existe reellement dans les DEUX JSON de ce domaine -- une cle utilisee mais jamais definie
- *      afficherait la cle brute au joueur (voir I18N_PLAN.md §7, "Clé manquante").
+ *      afficherait la cle brute au joueur (voir docs/I18N_PLAN.md §7, "Clé manquante").
  *
  * Exit code non-zero si divergence -- destine a bloquer un commit/CI.
  *
@@ -86,7 +86,7 @@ function walkJsFiles(dir, out) {
 }
 
 // formes plurielles CLDR gerees par i18next (fr/en n'utilisent que one/other, mais une langue
-// future -- polonais, russe, arabe -- peut activer les autres, voir I18N_PLAN.md §6/§10) : une
+// future -- polonais, russe, arabe -- peut activer les autres, voir docs/I18N_PLAN.md §6/§10) : une
 // cle passee a t() avec `count` est stockee sous cle_one/cle_other (etc.), jamais la cle nue.
 const PLURAL_SUFFIXES = ['_zero', '_one', '_two', '_few', '_many', '_other'];
 

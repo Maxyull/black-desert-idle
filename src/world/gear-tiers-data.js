@@ -132,7 +132,7 @@ const ZONE_ARMOR_SLOTS = [
 // 3, ~750 PA au PEN en bleu, contre ~460 PD total) — apShare/dpShare recalculés pour qu'un stuff
 // COMPLET du palier bleu (3 armes + 4 armures + bijoux) totalise ~301 PA / ~248 PD au PEN (×2.33,
 // voir enhBonus(20)), chaque palier plus bas donnant proportionnellement moins (la formule suit le
-// PA/PD requis de zone, qui grandit à chaque palier) — voir roadmap.md pour le détail du calcul.
+// PA/PD requis de zone, qui grandit à chaque palier) — voir docs/roadmap.md pour le détail du calcul.
 // AP retiré des 4 pièces d'armure (2026-07-06, demande explicite : "les armures ne donnent pas
 // d'AP") — comme dans le vrai jeu, l'armure est purement défensive (PD/PV/Esquive), seules les
 // armes apportent de l'AP. L'ancien total d'AP armure (.0204+.0204+.0163+.0163 = .0734) est

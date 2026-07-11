@@ -72,7 +72,7 @@ async function refreshLiveLootRates() {
 // ---------- admin (accès réservé à ce compte précis) ----------
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
 function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
-// système de sanctions (2026-07-18, voir ADMIN_MENU_PLAN.md §3.1) : banStatus = { banned_until, ban_reason } ou null
+// système de sanctions (2026-07-18, voir docs/ADMIN_MENU_PLAN.md §3.1) : banStatus = { banned_until, ban_reason } ou null
 function isBanned(banStatus) {
   if (!banStatus || !banStatus.banned_until) return false;
   const t = new Date(banStatus.banned_until).getTime();
@@ -778,11 +778,13 @@ $a('btnAchievements').onclick = openAchievements;
 $a('btnCompendium').onclick = openCompendiumReact;
 $a('ztCompendium').onclick = openCompendiumReact;
 // Donation (2026-07-21, demande explicite : "ouvre soutenir et on y met les page de donation
-// dedans") -- déverrouille #btnDonation (jusque-là lockedFeatureBtn) et ouvre donation.html (page
-// autonome déjà réelle : lien PayPal.me configuré, voir commit bc3a40c) dans un panneau iframe,
-// même pattern que openCompanionsModule()/closeCompanionsModule() (combat/boss.js) -- iframe
-// plutôt que fusion HTML : donation.html a son propre :root de couleurs et aucune dépendance au
-// scope global du jeu, pas besoin de partager quoi que ce soit avec lui.
+// dedans") -- déverrouille #btnDonation (jusque-là lockedFeatureBtn) et ouvre donation/donation.html
+// (page autonome déjà réelle : lien PayPal.me configuré, voir commit bc3a40c) dans un panneau
+// iframe, même pattern que openCompanionsModule()/closeCompanionsModule() (combat/boss.js) --
+// iframe plutôt que fusion HTML : donation.html a son propre :root de couleurs et aucune dépendance
+// au scope global du jeu, pas besoin de partager quoi que ce soit avec lui.
+// 2026-07-21 (tri de la racine, voir docs/) : donation.html/donation-merci.html/donation-policy.html
+// déplacés à la racine du dossier donation/ -- chemin mis à jour ici en conséquence.
 // ⚠️ Le total collecté/la barre de progression/le mur de donateurs affichés dans donation.html sont
 // des VALEURS FIXES (jamais branchées à un vrai suivi des dons) -- pas touché ici, mais à garder en
 // tête si un vrai suivi est demandé un jour (voir aussi donation-policy.html, lien déjà en place).
@@ -802,7 +804,7 @@ function openDonationPanel() {
     const frame = document.createElement('iframe');
     frame.id = 'donationFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'donation.html';
+    frame.src = 'donation/donation.html';
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);
@@ -1312,7 +1314,7 @@ function applyI18n() {
 }
 $a('langToggle').onclick = () => {
   LANG = LANG === 'fr' ? 'en' : 'fr';
-  if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG); // garde i18next synchronise avec LANG, voir I18N_PLAN.md §8
+  if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG); // garde i18next synchronise avec LANG, voir docs/I18N_PLAN.md §8
   try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
   applyI18n();
 };

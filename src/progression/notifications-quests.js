@@ -759,7 +759,7 @@ function lootMult(r) {
 // valeurs THÉORIQUES, indépendantes du stuff actuel du joueur (demande explicite : "silver/h, xp/h,
 // kills/min théoriques par zone") -- comparent les zones entre elles à armes égales, sans se
 // soucier de si le joueur peut y survivre aujourd'hui.
-const REF_KPM_FOR_STATS = 15; // kills/min de référence (voir roadmap.md, même valeur que le calibrage économique des zones)
+const REF_KPM_FOR_STATS = 15; // kills/min de référence (voir docs/roadmap.md, même valeur que le calibrage économique des zones)
 const REF_DPS_FOR_STATS = 900; // dégâts/min de référence PUREMENT relatif : seul hpPer varie d'une zone à l'autre, donc le classement (et le ratio entre zones) ne dépend pas de la valeur choisie ici
 // UNIQUEMENT le trash (2026-07-09, demande explicite : "le calcul de silver/h se fait uniquement
 // sur les silver looté au sol grâce au token qui doivent être la principale source de revenu") --
