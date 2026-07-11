@@ -707,11 +707,17 @@ const I18N_RESOURCES = {
       "market.vs_label": "Face à"
     },
     "progression": {
-      "progression.achievements.completed": "Terminé ✓",
+      "progression.achievements.cat_all_label": "Tous",
       "progression.achievements.empty": "Rien à afficher ici",
-      "progression.achievements.filter_unfinished_off": "☐ Pas fini",
-      "progression.achievements.filter_unfinished_on": "☑ Pas fini",
+      "progression.achievements.filter_unfinished_label": "Non terminés seulement",
+      "progression.achievements.overview_summary": "{{done}} / {{total}} débloqués · {{earned}} silver déjà gagné en récompenses",
+      "progression.achievements.overview_title": "Succès",
       "progression.achievements.panel_title": "🏅 Succès",
+      "progression.achievements.recent_new_badge": "NOUVEAU",
+      "progression.achievements.spotlight_label": "Presque là",
+      "progression.achievements.stat_remaining": "Restants",
+      "progression.achievements.stat_silver_to_unlock": "Silver à débloquer",
+      "progression.achievements.stat_unlocked": "Débloqués",
       "progression.achievements.toast_title": "🏅 Succès débloqué",
       "progression.compendium.boss_defeated": "Vaincu au moins une fois",
       "progression.compendium.boss_not_defeated": "Pas encore vaincu",
@@ -1565,11 +1571,17 @@ const I18N_RESOURCES = {
       "market.vs_label": "Vs"
     },
     "progression": {
-      "progression.achievements.completed": "Completed ✓",
+      "progression.achievements.cat_all_label": "All",
       "progression.achievements.empty": "Nothing to show here",
-      "progression.achievements.filter_unfinished_off": "☐ Unfinished",
-      "progression.achievements.filter_unfinished_on": "☑ Unfinished",
+      "progression.achievements.filter_unfinished_label": "Unfinished only",
+      "progression.achievements.overview_summary": "{{done}} / {{total}} unlocked · {{earned}} silver already earned in rewards",
+      "progression.achievements.overview_title": "Achievements",
       "progression.achievements.panel_title": "🏅 Achievements",
+      "progression.achievements.recent_new_badge": "NEW",
+      "progression.achievements.spotlight_label": "Almost there",
+      "progression.achievements.stat_remaining": "Remaining",
+      "progression.achievements.stat_silver_to_unlock": "Silver to unlock",
+      "progression.achievements.stat_unlocked": "Unlocked",
       "progression.achievements.toast_title": "🏅 Achievement unlocked",
       "progression.compendium.boss_defeated": "Defeated at least once",
       "progression.compendium.boss_not_defeated": "Not defeated yet",
@@ -3487,7 +3499,7 @@ const CONTENT_UPDATE_VERSION = {
   wiki:         { v:2, desc:{fr:'1 arme garantie sur les 3 dernières zones de chaque palier (plus rien sur la 1ère)',en:'1 guaranteed weapon on a tier\'s last 3 zones (none on the 1st)'} },
   compendium:   { v:1, desc:{fr:'Clique un objet pour voir dans quelles zones le farmer',en:'Click an item to see which zones farm it'} },
   codex:        { v:1, desc:{fr:'Liste à jour de tous les objets du jeu',en:'Up to date list of every item in the game'} },
-  achievements: { v:1, desc:{fr:'Filtres par catégorie et "pas fini" disponibles',en:'Category and "unfinished" filters available'} },
+  achievements: { v:2, desc:{fr:'Nouveau visuel : succès groupés par chaîne de paliers, vue d\'ensemble et derniers débloqués',en:'New look: achievements grouped into tiered chains, overview and recent unlocks'} },
 };
 function contentSeenKey(panel) { return 'velia-idle-seenv-'+panel; }
 function contentLastSeenVersion(panel) {
@@ -3924,6 +3936,57 @@ function achCat(id) {
   return 'equipment'; 
 }
 
+function groupAchievementsIntoChains() {
+  const chains = new Map();
+  for (const a of ACHIEVEMENTS) {
+    const key = achCat(a.id) + '::' + a.statFn.toString();
+    if (!chains.has(key)) chains.set(key, { key, cat: achCat(a.id), tiers: [] });
+    chains.get(key).tiers.push(a);
+  }
+  return Array.from(chains.values());
+}
+
+function chainProgress(chain, S) {
+  const tiers = chain.tiers;
+  const unlockedCount = tiers.filter(a => !!S.achUnlocked[a.id]).length;
+  const done = unlockedCount === tiers.length;
+  const tierIndex = done ? tiers.length - 1 : tiers.findIndex(a => !S.achUnlocked[a.id]);
+  const tier = tiers[tierIndex];
+  const val = tier.statFn(S);
+  const pct = done ? 100 : Math.max(0, Math.min(99, (val / tier.target) * 100));
+  return { tier, tierIndex, unlockedCount, totalTiers: tiers.length, done, pct, val };
+}
+
+function sortChainsForDisplay(chains, S) {
+  const withProgress = chains.map(chain => ({ chain, progress: chainProgress(chain, S) }));
+  withProgress.sort((x, y) => {
+    if (x.progress.done !== y.progress.done) return x.progress.done ? 1 : -1;
+    return y.progress.pct - x.progress.pct;
+  });
+  return withProgress;
+}
+
+function achievementSilverTotals(S) {
+  let earned = 0, remaining = 0;
+  for (const a of ACHIEVEMENTS) {
+    if (S.achUnlocked[a.id]) earned += a.reward; else remaining += a.reward;
+  }
+  return { earned, remaining };
+}
+
+function achCatCompletion(catId, S) {
+  const list = catId === 'all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id) === catId);
+  const done = list.filter(a => S.achUnlocked[a.id]).length;
+  return { done, total: list.length, pct: list.length ? Math.round((done / list.length) * 100) : 0 };
+}
+
+function recentlyUnlockedAchievements(S, limit) {
+  return ACHIEVEMENTS
+    .filter(a => typeof S.achUnlocked[a.id] === 'number' && S.achUnlocked[a.id] > 0)
+    .sort((a, b) => S.achUnlocked[b.id] - S.achUnlocked[a.id])
+    .slice(0, limit);
+}
+
 // ==== src/progression/treasure-craft.js ====
 const VELIA_TREASURE = [
   { name:'Bout du trésor de Velia', ch:.0017,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' }, 
@@ -4253,41 +4316,127 @@ function openMailbox() {
 
 let achPanelCat = 'all';       
 let achOnlyUnfinished = false; 
-function achRowHtml(a) {
-  const val = a.statFn(S), done = !!S.achUnlocked[a.id];
-  const pct = Math.max(0, Math.min(100, Math.round((val/a.target)*100)));
-  return `<div class="achRow${done?' done':''}">` +
-    `<div class="achIcon">${a.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${a.name[LANG]}</div><div class="achDesc">${a.desc[LANG]}</div>` +
-    `<div class="achBarWrap"><div class="achBar" style="width:${pct}%"></div></div>` +
-    `<div class="achProgress">${done ? i18next.t('progression:progression.achievements.completed') : fmt(Math.min(val,a.target))+' / '+fmt(a.target)}</div></div>` +
-    `<div class="achReward">+${fmt(a.reward)} 🪙</div></div>`;
+
+function achRingSvg(pct, size, strokeW) {
+  const r = (size - strokeW) / 2, c = 2 * Math.PI * r;
+  const clamped = Math.max(0, Math.min(100, pct));
+  const off = c * (1 - clamped / 100);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">` +
+    `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--s3)" stroke-width="${strokeW}"/>` +
+    `<circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="var(--gold)" stroke-width="${strokeW}" ` +
+    `stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="${off.toFixed(2)}" stroke-linecap="round" ` +
+    `transform="rotate(-90 ${size/2} ${size/2})"/></svg>`;
+}
+
+function achOverviewHtml(S) {
+  const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
+  const totalCount = ACHIEVEMENTS.length;
+  const overallPct = totalCount ? Math.round((doneCount / totalCount) * 100) : 0;
+  const { earned, remaining } = achievementSilverTotals(S);
+  return `<div class="achOverviewCard">` +
+    `<div class="achOverviewRing">${achRingSvg(overallPct, 76, 7)}<span class="achRingPct">${overallPct}%</span></div>` +
+    `<div class="achOverviewBody">` +
+      `<div class="achOverviewTitle">${i18next.t('progression:progression.achievements.overview_title')}</div>` +
+      `<div class="achOverviewSub">${i18next.t('progression:progression.achievements.overview_summary', { done: fmt(doneCount), total: fmt(totalCount), earned: fmt(earned) })}</div>` +
+    `</div>` +
+    `<div class="achOverviewStats">` +
+      `<div class="achOStat"><div class="v">${fmt(doneCount)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_unlocked')}</div></div>` +
+      `<div class="achOStat"><div class="v">${fmt(totalCount - doneCount)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_remaining')}</div></div>` +
+      `<div class="achOStat"><div class="v" style="color:var(--green2)">${fmt(remaining)}</div><div class="k">${i18next.t('progression:progression.achievements.stat_silver_to_unlock')}</div></div>` +
+    `</div>` +
+  `</div>`;
+}
+
+function achSpotlightHtml(S) {
+  const next = nextAchievement();
+  if (!next) return `<div class="achSpotlightBox achSpotlightDone">${i18next.t('progression:progression.quests.all_achievements_done')}</div>`;
+  const { a, pct } = next;
+  const pctRound = Math.round(pct);
+  return `<div class="achSpotlightBox">` +
+    `<div class="achSpotlightIcon">${a.icon}</div>` +
+    `<div class="achSpotlightBody">` +
+      `<div class="achSpotlightLbl">${i18next.t('progression:progression.achievements.spotlight_label')}</div>` +
+      `<div class="achSpotlightName"><b>${a.name[LANG]}</b> — ${a.desc[LANG]}</div>` +
+      `<div class="achSpotlightBar"><div class="achSpotlightBarFill" style="width:${pctRound}%"></div></div>` +
+    `</div>` +
+    `<div class="achSpotlightPct">${pctRound}%</div>` +
+  `</div>`;
+}
+
+function achCatCardHtml(catId, meta, S) {
+  const { done, total, pct } = achCatCompletion(catId, S);
+  return `<div class="achCatCard${catId===achPanelCat?' on':''}" data-cat="${catId}">` +
+    `<div class="achCatRing">${achRingSvg(pct, 36, 4)}<span class="achCatIc">${meta.icon}</span></div>` +
+    `<div class="achCatNm">${meta.label[LANG]}</div>` +
+    `<div class="achCatCnt">${done}/${total}</div>` +
+  `</div>`;
+}
+
+function achChainCardHtml(entry) {
+  const { chain, progress } = entry;
+  const { tier, unlockedCount, totalTiers, done, pct, val } = progress;
+  const pipsHtml = totalTiers > 1
+    ? `<div class="achTierPips">${chain.tiers.map((_, i) => `<span class="achPip${i < unlockedCount ? ' on' : ''}"></span>`).join('')}` +
+      `<span class="achPipLbl">${unlockedCount}/${totalTiers}</span></div>`
+    : '';
+  const progressHtml = done ? '' :
+    `<div class="achChainProgRow"><span>${fmt(Math.min(val, tier.target))} / ${fmt(tier.target)}</span><span>${Math.round(pct)}%</span></div>` +
+    `<div class="achChainBar"><div class="achChainBarFill" style="width:${Math.round(pct)}%"></div></div>`;
+  return `<div class="achChainCard${done?' done':''}" data-cat="${chain.cat}">` +
+    `<div class="achChainIcon">${tier.icon}</div>` +
+    `<div class="achChainBody">` +
+      `<div class="achChainName">${tier.name[LANG]}</div>` +
+      `<div class="achChainDesc">${tier.desc[LANG]}</div>` +
+      pipsHtml + progressHtml +
+      `<div class="achChainReward">+${fmt(tier.reward)} 🪙</div>` +
+    `</div>` +
+    (done ? `<div class="achChainDoneBadge">✓</div>` : '') +
+  `</div>`;
+}
+
+function achRecentRowHtml(S) {
+  const recent = recentlyUnlockedAchievements(S, 4);
+  if (!recent.length) return '';
+  const now = Date.now();
+  const items = recent.map((a, i) => {
+    const ts = S.achUnlocked[a.id];
+    const isNew = i === 0 && (now - ts) < 24*3600*1000;
+    const rel = typeof pneRelativeTime === 'function' ? pneRelativeTime(ts) : new Date(ts).toLocaleDateString();
+    return `<div class="achRecentItem">` +
+      (isNew ? `<div class="achRecentBadge">${i18next.t('progression:progression.achievements.recent_new_badge')}</div>` : '') +
+      `<div class="achRecentIc">${a.icon}</div>` +
+      `<div class="achRecentNm">${a.name[LANG]}</div>` +
+      `<div class="achRecentDt">${rel}</div>` +
+    `</div>`;
+  }).join('');
+  return `<div class="achRecentRow">${items}</div>`;
 }
 function renderAchievementsHtml() {
-  const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
+  const overview = achOverviewHtml(S);
+  const spotlight = achSpotlightHtml(S);
   
-  const cats = [['all', {icon:'🏅', label:{fr:'Tout',en:'All'}}], ...Object.entries(ACH_CATS)];
-  const tabsHtml = cats.map(([id, meta]) => {
-    const list = id==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===id);
-    const remaining = list.filter(a => !S.achUnlocked[a.id]).length;
-    const badge = remaining>0 ? `<span class="qCountBadge">${remaining}</span>` : `<span class="qCountBadge done">✓</span>`;
-    return `<button class="catTab achCatTab${id===achPanelCat?' active':''}" data-cat="${id}">${meta.icon} ${meta.label[LANG]} ${badge}</button>`;
-  }).join('');
-  
-  const filterBtn = `<button id="achUnfinishedBtn" class="achFilterBtn${achOnlyUnfinished?' on':''}">${achOnlyUnfinished?i18next.t('progression:progression.achievements.filter_unfinished_on'):i18next.t('progression:progression.achievements.filter_unfinished_off')}</button>`;
-  let list = achPanelCat==='all' ? ACHIEVEMENTS : ACHIEVEMENTS.filter(a => achCat(a.id)===achPanelCat);
-  if (achOnlyUnfinished) list = list.filter(a => !S.achUnlocked[a.id]);
-  const rows = list.length ? list.map(achRowHtml).join('')
-    : `<div class="admEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
-  return `<div class="achSummary">${doneCount} / ${ACHIEVEMENTS.length}</div>` +
-    `<div class="catTabs">${tabsHtml}</div>${filterBtn}${rows}`;
+  const allLabel = i18next.t('progression:progression.achievements.cat_all_label');
+  const cats = [['all', {icon:'🏅', label:{fr:allLabel, en:allLabel}}], ...Object.entries(ACH_CATS)];
+  const catRow = `<div class="achCatRow">${cats.map(([id, meta]) => achCatCardHtml(id, meta, S)).join('')}</div>`;
+  const toggleRow = `<div class="achToggleRow"><div class="achToggle" id="achUnfinishedBtn">` +
+    `<div class="achToggleSwitch${achOnlyUnfinished?' on':''}"><div class="achKnob"></div></div>` +
+    `${i18next.t('progression:progression.achievements.filter_unfinished_label')}</div></div>`;
+  const recentRow = achRecentRowHtml(S);
+  const chains = groupAchievementsIntoChains();
+  const visibleChains = achPanelCat === 'all' ? chains : chains.filter(c => c.cat === achPanelCat);
+  let ordered = sortChainsForDisplay(visibleChains, S);
+  if (achOnlyUnfinished) ordered = ordered.filter(entry => !entry.progress.done);
+  const grid = ordered.length
+    ? `<div class="achChainGrid">${ordered.map(achChainCardHtml).join('')}</div>`
+    : `<div class="achEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
+  return `<div class="achPanel">${overview}${spotlight}${catRow}${toggleRow}${recentRow}${grid}</div>`;
 }
 function openAchievements() {
   const callout = contentChangeCalloutHtml('achievements');
   openInfo(i18next.t('progression:progression.achievements.panel_title'), callout + renderAchievementsHtml());
   markContentSeen('achievements');
-  $a('infoBody').querySelectorAll('.achCatTab').forEach(btn => {
-    btn.onclick = () => { achPanelCat = btn.dataset.cat; openAchievements(); };
+  $a('infoBody').querySelectorAll('.achCatCard').forEach(card => {
+    card.onclick = () => { achPanelCat = card.dataset.cat; openAchievements(); };
   });
   const fb = $a('achUnfinishedBtn');
   if (fb) fb.onclick = () => { achOnlyUnfinished = !achOnlyUnfinished; openAchievements(); };

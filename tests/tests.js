@@ -3396,6 +3396,92 @@
     });
   }
 
+  // ---------- refonte visuelle Succès (2026-07-11) : chaînes de paliers ----------
+  // testé avec un état de sauvegarde FICTIF passé directement en argument (jamais le vrai S global)
+  // -- possible car statFn:S=>S.kills etc. lisent explicitement le paramètre reçu plutôt qu'une
+  // fermeture sur le S global, comme nextAchievement()/checkAchievements() le font déjà.
+  function testGroupAchievementsIntoChainsGroupsByStatFnIdentity() {
+    const chains = groupAchievementsIntoChains();
+    const totalTiers = chains.reduce((sum, c) => sum + c.tiers.length, 0);
+    assert('groupAchievementsIntoChains() ne perd ni ne duplique aucun succès', totalTiers === ACHIEVEMENTS.length, `total=${totalTiers}, attendu=${ACHIEVEMENTS.length}`);
+    const killsChain = chains.find(c => c.tiers.some(a => a.id === 'first_kill'));
+    assert('la chaîne "kills" regroupe les 4 paliers, dans l\'ordre du tableau source',
+      !!killsChain && killsChain.tiers.map(a => a.id).join(',') === 'first_kill,kills_100,kills_1000,kills_10000',
+      JSON.stringify(killsChain && killsChain.tiers.map(a => a.id)));
+    const silverChain = chains.find(c => c.tiers.some(a => a.id === 'silver_10k'));
+    assert('la chaîne "silver" regroupe les 4 paliers silver_10k->10m',
+      !!silverChain && silverChain.tiers.length === 4, silverChain && silverChain.tiers.length);
+    const jackpotChain = chains.find(c => c.tiers.some(a => a.id === 'jackpot_1'));
+    assert('jackpot_1 forme sa propre chaîne à 1 palier (pas de palier frère)', !!jackpotChain && jackpotChain.tiers.length === 1);
+    const gearChain = chains.find(c => c.tiers.some(a => a.id === 'gear_1'));
+    assert('gear_1 forme aussi sa propre chaîne à 1 palier (statFn distinct de jackpot_1)', !!gearChain && gearChain.tiers.length === 1 && gearChain !== jackpotChain);
+  }
+  // garde-fou (régression) : un check vert ne doit JAMAIS apparaître tant qu'un palier de la chaîne
+  // reste verrouillé -- même si des paliers intermédiaires sont déjà débloqués individuellement.
+  function testChainProgressNeverMarksIntermediateTierDoneAheadOfChain() {
+    const killsChain = groupAchievementsIntoChains().find(c => c.tiers.some(a => a.id === 'first_kill'));
+    // kills_10000 pas encore débloqué -- 3 paliers sur 4 le sont
+    const partialS = { kills: 1500, achUnlocked: { first_kill: 1, kills_100: 2, kills_1000: 3 } };
+    const partial = chainProgress(killsChain, partialS);
+    assert('chaîne en cours : le palier actif est le 1er palier NON débloqué (kills_10000)', partial.tier.id === 'kills_10000', partial.tier.id);
+    assert('chaîne en cours : done=false tant qu\'un palier reste verrouillé (pas de check vert prématuré)', partial.done === false);
+    assert('chaîne en cours : unlockedCount reflète bien les 3 paliers réellement débloqués', partial.unlockedCount === 3, partial.unlockedCount);
+    // les 4 paliers sont débloqués
+    const fullS = { kills: 99999, achUnlocked: { first_kill: 1, kills_100: 2, kills_1000: 3, kills_10000: 4 } };
+    const full = chainProgress(killsChain, fullS);
+    assert('chaîne 100% débloquée : le palier actif est le DERNIER palier (jamais un intermédiaire)', full.tier.id === 'kills_10000');
+    assert('chaîne 100% débloquée : done=true (seul cas où le check vert doit apparaître)', full.done === true);
+    assert('chaîne 100% débloquée : pct fixé à 100, jamais recalculé au-delà', full.pct === 100, full.pct);
+  }
+  function testSortChainsForDisplayPushesCompletedChainsToEnd() {
+    // état minimal mais safe pour TOUTES les chaînes (y compris gs_*/enh_*/treasure_* qui lisent
+    // GS()/maxEnhLv()/treasureTotal() -- treasureTotal() accède à S.lootByItem[...], doit exister)
+    const fakeS = {
+      kills: 0, lootCount: 0, silverEarned: 0, maxZoneIdx: 0, jackpotCount: 1, gearDropCount: 1,
+      playtimeSec: 0, lootByItem: {}, achUnlocked: { jackpot_1: 1, gear_1: 2 },
+    };
+    const chains = groupAchievementsIntoChains();
+    const ordered = sortChainsForDisplay(chains, fakeS);
+    assert('sortChainsForDisplay() retourne toutes les chaînes (aucune perdue)', ordered.length === chains.length, `${ordered.length} vs ${chains.length}`);
+    assert('sortChainsForDisplay() : une chaîne encore en cours passe en premier', !ordered[0].progress.done, JSON.stringify(ordered[0].chain.tiers.map(a=>a.id)));
+    const doneChains = ordered.filter(e => e.progress.done);
+    assert('sortChainsForDisplay() : jackpot_1 et gear_1 (seules chaînes débloquées ici) sont bien poussées en fin de liste',
+      doneChains.length > 0 && ordered.slice(ordered.length - doneChains.length).every(e => e.progress.done));
+  }
+  function testAchievementSilverTotalsSplitsEarnedAndRemaining() {
+    const fakeS = { achUnlocked: {} };
+    ACHIEVEMENTS.forEach((a, i) => { if (i % 2 === 0) fakeS.achUnlocked[a.id] = 1; });
+    const { earned, remaining } = achievementSilverTotals(fakeS);
+    const expectedEarned = ACHIEVEMENTS.filter((a, i) => i % 2 === 0).reduce((s, a) => s + a.reward, 0);
+    const expectedRemaining = ACHIEVEMENTS.filter((a, i) => i % 2 !== 0).reduce((s, a) => s + a.reward, 0);
+    assert('achievementSilverTotals() : silver déjà gagné = somme des reward des succès débloqués', earned === expectedEarned, `${earned} vs ${expectedEarned}`);
+    assert('achievementSilverTotals() : silver restant = somme des reward des succès verrouillés', remaining === expectedRemaining, `${remaining} vs ${expectedRemaining}`);
+    assert('achievementSilverTotals() : la somme des deux couvre bien tous les succès', earned + remaining === ACHIEVEMENTS.reduce((s,a)=>s+a.reward,0));
+  }
+  function testAchCatCompletionUsesRealUnlockedCounts() {
+    const fakeS = { achUnlocked: {} };
+    const combatIds = ACHIEVEMENTS.filter(a => achCat(a.id) === 'combat').map(a => a.id);
+    fakeS.achUnlocked[combatIds[0]] = 1; // 1 seul débloqué sur la catégorie combat
+    const combat = achCatCompletion('combat', fakeS);
+    assert('achCatCompletion() : total = nombre réel de succès de la catégorie', combat.total === combatIds.length, combat.total);
+    assert('achCatCompletion() : done reflète le vrai nombre débloqué (1 ici)', combat.done === 1, combat.done);
+    const all = achCatCompletion('all', fakeS);
+    assert('achCatCompletion(\'all\') : total = ACHIEVEMENTS.length', all.total === ACHIEVEMENTS.length, all.total);
+  }
+  function testRecentlyUnlockedAchievementsSortsByTimestampDescendingAndRespectsLimit() {
+    const fakeS = { achUnlocked: { first_kill: 1000, kills_100: 3000, loot_1: 2000 } };
+    const recent = recentlyUnlockedAchievements(fakeS, 2);
+    assert('recentlyUnlockedAchievements() trie du plus récent au plus ancien', recent.map(a => a.id).join(',') === 'kills_100,loot_1', recent.map(a => a.id).join(','));
+    assert('recentlyUnlockedAchievements() respecte la limite demandée', recent.length === 2, recent.length);
+  }
+  // défensif : une entrée non numérique (sauvegarde très ancienne hypothétique) ne doit jamais
+  // remonter dans la liste plutôt que d'afficher un horodatage cassé au joueur.
+  function testRecentlyUnlockedAchievementsIgnoresNonNumericTimestamps() {
+    const fakeS = { achUnlocked: { first_kill: true, kills_100: 3000 } };
+    const recent = recentlyUnlockedAchievements(fakeS, 5);
+    assert('recentlyUnlockedAchievements() ignore une entrée achUnlocked non numérique', recent.map(a => a.id).join(',') === 'kills_100', recent.map(a => a.id).join(','));
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -3582,6 +3668,13 @@
     testAllBossesHaveLoreInBothLangs();
     testBossMatInHandSumsAcrossSlotsAndHandlesEmptyInv();
     testBossLobbyRewardLineShowsMatInHandWithoutThrow();
+    testGroupAchievementsIntoChainsGroupsByStatFnIdentity();
+    testChainProgressNeverMarksIntermediateTierDoneAheadOfChain();
+    testSortChainsForDisplayPushesCompletedChainsToEnd();
+    testAchievementSilverTotalsSplitsEarnedAndRemaining();
+    testAchCatCompletionUsesRealUnlockedCounts();
+    testRecentlyUnlockedAchievementsSortsByTimestampDescendingAndRespectsLimit();
+    testRecentlyUnlockedAchievementsIgnoresNonNumericTimestamps();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
