@@ -1055,7 +1055,7 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
 
 // PvP (2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction de la
 // categorie" + "header : PVP bloqué") -- vrai PvP joueur-contre-joueur pas encore livré (bandeau
-// verrouillé, voir companions.pvp.js), mais le classement local par puissance (GS) fonctionne
+// verrouillé, voir pvp.js), mais le classement local par puissance (GS) fonctionne
 // réellement -- vérifie les deux : l'UI verrouillée ET le tri correct du classement.
 test('PvP tab shows a locked banner and a real GS-sorted ranking of owned pets', async ({ page }) => {
   const pageErrors = [];

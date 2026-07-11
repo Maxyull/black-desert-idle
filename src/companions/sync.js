@@ -24,7 +24,7 @@ function computeCompanionBreakdowns() {
 }
 // Agrégats GS pour le Classement Public (2026-07-21, catégorie "Prestige"/"Gearscore" du mockup
 // classement-public.html — voir migration 20260721100000_companion_leaderboard_prestige.sql).
-// gsSumWithTier reproduit EXACTEMENT le terme par-pet de prestigeScore() (companions.achievements.js:
+// gsSumWithTier reproduit EXACTEMENT le terme par-pet de prestigeScore() (achievements.js:
 // `score += normGS(p); score += (p.tier||1)*20;`) pour que le prestige_score calculé côté serveur
 // corresponde au vrai prestigeScore() affiché localement au joueur. Fonction pure, testable isolément.
 function computeCompanionGsAggregates() {

@@ -116,7 +116,7 @@ let completedAchievements = new Set();
 // consomme toujours 2 pets pour en recréer 1), mais peut faire RETOMBER la rareté du résultat sous
 // celle du meilleur des deux parents (tirage défavorable). Incrémenté dans executeFusion() quand le
 // meilleur parent était Légendaire(4)/Ancestral(5) ET que le résultat sort à une rareté inférieure --
-// jamais remis à 0, achievement "hard" débloqué à la 1ère occurrence (voir companions.achievements.js).
+// jamais remis à 0, achievement "hard" débloqué à la 1ère occurrence (voir achievements.js).
 let fusionLostHighRarityCount = 0;
 
 // ═══ STREAK DE CONNEXION QUOTIDIENNE ═══

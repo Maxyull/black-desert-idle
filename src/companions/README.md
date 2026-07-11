@@ -76,7 +76,7 @@ categorie pvp")** :
   `fusion_downgrade_count` — voir `supabase/migrations/20260720100000_companion_stats_breakdowns.sql`.
   Le panneau admin (`Contenu → Compagnons`, `src/admin/admin-panel.js`) les agrège
   (`sumCompanionBreakdown`) en 2 camemberts (rareté, section) + 1 graphique en barres (Tier).
-- `companions.pvp.js` (nouveau) — onglet ⚔️ PvP (9e tab) : bandeau verrouillé (🔒 vrai PvP
+- `pvp.js` (nouveau) — onglet ⚔️ PvP (9e tab) : bandeau verrouillé (🔒 vrai PvP
   joueur-contre-joueur pas encore livré, nécessite un serveur autoritaire) + un CLASSEMENT réel des
   familiers du joueur par puissance (`computePvpRanking`/`pvpPower`, alias de `normGS`). Base du
   futur matchmaking, fonctionne dès aujourd'hui sans dépendre du serveur PvP à venir.
@@ -164,7 +164,7 @@ authentifié non-invité, même pattern que `get_online_players()`) — résout 
   gagne 2 colonnes agrégées, `gs_sum_with_tier` (Σ `normGS(p) + tier×20` sur tout le roster,
   poussée par `computeCompanionGsAggregates()` dans `sync.js`) et `gs_max` (le plus haut
   `normGS` du roster). `companion_leaderboard()` calcule `prestige_score` à partir de ces agrégats
-  EXACTEMENT comme `prestigeScore()` (`companions.achievements.js`) — même formule, deux endroits,
+  EXACTEMENT comme `prestigeScore()` (`achievements.js`) — même formule, deux endroits,
   à garder synchronisés si la formule change un jour. `sync_companion_stats()` passe de 15 à 17
   paramètres (DROP obligatoire de l'ancienne signature, règle du projet section 12).
   ⚠️ **Migration écrite mais pas encore appliquée en base au moment de ce commit** (pas d'accès
@@ -468,10 +468,10 @@ par Supabase le temps de la transaction.
 15. `index.js` — onglet Index (matrice Rareté×Tier + catalogue complet).
 16. `game-view.js` — onglet Jeu (personnage + pets actifs + inventaire + log).
 17. `hardinage.js` — champ isométrique animé (canvas) avec drops en direct.
-18. `companions.achievements.js` — définitions des achievements, score de prestige.
-19. `companions.pvp.js` — onglet PvP (classement LOCAL par puissance, bandeau verrouillé). Charge
+18. `achievements.js` — définitions des achievements, score de prestige.
+19. `pvp.js` — onglet PvP (classement LOCAL par puissance, bandeau verrouillé). Charge
     après `tier.js`/`roster.js` par lisibilité, aucune contrainte d'ordre réelle (appelée via `ST(8)`).
-20. `companions.leaderboard.js` (2026-07-20, refonte "Classement Public" 2026-07-21) — onglet "Tes
+20. `leaderboard.js` (2026-07-20, refonte "Classement Public" 2026-07-21) — onglet "Tes
     stats" + Classement (tab 9, `ST(9)`), distinct du classement PvP LOCAL ci-dessus : "Tes stats"
     (100% local, œufs ouverts/argent dépensé/fusions/index/Score Prestige) + un vrai classement
     CROSS-JOUEURS via la RPC publique `companion_leaderboard()` (voir

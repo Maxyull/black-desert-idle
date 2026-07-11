@@ -2,7 +2,7 @@
 // CLASSEMENT PUBLIC (jeu principal) — panneau enrichi (2026-07-11, demande explicite : "fait le
 // meme classement [que le Classement Public Compagnons] avec toute les infos global du menu a
 // gauche") ═══════════════════════════════════════════════════════════════════════════════════
-// Reprend le même traitement que companions.leaderboard.js (podium top 3, catégories en onglets,
+// Reprend le même traitement que leaderboard.js (podium top 3, catégories en onglets,
 // recherche, pagination, "Ma position") mais appliqué au VRAI classement du jeu principal
 // (table `player_stats`, déjà alimentée par syncPlayerStats() -- records À VIE, jamais un
 // instantané, voir le commentaire au-dessus de cette fonction dans game-supabase.js) : les 7
