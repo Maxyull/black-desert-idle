@@ -88,7 +88,7 @@ async function renderMarketBrowse(){
   </div>`;
   try{
     const sb = marketSb(); const me = marketUser();
-    const { data, error } = await sb.from('pet_trade_offers').select('*').eq('status','open').neq('owner_user_id', me.id).order('created_at',{ascending:false}).limit(60);
+    const { data, error } = await sb.from('pet_trade_offers').select('id, status, pet_snapshot, accepts_pets, pet_qty, accepts_silver, min_silver, owner_pseudo, expires_at').eq('status','open').neq('owner_user_id', me.id).order('created_at',{ascending:false}).limit(60);
     if(error) throw error;
     marketOffers = data||[];
   }catch(e){ marketOffers=[]; }
@@ -119,15 +119,15 @@ async function renderMarketMine(){
   try{
     const sb = marketSb(); const me = marketUser();
     const [offersRes, countersRes] = await Promise.all([
-      sb.from('pet_trade_offers').select('*').eq('owner_user_id', me.id).order('created_at',{ascending:false}).limit(40),
-      sb.from('pet_trade_counters').select('*').eq('from_user_id', me.id).order('created_at',{ascending:false}).limit(40),
+      sb.from('pet_trade_offers').select('id, status, pet_snapshot, pet_uid').eq('owner_user_id', me.id).order('created_at',{ascending:false}).limit(40),
+      sb.from('pet_trade_counters').select('id, offer_id, status').eq('from_user_id', me.id).order('created_at',{ascending:false}).limit(40),
     ]);
     marketMyOffers = offersRes.data||[];
     marketMyCounters = countersRes.data||[];
     const openIds = marketMyOffers.filter(o=>o.status==='open').map(o=>o.id);
     marketCountersByOffer = {};
     if(openIds.length){
-      const { data:cs } = await sb.from('pet_trade_counters').select('*').in('offer_id', openIds).eq('status','pending');
+      const { data:cs } = await sb.from('pet_trade_counters').select('id, offer_id, from_pseudo, pets, silver').in('offer_id', openIds).eq('status','pending');
       (cs||[]).forEach(c=>{ (marketCountersByOffer[c.offer_id] = marketCountersByOffer[c.offer_id]||[]).push(c); });
     }
   }catch(e){ el.innerHTML = `<div>Erreur : ${escapeMarket(marketMkErr(e))}</div>`; return; }
@@ -183,7 +183,7 @@ async function renderMarketHistory(){
   const el = document.getElementById('market-hist-body');
   try{
     const sb = marketSb(); const me = marketUser();
-    const { data, error } = await sb.from('pet_trade_history').select('*').or(`seller_user_id.eq.${me.id},buyer_user_id.eq.${me.id}`).order('completed_at',{ascending:false}).limit(50);
+    const { data, error } = await sb.from('pet_trade_history').select('seller_user_id, seller_gave, buyer_gave, completed_at').or(`seller_user_id.eq.${me.id},buyer_user_id.eq.${me.id}`).order('completed_at',{ascending:false}).limit(50);
     if(error) throw error;
     marketHistory = data||[];
   }catch(e){ el.innerHTML = `<div>Erreur : ${escapeMarket(marketMkErr(e))}</div>`; return; }
@@ -341,7 +341,7 @@ async function claimMarketDeliveries(){
   if(!marketReady()) return;
   try{
     const sb = marketSb(); const me = marketUser();
-    const { data, error } = await sb.from('pet_trade_deliveries').select('*').eq('user_id', me.id).eq('claimed', false);
+    const { data, error } = await sb.from('pet_trade_deliveries').select('id, pets, silver').eq('user_id', me.id).eq('claimed', false);
     if(error || !data || !data.length) return;
     let gained = [];
     for(const d of data){
@@ -364,7 +364,7 @@ async function pollMarketNotifications(){
   if(!marketReady()) return;
   try{
     const sb = marketSb(); const me = marketUser();
-    const { data, error } = await sb.from('pet_trade_notifications').select('*').eq('user_id', me.id).eq('read', false).order('created_at',{ascending:true}).limit(10);
+    const { data, error } = await sb.from('pet_trade_notifications').select('message').eq('user_id', me.id).eq('read', false).order('created_at',{ascending:true}).limit(10);
     if(error || !data || !data.length) return;
     data.forEach(n=>toast('🔔', n.message));
     await sb.rpc('mark_pet_trade_notifications_read');

@@ -13071,7 +13071,7 @@ function renderAdminLoot(el) {
 
 function renderAdminItems(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
-  sb.from('admin_farm_by_item').select('*').limit(20).then(({data}) => {
+  sb.from('admin_farm_by_item').select('item_name, item_kind, pickups, total_qty, total_silver').limit(20).then(({data}) => {
     const rows = data || [];
     const itemHtml = rows.map((r,i) => `
       <tr class="${i===0?'admTop':''}">
@@ -13088,7 +13088,7 @@ function renderAdminItems(el) {
 function renderAdminCron(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([
-    sb.from('admin_farm_by_item').select('*'),
+    sb.from('admin_farm_by_item').select('item_name, item_kind, pickups, total_qty'),
     sb.from('player_stats').select('user_id'),
   ]).then(([{data: byItem}, {data: playerStats}]) => {
     const farmedRow = (byItem||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'material');
@@ -13388,7 +13388,7 @@ function dashboardLight(healthy) {
 
 const DASHBOARD_WIDGETS = [
   { id:'dw-econ', cat:'economy', sec:'health', icon:'💹', title:{fr:'Santé économique',en:'Economic health'},
-    fetch: () => sb.from('admin_silver_ledger_by_category').select('*'),
+    fetch: () => sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent'),
     build: ({ data }) => {
       const rows = (data||[]).map(r => ({ category:r.category, gained:Number(r.total_gained||0), spent:Number(r.total_spent||0) }));
       const alerts = computeEconAlerts(rows);
@@ -13401,7 +13401,7 @@ const DASHBOARD_WIDGETS = [
       };
     } },
   { id:'dw-silver', cat:'economy', sec:'silver', icon:'🏦', title:{fr:'Flux de silver (48h)',en:'Silver flow (48h)'},
-    fetch: () => sb.from('admin_silver_ledger_by_hour').select('*'),
+    fetch: () => sb.from('admin_silver_ledger_by_hour').select('hour, net_delta'),
     build: ({ data }) => {
       const rows = data || [];
       const netTotal = rows.reduce((a,r) => a + Number(r.net_delta||0), 0);
@@ -13529,7 +13529,7 @@ const DASHBOARD_WIDGETS = [
       };
     } },
   { id:'dw-cron', cat:'content', sec:'cron', icon:'⏳', title:{fr:'Pierres de Cron',en:'Cron Stones'},
-    fetch: () => sb.from('admin_farm_by_item').select('*'),
+    fetch: () => sb.from('admin_farm_by_item').select('item_name, item_kind, total_qty'),
     build: ({ data }) => {
       const farmedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'material');
       const usedRow = (data||[]).find(r => r.item_name === CRON_STONE.name && r.item_kind === 'cron_used');
@@ -13568,7 +13568,7 @@ function renderAdminDashboard(el) {
     sb.from('admin_wealth').select('silver'),
     sb.rpc('admin_list_bans'),
     sb.rpc('get_market_open'),
-    sb.from('admin_silver_ledger_by_category').select('*'),
+    sb.from('admin_silver_ledger_by_category').select('total_gained, total_spent'),
   ]).then(([{data: players}, {data: wealth}, {data: bans}, {data: marketOpen}, {data: ledgerByCat}]) => {
     const online = (players||[]).filter(p => p.online).length;
     const totalSilver = (wealth||[]).reduce((a,r) => a + Number(r.silver||0), 0);
@@ -14173,7 +14173,7 @@ function buildEconAlertsHtml(alerts) {
 
 function renderAdminEconHealth(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
-  sb.from('admin_silver_ledger_by_category').select('*').then(({data}) => {
+  sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent').then(({data}) => {
     const rows = (data||[]).map(r => ({
       category: r.category, gained: Number(r.total_gained||0), spent: Number(r.total_spent||0),
     }));
@@ -14192,9 +14192,9 @@ function renderAdminEconHealth(el) {
 function renderAdminSilver(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
-    sb.from('admin_wealth').select('*'),
-    sb.from('admin_silver_ledger_by_category').select('*'),
-    sb.from('admin_silver_ledger_by_hour').select('*'),
+    sb.from('admin_wealth').select('user_id, silver, silver_earned'),
+    sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent, tx_count'),
+    sb.from('admin_silver_ledger_by_hour').select('hour, net_delta'),
     sb.from('player_stats').select('user_id, playtime_sec'),
     sb.rpc('admin_list_players'),
   ]).then(([{data: wealth}, {data: silverByCategory}, {data: silverByHour}, {data: stats}, {data: playersList}]) => {
@@ -14249,6 +14249,7 @@ function renderAdminSilver(el) {
 
 function renderAdminHourly(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
+  
   Promise.all([
     sb.from('admin_farm_by_hour').select('*'),
     sb.from('admin_playtime_by_hour').select('*'),
@@ -14275,7 +14276,7 @@ function renderAdminHourly(el) {
 function renderAdminWealth(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
-    sb.from('admin_wealth').select('*'),
+    sb.from('admin_wealth').select('user_id, silver, lvl'),
     sb.from('player_stats').select('user_id, playtime_sec'),
     sb.rpc('admin_list_players'),
   ]).then(([{data: wealth}, {data: stats}, {data: playersList}]) => {

@@ -160,7 +160,7 @@ function buildEconAlertsHtml(alerts) {
 // ---------- Économie → Santé économique (2 camemberts : sources / puits, par catégorie) ----------
 function renderAdminEconHealth(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
-  sb.from('admin_silver_ledger_by_category').select('*').then(({data}) => {
+  sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent').then(({data}) => {
     const rows = (data||[]).map(r => ({
       category: r.category, gained: Number(r.total_gained||0), spent: Number(r.total_spent||0),
     }));
@@ -180,9 +180,9 @@ function renderAdminEconHealth(el) {
 function renderAdminSilver(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
-    sb.from('admin_wealth').select('*'),
-    sb.from('admin_silver_ledger_by_category').select('*'),
-    sb.from('admin_silver_ledger_by_hour').select('*'),
+    sb.from('admin_wealth').select('user_id, silver, silver_earned'),
+    sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent, tx_count'),
+    sb.from('admin_silver_ledger_by_hour').select('hour, net_delta'),
     sb.from('player_stats').select('user_id, playtime_sec'),
     sb.rpc('admin_list_players'),
   ]).then(([{data: wealth}, {data: silverByCategory}, {data: silverByHour}, {data: stats}, {data: playersList}]) => {
@@ -238,6 +238,14 @@ function renderAdminSilver(el) {
 // ---------- Économie → Activité horaire ----------
 function renderAdminHourly(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
+  // select('*') volontairement conservé ici (2026-07-21, repo-audit-todo.md point 3) :
+  // admin_farm_by_hour n'a AUCUNE migration versionnée (introuvable dans supabase/migrations/ ni
+  // schema_snapshot_*), et admin_playtime_by_hour telle que définie dans
+  // 20260705080000_fix_admin_views_security.sql n'a que (hour, total_playtime_sec) alors que ce
+  // code lit r.players/r.playtime_sec plus bas -- schéma live probablement modifié directement via
+  // Supabase MCP sans migration créée, jamais capturé. Restreindre le select() sans connaître le
+  // vrai schéma live risquerait de casser silencieusement ce graphique. À corriger une fois le vrai
+  // schéma vérifié (voir tâche séparée).
   Promise.all([
     sb.from('admin_farm_by_hour').select('*'),
     sb.from('admin_playtime_by_hour').select('*'),
@@ -265,7 +273,7 @@ function renderAdminHourly(el) {
 function renderAdminWealth(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
-    sb.from('admin_wealth').select('*'),
+    sb.from('admin_wealth').select('user_id, silver, lvl'),
     sb.from('player_stats').select('user_id, playtime_sec'),
     sb.rpc('admin_list_players'),
   ]).then(([{data: wealth}, {data: stats}, {data: playersList}]) => {
