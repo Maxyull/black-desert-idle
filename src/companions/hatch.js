@@ -4,12 +4,12 @@ function ST(i){
   ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10','p11'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
   // bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut
   // pas acheter les oeufs") -- ST(1) (onglet Éclosion) n'appelait jamais renderHatch() : le tick
-  // (companions.ticks.js) décrémente bien sl.tl/passe sl.ready à true en mémoire chaque seconde,
+  // (ticks.js) décrémente bien sl.tl/passe sl.ready à true en mémoire chaque seconde,
   // mais SEUL renderHatch() régénère le DOM de #incub-slots (compte à rebours affiché + bouton
   // "Éclore" qui n'apparaît que si sl.ready). Sans cet appel, un joueur qui ouvrait l'onglet AVANT
   // qu'un slot devienne prêt ne voyait jamais le bouton apparaître (il fallait quitter l'onglet et
   // y revenir -- ce qui ne redéclenchait rien non plus, d'où le symptôme "je ne peux pas acheter
-  // d'œuf"). Voir aussi companions.ticks.js qui appelle désormais renderHatch() en direct tant que
+  // d'œuf"). Voir aussi ticks.js qui appelle désormais renderHatch() en direct tant que
   // cet onglet reste actif, pour que le compte à rebours bouge vraiment sans changer d'onglet.
   if(i===1) renderHatch();
   if(i===5) renderIndex();

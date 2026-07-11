@@ -66,7 +66,7 @@ incrémenté dans `rollAndCreatePet()`, `hatch.js`) — distinct de
 - Achievement "dur" `fusion_downgrade` (+ champ `hard:true` sur les achievements les plus
   exigeants) : se déclenche en fusionnant un Légendaire/Ancestral avec un pet plus faible ET en
   obtenant un résultat de rareté inférieure au meilleur des deux parents (`fusionLostHighRarityCount`,
-  `economy.js`, incrémenté dans `executeFusion`, `companions.fusion.js` — voir
+  `economy.js`, incrémenté dans `executeFusion`, `fusion.js` — voir
   CLAUDE.md §28 pour le piège `bestRar` vs meilleur parent réel).
 
 **Admin/PvP (2026-07-20, demande explicite : "creer les module d'admin... remplir le dashboard...
@@ -456,9 +456,9 @@ par Supabase le temps de la transaction.
 7. `pet-panel.js` — barres de stats, atelier de Caphras, bloc Tier détaillé.
 8. `sections.js` — navigation par section, slot terrain + réserve, déploiement.
 9. `collection.js` — tri/filtre/recherche, rendu de la grille de collection.
-10. `companions.fusion.js` — calcul des odds de fusion, aperçu, exécution, modal résultat.
-11. `companions.feed.js` — liste de nourrissage, nourrir un/tous.
-12. `companions.ticks.js` — header en direct + la boucle de jeu principale (`setInterval`
+10. `fusion.js` — calcul des odds de fusion, aperçu, exécution, modal résultat.
+11. `feed.js` — liste de nourrissage, nourrir un/tous.
+12. `ticks.js` — header en direct + la boucle de jeu principale (`setInterval`
     1s : faim, XP de tier, loot en tâche de fond, drops spéciaux, achievements).
 13. `companions.save.js` — sauvegarde/chargement localStorage, rattrapage hors-ligne, reset
     (export/import JSON retirés le 2026-07-20, voir plus haut).

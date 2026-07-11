@@ -112,7 +112,7 @@ let breakthroughCount = 0;
 let eggTypesUsed = new Set();
 let completedAchievements = new Set();
 // achievement "dur" (2026-07-20, demande explicite : "succes dure genre fusionner pour perdre
-// des legendaire/ancestral") -- la fusion ne DÉTRUIT jamais un pet (executeFusion, companions.fusion.js,
+// des legendaire/ancestral") -- la fusion ne DÉTRUIT jamais un pet (executeFusion, fusion.js,
 // consomme toujours 2 pets pour en recréer 1), mais peut faire RETOMBER la rareté du résultat sous
 // celle du meilleur des deux parents (tirage défavorable). Incrémenté dans executeFusion() quand le
 // meilleur parent était Légendaire(4)/Ancestral(5) ET que le résultat sort à une rareté inférieure --

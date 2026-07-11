@@ -624,7 +624,7 @@ test('incubation slot purchases are capped at 8, both server-side (silver never 
 
 // carte terrain en 3D (2026-07-10, demande explicite) -- pour les espèces avec un modèle GLB,
 // updateTerrainViewer3d() doit RÉUTILISER le contexte WebGL déjà créé sur un re-render du même pet
-// (companions.ticks.js appelle renderSecDetail() chaque seconde tant que l'onglet Sections est
+// (ticks.js appelle renderSecDetail() chaque seconde tant que l'onglet Sections est
 // ouvert -- recréer le contexte à chaque tick reproduirait le bug de fuite déjà corrigé pour la
 // modale 3D), et le LIBÉRER en quittant l'onglet.
 test('terrain 3D viewer reuses its WebGL context across re-renders of the same pet and disposes when leaving the Sections tab', async ({ page }) => {
@@ -645,12 +645,12 @@ test('terrain 3D viewer reuses its WebGL context across re-renders of the same p
     PETS.forEach(p => { if (p.cat.sec === cat.sec) p.terrain = false; });
     PETS.push(pet);
     activeSecIdx = SECTIONS.findIndex(s => s.id === cat.sec);
-    ST(2); // onglet Sections -- ne rend PAS lui-même (seul companions.ticks.js le fait, chaque
+    ST(2); // onglet Sections -- ne rend PAS lui-même (seul ticks.js le fait, chaque
     // seconde tant que l'onglet reste actif) : appel explicite ici pour le premier rendu.
     renderSecDetail();
     await new Promise(r => setTimeout(r, 50)); // laisse mount() (async, attend 'three-ready') tourner
     const firstWrap = terrainViewer3dState ? terrainViewer3dState.wrap : null;
-    renderSecDetail(); // simule le re-render déclenché chaque seconde par companions.ticks.js
+    renderSecDetail(); // simule le re-render déclenché chaque seconde par ticks.js
     const sameWrapReused = !!firstWrap && terrainViewer3dState && terrainViewer3dState.wrap === firstWrap;
     const anchorHasWrap = !!document.getElementById('ts-cv3d-anchor') && document.getElementById('ts-cv3d-anchor').contains(terrainViewer3dState.wrap);
     ST(3); // quitte l'onglet Sections -> doit libérer le contexte WebGL
@@ -893,7 +893,7 @@ test('header shows WIP banner, new title, close button, and collection legend/so
 // bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut pas
 // acheter les oeufs") -- ST(1) n'appelait jamais renderHatch(), et le tick ne rafraîchissait pas
 // le panel Éclosion même quand il restait ouvert. Vérifie que le texte du compte à rebours change
-// tout seul, SANS changer d'onglet, entre deux lectures espacées de plus d'1s (companions.ticks.js
+// tout seul, SANS changer d'onglet, entre deux lectures espacées de plus d'1s (ticks.js
 // tourne toutes les 1000ms).
 test('hatch countdown keeps updating live while the tab stays open', async ({ page }) => {
   const pageErrors = [];
@@ -921,7 +921,7 @@ test('hatch countdown keeps updating live while the tab stays open', async ({ pa
 // achievement "dur" (2026-07-20, demande explicite : "succes dure genre fusionner pour perdre des
 // legendaire/ancestral") -- force le tirage (Math.random mocké à 0 dans le contexte de l'iframe)
 // pour garantir un résultat de rareté inférieure au meilleur des 2 parents (voir le commentaire
-// détaillé dans executeFusion, companions.fusion.js, sur pourquoi bestParentRar et pas bestRar).
+// détaillé dans executeFusion, fusion.js, sur pourquoi bestParentRar et pas bestRar).
 test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard achievement', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -969,7 +969,7 @@ test('fusing an Ancestral into a weaker pet that downgrades unlocks the hard ach
 
 // Flèches de résultat de fusion (2026-07-20, demande explicite : "afficher des fleches verte si
 // on gagne des stats rang, ou rouge si on en perd, afficher de quel tiers a quel tiers on est
-// passes") -- deltaArrow()/showFusionResultModal() (companions.fusion.js) comparent le Tier et le
+// passes") -- deltaArrow()/showFusionResultModal() (fusion.js) comparent le Tier et le
 // Score (GS) du résultat au MEILLEUR des 2 parents (pas une moyenne) : ⬆️ vert si gain, ⬇️ rouge
 // si perte. Deux fusions forcées ici pour couvrir les deux directions dans le même test.
 test('fusion result modal shows a green up arrow on gain and a red down arrow on loss, for both tier and GS', async ({ page }) => {
