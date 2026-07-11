@@ -38,7 +38,7 @@ function fmtT(s){if(s<=0)return'PRÊT';return`${String(Math.floor(s/3600)).padSt
 // d'acheter les slots d'oeuf") -- DEUX boutons étaient des impasses : le slot verrouillé
 // (incubSlots[2].locked, voir companions.roster.js) n'avait AUCUN onclick, et le bouton "➕ slot
 // premium" ne faisait qu'un toast() factice sans jamais rien acheter. Les deux appellent
-// maintenant spendSilver() (companions.economy.js) puis déclenchent une vraie action.
+// maintenant spendSilver() (economy.js) puis déclenchent une vraie action.
 const UNLOCK_SLOT_COST = 500, EXTRA_SLOT_COST = 1000; // avant scaleCost(), voir TEST_BALANCE_DIVISOR
 // plafond de slots d'incubation (2026-07-10, demande explicite : "borner incubation a 8") --
 // jusqu'ici buyExtraIncubSlot() poussait dans incubSlots sans aucune limite, un joueur pouvait en
@@ -183,7 +183,7 @@ function rollAndCreatePet(eggType){
   const roll=Math.random()*100;let cum=0,rar=0;
   for(let i=0;i<odds.length;i++){cum+=odds[i];if(roll<=cum){rar=i;break;}}
   eggTypesUsed.add(eggType.id);
-  totalHatched++; // compteur à vie, jamais remis à 0 (voir companions.economy.js)
+  totalHatched++; // compteur à vie, jamais remis à 0 (voir economy.js)
 
   // ═══ PITY COUNTER ═══ Garantit un Ancestral après trop de malchance cumulée
   hatchCountSincePity++;

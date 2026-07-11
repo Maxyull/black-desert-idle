@@ -86,7 +86,7 @@ function loadGame(){
     if(!raw){ petsRosterResetV1 = true; return false; }
     const state = JSON.parse(raw);
     // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
-    // monde") -- voir petsRosterResetV1 (companions.economy.js). Vide le roster UNE SEULE FOIS
+    // monde") -- voir petsRosterResetV1 (economy.js). Vide le roster UNE SEULE FOIS
     // pour toute sauvegarde antérieure à ce changement, jamais plus ensuite.
     const needsRosterReset = !state.petsRosterResetV1;
     PETS = needsRosterReset ? [] : (state.PETS || PETS);

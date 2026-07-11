@@ -22,7 +22,7 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
 **Migration rétroactive du roster (2026-07-19, demande explicite : "supprime les 48 pet pour tout
 le monde")** : le roster de départ est passé à 0 pet le 2026-07-10 (`companions.roster.js`), mais
 les sauvegardes locales déjà existantes gardaient leur roster antérieur — `localStorage` n'est
-jamais réécrit tout seul. `petsRosterResetV1` (`companions.economy.js`) est un flag persisté qui
+jamais réécrit tout seul. `petsRosterResetV1` (`economy.js`) est un flag persisté qui
 vide le roster UNE SEULE FOIS par sauvegarde, au premier `loadGame()` suivant ce changement (et au
 premier `importSave()` d'un export antérieur) — silver/inventaire/progression restent intacts.
 Même esprit que les migrations rétroactives du jeu principal (`S.migratedXxxVNNN`, CLAUDE.md §13),
@@ -38,7 +38,7 @@ complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir
 `sb`/`currentUser`/`isGuest()` déjà authentifié de la page hôte via `window.parent` — pas de
 second SDK Supabase ni d'auth séparée dans l'iframe. Fire-and-forget, jamais bloquant, no-op
 silencieux sans compte connecté (même garde que `queueFarmEvent`/`markItemTutorialSeen`
-ailleurs dans le jeu). Nouveau compteur à vie `totalHatched` (`companions.economy.js`,
+ailleurs dans le jeu). Nouveau compteur à vie `totalHatched` (`economy.js`,
 incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
 `hatchCountSincePity` qui se remet à 0 à chaque pity déclenché.
 
@@ -66,7 +66,7 @@ incrémenté dans `rollAndCreatePet()`, `companions.hatch.js`) — distinct de
 - Achievement "dur" `fusion_downgrade` (+ champ `hard:true` sur les achievements les plus
   exigeants) : se déclenche en fusionnant un Légendaire/Ancestral avec un pet plus faible ET en
   obtenant un résultat de rareté inférieure au meilleur des deux parents (`fusionLostHighRarityCount`,
-  `companions.economy.js`, incrémenté dans `executeFusion`, `companions.fusion.js` — voir
+  `economy.js`, incrémenté dans `executeFusion`, `companions.fusion.js` — voir
   CLAUDE.md §28 pour le piège `bestRar` vs meilleur parent réel).
 
 **Admin/PvP (2026-07-20, demande explicite : "creer les module d'admin... remplir le dashboard...
@@ -122,7 +122,7 @@ dans la largeur (vérifié via `scrollWidth<=clientWidth`). `setCollZoom()` re-r
 changement de cran (bug annexe corrigé au passage : il ne changeait avant que la largeur CSS des
 colonnes, jamais le contenu des cartes).
 
-**Argent dépensé — compteur à vie (2026-07-20)** : `silverSpent` (`companions.economy.js`), jamais
+**Argent dépensé — compteur à vie (2026-07-20)** : `silverSpent` (`economy.js`), jamais
 remis à 0 contrairement à `SILVER`. Seul point d'incrément : `spendSilver(amount)` — TOUJOURS
 utiliser cette fonction plutôt que `SILVER -=` directement pour toute future dépense (2 occurrences
 actuelles, `companions.hatch.js:doHatch`/`bulkHatch`), sinon le compteur dérive silencieusement.
@@ -138,7 +138,7 @@ moyenne doeuf eclos/jour, stats entiere liste des fusion et grph completion inde
   `companions.sync.js`) et transmis à chaque sync. Alimente "Complétion Index" (admin) ET l'onglet
   "Tes stats" (joueur), comparé à `PET_CATALOG.length` (48, recopié en dur côté admin sous
   `COMPANION_CATALOG_SIZE` — même limite que `COMPANION_RARITY_LABELS`/`COMPANION_SECTION_LABELS`,
-  admin-panel.js ne peut jamais charger `companions.catalog.js`).
+  admin-panel.js ne peut jamais charger `catalog.js`).
 - `admin_companion_player_list()` (nouvelle RPC, admin uniquement) — une ligne par joueur
   (fusions/percées/perdantes/œufs/index), affichée en table triée par fusions décroissantes dans
   `Contenu → Compagnons` (panneau admin). Distincte de `admin_companion_breakdown()` (répartitions
@@ -199,7 +199,7 @@ palette de couleurs")** : `companions.css` (`:root`) suit désormais exactement 
 `#5c6785`, accents `#d4a955` or/`#7ea6ff` bleu/`#6fdc6f` vert/`#c0503c`+`#e08070` rouge) — remplace
 l'ancien thème doré fantasy ad hoc (`#c8a96e`, fond `#080810`) qui n'avait jamais été aligné sur
 cette DA. `--r0..--r5` (couleurs de rareté Commun→Ancestral) et les palettes pixel-art
-(`companions.pixelart.js`)/scène isométrique (`companions.hardinage.js`) sont volontairement PAS
+(`pixelart.js`)/scène isométrique (`companions.hardinage.js`) sont volontairement PAS
 touchées — elles codent un sens (rareté=couleur) ou sont du contenu artistique, hors périmètre
 d'une DA structurelle (fonds/bordures/texte/accents). Les couleurs médaille 🥈/🥉 (argent `#b8bcc4`/
 bronze `#cd7f32`, badges TOP2/TOP3 de fusion) restent aussi inchangées, distinctes de l'accent or
@@ -234,7 +234,7 @@ module Compagnon.
 "a terme on va utiliser l'entièreté de ces fichier")** :
 - Contexte : `output/loot/tiers/` (32 fichiers, 900 Mo) et `output/combat/tiers/` (30 fichiers,
   922 Mo) contiennent un `.glb` + textures par palier (T1→T5) pour chaque compagnon `sec:'loot'`
-  (chats/oiseaux) et `sec:'combat'` (chiens/dragons) de `companions.catalog.js` — noms de fichiers
+  (chats/oiseaux) et `sec:'combat'` (chiens/dragons) de `catalog.js` — noms de fichiers
   déjà alignés sur `art`/le nom des espèces. `output/` n'est pas suivi par git (~1,8 Go au total,
   bien au-dessus de la limite GitHub de 100 Mo/fichier de toute façon pour les plus gros T5).
 - Hébergement : bucket Supabase Storage public **`companion-models`** (lecture publique, écriture
@@ -318,7 +318,7 @@ changement nécessaire pour la 2e demande de cette même série ("Sur terrain et
 de modal").
 
 **Version affichée bas gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche")** :
-`COMPANION_MODULE_VERSION` (`companions.economy.js`) réutilise la MÊME numérotation `VNNN` que le
+`COMPANION_MODULE_VERSION` (`economy.js`) réutilise la MÊME numérotation `VNNN` que le
 jeu principal (`meta/patch-notes-data.js`) plutôt qu'un compteur séparé — ce module ne peut pas
 charger `meta/patch-notes-data.js` (scope global distinct, iframe isolée), donc pas de lecture
 automatique possible : à bumper à la main à chaque patch note qui touche `sub:'compagnon'`. Affiché
@@ -442,10 +442,10 @@ par Supabase le temps de la transaction.
 
 ### Scripts JS (ordre de chargement = ordre ci-dessous)
 
-1. `companions.pixelart.js` — palettes/formes pixel-art (`PA`) + `drawPixelArt()`.
-2. `companions.catalog.js` — `RARITIES`, `STAT_RANGES`, `SECTIONS` (drops par section),
+1. `pixelart.js` — palettes/formes pixel-art (`PA`) + `drawPixelArt()`.
+2. `catalog.js` — `RARITIES`, `STAT_RANGES`, `SECTIONS` (drops par section),
    loot spécial (Caphras/Dopi/items de Boss), `PET_CATALOG` (48 familiers).
-3. `companions.economy.js` — types d'œufs + œufs ciblés, `SILVER`, pity counter, compteurs
+3. `economy.js` — types d'œufs + œufs ciblés, `SILVER`, pity counter, compteurs
    de tracking pour achievements, streak de connexion quotidienne, inventaire + journal.
 4. `companions.tier.js` — système de Tier (multiplicateur, XP requis), Gearscore
    (`curGS`/`normGS`/`gsPct`...), helpers rareté (`rc`/`rn`/`secById`...).

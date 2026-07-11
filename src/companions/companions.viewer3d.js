@@ -16,7 +16,7 @@
 const COMPANION_MODELS_BASE = 'https://mkwwvzbjtyawpcyrnybk.supabase.co/storage/v1/object/public/companion-models';
 const VIEWER3D_TEST_MODEL = COMPANION_MODELS_BASE + '/loot/black_mask_cat_T5.glb';
 
-// nom de pet (companions.catalog.js) -> { section, slug } ; l'URL finale est construite comme
+// nom de pet (catalog.js) -> { section, slug } ; l'URL finale est construite comme
 // {BASE}/{section}/{slug}_T{tier}.glb, tier venant de pet.tier (1-5, companions.tier.js) — mais
 // seuls les tiers listés dans `tiers` existent réellement dans le bucket, jamais deviner au-delà.
 // 2026-07-20 ("integre les menu 3D de la phase 1" = output/loot/tiers + output/combat/tiers,
@@ -28,14 +28,14 @@ const VIEWER3D_TEST_MODEL = COMPANION_MODELS_BASE + '/loot/black_mask_cat_T5.glb
 // loadModel() mais autant ne pas promettre un modèle absent).
 const COMPANION_MODEL_TIERS_ALL = [1,2,3,4,5];
 const COMPANION_MODEL_MAP = {
-  // sec:'loot' (companions.catalog.js) — output/loot/tiers/
+  // sec:'loot' (catalog.js) — output/loot/tiers/
   'Black Mask Cat':          { section: 'loot', slug: 'black_mask_cat',         tiers: COMPANION_MODEL_TIERS_ALL },
   'Grey Moon Cat':           { section: 'loot', slug: 'grey_moon_cat',          tiers: COMPANION_MODEL_TIERS_ALL },
   'Black Cloaked Cat':       { section: 'loot', slug: 'black_cloaked_cat',      tiers: COMPANION_MODEL_TIERS_ALL },
   'Karlstein Cat':           { section: 'loot', slug: 'karlstein_cat',          tiers: COMPANION_MODEL_TIERS_ALL },
   'Sky Hawk':                { section: 'loot', slug: 'sky_hawk',               tiers: COMPANION_MODEL_TIERS_ALL },
   'Golden Crow Sovereign':   { section: 'loot', slug: 'golden_crow_sovereign',  tiers: COMPANION_MODEL_TIERS_ALL },
-  // sec:'combat' (companions.catalog.js) — output/combat/tiers/
+  // sec:'combat' (catalog.js) — output/combat/tiers/
   'Brown Fighting Dog':      { section: 'combat', slug: 'brown_fighting_dog',      tiers: COMPANION_MODEL_TIERS_ALL },
   'Snow Wolfdog':            { section: 'combat', slug: 'snow_wolfdog',            tiers: COMPANION_MODEL_TIERS_ALL },
   'Black Cloaked Dog':       { section: 'combat', slug: 'black_cloaked_dog',       tiers: COMPANION_MODEL_TIERS_ALL },

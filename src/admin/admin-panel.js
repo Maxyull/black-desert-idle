@@ -628,7 +628,7 @@ function renderAdminOnboarding(el) {
 // les 60s, réutilise le client sb/currentUser déjà authentifié de la page hôte via window.parent,
 // iframe same-origin). "players_synced" = a ouvert le module au moins une fois ET a un compte
 // (jamais les invités, ni les joueurs qui n'ont jamais cliqué l'onglet Compagnon). ----------
-// libellés/icônes en dur (2026-07-20) : RARITIES/SECTIONS vivent dans companions.catalog.js,
+// libellés/icônes en dur (2026-07-20) : RARITIES/SECTIONS vivent dans catalog.js,
 // chargé UNIQUEMENT dans l'iframe du module (jamais dans le bundle principal) -- le panneau admin
 // ne peut pas les lire directement. Recopie minimale (id/nom/couleur/icône), tenue à jour à la
 // main si le catalogue change -- même limite que toute donnée d'un module non bundlé.
@@ -659,9 +659,9 @@ function sumCompanionBreakdown(rows, field) {
 // taille totale de la complétion Index (2026-07-20, "Completion 48pet * 5 tier pour l'index et
 // classement") -- 48 espèces × 5 tiers = 240, recopiée en dur (même limite que
 // COMPANION_RARITY_LABELS/COMPANION_SECTION_LABELS ci-dessus : le panneau admin, bundle principal,
-// ne peut jamais charger companions.catalog.js, jamais bundlé). À tenir à jour si le catalogue
+// ne peut jamais charger catalog.js, jamais bundlé). À tenir à jour si le catalogue
 // du module change. unique_species_count (RPC) compte désormais des combos espèce×tier, pas
-// juste des espèces — voir companionIndexProgress(), companions.catalog.js.
+// juste des espèces — voir companionIndexProgress(), catalog.js.
 const COMPANION_CATALOG_SIZE = 48 * 5;
 function renderAdminCompanions(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;

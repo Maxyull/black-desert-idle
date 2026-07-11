@@ -30,7 +30,7 @@
 <body>
 <!-- bandeau "test en cours" (2026-07-20, demande explicite) : rappelle à chaque ouverture que ce
      module est isolé du jeu principal ET que ses valeurs (Silver/timers) sont divisées par
-     TEST_BALANCE_DIVISOR (voir companions.economy.js) pour permettre de tester vite -- jamais les
+     TEST_BALANCE_DIVISOR (voir economy.js) pour permettre de tester vite -- jamais les
      vraies valeurs finales. Toujours visible, pas de bouton pour le masquer : le but est un rappel
      permanent tant que le module reste en phase de test, pas un message qu'on ferme une fois. -->
 <div id="wipBanner" style="background:linear-gradient(90deg,#3a1808,#4a2408);border-bottom:1px solid var(--red);padding:6px 16px;font-size:10.5px;color:#ffcf9e;text-align:center;flex-shrink:0">
@@ -441,15 +441,18 @@
 <div class="toast-wrap" id="toast-wrap"></div>
 <!-- version en bas à gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche") --
      réutilise la numérotation VNNN partagée avec le jeu principal (COMPANION_MODULE_VERSION,
-     companions.economy.js), même esprit que #clientVersion (index.dev.html) côté jeu principal. -->
+     economy.js), même esprit que #clientVersion (index.dev.html) côté jeu principal. -->
 <div id="companion-version"></div>
 
 <!-- ordre de chargement documenté dans README.md de ce dossier — chaque fichier déclare des
      globals lus par les suivants (scope global partagé de ce document, isolé du jeu principal
      par l'iframe qui charge cette page) -->
-<script src="companions.pixelart.js?v=6"></script>
-<script src="companions.catalog.js?v=7"></script>
-<script src="companions.economy.js?v=10"></script>
+<!-- renommés le 2026-07-21 (retrait du préfixe companions. -- kebab-case simple, cohérent avec les
+     9 autres dossiers de src/, voir CLAUDE.md §15 -- renommage progressif "petit à petit", ce lot
+     est le premier des ~22 fichiers du module, voir repo-audit-todo.md point 1) -->
+<script src="pixelart.js?v=6"></script>
+<script src="catalog.js?v=7"></script>
+<script src="economy.js?v=10"></script>
 <script src="companions.tier.js?v=6"></script>
 <script src="companions.roster.js?v=7"></script>
 <script src="companions.hatch.js?v=14"></script>

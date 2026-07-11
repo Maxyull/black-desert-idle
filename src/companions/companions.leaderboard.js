@@ -51,7 +51,7 @@ function renderMyStatsGrid(){
     { ico:'🔗', lbl:'Fusions', val: fmtN(fusionCount||0) },
     { ico:'🌟', lbl:'Percées', val: fmtN(breakthroughCount||0) },
     // 2026-07-20, "Completion 48pet * 5 tier" -- espèce×tier distincts possédés / 240 (voir
-    // companionIndexProgress()/COMPANION_INDEX_MAX, companions.catalog.js)
+    // companionIndexProgress()/COMPANION_INDEX_MAX, catalog.js)
     { ico:'📖', lbl:'Complétion Index', val: `${indexProgress}/${COMPANION_INDEX_MAX}` },
     { ico:'🏆', lbl:'Succès', val: `${completedAchievements.size}/${ACHIEVEMENTS.length}` },
     { ico:'👑', lbl:'Score Prestige', val: fmtN(typeof prestigeScore==='function' ? prestigeScore() : 0) },

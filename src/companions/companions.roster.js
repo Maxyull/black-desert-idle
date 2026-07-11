@@ -12,9 +12,9 @@ const PET_ROSTER_CAP = 96;
 const PET_ROSTER_CAP_WITH_TRADE_BUFFER = 100;
 function petRosterRoomLeft(){ return Math.max(0, PET_ROSTER_CAP - PETS.length); }
 
-// Timers d'incubation (voir TEST_BALANCE_DIVISOR, companions.economy.js) : 21600s (6h) et
+// Timers d'incubation (voir TEST_BALANCE_DIVISOR, economy.js) : 21600s (6h) et
 // 13800s de base, réduits pour tester le flux rapidement -- repasser TEST_BALANCE_DIVISOR à 1
-// dans companions.economy.js pour revenir aux vrais timers.
+// dans economy.js pour revenir aux vrais timers.
 let incubSlots=[{free:true,tl:0,tot:scaleTimer(21600),ready:true},{free:false,tl:scaleTimer(13800),tot:scaleTimer(21600),ready:false},{free:false,tl:null,tot:null,locked:true}];
 let fusionSlots=[null,null];
 let activeSecIdx=0;

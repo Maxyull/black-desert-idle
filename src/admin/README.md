@@ -56,7 +56,7 @@ graph") : 2 camemberts (rareté, section) + 1 graphique en barres (Tier), alimen
 `admin_companion_breakdown()` (une ligne JSONB par joueur, agrégée côté client via
 `sumCompanionBreakdown()`) — voir migration `20260720100000_companion_stats_breakdowns.sql`.
 Libellés rareté/section recopiés en dur (`COMPANION_RARITY_LABELS`/`COMPANION_SECTION_LABELS`,
-`admin-panel.js`) car `RARITIES`/`SECTIONS` vivent dans `companions.catalog.js`, jamais chargé
+`admin-panel.js`) car `RARITIES`/`SECTIONS` vivent dans `catalog.js`, jamais chargé
 dans le bundle principal — à tenir à jour à la main si le catalogue du module change.
 
 **Utilisation des Pierres de Cron (2026-07-19)** : jusqu'ici seul le ramassage était tracké côté

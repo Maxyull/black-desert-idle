@@ -57,7 +57,7 @@ async function syncCompanionStatsToServer() {
     // complétion Index (2026-07-20, demande explicite : "Completion 48pet * 5 tier pour l'index et
     // classement") -- comptait initialement l'ESPÈCE seule (48 max, indifférent au palier) ;
     // compte désormais chaque combo ESPÈCE×TIER distinct (48×5=240 max, voir
-    // companionIndexProgress()/COMPANION_INDEX_MAX, companions.catalog.js). Colonne serveur
+    // companionIndexProgress()/COMPANION_INDEX_MAX, catalog.js). Colonne serveur
     // inchangée (unique_species_count, migration 20260720130000_companion_stats_egg_and_index.sql)
     // -- seule la sémantique du nombre envoyé change, pas le schéma. Les valeurs déjà en base sous
     // l'ancien calcul (max 48) se corrigent d'elles-mêmes au prochain sync de chaque joueur.

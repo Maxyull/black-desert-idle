@@ -390,7 +390,7 @@ test('terrain card is width-capped and the reserve sits to its right with room f
 
 // Version bas gauche (2026-07-20, demande explicite : "ajoute version en bas a gauche") -- réutilise
 // la numérotation VNNN partagée avec le jeu principal (COMPANION_MODULE_VERSION,
-// companions.economy.js), affichée via #companion-version, position:fixed bottom-left.
+// economy.js), affichée via #companion-version, position:fixed bottom-left.
 test('module version is displayed bottom-left, reusing the shared VNNN numbering', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
