@@ -86,7 +86,15 @@ setInterval(()=>{
         toast('⬆️',`${p.cat.name} atteint Tier ${p.tier} ! (×${p.tierMult.toFixed(3)}, ${tierMultPct(p)}% de la plage)`);
       }
 
-      if(document.getElementById('p1')?.classList.contains('active')) renderSecDetail();
+      // bug corrigé (2026-07-21, rapporté explicitement : "dans l'index il est noté comme
+      // épique, dans sections légendaire, dans la collection ancestral") -- renderSecNav()
+      // (liste de gauche, GS par section) n'était jamais rappelée ici, seulement renderSecDetail()
+      // (panneau de droite) -- une percée de rareté pendant que l'onglet Sections était déjà
+      // ouvert laissait le badge GS de la liste de gauche périmé jusqu'au prochain changement
+      // d'onglet. Voir aussi index.js (renderIndexPetTable) qui affichait la rareté DE BASE de
+      // l'espèce (catalogue, jamais mise à jour par une percée) au lieu de la rareté RÉELLE du
+      // pet possédé.
+      if(document.getElementById('p1')?.classList.contains('active')){ renderSecNav(); renderSecDetail(); }
       if(document.getElementById('p2')?.classList.contains('active')) renderGrid();
     }
   });

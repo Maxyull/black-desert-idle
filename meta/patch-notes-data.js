@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V375', d:'21/07/2026 20:00', name:{fr:'Module Compagnons : rareté après une percée corrigée', en:'Companion module: rarity after a breakthrough fixed'}, fr:[
+      {t:'fix', sub:'compagnon', tx:'Corrigé : un pet ayant "percé" en rareté (Tier→rareté supérieure) pouvait afficher une rareté différente selon l\'onglet (Index figé sur la rareté de base de l\'espèce, Sections périmée si l\'onglet était déjà ouvert au moment de la percée) au lieu de sa rareté réelle, correctement affichée dans la Collection.'},
+    ], en:[
+      {t:'fix', sub:'compagnon', tx:'Fixed: a pet that "broke through" in rarity (Tier-up → higher rarity) could show a different rarity depending on the tab (Index stuck on the species\' base rarity, Sections stale if the tab was already open when the breakthrough happened) instead of its real current rarity, correctly shown in the Collection.'},
+    ] },
   { v:'V374', d:'21/07/2026 19:00', name:{fr:'Module Compagnons : onboarding + 4 correctifs', en:'Companion module: onboarding + 4 fixes'}, fr:[
       {t:'new', sub:'compagnon', tx:'Onboarding de première visite dans le module Compagnon : 5 étapes, affiché une seule fois par navigateur.'},
       {t:'fix', sub:'compagnon', tx:'Corrigé : l\'auto-nourrissage grillait silencieusement des ressources spéciales (Caphras/Dopi) au lieu de la nourriture commune, et ne rafraîchissait jamais l\'onglet Nourrir.'},

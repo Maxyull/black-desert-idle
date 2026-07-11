@@ -97,7 +97,13 @@ function renderIndexPetTable(){
   list.sort((a,b)=>b.rar-a.rar||a.name.localeCompare(b.name));
 
   // Map nom -> instance possédée (pour marquer le statut Obtenu au bon tier précis)
-  const ownedMap = new Map(PETS.map(p=>[p.cat.name, p]));
+  // normalizeName() (2026-07-21, rapporté explicitement : une espèce possédée -- 2 pets, vus
+  // corrects dans Collection -- ressortait "(inconnu)" ici) -- .trim() défensif : une sauvegarde
+  // ancienne peut porter un p.cat.name avec un espace de bordure invisible (JSON figé au moment du
+  // hatch, jamais retouché depuis), qui casse une comparaison stricte === à la chaîne du
+  // catalogue actuel alors que le nom affiché est visuellement identique.
+  const normalizeName = n => (n||'').trim();
+  const ownedMap = new Map(PETS.map(p=>[normalizeName(p.cat.name), p]));
   const absMax = maxGS(5,5);
 
   const tiersToShow = indexFilterTier==='all' ? [1,2,3,4,5] : [+indexFilterTier];
@@ -117,14 +123,22 @@ function renderIndexPetTable(){
 
   list.forEach((c,ci)=>{
     const sec=secById(c.sec);
-    const owned=ownedMap.get(c.name);
+    const owned=ownedMap.get(normalizeName(c.name));
     const ownedTier = owned ? (owned.tier||1) : null;
+    // bug corrigé (2026-07-21, rapporté explicitement : "dans l'index il est noté comme épique,
+    // dans sections légendaire, dans la collection ancestral") -- une percée de rareté (ticks.js,
+    // BREAKTHROUGH) change p.rar SANS jamais toucher p.cat (l'espèce/son entrée catalogue reste
+    // celle d'origine). Cette table affichait c.rar (rareté DE BASE de l'espèce, figée) au lieu de
+    // la rareté RÉELLE actuelle du pet possédé -- Collection (rn(p.rar)/rc(p.rar)) était déjà juste,
+    // Index ne l'était pas. displayRar = rareté réelle si possédé, sinon rareté de base (espèce
+    // jamais obtenue, rien à afficher de "réel").
+    const displayRar = owned ? owned.rar : c.rar;
 
     // Rangée d'aperçus T1→T5 — seul le tier réellement possédé s'illumine, les autres restent éteints
     const evoRow = [1,2,3,4,5].map(t=>{
       const pid = `idx-prev-${ci}-t${t}`;
       const isOwnedAtThisTier = ownedTier===t;
-      previewsToRender.push({id:pid, art:c.art, col:rc(c.rar), tier:t, lit:isOwnedAtThisTier});
+      previewsToRender.push({id:pid, art:c.art, col:rc(displayRar), tier:t, lit:isOwnedAtThisTier});
       return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px">
         <div style="position:relative;${isOwnedAtThisTier?'':'opacity:.28;filter:grayscale(0.9) brightness(.7)'}">
           <canvas id="${pid}" width="52" height="52" style="width:52px;height:52px;image-rendering:pixelated;${isOwnedAtThisTier?'box-shadow:0 0 10px var(--gold),0 0 3px var(--gold2);border-radius:4px':''}"></canvas>
@@ -160,7 +174,7 @@ function renderIndexPetTable(){
           <div style="margin-bottom:4px">${sec?.ico||''} ${sec?.name||''}</div>
           <div style="display:flex;flex-wrap:wrap">${buffTags}</div>
         </td>` : '';
-      const rarCell = isFirstRowOfGroup ? `<td rowspan="${tiersToShow.length}" style="padding:8px 10px;color:${rc(c.rar)};border-bottom:2px solid var(--border);vertical-align:top;font-size:13px;font-weight:600">${rn(c.rar)}</td>` : '';
+      const rarCell = isFirstRowOfGroup ? `<td rowspan="${tiersToShow.length}" style="padding:8px 10px;color:${rc(displayRar)};border-bottom:2px solid var(--border);vertical-align:top;font-size:13px;font-weight:600">${rn(displayRar)}</td>` : '';
       const origCell = isFirstRowOfGroup ? `<td rowspan="${tiersToShow.length}" style="padding:8px 10px;color:var(--cream3);border-bottom:2px solid var(--border);font-size:11px;vertical-align:top">${c.orig}</td>` : '';
       const isLastTierRow = ti===tiersToShow.length-1;
       const borderStyle = isLastTierRow ? '2px solid var(--border)' : '1px solid var(--border)';

@@ -1560,3 +1560,60 @@ test('onboarding modal shows on first visit only, and never reopens once dismiss
 
   expect(pageErrors).toEqual([]);
 });
+
+// bug corrigé (2026-07-21, rapporté explicitement : "dans l'index il est noté comme épique, dans
+// sections il est noté comme légendaire et dans la collection il est noté comme ancestral") --
+// une percée de rareté (BREAKTHROUGH, ticks.js) change p.rar SANS jamais toucher p.cat (l'entrée
+// catalogue/espèce reste celle d'origine) : (1) index.js affichait c.rar (rareté DE BASE de
+// l'espèce, jamais mise à jour) au lieu de la rareté RÉELLE du pet possédé -- corrigé en
+// affichant owned.rar quand le pet est possédé ; (2) la percée ne rappelait que renderSecDetail()
+// (panneau de droite), jamais renderSecNav() (liste de gauche) si l'onglet Sections était déjà
+// ouvert au moment de la percée -- corrigé, les deux sont maintenant rappelées ensemble.
+test('a pet that breaks through in rarity shows the SAME current rarity in Index, Sections and Collection', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Sections' }).click(); // déjà sur Sections quand la percée survient
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.rar === 2 && c.sec === 'loot'); // espèce Rare de base
+    const pet = { id: petId++, uid: 'breakthrough-uid', cat, rar: 2, stats: mkStats(2), hunger: 100, terrain: true, tier: 1, tierXp: 0, tierMult: rollTierMult(1) };
+    PETS.forEach(pp => { if (pp.cat.sec === cat.sec) pp.terrain = false; });
+    PETS.push(pet);
+    activeSecIdx = SECTIONS.findIndex(s => s.id === cat.sec);
+    renderSecNav(); renderSecDetail();
+    // 2 percées (comme le tick réel : ne touchent QUE p.rar/p.stats/p.tier, jamais p.cat), en
+    // rappelant renderSecNav()+renderSecDetail() ENSEMBLE (le fix), onglet Sections déjà actif
+    pet.rar = 3; pet.stats = mkStats(3); pet.tier = 1; pet.tierXp = 0;
+    renderSecNav(); renderSecDetail();
+    pet.rar = 5; pet.stats = mkStats(5); pet.tier = 1; pet.tierXp = 0;
+    renderSecNav(); renderSecDetail();
+
+    const sectionsRstripColor = document.querySelector('.terrain-slot.occ').style.getPropertyValue('--pcard-color');
+    const sectionsNavColor = document.querySelector('.sec-row.active .gs-badge') ? getComputedStyle(document.querySelector('.terrain-slot.occ .pcard-name div:nth-child(2)')).color : null;
+
+    ST(3); // Collection
+    const collectionRstripColor = document.querySelector(`#card${pet.id} .rstrip`).style.background;
+
+    ST(5); // Index
+    const idxCell = Array.from(document.querySelectorAll('#index-pet-table td')).find(td => td.textContent.trim() === 'Ancestral');
+
+    return {
+      ancestralHex: RARITIES[5].hex,
+      sectionsRstripColor,
+      collectionRstripColor,
+      indexShowsAncestral: !!idxCell,
+    };
+  });
+
+  const hexToRgb = hex => { const n = parseInt(hex.slice(1), 16); return `rgb(${(n>>16)&255}, ${(n>>8)&255}, ${n&255})`; };
+  expect(result.sectionsRstripColor.toLowerCase()).toBe(result.ancestralHex.toLowerCase());
+  expect(result.collectionRstripColor.toLowerCase()).toBe(hexToRgb(result.ancestralHex));
+  expect(result.indexShowsAncestral).toBe(true);
+  expect(pageErrors).toEqual([]);
+});

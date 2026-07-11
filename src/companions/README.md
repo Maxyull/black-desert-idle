@@ -29,6 +29,21 @@ Même esprit que les migrations rétroactives du jeu principal (`S.migratedXxxVN
 adapté ici puisque ce module n'a pas de compte Supabase (sauvegarde 100% locale, pas de
 `applySaveState()` central à brancher).
 
+**Bug corrigé — rareté incohérente entre onglets après une percée (2026-07-21, rapporté
+explicitement : "dans l'index il est noté comme épique, dans sections il est noté comme
+légendaire et dans la collection il est noté comme ancestral")** : une percée de rareté
+(`BREAKTHROUGH`, `ticks.js`) change `p.rar` SANS jamais toucher `p.cat` (l'entrée catalogue/
+espèce reste celle d'origine, à sa rareté de base). Deux défauts cumulés :
+- `index.js` (`renderIndexPetTable`) affichait la rareté DE BASE de l'espèce (`c.rar`, figée)
+  au lieu de la rareté RÉELLE du pet possédé — corrigé via `displayRar = owned ? owned.rar :
+  c.rar`. Egalement rendu la recherche `ownedMap` (nom → pet) tolérante à un espace de bordure
+  (`.trim()`) sur `p.cat.name`, défensif contre un nom figé dans une vieille sauvegarde.
+- Une percée survenant PENDANT que l'onglet Sections était déjà ouvert ne rappelait que
+  `renderSecDetail()` (panneau de droite), jamais `renderSecNav()` (liste de gauche, GS par
+  section) — corrigé, les deux sont désormais rappelées ensemble (`ticks.js`).
+Voir `tests/companions.spec.js` ("a pet that breaks through in rarity shows the SAME current
+rarity in Index, Sections and Collection").
+
 **Sync admin (2026-07-19, demande explicite)** : la sauvegarde reste 100% locale, mais
 `sync.js` pousse désormais un RÉSUMÉ de compteurs (jamais le roster/inventaire
 complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir
