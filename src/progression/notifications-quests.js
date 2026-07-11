@@ -8,6 +8,7 @@
 // tous les objectifs ne reposent que sur des stats atteignables en solo (kills, loot, silver,
 // zones, gearscore, enchantement, temps de jeu) — jamais sur le marché/classement/Discord,
 // qui nécessitent un compte vérifié : ainsi tout succès/quête reste faisable par n'importe quel joueur.
+/** @returns {number} plus haut niveau d'enchantement parmi toutes les pièces équipées (0 si rien d'enchanté). */
 function maxEnhLv() {
   let m = 0;
   for (const k of OPTIMIZABLE_SLOTS) { const e = EQUIP[k]; if (e && (e.enhLv||0) > m) m = e.enhLv||0; }
@@ -26,10 +27,12 @@ let notifSerial = 0; // id local incrémental (unique le temps d'une session, su
 // important ou non")
 const NOTIF_MAX_AGE_MS = 7 * 24 * 3600 * 1000; // auto-purge après 7 jours — demande explicite du 2026-07-08
 const NOTIF_SHOW_LIMIT = 20; // "affiche les 20 dernières entrées" — demande explicite du 2026-07-08
+/** Purge S.notifLog des entrées de plus de NOTIF_MAX_AGE_MS (7 jours). */
 function pruneNotifLog() {
   const cutoff = Date.now() - NOTIF_MAX_AGE_MS;
   S.notifLog = (S.notifLog||[]).filter(n => n.t >= cutoff);
 }
+/** @param {string} icon @param {string} title @param {string} text @param {'important'|'success'|'info'} [cat] - défaut 'info'. Ajoute une entrée persistante à S.notifLog (survit au reload), purge les anciennes, incrémente le badge non-lu. */
 function pushNotif(icon, title, text, cat) {
   pruneNotifLog();
   S.notifLog.unshift({ id: ++notifSerial + '_' + Date.now(), icon, title, text, t: Date.now(), cat: cat || 'info' });
@@ -37,6 +40,7 @@ function pushNotif(icon, title, text, cat) {
   notifUnread++;
   updateNotifBadge();
 }
+/** @param {string} id - id de l'entrée S.notifLog à supprimer. */
 function deleteNotif(id) {
   S.notifLog = (S.notifLog||[]).filter(n => n.id !== id);
   openNotifCenter(); // re-render immédiat, le joueur voit la ligne disparaître
@@ -151,6 +155,7 @@ function openNotifCenter() {
   });
 }
 
+/** Parcourt ACHIEVEMENTS, débloque (silver + toast + notif + Discord) tout succès non encore obtenu dont la stat cible est atteinte. */
 function checkAchievements() {
   let unlocked = false;
   for (const a of ACHIEVEMENTS) {
@@ -181,6 +186,7 @@ function showAchToast(a) {
 // ---------- courrier (mailbox) : stockage permanent, jamais plein, jamais perdu ----------
 // contrairement au sac (192 cases, peut être plein), tout ce qui arrive ici s'empile sans
 // limite — pensé pour des dons automatiques comme la fidélité journalière (voir plus bas)
+/** @param {string} key - identifiant stable (fusionne dans une entrée existante). @param {string} name @param {string} icon @param {number} qty. Empile dans S.mailbox, jamais plein/perdu (contrairement au sac). */
 function mailboxAdd(key, name, icon, qty) {
   const existing = S.mailbox.find(m => m.key === key);
   if (existing) existing.qty += qty;
@@ -202,6 +208,7 @@ function showMailToast(icon, name, qty) {
 // Depuis le 2026-07-11 (demande explicite) : le gain quotidien ne rejoint plus S.loyalty tout
 // seul, il s'accumule dans le courrier (sans limite, tant que le joueur ne les récupère pas) —
 // voir claimLoyalty() pour le passage courrier -> stock utilisable (affiché à côté du silver).
+/** Appelé depuis hud() : accorde 200 points de fidélité au courrier une fois par jour civil (S.lastLoyaltyDate). No-op si déjà accordé aujourd'hui ou avant que la vraie sauvegarde soit chargée. */
 function ensureLoyaltyGrant() {
   if (!saveReady) return; // attend la vraie sauvegarde -- voir la déclaration de saveReady
   const now = new Date();
@@ -216,6 +223,7 @@ function ensureLoyaltyGrant() {
 // déplace tout le solde en attente dans le courrier vers S.loyalty (stock réellement utilisable,
 // affiché à côté du silver dans l'inventaire) -- le courrier continuera d'accumuler normalement
 // dès le prochain octroi journalier, rien n'est jamais plafonné ni perdu entre-temps
+/** Déplace tout le solde en attente du courrier (clé 'loyalty') vers S.loyalty (stock utilisable) — le courrier continue d'accumuler normalement ensuite. */
 function claimLoyalty() {
   const m = S.mailbox.find(m => m.key === 'loyalty');
   if (!m || m.qty <= 0) return;
@@ -229,6 +237,7 @@ function claimLoyalty() {
 // par le reset) et regrante 200 Loyalties à l'instant, masquant le fait que ça a bien été remis à
 // zéro. Bug confirmé le 2026-07-07 : "les Loyalties ne sont jamais remis à 0 même après un reset".
 // Le prochain octroi journalier reprendra normalement dès demain.
+/** Après un reset complet : force S.loyalty à 0 ET marque l'octroi du jour comme déjà fait, pour éviter qu'ensureLoyaltyGrant() ne re-crédite 200 aussitôt (hud() est appelé en fin de reset). */
 function suppressLoyaltyGrantForToday() {
   const now = new Date();
   S.lastLoyaltyDate = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
@@ -412,6 +421,7 @@ function compendiumItemDone(name) { return (S.lootByItem[name]||0) > 0; }
 // clic sur un objet du Compendium : montre (halo doré) TOUTES les zones qui le lootent, et propose
 // d'y aller directement — demande explicite du 2026-07-08 ("je clique sur Ceinture de Naru j'ai un
 // halo qui me montre toutes les zones qui loot ça et je choisis laquelle je veux")
+/** @param {string} name - nom d'objet cliqué dans le Compendium. Ajoute un halo doré (.compHalo) sur toutes les lignes de zone qui lootent cet objet précis. */
 function compendiumHighlightItem(name) {
   document.querySelectorAll('.compZoneRow').forEach(r => r.classList.remove('compHalo'));
   const matches = [];
@@ -576,7 +586,9 @@ const QUEST_SCOPES = {
   daily:  { stateKey:'dq', kinds:QUEST_KINDS_DAILY,  count:3, keyFn:d => d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate() },
   weekly: { stateKey:'wq', kinds:QUEST_KINDS_WEEKLY, count:3, keyFn:d => { const m = mondayOf(d); return m.getFullYear()+'-'+(m.getMonth()+1)+'-'+m.getDate(); } },
 };
+/** @param {Date} d. @returns {Date} le lundi de la semaine de `d` (clé de scope hebdomadaire des quêtes). */
 function mondayOf(d) { const day = (d.getDay()+6)%7; return new Date(d.getFullYear(), d.getMonth(), d.getDate()-day); }
+/** @param {string} kind - type de quête (QUEST_KINDS_DAILY/WEEKLY). @returns {number} valeur brute actuelle de la stat correspondante dans S. */
 function questStatValue(kind) {
   switch (kind) {
     case 'kills': case 'killsBig': return S.kills;
@@ -591,6 +603,7 @@ function questStatValue(kind) {
   }
   return 0;
 }
+/** @param {'daily'|'weekly'} scope. Tire un nouveau lot de quêtes (3 types au hasard + variante de difficulté) si la clé de période (jour/semaine ISO) a changé, sinon no-op. */
 function ensureQuests(scope) {
   const cfg = QUEST_SCOPES[scope];
   const key = cfg.keyFn(new Date());
@@ -606,10 +619,12 @@ function ensureQuests(scope) {
   for (const k of Object.keys(cfg.kinds)) base[k] = questStatValue(k);
   S[cfg.stateKey] = { date:key, quests, base };
 }
+/** @param {'daily'|'weekly'} scope @param {object} q - quête (lit .kind). @returns {number} progression depuis le début du scope (stat actuelle - valeur de référence au tirage). */
 function questProgress(scope, q) {
   const st = S[QUEST_SCOPES[scope].stateKey];
   return Math.max(0, questStatValue(q.kind) - st.base[q.kind]);
 }
+/** @param {'daily'|'weekly'} scope @param {number} i - index de la quête. Réclame la récompense si non déjà fait et l'objectif atteint (idempotent via q.claimed, empêche un double-clic de payer 2×). */
 function claimQuest(scope, i) {
   ensureQuests(scope);
   const st = S[QUEST_SCOPES[scope].stateKey];
@@ -671,6 +686,7 @@ function renderQuestSectionHtml(scope) {
   }).join('');
 }
 // compte, pour un scope, combien de quêtes sont prêtes à réclamer et combien restent en cours
+/** @param {'daily'|'weekly'} scope. @returns {object} compte de quêtes prêtes à réclamer / en cours pour ce scope. */
 function questScopeCounts(scope) {
   ensureQuests(scope);
   const st = S[QUEST_SCOPES[scope].stateKey];
@@ -742,10 +758,12 @@ function fmtDuration(ms) {
   const pad = n => String(n).padStart(2,'0');
   return (days>0 ? days+i18next.t('progression:progression.quests.duration_day_suffix') : '') + pad(h)+':'+pad(m)+':'+pad(s);
 }
+/** @returns {number} millisecondes avant minuit local (prochain reset des quêtes journalières). */
 function msToNextDailyReset() {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()+1, 0,0,0,0) - now;
 }
+/** @returns {number} millisecondes avant le prochain lundi minuit local (prochain reset des quêtes hebdomadaires). */
 function msToNextWeeklyReset() {
   const now = new Date();
   const day = (now.getDay()+6)%7; // 0=lundi..6=dimanche
@@ -879,6 +897,7 @@ const REF_DPS_FOR_STATS = 900; // dégâts/min de référence PUREMENT relatif :
 // matériaux et bijoux ne sont plus comptés : ce sont des objets de PROGRESSION (optimisation/gear),
 // pas une source de revenu régulière, et les looter au lieu de les vendre ne doit rien retirer au
 // classement "meilleur silver/h" d'une zone.
+/** @param {object} z - zone (ZONES). @returns {number} silver/h théorique de cette zone, calculé UNIQUEMENT sur le trash (matériaux/bijoux exclus, ce sont des objets de progression pas de revenu régulier). */
 function zoneSilverPerHour(z) {
   const l = z.loot;
   return l.trash.val*l.trash.ch * REF_KPM_FOR_STATS * 60;
@@ -887,6 +906,7 @@ function zoneXpPerHour(z) { return z.xp * REF_KPM_FOR_STATS * 60; }
 function zoneKillsPerMin(z) { return REF_DPS_FOR_STATS / z.hpPer; }
 // meilleure zone selon une métrique donnée (silver/xp/kills), toutes zones confondues (demande
 // explicite : classement théorique, PAS limité aux zones survivables aujourd'hui)
+/** @param {Function} metricFn - fonction (zone)=>number à maximiser. @returns {{i:number, v:number}} index et valeur de la meilleure zone selon cette métrique, toutes zones confondues (classement théorique, pas limité aux zones survivables aujourd'hui). */
 function bestZoneForMetric(metricFn) {
   let bestI = 0, bestV = -Infinity;
   for (let i = 0; i < ZONES.length; i++) {
@@ -895,6 +915,7 @@ function bestZoneForMetric(metricFn) {
   }
   return { i: bestI, v: bestV };
 }
+/** @param {number} r - ratio bottleneck (min de apRatio/dpRatio). @returns {{cls:string, txt:string}} badge de difficulté de zone (DANGEREUSE < 0.6, DIFFICILE < 0.9, ADAPTÉE ≤1.3, FACILE ≤1.8, DÉPASSÉE au-delà). */
 function badgeOf(r) {
   if (r < 0.6)  return { cls:'b-red',    txt:'ZONE DANGEREUSE' };
   if (r < 0.9)  return { cls:'b-orange', txt:'ZONE DIFFICILE' };
@@ -906,6 +927,7 @@ function badgeOf(r) {
 // qu'une pénalité invisible de dégâts/loot -- le joueur devient plus lent, et les monstres qui
 // t'ont aggro deviennent plus rapides (demande explicite du 2026-07-05 : "tu es plus lent, les
 // monstres sont plus rapides")
+/** @returns {boolean} vrai si la zone actuelle est "ZONE DANGEREUSE" (bottleneck < 0.6) — déclenche le malus de vitesse joueur/monstres. */
 function isZoneDangerous() { return bottleneck() < 0.6; }
 // valeurs durcies le 2026-07-05 (demande explicite : "un plus gros ralenti du joueur et une
 // vitesse plus élevée des monstres") -- étaient 0.7/1.35 à l'introduction de cette mécanique
@@ -937,6 +959,7 @@ function renderEquipModeBtn() {
   const crystalSlot = $('crystalSlotCenter');
   if (crystalSlot) crystalSlot.title = i18next.t('progression:progression.equip.crystal_coming_soon');
 }
+/** @param {'gear'|'crystal'} key. Bascule le panneau Équipement/Cristal (no-op si clé inconnue). */
 function setEquipMode(key) {
   if (!EQUIP_MODES[key]) return;
   equipMode = key;
@@ -1043,6 +1066,7 @@ ITEM_TUTORIALS.boss = {
 };
 // index inverse nom d'objet -> id de tutoriel, construit une seule fois (évite de reparcourir
 // ITEM_TUTORIALS à chaque ramassage) -- fonction pure, testable isolément
+/** @returns {Object<string,string>} index inverse nom d'objet → id de tutoriel (ITEM_TUTORIALS), construit une seule fois. Fonction pure, testable isolément. */
 function buildItemTutorialIndex() {
   const idx = {};
   for (const id in ITEM_TUTORIALS) {
@@ -1071,9 +1095,11 @@ let isLeavingViaSkipBtn = false;
 // séparée de l'écriture pour rester testable (voir consigne de la session : logique exposée,
 // pas enfouie dans une closure)
 function itemTutoStorageKey(id) { return 'velia-idle-item-tuto-seen-'+id; }
+/** @param {string} id - id de tutoriel (ITEM_TUTORIALS). @returns {boolean} vrai si déjà vu (flag localStorage). */
 function isItemTutorialSeen(id) {
   try { return localStorage.getItem(itemTutoStorageKey(id)) === '1'; } catch(e) { return false; }
 }
+/** @param {string} id @param {boolean} skipped - vrai si fermé via "Passer" (pour les stats admin). Pose le flag localStorage + journalise côté serveur en fire-and-forget si connecté. */
 function markItemTutorialSeen(id, skipped) {
   try { localStorage.setItem(itemTutoStorageKey(id), '1'); } catch(e) {}
   // best-effort, ne bloque jamais le jeu (voir consigne : fire-and-forget, jamais await/bloquant) --
@@ -1102,6 +1128,7 @@ let itemTutorialActive = false;
 // à maybeQueueTutorialById (2026-07-19, refactor) : le reste (file d'attente/plafond/flag vu) est
 // IDENTIQUE qu'un tutoriel soit déclenché par un ramassage d'objet ou manuellement (voir
 // ACTION_TUTORIALS ci-dessous — marché/enchantement/boss, déclenchés au premier usage réel).
+/** @param {string} itemName - nom de l'objet ramassé (dropsTick). @returns {boolean} vrai si un tutoriel a été mis en file (lookup nom→id puis délègue à maybeQueueTutorialById). */
 function maybeQueueItemTutorial(itemName) {
   const id = ITEM_TUTORIAL_BY_NAME[itemName];
   return id ? maybeQueueTutorialById(id) : false;
@@ -1109,6 +1136,7 @@ function maybeQueueItemTutorial(itemName) {
 // coeur de la décision (2026-07-19, extrait de maybeQueueItemTutorial) : id direct dans
 // ITEM_TUTORIALS (via un nom d'objet OU appelé directement pour un déclenchement manuel, voir
 // ACTION_TUTORIALS). File d'attente/plafond/flag "déjà vu" partagés, aucune distinction de source.
+/** @param {string} id - id de tutoriel (ITEM_TUTORIALS). @returns {boolean} vrai si mis en file — refuse si déjà vu, pas connecté, déjà en file/en cours, ou file pleine (ITEM_TUTORIAL_QUEUE_CAP). */
 function maybeQueueTutorialById(id) {
   if (!ITEM_TUTORIALS[id] || isItemTutorialSeen(id)) return false;
   // bug corrigé (2026-07-20, rapporté explicitement : "l'onboarding ne dois pas s'enclencher si on
@@ -1131,6 +1159,7 @@ function maybeQueueTutorialById(id) {
   return true;
 }
 let itemTutorialActiveId = null;
+/** Dépile et affiche le prochain tutoriel d'objet en file (no-op si un tutoriel est déjà affiché). */
 function playNextItemTutorial() {
   if (itemTutorialActive) return; // un tutoriel est déjà affiché, endItemTutorial() rappellera cette fonction
   const id = itemTutorialQueue.shift();
@@ -1144,6 +1173,7 @@ function playNextItemTutorial() {
 // appelé via le "after" du dernier step de chaque ITEM_TUTORIALS[id] (voir boucle juste après la
 // définition du registre plus haut) -- skipped reflète isLeavingViaSkipBtn au moment de l'appel :
 // true seulement si fermé via "Passer", pour les stats admin (voir mark_item_tutorial_seen)
+/** @param {boolean} skipped - vrai si fermé via "Passer". Appelé au dernier step d'un tutoriel d'objet : marque vu, puis enchaîne sur le suivant en file. */
 function endItemTutorial(skipped) {
   if (!itemTutorialActive) return;
   markItemTutorialSeen(itemTutorialActiveId, !!skipped); // réenvoie avec le bon skipped final (l'appel de mise en file avait skipped=false par défaut)
