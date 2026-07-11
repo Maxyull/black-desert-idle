@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V382', d:'22/07/2026 03:00', name:{fr:'Reskin du menu latéral et des encarts flottants (Suivi/Chat)', en:'Sidebar menu and floating widgets (Tracker/Chat) reskin'}, fr:[
+      {t:'change', sub:'interface', tx:'Les boutons du menu latéral (Quêtes, Courrier, Compendium, Codex, Succès, Classement, Marché, Discord, Wiki, Notes de version, Soutenir, Mon compte, Déconnexion...) et le bouton de repli du menu ont reçu le même reskin visuel que le reste de l\'écran Zone (police, couleurs, coins arrondis) — ils avaient été oubliés lors des refontes précédentes et gardaient encore l\'ancien style.'},
+      {t:'change', sub:'interface', tx:'Les encarts flottants "Suivi de quête" et "Chat" (coin haut-droit) ont reçu le même traitement — seule leur coque a changé, les onglets de canaux du chat gardent leur style déjà à jour.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The sidebar menu buttons (Quests, Mailbox, Compendium, Codex, Achievements, Leaderboard, Market, Discord, Wiki, Patch notes, Support, My account, Logout...) and the menu collapse button received the same visual reskin as the rest of the Zone screen (font, colors, rounded corners) — they had been missed in previous redesign passes and still had the old style.'},
+      {t:'change', sub:'interface', tx:'The floating "Quest tracker" and "Chat" widgets (top-right corner) received the same treatment — only their shell changed, the chat channel tabs already had the up-to-date style.'},
+    ] },
   { v:'V381', d:'22/07/2026 02:00', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
       {t:'new', sub:'interface', tx:'Le Classement (🏆) a une 8e catégorie : "🧭 Compendium", basée sur ta complétion globale (zones + boss + Maîtrise PEN).'},
       {t:'new', sub:'interface', tx:'Si ton rang réel dans une catégorie est en dehors du top 20, une barre "Ta position" apparaît avec ton rang exact, ta valeur et le nombre total de joueurs classés.'},
