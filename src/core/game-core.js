@@ -538,6 +538,7 @@ const ENH_FS_INC = {
   16:.015,17:.012,18:.008,19:.004, 20:.0015,
 };
 function itemFailstack(item, level) { return (item && item.fsByLevel && item.fsByLevel[level]) || 0; }
+/** Incrémente le failstack de `item` au niveau `level` précis (jamais partagé entre niveaux/objets). @param {object} item @param {number} level */
 function addItemFailstack(item, level) {
   if (!item) return;
   if (!item.fsByLevel) item.fsByLevel = {};
@@ -562,18 +563,19 @@ function enhChanceParts(level, item) {
 function enhChance(level, item) { return enhChanceParts(level, item).total; }
 
 // ==================== POWER SCORE & SCALING ====================
-// les 3 armes (principale + éveil + secondaire) contribuent chacune leur PA, selon LEUR PROPRE enchant
+/** @returns {number} PA total des 3 armes équipées (principale/éveil/secondaire), chacune selon SON PROPRE enchant. */
 function weaponAP() {
   let a = 0;
   for (const k of WEAPON_SLOTS) { const e = EQUIP[k]; if (e) a += (e.ap||0) * itemMult(e); }
   return a;
 }
-// armure + bijoux : chaque pièce contribue selon SON propre niveau d'enchant
+/** @returns {number} PA total de l'armure+bijoux équipés (hors armes), chaque pièce selon SON propre enchant. */
 function equipAP() {
   let a = 0;
   for (const k of [...ARMOR_SLOTS, ...ACC_SLOTS]) { const e = EQUIP[k]; if (e) a += (e.ap||0) * itemMult(e); }
   return a;
 }
+/** @returns {number} PD total de l'armure+bijoux équipés. */
 function equipDP() {
   let d = 0;
   for (const k of [...ARMOR_SLOTS, ...ACC_SLOTS]) { const e = EQUIP[k]; if (e) d += (e.dp||0) * itemMult(e); }
@@ -582,6 +584,7 @@ function equipDP() {
 // PV apportés par l'armure (casque/plastron/gants/bottes) — demande : "ajoute au stuff des PV pour
 // que les joueurs ne se fassent pas one-shot". S.hpMax reste la valeur de BASE (progression par
 // niveau) ; effHpMax() = base + bonus d'armure, utilisée partout où "les PV max actuels" comptent.
+/** @returns {number} PV bonus des 4 pièces d'armure (chacune selon son enchant) — S.hpMax reste la base par niveau, voir effHpMax(). */
 function equipHP() {
   let h = 0;
   for (const k of ARMOR_SLOTS) { const e = EQUIP[k]; if (e) h += (e.hp||0) * itemMult(e); }
@@ -593,11 +596,13 @@ const effHpMax = () => S.hpMax + equipHP();
 const effManaMax = () => S.mpMax;
 // Esquive (2026-07-08) : stat de % dropée UNIQUEMENT sur les 4 pièces d'armure (voir GEAR_ROLE),
 // enchantée comme AP/DP/PV (itemMult). Chaque point de % réduit la chance de subir un coup.
+/** @returns {number} % d'esquive brut de l'armure équipée (avant dodgeEffectiveness()), enchanté comme AP/DP/PV. */
 function equipDodge() {
   let d = 0;
   for (const k of ARMOR_SLOTS) { const e = EQUIP[k]; if (e) d += (e.dodge||0) * itemMult(e); }
   return d;
 }
+/** @returns {number} bonus d'enchantement moyen des 4 pièces d'armure équipées (0 si aucune). */
 function armorBonusAvg() {
   const pieces = ARMOR_SLOTS.map(k => EQUIP[k]).filter(Boolean);
   if (!pieces.length) return 0;
@@ -616,13 +621,19 @@ const bottleneck = (z) => Math.min(apRatio(z), dpRatio(z));
 // fois — pas juste "avoir farmé la zone une fois" comme avant. Entièrement CALCULÉ à la volée à
 // partir de S.lootByItem (jamais un flag stocké séparément) : donc automatiquement rétroactif, y
 // compris pour les objets obtenus dans d'autres zones du même palier (matériau/bijou partagés).
+/** @param {number} zi - index de zone. @returns {string[]} les 4 noms d'objets requis pour le Compendium de cette zone (trash/matériau/jackpot/craft). */
 function zoneItemNames(zi) {
   const z = ZONES[zi], tier = gearTierForZone(zi);
   return [tr(z.loot.trash.name), tr(tier.material.name), tr(z.loot.jackpot.name), tr(z.loot.craft.name)];
 }
+/** @param {number} zi - index de zone. @returns {boolean} vrai si les 4 objets requis ont déjà tous été obtenus au moins une fois. */
 function zoneFullyCollected(zi) { return zoneItemNames(zi).every(n => compendiumItemDone(n)); }
-// appelé après chaque ramassage d'objet (voir dropsTick) : détecte le passage "incomplet → complet"
-// pour cette zone précise, et affiche la même notif +1% qu'avant (floatTxt + Discord)
+/**
+ * Appelé après chaque ramassage d'objet (dropsTick) : détecte le passage "incomplet → complet"
+ * du Compendium pour cette zone précise, et affiche la notif +1% (floatTxt + Discord).
+ * @param {number} zi - index de zone.
+ * @param {boolean} wasDone - état de zoneFullyCollected(zi) AVANT ce ramassage.
+ */
 function checkZoneCompendiumUnlock(zi, wasDone) {
   if (wasDone || !zoneFullyCollected(zi)) return;
   floatTxt(P.x, P.y, 96, '📖 Compendium — '+tr(ZONES[zi].name), { gold:true });
@@ -631,6 +642,7 @@ function checkZoneCompendiumUnlock(zi, wasDone) {
 }
 // World Boss (ajouté au Compendium le 2026-07-08, demande explicite) : vaincre un boss AU MOINS
 // une fois débloque le même bonus qu'une zone (+1% SPD/DMG/Esquive), voir endBossFight
+/** @param {string} bossId - clé BOSS_ROSTER. Marque le boss vaincu au moins une fois (déclenche le bonus Compendium +1%, une seule fois). */
 function markBossDefeated(bossId) {
   if (S.bossesKilled[bossId]) return;
   S.bossesKilled[bossId] = true;
@@ -647,6 +659,7 @@ function compendiumPct() { return compendiumTotalCount() * 1; } // points de %, 
 // distinct de compendiumPct() ci-dessus (qui n'est PAS un vrai pourcentage de complétion mais le
 // nombre de points de bonus de stat, zones+boss uniquement, PEN exclu). Utilisé par la barre de
 // progression combinée du Compendium et par le suivi admin (player_stats.compendium_pct).
+/** @returns {number} % de complétion GLOBALE du Compendium (0-100), zones+boss+Maîtrise PEN confondus — distinct de compendiumPct() (bonus de stat, PEN exclu). Alimente aussi player_stats.compendium_pct côté admin. */
 function compendiumOverallPct() {
   const done = compendiumTotalCount() + compendiumPenCount();
   const max = compendiumTotalMax() + penMasteryItemList().length;
@@ -665,6 +678,7 @@ function compendiumOverallPct() {
 // chaque palier (12 au total) n'étaient donc JAMAIS suivies dans la Maîtrise PEN, aucun moyen de
 // les compléter. Chaque entrée porte maintenant slot/grade/color/kind pour permettre un
 // regroupement par palier de couleur + une icône fidèle (voir renderCompendiumHtml).
+/** @returns {object[]} 44 entrées ({name,slot,grade,color,kind}) — 4 paliers × (3 armes + 4 armures + 4 bijoux), groupées par palier de couleur, pour le suivi Maîtrise PEN. */
 function penMasteryItemList() {
   const entries = [];
   for (const tier of GEAR_TIERS) {
@@ -687,11 +701,13 @@ const PEN_GEAR_ICON_FOR_SLOT = {
   helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor,
 };
 const PEN_JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+/** @param {object} entry - une entrée de penMasteryItemList(). @returns {string} HTML de l'icône fidèle (réutilise les vraies fonctions d'icône de gear-icons.js). */
 function penMasteryIcon(entry) {
   if (entry.kind === 'gear') { const fn = PEN_GEAR_ICON_FOR_SLOT[entry.slot]; return fn ? fn(entry.color, entry.grade) : ''; }
   const fn = PEN_JEWEL_ICON_FOR_SLOT[entry.slot] || ringIconForTier;
   return fn(JEWEL_TIER_IDX[entry.grade] || 0, entry.color);
 }
+/** @param {string} name - nom de l'objet amené à PEN pour la 1re fois. Marque S.penMastery[name], toast + Discord, jamais rejoué si déjà fait. */
 function markPenMastery(name) {
   if (S.penMastery[name]) return;
   S.penMastery[name] = true;
@@ -705,6 +721,7 @@ function markPenMastery(name) {
 // rééquilibrage passé laissant une entrée orpheline, jamais nettoyée). Filtre désormais sur les
 // noms RÉELLEMENT présents dans la liste actuelle -- une entrée orpheline reste en mémoire (aucune
 // perte de donnée si le nom revient un jour) mais ne gonfle plus le compteur affiché.
+/** @returns {number} nombre d'entrées de S.penMastery encore valides (présentes dans penMasteryItemList() actuelle — filtre les noms orphelins d'un rééquilibrage passé). */
 function compendiumPenCount() {
   const validNames = new Set(penMasteryItemList().map(e => e.name));
   return Object.keys(S.penMastery||{}).filter(n => validNames.has(n)).length;
@@ -716,6 +733,7 @@ function compendiumPenCount() {
 // protégé n'a plus de raison d'être : rendu ici au sac principal, jamais perdu (comme tout
 // mouvement Compendium -> sac). ensureCompendiumProtection() ne re-protège jamais un nom déjà
 // masterisé (garde-fou déjà en place), donc rien ne viendra le remplacer entre-temps.
+/** @param {string} name - objet qui vient d'atteindre PEN (peu importe quel exemplaire). Rend au sac principal l'exemplaire protégé de ce nom dans COMPENDIUM_BAG (n'a plus besoin d'y rester). */
 function evictMasteredFromCompendiumBag(name) {
   if (!name || !S.penMastery[name]) return;
   const idx = COMPENDIUM_BAG.findIndex(s => s && s.name === name);
@@ -729,6 +747,7 @@ function evictMasteredFromCompendiumBag(name) {
 // à S.penMastery (qui ne retient QUE le passage à PEN), ceci retient TOUT niveau intermédiaire
 // (+1 à +19 compris), pour que le Compendium garde une trace même d'un objet enchanté puis vendu
 // avant PEN. Mis à jour à CHAQUE succès d'optimisation (voir attemptEnhance), jamais effacé.
+/** @param {string} name @param {number} lvl - niveau atteint. Retient le meilleur niveau d'optimisation JAMAIS atteint pour ce nom (S.enhPeakByName), jamais effacé même si l'objet est revendu avant PEN. */
 function trackEnhPeak(name, lvl) {
   if (!S.enhPeakByName) S.enhPeakByName = {};
   if ((S.enhPeakByName[name]||0) < lvl) S.enhPeakByName[name] = lvl;
@@ -776,13 +795,14 @@ function totalDodgePct(dpR) {
 function isoX(x, y) { return (x - y); }
 function isoY(x, y) { return (x + y) * .5; }
 const cam = { x: 0, y: 0 };
+/** @param {number} x @param {number} y @param {number} [z] - hauteur (jump/float). @returns {{sx:number, sy:number}} coordonnées écran (canvas), projection isométrique centrée sur cam. */
 function toScreen(x, y, z = 0) {
   return {
     sx: W/2 + isoX(x,y) - isoX(cam.x,cam.y),
     sy: H/2 + 30 + isoY(x,y) - isoY(cam.x,cam.y) - z,
   };
 }
-// inverse de toScreen (z=0, au niveau du sol) : sert au clic sur le loot au sol
+/** Inverse de toScreen() (z=0, au niveau du sol) — sert au clic sur le loot au sol. @param {number} sx @param {number} sy @returns {{x:number, y:number}} coordonnées monde. */
 function screenToWorld(sx, sy) {
   const a = sx - W/2 + isoX(cam.x,cam.y);
   const b = 2*(sy - H/2 - 30) + isoY(cam.x,cam.y)*2;
@@ -853,6 +873,7 @@ function spawnPackNear() {
 // (2026-07-11, demande explicite : "rajoute des groupe de monstre a partir de la zone blanche" /
 // "+ de pack meme monstre") : le monstre et son loot restent ceux de la zone, seul le nombre de
 // groupes vivants en même temps dans le monde augmente avec le palier de stuff.
+/** @returns {number} nombre de packs de monstres actifs simultanément dans le monde selon le palier de zone (0 à Velia). */
 function targetPackCount() {
   if (atVelia) return 0;
   // volontairement SANS passer par GEAR_TIERS/gearTierForZone : resetWorld() (juste en dessous)
@@ -877,6 +898,7 @@ function targetPackCount() {
 // spawnaient près de l'origine pendant que le joueur se téléportait ensuite loin de là -- "zone
 // vide" au reload. keepPos=true fait spawn les packs autour de la position ACTUELLE de P (déjà
 // restaurée par l'appelant) au lieu de forcer un retour à l'origine.
+/** @param {boolean} [keepPos] - si vrai, fait spawn les packs autour de la position ACTUELLE de P au lieu de forcer un retour à l'origine (voir commentaire ci-dessus). Vide packs/drops/particules et réinitialise l'état de combat de la zone. */
 function resetWorld(keepPos) {
   packs = []; drops = []; corpses = []; particles = []; floats = [];
   target = null; P.lootTarget = null; P.manualTarget = null;
@@ -893,6 +915,7 @@ resetWorld();
 let DEFAULT_SAVE = JSON.parse(JSON.stringify(getSaveState()));
 
 // ==================== FSM ====================
+/** @returns {'agressif'|'normal'|'prudent'|'urgence'} palier de comportement IA selon le % de PV actuel (utilisé par pickSkill/l'IA de combat). */
 function hpTier() {
   const p = P.hp / effHpMax();
   if (p > .8) return 'agressif';
@@ -904,10 +927,16 @@ function setState(st){ P.state = st; P.stateT = 0; }
 
 // pénalité de vitesse liée au poids retirée (2026-07-15, demande explicite : "enleve ralentit par
 // le poids") -- ne reste que le bonus SPD niveau/Compendium et le malus de zone dangereuse
+/** @returns {number} multiplicateur de vitesse de déplacement — bonus SPD niveau/Compendium × malus si zone dangereuse. */
 function speedMult() {
   const dangerMult = isZoneDangerous() ? DANGER_PLAYER_SPEED_MULT : 1;
   return (1 + totalSpdPct()/100) * dangerMult;
 }
+/**
+ * Déplace P vers (tx,ty) à `speed` (avant speedMult()) pendant `dt` secondes, met à jour l'orientation/l'animation de rebond.
+ * @param {number} tx @param {number} ty @param {number} speed @param {number} dt
+ * @returns {number} distance restante avant d'atteindre la cible (0 si déjà arrivé).
+ */
 function moveToward(tx, ty, speed, dt) {
   const d = dist(P.x,P.y,tx,ty);
   if (d < 1) return d;
@@ -918,6 +947,7 @@ function moveToward(tx, ty, speed, dt) {
   P.bob += dt*9;
   return d;
 }
+/** @param {number} dirX @param {number} dirY - direction (normalisée en interne). Téléporte P de 95 unités dans cette direction, déclenche le cooldown et l'effet visuel de traînée. */
 function doTeleport(dirX, dirY) {
   teleportCd = 4.5;
   const d = Math.hypot(dirX,dirY)||1;
