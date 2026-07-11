@@ -8715,6 +8715,7 @@ function isStrictlyBetterGear(a, b) {
   if (sa !== sb) return sa > sb;
   return (a ? (a.enhLv||0) : -1) > (b ? (b.enhLv||0) : -1);
 }
+
 function tryAutoEquipIfBetter(i, s) {
   if (s.kind !== 'gear' && s.kind !== 'jackpot') return false;
   
@@ -8791,6 +8792,7 @@ function equipBestSingle(slotId, kind) {
   INV[bestIdx] = null;
   return true;
 }
+
 function equipBestPair(slotA, slotB, accSlot) {
   const candidates = [];
   if (EQUIP[slotA]) candidates.push(EQUIP[slotA]);
@@ -8813,6 +8815,7 @@ function equipBestPair(slotA, slotB, accSlot) {
   EQUIP[slotB] = chosen[1] ? { ...chosen[1] } : null;
   return true;
 }
+
 function equipBestGear() {
   let changed = 0;
   for (const slotId of ['weapon','awakening','secondary','helmet','armor','gloves','boots'])
@@ -8843,6 +8846,7 @@ function refScoreForSlot(slotId, accSlot) {
 }
 
 const NEGLECTED_UPGRADE_DELAY_MS = 15000;
+
 function hasNeglectedUpgradeInBag() {
   const now = Date.now();
   for (let i = 0; i < INV_SIZE; i++) {
@@ -8858,6 +8862,7 @@ function hasNeglectedUpgradeInBag() {
 }
 
 let lastWorseSaleSold = null;
+
 function sellWorseThanEquipped() {
   let count = 0, total = 0, divertedCount = 0;
   const sold = [];
@@ -8948,6 +8953,7 @@ function enhanceWithMaterial(i) {
 }
 
 let optTarget = { loc:'equip', key:'weapon' };
+
 function getOptTargetItem() {
   if (optTarget.loc === 'equip') return EQUIP[optTarget.key];
   if (optTarget.loc === 'inv') return INV[optTarget.key];
@@ -9120,6 +9126,7 @@ function targetPrimaryStat(target) {
   if (target.kind === 'jackpot') return 'ap';
   return WEAPON_SLOTS.includes(target.slot) ? 'ap' : 'dp';
 }
+
 function optAutoGainPrimaryPart(target, targetLvl) {
   if (!target || !Number.isInteger(targetLvl)) return '';
   const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
@@ -9238,6 +9245,7 @@ $('btnOptAuto').onclick = () => { if (autoOptTimer) stopAutoOpt(); else startAut
 
 const POUSSIERE_NAME = 'Poussière d\'esprit ancien';
 const CAPHRAS_NAME = 'Pierre de Caphras';
+
 function poussiereCount() {
   const s = INV.find(x => x && x.kind === 'craft' && x.name === POUSSIERE_NAME);
   return s ? s.qty : 0;
@@ -9248,6 +9256,7 @@ function renderCapConvertRow() {
   lbl.textContent = i18next.t('inventory:inventory.caphras_convert_label', { n: fmt(n), caphras: Math.floor(n/5) });
   btn.disabled = n < 5;
 }
+
 function convertPoussiereToCaphras() {
   const idx = INV.findIndex(s => s && s.kind === 'craft' && s.name === POUSSIERE_NAME);
   if (idx === -1 || INV[idx].qty < 5) return;
@@ -9465,6 +9474,7 @@ function renderLootTable(previewIdx) {
   $('lootTable').innerHTML = mainRowsHtml +
     `<div class="lootCatHead">🗺️ ${i18next.t('inventory:inventory.velia_treasure_label')}</div>` + treasureRowsHtml;
 }
+
 function dropItem(i) {
   const s = INV[i]; if (!s) return;
   if (forcedMatKey && s.key === forcedMatKey) forcedMatKey = null;
@@ -9485,6 +9495,7 @@ function sellOne(i) {
   if (s.kind === 'gear' || s.kind === 'jackpot') INV[i] = null; else invRemoveAt(i, 1);
   hud();
 }
+
 function sellStack(i) {
   const s = INV[i]; if (!s) return;
   const total = s.val * s.qty;

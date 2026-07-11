@@ -135,6 +135,7 @@ const JEWELRY_SLOTS = ['ring1','ring2','necklace','earring1','earring2','belt'];
 // testZoneWeaponArmorSlotsComplete) — jamais mis à jour, ce qui cassait toute tentative de lier
 // une zone précise à SON socle précis (une pièce d'armure ne peut en réalité dropper QUE dans SA
 // zone dédiée, jamais ailleurs dans le palier).
+/** @param {string} slotId - slot d'équipement. @returns {number[]} zones candidates du palier ACTUEL (zoneIdx) qui garantissent ce socle précis (armes/armures/bijoux), avant tout filtre de sécurité. */
 function slotCandidateZones(slotId) {
   const tier = gearTierForZone(zoneIdx);
   if (WEAPON_SLOTS.includes(slotId)) {
@@ -152,6 +153,7 @@ function slotCandidateZones(slotId) {
 // réservée au cas du socle REMPLI (safeZonesForSlot), slotCandidateZones reste inchangée pour le
 // socle VIDE (zonesForSlot, "où farmer" : rester scopé au palier courant y est voulu, on ne veut
 // pas suggérer un palier inférieur déjà dépassé).
+/** @param {string} slotId. @returns {number[]} zones candidates pour ce socle, TOUS paliers confondus (pas seulement zoneIdx) — voir safeZonesForSlot. */
 function slotCandidateZonesAllTiers(slotId) {
   const allZoneIdx = ZONES.map((_, zi) => zi);
   if (WEAPON_SLOTS.includes(slotId)) {
@@ -168,6 +170,7 @@ function slotCandidateZonesAllTiers(slotId) {
 // d'équipement vide, lorsque tu cliques dessus, te montre où farm l'item... halo bien visible,
 // tout sauf zone dangereuse". Ne recommande une zone DANGEREUSE que s'il n'existe vraiment aucune
 // alternative plus sûre (sinon le joueur n'a aucune option affichée du tout).
+/** @param {string} slotId. @returns {number[]} zones à proposer pour un socle VIDE (popup "où farmer") — préfère les zones sûres, ne recommande une zone dangereuse que si aucune alternative n'existe. */
 function zonesForSlot(slotId) {
   const zones = slotCandidateZones(slotId);
   const safe = zones.filter(zi => bottleneck(ZONES[zi]) >= 0.6);
@@ -185,6 +188,7 @@ function zonesForSlot(slotId) {
 // bleu, je devrais avoir une icône qui me montre que du stuff m'attend" -- avant, scopé au palier
 // courant via slotCandidateZones, un palier SUPÉRIEUR ne pouvait jamais être suggéré, quel que soit
 // le palier de la pièce déjà équipée).
+/** @param {string} slotId. @returns {number[]} zones à proposer pour l'icône ⬆️ d'un socle REMPLI — toutes zones sauf dangereuses, tous paliers confondus, jamais de fallback sur le dangereux. */
 function safeZonesForSlot(slotId) {
   return slotCandidateZonesAllTiers(slotId).filter(zi => bottleneck(ZONES[zi]) >= 0.6);
 }
@@ -205,6 +209,7 @@ function itemTierIdx(item) { return GEAR_TIERS.findIndex(t => t.color === item.c
 // Corrigé en comparant le palier de CHAQUE zone candidate individuellement au palier de la pièce
 // équipée, ce qui généralise correctement à toutes les transitions de palier (gris→blanc,
 // blanc→vert, vert→bleu), pas seulement au cas testé initialement.
+/** @param {string} id - slot. @param {object} e - item équipé sur ce slot. @returns {number[]} zones sûres, tous paliers, strictement meilleures que le palier de `e` (compare CHAQUE zone candidate individuellement, pas le palier de la zone farmée). */
 function upgradeZonesForEquippedSlot(id, e) {
   if (!e) return [];
   const eTier = itemTierIdx(e);
@@ -215,6 +220,7 @@ function upgradeZonesForEquippedSlot(id, e) {
 // le stuff est dans l'inventaire") -- si oui, inutile de suggérer d'aller le farmer, il suffit de
 // l'équiper. Réutilise refScoreForSlot (même référence -- le pire des 2 anneaux/boucles pour une
 // paire, -1 pour un socle vide -- que hasNeglectedUpgradeInBag) plutôt que de la recalculer.
+/** @param {string} slotId. @returns {boolean} vrai si un objet du sac améliorerait déjà ce socle (inutile de suggérer d'aller le farmer, il suffit de l'équiper). */
 function ownedBetterInBagForSlot(slotId) {
   const accSlot = JEWELRY_SLOTS.includes(slotId) ? accBaseSlot(slotId) : null;
   const ref = refScoreForSlot(slotId, accSlot);
@@ -226,6 +232,7 @@ function ownedBetterInBagForSlot(slotId) {
 // lignes de la liste de zones (2026-07-09, demande explicite : "ajoute l'icone d'upgrade sur les
 // case vide, et sur les zone en question"), en plus de l'icône déjà présente sur la poupée
 // d'équipement elle-même.
+/** @returns {Set<number>} zones (sûres) qui offrent vraiment mieux pour au moins un socle du joueur (vide ou palier inférieur), pour le badge ⬆️ sur les lignes de zone. */
 function zonesOfferingUpgrade() {
   const zones = new Set();
   for (const slotId of [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...JEWELRY_SLOTS]) {
@@ -241,6 +248,7 @@ function zonesOfferingUpgrade() {
 // peux montrer plusieurs flèches sur stuff ET zone à farm") : pour UNE zone donnée, quels socles
 // précis de la poupée d'équipement propose-t-elle réellement en amélioration ? Sert à ne surligner
 // QUE les cases concernées (pas toute la poupée) au survol d'une ligne de zone.
+/** @param {number} zi - index de zone. @returns {string[]} slots de la poupée d'équipement que CETTE zone précise propose en amélioration (inverse de zonesOfferingUpgrade). */
 function slotsUpgradedByZone(zi) {
   const slots = [];
   for (const slotId of [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...JEWELRY_SLOTS]) {
@@ -562,6 +570,7 @@ function renderCompendiumPane() {
 // ---------- coffre de ville (2026-07-16, demande explicite) ----------
 // premier emplacement UTILISABLE libre (les 172 au-delà de VELIA_CHEST_OPEN restent verrouillés,
 // jamais candidats) — même esprit que invAdd() pour le sac principal, mais borné aux 20 cases ouvertes
+/** @returns {number} index de la première case UTILISABLE libre du coffre (0-19, jamais au-delà de VELIA_CHEST_OPEN), -1 si plein. */
 function veliaChestFreeSlot() {
   for (let i = 0; i < VELIA_CHEST_OPEN; i++) if (!VELIA_CHEST[i]) return i;
   return -1;
@@ -569,6 +578,7 @@ function veliaChestFreeSlot() {
 // déplace N unités d'un objet du sac principal vers le coffre — empile d'abord sur une case déjà
 // identique si possible, sinon prend un emplacement libre ; ne retire du sac QUE si la place au
 // coffre est confirmée (jamais de perte si le coffre est plein)
+/** @param {number} invIndex - index dans INV. @param {number} n - quantité voulue. Déplace jusqu'à `n` unités du sac vers le coffre (stack existant en priorité), ne retire du sac que si la place est confirmée. @returns {boolean} vrai si déplacé. */
 function veliaChestStore(invIndex, n) {
   const s = INV[invIndex]; if (!s) return false;
   const take = Math.min(n, s.qty || 1);
@@ -656,6 +666,7 @@ document.querySelectorAll('#lootPanelTabs .lootPanelTab').forEach(btn => {
 $('btnChestZoom').onclick = () => { chestZoomed = !chestZoomed; renderVeliaChest(); };
 
 // double-clic = action rapide selon le type d'objet
+/** @param {number} i - index dans INV. Double-clic = action rapide selon le type d'objet (équiper gear/jackpot, cibler le matériau pour l'auto-opti, vendre le trash). */
 function quickAction(i) {
   const s = INV[i]; if (!s) return;
   if (s.kind === 'jackpot' || s.kind === 'gear') equipItem(i);
@@ -666,6 +677,7 @@ function quickAction(i) {
 
 // stat de référence déjà équipée pour comparer un objet du sac (pour les paires anneaux/boucles,
 // on compare à la pièce la plus faible des deux — celle qui serait remplacée en premier)
+/** @param {object} item - item du sac à comparer. @returns {object|null} pièce équipée de référence pour ce socle — pour une paire (anneau/boucle), la plus faible des deux (celle qui serait remplacée en premier). */
 function equippedRefForItem(item) {
   if (item.kind === 'gear') return EQUIP[item.slot];
   if (item.kind === 'jackpot') {
@@ -678,6 +690,7 @@ function equippedRefForItem(item) {
 }
 // texte de gain/perte de stats (PA/PD/PV) par rapport à ce qui est déjà équipé dans le slot —
 // affiché dans le menu au clic gauche pour décider d'équiper sans avoir à comparer soi-même
+/** @param {object} item - item du sac. @returns {string} HTML du gain/perte de stats (PA/PD/PV/Esquive) par rapport à equippedRefForItem(item), affiché dans le menu clic-gauche. */
 function statDeltaHtml(item) {
   const ref = equippedRefForItem(item);
   const cur = effectiveApDp(item);
@@ -694,6 +707,7 @@ function statDeltaHtml(item) {
   return `<div class="ipDelta">${ref ? i18next.t('inventory:inventory.stat_delta_vs_equipped') : i18next.t('inventory:inventory.stat_delta_nothing_equipped')}${parts.join(' ')}</div>`;
 }
 // version texte brut (sans HTML) du delta — utilisée dans les libellés de bouton (textContent)
+/** @param {object} item. @returns {string} version texte brut (sans HTML) du delta de stats de statDeltaHtml(), pour un textContent de bouton. */
 function statDeltaShortText(item) {
   const ref = equippedRefForItem(item);
   const cur = effectiveApDp(item);
@@ -820,6 +834,7 @@ function hideItemTooltip() { $('itemTooltip').style.display = 'none'; }
 
 // ---------- actions ----------
 // détermine dans quel slot précis une pièce (arme/armure/accessoire) doit s'équiper
+/** @param {object} item - lit .kind, .slot. @returns {string|null} slot précis de la poupée où équiper cet item (gear = correspondance directe ; jackpot ring/earring = le premier vide, sinon slot 1). */
 function resolveEquipSlot(item) {
   if (item.kind === 'gear') return item.slot; // 'weapon' | 'helmet' | 'armor' | 'gloves' | 'boots' — correspondance directe
   if (item.kind === 'jackpot') {
@@ -850,6 +865,14 @@ function isStrictlyBetterGear(a, b) {
   if (sa !== sb) return sa > sb;
   return (a ? (a.enhLv||0) : -1) > (b ? (b.enhLv||0) : -1);
 }
+/**
+ * Équipe automatiquement l'objet à l'index `i` S'IL EST MEILLEUR que ce qui est déjà équipé sur
+ * son slot (utilisé par sellOne AVANT toute vente). Pour un anneau/boucle (paire), compare au PIRE
+ * des deux déjà équipés et l'équipe spécifiquement à cette place.
+ * @param {number} i - index dans INV.
+ * @param {object} s - item à cet index (kind gear ou jackpot uniquement, sinon no-op).
+ * @returns {boolean} vrai si équipé.
+ */
 function tryAutoEquipIfBetter(i, s) {
   if (s.kind !== 'gear' && s.kind !== 'jackpot') return false;
   // gear : s.slot EST le slot direct ('helmet','weapon'...) ; jackpot : s.slot est déjà la BASE
@@ -920,6 +943,7 @@ function unequip(slotId) {
  */
 function itemScore(it) { return it ? (it.ap||0) + (it.dp||0)*0.5 + (it.dodge||0)*3 : -1; }
 
+/** @param {string} slotId. @param {'gear'|'jackpot'} kind. Équipe le meilleur exemplaire du sac pour ce socle (socle d'abord, enhLv en départage) si strictement meilleur que l'équipé. @returns {boolean} vrai si un changement a eu lieu. */
 function equipBestSingle(slotId, kind) {
   const current = EQUIP[slotId];
   let best = null, bestIdx = -1;
@@ -942,6 +966,7 @@ function equipBestSingle(slotId, kind) {
   INV[bestIdx] = null;
   return true;
 }
+/** @param {string} slotA @param {string} slotB - les 2 slots de la paire (ring1/ring2 ou earring1/earring2). @param {string} accSlot - base ('ring'/'earring'). Choisit les 2 meilleurs exemplaires (équipés+sac confondus) et les assigne. @returns {boolean} vrai si un changement a eu lieu. */
 function equipBestPair(slotA, slotB, accSlot) {
   const candidates = [];
   if (EQUIP[slotA]) candidates.push(EQUIP[slotA]);
@@ -965,6 +990,7 @@ function equipBestPair(slotA, slotB, accSlot) {
   EQUIP[slotB] = chosen[1] ? { ...chosen[1] } : null;
   return true;
 }
+/** Applique equipBestSingle/equipBestPair sur TOUS les slots équipables. @returns {number} nombre de pièces changées. */
 function equipBestGear() {
   let changed = 0;
   for (const slotId of ['weapon','awakening','secondary','helmet','armor','gloves','boots'])
@@ -989,6 +1015,7 @@ $('btnEquipBest').onclick = () => {
 };
 
 // ---------- vente automatique : tout objet strictement moins bon (socle) que ce qui est déjà équipé ----------
+/** @param {string} slotId @param {string} [accSlot] - 'ring'/'earring' pour une paire. @returns {number} itemScore de référence pour ce socle — le PIRE des 2 équipés pour une paire, sinon celui du slot direct. */
 function refScoreForSlot(slotId, accSlot) {
   if (accSlot === 'ring') return Math.min(itemScore(EQUIP.ring1), itemScore(EQUIP.ring2));
   if (accSlot === 'earring') return Math.min(itemScore(EQUIP.earring1), itemScore(EQUIP.earring2));
@@ -999,6 +1026,7 @@ function refScoreForSlot(slotId, accSlot) {
 // meilleur (itemScore) que ce qui est actuellement équipé sur son socle -- signale un oubli plutôt
 // qu'un objet tout juste looté qu'on n'a pas encore eu le temps de comparer
 const NEGLECTED_UPGRADE_DELAY_MS = 15000;
+/** @returns {boolean} vrai si un objet du sac, resté ≥15s sans être équipé (pickedAt), est réellement meilleur (itemScore) que l'équipé sur son socle — signale un oubli plutôt qu'un loot tout juste ramassé. */
 function hasNeglectedUpgradeInBag() {
   const now = Date.now();
   for (let i = 0; i < INV_SIZE; i++) {
@@ -1016,6 +1044,12 @@ function hasNeglectedUpgradeInBag() {
 // pour annuler un clic accidentel, demande explicite du 2026-07-06 ; annulable une seule fois,
 // non persisté (perdu au rechargement, ce n'est qu'un filet de sécurité immédiat)
 let lastWorseSaleSold = null;
+/**
+ * Vend tout gear/jackpot du sac strictement moins bon (itemScore) que l'équipé sur son socle
+ * (refScoreForSlot). Le PREMIER exemplaire d'un type jamais monté en PEN est protégé dans
+ * COMPENDIUM_BAG au lieu d'être vendu — les suivants du même type continuent d'être vendus.
+ * @returns {{count:number, total:number, divertedCount:number}} objets traités, silver gagné, dont ceux déviés vers le Compendium.
+ */
 function sellWorseThanEquipped() {
   let count = 0, total = 0, divertedCount = 0;
   const sold = [];
@@ -1043,6 +1077,7 @@ function sellWorseThanEquipped() {
 // annule la dernière "Vendre l'inférieur" : reverse le silver gagné et restaure les objets vendus
 // (tout ou rien — n'annule rien si le sac n'a pas assez de place ou si le silver a depuis baissé
 // sous le montant à rendre)
+/** Annule la dernière sellWorseThanEquipped() (tout ou rien) : reverse le silver (retiré de silverEarned aussi, pas juste dépensé) et restaure les objets vendus. @returns {boolean} vrai si annulé (faux si pas assez de place/silver). */
 function buyBackLastWorseSale() {
   if (!lastWorseSaleSold || !lastWorseSaleSold.length) return false;
   const total = lastWorseSaleSold.reduce((a,it) => a + it.val*it.qty, 0);
@@ -1119,6 +1154,7 @@ function enhanceWithMaterial(i) {
 // {loc,key} : 'equip' (key = slot EQUIP), 'inv' (key = index INV), 'compendium' (key = index
 // COMPENDIUM_BAG) -- l'objet est enchanté EN PLACE, quel que soit l'endroit où il se trouve.
 let optTarget = { loc:'equip', key:'weapon' };
+/** @returns {object|null} l'item réellement ciblé par le cadre d'optimisation (optTarget), quel que soit son emplacement (équipé, sac, ou Compendium). */
 function getOptTargetItem() {
   if (optTarget.loc === 'equip') return EQUIP[optTarget.key];
   if (optTarget.loc === 'inv') return INV[optTarget.key];
@@ -1133,6 +1169,7 @@ function optimizableList() { return OPTIMIZABLE_SLOTS.filter(k => EQUIP[k]); }
 // avoir un stuff tuvala qui s'opti avec une pierre de naru") -- avant, si le bon matériau
 // n'était pas en stock, un repli silencieux consommait N'IMPORTE QUEL AUTRE matériau (y compris
 // celui d'un palier différent) ; supprimé, sans le bon matériau l'optimisation reste bloquée.
+/** @returns {number} index dans INV du matériau d'optimisation à consommer pour la cible actuelle (getOptTargetItem) — respecte le matériau épinglé (forcedMatKey) SEULEMENT s'il correspond au bon palier, sinon repli automatique ; -1 si aucun trouvé. */
 function findEnhanceMaterial() {
   const target = getOptTargetItem();
   const wantedName = (target && target.matName) || Z().loot.mat.name;
@@ -1332,6 +1369,7 @@ $('btnOpt').onclick = attemptEnhance;
 // à cause d'une rétrogradation (pour ne pas vider tout le sac dans un mur de malchance)
 // calcule le gain de stats (PA/PD/PV/Esquive) entre l'état actuel de la pièce et un palier visé —
 // réutilisé à la fois pour chaque option du menu déroulant et le résumé sous celui-ci
+/** @param {object} target - item ciblé. @param {number} targetLvl - palier visé. @returns {string[]} lignes de gain de stats (PA/PD/PV/Esquive) entre l'état actuel et ce palier — tableau vide si aucun gain ou paramètres invalides. */
 function optAutoGainParts(target, targetLvl) {
   if (!target || !Number.isInteger(targetLvl)) return [];
   const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
@@ -1356,11 +1394,13 @@ function optAutoGainParts(target, targetLvl) {
 // primary dérivé directement de l'objet ciblé (2026-07-17 : plus de slotId disponible pour une
 // cible sac/Compendium) plutôt que du slot EQUIP -- gear : arme (WEAPON_SLOTS) -> PA, sinon PD ;
 // jackpot (bijou) -> toujours PA, quel que soit l'endroit où l'objet se trouve
+/** @param {object} target - item ciblé. @returns {'ap'|'dp'} stat principale de cette pièce — 'ap' pour arme/bijou, 'dp' sinon (armure). */
 function targetPrimaryStat(target) {
   if (!target) return 'dp';
   if (target.kind === 'jackpot') return 'ap';
   return WEAPON_SLOTS.includes(target.slot) ? 'ap' : 'dp';
 }
+/** @param {object} target @param {number} targetLvl. @returns {string} gain de la SEULE stat principale (targetPrimaryStat) entre l'état actuel et ce palier — version compacte d'optAutoGainParts pour le menu déroulant. */
 function optAutoGainPrimaryPart(target, targetLvl) {
   if (!target || !Number.isInteger(targetLvl)) return '';
   const cur = effectiveApDp(target), proj = projectedApDp(target, targetLvl);
@@ -1504,6 +1544,7 @@ $('btnOptAuto').onclick = () => { if (autoOptTimer) stopAutoOpt(); else startAut
 // cette conversion de la poussière ramassée en zones 1 à 6.
 const POUSSIERE_NAME = 'Poussière d\'esprit ancien';
 const CAPHRAS_NAME = 'Pierre de Caphras';
+/** @returns {number} quantité de Poussière d'esprit ancien dans le sac. */
 function poussiereCount() {
   const s = INV.find(x => x && x.kind === 'craft' && x.name === POUSSIERE_NAME);
   return s ? s.qty : 0;
@@ -1514,6 +1555,7 @@ function renderCapConvertRow() {
   lbl.textContent = i18next.t('inventory:inventory.caphras_convert_label', { n: fmt(n), caphras: Math.floor(n/5) });
   btn.disabled = n < 5;
 }
+/** Convertit 5 Poussière d'esprit ancien en 1 Pierre de Caphras — annule le prélèvement si le sac est plein pour la pierre obtenue. */
 function convertPoussiereToCaphras() {
   const idx = INV.findIndex(s => s && s.kind === 'craft' && s.name === POUSSIERE_NAME);
   if (idx === -1 || INV[idx].qty < 5) return;
@@ -1780,6 +1822,7 @@ function renderLootTable(previewIdx) {
   $('lootTable').innerHTML = mainRowsHtml +
     `<div class="lootCatHead">🗺️ ${i18next.t('inventory:inventory.velia_treasure_label')}</div>` + treasureRowsHtml;
 }
+/** @param {number} i - index dans INV. Jette définitivement le slot (déscelle forcedMatKey si c'était le matériau épinglé). */
 function dropItem(i) {
   const s = INV[i]; if (!s) return;
   if (forcedMatKey && s.key === forcedMatKey) forcedMatKey = null;
@@ -1795,6 +1838,7 @@ function dropItem(i) {
 //   2. COMPENDIUM : sinon, s'il doit remplacer un exemplaire moins enchanté déjà protégé (ou s'il
 //      n'y en a aucun), il rejoint le sac protégé au lieu d'être vendu (voir ensureCompendiumProtection).
 //   3. VENDRE : seulement si aucun des 2 cas au-dessus ne s'applique.
+/** @param {number} i - index dans INV. Vend 1 unité, en respectant l'ordre strict ÉQUIPER > COMPENDIUM > VENDRE (voir commentaire ci-dessus) pour du gear/jackpot. */
 function sellOne(i) {
   const s = INV[i]; if (!s) return;
   if (s.kind === 'gear' || s.kind === 'jackpot') {
@@ -1808,6 +1852,7 @@ function sellOne(i) {
   if (s.kind === 'gear' || s.kind === 'jackpot') INV[i] = null; else invRemoveAt(i, 1);
   hud();
 }
+/** @param {number} i - index dans INV. Vend TOUTE la pile (contrairement à sellOne) — protège d'abord un exemplaire au Compendium pour du gear/jackpot jamais monté en PEN. */
 function sellStack(i) {
   const s = INV[i]; if (!s) return;
   const total = s.val * s.qty;
@@ -1821,6 +1866,7 @@ function sellStack(i) {
 // dans le Compendium avant de vendre le reste, voir son commentaire) en une seule action. Remplace
 // les anciens boutons "Vendre trash"/"Vendre mat."/"Trier" (retirés, devenus inutiles avec cette
 // action unique) et leurs fonctions associées (sellAllOfKind, logSellMats).
+/** Action combinée "Équiper → Vendre → Compendium" : enchaîne equipBestGear() puis sellWorseThanEquipped(). @returns {{equipped:number, sold:number, total:number, diverted:number}} */
 function equipSellCompendium() {
   const equipped = equipBestGear();
   const { count, total, divertedCount } = sellWorseThanEquipped();
