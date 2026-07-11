@@ -11043,7 +11043,7 @@ function openDonationPanel() {
     const frame = document.createElement('iframe');
     frame.id = 'donationFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'donation/donation.html';
+    frame.src = 'donation/index.html';
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);

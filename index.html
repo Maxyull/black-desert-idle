@@ -57,7 +57,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=525">
+<link rel="stylesheet" href="src/styles/styles.css?v=526">
 
 </head>
 <body>
@@ -212,9 +212,9 @@
     <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
     <!-- Donation (2026-07-16, demande explicite : "ajoute un bouton Donation bloque cadenas") --
          déverrouillée le 2026-07-21 (demande explicite : "ouvre soutenir et on y met les page de
-         donation dedans") : ouvre donation/donation.html (page autonome déjà réelle, lien PayPal.me
-         configuré, déplacée dans son propre dossier le 2026-07-21) dans un panneau iframe, voir
-         openDonationPanel() (game-supabase.js) -->
+         donation dedans") : ouvre donation/index.html (page autonome déjà réelle, lien PayPal.me
+         configuré, déplacée dans son propre dossier puis renommée donation.html -> index.html le
+         2026-07-21 pour une URL propre, voir openDonationPanel() (game-supabase.js)) -->
     <button id="btnDonation" data-i18n="btnDonation">💖 Soutenir</button>
     <div id="menuSideToggle">
       <span class="menuSideOpt" data-side="left" data-i18n="menuSideLeft">◀ Gauche</span>
@@ -723,11 +723,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=525"></script>
+<script src="meta/patch-notes-data.js?v=526"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=525"></script>
+<script src="build/source.min.js?v=526"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier
      susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone
      tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis

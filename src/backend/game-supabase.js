@@ -778,16 +778,19 @@ $a('btnAchievements').onclick = openAchievements;
 $a('btnCompendium').onclick = openCompendiumReact;
 $a('ztCompendium').onclick = openCompendiumReact;
 // Donation (2026-07-21, demande explicite : "ouvre soutenir et on y met les page de donation
-// dedans") -- déverrouille #btnDonation (jusque-là lockedFeatureBtn) et ouvre donation/donation.html
+// dedans") -- déverrouille #btnDonation (jusque-là lockedFeatureBtn) et ouvre donation/index.html
 // (page autonome déjà réelle : lien PayPal.me configuré, voir commit bc3a40c) dans un panneau
 // iframe, même pattern que openCompanionsModule()/closeCompanionsModule() (combat/boss.js) --
-// iframe plutôt que fusion HTML : donation.html a son propre :root de couleurs et aucune dépendance
+// iframe plutôt que fusion HTML : index.html a son propre :root de couleurs et aucune dépendance
 // au scope global du jeu, pas besoin de partager quoi que ce soit avec lui.
 // 2026-07-21 (tri de la racine, voir docs/) : donation.html/donation-merci.html/donation-policy.html
 // déplacés à la racine du dossier donation/ -- chemin mis à jour ici en conséquence.
-// ⚠️ Le total collecté/la barre de progression/le mur de donateurs affichés dans donation.html sont
-// des VALEURS FIXES (jamais branchées à un vrai suivi des dons) -- pas touché ici, mais à garder en
-// tête si un vrai suivi est demandé un jour (voir aussi donation-policy.html, lien déjà en place).
+// 2026-07-21 (repo-audit-todo.md point 7) : donation.html renommé en index.html pour une URL
+// propre (tonsite.com/donation/ au lieu de .../donation/donation.html), chemin mis à jour ici.
+// ⚠️ Le total collecté/la barre de progression/le mur de donateurs affichés dans donation/index.html
+// sont des VALEURS FIXES (jamais branchées à un vrai suivi des dons) -- pas touché ici, mais à
+// garder en tête si un vrai suivi est demandé un jour (voir aussi donation-policy.html, lien déjà
+// en place).
 function openDonationPanel() {
   let overlay = $a('donationOverlay');
   if (!overlay) {
@@ -804,7 +807,7 @@ function openDonationPanel() {
     const frame = document.createElement('iframe');
     frame.id = 'donationFrame';
     frame.style.cssText = 'flex:1;border:0;width:100%';
-    frame.src = 'donation/donation.html';
+    frame.src = 'donation/index.html';
     overlay.appendChild(bar);
     overlay.appendChild(frame);
     document.body.appendChild(overlay);

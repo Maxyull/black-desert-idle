@@ -6,7 +6,7 @@ cloud, marché, chat, classement, boss mondial).
 
 🎮 **Jouer :** https://maxyull.github.io/black-desert-idle/
 💬 **Discord :** https://discord.gg/fEubtqMjtP
-💛 **Soutenir le projet :** [donation.html](donation/donation.html) — 100% gratuit, les dons couvrent juste les coûts d'infra (voir [politique de don](donation/donation-policy.html))
+💛 **Soutenir le projet :** [page de don](donation/index.html) — 100% gratuit, les dons couvrent juste les coûts d'infra (voir [politique de don](donation/donation-policy.html))
 
 > Projet de fan gratuit, non officiel, sans aucune affiliation ni partenariat avec Pearl Abyss. Les
 > noms/styles s'inspirent de Black Desert Online pour l'ambiance ; tous les visuels (icônes, sprites)
