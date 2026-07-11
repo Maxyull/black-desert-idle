@@ -1,4 +1,4 @@
-// Initialisation i18next -- charge en tout premier (avant gear-icons.js), voir I18N_PLAN.md §5.
+// Initialisation i18next -- charge en tout premier (avant gear-icons.js), voir docs/I18N_PLAN.md §5.
 // Lecture INDEPENDANTE de la langue (meme cle localStorage que `LANG` dans core/game-core.js,
 // mais sans dependance d'ordre de chargement sur ce fichier) : ce script doit pouvoir tourner
 // avant que game-core.js n'existe, car des fonctions qui appellent i18next.t() (buildZoneList,
@@ -8,9 +8,9 @@ let _i18nBootLang = 'fr';
 try { _i18nBootLang = localStorage.getItem('velia-idle-lang') || 'fr'; } catch (e) {}
 
 // Source unique des langues supportees -- ajouter une langue = ajouter une entree ici +
-// /locales/<lang>/*.json, voir I18N_PLAN.md §8/§10. Tant qu'on reste a 2 langues, le toggle
+// /locales/<lang>/*.json, voir docs/I18N_PLAN.md §8/§10. Tant qu'on reste a 2 langues, le toggle
 // binaire #langToggle (game-supabase.js) reste tel quel ; le remplacer par un menu genere depuis
-// ce tableau est necessaire AVANT d'ajouter une 3e langue, pas avant (I18N_PLAN.md §8).
+// ce tableau est necessaire AVANT d'ajouter une 3e langue, pas avant (docs/I18N_PLAN.md §8).
 const SUPPORTED_LANGS = ['fr', 'en'];
 
 i18next.init({

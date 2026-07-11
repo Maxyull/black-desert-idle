@@ -8,7 +8,7 @@ Le noyau du jeu : état global, boucle principale, rendu HUD, FSM de combat, sau
 - `i18n-resources.generated.js` — FICHIER GÉNÉRÉ (ne pas éditer à la main, même règle que
   `build/source.js`) : compile `/locales/{fr,en}/*.json` en `I18N_RESOURCES`/`I18N_NAMESPACES`.
   Régénéré par `scripts/gen-locales.js` (appelé automatiquement par `scripts/build.py`).
-- `i18n-init.js` — initialise i18next (voir `I18N_PLAN.md`, `CLAUDE.md` §31). Charge EN PREMIER,
+- `i18n-init.js` — initialise i18next (voir `docs/I18N_PLAN.md`, `CLAUDE.md` §31). Charge EN PREMIER,
   avant `gear-icons.js` : `I18N_RESOURCES` doit déjà être là, et des fonctions comme `hud()`
   peuvent appeler `i18next.t()` de façon synchrone très tôt au chargement (même piège que celui
   documenté en section 8 de `CLAUDE.md`).

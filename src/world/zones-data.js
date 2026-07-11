@@ -18,7 +18,7 @@
 // 100 000/h max (zone 11, Ruines de Kratuga, avec un stuff bien optimisé) — c'est le plafond haut de
 // la région Velia dans la nouvelle courbe économique à 5 régions :
 //   Velia 0→100k/h · Heidel 100k→1M/h · Calpheon 1M→100M/h · Valencia 100M→1B/h · Edana 1B→10B/h
-// (voir roadmap.md pour le détail des paliers futurs). Le "selon l'optimisation" vient
+// (voir docs/roadmap.md pour le détail des paliers futurs). Le "selon l'optimisation" vient
 // naturellement de la mécanique existante (un stuff mieux enchanté = plus de dps = plus de
 // kills/min = plus haut dans la fourchette de la zone), sans formule additionnelle nécessaire.
 const ZONES = [

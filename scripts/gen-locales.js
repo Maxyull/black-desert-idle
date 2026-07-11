@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /*
  * Compile /locales/{lang}/{domaine}.json en src/core/i18n-resources.generated.js.
- * Voir I18N_PLAN.md §5 et CLAUDE.md §31.
+ * Voir docs/I18N_PLAN.md §5 et CLAUDE.md §31.
  *
  * Editer les JSON sources dans /locales/, jamais le fichier genere directement (meme regle que
  * build/source.js, CLAUDE.md §0 regle 5). Appele automatiquement par scripts/build.py.
@@ -63,7 +63,7 @@ function main() {
   const header = [
     '// FICHIER GENERE -- ne pas editer a la main.',
     '// Source : /locales/{fr,en}/*.json -- editer ces JSON puis relancer `node scripts/gen-locales.js`',
-    '// (appele automatiquement par `python scripts/build.py`). Voir I18N_PLAN.md §5, CLAUDE.md §31.',
+    '// (appele automatiquement par `python scripts/build.py`). Voir docs/I18N_PLAN.md §5, CLAUDE.md §31.',
     "const I18N_NAMESPACES = " + JSON.stringify(ns) + ';',
     'const I18N_RESOURCES = ' + JSON.stringify(resources, null, 2) + ';',
     ''
