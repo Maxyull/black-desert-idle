@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
+    "csso-cli": "^4.0.2",
     "terser": "^5.48.0"
   }
 }
