@@ -185,8 +185,7 @@ function PneEntryCard(props) {
   },
     pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
       pneH('span', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 4, flexShrink: 0, fontSize: 11, background: cat.color + '22', border: `1px solid ${cat.color}55` } }, cat.icon),
-      pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: cat.color } }, cat[LANG]),
-      pneH('span', { style: { fontSize: 12, fontWeight: 700, color: PNE_V.cream, flex: 1 } }, line.tx, line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2 } }, LANG === 'fr' ? '🗑 Supprimé' : '🗑 Removed') : null),
+      pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: cat.color, flex: 1 } }, cat[LANG], line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2, textTransform: 'none', fontWeight: 600 } }, LANG === 'fr' ? '🗑 Supprimé' : '🗑 Removed') : null),
       // point "Nouveau"/tampon "Lu" PAR ENTRÉE (2026-07-11, fidélité maquette : la maquette calcule
       // ce badge par ligne, pas seulement une fois par version comme le point déjà affiché dans
       // PneVersionBlock) -- réutilise readPatches (déjà la source de vérité "lu", jamais dupliquée).
@@ -194,6 +193,13 @@ function PneEntryCard(props) {
         ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2, flexShrink: 0 }, title: LANG === 'fr' ? 'Nouveau' : 'New' })
         : pneH('span', { style: { fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, flexShrink: 0, color: PNE_V.red, border: `1.5px solid ${PNE_V.red}`, transform: 'rotate(-8deg)', fontFamily: 'monospace', opacity: 0.6 }, title: LANG === 'fr' ? 'Déjà lu' : 'Already read' }, LANG === 'fr' ? 'Lu' : 'Read'),
       line.img ? pneH('button', { className: 'pneBtn', onClick: () => openPatchImgCompare(line.img.before, line.img.after), title: LANG === 'fr' ? 'Voir avant/après' : 'See before/after', style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 } }, '🖼️') : null),
+    // corps de la ligne (2026-07-11, rapporté explicitement avec capture d'écran : "Titre de la
+    // note puis le texte en dessous") -- notre modèle de données n'a qu'UN SEUL champ `tx` par
+    // ligne (pas de title/body séparés comme la maquette), donc le fourrer en gras/12px dans la
+    // même rangée que le badge de catégorie produisait un faux "titre" démesuré sur plusieurs
+    // lignes. Rendu maintenant comme un vrai paragraphe de corps sous l'en-tête (icône+catégorie),
+    // même style que le body de la maquette -- l'en-tête (icône+catégorie) fait office de titre.
+    pneH('p', { style: { fontSize: 12, lineHeight: 1.5, color: PNE_V.cream, margin: 0 } }, line.tx),
     tags.length > 0 ? pneH('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } },
       tags.map((t, i) => pneH('span', { key: i, title: t.title, style: { fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 999, border: `1px solid ${t.color}`, color: t.color } }, t.label))) : null,
     pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 } },
