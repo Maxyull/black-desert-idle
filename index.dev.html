@@ -9,6 +9,19 @@
      disponible sur cette machine ; le SVG seul couvre tous les navigateurs modernes (Chrome/
      Firefox/Edge, Safari 16+). -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<!-- Open Graph / Twitter Card (2026-07-21, repo-audit-todo.md point 8) : sans ca, un lien partage
+     sur Discord/Twitter n'affichait que l'URL brute -- assets/og-preview.png genere via Meshy
+     (nano-banana, cout 3 credits, prompt/generation approuves par l'utilisateur), 1344x768, proche
+     du ratio recommande 1200x630. -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Black Desert Idle">
+<meta property="og:description" content="Jeu idle/incremental gratuit inspire de Black Desert Online -- combat automatique, enchantement, marche entre joueurs, boss mondial, classement.">
+<meta property="og:image" content="https://maxyull.github.io/black-desert-idle/assets/og-preview.png">
+<meta property="og:url" content="https://maxyull.github.io/black-desert-idle/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Black Desert Idle">
+<meta name="twitter:description" content="Jeu idle/incremental gratuit inspire de Black Desert Online -- combat automatique, enchantement, marche entre joueurs, boss mondial, classement.">
+<meta name="twitter:image" content="https://maxyull.github.io/black-desert-idle/assets/og-preview.png">
 <!-- preconnect CDN (2026-07-21, repo-audit-todo.md point 15) : ouvre la connexion TCP/TLS vers
      jsdelivr en avance, avant le premier <script src> qui en depend (Supabase/React/i18next
      ci-dessous) -- gain de quelques centaines de ms sur le premier chargement. -->
