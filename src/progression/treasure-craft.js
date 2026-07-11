@@ -6,18 +6,24 @@ const VELIA_TREASURE = [
   { name:'Bout du trésor de Velia', ch:.0017,   icon:'🧩', color:'#c9a55a', key:'treasure_bout_velia' }, // 0.17% (2026-07-13, demande explicite)
   { name:'Trésor de Velia',         ch:.000005, icon:'🗺️', color:'#e8c96a', key:'treasure_velia' },      // 0.0005% (2026-07-13, demande explicite)
 ];
-// total de morceaux du Trésor de Velia ramassés À VIE (lifetime, via S.lootByItem) — utilisé par
-// les succès et le classement dédié
+/**
+ * Total de morceaux du Trésor de Velia ramassés À VIE (lifetime, via S.lootByItem) — utilisé par
+ * les succès et le classement dédié.
+ * @param {object} S - état de sauvegarde, lit S.lootByItem[name] pour chaque entrée de VELIA_TREASURE.
+ * @returns {number} somme des quantités ramassées, toutes entrées confondues.
+ */
 function treasureTotal(S) {
   let total = 0;
   for (const t of new Set(VELIA_TREASURE.map(x => x.name))) total += S.lootByItem[t] || 0;
   return total;
 }
-// "prix d'un équipement" de référence (2026-07-13, demande explicite) pour tarifer le Trésor de
-// Velia -- réutilise TELLE QUELLE la formule de valeur d'une pièce d'armure de rollGearDrop (même
-// palier/zone que celle où le trésor est looté), pour rester automatiquement à jour si
-// GEAR_SELL_MULT ou les stats de zone changent (voir la règle mémoire "rebalance stuff = rétroactif
-// automatique" : préférer une formule dynamique à un chiffre figé).
+/**
+ * "Prix d'un équipement" de référence pour tarifer le Trésor de Velia — réutilise TELLE QUELLE la
+ * formule de valeur d'une pièce d'armure de rollGearDrop (même palier/zone que celle où le trésor
+ * est looté), pour rester automatiquement à jour si GEAR_SELL_MULT ou les stats de zone changent
+ * (préférer une formule dynamique à un chiffre figé — rebalance = rétroactif automatique).
+ * @returns {number} valeur silver de référence, basée sur la zone/palier actuels du joueur.
+ */
 function referenceGearVal() {
   const zone = Z(), tier = gearTierForZone(zoneIdx);
   const basisAP = zone.gearBasisAP ?? zone.reqAP, basisDP = zone.gearBasisDP ?? zone.reqDP;

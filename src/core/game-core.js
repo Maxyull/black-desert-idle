@@ -443,24 +443,37 @@ const SAFE_IDX = 8; // à partir de cet index (+8), l'enchantement cesse d'être
 // affichage (jamais figé sur l'objet), c'est rétroactif AUTOMATIQUEMENT sur tout le stuff déjà
 // équipé/en sac de tous les joueurs, sans script de migration — exactement l'automatisme demandé.
 const ENH_STEP = [0, .05,.05,.05,.05,.05,.05,.05,  .03,.03,.03,.03,.03,.03,.03,.03,  .20,.10,.13,.18,.25];
+/**
+ * Bonus multiplicatif cumulé d'enchantement jusqu'au palier `lvl` inclus (somme de ENH_STEP[1..lvl]).
+ * @param {number} lvl - palier d'enchantement atteint (index dans ENH_NAMES, 0 = pas enchanté).
+ * @returns {number} bonus cumulé (ex: 0.25 = +25%), recalculé à la volée à chaque appel — jamais
+ *   figé sur l'objet, donc automatiquement rétroactif si ENH_STEP change (voir commentaire
+ *   au-dessus de la constante).
+ */
 function enhBonus(lvl) { let b = 0; for (let i = 1; i <= (lvl||0); i++) b += ENH_STEP[i]; return b; }
+/** @param {object} item - lit .optimizable et .enhLv. @returns {number} multiplicateur de stats (1 = aucun bonus). */
 function itemMult(item) { return item && item.optimizable ? (1 + enhBonus(item.enhLv||0)) : 1; }
-// PA/PD réels d'un objet une fois son bonus d'enchantement appliqué (affichage tooltip/popup —
-// avant ce correctif, ces deux endroits affichaient la stat de BASE même sur un objet enchanté +15)
-// PA/PD arrondis vers le BAS (2026-07-08, demande explicite : "laisse uniquement des ajout de PA
-// entier, enleve toute trace de virgule de PA/PD... rajoute les plus bas que necessaire pas a la
-// hausse") -- Math.floor plutôt que Math.round : ne JAMAIS afficher/accorder plus de PA/PD que ce
-// qui est réellement gagné (un Math.round aurait pu arrondir 2.6 à 3, donnant l'illusion d'un
-// point de plus que la vraie valeur). L'Esquive reste en % avec décimales (pas concernée, c'est
-// une stat de %, pas un PA/PD).
+/**
+ * PA/PD/PV/Esquive réels d'un objet une fois son bonus d'enchantement actuel appliqué (affichage
+ * tooltip/popup). PA/PD/PV arrondis vers le BAS (Math.floor, jamais Math.round) — ne jamais
+ * afficher/accorder plus de PA/PD que ce qui est réellement gagné (un arrondi standard pourrait
+ * arrondir 2.6 à 3, donnant l'illusion d'un point de plus que la vraie valeur). L'Esquive reste en
+ * % avec décimales (stat de %, pas concernée par cette règle d'arrondi entier).
+ * @param {object} item - lit .ap, .dp, .hp, .dodge (bruts) + tout ce que itemMult() lit.
+ * @returns {{ap:number, dp:number, hp:number, dodge:number}} stats après bonus d'enchantement actuel.
+ */
 function effectiveApDp(item) {
   const mult = itemMult(item);
   return { ap: Math.floor((item.ap||0) * mult), dp: Math.floor((item.dp||0) * mult), hp: Math.floor((item.hp||0) * mult),
     dodge: Math.round((item.dodge||0) * mult * 100) / 100 };
 }
-// stats projetées SI l'objet atteignait targetLvl -- sert à afficher le gain avant de lancer
-// l'optimisation auto (demande explicite du 2026-07-05 : "il est écrit ce que tu gagnes si tu
-// passes à ce palier")
+/**
+ * Stats projetées SI l'objet atteignait `targetLvl` — sert à afficher le gain avant de lancer
+ * l'optimisation auto ("gain si tu passes à ce palier").
+ * @param {object} item - lit .ap, .dp, .hp, .dodge (bruts).
+ * @param {number} targetLvl - palier visé (index dans ENH_NAMES).
+ * @returns {{ap:number, dp:number, hp:number, dodge:number}} stats projetées à ce palier.
+ */
 function projectedApDp(item, targetLvl) {
   const mult = 1 + enhBonus(targetLvl);
   return { ap: Math.floor((item.ap||0) * mult), dp: Math.floor((item.dp||0) * mult), hp: Math.floor((item.hp||0) * mult),
@@ -688,14 +701,19 @@ function levelSpdPctFor(lvl) { return Math.max(0, Math.min(lvl,61)-1) / 60 * 75;
 function hpMaxFor(lvl) { return 100 + 8*Math.max(0, lvl-1); }
 function totalDmgPct() { return compendiumPct(); } // le DMG ne monte qu'avec le Compendium, pas le niveau
 
-// Esquive : dépend du niveau du monstre RELATIF au joueur (via dpRatio, comme le reste du combat).
-// Sous-géré pour la zone (dpRatio < 0.5) → l'esquive perd tout son intérêt (jusqu'à 0% d'effet) ;
-// à niveau ou au-dessus (dpRatio >= 1) → pleinement efficace. Dans une zone basse largement
-// dépassée, un bon total d'esquive peut donc éviter presque tous les dégâts.
+/**
+ * Efficacité de l'esquive (0-1) selon le niveau du monstre RELATIF au joueur (dpR = dpRatio(),
+ * comme le reste du combat). Sous-géré pour la zone (dpR < 0.5) → l'esquive perd tout son intérêt
+ * (jusqu'à 0% d'effet) ; à niveau ou au-dessus (dpR >= 1) → pleinement efficace. Dans une zone
+ * basse largement dépassée, un bon total d'esquive peut donc éviter presque tous les dégâts.
+ * @param {number} dpR - ratio PD joueur / PD requis de la zone (voir dpRatio()).
+ * @returns {number} facteur 0-1 appliqué au total d'esquive brut par totalDodgePct().
+ */
 function dodgeEffectiveness(dpR) {
   if (dpR >= 1) return 1;
   return Math.max(0, (dpR - 0.5) / 0.5);
 }
+/** @param {number} [dpR] - ratio PD (défaut dpRatio()). @returns {number} % d'esquive final, plafonné à 60 pour ne jamais rendre invincible. */
 function totalDodgePct(dpR) {
   const raw = equipDodge() + compendiumPct();
   return Math.min(60, raw * dodgeEffectiveness(dpR ?? dpRatio())); // plafond 60% pour ne jamais rendre invincible

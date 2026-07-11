@@ -834,23 +834,35 @@ function renderQuestTrackerWidget() {
   });
 }
 
-// dégâts infligés : dépend UNIQUEMENT de la PA face à la PA requise de la zone
+/**
+ * Multiplicateur de dégâts infligés : dépend UNIQUEMENT de la PA face à la PA requise de la zone.
+ * @param {number} apR - ratio PA joueur / PA requis de la zone.
+ * @returns {number} multiplicateur — jusqu'à 1.6× en overgear, chute quadratique si sous-géré
+ *   (plancher 0.25×).
+ */
 function dmgMult(apR) {
   if (apR >= 1) return Math.min(1 + (apR - 1) * 0.5, 1.6);
   return Math.max(0.25, apR * apR);
 }
-// dégâts reçus : dépend UNIQUEMENT de la PD face à la PD requise de la zone
-// pas assez de PD → tu encaisses beaucoup plus (jusqu'à 4,5×, courbe plus raide qu'avant) ; overgear en PD → tu encaisses moins
+/**
+ * Multiplicateur de dégâts REÇUS : dépend UNIQUEMENT de la PD face à la PD requise de la zone.
+ * Pas assez de PD → encaisse beaucoup plus (jusqu'à 4,5×, courbe raide) ; overgear en PD →
+ * encaisse moins (plancher 0.4×).
+ * @param {number} dpR - ratio PD joueur / PD requis de la zone.
+ * @returns {number} multiplicateur de dégâts reçus.
+ */
 function dmgTakenMult(dpR) {
   if (dpR < 1) return Math.min(4.5, 1 + (1 - dpR) * 3.2);
   return Math.max(0.4, 1 - (dpR - 1) * 0.35);
 }
-// le loot suit le "goulot d'étranglement" : être sous-PA OU sous-PD pénalise pareil (comme en vrai jeu)
-// pas assez de stuff -> loot pénalisé (comme dans le vrai jeu) ; stuff adapté OU overstuff -> loot
-// normal, plus jamais de bonus ni de malus au-delà de 1.0 (demande explicite du 2026-07-06 :
-// "il faut looter moins bien si tu as pas le stuff nécessaire c'est tout mais si tu es overstuff
-// tu auras un loot normal") -- supprime l'ancien bonus +10% (1.0-1.3x) et l'ancien malus
-// anti-overfarm qui redescendait jusqu'à 0.25x au-delà de 1.8x
+/**
+ * Multiplicateur de loot — suit le "goulot d'étranglement" : être sous-PA OU sous-PD pénalise
+ * pareil (comme dans le vrai jeu). Pas assez de stuff → loot pénalisé ; stuff adapté OU overstuff
+ * → loot normal, jamais de bonus au-delà de 1.0 (demande explicite : looter moins bien si sous-géré,
+ * loot normal — pas un bonus — si overgeared).
+ * @param {number} r - ratio "goulot d'étranglement" (min de apR/dpR, voir bottleneck()).
+ * @returns {number} multiplicateur de loot, plancher 0.3×, plafond 1.0×.
+ */
 function lootMult(r) {
   if (r < 0.9) return Math.max(0.3, r * 0.85);
   return 1.0;

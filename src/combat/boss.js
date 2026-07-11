@@ -629,8 +629,12 @@ function resizeBossCanvas() {
   cv.width = cv.clientWidth || 1280;
   cv.height = cv.clientHeight || 600;
 }
-// multiplicateur de récompense selon le RANG de contribution (boss partagé) : plus haut dans le
-// top, plus la récompense est intéressante — cf demande "plus t'es haut plus la recompense est interessante"
+/**
+ * Multiplicateur de récompense selon le RANG de contribution (boss partagé) : plus haut dans le
+ * top, plus la récompense est intéressante.
+ * @param {number} rank - rang de contribution (1 = meilleur contributeur).
+ * @returns {number} multiplicateur — 3× rang 1, 2× top 3, 1.4× top 10, 1× (base) au-delà.
+ */
 function bossRankMultiplier(rank) {
   if (rank === 1) return 3;
   if (rank <= 3) return 2;
@@ -659,6 +663,12 @@ const BOSS_PITY_THRESHOLD = 25;
 // (récompense de base) restent -- l'esprit de la pénalité est de retirer le "bonus" de performance,
 // jamais de punir une victoire chèrement acquise en la rendant totalement stérile.
 const BOSS_DEATH_PENALTY = [1, 0.9, 0.75, 0.5, 0];
+/**
+ * Multiplicateur de récompense selon le nombre de morts pendant le combat.
+ * @param {number} deathCount - S.bossFight.deathCount de la session en cours.
+ * @returns {number} multiplicateur (1 = aucune pénalité, 0 = loot chiffré nul à 4+ morts — les
+ *   drops garantis restent, voir BOSS_DEATH_PENALTY).
+ */
 function bossDeathPenaltyMult(deathCount) {
   return BOSS_DEATH_PENALTY[Math.min(deathCount, BOSS_DEATH_PENALTY.length - 1)];
 }

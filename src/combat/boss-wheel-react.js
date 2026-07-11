@@ -35,12 +35,23 @@ function wheelSegmentPath(cx, cy, r, startDeg, endDeg) {
   return `M${cx},${cy} L${p1.x.toFixed(2)},${p1.y.toFixed(2)} A${r},${r} 0 ${largeArc} 1 ${p2.x.toFixed(2)},${p2.y.toFixed(2)} Z`;
 }
 
-// angle (0..360°, 0°=haut) où la roue doit s'arrêter -- pure, testable isolément, extraite de
-// l'ancienne logique inline de wireBossRewardReveal (boss.js). Le segment rare occupe [0, segDeg[ :
-// - gagné -> centre exact du segment rare (segDeg/2)
-// - perdu + near-miss -> juste après une des 2 bordures du segment rare, jamais dessus (marginDeg
-//   de marge de sécurité, voir BOSS_NEAR_MISS_MARGIN_DEG dans boss.js)
-// - perdu, cas général -> point uniforme dans le reste de la roue (hors segment rare)
+/**
+ * Angle (0-360°, 0°=haut) où la roue doit s'arrêter — pure, testable isolément, extraite de
+ * l'ancienne logique inline de wireBossRewardReveal (boss.js). Le segment rare occupe [0, segDeg[.
+ * @param {object} opts
+ * @param {number} [opts.n] - nombre de segments de la roue (BOSS_WHEEL_SEGMENTS par défaut).
+ * @param {boolean} opts.won - vrai si le lot rare a été gagné (tirage déjà fait en amont).
+ * @param {number} [opts.marginDeg] - marge de sécurité (degrés) autour du segment rare pour le cas
+ *   near-miss (voir BOSS_NEAR_MISS_MARGIN_DEG, boss.js).
+ * @param {number} [opts.chance] - probabilité (0-1) de tomber en "near-miss" quand perdu (sinon
+ *   point uniforme ailleurs sur la roue).
+ * @param {Function} [opts.rng] - générateur aléatoire injectable (Math.random par défaut, pour
+ *   des tests déterministes).
+ * @returns {number} angle en degrés — gagné : centre exact du segment rare (segDeg/2) ; perdu +
+ *   near-miss : juste après une des 2 bordures du segment rare, jamais dessus (sinon le pointeur
+ *   semblerait désigner le lot rare alors que la perte est déjà actée) ; perdu, cas général :
+ *   point uniforme dans le reste de la roue.
+ */
 function wheelLandingDeg({ n = BOSS_WHEEL_SEGMENTS, won, marginDeg = 8, chance = 0, rng = Math.random }) {
   const segDeg = 360 / n;
   if (won) return segDeg / 2;

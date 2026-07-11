@@ -2605,7 +2605,9 @@ const PRI_IDX = 16;
 const SAFE_IDX = 8; 
 
 const ENH_STEP = [0, .05,.05,.05,.05,.05,.05,.05,  .03,.03,.03,.03,.03,.03,.03,.03,  .20,.10,.13,.18,.25];
+
 function enhBonus(lvl) { let b = 0; for (let i = 1; i <= (lvl||0); i++) b += ENH_STEP[i]; return b; }
+
 function itemMult(item) { return item && item.optimizable ? (1 + enhBonus(item.enhLv||0)) : 1; }
 
 function effectiveApDp(item) {
@@ -2783,6 +2785,7 @@ function dodgeEffectiveness(dpR) {
   if (dpR >= 1) return 1;
   return Math.max(0, (dpR - 0.5) / 0.5);
 }
+
 function totalDodgePct(dpR) {
   const raw = equipDodge() + compendiumPct();
   return Math.min(60, raw * dodgeEffectiveness(dpR ?? dpRatio())); 
@@ -6145,6 +6148,7 @@ function getISOWeekString(date) {
 const BOSS_PITY_THRESHOLD = 25;
 
 const BOSS_DEATH_PENALTY = [1, 0.9, 0.75, 0.5, 0];
+
 function bossDeathPenaltyMult(deathCount) {
   return BOSS_DEATH_PENALTY[Math.min(deathCount, BOSS_DEATH_PENALTY.length - 1)];
 }

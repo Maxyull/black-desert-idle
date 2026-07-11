@@ -835,13 +835,16 @@ function resolveEquipSlot(item) {
 // Pour un anneau/boucle (paire), compare au PIRE des deux déjà équipés (celui qui serait remplacé
 // en premier, même logique que refScoreForSlot) et l'équipe SPÉCIFIQUEMENT à cette place — jamais
 // via resolveEquipSlot seul, qui ne regarde pas lequel des deux est le plus faible.
-// compare 2 pièces avec la MÊME règle partout (2026-07-11, demande explicite : "si 2 stuff
-// identique doivent etre changé toujours prendre celui le plus optimisé... sans oublier les 2
-// anneaux verification slot 1 puis slot 2 et oreille slot 1 puis slot 2") : meilleur SOCLE
-// (itemScore) d'abord ; à socle STRICTEMENT égal, le plus enchanté (enhLv) l'emporte ; à égalité
-// totale, "a" (slot 1) reste la référence -- même critère que equipBestSingle/equipBestPair, pour
-// que sellOne (via tryAutoEquipIfBetter) ne rate plus jamais un doublon plus enchanté juste parce
-// que son socle de base est identique.
+/**
+ * Compare 2 pièces avec la MÊME règle partout (équiper le meilleur, vendre le pire, etc.) :
+ * meilleur SOCLE (itemScore) d'abord ; à socle STRICTEMENT égal, le plus enchanté (enhLv)
+ * l'emporte ; à égalité totale, `a` reste la référence — même critère que
+ * equipBestSingle/equipBestPair, pour que sellOne (via tryAutoEquipIfBetter) ne rate jamais un
+ * doublon plus enchanté juste parce que son socle de base est identique.
+ * @param {object} a - item candidat (souvent le nouveau, ex: dans le sac).
+ * @param {object} b - item de référence (souvent l'équipé actuel).
+ * @returns {boolean} vrai si `a` est strictement meilleur que `b`.
+ */
 function isStrictlyBetterGear(a, b) {
   const sa = itemScore(a), sb = itemScore(b);
   if (sa !== sb) return sa > sb;
@@ -907,10 +910,14 @@ function unequip(slotId) {
   if (invAdd({ ...e, equipped:false, qty:1, stackable:false })) { EQUIP[slotId] = null; hud(); }
 }
 
-// ---------- "Équiper le meilleur" : comparaison sur les stats DE BASE uniquement ----------
-// (volontairement SANS le bonus d'enchantement : un objet +0 avec un meilleur socle vaut mieux
-//  à terme qu'un objet déjà monté mais avec un socle plus faible — c'est lui qu'il faut remonter)
-// dodge (2026-07-08) : poids ×3 pour compter comme un vrai critère secondaire sans dominer PA/PD
+/**
+ * Score de comparaison "Équiper le meilleur" — stats DE BASE uniquement, volontairement SANS le
+ * bonus d'enchantement (un objet +0 avec un meilleur socle vaut mieux à terme qu'un objet déjà
+ * monté mais avec un socle plus faible : c'est celui-là qu'il faut remonter). Esquive pondérée
+ * ×3 pour compter comme un vrai critère secondaire sans dominer PA/PD.
+ * @param {object} it - item, lit .ap, .dp, .dodge bruts.
+ * @returns {number} score comparable (plus haut = meilleur socle), -1 si aucun objet.
+ */
 function itemScore(it) { return it ? (it.ap||0) + (it.dp||0)*0.5 + (it.dodge||0)*3 : -1; }
 
 function equipBestSingle(slotId, kind) {
