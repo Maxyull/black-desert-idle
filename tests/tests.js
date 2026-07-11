@@ -1456,10 +1456,31 @@
     assert('WIKI_SECTIONS accessible (game-supabase.js s\'est exécuté jusqu\'au bout, pas coupé par une réf. anticipée)',
       typeof WIKI_SECTIONS !== 'undefined');
     assert('PATCH_NOTES accessible', typeof PATCH_NOTES !== 'undefined');
-    if (typeof LB2_CATS !== 'undefined') {
-      assert('LB2_CATS couvre les 7 catégories du classement principal',
-        ['silver','gs','zone','sh','kpm','item','treasure'].every(k => LB2_CATS[k]));
+    // LB2_CATS_() : renommé de const objet vers fonction le 2026-07-11 (migration i18next, les
+    // labels/tips doivent se relire à chaque appel i18next.t(), pas figés une seule fois au
+    // chargement du script) -- garder ce test à jour avec le nom réel, sinon il devient un no-op
+    // silencieux (typeof sur un nom qui n'existe plus == 'undefined' == condition jamais vraie).
+    if (typeof LB2_CATS_ === 'function') {
+      assert('LB2_CATS_() couvre les 7 catégories du classement principal',
+        ['silver','gs','zone','sh','kpm','item','treasure'].every(k => LB2_CATS_()[k]));
     }
+  }
+  // garde-fou (2026-07-21, bug réel trouvé en buildant le panneau Donation) : un "https://" brut au
+  // milieu d'un template literal MULTI-LIGNE a fait planter le strip de commentaires du build
+  // (scripts/build.py, strip_js_comments_safe) -- le "//" de l'URL a été avalé comme un commentaire
+  // de ligne, tronquant la fonction en plein milieu et cassant tout ce qui suivait dans le fichier
+  // (Terser a heureusement échoué fort plutôt que de générer un bundle silencieusement corrompu).
+  // Corrigé en sortant l'URL du template literal ('https:' + '//...'). Ce test vérifie que le lien
+  // Discord réel du Wiki reste bien présent ET que le fichier ne s'est pas fait tronquer autour
+  // (wkInjectHeadingIds, défini juste après wkDiscordHtml, doit rester une fonction).
+  function testWikiDiscordLinkNeverTruncatesTheFile() {
+    if (typeof wkDiscordHtml !== 'function') return;
+    const html = wkDiscordHtml();
+    assert('Le Wiki (section Discord) contient le vrai lien d\'invitation, pas un placeholder',
+      html.includes('discord.gg/fEubtqMjtP'));
+    assert('wkInjectHeadingIds (défini juste après wkDiscordHtml dans le fichier) est bien accessible -- ' +
+      'si ce n\'est pas le cas, le fichier a probablement été tronqué par le build',
+      typeof wkInjectHeadingIds === 'function');
   }
   // "pense aux animations de sorts aussi" / "des effets un peu different pour chaque sort"
   // (2026-07-18) -- chaque sort doit avoir sa propre identité visuelle de cast (castColor/
@@ -3289,6 +3310,7 @@
     testWikiMentionsCronCostPerTier();
     testWikiMentionsBothWorldBosses();
     testLateScriptGlobalsSurviveButtonWiring();
+    testWikiDiscordLinkNeverTruncatesTheFile();
     testEverySkillHasDistinctCastIdentity();
     testSpawnCastOriginVfxNeverThrows();
     testWitchBodyOnAcceptsSkillObjectWithoutThrowing();

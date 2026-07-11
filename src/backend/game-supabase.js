@@ -777,6 +777,43 @@ $a('btnAchievements').onclick = openAchievements;
 // exception React du projet, voir src/progression/compendium-react.js et CLAUDE.md §7).
 $a('btnCompendium').onclick = openCompendiumReact;
 $a('ztCompendium').onclick = openCompendiumReact;
+// Donation (2026-07-21, demande explicite : "ouvre soutenir et on y met les page de donation
+// dedans") -- déverrouille #btnDonation (jusque-là lockedFeatureBtn) et ouvre donation.html (page
+// autonome déjà réelle : lien PayPal.me configuré, voir commit bc3a40c) dans un panneau iframe,
+// même pattern que openCompanionsModule()/closeCompanionsModule() (combat/boss.js) -- iframe
+// plutôt que fusion HTML : donation.html a son propre :root de couleurs et aucune dépendance au
+// scope global du jeu, pas besoin de partager quoi que ce soit avec lui.
+// ⚠️ Le total collecté/la barre de progression/le mur de donateurs affichés dans donation.html sont
+// des VALEURS FIXES (jamais branchées à un vrai suivi des dons) -- pas touché ici, mais à garder en
+// tête si un vrai suivi est demandé un jour (voir aussi donation-policy.html, lien déjà en place).
+function openDonationPanel() {
+  let overlay = $a('donationOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'donationOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:953;background:#0A0C14;display:flex;flex-direction:column';
+    const bar = document.createElement('div');
+    bar.style.cssText = 'flex-shrink:0;display:flex;justify-content:flex-end;padding:6px 10px;background:#12141f;border-bottom:1px solid #232739';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ ' + (LANG==='fr'?'Fermer':'Close');
+    closeBtn.style.cssText = 'font-family:Georgia,serif;font-size:12px;background:transparent;border:1px solid #3a2f22;color:#e8e6df;border-radius:5px;padding:5px 12px;cursor:pointer';
+    closeBtn.onclick = closeDonationPanel;
+    bar.appendChild(closeBtn);
+    const frame = document.createElement('iframe');
+    frame.id = 'donationFrame';
+    frame.style.cssText = 'flex:1;border:0;width:100%';
+    frame.src = 'donation.html';
+    overlay.appendChild(bar);
+    overlay.appendChild(frame);
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+function closeDonationPanel() {
+  const overlay = $a('donationOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+$a('btnDonation').onclick = openDonationPanel;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 // bascule Inventaire/Assemblage dans la carte Inventaire (2026-07-06, demande explicite : "on va
