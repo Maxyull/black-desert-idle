@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V381', d:'22/07/2026 02:00', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
+      {t:'new', sub:'interface', tx:'Le Classement (🏆) a une 8e catégorie : "🧭 Compendium", basée sur ta complétion globale (zones + boss + Maîtrise PEN).'},
+      {t:'new', sub:'interface', tx:'Si ton rang réel dans une catégorie est en dehors du top 20, une barre "Ta position" apparaît avec ton rang exact, ta valeur et le nombre total de joueurs classés.'},
+      {t:'new', sub:'interface', tx:'Chaque joueur affiché (podium et tableau) montre désormais depuis combien de temps il a été vu pour la dernière fois ("vu il y a...").'},
+      {t:'change', sub:'interface', tx:'Le Classement a reçu le même reskin visuel que l\'écran Zone (podium, cartes, typographies).'},
+      {t:'change', sub:'interface', tx:'Un compte invité qui ouvre le Classement voit désormais un message explicatif stylé avec un bouton "🔗 Lier un compte" direct, au lieu d\'une alerte de navigateur brute.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The Leaderboard (🏆) has an 8th category: "🧭 Compendium", based on your overall completion (zones + bosses + PEN Mastery).'},
+      {t:'new', sub:'interface', tx:'If your real rank in a category is outside the top 20, a "Your position" bar shows your exact rank, your value, and the total number of ranked players.'},
+      {t:'new', sub:'interface', tx:'Every player shown (podium and table) now shows how long ago they were last seen ("seen...").'},
+      {t:'change', sub:'interface', tx:'The Leaderboard received the same visual reskin as the Zone screen (podium, cards, typography).'},
+      {t:'change', sub:'interface', tx:'A guest account opening the Leaderboard now sees a styled explanatory message with a direct "🔗 Link account" button, instead of a raw browser alert.'},
+    ] },
   { v:'V380', d:'22/07/2026 01:00', name:{fr:'Succès refaits : chaînes de paliers, même style que Zone/Boss', en:'Achievements redesigned: tiered chains, same look as Zone/Boss'}, fr:[
       {t:'change', sub:'interface', tx:'Panneau Succès entièrement refait à l\'identique d\'une maquette fournie, avec la même palette que les écrans Zone et Boss. Les succès à paliers (ex : Premier sang → Chasseur → Exterminateur → Faucheur) sont désormais regroupés en une seule carte par chaîne, avec des puces montrant combien de paliers sont débloqués — le check vert n\'apparaît que quand toute la chaîne est terminée, plus sur un palier isolé.'},
       {t:'new', sub:'interface', tx:'Nouvelle vue d\'ensemble en haut du panneau : anneau de progression globale, silver déjà gagné en récompenses de succès et silver restant à débloquer, tous calculés en direct.'},

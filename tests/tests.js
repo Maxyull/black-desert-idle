@@ -1518,9 +1518,70 @@
     // chargement du script) -- garder ce test à jour avec le nom réel, sinon il devient un no-op
     // silencieux (typeof sur un nom qui n'existe plus == 'undefined' == condition jamais vraie).
     if (typeof LB2_CATS_ === 'function') {
-      assert('LB2_CATS_() couvre les 7 catégories du classement principal',
-        ['silver','gs','zone','sh','kpm','item','treasure'].every(k => LB2_CATS_()[k]));
+      // 8e catégorie "compendium" ajoutée le 2026-07-11 (r.compendium_pct, jamais utilisé par un
+      // classement avant) -- garder cette liste à jour à chaque nouvelle catégorie, sinon ce test
+      // devient silencieusement incomplet plutôt que de détecter une régression.
+      assert('LB2_CATS_() couvre les 8 catégories du classement principal (dont Compendium)',
+        ['silver','gs','zone','sh','kpm','item','treasure','compendium'].every(k => LB2_CATS_()[k]));
     }
+  }
+  // ---------- Classement : catégorie Compendium (2026-07-11, r.compendium_pct) ----------
+  function testLb2CompendiumCategoryUsesRealPct() {
+    if (typeof LB2_CATS_ !== 'function') return;
+    const cat = LB2_CATS_().compendium;
+    assert('Catégorie Compendium définie dans LB2_CATS_()', !!cat);
+    if (!cat) return;
+    const row = { compendium_pct: 42.7 };
+    assert('LB2_CATS_().compendium.val() lit bien r.compendium_pct', cat.val(row) === 42.7, `val=${cat.val(row)}`);
+    assert('LB2_CATS_().compendium.fmt() affiche un pourcentage arrondi', cat.fmt(row) === '43%', `fmt=${cat.fmt(row)}`);
+    assert('LB2_CATS_().compendium.val() ne plante pas sans compendium_pct (undefined -> 0)', cat.val({}) === 0);
+  }
+  // ---------- Classement : "Ta position" hors du top LB2_TOP_N ----------
+  // garde-fou (2026-07-11, demande explicite) : le rang réel doit être calculé sur TOUTES les
+  // lignes déjà chargées (jusqu'à 500 via .select('*').limit(500), aucune requête supplémentaire),
+  // pas seulement la page affichée -- lb2ComputeYourRankInfo() est une fonction PURE (ne lit aucun
+  // état module), testable directement avec des lignes fabriquées.
+  function testLb2ComputeYourRankInfoFindsRealRankOutsideTop20() {
+    if (typeof lb2ComputeYourRankInfo !== 'function') return;
+    const rows = [];
+    for (let i = 0; i < 30; i++) rows.push({ user_id: 'lb2test-u'+i, silver: (30-i)*1000 });
+    // u0 a le plus de silver (rang 1) ; la valeur décroît strictement avec i -> rang == i+1
+    const info = lb2ComputeYourRankInfo(rows, 'silver', 'lb2test-u24');
+    assert('lb2ComputeYourRankInfo calcule le bon rang réel, hors du top 20', info && info.rank === 25, `rank=${info&&info.rank}`);
+    assert('lb2ComputeYourRankInfo renvoie le nombre total de joueurs classés dans la catégorie', info && info.total === 30, `total=${info&&info.total}`);
+    const top = lb2ComputeYourRankInfo(rows, 'silver', 'lb2test-u0');
+    assert('lb2ComputeYourRankInfo fonctionne aussi pour un rang dans le top (pas réservé au hors-top)', top && top.rank === 1, `rank=${top&&top.rank}`);
+    const missing = lb2ComputeYourRankInfo(rows, 'silver', 'lb2test-unknown-user');
+    assert('lb2ComputeYourRankInfo renvoie null si le joueur n\'a pas encore de record synchronisé', missing === null);
+    assert('lb2ComputeYourRankInfo renvoie null sans userId (invité/déconnecté)', lb2ComputeYourRankInfo(rows, 'silver', null) === null);
+  }
+  // seuil "top" utilisé par lb2RenderBody() pour décider d'afficher la barre "Ta position" --
+  // garde-fou pour qu'un futur changement du seuil soit un choix explicite, pas un oubli.
+  function testLb2YourRankBarThresholdIsTop20() {
+    if (typeof LB2_TOP_N === 'undefined') return;
+    assert('Le seuil "top" de la barre "Ta position" du Classement est bien 20 (podium 1-3 + tableau 4-20)',
+      LB2_TOP_N === 20, `LB2_TOP_N=${LB2_TOP_N}`);
+  }
+  // ---------- Classement : panneau invité stylé (remplace l'alert() brut, 2026-07-11) ----------
+  function testLb2GuestGateReusesMarketCopyAndRealLinkButton() {
+    if (typeof lb2GuestGateHtml !== 'function') return;
+    const html = lb2GuestGateHtml();
+    // le HTML rendu passe par escapeHtml() (échappe les guillemets du texte source) -- comparer à
+    // la même version échappée, pas au texte brut de i18next.t(), sinon faux négatif systématique.
+    assert('Le panneau invité du Classement réutilise le texte EXACT de market:market.auth_verified_required (pas un texte dupliqué)',
+      html.includes(escapeHtml(i18next.t('market:market.auth_verified_required'))));
+    assert('Le panneau invité du Classement contient bien le bouton de liaison de compte (id lb2LinkAccountBtn)',
+      html.includes('id="lb2LinkAccountBtn"'));
+  }
+  // garde-fou statique (voir CLAUDE.md §11, "inspection du code source via .toString()") : vérifie
+  // que openLeaderboard2() affiche le panneau invité stylé pour un compte invité plutôt qu'un
+  // alert() brut -- seul le cas "aucune session du tout" (!sb || !currentUser) garde l'alerte
+  // historique de marketRequireAuth(), jamais appelée dans la branche isGuest().
+  function testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert() {
+    if (typeof openLeaderboard2 !== 'function') return;
+    const src = openLeaderboard2.toString();
+    assert('openLeaderboard2 affiche lb2GuestGateHtml() pour un compte invité, plutôt qu\'un alert() natif',
+      src.includes('lb2GuestGateHtml'));
   }
   // garde-fou (2026-07-21, bug réel trouvé en buildant le panneau Donation) : un "https://" brut au
   // milieu d'un template literal MULTI-LIGNE a fait planter le strip de commentaires du build
@@ -3675,6 +3736,11 @@
     testAchCatCompletionUsesRealUnlockedCounts();
     testRecentlyUnlockedAchievementsSortsByTimestampDescendingAndRespectsLimit();
     testRecentlyUnlockedAchievementsIgnoresNonNumericTimestamps();
+    testLb2CompendiumCategoryUsesRealPct();
+    testLb2ComputeYourRankInfoFindsRealRankOutsideTop20();
+    testLb2YourRankBarThresholdIsTop20();
+    testLb2GuestGateReusesMarketCopyAndRealLinkButton();
+    testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

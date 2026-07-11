@@ -1790,6 +1790,34 @@
   .lb2PagerBtn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
   .lb2PagerBtn:disabled { opacity:.35; cursor:default; }
   .lb2PagerNum { font-size:10.5px; color:var(--ink-dim); }
+  /* Classement — reskin "Zone" (2026-07-11, mockup validé itérativement avec l'utilisateur, voir
+     CLAUDE.md §30) : podium split + catégorie Compendium + barre "Ta position" + horodatage "vu
+     il y a..." + panneau invité stylé. Additif uniquement, réutilise EXCLUSIVEMENT les tokens déjà
+     posés par la refonte Zone/Boss (--s1/--s2/--dbBorder/--dbBorder2/--gold/--gold2/--green2/
+     --cream2/--cream3, voir plus haut dans ce fichier + CLAUDE.md §29) -- aucune nouvelle teinte. */
+  .lb2Summary { font-size:11px; color:var(--cream3); margin-bottom:10px; line-height:1.4; }
+  .lb2RankedCount { font-size:10px; color:var(--cream3); margin:6px 0 10px; }
+  /* "Ta position" : n'apparaît que si le joueur est hors du top LB2_TOP_N (voir lb2RenderBody,
+     leaderboard-panel.js) -- même famille visuelle que .weekBanner (bandeau or discret). */
+  .lb2YourRankBar {
+    margin:10px 0; padding:9px 12px; background:rgba(201,165,90,.08); border:1px solid var(--gold-dim);
+    border-radius:8px; display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    font-size:11.5px; color:var(--gold2);
+  }
+  .lb2YourRankBar .rk { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--gold); font-weight:600; }
+  .lb2YourRankBar .hint { margin-left:auto; color:var(--cream3); font-size:10px; }
+  /* "vu il y a Xmin/Xj" (podium ET tableau, voir lb2SeenInfo()) -- vert (--green2) si <1h, sinon
+     discret (--ink-dim), même logique de couleur que .podSeen.recent du mockup. */
+  .lb2Seen { display:block; font-size:9px; color:var(--ink-dim); margin-top:1px; }
+  .lb2Seen.recent { color:var(--green2); }
+  .lb2PodSeen { margin-top:2px; }
+  /* panneau invité (2026-07-11) : remplace l'alert() brut de marketRequireAuth() pour ce point
+     d'entrée précis -- voir lb2GuestGateHtml()/openLeaderboard2(), market.js non modifié. */
+  .lb2GuestGate { margin:16px 0; padding:22px 20px; background:var(--s2); border:1px solid var(--dbBorder); border-radius:10px; text-align:center; }
+  .lb2GuestIcon { font-size:26px; margin-bottom:8px; }
+  .lb2GuestTxt { font-size:12px; color:var(--cream2); max-width:380px; margin:0 auto 14px; line-height:1.5; }
+  .lb2GuestBtn { width:auto; background:var(--gold); color:#1a1712; border:none; border-radius:7px; padding:9px 18px; font-size:12px; font-weight:600; }
+  .lb2GuestBtn:hover { transform:translateY(-1px); filter:brightness(1.08); }
   /* onglets de région Velia->Edana (2026-07-12) : le cadenas passe AU-DESSUS, centré, plutôt que
      dans le texte du bouton -- libère de la largeur, mais 5 boutons "flex + flex-wrap" restaient
      tout de même sur 2 rangées dans une carte étroite (le mot "Calpheon" à lui seul dépasse la
