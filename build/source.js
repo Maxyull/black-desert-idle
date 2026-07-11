@@ -2420,6 +2420,19 @@ let awayLootCounts = {};
 let awayXpGained = 0;
 let awaySessionStartedAt = null;
 let awayLevelBefore = 1, awayPercentBefore = 0;
+
+const OFFLINE_CATCHUP_CAP_HOURS = 24;
+const OFFLINE_CATCHUP_MIN_HOURS = 0.05; 
+function computeOfflineCatchupSilver(data) {
+  if (!data || !data.savedAt) return 0;
+  const rate = (data.S && data.S.bestSilverPerHour) || 0;
+  if (rate <= 0) return 0;
+  const elapsedMs = Date.now() - Date.parse(data.savedAt);
+  if (!(elapsedMs > 0)) return 0;
+  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
+  if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  return Math.round(rate * hours);
+}
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0;
@@ -3638,6 +3651,11 @@ function getSaveState() {
 }
 function applySaveState(data) {
   if (!data || data.version !== 1) return false;
+  
+  const offlineSilverGain = computeOfflineCatchupSilver(data);
+  const offlineLevelBefore = data.S ? data.S.lvl : 1;
+  const offlinePercentBefore = data.S ? Math.round((data.S.xp||0) / xpNeededFor(data.S.lvl||1) * 100) : 0;
+  const offlineSavedAtMs = data.savedAt ? Date.parse(data.savedAt) : Date.now();
   Object.assign(S, data.S);
   
   S.startTime = performance.now();
@@ -3672,6 +3690,15 @@ function applySaveState(data) {
   resetWorld(true); 
   updateZoneTitleText(); 
   hud();
+  
+  if (offlineSilverGain > 0) {
+    addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
+    awaySilverGained = offlineSilverGain;
+    awaySessionStartedAt = offlineSavedAtMs;
+    awayLevelBefore = offlineLevelBefore;
+    awayPercentBefore = offlinePercentBefore;
+    showAwayLootSummaryIfAny();
+  }
   return true;
 }
 

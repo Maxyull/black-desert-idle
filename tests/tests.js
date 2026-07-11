@@ -2511,6 +2511,60 @@
       el.textContent === tr(ZONES[5].name), `got=${el.textContent}`);
     zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
   }
+  // rattrapage hors-ligne "réel" (2026-07-11, demande explicite : "le modal qui calcule le farm
+  // hors ligne, je le vois pas quand on se reconnecte") -- computeOfflineCatchupSilver()
+  // (game-core.js) doit : ignorer une sauvegarde sans savedAt/taux, ignorer une absence sous le
+  // seuil minimum (bruit d'un simple changement d'onglet, déjà couvert par visibilitychange),
+  // calculer un gain proportionnel au temps réel écoulé, et plafonner à OFFLINE_CATCHUP_CAP_HOURS
+  // même pour une absence bien plus longue.
+  function testComputeOfflineCatchupSilverCapsAndThresholds() {
+    if (typeof computeOfflineCatchupSilver !== 'function') return;
+    const rate = 3600; // valeur ronde : 3600 silver/h = 1 silver/s
+    assert('Sans savedAt -> 0, pas de throw', computeOfflineCatchupSilver({ S:{ bestSilverPerHour: rate } }) === 0);
+    assert('Sans taux connu (bestSilverPerHour=0) -> 0', computeOfflineCatchupSilver({ savedAt: new Date(Date.now()-3600000).toISOString(), S:{ bestSilverPerHour:0 } }) === 0);
+    const oneMinuteAgo = new Date(Date.now() - 60*1000).toISOString();
+    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> 0', computeOfflineCatchupSilver({ savedAt: oneMinuteAgo, S:{ bestSilverPerHour: rate } }) === 0);
+    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
+    const gain1h = computeOfflineCatchupSilver({ savedAt: oneHourAgo, S:{ bestSilverPerHour: rate } });
+    assert('1h d\'absence à 3600 silver/h -> ~3600 silver', Math.abs(gain1h - rate) <= 2, `gain=${gain1h}`);
+    const fortyEightHoursAgo = new Date(Date.now() - 48*3600*1000).toISOString();
+    const gainCapped = computeOfflineCatchupSilver({ savedAt: fortyEightHoursAgo, S:{ bestSilverPerHour: rate } });
+    assert('Plafonné à OFFLINE_CATCHUP_CAP_HOURS (24h) même après 48h d\'absence', Math.abs(gainCapped - rate*OFFLINE_CATCHUP_CAP_HOURS) <= 2, `gain=${gainCapped}`);
+  }
+  // vérifie l'intégration bout-en-bout : applySaveState() sur une sauvegarde dont savedAt est
+  // ancien doit créditer le silver de rattrapage ET déclencher le modal "Bon retour" (auparavant :
+  // rien ne s'affichait, awaySilverGained/awayLootCounts restaient à 0 après un vrai rechargement
+  // sans que l'onglet n'ait jamais été mis en arrière-plan dans CETTE session). Vérifie aussi que
+  // le rattrapage n'alimente PAS tokenSilverEarned (category 'offline_catchup', pas 'loot') --
+  // sinon le taux servant de base au PROCHAIN rattrapage s'auto-inflaterait à chaque reconnexion.
+  function testApplySaveStateOfflineCatchupCreditsSilverAndShowsReconnectModal() {
+    if (typeof applySaveState !== 'function' || typeof showAwayLootSummaryIfAny !== 'function') return;
+    const root = document.getElementById('reconnectModalRoot'); if (!root) return;
+    const s = { zoneIdx, atVelia, silver: S.silver, silverEarned: S.silverEarned, tokenSilverEarned: S.tokenSilverEarned, bestSilverPerHour: S.bestSilverPerHour };
+    const savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    try {
+      atVelia = false;
+      const save = getSaveState();
+      save.S.bestSilverPerHour = 7200; // 2 silver/s pile, pour un calcul exact
+      save.savedAt = new Date(Date.now() - 2*3600*1000).toISOString(); // 2h d'absence réelle
+      const silverBefore = save.S.silver;
+      const tokenBefore = save.S.tokenSilverEarned || 0;
+      // PAS de root.innerHTML='' ici (piège documenté CLAUDE.md §32 -- une fois le root React
+      // déjà monté par un test antérieur, vider le DOM à la main corrompt le suivi des fibers et
+      // fait planter le PROCHAIN rendu sur un removeChild) : openReconnectModal() gère lui-même le
+      // remplacement, que le root existe déjà ou non.
+      applySaveState(save);
+      assert('applySaveState() crédite le silver de rattrapage hors-ligne (2h × 7200/h = 14400)',
+        Math.abs(S.silver - (silverBefore + 14400)) <= 2, `silver=${S.silver}, attendu≈${silverBefore+14400}`);
+      assert('Le rattrapage n\'alimente PAS tokenSilverEarned (évite l\'auto-inflation du taux)', S.tokenSilverEarned === tokenBefore, `tokenSilverEarned=${S.tokenSilverEarned}`);
+      assert('Le modal "Bon retour" s\'affiche après un rattrapage hors-ligne réel (pas seulement un changement d\'onglet)',
+        root.innerHTML.includes('Bon retour'), root.innerHTML.slice(0,120));
+    } finally {
+      zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
+      S.silver = s.silver; S.silverEarned = s.silverEarned; S.tokenSilverEarned = s.tokenSilverEarned; S.bestSilverPerHour = s.bestSilverPerHour;
+      awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
   // "vérifie les info de la table de loot (couleurs cadre)" (2026-07-10) : la ligne dépliée du
   // bijou (kind jackpot) doit être colorée à la couleur du palier, comme les lignes gear/matériau
   // et comme la ligne condensée (zoneLootCompactRowHtml) — bug trouvé en vérification : "jackpot"
@@ -3441,6 +3495,7 @@
     testGearRetroactiveMigration();
     testGearRescaleV235RetroactiveOnZoneReqChange();
     testApplySaveStateUpdatesZoneTitleText();
+    testComputeOfflineCatchupSilverCapsAndThresholds();
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();
     testSellOnePriorityEquipCompendiumSell();
@@ -3501,6 +3556,7 @@
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
     testReconnectModalWrapperScrollsInsteadOfClipping();
+    testApplySaveStateOfflineCatchupCreditsSilverAndShowsReconnectModal();
     testReconnectModalTierChipsWrapOnSameRowInsteadOfStacking();
     testAwayLevelSnapshotCapturedOnHide();
     testReconnectDurationLabelFormatsHoursAndMinutes();

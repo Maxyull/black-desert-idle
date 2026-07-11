@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V379', d:'22/07/2026 00:00', name:{fr:'Rattrapage hors-ligne réel pour le modal "Bon retour"', en:'Real offline catch-up for the "Welcome back" modal'}, fr:[
+      {t:'fix', sub:'systeme', tx:'Corrigé : le modal "Bon retour" (résumé du silver/loot gagné pendant ton absence) ne s\'affichait que si l\'onglet était resté ouvert quelque part — fermer le navigateur ou une mise en veille faisait disparaître tout rattrapage, même après une vraie longue absence.'},
+      {t:'new', sub:'systeme', tx:'Le silver gagné pendant une absence réelle (navigateur fermé, PC en veille...) est désormais rattrapé au rechargement, basé sur ton meilleur taux de farm connu, plafonné à 24h d\'absence.'},
+    ], en:[
+      {t:'fix', sub:'systeme', tx:'Fixed: the "Welcome back" modal (summary of silver/loot earned while away) only showed if the tab had stayed open somewhere — closing the browser or a sleep/wake cycle made any catch-up vanish, even after a long real absence.'},
+      {t:'new', sub:'systeme', tx:'Silver earned during a real absence (browser closed, PC asleep...) is now caught up on reload, based on your best known farm rate, capped at 24h of absence.'},
+    ] },
   { v:'V378', d:'21/07/2026 23:00', name:{fr:'Écran Boss refait : même style que l\'écran Zone', en:'Boss screen redesigned: same look as the Zone screen'}, fr:[
       {t:'change', sub:'combat', tx:'L\'écran Boss (lobby et arène) a été redessiné avec le même style visuel que l\'écran Zone : carte "prochain boss" mise en avant, calendrier hebdomadaire et récompenses par rang recolorés, aucun changement de fonctionnement.'},
       {t:'new', sub:'combat', tx:'Chaque World Boss a désormais une courte réplique d\'ambiance affichée dans le lobby.'},
