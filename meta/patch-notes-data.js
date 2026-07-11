@@ -11,12 +11,14 @@ const PATCH_NOTES = [
       {t:'new', tx:'Lien direct vers une version précise des notes de version (utile pour partager un patch précis), et un tampon "Lu" apparaît sur les entrées déjà consultées.'},
       {t:'change', sub:'securite', tx:'Votes et commentaires des notes de version : limite de fréquence par joueur (anti-spam), et un commentaire massivement signalé est masqué automatiquement en attendant une revue par un modérateur.'},
       {t:'new', tx:'Modal de reconnexion : légende des paliers ajoutée à côté de l\'historique des sessions.'},
+      {t:'fix', tx:'Corrigé : le texte complet d\'une ligne de notes de version s\'affichait en gras dans l\'en-tête au lieu d\'un vrai paragraphe lisible en dessous.'},
     ], en:[
       {t:'fix', tx:'Fixed: filter chips (category in patch notes, tier in the reconnect modal) stacked full-width instead of sitting side by side.'},
       {t:'new', sub:'accessibilite', tx:'Patch notes panel: keyboard focus now stays within the window (Tab can\'t escape it anymore), and the unread badge is announced to screen readers.'},
       {t:'new', tx:'Direct link to a specific patch notes version (handy for sharing a specific patch), and an "Already read" stamp now appears on entries you\'ve already seen.'},
       {t:'change', sub:'securite', tx:'Patch notes votes and comments: per-player rate limiting (anti-spam), and a heavily-reported comment is now auto-hidden pending moderator review.'},
       {t:'new', tx:'Reconnect modal: tier legend added next to the session history.'},
+      {t:'fix', tx:'Fixed: the full text of a patch note line displayed bold in the header instead of a readable paragraph below.'},
     ] },
   { v:'V368', d:'21/07/2026 09:00', name:{fr:'Wiki refait + Classement Public Compagnons', en:'Wiki redesigned + Companion Public Leaderboard'}, fr:[
       {t:'change', tx:'Le Wiki a été entièrement refait en panneau plein écran, à l\'identique d\'une maquette fournie : navigation par catégories, fil d\'Ariane, sommaire de section et recherche live. Le contenu reste le même (Combat & Zones, Optimisation, Marché, Compte & Sauvegarde, À propos, Codex des objets, Tutoriel), avec des raccourcis directs vers le Compendium et le module Compagnons.'},
