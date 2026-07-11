@@ -2857,3 +2857,91 @@
     .achOverviewRing { width:60px; height:60px; }
     .achCatCard { min-width:64px; }
   }
+
+  /* =====================================================================
+     Refonte visuelle "Zone" — écran de connexion (2026-07-21, port fidèle
+     du mockup #authBox validé par l'utilisateur, voir CLAUDE.md section
+     mockups). Additif uniquement : aucune règle existante de la section
+     "===== authentification =====" plus haut dans ce fichier n'est
+     retirée -- ces sélecteurs (identiques ou plus spécifiques) gagnent la
+     cascade et remplacent le thème hérité par accident (font-family:
+     inherit -> body{font-family:Georgia}, ancien --panel/--gold-dim/
+     #3a3742, border-radius:0 partout) jamais touché par la refonte Zone
+     (topbar + tabs) ci-dessus.
+     #closeAuth : reste fonctionnel (ferme #authOverlay, voir
+     game-supabase.js `$a('closeAuth').onclick`) mais volontairement PAS
+     mis en avant visuellement -- l'utilisateur a retiré ce bouton du
+     mockup validé, repris ici avec le même traitement discret que
+     .topbar .icon-btn (icône ronde sourde s2/dbBorder), jamais un gros
+     bouton proéminent.
+     #sessionLockBox : même écart de style que #authBox (--panel/
+     --gold-dim hérités, radius 0, Georgia), même famille d'overlay
+     bloquant plein écran -- reskin à l'identique par cohérence (à ma
+     discrétion, CLAUDE.md le permet explicitement pour cette tâche).
+     #offlineBanner : laissé en l'état côté couleurs (bandeau d'alerte
+     orange intentionnel, sémantique de danger différente d'une carte de
+     contenu) -- seule la police est alignée sur Inter pour la lisibilité,
+     pas de reskin structurel (pas de carte/radius à corriger, c'est un
+     bandeau plein-largeur par design).
+     ===================================================================== */
+  #authBox {
+    background:var(--s1); border:1px solid var(--dbBorder); border-radius:14px;
+    font-family:'Inter',sans-serif;
+  }
+  #closeAuth {
+    width:26px; height:26px; top:10px; right:10px; padding:0; margin:0;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--s2); border:1px solid var(--dbBorder);
+    color:var(--cream2); font-size:13px;
+  }
+  /* #authBox #closeAuth (pas #closeAuth seul) : "#authBox button { border-radius:8px }"
+     ci-dessous a une spécificité (1,0,1) qui bat un simple "#closeAuth" (1,0,0) -- vérifié en
+     direct (2026-07-21) : sans ce doublement d'ID, le radius affiché restait 8px au lieu des
+     6px voulus (même famille compacte que .topbar .icon-btn). */
+  #authBox #closeAuth { border-radius:6px; }
+  #closeAuth:hover { border-color:var(--dbBorder2); color:var(--ink); transform:none; }
+  #authBox h1 {
+    font-family:'Cinzel',serif; font-weight:600; font-size:18px; letter-spacing:.08em;
+    color:var(--gold); margin-bottom:6px;
+  }
+  #authLangRow { margin-bottom:14px; }
+  .authLangBtn {
+    font-family:'Cinzel',serif; padding:4px 11px; font-size:10.5px; border-radius:20px;
+    border:1px solid var(--dbBorder); color:var(--cream3);
+  }
+  .authLangBtn.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
+  #authMobileBadge {
+    border-radius:20px; color:var(--gold2); font-weight:600; letter-spacing:.03em;
+    padding:3px 11px; font-family:'Inter',sans-serif;
+  }
+  .authSub { color:var(--cream2); line-height:1.5; }
+  #demoBadge { border-radius:20px; font-family:'Inter',sans-serif; }
+  .demoNote {
+    color:var(--gold2); background:var(--s2); border:1px solid var(--dbBorder); border-radius:8px;
+    padding:8px 10px; line-height:1.5;
+  }
+  #authBox input {
+    background:var(--s2); border:1px solid var(--dbBorder); font-family:'Inter',sans-serif;
+    font-size:12.5px; padding:9px 11px; border-radius:8px;
+  }
+  #authBox input::placeholder { color:var(--cream3); }
+  #authBox button { font-family:'Inter',sans-serif; border-radius:8px; }
+  #authBox button.ghost { border:1px solid var(--dbBorder); color:var(--cream2); }
+  #authBox button.ghost:hover:not(:disabled) { border-color:var(--dbBorder2); color:var(--ink); }
+  #btnSignIn { background:var(--gold); border:none; color:#2a1f08; font-weight:600; }
+  #btnSignIn:hover:not(:disabled) { border-color:transparent; filter:brightness(1.08); }
+  #authError { color:var(--danger); }
+  #authStatus { color:var(--cream3); }
+  #btnClearCacheAuth { font-size:10.5px; }
+
+  #sessionLockBox {
+    background:var(--s1); border:1px solid var(--dbBorder); border-radius:14px;
+    font-family:'Inter',sans-serif;
+  }
+  #sessionLockBox h1 { font-family:'Cinzel',serif; font-weight:600; letter-spacing:.06em; color:var(--gold); }
+  #sessionLockBox p { color:var(--cream2); }
+  #sessionLockResumeBtn {
+    background:var(--gold); border:none; border-radius:8px; color:#2a1f08; font-weight:600;
+  }
+  #sessionLockResumeBtn:hover:not(:disabled) { filter:brightness(1.08); }
+  #offlineBanner { font-family:'Inter',sans-serif; }
