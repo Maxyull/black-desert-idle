@@ -2562,3 +2562,28 @@
     font-family:'Cinzel',serif; font-size:9px; letter-spacing:.14em; text-transform:uppercase;
     color:var(--cream3); padding:0 2px; margin-bottom:6px;
   }
+
+  /* ===== Phase 3 (2026-07-11) : reskin visuel de #gameFrame + #panel (6 cards : stats/zones/
+     loot/equip/opt/inv) -- voir index.dev.html. Purement additif : structure, canvas, overlays
+     absolus (#zoneTitle, #hpPotWrap, #castBar, #skillBar...) et logique JS INCHANGÉS, seuls
+     couleurs/rayons/police changent. #panel est déjà une grille 3 colonnes (voir règle plus haut
+     dans ce fichier), exactement le pattern .card-row du mockup -- rien à changer côté layout. */
+  #gameFrame { border-radius:12px; }
+  #panel { background:var(--s1); border-color:var(--dbBorder); border-top-color:var(--dbBorder); border-radius:0 0 12px 12px; }
+  .card { background:var(--s1); border:1px solid var(--dbBorder); border-radius:11px; }
+  .card h3 {
+    font-family:'Cinzel',serif; font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--cream2); border-bottom-color:var(--dbBorder);
+  }
+  /* .catTab/.invModeTab/.lootPanelTab partagés par plusieurs endroits du jeu (chat, tabs de
+     zone/inventaire, tabs de stats...) -- reskin en pilule façon .chip du mockup profite à tous
+     ces contextes de la même manière, cohérent avec l'objectif "que les prochains menus matchent
+     aussi" (voir CLAUDE.md). */
+  .catTab, .invModeTab, .lootPanelTab {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:.02em; border-radius:20px;
+    color:var(--cream3); background:transparent;
+  }
+  .catTab:hover, .invModeTab:hover, .lootPanelTab:hover { border-color:var(--dbBorder2); color:var(--cream2); }
+  .catTab.active, .invModeTab.active, .lootPanelTab.active {
+    border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08);
+  }
