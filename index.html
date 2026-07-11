@@ -9,6 +9,19 @@
      disponible sur cette machine ; le SVG seul couvre tous les navigateurs modernes (Chrome/
      Firefox/Edge, Safari 16+). -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<!-- meta/patch-notes-data.js (432 Ko, repo-audit-todo.md point 4) : demarre le telechargement en
+     parallele dans <head>, plutot que d'attendre que le parseur atteigne le <script> tout en bas
+     du <body> (ligne ~850). Un vrai chargement PARESSEUX (fetch uniquement a l'ouverture du
+     panneau patch notes) casserait CURRENT_VERSION (= PATCH_NOTES[0].v, lu au top-level par
+     game-supabase.js, affiche immediatement dans #clientVersionNum) et le badge "non lu" du
+     header (unreadPatchCount(), appele des le tout debut du HUD) -- les deux sont deja des
+     dependances synchrones documentees (CLAUDE.md §6), les decoupler serait un vrai refactor a
+     risque (badge/version-mismatch deja fragiles historiquement, voir CLAUDE.md §8) pour un gain
+     marginal vu que ce script est deja tout en bas du <body> (le HTML/CSS a deja fini de peindre
+     avant de l'atteindre). Le preload reduit le delai avant que le bundle jeu (juste apres) puisse
+     demarrer, sans toucher a l'ordre d'execution ni au comportement -- optimisation pure, zero
+     risque. -->
+<link rel="preload" href="meta/patch-notes-data.js" as="script">
 <!-- PWA manifest (2026-07-21, repo-audit-todo.md point 12) : installable sur mobile (icone ecran
      d'accueil, mode standalone). Icone SVG uniquement (meme contrainte que le favicon, pas d'outil
      de rasterisation PNG 192x192/512x512 disponible) -- fonctionne pour l'installation sur Chrome/
