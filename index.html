@@ -9,6 +9,14 @@
      disponible sur cette machine ; le SVG seul couvre tous les navigateurs modernes (Chrome/
      Firefox/Edge, Safari 16+). -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
+<!-- PWA manifest (2026-07-21, repo-audit-todo.md point 12) : installable sur mobile (icone ecran
+     d'accueil, mode standalone). Icone SVG uniquement (meme contrainte que le favicon, pas d'outil
+     de rasterisation PNG 192x192/512x512 disponible) -- fonctionne pour l'installation sur Chrome/
+     Edge desktop et Android recents ; iOS Safari (ajout a l'ecran d'accueil) ignore le manifest et
+     utilisera l'icone par defaut tant qu'aucun PNG dedie n'est fourni. Pas de service worker (pas
+     de cache offline pour l'instant, hors scope de ce point d'audit). -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0b0f1a">
 <!-- Open Graph / Twitter Card (2026-07-21, repo-audit-todo.md point 8) : sans ca, un lien partage
      sur Discord/Twitter n'affichait que l'URL brute -- assets/og-preview.png genere via Meshy
      (nano-banana, cout 3 credits, prompt/generation approuves par l'utilisateur), 1344x768, proche
