@@ -29,15 +29,6 @@
   #ztCompendium { display:inline-block; font-size:9.5px; letter-spacing:.5px; margin-top:3px; color:var(--ink-dim); text-transform:none; cursor:pointer; }
   #ztCompendium.complete { color:var(--gold); font-weight:bold; }
   #ztReq .ok { color:#8fc98a; } #ztReq .bad { color:var(--danger); }
-  #silverBox {
-    position:absolute; top:10px; right:14px; background:rgba(10,9,12,.72);
-    border:1px solid var(--gold-dim); padding:5px 12px; font-size:14px;
-    display:flex; align-items:center; gap:7px;
-  }
-  #silverBox .coin { width:12px; height:12px; border-radius:50%;
-    background:radial-gradient(circle at 35% 30%, #fdf3d0, #c9a55a 60%, #8a7038);
-    box-shadow:0 0 4px rgba(201,165,90,.6); }
-  #shRate { position:absolute; top:44px; right:14px; font-size:11px; color:var(--ink-dim); text-shadow:0 1px 2px #000; }
   #lootTicker {
     position:absolute; bottom:14px; right:14px; text-align:right;
     font-size:11px; color:var(--ink-dim); max-height:250px; overflow:hidden;
@@ -2503,7 +2494,7 @@
   }
 
   .topbar {
-    width:1240px; max-width:100%; margin:0 auto 10px; box-sizing:border-box;
+    width:100%; max-width:none; margin:0 0 10px; box-sizing:border-box;
     background:linear-gradient(180deg,#0c0c1a,#0a0a14); border:1px solid var(--dbBorder);
     border-radius:8px; padding:8px 16px; display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px;
     font-family:'Inter',sans-serif;
@@ -2611,8 +2602,14 @@
      l'effet "colonnes toujours visibles" vient de position:sticky plutôt que
      position:fixed, même résultat perçu, vraie grille en dessous.
      ===================================================================== */
+  /* Pleine largeur (2026-07-11, demande explicite : "adapte pleine écran droite gauche") --
+     la maquette d'origine (bdi-dashboard-redesign.html) utilise déjà `.layout{flex:1}` dans un
+     `body{height:100vh}` : plein-écran de bord à bord, PAS une colonne centrée à largeur fixe.
+     Le premier portage (Phase 1-5) avait repris à tort la convention 1240px centré de l'ancien
+     jeu (#wrap) -- corrigé ici : seules les colonnes latérales (210px/300px) gardent une largeur
+     fixe, la colonne centrale (1fr) et le topbar/tabs remplissent tout l'espace disponible. */
   #activitiesBar, .layout {
-    width:1240px; max-width:100%; margin:0 auto; box-sizing:border-box;
+    width:100%; max-width:none; margin:0; box-sizing:border-box;
   }
   #activitiesBar { margin-bottom:10px; }
   .layout {
