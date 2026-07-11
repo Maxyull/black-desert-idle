@@ -95,4 +95,12 @@ Quelques convictions qui guident les choix :
 
 Le plus efficace : passer par le [Discord](https://discord.gg/fEubtqMjtP) ou ouvrir une
 [issue GitHub](https://github.com/Maxyull/black-desert-idle/issues). Tout retour est lu — bug,
-suggestion d'équilibrage, idée de fonctionnalité.
+suggestion d'équilibrage, idée de fonctionnalité. Voir [`CONTRIBUTING.md`](CONTRIBUTING.md) pour
+lancer le projet en local et les conventions de code.
+
+## Licence
+
+Code sous licence [MIT](LICENSE) — libre de fork/modifier/redistribuer. "Black Desert Online" et
+les noms associés restent la propriété de Pearl Abyss ; ce projet est un fan-game non officiel,
+sans affiliation (voir avertissement en haut de ce fichier), et tous les visuels sont des
+créations originales.
