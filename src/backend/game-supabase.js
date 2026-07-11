@@ -609,20 +609,11 @@ async function syncPlayerStats() {
 // Panneau Admin (reset demo/quetes/comptes, screenshot joueur, analytics) -> voir admin-panel.js (charge APRES ce fichier, voir index.html)
 
 // ---------- classement public (silver, gearscore, meilleure zone, silver/h, meilleur objet) ----------
-// badge "⚠️ possiblement obsolète" retiré (2026-07-08, demande explicite : "Classement public :
-// meilleur uniquement pas en temps reel donc oublie la synchro, on veut juste le meilleur") --
-// n'avait de sens QUE quand les colonnes reflétaient un état COURANT (solde/équipement pouvant
-// changer depuis la dernière synchro). Toutes les colonnes envoyées par syncPlayerStats sont
-// désormais des records À VIE qui ne redescendent jamais (voir le commentaire au-dessus de
-// syncPlayerStats) : une ligne n'est donc plus jamais "obsolète", juste éventuellement en retard
-// d'un record pas encore synchronisé, ce qui ne justifie plus un avertissement.
-function rankRows(rows, valueFn, fmtFn) {
-  const sorted = [...rows].sort((a,b) => valueFn(b) - valueFn(a)).slice(0,20);
-  return sorted.map((r,i) => `
-    <tr class="${r.user_id===currentUser?.id ? 'isYou' : ''}">
-      <td>#${i+1}</td><td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}</span></td><td>${fmtFn(r)}</td>
-    </tr>`).join('') || `<tr><td colspan="3" class="admEmpty">${LANG==='fr'?'Pas encore de données':'No data yet'}</td></tr>`;
-}
+// 2026-07-11 : panneau enrichi (podium/onglets/recherche/pagination/"Ma position") déplacé dans
+// src/backend/leaderboard-panel.js (openLeaderboard2()) — même traitement que le Classement Public
+// Compagnons, sur les mêmes 7 catégories déjà alimentées par syncPlayerStats() ci-dessus (records
+// À VIE, jamais un instantané). wirePlayerNameLinks()/showPlayerGear() restent ici, réutilisés par
+// le nouveau panneau (clic sur un pseudo -> stuff en lecture seule).
 // clic sur un pseudo du classement : ouvre son stuff en lecture seule (demande explicite — voir
 // get_player_gear côté serveur, n'expose QUE l'équipement, jamais le silver/inventaire complet)
 function wirePlayerNameLinks() {
@@ -776,52 +767,9 @@ async function showPlayerInventoryWindow(userId, displayName) {
   });
   renderInvPane();
 }
-// bascule entre onglets de catégorie repliés dans un même panneau (openInfo) — n'affiche
-// qu'une seule catégorie à la fois, les autres restent en mémoire (display:none)
-function wireCatTabs() {
-  $a('infoBody').querySelectorAll('.catTab').forEach(btn => {
-    btn.onclick = () => {
-      $a('infoBody').querySelectorAll('.catTab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      $a('infoBody').querySelectorAll('.catPane').forEach(p => p.style.display = p.dataset.cat === btn.dataset.cat ? '' : 'none');
-    };
-  });
-}
 
 // Chat (mondial/trade/annonce + mentions @joueur) -> voir chat.js (charge APRES ce fichier, voir index.html)
-async function openLeaderboard() {
-  if (!marketRequireAuth()) return;
-  const { data, error } = await sb.from('player_stats').select('*').limit(500);
-  const rows = data || [];
-
-  const cats = [
-    { id:'silver', icon:'💰', label:{fr:'Silver',en:'Silver'}, col:{fr:'Silver (total à vie)',en:'Silver (lifetime total)'},
-      rows: rankRows(rows, r => Number(r.silver||0), r => fmt(r.silver||0)) },
-    { id:'gs', icon:'⚔️', label:{fr:'Gearscore',en:'Gearscore'}, col:{fr:'Record GS (PA/PD)',en:'Record GS (AP/DP)'},
-      rows: rankRows(rows, r => Number(r.gearscore||0), r => `${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})`) },
-    { id:'zone', icon:'🗺️', label:{fr:'Meilleure zone',en:'Best zone'}, col:{fr:'Zone',en:'Zone'},
-      rows: rankRows(rows, r => Number(r.best_zone_index||0), r => tr(r.best_zone_name||'—')) },
-    { id:'sh', icon:'⏱️', label:{fr:'Silver/heure',en:'Silver/hour'}, col:{fr:'Taux (zone)',en:'Rate (zone)'},
-      rows: rankRows(rows, r => Number(r.silver_per_hour||0), r => `${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}`) },
-    { id:'kpm', icon:'🏹', label:{fr:'Record kills/min',en:'Kills/min record'}, col:{fr:'Kills/min',en:'Kills/min'},
-      rows: rankRows(rows, r => Number(r.best_kpm||0), r => `${(r.best_kpm||0).toFixed(1)}/min · ${tr(r.best_zone_name||'—')}`) },
-    { id:'item', icon:'🎯', label:{fr:'Meilleur objet',en:'Best item'}, col:{fr:'Objet (qté)',en:'Item (qty)'},
-      rows: rankRows(rows.filter(r => r.best_item_name), r => Number(r.best_item_count||0), r => `${tr(r.best_item_name)} (${fmt(r.best_item_count||0)})`) },
-    { id:'treasure', icon:'🗺️', label:{fr:'Trésors',en:'Treasures'}, col:{fr:'Morceaux',en:'Pieces'},
-      rows: rankRows(rows, r => Number(r.treasure_count||0), r => fmt(r.treasure_count||0)) },
-  ];
-  const tabsHtml = cats.map((c,i) => `<button class="catTab${i===0?' active':''}" data-cat="${c.id}">${c.icon} ${c.label[LANG]}</button>`).join('');
-  const panesHtml = cats.map((c,i) => `
-    <div class="catPane" data-cat="${c.id}"${i===0?'':' style="display:none"'}>
-      <table class="admTable"><thead><tr><th>#</th><th>${LANG==='fr'?'Joueur':'Player'}</th><th>${c.col[LANG]}</th></tr></thead><tbody>${c.rows}</tbody></table>
-    </div>`).join('');
-  const html = `<div class="catTabs">${tabsHtml}</div>${panesHtml}` +
-    `<div class="admSummary">${LANG==='fr'?'Classement des records personnels À VIE — jamais un instantané, ces valeurs ne redescendent jamais.':'Lifetime personal record leaderboard — never a live snapshot, these values never go down.'}</div>`;
-  openInfo(LANG==='fr' ? '🏆 Classement' : '🏆 Leaderboard', html);
-  wireCatTabs();
-  wirePlayerNameLinks();
-}
-$a('btnLeaderboard').onclick = openLeaderboard;
+$a('btnLeaderboard').onclick = () => openLeaderboard2();
 $a('btnNotifCenter').onclick = openNotifCenter;
 updateNotifBadge();
 $a('btnAchievements').onclick = openAchievements;

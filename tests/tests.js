@@ -1443,6 +1443,24 @@
       assert(`Le Wiki (FR) mentionne le boss "${marker}"`, combat.fr.includes(marker), `boss=${bossId}`);
     }
   }
+  // garde-fou (2026-07-11, bug réel trouvé en testant leaderboard-panel.js) : `$a('btnXxx').onclick
+  // = maFonctionDansUnAutreFichier;` (SANS closure) évalue le nom immédiatement, à l'exécution de
+  // CE script -- si la fonction vit dans un fichier chargé PLUS TARD (ex: leaderboard-panel.js
+  // après game-supabase.js), ça lève un ReferenceError qui coupe le script EN PLEIN MILIEU. Tout ce
+  // qui est déclaré plus loin dans CE MÊME fichier (WIKI_SECTIONS etc., même les fonctions à cause
+  // du point d'arrêt) ne s'exécute alors jamais -- symptôme sournois : les `function` déclarées
+  // AVANT le point de coupure restent hoistées et semblent fonctionner, seuls les `const`/`let`
+  // déclarés APRÈS restent inaccessibles, imitant une TDZ. Toujours passer par une closure
+  // (`() => maFonction()`) quand le handler vit dans un fichier qui charge après (voir §6-8).
+  function testLateScriptGlobalsSurviveButtonWiring() {
+    assert('WIKI_SECTIONS accessible (game-supabase.js s\'est exécuté jusqu\'au bout, pas coupé par une réf. anticipée)',
+      typeof WIKI_SECTIONS !== 'undefined');
+    assert('PATCH_NOTES accessible', typeof PATCH_NOTES !== 'undefined');
+    if (typeof LB2_CATS !== 'undefined') {
+      assert('LB2_CATS couvre les 7 catégories du classement principal',
+        ['silver','gs','zone','sh','kpm','item','treasure'].every(k => LB2_CATS[k]));
+    }
+  }
   // "pense aux animations de sorts aussi" / "des effets un peu different pour chaque sort"
   // (2026-07-18) -- chaque sort doit avoir sa propre identité visuelle de cast (castColor/
   // castBurst/castJitter), sinon witchBodyOn retombe silencieusement sur la teinte du palier
@@ -3209,6 +3227,7 @@
     testWikiTreasureCountMatchesRealArray();
     testWikiMentionsCronCostPerTier();
     testWikiMentionsBothWorldBosses();
+    testLateScriptGlobalsSurviveButtonWiring();
     testEverySkillHasDistinctCastIdentity();
     testSpawnCastOriginVfxNeverThrows();
     testWitchBodyOnAcceptsSkillObjectWithoutThrowing();
