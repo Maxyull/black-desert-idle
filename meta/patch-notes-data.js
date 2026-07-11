@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V377', d:'21/07/2026 22:00', name:{fr:'Module Compagnons : une percée de rareté change aussi le nom', en:'Companion module: a rarity breakthrough now changes the name too'}, fr:[
+      {t:'change', sub:'compagnon', tx:'Une percée de rareté (Tier 5 → rareté supérieure) fait désormais changer le familier d\'espèce, en prenant le nom correspondant à sa nouvelle rareté — au lieu de garder son ancien nom malgré une rareté supérieure.'},
+      {t:'fix', sub:'compagnon', tx:'Corrigé rétroactivement pour tout familier ayant déjà percé avant ce changement.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'A rarity breakthrough (Tier 5 → higher rarity) now changes the pet\'s species, taking on the name matching its new rarity — instead of keeping its old name despite a higher rarity.'},
+      {t:'fix', sub:'compagnon', tx:'Retroactively fixed for any pet that had already broken through before this change.'},
+    ] },
   { v:'V376', d:'21/07/2026 21:00', name:{fr:'Module Compagnons : Marché (contre-offres, suggestions) + correctif onglets', en:'Companion module: Market (counter-offers, suggestions) + tab fix'}, fr:[
       {t:'new', sub:'compagnon', tx:'Marché : raccourci "🔄 Ajouter au marché" directement depuis une carte de la Collection.'},
       {t:'new', sub:'compagnon', tx:'Marché : lors d\'une contre-offre, un badge "🆕" indique les familiers de ta Collection que le créateur de l\'offre ne possède pas encore.'},

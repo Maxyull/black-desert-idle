@@ -74,14 +74,24 @@ setInterval(()=>{
       // se mérite à nouveau depuis le début) — pourcentage volontairement très bas.
       const breakthrough = p.rar<5 && Math.random()<RARITY_BREAKTHROUGH_CHANCE;
       if(breakthrough){
+        const oldName = p.cat.name;
         p.rar += 1;
         p.stats = mkStats(p.rar);   // stats retirées dans la fourchette de la nouvelle rareté
         p.tier = 1;
         p.tierXp = 0;
         p.tierMult = rollTierMult(1);
+        // bug corrigé (2026-07-21, rapporté explicitement : "lorsqu'on passe a la rareté
+        // superieur, on change de nom et on prend les noms de la rareté superieur") -- une percée
+        // ne changeait QUE p.rar, jamais p.cat (espèce/nom) : le pet gardait son ancien nom
+        // malgré une rareté supérieure, source de toute la confusion Index/Sections/Collection
+        // corrigée juste avant (Index/catalogue affichait l'ancienne rareté figée sur ce nom).
+        // PET_CATALOG a EXACTEMENT une espèce par section×rareté (voir catalog.js) -- match
+        // déterministe garanti, même section (le pet garde son "métier").
+        const newCat = speciesForSectionAndRarity(p.cat.sec, p.rar);
+        if(newCat) p.cat = newCat;
         breakthroughCount++;
-        toast('🌟', `${p.cat.name} PERCE À TRAVERS ! Rareté → ${RARITIES[p.rar].name} (retour à Tier 1)`);
-        addGameLog(`🌟 <span style="color:${rc(p.rar)}">${p.cat.name} atteint ${RARITIES[p.rar].name} par un coup de chance rarissime !</span> (Tier réinitialisé à 1)`);
+        toast('🌟', `${oldName} PERCE À TRAVERS ET DEVIENT ${p.cat.name} ! Rareté → ${RARITIES[p.rar].name} (retour à Tier 1)`);
+        addGameLog(`🌟 <span style="color:${rc(p.rar)}">${oldName} devient ${p.cat.name}, atteint ${RARITIES[p.rar].name} par un coup de chance rarissime !</span> (Tier réinitialisé à 1)`);
       } else {
         toast('⬆️',`${p.cat.name} atteint Tier ${p.tier} ! (×${p.tierMult.toFixed(3)}, ${tierMultPct(p)}% de la plage)`);
       }

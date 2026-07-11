@@ -1721,3 +1721,75 @@ test('counter-offer pet list badges species the offer creator does not own yet',
   expect(result.unknownHasBadge).toBe(true);
   expect(pageErrors).toEqual([]);
 });
+
+// feature ajoutée (2026-07-21, demande explicite : "lorsqu'on passe a la rareté superieur, on
+// change de nom et on prend les noms de la rareté superieur") -- BREAKTHROUGH changeait p.rar
+// SANS jamais réassigner p.cat (espèce/nom), laissant un pet affiché sous un ancien nom qui ne
+// correspondait plus à sa vraie rareté. Teste directement la fonction pure partagée
+// (speciesForSectionAndRarity, tier.js) plutôt que de forcer un vrai tick aléatoire (le tirage de
+// breakthrough est très rare, voir RARITY_BREAKTHROUGH_CHANCE) -- même approche que les autres
+// tests de fonctions pures de ce fichier.
+test('speciesForSectionAndRarity returns the exact species for every section×rarity combo (deterministic 1-to-1 mapping)', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  const result = await frame.locator('body').evaluate(() => {
+    const mismatches = [];
+    SECTIONS.forEach(s => {
+      for (let rar = 0; rar <= 5; rar++) {
+        const cat = speciesForSectionAndRarity(s.id, rar);
+        if (!cat || cat.sec !== s.id || cat.rar !== rar) mismatches.push({ sec: s.id, rar, cat });
+      }
+    });
+    return { mismatches };
+  });
+
+  expect(result.mismatches).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
+// Vérifie que la migration rétroactive corrige un pet "percé" avant le correctif (écart >= 2
+// entre p.rar et p.cat.rar, seule signature possible d'une percée historique -- voir commentaire
+// de migratePetSpeciesRarityV1, save.js) SANS toucher un pet fraîchement éclos dont l'écart voulu
+// de 1 (rollAndCreatePet, hatch.js) est un mécanisme de jeu distinct, pas un bug à corriger.
+test('migratePetSpeciesRarityV1 fixes a legacy breakthrough pet but leaves a normal ±1 hatch mismatch untouched', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  const result = await frame.locator('body').evaluate(() => {
+    // pet "légende" avant le correctif : espèce Épique (rar=3) de la section farming, mais p.rar
+    // a percé jusqu'à 5 (Ancestral) sans jamais réassigner p.cat -- écart de 2, signature d'une
+    // percée historique.
+    const staleCat = speciesForSectionAndRarity('farming', 3);
+    const legacyPet = { id: petId++, uid: 'legacy-breakthrough', cat: staleCat, rar: 5, stats: mkStats(5), hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    // pet fraîchement éclos : écart voulu de 1 (fuzzy match du hatch), ne doit PAS être touché.
+    const freshCat = speciesForSectionAndRarity('loot', 1);
+    const freshPet = { id: petId++, uid: 'fresh-hatch-mismatch', cat: freshCat, rar: 2, stats: mkStats(2), hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(legacyPet, freshPet);
+
+    migratePetSpeciesRarityV1();
+
+    return {
+      legacyCatName: legacyPet.cat.name,
+      legacyCatRar: legacyPet.cat.rar,
+      expectedLegacyCatName: speciesForSectionAndRarity('farming', 5).name,
+      freshCatName: freshPet.cat.name,
+      expectedFreshCatNameUnchanged: freshCat.name,
+    };
+  });
+
+  expect(result.legacyCatRar).toBe(5);
+  expect(result.legacyCatName).toBe(result.expectedLegacyCatName);
+  expect(result.freshCatName).toBe(result.expectedFreshCatNameUnchanged);
+  expect(pageErrors).toEqual([]);
+});

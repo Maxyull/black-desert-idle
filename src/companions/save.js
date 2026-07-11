@@ -11,6 +11,7 @@ function saveGame(){
       eggTypesUsed: Array.from(eggTypesUsed),
       completedAchievements: Array.from(completedAchievements),
       pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1, petsRosterCapV1, petsUidV1,
+      petsSpeciesRarityV1,
       savedAt: Date.now()
     };
     localStorage.setItem('velia_idle_pets_save', JSON.stringify(state));
@@ -102,6 +103,19 @@ function trimRosterToCapIfNeeded(){
 function migratePetUidV1(){
   PETS.forEach(p=>{ if(!p.uid) p.uid = crypto.randomUUID(); });
 }
+// migration rétroactive (2026-07-21, demande explicite : "lorsqu'on passe a la rareté superieur,
+// on change de nom et on prend les noms de la rareté superieur") -- réaligne p.cat sur la bonne
+// espèce (même section, rareté = p.rar réel) pour tout pet dont la percée d'AVANT ce correctif
+// (ticks.js) a laissé un nom d'espèce périmé. Ne touche PAS les pets fraîchement éclos dont le
+// léger décalage ±1 entre p.rar et p.cat.rar est voulu (rollAndCreatePet, hatch.js) -- seul un
+// écart de 2 ou plus prouve une (ou plusieurs) percée(s) historique(s), jamais un simple hatch.
+function migratePetSpeciesRarityV1(){
+  PETS.forEach(p=>{
+    if(Math.abs(p.rar - p.cat.rar) < 2) return;
+    const newCat = speciesForSectionAndRarity(p.cat.sec, p.rar);
+    if(newCat) p.cat = newCat;
+  });
+}
 function loadGame(){
   try{
     const raw = localStorage.getItem('velia_idle_pets_save');
@@ -146,7 +160,12 @@ function loadGame(){
     const needsPetUid = !state.petsUidV1;
     if(needsPetUid) migratePetUidV1();
     petsUidV1 = true;
-    if(needsRosterReset || needsRosterCap || needsPetUid) saveGame(); // persiste immédiatement (roster modifié + flag), avant l'autosave 5s
+    // migration rétroactive (2026-07-21, "on change de nom et on prend les noms de la rareté
+    // superieur") -- voir migratePetSpeciesRarityV1() ci-dessus.
+    const needsSpeciesRarity = !state.petsSpeciesRarityV1;
+    if(needsSpeciesRarity) migratePetSpeciesRarityV1();
+    petsSpeciesRarityV1 = true;
+    if(needsRosterReset || needsRosterCap || needsPetUid || needsSpeciesRarity) saveGame(); // persiste immédiatement (roster modifié + flag), avant l'autosave 5s
     applyOfflineProgress(state.savedAt);
     checkDailyStreak();
     return true;
