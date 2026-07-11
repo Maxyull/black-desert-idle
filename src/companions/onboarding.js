@@ -26,8 +26,12 @@ function renderOnboarding(){
     <div style="text-align:center;font-size:40px;margin-bottom:10px">${step.ico}</div>
     <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);text-align:center;margin-bottom:10px">${step.title}</div>
     <p style="font-size:12px;color:var(--cream2);line-height:1.5;text-align:center;margin-bottom:16px">${step.body}</p>
+    <!-- pagination discrète (2026-07-21, rapporté explicitement : "le slider en bas du nom du
+         menu doit être un peu moins présent, plus discret") -- points réduits (6px->4px) et
+         couleur du point actif adoucie (--gold-dim au lieu de --gold plein), plutôt qu'un
+         indicateur aussi voyant que le titre lui-même juste au-dessus. -->
     <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:14px">
-      ${ONBOARDING_STEPS.map((_,i)=>`<span style="width:6px;height:6px;border-radius:999px;background:${i===onbIdx?'var(--gold)':'var(--border2)'}"></span>`).join('')}
+      ${ONBOARDING_STEPS.map((_,i)=>`<span style="width:4px;height:4px;border-radius:999px;background:${i===onbIdx?'var(--gold-dim)':'var(--border)'}"></span>`).join('')}
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-ghost" style="flex:1" onclick="onbSkip()">Passer</button>
