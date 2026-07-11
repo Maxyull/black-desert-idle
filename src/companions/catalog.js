@@ -136,7 +136,7 @@ const PET_CATALOG=[
 // au palier). Désormais compte chaque combo ESPÈCE×TIER distinct réellement possédé (48×5=240
 // max) : avoir juste "1 Rock Mole T1" ne compte plus comme "Rock Mole complet", il faut l'avoir
 // possédé à CHAQUE palier (T1 à T5) pour que les 5 combos de cette espèce soient acquis.
-// Réutilisé par companions.leaderboard.js ("Tes stats") ET companions.sync.js (stat envoyée à
+// Réutilisé par companions.leaderboard.js ("Tes stats") ET sync.js (stat envoyée à
 // l'admin) — un seul point de calcul, jamais dupliqué.
 const COMPANION_INDEX_MAX = PET_CATALOG.length * 5; // 240
 function companionIndexSpeciesTierKey(p){ return p.cat.name + '_T' + (p.tier||1); }

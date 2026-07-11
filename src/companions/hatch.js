@@ -198,7 +198,7 @@ function rollAndCreatePet(eggType){
   const stats=mkStats(rar);
   // uid stable cross-compte (2026-07-10, marché d'échange) -- distinct de `id` (local, jamais
   // envoyé au serveur) : c'est la clé qui identifie ce pet précis dans pet_trade_offers/deliveries,
-  // doit survivre à un transfert d'un compte à l'autre (voir migratePetUidV1, companions.save.js).
+  // doit survivre à un transfert d'un compte à l'autre (voir migratePetUidV1, save.js).
   const np={id:petId++,uid:crypto.randomUUID(),cat,rar,stats,hunger:100,terrain:false,tier:1,tierXp:0,tierMult:rollTierMult(1)};
   return {pet:np, pityTriggered};
 }

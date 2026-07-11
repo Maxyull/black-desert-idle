@@ -47,7 +47,7 @@ voir `src/progression/README.md` pour le détail.
 Compagnons`) — le module `src/companions/` (iframe isolée, 100% local jusqu'ici) pousse désormais
 un résumé de compteurs (familiers, Silver compagnon, œufs éclos, fusions, streak de connexion,
 pity déclenché, succès complétés) via `admin_companion_stats()` (migration
-`20260719190000_companion_stats.sql`), alimentée par `src/companions/companions.sync.js` toutes
+`20260719190000_companion_stats.sql`), alimentée par `src/companions/sync.js` toutes
 les 60s. "Joueurs synchronisés" ne compte QUE ceux ayant réellement ouvert l'onglet Compagnon au
 moins une fois — jamais les invités (RPC réservée aux comptes connectés, comme partout ailleurs).
 Lecture seule, pas d'éditeur.

@@ -796,7 +796,7 @@ test('syncCompanionStatsToServer reaches the RPC call and never throws with a ca
 // monde") -- une sauvegarde antérieure au passage du roster de départ à 0 pet (roster.js,
 // 2026-07-10) n'a jamais son flag petsRosterResetV1 : simule ce cas en injectant directement une
 // sauvegarde localStorage AVANT le premier chargement (localStorage est partagé entre la page hôte
-// et l'iframe, même origine -- voir companions.save.js).
+// et l'iframe, même origine -- voir save.js).
 test('retroactive migration clears a pre-existing roster and never repeats', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -821,7 +821,7 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
   // "0" est AUSSI l'état par défaut d'un tout nouveau joueur (roster.js) -- ne prouve
   // pas à lui seul que loadGame()/la migration ont fini de tourner, donc pas fiable comme seule
   // condition d'attente. On poll directement petsRosterResetV1 (posé synchroneement à la toute fin
-  // de loadGame(), voir companions.save.js) jusqu'à ce qu'il devienne true.
+  // de loadGame(), voir save.js) jusqu'à ce qu'il devienne true.
   await expect.poll(() => frame.locator('body').evaluate(() => petsRosterResetV1)).toBe(true);
   const afterMigration = await frame.locator('body').evaluate(() => ({
     petsLen: PETS.length, flag: petsRosterResetV1, silverKept: SILVER, fusionKept: fusionCount,
@@ -1318,7 +1318,7 @@ test('opening the 3D preview for many companions in a row never fails to render 
 });
 
 // ═══ MARCHÉ D'ÉCHANGE (2026-07-10, demande explicite : "vrai backend d'échange") ═══════════════
-// pet.uid stable + companions.market.js -- voir supabase/migrations/20260710150000_companion_pet_trade_market.sql
+// pet.uid stable + market.js -- voir supabase/migrations/20260710150000_companion_pet_trade_market.sql
 
 test('rollAndCreatePet assigns a stable uid, and petSnapshotOf/petFromSnapshot round-trip preserves it', async ({ page }) => {
   const pageErrors = [];
@@ -1356,7 +1356,7 @@ test('rollAndCreatePet assigns a stable uid, and petSnapshotOf/petFromSnapshot r
 
 // migration rétroactive : une sauvegarde antérieure à l'ajout de `uid` (2026-07-10) a des pets
 // sans ce champ -- migratePetUidV1() doit leur en attribuer un, une seule fois, sans jamais
-// écraser un uid déjà présent sur un autre pet (voir loadGame(), companions.save.js).
+// écraser un uid déjà présent sur un autre pet (voir loadGame(), save.js).
 test('migratePetUidV1 assigns a uid to legacy pets missing one, without touching pets that already have one', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -1387,7 +1387,7 @@ test('migratePetUidV1 assigns a uid to legacy pets missing one, without touching
 // Onglet Marché : rendu de la nav (Marché/Mes contrats/Historique) sans crash, même quand aucune
 // vraie session Supabase n'est disponible (signInForTest fabrique un utilisateur local, voir
 // commentaire en tête de fichier -- les appels réseau réels échouent silencieusement, gérés en
-// try/catch dans companions.market.js, jamais une exception qui remonte au navigateur).
+// try/catch dans market.js, jamais une exception qui remonte au navigateur).
 test('Marché tab renders its 3 sub-tabs and never throws even without a real Supabase session', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));

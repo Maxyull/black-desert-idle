@@ -85,7 +85,7 @@ function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 // bug corrigé (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
 // supabase") : `sb`/`currentUser` sont déclarés en `let` top-level -- contrairement à `var` ou à
 // une déclaration `function`, `let` au top-level d'un script classique NE devient PAS une
-// propriété de `window`. companions.sync.js (module Compagnon, iframe same-origin) lisait
+// propriété de `window`. sync.js (module Compagnon, iframe same-origin) lisait
 // `window.parent.sb`/`window.parent.currentUser`, qui étaient donc TOUJOURS `undefined` -- le
 // sync ne s'est jamais déclenché, pour aucun compte (invité ou non). Ces deux accesseurs sont des
 // déclarations `function`, qui elles SONT attachées à `window` automatiquement -- toujours à jour

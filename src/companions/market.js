@@ -1,11 +1,11 @@
 // ═══ MARCHÉ D'ÉCHANGE (2026-07-10, demande explicite : "vrai backend d'échange... c'est fini la
 // sauvegarde locale") ═══════════════════════════════════════════════════════════════════════════
 // Seul point du module qui fait vraiment traverser un PET d'un compte à l'autre (pas juste des
-// compteurs comme companions.sync.js) -- s'appuie sur
+// compteurs comme sync.js) -- s'appuie sur
 // supabase/migrations/20260710150000_companion_pet_trade_market.sql (offres/contre-offres/
 // historique/livraisons/notifications, transaction atomique côté serveur). Accès Supabase
 // EXCLUSIVEMENT via window.parent.getSbClient()/getCurrentUserForSync()/getMyPseudoForSync()
-// (jamais window.parent.sb -- même piège déjà corrigé dans companions.sync.js).
+// (jamais window.parent.sb -- même piège déjà corrigé dans sync.js).
 
 let marketSubTab = 'browse'; // browse | mine | history
 let marketOffers = [];

@@ -624,7 +624,7 @@ function renderAdminOnboarding(el) {
 // des stats sur toutes les nouvelle fonctionnalité de compagnons") -- le module (src/companions/,
 // iframe isolée, voir combat/boss.js) était 100% local jusqu'ici (localStorage, aucune sync
 // serveur) : ce panneau lit companion_stats via admin_companion_stats() (migration
-// 20260719190000_companion_stats.sql), alimentée par companions/companions.sync.js (poussé toutes
+// 20260719190000_companion_stats.sql), alimentée par companions/sync.js (poussé toutes
 // les 60s, réutilise le client sb/currentUser déjà authentifié de la page hôte via window.parent,
 // iframe same-origin). "players_synced" = a ouvert le module au moins une fois ET a un compte
 // (jamais les invités, ni les joueurs qui n'ont jamais cliqué l'onglet Compagnon). ----------

@@ -30,7 +30,7 @@ adapté ici puisque ce module n'a pas de compte Supabase (sauvegarde 100% locale
 `applySaveState()` central à brancher).
 
 **Sync admin (2026-07-19, demande explicite)** : la sauvegarde reste 100% locale, mais
-`companions.sync.js` pousse désormais un RÉSUMÉ de compteurs (jamais le roster/inventaire
+`sync.js` pousse désormais un RÉSUMÉ de compteurs (jamais le roster/inventaire
 complet) vers Supabase toutes les 60s, via la RPC `sync_companion_stats` (voir
 `supabase/migrations/20260719190000_companion_stats.sql`) — pour alimenter le panneau admin
 `Contenu → Compagnons`. Comme l'iframe est **same-origin** (pas de `sandbox`, voir
@@ -71,7 +71,7 @@ incrémenté dans `rollAndCreatePet()`, `hatch.js`) — distinct de
 
 **Admin/PvP (2026-07-20, demande explicite : "creer les module d'admin... remplir le dashboard...
 categorie pvp")** :
-- `companions.sync.js` envoie désormais aussi des répartitions par rareté/tier/section
+- `sync.js` envoie désormais aussi des répartitions par rareté/tier/section
   (`computeCompanionBreakdowns()`, objets `{clé:compte}`) + `hard_achievements_count`/
   `fusion_downgrade_count` — voir `supabase/migrations/20260720100000_companion_stats_breakdowns.sql`.
   Le panneau admin (`Contenu → Compagnons`, `src/admin/admin-panel.js`) les agrège
@@ -86,14 +86,14 @@ categorie pvp")** :
 
 **Bugs corrigés — sync admin totalement muette depuis sa création (2026-07-20, "toujours aucunes
 stats declosion... verifie si tout est connecté a supabase")** : DEUX bugs cumulés dans
-`companions.sync.js` empêchaient TOUTE synchro vers `companion_stats`, pour tous les comptes
+`sync.js` empêchaient TOUTE synchro vers `companion_stats`, pour tous les comptes
 (invité ou non), depuis la création du module :
 1. `hostWin.sb`/`hostWin.currentUser` (lus via `window.parent`) étaient TOUJOURS `undefined` —
    `sb`/`currentUser` sont des `let` top-level dans `game-supabase.js`, et contrairement à `var` ou
    à une déclaration `function`, `let` au top-level d'un script classique NE devient PAS une
    propriété de `window`. Corrigé en ajoutant `getSbClient()`/`getCurrentUserForSync()` (des
    déclarations `function`, elles bien attachées à `window`) dans `game-supabase.js`, utilisées par
-   `companions.sync.js` à la place d'un accès direct.
+   `sync.js` à la place d'un accès direct.
 2. Même une fois (1) corrigé, `sb.rpc(...).catch(()=>{})` levait silencieusement
    `TypeError: ...catch is not a function` — le builder Postgrest renvoyé par `sb.rpc(...)`
    n'implémente QUE `.then()` (thenable), jamais `.catch()` directement (déjà rencontré une fois
@@ -106,7 +106,7 @@ base, puis nettoyée) — voir tests `testRpcFireAndForgetCallsNeverUseBareCatch
 et `syncCompanionStatsToServer reaches the RPC call and never throws...` (`tests/companions.spec.js`).
 
 **Export/Import de sauvegarde JSON retirés (2026-07-20, demande explicite : "enlever import
-export")** : `exportSave()`/`importSave()` (`companions.save.js`) et leurs boutons 💾/📥
+export")** : `exportSave()`/`importSave()` (`save.js`) et leurs boutons 💾/📥
 (`companions.html`) supprimés — ne restait qu'un filet de sécurité local jamais relié à la
 sauvegarde cloud (module 100% `localStorage`), source de confusion vu qu'aucune autre partie du jeu
 principal n'expose ce genre de bouton. `resetSave()` (🗑️ Reset) reste seul mécanisme de remise à
@@ -135,7 +135,7 @@ moyenne doeuf eclos/jour, stats entiere liste des fusion et grph completion inde
   écraserait les joueurs récents).
 - `unique_species_count` (nouvelle colonne) = nombre d'ESPÈCES distinctes du catalogue possédées
   (pas le nombre de pets) — calculé côté client (`new Set(PETS.map(p=>p.cat.name)).size`,
-  `companions.sync.js`) et transmis à chaque sync. Alimente "Complétion Index" (admin) ET l'onglet
+  `sync.js`) et transmis à chaque sync. Alimente "Complétion Index" (admin) ET l'onglet
   "Tes stats" (joueur), comparé à `PET_CATALOG.length` (48, recopié en dur côté admin sous
   `COMPANION_CATALOG_SIZE` — même limite que `COMPANION_RARITY_LABELS`/`COMPANION_SECTION_LABELS`,
   admin-panel.js ne peut jamais charger `catalog.js`).
@@ -162,7 +162,7 @@ authentifié non-invité, même pattern que `get_online_players()`) — résout 
 - **`prestige_score`/`gs_max` calculés côté serveur (migration
   `supabase/migrations/20260721100000_companion_leaderboard_prestige.sql`)** : `companion_stats`
   gagne 2 colonnes agrégées, `gs_sum_with_tier` (Σ `normGS(p) + tier×20` sur tout le roster,
-  poussée par `computeCompanionGsAggregates()` dans `companions.sync.js`) et `gs_max` (le plus haut
+  poussée par `computeCompanionGsAggregates()` dans `sync.js`) et `gs_max` (le plus haut
   `normGS` du roster). `companion_leaderboard()` calcule `prestige_score` à partir de ces agrégats
   EXACTEMENT comme `prestigeScore()` (`companions.achievements.js`) — même formule, deux endroits,
   à garder synchronisés si la formule change un jour. `sync_companion_stats()` passe de 15 à 17
@@ -346,7 +346,7 @@ in a row never fails to render (WebGL context leak)` (`tests/companions.spec.js`
 consécutives, largement au-dessus de la limite typique).
 
 **Purge rétroactive du plafond de collection (2026-07-20, demande explicite : "supprime tout
-compagnon au dessus de la limite")** : `trimRosterToCapIfNeeded()` (`companions.save.js`), migration
+compagnon au dessus de la limite")** : `trimRosterToCapIfNeeded()` (`save.js`), migration
 rétroactive `petsRosterCapV1` (même pattern que `petsRosterResetV1`) — au premier chargement suivant
 l'ajout de `PET_ROSTER_CAP` (96), purge l'excédent d'une sauvegarde antérieure au plafond. Garde
 TOUJOURS les pets déployés sur le terrain (même mal roulés — jamais casser une configuration
@@ -400,7 +400,7 @@ rareté du pet (`--r0..--r5`, variable CSS `--pcard-color`) — jamais une coule
 
 **Marché d'échange réel entre joueurs (2026-07-10, demande explicite : "vrai backend d'échange...
 c'est fini la sauvegarde locale c'est sur supabase déjà")** : premier point de ce module qui fait
-vraiment traverser un PET (pas juste des compteurs comme `companions.sync.js`) d'un compte à
+vraiment traverser un PET (pas juste des compteurs comme `sync.js`) d'un compte à
 l'autre — le reste de la sauvegarde (roster non mis en vente, inventaire, progression) reste
 100% `localStorage` comme avant, seuls les pets IMPLIQUÉS dans une offre/contre-offre transitent
 par Supabase le temps de la transaction.
@@ -414,13 +414,13 @@ par Supabase le temps de la transaction.
   pour `pg_cron`, pas encore branché).
 - `pet.uid` (UUID stable, `hatch.js:rollAndCreatePet`) — clé serveur, DISTINCTE de
   `pet.id` (compteur local, jamais envoyé). Migration rétroactive `migratePetUidV1()`
-  (`companions.save.js`, gatée par `petsUidV1`) attribue un `uid` à tout pet créé avant son ajout.
-- `companions.market.js` (nouveau, onglet 🔄 Marché, tab 11) — 3 sous-onglets (Marché/Mes
+  (`save.js`, gatée par `petsUidV1`) attribue un `uid` à tout pet créé avant son ajout.
+- `market.js` (nouveau, onglet 🔄 Marché, tab 11) — 3 sous-onglets (Marché/Mes
   contrats/Historique). Accès Supabase EXCLUSIVEMENT via `window.parent.getSbClient()`/
   `getCurrentUserForSync()`/`getMyPseudoForSync()` (ce dernier ajouté dans `game-supabase.js` pour
   ce besoin — même pattern que les deux premiers, `myPseudo` était un `let` top-level jamais
   attaché à `window`) — jamais `window.parent.sb` directement (même piège déjà corrigé dans
-  `companions.sync.js`). `claimMarketDeliveries()`/`pollMarketNotifications()` tournent en
+  `sync.js`). `claimMarketDeliveries()`/`pollMarketNotifications()` tournent en
   arrière-plan (`setTimeout`/`setInterval`, indépendant de l'onglet ouvert) pour qu'un joueur
   reçoive son pet gagné même s'il ne rouvre pas l'onglet Marché tout de suite.
 - Portée volontairement scopée à ce qui bloquait (schéma+RLS, transaction atomique, notification
@@ -460,9 +460,9 @@ par Supabase le temps de la transaction.
 11. `feed.js` — liste de nourrissage, nourrir un/tous.
 12. `ticks.js` — header en direct + la boucle de jeu principale (`setInterval`
     1s : faim, XP de tier, loot en tâche de fond, drops spéciaux, achievements).
-13. `companions.save.js` — sauvegarde/chargement localStorage, rattrapage hors-ligne, reset
+13. `save.js` — sauvegarde/chargement localStorage, rattrapage hors-ligne, reset
     (export/import JSON retirés le 2026-07-20, voir plus haut).
-14. `companions.sync.js` — pousse un résumé de compteurs vers Supabase toutes les 60s
+14. `sync.js` — pousse un résumé de compteurs vers Supabase toutes les 60s
     (stats admin, voir plus haut) via `window.parent.sb`. Charge après `save.js` par
     lisibilité, aucune contrainte d'ordre réelle (appelée via `setTimeout`/`setInterval`).
 15. `companions.index.js` — onglet Index (matrice Rareté×Tier + catalogue complet).
@@ -476,7 +476,7 @@ par Supabase le temps de la transaction.
     (100% local, œufs ouverts/argent dépensé/fusions/index/Score Prestige) + un vrai classement
     CROSS-JOUEURS via la RPC publique `companion_leaderboard()` (voir
     `supabase/migrations/20260721100000_companion_leaderboard_prestige.sql`), même pattern
-    `window.parent.getSbClient()` que `companions.sync.js` — 4 catégories, podium, recherche,
+    `window.parent.getSbClient()` que `sync.js` — 4 catégories, podium, recherche,
     pagination, "Ma position" (voir plus haut pour le détail).
 21. `companions.viewer3d.js` (2026-07-10) — écran de test du viewer 3D GLB (voir plus haut). Lit
     `window.THREE`/`window.GLTFLoader`/`window.OrbitControls` posés par

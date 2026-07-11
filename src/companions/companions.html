@@ -44,7 +44,7 @@
        fenetre a coté de familier") -- s'ajoute au bouton "Fermer" déjà présent dans la barre au-
        dessus de l'iframe (src/combat/boss.js:openCompanionsModule), qui reste inchangé. Appelle le
        même closeCompanionsModule() de la page hôte via window.parent (iframe same-origin, voir
-       companions.sync.js pour le même pattern d'accès à window.parent). -->
+       sync.js pour le même pattern d'accès à window.parent). -->
   <button id="hdrCloseBtn" onclick="if(window.parent&&window.parent.closeCompanionsModule)window.parent.closeCompanionsModule();" title="Fermer" style="font-family:'Cinzel',serif;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--cream2);cursor:pointer">✕</button>
   <!-- badge fusion top1/2/3 centré (2026-07-20, demande explicite) : reflète EXACTEMENT le même
        indicateur que les badges 🥇🥈🥉 des cartes de la Collection (voir collection.js,
@@ -80,7 +80,7 @@
   <div class="tab" onclick="ST(9)">🏆 Classement</div>
   <!-- 2026-07-10, demande explicite : "vrai backend d'échange" -- marché réel de compagnons entre
        joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
-       sync). Voir companions.market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
+       sync). Voir market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
   <div class="tab" onclick="ST(11)">🔄 Marché</div>
   <!-- 2026-07-10, demande explicite : "on va integrer des model gbl" -- écran de test isolé pour
        valider le pipeline Three.js/GLB avant tout remplacement des icônes 2D existantes (roster,
@@ -465,17 +465,18 @@
 <script src="fusion.js?v=9"></script>
 <script src="feed.js?v=7"></script>
 <script src="ticks.js?v=7"></script>
-<script src="companions.save.js?v=11"></script>
+<!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
+<script src="save.js?v=12"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="companions.sync.js?v=11"></script>
+<script src="sync.js?v=12"></script>
 <!-- marché d'échange réel (2026-07-10, demande explicite) : lit PETS/petId/PET_CATALOG/RARITIES/
      rc/rn/tierMultOf/rollTierMult/drawPixelArt/toast/CM/petRosterRoomLeft déjà déclarés plus haut,
      appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
      strictement requis vis-à-vis de ces globals (aucune lecture immédiate), placé ici par
      lisibilité juste après le sync admin (même famille : accès à window.parent.getSbClient()). -->
-<script src="companions.market.js?v=1"></script>
+<script src="market.js?v=2"></script>
 <script src="companions.index.js?v=6"></script>
 <script src="companions.game-view.js?v=6"></script>
 <script src="companions.hardinage.js?v=6"></script>

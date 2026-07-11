@@ -5,7 +5,7 @@
 // "Tes stats" reste 100% local (aucun appel réseau) -- juste une lecture groupée de compteurs déjà
 // suivis ailleurs (totalHatched, silverSpent, fusionCount...). Le classement, lui, appelle la RPC
 // publique companion_leaderboard() (voir supabase/migrations/20260721100000_companion_leaderboard_prestige.sql)
-// via le même pattern cross-window que companions.sync.js (getSbClient()/getCurrentUserForSync()/
+// via le même pattern cross-window que sync.js (getSbClient()/getCurrentUserForSync()/
 // isGuest() sur window.parent -- jamais de 2e SDK Supabase dans l'iframe).
 //
 // Écarts assumés par rapport au mockup fourni :

@@ -1,6 +1,6 @@
 // ═══ SYNC ADMIN (2026-07-19, demande explicite : "branche des stats sur toutes les nouvelle
 // fonctionnalité de compagnons dans menu admin") ═══════════════════════════════════════════
-// Ce module est 100% local (localStorage, voir companions.save.js) : rien n'en sortait jusqu'ici,
+// Ce module est 100% local (localStorage, voir save.js) : rien n'en sortait jusqu'ici,
 // donc aucune stat cross-joueurs n'était possible côté admin. Ce fichier pousse un petit résumé
 // de compteurs (jamais l'état complet du roster/inventaire) vers Supabase, en réutilisant EXACTEMENT
 // le client déjà authentifié de la page hôte (iframe SAME-ORIGIN, voir combat/boss.js:
@@ -91,7 +91,7 @@ async function syncCompanionStatsToServer() {
     });
   } catch(e) {}
 }
-// throttlé à 60s (pas à chaque autosave de 5s, voir companions.save.js) : ce sont des compteurs
+// throttlé à 60s (pas à chaque autosave de 5s, voir save.js) : ce sont des compteurs
 // admin, pas une sauvegarde temps réel -- inutile de spammer la RPC. 1er envoi après 5s (laisse
 // loadGame() terminer), pour qu'un joueur qui ouvre puis referme vite le module soit quand même compté.
 setTimeout(syncCompanionStatsToServer, 5000);

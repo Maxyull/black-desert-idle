@@ -86,17 +86,17 @@ let pityEverTriggered = false;
 // monde") -- le roster de départ est passé de X pets à 0 (voir roster.js, 2026-07-10),
 // mais les sauvegardes locales déjà existantes gardaient leur roster antérieur (localStorage n'est
 // jamais réécrit tout seul). Ce flag, posé UNE SEULE FOIS par joueur (voir loadGame/importSave,
-// companions.save.js), vide le roster au tout premier chargement suivant ce changement -- même
+// save.js), vide le roster au tout premier chargement suivant ce changement -- même
 // esprit que les migrations rétroactives du jeu principal (S.migratedXxxVNNN, CLAUDE.md §13),
 // adapté ici puisque ce module n'a pas de compte Supabase (sauvegarde 100% locale).
 let petsRosterResetV1 = false;
 // migration rétroactive (2026-07-20, demande explicite : "supprime tout compagnon au dessus de la
 // limite") -- PET_ROSTER_CAP=96 (roster.js) bloque désormais tout NOUVEL hatch au-delà,
 // mais une sauvegarde déjà constituée AVANT ce plafond pouvait dépasser 96 -- ce flag, posé UNE
-// SEULE FOIS (voir trimRosterToCapIfNeeded()/loadGame(), companions.save.js), purge l'excédent au
+// SEULE FOIS (voir trimRosterToCapIfNeeded()/loadGame(), save.js), purge l'excédent au
 // premier chargement suivant l'ajout du plafond. Même esprit que petsRosterResetV1 ci-dessus.
 let petsRosterCapV1 = false;
-// migration rétroactive (2026-07-10, marché d'échange) -- voir migratePetUidV1(), companions.save.js
+// migration rétroactive (2026-07-10, marché d'échange) -- voir migratePetUidV1(), save.js
 let petsUidV1 = false;
 // compteur À VIE (2026-07-19, demande explicite : stats admin) -- distinct de
 // hatchCountSincePity (remis à 0 à chaque pity déclenché) : jamais réinitialisé, incrémenté
