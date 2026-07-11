@@ -5,6 +5,8 @@
   "description": "Browser-based idle game inspired by Black Desert Online.",
   "scripts": {
     "build": "python3 scripts/build.py",
+    "check-build": "python3 scripts/check_build_freshness.py",
+    "check-i18n": "node scripts/check-missing-translations.js",
     "test": "playwright test",
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",

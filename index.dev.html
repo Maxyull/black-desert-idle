@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Black Desert Idle — Progression & Zones</title>
+<!-- preconnect CDN (2026-07-21, repo-audit-todo.md point 15) : ouvre la connexion TCP/TLS vers
+     jsdelivr en avance, avant le premier <script src> qui en depend (Supabase/React/i18next
+     ci-dessous) -- gain de quelques centaines de ms sur le premier chargement. -->
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
 <!-- version figee + integrite verifiee (2026-07-14, issue GitHub #4 finding M1) : "@2" flottant sans
      SRI aurait execute silencieusement tout code servi par jsdelivr/npm sous ce nom, y compris en
      cas de compromission de la chaine d'approvisionnement -- hash recalcule independamment (voir
