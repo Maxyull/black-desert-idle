@@ -15,7 +15,7 @@
 // variables CSS déjà en place (var(--gold)/var(--ink)/var(--panel)...) et les classes existantes
 // (.admTable, .bossPodium/.bossPodiumStep, .catTab) plutôt qu'une palette séparée.
 //
-// Textes via i18next (2026-07-11, migré après coup pour rejoindre le chantier I18N_PLAN.md en
+// Textes via i18next (2026-07-11, migré après coup pour rejoindre le chantier docs/I18N_PLAN.md en
 // cours en parallèle -- clés dans locales/{fr,en}/backend.json, préfixe backend.leaderboard.*).
 
 function LB2_CATS_() {

@@ -88,7 +88,7 @@ horaire, Richesse, Volume du marché, Inscriptions. `.admBars`/nouvelles classes
 affectés). Nouveau conteneur `#adminOverlay` (sidebar + zone de contenu), voir `index.dev.html`.
 Chaque item de `ADMIN_SECTIONS` a soit `render(container)` (charge ses propres données au clic),
 soit `planned:true` (Guildes/PvP/Donations — roadmap confirmée, pas encore de code jeu derrière,
-voir `ADMIN_MENU_PLAN.md` §0bis). Repli mobile : sidebar → barre horizontale scrollable
+voir `docs/ADMIN_MENU_PLAN.md` §0bis). Repli mobile : sidebar → barre horizontale scrollable
 (`max-width:1024px`, même convention que `.catTabs` ailleurs dans le jeu).
 
 **Taux de loot en direct (2026-07-19)** : `LOOT_RATES_LIVE` (`src/world/gear-tiers-data.js`) est
@@ -192,6 +192,6 @@ joueur" toutes les 400ms pour rappeler `openAdminPanel()`, MÊME si l'admin avai
 panneau admin lui-même (ex: parti tester le module Compagnon). Ne rouvre désormais que si
 `#adminOverlay` a encore la classe `open` au moment de la fermeture de la popup.
 
-Voir `ADMIN_MENU_PLAN.md` (racine du repo) pour l'état des lieux du panneau admin et pourquoi le
+Voir `docs/ADMIN_MENU_PLAN.md` (racine du repo) pour l'état des lieux du panneau admin et pourquoi le
 reste d'un plan initial plus large (React, Sentry, i18n editor, staging, équipe multi-rôles...) a
 été volontairement écarté à l'échelle actuelle du projet.

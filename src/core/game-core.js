@@ -832,7 +832,7 @@ function doTeleport(dirX, dirY) {
 // restent un luxe) et le temps de recharge grandit avec le soin apporté, pour qu'aucune taille
 // ne soit "abusable" (spam en boucle) ni trop faible pour être utile.
 // Recalibré le 2026-07-08 par rapport à la courbe de gains des zones de Velia (~3 000 silver/h en
-// zone 1 jusqu'à ~100 000 silver/h en zone 11, voir roadmap.md) : même utilisée en continu à
+// zone 1 jusqu'à ~100 000 silver/h en zone 11, voir docs/roadmap.md) : même utilisée en continu à
 // son propre CD, la potion la plus chère (mega) ne dépasse jamais ~15% du revenu horaire d'une
 // zone adaptée à son coût — un vrai sink sans jamais casser l'économie du joueur qui progresse.
 // "Potion de vie" (infinite, cost:0) : verrouillée 🔒 en bas du sélecteur, réservée à un futur
@@ -1235,7 +1235,7 @@ let lootPreviewIdx = null; // null = suit la zone qu'on farm ; sinon index de la
 // paliers de zones : pour l'instant tout ZONES[] est "Early" (jusqu'au niveau ~31) — Mid et End
 // arriveront dans une future mise à jour, d'où le verrou 🔒 (demande explicite du 2026-07-05)
 let zoneTier = 'early';
-// 5 paliers de régions (voir roadmap.md pour le détail des zones prévues par palier) —
+// 5 paliers de régions (voir docs/roadmap.md pour le détail des zones prévues par palier) —
 // seul "Early / Velia" est en jeu pour l'instant, les autres sont verrouillés en attendant
 // d'être construits (demande explicite du 2026-07-05)
 // TIER_PREVIEW_CARD/ZONE_TIERS desormais dans world/region-tiers-data.js (extrait le

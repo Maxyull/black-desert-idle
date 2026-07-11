@@ -232,7 +232,7 @@ def minify_bundle_with_terser():
 
 def gen_locales():
     """Recompile /locales/{fr,en}/*.json en src/core/i18n-resources.generated.js (voir
-    I18N_PLAN.md §5, CLAUDE.md §31) -- lance AVANT la concatenation, pour que le fichier genere
+    docs/I18N_PLAN.md §5, CLAUDE.md §31) -- lance AVANT la concatenation, pour que le fichier genere
     soit a jour dans le bundle. Meme piege Windows npx que Terser : script Node via npx-like direct
     call ici, mais gen-locales.js n'a pas de dependance npm, donc appele directement via NODE_CMD."""
     script = ROOT / "scripts" / "gen-locales.js"

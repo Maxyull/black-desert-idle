@@ -41,7 +41,7 @@ function setAdminTheme(id) {
 // pilotée par le registre ADMIN_SECTIONS ci-dessous -- chaque item a soit un render(container)
 // (charge ses propres données au clic, jamais tout d'un coup), soit planned:true (emplacement
 // réservé Guildes/PvP/Donations -- roadmap confirmée mais aucun code jeu derrière aujourd'hui,
-// voir ADMIN_MENU_PLAN.md §0bis). AUCUNE RPC n'est réécrite ici -- uniquement réorganisées.
+// voir docs/ADMIN_MENU_PLAN.md §0bis). AUCUNE RPC n'est réécrite ici -- uniquement réorganisées.
 // ============================================================
 const ADMIN_SECTIONS = [
   { cat:'overview', label:{fr:'Vue d\'ensemble',en:'Overview'}, items:[
