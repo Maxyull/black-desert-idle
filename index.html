@@ -26,7 +26,8 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=521">
+<link rel="stylesheet" href="src/styles/styles.css?v=523">
+
 </head>
 <body>
 
@@ -689,11 +690,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=521"></script>
+<script src="meta/patch-notes-data.js?v=523"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=521"></script>
+<script src="build/source.min.js?v=523"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier
      susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone
      tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
@@ -796,6 +797,10 @@
      -- charge APRÈS game-supabase.js : lit WIKI_SECTIONS/renderCodexHtml/renderTutoPageHtml/
      PATCH_NOTES au moment de l'ouverture (jamais au chargement immédiat), donc l'ordre exact avec
      admin-panel.js/chat.js qui suivent n'a pas d'importance -->
+<!-- panneau Classement (jeu principal) enrichi (2026-07-11, même traitement que le Classement
+     Public Compagnons — podium/onglets/recherche/pagination) -- charge APRÈS game-supabase.js :
+     lit $a/sb/currentUser/marketRequireAuth/tr/fmt/escapeHtml/openInfo/wirePlayerNameLinks au
+     moment de l'ouverture, jamais au chargement immédiat -->
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->
