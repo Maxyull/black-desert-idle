@@ -1,5 +1,8 @@
 # ⚔️ Black Desert Idle
 
+[![CI](https://github.com/Maxyull/black-desert-idle/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Un jeu idle/incrémental dans le navigateur, inspiré de **Black Desert Online** — combat automatique,
 progression par zones, enchantement d'équipement, et une vraie couche multijoueur (comptes, sauvegarde
 cloud, marché, chat, classement, boss mondial).
