@@ -392,6 +392,8 @@ const I18N_RESOURCES = {
       "backend.inventory_window.coming_soon": "Bientôt disponible",
       "backend.inventory_window.gear_title": "Équipement",
       "backend.inventory_window.slots_used": "cases utilisées",
+      "backend.leaderboard.cat_compendium_label": "Compendium",
+      "backend.leaderboard.cat_compendium_tip": "Complétion globale du Compendium (zones + boss + Maîtrise PEN), déjà calculée et synchronisée à chaque sauvegarde.",
       "backend.leaderboard.cat_gs_label": "Gearscore",
       "backend.leaderboard.cat_gs_tip": "Record de Gearscore (PA/PD affichés entre parenthèses).",
       "backend.leaderboard.cat_item_label": "Meilleur objet",
@@ -406,7 +408,9 @@ const I18N_RESOURCES = {
       "backend.leaderboard.cat_treasure_tip": "Morceaux du Trésor de Velia ramassés à vie.",
       "backend.leaderboard.cat_zone_label": "Meilleure zone",
       "backend.leaderboard.cat_zone_tip": "Zone la plus avancée jamais atteinte.",
+      "backend.leaderboard.link_account_button": "🔗 Lier un compte",
       "backend.leaderboard.me_toggle": "📍 Ma position",
+      "backend.leaderboard.new_tag": "NOUVEAU",
       "backend.leaderboard.no_data": "Pas encore de données",
       "backend.leaderboard.no_record_yet": "Pas encore de record synchronisé pour cette catégorie.",
       "backend.leaderboard.no_search_match": "Aucun joueur ne correspond à cette recherche.",
@@ -415,9 +419,15 @@ const I18N_RESOURCES = {
       "backend.leaderboard.pager_prev": "‹ Précédent",
       "backend.leaderboard.panel_title": "🏆 Classement",
       "backend.leaderboard.rank_neighborhood": "Voisinage de ton rang",
+      "backend.leaderboard.ranked_count_one": "{{count}} joueur classé dans cette catégorie",
+      "backend.leaderboard.ranked_count_other": "{{count}} joueurs classés dans cette catégorie",
       "backend.leaderboard.search_placeholder": "Rechercher un joueur…",
+      "backend.leaderboard.seen_label": "vu {{time}}",
       "backend.leaderboard.summary": "Classement des records personnels À VIE — jamais un instantané, ces valeurs ne redescendent jamais.",
       "backend.leaderboard.you_suffix": "(toi)",
+      "backend.leaderboard.your_position_hint_one": "calculé sur {{count}} joueur classé",
+      "backend.leaderboard.your_position_hint_other": "calculé sur {{count}} joueurs classés",
+      "backend.leaderboard.your_position_label": "Ta position :",
       "backend.patch_notes.before_after_title": "Voir avant/après",
       "backend.patch_notes.compare_after_label": "Après",
       "backend.patch_notes.compare_before_label": "Avant",
@@ -1250,6 +1260,8 @@ const I18N_RESOURCES = {
       "backend.inventory_window.coming_soon": "Coming soon",
       "backend.inventory_window.gear_title": "Gear",
       "backend.inventory_window.slots_used": "slots used",
+      "backend.leaderboard.cat_compendium_label": "Compendium",
+      "backend.leaderboard.cat_compendium_tip": "Overall Compendium completion (zones + bosses + PEN Mastery), already computed and synced on every save.",
       "backend.leaderboard.cat_gs_label": "Gearscore",
       "backend.leaderboard.cat_gs_tip": "Gearscore record (AP/DP shown in parentheses).",
       "backend.leaderboard.cat_item_label": "Best item",
@@ -1264,7 +1276,9 @@ const I18N_RESOURCES = {
       "backend.leaderboard.cat_treasure_tip": "Lifetime Velia Treasure pieces picked up.",
       "backend.leaderboard.cat_zone_label": "Best zone",
       "backend.leaderboard.cat_zone_tip": "Furthest zone ever reached.",
+      "backend.leaderboard.link_account_button": "🔗 Link account",
       "backend.leaderboard.me_toggle": "📍 My position",
+      "backend.leaderboard.new_tag": "NEW",
       "backend.leaderboard.no_data": "No data yet",
       "backend.leaderboard.no_record_yet": "No synced record yet for this category.",
       "backend.leaderboard.no_search_match": "No player matches this search.",
@@ -1273,9 +1287,15 @@ const I18N_RESOURCES = {
       "backend.leaderboard.pager_prev": "‹ Previous",
       "backend.leaderboard.panel_title": "🏆 Leaderboard",
       "backend.leaderboard.rank_neighborhood": "Neighborhood of your rank",
+      "backend.leaderboard.ranked_count_one": "{{count}} player ranked in this category",
+      "backend.leaderboard.ranked_count_other": "{{count}} players ranked in this category",
       "backend.leaderboard.search_placeholder": "Search a player…",
+      "backend.leaderboard.seen_label": "seen {{time}}",
       "backend.leaderboard.summary": "Lifetime personal record leaderboard — never a live snapshot, these values never go down.",
       "backend.leaderboard.you_suffix": "(you)",
+      "backend.leaderboard.your_position_hint_one": "computed over {{count}} ranked player",
+      "backend.leaderboard.your_position_hint_other": "computed over {{count}} ranked players",
+      "backend.leaderboard.your_position_label": "Your position:",
       "backend.patch_notes.before_after_title": "See before/after",
       "backend.patch_notes.compare_after_label": "After",
       "backend.patch_notes.compare_before_label": "Before",
@@ -12745,9 +12765,14 @@ function LB2_CATS_() {
       val:r=>Number(r.best_item_count||0), fmt:r=>`${tr(r.best_item_name||'—')} (${fmt(r.best_item_count||0)})`, filter:r=>!!r.best_item_name },
     treasure: { icon:'🗺️', label:i18next.t('backend:backend.leaderboard.cat_treasure_label'), tip:i18next.t('backend:backend.leaderboard.cat_treasure_tip'),
       val:r=>Number(r.treasure_count||0), fmt:r=>fmt(r.treasure_count||0) },
+    
+    compendium: { icon:'🧭', label:i18next.t('backend:backend.leaderboard.cat_compendium_label'), tip:i18next.t('backend:backend.leaderboard.cat_compendium_tip'),
+      val:r=>Number(r.compendium_pct||0), fmt:r=>`${Math.round(r.compendium_pct||0)}%`, isNew:true },
   };
 }
 const LB2_PAGE_SIZE = 15;
+
+const LB2_TOP_N = 20;
 let lb2Rows = null;
 let lb2Cat = 'silver';
 let lb2Search = '';
@@ -12756,14 +12781,51 @@ let lb2Page = 1;
 let lb2Error = null;
 
 function lb2Medal(rank) { return rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':''; }
-function lb2Sorted(cat) {
+
+function lb2Sorted(cat, rows) {
   const info = LB2_CATS_()[cat];
-  const rows = info.filter ? lb2Rows.filter(info.filter) : lb2Rows;
-  return [...rows].sort((a,b) => info.val(b) - info.val(a));
+  const source = rows || lb2Rows;
+  const filtered = info.filter ? source.filter(info.filter) : source;
+  return [...filtered].sort((a,b) => info.val(b) - info.val(a));
+}
+
+function lb2ComputeYourRankInfo(rows, cat, userId) {
+  if (!userId) return null;
+  const sorted = lb2Sorted(cat, rows);
+  const idx = sorted.findIndex(r => r.user_id === userId);
+  if (idx === -1) return null;
+  return { rank: idx+1, total: sorted.length };
+}
+
+function lb2SeenInfo(updatedAtIso) {
+  if (!updatedAtIso) return null;
+  const ts = new Date(updatedAtIso).getTime();
+  if (Number.isNaN(ts)) return null;
+  const recent = (Date.now() - ts) < 3600000; 
+  const time = typeof pneRelativeTime === 'function' ? pneRelativeTime(ts) : '';
+  return { text: i18next.t('backend:backend.leaderboard.seen_label', { time }), recent };
+}
+
+function lb2GuestGateHtml() {
+  return `<div class="lb2GuestGate">
+    <div class="lb2GuestIcon">🔒</div>
+    <div class="lb2GuestTxt">${escapeHtml(i18next.t('market:market.auth_verified_required'))}</div>
+    <button class="lb2GuestBtn" id="lb2LinkAccountBtn">${escapeHtml(i18next.t('backend:backend.leaderboard.link_account_button'))}</button>
+  </div>`;
+}
+function lb2WireGuestGate() {
+  const btn = $a('lb2LinkAccountBtn');
+  
+  if (btn) btn.onclick = () => { const real = $a('btnLinkAccount'); if (real) real.click(); };
 }
 
 async function openLeaderboard2() {
-  if (!marketRequireAuth()) return;
+  if (!sb || !currentUser) { marketRequireAuth(); return; } 
+  if (isGuest()) {
+    openInfo(i18next.t('backend:backend.leaderboard.panel_title'), lb2GuestGateHtml());
+    lb2WireGuestGate();
+    return;
+  }
   lb2Error = null;
   openInfo(i18next.t('backend:backend.leaderboard.panel_title'), lb2ShellHtml());
   const { data, error } = await sb.from('player_stats').select('*').limit(500);
@@ -12773,16 +12835,19 @@ async function openLeaderboard2() {
 }
 
 function lb2ShellHtml() {
-  return `<div id="lb2Podium"></div>
+  return `<div class="lb2Summary">${escapeHtml(i18next.t('backend:backend.leaderboard.summary'))}</div>
+    <div id="lb2Podium"></div>
+    <div id="lb2YourRank"></div>
     <div id="lb2Controls"></div>
     <div id="lb2Body"><div class="admEmpty">${escapeHtml(i18next.t('backend:backend.gear.loading'))}</div></div>`;
 }
 
-function lb2ControlsHtml() {
+function lb2ControlsHtml(total) {
   const cats = LB2_CATS_();
   const tabs = Object.entries(cats).map(([k,c]) =>
-    `<button class="catTab${k===lb2Cat?' active':''}" data-lb2cat="${k}" title="${escapeHtml(c.tip)}">${c.icon} ${escapeHtml(c.label)}</button>`).join('');
+    `<button class="catTab${k===lb2Cat?' active':''}" data-lb2cat="${k}" title="${escapeHtml(c.tip)}">${c.icon} ${escapeHtml(c.label)}${c.isNew?` <span class="patchNewTag">${escapeHtml(i18next.t('backend:backend.leaderboard.new_tag'))}</span>`:''}</button>`).join('');
   return `<div class="catTabs">${tabs}</div>
+    <div class="lb2RankedCount">${escapeHtml(i18next.t('backend:backend.leaderboard.ranked_count', { count: total }))}</div>
     <div class="lb2ToolRow">
       <input type="text" id="lb2Search" class="lb2SearchBox" placeholder="${escapeHtml(i18next.t('backend:backend.leaderboard.search_placeholder'))}" value="${escapeHtml(lb2Search)}">
       <button class="lb2MeToggle${lb2ShowMeOnly?' on':''}" id="lb2MeToggle">${escapeHtml(i18next.t('backend:backend.leaderboard.me_toggle'))}</button>
@@ -12790,22 +12855,39 @@ function lb2ControlsHtml() {
 }
 
 function lb2RenderBody() {
-  const podiumEl = $a('lb2Podium'), controlsEl = $a('lb2Controls'), bodyEl = $a('lb2Body');
+  const podiumEl = $a('lb2Podium'), yourRankEl = $a('lb2YourRank'), controlsEl = $a('lb2Controls'), bodyEl = $a('lb2Body');
   if (!bodyEl) return; 
   if (lb2Error) {
-    podiumEl.innerHTML = ''; controlsEl.innerHTML = '';
+    podiumEl.innerHTML = ''; if (yourRankEl) yourRankEl.innerHTML = ''; controlsEl.innerHTML = '';
     bodyEl.innerHTML = `<div class="admEmpty">${escapeHtml(lb2Error)}</div>`;
     return;
   }
   if (!lb2Rows) { bodyEl.innerHTML = `<div class="admEmpty">${escapeHtml(i18next.t('backend:backend.gear.loading'))}</div>`; return; }
 
-  controlsEl.innerHTML = lb2ControlsHtml();
-  lb2WireControls();
-
   const fullSorted = lb2Sorted(lb2Cat);
   const rankMap = new Map(fullSorted.map((r,i) => [r.user_id, i+1]));
+
+  controlsEl.innerHTML = lb2ControlsHtml(fullSorted.length);
+  lb2WireControls();
+
   podiumEl.innerHTML = lb2PodiumHtml(fullSorted.slice(0,3));
   wirePlayerNameLinks();
+
+  if (yourRankEl) {
+    const myRankInfo = lb2ComputeYourRankInfo(lb2Rows, lb2Cat, currentUser?.id);
+    if (!lb2ShowMeOnly && myRankInfo && myRankInfo.rank > LB2_TOP_N) {
+      const info = LB2_CATS_()[lb2Cat];
+      const myRow = fullSorted[myRankInfo.rank-1];
+      yourRankEl.innerHTML = `<div class="lb2YourRankBar">
+        <span>${escapeHtml(i18next.t('backend:backend.leaderboard.your_position_label'))}</span>
+        <span class="rk">#${myRankInfo.rank}</span>
+        <span>· ${escapeHtml(info.fmt(myRow))}</span>
+        <span class="hint">${escapeHtml(i18next.t('backend:backend.leaderboard.your_position_hint', { count: myRankInfo.total }))}</span>
+      </div>`;
+    } else {
+      yourRankEl.innerHTML = '';
+    }
+  }
 
   let list = fullSorted;
   if (lb2Search.trim()) {
@@ -12854,10 +12936,12 @@ function lb2PodiumHtml(top3) {
     const r = top3[i]; if (!r) return '';
     const rank = i+1;
     const isYou = r.user_id === currentUser?.id;
+    const seen = lb2SeenInfo(r.updated_at);
     return `<div class="bossPodiumStep rank${rank}${isYou?' lb2You':''}">
       <div class="bossPodiumMedal">${lb2Medal(rank)}</div>
       <div class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}" style="font-size:11px;color:var(--ink);cursor:pointer">${escapeHtml(r.display_name||'?')}${isYou?` ${escapeHtml(i18next.t('backend:backend.leaderboard.you_suffix'))}`:''}</div>
       <div class="bossPodiumReward" style="color:var(--gold)">${escapeHtml(info.fmt(r))}</div>
+      ${seen ? `<div class="lb2Seen lb2PodSeen${seen.recent?' recent':''}">${escapeHtml(seen.text)}</div>` : ''}
     </div>`;
   }).join('')}</div>`;
 }
@@ -12868,9 +12952,10 @@ function lb2TableHtml(rows, rankMap) {
     <tbody>${rows.map(r => {
       const rank = rankMap.get(r.user_id);
       const isYou = r.user_id === currentUser?.id;
+      const seen = lb2SeenInfo(r.updated_at);
       return `<tr class="admPlayerRow${isYou?' isYou':''}${rank<=3?' admTop':''}">
         <td>${lb2Medal(rank)||('#'+rank)}</td>
-        <td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}${isYou?` ${escapeHtml(i18next.t('backend:backend.leaderboard.you_suffix'))}`:''}</span></td>
+        <td><span class="plNameLink" data-uid="${r.user_id}" data-name="${escapeHtml(r.display_name||'?')}">${escapeHtml(r.display_name||'?')}${isYou?` ${escapeHtml(i18next.t('backend:backend.leaderboard.you_suffix'))}`:''}</span>${seen?`<span class="lb2Seen${seen.recent?' recent':''}">${escapeHtml(seen.text)}</span>`:''}</td>
         <td>${info.fmt(r)}</td>
       </tr>`;
     }).join('')}</tbody></table>`;
