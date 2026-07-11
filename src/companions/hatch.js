@@ -186,7 +186,17 @@ function openEggChoice(slotIdx){
   OM('hatch-modal');
 }
 
-// ═══ TIRAGE PARTAGÉ — utilisé par l'éclosion via slot ET l'achat instantané ═══
+/**
+ * Tirage partagé — utilisé par l'éclosion via slot ET l'achat instantané. Tire une rareté selon
+ * la table d'odds de l'œuf, applique le pity (garantit un Ancestral après PITY_THRESHOLD hatchs
+ * sans en obtenir), puis choisit une espèce dont la rareté catalogue est à ±1 de la rareté tirée
+ * (l'espèce n'est donc pas toujours EXACTEMENT alignée sur p.rar — voir speciesForSectionAndRarity()
+ * pour le cas différent d'une percée de rareté, qui elle réaligne toujours exactement).
+ * @param {object} eggType - un des EGG_TYPES/TARGETED_EGG_DEFS, lit .odds[] (6 valeurs, une par
+ *   rareté, sommant à 100) et .id.
+ * @returns {{pet:object, pityTriggered:boolean}} pet = nouvelle instance (id/uid/cat/rar/stats/
+ *   tier 1) ; pityTriggered = vrai si le pity a forcé la rareté à Ancestral (5) cette fois-ci.
+ */
 function rollAndCreatePet(eggType){
   const odds = eggType.odds;
   const roll=Math.random()*100;let cum=0,rar=0;

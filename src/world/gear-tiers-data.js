@@ -58,16 +58,29 @@ const LOOT_RATES_V2 = {
 // gearDropChance/jewelDropChance lisent TOUJOURS cette copie, jamais LOOT_RATES_V2 directement --
 // LOOT_RATES_V2 reste la référence "valeurs par défaut du jeu", jamais mutée elle-même.
 let LOOT_RATES_LIVE = JSON.parse(JSON.stringify(LOOT_RATES_V2));
-// chance de drop d'armure/arme pour CE palier/CETTE zone, selon la version de table active
-// (S.lootTableVersion) -- zi explicite (pas juste zoneIdx global) pour rester utilisable aussi
-// bien lors d'un vrai tirage (zone actuellement farmée) que pour l'AFFICHAGE de la table de loot
-// d'une zone PRÉVISUALISÉE (zoneLootRowsHtml peut montrer une zone différente de celle qu'on farme)
+/**
+ * Chance de drop d'armure/arme pour CE palier/CETTE zone, selon la version de table active
+ * (S.lootTableVersion). `zi` est explicite (pas juste zoneIdx global) pour rester utilisable
+ * aussi bien lors d'un vrai tirage (zone actuellement farmée) que pour l'AFFICHAGE de la table de
+ * loot d'une zone PRÉVISUALISÉE (zoneLootRowsHtml peut montrer une zone différente de celle qu'on
+ * farme).
+ * @param {object} tier - palier de gear (GEAR_TIERS), lit .grade et .dropChance.
+ * @param {number} zi - index de zone (ZONES), utilisé seulement en V1 (fallback GEAR_CHANCE[zi]).
+ * @returns {number} chance de drop (0-1) — lit LOOT_RATES_LIVE[tier.grade].gear en V2, sinon
+ *   tier.dropChance ou GEAR_CHANCE[zi] (défaut 0.002) en V1.
+ */
 function gearDropChance(tier, zi) {
   if (S.lootTableVersion === 'v2') return LOOT_RATES_LIVE[tier.grade].gear;
   return tier.dropChance != null ? tier.dropChance : (GEAR_CHANCE[zi] ?? .002);
 }
-// chance de drop de bijou pour CE palier -- v1FallbackCh = la valeur V1 propre à CETTE zone (celle
-// déjà stockée dans ZONES[zi].loot.jackpot.ch), utilisée telle quelle quand la V1 est active
+/**
+ * Chance de drop de bijou pour CE palier, selon la version de table active.
+ * @param {object} tier - palier de gear (GEAR_TIERS), lit .grade.
+ * @param {number} v1FallbackCh - valeur V1 propre à CETTE zone (ZONES[zi].loot.jackpot.ch),
+ *   utilisée telle quelle quand la V1 est active.
+ * @returns {number} chance de drop (0-1) — lit LOOT_RATES_LIVE[tier.grade].jewel en V2, sinon
+ *   v1FallbackCh en V1.
+ */
 function jewelDropChance(tier, v1FallbackCh) {
   if (S.lootTableVersion === 'v2') return LOOT_RATES_LIVE[tier.grade].jewel;
   return v1FallbackCh;

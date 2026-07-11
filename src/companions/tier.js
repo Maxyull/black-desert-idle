@@ -54,19 +54,35 @@ function minGS(rar,tier){
   let t=0;for(let i=0;i<BONUS_COUNT[rar];i++)t+=STAT_RANGES[rar][i][0];
   return t*mult;
 }
+/**
+ * Gearscore effectif d'un pet (somme des stats brutes actives × multiplicateur de tier, plus les
+ * bonus permanents de Caphras). Base de curGS/gsPct/normGS ci-dessous.
+ * @param {object} pet - lit .rar, .stats[], .tier, .caphrasBonus[].
+ * @returns {number} GS effectif, non normalisé (échelle dépend de la rareté).
+ */
 function curGS(pet){
-  // GS effectif = (somme des stats brutes × multiplicateur de tier) + bonus permanents de Caphras
   let t=0;for(let i=0;i<BONUS_COUNT[pet.rar];i++)t+=(pet.stats[i]||0);
   const caphrasTotal = (pet.caphrasBonus||[]).reduce((s,v)=>s+(v||0),0);
   return t*tierMultOf(pet) + caphrasTotal;
 }
+/**
+ * % du GS max atteignable pour SA rareté à SON tier actuel — à quel point ce pet est bien roulé
+ * dans sa propre fourchette (indépendant des autres raretés/tiers).
+ * @param {object} pet - lit .rar, .tier (+ tout ce que curGS()/maxGS() lisent).
+ * @returns {number} pourcentage entier 0-100.
+ */
 function gsPct(pet){
-  // % du max atteignable pour SA rareté à SON tier actuel (à quel point ce pet est bien roulé)
   const mx=maxGS(pet.rar,pet.tier||1);
   return mx>0?Math.round(curGS(pet)/mx*100):0;
 }
+/**
+ * GS absolu normalisé sur une échelle 0-1000, comparé au max théorique universel (Ancestral,
+ * Tier 5, toutes stats au plafond) — seule mesure comparable ENTRE pets de raretés différentes
+ * (contrairement à curGS()/gsPct() qui restent relatifs à la rareté du pet).
+ * @param {object} pet - lit .rar, .tier (+ tout ce que curGS() lit).
+ * @returns {number} GS normalisé, entier 0-1000.
+ */
 function normGS(pet){
-  // GS absolu sur 1000 = comparé au max théorique universel (Ancestral, Tier 5, toutes stats max)
   return Math.round(curGS(pet)/maxGS(5,5)*1000);
 }
 function avgGSForRarityAtTier1(rar){

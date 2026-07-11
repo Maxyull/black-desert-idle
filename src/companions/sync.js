@@ -6,11 +6,15 @@
 // le client déjà authentifié de la page hôte (iframe SAME-ORIGIN, voir combat/boss.js:
 // openCompanionsModule -- pas de sandbox, window.parent est directement accessible en JS) :
 // pas de duplication du SDK Supabase ni d'auth séparée dans l'iframe.
-// répartitions par rareté/tier/section (2026-07-20, demande explicite : "pet par tier, rareté,
-// catégorie, et tout ce qui se genere dans compagnon") -- objets simples {clé:compte}, jamais le
-// détail nominatif de chaque pet (économie fermée, voir README.md) -- sérialisés en JSONB côté
-// serveur (voir supabase/migrations/20260720100000_companion_stats_breakdowns.sql). Fonction pure,
-// testable isolément sans dépendre de window.parent.
+/**
+ * Répartitions par rareté/tier/section du roster local (2026-07-20, demande explicite : "pet par
+ * tier, rareté, catégorie, et tout ce qui se genere dans compagnon") — objets simples
+ * {clé:compte}, JAMAIS le détail nominatif de chaque pet (économie fermée, voir README.md),
+ * sérialisés en JSONB côté serveur (voir supabase/migrations/20260720100000_companion_stats_breakdowns.sql).
+ * Fonction pure, testable isolément sans dépendre de window.parent.
+ * @returns {{rarity:Object<number,number>, tier:Object<number,number>, section:Object<string,number>}}
+ *   un compte par valeur de p.rar / (p.tier||1) / p.cat.sec parmi PETS.
+ */
 function computeCompanionBreakdowns() {
   const rarity = {}, tier = {}, section = {};
   (Array.isArray(PETS) ? PETS : []).forEach(p => {
