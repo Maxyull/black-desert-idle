@@ -2857,3 +2857,102 @@
     .achOverviewRing { width:60px; height:60px; }
     .achCatCard { min-width:64px; }
   }
+
+  /* =====================================================================
+     Refonte visuelle "Zone" -- Phase 6 (2026-07-22) : sidebar gauche
+     (#sideMenu) + widgets flottants droite (#rightWidgets/#chatWidget),
+     les deux seules zones sautées par les Phases 1-5 -- confirmé en
+     inspectant le jeu vivant (computed styles réels) : Phase 2 n'avait
+     ajouté QUE le label de groupe (.sideGroupLabel, voir commentaire sur
+     .sideGroup + .sideGroup plus haut) et Phase 4 QUE du repositionnement
+     en grille (.layout), aucune des deux n'avait touché aux couleurs/police
+     des boutons eux-mêmes ni des coques .floatWidget -- ces éléments
+     héritaient donc encore de body{font-family:Georgia,...} et de l'ancien
+     --gold-dim/fonds rgba(10,9,12,.88)/bordures #2c2a33 d'avant toute
+     refonte. Port fidèle du mockup de comparaison avant/après validé par
+     l'utilisateur (voir CLAUDE.md section mockups) -- règles additives
+     uniquement, aucune règle existante retirée, mêmes tokens déjà posés par
+     la Phase 1 (--s1/--s2/--dbBorder/--dbBorder2/--gold2/--cream2/--cream3),
+     pattern "seuls couleurs/rayons/police changent" de la Phase 3. Les
+     onglets de canaux du chat (.catTab dans #chatWidget) étaient déjà au bon
+     style depuis la Phase 3 (règle .catTab plus haut) -- non retouchés ici,
+     seule la coque .floatWidget/#chatWidget autour change. */
+
+  /* Groupes de la sidebar : même traitement de coque que .card (Phase 3) --
+     #metaBar n'a en réalité aucun <button> direct (langToggle/menuSideToggle
+     sont des sliders, pas des boutons -- #metaBar button restait déjà une
+     règle historique sans effet), gardé dans la liste pour la symétrie avec
+     la règle existante plutôt que la casser. */
+  #gameBar, #userBar, #metaBar, #econBar, #communityBar {
+    background:var(--s1); border-color:var(--dbBorder); border-radius:11px;
+  }
+  /* #gameBar/#metaBar avaient une règle historique (background rgba(10,9,12,.6);
+     border #2c2a33) plus haut dans ce fichier -- rejouée ici pour TOUS les
+     groupes (#userBar/#econBar/#communityBar en manquaient totalement) avec
+     Inter à la place de Georgia hérité, radius façon pilule de contrôle
+     (8px, cohérent avec .actTab/.catTab) plutôt que le carré d'origine, fond
+     transparent au repos (le fond plein vit désormais sur le groupe lui-même
+     via la règle juste au-dessus, pas sur chaque bouton) et survol aligné sur
+     .actTab:hover/.topbar .icon-btn:hover (bordure --dbBorder2, texte --ink)
+     au lieu de l'ancien survol doré plein. */
+  #gameBar button, #userBar button, #metaBar button, #econBar button, #communityBar button {
+    font-family:'Inter',sans-serif; background:transparent; border:1px solid transparent;
+    color:var(--cream2); border-radius:8px; transition:border-color .15s,color .15s,background .15s;
+  }
+  #gameBar button:hover, #userBar button:hover, #metaBar button:hover, #econBar button:hover,
+  #communityBar button:hover {
+    border-color:var(--dbBorder2); color:var(--ink); background:rgba(255,255,255,.02);
+  }
+  /* #communityBar contient aussi un <a id="btnDiscord"> (pas un <button>) --
+     bug réel repéré en testant en conditions réelles (getComputedStyle) : une
+     première version de cette règle incluait "#communityBar a" dans le bloc
+     ci-dessus, MAIS "#communityBar a" (spécificité id+type) est PLUS
+     spécifique que la règle historique "#btnDiscord" seule (juste id) plus
+     haut dans ce fichier -- son fond/bordure/texte de marque (violet Discord,
+     voir #btnDiscord/.discordBtn) se faisait donc écraser par le fond/bordure
+     transparents ci-dessus. Corrigé : règle séparée qui ne touche QUE
+     police/radius/transition (jamais background/border/color), donc aucun
+     conflit de spécificité possible avec #btnDiscord ni #btnDiscord:hover. */
+  #communityBar a { font-family:'Inter',sans-serif; border-radius:8px; transition:border-color .15s,color .15s,background .15s; }
+
+  /* bouton de repli : même traitement que .topbar .icon-btn (Phase 1) --
+     icône carrée 28px plutôt que le rectangle texte d'origine (le contenu
+     ◀/▶ est déjà purement une flèche, jamais de texte à côté). */
+  #btnCollapseMenu {
+    width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-family:'Inter',sans-serif; background:var(--s2); border:1px solid var(--dbBorder);
+    color:var(--cream2); border-radius:6px;
+  }
+  #btnCollapseMenu:hover { border-color:var(--dbBorder2); color:var(--ink); }
+
+  /* badges de la sidebar : même police que les autres badges déjà migrés
+     (#notifBadge dans .topbar, Phase 1) -- uniquement la police, couleurs/
+     fonds inchangés (déjà conformes à la palette officielle, --danger pour
+     les compteurs, bleu de marque pour .betaTag). */
+  #questBadge, #mailBadge, #patchBadge, .contentNewBadge, .betaTag {
+    font-family:'JetBrains Mono',monospace;
+  }
+
+  /* Widgets flottants droite (Suivi de quête + Chat) : même coque que .card
+     (Phase 3). #chatWidget porte sa propre règle historique (background/
+     border/radius en dur, plus spécifique qu'une simple classe .floatWidget)
+     -- reprise ici explicitement, sinon la règle .floatWidget ci-dessous ne
+     l'aurait jamais emporté dessus. */
+  .floatWidget {
+    background:var(--s1); border:1px solid var(--dbBorder); border-radius:11px;
+    font-family:'Inter',sans-serif;
+  }
+  #chatWidget { background:var(--s1); border-color:var(--dbBorder); border-radius:11px; }
+
+  /* titre d'en-tête de widget : même traitement que .card h3 (Phase 3). */
+  .qwHeaderRow .qwTitle { font-family:'Cinzel',serif; color:var(--gold2); }
+
+  /* bouton plier/déplier : icône minimaliste cohérente avec le reste (voir
+     mockup) -- transparent par défaut, bordure/texte discrets, accent
+     seulement au survol (même logique que .qwFoldBtn:hover). */
+  .qwFoldBtn {
+    width:22px; height:22px; padding:0; display:flex; align-items:center; justify-content:center;
+    background:transparent; border:1px solid transparent; color:var(--cream3); border-radius:5px;
+    font-family:'Inter',sans-serif;
+  }
+  .qwFoldBtn:hover { border-color:var(--dbBorder); color:var(--cream2); }
