@@ -5,6 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V376', d:'21/07/2026 21:00', name:{fr:'Module Compagnons : Marché (contre-offres, suggestions) + correctif onglets', en:'Companion module: Market (counter-offers, suggestions) + tab fix'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Marché : raccourci "🔄 Ajouter au marché" directement depuis une carte de la Collection.'},
+      {t:'new', sub:'compagnon', tx:'Marché : lors d\'une contre-offre, un badge "🆕" indique les familiers de ta Collection que le créateur de l\'offre ne possède pas encore.'},
+      {t:'fix', sub:'compagnon', tx:'Corrigé : cliquer sur l\'onglet Marché surlignait à tort l\'onglet Viewer 3D (et vice versa) — le contenu affiché était le bon, seul le surlignage de l\'onglet était inversé.'},
+      {t:'change', sub:'compagnon', tx:'Onboarding : la pagination en bas des étapes est plus discrète (points plus petits, couleur adoucie).'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'Market: "🔄 Add to Market" shortcut directly from a Collection card.'},
+      {t:'new', sub:'compagnon', tx:'Market: when making a counter-offer, a "🆕" badge marks pets from your Collection the offer creator doesn\'t own yet.'},
+      {t:'fix', sub:'compagnon', tx:'Fixed: clicking the Market tab wrongly highlighted the 3D Viewer tab (and vice versa) — the displayed content was correct, only the tab highlight was swapped.'},
+      {t:'change', sub:'compagnon', tx:'Onboarding: the step pagination dots are now more discreet (smaller, softer color).'},
+    ] },
   { v:'V375', d:'21/07/2026 20:00', name:{fr:'Module Compagnons : rareté après une percée corrigée', en:'Companion module: rarity after a breakthrough fixed'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Corrigé : un pet ayant "percé" en rareté (Tier→rareté supérieure) pouvait afficher une rareté différente selon l\'onglet (Index figé sur la rareté de base de l\'espèce, Sections périmée si l\'onglet était déjà ouvert au moment de la percée) au lieu de sa rareté réelle, correctement affichée dans la Collection.'},
     ], en:[

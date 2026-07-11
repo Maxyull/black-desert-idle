@@ -1617,3 +1617,107 @@ test('a pet that breaks through in rarity shows the SAME current rarity in Index
   expect(result.indexShowsAncestral).toBe(true);
   expect(pageErrors).toEqual([]);
 });
+
+// bug corrigé (2026-07-21, rapporté explicitement : "lorsque je suis au market c'est le viewer 3D
+// qui montre actif et vis a versa") -- ST() surligne l'onglet actif par POSITION DOM parmi les
+// .tab, pas par l'argument i passé à onclick="ST(i)" -- les onglets Marché (onclick=ST(11)) et
+// Viewer 3D (onclick=ST(10)) étaient déclarés dans l'ordre INVERSE de leurs propres indices,
+// donc cliquer l'un surlignait l'autre (le CONTENU affiché restait correct, seul le surlignage
+// de l'onglet cliqué était faux). Corrigé en réordonnant les <div class="tab"> dans companions.html.
+test('clicking Marché highlights the Marché tab (not Viewer 3D), and vice versa', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  await frame.locator('.tabs .tab', { hasText: 'Marché' }).click();
+  await expect(frame.locator('.tabs .tab', { hasText: 'Marché' })).toHaveClass(/active/);
+  await expect(frame.locator('.tabs .tab', { hasText: 'Viewer 3D' })).not.toHaveClass(/active/);
+  await expect(frame.locator('#p11')).toHaveClass(/active/);
+
+  await frame.locator('.tabs .tab', { hasText: 'Viewer 3D' }).click();
+  await expect(frame.locator('.tabs .tab', { hasText: 'Viewer 3D' })).toHaveClass(/active/);
+  await expect(frame.locator('.tabs .tab', { hasText: 'Marché' })).not.toHaveClass(/active/);
+  await expect(frame.locator('#p10')).toHaveClass(/active/);
+
+  expect(pageErrors).toEqual([]);
+});
+
+// feature ajoutée (2026-07-21, demande explicite : "Ajouter au market") -- raccourci depuis une
+// carte Collection qui bascule sur l'onglet Marché et pré-sélectionne directement ce familier
+// dans la modale de création d'offre, au lieu d'obliger à re-cliquer dessus dans la grille.
+test('quickAddToMarket switches to the Marché tab and preselects the clicked pet in the create-offer modal', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
+
+  const petId = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.sec === 'loot');
+    const pet = { id: petId++, uid: 'quick-add-uid', cat, rar: 2, stats: mkStats(2), hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(pet);
+    renderGrid();
+    return pet.id;
+  });
+
+  await frame.locator(`#card${petId} button[title="Ajouter au marché"]`).click();
+
+  await expect(frame.locator('.tabs .tab', { hasText: 'Marché' })).toHaveClass(/active/);
+  await expect(frame.locator('#market-modal')).toHaveClass(/open/);
+  const preselected = await frame.locator('body').evaluate(() => marketCreatePetUid);
+  const petUid = await frame.locator('body').evaluate((el, id) => PETS.find(p => p.id === id).uid, petId);
+  expect(preselected).toBe(petUid);
+
+  expect(pageErrors).toEqual([]);
+});
+
+// feature ajoutée (2026-07-21, demande explicite : "montrer ce que le joueur en face n'a pas") --
+// dans la modale de contre-offre, chaque familier candidat encore INCONNU du créateur de l'offre
+// (species absente de marketOpponentOwnedSpecies, rempli par get_player_owned_species() côté
+// serveur -- accès restreint au contexte d'une offre ouverte réelle, voir la migration
+// restrict_get_player_owned_species_to_open_offer.sql) affiche un badge "🆕". Teste
+// renderCounterPetList() directement avec un Set simulé (pas de vraie session Supabase possible
+// dans ce test, voir signInForTest()) plutôt que le trajet réseau complet.
+test('counter-offer pet list badges species the offer creator does not own yet', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await frame.locator('.tabs .tab', { hasText: 'Marché' }).click();
+
+  const result = await frame.locator('body').evaluate(() => {
+    const catKnown = PET_CATALOG.find(c => c.sec === 'loot');
+    const catUnknown = PET_CATALOG.find(c => c.sec === 'xp' && c.name !== catKnown.name);
+    const petKnown = { id: petId++, uid: 'known-uid', cat: catKnown, rar: 1, stats: mkStats(1), hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    const petUnknown = { id: petId++, uid: 'unknown-uid', cat: catUnknown, rar: 1, stats: mkStats(1), hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(petKnown, petUnknown);
+
+    marketOffers = [{ id: 999, owner_user_id: 'someone-else', pet_qty: 1, accepts_pets: true }];
+    document.getElementById('market-modal-body').innerHTML = '<div id="market-counter-pet-list"></div>';
+    marketCounterOfferId = 999; marketCounterPetUids = new Set();
+    marketOpponentOwnedSpecies = new Set([catKnown.name]); // le créateur possède déjà catKnown, pas catUnknown
+
+    renderCounterPetList(999);
+    const knownHasBadge = !!document.querySelector(`.market-pick[data-uid="known-uid"] span[title]`);
+    const unknownHasBadge = !!document.querySelector(`.market-pick[data-uid="unknown-uid"] span[title]`);
+    return { knownHasBadge, unknownHasBadge };
+  });
+
+  expect(result.knownHasBadge).toBe(false);
+  expect(result.unknownHasBadge).toBe(true);
+  expect(pageErrors).toEqual([]);
+});

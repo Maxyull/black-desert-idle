@@ -88,7 +88,7 @@ async function renderMarketBrowse(){
   </div>`;
   try{
     const sb = marketSb(); const me = marketUser();
-    const { data, error } = await sb.from('pet_trade_offers').select('id, status, pet_snapshot, accepts_pets, pet_qty, accepts_silver, min_silver, owner_pseudo, expires_at').eq('status','open').neq('owner_user_id', me.id).order('created_at',{ascending:false}).limit(60);
+    const { data, error } = await sb.from('pet_trade_offers').select('id, status, pet_snapshot, accepts_pets, pet_qty, accepts_silver, min_silver, owner_pseudo, owner_user_id, expires_at').eq('status','open').neq('owner_user_id', me.id).order('created_at',{ascending:false}).limit(60);
     if(error) throw error;
     marketOffers = data||[];
   }catch(e){ marketOffers=[]; }
@@ -237,6 +237,20 @@ function pickCreatePet(uid){
     el.style.boxShadow = el.dataset.uid===uid ? '0 0 0 2px var(--gold)' : '';
   });
 }
+// Raccourci "Ajouter au marché" depuis une carte Collection (2026-07-21, demande explicite) --
+// bascule sur l'onglet Marché puis ouvre directement la modale de création AVEC ce familier déjà
+// pré-sélectionné (évite de re-cliquer dessus dans la grille de choix qui s'affiche quand même,
+// utile pour voir/changer de choix avant publication).
+function quickAddToMarket(petId){
+  const pet = PETS.find(p=>p.id===petId); if(!pet) return;
+  if(alreadyOfferedUids().has(pet.uid)){ toast('❌','Déjà en vente.'); return; }
+  ST(11);
+  setMarketSubTab('browse');
+  openCreateOfferModal();
+  pickCreatePet(pet.uid);
+  const el = document.querySelector(`#market-create-pet-list .market-pick[data-uid="${pet.uid}"]`);
+  if(el) el.scrollIntoView({ block:'center' });
+}
 async function submitCreateOffer(){
   if(!marketCreatePetUid){ toast('❌','Choisis un familier à proposer.'); return; }
   const pet = PETS.find(p=>p.uid===marketCreatePetUid);
@@ -265,11 +279,17 @@ async function cancelMyOffer(offerId){
 }
 
 // ═══ CONTRE-OFFRE ═══════════════════════════════════════════════════════════════════════════════
-function openCounterModal(offerId){
+// Marché — "montrer ce que le joueur en face n'a pas" (2026-07-21, demande explicite) : rempli
+// par openCounterModal() via get_player_owned_species(), lu par renderCounterPetList() pour
+// badger chaque familier candidat encore "nouveau" pour le créateur de l'offre. Accès restreint
+// côté serveur au contexte de CETTE offre ouverte précise (voir migration
+// restrict_get_player_owned_species_to_open_offer.sql) -- jamais une sonde arbitraire.
+let marketOpponentOwnedSpecies = null; // Set<string> | null tant que non chargé
+async function openCounterModal(offerId){
   const o = marketOffers.find(x=>x.id===offerId);
   if(!o) return;
   marketCounterOfferId = offerId; marketCounterPetUids = new Set(); marketCounterIncludeEver = false;
-  const everNames = new Set(PETS.map(p=>p.cat.name));
+  marketOpponentOwnedSpecies = null;
   document.getElementById('market-modal-title').textContent = '🤝 Faire une offre';
   document.getElementById('market-modal-body').innerHTML = `
     <div style="margin-bottom:10px">${petChipHtml(o.pet_snapshot)}</div>
@@ -282,7 +302,16 @@ function openCounterModal(offerId){
     ${o.accepts_silver?`<label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--cream2);margin-bottom:12px">Silver proposé (min ${(o.min_silver||0).toLocaleString('fr-FR')}) : <input type="number" id="market-counter-silver" min="0" value="${o.min_silver||0}" style="width:120px"></label>`:''}
     <button class="btn btn-gold" style="width:100%" onclick="submitCounter(${offerId})">Envoyer l'offre</button>
   `;
-  if(o.accepts_pets) renderCounterPetList(offerId);
+  if(o.accepts_pets){
+    renderCounterPetList(offerId);
+    try{
+      const sb = marketSb();
+      const { data, error } = await sb.rpc('get_player_owned_species', { p_user_id: o.owner_user_id, p_offer_id: offerId });
+      if(error) throw error;
+      marketOpponentOwnedSpecies = new Set(Array.isArray(data) ? data : []);
+      renderCounterPetList(offerId);
+    }catch(e){ marketOpponentOwnedSpecies = null; }
+  }
   document.getElementById('market-modal').classList.add('open');
 }
 function renderCounterPetList(offerId){
@@ -290,9 +319,13 @@ function renderCounterPetList(offerId){
   const list = document.getElementById('market-counter-pet-list'); if(!list) return;
   const offered = alreadyOfferedUids();
   const eligible = PETS.filter(p=>!offered.has(p.uid));
-  list.innerHTML = eligible.map(p=>`<div class="market-pick" data-uid="${p.uid}" onclick="toggleCounterPet('${p.uid}',${offerId})" style="cursor:pointer;border:1px solid ${marketCounterPetUids.has(p.uid)?'var(--gold)':'var(--border)'};border-radius:8px;padding:6px">
+  list.innerHTML = eligible.map(p=>{
+    const isNewForOpponent = marketOpponentOwnedSpecies && !marketOpponentOwnedSpecies.has(p.cat.name);
+    return `<div class="market-pick" data-uid="${p.uid}" onclick="toggleCounterPet('${p.uid}',${offerId})" style="cursor:pointer;position:relative;border:1px solid ${marketCounterPetUids.has(p.uid)?'var(--gold)':'var(--border)'};border-radius:8px;padding:6px">
+    ${isNewForOpponent?`<span style="position:absolute;top:2px;right:2px;background:var(--green2);color:var(--bg);font-size:8px;font-weight:700;border-radius:3px;padding:1px 4px;z-index:1" title="Ce joueur ne possède pas encore cette espèce">🆕</span>`:''}
     ${petChipHtml(petSnapshotOf(p))}
-  </div>`).join('') || `<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">Aucun familier disponible.</div>`;
+  </div>`;
+  }).join('') || `<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">Aucun familier disponible.</div>`;
   paintMarketChips(list);
 }
 function toggleCounterPet(uid, offerId){

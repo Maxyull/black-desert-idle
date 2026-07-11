@@ -3,7 +3,7 @@
 // data.js), plutôt qu'un compteur séparé propre à ce module : ce dossier ne peut pas charger
 // meta/patch-notes-data.js (scope global distinct, iframe isolée), donc pas de lecture automatique
 // possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
-const COMPANION_MODULE_VERSION = 'V375';
+const COMPANION_MODULE_VERSION = 'V376';
 
 // ═══ BALANCE DE TEST (2026-07-10, demande explicite) ═══
 // Tous les coûts Silver et timers (incubation, œuf gratuit) sont divisés par ce facteur pour
