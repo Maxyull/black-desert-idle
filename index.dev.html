@@ -4,6 +4,32 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Black Desert Idle — Progression & Zones</title>
+<!-- CSP (2026-07-21, repo-audit-todo.md point 16) : meta tag (GitHub Pages ne permet pas de header
+     custom, seule option possible). Domaines audites un par un dans le code reel avant d'ecrire
+     cette liste (pas de generalisation) :
+     - connect-src : SUPABASE_URL (auth/DB/realtime, game-supabase.js) + BOT_API_URL (webhook
+       Discord bot, meme fichier) -- les 2 SEULS fetch() vers un domaine externe du jeu principal.
+     - script-src : cdn.jsdelivr.net (Supabase JS/React/ReactDOM/i18next, seuls CDN charges).
+       'unsafe-inline' necessaire : 3 attributs onclick="..." dans
+       src/progression/notifications-quests.js (toggleQuestTracker/toggleResetFold/
+       toggleTrackerFold) -- seul fichier du jeu principal a utiliser ce pattern (tout le reste,
+       wiki-panel.js/leaderboard-panel.js/etc, utilise deja .onclick=fn/addEventListener, CSP-safe
+       sans 'unsafe-inline'). Retrait possible si ces 3 boutons sont un jour convertis au meme
+       pattern -- pas fait ici pour eviter un refactor a risque sur un fichier deja dense un jour
+       ou l'objectif etait le CSP, pas ce fichier.
+     - style-src : 'unsafe-inline' necessaire, attributs style="..." utilises massivement dans TOUT
+       le jeu (index.dev.html lui-meme, wiki-panel.js, leaderboard-panel.js, etc.) -- retirer cassait
+       la quasi-totalite de l'UI, hors de portee raisonnable ici.
+     - img-src/font-src : data: uniquement (icones/canvas, aucune police/image externe -- aucun
+       @font-face ni url() externe dans styles.css).
+     - frame-src 'self' : donation/companions.html s'ouvrent en iframe SAME-ORIGIN uniquement.
+     - object-src none, base-uri/form-action 'self' : aucun plugin, aucun <base>/<form> externe.
+     src/companions/ (module isole, iframe, fonts.googleapis.com pour ses propres polices) et les
+     pages donation/ NE sont PAS couvertes par cette CSP -- chaque document a la sienne (une CSP
+     meta ne s'applique qu'au document qui la porte, jamais a un iframe cross-document). Teste
+     avant commit : connexion Supabase, panneaux React (boss wheel/reconnect/compendium/patch
+     notes), i18next, aucune violation CSP en console. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://mkwwvzbjtyawpcyrnybk.supabase.co wss://mkwwvzbjtyawpcyrnybk.supabase.co https://black-desert-idle-discord-bot.onrender.com; frame-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self';">
 <!-- favicon (2026-07-21, repo-audit-todo.md point 9) : SVG, palette officielle (CLAUDE.md §29,
      fond #0b0f1a / accent or #d4a955) -- pas de fallback PNG/ICO, pas d'outil de rasterisation
      disponible sur cette machine ; le SVG seul couvre tous les navigateurs modernes (Chrome/
