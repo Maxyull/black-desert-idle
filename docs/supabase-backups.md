@@ -33,3 +33,24 @@ préventivement.
 - Le volume de données augmente au point où la restauration complète devient trop lente/coûteuse.
 - Un incident réel de perte de données montre que 7 jours de rétention ou une granularité
   journalière (pas de PITR) sont insuffisants — réévaluer l'add-on PITR à ce moment-là.
+
+## `silver_ledger`/`farm_events` : pas de purge en cours (vérifié 2026-07-21)
+
+`supabase/migrations/20260708102350_silver_ledger_archive_and_purge_retention.sql` a purgé
+UNE SEULE FOIS (le jour de son application) les lignes de plus de 3 jours, en archivant leurs
+totaux dans `silver_ledger_archive_totals` avant suppression — motivé à l'époque par un quota de
+500 Mo rempli en moins d'une semaine. **Ce n'était pas une tâche récurrente** : aucun `pg_cron`
+ne la relance, confirmé par une requête directe le 2026-07-21 :
+
+- Taille totale de la base : 403 Mo (plan **Pro**, quota bien plus large que les 500 Mo d'origine).
+- `silver_ledger` : 1 069 417 lignes / 145 Mo ; `farm_events` : 1 460 464 lignes / 237 Mo.
+- Ligne la plus ancienne de `silver_ledger` : 2026-07-06 — soit tout l'historique détaillé
+  accumulé sans interruption depuis cette seule purge ponctuelle, jamais reproduite depuis.
+
+**Décision (2026-07-21)** : ne rien changer. Le comportement actuel (aucune purge récurrente,
+historique détaillé conservé en entier) correspond déjà à la préférence de garder l'historique
+complet — le plan Pro absorbe largement la croissance actuelle (~380 Mo accumulés en ~2 semaines
+sur ces 2 tables). Ne jamais modifier la migration déjà appliquée (règle du projet) ; si une
+purge récurrente est un jour désirée, elle devra être une NOUVELLE migration explicite, pas une
+reprise de l'ancienne. Revoir si la taille totale de la base approche sérieusement le quota du
+plan Pro.
