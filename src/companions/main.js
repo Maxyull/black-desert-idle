@@ -1,4 +1,5 @@
 // ═══ BOOTSTRAP — dernier fichier chargé (voir README.md) ═════════
+/** Rafraîchit tous les panneaux du module Compagnons (éclosion, sections, grille/filtres, fusion, nourrir, header, jeu, inventaire, succès). Appelé une fois au boot puis à chaque changement d'état global. */
 function renderAll(){
   renderHatch();
   renderSecNav();renderSecDetail();

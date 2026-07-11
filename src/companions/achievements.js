@@ -23,6 +23,7 @@ const ACHIEVEMENTS = [
   {id:'fusion_downgrade', ico:'🎰', name:'Pari perdu',          desc:'Fusionne un Légendaire/Ancestral et obtiens un résultat de rareté inférieure', reward:10000, check:()=>fusionLostHighRarityCount>=1, hard:true},
 ];
 
+/** Vérifie tous les ACHIEVEMENTS non encore complétés, débloque ceux dont check() passe (verse la récompense en SILVER), affiche un toast/log et rafraîchit le badge + le panneau s'il est ouvert. */
 function checkAchievements(){
   let newlyCompleted=[];
   ACHIEVEMENTS.forEach(a=>{
@@ -44,6 +45,7 @@ function checkAchievements(){
   }
 }
 
+/** @returns {number} score composite du Classement (achievements×250 + GS/tier/fusions/caphras/breakthroughs cumulés + silver/100). */
 function prestigeScore(){
   // Score composite : achievements (poids fort) + progression brute (GS cumulé, tiers, fusions...)
   let score = completedAchievements.size*250;
@@ -53,6 +55,7 @@ function prestigeScore(){
   return Math.round(score);
 }
 
+/** Reconstruit la grille du panneau Succès (compteur, score de prestige, une tuile par ACHIEVEMENTS avec état débloqué/verrouillé). */
 function renderAchievements(){
   document.getElementById('ach-count').textContent = `${completedAchievements.size} / ${ACHIEVEMENTS.length}`;
   document.getElementById('prestige-score').textContent = prestigeScore().toLocaleString('fr-FR');

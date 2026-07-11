@@ -31,6 +31,7 @@ function computeCompanionBreakdowns() {
 // gsSumWithTier reproduit EXACTEMENT le terme par-pet de prestigeScore() (achievements.js:
 // `score += normGS(p); score += (p.tier||1)*20;`) pour que le prestige_score calculé côté serveur
 // corresponde au vrai prestigeScore() affiché localement au joueur. Fonction pure, testable isolément.
+/** @returns {{gsSumWithTier:number, gsMax:number}} agrégats GS du roster pour le Classement Public (même terme par-pet que prestigeScore()). */
 function computeCompanionGsAggregates() {
   let gsSumWithTier = 0, gsMax = 0;
   (Array.isArray(PETS) ? PETS : []).forEach(p => {
@@ -41,6 +42,7 @@ function computeCompanionGsAggregates() {
   return { gsSumWithTier, gsMax };
 }
 
+/** Pousse un résumé de compteurs/répartitions du roster local vers Supabase (RPC sync_companion_stats), via le client déjà authentifié de la page hôte (iframe same-origin). No-op silencieux hors iframe/invité/erreur réseau. */
 async function syncCompanionStatsToServer() {
   try {
     const hostWin = window.parent;

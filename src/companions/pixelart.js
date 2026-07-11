@@ -111,6 +111,16 @@ const PA = {
 };
 
 // ═══ PIXEL ART DRAW ═══════════════════════════════════════════════
+/**
+ * Dessine le sprite pixel-art d'un familier sur un canvas (grille 8×8 de PA[artKey]), avec glow
+ * de rareté optionnel et un liseré/étincelles qui s'intensifie visuellement de T2 à T5 (même
+ * forme de base à tous les tiers, seule l'aura change).
+ * @param {HTMLCanvasElement} canvas - canvas cible (redimensionné à size×size).
+ * @param {string} artKey - clé de PA (ex: 'cat_black').
+ * @param {number} size - taille en pixels du rendu.
+ * @param {?string} glowColor - couleur du glow de fond (rareté), null = pas de glow.
+ * @param {number} [tier=1] - palier du familier (1-5), pilote TIER_VISUAL.
+ */
 function drawPixelArt(canvas, artKey, size, glowColor, tier) {
   tier = tier||1;
   const art = PA[artKey];

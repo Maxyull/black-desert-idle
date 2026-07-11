@@ -1,4 +1,5 @@
 // ═══ HEADER ══════════════════════════════════════════════════════
+/** Rafraîchit le header (bonus collecte/PA/XP du pet actif sur chaque terrain, streak de connexion, affichage silver). */
 function updateHeader(){
   const loot=terrainPet('loot'),xp=terrainPet('xp'),combat=terrainPet('combat');
   document.getElementById('h-col').textContent=loot?`+${(loot.stats[0]||0).toFixed(1)}%`:'—';
@@ -8,6 +9,7 @@ function updateHeader(){
   if(streakEl) streakEl.textContent=`${loginStreak}/7`;
   updateSilverDisplay();
 }
+/** Met à jour tous les affichages du solde SILVER (header + panneaux Collection/Jeu) avec la même valeur formatée. */
 function updateSilverDisplay(){
   const val = SILVER.toLocaleString('fr-FR');
   ['h-silver','game-silver-inline','coll-silver','coll-silver-2'].forEach(id=>{

@@ -1,4 +1,5 @@
 // ═══ FEED ════════════════════════════════════════════════════════
+/** Reconstruit l'onglet Nourrir : liste des pets avec barre de faim, liste de nourriture sélectionnable (exclut Caphras/Dopi/Boss), et ressources spéciales en lecture seule. */
 function renderFeed(){
   const hungry=PETS.filter(p=>p.terrain&&p.hunger<30).length;
   document.getElementById('tb3').textContent=hungry>0?hungry+'!':'✓';
@@ -62,6 +63,7 @@ function renderFeed(){
   }
 }
 
+/** @param {number} id - id du familier. Nourrit 1 pet avec la nourriture sélectionnée (selFoodName), consomme 1 unité, no-op si aucune nourriture disponible. */
 function feedOne(id){
   const p=PETS.find(pp=>pp.id===id);if(!p)return;
   if(!selFoodName || !INVENTORY[selFoodName] || INVENTORY[selFoodName].qty<=0){
@@ -77,6 +79,7 @@ function feedOne(id){
   if(document.getElementById('p5')?.classList.contains('active')) renderGameInventory();
 }
 
+/** Nourrit tous les familiers en boucle avec la nourriture sélectionnée jusqu'à épuisement du stock, affiche un toast récapitulatif. */
 function feedAll(){
   const activePets = PETS.filter(p=>true); // tous, comme avant
   let fed=0;

@@ -10,6 +10,7 @@ let PETS=[];
 // consommés par le hatching normal.
 const PET_ROSTER_CAP = 96;
 const PET_ROSTER_CAP_WITH_TRADE_BUFFER = 100;
+/** @returns {number} places restantes avant PET_ROSTER_CAP (96) — gate doHatch()/bulkHatch(), jamais négatif. */
 function petRosterRoomLeft(){ return Math.max(0, PET_ROSTER_CAP - PETS.length); }
 
 // Timers d'incubation (voir TEST_BALANCE_DIVISOR, economy.js) : 21600s (6h) et
@@ -20,11 +21,13 @@ let fusionSlots=[null,null];
 let activeSecIdx=0;
 let sortMode='gs',sortDir=-1;
 let filterSec=new Set(),filterRar=new Set(),filterTierColl=new Set(); // vide = "tous" ; aucune limite de sélection
+/** @param {Set} setObj - un des filterSec/filterRar/filterTierColl. @param {*} value - valeur à basculer. Ajoute/retire `value` du Set puis rafraîchit filtres+grille. */
 function toggleFilter(setObj, value){
   if(setObj.has(value)) setObj.delete(value);
   else setObj.add(value);
   renderFilters(); renderGrid();
 }
+/** Vide tous les filtres de collection (section/rareté/tier) et le champ de recherche, rafraîchit filtres+grille. */
 function clearAllFilters(){
   filterSec.clear(); filterRar.clear(); filterTierColl.clear();
   const sb=document.getElementById('search-box'); if(sb) sb.value='';

@@ -10,10 +10,12 @@
 // puissance de combat utilisée pour classer les familiers en PvP -- volontairement le même normGS
 // que partout ailleurs dans le module (tier.js), pas une formule séparée : un pet fort
 // en Collection doit rester fort en PvP, pas de double calibration à maintenir.
+/** @param {object} p - familier. @returns {number} puissance de combat pour le classement PvP (= normGS, même formule que le reste du module). */
 function pvpPower(p) { return normGS(p); }
 
 // classement pur (id → rang), testable isolément sans DOM -- tri par puissance décroissante,
 // égalité départagée par Tier puis par id (stable, jamais d'ex-aequo silencieux).
+/** @param {object[]} pets - familiers à classer. @returns {object[]} copie triée par pvpPower décroissant, égalité départagée par tier puis id (jamais d'ex-aequo silencieux). */
 function computePvpRanking(pets) {
   return [...(pets||[])].sort((a,b) => {
     const pv = pvpPower(b) - pvpPower(a);
@@ -24,6 +26,7 @@ function computePvpRanking(pets) {
   });
 }
 
+/** Reconstruit le classement PvP (podium + liste), calculé depuis computePvpRanking(PETS). */
 function renderPvp() {
   const el = document.getElementById('pvp-ranking');
   if (!el) return;

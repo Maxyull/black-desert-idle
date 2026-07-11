@@ -62,6 +62,7 @@ const BOSS_ITEMS = {
 const BOSS_ITEM_RATE = 1e-8; // 0.000001% par tick de 2s, flat (indépendant du tier)
 
 // Facteur de difficulté de zone = Tier du pet. T1=×1 ... T5=×5 pour Caphras/Dopi.
+/** @param {object} pet - familier. @returns {number} multiplicateur de difficulté de zone pour Caphras/Dopi (= tier du pet, T1=×1..T5=×5). */
 function zoneTierFactor(pet){ return (pet.tier||1); }
 
 // Pet catalog: name, artKey, rarity, section, type, origin(classic/rare/premium)
@@ -139,7 +140,9 @@ const PET_CATALOG=[
 // Réutilisé par leaderboard.js ("Tes stats") ET sync.js (stat envoyée à
 // l'admin) — un seul point de calcul, jamais dupliqué.
 const COMPANION_INDEX_MAX = PET_CATALOG.length * 5; // 240
+/** @param {object} p - familier possédé. @returns {string} clé unique espèce×tier ("Rock Mole_T3"), unité de complétion de l'Index (COMPANION_INDEX_MAX = 48×5). */
 function companionIndexSpeciesTierKey(p){ return p.cat.name + '_T' + (p.tier||1); }
+/** @param {object[]} petsList - familiers possédés. @returns {number} nombre de combos espèce×tier DISTINCTS déjà obtenus (sur COMPANION_INDEX_MAX). */
 function companionIndexProgress(petsList){
   return new Set((petsList||[]).map(companionIndexSpeciesTierKey)).size;
 }

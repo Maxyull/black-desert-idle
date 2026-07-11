@@ -464,12 +464,12 @@
 <!-- renommés le 2026-07-21 (retrait du préfixe companions. -- kebab-case simple, cohérent avec les
      9 autres dossiers de src/, voir CLAUDE.md §15 -- renommage progressif "petit à petit", ce lot
      est le premier des ~22 fichiers du module, voir repo-audit-todo.md point 1) -->
-<script src="pixelart.js?v=6"></script>
-<script src="catalog.js?v=7"></script>
+<script src="pixelart.js?v=7"></script>
+<script src="catalog.js?v=8"></script>
 <script src="economy.js?v=14"></script>
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
 <script src="tier.js?v=9"></script>
-<script src="roster.js?v=8"></script>
+<script src="roster.js?v=9"></script>
 <script src="hatch.js?v=17"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=7"></script>
@@ -477,14 +477,14 @@
 <script src="collection.js?v=12"></script>
 <!-- renommés le 2026-07-21 (lot 4/~8, même renommage progressif que ci-dessus) -->
 <script src="fusion.js?v=9"></script>
-<script src="feed.js?v=7"></script>
-<script src="ticks.js?v=10"></script>
+<script src="feed.js?v=8"></script>
+<script src="ticks.js?v=11"></script>
 <!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
 <script src="save.js?v=14"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
-<script src="sync.js?v=14"></script>
+<script src="sync.js?v=15"></script>
 <!-- marché d'échange réel (2026-07-10, demande explicite) : lit PETS/petId/PET_CATALOG/RARITIES/
      rc/rn/tierMultOf/rollTierMult/drawPixelArt/toast/CM/petRosterRoomLeft déjà déclarés plus haut,
      appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
@@ -496,11 +496,11 @@
 <script src="game-view.js?v=7"></script>
 <script src="hardinage.js?v=7"></script>
 <!-- renommés le 2026-07-21 (lot 7/~8, même renommage progressif que ci-dessus) -->
-<script src="achievements.js?v=7"></script>
+<script src="achievements.js?v=8"></script>
 <!-- classement PvP (2026-07-20, demande explicite) : lit PETS/normGS/rc/rn/secById/gsCls/gsPct
      déjà déclarés plus haut, appelée uniquement via ST(8) -- ordre non strictement requis (aucune
      lecture au chargement immédiat), placé ici par lisibilité (juste avant main.js). -->
-<script src="pvp.js?v=7"></script>
+<script src="pvp.js?v=8"></script>
 <!-- tes stats + classement cross-joueurs (2026-07-20, demande explicite) : lit
      PETS/totalHatched/silverSpent/fusionCount/PET_CATALOG/ACHIEVEMENTS/completedAchievements déjà
      déclarés plus haut, appelée uniquement via ST(9) -- ordre non strictement requis, placé ici par
@@ -517,6 +517,6 @@
      chargé) et de localStorage -- ordre non strictement requis, placé juste avant main.js qui
      l'appelle (maybeShowOnboarding()) après le premier renderAll(). -->
 <script src="onboarding.js?v=2"></script>
-<script src="main.js?v=9"></script>
+<script src="main.js?v=10"></script>
 </body>
 </html>
