@@ -109,6 +109,7 @@ function rollWeaponDrop(zone, alpha) {
 // charge APRES ce fichier, voir index.html.
 // affiche un % avec juste assez de décimales pour rester lisible même sur des chances minuscules
 // (ex: 0.00001%) — toFixed(1) fixe habituel afficherait juste "0.0%"
+/** @param {number} ch - chance en fraction (0-1). @returns {string} pourcentage avec assez de décimales pour rester lisible même à 0.00001%. */
 function fmtTinyPct(ch) {
   const pct = ch * 100;
   if (pct <= 0) return '0%';
@@ -118,6 +119,7 @@ function fmtTinyPct(ch) {
 // rythme de kills/min de référence pour évaluer le temps moyen d'obtention des trésors côté admin
 // (voir panneau admin > Trésor de Velia) — comparable au "Kills/min" affiché en jeu (stKpm)
 const ADMIN_TREASURE_KPM_REF = 15;
+/** @param {number} min - durée en minutes. @returns {string} min/h/j, formaté selon la grandeur (panneau admin Trésor de Velia). */
 function fmtDurationMin(min) {
   if (min < 60) return Math.round(min) + ' min';
   const hours = min / 60;
@@ -213,6 +215,7 @@ function rollDrops(wp, alpha, lm) {
 const DESPAWN = 40;
 let invFullWarned = 0;
 let lastInvFullToast = 0;
+/** Affiche le bandeau "sac plein" et un toast (au plus 1/4s pour ne pas spammer) quand un drop ne peut pas être ramassé. */
 function showInvFullWarning() {
   invFullWarned = 2;
   const el = $('invFullBanner');
@@ -224,6 +227,13 @@ function showInvFullWarning() {
     floatTxt(P.x, P.y-20, 70, i18next.t('combat:combat.loot.bag_full'), {hurt:true});
   }
 }
+/**
+ * Tick des drops au sol : fait vieillir/dépop chaque drop, ramasse ceux à portée du joueur
+ * (trash en silver direct, le reste via invAdd — reste au sol si le sac est plein), déclenche
+ * loot ticker/floatTxt/tutoriels d'objet/logs Discord selon le kind, puis purge les drops pris
+ * ou expirés (DESPAWN).
+ * @param {number} dt - delta-temps de la frame, en secondes.
+ */
 function dropsTick(dt) {
   for (const l of drops) {
     if (l.taken) continue;
@@ -326,6 +336,7 @@ function dropsTick(dt) {
 }
 
 // attribue un slot d'accessoire probable selon le nom
+/** @param {object} it - item jackpot (lit it.name). @returns {'ring'|'necklace'|'earring'|'belt'} slot d'accessoire déduit du nom (repli 'ring' si aucun mot-clé). */
 function accSlotFor(it) {
   const n = it.name.toLowerCase();
   // "earring" contient la sous-chaîne "ring" → on le teste EN PREMIER pour ne pas le confondre avec une bague
@@ -344,6 +355,13 @@ function accSlotFor(it) {
 // autres kinds n'affichent plus que leur nom + ×N. Une pièce 🪙 précède le prix quand il est affiché.
 // Quantité ×N placée AVANT le prix (2026-07-15, demande explicite : "dans le loot ticker mais la
 // quantité avant le prix") -- était après.
+/**
+ * Ajoute une ligne au loot ticker, ou incrémente le compteur ×N de la dernière ligne si le
+ * même item/classe se répète consécutivement (évite de spammer une ligne par ramassage).
+ * @param {object} item - item ramassé (lit item.name).
+ * @param {number} val - silver à afficher (0 = pas de prix affiché, juste le nom/quantité).
+ * @param {string} cls - classe CSS de la ligne (style par kind de loot).
+ */
 function lootLine(item, val, cls) {
   const t = $('lootTicker');
   if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.el.isConnected) {
@@ -371,6 +389,7 @@ function lootLine(item, val, cls) {
  */
 function xpNeededFor(lvl) { return LEVEL_XP_TABLE[Math.min(lvl, LEVEL_XP_TABLE.length-1)]; }
 // affichage façon BDO : pourcentage à 3 décimales, toujours 2 chiffres avant la virgule (00.000%)
+/** @param {number} pct - pourcentage d'XP (0-100). @returns {string} format BDO "00.000%" (2 chiffres + 3 décimales, clampé). */
 function fmtXpPct(pct) {
   pct = Math.max(0, Math.min(99.999, pct));
   const [intPart, decPart] = pct.toFixed(3).split('.');
@@ -378,6 +397,7 @@ function fmtXpPct(pct) {
 }
 // s'illumine brièvement autour du niveau/XP à chaque gain (2026-07-10, demande explicite : "fais
 // un carré autour du niveau et % d'xp qui s'illumine quand on gagne de l'xp")
+/** Rejoue brièvement l'animation de flash CSS (xpFlash) autour du niveau/XP à chaque gain. */
 function flashXpGain() {
   const el = $('lvlXpRow'); if (!el) return;
   el.classList.remove('xpFlash');

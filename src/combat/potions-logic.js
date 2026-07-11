@@ -20,10 +20,12 @@ const POTION_KPM_REF = 15; // même rythme que la courbe économique des zones (
 // une 1ère fois le 2026-07-12)
 const POTION_PCT_MIN = 0.0005; // small ≈ 0.05% du revenu horaire
 const POTION_PCT_MAX = 0.003;  // mega ≈ 0.3% du revenu horaire
+/** @returns {number} revenu horaire théorique de trash de la zone actuelle (référence pour tarifer les potions, jamais une zone fixe). */
 function potionHourlyIncome() {
   const z = (typeof atVelia !== 'undefined' && !atVelia && typeof Z === 'function') ? Z() : ZONES[0];
   return (z.loot.trash.val || 1) * POTION_KPM_REF * 60;
 }
+/** @param {number} baseCost - coût de base de la taille de potion (POTIONS.small..mega.cost). @returns {number} prix réel en silver, interpolé linéairement entre POTION_PCT_MIN/MAX du revenu horaire de la zone actuelle. */
 function potionCost(baseCost) {
   if (!baseCost) return 0;
   const lo = POTIONS.small.cost, hi = POTIONS.mega.cost;
@@ -59,12 +61,14 @@ const ICO_POTION_DUO = `<svg class="gicon" viewBox="0 0 44 34" xmlns="http://www
 // rapide sans soin), ce qui passait pour un bug, surtout en zone dangereuse où les dégâts encaissés
 // sont énormes ET le silver s'épuise vite. 1 toast/3s max pour ne pas spammer vu le retry à 1s.
 let lastPotionSilverWarn = 0;
+/** Affiche un toast "pas assez de silver" (au plus 1/3s vu le retry à 1s) quand une potion ne peut pas être payée. */
 function warnPotionNoSilver() {
   const now = performance.now();
   if (now - lastPotionSilverWarn < 3000) return;
   lastPotionSilverWarn = now;
   floatTxt(P.x, P.y-15, 75, i18next.t('combat:combat.potion.no_silver_warning'), {hurt:true});
 }
+/** Consomme la potion de PV sélectionnée (S.potionType) : débite le silver (retry sans soin si insuffisant), soigne un % des PV max, relance le cooldown. */
 function usePotion() {
   const pot = POTIONS[S.potionType] || POTIONS.medium;
   const cost = potionCost(pot.cost);
@@ -79,6 +83,7 @@ function usePotion() {
 }
 // potion de mana (2026-07-05, demande explicite : "ajoute ... une potion de mana") -- un seul
 // palier pour l'instant (pas de choix de taille comme les potions de PV), même mécanique
+/** Consomme la potion de mana (palier unique) : débite le silver (retry sans soin si insuffisant), restaure un % du mana max, relance le cooldown. */
 function usePotionMana() {
   const cost = potionCost(MANA_POTION.cost);
   if (S.silver < cost) { P.manaPotCd = 1; warnPotionNoSilver(); return; } // pas assez de silver : réessaie vite
@@ -90,6 +95,7 @@ function usePotionMana() {
 }
 // sélecteur de potion : le joueur choisit laquelle des 4 tailles utiliser automatiquement en
 // combat — le soin affiché (en PV) dépend de ses PV max actuels, mis à jour à chaque ouverture
+/** Reconstruit le panneau sélecteur de potion (4 tailles PV + info mana), recalculé à chaque ouverture (PV max/coûts peuvent avoir changé), câble clics + slider de seuil d'auto-soin. */
 function renderPotSelect() {
   const el = $('potSelect'); if (!el) return;
   const threshPct = Math.round((S.potionThreshold ?? 0.5) * 100);

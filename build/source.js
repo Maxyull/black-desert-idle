@@ -5133,6 +5133,7 @@ function renderAiModeBtn() {
     seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
   });
 }
+
 function setAiCombatMode(key) {
   if (!AI_COMBAT_MODES[key]) return;
   S.aiCombatMode = key;
@@ -5161,6 +5162,7 @@ function renderFarmModeBtn() {
     seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
   });
 }
+
 function setFarmMode(key) {
   if (!FARM_MODES[key]) return;
   S.farmMode = key;
@@ -5233,6 +5235,7 @@ function fmtTinyPct(ch) {
 }
 
 const ADMIN_TREASURE_KPM_REF = 15;
+
 function fmtDurationMin(min) {
   if (min < 60) return Math.round(min) + ' min';
   const hours = min / 60;
@@ -5295,6 +5298,7 @@ function rollDrops(wp, alpha, lm) {
 const DESPAWN = 40;
 let invFullWarned = 0;
 let lastInvFullToast = 0;
+
 function showInvFullWarning() {
   invFullWarned = 2;
   const el = $('invFullBanner');
@@ -5306,6 +5310,7 @@ function showInvFullWarning() {
     floatTxt(P.x, P.y-20, 70, i18next.t('combat:combat.loot.bag_full'), {hurt:true});
   }
 }
+
 function dropsTick(dt) {
   for (const l of drops) {
     if (l.taken) continue;
@@ -5526,6 +5531,7 @@ function spawnCastOriginVfx(sk) {
       break;
   }
 }
+
 function particlesTick(dt) {
   for (const q of particles) {
     if (q.life !== undefined) q.life -= dt;
@@ -5554,10 +5560,12 @@ const POTION_KPM_REF = 15;
 
 const POTION_PCT_MIN = 0.0005; 
 const POTION_PCT_MAX = 0.003;  
+
 function potionHourlyIncome() {
   const z = (typeof atVelia !== 'undefined' && !atVelia && typeof Z === 'function') ? Z() : ZONES[0];
   return (z.loot.trash.val || 1) * POTION_KPM_REF * 60;
 }
+
 function potionCost(baseCost) {
   if (!baseCost) return 0;
   const lo = POTIONS.small.cost, hi = POTIONS.mega.cost;
@@ -5588,12 +5596,14 @@ const ICO_POTION_DUO = `<svg class="gicon" viewBox="0 0 44 34" xmlns="http://www
 </svg>`;
 
 let lastPotionSilverWarn = 0;
+
 function warnPotionNoSilver() {
   const now = performance.now();
   if (now - lastPotionSilverWarn < 3000) return;
   lastPotionSilverWarn = now;
   floatTxt(P.x, P.y-15, 75, i18next.t('combat:combat.potion.no_silver_warning'), {hurt:true});
 }
+
 function usePotion() {
   const pot = POTIONS[S.potionType] || POTIONS.medium;
   const cost = potionCost(pot.cost);

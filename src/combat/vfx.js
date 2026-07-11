@@ -3,6 +3,7 @@
 // core/game-core.js (particules/P definis dans la section MONDE) -- reference en execution
 // uniquement, aucune evaluation immediate.
 // ==================== VFX ====================
+/** @param {object} sk - sort lancé (lit sk.vfx). @param {{x:number,y:number}} p - point d'impact. Pousse les particules d'impact correspondant au type de VFX du sort. */
 function spawnVfx(sk,p) {
   switch (sk.vfx) {
     case 'meteor':
@@ -38,6 +39,7 @@ function spawnVfx(sk,p) {
 // sort". Distinct de spawnVfx ci-dessus (effet d'IMPACT sur la cible, à la résolution du sort) :
 // ici c'est ce qui accompagne visuellement le temps de cast, tout de suite quand P.castingSkill
 // est posé (voir game-core.js). sk.castBurst vient des données de SKILLS (skills-data.js).
+/** @param {object} sk - sort en cours de cast (lit sk.castBurst/castColor/castT). Pousse les particules d'ORIGINE (sur le joueur, au démarrage du cast) — distinct de spawnVfx (impact sur la cible). */
 function spawnCastOriginVfx(sk) {
   const color = sk.castColor || '#c9a55a';
   switch (sk.castBurst) {
@@ -80,6 +82,7 @@ function spawnCastOriginVfx(sk) {
       break;
   }
 }
+/** @param {number} dt - delta-temps de la frame, en secondes. Fait vivre/vieillir chaque particule (chute, explosion au sol, éclats du fireOrb au contact), purge les particules mortes. */
 function particlesTick(dt) {
   for (const q of particles) {
     if (q.life !== undefined) q.life -= dt;

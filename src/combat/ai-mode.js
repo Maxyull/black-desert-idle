@@ -7,6 +7,7 @@
 // mode de combat IA -- ÉTAIT auto-calculé depuis le ratio de gear (bottleneck()), REMPLACÉ le
 // 2026-07-14 (demande explicite, décision confirmée malgré la conception précédente) par un choix
 // manuel du joueur, voir S.aiCombatMode et AI_COMBAT_MODES/setAiCombatMode ci-dessous.
+/** @returns {string} mode de combat IA choisi manuellement par le joueur (S.aiCombatMode), 'équilibré' par défaut/repli. */
 function aiMode() {
   return AI_COMBAT_MODES[S.aiCombatMode] ? S.aiCombatMode : 'équilibré';
 }
@@ -32,6 +33,7 @@ function renderAiModeBtn() {
     seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
   });
 }
+/** @param {string} key - clé de AI_COMBAT_MODES. No-op si clé inconnue. */
 function setAiCombatMode(key) {
   if (!AI_COMBAT_MODES[key]) return;
   S.aiCombatMode = key;
@@ -69,6 +71,7 @@ function renderFarmModeBtn() {
     seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
   });
 }
+/** @param {string} key - clé de FARM_MODES ('loot'/'xp'). No-op si clé inconnue. */
 function setFarmMode(key) {
   if (!FARM_MODES[key]) return;
   S.farmMode = key;
