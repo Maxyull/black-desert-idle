@@ -2636,6 +2636,7 @@ const ENH_FS_INC = {
   16:.015,17:.012,18:.008,19:.004, 20:.0015,
 };
 function itemFailstack(item, level) { return (item && item.fsByLevel && item.fsByLevel[level]) || 0; }
+
 function addItemFailstack(item, level) {
   if (!item) return;
   if (!item.fsByLevel) item.fsByLevel = {};
@@ -2663,6 +2664,7 @@ function equipAP() {
   for (const k of [...ARMOR_SLOTS, ...ACC_SLOTS]) { const e = EQUIP[k]; if (e) a += (e.ap||0) * itemMult(e); }
   return a;
 }
+
 function equipDP() {
   let d = 0;
   for (const k of [...ARMOR_SLOTS, ...ACC_SLOTS]) { const e = EQUIP[k]; if (e) d += (e.dp||0) * itemMult(e); }
@@ -2683,6 +2685,7 @@ function equipDodge() {
   for (const k of ARMOR_SLOTS) { const e = EQUIP[k]; if (e) d += (e.dodge||0) * itemMult(e); }
   return d;
 }
+
 function armorBonusAvg() {
   const pieces = ARMOR_SLOTS.map(k => EQUIP[k]).filter(Boolean);
   if (!pieces.length) return 0;
@@ -2699,6 +2702,7 @@ function zoneItemNames(zi) {
   const z = ZONES[zi], tier = gearTierForZone(zi);
   return [tr(z.loot.trash.name), tr(tier.material.name), tr(z.loot.jackpot.name), tr(z.loot.craft.name)];
 }
+
 function zoneFullyCollected(zi) { return zoneItemNames(zi).every(n => compendiumItemDone(n)); }
 
 function checkZoneCompendiumUnlock(zi, wasDone) {
@@ -2747,11 +2751,13 @@ const PEN_GEAR_ICON_FOR_SLOT = {
   helmet:helmetIconForColor, armor:armorIconForColor, gloves:glovesIconForColor, boots:bootsIconForColor,
 };
 const PEN_JEWEL_ICON_FOR_SLOT = { ring:ringIconForTier, necklace:necklaceIconForTier, earring:earringIconForTier, belt:beltIconForTier };
+
 function penMasteryIcon(entry) {
   if (entry.kind === 'gear') { const fn = PEN_GEAR_ICON_FOR_SLOT[entry.slot]; return fn ? fn(entry.color, entry.grade) : ''; }
   const fn = PEN_JEWEL_ICON_FOR_SLOT[entry.slot] || ringIconForTier;
   return fn(JEWEL_TIER_IDX[entry.grade] || 0, entry.color);
 }
+
 function markPenMastery(name) {
   if (S.penMastery[name]) return;
   S.penMastery[name] = true;
@@ -2798,6 +2804,7 @@ function totalDodgePct(dpR) {
 function isoX(x, y) { return (x - y); }
 function isoY(x, y) { return (x + y) * .5; }
 const cam = { x: 0, y: 0 };
+
 function toScreen(x, y, z = 0) {
   return {
     sx: W/2 + isoX(x,y) - isoX(cam.x,cam.y),
@@ -2902,6 +2909,7 @@ function speedMult() {
   const dangerMult = isZoneDangerous() ? DANGER_PLAYER_SPEED_MULT : 1;
   return (1 + totalSpdPct()/100) * dangerMult;
 }
+
 function moveToward(tx, ty, speed, dt) {
   const d = dist(P.x,P.y,tx,ty);
   if (d < 1) return d;
@@ -2912,6 +2920,7 @@ function moveToward(tx, ty, speed, dt) {
   P.bob += dt*9;
   return d;
 }
+
 function doTeleport(dirX, dirY) {
   teleportCd = 4.5;
   const d = Math.hypot(dirX,dirY)||1;
