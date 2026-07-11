@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V376', d:'21/07/2026 21:00', name:{fr:'Écran Boss refait : même style que l\'écran Zone', en:'Boss screen redesigned: same look as the Zone screen'}, fr:[
+      {t:'change', sub:'combat', tx:'L\'écran Boss (lobby et arène) a été redessiné avec le même style visuel que l\'écran Zone : carte "prochain boss" mise en avant, calendrier hebdomadaire et récompenses par rang recolorés, aucun changement de fonctionnement.'},
+      {t:'new', sub:'combat', tx:'Chaque World Boss a désormais une courte réplique d\'ambiance affichée dans le lobby.'},
+      {t:'new', sub:'combat', tx:'Le lobby affiche maintenant la quantité de matériau garanti déjà en poche à côté de sa fourchette de drop.'},
+      {t:'new', sub:'combat', tx:'Le bonus "premier kill de la semaine" (quand encore disponible) est désormais visible dans le lobby, avant même de combattre.'},
+      {t:'change', sub:'combat', tx:'La barre de progression du pity (loot rarissime) est plus visible dans le lobby.'},
+    ], en:[
+      {t:'change', sub:'combat', tx:'The Boss screen (lobby and arena) has been redesigned with the same visual style as the Zone screen: featured "next boss" card, recolored weekly calendar and rank rewards, no gameplay change.'},
+      {t:'new', sub:'combat', tx:'Every World Boss now has a short flavor line shown in the lobby.'},
+      {t:'new', sub:'combat', tx:'The lobby now shows how much of the guaranteed material you already have next to its drop range.'},
+      {t:'new', sub:'combat', tx:'The "first kill of the week" bonus (when still available) is now shown in the lobby, before you even fight.'},
+      {t:'change', sub:'combat', tx:'The pity progress bar (rare loot) is more visible in the lobby.'},
+    ] },
   { v:'V375', d:'21/07/2026 20:00', name:{fr:'Module Compagnons : rareté après une percée corrigée', en:'Companion module: rarity after a breakthrough fixed'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Corrigé : un pet ayant "percé" en rareté (Tier→rareté supérieure) pouvait afficher une rareté différente selon l\'onglet (Index figé sur la rareté de base de l\'espèce, Sections périmée si l\'onglet était déjà ouvert au moment de la percée) au lieu de sa rareté réelle, correctement affichée dans la Collection.'},
     ], en:[

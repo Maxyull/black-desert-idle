@@ -2634,3 +2634,73 @@
     #sideMenu, .side-right { position:static; width:100%; max-width:none; }
     #sideMenu.onRight, #sideMenu.onRight ~ .side-right { order:0; }
   }
+
+  /* =====================================================================
+     Reskin visuel écran Boss (2026-07-11, port fidèle d'un mockup validé --
+     voir CLAUDE.md). Même démarche que la refonte Zone (§32) : additif
+     uniquement, structure HTML de renderBossLobbyHtml()/#bossArena
+     INCHANGÉE (voir combat/boss.js pour les 2 seuls ajouts de contenu :
+     lore par boss + quantité de matériau déjà en poche), seules les
+     couleurs/typo changent ici, plus quelques classes neuves pour le
+     lore/bandeau/récompense qui n'existaient pas avant. Réutilise les
+     tokens --s1/--s2/--dbBorder/--dbBorder2/--gold2/--green2/--red2/
+     --cream2/--cream3 déjà posés par la refonte Zone plutôt que d'en
+     introduire de nouveaux (voir palette officielle §29/§32).
+     ===================================================================== */
+  .bossHeroCard { padding:0; overflow:hidden; }
+  .bossHeroCard .bossNext {
+    border:none; border-radius:0; margin-bottom:0; padding:20px;
+    background:radial-gradient(ellipse at top left, rgba(192,64,64,.08), transparent 60%);
+  }
+  .bossHeroCard .bossNextIcon { font-size:44px; filter:drop-shadow(0 0 14px rgba(192,64,64,.35)); }
+  .bossHeroCard .bossNextName { font-family:'Cinzel',serif; font-size:16px; color:var(--gold2); }
+  /* réplique d'ambiance (BOSS_ROSTER.*.lore, voir combat/boss.js) -- purement cosmétique */
+  .bossNextLore { font-family:'Cinzel',serif; font-style:italic; font-size:11px; color:var(--cream3); margin:3px 0 4px; line-height:1.4; }
+  .bossHeroCard .bossNextTime { color:var(--cream2); }
+  /* ligne récompense garantie + quantité déjà en poche + loot rarissime (bossMatInHand, boss.js) */
+  .bossNextReward { display:flex; flex-wrap:wrap; gap:14px; font-size:11px; color:var(--cream2); margin-top:6px; }
+  .bossNextReward b { font-family:'JetBrains Mono',monospace; color:var(--gold2); font-weight:500; }
+  .bossNextReward .have { color:var(--cream3); font-size:10px; }
+  .bossHeroCard .bossNextCountdown { font-family:'JetBrains Mono',monospace; color:var(--gold2); }
+  .bossHeroCard .bossNextCountdown.live { color:var(--red2); }
+  /* bandeau "premier kill de la semaine encore disponible", désormais visible AVANT le combat
+     (voir bossFirstKillOfWeek() appelé depuis renderBossLobbyHtml, combat/boss.js) */
+  .weekBanner {
+    margin:0 20px 14px; padding:9px 14px; background:rgba(200,169,110,.1); border:1px solid var(--gold-dim);
+    border-radius:8px; font-size:11.5px; color:var(--gold2);
+  }
+  .weekBanner b { font-family:'JetBrains Mono',monospace; color:var(--gold); }
+  .bossHeroCard .bossFightBtn { margin:0 20px 20px; width:calc(100% - 40px); }
+  .bossHeroCard .admHint { margin:0 20px 12px; }
+
+  /* calendrier hebdomadaire : recoloration des classes existantes, structure inchangée */
+  .card .bossCal { margin:0 0 8px; }
+  .card .bcHead, .card .bcCell { background:var(--s2); }
+  .card .bcCell.bcEmpty { background:#141322; }
+  .card .bcHead.bcToday { background:rgba(200,169,110,.12); }
+  .card .bcCell.bcLive { background:rgba(224,80,80,.16); }
+
+  /* barre de pity (bossPityBarHtml, réutilise .admBars/.admBarRow/.admBarTrack/.admBar/.admBarVal
+     partagés avec l'admin) : scoping sous .bossRewardRules pour la rendre plus visible SEULEMENT
+     dans le lobby Boss, sans toucher au rendu .admBars par défaut utilisé ailleurs (admin). */
+  .bossRewardRules .admBars { max-width:100%; margin:10px 0 0; }
+  .bossRewardRules .admBarTrack { height:7px; background:var(--s2); border:none; border-radius:4px; }
+  .bossRewardRules .admBar { background:linear-gradient(90deg,var(--gold-dim),var(--gold)); border-radius:4px; }
+  .bossRewardRules .admBarLbl { width:auto; flex:1; color:var(--cream2); }
+  .bossRewardRules .admBarVal { color:var(--gold2); font-family:'JetBrains Mono',monospace; }
+
+  /* ===== arène : recoloration seule, layout HP bar/canvas/top panel INCHANGÉ (demande explicite,
+     voir CLAUDE.md -- pas de restructuration du combat) ===== */
+  #bossTopBar { background:var(--s1); border-bottom:1px solid var(--dbBorder); }
+  #bossName { color:var(--red2); }
+  #bossHpBarWrap { background:var(--s2); border-color:var(--dbBorder2); }
+  #bossTimer { color:var(--gold2); }
+  #bossLeaveBtn { color:var(--cream3); }
+  #bossLeaveBtn:hover { color:var(--ink); }
+  #bossPlayerHpWrap { background:var(--s1); border-color:var(--dbBorder); }
+  #bossTopPanel { background:rgba(16,16,30,.9); border-color:var(--dbBorder2); }
+  #bossTopPanel h4 { color:var(--gold2); }
+  #bossTopPanel .btpRow.me { color:var(--gold2); }
+  #bossTopPanel .btpRank { color:var(--cream3); }
+  #bossTopPanel .btpPct { color:var(--gold2); }
+  #bossTopPanel .btpDmg { color:var(--cream3); }

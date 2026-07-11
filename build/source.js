@@ -499,6 +499,7 @@ const I18N_RESOURCES = {
       "combat.boss.first_kill_week_bonus": "Premier kill de la semaine : +{{bonusPct}}%",
       "combat.boss.for_everyone": "Pour tous",
       "combat.boss.hard_zone_stone": "pierre d'optimisation de ta meilleure zone difficile",
+      "combat.boss.have_qty": "(tu en as {{qty}})",
       "combat.boss.in_label": "dans",
       "combat.boss.leave_button": "🚪 Quitter",
       "combat.boss.memory_frag_label": "Frag. mémoire",
@@ -523,6 +524,7 @@ const I18N_RESOURCES = {
       "combat.boss.victory_title": "🏆 VICTOIRE",
       "combat.boss.waiting_for_fighters": "En attente de combattants",
       "combat.boss.wave_msg": "VAGUE !",
+      "combat.boss.week_bonus_available": "📅 Premier kill de la semaine encore disponible",
       "combat.boss.weekly_calendar_title": "📅 Calendrier de la semaine",
       "combat.boss.wheel_not_this_time": "Pas cette fois — {{icon}} {{name}} attend toujours",
       "combat.boss.wheel_obtained": "Obtenu",
@@ -1355,6 +1357,7 @@ const I18N_RESOURCES = {
       "combat.boss.first_kill_week_bonus": "First kill of the week: +{{bonusPct}}%",
       "combat.boss.for_everyone": "For everyone",
       "combat.boss.hard_zone_stone": "enhancement stone from your best hard zone",
+      "combat.boss.have_qty": "(you have {{qty}})",
       "combat.boss.in_label": "in",
       "combat.boss.leave_button": "🚪 Leave",
       "combat.boss.memory_frag_label": "Memory frag.",
@@ -1379,6 +1382,7 @@ const I18N_RESOURCES = {
       "combat.boss.victory_title": "🏆 VICTORY",
       "combat.boss.waiting_for_fighters": "Waiting for fighters",
       "combat.boss.wave_msg": "WAVE!",
+      "combat.boss.week_bonus_available": "📅 First kill of the week still available",
       "combat.boss.weekly_calendar_title": "📅 Weekly calendar",
       "combat.boss.wheel_not_this_time": "Not this time — {{icon}} {{name}} still awaits",
       "combat.boss.wheel_obtained": "Obtained",
@@ -5431,6 +5435,9 @@ const BOSS_ROSTER = {
   kzarka: {
     name:{fr:'Grand Seigneur de guerre de la corruption',en:'Great Warlord of Corruption'},
     short:{fr:'Seigneur de guerre',en:'Warlord'}, icon:'👹', color:'#7a2d33',
+    
+    lore:{fr:'« Sa colère a réduit trois royaumes en cendres avant qu\'on ne le scelle sous Valencia. »',
+          en:'"His wrath reduced three kingdoms to ashes before he was sealed beneath Valencia."'},
     hp: 400000,          
     reward: 250000,      
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[8,20],
@@ -5441,6 +5448,8 @@ const BOSS_ROSTER = {
   vell: {
     name:{fr:'Vell, la Terreur des Flots',en:'Vell, Terror of the Tides'},
     short:{fr:'Vell',en:'Vell'}, icon:'🐋', color:'#2a5a78',
+    lore:{fr:'« Les pêcheurs disent qu\'elle chante encore, quelque part sous les vagues, pour appeler les navires vers le fond. »',
+          en:'"Sailors say she still sings somewhere beneath the waves, calling ships down to the deep."'},
     hp: 550000,
     reward: 400000,
     matKey:'mat_Pierre noire', matName:'Pierre noire', matIcon:ICO_MAT_NOIRE, matQty:[12,28],
@@ -5672,6 +5681,11 @@ setInterval(() => {
   const room = $a('bossRoom');
   if (room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active) refreshLiveBoss();
 }, 20000);
+
+function bossMatInHand(matKey) {
+  if (!matKey || !Array.isArray(INV)) return 0;
+  return INV.reduce((sum, s) => s && s.key === matKey ? sum + (s.qty || 0) : sum, 0);
+}
 function renderBossLobbyHtml() {
   const occ = nextBossOccurrence();
   const now = Date.now();
@@ -5692,15 +5706,28 @@ function renderBossLobbyHtml() {
             `<span class="bossNextHpTxt">${alreadyDead ? i18next.t('combat:combat.boss.status_defeated') : pct.toFixed(1)+'%'}</span></div>`;
         })()
       : '';
+    
+    const haveQty = bossMatInHand(b.matKey);
+    const rewardLineHtml = `<div class="bossNextReward">` +
+      `<span>${b.matIcon ? b.matIcon+' ' : ''}${tr(b.matName)} · <b>${b.matQty[0]}-${b.matQty[1]}</b> <span class="have">${i18next.t('combat:combat.boss.have_qty', { qty: haveQty })}</span></span>` +
+      (b.rareLoot ? `<span>${b.rareLoot.icon} ${tr(b.rareLoot.name)} · <b>${Math.round(b.rareLoot.ch*100)}%</b></span>` : '') +
+      `</div>`;
+    
+    const weekBannerHtml = bossFirstKillOfWeek(occ.boss)
+      ? `<div class="weekBanner">${i18next.t('combat:combat.boss.week_bonus_available')} · ${i18next.t('combat:combat.boss.first_kill_week_bonus', { bonusPct: Math.round((BOSS_FIRST_KILL_WEEK_BONUS-1)*100) })}</div>`
+      : '';
     nextHtml = `<div class="bossNext">
       <div class="bossNextIcon">${b.icon}</div>
       <div class="bossNextInfo">
         <div class="bossNextName">${b.name[LANG]}</div>
+        ${b.lore ? `<div class="bossNextLore">${b.lore[LANG]}</div>` : ''}
         <div class="bossNextTime">${alreadyDead ? i18next.t('combat:combat.boss.already_defeated_by_others') : occ.live ? i18next.t('combat:combat.boss.available_now') : when}</div>
+        ${rewardLineHtml}
         ${hpBarHtml}
       </div>
       ${cd}
-    </div>` +
+    </div>
+    ${weekBannerHtml}` +
     (alreadyDead
       ? `<div class="admHint">${i18next.t('combat:combat.boss.already_defeated_hint')}</div>` +
         `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.already_defeated_button')}</button>`
@@ -5741,12 +5768,16 @@ function renderBossLobbyHtml() {
   
   const legend = Object.values(BOSS_ROSTER).map(b => `<span class="bcLegend">${b.icon} ${b.name[LANG]}</span>`).join('');
   
-  return `${nextHtml}
-    <h3>${i18next.t('combat:combat.boss.weekly_calendar_title')}</h3>
-    ${calHtml}
-    <div class="bcLegendRow">${legend}</div>
-    <div class="admSummary">${i18next.t('combat:combat.boss.schedule_note')}</div>
-    ${bossRewardRulesHtml()}`;
+  return `<div class="card bossHeroCard">${nextHtml}</div>
+    <div class="card" style="margin-top:14px">
+      <h3>${i18next.t('combat:combat.boss.weekly_calendar_title')}</h3>
+      ${calHtml}
+      <div class="bcLegendRow">${legend}</div>
+      <div class="admSummary">${i18next.t('combat:combat.boss.schedule_note')}</div>
+    </div>
+    <div class="card" style="margin-top:14px">
+      ${bossRewardRulesHtml()}
+    </div>`;
 }
 function wireBossLobby() {
   const btn = $a('bossFightBtn');
