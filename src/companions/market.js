@@ -321,7 +321,7 @@ async function withdrawMyCounter(counterId){
   catch(e){ toast('❌', marketMkErr(e)); }
 }
 async function declineMarketCounter(counterId){
-  try{ const sb=marketSb(); const { error } = await sb.rpc('decline_pet_trade_counter', { p_counter_id: counterId }); if(error) throw error; toast('✕','Contre-offre refusée.'); renderMarketMine(); }
+  try{ const sb=marketSb(); const { error } = await sb.rpc('decline_pet_trade_counter', { p_counter_id: counterId }); if(error) throw error; toast('✕','Contre-offre refusée.'); renderMarketMine(); updateMarketBadge(); }
   catch(e){ toast('❌', marketMkErr(e)); }
 }
 async function acceptMarketCounter(counterId){
@@ -332,6 +332,7 @@ async function acceptMarketCounter(counterId){
     if(error) throw error;
     toast('✨','Échange conclu !');
     await claimMarketDeliveries();
+    updateMarketBadge();
     renderMarketMine();
   }catch(e){ toast('❌', marketMkErr(e)); }
 }
@@ -370,5 +371,28 @@ async function pollMarketNotifications(){
     await sb.rpc('mark_pet_trade_notifications_read');
   }catch(e){}
 }
-setTimeout(()=>{ claimMarketDeliveries(); pollMarketNotifications(); }, 6000);
-setInterval(()=>{ claimMarketDeliveries(); pollMarketNotifications(); }, 90000);
+// badge d'attention sur l'onglet Marché (2026-07-11, demande explicite : "Afficher le bon onglet
+// de presence pour le market") -- seul onglet du module sans indicateur (tb0/tb2/tb3/tb7 existent
+// déjà pour Éclosion/Collection/Nourrir/Progression, voir companions.html) alors que le Marché a
+// de vraies notifications asynchrones (contre-offres reçues sur mes contrats) -- compte les
+// contre-offres en attente sur MES offres ouvertes, même info que la liste détaillée de l'onglet
+// "Mes contrats" (renderMarketMine()), juste résumée en un chiffre visible sans ouvrir l'onglet.
+async function updateMarketBadge(){
+  const badge = document.getElementById('tb-market');
+  if(!badge) return;
+  if(!marketReady()){ badge.textContent=''; badge.classList.remove('alert'); return; }
+  try{
+    const sb = marketSb(); const me = marketUser();
+    const { data: myOpenOffers } = await sb.from('pet_trade_offers').select('id').eq('owner_user_id', me.id).eq('status','open');
+    let pendingCount = 0;
+    if(myOpenOffers && myOpenOffers.length){
+      const ids = myOpenOffers.map(o=>o.id);
+      const { count } = await sb.from('pet_trade_counters').select('id', { count: 'exact', head: true }).in('offer_id', ids).eq('status','pending');
+      pendingCount = count || 0;
+    }
+    badge.textContent = pendingCount>0 ? String(pendingCount) : '';
+    badge.classList.toggle('alert', pendingCount>0);
+  }catch(e){}
+}
+setTimeout(()=>{ claimMarketDeliveries(); pollMarketNotifications(); updateMarketBadge(); }, 6000);
+setInterval(()=>{ claimMarketDeliveries(); pollMarketNotifications(); updateMarketBadge(); }, 90000);

@@ -430,6 +430,44 @@ par Supabase le temps de la transaction.
 - Tests : `tests/companions.spec.js` (`rollAndCreatePet assigns a stable uid...`,
   `migratePetUidV1 assigns a uid to legacy pets...`, `Marché tab renders its 3 sub-tabs...`).
 
+**Corrections + onboarding (2026-07-11, demande explicite, 7 points rapportés d'un coup)** :
+- **Onboarding** (`onboarding.js`, nouveau) : modal séquentiel autonome (5 étapes, "Passer" à tout
+  moment), affiché UNE SEULE FOIS par navigateur via une clé localStorage DÉDIÉE
+  (`velia_idle_pets_onboarding_seen_v1`), indépendante de la sauvegarde de progression -- un reset
+  de save ne le redéclenche pas, et inversement. Ne peut pas réutiliser `TUTORIAL_STEPS`/
+  `startTutorial()` du jeu principal (scope JS totalement séparé, iframe isolée, voir plus haut).
+  ⚠️ Piège rencontré en l'ajoutant : ce modal s'ouvre au tout premier chargement du module dans
+  CHAQUE contexte de test Playwright (jamais vu = jamais marqué) et bloquait tous les clics
+  suivants dans l'iframe -- `signInForTest()` (`tests/companions.spec.js`) pré-marque désormais ce
+  flag pour tous les tests existants.
+- **Bug corrigé — auto-nourrissage** (`ticks.js`) : le filtre `d.feed>0` seul incluait Pierre de
+  Caphras/Dopi (feed:14-45) -- l'auto-nourrissage pouvait silencieusement griller ces ressources
+  rares au lieu de la nourriture commune (contrairement au nourrissage manuel, `feed.js`, qui les
+  exclut déjà). Même exclusion reprise. Manquait aussi le rafraîchissement de l'onglet Nourrir
+  (`renderFeed()` jamais rappelée depuis le tick).
+- **Bug corrigé — GS périmé entre Sections/Collection** (`hatch.js:ST()`) : même classe de bug que
+  le correctif historique de `ST(1)` (timer d'éclosion figé, voir plus haut) -- `ST(2)`/`ST(3)` ne
+  rappelaient jamais `renderSecDetail()`/`renderGrid()` au changement d'onglet. Un tier-up (donc un
+  nouveau GS) survenu en arrière-plan pendant qu'on est sur un AUTRE onglet restait invisible en
+  revenant sur Sections/Collection tant qu'aucune autre action ne forçait un `renderAll()` complet.
+- **Bug corrigé — rattrapage hors-ligne jamais déclenché après une longue absence** (`save.js`) :
+  `applyOfflineProgress()` n'était appelée qu'au chargement de l'iframe (`loadGame()`). Un onglet
+  resté ouvert/caché longtemps (mise en veille, navigateur jamais rouvert) sans jamais recharger la
+  page n'avait donc AUCUN moyen de déclencher le rattrapage. Ajout d'un listener `visibilitychange`
+  (même pattern que `showAwayLootSummaryIfAny()` du jeu principal, `core/game-core.js`) -- le calcul
+  lui-même (60 Silver/h/pet, 3 objets communs/h, plafond 24h) a été vérifié correct par simulation,
+  seul le déclenchement manquait.
+- **Odds d'éclosion T5/Ancestral vérifiées, PAS un bug** : simulation de 20 000 tirages par type
+  d'œuf -- les taux observés correspondent aux taux déclarés (`EGG_TYPES`/`TARGETED_EGG_DEFS`,
+  `economy.js`) à la marge d'erreur statistique près (0.83% œuf de base, jusqu'à 2% pour l'œuf
+  Ancestral ciblé). Si le taux ressenti en jeu semble élevé, c'est un effet de `TEST_BALANCE_DIVISOR`
+  (coûts quasi gratuits en mode test, permettant d'enchaîner beaucoup d'éclosions vite) plutôt qu'un
+  bug de tirage -- question de rééquilibrage à trancher séparément, pas corrigée ici sans confirmation.
+- **Badge d'attention sur l'onglet Marché** (`market.js`) : seul onglet du module sans indicateur
+  (`tb0`/`tb2`/`tb3`/`tb7` existent déjà pour Éclosion/Collection/Nourrir/Progression) alors que le
+  Marché a de vraies notifications asynchrones -- `updateMarketBadge()` compte les contre-offres en
+  attente sur mes offres ouvertes, même info que l'onglet "Mes contrats" mais résumée en un chiffre.
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2
@@ -483,8 +521,11 @@ par Supabase le temps de la transaction.
     `vendor/three/three-bridge.js` (module, asynchrone — géré via l'event `three-ready`). Ordre
     non strictement requis vis-à-vis des autres scripts classiques, placé par lisibilité juste
     avant `main.js`.
-22. `main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
-    (`loadGame()` puis `checkDailyStreak()`/`renderAll()`).
+22. `onboarding.js` (2026-07-11) — modal de première visite, autonome (voir plus haut). N'a besoin
+    que de `OM()`/`CM()` (`hatch.js`, déjà chargé) et de `localStorage` — ordre non strictement
+    requis, placé juste avant `main.js` qui l'appelle (`maybeShowOnboarding()`).
+23. `main.js` — **doit rester en dernier** : `renderAll()` et le bootstrap final
+    (`loadGame()` puis `checkDailyStreak()`/`renderAll()`/`maybeShowOnboarding()`).
 
 ### `vendor/three/` — Three.js vendorisé en local (pas de CDN, voir plus haut)
 

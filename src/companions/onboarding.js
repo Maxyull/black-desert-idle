@@ -1,0 +1,53 @@
+// ═══ ONBOARDING (2026-07-11, demande explicite : "Onboarding pour le menu Compagnon") ═══════════
+// Ce module est isolé (iframe, scope global propre -- voir CLAUDE.md §28) : il ne peut PAS
+// réutiliser le système de tutoriel du jeu principal (TUTORIAL_STEPS/startTutorial(),
+// backend/game-supabase.js, qui vit dans un scope JS totalement différent). Onboarding autonome,
+// même esprit (modal séquentiel, "Passer" à tout moment) mais entièrement propre à ce module.
+// Affiché UNE SEULE FOIS par navigateur, indépendamment de la sauvegarde de progression (clé
+// localStorage dédiée, distincte de 'velia_idle_pets_save') -- un "Reset" de la sauvegarde ne doit
+// pas re-déclencher l'onboarding à chaque fois, ni l'inverse (voir maybeShowOnboarding()).
+const ONBOARDING_STORAGE_KEY = 'velia_idle_pets_onboarding_seen_v1';
+
+const ONBOARDING_STEPS = [
+  { ico:'🐾', title:'Bienvenue dans le module Compagnons', body:'Élève des familiers qui travaillent pour toi en tâche de fond — même quand tu n\'es pas sur cet onglet. Ce guide rapide te montre la boucle de base.' },
+  { ico:'🥚', title:'Éclosion', body:'Un œuf gratuit se prépare automatiquement (voir le compte à rebours en haut). Ouvre-le dans l\'onglet Éclosion pour obtenir un familier de rareté aléatoire, de Commun à Ancestral.' },
+  { ico:'🗺️', title:'Sections', body:'Chaque section (Minage, Bûcheron, Combat...) accepte UN SEUL familier déployé à la fois. Une fois déployé, il loot en continu — même quand tu es sur un autre onglet.' },
+  { ico:'📦', title:'Collection & Fusion', body:'Retrouve tous tes familiers dans Collection. Fusionnes-en deux pour obtenir un résultat plus fort (meilleures stats, palier +1 garanti) — la vraie façon de progresser sur le long terme.' },
+  { ico:'🍖', title:'Nourrir', body:'Un familier déployé perd faim avec le temps et arrête de looter s\'il est affamé. Nourris-le manuellement ou active l\'auto-nourrissage dans l\'onglet Nourrir.' },
+  { ico:'🔄', title:'Marché', body:'Échange tes familiers avec d\'autres joueurs contre d\'autres familiers ou du Silver — un vrai échange serveur, distinct de ta sauvegarde locale.' },
+];
+
+let onbIdx = 0;
+
+function renderOnboarding(){
+  const step = ONBOARDING_STEPS[onbIdx];
+  const isLast = onbIdx === ONBOARDING_STEPS.length - 1;
+  document.getElementById('onboarding-body').innerHTML = `
+    <div style="text-align:center;font-size:40px;margin-bottom:10px">${step.ico}</div>
+    <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);text-align:center;margin-bottom:10px">${step.title}</div>
+    <p style="font-size:12px;color:var(--cream2);line-height:1.5;text-align:center;margin-bottom:16px">${step.body}</p>
+    <div style="display:flex;align-items:center;justify-content:center;gap:4px;margin-bottom:14px">
+      ${ONBOARDING_STEPS.map((_,i)=>`<span style="width:6px;height:6px;border-radius:999px;background:${i===onbIdx?'var(--gold)':'var(--border2)'}"></span>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost" style="flex:1" onclick="onbSkip()">Passer</button>
+      ${onbIdx>0?`<button class="btn btn-ghost" style="flex:1" onclick="onbPrev()">◀ Précédent</button>`:''}
+      <button class="btn btn-gold" style="flex:1" onclick="${isLast?'onbFinish()':'onbNext()'}">${isLast?'C\'est parti !':'Suivant ▶'}</button>
+    </div>`;
+}
+function onbNext(){ onbIdx=Math.min(ONBOARDING_STEPS.length-1, onbIdx+1); renderOnboarding(); }
+function onbPrev(){ onbIdx=Math.max(0, onbIdx-1); renderOnboarding(); }
+function onbSkip(){ closeOnboarding(); }
+function onbFinish(){ closeOnboarding(); }
+function closeOnboarding(){
+  try{ localStorage.setItem(ONBOARDING_STORAGE_KEY, '1'); }catch(e){}
+  CM('onboarding-modal');
+}
+function maybeShowOnboarding(){
+  let seen = false;
+  try{ seen = localStorage.getItem(ONBOARDING_STORAGE_KEY) === '1'; }catch(e){}
+  if(seen) return;
+  onbIdx = 0;
+  renderOnboarding();
+  OM('onboarding-modal');
+}
