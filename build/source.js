@@ -751,6 +751,7 @@ const I18N_RESOURCES = {
       "progression.notifications.tab_all": "Tout",
       "progression.notifications.title": "🔔 Notifications",
       "progression.patch_notes.already_read_title": "Déjà lu",
+      "progression.patch_notes.admin_badge": "🛡 Admin",
       "progression.patch_notes.before_after_title": "Voir avant/après",
       "progression.patch_notes.changes_count_suffix": " changements",
       "progression.patch_notes.clear_all_filters": "Tout effacer",
@@ -1573,6 +1574,7 @@ const I18N_RESOURCES = {
       "progression.notifications.tab_all": "All",
       "progression.notifications.title": "🔔 Notifications",
       "progression.patch_notes.already_read_title": "Already read",
+      "progression.patch_notes.admin_badge": "🛡 Admin",
       "progression.patch_notes.before_after_title": "See before/after",
       "progression.patch_notes.changes_count_suffix": " changes",
       "progression.patch_notes.clear_all_filters": "Clear all",
@@ -7397,7 +7399,8 @@ function PneCommentThread(props) {
             return pneH('div', { key: c.id, style: { display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 6 } },
               pneH('p', { style: { fontSize: 10.5, color: PNE_V.text2, margin: 0, wordBreak: 'break-word' } },
                 pneH('span', { style: { fontWeight: 600, color: mine ? PNE_V.gold2 : PNE_V.blue } }, c.author), ' ',
-                pneH('span', { style: { color: PNE_V.muted } }, new Date(c.created_at).toLocaleDateString(i18next.t('progression:progression.patch_notes.date_locale'))),
+                
+                pneH('span', { style: { color: PNE_V.muted } }, typeof fmtNotifTime === 'function' ? fmtNotifTime(new Date(c.created_at).getTime()) : new Date(c.created_at).toLocaleDateString(i18next.t('progression:progression.patch_notes.date_locale'))),
                 pneH('br'), c.text),
               pneH('div', { style: { display: 'flex', gap: 4, flexShrink: 0 } },
                 !mine ? pneH('button', { className: 'pneBtn', onClick: () => report(c.id), title: i18next.t('progression:progression.patch_notes.report_title'), style: { background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 10 } }, '🚩') : null,
@@ -7467,13 +7470,14 @@ function PneEntryCard(props) {
   },
     pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6 } },
       pneH('span', { style: { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 20, height: 20, borderRadius: 4, flexShrink: 0, fontSize: 11, background: cat.color + '22', border: `1px solid ${cat.color}55` } }, cat.icon),
-      pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: cat.color } }, cat[LANG]),
-      pneH('span', { style: { fontSize: 12, fontWeight: 700, color: PNE_V.cream, flex: 1 } }, line.tx, line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2 } }, i18next.t('progression:progression.patch_notes.removed_badge')) : null),
+      pneH('span', { style: { fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.03em', color: cat.color, flex: 1 } }, cat[LANG], line.removed ? pneH('span', { style: { marginLeft: 6, fontSize: 9, color: PNE_V.red2, textTransform: 'none', fontWeight: 600 } }, i18next.t('progression:progression.patch_notes.removed_badge')) : null),
       
       !readPatches.has(p.v)
         ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2, flexShrink: 0 }, title: i18next.t('progression:progression.patch_notes.new_badge_title') })
         : pneH('span', { style: { fontSize: 8, fontWeight: 700, padding: '1px 5px', borderRadius: 3, flexShrink: 0, color: PNE_V.red, border: `1.5px solid ${PNE_V.red}`, transform: 'rotate(-8deg)', fontFamily: 'monospace', opacity: 0.6 }, title: i18next.t('progression:progression.patch_notes.already_read_title') }, i18next.t('progression:progression.patch_notes.read_badge')),
       line.img ? pneH('button', { className: 'pneBtn', onClick: () => openPatchImgCompare(line.img.before, line.img.after), title: i18next.t('progression:progression.patch_notes.before_after_title'), style: { background: 'none', border: 'none', cursor: 'pointer', fontSize: 13 } }, '🖼️') : null),
+    
+    pneH('p', { style: { fontSize: 12, lineHeight: 1.5, color: PNE_V.cream, margin: 0 } }, line.tx),
     tags.length > 0 ? pneH('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4 } },
       tags.map((t, i) => pneH('span', { key: i, title: t.title, style: { fontSize: 9, fontWeight: 600, padding: '1px 6px', borderRadius: 999, border: `1px solid ${t.color}`, color: t.color } }, t.label))) : null,
     pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 } },
@@ -7620,22 +7624,36 @@ function PatchNotesApp(props) {
          2026-07-11 : les chips de catégorie s'empilaient en pleine largeur au lieu de wrapper comme
          la maquette). Neutralisé ici plutôt que sur chaque bouton un par un. */
       #patchNotesModalRoot button { width: auto; margin: 0; }
+      /* scrollbar thème (2026-07-11, demande explicite "scroll bleu foncé comme le theme") --
+         .pneScroll était déjà posée sur la timeline mais sans règle correspondante, donc le
+         navigateur affichait sa scrollbar par défaut au lieu de suivre la palette du panneau. */
+      .pneScroll::-webkit-scrollbar { width: 8px; }
+      .pneScroll::-webkit-scrollbar-track { background: ${PNE_V.bg}; border-radius: 8px; }
+      .pneScroll::-webkit-scrollbar-thumb { background: ${PNE_V.border}; border-radius: 8px; }
+      .pneScroll::-webkit-scrollbar-thumb:hover { background: ${PNE_V.border2}; }
+      .pneScroll { scrollbar-width: thin; scrollbar-color: ${PNE_V.border} ${PNE_V.bg}; }
     `),
     pneH('div', { ref: dialogRef, style: { width: '100%', maxWidth: 640, borderRadius: 10, border: `1px solid ${PNE_V.border}`, background: PNE_V.card, overflow: 'hidden', display: 'flex', flexDirection: 'column' } },
       
       pneH('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderBottom: `1px solid ${PNE_V.border}` } },
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
           pneH('span', { style: { display: 'inline-block', width: 4, height: 16, borderRadius: 2, background: PNE_V.pink } }),
-          pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, i18next.t('progression:progression.patch_notes.panel_title'))),
+          pneH('h2', { style: { fontSize: 13, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: PNE_V.pink, margin: 0 } }, i18next.t('progression:progression.patch_notes.panel_title')),
+          
+          isStaff ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 7px', borderRadius: 4, textTransform: 'uppercase', letterSpacing: '.03em', color: PNE_V.gold, border: `1px solid ${PNE_V.gold}55`, background: PNE_V.gold + '1a' } }, i18next.t('progression:progression.patch_notes.admin_badge')) : null),
         pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 8 } },
           isStaff ? pneH('button', { className: 'pneBtn', onClick: () => setControversyView(v => !v), title: i18next.t('progression:progression.patch_notes.controversy_sort_title'),
             style: { fontSize: 10, fontWeight: 600, padding: '4px 8px', borderRadius: 4, cursor: 'pointer', border: `1px solid ${controversyView ? PNE_V.red : PNE_V.border}`, background: controversyView ? 'rgba(192,80,60,.13)' : 'transparent', color: controversyView ? PNE_V.red2 : PNE_V.muted } }, '📉 ' + i18next.t('progression:progression.patch_notes.controversy_label')) : null,
-          unreadNow > 0 ? pneH('button', { className: 'pneBtn', onClick: markAllRead, style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', color: PNE_V.green, cursor: 'pointer' } }, i18next.t('progression:progression.patch_notes.mark_all_read')) : null,
+          
+          pneH('button', { className: 'pneBtn', onClick: markAllRead, disabled: unreadNow === 0,
+            style: { fontSize: 10, fontWeight: 600, background: 'none', border: 'none', cursor: unreadNow > 0 ? 'pointer' : 'default', color: unreadNow > 0 ? PNE_V.green : PNE_V.muted2 } }, i18next.t('progression:progression.patch_notes.mark_all_read')),
           pneH('button', { className: 'pneBtn', onClick: props.onClose, 'aria-label': i18next.t('progression:progression.patch_notes.close_aria'), style: { width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'none', border: 'none', color: PNE_V.muted, cursor: 'pointer', fontSize: 14 } }, '✕'))),
 
       pneH('div', { style: { padding: '12px 16px 0' } },
-        pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, border: `1px solid ${PNE_V.border}`, background: PNE_V.bg } },
-          pneH('span', { style: { fontSize: 12, color: PNE_V.muted } }, '🔎'),
+        pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 6, padding: '5px 10px', borderRadius: 6, border: `1px solid ${PNE_V.border}`, background: 'transparent' } },
+          
+          pneH('svg', { width: 13, height: 13, viewBox: '0 0 24 24', fill: 'none', stroke: PNE_V.muted, strokeWidth: 2, strokeLinecap: 'round', style: { flexShrink: 0 } },
+            pneH('circle', { cx: 11, cy: 11, r: 7 }), pneH('line', { x1: 21, y1: 21, x2: 16.65, y2: 16.65 })),
           pneH('input', { value: query, onChange: e => setQuery(e.target.value), placeholder: i18next.t('progression:progression.patch_notes.search_placeholder'),
             style: { flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: PNE_V.textMain } }))),
 
