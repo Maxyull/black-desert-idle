@@ -1364,6 +1364,39 @@ applyMenuCollapse();
 // ============================================================
 const CURRENT_VERSION = PATCH_NOTES[0].v;
 $a('clientVersionNum').textContent = CURRENT_VERSION;
+
+// ============================================================
+// MONITORING D'ERREURS CLIENT (2026-07-21, repo-audit-todo.md point 18) — sans dépendance
+// externe (pas de Sentry, option minimale) : logue les erreurs JS/promesses rejetées non gérées
+// dans public.client_errors (supabase/migrations/20260721150000_client_error_logging.sql),
+// jusque-là invisible côté développeur sauf signalement manuel Discord. Throttlé à
+// CLIENT_ERROR_MAX_PER_SESSION (évite qu'une boucle d'erreur répétée spamme la table) ; hors
+// ligne/sans sb : no-op silencieux (même pattern que les autres appels réseau du fichier, voir
+// CLAUDE.md §11 politique tests en ligne + hors ligne).
+// ============================================================
+const CLIENT_ERROR_MAX_PER_SESSION = 5;
+let clientErrorCount = 0;
+function reportClientError(message, stack) {
+  if (isOffline || !sb || clientErrorCount >= CLIENT_ERROR_MAX_PER_SESSION) return;
+  clientErrorCount++;
+  try {
+    sb.from('client_errors').insert({
+      message: String(message || '').slice(0, 2000),
+      stack: stack ? String(stack).slice(0, 4000) : null,
+      url: location.href,
+      game_version: typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : null,
+      user_agent: navigator.userAgent,
+    }).then(() => {}, () => {});
+  } catch (e) {}
+}
+window.addEventListener('error', e => {
+  reportClientError(e.message, e.error && e.error.stack);
+});
+window.addEventListener('unhandledrejection', e => {
+  const reason = e.reason;
+  reportClientError(reason && reason.message ? reason.message : String(reason), reason && reason.stack);
+});
+
 let updateToastShown = false;
 async function checkForUpdate() {
   if (updateToastShown) return;

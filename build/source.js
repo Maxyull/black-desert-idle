@@ -11539,6 +11539,30 @@ applyMenuCollapse();
 
 const CURRENT_VERSION = PATCH_NOTES[0].v;
 $a('clientVersionNum').textContent = CURRENT_VERSION;
+
+const CLIENT_ERROR_MAX_PER_SESSION = 5;
+let clientErrorCount = 0;
+function reportClientError(message, stack) {
+  if (isOffline || !sb || clientErrorCount >= CLIENT_ERROR_MAX_PER_SESSION) return;
+  clientErrorCount++;
+  try {
+    sb.from('client_errors').insert({
+      message: String(message || '').slice(0, 2000),
+      stack: stack ? String(stack).slice(0, 4000) : null,
+      url: location.href,
+      game_version: typeof CURRENT_VERSION !== 'undefined' ? CURRENT_VERSION : null,
+      user_agent: navigator.userAgent,
+    }).then(() => {}, () => {});
+  } catch (e) {}
+}
+window.addEventListener('error', e => {
+  reportClientError(e.message, e.error && e.error.stack);
+});
+window.addEventListener('unhandledrejection', e => {
+  const reason = e.reason;
+  reportClientError(reason && reason.message ? reason.message : String(reason), reason && reason.stack);
+});
+
 let updateToastShown = false;
 async function checkForUpdate() {
   if (updateToastShown) return;

@@ -3194,6 +3194,35 @@
     assert('checkPlayerSession() ne pose sessionLocked=true que sur data===false explicite (jamais sur error)',
       /if\s*\(error\)\s*return/.test(src) && src.includes('data === false'));
   }
+  // reportClientError() (2026-07-21, repo-audit-todo.md point 18) : monitoring d'erreurs client
+  // minimal (window.onerror/unhandledrejection -> public.client_errors). Garde-fou statique
+  // (isOffline/!sb) même pattern que les autres fonctions réseau ci-dessus, + test dynamique du
+  // throttle (jamais plus de CLIENT_ERROR_MAX_PER_SESSION tentatives réseau par session, sinon une
+  // boucle d'erreur répétée spammerait la table).
+  function testReportClientErrorGuardsOfflineAndMissingClient() {
+    if (typeof reportClientError !== 'function') return;
+    const src = reportClientError.toString();
+    assert('reportClientError() ignore l\'appel si isOffline est vrai', src.includes('isOffline'));
+    assert('reportClientError() ignore l\'appel si sb est absent (pas encore initialisé)', src.includes('!sb'));
+    assert('reportClientError() respecte un plafond par session (CLIENT_ERROR_MAX_PER_SESSION)',
+      src.includes('CLIENT_ERROR_MAX_PER_SESSION'));
+  }
+  function testReportClientErrorThrottlesAfterMaxPerSession() {
+    if (typeof reportClientError !== 'function' || typeof CLIENT_ERROR_MAX_PER_SESSION === 'undefined') return;
+    const savedCount = clientErrorCount, savedOffline = isOffline, savedSb = sb;
+    let insertCalls = 0;
+    isOffline = false;
+    sb = { from: () => ({ insert: () => { insertCalls++; return { then: (res) => { res && res(); return { catch: () => {} }; } }; } }) };
+    try {
+      clientErrorCount = CLIENT_ERROR_MAX_PER_SESSION - 1;
+      reportClientError('test error 1'); // dernier appel autorisé (compteur atteint le plafond)
+      reportClientError('test error 2'); // doit être ignoré (plafond déjà atteint)
+      assert('reportClientError() n\'insère plus une fois CLIENT_ERROR_MAX_PER_SESSION atteint',
+        insertCalls === 1, `insertCalls=${insertCalls}`);
+    } finally {
+      clientErrorCount = savedCount; isOffline = savedOffline; sb = savedSb;
+    }
+  }
 
   // ---------- i18n (2026-07-11, voir docs/I18N_PLAN.md/CLAUDE.md §31) ----------
   // Garde-fous complémentaires à scripts/check-missing-translations.js (qui tourne côté Node, hors
@@ -3409,6 +3438,8 @@
     testOfflineCacheRoundTripsPerUserAndTracksPendingSync();
     testSaveToCloudGuardsSessionLockAndOffline();
     testCheckPlayerSessionNeverLocksOnNetworkFailure();
+    testReportClientErrorGuardsOfflineAndMissingClient();
+    testReportClientErrorThrottlesAfterMaxPerSession();
     testCheckPlayerSessionRequiresSuccessfulClaimFirst();
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
     testReconnectModalWrapperScrollsInsteadOfClipping();
