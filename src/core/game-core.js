@@ -15,6 +15,7 @@ const $a = id => document.getElementById(id);
 // explicite : "met en valeur le changement de XP/LOOT"). uiTextScale() compense en agrandissant les
 // polices dans le repère du canvas d'autant que l'affichage réel a rétréci, pour une taille visuelle
 // ~constante à l'écran quelle que soit la largeur ; plafonné pour rester lisible sans être absurde.
+/** @returns {number} facteur d'agrandissement du texte dessiné sur le canvas (1-3.2), compense le rétrécissement CSS pour une taille visuelle ~constante à l'écran. */
 function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth || 1240))); }
 // détecte un client mobile/tablette (2026-07-05, adaptation mobile) : sert à choisir un état
 // replié par DÉFAUT pour les panneaux flottants (menu, chat, suivi) qui se chevauchent sinon sur un
@@ -167,6 +168,14 @@ const S = {
 // queueSilverLedger, game-supabase.js), pour ne plus jamais pouvoir modifier l'un sans l'autre.
 // category : identifiant court et STABLE (ex: 'loot','potion','sell','quest','achievement',
 // 'welcome','admin_test') -- alimente l'onglet Admin "Silver" (tableau + graphique par catégorie).
+/**
+ * Point d'entrée UNIQUE pour toute variation de silver côté client — centralise S.silver/
+ * S.silverEarned ET la journalisation (queueSilverLedger).
+ * @param {number} delta - variation de silver (positive = gain, négative = dépense).
+ * @param {string} category - identifiant court et STABLE ('loot','potion','sell','quest',
+ *   'achievement','welcome','admin_test'...), alimente l'onglet Admin Silver.
+ * @param {string} [note] - contexte libre, transmis tel quel à queueSilverLedger.
+ */
 function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
@@ -181,7 +190,14 @@ function addSilver(delta, category, note) {
   if (delta > 0 && category === 'loot') S.tokenSilverEarned = (S.tokenSilverEarned||0) + delta;
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }
-// suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le classement)
+/**
+ * Suit combien de fois chaque objet a été ramassé (pour "meilleur objet farmé" dans le
+ * classement), et accumule dans awayLootCounts si l'onglet est en arrière-plan (résumé au retour).
+ * @param {string} name - nom de l'objet ramassé.
+ * @param {string} color - couleur d'affichage (utilisée par le résumé au retour).
+ * @param {number} val - valeur silver de référence (sert à trouver le "meilleur drop").
+ * @param {string} kind - catégorie de l'objet ('trash', 'gear', 'jewel'...).
+ */
 function trackLoot(name, color, val, kind) {
   S.lootByItem[name] = (S.lootByItem[name]||0) + 1;
   if (document.hidden) {
@@ -190,6 +206,7 @@ function trackLoot(name, color, val, kind) {
     if ((val||0) > awayLootCounts[name].val) awayLootCounts[name].val = val;
   }
 }
+/** @returns {{name:string, count:number}|null} objet le plus ramassé (S.lootByItem), ou null si aucun loot. */
 function bestFarmedItem() {
   let best = null, bestN = 0;
   for (const name in S.lootByItem) if (S.lootByItem[name] > bestN) { best = name; bestN = S.lootByItem[name]; }
@@ -227,6 +244,14 @@ let awayLevelBefore = 1, awayPercentBefore = 0;
 // sécurité si ce taux était anormalement élevé.
 const OFFLINE_CATCHUP_CAP_HOURS = 24;
 const OFFLINE_CATCHUP_MIN_HOURS = 0.05; // ~3 min
+/**
+ * Rattrapage silver pour le temps réellement écoulé hors-ligne (navigateur fermé/veille OS),
+ * complément du rattrapage "onglet en arrière-plan" (awaySilverGained). Taux plat = record perso
+ * bestSilverPerHour de la sauvegarde chargée, pas de simulation tick par tick — XP/loot
+ * volontairement pas simulés (pas de taux fiable équivalent).
+ * @param {object} data - sauvegarde chargée, lit data.savedAt et data.S.bestSilverPerHour.
+ * @returns {number} silver à créditer, 0 si aucun taux connu ou absence sous OFFLINE_CATCHUP_MIN_HOURS.
+ */
 function computeOfflineCatchupSilver(data) {
   if (!data || !data.savedAt) return 0;
   const rate = (data.S && data.S.bestSilverPerHour) || 0;
@@ -250,6 +275,12 @@ document.addEventListener('visibilitychange', () => {
 // objets (couleur réelle par palier), record perso À VIE (bestAfkSessionSilver) et l'historique
 // des sessions passées (Supabase, get_afk_history). Ne se déclenche que s'il s'est VRAIMENT passé
 // quelque chose (silver ou item), comme avant.
+/**
+ * Affiche le modal de reconnexion ("Bon retour") si du silver/loot s'est accumulé pendant que
+ * l'onglet était en arrière-plan (awaySilverGained/awayLootCounts) — no-op sinon. Bascule le
+ * record perso bestAfkSessionSilver si dépassé, journalise la session (recordAfkSession), puis
+ * remet les compteurs "away" à zéro.
+ */
 function showAwayLootSummaryIfAny() {
   if (awaySilverGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
   if (typeof openReconnectModal !== 'function' || !$a('reconnectModalRoot')) {
@@ -326,6 +357,7 @@ function compendiumBagHasName(name) { return COMPENDIUM_BAG.some(s => s && s.nam
 // l'instant (les suivants restent verrouillés 🔒, comme les futures cases RNG/Consommable ailleurs).
 const VELIA_CHEST = new Array(INV_SIZE).fill(null);
 const VELIA_CHEST_OPEN = 20;
+/** @param {object} obj - item à protéger (copié, pas référencé). @returns {boolean} vrai si placé, faux si COMPENDIUM_BAG plein. */
 function compendiumBagAdd(obj) {
   const idx = COMPENDIUM_BAG.findIndex(s => s === null);
   if (idx === -1) return false;
@@ -339,6 +371,14 @@ function compendiumBagAdd(obj) {
 // du sac principal est plus enchanté que celui déjà protégé, il PREND SA PLACE (swap) — l'ancien
 // exemplaire protégé (souvent un +0) retourne dans le sac principal, jamais perdu ni détruit. Ne
 // touche JAMAIS l'équipement porté (demande explicite) — uniquement le sac principal.
+/**
+ * Filet de sécurité appelé après une VENTE (jamais "Jeter") touchant du gear/jackpot : garantit
+ * que COMPENDIUM_BAG contient toujours le PLUS ENCHANTÉ des exemplaires possédés de ce nom, tant
+ * qu'il n'a jamais atteint PEN. Si le sac principal a un exemplaire plus enchanté que celui déjà
+ * protégé, échange les deux (l'ancien retourne en sac principal, jamais perdu). Ne touche jamais
+ * l'équipement porté, uniquement le sac principal.
+ * @param {string} name - nom de l'objet (gear/jackpot) à vérifier.
+ */
 function ensureCompendiumProtection(name) {
   if (!name || S.penMastery[name]) return;
   const curIdx = COMPENDIUM_BAG.findIndex(s => s && s.name === name);
@@ -390,7 +430,12 @@ function invWeight() {
 const MAX_WEIGHT = () => 800;
 function invUsed() { return INV.filter(s => s).length; }
 
-// ajoute un objet à l'inventaire (stack si possible). retourne false si plein.
+/**
+ * Ajoute un objet à l'inventaire principal — fusionne dans un stack existant si `obj.stackable`
+ * (clé de fusion = name, pas la clé technique de provenance), sinon prend un nouveau slot.
+ * @param {object} obj - item à ajouter (copié, jamais référencé) ; lit .stackable, .name, .qty.
+ * @returns {boolean} vrai si ajouté, faux si l'inventaire est plein.
+ */
 function invAdd(obj) {
   // "toute item identique et quelque soit leurs provenance (meme nom) doit tenir sur un seul
   // stack" (2026-07-08) -- avant, le stack était choisi par `key` (identifiant technique de la
@@ -413,6 +458,7 @@ function invAdd(obj) {
   enforceTreasureStackCap(INV[idx]);
   return true;
 }
+/** @param {number} i - index dans INV. @param {number} n - quantité à retirer (le slot devient null si qty tombe à 0 ou moins). */
 function invRemoveAt(i, n) {
   const s = INV[i]; if (!s) return;
   s.qty -= n;

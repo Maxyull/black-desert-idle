@@ -2441,6 +2441,7 @@ function trackLoot(name, color, val, kind) {
     if ((val||0) > awayLootCounts[name].val) awayLootCounts[name].val = val;
   }
 }
+
 function bestFarmedItem() {
   let best = null, bestN = 0;
   for (const name in S.lootByItem) if (S.lootByItem[name] > bestN) { best = name; bestN = S.lootByItem[name]; }
@@ -2455,6 +2456,7 @@ let awayLevelBefore = 1, awayPercentBefore = 0;
 
 const OFFLINE_CATCHUP_CAP_HOURS = 24;
 const OFFLINE_CATCHUP_MIN_HOURS = 0.05; 
+
 function computeOfflineCatchupSilver(data) {
   if (!data || !data.savedAt) return 0;
   const rate = (data.S && data.S.bestSilverPerHour) || 0;
@@ -2529,6 +2531,7 @@ function compendiumBagHasName(name) { return COMPENDIUM_BAG.some(s => s && s.nam
 
 const VELIA_CHEST = new Array(INV_SIZE).fill(null);
 const VELIA_CHEST_OPEN = 20;
+
 function compendiumBagAdd(obj) {
   const idx = COMPENDIUM_BAG.findIndex(s => s === null);
   if (idx === -1) return false;
@@ -2593,6 +2596,7 @@ function invAdd(obj) {
   enforceTreasureStackCap(INV[idx]);
   return true;
 }
+
 function invRemoveAt(i, n) {
   const s = INV[i]; if (!s) return;
   s.qty -= n;
