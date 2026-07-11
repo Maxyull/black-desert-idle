@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V370', d:'21/07/2026 18:00', name:{fr:'Écran Zone refait : nouvel en-tête, sidebar réorganisée, colonnes redessinées', en:'Zone screen redesigned: new header, reorganized sidebar, redesigned columns'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'écran principal (Zone) a été entièrement refait à l\'identique d\'une maquette fournie : nouvel en-tête avec logo, silver/taux et prochain boss, onglets d\'activité redessinés, panneau latéral regroupé en 4 sections (Progression, Économie, Communauté, Compte), cartes de statistiques/zones/loot/équipement/optimisation/inventaire redessinées, et le panneau de droite (suivi, quêtes, chat) devient une vraie colonne.'},
+      {t:'change', sub:'interface', tx:'La préférence "menu à gauche/droite" et le repli du menu latéral fonctionnent toujours, avec le même comportement qu\'avant.'},
+      {t:'fix', tx:'Corrigé : replier le menu latéral ne masquait plus les sections Économie/Communauté (seulement Progression/Compte) depuis leur récente réorganisation en 4 groupes.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The main screen (Zone) has been completely redesigned to match a provided mockup: new header with logo, silver/rate and next boss, redesigned activity tabs, sidebar regrouped into 4 sections (Progression, Economy, Community, Account), redesigned stats/zones/loot/gear/optimization/inventory cards, and the right panel (tracking, quests, chat) becomes a real column.'},
+      {t:'change', sub:'interface', tx:'The "menu left/right" preference and sidebar collapse still work exactly as before.'},
+      {t:'fix', tx:'Fixed: collapsing the sidebar no longer hid the Economy/Community sections (only Progression/Account) since their recent reorganization into 4 groups.'},
+    ] },
   { v:'V369', d:'21/07/2026 11:00', name:{fr:'Notes de version : accessibilité, lien direct et anti-abus', en:'Patch notes: accessibility, deep link and anti-abuse'}, fr:[
       {t:'fix', tx:'Corrigé : les chips de filtre (catégorie dans les notes de version, palier dans le modal de reconnexion) s\'empilaient en pleine largeur au lieu de s\'aligner côte à côte.'},
       {t:'new', sub:'accessibilite', tx:'Panneau des notes de version : le focus clavier reste désormais dans la fenêtre (Tab ne peut plus en sortir), et le badge de nouveautés est annoncé aux lecteurs d\'écran.'},

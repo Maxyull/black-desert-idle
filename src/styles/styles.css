@@ -1160,7 +1160,15 @@
   /* corrigé le 2026-07-05 (adaptation mobile) : #clientVersion (numéro de version, tout en bas du
      menu) n'était PAS masqué par le repli — seuls #topBar/#userBar l'étaient — donc replier le menu
      laissait ce texte flotter tout seul, hors de tout cadre, chevauchant le contenu du dessous */
-  #sideMenu.collapsed #gameBar, #sideMenu.collapsed #userBar, #sideMenu.collapsed #metaBar, #sideMenu.collapsed #clientVersion { display:none; }
+  /* #econBar/#communityBar/.sideGroupLabel/#onlineStatsBox ajoutés (2026-07-11, Phase 5) : la
+     Phase 2 avait éclaté l'ancien #gameBar unique en #gameBar/#econBar/#communityBar (4 groupes
+     visuels façon mockup) sans mettre à jour cette règle -- repéré en testant le repli PAR
+     DÉFAUT sur mobile (isMobileViewport(), jamais vérifié avant la Phase 5) : Économie et
+     Communauté restaient visibles alors que Progression/Compte disparaissaient, incohérent. */
+  #sideMenu.collapsed #gameBar, #sideMenu.collapsed #userBar, #sideMenu.collapsed #metaBar,
+  #sideMenu.collapsed #econBar, #sideMenu.collapsed #communityBar,
+  #sideMenu.collapsed .sideGroupLabel, #sideMenu.collapsed #onlineStatsBox,
+  #sideMenu.collapsed #clientVersion { display:none; }
   /* replié : la largeur fixe de 210px ne se réduisait jamais (seuls les ENFANTS étaient masqués),
      donc le menu "replié" gardait la même emprise qu'ouvert — sans conséquence sur grand écran
      (assez de place), mais ça faisait chevaucher les encarts de droite sur mobile/tablette une fois
@@ -2371,50 +2379,12 @@
   #bossTopPanel .btpPct { flex-shrink:0; color:var(--gold); font-variant-numeric:tabular-nums; width:38px; text-align:right; }
   #bossTopPanel .btpDmg { flex-shrink:0; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
 
-  /* ===== Adaptation tablette/téléphone (2026-07-05, demande explicite) =====
-     Le layout desktop suppose un écran large : #sideMenu (haut-gauche), #rightWidgets (haut-droite)
-     et #chatWidget (bas-droite) flottent en position:fixed au-dessus du contenu, avec assez de marge
-     de chaque côté du bloc de jeu centré (#wrap, 1240px) pour ne jamais le recouvrir. Sous 1024px de
-     large (couvre aussi l'iPad en paysage, 1024×768, où le menu déplié touchait déjà le bord du
-     canvas de jeu), cette marge disparaît et ces 3 panneaux flottants finissent par se chevaucher
-     entre eux ET par recouvrir le jeu — confirmé en testant à 390×844 (iPhone) et 1024×768 (iPad
-     paysage) avant ce correctif. Rien n'est changé au-dessus de 1024px : la version ordinateur/
-     laptop reste identique à l'existant. Placé en toute fin de
-     feuille de style pour être sûr de l'emporter sur les règles non-conditionnelles définies plus
-     haut (même sélecteur + media query active = priorité à l'ordre d'apparition, pas au media). */
-  @media (max-width:1024px) {
-    /* le menu de gauche et les encarts de droite passent en repli par défaut sur mobile (voir le
-       JS d'initialisation isMobileViewport()) ; ces règles gèrent le cas où l'un des deux est quand
-       même ouvert, pour qu'il reste lisible sans déborder de l'écran ni écraser l'autre */
-    #sideMenu { max-width:calc(100vw - 20px) !important; }
-    /* le menu peut être basculé à droite (préférence perso, voir menuSide) — sur mobile ça le fait
-       entrer en collision avec les encarts de suivi (aussi à droite) une fois les deux repliés en
-       petites pastilles compactes ; forcé à gauche sur petit écran pour éviter ce chevauchement,
-       la préférence "droite" reste respectée telle quelle au-dessus de 1024px */
-    #sideMenu.onRight { left:14px !important; right:auto !important; }
-    #gameBar, #userBar, #metaBar, #econBar, #communityBar { width:min(210px, calc(100vw - 20px)); }
-    #rightWidgets { max-width:min(260px, calc(100vw - 20px)) !important; }
-    /* le chat gardait une largeur fixe de 440px, bien plus large que n'importe quel téléphone */
-    #chatWidget { width:min(400px, calc(100vw - 20px)) !important; }
-  }
   @media (max-width:600px) {
     /* sur téléphone, 1 seule colonne pour les cartes (stats/inventaire/optimisation/etc.), plus
        lisible qu'une grille à 2 colonnes trop étroites pour leur contenu (tableaux, boutons) */
     #panel { grid-template-columns:1fr !important; }
     #wrap { padding:0 2px; }
     body { padding:8px 4px 20px; }
-    /* #activitiesBar met les 8 onglets (#activityTabs, flex:1) ET le texte "Prochain boss : ..."
-       (#nextBossMini, assez long) côte à côte sur UNE seule ligne — sur téléphone ce texte écrase
-       toute la largeur dispo pour les onglets, qui se retrouvent forcés à 1 seul par ligne (8 lignes
-       de haut, confirmé sur un vrai téléphone). Empilés à la place : les onglets ont toute la
-       largeur pour se répartir sur 3-4 par ligne, le texte passe en dessous. */
-    #activitiesBar { flex-direction:column; align-items:stretch; gap:6px; }
-    #nextBossMini { text-align:center; }
-    /* #sideMenu replié (icône ◀/▶ seule) est en position:fixed tout en haut à gauche de l'écran,
-       PAR-DESSUS le contenu de #wrap qui démarre au même endroit — sur téléphone, le premier onglet
-       de #activitiesBar se retrouvait donc caché sous ce bouton (confirmé sur un vrai téléphone).
-       Le contenu est repoussé sous l'emprise du bouton replié pour ne plus jamais le chevaucher. */
-    #wrap { margin-top:46px; }
     /* La zone de jeu (canvas) est déjà responsive (width:100%), mais toute sa surcouche HTML
        (textes/icônes positionnés en absolu par-dessus) est calibrée en pixels fixes pour un canvas
        ~1240px de large — une fois le canvas réduit à la largeur d'un téléphone (~360-380px), ces
@@ -2465,11 +2435,9 @@
     /* barre d'incantation : au-dessus du bouton replié de la barre de sorts plutôt que de la
        barre déployée (qui est masquée par défaut sur mobile, voir #skillBar.expanded) */
     #castBar { bottom:46px; width:160px; }
-    /* silverBox/shRate (haut-droite) et lootTicker (bas-droite) se marchent aussi dessus sur un
-       cadre aussi bas — lootTicker moins haut et un peu plus petit pour laisser plus de respiration
-       au silver/taux au-dessus */
-    #silverBox { font-size:12px; padding:4px 9px; }
-    #shRate { font-size:9.5px; }
+    /* lootTicker (bas-droite du cadre de jeu) : moins haut et un peu plus petit pour laisser plus
+       de respiration sur un cadre de jeu aussi bas (silver/taux vivent dans .topbar depuis la
+       Phase 1, plus dans #gameFrame -- règles #silverBox/#shRate ici retirées, obsolètes). */
     #lootTicker { font-size:9.5px; max-height:70px; }
   }
 
@@ -2641,7 +2609,12 @@
      grille 3 colonnes fixe (210px/1fr/300px) n'a plus la place de respirer --
      empilée en 1 seule colonne plutôt que compressée/superposée. */
   @media (max-width:1024px) {
-    .layout { grid-template-columns:1fr; }
+    /* :has(#sideMenu.collapsed) (règle desktop plus haut) a une spécificité plus élevée
+       (id dans l'argument :has()) qu'un simple ".layout{}" -- sans le répéter ici
+       explicitement, un menu replié AVANT de passer sous 1024px gardait la grille desktop
+       à 3 pistes compressées (56px/qq px/300px) au lieu d'empiler, repéré en testant à
+       390px avec un menu replié persistant (localStorage). */
+    .layout, .layout:has(#sideMenu.collapsed) { grid-template-columns:1fr; }
     #sideMenu, .side-right { position:static; width:100%; max-width:none; }
     #sideMenu.onRight, #sideMenu.onRight ~ .side-right { order:0; }
   }
