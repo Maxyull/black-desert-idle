@@ -1,4 +1,5 @@
 // ═══ VUE DE JEU (personnage + pets actifs + inventaire) ══════════
+/** Rafraîchit l'onglet Jeu (pets actifs, stats par section, inventaire, log, silver). */
 function renderGameView(){
   renderGameCompanions();
   renderGameStats();
@@ -7,6 +8,7 @@ function renderGameView(){
   updateSilverDisplay();
 }
 
+/** Affiche les sprites des familiers actuellement sur le terrain (p.terrain), avec leur tier/multiplicateur. */
 function renderGameCompanions(){
   const el = document.getElementById('game-companions');
   if(!el) return;
@@ -27,6 +29,7 @@ function renderGameCompanions(){
   });
 }
 
+/** Affiche une tuile par SECTIONS avec le bonus réel (stat×multiplicateur de tier) du pet actif sur cette section, vide si aucun. */
 function renderGameStats(){
   const el = document.getElementById('game-stats-grid');
   if(!el) return;
@@ -46,6 +49,7 @@ function renderGameStats(){
   }).join('');
 }
 
+/** Reconstruit la grille d'inventaire de l'onglet Jeu (INVENTORY complet). */
 function renderGameInventory(){
   const el = document.getElementById('game-inventory-grid');
   if(!el) return;
@@ -65,6 +69,7 @@ function renderGameInventory(){
   updateSilverDisplay();
 }
 
+/** Reconstruit la grille d'inventaire compacte de l'onglet Collection (même données que renderGameInventory, mise en page réduite). */
 function renderCollInventory(){
   const el = document.getElementById('coll-inventory-grid');
   if(!el) return;
@@ -84,6 +89,7 @@ function renderCollInventory(){
   updateSilverDisplay();
 }
 
+/** Affiche les 20 dernières entrées de GAME_LOG (journal d'activité). */
 function renderGameLog(){
   const el = document.getElementById('game-log');
   if(!el) return;

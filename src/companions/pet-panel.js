@@ -1,4 +1,5 @@
 // ═══ STAT BARS ═══════════════════════════════════════════════════
+/** @param {object} pet - familier. @returns {string} HTML des barres de stat de sa section (verrouillées au-delà de BONUS_COUNT[pet.rar], bonus Caphras affiché à part). */
 function renderStatBars(pet){
   const sec=secById(pet.cat.sec);if(!sec)return'';
   return`<div style="display:flex;flex-direction:column;gap:0">${sec.sk.map((k,i)=>{
@@ -21,6 +22,7 @@ const CAPHRAS_COST_PER_UPGRADE = 3; // pierres consommées par tentative
 const CAPHRAS_BOOST_AMOUNT = 0.6;   // gain de stat par tentative réussie
 const CAPHRAS_MAX_BONUS_RATIO = 0.25; // plafond = 25% du max de la stat pour cette rareté
 
+/** @param {object} pet - familier. @returns {string} HTML de l'atelier de Caphras : un bouton d'amélioration par stat active, désactivé si stock insuffisant ou stat déjà au plafond (25% du max). */
 function renderCaphrasWorkshop(pet){
   const sec=secById(pet.cat.sec); if(!sec) return '';
   const stock = INVENTORY['Pierre de Caphras']?.qty || 0;
@@ -44,6 +46,7 @@ function renderCaphrasWorkshop(pet){
   </div>`;
 }
 
+/** @param {number} petId - id du familier. @param {number} statIndex - index de la stat à améliorer. Consomme CAPHRAS_COST_PER_UPGRADE pierres pour +CAPHRAS_BOOST_AMOUNT permanent, plafonné à CAPHRAS_MAX_BONUS_RATIO du max de la stat. No-op si stock/plafond insuffisant. */
 function upgradeCaphras(petId, statIndex){
   const p = PETS.find(pp=>pp.id===petId); if(!p) return;
   const stock = INVENTORY['Pierre de Caphras']?.qty || 0;
@@ -64,6 +67,7 @@ function upgradeCaphras(petId, statIndex){
 }
 
 // ═══ TIER BLOCK (badge + XP bar + comparaison) ═══════════════════
+/** @param {object} pet - familier. @returns {string} HTML du bloc Tier : badge, multiplicateur réel tiré vs plage, barre d'XP de tier, comparaison GS avec la rareté supérieure. */
 function renderTierBlock(pet){
   const tier=pet.tier||1;
   const mult=tierMultOf(pet); // valeur RÉELLEMENT tirée pour ce pet (pas une constante)

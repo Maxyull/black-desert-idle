@@ -2,17 +2,20 @@
 let indexFilterSec='all';
 let indexFilterTier='all';
 
+/** @param {number} rar - rareté visée (0-5). Affiche un toast avec les odds de chaque type d'œuf pour cette rareté. */
 function suggestEggFor(rar){
   const lines = EGG_TYPES.map(e=>`${e.ico} ${e.name} : ${e.odds[rar]}%`).join(' · ');
   toast('🥚', `Pour viser ${RARITIES[rar].name} — ${lines}`);
 }
 
+/** Reconstruit l'onglet Index (matrice rareté×tier, chips de filtre, table du catalogue). */
 function renderIndex(){
   renderIndexMatrix();
   renderIndexFilterChips();
   renderIndexPetTable();
 }
 
+/** Reconstruit la matrice rareté×tier (plage de GS normalisée sur l'absolu Ancestral T5, statut possédé/à nourrir/à éclore par case) + légende. */
 function renderIndexMatrix(){
   // Pour chaque (rareté, tier), calcule la plage de GS possible : du pire tirage
   // (stats + multiplicateur de tier au plancher) au meilleur tirage (les deux au plafond).
@@ -77,6 +80,7 @@ function renderIndexMatrix(){
   document.getElementById('index-matrix').innerHTML = html;
 }
 
+/** Reconstruit les chips de filtre section/tier de l'onglet Index (indexFilterSec/indexFilterTier). */
 function renderIndexFilterChips(){
   document.getElementById('index-filter-chips').innerHTML =
     [['all','Tous'],...SECTIONS.map(s=>[s.id,s.ico+' '+s.name])].map(([id,lbl])=>
@@ -91,6 +95,7 @@ function renderIndexFilterChips(){
   }
 }
 
+/** Reconstruit la table du catalogue (une espèce par groupe de lignes T1-T5), filtrée par indexFilterSec/indexFilterTier — statut possédé calculé sur la rareté RÉELLE du pet (pas la rareté de base de l'espèce, peut différer après un breakthrough). */
 function renderIndexPetTable(){
   let list=[...PET_CATALOG];
   if(indexFilterSec!=='all') list=list.filter(c=>c.sec===indexFilterSec);
