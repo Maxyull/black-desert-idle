@@ -5,6 +5,32 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V374', d:'21/07/2026 19:00', name:{fr:'Module Compagnons : onboarding + 4 correctifs', en:'Companion module: onboarding + 4 fixes'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Onboarding de première visite dans le module Compagnon : 5 étapes, affiché une seule fois par navigateur.'},
+      {t:'fix', sub:'compagnon', tx:'Corrigé : l\'auto-nourrissage grillait silencieusement des ressources spéciales (Caphras/Dopi) au lieu de la nourriture commune, et ne rafraîchissait jamais l\'onglet Nourrir.'},
+      {t:'fix', sub:'compagnon', tx:'Corrigé : le Gearscore affiché pouvait devenir périmé entre les onglets Sections et Collection après un changement d\'onglet.'},
+      {t:'fix', sub:'compagnon', tx:'Corrigé : le rattrapage hors-ligne ne se déclenchait qu\'au chargement du module — un onglet resté ouvert en arrière-plan longtemps n\'avait aucun moyen de le déclencher.'},
+      {t:'new', sub:'compagnon', tx:'Badge d\'attention ajouté sur l\'onglet Marché (contre-offres en attente).'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'First-visit onboarding in the Companion module: 5 steps, shown once per browser.'},
+      {t:'fix', sub:'compagnon', tx:'Fixed: auto-feeding silently burned special resources (Caphras/Dopi) instead of common food, and never refreshed the Feed tab.'},
+      {t:'fix', sub:'compagnon', tx:'Fixed: displayed Gearscore could go stale between the Sections and Collection tabs after switching tabs.'},
+      {t:'fix', sub:'compagnon', tx:'Fixed: offline catch-up only triggered when the module loaded — a tab left open in the background for a long time had no way to trigger it.'},
+      {t:'new', sub:'compagnon', tx:'Attention badge added on the Market tab (pending counter-offers).'},
+    ] },
+  { v:'V373', d:'21/07/2026 18:30', name:{fr:'Notes de version : correctifs de la maquette (couleur, mini-panel admin, icônes)', en:'Patch notes: mockup fixes (color, admin mini-panel, icons)'}, fr:[
+      {t:'fix', sub:'interface', tx:'Corrigé : l\'en-tête de chaque version affichait "vV369" au lieu de "V369" (un préfixe en trop).'},
+      {t:'change', sub:'interface', tx:'"Marquer comme lu" garde sa couleur verte même désactivé (juste l\'opacité baisse), au lieu de virer gris.'},
+      {t:'new', sub:'admin', tx:'Le badge "Admin" du panneau des notes de version devient un vrai bouton : ouvre un mini-panneau listant les signalements en attente avec suppression directe.'},
+      {t:'change', sub:'interface', tx:'Icônes des chips de catégorie passées en niveaux de gris, même traitement que la loupe de recherche.'},
+      {t:'fix', sub:'interface', tx:'Horodatage des commentaires : vraie durée relative (à l\'instant / il y a X min / il y a X h / il y a X j) au lieu d\'une date figée.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'Fixed: each version header showed "vV369" instead of "V369" (an extra prefix).'},
+      {t:'change', sub:'interface', tx:'"Mark as read" keeps its green color even when disabled (opacity only), instead of turning grey.'},
+      {t:'new', sub:'admin', tx:'The patch notes panel\'s "Admin" badge becomes a real button: opens a mini-panel listing pending reports with direct removal.'},
+      {t:'change', sub:'interface', tx:'Category chip icons switched to grayscale, matching the already-monochrome search icon.'},
+      {t:'fix', sub:'interface', tx:'Comment timestamps: real relative duration (just now / X min ago / X h ago / X d ago) instead of a fixed date.'},
+    ] },
   { v:'V372', d:'21/07/2026 18:00', name:{fr:'Écran Zone refait : nouvel en-tête, sidebar réorganisée, colonnes redessinées', en:'Zone screen redesigned: new header, reorganized sidebar, redesigned columns'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran principal (Zone) a été entièrement refait à l\'identique d\'une maquette fournie : nouvel en-tête avec logo, silver/taux et prochain boss, onglets d\'activité redessinés, panneau latéral regroupé en 4 sections (Progression, Économie, Communauté, Compte), cartes de statistiques/zones/loot/équipement/optimisation/inventaire redessinées, et le panneau de droite (suivi, quêtes, chat) devient une vraie colonne.'},
       {t:'change', sub:'interface', tx:'La préférence "menu à gauche/droite" et le repli du menu latéral fonctionnent toujours, avec le même comportement qu\'avant.'},
