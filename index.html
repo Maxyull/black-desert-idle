@@ -26,7 +26,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=523">
+<link rel="stylesheet" href="src/styles/styles.css?v=525">
 
 </head>
 <body>
@@ -180,9 +180,10 @@
     <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge" aria-live="polite"></span></button>
     <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
     <!-- Donation (2026-07-16, demande explicite : "ajoute un bouton Donation bloque cadenas") --
-         verrouillée, en attente d'une future intégration (ex: Ko-fi/Patreon) ; renommée "Soutenir"
-         le 2026-07-17 (demande explicite) -->
-    <button id="btnDonation" class="lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnDonation">💖 Soutenir</span></button>
+         déverrouillée le 2026-07-21 (demande explicite : "ouvre soutenir et on y met les page de
+         donation dedans") : ouvre donation.html (page autonome déjà réelle, lien PayPal.me
+         configuré) dans un panneau iframe, voir openDonationPanel() (game-supabase.js) -->
+    <button id="btnDonation" data-i18n="btnDonation">💖 Soutenir</button>
     <div id="menuSideToggle">
       <span class="menuSideOpt" data-side="left" data-i18n="menuSideLeft">◀ Gauche</span>
       <span class="menuSideOpt" data-side="right" data-i18n="menuSideRight">Droite ▶</span>
@@ -690,11 +691,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=523"></script>
+<script src="meta/patch-notes-data.js?v=525"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=523"></script>
+<script src="build/source.min.js?v=525"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier
      susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone
      tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis

@@ -106,8 +106,17 @@ function wkHomeHtml() {
 function wkTutoHtml() {
   return typeof renderTutoPageHtml === 'function' ? renderTutoPageHtml() : '';
 }
+// lien réel (2026-07-21, corrigé : #btnDiscord dans le header du jeu a toujours eu un vrai lien
+// d'invitation, jamais lu depuis ici -- cette page affirmait à tort "pas encore de serveur").
+// URL sortie du template literal (pas de "//" brut dans un template multi-ligne, voir scripts/build.py
+// -- "https://" au milieu d'un template literal multi-ligne a fait planter le strip de commentaires
+// du build, une ligne entière avalée comme un commentaire // -- bug réel constaté le 2026-07-21).
+const WK_DISCORD_URL = 'https:' + '//discord.gg/fEubtqMjtP';
 function wkDiscordHtml() {
-  return `<div class="wk-callout" style="border-left-color:${WK_V.blue}">💬 ${i18next.t('backend:backend.wiki.discord_placeholder')}</div>`;
+  const lead = i18next.t('backend:backend.wiki.discord_intro');
+  const label = i18next.t('backend:backend.wiki.discord_join_button');
+  return `<p class="wk-lead">${lead}</p>` +
+    `<a class="wk-btn" href="${WK_DISCORD_URL}" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none">💬 ${label}</a>`;
 }
 
 // ---- headings -> ancres pour le sommaire (les articles réels utilisent <h3>, pas <h2>) ----

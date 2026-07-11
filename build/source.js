@@ -438,7 +438,8 @@ const I18N_RESOURCES = {
       "backend.tutorial.skip": "Passer",
       "backend.tutorial.step_label": "Étape",
       "backend.wiki.close_button": "Fermer",
-      "backend.wiki.discord_placeholder": "Pas encore de serveur Discord officiel pour le moment — cette section sera complétée dès qu'un lien existera.",
+      "backend.wiki.discord_intro": "Rejoins le serveur Discord officiel pour suivre les mises à jour, signaler un bug ou discuter avec la communauté.",
+      "backend.wiki.discord_join_button": "Rejoindre le Discord",
       "backend.wiki.home_lead": "Bienvenue sur le Wiki de Velia Idle — jeu idle de farm automatique inspiré de Black Desert Online. Retrouve ici les règles de combat/zones, l'optimisation, le marché, ainsi que des raccourcis vers le Compendium et le module Compagnons.",
       "backend.wiki.home_system_combat_desc": "PA/PD requis, loot progressif",
       "backend.wiki.home_system_companions_desc": "collection, fusion et classement (module dédié)",
@@ -1284,7 +1285,8 @@ const I18N_RESOURCES = {
       "backend.tutorial.skip": "Skip",
       "backend.tutorial.step_label": "Step",
       "backend.wiki.close_button": "Close",
-      "backend.wiki.discord_placeholder": "No official Discord server yet — this section will be filled in once a link exists.",
+      "backend.wiki.discord_intro": "Join the official Discord server to follow updates, report a bug, or chat with the community.",
+      "backend.wiki.discord_join_button": "Join the Discord",
       "backend.wiki.home_lead": "Welcome to the Velia Idle Wiki — an automatic idle-farming game inspired by Black Desert Online. Here you'll find combat/zone rules, enhancement, the market, plus shortcuts to the Compendium and Companions module.",
       "backend.wiki.home_system_combat_desc": "required AP/DP, progressive loot",
       "backend.wiki.home_system_companions_desc": "collection, fusion and leaderboard (dedicated module)",
@@ -11024,6 +11026,35 @@ $a('btnAchievements').onclick = openAchievements;
 
 $a('btnCompendium').onclick = openCompendiumReact;
 $a('ztCompendium').onclick = openCompendiumReact;
+
+function openDonationPanel() {
+  let overlay = $a('donationOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'donationOverlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:953;background:#0A0C14;display:flex;flex-direction:column';
+    const bar = document.createElement('div');
+    bar.style.cssText = 'flex-shrink:0;display:flex;justify-content:flex-end;padding:6px 10px;background:#12141f;border-bottom:1px solid #232739';
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕ ' + (LANG==='fr'?'Fermer':'Close');
+    closeBtn.style.cssText = 'font-family:Georgia,serif;font-size:12px;background:transparent;border:1px solid #3a2f22;color:#e8e6df;border-radius:5px;padding:5px 12px;cursor:pointer';
+    closeBtn.onclick = closeDonationPanel;
+    bar.appendChild(closeBtn);
+    const frame = document.createElement('iframe');
+    frame.id = 'donationFrame';
+    frame.style.cssText = 'flex:1;border:0;width:100%';
+    frame.src = 'donation.html';
+    overlay.appendChild(bar);
+    overlay.appendChild(frame);
+    document.body.appendChild(overlay);
+  }
+  overlay.style.display = 'flex';
+}
+function closeDonationPanel() {
+  const overlay = $a('donationOverlay');
+  if (overlay) overlay.style.display = 'none';
+}
+$a('btnDonation').onclick = openDonationPanel;
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 
@@ -12269,11 +12300,18 @@ function wkHomeHtml() {
 function wkTutoHtml() {
   return typeof renderTutoPageHtml === 'function' ? renderTutoPageHtml() : '';
 }
+// lien réel (2026-07-21, corrigé : #btnDiscord dans le header du jeu a toujours eu un vrai lien
+// d'invitation, jamais lu depuis ici -- cette page affirmait à tort "pas encore de serveur").
+// URL sortie du template literal (pas de "
+
+const WK_DISCORD_URL = 'https:' + '//discord.gg/fEubtqMjtP';
 function wkDiscordHtml() {
-  return `<div class="wk-callout" style="border-left-color:${WK_V.blue}">💬 ${i18next.t('backend:backend.wiki.discord_placeholder')}</div>`;
+  const lead = i18next.t('backend:backend.wiki.discord_intro');
+  const label = i18next.t('backend:backend.wiki.discord_join_button');
+  return `<p class="wk-lead">${lead}</p>` +
+    `<a class="wk-btn" href="${WK_DISCORD_URL}" target="_blank" rel="noopener noreferrer" style="display:inline-block;text-decoration:none">💬 ${label}</a>`;
 }
 
-// ---- headings -> ancres pour le sommaire (les articles réels utilisent <h3>, pas <h2>) ----
 function wkInjectHeadingIds(html) {
   return html.replace(/<h3>(.*?)<\/h3>/g, (m, txt) => `<h3 id="${wkSlug(txt.replace(/<[^>]+>/g,''))}">${txt}</h3>`);
 }
@@ -12324,7 +12362,8 @@ function wkRenderArticleAndInfobox(item) {
     <div class="wk-art-body">${bodyHtml}</div>`;
   infoboxCol.innerHTML = wkRenderInfobox(item, headings);
   const tutoBtn = document.getElementById('btnStartTutoWiki');
-  
+  // SEUL point d'entrée du tutoriel d'arrivée (voir game-supabase.js) : trackId:'onboarding' doit
+  // être préservé, c'est ce qui alimente les stats admin de démarrage du tutoriel (onboarding_stats).
   if (tutoBtn) tutoBtn.onclick = () => { closeWikiPanel(); if (typeof startTutorial === 'function' && typeof TUTORIAL_STEPS !== 'undefined') startTutorial(TUTORIAL_STEPS, { trackId:'onboarding' }); };
   infoboxCol.querySelectorAll('.wk-related-item').forEach(el => {
     el.onclick = () => wkNavigate(el.dataset.nav);
@@ -12376,6 +12415,7 @@ function wkNavigate(id) {
   wkCloseSearch();
 }
 
+// ---- recherche live (titres uniquement, comme le mockup) ----
 function wkCloseSearch() { document.getElementById('wkSearchResults')?.remove(); }
 function wkRunSearch(q) {
   wkCloseSearch();

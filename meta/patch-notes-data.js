@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V371', d:'21/07/2026 12:00', name:{fr:'Bouton "Soutenir" débloqué', en:'"Support" button unlocked'}, fr:[
+      {t:'new', tx:'Le bouton "💖 Soutenir" (menu principal) n\'est plus verrouillé : il ouvre désormais la page de don (lien PayPal, détail des coûts mensuels du projet) directement dans le jeu.'},
+      {t:'fix', tx:'Le Wiki (section Discord) affichait à tort "pas encore de serveur Discord" — il pointe maintenant vers le vrai serveur.'},
+    ], en:[
+      {t:'new', tx:'The "💖 Support" button (main menu) is no longer locked: it now opens the donation page (PayPal link, monthly project cost breakdown) directly in the game.'},
+      {t:'fix', tx:'The Wiki (Discord section) wrongly said "no Discord server yet" — it now points to the real server.'},
+    ] },
   { v:'V370', d:'21/07/2026 11:30', name:{fr:'Classement principal refait : podium, catégories, recherche', en:'Main leaderboard redesigned: podium, categories, search'}, fr:[
       {t:'change', tx:'Le Classement (🏆, en haut du menu) a été entièrement refait : podium des 3 premiers, 7 catégories en onglets (Silver, Gearscore, Meilleure zone, Silver/heure, Kills/min, Meilleur objet, Trésors), recherche par pseudo, pagination et bouton "Ma position" pour retrouver ton rang directement. Toujours les mêmes records personnels à vie, jamais un instantané.'},
     ], en:[
