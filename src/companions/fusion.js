@@ -1,4 +1,5 @@
 // ═══ FUSION ══════════════════════════════════════════════════════
+/** @param {number} pid - id du pet cliqué. Ajoute/retire ce pet des 2 slots de fusion (retire si déjà présent, sinon remplit le 1er slot vide ou décale le slot 0 vers le slot 1). */
 function addToFusion(pid){
   if(fusionSlots[0]===pid||fusionSlots[1]===pid){const i=fusionSlots.indexOf(pid);fusionSlots[i]=null;}
   else if(fusionSlots[0]===null)fusionSlots[0]=pid;
@@ -6,8 +7,10 @@ function addToFusion(pid){
   else{fusionSlots[0]=fusionSlots[1];fusionSlots[1]=pid;}
   updateFusionUI();renderGrid();
 }
+/** @param {number} i - index de slot (0 ou 1). Vide ce slot de fusion. */
 function clearFS(i){fusionSlots[i]=null;updateFusionUI();renderGrid();}
 
+/** Reconstruit les 2 slots de fusion et, si les deux sont remplis, l'aperçu de résultat (section/stats/GS/odds via computeFusionOdds). */
 function updateFusionUI(){
   [0,1].forEach(i=>{
     const el=document.getElementById('fs'+i);const pid=fusionSlots[i];
@@ -87,6 +90,7 @@ function updateFusionUI(){
 // Si les 2 parents n'ont PAS la même rareté, un tirage détermine d'abord laquelle des
 // 2 raretés sert de base : 50/50 si l'écart est minime, jusqu'à 10/90 (favorable à la
 // plus haute) si l'écart est maximal (Commun ↔ Ancestral, écart de 5).
+/** @param {object[]} arr - issues avec un champ `key` et un `pct`. @param {string} key - nom du champ à dédupliquer. @returns {object[]} copie où les entrées de même `key` ont leurs pct sommés. */
 function mergeDupOutcomes(arr, key){
   return arr.reduce((acc,o)=>{
     const ex=acc.find(x=>x[key]===o[key]);
@@ -194,6 +198,7 @@ function rollFusionRarity(a, b, gapFactor){
   return {bestRar, newRar, rarityIncreased:newRar>bestRar};
 }
 
+/** Ouvre la modale d'aperçu de fusion pour les 2 pets actuellement en fusionSlots (odds de section/rareté/tier détaillés, bouton de confirmation). No-op si un des 2 slots est vide. */
 function openFusionPreviewModal(){
   const a=PETS.find(p=>p.id===fusionSlots[0]),b=PETS.find(p=>p.id===fusionSlots[1]);
   if(!a||!b)return;
@@ -291,12 +296,22 @@ function openFusionPreviewModal(){
   },30);
 }
 
+/** @param {number} aId @param {number} bId - ids des 2 pets parents. Lance executeFusion() si les deux existent encore. */
 function confirmFusionExecute(aId,bId){
   const a=PETS.find(p=>p.id===aId), b=PETS.find(p=>p.id===bId);
   if(!a||!b) return;
   executeFusion(a,b);
 }
 
+/**
+ * Tirage réel de fusion : résout la section (même si identique, 50/50 sinon), la rareté
+ * (rollFusionRarity, tracke fusionLostHighRarityCount si le meilleur parent était Légendaire+/
+ * Ancestral et redescend), le tier (reset à T1 si la rareté a bondi, sinon +1 garanti avec chance
+ * d'escalade), les stats (meilleur des 2 parents, clampé à la nouvelle rareté). Remplace les 2
+ * parents par le pet fusionné dans PETS, log + affiche le résultat.
+ * @param {object} a - pet parent 1.
+ * @param {object} b - pet parent 2.
+ */
 function executeFusion(a,b){
   // 1. Résolution de la section du résultat
   const sameSec = a.cat.sec===b.cat.sec;
@@ -362,12 +377,21 @@ function executeFusion(a,b){
 }
 
 // Flèche colorée compréhensible d'un coup d'œil : ⬆️ vert = gain, ⬇️ rouge = perte, ➡️ gris = inchangé
+/** @param {number} delta - variation (positive/négative/nulle). @returns {{ico:string, color:string}} flèche/couleur (⬆️ vert gain, ⬇️ rouge perte, ➡️ gris inchangé). */
 function deltaArrow(delta){
   if(delta>0) return {ico:'⬆️', color:'var(--green2)'};
   if(delta<0) return {ico:'⬇️', color:'var(--red2)'};
   return {ico:'➡️', color:'var(--cream3)'};
 }
 
+/**
+ * Affiche la modale de résultat de fusion (comparaison Tier/GS au meilleur des 2 parents, flèches
+ * de progression, stats détaillées du pet obtenu).
+ * @param {object} a - pet parent 1 (avant fusion). @param {object} b - pet parent 2 (avant fusion).
+ * @param {object} merged - pet résultant. @param {boolean} rarityIncreased - vrai si percée de rareté.
+ * @param {boolean} sameSec - vrai si les 2 parents partageaient la même section.
+ * @param {string} resultSec - section du résultat.
+ */
 function showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec){
   document.getElementById('fusion-modal-title').textContent = rarityIncreased ? '🌟 Percée de rareté !' : '⚗️ Fusion réussie !';
 

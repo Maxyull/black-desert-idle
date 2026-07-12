@@ -43,6 +43,7 @@ const COMPANION_MODEL_MAP = {
   'Young Black Dragon':      { section: 'combat', slug: 'young_black_dragon',      tiers: COMPANION_MODEL_TIERS_ALL },
   'Newborn Crimson Dragon':  { section: 'combat', slug: 'newborn_crimson_dragon',  tiers: COMPANION_MODEL_TIERS_ALL },
 };
+/** @param {object} pet - familier. @returns {?string} URL du modèle GLB (COMPANION_MODEL_MAP) si son espèce/tier est réellement uploadée dans le bucket, sinon null (jamais deviner une URL). */
 function companionModelUrlFor(pet) {
   const m = pet && pet.cat && COMPANION_MODEL_MAP[pet.cat.name];
   if (!m || m.tiers.indexOf(pet.tier) === -1) return null;
@@ -52,6 +53,14 @@ function companionModelUrlFor(pet) {
 // crée un renderer/scène/caméra/OrbitControls dans `wrap` (élément DOM), avec sa propre boucle de
 // rendu et son propre event 'resize' -- indépendant de tout autre viewer déjà monté ailleurs
 // (le test tab et une modale de pet peuvent en théorie coexister, chacun son état).
+/**
+ * Crée un renderer/scène/caméra/OrbitControls Three.js indépendant dans `wrap`, avec sa propre
+ * boucle de rendu et son propre listener 'resize'. Plusieurs viewers peuvent coexister (chacun
+ * son état) — voir dispose() pour la libération du contexte WebGL (limité par navigateur).
+ * @param {HTMLElement} wrap - conteneur DOM (le canvas y est monté).
+ * @param {?function(string):void} onStatus - callback de statut texte (chargement/erreur), optionnel.
+ * @returns {{loadModel:function(string):void, dispose:function():void}}
+ */
 function createThreeViewer(wrap, onStatus) {
   const THREE = window.THREE;
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -145,6 +154,7 @@ function createThreeViewer(wrap, onStatus) {
 // ---------- écran de test (onglet dédié, un seul modèle fixe) ----------
 let viewer3dState = null; // { dispose } — créé au premier ST(10)
 
+/** Initialise l'écran de test Viewer 3D (un seul modèle fixe, VIEWER3D_TEST_MODEL) au premier affichage de l'onglet, attend Three.js si pas encore chargé. No-op si déjà initialisé. */
 function initViewer3dIfNeeded() {
   const wrap = document.getElementById('viewer3d-canvas-wrap');
   if (!wrap || viewer3dState) return;
@@ -158,10 +168,12 @@ function initViewer3dIfNeeded() {
   viewer3dState = viewer;
   viewer.loadModel(VIEWER3D_TEST_MODEL);
 }
+/** @param {string} text - message de statut de l'écran de test Viewer 3D. */
 function setViewer3dStatus(text) {
   const el = document.getElementById('viewer3d-status');
   if (el) el.textContent = text;
 }
+/** Libère le viewer de l'écran de test s'il est actif. */
 function disposeViewer3dIfActive() {
   if (!viewer3dState) return;
   viewer3dState.dispose();
@@ -171,6 +183,7 @@ function disposeViewer3dIfActive() {
 // ---------- modale "Voir en 3D" pour un pet réel (sections.js) ----------
 let pet3dModalState = null; // { dispose }
 
+/** @param {object} pet - familier. Ouvre la modale "Voir en 3D" et charge son modèle GLB (no-op si aucun modèle uploadé pour ce pet/tier). */
 function open3dPreviewModal(pet) {
   const url = companionModelUrlFor(pet);
   if (!url) return; // pas de modèle uploadé pour ce pet/tier — le bouton ne doit de toute façon pas s'afficher
@@ -188,6 +201,7 @@ function open3dPreviewModal(pet) {
     window.addEventListener('three-ready', start, { once: true });
   } else start();
 }
+/** Ferme la modale "Voir en 3D" et libère son viewer. */
 function close3dPreviewModal() {
   CM('pet3d-modal');
   if (pet3dModalState) { pet3dModalState.dispose(); pet3dModalState = null; }

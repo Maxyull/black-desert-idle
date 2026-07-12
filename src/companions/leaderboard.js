@@ -36,11 +36,13 @@ let lbPage = 1;
 let lbMyUserId = null;
 let lbError = null;
 
+/** Rafraîchit l'onglet Classement : "Tes stats" (local) puis relance le fetch réseau du classement public. */
 function renderMyStatsAndLeaderboard(){
   renderMyStatsGrid();
   fetchAndRenderCompanionLeaderboard();
 }
 
+/** Reconstruit la grille "Tes stats" (compteurs 100% locaux, aucun appel réseau). */
 function renderMyStatsGrid(){
   const el = document.getElementById('my-stats-grid');
   if(!el) return;
@@ -63,10 +65,13 @@ function renderMyStatsGrid(){
     </div>`).join('');
 }
 function fmtN(n){ return n.toLocaleString('fr-FR'); }
+/** @param {object} row - ligne du classement (résultat RPC). @param {string} cat - clé de LB_CATS. @returns {number} valeur du joueur pour cette catégorie. */
 function lbScoreOf(row, cat){ return cat==='prestige' ? Number(row.prestige_score||0) : cat==='gs' ? (row.gs_max||0) : cat==='fusion' ? (row.fusion_count||0) : (row.achievements_count||0); }
+/** @param {string} cat - clé de LB_CATS. @returns {object[]} copie de lbRows triée par lbScoreOf décroissant. */
 function lbSorted(cat){ return [...(lbRows||[])].sort((a,b)=>lbScoreOf(b,cat)-lbScoreOf(a,cat)); }
 function lbMedal(rank){ return rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':''; }
 
+/** Appelle la RPC publique companion_leaderboard() via le client déjà authentifié de la page hôte (pattern cross-window de sync.js), gère les cas hors-iframe/déconnecté/invité, puis rend l'UI. */
 async function fetchAndRenderCompanionLeaderboard(){
   const el = document.getElementById('companion-leaderboard');
   if(!el) return;
@@ -92,6 +97,7 @@ async function fetchAndRenderCompanionLeaderboard(){
   }
 }
 
+/** Reconstruit podium/contrôles/liste du classement depuis lbRows (cache) selon lbCategory/lbSearch/lbShowMeOnly/lbPage — gère les états erreur/vide/recherche sans résultat/pas encore synchronisé. */
 function renderLeaderboardUi(){
   const el = document.getElementById('companion-leaderboard');
   const podiumEl = document.getElementById('lb-podium');
@@ -142,6 +148,7 @@ function renderLeaderboardUi(){
   lbWirePager(totalPages);
 }
 
+/** @returns {string} HTML des contrôles du classement (recherche, chips de catégorie, toggle "Ma position"). */
 function lbControlsHtml(){
   return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
     <input class="search-box" id="lb-search" placeholder="Rechercher un joueur…" value="${escapeHtmlLb(lbSearch)}" style="width:180px">
@@ -151,6 +158,7 @@ function lbControlsHtml(){
     <button class="schip ${lbShowMeOnly?'on':''}" id="lb-me-toggle" style="margin-left:auto">📍 Ma position</button>
   </div>`;
 }
+/** Câble les événements des contrôles du classement (recherche, chips de catégorie, toggle "Ma position"). */
 function lbWireControls(){
   const search = document.getElementById('lb-search');
   if(search) search.oninput = e => { lbSearch = e.target.value; lbPage = 1; renderLeaderboardUi(); };
@@ -161,6 +169,7 @@ function lbWireControls(){
   if(meToggle) meToggle.onclick = () => { lbShowMeOnly = !lbShowMeOnly; renderLeaderboardUi(); };
 }
 
+/** @param {object[]} top3 - les 3 premiers du classement trié. @returns {string} HTML du podium (ordre visuel 2e/1er/3e), vide si aucun. */
 function lbPodiumHtml(top3){
   if(!top3.length) return '';
   const cat = LB_CATS[lbCategory];
@@ -180,6 +189,7 @@ function lbPodiumHtml(top3){
   <div style="font-size:9px;color:var(--cream3);margin:-8px 0 12px;display:flex;align-items:center;gap:4px" title="${escapeHtmlLb(cat.tip)}">ⓘ ${escapeHtmlLb(cat.label)} — survole pour le détail du calcul</div>`;
 }
 
+/** @param {object[]} rows - lignes à afficher (déjà paginées/filtrées). @param {Map} rankMap - user_id -> rang dans le classement complet. @returns {string} HTML de la table du classement. */
 function lbRowsHtml(rows, rankMap){
   const cat = LB_CATS[lbCategory];
   return `<table style="width:100%;border-collapse:collapse;font-size:11px">
@@ -203,6 +213,7 @@ function lbRowsHtml(rows, rankMap){
     }).join('')}</tbody>
   </table>`;
 }
+/** @param {number} totalPages - nombre total de pages. @returns {string} HTML du pager Précédent/Suivant (vide si 1 seule page). */
 function lbPagerHtml(totalPages){
   if(totalPages<=1) return '';
   return `<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0">
@@ -211,6 +222,7 @@ function lbPagerHtml(totalPages){
     <button class="schip" id="lb-next" ${lbPage>=totalPages?'disabled':''}>Suivant ›</button>
   </div>`;
 }
+/** @param {number} totalPages - nombre total de pages. Câble les boutons Précédent/Suivant du pager. */
 function lbWirePager(totalPages){
   const prev = document.getElementById('lb-prev'), next = document.getElementById('lb-next');
   if(prev) prev.onclick = () => { lbPage--; renderLeaderboardUi(); };

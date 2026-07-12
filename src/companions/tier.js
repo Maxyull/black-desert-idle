@@ -18,18 +18,22 @@ const TIER_XP_NEEDED = [0, 800, 2200, 5000, 10000]; // XP cumulé requis pour at
 // de croiser ce jackpot. 0.015 = 1.5% par montée de tier.
 const RARITY_BREAKTHROUGH_CHANCE = 0.015;
 
+/** @param {number} tier - palier (1-5). @returns {number} multiplicateur tiré aléatoirement dans TIER_MULT_RANGE[tier-1], arrondi à 3 décimales. */
 function rollTierMult(tier){
   const [lo,hi] = TIER_MULT_RANGE[tier-1];
   return +(lo + Math.random()*(hi-lo)).toFixed(3);
 }
+/** @param {object} pet - familier. @returns {number} multiplicateur de tier RÉELLEMENT tiré pour ce pet (tiré une fois et mémorisé sur pet.tierMult, rétro-compat pets sans ce champ). */
 function tierMultOf(pet){
   if(pet.tierMult===undefined) pet.tierMult = rollTierMult(pet.tier||1); // rétro-compat pets existants
   return pet.tierMult;
 }
+/** @param {object} pet - familier. @returns {number} position (0-100) du multiplicateur réellement tiré dans la plage de son tier. */
 function tierMultPct(pet){
   const [lo,hi] = TIER_MULT_RANGE[(pet.tier||1)-1];
   return Math.round((tierMultOf(pet)-lo)/(hi-lo)*100);
 }
+/** @param {object} pet - familier. @returns {?number} XP requise pour passer au tier suivant (null si déjà Tier 5, max atteint). */
 function tierXpMaxFor(pet){
   const t=(pet.tier||1);
   return t>=5 ? null : (TIER_XP_NEEDED[t] - TIER_XP_NEEDED[t-1]);
@@ -37,10 +41,13 @@ function tierXpMaxFor(pet){
 
 // ═══ STATE ═══════════════════════════════════════════════════════
 let petId=100;
+/** @param {number} rar - rareté. @param {number} i - index de stat. @returns {number} valeur tirée dans STAT_RANGES[rar][i] (0 si la plage est [0,0], stat inactive). */
 function rs(rar,i){const[lo,hi]=STAT_RANGES[rar][i];if(lo===0&&hi===0)return 0;return+(lo+Math.random()*(hi-lo)).toFixed(1);}
+/** @param {number} rar - rareté. @returns {number[]} 5 stats tirées (les BONUS_COUNT[rar] premières actives, le reste à 0) — état initial d'un familier fraîchement éclos/fusionné. */
 function mkStats(rar){return Array(5).fill(0).map((_,i)=>i<BONUS_COUNT[rar]?rs(rar,i):0);}
 
 // ═══ GEARSCORE ═══════════════════════════════════════════════════
+/** @param {number} rar - rareté. @param {number} [tier] - palier (sans tier = Tier 5, référence absolue). @returns {number} GS théorique max (stats au plafond × multiplicateur haut du tier). */
 function maxGS(rar,tier){
   // Max théorique pour cette rareté à un tier donné (borne HAUTE de la plage du tier).
   // Sans tier précisé → Tier 5 au maximum (référence absolue).
@@ -48,6 +55,7 @@ function maxGS(rar,tier){
   let t=0;for(let i=0;i<BONUS_COUNT[rar];i++)t+=STAT_RANGES[rar][i][1];
   return t*mult;
 }
+/** @param {number} rar - rareté. @param {number} [tier] - palier (sans tier = Tier 1, plancher absolu). @returns {number} GS théorique min (stats au plancher × multiplicateur bas du tier). */
 function minGS(rar,tier){
   // Min théorique pour cette rareté à un tier donné (borne BASSE de la plage du tier, stats au plancher).
   const mult = tier ? TIER_MULT_RANGE[tier-1][0] : TIER_MULT_RANGE[0][0];
@@ -85,6 +93,7 @@ function gsPct(pet){
 function normGS(pet){
   return Math.round(curGS(pet)/maxGS(5,5)*1000);
 }
+/** @param {number} rar - rareté. @returns {number} GS normalisé (0-1000) moyen attendu d'un pet fraîchement éclos de cette rareté (stats au milieu de fourchette, multiplicateur T1 moyen). */
 function avgGSForRarityAtTier1(rar){
   // GS moyen attendu d'un pet de cette rareté fraîchement éclos (Tier 1, stats moyennes = milieu de fourchette)
   let t=0;
@@ -95,6 +104,7 @@ function avgGSForRarityAtTier1(rar){
   const t1AvgMult = (TIER_MULT_RANGE[0][0]+TIER_MULT_RANGE[0][1])/2; // multiplicateur moyen attendu au Tier 1
   return Math.round(t*t1AvgMult/maxGS(5,5)*1000);
 }
+/** @param {object} pet - familier. @returns {?{beats:boolean, text:string, delta:number}} comparaison de son GS normalisé à la moyenne T1 de la rareté supérieure, null si déjà Ancestral. */
 function comparisonBadge(pet){
   // Compare ce pet à la moyenne T1 de la rareté immédiatement supérieure
   if(pet.rar>=5) return null; // déjà Ancestral, rien au-dessus
