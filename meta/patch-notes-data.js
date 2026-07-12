@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V393', d:'23/07/2026 09:00', name:{fr:'Marché commun : panneau agrandi', en:'Common Market: panel enlarged'}, fr:[
+      {t:'change', sub:'economie', tx:'Le panneau du Marché commun est désormais nettement plus grand (largeur et hauteur), sur retour des joueurs le trouvant trop petit. Le catalogue affiche maintenant ~7 objets visibles avant de défiler (contre 5 auparavant), toujours dans un cadre borné pour ne pas faire "sauter" la page.'},
+      {t:'change', sub:'economie', tx:'La popup "Acheter" (échelle de prix) est également un peu plus large, en cohérence avec le reste du panneau.'},
+    ], en:[
+      {t:'change', sub:'economie', tx:'The Common Market panel is now noticeably larger (width and height), following feedback that it felt too small. The catalog now shows ~7 items before scrolling (up from 5), still within a fixed frame so the page never "jumps".'},
+      {t:'change', sub:'economie', tx:'The "Buy" popup (price ladder) is also slightly wider, in line with the rest of the panel.'},
+    ] },
   { v:'V392', d:'22/07/2026 13:00', name:{fr:'Barre de sorts et sélecteur de potion : même reskin que Zone', en:'Skill bar and potion selector: same reskin as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'La barre de sorts (icônes en bas de l\'écran de jeu) a reçu le même reskin visuel que le reste de l\'écran Zone : coque assortie aux autres icônes du jeu (fond/bordure/coins arrondis), nom du sort en police moderne. Les couleurs de sort en cours de lancement et de buff actif sont inchangées.'},
       {t:'change', sub:'interface', tx:'Le sélecteur de potion (case Vie/Mana en bas à gauche) a reçu le même reskin : coque assortie, libellés de section ("Potion de vie"/"Potion de mana") en petites majuscules dorées, soin et coût en police moderne. Les couleurs de sélection/verrouillage sont inchangées.'},
