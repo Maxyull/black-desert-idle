@@ -473,14 +473,14 @@
 <script src="hatch.js?v=17"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=8"></script>
-<script src="sections.js?v=15"></script>
+<script src="sections.js?v=16"></script>
 <script src="collection.js?v=12"></script>
 <!-- renommés le 2026-07-21 (lot 4/~8, même renommage progressif que ci-dessus) -->
 <script src="fusion.js?v=9"></script>
 <script src="feed.js?v=8"></script>
 <script src="ticks.js?v=11"></script>
 <!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
-<script src="save.js?v=14"></script>
+<script src="save.js?v=15"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
@@ -516,7 +516,7 @@
 <!-- onboarding (2026-07-11, demande explicite) : n'a besoin que de OM()/CM() (hatch.js, déjà
      chargé) et de localStorage -- ordre non strictement requis, placé juste avant main.js qui
      l'appelle (maybeShowOnboarding()) après le premier renderAll(). -->
-<script src="onboarding.js?v=2"></script>
+<script src="onboarding.js?v=3"></script>
 <script src="main.js?v=10"></script>
 </body>
 </html>

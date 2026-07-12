@@ -3622,6 +3622,56 @@
     assert('recentlyUnlockedAchievements() ignore une entrée achUnlocked non numérique', recent.map(a => a.id).join(',') === 'kills_100', recent.map(a => a.id).join(','));
   }
 
+  // Refonte visuelle "Zone" -- Phase 6 (2026-07-22) : #sideMenu (#gameBar/#userBar/#metaBar/
+  // #econBar/#communityBar/#btnCollapseMenu) et les widgets flottants (.floatWidget/#chatWidget/
+  // .qwHeaderRow .qwTitle/.qwFoldBtn) avaient été sautés par les Phases 1-5 de la refonte Zone --
+  // confirmé en inspectant le jeu vivant : ils héritaient encore de body{font-family:Georgia,...}
+  // et de l'ancien fond rgba(10,9,12,.88)/bordure #2c2a33/#3a3742 d'avant toute refonte. Garde-fou
+  // statique : inspecte les règles CSS RÉELLEMENT chargées (document.styleSheets), pas de fetch
+  // réseau ni de rendu DOM nécessaire, test synchrone comme le reste de la suite (même convention
+  // que testSorcierRenderLoadsBeforeSyncStartupCallers/testSupabaseScriptIsPinnedWithIntegrity).
+  function testSidebarAndFloatWidgetsAreReskinnedNotLegacyGeorgia() {
+    if (typeof document === 'undefined') return; // hors-contexte navigateur
+    const allRules = [];
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules || sheet.rules; } catch (e) { continue; }
+      if (!rules) continue;
+      for (const r of rules) if (r && r.cssText) allRules.push(r.cssText);
+    }
+    const rulesMatching = needle => allRules.filter(t => t.includes(needle));
+
+    const collapseBtnRules = rulesMatching('#btnCollapseMenu');
+    assert('#btnCollapseMenu a une règle en police Inter (reskin Phase 6, plus le carré Georgia d\'origine)',
+      collapseBtnRules.some(t => /font-family:\s*['"]?Inter/i.test(t)), collapseBtnRules.join(' | '));
+
+    const gameBarBtnRules = rulesMatching('#gameBar button');
+    assert('les boutons de #gameBar passent en police Inter (pas Georgia hérité de body)',
+      gameBarBtnRules.some(t => /font-family:\s*['"]?Inter/i.test(t)), gameBarBtnRules.join(' | '));
+
+    const communityBarLinkRules = rulesMatching('#communityBar a');
+    assert('#communityBar a (bouton Discord, un <a> pas un <button>) est bien couvert par le reskin',
+      communityBarLinkRules.some(t => /font-family:\s*['"]?Inter/i.test(t)), communityBarLinkRules.join(' | '));
+
+    const floatWidgetRules = rulesMatching('.floatWidget');
+    assert('.floatWidget utilise la police Inter (pas Georgia hérité)',
+      floatWidgetRules.some(t => /font-family:\s*['"]?Inter/i.test(t)), floatWidgetRules.join(' | '));
+    assert('.floatWidget utilise le token --s1 pour le fond (cohérent avec .card, plus l\'ancien #1c1a22 en dur seul)',
+      floatWidgetRules.some(t => /--s1/.test(t)), floatWidgetRules.join(' | '));
+
+    const chatWidgetRules = rulesMatching('#chatWidget');
+    assert('#chatWidget (règle historique plus spécifique que .floatWidget) reprend aussi --s1/--dbBorder',
+      chatWidgetRules.some(t => /--s1/.test(t) && /--dbBorder/.test(t)), chatWidgetRules.join(' | '));
+
+    const qwTitleRules = rulesMatching('.qwHeaderRow .qwTitle');
+    assert('.qwHeaderRow .qwTitle passe en Cinzel + --gold2 (même traitement que .card h3)',
+      qwTitleRules.some(t => /Cinzel/.test(t) && /--gold2/.test(t)), qwTitleRules.join(' | '));
+
+    const qwFoldBtnRules = rulesMatching('.qwFoldBtn');
+    assert('.qwFoldBtn a une règle avec border-radius + --cream3 (icône minimaliste, pas la pilule --gold-dim d\'origine)',
+      qwFoldBtnRules.some(t => /border-radius/.test(t) && /--cream3/.test(t)), qwFoldBtnRules.join(' | '));
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -3825,6 +3875,7 @@
     testLb2YourRankBarThresholdIsTop20();
     testLb2GuestGateReusesMarketCopyAndRealLinkButton();
     testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert();
+    testSidebarAndFloatWidgetsAreReskinnedNotLegacyGeorgia();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

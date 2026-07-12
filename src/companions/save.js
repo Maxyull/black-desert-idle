@@ -2,6 +2,7 @@
 // Sauvegarde 100% locale (2026-07-19, demande explicite) : pas de compte Supabase pour ce
 // module en v1 -- clé dédiée pour ne jamais collisionner avec les clés du jeu principal
 // (même origine, localStorage partagé entre l'iframe et la page hôte).
+/** Sérialise tout l'état du module (roster, silver, inventaire, compteurs, flags de migration) dans localStorage (clé dédiée, 100% locale). */
 function saveGame(){
   try{
     const state = {
@@ -25,6 +26,7 @@ const OFFLINE_CAP_HOURS = 24;
 const OFFLINE_SILVER_PER_HOUR = 60;   // moyenne estimée par pet actif
 const OFFLINE_COMMON_ITEMS_PER_HOUR = 3;
 
+/** @param {?number} savedAt - timestamp de la dernière sauvegarde. Simule (taux plat, pas tick-par-tick) le silver/loot commun gagnés par les pets sur le terrain pendant l'absence, plafonné à OFFLINE_CAP_HOURS, ignoré sous 3 minutes. */
 function applyOfflineProgress(savedAt){
   if(!savedAt) return;
   const elapsedMs = Date.now()-savedAt;
@@ -85,6 +87,7 @@ document.addEventListener('visibilitychange', () => {
 // limite") -- purge l'excédent au-delà de PET_ROSTER_CAP (96, roster.js). Garde TOUJOURS
 // les pets actuellement déployés sur le terrain (quel que soit leur GS -- jamais casser une
 // configuration active), puis complète avec les meilleurs GS parmi le reste jusqu'au plafond.
+/** Migration rétroactive : purge l'excédent au-delà de PET_ROSTER_CAP, garde toujours les pets déployés puis complète avec les meilleurs GS parmi le reste. */
 function trimRosterToCapIfNeeded(){
   if(PETS.length <= PET_ROSTER_CAP) return;
   const deployed = PETS.filter(p=>p.terrain);
@@ -100,6 +103,7 @@ function trimRosterToCapIfNeeded(){
 // (rollAndCreatePet, hatch.js) n'en a pas : indispensable avant de pouvoir le mettre en
 // vente (pet_uid est la clé serveur). Gatée par petsUidV1 (pas de flag par pet -- un seul passage
 // suffit, générer un uid à un pet qui en a déjà un ne se produit jamais après ce passage).
+/** Migration rétroactive : génère un uid pour tout pet créé avant l'ajout du marché d'échange (pet_uid = clé serveur). */
 function migratePetUidV1(){
   PETS.forEach(p=>{ if(!p.uid) p.uid = crypto.randomUUID(); });
 }
@@ -109,6 +113,7 @@ function migratePetUidV1(){
 // (ticks.js) a laissé un nom d'espèce périmé. Ne touche PAS les pets fraîchement éclos dont le
 // léger décalage ±1 entre p.rar et p.cat.rar est voulu (rollAndCreatePet, hatch.js) -- seul un
 // écart de 2 ou plus prouve une (ou plusieurs) percée(s) historique(s), jamais un simple hatch.
+/** Migration rétroactive : réaligne p.cat sur l'espèce correspondant à p.rar quand l'écart prouve une percée historique antérieure au correctif (écart ≥2, jamais le ±1 normal d'un hatch récent). */
 function migratePetSpeciesRarityV1(){
   PETS.forEach(p=>{
     if(Math.abs(p.rar - p.cat.rar) < 2) return;
@@ -116,6 +121,7 @@ function migratePetSpeciesRarityV1(){
     if(newCat) p.cat = newCat;
   });
 }
+/** @returns {boolean} charge l'état sauvegardé (localStorage), applique les migrations rétroactives une seule fois chacune (flags petsRosterResetV1/petsRosterCapV1/petsUidV1/petsSpeciesRarityV1), rattrape le hors-ligne. false si aucune sauvegarde ou erreur (nouveau joueur). */
 function loadGame(){
   try{
     const raw = localStorage.getItem('velia_idle_pets_save');
@@ -178,6 +184,7 @@ setInterval(saveGame, 5000); // autosave toutes les 5s
 // restait qu'un filet de sécurité local, jamais relié à la sauvegarde cloud (module 100%
 // localStorage, voir CLAUDE.md §28), et source de confusion pour les joueurs vu qu'aucune autre
 // partie du jeu principal n'expose ce genre de bouton.
+/** Efface la sauvegarde locale (avec confirmation) et recharge la page (roster de départ, 0 pet). */
 function resetSave(){
   if(!confirm('Effacer la sauvegarde et recharger le roster de départ (0 pet) ?\n\nTa progression actuelle sera définitivement perdue.')) return;
   localStorage.removeItem('velia_idle_pets_save');

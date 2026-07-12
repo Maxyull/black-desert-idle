@@ -19,6 +19,7 @@ const ONBOARDING_STEPS = [
 
 let onbIdx = 0;
 
+/** Reconstruit le modal d'onboarding à l'étape onbIdx (ONBOARDING_STEPS), pagination + boutons Passer/Précédent/Suivant. */
 function renderOnboarding(){
   const step = ONBOARDING_STEPS[onbIdx];
   const isLast = onbIdx === ONBOARDING_STEPS.length - 1;
@@ -39,14 +40,20 @@ function renderOnboarding(){
       <button class="btn btn-gold" style="flex:1" onclick="${isLast?'onbFinish()':'onbNext()'}">${isLast?'C\'est parti !':'Suivant ▶'}</button>
     </div>`;
 }
+/** Avance d'une étape d'onboarding (clampé au dernier pas). */
 function onbNext(){ onbIdx=Math.min(ONBOARDING_STEPS.length-1, onbIdx+1); renderOnboarding(); }
+/** Recule d'une étape d'onboarding (clampé au premier pas). */
 function onbPrev(){ onbIdx=Math.max(0, onbIdx-1); renderOnboarding(); }
+/** Ferme l'onboarding sans terminer la dernière étape (bouton "Passer"). */
 function onbSkip(){ closeOnboarding(); }
+/** Ferme l'onboarding après la dernière étape (bouton "C'est parti !"). */
 function onbFinish(){ closeOnboarding(); }
+/** Marque l'onboarding comme vu (localStorage, clé dédiée indépendante de la sauvegarde de progression) et ferme le modal. */
 function closeOnboarding(){
   try{ localStorage.setItem(ONBOARDING_STORAGE_KEY, '1'); }catch(e){}
   CM('onboarding-modal');
 }
+/** Affiche l'onboarding une seule fois par navigateur (clé localStorage dédiée, indépendante de la sauvegarde de progression), no-op si déjà vu. */
 function maybeShowOnboarding(){
   let seen = false;
   try{ seen = localStorage.getItem(ONBOARDING_STORAGE_KEY) === '1'; }catch(e){}

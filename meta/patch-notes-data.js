@@ -5,6 +5,7 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+<<<<<<< HEAD
   { v:'V382', d:'22/07/2026 03:00', name:{fr:'Marché commun refait : catalogue unifié + popup "Acheter"', en:'Common Market redesigned: unified catalog + "Buy" popup'}, fr:[
       {t:'change', sub:'economie', tx:'Le Marché commun a été entièrement redessiné : une seule liste parcourable regroupe désormais équipement ET matériaux (au lieu d\'un onglet "Matériaux" séparé), avec recherche, tri, et arbre de catégories façon Marché Central.'},
       {t:'new', sub:'economie', tx:'Les objets qui n\'ont aucune vente en cours restent visibles dans le catalogue (grisés, sans prix) — tu peux parcourir tout ce qui existe dans le jeu, pas seulement ce qui est en vente à l\'instant.'},
@@ -17,6 +18,14 @@ const PATCH_NOTES = [
       {t:'new', sub:'economie', tx:'New "Buy" popup with the real price scale (price tiers + pending orders), a price chart, a quantity stepper and an enhancement-level stepper to move between tiers of the same item.'},
       {t:'new', sub:'economie', tx:'From an item\'s detail view, you can now place a buy offer OR a sell offer at your own price (with quantity for materials), in addition to instant purchase.'},
       {t:'change', sub:'economie', tx:'"My orders" is now a panel pinned to the right, always visible with separate Buy/Sell tabs, instead of a 3rd tab to open separately.'},
+=======
+  { v:'V382', d:'22/07/2026 03:00', name:{fr:'Reskin du menu latéral et des encarts flottants (Suivi/Chat)', en:'Sidebar menu and floating widgets (Tracker/Chat) reskin'}, fr:[
+      {t:'change', sub:'interface', tx:'Les boutons du menu latéral (Quêtes, Courrier, Compendium, Codex, Succès, Classement, Marché, Discord, Wiki, Notes de version, Soutenir, Mon compte, Déconnexion...) et le bouton de repli du menu ont reçu le même reskin visuel que le reste de l\'écran Zone (police, couleurs, coins arrondis) — ils avaient été oubliés lors des refontes précédentes et gardaient encore l\'ancien style.'},
+      {t:'change', sub:'interface', tx:'Les encarts flottants "Suivi de quête" et "Chat" (coin haut-droit) ont reçu le même traitement — seule leur coque a changé, les onglets de canaux du chat gardent leur style déjà à jour.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The sidebar menu buttons (Quests, Mailbox, Compendium, Codex, Achievements, Leaderboard, Market, Discord, Wiki, Patch notes, Support, My account, Logout...) and the menu collapse button received the same visual reskin as the rest of the Zone screen (font, colors, rounded corners) — they had been missed in previous redesign passes and still had the old style.'},
+      {t:'change', sub:'interface', tx:'The floating "Quest tracker" and "Chat" widgets (top-right corner) received the same treatment — only their shell changed, the chat channel tabs already had the up-to-date style.'},
+>>>>>>> claude/bdi-sidebar-widgets-reskin
     ] },
   { v:'V381', d:'22/07/2026 02:00', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
       {t:'new', sub:'interface', tx:'Le Classement (🏆) a une 8e catégorie : "🧭 Compendium", basée sur ta complétion globale (zones + boss + Maîtrise PEN).'},

@@ -1,3 +1,4 @@
+/** Reconstruit la liste de gauche des sections (icône, pet actif, badge GS), surligne activeSecIdx. */
 function renderSecNav(){
   document.getElementById('sec-nav').innerHTML=SECTIONS.map((s,i)=>{
     const tp=terrainPet(s.id);const pct=tp?gsPct(tp):0;
@@ -14,6 +15,7 @@ function renderSecNav(){
 
 let expandedResPets = new Set(); // ids des pets de réserve actuellement dépliés
 
+/** @param {number} id - id du pet en réserve. Bascule l'état déplié/replié de sa carte compacte et rafraîchit le panneau. */
 function toggleResPetExpand(id){
   if(expandedResPets.has(id)) expandedResPets.delete(id);
   else expandedResPets.add(id);
@@ -26,10 +28,12 @@ function toggleResPetExpand(id){
 // Tri par défaut = Tier (2026-07-20, demande explicite : "Tier par Tiers/GS") -- Tier décroissant
 // en priorité, GS décroissant en cas d'égalité de Tier (plutôt que l'ordre d'obtention par défaut).
 let resSortMode='tier', resSortDir=-1;
+/** @param {'gs'|'tier'} mode - critère de tri. Réinverse resSortDir si déjà actif, sinon l'active en décroissant. */
 function setResSort(mode){
   if(resSortMode===mode) resSortDir*=-1; else { resSortMode=mode; resSortDir=-1; }
   renderSecDetail();
 }
+/** @param {object[]} list - pets en réserve. @returns {object[]} copie triée selon resSortMode/resSortDir ('default' = ordre d'obtention, 'tier' départagé par GS). */
 function sortReserveList(list){
   if(resSortMode==='default') return list;
   const sorted=[...list];
@@ -45,6 +49,7 @@ function sortReserveList(list){
   return sorted;
 }
 
+/** Reconstruit le panneau de droite de l'onglet Sections : carte du pet déployé (terrain) + grille de réserve triable/dépliable. */
 function renderSecDetail(){
   const s=SECTIONS[activeSecIdx];
   const tp=terrainPet(s.id);
@@ -164,11 +169,13 @@ function renderSecDetail(){
 // (contenant le <canvas> WebGL déjà initialisé) est simplement RÉ-ATTACHÉ dans le nouvel ancrage
 // généré par innerHTML, jamais recréé tant que le pet affiché ne change pas.
 let terrainViewer3dState = null; // { key, wrap, viewer }
+/** Libère le contexte WebGL du viewer 3D de la carte terrain s'il est actif (évite la fuite mémoire signalée le 2026-07-20). */
 function disposeTerrainViewer3dIfActive(){
   if(!terrainViewer3dState) return;
   terrainViewer3dState.viewer.dispose();
   terrainViewer3dState = null;
 }
+/** @param {?object} tp - pet déployé sur la section active (null si aucun). Monte/réutilise le viewer 3D de la carte terrain (mis en cache par id+tier, jamais recréé tant que le pet affiché ne change pas), ou libère le viewer si le pet n'a pas de modèle 3D. */
 function updateTerrainViewer3d(tp){
   const modelUrl = tp && typeof companionModelUrlFor==='function' ? companionModelUrlFor(tp) : null;
   if(!modelUrl){ disposeTerrainViewer3dIfActive(); return; }
@@ -192,6 +199,7 @@ function updateTerrainViewer3d(tp){
   else mount();
 }
 
+/** @param {number} id - id du pet à déployer. Le place sur le terrain de sa section (retire tout autre pet déjà déployé sur cette même section, 1 seul actif à la fois). */
 function deployPet(id){
   const p=PETS.find(pp=>pp.id===id);if(!p)return;
   PETS.forEach(pp=>{if(pp.cat.sec===p.cat.sec)pp.terrain=false;});
