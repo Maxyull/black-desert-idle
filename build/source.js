@@ -2437,12 +2437,18 @@ const S = {
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
   
+  xpEarned: 0,
+  
   silverEarnedAtLoad: 0, killsAtLoad: 0,
+  
+  xpEarnedAtLoad: 0,
   
   tokenSilverEarned: 0, tokenSilverEarnedAtLoad: 0,
   bestKpm: 0, 
   
   bestSilverPerHour: 0,
+  
+  bestXpPerHour: 0,
   
   bestGearscore: 0, bestAp: 0, bestDp: 0,
   
@@ -2505,6 +2511,17 @@ function computeOfflineCatchupSilver(data) {
   if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
   return Math.round(rate * hours);
 }
+
+function computeOfflineCatchupXp(data) {
+  if (!data || !data.savedAt) return 0;
+  const rate = (data.S && data.S.bestXpPerHour) || 0;
+  if (rate <= 0) return 0;
+  const elapsedMs = Date.now() - Date.parse(data.savedAt);
+  if (!(elapsedMs > 0)) return 0;
+  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
+  if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  return Math.round(rate * hours);
+}
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0;
@@ -2514,14 +2531,15 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function showAwayLootSummaryIfAny() {
-  if (awaySilverGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
+  
+  if (awaySilverGained <= 0 && awayXpGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
   if (typeof openReconnectModal !== 'function' || !$a('reconnectModalRoot')) {
     
     if (typeof showResetNotice === 'function') {
       showResetNotice('🎁', i18next.t('core:core.away.title'),
         `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver`);
     }
-    awaySilverGained = 0; awayLootCounts = {}; return;
+    awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0; return;
   }
   const items = Object.entries(awayLootCounts)
     .sort((a,b) => b[1].qty - a[1].qty)
@@ -3557,6 +3575,12 @@ function refreshStatsOnly() {
     ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
     : '— silver/min';
   
+  const xpGain = S.xpEarned-(S.xpEarnedAtLoad||0);
+  if (mins > 2) {
+    const xpPerHourNow = xpGain/(mins/60);
+    if (xpPerHourNow > (S.bestXpPerHour||0)) S.bestXpPerHour = xpPerHourNow;
+  }
+  
   const gsNow = GS(), apNow = apEff(), dpNow = totalDP();
   if (gsNow > (S.bestGearscore||0)) S.bestGearscore = gsNow;
   if (apNow > (S.bestAp||0)) S.bestAp = apNow;
@@ -3765,6 +3789,7 @@ function applySaveState(data) {
   if (!data || data.version !== 1) return false;
   
   const offlineSilverGain = computeOfflineCatchupSilver(data);
+  const offlineXpGain = computeOfflineCatchupXp(data);
   const offlineLevelBefore = data.S ? data.S.lvl : 1;
   const offlinePercentBefore = data.S ? Math.round((data.S.xp||0) / xpNeededFor(data.S.lvl||1) * 100) : 0;
   const offlineSavedAtMs = data.savedAt ? Date.parse(data.savedAt) : Date.now();
@@ -3774,6 +3799,8 @@ function applySaveState(data) {
   S.silverEarnedAtLoad = S.silverEarned || 0;
   S.tokenSilverEarnedAtLoad = S.tokenSilverEarned || 0;
   S.killsAtLoad = S.kills || 0;
+  
+  S.xpEarnedAtLoad = S.xpEarned || 0;
   
   S.bossPity = S.bossPity || {};
   S.bossLastKillWeek = S.bossLastKillWeek || {};
@@ -3803,9 +3830,16 @@ function applySaveState(data) {
   updateZoneTitleText(); 
   hud();
   
-  if (offlineSilverGain > 0) {
-    addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
+  if (offlineSilverGain > 0 || offlineXpGain > 0) {
+    if (offlineSilverGain > 0) addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
+    if (offlineXpGain > 0) {
+      
+      gainXp(offlineXpGain);
+      
+      S.xpEarnedAtLoad = S.xpEarned || 0;
+    }
     awaySilverGained = offlineSilverGain;
+    awayXpGained = offlineXpGain;
     awaySessionStartedAt = offlineSavedAtMs;
     awayLevelBefore = offlineLevelBefore;
     awayPercentBefore = offlinePercentBefore;
@@ -5535,6 +5569,7 @@ function flashXpGain() {
 function gainXp(n) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
+  if (n > 0) S.xpEarned = (S.xpEarned||0) + n;
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;

@@ -2109,6 +2109,36 @@
     S.bestSilverPerHour = s.bestSilverPerHour; S.tokenSilverEarned = s.tokenSilverEarned;
     S.tokenSilverEarnedAtLoad = s.tokenSilverEarnedAtLoad; S.startTime = s.startTime;
   }
+  // même garde-fou que testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes, version XP
+  // (2026-07-12, rattrapage hors-ligne XP) -- bestXpPerHour ne doit jamais redescendre (monotone),
+  // et seulement après 2 min de session (protège contre un pic extrapolé juste après un chargement,
+  // même précaution que bestSilverPerHour/bestKpm).
+  function testBestXpPerHourNeverDecreasesAndRequiresTwoMinutes() {
+    const s = { bestXpPerHour: S.bestXpPerHour, xpEarned: S.xpEarned, xpEarnedAtLoad: S.xpEarnedAtLoad, startTime: S.startTime };
+    // simule une session de 30s avec un gros gain XP -> ne doit PAS mettre à jour le record (mins<2)
+    S.bestXpPerHour = 1000;
+    S.xpEarnedAtLoad = 0;
+    S.xpEarned = 50000; // extrapolé sur 30s -> pic irréaliste en xp/h
+    S.startTime = performance.now() - 30*1000;
+    hud();
+    assert('Un gros gain XP sur <2min de session ne modifie PAS le record (protège contre les pics)',
+      S.bestXpPerHour === 1000, `bestXpPerHour=${S.bestXpPerHour}`);
+    // simule une session de 3 min avec un rythme réellement plus élevé -> le record doit monter
+    S.xpEarned = 100000;
+    S.startTime = performance.now() - 3*60*1000;
+    hud();
+    assert('Un rythme XP soutenu sur >2min de session met bien à jour le record (record monte)',
+      S.bestXpPerHour > 1000, `bestXpPerHour=${S.bestXpPerHour}`);
+    const afterFirstUpdate = S.bestXpPerHour;
+    // un rythme plus FAIBLE ensuite ne doit jamais faire REDESCENDRE le record (monotone)
+    S.xpEarnedAtLoad = 99000; S.xpEarned = 99100;
+    S.startTime = performance.now() - 3*60*1000;
+    hud();
+    assert('Le record xp/h ne redescend jamais (monotone, comme bestSilverPerHour/bestKpm)', S.bestXpPerHour === afterFirstUpdate,
+      `avant=${afterFirstUpdate} apres=${S.bestXpPerHour}`);
+    S.bestXpPerHour = s.bestXpPerHour; S.xpEarned = s.xpEarned;
+    S.xpEarnedAtLoad = s.xpEarnedAtLoad; S.startTime = s.startTime;
+  }
   // "afficher valeur/min puis meilleure valeur/heure" (2026-07-18) -- #shRate doit afficher un
   // format ".../min" (jamais "/h" pour la valeur instantanée, source du bug de pic irréaliste)
   function testShRateDisplaysPerMinuteNotPerHour() {
@@ -2853,6 +2883,27 @@
     const gainCapped = computeOfflineCatchupSilver({ savedAt: fortyEightHoursAgo, S:{ bestSilverPerHour: rate } });
     assert('Plafonné à OFFLINE_CATCHUP_CAP_HOURS (24h) même après 48h d\'absence', Math.abs(gainCapped - rate*OFFLINE_CATCHUP_CAP_HOURS) <= 2, `gain=${gainCapped}`);
   }
+  // même garde-fou que testComputeOfflineCatchupSilverCapsAndThresholds, version XP (2026-07-12,
+  // demande explicite : "ajoute le rattrapage XP" -- annule la décision précédente de ne pas
+  // simuler l'XP) -- computeOfflineCatchupXp() doit : ignorer une sauvegarde sans savedAt/taux
+  // (y compris une ancienne sauvegarde où S.bestXpPerHour n'existe même pas encore), ignorer une
+  // absence sous le seuil minimum, calculer un gain proportionnel au temps réel écoulé, et
+  // plafonner à OFFLINE_CATCHUP_CAP_HOURS même pour une absence bien plus longue.
+  function testComputeOfflineCatchupXpCapsAndThresholds() {
+    if (typeof computeOfflineCatchupXp !== 'function') return;
+    const rate = 3600; // valeur ronde : 3600 xp/h = 1 xp/s
+    assert('Sans savedAt -> 0, pas de throw', computeOfflineCatchupXp({ S:{ bestXpPerHour: rate } }) === 0);
+    assert('Sans taux connu (bestXpPerHour=0) -> 0', computeOfflineCatchupXp({ savedAt: new Date(Date.now()-3600000).toISOString(), S:{ bestXpPerHour:0 } }) === 0);
+    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
+    assert('Sauvegarde antérieure à cette feature (S.bestXpPerHour absent) -> 0, pas de throw', computeOfflineCatchupXp({ savedAt: oneHourAgo, S:{} }) === 0);
+    const oneMinuteAgo = new Date(Date.now() - 60*1000).toISOString();
+    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> 0', computeOfflineCatchupXp({ savedAt: oneMinuteAgo, S:{ bestXpPerHour: rate } }) === 0);
+    const gain1h = computeOfflineCatchupXp({ savedAt: oneHourAgo, S:{ bestXpPerHour: rate } });
+    assert('1h d\'absence à 3600 xp/h -> ~3600 xp', Math.abs(gain1h - rate) <= 2, `gain=${gain1h}`);
+    const fortyEightHoursAgo = new Date(Date.now() - 48*3600*1000).toISOString();
+    const gainCapped = computeOfflineCatchupXp({ savedAt: fortyEightHoursAgo, S:{ bestXpPerHour: rate } });
+    assert('Plafonné à OFFLINE_CATCHUP_CAP_HOURS (24h) même après 48h d\'absence', Math.abs(gainCapped - rate*OFFLINE_CATCHUP_CAP_HOURS) <= 2, `gain=${gainCapped}`);
+  }
   // vérifie l'intégration bout-en-bout : applySaveState() sur une sauvegarde dont savedAt est
   // ancien doit créditer le silver de rattrapage ET déclencher le modal "Bon retour" (auparavant :
   // rien ne s'affichait, awaySilverGained/awayLootCounts restaient à 0 après un vrai rechargement
@@ -2885,6 +2936,73 @@
       zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
       S.silver = s.silver; S.silverEarned = s.silverEarned; S.tokenSilverEarned = s.tokenSilverEarned; S.bestSilverPerHour = s.bestSilverPerHour;
       awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
+  // vérifie l'intégration bout-en-bout côté XP (2026-07-12, demande explicite : "ajoute le
+  // rattrapage XP") -- computeOfflineCatchupXp()/gainXp() doivent créditer l'XP ET gérer un vrai
+  // passage de niveau EN CASCADE si le rattrapage dépasse le seuil du niveau en cours (piège
+  // classique : un code qui ferait juste `S.xp += gain` sans boucle de passage de niveau laisserait
+  // S.xp très au-delà de S.xpNext sans faire monter S.lvl -- ce test le détecterait). Vérifie aussi
+  // que S.xpEarnedAtLoad est re-basé APRÈS le rattrapage (comme tokenSilverEarned pour le silver) :
+  // sinon ce gain hors-ligne compterait comme un gain de LA session en cours et fausserait le
+  // prochain calcul de bestXpPerHour.
+  function testApplySaveStateOfflineCatchupCreditsXpAndHandlesLevelUp() {
+    if (typeof applySaveState !== 'function' || typeof showAwayLootSummaryIfAny !== 'function' || typeof computeOfflineCatchupXp !== 'function') return;
+    const root = document.getElementById('reconnectModalRoot'); if (!root) return;
+    const s = { zoneIdx, atVelia, lvl: S.lvl, xp: S.xp, xpNext: S.xpNext, xpEarned: S.xpEarned,
+      xpEarnedAtLoad: S.xpEarnedAtLoad, bestXpPerHour: S.bestXpPerHour, hpMax: S.hpMax, silver: S.silver,
+      silverEarned: S.silverEarned, bestSilverPerHour: S.bestSilverPerHour };
+    const savedAwayXp = awayXpGained, savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    try {
+      atVelia = false;
+      // niveau 5 : xpNeededFor(5)=161 (LEVEL_XP_TABLE) -- un palier "normal", pas les tout premiers
+      // niveaux quasi gratuits (0-4 coûtent 1 xp chacun), pour un test représentatif d'une vraie
+      // cascade de plusieurs niveaux d'un coup.
+      S.lvl = 5; S.xp = 100; S.xpNext = xpNeededFor(5);
+      const save = getSaveState();
+      save.S.bestXpPerHour = 3600; // 1 xp/s pile
+      save.S.bestSilverPerHour = 0; // isole le test : pas de rattrapage silver ici
+      save.savedAt = new Date(Date.now() - 3600*1000).toISOString(); // 1h d'absence réelle
+      const xpEarnedBefore = save.S.xpEarned || 0;
+      const offlineXpGain = computeOfflineCatchupXp(save); // valeur exacte réellement utilisée (évite tout flake de timing sur ~3600)
+      assert('computeOfflineCatchupXp calcule bien un gain proche de 3600 (1h à 3600 xp/h)', Math.abs(offlineXpGain - 3600) <= 5, `offlineXpGain=${offlineXpGain}`);
+      // simule la MÊME boucle de cascade que gainXp() (xpNeededFor/LEVEL_XP_TABLE, code réel du
+      // jeu) à partir de l'état "avant" de la sauvegarde, pour obtenir le résultat attendu SANS
+      // dupliquer la logique métier dans le test -- seul le déclenchement bout-en-bout est vérifié.
+      let lvl = save.S.lvl, xp = save.S.xp + offlineXpGain;
+      while (xp >= xpNeededFor(lvl)) { xp -= xpNeededFor(lvl); lvl++; }
+      applySaveState(save);
+      assert('applySaveState() fait bien progresser le niveau via le rattrapage XP (cascade multi-niveaux)',
+        S.lvl === lvl, `S.lvl=${S.lvl}, attendu=${lvl}`);
+      assert('applySaveState() applique bien le reliquat d\'XP correct après cascade', S.xp === xp, `S.xp=${S.xp}, attendu=${xp}`);
+      assert('applySaveState() a bien fait progresser le niveau (au moins un passage de niveau attendu ici)', S.lvl > save.S.lvl, `S.lvl=${S.lvl}`);
+      assert('S.xpEarned (compteur À VIE) inclut bien le rattrapage hors-ligne', S.xpEarned >= xpEarnedBefore + offlineXpGain, `xpEarned=${S.xpEarned}`);
+      assert('S.xpEarnedAtLoad est re-basé APRÈS le rattrapage (n\'inflate pas la session qui commence)',
+        S.xpEarnedAtLoad === S.xpEarned, `xpEarnedAtLoad=${S.xpEarnedAtLoad}, xpEarned=${S.xpEarned}`);
+      assert('Le modal "Bon retour" s\'affiche après un rattrapage XP hors-ligne réel', root.innerHTML.includes('Bon retour'), root.innerHTML.slice(0,120));
+    } finally {
+      zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
+      S.lvl = s.lvl; S.xp = s.xp; S.xpNext = s.xpNext; S.xpEarned = s.xpEarned; S.xpEarnedAtLoad = s.xpEarnedAtLoad;
+      S.bestXpPerHour = s.bestXpPerHour; S.hpMax = s.hpMax; S.silver = s.silver; S.silverEarned = s.silverEarned; S.bestSilverPerHour = s.bestSilverPerHour;
+      awayXpGained = savedAwayXp; awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
+  // garde-fou (2026-07-12) : showAwayLootSummaryIfAny() sortait silencieusement (return anticipé)
+  // si SEULE de l'XP avait été gagnée pendant l'absence (awaySilverGained<=0 ET awayLootCounts
+  // vide) -- la garde ne testait pas awayXpGained, un rattrapage 100% XP (silver rate à 0 mais xp
+  // rate>0) n'aurait donc jamais affiché le modal.
+  function testShowAwayLootSummaryTriggersOnXpOnlyGain() {
+    if (typeof showAwayLootSummaryIfAny !== 'function') return;
+    const root = document.getElementById('reconnectModalRoot'); if (!root) return;
+    const savedAwaySilver = awaySilverGained, savedAwayXp = awayXpGained, savedAwayLoot = { ...awayLootCounts };
+    try {
+      awaySilverGained = 0; awayXpGained = 500; awayLootCounts = {};
+      showAwayLootSummaryIfAny();
+      assert('Le modal "Bon retour" s\'affiche même si seule de l\'XP a été gagnée (silver=0)',
+        root.innerHTML.includes('Bon retour'), root.innerHTML.slice(0,120));
+      assert('showAwayLootSummaryIfAny() remet awayXpGained à 0 après affichage', awayXpGained === 0, `awayXpGained=${awayXpGained}`);
+    } finally {
+      awaySilverGained = savedAwaySilver; awayXpGained = savedAwayXp; awayLootCounts = savedAwayLoot;
     }
   }
   // "vérifie les info de la table de loot (couleurs cadre)" (2026-07-10) : la ligne dépliée du
@@ -4313,6 +4431,7 @@
     testMigratePenMasteryV308EvictsCompendiumRetroactively();
     testBestGearscoreApDpNeverDecrease();
     testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes();
+    testBestXpPerHourNeverDecreasesAndRequiresTwoMinutes();
     testShRateDisplaysPerMinuteNotPerHour();
     testAdminEquipFullTierSetCoversAllFourTiers();
     testChestZoomToggleWorks();
@@ -4349,6 +4468,7 @@
     testGearRescaleV235RetroactiveOnZoneReqChange();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
+    testComputeOfflineCatchupXpCapsAndThresholds();
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();
     testSellOnePriorityEquipCompendiumSell();
@@ -4411,6 +4531,8 @@
     testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets();
     testReconnectModalWrapperScrollsInsteadOfClipping();
     testApplySaveStateOfflineCatchupCreditsSilverAndShowsReconnectModal();
+    testApplySaveStateOfflineCatchupCreditsXpAndHandlesLevelUp();
+    testShowAwayLootSummaryTriggersOnXpOnlyGain();
     testReconnectModalTierChipsWrapOnSameRowInsteadOfStacking();
     testAwayLevelSnapshotCapturedOnHide();
     testReconnectDurationLabelFormatsHoursAndMinutes();

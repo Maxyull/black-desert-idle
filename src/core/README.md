@@ -40,6 +40,29 @@ retour sur l'onglet.
 Tests : `testAwayLootSummaryAccumulatesOnlyWhileHiddenAndResets`, `testAwayLevelSnapshotCapturedOnHide`,
 `testBestAfkSessionSilverIsMonotone` (`tests/tests.js`).
 
+**Rattrapage hors-ligne réel (2026-07-11, étendu à l'XP le 2026-07-12)** : distinct du mécanisme
+"onglet en arrière-plan" ci-dessus (qui n'avance QUE tant qu'un onglet reste ouvert quelque part) —
+couvre le cas navigateur fermé/veille OS. `computeOfflineCatchupSilver(data)`/
+`computeOfflineCatchupXp(data)` (juste avant `applySaveState()`) calculent un gain à taux plat
+(`bestSilverPerHour`/`bestXpPerHour` DE LA SAUVEGARDE CHARGÉE × heures écoulées depuis
+`data.savedAt`, plafonné `OFFLINE_CATCHUP_CAP_HOURS`=24h, ignoré sous `OFFLINE_CATCHUP_MIN_HOURS`
+≈3min) — pas de simulation tick par tick. `applySaveState()` les calcule AVANT `Object.assign(S,
+data.S)` (le taux "avant" doit venir de la sauvegarde chargée), puis les applique APRÈS : silver via
+`addSilver(..., 'offline_catchup', ...)` (n'alimente PAS `tokenSilverEarned`, sinon le taux
+s'auto-inflaterait au prochain rattrapage), XP via `gainXp()` réutilisée telle quelle (gère déjà la
+cascade de passages de niveau, pas de logique dupliquée) — puis `S.xpEarnedAtLoad` est reposée
+juste après pour la même raison que `tokenSilverEarned` (éviter que ce gain hors-ligne ne fausse le
+`bestXpPerHour` de la session qui commence). `S.xpEarned` est un compteur XP cumulatif À VIE distinct
+de `S.xp` (qui se remet à 0 à chaque niveau, voir `gainXp()`), nécessaire pour calculer un xp/h de
+session fiable. Réutilise le même mécanisme d'affichage que ci-dessus
+(`awaySilverGained`/`awayXpGained`/`showAwayLootSummaryIfAny()`) — le loot (objets) reste
+volontairement PAS simulé (pas d'équivalent fiable à un taux/h). Le loot (module Compagnons,
+`src/companions/save.js`, `applyOfflineProgress`/`OFFLINE_CAP_HOURS`) suit le même principe en
+isolation. Tests : `testComputeOfflineCatchupSilverCapsAndThresholds`,
+`testComputeOfflineCatchupXpCapsAndThresholds`, `testApplySaveStateOfflineCatchupCreditsSilverAndShowsReconnectModal`,
+`testApplySaveStateOfflineCatchupCreditsXpAndHandlesLevelUp`, `testBestXpPerHourNeverDecreasesAndRequiresTwoMinutes`
+(`tests/tests.js`).
+
 **`MAX_STACK` relevé 9999 → 999999 (2026-07-10, rapporté explicitement : "pourquoi on peut se
 retrouver avec plusieurs stack d'une meme ressources")** : `invAdd()` ne fusionne dans un stack
 existant que si `qty < MAX_STACK` — un stack plein forçait la création d'un nouveau stack séparé

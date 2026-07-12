@@ -114,6 +114,11 @@ const S = {
   lootTableVersion: 'v2', // 'v1' (par zone, historique) ou 'v2' (taux fixe par palier, 2026-07-15) -- voir gearDropChance/jewelDropChance, réversible à tout moment via l'admin
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
   startTime: performance.now(), silverEarned: 0,
+  // XP totale gagnée À VIE (2026-07-12, rattrapage hors-ligne XP) -- distinct de S.xp, qui se remet
+  // à 0 à chaque passage de niveau (voir gainXp) : sans ce compteur cumulatif séparé, impossible de
+  // calculer un "xp/h" de session fiable (S.xp seul redescendrait au milieu d'une fenêtre de mesure
+  // dès qu'un level-up survient). Incrémenté uniquement dans gainXp() pour n>0, ne redescend jamais.
+  xpEarned: 0,
   // baseline (silverEarned/kills au début de LA SESSION EN COURS), pour calculer un vrai "silver/h"
   // et "kills/min" de session — S.silverEarned et S.kills sont des compteurs À VIE (achievements
   // "gagne X silver au total" etc.) et ne doivent jamais être réinitialisés au chargement d'une
@@ -123,6 +128,9 @@ const S = {
   // anti-triche confirmé le 2026-07-06). Corrigé en réinitialisant startTime + ces baselines à
   // chaque chargement (voir applySaveState).
   silverEarnedAtLoad: 0, killsAtLoad: 0,
+  // baseline de session pour xpEarned (même principe que silverEarnedAtLoad juste au-dessus) --
+  // voir applySaveState() pour le moment exact où elle est (re)posée.
+  xpEarnedAtLoad: 0,
   // "silver par heure" affiché (#shRate) = UNIQUEMENT le trash/token vendu au sol (2026-07-12,
   // demande explicite : "compté exclusivement par les silver recolté grace au token vendu") --
   // compteur À VIE séparé de silverEarned (qui reste global, toutes sources, pour les succès), voir
@@ -137,6 +145,12 @@ const S = {
   // envoyée au classement (voir syncPlayerStats, game-supabase.js) -- un record ne fait que monter,
   // aucune synchronisation temps réel n'est donc nécessaire côté classement.
   bestSilverPerHour: 0,
+  // record perso À VIE d'xp/h (2026-07-12, demande explicite : rattrapage hors-ligne XP) -- même
+  // principe "record monotone" que bestSilverPerHour/bestKpm : ne redescend jamais, calculé
+  // seulement au-delà de 2 min de session (voir hud()), sert de taux plat à
+  // computeOfflineCatchupXp() pour créditer l'XP gagnée pendant une vraie absence (navigateur
+  // fermé/veille OS), symétrique de bestSilverPerHour pour le silver.
+  bestXpPerHour: 0,
   // records perso À VIE de Gearscore/PA/PD (2026-07-08, demande explicite : "Classement public :
   // meilleur uniquement pas en temps reel donc oublie la synchro, on veut juste le meilleur") --
   // GS()/apEff()/totalDP() reflètent l'équipement ACTUELLEMENT porté, qui peut redescendre (test
@@ -240,23 +254,46 @@ let awayLevelBefore = 1, awayPercentBefore = 0;
 // OFFLINE_CATCHUP_CAP_HOURS, ignoré sous OFFLINE_CATCHUP_MIN_HOURS (bruit d'un simple changement
 // d'onglet, déjà couvert par visibilitychange ci-dessous). Utilise S.bestSilverPerHour DE LA
 // SAUVEGARDE CHARGÉE (record perso à vie, déjà isolé au seul revenu du trash au sol -- voir son
-// commentaire plus bas, section hud()) comme taux -- XP/loot volontairement PAS simulés ici (pas
-// de taux fiable équivalent pour l'XP), cohérent avec la simplicité du même mécanisme côté
-// Compagnons. Le clamp anti-triche serveur (clamp_player_stats(), CLAUDE.md §12) reste le filet de
-// sécurité si ce taux était anormalement élevé.
+// commentaire plus bas, section hud()) comme taux. XP désormais simulée aussi (2026-07-12, demande
+// explicite : revient sur la décision précédente) via computeOfflineCatchupXp()/S.bestXpPerHour,
+// même principe exact -- taux plat, mêmes seuils/plafond. Le loot (objets) reste volontairement
+// PAS simulé : contrairement à un taux silver/h ou xp/h (un seul nombre), un "loot/h" représentatif
+// n'a pas d'équivalent fiable (mix d'objets de raretés/types très différents selon la zone/le
+// palier de stuff) -- resterait un choix arbitraire (quel(s) objet(s) créditer ?) plutôt qu'un
+// vrai rattrapage. Le clamp anti-triche serveur (clamp_player_stats(), CLAUDE.md §12) reste le
+// filet de sécurité si un taux était anormalement élevé.
 const OFFLINE_CATCHUP_CAP_HOURS = 24;
 const OFFLINE_CATCHUP_MIN_HOURS = 0.05; // ~3 min
 /**
  * Rattrapage silver pour le temps réellement écoulé hors-ligne (navigateur fermé/veille OS),
  * complément du rattrapage "onglet en arrière-plan" (awaySilverGained). Taux plat = record perso
- * bestSilverPerHour de la sauvegarde chargée, pas de simulation tick par tick — XP/loot
- * volontairement pas simulés (pas de taux fiable équivalent).
+ * bestSilverPerHour de la sauvegarde chargée, pas de simulation tick par tick — le loot (objets)
+ * reste volontairement pas simulé (pas d'équivalent fiable à un taux/h, voir commentaire ci-dessus).
  * @param {object} data - sauvegarde chargée, lit data.savedAt et data.S.bestSilverPerHour.
  * @returns {number} silver à créditer, 0 si aucun taux connu ou absence sous OFFLINE_CATCHUP_MIN_HOURS.
  */
 function computeOfflineCatchupSilver(data) {
   if (!data || !data.savedAt) return 0;
   const rate = (data.S && data.S.bestSilverPerHour) || 0;
+  if (rate <= 0) return 0;
+  const elapsedMs = Date.now() - Date.parse(data.savedAt);
+  if (!(elapsedMs > 0)) return 0;
+  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
+  if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  return Math.round(rate * hours);
+}
+/**
+ * Rattrapage XP pour le temps réellement écoulé hors-ligne, calqué exactement sur
+ * computeOfflineCatchupSilver() (mêmes seuils/plafond, mêmes garde-fous) mais lit
+ * data.S.bestXpPerHour à la place. Ajouté le 2026-07-12 sur demande explicite — annule la décision
+ * précédente ("XP volontairement pas simulée", voir commentaire au-dessus de
+ * OFFLINE_CATCHUP_CAP_HOURS pour l'historique).
+ * @param {object} data - sauvegarde chargée, lit data.savedAt et data.S.bestXpPerHour.
+ * @returns {number} XP à créditer, 0 si aucun taux connu ou absence sous OFFLINE_CATCHUP_MIN_HOURS.
+ */
+function computeOfflineCatchupXp(data) {
+  if (!data || !data.savedAt) return 0;
+  const rate = (data.S && data.S.bestXpPerHour) || 0;
   if (rate <= 0) return 0;
   const elapsedMs = Date.now() - Date.parse(data.savedAt);
   if (!(elapsedMs > 0)) return 0;
@@ -284,14 +321,17 @@ document.addEventListener('visibilitychange', () => {
  * remet les compteurs "away" à zéro.
  */
 function showAwayLootSummaryIfAny() {
-  if (awaySilverGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
+  // awayXpGained ajouté à la garde (2026-07-12, rattrapage hors-ligne XP) : sans lui, un rattrapage
+  // qui ne créditerait QUE de l'XP (bestSilverPerHour=0 mais bestXpPerHour>0, cas rare mais possible)
+  // sortirait ici silencieusement et le modal ne s'afficherait jamais.
+  if (awaySilverGained <= 0 && awayXpGained <= 0 && Object.keys(awayLootCounts).length === 0) return;
   if (typeof openReconnectModal !== 'function' || !$a('reconnectModalRoot')) {
     // repli si le fichier React n'a pas pu charger (CDN indispo) -- garde un minimum d'info visible
     if (typeof showResetNotice === 'function') {
       showResetNotice('🎁', i18next.t('core:core.away.title'),
         `+${awaySilverGained.toLocaleString(LANG==='fr'?'fr-FR':'en-US')} silver`);
     }
-    awaySilverGained = 0; awayLootCounts = {}; return;
+    awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0; return;
   }
   const items = Object.entries(awayLootCounts)
     .sort((a,b) => b[1].qty - a[1].qty)
@@ -1797,6 +1837,16 @@ function refreshStatsOnly() {
   $('shRate').textContent = mins>.1
     ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
     : '— silver/min';
+  // record perso xp/h À VIE (2026-07-12, rattrapage hors-ligne XP) -- même formule/même garde-fou
+  // "2 minutes" que bestSilverPerHour juste au-dessus (évite qu'un gros pack XP juste après le
+  // chargement extrapole un pic irréaliste en xp/h). S.xpEarned est le compteur cumulatif À VIE
+  // (ne redescend JAMAIS, contrairement à S.xp qui se remet à 0 à chaque niveau -- voir gainXp) ;
+  // xpEarnedAtLoad est la baseline de session, posée/reposée dans applySaveState().
+  const xpGain = S.xpEarned-(S.xpEarnedAtLoad||0);
+  if (mins > 2) {
+    const xpPerHourNow = xpGain/(mins/60);
+    if (xpPerHourNow > (S.bestXpPerHour||0)) S.bestXpPerHour = xpPerHourNow;
+  }
   // records Gearscore/PA/PD à vie (voir S.bestGearscore ci-dessus) -- simple max courant, pas
   // besoin du garde-fou "2 minutes" de bestKpm/bestSilverPerHour : ce ne sont pas des taux
   // bruités sur une fenêtre courte, juste l'état d'équipement actuel, jamais faussé par un petit
@@ -2102,7 +2152,8 @@ function getSaveState() {
  * zone/position (playerPos restauré AVANT resetWorld() pour que les packs spawnent au bon
  * endroit), lance toutes les migrations rétroactives gear-migrations.js (une seule fois chacune,
  * gatées par leur flag S.migratedXxxVNNN), puis calcule et applique le rattrapage hors-ligne
- * (computeOfflineCatchupSilver) avant d'afficher le résumé au retour si applicable.
+ * (computeOfflineCatchupSilver + computeOfflineCatchupXp) avant d'afficher le résumé au retour si
+ * applicable.
  * @param {object} data - instantané produit par getSaveState() (ou chargé depuis Supabase/fichier).
  * @returns {boolean} vrai si appliqué, faux si `data` est absent ou d'une version incompatible.
  */
@@ -2112,6 +2163,7 @@ function applySaveState(data) {
   // (data.S), pas de l'état par défaut encore présent dans S à cet instant (voir
   // computeOfflineCatchupSilver ci-dessus).
   const offlineSilverGain = computeOfflineCatchupSilver(data);
+  const offlineXpGain = computeOfflineCatchupXp(data);
   const offlineLevelBefore = data.S ? data.S.lvl : 1;
   const offlinePercentBefore = data.S ? Math.round((data.S.xp||0) / xpNeededFor(data.S.lvl||1) * 100) : 0;
   const offlineSavedAtMs = data.savedAt ? Date.parse(data.savedAt) : Date.now();
@@ -2123,6 +2175,10 @@ function applySaveState(data) {
   S.silverEarnedAtLoad = S.silverEarned || 0;
   S.tokenSilverEarnedAtLoad = S.tokenSilverEarned || 0;
   S.killsAtLoad = S.kills || 0;
+  // baseline xp/h de session (voir S.xpEarnedAtLoad plus haut) -- reposée une 2e fois plus bas,
+  // APRÈS application du rattrapage XP hors-ligne, pour que ce rattrapage ne s'auto-inflate pas
+  // (même principe que tokenSilverEarned volontairement exclu de addSilver('offline_catchup', ...)).
+  S.xpEarnedAtLoad = S.xpEarned || 0;
   // absents des sauvegardes antérieures à cette feature (2026-07-19) -- filet défensif, pas besoin
   // d'une migration dédiée (gear-migrations.js) puisqu'un objet vide est déjà l'état "jamais tué ce
   // boss avec pity", identique à un vrai nouveau joueur -- aucune donnée existante à corriger.
@@ -2160,13 +2216,25 @@ function applySaveState(data) {
   resetWorld(true); // recrée les packs autour de la vraie position du joueur (keepPos, voir commentaire sur resetWorld)
   updateZoneTitleText(); // voir son commentaire -- sans cet appel, le nom de zone affiché restait figé au placeholder HTML
   hud();
-  // rattrapage hors-ligne réel (voir computeOfflineCatchupSilver ci-dessus) : appliqué ICI, APRÈS
-  // Object.assign(S,...) pour que addSilver() s'applique bien au silver fraîchement restauré (pas
-  // à un état par défaut qui serait de toute façon écrasé). Réutilise le mécanisme d'affichage déjà
-  // en place (awaySilverGained/showAwayLootSummaryIfAny, voir plus haut) au lieu d'un chemin séparé.
-  if (offlineSilverGain > 0) {
-    addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
+  // rattrapage hors-ligne réel (voir computeOfflineCatchupSilver/computeOfflineCatchupXp ci-dessus) :
+  // appliqué ICI, APRÈS Object.assign(S,...) pour que addSilver()/gainXp() s'appliquent bien à
+  // l'état fraîchement restauré (pas à un état par défaut qui serait de toute façon écrasé).
+  // Réutilise le mécanisme d'affichage déjà en place (awaySilverGained/awayXpGained/
+  // showAwayLootSummaryIfAny, voir plus haut) au lieu d'un chemin séparé.
+  if (offlineSilverGain > 0 || offlineXpGain > 0) {
+    if (offlineSilverGain > 0) addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
+    if (offlineXpGain > 0) {
+      // gainXp() réutilisée telle quelle (pas de logique de niveau dupliquée ici) : gère déjà la
+      // cascade de passages de niveau (while, un gros rattrapage peut faire monter plusieurs
+      // niveaux d'un coup), le +8 HP max/niveau, les notifications/logs Discord "Niveau supérieur".
+      gainXp(offlineXpGain);
+      // re-baseline APRÈS avoir crédité l'XP hors-ligne (comme tokenSilverEarned qui n'est PAS
+      // incrémenté par addSilver('offline_catchup',...)) : sinon ce rattrapage compterait comme un
+      // gain de LA SESSION EN COURS et fausserait/inflaterait le prochain calcul de bestXpPerHour.
+      S.xpEarnedAtLoad = S.xpEarned || 0;
+    }
     awaySilverGained = offlineSilverGain;
+    awayXpGained = offlineXpGain;
     awaySessionStartedAt = offlineSavedAtMs;
     awayLevelBefore = offlineLevelBefore;
     awayPercentBefore = offlinePercentBefore;
