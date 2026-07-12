@@ -15391,6 +15391,7 @@ function cmItemKey(kind, name, enhLv) {
 }
 
 let MARKET_CATALOG_CACHE = null;
+
 function marketCatalog() {
   if (MARKET_CATALOG_CACHE) return MARKET_CATALOG_CACHE;
   const catalog = [];
@@ -15420,6 +15421,7 @@ function marketCatalog() {
   MARKET_CATALOG_CACHE = catalog;
   return catalog;
 }
+
 function catalogEntriesForCat(cat) {
   if (cat.id === 'all') return marketCatalog();
   return marketCatalog().filter(c => c.catId === cat.id);

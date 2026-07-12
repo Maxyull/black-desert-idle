@@ -208,7 +208,7 @@
   }
   .farmModeSeg {
     display:flex; align-items:center; gap:2px; cursor:pointer;
-    padding:3px 3px; border-radius:16px;
+    padding:3px 3px; border-radius:16px; font-family:'Inter',sans-serif;
     font-size:8px; font-weight:600; color:var(--cream3); letter-spacing:.02em;
   }
   .farmModeSeg.active { background:var(--gold); color:#1a1712; }
@@ -227,7 +227,7 @@
   }
   .aiModeSeg {
     display:flex; align-items:center; gap:2px; cursor:pointer;
-    padding:3px 3px; border-radius:16px;
+    padding:3px 3px; border-radius:16px; font-family:'Inter',sans-serif;
     font-size:8px; font-weight:600; color:var(--cream3); letter-spacing:.02em;
   }
   .aiModeSeg.active { background:var(--gold); color:#1a1712; }
@@ -506,7 +506,7 @@
   }
   .equipModeSeg {
     display:flex; align-items:center; gap:5px; cursor:pointer;
-    padding:6px 11px; border-radius:16px;
+    padding:6px 11px; border-radius:16px; font-family:'Inter',sans-serif;
     font-size:10.5px; font-weight:600; color:var(--cream3); letter-spacing:.02em;
   }
   .equipModeSeg.active { background:var(--gold); color:#1a1712; }
