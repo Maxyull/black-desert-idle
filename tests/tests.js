@@ -2237,6 +2237,32 @@
     cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
     assert('drawProttyIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran)', !threw, errMsg);
   }
+  // Révision silhouette pirate approuvée après 3 tours de mockup (2026-07-13, Meshy) --
+  // drawPirateIso enrichi (épaulières arrondies, bas de gilet déchiqueté, boutons, ceinture/boucle,
+  // biceps, coutelas large, barbe carrée, boucle d'oreille, bandana à noeud + pan 2 segments, bottes
+  // à revers, patches sur le pantalon) ajoute de nombreuses formes en plus de l'original. Même
+  // garde-fou que le loup/Protty : ne doit jamais lever d'exception, quels que soient l'échelle,
+  // l'état de charge (lunge) ou le sens (facingRight), y compris aux valeurs limites (scale=0,
+  // lunge=1, loin hors écran -> sortie anticipée avant même de dessiner).
+  function testDrawPirateIsoNeverThrows() {
+    if (typeof drawPirateIso === 'undefined' || typeof cam === 'undefined' || typeof P === 'undefined') return;
+    const savedCamX = cam.x, savedCamY = cam.y, savedPx = P.x, savedPy = P.y;
+    cam.x = 0; cam.y = 0; P.x = 100; P.y = 0;
+    let threw = false, errMsg = '';
+    try {
+      [0, 0.85, 1.5].forEach(scale => {
+        [0, 0.5, 1].forEach(lunge => {
+          [-1, 1].forEach(px => {
+            P.x = px;
+            drawPirateIso(0, 0, { scale, lunge, phase: 0, tone:'#7a6248' }, 0.3);
+          });
+        });
+      });
+      drawPirateIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#7a6248' }, 0); // hors écran -> sortie anticipée
+    } catch (e) { threw = true; errMsg = e.message; }
+    cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
+    assert('drawPirateIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran)', !threw, errMsg);
+  }
   // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
   // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
   // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
@@ -4868,6 +4894,7 @@
     testDaggerRendersOnlyWhenSecondaryEquipped();
     testDrawWolfIsoNeverThrows();
     testDrawProttyIsoNeverThrows();
+    testDrawPirateIsoNeverThrows();
     testMigratePenMasteryV308MarksExistingPenItems();
     testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
     testMigratePenMasteryV308EvictsCompendiumRetroactively();

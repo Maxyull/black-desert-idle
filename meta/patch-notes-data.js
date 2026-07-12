@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V409', d:'23/07/2026 20:00', name:{fr:'Pirate (zone 3) : silhouette plus détaillée', en:'Pirate (zone 3): more detailed silhouette'}, fr:[
+      {t:'change', sub:'interface', tx:'Le pirate (Repaire des Pirates) a une silhouette plus détaillée et plus carrée : carrure plus large avec épaulières arrondies, gilet en cuir usé avec 3 boutons et un bas déchiqueté, biceps visibles, ceinture à boucle dorée, coutelas large tenu en avant/vers le bas au lieu d\'une lame fine, barbe plus fournie et carrée, petite boucle d\'oreille, bandana avec un nœud et un pan flottant à 2 segments, bottes avec revers à la cheville, patches sur le pantalon, et une garde plus large. Comportement de combat inchangé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The pirate (Pirates\' Den) now has a more detailed, sturdier silhouette: a broader build with rounded shoulder caps, a tattered leather vest with 3 buttons and a jagged hem, visible biceps, a belt with a gold buckle, a wide cutlass held forward/downward instead of a thin blade, a fuller square beard, a small earring, a bandana with a knot and a 2-segment flowing tail, boots with an ankle cuff, patches on the trouser legs, and a wider stance. Combat behavior unchanged.'},
+    ] },
   { v:'V408', d:'23/07/2026 19:00', name:{fr:'Mise à jour auto (15s), scrollbar du coffre, fusion des matériaux, slider de dépôt', en:'Auto-update (15s), chest scrollbar, material stacking, deposit slider'}, fr:[
       {t:'change', sub:'interface', tx:'Le bandeau "Nouvelle version disponible" affiche désormais un compte à rebours de 15s avant de recharger automatiquement la page — tu peux continuer à jouer normalement pendant ce temps, ou cliquer "Recharger maintenant" pour ne pas attendre.'},
       {t:'change', sub:'interface', tx:'La barre de défilement du coffre de ville suit maintenant le thème sombre/or du jeu au lieu de la scrollbar blanche par défaut du navigateur.'},
