@@ -1022,6 +1022,72 @@
       if (overlay) overlay.classList.remove('open');
     }
   }
+  // Reskin Zone du tutoriel (2026-07-12, port fidèle du mockup validé) : #tutorialBox suivait
+  // encore l'ancien thème doré (fond #1c1a22 en dur, police Georgia héritée de body, bouton
+  // "Suivant" carré, "Précédent" sur l'ancien --gold-dim) -- aligné ici sur .card
+  // (var(--s1)/var(--dbBorder)/radius 11px) + boutons radius 8px cohérents avec le reste des CTA
+  // (#sessionLockResumeBtn, #btnSignIn...). #tutorialArrow garde --gold, volontairement pas
+  // touché (déjà correct selon le mockup). Test réel (pas juste absence d'erreur) : startTutorial()
+  // avec de vraies étapes factices + navigation Suivant/Précédent/Passer, comme
+  // testSessionLockBoxUsesZoneRedesignTokens/testToastsUseZoneRedesignTokens pour les autres
+  // reskins Zone déjà faits.
+  function testTutorialBoxUsesZoneRedesignTokens() {
+    if (typeof startTutorial !== 'function' || typeof endTutorial !== 'function') return;
+    const savedUser = typeof currentUser !== 'undefined' ? currentUser : undefined;
+    const savedIdx = tutorialStepIdx, savedSteps = activeTutorialSteps;
+    const target = document.createElement('div');
+    target.id = 'testTutorialReskinTarget';
+    target.style.cssText = 'position:fixed; left:20px; top:100px; width:80px; height:20px;';
+    document.body.appendChild(target);
+    try {
+      if (typeof currentUser !== 'undefined') currentUser = { id:'test-tutorial-reskin', email:'test@test.local' };
+      const steps = [
+        { target:'#testTutorialReskinTarget', placement:'bottom', title:{fr:'Étape 1', en:'Step 1'}, text:{fr:'Texte 1', en:'Text 1'} },
+        { target:'#testTutorialReskinTarget', placement:'bottom', title:{fr:'Étape 2', en:'Step 2'}, text:{fr:'Texte 2', en:'Text 2'} },
+        { target:'#testTutorialReskinTarget', placement:'bottom', final:true, title:{fr:'Étape 3', en:'Step 3'}, text:{fr:'Texte 3', en:'Text 3'} },
+      ];
+      startTutorial(steps, { resetView:false });
+      const box = document.getElementById('tutorialBox');
+      const h4 = box.querySelector('h4'), p = box.querySelector('p'), step = box.querySelector('.tutStep');
+      const skip = document.getElementById('tutSkipBtn'), prev = document.getElementById('tutPrevBtn'), next = document.getElementById('tutNextBtn');
+      const cs = getComputedStyle(box);
+      assert('#tutorialBox : fond var(--s1) (plus #1c1a22 en dur)', cs.backgroundColor === 'rgb(16, 16, 30)', `backgroundColor=${cs.backgroundColor}`);
+      assert('#tutorialBox : bordure var(--dbBorder) (plus var(--gold))', cs.borderColor === 'rgb(42, 42, 68)', `borderColor=${cs.borderColor}`);
+      assert('#tutorialBox : radius 11px (comme .card)', cs.borderRadius === '11px', `borderRadius=${cs.borderRadius}`);
+      assert('#tutorialBox : police Inter (plus Georgia hérité de body)', /Inter/.test(cs.fontFamily), `fontFamily=${cs.fontFamily}`);
+      const csStep = getComputedStyle(step);
+      assert('#tutorialBox .tutStep : Cinzel + var(--cream3), petites majuscules',
+        /Cinzel/.test(csStep.fontFamily) && csStep.color === 'rgb(88, 80, 64)' && csStep.textTransform === 'uppercase',
+        `fontFamily=${csStep.fontFamily} color=${csStep.color} textTransform=${csStep.textTransform}`);
+      const csH4 = getComputedStyle(h4);
+      assert('#tutorialBox h4 : Cinzel + var(--gold2)', /Cinzel/.test(csH4.fontFamily) && csH4.color === 'rgb(232, 200, 128)', `fontFamily=${csH4.fontFamily} color=${csH4.color}`);
+      const csP = getComputedStyle(p);
+      assert('#tutorialBox p : Inter + var(--cream2)', /Inter/.test(csP.fontFamily) && csP.color === 'rgb(154, 142, 120)', `fontFamily=${csP.fontFamily} color=${csP.color}`);
+      const csSkip = getComputedStyle(skip);
+      assert('.tutSkip : Inter + var(--cream3)', /Inter/.test(csSkip.fontFamily) && csSkip.color === 'rgb(88, 80, 64)', `fontFamily=${csSkip.fontFamily} color=${csSkip.color}`);
+      const csPrev = getComputedStyle(prev);
+      assert('.tutPrev : bordure var(--dbBorder), radius 8px, var(--cream2)',
+        csPrev.borderRadius === '8px' && csPrev.color === 'rgb(154, 142, 120)', `borderRadius=${csPrev.borderRadius} color=${csPrev.color}`);
+      const csNext = getComputedStyle(next);
+      assert('.tutNext : radius 8px (plus carré, border-radius:0)', csNext.borderRadius === '8px', `borderRadius=${csNext.borderRadius}`);
+      // navigation réelle Suivant/Précédent/Passer -- le reskin doit survivre à un changement de step
+      $a('tutNextBtn').onclick();
+      assert('Navigation "Suivant" : passe bien à l\'étape 2/3', document.getElementById('tutStepLbl').textContent.indexOf('2') !== -1,
+        document.getElementById('tutStepLbl').textContent);
+      assert('Étape 2 : bordure toujours var(--dbBorder) après navigation', getComputedStyle(box).borderColor === 'rgb(42, 42, 68)');
+      $a('tutPrevBtn').onclick();
+      assert('Navigation "Précédent" : retombe bien sur l\'étape 1/3', document.getElementById('tutStepLbl').textContent.indexOf('1') !== -1,
+        document.getElementById('tutStepLbl').textContent);
+      endTutorial(true); // Passer
+      assert('"Passer" referme bien l\'overlay du tutoriel', !document.getElementById('tutorialOverlay').classList.contains('open'));
+    } finally {
+      target.remove();
+      tutorialStepIdx = savedIdx; activeTutorialSteps = savedSteps;
+      if (typeof currentUser !== 'undefined') currentUser = savedUser;
+      const overlay = document.getElementById('tutorialOverlay');
+      if (overlay) overlay.classList.remove('open');
+    }
+  }
   // trash de zone : tutoriel unique couvrant TOUS les noms de trash de ZONES (2026-07-19) --
   // itemNames calculé dynamiquement (jamais codé en dur), donc doit toujours refléter ZONES.
   function testTrashTutorialCoversEveryZoneTrashName() {
@@ -4054,6 +4120,7 @@
     testTutorialNeverQueuesOrMarksSeenWithoutAuthenticatedUser();
     testMarketTutorialTargetsMarketHeadNotFullPanel();
     testTutorialBoxClampsToRealHeightNeverOverflowsBottom();
+    testTutorialBoxUsesZoneRedesignTokens();
     testTrashTutorialCoversEveryZoneTrashName();
     testActionTutorialsRegisteredWithEmptyItemNames();
     testMaybeQueueTutorialByIdWorksForManualTrigger();

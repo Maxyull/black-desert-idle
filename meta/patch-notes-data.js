@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V391', d:'22/07/2026 12:00', name:{fr:'Bulle de tutoriel : même reskin que le reste de l\'écran Zone', en:'Tutorial tooltip: same reskin as the rest of the Zone screen'}, fr:[
+      {t:'change', sub:'interface', tx:'La bulle d\'aide du tutoriel pas-à-pas (titre/texte + boutons Passer/Précédent/Suivant) a reçu le même reskin visuel que le reste du jeu : fond et bordure assortis aux autres panneaux, titre en Cinzel, texte en police moderne, boutons "Précédent"/"Suivant" au même arrondi que les autres boutons. La flèche qui pointe vers l\'élément ciblé garde sa couleur dorée, déjà correcte.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The step-by-step tutorial tooltip (title/text + Skip/Previous/Next buttons) received the same visual reskin as the rest of the game: background and border matching the other panels, Cinzel title, modern-font text, "Previous"/"Next" buttons with the same corner rounding as other buttons. The arrow pointing at the targeted element keeps its gold color, already correct.'},
+    ] },
   { v:'V390', d:'22/07/2026 11:00', name:{fr:'Sélecteurs à bulles (combat/farm/équipement) : texte toujours visible', en:'Bubble selectors (combat/farm/gear): labels always visible'}, fr:[
       {t:'change', sub:'interface', tx:'Les 3 sélecteurs à bulles du jeu (mode de combat IA, mode de farm sur le cadre de jeu, et Équipement/Cristal dans le panneau latéral) affichent désormais leur texte en permanence sur chaque option, plus seulement sur celle sélectionnée — plus besoin de cliquer pour voir ce que représente chaque bulle.'},
       {t:'change', sub:'interface', tx:'Ces 3 sélecteurs sont passés aux couleurs de la refonte Zone (fond et bordure assortis aux autres panneaux), à la place de l\'ancienne teinte dorée isolée.'},

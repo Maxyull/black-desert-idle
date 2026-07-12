@@ -2454,18 +2454,25 @@
        un décalage/lag visible pendant le scroll */
   }
   #tutorialHighlight.center { box-shadow:0 0 0 9999px rgba(8,7,10,.72); }
+  /* Reskin Zone (2026-07-12) : port fidèle du mockup validé -- fond/bordure/radius alignés sur
+     .card (var(--s1)/var(--dbBorder)/11px), police Inter/Cinzel, boutons cohérents avec les
+     autres CTA du jeu (#sessionLockResumeBtn, #btnSignIn...). #tutorialArrow garde --gold, non
+     touché (déjà correct selon le mockup). */
   #tutorialBox {
-    position:fixed; z-index:902; width:280px; background:#1c1a22; border:1px solid var(--gold);
-    border-radius:8px; padding:14px 16px; box-shadow:0 6px 24px rgba(0,0,0,.6);
+    position:fixed; z-index:902; width:280px; background:var(--s1); border:1px solid var(--dbBorder);
+    border-radius:11px; padding:14px 16px; box-shadow:0 6px 24px rgba(0,0,0,.6); font-family:'Inter',sans-serif;
   }
-  #tutorialBox .tutStep { font-size:9.5px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; margin-bottom:4px; }
-  #tutorialBox h4 { margin:0 0 8px; font-size:14px; color:var(--gold); }
-  #tutorialBox p { margin:0 0 12px; font-size:12px; line-height:1.5; color:var(--ink); }
+  #tutorialBox .tutStep { font-family:'Cinzel',serif; font-size:9px; color:var(--cream3); letter-spacing:.1em; text-transform:uppercase; margin-bottom:5px; }
+  #tutorialBox h4 { margin:0 0 8px; font-family:'Cinzel',serif; font-weight:600; font-size:14px; color:var(--gold2); }
+  #tutorialBox p { margin:0 0 12px; font-size:12px; line-height:1.55; color:var(--cream2); }
   #tutorialBox .tutBtns { display:flex; justify-content:space-between; gap:8px; }
-  #tutorialBox .tutSkip { width:auto; margin:0; padding:6px 10px; font-size:11px; background:none; border:none; color:var(--ink-dim); }
-  #tutorialBox .tutPrev { width:auto; margin:0; padding:6px 10px; font-size:11px; background:none; border:1px solid var(--gold-dim); color:var(--ink-dim); }
+  #tutorialBox .tutSkip { width:auto; margin:0; padding:6px 10px; font-size:11px; background:none; border:none; color:var(--cream3); font-family:'Inter',sans-serif; }
+  #tutorialBox .tutSkip:hover { color:var(--cream2); }
+  #tutorialBox .tutPrev { width:auto; margin:0; padding:6px 10px; font-size:11px; background:none; border:1px solid var(--dbBorder); color:var(--cream2); border-radius:8px; font-family:'Inter',sans-serif; }
+  #tutorialBox .tutPrev:hover { border-color:var(--dbBorder2); }
   #tutorialBox .tutPrev:disabled { opacity:.3; }
-  #tutorialBox .tutNext { width:auto; margin:0; padding:6px 16px; font-size:12px; font-weight:bold; }
+  #tutorialBox .tutNext { width:auto; margin:0; padding:7px 16px; font-size:12px; font-weight:600; background:var(--gold); color:#2a1f08; border:none; border-radius:8px; font-family:'Inter',sans-serif; }
+  #tutorialBox .tutNext:hover { filter:brightness(1.08); }
   #tutorialArrow { position:fixed; z-index:902; width:0; height:0; pointer-events:none; }
   #tutorialArrow.top    { border-left:9px solid transparent; border-right:9px solid transparent; border-bottom:11px solid var(--gold); }
   #tutorialArrow.bottom { border-left:9px solid transparent; border-right:9px solid transparent; border-top:11px solid var(--gold); }
