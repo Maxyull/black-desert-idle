@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V400', d:'23/07/2026 11:00', name:{fr:'Sélecteurs de mode IA déplacés en haut à droite, compteur Compendium masqué sur téléphone', en:'AI mode selectors moved to the top-right, Compendium counter hidden on mobile'}, fr:[
+      {t:'change', sub:'interface', tx:'Les 2 sélecteurs à bulles du cadre de jeu (mode de combat IA et mode de farm) sont désormais empilés en haut à droite du cadre, à la place de l\'ancien calage centré de part et d\'autre de l\'indicateur "IA : ...". Aucun changement de fonctionnement, seulement leur position.'},
+      {t:'change', sub:'interface', plat:'mobile', tx:'Le compteur Compendium ("📖 X/Y" sous le nom de la zone) est désormais masqué sur téléphone pour laisser plus de place au nom de zone et aux PA/PD requis — reste affiché normalement sur ordinateur.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The game frame\'s 2 bubble selectors (AI combat mode and farm mode) are now stacked in the top-right corner of the frame, instead of the old centered layout on either side of the "AI: ..." indicator. No functional change, position only.'},
+      {t:'change', sub:'interface', plat:'mobile', tx:'The Compendium counter ("📖 X/Y" under the zone name) is now hidden on phones to leave more room for the zone name and required AP/DP — still shown normally on desktop.'},
+    ] },
   { v:'V399', d:'23/07/2026 10:00', name:{fr:'Téléphone : cadre de jeu recadré en 4:5', en:'Phone: game frame cropped to 4:5'}, fr:[
       {t:'change', plat:'mobile', sub:'interface', tx:'Sur téléphone, le cadre de jeu (canvas) s\'affiche désormais dans un ratio 4:5 (plus haut que large) au lieu de son ratio natif très large — rendu moins écrasé et plus lisible sur petit écran, recadrage visuel centré sur l\'action. La résolution interne du jeu n\'est pas modifiée, et le clic sur un objet au sol reste précis dans ce nouveau cadre.'},
     ], en:[
