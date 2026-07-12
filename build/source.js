@@ -13297,6 +13297,7 @@ function getAdminTheme() {
   try { saved = localStorage.getItem(ADMIN_THEME_STORAGE_KEY); } catch (e) {}
   return ADMIN_THEMES.some(t => t.id === saved) ? saved : 'gold';
 }
+
 function setAdminTheme(id) {
   try { localStorage.setItem(ADMIN_THEME_STORAGE_KEY, id); } catch (e) {}
 }
@@ -13409,6 +13410,7 @@ async function adminScreenshotPlayer() {
   if (!data) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.no_save_for_uuid'), { hurt:true }); return; }
   openInfo(i18next.t('admin:admin.reset.screenshot_title_prefix') + escapeHtml(data._pseudo||'?'), renderAdminScreenshotHtml(data));
 }
+
 function renderAdminScreenshotHtml(save) {
   const s = save.S || {};
   const eq = save.EQUIP || {};
@@ -13541,6 +13543,7 @@ async function unbanPlayer(uuid) {
   floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.toast_unbanned'), { gold:true });
   refreshBanList();
 }
+
 function fmtAdmPlaytime(sec) {
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
   return `${h}h${String(m).padStart(2,'0')}`;
@@ -13591,6 +13594,7 @@ function buildLootVersionTabHtml() {
     <h3>${i18next.t('admin:admin.loot.v2_table_title')}</h3>
     ${v2Table}`;
 }
+
 function wireLootVersionButtons() {
   const v1Btn = $a('btnLootVerV1'), v2Btn = $a('btnLootVerV2');
   if (v1Btn) v1Btn.onclick = () => { if(!isAdmin())return; S.lootTableVersion = 'v1'; renderAdminLoot($a('adminMainBody')); floatTxt(P.x,P.y,100,'Loot V1',{blue:true}); };
@@ -13657,6 +13661,7 @@ function renderAdminCron(el) {
       </table>`;
   });
 }
+
 function renderAdminTreasure(el) {
   el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.treasure_estimate', { kpm: ADMIN_TREASURE_KPM_REF })}</div>
     <table class="admTable">
@@ -13828,6 +13833,7 @@ function sumCompanionBreakdown(rows, field) {
 }
 
 const COMPANION_CATALOG_SIZE = 48 * 5;
+
 function renderAdminCompanions(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown'), sb.rpc('admin_companion_player_list'), sb.rpc('admin_list_players')]).then(([statsRes, breakdownRes, playerListRes, allPlayersRes]) => {
@@ -14079,6 +14085,7 @@ const DASHBOARD_WIDGETS = [
       };
     } },
 ];
+
 function buildDashboardCard(widget, result) {
   return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
       <div class="admDashCardHead">
@@ -14089,12 +14096,14 @@ function buildDashboardCard(widget, result) {
       <div class="admDashCardNote">${escapeHtml(result.note||'')}</div>
     </div>`;
 }
+
 function buildDashboardCardError(widget) {
   return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
       <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${i18next.t('admin:admin.dashboard.unavailable')}">⚪</span></div>
       <div class="admDashCardBody"><div class="admEmpty">${i18next.t('admin:admin.dashboard.unavailable')}</div></div>
     </div>`;
 }
+
 function renderAdminDashboard(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   const topPromise = Promise.all([
@@ -14140,6 +14149,7 @@ const PROVIDER_INFO = {
   twitter: { icon:'🐦', label:{fr:'Twitter/X',en:'Twitter/X'} },
   anonymous: { icon:'🎭', label:{fr:'Invité',en:'Guest'} },
 };
+
 function providerInfo(provider) {
   return PROVIDER_INFO[provider] || { icon:'❔', label:{fr:provider||'?',en:provider||'?'} };
 }
@@ -14179,6 +14189,7 @@ function renderAdminPlayerList(el) {
     });
   });
 }
+
 function renderAdminTargetPlayer(el) {
   el.innerHTML = `
     <div class="admSection riskSingle">
@@ -14194,6 +14205,7 @@ function renderAdminTargetPlayer(el) {
   $a('btnScreenshotPlayer').onclick = adminScreenshotPlayer;
   $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
 }
+
 function renderAdminSanctions(el) {
   el.innerHTML = `
     <div class="admSection">
@@ -14214,6 +14226,7 @@ function renderAdminSanctions(el) {
   $a('btnBanPlayer').onclick = banPlayerByUuid;
   refreshBanList();
 }
+
 function renderAdminRoles(el) {
   el.innerHTML = `
     <div class="admSection riskMgmt">
@@ -14255,6 +14268,7 @@ function renderAdminReconnect(el) {
     </div>`;
   refreshAdminReconnect();
 }
+
 async function refreshAdminReconnect() {
   if (!isAdmin() || !sb) return;
   const statsEl = $a('admReconnectStats'), topEl = $a('admReconnectTop');
@@ -14299,6 +14313,7 @@ async function adminSpawnSharedBoss(id, targetMin) {
   if (!error) await refreshLiveBoss();
   return !error;
 }
+
 function renderAdminBoss(el) {
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
   el.innerHTML = `
@@ -14344,6 +14359,7 @@ function formatPatchNoteForDiscord(note, lang) {
     description: lines.join('\n') || (lang==='fr' ? '(note vide)' : '(empty note)'),
   };
 }
+
 async function publishPatchNoteToDiscord(version) {
   if (!isAdmin()) return false;
   const note = PATCH_NOTES.find(n => n.v === version) || PATCH_NOTES[0];
@@ -14352,6 +14368,7 @@ async function publishPatchNoteToDiscord(version) {
   await logToDiscord(title, description, 0xc9a55a);
   return true;
 }
+
 function renderAdminPatchNotesDiscord(el) {
   const options = PATCH_NOTES.slice(0, 20).map(n => `<option value="${n.v}">${n.v} — ${n.name.fr}</option>`).join('');
   el.innerHTML = `
@@ -14385,6 +14402,7 @@ function renderAdminPatchNotesModeration(el) {
     </div>`;
   refreshAdminPatchNotesModeration();
 }
+
 async function refreshAdminPatchNotesModeration() {
   if (!sb) return;
   const reportsEl = $a('admPatchReports'), removedEl = $a('admPatchRemoved');
@@ -14455,6 +14473,7 @@ function renderAdminThemeSwatchesHtml(currentTheme) {
     `<button class="admSwatchBtn${t.id===currentTheme?' active':''}" data-theme="${t.id}" style="background:${t.color}" title="${escapeHtml(t.label[LANG])}"></button>`
   ).join('')}</div>`;
 }
+
 function wireAdminThemeSwatches() {
   $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(btn => {
     btn.onclick = () => {
@@ -14466,6 +14485,7 @@ function wireAdminThemeSwatches() {
     };
   });
 }
+
 function renderAdminServerDanger(el) {
   el.innerHTML = `
     <div class="admSection riskGlobal">
@@ -14484,6 +14504,7 @@ function renderAdminServerDanger(el) {
 function closeAdminPanel() {
   const overlay = $a('adminOverlay'); if (overlay) overlay.classList.remove('open');
 }
+
 function renderAdminSidebar(activeCat, activeId) {
   return ADMIN_SECTIONS.map(group => `
     <div class="admNavCatLabel">${group.label[LANG]}</div>
@@ -14494,10 +14515,12 @@ function renderAdminSidebar(activeCat, activeId) {
       </div>`).join('')}
   `).join('');
 }
+
 function findAdminSection(cat, id) {
   const group = ADMIN_SECTIONS.find(g => g.cat === cat);
   return group ? group.items.find(i => i.id === id) : null;
 }
+
 function openAdminSection(cat, id) {
   const item = findAdminSection(cat, id);
   if (!item) return;
@@ -14534,6 +14557,7 @@ function wireAdminSidebarSearch() {
     if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
   };
 }
+
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
   const currentTheme = getAdminTheme();
@@ -14611,6 +14635,7 @@ function buildSilverChartSvg(rows, accentColor, dangerColor) {
     `<line x1="5" y1="${midY}" x2="${w-5}" y2="${midY}" stroke="#2c2a33" stroke-width="1"></line>` +
     bars + `</svg>`;
 }
+
 function currentAdminAccentColors() {
   const overlay = $a('adminOverlay');
   const accent = overlay ? getComputedStyle(overlay).getPropertyValue('--gold').trim() || '#c9a55a' : '#c9a55a';
@@ -14686,6 +14711,7 @@ function buildBarSeriesSvg(points, color) {
 
 const ECON_ALERT_MIN_GAINED = 500000;
 const ECON_ALERT_SINK_RATIO = 0.35;
+
 function computeEconAlerts(categoryRows) {
   const rows = (categoryRows||[]).map(r => ({ gained:Number(r.total_gained||r.gained||0), spent:Number(r.total_spent||r.spent||0) }));
   const totalGained = rows.reduce((a,r) => a+r.gained, 0);
@@ -14700,6 +14726,7 @@ function computeEconAlerts(categoryRows) {
   }
   return alerts;
 }
+
 function buildEconAlertsHtml(alerts) {
   if (!alerts.length) return '';
   return `<div class="admAlerts">${alerts.map(a => `<div class="admAlertBox">${a.icon} ${escapeHtml(a.text)}</div>`).join('')}</div>`;
@@ -14969,6 +14996,7 @@ const LOOT_RATE_GRADES = [
   { grade:'grey', label:{fr:'Gris',en:'Grey'} }, { grade:'white', label:{fr:'Blanc',en:'White'} },
   { grade:'green', label:{fr:'Vert',en:'Green'} }, { grade:'blue', label:{fr:'Bleu',en:'Blue'} },
 ];
+
 function buildLootRateEditorHtml() {
   return `<h3>${i18next.t('admin:admin.economy.loot_editor_title')}</h3>
     <div class="admHint">${i18next.t('admin:admin.economy.loot_editor_hint')}</div>
@@ -14985,6 +15013,7 @@ function buildLootRateEditorHtml() {
     </div>
     <div id="admLootRateStatus" class="admHint"></div>`;
 }
+
 function wireLootRateEditor() {
   const saveBtn = $a('btnSaveLootRates'); if (!saveBtn) return; 
   saveBtn.onclick = async () => {

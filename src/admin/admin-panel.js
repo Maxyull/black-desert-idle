@@ -2,6 +2,7 @@
 // bannir lui-même par erreur") — fonction PURE, réutilisable telle quelle par un test unitaire
 // (pas de dépendance à sb/currentUser à l'intérieur, ceux-ci sont passés en paramètres par
 // l'appelant). Retourne false si l'UUID cible est vide OU identique à l'UUID de l'admin connecté.
+/** @param {string} targetUuid @param {string} myUuid. @returns {boolean} false si vide ou identique à l'UUID de l'admin connecté (empêche l'auto-ban). Fonction pure, testable isolément. */
 function canBanUuid(targetUuid, myUuid) {
   return !!targetUuid && targetUuid !== myUuid;
 }
@@ -26,11 +27,13 @@ const ADMIN_THEMES = [
 const ADMIN_THEME_STORAGE_KEY = 'bdiAdminTheme';
 // lit la préférence de palette persistée -- purement locale à ce navigateur/admin, ne touche
 // jamais S/le compte (pas une donnée de jeu, pas besoin de sync/migration)
+/** @returns {string} id de thème du panneau admin persisté (localStorage), 'gold' par défaut/invalide. */
 function getAdminTheme() {
   let saved = null;
   try { saved = localStorage.getItem(ADMIN_THEME_STORAGE_KEY); } catch (e) {}
   return ADMIN_THEMES.some(t => t.id === saved) ? saved : 'gold';
 }
+/** @param {string} id - id de ADMIN_THEMES. Persiste le thème choisi du panneau admin (localStorage). */
 function setAdminTheme(id) {
   try { localStorage.setItem(ADMIN_THEME_STORAGE_KEY, id); } catch (e) {}
 }
@@ -79,6 +82,7 @@ const ADMIN_SECTIONS = [
 ];
 
 // ---------- réinitialisation de la démo (réservée à l'admin, à tout moment) ----------
+/** Réinitialise entièrement la démo de l'admin (état local + cloud) au DEFAULT_SAVE, après confirmation. */
 async function resetDemo() {
   if (!isAdmin()) return; // double protection : même si le bouton est masqué, la fonction refuse
   const msg = i18next.t('admin:admin.reset.confirm_demo');
@@ -92,6 +96,7 @@ async function resetDemo() {
 
 // ---------- reset des quêtes (admin) : juste pour soi, ou pour tout le monde ----------
 // "pour soi" ne touche que l'état local + sa propre sauvegarde cloud (aucun risque).
+/** Réinitialise les quêtes journalières/hebdo de l'admin lui-même (aucun risque, ne touche que son propre état). */
 function resetMyQuests() {
   if (!isAdmin()) return;
   S.dq = null; S.wq = null;
@@ -106,6 +111,7 @@ function resetMyQuests() {
 // dq/wq dans TOUTES les sauvegardes cloud — celle-ci vérifie elle-même l'email admin côté
 // serveur (voir supabase-quest-reset-schema.sql), le bouton masqué côté client n'étant
 // qu'une protection de confort, pas la vraie barrière de sécurité.
+/** Réinitialise les quêtes de TOUS les joueurs (RPC admin_reset_all_quests, SECURITY DEFINER — la vraie barrière est côté serveur), après confirmation. */
 async function resetAllQuests() {
   if (!isAdmin() || !sb) return;
   const msg = i18next.t('admin:admin.reset.confirm_all_quests');
@@ -122,6 +128,7 @@ async function resetAllQuests() {
 // remise à zéro COMPLÈTE de TOUS les comptes (silver/équipement/niveau/sac), avec diffusion d'un
 // message d'explication livré à chaque joueur (bannière stylée + notification) à sa prochaine
 // connexion — demande explicite du 2026-07-06, deux confirmations vu la gravité de l'action
+/** Remet à zéro TOUS les comptes (silver/équipement/niveau/sac) via RPC admin_reset_all_accounts, diffuse une bannière d'explication à chaque joueur à sa prochaine connexion. Double confirmation vu la gravité. */
 async function resetAllAccounts() {
   if (!isAdmin() || !sb) return;
   const msg1 = i18next.t('admin:admin.reset.confirm_all_accounts_1');
@@ -154,6 +161,7 @@ async function resetAllAccounts() {
 // sauvegarde brute (admin_get_player_save), affichée dans le panneau info générique. N'équipe/ne
 // modifie jamais rien : c'est un snapshot en texte, pas une vraie capture d'écran de son navigateur
 // (impossible côté web), mais montre exactement l'équivalent (équipement + sac + état).
+/** Affiche un snapshot en lecture seule (équipement + sac + état) de la sauvegarde d'un joueur ciblé par UUID (RPC admin_get_player_save). Ne modifie jamais rien. */
 async function adminScreenshotPlayer() {
   if (!isAdmin() || !sb) return;
   const uuid = ($a('admResetUuidInput').value || '').trim();
@@ -163,6 +171,7 @@ async function adminScreenshotPlayer() {
   if (!data) { floatTxt(P.x, P.y, 100, i18next.t('admin:admin.reset.no_save_for_uuid'), { hurt:true }); return; }
   openInfo(i18next.t('admin:admin.reset.screenshot_title_prefix') + escapeHtml(data._pseudo||'?'), renderAdminScreenshotHtml(data));
 }
+/** @param {object} save - sauvegarde brute d'un joueur (S/EQUIP/INV/zoneIdx). @returns {string} HTML du snapshot admin (stats clés, équipement, inventaire). */
 function renderAdminScreenshotHtml(save) {
   const s = save.S || {};
   const eq = save.EQUIP || {};
@@ -192,6 +201,7 @@ function renderAdminScreenshotHtml(save) {
 // resetAllAccounts (silver/équipement/niveau/sac effacés + bannière d'explication à la prochaine
 // connexion), mais admin_reset_account_by_uuid() ne touche QUE la ligne de CE user_id, et la
 // notification n'est insérée que pour lui (pas un broadcast à tout le monde).
+/** Remet à zéro le compte d'UN joueur ciblé par UUID (RPC admin_reset_account_by_uuid), avertit si ce joueur est actuellement en ligne (son reset serait réécrit à sa prochaine autosave). */
 async function resetAccountByUuid() {
   if (!isAdmin() || !sb) return;
   const input = $a('admResetUuidInput');
@@ -253,6 +263,7 @@ const BAN_DURATIONS = [
 ];
 // rafraîchit le tableau des bans actifs (suit le même pattern que refreshRoleList : appel RPC,
 // regénération complète du HTML, re-branchement des boutons de ligne à chaque appel)
+/** Recharge et reconstruit le tableau des bans actifs (RPC admin_list_bans), câble le bouton "Lever" de chaque ligne. */
 async function refreshBanList() {
   const el = $a('admBanList'); if (!el || !sb) return;
   const { data, error } = await sb.rpc('admin_list_bans');
@@ -274,6 +285,7 @@ async function refreshBanList() {
 }
 // bannit un joueur par UUID pour une durée choisie avec un motif prédéfini — vérifie D'ABORD
 // (canBanUuid) que l'admin ne se bannit pas lui-même par erreur, AVANT tout appel RPC.
+/** Bannit un joueur par UUID pour une durée/motif choisis (RPC admin_ban_player). Vérifie canBanUuid AVANT tout appel réseau. */
 async function banPlayerByUuid() {
   if (!isAdmin() || !sb) return;
   const input = $a('admBanUuidInput');
@@ -298,6 +310,7 @@ async function banPlayerByUuid() {
   refreshBanList();
 }
 // lève un ban — appelée par le bouton "Lever" d'une ligne du tableau (admin_list_bans)
+/** @param {string} uuid. Lève le ban d'un joueur (RPC admin_unban_player), rafraîchit la liste. */
 async function unbanPlayer(uuid) {
   if (!isAdmin() || !sb || !uuid) return;
   const { error } = await sb.rpc('admin_unban_player', { p_user_id: uuid });
@@ -309,6 +322,7 @@ async function unbanPlayer(uuid) {
   floatTxt(P.x, P.y, 100, i18next.t('admin:admin.sanctions.toast_unbanned'), { gold:true });
   refreshBanList();
 }
+/** @param {number} sec - temps de jeu en secondes. @returns {string} format compact "XhYY". */
 function fmtAdmPlaytime(sec) {
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
   return `${h}h${String(m).padStart(2,'0')}`;
@@ -317,6 +331,7 @@ function fmtAdmPlaytime(sec) {
 // panneau unique "Rôles" : fusionne les listes Modérateur et Testeur (2 tables distinctes côté
 // serveur, chat_mods et testers) pour que l'admin ajoute/retire les deux rôles au même endroit,
 // sur une seule ligne par joueur — demande explicite du 2026-07-07 ("lie les 2 systèmes")
+/** Recharge et fusionne les listes Modérateur/Testeur (2 tables serveur distinctes) en une seule ligne par joueur, câble les boutons de retrait de rôle. */
 async function refreshRoleList() {
   const el = $a('admRoleList'); if (!el || !sb) return;
   const [{ data: mods, error: modErr }, { data: testers, error: testErr }] = await Promise.all([
@@ -348,6 +363,7 @@ async function refreshRoleList() {
 // present garde a memoire v1 le loot davant et ça c'est la v2 a tout moment je repasse en v1") --
 // S.lootTableVersion pilote gearDropChance/jewelDropChance (game-core.js). Les 2 tables restent
 // visibles ici pour comparer, jamais perdues même quand une seule est active.
+/** @returns {string} HTML du sélecteur de version de table de loot (V1/V2, S.lootTableVersion) + tableau récapitulatif des taux V2. */
 function buildLootVersionTabHtml() {
   const v = S.lootTableVersion || 'v2';
   const rows = [
@@ -366,6 +382,7 @@ function buildLootVersionTabHtml() {
     <h3>${i18next.t('admin:admin.loot.v2_table_title')}</h3>
     ${v2Table}`;
 }
+/** Câble les boutons V1/V2 de bascule de la table de loot active (S.lootTableVersion). */
 function wireLootVersionButtons() {
   const v1Btn = $a('btnLootVerV1'), v2Btn = $a('btnLootVerV2');
   if (v1Btn) v1Btn.onclick = () => { if(!isAdmin())return; S.lootTableVersion = 'v1'; renderAdminLoot($a('adminMainBody')); floatTxt(P.x,P.y,100,'Loot V1',{blue:true}); };
@@ -374,6 +391,7 @@ function wireLootVersionButtons() {
 // point d'extension pour admin-economy.js (éditeur de taux en %, ajouté séparément) -- lu au
 // moment du RENDU (pas au chargement), donc aucun risque d'ordre de chargement/TDZ : si
 // admin-economy.js n'est pas encore chargé (ou n'existe pas), la table reste juste en lecture seule.
+/** @param {HTMLElement} el. Section admin "Table de loot" : sélecteur V1/V2 + éditeur de taux en % si admin-economy.js est chargé (typeof guard, sinon lecture seule). */
 function renderAdminLoot(el) {
   el.innerHTML = buildLootVersionTabHtml() + (typeof buildLootRateEditorHtml === 'function' ? buildLootRateEditorHtml() : '');
   wireLootVersionButtons();
@@ -382,6 +400,7 @@ function renderAdminLoot(el) {
 
 // ---------- sections "Contenu" réutilisant les données déjà chargées côté serveur (RPC/tables
 // identiques à l'ancien panneau, juste ré-agencées en render(container) indépendants) ----------
+/** @param {HTMLElement} el. Section admin "Ressources farmées" : top 20 objets par volume (RPC/table admin_farm_by_item). */
 function renderAdminItems(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.from('admin_farm_by_item').select('item_name, item_kind, pickups, total_qty, total_silver').limit(20).then(({data}) => {
@@ -405,6 +424,7 @@ function renderAdminItems(el) {
 // place (kind='cron_used', distinct de 'material' -- admin_farm_by_item groupe par les deux),
 // sans nouvelle table. Requête SANS .limit(20) ici (contrairement à "Ressources farmées") : on
 // filtre nommément sur la Pierre de Cron, pas besoin du top 20 par volume qui l'exclurait souvent.
+/** @param {HTMLElement} el. Section admin "Pierres de Cron" : farmé vs utilisé (journalisé via queueFarmEvent kind='cron_used'), coût par palier, camembert de répartition. */
 function renderAdminCron(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([
@@ -443,6 +463,7 @@ function renderAdminCron(el) {
       </table>`;
   });
 }
+/** @param {HTMLElement} el. Section admin "Trésor de Velia" : chance/kill, kills moyens et temps estimé pour chaque objet (référence ADMIN_TREASURE_KPM_REF). */
 function renderAdminTreasure(el) {
   el.innerHTML = `<div class="admSummary">${i18next.t('admin:admin.content.treasure_estimate', { kpm: ADMIN_TREASURE_KPM_REF })}</div>
     <table class="admTable">
@@ -467,6 +488,7 @@ function renderAdminTreasure(el) {
 // buildPieWithLegendHtml vient de admin-economy.js (chargé APRÈS ce fichier) -- appelé seulement
 // au clic sur la section, bien après le chargement des deux fichiers : aucun risque de TDZ, même
 // pattern que le hook buildLootRateEditorHtml() de renderAdminLoot() ci-dessus.
+/** @param {HTMLElement} el. Section admin "Progression par zone" : camemberts de répartition par meilleure zone atteinte et par tranche de Gearscore (player_stats). */
 function renderAdminZoneProgression(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.from('player_stats').select('best_zone_index, gearscore').then(({data}) => {
@@ -505,6 +527,7 @@ function renderAdminZoneProgression(el) {
 // compendiumOverallPct(), core/game-core.js, à chaque syncPlayerStats()) -- même pattern que
 // renderAdminZoneProgression juste au-dessus (placeholder synchrone, requête async, buckets +
 // buildPieWithLegendHtml). Lecture seule, aucune action admin ici.
+/** @param {HTMLElement} el. Section admin "Compendium" : distribution de la complétion globale (player_stats.compendium_pct) par tranche, en lecture seule. */
 function renderAdminCompendium(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.from('player_stats').select('compendium_pct').then(({data}) => {
@@ -535,6 +558,7 @@ function renderAdminCompendium(el) {
 // traversé par un joueur -- même state vide que renderAdminSignups ("Aucune inscription..."), pas
 // une erreur. buildPieWithLegendHtml vient de admin-economy.js (chargé APRÈS ce fichier, guard
 // typeof identique à renderAdminLoot/renderAdminZoneProgression ci-dessus). ----------
+/** @param {HTMLElement} el. Section admin "Tutoriels d'objets" : taux de complétion/passage par tutoriel (RPC admin_item_tutorial_stats), lecture seule. */
 function renderAdminItemTutorials(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.rpc('admin_item_tutorial_stats').then(({data, error}) => {
@@ -580,6 +604,7 @@ function renderAdminItemTutorials(el) {
 // + 20260719180100). Le tutoriel d'arrivée n'a AUCUN déclenchement automatique à la 1ère connexion
 // (seulement un bouton dans le Wiki, voir game-supabase.js) -- ce panneau permet justement de
 // constater ce faible taux de démarrage, pas seulement le taux de complétion une fois démarré. ----------
+/** @param {HTMLElement} el. Section admin "Onboarding" : taux de démarrage/complétion/abandon du tutoriel d'arrivée (RPC admin_onboarding_stats/admin_onboarding_dropoff), entonnoir d'abandon par étape. */
 function renderAdminOnboarding(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([sb.rpc('admin_onboarding_stats'), sb.rpc('admin_onboarding_dropoff')]).then(([statsRes, dropRes]) => {
@@ -647,6 +672,7 @@ const COMPANION_SECTION_LABELS = {
 // somme un tableau de lignes {rarity_breakdown|tier_breakdown|section_breakdown: {clé:compte}}
 // (une ligne par joueur, admin_companion_breakdown()) en un seul objet {clé:total} -- pure,
 // testable isolément sans réseau/DOM.
+/** @param {object[]} rows - lignes admin_companion_breakdown() (une par joueur). @param {string} field - 'rarity_breakdown'/'tier_breakdown'/'section_breakdown'. @returns {object} totaux {clé:compte} sommés sur tous les joueurs. Fonction pure. */
 function sumCompanionBreakdown(rows, field) {
   const totals = {};
   (rows||[]).forEach(r => {
@@ -663,6 +689,7 @@ function sumCompanionBreakdown(rows, field) {
 // du module change. unique_species_count (RPC) compte désormais des combos espèce×tier, pas
 // juste des espèces — voir companionIndexProgress(), catalog.js.
 const COMPANION_CATALOG_SIZE = 48 * 5;
+/** @param {HTMLElement} el. Section admin "Compagnons" : stats agrégées (pets/silver/fusions/succès/pity/index), répartitions rareté/section/tier, liste des joueurs fusionneurs actifs. */
 function renderAdminCompanions(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   Promise.all([sb.rpc('admin_companion_stats'), sb.rpc('admin_companion_breakdown'), sb.rpc('admin_companion_player_list'), sb.rpc('admin_list_players')]).then(([statsRes, breakdownRes, playerListRes, allPlayersRes]) => {
@@ -758,6 +785,7 @@ function renderAdminCompanions(el) {
 // des voyant vert rouge pour plus dinfos") ----------
 
 // voyant vert/rouge -- fonction PURE (juste une projection booléen -> {dot,label}), testable isolément
+/** @param {boolean} healthy. @returns {{dot:string, label:string}} voyant 🟢/🔴 + libellé. Fonction pure. */
 function dashboardLight(healthy) {
   return healthy
     ? { dot:'🟢', label: i18next.t('admin:admin.dashboard.light_ok') }
@@ -932,6 +960,7 @@ const DASHBOARD_WIDGETS = [
       };
     } },
 ];
+/** @param {object} widget - entrée de DASHBOARD_WIDGETS. @param {{light:object, chart:string, note:string}} result - résultat de widget.build(). @returns {string} HTML de la carte dashboard (cliquable, navigue vers la section complète). */
 function buildDashboardCard(widget, result) {
   return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
       <div class="admDashCardHead">
@@ -942,12 +971,14 @@ function buildDashboardCard(widget, result) {
       <div class="admDashCardNote">${escapeHtml(result.note||'')}</div>
     </div>`;
 }
+/** @param {object} widget - entrée de DASHBOARD_WIDGETS dont le fetch/build a échoué. @returns {string} HTML de repli "Indisponible" pour cette carte seule. */
 function buildDashboardCardError(widget) {
   return `<div class="admDashCard" data-cat="${widget.cat}" data-id="${widget.sec}">
       <div class="admDashCardHead"><span class="admDashCardTitle">${widget.icon} ${widget.title[LANG]}</span><span class="admDashLight" title="${i18next.t('admin:admin.dashboard.unavailable')}">⚪</span></div>
       <div class="admDashCardBody"><div class="admEmpty">${i18next.t('admin:admin.dashboard.unavailable')}</div></div>
     </div>`;
 }
+/** @param {HTMLElement} el. Dashboard "Vue d'ensemble" : tuiles globales + alertes économiques, puis une carte par widget de DASHBOARD_WIDGETS (chacun fetch ses propres données via Promise.allSettled — un widget en échec n'empêche jamais les autres). Clic sur une carte navigue vers sa section complète. */
 function renderAdminDashboard(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   const topPromise = Promise.all([
@@ -999,11 +1030,13 @@ const PROVIDER_INFO = {
   twitter: { icon:'🐦', label:{fr:'Twitter/X',en:'Twitter/X'} },
   anonymous: { icon:'🎭', label:{fr:'Invité',en:'Guest'} },
 };
+/** @param {string} provider - id fourni par auth.users.raw_app_meta_data. @returns {{icon:string, label:object}} icône+libellé du fournisseur d'inscription (repli '❔' si inconnu). */
 function providerInfo(provider) {
   return PROVIDER_INFO[provider] || { icon:'❔', label:{fr:provider||'?',en:provider||'?'} };
 }
 
 // ---------- section "Joueurs" ----------
+/** @param {HTMLElement} el. Section admin "Liste des joueurs" : tableau complet (en ligne, plateforme d'inscription, silver/GS/PA/PD/niveau/kpm), boutons copier UUID / voir inventaire. */
 function renderAdminPlayerList(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div>`;
   sb.rpc('admin_list_players').then(({data: playersList}) => {
@@ -1039,6 +1072,7 @@ function renderAdminPlayerList(el) {
     });
   });
 }
+/** @param {HTMLElement} el. Section admin "Joueur précis" : champ UUID + boutons screenshot/reset ciblé. */
 function renderAdminTargetPlayer(el) {
   el.innerHTML = `
     <div class="admSection riskSingle">
@@ -1054,6 +1088,7 @@ function renderAdminTargetPlayer(el) {
   $a('btnScreenshotPlayer').onclick = adminScreenshotPlayer;
   $a('btnResetAccountByUuid').onclick = resetAccountByUuid;
 }
+/** @param {HTMLElement} el. Section admin "Sanctions" : formulaire de ban (UUID/motif/durée) + tableau des bans actifs. */
 function renderAdminSanctions(el) {
   el.innerHTML = `
     <div class="admSection">
@@ -1074,6 +1109,7 @@ function renderAdminSanctions(el) {
   $a('btnBanPlayer').onclick = banPlayerByUuid;
   refreshBanList();
 }
+/** @param {HTMLElement} el. Section admin "Rôles" : formulaire d'ajout mod/testeur par UUID + liste fusionnée des rôles actifs. */
 function renderAdminRoles(el) {
   el.innerHTML = `
     <div class="admSection riskMgmt">
@@ -1106,6 +1142,7 @@ function renderAdminRoles(el) {
 // vue d'ensemble agrégée des sessions AFK/hors-ligne journalisées par le modal de reconnexion
 // (src/core/reconnect-modal-react.js, table player_afk_sessions) -- lecture seule, RPC dédiée
 // admin_afk_sessions_summary (gate email staff côté serveur, voir migration correspondante).
+/** @param {HTMLElement} el. Section admin "Reconnexion" : vue d'ensemble agrégée des sessions AFK/hors-ligne, lecture seule. */
 function renderAdminReconnect(el) {
   el.innerHTML = `
     <div class="admSection">
@@ -1119,6 +1156,7 @@ function renderAdminReconnect(el) {
     </div>`;
   refreshAdminReconnect();
 }
+/** Recharge et affiche les stats de sessions AFK/reconnexion (RPC admin_afk_sessions_summary) : compteurs globaux + top 10 des meilleures sessions. */
 async function refreshAdminReconnect() {
   if (!isAdmin() || !sb) return;
   const statsEl = $a('admReconnectStats'), topEl = $a('admReconnectTop');
@@ -1154,6 +1192,7 @@ async function refreshAdminReconnect() {
 // spawn un VRAI boss partagé (PV communs, top10, contribution %, joueurs en direct) — utilisé à la
 // fois par le test perso admin (Compte→Tests) et par le lancement pour tous, pour que le test admin
 // ressemble exactement au vrai boss multijoueurs (demande explicite : "pas un boss solo")
+/** @param {string} id - clé BOSS_ROSTER. @param {number} targetMin - durée visée en minutes. @returns {Promise<boolean>} succès. Fait apparaître un vrai boss PARTAGÉ (PV communs dimensionnés sur ~40% des joueurs en ligne × DPS de référence), utilisé pour le lancement global ET le test perso admin. */
 async function adminSpawnSharedBoss(id, targetMin) {
   if (!sb) return false;
   let onlineTotal = 1;
@@ -1167,6 +1206,7 @@ async function adminSpawnSharedBoss(id, targetMin) {
   if (!error) await refreshLiveBoss();
   return !error;
 }
+/** @param {HTMLElement} el. Section admin "Boss mondiaux" : sélection boss/durée + boutons lancer pour tous / faire disparaître. */
 function renderAdminBoss(el) {
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
   el.innerHTML = `
@@ -1210,6 +1250,7 @@ function renderAdminBoss(el) {
 // pour déclencher un appel serveur au moment exact où une note devient live.
 const PATCH_NOTE_DISCORD_TYPE_ICON = { new:'🆕', change:'🔄', fix:'🛠️', exploit:'🔒' };
 // fonction PURE, testable sans DOM/réseau — construit juste le texte, n'envoie rien.
+/** @param {object} note - entrée de PATCH_NOTES. @param {string} lang - langue préférée ('fr' repli si absente). @returns {{title:string, description:string}} texte formaté pour l'embed Discord. Fonction pure, n'envoie rien. */
 function formatPatchNoteForDiscord(note, lang) {
   lang = (note[lang] ? lang : null) || 'fr';
   const name = (note.name && (note.name[lang] || note.name.fr)) || note.v;
@@ -1219,6 +1260,7 @@ function formatPatchNoteForDiscord(note, lang) {
     description: lines.join('\n') || (lang==='fr' ? '(note vide)' : '(empty note)'),
   };
 }
+/** @param {string} version - v de PATCH_NOTES à publier. @returns {Promise<boolean>} succès. Publie la note formatée sur le webhook Discord général (logToDiscord), action admin manuelle. */
 async function publishPatchNoteToDiscord(version) {
   if (!isAdmin()) return false;
   const note = PATCH_NOTES.find(n => n.v === version) || PATCH_NOTES[0];
@@ -1227,6 +1269,7 @@ async function publishPatchNoteToDiscord(version) {
   await logToDiscord(title, description, 0xc9a55a);
   return true;
 }
+/** @param {HTMLElement} el. Section admin "Notes de version → Discord" : sélecteur de version + bouton de publication manuelle sur le webhook. */
 function renderAdminPatchNotesDiscord(el) {
   const options = PATCH_NOTES.slice(0, 20).map(n => `<option value="${n.v}">${n.v} — ${n.name.fr}</option>`).join('');
   el.innerHTML = `
@@ -1253,6 +1296,7 @@ function renderAdminPatchNotesDiscord(el) {
 // attente sur les commentaires encore visibles. Réservé admin/modérateur côté serveur (même gate
 // que remove_patch_note_comment, voir la migration) -- ce panneau n'est de toute façon accessible
 // que via le panneau admin lui-même (isAdmin() déjà requis pour l'ouvrir).
+/** @param {HTMLElement} el. Section admin "Notes de version : modération" : commentaires signalés en attente + commentaires retirés/auto-masqués restaurables. */
 function renderAdminPatchNotesModeration(el) {
   el.innerHTML = `
     <div class="admSection">
@@ -1265,6 +1309,7 @@ function renderAdminPatchNotesModeration(el) {
     </div>`;
   refreshAdminPatchNotesModeration();
 }
+/** Recharge les signalements en attente et les commentaires retirés/auto-masqués (RPC admin_patch_note_pending_reports/admin_list_removed_patch_note_comments), câble la restauration. */
 async function refreshAdminPatchNotesModeration() {
   if (!sb) return;
   const reportsEl = $a('admPatchReports'), removedEl = $a('admPatchRemoved');
@@ -1300,6 +1345,7 @@ async function refreshAdminPatchNotesModeration() {
 }
 
 // ---------- section "Compte (Moi)" ----------
+/** @param {HTMLElement} el. Section admin "Tests perso" : raccourcis (silver/loyalty/succès/reset), combat de boss partagé en solo. */
 function renderAdminMyTests(el) {
   const bossOptions = Object.keys(BOSS_ROSTER).map(id => `<option value="${id}">${BOSS_ROSTER[id].icon} ${BOSS_ROSTER[id].short[LANG]}</option>`).join('');
   el.innerHTML = `
@@ -1341,11 +1387,13 @@ function renderAdminMyTests(el) {
 // directement dans .admNavHead, donc visibles en permanence dès l'ouverture du panneau, quelle
 // que soit la section affichée. Même storage/effet (setAdminTheme/data-adm-theme) que l'ancien
 // slider, juste un contrôle différent. ----------
+/** @param {string} currentTheme - id de thème actif. @returns {string} HTML des pastilles de palette (haut de sidebar), toujours visibles quelle que soit la section affichée. */
 function renderAdminThemeSwatchesHtml(currentTheme) {
   return `<div class="admThemeSwatches" title="🎨 ${i18next.t('admin:admin.system.palette_label')}">${ADMIN_THEMES.map(t =>
     `<button class="admSwatchBtn${t.id===currentTheme?' active':''}" data-theme="${t.id}" style="background:${t.color}" title="${escapeHtml(t.label[LANG])}"></button>`
   ).join('')}</div>`;
 }
+/** Câble les pastilles de palette (change data-adm-theme + persiste via setAdminTheme). */
 function wireAdminThemeSwatches() {
   $a('adminSidebar').querySelectorAll('.admSwatchBtn').forEach(btn => {
     btn.onclick = () => {
@@ -1357,6 +1405,7 @@ function wireAdminThemeSwatches() {
     };
   });
 }
+/** @param {HTMLElement} el. Section admin "Zone danger" : reset des quêtes de tous / reset complet de tous les comptes. */
 function renderAdminServerDanger(el) {
   el.innerHTML = `
     <div class="admSection riskGlobal">
@@ -1375,9 +1424,11 @@ function renderAdminServerDanger(el) {
 // ============================================================
 // SHELL : ouverture/fermeture du panneau, sidebar pilotée par ADMIN_SECTIONS
 // ============================================================
+/** Ferme le panneau admin plein écran. */
 function closeAdminPanel() {
   const overlay = $a('adminOverlay'); if (overlay) overlay.classList.remove('open');
 }
+/** @param {string} activeCat @param {string} activeId - section actuellement affichée. @returns {string} HTML de la sidebar admin (groupes/items de ADMIN_SECTIONS, badge "Prévu" pour les items planned). */
 function renderAdminSidebar(activeCat, activeId) {
   return ADMIN_SECTIONS.map(group => `
     <div class="admNavCatLabel">${group.label[LANG]}</div>
@@ -1388,10 +1439,12 @@ function renderAdminSidebar(activeCat, activeId) {
       </div>`).join('')}
   `).join('');
 }
+/** @param {string} cat @param {string} id. @returns {?object} item de ADMIN_SECTIONS correspondant, null si absent. */
 function findAdminSection(cat, id) {
   const group = ADMIN_SECTIONS.find(g => g.cat === cat);
   return group ? group.items.find(i => i.id === id) : null;
 }
+/** @param {string} cat @param {string} id. Bascule la sidebar sur cette section, affiche son pane "Prévu" si planned, sinon appelle son render(body). */
 function openAdminSection(cat, id) {
   const item = findAdminSection(cat, id);
   if (!item) return;
@@ -1416,6 +1469,7 @@ function openAdminSection(cat, id) {
 // barre de recherceh") -- filtre en direct les items de ADMIN_SECTIONS par libellé (fr/en),
 // masque aussi l'en-tête de catégorie d'un groupe devenu entièrement vide. Pure manipulation DOM,
 // aucun re-render de renderAdminSidebar() (garde la sélection "active" intacte pendant la frappe).
+/** Câble la barre de recherche de la sidebar admin : filtre en direct les items par libellé, masque les en-têtes de catégorie devenus entièrement vides. Pure manipulation DOM, pas de re-render. */
 function wireAdminSidebarSearch() {
   const input = $a('admNavSearch'); if (!input) return;
   input.oninput = () => {
@@ -1435,6 +1489,7 @@ function wireAdminSidebarSearch() {
     if (lastCatLabel) lastCatLabel.style.display = catHasVisible ? '' : 'none';
   };
 }
+/** Ouvre le panneau admin plein écran : applique le thème persisté, construit la sidebar (ADMIN_SECTIONS + recherche + pastilles de palette), ouvre le Dashboard par défaut. */
 async function openAdminPanel() {
   if (!isAdmin() || !sb) return;
   const currentTheme = getAdminTheme();
@@ -1463,6 +1518,7 @@ $a('btnAdmin').onclick = openAdminPanel;
 // Pour l'instant, contenu limité (pêche/mine/etc. pas encore développés) — le panneau existe et
 // se remplira au fur et à mesure des nouveautés à tester. Reste sur l'ancienne modale (openInfo) :
 // c'est un panneau JOUEUR (myIsTester), pas admin, pas concerné par la refonte de la sidebar.
+/** Ouvre le panneau Testeur (fonctionnalités à venir, aucun avantage de jeu) — réservé aux joueurs avec le rôle testeur. Panneau joueur (openInfo), pas admin. */
 function openTesterPanel() {
   if (!myIsTester) return;
   const upcoming = [

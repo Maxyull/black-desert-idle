@@ -26,6 +26,7 @@ const CATEGORY_LABEL = {
 // fonction PURE (aucune dépendance DOM/réseau à l'intérieur) : prend les lignes déjà chargées de
 // admin_silver_ledger_by_hour ({hour, net_delta}) et retourne une string SVG -- testable
 // unitairement sans navigateur. rows vide -> SVG avec juste l'axe, jamais d'exception.
+/** @param {object[]} rows - lignes {hour, net_delta} de admin_silver_ledger_by_hour. @param {string} accentColor - couleur des barres positives. @param {string} dangerColor - couleur des barres négatives. @returns {string} SVG du graphique silver (barres au-dessus/en-dessous d'un axe médian). Fonction pure, tableau vide → juste l'axe. */
 function buildSilverChartSvg(rows, accentColor, dangerColor) {
   // rapetissé le 2026-07-19 (640x140 -> 400x100) : ne doit plus s'étirer sur toute la largeur du
   // panneau, même convention de taille que buildBarSeriesSvg/les camemberts.
@@ -47,6 +48,7 @@ function buildSilverChartSvg(rows, accentColor, dangerColor) {
     `<line x1="5" y1="${midY}" x2="${w-5}" y2="${midY}" stroke="#2c2a33" stroke-width="1"></line>` +
     bars + `</svg>`;
 }
+/** @returns {{accent:string, danger:string}} couleurs --gold/--danger actuellement actives du thème admin (repli si overlay absent). */
 function currentAdminAccentColors() {
   const overlay = $a('adminOverlay');
   const accent = overlay ? getComputedStyle(overlay).getPropertyValue('--gold').trim() || '#c9a55a' : '#c9a55a';
@@ -62,6 +64,7 @@ function currentAdminAccentColors() {
 const PIE_PALETTE = ['#c9a55a','#5a8fc8','#8fc98a','#e05a6e','#a578d8','#e8b45a','#5ac8b0','#c8785a'];
 // fusionne les entrées sous thresholdPct% du total dans un seul bucket "Autres"/"Other" -- évite
 // un camembert à 12 fines tranches illisibles. Fonction PURE : ne dépend que de ses arguments.
+/** @param {{label:string, value:number}[]} items @param {number} thresholdPct - seuil % en dessous duquel une tranche rejoint "Autres". @param {string} otherLabel. @returns {object[]} tranches fusionnées. Fonction pure. */
 function mergeSmallSlices(items, thresholdPct, otherLabel) {
   const total = items.reduce((a,i) => a + Math.max(0, Number(i.value)||0), 0);
   if (total <= 0) return [];
@@ -77,6 +80,7 @@ function mergeSmallSlices(items, thresholdPct, otherLabel) {
 }
 // camembert SVG pur -- prend des slices déjà { label, value, color }, retourne juste le <svg>.
 // tableau vide -> cercle gris neutre, jamais d'exception.
+/** @param {{label:string, value:number, color:string}[]} slices. @returns {string} SVG du camembert (cercle gris neutre si vide). Fonction pure. */
 function buildPieChartSvg(slices) {
   const size = 110, r = 50, cx = size/2, cy = size/2;
   const total = slices.reduce((a,s) => a + s.value, 0);
@@ -96,6 +100,7 @@ function buildPieChartSvg(slices) {
 }
 // camembert + légende (label, %, valeur formatée) -- point d'entrée utilisé par les render*().
 // fuse automatiquement les petites tranches (<4% par défaut) dans "Autres"/"Other".
+/** @param {{label:string, value:number}[]} items. @param {{thresholdPct?:number, formatValue?:function}} [opts]. @returns {string} HTML camembert + légende (fusionne les petites tranches <4% par défaut dans "Autres"). Point d'entrée principal utilisé par les render*(). */
 function buildPieWithLegendHtml(items, opts) {
   opts = opts || {};
   const otherLabel = i18next.t('admin:admin.economy.pie_other');
@@ -113,6 +118,7 @@ function buildPieWithLegendHtml(items, opts) {
 }
 // série temporelle en barres compactes (remplace les piles de .admBarRow pour 24h/30j) -- fonction
 // PURE, points déjà triés chronologiquement par l'appelant. tableau vide -> juste l'axe.
+/** @param {{label:string, value:number}[]} points - déjà triés chronologiquement. @param {string} color. @returns {string} SVG en barres compactes (remplace les piles .admBarRow). Fonction pure. */
 function buildBarSeriesSvg(points, color) {
   const w = 400, h = 90, padB = 16, padT = 4;
   const maxV = Math.max(1, ...points.map(p => p.value));
@@ -138,6 +144,7 @@ function buildBarSeriesSvg(points, color) {
 // données (un seul joueur qui gagne 200 silver ne doit pas déjà crier à l'inflation).
 const ECON_ALERT_MIN_GAINED = 500000;
 const ECON_ALERT_SINK_RATIO = 0.35;
+/** @param {object[]} categoryRows - lignes {gained/total_gained, spent/total_spent} de admin_silver_ledger_by_category. @returns {{icon:string, text:string}[]} alertes (ex: ratio puits/sources trop bas au-delà de ECON_ALERT_MIN_GAINED). Fonction pure, jamais d'action automatique. */
 function computeEconAlerts(categoryRows) {
   const rows = (categoryRows||[]).map(r => ({ gained:Number(r.total_gained||r.gained||0), spent:Number(r.total_spent||r.spent||0) }));
   const totalGained = rows.reduce((a,r) => a+r.gained, 0);
@@ -152,12 +159,14 @@ function computeEconAlerts(categoryRows) {
   }
   return alerts;
 }
+/** @param {{icon:string, text:string}[]} alerts - résultat de computeEconAlerts. @returns {string} HTML des encarts d'alerte (vide si aucune). */
 function buildEconAlertsHtml(alerts) {
   if (!alerts.length) return '';
   return `<div class="admAlerts">${alerts.map(a => `<div class="admAlertBox">${a.icon} ${escapeHtml(a.text)}</div>`).join('')}</div>`;
 }
 
 // ---------- Économie → Santé économique (2 camemberts : sources / puits, par catégorie) ----------
+/** @param {HTMLElement} el. Section admin "Santé économique" : alertes + 2 camemberts (sources vs puits de silver par catégorie). */
 function renderAdminEconHealth(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.from('admin_silver_ledger_by_category').select('category, total_gained, total_spent').then(({data}) => {
@@ -177,6 +186,7 @@ function renderAdminEconHealth(el) {
 }
 
 // ---------- Économie → Silver (registre détaillé + graphique SVG + taux de gain) ----------
+/** @param {HTMLElement} el. Section admin "Silver" : totaux (stocké/gagné à vie/dépensé), registre par catégorie, graphique SVG 48h, top 15 des taux de gain/heure. */
 function renderAdminSilver(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
@@ -236,6 +246,7 @@ function renderAdminSilver(el) {
 }
 
 // ---------- Économie → Activité horaire ----------
+/** @param {HTMLElement} el. Section admin "Activité horaire" : silver farmé et joueurs actifs sur les 24 dernières heures. */
 function renderAdminHourly(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
@@ -262,6 +273,7 @@ function renderAdminHourly(el) {
 }
 
 // ---------- Économie → Richesse ----------
+/** @param {HTMLElement} el. Section admin "Richesse" : totaux/moyenne/médiane, camembert par tranche de silver, top 20 des joueurs les plus riches. */
 function renderAdminWealth(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
@@ -310,6 +322,7 @@ function renderAdminWealth(el) {
 }
 
 // ---------- Économie → Loyalties ----------
+/** @param {HTMLElement} el. Section admin "Loyalties" : totaux/moyenne (aucune boutique de dépense n'existe encore). */
 function renderAdminLoyalty(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.from('player_stats').select('loyalty').then(({data: stats}) => {
@@ -327,6 +340,7 @@ function renderAdminLoyalty(el) {
 }
 
 // ---------- Économie → Marché (lockdown + annulation en masse) ----------
+/** @param {HTMLElement} el. Section admin "Marché" : bascule ouverture/fermeture (lockdown) + annulation en masse de tous les ordres (remboursés). */
 function renderAdminMarket(el) {
   el.innerHTML = `
     <div class="admSection riskGlobal">
@@ -376,6 +390,7 @@ function renderAdminMarket(el) {
 // volume total. Distinct de la section "Marché" ci-dessus (lockdown/annulation) : ici c'est de la
 // lecture pure, aucune action. admin_market_top_items (SECURITY DEFINER) agrège côté serveur
 // plutôt que de renvoyer les lignes brutes de market_trades au client. ----------
+/** @param {HTMLElement} el. Section admin "Volume du marché" : top objets échangés sur 30j (RPC admin_market_top_items), lecture seule. */
 function renderAdminMarketVolume(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   sb.rpc('admin_market_top_items', { p_days: 30 }).then(({data, error}) => {
@@ -405,6 +420,7 @@ function renderAdminMarketVolume(el) {
 // ---------- Vue d'ensemble → Inscriptions (NOUVEAU, 2026-07-19) — courbe des créations de compte
 // par jour (30j). auth.users n'est pas exposé via PostgREST, seule une RPC SECURITY DEFINER peut
 // y accéder -- admin_signups_by_day() (voir la migration). ----------
+/** @param {HTMLElement} el. Section admin "Inscriptions" : courbe des créations de compte sur 30j + répartition par fournisseur (RPC admin_signups_by_day/admin_signups_by_provider). */
 function renderAdminSignups(el) {
   el.innerHTML = `<div class="admEmpty">${i18next.t('admin:admin.economy.loading')}</div>`;
   Promise.all([
@@ -440,6 +456,7 @@ const LOOT_RATE_GRADES = [
   { grade:'grey', label:{fr:'Gris',en:'Grey'} }, { grade:'white', label:{fr:'Blanc',en:'White'} },
   { grade:'green', label:{fr:'Vert',en:'Green'} }, { grade:'blue', label:{fr:'Bleu',en:'Blue'} },
 ];
+/** @returns {string} HTML de l'éditeur de taux de loot en % (un champ gear/jewel par palier, pré-rempli avec LOOT_RATES_LIVE) — hook lu par renderAdminLoot() (admin-panel.js). */
 function buildLootRateEditorHtml() {
   return `<h3>${i18next.t('admin:admin.economy.loot_editor_title')}</h3>
     <div class="admHint">${i18next.t('admin:admin.economy.loot_editor_hint')}</div>
@@ -456,6 +473,7 @@ function buildLootRateEditorHtml() {
     </div>
     <div id="admLootRateStatus" class="admHint"></div>`;
 }
+/** Câble les boutons Sauvegarder (RPC admin_set_loot_rates, met à jour LOOT_RATES_LIVE) / Réinitialiser (retour à LOOT_RATES_V2) de l'éditeur de taux de loot. No-op si le hook n'est pas rendu. */
 function wireLootRateEditor() {
   const saveBtn = $a('btnSaveLootRates'); if (!saveBtn) return; // pane pas affichée / hook pas rendu
   saveBtn.onclick = async () => {
