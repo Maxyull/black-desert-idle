@@ -3813,11 +3813,38 @@
     assert('updateToast : police Inter', /Inter/.test(csu.fontFamily), `fontFamily=${csu.fontFamily}`);
     assert('updateToast button : radius 8px (cohérent avec les autres CTA, plus carré)', csb.borderRadius === '8px', `borderRadius=${csb.borderRadius}`);
   }
+  // garde-fou du reskin .pdSlot/#equipSummary (2026-07-12, mockup validé : claude.ai/code/artifact/
+  // 0c7bfa65-d046-4d4c-9541-232b14313e7a) -- même méthode que testSessionLockBoxUsesZoneRedesignTokens :
+  // getComputedStyle sur du markup RÉELLEMENT présent au chargement (#crystalSlotCenter porte déjà
+  // la classe .pdSlot en statique, #equipSummary aussi), pas une simple relecture du CSS source.
+  // Vérifie aussi que les couleurs sémantiques des sous-éléments (Niv blanc / XP doré / GS bleu)
+  // et les états .filled/.empty du paperdoll (hors périmètre de ce reskin) restent inchangés.
+  function testEquipmentPaperdollUsesZoneRedesignTokens() {
+    const slot = document.getElementById('crystalSlotCenter');
+    const summary = document.getElementById('equipSummary');
+    const lvl = document.getElementById('eqSumLvl');
+    const xp = document.getElementById('eqSumXp');
+    const gs = document.getElementById('eqSumGs');
+    if (!slot || !summary || !lvl || !xp || !gs) { assert('paperdoll reskin : markup présent', false, 'élément(s) manquant(s)'); return; }
+    const csSlot = getComputedStyle(slot), csSummary = getComputedStyle(summary);
+    const csLvl = getComputedStyle(lvl), csXp = getComputedStyle(xp), csGs = getComputedStyle(gs);
+    assert('.pdSlot : bordure --dbBorder rgb(42,42,68) (plus #3a3742 en dur)', csSlot.borderTopColor === 'rgb(42, 42, 68)', csSlot.borderTopColor);
+    assert('.pdSlot : radius 7px (plus coins carrés)', csSlot.borderRadius === '7px', csSlot.borderRadius);
+    assert('.pdSlot : fond --s2 rgb(24,24,40) (plus rgba(20,19,26,.9))', csSlot.backgroundColor === 'rgb(24, 24, 40)', csSlot.backgroundColor);
+    assert('#equipSummary : bordure --dbBorder rgb(42,42,68) (plus --gold-dim)', csSummary.borderTopColor === 'rgb(42, 42, 68)', csSummary.borderTopColor);
+    assert('#equipSummary : radius 8px (plus 4px)', csSummary.borderRadius === '8px', csSummary.borderRadius);
+    assert('#equipSummary : fond --s2 rgb(24,24,40) (plus rgba(201,165,90,.05))', csSummary.backgroundColor === 'rgb(24, 24, 40)', csSummary.backgroundColor);
+    assert('#equipSummary : police JetBrains Mono (plus héritée)', /JetBrains Mono/.test(csSummary.fontFamily), csSummary.fontFamily);
+    assert('#eqSumLvl reste blanc (couleur sémantique inchangée)', csLvl.color === 'rgb(255, 255, 255)', csLvl.color);
+    assert('#eqSumXp reste doré --gold (couleur sémantique inchangée)', csXp.color === 'rgb(201, 165, 90)', csXp.color);
+    assert('#eqSumGs reste bleu #9cc9e8 (couleur sémantique inchangée)', csGs.color === 'rgb(156, 201, 232)', csGs.color);
+  }
 
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
     testToastsUseZoneRedesignTokens();
+    testEquipmentPaperdollUsesZoneRedesignTokens();
     testZoneMonotonicity();
     testZoneWeaponArmorSlotsComplete();
     testGearRoleSanity();
