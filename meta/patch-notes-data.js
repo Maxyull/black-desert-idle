@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V388', d:'22/07/2026 09:00', name:{fr:'Bulle de tutoriel : même reskin que le reste de l\'écran Zone', en:'Tutorial tooltip: same reskin as the rest of the Zone screen'}, fr:[
+      {t:'change', sub:'interface', tx:'La bulle d\'aide du tutoriel pas-à-pas (titre/texte + boutons Passer/Précédent/Suivant) a reçu le même reskin visuel que le reste du jeu : fond et bordure assortis aux autres panneaux, titre en Cinzel, texte en police moderne, boutons "Précédent"/"Suivant" au même arrondi que les autres boutons. La flèche qui pointe vers l\'élément ciblé garde sa couleur dorée, déjà correcte.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The step-by-step tutorial tooltip (title/text + Skip/Previous/Next buttons) received the same visual reskin as the rest of the game: background and border matching the other panels, Cinzel title, modern-font text, "Previous"/"Next" buttons with the same corner rounding as other buttons. The arrow pointing at the targeted element keeps its gold color, already correct.'},
+    ] },
   { v:'V386', d:'22/07/2026 07:00', name:{fr:'Écran de connexion refait : même style que Zone', en:'Login screen redesigned: same look as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran de connexion (compte, création, Discord/Google/GitHub/Twitter) a reçu le même reskin visuel que le reste du jeu : titre en Cinzel, champs et boutons arrondis, mêmes couleurs que l\'écran Zone. Aucun changement de fonctionnement.'},
     ], en:[
