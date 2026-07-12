@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V406', d:'23/07/2026 17:00', name:{fr:'Esprit de Protty (zone 2) : silhouette plus détaillée', en:'Protty Spirit (zone 2): more detailed silhouette'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'Esprit de Protty (Ruines de Protty) a une silhouette plus détaillée : mouchetures bioluminescentes sur la coquille, halo permanent (avant : visible seulement pendant sa charge), ailes du sommet plus marquées façon aile de mite, tentacules frangés sous le ventre. Comportement de combat inchangé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Protty Spirit (Ruins of Protty) now has a more detailed silhouette: bioluminescent speckles on the shell, a permanent glow halo (previously only visible during its charge), more pronounced moth-wing-like top fins, fringed tentacles under the belly. Combat behavior unchanged.'},
+    ] },
   { v:'V405', d:'23/07/2026 16:00', name:{fr:'Correctif : le classement ne reflétait pas la correction de stuff de la version précédente', en:'Fix: leaderboard didn\'t reflect the previous version\'s gear correction'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Le classement (PA/PD/Gearscore) enregistre un record À VIE qui ne redescend jamais — la correction du stuff de la version précédente pouvait donc faire baisser la vraie puissance d\'un joueur sans jamais mettre à jour son record affiché au classement. Les 3 records sont désormais recalculés depuis le stuff réellement équipé (une fois corrigé) et synchronisés immédiatement, y compris à la baisse pour cette correction ponctuelle.'},
     ], en:[

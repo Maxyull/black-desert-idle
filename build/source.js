@@ -10723,25 +10723,43 @@ function drawProttyIso(wx,wy,w,t) {
   ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3+bob);
   if (!facingRight) ctx.scale(-1,1);
   ctx.scale(w.scale,w.scale);
-  if (w.lunge > .3) { ctx.strokeStyle='rgba(120,210,180,.55)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.ellipse(0,-13,17,11,0,0,7); ctx.stroke(); }
+  
+  ctx.strokeStyle = w.lunge>.3 ? 'rgba(120,210,180,.55)' : 'rgba(120,210,180,.22)';
+  ctx.lineWidth = w.lunge>.3 ? 2 : 1.2;
+  ctx.beginPath(); ctx.ellipse(0,-13,17,11,0,0,7); ctx.stroke();
   const tone = w.tone;
   
   ctx.fillStyle = tone;
   ctx.beginPath(); ctx.ellipse(0,-14,14,13,0,Math.PI,0,true); ctx.fill();
   
+  ctx.fillStyle='rgba(230,250,240,.75)';
+  [[-8,-19,.7],[-3,-22,.55],[4,-21,.65],[8,-17,.5],[-5,-15,.5],[2,-16,.6]].forEach(([dx,dy,r]) => {
+    ctx.beginPath(); ctx.arc(dx,dy,r,0,7); ctx.fill();
+  });
+  
   ctx.fillStyle='rgba(216,205,184,.92)';
   ctx.beginPath(); ctx.ellipse(0,-6,10.5,7,0,0,Math.PI); ctx.fill();
   
-  ctx.fillStyle='#c9d86a';
+  ctx.strokeStyle='rgba(216,205,184,.7)'; ctx.lineWidth=1.6; ctx.lineCap='round';
+  [[-6,0],[0,.6],[6,1.2]].forEach(([dx,ph]) => {
+    const sway = Math.sin(t*2.2+w.phase+ph)*2;
+    ctx.beginPath(); ctx.moveTo(dx,-2); ctx.quadraticCurveTo(dx+sway,3,dx+sway*1.4,8); ctx.stroke();
+  });
+  
   [[-9,0],[-3,1],[3,1],[9,0]].forEach(([dx,ph],i) => {
     const sway = Math.sin(t*3+w.phase+ph)*1.6;
-    ctx.beginPath(); ctx.moveTo(dx,-22); ctx.lineTo(dx+sway,-28-Math.abs(sway)*.3); ctx.lineTo(dx+3.2,-21.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#c9d86a';
+    ctx.beginPath(); ctx.moveTo(dx-1.6,-21.5); ctx.lineTo(dx+sway,-30-Math.abs(sway)*.35); ctx.lineTo(dx+4.4,-21); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(60,80,50,.4)';
+    ctx.beginPath(); ctx.ellipse(dx+sway*.5+1,-26,1.3,1.8,0,0,7); ctx.fill();
   });
   
   ctx.fillStyle = tone;
   ctx.beginPath(); ctx.moveTo(-13,-13); ctx.lineTo(-21,-9+Math.sin(t*4+w.phase)*2); ctx.lineTo(-12,-6); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(13,-13); ctx.lineTo(21,-9-Math.sin(t*4+w.phase)*2); ctx.lineTo(12,-6); ctx.closePath(); ctx.fill();
+  
+  ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=.9;
+  ctx.beginPath(); ctx.ellipse(0,-14,14,13,0,Math.PI,0,true); ctx.stroke();
   
   ctx.fillStyle = w.lunge>.3 ? '#e05540' : '#2a2420';
   ctx.beginPath(); ctx.arc(4.5,-11,1.5,0,7); ctx.fill();

@@ -2214,6 +2214,29 @@
     cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
     assert('drawWolfIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran)', !threw, errMsg);
   }
+  // "dans le style plus détaillé", ambiance de référence (2026-07-23) -- drawProttyIso enrichi
+  // (halo permanent, mouchetures bioluminescentes, tentacules, aile de mite avec tache) ajoute des
+  // formes/boucles en plus de l'original. Même garde-fou que le loup : ne doit jamais lever
+  // d'exception, quels que soient l'échelle, l'état de charge (lunge) ou le sens.
+  function testDrawProttyIsoNeverThrows() {
+    if (typeof drawProttyIso === 'undefined' || typeof cam === 'undefined' || typeof P === 'undefined') return;
+    const savedCamX = cam.x, savedCamY = cam.y, savedPx = P.x, savedPy = P.y;
+    cam.x = 0; cam.y = 0; P.x = 100; P.y = 0;
+    let threw = false, errMsg = '';
+    try {
+      [0, 0.85, 1.5].forEach(scale => {
+        [0, 0.5, 1].forEach(lunge => {
+          [-1, 1].forEach(px => {
+            P.x = px;
+            drawProttyIso(0, 0, { scale, lunge, phase: 0, tone:'#a5543c' }, 0.3);
+          });
+        });
+      });
+      drawProttyIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#a5543c' }, 0); // hors écran -> sortie anticipée
+    } catch (e) { threw = true; errMsg = e.message; }
+    cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
+    assert('drawProttyIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran)', !threw, errMsg);
+  }
   // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
   // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
   // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
@@ -4800,6 +4823,7 @@
     testOrnamentFlashinessIncreasesByTier();
     testDaggerRendersOnlyWhenSecondaryEquipped();
     testDrawWolfIsoNeverThrows();
+    testDrawProttyIsoNeverThrows();
     testMigratePenMasteryV308MarksExistingPenItems();
     testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
     testMigratePenMasteryV308EvictsCompendiumRetroactively();

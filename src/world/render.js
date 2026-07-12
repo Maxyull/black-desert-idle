@@ -370,6 +370,7 @@ function drawWolfIso(wx,wy,w,t) {
 // fantomatique flottant (dôme façon coquille, frange de nageoires, silhouette évasive), demande
 // explicite du 2026-07-07 ("modélise les Protty") — aucun asset réel repris, juste l'ambiance.
 /** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Protty en isométrique. */
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Esprit de Protty en isométrique (zone "Ruines de Protty"). Silhouette enrichie le 2026-07-23 (demande explicite, ambiance uniquement -- captures/concept art fournis en référence, "aucun asset réel repris" reste vrai, voir commentaire ci-dessous) -- halo bioluminescent permanent (pas seulement pendant le lunge), mouchetures lumineuses sur le dôme, nageoires du sommet plus larges façon aile de mite avec tache sombre, tentacules frangés sous le ventre, contour net -- même flottement/lunge qu'avant, purement procédural (pas de sprite). */
 function drawProttyIso(wx,wy,w,t) {
   const c = toScreen(wx,wy);
   if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
@@ -382,25 +383,48 @@ function drawProttyIso(wx,wy,w,t) {
   ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3+bob);
   if (!facingRight) ctx.scale(-1,1);
   ctx.scale(w.scale,w.scale);
-  if (w.lunge > .3) { ctx.strokeStyle='rgba(120,210,180,.55)'; ctx.lineWidth=2;
-    ctx.beginPath(); ctx.ellipse(0,-13,17,11,0,0,7); ctx.stroke(); }
+  // halo bioluminescent permanent, discret au repos et net pendant le lunge -- même teinte que
+  // la frange (pas de nouvelle couleur), juste toujours un peu présent au lieu d'apparaître d'un coup
+  ctx.strokeStyle = w.lunge>.3 ? 'rgba(120,210,180,.55)' : 'rgba(120,210,180,.22)';
+  ctx.lineWidth = w.lunge>.3 ? 2 : 1.2;
+  ctx.beginPath(); ctx.ellipse(0,-13,17,11,0,0,7); ctx.stroke();
   const tone = w.tone;
   // dôme/coquille (moitié supérieure d'une ellipse)
   ctx.fillStyle = tone;
   ctx.beginPath(); ctx.ellipse(0,-14,14,13,0,Math.PI,0,true); ctx.fill();
+  // mouchetures lumineuses sur le dôme -- étoiles bioluminescentes fixes (pas animées, juste
+  // un semis de points), même esprit que la carapace mouchetée des références d'ambiance
+  ctx.fillStyle='rgba(230,250,240,.75)';
+  [[-8,-19,.7],[-3,-22,.55],[4,-21,.65],[8,-17,.5],[-5,-15,.5],[2,-16,.6]].forEach(([dx,dy,r]) => {
+    ctx.beginPath(); ctx.arc(dx,dy,r,0,7); ctx.fill();
+  });
   // sous-ventre pâle, translucide
   ctx.fillStyle='rgba(216,205,184,.92)';
   ctx.beginPath(); ctx.ellipse(0,-6,10.5,7,0,0,Math.PI); ctx.fill();
-  // frange de nageoires ondulantes sur le sommet du dôme
-  ctx.fillStyle='#c9d86a';
+  // tentacules frangés sous le ventre -- ondulent doucement, ajoutent de la matière évasive sous
+  // la coquille (inspiré de l'ambiance des références, pas un asset copié)
+  ctx.strokeStyle='rgba(216,205,184,.7)'; ctx.lineWidth=1.6; ctx.lineCap='round';
+  [[-6,0],[0,.6],[6,1.2]].forEach(([dx,ph]) => {
+    const sway = Math.sin(t*2.2+w.phase+ph)*2;
+    ctx.beginPath(); ctx.moveTo(dx,-2); ctx.quadraticCurveTo(dx+sway,3,dx+sway*1.4,8); ctx.stroke();
+  });
+  // frange de nageoires du sommet, élargie façon aile de mite avec une tache sombre (2026-07-23,
+  // "dans le style plus détaillé", ambiance des références) -- garde le même balancement qu'avant
   [[-9,0],[-3,1],[3,1],[9,0]].forEach(([dx,ph],i) => {
     const sway = Math.sin(t*3+w.phase+ph)*1.6;
-    ctx.beginPath(); ctx.moveTo(dx,-22); ctx.lineTo(dx+sway,-28-Math.abs(sway)*.3); ctx.lineTo(dx+3.2,-21.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#c9d86a';
+    ctx.beginPath(); ctx.moveTo(dx-1.6,-21.5); ctx.lineTo(dx+sway,-30-Math.abs(sway)*.35); ctx.lineTo(dx+4.4,-21); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='rgba(60,80,50,.4)';
+    ctx.beginPath(); ctx.ellipse(dx+sway*.5+1,-26,1.3,1.8,0,0,7); ctx.fill();
   });
   // nageoires latérales (façon poisson)
   ctx.fillStyle = tone;
   ctx.beginPath(); ctx.moveTo(-13,-13); ctx.lineTo(-21,-9+Math.sin(t*4+w.phase)*2); ctx.lineTo(-12,-6); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(13,-13); ctx.lineTo(21,-9-Math.sin(t*4+w.phase)*2); ctx.lineTo(12,-6); ctx.closePath(); ctx.fill();
+  // contour net (même logique que sorcière/loup) : liseré sombre sur le dôme pour une silhouette
+  // plus lisible
+  ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=.9;
+  ctx.beginPath(); ctx.ellipse(0,-14,14,13,0,Math.PI,0,true); ctx.stroke();
   // petit oeil sombre
   ctx.fillStyle = w.lunge>.3 ? '#e05540' : '#2a2420';
   ctx.beginPath(); ctx.arc(4.5,-11,1.5,0,7); ctx.fill();
