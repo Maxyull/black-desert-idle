@@ -802,13 +802,29 @@ const I18N_RESOURCES = {
       "progression.mailbox.permanent_note": "Ces objets restent ici en permanence tant qu'ils ne sont pas récupérés — ils ne se perdent jamais et s'empilent sans limite.",
       "progression.mailbox.toast_title": "📬 Nouveau courrier",
       "progression.notifications.achievement_unlocked": "Succès débloqué",
+      "progression.notifications.clear_category": "🗑️ Vider \"{{cat}}\"",
+      "progression.notifications.clear_confirm": "Confirmer ? ({{sec}}s)",
       "progression.notifications.delete": "Supprimer",
       "progression.notifications.empty": "Aucune notification pour l'instant",
       "progression.notifications.empty_category": "Rien dans cette catégorie",
+      "progression.notifications.empty_hint_all": "Aucune notification pour l'instant. Succès, montées de niveau, boss vaincus et alertes importantes apparaîtront ici.",
+      "progression.notifications.empty_hint_important": "Rien d'important pour l'instant. Les alertes qui nécessitent ton attention (reset de compte, annonces...) apparaîtront ici.",
+      "progression.notifications.empty_hint_info": "Rien ici pour l'instant. Les notifications d'activité (niveau, XP...) apparaîtront ici.",
+      "progression.notifications.empty_hint_success": "Aucune réussite pour l'instant. Succès débloqués et victoires de boss apparaîtront ici.",
+      "progression.notifications.group_collapse": "Replier",
+      "progression.notifications.group_expand": "déplier",
+      "progression.notifications.group_summary": "{{count}} × {{title}} — dernière : {{lastText}}",
+      "progression.notifications.login_action": "Se connecter",
+      "progression.notifications.mark_all_read": "✓ Tout marquer lu",
+      "progression.notifications.no_search_results": "Aucun résultat pour cette recherche",
+      "progression.notifications.rail_title": "Catégories",
+      "progression.notifications.search_placeholder": "🔎 Rechercher dans l'historique...",
       "progression.notifications.summary_one": "{{count}} affichée (sur {{total}}) · auto-supprimées après 7 jours",
       "progression.notifications.summary_other": "{{count}} affichées (sur {{total}}) · auto-supprimées après 7 jours",
       "progression.notifications.tab_all": "Tout",
       "progression.notifications.title": "🔔 Notifications",
+      "progression.notifications.unread_badge_one": "{{count}} non lue",
+      "progression.notifications.unread_badge_other": "{{count}} non lues",
       "progression.patch_notes.already_read_title": "Déjà lu",
       "progression.patch_notes.admin_badge": "🛡 Admin",
       "progression.patch_notes.before_after_title": "Voir avant/après",
@@ -1693,13 +1709,29 @@ const I18N_RESOURCES = {
       "progression.mailbox.permanent_note": "These items stay here permanently until claimed — they never get lost and stack without limit.",
       "progression.mailbox.toast_title": "📬 New mail",
       "progression.notifications.achievement_unlocked": "Achievement unlocked",
+      "progression.notifications.clear_category": "🗑️ Clear \"{{cat}}\"",
+      "progression.notifications.clear_confirm": "Confirm? ({{sec}}s)",
       "progression.notifications.delete": "Delete",
       "progression.notifications.empty": "No notifications yet",
       "progression.notifications.empty_category": "Nothing in this category",
+      "progression.notifications.empty_hint_all": "No notifications yet. Achievements, level-ups, boss kills and important alerts will appear here.",
+      "progression.notifications.empty_hint_important": "Nothing important yet. Alerts that need your attention (account resets, announcements...) will appear here.",
+      "progression.notifications.empty_hint_info": "Nothing here yet. Activity notifications (level, XP...) will appear here.",
+      "progression.notifications.empty_hint_success": "No achievements yet. Unlocked achievements and boss victories will appear here.",
+      "progression.notifications.group_collapse": "Collapse",
+      "progression.notifications.group_expand": "expand",
+      "progression.notifications.group_summary": "{{count}} × {{title}} — last: {{lastText}}",
+      "progression.notifications.login_action": "Log in",
+      "progression.notifications.mark_all_read": "✓ Mark all read",
+      "progression.notifications.no_search_results": "No results for this search",
+      "progression.notifications.rail_title": "Categories",
+      "progression.notifications.search_placeholder": "🔎 Search history...",
       "progression.notifications.summary_one": "{{count}} shown (of {{total}}) · auto-deleted after 7 days",
       "progression.notifications.summary_other": "{{count}} shown (of {{total}}) · auto-deleted after 7 days",
       "progression.notifications.tab_all": "All",
       "progression.notifications.title": "🔔 Notifications",
+      "progression.notifications.unread_badge_one": "{{count}} unread",
+      "progression.notifications.unread_badge_other": "{{count}} unread",
       "progression.patch_notes.already_read_title": "Already read",
       "progression.patch_notes.admin_badge": "🛡 Admin",
       "progression.patch_notes.before_after_title": "See before/after",
@@ -4208,6 +4240,36 @@ let notifSerial = 0;
 const NOTIF_MAX_AGE_MS = 7 * 24 * 3600 * 1000; 
 const NOTIF_SHOW_LIMIT = 20; 
 
+let notifCenterOpen = false; 
+let notifCatFilter = 'all'; 
+let notifSearchQuery = '';
+let notifExpandedGroups = new Set(); 
+let notifClearArm = null; 
+
+function ensureNotifLastSeen() {
+  if (S.notifLastSeenTs != null) return;
+  S.notifLastSeenTs = (S.notifLog && S.notifLog.length) ? Date.now() : 0;
+}
+
+function computeNotifUnreadCount(catFilter) {
+  ensureNotifLastSeen();
+  const cutoff = S.notifLastSeenTs;
+  const log = S.notifLog || [];
+  return log.filter(n => n.t > cutoff && (!catFilter || catFilter === 'all' || n.cat === catFilter)).length;
+}
+
+function markAllNotifRead() {
+  S.notifLastSeenTs = Date.now();
+  updateNotifBadge();
+}
+
+function leaveNotifCenterIfOpen() {
+  if (!notifCenterOpen) return;
+  notifCenterOpen = false;
+  S.notifLastSeenTs = Date.now();
+  updateNotifBadge();
+}
+
 function pruneNotifLog() {
   const cutoff = Date.now() - NOTIF_MAX_AGE_MS;
   S.notifLog = (S.notifLog||[]).filter(n => n.t >= cutoff);
@@ -4217,13 +4279,13 @@ function pushNotif(icon, title, text, cat) {
   pruneNotifLog();
   S.notifLog.unshift({ id: ++notifSerial + '_' + Date.now(), icon, title, text, t: Date.now(), cat: cat || 'info' });
   if (S.notifLog.length > 200) S.notifLog.length = 200; 
-  notifUnread++;
-  updateNotifBadge();
+  updateNotifBadge(); 
 }
 
 function deleteNotif(id) {
   S.notifLog = (S.notifLog||[]).filter(n => n.id !== id);
-  openNotifCenter(); 
+  updateNotifBadge();
+  refreshNotifPanel(); 
 }
 
 async function logToDiscord(title, description, color) {
@@ -4240,6 +4302,7 @@ async function logToDiscord(title, description, color) {
 }
 function updateNotifBadge() {
   const badge = $a('notifBadge'); if (!badge) return;
+  notifUnread = computeNotifUnreadCount(); 
   badge.textContent = notifUnread > 9 ? '9+' : notifUnread;
   badge.classList.toggle('show', notifUnread > 0);
   
@@ -4277,52 +4340,194 @@ const NOTIF_CAT_META = {
   success:   { fr:'🏆 Réussites', en:'🏆 Achievements' },
   info:      { fr:'📰 Activité',  en:'📰 Activity' },
 };
+
+const NOTIF_ACTIONS = {
+  '🎭': { labelKey: 'progression:progression.notifications.login_action', run: () => { if (typeof showAuthOverlay === 'function') showAuthOverlay(true); } },
+};
+
+const NOTIF_GROUP_MIN = 3;
+
+function notifDayKey(ts) { return dayKeyOf(new Date(ts).toISOString()); }
+
+function notifDayLabel(ts) { return fmtDaySeparator(new Date(ts).toISOString()); }
+
+function groupNotifEntries(items) {
+  const groups = [];
+  const byKey = new Map();
+  items.forEach(n => {
+    if (n.cat !== 'info') { groups.push({ single: n }); return; }
+    const key = notifDayKey(n.t) + '|' + n.icon + '|' + n.title;
+    let g = byKey.get(key);
+    if (!g) { g = { key, cat: n.cat, icon: n.icon, title: n.title, entries: [] }; byKey.set(key, g); groups.push(g); }
+    g.entries.push(n);
+  });
+  
+  return groups.flatMap(g => (g.single || g.entries.length >= NOTIF_GROUP_MIN) ? [g] : g.entries.map(n => ({ single: n })));
+}
 function notifRowHtml(n) {
-  return `<div class="notifRow ${n.cat}">
-    <div class="notifIcon">${n.icon}</div>
-    <div class="notifBody"><div class="notifTitle">${escapeHtml(n.title)}</div><div class="notifText">${escapeHtml(n.text)}</div></div>
-    <div class="notifTime">${fmtNotifTime(n.t)}</div>
-    <button class="notifDelBtn" data-id="${n.id}" title="${i18next.t('progression:progression.notifications.delete')}">✕</button>
+  const isNew = n.t > (S.notifLastSeenTs != null ? S.notifLastSeenTs : Infinity);
+  const action = NOTIF_ACTIONS[n.icon];
+  return `<div class="ncRow ${n.cat}">
+    <div class="ncIconWrap"><div class="ncIcon">${n.icon}</div>${isNew ? '<div class="ncNewDot"></div>' : ''}</div>
+    <div class="ncBody">
+      <div class="ncTitle">${escapeHtml(n.title)}</div>
+      <div class="ncText">${escapeHtml(n.text)}</div>
+      ${action ? `<button class="ncActionBtn" data-action-icon="${escapeHtml(n.icon)}">${escapeHtml(i18next.t(action.labelKey))}</button>` : ''}
+    </div>
+    <div class="ncRight"><span class="ncTime">${fmtNotifTime(n.t)}</span><button class="ncDel" data-id="${n.id}" title="${i18next.t('progression:progression.notifications.delete')}">✕</button></div>
   </div>`;
 }
-let notifCatFilter = 'all'; 
-function openNotifCenter() {
-  notifUnread = 0;
-  updateNotifBadge();
-  pruneNotifLog(); 
-  const log = S.notifLog||[];
-  if (!log.length) {
-    openInfo(i18next.t('progression:progression.notifications.title'),
-      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty')}</div>`);
-    return;
-  }
-  
-  const shown = log.slice(0, NOTIF_SHOW_LIMIT);
-  const important = shown.filter(n => n.cat === 'important');
-  const success = shown.filter(n => n.cat === 'success');
-  const info = shown.filter(n => n.cat === 'info');
-  if (!['all','important','success','info'].includes(notifCatFilter)) notifCatFilter = 'all';
-  const tabsHtml = `<div class="catTabs">
-    <button class="catTab notifCatTab${notifCatFilter==='all'?' active':''}" data-cat="all">${i18next.t('progression:progression.notifications.tab_all')} <span class="notifSectionCount">${shown.length}</span></button>
-    <button class="catTab notifCatTab${notifCatFilter==='important'?' active':''}" data-cat="important">${NOTIF_CAT_META.important[LANG]} <span class="notifSectionCount">${important.length}</span></button>
-    <button class="catTab notifCatTab${notifCatFilter==='success'?' active':''}" data-cat="success">${NOTIF_CAT_META.success[LANG]} <span class="notifSectionCount">${success.length}</span></button>
-    <button class="catTab notifCatTab${notifCatFilter==='info'?' active':''}" data-cat="info">${NOTIF_CAT_META.info[LANG]} <span class="notifSectionCount">${info.length}</span></button>
-  </div>`;
-  const section = (cat, items) => !items.length ? '' :
-    `<div class="notifSectionTitle">${NOTIF_CAT_META[cat][LANG]} <span class="notifSectionCount">${items.length}</span></div>` +
-    items.map(notifRowHtml).join('');
-  const html = notifCatFilter === 'all'
-    ? section('important', important) + section('success', success) + section('info', info)
-    : (notifCatFilter === 'important' ? important : notifCatFilter === 'success' ? success : info).map(notifRowHtml).join('') ||
-      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty_category')}</div>`;
-  const summary = `<div class="notifSummary">${i18next.t('progression:progression.notifications.summary', { count: shown.length, total: log.length })}</div>`;
-  openInfo(i18next.t('progression:progression.notifications.title'), summary + tabsHtml + `<div class="notifScroll">${html}</div>`);
-  $a('infoBody').querySelectorAll('.notifCatTab').forEach(btn => {
-    btn.onclick = () => { notifCatFilter = btn.dataset.cat; openNotifCenter(); };
+
+function notifEmptyHintKey(cat) {
+  if (cat === 'important') return 'progression:progression.notifications.empty_hint_important';
+  if (cat === 'success') return 'progression:progression.notifications.empty_hint_success';
+  if (cat === 'info') return 'progression:progression.notifications.empty_hint_info';
+  return 'progression:progression.notifications.empty_hint_all';
+}
+
+function renderNotifListHtml(items) {
+  if (!items.length) return `<div class="ncEmptyHint">${i18next.t(notifEmptyHintKey(notifCatFilter))}</div>`;
+  const q = notifSearchQuery.trim().toLowerCase();
+  const filtered = q ? items.filter(n => (n.title + ' ' + n.text).toLowerCase().includes(q)) : items;
+  if (!filtered.length) return `<div class="ncEmptyHint">${i18next.t('progression:progression.notifications.no_search_results')}</div>`;
+  const groups = groupNotifEntries(filtered);
+  let lastDay = null, html = '';
+  groups.forEach(g => {
+    const repEntry = g.single || g.entries[0];
+    const dk = notifDayKey(repEntry.t);
+    if (dk !== lastDay) { html += `<div class="ncDay">${escapeHtml(notifDayLabel(repEntry.t))}</div>`; lastDay = dk; }
+    if (g.single) { html += notifRowHtml(g.single); return; }
+    const expanded = notifExpandedGroups.has(g.key);
+    if (expanded) {
+      html += g.entries.map(notifRowHtml).join('');
+      html += `<div class="ncGroupRow" data-key="${escapeHtml(g.key)}"><div class="ncGroupIcon">${g.icon}</div><div class="ncGroupText">${escapeHtml(i18next.t('progression:progression.notifications.group_collapse'))}</div><span class="ncChevron">▴</span></div>`;
+    } else {
+      html += `<div class="ncGroupRow" data-key="${escapeHtml(g.key)}">` +
+        `<div class="ncGroupIcon">${g.icon}</div>` +
+        `<div class="ncGroupText">${i18next.t('progression:progression.notifications.group_summary', { count: g.entries.length, title: escapeHtml(g.title), lastText: escapeHtml(g.entries[0].text) })}</div>` +
+        `<span class="ncChevron">▾ ${escapeHtml(i18next.t('progression:progression.notifications.group_expand'))}</span></div>`;
+    }
   });
-  $a('infoBody').querySelectorAll('.notifDelBtn').forEach(btn => {
+  return html;
+}
+
+function notifRailHtml(shown) {
+  const cats = [
+    { id:'all', label: i18next.t('progression:progression.notifications.tab_all') },
+    { id:'important', label: NOTIF_CAT_META.important[LANG] },
+    { id:'success', label: NOTIF_CAT_META.success[LANG] },
+    { id:'info', label: NOTIF_CAT_META.info[LANG] },
+  ];
+  return `<div class="ncRailTitle">${i18next.t('progression:progression.notifications.rail_title')}</div>` +
+    cats.map(c => {
+      const unread = computeNotifUnreadCount(c.id === 'all' ? null : c.id);
+      return `<div class="ncRailItem${notifCatFilter===c.id?' active':''}" data-cat="${c.id}">` +
+        `<span>${c.label}</span><span class="ncRailCount${unread>0?' unread':''}">${unread}</span></div>`;
+    }).join('');
+}
+
+function notifHeadHtml(shown) {
+  const totalUnread = computeNotifUnreadCount();
+  const catLabel = notifCatFilter === 'all' ? i18next.t('progression:progression.notifications.tab_all') : NOTIF_CAT_META[notifCatFilter][LANG];
+  const armed = !!(notifClearArm && notifClearArm.cat === notifCatFilter && notifClearArm.expiresAt > Date.now());
+  const clearLabel = armed
+    ? i18next.t('progression:progression.notifications.clear_confirm', { sec: Math.max(1, Math.ceil((notifClearArm.expiresAt - Date.now())/1000)) })
+    : i18next.t('progression:progression.notifications.clear_category', { cat: escapeHtml(catLabel) });
+  
+  const retentionTitle = i18next.t('progression:progression.notifications.summary', { count: (shown||[]).length, total: (S.notifLog||[]).length });
+  return `<div class="ncHeadTitle" title="${escapeHtml(retentionTitle)}">${i18next.t('progression:progression.notifications.title')}` +
+    (totalUnread>0 ? ` <span class="ncHeadUnread">${i18next.t('progression:progression.notifications.unread_badge', { count: totalUnread })}</span>` : '') +
+    `</div><div class="ncActions">` +
+    `<button id="notifMarkAllReadBtn" class="ncGhostBtn">${i18next.t('progression:progression.notifications.mark_all_read')}</button>` +
+    `<button id="notifClearBtn" class="ncClearBtn${armed?' armed':''}">${clearLabel}</button></div>`;
+}
+
+function currentNotifShown() {
+  pruneNotifLog();
+  return (S.notifLog||[]).slice(0, NOTIF_SHOW_LIMIT);
+}
+
+function currentNotifFiltered() {
+  const shown = currentNotifShown();
+  return notifCatFilter === 'all' ? shown : shown.filter(n => n.cat === notifCatFilter);
+}
+
+function wireNotifPanelEvents() {
+  const body = $a('infoBody'); if (!body) return;
+  body.querySelectorAll('.ncRailItem').forEach(btn => {
+    btn.onclick = () => { notifCatFilter = btn.dataset.cat; notifClearArm = null; refreshNotifPanel(); };
+  });
+  const markBtn = $a('notifMarkAllReadBtn');
+  if (markBtn) markBtn.onclick = () => { markAllNotifRead(); refreshNotifPanel(); };
+  const clearBtn = $a('notifClearBtn');
+  if (clearBtn) clearBtn.onclick = () => handleNotifClearClick();
+  body.querySelectorAll('.ncDel').forEach(btn => {
     btn.onclick = e => { e.stopPropagation(); deleteNotif(btn.dataset.id); };
   });
+  body.querySelectorAll('.ncGroupRow').forEach(row => {
+    row.onclick = () => { toggleNotifGroup(row.dataset.key); };
+  });
+  body.querySelectorAll('.ncActionBtn').forEach(btn => {
+    btn.onclick = e => { e.stopPropagation(); const action = NOTIF_ACTIONS[btn.dataset.actionIcon]; if (action) action.run(); };
+  });
+}
+
+function toggleNotifGroup(key) {
+  if (notifExpandedGroups.has(key)) notifExpandedGroups.delete(key); else notifExpandedGroups.add(key);
+  refreshNotifPanel();
+}
+
+function handleNotifClearClick() {
+  const now = Date.now();
+  if (notifClearArm && notifClearArm.cat === notifCatFilter && notifClearArm.expiresAt > now) {
+    S.notifLog = notifCatFilter === 'all' ? [] : (S.notifLog||[]).filter(n => n.cat !== notifCatFilter);
+    notifClearArm = null;
+    updateNotifBadge();
+    refreshNotifPanel();
+    return;
+  }
+  notifClearArm = { cat: notifCatFilter, expiresAt: now + 3000 };
+  refreshNotifPanel();
+  setTimeout(() => {
+    if (notifClearArm && notifClearArm.expiresAt <= Date.now()) { notifClearArm = null; if (notifCenterOpen) refreshNotifPanel(); }
+  }, 3100);
+}
+
+function refreshNotifPanel() {
+  const railEl = $a('notifRail'), headEl = $a('notifHead'), listEl = $a('notifListBody');
+  if (!railEl || !headEl || !listEl) return;
+  const shown = currentNotifShown();
+  railEl.innerHTML = notifRailHtml(shown);
+  headEl.innerHTML = notifHeadHtml(shown);
+  listEl.innerHTML = renderNotifListHtml(currentNotifFiltered());
+  wireNotifPanelEvents();
+}
+function openNotifCenter() {
+  ensureNotifLastSeen();
+  pruneNotifLog(); 
+  if (!['all','important','success','info'].includes(notifCatFilter)) notifCatFilter = 'all';
+  notifSearchQuery = ''; notifClearArm = null; 
+  if (!(S.notifLog||[]).length) {
+    openInfo(i18next.t('progression:progression.notifications.title'),
+      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty')}</div>`, { isNotifCenter:true });
+    return;
+  }
+  const shellHtml = `<div class="ncStage">` +
+    `<div class="ncRail" id="notifRail"></div>` +
+    `<div class="ncMain">` +
+      `<div class="ncHead" id="notifHead"></div>` +
+      `<div class="ncSearchRow"><input id="notifSearchInput" class="ncSearch" placeholder="${i18next.t('progression:progression.notifications.search_placeholder')}"></div>` +
+      `<div class="ncList" id="notifListBody"></div>` +
+    `</div></div>`;
+  openInfo(i18next.t('progression:progression.notifications.title'), shellHtml, { isNotifCenter:true });
+  refreshNotifPanel();
+  const search = $a('notifSearchInput');
+  if (search) search.oninput = () => {
+    notifSearchQuery = search.value;
+    const listEl = $a('notifListBody'); 
+    if (listEl) listEl.innerHTML = renderNotifListHtml(currentNotifFiltered());
+    wireNotifPanelEvents();
+  };
 }
 
 function checkAchievements() {
@@ -12202,19 +12407,28 @@ function renderTutoPageHtml() {
     <button id="btnStartTutoWiki" style="width:auto;margin-top:10px;padding:8px 18px;">${i18next.t('backend:backend.tuto_page.replay_button')}</button>`;
 }
 
-function openInfo(title, bodyHtml) {
+function openInfo(title, bodyHtml, opts) {
   questsPanelOpen = false; 
+  
+  if (typeof notifCenterOpen !== 'undefined') notifCenterOpen = !!(opts && opts.isNotifCenter);
   $a('infoTitle').textContent = title;
   $a('infoBody').innerHTML = bodyHtml;
   $a('infoOverlay').classList.add('open');
   
   if (typeof updatePatchBadge === 'function') updatePatchBadge();
 }
-$a('closeInfo').onclick = () => { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); updatePatchBadge(); };
+
+function closeInfoOverlay() {
+  questsPanelOpen = false;
+  $a('infoOverlay').classList.remove('open');
+  updatePatchBadge();
+  if (typeof leaveNotifCenterIfOpen === 'function') leaveNotifCenterIfOpen();
+}
+$a('closeInfo').onclick = closeInfoOverlay;
 
 let infoMouseDownOnBackdrop = false;
 $a('infoOverlay').addEventListener('mousedown', e => { infoMouseDownOnBackdrop = (e.target.id === 'infoOverlay'); });
-$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); updatePatchBadge(); } });
+$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) closeInfoOverlay(); });
 
 $a('btnCodex').onclick = () => {
   const callout = contentChangeCalloutHtml('codex');

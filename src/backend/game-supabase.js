@@ -1669,9 +1669,13 @@ function renderTutoPageHtml() {
 // ============================================================
 // Ouverture des modals Wiki / Patch Notes
 // ============================================================
-/** @param {string} title @param {string} bodyHtml. Ouvre le panneau info générique (partagé Wiki/Compendium/Succès/Patch notes), masque la pastille de patch notes non lues. */
-function openInfo(title, bodyHtml) {
+/** @param {string} title @param {string} bodyHtml @param {{isNotifCenter?:boolean}} [opts] - isNotifCenter:true UNIQUEMENT pour openNotifCenter() (progression/notifications-quests.js), pour que closeInfoOverlay() sache s'il doit stamper S.notifLastSeenTs à la fermeture. Ouvre le panneau info générique (partagé Wiki/Compendium/Succès/Patch notes/Notifications), masque la pastille de patch notes non lues. */
+function openInfo(title, bodyHtml, opts) {
   questsPanelOpen = false; // tout ouverture de panneau réinitialise le flag ; openDailyQuests le remet
+  // notifCenterOpen (progression/notifications-quests.js) : ne reste vrai que si CE openInfo() est
+  // bien un (re)rendu du centre de notifications lui-même -- les re-rendus internes du panneau
+  // (recherche/filtre/suppression, voir refreshNotifPanel) passent aussi par ici avec le même flag.
+  if (typeof notifCenterOpen !== 'undefined') notifCenterOpen = !!(opts && opts.isNotifCenter);
   $a('infoTitle').textContent = title;
   $a('infoBody').innerHTML = bodyHtml;
   $a('infoOverlay').classList.add('open');
@@ -1680,13 +1684,24 @@ function openInfo(title, bodyHtml) {
   // panneau lui-même) -- ne pas attendre le prochain tick de hud() (jusqu'à 1s de délai visible)
   if (typeof updatePatchBadge === 'function') updatePatchBadge();
 }
-$a('closeInfo').onclick = () => { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); updatePatchBadge(); };
+// fermeture RÉELLE du panneau générique (bouton ✕ ou clic sur le fond noir) -- centralisée ici
+// (au lieu des 3 duplications précédentes) pour que le centre de notifications puisse stamper
+// S.notifLastSeenTs = Date.now() SEULEMENT à ce moment précis, jamais à un simple re-rendu interne
+// (voir leaveNotifCenterIfOpen(), progression/notifications-quests.js) -- demande explicite du
+// 2026-07-2x : le badge/les points "nouveau" doivent rester visibles PENDANT la consultation.
+function closeInfoOverlay() {
+  questsPanelOpen = false;
+  $a('infoOverlay').classList.remove('open');
+  updatePatchBadge();
+  if (typeof leaveNotifCenterIfOpen === 'function') leaveNotifCenterIfOpen();
+}
+$a('closeInfo').onclick = closeInfoOverlay;
 // ferme seulement si le clic ET l'appui initial (mousedown) sont bien sur le fond noir —
 // sinon, sélectionner du texte dans un champ (ex: le pseudo) et relâcher la souris un peu
 // hors du champ pouvait faire remonter le clic jusqu'au fond et fermer tout le panneau
 let infoMouseDownOnBackdrop = false;
 $a('infoOverlay').addEventListener('mousedown', e => { infoMouseDownOnBackdrop = (e.target.id === 'infoOverlay'); });
-$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) { questsPanelOpen = false; $a('infoOverlay').classList.remove('open'); updatePatchBadge(); } });
+$a('infoOverlay').addEventListener('click', e => { if (e.target.id === 'infoOverlay' && infoMouseDownOnBackdrop) closeInfoOverlay(); });
 
 // Codex des objets (2026-07-05, demande explicite) : sorti du Wiki pour sa propre section,
 // plus visible, directement accessible depuis le menu de gauche
