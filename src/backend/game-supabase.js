@@ -922,12 +922,41 @@ $a('equipModeSlider').querySelectorAll('.equipModeSeg').forEach(seg => {
 });
 renderEquipModeBtn();
 
+/**
+ * Traduit une position écran (clientX/clientY d'un clic) en coordonnées MONDE du canvas #cv, en
+ * tenant compte d'un éventuel recadrage CSS `object-fit:cover` (2026-07-12, cadre 4:5 sur mobile,
+ * voir @media max-width:600px dans src/styles/styles.css) -- sans ça, le clic reste correctement
+ * aligné sur desktop mais devient décalé sur mobile dès que le canvas est recadré/zoomé plutôt
+ * que simplement mis à l'échelle uniformément.
+ *
+ * Formule générale pour "cover" : le canvas est mis à l'échelle par le PLUS GRAND des deux
+ * ratios largeur/hauteur (rect vs résolution interne), pour remplir entièrement la boîte CSS —
+ * la dimension qui déborde est recadrée (centrée par défaut, object-position:50% 50%). On calcule
+ * cette échelle + l'offset de centrage réels, puis on les inverse pour retomber sur la
+ * coordonnée source (monde) du point cliqué.
+ *
+ * Cas desktop (pas de recadrage, rect.width/canvasW === rect.height/canvasH déjà égaux car
+ * height:auto préserve le ratio natif) : scale/offset se simplifient exactement à l'ancien calcul
+ * `(clientX - rect.left) * (canvasW / rect.width)` -- cette fonction reste donc correcte aussi
+ * bien sur desktop que sur mobile, un seul chemin de code pour les deux.
+ * @param {{left:number,top:number,width:number,height:number}} rect - cv.getBoundingClientRect()
+ * @param {number} canvasW - résolution interne du canvas (cv.width, W) -- jamais modifiée par CSS
+ * @param {number} canvasH - résolution interne du canvas (cv.height, H) -- jamais modifiée par CSS
+ * @param {number} clientX - e.clientX du clic
+ * @param {number} clientY - e.clientY du clic
+ * @returns {{sx:number, sy:number}} coordonnées monde correspondant au point cliqué
+ */
+function mapCanvasClickToWorld(rect, canvasW, canvasH, clientX, clientY) {
+  const scale = Math.max(rect.width / canvasW, rect.height / canvasH);
+  const dispW = canvasW * scale, dispH = canvasH * scale;
+  const offX = (rect.width - dispW) / 2, offY = (rect.height - dispH) / 2;
+  return { sx: (clientX - rect.left - offX) / scale, sy: (clientY - rect.top - offY) / scale };
+}
 // clic sur un objet au sol : déplace le perso jusque là. Prioritaire sur l'IA — tant qu'il n'est
 // pas arrivé à l'endroit cliqué, l'IA ne reprend pas la main (voir P.manualTarget dans fsm())
 cv.addEventListener('click', e => {
   const rect = cv.getBoundingClientRect();
-  const sx = (e.clientX - rect.left) * (W / rect.width);
-  const sy = (e.clientY - rect.top) * (H / rect.height);
+  const { sx, sy } = mapCanvasClickToWorld(rect, W, H, e.clientX, e.clientY);
   const candidates = drops.filter(l => !l.taken).map(l => {
     const s = toScreen(l.x, l.y);
     return { l, d: Math.hypot(sx - s.sx, sy - s.sy) };

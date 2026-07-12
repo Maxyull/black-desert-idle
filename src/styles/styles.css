@@ -2607,6 +2607,22 @@
     .aiModeSeg, .farmModeSeg, .farmModeLocked { padding:2px 3px; gap:1px; }
     .farmModeSegIcon { font-size:8px; }
     .farmModeSegLabel { font-size:6px; letter-spacing:0; }
+
+    /* Cadre de jeu en 4:5 sur téléphone (2026-07-12, demande explicite : "la vidéo du jeu passe en
+       4:5 pour un meilleur affichage"). Le canvas #cv garde sa RÉSOLUTION INTERNE 1240x440 intacte
+       (attributs width/height jamais touchés ici, voir CLAUDE.md §18/§25, incident PR #3) -- sur
+       téléphone, ce ratio natif très large (~2.82:1) l'affichait écrasé (~135px de haut à 390px de
+       large). #gameFrame prend maintenant un ratio CSS fixe 4:5 (plus haut que large, via
+       aspect-ratio, purement visuel) et #cv est mis à l'échelle en object-fit:cover pour le
+       remplir -- ce qui RECADRE une bonne partie des côtés gauche/droit de la scène (zoom centré
+       sur le personnage), effet recherché, pas un bug. Le calcul clic->monde
+       (mapCanvasClickToWorld(), src/backend/game-supabase.js) a été généralisé en conséquence pour
+       rester exact avec ce recadrage (formule "cover" : scale = max(rect.w/W, rect.h/H) + offset
+       de centrage) -- sinon les clics sur les objets au sol auraient été silencieusement décalés.
+       Desktop (>600px) inchangé : #cv y garde width:100%;height:auto (règle générique plus haut),
+       aucun recadrage, aucun changement de comportement. */
+    #gameFrame { aspect-ratio:4/5; }
+    #gameFrame canvas#cv { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
   }
 
   /* =====================================================================

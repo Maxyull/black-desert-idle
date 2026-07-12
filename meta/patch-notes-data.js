@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V399', d:'23/07/2026 10:00', name:{fr:'Téléphone : cadre de jeu recadré en 4:5', en:'Phone: game frame cropped to 4:5'}, fr:[
+      {t:'change', plat:'mobile', sub:'interface', tx:'Sur téléphone, le cadre de jeu (canvas) s\'affiche désormais dans un ratio 4:5 (plus haut que large) au lieu de son ratio natif très large — rendu moins écrasé et plus lisible sur petit écran, recadrage visuel centré sur l\'action. La résolution interne du jeu n\'est pas modifiée, et le clic sur un objet au sol reste précis dans ce nouveau cadre.'},
+    ], en:[
+      {t:'change', plat:'mobile', sub:'interface', tx:'On phone, the game frame (canvas) now displays in a 4:5 ratio (taller than wide) instead of its very wide native ratio — a less squashed, more readable display on small screens, a centered visual crop on the action. The game\'s internal resolution is unchanged, and clicking a ground item stays accurate within this new frame.'},
+    ] },
   { v:'V398', d:'23/07/2026 09:00', name:{fr:'Marché commun : panneau agrandi', en:'Common Market: panel enlarged'}, fr:[
       {t:'change', sub:'economie', tx:'Le panneau du Marché commun est désormais nettement plus grand (largeur et hauteur), sur retour des joueurs le trouvant trop petit. Le catalogue affiche maintenant ~7 objets visibles avant de défiler (contre 5 auparavant), toujours dans un cadre borné pour ne pas faire "sauter" la page.'},
       {t:'change', sub:'economie', tx:'La popup "Acheter" (échelle de prix) est également un peu plus large, en cohérence avec le reste du panneau.'},

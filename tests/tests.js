@@ -4508,6 +4508,57 @@
     if (lockedRow) assert('.psRow.locked garde son opacité .45 (état sémantique inchangé)', getComputedStyle(lockedRow).opacity === '0.45', getComputedStyle(lockedRow).opacity);
   }
 
+  // regression (2026-07-12) : cadre de jeu recadré en 4:5 sur mobile (@media max-width:600px,
+  // src/styles/styles.css, object-fit:cover sur #cv) -- garde-fou qui empêche tout futur
+  // changement de la RÉSOLUTION INTERNE du canvas #cv pour "régler" un problème d'affichage
+  // mobile (règle absolue du projet, CLAUDE.md §18/§25, incident PR #3 : changer la résolution du
+  // canvas casserait tout le mapping clic->monde ET le rendu du jeu). Seul le CSS (aspect-ratio +
+  // object-fit) doit bouger, jamais les attributs width/height de la balise <canvas id="cv">.
+  function testCanvasResolutionNeverChangedByMobileCrop() {
+    if (typeof document === 'undefined') return; // hors-contexte navigateur
+    assert('#cv garde sa résolution interne width=1240 (jamais modifiée pour le recadrage mobile 4:5)',
+      cv.getAttribute('width') === '1240', `width=${cv.getAttribute('width')}`);
+    assert('#cv garde sa résolution interne height=440 (jamais modifiée pour le recadrage mobile 4:5)',
+      cv.getAttribute('height') === '440', `height=${cv.getAttribute('height')}`);
+  }
+  // regression (2026-07-12) : mapCanvasClickToWorld() (src/backend/game-supabase.js) doit rester
+  // exact que le canvas soit affiché à l'échelle uniforme (desktop, aucun recadrage) OU recadré en
+  // object-fit:cover (mobile, cadre 4:5) -- sinon un clic sur un objet au sol se retrouve
+  // silencieusement décalé du monde réel, un bug quasi invisible à l'oeil (le perso se déplace
+  // "à peu près" au bon endroit visuellement tant qu'on ne compare pas au vrai point cliqué).
+  function testMapCanvasClickToWorldDesktopUniformScale() {
+    // desktop : rect à échelle uniforme 0.5x (620x220 pour un canvas 1240x440), aucun recadrage --
+    // doit se comporter comme l'ancien calcul (clientX - rect.left) * (W / rect.width)
+    const rect = { left:0, top:0, width:620, height:220 };
+    const center = mapCanvasClickToWorld(rect, 1240, 440, 310, 110);
+    assert('desktop (échelle uniforme) : clic au centre du rect retombe au centre du monde (sx=620)',
+      Math.abs(center.sx - 620) < 0.001, `sx=${center.sx}`);
+    assert('desktop (échelle uniforme) : clic au centre du rect retombe au centre du monde (sy=220)',
+      Math.abs(center.sy - 220) < 0.001, `sy=${center.sy}`);
+    const topLeft = mapCanvasClickToWorld(rect, 1240, 440, 0, 0);
+    assert('desktop (échelle uniforme) : clic au coin haut-gauche du rect retombe en (0,0) monde',
+      topLeft.sx === 0 && topLeft.sy === 0, `sx=${topLeft.sx}, sy=${topLeft.sy}`);
+  }
+  function testMapCanvasClickToWorldMobileCoverCrop() {
+    // mobile : rect 4:5 (380x475), object-fit:cover -- le canvas (1240x440, bien plus large que
+    // haut) déborde en largeur une fois mis à l'échelle pour remplir la hauteur du cadre, donc
+    // recadré symétriquement des 2 côtés. scale = max(380/1240, 475/440) = 475/440 (la hauteur
+    // pilote l'échelle) ; 176px de scène (sur 1240) sont coupés de chaque côté (352px visibles,
+    // centrés sur 620) -- valeurs attendues calculées à la main, voir commentaire de la tâche.
+    const rect = { left:0, top:0, width:380, height:475 };
+    const center = mapCanvasClickToWorld(rect, 1240, 440, 190, 237.5);
+    assert('mobile (cover 4:5) : clic au centre du rect retombe au centre du monde (sx=620)',
+      Math.abs(center.sx - 620) < 0.01, `sx=${center.sx}`);
+    assert('mobile (cover 4:5) : clic au centre du rect retombe au centre du monde (sy=220)',
+      Math.abs(center.sy - 220) < 0.01, `sy=${center.sy}`);
+    const leftEdge = mapCanvasClickToWorld(rect, 1240, 440, 0, 237.5);
+    assert('mobile (cover 4:5) : bord GAUCHE du cadre retombe à sx=444, PAS 0 (scène recadrée, 176px coupés de ce côté)',
+      Math.abs(leftEdge.sx - 444) < 0.01, `sx=${leftEdge.sx}`);
+    const rightEdge = mapCanvasClickToWorld(rect, 1240, 440, 380, 237.5);
+    assert('mobile (cover 4:5) : bord DROIT du cadre retombe à sx=796, symétrique du bord gauche',
+      Math.abs(rightEdge.sx - 796) < 0.01, `sx=${rightEdge.sx}`);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -4745,6 +4796,9 @@
     testNotifActionButtonOnlyRendersForGuestModeIcon();
     testNotifRailShowsPerCategoryUnreadCounts();
     testHandleNotifClearArmedButtonAutoRevertsFieldNotUsedElsewhere();
+    testCanvasResolutionNeverChangedByMobileCrop();
+    testMapCanvasClickToWorldDesktopUniformScale();
+    testMapCanvasClickToWorldMobileCoverCrop();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
