@@ -4238,6 +4238,7 @@ async function logToDiscord(title, description, color) {
     });
   } catch (e) {}
 }
+
 function updateNotifBadge() {
   const badge = $a('notifBadge'); if (!badge) return;
   badge.textContent = notifUnread > 9 ? '9+' : notifUnread;
@@ -4277,6 +4278,7 @@ const NOTIF_CAT_META = {
   success:   { fr:'🏆 Réussites', en:'🏆 Achievements' },
   info:      { fr:'📰 Activité',  en:'📰 Activity' },
 };
+
 function notifRowHtml(n) {
   return `<div class="notifRow ${n.cat}">
     <div class="notifIcon">${n.icon}</div>
@@ -4286,6 +4288,7 @@ function notifRowHtml(n) {
   </div>`;
 }
 let notifCatFilter = 'all'; 
+
 function openNotifCenter() {
   notifUnread = 0;
   updateNotifBadge();
@@ -4340,6 +4343,7 @@ function checkAchievements() {
   }
   if (unlocked) refreshStatsOnly();
 }
+
 function showAchToast(a) {
   const stack = $('achToastStack'); if (!stack) return;
   const el = document.createElement('div');
@@ -4358,6 +4362,7 @@ function mailboxAdd(key, name, icon, qty) {
   if (existing) existing.qty += qty;
   else S.mailbox.push({ key, name, icon, qty });
 }
+
 function showMailToast(icon, name, qty) {
   const stack = $('achToastStack'); if (!stack) return;
   const el = document.createElement('div');
@@ -4397,12 +4402,14 @@ function suppressLoyaltyGrantForToday() {
   S.lastLoyaltyDate = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
   S.loyalty = 0;
 }
+
 function updateMailBadge() {
   const badge = $('mailBadge'); if (!badge) return;
   const n = S.mailbox.reduce((sum,m) => sum + m.qty, 0);
   badge.textContent = fmt(n);
   badge.classList.toggle('show', n > 0);
 }
+
 function renderMailboxHtml() {
   const stockRow = `<div class="admSummary">${i18next.t('progression:progression.mailbox.claimed_stock_label')} : <b>${fmt(S.loyalty||0)}</b> 🏅</div>`;
   if (!S.mailbox.length || !S.mailbox.some(m => m.qty > 0)) {
@@ -4416,6 +4423,7 @@ function renderMailboxHtml() {
     `</div>`).join('') +
     `<div class="admSummary">${i18next.t('progression:progression.mailbox.permanent_note')}</div>`;
 }
+
 function openMailbox() {
   openInfo(i18next.t('progression:progression.mailbox.panel_title'), renderMailboxHtml());
   $a('infoBody').querySelectorAll('.mailClaimBtn').forEach(btn => {
@@ -4520,6 +4528,7 @@ function achRecentRowHtml(S) {
   }).join('');
   return `<div class="achRecentRow">${items}</div>`;
 }
+
 function renderAchievementsHtml() {
   const overview = achOverviewHtml(S);
   const spotlight = achSpotlightHtml(S);
@@ -4540,6 +4549,7 @@ function renderAchievementsHtml() {
     : `<div class="achEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
   return `<div class="achPanel">${overview}${spotlight}${catRow}${toggleRow}${recentRow}${grid}</div>`;
 }
+
 function openAchievements() {
   const callout = contentChangeCalloutHtml('achievements');
   openInfo(i18next.t('progression:progression.achievements.panel_title'), callout + renderAchievementsHtml());
@@ -4577,6 +4587,7 @@ function compendiumHighlightItem(name) {
 }
 
 let compendiumTab = 'zones'; 
+
 function renderCompendiumHtml() {
   const zc = compendiumZoneCount(), bc = compendiumBossCount();
   const total = compendiumTotalCount(), max = compendiumTotalMax(), pct = compendiumPct();
@@ -4651,6 +4662,7 @@ try { compTutoSeen = localStorage.getItem('velia-idle-comp-tuto-seen') === '1'; 
 
 let cronTutoSeen = false;
 try { cronTutoSeen = localStorage.getItem('velia-idle-cron-tuto-seen') === '1'; } catch(e) {}
+
 function openCompendium() {
   const callout = contentChangeCalloutHtml('compendium');
   openInfo(i18next.t('progression:progression.compendium.panel_title'), callout + renderCompendiumHtml());
@@ -4742,6 +4754,7 @@ function claimQuest(scope, i) {
   renderQuestTrackerWidget();
   if (questsPanelOpen) openDailyQuests();
 }
+
 function updateQuestBadge() {
   ensureQuests('daily'); ensureQuests('weekly');
   let n = 0;
@@ -4798,6 +4811,7 @@ function questScopeCounts(scope) {
   return { claimable, remaining };
 }
 let questPanelScope = 'daily'; 
+
 function renderDailyQuestsHtml() {
   const dailyNote = i18next.t('progression:progression.quests.daily_reset_note');
   const weeklyNote = i18next.t('progression:progression.quests.weekly_reset_note');
@@ -4821,6 +4835,7 @@ function renderDailyQuestsHtml() {
     `<div id="questScopeBody">${renderQuestSectionHtml(questPanelScope)}<div class="admSummary">${note}</div></div>`;
 }
 let questsPanelOpen = false; 
+
 function openDailyQuests() {
   openInfo(i18next.t('progression:progression.quests.panel_title'), renderDailyQuestsHtml());
   questsPanelOpen = true; 
@@ -4848,6 +4863,7 @@ function nextAchievement() {
   }
   return best;
 }
+
 function fmtDuration(ms) {
   let s = Math.max(0, Math.floor(ms/1000));
   const days = Math.floor(s/86400); s -= days*86400;
@@ -4868,6 +4884,7 @@ function msToNextWeeklyReset() {
   const daysUntil = 7 - day;
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()+daysUntil, 0,0,0,0) - now;
 }
+
 function fmtHours(sec) {
   sec = Math.max(0, Math.floor(sec));
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
@@ -4877,7 +4894,9 @@ function fmtHours(sec) {
 let resetWidgetFolded = isMobileViewport(), trackerWidgetFolded = isMobileViewport();
 try { const v = localStorage.getItem('velia-idle-resetwidget-folded'); if (v !== null) resetWidgetFolded = v === '1'; } catch(e) {}
 try { const v = localStorage.getItem('velia-idle-trackerwidget-folded'); if (v !== null) trackerWidgetFolded = v === '1'; } catch(e) {}
+
 function toggleResetFold() { resetWidgetFolded = !resetWidgetFolded; try { localStorage.setItem('velia-idle-resetwidget-folded', resetWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestWidget(); }
+
 function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; try { localStorage.setItem('velia-idle-trackerwidget-folded', trackerWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestTrackerWidget(); }
 
 function renderQuestWidget() {
@@ -4967,7 +4986,9 @@ function zoneSilverPerHour(z) {
   const l = z.loot;
   return l.trash.val*l.trash.ch * REF_KPM_FOR_STATS * 60;
 }
+
 function zoneXpPerHour(z) { return z.xp * REF_KPM_FOR_STATS * 60; }
+
 function zoneKillsPerMin(z) { return REF_DPS_FOR_STATS / z.hpPer; }
 
 function bestZoneForMetric(metricFn) {
@@ -4997,6 +5018,7 @@ const EQUIP_MODES = {
   gear:    { icon:'⚔️', name:{fr:'Équipement', en:'Gear'} },
   crystal: { icon:'💎', name:{fr:'Cristal',    en:'Crystal'} },
 };
+
 function renderEquipModeBtn() {
   const el = $('equipModeSlider'); if (!el) return;
   el.querySelectorAll('.equipModeSeg').forEach(seg => {
@@ -5813,6 +5835,7 @@ function bossOccurrences(fromDate) {
 }
 
 let liveBoss = null; 
+
 async function refreshLiveBoss() {
   if (!sb) return;
   const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
@@ -5848,6 +5871,7 @@ function nextBossOccurrence() {
   const occ = bossOccurrences(new Date());
   return occ.find(o => o.live) || occ[0] || null;
 }
+
 function fmtBossCountdown(ms) {
   let s = Math.max(0, Math.floor(ms/1000));
   const h = Math.floor(s/3600); s -= h*3600;
@@ -5902,6 +5926,7 @@ function renderActivityTabs() {
 }
 
 const BOSS_TAB_FLASH_LEAD_MS = 5 * 60 * 1000;
+
 function updateBossActivityTabHot() {
   const btn = $a('actTabBoss'); if (!btn) return;
   const occ = nextBossOccurrence();
@@ -5925,6 +5950,7 @@ function setFarmViewVisible(v) {
     const el = $(id); if (el) el.style.display = v ? '' : 'none';
   });
 }
+
 function showActivityPage(id) {
   if (id === 'boss') {
     currentActivity = 'boss';
@@ -5964,6 +5990,7 @@ function openCompanionsModule() {
   }
   overlay.style.display = 'flex';
 }
+
 function closeCompanionsModule() {
   const overlay = $a('companionsOverlay');
   if (overlay) overlay.style.display = 'none';
@@ -5997,6 +6024,7 @@ function bossMatInHand(matKey) {
   if (!matKey || !Array.isArray(INV)) return 0;
   return INV.reduce((sum, s) => s && s.key === matKey ? sum + (s.qty || 0) : sum, 0);
 }
+
 function renderBossLobbyHtml() {
   const occ = nextBossOccurrence();
   const now = Date.now();
@@ -6090,6 +6118,7 @@ function renderBossLobbyHtml() {
       ${bossRewardRulesHtml()}
     </div>`;
 }
+
 function wireBossLobby() {
   const btn = $a('bossFightBtn');
   const occ = nextBossOccurrence();
@@ -6167,6 +6196,7 @@ const BOSS_SPOTS_VELL = [
   {x:.06,y:.86},{x:.11,y:.89},{x:.16,y:.92},{x:.09,y:.95},{x:.14,y:.97},
   {x:.94,y:.86},{x:.89,y:.89},{x:.84,y:.92},{x:.91,y:.95},{x:.86,y:.97},
 ];
+
 function bossAttackSpots(bossId) { return bossId === 'vell' ? BOSS_SPOTS_VELL : BOSS_SPOTS_KZARKA; }
 const bossCtx = document.getElementById('bossCv').getContext('2d');
 
@@ -6222,6 +6252,7 @@ async function refreshBossTop() {
     renderBossTop();
   } catch (e) {}
 }
+
 function renderBossTop() {
   const el = $('bossTopList'); if (!el) return;
   const liveEl = $('btpLiveCount');
@@ -6238,6 +6269,7 @@ function renderBossTop() {
     `<span class="btpPseudo">${r.active?'<span class="btpActiveDot"></span>':''}${escapeHtml(r.pseudo||'?')}</span>` +
     `<span class="btpPct">${(r.pct!=null?r.pct:0)}%</span><span class="btpDmg">${fmt(Math.round(r.damage))}</span></div>`).join('');
 }
+
 function resizeBossCanvas() {
   const cv = $('bossCv');
   cv.width = cv.clientWidth || 1280;
@@ -6269,6 +6301,7 @@ function bossDeathPenaltyMult(deathCount) {
 }
 
 const BOSS_FIRST_KILL_WEEK_BONUS = 1.5;
+
 function bossFirstKillOfWeek(bossId) {
   return S.bossLastKillWeek[bossId] !== getISOWeekString(new Date());
 }
@@ -6322,6 +6355,7 @@ function bossZoneMaterialItem(zi, qty) {
 }
 
 let bossRewardPreviewBoss = 'kzarka';
+
 function bossRewardSelectorHtml() {
   return `<div class="bossRewardSel">` + Object.keys(BOSS_ROSTER).map(k => {
     const b = BOSS_ROSTER[k], active = bossRewardPreviewBoss === k;
@@ -6342,6 +6376,7 @@ function bossPityBarHtml(bossId) {
     </div>
   </div>`;
 }
+
 function bossRewardRulesHtml() {
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
@@ -6381,6 +6416,7 @@ const BOSS_REVEAL_STAGGER_MS = 850, BOSS_REVEAL_WHEEL_MS = 3600;
 const BOSS_ROLL_DURATION_MS = 2200, BOSS_ROLL_START_INTERVAL_MS = 40, BOSS_ROLL_GROWTH = 1.16;
 
 const BOSS_NEAR_MISS_CHANCE = 0.18, BOSS_NEAR_MISS_MARGIN_DEG = 8;
+
 function renderBossRewardReveal(items) {
   if (!items.length) return `<button id="bossCloseBtn">${i18next.t('combat:combat.boss.leave_button')}</button>`;
   const itemsHtml = items.map((it,i) => {
@@ -6476,6 +6512,7 @@ function leaveBossResultToZone() {
   setFarmViewVisible(true);
   renderActivityTabs();
 }
+
 async function endBossFight(win) {
   if (bossState.ended) return;
   bossState.ended = true;
