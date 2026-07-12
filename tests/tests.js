@@ -368,6 +368,63 @@
     assert('Une sauvegarde avec farmMode="opti" (retiré) retombe sur "loot"', S.farmMode === 'loot', `farmMode=${S.farmMode}`);
     S.farmMode = s.farmMode; renderFarmModeBtn();
   }
+  // style F "capsule segmentée, texte partout" (2026-07-12, demande explicite après mockup A/B des
+  // options E/F/G validé par l'utilisateur : "F pour les 3 avec l'inventaire") -- les 3 sélecteurs à
+  // bulles (#aiModeSlider/#farmModeSlider/#equipModeSlider) doivent TOUS afficher leur label texte
+  // en PERMANENCE, même sur les segments inactifs (avant : innerHTML conditionnel qui masquait le
+  // texte des segments inactifs, seul l'actif avait un <span class="farmModeSegLabel">). Garde-fou
+  // contre un retour au morph rond(icône seule)->pilule(icône+texte) de l'ancien style. Vérifie
+  // aussi la migration des tokens de la refonte Zone (--s2/--dbBorder, voir CLAUDE.md §29) sur les
+  // 3 conteneurs, à la place de l'ancien rgba(10,9,12,.6)/--gold-dim.
+  function testBubbleSelectorsStyleFAlwaysShowLabelsAndUseZoneTokens() {
+    if (!$('aiModeSlider') || !$('farmModeSlider') || !$('equipModeSlider')) return; // pas de DOM (contexte hors-jeu)
+    const s = { aiMode: S.aiCombatMode, farmMode: S.farmMode, equipMode };
+
+    // --- aiModeSlider : tous les segments (actif ET inactifs) gardent leur label ---
+    setAiCombatMode('défensif');
+    $('aiModeSlider').querySelectorAll('.aiModeSeg').forEach(seg => {
+      const label = seg.querySelector('.farmModeSegLabel');
+      assert(`aiModeSlider : segment "${seg.dataset.mode}" garde son label même inactif`,
+        !!label && label.textContent.length > 0, seg.innerHTML);
+    });
+
+    // --- farmModeSlider : idem ---
+    setFarmMode('loot');
+    $('farmModeSlider').querySelectorAll('.farmModeSeg').forEach(seg => {
+      const label = seg.querySelector('.farmModeSegLabel');
+      assert(`farmModeSlider : segment "${seg.dataset.mode}" garde son label même inactif`,
+        !!label && label.textContent.length > 0, seg.innerHTML);
+    });
+
+    // --- equipModeSlider : idem ---
+    setEquipMode('gear');
+    $('equipModeSlider').querySelectorAll('.equipModeSeg').forEach(seg => {
+      const label = seg.querySelector('.farmModeSegLabel');
+      assert(`equipModeSlider : segment "${seg.dataset.mode}" garde son label même inactif`,
+        !!label && label.textContent.length > 0, seg.innerHTML);
+    });
+
+    // --- tokens : conteneurs migrés vers --s2/--dbBorder (rgb(24,24,40)/rgb(42,42,68)), plus
+    // l'ancien rgba(10,9,12,.6)/--gold-dim (rgb(10,9,12)/rgb(138,112,56)) ---
+    [['aiModeSlider'], ['farmModeSlider'], ['equipModeSlider']].forEach(([id]) => {
+      const cs = getComputedStyle($(id));
+      assert(`${id} : fond var(--s2) rgb(24, 24, 40) (plus l'ancien rgba(10,9,12,.6))`,
+        cs.backgroundColor === 'rgb(24, 24, 40)', cs.backgroundColor);
+      assert(`${id} : bordure var(--dbBorder) rgb(42, 42, 68) (plus l'ancien --gold-dim)`,
+        cs.borderColor === 'rgb(42, 42, 68)', cs.borderColor);
+    });
+
+    // --- segment actif : fond doré plein #c9a55a, texte sombre ; segment inactif : fond transparent ---
+    const activeSeg = $('farmModeSlider').querySelector('.farmModeSeg.active');
+    const inactiveSeg = $('farmModeSlider').querySelector('.farmModeSeg:not(.active)');
+    const csActive = getComputedStyle(activeSeg), csInactive = getComputedStyle(inactiveSeg);
+    assert('farmModeSeg.active : fond var(--gold) rgb(201, 165, 90)', csActive.backgroundColor === 'rgb(201, 165, 90)', csActive.backgroundColor);
+    assert('farmModeSeg inactif : fond transparent (pas de fond doré résiduel)', csActive.backgroundColor !== csInactive.backgroundColor, csInactive.backgroundColor);
+
+    S.aiCombatMode = s.aiMode; renderAiModeBtn();
+    S.farmMode = s.farmMode; renderFarmModeBtn();
+    equipMode = s.equipMode; renderEquipModeBtn();
+  }
   // "montrer dans l'inventaire uniquement les items qui se lootent dans la zone... si plusieurs
   // zones sont disponibles... plusieurs flèches sur stuff ET zone à farm" (2026-07-12) --
   // slotsUpgradedByZone(zi) doit retourner UNIQUEMENT le(s) socle(s) que CETTE zone améliore
@@ -3865,6 +3922,7 @@
     testUpgradeIconIgnoresDiscoveredZone();
     testEquipmentDollRefreshesOnZoneTravel();
     testFarmModeBubbleSelectorReflectsTwoModes();
+    testBubbleSelectorsStyleFAlwaysShowLabelsAndUseZoneTokens();
     testSlotsUpgradedByZoneIsZoneSpecific();
     testZoneTierLockIsSeparateFromLabel();
     testCompagnonSeaLifeLiveInHeaderNotZoneTierTabs();

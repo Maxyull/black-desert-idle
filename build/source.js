@@ -4980,7 +4980,8 @@ function renderEquipModeBtn() {
     const active = equipMode === key;
     seg.classList.toggle('active', active);
     seg.title = m.name[LANG];
-    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
+    
+    seg.innerHTML = `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>`;
   });
   const gearPane = $('equipGearPane'), crystalPane = $('equipCrystalPane');
   if (gearPane) gearPane.style.display = equipMode === 'gear' ? '' : 'none';
@@ -5171,7 +5172,8 @@ function renderAiModeBtn() {
     const active = S.aiCombatMode === key;
     seg.classList.toggle('active', active);
     seg.title = titles[key] || '';
-    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
+    
+    seg.innerHTML = `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>`;
   });
 }
 
@@ -5200,7 +5202,8 @@ function renderFarmModeBtn() {
     const active = S.farmMode === key;
     seg.classList.toggle('active', active);
     seg.title = titles[key] || '';
-    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
+    
+    seg.innerHTML = `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>`;
   });
 }
 

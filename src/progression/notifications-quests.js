@@ -951,7 +951,9 @@ function renderEquipModeBtn() {
     const active = equipMode === key;
     seg.classList.toggle('active', active);
     seg.title = m.name[LANG];
-    seg.innerHTML = active ? `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>` : `<span class="farmModeSegIcon">${m.icon}</span>`;
+    // style F (2026-07-12, demande explicite) : icône+texte visibles en permanence, plus
+    // seulement sur le segment actif -- seule la classe .active (fond doré/texte sombre) change.
+    seg.innerHTML = `<span class="farmModeSegIcon">${m.icon}</span><span class="farmModeSegLabel">${m.name[LANG]}</span>`;
   });
   const gearPane = $('equipGearPane'), crystalPane = $('equipCrystalPane');
   if (gearPane) gearPane.style.display = equipMode === 'gear' ? '' : 'none';
