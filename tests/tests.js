@@ -3105,6 +3105,23 @@
     assert('Rescale V235 : enhLv déjà investi reste intact', INV[INV_SIZE-1].enhLv === 3);
     INV[INV_SIZE-1] = s.b; zoneIdx = s.zoneIdx;
   }
+  // bug trouvé le 2026-07-23 : Sanctuaire d'Elric (zone 9, casque) a eu son reqDP relevé de 91 à
+  // 101 en V267, APRÈS le dernier passage de rattrapage câblé (V245) -- un vieux Casque Grunil
+  // resterait figé sur l'ancien reqDP=91 pour toujours sans migrateGearRescaleV403.
+  function testGearRescaleV403RetroactiveOnZoneReqChange() {
+    const s = { b: INV[INV_SIZE-1], zoneIdx };
+    zoneIdx = 9; // Sanctuaire d'Elric
+    const zone = ZONES[9];
+    let freshHelmet = null;
+    for (let i = 0; i < 2000 && !freshHelmet; i++) freshHelmet = rollGearDrop(zone, true);
+    // simule un casque dropé avant le relèvement du reqDP (ancien reqDP=91 -> ancien dp plus faible)
+    INV[INV_SIZE-1] = { name:'Casque Grunil', kind:'gear', slot:'helmet', ap:0, dp:1, hp:1, dodge:0.1, enhLv:5, color:GEAR_TIERS[3].color, val:1, key:'t_old_helmet' };
+    migrateGearRescaleV403();
+    assert('Rescale V403 : dp recalculé au reqDP ACTUEL de la zone (post-V267)',
+      INV[INV_SIZE-1].dp === freshHelmet.dp, `got=${INV[INV_SIZE-1].dp}, attendu=${freshHelmet.dp}`);
+    assert('Rescale V403 : enhLv déjà investi reste intact', INV[INV_SIZE-1].enhLv === 5);
+    INV[INV_SIZE-1] = s.b; zoneIdx = s.zoneIdx;
+  }
   // "le nom de la zone doit être mis à jour et rester en place" (2026-07-11) : après un chargement
   // de sauvegarde sur une zone différente de la zone 0, #ztName restait bloqué sur le placeholder
   // HTML statique -- seuls travelTo()/goToVelia() le mettaient à jour, jamais applySaveState().
@@ -4779,6 +4796,7 @@
     testJewelryApIsDynamic();
     testGearRetroactiveMigration();
     testGearRescaleV235RetroactiveOnZoneReqChange();
+    testGearRescaleV403RetroactiveOnZoneReqChange();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();

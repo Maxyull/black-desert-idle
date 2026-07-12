@@ -190,6 +190,24 @@ function migrateGearRescaleV245() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
 }
+// migration 2026-07-23 (bug trouvé : joueurs au même palier PEN avec des PD différents sur des
+// pièces au nom pourtant identique, ex: Casque Grunil 31 chez l'un, 53 chez l'autre) -- 3
+// rééquilibrages de zone ont modifié reqDP APRÈS le dernier passage de rattrapage (V245) SANS
+// jamais relancer migrateGearFixedStatsV226()/migrateJewelryApV207() : Sanctuaire d'Elric (V267,
+// reqDP 91->101, palier Vert/casque du palier suivant selon la zone), Ruines de Kratuga (V282,
+// reqDP abaissé, palier Bleu/armure) et Planque des Mânes (V286, reqDP abaissé, palier Bleu/gants).
+// Ces 3 zones n'ont pas de gearBasisDP dédié : basisDP = reqDP directement (voir rollGearDrop),
+// donc tout changement de reqDP change aussi silencieusement la puissance du stuff qui en drope --
+// exactement le piège documenté juste au-dessus ("À REFAIRE... sans quoi le stuff déjà dropé reste
+// sur l'ancien calcul pour toujours"), pas fait pour ces 3 versions. Relance simplement les 2
+// migrations existantes (mêmes formules que V235/V243/V245, jamais dupliquées) pour TOUTE pièce de
+// stuff déjà possédée (armes, armure, bijoux) -- pas seulement les 3 zones identifiées : capture
+// aussi tout autre écart accumulé depuis V245 sans qu'on ait eu besoin de l'identifier zone par zone.
+/** Migration rétroactive V403 : relance migrateGearFixedStatsV226()+migrateJewelryApV207() pour rattraper Sanctuaire d'Elric (V267), Ruines de Kratuga (V282) et Planque des Mânes (V286) -- changements de reqDP jamais répercutés sur le stuff déjà possédé, plus tout autre écart accumulé depuis V245. */
+function migrateGearRescaleV403() {
+  migrateGearFixedStatsV226();
+  migrateJewelryApV207();
+}
 // migration 2026-07-11 (bug corrigé : "aucune pierre ne se met dans le slot pour les bijoux") --
 // les bijoux (jackpot) n'ont jamais eu de matName depuis leur introduction (voir rollDrops,
 // corrigé juste au-dessus) : findEnhanceMaterial() retombait donc sur le matériau de la zone

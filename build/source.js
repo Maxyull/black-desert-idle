@@ -3859,6 +3859,7 @@ function applySaveState(data) {
   if (!S.migratedJewelryMatNameV239) { migrateJewelryMatNameV239(); S.migratedJewelryMatNameV239 = true; }
   if (!S.migratedGearRescaleV243) { migrateGearRescaleV243(); S.migratedGearRescaleV243 = true; }
   if (!S.migratedGearRescaleV245) { migrateGearRescaleV245(); S.migratedGearRescaleV245 = true; }
+  if (!S.migratedGearRescaleV403) { migrateGearRescaleV403(); S.migratedGearRescaleV403 = true; }
   if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); 
@@ -10171,6 +10172,11 @@ function migrateGearRescaleV243() {
 }
 
 function migrateGearRescaleV245() {
+  migrateGearFixedStatsV226();
+  migrateJewelryApV207();
+}
+
+function migrateGearRescaleV403() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
 }
