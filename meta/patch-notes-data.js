@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V403', d:'23/07/2026 14:00', name:{fr:'Correctif : stats de stuff figées sur d\'anciens rééquilibrages de zone', en:'Fix: gear stats frozen on old zone rebalances'}, fr:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'3 rééquilibrages de zone (Sanctuaire d\'Elric, Ruines de Kratuga, Planque des Mânes) avaient changé la Défense requise sans jamais recalculer le stuff déjà en possession des joueurs — deux exemplaires du même objet (même nom, même palier, même niveau d\'enchantement) pouvaient donc afficher des PA/PD différents selon la date de leur obtention. Recalculé une bonne fois pour toutes au prochain chargement, sans rien perdre (l\'enchantement déjà investi reste intact).'},
+    ], en:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'3 zone rebalances (Elric Shrine, Kratuga Ruins, Manes\' Hideout) had changed required Defense without ever recalculating gear already owned by players — two copies of the same item (same name, same tier, same enhancement level) could show different AP/DP depending on when they were obtained. Recalculated once and for all on next load, without losing anything (enhancement already invested stays intact).'},
+    ] },
   { v:'V402', d:'23/07/2026 13:00', name:{fr:'Sorcière : silhouette plus détaillée, dague au fourreau', en:'Sorceress: more detailed silhouette, sheathed dagger'}, fr:[
       {t:'change', sub:'interface', tx:'Le personnage (sorcière) a un contour plus net et un galon doré sur la robe, quel que soit le palier d\'équipement.'},
       {t:'new', sub:'interface', tx:'Une dague au fourreau apparaît désormais à la ceinture lorsqu\'une arme secondaire est équipée (Dague Naru/Tuvala/Yuria/Grunil selon le palier) — jusqu\'ici cette pièce d\'équipement n\'avait aucun effet visuel sur le personnage.'},
