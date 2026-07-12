@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V387', d:'22/07/2026 08:00', name:{fr:'Correctif Marché commun : panneau enfin borné avec défilement propre', en:'Common Market fix: panel now properly bounded with clean scrolling'}, fr:[
+      {t:'fix', sub:'economie', tx:'Le panneau du Marché commun ne se bornait pas correctement à la hauteur de sa fenêtre : la liste d\'objets, le détail et "Mes ordres" pouvaient déborder au lieu de défiler chacun dans leur propre cadre. Corrigé.'},
+    ], en:[
+      {t:'fix', sub:'economie', tx:'The Common Market panel wasn\'t properly bounded to its window height: the item list, detail view, and "My orders" could overflow instead of each scrolling within their own frame. Fixed.'},
+    ] },
   { v:'V386', d:'22/07/2026 07:00', name:{fr:'Écran de connexion refait : même style que Zone', en:'Login screen redesigned: same look as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran de connexion (compte, création, Discord/Google/GitHub/Twitter) a reçu le même reskin visuel que le reste du jeu : titre en Cinzel, champs et boutons arrondis, mêmes couleurs que l\'écran Zone. Aucun changement de fonctionnement.'},
     ], en:[

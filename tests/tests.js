@@ -1449,6 +1449,28 @@
     if (typeof MARKET_SELL_TAX_RATE === 'undefined') return; // pas de DOM/module marché chargé
     assert('MARKET_SELL_TAX_RATE vaut bien 35% (0.65 côté SQL)', MARKET_SELL_TAX_RATE === 0.35, `got=${MARKET_SELL_TAX_RATE}`);
   }
+  // bug réel trouvé en conditions réelles (2026-07-22, "borne le marché commun et mets-y un scroll") :
+  // .marketPane sans display:flex faisait que .cmMarketLayout{flex:1;min-height:0} ne servait à rien
+  // (flex:1 sur un enfant non-flex-item est un no-op) -- .cmMarketLayout ne prenait que sa hauteur de
+  // contenu naturelle (mesuré 144px sur 657px disponibles), #marketBox entier défilait comme un seul
+  // bloc au lieu que chaque colonne (catégories/liste/détail/mes ordres) défile indépendamment dans
+  // un cadre borné. Garde-fou statique (inspection des règles CSS réellement chargées, même
+  // convention que testSidebarAndFloatWidgetsAreReskinnedNotLegacyGeorgia).
+  function testMarketPaneIsFlexColumnSoInnerColumnsScrollIndependently() {
+    if (typeof document === 'undefined') return;
+    const allRules = [];
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules || sheet.rules; } catch (e) { continue; }
+      if (!rules) continue;
+      for (const r of rules) if (r && r.cssText) allRules.push(r.cssText);
+    }
+    const marketPaneRule = allRules.find(t => t.trim().startsWith('.marketPane'));
+    assert('.marketPane existe bien dans le CSS chargé', !!marketPaneRule, 'règle introuvable');
+    if (!marketPaneRule) return;
+    assert('.marketPane est un conteneur flex (sinon .cmMarketLayout{flex:1} ne borne rien)', /display:\s*flex/.test(marketPaneRule), marketPaneRule);
+    assert('.marketPane a min-height:0 (sinon un enfant flex:1 peut quand même déborder son conteneur)', /min-height:\s*0/.test(marketPaneRule), marketPaneRule);
+  }
   // ---------- refonte "Marché commun" v3 (2026-07-22) : catalogue unifié + popup Acheter ----------
   // Le catalogue "objets sans vente en cours" (marketCatalog()) DOIT être construit depuis les
   // VRAIES données du jeu (GEAR_TIERS/ZONES/MARKET_MATERIALS), jamais depuis des noms inventés --
@@ -3800,6 +3822,7 @@
     testInvOptTargetDoesNotEquip();
     testCompendiumEvictsItemOnceItReachesPen();
     testMarketSellTaxRateMatchesServerFactor();
+    testMarketPaneIsFlexColumnSoInnerColumnsScrollIndependently();
     testMarketCatalogUsesOnlyRealGameNames();
     testMarketCatalogCoversGearSlotsAndSkipsArtifactDeadCategory();
     testCmItemKeyMatchesServerKeyFormat();
