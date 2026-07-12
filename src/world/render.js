@@ -733,6 +733,10 @@ function drawSausanIso(wx,wy,w,t) {
   ctx.moveTo(-3,-8); ctx.lineTo(-4,3+trot*.5);
   ctx.moveTo(3,-8); ctx.lineTo(4,3-trot*.5);
   ctx.stroke();
+  // bottes
+  ctx.fillStyle='#1e1a14';
+  ctx.beginPath(); ctx.ellipse(-4.2,3.2+trot*.5,1.4,0.8,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(4.2,3.2-trot*.5,1.4,0.8,0,0,7); ctx.fill();
   // longue tunique en cotte de mailles (s'évase vers le bas, avec un pan qui flotte)
   ctx.fillStyle = cloth;
   ctx.beginPath();
@@ -741,14 +745,20 @@ function drawSausanIso(wx,wy,w,t) {
   // texture de mailles (petits reflets)
   ctx.strokeStyle='rgba(230,230,240,.18)'; ctx.lineWidth=1;
   ctx.beginPath(); ctx.moveTo(-5,-20); ctx.lineTo(5,-20); ctx.moveTo(-5,-15); ctx.lineTo(5,-15); ctx.moveTo(-5,-10); ctx.lineTo(5,-10); ctx.stroke();
-  // ceinture
-  ctx.strokeStyle='#5a4632'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.moveTo(-6,-12); ctx.lineTo(6,-12); ctx.stroke();
+  // ceinture large + boucle dorée (2026-07-23, révision approuvée "Option C")
+  ctx.fillStyle='#5a4632';
+  ctx.fillRect(-6.6,-13,13.2,2.4);
+  ctx.fillStyle='#c9a55a';
+  ctx.beginPath(); ctx.ellipse(0,-11.8,0.9,0.9,0,0,7); ctx.fill();
   // bras armé + lame courbe (cimeterre) qui avance en attaque
   ctx.strokeStyle = cloth; ctx.lineWidth=3;
   ctx.beginPath(); ctx.moveTo(6,-21); ctx.lineTo(11+lungeAmt*.4,-15); ctx.stroke();
   ctx.strokeStyle='#c9ccd2'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.moveTo(11+lungeAmt*.4,-15); ctx.quadraticCurveTo(17+lungeAmt*.6,-18, 16+lungeAmt*.6,-24); ctx.stroke();
+  // gantelet sur la main armée
+  ctx.fillStyle='#5a5650';
+  ctx.beginPath(); ctx.ellipse(11+lungeAmt*.4,-15,2,2,0,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.5; ctx.stroke();
   // tête voilée (bas du visage en tissu)
   ctx.fillStyle='#b8a382';
   ctx.beginPath(); ctx.arc(0,-28,4.2,0,7); ctx.fill();
