@@ -96,8 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=569"><!-- refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-redesign.html fourni par     l'utilisateur, voir CLAUDE.md) : Cinzel déjà référencé dans styles.css mais jamais chargé     jusqu'ici (retombait en serif silencieusement) -- Inter/JetBrains Mono nouvellement introduits     par ce portage, mêmes polices que le mockup -->
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="src/styles/styles.css?v=569"><!-- refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-redesign.html fourni par     l'utilisateur, voir CLAUDE.md) : Cinzel déjà référencé dans styles.css mais jamais chargé     jusqu'ici (retombait en serif silencieusement) -- Inter/JetBrains Mono nouvellement introduits     par ce portage, mêmes polices que le mockup --><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
 
@@ -851,8 +850,7 @@
      dossiers, prépare l'ajout futur d'autres classes jouables) -- DOIT charger AVANT
      game-core.js : la boucle qui construit la barre de sorts lit SKILLS immédiatement -->
 <script src="src/classes/sorcier/skills-data.js?v=569"></script>
-<script src="src/core/game-core.js?v=569"></script><!-- classe Sorcier : rendu du personnage (drawWitchIso, witchBodyOn...) -- extrait de     world/render.js le 2026-07-08 (réorganisation par dossiers) -- DOIT charger juste APRÈS     core/game-core.js (toScreen/ctx/P) et AVANT inventory/inventory-ui.js ET world/render.js :     tous deux appellent witchBodyOn de façon SYNCHRONE au chargement (render.js appelle hud()
-     -> refreshInvUI() -> renderEquipment() -> drawPreviewChar() -> drawWitchOn() ->
+<script src="src/core/game-core.js?v=569"></script><!-- classe Sorcier : rendu du personnage (drawWitchIso, witchBodyOn...) -- extrait de     world/render.js le 2026-07-08 (réorganisation par dossiers) -- DOIT charger juste APRÈS     core/game-core.js (toScreen/ctx/P) et AVANT inventory/inventory-ui.js ET world/render.js :     tous deux appellent witchBodyOn de façon SYNCHRONE au chargement (render.js appelle hud()     -> refreshInvUI() -> renderEquipment() -> drawPreviewChar() -> drawWitchOn() ->
      witchBodyOn() avant même requestAnimationFrame(loop) -- bug réel constaté le 2026-07-08 :
      avec sorcier-render.js chargé après render.js, ce premier hud() lançait un ReferenceError
      qui empêchait purement et simplement requestAnimationFrame(loop) de s'exécuter, gelant tout

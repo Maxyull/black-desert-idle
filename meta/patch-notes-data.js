@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V398', d:'23/07/2026 09:00', name:{fr:'Marché commun : panneau agrandi', en:'Common Market: panel enlarged'}, fr:[
+      {t:'change', sub:'economie', tx:'Le panneau du Marché commun est désormais nettement plus grand (largeur et hauteur), sur retour des joueurs le trouvant trop petit. Le catalogue affiche maintenant ~7 objets visibles avant de défiler (contre 5 auparavant), toujours dans un cadre borné pour ne pas faire "sauter" la page.'},
+      {t:'change', sub:'economie', tx:'La popup "Acheter" (échelle de prix) est également un peu plus large, en cohérence avec le reste du panneau.'},
+    ], en:[
+      {t:'change', sub:'economie', tx:'The Common Market panel is now noticeably larger (width and height), following feedback that it felt too small. The catalog now shows ~7 items before scrolling (up from 5), still within a fixed frame so the page never "jumps".'},
+      {t:'change', sub:'economie', tx:'The "Buy" popup (price ladder) is also slightly wider, in line with the rest of the panel.'},
+    ] },
   { v:'V397', d:'22/07/2026 18:00', name:{fr:'World Boss : mode solo/partagé toujours annoncé, fausse "récompense déjà réclamée" corrigée', en:'World Boss: solo/shared mode always announced, false "reward already claimed" fixed'}, fr:[
       {t:'fix', sub:'combat', tx:'World Boss partagé : le bouton "Combattre" du lobby ne démarre plus JAMAIS un combat solo sans le dire. Si la confirmation "partagé" du serveur tarde, le bouton se bloque quelques secondes avec un message clair ; si elle échoue vraiment, un bouton "Combattre en solo" honnête apparaît à la place — fini le combat solo silencieux qui se faisait passer pour du partagé (les autres joueurs restaient invisibles, et inversement).'},
       {t:'fix', sub:'combat', tx:'World Boss partagé : un joueur avec un très gros DPS pouvait voir son combat se terminer en "Récompense déjà réclamée" alors qu\'il s\'agissait d\'une vraie première victoire — la barre de vie affichée en local pouvait tomber à 0 avant que le serveur (qui tient les vrais PV communs) ait confirmé la mort du boss. La victoire attend désormais toujours la confirmation du serveur pour un boss partagé.'},

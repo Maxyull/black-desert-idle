@@ -1283,7 +1283,12 @@
     /* élargi le 2026-07-22 (refonte catalogue unifié + panneau "Mes ordres" ancré) -- l'ancienne
        largeur de 640px suffisait pour un simple carnet d'ordres, plus pour arbre de catégories +
        liste + détail + sidebar côte à côte (voir .cmMarketLayout/.cmBrowseLayout ci-dessous) */
-    width:1040px; max-width:96vw; height:82vh; display:flex; flex-direction:column;
+    /* agrandi le 2026-07-23 (demande explicite : "c'est petit", panneau entier jugé trop petit) --
+       1040px/82vh laissait le catalogue/les colonnes serrés sur un écran desktop standard.
+       1280px/90vh reste confortable jusqu'à ~1440-1920px sans dépasser (max-width:96vw absorbe le
+       reste sur écran plus étroit) ; voir .cmMarketLayout juste plus bas pour l'ajustement
+       proportionnel du plafond "5 items" en conséquence. */
+    width:1280px; max-width:96vw; height:90vh; display:flex; flex-direction:column;
     /* reskin coque (2026-07-22, complément demandé) : mêmes tokens que le reste de la refonte
        marché (--s1/--dbBorder, coins arrondis) au lieu de l'ancien --panel/--gold-dim sans radius,
        cohérent avec .cmBuyModal/.cmBrowseLayout déjà sur ces tokens -- additif, aucune règle
@@ -1351,7 +1356,13 @@
      .cmSidebar/#cmMyOrders partagent la même hauteur pour rester visuellement symétriques.
      Scrollbar aux couleurs du thème (voir .cmCategoryTree/.cmListingsList/.cmDetailPanel/
      #cmMyOrders::-webkit-scrollbar plus bas) au lieu de la barre grise par défaut du navigateur. */
-  .cmMarketLayout { display:grid; grid-template-columns:1fr 250px; gap:14px; flex:1; min-height:0; max-height:300px; }
+  /* plafond relevé le 2026-07-23 en même temps que #marketBox (1040px/82vh -> 1280px/90vh) --
+     garder le principe "chaque colonne défile dans un cadre borné" (PAS un retour au remplissage
+     flex illimité qui référait apparaître le bug corrigé en V387), mais un panneau nettement plus
+     grand avec toujours seulement 5 lignes visibles laissait un vide disproportionné en dessous.
+     420px (~7 .cmListCard) reste un cadre fixe et scrollable, juste redimensionné dans les mêmes
+     proportions que le panneau. */
+  .cmMarketLayout { display:grid; grid-template-columns:1fr 250px; gap:14px; flex:1; min-height:0; max-height:420px; }
   .cmMain { min-width:0; display:flex; flex-direction:column; min-height:0; }
   .cmSidebar { border-left:1px solid var(--dbBorder); padding-left:14px; display:flex; flex-direction:column; min-height:0; }
   .cmSidebarHdr { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--cream2); margin-bottom:8px; }
@@ -1440,10 +1451,11 @@
   #cmBuyMsg.ok { color:var(--green2); } #cmBuyMsg.fail { color:var(--red2); }
 
   @media (max-width:1024px) {
-    /* .cmMarketLayout passe en 1 colonne empilée (cmMain puis cmSidebar) -- le plafond desktop de
-       300px (voir plus haut, "borné à 5 items") ne doit PAS s'appliquer ici : il couperait
-       toute la pile (catalogue + Mes ordres) au lieu du seul catalogue. .cmSidebar garde son
-       propre plafond dédié (220px, ligne juste en dessous), indépendant de celui-ci. */
+    /* .cmMarketLayout passe en 1 colonne empilée (cmMain puis cmSidebar) -- le plafond desktop
+       (voir plus haut, "borné à ~7 items" depuis le 2026-07-23, 420px) ne doit PAS s'appliquer
+       ici : il couperait toute la pile (catalogue + Mes ordres) au lieu du seul catalogue.
+       .cmSidebar garde son propre plafond dédié (220px, ligne juste en dessous), indépendant de
+       celui-ci. */
     .cmMarketLayout { grid-template-columns:1fr; max-height:none; }
     .cmSidebar { border-left:none; border-top:1px solid var(--dbBorder); padding-left:0; padding-top:10px; margin-top:10px; max-height:220px; }
   }
@@ -1457,7 +1469,10 @@
   /* ---------- popup "Acheter" façon Marché Central BDO ---------- */
   .cmBuyModalBg { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:95; }
   .cmBuyModalBg.open { display:flex; }
-  .cmBuyModal { background:var(--s1); border:1px solid var(--dbBorder2); border-radius:12px; width:920px; max-width:95vw; max-height:92vh; overflow:hidden; display:flex; flex-direction:column; }
+  /* largeur relevée le 2026-07-23 en cohérence avec #marketBox (920px -> 1000px, +8.7%, modéré --
+     ce popup a déjà son propre scroll interne/max-height:92vh généreux, pas besoin d'un saut aussi
+     large que le panneau principal). max-height inchangé, déjà confortable. */
+  .cmBuyModal { background:var(--s1); border:1px solid var(--dbBorder2); border-radius:12px; width:1000px; max-width:95vw; max-height:92vh; overflow:hidden; display:flex; flex-direction:column; }
   .cmBmHdr { display:flex; align-items:center; padding:14px 18px; border-bottom:1px solid var(--dbBorder); font-family:'Cinzel',serif; font-size:15px; color:var(--gold2); }
   .cmBmClose { margin-left:auto; cursor:pointer; color:var(--cream3); font-size:20px; line-height:1; }
   .cmBmBody { display:grid; grid-template-columns:1fr 260px; gap:0; overflow-y:auto; }
