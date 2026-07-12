@@ -103,30 +103,59 @@ function bossOccurrences(fromDate) {
 // live_boss). Prioritaire sur le planning horaire : s'il est actif, il apparaît comme "EN COURS"
 // pour tout le monde. Rafraîchi périodiquement (voir refreshLiveBoss).
 let liveBoss = null; // { boss, time, expires } quand un spawn global est en cours
-/** Rafraîchit liveBoss depuis Supabase (RPC ensure_scheduled_boss, repli sur lecture directe de live_boss), re-render le lobby si le statut "en cours" vient de changer pendant qu'il est affiché. */
+// compteur d'échecs consécutifs de refreshLiveBoss() (2026-07-12, bug corrigé : "joueurs invisibles
+// entre eux lors d'un World Boss") -- avant, l'appel RPC ensure_scheduled_boss ET son repli (lecture
+// directe de live_boss) étaient chacun dans un try/catch qui avalait l'erreur SANS AUCUNE trace ; un
+// joueur pouvait alors rejoindre un créneau du planning qui AURAIT DÛ être partagé (occ.live vrai
+// localement, voir bossOccurrences) sans que liveBoss n'ait jamais pu être confirmé côté serveur --
+// wireBossLobby() démarrait alors un combat solo silencieux (occ.sharedHp absent) que le joueur
+// croyait partagé. Exposé désormais via un vrai compteur (log explicite + relance rapide en cas
+// d'échec) et consommé par bossSharedConfirmState() (voir plus bas) pour ne plus JAMAIS laisser un
+// joueur démarrer en mode "partagé implicite" sans confirmation ou message clair.
+let liveBossFailCount = 0;
+/** Rafraîchit liveBoss depuis Supabase (RPC ensure_scheduled_boss, repli sur lecture directe de live_boss), re-render le lobby si le statut "en cours" vient de changer pendant qu'il est affiché. Trace/relance en cas d'échec des DEUX tentatives (voir liveBossFailCount) plutôt que d'avaler l'erreur silencieusement. */
 async function refreshLiveBoss() {
   if (!sb) return;
   const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
+  let data = null;
+  let hadError = false;
+  // ensure_scheduled_boss vérifie CÔTÉ SERVEUR si une occurrence du planning (Kzarka) doit être
+  // en cours maintenant et, si oui, s'assure que live_boss la reflète (sans écraser un spawn admin
+  // déjà actif) — rend le boss du planning RÉELLEMENT partagé (PV communs, tout le monde se voit
+  // dans l'arène) au lieu d'une instance solo par joueur. Demande explicite du 2026-07-06.
   try {
-    // ensure_scheduled_boss vérifie CÔTÉ SERVEUR si une occurrence du planning (Kzarka) doit être
-    // en cours maintenant et, si oui, s'assure que live_boss la reflète (sans écraser un spawn admin
-    // déjà actif) — rend le boss du planning RÉELLEMENT partagé (PV communs, tout le monde se voit
-    // dans l'arène) au lieu d'une instance solo par joueur. Demande explicite du 2026-07-06.
-    // Retombe sur une simple lecture si l'appel échoue, pour ne jamais bloquer l'affichage du lobby.
-    let data = null;
+    const r = await sb.rpc('ensure_scheduled_boss');
+    if (r.error) throw r.error;
+    data = Array.isArray(r.data) ? r.data[0] : r.data;
+  } catch (e) {
+    // repli sur une simple lecture si le RPC échoue -- mais désormais TRACÉ (console.warn), plus un
+    // échec avalé sans laisser de trace
+    console.warn('[LiveBoss] ensure_scheduled_boss a échoué, repli sur lecture directe de live_boss', e);
     try {
-      const r = await sb.rpc('ensure_scheduled_boss');
-      data = Array.isArray(r.data) ? r.data[0] : r.data;
-    } catch (e) {}
-    if (!data) {
       const r = await sb.from('live_boss').select('boss_id, spawned_at, expires_at, hp, max_hp').eq('id', 1).maybeSingle();
+      if (r.error) throw r.error;
       data = r.data;
+    } catch (e2) {
+      hadError = true;
+      console.warn('[LiveBoss] lecture directe de live_boss a AUSSI échoué -- liveBoss reste inchangé pour cette passe', e2);
     }
+  }
+  if (hadError) {
+    liveBossFailCount++;
+    console.warn(`[LiveBoss] échec de synchro #${liveBossFailCount} consécutif(s) -- liveBoss non confirmé`);
+    // relance rapide (au lieu d'attendre le prochain tick de 20s, voir les setInterval plus bas) tant
+    // que l'échec reste isolé -- backoff croissant, bornée à 5 tentatives rapprochées
+    if (liveBossFailCount <= 5) setTimeout(refreshLiveBoss, 3000 * liveBossFailCount);
+    // volontairement PAS de `liveBoss = null` ici : un hoquet réseau transitoire ne doit pas faire
+    // disparaître un boss partagé déjà confirmé juste avant (évite un flicker "partagé -> solo ->
+    // partagé" pour les autres joueurs déjà dans l'arène)
+  } else {
+    liveBossFailCount = 0;
     if (data && data.boss_id && BOSS_ROSTER[data.boss_id] && new Date(data.expires_at).getTime() > Date.now()) {
       liveBoss = { boss: data.boss_id, time: new Date(data.spawned_at).getTime(), expires: new Date(data.expires_at).getTime(),
                    hp: Number(data.hp||0), maxHp: Number(data.max_hp||0) };
-    } else liveBoss = null;
-  } catch (e) {}
+    } else liveBoss = null; // réponse SERVEUR fiable (pas d'erreur) : aucun boss actif confirmé
+  }
   updateNextBossMini();
   // si le statut "en cours" a changé pendant qu'un joueur regarde le lobby (sans être en plein
   // combat), on re-render le lobby pour que le bouton "Combattre" apparaisse/disparaisse tout seul
@@ -146,6 +175,47 @@ function nextBossOccurrence() {
   if (liveBoss && liveBoss.expires > Date.now()) return { boss: liveBoss.boss, time: liveBoss.time, live: true, sharedHp: true, hp: liveBoss.hp, maxHp: liveBoss.maxHp };
   const occ = bossOccurrences(new Date());
   return occ.find(o => o.live) || occ[0] || null;
+}
+// ---- confirmation "boss partagé" (2026-07-12, bug corrigé : "joueurs invisibles entre eux lors
+// d'un World Boss") ----
+// nextBossOccurrence() peut retomber SILENCIEUSEMENT sur bossOccurrences() (planning purement
+// local, sans sharedHp) si liveBoss n'a pas encore pu être confirmé par le serveur -- voir
+// refreshLiveBoss/liveBossFailCount ci-dessus. Avant ce correctif, wireBossLobby() démarrait alors
+// startBossFight(occ.boss, !!occ.sharedHp) avec isShared=false SANS RIEN dire au joueur : il croyait
+// rejoindre le combat commun (PV partagés, tout le monde visible) alors qu'il démarrait une instance
+// solo (joinBossChannel n'est appelé QUE si shared, voir startBossFight) -- lui restait invisible
+// aux autres et inversement. On distingue maintenant 3 états EXPLICITES pour toute occurrence live :
+//  - 'confirmed'    : occ.sharedHp === true, liveBoss confirmé par le serveur -- combat partagé normal.
+//  - 'pending'      : occ.live localement mais pas encore confirmé -- bouton bloqué, message clair,
+//                     tant que la confirmation reste possible (voir BOSS_SHARED_CONFIRM_TIMEOUT_MS).
+//  - 'solo-fallback': délai de tolérance écoulé sans confirmation -- bouton réactivé mais avec un
+//                     libellé HONNÊTE ("Combattre en solo"), jamais un simple "Combattre" qui
+//                     laisserait croire à du partagé.
+const BOSS_SHARED_CONFIRM_TIMEOUT_MS = 15000;
+/**
+ * Version pure (testable) de la machine à états de confirmation "boss partagé" -- ne touche à aucun
+ * état module, prend `now`/`pendingSince` en paramètres et renvoie la nouvelle valeur à mémoriser.
+ * @param {{live:boolean, sharedHp?:boolean}|null} occ - occurrence courante (voir nextBossOccurrence).
+ * @param {number} pendingSince - horodatage (ms) depuis lequel cette occurrence est "live" sans
+ *   confirmation serveur, 0 si aucune détection en cours.
+ * @param {number} now - horodatage courant (ms).
+ * @returns {{state:'confirmed'|'pending'|'solo-fallback'|null, pendingSince:number}}
+ */
+function computeBossSharedConfirmState(occ, pendingSince, now) {
+  if (!occ || !occ.live) return { state: null, pendingSince: 0 };
+  if (occ.sharedHp) return { state: 'confirmed', pendingSince: 0 };
+  const since = pendingSince || now;
+  const state = (now - since >= BOSS_SHARED_CONFIRM_TIMEOUT_MS) ? 'solo-fallback' : 'pending';
+  return { state, pendingSince: since };
+}
+// mémorise pendingSince entre 2 appels (rendu du lobby, ticker d'accélération) -- wrapper fin autour
+// de la fonction pure ci-dessus, seul point qui touche un `let` de module.
+let sharedPendingSince = 0;
+/** @param {{live:boolean, sharedHp?:boolean}|null} occ. @returns {'confirmed'|'pending'|'solo-fallback'|null} état de confirmation "boss partagé" pour l'occurrence live courante (null si pas live) -- voir computeBossSharedConfirmState. */
+function bossSharedConfirmState(occ) {
+  const r = computeBossSharedConfirmState(occ, sharedPendingSince, Date.now());
+  sharedPendingSince = r.pendingSince;
+  return r.state;
 }
 /** @param {number} ms. @returns {string} compte à rebours formaté (HH:MM:SS, ou MM:SS si <1h). */
 function fmtBossCountdown(ms) {
@@ -347,6 +417,24 @@ setInterval(() => {
   const room = $a('bossRoom');
   if (room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active) refreshLiveBoss();
 }, 20000);
+// ticker dédié (3s) tant qu'une occurrence live n'est pas encore confirmée "partagée" (voir
+// bossSharedConfirmState/BOSS_SHARED_CONFIRM_TIMEOUT_MS) -- accélère la confirmation serveur (au
+// lieu d'attendre le ticker normal de 20s ci-dessus) ET re-render le lobby dès que l'état bascule
+// (pending -> confirmed ou solo-fallback), pour que le joueur ne reste jamais devant un bouton figé
+// dans un état ambigu plus longtemps que nécessaire.
+let bossPendingRefreshInFlight = false;
+setInterval(() => {
+  const room = $a('bossRoom');
+  if (!(room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active)) return;
+  const state = bossSharedConfirmState(nextBossOccurrence());
+  if (state !== 'pending') return;
+  $('bossLobbyBody').innerHTML = renderBossLobbyHtml(); // fait avancer le countdown de tolérance à l'écran
+  wireBossLobby();
+  if (bossPendingRefreshInFlight) return;
+  bossPendingRefreshInFlight = true;
+  // refreshLiveBoss() est une fonction async -> renvoie toujours une vraie Promise, .finally() existe
+  refreshLiveBoss().finally(() => { bossPendingRefreshInFlight = false; });
+}, 3000);
 // quantité déjà en poche du matériau garanti du boss (b.matKey) -- affichée à côté de la fourchette
 // de drop dans la carte "prochain boss" du lobby (2026-07-11, reskin visuel, voir CLAUDE.md).
 // INV peut contenir plusieurs slots de la même clé en théorie (voir invAdd/MAX_STACK) -- somme sur
@@ -355,6 +443,27 @@ setInterval(() => {
 function bossMatInHand(matKey) {
   if (!matKey || !Array.isArray(INV)) return 0;
   return INV.reduce((sum, s) => s && s.key === matKey ? sum + (s.qty || 0) : sum, 0);
+}
+// libellés/attributs du bouton "Combattre" du lobby (2026-07-12, voir bossSharedConfirmState) --
+// extrait de renderBossLobbyHtml() pour couvrir explicitement les 4 états possibles d'une occurrence
+// (pas encore live / confirmée partagée / en attente de confirmation / repli solo explicite) plutôt
+// que le seul if(occ.live) binaire d'avant, qui masquait le mode "partagé implicite" du bug 2026-07-12.
+/** @param {{live:boolean, sharedHp?:boolean}|null} occ. @returns {string} HTML du bouton "Combattre" (+ message au-dessus si pending/solo-fallback). */
+function bossFightButtonHtml(occ) {
+  if (!occ || !occ.live) {
+    return `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.not_spawned_yet')}</button>`;
+  }
+  const state = bossSharedConfirmState(occ);
+  if (state === 'pending') {
+    return `<div class="admHint">${i18next.t('combat:combat.boss.connecting_hint')}</div>` +
+      `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.connecting_button')}</button>`;
+  }
+  if (state === 'solo-fallback') {
+    return `<div class="admHint">${i18next.t('combat:combat.boss.solo_fallback_hint')}</div>` +
+      `<button class="bossFightBtn soloFallback" id="bossFightBtn">${i18next.t('combat:combat.boss.solo_fallback_button')}</button>`;
+  }
+  // 'confirmed' (occ.sharedHp === true) : combat partagé normal
+  return `<button class="bossFightBtn" id="bossFightBtn">${i18next.t('combat:combat.boss.fight_button')}</button>`;
 }
 /** @returns {string} HTML complet du lobby Boss (carte "prochain boss" avec countdown/barre PV/récompense, calendrier hebdomadaire, règles de récompense). */
 function renderBossLobbyHtml() {
@@ -415,7 +524,7 @@ function renderBossLobbyHtml() {
     (alreadyDead
       ? `<div class="admHint">${i18next.t('combat:combat.boss.already_defeated_hint')}</div>` +
         `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.already_defeated_button')}</button>`
-      : `<button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?i18next.t('combat:combat.boss.fight_button'):i18next.t('combat:combat.boss.not_spawned_yet')}</button>`);
+      : bossFightButtonHtml(occ));
   }
   // VRAI calendrier hebdomadaire : grille jours (colonnes) × heures de spawn (lignes), le nom du
   // boss dans chaque case. Seuls les boss implémentés (BOSS_ROSTER) apparaissent.
@@ -492,7 +601,15 @@ function wireBossLobby() {
 const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:0, playerHp:0, playerHpMax:0, hits:[], last:0, raf:0, potCd:0, ended:false,
   px:0.5, py:0.85, pillars:[], aoePhase:'idle', aoeT:0, aoeInterval:9, blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
   // ---- world boss PARTAGÉ (spawn admin) : PV communs à tous, contribution reportée au serveur ----
-  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0, presenceCd:0,
+  // serverConfirmedDead (2026-07-12, bug corrigé : fausse "récompense déjà réclamée") : en partagé,
+  // seule cette valeur (mise à jour UNIQUEMENT depuis la réponse authoritative de boss_contribute,
+  // voir applyBossContributeResponse/bossLoop) déclenche la victoire -- jamais bossState.hp, qui
+  // reste décrémenté localement chaque frame au DPS RÉEL du joueur SANS le plafond de 5%/appel que
+  // le serveur applique (boss_contribute, `p_damage := least(p_damage, max_hp*0.05)`). Un joueur à
+  // fort DPS voyait sa prédiction locale atteindre 0 bien avant le serveur, endBossFight(true)
+  // partait trop tôt, et boss_claim() (qui n'accorde la récompense QUE si le PV serveur est <=0)
+  // refusait avec un faux "déjà réclamée" alors qu'il s'agissait d'une vraie première victoire.
+  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0, presenceCd:0, serverConfirmedDead:false,
   // ---- effet de profondeur/immersion ("4D") : tremblement d'écran + braises de corruption en parallaxe ----
   shakeT:0, embers:[],
   // ---- pénalité de récompense sur mort pendant le combat (voir bossDeathPenaltyMult) : ce boss ne
@@ -617,6 +734,7 @@ function startBossFight(bossId, isShared) {
     px:atkPos.x, py:atkPos.y, atkPos, pillars:spots.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
     shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
+    serverConfirmedDead:false,
     shakeT:0, embers:[], deathCount:0, deathFlag:false,
   });
   currentActivity = 'boss'; renderActivityTabs();
@@ -1181,6 +1299,41 @@ async function endBossFight(win) {
   // n'est pas terminée, voir renderBossRewardReveal), pas besoin de le re-brancher plus tard.
   $a('bossCloseBtn').onclick = leaveBossResultToZone;
 }
+// ---- victoire boss PARTAGÉ : décidée par le PV SERVEUR, jamais la prédiction locale (2026-07-12,
+// bug corrigé : fausse "récompense déjà réclamée") ----
+// Le serveur (boss_contribute, supabase/schema_snapshot_functions.sql) plafonne CHAQUE appel à 5%
+// du max_hp (`p_damage := least(p_damage, max_hp*0.05)`), qu'il y ait un ou plusieurs joueurs -- un
+// joueur seul à fort DPS ne peut donc jamais faire tomber le PV serveur plus vite que ce plafond
+// (~5%/1.2s, le rythme d'envoi de bossLoop), même si SA prédiction locale (bossState.hp, décrémentée
+// chaque frame au DPS RÉEL, sans ce plafond) atteint 0 bien avant. boss_claim() n'accorde la
+// récompense QUE si le PV serveur est <=0 -- déclarer victoire depuis la prédiction locale (ancien
+// code) menait donc systématiquement un joueur à fort DPS vers un faux "déjà réclamée" (boss_claim
+// renvoie -1 tant que le PV serveur reste >0). Plutôt que de reproduire ce plafond de 5%/appel côté
+// client (couplage fragile à un détail d'implémentation serveur qui peut changer), on attend
+// simplement la confirmation SERVEUR avant de déclarer la victoire -- plus simple et plus robuste.
+/**
+ * Pure/testable : décide si le combat doit se terminer en victoire.
+ * @param {boolean} shared - bossState.shared.
+ * @param {number} localHp - bossState.hp (prédiction locale, décrémentée chaque frame).
+ * @param {boolean} serverConfirmedDead - bossState.serverConfirmedDead (voir applyBossContributeResponse).
+ * @returns {boolean} vrai si endBossFight(true) doit être appelé maintenant.
+ */
+function bossShouldDeclareVictory(shared, localHp, serverConfirmedDead) {
+  return shared ? !!serverConfirmedDead : localHp <= 0;
+}
+/**
+ * Applique la réponse AUTORITAIRE de boss_contribute à un état de boss (bossState en vrai jeu, un
+ * mock dans les tests) -- seule source qui doit faire passer serverConfirmedDead à true. Pure à
+ * l'exception de la mutation de `state` (2e paramètre), aucun accès réseau/DOM ici.
+ * @param {{hp:number, max_hp:number}[]|null|undefined} data - `data` de la réponse RPC boss_contribute.
+ * @param {{hp:number, maxHp:number, serverConfirmedDead:boolean}} state - état à mettre à jour.
+ */
+function applyBossContributeResponse(data, state) {
+  if (!data || !data.length) return;
+  state.hp = Number(data[0].hp);
+  state.maxHp = Number(data[0].max_hp) || state.maxHp;
+  if (state.hp <= 0) state.serverConfirmedDead = true;
+}
 /**
  * Boucle de rendu/simulation du combat de boss (requestAnimationFrame) : dégâts du joueur au fil
  * du temps (playerBossDps), timers d'AoE et blocage, PV du boss (partagés ou solo), position des
@@ -1202,9 +1355,10 @@ function bossLoop(now) {
       bossState.contribCd = 1.2;
       const dmg = bossState.contribAccum; bossState.contribAccum = 0;
       sb.rpc('boss_contribute', { p_damage: dmg, p_pseudo: myPseudo || null }).then(({ data, error }) => {
-        if (error || !data || !data.length) return;
-        // état AUTORITAIRE renvoyé par le serveur (inclut les dégâts de tous les autres joueurs)
-        bossState.hp = Number(data[0].hp); bossState.maxHp = Number(data[0].max_hp) || bossState.maxHp;
+        if (error) return;
+        // état AUTORITAIRE renvoyé par le serveur (inclut les dégâts de tous les autres joueurs) --
+        // seule source qui peut faire passer serverConfirmedDead à true, voir bossShouldDeclareVictory.
+        applyBossContributeResponse(data, bossState);
       }).catch(()=>{});
     }
     if (bossState.topCd <= 0) { bossState.topCd = 4; refreshBossTop(); }
@@ -1306,7 +1460,7 @@ function bossLoop(now) {
   $('bossTimer').textContent = bossState.shared ? fmtBossCountdown(bossState.expiresAt - Date.now()) : fmtBossCountdown((bossState.duration - bossState.elapsed)*1000);
   $('bossPlayerHp').style.width = (bossState.playerHp/bossState.playerHpMax*100)+'%';
   $('bossPlayerHpTxt').textContent = Math.ceil(bossState.playerHp)+' / '+bossState.playerHpMax+' PV';
-  if (bossState.hp <= 0) { endBossFight(true); return; }
+  if (bossShouldDeclareVictory(bossState.shared, bossState.hp, bossState.serverConfirmedDead)) { endBossFight(true); return; }
   if (bossState.shared && Date.now() > bossState.expiresAt) { endBossFight(false); return; }
   bossState.raf = requestAnimationFrame(bossLoop);
 }
