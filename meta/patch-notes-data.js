@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V387', d:'22/07/2026 08:00', name:{fr:'Barre de sorts et sélecteur de potion : même reskin que Zone', en:'Skill bar and potion selector: same reskin as Zone'}, fr:[
+      {t:'change', sub:'interface', tx:'La barre de sorts (icônes en bas de l\'écran de jeu) a reçu le même reskin visuel que le reste de l\'écran Zone : coque assortie aux autres icônes du jeu (fond/bordure/coins arrondis), nom du sort en police moderne. Les couleurs de sort en cours de lancement et de buff actif sont inchangées.'},
+      {t:'change', sub:'interface', tx:'Le sélecteur de potion (case Vie/Mana en bas à gauche) a reçu le même reskin : coque assortie, libellés de section ("Potion de vie"/"Potion de mana") en petites majuscules dorées, soin et coût en police moderne. Les couleurs de sélection/verrouillage sont inchangées.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The skill bar (icons at the bottom of the game screen) received the same visual reskin as the rest of the Zone screen: shell matching the other game icons (background/border/rounded corners), spell name in a modern font. Cast/buff colors are unchanged.'},
+      {t:'change', sub:'interface', tx:'The potion selector (Health/Mana box, bottom-left) received the same reskin: matching shell, section labels ("Health Potion"/"Mana Potion") in small-caps gold, heal and cost in a modern font. Selection/lock colors are unchanged.'},
+    ] },
   { v:'V386', d:'22/07/2026 07:00', name:{fr:'Écran de connexion refait : même style que Zone', en:'Login screen redesigned: same look as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran de connexion (compte, création, Discord/Google/GitHub/Twitter) a reçu le même reskin visuel que le reste du jeu : titre en Cinzel, champs et boutons arrondis, mêmes couleurs que l\'écran Zone. Aucun changement de fonctionnement.'},
     ], en:[
