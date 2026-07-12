@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V393', d:'22/07/2026 14:00', name:{fr:'Bordures et barres de défilement héritées unifiées avec le thème Zone', en:'Legacy borders and scrollbars unified with the Zone theme'}, fr:[
+      {t:'change', sub:'interface', tx:'Une trentaine de bordures de séparation, de bordures de bouton/case et de barres de défilement affichaient encore deux anciennes teintes grises héritées d\'avant la refonte Zone (liste des zones, loot, notifications, chat, inventaire, Compendium, Succès, Classement, écran Boss...) : elles utilisent désormais les mêmes variables de bordure que le reste du jeu, pour une cohérence visuelle complète.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'About thirty divider borders, button/cell borders and scrollbars were still using two old gray tints left over from before the Zone redesign (zone list, loot, notifications, chat, inventory, Compendium, Achievements, Leaderboard, Boss screen...): they now use the same border variables as the rest of the game, for full visual consistency.'},
+    ] },
   { v:'V392', d:'22/07/2026 13:00', name:{fr:'Barre de sorts et sélecteur de potion : même reskin que Zone', en:'Skill bar and potion selector: same reskin as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'La barre de sorts (icônes en bas de l\'écran de jeu) a reçu le même reskin visuel que le reste de l\'écran Zone : coque assortie aux autres icônes du jeu (fond/bordure/coins arrondis), nom du sort en police moderne. Les couleurs de sort en cours de lancement et de buff actif sont inchangées.'},
       {t:'change', sub:'interface', tx:'Le sélecteur de potion (case Vie/Mana en bas à gauche) a reçu le même reskin : coque assortie, libellés de section ("Potion de vie"/"Potion de mana") en petites majuscules dorées, soin et coût en police moderne. Les couleurs de sélection/verrouillage sont inchangées.'},

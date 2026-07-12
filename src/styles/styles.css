@@ -424,16 +424,16 @@
      garder un défilement interne au-delà d'une hauteur raisonnable */
   #zoneList { min-height:150px; max-height:60vh; overflow-y:auto; }
   #zoneList::-webkit-scrollbar { width:6px; }
-  #zoneList::-webkit-scrollbar-thumb { background:#3a3742; }
+  #zoneList::-webkit-scrollbar-thumb { background:var(--dbBorder2); }
   /* même traitement pour la carte Loot (2026-07-05, demande explicite : "refais la découpe de
      carte et rajoute le scroll") -- la table de loot peut aussi devenir longue (Trésor de Velia,
      vue condensée de toutes les zones à Velia...) sans plafond ni défilement jusqu'ici */
   #lootTable { min-height:150px; max-height:60vh; overflow-y:auto; padding-right:2px; }
   #lootTable::-webkit-scrollbar { width:6px; }
-  #lootTable::-webkit-scrollbar-thumb { background:#3a3742; }
+  #lootTable::-webkit-scrollbar-thumb { background:var(--dbBorder2); }
   .zRow {
     position:relative; display:flex; align-items:center; gap:6px; padding:4px 5px;
-    border-bottom:1px solid #232128; border-left:2px solid transparent; font-size:10.5px; cursor:pointer;
+    border-bottom:1px solid var(--dbBorder); border-left:2px solid transparent; font-size:10.5px; cursor:pointer;
   }
   /* en-tête de groupe de zones par palier de stuff (couleur = couleur du stuff dans l'inventaire) */
   .zTierHead { display:flex; align-items:center; gap:5px; padding:6px 5px 2px; font-size:9.5px;
@@ -678,19 +678,19 @@
   #veliaChestGrid.chestZoomed .cell .qty { font-size:11px; }
   #veliaChestGrid.chestZoomed .cell .zoneTierLock { width:18px; height:18px; font-size:11px; }
   #invGrid::-webkit-scrollbar { width:7px; }
-  #invGrid::-webkit-scrollbar-thumb { background:#3a3742; }
+  #invGrid::-webkit-scrollbar-thumb { background:var(--dbBorder2); }
   /* Compendium en onglet principal "en grand" (2026-07-14, demande explicite) -- plus de place
      disponible qu'avant (pas de barre d'outils au-dessus, juste les onglets de mode), la grille
      profite d'une hauteur bien plus généreuse que celle de l'inventaire normal */
   #compGrid { max-height:420px; }
   #compGrid::-webkit-scrollbar { width:7px; }
-  #compGrid::-webkit-scrollbar-thumb { background:#3a3742; }
+  #compGrid::-webkit-scrollbar-thumb { background:var(--dbBorder2); }
   #compGridEmpty { text-align:center; padding:20px 0; }
   /* panneau de craft du Trésor de Velia (onglet "Trésors" uniquement) — demande explicite du 2026-07-08 */
   .craftPanelTitle { font-size:10px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:4px; }
   .craftRecipes { display:flex; flex-direction:column; gap:4px; margin-bottom:8px; }
   .craftRecipeBtn { width:100%; margin:0; padding:6px 8px; font-size:10.5px; text-align:left;
-    border-color:#3a3742; color:var(--ink-dim); }
+    border-color:var(--dbBorder2); color:var(--ink-dim); }
   .craftRecipeBtn.ready { border-color:var(--gold); color:var(--ink); }
   .craftRecipeBtn.ready:hover { background:rgba(201,165,90,.12); }
   /* Compendium (2026-07-08) : objets cliquables (halo sur les zones qui les lootent) */
@@ -745,7 +745,7 @@
   .cell.has { cursor:pointer; }
   .cell.has:hover { border-color:var(--gold); }
   .cell:not(.has) { cursor:pointer; }
-  .cell:not(.has):hover { border-color:#3a3742; }
+  .cell:not(.has):hover { border-color:var(--dbBorder2); }
   .cell.k-trash.has { background:#20201c; }
   .cell.k-material.has { background:#1a2028; }
   .cell.k-jackpot.has { background:#252012; border-color:var(--gold-dim); }
@@ -796,7 +796,7 @@
 
   #itemTooltip {
     position:fixed; z-index:65; display:none; min-width:140px; max-width:210px;
-    background:#14131a; border:1px solid #3a3742; padding:7px 9px; font-size:11px;
+    background:#14131a; border:1px solid var(--dbBorder2); padding:7px 9px; font-size:11px;
     box-shadow:0 6px 18px rgba(0,0,0,.6); pointer-events:none;
   }
   #itemTooltip .ipName { font-size:12px; margin-bottom:3px; }
@@ -807,7 +807,7 @@
   /* ===== loot de la zone ===== */
   /* padding-top agrandi (2026-07-16) pour laisser la place au badge cadenas de .lootAutoSellBtn qui
      dépasse au-dessus de chaque ligne (voir plus bas) -- avant 5px 0, insuffisant pour le badge */
-  .lootRow { display:flex; align-items:center; gap:8px; padding:9px 0 5px; border-bottom:1px solid #232128; font-size:12px; }
+  .lootRow { display:flex; align-items:center; gap:8px; padding:9px 0 5px; border-bottom:1px solid var(--dbBorder); font-size:12px; }
   .lootRow:last-child { border-bottom:none; }
   /* flèche d'upgrade (2026-07-16, demande explicite : "une fois sur la zone la fleche se met dans
      la loottable") -- pointe désormais l'objet précis à ramasser ICI, plutôt que la zone à
@@ -850,7 +850,7 @@
   .lootZoneCompact:hover { background:rgba(255,255,255,.03); }
   .lootExpandHint { color:var(--ink-dim); margin-left:2px; display:inline-block; transition:transform .15s; }
   .lootZoneCompact.expanded .lootExpandHint { transform:rotate(180deg); }
-  .lootZoneDetail { padding:0 0 6px 8px; border-bottom:1px solid #232128; }
+  .lootZoneDetail { padding:0 0 6px 8px; border-bottom:1px solid var(--dbBorder); }
   .lootZoneDetail .lootRow:last-child { border-bottom:none; }
   .lootPct { color:var(--gold); font-size:12px; text-align:right; min-width:48px; }
 
@@ -913,7 +913,7 @@
   #naderrBand { display:flex; gap:3px; margin-top:4px; }
   .ndSlot {
     width:19px; height:19px; display:flex; align-items:center; justify-content:center;
-    font-size:9.5px; background:rgba(20,19,26,.85); border:1px solid #3a3742; color:var(--ink-dim);
+    font-size:9.5px; background:rgba(20,19,26,.85); border:1px solid var(--dbBorder2); color:var(--ink-dim);
   }
   .ndSlot.on { border-color:var(--gold); color:var(--gold); background:#231f16; }
   .ndSlot.locked { opacity:.4; font-size:8px; border-style:dashed; }
@@ -976,6 +976,12 @@
     font-size:10.5px; color:#e8b84a; background:rgba(201,165,90,.1); border:1px solid var(--gold-dim);
     padding:7px 9px; margin-bottom:16px; line-height:1.4; text-align:left;
   }
+  /* unification bordures héritées (2026-07-12) : #authBox input / #authBox button.ghost /
+     .authLangBtn ci-dessous gardent VOLONTAIREMENT leur #3a3742 en dur -- déclaration MORTE en
+     cascade, déjà réécrite par la refonte "Zone" Phase 9 (#authBox input/#authBox button.ghost/
+     .authLangBtn plus bas dans ce fichier, border:1px solid var(--dbBorder), même sélecteur/
+     spécificité, gagnante par ordre car définie après) -- voir le commentaire de tête de la Phase 9.
+     Laissé tel quel pour ne pas casser la sélectivité d'une règle déjà sans effet visuel réel. */
   #authBox input {
     width:100%; background:#191720; border:1px solid #3a3742; color:var(--ink);
     font-family:inherit; font-size:13px; padding:9px 10px; margin-bottom:9px;
@@ -1147,7 +1153,7 @@
   }
   .admReloadBtn:hover { background:#e0bc72; }
   .admReloadBtn:disabled { opacity:.6; cursor:default; }
-  .modRow { display:flex; align-items:center; gap:8px; padding:4px 2px; border-bottom:1px solid #232128; font-size:11px; }
+  .modRow { display:flex; align-items:center; gap:8px; padding:4px 2px; border-bottom:1px solid var(--dbBorder); font-size:11px; }
   .modPseudo { color:var(--gold); font-weight:bold; flex-shrink:0; }
   .modUuid { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:monospace; font-size:9.5px; color:var(--ink-dim); }
   .modRemBtn { width:auto; margin:0; padding:2px 8px; font-size:10px; flex-shrink:0; border-color:var(--danger); color:#e8a89f; }
@@ -1560,13 +1566,13 @@
   .notifSummary { font-size:10.5px; color:var(--ink-dim); margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid #2c2a33; }
   .notifScroll { max-height:420px; overflow-y:auto; padding-right:2px; }
   .notifScroll::-webkit-scrollbar { width:7px; }
-  .notifScroll::-webkit-scrollbar-thumb { background:#3a3742; border-radius:4px; }
+  .notifScroll::-webkit-scrollbar-thumb { background:var(--dbBorder2); border-radius:4px; }
   .notifSectionTitle { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim);
     margin:12px 0 4px; display:flex; align-items:center; gap:6px; }
   .notifSectionTitle:first-of-type { margin-top:0; }
-  .notifSectionCount { background:#232128; color:var(--ink-dim); font-size:9px; padding:1px 6px; border-radius:8px; }
+  .notifSectionCount { background:var(--dbBorder); color:var(--ink-dim); font-size:9px; padding:1px 6px; border-radius:8px; }
   .notifRow { display:flex; align-items:flex-start; gap:9px; padding:8px 8px; margin-bottom:4px;
-    border-left:3px solid #3a3742; border-radius:0 5px 5px 0; background:rgba(255,255,255,.015);
+    border-left:3px solid var(--dbBorder2); border-radius:0 5px 5px 0; background:rgba(255,255,255,.015);
     transition:background .15s; }
   .notifRow:hover { background:rgba(255,255,255,.045); }
   .notifRow.important { border-left-color:var(--danger); background:rgba(192,85,69,.06); }
@@ -1725,7 +1731,7 @@
   }
   .patchNavBtn {
     width:auto; padding:5px 10px; font-size:11px; font-weight:bold; cursor:pointer;
-    background:var(--panel-2); color:var(--ink); border:1px solid #3a3742; border-radius:4px;
+    background:var(--panel-2); color:var(--ink); border:1px solid var(--dbBorder2); border-radius:4px;
   }
   .patchNavBtn:hover:not(:disabled) { background:var(--gold-dim); color:#1a1712; }
   .patchNavBtn:disabled { opacity:.35; cursor:default; }
@@ -1764,7 +1770,7 @@
   #infoBody .patchEntry:hover { background:rgba(255,255,255,.035); }
   #infoBody .patchEntry::before {
     content:''; position:absolute; left:-5px; top:16px; width:8px; height:8px;
-    border-radius:50%; background:#3a3742; border:2px solid var(--panel);
+    border-radius:50%; background:var(--dbBorder2); border:2px solid var(--panel);
   }
   #infoBody .patchEntry.latest {
     border-left-color:var(--gold-dim); background:rgba(232,184,74,.06);
@@ -1859,7 +1865,7 @@
   .plNameLink:hover { color:var(--gold); }
   .admTable tr.isYou { box-shadow:inset 0 0 0 1px var(--gold), 0 0 8px 1px rgba(201,165,90,.45); }
   .catTabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
-  .catTab { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent; border:1px solid #3a3742; }
+  .catTab { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent; border:1px solid var(--dbBorder2); }
   .catTab.active { border-color:var(--gold); color:var(--gold); }
   .catTab.locked { opacity:.45; cursor:not-allowed; }
   /* Classement (jeu principal) — podium/onglets/recherche/pagination (2026-07-11, même traitement
@@ -1870,11 +1876,11 @@
     font-family:inherit; font-size:12px; padding:6px 9px; margin:0; border-radius:3px; }
   .lb2SearchBox::placeholder { color:var(--ink-dim); }
   .lb2MeToggle { width:auto; margin:0; padding:6px 11px; font-size:11px; background:transparent;
-    border:1px solid #3a3742; color:var(--ink-dim); flex-shrink:0; }
+    border:1px solid var(--dbBorder2); color:var(--ink-dim); flex-shrink:0; }
   .lb2MeToggle.on, .lb2MeToggle:hover { border-color:var(--gold); color:var(--gold); }
   .bossPodiumStep.lb2You { outline:1px solid var(--gold); border-radius:4px; }
   .lb2Pager { display:flex; align-items:center; justify-content:center; gap:10px; padding:8px 0 2px; }
-  .lb2PagerBtn { width:auto; margin:0; padding:5px 12px; font-size:11px; background:transparent; border:1px solid #3a3742; }
+  .lb2PagerBtn { width:auto; margin:0; padding:5px 12px; font-size:11px; background:transparent; border:1px solid var(--dbBorder2); }
   .lb2PagerBtn:hover:not(:disabled) { border-color:var(--gold); color:var(--gold); }
   .lb2PagerBtn:disabled { opacity:.35; cursor:default; }
   .lb2PagerNum { font-size:10.5px; color:var(--ink-dim); }
@@ -1933,16 +1939,16 @@
   .zoneTierLabel { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .zoneTierLock {
     position:absolute; top:-9px; left:50%; transform:translateX(-50%);
-    font-size:9px; line-height:1; background:var(--panel-2); border:1px solid #3a3742; border-radius:50%;
+    font-size:9px; line-height:1; background:var(--panel-2); border:1px solid var(--dbBorder2); border-radius:50%;
     width:14px; height:14px; display:flex; align-items:center; justify-content:center;
   }
   /* bascule Inventaire/Assemblage en haut de la carte Inventaire (2026-07-06, demande explicite) */
   .invModeTabs { display:flex; gap:6px; margin-bottom:8px; }
-  .invModeTab { flex:1; margin:0; padding:6px 11px; font-size:11.5px; background:transparent; border:1px solid #3a3742; }
+  .invModeTab { flex:1; margin:0; padding:6px 11px; font-size:11.5px; background:transparent; border:1px solid var(--dbBorder2); }
   .invModeTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
   /* onglets Loot/Coffre de la carte "Loot de cette zone" (2026-07-16) -- classe dédiée distincte de
      .invModeTab (collision de nom évitée, voir son commentaire dans inventory-ui.js), même style visuel */
-  .lootPanelTab { flex:1; margin:0; padding:6px 11px; font-size:11.5px; background:transparent; border:1px solid #3a3742; }
+  .lootPanelTab { flex:1; margin:0; padding:6px 11px; font-size:11.5px; background:transparent; border:1px solid var(--dbBorder2); }
   .lootPanelTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
   .admEmpty { color:var(--ink-dim); font-style:italic; text-align:center; padding:10px 0; }
   .admSummary { font-size:11px; color:var(--ink-dim); margin-bottom:8px; }
@@ -1994,7 +2000,7 @@
   /* ===== succès & quêtes journalières ===== */
   .achSummary { font-size:12px; color:var(--gold); font-weight:bold; margin-bottom:8px; }
   .achCatTab { display:inline-flex; align-items:center; gap:5px; }
-  .achFilterBtn { width:auto; margin:0 0 8px; padding:4px 10px; font-size:10.5px; background:transparent; border:1px solid #3a3742; }
+  .achFilterBtn { width:auto; margin:0 0 8px; padding:4px 10px; font-size:10.5px; background:transparent; border:1px solid var(--dbBorder2); }
   .achFilterBtn.on { border-color:var(--gold); color:var(--gold); }
   .qwAllDone { color:var(--gold); font-size:11px; font-weight:bold; text-align:center; }
   .codexRow { display:flex; align-items:center; gap:10px; padding:6px 4px; border-bottom:1px solid #201f26; }
@@ -2154,7 +2160,7 @@
     padding-right:2px; margin-bottom:6px;
   }
   #chatMessages::-webkit-scrollbar { width:5px; }
-  #chatMessages::-webkit-scrollbar-thumb { background:#3a3742; }
+  #chatMessages::-webkit-scrollbar-thumb { background:var(--dbBorder2); }
   .chatMsg { font-size:12.5px; line-height:1.4; word-break:break-word; position:relative; padding-right:16px; }
   .chatMsg .chatPseudo { font-weight:bold; }
   .chatMsg.chan-mondial .chatPseudo { color:#9cc9e8; }
@@ -2241,12 +2247,17 @@
      place que prend le débordement, pour que overflow-y:hidden ne le rogne plus. */
   #activityTabs { display:flex; flex-wrap:nowrap; gap:4px; flex:1; overflow-x:auto; overflow-y:hidden; padding-bottom:10px; }
   #activityTabs::-webkit-scrollbar { height:4px; }
-  #activityTabs::-webkit-scrollbar-thumb { background:#3a3742; }
+  #activityTabs::-webkit-scrollbar-thumb { background:var(--dbBorder2); }
   /* cadenas EN BADGE sur le cadre (bordure) de la ligne du bas du bouton (2026-07-08, demande
      explicite : "Cadenas dans le header sur le cadre de la ligne du bas") -- même convention que
      .zoneTierLock (badge rond, fond/bordure, à cheval sur le cadre), mais en BAS plutôt qu'en haut
      -- pas un 🔒 collé en texte après le nom (ancienne version), ni une simple 2e ligne interne
      (version intermédiaire), mais un vrai badge qui chevauche la bordure inférieure du bouton. */
+  /* unification bordures héritées (2026-07-12) : .actTab garde VOLONTAIREMENT son #3a3742 en dur
+     ci-dessous -- déclaration MORTE en cascade, la refonte "Zone" Phase 1 (.actTab plus bas dans
+     ce fichier, même sélecteur/spécificité) fixe déjà border-color:transparent en état par défaut
+     (et .active/.bossHot posent leur propre border-color) : cette valeur ne s'affiche jamais.
+     Laissé tel quel pour ne pas casser la sélectivité d'une règle déjà sans effet visuel réel. */
   .actTab {
     position:relative; width:auto; flex-shrink:0; margin:0; padding:5px 7px 9px; font-size:11.5px; font-weight:bold;
     background:transparent; border:1px solid #3a3742; overflow:visible;
@@ -2255,7 +2266,7 @@
   .actTab.locked { opacity:.4; cursor:not-allowed; }
   .actTabLock {
     position:absolute; bottom:-8px; left:50%; transform:translateX(-50%);
-    font-size:9px; line-height:1; background:var(--panel-2); border:1px solid #3a3742; border-radius:50%;
+    font-size:9px; line-height:1; background:var(--panel-2); border:1px solid var(--dbBorder2); border-radius:50%;
     width:14px; height:14px; display:flex; align-items:center; justify-content:center;
   }
   /* badge "NEW" (2026-07-20, demande explicite : "met NEW sur compagnon a la place du cadenas") --
@@ -2297,7 +2308,7 @@
   .actGrid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
   .actTile {
     display:flex; flex-direction:column; align-items:center; gap:6px; padding:16px 10px;
-    border:1px solid #3a3742; background:var(--panel-2); cursor:pointer; text-align:center;
+    border:1px solid var(--dbBorder2); background:var(--panel-2); cursor:pointer; text-align:center;
     transition:border-color .12s, transform .12s;
   }
   .actTile:hover:not(.locked) { border-color:var(--gold); transform:translateY(-2px); }
@@ -2323,14 +2334,14 @@
      esprit que #bossHpBar de l'arène mais compacte, pour un boss partagé (spawn admin) : reflète
      les vrais PV connus côté client (occ.hp/occ.maxHp), reste visible tant que occ.live (donc
      jusqu'à la vraie expiration de la fenêtre de combat, 9 min après le spawn). */
-  .bossNextHpWrap { position:relative; height:14px; margin-top:6px; border-radius:3px; overflow:hidden; background:#232128; }
+  .bossNextHpWrap { position:relative; height:14px; margin-top:6px; border-radius:3px; overflow:hidden; background:var(--dbBorder); }
   .bossNextHpBar { height:100%; background:linear-gradient(90deg,#c9604a,#e8935a); transition:width .4s; }
-  .bossNextHpBar.dead { width:0 !important; background:#3a3742; }
+  .bossNextHpBar.dead { width:0 !important; background:var(--dbBorder2); }
   .bossNextHpTxt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
     font-size:9.5px; font-weight:bold; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,.8); }
   .bossFightBtn { margin-top:0; }
   .bossFightBtn:disabled { opacity:.4; cursor:not-allowed; }
-  .bossSchedRow { display:flex; align-items:center; gap:8px; padding:5px 10px; border-bottom:1px solid #232128; font-size:11.5px; }
+  .bossSchedRow { display:flex; align-items:center; gap:8px; padding:5px 10px; border-bottom:1px solid var(--dbBorder); font-size:11.5px; }
   .bossSchedRow.soon { background:rgba(201,165,90,.08); }
   .bossSchedName { flex:1; }
   .bossSchedTime { color:var(--gold); font-variant-numeric:tabular-nums; }
