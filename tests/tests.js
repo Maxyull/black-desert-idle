@@ -2286,6 +2286,27 @@
     cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
     assert('drawRhutumIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran)', !threw, errMsg);
   }
+  // Garde protège contre tout retour d'exception après la révision "Option C — héraldique"
+  // (2026-07-23) : ajout d'une cape, d'un emblème doré et d'une ceinture/pochette au Garde Shultz.
+  function testDrawShultzIsoNeverThrows() {
+    if (typeof drawShultzIso === 'undefined' || typeof cam === 'undefined' || typeof P === 'undefined') return;
+    const savedCamX = cam.x, savedCamY = cam.y, savedPx = P.x, savedPy = P.y;
+    cam.x = 0; cam.y = 0; P.x = 100; P.y = 0;
+    let threw = false, errMsg = '';
+    try {
+      [0, 0.85, 1.5].forEach(scale => {
+        [0, 0.5, 1].forEach(lunge => {
+          [-1, 1].forEach(px => {
+            P.x = px;
+            drawShultzIso(0, 0, { scale, lunge, phase: 0, tone:'#8a8578' }, 0.3);
+          });
+        });
+      });
+      drawShultzIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#8a8578' }, 0); // hors écran -> sortie anticipée
+    } catch (e) { threw = true; errMsg = e.message; }
+    cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
+    assert('drawShultzIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran)', !threw, errMsg);
+  }
   // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
   // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
   // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
@@ -4919,6 +4940,7 @@
     testDrawProttyIsoNeverThrows();
     testDrawPirateIsoNeverThrows();
     testDrawRhutumIsoNeverThrows();
+    testDrawShultzIsoNeverThrows();
     testMigratePenMasteryV308MarksExistingPenItems();
     testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
     testMigratePenMasteryV308EvictsCompendiumRetroactively();
