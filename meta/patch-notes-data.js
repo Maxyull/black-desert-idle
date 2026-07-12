@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V393', d:'22/07/2026 14:00', name:{fr:'Correctif Marché commun : l\'objet vendu disparaît enfin immédiatement du sac', en:'Common Market fix: sold item now disappears from your bag immediately'}, fr:[
+      {t:'fix', sub:'economie', tx:'Poser une offre de vente au Marché commun ne retirait pas toujours l\'objet du sac immédiatement (il pouvait sembler "encore là" après une vente, notamment sur un objet enchanté à PEN). Le retrait local est désormais instantané dès la confirmation de la vente, sans attendre l\'aller-retour réseau — corrige aussi une fenêtre de course rare avec la sauvegarde automatique périodique qui pouvait repousser l\'ancien état du sac par-dessus la vente tout juste effectuée.'},
+    ], en:[
+      {t:'fix', sub:'economie', tx:'Placing a sell offer on the Common Market didn\'t always remove the item from your bag right away (it could look "still there" after a sale, especially on a PEN-enhanced item). The local removal is now instant as soon as the sale is confirmed, without waiting on the network round trip — also fixes a rare race with the periodic autosave that could push the old bag state back over a sale that had just gone through.'},
+    ] },
   { v:'V392', d:'22/07/2026 13:00', name:{fr:'Barre de sorts et sélecteur de potion : même reskin que Zone', en:'Skill bar and potion selector: same reskin as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'La barre de sorts (icônes en bas de l\'écran de jeu) a reçu le même reskin visuel que le reste de l\'écran Zone : coque assortie aux autres icônes du jeu (fond/bordure/coins arrondis), nom du sort en police moderne. Les couleurs de sort en cours de lancement et de buff actif sont inchangées.'},
       {t:'change', sub:'interface', tx:'Le sélecteur de potion (case Vie/Mana en bas à gauche) a reçu le même reskin : coque assortie, libellés de section ("Potion de vie"/"Potion de mana") en petites majuscules dorées, soin et coût en police moderne. Les couleurs de sélection/verrouillage sont inchangées.'},

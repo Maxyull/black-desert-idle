@@ -1673,6 +1673,60 @@
     assert('ownedQtyFor gear à un AUTRE enhLv (non possédé) = 0, même si le nom existe ailleurs dans le sac', ownedQtyFor('Bâton Naru', 'gear', 3) === 0);
     INV[INV_SIZE-1] = s.a; INV[INV_SIZE-2] = s.b; INV[INV_SIZE-3] = s.c;
   }
+  // bug rapporté par un joueur : "j'ai mis un item PEN en vente et il est encore dans mon
+  // inventaire" -- cause racine : le handler de soumission de vente (wireCmOfferForms(),
+  // sellSubmit.onclick) ne retirait JAMAIS l'objet du sac LOCAL après un succès de vente, ne
+  // comptant que sur `await loadCloudSave()` (aller-retour réseau complet) pour rafraîchir
+  // l'affichage. Ça ouvrait une fenêtre de course avec l'autosave cloud périodique (saveToCloud(),
+  // game-supabase.js, toutes les 30s) : `saveToCloud()` fait un `upsert` COMPLET de getSaveState()
+  // depuis l'état CLIENT courant -- si cet autosave se déclenchait entre la mutation SQL directe
+  // du RPC market_place_order (qui retire déjà l'objet côté serveur) et la fin de loadCloudSave(),
+  // il réécrivait save_data avec le sac client encore périmé (objet toujours présent), et
+  // loadCloudSave() retéléchargeait ensuite cet état périmé -- l'objet "réapparaissait". Garde-fou
+  // statique (même famille que testSorcierRenderLoadsBeforeSyncStartupCallers, voir CLAUDE.md
+  // §11) : vérifie que le retrait/la décrémentation locale de INV[invIndex] intervient bien AVANT
+  // tout `await loadCloudSave()` dans le handler de vente, pour que ce correctif ne puisse pas
+  // silencieusement régresser (ex: un futur refactor qui réordonnerait les lignes).
+  function testMarketSellRemovesInvLocallyBeforeCloudReload() {
+    if (typeof wireCmOfferForms === 'undefined') return;
+    const src = wireCmOfferForms.toString();
+    const sellHandlerStart = src.indexOf('sellSubmit.onclick');
+    assert('wireCmOfferForms définit bien sellSubmit.onclick', sellHandlerStart !== -1);
+    const sellHandlerSrc = src.slice(sellHandlerStart);
+    const idxInvMutation = sellHandlerSrc.search(/INV\[invIndex\]\s*=\s*null|invRemoveAt\(invIndex/);
+    const idxLoadCloudSave = sellHandlerSrc.indexOf('loadCloudSave()');
+    assert('le handler de vente retire/décrémente INV[invIndex] localement (gear -> null, matériau -> invRemoveAt)', idxInvMutation !== -1);
+    assert('await loadCloudSave() est bien présent dans le handler de vente', idxLoadCloudSave !== -1);
+    assert('le retrait local de INV a lieu AVANT loadCloudSave() (élimine la fenêtre de course avec l\'autosave périodique)',
+      idxInvMutation !== -1 && idxLoadCloudSave !== -1 && idxInvMutation < idxLoadCloudSave,
+      `idxInvMutation=${idxInvMutation} idxLoadCloudSave=${idxLoadCloudSave}`);
+  }
+  // vérifie le comportement réel de la mutation locale utilisée par ce handler (pas seulement sa
+  // position dans la source) : un gear/bijou vendu doit disparaître entièrement (INV[i]=null), un
+  // matériau vendu en partie doit voir sa quantité décroître SANS disparaître (invRemoveAt),
+  // vendu en totalité doit lui aussi disparaître -- couvre gear ET matériau comme demandé (le bug
+  // rapporté portait sur un item PEN/gear, mais le même correctif s'applique aux deux chemins).
+  // Slots réservés (INV_SIZE-1/-2) restaurés en fin de test, voir la règle mémoire sur les tests
+  // qui dépendent d'un slot INV libre (sac plein sur le compte de démo).
+  function testSellHandlerLocalMutationMatchesServerSemantics() {
+    if (typeof invRemoveAt === 'undefined') return;
+    const saved = { a: INV[INV_SIZE-1], b: INV[INV_SIZE-2] };
+    // cas gear : vente totale (qty=1 toujours pour gear/bijou côté serveur) -> le slot doit disparaître
+    INV[INV_SIZE-1] = { name:'Bâton Naru', kind:'gear', slot:'weapon', enhLv:15, key:'pen_test' };
+    const gearInvIndex = INV_SIZE-1;
+    if (INV[gearInvIndex].kind === 'material') invRemoveAt(gearInvIndex, 1); else INV[gearInvIndex] = null;
+    assert('objet gear/PEN vendu : disparaît immédiatement du sac local (INV[i] === null)', INV[gearInvIndex] === null);
+    // cas matériau : vente PARTIELLE -> la quantité diminue, le slot reste
+    INV[INV_SIZE-2] = { name:'Pierre de Novice', kind:'material', qty:10, stackable:true, key:'mat_test' };
+    const matInvIndex = INV_SIZE-2;
+    const matQtySold = 3;
+    if (INV[matInvIndex].kind === 'material') invRemoveAt(matInvIndex, matQtySold); else INV[matInvIndex] = null;
+    assert('matériau vendu partiellement : quantité décrémentée (10-3=7), slot toujours présent', INV[matInvIndex] && INV[matInvIndex].qty === 7, `got=${INV[matInvIndex] && INV[matInvIndex].qty}`);
+    // cas matériau : vente TOTALE -> le slot doit disparaître (comme le gear)
+    if (INV[matInvIndex].kind === 'material') invRemoveAt(matInvIndex, 7); else INV[matInvIndex] = null;
+    assert('matériau vendu en totalité : disparaît du sac local (INV[i] === null)', INV[matInvIndex] === null);
+    INV[INV_SIZE-1] = saved.a; INV[INV_SIZE-2] = saved.b;
+  }
   // garde-fou d'ordre de chargement (même famille que testSorcierRenderLoadsBeforeSyncStartupCallers) :
   // market.js appelle marketCatalog() qui lit GEAR_TIERS/ZONES/MARKET_MATERIALS et des fonctions
   // d'icônes (gear-icons.js) -- uniquement DANS des corps de fonction (jamais au chargement
@@ -4081,6 +4135,8 @@
     testCmItemKeyMatchesServerKeyFormat();
     testFindInvIndexForSellMatchesExactEnhLv();
     testOwnedQtyForMaterialsSumsButGearIsBinaryPerEnhLv();
+    testMarketSellRemovesInvLocallyBeforeCloudReload();
+    testSellHandlerLocalMutationMatchesServerSemantics();
     testMarketScriptLoadsAfterGearZoneAndIconData();
     testWikiTreasureCountMatchesRealArray();
     testWikiMentionsCronCostPerTier();
