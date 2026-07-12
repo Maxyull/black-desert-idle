@@ -34,6 +34,7 @@ const GEAR_TIERS = [
     // de Yuria, ce qui mélangeait les 2 paliers) — Yuria (vert) garde la Pierre Noire
     material:{ name:'Pierre concentrée', icon:ICO_MAT_CONCENTREE, color:'#6ea3c9' }, dropChance:0.02 },
 ];
+/** @param {number} zi - index de zone. @returns {object} le palier GEAR_TIERS qui contient cette zone (repli sur le dernier palier si absente). */
 function gearTierForZone(zi) { return GEAR_TIERS.find(t => t.zones.includes(zi)) || GEAR_TIERS[GEAR_TIERS.length-1]; }
 // chance de drop d'une pièce d'équipement, décroissante zone par zone — utilisée par Naru/Tuvala
 // (dropChance:null) ; Yuria/Grunil utilisent leur taux fixe défini ci-dessus à la place.
@@ -169,6 +170,7 @@ const GEAR_ROLE = {
 };
 // plancher minimum (2026-07-08) : évite qu'une zone à faible reqAP/reqDP (ex: Camp des Loups,
 // gearBasisAP volontairement bas pour le combat) ne produise un stuff à 0 PA/PD après arrondi
+/** @param {number} v. @returns {number} arrondi avec plancher à 1 (évite un stuff à 0 PA/PD sur une zone à faible base). */
 function gearFloor(v) { return Math.max(1, Math.round(v)); }
 // facteur d'échelle des PV d'armure par rapport au PD requis de zone (calibré pour qu'un stuff
 // d'armure complet et adapté à la zone évite un one-shot même en subissant la pénalité de PD

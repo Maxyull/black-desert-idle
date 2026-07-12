@@ -21,6 +21,7 @@ const BOSS_WHEEL_SEGMENTS = 12;
 
 // coordonnées d'un point sur le cercle, angle en degrés, 0° = haut (12h), sens horaire -- même
 // convention que rotate(deg) en CSS, pour que la géométrie et l'animation restent cohérentes.
+/** @param {number} cx @param {number} cy @param {number} r @param {number} angleDeg - 0°=haut (12h), sens horaire. @returns {{x:number,y:number}} coordonnées sur le cercle. */
 function wheelPolarToCartesian(cx, cy, r, angleDeg) {
   const rad = (angleDeg * Math.PI) / 180;
   return { x: cx + r * Math.sin(rad), y: cy - r * Math.cos(rad) };
@@ -28,6 +29,7 @@ function wheelPolarToCartesian(cx, cy, r, angleDeg) {
 
 // chemin SVG d'un secteur (part de camembert) du centre (cx,cy) vers le bord, entre startDeg et
 // endDeg -- pure, testable isolément (retourne toujours une chaîne "M...A...Z" bien formée).
+/** @param {number} cx @param {number} cy @param {number} r @param {number} startDeg @param {number} endDeg. @returns {string} chemin SVG (M...A...Z) d'un secteur de camembert. */
 function wheelSegmentPath(cx, cy, r, startDeg, endDeg) {
   const p1 = wheelPolarToCartesian(cx, cy, r, startDeg);
   const p2 = wheelPolarToCartesian(cx, cy, r, endDeg);
@@ -68,6 +70,7 @@ function wheelLandingDeg({ n = BOSS_WHEEL_SEGMENTS, won, marginDeg = 8, chance =
 // composant roue -- prend rareLoot/won/instant en props ; `instant` piloté par le parent (boss.js,
 // via un nouveau render() sur le même root React) plutôt qu'une ref impérative, pour rester dans
 // l'idiome React standard (re-render déclenché par un changement de prop, pas d'API impérative).
+/** Composant React — roue de récompense rare (SVG), animation vers wheelLandingDeg(props), instantané si props.instant. */
 function BossWheelReact(props) {
   const rareLoot = props.rareLoot;
   const won = !!props.won;
@@ -134,6 +137,7 @@ function BossWheelReact(props) {
 // un seul React root par conteneur DOM (createRoot ne doit être appelé qu'une fois par élément --
 // les re-renders, ex: "Passer" qui passe instant:true, réutilisent le root existant via .render()).
 const bossWheelReactRoots = typeof WeakMap === 'function' ? new WeakMap() : null;
+/** @param {HTMLElement} container @param {object} props - {rareLoot, won, instant}. Monte (ou re-render, un seul root par conteneur) BossWheelReact — no-op si React/ReactDOM indisponibles. */
 function mountBossWheelReact(container, props) {
   if (!container || typeof React === 'undefined' || typeof ReactDOM === 'undefined' || !bossWheelReactRoots) return;
   let root = bossWheelReactRoots.get(container);

@@ -2215,6 +2215,7 @@ const GEAR_TIERS = [
     
     material:{ name:'Pierre concentrée', icon:ICO_MAT_CONCENTREE, color:'#6ea3c9' }, dropChance:0.02 },
 ];
+
 function gearTierForZone(zi) { return GEAR_TIERS.find(t => t.zones.includes(zi)) || GEAR_TIERS[GEAR_TIERS.length-1]; }
 
 const GEAR_CHANCE = [.16,.12,.09,.065,.046,.032,.021,.014,.009,.0055,.0032,.0018,.065,.022,.0014,.0014];
@@ -3891,6 +3892,7 @@ function gearVisualTier() {
   }
   return best;
 }
+
 function hexToRgba(hex, alpha) {
   const h = hex.replace('#','');
   const num = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
@@ -3985,6 +3987,7 @@ function witchBodyOn(g, t, castingSkill) {
     }
   }
 }
+
 function witchBody(t,castingSkill) { witchBodyOn(ctx, t, castingSkill); }
 
 // ==== src/progression/achievements-data.js ====
@@ -5205,6 +5208,7 @@ const AI_COMBAT_MODES = {
   'overgeared':{ icon:'⚔️', name:{fr:'Offensif',  en:'Overgeared'} },
 };
 const AI_COMBAT_MODE_ORDER = ['défensif','équilibré','overgeared'];
+
 function renderAiModeBtn() {
   const el = $('aiModeSlider'); if (!el) return;
   if (!AI_COMBAT_MODES[S.aiCombatMode]) S.aiCombatMode = 'équilibré';
@@ -5754,6 +5758,7 @@ function renderPotSelect() {
   slider.oninput = e => { e.stopPropagation(); S.potionThreshold = Number(slider.value)/100; $('potThreshVal').textContent = slider.value+'%'; };
   slider.onclick = e => e.stopPropagation();
 }
+
 function togglePotSelect(e) {
   e.stopPropagation();
   const el = $('potSelect');
@@ -6756,6 +6761,7 @@ function bossLoop(now) {
 
 // ==== src/combat/boss-render.js ====
 function bossProj(nx, ny) { const cv = $('bossCv'); return { x: cv.width*0.5 + (nx-0.5)*cv.width*0.86, y: cv.height*0.10 + ny*cv.height*0.78 }; }
+
 function drawStonePillar(cx, sx, sy, scale) {
   const w = 34*scale, h = 120*scale;
   cx.fillStyle = 'rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(sx, sy, w*0.75, w*0.28, 0, 0, 7); cx.fill(); 
@@ -6770,6 +6776,7 @@ function drawStonePillar(cx, sx, sy, scale) {
   cx.strokeStyle = 'rgba(0,0,0,.25)'; cx.lineWidth = 1;
   for (let i=1;i<4;i++){ const lx=sx-w/2+w*i/4; cx.beginPath(); cx.moveTo(lx,sy-h+6*scale); cx.lineTo(lx,sy-4*scale); cx.stroke(); }
 }
+
 function drawWarlord(cx, sx, sy, r, t) {
   cx.save();
   
@@ -6905,6 +6912,7 @@ const VELL_BOATS = [ {x:0.04, y:0.92}, {x:0.96, y:0.92} ];
 const VELL_BOAT_SCALE = 13; 
 
 const VELL_ANCHORS = [ {x:0.16, y:0.74}, {x:0.84, y:0.74} ];
+
 function drawVellBoat(cx, sx, sy, scale, facingRight) {
   cx.save(); cx.translate(sx,sy); if (!facingRight) cx.scale(-1,1); cx.scale(scale,scale);
   cx.fillStyle='rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(0,4,26,7,0,0,7); cx.fill();
@@ -6915,6 +6923,7 @@ function drawVellBoat(cx, sx, sy, scale, facingRight) {
   cx.fillStyle='#c9c2a8'; cx.beginPath(); cx.moveTo(-4,-25); cx.lineTo(12,-16); cx.lineTo(-4,-9); cx.closePath(); cx.fill(); 
   cx.restore();
 }
+
 function drawBossRoom(t) {
   const cx = bossCtx, cv = $('bossCv'), W = cv.width, H = cv.height, bs = bossState;
   const isVell = bs.boss === BOSS_ROSTER.vell;
@@ -7204,6 +7213,7 @@ function BossWheelReact(props) {
 }
 
 const bossWheelReactRoots = typeof WeakMap === 'function' ? new WeakMap() : null;
+
 function mountBossWheelReact(container, props) {
   if (!container || typeof React === 'undefined' || typeof ReactDOM === 'undefined' || !bossWheelReactRoots) return;
   let root = bossWheelReactRoots.get(container);
@@ -8835,12 +8845,14 @@ function itemTooltipHtml(data) {
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
   return `<div class="ipName ${data.kind||''}">${tr(data.name)}</div><div class="ipDesc">${desc.join(' · ')}</div>`;
 }
+
 function showItemTooltip(px, py, data) {
   const tip = $('itemTooltip');
   tip.innerHTML = itemTooltipHtml(data);
   tip.style.display = 'block';
   moveItemTooltip(px, py);
 }
+
 function moveItemTooltip(px, py) {
   const tip = $('itemTooltip');
   if (tip.style.display !== 'block') return;
@@ -9914,6 +9926,7 @@ function adminStepEnhAllEquipped(delta) {
   if (count > 0) { hud(); renderOptimization(); drawPreviewChar(); }
   return count;
 }
+
 function wireAdminEnhStepBtn(id, delta, msgUpKey, msgNoneKey) {
   const el = $(id); if (!el) return;
   el.onclick = () => {
@@ -15347,6 +15360,7 @@ function renderChatMessages(msgs, sinceTs) {
     };
   });
 }
+
 async function fetchChatMessages() {
   if (!sb || chatFolded) return;
   if (chatChannel === 'modéré') { fetchModeratedLog(); return; }
@@ -15410,6 +15424,7 @@ async function fetchModeratedLog() {
     };
   });
 }
+
 async function sendChatMessage() {
   const input = $a('chatInput');
   const val = input.value.trim();
@@ -15423,6 +15438,7 @@ async function sendChatMessage() {
 $a('chatSendBtn').onclick = sendChatMessage;
 
 let onlinePlayersCache = [];
+
 async function refreshOnlinePlayersCache() {
   if (!sb || !currentUser || isGuest()) return;
   try {

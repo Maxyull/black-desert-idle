@@ -160,6 +160,7 @@ function renderChatMessages(msgs, sinceTs) {
     };
   });
 }
+/** Charge les 50 derniers messages du canal actif (ou fetchModeratedLog si canal "modéré"), les rend, met à jour chatLastRead et le badge non-lu. */
 async function fetchChatMessages() {
   if (!sb || chatFolded) return;
   if (chatChannel === 'modéré') { fetchModeratedLog(); return; }
@@ -175,6 +176,7 @@ async function fetchChatMessages() {
 // vérifie s'il y a des messages non lus dans les canaux qu'on ne regarde PAS actuellement (ou
 // si le chat est replié) : halo sur l'onglet du canal — demande explicite "montrer qu'un message
 // n'a pas été lu dans un channel où tu n'es pas"
+/** Sonde les canaux non actuellement suivis pour du non-lu (halo sur onglet), déclenche l'alerte de mention @moi si un ping arrive dans un canal non suivi. */
 async function pollChatUnread() {
   if (!sb || !currentUser || isGuest()) return;
   for (const c of chatVisibleChannels()) {
@@ -205,6 +207,7 @@ async function pollChatUnread() {
 }
 // journal "modéré" : messages supprimés (staff uniquement) — on affiche le pseudo, l'UUID de
 // l'auteur, le message d'origine et le canal, pour tracer la modération
+/** Charge et affiche le journal des messages supprimés (staff uniquement), câble le bouton de restauration par ligne. */
 async function fetchModeratedLog() {
   const el = $a('chatMessages'); if (!el) return;
   const { data, error } = await sb.from('chat_deleted').select('id, channel, author_id, author_pseudo, message, deleted_at')
@@ -229,6 +232,7 @@ async function fetchModeratedLog() {
     };
   });
 }
+/** Envoie le contenu de #chatInput vers le canal actif (RPC post_chat_message) puis rafraîchit les messages. */
 async function sendChatMessage() {
   const input = $a('chatInput');
   const val = input.value.trim();
@@ -246,6 +250,7 @@ $a('chatSendBtn').onclick = sendChatMessage;
 // liste des joueurs en ligne, rafraîchie périodiquement — sert à suggérer des mentions et à
 // repérer/colorer celles déjà tapées dans un message (voir highlightMentions)
 let onlinePlayersCache = [];
+/** Rafraîchit onlinePlayersCache (RPC get_online_players), utilisé pour les suggestions et le surlignage de mentions @. */
 async function refreshOnlinePlayersCache() {
   if (!sb || !currentUser || isGuest()) return;
   try {

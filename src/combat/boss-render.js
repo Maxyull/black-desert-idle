@@ -4,7 +4,9 @@
 // ===== salle de boss ORIGINALE (art dessiné, aucun asset réel) : salle de pierre à 4 piliers,
 // grand seigneur de guerre de la corruption au fond, mécanique d'AoE dont on se protège en se
 // plaçant derrière un pilier. Vue de dessus légèrement inclinée. =====
+/** @param {number} nx @param {number} ny - coordonnées normalisées [0,1]. @returns {{x:number,y:number}} projection écran dans l'arène de boss. */
 function bossProj(nx, ny) { const cv = $('bossCv'); return { x: cv.width*0.5 + (nx-0.5)*cv.width*0.86, y: cv.height*0.10 + ny*cv.height*0.78 }; }
+/** @param {CanvasRenderingContext2D} cx @param {number} sx @param {number} sy @param {number} scale. Dessine un pilier de pierre (zone sûre contre l'AoE de Kzarka). */
 function drawStonePillar(cx, sx, sy, scale) {
   const w = 34*scale, h = 120*scale;
   cx.fillStyle = 'rgba(0,0,0,.4)'; cx.beginPath(); cx.ellipse(sx, sy, w*0.75, w*0.28, 0, 0, 7); cx.fill(); // ombre
@@ -19,6 +21,7 @@ function drawStonePillar(cx, sx, sy, scale) {
   cx.strokeStyle = 'rgba(0,0,0,.25)'; cx.lineWidth = 1;
   for (let i=1;i<4;i++){ const lx=sx-w/2+w*i/4; cx.beginPath(); cx.moveTo(lx,sy-h+6*scale); cx.lineTo(lx,sy-4*scale); cx.stroke(); }
 }
+/** @param {CanvasRenderingContext2D} cx @param {number} sx @param {number} sy @param {number} r @param {number} t. Dessine Kzarka (Grand Seigneur de guerre) en isométrique. */
 function drawWarlord(cx, sx, sy, r, t) {
   cx.save();
   // ombre au sol
@@ -71,6 +74,7 @@ function drawWarlord(cx, sx, sy, r, t) {
 // fine terminée par une pointe recourbée en lame) est perché tout en haut au centre de cette coupe,
 // pattes griffues agrippées au rebord. Franchement différent de Kzarka (humanoïde compact, 2 cornes
 // droites, gueule fermée). Pas de reprise d'asset réel, juste l'ambiance/la composition.
+/** @param {CanvasRenderingContext2D} cx @param {number} sx @param {number} sy @param {number} r @param {number} t. Dessine Vell (dragon des mers, ailes en vasque). */
 function drawVell(cx, sx, sy, r, t) {
   cx.save();
   const glow = 0.5+0.5*Math.sin(t*2);
@@ -156,6 +160,7 @@ function drawVell(cx, sx, sy, r, t) {
 }
 // dispatcher : chaque boss du roster a sa propre silhouette dans l'arène — pour l'instant Kzarka
 // (Grand Seigneur de guerre) et Vell (grand poisson des mers) ont la leur
+/** @param {string} bossId. Aiguille vers drawVell ou drawWarlord selon le boss combattu. */
 function drawBossCreature(bossId, cx, sx, sy, r, t) {
   if (bossId === 'vell') return drawVell(cx, sx, sy, r, t);
   return drawWarlord(cx, sx, sy, r, t);
@@ -171,6 +176,7 @@ const VELL_BOAT_SCALE = 13; // 1.3 × 10
 // bateaux à la place des piliers de Kzarka") — un peu vers le centre par rapport au bateau lui-même,
 // pour rester une position atteignable à la nage plutôt que collée au bord de l'écran
 const VELL_ANCHORS = [ {x:0.16, y:0.74}, {x:0.84, y:0.74} ];
+/** @param {CanvasRenderingContext2D} cx @param {number} sx @param {number} sy @param {number} scale @param {boolean} facingRight. Dessine un des 2 bateaux des joueurs pendant le combat contre Vell. */
 function drawVellBoat(cx, sx, sy, scale, facingRight) {
   cx.save(); cx.translate(sx,sy); if (!facingRight) cx.scale(-1,1); cx.scale(scale,scale);
   cx.fillStyle='rgba(0,0,0,.35)'; cx.beginPath(); cx.ellipse(0,4,26,7,0,0,7); cx.fill();
@@ -181,6 +187,7 @@ function drawVellBoat(cx, sx, sy, scale, facingRight) {
   cx.fillStyle='#c9c2a8'; cx.beginPath(); cx.moveTo(-4,-25); cx.lineTo(12,-16); cx.lineTo(-4,-9); cx.closePath(); cx.fill(); // voile
   cx.restore();
 }
+/** @param {number} t - timestamp. Rendu complet d'une frame de l'arène de boss (décor Kzarka/Vell, boss, piliers/ancres, autres joueurs, AoE, boulets, vignette réactive aux PV). */
 function drawBossRoom(t) {
   const cx = bossCtx, cv = $('bossCv'), W = cv.width, H = cv.height, bs = bossState;
   const isVell = bs.boss === BOSS_ROSTER.vell;

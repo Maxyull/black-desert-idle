@@ -5,6 +5,7 @@
 // au chargement, et GEAR_TIERS (dans core/game-core.js) lit ICO_MAT_* immediatement aussi.
 // icônes SVG originales (dessinées pour ce projet, aucun asset BDO réel) — plus détaillées :
 // base + reflets + ombres pour un rendu plus joli, remplissant davantage la case
+/** @param {string} inner - contenu SVG interne (paths). @returns {string} balise <svg class="gicon"> encapsulant inner (viewBox 24×24). */
 function svgIcon(inner) { return `<svg class="gicon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">${inner}</svg>`; }
 // livre (compétences de vie) : couverture bleue + tranche + pages
 const ICO_BOOK = svgIcon(

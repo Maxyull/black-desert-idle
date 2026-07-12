@@ -17,6 +17,7 @@ const AI_COMBAT_MODES = {
   'overgeared':{ icon:'⚔️', name:{fr:'Offensif',  en:'Overgeared'} },
 };
 const AI_COMBAT_MODE_ORDER = ['défensif','équilibré','overgeared'];
+/** Reconstruit le sélecteur à bulles du mode IA de combat (défensif/équilibré/overgeared). */
 function renderAiModeBtn() {
   const el = $('aiModeSlider'); if (!el) return;
   if (!AI_COMBAT_MODES[S.aiCombatMode]) S.aiCombatMode = 'équilibré';
@@ -56,6 +57,7 @@ const FARM_MODE_ORDER = ['loot','xp'];
 // slider <input type="range"> par une pilule segmentée : le mode actif s'affiche en capsule dorée
 // pleine (icône + texte), les autres modes en icône seule, et un 3e rond grisé/verrouillé (aucun
 // mode derrière pour l'instant) ferme la pilule.
+/** Reconstruit le sélecteur à bulles du mode de farm (Loot/XP, 3e emplacement verrouillé), repli sur 'loot' si S.farmMode contient l'ancien mode 'opti' retiré. */
 function renderFarmModeBtn() {
   const el = $('farmModeSlider'); if (!el) return;
   // repli (2026-07-14) : une sauvegarde existante peut encore avoir S.farmMode==='opti' (mode
