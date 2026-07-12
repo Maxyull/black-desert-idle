@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V402', d:'23/07/2026 13:00', name:{fr:'Sorcière : silhouette plus détaillée, dague au fourreau', en:'Sorceress: more detailed silhouette, sheathed dagger'}, fr:[
+      {t:'change', sub:'interface', tx:'Le personnage (sorcière) a un contour plus net et un galon doré sur la robe, quel que soit le palier d\'équipement.'},
+      {t:'new', sub:'interface', tx:'Une dague au fourreau apparaît désormais à la ceinture lorsqu\'une arme secondaire est équipée (Dague Naru/Tuvala/Yuria/Grunil selon le palier) — jusqu\'ici cette pièce d\'équipement n\'avait aucun effet visuel sur le personnage.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The character (sorceress) now has a crisper outline and a gold trim on the robe, at every gear tier.'},
+      {t:'new', sub:'interface', tx:'A sheathed dagger now appears at the belt when a secondary weapon is equipped (Naru/Tuvala/Yuria/Grunil Dagger depending on tier) — until now this equipment piece had no visual effect on the character.'},
+    ] },
   { v:'V401', d:'23/07/2026 12:00', name:{fr:'Correctif : du texte technique s\'affichait en bas de l\'écran de jeu', en:'Fix: technical text was showing at the bottom of the game screen'}, fr:[
       {t:'fix', sub:'interface', tx:'Un défaut dans le générateur de la version en ligne du jeu pouvait afficher des bouts de commentaires techniques (notes internes sur l\'ordre de chargement des fichiers) sous forme de texte brut tout en bas de l\'écran de jeu. Corrigé à la source : ce texte n\'apparaît plus jamais.'},
     ], en:[

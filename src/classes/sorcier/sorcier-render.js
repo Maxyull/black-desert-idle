@@ -112,8 +112,31 @@ function witchBodyOn(g, t, castingSkill) {
   g.lineTo(11-sway,24);
   g.quadraticCurveTo(13-sway,6,3,-18);
   g.closePath(); g.fill();
+  // contour net + galon central doré (2026-07-23, demande explicite : "inspiré du sprite IA
+  // (navy/or, capuche, cape)") -- silhouette plus définie et détail de robe repris du concept
+  // art généré, mais redessiné en formes canvas (pas de sprite/image, rendu procédural inchangé)
+  g.strokeStyle=hexToRgba(pal.trim,.75); g.lineWidth=1;
+  g.beginPath();
+  g.moveTo(-3,-18); g.quadraticCurveTo(-14+sway,8,-11+sway,24);
+  g.lineTo(11-sway,24); g.quadraticCurveTo(13-sway,6,3,-18);
+  g.stroke();
   g.strokeStyle=pal.trim; g.lineWidth=1.4;
+  g.beginPath(); g.moveTo(0,-16); g.quadraticCurveTo(-1+sway*.3,6,0,23); g.stroke();
   g.beginPath(); g.moveTo(-10.4+sway,21.6); g.lineTo(10.4-sway,21.6); g.stroke();
+  // ceinture + dague au fourreau : seulement si une arme secondaire est équipée (2026-07-23,
+  // même logique que les orbes d'éveil ci-dessous, conditionnées par EQUIP.awakening) -- le slot
+  // secondary est bien une dague en jeu (voir GEAR_TIERS[].sets.secondary, "Dague Naru/Tuvala/
+  // Yuria/Grunil"), donc ce détail visuel raconte un vrai équipement, pas un ajout arbitraire
+  if (EQUIP.secondary) {
+    g.strokeStyle='#5a4632'; g.lineWidth=2.6;
+    g.beginPath(); g.moveTo(-10.5+sway,14); g.lineTo(10.5-sway,15.5); g.stroke();
+    g.save(); g.translate(7-sway*.3,17); g.rotate(.25);
+    g.fillStyle='#5a4632'; g.fillRect(-1.6,-3,3.2,7);
+    g.fillStyle='#8a95a3'; g.beginPath();
+    g.moveTo(-1.6,4); g.lineTo(1.6,4); g.lineTo(0,11); g.closePath(); g.fill();
+    g.fillStyle=pal.trim; g.fillRect(-1.9,-4.4,3.8,2);
+    g.restore();
+  }
   g.fillStyle=pal.robe; g.fillRect(-5,-20,10,12);
   g.fillStyle='#e8e0cf'; g.fillRect(-2.4,-19,4.8,9);
   g.fillStyle='#e9c9a8'; g.beginPath(); g.arc(0,-26,5.6,0,7); g.fill();
@@ -124,6 +147,8 @@ function witchBodyOn(g, t, castingSkill) {
   g.quadraticCurveTo(3.5,-37,6.4,-31); g.closePath(); g.fill();
   g.strokeStyle=pal.trim; g.lineWidth=1.1;
   g.beginPath(); g.ellipse(0,-30.5,12.5,3.4,-.07,0,7); g.stroke();
+  g.beginPath(); g.moveTo(-6.4,-31); g.quadraticCurveTo(-2,-46,5.5,-42);
+  g.quadraticCurveTo(3.5,-37,6.4,-31); g.stroke();
   // cornes : palier vert et bleu uniquement (2026-07-08, même logique que les icônes de casque)
   if (pal.horn) {
     g.fillStyle = pal.trim;

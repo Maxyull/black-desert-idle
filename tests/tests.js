@@ -2158,6 +2158,38 @@
     assert('Ornements : blanc < vert (net saut de flashiness)', white < green, `white=${white} green=${green}`);
     assert('Ornements : vert < bleu (bleu le plus flashy de tous)', green < blue, `green=${green} blue=${blue}`);
   }
+  // "il manque sphère et dague" (2026-07-23) -- ceinture + dague au fourreau ajoutées à
+  // witchBodyOn, mais SEULEMENT si EQUIP.secondary est équipé (le slot secondary est bien une
+  // dague en jeu, voir GEAR_TIERS[].sets.secondary "Dague Naru/Tuvala/Yuria/Grunil") -- même
+  // logique que les orbes d'éveil déjà conditionnées par EQUIP.awakening juste en dessous dans
+  // le fichier. Garde-fou : la dague ne doit JAMAIS s'afficher sans arme secondaire équipée.
+  function testDaggerRendersOnlyWhenSecondaryEquipped() {
+    if (typeof witchBodyOn === 'undefined' || typeof GEAR_TIERS === 'undefined' || typeof document === 'undefined') return;
+    const canvas = document.createElement('canvas'); canvas.width = 100; canvas.height = 100;
+    const g = canvas.getContext('2d'); if (!g) return;
+    const savedEquip = { ...EQUIP };
+    const tier = GEAR_TIERS.find(t => t.grade === 'blue') || GEAR_TIERS[GEAR_TIERS.length-1];
+    function render(withSecondary) {
+      Object.keys(EQUIP).forEach(k => delete EQUIP[k]);
+      EQUIP.weapon = { color: tier.color, kind:'gear' };
+      if (withSecondary) EQUIP.secondary = { color: tier.color, kind:'gear' };
+      g.clearRect(0,0,100,100);
+      g.save(); g.translate(35,70);
+      witchBodyOn(g, 0, false);
+      g.restore();
+      return g.getImageData(0,0,100,100).data;
+    }
+    const withDagger = render(true);
+    const withoutDagger = render(false);
+    Object.keys(EQUIP).forEach(k => delete EQUIP[k]);
+    Object.assign(EQUIP, savedEquip);
+    let diffCount = 0;
+    for (let i=0;i<withDagger.length;i+=4) {
+      const d = Math.abs(withDagger[i]-withoutDagger[i])+Math.abs(withDagger[i+1]-withoutDagger[i+1])+Math.abs(withDagger[i+2]-withoutDagger[i+2]);
+      if (d>10) diffCount++;
+    }
+    assert('La ceinture/dague ajoute des pixels visibles quand EQUIP.secondary est équipé', diffCount > 20, `diffCount=${diffCount}`);
+  }
   // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
   // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
   // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
@@ -4706,6 +4738,7 @@
     testWitchBodyOnAcceptsSkillObjectWithoutThrowing();
     testCastVisualDifferenceIsClearlyVisible();
     testOrnamentFlashinessIncreasesByTier();
+    testDaggerRendersOnlyWhenSecondaryEquipped();
     testMigratePenMasteryV308MarksExistingPenItems();
     testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
     testMigratePenMasteryV308EvictsCompendiumRetroactively();
