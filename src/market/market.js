@@ -456,6 +456,20 @@ function wireCmOfferForms(panel, g, kind, enhLv, owned) {
       });
       if (error) { m.className='fail'; m.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); return; }
       m.className='ok'; m.textContent = i18next.t('market:market.sell_offer_placed');
+      // retrait LOCAL immédiat (bug rapporté : "objet PEN vendu encore visible dans le sac") --
+      // avant ce correctif, seul le rechargement cloud complet ci-dessous (aller-retour réseau)
+      // rafraîchissait le sac. En plus du délai visible, ça ouvrait une fenêtre de course avec
+      // l'autosave cloud périodique (30s, saveToCloud() dans game-supabase.js) : saveToCloud() fait
+      // un upsert COMPLET de getSaveState() depuis l'état client courant. Si cet autosave se
+      // déclenchait entre la mutation SQL directe du RPC (qui retire déjà l'objet côté serveur) et
+      // la fin du rechargement cloud ci-dessous, il réécrivait save_data avec le sac CLIENT encore
+      // périmé (objet toujours présent, puisque rien ne l'avait retiré localement) -- le rechargement
+      // cloud retéléchargeait ensuite cet état périmé : l'objet "réapparaissait" dans le sac. Retirer
+      // l'objet du sac local de façon SYNCHRONE dès le succès du RPC (avant tout nouvel await)
+      // élimine cette fenêtre de course, en plus de donner un retour visuel instantané (comme
+      // l'ancien mockup marché avant refonte).
+      if (kind === 'material') invRemoveAt(invIndex, qty); else INV[invIndex] = null;
+      refreshInvUI();
       await loadCloudSave();
       updateCmWallet(); refreshCmBrowse(); refreshMyMarketOrders();
     };

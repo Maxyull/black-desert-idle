@@ -15968,6 +15968,9 @@ function wireCmOfferForms(panel, g, kind, enhLv, owned) {
       });
       if (error) { m.className='fail'; m.textContent = i18next.t('market:market.failed_with_reason', { reason: error.message }); return; }
       m.className='ok'; m.textContent = i18next.t('market:market.sell_offer_placed');
+      
+      if (kind === 'material') invRemoveAt(invIndex, qty); else INV[invIndex] = null;
+      refreshInvUI();
       await loadCloudSave();
       updateCmWallet(); refreshCmBrowse(); refreshMyMarketOrders();
     };
