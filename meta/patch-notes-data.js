@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V404', d:'23/07/2026 15:00', name:{fr:'Loup (zone 1) : silhouette plus détaillée', en:'Wolf (zone 1): more detailed silhouette'}, fr:[
+      {t:'change', sub:'interface', tx:'Le loup (zone 1) a une silhouette plus détaillée : dos plus sombre et ventre plus clair, crinière et collerette de poitrail, pattes visibles au sol, truffe marquée, contour plus net. Comportement de combat inchangé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The wolf (zone 1) now has a more detailed silhouette: darker back and lighter belly, mane and chest ruff, visible paws, a marked nose, a crisper outline. Combat behavior unchanged.'},
+    ] },
   { v:'V403', d:'23/07/2026 14:00', name:{fr:'Correctif : stats de stuff figées sur d\'anciens rééquilibrages de zone', en:'Fix: gear stats frozen on old zone rebalances'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'3 rééquilibrages de zone (Sanctuaire d\'Elric, Ruines de Kratuga, Planque des Mânes) avaient changé la Défense requise sans jamais recalculer le stuff déjà en possession des joueurs — deux exemplaires du même objet (même nom, même palier, même niveau d\'enchantement) pouvaient donc afficher des PA/PD différents selon la date de leur obtention. Recalculé une bonne fois pour toutes au prochain chargement, sans rien perdre (l\'enchantement déjà investi reste intact).'},
     ], en:[

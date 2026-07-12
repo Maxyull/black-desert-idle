@@ -10645,14 +10645,59 @@ function drawWolfIso(wx,wy,w,t) {
   ctx.moveTo(6,-6); ctx.lineTo(6,2+trot*.3);
   ctx.moveTo(11,-6); ctx.lineTo(12,2-trot*.3);
   ctx.stroke();
+  
+  ctx.fillStyle=w.tone;
+  [[-11,2+trot*.4],[-4,2-trot*.4],[6,2+trot*.3],[12,2-trot*.3]].forEach(([px,py]) => {
+    ctx.beginPath(); ctx.ellipse(px,py,2.3,1.3,0,0,7); ctx.fill();
+  });
+  ctx.fillStyle='rgba(0,0,0,.22)';
+  ctx.beginPath(); ctx.ellipse(-10.5,1,1.8,1,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(-4,1,1.8,1,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(6,1,1.8,1,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(11.5,1,1.8,1,0,0,7); ctx.fill();
+  
+  ctx.fillStyle=w.tone;
+  ctx.beginPath(); ctx.moveTo(-14,-12); ctx.quadraticCurveTo(-22,-15+trot,-25,-10+trot);
+  ctx.quadraticCurveTo(-20,-9+trot,-14,-9); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(-16,-14); ctx.quadraticCurveTo(-24,-17+trot*.6,-27,-12+trot*.6);
+  ctx.quadraticCurveTo(-21,-13+trot*.6,-16,-12); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.ellipse(0,-11,15,7.5,-.06,0,7); ctx.fill();
+  
+  ctx.fillStyle='rgba(255,255,255,.14)';
+  ctx.beginPath(); ctx.ellipse(0,-6.5,12,4,-.06,0,Math.PI); ctx.fill();
+  ctx.fillStyle=w.tone;
   ctx.beginPath(); ctx.ellipse(9,-10,7,6.4,.2,0,7); ctx.fill();
   ctx.beginPath(); ctx.ellipse(17,-17+trot*.2,6.4,5,.15,0,7); ctx.fill();
   ctx.beginPath(); ctx.moveTo(21,-18); ctx.lineTo(27,-15.6); ctx.lineTo(21,-14); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(13,-22); ctx.lineTo(15,-27); ctx.lineTo(17.5,-21.5); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(17,-22); ctx.lineTo(19.6,-26.4); ctx.lineTo(21,-21); ctx.closePath(); ctx.fill();
-  ctx.lineWidth=4;
-  ctx.beginPath(); ctx.moveTo(-14,-12); ctx.quadraticCurveTo(-21,-16+trot,-24,-11+trot); ctx.stroke();
+  
+  ctx.fillStyle='rgba(0,0,0,.55)';
+  ctx.beginPath(); ctx.ellipse(22.6,-16.4+trot*.2,1.3,1,.15,0,7); ctx.fill();
+  
+  ctx.fillStyle='rgba(0,0,0,.25)';
+  ctx.beginPath(); ctx.moveTo(14,-23); ctx.lineTo(15.4,-25.6); ctx.lineTo(16.7,-22.2); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(17.6,-23); ctx.lineTo(19.3,-25.5); ctx.lineTo(20.2,-22.4); ctx.closePath(); ctx.fill();
+  
+  ctx.fillStyle='rgba(0,0,0,.18)';
+  [[-12,-15.5],[-8,-18],[-2,-19.5],[4,-19],[9,-17]].forEach(([tx,ty]) => {
+    ctx.beginPath(); ctx.moveTo(tx-2,ty+3); ctx.lineTo(tx,ty); ctx.lineTo(tx+2,ty+3); ctx.closePath(); ctx.fill();
+  });
+  
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  [[10,-6],[13,-7.5],[16,-9]].forEach(([tx,ty]) => {
+    ctx.beginPath(); ctx.moveTo(tx-1.6,ty+2.4); ctx.lineTo(tx,ty); ctx.lineTo(tx+1.6,ty+2.4); ctx.closePath(); ctx.fill();
+  });
+  
+  ctx.strokeStyle='rgba(0,0,0,.14)'; ctx.lineWidth=.7; ctx.lineCap='round';
+  [[-6,-14,-3,-10],[0,-15,3,-11],[-9,-11,-6,-8]].forEach(([x1,y1,x2,y2]) => {
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  });
+  
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.9;
+  ctx.beginPath(); ctx.ellipse(0,-11,15,7.5,-.06,0,7); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(9,-10,7,6.4,.2,0,7); ctx.stroke();
+  ctx.beginPath(); ctx.ellipse(17,-17+trot*.2,6.4,5,.15,0,7); ctx.stroke();
   ctx.fillStyle = w.lunge>.3 ? '#e05540' : '#e8c25a';
   ctx.beginPath(); ctx.arc(17.5,-18+trot*.2,1.2,0,7); ctx.fill();
   ctx.restore();
