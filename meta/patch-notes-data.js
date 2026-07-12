@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V412', d:'23/07/2026 23:00', name:{fr:'Guerrier Sausan (Colonie Sausan) : gantelet, ceinture et bottes', en:'Sausan Warrior (Sausan Colony): gauntlet, belt and boots'}, fr:[
+      {t:'change', sub:'interface', tx:'Le guerrier Sausan (Colonie Sausan, juste après la Ferme Shultz) porte désormais un gantelet sur la main tenant le cimeterre, une ceinture large en cuir avec une boucle dorée (remplaçant la simple ligne de ceinture), et des bottes aux pieds. Tunique/cotte de mailles, lame, capuche et voile inchangés. Comportement de combat inchangé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Sausan warrior (Sausan Colony, right after Shultz Farm) now wears a gauntlet on the hand holding the scimitar, a wide leather belt with a gold buckle (replacing the plain belt line), and boots. Tunic/chainmail, blade, hood and veil unchanged. Combat behavior unchanged.'},
+    ] },
   { v:'V411', d:'23/07/2026 22:00', name:{fr:'Garde Shultz (Ferme Shultz) : cape, emblème et pochette', en:'Shultz Guard (Shultz Farm): cape, emblem and pouch'}, fr:[
       {t:'change', sub:'interface', tx:'Le Garde Shultz (Ferme Shultz, juste après le Camp Rhutum) porte désormais une cape rouge sombre tombant de l\'épaule gauche, un petit emblème héraldique doré sur le plastron sous le liseré existant, et une ceinture en cuir avec une pochette à la taille. Armure, épaulières, bras/arme et casque/moustache inchangés. Comportement de combat inchangé.'},
     ], en:[
