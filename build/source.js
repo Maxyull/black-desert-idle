@@ -8195,6 +8195,7 @@ function enhShortLabel(lvl) {
   if (lvl < PRI_IDX) return '+' + lvl;
   return ['I','II','III','IV','V'][lvl - PRI_IDX] || '+' + lvl;
 }
+
 function pdSlotInnerHtmlFor(id, e) {
   const icon = (e ? (e.icon || SLOT_ICON[id]) : SLOT_ICON[id]);
   let badge = '';
@@ -8228,6 +8229,7 @@ function pdSlotInnerHtmlFor(id, e) {
   const unequipBadge = e ? `<span class="pdUnequipBtn" title="${i18next.t('inventory:inventory.action_unequip')}">✕</span>` : '';
   return icon + badge + apDpBadge + cornerHtml + unequipBadge;
 }
+
 function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
 
 function pdStatSuffix(e) {
@@ -8369,6 +8371,7 @@ function showEquipSlotMenu(cell, slotId) {
   pop.style.left = Math.min(r.right + 8, window.innerWidth - pr.width - 10) + 'px';
   pop.style.top = Math.min(r.top, window.innerHeight - pr.height - 10) + 'px';
 }
+
 function fillPdCol(colId, ids) {
   const col = $(colId);
   col.innerHTML = '';
@@ -8470,6 +8473,7 @@ function cellEnhBadgeHtml(s) {
 
 let hoverInvIndex = -1;
 let lastMouseX = 0, lastMouseY = 0;
+
 function renderInventory() {
   const grid = $('invGrid');
   grid.innerHTML = '';
@@ -8588,12 +8592,14 @@ function veliaChestStore(invIndex, n) {
 }
 
 let chestZoomed = false;
+
 function updateChestZoomBtn() {
   const btn = $('btnChestZoom'); if (!btn) return;
   btn.textContent = chestZoomed
     ? i18next.t('inventory:inventory.chest_zoom_shrink')
     : i18next.t('inventory:inventory.chest_zoom_enlarge');
 }
+
 function renderVeliaChest() {
   const grid = $('veliaChestGrid'); if (!grid) return;
   grid.classList.toggle('chestZoomed', chestZoomed);
@@ -8752,6 +8758,7 @@ function showItemMenuAtCell(cell, data) {
   const r = cell.getBoundingClientRect();
   showItemMenu(r.left, r.bottom + 4, data);
 }
+
 function addPopBtn(pop, label, fn) {
   const b = document.createElement('button');
   b.textContent = label;
@@ -8860,6 +8867,7 @@ function equipFromCompendium(i) {
   renderCompendiumPane();
   renderOptimization();
 }
+
 function unequip(slotId) {
   const e = EQUIP[slotId]; if (!e) return;
   if (invAdd({ ...e, equipped:false, qty:1, stackable:false })) { EQUIP[slotId] = null; hud(); }
@@ -9070,7 +9078,9 @@ function findEnhanceMaterial() {
   }
   return INV.findIndex(s => s && s.kind === 'material' && s.name === wantedName);
 }
+
 function findCronStone() { return INV.findIndex(s => s && s.name === CRON_STONE.name); }
+
 function renderOptimization() {
   
   const avail = optimizableList();
@@ -9229,6 +9239,7 @@ function optAutoGainPrimaryPart(target, targetLvl) {
   const delta = proj[primary] - cur[primary];
   return delta > 0 ? '+' + delta + ' ' + (primary === 'ap' ? 'PA' : 'PD') : '';
 }
+
 function renderOptAutoTargetSelect() {
   const sel = $('optAutoTarget'); if (!sel) return;
   const prevVal = sel.value; 
@@ -9262,6 +9273,7 @@ function renderOptAutoGain() {
 $('optAutoTarget').onchange = renderOptAutoGain;
 
 let autoOptMode = 'target';
+
 function stopAutoOpt() {
   if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; }
   autoOptTargetLvl = null;
@@ -9275,6 +9287,7 @@ function stopAutoOpt() {
 $('optAutoMode').onchange = () => {
   $('optAutoTarget').style.display = $('optAutoMode').value === 'target' ? '' : 'none';
 };
+
 function startAutoOpt() {
   if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; } 
   const mode = $('optAutoMode').value;
@@ -9345,6 +9358,7 @@ function poussiereCount() {
   const s = INV.find(x => x && x.kind === 'craft' && x.name === POUSSIERE_NAME);
   return s ? s.qty : 0;
 }
+
 function renderCapConvertRow() {
   const lbl = $('capConvertLbl'), btn = $('btnConvertCaphras'); if (!lbl || !btn) return;
   const n = poussiereCount();
@@ -9529,6 +9543,7 @@ function showFarmGuide() {
     };
   });
 }
+
 function renderLootTable(previewIdx) {
   
   if (atVelia && previewIdx == null) {

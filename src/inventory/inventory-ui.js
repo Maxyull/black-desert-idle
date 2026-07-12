@@ -23,6 +23,7 @@ const SLOT_ICON = { weapon:staffIconForColor('#8f9aa6','grey'), awakening:orbPai
   ring1:ringIconForTier(0,'#8f9aa6'), ring2:ringIconForTier(0,'#8f9aa6'), belt:ICO_BELT,
   artifact1:ICO_ARTIFACT, artifact2:ICO_ARTIFACT, eqStone:ICO_EQSTONE };
 
+/** Reconstruit la poupée d'équipement (armes/armure/accessoires) et le résumé PA/PD/GS de la carte Équipement. */
 function renderEquipment() {
   drawPreviewChar();
   fillPdCol('pdLeft', PD_LEFT);
@@ -44,10 +45,12 @@ function renderEquipment() {
   $('eqSumGs').textContent = 'GS ' + Math.round(GS());
 }
 // libellé court du niveau d'optimisation : "+N" jusqu'à +15, puis chiffres romains I..V pour PRI..PEN
+/** @param {number} lvl - niveau d'enchant. @returns {string} libellé court ("+N" jusqu'à +15, puis I..V pour PRI..PEN). */
 function enhShortLabel(lvl) {
   if (lvl < PRI_IDX) return '+' + lvl;
   return ['I','II','III','IV','V'][lvl - PRI_IDX] || '+' + lvl;
 }
+/** @param {string} id - slot de la poupée. @param {?object} e - objet équipé sur ce slot (null si vide). @returns {string} HTML intérieur de la case (icône, badge d'enchant, PA/PD, bouton opti, badge upgrade/verrou, croix de déséquipement). */
 function pdSlotInnerHtmlFor(id, e) {
   const icon = (e ? (e.icon || SLOT_ICON[id]) : SLOT_ICON[id]);
   let badge = '';
@@ -96,9 +99,11 @@ function pdSlotInnerHtmlFor(id, e) {
   const unequipBadge = e ? `<span class="pdUnequipBtn" title="${i18next.t('inventory:inventory.action_unequip')}">✕</span>` : '';
   return icon + badge + apDpBadge + cornerHtml + unequipBadge;
 }
+/** @param {string} id - slot de la poupée. @returns {string} HTML de la case pour l'objet actuellement équipé sur ce slot. */
 function pdSlotInnerHtml(id) { return pdSlotInnerHtmlFor(id, EQUIP[id]); }
 // texte "+X PA +Y PD +Z PV" affiché dans le tooltip d'une pièce de la poupée d'équipement —
 // demande explicite : voir ce que le stuff donne comme PA/PD directement sur l'équipement
+/** @param {object} e - objet équipé. @returns {string} suffixe " (+X PA +Y PD +Z PV +W% Esq.)" pour le tooltip, vide si aucune stat. */
 function pdStatSuffix(e) {
   const { ap, dp, hp, dodge } = effectiveApDp(e);
   const parts = [];
@@ -110,6 +115,7 @@ function pdStatSuffix(e) {
 }
 // base de comparaison ("ring"/"earring"/"necklace"/"belt") pour un slot précis de la poupée —
 // les paires (ring1/ring2, earring1/earring2) partagent le même bassin de candidats
+/** @param {string} slotId - slot de la poupée. @returns {string} slot de base pour comparaison ("ring"/"earring"/autre) — les paires ring1/ring2 et earring1/earring2 partagent le même bassin de candidats. */
 function accBaseSlot(slotId) {
   if (slotId==='ring1'||slotId==='ring2') return 'ring';
   if (slotId==='earring1'||slotId==='earring2') return 'earring';
@@ -195,6 +201,7 @@ function safeZonesForSlot(slotId) {
 // index de palier d'un objet équipé (grey=0 < white=1 < green=2 < blue=3), déduit de sa couleur —
 // voir GEAR_TIERS (gear ET jackpot sont toujours tagués color:tier.color au drop). -1 si la
 // couleur ne correspond à aucun palier connu.
+/** @param {object} item - objet gear/jackpot (lit .color). @returns {number} index de palier (grey=0..blue=3) déduit de sa couleur, -1 si inconnu. */
 function itemTierIdx(item) { return GEAR_TIERS.findIndex(t => t.color === item.color); }
 // zones à proposer pour l'icône ⬆️ d'un socle REMPLI — demande explicite du 2026-07-09 : "l'icone
 // s'affiche uniquement [si] tu peux trouver un stuff meilleur que celui que tu as déjà, SAUF
@@ -260,11 +267,13 @@ function slotsUpgradedByZone(zi) {
   return slots;
 }
 // applique/retire le halo sur les cases de la poupée d'équipement concernées par UNE zone précise
+/** @param {string[]} slots - slots de la poupée à surligner (vide = tout retirer). Applique/retire le halo "farm zone" sur les cases concernées au survol d'une ligne de zone. */
 function highlightEquipSlotsForZone(slots) {
   document.querySelectorAll('.pdSlot').forEach(el => el.classList.remove('pdFarmZoneHalo'));
   slots.forEach(id => { const el = document.querySelector(`.pdSlot[data-slot="${id}"]`); if (el) el.classList.add('pdFarmZoneHalo'); });
 }
 // applique/retire le halo dans #zoneList pour les zones qui lootent l'objet manquant d'un socle vide
+/** @param {number[]} zones - index de zones à surligner (vide = tout retirer). Applique/retire le halo dans #zoneList pour les zones qui lootent l'objet manquant d'un socle vide. */
 function highlightFarmZones(zones) {
   document.querySelectorAll('#zoneList .zRow').forEach(r => r.classList.remove('eqFarmHalo'));
   zones.forEach(zi => { const row = document.querySelector(`#zoneList .zRow[data-zi="${zi}"]`); if (row) row.classList.add('eqFarmHalo'); });
@@ -272,6 +281,7 @@ function highlightFarmZones(zones) {
 // clic simple sur une case de la poupée d'équipement — demande explicite du 2026-07-09 : une case
 // équipée n'affiche plus QUE le nom + les stats (déséquiper/optimiser restent accessibles via le
 // double-clic et le bouton 🔧 dédiés) ; une case vide n'affiche plus QUE le nom + où farmer
+/** @param {HTMLElement} cell - case de la poupée cliquée. @param {string} slotId. Affiche le popup d'info d'une case (nom+stats si équipée, boutons "où farmer" si vide), positionné près de la case. */
 function showEquipSlotMenu(cell, slotId) {
   const e = EQUIP[slotId];
   const pop = $('itemPop');
@@ -308,6 +318,7 @@ function showEquipSlotMenu(cell, slotId) {
   pop.style.left = Math.min(r.right + 8, window.innerWidth - pr.width - 10) + 'px';
   pop.style.top = Math.min(r.top, window.innerHeight - pr.height - 10) + 'px';
 }
+/** @param {string} colId - id du conteneur DOM. @param {string[]} ids - slots à afficher dans cette colonne. Reconstruit une colonne de la poupée d'équipement (cases + halos de couleur + gestionnaires clic/double-clic/boutons). */
 function fillPdCol(colId, ids) {
   const col = $(colId);
   col.innerHTML = '';
@@ -360,6 +371,7 @@ function fillPdCol(colId, ids) {
 // sans reconstruire les ~13 cases + leurs gestionnaires d'événements ni redessiner le
 // canvas — utilisée après une tentative d'optimisation pour rester fluide même en
 // enchaînant les clics rapidement (avant ce correctif, chaque clic reconstruisait tout)
+/** @param {string} slotId. Met à jour une seule case de la poupée (icône/badges) sans reconstruire toutes les cases ni leurs gestionnaires — utilisé après une optimisation pour rester fluide. */
 function refreshEquipSlot(slotId) {
   const div = document.querySelector('.pdSlot[data-slot="'+slotId+'"]');
   if (!div) return;
@@ -371,6 +383,7 @@ function refreshEquipSlot(slotId) {
   div.style.borderColor = (e && e.color && JEWELRY_SLOTS.includes(slotId)) ? e.color : '';
 }
 
+/** Dessine l'aperçu du personnage (canvas #charPrev) sur la carte Équipement, réutilise witchBodyOn pour rester identique au rendu en combat. */
 function drawPreviewChar() {
   const c = $('charPrev'), x = c.getContext('2d');
   x.clearRect(0,0,c.width,c.height);
@@ -383,6 +396,7 @@ function drawPreviewChar() {
 // version paramétrable de witchBody pour un contexte/échelle donnés — délègue maintenant à
 // witchBodyOn (2026-07-08) pour partager EXACTEMENT le même rendu par palier que le personnage en
 // combat (couleurs/cornes/cape/orbes selon le stuff équipé)
+/** @param {CanvasRenderingContext2D} x @param {number} cx @param {number} cy @param {number} sc - échelle. Dessine le personnage à une position/échelle données, délègue à witchBodyOn (même rendu par palier que le combat). */
 function drawWitchOn(x, cx, cy, sc) {
   x.save(); x.translate(cx,cy); x.scale(sc,sc);
   witchBodyOn(x, performance.now()/1000, false);
@@ -419,6 +433,7 @@ let invCategory = 'normal';
 // cadenas en badge au-dessus, centré (2026-07-14, demande explicite : "avec les cadenas au dessus
 // au milieu") -- même pattern que les onglets de région (#zoneTierTabs, voir styles.css), sur une
 // grille à 5 colonnes strictes pour que les 5 catégories tiennent toujours sur une seule ligne.
+/** Reconstruit les onglets de catégorie d'inventaire (INV_CATEGORIES), câble le changement de filtre. */
 function renderInvCatTabs() {
   const el = $('invCatTabs'); if (!el) return;
   el.innerHTML = INV_CATEGORIES.map(c => `<button class="catTab${c.id===invCategory?' active':''}${c.locked?' locked':''}"` +
@@ -437,6 +452,7 @@ function renderInvCatTabs() {
 // badge de niveau d'enchantement pour une case de sac — même logique que pdSlotInnerHtmlFor (poupée
 // d'équipement), réutilisée ici pour le sac principal ET le sac protégé du Compendium (2026-07-09,
 // demande explicite : "on peut voir l'optimisation dans l'inventaire ET le compendium")
+/** @param {object} s - slot d'inventaire (sac principal ou Compendium). @returns {string} badge HTML du niveau d'enchant, vide si non optimisable. */
 function cellEnhBadgeHtml(s) {
   if (!s.optimizable) return '';
   const lvl = s.enhLv || 0;
@@ -445,6 +461,7 @@ function cellEnhBadgeHtml(s) {
 
 let hoverInvIndex = -1;
 let lastMouseX = 0, lastMouseY = 0;
+/** Reconstruit la grille du sac principal (#invGrid) selon la catégorie active, câble hover/clic/double-clic/clic-droit par case, met à jour poids/silver/loyauté. */
 function renderInventory() {
   const grid = $('invGrid');
   grid.innerHTML = '';
@@ -536,6 +553,7 @@ function renderInventory() {
 // catégorie parmi d'autres DANS l'onglet Inventaire ; extrait ici en pane dédiée, grille séparée
 // (#compGrid), même logique de case (icône, badge d'enchantement, PA/PD, bouton "équiper et
 // optimiser") que l'ancienne intégration.
+/** Reconstruit la grille du Compendium (#compGrid, sac protégé), câble hover/clic (ouvre le menu d'équiper/mettre en optimisation). */
 function renderCompendiumPane() {
   const grid = $('compGrid'); if (!grid) return;
   grid.innerHTML = '';
@@ -598,12 +616,14 @@ function veliaChestStore(invIndex, n) {
 // préférence d'affichage pure, pas de persistance nécessaire (retombe sur la vue dense par défaut
 // à chaque rechargement, comme les autres onglets/filtres du jeu)
 let chestZoomed = false;
+/** Met à jour le libellé du bouton de bascule 5/8 colonnes du coffre selon chestZoomed. */
 function updateChestZoomBtn() {
   const btn = $('btnChestZoom'); if (!btn) return;
   btn.textContent = chestZoomed
     ? i18next.t('inventory:inventory.chest_zoom_shrink')
     : i18next.t('inventory:inventory.chest_zoom_enlarge');
 }
+/** Reconstruit la grille du coffre de ville (#veliaChestGrid), cases verrouillées au-delà de VELIA_CHEST_OPEN, câble hover + bouton "retour au sac". */
 function renderVeliaChest() {
   const grid = $('veliaChestGrid'); if (!grid) return;
   grid.classList.toggle('chestZoomed', chestZoomed);
@@ -720,6 +740,7 @@ function statDeltaShortText(item) {
 }
 
 // ---------- popup d'objet + actions ----------
+/** @param {number} px @param {number} py @param {object} data - item + invIndex/compIndex/slotId selon la source. Construit et affiche le popup d'actions (équiper/optimiser/vendre/jeter/coffre) à la position donnée. */
 function showItemMenu(px, py, data) {
   const pop = $('itemPop');
   let html = `<div class="ipName ${data.kind||''}">${tr(data.name)}</div>`;
@@ -783,10 +804,12 @@ function showItemMenu(px, py, data) {
 }
 // clic gauche sur une case du sac : ouvre le même menu, mais ANCRÉ à la case (juste en dessous)
 // plutôt qu'au curseur — demande explicite "collé à la case"
+/** @param {HTMLElement} cell - case du sac cliquée. @param {object} data. Ouvre showItemMenu ancré juste sous la case (plutôt qu'au curseur). */
 function showItemMenuAtCell(cell, data) {
   const r = cell.getBoundingClientRect();
   showItemMenu(r.left, r.bottom + 4, data);
 }
+/** @param {HTMLElement} pop - conteneur popup. @param {string} label. @param {Function} fn - action au clic. Ajoute un bouton texte au popup d'objet. */
 function addPopBtn(pop, label, fn) {
   const b = document.createElement('button');
   b.textContent = label;
@@ -795,6 +818,7 @@ function addPopBtn(pop, label, fn) {
 }
 // variante avec du HTML (icône + texte) au lieu d'un simple texte — utilisée pour les candidats
 // d'équipement (icône de l'objet + gain/perte de stats), demande explicite
+/** @param {HTMLElement} pop @param {string} html @param {Function} fn. Variante de addPopBtn avec du HTML (icône + texte) au lieu d'un simple label. */
 function addPopBtnHtml(pop, html, fn) {
   const b = document.createElement('button');
   b.innerHTML = html;
@@ -806,6 +830,7 @@ document.addEventListener('click', () => { hideItemPop(); const ps = $('potSelec
 document.addEventListener('contextmenu', ev => { if (!ev.target.closest('.cell')) hideItemPop(); });
 
 // ---------- infobulle au survol (lecture seule) ----------
+/** @param {object} data - item survolé. @returns {string} HTML de l'infobulle en lecture seule (description courte selon le type). */
 function itemTooltipHtml(data) {
   const desc = [];
   if (data.kind === 'trash') desc.push('Vente ~'+fmt(data.val)+' silver');
@@ -896,6 +921,7 @@ function tryAutoEquipIfBetter(i, s) {
   return true;
 }
 // équipe n'importe quelle pièce (arme/armure/accessoire) dans le bon slot
+/** @param {number} i - index dans INV. Équipe la pièce (arme/armure/accessoire) dans son slot, renvoie l'ancienne pièce dans le sac (annule si le sac est plein). */
 function equipItem(i) {
   const item = INV[i]; if (!item) return;
   const slotId = resolveEquipSlot(item);
@@ -913,6 +939,7 @@ function equipItem(i) {
 // du 2026-07-14 : "possibilité d'optimisation direct avec un bouton" depuis l'onglet Compendium.
 // L'ancienne pièce équipée revient dans le sac PRINCIPAL (INV), pas dans le Compendium -- seul le
 // meilleur exemplaire de chaque nom est censé y résider (voir ensureCompendiumProtection).
+/** @param {number} i - index dans COMPENDIUM_BAG. Équivalent equipItem() pour le sac protégé — l'ancienne pièce équipée revient dans INV (jamais dans le Compendium). */
 function equipFromCompendium(i) {
   const item = COMPENDIUM_BAG[i]; if (!item) return;
   const slotId = resolveEquipSlot(item);
@@ -928,6 +955,7 @@ function equipFromCompendium(i) {
   renderCompendiumPane();
   renderOptimization();
 }
+/** @param {string} slotId. Déséquipe (renvoie dans le sac principal, no-op si le sac est plein). */
 function unequip(slotId) {
   const e = EQUIP[slotId]; if (!e) return;
   if (invAdd({ ...e, equipped:false, qty:1, stackable:false })) { EQUIP[slotId] = null; hud(); }
@@ -1123,6 +1151,7 @@ $('btnBuyBackWorse').onclick = () => {
   }
 };
 
+/** @param {number} i - index dans INV du matériau. Ancienne tentative d'enchant directe sur l'arme équipée, conservée pour compat (le popup passe désormais par le cadre Optimisation/attemptEnhance). */
 function enhanceWithMaterial(i) {
   // conservé pour compat (non utilisé par le popup désormais, cf. cadre Optimisation)
   const mat = INV[i]; if (!mat || !EQUIP.weapon || EQUIP.weapon.enhLv >= ENH_NAMES.length-1) return;
@@ -1163,6 +1192,7 @@ function getOptTargetItem() {
 }
 let forcedMatKey = null; // matériau épinglé via le menu clic droit ("Mettre en optimisation")
 
+/** @returns {string[]} slots équipés (parmi OPTIMIZABLE_SLOTS) réellement occupés, candidats du sélecteur de cible d'optimisation. */
 function optimizableList() { return OPTIMIZABLE_SLOTS.filter(k => EQUIP[k]); }
 // chaque palier de stuff (Naru/Tuvala/Yuria/Grunil) a SA PROPRE pierre d'optimisation, jamais
 // interchangeable avec celle d'un autre palier (2026-07-11, demande explicite : "on doit pas
@@ -1182,7 +1212,9 @@ function findEnhanceMaterial() {
   }
   return INV.findIndex(s => s && s.kind === 'material' && s.name === wantedName);
 }
+/** @returns {number} index dans INV de la Pierre de Cron, -1 si absente. */
 function findCronStone() { return INV.findIndex(s => s && s.name === CRON_STONE.name); }
+/** Reconstruit tout le cadre Optimisation (sélecteur de cible, icône/niveau, matériau requis, chance, barre à deux tons, Pierre de Cron, suggestions) pour optTarget/getOptTargetItem() actuel. */
 function renderOptimization() {
   // (re)construit la liste déroulante des pièces optimisables équipées (armes + armure + bijoux)
   const avail = optimizableList();
@@ -1408,6 +1440,7 @@ function optAutoGainPrimaryPart(target, targetLvl) {
   const delta = proj[primary] - cur[primary];
   return delta > 0 ? '+' + delta + ' ' + (primary === 'ap' ? 'PA' : 'PD') : '';
 }
+/** Reconstruit le sélecteur de palier visé par l'auto-optimisation (mode 'target'), avec le gain de stat principale affiché seulement quand il change d'un palier à l'autre. Préserve le choix du joueur à travers les re-renders. */
 function renderOptAutoTargetSelect() {
   const sel = $('optAutoTarget'); if (!sel) return;
   const prevVal = sel.value; // préserve le choix du joueur à travers les re-renders (voir plus bas)
@@ -1439,6 +1472,7 @@ function renderOptAutoTargetSelect() {
   renderOptAutoGain();
 }
 // affiche le gain de stats si on atteint le palier choisi dans #optAutoTarget (ex: "+18 PA")
+/** Affiche le gain de stats complet (optAutoGainParts) si la cible atteint le palier actuellement choisi dans #optAutoTarget. */
 function renderOptAutoGain() {
   const el = $('optAutoGainTxt'); if (!el) return;
   const target = getOptTargetItem();
@@ -1452,6 +1486,7 @@ function renderOptAutoGain() {
 $('optAutoTarget').onchange = renderOptAutoGain;
 // mode de l'auto-optimisation en cours ('target'/'loop'/'fail'/'cron') — voir startAutoOpt
 let autoOptMode = 'target';
+/** Arrête la boucle d'auto-optimisation en cours (clearInterval) et restaure les contrôles UI. */
 function stopAutoOpt() {
   if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; }
   autoOptTargetLvl = null;
@@ -1465,6 +1500,7 @@ function stopAutoOpt() {
 $('optAutoMode').onchange = () => {
   $('optAutoTarget').style.display = $('optAutoMode').value === 'target' ? '' : 'none';
 };
+/** Démarre la boucle d'auto-optimisation (setInterval 220ms) sur la cible actuelle, selon le mode choisi (#optAutoMode : 'target'/'loop'/'fail'/'cron'/'nextgain') — s'arrête sur rupture de matériau/Cron, échec, gain de stat, ou palier atteint. */
 function startAutoOpt() {
   if (autoOptTimer) { clearInterval(autoOptTimer); autoOptTimer = null; } // garde-fou : jamais 2 intervalles en parallèle
   const mode = $('optAutoMode').value;
@@ -1549,6 +1585,7 @@ function poussiereCount() {
   const s = INV.find(x => x && x.kind === 'craft' && x.name === POUSSIERE_NAME);
   return s ? s.qty : 0;
 }
+/** Met à jour le label/bouton de conversion Poussière→Caphras selon le stock actuel (5:1). */
 function renderCapConvertRow() {
   const lbl = $('capConvertLbl'), btn = $('btnConvertCaphras'); if (!lbl || !btn) return;
   const n = poussiereCount();
@@ -1579,6 +1616,7 @@ $('btnConvertCaphras').onclick = convertPoussiereToCaphras;
 // d'info possible avec écris au dessus recommandé:") -- avant, une phrase complète avec le déficit
 // PA/PD et le gain estimé ; désormais juste un label "Recommandé :" suivi du nom de la pièce et de
 // son palier d'enchantement cible, sans justification ni chiffres
+/** Affiche la pièce équipée recommandée à optimiser en priorité pour atteindre la zone suivante (label minimal, sans chiffres de justification). */
 function renderOptSuggestions() {
   const nextZone = ZONES[zoneIdx+1];
   const box = $('optSuggest');
@@ -1614,6 +1652,7 @@ const LOOT_ICONS = { trash:'▬', material:'◈', jackpot:'💍', craft:'✦', g
 // "ajoute un bouton bloqué cadenas vente auto sur chaque item dans la lootable") -- même convention
 // que #btnAutoSellLoot (global, voir index.html) : cadenas TOUJOURS en badge au-dessus, centré
 // (.zoneTierLock/.lockedFeatureBtn), jamais inline dans le bouton
+/** @returns {string} HTML du bouton "vente auto" verrouillé (cadenas), affiché sur chaque ligne de la table de loot. */
 function lootAutoSellLockHtml() {
   return `<button class="lootAutoSellBtn" disabled title="${i18next.t('inventory:inventory.loot_autosell_coming_soon')}"><span class="zoneTierLock">🔒</span>🗑️</button>`;
 }
@@ -1646,6 +1685,7 @@ function lootAutoSellLockHtml() {
 })();
 // construit les lignes de loot d'UNE zone (utilisé pour l'aperçu normal ET pour le récapitulatif
 // "toutes zones confondues" affiché à Velia, voir renderLootTable ci-dessous)
+/** @param {number} idx - index de zone. @returns {string} HTML détaillé (groupé par catégorie) de toutes les lignes de loot de cette zone, avec % réels et flèche d'upgrade si applicable. */
 function zoneLootRowsHtml(idx) {
   const z = ZONES[idx], L = z.loot;
   const tier = gearTierForZone(idx);
@@ -1742,6 +1782,7 @@ function zoneLootRowsHtml(idx) {
 // ligne CONDENSÉE (1 par zone, repliée par défaut) pour le récapitulatif "toutes zones" de Velia —
 // demande explicite du 2026-07-08 ("faut scroll à la mort") : affiche juste le bijou (l'objet le
 // plus recherché de la zone), un clic déplie le détail complet via zoneLootRowsHtml
+/** @param {number} idx - index de zone. @returns {string} HTML condensé (1 ligne, bijou uniquement) pour le récapitulatif "toutes zones" de Velia, dépliable au clic vers zoneLootRowsHtml. */
 function zoneLootCompactRowHtml(idx) {
   const z = ZONES[idx], tier = gearTierForZone(idx);
   // vraie icône du bijou de cette zone (2026-07-08, même correctif que zoneLootRowsHtml) au lieu
@@ -1760,6 +1801,7 @@ function zoneLootCompactRowHtml(idx) {
 // où farmer, dans toutes les zones disponibles (débloquées), EN EXCLUANT les zones actuellement
 // trop dangereuses pour le joueur (badge "ZONE DANGEREUSE", voir badgeOf/bottleneck). Réutilise le
 // même récapitulatif condensé/dépliable que la vue Velia (zoneLootCompactRowHtml/zoneLootRowsHtml).
+/** Ouvre le panneau "Guide de farm" (openInfo) : liste condensée/dépliable des zones débloquées et sûres où farmer, en excluant les zones marquées "ZONE DANGEREUSE". */
 function showFarmGuide() {
   const rows = ZONES.map((z,zi) => ({ zi, dangerous: badgeOf(bottleneck(z)).txt === 'ZONE DANGEREUSE' }))
     .filter(r => r.zi <= S.maxZoneIdx && !r.dangerous);
@@ -1777,6 +1819,7 @@ function showFarmGuide() {
     };
   });
 }
+/** @param {number} [previewIdx] - zone à prévisualiser (bouton "Voir"), sinon la zone active. Reconstruit la carte "Loot de cette zone" — récapitulatif condensé de toutes les zones si à Velia, sinon détail complet + Trésor de Velia. */
 function renderLootTable(previewIdx) {
   // Velia (zone paisible) : aucun monstre, donc aucun loot possible ICI — message explicite au lieu
   // d'afficher par erreur les stats de la dernière zone farmée. On affiche à la place, à titre
@@ -1894,6 +1937,7 @@ $('btnEquipSellCompendium').onclick = () => {
 // passe lootPreviewIdx explicitement : un simple renderLootTable() remettrait le loot affiché
 // sur la zone qu'on farm à CHAQUE rafraîchissement auto (dès qu'un objet est ramassé), écrasant
 // l'aperçu manuel choisi via le 👁 quasi instantanément
+/** Rafraîchit tout le panneau Inventaire (équipement, sac, Compendium, optimisation, table de loot) en un seul appel, en préservant l'aperçu de loot manuel (lootPreviewIdx). */
 function refreshInvUI() { renderEquipment(); renderInventory(); renderCompendiumPane(); renderOptimization(); renderLootTable(lootPreviewIdx); }
 
 // Les migrations retroactives du stuff (migrateGearRebalanceV158, migrateEarringRebalanceV175,
