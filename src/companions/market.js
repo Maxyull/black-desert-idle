@@ -21,11 +21,17 @@ let marketCounterOfferId = null;
 let marketCounterPetUids = new Set();
 let marketCounterIncludeEver = false;
 
+/** @returns {Window|null} la fenêtre hôte (jeu principal) si le module tourne bien en iframe, sinon null. */
 function marketHostWin(){ return (window.parent && window.parent!==window) ? window.parent : null; }
+/** @returns {object|null} client Supabase du jeu hôte (jamais un 2e SDK dans l'iframe, voir en-tête du fichier). */
 function marketSb(){ const w=marketHostWin(); return w && typeof w.getSbClient==='function' ? w.getSbClient() : null; }
+/** @returns {object|null} utilisateur Supabase courant, récupéré via le jeu hôte. */
 function marketUser(){ const w=marketHostWin(); return w && typeof w.getCurrentUserForSync==='function' ? w.getCurrentUserForSync() : null; }
+/** @returns {string} pseudo affiché du joueur courant (repli 'Joueur' si indisponible). */
 function marketPseudo(){ const w=marketHostWin(); return w && typeof w.getMyPseudoForSync==='function' ? w.getMyPseudoForSync() : 'Joueur'; }
+/** @returns {boolean} true si le compte courant est un invité (Marché inaccessible aux invités). */
 function marketIsGuest(){ const w=marketHostWin(); return w && typeof w.isGuest==='function' ? w.isGuest() : false; }
+/** @returns {boolean} true si le Marché peut être utilisé (Supabase + user dispo, pas invité). */
 function marketReady(){ return !!(marketSb() && marketUser() && !marketIsGuest()); }
 
 /** @param {object} pet - familier local. @returns {object} snapshot sérialisable envoyé au serveur (pet_snapshot), assez d'info pour recréer le pet côté acheteur. */
@@ -33,14 +39,21 @@ function petSnapshotOf(pet){
   return { uid:pet.uid, name:pet.cat.name, art:pet.cat.art, sec:pet.cat.sec, typ:pet.cat.typ, orig:pet.cat.orig,
     rar:pet.rar, tier:pet.tier||1, tierMult:tierMultOf(pet), stats:pet.stats.slice() };
 }
+/**
+ * Reconstruit un pet local jouable à partir d'un snapshot reçu du serveur (livraison d'échange).
+ * @param {object} snap - pet_snapshot stocké côté Supabase (voir petSnapshotOf).
+ * @returns {object} nouveau pet inséré dans PETS, avec un id local frais et faim pleine.
+ */
 function petFromSnapshot(snap){
   const cat = PET_CATALOG.find(c=>c.name===snap.name) || {name:snap.name,art:snap.art,sec:snap.sec,typ:snap.typ,orig:snap.orig,rar:snap.rar};
   return { id:petId++, uid:snap.uid||crypto.randomUUID(), cat, rar:snap.rar, stats:(snap.stats||[]).slice(),
     hunger:100, terrain:false, tier:snap.tier||1, tierXp:0, tierMult:snap.tierMult||rollTierMult(snap.tier||1) };
 }
+/** @param {*} e - erreur capturée (fetch/RPC Supabase). @returns {string} message d'erreur affichable, repli générique si absent. */
 function marketMkErr(e){ return (e && e.message) || 'Erreur réseau'; }
 
 // ═══ NAVIGATION ═════════════════════════════════════════════════════════════════════════════
+/** Rend la nav des sous-onglets Marché (browse/mine/history) et délègue au rendu du sous-onglet actif ; affiche un message de blocage si le Marché n'est pas accessible (invité/déconnecté). */
 function renderMarketTab(){
   const nav = document.getElementById('market-nav');
   if(nav){
@@ -61,8 +74,15 @@ function renderMarketTab(){
   else if(marketSubTab==='mine') renderMarketMine();
   else renderMarketHistory();
 }
+/** Change le sous-onglet actif du Marché et re-rend. @param {string} t - 'browse'|'mine'|'history'. */
 function setMarketSubTab(t){ marketSubTab=t; renderMarketTab(); }
 
+/**
+ * Construit le HTML d'une "puce" pet (canvas art + nom + rareté/tier) réutilisée partout dans le Marché.
+ * @param {object} snap - pet_snapshot (ou équivalent) à afficher.
+ * @param {string} [extraBtn] - HTML optionnel d'un bouton additionnel accolé à la puce.
+ * @returns {string} HTML de la puce ; le canvas doit ensuite être peint via paintMarketChips().
+ */
 function petChipHtml(snap, extraBtn){
   return `<div style="display:flex;align-items:center;gap:8px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:6px 9px">
     <canvas class="market-chip-canvas" data-art="${snap.art||''}" data-tier="${snap.tier||1}" width="32" height="32" style="width:32px;height:32px;image-rendering:pixelated;flex-shrink:0"></canvas>
@@ -73,6 +93,7 @@ function petChipHtml(snap, extraBtn){
     ${extraBtn||''}
   </div>`;
 }
+/** Peint les canvas `.market-chip-canvas` (art pixel + tier) déjà présents dans le DOM. @param {Element} [root] - conteneur à parcourir (document entier par défaut). */
 function paintMarketChips(root){
   (root||document).querySelectorAll('.market-chip-canvas').forEach(cv=>{
     const art=cv.dataset.art, tier=+cv.dataset.tier||1;
@@ -81,6 +102,7 @@ function paintMarketChips(root){
 }
 
 // ═══ MARCHÉ (offres ouvertes des autres joueurs) ═══════════════════════════════════════════════
+/** Charge et affiche les offres ouvertes des AUTRES joueurs (exclut les miennes), triées par date décroissante. */
 async function renderMarketBrowse(){
   const body = document.getElementById('market-body');
   body.innerHTML = `<div style="padding:16px">
@@ -113,6 +135,7 @@ async function renderMarketBrowse(){
 }
 
 // ═══ MES CONTRATS ═══════════════════════════════════════════════════════════════════════════════
+/** Charge et affiche mes offres publiées (avec contre-offres pendantes reçues) et mes contre-offres envoyées ailleurs. */
 async function renderMarketMine(){
   const body = document.getElementById('market-body');
   body.innerHTML = `<div style="padding:16px;font-size:11px;color:var(--cream3)" id="market-mine-body">Chargement…</div>`;
@@ -173,11 +196,13 @@ async function renderMarketMine(){
   `;
   paintMarketChips(el);
 }
+/** @param {string} s - code de statut brut (offre ou contre-offre). @returns {string} libellé FR affichable, ou le code tel quel si inconnu. */
 function marketStatusLabel(s){
   return {open:'Ouvert',closed:'Conclu',cancelled:'Retiré',expired:'Expiré',pending:'En attente',accepted:'Acceptée',declined:'Refusée',withdrawn:'Retirée',invalidated:'Invalidée'}[s]||s;
 }
 
 // ═══ HISTORIQUE ═════════════════════════════════════════════════════════════════════════════════
+/** Charge et affiche l'historique des échanges conclus impliquant le joueur (vendeur ou acheteur), avec ce qui a été cédé/reçu. */
 async function renderMarketHistory(){
   const body = document.getElementById('market-body');
   body.innerHTML = `<div style="padding:16px;font-size:11px;color:var(--cream3)" id="market-hist-body">Chargement…</div>`;
@@ -202,13 +227,16 @@ async function renderMarketHistory(){
     </div>`;
   }).join('');
 }
+/** @param {*} s - texte potentiellement fourni par un autre joueur (pseudo, message). @returns {string} version échappée sûre pour insertion HTML. */
 function escapeMarket(s){ return String(s==null?'':s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 // ═══ CRÉER UNE OFFRE ════════════════════════════════════════════════════════════════════════════
+/** @returns {Set<string>} uid des pets déjà en vente sur une offre ouverte (à exclure des listes de sélection). */
 function alreadyOfferedUids(){
   const mine = new Set((marketMyOffers||[]).filter(o=>o.status==='open').map(o=>o.pet_uid));
   return mine;
 }
+/** Ouvre la modale de création d'offre : liste les pets encore éligibles (pas déjà en vente) et réinitialise l'état du formulaire. */
 function openCreateOfferModal(){
   marketCreatePetUid = null; marketCreateAcceptsPets = true; marketCreateAcceptsSilver = false;
   const offered = alreadyOfferedUids();
@@ -232,6 +260,7 @@ function openCreateOfferModal(){
   paintMarketChips(document.getElementById('market-create-pet-list'));
   document.getElementById('market-modal').classList.add('open');
 }
+/** Sélectionne le pet à proposer dans la modale de création d'offre et met à jour le surlignage visuel. @param {string} uid - uid du pet choisi. */
 function pickCreatePet(uid){
   marketCreatePetUid = uid;
   document.querySelectorAll('#market-create-pet-list .market-pick').forEach(el=>{
@@ -242,6 +271,7 @@ function pickCreatePet(uid){
 // bascule sur l'onglet Marché puis ouvre directement la modale de création AVEC ce familier déjà
 // pré-sélectionné (évite de re-cliquer dessus dans la grille de choix qui s'affiche quand même,
 // utile pour voir/changer de choix avant publication).
+/** @param {number} petId - id local du pet à pré-sélectionner (voir commentaire ci-dessus pour le contexte). */
 function quickAddToMarket(petId){
   const pet = PETS.find(p=>p.id===petId); if(!pet) return;
   if(alreadyOfferedUids().has(pet.uid)){ toast('❌','Déjà en vente.'); return; }
@@ -252,6 +282,7 @@ function quickAddToMarket(petId){
   const el = document.querySelector(`#market-create-pet-list .market-pick[data-uid="${pet.uid}"]`);
   if(el) el.scrollIntoView({ block:'center' });
 }
+/** Valide le formulaire de création d'offre et publie l'offre via la RPC `create_pet_trade_offer`. */
 async function submitCreateOffer(){
   if(!marketCreatePetUid){ toast('❌','Choisis un familier à proposer.'); return; }
   const pet = PETS.find(p=>p.uid===marketCreatePetUid);
@@ -273,6 +304,7 @@ async function submitCreateOffer(){
     setMarketSubTab('mine');
   }catch(e){ toast('❌', marketMkErr(e)); }
 }
+/** Retire une de mes offres ouvertes après confirmation (invalide toute contre-offre en attente). @param {number} offerId */
 async function cancelMyOffer(offerId){
   if(!confirm('Retirer ce contrat ? Toute contre-offre en attente sera invalidée.')) return;
   try{ const sb=marketSb(); const { error } = await sb.rpc('cancel_pet_trade_offer', { p_offer_id: offerId }); if(error) throw error; toast('🗑️','Contrat retiré.'); renderMarketMine(); }
@@ -286,6 +318,12 @@ async function cancelMyOffer(offerId){
 // côté serveur au contexte de CETTE offre ouverte précise (voir migration
 // restrict_get_player_owned_species_to_open_offer.sql) -- jamais une sonde arbitraire.
 let marketOpponentOwnedSpecies = null; // Set<string> | null tant que non chargé
+/**
+ * Ouvre la modale de contre-offre sur une offre du Marché : construit le formulaire (pets/silver
+ * selon ce que l'offre accepte) puis charge en tâche de fond les espèces déjà possédées par le
+ * créateur de l'offre pour badger les pets "nouveaux" pour lui.
+ * @param {number} offerId - id de l'offre visée (doit être dans marketOffers).
+ */
 async function openCounterModal(offerId){
   const o = marketOffers.find(x=>x.id===offerId);
   if(!o) return;
@@ -315,6 +353,7 @@ async function openCounterModal(offerId){
   }
   document.getElementById('market-modal').classList.add('open');
 }
+/** Rend la grille de sélection des pets à proposer en contre-offre, avec badge "🆕" pour les espèces que le créateur de l'offre ne possède pas encore. @param {number} offerId */
 function renderCounterPetList(offerId){
   const o = marketOffers.find(x=>x.id===offerId); if(!o) return;
   const list = document.getElementById('market-counter-pet-list'); if(!list) return;
@@ -329,12 +368,14 @@ function renderCounterPetList(offerId){
   }).join('') || `<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">Aucun familier disponible.</div>`;
   paintMarketChips(list);
 }
+/** Ajoute/retire un pet de la sélection de contre-offre, en respectant le quota `pet_qty` de l'offre. @param {string} uid @param {number} offerId */
 function toggleCounterPet(uid, offerId){
   const o = marketOffers.find(x=>x.id===offerId);
   if(marketCounterPetUids.has(uid)) marketCounterPetUids.delete(uid);
   else { if(o && marketCounterPetUids.size>=o.pet_qty){ toast('❌',`Maximum ${o.pet_qty} familier(s).`); return; } marketCounterPetUids.add(uid); }
   renderCounterPetList(offerId);
 }
+/** Valide et envoie la contre-offre (pets sélectionnés + silver) via la RPC `submit_pet_trade_counter`. @param {number} offerId */
 async function submitCounter(offerId){
   const o = marketOffers.find(x=>x.id===offerId); if(!o) return;
   const pets = Array.from(marketCounterPetUids).map(uid=>petSnapshotOf(PETS.find(p=>p.uid===uid))).filter(Boolean);
@@ -350,14 +391,17 @@ async function submitCounter(offerId){
     renderMarketBrowse();
   }catch(e){ toast('❌', marketMkErr(e)); }
 }
+/** Retire une contre-offre que j'ai envoyée, tant qu'elle est encore pending. @param {number} counterId */
 async function withdrawMyCounter(counterId){
   try{ const sb=marketSb(); const { error } = await sb.rpc('withdraw_pet_trade_counter', { p_counter_id: counterId }); if(error) throw error; toast('🗑️','Contre-offre retirée.'); renderMarketMine(); }
   catch(e){ toast('❌', marketMkErr(e)); }
 }
+/** Refuse une contre-offre reçue sur une de mes offres. @param {number} counterId */
 async function declineMarketCounter(counterId){
   try{ const sb=marketSb(); const { error } = await sb.rpc('decline_pet_trade_counter', { p_counter_id: counterId }); if(error) throw error; toast('✕','Contre-offre refusée.'); renderMarketMine(); updateMarketBadge(); }
   catch(e){ toast('❌', marketMkErr(e)); }
 }
+/** Accepte une contre-offre après confirmation : conclut l'échange côté serveur (atomique) puis réclame la livraison locale. @param {number} counterId */
 async function acceptMarketCounter(counterId){
   if(!confirm('Accepter cette offre ? L\'échange sera définitif.')) return;
   try{
@@ -372,6 +416,11 @@ async function acceptMarketCounter(counterId){
 }
 
 // ═══ LIVRAISONS + NOTIFICATIONS (appelées au chargement du module) ═════════════════════════════
+/**
+ * Réclame les livraisons d'échange non encore récupérées : insère les pets reçus dans PETS
+ * (en respectant le plafond du roster + tampon d'échange), crédite le silver reçu, marque
+ * chaque livraison comme réclamée côté serveur, puis sauvegarde/rafraîchit l'UI si du gain a eu lieu.
+ */
 async function claimMarketDeliveries(){
   if(!marketReady()) return;
   try{
@@ -395,6 +444,7 @@ async function claimMarketDeliveries(){
     }
   }catch(e){}
 }
+/** Récupère et affiche (toast) les notifications Marché non lues, puis les marque comme lues côté serveur. */
 async function pollMarketNotifications(){
   if(!marketReady()) return;
   try{
@@ -411,6 +461,7 @@ async function pollMarketNotifications(){
 // de vraies notifications asynchrones (contre-offres reçues sur mes contrats) -- compte les
 // contre-offres en attente sur MES offres ouvertes, même info que la liste détaillée de l'onglet
 // "Mes contrats" (renderMarketMine()), juste résumée en un chiffre visible sans ouvrir l'onglet.
+/** Met à jour le badge numérique de l'onglet Marché avec le nombre de contre-offres en attente sur mes offres ouvertes. */
 async function updateMarketBadge(){
   const badge = document.getElementById('tb-market');
   if(!badge) return;

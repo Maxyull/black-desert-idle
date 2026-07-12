@@ -38,9 +38,13 @@ function ST(i){
   // (sections.js).
   if(i!==2 && typeof disposeTerrainViewer3dIfActive==='function') disposeTerrainViewer3dIfActive();
 }
+/** Affiche une notification toast éphémère (auto-retirée après ~2.9s). @param {string} ico - emoji. @param {string} msg - texte. */
 function toast(ico,msg){const w=document.getElementById('toast-wrap');const t=document.createElement('div');t.className='toast';t.innerHTML=`<span style="font-size:15px">${ico}</span><span>${msg}</span>`;w.appendChild(t);setTimeout(()=>t.remove(),2900);}
+/** Ouvre une modale (ajoute la classe 'open'). @param {string} id - id DOM de la modale. */
 function OM(id){document.getElementById(id).classList.add('open');}
+/** Ferme une modale (retire la classe 'open'). @param {string} id - id DOM de la modale. */
 function CM(id){document.getElementById(id).classList.remove('open');}
+/** @param {number} s - secondes restantes. @returns {string} 'PRÊT' si ≤0, sinon durée formatée HH:MM:SS. */
 function fmtT(s){if(s<=0)return'PRÊT';return`${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
 
 // ═══ HATCH ═══════════════════════════════════════════════════════

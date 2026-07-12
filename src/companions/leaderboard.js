@@ -64,11 +64,13 @@ function renderMyStatsGrid(){
       <div style="font-family:'JetBrains Mono',monospace;font-size:16px;color:var(--gold)">${t.val}</div>
     </div>`).join('');
 }
+/** @param {number} n - nombre brut. @returns {string} nombre formaté avec séparateurs de milliers FR. */
 function fmtN(n){ return n.toLocaleString('fr-FR'); }
 /** @param {object} row - ligne du classement (résultat RPC). @param {string} cat - clé de LB_CATS. @returns {number} valeur du joueur pour cette catégorie. */
 function lbScoreOf(row, cat){ return cat==='prestige' ? Number(row.prestige_score||0) : cat==='gs' ? (row.gs_max||0) : cat==='fusion' ? (row.fusion_count||0) : (row.achievements_count||0); }
 /** @param {string} cat - clé de LB_CATS. @returns {object[]} copie de lbRows triée par lbScoreOf décroissant. */
 function lbSorted(cat){ return [...(lbRows||[])].sort((a,b)=>lbScoreOf(b,cat)-lbScoreOf(a,cat)); }
+/** @param {number} rank - rang 1-based. @returns {string} emoji médaille pour le top 3, chaîne vide sinon. */
 function lbMedal(rank){ return rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':''; }
 
 /** Appelle la RPC publique companion_leaderboard() via le client déjà authentifié de la page hôte (pattern cross-window de sync.js), gère les cas hors-iframe/déconnecté/invité, puis rend l'UI. */
@@ -228,4 +230,5 @@ function lbWirePager(totalPages){
   if(prev) prev.onclick = () => { lbPage--; renderLeaderboardUi(); };
   if(next) next.onclick = () => { lbPage++; renderLeaderboardUi(); };
 }
+/** @param {*} s - texte potentiellement fourni par un autre joueur (pseudo). @returns {string} version échappée sûre pour insertion HTML. */
 function escapeHtmlLb(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
