@@ -27,23 +27,63 @@ let notifSerial = 0; // id local incrémental (unique le temps d'une session, su
 // important ou non")
 const NOTIF_MAX_AGE_MS = 7 * 24 * 3600 * 1000; // auto-purge après 7 jours — demande explicite du 2026-07-08
 const NOTIF_SHOW_LIMIT = 20; // "affiche les 20 dernières entrées" — demande explicite du 2026-07-08
+// ---------- réorganisation du centre de notifications (rail catégories/regroupement par jour/
+// point "nouveau"/regroupement répétitif/action contextuelle/recherche/vider scopé), port fidèle
+// du mockup validé par l'utilisateur -- voir CLAUDE.md section mockups ----------
+// "non lu" = un SEUL timestamp (S.notifLastSeenTs), pas un Set<id> : une entrée est "nouvelle" si
+// n.t > S.notifLastSeenTs. Ce timestamp n'avance QUE à la fermeture RÉELLE du panneau
+// (closeInfoOverlay(), game-supabase.js -> leaveNotifCenterIfOpen() ci-dessous) ou via le bouton
+// "Tout marquer lu" (markAllNotifRead()) -- JAMAIS à l'ouverture, pour que le badge cloche et les
+// points dorés restent visibles PENDANT que le joueur consulte le panneau (avant, notifUnread=0
+// était posé dès l'ouverture : le joueur n'avait plus aucun moyen de voir ce qui était vraiment
+// nouveau). Choix documenté ici plutôt qu'un Set<id> : plus simple, ne grossit jamais, suffisant
+// car on ne distingue jamais "lu individuellement" une entrée précise, seulement un seuil temporel.
+let notifCenterOpen = false; // le panneau est-il actuellement affiché ? (pour ne stamper notifLastSeenTs qu'à la fermeture réelle, voir leaveNotifCenterIfOpen)
+let notifCatFilter = 'all'; // 'all' | 'important' | 'success' | 'info'
+let notifSearchQuery = '';
+let notifExpandedGroups = new Set(); // clés des groupes "N répétitions" actuellement dépliés (état de session, non sauvegardé)
+let notifClearArm = null; // { cat, expiresAt } | null -- état transitoire du bouton "Vider" (confirmation 2 clics/3s, pas de popup)
+/** Initialise S.notifLastSeenTs si absent (défaut lazy, pas un flag de migration dédié : une simple valeur par défaut, pas un recalcul rétroactif d'une donnée existante). Une sauvegarde qui a DÉJÀ des entrées dans S.notifLog (mise à jour depuis une version antérieure à ce champ) les considère toutes déjà vues -- sinon un joueur existant verrait un flot de points "nouveau" rétroactifs sur tout son historique. Un compte tout neuf (journal vide) part de 0 : sa toute première notification s'affichera bien comme nouvelle. */
+function ensureNotifLastSeen() {
+  if (S.notifLastSeenTs != null) return;
+  S.notifLastSeenTs = (S.notifLog && S.notifLog.length) ? Date.now() : 0;
+}
+/** @param {string} [catFilter] - si fourni, ne compte que cette catégorie. @returns {number} nombre d'entrées de S.notifLog postérieures à S.notifLastSeenTs. */
+function computeNotifUnreadCount(catFilter) {
+  ensureNotifLastSeen();
+  const cutoff = S.notifLastSeenTs;
+  const log = S.notifLog || [];
+  return log.filter(n => n.t > cutoff && (!catFilter || catFilter === 'all' || n.cat === catFilter)).length;
+}
+/** Marque tout comme lu IMMÉDIATEMENT (bouton "Tout marquer lu", non destructif) -- distinct de la fermeture du panneau qui fait la même chose mais seulement quand le joueur s'en va. */
+function markAllNotifRead() {
+  S.notifLastSeenTs = Date.now();
+  updateNotifBadge();
+}
+/** Appelé UNIQUEMENT par closeInfoOverlay() (game-supabase.js) à la fermeture réelle du panneau -- jamais à un simple re-rendu interne (recherche/filtre/suppression/expansion de groupe restent "notifCenterOpen"). */
+function leaveNotifCenterIfOpen() {
+  if (!notifCenterOpen) return;
+  notifCenterOpen = false;
+  S.notifLastSeenTs = Date.now();
+  updateNotifBadge();
+}
 /** Purge S.notifLog des entrées de plus de NOTIF_MAX_AGE_MS (7 jours). */
 function pruneNotifLog() {
   const cutoff = Date.now() - NOTIF_MAX_AGE_MS;
   S.notifLog = (S.notifLog||[]).filter(n => n.t >= cutoff);
 }
-/** @param {string} icon @param {string} title @param {string} text @param {'important'|'success'|'info'} [cat] - défaut 'info'. Ajoute une entrée persistante à S.notifLog (survit au reload), purge les anciennes, incrémente le badge non-lu. */
+/** @param {string} icon @param {string} title @param {string} text @param {'important'|'success'|'info'} [cat] - défaut 'info'. Ajoute une entrée persistante à S.notifLog (survit au reload), purge les anciennes, recalcule le badge non-lu. */
 function pushNotif(icon, title, text, cat) {
   pruneNotifLog();
   S.notifLog.unshift({ id: ++notifSerial + '_' + Date.now(), icon, title, text, t: Date.now(), cat: cat || 'info' });
   if (S.notifLog.length > 200) S.notifLog.length = 200; // garde-fou dur, bien au-delà des 20 affichées
-  notifUnread++;
-  updateNotifBadge();
+  updateNotifBadge(); // recalcule notifUnread depuis S.notifLastSeenTs (voir computeNotifUnreadCount), plus un simple ++
 }
 /** @param {string} id - id de l'entrée S.notifLog à supprimer. */
 function deleteNotif(id) {
   S.notifLog = (S.notifLog||[]).filter(n => n.id !== id);
-  openNotifCenter(); // re-render immédiat, le joueur voit la ligne disparaître
+  updateNotifBadge();
+  refreshNotifPanel(); // no-op si le panneau n'est pas ouvert (voir garde en tête de fonction)
 }
 // relaie un événement vers le salon Discord "log général" via l'Edge Function discord-log —
 // le webhook lui-même reste côté serveur, jamais dans ce code client (voir supabase-discord-log)
@@ -61,6 +101,7 @@ async function logToDiscord(title, description, color) {
 }
 function updateNotifBadge() {
   const badge = $a('notifBadge'); if (!badge) return;
+  notifUnread = computeNotifUnreadCount(); // dérivé de S.notifLastSeenTs, jamais un compteur incrémenté à la main
   badge.textContent = notifUnread > 9 ? '9+' : notifUnread;
   badge.classList.toggle('show', notifUnread > 0);
   // halo doré autour du bouton cloche (même animation que "notes de version non lues") — demande
@@ -103,56 +144,203 @@ const NOTIF_CAT_META = {
   success:   { fr:'🏆 Réussites', en:'🏆 Achievements' },
   info:      { fr:'📰 Activité',  en:'📰 Activity' },
 };
+// bouton d'action contextuel : seulement quand une notification appelle une action évidente --
+// clé = icône (suffisant, un seul cas aujourd'hui : le mode invité, voir pushNotif('🎭', ...) dans
+// backend/game-supabase.js). Si un 2e cas apparaît, généraliser à une clé plus fine (icon+cat)
+// plutôt que déjà sur-anticiper sur un seul exemple.
+const NOTIF_ACTIONS = {
+  '🎭': { labelKey: 'progression:progression.notifications.login_action', run: () => { if (typeof showAuthOverlay === 'function') showAuthOverlay(true); } },
+};
+// seuil de regroupement des notifications répétitives (ex: plusieurs "Niveau supérieur" le même
+// jour) -- limité aux entrées 'info' (routine, potentiellement nombreuses en session de farm) :
+// jamais 'important'/'success', qui restent des événements rares méritant d'être vus
+// individuellement (succès, boss vaincu, reset de compte). Seuil >= 3 répétitions le même jour
+// (même icône + même titre) pour ne pas grouper 1-2 occurrences isolées.
+const NOTIF_GROUP_MIN = 3;
+/** @param {number} ts. @returns {string} clé de jour, réutilise dayKeyOf() (social/chat.js) -- même regroupement "Aujourd'hui/Hier/date" que le chat, référencé en exécution (chat.js charge après ce fichier mais seulement appelé au clic du joueur, voir CLAUDE.md §7). */
+function notifDayKey(ts) { return dayKeyOf(new Date(ts).toISOString()); }
+/** @param {number} ts. @returns {string} libellé de jour ("Aujourd'hui"/"Hier"/date), réutilise fmtDaySeparator() (social/chat.js). */
+function notifDayLabel(ts) { return fmtDaySeparator(new Date(ts).toISOString()); }
+/** @param {Array} items - entrées déjà filtrées (catégorie/recherche), triées du plus récent au plus ancien. @returns {Array} liste de { single:entry } ou { key,cat,icon,title,entries:[...] } (entries[0] = la plus récente du groupe). */
+function groupNotifEntries(items) {
+  const groups = [];
+  const byKey = new Map();
+  items.forEach(n => {
+    if (n.cat !== 'info') { groups.push({ single: n }); return; }
+    const key = notifDayKey(n.t) + '|' + n.icon + '|' + n.title;
+    let g = byKey.get(key);
+    if (!g) { g = { key, cat: n.cat, icon: n.icon, title: n.title, entries: [] }; byKey.set(key, g); groups.push(g); }
+    g.entries.push(n);
+  });
+  // sous le seuil : redevient des lignes seules (pas assez répétitif pour justifier un pliage)
+  return groups.flatMap(g => (g.single || g.entries.length >= NOTIF_GROUP_MIN) ? [g] : g.entries.map(n => ({ single: n })));
+}
 function notifRowHtml(n) {
-  return `<div class="notifRow ${n.cat}">
-    <div class="notifIcon">${n.icon}</div>
-    <div class="notifBody"><div class="notifTitle">${escapeHtml(n.title)}</div><div class="notifText">${escapeHtml(n.text)}</div></div>
-    <div class="notifTime">${fmtNotifTime(n.t)}</div>
-    <button class="notifDelBtn" data-id="${n.id}" title="${i18next.t('progression:progression.notifications.delete')}">✕</button>
+  const isNew = n.t > (S.notifLastSeenTs != null ? S.notifLastSeenTs : Infinity);
+  const action = NOTIF_ACTIONS[n.icon];
+  return `<div class="ncRow ${n.cat}">
+    <div class="ncIconWrap"><div class="ncIcon">${n.icon}</div>${isNew ? '<div class="ncNewDot"></div>' : ''}</div>
+    <div class="ncBody">
+      <div class="ncTitle">${escapeHtml(n.title)}</div>
+      <div class="ncText">${escapeHtml(n.text)}</div>
+      ${action ? `<button class="ncActionBtn" data-action-icon="${escapeHtml(n.icon)}">${escapeHtml(i18next.t(action.labelKey))}</button>` : ''}
+    </div>
+    <div class="ncRight"><span class="ncTime">${fmtNotifTime(n.t)}</span><button class="ncDel" data-id="${n.id}" title="${i18next.t('progression:progression.notifications.delete')}">✕</button></div>
   </div>`;
 }
-let notifCatFilter = 'all'; // 'all' | 'important' | 'success' | 'info' — demande explicite du 2026-07-08 ("les catégories doivent être en haut")
-function openNotifCenter() {
-  notifUnread = 0;
-  updateNotifBadge();
-  pruneNotifLog(); // purge les entrées de plus de 7 jours avant d'afficher
-  const log = S.notifLog||[];
-  if (!log.length) {
-    openInfo(i18next.t('progression:progression.notifications.title'),
-      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty')}</div>`);
-    return;
-  }
-  // "affiche les 20 dernières entrées" (demande explicite du 2026-07-08) : on ne garde QUE les 20
-  // plus récentes tous types confondus pour l'affichage (le stockage garde jusqu'à 200, purgées au
-  // bout de 7 jours) — réparties ensuite par catégorie, avec des ONGLETS FIXES en haut du panneau
-  // (au lieu de simples titres de section perdus dans le défilement) pour sauter direct à une
-  // catégorie sans avoir à scroller.
-  const shown = log.slice(0, NOTIF_SHOW_LIMIT);
-  const important = shown.filter(n => n.cat === 'important');
-  const success = shown.filter(n => n.cat === 'success');
-  const info = shown.filter(n => n.cat === 'info');
-  if (!['all','important','success','info'].includes(notifCatFilter)) notifCatFilter = 'all';
-  const tabsHtml = `<div class="catTabs">
-    <button class="catTab notifCatTab${notifCatFilter==='all'?' active':''}" data-cat="all">${i18next.t('progression:progression.notifications.tab_all')} <span class="notifSectionCount">${shown.length}</span></button>
-    <button class="catTab notifCatTab${notifCatFilter==='important'?' active':''}" data-cat="important">${NOTIF_CAT_META.important[LANG]} <span class="notifSectionCount">${important.length}</span></button>
-    <button class="catTab notifCatTab${notifCatFilter==='success'?' active':''}" data-cat="success">${NOTIF_CAT_META.success[LANG]} <span class="notifSectionCount">${success.length}</span></button>
-    <button class="catTab notifCatTab${notifCatFilter==='info'?' active':''}" data-cat="info">${NOTIF_CAT_META.info[LANG]} <span class="notifSectionCount">${info.length}</span></button>
-  </div>`;
-  const section = (cat, items) => !items.length ? '' :
-    `<div class="notifSectionTitle">${NOTIF_CAT_META[cat][LANG]} <span class="notifSectionCount">${items.length}</span></div>` +
-    items.map(notifRowHtml).join('');
-  const html = notifCatFilter === 'all'
-    ? section('important', important) + section('success', success) + section('info', info)
-    : (notifCatFilter === 'important' ? important : notifCatFilter === 'success' ? success : info).map(notifRowHtml).join('') ||
-      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty_category')}</div>`;
-  const summary = `<div class="notifSummary">${i18next.t('progression:progression.notifications.summary', { count: shown.length, total: log.length })}</div>`;
-  openInfo(i18next.t('progression:progression.notifications.title'), summary + tabsHtml + `<div class="notifScroll">${html}</div>`);
-  $a('infoBody').querySelectorAll('.notifCatTab').forEach(btn => {
-    btn.onclick = () => { notifCatFilter = btn.dataset.cat; openNotifCenter(); };
+/** @param {string} cat - 'all'|'important'|'success'|'info'. @returns {string} clé i18n de l'état vide EXPLIQUANT ce qui apparaîtra dans cette catégorie (pas juste "rien à afficher"). */
+function notifEmptyHintKey(cat) {
+  if (cat === 'important') return 'progression:progression.notifications.empty_hint_important';
+  if (cat === 'success') return 'progression:progression.notifications.empty_hint_success';
+  if (cat === 'info') return 'progression:progression.notifications.empty_hint_info';
+  return 'progression:progression.notifications.empty_hint_all';
+}
+/** @param {Array} items - entrées déjà filtrées par catégorie (PAS encore par recherche). @returns {string} HTML de la liste : recherche texte, regroupement par jour (notifDayKey/notifDayLabel) puis par répétition (groupNotifEntries), état vide explicatif si rien à montrer. */
+function renderNotifListHtml(items) {
+  if (!items.length) return `<div class="ncEmptyHint">${i18next.t(notifEmptyHintKey(notifCatFilter))}</div>`;
+  const q = notifSearchQuery.trim().toLowerCase();
+  const filtered = q ? items.filter(n => (n.title + ' ' + n.text).toLowerCase().includes(q)) : items;
+  if (!filtered.length) return `<div class="ncEmptyHint">${i18next.t('progression:progression.notifications.no_search_results')}</div>`;
+  const groups = groupNotifEntries(filtered);
+  let lastDay = null, html = '';
+  groups.forEach(g => {
+    const repEntry = g.single || g.entries[0];
+    const dk = notifDayKey(repEntry.t);
+    if (dk !== lastDay) { html += `<div class="ncDay">${escapeHtml(notifDayLabel(repEntry.t))}</div>`; lastDay = dk; }
+    if (g.single) { html += notifRowHtml(g.single); return; }
+    const expanded = notifExpandedGroups.has(g.key);
+    if (expanded) {
+      html += g.entries.map(notifRowHtml).join('');
+      html += `<div class="ncGroupRow" data-key="${escapeHtml(g.key)}"><div class="ncGroupIcon">${g.icon}</div><div class="ncGroupText">${escapeHtml(i18next.t('progression:progression.notifications.group_collapse'))}</div><span class="ncChevron">▴</span></div>`;
+    } else {
+      html += `<div class="ncGroupRow" data-key="${escapeHtml(g.key)}">` +
+        `<div class="ncGroupIcon">${g.icon}</div>` +
+        `<div class="ncGroupText">${i18next.t('progression:progression.notifications.group_summary', { count: g.entries.length, title: escapeHtml(g.title), lastText: escapeHtml(g.entries[0].text) })}</div>` +
+        `<span class="ncChevron">▾ ${escapeHtml(i18next.t('progression:progression.notifications.group_expand'))}</span></div>`;
+    }
   });
-  $a('infoBody').querySelectorAll('.notifDelBtn').forEach(btn => {
+  return html;
+}
+/** @param {Array} shown - fenêtre d'affichage courante (déjà limitée à NOTIF_SHOW_LIMIT). @returns {string} HTML du rail de catégories (façon Marché commun, .cmCategoryTree/.cmCatBtn) avec compteur de NON-LUES par catégorie. */
+function notifRailHtml(shown) {
+  const cats = [
+    { id:'all', label: i18next.t('progression:progression.notifications.tab_all') },
+    { id:'important', label: NOTIF_CAT_META.important[LANG] },
+    { id:'success', label: NOTIF_CAT_META.success[LANG] },
+    { id:'info', label: NOTIF_CAT_META.info[LANG] },
+  ];
+  return `<div class="ncRailTitle">${i18next.t('progression:progression.notifications.rail_title')}</div>` +
+    cats.map(c => {
+      const unread = computeNotifUnreadCount(c.id === 'all' ? null : c.id);
+      return `<div class="ncRailItem${notifCatFilter===c.id?' active':''}" data-cat="${c.id}">` +
+        `<span>${c.label}</span><span class="ncRailCount${unread>0?' unread':''}">${unread}</span></div>`;
+    }).join('');
+}
+/** @param {Array} shown - fenêtre d'affichage courante (voir currentNotifShown), sert uniquement au tooltip de rétention. @returns {string} HTML de l'en-tête (compteur non-lues total, "Tout marquer lu" non-destructif, "Vider [catégorie affichée]" destructif rescopé + confirmation 2 clics/3s). */
+function notifHeadHtml(shown) {
+  const totalUnread = computeNotifUnreadCount();
+  const catLabel = notifCatFilter === 'all' ? i18next.t('progression:progression.notifications.tab_all') : NOTIF_CAT_META[notifCatFilter][LANG];
+  const armed = !!(notifClearArm && notifClearArm.cat === notifCatFilter && notifClearArm.expiresAt > Date.now());
+  const clearLabel = armed
+    ? i18next.t('progression:progression.notifications.clear_confirm', { sec: Math.max(1, Math.ceil((notifClearArm.expiresAt - Date.now())/1000)) })
+    : i18next.t('progression:progression.notifications.clear_category', { cat: escapeHtml(catLabel) });
+  // info de rétention (fenêtre affichée/total réel, purge auto 7 jours) : plus affichée en ligne
+  // permanente (le mockup validé ne la montre pas), conservée en tooltip du titre pour ne rien
+  // perdre plutôt que de simplement supprimer la clé i18n existante (progression.notifications.summary).
+  const retentionTitle = i18next.t('progression:progression.notifications.summary', { count: (shown||[]).length, total: (S.notifLog||[]).length });
+  return `<div class="ncHeadTitle" title="${escapeHtml(retentionTitle)}">${i18next.t('progression:progression.notifications.title')}` +
+    (totalUnread>0 ? ` <span class="ncHeadUnread">${i18next.t('progression:progression.notifications.unread_badge', { count: totalUnread })}</span>` : '') +
+    `</div><div class="ncActions">` +
+    `<button id="notifMarkAllReadBtn" class="ncGhostBtn">${i18next.t('progression:progression.notifications.mark_all_read')}</button>` +
+    `<button id="notifClearBtn" class="ncClearBtn${armed?' armed':''}">${clearLabel}</button></div>`;
+}
+/** @returns {Array} les entrées dans la fenêtre d'affichage (purge + NOTIF_SHOW_LIMIT), tous types confondus. */
+function currentNotifShown() {
+  pruneNotifLog();
+  return (S.notifLog||[]).slice(0, NOTIF_SHOW_LIMIT);
+}
+/** @returns {Array} currentNotifShown() filtré par notifCatFilter (PAS encore par recherche, voir renderNotifListHtml). */
+function currentNotifFiltered() {
+  const shown = currentNotifShown();
+  return notifCatFilter === 'all' ? shown : shown.filter(n => n.cat === notifCatFilter);
+}
+/** Câble les interactions du panneau (rail, tout marquer lu, vider, suppression de ligne, dépli de groupe, action contextuelle) -- appelé après CHAQUE (re)rendu du rail/en-tête/liste. */
+function wireNotifPanelEvents() {
+  const body = $a('infoBody'); if (!body) return;
+  body.querySelectorAll('.ncRailItem').forEach(btn => {
+    btn.onclick = () => { notifCatFilter = btn.dataset.cat; notifClearArm = null; refreshNotifPanel(); };
+  });
+  const markBtn = $a('notifMarkAllReadBtn');
+  if (markBtn) markBtn.onclick = () => { markAllNotifRead(); refreshNotifPanel(); };
+  const clearBtn = $a('notifClearBtn');
+  if (clearBtn) clearBtn.onclick = () => handleNotifClearClick();
+  body.querySelectorAll('.ncDel').forEach(btn => {
     btn.onclick = e => { e.stopPropagation(); deleteNotif(btn.dataset.id); };
   });
+  body.querySelectorAll('.ncGroupRow').forEach(row => {
+    row.onclick = () => { toggleNotifGroup(row.dataset.key); };
+  });
+  body.querySelectorAll('.ncActionBtn').forEach(btn => {
+    btn.onclick = e => { e.stopPropagation(); const action = NOTIF_ACTIONS[btn.dataset.actionIcon]; if (action) action.run(); };
+  });
+}
+/** @param {string} key - clé de groupe (voir groupNotifEntries). Déplie/replie un groupe de notifications répétitives. */
+function toggleNotifGroup(key) {
+  if (notifExpandedGroups.has(key)) notifExpandedGroups.delete(key); else notifExpandedGroups.add(key);
+  refreshNotifPanel();
+}
+/** Gère le bouton "Vider [catégorie]" : 1er clic arme une confirmation transitoire (3s, pas de popup), 2e clic dans la fenêtre supprime RÉELLEMENT — et SEULEMENT — les entrées de la catégorie actuellement affichée (jamais tout l'historique si un filtre est actif, sauf si ce filtre est justement "Tout"). */
+function handleNotifClearClick() {
+  const now = Date.now();
+  if (notifClearArm && notifClearArm.cat === notifCatFilter && notifClearArm.expiresAt > now) {
+    S.notifLog = notifCatFilter === 'all' ? [] : (S.notifLog||[]).filter(n => n.cat !== notifCatFilter);
+    notifClearArm = null;
+    updateNotifBadge();
+    refreshNotifPanel();
+    return;
+  }
+  notifClearArm = { cat: notifCatFilter, expiresAt: now + 3000 };
+  refreshNotifPanel();
+  setTimeout(() => {
+    if (notifClearArm && notifClearArm.expiresAt <= Date.now()) { notifClearArm = null; if (notifCenterOpen) refreshNotifPanel(); }
+  }, 3100);
+}
+/** Re-rendu LÉGER du panneau (rail + en-tête + liste seulement, jamais la recherche elle-même) -- préserve le focus/la valeur du champ de recherche, contrairement à un openInfo() complet. No-op si le panneau n'est pas ouvert. */
+function refreshNotifPanel() {
+  const railEl = $a('notifRail'), headEl = $a('notifHead'), listEl = $a('notifListBody');
+  if (!railEl || !headEl || !listEl) return;
+  const shown = currentNotifShown();
+  railEl.innerHTML = notifRailHtml(shown);
+  headEl.innerHTML = notifHeadHtml(shown);
+  listEl.innerHTML = renderNotifListHtml(currentNotifFiltered());
+  wireNotifPanelEvents();
+}
+function openNotifCenter() {
+  ensureNotifLastSeen();
+  pruneNotifLog(); // purge les entrées de plus de 7 jours avant d'afficher
+  if (!['all','important','success','info'].includes(notifCatFilter)) notifCatFilter = 'all';
+  notifSearchQuery = ''; notifClearArm = null; // repartent à zéro à chaque OUVERTURE (pas aux re-rendus internes, voir refreshNotifPanel)
+  if (!(S.notifLog||[]).length) {
+    openInfo(i18next.t('progression:progression.notifications.title'),
+      `<div class="admEmpty">${i18next.t('progression:progression.notifications.empty')}</div>`, { isNotifCenter:true });
+    return;
+  }
+  const shellHtml = `<div class="ncStage">` +
+    `<div class="ncRail" id="notifRail"></div>` +
+    `<div class="ncMain">` +
+      `<div class="ncHead" id="notifHead"></div>` +
+      `<div class="ncSearchRow"><input id="notifSearchInput" class="ncSearch" placeholder="${i18next.t('progression:progression.notifications.search_placeholder')}"></div>` +
+      `<div class="ncList" id="notifListBody"></div>` +
+    `</div></div>`;
+  openInfo(i18next.t('progression:progression.notifications.title'), shellHtml, { isNotifCenter:true });
+  refreshNotifPanel();
+  const search = $a('notifSearchInput');
+  if (search) search.oninput = () => {
+    notifSearchQuery = search.value;
+    const listEl = $a('notifListBody'); // seule la liste est reconstruite : le champ garde le focus/curseur
+    if (listEl) listEl.innerHTML = renderNotifListHtml(currentNotifFiltered());
+    wireNotifPanelEvents();
+  };
 }
 
 /** Parcourt ACHIEVEMENTS, débloque (silver + toast + notif + Discord) tout succès non encore obtenu dont la stat cible est atteinte. */
