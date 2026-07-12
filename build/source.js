@@ -11621,10 +11621,16 @@ $a('equipModeSlider').querySelectorAll('.equipModeSeg').forEach(seg => {
 });
 renderEquipModeBtn();
 
+function mapCanvasClickToWorld(rect, canvasW, canvasH, clientX, clientY) {
+  const scale = Math.max(rect.width / canvasW, rect.height / canvasH);
+  const dispW = canvasW * scale, dispH = canvasH * scale;
+  const offX = (rect.width - dispW) / 2, offY = (rect.height - dispH) / 2;
+  return { sx: (clientX - rect.left - offX) / scale, sy: (clientY - rect.top - offY) / scale };
+}
+
 cv.addEventListener('click', e => {
   const rect = cv.getBoundingClientRect();
-  const sx = (e.clientX - rect.left) * (W / rect.width);
-  const sy = (e.clientY - rect.top) * (H / rect.height);
+  const { sx, sy } = mapCanvasClickToWorld(rect, W, H, e.clientX, e.clientY);
   const candidates = drops.filter(l => !l.taken).map(l => {
     const s = toScreen(l.x, l.y);
     return { l, d: Math.hypot(sx - s.sx, sy - s.sy) };
