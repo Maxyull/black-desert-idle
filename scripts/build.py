@@ -352,7 +352,7 @@ def rewrite_prod_html(dev_html):
             if not bundle_tag_inserted:
                 prod_lines.extend(meta_lines)
                 prod_lines.append(
-                    "<!-- build de production : bundle concatene, commentaires retires, puis minifie -->"
+                    "<!-- build de production : bundle concatene, commentaires retires, puis minifie"
                 )
                 prod_lines.append(
                     "     par Terser (build/source.min.js) -- genere par scripts/build.py depuis"

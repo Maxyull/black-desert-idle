@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V401', d:'23/07/2026 12:00', name:{fr:'Correctif : du texte technique s\'affichait en bas de l\'écran de jeu', en:'Fix: technical text was showing at the bottom of the game screen'}, fr:[
+      {t:'fix', sub:'interface', tx:'Un défaut dans le générateur de la version en ligne du jeu pouvait afficher des bouts de commentaires techniques (notes internes sur l\'ordre de chargement des fichiers) sous forme de texte brut tout en bas de l\'écran de jeu. Corrigé à la source : ce texte n\'apparaît plus jamais.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'A defect in the generator for the live version of the game could display fragments of internal technical comments (notes about file loading order) as raw text at the very bottom of the game screen. Fixed at the source: this text no longer appears.'},
+    ] },
   { v:'V400', d:'23/07/2026 11:00', name:{fr:'Sélecteurs de mode IA déplacés en haut à droite, compteur Compendium masqué sur téléphone', en:'AI mode selectors moved to the top-right, Compendium counter hidden on mobile'}, fr:[
       {t:'change', sub:'interface', tx:'Les 2 sélecteurs à bulles du cadre de jeu (mode de combat IA et mode de farm) sont désormais empilés en haut à droite du cadre, à la place de l\'ancien calage centré de part et d\'autre de l\'indicateur "IA : ...". Aucun changement de fonctionnement, seulement leur position.'},
       {t:'change', sub:'interface', plat:'mobile', tx:'Le compteur Compendium ("📖 X/Y" sous le nom de la zone) est désormais masqué sur téléphone pour laisser plus de place au nom de zone et aux PA/PD requis — reste affiché normalement sur ordinateur.'},
