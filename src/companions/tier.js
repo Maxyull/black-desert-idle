@@ -116,15 +116,22 @@ function comparisonBadge(pet){
     return {beats:false, text:`🔻 Sous ${RARITIES[pet.rar+1].name} T1 moyen`, delta: myGS-nextRarAvg};
   }
 }
+/** @param {number} pct - pourcentage de GS (0-100, voir gsPct()). @returns {string} classe CSS de couleur associée au palier de qualité. */
 function gsCls(pct){return pct>=90?'gs-max':pct>=65?'gs-high':pct>=35?'gs-med':'gs-low';}
+/** @param {number} r - index de rareté. @returns {string} couleur hex associée. */
 function rc(r){return RARITIES[r].hex;}
+/** @param {number} r - index de rareté. @returns {string} nom affichable de la rareté. */
 function rn(r){return RARITIES[r].name;}
+/** @param {string} id - id de section. @returns {object|undefined} définition de section correspondante dans SECTIONS. */
 function secById(id){return SECTIONS.find(s=>s.id===id);}
+/** @param {object} p - familier. @returns {string} id de section de son espèce. */
 function petSec(p){return p.cat.sec;}
+/** @param {string} secId - id de section. @returns {object|undefined} le pet actuellement marqué "terrain" (posé sur la carte) de cette section, s'il y en a un. */
 function terrainPet(secId){return PETS.find(p=>p.cat.sec===secId&&p.terrain);}
 // espèce pour une section+rareté donnée (2026-07-21, demande explicite : "lorsqu'on passe a la
 // rareté superieur, on change de nom et on prend les noms de la rareté superieur") -- PET_CATALOG
 // a EXACTEMENT une espèce par section×rareté (voir catalog.js), match déterministe garanti.
 // Partagée entre ticks.js (BREAKTHROUGH, temps réel) et save.js (migratePetSpeciesRarityV1,
 // rétroactif) pour ne jamais dupliquer cette règle à deux endroits.
+/** @param {string} sec - id de section. @param {number} rar - rareté cible. @returns {object|undefined} l'unique espèce de PET_CATALOG pour cette combinaison section×rareté. */
 function speciesForSectionAndRarity(sec,rar){return PET_CATALOG.find(c=>c.sec===sec&&c.rar===rar);}
