@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V384', d:'22/07/2026 05:00', name:{fr:'Panneau Quêtes/Courrier/Codex : même style que Zone/Boss/Succès', en:'Quests/Mailbox/Codex panel: same look as Zone/Boss/Achievements'}, fr:[
+      {t:'change', sub:'interface', tx:'La fenêtre générique utilisée par Quêtes, Courrier, Codex et les replis Wiki/Notes de version a reçu le même reskin visuel que les écrans Zone/Boss/Succès : coins arrondis, en-tête sobre (fini le vieux dégradé bleu-vert), titres en petites majuscules dorées, texte en police moderne.'},
+      {t:'change', sub:'interface', tx:'Le comparateur "Avant/Après" des notes de version a reçu la même coque.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The generic window used by Quests, Mailbox, Codex and the Wiki/Patch notes fallbacks got the same visual reskin as the Zone/Boss/Achievements screens: rounded corners, a plain header (no more the old blue-green gradient), small-caps gold titles, modern-font text.'},
+      {t:'change', sub:'interface', tx:'The patch notes "Before/After" comparison viewer got the same shell.'},
+    ] },
   { v:'V383', d:'22/07/2026 04:00', name:{fr:'Reskin du menu latéral et des encarts flottants (Suivi/Chat)', en:'Sidebar menu and floating widgets (Tracker/Chat) reskin'}, fr:[
       {t:'change', sub:'interface', tx:'Les boutons du menu latéral (Quêtes, Courrier, Compendium, Codex, Succès, Classement, Marché, Discord, Wiki, Notes de version, Soutenir, Mon compte, Déconnexion...) et le bouton de repli du menu ont reçu le même reskin visuel que le reste de l\'écran Zone (police, couleurs, coins arrondis) — ils avaient été oubliés lors des refontes précédentes et gardaient encore l\'ancien style.'},
       {t:'change', sub:'interface', tx:'Les encarts flottants "Suivi de quête" et "Chat" (coin haut-droit) ont reçu le même traitement — seule leur coque a changé, les onglets de canaux du chat gardent leur style déjà à jour.'},

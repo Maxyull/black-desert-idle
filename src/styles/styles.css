@@ -3003,3 +3003,62 @@
     font-family:'Inter',sans-serif;
   }
   .qwFoldBtn:hover { border-color:var(--dbBorder); color:var(--cream2); }
+
+  /* =====================================================================
+     Refonte visuelle "Zone" -- Phase 7 (2026-07-12) : reskin coque #infoOverlay/#infoBox + repli
+     #patchImgOverlay/#patchImgBox (mockup validé par l'utilisateur, voir
+     CLAUDE.md section mockups). #infoBox est la coque MODALE GÉNÉRIQUE
+     partagée par Quêtes/Courrier/Codex/repli Wiki/repli Notes de version --
+     jamais touchée par les refontes Zone/Boss/Succès précédentes : encore en
+     font-family:Georgia (hérité de body), fond var(--panel), bordure
+     var(--gold-dim), border-radius:0, en-tête en dégradé bleu-vert
+     (#26313a->#1b232a, reliquat d'un très ancien thème antérieur au thème
+     doré). Additif uniquement, réutilise EXCLUSIVEMENT les tokens déjà posés
+     par les refontes précédentes (--s1/--s2/--dbBorder/--dbBorder2/--gold2/
+     --cream2), aucune nouvelle teinte.
+     #infoHead est un id PARTAGÉ (préexistant, pas corrigé ici) entre
+     #infoOverlay ET #patchImgOverlay (voir index.dev.html) -- ce reskin
+     profite donc automatiquement aux deux en-têtes.
+     Composants internes déjà reskinnés séparément et volontairement NON
+     touchés ici : .catTab/.qScopeTab (reskin global existant), .achPanel/
+     .achOverview-/.achCatCard/.achChain- (reskin dédié Succès, 2026-07-11,
+     plus haut dans ce fichier), .patchToolbar/.patchSearchBox/.patchCatChip/
+     .patchControversyBtn (3e palette officielle propre au repli Notes de
+     version, voir commentaire dédié plus haut).
+     .achRow/.codexRow/.achBarWrap/.questSectionTitle (lignes de quête/
+     courrier/codex, bordures #201f26/#2c2a33) : vérifiés lisibles tels
+     quels -- le fond du panneau passe de var(--panel) #16151a à var(--s1)
+     #10101e, un ton à peine plus sombre ; ces bordures et les couleurs de
+     texte déjà en place (var(--ink), var(--ink-dim), var(--gold)) restent
+     largement assez contrastées sur les deux fonds, aucun ajustement requis.
+     .achBarWrap/.achBar sont aussi partagés avec #questWidget/#questTrackerWidget
+     (encarts HUD hors de #infoBody) -- volontairement pas retouchés ici pour
+     ne pas les affecter. */
+  #infoBox {
+    background:var(--s1); border-color:var(--dbBorder); border-radius:12px;
+  }
+  #infoHead {
+    background:var(--s1); border-bottom-color:var(--dbBorder);
+  }
+  #infoHead h2 {
+    font-family:'Cinzel',serif; font-weight:600; font-size:14px; letter-spacing:.05em; color:var(--gold2);
+  }
+  #closeInfo, #closePatchImg {
+    width:26px; height:26px; margin:0; padding:0; display:flex; align-items:center; justify-content:center;
+    background:var(--s2); border:1px solid var(--dbBorder); border-radius:6px; font-size:13px; color:var(--cream2);
+  }
+  #closeInfo:hover, #closePatchImg:hover { border-color:var(--dbBorder2); color:var(--ink); }
+  #infoBody {
+    font-family:'Inter',sans-serif; color:var(--cream2);
+  }
+  #infoBody h3 {
+    font-family:'Cinzel',serif; color:var(--gold2); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+  }
+  #infoBody p, #infoBody ul, #infoBody li { color:var(--cream2); }
+
+  /* #patchImgBox (comparateur avant/après des notes de version, même famille visuelle juste au-
+     dessus dans ce fichier) : même coque que #infoBox -- .patchImgLbl (badge Avant/Après en accent
+     doré) et .patchImgCol img restent inchangés, pas datés, hors périmètre de cette passe. */
+  #patchImgBox {
+    background:var(--s1); border-color:var(--dbBorder); border-radius:12px;
+  }
