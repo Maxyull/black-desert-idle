@@ -162,5 +162,6 @@
   "backend.wiki.nav_patchnotes": "Notes de version",
   "backend.wiki.nav_tuto": "Tutoriel",
   "backend.wiki.search_no_results": "Aucun résultat pour",
-  "backend.wiki.search_placeholder": "Rechercher…"
+  "backend.wiki.search_placeholder": "Rechercher…",
+  "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant"
 }

@@ -2203,6 +2203,7 @@ function applySaveState(data) {
   if (!S.migratedGearRescaleV403) { migrateGearRescaleV403(); S.migratedGearRescaleV403 = true; }
   if (!S.migratedGearLeaderboardRecordFixV405) { migrateGearLeaderboardRecordFixV405(); S.migratedGearLeaderboardRecordFixV405 = true; }
   if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
+  if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO

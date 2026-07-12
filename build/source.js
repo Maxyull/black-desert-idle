@@ -482,7 +482,8 @@ const I18N_RESOURCES = {
       "backend.wiki.nav_patchnotes": "Notes de version",
       "backend.wiki.nav_tuto": "Tutoriel",
       "backend.wiki.search_no_results": "Aucun résultat pour",
-      "backend.wiki.search_placeholder": "Rechercher…"
+      "backend.wiki.search_placeholder": "Rechercher…",
+      "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant"
     },
     "combat": {
       "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
@@ -673,7 +674,8 @@ const I18N_RESOURCES = {
       "inventory.velia_loot_banner": "🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :",
       "inventory.velia_peaceful_zone": "Velia — zone paisible",
       "inventory.velia_treasure_label": "Trésor de Velia",
-      "inventory.where_to_farm_label": "📍 Où farmer : "
+      "inventory.where_to_farm_label": "📍 Où farmer : ",
+      "inventory.action_store_in_chest_qty": "📦 Ranger {{n}} au coffre"
     },
     "market": {
       "market.after_balance_label": "Solde après l'achat",
@@ -1393,7 +1395,8 @@ const I18N_RESOURCES = {
       "backend.wiki.nav_patchnotes": "Patch notes",
       "backend.wiki.nav_tuto": "Tutorial",
       "backend.wiki.search_no_results": "No results for",
-      "backend.wiki.search_placeholder": "Search…"
+      "backend.wiki.search_placeholder": "Search…",
+      "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait"
     },
     "combat": {
       "combat.ai_mode.balanced_title": "Balanced AI: alternates attack and caution based on the fight",
@@ -1584,7 +1587,8 @@ const I18N_RESOURCES = {
       "inventory.velia_loot_banner": "🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:",
       "inventory.velia_peaceful_zone": "Velia — peaceful zone",
       "inventory.velia_treasure_label": "Velia Treasure",
-      "inventory.where_to_farm_label": "📍 Where to farm: "
+      "inventory.where_to_farm_label": "📍 Where to farm: ",
+      "inventory.action_store_in_chest_qty": "📦 Store {{n}} in chest"
     },
     "market": {
       "market.after_balance_label": "Balance after purchase",
@@ -3862,6 +3866,7 @@ function applySaveState(data) {
   if (!S.migratedGearRescaleV403) { migrateGearRescaleV403(); S.migratedGearRescaleV403 = true; }
   if (!S.migratedGearLeaderboardRecordFixV405) { migrateGearLeaderboardRecordFixV405(); S.migratedGearLeaderboardRecordFixV405 = true; }
   if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
+  if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); 
   S.xpNext = xpNeededFor(S.lvl); 
@@ -9144,9 +9149,26 @@ function showItemMenu(px, py, data) {
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
     
-    addPopBtn(pop, i18next.t('inventory:inventory.action_store_in_chest'), () => {
-      if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
-    });
+    if (s.stackable && s.qty > 1) {
+      pop.insertAdjacentHTML('beforeend', `<div class="ipChestDeposit">
+        <input type="range" min="1" max="${s.qty}" value="${s.qty}" id="ipChestDepositSlider">
+        <span id="ipChestDepositVal">${s.qty}</span>
+        <button id="ipChestDepositBtn">${i18next.t('inventory:inventory.action_store_in_chest_qty', { n: s.qty })}</button>
+      </div>`);
+      const wrap = pop.querySelector('.ipChestDeposit');
+      const slider = pop.querySelector('#ipChestDepositSlider'), val = pop.querySelector('#ipChestDepositVal'), btn = pop.querySelector('#ipChestDepositBtn');
+      wrap.onclick = e => e.stopPropagation(); 
+      slider.oninput = () => { val.textContent = slider.value; btn.textContent = i18next.t('inventory:inventory.action_store_in_chest_qty', { n: slider.value }); };
+      btn.onclick = () => {
+        const n = parseInt(slider.value, 10);
+        if (!veliaChestStore(data.invIndex, n)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
+        hideItemPop(); refreshInvUI();
+      };
+    } else {
+      addPopBtn(pop, i18next.t('inventory:inventory.action_store_in_chest'), () => {
+        if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
+      });
+    }
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
     
@@ -10214,6 +10236,23 @@ function migratePenMasteryV308() {
   new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
 }
 
+function mergeStackableDuplicateStacks(arr) {
+  const firstSlotByName = new Map();
+  for (let i = 0; i < arr.length; i++) {
+    const s = arr[i];
+    if (!s || !s.stackable) continue;
+    const firstIdx = firstSlotByName.get(s.name);
+    if (firstIdx === undefined) { firstSlotByName.set(s.name, i); continue; }
+    arr[firstIdx].qty = (arr[firstIdx].qty||0) + (s.qty||0);
+    arr[i] = null;
+  }
+}
+
+function migrateMergeStackableDuplicatesV407() {
+  mergeStackableDuplicateStacks(INV);
+  mergeStackableDuplicateStacks(VELIA_CHEST);
+}
+
 // ==== src/admin/enh-debug-tools.js ====
 function adminMaxEnhAllEquipped() {
   const maxLvl = ENH_NAMES.length - 1;
@@ -10730,36 +10769,64 @@ function drawProttyIso(wx,wy,w,t) {
   const tone = w.tone;
   
   ctx.fillStyle = tone;
-  ctx.beginPath(); ctx.ellipse(0,-14,14,13,0,Math.PI,0,true); ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(-14,-14);
+  ctx.bezierCurveTo(-18,-25,-10,-30,0,-27);
+  ctx.bezierCurveTo(10,-30,18,-25,14,-14);
+  ctx.bezierCurveTo(14,-4,6,2,0,2);
+  ctx.bezierCurveTo(-6,2,-14,-4,-14,-14);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.28)'; ctx.lineWidth=.9; ctx.stroke();
+  ctx.fillStyle='rgba(255,255,255,.16)';
+  ctx.save(); ctx.translate(-6,-20); ctx.rotate(-20*Math.PI/180);
+  ctx.beginPath(); ctx.ellipse(0,0,3.6,2.6,0,0,7); ctx.fill(); ctx.restore();
+  ctx.strokeStyle='rgba(0,0,0,.16)'; ctx.lineWidth=.6;
+  ctx.beginPath(); ctx.moveTo(0,-27); ctx.quadraticCurveTo(-1,-13,0,2); ctx.stroke();
   
-  ctx.fillStyle='rgba(230,250,240,.75)';
-  [[-8,-19,.7],[-3,-22,.55],[4,-21,.65],[8,-17,.5],[-5,-15,.5],[2,-16,.6]].forEach(([dx,dy,r]) => {
+  ctx.fillStyle='rgba(230,250,240,.85)';
+  [[-9,-19,.8],[-4,-23,.6],[4,-24,.7],[9,-18,.65],[-6,-13,.55],[2,-15,.65],[7,-11,.5]].forEach(([dx,dy,r]) => {
     ctx.beginPath(); ctx.arc(dx,dy,r,0,7); ctx.fill();
   });
   
   ctx.fillStyle='rgba(216,205,184,.92)';
   ctx.beginPath(); ctx.ellipse(0,-6,10.5,7,0,0,Math.PI); ctx.fill();
   
-  ctx.strokeStyle='rgba(216,205,184,.7)'; ctx.lineWidth=1.6; ctx.lineCap='round';
-  [[-6,0],[0,.6],[6,1.2]].forEach(([dx,ph]) => {
-    const sway = Math.sin(t*2.2+w.phase+ph)*2;
-    ctx.beginPath(); ctx.moveTo(dx,-2); ctx.quadraticCurveTo(dx+sway,3,dx+sway*1.4,8); ctx.stroke();
-  });
+  const drift = Math.sin(t*2.2+w.phase)*2.2;
+  ctx.strokeStyle='rgba(216,205,184,.7)'; ctx.lineCap='round';
+  ctx.lineWidth=1.3; ctx.beginPath(); ctx.moveTo(-8,0); ctx.quadraticCurveTo(-10,6,-15+drift,10); ctx.stroke();
+  ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(-3,1); ctx.quadraticCurveTo(-4,8,-9+drift,13); ctx.stroke();
+  ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(2,1); ctx.quadraticCurveTo(2,8,-2+drift,14); ctx.stroke();
+  ctx.lineWidth=1.3; ctx.beginPath(); ctx.moveTo(6,0); ctx.quadraticCurveTo(5,8,0+drift,14); ctx.stroke();
+  ctx.lineWidth=1.1; ctx.beginPath(); ctx.moveTo(11,-2); ctx.quadraticCurveTo(10,5,6+drift,10); ctx.stroke();
   
-  [[-9,0],[-3,1],[3,1],[9,0]].forEach(([dx,ph],i) => {
-    const sway = Math.sin(t*3+w.phase+ph)*1.6;
-    ctx.fillStyle='#c9d86a';
-    ctx.beginPath(); ctx.moveTo(dx-1.6,-21.5); ctx.lineTo(dx+sway,-30-Math.abs(sway)*.35); ctx.lineTo(dx+4.4,-21); ctx.closePath(); ctx.fill();
-    ctx.fillStyle='rgba(60,80,50,.4)';
-    ctx.beginPath(); ctx.ellipse(dx+sway*.5+1,-26,1.3,1.8,0,0,7); ctx.fill();
-  });
+  const wingSwayL = Math.sin(t*3+w.phase)*1.6;
+  ctx.save(); ctx.translate(wingSwayL*.4,0);
+  ctx.fillStyle = '#2f5a4e';
+  ctx.beginPath();
+  ctx.moveTo(-13,-18); ctx.lineTo(-15,-24); ctx.lineTo(-12,-24.5); ctx.lineTo(-14,-30);
+  ctx.lineTo(-10,-30); ctx.lineTo(-12,-36); ctx.lineTo(-7,-32); ctx.lineTo(-6,-25); ctx.lineTo(-3,-19);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(20,45,35,.55)';
+  ctx.save(); ctx.translate(-11,-30); ctx.rotate(-20*Math.PI/180);
+  ctx.beginPath(); ctx.ellipse(0,0,1.3,1.8,0,0,7); ctx.fill(); ctx.restore();
+  ctx.restore();
+  const wingSwayR = Math.sin(t*3+w.phase+1.4)*1.6;
+  ctx.save(); ctx.translate(wingSwayR*.4,0);
+  ctx.fillStyle = '#3a7364';
+  ctx.beginPath();
+  ctx.moveTo(13,-18); ctx.lineTo(16,-25); ctx.lineTo(12.5,-25.6); ctx.lineTo(15,-32);
+  ctx.lineTo(10.4,-32); ctx.lineTo(13,-39); ctx.lineTo(7,-34.5); ctx.lineTo(6.4,-27); ctx.lineTo(3,-19.5);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = 'rgba(20,45,35,.5)';
+  ctx.save(); ctx.translate(10.5,-31.5); ctx.rotate(20*Math.PI/180);
+  ctx.beginPath(); ctx.ellipse(0,0,1.5,2,0,0,7); ctx.fill(); ctx.restore();
+  ctx.save(); ctx.translate(7.5,-24); ctx.rotate(20*Math.PI/180);
+  ctx.beginPath(); ctx.ellipse(0,0,1,1.3,0,0,7); ctx.fill(); ctx.restore();
+  ctx.restore();
   
   ctx.fillStyle = tone;
   ctx.beginPath(); ctx.moveTo(-13,-13); ctx.lineTo(-21,-9+Math.sin(t*4+w.phase)*2); ctx.lineTo(-12,-6); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(13,-13); ctx.lineTo(21,-9-Math.sin(t*4+w.phase)*2); ctx.lineTo(12,-6); ctx.closePath(); ctx.fill();
-  
-  ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=.9;
-  ctx.beginPath(); ctx.ellipse(0,-14,14,13,0,Math.PI,0,true); ctx.stroke();
   
   ctx.fillStyle = w.lunge>.3 ? '#e05540' : '#2a2420';
   ctx.beginPath(); ctx.arc(4.5,-11,1.5,0,7); ctx.fill();
@@ -12527,6 +12594,21 @@ window.addEventListener('unhandledrejection', e => {
 
 let updateToastShown = false;
 
+const UPDATE_AUTO_RELOAD_SEC = 15;
+let updateCountdownTimer = null;
+
+function startUpdateCountdown() {
+  let remaining = UPDATE_AUTO_RELOAD_SEC;
+  const el = $a('updCountdown');
+  const render = () => { if (el) el.innerHTML = i18next.t('backend:backend.update.auto_reload_countdown', { count: remaining }); };
+  render();
+  updateCountdownTimer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) { clearInterval(updateCountdownTimer); location.reload(); return; }
+    render();
+  }, 1000);
+}
+
 async function checkForUpdate() {
   if (updateToastShown) return;
   try {
@@ -12538,10 +12620,11 @@ async function checkForUpdate() {
       updateToastShown = true;
       $a('updToastVer').textContent = '(' + m[1] + ')';
       $a('updateToast').classList.add('show');
+      startUpdateCountdown();
     }
   } catch (e) {}
 }
-$a('btnReloadUpdate').onclick = () => location.reload();
+$a('btnReloadUpdate').onclick = () => { if (updateCountdownTimer) clearInterval(updateCountdownTimer); location.reload(); };
 // vide le cache du navigateur pour les fichiers du jeu (utile si une maj ne s'affiche pas
 
 async function clearGameCache() {

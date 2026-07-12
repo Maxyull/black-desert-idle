@@ -84,5 +84,6 @@
   "inventory.velia_loot_banner": "🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :",
   "inventory.velia_peaceful_zone": "Velia — zone paisible",
   "inventory.velia_treasure_label": "Trésor de Velia",
-  "inventory.where_to_farm_label": "📍 Où farmer : "
+  "inventory.where_to_farm_label": "📍 Où farmer : ",
+  "inventory.action_store_in_chest_qty": "📦 Ranger {{n}} au coffre"
 }

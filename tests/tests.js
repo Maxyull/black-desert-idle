@@ -2504,6 +2504,20 @@
     assert('checkForUpdate() ne fetch plus game-supabase.js (ne contient plus PATCH_NOTES depuis le découpage)',
       !src.includes("'./game-supabase.js"));
   }
+  // "afficher un compteur 15 secondes et recharger la page tout en continuant ce que fais le
+  // joueur" (2026-07-13) -- vérifie que checkForUpdate() démarre bien le compte à rebours à la
+  // détection, et que le rendu initial affiche 15s. N'attend JAMAIS les 15 vraies secondes (ça
+  // rechargerait réellement la page en plein milieu de la suite de tests) : le timer démarré est
+  // toujours nettoyé explicitement à la fin, comme un vrai clic sur "Recharger maintenant" le ferait.
+  function testUpdateCountdownStartsAt15sAndIsCleanedUp() {
+    assert('checkForUpdate() démarre bien le compte à rebours à la détection d\'une MAJ',
+      checkForUpdate.toString().includes('startUpdateCountdown()'));
+    assert('UPDATE_AUTO_RELOAD_SEC vaut bien 15', UPDATE_AUTO_RELOAD_SEC === 15);
+    startUpdateCountdown();
+    const el = $a('updCountdown');
+    if (el) assert('le rendu initial du compte à rebours affiche 15', el.textContent.includes('15'), `got=${el.textContent}`);
+    clearInterval(updateCountdownTimer); // jamais laisser tourner un vrai setInterval après le test (recharge la page à 0)
+  }
   // issue GitHub #4 (audit de sécurité, 2026-07-14), finding L1 : les messages d'erreur Supabase
   // étaient injectés via innerHTML sans échappement (game-supabase.js:showPlayerGear,
   // admin-panel.js:refreshRoleList) -- pas d'exploitation trouvée avec les RPC actuelles, mais
@@ -3187,6 +3201,36 @@
     assert('Rescale V405 : le record de classement (bestDp) est recalculé, y compris à la baisse',
       S.bestDp === expectedDp && expectedDp < 999999, `got=${S.bestDp}, attendu=${expectedDp}`);
     EQUIP.helmet = s.helmet; S.bestDp = s.bestDp; S.bestAp = s.bestAp; S.bestGearscore = s.bestGearscore; zoneIdx = s.zoneIdx;
+  }
+  // "lier tout les matériaux portant le meme nom" (2026-07-13) : invAdd() fusionne déjà par nom
+  // depuis le 2026-07-08, mais les piles déjà séparées AVANT ce correctif ne se fusionnent jamais
+  // toutes seules -- migrateMergeStackableDuplicatesV407 doit les rattraper au chargement.
+  function testMergeStackableDuplicatesV407MergesSameNamePiles() {
+    const s = { slots: [INV[INV_SIZE-1], INV[INV_SIZE-2], INV[INV_SIZE-3]] };
+    INV[INV_SIZE-1] = { name:'Pierre concentrée', kind:'material', stackable:true, qty:12, key:'t_dup_a', val:1 };
+    INV[INV_SIZE-2] = { name:'Pierre concentrée', kind:'material', stackable:true, qty:7, key:'t_dup_b', val:1 };
+    INV[INV_SIZE-3] = { name:'Pierre concentrée', kind:'material', stackable:true, qty:3, key:'t_dup_c', val:1 };
+    migrateMergeStackableDuplicatesV407();
+    // la boucle parcourt INV par index CROISSANT -- la 1ère occurrence rencontrée (index le plus
+    // bas, ici INV_SIZE-3) est celle qui absorbe les suivantes, pas l'ordre d'insertion du test
+    assert('Rescale V407 : la 1ère occurrence rencontrée (index le plus bas) absorbe la quantité des autres',
+      INV[INV_SIZE-3].qty === 22, `got=${INV[INV_SIZE-3].qty}`);
+    assert('Rescale V407 : les piles suivantes sont vidées (slot libéré)',
+      INV[INV_SIZE-2] === null && INV[INV_SIZE-1] === null);
+    INV[INV_SIZE-1] = s.slots[0]; INV[INV_SIZE-2] = s.slots[1]; INV[INV_SIZE-3] = s.slots[2];
+  }
+  // "ajouter un slider a choix de nombre lorsqu'on pose en banque" (2026-07-13) : veliaChestStore
+  // acceptait déjà un `n` en paramètre (jamais utilisé par l'UI, toujours appelé avec 1) -- vérifie
+  // qu'un dépôt partiel (n < qty totale) laisse bien le reste dans le sac, pas tout ou rien.
+  function testVeliaChestStorePartialQuantityFromSlider() {
+    const s = { inv: INV[INV_SIZE-1], chest0: VELIA_CHEST[0] };
+    INV[INV_SIZE-1] = { name:'t_slider_mat', kind:'material', stackable:true, qty:10, key:'t_slider_mat', val:1 };
+    VELIA_CHEST[0] = null; // case libre garantie pour le test (case 0 toujours < VELIA_CHEST_OPEN)
+    const ok = veliaChestStore(INV_SIZE-1, 6);
+    assert('veliaChestStore(n) : dépôt partiel réussi', ok === true);
+    assert('veliaChestStore(n) : le sac garde le reliquat (10-6=4)', INV[INV_SIZE-1] && INV[INV_SIZE-1].qty === 4, `got=${INV[INV_SIZE-1] && INV[INV_SIZE-1].qty}`);
+    assert('veliaChestStore(n) : le coffre reçoit exactement la quantité choisie (6)', VELIA_CHEST[0] && VELIA_CHEST[0].qty === 6, `got=${VELIA_CHEST[0] && VELIA_CHEST[0].qty}`);
+    INV[INV_SIZE-1] = s.inv; VELIA_CHEST[0] = s.chest0;
   }
   // "le nom de la zone doit être mis à jour et rester en place" (2026-07-11) : après un chargement
   // de sauvegarde sur une zone différente de la zone 0, #ztName restait bloqué sur le placeholder
@@ -4834,6 +4878,7 @@
     testAdminEquipFullTierSetCoversAllFourTiers();
     testChestZoomToggleWorks();
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
+    testUpdateCountdownStartsAt15sAndIsCleanedUp();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();
     testNoLegacyHardcodedBorderHexOutsideAdminOrDeadCascade();
@@ -4866,6 +4911,8 @@
     testGearRescaleV235RetroactiveOnZoneReqChange();
     testGearRescaleV403RetroactiveOnZoneReqChange();
     testGearLeaderboardRecordFixV405RecomputesEvenDownward();
+    testMergeStackableDuplicatesV407MergesSameNamePiles();
+    testVeliaChestStorePartialQuantityFromSlider();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();

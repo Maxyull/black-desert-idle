@@ -484,7 +484,8 @@ const I18N_RESOURCES = {
       "backend.wiki.nav_patchnotes": "Notes de version",
       "backend.wiki.nav_tuto": "Tutoriel",
       "backend.wiki.search_no_results": "Aucun résultat pour",
-      "backend.wiki.search_placeholder": "Rechercher…"
+      "backend.wiki.search_placeholder": "Rechercher…",
+      "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant"
     },
     "combat": {
       "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
@@ -675,7 +676,8 @@ const I18N_RESOURCES = {
       "inventory.velia_loot_banner": "🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :",
       "inventory.velia_peaceful_zone": "Velia — zone paisible",
       "inventory.velia_treasure_label": "Trésor de Velia",
-      "inventory.where_to_farm_label": "📍 Où farmer : "
+      "inventory.where_to_farm_label": "📍 Où farmer : ",
+      "inventory.action_store_in_chest_qty": "📦 Ranger {{n}} au coffre"
     },
     "market": {
       "market.after_balance_label": "Solde après l'achat",
@@ -1395,7 +1397,8 @@ const I18N_RESOURCES = {
       "backend.wiki.nav_patchnotes": "Patch notes",
       "backend.wiki.nav_tuto": "Tutorial",
       "backend.wiki.search_no_results": "No results for",
-      "backend.wiki.search_placeholder": "Search…"
+      "backend.wiki.search_placeholder": "Search…",
+      "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait"
     },
     "combat": {
       "combat.ai_mode.balanced_title": "Balanced AI: alternates attack and caution based on the fight",
@@ -1586,7 +1589,8 @@ const I18N_RESOURCES = {
       "inventory.velia_loot_banner": "🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:",
       "inventory.velia_peaceful_zone": "Velia — peaceful zone",
       "inventory.velia_treasure_label": "Velia Treasure",
-      "inventory.where_to_farm_label": "📍 Where to farm: "
+      "inventory.where_to_farm_label": "📍 Where to farm: ",
+      "inventory.action_store_in_chest_qty": "📦 Store {{n}} in chest"
     },
     "market": {
       "market.after_balance_label": "Balance after purchase",

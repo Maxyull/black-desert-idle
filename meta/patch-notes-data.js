@@ -5,6 +5,22 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V408', d:'23/07/2026 19:00', name:{fr:'Mise à jour auto (15s), scrollbar du coffre, fusion des matériaux, slider de dépôt', en:'Auto-update (15s), chest scrollbar, material stacking, deposit slider'}, fr:[
+      {t:'change', sub:'interface', tx:'Le bandeau "Nouvelle version disponible" affiche désormais un compte à rebours de 15s avant de recharger automatiquement la page — tu peux continuer à jouer normalement pendant ce temps, ou cliquer "Recharger maintenant" pour ne pas attendre.'},
+      {t:'change', sub:'interface', tx:'La barre de défilement du coffre de ville suit maintenant le thème sombre/or du jeu au lieu de la scrollbar blanche par défaut du navigateur.'},
+      {t:'fix', sub:'inventaire', tx:'Les piles de matériaux portant le même nom, restées séparées dans le sac ou le coffre (ramassées avant un ancien correctif de fusion), sont désormais regroupées en une seule case.'},
+      {t:'new', sub:'inventaire', tx:'Un slider permet de choisir la quantité à ranger dans le coffre en un clic, au lieu de toujours déposer 1 unité à la fois.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The "New version available" banner now shows a 15s countdown before reloading automatically — keep playing normally in the meantime, or click "Reload now" to skip the wait.'},
+      {t:'change', sub:'interface', tx:'The town chest\'s scrollbar now follows the game\'s dark/gold theme instead of the browser\'s default white scrollbar.'},
+      {t:'fix', sub:'inventaire', tx:'Material stacks sharing the same name that stayed split across the bag or chest (picked up before an older stacking fix) are now merged into a single slot.'},
+      {t:'new', sub:'inventaire', tx:'A slider lets you pick how many units to store in the chest in one click, instead of always depositing 1 at a time.'},
+    ] },
+  { v:'V407', d:'23/07/2026 18:00', name:{fr:'Esprit de Protty (zone 2) : ailes agrandies, coquille plus arrondie', en:'Protty Spirit (zone 2): bigger wings, rounder shell'}, fr:[
+      {t:'change', sub:'interface', tx:'La silhouette de l\'Esprit de Protty (Ruines de Protty) est revue : les ailes/nageoires du sommet sont beaucoup plus grandes et déchiquetées façon membrane déchirée, dominant désormais le haut de la silhouette ; la coquille est plus ronde et bombée avec un reflet brillant et une fine ligne de couture ; 7 mouchetures bioluminescentes au lieu de 6 ; les tentacules sous le ventre se balancent maintenant tous ensemble dans le même sens, comme pris dans un courant, au lieu de pendre symétriquement. Comportement de combat inchangé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Protty Spirit\'s silhouette (Ruins of Protty) has been revised: the top wings/fins are now much bigger and jagged like a torn membrane, dominating the upper silhouette; the shell is rounder and more bulbous with a glossy highlight and a thin seam line; 7 bioluminescent speckles instead of 6; the tentacles under the belly now all sway together in the same direction, as if caught in a current, instead of hanging symmetrically. Combat behavior unchanged.'},
+    ] },
   { v:'V406', d:'23/07/2026 17:00', name:{fr:'Esprit de Protty (zone 2) : silhouette plus détaillée', en:'Protty Spirit (zone 2): more detailed silhouette'}, fr:[
       {t:'change', sub:'interface', tx:'L\'Esprit de Protty (Ruines de Protty) a une silhouette plus détaillée : mouchetures bioluminescentes sur la coquille, halo permanent (avant : visible seulement pendant sa charge), ailes du sommet plus marquées façon aile de mite, tentacules frangés sous le ventre. Comportement de combat inchangé.'},
     ], en:[

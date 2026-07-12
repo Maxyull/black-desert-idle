@@ -162,5 +162,6 @@
   "backend.wiki.nav_patchnotes": "Patch notes",
   "backend.wiki.nav_tuto": "Tutorial",
   "backend.wiki.search_no_results": "No results for",
-  "backend.wiki.search_placeholder": "Search…"
+  "backend.wiki.search_placeholder": "Search…",
+  "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait"
 }

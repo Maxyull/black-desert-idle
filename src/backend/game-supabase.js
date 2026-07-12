@@ -1497,7 +1497,26 @@ window.addEventListener('unhandledrejection', e => {
 });
 
 let updateToastShown = false;
-/** Refetch meta/patch-notes-data.js et compare sa version à CURRENT_VERSION — affiche le toast de mise à jour une seule fois si différente. */
+// rechargement automatique 15s (2026-07-13, demande explicite : "afficher un compteur 15 secondes
+// et recharger la page tout en continuant ce que fais le joueur") -- le joueur continue de jouer
+// normalement pendant le compte à rebours (aucune pause de la boucle/du combat), seul un reload
+// silencieux de la page ferme la session au bout de 15s si le bouton "Recharger maintenant" n'a
+// pas déjà été cliqué entre-temps.
+const UPDATE_AUTO_RELOAD_SEC = 15;
+let updateCountdownTimer = null;
+/** Démarre le compte à rebours de 15s affiché dans le toast de MAJ, rechargement automatique à 0 (annulé si btnReloadUpdate est cliqué avant). */
+function startUpdateCountdown() {
+  let remaining = UPDATE_AUTO_RELOAD_SEC;
+  const el = $a('updCountdown');
+  const render = () => { if (el) el.innerHTML = i18next.t('backend:backend.update.auto_reload_countdown', { count: remaining }); };
+  render();
+  updateCountdownTimer = setInterval(() => {
+    remaining--;
+    if (remaining <= 0) { clearInterval(updateCountdownTimer); location.reload(); return; }
+    render();
+  }, 1000);
+}
+/** Refetch meta/patch-notes-data.js et compare sa version à CURRENT_VERSION — affiche le toast de mise à jour une seule fois si différente, démarre le compte à rebours de rechargement auto. */
 async function checkForUpdate() {
   if (updateToastShown) return;
   try {
@@ -1512,10 +1531,11 @@ async function checkForUpdate() {
       updateToastShown = true;
       $a('updToastVer').textContent = '(' + m[1] + ')';
       $a('updateToast').classList.add('show');
+      startUpdateCountdown();
     }
   } catch (e) {}
 }
-$a('btnReloadUpdate').onclick = () => location.reload();
+$a('btnReloadUpdate').onclick = () => { if (updateCountdownTimer) clearInterval(updateCountdownTimer); location.reload(); };
 // vide le cache du navigateur pour les fichiers du jeu (utile si une maj ne s'affiche pas
 // correctement) -- ne touche jamais la sauvegarde (Supabase ni le fallback localStorage)
 /** Vide le cache navigateur (Cache API + service workers) du jeu et recharge sans cache. Ne touche jamais la sauvegarde. */

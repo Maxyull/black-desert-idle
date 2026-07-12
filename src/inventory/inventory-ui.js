@@ -782,11 +782,30 @@ function showItemMenu(px, py, data) {
       addPopBtn(pop, L.sell1(fmt(s.val)), () => { if (confirm(L.confirmSell1(fmt(s.val)))) sellOne(data.invIndex); });
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
-    // coffre de ville (2026-07-16, demande explicite) : range 1 unité dans le coffre (même
-    // granularité que "Vendre 1"), désactivé si le coffre n'a plus de place libre
-    addPopBtn(pop, i18next.t('inventory:inventory.action_store_in_chest'), () => {
-      if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
-    });
+    // coffre de ville : slider de quantité (2026-07-13, demande explicite : "ajouter un slider a
+    // choix de nombre lorsqu'on pose en banque") -- remplace l'ancien dépôt fixe à 1 unité pour
+    // tout objet stackable en pile >1 ; un objet unique (qty===1, ou non stackable comme le gear)
+    // garde le simple bouton "Ranger 1", un slider n'apporterait rien pour une seule unité.
+    if (s.stackable && s.qty > 1) {
+      pop.insertAdjacentHTML('beforeend', `<div class="ipChestDeposit">
+        <input type="range" min="1" max="${s.qty}" value="${s.qty}" id="ipChestDepositSlider">
+        <span id="ipChestDepositVal">${s.qty}</span>
+        <button id="ipChestDepositBtn">${i18next.t('inventory:inventory.action_store_in_chest_qty', { n: s.qty })}</button>
+      </div>`);
+      const wrap = pop.querySelector('.ipChestDeposit');
+      const slider = pop.querySelector('#ipChestDepositSlider'), val = pop.querySelector('#ipChestDepositVal'), btn = pop.querySelector('#ipChestDepositBtn');
+      wrap.onclick = e => e.stopPropagation(); // ne ferme pas le popup en glissant le slider
+      slider.oninput = () => { val.textContent = slider.value; btn.textContent = i18next.t('inventory:inventory.action_store_in_chest_qty', { n: slider.value }); };
+      btn.onclick = () => {
+        const n = parseInt(slider.value, 10);
+        if (!veliaChestStore(data.invIndex, n)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
+        hideItemPop(); refreshInvUI();
+      };
+    } else {
+      addPopBtn(pop, i18next.t('inventory:inventory.action_store_in_chest'), () => {
+        if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
+      });
+    }
     addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
     // objet du Compendium (sac protégé) — "Équiper" (equipFromCompendium, inchangé) ET "Mettre en

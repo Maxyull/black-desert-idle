@@ -152,6 +152,10 @@
   }
   #updateToast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
   #updateToast .updVer { color:var(--gold2); font-weight:bold; font-family:'JetBrains Mono',monospace; }
+  /* compte à rebours de rechargement auto (2026-07-13, demande explicite) -- même ton discret que
+     le reste du toast, chiffre en évidence pour que le joueur sache combien de temps il lui reste */
+  #updateToast .updCountdown { color:var(--cream3); margin-left:6px; }
+  #updateToast .updCountdown b { color:var(--gold2); font-family:'JetBrains Mono',monospace; }
 
   /* un seul carré pour "en ligne" + "inscrits" (demande explicite du 2026-07-06 : "fais un seul
      carré avec en ligne et inscrit juste en dessous") -- avant, 2 boîtes distinctes empilées */
@@ -670,6 +674,11 @@
      contenus de cartes voisines) -- avant, 260px fixe était totalement différent de leur 60vh
      relatif à la fenêtre, faisant sauter la hauteur de la carte selon l'onglet actif (Loot/Coffre). */
   #veliaChestGrid { min-height:150px; max-height:60vh; overflow-y:auto; }
+  /* scrollbar au thème du jeu (2026-07-13, demande explicite) -- restait la scrollbar blanche par
+     défaut du navigateur, seul contenu défilable du jeu à ne pas suivre la convention déjà en place
+     sur #invGrid/#compGrid ci-dessous (même couleur --dbBorder2) */
+  #veliaChestGrid::-webkit-scrollbar { width:7px; }
+  #veliaChestGrid::-webkit-scrollbar-thumb { background:var(--dbBorder2); }
   /* cadenas des cases verrouillées du coffre : même badge que .zoneTierLock (fond/bordure/cercle),
      mais repositionné DANS la case (top:2px) plutôt qu'au-dessus (top:-9px, pensé pour un onglet
      isolé) -- dans une grille dense de 192 cases, flotter au-dessus chevaucherait la rangée
@@ -802,6 +811,12 @@
   #itemPop .statLoss { color:var(--danger); margin-right:6px; }
   #itemPop button { margin:4px 0 0; font-size:11px; padding:5px; }
   #itemPop button .psIcon { margin-right:2px; }
+  /* slider de quantité au dépôt en banque (2026-07-13, demande explicite) -- même structure
+     compacte que le reste du popup (bouton pleine largeur juste en dessous du slider) */
+  #itemPop .ipChestDeposit { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:6px 0 0; }
+  #itemPop .ipChestDeposit input[type=range] { flex:1; }
+  #itemPop .ipChestDeposit span { font-size:11px; color:var(--gold2); min-width:22px; text-align:right; }
+  #itemPop .ipChestDeposit button { flex-basis:100%; margin:0; }
 
   #itemTooltip {
     position:fixed; z-index:65; display:none; min-width:140px; max-width:210px;

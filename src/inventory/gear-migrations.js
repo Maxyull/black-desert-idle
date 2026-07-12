@@ -279,3 +279,31 @@ function migratePenMasteryV308() {
   // à chaque enchantement réussi vers PEN -- ici on la rejoue simplement pour tout l'historique.
   new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
 }
+
+// migration 2026-07-13 (demande explicite : "lier tout les matériaux portant le meme nom") --
+// invAdd() fusionne déjà par NOM (pas par clé technique de provenance) tout NOUVEAU matériau
+// ramassé depuis le 2026-07-08 (voir son commentaire), mais ne fait rien pour les piles déjà
+// séparées AVANT ce correctif : un joueur pouvait donc se retrouver avec plusieurs cases occupées
+// par le même matériau (ex: 3 piles de "Pierre concentrée") au lieu d'une seule, pour la seule
+// raison qu'elles avaient été ramassées à des moments différents. Fusionne toute paire de slots
+// stackable partageant le même nom en une seule case (garde la 1ère occurrence, additionne les
+// quantités dans les suivantes), sur le sac principal ET le coffre de ville (les deux peuvent
+// contenir des matériaux stackables, voir veliaChestStore) -- jamais le Compendium (uniquement du
+// gear/bijoux non stackable, jamais concerné).
+/** @param {Array<object|null>} arr - INV ou VELIA_CHEST. Fusionne en place tout slot stackable partageant le même nom (garde le 1er, additionne les suivants dans son slot, vide les autres). */
+function mergeStackableDuplicateStacks(arr) {
+  const firstSlotByName = new Map();
+  for (let i = 0; i < arr.length; i++) {
+    const s = arr[i];
+    if (!s || !s.stackable) continue;
+    const firstIdx = firstSlotByName.get(s.name);
+    if (firstIdx === undefined) { firstSlotByName.set(s.name, i); continue; }
+    arr[firstIdx].qty = (arr[firstIdx].qty||0) + (s.qty||0);
+    arr[i] = null;
+  }
+}
+/** Migration rétroactive V407 : fusionne toute pile de matériaux/objets stackable dupliquée par nom (INV + VELIA_CHEST) en une seule case, rattrapant les piles restées séparées avant le correctif de fusion par nom d'invAdd() (2026-07-08). */
+function migrateMergeStackableDuplicatesV407() {
+  mergeStackableDuplicateStacks(INV);
+  mergeStackableDuplicateStacks(VELIA_CHEST);
+}
