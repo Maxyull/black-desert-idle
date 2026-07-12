@@ -134,11 +134,15 @@
     min-width:16px; height:16px; border-radius:8px; display:flex; align-items:center; justify-content:center;
     flex-shrink:0;
   }
+  /* Reskin Zone (2026-07-12) : port à l'identique du mockup validé
+     (claude.ai/code/artifact/85d689a7-c5f1-4361-8114-a6f822f45c87) -- mêmes tokens que .card
+     (--s1/--dbBorder, radius 10px), fini var(--panel-2)/--gold en dur. */
   #updateToast {
     position:fixed; top:18px; left:50%; transform:translateX(-50%) translateY(-20px);
-    background:var(--panel-2); border:1px solid var(--gold); color:var(--ink);
-    padding:12px 16px; display:none; align-items:center; gap:14px;
-    box-shadow:0 8px 28px rgba(0,0,0,.6); font-size:13px;
+    background:var(--s1); border:1px solid var(--dbBorder); color:var(--cream2);
+    padding:12px 18px; display:none; align-items:center; gap:14px;
+    box-shadow:0 8px 28px rgba(0,0,0,.6); font-size:12.5px; border-radius:10px;
+    font-family:'Inter',sans-serif;
     opacity:0; transition:opacity .25s ease, transform .25s ease;
     /* z-index relevé de 200 à 960 (2026-07-20, demande explicite : "met la pop up de mise a jour
        par dessus le menu Compagnon") -- #companionsOverlay (src/combat/boss.js) est à 950, la popup
@@ -147,7 +151,7 @@
     z-index:960;
   }
   #updateToast.show { display:flex; opacity:1; transform:translateX(-50%) translateY(0); }
-  #updateToast .updVer { color:var(--gold); font-weight:bold; }
+  #updateToast .updVer { color:var(--gold2); font-weight:bold; font-family:'JetBrains Mono',monospace; }
 
   /* un seul carré pour "en ligne" + "inscrits" (demande explicite du 2026-07-06 : "fais un seul
      carré avec en ligne et inscrit juste en dessous") -- avant, 2 boîtes distinctes empilées */
@@ -161,10 +165,11 @@
   #registeredCounter { font-size:10.5px; color:var(--ink-dim); letter-spacing:.3px; }
   #registeredCounter b { color:#9cc9e8; }
   #updateToast button {
-    background:var(--gold); color:#1a1712; border:none; font-weight:bold;
-    padding:7px 14px; letter-spacing:.5px; cursor:pointer; font-family:inherit; font-size:12.5px;
+    background:var(--gold); color:#2a1f08; border:none; font-weight:600;
+    padding:8px 16px; letter-spacing:.5px; cursor:pointer; font-family:'Inter',sans-serif; font-size:12px;
+    border-radius:8px;
   }
-  #updateToast button:hover { background:#e0bc72; }
+  #updateToast button:hover { filter:brightness(1.08); }
 
   #aiState {
     position:absolute; top:10px; left:50%; transform:translateX(-50%);
@@ -2000,17 +2005,25 @@
     position:fixed; top:14px; left:14px; z-index:400;
     display:flex; flex-direction:column; gap:6px; pointer-events:none;
   }
+  /* Reskin Zone (2026-07-12) : port à l'identique du mockup validé
+     (claude.ai/code/artifact/85d689a7-c5f1-4361-8114-a6f822f45c87) -- même tokens que
+     .card/.card h3 (--s1/--dbBorder, radius 10px, titre Cinzel/--gold2 petites majuscules,
+     récompense JetBrains Mono/--gold2), fini le fond #1c1a22 en dur / bordure --gold-dim /
+     radius 6px / police Georgia héritée de body. */
   .achToast {
-    display:flex; align-items:center; gap:8px; background:#1c1a22; border:1px solid var(--gold-dim);
-    border-radius:6px; padding:8px 12px; box-shadow:0 4px 14px rgba(0,0,0,.5);
+    display:flex; align-items:center; gap:9px; background:var(--s1); border:1px solid var(--dbBorder);
+    border-radius:10px; padding:9px 13px; box-shadow:0 4px 14px rgba(0,0,0,.5);
     opacity:0; transform:translateX(20px); transition:opacity .3s ease, transform .3s ease;
-    max-width:260px;
+    max-width:270px; font-family:'Inter',sans-serif;
   }
   .achToast.show { opacity:1; transform:translateX(0); }
   .achToastIcon { font-size:22px; }
-  .achToastTitle { font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--gold); }
-  .achToastName { font-size:12px; font-weight:bold; color:var(--ink); }
-  .achToastReward { font-size:11px; color:var(--gold); }
+  .achToastTitle {
+    font-family:'Cinzel',serif; font-size:9px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--gold2);
+  }
+  .achToastName { font-size:12px; font-weight:600; color:var(--ink); }
+  .achToastReward { font-size:11px; font-family:'JetBrains Mono',monospace; color:var(--gold2); }
   .questSection { margin-bottom:4px; }
   .questSectionTitle {
     font-size:9.5px; letter-spacing:2px; text-transform:uppercase; color:var(--gold);
