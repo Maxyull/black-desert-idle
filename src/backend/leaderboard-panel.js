@@ -32,6 +32,7 @@
 // fait sa propre vérification isGuest()/currentUser (mêmes globals déjà lus par
 // marketRequireAuth(), pas une nouvelle logique).
 
+/** @returns {object} définitions des 8 catégories du classement public (icône, label, formateur, extracteur de valeur), recalculées à chaque appel pour suivre i18next.t() en direct. */
 function LB2_CATS_() {
   return {
     silver:   { icon:'💰', label:i18next.t('backend:backend.leaderboard.cat_silver_label'), tip:i18next.t('backend:backend.leaderboard.cat_silver_tip'),
@@ -66,10 +67,12 @@ let lb2ShowMeOnly = false;
 let lb2Page = 1;
 let lb2Error = null;
 
+/** @param {number} rank. @returns {string} médaille (🥇🥈🥉) pour les 3 premiers, '' sinon. */
 function lb2Medal(rank) { return rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':''; }
 // rows optionnel (défaut : lb2Rows, l'état réel du panneau) -- garder ce paramètre permet de
 // tester lb2Sorted()/lb2ComputeYourRankInfo() avec des données fabriquées, sans dépendre de l'état
 // mutable du module (voir tests/tests.js, testLb2ComputeYourRankInfoFindsRealRankOutsideTop20).
+/** @param {string} cat - clé LB2_CATS_. @param {object[]} [rows] - défaut lb2Rows. @returns {object[]} lignes filtrées (si la catégorie a un filter) et triées décroissant par valeur de catégorie. */
 function lb2Sorted(cat, rows) {
   const info = LB2_CATS_()[cat];
   const source = rows || lb2Rows;
@@ -79,6 +82,7 @@ function lb2Sorted(cat, rows) {
 // rang réel (1-based) + nombre total de joueurs classés dans cette catégorie (après filtre
 // éventuel de la catégorie, ex: item.filter) -- null si le joueur n'a pas encore de record
 // synchronisé. Fonction PURE (ne lit aucun état module) pour rester facilement testable.
+/** @param {object[]} rows @param {string} cat @param {string} userId. @returns {{rank:number,total:number}|null} rang réel (1-based) + total classé dans cette catégorie, null si pas de record. Fonction pure. */
 function lb2ComputeYourRankInfo(rows, cat, userId) {
   if (!userId) return null;
   const sorted = lb2Sorted(cat, rows);
@@ -90,6 +94,7 @@ function lb2ComputeYourRankInfo(rows, cat, userId) {
 // .select('*') (aucun nouveau champ). Réutilise pneRelativeTime() (progression/patch-notes-engage-
 // react.js, charge AVANT ce fichier -- voir index.dev.html) plutôt que dupliquer un formatage
 // relatif de plus (cmTimeAgo dans market.js fait un calcul voisin mais sans i18next).
+/** @param {string} updatedAtIso. @returns {{text:string,recent:boolean}|null} "vu il y a Xmin/Xj" formaté, recent=vrai si <1h, null si date invalide. */
 function lb2SeenInfo(updatedAtIso) {
   if (!updatedAtIso) return null;
   const ts = new Date(updatedAtIso).getTime();
@@ -103,6 +108,7 @@ function lb2SeenInfo(updatedAtIso) {
 // market.js) et le VRAI bouton de liaison de compte (#btnLinkAccount, game-supabase.js) --
 // n'appelle PAS marketRequireAuth() ici (son alert() reste réservé au cas "aucune session du
 // tout", ci-dessous) pour ne pas déclencher son alert() natif sur le cas invité qu'on veut styliser.
+/** @returns {string} HTML du panneau invité stylé (compte anonyme), réutilise le texte de marketRequireAuth() et le vrai bouton de liaison de compte. */
 function lb2GuestGateHtml() {
   return `<div class="lb2GuestGate">
     <div class="lb2GuestIcon">🔒</div>
@@ -110,6 +116,7 @@ function lb2GuestGateHtml() {
     <button class="lb2GuestBtn" id="lb2LinkAccountBtn">${escapeHtml(i18next.t('backend:backend.leaderboard.link_account_button'))}</button>
   </div>`;
 }
+/** Câble le bouton du panneau invité (délègue au vrai bouton #btnLinkAccount, jamais de logique dupliquée). */
 function lb2WireGuestGate() {
   const btn = $a('lb2LinkAccountBtn');
   // délègue au VRAI bouton de liaison de compte déjà câblé (game-supabase.js) plutôt que de
@@ -117,6 +124,7 @@ function lb2WireGuestGate() {
   if (btn) btn.onclick = () => { const real = $a('btnLinkAccount'); if (real) real.click(); };
 }
 
+/** Ouvre le panneau Classement public : panneau invité si compte anonyme, sinon charge player_stats (jusqu'à 500 lignes) et rend le corps. */
 async function openLeaderboard2() {
   if (!sb || !currentUser) { marketRequireAuth(); return; } // aucune session du tout (cas rare) -- alerte historique conservée
   if (isGuest()) {
@@ -132,6 +140,7 @@ async function openLeaderboard2() {
   lb2RenderBody();
 }
 
+/** @returns {string} coquille statique du panneau (podium/ta-position/contrôles/corps vides, remplis ensuite par lb2RenderBody). */
 function lb2ShellHtml() {
   return `<div class="lb2Summary">${escapeHtml(i18next.t('backend:backend.leaderboard.summary'))}</div>
     <div id="lb2Podium"></div>
@@ -140,6 +149,7 @@ function lb2ShellHtml() {
     <div id="lb2Body"><div class="admEmpty">${escapeHtml(i18next.t('backend:backend.gear.loading'))}</div></div>`;
 }
 
+/** @param {number} total - joueurs classés dans la catégorie active. @returns {string} HTML des onglets de catégorie + recherche + bouton "Ma position". */
 function lb2ControlsHtml(total) {
   const cats = LB2_CATS_();
   const tabs = Object.entries(cats).map(([k,c]) =>
@@ -152,6 +162,7 @@ function lb2ControlsHtml(total) {
     </div>`;
 }
 
+/** Reconstruit tout le corps du panneau Classement (podium, barre "Ta position", contrôles, tableau paginé ou voisinage de rang selon lb2ShowMeOnly) depuis l'état module (lb2Rows/lb2Cat/lb2Search/lb2Page). */
 function lb2RenderBody() {
   const podiumEl = $a('lb2Podium'), yourRankEl = $a('lb2YourRank'), controlsEl = $a('lb2Controls'), bodyEl = $a('lb2Body');
   if (!bodyEl) return; // panneau refermé entre-temps
@@ -219,6 +230,7 @@ function lb2RenderBody() {
   lb2WirePager(totalPages);
 }
 
+/** Câble la recherche, les onglets de catégorie et le bouton "Ma position" du panneau Classement. */
 function lb2WireControls() {
   const search = $a('lb2Search');
   if (search) search.oninput = e => { lb2Search = e.target.value; lb2Page = 1; lb2RenderBody(); };
@@ -229,6 +241,7 @@ function lb2WireControls() {
   if (meToggle) meToggle.onclick = () => { lb2ShowMeOnly = !lb2ShowMeOnly; lb2RenderBody(); };
 }
 
+/** @param {object[]} top3 - 3 meilleures lignes triées. @returns {string} HTML du podium (ordre visuel 2e/1er/3e). */
 function lb2PodiumHtml(top3) {
   if (!top3.length) return '';
   const info = LB2_CATS_()[lb2Cat];
@@ -247,6 +260,7 @@ function lb2PodiumHtml(top3) {
   }).join('')}</div>`;
 }
 
+/** @param {object[]} rows - lignes à afficher (déjà paginées/filtrées). @param {Map} rankMap - user_id → rang réel. @returns {string} HTML du tableau de classement. */
 function lb2TableHtml(rows, rankMap) {
   const info = LB2_CATS_()[lb2Cat];
   return `<table class="admTable"><thead><tr><th>#</th><th>${escapeHtml(i18next.t('backend:backend.common.player_label'))}</th><th>${escapeHtml(info.label)}</th></tr></thead>
@@ -261,6 +275,7 @@ function lb2TableHtml(rows, rankMap) {
       </tr>`;
     }).join('')}</tbody></table>`;
 }
+/** @param {number} totalPages. @returns {string} HTML du pager (précédent/page N sur M/suivant), '' si une seule page. */
 function lb2PagerHtml(totalPages) {
   if (totalPages<=1) return '';
   return `<div class="lb2Pager">
@@ -269,6 +284,7 @@ function lb2PagerHtml(totalPages) {
     <button class="lb2PagerBtn" id="lb2Next" ${lb2Page>=totalPages?'disabled':''}>${escapeHtml(i18next.t('backend:backend.leaderboard.pager_next'))}</button>
   </div>`;
 }
+/** @param {number} totalPages. Câble les boutons précédent/suivant du pager. */
 function lb2WirePager(totalPages) {
   const prev = $a('lb2Prev'), next = $a('lb2Next');
   if (prev) prev.onclick = () => { lb2Page--; lb2RenderBody(); };

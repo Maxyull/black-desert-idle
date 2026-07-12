@@ -13252,6 +13252,7 @@ function lb2GuestGateHtml() {
     <button class="lb2GuestBtn" id="lb2LinkAccountBtn">${escapeHtml(i18next.t('backend:backend.leaderboard.link_account_button'))}</button>
   </div>`;
 }
+
 function lb2WireGuestGate() {
   const btn = $a('lb2LinkAccountBtn');
   
@@ -13399,6 +13400,7 @@ function lb2TableHtml(rows, rankMap) {
       </tr>`;
     }).join('')}</tbody></table>`;
 }
+
 function lb2PagerHtml(totalPages) {
   if (totalPages<=1) return '';
   return `<div class="lb2Pager">
@@ -13407,6 +13409,7 @@ function lb2PagerHtml(totalPages) {
     <button class="lb2PagerBtn" id="lb2Next" ${lb2Page>=totalPages?'disabled':''}>${escapeHtml(i18next.t('backend:backend.leaderboard.pager_next'))}</button>
   </div>`;
 }
+
 function lb2WirePager(totalPages) {
   const prev = $a('lb2Prev'), next = $a('lb2Next');
   if (prev) prev.onclick = () => { lb2Page--; lb2RenderBody(); };
