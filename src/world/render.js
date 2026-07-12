@@ -658,12 +658,29 @@ function drawShultzIso(wx,wy,w,t) {
   ctx.moveTo(-4,-9); ctx.lineTo(-5,3+trot*.4);
   ctx.moveTo(4,-9); ctx.lineTo(5,3-trot*.4);
   ctx.stroke();
+  // cape (2026-07-23, révision approuvée "Option C — héraldique")
+  ctx.fillStyle = '#5a1e1a';
+  ctx.beginPath();
+  ctx.moveTo(-9,-24); ctx.lineTo(-11,-3); ctx.lineTo(-7,-4); ctx.lineTo(-7,-22);
+  ctx.closePath(); ctx.fill();
   // torse blindé (plastron)
   ctx.fillStyle = plate;
   ctx.beginPath(); ctx.moveTo(-9,-9); ctx.lineTo(-8,-25); ctx.lineTo(8,-25); ctx.lineTo(9,-9); ctx.closePath(); ctx.fill();
   // liseré doré sur le plastron
   ctx.strokeStyle='#c9a55a'; ctx.lineWidth=1.4;
   ctx.beginPath(); ctx.moveTo(-7,-12); ctx.lineTo(7,-12); ctx.stroke();
+  // emblème héraldique doré sous le liseré
+  ctx.fillStyle='#c9a55a';
+  ctx.beginPath();
+  ctx.moveTo(-1.6,-11); ctx.lineTo(1.6,-11); ctx.lineTo(1.2,-7.5); ctx.lineTo(0,-6); ctx.lineTo(-1.2,-7.5);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.5; ctx.stroke();
+  // ceinture + pochette en cuir
+  ctx.fillStyle='#4a3a28';
+  ctx.fillRect(-7.6,-10.2,15.2,1.6);
+  ctx.fillStyle='#5a4630';
+  ctx.fillRect(2,-9.4,2.4,2.8);
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.4; ctx.strokeRect(2,-9.4,2.4,2.8);
   // épaulières massives
   ctx.fillStyle = plate;
   ctx.beginPath(); ctx.ellipse(-9,-23,4,3.4,0,0,7); ctx.fill();

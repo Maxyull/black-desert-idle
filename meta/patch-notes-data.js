@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V411', d:'23/07/2026 22:00', name:{fr:'Garde Shultz (Ferme Shultz) : cape, emblème et pochette', en:'Shultz Guard (Shultz Farm): cape, emblem and pouch'}, fr:[
+      {t:'change', sub:'interface', tx:'Le Garde Shultz (Ferme Shultz, juste après le Camp Rhutum) porte désormais une cape rouge sombre tombant de l\'épaule gauche, un petit emblème héraldique doré sur le plastron sous le liseré existant, et une ceinture en cuir avec une pochette à la taille. Armure, épaulières, bras/arme et casque/moustache inchangés. Comportement de combat inchangé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Shultz Guard (Shultz Farm, right after Rhutum Camp) now wears a dark red cape hanging from the left shoulder, a small gold heraldic emblem on the breastplate below the existing stripe, and a leather belt with a waist pouch. Armor, pauldrons, arm/weapon, and helmet/mustache unchanged. Combat behavior unchanged.'},
+    ] },
   { v:'V410', d:'23/07/2026 21:00', name:{fr:'Guerrier Rhutum (Camp Rhutum) : silhouette plus détaillée', en:'Rhutum Warrior (Rhutum Camp): more detailed silhouette'}, fr:[
       {t:'change', sub:'interface', tx:'Le guerrier Rhutum (Camp Rhutum, juste après le Repaire des Pirates) a une silhouette plus détaillée : bras musclés avec biceps/avant-bras marqués, bourrelet de ventre, bas du torse en pagne déchiqueté, petit collier d\'os au cou, et deux marques de peinture de guerre sous les yeux. Sangle en cuir, arme et tête (crête, défenses, bouc) inchangées. Comportement de combat inchangé.'},
     ], en:[
