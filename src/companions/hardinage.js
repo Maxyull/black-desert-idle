@@ -4,6 +4,7 @@ let hardFieldPets = []; // {pet, sprite, x,y,tx,ty,prog}
 let hardSession = {items:0, silver:0, rare:0, legendary:0};
 let hardLastTime = 0;
 
+/** Démarre le champ animé Hardinage (une seule fois — appels suivants ne font que rafraîchir les pets affichés) : canvas iso, boucle d'animation, tick de drop toutes les 1.2s. */
 function startHardinage(){
   if(hardinageStarted){ initHardFieldPets(); return; }
   hardinageStarted = true;
@@ -12,6 +13,7 @@ function startHardinage(){
   setInterval(triggerHardDrop, 1200);
 }
 
+/** Rafraîchit hardFieldPets depuis les pets actuellement déployés (terrain), pré-rend le sprite pixel-art de chacun sur un canvas dédié (évite de le redessiner à chaque frame). */
 function initHardFieldPets(){
   // Rafraîchit la liste des pets affichés (si on a changé de terrain depuis le dernier passage sur l'onglet)
   const active = PETS.filter(p=>p.terrain);
@@ -22,6 +24,7 @@ function initHardFieldPets(){
   });
 }
 
+/** Initialise le canvas du champ Hardinage (dimensionné sur son conteneur), les sprites des pets et lance la boucle d'animation. */
 function initHardField(){
   const wrap = document.getElementById('hard-field-wrap');
   const canvas = document.getElementById('hard-field-canvas');
@@ -32,6 +35,7 @@ function initHardField(){
   animateHardField(canvas);
 }
 
+/** @param {CanvasRenderingContext2D} ctx @param {number} W @param {number} H. Dessine la grille isométrique de fond du champ Hardinage (tuiles alternées + décor déterministe par seed de position). */
 function drawIsoFieldBg(ctx,W,H){
   ctx.clearRect(0,0,W,H);
   const TW=56,TH=30,COLS=16,ROWS=11;
@@ -57,6 +61,7 @@ function drawIsoFieldBg(ctx,W,H){
   }
 }
 
+/** @param {HTMLCanvasElement} canvas - canvas du champ Hardinage. Boucle requestAnimationFrame (throttlée ~60fps, ne dessine que si l'onglet est actif) : déplace chaque pet vers une cible aléatoire (easing), affiche son sprite + étiquette de nom. */
 function animateHardField(canvas){
   const ctx = canvas.getContext('2d');
   function tick(ts){
@@ -92,6 +97,7 @@ function animateHardField(canvas){
   requestAnimationFrame(tick);
 }
 
+/** Tick de loot (toutes les 1.2s, no-op si l'onglet Hardinage n'est pas actif) : un pet aléatoire du champ loote selon les taux de sa section, met à jour la session et déclenche l'effet visuel. */
 function triggerHardDrop(){
   if(!document.getElementById('p6')?.classList.contains('active')) return;
   if(!hardFieldPets.length) return;
@@ -124,6 +130,7 @@ function triggerHardDrop(){
   if(document.getElementById('p2')?.classList.contains('active')) renderCollInventory();
 }
 
+/** @param {object} fp - entrée hardFieldPets (position x/y). @param {string} emoji - emoji flottant à afficher. Fait apparaître un emoji animé au-dessus du pet, se retire seul après l'animation CSS. */
 function spawnHardFloat(fp, emoji){
   const layer = document.getElementById('hard-drop-layer');
   const canvas = document.getElementById('hard-field-canvas');
@@ -139,6 +146,7 @@ function spawnHardFloat(fp, emoji){
   setTimeout(()=>el.remove(), 1400);
 }
 
+/** @param {object} pet - familier qui a looté. @param {object} drop - objet loot {e,n}. @param {?string} colorKey - 'gold'/'r3'/null, couleur de la ligne. Ajoute une ligne au log Hardinage (plafonné à 60 lignes). */
 function addHardLog(pet, drop, colorKey){
   const lb = document.getElementById('hard-log-body');
   if(!lb) return;
@@ -152,6 +160,7 @@ function addHardLog(pet, drop, colorKey){
   while(lb.children.length>60) lb.removeChild(lb.lastChild);
 }
 
+/** Reconstruit le résumé de session Hardinage (items, silver, rares, pets actifs). */
 function renderHardSession(){
   const el = document.getElementById('hard-session-grid');
   if(!el) return;

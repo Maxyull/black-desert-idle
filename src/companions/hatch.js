@@ -1,4 +1,5 @@
 // ═══ TABS & PETITS UTILITAIRES D'UI ═════════════════════════════
+/** @param {number} i - index d'onglet (0-11). Bascule l'onglet actif et déclenche le render/dispose lazy propre à chaque onglet (viewers 3D montés/libérés uniquement quand leur onglet est visible). */
 function ST(i){
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
   ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10','p11'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
@@ -53,6 +54,7 @@ const UNLOCK_SLOT_COST = 500, EXTRA_SLOT_COST = 1000; // avant scaleCost(), voir
 // jusqu'ici buyExtraIncubSlot() poussait dans incubSlots sans aucune limite, un joueur pouvait en
 // acheter à l'infini.
 const MAX_INCUB_SLOTS = 8;
+/** @param {number} i - index du slot verrouillé. Débloque le slot d'incubation contre UNLOCK_SLOT_COST, no-op si silver insuffisant. */
 function unlockIncubSlot(i){
   const cost = scaleCost(UNLOCK_SLOT_COST);
   if(SILVER < cost){ toast('❌','Silver insuffisant'); return; }
@@ -61,6 +63,7 @@ function unlockIncubSlot(i){
   toast('🔓','Slot débloqué !');
   renderHatch();
 }
+/** Achète un slot d'incubation supplémentaire contre EXTRA_SLOT_COST, plafonné à MAX_INCUB_SLOTS. No-op si plafond atteint ou silver insuffisant. */
 function buyExtraIncubSlot(){
   if(incubSlots.length >= MAX_INCUB_SLOTS){ toast('❌','Plafond de slots atteint (8)'); return; }
   const cost = scaleCost(EXTRA_SLOT_COST);
@@ -70,6 +73,7 @@ function buyExtraIncubSlot(){
   toast('➕','Nouveau slot acheté !');
   renderHatch();
 }
+/** Reconstruit l'onglet Éclosion : slots d'incubation (verrouillé/en cours/prêt), grille comparative des odds par rareté×type d'œuf, bonus de rareté, historique des 10 derniers pets obtenus. */
 function renderHatch(){
   // Slots
   document.getElementById('incub-slots').innerHTML=incubSlots.map((sl,i)=>{
@@ -146,6 +150,7 @@ function renderHatch(){
 }
 
 // ═══ CHOIX D'ŒUF ═══════════════════════════════════════════════
+/** @param {number} slotIdx - index du slot d'incubation prêt. Ouvre la modale de choix d'œuf (standards + ciblés) pour ce slot. */
 function openEggChoice(slotIdx){
   const sl=incubSlots[slotIdx];
   const body=document.getElementById('hatch-body');
@@ -222,6 +227,13 @@ function rollAndCreatePet(eggType){
   return {pet:np, pityTriggered};
 }
 
+/**
+ * Éclosion via un slot d'incubation : bloque si sac plein/silver insuffisant, débite le coût,
+ * tire le pet (rollAndCreatePet), affiche la modale de reveal (3D si modèle GLB disponible,
+ * sinon pixel-art) avec choix Garder/Déployer, relance le timer du slot.
+ * @param {number} slotIdx - index du slot d'incubation prêt.
+ * @param {string} eggTypeId - id de EGG_TYPES choisi.
+ */
 function doHatch(slotIdx, eggTypeId){
   // plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets") --
   // bloque AVANT de dépenser le silver, pas après (voir petRosterRoomLeft(), roster.js)
@@ -281,17 +293,26 @@ function doHatch(slotIdx, eggTypeId){
 // doHatch en boucle contrairement à renderSecDetail, donc pas besoin du cache par clé de
 // updateTerrainViewer3d() : juste un dispose propre à la fermeture, voir closeHatchModal().
 let hatchReveal3dState = null;
+/** Libère le viewer 3D de la modale de reveal d'éclosion s'il est actif. */
 function disposeHatchReveal3d(){
   if(!hatchReveal3dState) return;
   hatchReveal3dState.dispose();
   hatchReveal3dState = null;
 }
+/** Ferme la modale d'éclosion et libère le viewer 3D de reveal associé. */
 function closeHatchModal(){
   disposeHatchReveal3d();
   CM('hatch-modal');
 }
 
 // ═══ ÉCLOSION INSTANTANÉE — ×1/×5/×10, indépendant des créneaux d'incubation ═══
+/**
+ * Éclosion instantanée ×N (indépendante des slots d'incubation) : exige la place pour TOUT le lot
+ * avant de dépenser quoi que ce soit (soit le lot entier passe, soit rien), débite le coût total,
+ * tire chaque pet, affiche un résumé et log l'activité.
+ * @param {string} eggTypeId - id de EGG_TYPES choisi.
+ * @param {number} qty - quantité (1/5/10).
+ */
 function bulkHatch(eggTypeId, qty){
   // plafond de collection (2026-07-20, demande explicite) -- exige la place pour TOUT le lot avant
   // de dépenser quoi que ce soit, pas un remboursement partiel après coup (plus simple, plus clair
@@ -324,6 +345,12 @@ function bulkHatch(eggTypeId, qty){
   addGameLog(`🥚 Éclosion ×${qty} (${eggType.name}) : ${summaryParts}`);
 }
 
+/**
+ * Affiche la modale de résumé d'une éclosion en masse (pas de reveal 3D volontairement — jusqu'à
+ * 10 pets affichés en même temps dépasserait la limite de contextes WebGL du navigateur).
+ * @param {object} eggType - type d'œuf utilisé. @param {object[]} results - pets obtenus.
+ * @param {number[]} tally - compte par rareté. @param {boolean} anyPity - vrai si le pity a été déclenché dans ce lot.
+ */
 function showBulkHatchModal(eggType, results, tally, anyPity){
   const titleEl = document.querySelector('#hatch-modal .modal > div[style*="Cinzel"]');
   if(titleEl) titleEl.textContent = anyPity ? `🎁 Éclosion ×${results.length} — Pity déclenché !` : `✨ Éclosion ×${results.length} terminée !`;

@@ -1,4 +1,5 @@
 // ═══ COLLECTION ══════════════════════════════════════════════════
+/** @param {'gs'|'rar'|'tier'|'nom'|'sec'|'typ'} mode - critère de tri. @param {HTMLElement} el - chip cliquée. Réinverse sortDir si déjà actif, sinon l'active en décroissant, met à jour la grille. */
 function setSort(mode,el){
   if(sortMode===mode)sortDir*=-1;else{sortMode=mode;sortDir=-1;}
   document.querySelectorAll('.schip').forEach(c=>c.classList.remove('on'));
@@ -14,12 +15,14 @@ function setSort(mode,el){
 // 6 colonnes, la carte est trop étroite pour la ligne meta verbeuse (rareté en toutes lettres).
 const COLL_COLS_MIN = 5, COLL_COLS_MAX = 9, COLL_COLS_COMPACT_FROM = 7;
 let collColsPerRow = 6; // valeur de départ, proche de l'ancien cran par défaut (160px ≈ 6 colonnes à largeur normale)
+/** Reconstruit les chips de choix du nombre de colonnes (5-9) de la grille Collection. */
 function renderCollColsChips(){
   const el = document.getElementById('coll-cols-chips');
   if(!el) return;
   el.innerHTML = Array.from({length:COLL_COLS_MAX-COLL_COLS_MIN+1},(_,i)=>COLL_COLS_MIN+i)
     .map(n=>`<button class="schip ${n===collColsPerRow?'on':''}" onclick="setCollColsPerRow(${n})">${n}</button>`).join('');
 }
+/** @param {number} n - nombre de colonnes voulu (clampé à [COLL_COLS_MIN, COLL_COLS_MAX]). Applique la grille, revient à la page 0 (la pagination dépend du nombre de colonnes) et rafraîchit. */
 function setCollColsPerRow(n){
   const prevCompact = collColsPerRow>=COLL_COLS_COMPACT_FROM;
   collColsPerRow = Math.max(COLL_COLS_MIN, Math.min(COLL_COLS_MAX, n));
@@ -40,6 +43,7 @@ function setCollColsPerRow(n){
 // page), avec un pager Précédent/Suivant sous la grille -- jamais persisté dans la sauvegarde.
 let collPaginationOn = false;
 let collPage = 0;
+/** Bascule la pagination de la Collection on/off, revient à la page 0, rafraîchit la grille. */
 function toggleCollPagination(){
   collPaginationOn = !collPaginationOn;
   collPage = 0;
@@ -47,6 +51,7 @@ function toggleCollPagination(){
   if(btn) btn.textContent = collPaginationOn ? '📄 Pagination : ON' : '📄 Pagination : OFF';
   renderGrid();
 }
+/** @param {number} delta - +1/-1. Change de page (clampé à 0 en bas, le clamp haut se fait dans renderGrid selon le nombre de résultats filtrés). */
 function collPageDelta(delta){
   collPage = Math.max(0, collPage + delta); // le clamp haut se fait dans renderGrid() (dépend du nombre de résultats filtrés)
   renderGrid();
@@ -56,6 +61,7 @@ function collPageDelta(delta){
 // Reflète le même calcul TOP1/TOP2/TOP3 que renderGrid() ci-dessous (compte des candidats
 // actuellement affichés dans la grille) -- appelée à chaque renderGrid(), visible seulement
 // pendant une sélection de fusion (1 pet choisi, 2e slot vide).
+/** @param {?{top1:number, top2:number, top3:number}} counts - comptes de candidats de fusion (renderGrid), null pour masquer le badge. Met à jour le badge de fusion du header. */
 function updateHeaderFusionBadge(counts){
   const el = document.getElementById('hdr-fusion-badge');
   if(!el) return;
@@ -68,6 +74,7 @@ function updateHeaderFusionBadge(counts){
   el.style.display = '';
 }
 
+/** Reconstruit les chips de filtre section/rareté/tier de la Collection. */
 function renderFilters(){
   document.getElementById('sec-filter-chips').innerHTML=
     SECTIONS.map(s=>`<div class="chip ${filterSec.has(s.id)?'on':''}" onclick="toggleFilter(filterSec,'${s.id}')">${s.ico}</div>`).join('');
@@ -80,6 +87,7 @@ function renderFilters(){
   }
 }
 
+/** Reconstruit la grille Collection : filtre/trie PETS, pagine si activé, calcule les indices de fusion (TOP1/TOP2/TOP3 selon rareté/section/tier communs au 1er pet sélectionné) et rend chaque carte. */
 function renderGrid(){
   document.getElementById('tb2').textContent=PETS.length;
   const gridEl = document.getElementById('pet-grid');

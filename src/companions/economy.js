@@ -10,8 +10,11 @@ const COMPANION_MODULE_VERSION = 'V377';
 // tester rapidement les flux -- repasser TEST_BALANCE_DIVISOR à 1 pour revenir aux vraies
 // valeurs (aucune autre ligne à toucher, tout est dérivé de cette seule constante).
 const TEST_BALANCE_DIVISOR = 1000;
+/** @param {number} v - coût réel en silver. @returns {number} coût réduit par TEST_BALANCE_DIVISOR (min 1 si v>0, 0 si gratuit). */
 function scaleCost(v){ return v>0 ? Math.max(1, Math.round(v/TEST_BALANCE_DIVISOR)) : 0; }
+/** @param {number} v - durée réelle en secondes. @returns {number} durée réduite par TEST_BALANCE_DIVISOR (min 1s). */
 function scaleTimer(v){ return Math.max(1, Math.round(v/TEST_BALANCE_DIVISOR)); }
+/** @param {number} v - coût (déjà réduit par scaleCost). @returns {string} libellé affiché ("Gratuit" si 0). */
 function costLabelFor(v){ return v>0 ? `${v.toLocaleString('fr-FR')} Silver` : 'Gratuit'; }
 
 // ═══ TYPES D'ŒUFS — coût qui explose pour un gain d'odds marginal ═══
@@ -36,6 +39,7 @@ const EGG_TYPES=[
 // makeTargetedOdds(rar, targetPct) : la rareté visée devient targetPct%, le
 // reste (100-targetPct) est réparti entre les 5 autres raretés en conservant
 // leur PROPORTION relative d'origine (celle de l'Œuf Basique).
+/** @param {number} targetRar - index de rareté à booster. @param {number} targetPct - % visé pour cette rareté. @returns {number[]} 6 odds sommant à 100 : targetPct à targetRar, le reste redistribué proportionnellement aux odds de l'Œuf Basique. */
 function makeTargetedOdds(targetRar, targetPct){
   const base = EGG_TYPES[0].odds; // proportions de référence = Œuf Basique
   const sumOthersBase = 100 - base[targetRar];
@@ -74,6 +78,7 @@ let SILVER = 55000; // solde de départ pour tester les tiers d'œufs
 // à SILVER qui peut monter et descendre. Incrémenté à chaque dépense réelle (achat d'œuf,
 // hatch.js) -- voir sumSpent() plus bas pour le seul point d'entrée d'incrément.
 let silverSpent = 0;
+/** @param {number} amount - montant à dépenser. Débite SILVER et incrémente silverSpent (compteur à vie, jamais remis à 0). */
 function spendSilver(amount){ SILVER -= amount; silverSpent += amount; }
 
 // ═══ PITY COUNTER ═══ Garantit un Ancestral après trop d'éclosions sans en avoir eu
@@ -142,14 +147,17 @@ const STREAK_REWARDS = [
   {silver:60, bonus:'Œuf Doré gratuit'},
 ];
 
+/** @returns {string} date du jour au format 'YYYY-MM-DD' (fuseau local). */
 function todayStr(){
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+/** @param {string} d1 @param {string} d2 - dates 'YYYY-MM-DD'. @returns {number} nombre de jours entiers entre d1 et d2. */
 function daysBetween(d1,d2){
   return Math.round((new Date(d2)-new Date(d1))/86400000);
 }
 
+/** Vérifie/actualise le streak de connexion quotidienne (incrémente si jour consécutif, reset sinon), verse la récompense STREAK_REWARDS du jour et l'affiche. No-op si déjà connecté aujourd'hui. */
 function checkDailyStreak(){
   const today = todayStr();
   if(lastLoginDate===today) return; // déjà connecté aujourd'hui, rien à faire
@@ -183,11 +191,13 @@ function checkDailyStreak(){
 let INVENTORY = {}; // { "Minerai de fer": 12, ... }
 let GAME_LOG = [];  // liste de {t, text}
 
+/** @param {string} itemName @param {string} icon @param {number} qty - quantité à ajouter. @param {number} [feed] - valeur nutritive (maintenue à jour même sur un stack existant). Ajoute/incrémente un objet dans INVENTORY. */
 function addToInventory(itemName, icon, qty, feed){
   if(!INVENTORY[itemName]) INVENTORY[itemName] = {icon, qty:0, feed:feed||0};
   INVENTORY[itemName].qty += qty;
   if(feed!==undefined) INVENTORY[itemName].feed = feed; // garde la valeur nutritive à jour
 }
+/** @param {string} text - HTML de la ligne. Ajoute une entrée horodatée en tête de GAME_LOG (plafonné à 40 entrées). */
 function addGameLog(text){
   const now=new Date();
   const t=`${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;

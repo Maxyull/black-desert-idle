@@ -28,6 +28,7 @@ function marketPseudo(){ const w=marketHostWin(); return w && typeof w.getMyPseu
 function marketIsGuest(){ const w=marketHostWin(); return w && typeof w.isGuest==='function' ? w.isGuest() : false; }
 function marketReady(){ return !!(marketSb() && marketUser() && !marketIsGuest()); }
 
+/** @param {object} pet - familier local. @returns {object} snapshot sérialisable envoyé au serveur (pet_snapshot), assez d'info pour recréer le pet côté acheteur. */
 function petSnapshotOf(pet){
   return { uid:pet.uid, name:pet.cat.name, art:pet.cat.art, sec:pet.cat.sec, typ:pet.cat.typ, orig:pet.cat.orig,
     rar:pet.rar, tier:pet.tier||1, tierMult:tierMultOf(pet), stats:pet.stats.slice() };
