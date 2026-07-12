@@ -24,6 +24,7 @@ function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth
 function isMobileViewport() { return window.innerWidth <= 1024; }
 // échappe pseudo/message avant insertion via innerHTML — ce sont des chaînes saisies par
 // d'autres joueurs, jamais dignes de confiance (évite une injection XSS stockée dans le chat)
+/** @param {*} s - texte à insérer via innerHTML (pseudo/message d'un autre joueur, jamais fiable). @returns {string} texte avec &<>"' échappés (empêche une injection XSS stockée). */
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -80,6 +81,7 @@ const NAME_EN = {
   // mode IA
   'équilibré':'balanced', 'défensif':'defensive', 'overgeared':'overgeared',
 };
+/** @param {string} s - texte FR d'origine (nom de zone/mob/objet). @returns {string} traduction EN via NAME_EN si LANG==='en', sinon le texte inchangé. */
 function tr(s) { if (LANG !== 'en' || !s) return s; return NAME_EN[s] || s; }
 
 // ZONES est desormais defini dans world/zones-data.js (extrait le 2026-07-08,
@@ -350,6 +352,7 @@ const MAX_STACK = 999999;
 // prend automatiquement la place de celui déjà protégé (souvent un +0), qui retourne dans le sac
 // principal — jamais perdu ni détruit.
 const COMPENDIUM_BAG = new Array(INV_SIZE).fill(null);
+/** @param {string} name. @returns {boolean} vrai si un objet de ce nom est déjà protégé dans COMPENDIUM_BAG. */
 function compendiumBagHasName(name) { return COMPENDIUM_BAG.some(s => s && s.name === name); }
 // Coffre de ville (2026-07-16, demande explicite : "on ajoute un onglet coffre lié a la ville
 // 20/192 emplacement le reste bloqué") -- rangement personnel séparé du sac principal, même taille
@@ -420,6 +423,7 @@ const WEAPON_SLOTS = ['weapon','awakening','secondary'];
 const OPTIMIZABLE_SLOTS = [...WEAPON_SLOTS, ...ARMOR_SLOTS, ...ACC_SLOTS];
 
 
+/** @returns {number} poids total (LT) du sac principal, somme du poids×qty de chaque slot occupé. */
 function invWeight() {
   let w = 0;
   for (const s of INV) if (s) w += (s.weight||0.1) * s.qty;
@@ -428,6 +432,7 @@ function invWeight() {
 // LT de base — mesuré empiriquement à ~6.8 LT/min en farm continu zone 1 (personnage neuf),
 // calibré pour ~2h de farm avant ralentissement. Augmentable plus tard via une boutique.
 const MAX_WEIGHT = () => 800;
+/** @returns {number} nombre de slots occupés du sac principal. */
 function invUsed() { return INV.filter(s => s).length; }
 
 /**
@@ -537,6 +542,7 @@ const ENH_FS_INC = {
   8:.05,  9:.045, 10:.04, 11:.035, 12:.03, 13:.025, 14:.02, 15:.015,
   16:.015,17:.012,18:.008,19:.004, 20:.0015,
 };
+/** @param {?object} item @param {number} level. @returns {number} échecs déjà accumulés par cet objet à ce niveau précis (0 si aucun). */
 function itemFailstack(item, level) { return (item && item.fsByLevel && item.fsByLevel[level]) || 0; }
 /** Incrémente le failstack de `item` au niveau `level` précis (jamais partagé entre niveaux/objets). @param {object} item @param {number} level */
 function addItemFailstack(item, level) {
@@ -560,6 +566,7 @@ function enhChanceParts(level, item) {
   const bonus = Math.min(0.9 - base, fs * inc); // plafond global 90%
   return { base, bonus: Math.max(0, bonus), total: base + Math.max(0, bonus) };
 }
+/** @param {number} level @param {object} item. @returns {number} chance totale de succès (base+bonus failstack), voir enhChanceParts(). */
 function enhChance(level, item) { return enhChanceParts(level, item).total; }
 
 // ==================== POWER SCORE & SCALING ====================
@@ -650,9 +657,13 @@ function markBossDefeated(bossId) {
   floatTxt(P.x, P.y, 96, '📖 Compendium — '+b.name[LANG], { gold:true });
   logToDiscord('📖 Compendium', `**${myPseudo||'Joueur'}** débloque le bonus de **${b.name.fr}** (World Boss)`, 0xc9a55a);
 }
+/** @returns {number} nombre de zones entièrement collectées (Compendium). */
 function compendiumZoneCount() { return ZONES.reduce((n,z,zi) => n + (zoneFullyCollected(zi)?1:0), 0); }
+/** @returns {number} nombre de World Boss vaincus au moins une fois. */
 function compendiumBossCount() { return Object.keys(S.bossesKilled||{}).length; }
+/** @returns {number} zones + boss confondus (points de bonus de stat Compendium, PEN exclu). */
 function compendiumTotalCount() { return compendiumZoneCount() + compendiumBossCount(); }
+/** @returns {number} total possible de zones+boss (dénominateur de compendiumTotalCount()). */
 function compendiumTotalMax() { return ZONES.length + Object.keys(BOSS_ROSTER).length; }
 function compendiumPct() { return compendiumTotalCount() * 1; } // points de %, 1 par zone OU par boss
 // % de complétion GLOBALE du Compendium, toutes sources confondues (zones + boss + Maîtrise PEN) --
@@ -755,14 +766,18 @@ function trackEnhPeak(name, lvl) {
 
 // Vitesse de déplacement (2026-07-08) : progression par NIVEAU (0% au niv.1, jusqu'à +75% au
 // niveau 61, plafonné ensuite) + bonus de Compendium (points de % additifs entre eux).
+/** @returns {number} % de vitesse gagné par le niveau actuel (0% au niv.1, +75% au niv.61, plafonné). */
 function levelSpdPct() { return Math.max(0, Math.min(S.lvl,61)-1) / 60 * 75; }
+/** @returns {number} % de vitesse total (niveau + Compendium). */
 function totalSpdPct() { return levelSpdPct() + compendiumPct(); }
 // variantes "pour un niveau HYPOTHÉTIQUE" (2026-07-15, demande explicite : "ce qu'on gagne par
 // lvl... des qu'on prend un lvl les info change en fonction") -- réutilisées par l'onglet
 // Statistiques > Niveaux pour prévisualiser les 5 niveaux avant/après le niveau actuel, sans
 // dépendre de S.lvl. hpMaxFor() suppose la progression FIXE +8 PV/niveau depuis 100 à lvl 1 (voir
 // S.hpMax += 8 dans le level-up, aucune autre source ne modifie S.hpMax).
+/** @param {number} lvl - niveau hypothétique. @returns {number} % de vitesse pour ce niveau (même formule que levelSpdPct, sans dépendre de S.lvl). */
 function levelSpdPctFor(lvl) { return Math.max(0, Math.min(lvl,61)-1) / 60 * 75; }
+/** @param {number} lvl - niveau hypothétique. @returns {number} PV max pour ce niveau (+8/niveau depuis 100 à lvl 1). */
 function hpMaxFor(lvl) { return 100 + 8*Math.max(0, lvl-1); }
 function totalDmgPct() { return compendiumPct(); } // le DMG ne monte qu'avec le Compendium, pas le niveau
 
@@ -792,7 +807,9 @@ function totalDodgePct(dpR) {
 // charge AVANT ce fichier, voir index.html.
 
 // ==================== PROJECTION ISO ====================
+/** @param {number} x @param {number} y. @returns {number} composante X de la projection isométrique. */
 function isoX(x, y) { return (x - y); }
+/** @param {number} x @param {number} y. @returns {number} composante Y de la projection isométrique. */
 function isoY(x, y) { return (x + y) * .5; }
 const cam = { x: 0, y: 0 };
 /** @param {number} x @param {number} y @param {number} [z] - hauteur (jump/float). @returns {{sx:number, sy:number}} coordonnées écran (canvas), projection isométrique centrée sur cam. */
@@ -826,8 +843,10 @@ const BASE_SPEED = 92;
 let packs = [], drops = [], particles = [], floats = [], corpses = [];
 let packSerial = 0, target = null, shakeT = 0, shakeAmp = 0;
 
+/** @param {number} ax @param {number} ay @param {number} bx @param {number} by. @returns {number} distance euclidienne entre les deux points. */
 function dist(ax,ay,bx,by){ return Math.hypot(ax-bx,ay-by); }
 
+/** Fait apparaître un nouveau pack de monstres autour du joueur (taille/PV/alpha selon la zone et le palier), ajouté à `packs`. */
 function spawnPackNear() {
   packSerial++;
   const z = Z();
@@ -923,6 +942,7 @@ function hpTier() {
   if (p > .25) return 'prudent';
   return 'urgence';
 }
+/** @param {string} st - nouvel état de la FSM du joueur. Change P.state et réinitialise son minuteur (P.stateT). */
 function setState(st){ P.state = st; P.stateT = 0; }
 
 // pénalité de vitesse liée au poids retirée (2026-07-15, demande explicite : "enleve ralentit par
@@ -1164,6 +1184,7 @@ function combatTick(dt) {
 // le monstre du pack ACTUELLEMENT visé par le joueur : le premier encore vivant (2026-07-11,
 // demande explicite : chaque monstre a désormais son propre PV, on les abat un par un plutôt que
 // de vider une seule barre agrégée pour tout le pack d'un coup)
+/** @param {object} p - pack de monstres. @returns {?object} premier monstre encore vivant du pack (cible actuelle), null si tous morts. */
 function currentWolf(p) { return p.wolves.find(w => !w.dead) || null; }
 
 /**
@@ -1371,6 +1392,7 @@ function killPack(p) {
 
 // Rendu canvas (scene, sprites, particules) + demarrage du jeu -> voir render.js (charge APRES ce fichier, voir index.html)
 // ==================== HUD ====================
+/** @param {number} n. @returns {string} nombre compacté (ex: "1.2M"/"3.4k"), tronqué à l'entier en dessous de 1000. */
 function fmt(n){ n=Math.floor(n); return n>=1e6 ? (n/1e6).toFixed(1)+'M' : n>=1e3 ? (n/1e3).toFixed(1)+'k' : n; }
 const STATE_FR = { search:'SearchPack', move:'MoveToPack', gather:'GatherPack', combat:'Combat', kite:'Kite', loot:'Loot' };
 
@@ -1404,6 +1426,7 @@ let zoneTier = 'early';
 // zoneSilverPerHour/zoneXpPerHour/zoneKillsPerMin), donc constantes tout le long d'une session :
 // rendu une seule fois au clic sur l'onglet plutôt qu'à chaque tick de hud().
 let statsTab = 'perso';
+/** Bascule les panneaux de la carte Statistiques (Perso/Recommandations/Niveaux) selon statsTab, rend Reco une seule fois (valeurs théoriques stables) et Niveaux à chaque affichage (doit refléter le niveau courant). */
 function renderStatsTabs() {
   const el = $('statsTabTabs'); if (!el) return;
   el.querySelectorAll('.catTab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === statsTab));
@@ -1424,6 +1447,7 @@ function renderStatsTabs() {
 })();
 // contenu de l'onglet "Recommandations" : meilleure zone pour le silver/h, le xp/h et les
 // kills/min, chacun cliquable pour s'y rendre directement (même geste que les zones de farm)
+/** Reconstruit l'onglet Recommandations : meilleure zone pour silver/h, xp/h et kills/min, chaque ligne cliquable pour s'y téléporter. */
 function renderStatsRecoPane() {
   const el = $('statsRecoPane'); if (!el) return;
   const rows = [
@@ -1445,6 +1469,7 @@ function renderStatsRecoPane() {
 // PAS de garde "déjà rendu" (contrairement à renderStatsRecoPane) : appelée à chaque affichage de
 // l'onglet ET après un level-up (voir le bloc S.lvl++ un peu plus haut) pour toujours refléter le
 // niveau courant, comme demandé explicitement.
+/** Reconstruit l'onglet Niveaux : 5 niveaux avant/après le niveau actuel (PV/vitesse/XP requis), ligne courante mise en évidence. Toujours re-rendu (pas de garde), pour suivre chaque level-up. */
 function renderStatsLevelsPane() {
   const el = $('statsLevelsPane'); if (!el) return;
   const cur = S.lvl, maxLvl = LEVEL_XP_TABLE.length - 1;
@@ -1462,6 +1487,7 @@ function renderStatsLevelsPane() {
 // avec cadenas") vivaient ici, dans la barre d'onglets de région -- remis dans le header
 // (#activityTabs, ACTIVITY_TABS dans combat/boss.js) le 2026-07-08, demande explicite : "remet les
 // categorie compagnon et vie en mer dans le header". Retirés d'ici pour ne pas les dupliquer.
+/** Reconstruit les onglets de palier de zone (ZONE_TIERS), cadenas pour les paliers non encore construits. */
 function renderZoneTierTabs() {
   const el = $('zoneTierTabs'); if (!el) return;
   // cadenas déplacé AU-DESSUS, centré (2026-07-12, demande explicite : "réorganise les noms de
@@ -1504,6 +1530,7 @@ let veliaPlayers = [];
 let readPatches = new Set();
 try { readPatches = new Set(JSON.parse(localStorage.getItem('velia-patch-read') || '[]')); } catch(e) {}
 let seenThisSession = new Set();
+/** Reconstruit la liste de zones (#zoneList) : Velia épinglée en haut, zones groupées par palier de stuff (GEAR_TIERS.zones, pas l'ordre physique de ZONES), badges danger/PA-PD/upgrade/joueurs présents/admin ici. */
 function buildZoneList() {
   renderZoneTierTabs();
   const list = $('zoneList');
@@ -1584,6 +1611,7 @@ function buildZoneList() {
 }
 // rafraîchit juste les compteurs "👥 N joueurs" (appelé toutes les 20s par refreshZonePlayerCounts,
 // game-supabase.js), sans reconstruire toute la liste — même logique dataset.zi que le halo du 👁
+/** Rafraîchit juste les compteurs "👥 N joueurs" de la liste de zones sans la reconstruire entièrement (appelé toutes les 20s). */
 function updateZonePlayerCountBadges() {
   document.querySelectorAll('#zoneList .zRow:not(.veliaRow)').forEach(row => {
     const i = parseInt(row.dataset.zi, 10);
@@ -1594,6 +1622,7 @@ function updateZonePlayerCountBadges() {
   });
 }
 // rafraîchit juste le halo du 👁 sans reconstruire toute la liste (appelé à chaque aperçu de loot)
+/** Rafraîchit juste le halo actif du bouton 👁 (aperçu de loot) sans reconstruire la liste de zones, basé sur data-zi (pas la position DOM). */
 function updateZoneViewHalo() {
   // se base sur data-zi (index réel de la zone), pas la position dans le DOM -- depuis que les
   // zones sont affichées groupées par PALIER (voir buildZoneList), l'ordre d'affichage ne
@@ -1609,6 +1638,7 @@ function updateZoneViewHalo() {
 // avant, seuls travelTo()/goToVelia() les modifiaient, jamais applySaveState() -- après un
 // rechargement de page sur une zone différente de la zone 0, le nom affiché restait bloqué sur le
 // texte statique du HTML ("Camp des Loups") tant que le joueur ne voyageait pas manuellement.
+/** Met à jour le nom/palier affichés en haut du cadre de jeu (#ztName/#ztTier) — seul point d'appel qui les synchronise, y compris après un rechargement de sauvegarde. */
 function updateZoneTitleText() {
   if (atVelia) {
     $('ztName').textContent = 'Velia'; // nom propre, identique dans toutes les langues -- ternaire d'origine n'avait aucune variante EN
@@ -1618,6 +1648,7 @@ function updateZoneTitleText() {
     $('ztTier').textContent = Z().tier;
   }
 }
+/** @param {number} i - index de zone cible. Voyage vers une zone de farm : reset le monde, met à jour titre/loot/HUD/liste de zones/poupée d'équipement, log la 1ère découverte sur Discord. */
 function travelTo(i) {
   atVelia = false;
   // quitter Velia : efface la liste de joueurs éventuellement affichée dans #lootTicker (2026-07-16)
@@ -1647,6 +1678,7 @@ function travelTo(i) {
 // demande explicite : "on peut voir la liste des joueurs dans la ville a droite a la place du loot
 // ticker") -- aucun monstre à Velia donc le ticker de loot y est de toute façon toujours vide
 // (lootLine() n'est jamais appelé sans pack), cette zone de l'écran est donc libre à réutiliser.
+/** Affiche la liste des joueurs présents à Velia dans #lootTicker (réutilise cet espace, toujours vide à Velia puisqu'aucun monstre n'y génère de loot). No-op hors Velia. */
 function updateVeliaPlayersTicker() {
   const t = $('lootTicker'); if (!t || !atVelia) return;
   const label = i18next.t('core:core.velia.in_town_label', { count: veliaPlayers.length });
@@ -1656,6 +1688,7 @@ function updateVeliaPlayersTicker() {
 }
 // Velia : zone paisible, aucun monstre — ne lance plus le tutoriel automatiquement (voir
 // demande du 2026-07-04), juste un endroit calme où se rendre (à la main ou après une mort)
+/** Voyage vers Velia (zone paisible, aucun monstre) : reset le monde, met à jour titre/loot/HUD/liste de zones/poupée, rafraîchit la liste des joueurs en ville. */
 function goToVelia() {
   atVelia = true;
   resetWorld();
@@ -1674,6 +1707,7 @@ function goToVelia() {
 // demande explicite du 2026-07-05, remplace l'ancien "faint" qui soignait sur place. Ne renvoie
 // PLUS de force vers Velia si le joueur a déjà changé de zone pendant le K.O. (2026-07-09, demande
 // explicite : "à la fin du timer tu es renvoyé en ville SI tu n'as pas changé de zone entre temps")
+/** Gère la mort du joueur (PV à 0) : renvoie à Velia SEULEMENT si la zone n'a pas changé pendant le K.O., soigne à 50% PV, affiche la bannière de mort. */
 function die() {
   const stayedPut = (zoneIdx === P.faintZoneIdx) && (atVelia === P.faintAtVelia);
   if (stayedPut) goToVelia();
@@ -1692,6 +1726,7 @@ function die() {
 
 // mise à jour légère des chiffres uniquement (aucune reconstruction de DOM lourde) —
 // utilisée pour les actions fréquentes comme les tentatives d'optimisation
+/** Met à jour les chiffres du HUD/panneau Stats sans reconstruire le DOM lourd (silver, niveau/XP, PA/PD/GS, bannières sac plein/zone dangereuse) — utilisé pour les actions fréquentes comme les tentatives d'optimisation. */
 function refreshStatsOnly() {
   const invFullEl = $('invFullBanner');
   if (invFullEl) invFullEl.classList.toggle('show', invUsed() >= INV_SIZE);
@@ -1792,6 +1827,7 @@ function refreshStatsOnly() {
 // refaisait tout ce travail en continu, pour toujours, même quand le joueur ne looter/
 // n'équipait/ne voyageait pas cette seconde-là précise
 let lastInvSig = '', lastZoneSig = '';
+/** @returns {string} signature bon marché du sac+équipement (clé/qté/enhLv de chaque slot), sert à éviter de reconstruire le DOM inventaire quand rien n'a réellement changé (voir hud()). */
 function invSignature() {
   let s = '';
   for (let i = 0; i < INV_SIZE; i++) { const it = INV[i]; s += it ? (it.key+','+it.qty+','+(it.enhLv||0)) : '_'; s += '|'; }
@@ -1803,6 +1839,7 @@ function invSignature() {
   for (const k of Object.keys(EQUIP)) { const e = EQUIP[k]; s += e ? (e.key+','+(e.enhLv||0)) : '_'; s += '|'; }
   return s;
 }
+/** @returns {string} signature bon marché de la zone+puissance courantes, sert à éviter de reconstruire la liste de zones à chaque tick (voir hud()). */
 function zoneSignature() { return zoneIdx + ':' + atVelia + ':' + Math.round(apEff()) + ':' + Math.round(totalDP()); }
 
 // badge "1" sur Wiki/Compendium/Codex/Succès après une modification de contenu, RETIRÉ dès que CE
@@ -1825,10 +1862,13 @@ const CONTENT_UPDATE_VERSION = {
   codex:        { v:1, desc:{fr:'Liste à jour de tous les objets du jeu',en:'Up to date list of every item in the game'} },
   achievements: { v:2, desc:{fr:'Nouveau visuel : succès groupés par chaîne de paliers, vue d\'ensemble et derniers débloqués',en:'New look: achievements grouped into tiered chains, overview and recent unlocks'} },
 };
+/** @param {string} panel - clé de CONTENT_UPDATE_VERSION. @returns {string} clé localStorage de dernière version vue de ce panneau. */
 function contentSeenKey(panel) { return 'velia-idle-seenv-'+panel; }
+/** @param {string} panel. @returns {number} numéro de version du dernier changement vu par ce joueur pour ce panneau (0 si jamais). */
 function contentLastSeenVersion(panel) {
   try { return parseInt(localStorage.getItem(contentSeenKey(panel))||'0', 10) || 0; } catch(e) { return 0; }
 }
+/** @param {string} panel. @returns {boolean} vrai si le panneau a un changement de contenu plus récent que la dernière ouverture de ce joueur. */
 function contentIsUnread(panel) {
   const entry = CONTENT_UPDATE_VERSION[panel]; if (!entry) return false;
   return entry.v > contentLastSeenVersion(panel);
@@ -1836,17 +1876,20 @@ function contentIsUnread(panel) {
 // à appeler à l'OUVERTURE de chaque panneau (après avoir déjà lu contentIsUnread pour l'affichage
 // de cette ouverture précise) — le badge disparaît, mais la mise en évidence reste visible tant
 // que le panneau affiché à l'écran ne s'est pas refermé/rouvert
+/** @param {string} panel. Marque la version actuelle du panneau comme vue (localStorage), retire le badge "1" (à appeler à l'ouverture du panneau, après avoir lu contentIsUnread pour cette ouverture). */
 function markContentSeen(panel) {
   const entry = CONTENT_UPDATE_VERSION[panel]; if (!entry) return;
   try { localStorage.setItem(contentSeenKey(panel), String(entry.v)); } catch(e) {}
   refreshContentNewBadges();
 }
 // callout affiché en haut du panneau tant qu'il n'a pas encore été ouvert depuis le changement
+/** @param {string} panel. @returns {string} HTML du callout "🆕 ..." affiché en haut du panneau tant qu'il n'a pas été ouvert depuis ce changement, vide sinon. */
 function contentChangeCalloutHtml(panel) {
   if (!contentIsUnread(panel)) return '';
   const entry = CONTENT_UPDATE_VERSION[panel]; if (!entry || !entry.desc) return '';
   return `<div class="contentNewCallout">🆕 ${escapeHtml(entry.desc[LANG]||entry.desc.fr)}</div>`;
 }
+/** Rafraîchit les pastilles "1" de Wiki/Compendium/Codex/Succès selon contentIsUnread() de chacun. */
 function refreshContentNewBadges() {
   const map = { wiki:'newBadgeWiki', compendium:'newBadgeCompendium', codex:'newBadgeCodex', achievements:'newBadgeAchievements' };
   for (const key in map) {
@@ -1856,6 +1899,7 @@ function refreshContentNewBadges() {
   }
 }
 
+/** Boucle d'affichage principale (appelée ~1×/s + après chaque action) : stats/zone/inventaire reconstruits seulement si leur signature a changé, quêtes/succès/loyalty/badges toujours resynchronisés. */
 function hud() {
   refreshStatsOnly();
   drawZoneMobIcon();
@@ -1902,6 +1946,7 @@ function hud() {
 // plafonné jusqu'ici par un max-height:60vh fixe, sans rapport avec la hauteur réelle de
 // Statistiques -- d'où l'écart visible. Mesure la hauteur RÉELLE de Statistiques et l'applique en
 // max-height sur les listes internes (le défilement absorbe le surplus de contenu).
+/** Aligne la hauteur des cartes "Zones de farm"/"Loot"/"Coffre" sur celle de la carte Statistiques (mesure réelle, jamais de valeur fixe). Appelé seulement quand la liste de zones est reconstruite ou au redimensionnement, pas à chaque tick (coûteux, cause un ralenti connu). */
 function syncFarmCardHeights() {
   const statsCard = $('statsCard');
   if (!statsCard) return;
@@ -1925,6 +1970,7 @@ function syncFarmCardHeights() {
   });
 }
 window.addEventListener('resize', () => { if (typeof syncFarmCardHeights === 'function') syncFarmCardHeights(); });
+/** Rafraîchit à chaque frame les éléments à jour élevée (barres PV/mana/cooldowns potions, cooldowns de sorts, barre d'incantation) — distinct de hud() qui tourne plus rarement. */
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
   if (P.hp > effHpMax()) P.hp = effHpMax(); // déséquiper une pièce peut faire baisser le max courant
@@ -1958,6 +2004,7 @@ function hudFast() {
 // barre d'incantation (2026-07-05, demande explicite) : "----------o----------", la matière se
 // retire des 2 côtés vers le centre au fil du temps -- le sort part quand elle a disparu. scaleX
 // part de 1 (barre pleine) et va vers 0 (juste le point central) en suivant P.castProgress.
+/** Anime la barre d'incantation ("----o----", se retire des 2 côtés vers le centre selon P.castProgress), masquée si aucun sort en cours de cast. */
 function renderCastBar() {
   const bar = $('castBar');
   if (!P.castingSkill) { bar.classList.remove('show'); return; }
@@ -1979,6 +2026,14 @@ let last = performance.now();
 // cette fonction) qui, lui, continue de tourner en arrière-plan (juste clampé à ~1s minimum par les
 // navigateurs, jamais suspendu comme rAF) prend le relais pour cette même fonction quand l'onglet
 // est caché, avec un dt basé sur le temps RÉEL écoulé (pas un FPS supposé).
+/**
+ * Simulation d'un tick de jeu (dt réel écoulé depuis le dernier appel, plafonné à 2s) : gate sur
+ * sessionLocked/combat de boss, respawn les packs manquants, purge corpses/floats, avance FSM/
+ * combat/loot/particules, suit la caméra. Appelée par loop() (rAF, tant que l'onglet est visible)
+ * ET par un setInterval de secours (tant que l'onglet est masqué, rAF étant throttlé par le
+ * navigateur) — c'est ce qui permet au farm de continuer en arrière-plan.
+ * @param {number} now - horodatage performance.now() de cet appel.
+ */
 function advanceSim(now) {
   const dt = Math.min(2, (now-last)/1000); last = now;
   if (dt <= 0) return;
@@ -2011,6 +2066,7 @@ function advanceSim(now) {
   cam.x += (P.x-cam.x)*Math.min(1,dt*4);
   cam.y += (P.y-cam.y)*Math.min(1,dt*4);
 }
+/** @param {number} now - performance.now() (fourni par requestAnimationFrame). Boucle de rendu principale : avance la simulation, dessine le monde, met à jour le HUD rapide, se replanifie. Skip pendant un combat de boss (plein écran séparé). */
 function loop(now) {
   if (bossState.active) { requestAnimationFrame(loop); return; }
   advanceSim(now);
@@ -2119,6 +2175,7 @@ function applySaveState(data) {
   return true;
 }
 // Export manuel (bouton à brancher si besoin) : télécharge un .json local
+/** Télécharge un fichier .json local contenant l'état de sauvegarde complet (getSaveState()). */
 function exportSaveToFile() {
   const blob = new Blob([JSON.stringify(getSaveState(), null, 2)], { type:'application/json' });
   const a = document.createElement('a');
@@ -2127,6 +2184,7 @@ function exportSaveToFile() {
   a.click();
 }
 // Import manuel depuis un fichier .json choisi par le joueur
+/** @param {File} file - fichier .json choisi par le joueur. Lit et applique la sauvegarde (applySaveState), log une erreur en console si le JSON est invalide. */
 function importSaveFromFile(file) {
   const reader = new FileReader();
   reader.onload = e => { try { applySaveState(JSON.parse(e.target.result)); } catch(err) { console.error('Sauvegarde invalide', err); } };

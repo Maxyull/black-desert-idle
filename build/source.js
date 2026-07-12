@@ -2412,6 +2412,7 @@ const NAME_EN = {
   
   'équilibré':'balanced', 'défensif':'defensive', 'overgeared':'overgeared',
 };
+
 function tr(s) { if (LANG !== 'en' || !s) return s; return NAME_EN[s] || s; }
 
 let zoneIdx = 0;
@@ -2563,6 +2564,7 @@ const INV = new Array(INV_SIZE).fill(null);
 const MAX_STACK = 999999;
 
 const COMPENDIUM_BAG = new Array(INV_SIZE).fill(null);
+
 function compendiumBagHasName(name) { return COMPENDIUM_BAG.some(s => s && s.name === name); }
 
 const VELIA_CHEST = new Array(INV_SIZE).fill(null);
@@ -2617,6 +2619,7 @@ function invWeight() {
 }
 
 const MAX_WEIGHT = () => 800;
+
 function invUsed() { return INV.filter(s => s).length; }
 
 function invAdd(obj) {
@@ -2671,6 +2674,7 @@ const ENH_FS_INC = {
   8:.05,  9:.045, 10:.04, 11:.035, 12:.03, 13:.025, 14:.02, 15:.015,
   16:.015,17:.012,18:.008,19:.004, 20:.0015,
 };
+
 function itemFailstack(item, level) { return (item && item.fsByLevel && item.fsByLevel[level]) || 0; }
 
 function addItemFailstack(item, level) {
@@ -2687,6 +2691,7 @@ function enhChanceParts(level, item) {
   const bonus = Math.min(0.9 - base, fs * inc); 
   return { base, bonus: Math.max(0, bonus), total: base + Math.max(0, bonus) };
 }
+
 function enhChance(level, item) { return enhChanceParts(level, item).total; }
 
 function weaponAP() {
@@ -2755,9 +2760,13 @@ function markBossDefeated(bossId) {
   floatTxt(P.x, P.y, 96, '📖 Compendium — '+b.name[LANG], { gold:true });
   logToDiscord('📖 Compendium', `**${myPseudo||'Joueur'}** débloque le bonus de **${b.name.fr}** (World Boss)`, 0xc9a55a);
 }
+
 function compendiumZoneCount() { return ZONES.reduce((n,z,zi) => n + (zoneFullyCollected(zi)?1:0), 0); }
+
 function compendiumBossCount() { return Object.keys(S.bossesKilled||{}).length; }
+
 function compendiumTotalCount() { return compendiumZoneCount() + compendiumBossCount(); }
+
 function compendiumTotalMax() { return ZONES.length + Object.keys(BOSS_ROSTER).length; }
 function compendiumPct() { return compendiumTotalCount() * 1; } 
 
@@ -2821,9 +2830,11 @@ function trackEnhPeak(name, lvl) {
 }
 
 function levelSpdPct() { return Math.max(0, Math.min(S.lvl,61)-1) / 60 * 75; }
+
 function totalSpdPct() { return levelSpdPct() + compendiumPct(); }
 
 function levelSpdPctFor(lvl) { return Math.max(0, Math.min(lvl,61)-1) / 60 * 75; }
+
 function hpMaxFor(lvl) { return 100 + 8*Math.max(0, lvl-1); }
 function totalDmgPct() { return compendiumPct(); } 
 
@@ -2838,6 +2849,7 @@ function totalDodgePct(dpR) {
 }
 
 function isoX(x, y) { return (x - y); }
+
 function isoY(x, y) { return (x + y) * .5; }
 const cam = { x: 0, y: 0 };
 
@@ -2939,6 +2951,7 @@ function hpTier() {
   if (p > .25) return 'prudent';
   return 'urgence';
 }
+
 function setState(st){ P.state = st; P.stateT = 0; }
 
 function speedMult() {
@@ -3265,6 +3278,7 @@ let lootPreviewIdx = null;
 let zoneTier = 'early';
 
 let statsTab = 'perso';
+
 function renderStatsTabs() {
   const el = $('statsTabTabs'); if (!el) return;
   el.querySelectorAll('.catTab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === statsTab));
@@ -3337,6 +3351,7 @@ let veliaPlayers = [];
 let readPatches = new Set();
 try { readPatches = new Set(JSON.parse(localStorage.getItem('velia-patch-read') || '[]')); } catch(e) {}
 let seenThisSession = new Set();
+
 function buildZoneList() {
   renderZoneTierTabs();
   const list = $('zoneList');
@@ -3421,6 +3436,7 @@ function updateZoneTitleText() {
     $('ztTier').textContent = Z().tier;
   }
 }
+
 function travelTo(i) {
   atVelia = false;
   
@@ -3560,6 +3576,7 @@ function refreshStatsOnly() {
 }
 
 let lastInvSig = '', lastZoneSig = '';
+
 function invSignature() {
   let s = '';
   for (let i = 0; i < INV_SIZE; i++) { const it = INV[i]; s += it ? (it.key+','+it.qty+','+(it.enhLv||0)) : '_'; s += '|'; }
@@ -3567,6 +3584,7 @@ function invSignature() {
   for (const k of Object.keys(EQUIP)) { const e = EQUIP[k]; s += e ? (e.key+','+(e.enhLv||0)) : '_'; s += '|'; }
   return s;
 }
+
 function zoneSignature() { return zoneIdx + ':' + atVelia + ':' + Math.round(apEff()) + ':' + Math.round(totalDP()); }
 
 const CONTENT_UPDATE_VERSION = {
@@ -3575,10 +3593,13 @@ const CONTENT_UPDATE_VERSION = {
   codex:        { v:1, desc:{fr:'Liste à jour de tous les objets du jeu',en:'Up to date list of every item in the game'} },
   achievements: { v:2, desc:{fr:'Nouveau visuel : succès groupés par chaîne de paliers, vue d\'ensemble et derniers débloqués',en:'New look: achievements grouped into tiered chains, overview and recent unlocks'} },
 };
+
 function contentSeenKey(panel) { return 'velia-idle-seenv-'+panel; }
+
 function contentLastSeenVersion(panel) {
   try { return parseInt(localStorage.getItem(contentSeenKey(panel))||'0', 10) || 0; } catch(e) { return 0; }
 }
+
 function contentIsUnread(panel) {
   const entry = CONTENT_UPDATE_VERSION[panel]; if (!entry) return false;
   return entry.v > contentLastSeenVersion(panel);
@@ -3595,6 +3616,7 @@ function contentChangeCalloutHtml(panel) {
   const entry = CONTENT_UPDATE_VERSION[panel]; if (!entry || !entry.desc) return '';
   return `<div class="contentNewCallout">🆕 ${escapeHtml(entry.desc[LANG]||entry.desc.fr)}</div>`;
 }
+
 function refreshContentNewBadges() {
   const map = { wiki:'newBadgeWiki', compendium:'newBadgeCompendium', codex:'newBadgeCodex', achievements:'newBadgeAchievements' };
   for (const key in map) {
@@ -3649,6 +3671,7 @@ function syncFarmCardHeights() {
   });
 }
 window.addEventListener('resize', () => { if (typeof syncFarmCardHeights === 'function') syncFarmCardHeights(); });
+
 function hudFast() {
   $('stateName').textContent = STATE_FR[P.state]||P.state;
   if (P.hp > effHpMax()) P.hp = effHpMax(); 
@@ -3712,6 +3735,7 @@ function advanceSim(now) {
   cam.x += (P.x-cam.x)*Math.min(1,dt*4);
   cam.y += (P.y-cam.y)*Math.min(1,dt*4);
 }
+
 function loop(now) {
   if (bossState.active) { requestAnimationFrame(loop); return; }
   advanceSim(now);
