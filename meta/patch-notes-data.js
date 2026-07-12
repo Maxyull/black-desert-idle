@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V387', d:'22/07/2026 08:00', name:{fr:'Sélecteurs à bulles (combat/farm/équipement) : texte toujours visible', en:'Bubble selectors (combat/farm/gear): labels always visible'}, fr:[
+      {t:'change', sub:'interface', tx:'Les 3 sélecteurs à bulles du jeu (mode de combat IA, mode de farm sur le cadre de jeu, et Équipement/Cristal dans le panneau latéral) affichent désormais leur texte en permanence sur chaque option, plus seulement sur celle sélectionnée — plus besoin de cliquer pour voir ce que représente chaque bulle.'},
+      {t:'change', sub:'interface', tx:'Ces 3 sélecteurs sont passés aux couleurs de la refonte Zone (fond et bordure assortis aux autres panneaux), à la place de l\'ancienne teinte dorée isolée.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The game\'s 3 bubble selectors (AI combat mode, farm mode on the game frame, and Gear/Crystal in the side panel) now show their label at all times on every option, not just the selected one — no need to click to see what each bubble does.'},
+      {t:'change', sub:'interface', tx:'These 3 selectors now use the Zone redesign colors (background and border matching the other panels), instead of the old standalone gold tint.'},
+    ] },
   { v:'V386', d:'22/07/2026 07:00', name:{fr:'Écran de connexion refait : même style que Zone', en:'Login screen redesigned: same look as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran de connexion (compte, création, Discord/Google/GitHub/Twitter) a reçu le même reskin visuel que le reste du jeu : titre en Cinzel, champs et boutons arrondis, mêmes couleurs que l\'écran Zone. Aucun changement de fonctionnement.'},
     ], en:[
