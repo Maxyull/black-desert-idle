@@ -1380,6 +1380,105 @@
     assert('La carte "prochain boss" affiche la ligne récompense (quantité en poche)', !!div.querySelector('.bossNextReward'));
     liveBoss = savedLiveBoss;
   }
+  // BUG 1 corrigé le 2026-07-12 ("joueurs invisibles entre eux lors d'un World Boss") :
+  // nextBossOccurrence() peut retomber sur bossOccurrences() (planning purement local, sans
+  // sharedHp) si liveBoss n'a pas pu être confirmé côté serveur (RPC ensure_scheduled_boss + son
+  // repli en échec, tous deux avalés silencieusement avant ce correctif) -- le joueur démarrait
+  // alors un combat SOLO en croyant rejoindre du partagé (occ.sharedHp absent -> isShared=false dans
+  // startBossFight). computeBossSharedConfirmState() est la version pure (testable sans horloge
+  // réelle) de la machine à états qui distingue désormais explicitement confirmed/pending/solo-fallback.
+  function testComputeBossSharedConfirmStatePendingThenSoloFallback() {
+    if (typeof computeBossSharedConfirmState !== 'function') return;
+    const now0 = 1700000000000;
+    let r = computeBossSharedConfirmState({ live:true, sharedHp:false }, 0, now0);
+    assert('1ère détection (pendingSince=0) : état "pending", pendingSince initialisé à now', r.state === 'pending' && r.pendingSince === now0, JSON.stringify(r));
+    r = computeBossSharedConfirmState({ live:true, sharedHp:false }, now0, now0 + 5000);
+    assert('Encore dans la fenêtre de tolérance (5s < 15s) : toujours "pending"', r.state === 'pending', JSON.stringify(r));
+    r = computeBossSharedConfirmState({ live:true, sharedHp:false }, now0, now0 + BOSS_SHARED_CONFIRM_TIMEOUT_MS + 1);
+    assert('Délai de tolérance dépassé : bascule en "solo-fallback" EXPLICITE (jamais un partagé silencieux)', r.state === 'solo-fallback', JSON.stringify(r));
+    r = computeBossSharedConfirmState({ live:true, sharedHp:true }, now0, now0 + 1000);
+    assert('sharedHp confirmé par le serveur -> "confirmed", pendingSince remis à 0', r.state === 'confirmed' && r.pendingSince === 0, JSON.stringify(r));
+    r = computeBossSharedConfirmState(null, now0, now0 + 1000);
+    assert('Pas d\'occurrence -> null, pendingSince remis à 0', r.state === null && r.pendingSince === 0, JSON.stringify(r));
+    r = computeBossSharedConfirmState({ live:false }, now0, now0 + 1000);
+    assert('Occurrence pas encore live -> null (rien à confirmer)', r.state === null, JSON.stringify(r));
+  }
+  // garde-fou DOM : renderBossLobbyHtml() doit bloquer le bouton "Combattre" en pending (jamais
+  // laisser cliquer sur un "partagé implicite" pas encore confirmé) puis basculer sur un bouton actif
+  // au libellé HONNÊTE "Combattre en solo" une fois le délai de tolérance dépassé -- jamais un simple
+  // "⚔️ Combattre" qui laisserait croire à du partagé alors que occ.sharedHp est absent.
+  function testBossLobbyBlocksThenShowsHonestSoloFallbackWhenSharedUnconfirmed() {
+    if (typeof renderBossLobbyHtml !== 'function' || typeof nextBossOccurrence !== 'function') return;
+    const origNextBossOccurrence = nextBossOccurrence, origPendingSince = sharedPendingSince, origLiveBoss = liveBoss;
+    liveBoss = null; // aucune confirmation serveur possible pour ce test
+    nextBossOccurrence = () => ({ boss:'kzarka', time: Date.now(), live:true }); // pas de sharedHp -> non confirmé
+    try {
+      sharedPendingSince = 0; // 1ère détection : pending
+      let div = document.createElement('div'); div.innerHTML = renderBossLobbyHtml();
+      let btn = div.querySelector('#bossFightBtn');
+      assert('État "pending" : le bouton Combattre est bloqué (disabled)', btn && btn.disabled, btn && btn.outerHTML);
+      sharedPendingSince = Date.now() - BOSS_SHARED_CONFIRM_TIMEOUT_MS - 1000; // délai dépassé
+      div = document.createElement('div'); div.innerHTML = renderBossLobbyHtml();
+      btn = div.querySelector('#bossFightBtn');
+      assert('État "solo-fallback" : le bouton redevient actif', btn && !btn.disabled, btn && btn.outerHTML);
+      assert('État "solo-fallback" : le libellé N\'EST PAS le "Combattre" partagé standard (message honnête)',
+        btn && btn.textContent !== i18next.t('combat:combat.boss.fight_button'), btn && btn.textContent);
+    } finally {
+      nextBossOccurrence = origNextBossOccurrence; sharedPendingSince = origPendingSince; liveBoss = origLiveBoss;
+    }
+  }
+  // BUG 2 corrigé le 2026-07-12 ("fausse récompense déjà réclamée") : boss_contribute (SQL) plafonne
+  // CHAQUE appel à 5% du max_hp, donc le PV serveur d'un boss partagé baisse forcément plus lentement
+  // que la prédiction locale d'un joueur à fort DPS (décrémentée sans plafond, voir bossLoop). Avant
+  // ce correctif, endBossFight(true) partait dès que la prédiction LOCALE atteignait 0, et boss_claim
+  // (qui n'accorde la récompense QUE si le PV SERVEUR est <=0) refusait avec un faux "déjà réclamée".
+  // bossShouldDeclareVictory() est la fonction pure qui décide désormais de la victoire.
+  function testBossSharedVictoryOnlyFromServerConfirmationNeverLocalPrediction() {
+    if (typeof bossShouldDeclareVictory !== 'function') return;
+    assert('Solo : localHp<=0 déclare la victoire (pas de serveur à attendre)', bossShouldDeclareVictory(false, 0, false) === true);
+    assert('Solo : localHp>0 ne déclare pas la victoire', bossShouldDeclareVictory(false, 10, false) === false);
+    assert('Partagé : localHp<=0 SANS confirmation serveur NE déclare PAS victoire (régression bug 2026-07-12)', bossShouldDeclareVictory(true, 0, false) === false);
+    assert('Partagé : confirmation serveur déclare victoire même si localHp affiche encore >0 (bar visuelle en retard)', bossShouldDeclareVictory(true, 5000, true) === true);
+    assert('Partagé : ni local ni serveur -> pas de victoire', bossShouldDeclareVictory(true, 100, false) === false);
+  }
+  // applyBossContributeResponse() : seule porte d'entrée qui doit faire passer serverConfirmedDead
+  // à true -- doit ignorer une réponse vide/en erreur sans lever, et ne jamais "dé-confirmer" un état
+  // déjà mort si une réponse tardive renvoyait un hp>0 par accident (protection défensive : le
+  // serveur ne fait que décroître le hp, mais le test documente l'intention si ce n'était pas le cas).
+  function testApplyBossContributeResponseSetsServerConfirmedDeadOnlyWhenHpReachesZero() {
+    if (typeof applyBossContributeResponse !== 'function') return;
+    const state = { hp: 5000, maxHp: 50000, serverConfirmedDead: false };
+    applyBossContributeResponse([{ hp: 2000, max_hp: 50000 }], state);
+    assert('hp mis à jour depuis la réponse AUTORITAIRE du serveur', state.hp === 2000, state.hp);
+    assert('Pas encore confirmé mort tant que le serveur renvoie hp>0', state.serverConfirmedDead === false);
+    applyBossContributeResponse([{ hp: 0, max_hp: 50000 }], state);
+    assert('serverConfirmedDead passe à true quand le SERVEUR renvoie hp<=0', state.serverConfirmedDead === true);
+    const state2 = { hp: 100, maxHp: 50000, serverConfirmedDead: false };
+    applyBossContributeResponse(null, state2);
+    assert('Réponse vide/absente : ne touche pas au state, ne lève pas', state2.hp === 100 && state2.serverConfirmedDead === false);
+    applyBossContributeResponse([], state2);
+    assert('Tableau vide : idem, aucun effet', state2.hp === 100 && state2.serverConfirmedDead === false);
+  }
+  // garde-fou statique : empêche qu'une future modif ré-inline un simple "bossState.hp <= 0" pour
+  // décider la victoire d'un combat PARTAGÉ (régression facile à réintroduire par inadvertance lors
+  // d'un futur refactor de bossLoop) -- bossLoop doit toujours déléguer à bossShouldDeclareVictory().
+  function testBossLoopDelegatesSharedVictoryDecisionToPureHelper() {
+    if (typeof bossLoop !== 'function') return;
+    const src = bossLoop.toString();
+    assert('bossLoop() appelle bossShouldDeclareVictory() pour décider de la victoire (jamais un hp<=0 direct pour le partagé)',
+      /bossShouldDeclareVictory\s*\(/.test(src));
+    assert('bossLoop() route la réponse boss_contribute via applyBossContributeResponse() (pas une réassignation directe de bossState.hp)',
+      /applyBossContributeResponse\s*\(/.test(src));
+  }
+  // garde-fou statique : refreshLiveBoss() ne doit plus jamais avaler une erreur réseau SANS trace --
+  // régression facile à réintroduire (retour à un simple try/catch(e){}) qui a directement causé le
+  // bug 1 (liveBoss jamais confirmé, aucun moyen de diagnostiquer pourquoi en prod).
+  function testRefreshLiveBossLogsAndRetriesOnFailure() {
+    if (typeof refreshLiveBoss !== 'function') return;
+    const src = refreshLiveBoss.toString();
+    assert('refreshLiveBoss() logue explicitement (console.warn) en cas d\'échec', /console\.warn/.test(src));
+    assert('refreshLiveBoss() relance (setTimeout) après un échec plutôt que d\'attendre le prochain tick de 20s', /setTimeout\s*\(\s*refreshLiveBoss/.test(src));
+  }
   // "borne la taille de la fiche coffre a une taille standard par rapport au autre" (2026-07-08) --
   // #veliaChestGrid doit suivre le MÊME mécanisme de synchro de hauteur que zoneList/lootTable
   // (syncFarmCardHeights, core/game-core.js), pas un max-height fixe indépendant des cartes voisines.
@@ -4219,6 +4318,12 @@
     testAllBossesHaveLoreInBothLangs();
     testBossMatInHandSumsAcrossSlotsAndHandlesEmptyInv();
     testBossLobbyRewardLineShowsMatInHandWithoutThrow();
+    testComputeBossSharedConfirmStatePendingThenSoloFallback();
+    testBossLobbyBlocksThenShowsHonestSoloFallbackWhenSharedUnconfirmed();
+    testBossSharedVictoryOnlyFromServerConfirmationNeverLocalPrediction();
+    testApplyBossContributeResponseSetsServerConfirmedDeadOnlyWhenHpReachesZero();
+    testBossLoopDelegatesSharedVictoryDecisionToPureHelper();
+    testRefreshLiveBossLogsAndRetriesOnFailure();
     testGroupAchievementsIntoChainsGroupsByStatFnIdentity();
     testChainProgressNeverMarksIntermediateTierDoneAheadOfChain();
     testSortChainsForDisplayPushesCompletedChainsToEnd();

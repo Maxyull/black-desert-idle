@@ -500,6 +500,8 @@ const I18N_RESOURCES = {
       "combat.boss.caphras_label": "Caphras",
       "combat.boss.chance_label": "de chance",
       "combat.boss.close_button": "Fermer",
+      "combat.boss.connecting_button": "🔄 Connexion en cours…",
+      "combat.boss.connecting_hint": "Confirmation du combat partagé auprès du serveur — patiente quelques secondes.",
       "combat.boss.contribution_rank": "Rang de contribution",
       "combat.boss.death_penalty": "💀 {{deathCount}} mort{{s}} — récompense chiffrée réduite de {{pct}}%{{excludedNote}}",
       "combat.boss.death_penalty_rare_excluded": " (loot rarissime exclu)",
@@ -529,6 +531,8 @@ const I18N_RESOURCES = {
       "combat.boss.schedule_note": "Horaires calqués sur le vrai BDO −15 min. Heure locale.",
       "combat.boss.silver_label": "Silver",
       "combat.boss.skip_button": "⏭ Passer",
+      "combat.boss.solo_fallback_button": "⚔️ Combattre en solo",
+      "combat.boss.solo_fallback_hint": "Connexion au combat partagé indisponible — ce combat sera solo (pas de PV communs).",
       "combat.boss.status_defeated": "VAINCU",
       "combat.boss.status_live": "EN COURS",
       "combat.boss.victory_title": "🏆 VICTOIRE",
@@ -1391,6 +1395,8 @@ const I18N_RESOURCES = {
       "combat.boss.caphras_label": "Caphras",
       "combat.boss.chance_label": "chance",
       "combat.boss.close_button": "Close",
+      "combat.boss.connecting_button": "🔄 Connecting…",
+      "combat.boss.connecting_hint": "Confirming the shared fight with the server — hang on a few seconds.",
       "combat.boss.contribution_rank": "Contribution rank",
       "combat.boss.death_penalty": "💀 {{deathCount}} death{{s}} — numeric reward reduced by {{pct}}%{{excludedNote}}",
       "combat.boss.death_penalty_rare_excluded": " (rare loot excluded)",
@@ -1420,6 +1426,8 @@ const I18N_RESOURCES = {
       "combat.boss.schedule_note": "Times mirror real BDO −15 min. Local time.",
       "combat.boss.silver_label": "Silver",
       "combat.boss.skip_button": "⏭ Skip",
+      "combat.boss.solo_fallback_button": "⚔️ Fight solo",
+      "combat.boss.solo_fallback_hint": "Couldn't reach the shared fight — this attempt will be solo (no shared HP).",
       "combat.boss.status_defeated": "DEFEATED",
       "combat.boss.status_live": "LIVE",
       "combat.boss.victory_title": "🏆 VICTORY",
@@ -5836,25 +5844,43 @@ function bossOccurrences(fromDate) {
 
 let liveBoss = null; 
 
+let liveBossFailCount = 0;
+
 async function refreshLiveBoss() {
   if (!sb) return;
   const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
+  let data = null;
+  let hadError = false;
+  
   try {
+    const r = await sb.rpc('ensure_scheduled_boss');
+    if (r.error) throw r.error;
+    data = Array.isArray(r.data) ? r.data[0] : r.data;
+  } catch (e) {
     
-    let data = null;
+    console.warn('[LiveBoss] ensure_scheduled_boss a échoué, repli sur lecture directe de live_boss', e);
     try {
-      const r = await sb.rpc('ensure_scheduled_boss');
-      data = Array.isArray(r.data) ? r.data[0] : r.data;
-    } catch (e) {}
-    if (!data) {
       const r = await sb.from('live_boss').select('boss_id, spawned_at, expires_at, hp, max_hp').eq('id', 1).maybeSingle();
+      if (r.error) throw r.error;
       data = r.data;
+    } catch (e2) {
+      hadError = true;
+      console.warn('[LiveBoss] lecture directe de live_boss a AUSSI échoué -- liveBoss reste inchangé pour cette passe', e2);
     }
+  }
+  if (hadError) {
+    liveBossFailCount++;
+    console.warn(`[LiveBoss] échec de synchro #${liveBossFailCount} consécutif(s) -- liveBoss non confirmé`);
+    
+    if (liveBossFailCount <= 5) setTimeout(refreshLiveBoss, 3000 * liveBossFailCount);
+    
+  } else {
+    liveBossFailCount = 0;
     if (data && data.boss_id && BOSS_ROSTER[data.boss_id] && new Date(data.expires_at).getTime() > Date.now()) {
       liveBoss = { boss: data.boss_id, time: new Date(data.spawned_at).getTime(), expires: new Date(data.expires_at).getTime(),
                    hp: Number(data.hp||0), maxHp: Number(data.max_hp||0) };
-    } else liveBoss = null;
-  } catch (e) {}
+    } else liveBoss = null; 
+  }
   updateNextBossMini();
   
   const nowLive = !!(liveBoss && liveBoss.expires > Date.now());
@@ -5870,6 +5896,24 @@ function nextBossOccurrence() {
   if (liveBoss && liveBoss.expires > Date.now()) return { boss: liveBoss.boss, time: liveBoss.time, live: true, sharedHp: true, hp: liveBoss.hp, maxHp: liveBoss.maxHp };
   const occ = bossOccurrences(new Date());
   return occ.find(o => o.live) || occ[0] || null;
+}
+
+const BOSS_SHARED_CONFIRM_TIMEOUT_MS = 15000;
+
+function computeBossSharedConfirmState(occ, pendingSince, now) {
+  if (!occ || !occ.live) return { state: null, pendingSince: 0 };
+  if (occ.sharedHp) return { state: 'confirmed', pendingSince: 0 };
+  const since = pendingSince || now;
+  const state = (now - since >= BOSS_SHARED_CONFIRM_TIMEOUT_MS) ? 'solo-fallback' : 'pending';
+  return { state, pendingSince: since };
+}
+
+let sharedPendingSince = 0;
+
+function bossSharedConfirmState(occ) {
+  const r = computeBossSharedConfirmState(occ, sharedPendingSince, Date.now());
+  sharedPendingSince = r.pendingSince;
+  return r.state;
 }
 
 function fmtBossCountdown(ms) {
@@ -6020,9 +6064,40 @@ setInterval(() => {
   if (room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active) refreshLiveBoss();
 }, 20000);
 
+let bossPendingRefreshInFlight = false;
+setInterval(() => {
+  const room = $a('bossRoom');
+  if (!(room && room.classList.contains('open') && room.classList.contains('lobby') && !bossState.active)) return;
+  const state = bossSharedConfirmState(nextBossOccurrence());
+  if (state !== 'pending') return;
+  $('bossLobbyBody').innerHTML = renderBossLobbyHtml(); 
+  wireBossLobby();
+  if (bossPendingRefreshInFlight) return;
+  bossPendingRefreshInFlight = true;
+  
+  refreshLiveBoss().finally(() => { bossPendingRefreshInFlight = false; });
+}, 3000);
+
 function bossMatInHand(matKey) {
   if (!matKey || !Array.isArray(INV)) return 0;
   return INV.reduce((sum, s) => s && s.key === matKey ? sum + (s.qty || 0) : sum, 0);
+}
+
+function bossFightButtonHtml(occ) {
+  if (!occ || !occ.live) {
+    return `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.not_spawned_yet')}</button>`;
+  }
+  const state = bossSharedConfirmState(occ);
+  if (state === 'pending') {
+    return `<div class="admHint">${i18next.t('combat:combat.boss.connecting_hint')}</div>` +
+      `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.connecting_button')}</button>`;
+  }
+  if (state === 'solo-fallback') {
+    return `<div class="admHint">${i18next.t('combat:combat.boss.solo_fallback_hint')}</div>` +
+      `<button class="bossFightBtn soloFallback" id="bossFightBtn">${i18next.t('combat:combat.boss.solo_fallback_button')}</button>`;
+  }
+  
+  return `<button class="bossFightBtn" id="bossFightBtn">${i18next.t('combat:combat.boss.fight_button')}</button>`;
 }
 
 function renderBossLobbyHtml() {
@@ -6070,7 +6145,7 @@ function renderBossLobbyHtml() {
     (alreadyDead
       ? `<div class="admHint">${i18next.t('combat:combat.boss.already_defeated_hint')}</div>` +
         `<button class="bossFightBtn" id="bossFightBtn" disabled>${i18next.t('combat:combat.boss.already_defeated_button')}</button>`
-      : `<button class="bossFightBtn" id="bossFightBtn" ${occ.live?'':'disabled'}>${occ.live?i18next.t('combat:combat.boss.fight_button'):i18next.t('combat:combat.boss.not_spawned_yet')}</button>`);
+      : bossFightButtonHtml(occ));
   }
   
   const weekOcc = bossOccurrences(new Date()).filter(o => o.time < now + 7*24*3600*1000);
@@ -6136,7 +6211,7 @@ function wireBossLobby() {
 const bossState = { active:false, boss:null, hp:0, maxHp:0, duration:0, elapsed:0, playerHp:0, playerHpMax:0, hits:[], last:0, raf:0, potCd:0, ended:false,
   px:0.5, py:0.85, pillars:[], aoePhase:'idle', aoeT:0, aoeInterval:9, blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
   
-  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0, presenceCd:0,
+  shared:false, expiresAt:0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0, presenceCd:0, serverConfirmedDead:false,
   
   shakeT:0, embers:[],
   
@@ -6228,6 +6303,7 @@ function startBossFight(bossId, isShared) {
     px:atkPos.x, py:atkPos.y, atkPos, pillars:spots.map(p=>({...p})), aoePhase:'idle', aoeT:0, aoeInterval:8,
     blocked:false, blockFlash:0, hurtFlash:0, floatMsgs:[],
     shared, expiresAt: shared ? liveBoss.expires : 0, contribAccum:0, contribCd:0, topCd:0, topList:[], myDmg:0, activeFighters:0,
+    serverConfirmedDead:false,
     shakeT:0, embers:[], deathCount:0, deathFlag:false,
   });
   currentActivity = 'boss'; renderActivityTabs();
@@ -6642,6 +6718,17 @@ async function endBossFight(win) {
   $a('bossCloseBtn').onclick = leaveBossResultToZone;
 }
 
+function bossShouldDeclareVictory(shared, localHp, serverConfirmedDead) {
+  return shared ? !!serverConfirmedDead : localHp <= 0;
+}
+
+function applyBossContributeResponse(data, state) {
+  if (!data || !data.length) return;
+  state.hp = Number(data[0].hp);
+  state.maxHp = Number(data[0].max_hp) || state.maxHp;
+  if (state.hp <= 0) state.serverConfirmedDead = true;
+}
+
 function bossLoop(now) {
   if (!bossState.active) return;
   const dt = Math.min(.05, (now - bossState.last)/1000); bossState.last = now;
@@ -6656,9 +6743,9 @@ function bossLoop(now) {
       bossState.contribCd = 1.2;
       const dmg = bossState.contribAccum; bossState.contribAccum = 0;
       sb.rpc('boss_contribute', { p_damage: dmg, p_pseudo: myPseudo || null }).then(({ data, error }) => {
-        if (error || !data || !data.length) return;
+        if (error) return;
         
-        bossState.hp = Number(data[0].hp); bossState.maxHp = Number(data[0].max_hp) || bossState.maxHp;
+        applyBossContributeResponse(data, bossState);
       }).catch(()=>{});
     }
     if (bossState.topCd <= 0) { bossState.topCd = 4; refreshBossTop(); }
@@ -6749,7 +6836,7 @@ function bossLoop(now) {
   $('bossTimer').textContent = bossState.shared ? fmtBossCountdown(bossState.expiresAt - Date.now()) : fmtBossCountdown((bossState.duration - bossState.elapsed)*1000);
   $('bossPlayerHp').style.width = (bossState.playerHp/bossState.playerHpMax*100)+'%';
   $('bossPlayerHpTxt').textContent = Math.ceil(bossState.playerHp)+' / '+bossState.playerHpMax+' PV';
-  if (bossState.hp <= 0) { endBossFight(true); return; }
+  if (bossShouldDeclareVictory(bossState.shared, bossState.hp, bossState.serverConfirmedDead)) { endBossFight(true); return; }
   if (bossState.shared && Date.now() > bossState.expiresAt) { endBossFight(false); return; }
   bossState.raf = requestAnimationFrame(bossLoop);
 }
