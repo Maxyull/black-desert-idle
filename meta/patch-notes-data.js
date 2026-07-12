@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V396', d:'22/07/2026 17:00', name:{fr:'Correctif Marché commun : l\'objet vendu disparaît enfin immédiatement du sac', en:'Common Market fix: sold item now disappears from your bag immediately'}, fr:[
+      {t:'fix', sub:'economie', tx:'Poser une offre de vente au Marché commun ne retirait pas toujours l\'objet du sac immédiatement (il pouvait sembler "encore là" après une vente, notamment sur un objet enchanté à PEN). Le retrait local est désormais instantané dès la confirmation de la vente, sans attendre l\'aller-retour réseau — corrige aussi une fenêtre de course rare avec la sauvegarde automatique périodique qui pouvait repousser l\'ancien état du sac par-dessus la vente tout juste effectuée.'},
+    ], en:[
+      {t:'fix', sub:'economie', tx:'Placing a sell offer on the Common Market didn\'t always remove the item from your bag right away (it could look "still there" after a sale, especially on a PEN-enhanced item). The local removal is now instant as soon as the sale is confirmed, without waiting on the network round trip — also fixes a rare race with the periodic autosave that could push the old bag state back over a sale that had just gone through.'},
+    ] },
   { v:'V395', d:'22/07/2026 16:00', name:{fr:'Rattrapage hors-ligne : l\'XP aussi, pas seulement le silver', en:'Offline catch-up: XP too, not just silver'}, fr:[
       {t:'change', sub:'xp', tx:'Le rattrapage hors-ligne (après une vraie absence : navigateur fermé ou veille prolongée, pas un simple changement d\'onglet) crédite désormais aussi de l\'XP en plus du silver, au même taux plat basé sur ton record perso xp/h — avec passage(s) de niveau si le gain dépasse le seuil du niveau en cours.'},
       {t:'change', sub:'xp', tx:'Le modal "Bon retour" affiche donc un vrai avant/après de niveau même après une absence sans que l\'onglet n\'ait jamais été ouvert entre-temps.'},
