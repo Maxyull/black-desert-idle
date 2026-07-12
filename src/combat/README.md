@@ -7,6 +7,17 @@ comportement de l'IA.
   2026-07-19 : pity du loot rarissime (`BOSS_PITY_THRESHOLD`, `S.bossPity`), pénalité de
   récompense sur mort (`bossDeathPenaltyMult`), bonus "1ère victoire de la semaine PAR boss"
   (`bossFirstKillOfWeek`, `S.bossLastKillWeek`), near-miss sur la roue de loot rare.
+  **2 bugs corrigés le 2026-07-12** (voir commentaires en tête des fonctions concernées) :
+  (1) `refreshLiveBoss()` trace désormais ses échecs (`console.warn`, `liveBossFailCount`) et
+  relance rapidement au lieu de les avaler silencieusement ; `bossSharedConfirmState()`/
+  `computeBossSharedConfirmState()` (état pur `confirmed`/`pending`/`solo-fallback`,
+  `BOSS_SHARED_CONFIRM_TIMEOUT_MS`) empêchent le lobby de démarrer un combat solo silencieux quand
+  une occurrence est "live" localement sans confirmation serveur — le bouton `bossFightButtonHtml()`
+  bloque puis propose un repli solo EXPLICITE plutôt qu'un simple "Combattre" ambigu.
+  (2) La victoire d'un combat PARTAGÉ est désormais décidée uniquement par le PV **serveur confirmé**
+  (`bossState.serverConfirmedDead`, mis à jour par `applyBossContributeResponse()`), jamais par la
+  prédiction locale (`bossState.hp`, décrémentée sans le plafond de 5%/appel que `boss_contribute`
+  applique côté SQL) — `bossShouldDeclareVictory()` centralise cette décision dans `bossLoop()`.
 - `boss-render.js` — rendu canvas de la salle de boss (piliers, créature). Charge après
   `boss.js` (`bossLoop()` l'appelle).
 - `boss-wheel-react.js` (2026-07-19, demande explicite : "je veux une roue react et que tout soit
