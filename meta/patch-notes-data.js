@@ -5,6 +5,25 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V394', d:'22/07/2026 15:00', name:{fr:'Centre de notifications réorganisé : rail de catégories, regroupement par jour', en:'Notification center reorganized: category rail, day grouping'}, fr:[
+      {t:'new', sub:'ux', tx:'Le centre de notifications (🔔) a été réorganisé : rail de catégories à gauche (façon Marché commun) avec un compteur de notifications NON LUES par catégorie, au lieu des anciens onglets horizontaux.'},
+      {t:'new', sub:'ux', tx:'Les notifications sont désormais regroupées par jour (Aujourd\'hui / Hier / date) en plus du tri par catégorie.'},
+      {t:'new', sub:'ux', tx:'Un point doré pulsant signale les notifications reçues depuis ta dernière visite du panneau — il reste visible pendant que tu consultes, il ne disparaît qu\'à la fermeture (ou via "Tout marquer lu").'},
+      {t:'new', sub:'ux', tx:'Les notifications répétitives (ex: plusieurs "Niveau supérieur" le même jour) sont regroupées en une seule ligne dépliable à partir de 3 occurrences, pour ne plus noyer le reste sous une session de farm.'},
+      {t:'new', sub:'ux', tx:'La notification "Mode invité" propose désormais un bouton "Se connecter" qui ouvre directement l\'écran de connexion.'},
+      {t:'new', sub:'ux', tx:'Une recherche texte permet de retrouver une notification dans l\'historique.'},
+      {t:'change', sub:'ux', tx:'L\'en-tête sépare maintenant "Tout marquer lu" (non destructif) de "Vider [catégorie affichée]" (destructif, avec confirmation en 2 clics/3s) — l\'ancien bouton "Tout supprimer" agissait sur l\'onglet affiché mais restait ambigu.'},
+      {t:'change', sub:'ux', tx:'Chaque catégorie vide affiche désormais un texte expliquant ce qui y apparaîtra, plutôt qu\'un simple "rien à afficher".'},
+    ], en:[
+      {t:'new', sub:'ux', tx:'The notification center (🔔) was reorganized: a category rail on the left (same style as the Common Market) with an UNREAD count per category, replacing the old horizontal tabs.'},
+      {t:'new', sub:'ux', tx:'Notifications are now grouped by day (Today / Yesterday / date) in addition to the category sorting.'},
+      {t:'new', sub:'ux', tx:'A pulsing gold dot marks notifications received since your last visit to the panel — it stays visible while you\'re browsing, only clearing on close (or via "Mark all read").'},
+      {t:'new', sub:'ux', tx:'Repetitive notifications (e.g. several "Level up" the same day) are grouped into a single expandable row starting at 3 occurrences, so a farming session no longer buries everything else.'},
+      {t:'new', sub:'ux', tx:'The "Guest mode" notification now offers a "Log in" button that opens the login screen directly.'},
+      {t:'new', sub:'ux', tx:'A text search lets you find a notification in your history.'},
+      {t:'change', sub:'ux', tx:'The header now separates "Mark all read" (non-destructive) from "Clear [displayed category]" (destructive, with a 2-click/3s confirmation) — the old "Clear all" button acted on the displayed tab but stayed ambiguous.'},
+      {t:'change', sub:'ux', tx:'Each empty category now shows a text explaining what will appear there, instead of a plain "nothing to show".'},
+    ] },
   { v:'V393', d:'22/07/2026 14:00', name:{fr:'Bordures et barres de défilement héritées unifiées avec le thème Zone', en:'Legacy borders and scrollbars unified with the Zone theme'}, fr:[
       {t:'change', sub:'interface', tx:'Une trentaine de bordures de séparation, de bordures de bouton/case et de barres de défilement affichaient encore deux anciennes teintes grises héritées d\'avant la refonte Zone (liste des zones, loot, notifications, chat, inventaire, Compendium, Succès, Classement, écran Boss...) : elles utilisent désormais les mêmes variables de bordure que le reste du jeu, pour une cohérence visuelle complète.'},
     ], en:[

@@ -3914,6 +3914,185 @@
     $('patchImgOverlay').classList.remove('open');
   }
 
+  // ---------- réorganisation du centre de notifications (2026-07-2x, port du mockup validé) ----------
+  // helper commun : sauvegarde/restaure l'état global mutable touché par ces tests (S.notifLog,
+  // S.notifLastSeenTs, notifCatFilter, notifSearchQuery, notifExpandedGroups, notifClearArm,
+  // notifCenterOpen) -- sans ça, un test qui ouvre le panneau ou vide une catégorie polluerait les
+  // tests suivants ET la vraie session de jeu en cours.
+  function withNotifState(fn) {
+    const savedLog = S.notifLog, savedSeen = S.notifLastSeenTs, savedCat = notifCatFilter,
+      savedSearch = notifSearchQuery, savedExpanded = notifExpandedGroups, savedArm = notifClearArm,
+      savedOpen = notifCenterOpen;
+    try { fn(); } finally {
+      S.notifLog = savedLog; S.notifLastSeenTs = savedSeen; notifCatFilter = savedCat;
+      notifSearchQuery = savedSearch; notifExpandedGroups = savedExpanded; notifClearArm = savedArm;
+      notifCenterOpen = savedOpen;
+      if ($a('infoOverlay').classList.contains('open')) $a('infoOverlay').classList.remove('open');
+      updateNotifBadge();
+    }
+  }
+  function fakeNotif(icon, title, text, cat, t) {
+    return { id: 'test_' + Math.random(), icon, title, text, t, cat };
+  }
+
+  function testGroupNotifEntriesGroupsInfoAtThresholdButNeverSuccessOrImportant() {
+    withNotifState(() => {
+      const now = Date.now();
+      // 3x la même notif 'info' (niveau supérieur) le même jour -> doit se grouper
+      const items = [
+        fakeNotif('⭐', 'Niveau supérieur', 'Niveau 9 atteint', 'info', now),
+        fakeNotif('⭐', 'Niveau supérieur', 'Niveau 8 atteint', 'info', now - 1000),
+        fakeNotif('⭐', 'Niveau supérieur', 'Niveau 7 atteint', 'info', now - 2000),
+      ];
+      const groups = groupNotifEntries(items);
+      assert('groupNotifEntries : 3 notifs info identiques le même jour -> 1 seul groupe', groups.length === 1 && !groups[0].single, JSON.stringify(groups.map(g=>g.single?'single':g.entries.length)));
+      assert('groupNotifEntries : le groupe contient les 3 entrées, la plus récente en premier', groups[0].entries && groups[0].entries[0].text === 'Niveau 9 atteint', groups[0].entries && groups[0].entries.map(e=>e.text));
+
+      // seulement 2 répétitions -> sous le seuil, reste 2 lignes seules
+      const under = [
+        fakeNotif('⭐', 'Niveau supérieur', 'Niveau 5 atteint', 'info', now),
+        fakeNotif('⭐', 'Niveau supérieur', 'Niveau 4 atteint', 'info', now - 1000),
+      ];
+      const underGroups = groupNotifEntries(under);
+      assert('groupNotifEntries : 2 répétitions (< NOTIF_GROUP_MIN) restent des lignes seules', underGroups.length === 2 && underGroups.every(g=>g.single), JSON.stringify(underGroups));
+
+      // 3x la même notif 'success' (succès débloqué, titre identique par construction) -> jamais groupée
+      const successItems = [
+        fakeNotif('🏅', 'Succès débloqué', 'Premier sang', 'success', now),
+        fakeNotif('🏅', 'Succès débloqué', 'Chasseur', 'success', now - 1000),
+        fakeNotif('🏅', 'Succès débloqué', 'Vétéran', 'success', now - 2000),
+      ];
+      const successGroups = groupNotifEntries(successItems);
+      assert('groupNotifEntries : les entrées "success" ne sont JAMAIS groupées (événements rares, toujours individuels)', successGroups.length === 3 && successGroups.every(g=>g.single), JSON.stringify(successGroups));
+    });
+  }
+
+  function testNotifDayKeyMatchesChatDayGrouping() {
+    // notifDayKey/notifDayLabel réutilisent EXACTEMENT dayKeyOf/fmtDaySeparator (social/chat.js) --
+    // ce test empêche une divergence silencieuse si l'un des deux fichiers est modifié séparément.
+    const ts = Date.now() - 3 * 3600 * 1000;
+    const iso = new Date(ts).toISOString();
+    assert('notifDayKey(ts) === dayKeyOf(iso) (même regroupement par jour que le chat)', notifDayKey(ts) === dayKeyOf(iso), `${notifDayKey(ts)} vs ${dayKeyOf(iso)}`);
+    assert('notifDayLabel(ts) === fmtDaySeparator(iso)', notifDayLabel(ts) === fmtDaySeparator(iso), `${notifDayLabel(ts)} vs ${fmtDaySeparator(iso)}`);
+  }
+
+  function testComputeNotifUnreadCountDerivesFromLastSeenTsNotACounter() {
+    withNotifState(() => {
+      const now = Date.now();
+      S.notifLastSeenTs = now - 5000;
+      S.notifLog = [
+        fakeNotif('🏅', 'Succès débloqué', 'a', 'success', now),       // après lastSeenTs -> non lue
+        fakeNotif('🎭', 'Mode invité', 'b', 'info', now - 10000),      // avant -> déjà vue
+        fakeNotif('⚠️', 'Alerte', 'c', 'important', now - 1000),       // après -> non lue
+      ];
+      assert('computeNotifUnreadCount() : 2 entrées postérieures à notifLastSeenTs sur 3', computeNotifUnreadCount() === 2, computeNotifUnreadCount());
+      assert('computeNotifUnreadCount("important") : filtre bien par catégorie', computeNotifUnreadCount('important') === 1, computeNotifUnreadCount('important'));
+      assert('computeNotifUnreadCount("info") : la notif "vue" (avant lastSeenTs) ne compte pas', computeNotifUnreadCount('info') === 0, computeNotifUnreadCount('info'));
+    });
+  }
+
+  function testEnsureNotifLastSeenMigratesExistingLogToSeenButFreshLogToZero() {
+    withNotifState(() => {
+      // sauvegarde "ancienne" (avant l'ajout du champ) : déjà des entrées dans le journal --
+      // doit devenir "déjà tout vu" (pas de flot de points nouveau rétroactifs), pas 0.
+      S.notifLastSeenTs = undefined;
+      S.notifLog = [fakeNotif('🏅', 'x', 'y', 'success', Date.now() - 100000)];
+      ensureNotifLastSeen();
+      assert('ensureNotifLastSeen : sauvegarde existante avec historique -> notifLastSeenTs proche de maintenant (tout considéré déjà vu)', Date.now() - S.notifLastSeenTs < 2000, S.notifLastSeenTs);
+
+      // compte tout neuf : journal vide -> part de 0 (la 1ère notif s'affichera bien comme nouvelle)
+      S.notifLastSeenTs = undefined;
+      S.notifLog = [];
+      ensureNotifLastSeen();
+      assert('ensureNotifLastSeen : journal vide (nouveau compte) -> notifLastSeenTs = 0', S.notifLastSeenTs === 0, S.notifLastSeenTs);
+    });
+  }
+
+  function testOpeningNotifCenterKeepsUnreadUntilRealClose() {
+    withNotifState(() => {
+      S.notifLastSeenTs = Date.now() - 60000;
+      S.notifLog = [fakeNotif('🏅', 'Succès débloqué', 'test', 'success', Date.now())];
+      updateNotifBadge();
+      assert('avant ouverture : 1 notification non lue', notifUnread === 1, notifUnread);
+      openNotifCenter();
+      assert('pendant que le panneau est OUVERT : le badge reste à 1 (pas remis à 0 à l\'ouverture, sinon plus aucun moyen de voir ce qui est vraiment nouveau)', notifUnread === 1, notifUnread);
+      const dotPresent = $a('infoBody').querySelector('.ncNewDot');
+      assert('pendant que le panneau est ouvert : le point "nouveau" est toujours affiché sur la ligne', !!dotPresent, 'ncNewDot absent');
+      // simule la fermeture RÉELLE (closeInfoOverlay() appelle leaveNotifCenterIfOpen())
+      leaveNotifCenterIfOpen();
+      assert('après la fermeture RÉELLE du panneau : le badge repasse à 0', notifUnread === 0, notifUnread);
+    });
+  }
+
+  function testMarkAllNotifReadClearsBadgeButKeepsLogEntries() {
+    withNotifState(() => {
+      S.notifLastSeenTs = Date.now() - 60000;
+      S.notifLog = [fakeNotif('⭐', 'Niveau supérieur', 'Niveau 5', 'info', Date.now())];
+      updateNotifBadge();
+      assert('avant "Tout marquer lu" : 1 non lue', notifUnread === 1, notifUnread);
+      markAllNotifRead();
+      assert('"Tout marquer lu" : badge à 0 immédiatement', notifUnread === 0, notifUnread);
+      assert('"Tout marquer lu" : l\'entrée reste dans S.notifLog (non destructif)', S.notifLog.length === 1, S.notifLog.length);
+    });
+  }
+
+  function testHandleNotifClearScopesToDisplayedCategoryOnlyWithTwoClickConfirm() {
+    withNotifState(() => {
+      const now = Date.now();
+      S.notifLog = [
+        fakeNotif('🏅', 'Succès débloqué', 'a', 'success', now),
+        fakeNotif('🎭', 'Mode invité', 'b', 'info', now),
+      ];
+      notifCatFilter = 'success';
+      notifClearArm = null;
+      handleNotifClearClick(); // 1er clic : arme la confirmation, ne supprime rien encore
+      assert('1er clic sur "Vider" : rien supprimé, juste armé', S.notifLog.length === 2, S.notifLog.length);
+      assert('1er clic : notifClearArm armé pour la catégorie affichée', !!notifClearArm && notifClearArm.cat === 'success', JSON.stringify(notifClearArm));
+      handleNotifClearClick(); // 2e clic (dans la fenêtre de 3s) : confirme
+      assert('2e clic : seule la catégorie "success" est vidée', S.notifLog.length === 1 && S.notifLog[0].cat === 'info', JSON.stringify(S.notifLog));
+    });
+  }
+
+  function testNotifActionButtonOnlyRendersForGuestModeIcon() {
+    withNotifState(() => {
+      const guestRow = notifRowHtml(fakeNotif('🎭', 'Mode invité', 'test', 'info', Date.now()));
+      assert('la notification "Mode invité" (icône 🎭) affiche un bouton d\'action contextuel', guestRow.includes('ncActionBtn'), guestRow);
+      const levelRow = notifRowHtml(fakeNotif('⭐', 'Niveau supérieur', 'Niveau 5', 'info', Date.now()));
+      assert('une notification sans action mappée (icône ⭐) n\'affiche PAS de bouton d\'action', !levelRow.includes('ncActionBtn'), levelRow);
+    });
+  }
+
+  function testNotifRailShowsPerCategoryUnreadCounts() {
+    withNotifState(() => {
+      const now = Date.now();
+      S.notifLastSeenTs = now - 60000;
+      S.notifLog = [
+        fakeNotif('🏅', 'Succès débloqué', 'a', 'success', now),
+        fakeNotif('⚠️', 'Alerte', 'b', 'important', now - 100000), // déjà vue (avant lastSeenTs)
+      ];
+      openNotifCenter();
+      const railItems = [...$a('infoBody').querySelectorAll('.ncRailItem')];
+      const successItem = railItems.find(el => el.dataset.cat === 'success');
+      const importantItem = railItems.find(el => el.dataset.cat === 'important');
+      assert('rail : catégorie "Réussites" affiche 1 non lue', !!successItem && successItem.querySelector('.ncRailCount').textContent.trim() === '1', successItem && successItem.textContent);
+      assert('rail : catégorie "Important" affiche 0 (entrée déjà vue avant notifLastSeenTs)', !!importantItem && importantItem.querySelector('.ncRailCount').textContent.trim() === '0', importantItem && importantItem.textContent);
+      leaveNotifCenterIfOpen();
+    });
+  }
+
+  function testHandleNotifClearArmedButtonAutoRevertsFieldNotUsedElsewhere() {
+    // garde-fou statique (pas de vrai setTimeout de 3s dans la suite de tests) : vérifie que
+    // handleNotifClearClick() pose bien un expiresAt futur au 1er clic, condition nécessaire pour
+    // que le revert automatique (setTimeout dans la fonction réelle) fonctionne.
+    withNotifState(() => {
+      notifCatFilter = 'all';
+      notifClearArm = null;
+      const before = Date.now();
+      handleNotifClearClick();
+      assert('1er clic "Vider" : expiresAt posé dans le futur (~3s)', !!notifClearArm && notifClearArm.expiresAt > before + 2500 && notifClearArm.expiresAt <= before + 3500, JSON.stringify(notifClearArm));
+    });
+  }
+
   // garde-fou du reskin #sessionLockBox (2026-07-12, mockup validé : claude.ai/code/artifact/
   // c6ea1bee-8162-4705-a9f4-cb5c5649fa84) -- vérifie le rendu RÉEL via getComputedStyle (résolu
   // même sur un ancêtre display:none, seules les valeurs dépendant du layout comme offsetWidth ne
@@ -4273,6 +4452,16 @@
     testInfoBoxSharedShellUsesZoneRedesignTokens();
     testPatchImgBoxReusesInfoBoxShell();
     testAuthBoxUsesZoneRedesignTokens();
+    testGroupNotifEntriesGroupsInfoAtThresholdButNeverSuccessOrImportant();
+    testNotifDayKeyMatchesChatDayGrouping();
+    testComputeNotifUnreadCountDerivesFromLastSeenTsNotACounter();
+    testEnsureNotifLastSeenMigratesExistingLogToSeenButFreshLogToZero();
+    testOpeningNotifCenterKeepsUnreadUntilRealClose();
+    testMarkAllNotifReadClearsBadgeButKeepsLogEntries();
+    testHandleNotifClearScopesToDisplayedCategoryOnlyWithTwoClickConfirm();
+    testNotifActionButtonOnlyRendersForGuestModeIcon();
+    testNotifRailShowsPerCategoryUnreadCounts();
+    testHandleNotifClearArmedButtonAutoRevertsFieldNotUsedElsewhere();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
