@@ -36,6 +36,12 @@ let wkScrollHandler = null;
 // Structure de nav groupée, comme le mockup — chaque item est soit un article réel (WIKI_SECTIONS
 // / renderCodexHtml), soit un raccourci vers un autre panneau du jeu (openCompanionsModule /
 // openCompendiumReact / openPatchNotesReact), jamais un contenu inventé.
+/**
+ * Construit la structure de navigation groupée du Wiki (accueil, guides, objets, compagnons/monde,
+ * communauté). Chaque item est soit un article réel (WIKI_SECTIONS/renderCodexHtml), soit un
+ * raccourci vers un autre panneau du jeu — jamais de contenu inventé.
+ * @returns {Array<{title:string, items:Array<object>}>} groupes de navigation avec leurs items
+ */
 function wkNavGroups() {
   return [
     { title: i18next.t('backend:backend.wiki.nav_group_general'), items: [
@@ -65,19 +71,34 @@ function wkNavGroups() {
     ]},
   ];
 }
+/** @returns {Array<object>} tous les items de nav à plat, chacun enrichi du titre de son groupe (`group`) */
 function wkFlatItems() { return wkNavGroups().flatMap(g => g.items.map(it => ({ ...it, group:g.title }))); }
+/** @param {string} id identifiant d'item de nav @returns {object|undefined} l'item correspondant, ou undefined si inconnu */
 function wkFindItem(id) { return wkFlatItems().find(it => it.id === id); }
 
+/**
+ * Bandeau "🆕" affiché en tête d'article si le contenu Wiki a une mise à jour non vue par le joueur.
+ * @returns {string} HTML du bandeau, ou chaîne vide si rien de nouveau
+ */
 function wkChangeCallout() {
   if (typeof contentIsUnread !== 'function' || !contentIsUnread('wiki')) return '';
   const entry = (typeof CONTENT_UPDATE_VERSION !== 'undefined') ? CONTENT_UPDATE_VERSION.wiki : null;
   if (!entry || !entry.desc) return '';
   return `<div class="wk-callout">🆕 ${wkEscape(entry.desc[LANG] || entry.desc.fr)}</div>`;
 }
+/** @param {*} s valeur à insérer dans du HTML @returns {string} version échappée (&,<,>,",') */
 function wkEscape(s) { return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+/** @param {string} t texte de titre @returns {string} slug ancre (minuscules, sans accents/diacritiques, tirets) */
 function wkSlug(t) { return String(t).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
 
 // ---- rendu de l'article actif (contenu réel uniquement) ----
+/**
+ * Rend le corps HTML de l'article correspondant à un item de nav, selon son `kind`
+ * (home/tuto/codex/section/discord/link). Ne fait que dispatcher vers le contenu réel du jeu,
+ * jamais de texte inventé ici.
+ * @param {object} item item de nav (voir wkNavGroups)
+ * @returns {string} HTML de l'article
+ */
 function wkArticleHtml(item) {
   if (item.kind === 'home') return wkHomeHtml();
   if (item.kind === 'tuto') return wkTutoHtml();
@@ -90,6 +111,7 @@ function wkArticleHtml(item) {
   if (item.kind === 'discord') return wkDiscordHtml();
   return '';
 }
+/** @returns {string} HTML de l'article d'accueil (résumé des systèmes de jeu, version courante) */
 function wkHomeHtml() {
   const version = (typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES[0]) ? PATCH_NOTES[0].v : '';
   return `<p class="wk-lead">${i18next.t('backend:backend.wiki.home_lead')}</p>
@@ -103,6 +125,7 @@ function wkHomeHtml() {
 }
 // réutilise le vrai renderTutoPageHtml() (game-supabase.js) — pas de duplication du texte, et le
 // bouton #btnStartTutoWiki qu'il génère reste câblé en bas de wkRenderArticleAndInfobox.
+/** @returns {string} HTML de la page tutoriel, délégué à renderTutoPageHtml() (game-supabase.js), ou '' si indisponible */
 function wkTutoHtml() {
   return typeof renderTutoPageHtml === 'function' ? renderTutoPageHtml() : '';
 }
@@ -112,6 +135,7 @@ function wkTutoHtml() {
 // -- "https://" au milieu d'un template literal multi-ligne a fait planter le strip de commentaires
 // du build, une ligne entière avalée comme un commentaire // -- bug réel constaté le 2026-07-21).
 const WK_DISCORD_URL = 'https:' + '//discord.gg/fEubtqMjtP';
+/** @returns {string} HTML de la page Discord (intro + bouton d'invitation vers le vrai lien du serveur) */
 function wkDiscordHtml() {
   const lead = i18next.t('backend:backend.wiki.discord_intro');
   const label = i18next.t('backend:backend.wiki.discord_join_button');
@@ -120,20 +144,30 @@ function wkDiscordHtml() {
 }
 
 // ---- headings -> ancres pour le sommaire (les articles réels utilisent <h3>, pas <h2>) ----
+/** @param {string} html corps d'article @returns {string} même HTML avec un `id` slug ajouté sur chaque `<h3>` */
 function wkInjectHeadingIds(html) {
   return html.replace(/<h3>(.*?)<\/h3>/g, (m, txt) => `<h3 id="${wkSlug(txt.replace(/<[^>]+>/g,''))}">${txt}</h3>`);
 }
+/** @param {string} html corps d'article avec ids injectés @returns {Array<{id:string, txt:string}>} sommaire extrait des `<h3 id>` */
 function wkExtractHeadings(html) {
   const out = []; const re = /<h3 id="([^"]+)">(.*?)<\/h3>/g; let m;
   while ((m = re.exec(html))) out.push({ id:m[1], txt:m[2].replace(/<[^>]+>/g,'') });
   return out;
 }
 
+/** @param {object} item item de nav actif @returns {Array<object>} jusqu'à 4 autres items du même groupe ("voir aussi") */
 function wkRelated(item) {
   const group = wkNavGroups().find(g => g.items.some(it => it.id === item.id));
   return (group ? group.items : []).filter(it => it.id !== item.id).slice(0, 4);
 }
 
+/**
+ * Construit le HTML de la colonne infobox (fiche article + sommaire + articles liés) affichée à
+ * droite de l'article actif.
+ * @param {object} item item de nav actif
+ * @param {Array<{id:string, txt:string}>} headings sommaire extrait de l'article (wkExtractHeadings)
+ * @returns {string} HTML de l'infobox
+ */
 function wkRenderInfobox(item, headings) {
   const isHome = item.kind === 'home';
   const rowsHtml = isHome ? `
@@ -158,6 +192,13 @@ function wkRenderInfobox(item, headings) {
     </div>${tocHtml}${relatedHtml}`;
 }
 
+/**
+ * Rend intégralement l'article actif et son infobox dans le DOM (#wkArticle/#wkInfoboxCol),
+ * câble le bouton "démarrer le tutoriel", les clics sommaire/articles liés, et le suivi de
+ * la section visible au scroll (surlignage du sommaire).
+ * @param {object} item item de nav actif
+ * @returns {void}
+ */
 function wkRenderArticleAndInfobox(item) {
   const article = document.getElementById('wkArticle');
   const infoboxCol = document.getElementById('wkInfoboxCol');
@@ -192,6 +233,7 @@ function wkRenderArticleAndInfobox(item) {
   wkScrollHandler();
 }
 
+/** @param {object} item item de nav actif — met à jour le fil d'ariane (#wkCrumb) @returns {void} */
 function wkRenderBreadcrumb(item) {
   const el = document.getElementById('wkCrumb');
   el.innerHTML = `<span class="wk-crumb-link" data-nav="accueil">Wiki</span><span class="wk-sep">/</span>` +
@@ -200,6 +242,7 @@ function wkRenderBreadcrumb(item) {
   el.querySelectorAll('.wk-crumb-link').forEach(a => { if (a.dataset.nav === 'accueil') a.onclick = () => wkNavigate('accueil'); });
 }
 
+/** Reconstruit intégralement la sidebar de navigation (#wkNav) et câble les clics de chaque item. @returns {void} */
 function wkRenderNav() {
   const el = document.getElementById('wkNav');
   el.innerHTML = wkNavGroups().map(g => `
@@ -212,6 +255,13 @@ function wkRenderNav() {
   el.querySelectorAll('.wk-nav-item').forEach(elm => { elm.onclick = () => wkNavigate(elm.dataset.nav); });
 }
 
+/**
+ * Point d'entrée de navigation du Wiki : si l'item cible est un raccourci (`kind:'link'`), ferme
+ * le panneau et ouvre le vrai panneau visé (Compagnons/Compendium/Patch notes) ; sinon met à jour
+ * l'id courant et re-rend nav/breadcrumb/article/infobox.
+ * @param {string} id identifiant d'item de nav
+ * @returns {void}
+ */
 function wkNavigate(id) {
   const item = wkFindItem(id);
   if (!item) return;
@@ -224,7 +274,14 @@ function wkNavigate(id) {
 }
 
 // ---- recherche live (titres uniquement, comme le mockup) ----
+/** Ferme/retire le dropdown de résultats de recherche live s'il existe. @returns {void} */
 function wkCloseSearch() { document.getElementById('wkSearchResults')?.remove(); }
+/**
+ * Recherche live sur les titres/groupes de la nav et affiche un dropdown de résultats cliquables
+ * (ou un message "aucun résultat").
+ * @param {string} q requête tapée par l'utilisateur
+ * @returns {void}
+ */
 function wkRunSearch(q) {
   wkCloseSearch();
   q = q.trim().toLowerCase();
@@ -239,6 +296,11 @@ function wkRunSearch(q) {
   document.getElementById('wkSearchWrap').appendChild(wrap);
 }
 
+/**
+ * Construit la structure DOM de l'overlay Wiki (header/recherche/breadcrumb/nav/article/infobox)
+ * et l'ajoute au `document.body`. Appelé une seule fois, à la première ouverture du panneau.
+ * @returns {HTMLElement} l'élément overlay créé (#wikiOverlay)
+ */
 function wkBuildOverlay() {
   const overlay = document.createElement('div');
   overlay.id = 'wikiOverlay';
@@ -264,6 +326,11 @@ function wkBuildOverlay() {
   return overlay;
 }
 
+/**
+ * Ouvre le panneau Wiki : construit l'overlay/les styles au premier appel (lazy), le rend visible,
+ * marque le contenu Wiki comme vu et navigue vers le dernier item consulté (`wkCurrentId`).
+ * @returns {void}
+ */
 function openWikiPanel() {
   let overlay = document.getElementById('wikiOverlay');
   if (!overlay) { wkInjectStyles(); overlay = wkBuildOverlay(); }
@@ -271,11 +338,13 @@ function openWikiPanel() {
   if (typeof markContentSeen === 'function') markContentSeen('wiki');
   wkNavigate(wkCurrentId);
 }
+/** Ferme le panneau Wiki et rafraîchit le badge de patch notes du header. @returns {void} */
 function closeWikiPanel() {
   document.getElementById('wikiOverlay')?.classList.remove('open');
   if (typeof updatePatchBadge === 'function') updatePatchBadge();
 }
 
+/** Injecte le `<style>` du panneau Wiki dans le `<head>` une seule fois (no-op si déjà présent). @returns {void} */
 function wkInjectStyles() {
   if (document.getElementById('wkStyles')) return;
   const s = document.createElement('style');

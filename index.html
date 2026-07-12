@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=564">
+<link rel="stylesheet" href="build/styles.min.css?v=565">
 <!-- refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-redesign.html fourni par
      l'utilisateur, voir CLAUDE.md) : Cinzel déjà référencé dans styles.css mais jamais chargé
      jusqu'ici (retombait en serif silencieusement) -- Inter/JetBrains Mono nouvellement introduits
@@ -829,11 +829,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=564"></script>
+<script src="meta/patch-notes-data.js?v=565"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=564"></script>
+<script src="build/source.min.js?v=565"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier
      susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone
      tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
