@@ -3962,12 +3962,71 @@
     assert('#eqSumXp reste doré --gold (couleur sémantique inchangée)', csXp.color === 'rgb(201, 165, 90)', csXp.color);
     assert('#eqSumGs reste bleu #9cc9e8 (couleur sémantique inchangée)', csGs.color === 'rgb(156, 201, 232)', csGs.color);
   }
+  // garde-fou du reskin .sk (barre de sorts) + #potSelect (sélecteur de potion) -- 2026-07-12,
+  // port fidèle du mockup validé (claude.ai/code/artifact/254bf55f-d00b-4a15-a0d3-441876371a98).
+  // Ces 2 éléments avaient été oubliés par les phases précédentes de la refonte Zone : .sk gardait
+  // le dégradé gris #22202a->#161419 + coins carrés + police héritée Georgia, #potSelect gardait
+  // un fond noir en dur rgba(12,10,15,.95) + bordure --gold-dim + radius 6/4px + police héritée.
+  // Vérifie le rendu RÉEL via getComputedStyle (pas juste une relecture de styles.css) et confirme
+  // que .cast/.buffed/.sel/.locked (états sémantiques de jeu) restent EXACTEMENT inchangés --
+  // seule la coque (fond/bordure/radius/police) doit avoir bougé.
+  function testSkillBarAndPotSelectUseZoneRedesignTokens() {
+    if (typeof document === 'undefined') return; // hors-contexte navigateur
+    const sk = document.querySelector('#skillBar .sk');
+    if (!sk) { assert('#skillBar contient au moins un .sk (barre de sorts construite)', false, 'aucun .sk trouvé'); return; }
+    const skCs = getComputedStyle(sk);
+    const ic = sk.querySelector('.ic'), nm = sk.querySelector('.nm');
+    assert('.sk fond var(--s1) #10101e (plus le dégradé gris #22202a->#161419)', skCs.backgroundColor === 'rgb(16, 16, 30)', skCs.backgroundColor);
+    assert('.sk bordure var(--dbBorder) #2a2a44 (plus --gold-dim)', skCs.borderColor === 'rgb(42, 42, 68)', skCs.borderColor);
+    assert('.sk radius 8px (plus 0, coins carrés d\'origine)', skCs.borderRadius === '8px', skCs.borderRadius);
+    assert('.sk police Inter (plus Georgia hérité de body)', /Inter/.test(skCs.fontFamily), skCs.fontFamily);
+    assert('.sk .ic teinté --gold2 #e8c880', getComputedStyle(ic).color === 'rgb(232, 200, 128)', getComputedStyle(ic).color);
+    assert('.sk .nm police JetBrains Mono (plus héritée)', /JetBrains Mono/.test(getComputedStyle(nm).fontFamily), getComputedStyle(nm).fontFamily);
+    assert('.sk .nm couleur --cream3 #585040 (plus --ink-dim)', getComputedStyle(nm).color === 'rgb(88, 80, 64)', getComputedStyle(nm).color);
+    // états sémantiques .cast/.buffed inchangés (ajoutés/retirés ici uniquement pour le test)
+    sk.classList.add('cast');
+    assert('.sk.cast garde sa bordure bleue #9cc9e8 (état sémantique, non touché par le reskin)',
+      getComputedStyle(sk).borderColor === 'rgb(156, 201, 232)', getComputedStyle(sk).borderColor);
+    sk.classList.remove('cast'); sk.classList.add('buffed');
+    assert('.sk.buffed garde sa bordure dorée var(--gold) (état sémantique, non touché par le reskin)',
+      getComputedStyle(sk).borderColor === 'rgb(201, 165, 90)', getComputedStyle(sk).borderColor);
+    sk.classList.remove('buffed');
+
+    if (typeof renderPotSelect !== 'function') { assert('renderPotSelect disponible', false, 'fonction absente'); return; }
+    renderPotSelect();
+    const potEl = $('potSelect');
+    const potCs = getComputedStyle(potEl);
+    assert('#potSelect fond var(--s1) #10101e (plus rgba(12,10,15,.95) en dur)', potCs.backgroundColor === 'rgb(16, 16, 30)', potCs.backgroundColor);
+    assert('#potSelect bordure var(--dbBorder) #2a2a44 (plus --gold-dim)', potCs.borderColor === 'rgb(42, 42, 68)', potCs.borderColor);
+    assert('#potSelect radius 10px (plus 6px)', potCs.borderRadius === '10px', potCs.borderRadius);
+    const row = potEl.querySelector('.psRow[data-pot="medium"]');
+    const lbl = potEl.querySelector('.psSectionLabel');
+    const heal = potEl.querySelector('.psHeal');
+    const cost = potEl.querySelector('.psCost');
+    if (!row || !lbl || !heal || !cost) { assert('#potSelect : markup attendu présent (.psRow/.psSectionLabel/.psHeal/.psCost)', false, 'élément(s) manquant(s)'); return; }
+    assert('.psRow radius 7px (plus 4px)', getComputedStyle(row).borderRadius === '7px', getComputedStyle(row).borderRadius);
+    assert('.psSectionLabel police Cinzel (plus héritée)', /Cinzel/.test(getComputedStyle(lbl).fontFamily), getComputedStyle(lbl).fontFamily);
+    assert('.psSectionLabel couleur --cream3 #585040 (plus --ink-dim)', getComputedStyle(lbl).color === 'rgb(88, 80, 64)', getComputedStyle(lbl).color);
+    assert('.psSectionLabel petites majuscules (text-transform:uppercase, comme .card h3)', getComputedStyle(lbl).textTransform === 'uppercase', getComputedStyle(lbl).textTransform);
+    assert('.psHeal police JetBrains Mono (plus héritée)', /JetBrains Mono/.test(getComputedStyle(heal).fontFamily), getComputedStyle(heal).fontFamily);
+    assert('.psCost police JetBrains Mono (plus héritée)', /JetBrains Mono/.test(getComputedStyle(cost).fontFamily), getComputedStyle(cost).fontFamily);
+    // couleurs sémantiques inchangées : soin en vert, coût en or, ligne sélectionnée/verrouillée pareilles qu'avant
+    assert('.psHeal garde sa couleur verte #8fc98a (couleur sémantique, non touchée par le reskin)',
+      getComputedStyle(heal).color === 'rgb(143, 201, 138)', getComputedStyle(heal).color);
+    assert('.psCost garde sa couleur dorée var(--gold) (couleur sémantique, non touchée par le reskin)',
+      getComputedStyle(cost).color === 'rgb(201, 165, 90)', getComputedStyle(cost).color);
+    assert('.psRow[data-pot=medium] (potion par défaut) garde sa classe .sel (état sémantique inchangé)',
+      row.classList.contains('sel'), row.className);
+    const lockedRow = potEl.querySelector('.psRow.locked');
+    if (lockedRow) assert('.psRow.locked garde son opacité .45 (état sémantique inchangé)', getComputedStyle(lockedRow).opacity === '0.45', getComputedStyle(lockedRow).opacity);
+  }
 
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
     testToastsUseZoneRedesignTokens();
     testEquipmentPaperdollUsesZoneRedesignTokens();
+    testSkillBarAndPotSelectUseZoneRedesignTokens();
     testZoneMonotonicity();
     testZoneWeaponArmorSlotsComplete();
     testGearRoleSanity();
