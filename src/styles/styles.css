@@ -1250,17 +1250,26 @@
        du sous-onglet ou de l'item choisi (ex: "Aucun ordre" très court vs carnet+chandelier+
        historique bien plus haut), donnant l'impression que la page "saute" à chaque clic. Hauteur
        constante désormais, chaque sous-onglet défile en interne (voir .marketPane overflow-y). */
-    width:640px; max-width:94vw; height:80vh; display:flex; flex-direction:column;
-    background:var(--panel); border:1px solid var(--gold-dim); box-shadow:0 20px 60px rgba(0,0,0,.7);
+    /* élargi le 2026-07-22 (refonte catalogue unifié + panneau "Mes ordres" ancré) -- l'ancienne
+       largeur de 640px suffisait pour un simple carnet d'ordres, plus pour arbre de catégories +
+       liste + détail + sidebar côte à côte (voir .cmMarketLayout/.cmBrowseLayout ci-dessous) */
+    width:1040px; max-width:96vw; height:82vh; display:flex; flex-direction:column;
+    /* reskin coque (2026-07-22, complément demandé) : mêmes tokens que le reste de la refonte
+       marché (--s1/--dbBorder, coins arrondis) au lieu de l'ancien --panel/--gold-dim sans radius,
+       cohérent avec .cmBuyModal/.cmBrowseLayout déjà sur ces tokens -- additif, aucune règle
+       retirée ailleurs. */
+    background:var(--s1); border:1px solid var(--dbBorder); border-radius:14px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.7);
   }
   #marketHead {
     /* croix de fermeture à droite (2026-07-08, demande explicite : "met la croix de fermeture a
        droite") -- avant, sans justify-content, le bouton flottait juste après le titre au lieu
-       d'être plaqué au bord droit du panneau. */
+       d'être plaqué au bord droit du panneau. Dégradé bleu-vert d'origine (#26313a→#1b232a)
+       retiré le 2026-07-22 : remplacé par --s2 (uni, même famille que le reste de la refonte). */
     display:flex; align-items:center; justify-content:space-between; gap:14px; padding:12px 16px;
-    background:linear-gradient(180deg,#26313a,#1b232a); border-bottom:1px solid var(--gold-dim);
+    background:var(--s2); border-bottom:1px solid var(--dbBorder);
   }
-  #marketHead h2 { font-size:15px; letter-spacing:1px; margin:0; }
+  #marketHead h2 { font-family:'Cinzel',serif; font-size:15px; letter-spacing:1px; margin:0; color:var(--gold2); }
   /* rappel clair "en construction" dans le panneau lui-même (2026-07-06, demande explicite :
      "faut que les gens comprennent que c'est peu fonctionnel et en construction") */
   #marketConstructionBanner, .constructionBanner {
@@ -1276,129 +1285,167 @@
   .marketPane { padding:14px 16px; overflow-y:auto; flex:1; }
   .mEmpty { color:var(--ink-dim); font-size:12px; text-align:center; padding:30px 0; }
 
-  /* ===== marché commun (matériaux, prix flottant) ===== */
-  .cmRow { display:flex; align-items:center; gap:10px; padding:8px 10px;
-    background:var(--panel-2); border:1px solid #2c2a31; font-size:12.5px; }
-  .cmInfo { flex:1; min-width:0; }
-  .cmInfo .cmOwned { color:var(--ink-dim); font-size:10.5px; }
-  .cmPrice { font-size:13px; white-space:nowrap; text-align:right; width:80px; }
-  .cmPrice.low { color:#8fc98a; } .cmPrice.mid { color:var(--gold); } .cmPrice.high { color:var(--danger); }
-  #cmMyOrders { display:flex; flex-direction:column; gap:6px; margin-top:6px; }
-  #cmSellItemSelect { width:100%; background:#191720; color:var(--ink); border:1px solid var(--gold-dim);
-    font-family:inherit; font-size:12px; padding:8px 9px; margin-bottom:8px; }
-  #cmSellPriceInput { width:100%; background:#191720; color:var(--ink); border:1px solid #3a3742;
-    font-family:inherit; font-size:12px; padding:8px 9px; margin-bottom:8px; }
+  /* =====================================================================
+     Refonte visuelle "Marché commun" v3 (2026-07-22, port fidèle du mockup
+     fourni par l'utilisateur — voir CLAUDE.md §30) : catalogue unifié
+     équipement + matériaux (objets sans vente en cours visibles, grisés),
+     popup "Acheter" façon Marché Central BDO (échelle de prix réelle,
+     market_order_book), panneau "Mes ordres" ancré à droite. Tokens
+     --s1/--s2/--dbBorder/--dbBorder2/--gold/--gold2/--green2/--red2/
+     --cream2/--cream3 déjà posés par la refonte Zone (CLAUDE.md §29) --
+     le mockup fourni utilise EXACTEMENT ces mêmes teintes, réutilisées
+     telles quelles, aucun nouveau token introduit hors --s3 (surface la
+     plus profonde, sans équivalent direct avant ce panneau).
+     ===================================================================== */
+  :root { --s3:#202038; }
 
-  /* ===== "nouveau marché" : carnet d'ordres + chandelier pour les matériaux (2026-07-16, demande
-     explicite : "envoyer le nouveau marché") -- reprend le design de l'artefact de démo (2 colonnes
-     vente/achat avec barres de volume, meilleur prix en avant, spread, pression du marché, mini
-     chandelier), adapté aux couleurs du jeu (--gold/--r-green/--r-red) au lieu de la palette brute
-     de la démo, branché sur les VRAIES données (aucun bot, voir market.js) ===== */
-  .mktItems { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
-  .mktPill { width:auto; margin:0; background:var(--panel-2); border:1px solid #2c2a33; color:var(--ink-dim);
-    padding:6px 12px; border-radius:16px; font-size:10.5px; font-weight:bold; letter-spacing:.5px; text-transform:uppercase; }
-  .mktPill.active { background:rgba(201,165,90,.15); border-color:var(--gold); color:var(--gold); }
-  .mktMetaRow { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px; }
-  .mktMetaCard { flex:1; min-width:110px; background:var(--panel-2); border:1px solid #2c2a33; border-radius:6px; padding:7px 10px; text-align:center; }
-  .mktMetaLbl { font-size:8.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:3px; }
-  .mktMetaVal { font-size:14px; font-weight:bold; }
-  .mktMetaVal.sell { color:var(--r-red); } .mktMetaVal.buy { color:var(--r-green); }
-  .mktMetaVal.up { color:var(--r-green); } .mktMetaVal.down { color:var(--r-red); }
-  .mktGrid { display:grid; grid-template-columns:1fr 260px 1fr; gap:10px; margin-bottom:12px; }
-  @media (max-width:820px) { .mktGrid { grid-template-columns:1fr; } }
-  .mktCol { background:var(--panel-2); border:1px solid #2c2a33; border-radius:6px; overflow:hidden; }
-  .mktColHead { display:flex; justify-content:space-between; padding:7px 10px; font-size:10px; font-weight:bold; letter-spacing:.5px; text-transform:uppercase; border-bottom:1px solid #2c2a33; }
-  .mktColHead.sell { color:var(--r-red); } .mktColHead.buy { color:var(--r-green); }
-  .mktRowsWrap { max-height:220px; overflow-y:auto; }
-  .mktOrderRow { position:relative; display:grid; grid-template-columns:1fr 44px 1fr; gap:6px; padding:4px 10px; font-size:11px; border-bottom:1px solid #201f26; overflow:hidden; }
-  .mktOrderRow:nth-child(even) { background:rgba(255,255,255,.02); }
-  .mktVol { position:absolute; top:0; bottom:0; right:0; opacity:.12; z-index:0; }
-  .mktOrderRow.sell .mktVol { background:var(--r-red); } .mktOrderRow.buy .mktVol { background:var(--r-green); }
-  .mktOrderRow > * { position:relative; z-index:1; }
-  .mktPrice { font-weight:bold; text-align:left; }
-  .mktOrderRow.sell .mktPrice { color:var(--r-red); } .mktOrderRow.buy .mktPrice { color:var(--r-green); }
-  .mktQty { text-align:center; color:var(--ink-dim); }
-  .mktTotal { text-align:right; color:var(--ink-dim); }
-  .mktOrderRow.best { font-size:12.5px; }
-  .mktOrderRow.sell.best { box-shadow:inset 0 0 0 1px var(--r-red); } .mktOrderRow.buy.best { box-shadow:inset 0 0 0 1px var(--r-green); }
-  .mktCenter { display:flex; }
-  .mktChartCard { background:var(--panel-2); border:1px solid #2c2a33; border-radius:6px; padding:8px; width:100%; }
-  .mktChartHead { font-size:9.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-dim); text-align:center; margin-bottom:4px; }
-  #mktCandleCv { display:block; width:100%; height:110px; }
-  .mktFormCard { background:var(--panel-2); border:1px solid #2c2a33; border-radius:6px; padding:10px 12px; margin-bottom:12px; }
-  .mktFormTitle { font-size:11px; font-weight:bold; color:var(--gold); margin-bottom:8px; }
-  .mktSideToggle { display:flex; gap:6px; margin-bottom:8px; }
-  .mktSideBtn { flex:1; width:auto; margin:0; padding:7px; border-radius:5px; border:1px solid #2c2a33; background:var(--panel); color:var(--ink-dim); font-weight:bold; font-size:10.5px; letter-spacing:.5px; text-transform:uppercase; }
-  .mktSideBtn.buy.active { background:rgba(122,163,94,.15); border-color:var(--r-green); color:var(--r-green); }
-  .mktSideBtn.sell.active { background:rgba(192,85,69,.15); border-color:var(--r-red); color:var(--r-red); }
-  .mktFormGrid { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:6px; }
-  .mktFld label { display:block; font-size:8.5px; letter-spacing:.5px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:3px; }
-  .mktFld input { width:100%; background:#191720; border:1px solid #3a3742; color:var(--ink); padding:7px; border-radius:4px; font-size:12px; font-weight:bold; }
-  .mktErr { color:var(--danger); font-size:10.5px; font-weight:bold; min-height:14px; margin-bottom:4px; }
-  /* aperçu net après taxe de vente (2026-07-18) -- voir updateMktTaxHint() */
-  .mktTaxHint { color:var(--ink-dim); font-size:10px; margin-bottom:6px; }
-  .mktPlaceBtn { width:100%; padding:9px; border-radius:5px; border:none; font-weight:bold; font-size:11px; letter-spacing:.5px; text-transform:uppercase; }
-  .mktPlaceBtn.buy { background:var(--r-green); color:#0d1a08; }
-  .mktPlaceBtn.sell { background:var(--r-red); color:#1a0805; }
-  .mktHistCard { background:var(--panel-2); border:1px solid #2c2a33; border-radius:6px; overflow:hidden; }
-  .mktHistHead { padding:7px 10px; font-size:10.5px; font-weight:bold; color:var(--gold); border-bottom:1px solid #2c2a33; }
-  #mktHistRows { max-height:150px; overflow-y:auto; }
-  .mktHistRow { display:grid; grid-template-columns:1.2fr 1fr .6fr 1fr; gap:8px; padding:5px 10px; font-size:10px; border-bottom:1px solid #201f26; }
-  .mktHistRow:nth-child(even) { background:rgba(255,255,255,.02); }
-  .mktHistTime { color:var(--ink-dim); text-align:right; }
-
-  /* ===== marché commun v2 : vitrine "parcourir" (inspirée d'une référence visuelle fournie par
-     l'utilisateur le 2026-07-07) — cartes d'objets en vente + panneau de détail avec comparaison ===== */
-  .cmSubTabs { display:flex; gap:6px; margin-bottom:10px; border-bottom:1px solid #2c2a33; padding-bottom:8px; }
-  .cmSubTab { width:auto; margin:0; padding:6px 12px; font-size:11.5px; background:transparent; border:1px solid #3a3742; }
-  .cmSubTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
-  /* solde bien visible en haut de la vitrine (façon référence BDO), et arbre de catégories façon
-     Marché Central au lieu de simples pastilles — demande explicite du 2026-07-07 */
-  .cmWalletBar { display:flex; align-items:center; justify-content:space-between; gap:8px;
-    background:rgba(201,165,90,.06); border:1px solid var(--gold-dim); border-radius:4px;
+  .mHint { color:var(--cream3); font-size:11.5px; margin-bottom:8px; }
+  .cmWalletBar { display:flex; align-items:center; gap:10px;
+    background:var(--s2); border:1px solid var(--dbBorder); border-radius:6px;
     padding:8px 12px; margin-bottom:10px; }
-  .cmWalletLbl { font-size:11px; color:var(--ink-dim); }
-  .cmWalletVal { font-size:15px; color:var(--gold); font-weight:bold; }
-  .cmFilterBar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
-  #cmSearch { flex:1; min-width:120px; background:#191720; color:var(--ink); border:1px solid #3a3742;
-    font-family:inherit; font-size:11.5px; padding:6px 9px; }
-  #cmSort { background:#191720; color:var(--ink); border:1px solid #3a3742; font-family:inherit; font-size:11.5px; padding:6px 8px; }
-  .cmBrowseLayout { display:flex; gap:10px; align-items:flex-start; }
-  .cmCategoryTree { flex:0 0 130px; display:flex; flex-direction:column; gap:2px; max-height:420px; overflow-y:auto; }
-  .cmCatBtn { width:100%; text-align:left; margin:0; padding:7px 9px; font-size:11px; background:transparent;
-    border:1px solid transparent; border-left:3px solid transparent; color:var(--ink-dim); border-radius:0; }
-  .cmCatBtn:hover { background:rgba(255,255,255,.03); color:var(--ink); }
-  .cmCatBtn.active { border-left-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.08); }
-  .cmBackBtn { width:auto; margin-bottom:8px; padding:5px 12px; font-size:11px; }
-  .cmListingsList { flex:1.4; min-width:0; display:flex; flex-direction:column; gap:6px; max-height:420px; overflow-y:auto; }
-  .cmDetailPanel { flex:1; min-width:0; position:sticky; top:0; background:var(--panel-2);
-    border:1px solid #2c2a31; padding:12px; max-height:420px; overflow-y:auto; }
-  .cmListCard { display:flex; align-items:center; gap:9px; padding:8px 10px; background:var(--panel-2);
-    border:1px solid #2c2a31; border-left-width:3px; cursor:pointer; font-size:12px; }
-  .cmListCard:hover { background:#232028; }
-  .cmListCard.selected { border-color:var(--gold); background:rgba(201,165,90,.06); }
-  .cmListIcon { width:32px; height:32px; display:flex; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.3); border:1px solid #2c2a31; flex-shrink:0; }
-  .cmListInfo { flex:1; min-width:0; }
-  .cmListName { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .cmListSub { color:var(--ink-dim); font-size:10px; }
-  .cmListPrice { text-align:right; flex-shrink:0; }
-  .cmListPrice .price { color:var(--gold); font-size:12.5px; white-space:nowrap; }
-  .cmListPrice button { width:auto; margin:3px 0 0; padding:3px 10px; font-size:10.5px; }
-  .cmDetailTitle { font-size:13px; margin-bottom:2px; }
-  .cmDetailSub { color:var(--ink-dim); font-size:10.5px; margin-bottom:10px; }
-  .cmDetailIcon { width:64px; height:64px; margin:0 auto 10px; display:flex; align-items:center; justify-content:center;
-    background:rgba(0,0,0,.3); border:2px solid #2c2a31; border-radius:6px; }
-  .cmDetailIcon svg { width:40px; height:40px; }
-  .cmDetailStats { margin-bottom:10px; }
-  .cmDetailStats .srow { display:flex; justify-content:space-between; font-size:11.5px; margin:3px 0; }
-  .cmCompareTable { width:100%; border-collapse:collapse; font-size:10.5px; margin-top:6px; }
-  .cmCompareTable th { text-align:left; color:var(--ink-dim); font-weight:normal; padding:3px 4px; border-bottom:1px solid #2c2a31; }
-  .cmCompareTable td { padding:3px 4px; border-bottom:1px solid #232128; }
-  .cmDelta.up { color:#8fc98a; } .cmDelta.down { color:var(--danger); }
-  #cmDetailPanel .btnBuyListing { width:100%; margin-top:8px; padding:9px; font-size:12px; }
+  .cmWalletLbl { font-size:11px; color:var(--cream2); }
+  .cmWalletVal { font-family:'JetBrains Mono',monospace; font-size:15px; color:var(--gold2); font-weight:bold; }
+  .cmLockedHint { margin-left:auto; font-size:9.5px; color:var(--cream3); }
 
-  .mHint { color:var(--ink-dim); font-size:11.5px; margin-bottom:10px; }
+  /* layout principal (catalogue) + panneau "Mes ordres" ancré à droite, toujours visible quel que
+     soit l'objet consulté -- remplace l'ancien 3e sous-onglet (2026-07-16→2026-07-22) */
+  .cmMarketLayout { display:grid; grid-template-columns:1fr 250px; gap:14px; flex:1; min-height:0; }
+  .cmMain { min-width:0; display:flex; flex-direction:column; min-height:0; }
+  .cmSidebar { border-left:1px solid var(--dbBorder); padding-left:14px; display:flex; flex-direction:column; min-height:0; }
+  .cmSidebarHdr { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--cream2); margin-bottom:8px; }
+  .cmMyOrdersTabs { display:flex; gap:6px; margin-bottom:8px; }
+  .cmMyOrdersTab { flex:1; width:auto; margin:0; text-align:center; font-size:9.5px; padding:6px 4px;
+    border-radius:20px; border:1px solid var(--dbBorder); color:var(--cream3); font-family:'Cinzel',serif;
+    background:var(--s2); display:flex; align-items:center; justify-content:center; gap:4px; }
+  .cmMyOrdersTab.active { border-color:var(--gold); color:var(--gold); background:rgba(201,165,90,.09); }
+  .cmMyOrdersCount { font-family:'JetBrains Mono',monospace; font-size:8.5px; color:var(--cream3); background:var(--s3); border-radius:8px; padding:1px 5px; }
+  .cmMyOrdersTab.active .cmMyOrdersCount { color:var(--gold); }
+  #cmMyOrders { display:flex; flex-direction:column; gap:6px; overflow-y:auto; flex:1; }
+  .cmRow { display:flex; align-items:center; gap:8px; padding:8px 9px;
+    background:var(--s2); border:1px solid var(--dbBorder); border-radius:6px; font-size:11px; }
+  .cmInfo { flex:1; min-width:0; }
+  .cmInfo .mName { font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cmInfo .cmOwned { color:var(--cream3); font-size:9.5px; margin-top:2px; }
+  .cmCancelOrder { width:auto; margin:0; background:transparent; border:1px solid var(--red2); color:var(--red2);
+    border-radius:6px; padding:4px 9px; font-size:9.5px; }
+
+  .cmFilterBar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:10px; }
+  #cmSearch { flex:1; min-width:120px; background:var(--s2); color:var(--cream2); border:1px solid var(--dbBorder);
+    border-radius:6px; font-family:inherit; font-size:11.5px; padding:6px 9px; }
+  #cmSort { background:var(--s2); color:var(--cream2); border:1px solid var(--dbBorder); border-radius:6px; font-family:inherit; font-size:11.5px; padding:6px 8px; }
+  .cmBrowseLayout { display:grid; grid-template-columns:140px 1fr 230px; gap:0; flex:1; min-height:0; background:var(--s1); border:1px solid var(--dbBorder); border-radius:8px; overflow:hidden; }
+  .cmCategoryTree { border-right:1px solid var(--dbBorder); padding:10px 6px; overflow-y:auto; }
+  .cmCatBtn { display:block; width:100%; text-align:left; margin:0; padding:7px 8px; font-size:11px; background:transparent;
+    border:none; color:var(--cream2); border-radius:6px; font-family:'Inter',sans-serif; }
+  .cmCatBtn:hover:not(.active) { background:var(--s2); }
+  .cmCatBtn.active { background:rgba(200,169,110,.1); color:var(--gold2); }
+  .cmBackBtn { width:100%; margin-bottom:8px; padding:7px 12px; font-size:11px; background:var(--s2); border:1px solid var(--dbBorder); color:var(--cream2); border-radius:6px; }
+  .cmListingsList { border-right:1px solid var(--dbBorder); padding:10px; display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+  .cmDetailPanel { padding:14px; overflow-y:auto; text-align:center; }
+  .cmListCard { display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:8px; background:var(--s2);
+    border:1px solid var(--dbBorder); cursor:pointer; }
+  .cmListCard:hover { border-color:var(--dbBorder2); }
+  .cmListCard.selected { border-color:var(--gold); }
+  /* objets du catalogue sans vente en cours : restent visibles (navigation "catalogue complet"),
+     juste grisés/sans prix -- demande explicite du mockup fourni */
+  .cmListCard.noListing { opacity:.55; }
+  .cmListCard.noListing .cmListIcon { filter:grayscale(1); }
+  .cmListCard.noListing .cmListPrice .price { color:var(--cream3); font-family:'Inter',sans-serif; }
+  .cmListIcon { width:32px; height:32px; border-radius:6px; background:var(--s3); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
+  .cmListIcon svg { width:22px; height:22px; }
+  .cmListInfo { flex:1; min-width:0; }
+  .cmListName { font-size:11.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cmListSub { font-size:9.5px; color:var(--cream3); margin-top:1px; }
+  .cmListPrice { text-align:right; flex-shrink:0; }
+  .cmListPrice .price { font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--gold2); white-space:nowrap; }
+
+  .cmDetailIcon { width:52px; height:52px; border:2px solid var(--gold); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 8px; color:var(--gold2); }
+  .cmDetailIcon svg { width:34px; height:34px; }
+  .cmDetailTitle { font-family:'Cinzel',serif; font-size:13px; color:var(--gold2); margin-bottom:3px; }
+  .cmDetailSub { font-size:10px; color:var(--cream3); margin-bottom:10px; }
+  .cmDetailStats { margin-bottom:10px; }
+  .cmDetailStats .srow { display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid var(--dbBorder); }
+  .cmDetailStats .srow b { color:var(--gold2); }
+  .cmDetailSub.cmCompareTitle { margin:10px 0 4px; text-align:left; }
+  .cmCompareTable { width:100%; font-size:10px; border-collapse:collapse; margin-bottom:10px; }
+  .cmCompareTable th { color:var(--cream3); font-weight:500; padding:3px 0; text-align:center; }
+  .cmCompareTable td { padding:3px 0; text-align:center; border-top:1px solid var(--dbBorder); }
+  .cmDelta.up { color:var(--green2); } .cmDelta.down { color:var(--red2); }
+  .cmPriceBig { font-family:'JetBrains Mono',monospace; color:var(--gold2); font-size:16px; margin:8px 0; }
+  #cmDetailPanel .btnBuyListing, .cmOfferBtn { width:100%; border-radius:7px; font-family:'Inter',sans-serif; cursor:pointer; }
+  #cmDetailPanel .btnBuyListing { background:var(--gold); color:#2a1f08; border:none; padding:10px; font-size:12px; font-weight:600; margin-top:4px; }
+  .cmOfferBtn { background:transparent; color:var(--cream2); border:1px solid var(--dbBorder2); padding:8px; font-size:11px; margin-top:6px; }
+  .cmOfferForm { display:none; margin-top:8px; padding:10px; background:var(--s2); border:1px solid var(--dbBorder); border-radius:8px; text-align:left; }
+  .cmOfferForm.open { display:block; }
+  .cmOfferForm .cmOfferLbl { font-size:9.5px; color:var(--cream3); margin-bottom:5px; }
+  .cmOfferForm input { width:100%; background:var(--s3); border:1px solid var(--dbBorder); border-radius:6px; color:var(--cream2); padding:6px 8px; font-size:11px; margin-bottom:8px; font-family:inherit; }
+  .cmOfferForm button { width:100%; background:var(--gold-dim); color:var(--gold2); border:1px solid var(--gold-dim); border-radius:6px; padding:7px; font-size:11px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .cmOfferForm button:disabled { opacity:.4; cursor:not-allowed; }
+  .cmOfferStepRow { display:flex; gap:4px; margin-bottom:8px; }
+  .cmOfferStepRow input { flex:1; min-width:0; margin-bottom:0; }
+  .cmOfferStepRow button { width:auto; background:var(--s3); border:1px solid var(--dbBorder); border-radius:6px; color:var(--cream2); font-size:10px; padding:0 8px; margin-bottom:0; }
+  #cmBuyMsg { font-size:10.5px; margin-top:8px; min-height:14px; }
+  #cmBuyMsg.ok { color:var(--green2); } #cmBuyMsg.fail { color:var(--red2); }
+
+  @media (max-width:1024px) {
+    .cmMarketLayout { grid-template-columns:1fr; }
+    .cmSidebar { border-left:none; border-top:1px solid var(--dbBorder); padding-left:0; padding-top:10px; margin-top:10px; max-height:220px; }
+  }
+  @media (max-width:820px) {
+    .cmBrowseLayout { grid-template-columns:1fr; }
+    .cmCategoryTree { border-right:none; border-bottom:1px solid var(--dbBorder); display:flex; flex-wrap:wrap; gap:4px; max-height:none; }
+    .cmCatBtn { width:auto; }
+    .cmListingsList, .cmDetailPanel { border-right:none; max-height:none; }
+  }
+
+  /* ---------- popup "Acheter" façon Marché Central BDO ---------- */
+  .cmBuyModalBg { position:fixed; inset:0; background:rgba(0,0,0,.65); display:none; align-items:center; justify-content:center; z-index:95; }
+  .cmBuyModalBg.open { display:flex; }
+  .cmBuyModal { background:var(--s1); border:1px solid var(--dbBorder2); border-radius:12px; width:920px; max-width:95vw; max-height:92vh; overflow:hidden; display:flex; flex-direction:column; }
+  .cmBmHdr { display:flex; align-items:center; padding:14px 18px; border-bottom:1px solid var(--dbBorder); font-family:'Cinzel',serif; font-size:15px; color:var(--gold2); }
+  .cmBmClose { margin-left:auto; cursor:pointer; color:var(--cream3); font-size:20px; line-height:1; }
+  .cmBmBody { display:grid; grid-template-columns:1fr 260px; gap:0; overflow-y:auto; }
+  .cmBmLeft { padding:16px 18px; border-right:1px solid var(--dbBorder); }
+  .cmBmItemRow { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .cmBmIcon { width:38px; height:38px; border-radius:7px; background:var(--s2); border:1px solid var(--gold-dim); display:flex; align-items:center; justify-content:center; font-size:18px; }
+  .cmBmIcon svg { width:26px; height:26px; }
+  .cmBmName { font-size:13px; color:var(--gold2); flex:1; }
+  .cmBmStatsGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:10px 16px; margin-bottom:10px; }
+  .cmBmStat .cmBmLbl { font-size:9px; color:var(--cream3); text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px; }
+  .cmBmStat .cmBmStatVal { font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--cream2); }
+  .cmBmChartWrap canvas { width:100%; height:110px; background:var(--s2); border:1px solid var(--dbBorder); border-radius:8px; margin-bottom:14px; display:block; }
+  .cmBmLbl { font-size:9.5px; color:var(--cream3); text-transform:uppercase; letter-spacing:.03em; margin-bottom:3px; }
+  .cmBmVal { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--gold2); }
+  .cmBmLowerGrid { display:grid; grid-template-columns:7fr 3fr; gap:20px; margin-bottom:14px; }
+  .cmBmLowerLeft { background:var(--s2); border:1px solid var(--dbBorder); border-radius:9px; padding:12px 14px; display:flex; flex-direction:column; }
+  .cmBmSep { height:1px; background:var(--dbBorder); margin:10px 0; }
+  .cmBmLowerRight { display:flex; flex-direction:column; gap:12px; min-width:0; }
+  .cmBmPriceRow, .cmBmStepRow { display:flex; gap:4px; align-items:stretch; }
+  .cmBmPriceRow input, .cmBmStepRow input { flex:1; min-width:0; background:var(--s2); border:1px solid var(--dbBorder); border-radius:6px; color:var(--cream2); padding:7px 8px; font-size:11px; font-family:'JetBrains Mono',monospace; }
+  .cmBmPriceRow button, .cmBmStepRow button { background:var(--s3); border:1px solid var(--dbBorder); border-radius:6px; color:var(--cream2); font-size:10px; padding:0 8px; cursor:pointer; font-family:'Inter',sans-serif; }
+  .cmBmTierVal { flex:1; background:var(--s2); border:1px solid var(--dbBorder); border-radius:6px; color:var(--gold2); padding:7px 8px; font-size:11px; text-align:center; font-family:'Cinzel',serif; }
+  .cmBmCostBig { font-family:'JetBrains Mono',monospace; font-size:20px; color:var(--gold2); text-align:right; }
+  .cmBmAfterRow { display:flex; justify-content:space-between; font-size:10.5px; color:var(--cream2); }
+  .cmBmAfterRow b { color:var(--gold2); font-family:'JetBrains Mono',monospace; }
+  .cmBmBuyBtn { width:100%; background:var(--gold); color:#2a1f08; border:none; border-radius:8px; padding:11px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; margin-bottom:8px; }
+  .cmBmMsg { font-size:10.5px; margin-bottom:10px; min-height:14px; }
+  .cmBmMsg.ok { color:var(--green2); } .cmBmMsg.fail { color:var(--red2); }
+  .cmBmDisclaimer { font-size:9.5px; color:var(--cream3); line-height:1.6; }
+  .cmBmRight { padding:0; display:flex; flex-direction:column; min-width:0; }
+  .cmBmTierHead { display:grid; grid-template-columns:1fr 1fr 1fr; padding:10px 12px; font-size:9px; color:var(--cream3); text-transform:uppercase; letter-spacing:.03em; border-bottom:1px solid var(--dbBorder); position:sticky; top:0; background:var(--s1); }
+  .cmBmTierList { overflow-y:auto; flex:1; }
+  .cmBmTierRow { display:grid; grid-template-columns:1fr 1fr 1fr; padding:9px 12px; font-size:10.5px; font-family:'JetBrains Mono',monospace; cursor:pointer; background:transparent; color:var(--cream2); }
+  .cmBmTierRow.hasStock { background:var(--s2); }
+  .cmBmTierRow.sel { background:var(--gold-dim); color:var(--gold2); }
+  .cmBmTierRow .p { color:var(--cream3); font-weight:600; }
+  .cmBmTierRow.hasStock .p { color:var(--green2); }
+  .cmBmTierRow.sel .p { color:var(--gold2); }
+  @media (max-width:820px) {
+    .cmBuyModal { width:96vw; }
+    .cmBmBody { grid-template-columns:1fr; }
+    .cmBmLeft { border-right:none; }
+    .cmBmRight { max-height:200px; }
+  }
 
   /* ===== panneau Mon compte / parrainage ===== */
   #refCodeBox {

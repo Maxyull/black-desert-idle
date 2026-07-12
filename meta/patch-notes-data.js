@@ -5,6 +5,19 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V382', d:'22/07/2026 03:00', name:{fr:'Marché commun refait : catalogue unifié + popup "Acheter"', en:'Common Market redesigned: unified catalog + "Buy" popup'}, fr:[
+      {t:'change', sub:'economie', tx:'Le Marché commun a été entièrement redessiné : une seule liste parcourable regroupe désormais équipement ET matériaux (au lieu d\'un onglet "Matériaux" séparé), avec recherche, tri, et arbre de catégories façon Marché Central.'},
+      {t:'new', sub:'economie', tx:'Les objets qui n\'ont aucune vente en cours restent visibles dans le catalogue (grisés, sans prix) — tu peux parcourir tout ce qui existe dans le jeu, pas seulement ce qui est en vente à l\'instant.'},
+      {t:'new', sub:'economie', tx:'Nouvelle popup "Acheter" avec l\'échelle de prix réelle (paliers de prix + commandes en attente), un graphique de prix, un stepper de quantité et un stepper de niveau d\'optimisation pour naviguer entre les paliers d\'un même objet.'},
+      {t:'new', sub:'economie', tx:'Depuis la fiche d\'un objet, tu peux désormais poser une offre d\'achat OU une offre de vente à ton propre prix (avec quantité pour les matériaux), en plus de l\'achat immédiat.'},
+      {t:'change', sub:'economie', tx:'"Mes ordres" est maintenant un panneau ancré à droite, toujours visible avec des onglets Achat/Vente séparés, au lieu d\'un 3e onglet à ouvrir séparément.'},
+    ], en:[
+      {t:'change', sub:'economie', tx:'The Common Market has been completely redesigned: a single browsable list now groups equipment AND materials together (instead of a separate "Materials" tab), with search, sort, and a Central-Market-style category tree.'},
+      {t:'new', sub:'economie', tx:'Items with no active sale stay visible in the catalog (greyed out, no price) — you can browse everything that exists in the game, not just what\'s currently for sale.'},
+      {t:'new', sub:'economie', tx:'New "Buy" popup with the real price scale (price tiers + pending orders), a price chart, a quantity stepper and an enhancement-level stepper to move between tiers of the same item.'},
+      {t:'new', sub:'economie', tx:'From an item\'s detail view, you can now place a buy offer OR a sell offer at your own price (with quantity for materials), in addition to instant purchase.'},
+      {t:'change', sub:'economie', tx:'"My orders" is now a panel pinned to the right, always visible with separate Buy/Sell tabs, instead of a 3rd tab to open separately.'},
+    ] },
   { v:'V381', d:'22/07/2026 02:00', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
       {t:'new', sub:'interface', tx:'Le Classement (🏆) a une 8e catégorie : "🧭 Compendium", basée sur ta complétion globale (zones + boss + Maîtrise PEN).'},
       {t:'new', sub:'interface', tx:'Si ton rang réel dans une catégorie est en dehors du top 20, une barre "Ta position" apparaît avec ton rang exact, ta valeur et le nombre total de joueurs classés.'},
