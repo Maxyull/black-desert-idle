@@ -34,18 +34,22 @@ const CMP_WORLD_COLOR = { early: '#6b9c6b', mid: '#5c85a8', end: '#c9a227', end2
 // mapping explicite ici plutôt que de supposer un champ qui n'existe pas côté data.
 const CMP_BOSS_WORLD = { kzarka: 'early', vell: 'early' };
 
+/** @param {*} val. @returns {boolean} vrai si val est une chaîne de niveau d'enchant qui commence par 'PEN'. */
 function cmpMastered(val) { return typeof val === 'string' && val.indexOf('PEN') === 0; }
 
+/** Composant React — badge "✓ Maîtrisé" (doré), taille compacte optionnelle via props.small. */
 function CmpBadge(props) {
   return cmpH('span', { className: 'cinzelC', style: { display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: props.small ? 8.5 : 9.5, fontWeight: 700, letterSpacing: 1, color: CMP_V.bg0, background: CMP_V.gold, padding: props.small ? '1px 6px' : '2px 8px', borderRadius: 3, textTransform: 'uppercase', ...CMP_CINZEL } }, '✓ ', i18next.t('progression:progression.compendium_react.mastered_badge'));
 }
 
+/** Composant React — plaque de statistique compacte (icône+label, valeur, liseré coloré). */
 function CmpStatPlate(props) {
   return cmpH('div', { style: { background: CMP_V.bg1, border: `1px solid ${CMP_V.border}`, borderTop: `2px solid ${props.accent}`, borderRadius: 4, padding: '10px 8px', textAlign: 'center' } },
     cmpH('div', { style: { fontSize: 9, letterSpacing: 1, color: CMP_V.muted, textTransform: 'uppercase', marginBottom: 4, ...CMP_CINZEL } }, props.icon + ' ' + props.label),
     cmpH('div', { style: { fontSize: 17, fontWeight: 700, color: CMP_V.cream, ...CMP_CINZEL } }, props.value));
 }
 
+/** Composant React — sélecteur de monde (ZONE_TIERS), verrouillé si w.locked, avec barre de progression et badge "Maîtrisé" par monde. */
 function CmpWorldSelector(props) {
   return cmpH('div', { style: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' } },
     ZONE_TIERS.map(w => {
@@ -67,6 +71,7 @@ function CmpWorldSelector(props) {
     }));
 }
 
+/** Composant React — bouton d'onglet (Zones/Boss/Maîtrise PEN), soulignement doré si actif. */
 function CmpTabButton(props) {
   return cmpH('button', {
     className: 'cinzelC cmpTabBtn', onClick: props.onClick, 'aria-pressed': props.active,
@@ -74,6 +79,7 @@ function CmpTabButton(props) {
   }, props.icon + ' ' + props.label);
 }
 
+/** Composant React racine du panneau Compendium (sélecteur de monde, onglets Zones/Boss/Maîtrise PEN, recherche). */
 function CompendiumApp(props) {
   const [tab, setTab] = React.useState('zones');
   const [activeWorld, setActiveWorld] = React.useState('early');
@@ -196,6 +202,7 @@ function CompendiumApp(props) {
         i18next.t('progression:progression.compendium_react.teleporting_label'), cmpH('span', { className: 'cinzelC', style: { color: CMP_V.gold, fontWeight: 700 } }, teleportMsg), '...') : null));
 }
 
+/** Composant React — onglet Zones : liste des zones du monde actif groupées par palier, objets à cliquer (surlignage), bouton "Lancer le farm ici". */
 function CmpZonesTab(props) {
   let idxs = props.filteredZoneIdxs;
   if (props.sortMode === 'az') idxs = [...idxs].sort((a, b) => tr(ZONES[a].name).localeCompare(tr(ZONES[b].name)));
@@ -252,6 +259,7 @@ function CmpZonesTab(props) {
     }));
 }
 
+/** Composant React — onglet World Bosses : liste des boss du monde actif, statut vaincu/verrouillé. */
 function CmpBossesTab(props) {
   return cmpH('div', null,
     cmpH(CmpWorldSelector, {
@@ -279,6 +287,7 @@ function CmpBossesTab(props) {
       })));
 }
 
+/** Composant React — onglet Maîtrise PEN : grille des objets par palier, niveau d'enchant max jamais atteint (S.enhPeakByName), badge maîtrisé si PEN atteint (pas de bonus de stat fictif, voir commentaire de fichier). */
 function CmpPenTab(props) {
   return cmpH('div', null,
     cmpH('div', { style: { marginBottom: 18, background: CMP_V.bg1, border: `1px solid ${CMP_V.border}`, borderRadius: 4, padding: '10px 14px', fontSize: 10.5, color: CMP_V.muted3, fontStyle: 'italic' } },
@@ -319,12 +328,14 @@ function CmpPenTab(props) {
 
 let cmpRoot = null;
 let cmpSession = 0;
+/** Re-render synchrone du panneau Compendium React monté (no-op si aucun root). */
 function cmpRender() {
   if (!cmpRoot) return;
   ReactDOM.flushSync(() => {
     cmpRoot.render(cmpH(CompendiumApp, { key: cmpSession, onClose: closeCompendiumReact }));
   });
 }
+/** Monte (ou remonte, session incrémentée) le panneau React Compendium dans #compendiumModalRoot — repli sur openCompendium() (ancienne modale HTML) si React est indisponible. */
 function openCompendiumReact() {
   const container = document.getElementById('compendiumModalRoot');
   if (!container || typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
@@ -335,6 +346,7 @@ function openCompendiumReact() {
   if (!cmpRoot) cmpRoot = ReactDOM.createRoot(container);
   cmpRender();
 }
+/** Démonte le panneau React Compendium (rendu synchrone à null). */
 function closeCompendiumReact() {
   // flushSync : même raison que cmpRender() -- un test ou un appelant synchrone qui lit le DOM
   // juste après l'appel doit voir le démontage effectif, pas un rendu React 18 encore batché.

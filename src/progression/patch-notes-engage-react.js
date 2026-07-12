@@ -46,6 +46,7 @@ let patchMyVoteCache = {};  // entry_id -> -1|1
 // supabase/migrations/20260710140000_patch_notes_votes_comments.sql) -- même distinction que le
 // pipeline doc §8 ("ça ne suffit jamais en prod... le vrai garde-fou doit vivre côté serveur").
 const PNE_BANNED_WORDS_CLIENT = ['idiot', 'debile', 'nul', 'connard', 'stupide', 'abruti', 'merde'];
+/** @param {string} text. @returns {boolean} vrai si le texte contient un mot de la liste anti-insulte client (garde-fou UX uniquement, le vrai blocage vit côté serveur). */
 function pneContainsBannedWord(text) {
   const normalized = text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   return PNE_BANNED_WORDS_CLIENT.some(w => normalized.includes(w));
@@ -54,6 +55,7 @@ function pneContainsBannedWord(text) {
 // entrées à plat de la page courante -- une entrée par LIGNE (pas groupée par catégorie comme
 // l'ancien panneau HTML, chaque ligne porte sa propre carte comme dans la maquette), avec son
 // entry_id stable et toutes les métadonnées optionnelles déjà réelles du jeu.
+/** @param {object[]} entries - versions de PATCH_NOTES pour la page courante. @param {number} pageStart - index absolu de la première version de la page. @returns {object[]} entrées à plat, une par ligne (entryId stable = version + index dans p[LANG]). */
 function pneFlattenPage(entries, pageStart) {
   const out = [];
   entries.forEach((p, k) => {
@@ -70,6 +72,7 @@ function pneFlattenPage(entries, pageStart) {
 // ("maintenant") que pour un commentaire ancien déjà en base ("rétroactif", aucune donnée à migrer,
 // c'est une fonction pure du temps écoulé). Au-delà d'une semaine, repli sur fmtNotifTime() (date
 // exacte), même limite que le reste du jeu (notifications-quests.js).
+/** @param {number} ts - timestamp ms. @returns {string} horodatage relatif ("à l'instant"/"il y a Xmin/Xh/Xj"), repli sur fmtNotifTime() (date exacte) au-delà d'une semaine. */
 function pneRelativeTime(ts) {
   const diffSec = Math.max(0, Math.floor((Date.now() - ts) / 1000));
   if (diffSec < 60) return i18next.t('progression:progression.patch_notes.time_just_now');
@@ -87,6 +90,7 @@ function pneRelativeTime(ts) {
 // attente (admin_patch_note_pending_reports(), déjà utilisée par la section admin dédiée) et
 // permet de supprimer directement (remove_patch_note_comment(), même RPC que le fil de
 // commentaires) sans quitter le panneau des notes de version.
+/** Composant React — mini-panneau de modération ouvert depuis le badge "Admin" : liste les signalements en attente et permet de supprimer un commentaire directement. */
 function PneAdminReportsPanel(props) {
   const [rows, setRows] = React.useState(null);
   const load = React.useCallback(async () => {
@@ -111,6 +115,7 @@ function PneAdminReportsPanel(props) {
             pneH('button', { className: 'pneBtn', onClick: () => del(r.comment_id), title: i18next.t('progression:progression.patch_notes.delete_title'), style: { background: 'none', border: 'none', color: PNE_V.red, cursor: 'pointer', fontSize: 11, flexShrink: 0 } }, '🗑')))));
 }
 
+/** Composant React — badge de vote karma (−/score/+), boutons désactivés si non connecté. */
 function PneVoteBadge(props) {
   const loggedIn = typeof currentUser !== 'undefined' && !!currentUser;
   return pneH('div', { style: { display: 'flex', alignItems: 'center', gap: 2, borderRadius: 4, border: `1px solid ${PNE_V.border2}`, padding: '1px 4px', flexShrink: 0 } },
@@ -121,6 +126,7 @@ function PneVoteBadge(props) {
       style: { width: 18, height: 18, border: 'none', background: 'none', cursor: loggedIn ? 'pointer' : 'default', color: props.myVote === 1 ? PNE_V.gold2 : PNE_V.border2, fontSize: 12 } }, '+'));
 }
 
+/** Composant React — fil de commentaires d'une entrée de patch note (chargement, envoi avec filtre anti-insulte + rate limit serveur, suppression, signalement). */
 function PneCommentThread(props) {
   const [comments, setComments] = React.useState(null);
   const [draft, setDraft] = React.useState('');
@@ -189,6 +195,7 @@ function PneCommentThread(props) {
       : pneH('p', { style: { fontSize: 9.5, color: PNE_V.muted2, fontStyle: 'italic', margin: '6px 0 0' } }, i18next.t('progression:progression.patch_notes.login_to_comment')));
 }
 
+/** Composant React — carte d'une ligne de patch note (badges/tags, vote karma, fil de commentaires repliable). */
 function PneEntryCard(props) {
   const { row } = props;
   const line = row.line, p = row.version;
@@ -263,6 +270,7 @@ function PneEntryCard(props) {
     commentsOpen ? pneH(PneCommentThread, { entryId: row.entryId }) : null);
 }
 
+/** Composant React — bloc d'une version (timeline verticale, titre/date/badge "dernière"/"nouveau", liste des PneEntryCard). */
 function PneVersionBlock(props) {
   const { p, absIdx, rows } = props;
   const isNew = !readPatches.has(p.v);
@@ -287,6 +295,7 @@ function PneVersionBlock(props) {
 // le patch de cette semaine'") -- lu UNE SEULE FOIS au montage (pas un effet permanent, un hash
 // changé après coup pendant que le panneau est déjà ouvert ne doit pas le re-sauter). Retourne le
 // pageStart de la page contenant cette version, ou le pageStart courant si le hash ne matche rien.
+/** @returns {number} pageStart initial — résout le deep link "#patch-{version}" (lu une seule fois au montage) vers la page qui contient cette version, sinon patchPageStart courant. */
 function pneResolveInitialPageStart() {
   try {
     const hash = (typeof location !== 'undefined' && location.hash) || '';
@@ -300,6 +309,7 @@ function pneResolveInitialPageStart() {
   } catch (e) { return patchPageStart; }
 }
 
+/** Composant React racine du panneau Notes de version (recherche, filtre, vue-controverse, pagination, timeline de versions). */
 function PatchNotesApp(props) {
   const [, forceTick] = React.useState(0);
   const [query, setQuery] = React.useState('');
@@ -490,6 +500,7 @@ function PatchNotesApp(props) {
 
 let patchNotesRoot = null;
 let patchNotesSession = 0;
+/** Monte (ou remonte, via une clé de session incrémentée) le panneau React Notes de version dans #patchNotesModalRoot — repli sur renderPatchNotesPanel() (HTML) si React est indisponible. */
 function openPatchNotesReact() {
   const container = document.getElementById('patchNotesModalRoot');
   if (!container || typeof React === 'undefined' || typeof ReactDOM === 'undefined') { if (typeof renderPatchNotesPanel === 'function') renderPatchNotesPanel(); return; }
@@ -503,6 +514,7 @@ function openPatchNotesReact() {
     patchNotesRoot.render(pneH(PatchNotesApp, { key: patchNotesSession, onClose: closePatchNotesReact }));
   });
 }
+/** Démonte le panneau React Notes de version (rendu synchrone à null). */
 function closePatchNotesReact() {
   if (patchNotesRoot) ReactDOM.flushSync(() => patchNotesRoot.render(null));
 }

@@ -27,6 +27,7 @@ const RC_INTER = { fontFamily: "'Inter', sans-serif" };
 const RC_MONO = { fontFamily: "'JetBrains Mono', monospace" };
 const h = React.createElement;
 
+/** Hook React — anime un compteur de 0 vers `target` (easing cubique) sur `durationMs`. @param {number} target @param {number} durationMs. @returns {number} valeur animée courante. */
 function rcCountUp(target, durationMs) {
   const [value, setValue] = React.useState(0);
   React.useEffect(() => {
@@ -44,6 +45,7 @@ function rcCountUp(target, durationMs) {
   return value;
 }
 
+/** Composant React — barre de progression de niveau (avant/après), % et niveau animés via rcCountUp. */
 function RcLevelBar(p) {
   const animatedPercent = rcCountUp(p.percent, 1100);
   const animatedLevel = rcCountUp(p.level, 700);
@@ -64,6 +66,7 @@ function RcLevelBar(p) {
       h('div', { style: { height: '100%', borderRadius: 999, width: barWidth + '%', background: p.active ? `linear-gradient(90deg, ${RECONNECT_V.goldDim}, ${RECONNECT_V.gold})` : RECONNECT_V.border2, transition: 'width 1.1s cubic-bezier(0.16,1,0.3,1)' } })));
 }
 
+/** Composant React — ligne "état vide" (bordure pointillée), texte via p.text. */
 function RcEmptyRow(p) {
   return h('div', { style: { borderRadius: 7, padding: '12px', textAlign: 'center', background: RECONNECT_V.s1, border: `1px dashed ${RECONNECT_V.border}` } },
     h('p', { style: { ...RC_INTER, fontSize: 11, color: RECONNECT_V.cream3 } }, p.text));
@@ -71,15 +74,18 @@ function RcEmptyRow(p) {
 
 // tiers = les 4 paliers de zone déjà définis par le jeu (GEAR_TIERS grade/color), pas des tiers
 // inventés -- cohérent avec le reste du projet (zoneIdx -> grey/white/green/blue).
+/** @param {string} grade. @returns {string} label localisé du palier de zone (GEAR_TIERS), ou grade tel quel si introuvable. */
 function rcGearGradeLabel(grade) {
   const t = (typeof GEAR_TIERS !== 'undefined' ? GEAR_TIERS : []).find(g => g.grade === grade);
   return t ? (t.label[LANG] || t.label.fr) : grade;
 }
+/** @param {string} grade. @returns {string} couleur du palier de zone (GEAR_TIERS), repli neutre si introuvable. */
 function rcGearGradeColor(grade) {
   const t = (typeof GEAR_TIERS !== 'undefined' ? GEAR_TIERS : []).find(g => g.grade === grade);
   return t ? t.color : RECONNECT_V.cream2;
 }
 
+/** Composant React racine du modal "Bon retour" (progression niveau/silver/XP animée, objets ramassés, historique AFK filtrable par palier). */
 function ReconnectModal(props) {
   const d = props.data;
   const [open, setOpen] = React.useState(true);
@@ -228,6 +234,7 @@ function ReconnectModal(props) {
 let reconnectModalRoot = null;
 let reconnectModalData = null;
 let reconnectModalSession = 0;
+/** Re-render synchrone (remount via session incrémentée) du modal de reconnexion depuis reconnectModalData. */
 function reconnectModalRender() {
   if (!reconnectModalRoot || !reconnectModalData) return;
   // key=session : force un remount (donc un useState(true) frais pour `open`) à chaque nouvelle
@@ -244,6 +251,7 @@ function reconnectModalRender() {
 // données déjà connues localement (silver/xp/items/niveaux, instantané) ; l'historique + le record
 // perso arrivent de façon async (Supabase), affichés en "Chargement…" le temps du fetch — jamais
 // tout le modal en skeleton, puisque l'essentiel de la donnée est déjà disponible côté client.
+/** @param {object} data - silver/xp/items/niveaux déjà connus localement (instantané). Monte le modal "Bon retour" (affiche l'essentiel tout de suite, l'historique/record perso arrive en async). */
 function openReconnectModal(data) {
   const container = document.getElementById('reconnectModalRoot');
   if (!container || typeof React === 'undefined' || typeof ReactDOM === 'undefined') return;
@@ -253,6 +261,7 @@ function openReconnectModal(data) {
   reconnectModalRender();
   reconnectModalLoadHistory();
 }
+/** Charge l'historique AFK (fetchAfkHistory), met à jour le record perso, re-render — gère l'état loading/erreur. */
 async function reconnectModalLoadHistory() {
   if (!reconnectModalData) return;
   reconnectModalData = Object.assign({}, reconnectModalData, { historyLoading: true, historyError: false });
@@ -280,7 +289,9 @@ async function reconnectModalLoadHistory() {
     reconnectModalRender();
   }
 }
+/** Relance le chargement de l'historique AFK (bouton "Réessayer" en cas d'erreur). */
 function reconnectModalRetryHistory() { reconnectModalLoadHistory(); }
+/** @param {Date} start @param {Date} end. @returns {string} durée formatée ("Xh YYmin" ou "Ymin", minimum 1min). */
 function reconnectDurationLabel(start, end) {
   const mins = Math.max(1, Math.round((end - start) / 60000));
   const h2 = Math.floor(mins / 60), m = mins % 60;

@@ -7275,6 +7275,7 @@ function rcGearGradeLabel(grade) {
   const t = (typeof GEAR_TIERS !== 'undefined' ? GEAR_TIERS : []).find(g => g.grade === grade);
   return t ? (t.label[LANG] || t.label.fr) : grade;
 }
+
 function rcGearGradeColor(grade) {
   const t = (typeof GEAR_TIERS !== 'undefined' ? GEAR_TIERS : []).find(g => g.grade === grade);
   return t ? t.color : RECONNECT_V.cream2;
@@ -7411,6 +7412,7 @@ function ReconnectModal(props) {
 let reconnectModalRoot = null;
 let reconnectModalData = null;
 let reconnectModalSession = 0;
+
 function reconnectModalRender() {
   if (!reconnectModalRoot || !reconnectModalData) return;
   
@@ -7428,6 +7430,7 @@ function openReconnectModal(data) {
   reconnectModalRender();
   reconnectModalLoadHistory();
 }
+
 async function reconnectModalLoadHistory() {
   if (!reconnectModalData) return;
   reconnectModalData = Object.assign({}, reconnectModalData, { historyLoading: true, historyError: false });
@@ -7455,7 +7458,9 @@ async function reconnectModalLoadHistory() {
     reconnectModalRender();
   }
 }
+
 function reconnectModalRetryHistory() { reconnectModalLoadHistory(); }
+
 function reconnectDurationLabel(start, end) {
   const mins = Math.max(1, Math.round((end - start) / 60000));
   const h2 = Math.floor(mins / 60), m = mins % 60;
@@ -7752,12 +7757,14 @@ function CmpPenTab(props) {
 
 let cmpRoot = null;
 let cmpSession = 0;
+
 function cmpRender() {
   if (!cmpRoot) return;
   ReactDOM.flushSync(() => {
     cmpRoot.render(cmpH(CompendiumApp, { key: cmpSession, onClose: closeCompendiumReact }));
   });
 }
+
 function openCompendiumReact() {
   const container = document.getElementById('compendiumModalRoot');
   if (!container || typeof React === 'undefined' || typeof ReactDOM === 'undefined') {
@@ -7768,6 +7775,7 @@ function openCompendiumReact() {
   if (!cmpRoot) cmpRoot = ReactDOM.createRoot(container);
   cmpRender();
 }
+
 function closeCompendiumReact() {
   
   if (cmpRoot) ReactDOM.flushSync(() => cmpRoot.render(null));
@@ -7787,6 +7795,7 @@ let patchKarmaCache = {};
 let patchMyVoteCache = {};  
 
 const PNE_BANNED_WORDS_CLIENT = ['idiot', 'debile', 'nul', 'connard', 'stupide', 'abruti', 'merde'];
+
 function pneContainsBannedWord(text) {
   const normalized = text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
   return PNE_BANNED_WORDS_CLIENT.some(w => normalized.includes(w));
@@ -8178,6 +8187,7 @@ function PatchNotesApp(props) {
 
 let patchNotesRoot = null;
 let patchNotesSession = 0;
+
 function openPatchNotesReact() {
   const container = document.getElementById('patchNotesModalRoot');
   if (!container || typeof React === 'undefined' || typeof ReactDOM === 'undefined') { if (typeof renderPatchNotesPanel === 'function') renderPatchNotesPanel(); return; }
@@ -8188,6 +8198,7 @@ function openPatchNotesReact() {
     patchNotesRoot.render(pneH(PatchNotesApp, { key: patchNotesSession, onClose: closePatchNotesReact }));
   });
 }
+
 function closePatchNotesReact() {
   if (patchNotesRoot) ReactDOM.flushSync(() => patchNotesRoot.render(null));
 }
