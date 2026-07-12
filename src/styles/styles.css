@@ -506,10 +506,14 @@
      2026-07-15 (demande explicite : "restylise un carre... de la largeur des 3 armes") -- largeur
      calée sur #pdWeapons (3 × 48px de case + 2 × 6px de gap = 156px), grille 2 colonnes plutôt
      qu'une ligne étirée sur toute la largeur de la carte */
+  /* reskin refonte Zone (2026-07-12, mockup validé) : bordure/radius/fond alignés sur les tokens
+     Zone (--dbBorder/--s2), police JetBrains Mono comme le reste des valeurs chiffrées du panneau
+     Zone -- couleurs sémantiques des sous-éléments (#eqSumLvl/#eqSumXp/#eqSumGs) INCHANGÉES */
   #equipSummary {
     display:grid; grid-template-columns:1fr 1fr; gap:2px 8px; justify-items:center;
-    width:156px; margin:6px auto 0; border:1px solid var(--gold-dim); border-radius:4px;
-    padding:5px 8px; font-size:11px; color:var(--gold); font-weight:bold; background:rgba(201,165,90,.05);
+    width:156px; margin:6px auto 0; border:1px solid var(--dbBorder); border-radius:8px;
+    padding:5px 8px; font-size:11px; color:var(--gold); font-weight:bold; background:var(--s2);
+    font-family:'JetBrains Mono',monospace;
   }
   #eqSumLvl { color:#fff; }
   #eqSumXp { color:var(--gold); }
@@ -527,8 +531,11 @@
   #pdRight { flex-direction:column; gap:5px; }
   .pdCenter { flex:1; display:flex; align-items:center; justify-content:center; min-width:0; }
   .pdCenter canvas { width:70px; height:auto; }
+  /* reskin refonte Zone (2026-07-12, mockup validé) : bordure/radius/fond alignés sur les tokens
+     Zone (--dbBorder/--s2) -- :hover/.filled/.empty INCHANGÉS (sémantique de rareté/optimisation
+     déjà validée, hors périmètre de ce reskin) */
   .pdSlot {
-    width:46px; height:46px; border:1px solid #3a3742; background:rgba(20,19,26,.9);
+    width:46px; height:46px; border:1px solid var(--dbBorder); border-radius:7px; background:var(--s2);
     display:flex; align-items:center; justify-content:center; font-size:20px;
     cursor:pointer; position:relative;
   }

@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V387', d:'22/07/2026 08:00', name:{fr:'Poupée d\'équipement refaite : même style que Zone', en:'Equipment paperdoll redesigned: same look as Zone'}, fr:[
+      {t:'change', sub:'interface', tx:'Les cases d\'équipement (armes, armure, accessoires) et le résumé Niv./XP/GS/PA de la carte Équipement ont reçu le même reskin visuel que le reste de l\'écran Zone : coins arrondis, mêmes couleurs de bordure/fond, chiffres en police moderne. Les couleurs des paliers d\'optimisation (vert TET, doré PRI+), les coins PA/PD et la croix de déséquipement restent identiques.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The equipment slots (weapons, armor, accessories) and the Lvl/XP/GS/AP summary on the Equipment card received the same visual reskin as the rest of the Zone screen: rounded corners, matching border/background colors, modern-font numbers. The enhancement-tier colors (green TET, gold PRI+), the AP/DP corner badges and the unequip cross stay identical.'},
+    ] },
   { v:'V386', d:'22/07/2026 07:00', name:{fr:'Écran de connexion refait : même style que Zone', en:'Login screen redesigned: same look as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran de connexion (compte, création, Discord/Google/GitHub/Twitter) a reçu le même reskin visuel que le reste du jeu : titre en Cinzel, champs et boutons arrondis, mêmes couleurs que l\'écran Zone. Aucun changement de fonctionnement.'},
     ], en:[
