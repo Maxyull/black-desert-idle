@@ -96,11 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<<<<<<< HEAD
-<link rel="stylesheet" href="build/styles.min.css?v=551">
-=======
-<link rel="stylesheet" href="build/styles.min.css?v=547">
->>>>>>> claude/bdi-sidebar-widgets-reskin
+<link rel="stylesheet" href="build/styles.min.css?v=552">
 <!-- refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-redesign.html fourni par
      l'utilisateur, voir CLAUDE.md) : Cinzel déjà référencé dans styles.css mais jamais chargé
      jusqu'ici (retombait en serif silencieusement) -- Inter/JetBrains Mono nouvellement introduits
@@ -254,12 +250,18 @@
   </div>
 </div>
 
-<!-- renommé "Marché commun" (2026-07-16, demande explicite : "Marché : renommé en marché commun") --
-     les anciens onglets de premier niveau Acheter/Vendre/Mes annonces (simples annonces à prix
-     fixe, table market_listings) sont retirés (demande explicite : "supprime onglet acheter vendre
-     mes annonce") : le carnet d'ordres du Marché commun (market_orders, order book + chandelier)
-     les remplace entièrement -- on atterrit directement dedans, plus aucun onglet de premier niveau
-     à choisir (demande explicite : "on se retrouve dans le marché commun sans onglet") -->
+<!-- Refonte "Marché commun" v3 (2026-07-22, port fidèle du mockup fourni -- voir CLAUDE.md §30) :
+     catalogue UNIFIÉ équipement + matériaux (les objets sans vente en cours restent visibles,
+     grisés) + popup "Acheter" façon Marché Central BDO (échelle de prix RÉELLE = market_order_book,
+     pas de mécanique d'inflation/déflation inventée côté client -- le carnet d'ordres réel produit
+     déjà cette dynamique : le meilleur prix qui s'épuise révèle le palier suivant, une nouvelle
+     offre de vente fait apparaître un palier moins cher) + "Mes ordres" ancré à droite en permanence
+     (remplace l'ancien 3e sous-onglet). Sous-onglet "Matériaux" (carnet d'ordres/chandelier séparé)
+     retiré -- les matériaux vivent désormais dans le même catalogue/popup que le reste (voir
+     src/market/market.js, refreshCmBrowse/openBuyModal). Palette : tokens déjà en place depuis la
+     refonte Zone (--s1/--s2/--dbBorder/--dbBorder2/--gold/--gold2/--green2/--red2/--cream2/--cream3,
+     voir CLAUDE.md §29) réutilisés tels quels -- le mockup fourni utilise EXACTEMENT ces mêmes
+     teintes, aucun écart à corriger. -->
 <div id="marketOverlay">
   <div id="marketBox">
     <div id="marketHead">
@@ -269,81 +271,97 @@
     <div id="marketConstructionBanner" data-i18n="marketConstructionBanner">🚧 BETA — Marché en construction, encore peu fonctionnel : bugs et changements à prévoir</div>
 
     <div id="marketCommon" class="marketPane">
-      <p class="mHint" data-i18n="commonHint">Vrai carnet d'ordres entre joueurs : pose un prix d'achat ou de vente, l'argent/l'objet reste bloqué tant que l'ordre n'est pas exécuté ou annulé. Si ton prix correspond au meilleur ordre opposé, l'échange se fait automatiquement (égalité de prix = tirage au sort).</p>
-      <!-- sous-onglet "Vendre" (vente d'1 pièce de gear/bijou à prix fixe) retiré (2026-07-08,
-           demande explicite : "enleve vendre") -- ne reste que Parcourir/Matériaux/Mes ordres -->
-      <div class="cmSubTabs">
-        <button class="cmSubTab active" data-cmtab="browse" data-i18n="cmTabBrowse">🛒 Parcourir</button>
-        <button class="cmSubTab" data-cmtab="materials" data-i18n="cmTabMaterials">📊 Matériaux</button>
-        <button class="cmSubTab" data-cmtab="orders" data-i18n="cmTabOrders">📋 Mes ordres</button>
-      </div>
+      <p class="mHint" data-i18n="commonHint">Vrai carnet d'ordres entre joueurs : pose un prix d'achat ou de vente, l'argent/l'objet reste bloqué tant que l'ordre n'est pas exécuté ou annulé. Si ton prix correspond au meilleur ordre opposé, l'échange se fait automatiquement (égalité de prix = tirage au sort). Taxe de vente : 35% (prélevée sur le vendeur).</p>
       <div id="commonMsg"></div>
 
-      <div id="cmPaneBrowse" class="cmSubPane">
-        <div class="cmWalletBar">
-          <div class="cmWalletLbl" data-i18n="cmWalletLbl">💰 Ton solde</div>
-          <div class="cmWalletVal" id="cmWalletVal">0</div>
-        </div>
-        <div class="cmFilterBar">
-          <input type="text" id="cmSearch" placeholder="🔎 Rechercher un objet...">
-          <select id="cmSort">
-            <option value="price_asc">Prix ↑</option>
-            <option value="price_desc">Prix ↓</option>
-            <option value="recent">Plus récents</option>
-          </select>
-        </div>
-        <div class="cmBrowseLayout">
-          <div id="cmCategoryTree" class="cmCategoryTree"></div>
-          <div id="cmListingsList" class="cmListingsList"></div>
-          <div id="cmDetailPanel" class="cmDetailPanel">
-            <div class="mEmpty" data-i18n="cmSelectItemHint">Clique un objet pour voir le détail</div>
-          </div>
-        </div>
+      <div class="cmWalletBar">
+        <div class="cmWalletLbl" data-i18n="cmWalletLbl">💰 Ton solde</div>
+        <div class="cmWalletVal" id="cmWalletVal">0</div>
+        <div class="cmLockedHint" id="cmLockedHint" style="display:none"></div>
       </div>
 
-      <!-- carnet d'ordres + graphique chandelier pour les matériaux (2026-07-16, demande explicite :
-           "envoyer le nouveau marché" -- reprend le design de l'artefact de démo, branché sur les
-           vraies données : market_order_book (RPC déjà existante) + market_trades (table déjà
-           existante, RLS SELECT publique, alimentée par market_match_item côté serveur). Pas de
-           bots ni de fourchette min/max fictive (spécifiques à la démo) -- prix validé comme partout
-           ailleurs (juste > 0). -->
-      <div id="cmPaneMaterials" class="cmSubPane" style="display:none">
-        <div class="mktItems" id="mktItemPills"></div>
-        <div class="mktMetaRow" id="mktMetaRow"></div>
-        <div class="mktGrid">
-          <div class="mktCol" id="mktSellCol"></div>
-          <div class="mktCenter">
-            <div class="mktChartCard">
-              <div class="mktChartHead" data-i18n="mktChartHead">Graphique chandelier — 20 dernières transactions</div>
-              <canvas id="mktCandleCv"></canvas>
+      <!-- layout principal + panneau "Mes ordres" ancré à droite, toujours visible -->
+      <div class="cmMarketLayout">
+        <div class="cmMain">
+          <div class="cmFilterBar">
+            <input type="text" id="cmSearch" placeholder="🔎 Rechercher un objet...">
+            <select id="cmSort">
+              <option value="price_asc">Prix ↑</option>
+              <option value="price_desc">Prix ↓</option>
+              <option value="recent">Plus récents</option>
+            </select>
+          </div>
+          <div class="cmBrowseLayout">
+            <div id="cmCategoryTree" class="cmCategoryTree"></div>
+            <div id="cmListingsList" class="cmListingsList"></div>
+            <div id="cmDetailPanel" class="cmDetailPanel">
+              <div class="mEmpty" data-i18n="cmSelectItemHint">Clique un objet pour voir le détail</div>
             </div>
           </div>
-          <div class="mktCol" id="mktBuyCol"></div>
         </div>
-        <div class="mktFormCard">
-          <div class="mktFormTitle" id="mktFormTitle"></div>
-          <div class="mktSideToggle">
-            <button class="mktSideBtn buy active" id="mktSideBuy" data-i18n="mktSideBuy">Achat</button>
-            <button class="mktSideBtn sell" id="mktSideSell" data-i18n="mktSideSell">Vente</button>
+        <div class="cmSidebar">
+          <div class="cmSidebarHdr" id="cmMyOrdersHdr">📋 Mes ordres</div>
+          <div class="cmMyOrdersTabs">
+            <button class="cmMyOrdersTab active" data-side="buy">🛒 <span id="cmBuyTabLbl">Achat</span> <span class="cmMyOrdersCount" id="cmOrdersCountBuy">0</span></button>
+            <button class="cmMyOrdersTab" data-side="sell">🏷️ <span id="cmSellTabLbl">Vente</span> <span class="cmMyOrdersCount" id="cmOrdersCountSell">0</span></button>
           </div>
-          <div class="mktFormGrid">
-            <div class="mktFld"><label data-i18n="mktPriceLbl">Prix unitaire</label><input type="number" id="mktPriceInput" min="1"></div>
-            <div class="mktFld"><label data-i18n="mktQtyLbl">Quantité</label><input type="number" id="mktQtyInput" min="1" value="1"></div>
-          </div>
-          <!-- aperçu du net apres taxe de vente (2026-07-18, demande explicite : "taxe market
-               20%") -- affiche uniquement en mode Vente, voir updateMktTaxHint() -->
-          <div class="mktTaxHint" id="mktSellTaxHint" style="display:none"></div>
-          <div class="mktErr" id="mktFormMsg"></div>
-          <button class="mktPlaceBtn buy" id="mktPlaceBtn" data-i18n="mktPlaceBuy">Placer l'ordre d'achat</button>
-        </div>
-        <div class="mktHistCard">
-          <div class="mktHistHead" data-i18n="mktHistHead">📜 Historique des transactions</div>
-          <div id="mktHistRows"></div>
+          <div id="cmMyOrders"></div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
 
-      <div id="cmPaneOrders" class="cmSubPane" style="display:none">
-        <div id="cmMyOrders"></div>
+<!-- popup "Acheter" façon Marché Central BDO : échelle de prix RÉELLE (market_order_book), stepper
+     quantité, cycle de niveau d'optimisation (variantes enhLv déjà réellement en vente), graphique
+     (market_trades réel), coût total, avertissement remboursement/commande en attente -->
+<div class="cmBuyModalBg" id="cmBuyModalBg">
+  <div class="cmBuyModal">
+    <div class="cmBmHdr"><span id="cmBuyModalTitle">Acheter</span><span class="cmBmClose" id="cmBmClose">✕</span></div>
+    <div class="cmBmBody">
+      <div class="cmBmLeft">
+        <div class="cmBmItemRow">
+          <div class="cmBmIcon" id="cmBmIcon"></div>
+          <div class="cmBmName" id="cmBmName"></div>
+        </div>
+        <div class="cmBmStatsGrid" id="cmBmStatsGrid"></div>
+        <div class="cmBmChartWrap"><canvas id="cmBmChart"></canvas></div>
+        <div class="cmBmLowerGrid">
+          <div class="cmBmLowerLeft">
+            <div class="cmBmLbl" id="cmBmBalanceLbl">Solde</div>
+            <div class="cmBmVal" id="cmBmSolde"></div>
+            <div class="cmBmSep"></div>
+            <div class="cmBmLbl" id="cmBmTotalCostLbl">Coût total</div>
+            <div class="cmBmCostBig" id="cmBmCostBig"></div>
+            <div class="cmBmSep"></div>
+            <div class="cmBmAfterRow"><span id="cmBmAfterBalanceLbl">Solde après l'achat</span><b id="cmBmAfter"></b></div>
+          </div>
+          <div class="cmBmLowerRight">
+            <div>
+              <div class="cmBmLbl" id="cmBmSetPriceLbl">Établir un prix d'achat</div>
+              <div class="cmBmPriceRow"><input id="cmBmPrice" type="number"><button id="cmBmMax">MAX</button><button id="cmBmMin">MIN</button></div>
+            </div>
+            <div>
+              <div class="cmBmLbl" id="cmBmQtyLbl">Quantité achetée</div>
+              <div class="cmBmStepRow"><input id="cmBmQty" type="number" value="1" min="1"><button id="cmBmQtyMinus">−</button><button id="cmBmQtyPlus">+</button></div>
+            </div>
+            <div id="cmBmTierRowWrap">
+              <div class="cmBmLbl" id="cmBmTierLbl">Choisir le niv. d'optimisation</div>
+              <div class="cmBmStepRow"><div class="cmBmTierVal" id="cmBmTierVal"></div><button id="cmBmTierMinus">−</button><button id="cmBmTierPlus">+</button></div>
+            </div>
+          </div>
+        </div>
+        <button class="cmBmBuyBtn" id="cmBmBuyBtn">Acheter</button>
+        <div class="cmBmMsg" id="cmBmMsg"></div>
+        <div class="cmBmDisclaimer" id="cmBmDisclaimer">
+          - Si tu établis un prix d'achat précis mais qu'un vendeur propose un prix inférieur, la différence entre le prix établi et le prix réel te sera remboursée.<br>
+          - Si l'objet recherché n'est pas en stock au prix que tu as établi, une commande correspondante sera créée en attente.<br>
+          - Tu peux voir tes commandes via Marché commun &gt; Mes ordres.
+        </div>
+      </div>
+      <div class="cmBmRight">
+        <div class="cmBmTierHead"><span id="cmBmColStock">En stock</span><span id="cmBmColPrice">Prix</span><span id="cmBmColOrders">Commandes</span></div>
+        <div id="cmBmTierList" class="cmBmTierList"></div>
       </div>
     </div>
   </div>
@@ -811,19 +829,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<<<<<<< HEAD
-<script src="meta/patch-notes-data.js?v=551"></script>
+<script src="meta/patch-notes-data.js?v=552"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie -->
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=551"></script>
-=======
-<script src="meta/patch-notes-data.js?v=547"></script>
-<!-- build de production : bundle concatene, commentaires retires, puis minifie -->
-     par Terser (build/source.min.js) -- genere par scripts/build.py depuis
-     index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=547"></script>
->>>>>>> claude/bdi-sidebar-widgets-reskin
+<script src="build/source.min.js?v=552"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier
      susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone
      tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
