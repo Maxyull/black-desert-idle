@@ -1,6 +1,7 @@
 // ============================================================
 // HÔTEL DES VENTES
 // ============================================================
+/** @returns {boolean} vrai si connecté et vérifié (pas invité), affiche une alerte sinon. */
 function marketRequireAuth() {
   if (!sb || !currentUser) { alert('Connecte-toi pour accéder au marché.'); return false; }
   if (isGuest()) {
@@ -91,6 +92,7 @@ async function refreshCommonMarket() {
 // Appelé à chaque ouverture du panneau (refreshCommonMarket) -- suffisant pour ce panneau (pas
 // besoin d'un hook global de changement de langue, le panneau est toujours refermé/rouvert avant
 // d'être revu après un changement de langue dans la pratique de ce jeu).
+/** Applique les libellés i18next statiques du panneau Marché (appelé à chaque ouverture, panneau toujours refermé/rouvert entre changements de langue). */
 function applyMarketStaticI18n() {
   const set = (id, key) => { const el = $a(id); if (el) el.textContent = i18next.t(key); };
   set('cmMyOrdersHdr', 'market:market.my_orders_hdr');
@@ -134,6 +136,7 @@ let cmMyOrdersTab = 'buy', cmMyOrdersData = [];
 // clé d'objet cohérente avec le serveur (market_place_order) : 'material:<nom>' pour les
 // matériaux, 'gear:<nom>+<enhLv>' pour TOUT le reste (gear ET bijoux -- le serveur ne distingue
 // pas les deux dans son calcul de clé, voir v_real_key dans market_place_order)
+/** @param {string} kind - 'material'/'gear'/'jackpot'. @param {string} name @param {number} enhLv - niveau d'enchant. @returns {string} clé d'objet cohérente avec le serveur (market_place_order). */
 function cmItemKey(kind, name, enhLv) {
   return kind === 'material' ? ('material:' + name) : ('gear:' + name + '+' + (enhLv || 0));
 }
@@ -143,6 +146,7 @@ function cmItemKey(kind, name, enhLv) {
 // VRAIES tables de données (GEAR_TIERS/ZONES/MARKET_MATERIALS) -- fonction, pas un littéral
 // top-level, pour ne dépendre d'aucun ordre de chargement (voir CLAUDE.md §7-8).
 let MARKET_CATALOG_CACHE = null;
+/** @returns {object[]} catalogue complet des objets du jeu (armure/armes via GEAR_TIERS, bijoux via ZONES, matériaux via MARKET_MATERIALS) — construit une seule fois et mis en cache (MARKET_CATALOG_CACHE), inclut les objets sans vente en cours. */
 function marketCatalog() {
   if (MARKET_CATALOG_CACHE) return MARKET_CATALOG_CACHE;
   const catalog = [];
@@ -172,11 +176,13 @@ function marketCatalog() {
   MARKET_CATALOG_CACHE = catalog;
   return catalog;
 }
+/** @param {object} cat - entrée de CM_CATEGORIES. @returns {object[]} entrées du catalogue appartenant à cette catégorie ('all' = tout). */
 function catalogEntriesForCat(cat) {
   if (cat.id === 'all') return marketCatalog();
   return marketCatalog().filter(c => c.catId === cat.id);
 }
 
+/** Reconstruit l'arbre de catégories du Marché commun, câble les clics (change cmActiveCat, rafraîchit la liste). */
 function renderCmCategoryTree() {
   const el = $a('cmCategoryTree'); if (!el) return;
   el.innerHTML = CM_CATEGORIES.map(c => `<button class="cmCatBtn${c.id===cmActiveCat?' active':''}" data-cat="${c.id}">${c.label[LANG]}</button>`).join('');
@@ -184,6 +190,7 @@ function renderCmCategoryTree() {
     btn.onclick = () => { cmActiveCat = btn.dataset.cat; cmDrilldownName = null; refreshCmBrowse(); };
   });
 }
+/** Affiche le solde silver et, si des ordres d'achat sont ouverts, le montant verrouillé en attente. */
 function updateCmWallet() {
   const el = $a('cmWalletVal'); if (el) el.textContent = fmt(Math.round(S.silver)) + ' 🪙';
   const locked = (cmMyOrdersData || []).filter(o => o.side === 'buy' && o.status === 'open')
@@ -194,6 +201,7 @@ function updateCmWallet() {
     else hint.style.display = 'none';
   }
 }
+/** Recharge les annonces de la catégorie active (RPC market_listings, filtrées par slot si la catégorie en spécifie), rafraîchit l'arbre/portefeuille/liste. */
 async function refreshCmBrowse() {
   renderCmCategoryTree();
   updateCmWallet();
@@ -207,14 +215,17 @@ async function refreshCmBrowse() {
   if (error) { list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.loading_error')}</div>`; return; }
   renderCmListingsList();
 }
+/** @param {object} l - annonce (listing). @returns {string} icône de l'objet (matériau ou item_snapshot). */
 function cmListingIcon(l) {
   if (l.item_kind === 'material') { const m = MARKET_MATERIALS.find(x => x.name === l.item_name); return m ? m.icon : '◈'; }
   return l.item_snapshot ? l.item_snapshot.icon : '📦';
 }
+/** @param {object} l - annonce (listing). @returns {string} couleur de l'objet (matériau ou item_snapshot). */
 function cmListingColor(l) {
   if (l.item_kind === 'material') { const m = MARKET_MATERIALS.find(x => x.name === l.item_name); return m ? m.color : '#8fb0c9'; }
   return l.item_snapshot ? l.item_snapshot.color : '#c9a55a';
 }
+/** @param {string} iso - date ISO. @returns {string} durée écoulée compacte ("Nm"/"Nh"/"Nj"). */
 function cmTimeAgo(iso) {
   const sec = Math.max(0, (Date.now() - new Date(iso).getTime())/1000);
   if (sec < 3600) return Math.round(sec/60) + 'm';
@@ -224,6 +235,7 @@ function cmTimeAgo(iso) {
 // applique recherche + tri à un tableau de lignes déjà construites (utilisé par la vue groupée et
 // la vue détaillée par niveau d'enchantement) -- priceOf renvoie Infinity pour une ligne "sans
 // vente" (jamais triée artificiellement en tête par prix croissant)
+/** @param {object[]} items - lignes à filtrer/trier. @param {function(object):number} priceOf - extrait le prix (Infinity si pas en vente, jamais triée en tête). @param {function(object):string} timeOf - extrait la date. @returns {object[]} lignes filtrées par recherche (cmSearch) et triées selon cmSort. */
 function cmApplySearchSort(items, priceOf, timeOf) {
   const search = ($a('cmSearch').value || '').toLowerCase().trim();
   const sort = $a('cmSort').value;
@@ -233,6 +245,7 @@ function cmApplySearchSort(items, priceOf, timeOf) {
   else rows.sort((a,b) => new Date(timeOf(b)||0) - new Date(timeOf(a)||0));
   return rows;
 }
+/** Reconstruit la liste du Marché groupée par nom d'objet (une ligne par objet, prix le plus bas/stock total), inclut les objets du catalogue sans vente en cours (grisés). Délègue au tiroir de drilldown si un nom est sélectionné. */
 function renderCmListingsList() {
   const list = $a('cmListingsList'); if (!list) return;
   if (cmDrilldownName) { renderCmDrilldown(); return; }
@@ -285,6 +298,7 @@ function renderCmListingsList() {
 }
 // tiroir détaillé par niveau d'enchantement (façon "+13/+14/+15/PRI/DUO..." du vrai marché BDO) —
 // une ligne par niveau RÉELLEMENT en vente, avec son propre prix le plus bas et son stock
+/** Reconstruit le tiroir détaillé par niveau d'enchantement (cmDrilldownName) — une ligne par niveau réellement en vente, avec prix/stock propres. */
 function renderCmDrilldown() {
   const list = $a('cmListingsList'); if (!list) return;
   const items = cmListings.filter(l => l.item_name === cmDrilldownName);
@@ -321,16 +335,19 @@ function renderCmDrilldown() {
 }
 // possédé (INV) par nom+kind+enhLv EXACT -- corrige un flou de l'ancien placeMarketOrder (ne
 // filtrait jamais par enhLv, risquait de vendre par erreur une autre variante du même objet)
+/** @param {string} name @param {string} kind @param {number} enhLv - niveau d'enchant exact. @returns {number} quantité possédée dans INV correspondant exactement (jamais confondue avec une autre variante). */
 function ownedQtyFor(name, kind, enhLv) {
   if (kind === 'material') return INV.filter(s => s && s.kind === 'material' && s.name === name).reduce((n,s) => n + s.qty, 0);
   return INV.some(s => s && s.kind === kind && s.name === name && (s.enhLv||0) === (enhLv||0)) ? 1 : 0;
 }
+/** @param {string} name @param {string} kind @param {number} enhLv. @returns {number} index INV de l'objet exact à vendre, -1 si absent. */
 function findInvIndexForSell(name, kind, enhLv) {
   if (kind === 'material') return INV.findIndex(s => s && s.kind === 'material' && s.name === name);
   return INV.findIndex(s => s && s.kind === kind && s.name === name && (s.enhLv||0) === (enhLv||0));
 }
 // panneau de détail : stats + comparaison (objets réellement en vente) ou état "non listé" +
 // offres d'achat/de vente (2026-07-22, port du mockup)
+/** @param {?object} g - ligne groupée sélectionnée (renderCmListingsList/renderCmDrilldown), null pour l'état vide. Reconstruit le panneau de détail : stats/comparaison à l'équipé si en vente, sinon état "non listé", + formulaires d'offre d'achat/de vente. */
 function renderCmDetailPanel(g) {
   const panel = $a('cmDetailPanel'); if (!panel) return;
   if (!g) { panel.innerHTML = `<div class="mEmpty">${i18next.t('market:market.select_item_hint')}</div>`; return; }
@@ -396,6 +413,7 @@ function renderCmDetailPanel(g) {
   if (l) panel.querySelector('.btnBuyListing').onclick = () => openBuyModal(g);
   wireCmOfferForms(panel, g, kind, enhLv, owned);
 }
+/** @param {HTMLElement} panel - panneau de détail. @param {object} g - ligne sélectionnée. @param {string} kind @param {number} enhLv @param {number} owned - quantité possédée. Câble les formulaires d'offre d'achat/de vente (ouverture, +/-, soumission RPC market_place_order). */
 function wireCmOfferForms(panel, g, kind, enhLv, owned) {
   const msg = () => $a('cmBuyMsg');
   panel.querySelector('#cmOfferBtn').onclick = () => panel.querySelector('#cmOfferForm').classList.toggle('open');
@@ -453,6 +471,7 @@ $a('cmSort').onchange = () => renderCmListingsList();
 let cmBmEntry = null; // { name, kind } de l'objet actuellement affiché dans la popup
 let cmBmEnhLv = 0;
 let cmBmLadder = []; // [{price, stock, orders}] -- construit depuis market_order_book, PAS inventé
+/** @param {object} g - ligne sélectionnée (liste ou drilldown). Ouvre la popup "Acheter" (échelle de prix réelle, stepper quantité, cycle de niveau d'enchant, graphique). */
 async function openBuyModal(g) {
   cmBmEntry = { name: g.name, kind: g.kind };
   cmBmEnhLv = g.best ? ((g.best.item_snapshot && g.best.item_snapshot.enhLv) || 0) : (g.lv || 0);
@@ -468,7 +487,9 @@ async function openBuyModal(g) {
   updateBmCost();
   $a('cmBuyModalBg').classList.add('open');
 }
+/** @returns {string} clé d'objet de la popup Acheter actuellement ouverte (cmBmEntry/cmBmEnhLv). */
 function bmItemKey() { return cmItemKey(cmBmEntry.kind, cmBmEntry.name, cmBmEnhLv); }
+/** Recharge l'échelle de prix réelle (market_order_book) et les stats/graphique (market_trades) de la popup Acheter, reconstruit la liste de paliers. */
 async function refreshBuyModalLadderAndStats() {
   const key = bmItemKey();
   const [{ data: book }, { data: trades }] = await Promise.all([
@@ -499,6 +520,7 @@ async function refreshBuyModalLadderAndStats() {
   if (enhLvs.length > 1) { tierWrap.style.display = ''; $a('cmBmTierVal').textContent = ENH_NAMES[cmBmEnhLv]; }
   else tierWrap.style.display = 'none';
 }
+/** Reconstruit la liste de paliers de prix (cmBmLadder) de la popup Acheter, câble le clic pour sélectionner un prix. */
 function renderBmTierList() {
   const list = $a('cmBmTierList');
   const selectedPrice = Number($a('cmBmPrice').value) || null;
@@ -509,6 +531,7 @@ function renderBmTierList() {
     row.onclick = () => { $a('cmBmPrice').value = row.dataset.price; renderBmTierList(); updateBmCost(); };
   });
 }
+/** Recalcule et affiche le coût total (prix×qté) et le solde après achat dans la popup Acheter. */
 function updateBmCost() {
   const price = Number($a('cmBmPrice').value) || 0;
   const qty = parseInt($a('cmBmQty').value, 10) || 1;
@@ -516,6 +539,7 @@ function updateBmCost() {
   $a('cmBmCostBig').textContent = fmt(total) + ' 🪙';
   $a('cmBmAfter').textContent = fmt(Math.round(S.silver) - total) + ' 🪙';
 }
+/** @param {number} dir - +1/-1. Fait défiler cmBmEnhLv vers le niveau d'enchant réellement en vente suivant/précédent, rafraîchit prix/échelle/stats. */
 async function cycleBmTier(dir) {
   const group = cmListings.filter(l => l.item_name === cmBmEntry.name && l.item_kind === cmBmEntry.kind);
   const enhLvs = [...new Set(group.map(l => (l.item_snapshot && l.item_snapshot.enhLv) || 0))].sort((a,b) => a-b);
@@ -571,6 +595,7 @@ $a('cmBuyModalBg').addEventListener('click', e => { if (e.target.id === 'cmBuyMo
 // QUEL item_key, pas seulement les matériaux) : chaque transaction = 1 bougie (open = prix de la
 // transaction précédente, close = son propre prix) -- fidèle aux VRAIES transactions, sans
 // inventer de mèche haute/basse intra-transaction
+/** @param {string} canvasId - id du canvas cible. @param {object[]} trades - transactions réelles (market_trades), triées par date. Dessine un chandelier fidèle (chaque transaction = 1 bougie, pas de mèche inventée), placeholder si moins de 2 transactions. */
 function drawItemPriceChart(canvasId, trades) {
   const canvas = $a(canvasId); if (!canvas) return;
   const ctx = canvas.getContext('2d');
@@ -617,17 +642,20 @@ function drawItemPriceChart(canvasId, trades) {
 // "Mes ordres" ancré à droite en permanence (2026-07-22) : onglets Achat/Vente séparés, remplace
 // l'ancien 3e sous-onglet. Cancel = rend le silver/objet bloqué (market_cancel_order, inchangé).
 // ============================================================
+/** Câble les onglets Achat/Vente du panneau "Mes ordres". */
 function wireCmMyOrdersTabs() {
   document.querySelectorAll('.cmMyOrdersTab').forEach(btn => {
     btn.onclick = () => { cmMyOrdersTab = btn.dataset.side; renderCmMyOrdersList(); };
   });
 }
+/** Recharge mes ordres (RPC market_my_orders) et rafraîchit portefeuille + liste. */
 async function refreshMyMarketOrders() {
   const { data } = await sb.rpc('market_my_orders');
   cmMyOrdersData = data || [];
   updateCmWallet();
   renderCmMyOrdersList();
 }
+/** Reconstruit la liste "Mes ordres" (onglet actif cmMyOrdersTab), câble le bouton Annuler (market_cancel_order). */
 function renderCmMyOrdersList() {
   const box = $a('cmMyOrders'); if (!box) return;
   document.querySelectorAll('.cmMyOrdersTab').forEach(btn => btn.classList.toggle('active', btn.dataset.side === cmMyOrdersTab));

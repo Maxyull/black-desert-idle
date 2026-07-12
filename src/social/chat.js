@@ -20,7 +20,9 @@ try { const v = localStorage.getItem('velia-idle-chat-folded'); if (v !== null) 
 let chatLastRead = {}; // channel -> ISO du dernier message vu (sert au halo "non lu")
 let chatUnread = {};   // channel -> true si des messages sont arrivés depuis qu'on ne le regarde plus
 let chatLastPingedAt = {}; // channel -> ISO du dernier mention @moi déjà signalée (évite de répéter l'alerte à chaque sondage)
+/** @returns {object[]} canaux visibles pour le joueur (masque les canaux staff-only sauf admin/mod). */
 function chatVisibleChannels() { return CHAT_CHANNELS.filter(c => !c.staff || isAdmin() || myIsMod); }
+/** Reconstruit les onglets de canaux (visibilité, actif, halo non-lu), câble le changement de canal. */
 function renderChatTabs() {
   const el = $a('chatTabs'); if (!el) return;
   const chans = chatVisibleChannels();
@@ -39,6 +41,7 @@ function renderChatTabs() {
     };
   });
 }
+/** Bascule le chat replié/déplié, persiste le choix (localStorage), rafraîchit les messages et efface l'alerte de ping au dépli. */
 function toggleChatFold() {
   chatFolded = !chatFolded;
   try { localStorage.setItem('velia-idle-chat-folded', chatFolded ? '1' : '0'); } catch(e) {}
@@ -47,6 +50,7 @@ function toggleChatFold() {
   // déplier = on considère la mention "lue", l'alerte (couleur/mouvement en boucle) s'arrête
   if (!chatFolded) { fetchChatMessages(); $a('chatWidget').classList.remove('pinged'); }
 }
+/** Affiche/masque la zone de saisie selon le canal (modéré = lecture seule, annonce = admin uniquement) et l'état de connexion, met à jour la note explicative. */
 function updateChatInputVisibility() {
   const row = $a('chatInputRow'), note = $a('chatNote');
   if (chatChannel === 'modéré') {
@@ -64,6 +68,7 @@ function updateChatInputVisibility() {
   }
 }
 // formatte l'horodatage d'un message : HH:MM si aujourd'hui, sinon JJ/MM HH:MM
+/** @param {string} iso - date ISO. @returns {string} "HH:MM" si aujourd'hui, sinon "JJ/MM HH:MM". */
 function fmtChatTimestamp(iso) {
   if (!iso) return '';
   const d = new Date(iso), now = new Date();
@@ -76,13 +81,23 @@ function fmtChatTimestamp(iso) {
 // 2026-07-07 : "chaque nouveau jour est séparé d'une jolie barre dorée puis le jour précédent est
 // replié, dépliable pour relire le chat"
 let chatExpandedDays = new Set();
+/** @param {string} iso - date ISO. @returns {string} clé de jour "AAAA-M-J" pour regrouper les messages. */
 function dayKeyOf(iso) { const d = new Date(iso); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
+/** @param {string} iso - date ISO. @returns {string} libellé de la barre de séparation ("Aujourd'hui"/"Hier"/date complète). */
 function fmtDaySeparator(iso) {
   const d = new Date(iso), now = new Date(), yest = new Date(now); yest.setDate(yest.getDate()-1);
   if (dayKeyOf(iso) === dayKeyOf(now.toISOString())) return i18next.t('social:social.chat_day_today');
   if (dayKeyOf(iso) === dayKeyOf(yest.toISOString())) return i18next.t('social:social.chat_day_yesterday');
   return d.toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', day:'numeric', month:'long' });
 }
+/**
+ * Reconstruit la liste de messages du canal actif, groupés par jour (seul le dernier jour déplié
+ * par défaut, les précédents repliés sous une barre dorée cliquable). Gère badges de rôle, halo
+ * "non lu" (sinceTs), surlignage des mentions @moi (déclenche triggerChatPingAttention), et câble
+ * la suppression (admin/mod).
+ * @param {object[]} msgs - messages du canal, ordre chronologique.
+ * @param {?string} sinceTs - horodatage de dernière lecture (messages plus récents = "nouveaux").
+ */
 function renderChatMessages(msgs, sinceTs) {
   const el = $a('chatMessages'); if (!el) return;
   const canDelete = isAdmin() || myIsMod; // admin ET modérateurs peuvent supprimer
@@ -242,6 +257,7 @@ setInterval(refreshOnlinePlayersCache, 20000);
 refreshOnlinePlayersCache();
 
 let chatMentionActive = false, chatMentionStart = -1;
+/** Détecte si le curseur est en train de taper une mention "@..." dans le champ de saisie, affiche/masque la liste de suggestions filtrée sur onlinePlayersCache. */
 function updateChatMentionDropdown() {
   const input = $a('chatInput'), list = $a('chatMentionList');
   const val = input.value, pos = input.selectionStart;
@@ -262,6 +278,7 @@ function updateChatMentionDropdown() {
   list.classList.add('show');
   list.querySelectorAll('.chatMentionItem').forEach(el => { el.onclick = () => applyChatMention(el.dataset.p); });
 }
+/** @param {string} pseudo - pseudo choisi dans la liste de suggestions. Insère "@pseudo " à la place du "@partiel" en cours de saisie. */
 function applyChatMention(pseudo) {
   const input = $a('chatInput');
   const val = input.value, pos = input.selectionStart;
@@ -275,6 +292,7 @@ function applyChatMention(pseudo) {
   chatMentionActive = false;
 }
 // déplace la surbrillance ↑/↓ dans la liste de suggestions (demande explicite du 2026-07-05)
+/** @param {number} delta - +1/-1. Déplace la surbrillance dans la liste de suggestions de mention (boucle). */
 function moveChatMentionActive(delta) {
   const items = Array.from($a('chatMentionList').querySelectorAll('.chatMentionItem'));
   if (!items.length) return;
@@ -303,6 +321,7 @@ $a('chatInput').addEventListener('keydown', e => {
 // colore les mentions @pseudo déjà présentes dans un message (envoyé ou reçu) -- fait correspondre
 // les pseudos les plus longs d'abord pour ne pas couper un pseudo qui en contient un plus court
 // (ex: "Metal" ne doit pas amputer "@Metal Gear")
+/** @param {string} escapedText - texte de message déjà échappé HTML. @returns {string} texte avec les mentions @pseudo surlignées (pseudos multi-mots connus en priorité, pour ne pas couper un pseudo contenant un pseudo plus court). */
 function highlightMentions(escapedText) {
   // 1) pseudos multi-mots CONNUS (ex: "Maxyull Test") en priorité -- extraits vers des jetons
   // temporaires (pas encore du HTML) pour que la passe générique ci-dessous ne les retraite pas
@@ -330,6 +349,7 @@ function highlightMentions(escapedText) {
 // alerte visuelle quand JE suis mentionné et que le chat est replié (demande explicite du
 // 2026-07-05 : "couleur/vibration/agrandissement du chat pour faire ouvrir") -- se rejoue à
 // chaque nouvelle mention détectée, s'arrête toute seule (voir @keyframes chatPingAttention)
+/** Rejoue l'animation d'alerte visuelle (+ vibration mobile si dispo) sur le widget de chat replié, quand le joueur est mentionné. */
 function triggerChatPingAttention() {
   const w = $a('chatWidget'); if (!w) return;
   w.classList.remove('pinged'); void w.offsetWidth; // relance l'animation même si déjà en cours

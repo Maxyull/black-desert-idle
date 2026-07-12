@@ -15003,7 +15003,9 @@ try { const v = localStorage.getItem('velia-idle-chat-folded'); if (v !== null) 
 let chatLastRead = {}; 
 let chatUnread = {};   
 let chatLastPingedAt = {}; 
+
 function chatVisibleChannels() { return CHAT_CHANNELS.filter(c => !c.staff || isAdmin() || myIsMod); }
+
 function renderChatTabs() {
   const el = $a('chatTabs'); if (!el) return;
   const chans = chatVisibleChannels();
@@ -15022,6 +15024,7 @@ function renderChatTabs() {
     };
   });
 }
+
 function toggleChatFold() {
   chatFolded = !chatFolded;
   try { localStorage.setItem('velia-idle-chat-folded', chatFolded ? '1' : '0'); } catch(e) {}
@@ -15030,6 +15033,7 @@ function toggleChatFold() {
   
   if (!chatFolded) { fetchChatMessages(); $a('chatWidget').classList.remove('pinged'); }
 }
+
 function updateChatInputVisibility() {
   const row = $a('chatInputRow'), note = $a('chatNote');
   if (chatChannel === 'modéré') {
@@ -15056,13 +15060,16 @@ function fmtChatTimestamp(iso) {
 }
 
 let chatExpandedDays = new Set();
+
 function dayKeyOf(iso) { const d = new Date(iso); return d.getFullYear()+'-'+d.getMonth()+'-'+d.getDate(); }
+
 function fmtDaySeparator(iso) {
   const d = new Date(iso), now = new Date(), yest = new Date(now); yest.setDate(yest.getDate()-1);
   if (dayKeyOf(iso) === dayKeyOf(now.toISOString())) return i18next.t('social:social.chat_day_today');
   if (dayKeyOf(iso) === dayKeyOf(yest.toISOString())) return i18next.t('social:social.chat_day_yesterday');
   return d.toLocaleDateString(LANG==='fr'?'fr-FR':'en-US', { weekday:'long', day:'numeric', month:'long' });
 }
+
 function renderChatMessages(msgs, sinceTs) {
   const el = $a('chatMessages'); if (!el) return;
   const canDelete = isAdmin() || myIsMod; 
@@ -15206,6 +15213,7 @@ setInterval(refreshOnlinePlayersCache, 20000);
 refreshOnlinePlayersCache();
 
 let chatMentionActive = false, chatMentionStart = -1;
+
 function updateChatMentionDropdown() {
   const input = $a('chatInput'), list = $a('chatMentionList');
   const val = input.value, pos = input.selectionStart;
@@ -15225,6 +15233,7 @@ function updateChatMentionDropdown() {
   list.classList.add('show');
   list.querySelectorAll('.chatMentionItem').forEach(el => { el.onclick = () => applyChatMention(el.dataset.p); });
 }
+
 function applyChatMention(pseudo) {
   const input = $a('chatInput');
   const val = input.value, pos = input.selectionStart;
@@ -15434,6 +15443,7 @@ function renderCmCategoryTree() {
     btn.onclick = () => { cmActiveCat = btn.dataset.cat; cmDrilldownName = null; refreshCmBrowse(); };
   });
 }
+
 function updateCmWallet() {
   const el = $a('cmWalletVal'); if (el) el.textContent = fmt(Math.round(S.silver)) + ' 🪙';
   const locked = (cmMyOrdersData || []).filter(o => o.side === 'buy' && o.status === 'open')
@@ -15444,6 +15454,7 @@ function updateCmWallet() {
     else hint.style.display = 'none';
   }
 }
+
 async function refreshCmBrowse() {
   renderCmCategoryTree();
   updateCmWallet();
@@ -15457,14 +15468,17 @@ async function refreshCmBrowse() {
   if (error) { list.innerHTML = `<div class="mEmpty">${i18next.t('market:market.loading_error')}</div>`; return; }
   renderCmListingsList();
 }
+
 function cmListingIcon(l) {
   if (l.item_kind === 'material') { const m = MARKET_MATERIALS.find(x => x.name === l.item_name); return m ? m.icon : '◈'; }
   return l.item_snapshot ? l.item_snapshot.icon : '📦';
 }
+
 function cmListingColor(l) {
   if (l.item_kind === 'material') { const m = MARKET_MATERIALS.find(x => x.name === l.item_name); return m ? m.color : '#8fb0c9'; }
   return l.item_snapshot ? l.item_snapshot.color : '#c9a55a';
 }
+
 function cmTimeAgo(iso) {
   const sec = Math.max(0, (Date.now() - new Date(iso).getTime())/1000);
   if (sec < 3600) return Math.round(sec/60) + 'm';
@@ -15481,6 +15495,7 @@ function cmApplySearchSort(items, priceOf, timeOf) {
   else rows.sort((a,b) => new Date(timeOf(b)||0) - new Date(timeOf(a)||0));
   return rows;
 }
+
 function renderCmListingsList() {
   const list = $a('cmListingsList'); if (!list) return;
   if (cmDrilldownName) { renderCmDrilldown(); return; }
@@ -15568,6 +15583,7 @@ function ownedQtyFor(name, kind, enhLv) {
   if (kind === 'material') return INV.filter(s => s && s.kind === 'material' && s.name === name).reduce((n,s) => n + s.qty, 0);
   return INV.some(s => s && s.kind === kind && s.name === name && (s.enhLv||0) === (enhLv||0)) ? 1 : 0;
 }
+
 function findInvIndexForSell(name, kind, enhLv) {
   if (kind === 'material') return INV.findIndex(s => s && s.kind === 'material' && s.name === name);
   return INV.findIndex(s => s && s.kind === kind && s.name === name && (s.enhLv||0) === (enhLv||0));
@@ -15638,6 +15654,7 @@ function renderCmDetailPanel(g) {
   if (l) panel.querySelector('.btnBuyListing').onclick = () => openBuyModal(g);
   wireCmOfferForms(panel, g, kind, enhLv, owned);
 }
+
 function wireCmOfferForms(panel, g, kind, enhLv, owned) {
   const msg = () => $a('cmBuyMsg');
   panel.querySelector('#cmOfferBtn').onclick = () => panel.querySelector('#cmOfferForm').classList.toggle('open');
@@ -15690,6 +15707,7 @@ $a('cmSort').onchange = () => renderCmListingsList();
 let cmBmEntry = null; 
 let cmBmEnhLv = 0;
 let cmBmLadder = []; 
+
 async function openBuyModal(g) {
   cmBmEntry = { name: g.name, kind: g.kind };
   cmBmEnhLv = g.best ? ((g.best.item_snapshot && g.best.item_snapshot.enhLv) || 0) : (g.lv || 0);
@@ -15705,7 +15723,9 @@ async function openBuyModal(g) {
   updateBmCost();
   $a('cmBuyModalBg').classList.add('open');
 }
+
 function bmItemKey() { return cmItemKey(cmBmEntry.kind, cmBmEntry.name, cmBmEnhLv); }
+
 async function refreshBuyModalLadderAndStats() {
   const key = bmItemKey();
   const [{ data: book }, { data: trades }] = await Promise.all([
@@ -15736,6 +15756,7 @@ async function refreshBuyModalLadderAndStats() {
   if (enhLvs.length > 1) { tierWrap.style.display = ''; $a('cmBmTierVal').textContent = ENH_NAMES[cmBmEnhLv]; }
   else tierWrap.style.display = 'none';
 }
+
 function renderBmTierList() {
   const list = $a('cmBmTierList');
   const selectedPrice = Number($a('cmBmPrice').value) || null;
@@ -15746,6 +15767,7 @@ function renderBmTierList() {
     row.onclick = () => { $a('cmBmPrice').value = row.dataset.price; renderBmTierList(); updateBmCost(); };
   });
 }
+
 function updateBmCost() {
   const price = Number($a('cmBmPrice').value) || 0;
   const qty = parseInt($a('cmBmQty').value, 10) || 1;
@@ -15753,6 +15775,7 @@ function updateBmCost() {
   $a('cmBmCostBig').textContent = fmt(total) + ' 🪙';
   $a('cmBmAfter').textContent = fmt(Math.round(S.silver) - total) + ' 🪙';
 }
+
 async function cycleBmTier(dir) {
   const group = cmListings.filter(l => l.item_name === cmBmEntry.name && l.item_kind === cmBmEntry.kind);
   const enhLvs = [...new Set(group.map(l => (l.item_snapshot && l.item_snapshot.enhLv) || 0))].sort((a,b) => a-b);
@@ -15850,12 +15873,14 @@ function wireCmMyOrdersTabs() {
     btn.onclick = () => { cmMyOrdersTab = btn.dataset.side; renderCmMyOrdersList(); };
   });
 }
+
 async function refreshMyMarketOrders() {
   const { data } = await sb.rpc('market_my_orders');
   cmMyOrdersData = data || [];
   updateCmWallet();
   renderCmMyOrdersList();
 }
+
 function renderCmMyOrdersList() {
   const box = $a('cmMyOrders'); if (!box) return;
   document.querySelectorAll('.cmMyOrdersTab').forEach(btn => btn.classList.toggle('active', btn.dataset.side === cmMyOrdersTab));
