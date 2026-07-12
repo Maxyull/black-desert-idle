@@ -3,6 +3,7 @@
 // futur d'autres classes jouables) -- DOIT charger APRES world/render.js (toScreen/ctx/P) :
 // drawWitchIso est appele via une closure (voir drawEntities dans render.js), jamais au
 // chargement immediat.
+/** @param {number} t - timestamp. Dessine la sorcière en isométrique (K.O. couché si P.faint, sinon debout avec bob de marche, halos loot/téléport/buff), délègue le corps à witchBody(). */
 function drawWitchIso(t) {
   const c = toScreen(P.x,P.y);
   if (P.faint > 0) {
@@ -62,6 +63,7 @@ const ORNAMENT_TIER = {
 };
 // palier visuel = le plus HAUT palier de couleur présent parmi les pièces équipées (arme/armure) —
 // null si rien d'équipé, retombe alors sur le gris par défaut (voir witchBody/drawWitchOn)
+/** @returns {string|null} le plus haut palier de couleur (grey/white/green/blue) parmi les pièces équipées (arme/armure), null si rien d'équipé. */
 function gearVisualTier() {
   const rank = { blue:0, green:1, white:2, grey:3 };
   const gradeByColor = {}; GEAR_TIERS.forEach(t => gradeByColor[t.color] = t.grade);
@@ -73,6 +75,7 @@ function gearVisualTier() {
   }
   return best;
 }
+/** @param {string} hex - couleur #rgb ou #rrggbb. @param {number} alpha. @returns {string} chaîne rgba() équivalente. */
 function hexToRgba(hex, alpha) {
   const h = hex.replace('#','');
   const num = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
@@ -85,6 +88,7 @@ function hexToRgba(hex, alpha) {
 // paramètre n'était qu'un booléen ; désormais l'objet skill lui-même pour lire castColor/
 // castBurst/castJitter et donner à chaque sort une identité visuelle propre côté personnage
 // (avant, bâton+cristal identiques pour les 10 sorts, seul le VFX d'IMPACT variait)
+/** @param {CanvasRenderingContext2D} g - contexte 2D cible (combat ou prévisualisation). @param {number} t @param {object|false} castingSkill - objet SKILLS en cours de cast, ou falsy. Dessine le corps de la sorcière (robe/capuche/ornements) selon gearVisualTier(), partagé entre combat et aperçu équipement. */
 function witchBodyOn(g, t, castingSkill) {
   const casting = !!castingSkill;
   const sway = Math.sin(P.bob*.9)*2;
@@ -184,4 +188,5 @@ function witchBodyOn(g, t, castingSkill) {
     }
   }
 }
+/** @param {number} t @param {object|false} castingSkill. Dessine le corps de la sorcière sur le contexte de jeu global (ctx) — voir witchBodyOn. */
 function witchBody(t,castingSkill) { witchBodyOn(ctx, t, castingSkill); }

@@ -8,6 +8,7 @@
 // PAS S.enhAttempts/S.enhSuccess (ce ne sont pas de vraies tentatives) ni markPenMastery (éviterait
 // un faux log Discord "maîtrise PEN" et un faux déblocage de succès) -- mutation directe, aucun
 // effet de bord au-delà des pièces elles-mêmes.
+/** @returns {number} nombre de pièces équipées passées au niveau d'enchant maximum (PEN), sans effet de bord sur les stats de tentatives/succès. */
 function adminMaxEnhAllEquipped() {
   const maxLvl = ENH_NAMES.length - 1;
   let count = 0;
@@ -39,6 +40,7 @@ if (adminMaxEnhBtnEl) adminMaxEnhBtnEl.onclick = () => {
 // rétrogradé") -- remet chaque pièce équipée à +0, même filet de sécurité et mêmes non-effets de
 // bord (pas de compteur de tentative, pas de log/succès -- une rétrogradation n'en déclenche de
 // toute façon jamais côté succès, seule une MONTÉE en déclenche via markPenMastery)
+/** @returns {number} nombre de pièces équipées remises à +0. */
 function adminResetEnhAllEquipped() {
   let count = 0;
   for (const slotId of Object.keys(EQUIP)) {
@@ -68,6 +70,7 @@ if (adminResetEnhBtnEl) adminResetEnhBtnEl.onclick = () => {
 // pas fin d'1 rang dans un sens ou l'autre (2026-07-14, demande explicite : "ajoute retrograder de
 // 1 rang augmenter de 1 rang") -- même filet de sécurité/non-effets de bord que les 2 boutons
 // ci-dessus, juste bornés à [0, maxLvl] au lieu de sauter directement à une extrémité
+/** @param {number} delta - +1 ou -1. @returns {number} nombre de pièces équipées déplacées d'un rang (bornées à [0, maxLvl]). */
 function adminStepEnhAllEquipped(delta) {
   const maxLvl = ENH_NAMES.length - 1;
   let count = 0;
@@ -83,6 +86,7 @@ function adminStepEnhAllEquipped(delta) {
   if (count > 0) { hud(); renderOptimization(); drawPreviewChar(); }
   return count;
 }
+/** @param {string} id - id du bouton DOM. @param {number} delta @param {string} msgUpKey @param {string} msgNoneKey - clés i18next. Câble un bouton admin de pas d'enchant (+1/-1) sur tout le stuff équipé. */
 function wireAdminEnhStepBtn(id, delta, msgUpKey, msgNoneKey) {
   const el = $(id); if (!el) return;
   el.onclick = () => {
@@ -112,6 +116,7 @@ wireAdminEnhStepBtn('btnAdminEnhUp1', 1,
 // voir ZONES -- ring1/ring2 et earring1/earring2 reçoivent donc 2 copies du même bijou, comme un
 // joueur qui a fini par looter un doublon). Outil de test pur : aucun effet sur les succès/logs,
 // pas de vraie "chute" de loot.
+/** @param {string} grade - palier GEAR_TIERS. @returns {number} nombre de pièces équipées — outil de debug admin, équipe instantanément un set complet +0 du palier (mêmes formules que le vrai drop). */
 function adminEquipFullTierSet(grade) {
   const tier = GEAR_TIERS.find(t => t.grade === grade);
   if (!tier) return 0;

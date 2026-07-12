@@ -79,6 +79,7 @@ const MARKET_MATERIALS = [
 // Purement informatif ici (bandeau + aperçu net) -- le vrai calcul fait foi côté RPC.
 const MARKET_SELL_TAX_RATE = 0.35;
 
+/** Réouverture/rafraîchissement complet du panneau Marché : libellés i18next, portefeuille, onglets, parcours des offres, mes ordres. */
 async function refreshCommonMarket() {
   applyMarketStaticI18n();
   updateCmWallet();

@@ -842,12 +842,14 @@ function itemTooltipHtml(data) {
   if (data.qty > 1) desc.push('Quantité : '+data.qty);
   return `<div class="ipName ${data.kind||''}">${tr(data.name)}</div><div class="ipDesc">${desc.join(' · ')}</div>`;
 }
+/** @param {number} px @param {number} py @param {object} data. Affiche l'infobulle de survol (itemTooltipHtml) positionnée près du curseur. */
 function showItemTooltip(px, py, data) {
   const tip = $('itemTooltip');
   tip.innerHTML = itemTooltipHtml(data);
   tip.style.display = 'block';
   moveItemTooltip(px, py);
 }
+/** @param {number} px @param {number} py. Repositionne l'infobulle déjà affichée (no-op si masquée), bornée aux limites de la fenêtre. */
 function moveItemTooltip(px, py) {
   const tip = $('itemTooltip');
   if (tip.style.display !== 'block') return;

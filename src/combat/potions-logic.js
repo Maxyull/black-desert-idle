@@ -135,6 +135,7 @@ function renderPotSelect() {
   slider.oninput = e => { e.stopPropagation(); S.potionThreshold = Number(slider.value)/100; $('potThreshVal').textContent = slider.value+'%'; };
   slider.onclick = e => e.stopPropagation();
 }
+/** @param {Event} e. Bascule l'affichage du menu de sélection de potion (#potSelect), le reconstruit à l'ouverture. */
 function togglePotSelect(e) {
   e.stopPropagation();
   const el = $('potSelect');

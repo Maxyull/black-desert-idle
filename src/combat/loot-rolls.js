@@ -432,4 +432,5 @@ function gainXp(n) {
   }
 }
 
+/** @param {number} x @param {number} y @param {number} z @param {string} txt @param {object} [o] - options (gold/hurt/crit/blue/green/lvl...). Ajoute un texte flottant (voir world/render.js:drawFloats). */
 function floatTxt(x,y,z,txt,o={}){ floats.push({x,y,z,txt,life:o.lvl?1.6:1,...o}); }
