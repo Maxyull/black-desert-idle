@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V410', d:'23/07/2026 21:00', name:{fr:'Guerrier Rhutum (Camp Rhutum) : silhouette plus détaillée', en:'Rhutum Warrior (Rhutum Camp): more detailed silhouette'}, fr:[
+      {t:'change', sub:'interface', tx:'Le guerrier Rhutum (Camp Rhutum, juste après le Repaire des Pirates) a une silhouette plus détaillée : bras musclés avec biceps/avant-bras marqués, bourrelet de ventre, bas du torse en pagne déchiqueté, petit collier d\'os au cou, et deux marques de peinture de guerre sous les yeux. Sangle en cuir, arme et tête (crête, défenses, bouc) inchangées. Comportement de combat inchangé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Rhutum warrior (Rhutum Camp, right after the Pirates\' Den) now has a more detailed silhouette: muscular arms with marked biceps/forearms, a belly bulge, a ragged loincloth hem at the bottom of the torso, a small bone necklace, and two war-paint marks under the eyes. Leather strap, weapon, and head (crest, tusks, goatee) unchanged. Combat behavior unchanged.'},
+    ] },
   { v:'V409', d:'23/07/2026 20:00', name:{fr:'Pirate (zone 3) : silhouette plus détaillée', en:'Pirate (zone 3): more detailed silhouette'}, fr:[
       {t:'change', sub:'interface', tx:'Le pirate (Repaire des Pirates) a une silhouette plus détaillée et plus carrée : carrure plus large avec épaulières arrondies, gilet en cuir usé avec 3 boutons et un bas déchiqueté, biceps visibles, ceinture à boucle dorée, coutelas large tenu en avant/vers le bas au lieu d\'une lame fine, barbe plus fournie et carrée, petite boucle d\'oreille, bandana avec un nœud et un pan flottant à 2 segments, bottes avec revers à la cheville, patches sur le pantalon, et une garde plus large. Comportement de combat inchangé.'},
     ], en:[

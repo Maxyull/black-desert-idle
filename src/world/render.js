@@ -573,6 +573,10 @@ function drawRhutumIso(wx,wy,w,t) {
     ctx.beginPath(); ctx.ellipse(0,-17,15,11,0,0,7); ctx.stroke(); }
   const strap = w.tone; // teinte des sangles/pagne en cuir, variété par zone (comme les autres monstres)
   const skin = '#7a9a52';
+  // renflements de bras (2026-07-23, révision approuvée "B1") -- silhouette plus imposante
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.ellipse(-10.5,-18,3.5,4,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(10.5,-18,3.5,4,0,0,7); ctx.fill();
   // jambes épaisses
   ctx.strokeStyle='#3e3226'; ctx.lineWidth=4.4; ctx.lineCap='round';
   ctx.beginPath();
@@ -582,6 +586,21 @@ function drawRhutumIso(wx,wy,w,t) {
   // torse massif (peau)
   ctx.fillStyle = skin;
   ctx.beginPath(); ctx.moveTo(-9,-9); ctx.lineTo(-8,-26); ctx.lineTo(8,-26); ctx.lineTo(9,-9); ctx.closePath(); ctx.fill();
+  // bourrelet de ventre (2026-07-23, révision "B1")
+  ctx.fillStyle = '#6c8c48';
+  ctx.beginPath(); ctx.ellipse(0,-9.5,6.5,3.5,0,0,Math.PI); ctx.fill();
+  // pagne déchiqueté au bas du torse (2026-07-23, révision "B1")
+  ctx.fillStyle = '#5a4028';
+  ctx.beginPath();
+  ctx.moveTo(-6,-9); ctx.lineTo(-6,-4); ctx.lineTo(-4,-8); ctx.lineTo(-2,-3); ctx.lineTo(0,-8);
+  ctx.lineTo(2,-3); ctx.lineTo(4,-8); ctx.lineTo(6,-4); ctx.lineTo(6,-9);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+  // collier d'os (2026-07-23, révision "B1")
+  ctx.fillStyle = '#e8e2d0';
+  [-3,-1.2,0.6,2.4].forEach(bx => {
+    ctx.beginPath(); ctx.ellipse(bx,-21,0.6,0.5,0,0,7); ctx.fill();
+  });
   // sangle/pagne en cuir sur le torse (teinte de zone)
   ctx.strokeStyle = strap; ctx.lineWidth=3;
   ctx.beginPath(); ctx.moveTo(-7,-24); ctx.lineTo(6,-11); ctx.stroke();
@@ -600,6 +619,10 @@ function drawRhutumIso(wx,wy,w,t) {
   ctx.fillStyle='#e8e2d0';
   ctx.beginPath(); ctx.moveTo(-2.6,-26.5); ctx.lineTo(-3.2,-24); ctx.lineTo(-1.6,-25); ctx.closePath(); ctx.fill();
   ctx.beginPath(); ctx.moveTo(2.6,-26.5); ctx.lineTo(3.2,-24); ctx.lineTo(1.6,-25); ctx.closePath(); ctx.fill();
+  // peinture de guerre sous les yeux (2026-07-23, révision "B1")
+  ctx.strokeStyle = w.lunge>.3 ? '#c8503a' : '#a8402c'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(-1.8,-30); ctx.lineTo(-2.6,-27.5); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(1.8,-30); ctx.lineTo(2.6,-27.5); ctx.stroke();
   // crête de plumes/piquants sur le crâne (rouge, comme les images de référence)
   ctx.fillStyle = w.lunge>.3 ? '#c8503a' : '#a8402c';
   for (let i=-1; i<=1; i++) {
