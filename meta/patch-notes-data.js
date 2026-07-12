@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V386', d:'22/07/2026 07:00', name:{fr:'Écran de connexion refait : même style que Zone', en:'Login screen redesigned: same look as Zone'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'écran de connexion (compte, création, Discord/Google/GitHub/Twitter) a reçu le même reskin visuel que le reste du jeu : titre en Cinzel, champs et boutons arrondis, mêmes couleurs que l\'écran Zone. Aucun changement de fonctionnement.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The login screen (sign in, sign up, Discord/Google/GitHub/Twitter) received the same visual reskin as the rest of the game: Cinzel title, rounded fields and buttons, same colors as the Zone screen. No functional change.'},
+    ] },
   { v:'V385', d:'22/07/2026 06:00', name:{fr:'Écran de verrou multi-session : même reskin que Zone/Boss/Classement', en:'Multi-session lock screen: same reskin as Zone/Boss/Leaderboard'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran "Jeu en pause" affiché quand une autre session prend le relais (autre onglet, navigateur ou appareil) a reçu le même reskin visuel que le reste du jeu : fond et bordure assortis aux autres panneaux, titre en Cinzel, texte plus lisible, bouton "Reprendre ici" au même arrondi que les autres boutons.'},
     ], en:[

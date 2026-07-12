@@ -3621,6 +3621,30 @@
     const recent = recentlyUnlockedAchievements(fakeS, 5);
     assert('recentlyUnlockedAchievements() ignore une entrée achUnlocked non numérique', recent.map(a => a.id).join(',') === 'kills_100', recent.map(a => a.id).join(','));
   }
+  // reskin écran de connexion (2026-07-21, port fidèle du mockup #authBox validé par
+  // l'utilisateur, voir CLAUDE.md section mockups) -- #authBox n'avait jamais été touché par la
+  // refonte visuelle "Zone" (topbar/tabs) et restait sur l'ancien thème hérité par accident
+  // (font-family:inherit -> body{font-family:Georgia}, --panel/--gold-dim, border-radius:0
+  // partout). Garde-fou statique sur le DOM/CSS réellement appliqué (pas juste une relecture du
+  // fichier styles.css) : empêche tout retour silencieux vers l'ancien thème lors d'un futur
+  // remaniement CSS de cette carte.
+  function testAuthBoxUsesZoneRedesignTokens() {
+    const box = document.getElementById('authBox');
+    const h1 = box && box.querySelector('h1');
+    const input = document.getElementById('authEmail');
+    if (!box || !h1 || !input) return; // hors-contexte navigateur / DOM pas encore prêt
+    const boxStyle = getComputedStyle(box);
+    const h1Style = getComputedStyle(h1);
+    const inputStyle = getComputedStyle(input);
+    assert('#authBox a un radius de carte (>=12px, cohérent avec .confirmModal/.card) et non plus 0 (thème Georgia)',
+      parseFloat(boxStyle.borderRadius) >= 12, boxStyle.borderRadius);
+    assert('#authBox utilise Inter (plus hérité de body{font-family:Georgia})',
+      boxStyle.fontFamily.toLowerCase().includes('inter'), boxStyle.fontFamily);
+    assert('#authBox h1 utilise Cinzel (même famille que .topbar .logo)',
+      h1Style.fontFamily.toLowerCase().includes('cinzel'), h1Style.fontFamily);
+    assert('#authBox input a un radius (>=6px, cohérent avec le reste des inputs Zone)',
+      parseFloat(inputStyle.borderRadius) >= 6, inputStyle.borderRadius);
+  }
 
   // Refonte visuelle "Zone" -- Phase 6 (2026-07-22) : #sideMenu (#gameBar/#userBar/#metaBar/
   // #econBar/#communityBar/#btnCollapseMenu) et les widgets flottants (.floatWidget/#chatWidget/
@@ -3933,6 +3957,7 @@
     testSidebarAndFloatWidgetsAreReskinnedNotLegacyGeorgia();
     testInfoBoxSharedShellUsesZoneRedesignTokens();
     testPatchImgBoxReusesInfoBoxShell();
+    testAuthBoxUsesZoneRedesignTokens();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
