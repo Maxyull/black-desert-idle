@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V385', d:'22/07/2026 06:00', name:{fr:'Écran de verrou multi-session : même reskin que Zone/Boss/Classement', en:'Multi-session lock screen: same reskin as Zone/Boss/Leaderboard'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'écran "Jeu en pause" affiché quand une autre session prend le relais (autre onglet, navigateur ou appareil) a reçu le même reskin visuel que le reste du jeu : fond et bordure assortis aux autres panneaux, titre en Cinzel, texte plus lisible, bouton "Reprendre ici" au même arrondi que les autres boutons.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The "Game paused" screen shown when another session takes over (another tab, browser or device) received the same visual reskin as the rest of the game: background and border matching the other panels, Cinzel title, more readable text, "Resume here" button with the same corner rounding as other buttons.'},
+    ] },
   { v:'V384', d:'22/07/2026 05:00', name:{fr:'Panneau Quêtes/Courrier/Codex : même style que Zone/Boss/Succès', en:'Quests/Mailbox/Codex panel: same look as Zone/Boss/Achievements'}, fr:[
       {t:'change', sub:'interface', tx:'La fenêtre générique utilisée par Quêtes, Courrier, Codex et les replis Wiki/Notes de version a reçu le même reskin visuel que les écrans Zone/Boss/Succès : coins arrondis, en-tête sobre (fini le vieux dégradé bleu-vert), titres en petites majuscules dorées, texte en police moderne.'},
       {t:'change', sub:'interface', tx:'Le comparateur "Avant/Après" des notes de version a reçu la même coque.'},
