@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V388', d:'22/07/2026 09:00', name:{fr:'Popups "Succès débloqué" et "Mise à jour disponible" : même style que Zone', en:'"Achievement unlocked" and "Update available" popups: same look as Zone'}, fr:[
+      {t:'change', sub:'interface', tx:'La popup "Succès débloqué" (coin haut-gauche) a reçu le même reskin visuel que le reste du jeu : coins arrondis, titre en Cinzel petites majuscules, récompense en police moderne — fini le fond sombre et la police héritée de l\'ancien thème.'},
+      {t:'change', sub:'interface', tx:'Le bandeau "Nouvelle version disponible" (haut-centre) a reçu le même traitement : coque assortie aux autres panneaux, bouton "Recharger" aux coins arrondis comme les autres boutons du jeu.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The "Achievement unlocked" popup (top-left corner) received the same visual reskin as the rest of the game: rounded corners, small-caps Cinzel title, modern-font reward text — no more the dark background and inherited font from the old theme.'},
+      {t:'change', sub:'interface', tx:'The "New version available" banner (top-center) received the same treatment: shell matching the other panels, "Reload" button with rounded corners like the game\'s other buttons.'},
+    ] },
   { v:'V387', d:'22/07/2026 08:00', name:{fr:'Correctif Marché commun : panneau enfin borné avec défilement propre', en:'Common Market fix: panel now properly bounded with clean scrolling'}, fr:[
       {t:'fix', sub:'economie', tx:'Le panneau du Marché commun ne se bornait pas correctement à la hauteur de sa fenêtre : la liste d\'objets, le détail et "Mes ordres" pouvaient déborder au lieu de défiler chacun dans leur propre cadre. Corrigé.'},
     ], en:[
