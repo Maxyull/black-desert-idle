@@ -3672,6 +3672,42 @@
       qwFoldBtnRules.some(t => /border-radius/.test(t) && /--cream3/.test(t)), qwFoldBtnRules.join(' | '));
   }
 
+  // ---------- reskin coque #infoBox (2026-07-12) ----------
+  // #infoBox/#infoHead/#infoBody est la coque MODALE GÉNÉRIQUE partagée par Quêtes/Courrier/
+  // Codex/repli Wiki/repli Notes de version — garde-fou contre un retour à l'ancien thème
+  // (font-family:Georgia hérité de body, fond var(--panel), bordure var(--gold-dim), en-tête en
+  // dégradé bleu-vert #26313a->#1b232a) si une règle CSS future écrase le reskin sans qu'on s'en
+  // aperçoive visuellement (voir Phase 6, styles.css, mockup validé par l'utilisateur).
+  function testInfoBoxSharedShellUsesZoneRedesignTokens() {
+    openInfo('Test', '<h3>Titre</h3><p>Texte</p>');
+    const box = getComputedStyle($('infoBox'));
+    const head = getComputedStyle($('infoHead'));
+    const h2 = getComputedStyle($('infoTitle'));
+    const close = getComputedStyle($('closeInfo'));
+    const body = getComputedStyle($('infoBody'));
+    const h3 = getComputedStyle($('infoBody').querySelector('h3'));
+    assert('infoBox fond var(--s1) #10101e (plus var(--panel))', box.backgroundColor === 'rgb(16, 16, 30)', box.backgroundColor);
+    assert('infoBox border-radius 12px (plus 0)', box.borderRadius === '12px', box.borderRadius);
+    assert('infoHead sans le vieux dégradé bleu-vert (plus de background-image)', head.backgroundImage === 'none', head.backgroundImage);
+    assert('infoHead h2 en Cinzel', h2.fontFamily.indexOf('Cinzel') === 0, h2.fontFamily);
+    assert('infoHead h2 en --gold2 #e8c880 (plus --ink)', h2.color === 'rgb(232, 200, 128)', h2.color);
+    assert('closeInfo redimensionné en bouton icône 26x26 (plus texte brut sans fond)', close.width === '26px' && close.height === '26px', `${close.width}x${close.height}`);
+    assert('infoBody en Inter (plus l\'héritage Georgia du body)', body.fontFamily.indexOf('Inter') === 0, body.fontFamily);
+    assert('infoBody h3 en --gold2 petites majuscules (plus --gold sans transform)', h3.color === 'rgb(232, 200, 128)' && h3.textTransform === 'uppercase', `${h3.color}/${h3.textTransform}`);
+    $('infoOverlay').classList.remove('open');
+  }
+
+  // le comparateur avant/après des notes de version (#patchImgBox) partage la même coque que
+  // #infoBox (voir commentaire Phase 6, styles.css) -- même garde-fou.
+  function testPatchImgBoxReusesInfoBoxShell() {
+    if (typeof openPatchImgCompare !== 'function') { assert('openPatchImgCompare disponible', false, 'fonction absente'); return; }
+    openPatchImgCompare('a.png', 'b.png');
+    const box = getComputedStyle($('patchImgBox'));
+    assert('patchImgBox reprend le fond var(--s1) de infoBox', box.backgroundColor === 'rgb(16, 16, 30)', box.backgroundColor);
+    assert('patchImgBox reprend le border-radius 12px de infoBox', box.borderRadius === '12px', box.borderRadius);
+    $('patchImgOverlay').classList.remove('open');
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testZoneMonotonicity();
@@ -3876,6 +3912,8 @@
     testLb2GuestGateReusesMarketCopyAndRealLinkButton();
     testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert();
     testSidebarAndFloatWidgetsAreReskinnedNotLegacyGeorgia();
+    testInfoBoxSharedShellUsesZoneRedesignTokens();
+    testPatchImgBoxReusesInfoBoxShell();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
