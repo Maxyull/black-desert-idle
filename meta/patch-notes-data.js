@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V393', d:'22/07/2026 14:00', name:{fr:'Rattrapage hors-ligne : l\'XP aussi, pas seulement le silver', en:'Offline catch-up: XP too, not just silver'}, fr:[
+      {t:'change', sub:'xp', tx:'Le rattrapage hors-ligne (après une vraie absence : navigateur fermé ou veille prolongée, pas un simple changement d\'onglet) crédite désormais aussi de l\'XP en plus du silver, au même taux plat basé sur ton record perso xp/h — avec passage(s) de niveau si le gain dépasse le seuil du niveau en cours.'},
+      {t:'change', sub:'xp', tx:'Le modal "Bon retour" affiche donc un vrai avant/après de niveau même après une absence sans que l\'onglet n\'ait jamais été ouvert entre-temps.'},
+    ], en:[
+      {t:'change', sub:'xp', tx:'The offline catch-up (after a real absence: browser closed or extended sleep, not just a tab switch) now also credits XP in addition to silver, at the same flat rate based on your personal xp/h record — with level-up(s) if the gain crosses the current level\'s threshold.'},
+      {t:'change', sub:'xp', tx:'The "Welcome back" modal now shows a real level before/after even after an absence where the tab was never open in between.'},
+    ] },
   { v:'V392', d:'22/07/2026 13:00', name:{fr:'Barre de sorts et sélecteur de potion : même reskin que Zone', en:'Skill bar and potion selector: same reskin as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'La barre de sorts (icônes en bas de l\'écran de jeu) a reçu le même reskin visuel que le reste de l\'écran Zone : coque assortie aux autres icônes du jeu (fond/bordure/coins arrondis), nom du sort en police moderne. Les couleurs de sort en cours de lancement et de buff actif sont inchangées.'},
       {t:'change', sub:'interface', tx:'Le sélecteur de potion (case Vie/Mana en bas à gauche) a reçu le même reskin : coque assortie, libellés de section ("Potion de vie"/"Potion de mana") en petites majuscules dorées, soin et coût en police moderne. Les couleurs de sélection/verrouillage sont inchangées.'},

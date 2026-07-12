@@ -410,13 +410,16 @@ function flashXpGain() {
  * Ajoute `n` XP au joueur et gère le(s) passage(s) de niveau en cascade (une boucle `while`, pas
  * un `if` — un gros gain d'XP peut faire monter plusieurs niveaux d'un coup). Effets de bord :
  * HP max +8/niveau, floatTxt/notification à chaque niveau, tracking awayXpGained si l'onglet est
- * caché (résumé AFK au retour, voir showAwayLootSummaryIfAny).
+ * caché (résumé AFK au retour, voir showAwayLootSummaryIfAny), et cumul S.xpEarned (compteur À VIE,
+ * ne redescend jamais contrairement à S.xp -- alimente bestXpPerHour/le rattrapage hors-ligne XP,
+ * voir hud()/computeOfflineCatchupXp dans core/game-core.js).
  * @param {number} n - XP gagnée (peut être 0 ou négative selon l'appelant, seul n>0 déclenche le flash visuel).
- * @returns {void} mute S.xp/S.lvl/S.xpNext/S.hpMax/P.hp en place.
+ * @returns {void} mute S.xp/S.lvl/S.xpNext/S.hpMax/P.hp/S.xpEarned en place.
  */
 function gainXp(n) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
+  if (n > 0) S.xpEarned = (S.xpEarned||0) + n;
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;
