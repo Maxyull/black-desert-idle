@@ -3772,9 +3772,52 @@
     assert('sessionLockResumeBtn : radius 8px (cohérent avec les autres CTA, plus 4px isolé)', csbtn.borderRadius === '8px', `borderRadius=${csbtn.borderRadius}`);
   }
 
+  // garde-fou du reskin .achToast/#updateToast (2026-07-12, mockup validé : claude.ai/code/
+  // artifact/85d689a7-c5f1-4361-8114-a6f822f45c87) -- ces deux toasts n'avaient jamais suivi la
+  // refonte Zone (.achToast en fond #1c1a22/bordure --gold-dim/radius 6px/Georgia hérité,
+  // #updateToast en var(--panel-2)/--gold/bouton carré). Vérifie le rendu RÉEL via
+  // getComputedStyle plutôt qu'une simple relecture du CSS source, même pattern que
+  // testSessionLockBoxUsesZoneRedesignTokens ci-dessus. .achToast n'existe qu'à la création d'un
+  // toast (showAchToast()) : on en crée un jetable pour le test, puis on le retire du DOM pour ne
+  // pas laisser de résidu (pas d'appel à markPenMastery/logToDiscord ici, juste la fonction de
+  // rendu pure).
+  function testToastsUseZoneRedesignTokens() {
+    if (typeof showAchToast !== 'function') { assert('achToast reskin : showAchToast disponible', false, 'fonction manquante'); return; }
+    const stack = document.getElementById('achToastStack');
+    if (!stack) { assert('achToast reskin : #achToastStack présent', false, 'élément manquant'); return; }
+    const before = stack.children.length;
+    showAchToast({ icon:'🗡️', name:{ fr:'Test', en:'Test' }, reward:1 });
+    const toastEl = stack.lastElementChild;
+    const titleEl = toastEl && toastEl.querySelector('.achToastTitle');
+    const nameEl = toastEl && toastEl.querySelector('.achToastName');
+    const rewardEl = toastEl && toastEl.querySelector('.achToastReward');
+    if (!toastEl || !titleEl || !nameEl || !rewardEl) {
+      assert('achToast reskin : markup présent', false, 'élément(s) manquant(s)');
+    } else {
+      const cs = getComputedStyle(toastEl), cst = getComputedStyle(titleEl), csn = getComputedStyle(nameEl), csr = getComputedStyle(rewardEl);
+      assert('achToast : radius 10px (mêmes tokens que .card)', cs.borderRadius === '10px', `borderRadius=${cs.borderRadius}`);
+      assert('achToast : police Inter (plus Georgia hérité de body)', /Inter/.test(cs.fontFamily), `fontFamily=${cs.fontFamily}`);
+      assert('achToastTitle : police Cinzel petites majuscules (comme .card h3)', /Cinzel/.test(cst.fontFamily) && cst.textTransform === 'uppercase', `fontFamily=${cst.fontFamily} textTransform=${cst.textTransform}`);
+      assert('achToastName : reste lisible en Inter/--ink', /Inter/.test(csn.fontFamily), `fontFamily=${csn.fontFamily}`);
+      assert('achToastReward : police JetBrains Mono (plus Georgia)', /JetBrains Mono/.test(csr.fontFamily), `fontFamily=${csr.fontFamily}`);
+    }
+    // nettoyage : retire le toast jetable, ne pas laisser de résidu dans le DOM entre deux runs
+    if (toastEl) toastEl.remove();
+    assert('achToast reskin : pas de résidu après nettoyage', stack.children.length === before, `children=${stack.children.length}`);
+
+    const upd = document.getElementById('updateToast');
+    const updBtn = upd && upd.querySelector('button');
+    if (!upd || !updBtn) { assert('updateToast reskin : markup présent', false, 'élément(s) manquant(s)'); return; }
+    const csu = getComputedStyle(upd), csb = getComputedStyle(updBtn);
+    assert('updateToast : radius 10px (mêmes tokens que .card, plus var(--panel-2) en dur)', csu.borderRadius === '10px', `borderRadius=${csu.borderRadius}`);
+    assert('updateToast : police Inter', /Inter/.test(csu.fontFamily), `fontFamily=${csu.fontFamily}`);
+    assert('updateToast button : radius 8px (cohérent avec les autres CTA, plus carré)', csb.borderRadius === '8px', `borderRadius=${csb.borderRadius}`);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
+    testToastsUseZoneRedesignTokens();
     testZoneMonotonicity();
     testZoneWeaponArmorSlotsComplete();
     testGearRoleSanity();
