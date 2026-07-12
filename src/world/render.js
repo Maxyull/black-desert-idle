@@ -4,11 +4,13 @@
 // fonction ne pouvait donc JAMAIS dépasser 0.5. Conséquence silencieuse depuis toujours : aucun
 // seuil de décor (rochers .965, buissons .90, touffes .78, cases "dry" .93) n'était jamais atteint,
 // les zones de combat n'avaient AUCUN décor. Corrigé avec un décalage non signé (h>>>16).
+/** @param {number} ix @param {number} iy - coordonnées de tuile. @returns {number} pseudo-hash déterministe dans [0,1) (décalage NON signé >>> requis, voir commentaire ci-dessus). */
 function hash2(ix,iy){ let h=ix*374761393+iy*668265263; h=(h^(h>>13))*1274126177; return ((h^(h>>>16))>>>0)/4294967295; }
 
 // Velia (zone paisible) a son propre décor chaleureux de village — pas de réutilisation du
 // thème de la dernière zone de combat farmée, demande explicite du 2026-07-05
 const VELIA_TINT = { a:'#6a5842', b:'#5f4d38', dry:'#7a6650' };
+/** Dessine le sol en damier isométrique (tuiles visibles autour de la caméra), teinté selon la zone active (ou VELIA_TINT à Velia). */
 function drawGround() {
   const tint = atVelia ? VELIA_TINT : Z().tint;
   ctx.fillStyle = tint.b;
@@ -31,6 +33,7 @@ function drawGround() {
     }
 }
 
+/** @param {number} ix @param {number} iy. @returns {object|null} décor de zone de combat standard à cette tuile (rock/bush/tuft) selon hash2, ou null. */
 function sceneryAt(ix,iy) {
   const h = hash2(ix*7+3, iy*7+11);
   if (h > .965) return { kind:'rock', x:ix*46+23, y:iy*46+23 };
@@ -42,6 +45,7 @@ function sceneryAt(ix,iy) {
 // décor propre à la Mine de Fer Abandonnée (zone 6) : carrière ocre inspirée des captures de
 // référence du 2026-07-07 — tours de guet en bois, pitons rocheux (petites montagnes), chariots de
 // minerai cassés, crevasses dans la terre. Pas de buissons verts : terrain aride, éboulis partout.
+/** @param {number} ix @param {number} iy. @returns {object|null} décor propre à la Mine de Fer Abandonnée (tour/spire/chariot/crevasse/rocher/galets), ou null. */
 function mineSceneryAt(ix,iy) {
   const h = hash2(ix*7+3, iy*7+11);
   if (h > .988) return { kind:'tower',    x:ix*46+23, y:iy*46+23 };
@@ -55,6 +59,7 @@ function mineSceneryAt(ix,iy) {
 
 // décor du village de Velia (zone paisible) : maisons/puits/lampadaires disposés sur une grille
 // régulière plutôt que le placement aléatoire des zones de combat, pour un vrai ressenti de village
+/** @param {number} ix @param {number} iy. @returns {object|null} décor du village de Velia (maison/puits/lampadaire sur grille régulière + buissons épars), ou null. */
 function veliaSceneryAt(ix,iy) {
   const gx = ((ix%6)+6)%6, gy = ((iy%6)+6)%6;
   if (gx===0 && gy===0) return { kind:'house', x:ix*46+23, y:iy*46+23 };
@@ -66,6 +71,7 @@ function veliaSceneryAt(ix,iy) {
   return null;
 }
 
+/** @param {number} t - timestamp. Trie et dessine toutes les entités visibles (décor, cadavres, drops, loups, personnage, particules) par profondeur isométrique (x+y). */
 function drawEntities(t) {
   const items = [];
   const TILE = 46;
@@ -95,6 +101,7 @@ function drawEntities(t) {
   items.forEach(i=>i.fn());
 }
 
+/** @param {object} sc - décor (voir sceneryAt/mineSceneryAt/veliaSceneryAt). Dessine cet élément de décor à l'écran (culling hors viewport). */
 function drawScenery(sc) {
   const c = toScreen(sc.x,sc.y);
   if (c.sx<-40||c.sx>W+40||c.sy<-40||c.sy>H+40) return;
@@ -228,6 +235,7 @@ function drawScenery(sc) {
   }
 }
 
+/** @param {object} l - loot au sol. @param {number} t - timestamp. Dessine le loot au sol (forme/couleur selon l.item.kind), bobbing + clignotement avant despawn. */
 function drawDrop(l,t) {
   const c = toScreen(l.x,l.y);
   if (c.sx<-30||c.sx>W+30||c.sy<-30||c.sy>H+30) return;
@@ -262,6 +270,7 @@ function drawDrop(l,t) {
   }
 }
 
+/** @param {object} cp - cadavre (fondu progressif via cp.life). Dessine le cadavre d'un monstre vaincu. */
 function drawCorpse(cp) {
   const c = toScreen(cp.x,cp.y);
   ctx.save(); ctx.globalAlpha = Math.min(1,cp.life/1.2)*.8;
@@ -270,6 +279,7 @@ function drawCorpse(cp) {
   ctx.restore();
 }
 
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un loup en isométrique. */
 function drawWolfIso(wx,wy,w,t) {
   const c = toScreen(wx,wy);
   if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
@@ -306,6 +316,7 @@ function drawWolfIso(wx,wy,w,t) {
 // Esprit de Protty (zone "Ruines de Protty") — créature ORIGINALE inspirée d'un mollusque/poisson
 // fantomatique flottant (dôme façon coquille, frange de nageoires, silhouette évasive), demande
 // explicite du 2026-07-07 ("modélise les Protty") — aucun asset réel repris, juste l'ambiance.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Protty en isométrique. */
 function drawProttyIso(wx,wy,w,t) {
   const c = toScreen(wx,wy);
   if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
@@ -345,6 +356,7 @@ function drawProttyIso(wx,wy,w,t) {
 // Pirate (zone "Repaire des Pirates", juste après Ruines de Protty) — créature ORIGINALE
 // humanoïde : bandana, barbe, gilet ouvert sur le torse, lame en main. Demande explicite du
 // 2026-07-07 ("les pirates juste après Protty") — aucun asset réel repris, juste l'ambiance.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un pirate en isométrique. */
 function drawPirateIso(wx,wy,w,t) {
   const c = toScreen(wx,wy);
   if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
@@ -393,6 +405,7 @@ function drawPirateIso(wx,wy,w,t) {
 // humanoïde massif à peau verte, crâne rasé à crête de plumes/piquants, bouc tressé, torse épais et
 // bras noueux. Demande explicite du 2026-07-07 ("camp de ruthum... avec ce que je t'envoie comme
 // screen") — inspiré de l'ambiance des images de référence (guerrier/archer orc), aucun asset réel repris.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Rhutum en isométrique. */
 function drawRhutumIso(wx,wy,w,t) {
   const c = toScreen(wx,wy);
   if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
@@ -449,6 +462,7 @@ function drawRhutumIso(wx,wy,w,t) {
 // arme lourde brandie au-dessus de la tête. Demande explicite du 2026-07-07 ("Shultz aide toi des
 // screen") — inspiré de l'ambiance des captures (garde de camp BDO en armure complète), aucun
 // asset réel repris.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Shultz en isométrique. */
 function drawShultzIso(wx,wy,w,t) {
   const c = toScreen(wx,wy);
   if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
@@ -505,6 +519,7 @@ function drawShultzIso(wx,wy,w,t) {
 // sausans") — inspiré de l'ambiance des captures (soldats encapuchonnés en mailles, désert), aucun
 // asset réel repris. Volontairement distinct du Garde Shultz (plaques + casque à cimier) : ici,
 // mailles souples + capuche + voile.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Sausan en isométrique. */
 function drawSausanIso(wx,wy,w,t) {
   const c = toScreen(wx,wy);
   if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
@@ -567,6 +582,7 @@ function drawSausanIso(wx,wy,w,t) {
 //  - mob normal : mineur voûté encapuchonné, tunique poussiéreuse, pioche à l'épaule
 //  - boss de pack (w.alpha, 1 pack sur 2 dans cette zone) : contremaître massif en armure de fer
 //    bardée de pointes, épaulières rondes cloutées, masse énorme — silhouette bien plus large
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un mineur en isométrique. */
 function drawMineurIso(wx,wy,w,t) {
   const c = toScreen(wx,wy);
   if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
@@ -665,6 +681,7 @@ function drawMineurIso(wx,wy,w,t) {
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
 // du rendu en jeu) : plus simple et robuste qu'essayer de réutiliser le rendu iso dépendant de la
 // caméra dans un petit canvas indépendant.
+/** Dessine la petite icône du monstre de la zone active sur le canvas #zoneMobIcon (feuillage doré à Velia, pas de monstre). */
 function drawZoneMobIcon() {
   const cv2 = $('zoneMobIcon'); if (!cv2) return;
   const ctx2 = cv2.getContext('2d');
@@ -752,6 +769,7 @@ function drawZoneMobIcon() {
 // "Ferme Shultz" (zone index 4), "Colonie Sausan" (zone index 5) et "Mine de Fer Abandonnée"
 // (zone index 6, avec sa variante boss blindée) ont la leur, les autres zones gardent la
 // silhouette générique
+/** @param {number} wx @param {number} wy @param {object} w @param {number} t. Aiguille vers le draw*Iso du monstre correspondant à la zone active. */
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
   if (zoneIdx === 2) return drawPirateIso(wx,wy,w,t);
@@ -764,6 +782,7 @@ function drawMonsterIso(wx,wy,w,t) {
 
 // une barre de vie PAR MONSTRE (2026-07-11, demande explicite : "chaque monstre a sa propre barre
 // de vie") -- remplace l'ancienne drawPackBar, unique et partagée par tout le pack
+/** @param {object} p - pack. @param {object} w - loup individuel. Dessine la barre de vie propre à ce monstre (plus grande + marqueur ◆ si alpha). */
 function drawWolfHpBar(p, w) {
   const wp = wolfPos(p,w);
   const c = toScreen(wp.x,wp.y);
@@ -783,6 +802,7 @@ function drawWolfHpBar(p, w) {
 // witchBodyOn, witchBody) est desormais dans classes/sorcier/sorcier-render.js (extrait le
 // 2026-07-08, reorganisation par dossiers) -- charge APRES ce fichier, voir index.html.
 
+/** @param {object} q - particule (voir combat/vfx.js pour la création). Dessine une particule selon q.type (flash/meteor/etc.), opacité selon q.life/q.max. */
 function drawParticle(q) {
   const a = q.max ? Math.max(0,q.life/q.max) : 1;
   switch (q.type) {
@@ -915,6 +935,7 @@ function drawParticle(q) {
   }
 }
 
+/** Dessine tous les textes flottants actifs (dégâts, gain silver/or, level up...), couleur/taille selon le type, fondu selon f.life. */
 function drawFloats() {
   const s = uiTextScale();
   for (const f of floats) {
@@ -928,6 +949,7 @@ function drawFloats() {
   }
 }
 
+/** @param {number} t - timestamp. Rendu complet d'une frame du canvas monde (sol, entités, textes flottants, vignette, tremblement d'écran). */
 function render(t) {
   ctx.save();
   if (shakeT > 0) { shakeT -= 1/60; ctx.translate((Math.random()-.5)*shakeAmp,(Math.random()-.5)*shakeAmp); }
