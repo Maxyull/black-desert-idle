@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V405', d:'23/07/2026 16:00', name:{fr:'Correctif : le classement ne reflétait pas la correction de stuff de la version précédente', en:'Fix: leaderboard didn\'t reflect the previous version\'s gear correction'}, fr:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'Le classement (PA/PD/Gearscore) enregistre un record À VIE qui ne redescend jamais — la correction du stuff de la version précédente pouvait donc faire baisser la vraie puissance d\'un joueur sans jamais mettre à jour son record affiché au classement. Les 3 records sont désormais recalculés depuis le stuff réellement équipé (une fois corrigé) et synchronisés immédiatement, y compris à la baisse pour cette correction ponctuelle.'},
+    ], en:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'The leaderboard (AP/DP/Gearscore) stores a lifetime record that never decreases — the previous version\'s gear correction could therefore lower a player\'s real power without ever updating their displayed leaderboard record. The 3 records are now recalculated from the actually equipped gear (once corrected) and synced immediately, including downward for this one-time fix.'},
+    ] },
   { v:'V404', d:'23/07/2026 15:00', name:{fr:'Loup (zone 1) : silhouette plus détaillée', en:'Wolf (zone 1): more detailed silhouette'}, fr:[
       {t:'change', sub:'interface', tx:'Le loup (zone 1) a une silhouette plus détaillée : dos plus sombre et ventre plus clair, crinière et collerette de poitrail, pattes visibles au sol, truffe marquée, contour plus net. Comportement de combat inchangé.'},
     ], en:[

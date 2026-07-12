@@ -3146,6 +3146,25 @@
     assert('Rescale V403 : enhLv déjà investi reste intact', INV[INV_SIZE-1].enhLv === 5);
     INV[INV_SIZE-1] = s.b; zoneIdx = s.zoneIdx;
   }
+  // "tout les items doivent donner le chiffre... rétroactivement... je veux que le classement soit
+  // mis à jour" (2026-07-23) : S.bestDp est un record À VIE qui ne redescend JAMAIS (hud() :
+  // `if (dpNow > S.bestDp) S.bestDp = dpNow`) -- une correction à la BAISSE (nerf de zone) ne se
+  // serait donc jamais reflétée sur le classement toute seule, même une fois le stuff corrigé.
+  // migrateGearLeaderboardRecordFixV405 doit explicitement recalculer les records depuis le stuff
+  // équipé corrigé, y compris pour les faire redescendre (exception volontaire à la règle habituelle).
+  function testGearLeaderboardRecordFixV405RecomputesEvenDownward() {
+    const s = { helmet: EQUIP.helmet, bestDp: S.bestDp, bestAp: S.bestAp, bestGearscore: S.bestGearscore, zoneIdx };
+    zoneIdx = 9; // Sanctuaire d'Elric
+    // vieux casque à stat gonflée (ancien tirage/reqDP plus haut) -- simule le bug avant correction
+    EQUIP.helmet = { name:'Casque Grunil', kind:'gear', slot:'helmet', ap:0, dp:9999, hp:1, dodge:0, enhLv:0, optimizable:true, fsByLevel:{}, color:GEAR_TIERS[3].color, val:1, key:'t_inflated_helmet' };
+    S.bestDp = 999999; // record de classement historique gonflé par le bug -- hud() seul ne le ferait jamais redescendre
+    migrateGearRescaleV403(); // corrige d'abord la pièce elle-même (dp:9999 -> vraie valeur)
+    migrateGearLeaderboardRecordFixV405(); // puis recalcule le record depuis le stuff corrigé
+    const expectedDp = totalDP(); // recalculé APRÈS la correction du casque ci-dessus
+    assert('Rescale V405 : le record de classement (bestDp) est recalculé, y compris à la baisse',
+      S.bestDp === expectedDp && expectedDp < 999999, `got=${S.bestDp}, attendu=${expectedDp}`);
+    EQUIP.helmet = s.helmet; S.bestDp = s.bestDp; S.bestAp = s.bestAp; S.bestGearscore = s.bestGearscore; zoneIdx = s.zoneIdx;
+  }
   // "le nom de la zone doit être mis à jour et rester en place" (2026-07-11) : après un chargement
   // de sauvegarde sur une zone différente de la zone 0, #ztName restait bloqué sur le placeholder
   // HTML statique -- seuls travelTo()/goToVelia() le mettaient à jour, jamais applySaveState().
@@ -4822,6 +4841,7 @@
     testGearRetroactiveMigration();
     testGearRescaleV235RetroactiveOnZoneReqChange();
     testGearRescaleV403RetroactiveOnZoneReqChange();
+    testGearLeaderboardRecordFixV405RecomputesEvenDownward();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();
