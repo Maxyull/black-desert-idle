@@ -2202,6 +2202,43 @@
     assert('index.html charge supabase-js avec un attribut integrity (SRI)',
       !!tag.integrity && tag.integrity.startsWith('sha'), `integrity=${tag.integrity}`);
   }
+  // unification bordures/scrollbars héritées (2026-07-12) : #232128 (bordure de séparation entre
+  // lignes de liste) et #3a3742 (bordure de contrôle générique + thumb de scrollbar) dataient
+  // d'avant la refonte visuelle "Zone" et coexistaient, sur une trentaine de règles, avec les
+  // variables --dbBorder/--dbBorder2 posées par cette refonte pour EXACTEMENT les mêmes rôles.
+  // Remplacés partout hors : panneau admin (palette personnalisable via .admThemeRoot, voir
+  // CLAUDE.md "admThemeRoot" -- hors périmètre) et quelques déclarations déjà MORTES en cascade
+  // (#authBox input/#authBox button.ghost/.authLangBtn/.actTab, réécrites plus tard dans ce même
+  // fichier par la refonte "Zone" Phase 1/Phase 9 -- laissées telles quelles pour ne pas casser
+  // leur sélectivité, voir les commentaires dédiés juste au-dessus de chacune dans styles.css).
+  // Garde-fou statique inspectant le CSSOM déjà chargé (même famille que
+  // testSupabaseScriptIsPinnedWithIntegrity ci-dessus) pour empêcher qu'une future règle live ne
+  // réintroduise ces deux valeurs en dur au lieu des variables.
+  function testNoLegacyHardcodedBorderHexOutsideAdminOrDeadCascade() {
+    if (typeof document === 'undefined' || !document.styleSheets) return; // hors-contexte navigateur
+    const sheet = Array.from(document.styleSheets).find(s => s.href && s.href.includes('styles.css'));
+    if (!sheet) return; // feuille pas trouvée dans ce contexte -- rien à vérifier
+    let rootRules;
+    try { rootRules = sheet.cssRules; } catch (e) { return; } // accès CSSOM bloqué (CORS) -- rien à vérifier
+    const LEGACY = /#232128|#3a3742/i;
+    const isExempt = sel => /admin/i.test(sel || '') || /\.adm[A-Z]/.test(sel || '')
+      // déclarations mortes en cascade, voir commentaire ci-dessus -- réécrites plus loin dans le
+      // même fichier par la refonte "Zone" (Phase 1 pour .actTab, Phase 9 pour #authBox/.authLangBtn)
+      || /^#authBox input$/.test(sel || '') || /^#authBox button\.ghost$/.test(sel || '')
+      || /^\.authLangBtn$/.test(sel || '') || /^\.actTab$/.test(sel || '');
+    const offenders = [];
+    const walk = list => {
+      for (const rule of list) {
+        if (rule.cssRules) { walk(rule.cssRules); continue; } // @media/@keyframes/etc.
+        if (typeof rule.selectorText === 'undefined') continue; // pas une CSSStyleRule (ex: @font-face)
+        if (isExempt(rule.selectorText)) continue;
+        if (LEGACY.test(rule.cssText || '')) offenders.push(rule.selectorText || rule.cssText.slice(0, 60));
+      }
+    };
+    walk(rootRules);
+    assert('Aucune règle CSS live non-admin ne référence plus #232128/#3a3742 en dur (remplacés par var(--dbBorder)/var(--dbBorder2))',
+      offenders.length === 0, `offenders=${JSON.stringify(offenders)}`);
+  }
   // regression V317 (2026-07-08) : classes/sorcier/sorcier-render.js (witchBodyOn, drawWitchIso)
   // chargeait APRÈS world/render.js -- or render.js appelle hud() de façon SYNCHRONE tout à la
   // fin de son chargement, AVANT requestAnimationFrame(loop) : hud() -> refreshInvUI() ->
@@ -4103,6 +4140,7 @@
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testSupabaseScriptIsPinnedWithIntegrity();
+    testNoLegacyHardcodedBorderHexOutsideAdminOrDeadCascade();
     testSorcierRenderLoadsBeforeSyncStartupCallers();
     testPatchNotesDatesFormatAndOrder();
     testEveryPatchSubHasALabel();
