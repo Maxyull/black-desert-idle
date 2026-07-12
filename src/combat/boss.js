@@ -103,6 +103,7 @@ function bossOccurrences(fromDate) {
 // live_boss). Prioritaire sur le planning horaire : s'il est actif, il apparaît comme "EN COURS"
 // pour tout le monde. Rafraîchi périodiquement (voir refreshLiveBoss).
 let liveBoss = null; // { boss, time, expires } quand un spawn global est en cours
+/** Rafraîchit liveBoss depuis Supabase (RPC ensure_scheduled_boss, repli sur lecture directe de live_boss), re-render le lobby si le statut "en cours" vient de changer pendant qu'il est affiché. */
 async function refreshLiveBoss() {
   if (!sb) return;
   const wasLive = !!(liveBoss && liveBoss.expires > Date.now());
@@ -146,6 +147,7 @@ function nextBossOccurrence() {
   const occ = bossOccurrences(new Date());
   return occ.find(o => o.live) || occ[0] || null;
 }
+/** @param {number} ms. @returns {string} compte à rebours formaté (HH:MM:SS, ou MM:SS si <1h). */
 function fmtBossCountdown(ms) {
   let s = Math.max(0, Math.floor(ms/1000));
   const h = Math.floor(s/3600); s -= h*3600;
@@ -154,6 +156,7 @@ function fmtBossCountdown(ms) {
   return (h>0 ? pad(h)+':' : '') + pad(m)+':'+pad(s);
 }
 // petit rappel dans la barre d'activités, mis à jour chaque seconde
+/** Met à jour le petit rappel #nextBossMini de la barre d'activités (compte à rebours ou "EN COURS"). */
 function updateNextBossMini() {
   const el = $('nextBossMini'); if (!el) return;
   const occ = nextBossOccurrence();
@@ -201,6 +204,7 @@ let currentActivity = 'zone';
 // barre déjà chargée (10 onglets). Le nom et le cadenas sont maintenant 2 lignes distinctes dans
 // le même bouton (voir .actTab en flex-column dans styles.css), comme la convention .zoneTierLock
 // déjà utilisée ailleurs, mais ici SANS badge flottant/absolu -- juste 2 lignes empilées normales.
+/** Reconstruit la barre d'onglets d'activité (header) — badges %PV boss et "NEW" inclus, câble le clic. */
 function renderActivityTabs() {
   const el = $('activityTabs'); if (!el) return;
   el.innerHTML = ACTIVITY_TABS.map(t => {
@@ -222,6 +226,7 @@ function renderActivityTabs() {
 // (BOSS_WINDOW_MS, 9 min) reste ouverte -- ne touche PAS au DOM des autres onglets (léger, appelé
 // chaque seconde), contrairement à renderActivityTabs() qui régénère tout le innerHTML.
 const BOSS_TAB_FLASH_LEAD_MS = 5 * 60 * 1000;
+/** Allume/éteint le flash "bossHot" de l'onglet Boss et met à jour son badge %PV, sans regénérer tout le DOM (appelé chaque seconde). */
 function updateBossActivityTabHot() {
   const btn = $a('actTabBoss'); if (!btn) return;
   const occ = nextBossOccurrence();
@@ -244,11 +249,13 @@ function updateBossActivityTabHot() {
 setInterval(updateBossActivityTabHot, 1000);
 // affiche/masque la vue "farm" (canvas + panneaux) — le header (barre d'activités) n'est
 // JAMAIS masqué : le boss s'insère juste en dessous, dans le flux du jeu
+/** @param {boolean} v. Affiche/masque la vue "farm" (canvas + panneaux) sans jamais toucher au header. */
 function setFarmViewVisible(v) {
   ['gameFrame','panel','itemPop','itemTooltip'].forEach(id => {
     const el = $(id); if (el) el.style.display = v ? '' : 'none';
   });
 }
+/** @param {string} id - id d'ACTIVITY_TABS. Bascule la vue du jeu vers cette activité (zone/boss/compagnon). */
 function showActivityPage(id) {
   if (id === 'boss') {
     currentActivity = 'boss';
@@ -273,6 +280,7 @@ function showActivityPage(id) {
 // le module réutilise des noms globaux génériques (SILVER, PETS, toast, ST, son propre :root
 // de couleurs...) qui entreraient en collision avec le scope global partagé du jeu -- voir
 // src/companions/README.md.
+/** Ouvre le module Compagnon dans une iframe isolée (créée au tout premier clic, jamais bundlée avec le jeu — voir src/companions/README.md). */
 function openCompanionsModule() {
   let overlay = $a('companionsOverlay');
   if (!overlay) {
@@ -296,6 +304,7 @@ function openCompanionsModule() {
   }
   overlay.style.display = 'flex';
 }
+/** Ferme l'iframe du module Compagnon et revient à la vue Zone. */
 function closeCompanionsModule() {
   const overlay = $a('companionsOverlay');
   if (overlay) overlay.style.display = 'none';
@@ -304,6 +313,7 @@ function closeCompanionsModule() {
 }
 
 // affiche la page Boss (lobby) : prochain boss + calendrier, dans la colonne du jeu, pleine hauteur
+/** Affiche la page Boss (lobby) : rafraîchit d'abord liveBoss puis render le lobby (prochain boss + calendrier), câble ses actions. */
 async function openBossLobby() {
   $('bossRoom').classList.remove('fight'); $('bossRoom').classList.add('lobby', 'open');
   // rafraîchit d'abord l'état du boss global (spawn admin) pour que la page reflète tout de suite
@@ -325,6 +335,7 @@ async function openBossLobby() {
 // par le commentaire d'origine : un local (1s, juste le texte du countdown, aucun réseau) + un
 // serveur (20s, ré-interroge ensure_scheduled_boss et re-render tout le lobby si l'état a changé) --
 // tous deux inertes tant que le lobby n'est pas réellement ouvert.
+/** Tick local (1s, aucun réseau) du compte à rebours #bossPanelCountdown affiché dans le lobby — n'agit pas si le créneau vient de passer "live" (le ticker serveur 20s re-render alors tout le lobby). */
 function tickBossPanelCountdown() {
   const el = $a('bossPanelCountdown'); if (!el) return;
   const occ = nextBossOccurrence();
@@ -345,6 +356,7 @@ function bossMatInHand(matKey) {
   if (!matKey || !Array.isArray(INV)) return 0;
   return INV.reduce((sum, s) => s && s.key === matKey ? sum + (s.qty || 0) : sum, 0);
 }
+/** @returns {string} HTML complet du lobby Boss (carte "prochain boss" avec countdown/barre PV/récompense, calendrier hebdomadaire, règles de récompense). */
 function renderBossLobbyHtml() {
   const occ = nextBossOccurrence();
   const now = Date.now();
@@ -460,6 +472,7 @@ function renderBossLobbyHtml() {
       ${bossRewardRulesHtml()}
     </div>`;
 }
+/** Câble les actions du lobby Boss (bouton Combattre, sélecteur d'aperçu de récompense Kzarka/Vell). */
 function wireBossLobby() {
   const btn = $a('bossFightBtn');
   const occ = nextBossOccurrence();
@@ -560,6 +573,7 @@ const BOSS_SPOTS_VELL = [
   {x:.06,y:.86},{x:.11,y:.89},{x:.16,y:.92},{x:.09,y:.95},{x:.14,y:.97},
   {x:.94,y:.86},{x:.89,y:.89},{x:.84,y:.92},{x:.91,y:.95},{x:.86,y:.97},
 ];
+/** @param {string} bossId. @returns {{x:number,y:number}[]} les 10 spots d'attaque fixes de ce boss. */
 function bossAttackSpots(bossId) { return bossId === 'vell' ? BOSS_SPOTS_VELL : BOSS_SPOTS_KZARKA; }
 const bossCtx = document.getElementById('bossCv').getContext('2d');
 // DPS nominal ≈ PA effective × somme(dmg/cd des sorts) ; sert à calculer une durée dans [2,9] min.
@@ -618,6 +632,7 @@ function startBossFight(bossId, isShared) {
 // classement de contribution en direct (top 10 affiché en %, avec un point vert pour les joueurs
 // actuellement en train de taper) + compteur "X joueurs combattent en direct" — demande explicite :
 // "les joueurs doivent se voir et voir le top 10 de degats en % en direct"
+/** Rafraîchit le classement de contribution en direct (boss_top RPC) + le compteur de combattants actifs (boss_active_count), puis re-render. */
 async function refreshBossTop() {
   if (!sb || !bossState.shared) return;
   try {
@@ -629,6 +644,7 @@ async function refreshBossTop() {
     renderBossTop();
   } catch (e) {}
 }
+/** Reconstruit le top 10 de contribution affiché en combat partagé (pseudo, %, dégâts, pastille "actif"). */
 function renderBossTop() {
   const el = $('bossTopList'); if (!el) return;
   const liveEl = $('btpLiveCount');
@@ -645,6 +661,7 @@ function renderBossTop() {
     `<span class="btpPseudo">${r.active?'<span class="btpActiveDot"></span>':''}${escapeHtml(r.pseudo||'?')}</span>` +
     `<span class="btpPct">${(r.pct!=null?r.pct:0)}%</span><span class="btpDmg">${fmt(Math.round(r.damage))}</span></div>`).join('');
 }
+/** Redimensionne le canvas #bossCv à la taille CSS de son conteneur (repli 1280×600 si non mesurable). */
 function resizeBossCanvas() {
   const cv = $('bossCv');
   cv.width = cv.clientWidth || 1280;
@@ -666,6 +683,7 @@ function bossRankMultiplier(rank) {
 // "premier kill de la semaine PAR BOSS" (S.bossLastKillWeek[bossId], voir endBossFight). ISO et non
 // un simple Date.now()/durée fixe : évite toute dérive de fuseau horaire aux limites de semaine,
 // cohérent avec le reste du fichier qui calcule déjà les horaires en Europe/Paris.
+/** @param {Date} date. @returns {string} semaine ISO 8601 ('YYYY-Www') de cette date — pure, utilisée pour le bonus "premier kill de la semaine". */
 function getISOWeekString(date) {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
   const dayNum = d.getUTCDay() || 7; // lundi=1..dimanche=7
@@ -697,6 +715,7 @@ function bossDeathPenaltyMult(deathCount) {
 // Kzarka cette semaine ne "consomme" pas le bonus de Vell. Lit la semaine AVANT de la mettre à jour
 // (appelant : endBossFight), sinon le bonus ne se déclencherait jamais.
 const BOSS_FIRST_KILL_WEEK_BONUS = 1.5;
+/** @param {string} bossId. @returns {boolean} vrai si ce boss précis n'a pas encore été tué cette semaine ISO (bonus disponible). */
 function bossFirstKillOfWeek(bossId) {
   return S.bossLastKillWeek[bossId] !== getISOWeekString(new Date());
 }
@@ -704,6 +723,7 @@ function bossFirstKillOfWeek(bossId) {
 // bonus chiffré supplémentaire -- juste l'absence de malus, voir BOSS_DEATH_PENALTY[0]=1), la
 // pénalité de mort si elle a réduit le loot, et le bonus 1er kill de la semaine. Même idiome
 // LANG==='fr'?'...':'...' que le reste du fichier, pas de nouvelle classe CSS -- réutilise .brRewards.
+/** @param {number} deathCount @param {boolean} firstKillWeek. @returns {string} HTML des badges de résultat (Perfect Kill/pénalité de mort/bonus 1er kill de la semaine). */
 function bossMultBadgesHtml(deathCount, firstKillWeek) {
   let html = '';
   if (deathCount === 0) {
@@ -770,6 +790,7 @@ function bossZoneMaterialItem(zi, qty) {
 // 2 boss, seule la ligne "extra" (Coeur de Vell, voir BOSS_ROSTER.vell.rareLoot) diffère -- le
 // sélecteur sert donc surtout à prévisualiser cette différence.
 let bossRewardPreviewBoss = 'kzarka';
+/** @returns {string} HTML du sélecteur Kzarka/Vell de l'aperçu de récompense du lobby. */
 function bossRewardSelectorHtml() {
   return `<div class="bossRewardSel">` + Object.keys(BOSS_ROSTER).map(k => {
     const b = BOSS_ROSTER[k], active = bossRewardPreviewBoss === k;
@@ -787,6 +808,7 @@ function bossRewardSelectorHtml() {
 // barre de progression du pity (voir BOSS_PITY_THRESHOLD/endBossFight) -- réutilise les classes
 // .admBars/.admBarRow/.admBarTrack/.admBar/.admBarVal déjà existantes (styles.css) plutôt que
 // d'introduire une nouvelle CSS, cohérent avec le thème sombre/or du reste du panneau.
+/** @param {string} bossId. @returns {string} HTML de la barre de progression du pity vers le rareLoot de ce boss ('' si pas de rareLoot). */
 function bossPityBarHtml(bossId) {
   const b = BOSS_ROSTER[bossId];
   if (!b || !b.rareLoot) return '';
@@ -800,6 +822,7 @@ function bossPityBarHtml(bossId) {
     </div>
   </div>`;
 }
+/** @returns {string} HTML complet des règles de récompense (sélecteur, podium par rang, ligne rareLoot+pity) pour bossRewardPreviewBoss — Kzarka en récompenses fixes (KZARKA_REWARD_TIERS), Vell en zones de progression. */
 function bossRewardRulesHtml() {
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
@@ -865,6 +888,7 @@ const BOSS_ROLL_DURATION_MS = 2200, BOSS_ROLL_START_INTERVAL_MS = 40, BOSS_ROLL_
 // la marge (8°) doit rester nettement plus grande que la tolérance visuelle du pointeur/segment pour
 // ne jamais sembler tomber SUR le rare par erreur d'affichage.
 const BOSS_NEAR_MISS_CHANCE = 0.18, BOSS_NEAR_MISS_MARGIN_DEG = 8;
+/** @param {object[]} items - récompenses à révéler (dé 'dice' ou roue 'wheel'). @returns {string} HTML de la séquence de révélation (bouton Quitter direct si aucune récompense). */
 function renderBossRewardReveal(items) {
   if (!items.length) return `<button id="bossCloseBtn">${i18next.t('combat:combat.boss.leave_button')}</button>`;
   const itemsHtml = items.map((it,i) => {
@@ -880,6 +904,7 @@ function renderBossRewardReveal(items) {
 // inséré le HTML de renderBossRewardReveal() dans le DOM (jamais via un setTimeout interne : cette
 // assignation est déjà synchrone, un délai artificiel n'apportait rien et cassait les tests qui
 // déclenchent "Passer" immédiatement après le rendu).
+/** @param {object[]} items - mêmes récompenses que renderBossRewardReveal. Branche les timers de révélation échelonnée (roulement "casino" décélérant pour les dés chiffrés, roue React pour le rareLoot) + le bouton "Passer" qui révèle tout instantanément. */
 function wireBossRewardReveal(items) {
   if (!items.length) return;
   const done = new Array(items.length).fill(false);
@@ -963,6 +988,7 @@ function wireBossRewardReveal(items) {
 }
 // "un bouton quitter s'affiche (retour a zone)" (2026-07-08) -- avant, "Retour" ramenait toujours
 // au lobby Boss ; désormais un vrai retour direct au farm, cohérent avec la demande explicite.
+/** Ferme l'écran de résultat et retourne directement à la vue farm (jamais au lobby Boss). */
 function leaveBossResultToZone() {
   $('bossResult').classList.remove('show');
   currentActivity = 'zone';
@@ -970,6 +996,13 @@ function leaveBossResultToZone() {
   setFarmViewVisible(true);
   renderActivityTabs();
 }
+/**
+ * Termine le combat de boss (victoire ou défaite) : réclame la récompense côté serveur si partagé
+ * (boss_claim, protégé contre la double réclamation), applique pénalité de mort × bonus 1er kill de
+ * la semaine × multiplicateur de rang, tire le loot chiffré et le rareLoot, puis lance la séquence
+ * de révélation (revealItems).
+ * @param {boolean} win - vrai si le boss a été vaincu, faux sur une défaite/sortie.
+ */
 async function endBossFight(win) {
   if (bossState.ended) return;
   bossState.ended = true;
