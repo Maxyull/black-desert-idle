@@ -208,6 +208,27 @@ function migrateGearRescaleV403() {
   migrateGearFixedStatsV226();
   migrateJewelryApV207();
 }
+// le classement (S.bestGearscore/S.bestAp/S.bestDp) est un record À VIE qui ne redescend JAMAIS
+// (voir hud(), core/game-core.js : `if (dpNow > S.bestDp) S.bestDp = dpNow`) -- la correction
+// V403 ci-dessus ne se serait donc JAMAIS reflétée sur le classement pour les pièces NERFÉES
+// (Kratuga/Mânes), même une fois le stuff lui-même corrigé (demande explicite du 2026-07-23 :
+// "tout les items doivent donner le chiffre... rétroactivement... je veux que le classement soit
+// mis à jour"). Nouveau flag dédié plutôt que modifier migrateGearRescaleV403 déjà livré (des
+// comptes ont pu charger entre-temps et consommer son gate à usage unique -- même précaution que
+// pour toute migration déjà en production, voir CLAUDE.md §12 pour les migrations SQL, même esprit
+// ici). Exception volontaire et ponctuelle à la règle "jamais de régression", uniquement pour cette
+// correction de bug : recalcule les 3 records depuis le stuff RÉELLEMENT équipé maintenant (déjà
+// corrigé par migrateGearRescaleV403 juste avant dans applySaveState), puis pousse immédiatement
+// le résultat au classement (syncPlayerStats(), même idiome que le commentaire "propage
+// immédiatement au classement, sans attendre la prochaine synchro" de game-supabase.js) au lieu
+// d'attendre la prochaine sauvegarde périodique.
+/** Migration rétroactive V405 : recalcule les records de classement (bestGearscore/bestAp/bestDp) depuis le stuff équipé (déjà corrigé par migrateGearRescaleV403), y compris à la baisse, puis synchronise immédiatement (syncPlayerStats()). */
+function migrateGearLeaderboardRecordFixV405() {
+  if (typeof GS === 'function') S.bestGearscore = GS();
+  if (typeof apEff === 'function') S.bestAp = apEff();
+  if (typeof totalDP === 'function') S.bestDp = totalDP();
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
+}
 // migration 2026-07-11 (bug corrigé : "aucune pierre ne se met dans le slot pour les bijoux") --
 // les bijoux (jackpot) n'ont jamais eu de matName depuis leur introduction (voir rollDrops,
 // corrigé juste au-dessus) : findEnhanceMaterial() retombait donc sur le matériau de la zone
