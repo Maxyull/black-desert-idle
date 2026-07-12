@@ -10832,6 +10832,7 @@ const BOT_API_SECRET = 'TON-SECRET-PARTAGE';
 let myPseudo = null; 
 let myIsMod = false; 
 let myIsTester = false; 
+
 async function refreshMyTesterStatus() {
   myIsTester = false;
   if (sb && currentUser && !isGuest()) {
@@ -10839,6 +10840,7 @@ async function refreshMyTesterStatus() {
   }
   const b = $a('btnTester'); if (b) b.style.display = myIsTester ? '' : 'none';
 }
+
 async function refreshMyModStatus() {
   myIsMod = false;
   if (!sb || !currentUser || isGuest()) { if (typeof renderChatTabs==='function') renderChatTabs(); return; }
@@ -10874,11 +10876,13 @@ function isBanned(banStatus) {
 function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 
 function getSbClient() { return sb; }
+
 function getCurrentUserForSync() { return currentUser; }
 
 function getMyPseudoForSync() { return myPseudo || (currentUser && (currentUser.email || '?').split('@')[0]) || 'Joueur'; }
 
 let farmEventQueue = new Map();
+
 function queueFarmEvent(kind, name, qty, silverVal) {
   if (!sb || !currentUser || isGuest()) return; 
   const zone = Z().name;
@@ -10887,6 +10891,7 @@ function queueFarmEvent(kind, name, qty, silverVal) {
   if (cur) { cur.qty += qty; cur.silver_value += silverVal; }
   else farmEventQueue.set(key, { user_id: currentUser.id, item_name: name, item_kind: kind, qty, silver_value: silverVal, zone_name: zone });
 }
+
 async function flushFarmEvents() {
   if (!sb || !currentUser || isGuest() || farmEventQueue.size === 0) return;
   const batch = Array.from(farmEventQueue.values());
@@ -10897,6 +10902,7 @@ setInterval(flushFarmEvents, 25000);
 window.addEventListener('beforeunload', flushFarmEvents);
 
 let silverLedgerQueue = new Map();
+
 function queueSilverLedger(delta, category, note) {
   if (!sb || !currentUser || isGuest() || !delta) return; 
   const key = category + '|' + (note || '');
@@ -10904,6 +10910,7 @@ function queueSilverLedger(delta, category, note) {
   if (cur) cur.delta += Math.round(delta);
   else silverLedgerQueue.set(key, { user_id: currentUser.id, delta: Math.round(delta), category, note: note || null });
 }
+
 async function flushSilverLedger() {
   if (!sb || !currentUser || isGuest() || silverLedgerQueue.size === 0) return;
   const batch = Array.from(silverLedgerQueue.values()).filter(r => r.delta !== 0);
@@ -10919,6 +10926,7 @@ function authShow(msg, isError) {
   $a('authStatus').textContent = isError ? '' : (msg || '');
 }
 function showAuthOverlay(show) { $a('authOverlay').classList.toggle('hidden', !show); }
+
 function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
   $a('userEmail').textContent = ''; 
@@ -10944,6 +10952,7 @@ function updatePseudoDisplay() {
 }
 
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
+
 async function doSignUp() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
@@ -10964,6 +10973,7 @@ async function doSignUp() {
   if (data.session) { onAuthed(data.session.user); }
   else authShow('Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi.');
 }
+
 async function doSignIn() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
@@ -10983,6 +10993,7 @@ async function doForgotPassword() {
   if (error) { authShow(error.message, true); return; }
   authShow(i18next.t('backend:backend.auth.reset_email_sent'));
 }
+
 async function doLogout() {
   if (sb) await sb.auth.signOut();
   currentUser = null;
@@ -11010,6 +11021,7 @@ async function doSignInGoogle() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href } });
 }
+
 async function doSignInGithub() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: location.href } });
@@ -11025,16 +11037,19 @@ async function linkGoogleAccount() {
   const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.href } });
   if (error) alert('Erreur : ' + error.message);
 }
+
 async function linkGithubAccount() {
   if (!sb || !currentUser) return;
   const { error } = await sb.auth.linkIdentity({ provider: 'github', options: { redirectTo: location.href } });
   if (error) alert('Erreur : ' + error.message);
 }
+
 async function linkTwitterAccount() {
   if (!sb || !currentUser) return;
   const { error } = await sb.auth.linkIdentity({ provider: 'twitter', options: { redirectTo: location.href } });
   if (error) alert('Erreur : ' + error.message);
 }
+
 function providerIdentity(user, provider) {
   return user?.identities?.find(i => i.provider === provider) || null;
 }
@@ -11042,6 +11057,7 @@ function providerIdentity(user, provider) {
 function discordIdentity(user) {
   return user?.identities?.find(i => i.provider === 'discord') || null;
 }
+
 function discordUsername(user) {
   const id = discordIdentity(user);
   const d = id?.identity_data || {};
@@ -11073,6 +11089,7 @@ if (sb) {
 }
 
 let onAuthedRunning = false;
+
 async function onAuthed(user) {
   if (onAuthedRunning) return; 
   onAuthedRunning = true;
@@ -11082,6 +11099,7 @@ async function onAuthed(user) {
     onAuthedRunning = false;
   }
 }
+
 async function onAuthedInner(user) {
   currentUser = user;
   
@@ -11150,6 +11168,7 @@ async function startGuestOrShowAuth() {
 }
 
 let tutorialAutoShown = false; 
+
 async function loadCloudSave() {
   if (!sb || !currentUser) return;
   $a('saveStatus').textContent = 'Chargement...';
@@ -11186,11 +11205,13 @@ async function loadCloudSave() {
 }
 
 function offlineSaveKey() { return 'velia-idle-offline-save-' + (currentUser ? currentUser.id : ''); }
+
 function saveToLocalOfflineCache() {
   if (!currentUser) return;
   try { localStorage.setItem(offlineSaveKey(), JSON.stringify({ save_data: getSaveState(), savedAt: Date.now() })); } catch(e) {}
   pendingOfflineSync = true;
 }
+
 function clearLocalOfflineCache() {
   if (!currentUser) return;
   try { localStorage.removeItem(offlineSaveKey()); } catch(e) {}
@@ -11285,6 +11306,7 @@ function wirePlayerNameLinks() {
     el.onclick = e => { e.stopPropagation(); showPlayerGear(el.dataset.uid, el.dataset.name); };
   });
 }
+
 function readonlyPdSlotsHtml(equip, ids) {
   return ids.map(id => {
     const e = equip ? equip[id] : null;
@@ -11302,6 +11324,7 @@ function readonlyGearListHtml(equip) {
   if (!rows) return `<div class="admEmpty">${i18next.t('backend:backend.gear.no_gear')}</div>`;
   return `<table class="admTable"><thead><tr><th>${i18next.t('backend:backend.gear.slot_header')}</th><th>${i18next.t('backend:backend.gear.item_header')}</th><th>PA/PD/PV</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
+
 async function showPlayerGear(userId, displayName) {
   if (!sb) return;
   openInfo(i18next.t('backend:backend.gear.panel_title_prefix')+displayName,
@@ -11452,6 +11475,7 @@ function openDonationPanel() {
   }
   overlay.style.display = 'flex';
 }
+
 function closeDonationPanel() {
   const overlay = $a('donationOverlay');
   if (overlay) overlay.style.display = 'none';
@@ -11571,12 +11595,14 @@ async function recordAfkSession(payload) {
     });
   } catch (e) {}
 }
+
 async function fetchAfkHistory() {
   if (!sb || !currentUser) return [];
   const { data, error } = await sb.rpc('get_afk_history', { p_limit: 12 });
   if (error) throw error;
   return data || [];
 }
+
 async function refreshOnlineCounter() {
   if (!sb) return;
   try {
@@ -11715,6 +11741,7 @@ async function openAccountPanel() {
 $a('btnAccount').onclick = openAccountPanel;
 
 let cloudSaveInterval = null;
+
 function startAutoCloudSave() {
   if (cloudSaveInterval) clearInterval(cloudSaveInterval);
   cloudSaveInterval = setInterval(saveToCloud, 30000);
@@ -11886,6 +11913,7 @@ const I18N = {
   btnConvertCaphras: { fr:'Convertir (5:1)', en:'Convert (5:1)' },
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
 };
+
 function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
@@ -11911,6 +11939,7 @@ $a('langToggle').onclick = () => {
 
 let menuSide = 'left';
 try { menuSide = localStorage.getItem('velia-idle-menuside') || 'left'; } catch(e) {}
+
 function applyMenuSide() {
   $a('sideMenu').classList.toggle('onRight', menuSide === 'right');
   $a('menuSideThumb').classList.toggle('right', menuSide === 'right');
@@ -11928,6 +11957,7 @@ try {
   const saved = localStorage.getItem('velia-idle-menu-collapsed');
   if (saved !== null) sideMenuCollapsed = saved === '1'; 
 } catch(e) {}
+
 function applyMenuCollapse() {
   $a('sideMenu').classList.toggle('collapsed', sideMenuCollapsed);
   $a('btnCollapseMenu').textContent = sideMenuCollapsed ? '▶' : '◀';
@@ -11944,6 +11974,7 @@ $a('clientVersionNum').textContent = CURRENT_VERSION;
 
 const CLIENT_ERROR_MAX_PER_SESSION = 5;
 let clientErrorCount = 0;
+
 function reportClientError(message, stack) {
   if (isOffline || !sb || clientErrorCount >= CLIENT_ERROR_MAX_PER_SESSION) return;
   clientErrorCount++;
@@ -11966,6 +11997,7 @@ window.addEventListener('unhandledrejection', e => {
 });
 
 let updateToastShown = false;
+
 async function checkForUpdate() {
   if (updateToastShown) return;
   try {
@@ -12267,6 +12299,7 @@ const COMPENDIUM_TUTORIAL_STEPS = [
     before: () => { compendiumTab = 'pen'; openCompendium(); },
     after: () => { compendiumTab = tutCompTabSaved; openCompendium(); } },
 ];
+
 function startCompendiumTutorial() {
   tutCompTabSaved = compendiumTab;
   startTutorial(COMPENDIUM_TUTORIAL_STEPS, { resetView:false });
@@ -12277,6 +12310,7 @@ const CRON_TUTORIAL_STEPS = [
     title:{fr:'Pierre de Cron',en:'Cron Stone'},
     text:{fr:'Cet objet protège ta pièce d\'équipement contre une rétrogradation en cas d\'échec d\'optimisation. Clique dessus pour l\'activer ou la désactiver.', en:'This item protects your gear piece from downgrading if an enhancement attempt fails. Click it to activate or deactivate it.'} },
 ];
+
 function startCronTutorial() {
   startTutorial(CRON_TUTORIAL_STEPS, { resetView:false });
 }
@@ -12294,6 +12328,7 @@ function updateTutorialScrollHint(r) {
   hint.classList.toggle('up', above);
   hint.style.top = above ? '18px' : (window.innerHeight-56)+'px';
 }
+
 function positionTutorialStep() {
   const step = activeTutorialSteps[tutorialStepIdx];
   const hi = $a('tutorialHighlight'), box = $a('tutorialBox'), arrow = $a('tutorialArrow');
@@ -12334,6 +12369,7 @@ function positionTutorialStep() {
     }
   }
 }
+
 function showTutorialStep() {
   const step = activeTutorialSteps[tutorialStepIdx];
   $a('tutStepLbl').textContent = `${i18next.t('backend:backend.tutorial.step_label')} ${tutorialStepIdx+1} / ${activeTutorialSteps.length}`;
@@ -12354,6 +12390,7 @@ function leaveTutorialStep() {
 }
 
 let tutorialRafId = 0;
+
 function tutorialTrackLoop() {
   if (tutorialStepIdx < 0) { tutorialRafId = 0; return; }
   positionTutorialStep();
@@ -12372,6 +12409,7 @@ function reportTutorialProgress(completed, skipped) {
     }).then(null, ()=>{});
   } catch(e) {}
 }
+
 function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = null } = {}) {
   
   if (!currentUser) return;
@@ -12384,6 +12422,7 @@ function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = nul
   reportTutorialProgress(false, false); 
   if (!tutorialRafId) tutorialRafId = requestAnimationFrame(tutorialTrackLoop);
 }
+
 function endTutorial(skipped) {
   leaveTutorialStep();
   reportTutorialProgress(!skipped, !!skipped);
@@ -12407,6 +12446,7 @@ $a('tutPrevBtn').onclick = () => {
 
 let patchPageStart = 0;
 try { patchPageStart = parseInt(localStorage.getItem('velia-patch-page')||'0', 10) || 0; } catch(e) {}
+
 function commitPatchRead() { 
   try {
     const merged = new Set([...readPatches, ...seenThisSession]);
@@ -12419,6 +12459,7 @@ window.addEventListener('pagehide', commitPatchRead);
 function unreadPatchCount() { return PATCH_NOTES.filter(p => !readPatches.has(p.v) && !seenThisSession.has(p.v)).length; }
 
 const PATCH_PAGE_MIN = 2, PATCH_PAGE_MAX = 7, PATCH_PAGE_LINE_BUDGET = 10;
+
 function computePatchPages() {
   const pages = [];
   let i = 0;
@@ -12435,6 +12476,7 @@ function computePatchPages() {
   }
   return pages;
 }
+
 function updatePatchBadge() {
   const n = unreadPatchCount();
   const badge = $a('patchBadge');
@@ -12627,6 +12669,7 @@ $a('btnPatch').onclick = () => {
   if (typeof openPatchNotesReact === 'function' && $a('patchNotesModalRoot')) openPatchNotesReact();
   else renderPatchNotesPanel();
 };
+
 function openPatchImgCompare(before, after) {
   $a('patchImgLblBefore').textContent = i18next.t('backend:backend.patch_notes.compare_before_label');
   $a('patchImgLblAfter').textContent = i18next.t('backend:backend.patch_notes.compare_after_label');

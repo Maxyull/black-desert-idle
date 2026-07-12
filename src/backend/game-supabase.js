@@ -35,6 +35,7 @@ const BOT_API_SECRET = 'TON-SECRET-PARTAGE';
 let myPseudo = null; // pseudo effectif du joueur courant, mis en cache après connexion
 let myIsMod = false; // le joueur courant est-il modérateur (table chat_mods) ? — pour afficher les ✕ de suppression
 let myIsTester = false; // le joueur courant est-il testeur (table testers) ? — accès au panneau Tester
+/** Vérifie si le joueur courant est testeur (table testers) et bascule la visibilité du bouton Tester. */
 async function refreshMyTesterStatus() {
   myIsTester = false;
   if (sb && currentUser && !isGuest()) {
@@ -42,6 +43,7 @@ async function refreshMyTesterStatus() {
   }
   const b = $a('btnTester'); if (b) b.style.display = myIsTester ? '' : 'none';
 }
+/** Vérifie si le joueur courant est modérateur (table chat_mods) et re-render les onglets du chat (le statut mod peut débloquer le canal "modéré"). */
 async function refreshMyModStatus() {
   myIsMod = false;
   if (!sb || !currentUser || isGuest()) { if (typeof renderChatTabs==='function') renderChatTabs(); return; }
@@ -57,6 +59,7 @@ async function refreshMyModStatus() {
 // référence par défaut) ; lecture publique (RLS select-all sur game_config), pas besoin de RPC.
 // Repli silencieux si la ligne n'existe pas encore ou si hors-ligne -- LOOT_RATES_LIVE garde alors
 // simplement sa valeur par défaut (copie de LOOT_RATES_V2), aucun risque de casser le loot normal.
+/** Charge l'override admin des taux de loot V2 (game_config) et le fusionne par-dessus LOOT_RATES_LIVE (partiel, jamais écraser un palier non couvert par l'override). No-op silencieux si absent/hors-ligne. */
 async function refreshLiveLootRates() {
   if (!sb || typeof LOOT_RATES_LIVE === 'undefined') return;
   try {
@@ -73,6 +76,7 @@ async function refreshLiveLootRates() {
 const ADMIN_EMAIL = 'maxime.lacoste@icloud.com';
 function isAdmin() { return !!(currentUser && currentUser.email === ADMIN_EMAIL); }
 // système de sanctions (2026-07-18, voir docs/ADMIN_MENU_PLAN.md §3.1) : banStatus = { banned_until, ban_reason } ou null
+/** @param {?{banned_until:string, ban_reason:string}} banStatus. @returns {boolean} vrai si le bannissement est encore actif (banned_until dans le futur). */
 function isBanned(banStatus) {
   if (!banStatus || !banStatus.banned_until) return false;
   const t = new Date(banStatus.banned_until).getTime();
@@ -90,10 +94,13 @@ function isGuest() { return !!(currentUser && currentUser.is_anonymous); }
 // sync ne s'est jamais déclenché, pour aucun compte (invité ou non). Ces deux accesseurs sont des
 // déclarations `function`, qui elles SONT attachées à `window` automatiquement -- toujours à jour
 // car elles lisent `sb`/`currentUser` au moment de l'appel, pas une copie figée.
+/** @returns {?object} client Supabase — accesseur `function` (attaché à window, contrairement à `let sb`) utilisé par les iframes same-origin (module Compagnons). */
 function getSbClient() { return sb; }
+/** @returns {?object} utilisateur courant — même raison que getSbClient(). */
 function getCurrentUserForSync() { return currentUser; }
 // même besoin que ci-dessus, pour le Marché Compagnon (2026-07-10) : les offres/contre-offres
 // affichent un pseudo lisible, `myPseudo` (let top-level) n'était pas accessible depuis l'iframe.
+/** @returns {string} pseudo affiché du joueur courant, accessible depuis les iframes same-origin (marché Compagnons). */
 function getMyPseudoForSync() { return myPseudo || (currentUser && (currentUser.email || '?').split('@')[0]) || 'Joueur'; }
 
 // ---------- journal de farm (pour les stats admin) : queue légère, envoyée par lots ----------
@@ -103,6 +110,7 @@ function getMyPseudoForSync() { return myPseudo || (currentUser && (currentUser.
 // 2026-07-08). Les totaux par objet/zone restent exacts, seule la granularité "un pickup = une
 // ligne" est perdue (jamais utilisée : admin_farm_by_item ne fait que sommer qty/silver_value).
 let farmEventQueue = new Map();
+/** @param {string} kind @param {string} name @param {number} qty @param {number} silverVal. Agrège un événement de farm dans farmEventQueue (clé objet+zone) pour un envoi groupé par flushFarmEvents(), no-op si invité/déconnecté. */
 function queueFarmEvent(kind, name, qty, silverVal) {
   if (!sb || !currentUser || isGuest()) return; // pas de compte vérifié → pas de journalisation
   const zone = Z().name;
@@ -111,6 +119,7 @@ function queueFarmEvent(kind, name, qty, silverVal) {
   if (cur) { cur.qty += qty; cur.silver_value += silverVal; }
   else farmEventQueue.set(key, { user_id: currentUser.id, item_name: name, item_kind: kind, qty, silver_value: silverVal, zone_name: zone });
 }
+/** Envoie farmEventQueue en un seul lot (insert batch) puis vide la queue. Appelé toutes les 25s + à la fermeture de page. */
 async function flushFarmEvents() {
   if (!sb || !currentUser || isGuest() || farmEventQueue.size === 0) return;
   const batch = Array.from(farmEventQueue.values());
@@ -132,6 +141,7 @@ window.addEventListener('beforeunload', flushFarmEvents);
 // compris chaque petit loot de trash). Les totaux par catégorie (admin_silver_ledger_by_category)
 // restent exacts, seul l'horodatage individuel de chaque micro-variation est perdu.
 let silverLedgerQueue = new Map();
+/** @param {number} delta - variation de silver. @param {string} category @param {string} note. Agrège dans silverLedgerQueue (clé catégorie+note) pour un envoi groupé par flushSilverLedger(). */
 function queueSilverLedger(delta, category, note) {
   if (!sb || !currentUser || isGuest() || !delta) return; // pas de compte vérifié → pas de journalisation
   const key = category + '|' + (note || '');
@@ -139,6 +149,7 @@ function queueSilverLedger(delta, category, note) {
   if (cur) cur.delta += Math.round(delta);
   else silverLedgerQueue.set(key, { user_id: currentUser.id, delta: Math.round(delta), category, note: note || null });
 }
+/** Envoie silverLedgerQueue en un seul lot (filtre les deltas nuls) puis vide la queue. */
 async function flushSilverLedger() {
   if (!sb || !currentUser || isGuest() || silverLedgerQueue.size === 0) return;
   const batch = Array.from(silverLedgerQueue.values()).filter(r => r.delta !== 0);
@@ -152,11 +163,13 @@ window.addEventListener('beforeunload', flushSilverLedger);
 // $a est desormais declare dans game-core.js (evite un piege de zone morte temporelle une fois
 // le jeu regroupe en un seul fichier -- voir le commentaire a cote de sa declaration)
 
+/** @param {string} msg @param {boolean} isError - affiche en erreur (authError) ou en statut neutre (authStatus). */
 function authShow(msg, isError) {
   $a('authError').textContent = isError ? msg : '';
   $a('authStatus').textContent = isError ? '' : (msg || '');
 }
 function showAuthOverlay(show) { $a('authOverlay').classList.toggle('hidden', !show); }
+/** Affiche/masque la barre utilisateur et ses boutons (lier compte/déconnexion/admin) selon l'état de connexion. */
 function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
   $a('userEmail').textContent = ''; // email retiré de l'affichage (demande du 2026-07-04)
@@ -174,6 +187,7 @@ function updateUserBar() {
   if (typeof updateChatInputVisibility === 'function') { updateChatInputVisibility(); fetchChatMessages(); }
 }
 // affiche le pseudo (ou "🎭 Invité") à côté du tag DÉMO — l'email n'est plus jamais affiché
+/** Affiche le pseudo (ou "Invité") à côté du tag DÉMO — l'email n'est jamais affiché. */
 function updatePseudoDisplay() {
   const el = $a('userPseudo');
   if (!el) return;
@@ -187,6 +201,7 @@ function updatePseudoDisplay() {
 // (aucune session active à ce moment-là pour appeler set_pseudo tout de suite) -- appliqué au
 // prochain onAuthed() réussi, voir refreshMyPseudo()
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
+/** Crée un compte email/mot de passe, ou upgrade la session invité courante en compte réel (garde le même user_id, la sauvegarde suit). Mémorise le pseudo choisi (PENDING_PSEUDO_KEY) le temps de confirmer l'email. */
 async function doSignUp() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
@@ -211,6 +226,7 @@ async function doSignUp() {
   if (data.session) { onAuthed(data.session.user); }
   else authShow('Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi.');
 }
+/** Connexion par email/mot de passe. */
 async function doSignIn() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
@@ -221,6 +237,7 @@ async function doSignIn() {
   onAuthed(data.user);
 }
 // envoie un email de réinitialisation de mot de passe — demande explicite du 2026-07-05
+/** Envoie un email de réinitialisation de mot de passe. */
 async function doForgotPassword() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   const email = $a('authEmail').value.trim();
@@ -230,6 +247,7 @@ async function doForgotPassword() {
   if (error) { authShow(error.message, true); return; }
   authShow(i18next.t('backend:backend.auth.reset_email_sent'));
 }
+/** Déconnecte puis relance immédiatement une session invité (jamais de mur bloquant). */
 async function doLogout() {
   if (sb) await sb.auth.signOut();
   currentUser = null;
@@ -238,6 +256,7 @@ async function doLogout() {
 
 // connexion (ou liaison, si déjà invité/connecté) via Discord — demande le scope
 // guilds.join pour pouvoir ajouter automatiquement le joueur au serveur Discord ensuite
+/** Connexion/liaison via Discord OAuth (scope guilds.join pour l'ajout auto au serveur communautaire). */
 async function doSignInDiscord() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   await sb.auth.signInWithOAuth({
@@ -247,6 +266,7 @@ async function doSignInDiscord() {
 }
 // lie Discord à un compte email déjà existant (depuis le panneau "Mon compte"), sans
 // perdre la session courante — nécessite "Manual Linking" activé côté Supabase
+/** Lie Discord à un compte déjà existant sans perdre la session courante (nécessite Manual Linking côté Supabase). */
 async function linkDiscordAccount() {
   if (!sb || !currentUser) return;
   const { error } = await sb.auth.linkIdentity({
@@ -261,44 +281,53 @@ async function linkDiscordAccount() {
 // pour ces deux-là). ⚠️ Ces deux providers doivent être activés avec un Client ID/Secret OAuth
 // côté Dashboard Supabase (Authentication > Providers) avant de fonctionner — action externe,
 // impossible à faire depuis ce fichier.
+/** Connexion via Google OAuth. */
 async function doSignInGoogle() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href } });
 }
+/** Connexion via GitHub OAuth. */
 async function doSignInGithub() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: location.href } });
 }
 // Twitter/X (2026-07-20, demande explicite : "peux tu ajouter twitter aussi") — même pattern,
 // 'twitter' est le nom de provider attendu par Supabase Auth (OAuth 2.0, malgré le rebranding "X").
+/** Connexion via Twitter/X OAuth (provider 'twitter' côté Supabase Auth). */
 async function doSignInTwitter() {
   if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
   await sb.auth.signInWithOAuth({ provider: 'twitter', options: { redirectTo: location.href } });
 }
 // lie Google/GitHub/Twitter à un compte déjà existant (panneau "Mon compte") — même pattern que
 // linkDiscordAccount ci-dessus.
+/** Lie Google à un compte déjà existant. */
 async function linkGoogleAccount() {
   if (!sb || !currentUser) return;
   const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.href } });
   if (error) alert('Erreur : ' + error.message);
 }
+/** Lie GitHub à un compte déjà existant. */
 async function linkGithubAccount() {
   if (!sb || !currentUser) return;
   const { error } = await sb.auth.linkIdentity({ provider: 'github', options: { redirectTo: location.href } });
   if (error) alert('Erreur : ' + error.message);
 }
+/** Lie Twitter/X à un compte déjà existant. */
 async function linkTwitterAccount() {
   if (!sb || !currentUser) return;
   const { error } = await sb.auth.linkIdentity({ provider: 'twitter', options: { redirectTo: location.href } });
   if (error) alert('Erreur : ' + error.message);
 }
+/** @param {object} user - utilisateur Supabase. @param {string} provider. @returns {?object} identité liée à ce provider, null si absente. */
 function providerIdentity(user, provider) {
   return user?.identities?.find(i => i.provider === provider) || null;
 }
 
+/** @param {object} user - utilisateur Supabase. @returns {?object} identité Discord liée, null si absente. */
 function discordIdentity(user) {
   return user?.identities?.find(i => i.provider === 'discord') || null;
 }
+/** @param {object} user - utilisateur Supabase. @returns {?string} pseudo Discord (global_name/full_name/name/user_name, dans cet ordre), null si pas lié. */
 function discordUsername(user) {
   const id = discordIdentity(user);
   const d = id?.identity_data || {};
@@ -308,6 +337,7 @@ function discordUsername(user) {
 // ajoute automatiquement le joueur au serveur Discord communautaire via le bot, en
 // utilisant le token OAuth (scope guilds.join) obtenu à l'instant de la connexion —
 // ce token n'est disponible qu'à ce moment précis, jamais après un rechargement de page
+/** @param {string} providerToken - token OAuth Discord (scope guilds.join), disponible seulement à l'instant de la connexion. @param {object} user - utilisateur Supabase. Ajoute le joueur au serveur Discord communautaire via le bot. Échec silencieux (rejoindre reste possible via le bouton Discord du menu). */
 async function joinDiscordGuild(providerToken, user) {
   const id = discordIdentity(user);
   if (!providerToken || !id || !BOT_API_URL || BOT_API_URL.includes('TON-')) return;
@@ -339,6 +369,7 @@ if (sb) {
 }
 
 let onAuthedRunning = false;
+/** @param {object} user - utilisateur Supabase authentifié. Point d'entrée post-connexion, protégé contre un double appel concurrent (course entre le flux normal et le relais onAuthStateChange). Délègue à onAuthedInner(). */
 async function onAuthed(user) {
   if (onAuthedRunning) return; // évite un double appel concurrent (course entre le flux normal et le relais onAuthStateChange ci-dessus)
   onAuthedRunning = true;
@@ -348,6 +379,13 @@ async function onAuthed(user) {
     onAuthedRunning = false;
   }
 }
+/**
+ * Traite une connexion réussie : vérifie le bannissement (déconnecte si banni), initialise l'UI,
+ * réclame la session (claimPlayerSession, évince toute autre session active), charge pseudo/rôles/
+ * overrides loot/sauvegarde cloud, démarre l'autosave/heartbeat/compteurs, affiche un rappel
+ * proactif de connexion pour un invité.
+ * @param {object} user - utilisateur Supabase authentifié.
+ */
 async function onAuthedInner(user) {
   currentUser = user;
   // check de bannissement (2026-07-18) : bloque l'accès avant tout autre effet de la connexion
@@ -397,6 +435,7 @@ async function onAuthedInner(user) {
 }
 
 // détermine le pseudo effectif : pseudo choisi > pseudo Discord > partie locale de l'email
+/** Détermine le pseudo effectif (choisi > Discord > partie locale de l'email), applique un pseudo en attente (PENDING_PSEUDO_KEY) posé par doSignUp() faute de session active à ce moment. */
 async function refreshMyPseudo() {
   myPseudo = null;
   if (!sb || !currentUser || isGuest()) return;
@@ -425,6 +464,7 @@ async function refreshMyPseudo() {
 // diff — seul son comportement change. Les sessions invité créées AVANT ce changement continuent
 // de fonctionner normalement (isGuest() reste vrai pour elles, rien n'est supprimé côté serveur) ;
 // seule la création de NOUVELLES sessions anonymes est coupée.
+/** Affiche l'écran de connexion (les sessions invité automatiques sont désactivées depuis le 2026-07-20 ; les sessions invité déjà créées restent fonctionnelles). No-op si Supabase pas configuré. */
 async function startGuestOrShowAuth() {
   if (!sb) { showAuthOverlay(false); updateUserBar(); return; } // Supabase pas configuré → mode local, inchangé
   showAuthOverlay(true);
@@ -432,6 +472,7 @@ async function startGuestOrShowAuth() {
 }
 
 let tutorialAutoShown = false; // évite de relancer le tuto auto plusieurs fois si loadCloudSave est rappelé
+/** Charge la sauvegarde (cache local offline en priorité si hors-ligne, sinon Supabase game_saves), lance le tutoriel pour un nouveau personnage et marque les patch notes antérieures comme déjà lues. */
 async function loadCloudSave() {
   if (!sb || !currentUser) return;
   $a('saveStatus').textContent = 'Chargement...';
@@ -478,18 +519,22 @@ async function loadCloudSave() {
 // ---------- mode hors ligne : fallback localStorage + resync au retour réseau ----------
 // clé par currentUser.id (2026-07-10) : évite qu'une sauvegarde offline d'un compte fuite vers un
 // autre compte sur un navigateur/appareil partagé.
+/** @returns {string} clé localStorage de la sauvegarde hors-ligne, scopée par currentUser.id (évite qu'elle fuite vers un autre compte partageant l'appareil). */
 function offlineSaveKey() { return 'velia-idle-offline-save-' + (currentUser ? currentUser.id : ''); }
+/** Sauvegarde l'état courant dans localStorage (clé offlineSaveKey) et marque pendingOfflineSync pour un renvoi vers le cloud au retour réseau. */
 function saveToLocalOfflineCache() {
   if (!currentUser) return;
   try { localStorage.setItem(offlineSaveKey(), JSON.stringify({ save_data: getSaveState(), savedAt: Date.now() })); } catch(e) {}
   pendingOfflineSync = true;
 }
+/** Supprime la sauvegarde hors-ligne locale (offlineSaveKey). */
 function clearLocalOfflineCache() {
   if (!currentUser) return;
   try { localStorage.removeItem(offlineSaveKey()); } catch(e) {}
 }
 // pousse la dernière sauvegarde locale vers le cloud une fois le réseau revenu -- ne réécrit RIEN
 // si aucune sauvegarde offline n'était en attente (pendingOfflineSync reste false par défaut).
+/** Renvoie la dernière sauvegarde locale (offline) vers le cloud une fois le réseau revenu. No-op si aucune sauvegarde offline en attente. */
 async function flushOfflineSaveIfNeeded() {
   if (!pendingOfflineSync || !sb || !currentUser) return;
   let cached = null;
@@ -516,6 +561,7 @@ let sessionClaimOk = false;
 // prend la main sur ce compte (appelé à la connexion, et par le bouton "Reprendre ici" de
 // sessionLockOverlay) -- toute AUTRE session active sur ce compte se fera évincer à son prochain
 // checkPlayerSession() (20s max, même cadence que heartbeatPresence).
+/** Réclame la session serveur pour cet onglet (RPC claim_player_session) — toute autre session active sur ce compte se fait évincer à son prochain checkPlayerSession(). Appelé à la connexion et par le bouton "Reprendre ici". */
 async function claimPlayerSession() {
   if (!sb || !currentUser) return;
   try {
@@ -528,6 +574,7 @@ async function claimPlayerSession() {
 // vérifie que CETTE session est toujours celle active côté serveur -- si une autre session a pris
 // le relais depuis (claim_player_session appelé ailleurs), passe en pause locale sans jamais
 // forcer de déconnexion (le joueur peut reprendre la main via le bouton, pas de perte de contexte).
+/** Vérifie que cette session est toujours celle active côté serveur (RPC check_player_session) ; affiche/masque l'overlay de verrou en conséquence, jamais de déconnexion forcée. No-op hors-ligne ou sans claim préalable réussi. */
 async function checkPlayerSession() {
   if (!sb || !currentUser || isOffline || !sessionClaimOk) return; // pas de faux-positif pendant une coupure réseau, ou sans vrai claim préalable
   try {
@@ -542,6 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (btn) btn.onclick = claimPlayerSession;
 });
 
+/** Sauvegarde l'état courant vers Supabase (game_saves), bascule sur le cache local si hors-ligne ou en cas d'échec réseau. No-op si la session a été évincée (sessionLocked). */
 async function saveToCloud() {
   if (!sb || !currentUser || sessionLocked) return; // une session évincée n'écrase jamais la sauvegarde de la session active
   if (isOffline) { saveToLocalOfflineCache(); $a('saveStatus').textContent = '🔌 hors ligne (local)'; setTimeout(() => { if ($a('saveStatus')) $a('saveStatus').textContent = ''; }, 2000); return; }
@@ -553,6 +601,7 @@ async function saveToCloud() {
 }
 
 // ---------- classement : snapshot périodique des stats publiques dans player_stats ----------
+/** Pousse les records À VIE du joueur (silver/GS/AP/DP/kpm/zone/silver-par-heure/trésors/loyalty/compendium) dans player_stats — jamais l'état courant/instantané, pour un classement qui ne régresse jamais. Réservé aux comptes vérifiés. */
 async function syncPlayerStats() {
   if (!sb || !currentUser || isGuest()) return; // classement réservé aux comptes vérifiés
   // "silver par heure" (2026-07-12, demande explicite : "compté exclusivement par les silver
@@ -615,11 +664,13 @@ async function syncPlayerStats() {
 // prochain passage (actuellement LANG==='fr' ternaire, voir CLAUDE.md §31 si applicable).
 // clic sur un pseudo du classement : ouvre son stuff en lecture seule (demande explicite — voir
 // get_player_gear côté serveur, n'expose QUE l'équipement, jamais le silver/inventaire complet)
+/** Câble le clic sur un pseudo du classement pour ouvrir son stuff en lecture seule (showPlayerGear). */
 function wirePlayerNameLinks() {
   $a('infoBody').querySelectorAll('.plNameLink').forEach(el => {
     el.onclick = e => { e.stopPropagation(); showPlayerGear(el.dataset.uid, el.dataset.name); };
   });
 }
+/** @param {?object} equip - équipement du joueur consulté (ou null). @param {string[]} ids - slots à afficher. @returns {string} HTML des emplacements de paperdoll en lecture seule. */
 function readonlyPdSlotsHtml(equip, ids) {
   return ids.map(id => {
     const e = equip ? equip[id] : null;
@@ -628,6 +679,7 @@ function readonlyPdSlotsHtml(equip, ids) {
 }
 // liste TEXTE (nom + PA/PD/PV) de chaque pièce équipée — demande explicite : voir le nom de
 // l'objet et son PA/PD directement quand on regarde le stuff d'un autre joueur, pas juste au survol
+/** @param {?object} equip - équipement du joueur consulté. @returns {string} table texte (nom + PA/PD/PV) de chaque pièce équipée, en lecture seule. */
 function readonlyGearListHtml(equip) {
   const allSlots = [...PD_BOTTOM, ...PD_LEFT, ...PD_RIGHT];
   const rows = allSlots.map(id => {
@@ -638,6 +690,7 @@ function readonlyGearListHtml(equip) {
   if (!rows) return `<div class="admEmpty">${i18next.t('backend:backend.gear.no_gear')}</div>`;
   return `<table class="admTable"><thead><tr><th>${i18next.t('backend:backend.gear.slot_header')}</th><th>${i18next.t('backend:backend.gear.item_header')}</th><th>PA/PD/PV</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
+/** @param {string} userId @param {string} displayName. Ouvre le panneau info avec l'équipement en lecture seule d'un autre joueur (RPC get_player_gear, n'expose jamais le silver/inventaire complet). */
 async function showPlayerGear(userId, displayName) {
   if (!sb) return;
   openInfo(i18next.t('backend:backend.gear.panel_title_prefix')+displayName,
@@ -662,6 +715,7 @@ async function showPlayerGear(userId, displayName) {
 // VRAIE fenêtre séparée du navigateur (pas dans le panneau admin) et revient automatiquement sur
 // le panneau admin (dans la fenêtre principale) quand cette fenêtre popup se ferme — demande
 // explicite du 2026-07-06
+/** @param {string} userId @param {string} displayName. Ouvre l'inventaire complet (192 cases) d'un joueur en lecture seule dans une VRAIE fenêtre popup séparée (staff uniquement) — revient sur le panneau admin à sa fermeture. */
 async function showPlayerInventoryWindow(userId, displayName) {
   if (!isAdmin() || !sb) return;
   const win = window.open('', '_blank', 'width=620,height=760');
@@ -791,6 +845,7 @@ $a('ztCompendium').onclick = openCompendiumReact;
 // sont des VALEURS FIXES (jamais branchées à un vrai suivi des dons) -- pas touché ici, mais à
 // garder en tête si un vrai suivi est demandé un jour (voir aussi donation-policy.html, lien déjà
 // en place).
+/** Ouvre le panneau Don (crée l'overlay+iframe vers donation/index.html au premier appel, le réutilise ensuite). */
 function openDonationPanel() {
   let overlay = $a('donationOverlay');
   if (!overlay) {
@@ -814,6 +869,7 @@ function openDonationPanel() {
   }
   overlay.style.display = 'flex';
 }
+/** Ferme le panneau Don. */
 function closeDonationPanel() {
   const overlay = $a('donationOverlay');
   if (overlay) overlay.style.display = 'none';
@@ -889,6 +945,7 @@ setInterval(updateNextBossMini, 1000);
 // zone_idx = -1 pour Velia (2026-07-16, demande explicite : liste des joueurs en ville) -- avant,
 // NULL (aucune zone) ; -1 sert de sentinelle dédiée pour get_velia_players() côté serveur, sans
 // jamais entrer en collision avec un vrai index de zone (toujours >= 0).
+/** Signale la présence du joueur (RPC heartbeat_presence, zone -1 pour Velia) et vérifie la session en même cadence (20s). */
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
   try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
@@ -900,6 +957,7 @@ async function heartbeatPresence() {
 // (zonePlayerCounts, agrégé seulement). Affiché par updateVeliaPlayersTicker() (game-core.js).
 // veliaPlayers est declare dans game-core.js (evite un piege de zone morte temporelle une fois
 // le jeu regroupe en un seul fichier -- voir le commentaire juste avant buildZoneList())
+/** Recharge la liste des pseudos actuellement à Velia (RPC get_velia_players) et rafraîchit le ticker. No-op si pas à Velia. */
 async function refreshVeliaPlayers() {
   if (!sb || !atVelia) return;
   try {
@@ -914,6 +972,7 @@ async function refreshVeliaPlayers() {
 // le heartbeat pour rester à jour sans spammer le serveur
 // zonePlayerCounts est declare dans game-core.js (evite un piege de zone morte temporelle une
 // fois le jeu regroupe en un seul fichier -- voir le commentaire juste avant buildZoneList())
+/** Recharge le nombre de joueurs par zone de farm (RPC get_zone_player_counts) et rafraîchit les badges. */
 async function refreshZonePlayerCounts() {
   if (!sb) return;
   try {
@@ -932,6 +991,7 @@ async function refreshZonePlayerCounts() {
 // que zonePlayerCounts, ne reconstruit la liste de zones QUE si la valeur a changé.
 // adminZoneIdx est declare dans game-core.js (evite un piege de zone morte temporelle une fois
 // le jeu regroupe en un seul fichier -- voir le commentaire juste avant buildZoneList())
+/** Recharge la zone où se trouve le compte admin (RPC get_admin_zone, visible par tous), ne reconstruit la liste de zones que si la valeur a changé. */
 async function refreshAdminZone() {
   if (!sb) return;
   try {
@@ -947,6 +1007,7 @@ async function refreshAdminZone() {
 // Modal de reconnexion (2026-07-10) : enregistre une session AFK/hors-ligne terminée (fire-and-
 // forget, l'affichage du modal ne doit jamais dépendre du succès de cet appel) + lit l'historique
 // perso pour l'onglet "Historique des sessions" (voir src/core/reconnect-modal-react.js).
+/** @param {object} payload - session AFK terminée (startedAt/endedAt/silver/xp/levelBefore/levelNow/zoneName/gearGrade/items/bestDrop*). Enregistre la session (RPC record_afk_session), fire-and-forget — l'affichage du modal de reconnexion ne dépend jamais de son succès. */
 async function recordAfkSession(payload) {
   if (!sb || !currentUser) return;
   try {
@@ -965,12 +1026,14 @@ async function recordAfkSession(payload) {
     });
   } catch (e) {}
 }
+/** @returns {Promise<object[]>} historique des 12 dernières sessions AFK (RPC get_afk_history), lève en cas d'erreur. */
 async function fetchAfkHistory() {
   if (!sb || !currentUser) return [];
   const { data, error } = await sb.rpc('get_afk_history', { p_limit: 12 });
   if (error) throw error;
   return data || [];
 }
+/** Recharge et affiche le compteur "joueurs en ligne" (RPC get_online_counts, invités inclus). */
 async function refreshOnlineCounter() {
   if (!sb) return;
   try {
@@ -983,6 +1046,7 @@ async function refreshOnlineCounter() {
 }
 // nombre total de comptes inscrits (2026-07-05, demande explicite) : change rarement, pas besoin
 // de le rafraîchir aussi souvent que le compteur "en ligne"
+/** Recharge et affiche le nombre total de comptes inscrits (RPC get_registered_count) — change rarement, rafraîchi moins souvent que le compteur en ligne. */
 async function refreshRegisteredCounter() {
   if (!sb) return;
   try {
@@ -1002,6 +1066,7 @@ refreshRegisteredCounter();
 setInterval(refreshRegisteredCounter, 5 * 60000);
 
 // ---------- panneau "Mon compte" : identité + parrainage (comptes vérifiés uniquement) ----------
+/** Ouvre le panneau "Mon compte" (pseudo, liaison Discord/Google/GitHub/Twitter, code de parrainage + liste des filleuls). Version simplifiée (cache navigateur uniquement) pour un invité. */
 async function openAccountPanel() {
   if (!sb || !currentUser) return;
   if (isGuest()) {
@@ -1111,6 +1176,7 @@ async function openAccountPanel() {
 $a('btnAccount').onclick = openAccountPanel;
 
 let cloudSaveInterval = null;
+/** Démarre l'autosave cloud périodique (30s) et sur fermeture de page, remplace tout intervalle déjà actif. */
 function startAutoCloudSave() {
   if (cloudSaveInterval) clearInterval(cloudSaveInterval);
   cloudSaveInterval = setInterval(saveToCloud, 30000);
@@ -1299,6 +1365,7 @@ const I18N = {
   btnConvertCaphras: { fr:'Convertir (5:1)', en:'Convert (5:1)' },
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
 };
+/** Applique le dictionnaire I18N statique (data-i18n/data-i18n-ph) à tout le DOM, synchronise l'UI de langue et redessine inventaire/HUD avec les noms traduits. */
 function applyI18n() {
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
@@ -1325,6 +1392,7 @@ $a('langToggle').onclick = () => {
 // ---------- position du menu latéral (gauche/droite), persistée ----------
 let menuSide = 'left';
 try { menuSide = localStorage.getItem('velia-idle-menuside') || 'left'; } catch(e) {}
+/** Applique la position du menu latéral (gauche/droite, persistée) au DOM. */
 function applyMenuSide() {
   $a('sideMenu').classList.toggle('onRight', menuSide === 'right');
   $a('menuSideThumb').classList.toggle('right', menuSide === 'right');
@@ -1343,6 +1411,7 @@ try {
   const saved = localStorage.getItem('velia-idle-menu-collapsed');
   if (saved !== null) sideMenuCollapsed = saved === '1'; // préférence explicite du joueur > défaut auto
 } catch(e) {}
+/** Applique l'état replié/déplié (persisté) du menu latéral au DOM. */
 function applyMenuCollapse() {
   $a('sideMenu').classList.toggle('collapsed', sideMenuCollapsed);
   $a('btnCollapseMenu').textContent = sideMenuCollapsed ? '▶' : '◀';
@@ -1376,6 +1445,7 @@ $a('clientVersionNum').textContent = CURRENT_VERSION;
 // ============================================================
 const CLIENT_ERROR_MAX_PER_SESSION = 5;
 let clientErrorCount = 0;
+/** @param {string} message @param {?string} stack. Journalise une erreur client dans client_errors (throttlé à CLIENT_ERROR_MAX_PER_SESSION, no-op hors-ligne/sans Supabase). */
 function reportClientError(message, stack) {
   if (isOffline || !sb || clientErrorCount >= CLIENT_ERROR_MAX_PER_SESSION) return;
   clientErrorCount++;
@@ -1398,6 +1468,7 @@ window.addEventListener('unhandledrejection', e => {
 });
 
 let updateToastShown = false;
+/** Refetch meta/patch-notes-data.js et compare sa version à CURRENT_VERSION — affiche le toast de mise à jour une seule fois si différente. */
 async function checkForUpdate() {
   if (updateToastShown) return;
   try {
@@ -1418,6 +1489,7 @@ async function checkForUpdate() {
 $a('btnReloadUpdate').onclick = () => location.reload();
 // vide le cache du navigateur pour les fichiers du jeu (utile si une maj ne s'affiche pas
 // correctement) -- ne touche jamais la sauvegarde (Supabase ni le fallback localStorage)
+/** Vide le cache navigateur (Cache API + service workers) du jeu et recharge sans cache. Ne touche jamais la sauvegarde. */
 async function clearGameCache() {
   try {
     if ('caches' in window) {
@@ -1544,6 +1616,7 @@ const WIKI_SECTIONS = [
   { id:'tuto', icon:'🔰', label:{fr:'Tutoriel',en:'Tutorial'}, tuto:true },
 ];
 // génère le codex des objets à partir des données du jeu (matériaux, bijoux, trash, sets)
+/** @returns {string} HTML du Codex des objets, généré depuis les vraies données du jeu (bijoux par zone, matériaux, composants de craft, trash, Trésor de Velia) — jamais de contenu figé. */
 function renderCodexHtml() {
   const seen = new Set();
   const section = (title, items) => {
@@ -1584,6 +1657,7 @@ function renderCodexHtml() {
     section(i18next.t('backend:backend.codex.section_base_loot'), trash);
 }
 // page Wiki "Tutoriel" : résumé + bouton pour relancer le tutoriel d'arrivée à Velia à tout moment
+/** @returns {string} HTML de la page Wiki "Tutoriel" (résumé + bouton pour relancer le tutoriel d'arrivée). */
 function renderTutoPageHtml() {
   return `<div class="admSummary">${i18next.t('backend:backend.tuto_page.intro')}</div>
     <button id="btnStartTutoWiki" style="width:auto;margin-top:10px;padding:8px 18px;">${i18next.t('backend:backend.tuto_page.replay_button')}</button>`;
@@ -1595,6 +1669,7 @@ function renderTutoPageHtml() {
 // ============================================================
 // Ouverture des modals Wiki / Patch Notes
 // ============================================================
+/** @param {string} title @param {string} bodyHtml. Ouvre le panneau info générique (partagé Wiki/Compendium/Succès/Patch notes), masque la pastille de patch notes non lues. */
 function openInfo(title, bodyHtml) {
   questsPanelOpen = false; // tout ouverture de panneau réinitialise le flag ; openDailyQuests le remet
   $a('infoTitle').textContent = title;
@@ -1740,6 +1815,7 @@ const COMPENDIUM_TUTORIAL_STEPS = [
     before: () => { compendiumTab = 'pen'; openCompendium(); },
     after: () => { compendiumTab = tutCompTabSaved; openCompendium(); } },
 ];
+/** Lance le tutoriel du Compendium (COMPENDIUM_TUTORIAL_STEPS), garde le panneau affiché derrière le spotlight (resetView:false). */
 function startCompendiumTutorial() {
   tutCompTabSaved = compendiumTab;
   startTutorial(COMPENDIUM_TUTORIAL_STEPS, { resetView:false });
@@ -1754,6 +1830,7 @@ const CRON_TUTORIAL_STEPS = [
     title:{fr:'Pierre de Cron',en:'Cron Stone'},
     text:{fr:'Cet objet protège ta pièce d\'équipement contre une rétrogradation en cas d\'échec d\'optimisation. Clique dessus pour l\'activer ou la désactiver.', en:'This item protects your gear piece from downgrading if an enhancement attempt fails. Click it to activate or deactivate it.'} },
 ];
+/** Lance le tutoriel de la Pierre de Cron (1 étape), au tout premier ramassage. */
 function startCronTutorial() {
   startTutorial(CRON_TUTORIAL_STEPS, { resetView:false });
 }
@@ -1767,6 +1844,7 @@ let activeTutorialSteps = TUTORIAL_STEPS;
 // (ordinateur) ou doigt (mobile/tablette, voir la media query CSS) qui rebondit vers le haut/bas,
 // à l'opposé du bord hors champ. Se cache dès que la cible redevient visible (ex: le joueur a
 // scrollé) — recalculé à chaque frame par tutorialTrackLoop, comme le reste du positionnement.
+/** @param {?DOMRect} r - rectangle de la cible du step courant (null = pas de cible). Affiche un indice "il faut défiler" (souris/doigt rebondissant) si la cible est entièrement hors du viewport visible. */
 function updateTutorialScrollHint(r) {
   const hint = $a('tutorialScrollHint');
   if (!r) { hint.classList.remove('show'); return; }
@@ -1777,6 +1855,7 @@ function updateTutorialScrollHint(r) {
   hint.classList.toggle('up', above);
   hint.style.top = above ? '18px' : (window.innerHeight-56)+'px';
 }
+/** Repositionne le spotlight/encadré/flèche du step de tutoriel courant sur sa cible réelle (recalculé à chaque frame par tutorialTrackLoop, donc suit aussi un scroll). Centre l'encadré si le step n'a pas de cible précise. */
 function positionTutorialStep() {
   const step = activeTutorialSteps[tutorialStepIdx];
   const hi = $a('tutorialHighlight'), box = $a('tutorialBox'), arrow = $a('tutorialArrow');
@@ -1822,6 +1901,7 @@ function positionTutorialStep() {
     }
   }
 }
+/** Affiche le step de tutoriel courant (activeTutorialSteps[tutorialStepIdx]) : titre/texte/boutons, exécute son hook `before` s'il en a un, positionne le spotlight. */
 function showTutorialStep() {
   const step = activeTutorialSteps[tutorialStepIdx];
   $a('tutStepLbl').textContent = `${i18next.t('backend:backend.tutorial.step_label')} ${tutorialStepIdx+1} / ${activeTutorialSteps.length}`;
@@ -1838,6 +1918,7 @@ function showTutorialStep() {
 }
 // referme proprement le step courant avant d'en changer (ou de terminer) : appelle son "after" s'il
 // en a un (idempotent par design, voir tutTrackerForced — donc sans risque si appelé deux fois)
+/** Referme proprement le step de tutoriel courant (exécute son hook `after` idempotent) avant d'en changer ou de terminer. */
 function leaveTutorialStep() {
   const step = activeTutorialSteps[tutorialStepIdx];
   if (step && step.after) step.after();
@@ -1846,6 +1927,7 @@ function leaveTutorialStep() {
 // soit sa source : molette, glisser la scrollbar, scroll d'un conteneur interne...) — plus fiable
 // qu'un event "scroll" (qui ne remonte pas depuis les conteneurs internes) ou qu'un debounce
 let tutorialRafId = 0;
+/** Boucle requestAnimationFrame qui suit pixel-perfect la cible du step de tutoriel (survit à tout scroll, y compris depuis un conteneur interne), s'arrête quand tutorialStepIdx repasse à -1. */
 function tutorialTrackLoop() {
   if (tutorialStepIdx < 0) { tutorialRafId = 0; return; }
   positionTutorialStep();
@@ -1862,6 +1944,7 @@ let activeTutorialTrackId = null;
 // fire-and-forget, même garde que markItemTutorialSeen (sb && currentUser && !isGuest()) -- réutilise
 // la RPC mark_item_tutorial_seen (généralisée le 2026-07-19 avec p_last_step/p_completed, voir
 // migration 20260719180000_onboarding_stats.sql) plutôt qu'une RPC dédiée en double.
+/** @param {boolean} completed @param {boolean} skipped. Journalise la progression du tutoriel suivi (RPC mark_item_tutorial_seen), fire-and-forget. No-op si aucun trackId actif ou invité. */
 function reportTutorialProgress(completed, skipped) {
   if (!activeTutorialTrackId) return;
   if (!sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
@@ -1873,6 +1956,7 @@ function reportTutorialProgress(completed, skipped) {
     }).then(null, ()=>{});
   } catch(e) {}
 }
+/** @param {object[]} [steps] - liste d'étapes à jouer (défaut TUTORIAL_STEPS). @param {{resetView?:boolean, trackId?:?string}} [opts] - resetView ferme les panneaux et revient à la Zone (false pour un tutoriel qui doit rester affiché derrière son spotlight) ; trackId active le suivi de progression admin. Lance le moteur générique de tutoriel. No-op si pas authentifié. */
 function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = null } = {}) {
   // défense en profondeur (2026-07-20, voir maybeQueueTutorialById, notifications-quests.js pour
   // le vrai correctif) : jamais de tutoriel avant une authentification réelle, même via un futur
@@ -1887,6 +1971,7 @@ function startTutorial(steps = TUTORIAL_STEPS, { resetView = true, trackId = nul
   reportTutorialProgress(false, false); // démarré (last_step=0, ni terminé ni passé)
   if (!tutorialRafId) tutorialRafId = requestAnimationFrame(tutorialTrackLoop);
 }
+/** @param {boolean} skipped - vrai si le joueur a cliqué "Passer" plutôt que terminé toutes les étapes. Ferme le tutoriel actif, journalise la progression finale. */
 function endTutorial(skipped) {
   leaveTutorialStep();
   reportTutorialProgress(!skipped, !!skipped);
@@ -1920,6 +2005,7 @@ $a('tutPrevBtn').onclick = () => {
 // -- persisté par joueur, remplace l'ancien "velia-patch-scroll" (position de pixels).
 let patchPageStart = 0;
 try { patchPageStart = parseInt(localStorage.getItem('velia-patch-page')||'0', 10) || 0; } catch(e) {}
+/** Fusionne seenThisSession dans readPatches et persiste (localStorage) — appelé à la fermeture de l'onglet, le tag NEW reste visible toute la session jusque-là. */
 function commitPatchRead() { // appelé à la fermeture de l'onglet
   try {
     const merged = new Set([...readPatches, ...seenThisSession]);
@@ -1936,6 +2022,7 @@ window.addEventListener('pagehide', commitPatchRead); // filet de sécurité (mo
 // panneau suffisait à tout vider d'un coup : désormais, seul le DÉFILEMENT réel jusqu'à une entrée
 // (voir patchObserver plus bas) la marque vue, ouvrir le panneau seul ne change plus rien. Le tag
 // "NEW" sur chaque entrée reste basé UNIQUEMENT sur les sessions précédentes (readPatches).
+/** @returns {number} nombre de patch notes jamais vues (ni lors d'une session précédente, ni pendant celle-ci) — seul le défilement réel jusqu'à une entrée la marque vue. */
 function unreadPatchCount() { return PATCH_NOTES.filter(p => !readPatches.has(p.v) && !seenThisSession.has(p.v)).length; }
 // découpe PATCH_NOTES en pages de 2 à 7 entrées SELON LA TAILLE (2026-07-11, demande explicite :
 // "affiche les 2 a 7 dernier note selon la taille") -- une page s'arrête dès qu'elle atteint 7
@@ -1943,6 +2030,7 @@ function unreadPatchCount() { return PATCH_NOTES.filter(p => !readPatches.has(p.
 // si les 2 premières sont déjà volumineuses). Recalculé à chaque ouverture/navigation (bon marché,
 // PATCH_NOTES ne bouge jamais en cours de session).
 const PATCH_PAGE_MIN = 2, PATCH_PAGE_MAX = 7, PATCH_PAGE_LINE_BUDGET = 10;
+/** @returns {{start:number, count:number}[]} découpe PATCH_NOTES en pages de PATCH_PAGE_MIN à PATCH_PAGE_MAX entrées, arrêtées plus tôt si le budget de lignes (PATCH_PAGE_LINE_BUDGET) est dépassé (jamais moins de 2 entrées). */
 function computePatchPages() {
   const pages = [];
   let i = 0;
@@ -1959,6 +2047,7 @@ function computePatchPages() {
   }
   return pages;
 }
+/** Met à jour la pastille de patch notes non lues (bouton + bandeau interne au panneau, visible seulement si le panneau est ouvert). */
 function updatePatchBadge() {
   const n = unreadPatchCount();
   const badge = $a('patchBadge');
@@ -2076,6 +2165,7 @@ const PATCH_SUBCATS_EN = {
 // construit le HTML d'UNE entrée de patch note -- absIdx = index ABSOLU dans PATCH_NOTES (pas
 // juste dans la page affichée), pour que la classe "latest" ne s'applique qu'à la toute dernière
 // version du jeu, même quand on navigue vers une page qui ne contient pas l'index 0.
+/** @param {object} p - entrée de PATCH_NOTES. @param {number} absIdx - index absolu dans PATCH_NOTES (pas dans la page affichée, pour que la classe "latest" ne s'applique qu'à la vraie dernière version). @returns {string} HTML d'une entrée de patch note, lignes groupées par catégorie avec tags gravité/plateforme/nature/sous-catégorie. */
 function renderPatchEntryHtml(p, absIdx) {
     const isNew = !readPatches.has(p.v); // basé UNIQUEMENT sur les sessions précédentes, pas sur l'affichage en cours
     return `
@@ -2139,6 +2229,7 @@ function renderPatchEntryHtml(p, absIdx) {
 // ancien") : plus de mémoire de position de scroll, plus d'IntersectionObserver -- une page ENTIÈRE
 // (2 à 7 notes, voir computePatchPages) est toujours affichée en entier, donc marquée "vue" dès son
 // rendu, sans avoir besoin de défiler dessus.
+/** Affiche la page courante des notes de version (repli HTML si le panneau React est indisponible) — une page entière (2-7 entrées) rendue = marquée vue immédiatement, câble la navigation haut/bas et le comparateur avant/après. */
 function renderPatchNotesPanel() {
   const pages = computePatchPages();
   let pageIdx = pages.findIndex(pg => pg.start === patchPageStart);
@@ -2189,6 +2280,7 @@ $a('btnPatch').onclick = () => {
   if (typeof openPatchNotesReact === 'function' && $a('patchNotesModalRoot')) openPatchNotesReact();
   else renderPatchNotesPanel();
 };
+/** @param {string} before @param {string} after - URLs des captures. Ouvre le comparateur d'images avant/après d'une ligne de patch note. */
 function openPatchImgCompare(before, after) {
   $a('patchImgLblBefore').textContent = i18next.t('backend:backend.patch_notes.compare_before_label');
   $a('patchImgLblAfter').textContent = i18next.t('backend:backend.patch_notes.compare_after_label');
