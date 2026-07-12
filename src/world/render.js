@@ -807,12 +807,20 @@ function drawMineurIso(wx,wy,w,t) {
     ctx.moveTo(-5,-8); ctx.lineTo(-6.5,3+trot*.4);
     ctx.moveTo(5,-8); ctx.lineTo(6.5,3-trot*.4);
     ctx.stroke();
+    // bottes (2026-07-23, révision approuvée "Mix2" après un tour de mix + 3 variantes)
+    ctx.fillStyle='#181a1e';
+    ctx.beginPath(); ctx.ellipse(-6.6,3.3+trot*.4,1.8,0.9,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(6.6,3.3-trot*.4,1.8,0.9,0,0,7); ctx.fill();
     // corps rond massif en fer (dos voûté vers l'avant)
     ctx.fillStyle = tone;
     ctx.beginPath(); ctx.ellipse(0,-17,10.5,9.5,0,0,7); ctx.fill();
     // reflets de plaques
     ctx.strokeStyle='rgba(220,228,240,.22)'; ctx.lineWidth=1.4;
     ctx.beginPath(); ctx.ellipse(0,-17,7.5,6.5,0,Math.PI*1.15,Math.PI*1.85); ctx.stroke();
+    // fissures de lave incandescentes
+    ctx.strokeStyle='#c85a1e'; ctx.lineWidth=1.3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-3,-20); ctx.quadraticCurveTo(-1,-17,-2,-14); ctx.quadraticCurveTo(-3,-11,-2,-9); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(2,-22); ctx.quadraticCurveTo(4,-18,1,-15); ctx.quadraticCurveTo(0,-12,1,-9); ctx.stroke();
     // pointes sur le dos et les épaules (comme la brute des captures)
     ctx.fillStyle='#3a3e44';
     for (const [px,py,ang] of [[-8,-23,-2.3],[-3,-26,-1.85],[3,-26,-1.3],[8,-23,-0.85]]) {
@@ -820,29 +828,45 @@ function drawMineurIso(wx,wy,w,t) {
       ctx.beginPath(); ctx.moveTo(-1.6,0); ctx.lineTo(0,-5.5); ctx.lineTo(1.6,0); ctx.closePath(); ctx.fill();
       ctx.restore();
     }
-    // épaulière ronde cloutée côté arme
-    ctx.fillStyle='#4a5058';
-    ctx.beginPath(); ctx.arc(9,-22,4.6,0,7); ctx.fill();
-    ctx.fillStyle='#22262c';
-    ctx.beginPath(); ctx.arc(9,-22,1.6,0,7); ctx.fill();
+    // épaulières rondes cloutées des DEUX côtés, chacune bordée de 4 pointes
+    [9,-9].forEach(sx => {
+      ctx.fillStyle='#4a5058';
+      ctx.beginPath(); ctx.arc(sx,-22,4.6,0,7); ctx.fill();
+      ctx.fillStyle='#22262c';
+      ctx.beginPath(); ctx.arc(sx,-22,1.6,0,7); ctx.fill();
+      ctx.fillStyle='#3a3e44';
+      [[-3.2,-3.2],[3.2,-3.2],[-3.2,3.2],[3.2,3.2]].forEach(([dx,dy]) => {
+        const px = sx+dx, py = -22+dy;
+        ctx.beginPath(); ctx.moveTo(px-0.9,py+0.9); ctx.lineTo(px,py-2); ctx.lineTo(px+0.9,py+0.9); ctx.closePath(); ctx.fill();
+      });
+    });
     // bras + masse énorme (s'abat lors de l'attaque)
     ctx.strokeStyle='#2e3238'; ctx.lineWidth=4.4; ctx.lineCap='round';
     ctx.beginPath(); ctx.moveTo(10,-20); ctx.lineTo(15+lungeAmt*.5,-12); ctx.stroke();
     ctx.strokeStyle='#5a4a38'; ctx.lineWidth=2.6;
     ctx.beginPath(); ctx.moveTo(15+lungeAmt*.5,-12); ctx.lineTo(21+lungeAmt*.7,-22); ctx.stroke();
+    // gantelet au poignet
+    ctx.fillStyle='#5a5e64';
+    ctx.beginPath(); ctx.ellipse(18+lungeAmt*.6,-18,2.4,2.4,0,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.6; ctx.stroke();
+    // masse énorme, agrandie et hérissée sur tout le pourtour (Mix2)
     ctx.fillStyle='#6a7078';
-    ctx.beginPath(); ctx.ellipse(21+lungeAmt*.7,-24,3.6,4.6,0.3,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(21+lungeAmt*.7,-24,5.6,6.4,0.3,0,7); ctx.fill();
     ctx.fillStyle='#3a3e44';
-    for (const ang of [-1.2,0,1.2]) {
+    for (let i=0;i<6;i++) {
+      const ang = (i/6)*Math.PI*2;
       ctx.save(); ctx.translate(21+lungeAmt*.7,-24); ctx.rotate(ang+0.3);
-      ctx.beginPath(); ctx.moveTo(-1.2,-4); ctx.lineTo(0,-7.5); ctx.lineTo(1.2,-4); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(-1.3,-5.4); ctx.lineTo(0,-9.5); ctx.lineTo(1.3,-5.4); ctx.closePath(); ctx.fill();
       ctx.restore();
     }
     // petite tête casquée enfoncée dans les épaules
     ctx.fillStyle='#4a5058';
     ctx.beginPath(); ctx.arc(2,-27,3.6,0,7); ctx.fill();
-    ctx.fillStyle='rgba(10,8,6,.85)';
-    ctx.beginPath(); ctx.arc(2.8,-26.4,1.7,0,7); ctx.fill(); // fente d'ombre du casque
+    // fente d'oeil du casque + lueur de lave
+    ctx.fillStyle='rgba(10,8,6,.9)';
+    ctx.beginPath(); ctx.rect(1.2,-27,3.2,1.2); ctx.fill();
+    ctx.fillStyle = w.lunge>.3 ? '#ff7a3a' : '#c85a1e';
+    ctx.beginPath(); ctx.arc(2.8,-26.4,0.6,0,7); ctx.fill();
   } else {
     // ---- mineur corrompu (mob normal, voûté) ----
     // jambes

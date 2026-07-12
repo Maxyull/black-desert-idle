@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V413', d:'24/07/2026 00:00', name:{fr:'Contremaître (Mine de Fer Abandonnée) : fissures de lave, bottes, 2e épaulière et masse agrandie', en:'Foreman (Abandoned Iron Mine): lava cracks, boots, 2nd pauldron and bigger mace'}, fr:[
+      {t:'change', sub:'interface', tx:'Le contremaître blindé (boss de pack de la Mine de Fer Abandonnée, juste après la Colonie Sausan) affiche désormais 2 fissures incandescentes façon lave sur le torse, des bottes aux pieds, une 2e épaulière cloutée sur l\'épaule opposée (bordée de 4 petites pointes, comme celle déjà présente côté arme), un gantelet au poignet qui tient la masse, une fente d\'oeil du casque rectangulaire avec un point lumineux orange (au lieu d\'une simple ombre), et une masse bien plus grosse hérissée de 6 pointes tout autour (au lieu de 3 d\'un seul côté). Le mineur normal (non-boss) de cette zone est inchangé. Comportement de combat inchangé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The armored foreman (pack boss of the Abandoned Iron Mine, right after Sausan Colony) now shows 2 glowing lava-crack lines on the torso, boots, a 2nd spiked pauldron on the opposite shoulder (ringed by 4 small spikes, matching the existing weapon-side one), a gauntlet on the wrist holding the mace, a rectangular helmet eye-slit with a glowing orange dot (instead of a plain shadow), and a much bigger mace bristling with 6 spikes all the way around (instead of 3 on one side). The regular (non-boss) miner in this zone is unchanged. Combat behavior unchanged.'},
+    ] },
   { v:'V412', d:'23/07/2026 23:00', name:{fr:'Guerrier Sausan (Colonie Sausan) : gantelet, ceinture et bottes', en:'Sausan Warrior (Sausan Colony): gauntlet, belt and boots'}, fr:[
       {t:'change', sub:'interface', tx:'Le guerrier Sausan (Colonie Sausan, juste après la Ferme Shultz) porte désormais un gantelet sur la main tenant le cimeterre, une ceinture large en cuir avec une boucle dorée (remplaçant la simple ligne de ceinture), et des bottes aux pieds. Tunique/cotte de mailles, lame, capuche et voile inchangés. Comportement de combat inchangé.'},
     ], en:[
