@@ -200,8 +200,14 @@
   .farmModeSegLabel { font-size:8px; font-weight:600; letter-spacing:.02em; text-transform:uppercase; }
   /* remplace le slider <input type="range"> Loot/XP/Opti -- Opti est retiré (voir FARM_MODES), la
      pilule garde un 3e emplacement verrouillé (.farmModeLocked) en attente d'un futur mode */
+  /* repositionné en haut à droite du cadre de jeu, empilé au-dessus de #aiModeSlider (2026-07-12,
+     demande explicite : "met simplement les sélecteurs d'IA en haut à droite") -- remplace
+     l'ancien décalage centré 50%+1px symétrique à #aiState. Coin haut-droite du cadre entièrement
+     libre (aucun autre élément overlay n'y vit, #lootTicker est en bas-droite) -- empilage
+     vertical choisi plutôt que côte à côte pour rester dans le cadre même compressé/mobile sans
+     recalculer une largeur combinée des 2 pilules. */
   #farmModeSlider {
-    position:absolute; top:10px; left:calc(50% + 1px);
+    position:absolute; top:10px; right:10px;
     display:flex; align-items:center; gap:1px;
     background:var(--s2); border:1px solid var(--dbBorder);
     padding:3px; white-space:nowrap; border-radius:20px;
@@ -218,9 +224,12 @@
     color:#5a5666; opacity:.6; cursor:not-allowed;
   }
   /* mode de combat IA choisi manuellement (2026-07-14, demande explicite) -- même pilule à bulles
-     que farmModeSlider, symétrique de l'autre côté du centre (#aiState) */
+     que farmModeSlider. Repositionné en haut à droite (2026-07-12, demande explicite), empilé
+     juste sous #farmModeSlider plutôt que symétrique de l'autre côté du centre (#aiState) --
+     top recalculé pour laisser la hauteur réelle de #farmModeSlider + un petit espace (mesuré via
+     getBoundingClientRect en conditions réelles, pas juste une estimation visuelle). */
   #aiModeSlider {
-    position:absolute; top:10px; left:calc(50% - 1px); transform:translateX(-100%);
+    position:absolute; top:44px; right:10px;
     display:flex; align-items:center; gap:1px;
     background:var(--s2); border:1px solid var(--dbBorder);
     padding:3px; white-space:nowrap; border-radius:20px;
@@ -2586,19 +2595,19 @@
        de respiration sur un cadre de jeu aussi bas (silver/taux vivent dans .topbar depuis la
        Phase 1, plus dans #gameFrame -- règles #silverBox/#shRate ici retirées, obsolètes). */
     #lootTicker { font-size:9.5px; max-height:70px; }
-    /* #aiModeSlider/#farmModeSlider (style F, 2026-07-12) : le décalage 50%±165px et le texte
-       permanent des 3 segments sont calibrés pour le cadre desktop ~1240px large -- sur un cadre
-       réduit à la largeur d'un téléphone (~380px), ils débordaient déjà du cadre AVANT ce style
-       (bug pré-existant, vérifié via un script Playwright ad hoc : left ~ -144px sur un cadre qui
-       commence à 0), et le texte permanent l'aggrave nettement (~-478px, pilule quasi entièrement
-       hors cadre). Corrigé ici : décalage réduit + segments resserrés (padding/police plus petits)
-       pour que les 2 pilules restent visibles ENTIÈREMENT dans le cadre, sans se chevaucher, sans
-       changer la résolution du canvas (règle du projet) -- seule cette surcouche HTML bouge. */
-    #aiModeSlider { left:calc(50% - 4px); }
-    #farmModeSlider { left:calc(50% + 4px); }
+    /* #aiModeSlider/#farmModeSlider (style F) : repositionnés en haut à droite (2026-07-12,
+       demande explicite), déjà empilés verticalement via top/right en dehors de cette media
+       query -- ici seulement resserrer segments/police pour un cadre de téléphone (~380px) et
+       recalculer l'écart vertical entre les 2 pilules pour leur hauteur réduite (mesuré via
+       getBoundingClientRect en conditions réelles). #ztCompendium (compteur "📖 X/Y" dans
+       #zoneTitle) masqué uniquement ici : sur un cadre aussi bas, il se serrait déjà contre
+       #ztReq/le badge de zone empilés juste au-dessus -- reste affiché tel quel sur desktop. */
+    #farmModeSlider { top:8px; right:8px; }
+    #aiModeSlider { top:39px; right:8px; }
     .aiModeSeg, .farmModeSeg, .farmModeLocked { padding:2px 3px; gap:1px; }
     .farmModeSegIcon { font-size:8px; }
     .farmModeSegLabel { font-size:6px; letter-spacing:0; }
+    #ztCompendium { display:none; }
   }
 
   /* =====================================================================

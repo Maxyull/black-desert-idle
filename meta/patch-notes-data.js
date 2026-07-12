@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V393', d:'22/07/2026 14:00', name:{fr:'Sélecteurs de mode IA déplacés en haut à droite, compteur Compendium masqué sur téléphone', en:'AI mode selectors moved to the top-right, Compendium counter hidden on mobile'}, fr:[
+      {t:'change', sub:'interface', tx:'Les 2 sélecteurs à bulles du cadre de jeu (mode de combat IA et mode de farm) sont désormais empilés en haut à droite du cadre, à la place de l\'ancien calage centré de part et d\'autre de l\'indicateur "IA : ...". Aucun changement de fonctionnement, seulement leur position.'},
+      {t:'change', sub:'interface', plat:'mobile', tx:'Le compteur Compendium ("📖 X/Y" sous le nom de la zone) est désormais masqué sur téléphone pour laisser plus de place au nom de zone et aux PA/PD requis — reste affiché normalement sur ordinateur.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The game frame\'s 2 bubble selectors (AI combat mode and farm mode) are now stacked in the top-right corner of the frame, instead of the old centered layout on either side of the "AI: ..." indicator. No functional change, position only.'},
+      {t:'change', sub:'interface', plat:'mobile', tx:'The Compendium counter ("📖 X/Y" under the zone name) is now hidden on phones to leave more room for the zone name and required AP/DP — still shown normally on desktop.'},
+    ] },
   { v:'V392', d:'22/07/2026 13:00', name:{fr:'Barre de sorts et sélecteur de potion : même reskin que Zone', en:'Skill bar and potion selector: same reskin as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'La barre de sorts (icônes en bas de l\'écran de jeu) a reçu le même reskin visuel que le reste de l\'écran Zone : coque assortie aux autres icônes du jeu (fond/bordure/coins arrondis), nom du sort en police moderne. Les couleurs de sort en cours de lancement et de buff actif sont inchangées.'},
       {t:'change', sub:'interface', tx:'Le sélecteur de potion (case Vie/Mana en bas à gauche) a reçu le même reskin : coque assortie, libellés de section ("Potion de vie"/"Potion de mana") en petites majuscules dorées, soin et coût en police moderne. Les couleurs de sélection/verrouillage sont inchangées.'},

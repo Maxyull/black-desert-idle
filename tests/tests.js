@@ -425,6 +425,78 @@
     S.farmMode = s.farmMode; renderFarmModeBtn();
     equipMode = s.equipMode; renderEquipModeBtn();
   }
+  // repositionnement des sélecteurs #farmModeSlider/#aiModeSlider en haut à droite du cadre de jeu
+  // (2026-07-12, demande explicite : "met simplement les sélecteurs d'IA en haut à droite") --
+  // remplace l'ancien calage centré symétrique autour de #aiState (left:calc(50%±1px)). Double
+  // garde-fou : la RÈGLE CSS de base (ancrée via `right`, plus l'ancien left:calc(50%...)/
+  // translateX(-100%)) ET la position RÉELLE rendue (les 2 pilules dans la moitié droite du cadre,
+  // empilées verticalement sans se chevaucher). Empêche un retour silencieux au calage centré si
+  // quelqu'un retouche ce bloc plus tard.
+  function testAiFarmModeSlidersPositionedTopRightWithoutOverlap() {
+    if (!$('farmModeSlider') || !$('aiModeSlider') || !$('gameFrame')) return; // pas de DOM (contexte hors-jeu)
+
+    // --- garde-fou statique : règles CSS top-level (hors media query) ---
+    const topLevelRules = [];
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules || sheet.rules; } catch (e) { continue; }
+      if (!rules) continue;
+      for (const r of rules) if (r && r.cssText && !(r instanceof CSSMediaRule)) topLevelRules.push(r.cssText);
+    }
+    const farmRule = topLevelRules.find(t => t.trim().startsWith('#farmModeSlider'));
+    const aiRule = topLevelRules.find(t => t.trim().startsWith('#aiModeSlider'));
+    assert('#farmModeSlider (règle de base) existe dans le CSS chargé', !!farmRule, 'introuvable');
+    assert('#aiModeSlider (règle de base) existe dans le CSS chargé', !!aiRule, 'introuvable');
+    if (farmRule) {
+      assert('#farmModeSlider ancré via right (haut à droite), plus via left:calc(50%...)',
+        /right:\s*10px/.test(farmRule) && !/left:\s*calc/.test(farmRule), farmRule);
+    }
+    if (aiRule) {
+      assert('#aiModeSlider ancré via right (haut à droite), plus via left:calc(50%...)/translateX(-100%)',
+        /right:\s*10px/.test(aiRule) && !/left:\s*calc/.test(aiRule) && !/translateX\(-100%\)/.test(aiRule), aiRule);
+    }
+
+    // --- position réelle rendue : les 2 pilules dans le cadre, empilées sans chevauchement, dans la moitié droite ---
+    const frame = $('gameFrame').getBoundingClientRect();
+    const farm = $('farmModeSlider').getBoundingClientRect();
+    const ai = $('aiModeSlider').getBoundingClientRect();
+    const frameMid = frame.left + frame.width / 2;
+    assert('#farmModeSlider reste horizontalement DANS #gameFrame', farm.left >= frame.left - 1 && farm.right <= frame.right + 1,
+      `farm=${JSON.stringify(farm)} frame=${JSON.stringify(frame)}`);
+    assert('#aiModeSlider reste horizontalement DANS #gameFrame', ai.left >= frame.left - 1 && ai.right <= frame.right + 1,
+      `ai=${JSON.stringify(ai)} frame=${JSON.stringify(frame)}`);
+    assert('#farmModeSlider est dans la moitié DROITE du cadre (plus centré)', farm.left > frameMid, `farm.left=${farm.left} frameMid=${frameMid}`);
+    assert('#farmModeSlider/#aiModeSlider ont le même bord droit (ancrés à la même distance du bord)',
+      Math.abs(farm.right - ai.right) < 3, `farm.right=${farm.right} ai.right=${ai.right}`);
+    assert('#aiModeSlider est empilé SOUS #farmModeSlider, sans chevauchement vertical',
+      ai.top >= farm.bottom, `farm.bottom=${farm.bottom} ai.top=${ai.top}`);
+  }
+  // #ztCompendium ("📖 X/Y", compteur Compendium dans #zoneTitle) masqué UNIQUEMENT sur téléphone
+  // (2026-07-12, demande explicite : "retire le compteur compendium sur telephone") -- reste visible
+  // tel quel sur desktop. Garde-fou statique : la règle display:none doit vivre DANS le bloc
+  // @media (max-width:600px), jamais dans la règle de base (sinon il disparaîtrait aussi desktop).
+  function testZtCompendiumHiddenOnlyOnMobile() {
+    if (typeof document === 'undefined') return;
+    let baseRule = null, mobileRule = null;
+    for (const sheet of document.styleSheets) {
+      let rules;
+      try { rules = sheet.cssRules || sheet.rules; } catch (e) { continue; }
+      if (!rules) continue;
+      for (const r of rules) {
+        if (r.cssText && r.cssText.trim().startsWith('#ztCompendium') && !(r instanceof CSSMediaRule)) {
+          baseRule = r.cssText;
+        }
+        if (r instanceof CSSMediaRule && /max-width:\s*600px/.test(r.media.mediaText)) {
+          for (const inner of r.cssRules) {
+            if (inner.cssText && inner.cssText.trim().startsWith('#ztCompendium')) mobileRule = inner.cssText;
+          }
+        }
+      }
+    }
+    assert('#ztCompendium a une règle de base (visible par défaut, desktop)', !!baseRule, 'introuvable');
+    if (baseRule) assert('#ztCompendium : la règle de base ne masque PAS (display:none) hors media query', !/display:\s*none/.test(baseRule), baseRule);
+    assert('#ztCompendium a bien une règle display:none dans @media (max-width:600px)', !!mobileRule && /display:\s*none/.test(mobileRule), mobileRule);
+  }
   // "montrer dans l'inventaire uniquement les items qui se lootent dans la zone... si plusieurs
   // zones sont disponibles... plusieurs flèches sur stuff ET zone à farm" (2026-07-12) --
   // slotsUpgradedByZone(zi) doit retourner UNIQUEMENT le(s) socle(s) que CETTE zone améliore
@@ -4048,6 +4120,8 @@
     testEquipmentDollRefreshesOnZoneTravel();
     testFarmModeBubbleSelectorReflectsTwoModes();
     testBubbleSelectorsStyleFAlwaysShowLabelsAndUseZoneTokens();
+    testAiFarmModeSlidersPositionedTopRightWithoutOverlap();
+    testZtCompendiumHiddenOnlyOnMobile();
     testSlotsUpgradedByZoneIsZoneSpecific();
     testZoneTierLockIsSeparateFromLabel();
     testCompagnonSeaLifeLiveInHeaderNotZoneTierTabs();
