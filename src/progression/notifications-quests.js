@@ -47,6 +47,7 @@ function deleteNotif(id) {
 }
 // relaie un événement vers le salon Discord "log général" via l'Edge Function discord-log —
 // le webhook lui-même reste côté serveur, jamais dans ce code client (voir supabase-discord-log)
+/** @param {string} title @param {string} description @param {number} color - couleur hex de l'embed Discord. Relaie fire-and-forget vers le salon "log général" via l'Edge Function discord-log, no-op si `sb` indisponible. */
 async function logToDiscord(title, description, color) {
   if (!sb) return;
   try {
@@ -59,6 +60,7 @@ async function logToDiscord(title, description, color) {
     });
   } catch (e) {}
 }
+/** Rafraîchit la pastille du bouton cloche (compte non-lu, plafonné à "9+") et le halo doré si notifUnread > 0. */
 function updateNotifBadge() {
   const badge = $a('notifBadge'); if (!badge) return;
   badge.textContent = notifUnread > 9 ? '9+' : notifUnread;
@@ -69,6 +71,7 @@ function updateNotifBadge() {
 }
 // affiche TOUJOURS la date (pas seulement l'heure pour aujourd'hui) — demande explicite du
 // 2026-07-07, pour pouvoir resituer une notification dans le temps sans ambiguïté
+/** @param {number} ts - timestamp ms. @returns {string} "JJ/MM HH:MM", toujours avec la date (jamais juste l'heure, pour resituer sans ambiguïté). */
 function fmtNotifTime(ts) {
   const d = new Date(ts);
   const hhmm = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
@@ -76,6 +79,7 @@ function fmtNotifTime(ts) {
 }
 // bannière colorée d'annonce importante (ex: reset complet des comptes) + entrée correspondante
 // dans le centre de notifications — demande explicite du 2026-07-06
+/** @param {string} icon @param {string} title @param {string} body - HTML. Affiche la bannière colorée d'annonce importante (#resetNoticeOverlay) et ajoute l'entrée correspondante (texte brut) au centre de notifications. */
 function showResetNotice(icon, title, body) {
   $('resetNoticeIcon').textContent = icon || '🔔';
   $('resetNoticeTitle').textContent = title;
@@ -86,6 +90,7 @@ function showResetNotice(icon, title, body) {
 $('resetNoticeClose').onclick = () => $('resetNoticeOverlay').classList.remove('show');
 // réclame une éventuelle notice en attente à la connexion (livrée une seule fois, voir
 // claim_pending_notice côté serveur) — appelé après le chargement de la sauvegarde cloud
+/** Réclame (une seule fois, via RPC claim_pending_notice) une éventuelle notice serveur en attente et l'affiche. Appelé après le chargement de la sauvegarde cloud. No-op si non connecté. */
 async function checkPendingNotice() {
   if (!sb || !currentUser) return;
   try {
@@ -103,6 +108,7 @@ const NOTIF_CAT_META = {
   success:   { fr:'🏆 Réussites', en:'🏆 Achievements' },
   info:      { fr:'📰 Activité',  en:'📰 Activity' },
 };
+/** @param {object} n - entrée de S.notifLog. @returns {string} HTML d'une ligne du centre de notifications (icône, titre, texte, heure, bouton supprimer). */
 function notifRowHtml(n) {
   return `<div class="notifRow ${n.cat}">
     <div class="notifIcon">${n.icon}</div>
@@ -112,6 +118,7 @@ function notifRowHtml(n) {
   </div>`;
 }
 let notifCatFilter = 'all'; // 'all' | 'important' | 'success' | 'info' — demande explicite du 2026-07-08 ("les catégories doivent être en haut")
+/** Ouvre le centre de notifications : remet notifUnread à 0, purge les entrées >7 jours, affiche les 20 dernières triées en onglets (Tout/Important/Réussites/Activité) via notifCatFilter. */
 function openNotifCenter() {
   notifUnread = 0;
   updateNotifBadge();
@@ -171,6 +178,7 @@ function checkAchievements() {
   }
   if (unlocked) refreshStatsOnly();
 }
+/** @param {object} a - succès (ACHIEVEMENTS). Affiche un toast éphémère (4,5s) de déblocage de succès dans #achToastStack. */
 function showAchToast(a) {
   const stack = $('achToastStack'); if (!stack) return;
   const el = document.createElement('div');
@@ -192,6 +200,7 @@ function mailboxAdd(key, name, icon, qty) {
   if (existing) existing.qty += qty;
   else S.mailbox.push({ key, name, icon, qty });
 }
+/** @param {string} icon @param {string} name @param {number} qty. Affiche un toast éphémère (4,5s) de réception de courrier dans #achToastStack (même style que showAchToast). */
 function showMailToast(icon, name, qty) {
   const stack = $('achToastStack'); if (!stack) return;
   const el = document.createElement('div');
@@ -243,12 +252,14 @@ function suppressLoyaltyGrantForToday() {
   S.lastLoyaltyDate = now.getFullYear()+'-'+(now.getMonth()+1)+'-'+now.getDate();
   S.loyalty = 0;
 }
+/** Rafraîchit la pastille #mailBadge avec la somme des quantités en attente dans S.mailbox. */
 function updateMailBadge() {
   const badge = $('mailBadge'); if (!badge) return;
   const n = S.mailbox.reduce((sum,m) => sum + m.qty, 0);
   badge.textContent = fmt(n);
   badge.classList.toggle('show', n > 0);
 }
+/** @returns {string} HTML du panneau courrier : stock Loyalties déjà réclamé + liste des entrées en attente (bouton "Réclamer" uniquement sur l'entrée 'loyalty'). */
 function renderMailboxHtml() {
   const stockRow = `<div class="admSummary">${i18next.t('progression:progression.mailbox.claimed_stock_label')} : <b>${fmt(S.loyalty||0)}</b> 🏅</div>`;
   if (!S.mailbox.length || !S.mailbox.some(m => m.qty > 0)) {
@@ -262,6 +273,7 @@ function renderMailboxHtml() {
     `</div>`).join('') +
     `<div class="admSummary">${i18next.t('progression:progression.mailbox.permanent_note')}</div>`;
 }
+/** Ouvre le panneau courrier et branche le bouton "Réclamer" (claimLoyalty + ré-affichage). */
 function openMailbox() {
   openInfo(i18next.t('progression:progression.mailbox.panel_title'), renderMailboxHtml());
   $a('infoBody').querySelectorAll('.mailClaimBtn').forEach(btn => {
@@ -277,6 +289,7 @@ let achOnlyUnfinished = false; // filtre "pas fini" (s'applique désormais à la
 // petit anneau de progression SVG (barre circulaire), partagé par la vue d'ensemble (76px) et les
 // tuiles de catégorie (36px) -- même formule que les anneaux du mockup fourni (stroke-dasharray/
 // dashoffset sur un cercle tourné de -90deg pour démarrer en haut).
+/** @param {number} pct - 0-100. @param {number} size - diamètre px. @param {number} strokeW - épaisseur du trait. @returns {string} SVG d'un anneau de progression circulaire (stroke-dasharray/dashoffset), démarre en haut. */
 function achRingSvg(pct, size, strokeW) {
   const r = (size - strokeW) / 2, c = 2 * Math.PI * r;
   const clamped = Math.max(0, Math.min(100, pct));
@@ -289,6 +302,7 @@ function achRingSvg(pct, size, strokeW) {
 }
 // carte de vue d'ensemble : anneau global, débloqués/restants, silver déjà gagné en récompenses de
 // succès vs silver encore à débloquer -- tout calculé en direct depuis S.achUnlocked, jamais figé.
+/** @param {object} S - état joueur. @returns {string} HTML de la carte de vue d'ensemble des succès (anneau global, débloqués/restants, silver gagné/restant à débloquer), tout recalculé en direct. */
 function achOverviewHtml(S) {
   const doneCount = ACHIEVEMENTS.filter(a => S.achUnlocked[a.id]).length;
   const totalCount = ACHIEVEMENTS.length;
@@ -310,6 +324,7 @@ function achOverviewHtml(S) {
 // bandeau "Presque là" : réutilise TEL QUEL nextAchievement() (déjà utilisée par l'encart de suivi
 // permanent en haut à droite) -- juste reskinné ici, aucune nouvelle logique de calcul du succès le
 // plus proche n'est réintroduite.
+/** @param {object} S - état joueur. @returns {string} HTML du bandeau "Presque là" (succès le plus proche, réutilise nextAchievement()) ou un message "tout débloqué". */
 function achSpotlightHtml(S) {
   const next = nextAchievement();
   if (!next) return `<div class="achSpotlightBox achSpotlightDone">${i18next.t('progression:progression.quests.all_achievements_done')}</div>`;
@@ -327,6 +342,7 @@ function achSpotlightHtml(S) {
 }
 // tuile de filtre par catégorie ('all' inclus) : anneau + icône + libellé + compteur réel --
 // remplace les anciens onglets texte .catTab/.achCatTab.
+/** @param {string} catId - clé de catégorie ('all' inclus). @param {object} meta - {icon, label:{fr,en}}. @param {object} S - état joueur. @returns {string} HTML de la tuile de filtre par catégorie (anneau + icône + libellé + compteur). */
 function achCatCardHtml(catId, meta, S) {
   const { done, total, pct } = achCatCompletion(catId, S);
   return `<div class="achCatCard${catId===achPanelCat?' on':''}" data-cat="${catId}">` +
@@ -339,6 +355,7 @@ function achCatCardHtml(catId, meta, S) {
 // progression (X/N paliers débloqués), barre + récompense du palier actif si pas encore terminé,
 // check vert UNIQUEMENT si toute la chaîne est à 100% (jamais sur un palier intermédiaire déjà
 // débloqué tant que la chaîne continue).
+/** @param {object} entry - {chain, progress} (voir groupAchievementsIntoChains). @returns {string} HTML d'une carte de CHAÎNE de succès (palier actif, puces X/N paliers, barre si pas fini, check vert seulement si toute la chaîne est à 100%). */
 function achChainCardHtml(entry) {
   const { chain, progress } = entry;
   const { tier, unlockedCount, totalTiers, done, pct, val } = progress;
@@ -364,6 +381,7 @@ function achChainCardHtml(entry) {
 // pneRelativeTime() (progression/patch-notes-engage-react.js, charge APRÈS ce fichier mais appelé
 // seulement au clic joueur donc déjà défini à ce moment-là, voir CLAUDE.md section 7 "référence en
 // exécution") plutôt que dupliquer un 2e formateur de temps relatif identique dans ce fichier.
+/** @param {object} S - état joueur. @returns {string} HTML de la bande "derniers débloqués" (4 max, horodatage réel via S.achUnlocked, badge "nouveau" si <24h). */
 function achRecentRowHtml(S) {
   const recent = recentlyUnlockedAchievements(S, 4);
   if (!recent.length) return '';
@@ -381,6 +399,7 @@ function achRecentRowHtml(S) {
   }).join('');
   return `<div class="achRecentRow">${items}</div>`;
 }
+/** @returns {string} HTML complet du panneau Succès (vue d'ensemble, spotlight, tuiles de catégorie, filtre "pas fini", derniers débloqués, grille de chaînes filtrée/triée). */
 function renderAchievementsHtml() {
   const overview = achOverviewHtml(S);
   const spotlight = achSpotlightHtml(S);
@@ -403,6 +422,7 @@ function renderAchievementsHtml() {
     : `<div class="achEmpty">${i18next.t('progression:progression.achievements.empty')}</div>`;
   return `<div class="achPanel">${overview}${spotlight}${catRow}${toggleRow}${recentRow}${grid}</div>`;
 }
+/** Ouvre le panneau Succès et branche les interactions (clic catégorie, toggle "pas fini"). */
 function openAchievements() {
   const callout = contentChangeCalloutHtml('achievements');
   openInfo(i18next.t('progression:progression.achievements.panel_title'), callout + renderAchievementsHtml());
@@ -417,6 +437,7 @@ function openAchievements() {
 // ---------- Compendium (bonus de collection par zone) — demande explicite du 2026-07-08 ----------
 // le bonus d'une zone n'est actif QUE si ses 4 objets (trash/matériau/bijou/craft) ont TOUS déjà
 // été obtenus au moins une fois (voir zoneFullyCollected/compendiumZoneCount) — pas juste 1 seul.
+/** @param {string} name - nom d'objet. @returns {boolean} vrai si déjà looté au moins une fois. */
 function compendiumItemDone(name) { return (S.lootByItem[name]||0) > 0; }
 // clic sur un objet du Compendium : montre (halo doré) TOUTES les zones qui le lootent, et propose
 // d'y aller directement — demande explicite du 2026-07-08 ("je clique sur Ceinture de Naru j'ai un
@@ -449,6 +470,7 @@ function compendiumHighlightItem(name) {
 // Inventaire (onglet "Compendium", voir #invModeCompendiumPane/renderCompendiumPane, promu là-bas
 // le 2026-07-14)
 let compendiumTab = 'zones'; // 'zones' | 'bosses' | 'pen' — demande explicite du 2026-07-08 ("refais moi le compendium pour qu'il ressemble a quelque chose de lisible")
+/** @returns {string} HTML complet du panneau Compendium (résumé + onglets Zones/World Bosses/Maîtrise PEN selon compendiumTab). */
 function renderCompendiumHtml() {
   const zc = compendiumZoneCount(), bc = compendiumBossCount();
   const total = compendiumTotalCount(), max = compendiumTotalMax(), pct = compendiumPct();
@@ -540,6 +562,7 @@ try { compTutoSeen = localStorage.getItem('velia-idle-comp-tuto-seen') === '1'; 
 // Voir CRON_TUTORIAL_STEPS/startCronTutorial (game-supabase.js) et son déclenchement dans dropsTick.
 let cronTutoSeen = false;
 try { cronTutoSeen = localStorage.getItem('velia-idle-cron-tuto-seen') === '1'; } catch(e) {}
+/** Ouvre le panneau Compendium, lance le tutoriel au tout premier accès, branche les onglets et le clic sur un objet (halo de zones via compendiumHighlightItem). */
 function openCompendium() {
   const callout = contentChangeCalloutHtml('compendium');
   openInfo(i18next.t('progression:progression.compendium.panel_title'), callout + renderCompendiumHtml());
@@ -639,6 +662,7 @@ function claimQuest(scope, i) {
   renderQuestTrackerWidget();
   if (questsPanelOpen) openDailyQuests();
 }
+/** Assure les tirages journalier/hebdo puis rafraîchit #questBadge avec le nombre de quêtes prêtes à réclamer (des deux scopes). */
 function updateQuestBadge() {
   ensureQuests('daily'); ensureQuests('weekly');
   let n = 0;
@@ -652,6 +676,7 @@ function updateQuestBadge() {
 // affiche TOUS les types de quêtes du pool (pas seulement les 3 tirées ce cycle) — celles non
 // tirées ce cycle-ci restent visibles en grisé avec leur objectif possible, pour que le joueur
 // voie l'étendue complète du pool plutôt que seulement le tirage du jour/de la semaine
+/** @param {'daily'|'weekly'} scope. @returns {string} HTML de TOUS les types de quêtes du pool pour ce scope — celles non tirées ce cycle restent visibles en grisé ("pas active"). */
 function renderQuestSectionHtml(scope) {
   ensureQuests(scope);
   const cfg = QUEST_SCOPES[scope], st = S[cfg.stateKey];
@@ -698,6 +723,7 @@ function questScopeCounts(scope) {
   return { claimable, remaining };
 }
 let questPanelScope = 'daily'; // scope actuellement affiché dans le panneau Quêtes
+/** @returns {string} HTML du panneau Quêtes (bouton suivi + onglets Journalières/Hebdo avec badge de statut + section du scope actif). */
 function renderDailyQuestsHtml() {
   const dailyNote = i18next.t('progression:progression.quests.daily_reset_note');
   const weeklyNote = i18next.t('progression:progression.quests.weekly_reset_note');
@@ -722,6 +748,7 @@ function renderDailyQuestsHtml() {
     `<div id="questScopeBody">${renderQuestSectionHtml(questPanelScope)}<div class="admSummary">${note}</div></div>`;
 }
 let questsPanelOpen = false; // le panneau Quêtes est-il ouvert ? (pour re-rendre après une réclamation)
+/** Ouvre le panneau Quêtes et branche les onglets de scope + boutons "Réclamer". */
 function openDailyQuests() {
   openInfo(i18next.t('progression:progression.quests.panel_title'), renderDailyQuestsHtml());
   questsPanelOpen = true; // openInfo l'a remis à false ; on le repasse à true APRÈS
@@ -735,12 +762,14 @@ function openDailyQuests() {
 }
 // active/désactive la liste de suivi des quêtes restantes (encart en haut à droite) — le bouton
 // "Suivre" vit dans le panneau Quêtes, mais l'affichage lui-même est un encart permanent séparé
+/** Active/désactive l'encart de suivi des quêtes (S.questTrackerOn) et rafraîchit l'encart + le panneau Quêtes s'il est ouvert. */
 function toggleQuestTracker() {
   S.questTrackerOn = !S.questTrackerOn;
   renderQuestTrackerWidget();
   if ($a('infoOverlay').classList.contains('open')) openDailyQuests();
 }
 // prochain succès le plus proche d'être débloqué (plus haut % de progression parmi les non-débloqués)
+/** @returns {?{a:object, pct:number}} le succès non-débloqué le plus proche (plus haut % de progression, plafonné à 99), ou null si tout est débloqué. */
 function nextAchievement() {
   let best = null, bestPct = -1;
   for (const a of ACHIEVEMENTS) {
@@ -750,6 +779,7 @@ function nextAchievement() {
   }
   return best;
 }
+/** @param {number} ms. @returns {string} durée formatée "[Njours]HH:MM:SS". */
 function fmtDuration(ms) {
   let s = Math.max(0, Math.floor(ms/1000));
   const days = Math.floor(s/86400); s -= days*86400;
@@ -770,6 +800,7 @@ function msToNextWeeklyReset() {
   const daysUntil = 7 - day;
   return new Date(now.getFullYear(), now.getMonth(), now.getDate()+daysUntil, 0,0,0,0) - now;
 }
+/** @param {number} sec. @returns {string} durée formatée "HhMM" si ≥1h, sinon "Mmin". */
 function fmtHours(sec) {
   sec = Math.max(0, Math.floor(sec));
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
@@ -783,9 +814,12 @@ function fmtHours(sec) {
 let resetWidgetFolded = isMobileViewport(), trackerWidgetFolded = isMobileViewport();
 try { const v = localStorage.getItem('velia-idle-resetwidget-folded'); if (v !== null) resetWidgetFolded = v === '1'; } catch(e) {}
 try { const v = localStorage.getItem('velia-idle-trackerwidget-folded'); if (v !== null) trackerWidgetFolded = v === '1'; } catch(e) {}
+/** Replie/déplie l'encart "resets" (persisté en localStorage) et le re-rend. */
 function toggleResetFold() { resetWidgetFolded = !resetWidgetFolded; try { localStorage.setItem('velia-idle-resetwidget-folded', resetWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestWidget(); }
+/** Replie/déplie l'encart de suivi des quêtes (persisté en localStorage) et le re-rend. */
 function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; try { localStorage.setItem('velia-idle-trackerwidget-folded', trackerWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestTrackerWidget(); }
 // encart permanent en haut à droite : timers de reset, prochain succès à débloquer, temps de jeu
+/** Rend l'encart permanent en haut à droite (#questWidget) : timers de reset journalier/hebdo, temps de jeu, prochain succès. No-op replié (juste l'en-tête) si resetWidgetFolded. */
 function renderQuestWidget() {
   const el = $('questWidget'); if (!el) return;
   ensureQuests('daily'); ensureQuests('weekly');
@@ -811,6 +845,7 @@ function renderQuestWidget() {
 }
 // encart de suivi des quêtes restantes (activé via le bouton "Suivre" du panneau Quêtes) —
 // liste toutes les quêtes actives ce cycle (journalières + hebdo) pas encore réclamées
+/** Rend l'encart de suivi des quêtes (#questTrackerWidget, activé via S.questTrackerOn) : liste les quêtes actives non réclamées des deux scopes, avec bouton "Réclamer" si terminées. Masqué si désactivé. */
 function renderQuestTrackerWidget() {
   const el = $('questTrackerWidget'); if (!el) return;
   if (!S.questTrackerOn) { el.style.display = 'none'; el.innerHTML = ''; return; }
@@ -902,7 +937,9 @@ function zoneSilverPerHour(z) {
   const l = z.loot;
   return l.trash.val*l.trash.ch * REF_KPM_FOR_STATS * 60;
 }
+/** @param {object} z - zone (ZONES). @returns {number} XP/h théorique à REF_KPM_FOR_STATS kills/min. */
 function zoneXpPerHour(z) { return z.xp * REF_KPM_FOR_STATS * 60; }
+/** @param {object} z - zone (ZONES). @returns {number} kills/min théorique à REF_DPS_FOR_STATS dégâts/min de référence. */
 function zoneKillsPerMin(z) { return REF_DPS_FOR_STATS / z.hpPer; }
 // meilleure zone selon une métrique donnée (silver/xp/kills), toutes zones confondues (demande
 // explicite : classement théorique, PAS limité aux zones survivables aujourd'hui)
@@ -944,6 +981,7 @@ const EQUIP_MODES = {
   gear:    { icon:'⚔️', name:{fr:'Équipement', en:'Gear'} },
   crystal: { icon:'💎', name:{fr:'Cristal',    en:'Crystal'} },
 };
+/** Rafraîchit le slider Équipement/Cristal (#equipModeSlider) : segment actif, libellés, bascule les panneaux gear/cristal selon equipMode. */
 function renderEquipModeBtn() {
   const el = $('equipModeSlider'); if (!el) return;
   el.querySelectorAll('.equipModeSeg').forEach(seg => {
@@ -1096,6 +1134,7 @@ let isLeavingViaSkipBtn = false;
 // 1 flag localStorage par tutoriel (même convention que compTutoSeen/cronTutoSeen) -- fonction pure
 // séparée de l'écriture pour rester testable (voir consigne de la session : logique exposée,
 // pas enfouie dans une closure)
+/** @param {string} id - id de tutoriel (ITEM_TUTORIALS). @returns {string} clé localStorage du flag "déjà vu" pour ce tutoriel. */
 function itemTutoStorageKey(id) { return 'velia-idle-item-tuto-seen-'+id; }
 /** @param {string} id - id de tutoriel (ITEM_TUTORIALS). @returns {boolean} vrai si déjà vu (flag localStorage). */
 function isItemTutorialSeen(id) {
@@ -1204,6 +1243,7 @@ function endItemTutorial(skipped) {
 // CONTENT_UPDATE_VERSION (game-core.js, hors périmètre de cet agent) : le badge est injecté en JS
 // au premier appel plutôt qu'ajouté en dur dans index.dev.html (constrainte de cette session), donc
 // idempotent (ne recrée pas le <span> s'il existe déjà) pour être appelable à chaque renderInventory().
+/** Injecte (si absente, idempotent) et bascule la pastille "NEW" sur l'onglet 🎒 Inventaire tant qu'un tutoriel d'objet est en attente ou affiché. */
 function refreshItemTutorialBadge() {
   const tabBtn = document.querySelector('.invModeTab[data-mode="inv"]');
   if (!tabBtn) return;
