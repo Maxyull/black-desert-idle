@@ -823,6 +823,8 @@ declare
   v_price_key text;
   v_price numeric;
   v_payout bigint;
+  v_payout_factor numeric;
+  v_has_seal boolean;
   v_have int;
 begin
   if v_uid is null then raise exception 'Non authentifié'; end if;
@@ -845,7 +847,9 @@ begin
   v_have := coalesce((v_item->>'qty')::int, 0);
   if v_have < p_qty then raise exception 'Quantité insuffisante'; end if;
 
-  v_payout := floor(v_price * p_qty);
+  v_has_seal := coalesce((v_save->'S'->>'hasConclaveMarchandsSeal')::boolean, false);
+  v_payout_factor := case when v_has_seal then 0.7884 else 0.65 end;
+  v_payout := floor(v_price * p_qty * v_payout_factor);
 
   if v_have = p_qty then
     v_save := jsonb_set(v_save, array['INV', p_inv_index::text], 'null'::jsonb);
@@ -856,6 +860,8 @@ begin
   v_save := jsonb_set(v_save, array['S','silver'],
     to_jsonb(coalesce((v_save->'S'->>'silver')::bigint, 0) + v_payout));
   update public.game_saves set save_data = v_save where user_id = v_uid;
+  insert into public.silver_ledger (user_id, delta, category, note)
+    values (v_uid, v_payout, 'market_sell', v_item->>'name');
 end;
 $function$
 
@@ -1057,6 +1063,9 @@ declare
   v_sell record;
   v_qty int;
   v_price numeric;
+  v_payout bigint;
+  v_payout_factor numeric;
+  v_seller_has_seal boolean;
   v_buy_save jsonb;
   v_sell_save jsonb;
   v_inv jsonb;
@@ -1068,22 +1077,28 @@ begin
     select * into v_buy from public.market_orders
       where item_key = p_item_key and side = 'buy' and status = 'open'
       order by price desc, random() limit 1 for update skip locked;
+    exit when v_buy.id is null;
     select * into v_sell from public.market_orders
-      where item_key = p_item_key and side = 'sell' and status = 'open'
+      where item_key = p_item_key and side = 'sell' and status = 'open' and user_id <> v_buy.user_id
       order by price asc, random() limit 1 for update skip locked;
 
-    exit when v_buy.id is null or v_sell.id is null or v_buy.price < v_sell.price;
+    exit when v_sell.id is null or v_buy.price < v_sell.price;
 
     v_qty := least(v_buy.qty, v_sell.qty);
     v_price := v_sell.price;
 
+    select coalesce((save_data->'S'->>'hasConclaveMarchandsSeal')::boolean, false)
+      into v_seller_has_seal from public.game_saves where user_id = v_sell.user_id;
+    v_payout_factor := case when v_seller_has_seal then 0.7884 else 0.65 end;
+    v_payout := floor(v_price * v_qty * v_payout_factor);
+
     select save_data into v_sell_save from public.game_saves where user_id = v_sell.user_id for update;
     if v_sell_save is not null then
       v_sell_save := jsonb_set(v_sell_save, array['S','silver'],
-        to_jsonb(coalesce((v_sell_save->'S'->>'silver')::bigint, 0) + floor(v_price * v_qty)));
+        to_jsonb(coalesce((v_sell_save->'S'->>'silver')::bigint, 0) + v_payout));
       update public.game_saves set save_data = v_sell_save where user_id = v_sell.user_id;
       insert into public.silver_ledger (user_id, delta, category, note)
-        values (v_sell.user_id, floor(v_price * v_qty)::bigint, 'market_sell', v_sell.item_name);
+        values (v_sell.user_id, v_payout, 'market_sell', v_sell.item_name);
     end if;
 
     select save_data into v_buy_save from public.game_saves where user_id = v_buy.user_id for update;

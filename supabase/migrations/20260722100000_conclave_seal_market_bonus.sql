@@ -1,6 +1,13 @@
 -- Sceau du Conclave des Marchands : bonus vendeur (2026-07-13, NON APPLIQUEE cette session --
 -- ecrite sans acces Supabase authentifie, a appliquer par une session/CLI qui en dispose).
 --
+-- SUPERSEDEE (2026-07-13, meme jour, session suivante avec acces Supabase authentifie) : la
+-- definition de market_match_item supposee ici etait perimee (colonnes market_trades differentes,
+-- logique de remboursement acheteur absente) et market_sell_material (vente directe, meme facteur
+-- 0.65 en dur) n'etait pas couverte du tout. Voir 20260722100001_conclave_seal_market_bonus_v2.sql
+-- pour la version reellement appliquee en base -- ce fichier reste tel quel pour l'historique,
+-- jamais modifie une fois ecrit (CLAUDE.md section 12), mais ne PAS l'appliquer tel quel.
+--
 -- Remplace le facteur de payout FIXE 0.65 (market_match_item, voir
 -- 20260718130000_market_sales_tax_35pct.sql) par un facteur PAR VENDEUR : si le vendeur a assemble
 -- le Sceau (game_saves.save_data->'S'->>'hasConclaveMarchandsSeal' = 'true'), applique la taxe/frais
