@@ -1732,6 +1732,44 @@
     delete S.enhPeakByName['testCompPenItem'];
     if (s.hadMastery) S.penMastery['testCompPenItem'] = true; else delete S.penMastery['testCompPenItem'];
   }
+  // "j'ai des items protégé compendium dans mon sac tuvala qui sont deja pen compendium"
+  // (2026-07-13) : bug réel -- si invAdd() échouait (sac plein) au moment où
+  // evictMasteredFromCompendiumBag() était appelée (au moment d'atteindre PEN, ou via la
+  // migration migratePenMasteryV308, gatée/exécution unique), l'objet restait protégé POUR
+  // TOUJOURS -- rien ne relançait jamais l'éviction pour ce nom ensuite. Vérifie que le balayage
+  // NON gaté ajouté dans applySaveState() (même ligne que celle rejouée ici) répare bien un objet
+  // resté coincé alors que S.penMastery est déjà vrai pour son nom, dès qu'une place se libère.
+  function testCompendiumSweepRescuesStuckMasteredItemOnEveryLoad() {
+    // sauvegarde l'INV ENTIER (pas juste un slot) : contrairement aux autres tests Compendium de
+    // ce fichier, celui-ci a justement besoin d'un sac RÉELLEMENT plein (0 slot libre nulle part)
+    // pour prouver que l'éviction échoue proprement -- supposer que le compte de test a déjà le
+    // sac plein (comme le suggère CLAUDE.md section 11) s'est avéré faux dans cet environnement
+    // Playwright précis (échec constaté : invAdd() trouvait un slot libre ailleurs).
+    const savedInv = INV.slice();
+    const s = { comp: COMPENDIUM_BAG[INV_SIZE-1], hadMastery: !!(S.penMastery && S.penMastery['testStuckPenItem']) };
+    for (let i = 0; i < INV_SIZE-1; i++) INV[i] = { key:'filler'+i, name:'Filler', kind:'material', qty:1, stackable:true, weight:0, val:0 };
+    // simule l'état bloqué : déjà maîtrisé, mais toujours protégé dans le Compendium (comme si
+    // invAdd() avait échoué la 1re fois) -- sac plein au départ (0 slot libre), puis une place
+    // se libère (comme un joueur qui vend/range quelque chose entre-temps).
+    const item = { name:'testStuckPenItem', kind:'gear', slot:'weapon', ap:5, dp:0, hp:0, enhLv: ENH_NAMES.length-1, optimizable:true, matName:'Pierre du Temps' };
+    COMPENDIUM_BAG[INV_SIZE-1] = item;
+    INV[INV_SIZE-1] = { key:'mat_Pierre du Temps', name:'Pierre du Temps', kind:'material', qty:5, stackable:true, weight:0.1, val:1 };
+    if (!S.penMastery) S.penMastery = {};
+    S.penMastery['testStuckPenItem'] = true; // déjà maîtrisé, mais l'éviction n'a jamais réussi
+    // sac RÉELLEMENT plein (0 slot null dans tout INV) : le balayage ne peut rien faire, l'objet reste protégé (pas perdu)
+    new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
+    assert('Sac plein : l\'objet coincé reste protégé (pas perdu, juste pas encore évacuable)', COMPENDIUM_BAG[INV_SIZE-1] !== null);
+    // une place se libère (le joueur range/vend quelque chose) -- le balayage suivant doit réussir
+    const freeIdx = INV_SIZE-2;
+    INV[freeIdx] = null;
+    new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
+    assert('Place libérée : le balayage rattrape l\'objet resté coincé, sans attendre un nouvel enchantement', COMPENDIUM_BAG[INV_SIZE-1] === null);
+    const movedIdx = INV.findIndex(x => x && x.name === 'testStuckPenItem');
+    assert('L\'objet rattrapé rejoint bien le sac principal', movedIdx !== -1);
+    for (let i = 0; i < INV_SIZE; i++) INV[i] = savedInv[i];
+    COMPENDIUM_BAG[INV_SIZE-1] = s.comp;
+    if (s.hadMastery) S.penMastery['testStuckPenItem'] = true; else delete S.penMastery['testStuckPenItem'];
+  }
   // "taxe market 20% dorenavant" (2026-07-18) -- garde-fou de synchronisation : la constante
   // client MARKET_SELL_TAX_RATE (aperçu affiché avant de placer un ordre, voir
   // updateMktTaxHint()) doit rester alignée sur le facteur réel appliqué côté serveur
@@ -5925,6 +5963,7 @@
     testJewelryHasMatNameForEnhancement();
     testInvOptTargetDoesNotEquip();
     testCompendiumEvictsItemOnceItReachesPen();
+    testCompendiumSweepRescuesStuckMasteredItemOnEveryLoad();
     testConclaveSealOnlyVeliaFragmentUnlocked();
     testConclaveSealAssembleFailsWithoutAllFiveFragments();
     testConclaveSealAssembleSucceedsWithAllFiveFragmentsSimulated();

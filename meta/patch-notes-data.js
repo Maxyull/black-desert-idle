@@ -16,6 +16,11 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V437', d:'13/07/2026 18:00', name:{fr:'Compendium : les objets PEN coincés dans le sac protégé sont enfin libérés', en:'Compendium: PEN items stuck in the protected bag are finally freed'}, fr:[
+      {t:'fix', sub:'equipements', tx:'Bug trouvé (rapporté explicitement) : un objet ayant atteint PEN restait parfois protégé dans le Compendium POUR TOUJOURS si le sac principal était plein au moment précis de l\'éviction — rien ne relançait ensuite la libération pour cet objet. Corrigé : à chaque chargement, tous les objets déjà maîtrisés PEN mais encore protégés sont réexaminés, et libérés dès qu\'une place se libère dans le sac.'},
+    ], en:[
+      {t:'fix', sub:'equipements', tx:'Bug found (explicitly reported): an item that reached PEN could stay protected in the Compendium FOREVER if the main bag was full at the exact moment of eviction — nothing would ever retry freeing it afterward. Fixed: on every load, all items already PEN-mastered but still protected are re-checked, and freed as soon as bag space opens up.'},
+    ] },
   { v:'V436', d:'13/07/2026 17:45', name:{fr:'Classement : silver/h remis à 0, plus de faux record à la connexion', en:'Leaderboard: silver/h reset to 0, no more fake record on connection'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Bug trouvé (rapporté explicitement) : juste après une reconnexion, une bourrasque de kills sur une zone dense en mobs pouvait s\'extrapoler en un taux astronomique et devenir le record de silver/h à vie, sans aucun garde-fou si aucun record n\'était encore établi. Corrigé : un taux ne peut plus jamais devenir un record s\'il ne repose pas sur au moins 90 secondes d\'échantillons réels (au lieu de s\'appuyer sur l\'étalement réel, parfois de quelques secondes seulement).'},
       {t:'change', sub:'equipements', tx:'Tous les records de silver/h existants ont été remis à 0 (possiblement gonflés par ce bug) — ils se rebâtissent naturellement avec la formule corrigée dès la prochaine bonne session.'},

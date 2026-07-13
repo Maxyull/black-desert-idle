@@ -2453,6 +2453,17 @@ function applySaveState(data) {
   if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
   if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
   if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
+  // Rattrapage NON gaté (2026-07-13, bug rapporté : "j'ai des items protégé compendium dans mon
+  // sac tuvala qui sont deja pen compendium") -- evictMasteredFromCompendiumBag() n'est rejouée
+  // que lors d'un NOUVEL enchantement PEN, ou une seule fois via migratePenMasteryV308 (gatée,
+  // déjà consommée pour ces joueurs). Si invAdd() échouait silencieusement au moment de l'éviction
+  // (sac principal plein), l'objet restait protégé dans COMPENDIUM_BAG POUR TOUJOURS -- rien ne
+  // relance jamais l'éviction pour ce nom ensuite. Contrairement aux migrations `migratedXxx`
+  // ci-dessus (gatées, exécution unique), ce balayage tourne à CHAQUE chargement : idempotent
+  // (evictMasteredFromCompendiumBag() sort tout de suite si le nom n'est pas dans S.penMastery ou
+  // déjà absent de COMPENDIUM_BAG) et auto-réparateur (un objet coincé se libère dès qu'il y a à
+  // nouveau de la place dans le sac principal, sans attendre un hypothétique futur enchantement).
+  new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO
