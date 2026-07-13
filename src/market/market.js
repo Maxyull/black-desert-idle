@@ -16,7 +16,9 @@ function marketRequireAuth() {
 // market_lockdown_and_cancel_all) fait aussi foi côté RPC (market_place_order refuse tout nouvel
 // ordre si fermé) ; ce blocage client évite juste d'ouvrir le panneau pour rien et explique
 // pourquoi. L'admin garde toujours l'accès (même logique staff-only que le serveur).
-$a('btnMarket').onclick = async () => {
+// 2026-07-13 : #btnMarket (sidebar) retiré, doublon du header -- #btnMarketTopbar est désormais
+// le SEUL déclencheur.
+$a('btnMarketTopbar').onclick = async () => {
   if (!marketRequireAuth()) return;
   if (!(typeof isAdmin === 'function' && isAdmin())) {
     try {
@@ -34,6 +36,46 @@ $a('btnMarket').onclick = async () => {
   if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('market');
 };
 $a('closeMarket').onclick = () => $a('marketOverlay').classList.remove('open');
+// accès direct au Marché depuis le menu contextuel d'un objet du sac (2026-07-24, demande
+// explicite : "un bouton Vendre qui ouvre un accès direct au marché commun pour cet item précis")
+// -- réutilise EXACTEMENT le même garde-fou (auth + fermeture d'urgence) que $a('btnMarketTopbar').onclick
+// ci-dessus, ouvre le panneau, PUIS sélectionne directement l'objet et déploie son formulaire de
+// vente (voir wireCmOfferForms/cmSellOfferForm plus bas), au lieu de laisser le joueur le
+// rechercher lui-même dans le catalogue. Catégorie 'all' pour ne pas avoir à deviner la bonne
+// sous-catégorie CM_SLOT_TO_CAT à l'avance -- charge tous les kinds (p_kind:null), assez rapide
+// pour ce panneau (déjà rechargé entièrement à chaque ouverture, voir refreshCommonMarket).
+/** @param {object} item - item du sac (kind/name/enhLv) dont on veut ouvrir directement l'écran de vente Marché. Ouvre le panneau Marché, sélectionne CET objet précis (même niveau d'enchant) et déploie son formulaire "Vendre" -- appelé depuis le bouton "🏛️ Vendre au marché" du menu contextuel inventaire (inventory-ui.js:showItemMenu). */
+async function openMarketSellFor(item) {
+  if (!marketRequireAuth()) return;
+  if (!(typeof isAdmin === 'function' && isAdmin())) {
+    try {
+      const { data } = await sb.rpc('get_market_open');
+      if (data === false) { alert(i18next.t('market:market.closed_for_maintenance')); return; }
+    } catch(e) {}
+  }
+  $a('marketOverlay').classList.add('open');
+  cmActiveCat = 'all'; cmDrilldownName = null;
+  await refreshCommonMarket();
+  const kind = item.kind, enhLv = item.enhLv || 0;
+  const g = cmGroupForExactItem(item.name, kind, enhLv);
+  cmSelectedKey = cmItemKey(kind, item.name, enhLv);
+  renderCmListingsList();
+  renderCmDetailPanel(g);
+  const offerBtn = $a('cmSellOfferBtn');
+  const offerForm = $a('cmSellOfferForm');
+  if (offerBtn && offerForm && !offerForm.classList.contains('open')) offerBtn.click();
+  if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('market');
+}
+// construit une ligne "sélectionnée" compatible renderCmDetailPanel pour un (name, kind, enhLv)
+// EXACT -- contrairement aux groupes de renderCmListingsList (regroupés par nom, meilleur prix tous
+// niveaux confondus), cible précisément le niveau d'enchant de l'objet réel du joueur.
+/** @param {string} name @param {string} kind @param {number} enhLv. @returns {object} ligne "sélectionnée" ({name, kind, lv, best}) compatible renderCmDetailPanel, pour l'objet exact (même niveau d'enchant) -- utilisée par openMarketSellFor. */
+function cmGroupForExactItem(name, kind, enhLv) {
+  const items = cmListings.filter(l => l.item_name === name && l.item_kind === kind &&
+    ((l.item_snapshot && l.item_snapshot.enhLv) || 0) === (enhLv || 0));
+  const best = items.length ? items.reduce((a,b) => a.price < b.price ? a : b) : null;
+  return { name, kind, lv: enhLv, best, items };
+}
 let marketMouseDownOnBackdrop = false;
 $a('marketOverlay').addEventListener('mousedown', e => { marketMouseDownOnBackdrop = (e.target.id === 'marketOverlay'); });
 $a('marketOverlay').addEventListener('click', e => { if (e.target.id === 'marketOverlay' && marketMouseDownOnBackdrop) $a('marketOverlay').classList.remove('open'); });

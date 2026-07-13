@@ -2463,6 +2463,57 @@
     cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
     assert('drawUluanIso ne lève jamais d\'exception (alpha/normal, échelle/charge/sens/hors-écran)', !threw, errMsg);
   }
+  // Garde protège contre tout retour d'exception pour l'Esprit des Mânes (zone "Planque des
+  // Mânes", zone 11) -- ajouté le 2026-07-13 pour corriger le bug où zoneIdx 11 tombait dans le
+  // fallback drawWolfIso générique (loup affiché à tort). Contrairement à Uluan/Gahaz/Sausan/
+  // Rhutum/Shultz/Pirate, ce monstre A une vraie variante w.alpha dédiée (brute spectrale
+  // bouffie au fléau fumant, mockup "Mix B") distincte du mob normal (archer/lancier spectral
+  // svelte, mockup "Mix C") -- les deux branches sont donc exercées ici comme pour
+  // drawElricIso/drawHelmIso/drawMineurIso.
+  function testDrawManesIsoNeverThrows() {
+    if (typeof drawManesIso === 'undefined' || typeof cam === 'undefined' || typeof P === 'undefined') return;
+    const savedCamX = cam.x, savedCamY = cam.y, savedPx = P.x, savedPy = P.y;
+    cam.x = 0; cam.y = 0; P.x = 100; P.y = 0;
+    let threw = false, errMsg = '';
+    try {
+      [true, false].forEach(alpha => {
+        [0, 0.85, 1.5].forEach(scale => {
+          [0, 0.5, 1].forEach(lunge => {
+            [-1, 1].forEach(px => {
+              P.x = px;
+              drawManesIso(0, 0, { scale, lunge, phase: 0, tone:'#8a9ab0', alpha }, 0.3);
+            });
+          });
+        });
+      });
+      drawManesIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#8a9ab0', alpha:true }, 0); // hors écran -> sortie anticipée
+      drawManesIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#8a9ab0', alpha:false }, 0); // idem, branche normale
+    } catch (e) { threw = true; errMsg = e.message; }
+    cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
+    assert('drawManesIso ne lève jamais d\'exception (alpha/normal, échelle/charge/sens/hors-écran)', !threw, errMsg);
+  }
+  function testDrawTrollIsoNeverThrows() {
+    if (typeof drawTrollIso === 'undefined' || typeof cam === 'undefined' || typeof P === 'undefined') return;
+    const savedCamX = cam.x, savedCamY = cam.y, savedPx = P.x, savedPy = P.y;
+    cam.x = 0; cam.y = 0; P.x = 100; P.y = 0;
+    let threw = false, errMsg = '';
+    try {
+      [true, false].forEach(alpha => {
+        [0, 0.85, 1.5].forEach(scale => {
+          [0, 0.5, 1].forEach(lunge => {
+            [-1, 1].forEach(px => {
+              P.x = px;
+              drawTrollIso(0, 0, { scale, lunge, phase: 0, tone:'#6a7a5e', alpha }, 0.3);
+            });
+          });
+        });
+      });
+      drawTrollIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#6a7a5e', alpha:true }, 0); // hors écran -> sortie anticipée
+      drawTrollIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#6a7a5e', alpha:false }, 0); // idem, branche normale
+    } catch (e) { threw = true; errMsg = e.message; }
+    cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
+    assert('drawTrollIso ne lève jamais d\'exception (alpha/normal, échelle/charge/sens/hors-écran)', !threw, errMsg);
+  }
   // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
   // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
   // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
@@ -2914,45 +2965,31 @@
     const adminBtn = $('btnAdminTopbar');
     if (adminBtn) assert('#btnAdminTopbar est caché par défaut (pas isAdmin())', adminBtn.style.display === 'none', adminBtn.style.display);
   }
-  // même bouton, même fonction : chaque raccourci header doit déclencher un .click() sur son
-  // équivalent sidebar plutôt qu'une logique dupliquée (voir CLAUDE.md, "raccourcis header").
+  // ex-test "délégation .click() vers la sidebar" (2026-07-13) RÉÉCRIT le même jour : les
+  // boutons sidebar doublons (#btnLeaderboard/#btnMarket/#btnPatch/#btnDonation/#btnAdmin/
+  // #btnLogout, #adminBox, #patchBadge) ont été RETIRÉS (demande explicite : "retire les
+  // doublons") -- chaque bouton Topbar est désormais câblé DIRECTEMENT sur sa fonction réelle
+  // (plus de proxy .click() vers un sidebar qui n'existe plus). Ce test vérifie (1) que chaque
+  // raccourci header a bien un .onclick assigné (pas orphelin), et (2) garde-fou anti-retour :
+  // aucun des anciens ids sidebar ne doit réapparaître dans le DOM.
   function testHeaderShortcutButtonsDelegateToSidebarClick() {
-    const pairs = [
-      ['btnLeaderboardTopbar', 'btnLeaderboard'], ['btnMarketTopbar', 'btnMarket'],
-      ['btnPatchTopbar', 'btnPatch'], ['btnDonationTopbar', 'btnDonation'],
-      ['btnAdminTopbar', 'btnAdmin'], ['btnLogoutTopbar', 'btnLogout'],
-    ];
-    for (const [topbarId, sidebarId] of pairs) {
-      const topbarBtn = $(topbarId), sidebarBtn = $(sidebarId);
-      if (!topbarBtn || !sidebarBtn) continue;
-      let clicked = false;
-      const savedOnclick = sidebarBtn.onclick;
-      sidebarBtn.onclick = () => { clicked = true; };
-      topbarBtn.onclick();
-      sidebarBtn.onclick = savedOnclick;
-      assert(`#${topbarId} déclenche un clic sur #${sidebarId}`, clicked, topbarId);
+    const topbarIds = ['btnLeaderboardTopbar', 'btnMarketTopbar', 'btnPatchTopbar',
+      'btnDonationTopbar', 'btnAdminTopbar', 'btnLogoutTopbar'];
+    for (const id of topbarIds) {
+      const btn = $(id);
+      if (!btn) continue;
+      assert(`#${id} a un .onclick assigné (pas de logique orpheline)`, typeof btn.onclick === 'function', id);
+    }
+    const removedSidebarIds = ['btnLeaderboard', 'btnMarket', 'btnDiscord', 'btnPatch',
+      'btnDonation', 'btnAccount', 'btnAdmin', 'btnLogout', 'adminBox', 'patchBadge'];
+    for (const id of removedSidebarIds) {
+      assert(`#${id} (ancien doublon sidebar) n'existe plus dans le DOM`, !document.getElementById(id), id);
     }
   }
-  // publication de note de version sur Discord (2026-07-20, demande explicite : "ajoute la
-  // publication de patchnote directement sur discord") -- formatPatchNoteForDiscord() est PURE
-  // (aucun réseau/DOM), testable directement sur une vraie entrée de PATCH_NOTES.
-  function testFormatPatchNoteForDiscord() {
-    if (typeof formatPatchNoteForDiscord === 'undefined' || typeof PATCH_NOTES === 'undefined') return;
-    const note = PATCH_NOTES[0];
-    const { title, description } = formatPatchNoteForDiscord(note, 'fr');
-    assert('Le titre Discord contient le numéro de version', title.indexOf(note.v) !== -1, title);
-    assert('Le titre Discord contient le nom fr de la note', title.indexOf(note.name.fr) !== -1, title);
-    assert('La description Discord contient une ligne par entrée fr', description.split('\n').length === note.fr.length, description);
-    const icons = { new:'🆕', change:'🔄', fix:'🛠️', exploit:'🔒' };
-    note.fr.forEach(line => {
-      const icon = icons[line.t] || '•';
-      assert(`La ligne "${line.tx.slice(0,30)}..." garde son icône ${icon} et son texte`, description.indexOf(`${icon} ${line.tx}`) !== -1);
-    });
-    // cas limite : version inconnue -> repli sur l'anglais géré par formatPatchNoteForDiscord lui-même
-    const enOnly = { v:'V0', name:{en:'Test only'}, en:[{t:'new', tx:'English only line'}] };
-    const enResult = formatPatchNoteForDiscord(enOnly, 'en');
-    assert('Repli correct sur les lignes en quand lang="en"', enResult.description.indexOf('English only line') !== -1, enResult.description);
-  }
+  // ex-test "publication de note de version sur Discord" (2026-07-20) RETIRÉ le 2026-07-13 en
+  // même temps que formatPatchNoteForDiscord/publishPatchNoteToDiscord (src/admin/admin-panel.js)
+  // -- plus de bouton admin manuel, l'annonce Discord passe uniquement par
+  // scripts/announce-patch-note.js (CI, avec retry sur rate-limit désormais).
   // garde-fou (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
   // supabase") : bug rencontré 3 FOIS dans ce repo (log_playtime_ping le 2026-07-08,
   // mark_item_tutorial_seen ×2 et sync_companion_stats le 2026-07-20) -- le builder Postgrest
@@ -5242,6 +5279,103 @@
     assert('cardLayoutSetActiveTab() accepte de revenir sur l\'onglet hôte', switched.active.equipCard === 'equipCard');
   }
 
+  // ---------- Menu objet inventaire : Jeter/Vendre au marché/protection Compendium (2026-07-24) ----------
+  // Bouton "Jeter" du menu objet -- vérifie EN CONDITIONS RÉELLES (showItemMenu + confirm() mocké,
+  // pas juste une inspection statique) qu'annuler la confirmation ne modifie PAS INV, et que
+  // confirmer détruit bien le slot -- suit le modèle demandé pour toute action irréversible d'objet.
+  function testDropConfirmCancelDoesNotModifyInvButConfirmDoes() {
+    if (typeof showItemMenu !== 'function' || typeof dropItem !== 'function') return;
+    const idx = INV_SIZE - 2;
+    const saved = INV[idx];
+    const savedConfirm = window.confirm;
+    try {
+      INV[idx] = { name:'Objet de test jeter', kind:'trash', qty:1, val:5, stackable:true, key:'t_drop_test' };
+      showItemMenu(0, 0, { invIndex: idx, ...INV[idx] });
+      const dropLabel = i18next.t('inventory:inventory.action_drop');
+      let btn = [...$('itemPop').querySelectorAll('button')].find(b => b.textContent === dropLabel);
+      assert('showItemMenu affiche bien un bouton "Jeter"', !!btn);
+      if (!btn) return;
+      window.confirm = () => false;
+      btn.click();
+      assert('Annuler la confirmation de "Jeter" NE modifie PAS INV', !!INV[idx] && INV[idx].key === 't_drop_test', `INV[idx]=${JSON.stringify(INV[idx])}`);
+      // reconstruit le popup pour le 2e essai (le clic précédent a déjà appelé hideItemPop())
+      showItemMenu(0, 0, { invIndex: idx, ...INV[idx] });
+      btn = [...$('itemPop').querySelectorAll('button')].find(b => b.textContent === dropLabel);
+      window.confirm = () => true;
+      btn.click();
+      assert('Confirmer "Jeter" détruit bien le slot INV', INV[idx] === null, `INV[idx]=${JSON.stringify(INV[idx])}`);
+    } finally {
+      window.confirm = savedConfirm;
+      INV[idx] = saved;
+      hideItemPop();
+    }
+  }
+  // "🏛️ Vendre au marché" doit apparaître seulement pour les kinds qui ont une entrée au catalogue
+  // Marché (material/gear/jackpot) -- le trash n'a AUCUNE source de vente joueur-à-joueur, seul
+  // sell1/sellAll (vente instantanée au vendeur) s'y applique.
+  function testSellMarketButtonGatedByKindNotTrash() {
+    if (typeof showItemMenu !== 'function') return;
+    const idx = INV_SIZE - 3;
+    const saved = INV[idx];
+    const marketLabel = i18next.t('inventory:inventory.action_sell_market');
+    try {
+      INV[idx] = { name:'Objet de test trash', kind:'trash', qty:1, val:5, stackable:true, key:'t_trash_test' };
+      showItemMenu(0, 0, { invIndex: idx, ...INV[idx] });
+      let btn = [...$('itemPop').querySelectorAll('button')].find(b => b.textContent === marketLabel);
+      assert('Le trash n\'a PAS de bouton "Vendre au marché" (aucune entrée catalogue Marché pour ce kind)', !btn);
+
+      INV[idx] = { name:'Pierre de Novice', kind:'material', qty:5, stackable:true, val:1, key:'t_mat_test' };
+      showItemMenu(0, 0, { invIndex: idx, ...INV[idx] });
+      btn = [...$('itemPop').querySelectorAll('button')].find(b => b.textContent === marketLabel);
+      assert('Un matériau a bien un bouton "Vendre au marché"', !!btn);
+    } finally { INV[idx] = saved; hideItemPop(); }
+  }
+  // Objet du sac protégé Compendium : jamais de Jeter/Vendre (romprait silencieusement la collection
+  // de zone, voir zoneFullyCollected) -- tooltip explicite affiché à la place.
+  function testCompendiumItemMenuHasNoDropOrMarketSellButtons() {
+    if (typeof showItemMenu !== 'function' || typeof COMPENDIUM_BAG === 'undefined') return;
+    const idx = INV_SIZE - 4;
+    const saved = COMPENDIUM_BAG[idx];
+    try {
+      COMPENDIUM_BAG[idx] = { name:'Objet de test compendium', kind:'gear', slot:'helmet', ap:0, dp:5, hp:0, enhLv:0, key:'t_comp_test' };
+      showItemMenu(0, 0, { compIndex: idx, ...COMPENDIUM_BAG[idx] });
+      const pop = $('itemPop');
+      const dropLabel = i18next.t('inventory:inventory.action_drop');
+      const marketLabel = i18next.t('inventory:inventory.action_sell_market');
+      const buttons = [...pop.querySelectorAll('button')].map(b => b.textContent);
+      assert('Un objet du Compendium n\'a jamais de bouton "Jeter"', !buttons.includes(dropLabel));
+      assert('Un objet du Compendium n\'a jamais de bouton "Vendre au marché"', !buttons.includes(marketLabel));
+      assert('Un objet du Compendium affiche l\'explication de protection', pop.innerHTML.includes(i18next.t('inventory:inventory.compendium_protected_hint')));
+    } finally { COMPENDIUM_BAG[idx] = saved; hideItemPop(); }
+  }
+  // openMarketSellFor (market.js) doit présélectionner l'objet EXACT (même niveau d'enchant), jamais
+  // juste le meilleur prix tous niveaux confondus -- vérifié via cmGroupForExactItem sur un jeu de
+  // listings fictif avec 2 niveaux différents du même objet.
+  function testCmGroupForExactItemMatchesOnlyTheRequestedEnhLv() {
+    if (typeof cmGroupForExactItem !== 'function') return;
+    const savedListings = cmListings;
+    try {
+      cmListings = [
+        { item_name:'Bâton Naru', item_kind:'gear', price:1000, item_snapshot:{ enhLv:5 } },
+        { item_name:'Bâton Naru', item_kind:'gear', price:500,  item_snapshot:{ enhLv:12 } },
+        { item_name:'Bâton Naru', item_kind:'gear', price:800,  item_snapshot:{ enhLv:12 } },
+      ];
+      const g = cmGroupForExactItem('Bâton Naru', 'gear', 12);
+      assert('cmGroupForExactItem cible le bon niveau d\'enchant (12), pas le meilleur prix tous niveaux confondus', g.best && g.best.price === 500, `best=${JSON.stringify(g.best)}`);
+      const gAbsent = cmGroupForExactItem('Bâton Naru', 'gear', 7);
+      assert('cmGroupForExactItem renvoie best=null si aucune vente au niveau demandé', gAbsent.best === null);
+    } finally { cmListings = savedListings; }
+  }
+  // Garde-fou statique : le bouton "Vendre au marché" du menu objet appelle bien openMarketSellFor
+  // (pas un doublon de sellOne/sellStack) -- confirme que l'action instantanée existante n'a pas été
+  // remplacée par erreur, seulement complétée.
+  function testSellMarketButtonCallsOpenMarketSellFor() {
+    if (typeof showItemMenu !== 'function') return;
+    const src = showItemMenu.toString();
+    assert('showItemMenu() appelle openMarketSellFor(s) pour le bouton "Vendre au marché"', src.includes('openMarketSellFor(s)'));
+    assert('showItemMenu() garde sell1/sellAll (vente instantanée) intacts en plus du marché', src.includes('sellOne(data.invIndex)') && src.includes('sellStack(data.invIndex)'));
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -5329,6 +5463,8 @@
     testDrawGahazIsoNeverThrows();
     testDrawElricIsoNeverThrows();
     testDrawUluanIsoNeverThrows();
+    testDrawManesIsoNeverThrows();
+    testDrawTrollIsoNeverThrows();
     testMigratePenMasteryV308MarksExistingPenItems();
     testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
     testMigratePenMasteryV308EvictsCompendiumRetroactively();
@@ -5349,7 +5485,6 @@
     testEveryPatchSubHasALabel();
     testHeaderShortcutButtonsExistWithTitleAndAdminHidden();
     testHeaderShortcutButtonsDelegateToSidebarClick();
-    testFormatPatchNoteForDiscord();
     testRpcFireAndForgetCallsNeverUseBareCatch();
     testAdminHourlyReadsRealPlaytimeColumns();
     testPopupCloseOnlyReopensAdminPanelIfStillOpen();
@@ -5510,6 +5645,11 @@
     testUpdateLoginStreakResetsOnGapOfTwoOrMoreDays();
     testUpdateLoginStreakNoOpSameDayReplayed();
     testDeleteAccountConfirmGatedByExactPseudoMatch();
+    testDropConfirmCancelDoesNotModifyInvButConfirmDoes();
+    testSellMarketButtonGatedByKindNotTrash();
+    testCompendiumItemMenuHasNoDropOrMarketSellButtons();
+    testCmGroupForExactItemMatchesOnlyTheRequestedEnhLv();
+    testSellMarketButtonCallsOpenMarketSellFor();
     testCardLayoutSanitizeAcceptsDefaultState();
     testCardLayoutSanitizeRejectsCorruptState();
     testCardLayoutSanitizeKeepsValidNestedGroup();

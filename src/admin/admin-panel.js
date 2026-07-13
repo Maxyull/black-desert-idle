@@ -70,7 +70,6 @@ const ADMIN_SECTIONS = [
     { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
     { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:renderAdminOnboarding },
     { id:'companions', icon:'🐾', label:{fr:'Compagnons',en:'Companions'}, render:renderAdminCompanions },
-    { id:'patchnotes', icon:'📜', label:{fr:'Notes de version → Discord',en:'Patch notes → Discord'}, render:renderAdminPatchNotesDiscord },
     { id:'patchnotesmod', icon:'🚩', label:{fr:'Notes de version : modération',en:'Patch notes: moderation'}, render:renderAdminPatchNotesModeration },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
@@ -1241,55 +1240,14 @@ function renderAdminBoss(el) {
   };
 }
 
-// ---------- section "Notes de version → Discord" (2026-07-20, demande explicite : "ajoute la
-// publication de patchnote directement sur discord") ----------
-// Réutilise le webhook Discord "log général" déjà en place (logToDiscord(), voir
-// notifications-quests.js, appelé aussi par resetAllQuests/renderAdminBoss ci-dessus) — aucun
-// nouveau secret/Edge Function nécessaire. La publication reste une action ADMIN manuelle (bouton),
-// pas automatique au déploiement : ce projet n'a pas de hook CI/CD après le `git push` GitHub Pages
-// pour déclencher un appel serveur au moment exact où une note devient live.
-const PATCH_NOTE_DISCORD_TYPE_ICON = { new:'🆕', change:'🔄', fix:'🛠️', exploit:'🔒' };
-// fonction PURE, testable sans DOM/réseau — construit juste le texte, n'envoie rien.
-/** @param {object} note - entrée de PATCH_NOTES. @param {string} lang - langue préférée ('fr' repli si absente). @returns {{title:string, description:string}} texte formaté pour l'embed Discord. Fonction pure, n'envoie rien. */
-function formatPatchNoteForDiscord(note, lang) {
-  lang = (note[lang] ? lang : null) || 'fr';
-  const name = (note.name && (note.name[lang] || note.name.fr)) || note.v;
-  const lines = (note[lang] || note.fr || []).map(l => `${PATCH_NOTE_DISCORD_TYPE_ICON[l.t] || '•'} ${l.tx}`);
-  return {
-    title: `📜 Mise à jour ${note.v} — ${name}`,
-    description: lines.join('\n') || (lang==='fr' ? '(note vide)' : '(empty note)'),
-  };
-}
-/** @param {string} version - v de PATCH_NOTES à publier. @returns {Promise<boolean>} succès. Publie la note formatée sur le webhook Discord général (logToDiscord), action admin manuelle. */
-async function publishPatchNoteToDiscord(version) {
-  if (!isAdmin()) return false;
-  const note = PATCH_NOTES.find(n => n.v === version) || PATCH_NOTES[0];
-  if (!note) return false;
-  const { title, description } = formatPatchNoteForDiscord(note, 'fr');
-  await logToDiscord(title, description, 0xc9a55a);
-  return true;
-}
-/** @param {HTMLElement} el. Section admin "Notes de version → Discord" : sélecteur de version + bouton de publication manuelle sur le webhook. */
-function renderAdminPatchNotesDiscord(el) {
-  const options = PATCH_NOTES.slice(0, 20).map(n => `<option value="${n.v}">${n.v} — ${n.name.fr}</option>`).join('');
-  el.innerHTML = `
-    <div class="admSection riskSafe">
-      <div class="admSectionTitle">📜 ${i18next.t('admin:admin.patchnotes.publish_title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.patchnotes.publish_sub')}</div>
-      <div class="admBossSpawn">
-        <span>${i18next.t('admin:admin.patchnotes.version_label')}</span>
-        <select id="admPatchNoteSelect">${options}</select>
-        <button id="btnAdmPublishPatchNote">🚀 ${i18next.t('admin:admin.patchnotes.publish_btn')}</button>
-      </div>
-      <div class="admHint">${i18next.t('admin:admin.patchnotes.publish_hint')}</div>
-    </div>`;
-  $a('btnAdmPublishPatchNote').onclick = async () => {
-    if (!isAdmin()) return;
-    const version = $a('admPatchNoteSelect').value;
-    const ok = await publishPatchNoteToDiscord(version);
-    floatTxt(P.x, P.y, 100, ok ? i18next.t('admin:admin.patchnotes.published_toast') : i18next.t('admin:admin.common.failed'), { gold:ok, hurt:!ok });
-  };
-}
+// ---------- ex-section "Notes de version → Discord" (2026-07-20) RETIRÉE (2026-07-13, demande
+// explicite : "plus aucun chemin manuel, seulement l'annonce automatique du CI") -- l'annonce
+// Discord des patch notes passe désormais exclusivement par scripts/announce-patch-note.js
+// (lancé par .github/workflows/ci.yml sur push vers main, avec retry sur rate-limit). Le bouton
+// admin manuel (formatPatchNoteForDiscord/publishPatchNoteToDiscord/renderAdminPatchNotesDiscord)
+// et son entrée ADMIN_SECTIONS ont été supprimés -- voir git blame pour l'implémentation retirée
+// si besoin de la retrouver. Clés i18n admin.patchnotes.publish_*/published_toast/version_label
+// retirées de locales/{fr,en}/admin.json (n'étaient utilisées que par cette section).
 
 // ---------- section "Contenu → Notes de version : modération" (2026-07-10, demande explicite,
 // port de patch-notes-pipeline.md §12-13) -- commentaires retirés (restaurables) + signalements en
@@ -1512,7 +1470,9 @@ async function openAdminPanel() {
   overlay.classList.add('open');
   openAdminSection('overview', 'dashboard');
 }
-$a('btnAdmin').onclick = openAdminPanel;
+// 2026-07-13 : #btnAdmin (sidebar, dans #adminBox) retiré, doublon du header -- #btnAdminTopbar
+// est désormais le SEUL déclencheur.
+$a('btnAdminTopbar').onclick = openAdminPanel;
 
 // panneau Testeur : accès aux fonctionnalités en avant-première, sans aucun avantage de jeu.
 // Pour l'instant, contenu limité (pêche/mine/etc. pas encore développés) — le panneau existe et

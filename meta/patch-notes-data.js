@@ -4,8 +4,47 @@
 // chaque ligne est désormais { t:'new'|'change'|'fix'|'exploit', tx:'texte', plat:'mobile'? }
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
+//
+// Dates `d:` corrigées le 2026-07-13 (scripts/fix_patch_note_dates.py) : jusqu'ici incrémentées
+// à la main sans rapport avec la réalité (ex: V419 affichait "24/07/2026" alors que le vrai
+// commit datait du 13/07/2026, ~9-11 jours dans le futur sur tout l'historique). Remplacées par
+// l'horodatage RÉEL du commit git qui a introduit chaque entrée (committer date, `%cI`, format
+// DD/MM/YYYY HH:mm inchangé). Toutes les 359 entrées qui avaient déjà un champ `d:` ont pu être
+// résolues avec un commit d'introduction identifiable (union de `git log --follow` -- survit au
+// renommage/déplacement du fichier lors de la réorg `src/`, V301 -- et `git log --full-history`
+// -- capture aussi les commits de MERGE qui n'introduisent une entrée que via résolution de
+// conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
+// introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
-  { v:'V423', d:'25/07/2026 07:00', name:{fr:'Cartes du dashboard Zone déplaçables et imbricables en onglets', en:'Zone dashboard cards are now draggable and can be nested into tabs'}, fr:[
+  { v:'V427', d:'13/07/2026 12:30', name:{fr:'Header : retrait des doublons avec le menu latéral', en:'Header: removed duplicates with the side menu'}, fr:[
+      {t:'change', sub:'interface', tx:'Les raccourcis Classement/Marché/Notes de version/Discord/Soutenir/Mon compte/Admin/Déconnexion, ajoutés dans le header depuis V419, existaient en double avec le menu latéral gauche. Les doublons du menu latéral ont été retirés : ces actions ne se déclenchent plus que depuis le header. Quêtes/Courrier/Compendium/Codex/Succès/Wiki restent dans le menu latéral, inchangés.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Leaderboard/Market/Patch notes/Discord/Support/My account/Admin/Log out shortcuts, added to the header since V419, existed as duplicates in the left side menu. The side menu duplicates have been removed: these actions now only trigger from the header. Quests/Mailbox/Compendium/Codex/Achievements/Wiki remain in the side menu, unchanged.'},
+    ] },
+  { v:'V426', d:'13/07/2026 11:46', name:{fr:'Troll des Ruines (Ruines de Trent) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Troll des Ruines (Trent Ruins): new dedicated silhouette, no longer shows a wolf'}, fr:[
+      {t:'fix', sub:'interface', tx:'Ruines de Trent (zone 12, une des toutes premières zones du palier vert) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé, sur la silhouette animée comme sur la petite icône de zone.'},
+      {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour le Troll des Ruines : troll trapu et voûté, ventre rond proéminent, longs bras musclés qui pendent bien en-dessous du niveau des genoux, petits yeux globuleux sous une arcade sourcilière proéminente, peau de pierre fissurée avec des veines vert luisant, plaques de mousse sur épaules/tête, massue en tronc/branche. Sa variante boss ("brute à défenses") est nettement plus large et épaisse, avec une peau organique brune (sans fissures de pierre), des touffes de poils sur les épaules, de longues défenses courbes et un tronc d\'arbre déraciné plus lourd traîné au sol.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'Trent Ruins (zone 12, one of the very first zones of the green gear tier) incorrectly showed a wolf instead of its own monster — this zone never had a dedicated silhouette and fell back to the generic wolf one (zone 1). Fixed, both on the animated silhouette and the small zone icon.'},
+      {t:'new', sub:'interface', tx:'New original silhouette for the Troll des Ruines: a stocky, hunched troll with a prominent round belly, long muscular arms dangling well below knee level, small beady eyes under a heavy brow ridge, cracked stone-like skin with faintly glowing green veins, mossy patches on the shoulders/head, and a tree-stump/branch club. Its boss variant (a "tusked brute") is noticeably wider and bulkier, with fleshy brown hide (no stone cracks), a few hair tufts on the shoulders, long curved tusks, and a heavier uprooted tree stump dragged along the ground.'},
+    ] },
+  { v:'V425', d:'13/07/2026 10:16', name:{fr:'Menu objet inventaire : Vendre au marché direct + confirmation obligatoire pour Jeter', en:'Inventory item menu: direct sell-on-market + mandatory confirmation for Drop'}, fr:[
+      {t:'new', sub:'inventaire', tx:'Nouveau bouton "🏛️ Vendre au marché" sur les objets vendables (matériaux, armure/armes, bijoux) : ouvre directement le Marché commun sur cet objet précis (même niveau d\'enchant), formulaire de vente déjà déployé. Distinct de "Vendre 1"/"Vendre tout" (vente instantanée à valeur fixe), qui restent inchangés.'},
+      {t:'fix', sub:'inventaire', tx:'"Jeter" (destruction définitive d\'un objet du sac) demande désormais une confirmation explicite avant d\'agir — ce n\'était pas le cas auparavant.'},
+      {t:'change', sub:'inventaire', tx:'Un objet du sac protégé Compendium n\'a jamais eu de bouton Jeter/Vendre ; un texte explique maintenant pourquoi (protège la collection de la zone).'},
+    ], en:[
+      {t:'new', sub:'inventaire', tx:'New "🏛️ Sell on the market" button on sellable items (materials, armor/weapons, jewelry): opens the Common Market directly on that exact item (same enhancement level), sell form already expanded. Distinct from "Sell 1"/"Sell all" (instant fixed-value sale), which stay unchanged.'},
+      {t:'fix', sub:'inventaire', tx:'"Drop" (permanently destroying a bag item) now requires an explicit confirmation before acting — it did not before.'},
+      {t:'change', sub:'inventaire', tx:'A Compendium-protected bag item never had a Drop/Sell button; a note now explains why (protects the zone\'s collection).'},
+    ] },
+  { v:'V424', d:'13/07/2026 09:49', name:{fr:'Esprit des Mânes (Planque des Mânes) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Manes Spirit (Manes\' Den): new dedicated silhouette, no longer shows a wolf'}, fr:[
+      {t:'fix', sub:'interface', tx:'Planque des Mânes (zone 11, dernière zone du palier bleu avant la Forêt de Polly) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé, sur la silhouette animée comme sur la petite icône de zone.'},
+      {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour l\'Esprit des Mânes : esprit spectral à tête féline surmontée d\'une crinière de flammes écarlate/orange ondulante, corps fumant bleu-blanc translucide qui se dissout en volutes vers les pieds, et une lueur de braise au torse qui s\'intensifie en pleine charge. Le mob normal est un archer/lancier spectral svelte armé d\'un arc fumant ; sa variante boss est une brute bien plus massive et musclée armée d\'un fléau fumant à chaîne, avec des fissures de braise plus marquées sur le torse.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'Manes\' Den (zone 11, the last zone of the blue gear tier before Polly Forest) incorrectly showed a wolf instead of its own monster — this zone never had a dedicated silhouette and fell back to the generic wolf one (zone 1). Fixed, both on the animated silhouette and the small zone icon.'},
+      {t:'new', sub:'interface', tx:'New original silhouette for the Manes Spirit: a spectral entity with a feline head topped by a wavering crimson-orange flame mane, a translucent blue-white smoky body that dissolves into wisps toward the feet, and an ember glow on its chest that intensifies mid-lunge. The normal mob is a slim spectral archer/spearman wielding a smoking bow; its boss variant is a far bulkier, more muscular brute wielding a smoking chain flail, with more pronounced ember cracks across its chest.'},
+    ] },
+  { v:'V423', d:'13/07/2026 09:31', name:{fr:'Cartes du dashboard Zone déplaçables et imbricables en onglets', en:'Zone dashboard cards are now draggable and can be nested into tabs'}, fr:[
       {t:'new', sub:'interface', tx:'Les cartes du dashboard Zone (Statistiques, Zones de farm, Loot, Équipement, Inventaire, Optimisation) sont désormais déplaçables par glisser-déposer via la poignée ⠿ en haut à gauche de chaque titre.'},
       {t:'new', sub:'interface', tx:'Glisser une carte sur une autre la transforme en onglet de la carte cible (bouton "↗ Détacher" pour les re-séparer). La disposition choisie est mémorisée sur cet appareil.'},
       {t:'change', sub:'interface', tx:'Fonctionnalité desktop uniquement — sur mobile/tablette, les cartes gardent leur ordre normal, sans poignée.', plat:'mobile'},
@@ -14,21 +53,21 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'Dragging a card onto another turns it into a tab of the target card (an "↗ Detach" button separates them again). The chosen layout is remembered on this device.'},
       {t:'change', sub:'interface', tx:'Desktop-only feature — on mobile/tablet, cards keep their normal order, no handle shown.', plat:'mobile'},
     ] },
-  { v:'V422', d:'25/07/2026 06:00', name:{fr:'Uluan (Ruines de Kratuga) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Uluan (Kratuga Ruins): new dedicated silhouette, no longer shows a wolf'}, fr:[
+  { v:'V422', d:'13/07/2026 09:09', name:{fr:'Uluan (Ruines de Kratuga) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Uluan (Kratuga Ruins): new dedicated silhouette, no longer shows a wolf'}, fr:[
       {t:'fix', sub:'interface', tx:'Ruines de Kratuga (zone 10, 2e zone du palier bleu, juste après le Sanctuaire Elric) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé, sur la silhouette animée comme sur la petite icône de zone.'},
       {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour l\'Uluan : gardien de pierre trapu et brutal des ruines antiques, plaques de dalles de pierre superposées sur le torse et les épaules, tête casquée en bloc de pierre à crête sommitale avec deux fentes oculaires luisantes de rouge, chaînes de métal rouillé enroulées aux avant-bras, fissures fines sur la pierre fendillée et jambes épaisses façon piliers.'},
     ], en:[
       {t:'fix', sub:'interface', tx:'Kratuga Ruins (zone 10, the 2nd zone of the blue gear tier, right after Elric Sanctuary) incorrectly showed a wolf instead of its own monster — this zone never had a dedicated silhouette and fell back to the generic wolf one (zone 1). Fixed, both on the animated silhouette and the small zone icon.'},
       {t:'new', sub:'interface', tx:'New original silhouette for the Uluan: a stocky, brutish stone guardian of the ancient ruins, layered stone-slab plates on the torso and shoulders, a crested stone-block helm head with two glowing red eye-slits, rusted metal chains wrapped around its forearms, fine cracks in the weathered stone, and thick pillar-like legs.'},
     ] },
-  { v:'V421', d:'25/07/2026 05:00', name:{fr:'Sectateur d\'Elric (Sanctuaire Elric) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Elric Cultist (Elric Sanctuary): new dedicated silhouette, no longer shows a wolf'}, fr:[
+  { v:'V421', d:'13/07/2026 08:54', name:{fr:'Sectateur d\'Elric (Sanctuaire Elric) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Elric Cultist (Elric Sanctuary): new dedicated silhouette, no longer shows a wolf'}, fr:[
       {t:'fix', sub:'interface', tx:'Sanctuaire Elric (zone 9, 1ère zone du palier bleu, juste après le Repaire Bandits Gahaz) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé, sur la silhouette animée comme sur la petite icône de zone.'},
       {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour le Sectateur d\'Elric : cultiste voûté portant un masque rituel en bois sculpté, robe en lambeaux mousse/brun, bâton noueux avec un petit charme en os suspendu, et une ceinture de corde à talismans. Sa variante boss ("idole vivante") est bien plus massive, enveloppée de racines et d\'écorce, avec une tête-idole aux yeux luisants de vert, des mains griffues en bois, des talismans flottants près des épaules et de faibles feux follets verts aux pieds.'},
     ], en:[
       {t:'fix', sub:'interface', tx:'Elric Sanctuary (zone 9, the 1st zone of the blue gear tier, right after Gahaz Bandits\' Den) incorrectly showed a wolf instead of its own monster — this zone never had a dedicated silhouette and fell back to the generic wolf one (zone 1). Fixed, both on the animated silhouette and the small zone icon.'},
       {t:'new', sub:'interface', tx:'New original silhouette for the Elric Cultist: a hunched cultist wearing a carved wooden ritual mask, a tattered mossy-brown robe, a gnarled staff with a small dangling bone charm, and a rope belt with talisman charms. Its boss variant (a "living idol") is far bulkier, wrapped in roots and bark, with a glowing green-eyed idol head, clawed wooden hands, floating talismans near the shoulders, and faint green witch-fire wisps at its feet.'},
     ] },
-  { v:'V420', d:'24/07/2026 07:00', name:{fr:'Panneau "Mon compte" refondu en cartes + streak de connexion + suppression de compte', en:'"My account" panel redesigned into cards + login streak + account deletion'}, fr:[
+  { v:'V420', d:'13/07/2026 08:42', name:{fr:'Panneau "Mon compte" refondu en cartes + streak de connexion + suppression de compte', en:'"My account" panel redesigned into cards + login streak + account deletion'}, fr:[
       {t:'new', sub:'interface', tx:'Le panneau "Mon compte" est entièrement réorganisé en cartes : identité (pseudo + badge de palier), Progression (niveau/gearscore/meilleur silver-h/membre depuis + rang au classement Gearscore, cliquable), Connexion (dernière connexion/temps de jeu total/streak), puis Pseudo, Sécurité, Comptes liés et Parrainage.'},
       {t:'new', sub:'compte', tx:'Nouveau : streak de connexion 🔥 — un jour consécutif de connexion l\'augmente, un jour manqué le remet à 1. Affiché dans la carte Connexion.'},
       {t:'new', sub:'compte', tx:'Nouveau bouton "Changer le mot de passe" (carte Sécurité, visible uniquement pour un compte email/mot de passe) — envoie un email de réinitialisation.'},
@@ -39,31 +78,31 @@ const PATCH_NOTES = [
       {t:'new', sub:'compte', tx:'New "Change password" button (Security card, only shown for an email/password account) — sends a password reset email.'},
       {t:'new', sub:'securite', tx:'New: account deletion from the Maintenance card. Irreversible action, protected by a confirmation requiring your exact nickname to be retyped. Deletes all game data linked to the account (save, stats, leaderboard, history...) ; the Auth account itself is not technically deleted (current limitation), but keeps no progression — equivalent to starting from scratch.'},
     ] },
-  { v:'V419', d:'24/07/2026 06:00', name:{fr:'Header : raccourcis Classement/Marché/Notes de version/Discord/Soutenir/Admin/Déconnexion', en:'Header: Leaderboard/Market/Patch notes/Discord/Support/Admin/Log out shortcuts'}, fr:[
+  { v:'V419', d:'13/07/2026 08:30', name:{fr:'Header : raccourcis Classement/Marché/Notes de version/Discord/Soutenir/Admin/Déconnexion', en:'Header: Leaderboard/Market/Patch notes/Discord/Support/Admin/Log out shortcuts'}, fr:[
       {t:'new', sub:'interface', tx:'Le bandeau du haut affiche désormais des icônes de raccourci vers le Classement, le Marché (BETA), les Notes de version, le Discord, la page Soutenir, et — pour les comptes admin — le panneau Admin et la Déconnexion. Le bouton Mon compte affiche maintenant ton pseudo à côté de l\'icône. Les boutons équivalents de la barre latérale restent en place, ce sont de simples raccourcis en plus.'},
     ], en:[
       {t:'new', sub:'interface', tx:'The top bar now shows shortcut icons for the Leaderboard, the Market (BETA), Patch notes, Discord, the Support page, and — for admin accounts — the Admin panel and Log out. The My account button now shows your nickname next to the icon. The equivalent sidebar buttons stay in place, these are just extra shortcuts.'},
     ] },
-  { v:'V418', d:'24/07/2026 05:00', name:{fr:'Bandit Gahaz (Repaire Bandits Gahaz) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Gahaz Bandit (Gahaz Bandits\' Den): new dedicated silhouette, no longer shows a wolf'}, fr:[
+  { v:'V418', d:'13/07/2026 08:11', name:{fr:'Bandit Gahaz (Repaire Bandits Gahaz) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Gahaz Bandit (Gahaz Bandits\' Den): new dedicated silhouette, no longer shows a wolf'}, fr:[
       {t:'fix', sub:'interface', tx:'Repaire Bandits Gahaz (zone 8, juste après le Poste Helm) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé.'},
       {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour le Bandit Gahaz : pillard du désert trapu et brutal, turban rayé de rouge à long pan frangé qui flotte, torse nu musclé et cicatrisé visible sous un gilet sans manches ouvert, large ceinture tissée à pochettes, tibias bandés, et une hachette courte tenue basse.'},
     ], en:[
       {t:'fix', sub:'interface', tx:'Gahaz Bandits\' Den (zone 8, right after Helm Outpost) incorrectly showed a wolf instead of its own monster — this zone never had a dedicated silhouette and fell back to the generic wolf one (zone 1). Fixed.'},
       {t:'new', sub:'interface', tx:'New original silhouette for the Gahaz Bandit: a stocky, brutish desert raider with a red-striped turban and a long flowing frayed tail, a scarred muscular bare chest visible under an open sleeveless vest, a wide woven belt with hanging pouches, bandaged shins, and a short hand-axe held low.'},
     ] },
-  { v:'V417', d:'24/07/2026 04:00', name:{fr:'Classement : bouton retour depuis le stuff d\'un joueur', en:'Leaderboard: back button from a player\'s gear'}, fr:[
+  { v:'V417', d:'13/07/2026 07:56', name:{fr:'Classement : bouton retour depuis le stuff d\'un joueur', en:'Leaderboard: back button from a player\'s gear'}, fr:[
       {t:'new', sub:'interface', tx:'Ouvrir le stuff d\'un joueur depuis le classement affiche désormais un bouton "← Retour au classement" en haut du panneau, pour revenir directement au classement au lieu de devoir tout fermer.'},
     ], en:[
       {t:'new', sub:'interface', tx:'Opening a player\'s gear from the leaderboard now shows a "← Back to leaderboard" button at the top of the panel, to return directly to the leaderboard instead of having to close everything.'},
     ] },
-  { v:'V416', d:'24/07/2026 03:00', name:{fr:'Marché commun : contrôles prix/quantité et panneau redimensionnés', en:'Common Market: resized price/quantity controls and panel'}, fr:[
+  { v:'V416', d:'13/07/2026 07:54', name:{fr:'Marché commun : contrôles prix/quantité et panneau redimensionnés', en:'Common Market: resized price/quantity controls and panel'}, fr:[
       {t:'change', sub:'interface', tx:'Popup "Acheter" : les boutons MAX/MIN et -/+ sont plus discrets, le champ de prix/quantité est désormais plus grand et mis en valeur avec une bordure dorée. La ligne "Quantité achetée" adopte l\'ordre bouton moins / champ / bouton plus, plus intuitif pour ajuster une quantité.'},
       {t:'change', sub:'interface', tx:'Le panneau du Marché commun est légèrement plus large, sa hauteur ne laisse plus de grand vide en bas, et la liste d\'objets affiche 2 lignes de plus sans scroller. Texte un peu plus grand sur les libellés/valeurs principaux du panneau.'},
     ], en:[
       {t:'change', sub:'interface', tx:'"Buy" popup: the MAX/MIN and -/+ buttons are more subtle, the price/quantity field is now bigger and highlighted with a gold border. The "Quantity bought" row now uses the minus button / field / plus button order, more intuitive for adjusting a quantity.'},
       {t:'change', sub:'interface', tx:'The Common Market panel is slightly wider, its height no longer leaves a big empty gap at the bottom, and the item list shows 2 more rows without scrolling. Slightly bigger text on the panel\'s main labels/values.'},
     ] },
-  { v:'V415', d:'24/07/2026 02:00', name:{fr:'Soldat Helm (Poste Helm) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Helm Soldier (Helm Outpost): new dedicated silhouette, no longer shows a wolf'}, fr:[
+  { v:'V415', d:'13/07/2026 07:35', name:{fr:'Soldat Helm (Poste Helm) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Helm Soldier (Helm Outpost): new dedicated silhouette, no longer shows a wolf'}, fr:[
       {t:'fix', sub:'interface', tx:'Poste Helm (zone 7, juste après la Mine de Fer Abandonnée) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé.'},
       {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour le Soldat Helm : soldat trapu en plaques d\'armure superposées façon coquille, casque en dôme fermé à crête hérissée (aucun visage visible, seulement une fente d\'oeil sombre), ceinture large à boucle en losange, jupe en lambeaux et bottes plaquées.'},
       {t:'new', sub:'interface', tx:'Le boss de pack de cette zone ("Golem") a une silhouette radicalement différente de tous les autres monstres du jeu : une masse ovoïde flottante faite de plaques radiales bronze/pierre gravées de runes, sans bras/jambes/tête visibles, avec une bande incandescente à l\'équateur qui s\'intensifie pendant sa charge.'},
@@ -72,37 +111,37 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'New original silhouette for the Helm Soldier: a stocky soldier in overlapping shell-like armor plates, a closed domed helmet with a spiked crest (no visible face, just a dark eye-slit), a wide belt with a diamond buckle, a tattered cloth skirt and plated boots.'},
       {t:'new', sub:'interface', tx:'This zone\'s pack boss ("Golem") has a silhouette radically different from every other monster in the game: a floating ovoid mass of radial bronze/stone plates engraved with runes, with no visible arms/legs/head, and a glowing equatorial band that intensifies during its charge.'},
     ] },
-  { v:'V414', d:'24/07/2026 01:00', name:{fr:'Correctif : Gearscore incohérent au classement pour un stuff identique', en:'Fix: inconsistent Gearscore on the leaderboard for identical gear'}, fr:[
+  { v:'V414', d:'13/07/2026 06:53', name:{fr:'Correctif : Gearscore incohérent au classement pour un stuff identique', en:'Fix: inconsistent Gearscore on the leaderboard for identical gear'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Le Gearscore affiché au classement pouvait différer entre 2 joueurs ayant pourtant un stuff strictement identique aujourd\'hui : il était enregistré comme un record séparé de PA/PD, capturé à un instant différent de leur propre progression. Il est désormais toujours calculé comme la moyenne des records PA/PD affichés juste à côté — recalculé rétroactivement pour tous au prochain chargement.'},
     ], en:[
       {t:'fix', sub:'equipements', severity:'major', tx:'The leaderboard Gearscore could differ between 2 players with strictly identical gear today: it was recorded as a record separate from AP/DP, captured at a different point in their own progression. It\'s now always computed as the average of the AP/DP records shown right next to it — recalculated retroactively for everyone on next load.'},
     ] },
-  { v:'V413', d:'24/07/2026 00:00', name:{fr:'Contremaître (Mine de Fer Abandonnée) : fissures de lave, bottes, 2e épaulière et masse agrandie', en:'Foreman (Abandoned Iron Mine): lava cracks, boots, 2nd pauldron and bigger mace'}, fr:[
+  { v:'V413', d:'13/07/2026 01:45', name:{fr:'Contremaître (Mine de Fer Abandonnée) : fissures de lave, bottes, 2e épaulière et masse agrandie', en:'Foreman (Abandoned Iron Mine): lava cracks, boots, 2nd pauldron and bigger mace'}, fr:[
       {t:'change', sub:'interface', tx:'Le contremaître blindé (boss de pack de la Mine de Fer Abandonnée, juste après la Colonie Sausan) affiche désormais 2 fissures incandescentes façon lave sur le torse, des bottes aux pieds, une 2e épaulière cloutée sur l\'épaule opposée (bordée de 4 petites pointes, comme celle déjà présente côté arme), un gantelet au poignet qui tient la masse, une fente d\'oeil du casque rectangulaire avec un point lumineux orange (au lieu d\'une simple ombre), et une masse bien plus grosse hérissée de 6 pointes tout autour (au lieu de 3 d\'un seul côté). Le mineur normal (non-boss) de cette zone est inchangé. Comportement de combat inchangé.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The armored foreman (pack boss of the Abandoned Iron Mine, right after Sausan Colony) now shows 2 glowing lava-crack lines on the torso, boots, a 2nd spiked pauldron on the opposite shoulder (ringed by 4 small spikes, matching the existing weapon-side one), a gauntlet on the wrist holding the mace, a rectangular helmet eye-slit with a glowing orange dot (instead of a plain shadow), and a much bigger mace bristling with 6 spikes all the way around (instead of 3 on one side). The regular (non-boss) miner in this zone is unchanged. Combat behavior unchanged.'},
     ] },
-  { v:'V412', d:'23/07/2026 23:00', name:{fr:'Guerrier Sausan (Colonie Sausan) : gantelet, ceinture et bottes', en:'Sausan Warrior (Sausan Colony): gauntlet, belt and boots'}, fr:[
+  { v:'V412', d:'13/07/2026 01:34', name:{fr:'Guerrier Sausan (Colonie Sausan) : gantelet, ceinture et bottes', en:'Sausan Warrior (Sausan Colony): gauntlet, belt and boots'}, fr:[
       {t:'change', sub:'interface', tx:'Le guerrier Sausan (Colonie Sausan, juste après la Ferme Shultz) porte désormais un gantelet sur la main tenant le cimeterre, une ceinture large en cuir avec une boucle dorée (remplaçant la simple ligne de ceinture), et des bottes aux pieds. Tunique/cotte de mailles, lame, capuche et voile inchangés. Comportement de combat inchangé.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The Sausan warrior (Sausan Colony, right after Shultz Farm) now wears a gauntlet on the hand holding the scimitar, a wide leather belt with a gold buckle (replacing the plain belt line), and boots. Tunic/chainmail, blade, hood and veil unchanged. Combat behavior unchanged.'},
     ] },
-  { v:'V411', d:'23/07/2026 22:00', name:{fr:'Garde Shultz (Ferme Shultz) : cape, emblème et pochette', en:'Shultz Guard (Shultz Farm): cape, emblem and pouch'}, fr:[
+  { v:'V411', d:'13/07/2026 01:25', name:{fr:'Garde Shultz (Ferme Shultz) : cape, emblème et pochette', en:'Shultz Guard (Shultz Farm): cape, emblem and pouch'}, fr:[
       {t:'change', sub:'interface', tx:'Le Garde Shultz (Ferme Shultz, juste après le Camp Rhutum) porte désormais une cape rouge sombre tombant de l\'épaule gauche, un petit emblème héraldique doré sur le plastron sous le liseré existant, et une ceinture en cuir avec une pochette à la taille. Armure, épaulières, bras/arme et casque/moustache inchangés. Comportement de combat inchangé.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The Shultz Guard (Shultz Farm, right after Rhutum Camp) now wears a dark red cape hanging from the left shoulder, a small gold heraldic emblem on the breastplate below the existing stripe, and a leather belt with a waist pouch. Armor, pauldrons, arm/weapon, and helmet/mustache unchanged. Combat behavior unchanged.'},
     ] },
-  { v:'V410', d:'23/07/2026 21:00', name:{fr:'Guerrier Rhutum (Camp Rhutum) : silhouette plus détaillée', en:'Rhutum Warrior (Rhutum Camp): more detailed silhouette'}, fr:[
+  { v:'V410', d:'13/07/2026 01:13', name:{fr:'Guerrier Rhutum (Camp Rhutum) : silhouette plus détaillée', en:'Rhutum Warrior (Rhutum Camp): more detailed silhouette'}, fr:[
       {t:'change', sub:'interface', tx:'Le guerrier Rhutum (Camp Rhutum, juste après le Repaire des Pirates) a une silhouette plus détaillée : bras musclés avec biceps/avant-bras marqués, bourrelet de ventre, bas du torse en pagne déchiqueté, petit collier d\'os au cou, et deux marques de peinture de guerre sous les yeux. Sangle en cuir, arme et tête (crête, défenses, bouc) inchangées. Comportement de combat inchangé.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The Rhutum warrior (Rhutum Camp, right after the Pirates\' Den) now has a more detailed silhouette: muscular arms with marked biceps/forearms, a belly bulge, a ragged loincloth hem at the bottom of the torso, a small bone necklace, and two war-paint marks under the eyes. Leather strap, weapon, and head (crest, tusks, goatee) unchanged. Combat behavior unchanged.'},
     ] },
-  { v:'V409', d:'23/07/2026 20:00', name:{fr:'Pirate (zone 3) : silhouette plus détaillée', en:'Pirate (zone 3): more detailed silhouette'}, fr:[
+  { v:'V409', d:'13/07/2026 00:46', name:{fr:'Pirate (zone 3) : silhouette plus détaillée', en:'Pirate (zone 3): more detailed silhouette'}, fr:[
       {t:'change', sub:'interface', tx:'Le pirate (Repaire des Pirates) a une silhouette plus détaillée et plus carrée : carrure plus large avec épaulières arrondies, gilet en cuir usé avec 3 boutons et un bas déchiqueté, biceps visibles, ceinture à boucle dorée, coutelas large tenu en avant/vers le bas au lieu d\'une lame fine, barbe plus fournie et carrée, petite boucle d\'oreille, bandana avec un nœud et un pan flottant à 2 segments, bottes avec revers à la cheville, patches sur le pantalon, et une garde plus large. Comportement de combat inchangé.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The pirate (Pirates\' Den) now has a more detailed, sturdier silhouette: a broader build with rounded shoulder caps, a tattered leather vest with 3 buttons and a jagged hem, visible biceps, a belt with a gold buckle, a wide cutlass held forward/downward instead of a thin blade, a fuller square beard, a small earring, a bandana with a knot and a 2-segment flowing tail, boots with an ankle cuff, patches on the trouser legs, and a wider stance. Combat behavior unchanged.'},
     ] },
-  { v:'V408', d:'23/07/2026 19:00', name:{fr:'Mise à jour auto (15s), scrollbar du coffre, fusion des matériaux, slider de dépôt', en:'Auto-update (15s), chest scrollbar, material stacking, deposit slider'}, fr:[
+  { v:'V408', d:'13/07/2026 00:23', name:{fr:'Mise à jour auto (15s), scrollbar du coffre, fusion des matériaux, slider de dépôt', en:'Auto-update (15s), chest scrollbar, material stacking, deposit slider'}, fr:[
       {t:'change', sub:'interface', tx:'Le bandeau "Nouvelle version disponible" affiche désormais un compte à rebours de 15s avant de recharger automatiquement la page — tu peux continuer à jouer normalement pendant ce temps, ou cliquer "Recharger maintenant" pour ne pas attendre.'},
       {t:'change', sub:'interface', tx:'La barre de défilement du coffre de ville suit maintenant le thème sombre/or du jeu au lieu de la scrollbar blanche par défaut du navigateur.'},
       {t:'fix', sub:'inventaire', tx:'Les piles de matériaux portant le même nom, restées séparées dans le sac ou le coffre (ramassées avant un ancien correctif de fusion), sont désormais regroupées en une seule case.'},
@@ -113,82 +152,82 @@ const PATCH_NOTES = [
       {t:'fix', sub:'inventaire', tx:'Material stacks sharing the same name that stayed split across the bag or chest (picked up before an older stacking fix) are now merged into a single slot.'},
       {t:'new', sub:'inventaire', tx:'A slider lets you pick how many units to store in the chest in one click, instead of always depositing 1 at a time.'},
     ] },
-  { v:'V407', d:'23/07/2026 18:00', name:{fr:'Esprit de Protty (zone 2) : ailes agrandies, coquille plus arrondie', en:'Protty Spirit (zone 2): bigger wings, rounder shell'}, fr:[
+  { v:'V407', d:'13/07/2026 00:23', name:{fr:'Esprit de Protty (zone 2) : ailes agrandies, coquille plus arrondie', en:'Protty Spirit (zone 2): bigger wings, rounder shell'}, fr:[
       {t:'change', sub:'interface', tx:'La silhouette de l\'Esprit de Protty (Ruines de Protty) est revue : les ailes/nageoires du sommet sont beaucoup plus grandes et déchiquetées façon membrane déchirée, dominant désormais le haut de la silhouette ; la coquille est plus ronde et bombée avec un reflet brillant et une fine ligne de couture ; 7 mouchetures bioluminescentes au lieu de 6 ; les tentacules sous le ventre se balancent maintenant tous ensemble dans le même sens, comme pris dans un courant, au lieu de pendre symétriquement. Comportement de combat inchangé.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The Protty Spirit\'s silhouette (Ruins of Protty) has been revised: the top wings/fins are now much bigger and jagged like a torn membrane, dominating the upper silhouette; the shell is rounder and more bulbous with a glossy highlight and a thin seam line; 7 bioluminescent speckles instead of 6; the tentacles under the belly now all sway together in the same direction, as if caught in a current, instead of hanging symmetrically. Combat behavior unchanged.'},
     ] },
-  { v:'V406', d:'23/07/2026 17:00', name:{fr:'Esprit de Protty (zone 2) : silhouette plus détaillée', en:'Protty Spirit (zone 2): more detailed silhouette'}, fr:[
+  { v:'V406', d:'12/07/2026 23:58', name:{fr:'Esprit de Protty (zone 2) : silhouette plus détaillée', en:'Protty Spirit (zone 2): more detailed silhouette'}, fr:[
       {t:'change', sub:'interface', tx:'L\'Esprit de Protty (Ruines de Protty) a une silhouette plus détaillée : mouchetures bioluminescentes sur la coquille, halo permanent (avant : visible seulement pendant sa charge), ailes du sommet plus marquées façon aile de mite, tentacules frangés sous le ventre. Comportement de combat inchangé.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The Protty Spirit (Ruins of Protty) now has a more detailed silhouette: bioluminescent speckles on the shell, a permanent glow halo (previously only visible during its charge), more pronounced moth-wing-like top fins, fringed tentacles under the belly. Combat behavior unchanged.'},
     ] },
-  { v:'V405', d:'23/07/2026 16:00', name:{fr:'Correctif : le classement ne reflétait pas la correction de stuff de la version précédente', en:'Fix: leaderboard didn\'t reflect the previous version\'s gear correction'}, fr:[
+  { v:'V405', d:'12/07/2026 23:49', name:{fr:'Correctif : le classement ne reflétait pas la correction de stuff de la version précédente', en:'Fix: leaderboard didn\'t reflect the previous version\'s gear correction'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Le classement (PA/PD/Gearscore) enregistre un record À VIE qui ne redescend jamais — la correction du stuff de la version précédente pouvait donc faire baisser la vraie puissance d\'un joueur sans jamais mettre à jour son record affiché au classement. Les 3 records sont désormais recalculés depuis le stuff réellement équipé (une fois corrigé) et synchronisés immédiatement, y compris à la baisse pour cette correction ponctuelle.'},
     ], en:[
       {t:'fix', sub:'equipements', severity:'major', tx:'The leaderboard (AP/DP/Gearscore) stores a lifetime record that never decreases — the previous version\'s gear correction could therefore lower a player\'s real power without ever updating their displayed leaderboard record. The 3 records are now recalculated from the actually equipped gear (once corrected) and synced immediately, including downward for this one-time fix.'},
     ] },
-  { v:'V404', d:'23/07/2026 15:00', name:{fr:'Loup (zone 1) : silhouette plus détaillée', en:'Wolf (zone 1): more detailed silhouette'}, fr:[
+  { v:'V404', d:'12/07/2026 22:37', name:{fr:'Loup (zone 1) : silhouette plus détaillée', en:'Wolf (zone 1): more detailed silhouette'}, fr:[
       {t:'change', sub:'interface', tx:'Le loup (zone 1) a une silhouette plus détaillée : dos plus sombre et ventre plus clair, crinière et collerette de poitrail, pattes visibles au sol, truffe marquée, contour plus net. Comportement de combat inchangé.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The wolf (zone 1) now has a more detailed silhouette: darker back and lighter belly, mane and chest ruff, visible paws, a marked nose, a crisper outline. Combat behavior unchanged.'},
     ] },
-  { v:'V403', d:'23/07/2026 14:00', name:{fr:'Correctif : stats de stuff figées sur d\'anciens rééquilibrages de zone', en:'Fix: gear stats frozen on old zone rebalances'}, fr:[
+  { v:'V403', d:'12/07/2026 22:28', name:{fr:'Correctif : stats de stuff figées sur d\'anciens rééquilibrages de zone', en:'Fix: gear stats frozen on old zone rebalances'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'3 rééquilibrages de zone (Sanctuaire d\'Elric, Ruines de Kratuga, Planque des Mânes) avaient changé la Défense requise sans jamais recalculer le stuff déjà en possession des joueurs — deux exemplaires du même objet (même nom, même palier, même niveau d\'enchantement) pouvaient donc afficher des PA/PD différents selon la date de leur obtention. Recalculé une bonne fois pour toutes au prochain chargement, sans rien perdre (l\'enchantement déjà investi reste intact).'},
     ], en:[
       {t:'fix', sub:'equipements', severity:'major', tx:'3 zone rebalances (Elric Shrine, Kratuga Ruins, Manes\' Hideout) had changed required Defense without ever recalculating gear already owned by players — two copies of the same item (same name, same tier, same enhancement level) could show different AP/DP depending on when they were obtained. Recalculated once and for all on next load, without losing anything (enhancement already invested stays intact).'},
     ] },
-  { v:'V402', d:'23/07/2026 13:00', name:{fr:'Sorcière : silhouette plus détaillée, dague au fourreau', en:'Sorceress: more detailed silhouette, sheathed dagger'}, fr:[
+  { v:'V402', d:'12/07/2026 22:23', name:{fr:'Sorcière : silhouette plus détaillée, dague au fourreau', en:'Sorceress: more detailed silhouette, sheathed dagger'}, fr:[
       {t:'change', sub:'interface', tx:'Le personnage (sorcière) a un contour plus net et un galon doré sur la robe, quel que soit le palier d\'équipement.'},
       {t:'new', sub:'interface', tx:'Une dague au fourreau apparaît désormais à la ceinture lorsqu\'une arme secondaire est équipée (Dague Naru/Tuvala/Yuria/Grunil selon le palier) — jusqu\'ici cette pièce d\'équipement n\'avait aucun effet visuel sur le personnage.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The character (sorceress) now has a crisper outline and a gold trim on the robe, at every gear tier.'},
       {t:'new', sub:'interface', tx:'A sheathed dagger now appears at the belt when a secondary weapon is equipped (Naru/Tuvala/Yuria/Grunil Dagger depending on tier) — until now this equipment piece had no visual effect on the character.'},
     ] },
-  { v:'V401', d:'23/07/2026 12:00', name:{fr:'Correctif : du texte technique s\'affichait en bas de l\'écran de jeu', en:'Fix: technical text was showing at the bottom of the game screen'}, fr:[
+  { v:'V401', d:'12/07/2026 20:52', name:{fr:'Correctif : du texte technique s\'affichait en bas de l\'écran de jeu', en:'Fix: technical text was showing at the bottom of the game screen'}, fr:[
       {t:'fix', sub:'interface', tx:'Un défaut dans le générateur de la version en ligne du jeu pouvait afficher des bouts de commentaires techniques (notes internes sur l\'ordre de chargement des fichiers) sous forme de texte brut tout en bas de l\'écran de jeu. Corrigé à la source : ce texte n\'apparaît plus jamais.'},
     ], en:[
       {t:'fix', sub:'interface', tx:'A defect in the generator for the live version of the game could display fragments of internal technical comments (notes about file loading order) as raw text at the very bottom of the game screen. Fixed at the source: this text no longer appears.'},
     ] },
-  { v:'V400', d:'23/07/2026 11:00', name:{fr:'Sélecteurs de mode IA déplacés en haut à droite, compteur Compendium masqué sur téléphone', en:'AI mode selectors moved to the top-right, Compendium counter hidden on mobile'}, fr:[
+  { v:'V400', d:'12/07/2026 17:24', name:{fr:'Sélecteurs de mode IA déplacés en haut à droite, compteur Compendium masqué sur téléphone', en:'AI mode selectors moved to the top-right, Compendium counter hidden on mobile'}, fr:[
       {t:'change', sub:'interface', tx:'Les 2 sélecteurs à bulles du cadre de jeu (mode de combat IA et mode de farm) sont désormais empilés en haut à droite du cadre, à la place de l\'ancien calage centré de part et d\'autre de l\'indicateur "IA : ...". Aucun changement de fonctionnement, seulement leur position.'},
       {t:'change', sub:'interface', plat:'mobile', tx:'Le compteur Compendium ("📖 X/Y" sous le nom de la zone) est désormais masqué sur téléphone pour laisser plus de place au nom de zone et aux PA/PD requis — reste affiché normalement sur ordinateur.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The game frame\'s 2 bubble selectors (AI combat mode and farm mode) are now stacked in the top-right corner of the frame, instead of the old centered layout on either side of the "AI: ..." indicator. No functional change, position only.'},
       {t:'change', sub:'interface', plat:'mobile', tx:'The Compendium counter ("📖 X/Y" under the zone name) is now hidden on phones to leave more room for the zone name and required AP/DP — still shown normally on desktop.'},
     ] },
-  { v:'V399', d:'23/07/2026 10:00', name:{fr:'Téléphone : cadre de jeu recadré en 4:5', en:'Phone: game frame cropped to 4:5'}, fr:[
+  { v:'V399', d:'12/07/2026 17:22', name:{fr:'Téléphone : cadre de jeu recadré en 4:5', en:'Phone: game frame cropped to 4:5'}, fr:[
       {t:'change', plat:'mobile', sub:'interface', tx:'Sur téléphone, le cadre de jeu (canvas) s\'affiche désormais dans un ratio 4:5 (plus haut que large) au lieu de son ratio natif très large — rendu moins écrasé et plus lisible sur petit écran, recadrage visuel centré sur l\'action. La résolution interne du jeu n\'est pas modifiée, et le clic sur un objet au sol reste précis dans ce nouveau cadre.'},
     ], en:[
       {t:'change', plat:'mobile', sub:'interface', tx:'On phone, the game frame (canvas) now displays in a 4:5 ratio (taller than wide) instead of its very wide native ratio — a less squashed, more readable display on small screens, a centered visual crop on the action. The game\'s internal resolution is unchanged, and clicking a ground item stays accurate within this new frame.'},
     ] },
-  { v:'V398', d:'23/07/2026 09:00', name:{fr:'Marché commun : panneau agrandi', en:'Common Market: panel enlarged'}, fr:[
+  { v:'V398', d:'12/07/2026 17:21', name:{fr:'Marché commun : panneau agrandi', en:'Common Market: panel enlarged'}, fr:[
       {t:'change', sub:'economie', tx:'Le panneau du Marché commun est désormais nettement plus grand (largeur et hauteur), sur retour des joueurs le trouvant trop petit. Le catalogue affiche maintenant ~7 objets visibles avant de défiler (contre 5 auparavant), toujours dans un cadre borné pour ne pas faire "sauter" la page.'},
       {t:'change', sub:'economie', tx:'La popup "Acheter" (échelle de prix) est également un peu plus large, en cohérence avec le reste du panneau.'},
     ], en:[
       {t:'change', sub:'economie', tx:'The Common Market panel is now noticeably larger (width and height), following feedback that it felt too small. The catalog now shows ~7 items before scrolling (up from 5), still within a fixed frame so the page never "jumps".'},
       {t:'change', sub:'economie', tx:'The "Buy" popup (price ladder) is also slightly wider, in line with the rest of the panel.'},
     ] },
-  { v:'V397', d:'22/07/2026 18:00', name:{fr:'World Boss : mode solo/partagé toujours annoncé, fausse "récompense déjà réclamée" corrigée', en:'World Boss: solo/shared mode always announced, false "reward already claimed" fixed'}, fr:[
+  { v:'V397', d:'12/07/2026 17:20', name:{fr:'World Boss : mode solo/partagé toujours annoncé, fausse "récompense déjà réclamée" corrigée', en:'World Boss: solo/shared mode always announced, false "reward already claimed" fixed'}, fr:[
       {t:'fix', sub:'combat', tx:'World Boss partagé : le bouton "Combattre" du lobby ne démarre plus JAMAIS un combat solo sans le dire. Si la confirmation "partagé" du serveur tarde, le bouton se bloque quelques secondes avec un message clair ; si elle échoue vraiment, un bouton "Combattre en solo" honnête apparaît à la place — fini le combat solo silencieux qui se faisait passer pour du partagé (les autres joueurs restaient invisibles, et inversement).'},
       {t:'fix', sub:'combat', tx:'World Boss partagé : un joueur avec un très gros DPS pouvait voir son combat se terminer en "Récompense déjà réclamée" alors qu\'il s\'agissait d\'une vraie première victoire — la barre de vie affichée en local pouvait tomber à 0 avant que le serveur (qui tient les vrais PV communs) ait confirmé la mort du boss. La victoire attend désormais toujours la confirmation du serveur pour un boss partagé.'},
     ], en:[
       {t:'fix', sub:'combat', tx:'Shared World Boss: the lobby\'s "Fight" button no longer starts a silent solo fight. If the server\'s "shared" confirmation is slow, the button locks for a few seconds with a clear message; if it truly fails, an honest "Fight solo" button appears instead — no more solo fights masquerading as shared ones (other players stayed invisible to each other).'},
       {t:'fix', sub:'combat', tx:'Shared World Boss: a very high-DPS player could see their fight end in "Reward already claimed" despite a genuine first kill — the locally displayed health bar could hit 0 before the server (which holds the real shared HP) confirmed the boss was dead. Victory on a shared boss now always waits for server confirmation.'},
     ] },
-  { v:'V396', d:'22/07/2026 17:00', name:{fr:'Correctif Marché commun : l\'objet vendu disparaît enfin immédiatement du sac', en:'Common Market fix: sold item now disappears from your bag immediately'}, fr:[
+  { v:'V396', d:'12/07/2026 17:18', name:{fr:'Correctif Marché commun : l\'objet vendu disparaît enfin immédiatement du sac', en:'Common Market fix: sold item now disappears from your bag immediately'}, fr:[
       {t:'fix', sub:'economie', tx:'Poser une offre de vente au Marché commun ne retirait pas toujours l\'objet du sac immédiatement (il pouvait sembler "encore là" après une vente, notamment sur un objet enchanté à PEN). Le retrait local est désormais instantané dès la confirmation de la vente, sans attendre l\'aller-retour réseau — corrige aussi une fenêtre de course rare avec la sauvegarde automatique périodique qui pouvait repousser l\'ancien état du sac par-dessus la vente tout juste effectuée.'},
     ], en:[
       {t:'fix', sub:'economie', tx:'Placing a sell offer on the Common Market didn\'t always remove the item from your bag right away (it could look "still there" after a sale, especially on a PEN-enhanced item). The local removal is now instant as soon as the sale is confirmed, without waiting on the network round trip — also fixes a rare race with the periodic autosave that could push the old bag state back over a sale that had just gone through.'},
     ] },
-  { v:'V395', d:'22/07/2026 16:00', name:{fr:'Rattrapage hors-ligne : l\'XP aussi, pas seulement le silver', en:'Offline catch-up: XP too, not just silver'}, fr:[
+  { v:'V395', d:'12/07/2026 17:17', name:{fr:'Rattrapage hors-ligne : l\'XP aussi, pas seulement le silver', en:'Offline catch-up: XP too, not just silver'}, fr:[
       {t:'change', sub:'xp', tx:'Le rattrapage hors-ligne (après une vraie absence : navigateur fermé ou veille prolongée, pas un simple changement d\'onglet) crédite désormais aussi de l\'XP en plus du silver, au même taux plat basé sur ton record perso xp/h — avec passage(s) de niveau si le gain dépasse le seuil du niveau en cours.'},
       {t:'change', sub:'xp', tx:'Le modal "Bon retour" affiche donc un vrai avant/après de niveau même après une absence sans que l\'onglet n\'ait jamais été ouvert entre-temps.'},
     ], en:[
       {t:'change', sub:'xp', tx:'The offline catch-up (after a real absence: browser closed or extended sleep, not just a tab switch) now also credits XP in addition to silver, at the same flat rate based on your personal xp/h record — with level-up(s) if the gain crosses the current level\'s threshold.'},
       {t:'change', sub:'xp', tx:'The "Welcome back" modal now shows a real level before/after even after an absence where the tab was never open in between.'},
     ] },
-  { v:'V394', d:'22/07/2026 15:00', name:{fr:'Centre de notifications réorganisé : rail de catégories, regroupement par jour', en:'Notification center reorganized: category rail, day grouping'}, fr:[
+  { v:'V394', d:'12/07/2026 17:15', name:{fr:'Centre de notifications réorganisé : rail de catégories, regroupement par jour', en:'Notification center reorganized: category rail, day grouping'}, fr:[
       {t:'new', sub:'ux', tx:'Le centre de notifications (🔔) a été réorganisé : rail de catégories à gauche (façon Marché commun) avec un compteur de notifications NON LUES par catégorie, au lieu des anciens onglets horizontaux.'},
       {t:'new', sub:'ux', tx:'Les notifications sont désormais regroupées par jour (Aujourd\'hui / Hier / date) en plus du tri par catégorie.'},
       {t:'new', sub:'ux', tx:'Un point doré pulsant signale les notifications reçues depuis ta dernière visite du panneau — il reste visible pendant que tu consultes, il ne disparaît qu\'à la fermeture (ou via "Tout marquer lu").'},
@@ -207,72 +246,72 @@ const PATCH_NOTES = [
       {t:'change', sub:'ux', tx:'The header now separates "Mark all read" (non-destructive) from "Clear [displayed category]" (destructive, with a 2-click/3s confirmation) — the old "Clear all" button acted on the displayed tab but stayed ambiguous.'},
       {t:'change', sub:'ux', tx:'Each empty category now shows a text explaining what will appear there, instead of a plain "nothing to show".'},
     ] },
-  { v:'V393', d:'22/07/2026 14:00', name:{fr:'Bordures et barres de défilement héritées unifiées avec le thème Zone', en:'Legacy borders and scrollbars unified with the Zone theme'}, fr:[
+  { v:'V393', d:'12/07/2026 16:05', name:{fr:'Bordures et barres de défilement héritées unifiées avec le thème Zone', en:'Legacy borders and scrollbars unified with the Zone theme'}, fr:[
       {t:'change', sub:'interface', tx:'Une trentaine de bordures de séparation, de bordures de bouton/case et de barres de défilement affichaient encore deux anciennes teintes grises héritées d\'avant la refonte Zone (liste des zones, loot, notifications, chat, inventaire, Compendium, Succès, Classement, écran Boss...) : elles utilisent désormais les mêmes variables de bordure que le reste du jeu, pour une cohérence visuelle complète.'},
     ], en:[
       {t:'change', sub:'interface', tx:'About thirty divider borders, button/cell borders and scrollbars were still using two old gray tints left over from before the Zone redesign (zone list, loot, notifications, chat, inventory, Compendium, Achievements, Leaderboard, Boss screen...): they now use the same border variables as the rest of the game, for full visual consistency.'},
     ] },
-  { v:'V392', d:'22/07/2026 13:00', name:{fr:'Barre de sorts et sélecteur de potion : même reskin que Zone', en:'Skill bar and potion selector: same reskin as Zone'}, fr:[
+  { v:'V392', d:'12/07/2026 04:18', name:{fr:'Barre de sorts et sélecteur de potion : même reskin que Zone', en:'Skill bar and potion selector: same reskin as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'La barre de sorts (icônes en bas de l\'écran de jeu) a reçu le même reskin visuel que le reste de l\'écran Zone : coque assortie aux autres icônes du jeu (fond/bordure/coins arrondis), nom du sort en police moderne. Les couleurs de sort en cours de lancement et de buff actif sont inchangées.'},
       {t:'change', sub:'interface', tx:'Le sélecteur de potion (case Vie/Mana en bas à gauche) a reçu le même reskin : coque assortie, libellés de section ("Potion de vie"/"Potion de mana") en petites majuscules dorées, soin et coût en police moderne. Les couleurs de sélection/verrouillage sont inchangées.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The skill bar (icons at the bottom of the game screen) received the same visual reskin as the rest of the Zone screen: shell matching the other game icons (background/border/rounded corners), spell name in a modern font. Cast/buff colors are unchanged.'},
       {t:'change', sub:'interface', tx:'The potion selector (Health/Mana box, bottom-left) received the same reskin: matching shell, section labels ("Health Potion"/"Mana Potion") in small-caps gold, heal and cost in a modern font. Selection/lock colors are unchanged.'},
     ] },
-  { v:'V391', d:'22/07/2026 12:00', name:{fr:'Bulle de tutoriel : même reskin que le reste de l\'écran Zone', en:'Tutorial tooltip: same reskin as the rest of the Zone screen'}, fr:[
+  { v:'V391', d:'12/07/2026 04:14', name:{fr:'Bulle de tutoriel : même reskin que le reste de l\'écran Zone', en:'Tutorial tooltip: same reskin as the rest of the Zone screen'}, fr:[
       {t:'change', sub:'interface', tx:'La bulle d\'aide du tutoriel pas-à-pas (titre/texte + boutons Passer/Précédent/Suivant) a reçu le même reskin visuel que le reste du jeu : fond et bordure assortis aux autres panneaux, titre en Cinzel, texte en police moderne, boutons "Précédent"/"Suivant" au même arrondi que les autres boutons. La flèche qui pointe vers l\'élément ciblé garde sa couleur dorée, déjà correcte.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The step-by-step tutorial tooltip (title/text + Skip/Previous/Next buttons) received the same visual reskin as the rest of the game: background and border matching the other panels, Cinzel title, modern-font text, "Previous"/"Next" buttons with the same corner rounding as other buttons. The arrow pointing at the targeted element keeps its gold color, already correct.'},
     ] },
-  { v:'V390', d:'22/07/2026 11:00', name:{fr:'Sélecteurs à bulles (combat/farm/équipement) : texte toujours visible', en:'Bubble selectors (combat/farm/gear): labels always visible'}, fr:[
+  { v:'V390', d:'12/07/2026 04:11', name:{fr:'Sélecteurs à bulles (combat/farm/équipement) : texte toujours visible', en:'Bubble selectors (combat/farm/gear): labels always visible'}, fr:[
       {t:'change', sub:'interface', tx:'Les 3 sélecteurs à bulles du jeu (mode de combat IA, mode de farm sur le cadre de jeu, et Équipement/Cristal dans le panneau latéral) affichent désormais leur texte en permanence sur chaque option, plus seulement sur celle sélectionnée — plus besoin de cliquer pour voir ce que représente chaque bulle.'},
       {t:'change', sub:'interface', tx:'Ces 3 sélecteurs sont passés aux couleurs de la refonte Zone (fond et bordure assortis aux autres panneaux), à la place de l\'ancienne teinte dorée isolée.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The game\'s 3 bubble selectors (AI combat mode, farm mode on the game frame, and Gear/Crystal in the side panel) now show their label at all times on every option, not just the selected one — no need to click to see what each bubble does.'},
       {t:'change', sub:'interface', tx:'These 3 selectors now use the Zone redesign colors (background and border matching the other panels), instead of the old standalone gold tint.'},
     ] },
-  { v:'V389', d:'22/07/2026 10:00', name:{fr:'Poupée d\'équipement refaite : même style que Zone', en:'Equipment paperdoll redesigned: same look as Zone'}, fr:[
+  { v:'V389', d:'12/07/2026 04:09', name:{fr:'Poupée d\'équipement refaite : même style que Zone', en:'Equipment paperdoll redesigned: same look as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'Les cases d\'équipement (armes, armure, accessoires) et le résumé Niv./XP/GS/PA de la carte Équipement ont reçu le même reskin visuel que le reste de l\'écran Zone : coins arrondis, mêmes couleurs de bordure/fond, chiffres en police moderne. Les couleurs des paliers d\'optimisation (vert TET, doré PRI+), les coins PA/PD et la croix de déséquipement restent identiques.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The equipment slots (weapons, armor, accessories) and the Lvl/XP/GS/AP summary on the Equipment card received the same visual reskin as the rest of the Zone screen: rounded corners, matching border/background colors, modern-font numbers. The enhancement-tier colors (green TET, gold PRI+), the AP/DP corner badges and the unequip cross stay identical.'},
     ] },
-  { v:'V388', d:'22/07/2026 09:00', name:{fr:'Popups "Succès débloqué" et "Mise à jour disponible" : même style que Zone', en:'"Achievement unlocked" and "Update available" popups: same look as Zone'}, fr:[
+  { v:'V388', d:'12/07/2026 03:44', name:{fr:'Popups "Succès débloqué" et "Mise à jour disponible" : même style que Zone', en:'"Achievement unlocked" and "Update available" popups: same look as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'La popup "Succès débloqué" (coin haut-gauche) a reçu le même reskin visuel que le reste du jeu : coins arrondis, titre en Cinzel petites majuscules, récompense en police moderne — fini le fond sombre et la police héritée de l\'ancien thème.'},
       {t:'change', sub:'interface', tx:'Le bandeau "Nouvelle version disponible" (haut-centre) a reçu le même traitement : coque assortie aux autres panneaux, bouton "Recharger" aux coins arrondis comme les autres boutons du jeu.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The "Achievement unlocked" popup (top-left corner) received the same visual reskin as the rest of the game: rounded corners, small-caps Cinzel title, modern-font reward text — no more the dark background and inherited font from the old theme.'},
       {t:'change', sub:'interface', tx:'The "New version available" banner (top-center) received the same treatment: shell matching the other panels, "Reload" button with rounded corners like the game\'s other buttons.'},
     ] },
-  { v:'V387', d:'22/07/2026 08:00', name:{fr:'Correctif Marché commun : panneau enfin borné avec défilement propre', en:'Common Market fix: panel now properly bounded with clean scrolling'}, fr:[
+  { v:'V387', d:'12/07/2026 03:12', name:{fr:'Correctif Marché commun : panneau enfin borné avec défilement propre', en:'Common Market fix: panel now properly bounded with clean scrolling'}, fr:[
       {t:'fix', sub:'economie', tx:'Le panneau du Marché commun ne se bornait pas correctement à la hauteur de sa fenêtre : la liste d\'objets, le détail et "Mes ordres" pouvaient déborder au lieu de défiler chacun dans leur propre cadre. Corrigé.'},
     ], en:[
       {t:'fix', sub:'economie', tx:'The Common Market panel wasn\'t properly bounded to its window height: the item list, detail view, and "My orders" could overflow instead of each scrolling within their own frame. Fixed.'},
     ] },
-  { v:'V386', d:'22/07/2026 07:00', name:{fr:'Écran de connexion refait : même style que Zone', en:'Login screen redesigned: same look as Zone'}, fr:[
+  { v:'V386', d:'12/07/2026 02:24', name:{fr:'Écran de connexion refait : même style que Zone', en:'Login screen redesigned: same look as Zone'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran de connexion (compte, création, Discord/Google/GitHub/Twitter) a reçu le même reskin visuel que le reste du jeu : titre en Cinzel, champs et boutons arrondis, mêmes couleurs que l\'écran Zone. Aucun changement de fonctionnement.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The login screen (sign in, sign up, Discord/Google/GitHub/Twitter) received the same visual reskin as the rest of the game: Cinzel title, rounded fields and buttons, same colors as the Zone screen. No functional change.'},
     ] },
-  { v:'V385', d:'22/07/2026 06:00', name:{fr:'Écran de verrou multi-session : même reskin que Zone/Boss/Classement', en:'Multi-session lock screen: same reskin as Zone/Boss/Leaderboard'}, fr:[
+  { v:'V385', d:'12/07/2026 02:17', name:{fr:'Écran de verrou multi-session : même reskin que Zone/Boss/Classement', en:'Multi-session lock screen: same reskin as Zone/Boss/Leaderboard'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran "Jeu en pause" affiché quand une autre session prend le relais (autre onglet, navigateur ou appareil) a reçu le même reskin visuel que le reste du jeu : fond et bordure assortis aux autres panneaux, titre en Cinzel, texte plus lisible, bouton "Reprendre ici" au même arrondi que les autres boutons.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The "Game paused" screen shown when another session takes over (another tab, browser or device) received the same visual reskin as the rest of the game: background and border matching the other panels, Cinzel title, more readable text, "Resume here" button with the same corner rounding as other buttons.'},
     ] },
-  { v:'V384', d:'22/07/2026 05:00', name:{fr:'Panneau Quêtes/Courrier/Codex : même style que Zone/Boss/Succès', en:'Quests/Mailbox/Codex panel: same look as Zone/Boss/Achievements'}, fr:[
+  { v:'V384', d:'12/07/2026 02:10', name:{fr:'Panneau Quêtes/Courrier/Codex : même style que Zone/Boss/Succès', en:'Quests/Mailbox/Codex panel: same look as Zone/Boss/Achievements'}, fr:[
       {t:'change', sub:'interface', tx:'La fenêtre générique utilisée par Quêtes, Courrier, Codex et les replis Wiki/Notes de version a reçu le même reskin visuel que les écrans Zone/Boss/Succès : coins arrondis, en-tête sobre (fini le vieux dégradé bleu-vert), titres en petites majuscules dorées, texte en police moderne.'},
       {t:'change', sub:'interface', tx:'Le comparateur "Avant/Après" des notes de version a reçu la même coque.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The generic window used by Quests, Mailbox, Codex and the Wiki/Patch notes fallbacks got the same visual reskin as the Zone/Boss/Achievements screens: rounded corners, a plain header (no more the old blue-green gradient), small-caps gold titles, modern-font text.'},
       {t:'change', sub:'interface', tx:'The patch notes "Before/After" comparison viewer got the same shell.'},
     ] },
-  { v:'V383', d:'22/07/2026 04:00', name:{fr:'Reskin du menu latéral et des encarts flottants (Suivi/Chat)', en:'Sidebar menu and floating widgets (Tracker/Chat) reskin'}, fr:[
+  { v:'V383', d:'12/07/2026 02:05', name:{fr:'Reskin du menu latéral et des encarts flottants (Suivi/Chat)', en:'Sidebar menu and floating widgets (Tracker/Chat) reskin'}, fr:[
       {t:'change', sub:'interface', tx:'Les boutons du menu latéral (Quêtes, Courrier, Compendium, Codex, Succès, Classement, Marché, Discord, Wiki, Notes de version, Soutenir, Mon compte, Déconnexion...) et le bouton de repli du menu ont reçu le même reskin visuel que le reste de l\'écran Zone (police, couleurs, coins arrondis) — ils avaient été oubliés lors des refontes précédentes et gardaient encore l\'ancien style.'},
       {t:'change', sub:'interface', tx:'Les encarts flottants "Suivi de quête" et "Chat" (coin haut-droit) ont reçu le même traitement — seule leur coque a changé, les onglets de canaux du chat gardent leur style déjà à jour.'},
     ], en:[
       {t:'change', sub:'interface', tx:'The sidebar menu buttons (Quests, Mailbox, Compendium, Codex, Achievements, Leaderboard, Market, Discord, Wiki, Patch notes, Support, My account, Logout...) and the menu collapse button received the same visual reskin as the rest of the Zone screen (font, colors, rounded corners) — they had been missed in previous redesign passes and still had the old style.'},
       {t:'change', sub:'interface', tx:'The floating "Quest tracker" and "Chat" widgets (top-right corner) received the same treatment — only their shell changed, the chat channel tabs already had the up-to-date style.'},
     ] },
-  { v:'V382', d:'22/07/2026 03:00', name:{fr:'Marché commun refait : catalogue unifié + popup "Acheter"', en:'Common Market redesigned: unified catalog + "Buy" popup'}, fr:[
+  { v:'V382', d:'12/07/2026 01:46', name:{fr:'Marché commun refait : catalogue unifié + popup "Acheter"', en:'Common Market redesigned: unified catalog + "Buy" popup'}, fr:[
       {t:'change', sub:'economie', tx:'Le Marché commun a été entièrement redessiné : une seule liste parcourable regroupe désormais équipement ET matériaux (au lieu d\'un onglet "Matériaux" séparé), avec recherche, tri, et arbre de catégories façon Marché Central.'},
       {t:'new', sub:'economie', tx:'Les objets qui n\'ont aucune vente en cours restent visibles dans le catalogue (grisés, sans prix) — tu peux parcourir tout ce qui existe dans le jeu, pas seulement ce qui est en vente à l\'instant.'},
       {t:'new', sub:'economie', tx:'Nouvelle popup "Acheter" avec l\'échelle de prix réelle (paliers de prix + commandes en attente), un graphique de prix, un stepper de quantité et un stepper de niveau d\'optimisation pour naviguer entre les paliers d\'un même objet.'},
@@ -285,7 +324,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'economie', tx:'From an item\'s detail view, you can now place a buy offer OR a sell offer at your own price (with quantity for materials), in addition to instant purchase.'},
       {t:'change', sub:'economie', tx:'"My orders" is now a panel pinned to the right, always visible with separate Buy/Sell tabs, instead of a 3rd tab to open separately.'},
     ] },
-  { v:'V381', d:'22/07/2026 02:00', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
+  { v:'V381', d:'11/07/2026 22:17', name:{fr:'Classement : catégorie Compendium, position hors du top 20, horodatage', en:'Leaderboard: Compendium category, rank outside top 20, timestamps'}, fr:[
       {t:'new', sub:'interface', tx:'Le Classement (🏆) a une 8e catégorie : "🧭 Compendium", basée sur ta complétion globale (zones + boss + Maîtrise PEN).'},
       {t:'new', sub:'interface', tx:'Si ton rang réel dans une catégorie est en dehors du top 20, une barre "Ta position" apparaît avec ton rang exact, ta valeur et le nombre total de joueurs classés.'},
       {t:'new', sub:'interface', tx:'Chaque joueur affiché (podium et tableau) montre désormais depuis combien de temps il a été vu pour la dernière fois ("vu il y a...").'},
@@ -298,7 +337,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'The Leaderboard received the same visual reskin as the Zone screen (podium, cards, typography).'},
       {t:'change', sub:'interface', tx:'A guest account opening the Leaderboard now sees a styled explanatory message with a direct "🔗 Link account" button, instead of a raw browser alert.'},
     ] },
-  { v:'V380', d:'22/07/2026 01:00', name:{fr:'Succès refaits : chaînes de paliers, même style que Zone/Boss', en:'Achievements redesigned: tiered chains, same look as Zone/Boss'}, fr:[
+  { v:'V380', d:'11/07/2026 21:57', name:{fr:'Succès refaits : chaînes de paliers, même style que Zone/Boss', en:'Achievements redesigned: tiered chains, same look as Zone/Boss'}, fr:[
       {t:'change', sub:'interface', tx:'Panneau Succès entièrement refait à l\'identique d\'une maquette fournie, avec la même palette que les écrans Zone et Boss. Les succès à paliers (ex : Premier sang → Chasseur → Exterminateur → Faucheur) sont désormais regroupés en une seule carte par chaîne, avec des puces montrant combien de paliers sont débloqués — le check vert n\'apparaît que quand toute la chaîne est terminée, plus sur un palier isolé.'},
       {t:'new', sub:'interface', tx:'Nouvelle vue d\'ensemble en haut du panneau : anneau de progression globale, silver déjà gagné en récompenses de succès et silver restant à débloquer, tous calculés en direct.'},
       {t:'new', sub:'interface', tx:'Nouvelle bande "derniers débloqués" avec horodatage relatif (ex : "il y a 6h") et un badge "NOUVEAU" sur le succès obtenu dans les dernières 24h.'},
@@ -309,14 +348,14 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'New "recently unlocked" strip with relative timestamps (e.g. "6h ago") and a "NEW" badge on the achievement unlocked within the last 24h.'},
       {t:'change', sub:'interface', tx:'Category filter: replaced with tiles showing a completion ring per category, instead of plain text tabs. The "unfinished only" filter now applies to the whole chain rather than a single tier.'},
     ] },
-  { v:'V379', d:'22/07/2026 00:00', name:{fr:'Rattrapage hors-ligne réel pour le modal "Bon retour"', en:'Real offline catch-up for the "Welcome back" modal'}, fr:[
+  { v:'V379', d:'11/07/2026 20:59', name:{fr:'Rattrapage hors-ligne réel pour le modal "Bon retour"', en:'Real offline catch-up for the "Welcome back" modal'}, fr:[
       {t:'fix', sub:'systeme', tx:'Corrigé : le modal "Bon retour" (résumé du silver/loot gagné pendant ton absence) ne s\'affichait que si l\'onglet était resté ouvert quelque part — fermer le navigateur ou une mise en veille faisait disparaître tout rattrapage, même après une vraie longue absence.'},
       {t:'new', sub:'systeme', tx:'Le silver gagné pendant une absence réelle (navigateur fermé, PC en veille...) est désormais rattrapé au rechargement, basé sur ton meilleur taux de farm connu, plafonné à 24h d\'absence.'},
     ], en:[
       {t:'fix', sub:'systeme', tx:'Fixed: the "Welcome back" modal (summary of silver/loot earned while away) only showed if the tab had stayed open somewhere — closing the browser or a sleep/wake cycle made any catch-up vanish, even after a long real absence.'},
       {t:'new', sub:'systeme', tx:'Silver earned during a real absence (browser closed, PC asleep...) is now caught up on reload, based on your best known farm rate, capped at 24h of absence.'},
     ] },
-  { v:'V378', d:'21/07/2026 23:00', name:{fr:'Écran Boss refait : même style que l\'écran Zone', en:'Boss screen redesigned: same look as the Zone screen'}, fr:[
+  { v:'V378', d:'11/07/2026 20:16', name:{fr:'Écran Boss refait : même style que l\'écran Zone', en:'Boss screen redesigned: same look as the Zone screen'}, fr:[
       {t:'change', sub:'combat', tx:'L\'écran Boss (lobby et arène) a été redessiné avec le même style visuel que l\'écran Zone : carte "prochain boss" mise en avant, calendrier hebdomadaire et récompenses par rang recolorés, aucun changement de fonctionnement.'},
       {t:'new', sub:'combat', tx:'Chaque World Boss a désormais une courte réplique d\'ambiance affichée dans le lobby.'},
       {t:'new', sub:'combat', tx:'Le lobby affiche maintenant la quantité de matériau garanti déjà en poche à côté de sa fourchette de drop.'},
@@ -329,14 +368,14 @@ const PATCH_NOTES = [
       {t:'new', sub:'combat', tx:'The "first kill of the week" bonus (when still available) is now shown in the lobby, before you even fight.'},
       {t:'change', sub:'combat', tx:'The pity progress bar (rare loot) is more visible in the lobby.'},
     ] },
-  { v:'V377', d:'21/07/2026 22:00', name:{fr:'Module Compagnons : une percée de rareté change aussi le nom', en:'Companion module: a rarity breakthrough now changes the name too'}, fr:[
+  { v:'V377', d:'11/07/2026 20:05', name:{fr:'Module Compagnons : une percée de rareté change aussi le nom', en:'Companion module: a rarity breakthrough now changes the name too'}, fr:[
       {t:'change', sub:'compagnon', tx:'Une percée de rareté (Tier 5 → rareté supérieure) fait désormais changer le familier d\'espèce, en prenant le nom correspondant à sa nouvelle rareté — au lieu de garder son ancien nom malgré une rareté supérieure.'},
       {t:'fix', sub:'compagnon', tx:'Corrigé rétroactivement pour tout familier ayant déjà percé avant ce changement.'},
     ], en:[
       {t:'change', sub:'compagnon', tx:'A rarity breakthrough (Tier 5 → higher rarity) now changes the pet\'s species, taking on the name matching its new rarity — instead of keeping its old name despite a higher rarity.'},
       {t:'fix', sub:'compagnon', tx:'Retroactively fixed for any pet that had already broken through before this change.'},
     ] },
-  { v:'V376', d:'21/07/2026 21:00', name:{fr:'Module Compagnons : Marché (contre-offres, suggestions) + correctif onglets', en:'Companion module: Market (counter-offers, suggestions) + tab fix'}, fr:[
+  { v:'V376', d:'11/07/2026 19:51', name:{fr:'Module Compagnons : Marché (contre-offres, suggestions) + correctif onglets', en:'Companion module: Market (counter-offers, suggestions) + tab fix'}, fr:[
       {t:'new', sub:'compagnon', tx:'Marché : raccourci "🔄 Ajouter au marché" directement depuis une carte de la Collection.'},
       {t:'new', sub:'compagnon', tx:'Marché : lors d\'une contre-offre, un badge "🆕" indique les familiers de ta Collection que le créateur de l\'offre ne possède pas encore.'},
       {t:'fix', sub:'compagnon', tx:'Corrigé : cliquer sur l\'onglet Marché surlignait à tort l\'onglet Viewer 3D (et vice versa) — le contenu affiché était le bon, seul le surlignage de l\'onglet était inversé.'},
@@ -347,12 +386,12 @@ const PATCH_NOTES = [
       {t:'fix', sub:'compagnon', tx:'Fixed: clicking the Market tab wrongly highlighted the 3D Viewer tab (and vice versa) — the displayed content was correct, only the tab highlight was swapped.'},
       {t:'change', sub:'compagnon', tx:'Onboarding: the step pagination dots are now more discreet (smaller, softer color).'},
     ] },
-  { v:'V375', d:'21/07/2026 20:00', name:{fr:'Module Compagnons : rareté après une percée corrigée', en:'Companion module: rarity after a breakthrough fixed'}, fr:[
+  { v:'V375', d:'11/07/2026 19:15', name:{fr:'Module Compagnons : rareté après une percée corrigée', en:'Companion module: rarity after a breakthrough fixed'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Corrigé : un pet ayant "percé" en rareté (Tier→rareté supérieure) pouvait afficher une rareté différente selon l\'onglet (Index figé sur la rareté de base de l\'espèce, Sections périmée si l\'onglet était déjà ouvert au moment de la percée) au lieu de sa rareté réelle, correctement affichée dans la Collection.'},
     ], en:[
       {t:'fix', sub:'compagnon', tx:'Fixed: a pet that "broke through" in rarity (Tier-up → higher rarity) could show a different rarity depending on the tab (Index stuck on the species\' base rarity, Sections stale if the tab was already open when the breakthrough happened) instead of its real current rarity, correctly shown in the Collection.'},
     ] },
-  { v:'V374', d:'21/07/2026 19:00', name:{fr:'Module Compagnons : onboarding + 4 correctifs', en:'Companion module: onboarding + 4 fixes'}, fr:[
+  { v:'V374', d:'11/07/2026 18:59', name:{fr:'Module Compagnons : onboarding + 4 correctifs', en:'Companion module: onboarding + 4 fixes'}, fr:[
       {t:'new', sub:'compagnon', tx:'Onboarding de première visite dans le module Compagnon : 5 étapes, affiché une seule fois par navigateur.'},
       {t:'fix', sub:'compagnon', tx:'Corrigé : l\'auto-nourrissage grillait silencieusement des ressources spéciales (Caphras/Dopi) au lieu de la nourriture commune, et ne rafraîchissait jamais l\'onglet Nourrir.'},
       {t:'fix', sub:'compagnon', tx:'Corrigé : le Gearscore affiché pouvait devenir périmé entre les onglets Sections et Collection après un changement d\'onglet.'},
@@ -365,7 +404,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'compagnon', tx:'Fixed: offline catch-up only triggered when the module loaded — a tab left open in the background for a long time had no way to trigger it.'},
       {t:'new', sub:'compagnon', tx:'Attention badge added on the Market tab (pending counter-offers).'},
     ] },
-  { v:'V373', d:'21/07/2026 18:30', name:{fr:'Notes de version : correctifs de la maquette (couleur, mini-panel admin, icônes)', en:'Patch notes: mockup fixes (color, admin mini-panel, icons)'}, fr:[
+  { v:'V373', d:'11/07/2026 18:59', name:{fr:'Notes de version : correctifs de la maquette (couleur, mini-panel admin, icônes)', en:'Patch notes: mockup fixes (color, admin mini-panel, icons)'}, fr:[
       {t:'fix', sub:'interface', tx:'Corrigé : l\'en-tête de chaque version affichait "vV369" au lieu de "V369" (un préfixe en trop).'},
       {t:'change', sub:'interface', tx:'"Marquer comme lu" garde sa couleur verte même désactivé (juste l\'opacité baisse), au lieu de virer gris.'},
       {t:'new', sub:'admin', tx:'Le badge "Admin" du panneau des notes de version devient un vrai bouton : ouvre un mini-panneau listant les signalements en attente avec suppression directe.'},
@@ -378,7 +417,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'Category chip icons switched to grayscale, matching the already-monochrome search icon.'},
       {t:'fix', sub:'interface', tx:'Comment timestamps: real relative duration (just now / X min ago / X h ago / X d ago) instead of a fixed date.'},
     ] },
-  { v:'V372', d:'21/07/2026 18:00', name:{fr:'Écran Zone refait : nouvel en-tête, sidebar réorganisée, colonnes redessinées', en:'Zone screen redesigned: new header, reorganized sidebar, redesigned columns'}, fr:[
+  { v:'V372', d:'11/07/2026 18:27', name:{fr:'Écran Zone refait : nouvel en-tête, sidebar réorganisée, colonnes redessinées', en:'Zone screen redesigned: new header, reorganized sidebar, redesigned columns'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran principal (Zone) a été entièrement refait à l\'identique d\'une maquette fournie : nouvel en-tête avec logo, silver/taux et prochain boss, onglets d\'activité redessinés, panneau latéral regroupé en 4 sections (Progression, Économie, Communauté, Compte), cartes de statistiques/zones/loot/équipement/optimisation/inventaire redessinées, et le panneau de droite (suivi, quêtes, chat) devient une vraie colonne.'},
       {t:'change', sub:'interface', tx:'La préférence "menu à gauche/droite" et le repli du menu latéral fonctionnent toujours, avec le même comportement qu\'avant.'},
       {t:'fix', tx:'Corrigé : replier le menu latéral ne masquait plus les sections Économie/Communauté (seulement Progression/Compte) depuis leur récente réorganisation en 4 groupes.'},
@@ -387,19 +426,19 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'The "menu left/right" preference and sidebar collapse still work exactly as before.'},
       {t:'fix', tx:'Fixed: collapsing the sidebar no longer hid the Economy/Community sections (only Progression/Account) since their recent reorganization into 4 groups.'},
     ] },
-  { v:'V371', d:'21/07/2026 12:00', name:{fr:'Bouton "Soutenir" débloqué', en:'"Support" button unlocked'}, fr:[
+  { v:'V371', d:'11/07/2026 05:09', name:{fr:'Bouton "Soutenir" débloqué', en:'"Support" button unlocked'}, fr:[
       {t:'new', tx:'Le bouton "💖 Soutenir" (menu principal) n\'est plus verrouillé : il ouvre désormais la page de don (lien PayPal, détail des coûts mensuels du projet) directement dans le jeu.'},
       {t:'fix', tx:'Le Wiki (section Discord) affichait à tort "pas encore de serveur Discord" — il pointe maintenant vers le vrai serveur.'},
     ], en:[
       {t:'new', tx:'The "💖 Support" button (main menu) is no longer locked: it now opens the donation page (PayPal link, monthly project cost breakdown) directly in the game.'},
       {t:'fix', tx:'The Wiki (Discord section) wrongly said "no Discord server yet" — it now points to the real server.'},
     ] },
-  { v:'V370', d:'21/07/2026 11:30', name:{fr:'Classement principal refait : podium, catégories, recherche', en:'Main leaderboard redesigned: podium, categories, search'}, fr:[
+  { v:'V370', d:'11/07/2026 04:41', name:{fr:'Classement principal refait : podium, catégories, recherche', en:'Main leaderboard redesigned: podium, categories, search'}, fr:[
       {t:'change', tx:'Le Classement (🏆, en haut du menu) a été entièrement refait : podium des 3 premiers, 7 catégories en onglets (Silver, Gearscore, Meilleure zone, Silver/heure, Kills/min, Meilleur objet, Trésors), recherche par pseudo, pagination et bouton "Ma position" pour retrouver ton rang directement. Toujours les mêmes records personnels à vie, jamais un instantané.'},
     ], en:[
       {t:'change', tx:'The Leaderboard (🏆, top menu) has been completely redesigned: top-3 podium, 7 category tabs (Silver, Gearscore, Best zone, Silver/hour, Kills/min, Best item, Treasures), search by name, pagination and a "My position" button to jump straight to your rank. Still the same lifetime personal records, never a live snapshot.'},
     ] },
-  { v:'V369', d:'21/07/2026 11:00', name:{fr:'Notes de version : accessibilité, lien direct et anti-abus', en:'Patch notes: accessibility, deep link and anti-abuse'}, fr:[
+  { v:'V369', d:'11/07/2026 01:53', name:{fr:'Notes de version : accessibilité, lien direct et anti-abus', en:'Patch notes: accessibility, deep link and anti-abuse'}, fr:[
       {t:'fix', tx:'Corrigé : les chips de filtre (catégorie dans les notes de version, palier dans le modal de reconnexion) s\'empilaient en pleine largeur au lieu de s\'aligner côte à côte.'},
       {t:'new', sub:'accessibilite', tx:'Panneau des notes de version : le focus clavier reste désormais dans la fenêtre (Tab ne peut plus en sortir), et le badge de nouveautés est annoncé aux lecteurs d\'écran.'},
       {t:'new', tx:'Lien direct vers une version précise des notes de version (utile pour partager un patch précis), et un tampon "Lu" apparaît sur les entrées déjà consultées.'},
@@ -420,19 +459,19 @@ const PATCH_NOTES = [
       {t:'new', sub:'admin', tx:'Patch notes panel: "Admin" badge now shown next to the title for moderators/admins.'},
       {t:'fix', tx:'Fixed: patch notes comment timestamps only showed the date, never the time.'},
     ] },
-  { v:'V368', d:'21/07/2026 09:00', name:{fr:'Wiki refait + Classement Public Compagnons', en:'Wiki redesigned + Companion Public Leaderboard'}, fr:[
+  { v:'V368', d:'11/07/2026 01:47', name:{fr:'Wiki refait + Classement Public Compagnons', en:'Wiki redesigned + Companion Public Leaderboard'}, fr:[
       {t:'change', tx:'Le Wiki a été entièrement refait en panneau plein écran, à l\'identique d\'une maquette fournie : navigation par catégories, fil d\'Ariane, sommaire de section et recherche live. Le contenu reste le même (Combat & Zones, Optimisation, Marché, Compte & Sauvegarde, À propos, Codex des objets, Tutoriel), avec des raccourcis directs vers le Compendium et le module Compagnons.'},
       {t:'new', sub:'compagnon', tx:'L\'onglet "🏆 Classement" du module Compagnon devient un vrai Classement Public : podium des 3 premiers, 4 catégories (Score Prestige, Gearscore Max, Fusions, Achievements), recherche par pseudo, pagination et "Ma position" pour retrouver ton rang directement.'},
     ], en:[
       {t:'change', tx:'The Wiki has been completely redesigned as a fullscreen panel, matching a provided mockup: category navigation, breadcrumb, section table of contents, and live search. Content stays the same (Combat & Zones, Enhancement, Market, Account & Save, About, Item Codex, Tutorial), with direct shortcuts to the Compendium and Companion module.'},
       {t:'new', sub:'compagnon', tx:'The Companion module\'s "🏆 Leaderboard" tab becomes a real Public Leaderboard: top-3 podium, 4 categories (Prestige Score, Max Gearscore, Fusions, Achievements), search by name, pagination, and "My Position" to jump straight to your rank.'},
     ] },
-  { v:'V367', d:'20/07/2026 20:30', name:{fr:'Notes de version refaites selon la maquette', en:'Patch notes redesigned to match the mockup'}, fr:[
+  { v:'V367', d:'10/07/2026 23:40', name:{fr:'Notes de version refaites selon la maquette', en:'Patch notes redesigned to match the mockup'}, fr:[
       {t:'change', tx:'Le panneau des notes de version a été entièrement refait pour ressembler à la maquette fournie : timeline par version, recherche, filtres par catégorie et vue controverse (admin/modérateur).'},
     ], en:[
       {t:'change', tx:'The patch notes panel has been completely redesigned to match the provided mockup: version timeline, search, category filters, and controversy view (admin/moderator).'},
     ] },
-  { v:'V366', d:'20/07/2026 20:00', name:{fr:'Notes de version : vote et commentaires', en:'Patch notes: voting and comments'}, fr:[
+  { v:'V366', d:'10/07/2026 22:48', name:{fr:'Notes de version : vote et commentaires', en:'Patch notes: voting and comments'}, fr:[
       {t:'new', tx:'Chaque ligne des notes de version peut désormais être votée (👍/👎) et commentée — les commentaires passent par un filtre anti-contenu inapproprié côté serveur.'},
       {t:'new', tx:'Recherche et filtre par catégorie ajoutés au panneau des notes de version.'},
       {t:'new', sub:'admin', tx:'Admin : nouvelle section de modération pour les commentaires signalés/retirés des notes de version.'},
@@ -441,7 +480,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'Search and category filter added to the patch notes panel.'},
       {t:'new', sub:'admin', tx:'Admin: new moderation section for reported/removed patch note comments.'},
     ] },
-  { v:'V365', d:'20/07/2026 19:30', name:{fr:'Compendium refait : mondes, recherche, téléportation directe', en:'Compendium redesigned: worlds, search, direct teleport'}, fr:[
+  { v:'V365', d:'10/07/2026 16:12', name:{fr:'Compendium refait : mondes, recherche, téléportation directe', en:'Compendium redesigned: worlds, search, direct teleport'}, fr:[
       {t:'change', tx:'Le Compendium a été entièrement refait : organisé par monde (Velia débloqué, Heidel/Calpheon/Valencia/Edana verrouillés), avec une barre de progression combinée (zones + World Bosses + Maîtrise PEN).'},
       {t:'new', tx:'Recherche et tri (A→Z / % de complétion) dans l\'onglet Zones du Compendium.'},
       {t:'new', tx:'Cliquer sur un objet montre désormais dans quelles zones le trouver ; cliquer sur "Lancer le farm ici" (ou sur une zone de la liste) t\'y téléporte directement avec un message de confirmation.'},
@@ -452,7 +491,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'Clicking an item now shows which zones carry it; clicking "Start farming here" (or a zone in the list) teleports you there directly with a confirmation message.'},
       {t:'new', sub:'admin', tx:'Admin: new "Compendium" section (Content) showing players\' completion distribution.'},
     ] },
-  { v:'V364', d:'20/07/2026 19:00', name:{fr:'Nouveau modal de reconnexion "Bon retour"', en:'New "Welcome back" reconnect modal'}, fr:[
+  { v:'V364', d:'10/07/2026 15:47', name:{fr:'Nouveau modal de reconnexion "Bon retour"', en:'New "Welcome back" reconnect modal'}, fr:[
       {t:'new', tx:'De retour après une absence, un nouveau modal "Bon retour" récapitule ta session : progression de niveau avant/après, silver et objets trouvés (avec le meilleur mis en avant), et ton record personnel de silver en une session.'},
       {t:'new', tx:'Un historique de tes dernières sessions d\'absence est désormais consultable directement dans ce modal, filtrable par palier de zone.'},
       {t:'new', sub:'admin', tx:'Admin : nouvelle section "Reconnexion" (Joueurs) avec le volume agrégé de silver récupéré pendant les absences, tous joueurs confondus.'},
@@ -461,22 +500,22 @@ const PATCH_NOTES = [
       {t:'new', tx:'A history of your recent away sessions is now viewable directly in this modal, filterable by zone tier.'},
       {t:'new', sub:'admin', tx:'Admin: new "Reconnect" section (Players) showing the aggregate silver recovered from away sessions across all players.'},
     ] },
-  { v:'V363', d:'20/07/2026 18:30', name:{fr:'Compagnon : réserve triée par Tier par défaut', en:'Companion: reserve sorted by Tier by default'}, fr:[
+  { v:'V363', d:'10/07/2026 14:30', name:{fr:'Compagnon : réserve triée par Tier par défaut', en:'Companion: reserve sorted by Tier by default'}, fr:[
       {t:'change', sub:'compagnon', tx:'La réserve (onglet Sections) est maintenant triée par Tier par défaut (puis GS en cas d\'égalité), au lieu de l\'ordre d\'obtention.'},
     ], en:[
       {t:'change', sub:'compagnon', tx:'The reserve (Sections tab) is now sorted by Tier by default (then GS as a tiebreak), instead of pickup order.'},
     ] },
-  { v:'V362', d:'20/07/2026 18:15', name:{fr:'Compagnon : numéro de version affiché', en:'Companion: version number displayed'}, fr:[
+  { v:'V362', d:'10/07/2026 14:08', name:{fr:'Compagnon : numéro de version affiché', en:'Companion: version number displayed'}, fr:[
       {t:'new', sub:'compagnon', tx:'Le numéro de version du module s\'affiche maintenant discrètement en bas à gauche.'},
     ], en:[
       {t:'new', sub:'compagnon', tx:'The module\'s version number is now discreetly displayed at the bottom left.'},
     ] },
-  { v:'V361', d:'20/07/2026 18:00', name:{fr:'Compagnon : réserve à côté du terrain', en:'Companion: reserve next to terrain'}, fr:[
+  { v:'V361', d:'10/07/2026 13:58', name:{fr:'Compagnon : réserve à côté du terrain', en:'Companion: reserve next to terrain'}, fr:[
       {t:'change', sub:'compagnon', tx:'Sections : la réserve s\'affiche maintenant à droite du familier déployé (au lieu d\'en dessous), avec plusieurs cartes par ligne.'},
     ], en:[
       {t:'change', sub:'compagnon', tx:'Sections: the reserve now shows to the right of the deployed companion (instead of below), with several cards per row.'},
     ] },
-  { v:'V360', d:'20/07/2026 17:30', name:{fr:'Compagnon : aperçus 3D fiabilisés, carte terrain façon Pokémon', en:'Companion: reliable 3D previews, Pokémon-style terrain card'}, fr:[
+  { v:'V360', d:'10/07/2026 13:44', name:{fr:'Compagnon : aperçus 3D fiabilisés, carte terrain façon Pokémon', en:'Companion: reliable 3D previews, Pokémon-style terrain card'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Corrigé : après avoir ouvert l\'aperçu 3D de plusieurs familiers d\'affilée, seul le tout premier s\'affichait vraiment — les suivants restaient vides.'},
       {t:'change', sub:'compagnon', tx:'Une collection qui dépassait 96 familiers (avant l\'ajout du plafond) est automatiquement ramenée à 96 — les familiers déployés sont toujours conservés.'},
       {t:'change', sub:'compagnon', tx:'La carte du familier déployé sur le terrain (onglet Sections) a été refaite en grand format portrait, façon carte à collectionner.'},
@@ -485,12 +524,12 @@ const PATCH_NOTES = [
       {t:'change', sub:'compagnon', tx:'A collection that exceeded 96 companions (before the cap was added) is now automatically trimmed down to 96 — deployed companions are always kept.'},
       {t:'change', sub:'compagnon', tx:'The deployed companion card (Sections tab) was redesigned as a large portrait card, trading-card style.'},
     ] },
-  { v:'V359', d:'20/07/2026 17:00', name:{fr:'Compagnon : module agrandi de 25% en douceur', en:'Companion: module enlarged 25% more smoothly'}, fr:[
+  { v:'V359', d:'10/07/2026 13:27', name:{fr:'Compagnon : module agrandi de 25% en douceur', en:'Companion: module enlarged 25% more smoothly'}, fr:[
       {t:'change', sub:'compagnon', tx:'Le module est de nouveau affiché 25% plus grand, mais avec une méthode plus fiable qu\'avant (évite le flou sur les icônes et les aperçus 3D).'},
     ], en:[
       {t:'change', sub:'compagnon', tx:'The module is displayed 25% bigger again, using a more reliable method than before (avoids blur on icons and 3D previews).'},
     ] },
-  { v:'V358', d:'20/07/2026 16:30', name:{fr:'Compagnon : plafond de collection, complétion 240, 3D partout', en:'Companion: collection cap, 240 completion, 3D everywhere'}, fr:[
+  { v:'V358', d:'10/07/2026 12:55', name:{fr:'Compagnon : plafond de collection, complétion 240, 3D partout', en:'Companion: collection cap, 240 completion, 3D everywhere'}, fr:[
       {t:'change', sub:'compagnon', tx:'La Collection est plafonnée à 96 familiers (avec de la marge prévue pour un futur système d\'échange).'},
       {t:'change', sub:'compagnon', tx:'La Complétion de l\'Index compte maintenant chaque palier (48 espèces × 5 tiers = 240), pas juste l\'espèce possédée.'},
       {t:'change', sub:'compagnon', tx:'Le zoom 25% du module a été retiré.'},
@@ -503,48 +542,48 @@ const PATCH_NOTES = [
       {t:'new', sub:'compagnon', tx:'3D preview extended to the 11 already-modeled companions (instead of just one), also available from the Collection and reserve.'},
       {t:'fix', tx:'The "new version available" popup now shows even over the Companion module.'},
     ] },
-  { v:'V357', d:'20/07/2026 16:00', name:{fr:'Compagnon : colonnes/pagination Collection, réserve triable', en:'Companion: Collection columns/pagination, sortable reserve'}, fr:[
+  { v:'V357', d:'10/07/2026 12:33', name:{fr:'Compagnon : colonnes/pagination Collection, réserve triable', en:'Companion: Collection columns/pagination, sortable reserve'}, fr:[
       {t:'new', sub:'compagnon', tx:'Collection : choisis exactement le nombre de cartes par ligne (5 à 9), et active la pagination si tu préfères des pages plutôt que le défilement.'},
       {t:'change', sub:'compagnon', tx:'Sections : les cartes de la réserve sont encore plus compactes, et peuvent être triées par GS ou par Tier.'},
     ], en:[
       {t:'new', sub:'compagnon', tx:'Collection: choose exactly how many cards per row (5 to 9), and turn on pagination if you prefer pages over scrolling.'},
       {t:'change', sub:'compagnon', tx:'Sections: reserve cards are even more compact, and can be sorted by GS or Tier.'},
     ] },
-  { v:'V356', d:'20/07/2026 15:30', name:{fr:'Plafond de stack des matériaux relevé', en:'Material stack cap raised'}, fr:[
+  { v:'V356', d:'10/07/2026 12:16', name:{fr:'Plafond de stack des matériaux relevé', en:'Material stack cap raised'}, fr:[
       {t:'change', tx:'Le plafond d\'un stack de matériau/craft passe de 9 999 à 999 999 — un stack plein ne se scinde plus en plusieurs cases sur une longue session de farm.'},
     ], en:[
       {t:'change', tx:'The material/craft stack cap goes from 9,999 to 999,999 — a full stack no longer splits into multiple bag slots over a long farming session.'},
     ] },
-  { v:'V355', d:'20/07/2026 15:00', name:{fr:'Message de retour de loot en grand', en:'Loot-return message, bigger'}, fr:[
+  { v:'V355', d:'10/07/2026 11:46', name:{fr:'Message de retour de loot en grand', en:'Loot-return message, bigger'}, fr:[
       {t:'change', tx:'Le résumé du loot au retour d\'absence s\'affiche maintenant dans une vraie fenêtre plein écran, plus visible qu\'avant.'},
     ], en:[
       {t:'change', tx:'The away-loot summary now shows up in a real fullscreen window, more visible than before.'},
     ] },
-  { v:'V354', d:'20/07/2026 14:30', name:{fr:'Correctif : message de retour de loot invisible', en:'Fix: invisible loot-return message'}, fr:[
+  { v:'V354', d:'10/07/2026 10:48', name:{fr:'Correctif : message de retour de loot invisible', en:'Fix: invisible loot-return message'}, fr:[
       {t:'fix', tx:'Le résumé du loot au retour d\'absence (ajouté juste avant) ne s\'affichait nulle part à l\'écran — corrigé, un vrai popup apparaît maintenant.'},
     ], en:[
       {t:'fix', tx:'The away-loot summary (added right before) wasn\'t showing up on screen anywhere — fixed, a real popup now appears.'},
     ] },
-  { v:'V353', d:'20/07/2026 14:00', name:{fr:'Résumé du loot au retour + 1er aperçu 3D compagnon', en:'Loot summary on return + 1st companion 3D preview'}, fr:[
+  { v:'V353', d:'10/07/2026 10:35', name:{fr:'Résumé du loot au retour + 1er aperçu 3D compagnon', en:'Loot summary on return + 1st companion 3D preview'}, fr:[
       {t:'new', tx:'Quand tu reviens sur l\'onglet du jeu après une absence, un résumé du loot ramassé pendant ce temps s\'affiche dans les notifications.'},
       {t:'new', sub:'compagnon', tx:'Premier aperçu 3D réel d\'un familier : bouton "Voir en 3D" sur le Chat masqué noir déployé (T5), pour tester le rendu en conditions réelles.'},
     ], en:[
       {t:'new', tx:'When you come back to the game tab after being away, a summary of the loot gathered during that time shows up in notifications.'},
       {t:'new', sub:'compagnon', tx:'First real 3D preview of a companion: "View in 3D" button on the deployed Black Mask Cat (T5), to test the render under real conditions.'},
     ] },
-  { v:'V352', d:'20/07/2026 13:00', name:{fr:'Un seul appareil à la fois + mode hors ligne', en:'One device at a time + offline mode'}, fr:[
+  { v:'V352', d:'10/07/2026 10:18', name:{fr:'Un seul appareil à la fois + mode hors ligne', en:'One device at a time + offline mode'}, fr:[
       {t:'new', tx:'Ton compte ne peut plus jouer sur 2 onglets/navigateurs/appareils en même temps : la dernière connexion prend la main, les autres se mettent en pause avec un bouton pour reprendre.'},
       {t:'new', tx:'Mode hors ligne : si ta connexion coupe en pleine partie, le jeu continue et ta progression est sauvegardée localement, puis synchronisée automatiquement dès que le réseau revient.'},
     ], en:[
       {t:'new', tx:'Your account can no longer play on 2 tabs/browsers/devices at the same time: the latest sign-in takes over, others pause with a button to resume.'},
       {t:'new', tx:'Offline mode: if your connection drops mid-session, the game keeps going and your progress is saved locally, then synced automatically once the network is back.'},
     ] },
-  { v:'V351', d:'20/07/2026 12:00', name:{fr:'Compagnon : premier écran de test en 3D', en:'Companion: first 3D test screen'}, fr:[
+  { v:'V351', d:'10/07/2026 09:34', name:{fr:'Compagnon : premier écran de test en 3D', en:'Companion: first 3D test screen'}, fr:[
       {t:'new', sub:'compagnon', tx:'Nouvel onglet "Viewer 3D (TEST)" dans le module Compagnon : premier essai de rendu 3D réel des familiers, un seul modèle chargé pour l\'instant, purement expérimental.'},
     ], en:[
       {t:'new', sub:'compagnon', tx:'New "3D Viewer (TEST)" tab in the Companion module: first real 3D rendering test for pets, only one model loaded for now, purely experimental.'},
     ] },
-  { v:'V350', d:'20/07/2026 11:00', name:{fr:'Correctif tutoriel + connexion allégée + Compagnon : filtres, zoom, titre', en:'Tutorial fix + lighter sign-in + Companion: filters, zoom, title'}, fr:[
+  { v:'V350', d:'10/07/2026 08:51', name:{fr:'Correctif tutoriel + connexion allégée + Compagnon : filtres, zoom, titre', en:'Tutorial fix + lighter sign-in + Companion: filters, zoom, title'}, fr:[
       {t:'fix', tx:'Corrigé : un tutoriel pouvait être marqué "vu" avant même que tu ne te sois connecté, te privant définitivement de son affichage réel une fois ton compte créé.'},
       {t:'change', sub:'connexion', tx:'Écran de connexion simplifié : Discord reste le bouton principal, Google/GitHub/Twitter sont regroupés en dessous sur une seule ligne.'},
       {t:'change', sub:'compagnon', tx:'Le titre du module n\'affiche plus "Compagnon" en double (à gauche ET à droite) — ne reste qu\'à droite.'},
@@ -557,12 +596,12 @@ const PATCH_NOTES = [
       {t:'change', sub:'compagnon', tx:'Collection: filters moved back to the right of the search bar.'},
       {t:'new', sub:'compagnon', tx:'The whole Companion module is now displayed 25% bigger.'},
     ] },
-  { v:'V349', d:'20/07/2026 10:00', name:{fr:'Compagnon : nouvelle palette de couleurs', en:'Companion: new color palette'}, fr:[
+  { v:'V349', d:'10/07/2026 06:42', name:{fr:'Compagnon : nouvelle palette de couleurs', en:'Companion: new color palette'}, fr:[
       {t:'change', sub:'compagnon', tx:'Le module Compagnon adopte la palette de couleurs officielle du jeu (fonds bleu-nuit profond, accents or/bleu/vert/rouge) — jusqu\'ici il utilisait un thème doré à part, jamais aligné avec le reste.'},
     ], en:[
       {t:'change', sub:'compagnon', tx:'The Companion module now uses the game\'s official color palette (deep navy backgrounds, gold/blue/green/red accents) — until now it used a separate gold theme, never aligned with the rest.'},
     ] },
-  { v:'V348', d:'20/07/2026 09:00', name:{fr:'Compagnon : achat des slots d\'œuf corrigé · Header : badge NOUVEAU sur Compagnon, cadenas coupés réparés', en:'Companion: egg slot purchase fixed · Header: NEW badge on Companion, fixed clipped locks'}, fr:[
+  { v:'V348', d:'10/07/2026 06:26', name:{fr:'Compagnon : achat des slots d\'œuf corrigé · Header : badge NOUVEAU sur Compagnon, cadenas coupés réparés', en:'Companion: egg slot purchase fixed · Header: NEW badge on Companion, fixed clipped locks'}, fr:[
       {t:'fix', sub:'compagnon', tx:'Impossible d\'acheter le 3ème slot d\'incubation ni le slot supplémentaire ("➕") — les deux boutons ne faisaient rien. Corrigé, les deux débitent bien du Silver et débloquent le slot immédiatement.'},
       {t:'change', sub:'compagnon', tx:'Le fil d\'Ariane du module affichait encore "Familiers" — remplacé par "Compagnon".'},
       {t:'new', tx:'L\'onglet Compagnon du header principal affiche désormais un badge "NOUVEAU" plutôt qu\'un cadenas.'},
@@ -573,7 +612,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'The Companion tab in the main header now shows a "NEW" badge instead of a lock.'},
       {t:'fix', sub:'ux', tx:'Main header badges (lock, boss HP%, new) were sometimes clipped at the bottom — fixed.'},
     ] },
-  { v:'V347', d:'20/07/2026 08:00', name:{fr:'Compagnon : classement cross-joueurs, tes stats, cartes Collection compactes · Admin : stats œufs/index/fusions', en:'Companion: cross-player leaderboard, your stats, compact Collection cards · Admin: egg/index/fusion stats'}, fr:[
+  { v:'V347', d:'10/07/2026 06:08', name:{fr:'Compagnon : classement cross-joueurs, tes stats, cartes Collection compactes · Admin : stats œufs/index/fusions', en:'Companion: cross-player leaderboard, your stats, compact Collection cards · Admin: egg/index/fusion stats'}, fr:[
       {t:'new', sub:'compagnon', tx:'Nouvel onglet "🏆 Classement" : tes stats persos (œufs ouverts, argent dépensé, fusions, complétion Index...) + un vrai classement comparé à tous les autres joueurs.'},
       {t:'fix', sub:'compagnon', tx:'Au zoom le plus dense de la Collection, les cartes affichaient uniquement le nom — rareté/tier/section/GS étaient invisibles (coupés silencieusement). Un format compact garde désormais ces infos visibles à toutes les tailles.'},
       {t:'fix', sub:'admin', tx:'En de rares occasions, le panneau admin pouvait se rouvrir tout seul pendant une autre activité (ex: en pleine session du module Compagnon) — corrigé.'},
@@ -584,7 +623,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'admin', tx:'In rare cases the admin panel could reopen on its own during another activity (e.g. mid-session in the Companion module) — fixed.'},
       {t:'new', sub:'admin', tx:'Enriched Companion stats: average hatches per day, average Index completion, and a per-player list of their fusions/breakthroughs.'},
     ] },
-  { v:'V346', d:'20/07/2026 07:00', name:{fr:'Compagnon : résultat de fusion clarifié, export/import retiré · Admin : dashboard consolidé', en:'Companion: clearer fusion result, export/import removed · Admin: consolidated dashboard'}, fr:[
+  { v:'V346', d:'10/07/2026 05:26', name:{fr:'Compagnon : résultat de fusion clarifié, export/import retiré · Admin : dashboard consolidé', en:'Companion: clearer fusion result, export/import removed · Admin: consolidated dashboard'}, fr:[
       {t:'new', sub:'compagnon', tx:'Le résultat d\'une fusion affiche désormais clairement le changement de Rang (Tier) et de Score, avec une flèche verte ⬆️ en cas de gain et rouge ⬇️ en cas de perte, comparé au meilleur des 2 parents.'},
       {t:'change', sub:'compagnon', tx:'Boutons d\'export/import de sauvegarde JSON retirés du module Compagnon (ne restait qu\'un filet de sécurité local, jamais relié à la sauvegarde cloud).'},
       {t:'fix', sub:'compagnon', tx:'La synchronisation des statistiques du module Compagnon vers le panneau admin ne fonctionnait jamais depuis sa création (bug technique côté connexion au serveur) — corrigé, les stats remontent désormais correctement.'},
@@ -595,24 +634,24 @@ const PATCH_NOTES = [
       {t:'fix', sub:'compagnon', tx:'Syncing Companion module stats to the admin panel never worked since it was created (server-connection technical bug) — fixed, stats now come through correctly.'},
       {t:'new', sub:'admin', tx:'The admin Dashboard (Overview) now shows a preview of EVERY panel (economy, market, sanctions, onboarding, companions, zones...) with a 🟢/🔴 light per section — click a card to open the full detail.'},
     ] },
-  { v:'V345', d:'20/07/2026 06:00', name:{fr:'Admin : publication de notes de version sur Discord', en:'Admin: publish patch notes to Discord'}, fr:[
+  { v:'V345', d:'10/07/2026 04:51', name:{fr:'Admin : publication de notes de version sur Discord', en:'Admin: publish patch notes to Discord'}, fr:[
       {t:'new', sub:'admin', tx:'Nouvelle section admin "Notes de version → Discord" : choisir une version et la publier en un clic dans le salon Discord de log, avec les icônes 🆕/🔄/🛠️/🔒 par ligne conservées.'},
     ], en:[
       {t:'new', sub:'admin', tx:'New admin section "Patch notes → Discord": pick a version and publish it in one click to the log Discord channel, keeping the 🆕/🔄/🛠️/🔒 icon per line.'},
     ] },
-  { v:'V344', d:'20/07/2026 05:00', name:{fr:'Correctif : bulle du tutoriel Marché commun coupée en bas d\'écran', en:'Fix: Common Market tutorial bubble cut off at the bottom of the screen'}, fr:[
+  { v:'V344', d:'10/07/2026 04:13', name:{fr:'Correctif : bulle du tutoriel Marché commun coupée en bas d\'écran', en:'Fix: Common Market tutorial bubble cut off at the bottom of the screen'}, fr:[
       {t:'fix', sub:'ux', tx:'Le tutoriel affiché à la première ouverture du Marché commun visait le panneau entier (très haut à l\'écran), poussant sa bulle d\'explication hors de l\'écran, coupée en bas. Elle vise désormais le petit bandeau de titre du panneau et reste toujours entièrement visible.'},
     ], en:[
       {t:'fix', sub:'ux', tx:'The tutorial shown on first opening the Common Market targeted the entire panel (very tall on screen), pushing its explanation bubble off-screen, cut off at the bottom. It now targets the panel\'s small title bar and always stays fully visible.'},
     ] },
-  { v:'V343', d:'20/07/2026 04:00', name:{fr:'Onglet PvP (verrouillé) + classement Compagnon', en:'PvP tab (locked) + Companion ranking'}, fr:[
+  { v:'V343', d:'10/07/2026 03:18', name:{fr:'Onglet PvP (verrouillé) + classement Compagnon', en:'PvP tab (locked) + Companion ranking'}, fr:[
       {t:'new', sub:'compagnon', tx:'Nouvel onglet PvP dans le module Compagnon (test) : bandeau "bientôt disponible" + un vrai classement de tes familiers triés par puissance (GS), toutes sections confondues.'},
       {t:'new', tx:'Nouvel onglet "PvP" dans le header du jeu (verrouillé, comme Pêche/Mine/Forêt...) — activité à venir.'},
     ], en:[
       {t:'new', sub:'compagnon', tx:'New PvP tab in the (test) Companion module: "coming soon" banner + a real ranking of your pets sorted by power (GS), across all sections.'},
       {t:'new', tx:'New "PvP" tab in the game header (locked, like Fishing/Mining/Forest...) — upcoming activity.'},
     ] },
-  { v:'V342', d:'20/07/2026 02:00', name:{fr:'Invités désactivés, connexion Google/GitHub/Twitter', en:'Guests disabled, Google/GitHub/Twitter sign-in'}, fr:[
+  { v:'V342', d:'10/07/2026 02:54', name:{fr:'Invités désactivés, connexion Google/GitHub/Twitter', en:'Guests disabled, Google/GitHub/Twitter sign-in'}, fr:[
       {t:'change', sub:'connexion', severity:'major', tx:'Le mode invité (session anonyme, sans compte) est désactivé pour les nouveaux joueurs : il faut désormais créer un compte ou se connecter pour jouer. Les sessions invité créées avant ce changement continuent de fonctionner normalement.'},
       {t:'new', sub:'connexion', tx:'Connexion possible avec Google et GitHub, en plus d\'Email/mot de passe et Discord déjà existants.'},
       {t:'new', sub:'connexion', tx:'Connexion avec Twitter/X ajoutée également.'},
@@ -621,7 +660,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'connexion', tx:'Sign-in with Google and GitHub is now available, alongside the existing Email/password and Discord.'},
       {t:'new', sub:'connexion', tx:'Sign-in with Twitter/X was added as well.'},
     ] },
-  { v:'V341', d:'20/07/2026 01:00', name:{fr:'Panneau admin : recherche, palette en haut à gauche, alerte économique, plateforme d\'inscription', en:'Admin panel: search, top-left palette, economy alert, signup platform'}, fr:[
+  { v:'V341', d:'10/07/2026 02:54', name:{fr:'Panneau admin : recherche, palette en haut à gauche, alerte économique, plateforme d\'inscription', en:'Admin panel: search, top-left palette, economy alert, signup platform'}, fr:[
       {t:'new', sub:'admin', tx:'Barre de recherche dans la sidebar du panneau admin, pour filtrer les sections en direct.'},
       {t:'change', sub:'admin', tx:'La palette de couleurs du panneau admin est désormais accessible directement en haut à gauche (pastilles cliquables), au lieu d\'une page dédiée sous "Système".'},
       {t:'new', sub:'admin', tx:'Le Dashboard et la Santé économique affichent désormais une alerte quand trop peu de silver gagné est réellement dépensé (risque d\'inflation, besoin d\'un puits).'},
@@ -632,29 +671,29 @@ const PATCH_NOTES = [
       {t:'new', sub:'admin', tx:'The Dashboard and Economic Health now show an alert when too little of the gained silver is actually spent (inflation risk, sink needed).'},
       {t:'new', sub:'admin', tx:'The player list now shows each player\'s signup platform (email/Discord/Google/GitHub/guest), with a breakdown pie chart in "Signups".'},
     ] },
-  { v:'V340', d:'20/07/2026 00:00', name:{fr:'Correctif : stats d\'onboarding faussées par une relance du tutoriel', en:'Fix: onboarding stats corrupted by replaying the tutorial'}, fr:[
+  { v:'V340', d:'10/07/2026 02:54', name:{fr:'Correctif : stats d\'onboarding faussées par une relance du tutoriel', en:'Fix: onboarding stats corrupted by replaying the tutorial'}, fr:[
       {t:'fix', sub:'admin', tx:'Relancer le tutoriel d\'arrivée après l\'avoir déjà terminé effaçait à tort sa complétion dans les stats admin (le faisant réapparaître comme "abandonné"). Une complétion ne peut désormais plus régresser.'},
     ], en:[
       {t:'fix', sub:'admin', tx:'Replaying the arrival tutorial after already finishing it used to wrongly erase its completion in the admin stats (making it reappear as "abandoned"). A completed run can no longer regress.'},
     ] },
-  { v:'V339', d:'19/07/2026 08:00', name:{fr:'Nouveaux tutoriels : objets de loot courant, marché, enchantement, boss', en:'New tutorials: common loot items, market, enhancement, boss'}, fr:[
+  { v:'V339', d:'10/07/2026 00:49', name:{fr:'Nouveaux tutoriels : objets de loot courant, marché, enchantement, boss', en:'New tutorials: common loot items, market, enhancement, boss'}, fr:[
       {t:'new', sub:'inventaire', tx:'Un court tutoriel s\'affiche désormais au tout premier objet de loot courant ramassé (revendu automatiquement en silver), pour expliquer qu\'il n\'y a rien d\'autre à en faire.'},
       {t:'new', sub:'combat', tx:'De nouveaux courts tutoriels s\'affichent désormais au premier accès au Marché commun, à la première utilisation de l\'Optimisation (enchantement) et au premier passage dans le lobby d\'un World Boss.'},
     ], en:[
       {t:'new', sub:'inventaire', tx:'A short tutorial now appears the very first time you pick up a common loot item (automatically sold for silver), explaining there\'s nothing else to do with it.'},
       {t:'new', sub:'combat', tx:'New short tutorials now appear on first access to the Common Market, first use of Optimization (enhancement), and first visit to a World Boss lobby.'},
     ] },
-  { v:'V338', d:'19/07/2026 07:00', name:{fr:'Nouvelle roue de récompense boss (loot rarissime)', en:'New boss reward wheel (rarissime loot)'}, fr:[
+  { v:'V338', d:'10/07/2026 00:27', name:{fr:'Nouvelle roue de récompense boss (loot rarissime)', en:'New boss reward wheel (rarissime loot)'}, fr:[
       {t:'change', sub:'combat', tx:'La roue de récompense du loot rarissime de World Boss (Pierre de sang de Kzarka, Coeur de Vell) a été refaite entièrement : géométrie précise, plus aucun décalage visuel entre le pointeur et le lot obtenu.'},
     ], en:[
       {t:'change', sub:'combat', tx:'The World Boss rarissime loot reward wheel (Kzarka\'s Blood Stone, Vell\'s Heart) was completely rebuilt: precise geometry, no more visual misalignment between the pointer and the actual result.'},
     ] },
-  { v:'V337', d:'19/07/2026 06:00', name:{fr:'Correctif : compteur Maîtrise PEN pouvait dépasser le maximum', en:'Fix: PEN Mastery counter could exceed the maximum'}, fr:[
+  { v:'V337', d:'09/07/2026 17:46', name:{fr:'Correctif : compteur Maîtrise PEN pouvait dépasser le maximum', en:'Fix: PEN Mastery counter could exceed the maximum'}, fr:[
       {t:'fix', sub:'compte', tx:'Le compteur "Maîtrise PEN (X/44)" pouvait afficher un total supérieur à 44 (ex: 45/44) si un ancien nom d\'objet, retiré depuis un rééquilibrage passé, était resté enregistré. Corrigé : seuls les 44 objets réellement suivis aujourd\'hui comptent.'},
     ], en:[
       {t:'fix', sub:'compte', tx:'The "PEN Mastery (X/44)" counter could show a total above 44 (e.g. 45/44) if an old item name, removed by a past rebalance, was still recorded. Fixed: only the 44 items actually tracked today are counted.'},
     ] },
-  { v:'V336', d:'19/07/2026 05:00', name:{fr:'Pity boss, bonus 1ère victoire de la semaine, tutoriels d\'objets', en:'Boss pity, first weekly kill bonus, item tutorials'}, fr:[
+  { v:'V336', d:'09/07/2026 17:26', name:{fr:'Pity boss, bonus 1ère victoire de la semaine, tutoriels d\'objets', en:'Boss pity, first weekly kill bonus, item tutorials'}, fr:[
       {t:'new', sub:'combat', tx:'World Boss : un compteur de "pity" garantit désormais un loot rarissime (Pierre de sang de Kzarka, Coeur de Vell...) au bout d\'un certain nombre de kills sans en obtenir — affiché dans le lobby du boss. Bonus "+50% première victoire de la semaine" par boss.'},
       {t:'change', sub:'combat', tx:'Mourir pendant un combat de World Boss réduit désormais la récompense chiffrée (silver/matériaux/loot rarissime) : aucun malus à 0 mort ("Perfect Kill"), jusqu\'à une perte totale du loot bonus à 4 morts ou plus. Les drops garantis de base restent toujours acquis.'},
       {t:'new', sub:'inventaire', tx:'Un court tutoriel s\'affiche désormais au premier ramassage de certains matériaux (pierres d\'optimisation par palier, composants de craft endgame comme le Fragment de mémoire) pour expliquer à quoi ils servent.'},
@@ -663,27 +702,27 @@ const PATCH_NOTES = [
       {t:'change', sub:'combat', tx:'Dying during a World Boss fight now reduces the numeric reward (silver/materials/rare loot): no penalty at 0 deaths ("Perfect Kill"), up to a full loss of the bonus loot at 4+ deaths. Base guaranteed drops always remain.'},
       {t:'new', sub:'inventaire', tx:'A short tutorial now appears the first time you pick up certain materials (per-tier enhancement stones, endgame crafting components like the Memory Fragment) to explain what they\'re for.'},
     ] },
-  { v:'V335', d:'19/07/2026 04:00', name:{fr:'Panneau admin : système de sanctions (ban temporaire)', en:'Admin panel: sanctions system (temporary ban)'}, fr:[
+  { v:'V335', d:'09/07/2026 15:15', name:{fr:'Panneau admin : système de sanctions (ban temporaire)', en:'Admin panel: sanctions system (temporary ban)'}, fr:[
       {t:'new', sub:'admin', tx:'Nouvel onglet "🚫 Sanctions" dans le panneau admin : bannissement temporaire d\'un joueur (durée + motif prédéfini), avec liste des bannissements actifs et bouton de levée. Un compte banni est déconnecté et bloqué jusqu\'à expiration, avec un message clair indiquant la date de fin et le motif.'},
     ], en:[
       {t:'new', sub:'admin', tx:'New "🚫 Sanctions" tab in the admin panel: temporary ban of a player (duration + predefined reason), with a list of active bans and an unban button. A banned account is signed out and blocked until expiry, with a clear message showing the end date and reason.'},
     ] },
-  { v:'V334', d:'19/07/2026 03:00', name:{fr:'Roulement "casino" pour toutes les récompenses chiffrées de boss', en:'"Casino" roll for all boss numeric rewards'}, fr:[
+  { v:'V334', d:'09/07/2026 00:32', name:{fr:'Roulement "casino" pour toutes les récompenses chiffrées de boss', en:'"Casino" roll for all boss numeric rewards'}, fr:[
       {t:'new', sub:'graphismes', severity:'major', tx:'Les récompenses chiffrées de fin de boss (silver, Pierre de Caphras, Fragment de mémoire, matériau...) défilent maintenant comme une machine à sous : le nombre change rapidement puis ralentit de plus en plus, jusqu\'à s\'arrêter pile sur la vraie valeur déjà tirée. Le roulement dure aussi plus longtemps qu\'avant pour bien voir le ralentissement. "Passer" fait toujours tout atterrir instantanément.'},
     ], en:[
       {t:'new', sub:'graphismes', severity:'major', tx:'Numeric boss rewards at the end of a fight (silver, Caphras Stone, Memory Fragment, material...) now roll like a slot machine: the number changes fast then slows down more and more, landing exactly on the real value already rolled. The roll also lasts longer than before so the slowdown is clearly visible. "Skip" still lands everything instantly.'},
     ] },
-  { v:'V333', d:'19/07/2026 02:00', name:{fr:'"VAINCU" sur l\'onglet Boss du header', en:'"DEFEATED" on the header\'s Boss tab'}, fr:[
+  { v:'V333', d:'09/07/2026 00:09', name:{fr:'"VAINCU" sur l\'onglet Boss du header', en:'"DEFEATED" on the header\'s Boss tab'}, fr:[
       {t:'fix', sub:'interface', tx:'La bulle %PV de l\'onglet Boss du header restait sur "0%" une fois le boss tué, laissant croire que le combat continuait. Elle affiche désormais "VAINCU", comme le lobby.'},
     ], en:[
       {t:'fix', sub:'interface', tx:'The Boss tab\'s HP% bubble in the header stayed on "0%" once the boss was killed, making it look like the fight was still going. It now shows "DEFEATED", like the lobby.'},
     ] },
-  { v:'V332', d:'19/07/2026 01:00', name:{fr:'Compteur par palier dans la Maîtrise PEN', en:'Per-tier counter in PEN Mastery'}, fr:[
+  { v:'V332', d:'09/07/2026 00:06', name:{fr:'Compteur par palier dans la Maîtrise PEN', en:'Per-tier counter in PEN Mastery'}, fr:[
       {t:'new', sub:'interface', tx:'Chaque palier de couleur de la Maîtrise PEN affiche désormais son propre compteur (ex: 7/11), avec un halo vert dès que le palier est complet (11/11) — plus besoin de compter soi-même les icônes.'},
     ], en:[
       {t:'new', sub:'interface', tx:'Each color tier in PEN Mastery now shows its own counter (e.g. 7/11), with a green highlight once the tier is complete (11/11) — no more counting icons by hand.'},
     ] },
-  { v:'V331', d:'19/07/2026 00:00', name:{fr:'Barre de vie du boss vaincu, stack par nom, coffre à taille standard', en:'Defeated boss HP bar, stack by name, standard chest size'}, fr:[
+  { v:'V331', d:'09/07/2026 00:01', name:{fr:'Barre de vie du boss vaincu, stack par nom, coffre à taille standard', en:'Defeated boss HP bar, stack by name, standard chest size'}, fr:[
       {t:'new', sub:'interface', tx:'Le lobby Boss affiche désormais une vraie barre de vie (pas juste du texte) quand un boss partagé a déjà été vaincu par d\'autres joueurs — vide, grisée, "VAINCU" — visible jusqu\'au moment exact où il aurait normalement disparu (fin de la fenêtre de combat de 9 min).'},
       {t:'fix', sub:'economie', severity:'major', tx:'Deux objets identiques (même nom) provenant de sources différentes pouvaient finir dans 2 stacks séparés au lieu de fusionner, à cause d\'un identifiant technique de provenance différent. Corrigé : le stack se fait désormais uniquement par nom affiché, quelle que soit la provenance.'},
       {t:'fix', sub:'interface', tx:'La carte du Coffre de Velia avait une taille fixe (260px) sans rapport avec la hauteur réelle des cartes voisines (Zones, Loot, Statistiques). Elle suit désormais le même mécanisme de synchronisation de hauteur que les autres cartes — une taille standard, cohérente, plutôt qu\'un plafond arbitraire.'},
@@ -692,7 +731,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'economie', severity:'major', tx:'Two identical items (same name) from different sources could end up in 2 separate stacks instead of merging, due to a differing technical provenance identifier. Fixed: stacking is now based purely on the displayed name, regardless of source.'},
       {t:'fix', sub:'interface', tx:'The Velia Chest card had a fixed size (260px) unrelated to the real height of neighboring cards (Zones, Loot, Stats). It now follows the same height-sync mechanism as the other cards — a standard, consistent size instead of an arbitrary cap.'},
     ] },
-  { v:'V330', d:'18/07/2026 23:00', name:{fr:'Dés et roulette en fin de boss, Maîtrise PEN par palier, badges du header', en:'Dice and wheel at the end of boss fights, tiered PEN Mastery, header badges'}, fr:[
+  { v:'V330', d:'08/07/2026 23:47', name:{fr:'Dés et roulette en fin de boss, Maîtrise PEN par palier, badges du header', en:'Dice and wheel at the end of boss fights, tiered PEN Mastery, header badges'}, fr:[
       {t:'new', sub:'graphismes', severity:'major', tx:'Fin de combat de boss : chaque récompense se révèle maintenant l\'une après l\'autre (un dé pour les quantités aléatoires, une roulette pour le loot rarissime), avec un bouton "Passer" pour tout révéler d\'un coup. Le bouton "Quitter" n\'apparaît qu\'une fois tout révélé, et ramène directement à la zone de farm (au lieu du lobby boss comme avant).'},
       {t:'fix', sub:'interface', severity:'major', tx:'Bug trouvé dans la Maîtrise PEN du Compendium : les 12 armes (bâton/éveil/dague × 4 paliers) n\'étaient jamais suivies, aucun moyen de les compléter. Corrigé — les 44 entrées (armes, armure, bijoux) sont désormais toutes suivies, réorganisées par palier de couleur, toujours dans l\'ordre arme puis armure puis bijou, avec l\'icône réelle de chaque objet (grisée tant que jamais atteint PEN) et le meilleur niveau d\'enchantement jamais atteint affiché même pour un objet pas encore masterisé.'},
       {t:'change', sub:'interface', tx:'Cadenas et %PV du boss dans le header : désormais de vrais badges à cheval sur le cadre de la ligne du bas des onglets (comme les badges de la barre de région), au lieu d\'une simple ligne de texte.'},
@@ -701,7 +740,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', severity:'major', tx:'Bug found in the Compendium\'s PEN Mastery: the 12 weapons (staff/awakening/dagger × 4 tiers) were never tracked, no way to complete them. Fixed — all 44 entries (weapons, armor, jewelry) are now tracked, reorganized by color tier, always in weapon-then-armor-then-jewelry order, with the item\'s real icon (greyed out until PEN is reached) and the best enhancement level ever reached shown even for an item not yet mastered.'},
       {t:'change', sub:'interface', tx:'Lock icon and boss HP% in the header: now real badges straddling the bottom border of the tabs (like the region bar badges), instead of a plain line of text.'},
     ] },
-  { v:'V329', d:'18/07/2026 22:00', name:{fr:'Flash boss dans le header, Compagnon/Vie en mer de retour', en:'Boss flash in the header, Companion/Sea life are back'}, fr:[
+  { v:'V329', d:'08/07/2026 23:11', name:{fr:'Flash boss dans le header, Compagnon/Vie en mer de retour', en:'Boss flash in the header, Companion/Sea life are back'}, fr:[
       {t:'new', sub:'interface', severity:'major', tx:'L\'onglet Boss du header s\'illumine désormais d\'un flash bien visible dès que le prochain spawn est à moins de 5 minutes, et reste allumé pendant toute la fenêtre de combat (9 min) — impossible de rater un boss en farmant sur une autre page. Le %PV du boss s\'affiche aussi directement sur cet onglet pendant le combat.'},
       {t:'change', sub:'interface', tx:'Compagnon et Vie en mer, qui vivaient dans la barre des régions (Velia/Heidel/Calpheon...), reviennent dans le header aux côtés de Zone/Boss/Pêche/Mine — plus cohérent avec les autres activités, toujours verrouillés en teaser.'},
       {t:'fix', sub:'interface', tx:'Le cadenas des onglets verrouillés du header (Pêche, Mine, Compagnon...) était collé en texte après le nom sur la même ligne — il a désormais sa propre ligne, en dessous du nom, plus lisible dans une barre à 10 onglets.'},
@@ -710,14 +749,14 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'Companion and Sea life, which lived in the region tab bar (Velia/Heidel/Calpheon...), move back to the header alongside Zone/Boss/Fishing/Mining — a better fit with the other activities, still locked as teasers.'},
       {t:'fix', sub:'interface', tx:'The lock icon on locked header tabs (Fishing, Mining, Companion...) used to be glued as text after the name on the same line — it now has its own line below the name, easier to read in a 10-tab bar.'},
     ] },
-  { v:'V328', d:'18/07/2026 21:00', name:{fr:'Compendium : éviction PEN généralisée + rétroactive', en:'Compendium: generalized + retroactive PEN eviction'}, fr:[
+  { v:'V328', d:'08/07/2026 22:51', name:{fr:'Compendium : éviction PEN généralisée + rétroactive', en:'Compendium: generalized + retroactive PEN eviction'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Quand un exemplaire ÉQUIPÉ ou en sac atteignait PEN, une AUTRE copie non-PEN du même objet protégée dans le Compendium restait coincée là indéfiniment (l\'éviction ne gérait que le cas où c\'était CETTE copie précise qui montait à PEN). Corrigé : dès qu\'un nom d\'objet est maîtrisé PEN, peu importe quel exemplaire y est arrivé, la copie protégée devenue inutile rejoint le sac principal. Rattrapage rétroactif appliqué au premier chargement pour les cas déjà présents.'},
       {t:'fix', sub:'interface', tx:'Le classement Gearscore/PA/PD a été réinitialisé côté serveur puis repeuplé automatiquement avec les vraies valeurs actuelles de chaque joueur (record à vie, voir V327) au lieu de garder d\'anciennes valeurs "en direct" obsolètes datant d\'avant ce changement.'},
     ], en:[
       {t:'fix', sub:'interface', severity:'major', tx:'When an EQUIPPED or bagged copy reached PEN, a DIFFERENT non-PEN copy of the same item protected in the Compendium stayed stuck there indefinitely (eviction only handled the case where that exact copy was the one reaching PEN). Fixed: as soon as an item name is PEN-mastered, regardless of which copy got there, the now-useless protected copy rejoins the main bag. Retroactive catch-up applied on first load for existing cases.'},
       {t:'fix', sub:'interface', tx:'The Gearscore/AP/DP leaderboard was reset server-side then automatically repopulated with each player\'s real current values (lifetime record, see V327) instead of keeping old "live" values now stale from before that change.'},
     ] },
-  { v:'V327', d:'18/07/2026 20:00', name:{fr:'Ornements par palier, coffre 5/8, classement 100% records', en:'Tier ornaments, 5/8 chest, 100% record leaderboard'}, fr:[
+  { v:'V327', d:'08/07/2026 21:39', name:{fr:'Ornements par palier, coffre 5/8, classement 100% records', en:'Tier ornaments, 5/8 chest, 100% record leaderboard'}, fr:[
       {t:'new', sub:'graphismes', severity:'major', tx:'Nouveaux ornements en orbite autour du personnage, avec une flashiness qui monte avec le palier de stuff : gris/blanc restent discrets, vert en montre 4 nettement visibles, bleu en montre 5 avec un halo supplémentaire pendant le cast — le palier le plus flashy du jeu.'},
       {t:'change', sub:'interface', tx:'Le bouton d\'agrandissement du Coffre de Velia passe de 4 à 5 objets par ligne, et ne fait plus grandir la carte en changeant de vue (défilement interne à taille fixe dans les deux modes).'},
       {t:'fix', sub:'interface', severity:'major', tx:'Le classement public envoyait encore 4 valeurs "en direct" (silver dépensable, Gearscore/PA/PD actuellement équipés) qui pouvaient redescendre d\'une synchro à l\'autre (dépense, changement de stuff, test admin). Elles sont remplacées par de vrais records : silver cumulé à vie, et meilleur Gearscore/PA/PD jamais atteints — plus aucune colonne du classement ne peut redescendre. Le badge "peut-être obsolète" (⚠️, lié à la fraîcheur de la synchro) est retiré : un record ne devient jamais obsolète.'},
@@ -728,7 +767,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', severity:'major', tx:'The public leaderboard still sent 4 "live" values (spendable silver, currently equipped Gearscore/AP/DP) that could go down between syncs (spending, gear swaps, admin testing). They\'re replaced with real records: lifetime cumulative silver, and the best Gearscore/AP/DP ever reached — no leaderboard column can go down anymore. The "possibly outdated" badge (⚠️, tied to sync freshness) is removed: a record never goes stale.'},
       {t:'fix', sub:'interface', tx:'The Compendium\'s PEN Mastery only counted items brought to PEN AFTER this feature was added — an item already at PEN before was never counted. Retroactive migration: any item already at PEN (equipped, in bag, or in the protected Compendium) is now scanned and marked on first load.'},
     ] },
-  { v:'V326', d:'18/07/2026 19:00', name:{fr:'Animations de cast plus visibles, Wiki mis à jour', en:'More visible cast animations, Wiki updated'}, fr:[
+  { v:'V326', d:'08/07/2026 21:08', name:{fr:'Animations de cast plus visibles, Wiki mis à jour', en:'More visible cast animations, Wiki updated'}, fr:[
       {t:'fix', sub:'graphismes', severity:'major', tx:'Le cristal du bâton et les effets d\'origine du cast (introduits en V324) étaient techniquement corrects mais trop discrets pour être remarqués pendant le jeu (cristal minuscule, particules de 1 à 3 pixels, casts très brefs). Cristal agrandi de 60% pendant le cast, aura plus large et plus opaque avec un anneau de contour net, et toutes les particules de burst nettement plus grandes/opaques.'},
       {t:'fix', sub:'interface', tx:'Le Wiki (À propos) avait une section vide de tout contenu descriptif sur le jeu actuel — ajout d\'un résumé à jour des fonctionnalités (marché, loyalty, boss mondiaux, Trésor de Velia, Compendium...).'},
       {t:'fix', sub:'interface', tx:'Le Trésor de Velia était toujours marqué "catégorie TEST"/"expérimental" dans le Wiki alors qu\'il a sa vraie recette de craft depuis un moment — corrigé, avec la recette et la combinaison secrète expliquées.'},
@@ -741,7 +780,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', tx:'The exact progressive loot threshold (90% of required gear is enough for 100% loot, no need to reach 100%) and the Vell boss schedule\'s -15min offset from the real schedule are now spelled out in the Wiki.'},
       {t:'fix', sub:'interface', tx:'The Compendium tutorial implied a "visited" zone was enough for its bonus — clarified that all 4 zone items (trash, material, jewelry, craft) are required, not just passing through.'},
     ] },
-  { v:'V325', d:'18/07/2026 18:00', name:{fr:'Silver/h fiabilisé, coffre agrandissable', en:'Reliable silver/h, resizable chest'}, fr:[
+  { v:'V325', d:'08/07/2026 20:43', name:{fr:'Silver/h fiabilisé, coffre agrandissable', en:'Reliable silver/h, resizable chest'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Le compteur silver/h pouvait afficher des pics irréalistes (ex: "1,5M/h") en extrapolant un gros loot ramassé dès les premières secondes de session. Il affiche désormais le rythme réel en silver/MIN, accompagné du meilleur silver/h jamais atteint (record calculé uniquement après 2 minutes de session, jamais sur un coup de chance ponctuel).'},
       {t:'fix', sub:'interface', tx:'Le classement du silver/h reflète maintenant ce même record personnel à vie (comme le record de kills/min), au lieu d\'un instantané de la session en cours au moment de la synchronisation — un record ne redescend jamais.'},
       {t:'new', sub:'interface', tx:'Ajout d\'un bouton pour agrandir l\'affichage du Coffre de Velia (4 objets par ligne au lieu de 8), pratique pour repérer un objet précis parmi les 192 cases.'},
@@ -750,7 +789,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', tx:'The silver/h leaderboard now reflects this same lifetime personal record (like the kills/min record), instead of a snapshot of the current session at sync time — a record never goes down.'},
       {t:'new', sub:'interface', tx:'Added a button to enlarge the Velia Chest display (4 items per row instead of 8), handy for spotting a specific item among the 192 slots.'},
     ] },
-  { v:'V324', d:'18/07/2026 16:30', name:{fr:'Chaque sort a désormais sa propre identité visuelle de cast', en:'Every spell now has its own visual cast identity'}, fr:[
+  { v:'V324', d:'08/07/2026 20:21', name:{fr:'Chaque sort a désormais sa propre identité visuelle de cast', en:'Every spell now has its own visual cast identity'}, fr:[
       {t:'new', sub:'graphismes', severity:'major', tx:'Le cristal du bâton et son halo prennent désormais une couleur propre à chaque sort en cours de cast (orange pour Meteor Shower/Bolide/Fireball, cyan pour Blizzard, jaune pour Thunder Storm/Lightning Storm, violet pour Equilibrium Break, doré pâle pour Speed Spell, cyan clair pour Voltaic Pulse) — avant, le cristal restait toujours dans la couleur du palier d\'équipement, identique pour les 10 sorts.'},
       {t:'new', sub:'graphismes', tx:'Le tremblement du bâton pendant le cast varie aussi en vitesse selon le sort : plus rapide pour les sorts au temps de cast court (Voltaic Pulse, Lightning Storm), plus posé pour les sorts lourds (Meteor Shower).'},
       {t:'new', sub:'graphismes', tx:'Chaque sort déclenche désormais un petit effet visuel sur le personnage AU MOMENT DU CAST (braises montantes, anneau de givre qui se resserre, crépitement électrique, orbe qui se charge, poussière au sol, flash arcane...), en plus de l\'effet déjà existant à l\'impact sur la cible.'},
@@ -759,7 +798,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'graphismes', tx:'The staff\'s cast tremble also varies in speed per spell: faster for short-cast spells (Voltaic Pulse, Lightning Storm), calmer for heavy spells (Meteor Shower).'},
       {t:'new', sub:'graphismes', tx:'Every spell now triggers a small visual effect on the character AT THE MOMENT OF CASTING (rising embers, closing frost ring, electric crackle, charging orb, ground dust, arcane flash...), in addition to the existing impact effect on the target.'},
     ] },
-  { v:'V323', d:'18/07/2026 15:00', name:{fr:'Wiki : correction de plusieurs informations obsolètes', en:'Wiki: fixed several outdated facts'}, fr:[
+  { v:'V323', d:'08/07/2026 18:21', name:{fr:'Wiki : correction de plusieurs informations obsolètes', en:'Wiki: fixed several outdated facts'}, fr:[
       {t:'fix', sub:'interface', tx:'Le Wiki annonçait 4 objets de Trésor de Velia (0,5% à 0,00001%) — il n\'y en a en réalité que 2 (0,17% et 0,0005%). Corrigé.'},
       {t:'fix', sub:'interface', tx:'Le Wiki disait que la toute première zone d\'un palier n\'a jamais d\'arme garantie — c\'est en réalité la 2e zone du palier qui n\'en a aucune (la 1ère en garantit bien une). Corrigé.'},
       {t:'fix', sub:'interface', tx:'Le Wiki annonçait un taux de loot progressif "jusqu\'à 55%, moins de 3%" sans préciser de quel objet — reformulé : matériau d\'optimisation ~55% en début de jeu jusqu\'à ~5-7% en fin de jeu, composants de craft endgame sous 1%.'},
@@ -772,22 +811,22 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'The Wiki only mentioned the Kzarka boss (daily) — it now also mentions Vell, the weekly boss (Thursday 12:00pm, Sunday 4:45pm).'},
       {t:'new', sub:'interface', tx:'Added the Cron Stone\'s variable cost per tier (1 grey / 2 white / 3 green / 4 blue), previously missing from the Wiki despite being active in-game for a while.'},
     ] },
-  { v:'V322', d:'18/07/2026 14:00', name:{fr:'Palier bleu : 2,3x plus de monstres', en:'Blue tier: 2.3x more monsters'}, fr:[
+  { v:'V322', d:'08/07/2026 18:13', name:{fr:'Palier bleu : 2,3x plus de monstres', en:'Blue tier: 2.3x more monsters'}, fr:[
       {t:'change', sub:'combat', severity:'major', tx:'Le palier bleu (Ruines de Trent, Île d\'Iliya, Base de Bashim, Forêt de Polly) a désormais 28 groupes de monstres actifs en même temps (2,3× les 12 précédents), au lieu de 12 — redevient le palier le plus dense du jeu, devant le vert (16).'},
     ], en:[
       {t:'change', sub:'combat', severity:'major', tx:'The blue tier (Trent Ruins, Iliya Island, Bashim Base, Polly Forest) now has 28 monster groups active at once (2.3× the previous 12), up from 12 — becomes the densest tier again, ahead of green (16).'},
     ] },
-  { v:'V321', d:'18/07/2026 12:30', name:{fr:'Taxe de vente Marché relevée à 35%', en:'Market sales tax raised to 35%'}, fr:[
+  { v:'V321', d:'08/07/2026 18:08', name:{fr:'Taxe de vente Marché relevée à 35%', en:'Market sales tax raised to 35%'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'La taxe de vente du Marché commun (introduite en V320) passe de 20% à 35% : le vendeur touche désormais 65% du prix de vente. L\'acheteur n\'est toujours pas concerné, il paie toujours le prix affiché en entier.'},
     ], en:[
       {t:'change', sub:'economie', severity:'major', tx:'The Common Market sales tax (introduced in V320) goes from 20% to 35%: the seller now receives 65% of the sale price. The buyer is still unaffected, always paying the full listed price.'},
     ] },
-  { v:'V320', d:'18/07/2026 12:00', name:{fr:'Taxe de vente Marché : 20%', en:'Market sales tax: 20%'}, fr:[
+  { v:'V320', d:'08/07/2026 18:01', name:{fr:'Taxe de vente Marché : 20%', en:'Market sales tax: 20%'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le Marché commun applique désormais une taxe de vente de 20% (le vrai BDO prend ~30%) : le vendeur touche 80% du prix de vente, que ce soit via le carnet d\'ordres ou une vente instantanée — l\'acheteur, lui, paie toujours le prix affiché en entier. Un aperçu du montant net (après taxe) s\'affiche désormais avant de placer un ordre de vente.'},
     ], en:[
       {t:'change', sub:'economie', severity:'major', tx:'The Common Market now applies a 20% sales tax (real BDO takes ~30%): the seller receives 80% of the sale price, whether through the order book or an instant sale — the buyer always pays the full listed price. A preview of the net amount (after tax) now shows before placing a sell order.'},
     ] },
-  { v:'V319', d:'17/07/2026 13:30', name:{fr:'Coffre plafonné, Compagnon/Vie en mer dans les onglets de région, sécurité Marché', en:'Chest height capped, Companion/Sea life in region tabs, Market security'}, fr:[
+  { v:'V319', d:'08/07/2026 13:20', name:{fr:'Coffre plafonné, Compagnon/Vie en mer dans les onglets de région, sécurité Marché', en:'Chest height capped, Companion/Sea life in region tabs, Market security'}, fr:[
       {t:'fix', sub:'objets', tx:'La grille du Coffre de ville (192 cases) pouvait déborder largement sous la carte — plafonnée avec un défilement interne, comme le sac principal'},
       {t:'fix', sub:'interface', tx:'Les cases verrouillées du Coffre affichaient un cadenas inline sans le badge visuel habituel — reprennent désormais la même convention que partout ailleurs (cadenas en badge au-dessus, centré)'},
       {t:'change', sub:'interface', tx:'Les onglets 🐾 Compagnon et 🌊 Vie en mer, jusque-là dans le menu de gauche, rejoignent la barre d\'onglets de région (Velia à Edana) en haut du cadre de jeu, toujours verrouillés'},
@@ -800,7 +839,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'The "Donation" button is renamed "Support"'},
       {t:'fix', sub:'systeme', severity:'major', tx:'Common Market: a player could match their own buy order against their own sell order (self-trade), allowing artificial manipulation of the last price shown to other players. A buy order can no longer ever match a sell order from the same account'},
     ] },
-  { v:'V318', d:'17/07/2026 12:00', name:{fr:'Optimiser un objet du sac/Compendium ne l\'équipe plus', en:'Enhancing a bag/Compendium item no longer equips it'}, fr:[
+  { v:'V318', d:'08/07/2026 12:49', name:{fr:'Optimiser un objet du sac/Compendium ne l\'équipe plus', en:'Enhancing a bag/Compendium item no longer equips it'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'"Mettre en optimisation" sur un objet du sac équipait automatiquement cet objet (remplaçant ce qui était porté) avant de lancer l\'enchantement. Il est désormais enchanté EN PLACE, dans le sac, sans jamais toucher à l\'équipement.'},
       {t:'new', sub:'objets', tx:'Les objets du Compendium (sac protégé) peuvent désormais être enchantés directement jusqu\'à PEN, sans avoir à les équiper au préalable — un bouton "Équiper" séparé reste disponible pour les sortir du Compendium et les utiliser en combat.'},
       {t:'change', sub:'objets', tx:'Une fois PEN atteint, l\'objet quitte automatiquement le Compendium et rejoint le sac principal : le Compendium ne conserve désormais que des objets TET (IV) maximum, il n\'a plus besoin de protéger un objet déjà maîtrisé.'},
@@ -809,17 +848,17 @@ const PATCH_NOTES = [
       {t:'new', sub:'objets', tx:'Compendium (protected bag) items can now be enhanced directly up to PEN, without equipping them first — a separate "Equip" button remains available to take them out of the Compendium and use them in combat.'},
       {t:'change', sub:'objets', tx:'Once PEN is reached, the item automatically leaves the Compendium and joins the main bag: the Compendium now only ever holds TET (IV) items at most, it no longer needs to protect an already-mastered item.'},
     ] },
-  { v:'V317', d:'08/07/2026 10:11', name:{fr:'Fix critique : le jeu pouvait rester gelé au chargement', en:'Critical fix: the game could freeze on load'}, fr:[
+  { v:'V317', d:'08/07/2026 10:12', name:{fr:'Fix critique : le jeu pouvait rester gelé au chargement', en:'Critical fix: the game could freeze on load'}, fr:[
       {t:'fix', sub:'systeme', severity:'major', tx:'Correctif d\'une régression introduite lors d\'une réorganisation technique du code : dans certains cas, le personnage ne s\'affichait pas et toute la boucle de jeu (combat, loot, sauvegarde automatique) restait gelée dès le chargement de la page. Un simple rechargement ne suffisait pas à s\'en sortir tant que le correctif n\'était pas en place.'},
     ], en:[
       {t:'fix', sub:'systeme', severity:'major', tx:'Fixed a regression introduced during a technical code reorganization: in some cases the character wouldn\'t render and the entire game loop (combat, loot, auto-save) stayed frozen right from page load. A simple reload wasn\'t enough to recover until this fix landed.'},
     ] },
-  { v:'V316', d:'08/07/2026 10:00', name:{fr:'Le jeu s\'appelle désormais "Black Desert Idle"', en:'The game is now called "Black Desert Idle"'}, fr:[
+  { v:'V316', d:'08/07/2026 10:01', name:{fr:'Le jeu s\'appelle désormais "Black Desert Idle"', en:'The game is now called "Black Desert Idle"'}, fr:[
       {t:'change', sub:'systeme', tx:'Renommage du jeu : "Velia Idle" devient "Black Desert Idle" (titre de la page, écran de connexion, pied de page en jeu, notes de version). Aucun impact sur ta progression, ta sauvegarde ou tes préférences.'},
     ], en:[
       {t:'change', sub:'systeme', tx:'Game renamed: "Velia Idle" becomes "Black Desert Idle" (page title, login screen, in-game footer, patch notes). No impact on your progress, save, or preferences.'},
     ] },
-  { v:'V300', d:'08/07/2026 07:24', name:{fr:'Marché commun : croix à droite, hauteur fixe, Vendre retiré', en:'Common Market: close button on the right, fixed height, Sell removed'}, fr:[
+  { v:'V300', d:'08/07/2026 08:17', name:{fr:'Marché commun : croix à droite, hauteur fixe, Vendre retiré', en:'Common Market: close button on the right, fixed height, Sell removed'}, fr:[
       {t:'change', sub:'objets', tx:'La croix de fermeture du Marché commun est maintenant bien alignée à droite du panneau'},
       {t:'change', sub:'objets', tx:'La fenêtre du Marché commun garde désormais une hauteur fixe : changer de sous-onglet ou sélectionner un objet ne fait plus jamais bouger la taille de la page'},
       {t:'change', sub:'objets', tx:'Le sous-onglet "Vendre" (vente d\'1 pièce d\'équipement/bijou à prix fixe) a été retiré — les matériaux restent vendables via le sous-onglet Matériaux'},
@@ -828,7 +867,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'objets', tx:'The Common Market window now keeps a fixed height: switching sub-tabs or selecting an item no longer changes the page size'},
       {t:'change', sub:'objets', tx:'The "Sell" sub-tab (selling 1 gear/jewelry piece at a fixed price) was removed — materials remain sellable via the Materials sub-tab'},
     ] },
-  { v:'V299', d:'08/07/2026 07:04', name:{fr:'Marché renommé "Marché commun", réouvert', en:'Market renamed "Common Market", reopened'}, fr:[
+  { v:'V299', d:'08/07/2026 08:17', name:{fr:'Marché renommé "Marché commun", réouvert', en:'Market renamed "Common Market", reopened'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Le Marché est renommé "Marché commun" et les anciens onglets Acheter/Vendre/Mes annonces (annonces à prix fixe) ont été retirés — on atterrit directement dans le carnet d\'ordres à l\'ouverture, plus léger et plus clair'},
       {t:'change', sub:'objets', tx:'Dans le sous-onglet Matériaux, la pastille de l\'objet choisi se colore désormais avec sa propre couleur pour bien voir lequel est sélectionné'},
       {t:'new', sub:'objets', severity:'major', tx:'Le Marché commun est réouvert à tous les joueurs !'},
@@ -837,12 +876,12 @@ const PATCH_NOTES = [
       {t:'change', sub:'objets', tx:'In the Materials sub-tab, the selected item\'s pill now fills with its own color so it\'s obvious which one is chosen'},
       {t:'new', sub:'objets', severity:'major', tx:'The Common Market is reopened to all players!'},
     ] },
-  { v:'V298', d:'08/07/2026 06:48', name:{fr:'Marché : nouveau carnet d\'ordres et chandelier (matériaux)', en:'Market: new order book and candlestick chart (materials)'}, fr:[
+  { v:'V298', d:'08/07/2026 08:17', name:{fr:'Marché : nouveau carnet d\'ordres et chandelier (matériaux)', en:'Market: new order book and candlestick chart (materials)'}, fr:[
       {t:'new', sub:'objets', tx:'Le sous-onglet "Matériaux" du Marché commun a été refait : carnet d\'ordres vente/achat avec barres de volume, meilleur prix mis en avant, spread, pression du marché et mini graphique chandelier sur les 20 dernières transactions. Le Marché reste fermé pour l\'instant (voir la note précédente) — prêt pour sa réouverture.'},
     ], en:[
       {t:'new', sub:'objets', tx:'The "Materials" sub-tab of the Common Market was rebuilt: buy/sell order book with volume bars, best price highlighted, spread, market pressure indicator and a mini candlestick chart over the last 20 trades. The Market stays closed for now (see previous note) — ready for reopening.'},
     ] },
-  { v:'V297', d:'08/07/2026 06:29', name:{fr:'Joueurs en ville, Coffre, récompenses Kzarka repensées', en:'Players in town, Chest, reworked Kzarka rewards'}, fr:[
+  { v:'V297', d:'08/07/2026 08:17', name:{fr:'Joueurs en ville, Coffre, récompenses Kzarka repensées', en:'Players in town, Chest, reworked Kzarka rewards'}, fr:[
       {t:'new', sub:'interface', tx:'À Velia, la liste des joueurs présents en ville s\'affiche désormais en bas à droite, à la place du loot ticker (toujours vide là-bas)'},
       {t:'new', sub:'objets', tx:'Nouvel onglet "Coffre" en haut de la carte Loot : 20 emplacements de rangement personnel (le reste arrive plus tard), accessible sur n\'importe quelle pièce du sac via "Ranger au coffre"'},
       {t:'change', sub:'combat', severity:'major', tx:'Kzarka a désormais des récompenses fixes selon le rang de contribution : silver + Pierre de Caphras + Fragment de mémoire en quantités variables (Vell inchangé)'},
@@ -853,49 +892,49 @@ const PATCH_NOTES = [
       {t:'change', sub:'combat', severity:'major', tx:'Kzarka now has fixed rewards based on contribution rank: silver + Caphras Stone + Memory Fragment in variable amounts (Vell unchanged)'},
       {t:'new', sub:'combat', tx:'New ultra-rare drop on Kzarka: Kzarka\'s Blood Stone (1% chance), revealed by the same wheel as Coeur de Vell'},
     ] },
-  { v:'V296', d:'08/07/2026 05:44', name:{fr:'Fix : timer figé dans la page Boss', en:'Fixed: frozen timer on the Boss page'}, fr:[
+  { v:'V296', d:'08/07/2026 08:17', name:{fr:'Fix : timer figé dans la page Boss', en:'Fixed: frozen timer on the Boss page'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'Le compte à rebours du prochain boss, à l\'intérieur de la page Boss, restait figé tant qu\'on ne rechargeait pas la page — il se met désormais à jour chaque seconde comme partout ailleurs, et le bouton "Combattre" apparaît automatiquement au bon moment'},
     ], en:[
       {t:'fix', sub:'combat', severity:'major', tx:'The next-boss countdown inside the Boss page used to stay frozen until you reloaded — it now updates every second like everywhere else, and the "Fight" button appears automatically at the right time'},
     ] },
-  { v:'V295', d:'08/07/2026 05:35', name:{fr:'Marché fermé pour maintenance', en:'Market closed for maintenance'}, fr:[
+  { v:'V295', d:'08/07/2026 08:17', name:{fr:'Marché fermé pour maintenance', en:'Market closed for maintenance'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Le Marché est temporairement fermé pour maintenance — tous les ordres ouverts ont été annulés et intégralement remboursés (silver ou objet) à leurs propriétaires. Réouverture à venir.'},
     ], en:[
       {t:'change', sub:'objets', severity:'major', tx:'The Market is temporarily closed for maintenance — all open orders were cancelled and fully refunded (silver or item) to their owners. Reopening to come.'},
     ] },
-  { v:'V294', d:'07/07/2026 22:23', name:{fr:'Avertissement admin pour le reset d\'un joueur en ligne', en:'Admin warning for resetting an online player'}, fr:[
+  { v:'V294', d:'08/07/2026 08:17', name:{fr:'Avertissement admin pour le reset d\'un joueur en ligne', en:'Admin warning for resetting an online player'}, fr:[
       {t:'new', sub:'interface', tx:'Le panel admin avertit désormais explicitement si le joueur ciblé par un reset de compte est actuellement en ligne (risque que sa propre sauvegarde automatique annule le reset)'},
     ], en:[
       {t:'new', sub:'interface', tx:'The admin panel now explicitly warns if the player targeted by an account reset is currently online (risk that their own autosave undoes the reset)'},
     ] },
-  { v:'V293', d:'07/07/2026 22:16', name:{fr:'La flèche d\'upgrade pointe l\'objet précis à ramasser', en:'The upgrade arrow now points at the exact item to grab'}, fr:[
+  { v:'V293', d:'08/07/2026 08:17', name:{fr:'La flèche d\'upgrade pointe l\'objet précis à ramasser', en:'The upgrade arrow now points at the exact item to grab'}, fr:[
       {t:'change', sub:'interface', tx:'La flèche ⬆️ qui indique un stuff meilleur ne reste plus figée sur la zone à atteindre une fois qu\'on y est : elle apparaît directement sur la ligne de loot concernée (arme/armure/bijou précis), pour montrer quel objet ramasser'},
     ], en:[
       {t:'change', sub:'interface', tx:'The ⬆️ arrow that points to better gear no longer stays stuck on the target zone once you\'re there: it now shows up directly on the relevant loot row (the exact weapon/armor/jewel), pointing to which item to grab'},
     ] },
-  { v:'V292', d:'07/07/2026 22:11', name:{fr:'Étiquette admin visible par tous', en:'Admin tag visible to everyone'}, fr:[
+  { v:'V292', d:'08/07/2026 08:17', name:{fr:'Étiquette admin visible par tous', en:'Admin tag visible to everyone'}, fr:[
       {t:'change', sub:'interface', tx:'L\'étiquette "ADMIN" sur la liste des zones est désormais visible par TOUS les joueurs (avant, uniquement par l\'admin lui-même) — sans exposer l\'identité d\'aucun autre joueur, seule la zone où se trouve l\'admin est partagée'},
     ], en:[
       {t:'change', sub:'interface', tx:'The "ADMIN" tag on the zone list is now visible to ALL players (previously only to the admin themselves) — without exposing any other player\'s identity, only the zone the admin is in is shared'},
     ] },
-  { v:'V291', d:'07/07/2026 21:35', name:{fr:'Tooltip admin précisé, podium boss déplacé', en:'Clearer admin tooltip, boss podium moved'}, fr:[
+  { v:'V291', d:'08/07/2026 08:17', name:{fr:'Tooltip admin précisé, podium boss déplacé', en:'Clearer admin tooltip, boss podium moved'}, fr:[
       {t:'change', sub:'interface', tx:'L\'étiquette ADMIN (visible uniquement par l\'admin, sur sa propre zone) affiche désormais "Un admin est ici" au survol, moins ambigu'},
       {t:'change', sub:'combat', tx:'Le podium de récompenses World Boss s\'affiche désormais après le calendrier hebdomadaire complet, au lieu d\'être coincé juste sous le décompte du prochain spawn'},
     ], en:[
       {t:'change', sub:'interface', tx:'The ADMIN tag (visible only to the admin, on their own zone) now shows "An admin is here" on hover, less ambiguous'},
       {t:'change', sub:'combat', tx:'The World Boss reward podium now displays after the full weekly calendar, instead of being squeezed right under the next-spawn countdown'},
     ] },
-  { v:'V290', d:'07/07/2026 21:31', name:{fr:'Forêt de Polly ajustée', en:'Polly Forest adjusted'}, fr:[
+  { v:'V290', d:'08/07/2026 08:17', name:{fr:'Forêt de Polly ajustée', en:'Polly Forest adjusted'}, fr:[
       {t:'change', sub:'zones', tx:'Forêt de Polly : Défense requise resserrée pour qu\'un stuff moyen arrive tout juste en zone difficile au lieu de dangereuse'},
     ], en:[
       {t:'change', sub:'zones', tx:'Polly Forest: required Defense tightened so an average gear set lands just barely in hard-zone territory instead of dangerous'},
     ] },
-  { v:'V289', d:'07/07/2026 21:15', name:{fr:'Suivi des Pierres de Cron (panel admin)', en:'Cron Stone tracking (admin panel)'}, fr:[
+  { v:'V289', d:'08/07/2026 08:17', name:{fr:'Suivi des Pierres de Cron (panel admin)', en:'Cron Stone tracking (admin panel)'}, fr:[
       {t:'new', sub:'interface', tx:'Nouvel onglet "Pierres de Cron" dans le panneau admin (section Stats) : total farmé, ramassages, moyenne par joueur, chance de drop et rappel du coût par palier'},
     ], en:[
       {t:'new', sub:'interface', tx:'New "Cron Stones" tab in the admin panel (Stats section): total farmed, pickups, average per player, drop chance and cost-per-tier reminder'},
     ] },
-  { v:'V288', d:'07/07/2026 21:08', name:{fr:'Bouton Donation, Compendium par palier, Kratuga ajustée', en:'Donation button, tiered Compendium, Kratuga adjusted'}, fr:[
+  { v:'V288', d:'08/07/2026 08:17', name:{fr:'Bouton Donation, Compendium par palier, Kratuga ajustée', en:'Donation button, tiered Compendium, Kratuga adjusted'}, fr:[
       {t:'new', sub:'interface', tx:'Nouveau bouton "Donation" (verrouillé) dans le menu latéral'},
       {t:'change', sub:'interface', tx:'Le "Sac protégé" a été retiré du Compendium : il vit maintenant uniquement dans la carte Inventaire (onglet Compendium), où il était déjà accessible en double'},
       {t:'new', sub:'interface', tx:'La vue "Zones" du Compendium est désormais catégorisée par palier de stuff (en-tête colorée), avec un halo vert sur les zones déjà entièrement complétées — plus besoin de dérouler la liste d\'objets pour vérifier'},
@@ -906,7 +945,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'The Compendium\'s "Zones" view is now categorized by gear tier (colored header), with a green glow on fully completed zones — no need to expand the item list to check'},
       {t:'change', sub:'zones', tx:'Kratuga Ruins: required Defense tightened to get as close as possible to "just barely hard" with average gear'},
     ] },
-  { v:'V287', d:'07/07/2026 20:59', name:{fr:'Onglets Pet/Mer, Cristal en inventaire, vente auto par item', en:'Pet/Sea tabs, Crystal in inventory, per-item auto-sell'}, fr:[
+  { v:'V287', d:'08/07/2026 08:17', name:{fr:'Onglets Pet/Mer, Cristal en inventaire, vente auto par item', en:'Pet/Sea tabs, Crystal in inventory, per-item auto-sell'}, fr:[
       {t:'new', sub:'interface', tx:'2 nouveaux onglets verrouillés dans le menu latéral : Compagnon et Vie en mer, en attente de futur contenu'},
       {t:'new', sub:'objets', tx:'Nouvelle catégorie "Cristal" (verrouillée) dans l\'inventaire, aux côtés d\'Équip./Opti./Trésors/Conso./RNG (libellés raccourcis)'},
       {t:'new', sub:'interface', tx:'Bouton "vente auto" verrouillé ajouté sur chaque objet de la table de loot'},
@@ -917,7 +956,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'Locked "auto-sell" button added on every item in the loot table'},
       {t:'change', sub:'interface', tx:'Every locked button (auto-sell, equip→sell→compendium, categories, new tabs) now shows its padlock as a badge above, always centered — never inside the button text anymore'},
     ] },
-  { v:'V286', d:'07/07/2026 20:48', name:{fr:'Fix sélection auto-opti, étiquette admin ancrée, Planque des Mânes rééquilibrée', en:'Fixed auto-enhance selection, anchored admin tag, Manes rebalanced'}, fr:[
+  { v:'V286', d:'08/07/2026 08:17', name:{fr:'Fix sélection auto-opti, étiquette admin ancrée, Planque des Mânes rééquilibrée', en:'Fixed auto-enhance selection, anchored admin tag, Manes rebalanced'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Choisir un palier dans la liste déroulante d\'auto-optimisation pouvait être silencieusement écrasé par le prochain rafraîchissement (loot ramassé, équipement changé...) qui reconstruisait la liste sans garder le choix fait — le palier choisi est désormais préservé'},
       {t:'fix', sub:'interface', tx:'L\'étiquette ADMIN (visible uniquement par l\'admin, sur sa propre zone) est maintenant ancrée précisément au-dessus du nombre de joueurs, plus au-dessus du bouton 👁'},
       {t:'change', sub:'zones', tx:'Planque des Mânes : Défense requise abaissée pour qu\'un stuff moyen full PRI passe de zone dangereuse à tout juste difficile'},
@@ -926,19 +965,19 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', tx:'The ADMIN tag (visible only to the admin, on their own zone) is now anchored precisely above the player count, no longer above the 👁 button'},
       {t:'change', sub:'zones', tx:'Manes\' Hideout: required Defense lowered so an average full-PRI gear set moves from dangerous zone to just barely hard'},
     ] },
-  { v:'V285', d:'07/07/2026 20:43', name:{fr:'Récompenses World Boss en podium', en:'World Boss rewards as a podium'}, fr:[
+  { v:'V285', d:'08/07/2026 08:17', name:{fr:'Récompenses World Boss en podium', en:'World Boss rewards as a podium'}, fr:[
       {t:'new', sub:'combat', tx:'Les règles de récompense du World Boss (sous les horaires du lobby) prennent la forme d\'un vrai podium visuel (2e/1er/3e), avec un sélecteur Kzarka/Vell au-dessus pour prévisualiser la récompense propre à chaque boss'},
       {t:'new', sub:'combat', tx:'La chance de Coeur de Vell (5%) est désormais affichée dans ce même aperçu quand Vell est sélectionné'},
     ], en:[
       {t:'new', sub:'combat', tx:'World Boss reward rules (below the lobby schedule) now show as a real visual podium (2nd/1st/3rd), with a Kzarka/Vell selector above it to preview each boss\'s own reward'},
       {t:'new', sub:'combat', tx:'The Coeur de Vell chance (5%) is now shown in this same preview when Vell is selected'},
     ] },
-  { v:'V284', d:'07/07/2026 20:33', name:{fr:'Conseil de stuff minimal', en:'Minimal gear suggestion'}, fr:[
+  { v:'V284', d:'08/07/2026 08:17', name:{fr:'Conseil de stuff minimal', en:'Minimal gear suggestion'}, fr:[
       {t:'change', sub:'interface', tx:'Le conseil de stuff (entre l\'action d\'optimisation et les Pierres de Cron) affiche désormais juste "Recommandé :" suivi du nom de la pièce et de son palier cible, sans phrase ni chiffres'},
     ], en:[
       {t:'change', sub:'interface', tx:'The gear suggestion (between the enhance action and the Cron Stones) now just shows "Recommended :" followed by the piece name and its target tier, no sentence or numbers'},
     ] },
-  { v:'V283', d:'07/07/2026 20:31', name:{fr:'Farm en arrière-plan, spawn au reload, étiquette admin fixe', en:'Background farming, reload spawn, fixed admin tag'}, fr:[
+  { v:'V283', d:'08/07/2026 08:17', name:{fr:'Farm en arrière-plan, spawn au reload, étiquette admin fixe', en:'Background farming, reload spawn, fixed admin tag'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'Au chargement d\'une sauvegarde, les groupes de monstres pouvaient réapparaître loin du joueur (autour de l\'ancienne position par défaut) au lieu d\'être générés autour de sa position réelle — la zone semblait vide juste après un reload'},
       {t:'new', sub:'combat', tx:'Le jeu continue de farmer même sur un onglet en arrière-plan (navigateur minimisé ou un autre onglet ouvert) — un filet de secours prend le relais pour compenser le ralentissement que les navigateurs imposent aux onglets cachés'},
       {t:'fix', sub:'interface', tx:'L\'étiquette "ADMIN" (visible uniquement par l\'admin, sur sa propre zone) ne décale plus jamais le texte ni les boutons de la ligne de zone'},
@@ -949,7 +988,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', tx:'The "ADMIN" tag (visible only to the admin, on their own zone) no longer shifts any text or buttons on the zone row'},
       {t:'change', sub:'combat', tx:'World Boss reward rules now display bigger, in a dedicated box below the schedule'},
     ] },
-  { v:'V282', d:'07/07/2026 20:22', name:{fr:'Onglet Niveaux, coût de Cron par palier, Kratuga rééquilibrée', en:'Levels tab, tiered Cron cost, Kratuga rebalanced'}, fr:[
+  { v:'V282', d:'08/07/2026 08:17', name:{fr:'Onglet Niveaux, coût de Cron par palier, Kratuga rééquilibrée', en:'Levels tab, tiered Cron cost, Kratuga rebalanced'}, fr:[
       {t:'new', sub:'interface', tx:'Nouvel onglet "Niveaux" dans la carte Statistiques : PV de base, bonus de Vitesse et XP requise pour les 5 niveaux avant et après ton niveau actuel, mis à jour en direct à chaque level-up'},
       {t:'change', sub:'objets', tx:'Le coût en Pierres de Cron dépend désormais du palier de la pièce protégée (gris 1 / blanc 2 / vert 3 / bleu 4) au lieu de toujours 1 — le panneau Optimisation affiche "as-tu/il-faut" pour la pièce ciblée'},
       {t:'change', sub:'zones', tx:'Ruines de Kratuga : Défense requise abaissée pour qu\'un stuff moyen full PRI passe de zone dangereuse à tout juste difficile'},
@@ -958,7 +997,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'objets', tx:'Cron Stone cost now depends on the tier of the piece being protected (grey 1 / white 2 / green 3 / blue 4) instead of always 1 — the Enhancement panel shows "have/need" for the targeted piece'},
       {t:'change', sub:'zones', tx:'Kratuga Ruins: required Defense lowered so an average full-PRI gear set moves from dangerous zone to just barely hard'},
     ] },
-  { v:'V281', d:'07/07/2026 20:12', name:{fr:'World Boss : fix loot solo, récompenses par zone, table de loot V2', en:'World Boss: fixed solo loot, zone-based rewards, V2 loot table'}, fr:[
+  { v:'V281', d:'08/07/2026 08:17', name:{fr:'World Boss : fix loot solo, récompenses par zone, table de loot V2', en:'World Boss: fixed solo loot, zone-based rewards, V2 loot table'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'Un kill de World Boss très rapide (solo) pouvait afficher "Victoire" sans donner aucune récompense — le dernier paquet de dégâts n\'était pas encore transmis au serveur au moment de la réclamation. Corrigé : ce reliquat est désormais envoyé et attendu avant de réclamer'},
       {t:'new', sub:'combat', tx:'Nouveau message dans le lobby Boss quand un boss partagé est déjà à 0 PV mais que sa fenêtre reste ouverte : "Déjà vaincu — reviens plus tard" au lieu de pouvoir entrer dans un combat déjà gagné sans y avoir participé'},
       {t:'change', sub:'combat', severity:'major', tx:'Récompenses de World Boss repensées : pierre d\'optimisation de ta meilleure zone difficile (garantie) + bijou bonus selon ton rang de contribution (#1 : bijou de la prochaine zone dangereuse · #2 : bijou de ta zone difficile · #3 : 20%/30% de chance). Les règles sont affichées dans le lobby, visibles par tous avant de combattre'},
@@ -969,47 +1008,47 @@ const PATCH_NOTES = [
       {t:'change', sub:'combat', severity:'major', tx:'World Boss rewards reworked: enhancement stone from your best hard zone (guaranteed) + bonus jewel based on your contribution rank (#1: jewel from the next dangerous zone · #2: jewel from your hard zone · #3: 20%/30% chance). Rules are shown in the lobby, visible to everyone before fighting'},
       {t:'new', sub:'objets', tx:'New "V2" loot table (flat rate per tier instead of a per-zone decay) can be toggled by the admin anytime, reversible in one click — the old V1 table stays intact'},
     ] },
-  { v:'V280', d:'07/07/2026 19:54', name:{fr:'Sorts de zone : touchent aussi les packs voisins collés', en:'Zone spells: also hit touching neighbor packs'}, fr:[
+  { v:'V280', d:'08/07/2026 08:17', name:{fr:'Sorts de zone : touchent aussi les packs voisins collés', en:'Zone spells: also hit touching neighbor packs'}, fr:[
       {t:'change', sub:'combat', severity:'major', tx:'Un sort de zone ne touchait que le pack ciblé, même si d\'autres packs étaient collés juste à côté — désormais tous les packs qui se chevauchent avec la cible sont touchés, dégâts répartis pour garder un total infligé comparable (pas de multiplicateur par nombre de packs). Un pack isolé (aucun voisin collé) garde ses pleins dégâts individuels, inchangé'},
     ], en:[
       {t:'change', sub:'combat', severity:'major', tx:'A zone spell only hit the targeted pack, even when other packs were right next to it — now every pack that overlaps with the target also gets hit, damage shared to keep the total output comparable (no per-pack multiplier). An isolated pack (no touching neighbor) keeps its full individual damage, unchanged'},
     ] },
-  { v:'V279', d:'07/07/2026 19:43', name:{fr:'Nouveau sélecteur Équipement/Cristal', en:'New Gear/Crystal selector'}, fr:[
+  { v:'V279', d:'08/07/2026 08:17', name:{fr:'Nouveau sélecteur Équipement/Cristal', en:'New Gear/Crystal selector'}, fr:[
       {t:'new', sub:'interface', tx:'Nouveau sélecteur à bulles dans la carte Équipement, pour basculer entre la poupée d\'équipement normale et un nouvel onglet "Cristal" — 1 seul emplacement pour l\'instant, verrouillé (système de cristaux pas encore en jeu)'},
     ], en:[
       {t:'new', sub:'interface', tx:'New bubble selector in the Equipment card, to switch between the normal equipment doll and a new "Crystal" tab — only 1 slot for now, locked (crystal system not in-game yet)'},
     ] },
-  { v:'V278', d:'07/07/2026 19:38', name:{fr:'Loot ticker : quantité avant le prix', en:'Loot ticker: quantity before price'}, fr:[
+  { v:'V278', d:'08/07/2026 08:17', name:{fr:'Loot ticker : quantité avant le prix', en:'Loot ticker: quantity before price'}, fr:[
       {t:'change', sub:'interface', tx:'Dans le ticker de loot, la quantité (×N) s\'affiche désormais avant le prix au lieu d\'après'},
     ], en:[
       {t:'change', sub:'interface', tx:'In the loot ticker, the quantity (×N) now shows before the price instead of after'},
     ] },
-  { v:'V277', d:'07/07/2026 19:34', name:{fr:'Bijoux doublés en zones vertes et bleues', en:'Jewelry doubled in Green and Blue tiers'}, fr:[
+  { v:'V277', d:'08/07/2026 08:17', name:{fr:'Bijoux doublés en zones vertes et bleues', en:'Jewelry doubled in Green and Blue tiers'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Chance de trouver un bijou à nouveau doublée dans les 4 zones vertes et les 4 zones bleues (×3.6 et ×4.0 au total depuis l\'origine). Zones grise et blanche inchangées'},
     ], en:[
       {t:'change', sub:'objets', severity:'major', tx:'Jewelry drop chance doubled again in the 4 Green tier zones and the 4 Blue tier zones (×3.6 and ×4.0 total from the original rate). Grey and White tiers unchanged'},
     ] },
-  { v:'V276', d:'07/07/2026 19:29', name:{fr:'Loot ticker : prix uniquement pour le trash', en:'Loot ticker: price only for trash'}, fr:[
+  { v:'V276', d:'08/07/2026 08:17', name:{fr:'Loot ticker : prix uniquement pour le trash', en:'Loot ticker: price only for trash'}, fr:[
       {t:'change', sub:'interface', tx:'Le ticker de loot n\'affiche plus le prix de revente pour les matériaux/bijoux/équipements ramassés — seul le trash (token) garde son prix, désormais précédé d\'une icône 🪙'},
     ], en:[
       {t:'change', sub:'interface', tx:'The loot ticker no longer shows the resale price for picked-up materials/jewelry/gear — only trash (token) keeps its price, now prefixed with a 🪙 icon'},
     ] },
-  { v:'V275', d:'07/07/2026 19:26', name:{fr:'Plus de ralentissement lié au poids', en:'No more weight-based slowdown'}, fr:[
+  { v:'V275', d:'08/07/2026 08:17', name:{fr:'Plus de ralentissement lié au poids', en:'No more weight-based slowdown'}, fr:[
       {t:'change', sub:'systeme', tx:'Le poids du sac ne réduit plus la vitesse de déplacement — la barre de poids reste affichée à titre indicatif, mais dépasser la limite n\'entraîne plus de malus'},
     ], en:[
       {t:'change', sub:'systeme', tx:'Bag weight no longer reduces movement speed — the weight bar is still shown for reference, but going over the limit no longer applies a penalty'},
     ] },
-  { v:'V274', d:'07/07/2026 19:23', name:{fr:'Coffret secret : les 3 Trésors régionaux', en:'Secret box: the 3 regional treasures'}, fr:[
+  { v:'V274', d:'08/07/2026 08:17', name:{fr:'Coffret secret : les 3 Trésors régionaux', en:'Secret box: the 3 regional treasures'}, fr:[
       {t:'change', sub:'objets', tx:'"Carte de Heidel/Calpheon" renommés "Trésor de Heidel/Calpheon" (même famille que Trésor de Velia). Le Coffret secret demande désormais 1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon au lieu de Bout+matériau+bijou — pas encore complétable tant que Heidel/Calpheon restent verrouillés'},
     ], en:[
       {t:'change', sub:'objets', tx:'"Heidel/Calpheon Card" renamed "Heidel/Calpheon Treasure" (same family as Velia Treasure). The Secret box now requires 1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure instead of Piece+material+jewelry — not completable yet while Heidel/Calpheon remain locked'},
     ] },
-  { v:'V273', d:'07/07/2026 18:43', name:{fr:'Aperçu des cartes Heidel et Calpheon', en:'Heidel and Calpheon card preview'}, fr:[
+  { v:'V273', d:'08/07/2026 08:17', name:{fr:'Aperçu des cartes Heidel et Calpheon', en:'Heidel and Calpheon card preview'}, fr:[
       {t:'new', sub:'objets', tx:'Le palier verrouillé Heidel annonce désormais sa future récompense "Carte de Heidel" (visible en survolant l\'onglet 🔒) — pareil pour Calpheon avec "Carte de Calpheon". Un couple de recettes "100 fragment → 1 carte" grisées apparaît aussi dans Assemblage, prêtes pour l\'ouverture de ces paliers'},
     ], en:[
       {t:'new', sub:'objets', tx:'The locked Heidel tier now teases its future "Heidel Card" reward (visible by hovering the 🔒 tab) — same for Calpheon with "Calpheon Card". A pair of greyed-out "100 fragment → 1 card" recipes also appears in Assembly, ready for when those tiers open'},
     ] },
-  { v:'V272', d:'07/07/2026 18:18', name:{fr:'Fix icône d\'upgrade de zone, étiquette admin, historique d\'optimisation', en:'Fixed zone upgrade icon, admin tag, enhancement history'}, fr:[
+  { v:'V272', d:'08/07/2026 08:17', name:{fr:'Fix icône d\'upgrade de zone, étiquette admin, historique d\'optimisation', en:'Fixed zone upgrade icon, admin tag, enhancement history'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'L\'icône ⬆️ signalant qu\'un meilleur stuff attend dans une autre zone ne se déclenchait jamais quand le palier de la pièce équipée était le même que celui de la zone actuellement farmée — un joueur en stuff vert farmant une zone verte ne voyait donc jamais l\'icône, même si une zone bleue sûre offrait mieux. Corrigé et vérifié sur les 3 transitions de palier (gris→blanc, blanc→vert, vert→bleu)'},
       {t:'new', sub:'admin', tx:'Étiquette "ADMIN" affichée à côté du compteur de joueurs, sur la ligne de la zone où se trouve l\'admin — visible uniquement sur son propre client'},
       {t:'new', sub:'objets', tx:'Le Compendium (onglet Sac protégé) garde désormais un historique des objets déjà optimisés puis vendus, avec leur meilleur niveau atteint — avant, cette information disparaissait complètement dès que le dernier exemplaire était vendu'},
@@ -1018,12 +1057,12 @@ const PATCH_NOTES = [
       {t:'new', sub:'admin', tx:'"ADMIN" tag shown next to the player count, on the row of the zone the admin is currently in — visible only on their own client'},
       {t:'new', sub:'objets', tx:'The Compendium (Protected bag tab) now keeps a history of items that were enhanced and later sold, with their best level reached — previously this information vanished entirely once the last copy was sold'},
     ] },
-  { v:'V271', d:'07/07/2026 09:04', name:{fr:'Nouvelle recette secrète dans Assemblage', en:'New secret recipe in Assembly'}, fr:[
+  { v:'V271', d:'08/07/2026 08:17', name:{fr:'Nouvelle recette secrète dans Assemblage', en:'New secret recipe in Assembly'}, fr:[
       {t:'new', sub:'objets', tx:'Nouvelle recette dans Assemblage : combiner 1 Bout du trésor de Velia + 1 matériau d\'optimisation + 1 bijou (3 objets différents) donne un "Coffret secret" en silver — un bon moyen de valoriser un bijou ou un matériau isolé plutôt que de le vendre au rabais'},
     ], en:[
       {t:'new', sub:'objets', tx:'New Assembly recipe: combining 1 Velia Treasure piece + 1 enhancement material + 1 jewelry piece (3 different items) grants a "Secret box" in silver — a good way to cash in a stray jewelry piece or material instead of selling it cheap'},
     ] },
-  { v:'V270', d:'07/07/2026 08:44', name:{fr:'Compendium via menu, retrait Lifeskill, stats réorganisées', en:'Compendium via menu, Lifeskill removed, stats reorganized'}, fr:[
+  { v:'V270', d:'08/07/2026 08:17', name:{fr:'Compendium via menu, retrait Lifeskill, stats réorganisées', en:'Compendium via menu, Lifeskill removed, stats reorganized'}, fr:[
       {t:'change', sub:'inventaire', tx:'Dans le Compendium, cliquer un objet ouvre désormais le même menu que le reste du sac, avec un bouton "Mettre en optimisation" explicite (au lieu d\'équiper directement en silence)'},
       {t:'change', sub:'systeme', tx:'Retrait complet de l\'équipement "Lifeskill" (jamais utilisé en jeu, verrouillé depuis son introduction)'},
       {t:'change', sub:'interface', tx:'"Conseil de stuff" repositionné entre le bouton d\'optimisation et les contrôles d\'auto-optimisation, sans son ancien titre de catégorie'},
@@ -1036,7 +1075,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'The Level/AP/DP/GS frame is restyled into a compact square, matching the width of the 3 weapon slots'},
       {t:'change', sub:'interface', tx:'In the Statistics card: Kills/min, Monsters slain and Items looted are moved into "Farming zone stats"; the remaining stats switch to 3 columns (word / abbreviation / value)'},
     ] },
-  { v:'V269', d:'07/07/2026 08:24', name:{fr:'Compendium en grand onglet, catégories réorganisées', en:'Compendium as a main tab, categories reorganized'}, fr:[
+  { v:'V269', d:'08/07/2026 08:17', name:{fr:'Compendium en grand onglet, catégories réorganisées', en:'Compendium as a main tab, categories reorganized'}, fr:[
       {t:'change', sub:'inventaire', severity:'major', tx:'Le Compendium (sac protégé) devient un 3e onglet principal, au même niveau qu\'Inventaire/Assemblage, avec sa propre grille en grand format — ce n\'est plus une simple catégorie dans l\'onglet Inventaire'},
       {t:'change', sub:'inventaire', tx:'La catégorie "Trésors" est remontée avant "Consommable"'},
       {t:'change', sub:'inventaire', tx:'La catégorie "Normal" est renommée "Équipements"'},
@@ -1045,12 +1084,12 @@ const PATCH_NOTES = [
       {t:'change', sub:'inventaire', tx:'The "Treasures" category is moved above "Consumable"'},
       {t:'change', sub:'inventaire', tx:'The "Normal" category is renamed "Gear"'},
     ] },
-  { v:'V268', d:'07/07/2026 08:16', name:{fr:'Bouton "Équiper → Vendre → Compendium" verrouillé', en:'"Equip → Sell → Compendium" button locked'}, fr:[
+  { v:'V268', d:'08/07/2026 08:17', name:{fr:'Bouton "Équiper → Vendre → Compendium" verrouillé', en:'"Equip → Sell → Compendium" button locked'}, fr:[
       {t:'change', sub:'inventaire', tx:'Le bouton "Équiper → Vendre → Compendium" est temporairement verrouillé (cadenas, grisé), en attente d\'une future activation — même convention que le bouton "Vente automatique"'},
     ], en:[
       {t:'change', sub:'inventaire', tx:'The "Equip → Sell → Compendium" button is temporarily locked (padlock, greyed out), awaiting a future activation — same convention as the "Auto-sell" button'},
     ] },
-  { v:'V267', d:'07/07/2026 08:08', name:{fr:'Fix affichage PA/PD figé, Sanctuaire d\'Elric ajusté', en:'Fixed frozen AP/DP display, Elric Shrine adjusted'}, fr:[
+  { v:'V267', d:'08/07/2026 08:17', name:{fr:'Fix affichage PA/PD figé, Sanctuaire d\'Elric ajusté', en:'Fixed frozen AP/DP display, Elric Shrine adjusted'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Le PA/PD affiché au-dessus du personnage ne se rafraîchissait qu\'à un changement de composition du sac — une réussite d\'optimisation (qui ne touche que l\'équipement) pouvait donc laisser cet affichage figé sur une ancienne valeur jusqu\'au prochain loot/vente. Il se met désormais à jour instantanément'},
       {t:'change', sub:'zones', tx:'Sanctuaire d\'Elric était devenu exactement aussi difficile que Base de Bashim (la dernière zone verte) — reqDP relevé de 91 à 101 pour que ce soit de nouveau une vraie progression, tout en restant "tout juste difficile" pour un stuff vert complet enchanté à +15 en moyenne'},
       {t:'change', sub:'interface', tx:'Le sélecteur manuel de la pièce à optimiser est retiré — la cible se choisit désormais uniquement via "Mettre en optimisation" (menu objet/poupée) ou en équipant depuis le Compendium'},
@@ -1063,22 +1102,22 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'The Level/AP/DP/GS frame is moved below the animated character (was above the equipment doll)'},
       {t:'change', sub:'inventaire', tx:'In the loot table, the "Gear" category is renamed and moved above "Enhancement items"'},
     ] },
-  { v:'V266', d:'07/07/2026 07:58', name:{fr:'Poupée d\'équipement réorganisée', en:'Equipment doll reorganized'}, fr:[
+  { v:'V266', d:'08/07/2026 08:17', name:{fr:'Poupée d\'équipement réorganisée', en:'Equipment doll reorganized'}, fr:[
       {t:'change', sub:'interface', tx:'La colonne de droite de la poupée d\'équipement ne garde plus que collier, 2 bagues et 2 boucles d\'oreille (+ ceinture) — les 2 artéfacts, la Pierre d\'alchimie et le Livre de vie sont désormais regroupés sous les armes'},
     ], en:[
       {t:'change', sub:'interface', tx:'The right column of the equipment doll now only holds necklace, 2 rings and 2 earrings (+ belt) — the 2 artifacts, the Alchemy Stone and the Life Book are now grouped below the weapons'},
     ] },
-  { v:'V265', d:'07/07/2026 07:45', name:{fr:'Fix : PA/PD au-dessus de l\'équipement restaient en français en anglais', en:'Fix: AP/DP above equipment stayed in French while in English'}, fr:[
+  { v:'V265', d:'08/07/2026 08:17', name:{fr:'Fix : PA/PD au-dessus de l\'équipement restaient en français en anglais', en:'Fix: AP/DP above equipment stayed in French while in English'}, fr:[
       {t:'fix', sub:'interface', tx:'Le résumé PA/PD/GS affiché juste au-dessus de la poupée d\'équipement était codé en dur en français ("PA "/"PD "), même quand le jeu était en anglais — il suit désormais la langue choisie comme partout ailleurs. Les valeurs elles-mêmes étaient déjà correctes, seul le libellé était fautif'},
     ], en:[
       {t:'fix', sub:'interface', tx:'The AP/DP/GS summary shown just above the equipment doll was hardcoded in French ("PA "/"PD "), even when the game was set to English — it now follows the selected language like everywhere else. The values themselves were already correct, only the label was wrong'},
     ] },
-  { v:'V264', d:'07/07/2026 07:37', name:{fr:'Outils de debug admin pour l\'enchantement', en:'Admin debug tools for enhancement'}, fr:[
+  { v:'V264', d:'08/07/2026 08:17', name:{fr:'Outils de debug admin pour l\'enchantement', en:'Admin debug tools for enhancement'}, fr:[
       {t:'new', sub:'admin', tx:'4 boutons réservés à l\'admin dans l\'onglet inventaire principal (invisibles pour tous les autres joueurs) : passer tout l\'équipement en Optimisation max, tout rétrograder à +0, ou avancer/reculer d\'1 rang à la fois — aucun effet sur les compteurs de tentative ni les succès'},
     ], en:[
       {t:'new', sub:'admin', tx:'4 admin-only buttons in the main inventory tab (invisible to all other players): set all equipped gear to max Enhancement, reset it all to +0, or step it up/down by 1 rank at a time — no effect on attempt counters or achievements'},
     ] },
-  { v:'V263', d:'07/07/2026 06:42', name:{fr:'Refonte inventaire (onglets, Compendium, vente), IA manuelle, Sanctuaire d\'Elric régulé', en:'Inventory overhaul (tabs, Compendium, selling), manual AI, Elric Shrine access regulated'}, fr:[
+  { v:'V263', d:'08/07/2026 08:17', name:{fr:'Refonte inventaire (onglets, Compendium, vente), IA manuelle, Sanctuaire d\'Elric régulé', en:'Inventory overhaul (tabs, Compendium, selling), manual AI, Elric Shrine access regulated'}, fr:[
       {t:'change', sub:'inventaire', tx:'Le craft de la Pierre de Caphras a été déplacé dans l\'onglet "🔧 Assemblage" — tout futur craft y sera ajouté'},
       {t:'change', sub:'interface', tx:'PA (Attaque) et PD (Défense) affichés à côté des autres stats'},
       {t:'change', sub:'combat', severity:'major', tx:'Le mode de combat de l\'IA (Défensif/Équilibré/Offensif) se choisit désormais manuellement via un sélecteur à bulles, à la place de l\'ancien calcul automatique selon le stuff'},
@@ -1099,7 +1138,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'inventaire', severity:'major', tx:'The protected bag (Compendium) is now a full inventory tab (new 📖 icon): protected items show their AP/DP and a button to equip them and jump straight into their enhancement'},
       {t:'change', sub:'zones', tx:'Elric Shrine access regulated: a full green (Yuria) gear set enchanted to +15 average now lands in HARD ZONE instead of DANGEROUS ZONE (only the required Defense was lowered, Attack was already correctly calibrated)'},
     ] },
-  { v:'V262', d:'07/07/2026 05:48', name:{fr:'Audit de sécurité (issue GitHub #4)', en:'Security audit (GitHub issue #4)'}, fr:[
+  { v:'V262', d:'08/07/2026 08:17', name:{fr:'Audit de sécurité (issue GitHub #4)', en:'Security audit (GitHub issue #4)'}, fr:[
       {t:'exploit', sub:'securite', severity:'major', tx:'Sauvegarde cloud : borne serveur sur silver/niveau/loyauté/enchantement (au-delà de PEN), avec alerte auto en cas de tentative — avant, seul le client validait ces valeurs'},
       {t:'exploit', sub:'securite', tx:'Registre anti-triche (silver_ledger) : catégories et montants désormais bornés côté serveur'},
       {t:'exploit', sub:'securite', tx:'Bibliothèque Supabase JS chargée en version figée + intégrité vérifiée (SRI), au lieu d\'une version flottante'},
@@ -1110,55 +1149,55 @@ const PATCH_NOTES = [
       {t:'exploit', sub:'securite', tx:'Supabase JS library loaded with a pinned version + verified integrity (SRI), instead of a floating version'},
       {t:'fix', sub:'interface', tx:'Admin panel error messages escaped before display (precautionary XSS)'},
     ] },
-  { v:'V261', d:'07/07/2026 01:27', name:{fr:'Audit post-découpage : réfs de fichiers obsolètes corrigées', en:'Post-split audit: stale file references fixed'}, fr:[
+  { v:'V261', d:'08/07/2026 08:17', name:{fr:'Audit post-découpage : réfs de fichiers obsolètes corrigées', en:'Post-split audit: stale file references fixed'}, fr:[
       {t:'fix', sub:'admin', tx:'L\'astuce du panneau Admin "Silver" pour ajouter une nouvelle catégorie pointait encore vers game-supabase.js pour CATEGORY_LABEL, alors que ce code vit désormais dans admin-panel.js depuis le découpage'},
       {t:'change', sub:'systeme', tx:'Ajout d\'un test de régression qui vérifie que la détection de nouvelle version cible bien le fichier qui contient réellement PATCH_NOTES aujourd\'hui — pour attraper immédiatement un futur déplacement oublié, comme celui qui avait cassé la notification (voir V259)'},
     ], en:[
       {t:'fix', sub:'admin', tx:'The Admin "Silver" panel\'s hint for adding a new category still pointed to game-supabase.js for CATEGORY_LABEL, when that code now lives in admin-panel.js since the split'},
       {t:'change', sub:'systeme', tx:'Added a regression test that checks the update-detection fetch actually targets the file that currently defines PATCH_NOTES — to immediately catch a future forgotten move, like the one that broke the notification (see V259)'},
     ] },
-  { v:'V260', d:'07/07/2026 01:20', name:{fr:'Fix : vente d\'un bijou en trop via le menu objet', en:'Fix: selling a spare jewelry piece via the item menu'}, fr:[
+  { v:'V260', d:'08/07/2026 08:17', name:{fr:'Fix : vente d\'un bijou en trop via le menu objet', en:'Fix: selling a spare jewelry piece via the item menu'}, fr:[
       {t:'fix', sub:'inventaire', tx:'Le menu contextuel d\'un objet (clic droit / appui long) n\'affichait le bouton "Vendre 1" que pour le rebut/matériaux/équipement — les bijoux (anneaux, boucles, colliers, ceintures) en étaient exclus, rendant impossible leur vente manuelle via ce menu (seul l\'auto-équipement au clic simple fonctionnait). Vérifié au passage : la vente garde toujours le meilleur exemplaire enchanté d\'un doublon dans le sac protégé, y compris pour les bijoux'},
     ], en:[
       {t:'fix', sub:'inventaire', tx:'An item\'s context menu (right-click / long-press) only showed the "Sell 1" button for trash/materials/gear — jewelry (rings, earrings, necklaces, belts) was excluded, making it impossible to manually sell a spare one through that menu (only auto-equip on simple click worked). Also verified: selling always keeps the best-enchanted duplicate copy in the protected bag, jewelry included'},
     ] },
-  { v:'V259', d:'07/07/2026 01:12', name:{fr:'Fix notification de mise à jour, le jeu ne se met plus en pause en arrière-plan', en:'Fixed update notification, game no longer pauses in the background'}, fr:[
+  { v:'V259', d:'08/07/2026 08:17', name:{fr:'Fix notification de mise à jour, le jeu ne se met plus en pause en arrière-plan', en:'Fixed update notification, game no longer pauses in the background'}, fr:[
       {t:'fix', sub:'systeme', severity:'major', tx:'La notification "nouvelle version disponible" ne s\'affichait plus depuis le découpage de game-supabase.js (2026-07-14) : la détection allait chercher PATCH_NOTES dans le mauvais fichier (déplacé entre-temps dans patch-notes-data.js) et ne matchait donc plus jamais'},
       {t:'change', sub:'systeme', tx:'Le jeu ne se met plus en pause quand l\'onglet/la fenêtre perd le focus — le farm, le combat et le loot continuent de tourner en arrière-plan, comme attendu d\'un jeu idle'},
     ], en:[
       {t:'fix', sub:'systeme', severity:'major', tx:'The "new version available" notification stopped showing since the game-supabase.js split (2026-07-14): the detection fetched PATCH_NOTES from the wrong file (moved to patch-notes-data.js) and could never match anymore'},
       {t:'change', sub:'systeme', tx:'The game no longer pauses when the tab/window loses focus — farming, combat and loot keep running in the background, as expected from an idle game'},
     ] },
-  { v:'V258', d:'07/07/2026 01:02', name:{fr:'Nouveau sélecteur de mode de farm, mode Opti retiré', en:'New farm mode selector, Opti mode removed'}, fr:[
+  { v:'V258', d:'08/07/2026 08:17', name:{fr:'Nouveau sélecteur de mode de farm, mode Opti retiré', en:'New farm mode selector, Opti mode removed'}, fr:[
       {t:'change', sub:'interface', severity:'major', tx:'Le mode de farm (Loot/XP) se choisit désormais via un petit sélecteur à bulles à la place du slider — la bulle active s\'affiche en capsule dorée pleine (icône + texte), les autres en icône seule'},
       {t:'change', sub:'combat', tx:'Le mode "Opti" (pack à pack rapide) est retiré, ainsi que toute sa logique associée — un 3e emplacement verrouillé (cadenas grisé) reste visible dans le sélecteur, en attente d\'un futur mode'},
     ], en:[
       {t:'change', sub:'interface', severity:'major', tx:'The farm mode (Loot/XP) is now chosen via a small bubble selector instead of the slider — the active bubble shows as a full gold capsule (icon + text), the others as icon only'},
       {t:'change', sub:'combat', tx:'The "Opti" mode (fast pack-to-pack) is removed, along with all its associated logic — a 3rd locked slot (greyed padlock) remains visible in the selector, awaiting a future mode'},
     ] },
-  { v:'V257', d:'07/07/2026 00:42', name:{fr:'Nettoyage technique du code (aucun changement de jeu)', en:'Technical code cleanup (no gameplay change)'}, fr:[
+  { v:'V257', d:'08/07/2026 08:17', name:{fr:'Nettoyage technique du code (aucun changement de jeu)', en:'Technical code cleanup (no gameplay change)'}, fr:[
       {t:'change', sub:'systeme', tx:'Réorganisation interne du code : les deux gros fichiers du jeu (game-supabase.js et game-core.js) ont été découpés en plusieurs fichiers plus petits et thématiques (admin, chat, marché, boss mondial, rendu, inventaire...) pour être plus faciles à maintenir. Aucun impact sur le gameplay, tout a été vérifié par la suite de tests avant chaque étape'},
     ], en:[
       {t:'change', sub:'systeme', tx:'Internal code reorganization: the two large game files (game-supabase.js and game-core.js) were split into several smaller, themed files (admin, chat, market, world boss, rendering, inventory...) to be easier to maintain. No gameplay impact, everything was verified by the test suite before each step'},
     ] },
-  { v:'V256', d:'06/07/2026 23:07', name:{fr:'Plus de bijoux en zones vertes et bleues', en:'More jewelry in Green and Blue tiers'}, fr:[
+  { v:'V256', d:'08/07/2026 08:17', name:{fr:'Plus de bijoux en zones vertes et bleues', en:'More jewelry in Green and Blue tiers'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Chance de trouver un bijou rehaussée dans les 4 zones du palier vert (×1.8 : Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) et les 4 zones du palier bleu (×2 : Sanctuaire Elric, Ruines de Kratuga, Planque des Mânes, Forêt de Polly). Paliers gris et blanc inchangés'},
     ], en:[
       {t:'change', sub:'objets', severity:'major', tx:'Jewelry drop chance raised in the 4 Green tier zones (×1.8: Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Bashim Base) and the 4 Blue tier zones (×2: Elric Shrine, Kratuga Ruins, Manes Hideout, Polly Forest). Grey and White tiers unchanged'},
     ] },
-  { v:'V255', d:'06/07/2026 23:04', name:{fr:'Les sorts de zone touchent enfin toute la zone', en:'Zone spells finally hit the whole zone'}, fr:[
+  { v:'V255', d:'08/07/2026 08:17', name:{fr:'Les sorts de zone touchent enfin toute la zone', en:'Zone spells finally hit the whole zone'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'Les sorts (Météore, Blizzard, Tempête de foudre, Tremblement de terre...) ont toujours eu un effet visuel étalé sur tout le groupe de monstres, mais ne blessaient en réalité qu\'un seul monstre (le premier vivant) — ils infligent désormais leurs dégâts à TOUS les monstres vivants du groupe ciblé, comme leur effet le laissait déjà croire'},
     ], en:[
       {t:'fix', sub:'combat', severity:'major', tx:'Spells (Meteor Shower, Blizzard, Thunder Storm, Earthquake...) always had a visual effect spread across the whole monster pack, but only actually hurt one monster (the first alive) — they now deal damage to ALL living monsters in the targeted pack, matching what the effect already showed'},
     ] },
-  { v:'V254', d:'06/07/2026 22:54', name:{fr:'Potions ÷10 (encore), aggro de proximité partout', en:'Potions ÷10 (again), proximity aggro everywhere'}, fr:[
+  { v:'V254', d:'08/07/2026 08:17', name:{fr:'Potions ÷10 (encore), aggro de proximité partout', en:'Potions ÷10 (again), proximity aggro everywhere'}, fr:[
       {t:'change', sub:'economie', tx:'Prix des potions divisé par 10 une 2e fois (la petite coûte désormais ≈0.05% du revenu horaire de trash de la zone, la majeure ≈0.3%, au lieu de 0.5%/3%)'},
       {t:'change', sub:'combat', severity:'major', tx:'Les groupes de monstres proches (400 unités) s\'aggro désormais tout seuls dès qu\'on s\'approche, dans TOUTE zone — avant, ce réveil automatique n\'existait qu\'en zone dangereuse ; ailleurs, seul le pack visé par l\'IA s\'activait'},
     ], en:[
       {t:'change', sub:'economie', tx:'Potion prices divided by 10 a 2nd time (small now costs ≈0.05% of the zone\'s hourly trash income, mega ≈0.3%, down from 0.5%/3%)'},
       {t:'change', sub:'combat', severity:'major', tx:'Nearby monster packs (within 400 units) now aggro on their own as soon as you get close, in ANY zone — before, this auto-wakeup only existed in dangerous zones; elsewhere only the AI\'s current target would engage'},
     ] },
-  { v:'V253', d:'06/07/2026 22:41', name:{fr:'Trésor de Velia en production, plafond d\'empilement, poupée décalée', en:'Velia Treasure goes live, stack cap, doll shifted left'}, fr:[
+  { v:'V253', d:'08/07/2026 08:17', name:{fr:'Trésor de Velia en production, plafond d\'empilement, poupée décalée', en:'Velia Treasure goes live, stack cap, doll shifted left'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Le Trésor de Velia sort du statut expérimental "TEST" : "Bout du trésor de Velia" (0.17% de chance) et "Trésor de Velia" (0.0005%, fusion des anciennes variantes 1/2/3) ont désormais un vrai prix de revente — 10× le prix d\'un équipement du palier courant pour un Bout, 10 000× pour un Trésor'},
       {t:'change', sub:'objets', tx:'Le sac plafonne les Bouts à 100 et le Trésor de Velia à 1 : tout surplus est revendu automatiquement au prix ci-dessus au lieu de bloquer le ramassage ou remplir le sac. L\'ancien objet mystère "Objet inconnu" (qui demandait d\'empiler 3 Trésors différents) est retiré, devenu impossible à obtenir avec ce plafond'},
       {t:'fix', sub:'interface', tx:'Certaines icônes de la poupée d\'équipement (côté droit : bijoux/artefacts) pouvaient se retrouver coupées près du bord de la carte, juste à côté de l\'Inventaire — décalées d\'une marge supplémentaire vers la gauche'},
@@ -1167,7 +1206,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'objets', tx:'The bag caps fragments at 100 and Velia Treasure at 1: any surplus is auto-sold at the price above instead of blocking pickup or filling the bag. The old "Unknown Item" mystery item (which required stacking 3 different Treasures) is removed, now impossible to obtain with this cap'},
       {t:'fix', sub:'interface', tx:'Some equipment doll icons (right side: jewelry/artifacts) could end up clipped near the card edge, right next to the Inventory panel — shifted with extra left margin'},
     ] },
-  { v:'V252', d:'06/07/2026 22:26', name:{fr:'Mode Opti (IA pack à pack), slider de mode, icônes de stuff agrandies', en:'Opti mode (pack-to-pack AI), mode slider, bigger gear icons'}, fr:[
+  { v:'V252', d:'08/07/2026 08:17', name:{fr:'Mode Opti (IA pack à pack), slider de mode, icônes de stuff agrandies', en:'Opti mode (pack-to-pack AI), mode slider, bigger gear icons'}, fr:[
       {t:'new', sub:'combat', severity:'major', tx:'Nouveau 3e mode de farm "🌀 Opti" : dès que le pack combattu tombe à 70% de vie cumulée, le personnage repère déjà le pack vivant le plus proche et bascule dessus dès qu\'il serait normalement aggro — enchaîne les packs sans jamais attendre la fin d\'un combat'},
       {t:'change', sub:'interface', tx:'Le bouton de mode de farm est remplacé par un slider à 3 crans (🎒 Loot / 📖 XP / 🌀 Opti), plus lisible qu\'un simple clic cyclique'},
       {t:'fix', sub:'objets', tx:'La flèche ⬆️ d\'amélioration sur une pièce équipée ne se rafraîchissait pas en changeant de zone (elle ne réapparaissait qu\'après un loot ou une vente) — elle suit désormais correctement chaque voyage, y compris en quittant une zone qui devient une meilleure option'},
@@ -1178,7 +1217,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'objets', tx:'The ⬆️ upgrade arrow on an equipped piece didn\'t refresh on zone change (it only reappeared after a loot or a sale) — it now correctly follows every trip, including leaving a zone that becomes a better option'},
       {t:'change', sub:'interface', tx:'Gear icons (bag and equipment doll) now fill almost their entire cell instead of floating with a large margin around them'},
     ] },
-  { v:'V251', d:'06/07/2026 22:07', name:{fr:'Fix bijoux dans l\'auto-opti, 2x plus de monstres en zone verte, filet Firefox renforcé', en:'Fixed jewelry in auto-opt, 2x more monsters in Green tier, stronger Firefox safety net'}, fr:[
+  { v:'V251', d:'08/07/2026 08:17', name:{fr:'Fix bijoux dans l\'auto-opti, 2x plus de monstres en zone verte, filet Firefox renforcé', en:'Fixed jewelry in auto-opt, 2x more monsters in Green tier, stronger Firefox safety net'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'La liste déroulante de l\'optimisation automatique n\'affichait jamais le gain (+1 PA, +2 PA...) pour les bijoux (anneaux, boucles, colliers, ceintures) — le code ne regardait que le gain de PD par défaut pour tout ce qui n\'est pas une arme, alors que les bijoux donnent de la PA, jamais de PD. Corrigé : le gain s\'affiche désormais correctement pour les bijoux'},
       {t:'change', sub:'combat', tx:'Le palier vert (Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) a désormais 16 groupes de monstres actifs en même temps (2× le palier blanc), au lieu de 10'},
       {t:'fix', sub:'interface', plat:'firefox', tx:'Le filet de sécurité Firefox posé précédemment (min-width:0) ne suffisait pas d\'après un retour en jeu — ajout d\'un filet supplémentaire (overflow-x:hidden sur les cartes) qui empêche tout débordement horizontal, quelle que soit la cause exacte restante. Non vérifié visuellement sur un vrai Firefox (indisponible dans cet environnement de développement) — à reconfirmer'},
@@ -1187,92 +1226,92 @@ const PATCH_NOTES = [
       {t:'change', sub:'combat', tx:'The Green tier (Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Bashim Base) now has 16 monster groups active at once (2x the White tier), up from 10'},
       {t:'fix', sub:'interface', plat:'firefox', tx:'The previous Firefox safety net (min-width:0) wasn\'t enough per an in-game report — added another layer (overflow-x:hidden on cards) that prevents any horizontal overflow regardless of the exact remaining cause. Not visually verified on a real Firefox (unavailable in this dev environment) — to be reconfirmed'},
     ] },
-  { v:'V250', d:'06/07/2026 21:54', name:{fr:'Onglets de région (Velia à Edana) sur une seule ligne', en:'Region tabs (Velia to Edana) on a single row'}, fr:[
+  { v:'V250', d:'08/07/2026 08:17', name:{fr:'Onglets de région (Velia à Edana) sur une seule ligne', en:'Region tabs (Velia to Edana) on a single row'}, fr:[
       {t:'change', sub:'interface', tx:'Les 5 onglets de région (Velia/Heidel/Calpheon/Valencia/Edana) passaient parfois sur 2 rangées. Le cadenas 🔒 des régions verrouillées est désormais un petit badge au-dessus de chaque onglet, centré, au lieu d\'être dans le texte — libère assez de place pour que les 5 tiennent toujours sur une seule ligne'},
     ], en:[
       {t:'change', sub:'interface', tx:'The 5 region tabs (Velia/Heidel/Calpheon/Valencia/Edana) sometimes wrapped onto 2 rows. The 🔒 lock for locked regions is now a small badge above each tab, centered, instead of being in the text — frees up enough room for all 5 to always fit on a single row'},
     ] },
-  { v:'V249', d:'06/07/2026 21:42', name:{fr:'Lien zone ↔ pièce d\'équipement précis, fix armure "où farmer"', en:'Precise zone ↔ gear slot link, fixed armor "where to farm"'}, fr:[
+  { v:'V249', d:'08/07/2026 08:17', name:{fr:'Lien zone ↔ pièce d\'équipement précis, fix armure "où farmer"', en:'Precise zone ↔ gear slot link, fixed armor "where to farm"'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Le système "où farmer" (case vide ou flèche ⬆️) proposait TOUTES les zones du palier pour n\'importe quelle pièce d\'armure, alors que chaque pièce (casque/torse/gants/bottes) ne peut en réalité dropper que dans SA zone dédiée — un reliquat de l\'ancien système d\'avant "1 pièce garantie par zone". Corrigé : casque/torse/gants/bottes ne proposent plus que leur zone exacte'},
       {t:'new', sub:'interface', tx:'Survoler une zone dans la liste surligne désormais UNIQUEMENT la ou les pièces de la poupée d\'équipement que cette zone précise permet d\'améliorer — plus une pièce a de zones qui l\'améliorent, plus elle peut s\'allumer depuis plusieurs lignes de la liste'},
     ], en:[
       {t:'fix', sub:'objets', severity:'major', tx:'The "where to farm" system (empty slot or ⬆️ arrow) suggested EVERY zone of the tier for any armor piece, even though each piece (helmet/chest/gloves/boots) can only actually drop in its own dedicated zone — a leftover from the old system predating "1 guaranteed piece per zone". Fixed: helmet/chest/gloves/boots now only suggest their exact zone'},
       {t:'new', sub:'interface', tx:'Hovering a zone in the list now highlights ONLY the equipment doll piece(s) that specific zone can actually upgrade — the more zones improve a piece, the more list rows can light it up'},
     ] },
-  { v:'V248', d:'06/07/2026 21:37', name:{fr:'Tooltip détaillé pour le stuff du sac protégé', en:'Detailed tooltip for protected bag gear'}, fr:[
+  { v:'V248', d:'08/07/2026 08:17', name:{fr:'Tooltip détaillé pour le stuff du sac protégé', en:'Detailed tooltip for protected bag gear'}, fr:[
       {t:'new', sub:'interface', tx:'Survoler une pièce du sac protégé (Compendium) affiche désormais le tooltip complet (PA/PD/PV/Esquive/enchantement), comme dans le sac principal — avant, seul un petit badge d\'enchantement était visible, sans détail au survol'},
     ], en:[
       {t:'new', sub:'interface', tx:'Hovering a piece in the protected bag (Compendium) now shows the full tooltip (AP/DP/HP/Dodge/enhancement), like in the main bag — before, only a small enhancement badge was visible, with no hover detail'},
     ] },
-  { v:'V247', d:'06/07/2026 21:32', name:{fr:'La flèche d\'upgrade propose à nouveau toutes les zones', en:'The upgrade arrow suggests all zones again'}, fr:[
+  { v:'V247', d:'08/07/2026 08:17', name:{fr:'La flèche d\'upgrade propose à nouveau toutes les zones', en:'The upgrade arrow suggests all zones again'}, fr:[
       {t:'change', sub:'interface', tx:'La flèche ⬆️ (sur une pièce équipée ou sur une zone) ne proposait plus que des zones déjà découvertes (visitées au moins une fois) — revirement assumé : elle propose à nouveau n\'importe quelle zone du jeu, même jamais visitée, tant qu\'elle n\'est pas dangereuse'},
     ], en:[
       {t:'change', sub:'interface', tx:'The ⬆️ arrow (on an equipped piece or a zone) only suggested already-discovered zones (visited at least once) — deliberate reversal: it now suggests any zone in the game again, even one never visited, as long as it isn\'t dangerous'},
     ] },
-  { v:'V246', d:'06/07/2026 21:22', name:{fr:'Potions ÷10, palier vert accessible avec un stuff blanc complet', en:'Potions ÷10, Green tier reachable with full White gear'}, fr:[
+  { v:'V246', d:'08/07/2026 08:17', name:{fr:'Potions ÷10, palier vert accessible avec un stuff blanc complet', en:'Potions ÷10, Green tier reachable with full White gear'}, fr:[
       {t:'change', sub:'economie', tx:'Prix des potions divisé par 10 (la petite coûte désormais ≈0.5% du revenu horaire de trash, la majeure ≈3%, au lieu de 5%/30%)'},
       {t:'change', sub:'zones', severity:'major', tx:'Les 4 zones du palier vert (Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Base de Bashim) ont leur PA/PD requis abaissés d\'environ 20% : un stuff complet du palier blanc (armes+armure+bijoux des 4 zones blanches) enchanté à +13 atteint désormais tout juste "ZONE DIFFICILE" face à Mine de Fer Abandonnée, et ce même stuff au PEN atteint "ZONE DIFFICILE" face à Poste Helm (2e zone verte). Le palier blanc n\'est pas touché. Rétroactif sur le stuff déjà possédé de ces 4 zones'},
     ], en:[
       {t:'change', sub:'economie', tx:'Potion prices divided by 10 (the small one now costs ≈0.5% of the hourly trash income, the major one ≈3%, down from 5%/30%)'},
       {t:'change', sub:'zones', severity:'major', tx:'The 4 Green tier zones (Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Bashim Base) have their required AP/DP lowered by about 20%: a full White tier gear set (weapons+armor+jewelry from all 4 White zones) enhanced to +13 now just barely reaches "DIFFICULT ZONE" against Abandoned Iron Mine, and the same gear at PEN reaches "DIFFICULT ZONE" against Helm Post (2nd Green zone). White tier is untouched. Retroactive for gear already owned from these 4 zones'},
     ] },
-  { v:'V245', d:'06/07/2026 21:03', name:{fr:'Silver/h uniquement du token, potions rééquilibrées (5% à 30%)', en:'Silver/h from tokens only, potions rebalanced (5% to 30%)'}, fr:[
+  { v:'V245', d:'08/07/2026 08:17', name:{fr:'Silver/h uniquement du token, potions rééquilibrées (5% à 30%)', en:'Silver/h from tokens only, potions rebalanced (5% to 30%)'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le "silver/h" affiché en jeu (et celui utilisé pour le classement) comptait toutes les sources de gain (quêtes, succès, boss, marché...), ce qui pouvait gonfler artificiellement la lecture du rythme de farm réel après un gros coup de chance. Il ne compte désormais QUE le silver du trash (token) ramassé au sol'},
       {t:'change', sub:'economie', tx:'Prix des potions réajusté : la petite potion coûte désormais environ 5% du revenu horaire de trash de la zone actuelle, la potion majeure environ 30% (au lieu de 2.76% à 15%) — moyenne/grande potion interpolées entre les deux'},
     ], en:[
       {t:'change', sub:'economie', severity:'major', tx:'The in-game "silver/h" (and the one used for the leaderboard) counted every income source (quests, achievements, boss, market...), which could artificially inflate the reading of actual farming pace after a lucky reward. It now only counts trash (token) silver picked up off the ground'},
       {t:'change', sub:'economie', tx:'Potion pricing adjusted: the small potion now costs about 5% of the current zone\'s hourly trash income, the major potion about 30% (up from 2.76%-15%) — medium/large potions interpolated in between'},
     ] },
-  { v:'V244', d:'06/07/2026 20:57', name:{fr:'Fix layout Firefox, Mine de Fer Abandonnée accessible en +13', en:'Firefox layout fix, Abandoned Iron Mine reachable at +13'}, fr:[
+  { v:'V244', d:'08/07/2026 08:17', name:{fr:'Fix layout Firefox, Mine de Fer Abandonnée accessible en +13', en:'Firefox layout fix, Abandoned Iron Mine reachable at +13'}, fr:[
       {t:'fix', sub:'interface', severity:'major', plat:'firefox', tx:'Sur Firefox, certaines lignes de la carte Statistiques ("PA/PD requis (zone)") pouvaient déborder par-dessus les cartes Équipement/Inventaire au lieu de rester dans leur colonne. Corrigé (min-width:0 sur les cartes de la grille) — Chrome n\'était pas affecté, mais toute la mise en page en 3 colonnes est concernée par ce type de bug ; on va vérifier Firefox plus systématiquement à chaque changement de mise en page à l\'avenir'},
       {t:'change', sub:'zones', tx:'Un stuff complet de Colonie Sausan enchanté à +13 atteint désormais bien "ZONE DIFFICILE" face à Mine de Fer Abandonnée (au lieu de "ZONE DANGEREUSE") — la puissance de PD de son stuff est légèrement augmentée sans changer sa propre difficulté de combat. Le même stuff au PEN atteint "ZONE DIFFICILE" face à Poste Helm, 2 zones plus loin. Rétroactif sur le stuff déjà possédé'},
     ], en:[
       {t:'fix', sub:'interface', severity:'major', plat:'firefox', tx:'On Firefox, some Stats card rows ("AP/DP required (zone)") could overflow on top of the Equipment/Inventory cards instead of staying in their own column. Fixed (min-width:0 on the grid cards) — Chrome wasn\'t affected, but this class of bug applies to the whole 3-column layout; Firefox will be checked more systematically on future layout changes'},
       {t:'change', sub:'zones', tx:'A full Sausan Colony gear set enhanced to +13 now correctly reaches "DIFFICULT ZONE" against Abandoned Iron Mine (instead of "DANGEROUS ZONE") — its gear\'s DP power is slightly increased without changing the zone\'s own combat difficulty. The same gear at PEN reaches "DIFFICULT ZONE" against Helm Post, 2 zones further. Retroactive for already-owned gear'},
     ] },
-  { v:'V243', d:'06/07/2026 20:43', name:{fr:'Plus de groupes de monstres à partir du palier blanc', en:'More monster groups from the White tier onward'}, fr:[
+  { v:'V243', d:'08/07/2026 08:17', name:{fr:'Plus de groupes de monstres à partir du palier blanc', en:'More monster groups from the White tier onward'}, fr:[
       {t:'change', sub:'combat', tx:'Le nombre de groupes de monstres actifs en même temps dans le monde augmente désormais à chaque palier de stuff : 6 (gris, inchangé), 8 (blanc), 10 (vert), 12 (bleu). Même monstre et même loot par zone, juste plus de groupes vivants simultanément'},
     ], en:[
       {t:'change', sub:'combat', tx:'The number of monster groups active at the same time in the world now increases with each gear tier: 6 (grey, unchanged), 8 (white), 10 (green), 12 (blue). Same monster and loot per zone, just more groups alive at once'},
     ] },
-  { v:'V242', d:'06/07/2026 20:32', name:{fr:'Rééquilibrage du prix des potions (lié uniquement au trash/token)', en:'Potion price rebalance (tied only to trash/token)'}, fr:[
+  { v:'V242', d:'08/07/2026 08:17', name:{fr:'Rééquilibrage du prix des potions (lié uniquement au trash/token)', en:'Potion price rebalance (tied only to trash/token)'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le prix des potions ne dépendait déjà que du silver de trash (token) de la zone, jamais de la vente de stuff — mais l\'amortissement en racine carrée dérivait fortement de l\'objectif visé : la potion la plus chère (mega) coûtait jusqu\'à 42% du revenu horaire en début de jeu, mais seulement 3.6% en fin de jeu, au lieu de rester proche de 15% partout. Elle coûte désormais TOUJOURS exactement 15% du revenu horaire de trash de la zone actuelle, quelle que soit la zone — les autres tailles (petite/moyenne/grande) gardent le même ratio entre elles qu\'avant'},
     ], en:[
       {t:'change', sub:'economie', severity:'major', tx:'Potion price already depended only on the zone\'s trash (token) silver, never on gear sales — but the square-root dampening drifted far from its own target: the priciest potion (mega) cost up to 42% of hourly income early on, but only 3.6% late-game, instead of staying close to 15% everywhere. It now always costs exactly 15% of the current zone\'s hourly trash income, regardless of zone — the other sizes (small/medium/large) keep the same ratio between them as before'},
     ] },
-  { v:'V241', d:'06/07/2026 20:22', name:{fr:'Notes de version : pagination au lieu du scroll', en:'Patch notes: pagination instead of scrolling'}, fr:[
+  { v:'V241', d:'08/07/2026 08:17', name:{fr:'Notes de version : pagination au lieu du scroll', en:'Patch notes: pagination instead of scrolling'}, fr:[
       {t:'change', sub:'interface', tx:'Le panneau "Notes de version" ne se lit plus au scroll : il affiche désormais 2 à 7 notes à la fois (selon leur taille), avec un bouton "▲ Plus récent" et "Plus ancien ▼" pour naviguer dans l\'historique. La page affichée est toujours retenue d\'une ouverture à l\'autre'},
     ], en:[
       {t:'change', sub:'interface', tx:'The "Patch Notes" panel is no longer read by scrolling: it now shows 2 to 7 notes at a time (depending on size), with a "▲ Newer" and "Older ▼" button to navigate through history. The displayed page is always remembered between openings'},
     ] },
-  { v:'V240', d:'06/07/2026 20:13', name:{fr:'Fix : aucune pierre ne s\'auto-sélectionnait pour les bijoux', en:'Fix: no stone was auto-selected for jewelry'}, fr:[
+  { v:'V240', d:'08/07/2026 08:17', name:{fr:'Fix : aucune pierre ne s\'auto-sélectionnait pour les bijoux', en:'Fix: no stone was auto-selected for jewelry'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Les bijoux (anneaux, boucles, colliers, ceintures) n\'ont jamais porté l\'information de leur propre palier de matériau — contrairement à l\'armure et aux armes, qui l\'ont toujours eu. L\'optimisation retombait donc sur le matériau de la zone où tu farmes ACTUELLEMENT au lieu de celui du palier du bijou équipé, affichant "Aucun matériau en sac" à tort dès que les deux ne correspondaient pas. Corrigé pour tout nouveau bijou, et rétroactivement pour tous ceux déjà possédés (équipés, en sac, ou protégés). Rappel des paliers : Pierre de Novice = Naru, Pierre du Temps = Tuvala, Pierre Noire = tout le stuff vert, Pierre concentrée = tout le stuff bleu'},
     ], en:[
       {t:'fix', sub:'objets', severity:'major', tx:'Jewelry (rings, earrings, necklaces, belts) never carried its own material tier — unlike armor and weapons, which always did. Enhancement therefore fell back to the material of the zone you\'re CURRENTLY farming instead of the equipped jewelry\'s own tier, wrongly showing "No material in bag" whenever the two didn\'t match. Fixed for every new jewelry drop, and retroactively for anything already owned (equipped, in bag, or protected). Tier reminder: Novice Stone = Naru, Time Stone = Tuvala, Black Stone = all green gear, Concentrated Stone = all blue gear'},
     ] },
-  { v:'V239', d:'06/07/2026 20:07', name:{fr:'Fix : l\'auto-équipement ignorait un doublon plus enchanté à socle égal', en:'Fix: auto-equip ignored a more enhanced duplicate with the same base'}, fr:[
+  { v:'V239', d:'08/07/2026 08:17', name:{fr:'Fix : l\'auto-équipement ignorait un doublon plus enchanté à socle égal', en:'Fix: auto-equip ignored a more enhanced duplicate with the same base'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Quand tu vends un objet dont un exemplaire est déjà équipé avec exactement le même socle de base, l\'auto-équipement (avant vente) ne comparait pas l\'enchantement — un doublon plus enchanté restait ignoré au lieu de remplacer l\'exemplaire équipé moins monté. Concerne aussi les anneaux et boucles d\'oreille (vérifie désormais le slot 1 puis le slot 2, remplace toujours le moins enchanté des deux)'},
     ], en:[
       {t:'fix', sub:'objets', severity:'major', tx:'When selling an item with an exact same-base copy already equipped, auto-equip (before the sale) never compared enhancement level — a more enhanced duplicate stayed ignored instead of replacing the less-enhanced equipped copy. Also affects rings and earrings (now checks slot 1 then slot 2, always replaces the less enhanced of the two)'},
     ] },
-  { v:'V238', d:'06/07/2026 20:00', name:{fr:'Rétroactivité du lissage des zones, nom de zone corrigé au chargement', en:'Retroactive zone smoothing, fixed zone name on load'}, fr:[
+  { v:'V238', d:'08/07/2026 08:17', name:{fr:'Rétroactivité du lissage des zones, nom de zone corrigé au chargement', en:'Retroactive zone smoothing, fixed zone name on load'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Les changements de PA/PD requis de zones (échelonnement de Ruines de Trent/Île d\'Iliya/Base de Bashim et lissage de Ruines de Kratuga/Planque des Mânes) ne se répercutaient pas sur le stuff déjà dropé avant ces changements — tout objet déjà possédé de ces zones est désormais recalculé automatiquement, sans toucher à l\'enchantement déjà investi'},
       {t:'fix', sub:'interface', tx:'Le nom de la zone affiché en haut du cadre de jeu pouvait rester bloqué sur "Camp des Loups" après le chargement d\'une sauvegarde sur une autre zone, tant qu\'aucun voyage manuel n\'était fait. Il reflète désormais toujours la vraie zone dès le chargement'},
     ], en:[
       {t:'fix', sub:'objets', severity:'major', tx:'Zone AP/DP requirement changes (staggering Trent Ruins/Iliya Island/Bashim Base and smoothing Kratuga Ruins/Manes\' Hideout) didn\'t carry over to gear already dropped before those changes — any already-owned item from those zones is now automatically recalculated, without touching already-invested enhancement'},
       {t:'fix', sub:'interface', tx:'The zone name shown at the top of the game frame could stay stuck on "Wolf Camp" after loading a save on a different zone, until a manual travel was made. It now always reflects the real zone right after loading'},
     ] },
-  { v:'V237', d:'06/07/2026 19:41', name:{fr:'Fix : une pierre du mauvais palier ne peut plus optimiser du stuff', en:'Fix: a stone from the wrong tier can no longer enhance gear'}, fr:[
+  { v:'V237', d:'08/07/2026 08:17', name:{fr:'Fix : une pierre du mauvais palier ne peut plus optimiser du stuff', en:'Fix: a stone from the wrong tier can no longer enhance gear'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'S\'il ne restait plus de pierre du bon palier en sac (ex: Pierre du Temps pour du stuff Tuvala), l\'optimisation retombait silencieusement sur N\'IMPORTE QUELLE autre pierre en stock, même d\'un palier différent (ex: Pierre de Novice, Naru). Corrigé : sans le bon matériau, l\'optimisation reste bloquée ("Aucun matériau en sac") au lieu de consommer une pierre qui ne correspond pas. Un matériau épinglé via "Mettre en optimisation" qui ne correspond plus au palier de la pièce ciblée est désormais lui aussi ignoré'},
     ], en:[
       {t:'fix', sub:'objets', severity:'major', tx:'If no stone of the right tier was left in the bag (e.g. Time Stone for Tuvala gear), enhancement silently fell back to ANY other stone in stock, even from a different tier (e.g. Novice Stone, Naru). Fixed: without the right material, enhancement stays blocked ("No material in bag") instead of consuming a mismatched stone. A material pinned via "Set for enhancement" that no longer matches the targeted piece\'s tier is now also ignored'},
     ] },
-  { v:'V236', d:'06/07/2026 19:37', name:{fr:'La flèche de zone ignore le stuff déjà dans le sac', en:'The zone arrow ignores gear already in the bag'}, fr:[
+  { v:'V236', d:'08/07/2026 08:17', name:{fr:'La flèche de zone ignore le stuff déjà dans le sac', en:'The zone arrow ignores gear already in the bag'}, fr:[
       {t:'fix', sub:'interface', tx:'L\'icône ⬆️ affichée sur une zone (suggérant d\'aller y farmer un meilleur stuff) pouvait s\'afficher alors que ce meilleur stuff se trouvait déjà, non équipé, dans le sac — il suffisait de l\'équiper, pas d\'aller le farmer. Elle ne s\'affiche plus dans ce cas'},
     ], en:[
       {t:'fix', sub:'interface', tx:'The ⬆️ icon shown on a zone (suggesting better gear could be farmed there) could appear even when that better gear was already sitting unequipped in the bag — equipping it was all that was needed, not farming. It no longer shows in that case'},
     ] },
-  { v:'V235', d:'06/07/2026 19:28', name:{fr:'Combat monstre par monstre, loot Alpha ×2, flèche d\'upgrade limitée aux zones découvertes', en:'Monster-by-monster combat, ×2 Alpha loot, upgrade arrow limited to discovered zones'}, fr:[
+  { v:'V235', d:'08/07/2026 08:17', name:{fr:'Combat monstre par monstre, loot Alpha ×2, flèche d\'upgrade limitée aux zones découvertes', en:'Monster-by-monster combat, ×2 Alpha loot, upgrade arrow limited to discovered zones'}, fr:[
       {t:'change', sub:'combat', severity:'major', tx:'Chaque monstre d\'un pack a désormais sa propre barre de vie et son propre loot : avant, tout le pack partageait une seule barre agrégée et tous les monstres mouraient d\'un coup une fois vidée. Ils meurent maintenant un par un au fil du combat, chacun avec sa barre au-dessus de lui'},
       {t:'change', sub:'loot', tx:'Les groupes Alpha (boss de pack) ont maintenant un taux de drop uniformément ×2 par rapport à un groupe normal, sur tous les types de loot (trash, matériau, bijou, craft, trésor, pierre de Cron, armure, arme) — remplace les anciens multiplicateurs disparates (×1.5 et ×1.6 selon le type)'},
       {t:'fix', sub:'interface', tx:'La flèche ⬆️ sur une pièce équipée (indiquant qu\'un meilleur stuff existe) pouvait pointer vers une zone jamais découverte. Elle ne propose désormais que des zones déjà atteintes au moins une fois, en plus d\'exclure toujours les zones dangereuses'},
@@ -1283,12 +1322,12 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', tx:'The ⬆️ arrow on an equipped piece (flagging that better gear exists) could point to a zone never discovered. It now only suggests zones already reached at least once, on top of always excluding dangerous zones'},
       {t:'change', sub:'zones', tx:'The game\'s last 3 zones (Kratuga Ruins, Manes\' Hideout, Polly Forest) all required exactly 320 AP / 175 DP. They now climb progressively toward that same cap (286/157, then 303/166, then 320/175 on the very last one) instead of all 3 being there at once'},
     ] },
-  { v:'V234', d:'06/07/2026 18:58', name:{fr:'Zones jumelles échelonnées (Trent, Île d\'Iliya, Base de Bashim)', en:'Twin zones staggered (Trent, Iliya Island, Bashim Base)'}, fr:[
+  { v:'V234', d:'08/07/2026 08:17', name:{fr:'Zones jumelles échelonnées (Trent, Île d\'Iliya, Base de Bashim)', en:'Twin zones staggered (Trent, Iliya Island, Bashim Base)'}, fr:[
       {t:'change', sub:'zones', tx:'Ruines de Trent, Île d\'Iliya et Base de Bashim demandaient exactement le même PA/PD que leur zone jumelle du même palier (Repaire des Pirates, Colonie Sausan, Repaire Bandits Gahaz) — elles demandent désormais un peu plus, sans jamais dépasser la zone suivante du palier suivant. Le plafond de fin de jeu (320 PA / 175 PD, Ruines de Kratuga / Planque des Mânes / Forêt de Polly) reste inchangé'},
     ], en:[
       {t:'change', sub:'zones', tx:'Ruines de Trent, Iliya Island and Bashim Base required the exact same AP/DP as their twin zone in the same tier (Pirate Hideout, Sausan Colony, Gahaz Bandit Den) — they now require a bit more, never exceeding the next tier\'s opening zone. The endgame cap (320 AP / 175 DP, Kratuga Ruins / Manes\' Hideout / Polly Forest) stays unchanged'},
     ] },
-  { v:'V233', d:'06/07/2026 18:44', name:{fr:'Loyalties récupérables, liste admin fiabilisée, reload Silver, notes de version', en:'Claimable Loyalty, fixed admin list, Silver reload, patch notes'}, fr:[
+  { v:'V233', d:'08/07/2026 08:17', name:{fr:'Loyalties récupérables, liste admin fiabilisée, reload Silver, notes de version', en:'Claimable Loyalty, fixed admin list, Silver reload, patch notes'}, fr:[
       {t:'fix', sub:'admin', severity:'major', tx:'La réinitialisation des quêtes de tous les joueurs (bouton Admin) était cassée depuis sa création — la fonction serveur associée n\'avait jamais réellement été mise en place. Corrigé'},
       {t:'fix', sub:'admin', severity:'major', tx:'La liste des joueurs du panneau Admin ne montrait que les comptes vérifiés — tout joueur en mode invité (même actif, avec une vraie progression) en était totalement absent. Elle inclut désormais tous les comptes, invités compris'},
       {t:'new', sub:'admin', tx:'L\'onglet Admin "Silver" a maintenant un bouton de rechargement pour rafraîchir le registre sans fermer/rouvrir tout le panneau'},
@@ -1301,7 +1340,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'economie', severity:'major', tx:'The daily 200 Loyalty gain is no longer added to your stock automatically: it accumulates in the mailbox (no limit, until claimed), and a "Claim" button moves it to your real stock — now shown next to silver in the inventory'},
       {t:'change', sub:'interface', tx:'Patch notes no longer jump back to the top on their own when a new version ships — reading position always resumes exactly where you left it, you have to scroll up yourself to discover what\'s new'},
     ] },
-  { v:'V232', d:'06/07/2026 18:07', name:{fr:'Vente intelligente (Équiper > Compendium > Vendre), rappel invité, flash XP, refonte panneau Admin', en:'Smart selling (Equip > Compendium > Sell), guest reminder, XP flash, Admin panel redesign'}, fr:[
+  { v:'V232', d:'08/07/2026 08:17', name:{fr:'Vente intelligente (Équiper > Compendium > Vendre), rappel invité, flash XP, refonte panneau Admin', en:'Smart selling (Equip > Compendium > Sell), guest reminder, XP flash, Admin panel redesign'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Vendre un objet vérifie désormais dans l\'ordre : 1) s\'il est meilleur que ce qui est déjà équipé sur son emplacement, il est équipé au lieu d\'être vendu ; 2) sinon, s\'il doit rejoindre ou remplacer un exemplaire moins enchanté dans le sac protégé du Compendium, il y est déplacé au lieu d\'être vendu ; 3) seulement si aucun des deux cas ne s\'applique, il est réellement vendu. S\'applique quelle que soit l\'origine de la vente'},
       {t:'new', sub:'compte', tx:'Un joueur en mode invité reçoit désormais une notification lui rappelant que sa progression n\'est sauvegardée que sur cet appareil et l\'invitant à créer un compte (progression conservée) ou à se reconnecter à un compte existant'},
       {t:'new', sub:'interface', tx:'Le niveau et la barre d\'XP s\'illuminent brièvement à chaque gain d\'expérience'},
@@ -1314,22 +1353,22 @@ const PATCH_NOTES = [
       {t:'change', sub:'admin', tx:'The Admin panel is now organized into tabs: Me, Specific player (now includes role management), Server, Stats'},
       {t:'fix', sub:'admin', tx:'The "Unlock all achievements" test button wasn\'t logging the silver gained to the ledger (see V231) — fixed'},
     ] },
-  { v:'V231', d:'06/07/2026 17:36', name:{fr:'Registre de silver détaillé (panneau Admin)', en:'Detailed silver ledger (Admin panel)'}, fr:[
+  { v:'V231', d:'08/07/2026 08:17', name:{fr:'Registre de silver détaillé (panneau Admin)', en:'Detailed silver ledger (Admin panel)'}, fr:[
       {t:'admin', tx:'L\'onglet Admin "Silver" affiche désormais un vrai registre : tableau par catégorie (loot, potions, ventes, quêtes, succès, marché...) avec gagné/dépensé/nombre de mouvements, et un graphique du flux net par heure sur 48h. Toute variation de silver passe désormais par un point d\'entrée unique côté client, journalisé individuellement ; les mouvements du Marché (achat/vente/remboursement, gérés côté serveur) sont journalisés directement en base'},
     ], en:[
       {t:'admin', tx:'The Admin "Silver" tab now shows a real ledger: a per-category table (loot, potions, sales, quests, achievements, market...) with gained/spent/transaction count, and an hourly net-flow graph over 48h. Every silver change now goes through a single client-side entry point, individually logged; Market movements (buy/sell/refund, server-side) are logged directly in the database'},
     ] },
-  { v:'V230', d:'06/07/2026 17:16', name:{fr:'La protection Pierre de Cron est désormais désactivée par défaut', en:'Cron Stone protection is now disabled by default'}, fr:[
+  { v:'V230', d:'08/07/2026 08:17', name:{fr:'La protection Pierre de Cron est désormais désactivée par défaut', en:'Cron Stone protection is now disabled by default'}, fr:[
       {t:'change', sub:'systeme', tx:'L\'utilisation automatique des Pierres de Cron (protection contre une rétrogradation) est désormais désactivée par défaut sur un nouveau compte — active-la toi-même en cliquant sur la case Pierre de Cron du panneau Optimisation si tu la veux'},
     ], en:[
       {t:'change', sub:'systeme', tx:'Automatic use of Cron Stones (protection against downgrading) is now disabled by default on a new account — enable it yourself by clicking the Cron Stone slot in the Enhancement panel if you want it'},
     ] },
-  { v:'V229', d:'06/07/2026 17:08', name:{fr:'Fix probable de l\'erreur 404 après inscription par email', en:'Likely fix for the 404 error after email signup'}, fr:[
+  { v:'V229', d:'08/07/2026 08:17', name:{fr:'Fix probable de l\'erreur 404 après inscription par email', en:'Likely fix for the 404 error after email signup'}, fr:[
       {t:'fix', sub:'authentification', severity:'major', tx:'La création de compte par email (et la liaison d\'un compte invité à un email) n\'indiquait jamais explicitement où revenir après confirmation — contrairement à la connexion Discord et à la réinitialisation de mot de passe, qui le faisaient déjà. Le lien de confirmation retombait donc sur l\'adresse par défaut configurée côté serveur au lieu de la page réellement visitée, ce qui pouvait mener à une page inexistante (404) après inscription. Corrigé : le lien de confirmation ramène désormais toujours vers la page d\'où l\'inscription a été lancée'},
     ], en:[
       {t:'fix', sub:'authentification', severity:'major', tx:'Email account creation (and linking a guest account to an email) never explicitly stated where to return after confirmation — unlike Discord sign-in and password reset, which already did. The confirmation link therefore fell back to the server-side default address instead of the page actually visited, which could lead to a non-existent page (404) after signing up. Fixed: the confirmation link now always leads back to the page signup was started from'},
     ] },
-  { v:'V228', d:'06/07/2026 16:12', name:{fr:'Rétroactivité du stuff déjà possédé, fix couleur bijou (loot table), trésor à 0.22%', en:'Retroactivity for already-owned gear, jewelry color fix (loot table), treasure at 0.22%'}, fr:[
+  { v:'V228', d:'08/07/2026 08:17', name:{fr:'Rétroactivité du stuff déjà possédé, fix couleur bijou (loot table), trésor à 0.22%', en:'Retroactivity for already-owned gear, jewelry color fix (loot table), treasure at 0.22%'}, fr:[
       {t:'fix', sub:'objets', severity:'major', tx:'Les stats de base et le prix de revente d\'une pièce d\'équipement/bijou étaient figés dès son drop, jamais mis à jour automatiquement — le passage aux stats fixes (V226) et à la revente réduite (V225) ne s\'appliquait donc qu\'aux nouveaux drops. Tout le stuff déjà possédé (équipé, dans le sac, ou dans le sac protégé) est désormais recalculé automatiquement avec les mêmes formules, sans toucher à l\'enchantement déjà investi'},
       {t:'fix', sub:'interface', tx:'Dans la table de loot d\'une zone, la ligne du bijou (dépliée) restait sans couleur de palier — corrigé, elle reprend maintenant la couleur comme le reste des lignes'},
       {t:'change', sub:'loot', tx:'Chance du "Bout du trésor de Velia" ajustée à 0.22% (était 0.33%)'},
@@ -1338,19 +1377,19 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', tx:'In a zone\'s loot table, the jewelry row (expanded view) stayed without a tier color — fixed, it now matches the rest of the rows'},
       {t:'change', sub:'loot', tx:'"Bout du trésor de Velia" chance adjusted to 0.22% (was 0.33%)'},
     ] },
-  { v:'V227', d:'06/07/2026 15:59', name:{fr:'Bandeau "en construction" sur l\'onglet Recommandations', en:'"Under construction" banner on the Recommendations tab'}, fr:[
+  { v:'V227', d:'08/07/2026 08:17', name:{fr:'Bandeau "en construction" sur l\'onglet Recommandations', en:'"Under construction" banner on the Recommendations tab'}, fr:[
       {t:'new', sub:'interface', tx:'L\'onglet "Recommandations" de la carte Statistiques affiche désormais un bandeau "en construction" — les calculs et la présentation sont encore amenés à évoluer'},
     ], en:[
       {t:'new', sub:'interface', tx:'The "Recommendations" tab of the Stats card now shows an "under construction" banner — calculations and presentation are still subject to change'},
     ] },
-  { v:'V226', d:'06/07/2026 15:46', name:{fr:'Stats d\'équipement fixes (fini l\'aléatoire), tie-break "Équiper meilleur"', en:'Fixed gear stats (no more randomness), "Equip best" tie-break'}, fr:[
+  { v:'V226', d:'08/07/2026 08:17', name:{fr:'Stats d\'équipement fixes (fini l\'aléatoire), tie-break "Équiper meilleur"', en:'Fixed gear stats (no more randomness), "Equip best" tie-break'}, fr:[
       {t:'change', sub:'objets', severity:'major', tx:'Les objets équipables (armure, armes) donnaient des stats avec ±15% d\'aléatoire au drop — 2 exemplaires du même palier/slot/zone pouvaient différer sans raison. Ils donnent désormais des stats FIXES, toujours identiques ; seul l\'enchantement fait ensuite varier la puissance réelle'},
       {t:'fix', sub:'objets', tx:'"Équiper le meilleur" : quand 2 pièces ont exactement le même socle (stats de base), la plus enchantée l\'emporte désormais toujours — avant, le choix pouvait tomber sur un jumeau moins monté simplement parce qu\'il était rencontré en premier dans le sac'},
     ], en:[
       {t:'change', sub:'objets', severity:'major', tx:'Equipable items (armor, weapons) rolled stats with ±15% randomness on drop — 2 copies of the same tier/slot/zone could differ for no reason. They now give FIXED stats, always identical; only enhancement makes actual power vary afterward'},
       {t:'fix', sub:'objets', tx:'"Equip best": when 2 pieces have the exact same base stats, the more enhanced one now always wins — before, the pick could land on a less-enhanced twin simply because it was encountered first in the bag'},
     ] },
-  { v:'V225', d:'06/07/2026 15:38', name:{fr:'Le trash redevient la vraie source de revenu, bijoux dans le sac colorés', en:'Trash becomes the real income source again, jewelry in bag now colored'}, fr:[
+  { v:'V225', d:'08/07/2026 08:17', name:{fr:'Le trash redevient la vraie source de revenu, bijoux dans le sac colorés', en:'Trash becomes the real income source again, jewelry in bag now colored'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le silver/h "théorique" d\'une zone (voir onglet Recommandations) ne compte plus que le trash au sol — matériaux et bijoux sont des objets de PROGRESSION, pas une source de revenu régulière'},
       {t:'change', sub:'economie', severity:'major', tx:'Prix de revente du gear et des bijoux looté fortement réduit : un bijou valait jusqu\'à ~290× le trash de sa propre zone (35 000 silver contre 120), une pièce d\'armure jusqu\'à ~78×. Désormais ~20× pour un bijou et nettement moins pour le gear — un vrai bonus au drop, sans éclipser le farm de trash comme revenu principal'},
       {t:'change', sub:'interface', tx:'Les bijoux dans le sac principal ont désormais leur case bordée de la couleur de leur palier, comme le reste de l\'équipement'},
@@ -1359,41 +1398,41 @@ const PATCH_NOTES = [
       {t:'change', sub:'economie', severity:'major', tx:'Resell price of looted gear and jewelry heavily reduced: a jewel used to be worth up to ~290× its own zone\'s trash (35,000 silver vs 120), an armor piece up to ~78×. Now ~20× for a jewel and notably less for gear — still a real bonus on drop, without eclipsing trash farming as the main income'},
       {t:'change', sub:'interface', tx:'Jewelry in the main bag now has its cell bordered with its tier color, like the rest of the gear'},
     ] },
-  { v:'V224', d:'06/07/2026 15:29', name:{fr:'Tutoriel au premier ramassage d\'une Pierre de Cron', en:'Tutorial on first Cron Stone pickup'}, fr:[
+  { v:'V224', d:'08/07/2026 08:17', name:{fr:'Tutoriel au premier ramassage d\'une Pierre de Cron', en:'Tutorial on first Cron Stone pickup'}, fr:[
       {t:'new', sub:'interface', tx:'Un petit tutoriel se lance automatiquement la toute première fois que tu ramasses une Pierre de Cron : explique qu\'elle protège ta pièce d\'équipement contre une rétrogradation, et qu\'elle s\'active/désactive en cliquant dessus'},
     ], en:[
       {t:'new', sub:'interface', tx:'A small tutorial now triggers automatically the very first time you pick up a Cron Stone: explains that it protects your gear piece from downgrading, and that it toggles on/off by clicking it'},
     ] },
-  { v:'V223', d:'06/07/2026 15:24', name:{fr:'Carte Statistiques en onglets, menu d\'optimisation simplifié', en:'Tabbed Stats card, simplified enhancement menu'}, fr:[
+  { v:'V223', d:'08/07/2026 08:17', name:{fr:'Carte Statistiques en onglets, menu d\'optimisation simplifié', en:'Tabbed Stats card, simplified enhancement menu'}, fr:[
       {t:'new', sub:'interface', tx:'La carte Statistiques se divise désormais en 2 onglets : "Perso" (contenu inchangé) et "Recommandations" (nouveau) — ce dernier affiche la meilleure zone théorique pour le silver/h, le XP/h et les kills/min, chacune cliquable pour s\'y rendre directement'},
       {t:'change', sub:'interface', tx:'Le menu déroulant d\'optimisation n\'affiche plus qu\'une seule statistique par palier (la principale de la pièce : PA pour arme/éveil/dague, PD pour casque/armure/gants/bottes) au lieu de cumuler PD+PV+Esquive sur la même ligne — le détail complet reste visible juste en dessous du menu'},
     ], en:[
       {t:'new', sub:'interface', tx:'The Stats card now splits into 2 tabs: "Personal" (unchanged content) and "Recommendations" (new) — the latter shows the best theoretical zone for silver/h, XP/h and kills/min, each clickable to travel there directly'},
       {t:'change', sub:'interface', tx:'The enhancement dropdown now only shows one stat per level (the piece\'s main one: AP for weapon/awakening/dagger, DP for helmet/armor/gloves/boots) instead of stacking DP+HP+Dodge on the same line — the full detail is still visible right below the menu'},
     ] },
-  { v:'V222', d:'06/07/2026 15:09', name:{fr:'Prix des potions adouci (racine carrée au lieu du ratio linéaire)', en:'Potion prices softened (square root instead of linear ratio)'}, fr:[
+  { v:'V222', d:'08/07/2026 08:17', name:{fr:'Prix des potions adouci (racine carrée au lieu du ratio linéaire)', en:'Potion prices softened (square root instead of linear ratio)'}, fr:[
       {t:'change', sub:'economie', severity:'major', tx:'Le prix des potions reste lié au revenu de la zone (toujours plus cher en zone difficile) mais beaucoup plus doux : la mise à l\'échelle passait de manière linéaire (jusqu\'à ×135 en zone 11), elle suit désormais une racine carrée (×~11.6 en zone 11) — le ratio linéaire supposait un revenu "idéal" qui ne tenait pas dès qu\'on est un peu sous-géré pour sa zone (plus de dégâts encaissés, donc plus de potions, sans le revenu supposé pour les payer)'},
     ], en:[
       {t:'change', sub:'economie', severity:'major', tx:'Potion prices stay tied to the zone\'s income (still pricier in harder zones) but much gentler: scaling used to be linear (up to ×135 in zone 11), it now follows a square root (×~11.6 in zone 11) — the linear ratio assumed an "ideal" income that didn\'t hold once you\'re a bit under-geared for your zone (more damage taken, so more potions, without the assumed income to pay for them)'},
     ] },
-  { v:'V221', d:'06/07/2026 15:02', name:{fr:'Sac protégé : garde le PLUS enchanté (pas le +0), niveau visible partout', en:'Protected bag: keeps the MOST enhanced copy (not +0), level now visible everywhere'}, fr:[
+  { v:'V221', d:'08/07/2026 08:17', name:{fr:'Sac protégé : garde le PLUS enchanté (pas le +0), niveau visible partout', en:'Protected bag: keeps the MOST enhanced copy (not +0), level now visible everywhere'}, fr:[
       {t:'change', sub:'objets', tx:'Le sac protégé du Compendium garde désormais le PLUS ENCHANTÉ des exemplaires possédés d\'un type jamais monté en PEN, plutôt qu\'un simple +0 — un exemplaire plus enchanté trouvé dans le sac prend automatiquement sa place (l\'ancien, souvent un +0, revient dans le sac principal, jamais perdu)'},
       {t:'new', sub:'interface', tx:'Le niveau d\'enchantement (+1 à PEN) est désormais visible directement sur les cases du sac principal ET du sac protégé du Compendium, comme sur la poupée d\'équipement'},
     ], en:[
       {t:'change', sub:'objets', tx:'The Compendium\'s protected bag now keeps the MOST ENHANCED copy owned of a type never brought to PEN, rather than a plain +0 — a more enhanced copy found in the bag automatically takes its place (the old one, often a +0, goes back to the main bag, never lost)'},
       {t:'new', sub:'interface', tx:'The enhancement level (+1 to PEN) is now visible directly on cells in the main bag AND the Compendium\'s protected bag, just like on the equipment doll'},
     ] },
-  { v:'V220', d:'06/07/2026 14:33', name:{fr:'Sac protégé Compendium : remplacement auto après une vente', en:'Compendium protected bag: auto-replacement after a sale'}, fr:[
+  { v:'V220', d:'08/07/2026 08:17', name:{fr:'Sac protégé Compendium : remplacement auto après une vente', en:'Compendium protected bag: auto-replacement after a sale'}, fr:[
       {t:'new', sub:'objets', tx:'Vendre individuellement ("Vendre 1") ta dernière copie d\'une pièce jamais montée en PEN ne la perd plus totalement : si une autre copie du même type traîne dans le sac, elle prend automatiquement sa place dans le sac protégé du Compendium — priorité à un exemplaire +0 (moins coûteux à immobiliser), sinon le premier exemplaire enchanté trouvé'},
     ], en:[
       {t:'new', sub:'objets', tx:'Selling your last copy of a piece never brought to PEN ("Sell 1") no longer loses it for good: if another copy of the same type is sitting in your bag, it automatically takes its place in the Compendium\'s protected bag — priority to a +0 copy (cheaper to set aside), otherwise the first enhanced copy found'},
     ] },
-  { v:'V219', d:'06/07/2026 13:44', name:{fr:'Fix : plus d\'auto-potion payante à Velia (zone paisible)', en:'Fix: no more paid auto-potion in Velia (peaceful zone)'}, fr:[
+  { v:'V219', d:'08/07/2026 08:17', name:{fr:'Fix : plus d\'auto-potion payante à Velia (zone paisible)', en:'Fix: no more paid auto-potion in Velia (peaceful zone)'}, fr:[
       {t:'fix', sub:'economie', severity:'major', tx:'Une potion de vie ou de mana payante pouvait s\'auto-boire à Velia (zone paisible, aucun monstre) — typiquement juste après une mort, qui remet les PV à pile 50% (le seuil par défaut). Le silver était dépensé pour rien puisqu\'aucun combat ne s\'y déroule. Les auto-potions ne se déclenchent plus tant qu\'on est à Velia (la régénération passive de mana continue normalement)'},
     ], en:[
       {t:'fix', sub:'economie', severity:'major', tx:'A paid HP or mana potion could auto-trigger while in Velia (peaceful zone, no monsters) — typically right after a death, which resets HP to exactly 50% (the default threshold). Silver was spent for nothing since no combat happens there. Auto-potions no longer trigger while in Velia (passive mana regen still works normally)'},
     ] },
-  { v:'V218', d:'06/07/2026 13:26', name:{fr:'Halo sur "Équiper meilleur", icône ⬆️ sur les zones et cases vides', en:'Highlight on "Equip best", ⬆️ icon on zones and empty slots'}, fr:[
+  { v:'V218', d:'08/07/2026 08:17', name:{fr:'Halo sur "Équiper meilleur", icône ⬆️ sur les zones et cases vides', en:'Highlight on "Equip best", ⬆️ icon on zones and empty slots'}, fr:[
       {t:'new', sub:'interface', tx:'Le bouton "⚡ Équiper meilleur" se met en évidence (pulsation dorée) dès qu\'un objet du sac est resté plus de 15 secondes sans être équipé alors qu\'il est réellement meilleur que la pièce actuelle — pour ne plus oublier un upgrade qui traîne'},
       {t:'new', sub:'interface', tx:'Icône ⬆️ ajoutée directement sur les lignes de la liste de zones (entre le PA/PD requis et le nombre de joueurs) : indique qu\'un meilleur socle t\'attend dans cette zone, tous équipements confondus'},
       {t:'change', sub:'interface', tx:'Les cases d\'équipement vides affichent désormais la même icône ⬆️ que les cases remplies (au lieu d\'un pin 📍 séparé) — un socle vide est par définition à améliorer, langage visuel unifié'},
@@ -1402,17 +1441,17 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'⬆️ icon added directly on zone list rows (between required AP/DP and the player count): signals that a better piece awaits in that zone, across all gear slots'},
       {t:'change', sub:'interface', tx:'Empty equipment slots now show the same ⬆️ icon as filled ones (instead of a separate 📍 pin) — an empty slot is by definition something to upgrade, unified visual language'},
     ] },
-  { v:'V217', d:'06/07/2026 13:14', name:{fr:'Fix icône ⬆️ : n\'apparaît que s\'il existe vraiment un meilleur stuff', en:'Fix ⬆️ icon: only shows when actually better gear exists'}, fr:[
+  { v:'V217', d:'08/07/2026 08:17', name:{fr:'Fix icône ⬆️ : n\'apparaît que s\'il existe vraiment un meilleur stuff', en:'Fix ⬆️ icon: only shows when actually better gear exists'}, fr:[
       {t:'fix', sub:'interface', tx:'L\'icône ⬆️ pouvait s\'afficher même quand la pièce déjà équipée était du même palier (ou mieux) que la zone actuelle, donc sans rien de mieux à trouver. Elle ne s\'affiche désormais que si la pièce équipée est d\'un palier strictement inférieur à celui de la zone actuelle ET qu\'une zone sûre différente propose ce palier supérieur'},
     ], en:[
       {t:'fix', sub:'interface', tx:'The ⬆️ icon could show up even when the already-equipped piece was the same tier (or better) as the current zone, so there was nothing better to find. It now only shows if the equipped piece is a strictly lower tier than the current zone AND a different safe zone offers that higher tier'},
     ] },
-  { v:'V216', d:'06/07/2026 13:08', name:{fr:'Fix icône ⬆️ : plus affichée si on est déjà dans l\'unique zone proposée', en:'Fix ⬆️ icon: no longer shown if already in the only proposed zone'}, fr:[
+  { v:'V216', d:'08/07/2026 08:17', name:{fr:'Fix icône ⬆️ : plus affichée si on est déjà dans l\'unique zone proposée', en:'Fix ⬆️ icon: no longer shown if already in the only proposed zone'}, fr:[
       {t:'fix', sub:'interface', tx:'L\'icône ⬆️ (zone pour améliorer) restait affichée même quand la seule zone sûre proposée était celle où le joueur se trouvait déjà — inutile de proposer d\'aller là où on est. Elle ne s\'affiche plus dans ce cas'},
     ], en:[
       {t:'fix', sub:'interface', tx:'The ⬆️ (zone to upgrade) icon stayed visible even when the only proposed safe zone was the one the player was already in — no point suggesting a trip there. It no longer shows in that case'},
     ] },
-  { v:'V215', d:'06/07/2026 10:16', name:{fr:'Fix K.O. : les monstres n\'attaquent plus pendant le K.O., croix de déséquipement, cadre des bijoux', en:'K.O. fix: monsters stop attacking during K.O., unequip cross, jewelry frame color'}, fr:[
+  { v:'V215', d:'08/07/2026 08:17', name:{fr:'Fix K.O. : les monstres n\'attaquent plus pendant le K.O., croix de déséquipement, cadre des bijoux', en:'K.O. fix: monsters stop attacking during K.O., unequip cross, jewelry frame color'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'Pendant le K.O. (à 0 PV, avant renvoi en zone paisible), les monstres continuaient de frapper : ça repoussait le décompte à chaque coup et retirait de l\'XP en boucle au lieu d\'une seule fois. Plus aucun monstre n\'attaque tant que tu es K.O.'},
       {t:'change', sub:'systeme', tx:'Si tu changes de zone pendant le K.O., la fin du décompte ne te renvoie plus de force à Velia — tu restes là où tu as choisi d\'aller'},
       {t:'new', sub:'interface', tx:'Croix ✕ en bas à droite de chaque pièce équipée pour la déséquiper en un clic (le double-clic existant fonctionne toujours)'},
@@ -1425,7 +1464,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'The frame of equipped jewelry (rings, necklace, earrings, belt) now takes on their tier color'},
       {t:'change', sub:'interface', tx:'On armor pieces, DP moves to the bottom-left (same spot as AP on other pieces); the AP/DP numbers shown on gear are bigger'},
     ] },
-  { v:'V214', d:'06/07/2026 10:05', name:{fr:'Icônes de case réorganisées, cadenas sur les slots sans source, fix sac', en:'Reorganized slot icons, lock on sourceless slots, bag fix'}, fr:[
+  { v:'V214', d:'08/07/2026 08:17', name:{fr:'Icônes de case réorganisées, cadenas sur les slots sans source, fix sac', en:'Reorganized slot icons, lock on sourceless slots, bag fix'}, fr:[
       {t:'change', sub:'interface', tx:'Coin haut-droit des cases d\'équipement réorganisé : 🔧 (optimiser) en haut, ⬆️/📍/🔒 juste en dessous, plutôt que côte à côte'},
       {t:'change', sub:'interface', tx:'L\'icône ⬆️ (upgrade) d\'une case équipée ne s\'affiche désormais que s\'il existe une zone NON dangereuse où trouver mieux pour ce socle — plus d\'icône pointant vers une zone dangereuse'},
       {t:'new', sub:'interface', tx:'Cadenas 🔒 sur les 2 artéfacts et la pierre d\'équipement : ces 3 socles n\'ont encore aucune source en jeu, le cadenas l\'indique clairement au lieu d\'une case vide muette'},
@@ -1436,7 +1475,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'🔒 lock icon on the 2 artifacts and the equipment stone: these 3 slots have no in-game source yet, the lock makes that clear instead of a silent empty slot'},
       {t:'fix', sub:'inventaire', tx:'In the bag, an item\'s quantity and its displayed DP overlapped (both bottom-right) — quantity moved to top-right, corners now follow the same logic as the equipment doll (equipped top-left, AP bottom-left, DP bottom-right)'},
     ] },
-  { v:'V213', d:'06/07/2026 09:53', name:{fr:'Cases d\'équipement simplifiées : icônes ⬆️/📍 dédiées, clic = infos seulement', en:'Simplified equipment slots: dedicated ⬆️/📍 icons, click = info only'}, fr:[
+  { v:'V213', d:'08/07/2026 08:17', name:{fr:'Cases d\'équipement simplifiées : icônes ⬆️/📍 dédiées, clic = infos seulement', en:'Simplified equipment slots: dedicated ⬆️/📍 icons, click = info only'}, fr:[
       {t:'change', sub:'interface', tx:'Cliquer sur une case équipée n\'affiche plus que le nom et les stats de la pièce ; cliquer sur une case vide n\'affiche plus que le nom du slot et où le farmer (déséquiper reste au double-clic, optimiser reste sur le bouton 🔧)'},
       {t:'new', sub:'interface', tx:'Nouvelle icône ⬆️ en coin sur une case équipée : raccourci direct vers la zone où trouver une meilleure pièce pour ce socle'},
       {t:'new', sub:'interface', tx:'Nouvelle icône 📍 en coin sur une case vide : raccourci direct vers la zone où farmer l\'objet manquant'},
@@ -1445,7 +1484,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'New ⬆️ corner icon on an equipped slot: direct shortcut to the zone where a better piece for that slot can be found'},
       {t:'new', sub:'interface', tx:'New 📍 corner icon on an empty slot: direct shortcut to the zone where the missing item can be farmed'},
     ] },
-  { v:'V212', d:'06/07/2026 09:44', name:{fr:'Mode auto "jusqu\'au prochain gain", prix des potions par zone, trésor à 0.33%', en:'"Until next gain" auto mode, per-zone potion prices, treasure at 0.33%'}, fr:[
+  { v:'V212', d:'08/07/2026 08:17', name:{fr:'Mode auto "jusqu\'au prochain gain", prix des potions par zone, trésor à 0.33%', en:'"Until next gain" auto mode, per-zone potion prices, treasure at 0.33%'}, fr:[
       {t:'change', sub:'loot', tx:'Chance du "Bout du trésor de Velia" ajustée à 0.33% (au lieu de 0.5%)'},
       {t:'new', sub:'optimisation', tx:'Nouveau mode d\'auto-optimisation : "Jusqu\'au prochain gain de PA/PD" — s\'arrête automatiquement dès que le PA ou le PD affiché de la pièce augmente réellement, sans avoir à deviner à quel palier précis ça se produit (voir le fix du menu déroulant de la mise à jour précédente)'},
       {t:'change', sub:'economie', severity:'major', tx:'Le prix des potions (vie et mana) suit désormais le revenu de base de la zone actuelle au lieu d\'être fixe partout — les prix affichés/débités restent calibrés sur Camp des Loups en tout début de jeu, puis augmentent avec la zone pour rester un coût cohérent avec le loot d\'or gagné là où on farme'},
@@ -1454,12 +1493,12 @@ const PATCH_NOTES = [
       {t:'new', sub:'optimisation', tx:'New auto-enhance mode: "Until the next AP/DP gain" — automatically stops as soon as the piece\'s displayed AP or DP actually increases, no more guessing which exact level that happens at (see the dropdown fix from the previous update)'},
       {t:'change', sub:'economie', severity:'major', tx:'Potion prices (HP and mana) now follow the current zone\'s base income instead of being flat everywhere — displayed/charged prices stay calibrated on Camp des Loups at the very start, then rise with the zone to remain a cost consistent with the gold looted where you\'re farming'},
     ] },
-  { v:'V211', d:'06/07/2026 08:50', name:{fr:'Fix menu d\'optimisation : le gain de PA ne se répète plus sur plusieurs paliers', en:'Fix enhancement menu: the AP gain no longer repeats across several levels'}, fr:[
+  { v:'V211', d:'08/07/2026 08:17', name:{fr:'Fix menu d\'optimisation : le gain de PA ne se répète plus sur plusieurs paliers', en:'Fix enhancement menu: the AP gain no longer repeats across several levels'}, fr:[
       {t:'fix', sub:'interface', tx:'Depuis le passage à l\'arrondi vers le bas (voir mise à jour précédente), le menu déroulant d\'optimisation pouvait afficher "(+1 PA)" identique sur 7 paliers d\'affilée (la fraction accumulée n\'avait pas encore franchi le point suivant) — donnait l\'impression d\'un gain figé. Le gain ne s\'affiche désormais qu\'au palier où il change réellement : "+1 PA" apparaît une seule fois, puis rien jusqu\'à "+2 PA" au prochain vrai palier'},
     ], en:[
       {t:'fix', sub:'interface', tx:'Since switching to round-down (see previous update), the enhancement dropdown could show the identical "(+1 AP)" across 7 levels in a row (the accumulated fraction hadn\'t crossed the next point yet) — looked like a frozen/stuck gain. The gain now only shows on the level where it actually changes: "+1 AP" appears once, then nothing until "+2 AP" at the next real milestone'},
     ] },
-  { v:'V210', d:'06/07/2026 08:40', name:{fr:'PA/PD sans virgule, zone dangereuse = mort garantie en 100% des cas', en:'AP/DP without decimals, dangerous zone = guaranteed death 100% of the time'}, fr:[
+  { v:'V210', d:'08/07/2026 08:17', name:{fr:'PA/PD sans virgule, zone dangereuse = mort garantie en 100% des cas', en:'AP/DP without decimals, dangerous zone = guaranteed death 100% of the time'}, fr:[
       {t:'change', sub:'interface', tx:'Le PA/PD effectif affiché (stats, résumé équipement, menu d\'optimisation) est désormais un nombre entier, arrondi vers le BAS — jamais de virgule, et jamais plus que ce qui est réellement acquis'},
       {t:'change', sub:'combat', severity:'major', tx:'Zone DANGEREUSE : la mort est maintenant garantie à 100% dès le premier coup qui touche (plus de dégât insuffisant possible), l\'esquive automatique et la téléportation défensive sont désactivées, et TOUS les packs à moins de 400 unités s\'activent d\'un coup (pas seulement celui visé) — le badge représente désormais un risque de mort certaine et immédiate, pas probable'},
       {t:'new', sub:'systeme', tx:'5 tests de régression ajoutés pour ces 2 points (mort garantie sur 20 essais même avec un dégât brut quasi nul, aggro à distance, absence de décimale dans l\'affichage PA/PD)'},
@@ -1468,14 +1507,14 @@ const PATCH_NOTES = [
       {t:'change', sub:'combat', severity:'major', tx:'DANGEROUS zone: death is now guaranteed 100% of the time on the very first hit that lands (no more insufficient-damage rolls), automatic dodge and the defensive teleport are disabled, and ALL packs within 400 units activate at once (not just the targeted one) — the badge now represents a certain, immediate death risk, not just a probable one'},
       {t:'new', sub:'systeme', tx:'5 regression tests added for these 2 points (guaranteed death over 20 trials even with near-zero raw mob damage, ranged aggro, no decimals in AP/DP display)'},
     ] },
-  { v:'V209', d:'06/07/2026 08:20', name:{fr:'Le personnage change d\'apparence selon le stuff, potion vie+mana fusionnée', en:'Character appearance changes with gear, merged HP+mana potion'}, fr:[
+  { v:'V209', d:'08/07/2026 08:17', name:{fr:'Le personnage change d\'apparence selon le stuff, potion vie+mana fusionnée', en:'Character appearance changes with gear, merged HP+mana potion'}, fr:[
       {t:'new', sub:'graphismes', tx:'L\'apparence du personnage (robe, chapeau, bâton) change désormais selon la couleur du meilleur palier de stuff équipé (arme ou armure) : gris/blanc restent sobres, vert et bleu ajoutent des cornes au chapeau, le palier bleu ajoute une cape. Si une pièce d\'éveil est équipée, 2 orbes flottent en orbite autour du personnage'},
       {t:'change', sub:'interface', tx:'Les 2 cases séparées de potion (vie / mana) sont fusionnées en une seule icône (fioles entrelacées) — un clic ouvre désormais un panneau unique listant les tailles de potion de vie ET les infos de la potion de mana, au lieu de 2 emplacements distincts'},
     ], en:[
       {t:'new', sub:'graphismes', tx:'The character\'s appearance (robe, hat, staff) now changes based on the color of the best equipped gear tier (weapon or armor): grey/white stay plain, green and blue add horns to the hat, blue adds a cape. If an awakening piece is equipped, 2 orbs float in orbit around the character'},
       {t:'change', sub:'interface', tx:'The 2 separate potion slots (HP / mana) are merged into a single icon (intertwined vials) — one click now opens a single panel listing HP potion sizes AND mana potion info, instead of 2 separate slots'},
     ] },
-  { v:'V208', d:'06/07/2026 07:48', name:{fr:'PA des bijoux recalculé, stuff de Camp des Loups vraiment utile', en:'Jewelry AP recalculated, Wolf Camp gear actually useful'}, fr:[
+  { v:'V208', d:'08/07/2026 08:17', name:{fr:'PA des bijoux recalculé, stuff de Camp des Loups vraiment utile', en:'Jewelry AP recalculated, Wolf Camp gear actually useful'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Les PA donnés par un bijou (bague/collier/boucle/ceinture) étaient une valeur figée par zone, jamais recalculée depuis les rééquilibrages précédents — complètement désynchronisée du reste du stuff. Recalculés dynamiquement comme tout le reste (rétroactif sur les bijoux déjà en sac/équipés)'},
       {t:'change', sub:'equipements', tx:'Camp des Loups (1ère zone) : le stuff qu\'on y loot (casque, Bâton Naru, bagues) est désormais calibré sur la zone SUIVANTE plutôt que sur sa propre difficulté (volontairement basse pour rester jouable sans arme) — un casque+arme+2 bagues correctement enchantés (+12) donnaient 8.5 PA effectif (ZONE DANGEREUSE face à la zone suivante) ; ils en donnent maintenant 13 (ZONE DIFFICILE, plus DANGEREUSE)'},
       {t:'new', sub:'systeme', tx:'2 tests de régression ajoutés pour ce cas précis (AP des bijoux jamais figé à 0, stuff réaliste de Camp des Loups atteint la difficulté attendue face à la zone suivante)'},
@@ -1484,12 +1523,12 @@ const PATCH_NOTES = [
       {t:'change', sub:'equipements', tx:'Camp des Loups (1st zone): the gear looted there (helmet, Naru Staff, rings) is now calibrated against the NEXT zone rather than its own difficulty (deliberately low to stay playable weaponless) — a properly enhanced (+12) helmet+weapon+2 rings gave 8.5 effective AP (DANGEROUS ZONE against the next zone); they now give 13 (HARD ZONE, no longer dangerous)'},
       {t:'new', sub:'systeme', tx:'2 regression tests added for this exact case (jewelry AP never frozen at 0, a realistic Camp des Loups loadout reaches the expected difficulty against the next zone)'},
     ] },
-  { v:'V207', d:'06/07/2026 07:08', name:{fr:'Suite de tests de régression (coulisses)', en:'Regression test suite (behind the scenes)'}, fr:[
+  { v:'V207', d:'08/07/2026 08:17', name:{fr:'Suite de tests de régression (coulisses)', en:'Regression test suite (behind the scenes)'}, fr:[
       {t:'new', sub:'systeme', tx:'Ajout d\'une suite de tests de régression pour la progression PA/PD (monotonie des zones, ratios de transition de palier, génération des icônes, plafond de dégâts) — purement un outil de développement, invisible en jeu, sert à repérer automatiquement ce genre de régression avant qu\'un joueur ne la remarque (comme le fix de Camp Rhutum plus tôt aujourd\'hui)'},
     ], en:[
       {t:'new', sub:'systeme', tx:'Added a regression test suite for AP/DP progression (zone monotonicity, tier-transition ratios, icon generation, damage cap) — a pure development tool, invisible in-game, meant to catch this kind of regression automatically before a player notices it (like the Camp Rhutum fix earlier today)'},
     ] },
-  { v:'V206', d:'06/07/2026 06:53', name:{fr:'Zone dangereuse = vrai risque de one-shot, ceinture redessinée, bijoux recolorés', en:'Dangerous zone = real one-shot risk, redesigned belt, recolored jewelry'}, fr:[
+  { v:'V206', d:'08/07/2026 08:17', name:{fr:'Zone dangereuse = vrai risque de one-shot, ceinture redessinée, bijoux recolorés', en:'Dangerous zone = real one-shot risk, redesigned belt, recolored jewelry'}, fr:[
       {t:'change', sub:'combat', severity:'major', tx:'Marche arrière sur le plafond de dégâts ajouté plus tôt aujourd\'hui : en ZONE DANGEREUSE spécifiquement, les monstres peuvent de nouveau te tuer d\'un seul coup si le stuff est très en dessous du seuil — c\'est le vrai risque que ce badge doit représenter. Les autres zones (DIFFICILE et mieux) gardent le plafond de 30% des PV max cumulé sur 1s, pour ne jamais surprendre avec une mort instantanée quand le stuff n\'est QUE légèrement insuffisant'},
       {t:'new', sub:'graphismes', tx:'Nouvelle icône de ceinture dans le même style que le reste du set (sangle teintée par palier, boucle au contour coloré, rivets/gemmes de rareté)'},
       {t:'change', sub:'graphismes', tx:'Le contour des bagues, colliers et boucles d\'oreille reprend maintenant la couleur du palier (vert/bleu) au lieu d\'un contour sombre neutre'},
@@ -1498,19 +1537,19 @@ const PATCH_NOTES = [
       {t:'new', sub:'graphismes', tx:'New belt icon matching the rest of the set\'s style (tier-tinted strap, colored buckle outline, rarity rivets/gems)'},
       {t:'change', sub:'graphismes', tx:'Rings, necklaces, and earrings now show their tier color (green/blue) on their outline instead of a neutral dark outline'},
     ] },
-  { v:'V205', d:'06/07/2026 06:41', name:{fr:'Fix one-shot en zone dangereuse, Bâton Naru exclusif à Camp des Loups', en:'Fix dangerous-zone one-shots, Naru Staff exclusive to Wolf Camp'}, fr:[
+  { v:'V205', d:'08/07/2026 08:17', name:{fr:'Fix one-shot en zone dangereuse, Bâton Naru exclusif à Camp des Loups', en:'Fix dangerous-zone one-shots, Naru Staff exclusive to Wolf Camp'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'En zone dangereuse, plusieurs loups d\'un même pack (ou de plusieurs packs agressifs à la fois) pouvaient chacun toucher au même instant : chaque coup individuel restait plafonné à 30% des PV max, mais l\'ensemble s\'additionnait en une fraction de seconde et équivalait à un one-shot. Le plafond de 30% s\'applique désormais aux dégâts TOTAUX encaissés sur 1 seconde glissante, plus par coup isolé'},
       {t:'change', sub:'equipements', tx:'Le Bâton Naru (arme de départ du palier gris) se loot désormais exclusivement à Camp des Loups (1ère zone du jeu) au lieu de Ruines de Protty — cohérent avec le spawn sans arme : la toute première zone donne directement de quoi se défendre'},
     ], en:[
       {t:'fix', sub:'combat', severity:'major', tx:'In dangerous zones, several wolves from the same pack (or from multiple aggressive packs at once) could each land a hit at the same instant: each individual hit stayed capped at 30% max HP, but they added up within a fraction of a second into an effective one-shot. The 30% cap now applies to TOTAL damage taken over a rolling 1-second window, not per isolated hit'},
       {t:'change', sub:'equipements', tx:'The Naru Staff (Grey tier\'s starting weapon) now drops exclusively from Camp des Loups (the game\'s very first zone) instead of Ruines de Protty — consistent with the weaponless spawn: the very first zone directly gives you something to defend yourself with'},
     ] },
-  { v:'V204', d:'06/07/2026 06:34', name:{fr:'Fix : la PD de Camp Rhutum retombait sous la zone précédente', en:'Fix: Camp Rhutum\'s DP dropped below the previous zone'}, fr:[
+  { v:'V204', d:'08/07/2026 08:17', name:{fr:'Fix : la PD de Camp Rhutum retombait sous la zone précédente', en:'Fix: Camp Rhutum\'s DP dropped below the previous zone'}, fr:[
       {t:'fix', sub:'zones', tx:'La PD requise de Camp Rhutum (1ère zone du palier Blanc) était passée à 20, sous les 23 PD de la zone précédente — une régression introduite par le rééquilibrage de la mise à jour précédente. Corrigée (24 PD), avec les zones suivantes du palier (Ferme Shultz, Colonie Sausan, Île d\'Iliya) réajustées en proportion'},
     ], en:[
       {t:'fix', sub:'zones', tx:'Camp Rhutum\'s (first White tier zone) required DP had dropped to 20, below the previous zone\'s 23 DP — a regression introduced by the previous update\'s rebalance. Fixed (24 DP), with the tier\'s following zones (Ferme Shultz, Colonie Sausan, Île d\'Iliya) adjusted proportionally'},
     ] },
-  { v:'V203', d:'06/07/2026 06:29', name:{fr:'Plafond de stuff rehaussé à 320 PA, transitions de palier plus dures', en:'Gear ceiling raised to 320 AP, harder tier transitions'}, fr:[
+  { v:'V203', d:'08/07/2026 08:17', name:{fr:'Plafond de stuff rehaussé à 320 PA, transitions de palier plus dures', en:'Gear ceiling raised to 320 AP, harder tier transitions'}, fr:[
       {t:'change', sub:'zones', severity:'major', tx:'Le plafond de PA requis en fin de jeu (Forêt de Polly) passe de 145 à 320 (PD : 156 → 175). Les paliers Blanc/Vert/Bleu sont recalibrés pour qu\'un stuff complet du palier précédent, poussé en moyenne à PRI, retrouve son rôle de vrai jalon de progression pour passer au palier suivant'},
       {t:'change', sub:'zones', tx:'Chaque transition vers un nouveau palier de couleur (zones 3, 6 et 9) est délibérément plus dure que la progression fluide à l\'intérieur d\'un palier — le ratio PA/PD retombe nettement à l\'entrée d\'un nouveau palier avant de remonter au fil de ses zones, pour bien marquer le cap'},
       {t:'change', sub:'equipements', tx:'Le palier Gris (zones de départ) n\'est pas concerné par ce rééquilibrage, déjà calé sur le spawn sans arme'},
@@ -1519,7 +1558,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'zones', tx:'Every move into a new color tier (zones 3, 6, and 9) is deliberately harder than the smooth progression within a tier — the AP/DP ratio drops noticeably right at the start of a new tier before climbing back up across its zones, to properly mark the milestone'},
       {t:'change', sub:'equipements', tx:'The Grey tier (starting zones) isn\'t affected by this rebalance, already tuned for the weaponless spawn'},
     ] },
-  { v:'V202', d:'06/07/2026 06:02', name:{fr:'Nouveaux joueurs et notes de version, 3 nouveaux modes d\'optimisation auto, loupe sur le loot', en:'New players and patch notes, 3 new auto-enhance modes, loot magnifier'}, fr:[
+  { v:'V202', d:'08/07/2026 08:17', name:{fr:'Nouveaux joueurs et notes de version, 3 nouveaux modes d\'optimisation auto, loupe sur le loot', en:'New players and patch notes, 3 new auto-enhance modes, loot magnifier'}, fr:[
       {t:'fix', sub:'ux', severity:'major', tx:'Un nouveau joueur voyait un nombre absurde de notes de version "non lues" (tout l\'historique jamais publié). Désormais, seule la toute dernière version compte comme nouvelle à la création du compte — sa page de notes de version s\'ouvre directement dessus, pas besoin de fouiller un historique qu\'il n\'a pas vécu'},
       {t:'new', sub:'optimisation', tx:'3 nouveaux modes pour l\'auto-optimisation, en plus de "jusqu\'à un palier" : "en boucle" (continue jusqu\'à rupture de matériau), "jusqu\'au premier échec" (s\'arrête dès le 1er raté), "jusqu\'à épuisement des Pierres de Cron" (pousse un palier risqué tant qu\'il reste de la protection)'},
       {t:'new', sub:'interface', tx:'Les icônes de la table de loot s\'agrandissent automatiquement au survol (aperçu façon loupe) pour mieux voir le détail de chaque pièce'},
@@ -1530,7 +1569,7 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'Loot table icons now automatically zoom in on hover (magnifier-style preview) to see each piece\'s detail more clearly'},
       {t:'fix', sub:'interface', tx:'Safety net added to the inventory grid and the Compendium\'s protected bag: if an equippable item somehow has no icon of its own (old save), it now falls back to its slot\'s generic icon instead of showing an empty cell'},
     ] },
-  { v:'V201', d:'06/07/2026 05:47', name:{fr:'Pierre de Cron cliquable, spawn sans arme, zones rééquilibrées', en:'Clickable Cron Stone, empty spawn, rebalanced zones'}, fr:[
+  { v:'V201', d:'08/07/2026 08:17', name:{fr:'Pierre de Cron cliquable, spawn sans arme, zones rééquilibrées', en:'Clickable Cron Stone, empty spawn, rebalanced zones'}, fr:[
       {t:'change', sub:'interface', tx:'La case Pierre de Cron du panneau d\'optimisation sert désormais elle-même de bouton on/off (clique dessus pour activer/désactiver) — grisée quand désactivée. Remplace l\'ancienne case à cocher séparée'},
       {t:'change', sub:'equipements', tx:'Le personnage ne spawn plus avec un "Bâton de Grunil" par défaut — l\'emplacement d\'arme principale démarre vide, comme tous les autres emplacements'},
       {t:'fix', sub:'zones', severity:'major', tx:'Le passage vers le palier de stuff suivant était devenu bien plus dur que prévu depuis qu\'une zone ne garantit plus qu\'UNE SEULE pièce d\'équipement : un stuff complet du palier précédent poussé jusqu\'à PRI ne donnait qu\'un ratio PA/PD de 0.29-0.45 (ZONE DANGEREUSE) face à la 1ère zone du palier suivant. Toutes les zones à partir de Camp Rhutum recalibrées pour qu\'un tel stuff PRI atteigne ~0.8 (ZONE DIFFICILE, plus DANGEREUSE)'},
@@ -1541,12 +1580,12 @@ const PATCH_NOTES = [
       {t:'fix', sub:'zones', severity:'major', tx:'Moving up to the next gear tier had become far harder than intended since a zone now guarantees only ONE piece of gear: a full previous-tier set pushed to PRI only reached a 0.29-0.45 AP/DP ratio (DANGEROUS ZONE) against the next tier\'s first zone. Every zone from Camp Rhutum onward recalibrated so such a PRI set reaches ~0.8 (HARD ZONE, no longer dangerous)'},
       {t:'fix', sub:'zones', tx:'Camp des Loups (the game\'s very first zone) rebalanced following the weaponless spawn: a freshly created character dropped to a 0.27 ratio (DANGEROUS ZONE) there instead of ~0.93 with the old starter weapon'},
     ] },
-  { v:'V200', d:'06/07/2026 05:24', name:{fr:'Les nouvelles icônes de stuff arrivent aussi dans la table de loot', en:'The new gear icons now show up in the loot table too'}, fr:[
+  { v:'V200', d:'08/07/2026 08:17', name:{fr:'Les nouvelles icônes de stuff arrivent aussi dans la table de loot', en:'The new gear icons now show up in the loot table too'}, fr:[
       {t:'fix', sub:'interface', tx:'La table de loot (et le récapitulatif condensé des zones de Velia) affichait encore un glyphe générique (⚔️/💍) partagé par toutes les pièces d\'un même type — elle montre désormais la VRAIE icône de chaque pièce (casque, arme, bijou...), avec sa couleur et son ornementation de palier'},
     ], en:[
       {t:'fix', sub:'interface', tx:'The loot table (and the condensed Velia zone summary) still showed a generic shared glyph (⚔️/💍) for every piece of a given type — it now shows each piece\'s REAL icon, with its tier color and rarity ornamentation'},
     ] },
-  { v:'V199', d:'06/07/2026 05:18', name:{fr:'Refonte complète du stuff : sorcier, ornements par rareté', en:'Full gear rework: wizard theme, rarity ornaments'}, fr:[
+  { v:'V199', d:'08/07/2026 08:17', name:{fr:'Refonte complète du stuff : sorcier, ornements par rareté', en:'Full gear rework: wizard theme, rarity ornaments'}, fr:[
       {t:'new', sub:'graphismes', tx:'Toutes les icônes d\'équipement redessinées et alignées sur la classe sorcier : bâton (arme principale), dague (arme secondaire), deux sphères Aad en lévitation (éveil), casque à fente en Y, cuirasse cintrée à épaulières, gants griffus, bottes à genouillère, collier/bague/boucles d\'oreille à pendentif'},
       {t:'new', sub:'graphismes', tx:'Ornementation cohérente par rareté sur TOUTE pièce de stuff : rien au gris/blanc, 4 rivets au palier Vert (Yuria), 4 gemmes + 1 losange central au palier Bleu (Grunil)'},
       {t:'new', sub:'graphismes', tx:'Fond de case plus abouti selon la rareté (remplace le halo autour de l\'objet) : uni au gris, bandeau clair au blanc, teinte + coins marqués au vert, teinte + coins ornés de losanges au bleu'},
@@ -1557,28 +1596,28 @@ const PATCH_NOTES = [
       {t:'new', sub:'graphismes', tx:'More refined slot background by rarity (replaces the glow around the item): plain at grey, light banner at white, tinted with marked corners at green, tinted with ornate diamond corners at blue'},
       {t:'change', sub:'equipements', tx:'Main weapon renamed Staff (instead of Sword/Blade) across all 4 tiers to fit the wizard theme — no stat impact'},
     ] },
-  { v:'V198', d:'06/07/2026 03:46', name:{fr:'Halo de couleur sur le stuff, pastille de notes déplacée dans le panneau', en:'Color halo on gear, unread badge moved into the panel'}, fr:[
+  { v:'V198', d:'08/07/2026 08:17', name:{fr:'Halo de couleur sur le stuff, pastille de notes déplacée dans le panneau', en:'Color halo on gear, unread badge moved into the panel'}, fr:[
       {t:'new', sub:'graphismes', tx:'Chaque pièce équipée (arme, armure, bijou...) et chaque emplacement du panneau d\'optimisation (pièce en cours, matériau, Pierre de Cron) affiche désormais un halo lumineux dans la couleur de son palier — même esprit que le halo de l\'orbe de Pierre de Cron'},
       {t:'change', sub:'interface', tx:'La pastille "notes non lues" en haut de l\'écran a été retirée — l\'appel à remonter est maintenant un bandeau directement en haut du panneau des notes de version, qui scrolle en un clic'},
     ], en:[
       {t:'new', sub:'graphismes', tx:'Every equipped piece (weapon, armor, jewelry...) and every optimization panel slot (piece being enhanced, material, Cron Stone) now shows a glowing halo in its tier color — same spirit as the Cron Stone orb\'s glow'},
       {t:'change', sub:'interface', tx:'The "unread notes" badge at the top of the screen was removed — the scroll-up prompt is now a banner right at the top of the patch notes panel itself, one click to jump up'},
     ] },
-  { v:'V197', d:'06/07/2026 03:36', name:{fr:'Nouvelle icône Pierre de Cron (orbe turquoise)', en:'New Cron Stone icon (teal orb)'}, fr:[
+  { v:'V197', d:'08/07/2026 08:17', name:{fr:'Nouvelle icône Pierre de Cron (orbe turquoise)', en:'New Cron Stone icon (teal orb)'}, fr:[
       {t:'improve', sub:'graphismes', tx:'Icône de la Pierre de Cron redessinée en orbe turquoise lumineux façon perle (au lieu du sablier doré), couleur mise à jour partout (sac, table de loot, panneau d\'optimisation)'},
       {t:'fix', sub:'interface', severity:'minor', tx:'La case Pierre de Cron du panneau d\'optimisation affichait un sablier ⏳ générique figé — elle montre maintenant la vraie icône de l\'objet'},
     ], en:[
       {t:'improve', sub:'graphismes', tx:'Cron Stone icon redesigned as a glowing pearl-like teal orb (instead of the golden hourglass), color updated everywhere (bag, loot table, enhancement panel)'},
       {t:'fix', sub:'interface', severity:'minor', tx:'The Cron Stone slot in the enhancement panel showed a static generic ⏳ hourglass — it now shows the item\'s real icon'},
     ] },
-  { v:'V196', d:'06/07/2026 03:31', name:{fr:'Fix pastille notes de version : plus de chevauchement, plus de scroll forcé', en:'Patch notes badge fix: no more overlap, no more forced scrolling'}, fr:[
+  { v:'V196', d:'08/07/2026 08:17', name:{fr:'Fix pastille notes de version : plus de chevauchement, plus de scroll forcé', en:'Patch notes badge fix: no more overlap, no more forced scrolling'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'La pastille "notes de version non lues" en haut de page chevauchait le panneau des notes de version lui-même — elle se masque désormais tant qu\'un panneau est ouvert, et réapparaît dès qu\'il se ferme'},
       {t:'fix', sub:'interface', tx:'Notes de version : s\'il reste des entrées non lues, le panneau s\'ouvre désormais tout en haut (où elles sont) au lieu de reprendre l\'ancienne position de défilement, qui les cachait en dessous — la reprise de position ne s\'applique qu\'une fois à jour'},
     ], en:[
       {t:'fix', sub:'interface', severity:'minor', tx:'The "unread patch notes" badge at the top of the page overlapped the patch notes panel itself — it now hides while any panel is open, and reappears as soon as it closes'},
       {t:'fix', sub:'interface', tx:'Patch notes: if unread entries remain, the panel now opens scrolled to the very top (where they are) instead of resuming the old scroll position, which hid them below — position resume only kicks in once caught up'},
     ] },
-  { v:'V195', d:'06/07/2026 03:03', name:{fr:'Loot détaillé par zone, armes réparties sur les dernières zones, patch notes qui se souviennent de toi', en:'Detailed per-zone loot, weapons spread on the last zones, patch notes that remember you'}, fr:[
+  { v:'V195', d:'08/07/2026 08:17', name:{fr:'Loot détaillé par zone, armes réparties sur les dernières zones, patch notes qui se souviennent de toi', en:'Detailed per-zone loot, weapons spread on the last zones, patch notes that remember you'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'Fix : la table de loot affichait encore 0.1% pour la Pierre de Cron (l\'ancien taux, avant le passage à 1% de la mise à jour précédente) — un seul chiffre de référence désormais, ne peut plus se désynchroniser'},
       {t:'improve', sub:'interface', tx:'La table de loot indique maintenant exactement QUELLE pièce d\'équipement (casque/plastron/gants/bottes/arme précise) cette zone garantit, au lieu d\'une ligne générique "arme/armure (7 pièces)"'},
       {t:'change', sub:'equipements', severity:'major', tx:'Les 3 types d\'arme se répartissent maintenant sur les 3 DERNIÈRES zones de chaque palier (au lieu des 3 premières, avec la 4e qui répétait l\'arme principale) — la toute première zone d\'un palier n\'a donc plus aucune arme garantie, mais chaque type n\'apparaît plus qu\'une seule fois par palier'},
@@ -1591,14 +1630,14 @@ const PATCH_NOTES = [
       {t:'new', sub:'interface', tx:'Patch notes: scrolling now resumes exactly where you left it every time you open the panel, and a badge at the top of the page shows how many notes you haven\'t read yet (alongside the number on the menu button) — both badges only disappear once you\'ve actually scrolled to those entries, not just from opening the panel'},
       {t:'new', sub:'tresors', tx:'New "Treasures" tag for patch notes related to the Velia Treasure'},
     ] },
-  { v:'V194', d:'06/07/2026 02:47', name:{fr:'Badge NEW repensé (numéro, par joueur, met en évidence le changement)', en:'Redesigned NEW badge (number, per-player, highlights the change)'}, fr:[
+  { v:'V194', d:'08/07/2026 08:17', name:{fr:'Badge NEW repensé (numéro, par joueur, met en évidence le changement)', en:'Redesigned NEW badge (number, per-player, highlights the change)'}, fr:[
       {t:'change', sub:'interface', tx:'Le badge "NEW" clignotant (24h pour tout le monde) remplacé par un badge numéroté "1" qui disparaît dès que TOI tu ouvres le panneau — et le changement précis est mis en évidence en haut du panneau (Wiki/Compendium/Codex/Succès) tant que tu ne l\'as pas encore vu'},
       {t:'fix', sub:'interface', severity:'minor', tx:'Corrigé un bug qui empêchait le badge de jamais disparaître (comparaison à une date qui pouvait tomber dans le futur par rapport à l\'horloge réelle) — remplacé par un simple compteur, plus fiable'},
     ], en:[
       {t:'change', sub:'interface', tx:'The blinking "NEW" badge (24h for everyone) replaced by a numbered "1" badge that disappears as soon as YOU open the panel — and the specific change is highlighted at the top of the panel (Wiki/Compendium/Codex/Achievements) until you\'ve seen it'},
       {t:'fix', sub:'interface', severity:'minor', tx:'Fixed a bug that could keep the badge showing forever (comparison against a date that could fall in the future relative to the real clock) — replaced with a simple counter, more reliable'},
     ] },
-  { v:'V193', d:'06/07/2026 02:27', name:{fr:'1 pièce d\'armure garantie par zone, armures sans AP, Pierre de Cron au choix, Bout de Velia simplifié', en:'1 guaranteed armor piece per zone, armor with no AP, choosable Cron Stone, simplified Velia piece'}, fr:[
+  { v:'V193', d:'08/07/2026 08:17', name:{fr:'1 pièce d\'armure garantie par zone, armures sans AP, Pierre de Cron au choix, Bout de Velia simplifié', en:'1 guaranteed armor piece per zone, armor with no AP, choosable Cron Stone, simplified Velia piece'}, fr:[
       {t:'change', sub:'equipements', severity:'major', tx:'Chaque zone garantit désormais 1 seule pièce d\'armure précise (casque/armure/gants sur les 3 premières zones du palier, bottes sur la 4e) au lieu d\'un tirage au hasard partagé entre les 4 zones — même logique que les armes'},
       {t:'change', sub:'equipements', severity:'major', tx:'Les armures ne donnent plus d\'AP (comme dans le vrai jeu, purement défensif) — le total AP retiré est redistribué aux 3 armes pour que le total AP d\'un stuff complet reste identique. Rétroactif sur le stuff déjà possédé'},
       {t:'change', sub:'equipements', tx:'Pierre de Cron : taux relevé à 1% (au lieu de 0.1%), et son utilisation passe au choix du joueur — nouvelle case à droite du matériau chargé (panneau Optimisation) avec une case à cocher "Utiliser la Pierre de Cron si dispo", au lieu d\'une consommation 100% automatique et silencieuse'},
@@ -1609,7 +1648,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'equipements', tx:'Cron Stone: drop rate raised to 1% (from 0.1%), and its use is now the player\'s choice — new slot to the right of the loaded material (Enhancement panel) with a "Use Cron Stone if available" checkbox, instead of a fully automatic, silent consumption'},
       {t:'change', sub:'pve', tx:'"Velia Treasure Piece": the 2 separate items merged into 1, fixed 0.5% rate, 1 to 3 units per pickup'},
     ] },
-  { v:'V192', d:'06/07/2026 02:15', name:{fr:'Fix meute en zone dangereuse, sac plein qui bloquait le farm, Craft déplacé dans l\'Inventaire', en:'Dangerous zone pack pile-up fix, full-bag freeze fix, Craft moved into Inventory'}, fr:[
+  { v:'V192', d:'08/07/2026 08:17', name:{fr:'Fix meute en zone dangereuse, sac plein qui bloquait le farm, Craft déplacé dans l\'Inventaire', en:'Dangerous zone pack pile-up fix, full-bag freeze fix, Craft moved into Inventory'}, fr:[
       {t:'fix', sub:'pve', severity:'major', tx:'Un groupe de monstres engagé restait accroché pour toujours (jamais de désengagement), y compris en dehors de tout combat actif — en zone dangereuse (monstres plus rapides, toi plus lent), plusieurs groupes abandonnés finissaient par te rattraper en même temps qu\'un autre déjà engagé et faisaient meute. Un groupe trop éloigné (>550) abandonne maintenant la poursuite'},
       {t:'fix', sub:'interface', severity:'major', tx:'Sac plein : le personnage restait bloqué à suivre indéfiniment un objet au sol qu\'il ne pouvait plus ramasser, au lieu de continuer à combattre comme prévu — il abandonne maintenant cet objet précis après un court délai et repart chercher le prochain groupe'},
       {t:'change', sub:'interface', tx:'Le panneau de craft du Trésor de Velia déplacé de la carte Optimisation vers la carte Inventaire, accessible via un nouveau bouton "Assemblage" en haut (à côté d\'"Inventaire")'},
@@ -1618,14 +1657,14 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', severity:'major', tx:'Full bag: the character got stuck endlessly following a ground item it could no longer pick up, instead of continuing to fight as intended — it now abandons that specific item after a short delay and goes back to looking for the next pack'},
       {t:'change', sub:'interface', tx:'The Velia Treasure crafting panel moved from the Enhancement card to the Inventory card, accessible via a new "Craft" button up top (next to "Inventory")'},
     ] },
-  { v:'V191', d:'06/07/2026 02:03', name:{fr:'Optimisations contre le ralentissement sur session longue', en:'Optimizations against long-session slowdown'}, fr:[
+  { v:'V191', d:'08/07/2026 08:17', name:{fr:'Optimisations contre le ralentissement sur session longue', en:'Optimizations against long-session slowdown'}, fr:[
       {t:'fix', sub:'interface', severity:'major', tx:'Réduction de charge après un signalement de ralentissement système sur des sessions de plusieurs heures : le rendu (canvas + simulation) est désormais mis en pause quand l\'onglet est en arrière-plan, et le recalcul de hauteur des cartes (ajouté par erreur à chaque battement du HUD, potentiellement plusieurs fois par seconde) ne se déclenche plus qu\'au vrai changement de zone/inventaire'},
       {t:'fix', sub:'equipements', severity:'minor', tx:'Garde-fou : l\'optimisation automatique ne peut plus jamais empiler 2 minuteurs en parallèle'},
     ], en:[
       {t:'fix', sub:'interface', severity:'major', tx:'Reduced load after a report of system-wide slowdown on multi-hour sessions: rendering (canvas + simulation) now pauses when the tab is in the background, and the card-height recalculation (mistakenly added on every HUD tick, potentially several times per second) now only fires on an actual zone/inventory change'},
       {t:'fix', sub:'equipements', severity:'minor', tx:'Safety net: auto-enhancement can no longer ever stack 2 timers in parallel'},
     ] },
-  { v:'V190', d:'06/07/2026 01:50', name:{fr:'Badge NEW sur contenu modifié, carré unique en ligne/inscrits, niveau à côté de la vie', en:'NEW badge on updated content, single online/registered box, level next to HP'}, fr:[
+  { v:'V190', d:'08/07/2026 08:17', name:{fr:'Badge NEW sur contenu modifié, carré unique en ligne/inscrits, niveau à côté de la vie', en:'NEW badge on updated content, single online/registered box, level next to HP'}, fr:[
       {t:'new', sub:'interface', tx:'Badge "NEW" clignotant pendant 24h sur Wiki/Compendium/Codex/Succès après une modification de contenu, visible pour tout le monde (pas besoin de l\'avoir déjà vu ou pas)'},
       {t:'change', sub:'interface', severity:'minor', tx:'"En ligne" et "Inscrits" fusionnés dans un seul carré (au lieu de 2 boîtes empilées séparément)'},
       {t:'change', sub:'interface', tx:'Niveau et % d\'XP réalignés à côté de la barre de vie (au lieu d\'au-dessus)'},
@@ -1634,7 +1673,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', severity:'minor', tx:'"Online" and "Registered" merged into a single box (instead of 2 separately stacked boxes)'},
       {t:'change', sub:'interface', tx:'Level and XP % realigned next to the HP bar (instead of above it)'},
     ] },
-  { v:'V189', d:'06/07/2026 01:31', name:{fr:'Cartes alignées sur Statistiques, loot normal si overstuff, niveau sur la ligne PA/PD/GS', en:'Cards aligned to Stats, normal loot when overgeared, level on the AP/DP/GS line'}, fr:[
+  { v:'V189', d:'08/07/2026 08:17', name:{fr:'Cartes alignées sur Statistiques, loot normal si overstuff, niveau sur la ligne PA/PD/GS', en:'Cards aligned to Stats, normal loot when overgeared, level on the AP/DP/GS line'}, fr:[
       {t:'fix', sub:'interface', tx:'"Zones de farm" et "Loot de cette zone" font désormais exactement la même hauteur que "Statistiques" (au lieu d\'un plafond fixe de 60% d\'écran sans rapport) — le surplus de contenu défile toujours en interne'},
       {t:'change', sub:'pve', severity:'major', tx:'Loot : plus de bonus (+10%) ni de malus anti-overfarm au-delà du 100% adapté à la zone — un stuff insuffisant reste pénalisé (jusqu\'à -70%), mais un stuff adapté OU largement overstuff donne désormais toujours un loot normal'},
       {t:'improve', sub:'interface', tx:'Niveau et % d\'XP ajoutés sur la même ligne que PA/PD/GS dans la carte Équipement'},
@@ -1643,7 +1682,7 @@ const PATCH_NOTES = [
       {t:'change', sub:'pve', severity:'major', tx:'Loot: no more +10% bonus nor anti-overfarm penalty beyond the 100% adapted-to-zone baseline — insufficient gear still gets penalized (up to -70%), but adapted OR heavily overgeared now always gives normal loot'},
       {t:'improve', sub:'interface', tx:'Level and XP % added to the same line as AP/DP/GS in the Equipment card'},
     ] },
-  { v:'V188', d:'06/07/2026 01:20', name:{fr:'Plafond de dégâts par coup, screenshot admin, alignement joueurs par zone', en:'Per-hit damage cap, admin player screenshot, zone player count alignment'}, fr:[
+  { v:'V188', d:'08/07/2026 08:17', name:{fr:'Plafond de dégâts par coup, screenshot admin, alignement joueurs par zone', en:'Per-hit damage cap, admin player screenshot, zone player count alignment'}, fr:[
       {t:'fix', sub:'pve', severity:'major', tx:'En zone très dangereuse, un coup pouvait carrément one-shot (vérifié : 544 dégâts pour 478 PV max) — les dégâts par coup sont désormais plafonnés à 30% des PV max, garantissant au moins ~3-4 coups pour mourir depuis la vie pleine, même dans le pire des cas'},
       {t:'new', sub:'comptes', tx:'Admin : bouton "📸 Screenshot" à côté du champ UUID — affiche l\'équipement et l\'inventaire d\'un joueur en lecture seule (aucune modification), en plus du reset ciblé déjà existant'},
       {t:'fix', sub:'interface', severity:'minor', tx:'Le badge 👥 (joueurs sur la zone) réserve maintenant toujours la même largeur : le bouton 👁 ne bouge plus d\'une ligne à l\'autre selon qu\'il y ait ou non des joueurs présents'},
@@ -1652,22 +1691,22 @@ const PATCH_NOTES = [
       {t:'new', sub:'comptes', tx:'Admin: "📸 Screenshot" button next to the UUID field — shows a player\'s gear and inventory read-only (no changes made), alongside the existing targeted reset'},
       {t:'fix', sub:'interface', severity:'minor', tx:'The 👥 badge (players on the zone) now always reserves the same width: the 👁 button no longer shifts between rows depending on whether players are present'},
     ] },
-  { v:'V187', d:'06/07/2026 01:07', name:{fr:'Nombre de joueurs déplacé à côté de l\'œil de loot', en:'Player count moved next to the loot eye'}, fr:[
+  { v:'V187', d:'08/07/2026 08:17', name:{fr:'Nombre de joueurs déplacé à côté de l\'œil de loot', en:'Player count moved next to the loot eye'}, fr:[
       {t:'change', sub:'interface', severity:'minor', tx:'Le badge 👥 (joueurs sur la zone) est maintenant affiché juste à gauche du bouton 👁 (voir le loot), au lieu de juste après le badge de difficulté'},
     ], en:[
       {t:'change', sub:'interface', severity:'minor', tx:'The 👥 badge (players on the zone) now shows just left of the 👁 (view loot) button, instead of right after the difficulty badge'},
     ] },
-  { v:'V186', d:'06/07/2026 01:05', name:{fr:'% d\'XP aussi gros que le niveau', en:'XP % as big as the level'}, fr:[
+  { v:'V186', d:'08/07/2026 08:17', name:{fr:'% d\'XP aussi gros que le niveau', en:'XP % as big as the level'}, fr:[
       {t:'improve', sub:'interface', severity:'minor', tx:'Le % d\'XP au-dessus de la barre de vie est maintenant aussi gros que le niveau (au lieu de petit en dessous)'},
     ], en:[
       {t:'improve', sub:'interface', severity:'minor', tx:'The XP % above the HP bar is now as big as the level (instead of small underneath)'},
     ] },
-  { v:'V185', d:'06/07/2026 01:02', name:{fr:'Carte Statistiques sans espace vide', en:'Stats card without empty space'}, fr:[
+  { v:'V185', d:'08/07/2026 08:17', name:{fr:'Carte Statistiques sans espace vide', en:'Stats card without empty space'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'La carte "Statistiques" s\'étirait elle aussi pour matcher la hauteur de ses voisines de rangée (Zones de farm/Loot), laissant un vide sous ses dernières lignes — suit maintenant sa propre hauteur de contenu, comme les 2 autres cartes de la rangée'},
     ], en:[
       {t:'fix', sub:'interface', severity:'minor', tx:'The "Statistics" card also stretched to match its row neighbors\' height (Farming zones/Loot), leaving empty space under its last rows — now follows its own content height, like the other 2 cards in the row'},
     ] },
-  { v:'V184', d:'06/07/2026 00:51', name:{fr:'Joueurs par zone, niveau agrandi façon BDO, cartes sans espace vide, fix potion silencieuse', en:'Players per zone, BDO-style bigger level, no-empty-space cards, silent potion fix'}, fr:[
+  { v:'V184', d:'08/07/2026 08:17', name:{fr:'Joueurs par zone, niveau agrandi façon BDO, cartes sans espace vide, fix potion silencieuse', en:'Players per zone, BDO-style bigger level, no-empty-space cards, silent potion fix'}, fr:[
       {t:'new', sub:'interface', tx:'Nombre de joueurs actuellement présents affiché (👥 N) sur chaque zone de la liste de farm, masqué si personne n\'y est'},
       {t:'fix', sub:'interface', severity:'minor', tx:'Les cartes "Zones de farm" et "Loot de cette zone" s\'étiraient pour matcher la hauteur de leurs voisines de rangée, laissant un grand vide sous une liste courte — elles suivent maintenant leur propre contenu (toujours plafonnées avec défilement au-delà)'},
       {t:'fix', sub:'combat', severity:'major', tx:'Une potion (PV ou mana) sans assez de silver pour la payer échouait totalement en silence (aucun soin, aucun message) — un avertissement "Pas assez de silver pour la potion !" s\'affiche désormais, remarqué en zone dangereuse où ça pouvait ressembler à une potion cassée'},
@@ -1678,12 +1717,12 @@ const PATCH_NOTES = [
       {t:'fix', sub:'combat', severity:'major', tx:'A potion (HP or mana) without enough silver to pay for it used to fail completely silently (no heal, no message) — a "Not enough silver for a potion!" warning now shows, especially noticeable in dangerous zones where it could look like a broken potion'},
       {t:'improve', sub:'interface', tx:'BDO-style bigger level shown above the HP bar (large white number), XP % stays small right below'},
     ] },
-  { v:'V183', d:'06/07/2026 00:39', name:{fr:'Palier PRI relevé pour sortir de zone dangereuse au changement de couleur', en:'PRI tier raised to escape dangerous zone at color-tier change'}, fr:[
+  { v:'V183', d:'08/07/2026 08:17', name:{fr:'Palier PRI relevé pour sortir de zone dangereuse au changement de couleur', en:'PRI tier raised to escape dangerous zone at color-tier change'}, fr:[
       {t:'change', sub:'equipements', severity:'minor', tx:'Bonus du palier PRI relevé (+8% → +20%) : un stuff complet moyen-PRI (mix PEN/+10 possible) sort désormais de ZONE DANGEREUSE sur la 1ère zone du palier de couleur suivant, au lieu d\'y rester bloqué. Ne change rien pour +0 à +15 ni pour l\'équilibre sur sa propre zone (déjà bon) — rétroactif automatiquement sur tout le stuff déjà équipé/en sac, aucune migration nécessaire'},
     ], en:[
       {t:'change', sub:'equipements', severity:'minor', tx:'PRI tier bonus raised (+8% → +20%): a full average-PRI set (mixing PEN/+10 is fine) now escapes DANGEROUS ZONE on the next color tier\'s first zone, instead of staying stuck there. Nothing changes for +0 to +15 or for balance on its own zone (already fine) — automatically retroactive on all already-equipped/bagged gear, no migration needed'},
     ] },
-  { v:'V182', d:'06/07/2026 00:25', name:{fr:'Chat anglais, reset admin par UUID, Marché marqué "en construction"', en:'English chat, admin reset by UUID, Market flagged "under construction"'}, fr:[
+  { v:'V182', d:'08/07/2026 08:17', name:{fr:'Chat anglais, reset admin par UUID, Marché marqué "en construction"', en:'English chat, admin reset by UUID, Market flagged "under construction"'}, fr:[
       {t:'new', sub:'interface', tx:'Nouveau canal de chat 🇬🇧 Anglais, séparé du canal Mondial'},
       {t:'new', sub:'comptes', tx:'Admin : nouvelle action pour réinitialiser le compte d\'UN joueur précis par UUID (silver/équipement/niveau/sac), sans toucher aux autres — même message d\'explication que le reset global, mais montré uniquement à ce joueur'},
       {t:'change', sub:'interface', tx:'Marché : bandeau "en construction, encore peu fonctionnel" ajouté dans le panneau et le Wiki, pour que ce ne soit pas pris pour une fonctionnalité stable'},
@@ -1692,19 +1731,19 @@ const PATCH_NOTES = [
       {t:'new', sub:'comptes', tx:'Admin: new action to reset ONE specific player\'s account by UUID (silver/gear/level/bag), without touching anyone else — same explanation message as the global reset, but shown only to that player'},
       {t:'change', sub:'interface', tx:'Market: "under construction, still not very functional" banner added to the panel and the Wiki, so it isn\'t mistaken for a stable feature'},
     ] },
-  { v:'V181', d:'06/07/2026 00:13', name:{fr:'Halo "où farmer" sur socle vide, niveau/XP déplacé au-dessus de la vie', en:'"Where to farm" halo on empty slots, level/XP moved above HP'}, fr:[
+  { v:'V181', d:'08/07/2026 08:17', name:{fr:'Halo "où farmer" sur socle vide, niveau/XP déplacé au-dessus de la vie', en:'"Where to farm" halo on empty slots, level/XP moved above HP'}, fr:[
       {t:'new', sub:'equipements', tx:'Clique un socle d\'équipement vide : la ou les zones qui lootent cet objet s\'illuminent d\'un halo doré dans la liste des zones (+ bouton téléportation directe). Une zone dangereuse pour ton stuff actuel n\'est proposée que s\'il n\'existe vraiment aucune alternative plus sûre'},
       {t:'change', sub:'interface', tx:'Niveau et % d\'XP déplacés au-dessus de la barre de vie (en bas à gauche), retirés de la carte Inventaire'},
     ], en:[
       {t:'new', sub:'equipements', tx:'Click an empty equipment slot: the zone(s) that drop that item light up with a gold halo in the zone list (+ a direct teleport button). A zone too dangerous for your current gear is only suggested if there\'s truly no safer alternative'},
       {t:'change', sub:'interface', tx:'Level and XP % moved above the HP bar (bottom-left), removed from the Inventory card'},
     ] },
-  { v:'V180', d:'05/07/2026 23:28', name:{fr:'Carte de loot plafonnée avec défilement', en:'Loot card capped with scrolling'}, fr:[
+  { v:'V180', d:'08/07/2026 08:17', name:{fr:'Carte de loot plafonnée avec défilement', en:'Loot card capped with scrolling'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'La carte "Loot dans cette zone" (notamment la vue condensée de toutes les zones à Velia) pouvait déborder largement sous les cartes voisines — plafonnée avec un défilement interne, comme la liste des zones (V178)'},
     ], en:[
       {t:'fix', sub:'interface', severity:'minor', tx:'The "Loot in this zone" card (especially the condensed all-zones view at Velia) could overflow well below the neighboring cards — capped with internal scrolling, like the zone list (V178)'},
     ] },
-  { v:'V179', d:'05/07/2026 23:12', name:{fr:'Système de mana, barre d\'incantation repensée, zone dangereuse durcie', en:'Mana system, redesigned cast bar, harsher dangerous zone'}, fr:[
+  { v:'V179', d:'08/07/2026 08:17', name:{fr:'Système de mana, barre d\'incantation repensée, zone dangereuse durcie', en:'Mana system, redesigned cast bar, harsher dangerous zone'}, fr:[
       {t:'new', sub:'competences', tx:'Ajout de la mana : chaque sort a désormais un coût, une régénération passive, et une potion de mana (auto-bue sous 30%) vient compléter la potion de PV'},
       {t:'improve', sub:'interface', tx:'Barre d\'incantation repensée : affichée près de la barre de sorts (plus au-dessus du personnage), la matière se retire des 2 côtés vers le centre — le sort part quand elle a entièrement disparu'},
       {t:'change', sub:'interface', tx:'Barre de PV retirée d\'au-dessus du personnage, ne reste plus qu\'en bas à gauche (où une barre de mana l\'accompagne désormais)'},
@@ -1715,17 +1754,17 @@ const PATCH_NOTES = [
       {t:'change', sub:'interface', tx:'HP bar removed from above the character, only remains bottom-left (now joined by a mana bar)'},
       {t:'change', sub:'pve', severity:'major', tx:'Dangerous zone: player slowdown and monster speedup are harsher (×0.5 and ×1.7 instead of ×0.7/×1.35), and a warning message shows while you stay there'},
     ] },
-  { v:'V178', d:'05/07/2026 22:57', name:{fr:'Liste des zones plafonnée avec défilement', en:'Zone list capped with scrolling'}, fr:[
+  { v:'V178', d:'08/07/2026 08:17', name:{fr:'Liste des zones plafonnée avec défilement', en:'Zone list capped with scrolling'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'La liste des zones de farm (16 depuis l\'ajout des boucles d\'oreille) débordait largement sous les cartes voisines au lieu de s\'arrêter et défiler — plafonnée avec un défilement interne'},
     ], en:[
       {t:'fix', sub:'interface', severity:'minor', tx:'The farming zone list (16 since the earring update) overflowed well below the neighboring cards instead of stopping and scrolling — capped with internal scrolling'},
     ] },
-  { v:'V177', d:'05/07/2026 22:48', name:{fr:'Zone dangereuse : toi plus lent, les monstres plus rapides', en:'Dangerous zone: you slower, monsters faster'}, fr:[
+  { v:'V177', d:'08/07/2026 08:17', name:{fr:'Zone dangereuse : toi plus lent, les monstres plus rapides', en:'Dangerous zone: you slower, monsters faster'}, fr:[
       {t:'change', sub:'pve', severity:'major', tx:'En ZONE DANGEREUSE (PA/PD très insuffisants), tu es maintenant ralenti (×0,7) et les monstres qui t\'ont repéré deviennent plus rapides (×1,35) pour te rattraper — rend le danger concret plutôt qu\'une simple pénalité de dégâts/loot invisible'},
     ], en:[
       {t:'change', sub:'pve', severity:'major', tx:'In a DANGEROUS ZONE (very insufficient AP/DP), you are now slowed down (×0.7) and monsters that spotted you become faster (×1.35) to catch up — makes the danger tangible instead of just an invisible damage/loot penalty'},
     ] },
-  { v:'V176', d:'05/07/2026 22:36', name:{fr:'Menu d\'optimisation détaillé, navigation clavier dans le chat, alerte de mention en continu', en:'Detailed enhance menu, chat keyboard navigation, continuous mention alert'}, fr:[
+  { v:'V176', d:'08/07/2026 08:17', name:{fr:'Menu d\'optimisation détaillé, navigation clavier dans le chat, alerte de mention en continu', en:'Detailed enhance menu, chat keyboard navigation, continuous mention alert'}, fr:[
       {t:'improve', sub:'equipements', severity:'minor', tx:'Le menu déroulant "Auto jusqu\'à" affiche maintenant le gain de stats pour CHAQUE palier proposé, pas seulement celui sélectionné'},
       {t:'improve', sub:'interface', severity:'minor', tx:'Chat : les flèches ↑/↓ du clavier permettent de choisir un joueur dans la liste de suggestions de mention @'},
       {t:'improve', sub:'interface', tx:'L\'alerte de mention (couleur + vibration + agrandissement du chat replié) tourne maintenant en continu tant que le chat n\'est pas ouvert, au lieu de s\'arrêter après 3 répétitions'},
@@ -1736,14 +1775,14 @@ const PATCH_NOTES = [
       {t:'improve', sub:'interface', tx:'The mention alert (color + vibration + enlargement of the collapsed chat) now runs continuously until the chat is opened, instead of stopping after 3 repeats'},
       {t:'fix', sub:'interface', severity:'minor', tx:'An @player mention now shows in color for EVERYONE in chat, even if the mentioned person is no longer online when the message is displayed'},
     ] },
-  { v:'V175', d:'05/07/2026 22:30', name:{fr:'4e zone par palier + boucles d\'oreille', en:'4th zone per tier + earrings'}, fr:[
+  { v:'V175', d:'08/07/2026 08:17', name:{fr:'4e zone par palier + boucles d\'oreille', en:'4th zone per tier + earrings'}, fr:[
       {t:'new', sub:'zones', tx:'1 zone supplémentaire par palier de stuff (Ruines de Trent, Île d\'Iliya, Base de Bashim, Forêt de Polly) — chaque palier passe de 3 à 4 zones. PA/PD requis volontairement identiques à la dernière zone déjà existante du palier : aucun changement du plafond de difficulté'},
       {t:'new', sub:'equipements', tx:'Ajout de la boucle d\'oreille, seul type de bijou qui manquait à chaque palier (les emplacements existaient déjà mais rien ne les alimentait). Le PA total des bijoux d\'un palier reste identique : redistribué sur 4 pièces au lieu de 3, avec une migration automatique du stuff déjà possédé'},
     ], en:[
       {t:'new', sub:'zones', tx:'1 extra zone per gear tier (Trent Ruins, Iliya Island, Bashim Base, Polly Forest) — each tier goes from 3 to 4 zones. Required AP/DP deliberately identical to the tier\'s existing last zone: no change to the difficulty ceiling'},
       {t:'new', sub:'equipements', tx:'Added the earring, the only jewelry type missing from every tier (the slots already existed but nothing dropped there). A tier\'s total jewelry AP stays the same: redistributed across 4 pieces instead of 3, with an automatic migration of gear you already own'},
     ] },
-  { v:'V174', d:'05/07/2026 22:15', name:{fr:'Pseudo à l\'inscription, mentions @joueur dans le chat, nombre d\'inscrits', en:'Nickname at signup, @player mentions in chat, registered count'}, fr:[
+  { v:'V174', d:'08/07/2026 08:17', name:{fr:'Pseudo à l\'inscription, mentions @joueur dans le chat, nombre d\'inscrits', en:'Nickname at signup, @player mentions in chat, registered count'}, fr:[
       {t:'new', sub:'comptes', tx:'Champ pseudo sur l\'écran de création de compte — plus besoin de le changer après coup dans "Mon compte"'},
       {t:'new', sub:'interface', tx:'Nombre total de joueurs inscrits affiché sous le compteur "en ligne"'},
       {t:'improve', sub:'interface', severity:'minor', tx:'La pastille de gravité ne décale plus le texte des lignes de notes de version — déplacée dans la ligne d\'infos du bas, avec les autres badges'},
@@ -1758,21 +1797,21 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', severity:'minor', tx:'The notification badge on "Patch Notes" now clears as soon as the panel is opened, instead of on tab close'},
       {t:'new', sub:'interface', tx:'Chat: typing "@" shows the list of online players (filterable by typing letters) to mention them — a message mentioning you is highlighted, and if your chat is collapsed, it animates (color + vibration + enlargement) to prompt you to open it'},
     ] },
-  { v:'V173', d:'05/07/2026 22:01', name:{fr:'Alignement des boutons d\'inventaire + comparateur avant/après', en:'Inventory button alignment + before/after viewer'}, fr:[
+  { v:'V173', d:'08/07/2026 08:17', name:{fr:'Alignement des boutons d\'inventaire + comparateur avant/après', en:'Inventory button alignment + before/after viewer'}, fr:[
       {t:'fix', sub:'interface', severity:'minor', tx:'Les boutons "⚡ Équiper meilleur" et "🗑️ Vendre" (+ "↩️ Racheter") n\'étaient pas parfaitement alignés (marge et taille de police différentes) — corrigé pour un alignement pixel-perfect'},
       {t:'improve', sub:'interface', severity:'minor', tx:'Les notes de version peuvent désormais inclure un bouton 🖼️ "Voir avant/après" sur une ligne, ouvrant un comparateur avec 2 captures d\'écran côte à côte'},
     ], en:[
       {t:'fix', sub:'interface', severity:'minor', tx:'The "⚡ Equip best" and "🗑️ Sell" (+ "↩️ Buy back") buttons weren\'t perfectly aligned (different margin and font size) — fixed for pixel-perfect alignment'},
       {t:'improve', sub:'interface', severity:'minor', tx:'Patch notes can now include a 🖼️ "See before/after" button on a line, opening a comparer with 2 side-by-side screenshots'},
     ] },
-  { v:'V172', d:'05/07/2026 21:48', name:{fr:'Pastilles de gravité + infobulles sur les notes de version', en:'Severity dots + tooltips on patch notes'}, fr:[
+  { v:'V172', d:'08/07/2026 08:17', name:{fr:'Pastilles de gravité + infobulles sur les notes de version', en:'Severity dots + tooltips on patch notes'}, fr:[
       {t:'improve', sub:'interface', severity:'minor', tx:'Chaque ligne des notes de version peut désormais porter une pastille de couleur indiquant sa gravité (Critique/Important/Mineur/Info), indépendante de sa catégorie — une correction peut être Critique ou Mineure selon son impact réel'},
       {t:'improve', sub:'interface', severity:'minor', tx:'Toutes les pastilles/badges (catégorie, gravité, sous-catégorie, plateforme, nature) affichent désormais une explication au survol de la souris'},
     ], en:[
       {t:'improve', sub:'interface', severity:'minor', tx:'Each patch note line can now carry a colored severity dot (Critical/Major/Minor/Info), independent of its category — a fix can be Critical or Minor depending on its actual impact'},
       {t:'improve', sub:'interface', severity:'minor', tx:'All pastilles/badges (category, severity, subcategory, platform, nature) now show an explanation on mouse hover'},
     ] },
-  { v:'V171', d:'05/07/2026 21:42', name:{fr:'Bouton optimiser sur l\'équipement + refonte du menu de gauche', en:'Enhance button on gear + left menu overhaul'}, fr:[
+  { v:'V171', d:'08/07/2026 08:17', name:{fr:'Bouton optimiser sur l\'équipement + refonte du menu de gauche', en:'Enhance button on gear + left menu overhaul'}, fr:[
       {t:'improve', sub:'equipements', tx:'Petit bouton 🔧 directement sur chaque pièce équipée optimisable — charge instantanément CETTE pièce dans le panneau d\'optimisation, sans passer par le menu au clic. Mentionné dans le tutoriel et le Wiki (section Optimisation)'},
       {t:'improve', sub:'interface', tx:'Le Codex des objets sort du Wiki pour devenir sa propre section, directement accessible depuis le menu de gauche (📚 Codex)'},
       {t:'improve', sub:'interface', tx:'Refonte du menu de gauche : le vrai jeu (Quêtes, Courrier, Compendium, Codex, Succès, Marché, Classement) remonte en haut ; les infos moins utilisées au quotidien (Wiki, Notes de version, Discord, langue, compteur en ligne...) redescendent en bas'},
@@ -1781,36 +1820,36 @@ const PATCH_NOTES = [
       {t:'improve', sub:'interface', tx:'The Item Codex moves out of the Wiki into its own section, directly accessible from the left menu (📚 Codex)'},
       {t:'improve', sub:'interface', tx:'Left menu overhaul: the actual game (Quests, Mailbox, Compendium, Codex, Achievements, Market, Leaderboard) moves to the top; info used less often day-to-day (Wiki, Patch notes, Discord, language, online counter...) moves to the bottom'},
     ] },
-  { v:'V170', d:'05/07/2026 21:32', name:{fr:'Gain d\'optimisation auto affiché + guide de farm', en:'Auto-enhance gain preview + farm guide'}, fr:[
+  { v:'V170', d:'08/07/2026 08:17', name:{fr:'Gain d\'optimisation auto affiché + guide de farm', en:'Auto-enhance gain preview + farm guide'}, fr:[
       {t:'improve', sub:'equipements', tx:'L\'optimisation automatique ("Auto jusqu\'à") affiche désormais le gain de stats (PA/PD/PV/Esquive) que rapporterait le palier choisi, avant même de lancer l\'auto'},
       {t:'new', sub:'objets', tx:'Clique sur un emplacement de sac VIDE pour ouvrir un guide "Où farmer ?" listant les zones débloquées et ce qu\'elles rapportent — les zones actuellement trop dangereuses pour ton stuff sont exclues'},
     ], en:[
       {t:'improve', sub:'equipements', tx:'Auto-enhance ("Auto to") now shows the stat gain (AP/DP/HP/Dodge) the chosen tier would bring, before even starting the auto run'},
       {t:'new', sub:'objets', tx:'Click an EMPTY bag slot to open a "Where to farm?" guide listing unlocked zones and what they drop — zones currently too dangerous for your gear are excluded'},
     ] },
-  { v:'V169', d:'05/07/2026 21:26', name:{fr:'Refonte des notes de version + correction du cadeau de fidélité', en:'Patch notes overhaul + loyalty gift fix'}, fr:[
+  { v:'V169', d:'08/07/2026 08:17', name:{fr:'Refonte des notes de version + correction du cadeau de fidélité', en:'Patch notes overhaul + loyalty gift fix'}, fr:[
       {t:'improve', sub:'interface', tx:'Nouvelle taxonomie des notes de version (Nouveautés, Équilibrage, Améliorations, Corrections de bugs, Sécurité, Serveur, Événements, Informations) — les lignes d\'une même version sont désormais groupées par catégorie, chaque groupe séparé par un liseré doré, avec un alignement cohérent au lieu d\'un badge répété sur chaque ligne'},
       {t:'fix', sub:'connexion', tx:'Le cadeau de fidélité journalier (et son message flottant "Nouveau courrier") pouvait s\'afficher à tort à CHAQUE connexion, même si déjà réclamé aujourd\'hui — la vérification se faisait avant que la vraie sauvegarde cloud ait fini de charger. Corrigé : le jeu attend maintenant que la sauvegarde soit chargée avant de vérifier'},
     ], en:[
       {t:'improve', sub:'interface', tx:'New patch notes taxonomy (New, Balancing, Improvements, Bug fixes, Security, Server, Events, Information) — lines within a version are now grouped by category, each group separated by a gold divider, with consistent alignment instead of a repeated badge on every line'},
       {t:'fix', sub:'connexion', tx:'The daily loyalty gift (and its floating "New mail" toast) could wrongly show up on EVERY connection, even if already claimed today — the check ran before the real cloud save had finished loading. Fixed: the game now waits for the save to load before checking'},
     ] },
-  { v:'V168', d:'05/07/2026 20:31', name:{fr:'Correction : jeu bloqué au chargement pour les invités', en:'Fix: game stuck loading for guests'}, fr:[
+  { v:'V168', d:'08/07/2026 08:17', name:{fr:'Correction : jeu bloqué au chargement pour les invités', en:'Fix: game stuck loading for guests'}, fr:[
       {t:'fix', nature:'backend', tx:'Le correctif de la version précédente (page de connexion bloquée) déclenchait aussi un 2e chargement en parallèle de la sauvegarde pour une session invité, provoquant des effets en double (ex: bonus de bienvenue compté deux fois) et pouvait bloquer le jeu au chargement — sessions invité désormais exclues de ce relais, et un verrou empêche tout double appel'},
     ], en:[
       {t:'fix', nature:'backend', tx:'The previous version\'s fix (login screen stuck) also triggered a 2nd, parallel save load for guest sessions, causing duplicated effects (e.g. the welcome bonus counted twice) and could get the game stuck loading — guest sessions are now excluded from that relay, and a lock prevents any double call'},
     ] },
-  { v:'V167', d:'05/07/2026 20:24', name:{fr:'Bouton "Vider le cache" sur l\'écran de connexion', en:'"Clear cache" button on the login screen'}, fr:[
+  { v:'V167', d:'08/07/2026 08:17', name:{fr:'Bouton "Vider le cache" sur l\'écran de connexion', en:'"Clear cache" button on the login screen'}, fr:[
       {t:'new', tx:'Le bouton "🧹 Vider le cache du jeu" est maintenant aussi accessible directement sur l\'écran de connexion (en plus du panneau "Mon compte"), pour les cas où un joueur reste bloqué dessus'},
     ], en:[
       {t:'new', tx:'The "🧹 Clear game cache" button is now also available directly on the login screen (in addition to the "My account" panel), for cases where a player gets stuck on it'},
     ] },
-  { v:'V166', d:'05/07/2026 20:19', name:{fr:'Correction : page de connexion bloquée après une connexion réussie', en:'Fix: login screen stuck after a successful sign-in'}, fr:[
+  { v:'V166', d:'08/07/2026 08:17', name:{fr:'Correction : page de connexion bloquée après une connexion réussie', en:'Fix: login screen stuck after a successful sign-in'}, fr:[
       {t:'fix', nature:'backend', tx:'Après une connexion via Discord (ou un lien de confirmation d\'email), l\'écran de connexion pouvait rester affiché malgré une connexion réussie, y compris après un rechargement de la page — la session était bien établie mais le jeu ne le détectait pas toujours à temps'},
     ], en:[
       {t:'fix', nature:'backend', tx:'After signing in via Discord (or an email confirmation link), the login screen could stay on-screen despite a successful sign-in, even after reloading the page — the session was properly established but the game didn\'t always detect it in time'},
     ] },
-  { v:'V165', d:'05/07/2026 20:04', name:{fr:'Bouton "Vider le cache" et notes de version plus lisibles', en:'"Clear cache" button and more readable patch notes'}, fr:[
+  { v:'V165', d:'08/07/2026 08:17', name:{fr:'Bouton "Vider le cache" et notes de version plus lisibles', en:'"Clear cache" button and more readable patch notes'}, fr:[
       {t:'new', tx:'Panneau "Mon compte" : bouton "🧹 Vider le cache et recharger" pour les cas où une mise à jour ne s\'affiche pas correctement (fichiers du jeu mis en cache par le navigateur) — ne touche jamais à la sauvegarde'},
       {t:'change', nature:'opticode', tx:'Refonte visuelle des notes de version : chaque entrée devient une carte avec un fond légèrement teinté et des séparateurs entre les lignes, badges arrondis en forme de pilule, entrée la plus récente mise en valeur'},
       {t:'fix', nature:'backend', tx:'La détection de nouvelle version déployée (bandeau "Recharger") avait cessé de fonctionner depuis la séparation du code en plusieurs fichiers — elle cherchait les notes de version dans le mauvais fichier'},
@@ -1819,46 +1858,46 @@ const PATCH_NOTES = [
       {t:'change', nature:'opticode', tx:'Visual redesign of the patch notes: each entry is now a card with a lightly tinted background and separators between lines, rounded pill-shaped badges, most recent entry highlighted'},
       {t:'fix', nature:'backend', tx:'Detection of a newly deployed version (the "Reload" banner) had stopped working since the code was split into multiple files — it was looking for the patch notes in the wrong file'},
     ] },
-  { v:'V164', d:'05/07/2026 19:53', name:{fr:'Notes de version : tag "nature" (optim. code, backend...)', en:'Patch notes: "nature" tag (code opti, backend...)'}, fr:[
+  { v:'V164', d:'08/07/2026 08:17', name:{fr:'Notes de version : tag "nature" (optim. code, backend...)', en:'Patch notes: "nature" tag (code opti, backend...)'}, fr:[
       {t:'new', tx:'Chaque ligne des notes de version peut désormais porter un tag "nature" en plus du type et de la plateforme — Optim. code, Optimisation, Inventaire ou Backend — pour repérer d\'un coup d\'œil les changements sous le capot qui ne touchent pas directement le contenu de jeu. Ce 2e badge (nature ou Tab/Mobile) s\'affiche maintenant sur sa propre ligne, sous le badge principal, plutôt qu\'à côté'},
       {t:'change', nature:'opticode', tx:'Le code du jeu (un seul fichier HTML de plus de 11 500 lignes) a été séparé en plusieurs fichiers — structure HTML, CSS et JavaScript (coupé en 2 fichiers) chacun à part — pour être plus simple à maintenir sur la durée. Aucun changement de gameplay, tout fonctionne à l\'identique'},
     ], en:[
       {t:'new', tx:'Each patch note line can now carry a "nature" tag in addition to its type and platform — Code opti, Optimization, Inventory or Backend — to spot at a glance under-the-hood changes that don\'t directly touch game content. This 2nd badge (nature or Tab/Mobile) now shows on its own line, below the main badge, instead of next to it'},
       {t:'change', nature:'opticode', tx:'The game\'s code (a single 11,500+ line HTML file) has been split into several files — HTML structure, CSS and JavaScript (split into 2 files) each on their own — to be easier to maintain long-term. No gameplay change, everything works identically'},
     ] },
-  { v:'V163', d:'05/07/2026 19:04', name:{fr:'Tutoriel : indice de défilement quand la cible est hors champ', en:'Tutorial: scroll hint when the target is off-screen'}, fr:[
+  { v:'V163', d:'08/07/2026 08:17', name:{fr:'Tutoriel : indice de défilement quand la cible est hors champ', en:'Tutorial: scroll hint when the target is off-screen'}, fr:[
       {t:'new', tx:'Pendant le tutoriel de début, si l\'élément mis en avant par l\'étape en cours est hors du champ visible, une icône apparaît pour indiquer qu\'il faut défiler — 🖱️ souris sur ordinateur, 👆 doigt sur mobile/tablette. Disparaît dès que l\'élément redevient visible'},
     ], en:[
       {t:'new', tx:'During the opening tutorial, if the element highlighted by the current step is off-screen, an icon appears to indicate you need to scroll — 🖱️ mouse on desktop, 👆 finger on mobile/tablet. Disappears as soon as the element becomes visible again'},
     ] },
-  { v:'V162', d:'05/07/2026 18:58', name:{fr:'Nouvelle zone : Planque des Mânes (3e zone bleue)', en:'New zone: Manes\' Hideout (3rd blue zone)'}, fr:[
+  { v:'V162', d:'08/07/2026 08:17', name:{fr:'Nouvelle zone : Planque des Mânes (3e zone bleue)', en:'New zone: Manes\' Hideout (3rd blue zone)'}, fr:[
       {t:'new', tx:'Nouvelle zone "Planque des Mânes" (Esprit des Mânes), 3e zone du palier bleu (Grunil) — complète la rotation d\'une arme garantie par zone et apporte la ceinture manquante (Orkinrad\'s Belt). Ses PA/PD requis sont volontairement identiques à Ruines de Kratuga : le plafond de stat du palier bleu au PEN ne change pas (~294 PA / ~247 PD stuff complet)'},
     ], en:[
       {t:'new', tx:'New "Manes\' Hideout" zone (Manes Spirit), 3rd zone of the blue tier (Grunil) — completes the one-guaranteed-weapon-per-zone rotation and brings the missing belt (Orkinrad\'s Belt). Its AP/DP requirements are deliberately identical to Kratuga Ruins: the blue tier\'s stat ceiling at PEN doesn\'t change (~294 AP / ~247 DP full set)'},
     ] },
-  { v:'V161', d:'05/07/2026 18:43', name:{fr:'Badge "Compatible mobile/tablette" à la connexion', en:'"Mobile/tablet compatible" badge at login'}, fr:[
+  { v:'V161', d:'08/07/2026 08:17', name:{fr:'Badge "Compatible mobile/tablette" à la connexion', en:'"Mobile/tablet compatible" badge at login'}, fr:[
       {t:'new', plat:'mobile', tx:'Un badge "📱 BETA — Compatible mobile & tablette" s\'affiche désormais sur l\'écran de connexion/création de compte, pour annoncer l\'adaptation mobile dès l\'arrivée sur le jeu'},
     ], en:[
       {t:'new', plat:'mobile', tx:'A "📱 BETA — Mobile & tablet compatible" badge now shows on the login/account creation screen, announcing the mobile adaptation right from arrival on the game'},
     ] },
-  { v:'V160', d:'05/07/2026 18:20', name:{fr:'Rééquilibrage PA/PD appliqué rétroactivement au stuff déjà possédé', en:'AP/DP rebalance applied retroactively to owned gear'}, fr:[
+  { v:'V160', d:'08/07/2026 08:17', name:{fr:'Rééquilibrage PA/PD appliqué rétroactivement au stuff déjà possédé', en:'AP/DP rebalance applied retroactively to owned gear'}, fr:[
       {t:'fix', tx:'Le rééquilibrage des PA/PD (armes/armures/bijoux, voir version précédente) ne s\'appliquait qu\'aux nouveaux objets trouvés — tout le stuff déjà en possession (équipé ou dans le sac) gardait ses anciennes valeurs, bien plus hautes pour les armes. Recalculé une bonne fois pour toutes au prochain chargement, sans rien perdre (les PV/l\'Esquive, non concernés par le rééquilibrage, restent inchangés)'},
     ], en:[
       {t:'fix', tx:'The AP/DP rebalance (weapons/armor/jewelry, see previous version) only applied to newly found items — all gear already owned (equipped or in the bag) kept its old values, much higher for weapons. Recalculated once and for all on next load, without losing anything (HP/Dodge, untouched by the rebalance, stay the same)'},
     ] },
-  { v:'V159', d:'05/07/2026 18:09', name:{fr:'Notes de version : badge Tablette/Mobile', en:'Patch notes: Tablet/Mobile badge'}, fr:[
+  { v:'V159', d:'08/07/2026 08:17', name:{fr:'Notes de version : badge Tablette/Mobile', en:'Patch notes: Tablet/Mobile badge'}, fr:[
       {t:'new', tx:'Chaque ligne des notes de version peut maintenant porter un 2e badge "📱 Tab/Mobile" en plus du type (Nouveauté/Modification/Correction/Faille), pour repérer d\'un coup d\'œil les changements qui ne concernent QUE la tablette/le téléphone. Appliqué rétroactivement aux notes V152 à V157 (adaptation mobile)'},
     ], en:[
       {t:'new', tx:'Each patch note line can now carry a 2nd "📱 Tab/Mobile" badge next to its type (New/Change/Fix/Security), to spot at a glance changes that only concern tablet/phone. Applied retroactively to notes V152 through V157 (mobile adaptation)'},
     ] },
-  { v:'V158', d:'05/07/2026 18:05', name:{fr:'1 arme garantie par zone, PA des armes fortement réduit', en:'1 guaranteed weapon per zone, weapon AP greatly reduced'}, fr:[
+  { v:'V158', d:'08/07/2026 08:17', name:{fr:'1 arme garantie par zone, PA des armes fortement réduit', en:'1 guaranteed weapon per zone, weapon AP greatly reduced'}, fr:[
       {t:'change', tx:'Chaque zone garantit désormais un type d\'arme précis (épée/dague/éveil, en rotation par palier) au lieu de tirer au hasard le même emplacement que l\'armure — la zone bleue (2 zones seulement pour l\'instant) fait exception : sa 2e zone garantit 2 types d\'arme'},
       {t:'change', tx:'Les armes donnaient bien trop de PA (à elles 3, environ 750 PA au PEN sur un stuff bleu complet, contre ~460 PD total) — rééquilibrées pour qu\'un stuff bleu complet (3 armes + 4 armures + bijoux) totalise environ 301 PA et 248 PD au PEN, chaque palier plus bas donnant proportionnellement moins'},
     ], en:[
       {t:'change', tx:'Each zone now guarantees a specific weapon type (sword/dagger/awakening, rotating by tier) instead of randomly rolling the same slot as armor — the blue tier (only 2 zones for now) is an exception: its 2nd zone guarantees 2 weapon types'},
       {t:'change', tx:'Weapons gave far too much AP (the 3 of them alone reached ~750 AP at PEN on a full blue set, vs ~460 total DP) — rebalanced so a full blue set (3 weapons + 4 armor + jewelry) totals around 301 AP and 248 DP at PEN, with each lower tier giving proportionally less'},
     ] },
-  { v:'V157', d:'05/07/2026 17:48', name:{fr:'Mobile : header dégagé, gains XP/Loot lisibles, moins de chevauchement', en:'Mobile: cleared header, readable XP/Loot gains, less overlap'}, fr:[
+  { v:'V157', d:'08/07/2026 08:17', name:{fr:'Mobile : header dégagé, gains XP/Loot lisibles, moins de chevauchement', en:'Mobile: cleared header, readable XP/Loot gains, less overlap'}, fr:[
       {t:'fix', plat:'mobile', tx:'Le bouton replié du menu de gauche (position fixe, en haut à gauche) cachait le premier onglet de la barre d\'activités sur téléphone — le contenu est repoussé sous ce bouton pour ne plus jamais le chevaucher'},
       {t:'fix', plat:'mobile', tx:'Les bannières "Sac plein" et "Tu es mort" recouvraient le nom de la zone sur téléphone (cadre de jeu très bas) — repoussées en dessous'},
       {t:'change', plat:'mobile', tx:'Les nombres flottants de gains (loot, XP, dégâts) sont dessinés sur un canvas à résolution fixe, réduit à la taille de l\'écran — sur téléphone ils devenaient minuscules, quasi illisibles. Leur taille compense maintenant la réduction de l\'écran pour rester lisible, quelle que soit la largeur'},
@@ -1869,14 +1908,14 @@ const PATCH_NOTES = [
       {t:'change', plat:'mobile', tx:'Floating gain numbers (loot, XP, damage) are drawn on a fixed-resolution canvas that shrinks to fit the screen — on phone they became tiny, barely readable. Their size now compensates for the screen shrink to stay legible at any width'},
       {t:'change', plat:'mobile', tx:'Silver, rate/h and live loot slightly tightened on phone to leave more room for this group on a shrunk game frame'},
     ] },
-  { v:'V156', d:'05/07/2026 17:26', name:{fr:'Mobile : barre de sorts repliable, potion mise en avant', en:'Mobile: collapsible skill bar, potion put forward'}, fr:[
+  { v:'V156', d:'08/07/2026 08:17', name:{fr:'Mobile : barre de sorts repliable, potion mise en avant', en:'Mobile: collapsible skill bar, potion put forward'}, fr:[
       {t:'change', plat:'mobile', tx:'Sur mobile/tablette, la barre de sorts est maintenant repliée par défaut (purement indicative, aucun clic requis, le combat reste automatique) — un bouton ⚡ la déplie/replie à la demande, libérant de la place dans le cadre de jeu'},
       {t:'change', plat:'mobile', tx:'La potion (soin automatique), ce qui compte vraiment à surveiller en jeu, est mise en avant sur mobile/tablette : agrandie avec un halo doré au lieu d\'être réduite comme le reste du HUD'},
     ], en:[
       {t:'change', plat:'mobile', tx:'On mobile/tablet, the skill bar is now collapsed by default (purely informational, no click required, combat stays automatic) — a ⚡ button expands/collapses it on demand, freeing up space in the game frame'},
       {t:'change', plat:'mobile', tx:'The potion (auto-heal), the thing that actually matters to watch during play, is put forward on mobile/tablet: enlarged with a gold glow instead of being shrunk like the rest of the HUD'},
     ] },
-  { v:'V155', d:'05/07/2026 09:07', name:{fr:'Correctifs mobile : barre de sorts coupée, IA superposée', en:'Mobile fixes: cropped skill bar, overlapping AI status'}, fr:[
+  { v:'V155', d:'08/07/2026 08:17', name:{fr:'Correctifs mobile : barre de sorts coupée, IA superposée', en:'Mobile fixes: cropped skill bar, overlapping AI status'}, fr:[
       {t:'fix', plat:'mobile', tx:'Sur téléphone, la barre de 9 sorts (calibrée pour ~418px de large) dépassait des 2 côtés du cadre de jeu réduit (~360-380px), coupant les icônes de bord (ex: "Speed" et "Voltaic" à moitié visibles). Icônes réduites pour tenir entièrement dans le cadre'},
       {t:'fix', plat:'mobile', tx:'Le texte "IA : ..." se superposait au nom de la zone — le cadre de jeu devient très bas sur téléphone (son ratio suit la largeur), pas assez de place pour empiler proprement les deux. Masqué sur téléphone (indicatif seulement, le combat reste automatique)'},
       {t:'change', plat:'mobile', tx:'Barre de vie/potion légèrement réduite sur téléphone pour laisser plus de place à la barre de sorts juste à côté — un chevauchement résiduel entre les deux subsiste sur les téléphones les plus étroits, une refonte plus profonde (titre de zone notamment) serait nécessaire pour l\'éliminer complètement'},
@@ -1885,24 +1924,24 @@ const PATCH_NOTES = [
       {t:'fix', plat:'mobile', tx:'The "AI: ..." status text overlapped the zone name — the game frame becomes very short on phone (its ratio follows the width), not enough room to stack both cleanly. Hidden on phone (informational only, combat stays automatic)'},
       {t:'change', plat:'mobile', tx:'HP/potion bar slightly shrunk on phone to leave more room for the skill bar right next to it — a residual overlap between the two remains on the narrowest phones; a deeper redesign (notably the zone title) would be needed to fully eliminate it'},
     ] },
-  { v:'V154', d:'05/07/2026 09:01', name:{fr:'Correctif mobile : barre d\'onglets empilée sur 8 lignes', en:'Mobile fix: tab bar stacked into 8 rows'}, fr:[
+  { v:'V154', d:'08/07/2026 08:17', name:{fr:'Correctif mobile : barre d\'onglets empilée sur 8 lignes', en:'Mobile fix: tab bar stacked into 8 rows'}, fr:[
       {t:'fix', plat:'mobile', tx:'Sur téléphone, les 8 onglets (Zone/Boss/Pêche/Mine/Forêt/Champs/Bergerie/Atelier royal) et le texte "Prochain boss" se partageaient une seule ligne — le texte, assez long, écrasait la largeur dispo pour les onglets, forcés à 1 seul par ligne (8 lignes de haut, confirmé sur un vrai téléphone). Empilés l\'un sous l\'autre à la place : les onglets se répartissent maintenant sur 3-4 par ligne'},
     ], en:[
       {t:'fix', plat:'mobile', tx:'On phone, the 8 tabs (Zone/Boss/Fishing/Mining/Forest/Fields/Ranch/Royal Workshop) and the "Next boss" text shared a single row — the fairly long text crushed the space left for the tabs, forcing them to 1 per row (8 rows tall, confirmed on a real phone). Stacked on top of each other instead: tabs now spread across 3-4 per row'},
     ] },
-  { v:'V153', d:'05/07/2026 08:39', name:{fr:'Correctifs mobile : menu scrollable, version bien rangée', en:'Mobile fixes: scrollable menu, version properly placed'}, fr:[
+  { v:'V153', d:'08/07/2026 08:17', name:{fr:'Correctifs mobile : menu scrollable, version bien rangée', en:'Mobile fixes: scrollable menu, version properly placed'}, fr:[
       {t:'fix', plat:'mobile', tx:'Le numéro de version (tout en bas du menu de gauche) n\'était pas masqué quand le menu était replié — il flottait tout seul par-dessus le jeu. Il est maintenant bien rangé dans le menu, visible seulement quand celui-ci est déplié'},
       {t:'fix', plat:'mobile', tx:'Sur un petit écran, le menu de gauche déplié pouvait être plus haut que l\'écran lui-même, rendant certains boutons (Discord, Admin...) impossibles à atteindre. Le menu défile maintenant lui-même si besoin, plutôt que de déborder hors de l\'écran'},
     ], en:[
       {t:'fix', plat:'mobile', tx:'The version number (at the very bottom of the left menu) wasn\'t hidden when the menu was folded — it floated on its own over the game. It\'s now properly tucked inside the menu, only visible when expanded'},
       {t:'fix', plat:'mobile', tx:'On a small screen, the expanded left menu could be taller than the screen itself, making some buttons (Discord, Admin...) unreachable. The menu now scrolls internally when needed instead of overflowing off-screen'},
     ] },
-  { v:'V152', d:'05/07/2026 08:24', name:{fr:'Adaptation tablette/téléphone', en:'Tablet/phone optimization'}, fr:[
+  { v:'V152', d:'08/07/2026 08:17', name:{fr:'Adaptation tablette/téléphone', en:'Tablet/phone optimization'}, fr:[
       {t:'new', plat:'mobile', tx:'Sur tablette/téléphone (≤1024px de large, couvre les tailles standards du marché — iPhone SE à iPad en paysage), le menu de gauche, le suivi de quêtes et le chat se replient désormais automatiquement par défaut pour ne plus recouvrir le jeu ni se chevaucher entre eux ; toujours dépliables en un tap. Aucun changement sur la version ordinateur (>1024px), testée et inchangée'},
     ], en:[
       {t:'new', plat:'mobile', tx:'On tablet/phone (≤1024px wide, covers standard market sizes — iPhone SE to iPad landscape), the left menu, quest tracker and chat now auto-fold by default so they no longer cover the game or overlap each other; still one tap away to expand. No change to the desktop version (>1024px), tested and unaffected'},
     ] },
-  { v:'V151', d:'05/07/2026 07:51', name:{fr:'Dates des notes de version, tutoriel Compendium, joueurs fluides', en:'Patch note dates, Compendium tutorial, smooth players'}, fr:[
+  { v:'V151', d:'08/07/2026 08:17', name:{fr:'Dates des notes de version, tutoriel Compendium, joueurs fluides', en:'Patch note dates, Compendium tutorial, smooth players'}, fr:[
       {t:'fix', tx:'Les notes de version affichaient une date/heure de publication erronée (jusqu\'à plusieurs jours dans le futur) — corrigé pour les versions V91 à V150 avec l\'horodatage réel'},
       {t:'fix', tx:'Dans le tutoriel du Compendium, les étapes 4 et 6 (une zone/le sac protégé) affichaient l\'encadré par-dessus l\'élément mis en avant au lieu d\'au-dessus — une hauteur de boîte codée en dur ne correspondait pas au texte plus long de ces étapes ; corrigé pour mesurer la vraie hauteur'},
       {t:'change', tx:'Les autres joueurs dans l\'arène d\'un World Boss partagé bougent maintenant de façon fluide (interpolés à chaque image) au lieu de sauter d\'une position à l\'autre toutes les ~0.35s'},
@@ -1911,90 +1950,90 @@ const PATCH_NOTES = [
       {t:'fix', tx:'In the Compendium tutorial, steps 4 and 6 (a zone / the protected bag) showed the box overlapping the highlighted element instead of sitting above it — a hardcoded box height didn\'t match these steps\' longer text; fixed to measure the real height'},
       {t:'change', tx:'Other players in a shared World Boss arena now move smoothly (interpolated every frame) instead of jumping from position to position every ~0.35s'},
     ] },
-  { v:'V150', d:'05/07/2026 07:41', name:{fr:'Compendium : bonus de zone = TOUS les objets obtenus', en:'Compendium: zone bonus = ALL items obtained'}, fr:[
+  { v:'V150', d:'08/07/2026 08:17', name:{fr:'Compendium : bonus de zone = TOUS les objets obtenus', en:'Compendium: zone bonus = ALL items obtained'}, fr:[
       {t:'change', tx:'Le bonus +1% d\'une zone n\'est désormais actif que si ses 4 objets (trash, matériau, bijou jackpot, objet craft) ont TOUS déjà été obtenus au moins une fois — avant, un seul suffisait. Une zone incomplète affiche "Objet manquant" au lieu de "Non visitée". Entièrement recalculé à partir de tes objets déjà possédés : aucune perte de progression, le changement s\'applique rétroactivement dès le rechargement'},
     ], en:[
       {t:'change', tx:'A zone\'s +1% bonus is now only active if ALL 4 of its items (trash, material, jackpot jewel, craft item) have been obtained at least once — previously just one was enough. An incomplete zone now shows "Missing item" instead of "Not visited". Fully recomputed from items you already own: no progress lost, the change applies retroactively as soon as you reload'},
     ] },
-  { v:'V149', d:'05/07/2026 07:35', name:{fr:'Tutoriel du Compendium', en:'Compendium tutorial'}, fr:[
+  { v:'V149', d:'08/07/2026 08:17', name:{fr:'Tutoriel du Compendium', en:'Compendium tutorial'}, fr:[
       {t:'new', tx:'Nouveau bouton "?" en haut à droite du Compendium : lance un mini-tutoriel expliquant la progression globale, les 4 onglets, comment lire une zone, la Maîtrise PEN et le Sac protégé. Se lance automatiquement à la toute première ouverture du panneau, et peut être relancé à tout moment avec ce bouton'},
     ], en:[
       {t:'new', tx:'New "?" button at the top-right of the Compendium: launches a mini-tutorial explaining overall progress, the 4 tabs, how to read a zone, PEN Mastery and the Protected bag. Launches automatically the very first time the panel is opened, and can be replayed anytime with this button'},
     ] },
-  { v:'V148', d:'05/07/2026 07:29', name:{fr:'Correctif Compendium : zones marquées "Non visitée" à tort', en:'Compendium fix: zones wrongly shown "Not visited"'}, fr:[
+  { v:'V148', d:'08/07/2026 08:17', name:{fr:'Correctif Compendium : zones marquées "Non visitée" à tort', en:'Compendium fix: zones wrongly shown "Not visited"'}, fr:[
       {t:'fix', tx:'Une zone pouvait afficher "Non visitée" dans le Compendium alors que ses objets étaient déjà cochés ✓ — le suivi des zones visitées n\'existait pas encore quand ces objets avaient été ramassés. Rattrapage rétroactif au chargement : si tu possèdes déjà l\'objet unique de la zone, elle est maintenant marquée visitée (et le bonus +1% associé accordé)'},
     ], en:[
       {t:'fix', tx:'A zone could show "Not visited" in the Compendium even though its items were already checked ✓ — zone-visited tracking didn\'t exist yet when those items were first picked up. Retroactively backfilled on load: if you already own the zone\'s unique item, it\'s now marked visited (and the associated +1% bonus granted)'},
     ] },
-  { v:'V147', d:'05/07/2026 07:18', name:{fr:'Alerte double réclamation déplacée sur le salon cheat', en:'Double-claim alert moved to the cheat channel'}, fr:[
+  { v:'V147', d:'08/07/2026 08:17', name:{fr:'Alerte double réclamation déplacée sur le salon cheat', en:'Double-claim alert moved to the cheat channel'}, fr:[
       {t:'change', tx:'L\'alerte "Tentative de double réclamation" part désormais sur le salon Discord "cheat" (comme les bornages anti-triche) au lieu du salon général — déplacée côté serveur directement dans boss_claim(), plus fiable et impossible à contourner côté client'},
     ], en:[
       {t:'change', tx:'The "Double-claim attempt" alert now goes to the "cheat" Discord channel (like anti-cheat clamps) instead of the general channel — moved server-side directly into boss_claim(), more reliable and impossible to bypass client-side'},
     ] },
-  { v:'V146', d:'05/07/2026 07:06', name:{fr:'Correctif serveur : logs Discord bloqués par CORS', en:'Server fix: Discord logs blocked by CORS'}, fr:[
+  { v:'V146', d:'08/07/2026 08:17', name:{fr:'Correctif serveur : logs Discord bloqués par CORS', en:'Server fix: Discord logs blocked by CORS'}, fr:[
       {t:'fix', tx:'La fonction serveur qui relaie les événements vers Discord (boss vaincu, succès, loot rare, etc.) ne répondait pas correctement aux requêtes CORS depuis le site déployé — le navigateur bloquait l\'appel avant même qu\'il n\'atteigne le webhook, donc plus aucun log Discord ne partait. Corrigé côté serveur (Edge Function) ; vérifié par un appel de test réel depuis l\'extérieur, reçu avec succès'},
     ], en:[
       {t:'fix', tx:'The server function that relays events to Discord (boss defeated, achievements, rare loot, etc.) wasn\'t responding correctly to CORS requests from the deployed site — the browser blocked the call before it ever reached the webhook, so no Discord logs were going out anymore. Fixed server-side (Edge Function); verified with a real external test call, received successfully'},
     ] },
-  { v:'V145', d:'05/07/2026 07:02', name:{fr:'Correctif : présence des joueurs en World Boss', en:'Fix: player presence in World Boss'}, fr:[
+  { v:'V145', d:'08/07/2026 08:17', name:{fr:'Correctif : présence des joueurs en World Boss', en:'Fix: player presence in World Boss'}, fr:[
       {t:'fix', tx:'Grâce aux logs [BossPresence] : le canal de présence Realtime se fermait parfois tout seul (coupure réseau) pendant un combat de World Boss partagé, sans jamais se rétablir — les joueurs devenaient invisibles les uns aux autres pour le reste du combat. Le canal se reconnecte désormais automatiquement tant que le combat partagé est en cours'},
       {t:'fix', tx:'Corrigé un plantage JS toutes les 60s (ping de temps de jeu) qui pouvait perturber la page en arrière-plan : "sb.rpc(...).catch is not a function"'},
     ], en:[
       {t:'fix', tx:'Thanks to the [BossPresence] logs: the Realtime presence channel sometimes closed on its own (network hiccup) during a shared World Boss fight and never recovered — players became invisible to each other for the rest of the fight. The channel now automatically reconnects as long as the shared fight is ongoing'},
       {t:'fix', tx:'Fixed a JS crash every 60s (playtime ping) that could disrupt the page in the background: "sb.rpc(...).catch is not a function"'},
     ] },
-  { v:'V144', d:'05/07/2026 06:56', name:{fr:'Diagnostic : présence des joueurs en World Boss', en:'Diagnostics: player presence in World Boss'}, fr:[
+  { v:'V144', d:'08/07/2026 08:17', name:{fr:'Diagnostic : présence des joueurs en World Boss', en:'Diagnostics: player presence in World Boss'}, fr:[
       {t:'fix', tx:'Le partage des PV/top 10 fonctionne bien en World Boss (confirmé par test à 2 comptes), mais les silhouettes des autres joueurs restent invisibles dans l\'arène — traces de diagnostic ajoutées (console, préfixe [BossPresence]) pour identifier précisément la cause au prochain test'},
     ], en:[
       {t:'fix', tx:'HP/top 10 sharing works correctly in World Boss (confirmed via 2-account test), but other players\' silhouettes remain invisible in the arena — diagnostic logging added (console, [BossPresence] prefix) to pinpoint the exact cause on the next test'},
     ] },
-  { v:'V143', d:'05/07/2026 06:42', name:{fr:'Correctif serveur : Vell planifié était toujours en solo', en:'Server fix: scheduled Vell was always solo'}, fr:[
+  { v:'V143', d:'08/07/2026 08:17', name:{fr:'Correctif serveur : Vell planifié était toujours en solo', en:'Server fix: scheduled Vell was always solo'}, fr:[
       {t:'fix', tx:'Les apparitions programmées de Vell (jeudi 12h00, dimanche 16h45) ne créaient jamais d\'instance PARTAGÉE côté serveur — chaque joueur combattait Vell tout seul, sans jamais voir les autres joueurs ni PV communs, contrairement à Kzarka qui fonctionnait déjà correctement. Corrigé côté Supabase ; un spawn Vell déclenché par le planning est désormais bien partagé entre tous les joueurs, exactement comme un spawn admin'},
       {t:'fix', tx:'Correctif complémentaire : un spawn admin en cours (ex: Vell lancé manuellement) pouvait être écrasé par erreur si un créneau planifié de Kzarka devenait actif entre-temps — n\'importe quel spawn valide (admin ou planifié) est désormais protégé jusqu\'à son expiration'},
     ], en:[
       {t:'fix', tx:'Vell\'s scheduled appearances (Thursday 12:00, Sunday 16:45) never created a SHARED instance server-side — each player fought Vell completely alone, never seeing other players or shared HP, unlike Kzarka which already worked correctly. Fixed server-side; a scheduled Vell spawn is now properly shared among all players, exactly like an admin spawn'},
       {t:'fix', tx:'Additional fix: an ongoing admin spawn (e.g. Vell triggered manually) could be wrongly overwritten if a scheduled Kzarka slot became active in the meantime — any valid spawn (admin or scheduled) is now protected until it expires'},
     ] },
-  { v:'V142', d:'05/07/2026 06:33', name:{fr:'Persistance : chat, encarts de suivi', en:'Persistence: chat, tracker widgets'}, fr:[
+  { v:'V142', d:'08/07/2026 08:17', name:{fr:'Persistance : chat, encarts de suivi', en:'Persistence: chat, tracker widgets'}, fr:[
       {t:'change', tx:'Le canal de chat choisi et l\'état replié/déplié du chat survivent maintenant à un rechargement de la page (comme le menu de gauche, déjà persisté)'},
       {t:'change', tx:'Les encarts "🗒️ Suivi" (temps de jeu, reset quotidien/hebdo) et "🔖 Quêtes suivies" gardent leur état replié/déplié après un rechargement au lieu de toujours repartir dépliés'},
     ], en:[
       {t:'change', tx:'The chosen chat channel and the chat\'s folded/unfolded state now survive a page reload (like the left menu, already persisted)'},
       {t:'change', tx:'The "🗒️ Tracker" (playtime, daily/weekly reset) and "🔖 Tracked quests" widgets keep their folded/unfolded state after a reload instead of always starting unfolded'},
     ] },
-  { v:'V141', d:'05/07/2026 06:25', name:{fr:'10 spots fixes par World Boss, Vell sur les pontons', en:'10 fixed spots per World Boss, Vell on the boat decks'}, fr:[
+  { v:'V141', d:'08/07/2026 08:17', name:{fr:'10 spots fixes par World Boss, Vell sur les pontons', en:'10 fixed spots per World Boss, Vell on the boat decks'}, fr:[
       {t:'change', tx:'Chaque joueur arrive désormais sur l\'un de 10 spots fixes tirés au hasard dans l\'arène du boss (au lieu de se superposer exactement au même point que tout le monde), et y revient entre deux AoE — les joueurs se voient enfin répartis dans la zone pendant la strat'},
       {t:'change', tx:'Sur Vell, ces 10 spots sont répartis sur les pontons des 2 bateaux (5 chacun) au lieu d\'un point unique en pleine mer'},
     ], en:[
       {t:'change', tx:'Each player now spawns on one of 10 fixed spots picked at random in the boss arena (instead of stacking exactly on the same point as everyone else), and returns there between AoEs — players are finally spread out visibly during the strat'},
       {t:'change', tx:'On Vell, these 10 spots are spread across the 2 boats\' decks (5 each) instead of a single point out in open water'},
     ] },
-  { v:'V140', d:'05/07/2026 05:23', name:{fr:'Planning des World Boss ancré sur l\'heure française', en:'World Boss schedule anchored to French time'}, fr:[
+  { v:'V140', d:'08/07/2026 08:17', name:{fr:'Planning des World Boss ancré sur l\'heure française', en:'World Boss schedule anchored to French time'}, fr:[
       {t:'fix', tx:'Les horaires de Vell/Kzarka (repris de garmoth.com) sont ceux de l\'heure française (Europe/Paris) — mais le planning était calculé avec l\'heure LOCALE du navigateur, donc un joueur situé hors de France voyait un planning décalé de son propre fuseau. Le calcul est maintenant toujours ancré sur l\'heure de Paris (été/hiver géré automatiquement), quel que soit le fuseau du joueur'},
     ], en:[
       {t:'fix', tx:'Vell/Kzarka\'s schedule (sourced from garmoth.com) is in French time (Europe/Paris) — but it was computed using the browser\'s LOCAL time, so a player outside France saw a schedule shifted by their own timezone. The schedule is now always anchored to Paris time (summer/winter handled automatically), regardless of the player\'s timezone'},
     ] },
-  { v:'V139', d:'05/07/2026 04:53', name:{fr:'Alerte Discord sur tentative de double réclamation', en:'Discord alert on double-claim attempt'}, fr:[
+  { v:'V139', d:'08/07/2026 08:17', name:{fr:'Alerte Discord sur tentative de double réclamation', en:'Discord alert on double-claim attempt'}, fr:[
       {t:'new', tx:'Le blocage anti-double-réclamation d\'un World Boss (voir V135) était totalement silencieux — chaque tentative de re-réclamer une récompense déjà payée envoie désormais une alerte sur Discord (pseudo du joueur, boss concerné), pour repérer les abus'},
     ], en:[
       {t:'new', tx:'The World Boss anti-double-claim block (see V135) was completely silent — every attempt to re-claim an already-paid reward now sends a Discord alert (player name, boss involved), to spot abuse'},
     ] },
-  { v:'V138', d:'05/07/2026 04:52', name:{fr:'Correctif : Vell affichait en fait Kzarka', en:'Fix: Vell was actually showing Kzarka'}, fr:[
+  { v:'V138', d:'08/07/2026 08:17', name:{fr:'Correctif : Vell affichait en fait Kzarka', en:'Fix: Vell was actually showing Kzarka'}, fr:[
       {t:'fix', tx:'Bug de longue date : le combat de Vell affichait en réalité toujours la silhouette de Kzarka (rouge/brun) — la fonction qui choisit le dessin comparait le mauvais identifiant et ne reconnaissait jamais Vell. Toutes les silhouettes de Vell dessinées depuis plusieurs versions (bateaux, ailes-vasque...) n\'étaient donc jamais visibles en jeu ; elles s\'affichent enfin correctement maintenant'},
     ], en:[
       {t:'fix', tx:'Long-standing bug: Vell\'s fight actually always displayed Kzarka\'s silhouette (red/brown) — the function choosing which creature to draw was comparing the wrong identifier and never recognized Vell. Every Vell silhouette drawn over the last several versions (boats, wing-bowl...) was therefore never actually visible in-game; it now renders correctly'},
     ] },
-  { v:'V137', d:'05/07/2026 04:47', name:{fr:'Vell : ailes-vasque (angles supplémentaires de la sculpture)', en:'Vell: wing-bowl shape (extra sculpture angles)'}, fr:[
+  { v:'V137', d:'08/07/2026 08:17', name:{fr:'Vell : ailes-vasque (angles supplémentaires de la sculpture)', en:'Vell: wing-bowl shape (extra sculpture angles)'}, fr:[
       {t:'change', tx:'Silhouette de Vell affinée d\'après 5 angles de la sculpture 3D de référence : ce que l\'on prenait pour des cornes/socle séparé sont en fait les 2 AILES du dragon, si immenses qu\'elles s\'enroulent vers l\'intérieur et se rejoignent en bas pour former une grande vasque — le corps du dragon (petit, crête de pointes, museau fin, longue queue en lame recourbée) est perché tout en haut, pattes agrippées au rebord'},
     ], en:[
       {t:'change', tx:'Vell\'s silhouette refined from 5 angles of the reference 3D sculpture: what looked like separate horns/a base are actually the dragon\'s 2 WINGS, so huge they curl inward and meet at the bottom to form a large bowl — the dragon\'s body (small, spiked crest, slender snout, long curved blade-tipped tail) perches at the top, claws gripping the rim'},
     ] },
-  { v:'V136', d:'05/07/2026 04:44', name:{fr:'Vell : nouvelle silhouette (cornes enroulées, socle drapé)', en:'Vell: new silhouette (curled horns, draped base)'}, fr:[
+  { v:'V136', d:'08/07/2026 08:17', name:{fr:'Vell : nouvelle silhouette (cornes enroulées, socle drapé)', en:'Vell: new silhouette (curled horns, draped base)'}, fr:[
       {t:'change', tx:'Silhouette de Vell redessinée une 3e fois d\'après une sculpture 3D de référence : deux immenses cornes/ailes enroulées en "C" qui encadrent la tête, une crête de pointes sur la nuque, un museau fin aux crocs visibles, des bras griffus repliés devant, une longue queue fine et courbe, le tout émergeant d\'un socle drapé façon vague/tissu enroulé'},
     ], en:[
       {t:'change', tx:'Vell\'s silhouette redesigned a 3rd time from a reference 3D sculpture: two huge horns/wings curled into a "C" shape framing the head, a spiked ridge along the neck, a slender snout with visible fangs, clawed arms folded in front, a long thin curved tail, all emerging from a draped wave/cloth-like base'},
     ] },
-  { v:'V135', d:'05/07/2026 04:29', name:{fr:'Correctif exploit World Boss, Vell dragon, notifications par onglets', en:'World Boss exploit fix, Vell dragon redesign, tabbed notifications'}, fr:[
+  { v:'V135', d:'08/07/2026 08:17', name:{fr:'Correctif exploit World Boss, Vell dragon, notifications par onglets', en:'World Boss exploit fix, Vell dragon redesign, tabbed notifications'}, fr:[
       {t:'exploit', tx:'Corrigé un exploit sérieux : sur un boss partagé déjà mort, rentrer dans l\'arène redéclenchait la victoire et payait silver/matériau/loot rare une DEUXIÈME fois, alors que le serveur refusait déjà la réclamation en silence — le client accordait la récompense sans jamais vérifier si la réclamation avait réussi. Chaque victoire ne peut désormais être payée qu\'une seule fois'},
       {t:'change', tx:'Vell entièrement redessiné d\'après la vraie photo de référence : couronne de cornes/pointes asymétriques, grande gueule ouverte pleine de crocs, ailes membraneuses déployées, plastron clair/orangé, pattes griffues — une silhouette de dragon des mers, plus rien à voir avec le poisson/serpent précédent ni avec Kzarka'},
       {t:'change', tx:'Centre de notifications : les catégories (Important/Réussites/Activité) sont maintenant des onglets FIXES en haut du panneau au lieu de simples titres perdus dans le défilement'},
@@ -2005,12 +2044,12 @@ const PATCH_NOTES = [
       {t:'change', tx:'Notification center: categories (Important/Achievements/Activity) are now FIXED tabs at the top of the panel instead of plain headers lost in the scroll'},
       {t:'fix', tx:'A shared boss\'s "Top contributors" panel is pushed further down so it never overlaps the "✕" exit cross again'},
     ] },
-  { v:'V134', d:'05/07/2026 04:09', name:{fr:'Silhouette de Vell redessinée (forme distincte de Kzarka)', en:'Vell\'s silhouette redesigned (shape distinct from Kzarka)'}, fr:[
+  { v:'V134', d:'08/07/2026 08:17', name:{fr:'Silhouette de Vell redessinée (forme distincte de Kzarka)', en:'Vell\'s silhouette redesigned (shape distinct from Kzarka)'}, fr:[
       {t:'change', tx:'Silhouette de Vell entièrement redessinée pour ne plus ressembler à Kzarka en composition : corps massif HORIZONTAL façon baleine qui déferle en diagonale (au lieu d\'un buste vertical), tête émoussée penchée en avant avec la mâchoire sur le dessous, et une grappe de 6 longs tentacules ondulants sous la tête — plus aucune paire de bras/griffes'},
     ], en:[
       {t:'change', tx:'Vell\'s silhouette fully redesigned to stop resembling Kzarka in composition: a massive HORIZONTAL whale-like body surging diagonally (instead of a vertical torso), a blunt head tilted forward with the jaw underneath, and a cluster of 6 long swaying tentacles under the head — no more arm/claw pair'},
     ] },
-  { v:'V133', d:'05/07/2026 04:01', name:{fr:'Sac "Compendium" : protège les objets jamais montés en PEN', en:'"Compendium" bag: protects items never brought to PEN'}, fr:[
+  { v:'V133', d:'08/07/2026 08:17', name:{fr:'Sac "Compendium" : protège les objets jamais montés en PEN', en:'"Compendium" bag: protects items never brought to PEN'}, fr:[
       {t:'new', tx:'Nouveau sac dédié "📖 Compendium" (192 cases, comme le sac principal) : quand "Vendre" s\'apprête à vendre une pièce d\'équipement ou un bijou dont ce TYPE n\'a jamais atteint PEN, le 1er exemplaire trouvé est protégé ici au lieu d\'être vendu — les exemplaires suivants du même type continuent d\'être vendus normalement'},
       {t:'new', tx:'Nouvel onglet "🎒 Sac protégé" dans le Compendium pour consulter ce sac et renvoyer un objet au sac principal en un clic'},
       {t:'change', tx:'Le message de "Vendre" précise maintenant combien d\'objets ont été vendus VS protégés dans le sac Compendium ; "Racheter" ne redevient actif que s\'il y a vraiment quelque chose à racheter (les objets protégés n\'ont jamais quitté ta possession)'},
@@ -2019,14 +2058,14 @@ const PATCH_NOTES = [
       {t:'new', tx:'New "🎒 Protected bag" tab in the Compendium to browse this bag and send an item back to your main bag in one click'},
       {t:'change', tx:'The "Sell" message now shows how many items were sold VS protected in the Compendium bag; "Buy back" only becomes active if there\'s actually something to buy back (protected items never left your possession)'},
     ] },
-  { v:'V132', d:'05/07/2026 03:52', name:{fr:'Vell : ancres des bateaux, montagnes et entrée unique', en:'Vell: ship anchors, mountains and single entrance'}, fr:[
+  { v:'V132', d:'08/07/2026 08:17', name:{fr:'Vell : ancres des bateaux, montagnes et entrée unique', en:'Vell: ship anchors, mountains and single entrance'}, fr:[
       {t:'change', tx:'Les abris de la charge de Vell sont désormais les ancres des 2 bateaux (chaîne qui descend du pont) au lieu des anciens piliers de pierre de Kzarka — cohérent avec le fait que les joueurs sont sur les bateaux'},
       {t:'new', tx:'Vell est maintenant cerné de montagnes de tous les côtés, avec une seule entrée étroite au centre pour l\'apercevoir depuis les bateaux, d\'après la capture de référence ("Barrier Rock")'},
     ], en:[
       {t:'change', tx:'Vell\'s charge shelters are now the 2 boats\' anchors (chain hanging from the deck) instead of Kzarka\'s old stone pillars — consistent with players being on the boats'},
       {t:'new', tx:'Vell is now surrounded by mountains on every side, with a single narrow entrance in the middle to glimpse him from the boats, based on the reference capture ("Barrier Rock")'},
     ] },
-  { v:'V131', d:'05/07/2026 03:49', name:{fr:'Optimisation & Craft fusionnés, craft toujours visible', en:'Enhancement & Crafting merged, craft always visible'}, fr:[
+  { v:'V131', d:'08/07/2026 08:17', name:{fr:'Optimisation & Craft fusionnés, craft toujours visible', en:'Enhancement & Crafting merged, craft always visible'}, fr:[
       {t:'change', tx:'Les cartes "Conseil de stuff & Craft" et "Optimisation" sont fusionnées en une seule carte, avec l\'Optimisation en tête'},
       {t:'fix', tx:'Le panneau de craft du Trésor de Velia ne s\'affichait QUE quand l\'onglet "Trésors" de l\'inventaire était ouvert (reste de l\'époque où il vivait dans la carte Inventaire) — il reste maintenant visible en permanence dans la carte Optimisation'},
       {t:'change', tx:'Le Compendium précise maintenant clairement qu\'un clic sur une zone lance le farm directement (téléportation immédiate, sans confirmation), pas juste un aperçu'},
@@ -2035,14 +2074,14 @@ const PATCH_NOTES = [
       {t:'fix', tx:'The Velia Treasure crafting panel only showed when the inventory\'s "Treasures" tab was open (a leftover from when it lived in the Inventory card) — it now stays visible at all times in the Enhancement card'},
       {t:'change', tx:'The Compendium now clearly states that clicking a zone starts farming there directly (instant teleport, no confirmation), not just a preview'},
     ] },
-  { v:'V130', d:'05/07/2026 03:38', name:{fr:'Bateaux de Vell 10× plus gros, le héros plonge vraiment', en:'Vell\'s boats 10× bigger, hero really dives'}, fr:[
+  { v:'V130', d:'08/07/2026 08:17', name:{fr:'Bateaux de Vell 10× plus gros, le héros plonge vraiment', en:'Vell\'s boats 10× bigger, hero really dives'}, fr:[
       {t:'change', tx:'Les 2 bateaux du combat de Vell sont désormais 10× plus gros, repoussés dans les coins bas de l\'écran pour rester au premier plan sans recouvrir tout le combat'},
       {t:'new', tx:'Le héros plonge VRAIMENT sous l\'eau quand il s\'abrite près d\'une bouée pendant la charge de Vell : il disparaît, remplacé par des ridules et des bulles qui remontent, au lieu de rester debout avec juste un bouclier bleu'},
     ], en:[
       {t:'change', tx:'Vell\'s 2 boats are now 10× bigger, pushed into the bottom corners of the screen to stay in the foreground without covering the whole fight'},
       {t:'new', tx:'The hero now REALLY dives underwater when taking shelter near a buoy during Vell\'s charge: they vanish, replaced by ripples and rising bubbles, instead of just standing there with a blue shield'},
     ] },
-  { v:'V129', d:'05/07/2026 03:29', name:{fr:'Conseil de stuff & Craft regroupés, loot Velia condensé, Maîtrise PEN', en:'Grouped gear advice & Crafting, condensed Velia loot, PEN Mastery'}, fr:[
+  { v:'V129', d:'08/07/2026 08:17', name:{fr:'Conseil de stuff & Craft regroupés, loot Velia condensé, Maîtrise PEN', en:'Grouped gear advice & Crafting, condensed Velia loot, PEN Mastery'}, fr:[
       {t:'change', tx:'Nouvelle carte "Conseil de stuff & Craft" en bas à droite, juste au-dessus de l\'Optimisation : regroupe le conseil de progression et TOUS les crafts (Trésor de Velia + conversion Poussière→Caphras), qui étaient auparavant éparpillés dans l\'Inventaire et l\'Optimisation'},
       {t:'fix', tx:'Le récapitulatif de loot "toutes zones" affiché à Velia est maintenant CONDENSÉ (1 ligne par zone, dépliable au clic) au lieu d\'afficher les 6 lignes de chaque zone d\'un coup — fini le scroll interminable'},
       {t:'change', tx:'La ligne "Pierre de Cron" dans la table de loot précise maintenant "1 à 3 unités" en plus du taux de drop'},
@@ -2057,7 +2096,7 @@ const PATCH_NOTES = [
       {t:'fix', tx:'"Equip best" and "Sell" buttons are now exactly the same size ("Buy back" now overlaps a corner instead of eating into "Sell"\'s width)'},
       {t:'new', tx:'New special "🌟 PEN Mastery" Compendium: lists all 39 optimizable items in the game (7 pieces × 4 tiers + 1 jewel per zone) and tracks which ones have reached PEN at least once — a pure completion tracker, no stat bonus'},
     ] },
-  { v:'V128', d:'05/07/2026 03:18', name:{fr:'Vell en mer, Coeur de Vell, bonus de zone, Compendium refait', en:'Vell at sea, Heart of Vell, zone bonus, reworked Compendium'}, fr:[
+  { v:'V128', d:'08/07/2026 08:17', name:{fr:'Vell en mer, Coeur de Vell, bonus de zone, Compendium refait', en:'Vell at sea, Heart of Vell, zone bonus, reworked Compendium'}, fr:[
       {t:'new', tx:'Combat de Vell entièrement repensé d\'après les captures fournies : arène en pleine mer (ciel, pitons rocheux au loin, rides d\'eau), 2 bateaux qui tirent des boulets de canon animés sur le monstre (avec un tic de dégâts à chaque impact), et sa charge périodique devient "PLONGE !" — il faut se réfugier près d\'une bouée au lieu de se cacher derrière un pilier'},
       {t:'new', tx:'Vell a 5% de chance de looter le Coeur de Vell à sa mort — une roue de récompense qui tourne toute seule s\'affiche en fin de combat, révélant si tu l\'as obtenu (visible même quand tu ne l\'as pas)'},
       {t:'new', tx:'La récompense de silver/matériau des World Boss dépend maintenant de ta meilleure zone découverte, mais SEULEMENT si tu es "certifié sans mort" depuis au moins 3 minutes — sinon aucun bonus de zone'},
@@ -2068,7 +2107,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'World Boss silver/material rewards now scale with your best discovered zone, but ONLY if you\'ve been "death-free certified" for at least 3 minutes — otherwise no zone bonus'},
       {t:'new', tx:'The Compendium now also tracks defeated World Bosses (same +1% bonus as a zone) and was completely reworked: a clear progress card (SPD/Damage/Dodge), Zones/World Boss tabs, and clicking an item shows a gold halo on every zone that drops it with a button to travel there directly'},
     ] },
-  { v:'V127', d:'05/07/2026 03:05', name:{fr:'Loot Velia, Pierre de Cron, Pierre Noire recolorée', en:'Velia loot, Cron Stone, Black Stone recolored'}, fr:[
+  { v:'V127', d:'08/07/2026 08:17', name:{fr:'Loot Velia, Pierre de Cron, Pierre Noire recolorée', en:'Velia loot, Cron Stone, Black Stone recolored'}, fr:[
       {t:'fix', tx:'Velia (zone paisible) affichait par erreur les stats de la dernière zone farmée dans le cadre "Butin" — affiche maintenant un message clair ("aucun monstre, aucun loot possible ici") suivi d\'un récapitulatif du loot de TOUTES les zones de Velia, zone par zone'},
       {t:'change', tx:'La Pierre Noire (palier Yuria/vert) est recolorée en vert (icône + couleur), au lieu du noir/violet d\'origine — cohérent avec le palier qu\'elle sert à optimiser'},
       {t:'new', tx:'Nouvelle Pierre de Cron : dropée dans TOUTES les zones du jeu à un taux fixe de 0.1% (1 à 3 unités), protège automatiquement un enchantement d\'une rétrogradation en cas d\'échec (consommée seulement quand elle sert vraiment)'},
@@ -2077,7 +2116,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'The Black Stone (Yuria/green tier) is now green (icon + color), instead of the original black/purple — consistent with the tier it enhances'},
       {t:'new', tx:'New Cron Stone: drops in EVERY zone in the game at a fixed 0.1% rate (1 to 3 units), automatically protects an enhancement from downgrading on failure (only consumed when it actually matters)'},
     ] },
-  { v:'V126', d:'05/07/2026 02:54', name:{fr:'Craft du Trésor, notifications repensées, potions, + de logs Discord', en:'Treasure crafting, revamped notifications, potions, more Discord logs'}, fr:[
+  { v:'V126', d:'08/07/2026 08:17', name:{fr:'Craft du Trésor, notifications repensées, potions, + de logs Discord', en:'Treasure crafting, revamped notifications, potions, more Discord logs'}, fr:[
       {t:'new', tx:'Craft du Trésor de Velia : 100 "Bout du trésor" → 1 "Trésor de Velia" (même numéro), et 3 Trésors (mélangés) → 1 "Objet inconnu" mystère. Panneau dédié dans l\'onglet Trésors de l\'inventaire'},
       {t:'fix', tx:'Corrigé un doublon de nom : la 2e ligne "Bout du trésor de Velia 1" (la plus rare) est en fait le morceau du "Velia 2" — renommée en conséquence'},
       {t:'new', tx:'État du Compendium affiché directement dans la zone de farm (📖 X/11, doré quand complet)'},
@@ -2096,7 +2135,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'"Capheon" fixed to "Calpheon" in the zone tabs'},
       {t:'new', tx:'Lots of new "for fun" Discord logs: level up, new zone reached, Compendium bonus unlocked, treasure found, items crafted, kill milestones (every 1000), kills/min record broken'},
     ] },
-  { v:'V125', d:'05/07/2026 02:38', name:{fr:'Compendium, Vitesse (SPD) et Esquive', en:'Compendium, Speed (SPD) and Dodge'}, fr:[
+  { v:'V125', d:'08/07/2026 08:17', name:{fr:'Compendium, Vitesse (SPD) et Esquive', en:'Compendium, Speed (SPD) and Dodge'}, fr:[
       {t:'new', tx:'Nouveau 📖 Compendium : ramasse au moins 1 objet dans chaque zone pour débloquer son bonus permanent — +1% Vitesse, +1% Dégâts, +1% Esquive PAR zone (additif, jamais un multiplicateur : les 11 zones donnent +11% de chaque, pas +100%)'},
       {t:'new', tx:'Nouvelle stat Vitesse (SPD) : augmente avec le niveau, de +0% au niveau 1 jusqu\'à +75% au niveau 61 (plafonné), en plus du bonus de Compendium'},
       {t:'new', tx:'Nouvelle stat Esquive, qui se trouve UNIQUEMENT sur les 4 pièces d\'armure : évite complètement un coup en cas de succès. Son efficacité dépend de ton niveau de PD face à la zone — inutile face à un monstre bien trop fort pour toi, mais très puissante (jusqu\'à zéro dégât) dans une zone où tu es largement au-dessus du niveau requis'},
@@ -2107,7 +2146,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'New Dodge stat, found ONLY on the 4 armor pieces: fully avoids a hit on success. Its effectiveness depends on your DP level relative to the zone — useless against a monster far too strong for you, but very powerful (up to zero damage) in a zone you\'ve far outgrown'},
       {t:'change', tx:'Refined game goal: a good Speed and Dodge rate lets you never die and farm faster — item tooltips, gear comparison and "Equip best" now account for Dodge'},
     ] },
-  { v:'V124', d:'05/07/2026 02:24', name:{fr:'Enchantement ralenti, zones recalibrées, World Boss Vell', en:'Slower enhancement, recalibrated zones, Vell World Boss'}, fr:[
+  { v:'V124', d:'08/07/2026 08:17', name:{fr:'Enchantement ralenti, zones recalibrées, World Boss Vell', en:'Slower enhancement, recalibrated zones, Vell World Boss'}, fr:[
       {t:'change', tx:'Ralenti le gain de PA/PD des paliers +1 à +15 (divisé par ~1.6) : un stuff complet à +0 ne suffit plus à franchir la zone de couleur suivante, il faut réellement pousser jusqu\'à PRI+ pour progresser — les paliers PRI/DUO/TRI/TET/PEN représentent maintenant plus de la moitié du gain total à PEN'},
       {t:'change', tx:'PA/PD requis relevés d\'environ 30% sur les zones Camp Rhutum, Mine de Fer Abandonnée et Sanctuaire Elric (premières zones de chaque nouveau palier de couleur), et les zones suivantes de chaque palier réajustées en proportion pour garder une progression lisse'},
       {t:'change', tx:'% de drop de la Pierre concentrée doublé sur Sanctuaire Elric et Ruines de Kratuga (les 2 dernières zones, seule source de ce matériau) pour compenser l\'enchantement plus lent sur le stuff bleu'},
@@ -2118,14 +2157,14 @@ const PATCH_NOTES = [
       {t:'change', tx:'Concentrated Stone drop rate doubled on Elric Sanctuary and Kratuga Ruins (the last 2 zones, the only source of this material) to offset the slower enhancement on blue-tier gear'},
       {t:'new', tx:'New weekly World Boss: Vell, Terror of the Tides (a giant sea creature) — a provisional original silhouette pending a reference photo. Appears Thursday and Sunday, at real Black Desert times minus 15 minutes'},
     ] },
-  { v:'V123', d:'05/07/2026 02:07', name:{fr:'PA/PD affichés à côté du Gearscore (classement + admin)', en:'AP/DP shown next to Gearscore (leaderboard + admin)'}, fr:[
+  { v:'V123', d:'08/07/2026 08:17', name:{fr:'PA/PD affichés à côté du Gearscore (classement + admin)', en:'AP/DP shown next to Gearscore (leaderboard + admin)'}, fr:[
       {t:'new', tx:'Le classement "Gearscore" affiche maintenant le détail PA/PD de chaque joueur entre parenthèses, pas juste le score global'},
       {t:'new', tx:'Le tableau "Joueurs" du panneau admin a 2 nouvelles colonnes PA et PD, à côté du Gearscore'},
     ], en:[
       {t:'new', tx:'The "Gearscore" leaderboard now shows each player\'s AP/DP breakdown in parentheses, not just the overall score'},
       {t:'new', tx:'The admin panel\'s "Players" table has 2 new AP and DP columns, next to Gearscore'},
     ] },
-  { v:'V122', d:'05/07/2026 01:54', name:{fr:'Mine de Fer Abandonnée : mineurs, boss de pack, décor de carrière', en:'Abandoned Iron Mine: miners, pack bosses, quarry scenery'}, fr:[
+  { v:'V122', d:'08/07/2026 08:17', name:{fr:'Mine de Fer Abandonnée : mineurs, boss de pack, décor de carrière', en:'Abandoned Iron Mine: miners, pack bosses, quarry scenery'}, fr:[
       {t:'new', tx:'Nouvelles silhouettes originales pour la Mine de Fer Abandonnée : le Mineur corrompu (voûté, capuche tombante, yeux rougeoyants, pioche à l\'épaule) et son contremaître blindé — 1 pack sur 2 est mené par ce boss massif bardé de pointes, plus gros et qui loot plus (bonus élite ×1.5-1.6 déjà en place)'},
       {t:'new', tx:'Décor de carrière dédié à la Mine de Fer : terre rouge/ocre, tours de guet en bois, pitons rocheux, chariots de minerai cassés, crevasses et éboulis — fini le décor générique'},
       {t:'fix', tx:'Trouvé un bug silencieux présent depuis toujours : la fonction de bruit du décor ne pouvait mathématiquement jamais dépasser 0.5 (bit de signe annulé dans le mélange final), donc AUCUN rocher/buisson/touffe n\'apparaissait dans les zones de combat. Corrigé : toutes les zones retrouvent leur végétation et leurs rochers'},
@@ -2134,19 +2173,19 @@ const PATCH_NOTES = [
       {t:'new', tx:'Dedicated quarry scenery for the Iron Mine: red/ochre earth, wooden watchtowers, rock spires, broken ore carts, crevasses and scree — no more generic scenery'},
       {t:'fix', tx:'Found a silent bug present since forever: the scenery noise function could mathematically never exceed 0.5 (sign bit self-cancelled in the final mix), so NO rocks/bushes/tufts ever appeared in combat zones. Fixed: every zone gets its vegetation and rocks back'},
     ] },
-  { v:'V121', d:'05/07/2026 01:41', name:{fr:'Silhouette du Combattant Sausan', en:'Sausan Fighter silhouette'}, fr:[
+  { v:'V121', d:'08/07/2026 08:17', name:{fr:'Silhouette du Combattant Sausan', en:'Sausan Fighter silhouette'}, fr:[
       {t:'new', tx:'Nouvelle silhouette originale pour le Combattant Sausan (Colonie Sausan, juste après la Ferme Shultz) : guerrier des sables en cotte de mailles, capuche pointue rabattue, voile de tissu masquant le bas du visage et cimeterre courbe — au lieu de la silhouette générique. Son icône apparaît aussi en haut à gauche'},
     ], en:[
       {t:'new', tx:'New original silhouette for the Sausan Fighter (Sausan Colony, right after Shultz Farm): a desert warrior in chainmail with a pointed hood, a cloth veil over the lower face and a curved scimitar — instead of the generic silhouette. Its icon also appears in the top-left'},
     ] },
-  { v:'V120', d:'05/07/2026 01:35', name:{fr:'Icône du monstre de zone, silhouette Garde Shultz', en:'Zone monster icon, Shultz Guard silhouette'}, fr:[
+  { v:'V120', d:'08/07/2026 08:17', name:{fr:'Icône du monstre de zone, silhouette Garde Shultz', en:'Zone monster icon, Shultz Guard silhouette'}, fr:[
       {t:'new', tx:'Petite icône du monstre de la zone en cours affichée en haut à gauche de l\'écran de jeu (buste simplifié, une par zone déjà modélisée, feuillage doré pour Velia la zone paisible)'},
       {t:'new', tx:'Nouvelle silhouette originale pour le Garde Shultz (Ferme Shultz, juste après le Camp Rhutum) : garde humain lourdement blindé, casque à cimier empanaché, épaulières massives, moustache/bouc blanc et arme lourde brandie au-dessus de la tête'},
     ], en:[
       {t:'new', tx:'Small icon of the current zone\'s monster shown in the top-left of the game screen (simplified bust, one per already-modeled zone, golden foliage for Velia the peaceful zone)'},
       {t:'new', tx:'New original silhouette for the Shultz Guard (Shultz Farm, right after Rhutum Camp): a heavily armored human guard with a plumed helmet, massive pauldrons, white mustache/goatee, and a heavy weapon raised overhead'},
     ] },
-  { v:'V119', d:'05/07/2026 01:24', name:{fr:'Silhouette du Guerrier Rhutum, taux de gain silver (admin)', en:'Rhutum Warrior silhouette, silver earn rate (admin)'}, fr:[
+  { v:'V119', d:'08/07/2026 08:17', name:{fr:'Silhouette du Guerrier Rhutum, taux de gain silver (admin)', en:'Rhutum Warrior silhouette, silver earn rate (admin)'}, fr:[
       {t:'new', tx:'Nouvelle silhouette originale pour le Guerrier Rhutum (Camp Rhutum, juste après le Repaire des Pirates) : humanoïde massif à peau verte, crâne à crête de plumes, bouc tressé et défenses — au lieu de la silhouette générique'},
       {t:'new', tx:'Onglet admin "Silver" : nouveau tableau "Qui gagne le plus vite ?" — classe les joueurs par taux de gain à vie (silver gagné ÷ temps de jeu), pour voir d\'un coup d\'œil qui progresse vite et en combien de temps, pas juste qui a le plus gros total'},
       {t:'change', tx:'Les tableaux "Richesses" et "Silver" du panneau admin affichent désormais le pseudo du joueur au lieu d\'un UUID tronqué illisible'},
@@ -2155,14 +2194,14 @@ const PATCH_NOTES = [
       {t:'new', tx:'Admin "Silver" tab: new "Who earns fastest?" table — ranks players by lifetime earn rate (silver earned ÷ playtime), to see at a glance who\'s progressing fast and in how much time, not just who has the biggest total'},
       {t:'change', tx:'The admin panel\'s "Wealth" and "Silver" tables now show the player\'s pseudo instead of an unreadable truncated UUID'},
     ] },
-  { v:'V118', d:'05/07/2026 01:17', name:{fr:'Record kills/min (classement + admin), tooltip inventaire', en:'Kills/min record (leaderboard + admin), inventory tooltip'}, fr:[
+  { v:'V118', d:'08/07/2026 08:17', name:{fr:'Record kills/min (classement + admin), tooltip inventaire', en:'Kills/min record (leaderboard + admin), inventory tooltip'}, fr:[
       {t:'new', tx:'Nouveau record personnel "🏹 Kills/min" (à vie) : visible dans un nouveau classement dédié ET dans la liste des joueurs du panneau admin. Le record ne se met à jour qu\'après 2 min de session pour éviter qu\'un petit échantillon bruité ne le fausse'},
       {t:'change', tx:'Ajout d\'une infobulle sur le bouton "🎒 Inventaire" du panneau admin, expliquant ce qu\'il ouvre (équipement + sac complet en lecture seule, dans une nouvelle fenêtre)'},
     ], en:[
       {t:'new', tx:'New personal "🏹 Kills/min" (lifetime) record: shown in a new dedicated leaderboard AND in the admin panel\'s player list. The record only updates after 2 min of session to avoid a noisy small sample skewing it'},
       {t:'change', tx:'Added a tooltip on the admin panel\'s "🎒 Inventory" button, explaining what it opens (gear + full bag, read-only, in a new window)'},
     ] },
-  { v:'V117', d:'05/07/2026 01:06', name:{fr:'Refonte panneau Admin : rôles fusionnés, suivi du silver', en:'Admin panel refresh: merged roles, silver tracking'}, fr:[
+  { v:'V117', d:'08/07/2026 08:17', name:{fr:'Refonte panneau Admin : rôles fusionnés, suivi du silver', en:'Admin panel refresh: merged roles, silver tracking'}, fr:[
       {t:'fix', tx:'Corrigé le rendu disgracieux du bouton "↩️ Racheter" superposé sur "Vendre" (bordures qui se chevauchaient) : le groupe entier porte maintenant une seule bordure/dégradé, les 2 boutons à l\'intérieur sont transparents avec un simple séparateur'},
       {t:'change', tx:'Section admin "Rembourser un clic Vendre mat" retirée : "Vendre mat." est verrouillé 🔒 (pas encore en jeu), ce bouton n\'avait donc plus lieu d\'être'},
       {t:'change', tx:'Les sections "Modérateurs" et "Testeurs" du panneau admin sont fusionnées en une seule section "Rôles" : un seul champ UUID + un menu déroulant pour choisir le rôle, une seule liste combinée (un joueur peut cumuler les deux rôles)'},
@@ -2175,38 +2214,38 @@ const PATCH_NOTES = [
       {t:'new', tx:'New "🏦 Silver" tab in the admin panel, on the same principle as the Loyalties tab: see at a glance the silver stored with players, total lifetime earned, and total spent (sunk via enhancement), with a visual breakdown bar'},
       {t:'change', tx:'Small visual refresh of the admin panel: section cards now have a light shadow and hover effect, plus a color-code legend (blue/red/green) shown at the top to understand each section\'s risk level at a glance'},
     ] },
-  { v:'V116', d:'05/07/2026 00:52', name:{fr:'Inventaire admin complet, boutons 50/50', en:'Full admin inventory, 50/50 buttons'}, fr:[
+  { v:'V116', d:'08/07/2026 08:17', name:{fr:'Inventaire admin complet, boutons 50/50', en:'Full admin inventory, 50/50 buttons'}, fr:[
       {t:'fix', tx:'La fenêtre popup "Inventaire" du panneau admin n\'affichait qu\'une grille brute — elle montre maintenant l\'équipement porté (comme le paperdoll normal) ET les 5 onglets de catégorie (Normal/Optimisation/Consommable/RNG/Trésors), comme dans l\'inventaire du joueur'},
       {t:'change', tx:'Boutons "Équiper meilleur" / "Vendre" : répartition stricte 50%/50% au lieu de 66%/34%. Le bouton "↩️ Racheter" n\'est plus un 3e bouton séparé : il se superpose désormais sur le coin droit de "Vendre" (15% de sa largeur) pour bien montrer qu\'il annule sa dernière action. Les 3 boutons ont chacun une infobulle expliquant leur fonctionnement au survol'},
     ], en:[
       {t:'fix', tx:'The admin panel\'s "Inventory" popup window only showed a raw grid — it now also shows the equipped gear (like the normal paperdoll) AND the 5 category tabs (Normal/Enhancement/Consumable/RNG/Treasures), matching the player\'s own inventory view'},
       {t:'change', tx:'"Equip best" / "Sell" buttons: strict 50%/50% split instead of 66%/34%. The "↩️ Buy back" button is no longer a separate 3rd button: it now overlaps the right edge of "Sell" (15% of its width) to make clear it undoes that specific action. All 3 buttons now have a hover tooltip explaining what they do'},
     ] },
-  { v:'V115', d:'05/07/2026 00:38', name:{fr:'Silhouette originale du Pirate (Repaire des Pirates)', en:'Original Pirate silhouette (Pirate Hideout)'}, fr:[
+  { v:'V115', d:'08/07/2026 08:17', name:{fr:'Silhouette originale du Pirate (Repaire des Pirates)', en:'Original Pirate silhouette (Pirate Hideout)'}, fr:[
       {t:'new', tx:'Nouvelle silhouette originale pour le Pirate (Repaire des Pirates, juste après Ruines de Protty) : humanoïde barbu au bandana rouge, torse entrouvert, lame à la main qui s\'étend lors de l\'attaque — au lieu de la silhouette générique partagée par les autres zones'},
     ], en:[
       {t:'new', tx:'New original silhouette for the Pirate (Pirate Hideout, right after Protty Ruins): a bearded humanoid with a red bandana, open vest, and a blade that extends on attack — instead of the generic silhouette shared by other zones'},
     ] },
-  { v:'V114', d:'05/07/2026 00:29', name:{fr:'Vrai correctif Velia, silhouette des Esprits de Protty', en:'Real Velia fix, Protty Spirit silhouette'}, fr:[
+  { v:'V114', d:'08/07/2026 08:17', name:{fr:'Vrai correctif Velia, silhouette des Esprits de Protty', en:'Real Velia fix, Protty Spirit silhouette'}, fr:[
       {t:'fix', tx:'Trouvé la vraie cause des monstres qui revenaient dans Velia (zone paisible) : la boucle de jeu re-générait des packs dès que leur nombre passait sous 6, SANS vérifier qu\'on était à Velia — ça remplissait la zone en boucle juste après le "aucun monstre" du chargement. Corrigé : à Velia, le joueur reste maintenant immobile et rien ne se passe, comme prévu'},
       {t:'new', tx:'Nouvelle silhouette originale pour l\'Esprit de Protty (Ruines de Protty) : créature flottante façon mollusque/poisson fantomatique (dôme, frange de nageoires ondulantes), au lieu de la silhouette générique partagée par toutes les zones'},
     ], en:[
       {t:'fix', tx:'Found the real cause of monsters reappearing in Velia (peaceful zone): the game loop kept respawning packs whenever their count dropped below 6, WITHOUT checking if we were in Velia — it kept refilling the zone right after the "no monsters" load. Fixed: in Velia the player now stays still and nothing happens, as intended'},
       {t:'new', tx:'New original silhouette for the Protty Spirit (Protty Ruins): a floating ghostly mollusk/fish-like creature (dome, wavy fin fringe), instead of the generic silhouette shared by all zones'},
     ] },
-  { v:'V113', d:'05/07/2026 00:23', name:{fr:'Boutons inventaire raccourcis (robuste à toute largeur)', en:'Shortened inventory buttons (robust at any width)'}, fr:[
+  { v:'V113', d:'08/07/2026 08:17', name:{fr:'Boutons inventaire raccourcis (robuste à toute largeur)', en:'Shortened inventory buttons (robust at any width)'}, fr:[
       {t:'fix', tx:'"Équiper le meilleur (socle)" et "Vendre l\'inférieur" se tronquaient encore en pleine largeur de fenêtre plus étroite ("soc e", "Ven...") — raccourcis en "Équiper meilleur" et "Vendre", le sens complet reste visible au survol'},
     ], en:[
       {t:'fix', tx:'"Equip best (base stats)" and "Sell the worse" still got cut off on narrower windows ("bas...", "Sel...") — shortened to "Equip best" and "Sell worse", full meaning still shown on hover'},
     ] },
-  { v:'V112', d:'05/07/2026 00:18', name:{fr:'Correctifs : reset des Loyalties, bouton tronqué', en:'Fixes: Loyalties reset, truncated button'}, fr:[
+  { v:'V112', d:'08/07/2026 08:17', name:{fr:'Correctifs : reset des Loyalties, bouton tronqué', en:'Fixes: Loyalties reset, truncated button'}, fr:[
       {t:'fix', tx:'Corrigé : les Loyalties n\'étaient jamais vraiment remises à 0 après un reset — le rafraîchissement de l\'affichage juste après regrantait aussitôt les 200 du jour, masquant la remise à zéro réelle'},
       {t:'fix', tx:'Le bouton "Vendre l\'inférieur" s\'affichait tronqué ("Ven...") — élargi pour afficher le texte en entier'},
     ], en:[
       {t:'fix', tx:'Fixed: Loyalties were never actually reset to 0 after a reset — the display refresh right after immediately re-granted the day\'s 200, masking the real reset'},
       {t:'fix', tx:'The "Sell the worse" button displayed truncated ("Sel...") — widened to show the full text'},
     ] },
-  { v:'V111', d:'04/07/2026 23:47', name:{fr:'Marché Central façon BDO, chat par jour, Loyalties', en:'BDO-style Central Market, daily chat, Loyalties'}, fr:[
+  { v:'V111', d:'08/07/2026 08:17', name:{fr:'Marché Central façon BDO, chat par jour, Loyalties', en:'BDO-style Central Market, daily chat, Loyalties'}, fr:[
       {t:'new',    tx:'Marché commun repensé façon Marché Central de BDO (inspiré d\'une référence fournie) : solde bien visible, arbre de catégories (Arme principale/secondaire/éveil, Armure, Accessoires, Artéfact/Pierre, Matériaux), objets groupés par nom avec tiroir détaillé par niveau d\'enchantement (+13/+14/.../PRI/DUO...)'},
       {t:'new',    tx:'Chat : chaque jour est séparé par une barre dorée ; les jours précédents sont repliés par défaut (dépliables en un clic pour relire), seul le jour en cours reste toujours ouvert'},
       {t:'change',  tx:'Les notifications affichent maintenant toujours la date complète, pas seulement l\'heure'},
@@ -2219,7 +2258,7 @@ const PATCH_NOTES = [
       {t:'change',  tx:'Renamed "Loyalty Points" to "Loyalties" (already stackable daily and claimable anytime, 200/day, in the Mailbox)'},
       {t:'new',    tx:'New "🏅 Loyalties" tab in the admin panel: total in game, average per player (no shop to spend it on yet)'},
     ] },
-  { v:'V110', d:'04/07/2026 23:14', name:{fr:'Audit anti-triche & notifications refaites', en:'Anti-cheat audit & reworked notifications'}, fr:[
+  { v:'V110', d:'08/07/2026 08:17', name:{fr:'Audit anti-triche & notifications refaites', en:'Anti-cheat audit & reworked notifications'}, fr:[
       {t:'fix',     tx:'Corrigé un "NaN%" possible sur la barre de vie du boss (division par zéro si les PV max valent 0, ex: juste après un despawn)'},
       {t:'exploit', tx:'Faille trouvée en audit : sur le marché, un vendeur pouvait mettre en vente un objet sans valeur en étiquetant l\'annonce comme un objet précieux (arnaque à l\'appât) — le nom/type de l\'annonce est désormais TOUJOURS recalculé depuis l\'objet réellement en vente, jamais depuis ce que le client prétend'},
       {t:'change',  tx:'Centre de notifications entièrement refait : regroupé en 3 sections claires (⚠️ Important, 🏆 Réussites, 📰 Activité) avec un code couleur par catégorie, au lieu d\'une simple liste plate'},
@@ -2228,7 +2267,7 @@ const PATCH_NOTES = [
       {t:'exploit', tx:'Flaw found in audit: on the market, a seller could list a worthless item while labeling it as a valuable one (bait-and-switch scam) — the listing\'s name/type is now ALWAYS recalculated from the item actually being sold, never from what the client claims'},
       {t:'change',  tx:'Notification center fully reworked: grouped into 3 clear sections (⚠️ Important, 🏆 Achievements, 📰 Activity) with a color code per category, instead of a flat list'},
     ] },
-  { v:'V109', d:'04/07/2026 17:00', name:{fr:'Marché en vitrine & correctif zones de farm', en:'Marketplace browse view & farm zones fix'}, fr:[
+  { v:'V109', d:'08/07/2026 08:17', name:{fr:'Marché en vitrine & correctif zones de farm', en:'Marketplace browse view & farm zones fix'}, fr:[
       {t:'new',    tx:'Marché commun repensé en vitrine (inspirée d\'une référence fournie) : parcours les objets en vente sous forme de cartes (icône, vendeur, temps, prix), avec filtre par catégorie, recherche, tri, et un panneau de détail complet avec comparaison face à ton équipement actuel'},
       {t:'new',    tx:'Achat en un clic depuis la vitrine : pose automatiquement un ordre d\'achat au prix exact de l\'annonce (exécution immédiate garantie)'},
       {t:'fix',    tx:'La liste des zones de farm laissait un grand vide en bas de sa carte (la grille étire toutes les cartes d\'une rangée à la même hauteur) — la liste remplit maintenant tout l\'espace disponible, de haut en bas'},
@@ -2237,7 +2276,7 @@ const PATCH_NOTES = [
       {t:'new',    tx:'One-click buy from the storefront: automatically places a buy order at the listing\'s exact price (guaranteed instant execution)'},
       {t:'fix',    tx:'The farm zone list left a large empty gap at the bottom of its card (the grid stretches every card in a row to the same height) — the list now fills all available space, top to bottom'},
     ] },
-  { v:'V108', d:'04/07/2026 16:49', name:{fr:'Nouveaux emplacements, icônes teintées par palier', en:'New slots, tier-tinted icons'}, fr:[
+  { v:'V108', d:'08/07/2026 08:17', name:{fr:'Nouveaux emplacements, icônes teintées par palier', en:'New slots, tier-tinted icons'}, fr:[
       {t:'new',    tx:'Atelier royal ajouté dans le header (verrouillé, bientôt disponible)'},
       {t:'new',    tx:'3 nouveaux emplacements d\'équipement : 2 Artéfacts (ex: Vell, Khan) + 1 Pierre — pas encore de source de drop en jeu, prêts pour une future mise à jour'},
       {t:'change', tx:'Bouton "↩️ Racheter" réduit à une icône compacte, regroupé juste à côté de "Vendre l\'inférieur" (1/5 de la largeur) au lieu d\'un gros bouton séparé'},
@@ -2250,7 +2289,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'New icons for armor, gloves and boots: each piece now takes the real color of its tier (grey/white/green/blue) instead of a fixed color'},
       {t:'change', tx:'New progressive jewelry icons by tier: bare ring (grey/white) → one diamond (green) → several diamonds and tier color (blue)'},
     ] },
-  { v:'V107', d:'04/07/2026 16:38', name:{fr:'Économie retravaillée & vrai marché à ordres', en:'Reworked economy & real order-book market'}, fr:[
+  { v:'V107', d:'08/07/2026 08:17', name:{fr:'Économie retravaillée & vrai marché à ordres', en:'Reworked economy & real order-book market'}, fr:[
       {t:'change', tx:'Économie de Velia entièrement retravaillée : le silver/h moyen progresse maintenant de ~3 000/h (zone 1) à 100 000/h max (zone 11, stuff optimisé) au lieu de plusieurs millions/h — ce plafond correspond au bas de la nouvelle courbe à 5 régions (Velia 0-100k/h, Heidel 100k-1M/h, Calpheon 1M-100M/h, Valencia 100M-1B/h, Edana 1B-10B/h, voir zones-roadmap.md)'},
       {t:'new',    tx:'Marché commun entièrement refait : vrai carnet d\'ordres entre joueurs (achat ET vente), au lieu d\'un prix flottant avec achat/vente instantanés. Chacun pose le prix qu\'il veut ; ton silver (achat) ou ton objet (vente) reste bloqué tant que l\'ordre n\'est pas exécuté ou annulé'},
       {t:'new',    tx:'L\'exécution est automatique dès qu\'un ordre d\'achat et un ordre de vente compatibles existent (prix d\'achat ≥ prix de vente) ; en cas d\'égalité de prix entre plusieurs ordres, un tirage au sort désigne qui est servi'},
@@ -2263,7 +2302,7 @@ const PATCH_NOTES = [
       {t:'new',    tx:'The common market now also accepts gear and jewelry found in-game (not just materials), grouped by name + enhancement level'},
       {t:'new',    tx:'New "My orders" tab in the common market to track and cancel your open orders'},
     ] },
-  { v:'V106', d:'04/07/2026 16:08', name:{fr:'Loot ticker, reset admin réparé, couleurs du stuff', en:'Loot ticker, fixed admin reset, gear colors'}, fr:[
+  { v:'V106', d:'08/07/2026 08:17', name:{fr:'Loot ticker, reset admin réparé, couleurs du stuff', en:'Loot ticker, fixed admin reset, gear colors'}, fr:[
       {t:'fix', tx:'Corrigé le sens d\'arrivée du loot ticker : les nouvelles entrées apparaissaient en haut (déjà estompées) et les anciennes en bas (bien visibles juste avant d\'être supprimées) — l\'inverse de l\'effet voulu, désormais les nouvelles entrées arrivent nettes en bas et remontent en s\'estompant'},
       {t:'fix', tx:'Trouvé pourquoi "Réinitialiser TOUS les comptes" ne fonctionnait pas : Supabase bloque les UPDATE/DELETE sans clause WHERE (confirmé dans les logs), même pour un reset global volontaire — corrigé'},
       {t:'fix', tx:'Le stuff (équipement ET matériaux d\'optimisation) se ressemblait dans le sac quel que soit son palier : les icônes SVG ont leurs couleurs figées dans le tracé, le style posé par-dessus n\'avait donc aucun effet. Corrigé en teintant la bordure de chaque case avec la vraie couleur du palier (gris/blanc/vert/bleu) ou du matériau'},
@@ -2272,33 +2311,33 @@ const PATCH_NOTES = [
       {t:'fix', tx:'Found why "Reset ALL accounts" didn\'t work: Supabase blocks UPDATE/DELETE without a WHERE clause (confirmed in the logs), even for an intentional global reset — fixed'},
       {t:'fix', tx:'Gear and enhancement materials all looked alike in the bag regardless of tier: SVG icons have their colors baked into the artwork, so the color style layered on top had no effect. Fixed by tinting each cell\'s border with the real tier color (grey/white/green/blue) or material color'},
     ] },
-  { v:'V105', d:'04/07/2026 15:55', name:{fr:'Bijoux alignés sur les vrais paliers BDO', en:'Jewelry aligned with real BDO tiers'}, fr:[
+  { v:'V105', d:'08/07/2026 08:17', name:{fr:'Bijoux alignés sur les vrais paliers BDO', en:'Jewelry aligned with real BDO tiers'}, fr:[
       {t:'change', tx:'Les bijoux rares (jackpot) des 11 zones de Velia utilisent maintenant les vrais noms BDO alignés sur le palier de stuff de la zone : Naru (gris), Tuvala (blanc), Asula (vert), Cadry/Serap (bleu) — un anneau, un collier et une ceinture par palier'},
     ], en:[
       {t:'change', tx:'Rare jewelry (jackpot) drops across the 11 Velia zones now use real BDO names matching the zone\'s gear tier: Naru (grey), Tuvala (white), Asula (green), Cadry/Serap (blue) — one ring, one necklace and one belt per tier'},
     ] },
-  { v:'V104', d:'04/07/2026 15:19', name:{fr:'Reset complet des comptes & annonce dédiée', en:'Full account reset & dedicated announcement'}, fr:[
+  { v:'V104', d:'08/07/2026 08:17', name:{fr:'Reset complet des comptes & annonce dédiée', en:'Full account reset & dedicated announcement'}, fr:[
       {t:'new',    tx:'Nouveau bouton admin "💥 Réinitialiser TOUS les comptes" : efface silver/équipement/niveau/sac de tout le monde, et affiche une bannière colorée d\'explication (+ une entrée dans les notifications) à chaque joueur à sa prochaine connexion'},
       {t:'change', tx:'Le centre de notifications ne garde plus que les infos importantes (succès, boss vaincu, niveau supérieur) — les trouvailles de loot (bijoux/équipement rares) restent visibles dans le loot ticker mais ne polluent plus plus les notifications'},
     ], en:[
       {t:'new',    tx:'New admin button "💥 Reset ALL accounts": wipes silver/gear/level/bag for everyone, and shows a colorful explanation banner (+ a notification entry) to each player on their next login'},
       {t:'change', tx:'The notification center now only keeps important info (achievements, boss defeated, level up) — rare loot finds (jewelry/gear) stay visible in the loot ticker but no longer clutter notifications'},
     ] },
-  { v:'V103', d:'04/07/2026 15:08', name:{fr:'Panneau admin bien plus rapide à l\'ouverture', en:'Admin panel opens much faster'}, fr:[
+  { v:'V103', d:'08/07/2026 08:17', name:{fr:'Panneau admin bien plus rapide à l\'ouverture', en:'Admin panel opens much faster'}, fr:[
       {t:'fix', tx:'Trouvé la cause de la lenteur au clic sur "Zone Admin" : une vue serveur ("Ressources farmées") scannait TOUTE la table des ramassages (79 000+ lignes et ça grandit à chaque objet ramassé par tous les joueurs, depuis le début) sans aucune limite de temps — corrigée pour se limiter aux 30 derniers jours'},
       {t:'change', tx:'Le panneau admin s\'ouvre maintenant dès que la liste des joueurs est prête, sans attendre les 3 statistiques les plus lourdes (silver/heure, ressources farmées, richesses) qui se chargent maintenant en arrière-plan et remplissent leur onglet dès qu\'elles sont prêtes'},
     ], en:[
       {t:'fix', tx:'Found the cause of the "Admin Zone" click being slow: a server view ("Farmed resources") scanned the ENTIRE pickup log table (79,000+ rows and growing with every item picked up by every player, since the start) with no time limit at all — fixed to only look at the last 30 days'},
       {t:'change', tx:'The admin panel now opens as soon as the player list is ready, without waiting for the 3 heaviest stats (silver/hour, farmed resources, wealth) which now load in the background and fill in their tab once ready'},
     ] },
-  { v:'V102', d:'04/07/2026 15:00', name:{fr:'Difficulté retravaillée, bouton "Racheter"', en:'Reworked difficulty, "Buy back" button'}, fr:[
+  { v:'V102', d:'08/07/2026 08:17', name:{fr:'Difficulté retravaillée, bouton "Racheter"', en:'Reworked difficulty, "Buy back" button'}, fr:[
       {t:'change', tx:'Difficulté de toute la région de Velia retravaillée : PA requis plafonné à 209 (au lieu de 400) sur la dernière zone, avec un saut plus marqué à chaque transition de palier de stuff (gris→blanc, blanc→vert, vert→bleu) — il faut être un minimum optimisé sur le palier précédent avant d\'attaquer le suivant'},
       {t:'new',    tx:'Bouton "↩️ Racheter" à côté de "Vendre l\'inférieur" : annule la dernière vente automatique (restaure les objets et le silver) en cas de clic accidentel'},
     ], en:[
       {t:'change', tx:'Reworked the difficulty of the whole Velia region: required AP capped at 209 (down from 400) on the last zone, with a sharper jump at every gear-tier transition (grey→white, white→green, green→blue) — you need to be at least somewhat enhanced on the previous tier before tackling the next one'},
       {t:'new',    tx:'"↩️ Buy back" button next to "Sell the worse": undoes the last automatic sale (restores items and silver) after an accidental click'},
     ] },
-  { v:'V101', d:'04/07/2026 12:41', name:{fr:'Boss partagé enfin réparé, panneau admin retravaillé', en:'Shared boss finally fixed, reworked admin panel'}, fr:[
+  { v:'V101', d:'08/07/2026 08:17', name:{fr:'Boss partagé enfin réparé, panneau admin retravaillé', en:'Shared boss finally fixed, reworked admin panel'}, fr:[
       {t:'fix',    tx:'Trouvé et corrigé LE bug qui empêchait le boss mondial d\'être partagé depuis le début : une erreur SQL silencieuse ("column reference ambiguous") faisait échouer chaque tentative d\'infliger des dégâts au boss partagé — les PV n\'ont donc jamais bougé, le classement de contribution est resté vide, confirmé par test réel et reproduction isolée du bug'},
       {t:'new',    tx:'Bouton admin pour faire disparaître le World Boss pour tout le monde à tout moment'},
       {t:'change', tx:'Un World Boss disparaît désormais au bout de 9 minutes (au lieu de 15)'},
@@ -2313,7 +2352,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'Reworked admin panel: color-coded border by risk level (blue = safe on your own account, red = affects all players, green = staff management) + a short description under each section'},
       {t:'change', tx:'The Grunil (blue) tier now has its own "Concentrated Stone" material — Black Stone is now reserved for the Yuria (green) tier'},
     ] },
-  { v:'V100', d:'04/07/2026 12:22', name:{fr:'Corrections, sécurité & classement Trésors', en:'Fixes, security & Treasure leaderboard'}, fr:[
+  { v:'V100', d:'08/07/2026 08:17', name:{fr:'Corrections, sécurité & classement Trésors', en:'Fixes, security & Treasure leaderboard'}, fr:[
       {t:'fix',     tx:'Corrigé le faux positif anti-triche "silver_per_hour astronomique" juste après le chargement d\'une sauvegarde (le calcul utilisait un compteur à vie divisé par un temps de session erroné)'},
       {t:'fix',     tx:'Les chances du Trésor de Velia étaient 100× trop généreuses (0.01 interprété comme 1% au lieu de 0.01%) — corrigées'},
       {t:'exploit', tx:'Corrigé 2 failles XSS trouvées en audit : le pseudo affiché dans le Classement et dans la liste de filleuls n\'était pas échappé (un pseudo malveillant pouvait exécuter du code chez les autres joueurs qui le consultaient)'},
@@ -2330,19 +2369,19 @@ const PATCH_NOTES = [
       {t:'new',     tx:'Admin panel: average number of monsters to kill (and time) for each Velia Treasure piece'},
       {t:'change',  tx:'Wiki, codex and achievements updated to reflect the Velia Treasure, tier-grouped zones and the shared Kzarka boss'},
     ] },
-  { v:'V99', d:'04/07/2026 12:04', name:{fr:'Nouvel inventaire "Trésors"', en:'New "Treasures" inventory'}, fr:[
+  { v:'V99', d:'08/07/2026 08:17', name:{fr:'Nouvel inventaire "Trésors"', en:'New "Treasures" inventory'}, fr:[
       {t:'new', tx:'Nouvel onglet d\'inventaire dédié "🗺️ Trésors" pour ranger les objets du Trésor de Velia séparément du reste'},
     ], en:[
       {t:'new', tx:'New dedicated "🗺️ Treasures" inventory tab to store Velia Treasure items separately from the rest'},
     ] },
-  { v:'V98', d:'04/07/2026 12:03', name:{fr:'Trésor de Velia (catégorie TEST)', en:'Velia Treasure (TEST category)'}, fr:[
+  { v:'V98', d:'08/07/2026 08:17', name:{fr:'Trésor de Velia (catégorie TEST)', en:'Velia Treasure (TEST category)'}, fr:[
       {t:'new', tx:'Toutes les zones de Velia peuvent désormais looter le "Trésor de Velia" : 5 objets collectibles (Bout du trésor de Velia 1 ×2 chances, Trésor de Velia 1/2/3), identiques dans toutes les zones'},
       {t:'new', tx:'Nouvelle catégorie "🧪 TEST" en bas de la table de loot de chaque zone pour ces objets expérimentaux (pas encore de recette/usage)'},
     ], en:[
       {t:'new', tx:'All Velia zones can now loot the "Velia Treasure": 5 collectible items (Velia Treasure Piece 1 ×2 chances, Velia Treasure 1/2/3), identical across every zone'},
       {t:'new', tx:'New "🧪 TEST" category at the bottom of each zone\'s loot table for these experimental items (no recipe/use yet)'},
     ] },
-  { v:'V97', d:'04/07/2026 11:52', name:{fr:'Zones groupées par palier, boss Kzarka vraiment partagé', en:'Zones grouped by tier, truly shared Kzarka boss'}, fr:[
+  { v:'V97', d:'08/07/2026 08:17', name:{fr:'Zones groupées par palier, boss Kzarka vraiment partagé', en:'Zones grouped by tier, truly shared Kzarka boss'}, fr:[
       {t:'new', tx:'La liste des zones de Velia est désormais groupée par palier de stuff (Naru/Tuvala/Yuria/Grunil), avec un en-tête coloré par groupe'},
       {t:'change', tx:'Dans la table de loot, les lignes "armure" et "matériau" reprennent la couleur du stuff correspondant dans l\'inventaire (gris/blanc/vert/bleu) au lieu d\'une couleur générique'},
       {t:'fix', tx:'Le Kzarka du planning horaire (pas seulement celui lancé par l\'admin) a maintenant des PV réellement partagés entre tous les joueurs, et tout le monde se voit dans l\'arène'},
@@ -2351,14 +2390,14 @@ const PATCH_NOTES = [
       {t:'change', tx:'In the loot table, "armor" and "material" rows now use the matching gear color from the inventory (grey/white/green/blue) instead of a generic color'},
       {t:'fix', tx:'The scheduled Kzarka boss (not just the admin-spawned one) now has truly shared HP across all players, and everyone is visible in the arena'},
     ] },
-  { v:'V96', d:'04/07/2026 11:44', name:{fr:'Village de Velia & pierres d\'optimisation en SVG', en:'Velia village & SVG optimization stones'}, fr:[
+  { v:'V96', d:'08/07/2026 08:17', name:{fr:'Village de Velia & pierres d\'optimisation en SVG', en:'Velia village & SVG optimization stones'}, fr:[
       {t:'new', tx:'Velia a désormais son propre décor de village paisible (maisons, puits, lampadaires, teinte chaleureuse) au lieu de réutiliser le terrain de la dernière zone de combat farmée'},
       {t:'new', tx:'Nouvelles icônes SVG originales (style pierre à facettes) pour les pierres d\'optimisation : Pierre de Novice, Pierre du Temps, Pierre Noire et Pierre de Caphras'},
     ], en:[
       {t:'new', tx:'Velia now has its own peaceful village scenery (houses, well, lamp posts, warm tint) instead of reusing the last farmed combat zone\'s terrain'},
       {t:'new', tx:'New original SVG icons (faceted stone style) for the optimization materials: Novice Stone, Time Stone, Black Stone and Caphras Stone'},
     ] },
-  { v:'V95', d:'04/07/2026 10:56', name:{fr:'Menu repliable, mot de passe oublié, langue à la connexion', en:'Collapsible menu, forgot password, language at login'}, fr:[
+  { v:'V95', d:'08/07/2026 08:17', name:{fr:'Menu repliable, mot de passe oublié, langue à la connexion', en:'Collapsible menu, forgot password, language at login'}, fr:[
       {t:'new', tx:'Bouton pour replier/déplier le menu latéral (état mémorisé)'},
       {t:'new', tx:'Bouton "Mot de passe oublié ?" sur l\'écran de connexion (envoie un email de réinitialisation)'},
       {t:'new', tx:'Choix de la langue (FR/EN) directement sur l\'écran de connexion/création de compte'},
@@ -2367,24 +2406,24 @@ const PATCH_NOTES = [
       {t:'new', tx:'"Forgot password?" button on the login screen (sends a reset email)'},
       {t:'new', tx:'Language choice (FR/EN) directly on the login/signup screen'},
     ] },
-  { v:'V94', d:'04/07/2026 10:45', name:{fr:'Vraies zones de Velia (11 zones remplacent les anciennes)', en:'Real Velia zones (11 zones replace the old ones)'}, fr:[
+  { v:'V94', d:'08/07/2026 08:17', name:{fr:'Vraies zones de Velia (11 zones remplacent les anciennes)', en:'Real Velia zones (11 zones replace the old ones)'}, fr:[
       {t:'change', tx:'Les 12 anciennes zones fictives sont remplacées par les 11 vraies zones de Velia : Camp des Loups, Ruines de Protty, Repaire des Pirates, Camp Rhutum, Ferme Shultz, Colonie Sausan, Mine de Fer Abandonnée, Poste Helm, Repaire Bandits Gahaz, Sanctuaire Elric, Ruines de Kratuga'},
       {t:'change', tx:'Progression PA/PD/loot inchangée (juste les noms de zones et de monstres qui changent) ; le palier Grunil couvre désormais 2 zones au lieu de 3 (11 zones au total)'},
     ], en:[
       {t:'change', tx:'The 12 old fictional zones are replaced by the 11 real Velia zones: Wolf Camp, Protty Ruins, Pirate Den, Rhutum Camp, Shultz Farm, Sausan Colony, Abandoned Iron Mine, Helm Post, Gahaz Bandit Lair, Elric Shrine, Kratuga Ruins'},
       {t:'change', tx:'AP/DP/loot progression unchanged (only zone and monster names change); the Grunil tier now covers 2 zones instead of 3 (11 zones total)'},
     ] },
-  { v:'V93', d:'04/07/2026 10:39', name:{fr:'Onglets de région : juste le nom + pastille de couleur', en:'Region tabs: name only + color dot'}, fr:[
+  { v:'V93', d:'08/07/2026 08:17', name:{fr:'Onglets de région : juste le nom + pastille de couleur', en:'Region tabs: name only + color dot'}, fr:[
       {t:'change', tx:'Les onglets affichent juste le nom de la région (Velia/Heidel/Capheon/Valencia/Edana) sans préfixe Early/Mid/End, avec une pastille de couleur : vert, bleu, jaune, orange, rouge'},
     ], en:[
       {t:'change', tx:'Tabs now show just the region name (Velia/Heidel/Capheon/Valencia/Edana) without the Early/Mid/End prefix, with a color dot: green, blue, yellow, orange, red'},
     ] },
-  { v:'V92', d:'04/07/2026 10:36', name:{fr:'5 régions planifiées : Velia/Heidel/Capheon/Valencia/Edana', en:'5 regions planned: Velia/Heidel/Capheon/Valencia/Edana'}, fr:[
+  { v:'V92', d:'08/07/2026 08:17', name:{fr:'5 régions planifiées : Velia/Heidel/Capheon/Valencia/Edana', en:'5 regions planned: Velia/Heidel/Capheon/Valencia/Edana'}, fr:[
       {t:'change', tx:'Les onglets de zones passent de 3 à 5 paliers : Early (Velia, en jeu), Mid (Heidel), End (Capheon), End+ (Valencia), End++ (Edana) — les 4 derniers restent verrouillés 🔒 en attendant leur construction'},
     ], en:[
       {t:'change', tx:'Zone tabs go from 3 to 5 tiers: Early (Velia, live), Mid (Heidel), End (Capheon), End+ (Valencia), End++ (Edana) — the last 4 remain locked 🔒 pending construction'},
     ] },
-  { v:'V91', d:'04/07/2026 10:31', name:{fr:'Refonte du stuff Early : 4 paliers Naru/Tuvala/Yuria/Grunil + onglets Early/Mid/End', en:'Early gear overhaul: 4 tiers Naru/Tuvala/Yuria/Grunil + Early/Mid/End tabs'}, fr:[
+  { v:'V91', d:'08/07/2026 08:17', name:{fr:'Refonte du stuff Early : 4 paliers Naru/Tuvala/Yuria/Grunil + onglets Early/Mid/End', en:'Early gear overhaul: 4 tiers Naru/Tuvala/Yuria/Grunil + Early/Mid/End tabs'}, fr:[
       {t:'new', tx:'Onglets "Early / Mid / End" au-dessus de la liste des zones — Mid et End sont verrouillés 🔒 pour l\'instant, ils arriveront dans une future mise à jour'},
       {t:'new', tx:'Le stuff Early est réparti en 4 paliers (3 zones chacun) : ⬜ Naru (zones 1-3), ⬜ Tuvala (zones 4-6), 🟩 Yuria et 🟦 Grunil (zones 7-12)'},
       {t:'change', tx:'Chaque palier a désormais son propre matériau d\'optimisation (Pierre de Novice, Pierre du Temps, Pierre Noire) au lieu d\'un matériau générique par zone ; Yuria/Grunil ont une chance de drop fixe de 2% quelle que soit la zone'},
@@ -2395,7 +2434,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'Each tier now has its own enhancement material (Novice Stone, Time-worn Stone, Black Stone) instead of one generic material per zone; Yuria/Grunil have a fixed 2% drop chance regardless of zone'},
       {t:'new', tx:'New conversion: 5 Ancient Spirit Dust → 1 Caphras Stone (button in the Enhancement panel) — Caphras Stones no longer drop directly in zones'},
     ] },
-  { v:'V90', d:'04/07/2026 09:57', name:{fr:'Optimisation auto, inventaire des joueurs (admin), loot ticker amélioré', en:'Auto-enhance, player inventory (admin), improved loot ticker'}, fr:[
+  { v:'V90', d:'08/07/2026 08:17', name:{fr:'Optimisation auto, inventaire des joueurs (admin), loot ticker amélioré', en:'Auto-enhance, player inventory (admin), improved loot ticker'}, fr:[
       {t:'new', tx:'Optimisation : bouton "▶ Auto jusqu\'à" avec un palier au choix — tente automatiquement (et gère les rétrogradations) jusqu\'à atteindre ce palier ou tomber à court de matériau'},
       {t:'admin', tx:'Panneau Admin : bouton 🎒 dans l\'onglet Joueurs pour voir l\'inventaire complet (192 cases) de n\'importe quel joueur, en lecture seule'},
       {t:'change', tx:'Loot en direct : fondu des anciennes entrées plus prononcé, et les matériaux ont désormais leur propre couleur (bleu) au lieu du gris par défaut'},
@@ -2404,52 +2443,52 @@ const PATCH_NOTES = [
       {t:'admin', tx:'Admin panel: 🎒 button in the Players tab to view any player\'s full inventory (192 slots), read-only'},
       {t:'change', tx:'Live loot: stronger fade on older entries, and materials now have their own color (blue) instead of the default gray'},
     ] },
-  { v:'V89', d:'04/07/2026 09:42', name:{fr:'Log Discord (jeu + alertes triche)', en:'Discord logging (game + cheat alerts)'}, fr:[
+  { v:'V89', d:'08/07/2026 08:17', name:{fr:'Log Discord (jeu + alertes triche)', en:'Discord logging (game + cheat alerts)'}, fr:[
       {t:'admin', tx:'Salon Discord "log général" : succès débloqués, boss vaincus, bijoux/équipement rares trouvés, et actions admin (mod/testeur, remboursement, boss global, reset quêtes, réévaluation marché) y sont désormais relayés automatiquement'},
       {t:'admin', tx:'Salon Discord "triche" séparé : alerte automatique quand l\'anti-triche serveur doit borner une valeur impossible (silver, gearscore, niveau, temps de jeu), avec le joueur et les valeurs concernées'},
     ], en:[
       {t:'admin', tx:'"General log" Discord channel: unlocked achievements, boss kills, rare gear/jewelry finds, and admin actions (mod/tester, refund, global boss, quest reset, market reevaluation) are now automatically relayed there'},
       {t:'admin', tx:'Separate "cheat" Discord channel: automatic alert when the server-side anti-cheat has to clamp an impossible value (silver, gearscore, level, playtime), with the player and the values involved'},
     ] },
-  { v:'V88', d:'04/07/2026 09:23', name:{fr:'Admin : liste des joueurs + copie UUID', en:'Admin: player list + UUID copy'}, fr:[
+  { v:'V88', d:'08/07/2026 08:17', name:{fr:'Admin : liste des joueurs + copie UUID', en:'Admin: player list + UUID copy'}, fr:[
       {t:'admin', tx:'Nouvel onglet "👥 Joueurs" dans le panneau Admin : liste de tous les joueurs inscrits avec statut en ligne, silver, GS, niveau — clique une ligne pour copier son UUID'},
       {t:'admin', tx:'Depuis le classement, le stuff d\'un joueur consulté par l\'admin propose désormais un bouton "📋 Copier UUID"'},
     ], en:[
       {t:'admin', tx:'New "👥 Players" tab in the Admin panel: list of all registered players with online status, silver, GS, level — click a row to copy its UUID'},
       {t:'admin', tx:'From the leaderboard, a player\'s gear viewed by the admin now offers a "📋 Copy UUID" button'},
     ] },
-  { v:'V87', d:'04/07/2026 09:14', name:{fr:'Widget Suivi : explications sur les timers et le temps de jeu', en:'Tracker widget: timer and playtime clarifications'}, fr:[
+  { v:'V87', d:'08/07/2026 08:17', name:{fr:'Widget Suivi : explications sur les timers et le temps de jeu', en:'Tracker widget: timer and playtime clarifications'}, fr:[
       {t:'change', tx:'Le widget de suivi explique désormais (au survol) que "Journ." et "Hebdo" sont le temps avant la remise à zéro des quêtes, et sépare visuellement la section "Temps de jeu" (Total/Aujourd\'hui)'},
     ], en:[
       {t:'change', tx:'The tracker widget now explains (on hover) that "Daily" and "Weekly" are the time before quests reset, and visually separates the "Playtime" section (Total/Today)'},
     ] },
-  { v:'V86', d:'04/07/2026 09:12', name:{fr:'Chat : halo messages non lus', en:'Chat: unread message halo'}, fr:[
+  { v:'V86', d:'08/07/2026 08:17', name:{fr:'Chat : halo messages non lus', en:'Chat: unread message halo'}, fr:[
       {t:'new', tx:'Halo sur l\'onglet d\'un canal de chat où un nouveau message est arrivé pendant que tu ne le regardais pas'},
       {t:'new', tx:'Halo temporaire sur les messages tout juste arrivés quand tu ouvres/regardes le canal'},
     ], en:[
       {t:'new', tx:'Halo on a chat channel tab when a new message arrives while you\'re not viewing it'},
       {t:'new', tx:'Temporary halo on messages that just arrived when you open/view the channel'},
     ] },
-  { v:'V85', d:'04/07/2026 09:07', name:{fr:'Canal Annonce : rôle seul + message en rouge', en:'Announcement channel: role only + red message'}, fr:[
+  { v:'V85', d:'08/07/2026 08:17', name:{fr:'Canal Annonce : rôle seul + message en rouge', en:'Announcement channel: role only + red message'}, fr:[
       {t:'change', tx:'Dans le canal Annonce, le pseudo n\'est plus affiché : seul le badge de rôle (ADMIN) apparaît, et le message est en rouge'},
     ], en:[
       {t:'change', tx:'In the Announcement channel, the pseudo is no longer shown: only the role badge (ADMIN) appears, and the message is in red'},
     ] },
-  { v:'V84', d:'04/07/2026 09:03', name:{fr:'Centre de notifications, loot groupé', en:'Notification center, grouped loot'}, fr:[
+  { v:'V84', d:'08/07/2026 08:17', name:{fr:'Centre de notifications, loot groupé', en:'Notification center, grouped loot'}, fr:[
       {t:'new', tx:'Nouveau bouton "🔔 Notifications" : journal des événements marquants (succès débloqués, niveaux gagnés, équipement/bijoux rares trouvés, boss vaincus)'},
       {t:'change', tx:'Le loot en direct regroupe désormais les objets identiques ramassés d\'affilée en une seule ligne "×N" au lieu de spammer une ligne par ramassage'},
     ], en:[
       {t:'new', tx:'New "🔔 Notifications" button: a log of key events (achievements unlocked, levels gained, rare gear/jewelry found, bosses defeated)'},
       {t:'change', tx:'Live loot now groups identical items picked up back-to-back into a single "×N" line instead of spamming one line per pickup'},
     ] },
-  { v:'V83', d:'04/07/2026 08:55', name:{fr:'Statistiques réunies en une carte, retrait de l\'historique silver', en:'Stats merged into one card, silver history removed'}, fr:[
+  { v:'V83', d:'08/07/2026 08:17', name:{fr:'Statistiques réunies en une carte, retrait de l\'historique silver', en:'Stats merged into one card, silver history removed'}, fr:[
       {t:'change', tx:'Les stats perso et les stats de la zone de farm sont réunies dans une seule carte "Statistiques" (séparées par une ligne), au lieu de deux cartes côte à côte'},
       {t:'change', tx:'Retrait de l\'historique silver sous la table de loot pour l\'instant — une autre idée viendra à sa place plus tard'},
     ], en:[
       {t:'change', tx:'Personal stats and farming zone stats are now merged into a single "Stats" card (separated by a divider), instead of two side-by-side cards'},
       {t:'change', tx:'Removed the silver history under the loot table for now — something else will take its place later'},
     ] },
-  { v:'V82', d:'04/07/2026 08:51', name:{fr:'PA/PD/GS sur la carte Équipement, icônes dans le menu d\'équipement', en:'AP/DP/GS on the Equipment card, icons in the equip menu'}, fr:[
+  { v:'V82', d:'08/07/2026 08:17', name:{fr:'PA/PD/GS sur la carte Équipement, icônes dans le menu d\'équipement', en:'AP/DP/GS on the Equipment card, icons in the equip menu'}, fr:[
       {t:'new', tx:'La carte Équipement affiche désormais PA/PD (en haut) et GS (au-dessus du personnage)'},
       {t:'new', tx:'Chaque pièce équipée affiche son PA (bas-gauche) et son PD (bas-droite) directement sur son icône'},
       {t:'new', tx:'Le menu d\'équipement (clic sur une pièce) affiche maintenant l\'icône de chaque objet candidat, pas juste son nom'},
@@ -2458,7 +2497,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'Each equipped piece shows its AP (bottom-left) and DP (bottom-right) directly on its icon'},
       {t:'new', tx:'The equip-slot menu (click a piece) now shows each candidate item\'s icon, not just its name'},
     ] },
-  { v:'V81', d:'04/07/2026 08:47', name:{fr:'World Boss vraiment multijoueur, mort → Velia, loot stylisé', en:'World Boss truly multiplayer, death → Velia, styled loot'}, fr:[
+  { v:'V81', d:'08/07/2026 08:17', name:{fr:'World Boss vraiment multijoueur, mort → Velia, loot stylisé', en:'World Boss truly multiplayer, death → Velia, styled loot'}, fr:[
       {t:'new', tx:'World Boss partagé : les autres joueurs sont maintenant VISIBLES en direct dans l\'arène (silhouette + pseudo), pas juste dans un classement textuel'},
       {t:'change', tx:'Mourir au combat renvoie désormais à Velia (zone paisible) avec un message d\'avertissement, au lieu de simplement récupérer 50% des PV sur place'},
       {t:'change', tx:'Cliquer sur "Velia" dans la liste des zones n\'ouvre plus automatiquement le tutoriel : ça t\'y emmène juste, en zone paisible sans monstre (le tutoriel reste accessible depuis le Wiki)'},
@@ -2471,7 +2510,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'Live loot (bottom-right): trash is now white, older entries fade out toward the top'},
       {t:'change', tx:'The Stats panel is split in two: personal stats on top, farming zone stats right below'},
     ] },
-  { v:'V80', d:'04/07/2026 08:36', name:{fr:'PA/PD sur les cases du sac, optimisation en un clic, footer raccourci', en:'AP/DP on bag slots, one-click enhancement, shortened footer'}, fr:[
+  { v:'V80', d:'08/07/2026 08:17', name:{fr:'PA/PD sur les cases du sac, optimisation en un clic, footer raccourci', en:'AP/DP on bag slots, one-click enhancement, shortened footer'}, fr:[
       {t:'new', tx:'Les cases d\'équipement/bijoux du sac affichent maintenant le PA (bas-gauche) et le PD (bas-droite) directement sur l\'icône'},
       {t:'new', tx:'Le menu au clic sur un objet (sac ou équipement) propose désormais aussi "Mettre en optimisation" pour l\'armure/les bijoux, pas seulement les matériaux'},
       {t:'change', tx:'Footer raccourci : mention légale condensée + clause "fourni tel quel, sans garantie ni responsabilité, utilisation à tes risques"'},
@@ -2480,7 +2519,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'The click menu on an item (bag or equipped) now also offers "Load into enhancement" for armor/jewelry, not just materials'},
       {t:'change', tx:'Shortened footer: condensed legal notice + "provided as-is, no warranty or liability, use at your own risk" clause'},
     ] },
-  { v:'V79', d:'04/07/2026 08:26', name:{fr:'Menu d\'équipement (5 objets), boss admin partagé, stuff des joueurs détaillé', en:'Equip-slot menu (5 items), shared admin boss, detailed player gear'}, fr:[
+  { v:'V79', d:'08/07/2026 08:17', name:{fr:'Menu d\'équipement (5 objets), boss admin partagé, stuff des joueurs détaillé', en:'Equip-slot menu (5 items), shared admin boss, detailed player gear'}, fr:[
       {t:'new', tx:'Clic sur une pièce d\'équipement : affiche jusqu\'à 5 objets du sac équipables dans ce slot (avec le gain/perte de PA/PD/PV), en plus du bouton Déséquiper'},
       {t:'fix', tx:'Le test de boss "Pour moi" dans le panneau Admin lance maintenant un VRAI boss partagé (PV communs, top 10, contribution %, joueurs en direct) au lieu d\'un combat solo'},
       {t:'new', tx:'Le stuff d\'un joueur consulté depuis le classement affiche maintenant le nom de chaque objet et son PA/PD/PV en clair, pas seulement au survol'},
@@ -2491,7 +2530,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'A player\'s gear viewed from the leaderboard now shows each item\'s name and AP/DP/HP as plain text, not just on hover'},
       {t:'change', tx:'Legal notice clarified: some names/game styles/mechanics are inspired by Black Desert and remain Pearl Abyss\'s property where applicable, but Black Desert Idle\'s visuals are original fan-style creations, not the same assets'},
     ] },
-  { v:'V78', d:'04/07/2026 08:13', name:{fr:'Loot en bas à droite (15 entrées + effets), RNG/Consommable/Lifeskill verrouillés', en:'Bottom-right loot (15 entries + effects), locked RNG/Consumable/Lifeskill'}, fr:[
+  { v:'V78', d:'08/07/2026 08:17', name:{fr:'Loot en bas à droite (15 entrées + effets), RNG/Consommable/Lifeskill verrouillés', en:'Bottom-right loot (15 entries + effects), locked RNG/Consumable/Lifeskill'}, fr:[
       {t:'change', tx:'Le butin en direct (loot ticker) passe en bas à droite du jeu (à la place de l\'ancien GS/Niveau, déjà visibles dans le panneau Statistiques et l\'inventaire) : il affiche maintenant 15 entrées, les nouvelles apparaissent en bas et poussent les anciennes vers le haut'},
       {t:'new', tx:'Effet visuel (flash + lueur pulsante) sur les entrées de butin rare et jackpot dans le loot ticker'},
       {t:'change', tx:'Les onglets d\'inventaire "Consommable" et "RNG" sont verrouillés 🔒 (contenu prévu pour une future mise à jour)'},
@@ -2502,7 +2541,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'The "Consumable" and "RNG" inventory tabs are locked 🔒 (content planned for a future update)'},
       {t:'change', tx:'The lifeskill button (⛏️) is locked 🔒 but stays visible as a reminder that a future lifeskill system is planned'},
     ] },
-  { v:'V77', d:'04/07/2026 07:59', name:{fr:'Bannière en développement, stats sur le stuff, voir le stuff des autres', en:'In-development banner, gear stats, view others\' gear'}, fr:[
+  { v:'V77', d:'08/07/2026 08:17', name:{fr:'Bannière en développement, stats sur le stuff, voir le stuff des autres', en:'In-development banner, gear stats, view others\' gear'}, fr:[
       {t:'fix', tx:'Chat : les messages d\'annonce sans pseudo affichaient "null" au lieu d\'un nom — corrigé avec un repli propre'},
       {t:'new', tx:'Bannière "🚧 Jeu en développement 🚧" ajoutée en bas de page'},
       {t:'new', tx:'La poupée d\'équipement affiche maintenant le PA/PD/PV donné par chaque pièce au survol'},
@@ -2513,7 +2552,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'The equipment doll now shows the AP/DP/HP granted by each piece on hover'},
       {t:'new', tx:'Leaderboard: click a player\'s name to view their equipped gear (read-only)'},
     ] },
-  { v:'V76', d:'04/07/2026 07:51', name:{fr:'Tutoriel amélioré, UUID privé, inventaire au clic gauche', en:'Improved tutorial, private UUID, left-click inventory'}, fr:[
+  { v:'V76', d:'08/07/2026 08:17', name:{fr:'Tutoriel amélioré, UUID privé, inventaire au clic gauche', en:'Improved tutorial, private UUID, left-click inventory'}, fr:[
       {t:'fix', tx:'L\'étape "Potions de vie" du tutoriel ne recouvre plus la case qu\'elle doit montrer (placement corrigé)'},
       {t:'new', tx:'Bouton "← Précédent" dans le tutoriel pour revenir à l\'étape d\'avant'},
       {t:'new', tx:'Nouvelle étape de tutoriel sur "Équiper le meilleur" : explique qu\'il compare toujours le SOCLE des objets, donc une pièce de plus haut niveau reste préférée même moins forte à l\'instant T (ton futur BiS)'},
@@ -2530,17 +2569,17 @@ const PATCH_NOTES = [
       {t:'change', tx:'"Sell items worse than or equal to equipped" button renamed to "Sell the worse"'},
       {t:'change', tx:'"Sell trash" and "Sell mats" are temporarily locked 🔒 (will return with a dedicated purpose later)'},
     ] },
-  { v:'V75', d:'04/07/2026 07:18', name:{fr:'Tutoriel : étape sur les potions', en:'Tutorial: potion step'}, fr:[
+  { v:'V75', d:'08/07/2026 08:17', name:{fr:'Tutoriel : étape sur les potions', en:'Tutorial: potion step'}, fr:[
       {t:'new', tx:'Nouvelle étape du tutoriel sur les potions de vie : présente le choix de la taille et le curseur "Boire sous X%"'},
     ], en:[
       {t:'new', tx:'New tutorial step on HP potions: introduces the size selector and the "Drink under X%" slider'},
     ] },
-  { v:'V74', d:'04/07/2026 07:06', name:{fr:'Seuil de potion réglable', en:'Adjustable potion threshold'}, fr:[
+  { v:'V74', d:'08/07/2026 08:17', name:{fr:'Seuil de potion réglable', en:'Adjustable potion threshold'}, fr:[
       {t:'new', tx:'Nouveau curseur dans le sélecteur de potion : règle le % de PV en dessous duquel une potion est bue automatiquement (5% à 95%)'},
     ], en:[
       {t:'new', tx:'New slider in the potion selector: sets the HP % below which a potion is drunk automatically (5% to 95%)'},
     ] },
-  { v:'V73', d:'04/07/2026 07:03', name:{fr:'PV/potions en %, confirmation de vente, remboursement admin', en:'HP/potion %, sell confirmation, admin refund'}, fr:[
+  { v:'V73', d:'08/07/2026 08:17', name:{fr:'PV/potions en %, confirmation de vente, remboursement admin', en:'HP/potion %, sell confirmation, admin refund'}, fr:[
       {t:'new', tx:'La barre de vie du personnage affiche maintenant le % de PV, et le sélecteur de potion affiche le % de soin en plus du chiffre'},
       {t:'new', tx:'Une confirmation est désormais demandée avant toute vente (objet, tas, tout le rebut, tous les matériaux)'},
       {t:'admin', tx:'Panneau Admin : bouton pour rembourser le dernier clic "Vendre mat" d\'un joueur (par pseudo), à partir d\'un nouveau journal des ventes groupées'},
@@ -2549,7 +2588,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'A confirmation is now required before any sale (single item, stack, all trash, all materials)'},
       {t:'admin', tx:'Admin panel: button to refund a player\'s last "Sell mats" click (by pseudo), from a new bulk-sale log'},
     ] },
-  { v:'V72', d:'04/07/2026 06:36', name:{fr:'Potions à 4 tailles, IA Loot/XP, clic sur le loot, PV du stuff, boss stylisé', en:'4 potion sizes, Loot/XP AI, click-to-loot, gear HP, styled boss'}, fr:[
+  { v:'V72', d:'08/07/2026 08:17', name:{fr:'Potions à 4 tailles, IA Loot/XP, clic sur le loot, PV du stuff, boss stylisé', en:'4 potion sizes, Loot/XP AI, click-to-loot, gear HP, styled boss'}, fr:[
       {t:'new', tx:'Les potions de vie proposent maintenant 4 tailles au choix (petite/moyenne/grande/majeure), chacune avec un prix fixe et un soin différents (recharge adaptée à la taille pour rester équilibrée) — clique sur l\'icône de potion en jeu pour choisir'},
       {t:'new', tx:'Nouveau bouton de mode d\'IA à côté de l\'état : "🎒 Loot" ramasse tout le butin d\'un pack avant de passer au suivant (corrigé pour ne plus rien laisser au sol), "⚡ XP" enchaîne les packs sans se soucier du loot pour maximiser les kills/xp par minute'},
       {t:'new', tx:'Clic sur un objet au sol : le perso s\'y déplace directement, prioritaire sur l\'IA jusqu\'à l\'arrivée'},
@@ -2566,7 +2605,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'World Boss HP bar restyled: clear percentage, 25/50/75% tick marks, pulsing glow under 20% HP'},
       {t:'change', tx:'World Boss room even more "4D": parallax background fog (drifts independently from screen shake) and a corruption vignette that intensifies as the boss loses HP'},
     ] },
-  { v:'V71', d:'04/07/2026 06:17', name:{fr:'World Boss : combattants en direct + % de dégâts', en:'World Boss: live fighters + damage %'}, fr:[
+  { v:'V71', d:'08/07/2026 08:17', name:{fr:'World Boss : combattants en direct + % de dégâts', en:'World Boss: live fighters + damage %'}, fr:[
       {t:'new', tx:'Le panneau de classement du World Boss partagé affiche maintenant un compteur "X joueurs combattent en direct" et un point vert à côté des pseudos qui tapent en ce moment'},
       {t:'change', tx:'Le classement affiche désormais le % de dégâts de chacun (calculé sur le total réel de tous les participants) en plus du nombre brut'},
       {t:'change', tx:'Les PV du World Boss lancé pour tous sont désormais calculés selon le nombre de joueurs en ligne, pour viser une mort en 2 à 7 minutes réelles selon le stuff et le nombre de participants'},
@@ -2575,31 +2614,31 @@ const PATCH_NOTES = [
       {t:'change', tx:'The leaderboard now shows each player\'s damage % (computed on the real total across all participants) alongside the raw number'},
       {t:'change', tx:'HP for the globally-launched World Boss is now computed from the current online player count, targeting a real kill time of 2 to 7 minutes depending on gear and participation'},
     ] },
-  { v:'V70', d:'04/07/2026 04:38', name:{fr:'Tutoriel : suivi pixel perfect + démo du suivi de quêtes', en:'Tutorial: pixel-perfect tracking + quest tracker demo'}, fr:[
+  { v:'V70', d:'08/07/2026 08:17', name:{fr:'Tutoriel : suivi pixel perfect + démo du suivi de quêtes', en:'Tutorial: pixel-perfect tracking + quest tracker demo'}, fr:[
       {t:'fix', tx:'Le halo/encadré du tutoriel suit maintenant la cible au pixel près en permanence (recalcul à chaque frame), y compris pendant un scroll'},
       {t:'change', tx:'L\'étape "Quêtes" ouvre maintenant le panneau Quêtes tout seul et montre directement le bouton "Suivre" à l\'intérieur, avant de le refermer et de montrer où s\'affiche le suivi'},
     ], en:[
       {t:'fix', tx:'The tutorial\'s halo/box now tracks the target pixel-perfectly at all times (recalculated every frame), including while scrolling'},
       {t:'change', tx:'The "Quests" step now opens the Quests panel on its own and points directly at the "Track" button inside it, before closing it and showing where the tracker appears'},
     ] },
-  { v:'V69', d:'04/07/2026 04:30', name:{fr:'Tutoriel complet + BETA sur le marché', en:'Full tutorial tour + market BETA tag'}, fr:[
+  { v:'V69', d:'08/07/2026 08:17', name:{fr:'Tutoriel complet + BETA sur le marché', en:'Full tutorial tour + market BETA tag'}, fr:[
       {t:'new', tx:'Le tutoriel de bienvenue couvre maintenant tout le jeu en 19 étapes : pages, zones, sorts automatiques, statistiques, optimisation, inventaire (et ses boutons), butin en direct, quêtes (+ où trouver leur suivi), classement, succès, courrier, notes de version, marché, chat, déconnexion et UUID (utile si le staff doit t\'ajouter un rôle)'},
       {t:'change', tx:'Ajout d\'un badge "BETA" sur le bouton Marché et sur l\'Hôtel des ventes'},
     ], en:[
       {t:'new', tx:'The welcome tutorial now covers the whole game in 19 steps: pages, zones, automatic skills, stats, enhancement, inventory (and its buttons), live loot, quests (+ where to find their tracker), leaderboard, achievements, mailbox, patch notes, market, chat, logout and UUID (useful if staff needs to grant you a role)'},
       {t:'change', tx:'Added a "BETA" badge on the Market button and on the Marketplace'},
     ] },
-  { v:'V68', d:'04/07/2026 04:19', name:{fr:'Correctif : halo du tutoriel figé au scroll', en:'Fix: tutorial halo stays static on scroll'}, fr:[
+  { v:'V68', d:'08/07/2026 08:17', name:{fr:'Correctif : halo du tutoriel figé au scroll', en:'Fix: tutorial halo stays static on scroll'}, fr:[
       {t:'fix', tx:'Le halo/encadré du tutoriel de bienvenue reste maintenant totalement statique à l\'écran, même en cas de scroll — il ne se recale plus (et ne bouge donc plus) pendant que tu défiles la page'},
     ], en:[
       {t:'fix', tx:'The welcome tutorial\'s halo/box now stays completely static on screen even when scrolling — it no longer repositions (and therefore no longer moves) while you scroll the page'},
     ] },
-  { v:'V67', d:'04/07/2026 04:15', name:{fr:'Correctif : tutoriel désaligné au scroll', en:'Fix: tutorial misaligned on scroll'}, fr:[
+  { v:'V67', d:'08/07/2026 08:17', name:{fr:'Correctif : tutoriel désaligné au scroll', en:'Fix: tutorial misaligned on scroll'}, fr:[
       {t:'fix', tx:'L\'encadré et la flèche du tutoriel de bienvenue restent maintenant correctement collés à l\'élément expliqué même si on scroll la page pendant le tutoriel'},
     ], en:[
       {t:'fix', tx:'The welcome tutorial\'s box and arrow now stay correctly attached to the explained element even if the page is scrolled during the tutorial'},
     ] },
-  { v:'V66', d:'04/07/2026 04:03', name:{fr:'Tutoriel de bienvenue à Velia', en:'Velia welcome tutorial'}, fr:[
+  { v:'V66', d:'08/07/2026 08:17', name:{fr:'Tutoriel de bienvenue à Velia', en:'Velia welcome tutorial'}, fr:[
       {t:'new', tx:'Nouvelle zone paisible 🏘️ Velia, épinglée en haut de la liste des zones — aucun monstre, juste un point de repère pour revoir le tutoriel'},
       {t:'new', tx:'Un petit tutoriel se lance automatiquement pour tout nouveau compte : des encadrés et des flèches expliquent les pages du jeu, les zones, les sorts automatiques, les statistiques, les quêtes et le chat'},
       {t:'new', tx:'Le tutoriel peut être relancé à tout moment depuis le 📖 Wiki (onglet 🔰 Tutoriel) ou en cliquant sur 🏘️ Velia'},
@@ -2608,12 +2647,12 @@ const PATCH_NOTES = [
       {t:'new', tx:'A short tutorial now launches automatically for every new account: highlighted boxes and arrows explain the game pages, zones, automatic skills, stats, quests and chat'},
       {t:'new', tx:'The tutorial can be replayed anytime from the 📖 Wiki (🔰 Tutorial tab) or by clicking 🏘️ Velia'},
     ] },
-  { v:'V65', d:'04/07/2026 03:17', name:{fr:'Mise à jour de la clause de non-affiliation', en:'Updated copyright disclaimer'}, fr:[
+  { v:'V65', d:'08/07/2026 08:17', name:{fr:'Mise à jour de la clause de non-affiliation', en:'Updated copyright disclaimer'}, fr:[
       {t:'change', tx:'Mention légale mise à jour en bas de page et dans le Wiki (À propos) : Black Desert et toutes les images/illustrations/icônes/noms/données du jeu sont la propriété de Pearl Abyss — projet de fan non officiel et gratuit, sans affiliation ni partenariat avec Pearl Abyss'},
     ], en:[
       {t:'change', tx:'Updated legal notice at the bottom of the page and in the Wiki (About): Black Desert and all in-game images/illustrations/icons/names/data are property of Pearl Abyss — unofficial, free fan project, no affiliation or partnership with Pearl Abyss'},
     ] },
-  { v:'V64', d:'04/07/2026 03:05', name:{fr:'Renvoi de message, horodatage du chat & boss plus immersif', en:'Message restore, chat timestamps & more immersive boss'}, fr:[
+  { v:'V64', d:'08/07/2026 08:17', name:{fr:'Renvoi de message, horodatage du chat & boss plus immersif', en:'Message restore, chat timestamps & more immersive boss'}, fr:[
       {t:'new', tx:'Onglet 🛡️ Modéré : bouton "↩ Renvoyer" pour republier un message supprimé à tort dans son canal d\'origine'},
       {t:'new', tx:'Chaque message des canaux Mondial/Trade/Annonce affiche désormais l\'heure (et la date s\'il ne date pas d\'aujourd\'hui)'},
       {t:'change', tx:'Le encart de chat est agrandi (plus large, plus de messages visibles) pour un meilleur confort de lecture'},
@@ -2624,7 +2663,7 @@ const PATCH_NOTES = [
       {t:'change', tx:'The chat box is bigger (wider, more visible messages) for a more comfortable read'},
       {t:'new', tx:'Kzarka World Boss room: depth/immersion effects — parallax corruption embers, screen shake on crits and AoE hits, subtle volumetric wobble on the boss'},
     ] },
-  { v:'V63', d:'04/07/2026 02:59', name:{fr:'World Boss partagé, rôle Testeur & bouton copier', en:'Shared World Boss, Tester role & copy button'}, fr:[
+  { v:'V63', d:'08/07/2026 08:17', name:{fr:'World Boss partagé, rôle Testeur & bouton copier', en:'Shared World Boss, Tester role & copy button'}, fr:[
       {t:'new', tx:'World Boss global : quand l\'admin lance un boss pour tous, les PV sont désormais PARTAGÉS entre tous les joueurs qui se battent — chaque coup porté par n\'importe qui fait baisser la même barre de vie'},
       {t:'new', tx:'Classement de contribution en direct (top 10) affiché pendant le combat, avec le pseudo de chaque joueur et ses dégâts infligés'},
       {t:'new', tx:'À la mort du boss, la récompense dépend de ton rang de contribution : plus tu es haut dans le classement, plus la récompense en argent et matériaux est intéressante (jusqu\'à ×3 pour le rang #1)'},
@@ -2637,48 +2676,48 @@ const PATCH_NOTES = [
       {t:'new', tx:'New "Tester" role: access to a 🧪 Tester panel listing upcoming features (fishing, mining, forest...) — no gameplay advantage, preview only. Managed by the admin like moderators'},
       {t:'change', tx:'The UUID field is now a real clickable button with a clear "📋 Copy" hint (turns into "✓ Copied!" after clicking)'},
     ] },
-  { v:'V62', d:'04/07/2026 02:35', name:{fr:'Canal Modéré : journal des messages supprimés', en:'Moderated channel: deleted-message log'}, fr:[
+  { v:'V62', d:'08/07/2026 08:17', name:{fr:'Canal Modéré : journal des messages supprimés', en:'Moderated channel: deleted-message log'}, fr:[
       {t:'new', tx:'Nouveau canal de chat "🛡️ Modéré" visible seulement par l\'admin et les modérateurs : journal de tous les messages supprimés, avec le pseudo de l\'auteur, son UUID, le canal d\'origine et le message'},
       {t:'change', tx:'Le badge MOD s\'affiche devant le pseudo des modérateurs, et les modérateurs peuvent supprimer des messages dans le chat (le message supprimé est archivé dans le canal Modéré)'},
     ], en:[
       {t:'new', tx:'New "🛡️ Moderated" chat channel visible only to admin and moderators: a log of all deleted messages, with the author\'s nickname, their UUID, the original channel and the message'},
       {t:'change', tx:'The MOD badge shows in front of moderators\' nicknames, and moderators can delete chat messages (the deleted message is archived in the Moderated channel)'},
     ] },
-  { v:'V61', d:'04/07/2026 02:28', name:{fr:'Correctif : rejoindre le World Boss global', en:'Fix: joining the global World Boss'}, fr:[
+  { v:'V61', d:'08/07/2026 08:17', name:{fr:'Correctif : rejoindre le World Boss global', en:'Fix: joining the global World Boss'}, fr:[
       {t:'fix', tx:'Quand l\'admin lance un boss pour tous, il apparaît maintenant instantanément pour chaque joueur : l\'état est rafraîchi à l\'ouverture de la page Boss et au démarrage, et le bouton "Combattre" apparaît tout seul si tu es déjà sur la page — tout le monde peut rejoindre'},
     ], en:[
       {t:'fix', tx:'When the admin launches a boss for all, it now appears instantly for every player: the state is refreshed when opening the Boss page and at startup, and the "Fight" button shows up on its own if you\'re already on the page — everyone can join'},
     ] },
-  { v:'V60', d:'04/07/2026 02:20', name:{fr:'UUID copiable & gestion des modérateurs', en:'Copyable UUID & moderator management'}, fr:[
+  { v:'V60', d:'08/07/2026 08:17', name:{fr:'UUID copiable & gestion des modérateurs', en:'Copyable UUID & moderator management'}, fr:[
       {t:'new', tx:'Ton UUID de joueur s\'affiche sous les infos de connexion, avec un bouton 📋 pour le copier'},
       {t:'new', tx:'Zone Admin : section Modérateurs — ajouter un MOD par UUID, voir la liste des modérateurs et en retirer un à tout moment'},
     ], en:[
       {t:'new', tx:'Your player UUID is shown below the connection info, with a 📋 button to copy it'},
       {t:'new', tx:'Admin Zone: Moderators section — add a MOD by UUID, see the moderator list and remove one at any time'},
     ] },
-  { v:'V59', d:'04/07/2026 02:14', name:{fr:'Boutons équiper/vendre déplacés dans l\'inventaire', en:'Equip/sell buttons moved into inventory'}, fr:[
+  { v:'V59', d:'08/07/2026 08:17', name:{fr:'Boutons équiper/vendre déplacés dans l\'inventaire', en:'Equip/sell buttons moved into inventory'}, fr:[
       {t:'change', tx:'Les boutons "⚡ Équiper le meilleur (socle)" et "🗑️ Vendre les objets inférieurs ou égaux" sont déplacés dans la carte Inventaire (avec les outils) — plus besoin de faire défiler jusqu\'à l\'équipement'},
     ], en:[
       {t:'change', tx:'The "⚡ Equip best (base)" and "🗑️ Sell items worse than or equal" buttons moved into the Inventory card (with the tools) — no more scrolling down to the Equipment card'},
     ] },
-  { v:'V58', d:'04/07/2026 02:11', name:{fr:'Lancer un World Boss pour tous les joueurs', en:'Launch a World Boss for all players'}, fr:[
+  { v:'V58', d:'08/07/2026 08:17', name:{fr:'Lancer un World Boss pour tous les joueurs', en:'Launch a World Boss for all players'}, fr:[
       {t:'new', tx:'L\'admin peut lancer un World Boss pour TOUS les joueurs à la demande (15 min) : il apparaît instantanément "EN COURS" pour tout le monde et devient combattable, indépendamment du planning horaire'},
     ], en:[
       {t:'new', tx:'The admin can launch a World Boss for ALL players on demand (15 min): it instantly shows "LIVE" for everyone and becomes fightable, independently of the schedule'},
     ] },
-  { v:'V57', d:'04/07/2026 02:05', name:{fr:'Panneau admin en 2 parties & vrai calendrier boss', en:'Two-part admin panel & real boss calendar'}, fr:[
+  { v:'V57', d:'08/07/2026 08:17', name:{fr:'Panneau admin en 2 parties & vrai calendrier boss', en:'Two-part admin panel & real boss calendar'}, fr:[
       {t:'change', tx:'Zone Admin scindée en deux : "👤 Pour moi" (tests sur mon propre compte : +silver, +fidélité, débloquer les succès, réinitialiser mes quêtes/démo, combattre un boss) et "🌍 Pour les joueurs" (actions serveur qui touchent tout le monde)'},
       {t:'change', tx:'Le calendrier des World Boss est maintenant une vraie grille hebdomadaire : jours en colonnes, heures de spawn en lignes, avec le nom du boss dans chaque case et une légende'},
     ], en:[
       {t:'change', tx:'Admin Zone split in two: "👤 For me" (tests on my own account: +silver, +loyalty, unlock achievements, reset my quests/demo, fight a boss) and "🌍 For players" (server-wide actions affecting everyone)'},
       {t:'change', tx:'The World Boss calendar is now a real weekly grid: days as columns, spawn hours as rows, with the boss name in each cell and a legend'},
     ] },
-  { v:'V56', d:'04/07/2026 01:59', name:{fr:'Pseudo affiché dans le chat', en:'Nickname shown in chat'}, fr:[
+  { v:'V56', d:'08/07/2026 08:17', name:{fr:'Pseudo affiché dans le chat', en:'Nickname shown in chat'}, fr:[
       {t:'fix', tx:'Le chat affiche désormais bien ton pseudo (celui vu dans l\'interface, y compris ton nom Discord si tu n\'as pas de pseudo perso), jamais l\'email ni "Joueur"'},
     ], en:[
       {t:'fix', tx:'Chat now correctly shows your nickname (the one seen in the UI, including your Discord name if you have no custom nickname), never the email nor "Player"'},
     ] },
-  { v:'V55', d:'04/07/2026 01:49', name:{fr:'Salle de boss à piliers & mécanique d\'AoE', en:'Pillar boss room & AoE mechanic'}, fr:[
+  { v:'V55', d:'08/07/2026 08:17', name:{fr:'Salle de boss à piliers & mécanique d\'AoE', en:'Pillar boss room & AoE mechanic'}, fr:[
       {t:'new', tx:'Le World Boss se déroule maintenant dans une salle de pierre à 4 piliers, entièrement dessinée pour le jeu (art original)'},
       {t:'new', tx:'Le boss devient le "Grand Seigneur de guerre de la corruption" — grande créature originale et imposante'},
       {t:'new', tx:'Nouvelle mécanique : le boss charge une attaque de zone (AoE). Le héros court se cacher derrière un pilier pour la parer — s\'il est à découvert, il encaisse un gros coup ("PARÉ !" / "AoE !")'},
@@ -2687,7 +2726,7 @@ const PATCH_NOTES = [
       {t:'new', tx:'The boss is now the "Great Warlord of Corruption" — a large, imposing original creature'},
       {t:'new', tx:'New mechanic: the boss charges an area attack (AoE). The hero runs to hide behind a pillar to block it — if caught in the open, they take a big hit ("BLOCKED!" / "AoE!")'},
     ] },
-  { v:'V54', d:'04/07/2026 01:39', name:{fr:'Correctif double-réclamation & anti-triche', en:'Double-claim fix & anti-cheat'}, fr:[
+  { v:'V54', d:'08/07/2026 08:17', name:{fr:'Correctif double-réclamation & anti-triche', en:'Double-claim fix & anti-cheat'}, fr:[
       {t:'exploit', tx:'Faille corrigée : une quête terminée ne peut plus être réclamée deux fois (une fois dans l\'encart de suivi, une fois dans le panneau). Réclamer met désormais à jour instantanément les deux affichages, aucun bouton "Réclamer" périmé ne subsiste'},
       {t:'fix', tx:'Fermer le panneau Quêtes en cliquant à côté ne laisse plus l\'état incohérent'},
       {t:'change', tx:'Anti-triche côté serveur : le classement borne les valeurs manifestement impossibles (silver/gearscore/niveau/temps de jeu) pour rester crédible. Note : le jeu reste calculé côté navigateur, une triche subtile de sa propre ligne reste techniquement possible'},
@@ -2696,7 +2735,7 @@ const PATCH_NOTES = [
       {t:'fix', tx:'Closing the Quests panel by clicking outside no longer leaves an inconsistent state'},
       {t:'change', tx:'Server-side anti-cheat: the leaderboard clamps clearly impossible values (silver/gearscore/level/playtime) to stay credible. Note: the game is still computed in the browser, so subtle tampering of one\'s own row remains technically possible'},
     ] },
-  { v:'V53', d:'04/07/2026 01:30', name:{fr:'Succès par catégorie, wiki + codex, dates patchnotes', en:'Categorized achievements, wiki + codex, patchnote dates'}, fr:[
+  { v:'V53', d:'08/07/2026 08:17', name:{fr:'Succès par catégorie, wiki + codex, dates patchnotes', en:'Categorized achievements, wiki + codex, patchnote dates'}, fr:[
       {t:'new', tx:'Chaque note de version affiche désormais sa date et son heure (JJ/MM/AAAA HH:MM)'},
       {t:'change', tx:'Succès réorganisés en catégories (Combat, Butin, Silver, Temps de jeu, Exploration, Équipement) avec un filtre "Pas fini" pour ne voir que ceux qui restent'},
       {t:'change', tx:'L\'encart de suivi affiche "🏅 Vous avez fini les succès !" une fois tous les succès débloqués'},

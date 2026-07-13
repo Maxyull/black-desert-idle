@@ -117,7 +117,8 @@ externe fourni, sidebar/breadcrumb/article/infobox/sommaire/recherche — voir C
   ouverture), même logique que le `:root` propre au module Compagnons.
 
 **Classement (jeu principal) — `leaderboard-panel.js` (même dossier)** : `openLeaderboard2()`
-(câblé sur `$a('btnLeaderboard')`, `game-supabase.js`) ouvre le panneau via `openInfo()`/
+(câblé sur `$a('btnLeaderboardTopbar')`, `game-supabase.js` — le doublon sidebar `#btnLeaderboard`
+a été retiré le 2026-07-13, voir CLAUDE.md) ouvre le panneau via `openInfo()`/
 `#infoOverlay` — podium des 3 premiers + tableau paginé + recherche + "Ma position", sur la table
 `player_stats` (déjà alimentée par `syncPlayerStats()`, ce fichier-ci). Catégories définies dans
 `LB2_CATS_()` (fonction, pas un objet figé, car labels/tips passent par `i18next.t()` à chaque
