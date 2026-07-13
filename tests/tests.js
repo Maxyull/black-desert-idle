@@ -2954,6 +2954,64 @@
     assert('Taux calculé proche de +20% du record actuel', Math.abs(ratePerHour - targetRate)/targetRate < 0.15, `rate=${ratePerHour}, target=${targetRate}`);
     assert('Une hausse progressive sous le seuil anti-pic (30%) devient bien éligible au nouveau record', eligible === true);
   }
+  // même fenêtre glissante que computeSlidingSilverPerHour, version kills/min (2026-07-13,
+  // demande explicite : "pareil sur 3 minutes avec 30% de variation max"). Voir computeSlidingKpm.
+  function testComputeSlidingKpmStableRateWithinWindow() {
+    if (typeof computeSlidingKpm !== 'function') return;
+    const now = Date.now();
+    const buffer = [ { t: now-170000, kills:5 }, { t: now-90000, kills:5 }, { t: now-10000, kills:5 } ];
+    const { ratePerMin, eligible } = computeSlidingKpm(buffer, now, 0);
+    assert('Taux kpm calculé sur la fenêtre glissante à partir de kills réguliers', ratePerMin > 4 && ratePerMin < 6, `rate=${ratePerMin}`);
+    assert('Éligible au record en l\'absence de record préexistant (currentBest=0)', eligible === true);
+  }
+  function testComputeSlidingKpmIgnoresIsolatedSpikeForRecord() {
+    if (typeof computeSlidingKpm !== 'function') return;
+    const now = Date.now();
+    const currentBest = 10;
+    const targetRate = currentBest * 1.5;
+    const span = 100000; // 100s, > KPM_RATE_MIN_SPAN_MS (90s)
+    const totalOverSpan = targetRate * (span/60000);
+    const buffer = [ { t: now-span, kills: totalOverSpan*0.5 }, { t: now-1000, kills: totalOverSpan*0.5 } ];
+    const { ratePerMin, eligible } = computeSlidingKpm(buffer, now, currentBest);
+    assert('Le pic calcule bien un taux nettement au-dessus du record (+~50%)', ratePerMin > currentBest*1.3, `rate=${ratePerMin}`);
+    assert('Le pic n\'est PAS éligible au nouveau record (écart >30% avec la moyenne déjà établie)', eligible === false);
+  }
+  function testComputeSlidingKpmRejectsShortBurstRightAfterConnection() {
+    // même bug que silver/h (kpmRateBuffer transitoire, vidé au reload) : une bourrasque de kills
+    // sur quelques secondes juste après une reconnexion (zone dense en mobs) ne doit JAMAIS pouvoir
+    // devenir le record, peu importe currentBest.
+    if (typeof computeSlidingKpm !== 'function') return;
+    const now = Date.now();
+    const buffer = [ { t: now-5000, kills: 10 } ]; // 10 kills en 5s -> énorme si extrapolé sur 1 min
+    const { eligible: eligibleNoRecord } = computeSlidingKpm(buffer, now, 0);
+    assert('Bourrasque de 5s : PAS éligible au record même sans record préexistant (currentBest=0)', eligibleNoRecord === false);
+    const { eligible: eligibleWithRecord } = computeSlidingKpm(buffer, now, 10);
+    assert('Bourrasque de 5s : PAS éligible non plus avec un record déjà établi', eligibleWithRecord === false);
+    const okBuffer = [ { t: now-(KPM_RATE_MIN_SPAN_MS+5000), kills: 3 }, { t: now-1000, kills: 3 } ];
+    const { eligible: eligibleLongEnough } = computeSlidingKpm(okBuffer, now, 0);
+    assert('Un étalement au-dessus du seuil minimum redevient éligible', eligibleLongEnough === true);
+  }
+  function testComputeSlidingKpmAcceptsProgressiveIncreaseAsRecord() {
+    if (typeof computeSlidingKpm !== 'function') return;
+    const now = Date.now();
+    const currentBest = 10;
+    const targetRate = currentBest * 1.2; // +20%, sous le seuil de 30%
+    const totalOverWindow = targetRate * (KPM_RATE_WINDOW_MS/60000);
+    const buffer = [];
+    for (let i=0;i<6;i++) buffer.push({ t: now - KPM_RATE_WINDOW_MS + i*(KPM_RATE_WINDOW_MS/6) + 1000, kills: totalOverWindow/6 });
+    const { ratePerMin, eligible } = computeSlidingKpm(buffer, now, currentBest);
+    assert('Taux calculé proche de +20% du record actuel', Math.abs(ratePerMin - targetRate)/targetRate < 0.15, `rate=${ratePerMin}, target=${targetRate}`);
+    assert('Une hausse progressive sous le seuil anti-pic (30%) devient bien éligible au nouveau record', eligible === true);
+  }
+  // même migration que testSilverPerHourResetV436ZeroesStaleRecord, version bestKpm (2026-07-13)
+  function testBestKpmResetV439ZeroesStaleRecord() {
+    if (typeof migrateBestKpmResetV439 !== 'function') return;
+    const before = S.bestKpm;
+    S.bestKpm = 999999; // vieux record potentiellement gonflé par le bug corrigé
+    migrateBestKpmResetV439();
+    assert('Reset V439 : bestKpm remis à 0, quelle que soit sa valeur précédente', S.bestKpm === 0, `got=${S.bestKpm}`);
+    S.bestKpm = before;
+  }
   // même garde-fou que testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes, version XP
   // (2026-07-12, rattrapage hors-ligne XP) -- bestXpPerHour ne doit jamais redescendre (monotone),
   // et seulement après 2 min de session (protège contre un pic extrapolé juste après un chargement,
@@ -6067,6 +6125,7 @@
     testHudDerivesGearscoreFromBestApDp();
     testGearscoreDerivedFixV414RetroactivelyCorrectsStaleRecord();
     testSilverPerHourResetV436ZeroesStaleRecord();
+    testBestKpmResetV439ZeroesStaleRecord();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();

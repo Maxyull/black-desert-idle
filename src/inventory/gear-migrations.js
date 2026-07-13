@@ -340,3 +340,14 @@ function migrateSilverPerHourResetV436() {
   S.bestSilverPerHour = 0;
   if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
+
+// migrateBestKpmResetV439 (2026-07-13, demande explicite : "revoir aussi la formule best kpm...
+// on reset aussi ce classement") -- même raisonnement que migrateSilverPerHourResetV436 : les
+// records bestKpm existants ont pu être gonflés par le même bug de fenêtre (moyenne sur la
+// session ENTIÈRE au lieu d'une fenêtre glissante 3min/garde-fou 30%, voir computeSlidingKpm,
+// core/game-core.js). Remise à zéro explicite, pas de recalcul possible.
+/** Migration rétroactive V439 : remet S.bestKpm à 0 (records potentiellement gonflés par un bug corrigé le même jour) puis synchronise immédiatement le classement (syncPlayerStats()). */
+function migrateBestKpmResetV439() {
+  S.bestKpm = 0;
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
+}

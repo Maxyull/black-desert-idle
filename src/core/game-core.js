@@ -253,6 +253,49 @@ function pruneSilverRateBuffer(now) {
   while (silverRateBuffer.length && (now - silverRateBuffer[0].t) > SILVER_RATE_WINDOW_MS) silverRateBuffer.shift();
 }
 
+// ==================== Kills/min en fenêtre glissante (même correctif que silver/h, 2026-07-13) ====================
+// S.bestKpm était calculé sur (S.kills-S.killsAtLoad)/(minutes de SESSION ENTIÈRE) -- même famille
+// de bug que l'ancien bestSilverPerHour (fenêtre qui grandit en continu, un pic ponctuel de kills
+// juste après une reconnexion pouvait gonfler durablement la moyenne avant qu'elle ne se lisse).
+// Demande explicite : "revoir aussi la formule best kpm, pareil sur 3 minutes avec 30% de
+// variation max, on enlève les gros pics, on reset aussi ce classement" -- même traitement que
+// SILVER_RATE_* juste au-dessus (fenêtre glissante 3 min, garde-fou étalement minimum 90s, garde-fou
+// anti-pic 30%), constantes/buffer séparés par choix (pas de fusion avec silverRateBuffer, éviter
+// tout risque de régression sur du code déjà testé).
+const KPM_RATE_WINDOW_MS = 180000; // 3 min
+const KPM_RATE_MAX_DEVIATION = 0.30; // 30%
+const KPM_RATE_MIN_SPAN_MS = KPM_RATE_WINDOW_MS / 2; // 90s
+let kpmRateBuffer = []; // [{t:ms epoch, kills:1}] -- transient (pas sauvegardé), vidé au reload, 1 échantillon par kill
+/**
+ * Fonction PURE : calcule le kills/min projeté à partir d'un buffer d'échantillons {t,kills} et
+ * détermine si ce taux est éligible à devenir le nouveau record (comparé à currentBest, S.bestKpm).
+ * Même formule/mêmes garde-fous que computeSlidingSilverPerHour (voir son commentaire), sur des
+ * kills au lieu de silver et un taux par MINUTE (pas par heure).
+ * @param {{t:number,kills:number}[]} buffer - échantillons horodatés (ms epoch), jamais muté.
+ * @param {number} now - horodatage de référence (ms epoch), typiquement Date.now().
+ * @param {number} currentBest - record déjà établi (S.bestKpm), 0 si aucun encore.
+ * @returns {{ratePerMin:number, eligible:boolean}} taux projeté sur la fenêtre + éligibilité record.
+ */
+function computeSlidingKpm(buffer, now, currentBest) {
+  const pruned = (buffer||[]).filter(s => (now - s.t) <= KPM_RATE_WINDOW_MS && (now - s.t) >= 0);
+  if (pruned.length === 0) return { ratePerMin: 0, eligible: false };
+  const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
+  const windowMs = Math.max(now - oldestT, 1000);
+  const total = pruned.reduce((sum, s) => sum + s.kills, 0);
+  const ratePerMin = total / (windowMs / 60000);
+  let eligible = windowMs >= KPM_RATE_MIN_SPAN_MS;
+  if (eligible && currentBest > 0) {
+    const deviation = (ratePerMin - currentBest) / currentBest;
+    if (deviation > KPM_RATE_MAX_DEVIATION) eligible = false;
+  }
+  return { ratePerMin, eligible };
+}
+/** Purge kpmRateBuffer (mutation en place) des échantillons plus vieux que KPM_RATE_WINDOW_MS. */
+function pruneKpmRateBuffer(now) {
+  now = now || Date.now();
+  while (kpmRateBuffer.length && (now - kpmRateBuffer[0].t) > KPM_RATE_WINDOW_MS) kpmRateBuffer.shift();
+}
+
 // point d'entrée UNIQUE pour toute variation de silver côté client (2026-07-10, demande explicite :
 // "toute modification de silver doit être écrit dans ce registre... je dois pouvoir traquer le
 // moindre silver") -- centralise S.silver/S.silverEarned ET la journalisation (voir
@@ -1624,6 +1667,7 @@ function killWolf(p, w) {
   const z = Z(), lm = lootMult(bottleneck());
   const killsBefore = S.kills;
   S.kills++;
+  kpmRateBuffer.push({ t: Date.now(), kills: 1 }); // fenêtre glissante bestKpm (voir computeSlidingKpm)
   // palier de kills "pour le fun" (demande explicite du 2026-07-08)
   if (Math.floor(S.kills/1000) > Math.floor(killsBefore/1000)) {
     logToDiscord('💀 Palier de kills', `**${myPseudo||'Joueur'}** vient d'atteindre **${fmt(Math.floor(S.kills/1000)*1000)}** monstres tués à vie`, 0x7a2d33);
@@ -2048,10 +2092,17 @@ function refreshStatsOnly() {
   // record kills/min : on exige au moins 2 min de session pour éviter qu'un petit échantillon
   // bruité (ex: 3 kills en 5 secondes juste après un chargement) ne fausse le record à vie —
   // même précaution que le faux positif silver_per_hour corrigé le 2026-07-06
-  if (mins > 2 && kpmNow > (S.bestKpm||0)) {
-    // "pour le fun" (demande du 2026-07-08) : seuil de +0.5 kills/min pour ne pas spammer sur du bruit
-    if (kpmNow - (S.bestKpm||0) > 0.5) logToDiscord('🏹 Record kills/min', `**${myPseudo||'Joueur'}** bat son record perso : **${kpmNow.toFixed(1)}** kills/min (${tr(Z().name)})`, 0xc9a55a);
-    S.bestKpm = kpmNow;
+  // fenêtre glissante 3 min + garde-fous anti-pic (2026-07-13, même traitement que
+  // bestSilverPerHour, voir computeSlidingKpm) EN PLUS du garde-fou "2 minutes de session" déjà
+  // en place ci-dessus (double protection, pas un remplacement).
+  pruneKpmRateBuffer();
+  if (mins > 2) {
+    const { ratePerMin: kpmSliding, eligible } = computeSlidingKpm(kpmRateBuffer, Date.now(), S.bestKpm||0);
+    if (eligible && kpmSliding > (S.bestKpm||0)) {
+      // "pour le fun" (demande du 2026-07-08) : seuil de +0.5 kills/min pour ne pas spammer sur du bruit
+      if (kpmSliding - (S.bestKpm||0) > 0.5) logToDiscord('🏹 Record kills/min', `**${myPseudo||'Joueur'}** bat son record perso : **${kpmSliding.toFixed(1)}** kills/min (${tr(Z().name)})`, 0xc9a55a);
+      S.bestKpm = kpmSliding;
+    }
   }
   // "1M5/h alors que c'est faux" (2026-07-18) -- l'ancien affichage extrapolait le gain sur une
   // fenêtre dès 6s de session (mins>.1) directement en silver/HEURE (×60 sur cette fenêtre) : un
@@ -2453,6 +2504,7 @@ function applySaveState(data) {
   if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
   if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
   if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
+  if (!S.migratedBestKpmResetV439) { migrateBestKpmResetV439(); S.migratedBestKpmResetV439 = true; }
   // Rattrapage NON gaté (2026-07-13, bug rapporté : "j'ai des items protégé compendium dans mon
   // sac tuvala qui sont deja pen compendium") -- evictMasteredFromCompendiumBag() n'est rejouée
   // que lors d'un NOUVEL enchantement PEN, ou une seule fois via migratePenMasteryV308 (gatée,

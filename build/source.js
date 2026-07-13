@@ -2640,6 +2640,31 @@ function pruneSilverRateBuffer(now) {
   while (silverRateBuffer.length && (now - silverRateBuffer[0].t) > SILVER_RATE_WINDOW_MS) silverRateBuffer.shift();
 }
 
+const KPM_RATE_WINDOW_MS = 180000; 
+const KPM_RATE_MAX_DEVIATION = 0.30; 
+const KPM_RATE_MIN_SPAN_MS = KPM_RATE_WINDOW_MS / 2; 
+let kpmRateBuffer = []; 
+
+function computeSlidingKpm(buffer, now, currentBest) {
+  const pruned = (buffer||[]).filter(s => (now - s.t) <= KPM_RATE_WINDOW_MS && (now - s.t) >= 0);
+  if (pruned.length === 0) return { ratePerMin: 0, eligible: false };
+  const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
+  const windowMs = Math.max(now - oldestT, 1000);
+  const total = pruned.reduce((sum, s) => sum + s.kills, 0);
+  const ratePerMin = total / (windowMs / 60000);
+  let eligible = windowMs >= KPM_RATE_MIN_SPAN_MS;
+  if (eligible && currentBest > 0) {
+    const deviation = (ratePerMin - currentBest) / currentBest;
+    if (deviation > KPM_RATE_MAX_DEVIATION) eligible = false;
+  }
+  return { ratePerMin, eligible };
+}
+
+function pruneKpmRateBuffer(now) {
+  now = now || Date.now();
+  while (kpmRateBuffer.length && (now - kpmRateBuffer[0].t) > KPM_RATE_WINDOW_MS) kpmRateBuffer.shift();
+}
+
 function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
@@ -3519,6 +3544,7 @@ function killWolf(p, w) {
   const z = Z(), lm = lootMult(bottleneck());
   const killsBefore = S.kills;
   S.kills++;
+  kpmRateBuffer.push({ t: Date.now(), kills: 1 }); 
   
   if (Math.floor(S.kills/1000) > Math.floor(killsBefore/1000)) {
     logToDiscord('💀 Palier de kills', `**${myPseudo||'Joueur'}** vient d'atteindre **${fmt(Math.floor(S.kills/1000)*1000)}** monstres tués à vie`, 0x7a2d33);
@@ -3825,10 +3851,14 @@ function refreshStatsOnly() {
   const kpmNow = mins>.1 ? (S.kills-(S.killsAtLoad||0))/mins : 0;
   $('stKpm').textContent = mins>.1 ? kpmNow.toFixed(1) : '—';
   
-  if (mins > 2 && kpmNow > (S.bestKpm||0)) {
-    
-    if (kpmNow - (S.bestKpm||0) > 0.5) logToDiscord('🏹 Record kills/min', `**${myPseudo||'Joueur'}** bat son record perso : **${kpmNow.toFixed(1)}** kills/min (${tr(Z().name)})`, 0xc9a55a);
-    S.bestKpm = kpmNow;
+  pruneKpmRateBuffer();
+  if (mins > 2) {
+    const { ratePerMin: kpmSliding, eligible } = computeSlidingKpm(kpmRateBuffer, Date.now(), S.bestKpm||0);
+    if (eligible && kpmSliding > (S.bestKpm||0)) {
+      
+      if (kpmSliding - (S.bestKpm||0) > 0.5) logToDiscord('🏹 Record kills/min', `**${myPseudo||'Joueur'}** bat son record perso : **${kpmSliding.toFixed(1)}** kills/min (${tr(Z().name)})`, 0xc9a55a);
+      S.bestKpm = kpmSliding;
+    }
   }
   
   const tokenGain = S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0);
@@ -4096,6 +4126,7 @@ function applySaveState(data) {
   if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
   if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
   if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
+  if (!S.migratedBestKpmResetV439) { migrateBestKpmResetV439(); S.migratedBestKpmResetV439 = true; }
   
   new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
   zoneIdx = data.zoneIdx || 0;
@@ -10571,6 +10602,11 @@ function migrateGearscoreDerivedFixV414() {
 
 function migrateSilverPerHourResetV436() {
   S.bestSilverPerHour = 0;
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
+}
+
+function migrateBestKpmResetV439() {
+  S.bestKpm = 0;
   if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
 
