@@ -14,6 +14,8 @@
   "combat.miniboss.time_per_fight_real": "⚔️ Time/fight expected for this group (avg gear {{pct}}%)",
   "combat.miniboss.parchemin_required": "📜 Scrolls required per player ({{n}} fights)",
   "combat.miniboss.total_time_estimate": "⏱ Estimated total time",
+  "combat.miniboss.bonus_current": "Current bonus",
+  "combat.miniboss.gear_too_low_warning": "⚠️ Gear too low for a realistic fight time — upgrade your equipment before starting a long run.",
   "combat.miniboss.engage_button": "Commit my Scroll ({{n}})",
   "combat.miniboss.max_hint": "MAX button capped at {{n}} — the group member with the fewest Scrolls",
   "combat.miniboss.chat_recruit": "Recruitment",

@@ -14,6 +14,8 @@
   "combat.miniboss.time_per_fight_real": "⚔️ Temps/combat prévu pour ce groupe (gear moyen {{pct}}%)",
   "combat.miniboss.parchemin_required": "📜 Parchemins requis par joueur ({{n}} combats)",
   "combat.miniboss.total_time_estimate": "⏱ Temps total estimé",
+  "combat.miniboss.bonus_current": "Bonus actuel",
+  "combat.miniboss.gear_too_low_warning": "⚠️ Gear insuffisant pour un temps de combat réaliste — améliore ton équipement avant de lancer un run long.",
   "combat.miniboss.engage_button": "Engager mon Parchemin ({{n}})",
   "combat.miniboss.max_hint": "Bouton MAX plafonné à {{n}} — stock du membre du groupe qui a le moins de Parchemins",
   "combat.miniboss.chat_recruit": "Recrutement",

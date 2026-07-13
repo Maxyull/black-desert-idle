@@ -45,6 +45,14 @@ function minibossEstimatedDps(gearPct) {
   if (!_skillDpsSum) playerBossDps(); // force le calcul paresseux de _skillDpsSum (boss.js)
   return Math.max(1, (Math.max(0,gearPct)/100) * minibossGearRefAp() * _skillDpsSum);
 }
+/** @param {number} sec - durée en secondes. @returns {string} durée lisible ("≈42s"/"≈5min30"/"≈2h15") — dédié aux estimations de temps de combat, contrairement à fmtBossCountdown (boss.js, HH:MM:SS, pensé pour un décompte avant spawn). */
+function minibossFmtDuration(sec) {
+  sec = Math.max(0, Math.round(sec));
+  if (sec < 60) return `≈${sec}s`;
+  if (sec < 3600) { const m = Math.floor(sec/60), s = sec%60; return `≈${m}min${s ? String(s).padStart(2,'0') : ''}`; }
+  const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
+  return `≈${h}h${String(m).padStart(2,'0')}`;
+}
 
 // ---------------- état du groupe (Supabase Realtime Presence, aucune table requise) ----------------
 const MINIBOSS_LOBBY_TOPIC = 'miniboss_lobby';
@@ -157,13 +165,25 @@ function openMiniBossLobby() {
   $('minibossLobbyBody').innerHTML = renderMiniBossLobbyHtml();
   wireMiniBossLobby();
 }
-/** @param {number} n - taille de groupe. @returns {string} barre visuelle du bonus de groupe (paliers 1..5, palier courant en évidence) — même esprit que .bonusLadder du mockup, en compact. */
+/** @param {number} n - taille de groupe. @returns {string} échelle du bonus de groupe (paliers 1..5, palier courant en évidence) — porte fidèlement la maquette : titre + multiplicateur courant en évidence, et par palier le %, les PV du boss et le temps de combat idéal (gear 100%), pas seulement le multiplicateur brut. */
 function minibossBonusLadderHtml(n) {
+  const idealDpsPerPlayer = minibossEstimatedDps(100);
   const steps = [1,2,3,4,5].map(i => {
     const cls = ['minibossBonusStep', i<=n?'reached':'', i===n?'current':'', i===5?'jackpot':''].filter(Boolean).join(' ');
-    return `<div class="${cls}"><span class="minibossBonusStepN">${i}</span><span class="minibossBonusStepMult">×${MINIBOSS_GROUP_BONUS[i]}</span></div>`;
+    const pct = Math.round((MINIBOSS_GROUP_BONUS[i]-1)*100);
+    const stepHp = minibossMaxHp(i);
+    const stepTime = stepHp / Math.max(1, i*idealDpsPerPlayer);
+    return `<div class="${cls}">` +
+      `<span class="minibossBonusStepN">${i}</span>` +
+      `<span class="minibossBonusStepMult">×${MINIBOSS_GROUP_BONUS[i]}</span>` +
+      `<span class="minibossBonusStepPct">${pct>=0?'+':''}${pct}%</span>` +
+      `<span class="minibossBonusStepHp">${fmt(stepHp)} PV</span>` +
+      `<span class="minibossBonusStepTime">${minibossFmtDuration(stepTime)}</span>` +
+      `</div>`;
   }).join('');
-  return `<div class="minibossBonusLadder"><div class="minibossBonusLadderTrack">${steps}</div></div>`;
+  return `<div class="minibossBonusLadder">` +
+    `<div class="minibossBonusLadderHead"><span class="minibossBonusLadderTitle">✨ ${i18next.t('combat:combat.miniboss.bonus_current')}</span><span class="minibossBonusLadderCurrent">×${MINIBOSS_GROUP_BONUS[Math.max(1,Math.min(5,n))]}</span></div>` +
+    `<div class="minibossBonusLadderTrack">${steps}</div></div>`;
 }
 /** @returns {string} HTML complet du lobby Mini Boss (carte Parchemin/Invoquer, craft, état du groupe, chat à onglets). */
 function renderMiniBossLobbyHtml() {
@@ -229,10 +249,11 @@ function renderMiniBossLobbyHtml() {
       </div>
       <div class="minibossGroupPreview">
         <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.boss_hp_for_group')}</span><b>${fmt(maxHp)}</b></div>
-        <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.time_per_fight_ideal')}</span><b class="ideal">≈${Math.round(idealTimePerFight)}s</b></div>
-        <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.time_per_fight_real', { pct: avgGear })}</span><b class="real">≈${Math.round(realTimePerFight)}s</b></div>
+        <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.time_per_fight_ideal')}</span><b class="ideal">${minibossFmtDuration(idealTimePerFight)}</b></div>
+        <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.time_per_fight_real', { pct: avgGear })}</span><b class="real">${minibossFmtDuration(realTimePerFight)}</b></div>
         <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.parchemin_required', { n: minibossRunLength })}</span><b>${minibossRunLength}</b></div>
-        <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.total_time_estimate')}</span><b class="real">${fmtBossCountdown(realTimePerFight*minibossRunLength*1000)}</b></div>
+        <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.total_time_estimate')}</span><b class="real">${minibossFmtDuration(realTimePerFight*minibossRunLength)}</b></div>
+        ${realTimePerFight > 600 ? `<div class="minibossGbpWarn">${i18next.t('combat:combat.miniboss.gear_too_low_warning')}</div>` : ''}
       </div>
       <div class="minibossPartyList">${partyRows}</div>
       <button class="minibossReadyBtn" id="minibossSummonBtn2" ${summonBtnDisabled?'disabled':''}>✅ ${i18next.t('combat:combat.miniboss.engage_button', { n: minibossRunLength })}</button>

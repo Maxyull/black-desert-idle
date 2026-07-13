@@ -3024,9 +3024,12 @@
   .minibossCraftBar { height:7px; background:var(--s2); border-radius:4px; overflow:hidden; }
   .minibossCraftBarFill { height:100%; background:linear-gradient(90deg,var(--arcane-dim),var(--arcane)); }
   .minibossCraftCount { font-size:10px; color:var(--cream3); margin-top:4px; }
-  .minibossCraftBtn { width:auto; flex-shrink:0; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:7px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream3); cursor:not-allowed; }
+  .minibossCraftBtn { flex-shrink:0; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:7px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream3); cursor:not-allowed; }
   .minibossCraftBtn.ready { border-color:var(--gold); color:var(--gold2); cursor:pointer; }
   .minibossBonusLadder { padding:10px 16px; }
+  .minibossBonusLadderHead { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; }
+  .minibossBonusLadderTitle { font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--cream2); }
+  .minibossBonusLadderCurrent { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--arcane2); font-weight:600; }
   .minibossBonusLadderTrack { display:flex; gap:6px; }
   .minibossBonusStep { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 2px; border-radius:6px; background:var(--s2); border:1px solid var(--dbBorder2); }
   .minibossBonusStep.reached { border-color:var(--arcane-dim); }
@@ -3036,19 +3039,24 @@
   .minibossBonusStepMult { font-size:11px; color:var(--cream2); font-weight:600; }
   .minibossBonusStep.current .minibossBonusStepMult { color:var(--arcane2); }
   .minibossBonusStep.jackpot.current .minibossBonusStepMult { color:var(--gold2); }
+  .minibossBonusStepPct { font-size:8px; color:var(--cream3); }
+  .minibossBonusStepHp { font-size:7.5px; color:var(--red2); opacity:.75; }
+  .minibossBonusStepTime { font-size:7.5px; color:var(--cream3); opacity:.75; }
+  .minibossBonusStep.current .minibossBonusStepTime { color:var(--arcane2); opacity:.9; }
   .minibossGroupCard h3 { display:flex; align-items:center; justify-content:space-between; }
   .minibossRunLengthRow { display:flex; align-items:center; gap:10px; padding:12px 16px 4px; flex-wrap:wrap; }
   .minibossRunChips { display:flex; gap:6px; flex-wrap:wrap; }
-  .minibossRunChip { width:auto; flex-shrink:0; font-size:11px; padding:5px 12px; border-radius:14px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
+  .minibossRunChip { font-size:11px; padding:5px 12px; border-radius:14px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
   .minibossRunChip.on { border-color:var(--arcane); color:var(--arcane2); background:rgba(155,127,214,.16); font-weight:600; }
   .minibossRunCustom { display:flex; align-items:center; gap:10px; padding:2px 16px 10px; }
   .minibossRunCustom input[type=range] { flex:1; accent-color:var(--arcane); }
   #minibossRunSliderVal { font-size:11px; color:var(--arcane2); width:30px; text-align:right; }
-  .minibossMaxBtn { width:auto; font-size:10px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
+  .minibossMaxBtn { font-size:10px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
   .minibossGroupPreview { margin:6px 16px 0; padding:10px 12px; border-radius:7px; background:rgba(224,96,96,.06); border:1px solid var(--red-dim,#5a1818); }
   .minibossGbpRow { display:flex; justify-content:space-between; font-size:10.5px; color:var(--cream2); padding:2px 0; }
   .minibossGbpRow b.ideal { color:var(--green2); }
   .minibossGbpRow b.real { color:var(--gold2); }
+  .minibossGbpWarn { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:9.5px; color:var(--red2); line-height:1.5; }
   .minibossPartyList { padding:10px 16px 0; display:flex; flex-direction:column; gap:6px; }
   .minibossPartyRow { display:flex; align-items:center; gap:10px; font-size:11px; }
   .minibossPartyRow.mine { color:var(--arcane2); font-weight:600; }
@@ -3072,7 +3080,7 @@
   .minibossChatText { color:var(--cream); flex:1; min-width:0; }
   .minibossChatInputRow { display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--dbBorder); }
   .minibossChatInput { flex:1; background:var(--s2); border:1px solid var(--dbBorder2); border-radius:6px; padding:8px 10px; color:var(--cream); font-size:11.5px; }
-  .minibossSendBtn { width:auto; flex-shrink:0; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
+  .minibossSendBtn { flex-shrink:0; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
   .minibossGroupChatHead { flex-shrink:0; padding:10px 12px; font-size:11.5px; color:var(--cream2); border-bottom:1px solid var(--dbBorder); background:rgba(155,127,214,.06); }
   .minibossGroupRow { border:1px solid var(--dbBorder2); border-radius:9px; padding:10px 12px; background:var(--s2); display:flex; flex-direction:column; gap:6px; }
   .minibossGroupRowHead { display:flex; align-items:center; gap:8px; }
@@ -3082,7 +3090,7 @@
   .minibossGroupRowStatus.fighting { background:rgba(224,96,96,.14); color:var(--red2); }
   .minibossGroupRowSize { font-size:10px; color:var(--arcane2); }
   .minibossGroupRowMeta { font-size:9.5px; color:var(--cream3); }
-  .minibossGroupJoinBtn { width:auto; flex-shrink:0; align-self:flex-start; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); cursor:pointer; }
+  .minibossGroupJoinBtn { align-self:flex-start; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); cursor:pointer; }
 
   /* ===== arène Mini Boss ===== */
   #minibossTopBar { display:flex; align-items:center; gap:10px; padding:10px 16px; background:rgba(0,0,0,.5); border-bottom:1px solid var(--arcane); flex-wrap:wrap; }
