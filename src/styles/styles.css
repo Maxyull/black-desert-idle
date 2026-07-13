@@ -2992,7 +2992,12 @@
   #minibossRoom.lobby #minibossLobby { display:flex; }
   #minibossRoom.lobby #minibossArena { display:none; }
   #minibossRoom.fight #minibossLobby { display:none; }
-  #minibossArena { display:flex; flex-direction:column; height:100%; position:relative; }
+  /* overflow-y:auto (2026-07-14, ajout ladder+chat sous le canvas -- voir revue de maquette) :
+     le canvas garde un min-height fixe, le reste (échelle de bonus "en direct" + chat de groupe
+     persistant, absents du premier portage) devient accessible par scroll sous la zone de combat
+     plutôt que de comprimer le canvas. #minibossResult reste correct en position:absolute/inset:0
+     -- overflow:auto ne change pas la hauteur de la boîte elle-même, seulement son contenu. */
+  #minibossArena { display:flex; flex-direction:column; height:100%; position:relative; overflow-y:auto; }
   #minibossLobbyHead {
     display:flex; align-items:center; justify-content:space-between; padding:12px 18px;
     background:linear-gradient(180deg,var(--arcane-dim),#1b1626); border-bottom:1px solid var(--arcane);
@@ -3101,7 +3106,24 @@
   .minibossChatLog, .minibossGroupsList { flex:1; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:7px; max-height:260px; }
   .minibossChatMsg { font-size:12px; display:flex; align-items:baseline; gap:5px; flex-wrap:wrap; }
   .minibossChatPseudo { font-weight:bold; color:var(--arcane2); }
-  .minibossRepBadge { font-size:9px; font-family:'JetBrains Mono',monospace; background:rgba(112,216,144,.12); color:var(--green2); padding:1px 5px; border-radius:8px; }
+  /* badge de réputation + carte détaillée au survol (7 stats brutes), CSS pur -- retour de revue
+     de maquette : le premier portage n'affichait qu'un badge plat sans détail. */
+  .minibossRepBadge { position:relative; display:inline-flex; align-items:center; cursor:help; font-size:9px; font-family:'JetBrains Mono',monospace; padding:1px 5px; border-radius:8px; }
+  .minibossRepBadge.good { background:rgba(112,216,144,.12); color:var(--green2); }
+  .minibossRepBadge.ok { background:rgba(232,200,128,.12); color:var(--gold2); }
+  .minibossRepBadge.bad { background:rgba(224,96,96,.12); color:var(--red2); }
+  .minibossRepCard {
+    display:none; position:absolute; z-index:20; top:16px; left:0; width:190px; padding:10px 12px;
+    background:#141225; border:1px solid var(--dbBorder2); border-radius:9px; box-shadow:0 8px 24px rgba(0,0,0,.5);
+    font-family:'Inter',sans-serif; font-size:10px; color:var(--cream2); text-align:left; font-weight:400;
+  }
+  .minibossRepBadge:hover .minibossRepCard { display:block; }
+  .minibossRepCardTitle { font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--cream3); margin-bottom:5px; padding-bottom:5px; border-bottom:1px solid var(--dbBorder); }
+  .minibossRepCardRow { display:flex; justify-content:space-between; padding:2px 0; }
+  .minibossRepCardRow b { font-family:'JetBrains Mono',monospace; color:var(--cream); }
+  .minibossRepCardRow.good b { color:var(--green2); }
+  .minibossRepCardRow.bad b { color:var(--red2); }
+  .minibossRepCardDivider { border-top:1px dashed var(--dbBorder2); margin-top:4px; padding-top:5px; }
   .minibossGearBadge { font-size:9px; font-family:'JetBrains Mono',monospace; background:var(--s2); padding:1px 5px; border-radius:8px; }
   .minibossChatText { color:var(--cream); flex:1; min-width:0; }
   .minibossChatInputRow { display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--dbBorder); }
@@ -3135,6 +3157,10 @@
   #minibossSoloLeaveBtn { border-color:var(--red2); color:var(--red2); }
   .minibossVoteStopPanel { display:none; margin:0 16px 8px; padding:8px 12px; border-radius:7px; background:rgba(232,200,128,.08); border:1px solid var(--gold-dim); font-size:10.5px; color:var(--gold2); }
   .minibossVoteStopPanel.show { display:block; }
+  .minibossVoteStopList { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
+  .minibossVoteChip { font-size:9.5px; padding:3px 8px; border-radius:12px; background:var(--s2); border:1px solid var(--dbBorder2); color:var(--cream2); }
+  .minibossVoteChip.yes { border-color:var(--green2); color:var(--green2); }
+  .minibossVoteChip.pending { color:var(--cream3); }
   /* confirmation avant "quitter seul" -- perte sèche du loot, ne doit jamais être accidentelle
      (absent du premier portage : le clic quittait directement sans confirmation). */
   .minibossSoloLeaveConfirm { display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin:0 16px 8px; padding:8px 12px; border-radius:7px; background:rgba(224,96,96,.12); border:1px solid var(--red2); font-size:10.5px; color:var(--red2); }
@@ -3143,7 +3169,16 @@
   #minibossSoloLeaveConfirmBtn, #minibossSoloLeaveCancelBtn { width:auto; margin-top:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:6px 13px; border-radius:6px; cursor:pointer; }
   #minibossSoloLeaveConfirmBtn { border:1px solid var(--red2); background:var(--red2); color:#1a0808; }
   #minibossSoloLeaveCancelBtn { border:1px solid var(--dbBorder2); background:transparent; color:var(--cream2); }
-  #minibossCv { flex:1; width:100%; min-height:0; display:block; }
+  #minibossCv { flex:1; width:100%; min-height:240px; display:block; }
+  /* échelle de bonus "en direct" + chat de groupe persistant pendant le combat (mockup :
+     .bonusLadder répété + .arenaSide, absents du premier portage -- seul le panneau roster en
+     overlay existait). Cartes pleine largeur sous le canvas (pas de #minibossTopPanel-style
+     overlay ici, l'espace disponible varie trop selon la taille d'écran pour un 2e overlay). */
+  .minibossArenaLadderCard { flex-shrink:0; margin:10px 16px 0; }
+  .minibossArenaChatCard { flex-shrink:0; margin:10px 16px 16px; display:flex; flex-direction:column; height:220px; }
+  .minibossArenaChatCard h3 { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+  .minibossArenaChatCount { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--arcane2); text-transform:none; letter-spacing:0; }
+  .minibossArenaChatCard .minibossChatLog { flex:1; min-height:0; }
   #minibossTopPanel { position:absolute; top:70px; right:14px; width:200px; background:rgba(16,16,30,.9); border:1px solid var(--dbBorder2); border-radius:8px; padding:10px; }
   #minibossTopPanel h4 { margin:0 0 6px; font-size:10.5px; color:var(--arcane2); }
   .minibossRosterRow { display:flex; align-items:center; gap:6px; font-size:10px; padding:2px 0; }

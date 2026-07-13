@@ -1002,6 +1002,10 @@ $a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossT
 $a('minibossVoteStopBtn').onclick = () => { if (minibossState.active) minibossToggleVoteStop(); };
 $a('minibossSoloLeaveConfirmBtn').onclick = () => minibossSoloLeave();
 $a('minibossSoloLeaveCancelBtn').onclick = () => minibossToggleSoloLeaveConfirm();
+// chat de groupe persistant pendant le combat (2026-07-14, ajout suite à revue de maquette --
+// même flux partagé minibossGroupLog que le chat de groupe du lobby, voir renderMinibossGroupChatLog).
+$a('minibossArenaGroupSend').onclick = () => minibossSendChat('group', $a('minibossArenaGroupInput'));
+$a('minibossArenaGroupInput').onkeydown = e => { if (e.key==='Enter') minibossSendChat('group', $a('minibossArenaGroupInput')); };
 window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); if (minibossState.active) resizeMinibossCanvas(); });
 updateNextBossMini();
 setInterval(updateNextBossMini, 1000);

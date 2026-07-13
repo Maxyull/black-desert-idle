@@ -564,6 +564,14 @@ const I18N_RESOURCES = {
       "combat.miniboss.solo_leave_confirm_msg": "⚠️ Tu vas perdre tout le loot de ce combat — ton Parchemin déjà engagé est joué quand même (pas remboursé). Confirmer ?",
       "combat.miniboss.solo_leave_confirm_btn": "Oui, quitter",
       "combat.miniboss.solo_leave_cancel_btn": "Annuler",
+      "combat.miniboss.rep_card_title": "Réputation Mini Boss",
+      "combat.miniboss.rep_groups_created": "Groupes créés",
+      "combat.miniboss.rep_runs_joined": "Runs rejoints",
+      "combat.miniboss.rep_solo_quits": "Quittés (solo)",
+      "combat.miniboss.rep_disconnects": "Perdus (déco)",
+      "combat.miniboss.rep_votes": "Arrêtés (vote)",
+      "combat.miniboss.rep_runs_clean": "Runs sans incident",
+      "combat.miniboss.rep_runs_incident": "Runs avec incident",
       "combat.miniboss.chat_empty": "Aucun message pour l'instant.",
       "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
       "combat.ai_mode.defensive_title": "IA défensive : esquive et soigne en priorité, quitte à moins attaquer",
@@ -1572,6 +1580,14 @@ const I18N_RESOURCES = {
       "combat.miniboss.solo_leave_confirm_msg": "⚠️ You're about to lose all loot from this fight — your already-committed Scroll is spent anyway (not refunded). Confirm?",
       "combat.miniboss.solo_leave_confirm_btn": "Yes, leave",
       "combat.miniboss.solo_leave_cancel_btn": "Cancel",
+      "combat.miniboss.rep_card_title": "Mini Boss reputation",
+      "combat.miniboss.rep_groups_created": "Groups created",
+      "combat.miniboss.rep_runs_joined": "Runs joined",
+      "combat.miniboss.rep_solo_quits": "Left solo",
+      "combat.miniboss.rep_disconnects": "Lost (disconnect)",
+      "combat.miniboss.rep_votes": "Stopped (vote)",
+      "combat.miniboss.rep_runs_clean": "Runs without incident",
+      "combat.miniboss.rep_runs_incident": "Runs with incident",
       "combat.miniboss.chat_empty": "No messages yet.",
       "combat.ai_mode.balanced_title": "Balanced AI: alternates attack and caution based on the fight",
       "combat.ai_mode.defensive_title": "Defensive AI: prioritizes dodging/healing over attacking",
@@ -8107,6 +8123,11 @@ function joinMinibossLobbyChannel() {
     if (!payload || payload.groupId !== (minibossGroupId||currentUser.id) || minibossMyRole === 'summoner') return;
     startMiniBossFightLocal(payload);
   });
+  ch.on('broadcast', { event:'vote_stop' }, ({ payload }) => {
+    if (!payload || !minibossState.active || payload.groupId !== (minibossGroupId||currentUser.id) || !minibossState.votes) return;
+    minibossState.votes.add(payload.pseudo);
+    renderMinibossVoteChips();
+  });
   ch.subscribe(status => { minibossLobbySubscribed = (status === 'SUBSCRIBED'); if (minibossLobbySubscribed) minibossTrackPresence('forming'); });
 }
 
@@ -8350,33 +8371,51 @@ function refreshMiniBossLobbyGroupParts() {
   wireMiniBossLobby();
 }
 
-function minibossSendChat(mode) {
-  const input = $a(mode==='recruit' ? 'minibossRecruitInput' : 'minibossGroupInput');
+function minibossSendChat(mode, inputEl) {
+  const input = inputEl || $a(mode==='recruit' ? 'minibossRecruitInput' : 'minibossGroupInput');
   if (!input || !input.value.trim() || !minibossLobbyChannel) return;
   const payload = { pseudo: myPseudo||'?', text: input.value.trim().slice(0,200), time: Date.now(),
     groupId: mode==='group' ? (minibossGroupId || (currentUser&&currentUser.id)) : null,
-    gearPct: minibossMyGearPct(), rep: minibossReputationScore(minibossRepCounters().runsClean, minibossRepCounters().runsIncident) };
+    gearPct: minibossMyGearPct(), repCounters: minibossRepCounters() };
   try { minibossLobbyChannel.send({ type:'broadcast', event:'chat', payload }); } catch (e) {}
   if (payload.groupId) { minibossGroupLog.push(payload); renderMinibossGroupChatLog(); } else { minibossRecruitLog.push(payload); renderMinibossRecruitChatLog(); }
   input.value = '';
+}
+
+function minibossRepBadgeHtml(c) {
+  c = c || {};
+  const score = minibossReputationScore(c.runsClean, c.runsIncident);
+  const cls = score>=4?'good':score>=2.5?'ok':'bad';
+  return `<span class="minibossRepBadge ${cls}">🛡️${score}/5<div class="minibossRepCard">` +
+    `<div class="minibossRepCardTitle">${i18next.t('combat:combat.miniboss.rep_card_title')}</div>` +
+    `<div class="minibossRepCardRow"><span>👥 ${i18next.t('combat:combat.miniboss.rep_groups_created')}</span><b>${c.groupsCreated||0}</b></div>` +
+    `<div class="minibossRepCardRow"><span>🤝 ${i18next.t('combat:combat.miniboss.rep_runs_joined')}</span><b>${c.runsJoined||0}</b></div>` +
+    `<div class="minibossRepCardRow"><span>🚪 ${i18next.t('combat:combat.miniboss.rep_solo_quits')}</span><b>${c.soloQuits||0}</b></div>` +
+    `<div class="minibossRepCardRow"><span>📡 ${i18next.t('combat:combat.miniboss.rep_disconnects')}</span><b>${c.disconnects||0}</b></div>` +
+    `<div class="minibossRepCardRow"><span>🗳️ ${i18next.t('combat:combat.miniboss.rep_votes')}</span><b>${c.votes||0}</b></div>` +
+    `<div class="minibossRepCardRow good minibossRepCardDivider"><span>✅ ${i18next.t('combat:combat.miniboss.rep_runs_clean')}</span><b>${c.runsClean||0}</b></div>` +
+    `<div class="minibossRepCardRow bad"><span>⚠️ ${i18next.t('combat:combat.miniboss.rep_runs_incident')}</span><b>${c.runsIncident||0}</b></div>` +
+    `</div></span>`;
 }
 
 function renderMinibossRecruitChatLog() {
   const el = $a('minibossRecruitLog'); if (!el) return;
   el.innerHTML = minibossRecruitLog.slice(-50).map(m =>
     `<div class="minibossChatMsg"><span class="minibossChatPseudo">${escapeHtml(m.pseudo)}</span>` +
-    `<span class="minibossRepBadge">⭐${(m.rep!=null?m.rep:5)}/5</span>` +
+    minibossRepBadgeHtml(m.repCounters) +
     `<span class="minibossGearBadge">⚔️${m.gearPct||0}%</span>` +
     `<span class="minibossChatText">${escapeHtml(m.text)}</span></div>`).join('') || `<div class="admHint">${i18next.t('combat:combat.miniboss.chat_empty')}</div>`;
   el.scrollTop = el.scrollHeight;
 }
 
 function renderMinibossGroupChatLog() {
-  const el = $a('minibossGroupLog'); if (!el) return;
-  el.innerHTML = minibossGroupLog.slice(-50).map(m =>
+  const html = minibossGroupLog.slice(-50).map(m =>
     `<div class="minibossChatMsg"><span class="minibossChatPseudo">${escapeHtml(m.pseudo)}</span><span class="minibossChatText">${escapeHtml(m.text)}</span></div>`).join('') ||
     `<div class="admHint">${i18next.t('combat:combat.miniboss.chat_empty')}</div>`;
-  el.scrollTop = el.scrollHeight;
+  ['minibossGroupLog', 'minibossArenaGroupLog'].forEach(id => {
+    const el = $a(id); if (!el) return;
+    el.innerHTML = html; el.scrollTop = el.scrollHeight;
+  });
 }
 
 function renderMinibossGroupsList() {
@@ -8457,7 +8496,7 @@ function startMiniBossFightLocal(payload, isSummoner) {
   Object.assign(minibossState, {
     active:true, ended:false, startedAt: performance.now(), hp:maxHp, maxHp, duration: maxHp/groupDps, groupDps,
     isSummoner: !!isSummoner, party, runLength: payload.runLength || minibossRunLength, runIndex: 1,
-    playerHp: effHpMax(), playerHpMax: effHpMax(), floatMsgs:[], shakeT:0,
+    playerHp: effHpMax(), playerHpMax: effHpMax(), floatMsgs:[], shakeT:0, votes: new Set(),
   });
   currentActivity = 'miniboss'; renderActivityTabs();
   setFarmViewVisible(false);
@@ -8470,6 +8509,12 @@ function startMiniBossFightLocal(payload, isSummoner) {
   const confirmMsg = $a('minibossSoloLeaveConfirmMsg'); if (confirmMsg) confirmMsg.textContent = i18next.t('combat:combat.miniboss.solo_leave_confirm_msg');
   const confirmBtn = $a('minibossSoloLeaveConfirmBtn'); if (confirmBtn) confirmBtn.textContent = i18next.t('combat:combat.miniboss.solo_leave_confirm_btn');
   const cancelBtn = $a('minibossSoloLeaveCancelBtn'); if (cancelBtn) cancelBtn.textContent = i18next.t('combat:combat.miniboss.solo_leave_cancel_btn');
+  const ladderCard = $a('minibossArenaLadder'); if (ladderCard) ladderCard.innerHTML = minibossBonusLadderHtml(n);
+  const chatTitle = $a('minibossArenaChatTitle'); if (chatTitle) chatTitle.textContent = '💬 ' + i18next.t('combat:combat.miniboss.chat_group');
+  const chatCount = $a('minibossArenaChatCount'); if (chatCount) chatCount.textContent = `${n}/${MINIBOSS_MAX_GROUP_SIZE}`;
+  const arenaInput = $a('minibossArenaGroupInput'); if (arenaInput) arenaInput.placeholder = i18next.t('combat:combat.miniboss.chat_group_placeholder');
+  const arenaSend = $a('minibossArenaGroupSend'); if (arenaSend) arenaSend.textContent = i18next.t('combat:combat.miniboss.send_button');
+  renderMinibossGroupChatLog();
   resizeMinibossCanvas();
   renderMinibossRoster();
   minibossState.raf = requestAnimationFrame(miniBossLoop);
@@ -8587,7 +8632,27 @@ function minibossToggleVoteStop() {
     minibossRepCounters().votes++;
     const head = $a('minibossVoteStopHead');
     if (head) head.textContent = i18next.t('combat:combat.miniboss.vote_stop_head');
+    const myName = myPseudo || i18next.t('combat:combat.miniboss.you_label');
+    if (minibossState.votes) minibossState.votes.add(myName);
+    const groupId = minibossGroupId || (currentUser && currentUser.id);
+    if (minibossLobbyChannel && groupId) {
+      try { minibossLobbyChannel.send({ type:'broadcast', event:'vote_stop', payload:{ groupId, pseudo: myName } }); } catch (e) {}
+    }
+    renderMinibossVoteChips();
   }
+}
+
+function renderMinibossVoteChips() {
+  const el = $a('minibossVoteStopList'); if (!el || !minibossState.party) return;
+  const votes = minibossState.votes || new Set();
+  const myName = myPseudo || i18next.t('combat:combat.miniboss.you_label');
+  el.innerHTML = minibossState.party.map(p => {
+    const name = p.mine ? myName : p.pseudo;
+    const voted = votes.has(name);
+    return `<span class="minibossVoteChip ${voted?'yes':'pending'}">${escapeHtml(p.mine?i18next.t('combat:combat.miniboss.you_label'):p.pseudo)} ${voted?'✅':'⏳'}</span>`;
+  }).join('');
+  const head = $a('minibossVoteStopHead');
+  if (head) head.textContent = `${i18next.t('combat:combat.miniboss.vote_stop_head')} — ${votes.size}/${minibossState.party.length}`;
 }
 
 function resizeMinibossCanvas() {
@@ -15164,6 +15229,9 @@ $a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossT
 $a('minibossVoteStopBtn').onclick = () => { if (minibossState.active) minibossToggleVoteStop(); };
 $a('minibossSoloLeaveConfirmBtn').onclick = () => minibossSoloLeave();
 $a('minibossSoloLeaveCancelBtn').onclick = () => minibossToggleSoloLeaveConfirm();
+
+$a('minibossArenaGroupSend').onclick = () => minibossSendChat('group', $a('minibossArenaGroupInput'));
+$a('minibossArenaGroupInput').onkeydown = e => { if (e.key==='Enter') minibossSendChat('group', $a('minibossArenaGroupInput')); };
 window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); if (minibossState.active) resizeMinibossCanvas(); });
 updateNextBossMini();
 setInterval(updateNextBossMini, 1000);
