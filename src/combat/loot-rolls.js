@@ -196,6 +196,13 @@ function rollDrops(wp, alpha, lm) {
     // (indépendante du palier de stuff). 1 à 3 unités par drop (pickupQty).
     { name:CRON_STONE.name, val:0, ch:CRON_STONE.ch, kind:'material', color:CRON_STONE.color, key:CRON_STONE.key,
       icon:CRON_STONE.icon, stackable:true, weight:0.1, pickupQty: 1+Math.floor(Math.random()*3) },
+    // Livre interdit (Mini Boss, combat/miniboss-data.js) : taux FIXE (0,80%), identique dans
+    // TOUTES les zones du jeu — même mécanisme que Pierre de Cron ci-dessus. Référence à
+    // MINIBOSS_FORBIDDEN_BOOK résolue à l'EXÉCUTION (rollDrops() est une fonction, jamais un
+    // littéral top-level) : sans importance que miniboss-data.js charge après ce fichier dans
+    // index.dev.html, voir CLAUDE.md §7-8.
+    { name:MINIBOSS_FORBIDDEN_BOOK.name, val:0, ch:MINIBOSS_FORBIDDEN_BOOK.ch, kind:MINIBOSS_FORBIDDEN_BOOK.kind, color:MINIBOSS_FORBIDDEN_BOOK.color, key:MINIBOSS_FORBIDDEN_BOOK.key,
+      icon:MINIBOSS_FORBIDDEN_BOOK.icon, stackable:true, weight:0.1 },
   ];
   for (const item of table) {
     if (Math.random() > item.ch * mults) continue;
