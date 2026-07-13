@@ -2638,6 +2638,29 @@
     cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
     assert('drawIliyaIso ne lève jamais d\'exception (alpha/normal, échelle/charge/sens/hors-écran)', !threw, errMsg);
   }
+  // Troll de Polly (zone 15, "Forêt de Polly", DERNIÈRE zone sans modèle dédié -- désormais couverte)
+  function testDrawPollyTrollIsoNeverThrows() {
+    if (typeof drawPollyTrollIso === 'undefined' || typeof cam === 'undefined' || typeof P === 'undefined') return;
+    const savedCamX = cam.x, savedCamY = cam.y, savedPx = P.x, savedPy = P.y;
+    cam.x = 0; cam.y = 0; P.x = 100; P.y = 0;
+    let threw = false, errMsg = '';
+    try {
+      [true, false].forEach(alpha => {
+        [0, 0.85, 1.5].forEach(scale => {
+          [0, 0.5, 1].forEach(lunge => {
+            [-1, 1].forEach(px => {
+              P.x = px;
+              drawPollyTrollIso(0, 0, { scale, lunge, phase: 0, tone:'#3f6e50', alpha }, 0.3);
+            });
+          });
+        });
+      });
+      drawPollyTrollIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#3f6e50', alpha:true }, 0); // hors écran -> sortie anticipée
+      drawPollyTrollIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#3f6e50', alpha:false }, 0); // idem
+    } catch (e) { threw = true; errMsg = e.message; }
+    cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
+    assert('drawPollyTrollIso ne lève jamais d\'exception (alpha/normal, échelle/charge/sens/hors-écran)', !threw, errMsg);
+  }
   // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
   // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
   // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
@@ -5853,6 +5876,7 @@
     testDrawTrollIsoNeverThrows();
     testDrawBashimIsoNeverThrows();
     testDrawIliyaIsoNeverThrows();
+    testDrawPollyTrollIsoNeverThrows();
     testMigratePenMasteryV308MarksExistingPenItems();
     testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
     testMigratePenMasteryV308EvictsCompendiumRetroactively();

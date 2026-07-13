@@ -2140,6 +2140,144 @@ function drawIliyaIso(wx,wy,w,t) {
   ctx.stroke();
   ctx.restore();
 }
+// Troll de Polly (zone "Forêt de Polly", zone index 15, DERNIÈRE zone de farm du jeu — cette zone
+// complète l'art dédié de toutes les zones 0 à 15) — créature ORIGINALE : ancien troll corrompu par
+// la forêt, ambiance mousse/champignons bioluminescents évoquant librement la vraie zone BDO
+// "Polly's Forest" (qui n'a en réalité aucun troll — invention propre à ce jeu), ambiance seulement,
+// aucun asset réel repris, même convention que les autres monstres de ce fichier. Silhouette de
+// troll classique (torse rond, bras longs pendants, posture voûtée) mais penchée PLUS en avant que
+// le Troll des Ruines de zone 12 (drawTrollIso) pour lire comme nettement plus ANCIEN. Lierre/vigne
+// épais drapé sur le torse et une épaule (quelques bandes courbes superposées, même technique que
+// les moulures de tissu/écorce de drawGahazIso/drawElricIso, mais plus dense/couvrant ici) par-dessus
+// une peau d'écorce sombre. "Couronne" de petits champignons luisants bleu-teal sur la tête/les
+// épaules (petits chapeaux ronds sur tiges fines + halos de lueur douce, même principe que les
+// points bioluminescents de drawProttyIso / la lueur de drawElricIso). Bras longs terminés par des
+// mains-griffes racinaires noueuses (traits anguleux, même technique que les mains griffues en bois
+// de la variante alpha de drawElricIso). Volutes de spores vertes faibles/translucides au sol (même
+// technique que les feux follets de la variante alpha de drawElricIso / les volutes de dissolution
+// de drawManesIso). Massue en branches fusionnées/noueuses, plus lourde/imposante que la massue du
+// Troll de zone 12 (zone de fin de jeu, doit lire comme plus menaçant). Palette vert-brun sombre,
+// délibérément distincte de la palette grise fissurée de pierre du Troll des Ruines (zone 12) et du
+// Mineur corrompu (zone 6) malgré l'archétype "troll" partagé dans le nom — différenciation
+// délibérée (mockup Option C approuvé). Pas de variante w.alpha dédiée (comme
+// Rhutum/Shultz/Sausan/Pirate/Gahaz/Iliya) — w.scale déjà plus grand suffit pour un pack alpha.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Troll de Polly (troll ancien corrompu par la forêt) en isométrique (zone "Forêt de Polly"). */
+function drawPollyTrollIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,14*w.scale,5.6,0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const tone = w.tone; // teinte de zone (vert-brun sombre, forêt corrompue)
+  const lumber = Math.sin(t*1.4+w.phase)*1.4; // démarche lourde, plus lente/traînante que le Troll de zone 12 (plus ancien)
+  if (w.lunge > .3) { ctx.strokeStyle='rgba(120,220,190,.5)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(1,-14,16,12,0,0,7); ctx.stroke(); }
+  ctx.translate(0,lumber);
+  // volutes de spores vertes faibles au sol (translucides, basse opacité -- même technique que les
+  // feux follets de la variante alpha de drawElricIso)
+  ctx.fillStyle='rgba(110,220,130,.16)';
+  ctx.beginPath(); ctx.ellipse(-6,2+Math.sin(t*2+w.phase)*.8,4,2.3,0,0,7); ctx.fill();
+  ctx.fillStyle='rgba(110,220,130,.11)';
+  ctx.beginPath(); ctx.ellipse(6,3+Math.sin(t*2.3+w.phase+1)*.8,3.2,1.9,0,0,7); ctx.fill();
+  // jambes courtes, grêles par rapport au torse -- posture voûtée, tout le poids porté par le ventre
+  ctx.strokeStyle='#2a2f22'; ctx.lineWidth=5.6; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-6,-11); ctx.lineTo(-7,2);
+  ctx.moveTo(6,-11); ctx.lineTo(7,2);
+  ctx.stroke();
+  ctx.fillStyle='#181f16';
+  ctx.beginPath(); ctx.ellipse(-7.4,2.8,2.2,1.3,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(7.4,2.8,2.2,1.3,0,0,7); ctx.fill();
+  // torse : ventre rond, silhouette penchée nettement plus en avant que drawTrollIso (posture plus
+  // ancienne/décrépite) -- décalage +x du contour vers le haut
+  ctx.fillStyle = tone;
+  ctx.beginPath();
+  ctx.moveTo(-6,-29);
+  ctx.quadraticCurveTo(-15,-20,-13,-10);
+  ctx.quadraticCurveTo(-8,-3,1,-3);
+  ctx.quadraticCurveTo(10,-4,14,-12);
+  ctx.quadraticCurveTo(15,-22,5,-30);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.9; ctx.stroke();
+  // lierre/vigne épais drapé sur le torse et une épaule -- plusieurs bandes courbes superposées,
+  // plus denses/couvrantes que les plaques de mousse de drawTrollIso
+  ctx.strokeStyle='#3a6b3e'; ctx.lineWidth=2.2; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-11,-25); ctx.quadraticCurveTo(-2,-21,6,-26); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-9,-17); ctx.quadraticCurveTo(0,-13,9,-18); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-4,-28); ctx.quadraticCurveTo(-1,-15,-2,-5); ctx.stroke();
+  ctx.strokeStyle='#4a8a4e'; ctx.lineWidth=1.1;
+  ctx.beginPath(); ctx.moveTo(-10,-24); ctx.quadraticCurveTo(-2,-20.4,5,-25); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-8,-16.4); ctx.quadraticCurveTo(0,-12.8,8,-17.4); ctx.stroke();
+  // petites feuilles d'ivy le long des vignes (petits triangles)
+  ctx.fillStyle='#4a8a4e';
+  [[-9,-25],[-1,-22],[7,-25],[-6,-17],[3,-14]].forEach(([x,y]) => {
+    ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-1.4,y+2.2); ctx.lineTo(x+1.4,y+1.8); ctx.closePath(); ctx.fill();
+  });
+  // bras longs, pendant nettement sous le niveau des genoux, terminés par des mains-griffes
+  // racinaires noueuses (traits anguleux, même technique que les mains griffues en bois de la
+  // variante alpha de drawElricIso)
+  ctx.strokeStyle = tone; ctx.lineWidth=4.8; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-8,-26); ctx.quadraticCurveTo(-15,-11,-12-lungeAmt*.3,9); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(9,-27); ctx.quadraticCurveTo(16,-12,14+lungeAmt*.5,7); ctx.stroke();
+  ctx.strokeStyle='#3a2f20'; ctx.lineWidth=1.3; ctx.lineCap='round';
+  [[-2,-1.6],[0,-3],[2.2,-1.6]].forEach(([dx,dy]) => {
+    ctx.beginPath(); ctx.moveTo(-12-lungeAmt*.3,9); ctx.lineTo(-12-lungeAmt*.3+dx*1.5,9+dy*1.5-1.8); ctx.stroke();
+  });
+  [[-2.2,-1.6],[0,-3],[2,-1.6]].forEach(([dx,dy]) => {
+    ctx.beginPath(); ctx.moveTo(14+lungeAmt*.5,7); ctx.lineTo(14+lungeAmt*.5+dx*1.5,7+dy*1.5-1.8); ctx.stroke();
+  });
+  // massue en branches fusionnées/noueuses, tenue près de la hanche -- plus lourde/imposante que
+  // la massue de drawTrollIso (zone de fin de jeu, doit lire comme plus menaçant)
+  ctx.save(); ctx.translate(14+lungeAmt*.5,4); ctx.rotate(.42);
+  ctx.fillStyle='#4a3a22';
+  ctx.beginPath(); ctx.moveTo(-4.6,10); ctx.lineTo(-4,-13); ctx.quadraticCurveTo(0,-16.6,4,-13); ctx.lineTo(4.6,9.6); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.8; ctx.stroke();
+  ctx.strokeStyle='#3a2a18'; ctx.lineWidth=1.3; ctx.lineCap='round'; // moignons de branches
+  ctx.beginPath(); ctx.moveTo(-3.6,-11); ctx.lineTo(-7,-13.6); ctx.moveTo(3.4,-11.6); ctx.lineTo(6.8,-14.4); ctx.moveTo(0,-13.4); ctx.lineTo(0,-17); ctx.stroke();
+  ctx.strokeStyle='#3a6b3e'; ctx.lineWidth=.9; // vigne enroulée sur le manche
+  ctx.beginPath(); ctx.moveTo(-3.4,4); ctx.quadraticCurveTo(0,1,3,4); ctx.quadraticCurveTo(0,7,-3.2,9.6); ctx.stroke();
+  ctx.restore();
+  // tête, penchée en avant plus fortement que drawTrollIso (posture plus voûtée/ancienne)
+  const headX = 3.4, headY = -32;
+  ctx.fillStyle = tone;
+  ctx.beginPath(); ctx.ellipse(headX,headY,5.8,5.2,0,0,7); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.7; ctx.stroke();
+  // arcade sourcilière proéminente
+  ctx.fillStyle='rgba(15,20,12,.55)';
+  ctx.beginPath(); ctx.ellipse(headX,headY-1.6,5.2,1.7,0,0,Math.PI); ctx.fill();
+  // petits yeux globuleux
+  ctx.fillStyle='#1a1712';
+  ctx.beginPath(); ctx.arc(headX-2.3,headY,0.9,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(headX+2.3,headY,0.9,0,7); ctx.fill();
+  // couronne de petits champignons luisants bleu-teal sur la tête/les épaules -- chapeaux ronds sur
+  // tiges fines + halos de lueur douce, même principe que les points bioluminescents de drawProttyIso.
+  // Dessinée APRÈS la tête/les yeux et positionnée AU-DESSUS du sommet du crâne + sur les épaules
+  // (hors de la silhouette du visage), pour lire comme une couronne qui en sort plutôt que de
+  // recouvrir les traits du visage.
+  const mushGlow = w.lunge>.3 ? 'rgba(120,230,220,.9)' : 'rgba(90,200,190,.7)';
+  [[headX-3.6,headY-7.4,3.2],[headX+2.8,headY-8.6,2.8],[-9,-26.4,3],[10,-23,2.4]].forEach(([mx,my,mr]) => {
+    ctx.fillStyle='rgba(120,230,220,.22)'; // halo doux
+    ctx.beginPath(); ctx.arc(mx,my,mr+2.2,0,7); ctx.fill();
+    ctx.strokeStyle='#2a4a2c'; ctx.lineWidth=.9; ctx.lineCap='round'; // tige fine
+    ctx.beginPath(); ctx.moveTo(mx,my+mr-.4); ctx.lineTo(mx,my+mr+3); ctx.stroke();
+    ctx.fillStyle = mushGlow; // chapeau
+    ctx.beginPath(); ctx.arc(mx,my,mr*.55,Math.PI,0); ctx.fill();
+    ctx.fillStyle='rgba(20,16,10,.3)';
+    ctx.beginPath(); ctx.ellipse(mx,my,mr*.55,mr*.14,0,0,Math.PI); ctx.fill();
+  });
+  // contour net global (silhouette lisible, même logique que le contour du loup)
+  ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(-6,-29); ctx.quadraticCurveTo(-15,-20,-13,-10); ctx.quadraticCurveTo(-8,-3,1,-3);
+  ctx.quadraticCurveTo(10,-4,14,-12); ctx.quadraticCurveTo(15,-22,5,-30);
+  ctx.stroke();
+  ctx.restore();
+}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -2323,6 +2461,28 @@ function drawZoneMobIcon() {
     ctx2.fillStyle='rgba(200,140,120,.6)'; // touches de corail sur le bord du chapeau
     ctx2.beginPath(); ctx2.arc(-4.6,-4.8,.8,0,7); ctx2.fill();
     ctx2.beginPath(); ctx2.arc(4.8,-4.8,.8,0,7); ctx2.fill();
+  } else if (zi === 15) { // Troll de Polly (ventre rond drapé de lierre + couronne de champignons luisants)
+    ctx2.fillStyle=tone; // ventre rond
+    ctx2.beginPath();
+    ctx2.moveTo(-4,-6); ctx2.quadraticCurveTo(-8,-1,-7,4); ctx2.quadraticCurveTo(-4,7,0,7);
+    ctx2.quadraticCurveTo(4,7,7,4); ctx2.quadraticCurveTo(8,-1,4,-6);
+    ctx2.closePath(); ctx2.fill();
+    ctx2.strokeStyle='#3a6b3e'; ctx2.lineWidth=1.1; // lierre drapé
+    ctx2.beginPath(); ctx2.moveTo(-6,-2); ctx2.quadraticCurveTo(0,1,5,-3); ctx2.stroke();
+    ctx2.fillStyle=tone; // petite tête
+    ctx2.beginPath(); ctx2.arc(0,-8.4,3,0,7); ctx2.fill();
+    ctx2.fillStyle='rgba(15,20,12,.5)'; // arcade sourcilière proéminente
+    ctx2.beginPath(); ctx2.ellipse(0,-9.2,2.8,.9,0,0,Math.PI); ctx2.fill();
+    ctx2.fillStyle='#1a1712'; // petits yeux globuleux
+    ctx2.beginPath(); ctx2.arc(-1.2,-8.4,.5,0,7); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(1.2,-8.4,.5,0,7); ctx2.fill();
+    // couronne de champignons luisants bleu-teal
+    [[-2.6,-13],[2.6,-11.4]].forEach(([mx,my]) => {
+      ctx2.fillStyle='rgba(120,230,220,.22)';
+      ctx2.beginPath(); ctx2.arc(mx,my,2.4,0,7); ctx2.fill();
+      ctx2.fillStyle='rgba(90,200,190,.8)';
+      ctx2.beginPath(); ctx2.arc(mx,my,1.2,Math.PI,0); ctx2.fill();
+    });
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -2339,8 +2499,11 @@ function drawZoneMobIcon() {
 // "Sanctuaire Elric" (zone index 9, avec sa variante boss "idole vivante") et "Ruines de Kratuga"
 // (zone index 10, gardien de pierre Uluan), "Planque des Mânes" (zone index 11, Esprit des
 // Mânes spectral, avec sa variante boss plus massive), "Ruines de Trent" (zone index 12, Troll
-// des Ruines) et "Base de Bashim" (zone index 14, Soldat de Bashim caprin, avec sa variante boss
-// "Kurd" plus massive) ont la leur, les autres zones gardent la silhouette générique
+// des Ruines), "Île d'Iliya" (zone index 13, Pirate d'Iliya maudit/spectral) et "Base de Bashim"
+// (zone index 14, Soldat de Bashim caprin, avec sa variante boss "Kurd" plus massive) et "Forêt de
+// Polly" (zone index 15, DERNIÈRE zone du jeu, Troll de Polly ancien corrompu par la forêt — cette
+// zone complète l'art dédié de TOUTES les zones de farm, 0 à 15) ont la leur, la silhouette
+// générique (loup) ne sert plus pour aucune zone de farm désormais
 /** @param {number} wx @param {number} wy @param {object} w @param {number} t. Aiguille vers le draw*Iso du monstre correspondant à la zone active. */
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
@@ -2357,6 +2520,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 12) return drawTrollIso(wx,wy,w,t);
   if (zoneIdx === 13) return drawIliyaIso(wx,wy,w,t);
   if (zoneIdx === 14) return drawBashimIso(wx,wy,w,t);
+  if (zoneIdx === 15) return drawPollyTrollIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
