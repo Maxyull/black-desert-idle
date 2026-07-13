@@ -1322,6 +1322,127 @@ function drawElricIso(wx,wy,w,t) {
   }
   ctx.restore();
 }
+// Uluan (zone "Ruines de Kratuga", 2e zone du palier bleu/Mediah, juste après Sanctuaire Elric) —
+// créature ORIGINALE : gardien de pierre trapu et brutal des ruines antiques (ambiance générale
+// "Kratuga Ancient Ruins" de BDO -- gardien-construct de pierre/mécanique, ambiance seulement,
+// aucun asset réel repris, même convention que les autres monstres de ce fichier -- pas de photo
+// de référence disponible pour ce nom, propre à ce jeu). Silhouette large et lourde (même gabarit
+// que Sausan/Shultz, PAS lanky), 2-3 plaques de dalles de pierre superposées, plus anguleuses/
+// rectangulaires que les coquilles arrondies de drawHelmIso, sur torse et épaules ; tête casquée en
+// bloc de pierre à crête sommitale, avec 2 fentes oculaires luisantes de rouge (intensité liée à
+// w.lunge, même principe que la bande incandescente du Golem de drawHelmIso / les yeux verts de
+// drawElricIso) ; chaînes de métal rouillé enroulées aux avant-bras (quelques segments courbes +
+// petits maillons) ; quelques fissures fines sur torse/jambes (même technique que les cicatrices de
+// drawGahazIso) ; jambes épaisses façon piliers, pas effilées ; quelques éclats de gravats/poussière
+// aux épaules. Option C (la plus trapue/brutale des 3 options proposées) approuvée. Pas de variante
+// w.alpha dédiée ici (contrairement à Mineur/Helm/Elric) -- le w.scale déjà plus grand pour un pack
+// alpha suffit (même logique que drawRhutumIso/drawShultzIso/drawSausanIso/drawPirateIso/drawGahazIso).
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Uluan (gardien de pierre) en isométrique. */
+function drawUluanIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,13*w.scale,5.4,0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const trot = Math.sin(t*3.4+w.phase)*1.1; // démarche lourde, martelée -- plus lente que les mobs vivants
+  const stone = w.tone; // teinte de zone -- pierre gris-tan pâle, patinée
+  if (w.lunge > .3) { ctx.strokeStyle='rgba(200,70,60,.5)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(0,-17,16,12,0,0,7); ctx.stroke(); }
+  // jambes épaisses façon piliers (larges, blocs, pas effilées -- silhouette trapue)
+  ctx.strokeStyle='#4a4030'; ctx.lineWidth=6.2; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-6,-10); ctx.lineTo(-7,3+trot*.3);
+  ctx.moveTo(6,-10); ctx.lineTo(7,3-trot*.3);
+  ctx.stroke();
+  // pieds/socles de pierre
+  ctx.fillStyle='#3a3226';
+  ctx.beginPath(); ctx.ellipse(-7.2,3.6+trot*.3,2.4,1.3,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(7.2,3.6-trot*.3,2.4,1.3,0,0,7); ctx.fill();
+  // torse massif et large (bloc de pierre)
+  ctx.fillStyle = stone;
+  ctx.beginPath(); ctx.moveTo(-12,-10); ctx.lineTo(-11,-28); ctx.lineTo(11,-28); ctx.lineTo(12,-10); ctx.closePath(); ctx.fill();
+  // 2e couche de plaque de dalle, légèrement plus sombre, décalée -- plus anguleuse/rectangulaire
+  // que les coquilles arrondies de drawHelmIso, superposée par-dessus le bloc de base
+  ctx.fillStyle='rgba(0,0,0,.15)';
+  ctx.beginPath(); ctx.moveTo(-10,-11); ctx.lineTo(-9.4,-24); ctx.lineTo(9.4,-24); ctx.lineTo(10,-11); ctx.closePath(); ctx.fill();
+  // 3e dalle, plus claire, plus haute sur le torse (poitrail)
+  ctx.fillStyle='rgba(255,255,255,.1)';
+  ctx.beginPath(); ctx.moveTo(-8.6,-19); ctx.lineTo(-8,-27); ctx.lineTo(8,-27); ctx.lineTo(8.6,-19); ctx.closePath(); ctx.fill();
+  // lignes de jointure entre dalles (même technique que les lignes de plaques ventrales de drawHelmIso)
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(-10,-19); ctx.lineTo(10,-19);
+  ctx.moveTo(-9.2,-24); ctx.lineTo(9.2,-24);
+  ctx.stroke();
+  // fissures fines de pierre fendillée sur le torse (traits de détail, même technique que les
+  // cicatrices de drawGahazIso)
+  ctx.strokeStyle='rgba(20,16,10,.4)'; ctx.lineWidth=.8; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-4,-26); ctx.lineTo(-2.2,-20); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(3.4,-25); ctx.lineTo(4.8,-19.4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-1,-15); ctx.lineTo(1.4,-11.4); ctx.stroke();
+  // épaulières en dalles superposées, plus rectangulaires/anguleuses que les coquilles rondes de
+  // drawHelmIso (2 blocs chevauchants par épaule)
+  [-11,11].forEach(sx => {
+    const dir = sx<0?-1:1;
+    ctx.fillStyle = stone;
+    ctx.beginPath(); ctx.moveTo(sx-dir*3,-24); ctx.lineTo(sx-dir*3,-30); ctx.lineTo(sx+dir*4,-30); ctx.lineTo(sx+dir*4,-25); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+    ctx.fillStyle='rgba(0,0,0,.14)';
+    ctx.beginPath(); ctx.moveTo(sx-dir*1.4,-25.4); ctx.lineTo(sx-dir*1.4,-29.4); ctx.lineTo(sx+dir*3.4,-29.4); ctx.lineTo(sx+dir*3.4,-26); ctx.closePath(); ctx.fill();
+    // éclats de gravats/poussière près du bord de l'épaule (petits points gris, nice-to-have)
+    ctx.fillStyle='rgba(160,150,130,.5)';
+    ctx.beginPath(); ctx.arc(sx+dir*4.6,-27.4,.7,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(sx+dir*5.6,-25.8,.5,0,7); ctx.fill();
+  });
+  // chaînes de métal rouillé enroulées aux avant-bras (segments courbes + petits maillons circulaires)
+  ctx.strokeStyle='#5a3c28'; ctx.lineWidth=3.6; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-11,-26); ctx.lineTo(-14-lungeAmt*.2,-14); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(11,-26); ctx.lineTo(14+lungeAmt*.4,-14); ctx.stroke();
+  ctx.strokeStyle='#7a6248'; ctx.lineWidth=1.2;
+  [[-13,-20],[-13.6,-17],[-14.2,-14]].forEach(([cx,cy]) => {
+    ctx.beginPath(); ctx.ellipse(cx,cy,1.3,1,0.3,0,7); ctx.stroke();
+  });
+  [[13.2,-20],[13.8,-17],[14+lungeAmt*.4,-14.4]].forEach(([cx,cy]) => {
+    ctx.beginPath(); ctx.ellipse(cx,cy,1.3,1,-0.3,0,7); ctx.stroke();
+  });
+  // mains de pierre (blocs simples)
+  ctx.fillStyle = stone;
+  ctx.beginPath(); ctx.ellipse(-14.4-lungeAmt*.2,-12.6,2.2,2.6,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(14.4+lungeAmt*.4,-12.6,2.2,2.6,0,0,7); ctx.fill();
+  // tête casquée en bloc de pierre, avec crête sommitale
+  ctx.fillStyle = stone;
+  ctx.beginPath(); ctx.moveTo(-5.4,-28); ctx.lineTo(-5,-36); ctx.lineTo(5,-36); ctx.lineTo(5.4,-28); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.9; ctx.stroke();
+  // dôme sommital + crête centrale (ridge)
+  ctx.fillStyle='rgba(255,255,255,.08)';
+  ctx.beginPath(); ctx.ellipse(0,-36,5.2,2.4,0,Math.PI,0); ctx.fill();
+  ctx.fillStyle='#3a3226';
+  ctx.beginPath(); ctx.moveTo(-1.4,-36); ctx.lineTo(0,-41); ctx.lineTo(1.4,-36); ctx.closePath(); ctx.fill();
+  // fentes oculaires luisantes de rouge -- intensité/couleur liées à w.lunge (même principe que la
+  // bande incandescente du Golem de drawHelmIso / les yeux verts de drawElricIso)
+  const glow = w.lunge>.3 ? '#ff5a4a' : '#a8302a';
+  if (w.lunge>.3) {
+    ctx.fillStyle='rgba(255,90,70,.35)';
+    ctx.beginPath(); ctx.ellipse(-2.4,-31.6,2,1.5,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(2.4,-31.6,2,1.5,0,0,7); ctx.fill();
+  }
+  ctx.fillStyle = glow;
+  ctx.beginPath(); ctx.ellipse(-2.4,-31.6,1.3,.9,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(2.4,-31.6,1.3,.9,0,0,7); ctx.fill();
+  // fissures fines sur les jambes (même technique que sur le torse ci-dessus)
+  ctx.strokeStyle='rgba(20,16,10,.35)'; ctx.lineWidth=.7; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-6.2,-4); ctx.lineTo(-5.2,1); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(5.6,-6); ctx.lineTo(6.6,-1); ctx.stroke();
+  // contour net global (silhouette lisible, même logique que le contour du loup)
+  ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(-12,-10); ctx.lineTo(-11,-28); ctx.lineTo(11,-28); ctx.lineTo(12,-10); ctx.closePath(); ctx.stroke();
+  ctx.restore();
+}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -1436,6 +1557,15 @@ function drawZoneMobIcon() {
     ctx2.strokeStyle='#241d14'; ctx2.lineWidth=.9; // sourcils obliques renfrognés + arête du nez
     ctx2.beginPath(); ctx2.moveTo(-3.2,1.4); ctx2.lineTo(-1,0); ctx2.moveTo(3.2,1.4); ctx2.lineTo(1,0); ctx2.stroke();
     ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(0,2.6); ctx2.stroke();
+  } else if (zi === 10) { // Uluan (tête casquée de pierre en bloc à crête + fentes oculaires rouges)
+    ctx2.fillStyle=tone; // bloc de pierre de la tête
+    ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-5.6,-4); ctx2.lineTo(5.6,-4); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
+    ctx2.strokeStyle='rgba(0,0,0,.3)'; ctx2.lineWidth=.7; ctx2.stroke();
+    ctx2.fillStyle='#3a3226'; // crête sommitale
+    ctx2.beginPath(); ctx2.moveTo(-1.6,-4); ctx2.lineTo(0,-8.6); ctx2.lineTo(1.6,-4); ctx2.closePath(); ctx2.fill();
+    ctx2.fillStyle='#a8302a'; // fentes oculaires rougeoyantes
+    ctx2.beginPath(); ctx2.ellipse(-2.6,0,1.3,1,0,0,7); ctx2.fill();
+    ctx2.beginPath(); ctx2.ellipse(2.6,0,1.3,1,0,0,7); ctx2.fill();
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -1449,8 +1579,9 @@ function drawZoneMobIcon() {
 // "Ferme Shultz" (zone index 4), "Colonie Sausan" (zone index 5), "Mine de Fer Abandonnée"
 // (zone index 6, avec sa variante boss blindée), "Poste Helm" (zone index 7, avec sa variante
 // boss "Golem" à la silhouette radicalement différente), "Repaire Bandits Gahaz" (zone index 8)
-// et "Sanctuaire Elric" (zone index 9, avec sa variante boss "idole vivante") ont la leur, les
-// autres zones gardent la silhouette générique
+// "Sanctuaire Elric" (zone index 9, avec sa variante boss "idole vivante") et "Ruines de Kratuga"
+// (zone index 10, gardien de pierre Uluan) ont la leur, les autres zones gardent la silhouette
+// générique
 /** @param {number} wx @param {number} wy @param {object} w @param {number} t. Aiguille vers le draw*Iso du monstre correspondant à la zone active. */
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
@@ -1462,6 +1593,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 7) return drawHelmIso(wx,wy,w,t);
   if (zoneIdx === 8) return drawGahazIso(wx,wy,w,t);
   if (zoneIdx === 9) return drawElricIso(wx,wy,w,t);
+  if (zoneIdx === 10) return drawUluanIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
