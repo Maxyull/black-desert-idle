@@ -2663,32 +2663,86 @@
   // bestSilverPerHour ne doit JAMAIS redescendre (comme bestKpm), et seulement après 2 min de
   // session (jamais sur un pic de tout début de partie) -- garde-fou de régression contre un
   // retour du bug (extrapolation directement en /h dès 6s de session).
+  // 2026-07-13 : réécrit pour la fenêtre glissante 3 min (silverRateBuffer/computeSlidingSilverPerHour,
+  // voir game-core.js) -- bestSilverPerHour ne dérive plus de tokenGain/(minutes de session ENTIÈRE)
+  // mais du buffer d'échantillons horodatés ; ce test peuple donc silverRateBuffer directement
+  // plutôt que S.tokenSilverEarned. Le rythme "plus élevé" simulé reste dans les 30% du record
+  // (garde-fou anti-pic, voir testComputeSlidingSilverPerHourIgnoresIsolatedSpikeForRecord pour le
+  // cas où un pic dépasse ce seuil et est ignoré).
   function testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes() {
     const s = { bestSilverPerHour: S.bestSilverPerHour, tokenSilverEarned: S.tokenSilverEarned,
       tokenSilverEarnedAtLoad: S.tokenSilverEarnedAtLoad, startTime: S.startTime };
-    // simule une session de 30s avec un gros gain -> ne doit PAS mettre à jour le record (mins<2)
-    S.bestSilverPerHour = 1000;
-    S.tokenSilverEarnedAtLoad = 0;
-    S.tokenSilverEarned = 50000; // extrapolé sur 30s -> 6M/h, un pic exactement comme le bug d'origine
-    S.startTime = performance.now() - 30*1000;
-    hud();
-    assert('Un gros gain sur <2min de session ne modifie PAS le record (protège contre les pics)',
-      S.bestSilverPerHour === 1000, `bestSilverPerHour=${S.bestSilverPerHour}`);
-    // simule une session de 3 min avec un rythme réellement plus élevé -> le record doit monter
-    S.tokenSilverEarned = 100000;
-    S.startTime = performance.now() - 3*60*1000;
-    hud();
-    assert('Un rythme soutenu sur >2min de session met bien à jour le record (record monte)',
-      S.bestSilverPerHour > 1000, `bestSilverPerHour=${S.bestSilverPerHour}`);
-    const afterFirstUpdate = S.bestSilverPerHour;
-    // un rythme plus FAIBLE ensuite ne doit jamais faire REDESCENDRE le record (monotone)
-    S.tokenSilverEarnedAtLoad = 99000; S.tokenSilverEarned = 99100;
-    S.startTime = performance.now() - 3*60*1000;
-    hud();
-    assert('Le record ne redescend jamais (monotone, comme bestKpm)', S.bestSilverPerHour === afterFirstUpdate,
-      `avant=${afterFirstUpdate} apres=${S.bestSilverPerHour}`);
-    S.bestSilverPerHour = s.bestSilverPerHour; S.tokenSilverEarned = s.tokenSilverEarned;
-    S.tokenSilverEarnedAtLoad = s.tokenSilverEarnedAtLoad; S.startTime = s.startTime;
+    const savedBuffer = silverRateBuffer;
+    try {
+      // simule une session de 30s avec un gros gain -> ne doit PAS mettre à jour le record (mins<2),
+      // même si le buffer contiendrait de quoi extrapoler un pic énorme (le garde-fou "2 minutes"
+      // bloque AVANT même de lire le buffer)
+      S.bestSilverPerHour = 1000;
+      S.startTime = performance.now() - 30*1000;
+      silverRateBuffer = [{ t: Date.now()-20000, silver: 50000 }];
+      hud();
+      assert('Un gros gain sur <2min de session ne modifie PAS le record (protège contre les pics)',
+        S.bestSilverPerHour === 1000, `bestSilverPerHour=${S.bestSilverPerHour}`);
+      // simule une session de 3 min avec un rythme réellement plus élevé, RÉPARTI sur toute la
+      // fenêtre glissante (pas un pic isolé) -> le record doit monter (~+10%, sous le seuil
+      // anti-pic de 30%)
+      S.startTime = performance.now() - 3*60*1000;
+      const now = Date.now();
+      const targetRate = 1100; // record actuel (1000) +10%
+      const totalOverWindow = targetRate * (SILVER_RATE_WINDOW_MS/3600000);
+      silverRateBuffer = [];
+      for (let i=0;i<6;i++) silverRateBuffer.push({ t: now - SILVER_RATE_WINDOW_MS + i*(SILVER_RATE_WINDOW_MS/6) + 1000, silver: totalOverWindow/6 });
+      hud();
+      assert('Un rythme soutenu (progressif, pas un pic) sur >2min de session met bien à jour le record (record monte)',
+        S.bestSilverPerHour > 1000, `bestSilverPerHour=${S.bestSilverPerHour}`);
+      const afterFirstUpdate = S.bestSilverPerHour;
+      // un rythme plus FAIBLE ensuite ne doit jamais faire REDESCENDRE le record (monotone)
+      silverRateBuffer = [{ t: now-10000, silver: 10 }];
+      S.startTime = performance.now() - 3*60*1000;
+      hud();
+      assert('Le record ne redescend jamais (monotone, comme bestKpm)', S.bestSilverPerHour === afterFirstUpdate,
+        `avant=${afterFirstUpdate} apres=${S.bestSilverPerHour}`);
+    } finally {
+      S.bestSilverPerHour = s.bestSilverPerHour; S.tokenSilverEarned = s.tokenSilverEarned;
+      S.tokenSilverEarnedAtLoad = s.tokenSilverEarnedAtLoad; S.startTime = s.startTime;
+      silverRateBuffer = savedBuffer;
+    }
+  }
+  // fonction PURE computeSlidingSilverPerHour() (voir game-core.js, remplace le calcul session-
+  // entière par une fenêtre glissante 3 min + garde-fou anti-pic 30%) -- testée indépendamment du
+  // tick réel du jeu, buffer/now/currentBest en entrée directe.
+  function testComputeSlidingSilverPerHourStableRateWithinWindow() {
+    if (typeof computeSlidingSilverPerHour !== 'function') return;
+    const now = Date.now();
+    const buffer = [ { t: now-170000, silver:1000 }, { t: now-90000, silver:1000 }, { t: now-10000, silver:1000 } ];
+    const { ratePerHour, eligible } = computeSlidingSilverPerHour(buffer, now, 0);
+    assert('Taux calculé sur la fenêtre glissante à partir de gains réguliers (pas de gain hors-fenêtre)',
+      ratePerHour > 50000 && ratePerHour < 90000, `rate=${ratePerHour}`);
+    assert('Éligible au record en l\'absence de record préexistant (currentBest=0)', eligible === true);
+  }
+  function testComputeSlidingSilverPerHourIgnoresIsolatedSpikeForRecord() {
+    if (typeof computeSlidingSilverPerHour !== 'function') return;
+    const now = Date.now();
+    const currentBest = 60000;
+    // pic isolé (ex: juste après une reconnexion) : un seul gros échantillon récent qui, extrapolé
+    // sur sa fenêtre courte, dépasse le record de +50%
+    const buffer = [ { t: now-5000, silver: currentBest*1.5*(5/3600) } ];
+    const { ratePerHour, eligible } = computeSlidingSilverPerHour(buffer, now, currentBest);
+    assert('Le pic isolé calcule bien un taux nettement au-dessus du record (+~50%)', ratePerHour > currentBest*1.3, `rate=${ratePerHour}`);
+    assert('Le pic isolé n\'est PAS éligible au nouveau record (écart >30% avec la moyenne déjà établie)', eligible === false);
+  }
+  function testComputeSlidingSilverPerHourAcceptsProgressiveIncreaseAsRecord() {
+    if (typeof computeSlidingSilverPerHour !== 'function') return;
+    const now = Date.now();
+    const currentBest = 60000;
+    // hausse progressive (+20%, sous le seuil de 30%) répartie sur TOUTE la fenêtre, pas un pic
+    const targetRate = currentBest * 1.2;
+    const totalOverWindow = targetRate * (SILVER_RATE_WINDOW_MS/3600000);
+    const buffer = [];
+    for (let i=0;i<6;i++) buffer.push({ t: now - SILVER_RATE_WINDOW_MS + i*(SILVER_RATE_WINDOW_MS/6) + 1000, silver: totalOverWindow/6 });
+    const { ratePerHour, eligible } = computeSlidingSilverPerHour(buffer, now, currentBest);
+    assert('Taux calculé proche de +20% du record actuel', Math.abs(ratePerHour - targetRate)/targetRate < 0.15, `rate=${ratePerHour}, target=${targetRate}`);
+    assert('Une hausse progressive sous le seuil anti-pic (30%) devient bien éligible au nouveau record', eligible === true);
   }
   // même garde-fou que testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes, version XP
   // (2026-07-12, rattrapage hors-ligne XP) -- bestXpPerHour ne doit jamais redescendre (monotone),
@@ -3618,6 +3672,35 @@
     const gainCapped = computeOfflineCatchupXp({ savedAt: fortyEightHoursAgo, S:{ bestXpPerHour: rate } });
     assert('Plafonné à OFFLINE_CATCHUP_CAP_HOURS (24h) même après 48h d\'absence', Math.abs(gainCapped - rate*OFFLINE_CATCHUP_CAP_HOURS) <= 2, `gain=${gainCapped}`);
   }
+  // computeOfflineCatchupLoot() (2026-07-13, demande explicite : "la 0 en 5min c'est pas possible" --
+  // le modal affichait du silver gagné mais 0 objet) : ESPÉRANCE mathématique à partir de la table
+  // de loot RÉELLE de la zone (data.zoneIdx) + bestKpm, PAS un taux/h à un seul nombre. Vérifie que
+  // le matériau du palier est bien estimé avec la bonne quantité (kills × chance de drop), et que
+  // le trash est exclu (déjà couvert par computeOfflineCatchupSilver, éviterait un double-comptage).
+  function testComputeOfflineCatchupLootUsesZoneLootTableAndKpm() {
+    if (typeof computeOfflineCatchupLoot !== 'function') return;
+    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
+    const items = computeOfflineCatchupLoot({ savedAt: oneHourAgo, zoneIdx: 0, S: { bestKpm: 10 } });
+    assert('computeOfflineCatchupLoot() retourne au moins un objet estimé pour 1h à 10 kills/min',
+      items.length > 0, JSON.stringify(items));
+    const matName = gearTierForZone(0).material.name;
+    const mat = items.find(it => it.name === matName);
+    assert(`Le matériau du palier (${matName}) est bien estimé`, !!mat, JSON.stringify(items));
+    if (mat) {
+      // 1h à 10 kills/min = 600 kills équivalents ; ZONES[0].loot.mat.ch = .55 -> ~330
+      assert('Quantité proche de kills(600)×chance de drop de la zone', Math.abs(mat.qty - 600*ZONES[0].loot.mat.ch) <= 3, `qty=${mat.qty}`);
+    }
+    assert('computeOfflineCatchupLoot() exclut le trash (déjà couvert par le silver de rattrapage, éviterait un double-comptage)',
+      !items.some(it => it.kind === 'trash'));
+  }
+  function testComputeOfflineCatchupLootReturnsEmptyWithoutKpmOrSavedAt() {
+    if (typeof computeOfflineCatchupLoot !== 'function') return;
+    const oneHourAgo = new Date(Date.now() - 3600*1000).toISOString();
+    assert('Sans bestKpm connu -> []', computeOfflineCatchupLoot({ savedAt: oneHourAgo, zoneIdx:0, S:{ bestKpm:0 } }).length === 0);
+    assert('Sans savedAt -> []', computeOfflineCatchupLoot({ zoneIdx:0, S:{ bestKpm:10 } }).length === 0);
+    const oneMinuteAgo = new Date(Date.now() - 60*1000).toISOString();
+    assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> []', computeOfflineCatchupLoot({ savedAt: oneMinuteAgo, zoneIdx:0, S:{ bestKpm:10 } }).length === 0);
+  }
   // vérifie l'intégration bout-en-bout : applySaveState() sur une sauvegarde dont savedAt est
   // ancien doit créditer le silver de rattrapage ET déclencher le modal "Bon retour" (auparavant :
   // rien ne s'affichait, awaySilverGained/awayLootCounts restaient à 0 après un vrai rechargement
@@ -3717,6 +3800,85 @@
       assert('showAwayLootSummaryIfAny() remet awayXpGained à 0 après affichage', awayXpGained === 0, `awayXpGained=${awayXpGained}`);
     } finally {
       awaySilverGained = savedAwaySilver; awayXpGained = savedAwayXp; awayLootCounts = savedAwayLoot;
+    }
+  }
+  // vérifie l'intégration bout-en-bout du rattrapage LOOT (2026-07-13) : applySaveState() doit
+  // réellement ajouter les objets estimés dans INV (pas juste les afficher dans le modal), et
+  // peupler awayLootCounts en conséquence -- réserve/restaure 2 slots dédiés (voir CLAUDE.md
+  // section tests "sac plein", pattern testCompendiumEvictsItemOnceItReachesPen) pour ne jamais
+  // dépendre du remplissage réel du sac démo.
+  function testApplySaveStateOfflineCatchupCreditsLootIntoInv() {
+    if (typeof applySaveState !== 'function' || typeof computeOfflineCatchupLoot !== 'function') return;
+    const root = document.getElementById('reconnectModalRoot'); if (!root) return;
+    const s = { zoneIdx, atVelia, invSlots: [INV[INV_SIZE-3], INV[INV_SIZE-4]],
+      bestKpm: S.bestKpm, bestSilverPerHour: S.bestSilverPerHour, bestXpPerHour: S.bestXpPerHour,
+      silver: S.silver, silverEarned: S.silverEarned, tokenSilverEarned: S.tokenSilverEarned };
+    const savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    try {
+      atVelia = false; zoneIdx = 0;
+      INV[INV_SIZE-3] = null; INV[INV_SIZE-4] = null; // slots dédiés libres pour ce test
+      const save = getSaveState();
+      save.zoneIdx = 0;
+      save.S.bestKpm = 10;
+      save.S.bestSilverPerHour = 0; // isole le loot : pas de rattrapage silver à côté
+      save.S.bestXpPerHour = 0;
+      save.savedAt = new Date(Date.now() - 3600*1000).toISOString(); // 1h d'absence réelle
+      // pas de root.innerHTML='' ici (même piège CLAUDE.md §32 que les autres tests de ce fichier
+      // sur #reconnectModalRoot) : openReconnectModal() gère lui-même le remplacement.
+      applySaveState(save);
+      const matName = gearTierForZone(0).material.name;
+      // awayLootCounts est remis à {} par showAwayLootSummaryIfAny() APRÈS affichage (même pattern
+      // que awaySilverGained, voir testApplySaveStateOfflineCatchupCreditsSilverAndShowsReconnectModal
+      // qui vérifie S.silver plutôt que awaySilverGained pour la même raison) -- la preuve que le
+      // loot n'était PAS resté à "0 objet" se vérifie donc dans le modal rendu, pas dans la
+      // variable transitoire déjà réinitialisée à ce stade.
+      assert('Le modal "Bon retour" affiche bien du loot réel (pas 0 objet malgré 1h d\'absence à 10 kills/min)',
+        root.innerHTML.includes(matName), root.innerHTML.slice(0,200));
+      assert(`Les objets estimés sont réellement ajoutés à INV (${matName} présent dans le sac, pas juste affiché)`,
+        INV.some(it => it && it.name === matName), 'INV ne contient pas ' + matName);
+    } finally {
+      zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
+      INV[INV_SIZE-3] = s.invSlots[0]; INV[INV_SIZE-4] = s.invSlots[1];
+      S.bestKpm = s.bestKpm; S.bestSilverPerHour = s.bestSilverPerHour; S.bestXpPerHour = s.bestXpPerHour;
+      S.silver = s.silver; S.silverEarned = s.silverEarned; S.tokenSilverEarned = s.tokenSilverEarned;
+      awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
+    }
+  }
+  // régression "sac plein" (2026-07-13) : le rattrapage loot hors-ligne appelle invAdd() pour
+  // chaque objet estimé -- invAdd() retourne false SANS throw si le sac est plein (piège documenté
+  // CLAUDE.md section tests), applySaveState() ne doit donc jamais planter, et un objet refusé ne
+  // doit PAS apparaître dans awayLootCounts (rien de fantôme affiché que le joueur n'a pas reçu).
+  function testOfflineCatchupLootSkipsGracefullyWhenBagFull() {
+    if (typeof applySaveState !== 'function' || typeof computeOfflineCatchupLoot !== 'function') return;
+    const root = document.getElementById('reconnectModalRoot'); if (!root) return;
+    const s = { zoneIdx, atVelia, INV: INV.map(x => x ? { ...x } : null),
+      bestKpm: S.bestKpm, bestSilverPerHour: S.bestSilverPerHour, bestXpPerHour: S.bestXpPerHour };
+    const savedAwaySilver = awaySilverGained, savedAwayLoot = { ...awayLootCounts };
+    try {
+      atVelia = false; zoneIdx = 0;
+      const save = getSaveState();
+      save.zoneIdx = 0;
+      save.S.bestKpm = 10;
+      save.S.bestSilverPerHour = 0;
+      save.S.bestXpPerHour = 3600; // garde le modal déclenché (silver=0/loot bloqué, mais xp>0)
+      save.savedAt = new Date(Date.now() - 3600*1000).toISOString();
+      // sac totalement plein, objets NON stackable distincts (jamais de slot libre pour merger)
+      for (let i=0;i<INV_SIZE;i++) save.INV[i] = { name:'Test Bag Full Item '+i, key:'testfull_'+i, kind:'gear', qty:1, stackable:false, val:1, weight:0.1 };
+      let threw = false;
+      try { applySaveState(save); } catch(e) { threw = true; }
+      assert('applySaveState() ne plante pas quand le sac est plein pendant le rattrapage loot hors-ligne', !threw);
+      const matName = gearTierForZone(0).material.name;
+      assert('Sac plein : le matériau de rattrapage n\'est PAS ajouté à INV (invAdd() a échoué proprement, rien perdu ni fantôme)',
+        !INV.some(it => it && it.name === matName), 'INV contient ' + matName + ' alors que le sac était plein');
+      // le modal reste affiché (silver=0/loot bloqué, mais xp>0, voir bestXpPerHour ci-dessus) --
+      // mais ne doit pas prétendre avoir donné un objet que le joueur n'a en réalité pas reçu
+      assert('Sac plein : le modal "Bon retour" ne montre pas le matériau bloqué (rien de fantôme affiché)',
+        !root.innerHTML.includes(matName), root.innerHTML.slice(0,200));
+    } finally {
+      zoneIdx = s.zoneIdx; atVelia = s.atVelia; updateZoneTitleText();
+      for (let i=0;i<INV_SIZE;i++) INV[i] = s.INV[i];
+      S.bestKpm = s.bestKpm; S.bestSilverPerHour = s.bestSilverPerHour; S.bestXpPerHour = s.bestXpPerHour;
+      awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
     }
   }
   // "vérifie les info de la table de loot (couleurs cadre)" (2026-07-10) : la ligne dépliée du
@@ -5580,6 +5742,13 @@
     testReconnectModalWrapperScrollsInsteadOfClipping();
     testApplySaveStateOfflineCatchupCreditsSilverAndShowsReconnectModal();
     testApplySaveStateOfflineCatchupCreditsXpAndHandlesLevelUp();
+    testComputeOfflineCatchupLootUsesZoneLootTableAndKpm();
+    testComputeOfflineCatchupLootReturnsEmptyWithoutKpmOrSavedAt();
+    testApplySaveStateOfflineCatchupCreditsLootIntoInv();
+    testOfflineCatchupLootSkipsGracefullyWhenBagFull();
+    testComputeSlidingSilverPerHourStableRateWithinWindow();
+    testComputeSlidingSilverPerHourIgnoresIsolatedSpikeForRecord();
+    testComputeSlidingSilverPerHourAcceptsProgressiveIncreaseAsRecord();
     testShowAwayLootSummaryTriggersOnXpOnlyGain();
     testReconnectModalTierChipsWrapOnSameRowInsteadOfStacking();
     testAwayLevelSnapshotCapturedOnHide();

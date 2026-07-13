@@ -184,6 +184,53 @@ const S = {
   useCronStone: false, // 2026-07-06 : au choix du joueur (case à cocher) si elle protège une rétrogradation, plus automatique en silence -- désactivée par défaut (2026-07-10, demande explicite), le joueur l'active lui-même s'il en veut
 };
 
+// ==================== Silver/h en fenêtre glissante (anti-pic reconnexion, 2026-07-13) ====================
+// S.bestSilverPerHour (record perso à vie, voir plus bas) était calculé sur tokenGain/(minutes de
+// SESSION ENTIÈRE) -- fenêtre qui grandit en continu, donc un pic ponctuel (gros paquet de loot
+// groupé, notamment juste après une reconnexion où plusieurs secondes/minutes de rattrapage
+// tombent d'un coup) pouvait gonfler durablement le taux avant que la moyenne ne se lisse avec le
+// temps. Remplacé par une fenêtre GLISSANTE de SILVER_RATE_WINDOW_MS (3 min) : silverRateBuffer
+// accumule un échantillon {t,silver} à chaque gain de silver de catégorie 'loot' (addSilver plus
+// bas -- même source que tokenSilverEarned, pas les gains ponctuels quête/succès/boss), purgé des
+// entrées trop vieilles à chaque lecture (pruneSilverRateBuffer). computeSlidingSilverPerHour est
+// une fonction PURE (buffer en entrée, aucune lecture de S/Date.now() implicite) pour rester
+// testable sans dépendre du tick réel du jeu. Garde-fou anti-pic explicite EN PLUS de la fenêtre
+// glissante : un taux qui dépasse de plus de SILVER_RATE_MAX_DEVIATION (30%) le record déjà établi
+// n'est PAS éligible à devenir le nouveau record -- seule une hausse "de fond" (répartie sur toute
+// la fenêtre) doit pouvoir faire monter le record, jamais un pic isolé. Le garde-fou "2 minutes de
+// session minimum" (voir hud()) reste EN PLUS de tout ceci, pas remplacé (double protection).
+const SILVER_RATE_WINDOW_MS = 180000; // 3 min
+const SILVER_RATE_MAX_DEVIATION = 0.30; // 30%
+let silverRateBuffer = []; // [{t:ms epoch, silver:delta}] -- transient (pas sauvegardé), vidé au reload
+/**
+ * Fonction PURE : calcule le silver/h projeté à partir d'un buffer d'échantillons {t,silver}
+ * (silver gagné, catégorie 'loot' uniquement) et détermine si ce taux est éligible à devenir le
+ * nouveau record (comparé à currentBest, S.bestSilverPerHour).
+ * @param {{t:number,silver:number}[]} buffer - échantillons horodatés (ms epoch), jamais muté.
+ * @param {number} now - horodatage de référence (ms epoch), typiquement Date.now().
+ * @param {number} currentBest - record déjà établi (S.bestSilverPerHour), 0 si aucun encore.
+ * @returns {{ratePerHour:number, eligible:boolean}} taux projeté sur la fenêtre + éligibilité record.
+ */
+function computeSlidingSilverPerHour(buffer, now, currentBest) {
+  const pruned = (buffer||[]).filter(s => (now - s.t) <= SILVER_RATE_WINDOW_MS && (now - s.t) >= 0);
+  if (pruned.length === 0) return { ratePerHour: 0, eligible: false };
+  const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
+  const windowMs = Math.max(now - oldestT, 1000); // évite une quasi-division par 0 sur un tout premier échantillon
+  const total = pruned.reduce((sum, s) => sum + s.silver, 0);
+  const ratePerHour = total / (windowMs / 3600000);
+  let eligible = true;
+  if (currentBest > 0) {
+    const deviation = (ratePerHour - currentBest) / currentBest;
+    if (deviation > SILVER_RATE_MAX_DEVIATION) eligible = false; // pic isolé (ex: reconnexion) -- ignoré pour le record
+  }
+  return { ratePerHour, eligible };
+}
+/** Purge silverRateBuffer (mutation en place) des échantillons plus vieux que SILVER_RATE_WINDOW_MS. */
+function pruneSilverRateBuffer(now) {
+  now = now || Date.now();
+  while (silverRateBuffer.length && (now - silverRateBuffer[0].t) > SILVER_RATE_WINDOW_MS) silverRateBuffer.shift();
+}
+
 // point d'entrée UNIQUE pour toute variation de silver côté client (2026-07-10, demande explicite :
 // "toute modification de silver doit être écrit dans ce registre... je dois pouvoir traquer le
 // moindre silver") -- centralise S.silver/S.silverEarned ET la journalisation (voir
@@ -209,7 +256,12 @@ function addSilver(delta, category, note) {
   // HUD "silver/h" (#shRate) doit lui refléter UNIQUEMENT le revenu du trash (token) au sol, pas
   // le loot occasionnel de gros montants (succès/boss/quêtes) qui fausserait la lecture du rythme
   // de farm réel -- voir dropsTick, seul endroit qui appelle addSilver avec category:'loot'.
-  if (delta > 0 && category === 'loot') S.tokenSilverEarned = (S.tokenSilverEarned||0) + delta;
+  if (delta > 0 && category === 'loot') {
+    S.tokenSilverEarned = (S.tokenSilverEarned||0) + delta;
+    // fenêtre glissante 3 min pour le record silver/h à vie (voir computeSlidingSilverPerHour
+    // ci-dessus) -- même source que tokenSilverEarned, pas les gains ponctuels quête/succès/boss.
+    silverRateBuffer.push({ t: Date.now(), silver: delta });
+  }
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }
 /**
@@ -262,30 +314,45 @@ let awayLevelBefore = 1, awayPercentBefore = 0;
 // SAUVEGARDE CHARGÉE (record perso à vie, déjà isolé au seul revenu du trash au sol -- voir son
 // commentaire plus bas, section hud()) comme taux. XP désormais simulée aussi (2026-07-12, demande
 // explicite : revient sur la décision précédente) via computeOfflineCatchupXp()/S.bestXpPerHour,
-// même principe exact -- taux plat, mêmes seuils/plafond. Le loot (objets) reste volontairement
-// PAS simulé : contrairement à un taux silver/h ou xp/h (un seul nombre), un "loot/h" représentatif
-// n'a pas d'équivalent fiable (mix d'objets de raretés/types très différents selon la zone/le
-// palier de stuff) -- resterait un choix arbitraire (quel(s) objet(s) créditer ?) plutôt qu'un
-// vrai rattrapage. Le clamp anti-triche serveur (clamp_player_stats(), CLAUDE.md §12) reste le
-// filet de sécurité si un taux était anormalement élevé.
+// même principe exact -- taux plat, mêmes seuils/plafond. Loot (objets) désormais simulé aussi
+// (2026-07-13, demande explicite : "la 0 en 5min c'est pas possible", annule la décision précédente
+// figée juste au-dessus) via computeOfflineCatchupLoot() : ESPÉRANCE mathématique (kills équivalents
+// = bestKpm × durée, puis qty = kills × chance de drop par kill de la table de loot RÉELLE de la
+// zone où le joueur était), pas un taux/h à un seul nombre ni une simulation tick par tick -- même
+// philosophie "expected-value, flat-rate" que applyOfflineProgress du module Compagnon pour
+// Caphras/Dopi. Les objets estimés sont réellement ajoutés à INV (comme le silver via addSilver),
+// pas juste affichés dans le modal. Le clamp anti-triche serveur (clamp_player_stats(), CLAUDE.md
+// §12) reste le filet de sécurité si un taux était anormalement élevé.
 const OFFLINE_CATCHUP_CAP_HOURS = 24;
 const OFFLINE_CATCHUP_MIN_HOURS = 0.05; // ~3 min
 /**
- * Rattrapage silver pour le temps réellement écoulé hors-ligne (navigateur fermé/veille OS),
- * complément du rattrapage "onglet en arrière-plan" (awaySilverGained). Taux plat = record perso
- * bestSilverPerHour de la sauvegarde chargée, pas de simulation tick par tick — le loot (objets)
- * reste volontairement pas simulé (pas d'équivalent fiable à un taux/h, voir commentaire ci-dessus).
- * @param {object} data - sauvegarde chargée, lit data.savedAt et data.S.bestSilverPerHour.
- * @returns {number} silver à créditer, 0 si aucun taux connu ou absence sous OFFLINE_CATCHUP_MIN_HOURS.
+ * Nombre d'heures RÉELLEMENT écoulées hors-ligne, plafonné/filtré par les mêmes seuils que tout le
+ * rattrapage hors-ligne (silver/XP/loot) -- factorisé ici pour que les 3 rattrapages partagent
+ * EXACTEMENT la même fenêtre de temps (pas de plafond séparé à inventer par flux, voir CLAUDE.md
+ * §34 et la demande explicite du 2026-07-13 pour le loot).
+ * @param {object} data - sauvegarde chargée, lit data.savedAt.
+ * @returns {number} heures écoulées (0 à OFFLINE_CATCHUP_CAP_HOURS), 0 si absent/négatif/sous OFFLINE_CATCHUP_MIN_HOURS.
  */
-function computeOfflineCatchupSilver(data) {
+function computeOfflineElapsedHours(data) {
   if (!data || !data.savedAt) return 0;
-  const rate = (data.S && data.S.bestSilverPerHour) || 0;
-  if (rate <= 0) return 0;
   const elapsedMs = Date.now() - Date.parse(data.savedAt);
   if (!(elapsedMs > 0)) return 0;
   const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
   if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  return hours;
+}
+/**
+ * Rattrapage silver pour le temps réellement écoulé hors-ligne (navigateur fermé/veille OS),
+ * complément du rattrapage "onglet en arrière-plan" (awaySilverGained). Taux plat = record perso
+ * bestSilverPerHour de la sauvegarde chargée, pas de simulation tick par tick.
+ * @param {object} data - sauvegarde chargée, lit data.savedAt et data.S.bestSilverPerHour.
+ * @returns {number} silver à créditer, 0 si aucun taux connu ou absence sous OFFLINE_CATCHUP_MIN_HOURS.
+ */
+function computeOfflineCatchupSilver(data) {
+  const rate = (data && data.S && data.S.bestSilverPerHour) || 0;
+  if (rate <= 0) return 0;
+  const hours = computeOfflineElapsedHours(data);
+  if (hours <= 0) return 0;
   return Math.round(rate * hours);
 }
 /**
@@ -298,14 +365,52 @@ function computeOfflineCatchupSilver(data) {
  * @returns {number} XP à créditer, 0 si aucun taux connu ou absence sous OFFLINE_CATCHUP_MIN_HOURS.
  */
 function computeOfflineCatchupXp(data) {
-  if (!data || !data.savedAt) return 0;
-  const rate = (data.S && data.S.bestXpPerHour) || 0;
+  const rate = (data && data.S && data.S.bestXpPerHour) || 0;
   if (rate <= 0) return 0;
-  const elapsedMs = Date.now() - Date.parse(data.savedAt);
-  if (!(elapsedMs > 0)) return 0;
-  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
-  if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  const hours = computeOfflineElapsedHours(data);
+  if (hours <= 0) return 0;
   return Math.round(rate * hours);
+}
+/**
+ * Rattrapage LOOT (objets, pas juste silver) pour le temps réellement écoulé hors-ligne (2026-07-13,
+ * demande explicite : "la 0 en 5min c'est pas possible" -- le modal affichait du silver gagné mais
+ * 0 objet). Contrairement à computeOfflineCatchupSilver/Xp (un seul taux/h connu), un objet loot
+ * dépend de la ZONE -- utilise donc la table de loot RÉELLE de la zone où le joueur se trouvait à
+ * la fermeture (data.zoneIdx, voir rollDrops/loot-rolls.js pour la même table) + le record perso
+ * kills/min (data.S.bestKpm) pour estimer un nombre de kills équivalent sur la durée hors-ligne.
+ * ESPÉRANCE mathématique (qty = kills × chance de drop par kill), PAS un tirage aléatoire objet par
+ * objet -- même philosophie "taux plat/espérance" que applyOfflineProgress du module Compagnon
+ * (src/companions/save.js) pour Caphras/Dopi. Le trash (kind:'trash') est volontairement exclu :
+ * déjà couvert par computeOfflineCatchupSilver (tokenSilverEarned = revenu du trash au sol), un
+ * doublon ici compterait deux fois le même revenu sous 2 formes différentes.
+ * @param {object} data - sauvegarde chargée, lit data.savedAt, data.S.bestKpm, data.zoneIdx.
+ * @returns {{name:string,qty:number,val:number,color:string,icon:string,kind:string,key:string,stackable:true,weight:number}[]}
+ *   liste d'objets à créditer (qty déjà arrondie à l'entier, jamais 0), [] si rien d'estimable.
+ */
+function computeOfflineCatchupLoot(data) {
+  const kpm = (data && data.S && data.S.bestKpm) || 0;
+  if (kpm <= 0) return [];
+  const hours = computeOfflineElapsedHours(data);
+  if (hours <= 0) return [];
+  const zi = (data && data.zoneIdx) || 0;
+  const zone = typeof ZONES !== 'undefined' ? ZONES[zi] : null;
+  if (!zone || !zone.loot) return [];
+  const kills = kpm * hours * 60;
+  if (!(kills > 0)) return [];
+  const tier = (typeof gearTierForZone === 'function') ? gearTierForZone(zi) : null;
+  const tierMat = tier && tier.material;
+  const L = zone.loot;
+  const candidates = [];
+  // matériau d'optimisation : même substitution que rollDrops (loot-rolls.js) -- l'icône/couleur
+  // viennent du PALIER de stuff (tierMat), la chance/valeur de la table de zone (L.mat).
+  if (tierMat && L.mat) candidates.push({ name: tierMat.name, ch: L.mat.ch||0, val: L.mat.val||0, color: tierMat.color, icon: tierMat.icon, kind:'material', key:'mat_'+tierMat.name });
+  if (L.craft) candidates.push({ name: L.craft.name, ch: L.craft.ch||0, val: 0, color:'#b48ce8', icon:'✦', kind:'craft', key:'craft_'+L.craft.name });
+  const results = [];
+  for (const c of candidates) {
+    const qty = Math.floor(kills * c.ch);
+    if (qty > 0) results.push({ name:c.name, qty, val:c.val, color:c.color, icon:c.icon, kind:c.kind, key:c.key, stackable:true, weight:0.1 });
+  }
+  return results;
 }
 /** @returns {string} date du jour en heure LOCALE, format YYYY-MM-DD (pas UTC -- toISOString() déciderait le changement de jour au mauvais moment pour la plupart des fuseaux). */
 function localDayKey(d) {
@@ -1865,9 +1970,15 @@ function refreshStatsOnly() {
   // ci-dessus) qu'après 2 min de session — même garde-fou que kpmNow/bestKpm juste au-dessus.
   const tokenGain = S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0);
   const silverPerMinNow = mins>.1 ? tokenGain/mins : 0;
+  // record silver/h : fenêtre glissante 3 min + garde-fou anti-pic 30% (voir
+  // computeSlidingSilverPerHour ci-dessus) EN PLUS du garde-fou "2 min de session minimum" déjà en
+  // place ici (double protection, pas un remplacement) -- remplace l'ancien calcul sur
+  // tokenGain/(minutes de session ENTIÈRE), qui grandissait en continu et restait sensible à un
+  // pic isolé (ex: rattrapage groupé juste après une reconnexion) pendant plusieurs minutes.
+  pruneSilverRateBuffer();
   if (mins > 2) {
-    const silverPerHourNow = tokenGain/(mins/60);
-    if (silverPerHourNow > (S.bestSilverPerHour||0)) S.bestSilverPerHour = silverPerHourNow;
+    const { ratePerHour: silverPerHourNow, eligible } = computeSlidingSilverPerHour(silverRateBuffer, Date.now(), S.bestSilverPerHour||0);
+    if (eligible && silverPerHourNow > (S.bestSilverPerHour||0)) S.bestSilverPerHour = silverPerHourNow;
   }
   $('shRate').textContent = mins>.1
     ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
@@ -2018,6 +2129,7 @@ function hud() {
   checkAchievements();
   updateQuestBadge();
   renderQuestWidget();
+  if (typeof renderPlaytimeWidget === 'function') renderPlaytimeWidget();
   renderQuestTrackerWidget();
   ensureLoyaltyGrant();
   updateMailBadge();
@@ -2195,7 +2307,7 @@ function getSaveState() {
  * zone/position (playerPos restauré AVANT resetWorld() pour que les packs spawnent au bon
  * endroit), lance toutes les migrations rétroactives gear-migrations.js (une seule fois chacune,
  * gatées par leur flag S.migratedXxxVNNN), puis calcule et applique le rattrapage hors-ligne
- * (computeOfflineCatchupSilver + computeOfflineCatchupXp) avant d'afficher le résumé au retour si
+ * (computeOfflineCatchupSilver + computeOfflineCatchupXp + computeOfflineCatchupLoot) avant d'afficher le résumé au retour si
  * applicable.
  * @param {object} data - instantané produit par getSaveState() (ou chargé depuis Supabase/fichier).
  * @returns {boolean} vrai si appliqué, faux si `data` est absent ou d'une version incompatible.
@@ -2207,6 +2319,7 @@ function applySaveState(data) {
   // computeOfflineCatchupSilver ci-dessus).
   const offlineSilverGain = computeOfflineCatchupSilver(data);
   const offlineXpGain = computeOfflineCatchupXp(data);
+  const offlineLootItems = computeOfflineCatchupLoot(data);
   const offlineLevelBefore = data.S ? data.S.lvl : 1;
   const offlinePercentBefore = data.S ? Math.round((data.S.xp||0) / xpNeededFor(data.S.lvl||1) * 100) : 0;
   const offlineSavedAtMs = data.savedAt ? Date.parse(data.savedAt) : Date.now();
@@ -2268,7 +2381,7 @@ function applySaveState(data) {
   // l'état fraîchement restauré (pas à un état par défaut qui serait de toute façon écrasé).
   // Réutilise le mécanisme d'affichage déjà en place (awaySilverGained/awayXpGained/
   // showAwayLootSummaryIfAny, voir plus haut) au lieu d'un chemin séparé.
-  if (offlineSilverGain > 0 || offlineXpGain > 0) {
+  if (offlineSilverGain > 0 || offlineXpGain > 0 || offlineLootItems.length > 0) {
     if (offlineSilverGain > 0) addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
     if (offlineXpGain > 0) {
       // gainXp() réutilisée telle quelle (pas de logique de niveau dupliquée ici) : gère déjà la
@@ -2280,6 +2393,19 @@ function applySaveState(data) {
       // gain de LA SESSION EN COURS et fausserait/inflaterait le prochain calcul de bestXpPerHour.
       S.xpEarnedAtLoad = S.xpEarned || 0;
     }
+    // objets réellement ajoutés à INV (2026-07-13, demande explicite : "la 0 en 5min c'est pas
+    // possible") -- pas juste affichés dans le modal, sinon le joueur verrait un décalage plus
+    // tard (voir CLAUDE.md, discipline habituelle pour tout gain simulé). invAdd() retourne false
+    // sans throw si le sac est plein (piège connu, voir CLAUDE.md section tests "sac plein") :
+    // dans ce cas l'objet n'est simplement PAS crédité au résumé, pour ne jamais afficher un objet
+    // que le joueur n'a en réalité pas reçu.
+    offlineLootItems.forEach(it => {
+      const added = invAdd({ name: it.name, val: it.val, kind: it.kind, key: it.key, icon: it.icon, color: it.color, stackable: true, qty: it.qty, weight: it.weight });
+      if (added) {
+        if (!awayLootCounts[it.name]) awayLootCounts[it.name] = { qty: 0, color: it.color || '#c9a55a', val: it.val||0, kind: it.kind };
+        awayLootCounts[it.name].qty += it.qty;
+      }
+    });
     awaySilverGained = offlineSilverGain;
     awayXpGained = offlineXpGain;
     awaySessionStartedAt = offlineSavedAtMs;

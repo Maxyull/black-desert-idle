@@ -1029,6 +1029,25 @@ function renderQuestWidget() {
       : `<div class="qwNext qwAllDone">${i18next.t('progression:progression.quests.all_achievements_done')}</div>`) +
     `</div>`;
 }
+/**
+ * Rend le widget dédié "Temps de jeu" (#playtimeWidget, 2026-07-13, demande explicite -- mockup
+ * validé) : total à vie + aujourd'hui, réutilise les mêmes classes que #questWidget (qwHeaderRow/
+ * qwBody/qwRow/qwLbl/qwTimer) et les mêmes clés i18n déjà utilisées à l'intérieur de #questWidget
+ * (playtime_label/total_label/today_label) -- aucune nouvelle clé, aucune nouvelle classe CSS.
+ * "Aujourd'hui" réutilise le même calcul que renderQuestWidget() (S.playtimeSec moins la baseline
+ * du jour posée par ensureQuests('daily') dans S.dq.base.playtime) plutôt que d'inventer un 2e
+ * compteur journalier séparé.
+ */
+function renderPlaytimeWidget() {
+  const el = $('playtimeWidget'); if (!el) return;
+  ensureQuests('daily');
+  const todayPlaytime = S.playtimeSec - (S.dq && S.dq.base ? S.dq.base.playtime : 0);
+  el.innerHTML = `<div class="qwHeaderRow"><span class="qwTitle">${i18next.t('progression:progression.quests.playtime_label')}</span></div>` +
+    `<div class="qwBody">` +
+    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.total_label')}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
+    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.today_label')}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
+    `</div>`;
+}
 // encart de suivi des quêtes restantes (activé via le bouton "Suivre" du panneau Quêtes) —
 // liste toutes les quêtes actives ce cycle (journalières + hebdo) pas encore réclamées
 /** Rend l'encart de suivi des quêtes (#questTrackerWidget, activé via S.questTrackerOn) : liste les quêtes actives non réclamées des deux scopes, avec bouton "Réclamer" si terminées. Masqué si désactivé. */

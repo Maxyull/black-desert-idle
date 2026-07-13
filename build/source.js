@@ -2569,13 +2569,41 @@ const S = {
   useCronStone: false, 
 };
 
+const SILVER_RATE_WINDOW_MS = 180000; 
+const SILVER_RATE_MAX_DEVIATION = 0.30; 
+let silverRateBuffer = []; 
+
+function computeSlidingSilverPerHour(buffer, now, currentBest) {
+  const pruned = (buffer||[]).filter(s => (now - s.t) <= SILVER_RATE_WINDOW_MS && (now - s.t) >= 0);
+  if (pruned.length === 0) return { ratePerHour: 0, eligible: false };
+  const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
+  const windowMs = Math.max(now - oldestT, 1000); 
+  const total = pruned.reduce((sum, s) => sum + s.silver, 0);
+  const ratePerHour = total / (windowMs / 3600000);
+  let eligible = true;
+  if (currentBest > 0) {
+    const deviation = (ratePerHour - currentBest) / currentBest;
+    if (deviation > SILVER_RATE_MAX_DEVIATION) eligible = false; 
+  }
+  return { ratePerHour, eligible };
+}
+
+function pruneSilverRateBuffer(now) {
+  now = now || Date.now();
+  while (silverRateBuffer.length && (now - silverRateBuffer[0].t) > SILVER_RATE_WINDOW_MS) silverRateBuffer.shift();
+}
+
 function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
   if (delta > 0) S.silverEarned += delta;
   if (delta > 0 && document.hidden) awaySilverGained += delta;
   
-  if (delta > 0 && category === 'loot') S.tokenSilverEarned = (S.tokenSilverEarned||0) + delta;
+  if (delta > 0 && category === 'loot') {
+    S.tokenSilverEarned = (S.tokenSilverEarned||0) + delta;
+    
+    silverRateBuffer.push({ t: Date.now(), silver: delta });
+  }
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }
 
@@ -2603,26 +2631,54 @@ let awayLevelBefore = 1, awayPercentBefore = 0;
 const OFFLINE_CATCHUP_CAP_HOURS = 24;
 const OFFLINE_CATCHUP_MIN_HOURS = 0.05; 
 
-function computeOfflineCatchupSilver(data) {
+function computeOfflineElapsedHours(data) {
   if (!data || !data.savedAt) return 0;
-  const rate = (data.S && data.S.bestSilverPerHour) || 0;
-  if (rate <= 0) return 0;
   const elapsedMs = Date.now() - Date.parse(data.savedAt);
   if (!(elapsedMs > 0)) return 0;
   const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
   if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  return hours;
+}
+
+function computeOfflineCatchupSilver(data) {
+  const rate = (data && data.S && data.S.bestSilverPerHour) || 0;
+  if (rate <= 0) return 0;
+  const hours = computeOfflineElapsedHours(data);
+  if (hours <= 0) return 0;
   return Math.round(rate * hours);
 }
 
 function computeOfflineCatchupXp(data) {
-  if (!data || !data.savedAt) return 0;
-  const rate = (data.S && data.S.bestXpPerHour) || 0;
+  const rate = (data && data.S && data.S.bestXpPerHour) || 0;
   if (rate <= 0) return 0;
-  const elapsedMs = Date.now() - Date.parse(data.savedAt);
-  if (!(elapsedMs > 0)) return 0;
-  const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
-  if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
+  const hours = computeOfflineElapsedHours(data);
+  if (hours <= 0) return 0;
   return Math.round(rate * hours);
+}
+
+function computeOfflineCatchupLoot(data) {
+  const kpm = (data && data.S && data.S.bestKpm) || 0;
+  if (kpm <= 0) return [];
+  const hours = computeOfflineElapsedHours(data);
+  if (hours <= 0) return [];
+  const zi = (data && data.zoneIdx) || 0;
+  const zone = typeof ZONES !== 'undefined' ? ZONES[zi] : null;
+  if (!zone || !zone.loot) return [];
+  const kills = kpm * hours * 60;
+  if (!(kills > 0)) return [];
+  const tier = (typeof gearTierForZone === 'function') ? gearTierForZone(zi) : null;
+  const tierMat = tier && tier.material;
+  const L = zone.loot;
+  const candidates = [];
+  
+  if (tierMat && L.mat) candidates.push({ name: tierMat.name, ch: L.mat.ch||0, val: L.mat.val||0, color: tierMat.color, icon: tierMat.icon, kind:'material', key:'mat_'+tierMat.name });
+  if (L.craft) candidates.push({ name: L.craft.name, ch: L.craft.ch||0, val: 0, color:'#b48ce8', icon:'✦', kind:'craft', key:'craft_'+L.craft.name });
+  const results = [];
+  for (const c of candidates) {
+    const qty = Math.floor(kills * c.ch);
+    if (qty > 0) results.push({ name:c.name, qty, val:c.val, color:c.color, icon:c.icon, kind:c.kind, key:c.key, stackable:true, weight:0.1 });
+  }
+  return results;
 }
 
 function localDayKey(d) {
@@ -3688,9 +3744,11 @@ function refreshStatsOnly() {
   
   const tokenGain = S.tokenSilverEarned-(S.tokenSilverEarnedAtLoad||0);
   const silverPerMinNow = mins>.1 ? tokenGain/mins : 0;
+  
+  pruneSilverRateBuffer();
   if (mins > 2) {
-    const silverPerHourNow = tokenGain/(mins/60);
-    if (silverPerHourNow > (S.bestSilverPerHour||0)) S.bestSilverPerHour = silverPerHourNow;
+    const { ratePerHour: silverPerHourNow, eligible } = computeSlidingSilverPerHour(silverRateBuffer, Date.now(), S.bestSilverPerHour||0);
+    if (eligible && silverPerHourNow > (S.bestSilverPerHour||0)) S.bestSilverPerHour = silverPerHourNow;
   }
   $('shRate').textContent = mins>.1
     ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
@@ -3790,6 +3848,7 @@ function hud() {
   checkAchievements();
   updateQuestBadge();
   renderQuestWidget();
+  if (typeof renderPlaytimeWidget === 'function') renderPlaytimeWidget();
   renderQuestTrackerWidget();
   ensureLoyaltyGrant();
   updateMailBadge();
@@ -3912,6 +3971,7 @@ function applySaveState(data) {
   
   const offlineSilverGain = computeOfflineCatchupSilver(data);
   const offlineXpGain = computeOfflineCatchupXp(data);
+  const offlineLootItems = computeOfflineCatchupLoot(data);
   const offlineLevelBefore = data.S ? data.S.lvl : 1;
   const offlinePercentBefore = data.S ? Math.round((data.S.xp||0) / xpNeededFor(data.S.lvl||1) * 100) : 0;
   const offlineSavedAtMs = data.savedAt ? Date.parse(data.savedAt) : Date.now();
@@ -3956,7 +4016,7 @@ function applySaveState(data) {
   updateZoneTitleText(); 
   hud();
   
-  if (offlineSilverGain > 0 || offlineXpGain > 0) {
+  if (offlineSilverGain > 0 || offlineXpGain > 0 || offlineLootItems.length > 0) {
     if (offlineSilverGain > 0) addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
     if (offlineXpGain > 0) {
       
@@ -3964,6 +4024,14 @@ function applySaveState(data) {
       
       S.xpEarnedAtLoad = S.xpEarned || 0;
     }
+    
+    offlineLootItems.forEach(it => {
+      const added = invAdd({ name: it.name, val: it.val, kind: it.kind, key: it.key, icon: it.icon, color: it.color, stackable: true, qty: it.qty, weight: it.weight });
+      if (added) {
+        if (!awayLootCounts[it.name]) awayLootCounts[it.name] = { qty: 0, color: it.color || '#c9a55a', val: it.val||0, kind: it.kind };
+        awayLootCounts[it.name].qty += it.qty;
+      }
+    });
     awaySilverGained = offlineSilverGain;
     awayXpGained = offlineXpGain;
     awaySessionStartedAt = offlineSavedAtMs;
@@ -5274,6 +5342,17 @@ function renderQuestWidget() {
         `<div class="qwNextName">${next.a.name[LANG]}</div>` +
         `<div class="achBarWrap"><div class="achBar" style="width:${Math.round(next.pct)}%"></div></div></div></div>`
       : `<div class="qwNext qwAllDone">${i18next.t('progression:progression.quests.all_achievements_done')}</div>`) +
+    `</div>`;
+}
+
+function renderPlaytimeWidget() {
+  const el = $('playtimeWidget'); if (!el) return;
+  ensureQuests('daily');
+  const todayPlaytime = S.playtimeSec - (S.dq && S.dq.base ? S.dq.base.playtime : 0);
+  el.innerHTML = `<div class="qwHeaderRow"><span class="qwTitle">${i18next.t('progression:progression.quests.playtime_label')}</span></div>` +
+    `<div class="qwBody">` +
+    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.total_label')}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
+    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.today_label')}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
     `</div>`;
 }
 
@@ -13738,6 +13817,24 @@ $a('btnCollapseMenu').onclick = () => {
   applyMenuCollapse();
 };
 applyMenuCollapse();
+
+let sideRightCollapsed = isMobileViewport();
+try {
+  const savedRight = localStorage.getItem('velia-idle-right-collapsed');
+  if (savedRight !== null) sideRightCollapsed = savedRight === '1';
+} catch(e) {}
+
+function applyRightCollapse() {
+  $a('sideRight').classList.toggle('collapsed', sideRightCollapsed);
+  
+  $a('btnCollapseRight').textContent = sideRightCollapsed ? '◀' : '▶';
+}
+$a('btnCollapseRight').onclick = () => {
+  sideRightCollapsed = !sideRightCollapsed;
+  try { localStorage.setItem('velia-idle-right-collapsed', sideRightCollapsed ? '1' : '0'); } catch(e) {}
+  applyRightCollapse();
+};
+applyRightCollapse();
 
 const CURRENT_VERSION = PATCH_NOTES[0].v;
 $a('clientVersionNum').textContent = CURRENT_VERSION;
