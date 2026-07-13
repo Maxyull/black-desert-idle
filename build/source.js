@@ -11777,6 +11777,8 @@ function updateUserBar() {
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
   $a('btnLogout').style.display = isGuest() ? 'none' : '';
   $a('adminBox').style.display = isAdmin() ? '' : 'none';
+  
+  const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
   const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminResetEnhBtn = $a('btnAdminResetEnh'); if (adminResetEnhBtn) adminResetEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminEnhStepRow = $a('adminEnhStepRow'); if (adminEnhStepRow) adminEnhStepRow.style.display = isAdmin() ? '' : 'none';
@@ -11793,6 +11795,9 @@ function updatePseudoDisplay() {
   if (!el) return;
   if (isGuest()) el.textContent = i18next.t('backend:backend.auth.guest_badge');
   else el.textContent = (currentUser && myPseudo) ? myPseudo : '';
+  
+  const topbarEl = $a('userPseudoTopbar');
+  if (topbarEl) topbarEl.textContent = el.textContent;
 }
 
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
@@ -12329,6 +12334,13 @@ function closeDonationPanel() {
   if (overlay) overlay.style.display = 'none';
 }
 $a('btnDonation').onclick = openDonationPanel;
+
+$a('btnLeaderboardTopbar').onclick = () => $a('btnLeaderboard').click();
+$a('btnMarketTopbar').onclick = () => $a('btnMarket').click();
+$a('btnPatchTopbar').onclick = () => $a('btnPatch').click();
+$a('btnDonationTopbar').onclick = () => $a('btnDonation').click();
+$a('btnAdminTopbar').onclick = () => $a('btnAdmin').click();
+$a('btnLogoutTopbar').onclick = () => $a('btnLogout').click();
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 
@@ -12670,6 +12682,15 @@ const I18N = {
   btnResetAllQuests: { fr:'⚠️ Réinitialiser les quêtes de tous', en:'⚠️ Reset everyone\'s quests' },
   btnAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
+  
+  tbLeaderboard: { fr:'Classement', en:'Leaderboard' },
+  tbMarket: { fr:'Marché (BETA)', en:'Market (BETA)' },
+  tbPatch: { fr:'Notes de version', en:'Patch notes' },
+  tbDiscord: { fr:'Discord', en:'Discord' },
+  tbDonation: { fr:'Soutenir', en:'Support' },
+  tbAccount: { fr:'Mon compte', en:'My account' },
+  tbAdmin: { fr:'Admin', en:'Admin' },
+  tbLogout: { fr:'Déconnexion', en:'Log out' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
@@ -12776,6 +12797,11 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const key = el.getAttribute('data-i18n-ph');
     if (I18N[key]) el.setAttribute('placeholder', I18N[key][LANG]);
+  });
+  
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (I18N[key]) el.setAttribute('title', I18N[key][LANG]);
   });
   $a('langThumb').classList.toggle('en', LANG === 'en');
   document.querySelectorAll('.langOpt').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
@@ -13361,6 +13387,11 @@ function updatePatchBadge() {
   const badge = $a('patchBadge');
   if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
   $a('btnPatch').classList.toggle('hasNew', n > 0);
+  
+  const badgeTopbar = $a('patchBadgeTopbar');
+  if (badgeTopbar) { badgeTopbar.textContent = n; badgeTopbar.classList.toggle('show', n > 0); }
+  const btnPatchTopbar = $a('btnPatchTopbar');
+  if (btnPatchTopbar) btnPatchTopbar.classList.toggle('hasNew', n > 0);
   
   const banner = $a('patchUnreadBanner');
   if (banner) {

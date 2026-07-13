@@ -2736,6 +2736,31 @@
   }
   .topbar #notifBadge.show { display:inline-flex; }
 
+  /* raccourcis header (2026-07-13, mockup validé, voir CLAUDE.md) : Classement/Marché/Notes de
+     version/Discord/Soutenir/Admin/Déconnexion + compte (pseudo affiché). 32px (vs 28px pour
+     #btnNotifCenter/.icon-btn ci-dessus) -- taille demandée explicitement par le mockup pour
+     cette nouvelle rangée d'icônes SVG. */
+  .topbar .icon-btn-svg {
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    background:#131a29; border:1px solid #263049; border-radius:6px; cursor:pointer;
+    position:relative; flex-shrink:0; text-decoration:none; padding:0; gap:5px;
+  }
+  .topbar .icon-btn-svg:hover { border-color:var(--dbBorder2); }
+  .topbar .tbSep { flex-shrink:0; width:1px; height:22px; background:#263049; }
+  .topbar .icon-btn-svg .tbBetaTag {
+    position:absolute; bottom:-5px; right:-5px; margin-left:0; font-size:6.5px; padding:1px 3px;
+  }
+  .topbar .icon-btn-svg .tbBadge {
+    display:none; align-items:center; justify-content:center; position:absolute; top:-4px; right:-4px;
+    min-width:14px; height:14px; padding:0 3px; background:var(--danger); color:#fff; font-size:8px;
+    font-weight:bold; border-radius:8px; line-height:1;
+  }
+  .topbar .icon-btn-svg .tbBadge.show { display:inline-flex; }
+  .topbar #btnAdminTopbar { background:#2a1f10; border-color:#e8a355; }
+  .topbar #btnLogoutTopbar { border-color:#3a1f1f; }
+  .topbar .tbAccountBtn { width:auto; padding:0 10px; font-size:14px; }
+  .topbar .tbAccountBtn #userPseudoTopbar { font-size:11px; color:var(--cream2); white-space:nowrap; }
+
   /* ===== tabs (reskin visuel de #activitiesBar/.actTab — structure, JS (renderActivityTabs(),
      combat/boss.js) et mécanique des badges .actTabLock/.actTabNew/.actTabBossHp INCHANGÉS ;
      ces badges chevauchent volontairement le bord inférieur du bouton, voir les commentaires

@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=587">
+<link rel="stylesheet" href="build/styles.min.css?v=588">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -366,7 +366,18 @@
      depuis #activitiesBar, même id #nextBossMini, alimenté par nextBossOccurrence()/
      fmtBossCountdown(), combat/boss.js) + notifications (déplacé depuis #metaBar, même id
      #btnNotifCenter/#notifBadge, logique inchangée dans notifications-quests.js) + compte
-     (nouveau bouton, appelle openAccountPanel() comme #btnAccount dans la sidebar) -->
+     (nouveau bouton, appelle openAccountPanel() comme #btnAccount dans la sidebar) --
+
+     2026-07-13 (mockup validé, voir CLAUDE.md) : raccourcis Classement/Marché/Notes de
+     version/Discord/Soutenir/Admin/Déconnexion ajoutés dans le header, EN PLUS des boutons
+     sidebar existants (jamais supprimés). Chaque nouveau bouton déclenche un .click() sur son
+     équivalent sidebar (#btnLeaderboard/#btnMarket/#btnPatch/#btnDonation/#btnAdmin/#btnLogout,
+     wiring dans game-supabase.js) -- réutilise EXACTEMENT la même fonction, zéro logique
+     dupliquée, aucune contrainte d'ordre de script car la référence $a(...) est résolue au clic,
+     pas au chargement. Le pseudo affiché à côté de #btnAccountTopbar et le badge de
+     #btnPatchTopbar réutilisent la même source que #userPseudo/#patchBadge (mis à jour dans
+     updatePseudoDisplay()/updatePatchBadge()). #btnAdminTopbar est caché par défaut, montré/caché
+     en même temps que #adminBox (isAdmin(), voir updateUserBar()). -->
 <div class="topbar">
   <div class="logo"><span class="mark">◆</span> BLACK DESERT IDLE</div>
   <div class="res-pills">
@@ -375,8 +386,33 @@
   </div>
   <div class="topbar-right">
     <span id="nextBossMini"></span>
+    <button class="icon-btn-svg" id="btnLeaderboardTopbar" title="Classement" data-i18n-title="tbLeaderboard">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#d4a955" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8M12 17v4"/><path d="M7 4h10v6a5 5 0 01-10 0z"/><path d="M7 6H4v2a3 3 0 003 3M17 6h3v2a3 3 0 01-3 3"/></svg>
+    </button>
+    <button class="icon-btn-svg" id="btnMarketTopbar" title="Marché (BETA)" data-i18n-title="tbMarket">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#d4a955" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4l-3 4 3 4"/><path d="M4 8h16"/><path d="M17 12l3 4-3 4"/><path d="M20 16H4"/></svg>
+      <span class="betaTag tbBetaTag">BETA</span>
+    </button>
+    <button class="icon-btn-svg" id="btnPatchTopbar" title="Notes de version" data-i18n-title="tbPatch">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#d4a955" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="16" rx="1.5"/><path d="M9 4V3a1 1 0 011-1h4a1 1 0 011 1v1"/><path d="M8.5 10l1.5 1.5 3-3.5M8.5 15l1.5 1.5 3-3.5"/></svg>
+      <span id="patchBadgeTopbar" class="tbBadge" aria-live="polite"></span>
+    </button>
+    <a class="icon-btn-svg" id="btnDiscordTopbar" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer" title="Discord" data-i18n-title="tbDiscord">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="#5865F2"><path d="M20.3 5.4A18 18 0 0015.6 4l-.3.6a13 13 0 014 1.6 15 15 0 00-14.6 0A13 13 0 018.7 4.6L8.4 4a18 18 0 00-4.7 1.4C1 10 .3 14.5.6 19a18 18 0 005.5 2.8l.8-1.3a11.6 11.6 0 01-1.9-.9l.5-.4a13 13 0 0012.9 0l.5.4c-.6.4-1.2.7-1.9.9l.8 1.3a18 18 0 005.5-2.8c.4-5.2-.7-9.6-3.5-13.6zM9 15.9c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2zm6 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2z"/></svg>
+    </a>
+    <button class="icon-btn-svg" id="btnDonationTopbar" title="Soutenir" data-i18n-title="tbDonation">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#e8698f" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-9.7-9.2C.7 7.8 2.4 4.5 5.8 4c2-.3 3.8.7 6.2 3 2.4-2.3 4.2-3.3 6.2-3 3.4.5 5.1 3.8 3.5 7.3C19.5 15.9 12 20.5 12 20.5z"/></svg>
+    </button>
+    <span class="tbSep"></span>
     <button class="icon-btn" id="btnNotifCenter"><span data-i18n="btnNotifCenter">🔔 Notifications</span><span id="notifBadge"></span></button>
-    <button class="icon-btn" id="btnAccountTopbar" title="Mon compte" onclick="openAccountPanel()">👤</button>
+    <button class="icon-btn-svg tbAccountBtn" id="btnAccountTopbar" title="Mon compte" data-i18n-title="tbAccount" onclick="openAccountPanel()">👤<span id="userPseudoTopbar"></span></button>
+    <button class="icon-btn-svg" id="btnAdminTopbar" title="Admin" data-i18n-title="tbAdmin" style="display:none">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#e8a355" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 01-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 015.4-5.4l-2.6 2.6-2-2z"/></svg>
+    </button>
+    <span class="tbSep"></span>
+    <button class="icon-btn-svg" id="btnLogoutTopbar" title="Déconnexion" data-i18n-title="tbLogout">
+      <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="#c0503c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4H6a2 2 0 00-2 2v12a2 2 0 002 2h3"/><path d="M13 8l4 4-4 4"/><path d="M17 12H9"/></svg>
+    </button>
   </div>
 </div>
 
@@ -823,11 +859,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=587"></script>
+<script src="meta/patch-notes-data.js?v=588"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=587"></script>
+<script src="build/source.min.js?v=588"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
