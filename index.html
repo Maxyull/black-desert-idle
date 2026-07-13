@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=589">
+<link rel="stylesheet" href="build/styles.min.css?v=591">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -859,11 +859,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=589"></script>
+<script src="meta/patch-notes-data.js?v=591"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=589"></script>
+<script src="build/source.min.js?v=591"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
@@ -935,6 +935,11 @@
 <!-- rendu canvas (scène, sprites, particules) -- extrait de game-core.js le 2026-07-14 -- charge     APRÈS game-core.js/boss.js/inventory-ui.js : hud() (dans game-core.js) appelle     drawZoneMobIcon() (défini ici), donc ce fichier DOIT charger avant le tout premier hud(). C'est     pourquoi le démarrage du jeu (renderInvCatTabs/hud/requestAnimationFrame(loop), avant à la toute
      fin de game-core.js) a été déplacé à la fin de CE fichier -- requestAnimationFrame(loop) doit
      rester le tout dernier appel synchrone du chargement, sinon la boucle de jeu ne démarre jamais -->
+<!-- disposition des cartes du dashboard Zone (#panel), glisser-déposer + imbrication en onglets
+     (2026-07-13, mockup validé) -- placé APRÈS render.js pour ne jamais retarder
+     requestAnimationFrame(loop) (dernier appel synchrone attendu dans render.js) ; pas de
+     dépendance stricte au-delà de isMobileViewport() (game-core.js, chargé bien avant) et
+     i18next (configuré dès i18n-init.js, ligne ~865) -->
 <!-- données pures PATCH_NOTES (~2000 lignes, extraites de game-supabase.js le 2026-07-14 pour
      alléger le fichier) -- DOIT charger avant game-supabase.js, qui lit PATCH_NOTES[0].v au
      top-level dès son chargement (voir CURRENT_VERSION) -->

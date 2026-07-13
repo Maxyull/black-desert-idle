@@ -589,6 +589,8 @@ const I18N_RESOURCES = {
     "common": {},
     "core": {
       "core.away.title": "Pendant ton absence",
+      "core.card_layout.detach": "Détacher",
+      "core.card_layout.drag_handle": "Glisse-moi pour réorganiser",
       "core.combat.dodge": "Esquivé !",
       "core.death.got_back_up": "⚠ Tu t'es relevé — tu as changé de zone pendant le K.O.",
       "core.death.killed_by_monsters": "⚠ Les monstres t'ont tué ! Choisis une zone plus adaptée à ton niveau ou améliore ton stuff.",
@@ -1531,6 +1533,8 @@ const I18N_RESOURCES = {
     "common": {},
     "core": {
       "core.away.title": "While you were away",
+      "core.card_layout.detach": "Detach",
+      "core.card_layout.drag_handle": "Drag me to reorganize",
       "core.combat.dodge": "Dodged!",
       "core.death.got_back_up": "⚠ You got back up — you changed zone during the K.O.",
       "core.death.killed_by_monsters": "⚠ The monsters killed you! Pick a zone better suited to your level or improve your gear.",
