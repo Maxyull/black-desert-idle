@@ -2108,3 +2108,173 @@ test('market "new offer" pet selector is a clickable grid (not a native select) 
   expect(result.inputBg).not.toBe('rgba(0, 0, 0, 0)');
   expect(result.inputBg).not.toMatch(/^rgb\(255,\s*255,\s*255\)$/);
 });
+
+// ═══ TOURNOI PvP QUOTIDIEN (2026-07-13, demande explicite confirmée) ═══════════════════════════
+// src/companions/pvp-tournament.js + supabase/migrations/20260722090000_companion_pvp_tournament.sql.
+// Comme le reste de ce module, la RPC réelle (register_pvp_team/pvp_registrant_count) ne peut pas
+// être exercée de bout en bout ici -- signInForTest() fabrique un utilisateur LOCAL (onAuthed()
+// direct, pas une vraie session Supabase, voir plus haut), donc tout appel réseau retombe sur un
+// repli géré (même politique que syncCompanionStatsToServer : "jamais throw", pas "réussit
+// vraiment"). Les fonctions PURES (deriveCombatStats/computeTeamPower/buildBracket/resolveBracket)
+// et le rendu client (état de tournoi injecté directement, sans réseau) sont donc testés
+// séparément de l'appel RPC lui-même -- même séparation que le prompt de cette tâche demandait
+// ("calcul pur testable" vs "I/O réseau").
+
+test('deriveCombatStats/computeTeamPower are pure and computeTeamPower is an AVERAGE (not a sum) across deployed pets', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const mk = (rar, tier) => ({ id: petId++, uid: crypto.randomUUID(), cat: PET_CATALOG.find(c=>c.rar===rar), rar, stats: mkStats(rar), hunger: 100, terrain: true, tier, tierXp: 0, tierMult: (TIER_MULT_RANGE[tier-1][0]+TIER_MULT_RANGE[tier-1][1])/2 });
+    const single = [mk(2, 3)];
+    const eight = [mk(0,1), mk(1,1), mk(2,1), mk(3,1), mk(4,1), mk(5,1), mk(2,3), mk(3,4)];
+    const noPets = [];
+    const stats = deriveCombatStats(single[0]);
+    return {
+      noPetsPower: computeTeamPower(noPets),
+      singlePower: computeTeamPower(single),
+      eightPower: computeTeamPower(eight),
+      statsShape: stats && typeof stats.atk === 'number' && typeof stats.def === 'number' && typeof stats.spd === 'number' && typeof stats.eva === 'number',
+      evaCapped: deriveCombatStats({ rar: 5, tier: 5, stats: [60,38,30,20,15] }).eva <= 60,
+      // même pet -> même stats à chaque appel (pur, pas d'effet de bord/aléatoire)
+      deterministic: JSON.stringify(deriveCombatStats(single[0])) === JSON.stringify(deriveCombatStats(single[0])),
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.noPetsPower).toBe(0); // aucun pet déployé -- puissance nulle, jamais NaN/erreur
+  expect(result.statsShape).toBe(true);
+  expect(result.evaCapped).toBe(true);
+  expect(result.deterministic).toBe(true);
+  // MOYENNE, pas somme : la puissance à 8 pets (mélange faible/fort) reste dans le même ordre de
+  // grandeur qu'un seul pet fort, jamais ~8x plus élevée (ce qui prouverait une somme, pas une moyenne).
+  expect(result.eightPower).toBeLessThan(result.singlePower * 3);
+  expect(result.eightPower).toBeGreaterThan(0);
+});
+
+test('buildBracket pads an odd entrant count with byes to the next power of two, and resolveBracket is deterministic for a given seed', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const entrants5 = [1,2,3,4,5].map(i => ({ userId: 'u'+i, pseudo: 'P'+i, power: i*100 }));
+    const b5 = buildBracket(entrants5, 'test-seed-2099-01-01');
+    const emptyBracket = buildBracket([], 'x');
+    const r1 = resolveBracket(b5, 'test-seed-2099-01-01');
+    const r2 = resolveBracket(b5, 'test-seed-2099-01-01'); // même seed -> même résultat
+    const rOther = resolveBracket(b5, 'a-different-seed'); // seed différente -> pas garanti pareil
+    return {
+      size5: b5.size, byeCount: b5.slots.filter(s => s === null).length, slotCount: b5.slots.length,
+      emptySize: emptyBracket.size,
+      r1Winner: r1.winner && r1.winner.userId, r2Winner: r2.winner && r2.winner.userId,
+      roundCount: r1.rounds.length,
+      sameSeedSameWinner: JSON.stringify(r1) === JSON.stringify(r2),
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.size5).toBe(8); // puissance de 2 >= 5
+  expect(result.slotCount).toBe(8);
+  expect(result.byeCount).toBe(3); // 8 - 5 = 3 byes
+  expect(result.emptySize).toBe(0); // 0 inscrit -- jamais une erreur/NaN
+  expect(result.roundCount).toBe(3); // log2(8) = 3 rounds
+  expect(result.sameSeedSameWinner).toBe(true); // déterministe pour une seed donnée (rejouable)
+});
+
+test('PvP tab shows the tournament countdown card, disables registration with zero deployed pets, and renders yesterday\'s replay bracket from an injected resolved state', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  await dismissTutorialsAndClick(page, frame.locator('.tabs .tab', { hasText: 'PvP' }));
+  await expect(frame.locator('#pvp-tournament-card')).toBeVisible();
+  // le compte à rebours affiche un vrai format HH:MM:SS, pas un texte figé "--:--:--"
+  await expect(frame.locator('#pvp-countdown')).toHaveText(/^\d{2}:\d{2}:\d{2}$/, { timeout: 5000 });
+
+  // aucun familier déployé au départ (roster de test vide, voir "roster de départ : 0 pet" plus
+  // haut) -- le bouton d'inscription doit être désactivé, pas juste silencieusement inopérant.
+  const registerBtn = frame.locator('#pvp-tournament-card button', { hasText: 'Inscrire mon équipe' });
+  await expect(registerBtn).toBeDisabled();
+
+  // état "résolu" injecté directement côté client (pas de vraie session Supabase dans ce
+  // contexte de test, voir commentaire en tête de cette section) -- vérifie le rendu du replay
+  // (vainqueur + parcours perso + bracket complet), pas l'appel RPC lui-même.
+  const injected = await frame.locator('body').evaluate(() => {
+    const myId = (typeof getCurrentUserForSync === 'function') ? null : null; // n/a côté iframe
+    const userId = '00000000-0000-4000-8000-000000000001'; // même id que signInForTest()
+    pvpTournamentState.yesterday = {
+      day: '2099-01-01', status: 'resolved', winner_pseudo: 'ChampionDuTest', registrant_count: 3,
+      bracket: {
+        size: 4,
+        entrants: [
+          { user_id: userId, pseudo: 'Moi', power: 500 },
+          { user_id: 'u2', pseudo: 'Rival', power: 300 },
+          { user_id: 'u3', pseudo: 'ChampionDuTest', power: 900 },
+        ],
+        rounds: [
+          [
+            { a: { user_id: userId, pseudo: 'Moi', power: 500 }, b: { user_id: 'u2', pseudo: 'Rival', power: 300 }, winner_user_id: userId },
+            { a: { user_id: 'u3', pseudo: 'ChampionDuTest', power: 900 }, b: null, winner_user_id: 'u3' },
+          ],
+          [
+            { a: { user_id: userId, pseudo: 'Moi', power: 500 }, b: { user_id: 'u3', pseudo: 'ChampionDuTest', power: 900 }, winner_user_id: 'u3' },
+          ],
+        ],
+      },
+    };
+    renderPvpTournamentCard();
+    const cardHtml = document.getElementById('pvp-tournament-card').innerHTML;
+    return { cardHtml };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(injected.cardHtml).toContain('ChampionDuTest'); // vainqueur affiché
+  expect(injected.cardHtml).toContain('Round 1');
+  expect(injected.cardHtml).toContain('Round 2');
+  expect(injected.cardHtml).toContain('Victoire'); // round 1 gagné
+  expect(injected.cardHtml).toContain('Défaite'); // round 2 perdu
+
+  // "voir le bracket complet" ouvre bien la modale dédiée avec le détail des combats -- appelé
+  // directement en JS (pas via un clic Playwright) pour ne pas dépendre du timing d'un éventuel
+  // tutoriel qui rouvrirait #tutSkipBtn par-dessus l'iframe pendant le clic (flakiness déjà
+  // observée avec dismissTutorialsAndClick sur ce test précis, sans rapport avec la logique
+  // testée ici -- openPvpBracketModalIfAny()/OM() sont exactement ce que fait ce bouton onclick).
+  await frame.locator('body').evaluate(() => { openPvpBracketModalIfAny(); });
+  const modalBody = frame.locator('#pvp-bracket-modal-body');
+  await expect(modalBody).toContainText('ChampionDuTest');
+  await expect(modalBody).toContainText('Round 1');
+  await expect(modalBody).toContainText('Rival');
+});
+
+test('register_pvp_team RPC call never throws an unhandled exception when the account is not a real Supabase session (offline/invalid-JWT-style failure)', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await dismissTutorialsAndClick(page, frame.locator('.tabs .tab', { hasText: 'PvP' }));
+
+  await frame.locator('body').evaluate(async () => {
+    // déploie un familier factice pour que le bouton d'inscription soit actionnable, puis appelle
+    // le flux d'inscription réel (échouera réseau -- signInForTest() fabrique un user local sans
+    // vraie session -- mais ne doit JAMAIS lever d'exception non gérée, même politique que
+    // syncCompanionStatsToServer, voir plus haut).
+    const cat = PET_CATALOG[0];
+    PETS.push({ id: petId++, uid: crypto.randomUUID(), cat, rar: 0, stats: [1,0,0,0,0], hunger: 100, terrain: true, tier: 1, tierXp: 0, tierMult: 1 });
+    await registerForPvpTournament();
+  });
+  expect(pageErrors).toEqual([]); // aucune exception JS non gérée, même si la RPC échoue réseau
+});
