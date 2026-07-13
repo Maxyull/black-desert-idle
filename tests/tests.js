@@ -2396,17 +2396,23 @@
         [0, 0.85, 1.5].forEach(scale => {
           [0, 0.5, 1].forEach(lunge => {
             [-1, 1].forEach(px => {
-              P.x = px;
-              drawGahazIso(0, 0, { scale, lunge, phase: 0, tone:'#607a45', alpha }, 0.3);
+              // teleportChargeT (2026-07-13, boss de zone Gahaz) : 0 (repos), en cours de charge,
+              // et à son max (GAHAZ_TELEPORT_CHARGE_T) -- couvre la lueur additive ajoutée dans
+              // drawGahazIso sans jamais dépendre de son existence (fallback .6 si la constante
+              // n'est pas encore chargée, même esprit défensif que le reste de ce test).
+              [0, .3, (typeof GAHAZ_TELEPORT_CHARGE_T !== 'undefined' ? GAHAZ_TELEPORT_CHARGE_T : .6)].forEach(teleportChargeT => {
+                P.x = px;
+                drawGahazIso(0, 0, { scale, lunge, phase: 0, tone:'#607a45', alpha, teleportChargeT }, 0.3);
+              });
             });
           });
         });
       });
-      drawGahazIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#607a45', alpha:true }, 0); // hors écran -> sortie anticipée
-      drawGahazIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#607a45', alpha:false }, 0); // idem, branche normale
+      drawGahazIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#607a45', alpha:true, teleportChargeT:.5 }, 0); // hors écran -> sortie anticipée
+      drawGahazIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#607a45', alpha:false, teleportChargeT:0 }, 0); // idem, branche normale
     } catch (e) { threw = true; errMsg = e.message; }
     cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
-    assert('drawGahazIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran, alpha inclus)', !threw, errMsg);
+    assert('drawGahazIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran, alpha + teleportChargeT inclus)', !threw, errMsg);
   }
   // Garde protège contre tout retour d'exception pour le Sectateur d'Elric (zone "Sanctuaire
   // Elric", zone 9) -- ajouté le 2026-07-13 pour corriger le bug où zoneIdx 9 tombait dans le
@@ -4047,6 +4053,101 @@
     target = s.target; packs = s.packs; buffTimer = s.buffTimer;
   }
 
+  // Boss de zone Gahaz (zone 8, "Repaire Bandits Gahaz") -- 2026-07-13, demande explicite : PREMIER
+  // monstre du jeu avec une capacité de combat DÉDIÉE (téléportation) au-delà du simple bump
+  // générique de pack alpha. Voir GAHAZ_*/spawnPackNear/pickGahazTeleportSpot/gahazBossTeleport
+  // (core/game-core.js). Scope volontairement restreint à zoneIdx===8 && alpha -- ces tests
+  // vérifient explicitement qu'une AUTRE zone avec un pack alpha n'est PAS affectée.
+  function testGahazBossGetsExtraHpDmgMultOnTopOfGenericAlpha() {
+    if (typeof spawnPackNear !== 'function') return;
+    const s = { zoneIdx, packs, packSerial, Px: P.x, Py: P.y };
+    try {
+      P.x = 0; P.y = 0;
+      // packSerial=4 -> le prochain spawnPackNear() incrémente à 5 -> alpha (packSerial % 5 === 0)
+      zoneIdx = 8; packs = []; packSerial = 4;
+      spawnPackNear();
+      const gahazPack = packs[0];
+      zoneIdx = 3; packs = []; packSerial = 4; // Camp Rhutum : zone "normale", même mécanique alpha générique
+      spawnPackNear();
+      const normalAlphaPack = packs[0];
+      assert('Pack alpha zone 8 (Gahaz) marqué gahazBoss', gahazPack.alpha === true && gahazPack.gahazBoss === true);
+      assert('Pack alpha zone 3 (normale, hors scope) N\'EST PAS marqué gahazBoss',
+        normalAlphaPack.alpha === true && normalAlphaPack.gahazBoss !== true);
+      const zGahaz = ZONES[8];
+      const genericAlphaHp = zGahaz.hpPer * 2.6, genericAlphaDmg = zGahaz.dmg * 1.8;
+      assert('Le boss Gahaz a plus de PV que le simple bump alpha générique (x2.6)',
+        gahazPack.wolves[0].maxHp > genericAlphaHp * 1.05,
+        `hp=${gahazPack.wolves[0].maxHp}, alpha générique seul=${genericAlphaHp}`);
+      assert('Le boss Gahaz a un bump de PV conservateur (1.3x-1.6x par-dessus l\'alpha générique, pas 3x+)',
+        gahazPack.wolves[0].maxHp <= genericAlphaHp * 1.6 + 1e-6,
+        `hp=${gahazPack.wolves[0].maxHp}, plafond=${genericAlphaHp*1.6}`);
+      assert('Le boss Gahaz inflige plus de dégâts que le simple bump alpha générique (x1.8)',
+        gahazPack.dmg > genericAlphaDmg * 1.05, `dmg=${gahazPack.dmg}, alpha générique seul=${genericAlphaDmg}`);
+    } finally {
+      zoneIdx = s.zoneIdx; packs = s.packs; packSerial = s.packSerial; P.x = s.Px; P.y = s.Py;
+    }
+  }
+
+  function testPickGahazTeleportSpotStaysWithinConfiguredRingAroundPlayer() {
+    if (typeof pickGahazTeleportSpot !== 'function') return;
+    let allWithin = true, minSeen = Infinity, maxSeen = 0;
+    for (let i = 0; i < 200; i++) {
+      const spot = pickGahazTeleportSpot(500, -300);
+      const d = Math.hypot(spot.x-500, spot.y-(-300));
+      minSeen = Math.min(minSeen, d); maxSeen = Math.max(maxSeen, d);
+      if (d < GAHAZ_TELEPORT_MIN_DIST - .01 || d > GAHAZ_TELEPORT_MAX_DIST + .01) allWithin = false;
+    }
+    assert('pickGahazTeleportSpot reste toujours dans l\'anneau [MIN_DIST, MAX_DIST] autour du joueur (200 tirages)',
+      allWithin, `min=${minSeen}, max=${maxSeen}`);
+  }
+
+  function testGahazBossTeleportMovesPackSpawnsVfxAndResetsCooldown() {
+    if (typeof gahazBossTeleport !== 'function') return;
+    const s = { particles, Px: P.x, Py: P.y };
+    try {
+      particles = [];
+      P.x = 0; P.y = 0;
+      const pack = { x:1000, y:1000, gahazBoss:true, teleportCd:0,
+        wolves:[{dead:false,teleportChargeT:.4},{dead:false,teleportChargeT:.4}] };
+      const before = { x:pack.x, y:pack.y };
+      gahazBossTeleport(pack);
+      const dNew = Math.hypot(pack.x-P.x, pack.y-P.y);
+      assert('gahazBossTeleport déplace bien le pack', pack.x !== before.x || pack.y !== before.y);
+      assert('gahazBossTeleport atterrit dans l\'anneau configuré autour du joueur',
+        dNew >= GAHAZ_TELEPORT_MIN_DIST-.5 && dNew <= GAHAZ_TELEPORT_MAX_DIST+.5, `d=${dNew}`);
+      assert('gahazBossTeleport pousse des particules VFX (traînée + éclats aux 2 points)',
+        particles.length >= 3, `n=${particles.length}`);
+      assert('gahazBossTeleport relance le cooldown (> 0)', pack.teleportCd > 0);
+      assert('gahazBossTeleport remet teleportChargeT à 0 sur les monstres vivants',
+        pack.wolves.every(w => w.teleportChargeT === 0));
+    } finally {
+      particles = s.particles; P.x = s.Px; P.y = s.Py;
+    }
+  }
+
+  // Test d'intégration : le VRAI point d'entrée (wolvesTick, appelé chaque frame de combat) doit
+  // bien déclencher gahazBossTeleport quand le cooldown expire sur un pack aggro -- pas seulement
+  // la fonction isolée ci-dessus (protège contre un branchement oublié/cassé dans wolvesTick).
+  function testWolvesTickTriggersGahazTeleportWhenCooldownExpiresOnAggroPack() {
+    if (typeof wolvesTick !== 'function') return;
+    const s = { packs, target, Px: P.x, Py: P.y, particles, faint: P.faint };
+    try {
+      P.faint = 0; particles = [];
+      P.x = 0; P.y = 0;
+      const pack = { x:100, y:0, dead:false, aggro:true, gathered:1, dmg:1, gahazBoss:true, teleportCd:0,
+        wolves:[{ ox:0,oy:0,gx:0,gy:0, hp:99999,maxHp:99999, dead:false, scale:1, tone:'#fff',
+          atkT:99, lunge:0, teleportChargeT:0 }] };
+      packs = [pack];
+      const before = { x:pack.x, y:pack.y };
+      wolvesTick(0.016);
+      assert('wolvesTick déclenche le teleport du boss Gahaz quand son cooldown expire',
+        pack.x !== before.x || pack.y !== before.y, `avant=(${before.x},${before.y}) après=(${pack.x},${pack.y})`);
+      assert('Le cooldown est relancé après un teleport déclenché par wolvesTick', pack.teleportCd > 0);
+    } finally {
+      packs = s.packs; target = s.target; P.x = s.Px; P.y = s.Py; particles = s.particles; P.faint = s.faint;
+    }
+  }
+
   // Verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
   // and multidevice") -- advanceSim() (game-core.js) doit ignorer TOUT effet de bord (spawn, fsm,
   // caméra...) tant que sessionLocked est vrai (posé par checkPlayerSession(), game-supabase.js,
@@ -5543,6 +5644,10 @@
     testSausanGearReachesMineDeFerDifficile();
     testFullWhiteTierGearReachesGreenTierDifficile();
     testZoneSkillsDamageAllWolvesInPack();
+    testGahazBossGetsExtraHpDmgMultOnTopOfGenericAlpha();
+    testPickGahazTeleportSpotStaysWithinConfiguredRingAroundPlayer();
+    testGahazBossTeleportMovesPackSpawnsVfxAndResetsCooldown();
+    testWolvesTickTriggersGahazTeleportWhenCooldownExpiresOnAggroPack();
     testVeliaTreasureMergedIntoSingleTier();
     testTreasurePricingIsMultipleOfReferenceGearVal();
     testTreasureStackCapAutoSellsSurplus();

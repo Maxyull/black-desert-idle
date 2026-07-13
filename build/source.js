@@ -3035,11 +3035,19 @@ let packSerial = 0, target = null, shakeT = 0, shakeAmp = 0;
 
 function dist(ax,ay,bx,by){ return Math.hypot(ax-bx,ay-by); }
 
+const GAHAZ_BOSS_HP_MULT = 1.4;   
+const GAHAZ_BOSS_DMG_MULT = 1.35; 
+const GAHAZ_TELEPORT_MIN_CD = 5, GAHAZ_TELEPORT_MAX_CD = 8; 
+const GAHAZ_TELEPORT_CHARGE_T = .6; 
+const GAHAZ_TELEPORT_MIN_DIST = 220, GAHAZ_TELEPORT_MAX_DIST = 380; 
+
 function spawnPackNear() {
   packSerial++;
   const z = Z();
   
   const alpha = zoneIdx === 6 ? packSerial % 2 === 0 : packSerial % 5 === 0;
+  
+  const gahazBoss = zoneIdx === 8 && alpha;
   let x, y, tries = 0;
   do {
     const a = Math.random()*Math.PI*2, d = 320 + Math.random()*360;
@@ -3048,7 +3056,7 @@ function spawnPackNear() {
 
   const baseSize = 2 + Math.floor(zoneIdx * 0.5); 
   const n = alpha ? 2 : Math.min(9, baseSize + Math.floor(Math.random()*3));
-  const hpPer = z.hpPer * (alpha ? 2.6 : 1);
+  const hpPer = z.hpPer * (alpha ? 2.6 : 1) * (gahazBoss ? GAHAZ_BOSS_HP_MULT : 1);
   const wolves = [];
   for (let i = 0; i < n; i++) {
     const a = (i/n)*Math.PI*2 + Math.random();
@@ -3062,13 +3070,39 @@ function spawnPackNear() {
       atkT: 1 + Math.random()*2, lunge: 0,
       
       hp: hpPer, maxHp: hpPer, dead: false,
+      
+      teleportChargeT: 0,
     });
   }
   packs.push({
     x, y, wolves, alpha,
     aggro:false, gathered:0, dead:false,
-    dmg: z.dmg * (alpha ? 1.8 : 1),
+    dmg: z.dmg * (alpha ? 1.8 : 1) * (gahazBoss ? GAHAZ_BOSS_DMG_MULT : 1),
+    gahazBoss,
+    
+    teleportCd: gahazBoss ? GAHAZ_TELEPORT_MIN_CD + Math.random()*2 : 0,
   });
+}
+
+function pickGahazTeleportSpot(px, py) {
+  const a = Math.random()*Math.PI*2;
+  const d = GAHAZ_TELEPORT_MIN_DIST + Math.random()*(GAHAZ_TELEPORT_MAX_DIST-GAHAZ_TELEPORT_MIN_DIST);
+  return { x: px + Math.cos(a)*d, y: py + Math.sin(a)*d };
+}
+
+function gahazBossTeleport(p) {
+  const from = { x:p.x, y:p.y };
+  const to = pickGahazTeleportSpot(P.x, P.y);
+  particles.push({ type:'tpTrail', x1:from.x, y1:from.y, x2:to.x, y2:to.y, life:.4, max:.4 });
+  for (let i=0;i<6;i++)
+    particles.push({type:'spark', x:from.x+(Math.random()*30-15), y:from.y+(Math.random()*30-15),
+      z:10+Math.random()*20, vz:60+Math.random()*40, life:.4, max:.4});
+  for (let i=0;i<6;i++)
+    particles.push({type:'spark', x:to.x+(Math.random()*30-15), y:to.y+(Math.random()*30-15),
+      z:10+Math.random()*20, vz:60+Math.random()*40, life:.4, max:.4});
+  p.x = to.x; p.y = to.y;
+  p.teleportCd = GAHAZ_TELEPORT_MIN_CD + Math.random()*(GAHAZ_TELEPORT_MAX_CD-GAHAZ_TELEPORT_MIN_CD);
+  for (const w of p.wolves) if (!w.dead) w.teleportChargeT = 0;
 }
 
 function targetPackCount() {
@@ -3334,6 +3368,14 @@ function wolvesTick(dt) {
     
     if (d > 550) { p.aggro = false; continue; }
     if (d > 60) { p.x += (P.x-p.x)/d*mobSpeed*dt; p.y += (P.y-p.y)/d*mobSpeed*dt; }
+    
+    if (p.gahazBoss && p.wolves.some(w=>!w.dead)) {
+      p.teleportCd -= dt;
+      
+      const charge = Math.min(GAHAZ_TELEPORT_CHARGE_T, Math.max(0, GAHAZ_TELEPORT_CHARGE_T - p.teleportCd));
+      for (const w of p.wolves) if (!w.dead) w.teleportChargeT = charge;
+      if (p.teleportCd <= 0) gahazBossTeleport(p);
+    }
     for (const w of p.wolves) {
       if (w.dead) continue; 
       if (w.lunge > 0) {
@@ -11561,6 +11603,12 @@ function drawGahazIso(wx,wy,w,t) {
   ctx.moveTo(9+sway,-19); ctx.lineTo(7.6+sway,-16.4); ctx.lineTo(8.6+sway,-15.6);
   ctx.lineTo(7+sway,-13.2); ctx.lineTo(8+sway,-12.4); ctx.lineTo(6+sway,-20);
   ctx.closePath(); ctx.fill();
+  
+  if (w.alpha && w.teleportChargeT > 0) {
+    const cg = Math.min(1, w.teleportChargeT / GAHAZ_TELEPORT_CHARGE_T);
+    ctx.fillStyle = `rgba(140,200,255,${cg*.45})`;
+    ctx.beginPath(); ctx.arc(0,-18,9+cg*9,0,7); ctx.fill();
+  }
   ctx.restore();
 }
 

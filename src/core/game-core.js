@@ -921,6 +921,17 @@ let packSerial = 0, target = null, shakeT = 0, shakeAmp = 0;
 /** @param {number} ax @param {number} ay @param {number} bx @param {number} by. @returns {number} distance euclidienne entre les deux points. */
 function dist(ax,ay,bx,by){ return Math.hypot(ax-bx,ay-by); }
 
+// Boss de zone Gahaz (zone 8, "Repaire Bandits Gahaz") -- 2026-07-13, demande explicite : PREMIER
+// monstre du jeu avec une capacité de combat DÉDIÉE (téléportation) au-delà du simple bump
+// générique de pack alpha (taille/PV/dégâts, voir spawnPackNear ci-dessous). Scope volontairement
+// restreint à zoneIdx===8 && alpha (jamais un mécanisme global appliqué aux packs alpha des autres
+// zones) -- voir pickGahazTeleportSpot/gahazBossTeleport plus bas et le branchement dans wolvesTick.
+const GAHAZ_BOSS_HP_MULT = 1.4;   // PAR-DESSUS le multiplicateur alpha générique (x2.6) -> x3.64 au total face à un monstre normal
+const GAHAZ_BOSS_DMG_MULT = 1.35; // PAR-DESSUS le multiplicateur alpha générique (x1.8) -> x2.43 au total
+const GAHAZ_TELEPORT_MIN_CD = 5, GAHAZ_TELEPORT_MAX_CD = 8; // secondes entre 2 téléportations (tant que le pack reste aggro)
+const GAHAZ_TELEPORT_CHARGE_T = .6; // fenêtre de "charge" visuelle juste avant le teleport (lueur, voir drawGahazIso)
+const GAHAZ_TELEPORT_MIN_DIST = 220, GAHAZ_TELEPORT_MAX_DIST = 380; // distance AU JOUEUR après teleport -- casse l'engagement mêlée sans sortir de la zone de combat
+
 /** Fait apparaître un nouveau pack de monstres autour du joueur (taille/PV/alpha selon la zone et le palier), ajouté à `packs`. */
 function spawnPackNear() {
   packSerial++;
@@ -929,6 +940,9 @@ function spawnPackNear() {
   // gros, qui loot plus — les multiplicateurs alpha ×1.5/1.6 s'appliquent déjà) — demande explicite
   // du 2026-07-07. Les autres zones gardent le rythme habituel d'1 pack alpha sur 5.
   const alpha = zoneIdx === 6 ? packSerial % 2 === 0 : packSerial % 5 === 0;
+  // boss de zone Gahaz (voir bloc de constantes GAHAZ_* juste au-dessus) : uniquement le pack alpha
+  // de la zone 8, jamais ailleurs.
+  const gahazBoss = zoneIdx === 8 && alpha;
   let x, y, tries = 0;
   do {
     const a = Math.random()*Math.PI*2, d = 320 + Math.random()*360;
@@ -938,7 +952,7 @@ function spawnPackNear() {
   // densité progressive : packs de plus en plus grands en avançant dans les zones
   const baseSize = 2 + Math.floor(zoneIdx * 0.5); // Z1→2, Z6→4-5, Z12→7-8
   const n = alpha ? 2 : Math.min(9, baseSize + Math.floor(Math.random()*3));
-  const hpPer = z.hpPer * (alpha ? 2.6 : 1);
+  const hpPer = z.hpPer * (alpha ? 2.6 : 1) * (gahazBoss ? GAHAZ_BOSS_HP_MULT : 1);
   const wolves = [];
   for (let i = 0; i < n; i++) {
     const a = (i/n)*Math.PI*2 + Math.random();
@@ -954,13 +968,54 @@ function spawnPackNear() {
       // barre de vie et son loot associé") -- avant, tout le pack partageait une seule barre/PV
       // agrégée et mourait d'un coup ; chaque monstre meurt maintenant un par un, voir currentWolf()/killWolf()
       hp: hpPer, maxHp: hpPer, dead: false,
+      // lueur de "charge" juste avant un teleport (gahazBoss uniquement, mis à jour par wolvesTick,
+      // lu par drawGahazIso) -- toujours présent (même sur les monstres normaux) pour rester un
+      // simple nombre lu sans garde `typeof` partout dans le rendu.
+      teleportChargeT: 0,
     });
   }
   packs.push({
     x, y, wolves, alpha,
     aggro:false, gathered:0, dead:false,
-    dmg: z.dmg * (alpha ? 1.8 : 1),
+    dmg: z.dmg * (alpha ? 1.8 : 1) * (gahazBoss ? GAHAZ_BOSS_DMG_MULT : 1),
+    gahazBoss,
+    // léger délai avant la 1ère téléportation (laisse le temps d'engager le combat) -- seulement
+    // pertinent pour un pack gahazBoss, ignoré sinon (voir garde `p.gahazBoss` dans wolvesTick).
+    teleportCd: gahazBoss ? GAHAZ_TELEPORT_MIN_CD + Math.random()*2 : 0,
   });
+}
+/**
+ * @param {number} px @param {number} py - position actuelle du joueur.
+ * @returns {{x:number,y:number}} nouvelle position de téléportation du boss Gahaz : angle aléatoire,
+ * distance comprise entre GAHAZ_TELEPORT_MIN_DIST et GAHAZ_TELEPORT_MAX_DIST DU JOUEUR -- casse
+ * l'engagement en mêlée (le joueur doit re-parcourir la distance) sans envoyer le boss hors de la
+ * zone de combat. Pure (aucun effet de bord) -- testable isolément, voir tests.js.
+ */
+function pickGahazTeleportSpot(px, py) {
+  const a = Math.random()*Math.PI*2;
+  const d = GAHAZ_TELEPORT_MIN_DIST + Math.random()*(GAHAZ_TELEPORT_MAX_DIST-GAHAZ_TELEPORT_MIN_DIST);
+  return { x: px + Math.cos(a)*d, y: py + Math.sin(a)*d };
+}
+/**
+ * Exécute la téléportation du boss de zone Gahaz : VFX (traînée `tpTrail` + éclats `spark` aux 2
+ * points, même famille que doTeleport() côté joueur), déplace le pack entier (les 2 monstres du
+ * pack alpha suivent, même logique que le reste du fichier où `alpha` est un concept de PACK, pas
+ * d'un monstre isolé), relance le cooldown, remet la lueur de charge à 0.
+ * @param {object} p - pack gahazBoss ciblé (lit/écrit p.x/p.y/p.teleportCd).
+ */
+function gahazBossTeleport(p) {
+  const from = { x:p.x, y:p.y };
+  const to = pickGahazTeleportSpot(P.x, P.y);
+  particles.push({ type:'tpTrail', x1:from.x, y1:from.y, x2:to.x, y2:to.y, life:.4, max:.4 });
+  for (let i=0;i<6;i++)
+    particles.push({type:'spark', x:from.x+(Math.random()*30-15), y:from.y+(Math.random()*30-15),
+      z:10+Math.random()*20, vz:60+Math.random()*40, life:.4, max:.4});
+  for (let i=0;i<6;i++)
+    particles.push({type:'spark', x:to.x+(Math.random()*30-15), y:to.y+(Math.random()*30-15),
+      z:10+Math.random()*20, vz:60+Math.random()*40, life:.4, max:.4});
+  p.x = to.x; p.y = to.y;
+  p.teleportCd = GAHAZ_TELEPORT_MIN_CD + Math.random()*(GAHAZ_TELEPORT_MAX_CD-GAHAZ_TELEPORT_MIN_CD);
+  for (const w of p.wolves) if (!w.dead) w.teleportChargeT = 0;
 }
 
 // nombre de packs actifs simultanément dans le monde -- davantage à partir du palier BLANC
@@ -1352,6 +1407,20 @@ function wolvesTick(dt) {
     // cette distance, le pack retourne en patrouille (comme s'il n'avait jamais été engagé).
     if (d > 550) { p.aggro = false; continue; }
     if (d > 60) { p.x += (P.x-p.x)/d*mobSpeed*dt; p.y += (P.y-p.y)/d*mobSpeed*dt; }
+    // boss de zone Gahaz (2026-07-13, demande explicite : voir bloc de constantes GAHAZ_* et
+    // gahazBossTeleport/pickGahazTeleportSpot ci-dessus) -- se téléporte périodiquement TANT QUE le
+    // pack reste engagé (aggro), forçant le joueur à re-parcourir la distance. Uniquement les packs
+    // marqués gahazBoss à la génération (zoneIdx===8 && alpha, voir spawnPackNear) ET s'il reste au
+    // moins un monstre vivant (sécurité : évite de téléporter un pack déjà entièrement vidé mais pas
+    // encore marqué .dead dans la frame courante).
+    if (p.gahazBoss && p.wolves.some(w=>!w.dead)) {
+      p.teleportCd -= dt;
+      // lueur de charge (voir drawGahazIso) : monte de 0 à GAHAZ_TELEPORT_CHARGE_T durant la
+      // dernière fraction de seconde avant le teleport, purement cosmétique.
+      const charge = Math.min(GAHAZ_TELEPORT_CHARGE_T, Math.max(0, GAHAZ_TELEPORT_CHARGE_T - p.teleportCd));
+      for (const w of p.wolves) if (!w.dead) w.teleportChargeT = charge;
+      if (p.teleportCd <= 0) gahazBossTeleport(p);
+    }
     for (const w of p.wolves) {
       if (w.dead) continue; // (2026-07-11) un monstre déjà tué individuellement n'attaque plus
       if (w.lunge > 0) {

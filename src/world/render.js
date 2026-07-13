@@ -1142,6 +1142,15 @@ function drawGahazIso(wx,wy,w,t) {
   ctx.moveTo(9+sway,-19); ctx.lineTo(7.6+sway,-16.4); ctx.lineTo(8.6+sway,-15.6);
   ctx.lineTo(7+sway,-13.2); ctx.lineTo(8+sway,-12.4); ctx.lineTo(6+sway,-20);
   ctx.closePath(); ctx.fill();
+  // téléportation (boss de zone Gahaz, 2026-07-13, demande explicite -- voir gahazBossTeleport/
+  // GAHAZ_TELEPORT_CHARGE_T, core/game-core.js) : lueur additive brève qui monte juste avant le
+  // teleport, purement cosmétique -- ne touche JAMAIS la silhouette de base dessinée au-dessus.
+  // Déjà à l'intérieur du ctx.save()/scale() du monstre donc centrée/mise à l'échelle avec lui.
+  if (w.alpha && w.teleportChargeT > 0) {
+    const cg = Math.min(1, w.teleportChargeT / GAHAZ_TELEPORT_CHARGE_T);
+    ctx.fillStyle = `rgba(140,200,255,${cg*.45})`;
+    ctx.beginPath(); ctx.arc(0,-18,9+cg*9,0,7); ctx.fill();
+  }
   ctx.restore();
 }
 // Sectateur d'Elric (zone "Sanctuaire Elric", 1ère zone du palier bleu/Mediah, juste après Repaire
