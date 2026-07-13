@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V425', d:'25/07/2026 08:00', name:{fr:'Menu objet inventaire : Vendre au marché direct + confirmation obligatoire pour Jeter', en:'Inventory item menu: direct sell-on-market + mandatory confirmation for Drop'}, fr:[
+      {t:'new', sub:'inventaire', tx:'Nouveau bouton "🏛️ Vendre au marché" sur les objets vendables (matériaux, armure/armes, bijoux) : ouvre directement le Marché commun sur cet objet précis (même niveau d\'enchant), formulaire de vente déjà déployé. Distinct de "Vendre 1"/"Vendre tout" (vente instantanée à valeur fixe), qui restent inchangés.'},
+      {t:'fix', sub:'inventaire', tx:'"Jeter" (destruction définitive d\'un objet du sac) demande désormais une confirmation explicite avant d\'agir — ce n\'était pas le cas auparavant.'},
+      {t:'change', sub:'inventaire', tx:'Un objet du sac protégé Compendium n\'a jamais eu de bouton Jeter/Vendre ; un texte explique maintenant pourquoi (protège la collection de la zone).'},
+    ], en:[
+      {t:'new', sub:'inventaire', tx:'New "🏛️ Sell on the market" button on sellable items (materials, armor/weapons, jewelry): opens the Common Market directly on that exact item (same enhancement level), sell form already expanded. Distinct from "Sell 1"/"Sell all" (instant fixed-value sale), which stay unchanged.'},
+      {t:'fix', sub:'inventaire', tx:'"Drop" (permanently destroying a bag item) now requires an explicit confirmation before acting — it did not before.'},
+      {t:'change', sub:'inventaire', tx:'A Compendium-protected bag item never had a Drop/Sell button; a note now explains why (protects the zone\'s collection).'},
+    ] },
   { v:'V424', d:'25/07/2026 07:00', name:{fr:'Esprit des Mânes (Planque des Mânes) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Manes Spirit (Manes\' Den): new dedicated silhouette, no longer shows a wolf'}, fr:[
       {t:'fix', sub:'interface', tx:'Planque des Mânes (zone 11, dernière zone du palier bleu avant la Forêt de Polly) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé, sur la silhouette animée comme sur la petite icône de zone.'},
       {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour l\'Esprit des Mânes : esprit spectral à tête féline surmontée d\'une crinière de flammes écarlate/orange ondulante, corps fumant bleu-blanc translucide qui se dissout en volutes vers les pieds, et une lueur de braise au torse qui s\'intensifie en pleine charge. Le mob normal est un archer/lancier spectral svelte armé d\'un arc fumant ; sa variante boss est une brute bien plus massive et musclée armée d\'un fléau fumant à chaîne, avec des fissures de braise plus marquées sur le torse.'},
