@@ -1033,6 +1033,117 @@ function drawHelmIso(wx,wy,w,t) {
   }
   ctx.restore();
 }
+// Bandit Gahaz (zone "Repaire Bandits Gahaz", juste après le Poste Helm) — créature ORIGINALE :
+// pillard du désert trapu et brutal, turban rayé de rouge à longs pans frangés qui flottent,
+// torse nu musclé et cicatrisé visible sous un gilet sans manches ouvert, large ceinture tissée à
+// pochettes, tibias bandés, hachette courbe courte tenue basse. Demande explicite (captures de
+// référence : pillards du désert BDO en robes rouge/tan et turbans, canyons désertiques) —
+// ambiance seulement, aucun asset réel repris. Option C (la plus massive/brutale des 3 options
+// proposées) approuvée. Pas de variante w.alpha dédiée ici (contrairement à Mineur/Helm) — le
+// w.scale déjà plus grand pour un pack alpha suffit (même logique que drawRhutumIso/drawShultzIso/
+// drawSausanIso/drawPirateIso).
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Bandit Gahaz en isométrique. */
+function drawGahazIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,13*w.scale,5.2,0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const trot = Math.sin(t*5+w.phase)*1.4; // démarche lourde et brutale
+  const sway = Math.sin(t*3+w.phase)*1.3; // les pans frangés du turban flottent
+  if (w.lunge > .3) { ctx.strokeStyle='rgba(200,90,60,.5)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(0,-17,16,12,0,0,7); ctx.stroke(); }
+  const vest = w.tone; // teinte du gilet, variété par zone (comme les autres monstres)
+  const skin = '#b8895c'; // peau tannée par le soleil du désert
+  // jambes épaisses (silhouette trapue)
+  ctx.strokeStyle='#4a3c28'; ctx.lineWidth=4.8; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-5,-9); ctx.lineTo(-6,3+trot*.5);
+  ctx.moveTo(5,-9); ctx.lineTo(6,3-trot*.5);
+  ctx.stroke();
+  // tibias bandés (traits d'enroulement de bandelettes, même technique que les reflets de mailles
+  // de drawSausanIso, ici en travers du tibia)
+  ctx.strokeStyle='#d8c9a0'; ctx.lineWidth=1;
+  for (let i=0;i<3;i++) {
+    const ly = -5+i*2.6;
+    ctx.beginPath(); ctx.moveTo(-7.6,ly+1+trot*.4); ctx.lineTo(-4.4,ly+trot*.4); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(4.4,ly-trot*.4); ctx.lineTo(7.6,ly+1-trot*.4); ctx.stroke();
+  }
+  // sandales
+  ctx.fillStyle='#241d16';
+  ctx.beginPath(); ctx.ellipse(-6.2,3.4+trot*.5,1.8,1,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(6.2,3.4-trot*.5,1.8,1,0,0,7); ctx.fill();
+  // renflements de bras (peau nue, avant le torse pour que le gilet passe par-dessus -- même
+  // ordre que drawPirateIso)
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.ellipse(-11.5,-19,4,4.6,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(11.5,-19,4,4.6,0,0,7); ctx.fill();
+  // torse nu, musclé et large (silhouette plus massive que Rhutum/Pirate, proche de Sausan/Shultz)
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.moveTo(-10,-9); ctx.lineTo(-9,-27); ctx.lineTo(9,-27); ctx.lineTo(10,-9); ctx.closePath(); ctx.fill();
+  // cicatrices (quelques traits courts et discrets, même technique que les traits de détail déjà
+  // utilisés ailleurs dans ce fichier, ex. gravures runiques de drawHelmIso)
+  ctx.strokeStyle='rgba(110,64,46,.55)'; ctx.lineWidth=.8; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-3.2,-22.4); ctx.lineTo(-1.4,-18.2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(2.2,-24.4); ctx.lineTo(4,-20.4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-1.8,-14.6); ctx.lineTo(1,-12.6); ctx.stroke();
+  // gilet sans manches ouvert -- 2 pans latéraux seulement, laisse voir le torse et les cicatrices
+  ctx.fillStyle = vest;
+  ctx.beginPath(); ctx.moveTo(-10,-9); ctx.lineTo(-9,-27); ctx.lineTo(-4,-27); ctx.lineTo(-5,-9); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(10,-9); ctx.lineTo(9,-27); ctx.lineTo(4,-27); ctx.lineTo(5,-9); ctx.closePath(); ctx.fill();
+  ctx.stroke();
+  // large ceinture tissée + 2-3 pochettes suspendues -- couleur cuir clair (contraste voulu avec
+  // les jambes plus sombres, sinon les pochettes s'y fondent visuellement) + liseré sombre
+  ctx.fillStyle='#5a4020';
+  ctx.fillRect(-10.4,-10.6,20.8,2.2);
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.5; ctx.strokeRect(-10.4,-10.6,20.8,2.2);
+  ctx.fillStyle='#8a6a3c';
+  [[-5,-7.4,1.7,2.4],[0.6,-6.9,1.4,1.9],[5.4,-7.5,1.6,2.2]].forEach(([px,py,rx,ry]) => {
+    ctx.beginPath(); ctx.ellipse(px,py,rx,ry,0,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.5; ctx.stroke();
+  });
+  // avant-bras + hachette courte et trapue, tenue basse (avance légèrement en cas d'attaque --
+  // silhouette de hache de poing, pas une longue lame, inspirée du coutelas de drawPirateIso)
+  ctx.strokeStyle = skin; ctx.lineWidth=3.6; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(9,-18); ctx.lineTo(12+lungeAmt*.4,-9); ctx.stroke();
+  ctx.strokeStyle='#4a3420'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(12+lungeAmt*.4,-9); ctx.lineTo(15+lungeAmt*.5,-6); ctx.stroke();
+  ctx.fillStyle='#9aa0a8';
+  ctx.beginPath();
+  ctx.moveTo(15+lungeAmt*.5,-6);
+  ctx.quadraticCurveTo(21+lungeAmt*.6,-9, 20+lungeAmt*.6,-3);
+  ctx.quadraticCurveTo(17+lungeAmt*.5,-2, 15+lungeAmt*.5,-6);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+  // tête (peau tannée)
+  ctx.fillStyle = skin;
+  ctx.beginPath(); ctx.arc(0,-29,4.8,0,7); ctx.fill();
+  // turban : base tissu + rayures rouges enroulées
+  ctx.fillStyle='#c9b98a';
+  ctx.beginPath(); ctx.arc(0,-31,5.3,Math.PI,0); ctx.fill();
+  ctx.strokeStyle='#a03a2e'; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.moveTo(-5,-31.4); ctx.quadraticCurveTo(0,-34.6,5,-31.4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-4.3,-28.6); ctx.quadraticCurveTo(0,-31,4.3,-28.6); ctx.stroke();
+  // long pan frangé qui traîne d'un côté (suit la marche via `sway`, même principe que le pan de
+  // tunique de drawSausanIso / la cape de drawShultzIso)
+  ctx.fillStyle='#a03a2e';
+  ctx.beginPath();
+  ctx.moveTo(4,-32); ctx.quadraticCurveTo(11+sway,-27, 9+sway,-19);
+  ctx.lineTo(6+sway,-20); ctx.quadraticCurveTo(7.4+sway,-27, 3,-30);
+  ctx.closePath(); ctx.fill();
+  // franges en dents de scie au bout du pan
+  ctx.beginPath();
+  ctx.moveTo(9+sway,-19); ctx.lineTo(7.6+sway,-16.4); ctx.lineTo(8.6+sway,-15.6);
+  ctx.lineTo(7+sway,-13.2); ctx.lineTo(8+sway,-12.4); ctx.lineTo(6+sway,-20);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -1123,6 +1234,20 @@ function drawZoneMobIcon() {
       ctx2.beginPath();
       ctx2.moveTo(i*3.2,-6); ctx2.lineTo(i*3.2-1.2,-13-Math.abs(i)*2); ctx2.lineTo(i*3.2+1.2,-6); ctx2.closePath(); ctx2.fill();
     }
+  } else if (zi === 8) { // Bandit Gahaz (turban rayé rouge à pan frangé + gilet ouvert)
+    ctx2.fillStyle='#b8895c';
+    ctx2.beginPath(); ctx2.arc(0,1,6.6,0,7); ctx2.fill();
+    ctx2.fillStyle=tone; // pan de gilet visible sous le menton
+    ctx2.beginPath(); ctx2.arc(0,5,4.6,0.1,Math.PI-0.1); ctx2.fill();
+    ctx2.fillStyle='#c9b98a'; // turban, base tissu
+    ctx2.beginPath(); ctx2.arc(0,-1,7,Math.PI,0); ctx2.fill();
+    ctx2.strokeStyle='#a03a2e'; ctx2.lineWidth=1.4; // rayures rouges enroulées
+    ctx2.beginPath(); ctx2.moveTo(-5.4,-1.3); ctx2.quadraticCurveTo(0,-4.4,5.4,-1.3); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(-4.6,2); ctx2.quadraticCurveTo(0,-0.4,4.6,2); ctx2.stroke();
+    ctx2.fillStyle='#a03a2e'; // pan frangé qui pend d'un côté
+    ctx2.beginPath();
+    ctx2.moveTo(5,-2); ctx2.quadraticCurveTo(10,3,7,9); ctx2.lineTo(4.6,7.6); ctx2.quadraticCurveTo(6.4,3,3.6,-1);
+    ctx2.closePath(); ctx2.fill();
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -1134,9 +1259,9 @@ function drawZoneMobIcon() {
 // dispatcher : chaque zone peut avoir sa propre silhouette de monstre — pour l'instant "Ruines de
 // Protty" (zone index 1), "Repaire des Pirates" (zone index 2), "Camp Rhutum" (zone index 3),
 // "Ferme Shultz" (zone index 4), "Colonie Sausan" (zone index 5), "Mine de Fer Abandonnée"
-// (zone index 6, avec sa variante boss blindée) et "Poste Helm" (zone index 7, avec sa variante
-// boss "Golem" à la silhouette radicalement différente) ont la leur, les autres zones gardent la
-// silhouette générique
+// (zone index 6, avec sa variante boss blindée), "Poste Helm" (zone index 7, avec sa variante
+// boss "Golem" à la silhouette radicalement différente) et "Repaire Bandits Gahaz" (zone index 8)
+// ont la leur, les autres zones gardent la silhouette générique
 /** @param {number} wx @param {number} wy @param {object} w @param {number} t. Aiguille vers le draw*Iso du monstre correspondant à la zone active. */
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
@@ -1146,6 +1271,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 5) return drawSausanIso(wx,wy,w,t);
   if (zoneIdx === 6) return drawMineurIso(wx,wy,w,t);
   if (zoneIdx === 7) return drawHelmIso(wx,wy,w,t);
+  if (zoneIdx === 8) return drawGahazIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
