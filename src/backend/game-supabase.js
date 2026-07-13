@@ -1460,6 +1460,11 @@ const I18N = {
   tbAccount: { fr:'Mon compte', en:'My account' },
   tbAdmin: { fr:'Admin', en:'Admin' },
   tbLogout: { fr:'Déconnexion', en:'Log out' },
+  // boutons +/- taille UI/jeu sur les bords de #gameFrame (2026-07-13, mockup validé) -- même
+  // texte utilisé pour le title natif (data-i18n-title) ET le petit libellé qui apparaît sous le
+  // bouton au survol (data-i18n).
+  uiScaleDown: { fr:'Réduire', en:'Shrink' },
+  uiScaleUp: { fr:'Agrandir', en:'Grow' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
@@ -1651,6 +1656,47 @@ $a('btnCollapseRight').onclick = () => {
   applyRightCollapse();
 };
 applyRightCollapse();
+
+// ---------- taille de l'UI/jeu (Petit/Moyen/Grand), persistée ----------
+// mockup validé par l'utilisateur (2026-07-13) : 2 boutons +/- quasi invisibles au repos sur les
+// bords de #gameFrame (voir #btnUiScaleDown/#btnUiScaleUp, index.dev.html, styles .uiScaleBtn dans
+// styles.css). Le scale s'applique sur #wrap (colonne centrale : #gameFrame + #panel + #bossRoom/
+// #minibossRoom) via un simple transform CSS -- ne touche JAMAIS à la résolution interne du canvas
+// #cv (1240x440), voir CLAUDE.md règle critique #4 et §14 (ne pas changer la résolution canvas).
+const UI_SCALE_LEVELS = ['small', 'medium', 'large'];
+const UI_SCALE_FACTORS = { small:.85, medium:1, large:1.15 };
+
+/**
+ * Calcule le prochain palier de taille UI à partir du palier courant et d'une direction
+ * (+1 = "+", -1 = "-"), clampé aux deux bouts (no-op si déjà à small/large). Fonction pure,
+ * isolée pour être testable sans DOM -- voir tests/tests.js.
+ */
+function nextUiScaleLevel(current, direction) {
+  const idx = UI_SCALE_LEVELS.indexOf(current);
+  const from = idx === -1 ? UI_SCALE_LEVELS.indexOf('medium') : idx;
+  const to = Math.max(0, Math.min(UI_SCALE_LEVELS.length - 1, from + direction));
+  return UI_SCALE_LEVELS[to];
+}
+
+let uiScaleLevel = 'medium';
+try {
+  const savedScale = localStorage.getItem('velia-idle-ui-scale');
+  if (UI_SCALE_LEVELS.includes(savedScale)) uiScaleLevel = savedScale;
+} catch(e) {}
+/** Applique le palier de taille UI courant (persisté) au DOM : transform scale() sur #wrap. */
+function applyUiScale() {
+  $a('wrap').style.transform = `scale(${UI_SCALE_FACTORS[uiScaleLevel]})`;
+  $a('btnUiScaleDown').classList.toggle('uiScaleBtnDisabled', uiScaleLevel === UI_SCALE_LEVELS[0]);
+  $a('btnUiScaleUp').classList.toggle('uiScaleBtnDisabled', uiScaleLevel === UI_SCALE_LEVELS[UI_SCALE_LEVELS.length - 1]);
+}
+function setUiScaleLevel(direction) {
+  uiScaleLevel = nextUiScaleLevel(uiScaleLevel, direction);
+  try { localStorage.setItem('velia-idle-ui-scale', uiScaleLevel); } catch(e) {}
+  applyUiScale();
+}
+$a('btnUiScaleDown').onclick = () => setUiScaleLevel(-1);
+$a('btnUiScaleUp').onclick = () => setUiScaleLevel(1);
+applyUiScale();
 
 // (NAME_EN et tr() sont maintenant déclarés en haut du script)
 

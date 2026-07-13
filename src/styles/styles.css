@@ -3846,4 +3846,48 @@
   .card.cardDropAfter { box-shadow: 3px 0 0 var(--gold) inset; }
   .card.cardNested { border:none; padding:0; background:transparent; margin:0; }
   .card.cardNested > h3 { display:none; }
+
+  /* ===== boutons +/- taille UI/jeu, sur les bords de #gameFrame (2026-07-13, mockup validé) =====
+     Quasi invisibles au repos (~15% opacity, cercle doré fin) -- pleine opacité + petit libellé
+     sous le bouton au survol, transition courte cohérente avec le reste de la feuille (.15-.2s,
+     voir #btnCollapseMenu/.ncDel plus haut). #wrap (colonne centrale : #gameFrame+#panel+
+     #bossRoom/#minibossRoom) reçoit le transform:scale() correspondant, voir applyUiScale()
+     (game-supabase.js) -- ne touche jamais à la résolution interne du canvas #cv. */
+  #wrap { transition:transform .2s ease; transform-origin:center top; }
+  /* préfixées #gameFrame (comme #gameBar button:hover/#metaBar button:hover plus haut) : la règle
+     générique `button{margin-top:4px;padding:6px 9px}` / `button:hover:not(:disabled){transform:
+     translateY(-1px)}` (spécificité 0,0,2,1 pour la version :hover) est plus spécifique qu'une
+     simple classe .uiScaleBtn(:hover) seule (0,0,2,0) -- sans ce préfixe elle gagnait la cascade et
+     décalait le cercle de 4px (margin-top) + cassait le centrage vertical au survol (transform
+     réécrit à translateY(-1px) au lieu de translateY(-50%)), repéré en comparant getComputedStyle
+     avant/après ce fix. */
+  #gameFrame .uiScaleBtn {
+    position:absolute; top:50%; margin:0; padding:0;
+    transform:translateY(-50%);
+    width:34px; height:34px; border-radius:50%;
+    background:rgba(10,9,14,.55); border:1.5px solid var(--gold-dim); color:var(--gold);
+    font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center;
+    cursor:pointer; opacity:.15; transition:opacity .18s ease, border-color .18s ease, color .18s ease;
+    z-index:15;
+  }
+  .uiScaleBtnIcon { pointer-events:none; }
+  #btnUiScaleDown { left:14px; }
+  #btnUiScaleUp { right:14px; }
+  #gameFrame .uiScaleBtn:hover, #gameFrame .uiScaleBtn:focus-visible {
+    opacity:1; border-color:var(--gold); transform:translateY(-50%);
+  }
+  /* palier déjà atteint (small/large) : le clic reste un no-op (nextUiScaleLevel clampe), le survol
+     le montre visuellement -- ton neutre --dbBorder2 au lieu du gold, pas de libellé plein. */
+  #gameFrame .uiScaleBtn.uiScaleBtnDisabled:hover { opacity:.4; border-color:var(--dbBorder2); color:var(--dbBorder2); }
+  .uiScaleBtnLabel {
+    position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
+    font-size:9px; letter-spacing:.5px; text-transform:uppercase; color:var(--gold);
+    white-space:nowrap; opacity:0; transition:opacity .18s ease; pointer-events:none;
+    text-shadow:0 1px 2px #000;
+  }
+  #gameFrame .uiScaleBtn:hover .uiScaleBtnLabel, #gameFrame .uiScaleBtn:focus-visible .uiScaleBtnLabel { opacity:1; }
+  @media (max-width:600px) {
+    .uiScaleBtn { width:26px; height:26px; font-size:14px; }
+    .uiScaleBtnLabel { font-size:8px; }
+  }
   .cardHostBody, .card.cardNested { min-width:0; }

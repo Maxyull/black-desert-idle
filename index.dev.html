@@ -569,6 +569,18 @@
 
   <div id="gameFrame">
     <canvas id="cv" width="1240" height="440"></canvas>
+    <!-- boutons +/- taille UI/jeu (2026-07-13, mockup validé) : quasi invisibles au repos, pleine
+         opacité + petit libellé au survol -- voir applyUiScale()/setUiScaleLevel() (game-supabase.js)
+         et .uiScaleBtn (styles.css). Insets 14px gauche/droite = même convention que #lootTicker/
+         #hpPotWrap sur ce même cadre ; centrés verticalement (#gameFrame est position:relative). -->
+    <button id="btnUiScaleDown" class="uiScaleBtn" title="Réduire" data-i18n-title="uiScaleDown">
+      <span class="uiScaleBtnIcon">−</span>
+      <span class="uiScaleBtnLabel" data-i18n="uiScaleDown">Réduire</span>
+    </button>
+    <button id="btnUiScaleUp" class="uiScaleBtn" title="Agrandir" data-i18n-title="uiScaleUp">
+      <span class="uiScaleBtnIcon">+</span>
+      <span class="uiScaleBtnLabel" data-i18n="uiScaleUp">Agrandir</span>
+    </button>
     <canvas id="zoneMobIcon" width="34" height="34"></canvas>
     <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Camp des Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span><br><span id="ztCompendium"></span></div>
     <div id="aiState">IA : <span id="stateName">SearchPack</span> · <span id="aiSkill">—</span></div>
