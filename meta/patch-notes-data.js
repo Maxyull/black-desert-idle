@@ -16,6 +16,11 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V443', d:'13/07/2026 21:15', name:{fr:'Correctif Mini Boss : boutons illisibles (carte Craft, chips de combat, chat)', en:'Mini Boss fix: unreadable buttons (Craft card, fight chips, chat)'}, fr:[
+      {t:'fix', sub:'interface', tx:'Dans l\'onglet Mini Boss, la carte "Craft à Velia", les chips de nombre de combats (x1/x1.1/x1.2/x1.3/x2), le bouton "MAX", le bouton d\'envoi du chat et le bouton "Rejoindre" de l\'annuaire Groupes s\'affichaient sans aucun style (texte brut empilé mot par mot, bouton illisible) — une règle générique `button{width:100%}` du thème écrasait leur largeur puisqu\'ils n\'avaient pas de `width` explicite pour la contrer. Corrigé sur les 5 boutons concernés.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'In the Mini Boss tab, the "Craft at Velia" card, the fight-count chips (x1/x1.1/x1.2/x1.3/x2), the "MAX" button, the chat send button, and the "Join" button in the Groups directory rendered completely unstyled (raw text stacked one word per line, unreadable button) — a generic theme rule `button{width:100%}` overrode their width since they had no explicit `width` to counter it. Fixed on all 5 affected buttons.'},
+    ] },
   { v:'V442', d:'13/07/2026 19:30', name:{fr:'Nouvel onglet Mini Boss : Livre interdit → Parchemin, groupe jusqu\'à 5, gear%', en:'New Mini Boss tab: Forbidden Book → Scroll, group up to 5, gear%'}, fr:[
       {t:'new', sub:'combat', tx:'Nouvel onglet "Mini Boss" dans le header, à côté de Zone/Boss/Compagnon/PvP : un boss invocable en consommant un Parchemin, seul ou en groupe (jusqu\'à 5 joueurs).'},
       {t:'new', sub:'craft', tx:'Nouveau matériau "Livre interdit" (drop 0,80% dans toutes les zones, comme la Pierre de Cron), vendable au marché. 5 Livres interdits se combinent à Velia en 1 Parchemin de Mini Boss (non échangeable).'},
