@@ -154,5 +154,10 @@
   "progression.treasure_craft.panel_title": "🔧 Combiner",
   "progression.treasure_craft.secret_box_label": "Coffret secret",
   "progression.treasure_craft.secret_combo_hint": "1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon → silver (Heidel/Calpheon pas encore débloqués)",
-  "progression.treasure_craft.upcoming_tier_hint": "Bientôt disponible — palier {{tier}} pas encore ouvert"
+  "progression.treasure_craft.upcoming_tier_hint": "Bientôt disponible — palier {{tier}} pas encore ouvert",
+  "progression.treasure_craft.conclave_seal_label": "Sceau du Conclave des Marchands",
+  "progression.treasure_craft.conclave_seal_hint": "Assemble les 5 Sceaux de Guilde (un par région) — Heidel/Calpheon/Valencia/Edana pas encore débloqués, seul le Sceau du Port Ancestral (Velia) est obtenable aujourd'hui",
+  "progression.treasure_craft.conclave_seal_active_label": "Sceau du Conclave assemblé ✅",
+  "progression.treasure_craft.conclave_seal_active_hint": "Taxe de vente -5%, frais de mise en vente -3%, gain net +8%, passif régional actif — voir le panneau Marché",
+  "progression.treasure_craft.conclave_seal_assembled": "Sceau du Conclave des Marchands assemblé !"
 }

@@ -717,6 +717,9 @@ const I18N_RESOURCES = {
       "market.cancel_btn": "Annuler",
       "market.choose_tier_label": "Choisir le niv. d'optimisation",
       "market.closed_for_maintenance": "🏛️ Le Marché est actuellement fermé pour maintenance. Réessaie plus tard.",
+      "market.conclave_seal.avg_price_label": "📜 Prix moyen (10 dernières ventes) : {{price}} 🪙",
+      "market.conclave_seal.avg_price_loading": "📜 Prix moyen…",
+      "market.conclave_seal.avg_price_none": "📜 Prix moyen : aucune vente récente",
       "market.col_orders": "Commandes",
       "market.col_price": "Prix",
       "market.col_stock": "En stock",
@@ -923,7 +926,12 @@ const I18N_RESOURCES = {
       "progression.treasure_craft.panel_title": "🔧 Combiner",
       "progression.treasure_craft.secret_box_label": "Coffret secret",
       "progression.treasure_craft.secret_combo_hint": "1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon → silver (Heidel/Calpheon pas encore débloqués)",
-      "progression.treasure_craft.upcoming_tier_hint": "Bientôt disponible — palier {{tier}} pas encore ouvert"
+      "progression.treasure_craft.upcoming_tier_hint": "Bientôt disponible — palier {{tier}} pas encore ouvert",
+      "progression.treasure_craft.conclave_seal_label": "Sceau du Conclave des Marchands",
+      "progression.treasure_craft.conclave_seal_hint": "Assemble les 5 Sceaux de Guilde (un par région) — Heidel/Calpheon/Valencia/Edana pas encore débloqués, seul le Sceau du Port Ancestral (Velia) est obtenable aujourd'hui",
+      "progression.treasure_craft.conclave_seal_active_label": "Sceau du Conclave assemblé ✅",
+      "progression.treasure_craft.conclave_seal_active_hint": "Taxe de vente -5%, frais de mise en vente -3%, gain net +8%, passif régional actif — voir le panneau Marché",
+      "progression.treasure_craft.conclave_seal_assembled": "Sceau du Conclave des Marchands assemblé !"
     },
     "social": {
       "social.chat_day_today": "Aujourd'hui",
@@ -1658,6 +1666,9 @@ const I18N_RESOURCES = {
       "market.cancel_btn": "Cancel",
       "market.choose_tier_label": "Choose enhancement level",
       "market.closed_for_maintenance": "🏛️ The Market is currently closed for maintenance. Try again later.",
+      "market.conclave_seal.avg_price_label": "📜 Average price (last 10 sales): {{price}} 🪙",
+      "market.conclave_seal.avg_price_loading": "📜 Average price…",
+      "market.conclave_seal.avg_price_none": "📜 Average price: no recent sales",
       "market.col_orders": "Orders",
       "market.col_price": "Price",
       "market.col_stock": "In stock",
@@ -1864,7 +1875,12 @@ const I18N_RESOURCES = {
       "progression.treasure_craft.panel_title": "🔧 Combine",
       "progression.treasure_craft.secret_box_label": "Secret box",
       "progression.treasure_craft.secret_combo_hint": "1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → silver (Heidel/Calpheon not unlocked yet)",
-      "progression.treasure_craft.upcoming_tier_hint": "Coming soon — {{tier}} tier not yet open"
+      "progression.treasure_craft.upcoming_tier_hint": "Coming soon — {{tier}} tier not yet open",
+      "progression.treasure_craft.conclave_seal_label": "Merchants' Conclave Seal",
+      "progression.treasure_craft.conclave_seal_hint": "Assemble the 5 Guild Seals (one per region) — Heidel/Calpheon/Valencia/Edana not unlocked yet, only the Ancestral Harbor Seal (Velia) is obtainable today",
+      "progression.treasure_craft.conclave_seal_active_label": "Conclave Seal assembled ✅",
+      "progression.treasure_craft.conclave_seal_active_hint": "Sell tax -5%, listing fee -3%, net gain +8%, regional passive active — see the Market panel",
+      "progression.treasure_craft.conclave_seal_assembled": "Merchants' Conclave Seal assembled!"
     },
     "social": {
       "social.chat_day_today": "Today",
@@ -2407,6 +2423,23 @@ const ZONE_TIERS = [
   { id:'end3',  icon:'🔴', label:{fr:'Edana',en:'Edana'},       locked:true },
 ];
 
+const CONCLAVE_SEAL_FRAGMENTS = [
+  { tierId:'early', key:'conclave_seal_velia',    name:'Sceau du Port Ancestral',      icon:'📜', color:'#c8a96e' },
+  { tierId:'mid',   key:'conclave_seal_heidel',   name:'Sceau du Chevalier de la Plaine', icon:'📜', color:'#6ea3c9' },
+  { tierId:'end',   key:'conclave_seal_calpheon', name:'Sceau de la Cour Républicaine', icon:'📜', color:'#e0935a' },
+  { tierId:'end2',  key:'conclave_seal_valencia', name:'Sceau du Désert Ardent',        icon:'📜', color:'#d47a4a' },
+  { tierId:'end3',  key:'conclave_seal_edana',    name:'Sceau de l\'Œil d\'Ynix',        icon:'📜', color:'#c0503c' }, 
+];
+const CONCLAVE_SEAL_LORE = {
+  fr: 'Cinq sceaux, cinq cités, cinq serments. Le Conclave des Marchands ne se réunit qu\'une fois par génération — et celui qui porte leurs cinq sceaux réunis est reconnu par chaque guilde du continent. Les douaniers s\'inclinent. Les taxes disparaissent. L\'argent coule.',
+  en: 'Five seals, five cities, five oaths. The Merchants\' Conclave gathers only once a generation — and whoever bears all five seals united is recognized by every guild on the continent. Customs officers bow. Taxes vanish. Silver flows.',
+};
+
+function conclaveSealFragmentUnlocked(tierId) {
+  const t = ZONE_TIERS.find(z => z.id === tierId);
+  return !!t && !t.locked;
+}
+
 // ==== src/combat/potions-data.js ====
 const POTIONS = {
   small:    { name:{fr:'Petite potion de vie',  en:'Small HP Potion'},  icon:'🧪', cost:70,  heal:0.20, cd:2.4 },
@@ -2532,6 +2565,10 @@ const S = {
   
   bossPity: {}, bossLastKillWeek: {},
   penMastery: {}, 
+  
+  hasConclaveMarchandsSeal: false,
+  
+  conclaveSealRegions: [],
   enhPeakByName: {}, 
   lootTableVersion: 'v2', 
   costPA: 60, costDP: 55, costCast: 90, costHP: 70, costLoot: 110,
@@ -4403,7 +4440,7 @@ function referenceGearVal() {
   return Math.round((ap*2 + dp + hp*0.5) * GEAR_SELL_MULT);
 }
 
-const TREASURE_STACK_CAP = { treasure_bout_velia:100, treasure_velia:1 };
+const TREASURE_STACK_CAP = { treasure_bout_velia:100, treasure_velia:1, conclave_seal_velia:1 };
 
 function enforceTreasureStackCap(slot) {
   if (!slot || slot.kind !== 'treasure') return;
@@ -4460,6 +4497,27 @@ function craftSecretCombo() {
   return true;
 }
 
+function conclaveSealFragmentsOwnedTierIds() {
+  return CONCLAVE_SEAL_FRAGMENTS.filter(f => invSlotByKey(f.key) !== -1).map(f => f.tierId);
+}
+
+function conclaveSealAssembleReady() {
+  return CONCLAVE_SEAL_FRAGMENTS.every(f => invSlotByKey(f.key) !== -1);
+}
+
+function craftConclaveSeal() {
+  if (S.hasConclaveMarchandsSeal) return false; 
+  if (!conclaveSealAssembleReady()) return false;
+  const regions = conclaveSealFragmentsOwnedTierIds();
+  CONCLAVE_SEAL_FRAGMENTS.forEach(f => { const i = invSlotByKey(f.key); if (i !== -1) invRemoveAt(i, 1); });
+  S.hasConclaveMarchandsSeal = true;
+  S.conclaveSealRegions = regions;
+  floatTxt(P.x,P.y,90,'📜 '+i18next.t('progression:progression.treasure_craft.conclave_seal_assembled'),{gold:true});
+  logToDiscord('📜 Sceau du Conclave', `**${myPseudo||'Joueur'}** assemble le Sceau du Conclave des Marchands (${regions.length}/5 régions)`, 0xc8a96e);
+  renderInventory();
+  return true;
+}
+
 function renderTreasureCraftPanel() {
   
   const el = $('treasureCraftPanel'); if (!el) return;
@@ -4479,13 +4537,32 @@ function renderTreasureCraftPanel() {
     return `<button class="craftRecipeBtn" disabled title="${i18next.t('progression:progression.treasure_craft.upcoming_tier_hint', { tier: tierLabel })}">` +
       `🔒 🧩 0/100 → ${card.icon} ${escapeHtml(tr(card.name))}</button>`;
   }).join('');
+  
+  const sealRow = (() => {
+    if (S.hasConclaveMarchandsSeal) {
+      return `<button class="craftRecipeBtn ready" disabled title="${i18next.t('progression:progression.treasure_craft.conclave_seal_active_hint')}">` +
+        `📜 ${i18next.t('progression:progression.treasure_craft.conclave_seal_active_label')}</button>`;
+    }
+    const owned = conclaveSealFragmentsOwnedTierIds();
+    const icons = CONCLAVE_SEAL_FRAGMENTS.map(f => {
+      const locked = !conclaveSealFragmentUnlocked(f.tierId);
+      const have = owned.includes(f.tierId);
+      return locked ? '🔒' : (have ? '📜' : '▫️');
+    }).join('');
+    const ready = conclaveSealAssembleReady();
+    return `<button class="craftRecipeBtn${ready?' ready':''}" data-kind="conclaveSeal" ${ready?'':'disabled'} ` +
+      `title="${i18next.t('progression:progression.treasure_craft.conclave_seal_hint')}">` +
+      `${icons} ${owned.length}/5 → 📜 ${i18next.t('progression:progression.treasure_craft.conclave_seal_label')}</button>`;
+  })();
   el.innerHTML = `<div class="craftPanelTitle">${i18next.t('progression:progression.treasure_craft.panel_title')}</div>` +
-    `<div class="craftRecipes">${pieceRows}${secretRow}${upcomingRows}</div>`;
+    `<div class="craftRecipes">${pieceRows}${secretRow}${sealRow}${upcomingRows}</div>`;
   el.querySelectorAll('.craftRecipeBtn[data-kind="piece"]').forEach(btn => {
     btn.onclick = () => { const r = TREASURE_PIECE_RECIPES.find(x => x.needKey === btn.dataset.key); if (r) craftTreasurePiece(r); renderTreasureCraftPanel(); };
   });
   const secretBtn = el.querySelector('.craftRecipeBtn[data-kind="secret"]');
   if (secretBtn) secretBtn.onclick = () => { craftSecretCombo(); renderTreasureCraftPanel(); };
+  const sealBtn = el.querySelector('.craftRecipeBtn[data-kind="conclaveSeal"]');
+  if (sealBtn) sealBtn.onclick = () => { craftConclaveSeal(); renderTreasureCraftPanel(); };
 }
 
 // ==== src/progression/notifications-quests.js ====
@@ -5834,6 +5911,10 @@ function rollDrops(wp, alpha, lm) {
     
     ...VELIA_TREASURE.map(t => ({ name:t.name, val:referenceGearVal()*(t.key==='treasure_bout_velia'?10:10000), ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05,
       pickupQty: t.key==='treasure_bout_velia' ? 1+Math.floor(Math.random()*3) : 1 })),
+    
+    ...CONCLAVE_SEAL_FRAGMENTS.filter(f => conclaveSealFragmentUnlocked(f.tierId)).map(f => ({
+      name:f.name, val:referenceGearVal()*50, ch:.00004, kind:'treasure', color:f.color, key:f.key, icon:f.icon, stackable:false, weight:0.05, pickupQty:1,
+    })),
     
     { name:CRON_STONE.name, val:0, ch:CRON_STONE.ch, kind:'material', color:CRON_STONE.color, key:CRON_STONE.key,
       icon:CRON_STONE.icon, stackable:true, weight:0.1, pickupQty: 1+Math.floor(Math.random()*3) },
@@ -14656,6 +14737,8 @@ const WIKI_SECTIONS = [
       <p>Chaque zone garantit une seule pièce d'armure précise (casque/plastron/gants sur les 3 premières zones du palier, bottes sur la 4e) ; côté arme, 3 des 4 zones du palier garantissent chacune un type différent (arme principale/secondaire/éveil, jamais deux fois le même), seule la 2<sup>e</sup> zone du palier n'a aucune arme garantie. Clique l'icône 👁 d'une zone pour voir exactement laquelle.</p>
       <h3>Trésor de Velia</h3>
       <p>Toutes les zones de Velia peuvent aussi looter des morceaux du <b>Trésor de Velia</b> — 2 objets collectibles très rares (0,17% et 0,0005% par kill), rangés dans leur propre onglet d'inventaire 🗺️. 100 "Bout du trésor de Velia" se combinent (onglet Assemblage) en 1 "Trésor de Velia" complet, revendable à très haute valeur. Une recette secrète existe aussi (1 Trésor de Velia + 1 de Heidel + 1 de Calpheon → coffret bonus), mais reste hors de portée tant que Heidel/Calpheon ne sont pas débloqués.</p>
+      <h3>Sceau du Conclave des Marchands</h3>
+      <p>Un 5<sup>e</sup> trésor légendaire, distinct du Trésor de Velia : 5 "Sceaux de Guilde", un par région (Velia/Heidel/Calpheon/Valencia/Edana), à assembler (onglet Assemblage) en un unique <b>Sceau du Conclave des Marchands</b> — objet unique par compte, non revendable. Seul le Sceau du Port Ancestral (Velia) est obtenable aujourd'hui, en drop très rare dans n'importe quelle zone de Velia ; les 4 autres restent hors de portée tant que leur région n'est pas débloquée. Une fois assemblé (donc seulement quand les 5 régions seront sorties) : -5% de taxe de vente, -3% de frais de mise en vente, +8% de gain net à la vente, +1 emplacement d'enchère par région possédée (jusqu'à +5), un passif "Réseau Continental" (+2% de vente par région dont le Sceau de Guilde a contribué à l'assemblage, cumulable jusqu'à +10%) et un <b>Aperçu du prix moyen</b> (moyenne des 10 dernières ventes réelles) affiché dans le panneau Marché pour chaque objet consulté.</p>
       <h3>Boss mondiaux partagés</h3>
       <p>Le <b>Kzarka</b> du planning horaire (12h45/19h45/23h45 tous les jours, 15h45 le week-end) a des <b>PV réellement partagés entre tous les joueurs</b>, exactement comme un boss lancé par l'admin : tout le monde tape le même pool de PV et se voit dans l'arène. Le <b>Vell</b>, boss hebdomadaire bien plus rare et plus coriace (jeudi 12h00 et dimanche 16h45 — horaires in-game, soit -15 min par rapport aux horaires réels garmoth.com de 12h15/17h00), fonctionne sur le même principe.</p>
       <h3>Où farmer un socle vide ?</h3>
@@ -14680,6 +14763,8 @@ const WIKI_SECTIONS = [
       <p>Every zone guarantees exactly one specific armor piece (helmet/armor/gloves on the tier's first 3 zones, boots on the 4th); for weapons, 3 of the tier's 4 zones each guarantee a different type (main/secondary/awakening, never the same type twice) — only the tier's 2<sup>nd</sup> zone has no guaranteed weapon. Click a zone's 👁 icon to see exactly which one.</p>
       <h3>Velia Treasure</h3>
       <p>All Velia zones can also drop pieces of the <b>Velia Treasure</b> — 2 very rare collectibles (0.17% and 0.0005% per kill), stored in their own 🗺️ inventory tab. 100 "Velia Treasure Piece" combine (Assembly tab) into 1 complete "Velia Treasure", sellable for a very high value. A secret recipe also exists (1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → bonus chest), but stays out of reach until Heidel/Calpheon are unlocked.</p>
+      <h3>Merchants' Conclave Seal</h3>
+      <p>A 5th legendary treasure, separate from the Velia Treasure: 5 "Guild Seals", one per region (Velia/Heidel/Calpheon/Valencia/Edana), assembled (Assembly tab) into a single <b>Merchants' Conclave Seal</b> — an account-unique item, not resellable. Only the Ancestral Harbor Seal (Velia) is obtainable today, as a very rare drop in any Velia zone; the other 4 stay out of reach until their region is unlocked. Once assembled (so only once all 5 regions have shipped): -5% sell tax, -3% listing fee, +8% net sell gain, +1 market slot per region owned (up to +5), a "Continental Network" passive (+2% on sales per region whose Guild Seal contributed to the assembly, stacking up to +10%), and an <b>Average price preview</b> (last 10 real sales) shown in the Market panel for every item viewed.</p>
       <h3>Shared world bosses</h3>
       <p>The scheduled <b>Kzarka</b> (12:45pm/7:45pm/11:45pm daily, 3:45pm on weekends) has <b>truly shared HP across all players</b>, exactly like an admin-spawned boss: everyone hits the same HP pool and is visible in the arena. The <b>Vell</b>, a much rarer and tougher weekly boss (Thursday 12:00pm and Sunday 4:45pm in-game — 15 minutes earlier than the real garmoth.com schedule of 12:15pm/5:00pm), works the same way.</p>
       <h3>Where to farm an empty slot?</h3>
@@ -18084,6 +18169,39 @@ const MARKET_MATERIALS = [
 
 const MARKET_SELL_TAX_RATE = 0.35;
 
+const CONCLAVE_SEAL_TAX_REDUCTION = 0.05;     
+const CONCLAVE_SEAL_LISTING_FEE_REDUCTION = 0.03; 
+const CONCLAVE_SEAL_SELL_GAIN_BONUS = 0.08;   
+const CONCLAVE_SEAL_REGIONAL_BONUS_PCT = 0.02; 
+
+function conclaveSealActive() { return !!(typeof S !== 'undefined' && S.hasConclaveMarchandsSeal); }
+
+function conclaveSealEffectiveSellKeepFraction() {
+  const base = 1 - MARKET_SELL_TAX_RATE;
+  if (!conclaveSealActive()) return base;
+  const reducedTax = base + CONCLAVE_SEAL_TAX_REDUCTION + CONCLAVE_SEAL_LISTING_FEE_REDUCTION;
+  return reducedTax * (1 + CONCLAVE_SEAL_SELL_GAIN_BONUS);
+}
+
+function conclaveSealRegionalBonusPct(itemOriginTierId) {
+  if (!conclaveSealActive() || !S.conclaveSealRegions) return 0;
+  return S.conclaveSealRegions.includes(itemOriginTierId) ? CONCLAVE_SEAL_REGIONAL_BONUS_PCT : 0;
+}
+
+function itemOriginRegionTierId(zi) { return (typeof ZONES !== 'undefined' && ZONES[zi] && ZONES[zi].originTierId) || 'early'; }
+
+function conclaveSealSlotBonus() {
+  if (conclaveSealActive()) return (S.conclaveSealRegions || []).length;
+  return (typeof CONCLAVE_SEAL_FRAGMENTS !== 'undefined') ? CONCLAVE_SEAL_FRAGMENTS.filter(f => typeof invSlotByKey === 'function' && invSlotByKey(f.key) !== -1).length : 0;
+}
+
+async function fetchConclaveSealAvgPrice(itemKey) {
+  if (!conclaveSealActive() || !sb) return null;
+  const { data, error } = await sb.from('market_trades').select('price').eq('item_key', itemKey).order('created_at', { ascending:false }).limit(10);
+  if (error || !data || !data.length) return null;
+  return Math.round(data.reduce((n,r) => n + Number(r.price), 0) / data.length);
+}
+
 async function refreshCommonMarket() {
   applyMarketStaticI18n();
   updateCmWallet();
@@ -18384,10 +18502,21 @@ function renderCmDetailPanel(g) {
       <input id="cmSellOfferPrice" type="number" placeholder="${l ? Math.round(l.price*1.05) : 550000}" ${owned>0?'':'disabled'}>
       <button id="cmSellOfferSubmitBtn" ${owned>0?'':'disabled'}>${i18next.t('market:market.offer_sell_submit_btn')}</button>
     </div>
+    ${conclaveSealActive() ? `<div class="cmDetailSub cmConclaveAvgPrice" id="cmConclaveAvgPrice">${i18next.t('market:market.conclave_seal.avg_price_loading')}</div>` : ''}
     <div id="cmBuyMsg"></div>`;
 
   if (l) panel.querySelector('.btnBuyListing').onclick = () => openBuyModal(g);
   wireCmOfferForms(panel, g, kind, enhLv, owned);
+  
+  if (conclaveSealActive()) {
+    fetchConclaveSealAvgPrice(cmItemKey(kind, g.name, enhLv)).then(avg => {
+      const el2 = panel.querySelector('#cmConclaveAvgPrice');
+      if (!el2) return; 
+      el2.textContent = avg != null
+        ? i18next.t('market:market.conclave_seal.avg_price_label', { price: fmt(avg) })
+        : i18next.t('market:market.conclave_seal.avg_price_none');
+    });
+  }
 }
 
 function wireCmOfferForms(panel, g, kind, enhLv, owned) {

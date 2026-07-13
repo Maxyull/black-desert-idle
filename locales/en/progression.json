@@ -154,5 +154,10 @@
   "progression.treasure_craft.panel_title": "🔧 Combine",
   "progression.treasure_craft.secret_box_label": "Secret box",
   "progression.treasure_craft.secret_combo_hint": "1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → silver (Heidel/Calpheon not unlocked yet)",
-  "progression.treasure_craft.upcoming_tier_hint": "Coming soon — {{tier}} tier not yet open"
+  "progression.treasure_craft.upcoming_tier_hint": "Coming soon — {{tier}} tier not yet open",
+  "progression.treasure_craft.conclave_seal_label": "Merchants' Conclave Seal",
+  "progression.treasure_craft.conclave_seal_hint": "Assemble the 5 Guild Seals (one per region) — Heidel/Calpheon/Valencia/Edana not unlocked yet, only the Ancestral Harbor Seal (Velia) is obtainable today",
+  "progression.treasure_craft.conclave_seal_active_label": "Conclave Seal assembled ✅",
+  "progression.treasure_craft.conclave_seal_active_hint": "Sell tax -5%, listing fee -3%, net gain +8%, regional passive active — see the Market panel",
+  "progression.treasure_craft.conclave_seal_assembled": "Merchants' Conclave Seal assembled!"
 }
