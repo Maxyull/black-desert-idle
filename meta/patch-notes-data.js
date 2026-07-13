@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V415', d:'24/07/2026 02:00', name:{fr:'Soldat Helm (Poste Helm) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Helm Soldier (Helm Outpost): new dedicated silhouette, no longer shows a wolf'}, fr:[
+      {t:'fix', sub:'interface', tx:'Poste Helm (zone 7, juste après la Mine de Fer Abandonnée) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé.'},
+      {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour le Soldat Helm : soldat trapu en plaques d\'armure superposées façon coquille, casque en dôme fermé à crête hérissée (aucun visage visible, seulement une fente d\'oeil sombre), ceinture large à boucle en losange, jupe en lambeaux et bottes plaquées.'},
+      {t:'new', sub:'interface', tx:'Le boss de pack de cette zone ("Golem") a une silhouette radicalement différente de tous les autres monstres du jeu : une masse ovoïde flottante faite de plaques radiales bronze/pierre gravées de runes, sans bras/jambes/tête visibles, avec une bande incandescente à l\'équateur qui s\'intensifie pendant sa charge.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'Helm Outpost (zone 7, right after the Abandoned Iron Mine) incorrectly showed a wolf instead of its own monster — this zone never had a dedicated silhouette and fell back to the generic wolf one (zone 1). Fixed.'},
+      {t:'new', sub:'interface', tx:'New original silhouette for the Helm Soldier: a stocky soldier in overlapping shell-like armor plates, a closed domed helmet with a spiked crest (no visible face, just a dark eye-slit), a wide belt with a diamond buckle, a tattered cloth skirt and plated boots.'},
+      {t:'new', sub:'interface', tx:'This zone\'s pack boss ("Golem") has a silhouette radically different from every other monster in the game: a floating ovoid mass of radial bronze/stone plates engraved with runes, with no visible arms/legs/head, and a glowing equatorial band that intensifies during its charge.'},
+    ] },
   { v:'V414', d:'24/07/2026 01:00', name:{fr:'Correctif : Gearscore incohérent au classement pour un stuff identique', en:'Fix: inconsistent Gearscore on the leaderboard for identical gear'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Le Gearscore affiché au classement pouvait différer entre 2 joueurs ayant pourtant un stuff strictement identique aujourd\'hui : il était enregistré comme un record séparé de PA/PD, capturé à un instant différent de leur propre progression. Il est désormais toujours calculé comme la moyenne des records PA/PD affichés juste à côté — recalculé rétroactivement pour tous au prochain chargement.'},
     ], en:[

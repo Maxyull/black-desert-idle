@@ -11254,6 +11254,123 @@ function drawMineurIso(wx,wy,w,t) {
   ctx.restore();
 }
 
+function drawHelmIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,(w.alpha?15:11)*w.scale,(w.alpha?6:4.5),0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const tone = w.tone;
+  if (w.alpha) {
+    
+    const bob = Math.sin(t*2+w.phase)*1.6; 
+    if (w.lunge > .3) { ctx.strokeStyle='rgba(232,160,60,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(0,-18+bob,19,15,0,0,7); ctx.stroke(); }
+    ctx.translate(0,bob);
+    
+    ctx.fillStyle = tone;
+    ctx.beginPath(); ctx.ellipse(0,-18,15,13,0,0,7); ctx.fill();
+    
+    for (let i=0;i<8;i++) {
+      const ang = (i/8)*Math.PI*2 + 0.2;
+      ctx.save(); ctx.translate(0,-18); ctx.rotate(ang);
+      ctx.fillStyle = i%2===0 ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.09)';
+      ctx.beginPath();
+      ctx.moveTo(0,-3);
+      ctx.quadraticCurveTo(5,-8, 3,-15);
+      ctx.quadraticCurveTo(0,-18.5, -3,-15);
+      ctx.quadraticCurveTo(-5,-8, 0,-3);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.7; ctx.stroke();
+      
+      ctx.strokeStyle='rgba(255,220,160,.4)'; ctx.lineWidth=.6;
+      ctx.beginPath(); ctx.moveTo(-1.3,-10); ctx.lineTo(1.1,-10.7); ctx.moveTo(-0.8,-13.2); ctx.lineTo(0.9,-12.8); ctx.stroke();
+      ctx.restore();
+    }
+    
+    const glow = w.lunge>.3 ? '#ffb347' : '#c8791e';
+    if (w.lunge>.3) { ctx.strokeStyle='rgba(255,170,60,.35)'; ctx.lineWidth=5;
+      ctx.beginPath(); ctx.ellipse(0,-18,15.4,4.4,0,0,7); ctx.stroke(); }
+    ctx.strokeStyle = glow; ctx.lineWidth = w.lunge>.3?2.6:1.7;
+    ctx.beginPath(); ctx.ellipse(0,-18,15.4,4.4,0,0,7); ctx.stroke();
+    
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(0,-18,15,13,0,0,7); ctx.stroke();
+  } else {
+    
+    const trot = Math.sin(t*5+w.phase)*1.3; 
+    if (w.lunge > .3) { ctx.strokeStyle='rgba(150,120,200,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(0,-15,15,11,0,0,7); ctx.stroke(); }
+    const plate = tone;
+    
+    ctx.strokeStyle='#26222e'; ctx.lineWidth=4.6; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(-5,-8); ctx.lineTo(-6,2+trot*.4);
+    ctx.moveTo(5,-8); ctx.lineTo(6,2-trot*.4);
+    ctx.stroke();
+    
+    ctx.fillStyle='#1c1a22';
+    ctx.beginPath(); ctx.ellipse(-6.2,2.6+trot*.4,2,1.2,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(6.2,2.6-trot*.4,2,1.2,0,0,7); ctx.fill();
+    
+    ctx.fillStyle='#3a3040';
+    ctx.beginPath();
+    ctx.moveTo(-8,-9); ctx.lineTo(-8,-2); ctx.lineTo(-5,-7); ctx.lineTo(-2,-1); ctx.lineTo(0,-7);
+    ctx.lineTo(2,-1); ctx.lineTo(5,-7); ctx.lineTo(8,-2); ctx.lineTo(8,-9);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+    
+    ctx.fillStyle='#4a3a28';
+    ctx.fillRect(-8.4,-10.6,16.8,2.2);
+    ctx.save(); ctx.translate(0,-9.5); ctx.rotate(Math.PI/4);
+    ctx.fillStyle='#c9a55a'; ctx.fillRect(-1.6,-1.6,3.2,3.2);
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.4; ctx.strokeRect(-1.6,-1.6,3.2,3.2);
+    ctx.restore();
+    
+    ctx.fillStyle = plate;
+    ctx.beginPath(); ctx.moveTo(-10,-10); ctx.lineTo(-9,-25); ctx.lineTo(9,-25); ctx.lineTo(10,-10); ctx.closePath(); ctx.fill();
+    
+    ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=.9;
+    ctx.beginPath();
+    ctx.moveTo(-9,-19); ctx.lineTo(9,-19);
+    ctx.moveTo(-9,-15); ctx.lineTo(9,-15);
+    ctx.moveTo(-9,-22); ctx.lineTo(9,-22);
+    ctx.stroke();
+    
+    [-9,9].forEach(sx => {
+      const dir = sx<0?-1:1;
+      ctx.fillStyle = plate;
+      ctx.beginPath(); ctx.ellipse(sx,-24,4.6,3.6,0,0,7); ctx.fill();
+      ctx.fillStyle='rgba(0,0,0,.16)';
+      ctx.beginPath(); ctx.ellipse(sx+dir*1.6,-22.6,3.6,3,0,0,7); ctx.fill();
+      ctx.fillStyle = plate;
+      ctx.beginPath(); ctx.ellipse(sx+dir*2.8,-21.4,2.6,2.2,0,0,7); ctx.fill();
+    });
+    
+    ctx.strokeStyle='#8a8390'; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(9,-22); ctx.lineTo(14+lungeAmt*.5,-13); ctx.stroke();
+    ctx.strokeStyle='#5a5460'; ctx.lineWidth=2.6;
+    ctx.beginPath(); ctx.moveTo(14+lungeAmt*.5,-13); ctx.lineTo(21+lungeAmt*.7,-16); ctx.stroke();
+    
+    ctx.fillStyle = plate;
+    ctx.beginPath(); ctx.arc(0,-29,5.4,0,7); ctx.fill();
+    ctx.fillStyle='rgba(8,6,10,.92)';
+    ctx.fillRect(-3.6,-29.6,7.2,1.5);
+    
+    ctx.fillStyle='#3a3440';
+    for (let i=-1; i<=1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i*2.6,-33.8); ctx.lineTo(i*2.6-1,-40-Math.abs(i)*1.8); ctx.lineTo(i*2.6+1,-33.8); ctx.closePath(); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 function drawZoneMobIcon() {
   const cv2 = $('zoneMobIcon'); if (!cv2) return;
   const ctx2 = cv2.getContext('2d');
@@ -11328,6 +11445,16 @@ function drawZoneMobIcon() {
     ctx2.fillStyle='#c8503a';
     ctx2.beginPath(); ctx2.arc(-1.8,-2.4,1,0,7); ctx2.fill();
     ctx2.beginPath(); ctx2.arc(1.8,-2.4,1,0,7); ctx2.fill();
+  } else if (zi === 7) { 
+    ctx2.fillStyle=tone;
+    ctx2.beginPath(); ctx2.arc(0,1,7,0,7); ctx2.fill();
+    ctx2.fillStyle='rgba(8,6,10,.92)';
+    ctx2.fillRect(-4.6,0.4,9.2,2);
+    ctx2.fillStyle='#3a3440';
+    for (let i=-1; i<=1; i++) {
+      ctx2.beginPath();
+      ctx2.moveTo(i*3.2,-6); ctx2.lineTo(i*3.2-1.2,-13-Math.abs(i)*2); ctx2.lineTo(i*3.2+1.2,-6); ctx2.closePath(); ctx2.fill();
+    }
   } else { 
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -11344,6 +11471,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 4) return drawShultzIso(wx,wy,w,t);
   if (zoneIdx === 5) return drawSausanIso(wx,wy,w,t);
   if (zoneIdx === 6) return drawMineurIso(wx,wy,w,t);
+  if (zoneIdx === 7) return drawHelmIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
