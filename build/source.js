@@ -2437,7 +2437,7 @@ const CONCLAVE_SEAL_FRAGMENTS = [
   { tierId:'end3',  key:'conclave_seal_edana',    name:'Sceau de l\'Œil d\'Ynix',        icon:'📜', color:'#c0503c' }, 
 ];
 
-const CONCLAVE_SEAL_DROP_CH = .00004;
+const CONCLAVE_SEAL_DROP_CH = .000004; 
 const CONCLAVE_SEAL_LORE = {
   fr: 'Cinq sceaux, cinq cités, cinq serments. Le Conclave des Marchands ne se réunit qu\'une fois par génération — et celui qui porte leurs cinq sceaux réunis est reconnu par chaque guilde du continent. Les douaniers s\'inclinent. Les taxes disparaissent. L\'argent coule.',
   en: 'Five seals, five cities, five oaths. The Merchants\' Conclave gathers only once a generation — and whoever bears all five seals united is recognized by every guild on the continent. Customs officers bow. Taxes vanish. Silver flows.',

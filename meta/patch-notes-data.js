@@ -16,6 +16,11 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V441', d:'13/07/2026 19:15', name:{fr:'Sceau du Conclave : taux de drop divisé par 10', en:'Conclave Seal: drop rate divided by 10'}, fr:[
+      {t:'change', sub:'equipements', tx:'Le taux de drop du Sceau du Conclave des Marchands (Port Ancestral) passe de 0,004% à 0,0004% (rééquilibrage explicite).'},
+    ], en:[
+      {t:'change', sub:'equipements', tx:'The Merchants\' Conclave Seal (Ancestral Harbor) drop rate goes from 0.004% to 0.0004% (explicit rebalance).'},
+    ] },
   { v:'V440', d:'13/07/2026 18:45', name:{fr:'Classement : xp/h corrigé même bug que silver/h et kills/min, remis à 0', en:'Leaderboard: xp/h fixed same bug as silver/h and kills/min, reset to 0'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Même bug que le silver/h (V436) et les kills/min (V439), version xp/h : un gros paquet d\'XP juste après une reconnexion pouvait s\'extrapoler en un taux astronomique et devenir le record xp/h à vie. Corrigé avec la même formule : fenêtre glissante de 3 minutes, taux ignoré s\'il repose sur moins de 90 secondes d\'échantillons réels, et un pic isolé de plus de 30% au-dessus du record actuel n\'est plus jamais accepté comme nouveau record.'},
       {t:'change', sub:'equipements', tx:'Tous les records d\'xp/h existants ont été remis à 0 (possiblement gonflés par ce bug) — ils se rebâtissent naturellement avec la formule corrigée.'},
