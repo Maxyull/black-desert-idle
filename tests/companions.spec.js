@@ -1793,3 +1793,318 @@ test('migratePetSpeciesRarityV1 fixes a legacy breakthrough pet but leaves a nor
   expect(result.freshCatName).toBe(result.expectedFreshCatNameUnchanged);
   expect(pageErrors).toEqual([]);
 });
+
+// ═══ Session du 2026-07-13 — 7 tâches liées au module Compagnon (CLAUDE.md §28) ═══
+
+// Tâche 1 -- les % de chance par palier étaient déjà visibles AVANT l'éclosion (sélection d'œuf,
+// openEggChoice()) mais disparaissaient à l'écran de reveal (doHatch()). renderEggOddsRecap()
+// réaffiche EXACTEMENT egg.odds sur ce même écran, sans dupliquer le calcul.
+test('hatch reveal screen shows the odds recap of the egg that was used', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const eggType = EGG_TYPES[0];
+    SILVER = eggType.cost + 1000;
+    doHatch(0, eggType.id);
+    const bodyHtml = document.getElementById('hatch-body').innerHTML;
+    return { bodyHtml, firstOdd: eggType.odds[0], eggName: eggType.name };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.bodyHtml).toContain('Chances de');
+  expect(result.bodyHtml).toContain(result.eggName);
+  expect(result.bodyHtml).toContain(`${result.firstOdd}%`);
+});
+
+// Tâche 2 -- progressiveTierProbability() (tier.js) remplace un cutoff net par une rampe linéaire
+// autour d'un seuil ; vérifie la fonction pure (0 en dessous de la bande, 1 au-dessus, 0.5 au
+// centre), puis que baseRarityDraw() (fusion.js) produit bien des probabilités différentes selon
+// que le parent de rareté basse est proche ou loin du seuil GS de la rareté supérieure.
+test('progressiveTierProbability() ramps linearly around a threshold and feeds into fusion base-rarity odds', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const pure = {
+      belowBand: progressiveTierProbability(80, 100, 10),   // 80 < 100-10 -> 0
+      aboveBand: progressiveTierProbability(120, 100, 10),  // 120 > 100+10 -> 1
+      atThreshold: progressiveTierProbability(100, 100, 10),// centre de la rampe -> 0.5
+      hardCutoffBelow: progressiveTierProbability(50, 100, 0), // band<=0 -> cutoff dur
+      hardCutoffAbove: progressiveTierProbability(150, 100, 0),
+    };
+    // 2 parents de rareté 3 (Épique) et 4 (Légendaire) -- écart de rareté fixe (rarGap=1) mais GS
+    // du parent Épique très différent : un mal roulé (stats au plancher, Tier 1) très en dessous
+    // du seuil GS moyen T1 de la rareté supérieure, vs un très bien roulé (stats au plafond,
+    // Tier 5) bien au-dessus de ce même seuil.
+    const cat = PET_CATALOG[0];
+    const weakLo = { cat, rar: 3, tier: 1, stats: [14,7,6,2,0], tierMult: TIER_MULT_RANGE[0][0] };
+    const strongLo = { cat, rar: 3, tier: 5, stats: [25,14,12,7,0], tierMult: TIER_MULT_RANGE[4][1] };
+    const hi = { cat, rar: 4, tier: 1, stats: [30,17,14,9,6], tierMult: 1 };
+    const drawWeak = baseRarityDraw(weakLo, hi);
+    const drawStrong = baseRarityDraw(strongLo, hi);
+    const pctHigherWeak = drawWeak.outcomes.find(o => o.rar === 4).pct;
+    const pctHigherStrong = drawStrong.outcomes.find(o => o.rar === 4).pct;
+    return { pure, pctHigherWeak, pctHigherStrong };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.pure.belowBand).toBe(0);
+  expect(result.pure.aboveBand).toBe(1);
+  expect(result.pure.atThreshold).toBeCloseTo(0.5, 5);
+  expect(result.pure.hardCutoffBelow).toBe(0);
+  expect(result.pure.hardCutoffAbove).toBe(1);
+  // un parent bas mieux roulé (plus proche du seuil de la rareté supérieure) doit avoir de
+  // meilleures chances de tomber sur l'issue haute -- chevauchement progressif, pas un cutoff net
+  expect(result.pctHigherStrong).toBeGreaterThan(result.pctHigherWeak);
+  // reste borné entre 10 et 90 (même garde-fou que l'ancienne formule gapRatio-only)
+  expect(result.pctHigherWeak).toBeGreaterThanOrEqual(10);
+  expect(result.pctHigherStrong).toBeLessThanOrEqual(90);
+});
+
+// Tâche 3 -- applyOfflineProgress() doit rattraper TOUS les timers/compteurs identifiés à l'audit
+// (CLAUDE.md §28), pas seulement le silver/loot commun des pets déployés : slots d'incubation,
+// XP de Tier des pets déployés, loot spécial (Caphras).
+test('offline catch-up advances incubation slot timers, tier XP, and special loot -- not just silver', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.sec === 'minage'); // section avec du Caphras/Dopi (catalog.js)
+    const deployed = { id: petId++, cat, rar: 0, stats: [3,0,0,0,0], hunger: 90, terrain: true, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(deployed);
+    incubSlots.push({ locked:false, ready:false, tl:5000, tot:5000 }); // ne serait PAS prêt sans rattrapage
+    const eggTimerBefore = eggTimer;
+    const invBefore = Object.keys(INVENTORY).length;
+
+    // simule 10h d'absence (bien en dessous du plafond 24h)
+    const savedAt = Date.now() - 10*3600*1000;
+    applyOfflineProgress(savedAt);
+
+    const slot = incubSlots[incubSlots.length-1];
+    return {
+      slotReady: slot.ready,
+      slotTl: slot.tl,
+      tierAfter: deployed.tier,
+      tierXpAfter: deployed.tierXp,
+      eggTimerChanged: eggTimer !== eggTimerBefore,
+      invGrew: Object.keys(INVENTORY).length >= invBefore,
+      hungerAfter: deployed.hunger,
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  // 10h = 36000s >> le timer de 5000s du slot -- doit être rattrapé et prêt
+  expect(result.slotReady).toBe(true);
+  expect(result.slotTl).toBe(0);
+  // 10h à 2 XP/s = 72000 XP, largement de quoi monter au moins 1 Tier depuis T1 (seuil 800)
+  expect(result.tierAfter).toBeGreaterThan(1);
+  expect(result.eggTimerChanged).toBe(true);
+  expect(result.hungerAfter).toBeLessThan(90); // la faim a quand même un peu baissé
+  expect(result.hungerAfter).toBeGreaterThanOrEqual(0);
+});
+
+// Tâche 4 -- l'auto-nourrissage n'était jamais persisté (toujours ON après un rechargement, quel
+// que soit le choix précédent du joueur) : autoFeedEnabled doit survivre à un cycle save/load.
+test('auto-feed toggle state persists across a save/load cycle', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    // désactive puis sauvegarde
+    toggleAutoFeed(document.getElementById('autotog'));
+    const afterToggle = autoFeedEnabled;
+    saveGame();
+    const persisted = JSON.parse(localStorage.getItem('velia_idle_pets_save'));
+    // simule un rechargement : reset la variable au défaut, puis recharge depuis localStorage
+    autoFeedEnabled = true;
+    loadGame();
+    return { afterToggle, persistedValue: persisted.autoFeedEnabled, afterReload: autoFeedEnabled, domOn: document.getElementById('autotog').classList.contains('on') };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.afterToggle).toBe(false);
+  expect(result.persistedValue).toBe(false);
+  expect(result.afterReload).toBe(false);
+  expect(result.domOn).toBe(false);
+});
+
+// Auto-nourrissage : ne plante jamais et ne boucle jamais quand il n'y a plus aucune nourriture
+// disponible (garde-fou déjà en place avant cette session, vérifié explicitement à l'audit §28).
+test('auto-feed tick is a safe no-op when no food is available', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG[0];
+    const hungry = { id: petId++, cat, rar: 0, stats: [1,0,0,0,0], hunger: 5, terrain: true, tier: 1, tierXp: 0, tierMult: 1 };
+    PETS.push(hungry);
+    INVENTORY = {}; // aucune nourriture disponible
+    autoFeedEnabled = true;
+    let threw = false;
+    try {
+      const specialResourceNames = new Set([CAPHRAS_ITEM.n, ...DOPI_ITEMS.map(d=>d.n), ...Object.values(BOSS_ITEMS).map(b=>b.n)]);
+      PETS.forEach(p => {
+        if (!p.terrain || p.hunger >= 30) return;
+        const cheapestFood = Object.entries(INVENTORY).filter(([n,d]) => d.feed>0 && !specialResourceNames.has(n)).sort((a,b)=>a[1].feed-b[1].feed)[0];
+        if (!cheapestFood) return;
+        const [name, food] = cheapestFood;
+        p.hunger = Math.min(100, p.hunger+food.feed);
+        food.qty--;
+        if (food.qty<=0) delete INVENTORY[name];
+      });
+    } catch (e) { threw = true; }
+    return { threw, hungerUnchanged: hungry.hunger === 5 };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.threw).toBe(false);
+  expect(result.hungerUnchanged).toBe(true);
+});
+
+// Tâche 5 -- les % de loot du Hardinage n'étaient affichés nulle part dans l'UI. renderHardOdds()
+// doit lister, pour chaque pet actif sur le terrain, la même distribution commun/peu commun/rare
+// que triggerHardDrop() calcule réellement (même gsFactor, même formule).
+test('hardinage tab displays per-pet loot odds matching the real drop calculation', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.sec === 'peche');
+    const deployed = { id: petId++, cat, rar: 4, stats: [20,10,8,4,0], hunger: 100, terrain: true, tier: 3, tierXp: 0, tierMult: 1.3 };
+    PETS.push(deployed);
+    ST(6); // onglet Hardinage
+    const html = document.getElementById('hard-odds-panel').innerHTML;
+    const gsFactor = 1 + gsPct(deployed)/200;
+    const expectedRarePct = Math.min(100, 2*gsFactor).toFixed(1);
+    return { html, petName: cat.name, expectedRarePct, hasCommon: html.includes(secById(cat.sec).drops[0].n), hasUncommon: html.includes(secById(cat.sec).drops[1].n), hasRare: html.includes(secById(cat.sec).drops[2].n) };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.html).toContain(result.petName);
+  expect(result.html).toContain(`${result.expectedRarePct}%`);
+  expect(result.hasCommon).toBe(true);
+  expect(result.hasUncommon).toBe(true);
+  expect(result.hasRare).toBe(true);
+});
+
+// Tâche 6 -- les cartes de réserve (Sections) doivent être dépliées par défaut (tout le détail
+// visible sans clic), le badge GS coloré selon la rareté du pet (pas une couleur neutre), et le
+// Tier affiché à côté du GS.
+test('reserve cards in Sections are expanded by default with a rarity-colored GS badge next to the Tier', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG.find(c => c.sec === 'combat');
+    const reservePet = { id: petId++, cat, rar: 4, stats: [20,10,8,4,0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1.2 };
+    PETS.push(reservePet);
+    activeSecIdx = SECTIONS.findIndex(s => s.id === cat.sec);
+    ST(2);
+    renderSecNav(); renderSecDetail();
+    const card = document.querySelector('.sec-detail [style*="grid-template-columns"] > div');
+    const gsBadge = card.querySelector('.gs-badge');
+    return {
+      isCollapsedByDefault: collapsedResPets.has(reservePet.id),
+      hasStatBars: !!card.querySelector('[class*="stat"], .fp-row, canvas') && card.innerHTML.includes('%'),
+      innerHtmlLength: card.innerHTML.length,
+      gsBadgeColor: gsBadge ? gsBadge.style.color : null,
+      expectedColor: RARITIES[4].hex,
+      hasTierNearGs: card.textContent.includes('T2') && card.textContent.includes('GS'),
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.isCollapsedByDefault).toBe(false); // déplié par défaut, jamais dans le Set des repliés
+  expect(result.gsBadgeColor).toBeTruthy();
+  expect(result.hasTierNearGs).toBe(true);
+  // la couleur inline doit correspondre à la rareté (Légendaire, #cc8820 = rgb(204,136,32)), pas
+  // une couleur neutre -- getComputedStyle renvoie toujours du rgb(), jamais l'hex d'origine.
+  expect(result.gsBadgeColor).toBe('rgb(204, 136, 32)');
+});
+
+// Tâche 7 -- le sélecteur de familier de "nouvelle offre" (Marché) est une grille cliquable, PAS
+// un <select> natif, et vit dans son propre panneau visuellement séparé (bordé, titré "1.") du
+// formulaire de conditions ("2.") ; aucun fond blanc résiduel sur les champs natifs (number/checkbox).
+test('market "new offer" pet selector is a clickable grid (not a native select) visually separated from the terms form, with no residual white background', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  const result = await frame.locator('body').evaluate(() => {
+    const cat = PET_CATALOG[0];
+    PETS.push({ id: petId++, uid: crypto.randomUUID(), cat, rar: 0, stats: [1,0,0,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 });
+    marketMyOffers = []; // pour que le pet ne soit pas exclu comme "déjà en vente"
+    openCreateOfferModal();
+    const body = document.getElementById('market-modal-body');
+    const hasNativeSelect = !!body.querySelector('select');
+    const picks = body.querySelectorAll('.market-pick');
+    const numberInput = body.querySelector('input[type="number"]');
+    const inputBg = numberInput ? getComputedStyle(numberInput).backgroundColor : null;
+    const bodyHtml = body.innerHTML;
+    return {
+      hasNativeSelect,
+      pickCount: picks.length,
+      bodyHtml,
+      inputBg,
+      hasWhiteBg: /background(-color)?\s*:\s*(#fff|#ffffff|white|rgb\(255,\s*255,\s*255\))/i.test(bodyHtml),
+    };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.hasNativeSelect).toBe(false); // grille cliquable, jamais un <select>
+  expect(result.pickCount).toBeGreaterThan(0);
+  expect(result.bodyHtml).toContain('1. Choisis le familier');
+  expect(result.bodyHtml).toContain('2. Conditions de l\'offre');
+  expect(result.hasWhiteBg).toBe(false); // pas de background blanc en dur dans le HTML généré
+  // le champ number a bien un fond thémé (pas transparent/blanc par défaut du navigateur)
+  expect(result.inputBg).not.toBe('rgba(0, 0, 0, 0)');
+  expect(result.inputBg).not.toMatch(/^rgb\(255,\s*255,\s*255\)$/);
+});

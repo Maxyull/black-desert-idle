@@ -1,4 +1,21 @@
 // ═══ FEED ════════════════════════════════════════════════════════
+// Auto-Nourrissage — état persisté (2026-07-13, bug identifié à l'audit explicite du système :
+// le bouton #autotog (companions.html) ne faisait QUE basculer une classe CSS locale au DOM,
+// jamais lue par saveGame()/loadGame() -- un joueur qui désactivait l'auto-nourrissage le
+// retrouvait donc toujours réactivé après un rechargement de page (valeur par défaut de la
+// classe HTML, "tog on"). autoFeedEnabled est maintenant la source de vérité (lue par ticks.js),
+// le bouton ne fait plus que la refléter visuellement.
+let autoFeedEnabled = true;
+/** @param {HTMLElement} btn - bouton #autotog cliqué. Bascule autoFeedEnabled (source de vérité, persistée) et reflète l'état sur le bouton. */
+function toggleAutoFeed(btn){
+  autoFeedEnabled = !autoFeedEnabled;
+  btn.classList.toggle('on', autoFeedEnabled);
+}
+/** Applique l'état persisté (autoFeedEnabled) au bouton #autotog -- appelé une fois au chargement (loadGame(), save.js), avant que le joueur n'interagisse. */
+function syncAutoFeedToggleDom(){
+  const btn = document.getElementById('autotog');
+  if(btn) btn.classList.toggle('on', autoFeedEnabled);
+}
 /** Reconstruit l'onglet Nourrir : liste des pets avec barre de faim, liste de nourriture sélectionnable (exclut Caphras/Dopi/Boss), et ressources spéciales en lecture seule. */
 function renderFeed(){
   const hungry=PETS.filter(p=>p.terrain&&p.hunger<30).length;

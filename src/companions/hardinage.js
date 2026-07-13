@@ -22,6 +22,37 @@ function initHardFieldPets(){
     drawPixelArt(spriteCanvas, p.cat.art, 40, rc(p.rar), p.tier||1);
     return { pet:p, sprite:spriteCanvas, x:Math.random(), y:Math.random(), tx:Math.random(), ty:Math.random(), prog:1 };
   });
+  renderHardOdds();
+}
+
+/**
+ * % de loot par pet actif (2026-07-13, demande explicite : "afficher les % de loot du
+ * hardinage") -- réutilise EXACTEMENT le calcul déjà en place dans triggerHardDrop() (même
+ * gsFactor/mêmes seuils de roll), affiché ici sans jamais dupliquer la logique de tirage. Un pet
+ * bien roulé (GS élevé) a une meilleure chance de tomber sur le drop rare (sec.drops[2]),
+ * légèrement moins sur le peu commun, mécaniquement plus sur le commun en retour.
+ */
+function renderHardOdds(){
+  const el = document.getElementById('hard-odds-panel');
+  if(!el) return;
+  if(!hardFieldPets.length){ el.innerHTML = `<div style="font-size:9px;color:var(--cream3)">Aucun pet actif — déploie-en dans Sections.</div>`; return; }
+  el.innerHTML = hardFieldPets.map(fp=>{
+    const p = fp.pet;
+    const sec = secById(p.cat.sec);
+    if(!sec||!sec.drops) return '';
+    const gsFactor = 1 + gsPct(p)/200; // même formule que triggerHardDrop()
+    const rarePct = Math.min(100, 2*gsFactor);
+    const uncommonPct = Math.min(100-rarePct, 18*gsFactor-rarePct);
+    const commonPct = Math.max(0, 100-rarePct-uncommonPct);
+    return `<div style="font-size:9px;color:var(--cream2)">
+      <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span>${sec.ico}</span><span style="color:var(--cream)">${p.cat.name}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;padding-left:2px">
+        <span title="${sec.drops[0].n}">${sec.drops[0].e} ${commonPct.toFixed(1)}%</span>
+        <span title="${sec.drops[1].n}" style="color:var(--blue2)">${sec.drops[1].e} ${uncommonPct.toFixed(1)}%</span>
+        <span title="${sec.drops[2].n}" style="color:var(--r3)">${sec.drops[2].e} ${rarePct.toFixed(1)}%</span>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 /** Initialise le canvas du champ Hardinage (dimensionné sur son conteneur), les sprites des pets et lance la boucle d'animation. */

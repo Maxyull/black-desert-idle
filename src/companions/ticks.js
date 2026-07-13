@@ -31,7 +31,7 @@ setInterval(()=>{
   // ne jamais apparaître si le slot passait "prêt" pendant que l'onglet était déjà ouvert. Même
   // idiome que p5/p2 plus bas dans ce fichier (re-render seulement si le panel concerné est actif).
   if(document.getElementById('p0')?.classList.contains('active')) renderHatch();
-  if(document.getElementById('autotog')?.classList.contains('on')){
+  if(autoFeedEnabled){
     // bug corrigé (2026-07-11, rapporté explicitement : "Auto nourrissage non fonctionnel") --
     // DEUX défauts cumulés :
     // 1. le filtre `d.feed>0` seul incluait Pierre de Caphras/Dopi (feed:14-45, catalog.js) --

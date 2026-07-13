@@ -104,6 +104,30 @@ function avgGSForRarityAtTier1(rar){
   const t1AvgMult = (TIER_MULT_RANGE[0][0]+TIER_MULT_RANGE[0][1])/2; // multiplicateur moyen attendu au Tier 1
   return Math.round(t*t1AvgMult/maxGS(5,5)*1000);
 }
+// ═══ CHEVAUCHEMENT PROGRESSIF ENTRE PALIERS DE GS (2026-07-13, demande explicite) ═══
+// Avant ce changement, aucun cutoff dur "GS < X -> palier A, GS >= X -> palier B" ne pilotait
+// réellement un tier affiché (le Tier 1-5 d'un pet monte par XP, pas par GS -- voir
+// TIER_XP_NEEDED plus haut) : le seul endroit du code qui décidait un tirage à 2 issues à partir
+// d'un écart de rareté était baseRarityDraw() (fusion.js), avec un facteur basé UNIQUEMENT sur
+// l'écart de rareté brut (rarGap), jamais sur le GS réel des parents. progressiveTierProbability()
+// généralise le principe "chevauchement progressif autour d'un seuil" en fonction pure testable,
+// utilisée par baseRarityDraw() (fusion.js) pour faire dépendre la probabilité de la rareté HAUTE
+// du GS réel du parent le plus faible, en plus de l'écart de rareté déjà pris en compte.
+/**
+ * Rampe linéaire de probabilité autour d'un seuil : 0% en dessous de (threshold-band), 100%
+ * au-dessus de (threshold+band), progression linéaire entre les deux (chevauchement progressif,
+ * remplace un cutoff net "gs<threshold ? bas : haut").
+ * @param {number} gs - valeur mesurée (ex: normGS(), 0-1000).
+ * @param {number} threshold - valeur charnière entre les 2 paliers.
+ * @param {number} band - demi-largeur de la zone de transition (même unité que gs/threshold ;
+ *   ex. threshold*0.10 pour une zone de ±10% du seuil). band<=0 retombe sur un cutoff dur.
+ * @returns {number} probabilité (0-1) de tomber dans le palier SUPÉRIEUR.
+ */
+function progressiveTierProbability(gs, threshold, band){
+  if(band<=0) return gs>=threshold ? 1 : 0;
+  const t = (gs - (threshold-band)) / (band*2);
+  return Math.max(0, Math.min(1, t));
+}
 /** @param {object} pet - familier. @returns {?{beats:boolean, text:string, delta:number}} comparaison de son GS normalisé à la moyenne T1 de la rareté supérieure, null si déjà Ancestral. */
 function comparisonBadge(pet){
   // Compare ce pet à la moyenne T1 de la rareté immédiatement supérieure

@@ -533,6 +533,51 @@ par Supabase le temps de la transaction.
   Marché a de vraies notifications asynchrones -- `updateMarketBadge()` compte les contre-offres en
   attente sur mes offres ouvertes, même info que l'onglet "Mes contrats" mais résumée en un chiffre.
 
+**7 tâches liées (2026-07-13, demande explicite)** :
+- **Rappel des % à l'éclosion** (`hatch.js`) : les probabilités par rareté étaient déjà visibles
+  AVANT le clic (`openEggChoice()`, sélection d'œuf) mais disparaissaient à l'écran de reveal.
+  `renderEggOddsRecap(eggType)` réaffiche `egg.odds` (déjà calculé, jamais dupliqué) sur l'écran de
+  reveal (`doHatch()`) ET le résumé d'éclosion en masse (`showBulkHatchModal()`).
+- **Chevauchement progressif de GS** (`tier.js`/`fusion.js`) : `progressiveTierProbability(gs,
+  threshold, band)` (fonction pure, `tier.js`) remplace un cutoff net par une rampe linéaire de
+  probabilité autour d'un seuil. Appliquée dans `baseRarityDraw()` (`fusion.js`) : en plus de
+  l'écart brut de rareté déjà pris en compte, un parent de rareté basse proche du GS moyen T1 de la
+  rareté supérieure (`avgGSForRarityAtTier1()`) a de meilleures chances de tomber sur l'issue haute
+  -- moyenné avec le facteur d'écart existant pour ne jamais s'écarter trop loin de l'équilibrage en
+  place. Note : le Tier (1-5) d'un pet progresse par XP, pas par GS (`TIER_XP_NEEDED`) -- aucun
+  cutoff dur "GS→Tier" n'existait avant ce changement, donc le chevauchement a été appliqué au seul
+  vrai tirage à 2 issues déjà présent dans le code (rareté de fusion).
+- **Rattrapage hors-ligne étendu à TOUS les timers** (`save.js`) : `applyOfflineProgress()` ne
+  rattrapait avant que le silver et le loot commun des pets déployés. Étendu pour couvrir : les
+  timers de slots d'incubation (`incubSlots[].tl`), le compteur `eggTimer`, l'XP de Tier des pets
+  déployés (simplifiée, sans breakthrough de rareté -- volontairement laissé aléatoire, comme
+  l'item de Boss), et le loot spécial Caphras/Dopi (espérance arrondie, même taux que `ticks.js`).
+  Item de Boss (`BOSS_ITEM_RATE`) volontairement PAS rattrapé (espérance <0.05% sur 24h, le simuler
+  casserait le caractère "rarissime" voulu).
+- **Auto-nourrissage persisté** (`feed.js`/`save.js`) : `#autotog` ne faisait que basculer une
+  classe CSS locale, jamais lue par `saveGame()`/`loadGame()` -- un joueur qui désactivait
+  l'auto-nourrissage le retrouvait toujours réactivé après un rechargement. `autoFeedEnabled`
+  (`feed.js`) est maintenant la source de vérité, persistée et restaurée (`syncAutoFeedToggleDom()`
+  au chargement). Le rattrapage hors-ligne (ci-dessus) simule un plancher de faim (50) quand
+  l'auto-nourrissage est actif plutôt qu'une simple baisse ralentie, pour ne jamais bloquer à tort
+  le rattrapage d'XP de Tier (qui exige faim>10).
+- **% de loot du Hardinage affichés** (`hardinage.js`) : `renderHardOdds()` (nouveau panneau
+  `#hard-odds-panel`, `companions.html`) liste pour chaque pet actif la distribution commun/peu
+  commun/rare, réutilisant EXACTEMENT le `gsFactor` de `triggerHardDrop()` -- aucune 2e logique de
+  tirage.
+- **Cartes de réserve dépliées par défaut + GS coloré par rareté** (`sections.js`/`collection.js`) :
+  `expandedResPets` (opt-in) inversé en `collapsedResPets` (opt-out) -- déplié par défaut, replié
+  seulement sur clic explicite. Badges GS (réserve, terrain, grille Collection normale/compacte)
+  colorés en `RARITIES[p.rar].hex` au lieu de la seule couleur "qualité de roll" (`gsCls`), qui
+  reste utilisée pour le fond/la bordure.
+- **Marché : sélecteur de familier isolé + fond blanc résiduel retiré** (`market.js`/
+  `companions.css`) : `openCreateOfferModal()` distinguait déjà une grille cliquable (jamais de
+  `<select>` natif), mais mêlée au formulaire de conditions -- séparée en 2 panneaux visuels
+  ("1. Choisis le familier" / "2. Conditions de l'offre"). Aucune règle CSS ne stylait les
+  `<input type="number"/"text">` natifs (fond blanc du navigateur par-dessus le thème sombre) --
+  ajout de règles génériques thémées (`companions.css`) + couleur du bouton toggle (`.tog::after`)
+  passée de `#fff` à `var(--cream)`.
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2

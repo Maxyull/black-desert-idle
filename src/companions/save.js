@@ -12,7 +12,7 @@ function saveGame(){
       eggTypesUsed: Array.from(eggTypesUsed),
       completedAchievements: Array.from(completedAchievements),
       pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1, petsRosterCapV1, petsUidV1,
-      petsSpeciesRarityV1,
+      petsSpeciesRarityV1, autoFeedEnabled,
       savedAt: Date.now()
     };
     localStorage.setItem('velia_idle_pets_save', JSON.stringify(state));
@@ -26,18 +26,55 @@ const OFFLINE_CAP_HOURS = 24;
 const OFFLINE_SILVER_PER_HOUR = 60;   // moyenne estimée par pet actif
 const OFFLINE_COMMON_ITEMS_PER_HOUR = 3;
 
-/** @param {?number} savedAt - timestamp de la dernière sauvegarde. Simule (taux plat, pas tick-par-tick) le silver/loot commun gagnés par les pets sur le terrain pendant l'absence, plafonné à OFFLINE_CAP_HOURS, ignoré sous 3 minutes. */
+/**
+ * @param {?number} savedAt - timestamp de la dernière sauvegarde. Simule (taux plat, pas
+ * tick-par-tick) TOUT ce qui aurait avancé pendant l'absence, plafonné à OFFLINE_CAP_HOURS, ignoré
+ * sous 3 minutes.
+ *
+ * Audit explicite (2026-07-13, "vérifier le mode hors ligne pour TOUS les types d'item") de tous
+ * les timers/compteurs de ticks.js -- avant ce correctif, SEULS le silver et le loot commun des
+ * pets déployés étaient rattrapés ; tout le reste retombait silencieusement à "rien ne s'est
+ * passé" pendant l'absence :
+ *   - timers de slots d'incubation (sl.tl) -- un joueur revenant après plusieurs heures trouvait
+ *     ses œufs toujours "en cours" alors qu'ils auraient dû être prêts depuis longtemps.
+ *   - compteur eggTimer (affichage #h-egg) -- même défaut, purement cosmétique mais incohérent.
+ *   - XP de Tier des pets déployés (tierXp/tier) -- un pet resté des heures sur le terrain ne
+ *     montait jamais de Tier pendant l'absence, contrairement au jeu principal.
+ *   - loot spécial (Caphras/Pierres de Dopi) -- seul le loot COMMUN était rattrapé, les ressources
+ *     spéciales (feed.js les exclut déjà de l'auto-nourrissage) ne l'étaient jamais.
+ *   - auto-nourrissage (autoFeedEnabled) -- la faim redescendait pendant l'absence même si
+ *     l'auto-nourrissage était actif, alors qu'en jeu réel il aurait consommé de la nourriture
+ *     pour la maintenir. Item de boss (BOSS_ITEM_RATE, flat 1e-8/tick) volontairement PAS
+ *     rattrapé : l'espérance sur 24h reste <0.05%, le simuler casserait le caractère "rarissime"
+ *     voulu (même esprit que le pity, mais ici on ne veut PAS forcer l'issue).
+ */
 function applyOfflineProgress(savedAt){
   if(!savedAt) return;
   const elapsedMs = Date.now()-savedAt;
   const hours = Math.min(elapsedMs/3600000, OFFLINE_CAP_HOURS);
   if(hours<0.05) return; // moins de 3 minutes d'absence, pas la peine
+  const seconds = hours*3600;
+
+  // ═══ Slots d'incubation + compteur d'œuf gratuit ═══ (indépendant des pets déployés)
+  incubSlots.forEach(sl=>{
+    if(sl.locked||sl.ready||sl.tl<=0) return;
+    sl.tl = Math.max(0, sl.tl-seconds);
+    if(sl.tl<=0) sl.ready=true;
+  });
+  if(typeof eggTimer==='number'){
+    let remaining = seconds;
+    while(remaining>0){
+      if(eggTimer>remaining){ eggTimer-=remaining; remaining=0; }
+      else { remaining-=eggTimer; eggTimer=21600; } // même reset que ticks.js
+    }
+  }
 
   const activePets = PETS.filter(p=>p.terrain);
-  if(!activePets.length) return;
+  if(!activePets.length){ saveGame(); return; }
 
   let totalSilver=0;
   const itemsGained={};
+  const tierUps=[]; // {name, from, to} -- pour le résumé, jamais de toast individuel (pas de spam au retour)
   activePets.forEach(p=>{
     const sec=secById(p.cat.sec); if(!sec||!sec.drops) return;
     totalSilver += Math.round(OFFLINE_SILVER_PER_HOUR*hours);
@@ -47,19 +84,68 @@ function applyOfflineProgress(savedAt){
       addToInventory(commonDrop.n, commonDrop.e, qty, commonDrop.feed);
       itemsGained[commonDrop.n] = (itemsGained[commonDrop.n]||0)+qty;
     }
-    p.hunger = Math.max(0, p.hunger - hours*36); // note: plafonné par le hunger min 0 ; taux volontairement plus doux que le tick live pour ne pas punir une absence
+
+    // Loot spécial (Caphras/Dopi) -- espérance arrondie (même esprit "taux plat" que le loot
+    // commun ci-dessus, pas un tirage tick-par-tick) ; réutilise EXACTEMENT les taux de ticks.js
+    // (CAPHRAS_BASE_RATE/DOPI_ITEMS.baseRate, cadence de 2s) pour ne jamais désynchroniser les 2
+    // calculs.
+    const specialTicks = seconds/2;
+    const tf = zoneTierFactor(p);
+    const caphrasQty = Math.round(CAPHRAS_BASE_RATE*tf*specialTicks);
+    if(caphrasQty>0){
+      addToInventory(CAPHRAS_ITEM.n, CAPHRAS_ITEM.e, caphrasQty, CAPHRAS_ITEM.feed);
+      itemsGained[CAPHRAS_ITEM.n] = (itemsGained[CAPHRAS_ITEM.n]||0)+caphrasQty;
+    }
+    DOPI_ITEMS.forEach(dopi=>{
+      const qtyD = Math.round(dopi.baseRate*tf*specialTicks);
+      if(qtyD>0){
+        addToInventory(dopi.n, dopi.e, qtyD, dopi.feed);
+        itemsGained[dopi.n] = (itemsGained[dopi.n]||0)+qtyD;
+      }
+    });
+
+    // Faim -- l'auto-nourrissage (feed.js) aurait maintenu la faim au-dessus du seuil critique si
+    // de la nourriture était disponible ; sans simuler la consommation exacte (pas d'inventaire
+    // "au fil du temps" fiable hors-ligne), on simule plutôt un plancher (l'auto-nourrissage
+    // intervient avant que la faim tombe trop bas) plutôt qu'une simple baisse ralentie -- sinon
+    // une absence assez longue ramènerait quand même la faim à 0 même avec l'auto-nourrissage
+    // actif, ce qui bloquerait à tort le rattrapage d'XP de Tier ci-dessous (qui exige faim>10).
+    const hungerFloor = autoFeedEnabled ? 50 : 0;
+    const hungerDecay = autoFeedEnabled ? hours*10 : hours*36;
+    p.hunger = Math.max(hungerFloor, p.hunger - hungerDecay); // taux volontairement plus doux que le tick live pour ne pas punir une absence
+
+    // XP de Tier -- même condition que ticks.js (déployé, faim>10, pas déjà Tier 5), même
+    // cadence (2 XP/s) ; simplifié SANS breakthrough de rareté (RARITY_BREAKTHROUGH_CHANCE
+    // reste un tirage aléatoire par montée -- le simuler hors-ligne romprait le pity/l'équilibrage
+    // de la même façon que l'item de boss ci-dessus, jamais souhaitable pour un événement rare).
+    if(p.hunger>10 && (p.tier||1)<5){
+      let xpGain = 2*seconds;
+      let tier = p.tier||1, tierXp = p.tierXp||0;
+      const fromTier = tier;
+      while(xpGain>0 && tier<5){
+        const xpMax = TIER_XP_NEEDED[tier]-TIER_XP_NEEDED[tier-1];
+        const need = xpMax-tierXp;
+        if(xpGain<need){ tierXp+=xpGain; xpGain=0; }
+        else { xpGain-=need; tier++; tierXp=0; p.tierMult=rollTierMult(tier); }
+      }
+      if(tier!==fromTier) tierUps.push({name:p.cat.name, from:fromTier, to:tier});
+      p.tier=tier; p.tierXp=tierXp;
+    }
   });
 
-  if(totalSilver>0){
+  if(totalSilver>0 || tierUps.length){
     SILVER += totalSilver;
     const itemsText = Object.entries(itemsGained).map(([n,q])=>`${q}× ${n}`).join(', ');
     const hLabel = hours>=1 ? `${hours.toFixed(1)}h` : `${Math.round(hours*60)}min`;
-    toast('🎁', `Retour après ${hLabel} — +${totalSilver.toLocaleString('fr-FR')} Silver, ${itemsText}`);
-    addGameLog(`🎁 Rattrapage hors-ligne (${hLabel}) : +${totalSilver.toLocaleString('fr-FR')} Silver, ${itemsText}`);
+    const tierText = tierUps.length ? ` — ${tierUps.map(t=>`${t.name} T${t.from}➡️T${t.to}`).join(', ')}` : '';
+    toast('🎁', `Retour après ${hLabel} — +${totalSilver.toLocaleString('fr-FR')} Silver, ${itemsText}${tierText}`);
+    addGameLog(`🎁 Rattrapage hors-ligne (${hLabel}) : +${totalSilver.toLocaleString('fr-FR')} Silver, ${itemsText}${tierText}`);
   }
-  saveGame(); // persiste immédiatement le rattrapage (silver/items/hunger), avant l'autosave 5s
+  saveGame(); // persiste immédiatement le rattrapage (silver/items/hunger/tier/slots), avant l'autosave 5s
+  if(document.getElementById('p0')?.classList.contains('active')) renderHatch();
   if(document.getElementById('p5')?.classList.contains('active')){ renderGameInventory(); renderGameLog(); updateSilverDisplay(); }
-  if(document.getElementById('p1')?.classList.contains('active')) renderSecDetail();
+  if(document.getElementById('p1')?.classList.contains('active')){ renderSecNav(); renderSecDetail(); }
+  if(document.getElementById('p2')?.classList.contains('active')) renderGrid();
 }
 
 // bug corrigé (2026-07-11, rapporté explicitement : "Fenetre hors ligne non affichée au retour
@@ -157,6 +243,8 @@ function loadGame(){
     pityEverTriggered = state.pityEverTriggered || false;
     loginStreak = state.loginStreak || 0;
     lastLoginDate = state.lastLoginDate || null;
+    autoFeedEnabled = state.autoFeedEnabled !== undefined ? state.autoFeedEnabled : true;
+    syncAutoFeedToggleDom();
     petsRosterResetV1 = true; // posé qu'une migration ait eu lieu ou non -- ne redéclenche jamais
     // migration rétroactive (2026-07-20, "supprime tout compagnon au dessus de la limite") --
     // purge l'excédent au-delà de PET_ROSTER_CAP (96) une seule fois, voir trimRosterToCapIfNeeded()

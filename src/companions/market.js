@@ -242,18 +242,28 @@ function openCreateOfferModal(){
   const offered = alreadyOfferedUids();
   const eligible = PETS.filter(p=>!offered.has(p.uid));
   document.getElementById('market-modal-title').textContent = '➕ Nouvelle offre d\'échange';
+  // Sélecteur de familier EN DEHORS du formulaire des conditions (2026-07-13, demande explicite)
+  // -- déjà une grille cliquable (pas un <select> natif), mais mêlée aux champs "conditions"
+  // en dessous dans le même bloc visuel. Isolé ici dans son propre panneau bordé (fond --s2,
+  // titre dédié) séparé par un vrai bord (border-top) du formulaire de conditions, pour qu'il se
+  // lise comme une étape distincte (choisir QUI) avant le formulaire (choisir QUOI en échange).
   document.getElementById('market-modal-body').innerHTML = `
-    <div style="font-size:10.5px;color:var(--cream3);margin-bottom:8px">Choisis le familier à proposer :</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;max-height:220px;overflow-y:auto;margin-bottom:12px" id="market-create-pet-list">
-      ${eligible.length?eligible.map(p=>`<div class="market-pick" data-uid="${p.uid}" onclick="pickCreatePet('${p.uid}')" style="cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:6px">
-        ${petChipHtml(petSnapshotOf(p))}
-      </div>`).join(''):`<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">Tous tes familiers sont déjà en vente.</div>`}
+    <div style="background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:10px;margin-bottom:14px">
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">1. Choisis le familier à proposer</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;max-height:220px;overflow-y:auto" id="market-create-pet-list">
+        ${eligible.length?eligible.map(p=>`<div class="market-pick" data-uid="${p.uid}" onclick="pickCreatePet('${p.uid}')" style="cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:6px">
+          ${petChipHtml(petSnapshotOf(p))}
+        </div>`).join(''):`<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">Tous tes familiers sont déjà en vente.</div>`}
+      </div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:8px;font-size:11px;color:var(--cream2)">
-      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="market-accepts-pets" checked onchange="marketCreateAcceptsPets=this.checked"> Accepter en échange d'autres compagnons</label>
-      <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="market-accepts-silver" onchange="marketCreateAcceptsSilver=this.checked"> Accepter en échange de Silver</label>
-      <label style="display:flex;align-items:center;gap:8px">Nombre de compagnons demandés : <input type="number" id="market-pet-qty" min="1" max="5" value="1" style="width:56px"></label>
-      <label style="display:flex;align-items:center;gap:8px">Silver minimum : <input type="number" id="market-min-silver" min="0" value="0" style="width:100px"></label>
+    <div style="border-top:1px solid var(--border);padding-top:12px">
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">2. Conditions de l'offre</div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:11px;color:var(--cream2)">
+        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="market-accepts-pets" checked onchange="marketCreateAcceptsPets=this.checked"> Accepter en échange d'autres compagnons</label>
+        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="market-accepts-silver" onchange="marketCreateAcceptsSilver=this.checked"> Accepter en échange de Silver</label>
+        <label style="display:flex;align-items:center;gap:8px">Nombre de compagnons demandés : <input type="number" id="market-pet-qty" min="1" max="5" value="1" style="width:56px"></label>
+        <label style="display:flex;align-items:center;gap:8px">Silver minimum : <input type="number" id="market-min-silver" min="0" value="0" style="width:100px"></label>
+      </div>
     </div>
     <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="submitCreateOffer()">Publier l'offre</button>
   `;

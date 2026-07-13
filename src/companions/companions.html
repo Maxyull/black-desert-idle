@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=14">
+<link rel="stylesheet" href="companions.css?v=15">
 <!-- three.js vendorisé en local, jamais de CDN (2026-07-10, viewer 3D compagnons GLB) --
      three.module.min.js/GLTFLoader.js/OrbitControls.js sont des modules ES (import/export imposé
      par la lib), l'importmap ci-dessous résout le spécificateur nu "three" ; vendor/three/three-
@@ -273,7 +273,7 @@
       <div id="resource-list" style="display:flex;flex-direction:column;gap:5px"></div>
       <div style="background:rgba(200,169,110,.06);border:1px solid var(--gold-dim);border-radius:8px;padding:10px">
         <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold);margin-bottom:7px">⚙️ Auto-Nourrissage</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:5px"><span style="color:var(--cream2)">Activer</span><button class="tog on" id="autotog" onclick="this.classList.toggle('on')"></button></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:5px"><span style="color:var(--cream2)">Activer</span><button class="tog on" id="autotog" onclick="toggleAutoFeed(this)"></button></div>
         <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span style="color:var(--cream2)">Nourrisseuse</span><span style="color:var(--green2)">🧝 Aria</span></div>
         <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--cream2)">Seuil</span><span style="font-family:'JetBrains Mono',monospace">≤ 30%</span></div>
         <div style="font-size:9px;color:var(--cream3);margin-top:5px">Aria nourrit automatiquement avec le loot le moins précieux disponible.</div>
@@ -325,6 +325,10 @@
       <div style="border-top:1px solid var(--border);padding:10px 13px;flex-shrink:0">
         <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:7px">Session</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px" id="hard-session-grid"></div>
+      </div>
+      <div style="border-top:1px solid var(--border);padding:10px 13px;flex-shrink:0;max-height:160px;overflow-y:auto">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:7px">% de loot par pet actif</div>
+        <div id="hard-odds-panel" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
     </div>
   </div>
@@ -468,19 +472,19 @@
 <script src="catalog.js?v=8"></script>
 <script src="economy.js?v=15"></script>
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
-<script src="tier.js?v=11"></script>
+<script src="tier.js?v=12"></script>
 <script src="roster.js?v=9"></script>
-<script src="hatch.js?v=19"></script>
+<script src="hatch.js?v=20"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=8"></script>
-<script src="sections.js?v=16"></script>
-<script src="collection.js?v=13"></script>
+<script src="sections.js?v=17"></script>
+<script src="collection.js?v=14"></script>
 <!-- renommés le 2026-07-21 (lot 4/~8, même renommage progressif que ci-dessus) -->
-<script src="fusion.js?v=10"></script>
-<script src="feed.js?v=8"></script>
-<script src="ticks.js?v=11"></script>
+<script src="fusion.js?v=11"></script>
+<script src="feed.js?v=9"></script>
+<script src="ticks.js?v=12"></script>
 <!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
-<script src="save.js?v=15"></script>
+<script src="save.js?v=17"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
@@ -490,11 +494,11 @@
      appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
      strictement requis vis-à-vis de ces globals (aucune lecture immédiate), placé ici par
      lisibilité juste après le sync admin (même famille : accès à window.parent.getSbClient()). -->
-<script src="market.js?v=6"></script>
+<script src="market.js?v=7"></script>
 <!-- renommés le 2026-07-21 (lot 6/~8, même renommage progressif que ci-dessus) -->
 <script src="index.js?v=9"></script>
 <script src="game-view.js?v=8"></script>
-<script src="hardinage.js?v=8"></script>
+<script src="hardinage.js?v=9"></script>
 <!-- renommés le 2026-07-21 (lot 7/~8, même renommage progressif que ci-dessus) -->
 <script src="achievements.js?v=8"></script>
 <!-- classement PvP (2026-07-20, demande explicite) : lit PETS/normGS/rc/rn/secById/gsCls/gsPct
