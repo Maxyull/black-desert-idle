@@ -43,9 +43,9 @@ function extractLatestEntry(source) {
   return notes[0];
 }
 
-function buildDescription(entry) {
-  const lines = entry.fr.map(l => `${TYPE_ICONS[l.t] || '•'} ${l.tx}`).join('\n');
-  const full = `**${entry.name.fr}**\n\n${lines}`;
+function buildDescription(entry, lang) {
+  const lines = entry[lang].map(l => `${TYPE_ICONS[l.t] || '•'} ${l.tx}`).join('\n');
+  const full = `**${entry.name[lang]}**\n\n${lines}`;
   return full.length > 2000 ? full.slice(0, 1997) + '…' : full;
 }
 
@@ -112,17 +112,33 @@ async function main() {
     return;
   }
 
-  const res = await postToDiscordLogWithRetry({
-    title: `📜 Notes de version — ${currentLatest.v}`,
-    description: buildDescription(currentLatest),
-    color: 0xd4a955,
-  });
-
-  if (!res.ok) {
-    const text = res._text !== undefined ? res._text : await res.text().catch(() => '');
-    throw new Error(`discord-log a échoué après ${MAX_ATTEMPTS} tentatives (${res.status}): ${text}`);
+  // Poste séparément en FR et en EN (2026-07-14, demande explicite : les 2 langues ont chacune
+  // leur propre canal Discord -- 'target' sélectionne le webhook côté fonction discord-log, voir
+  // son code source pour le détail. Les 2 posts sont indépendants : un échec sur l'un n'empêche
+  // pas la tentative de l'autre, mais fait quand même échouer le script (exit 1) pour que le
+  // problème remonte en CI plutôt que d'être avalé silencieusement.
+  const langs = [
+    { lang: 'fr', target: 'patch_fr', titlePrefix: '📜 Notes de version' },
+    { lang: 'en', target: 'patch_en', titlePrefix: '📜 Patch notes' },
+  ];
+  const failures = [];
+  for (const { lang, target, titlePrefix } of langs) {
+    const res = await postToDiscordLogWithRetry({
+      title: `${titlePrefix} — ${currentLatest.v}`,
+      description: buildDescription(currentLatest, lang),
+      color: 0xd4a955,
+      target,
+    });
+    if (!res.ok) {
+      const text = res._text !== undefined ? res._text : await res.text().catch(() => '');
+      failures.push(`[${lang}] ${res.status}: ${text}`);
+    } else {
+      console.log(`Annonce Discord (${lang}) envoyée pour ${currentLatest.v}.`);
+    }
   }
-  console.log(`Annonce Discord envoyée pour ${currentLatest.v}.`);
+  if (failures.length) {
+    throw new Error(`discord-log a échoué après ${MAX_ATTEMPTS} tentatives -- ${failures.join(' | ')}`);
+  }
 }
 
 main().catch(e => { console.error(e); process.exit(1); });
