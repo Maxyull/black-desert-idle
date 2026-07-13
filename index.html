@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=603">
+<link rel="stylesheet" href="build/styles.min.css?v=604">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -523,6 +523,50 @@
     </div>
   </div>
 
+  <!-- Mini Boss (2026-07-13, port du plan validé, voir CLAUDE.md et combat/miniboss.js) : miroir
+       exact de #bossRoom juste au-dessus — même convention .open/.lobby/.fight, mêmes idées de
+       conteneurs (Lobby=carte Parchemin/craft/état du groupe/chat, Arène=canvas+roster+chat privé). -->
+  <div id="minibossRoom">
+    <div id="minibossLobby">
+      <div id="minibossLobbyHead">
+        <h2>📜 <span data-i18n="minibossPageTitle">Mini Boss</span></h2>
+        <button id="minibossLobbyClose">✕</button>
+      </div>
+      <div id="minibossLobbyBody"></div>
+    </div>
+    <div id="minibossArena">
+      <div id="minibossTopBar">
+        <div id="minibossName"></div>
+        <div id="minibossHpBarWrap"><div id="minibossHpBar"></div><span id="minibossHpTxt"></span></div>
+        <div id="minibossTimer"></div>
+        <span id="minibossRunProgress"></span>
+        <div id="minibossExitActions">
+          <button id="minibossVoteStopBtn">🗳️</button>
+          <button id="minibossSoloLeaveBtn">🚪</button>
+        </div>
+      </div>
+      <div id="minibossVoteStopPanel" class="minibossVoteStopPanel">
+        <div id="minibossVoteStopHead"></div>
+      </div>
+      <canvas id="minibossCv" width="1280" height="720"></canvas>
+      <div id="minibossTopPanel"><h4>👥 <span id="minibossRosterTitle"></span></h4><div id="minibossRosterList"></div></div>
+      <div id="minibossPlayerHpWrap"><div id="minibossPlayerHp"></div><span id="minibossPlayerHpTxt"></span></div>
+      <div id="minibossResult"></div>
+    </div>
+  </div>
+  <!-- pop-up "demande de rejoindre" un groupe Mini Boss en combat (voir plan §0sexies) — affiché
+       chez l'invocateur du groupe visé uniquement, via broadcast join_request (miniboss.js) -->
+  <div id="minibossJoinReqBackdrop" class="minibossJoinReqBackdrop">
+    <div class="minibossJoinReqModal">
+      <div class="minibossJoinReqTitle">🔔 <span data-i18n="minibossJoinReqTitle">Demande pour rejoindre le groupe</span></div>
+      <div id="minibossJoinReqBody"></div>
+      <div class="minibossJoinReqActions">
+        <button id="minibossJoinReqAccept" class="minibossJoinReqAccept" data-i18n="minibossJoinReqAccept">Accepter</button>
+        <button id="minibossJoinReqRefuse" class="minibossJoinReqRefuse" data-i18n="minibossJoinReqRefuse">Refuser</button>
+      </div>
+    </div>
+  </div>
+
   <div id="gameFrame">
     <canvas id="cv" width="1240" height="440"></canvas>
     <canvas id="zoneMobIcon" width="34" height="34"></canvas>
@@ -855,11 +899,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=603"></script>
+<script src="meta/patch-notes-data.js?v=604"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=603"></script>
+<script src="build/source.min.js?v=604"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
@@ -904,6 +948,13 @@
      ($, S, EQUIP, effHpMax, ZONES...) et le canvas #bossCv déjà présent dans le DOM -->
 <!-- rendu canvas de la salle de boss -- extrait de boss.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS boss.js (bossLoop() appelle drawBossRoom()) -->
+<!-- Mini Boss (2026-07-13, port du plan validé, voir CLAUDE.md et
+     C:\Users\maxim\.claude\plans\on-va-ajouter-une-vivid-pizza.md) : constantes pures d'abord
+     (miniboss-data.js, aucune dépendance), puis logique/wiring (miniboss.js, DOIT charger APRÈS
+     boss.js : lit playerBossDps/_skillDpsSum/setFarmViewVisible/renderActivityTabs/ACTIVITY_TABS/
+     currentActivity au moment de l'appel, pas au chargement immédiat), puis le rendu canvas
+     (miniboss-render.js, DOIT charger APRÈS miniboss.js : miniBossLoop() appelle
+     drawMinibossRoom()) -- même ordre relatif que boss.js/boss-render.js juste au-dessus. -->
 <!-- roue de récompense rare du boss, en React (2026-07-19, demande explicite : "je veux une roue     react et que tout soit aligné" -- remplace l'ancienne roue CSS conic-gradient/bwIcon, dont les     icônes en translate(0,-70px) débordaient du cercle visuel, cause du rendu "tordu" signalé) --     SEUL fichier du projet à utiliser React (React.createElement pur, aucun JSX/bundler, voir
      CLAUDE.md pour l'exception documentée) -- DOIT charger APRÈS boss.js (lit BOSS_NEAR_MISS_CHANCE/
      BOSS_NEAR_MISS_MARGIN_DEG au moment de l'appel, pas au chargement) et APRÈS les balises CDN

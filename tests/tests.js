@@ -5908,6 +5908,121 @@
     assert('showItemMenu() garde sell1/sellAll (vente instantanée) intacts en plus du marché', src.includes('sellOne(data.invIndex)') && src.includes('sellStack(data.invIndex)'));
   }
 
+  // ---------- Mini Boss (2026-07-13, combat/miniboss-data.js/miniboss.js) ----------
+  function testMinibossRecipeAndDropRates() {
+    assert('MINIBOSS_PARCHEMIN_RECIPE.needQty === 5', MINIBOSS_PARCHEMIN_RECIPE.needQty === 5, `needQty=${MINIBOSS_PARCHEMIN_RECIPE.needQty}`);
+    assert('MINIBOSS_FORBIDDEN_BOOK.ch === 0.008 (0,80%)', MINIBOSS_FORBIDDEN_BOOK.ch === 0.008, `ch=${MINIBOSS_FORBIDDEN_BOOK.ch}`);
+    assert('MINIBOSS_FORBIDDEN_BOOK.kind === material (vendable au marché, voir MARKET_MATERIALS)', MINIBOSS_FORBIDDEN_BOOK.kind === 'material');
+    assert('MINIBOSS_PARCHEMIN.kind === craft (jamais listé dans MARKET_MATERIALS, donc non vendable)', MINIBOSS_PARCHEMIN.kind === 'craft');
+  }
+  // garde-fou statique (même esprit que les autres inspections .toString() de ce fichier) : le
+  // Livre interdit doit tomber dans TOUTES les zones, indépendamment de zoneIdx -- on vérifie que
+  // rollDrops() référence bien MINIBOSS_FORBIDDEN_BOOK dans son tableau `table` (construit à
+  // chaque appel, pas conditionné par la zone), même mécanisme que Pierre de Cron (CRON_STONE).
+  function testForbiddenBookDropsInEveryZone() {
+    const src = rollDrops.toString();
+    assert('rollDrops() référence MINIBOSS_FORBIDDEN_BOOK dans sa table de drop (universel, comme CRON_STONE)', src.includes('MINIBOSS_FORBIDDEN_BOOK'));
+    assert('rollDrops() référence aussi CRON_STONE (même mécanisme de drop universel, non zoné)', src.includes('CRON_STONE'));
+  }
+  // MARKET_MATERIALS (src/market/market.js) est la liste blanche qui rend un matériau vendable
+  // (marketCatalog() ne construit une entrée QUE depuis cette liste) -- vérifie explicitement que
+  // Livre interdit y figure et que le nom du Parchemin n'y figure jamais.
+  function testForbiddenBookSellableParcheminIsNot() {
+    const names = MARKET_MATERIALS.map(m => m.name);
+    assert('MARKET_MATERIALS contient "Livre interdit" (vendable au marché)', names.includes(MINIBOSS_FORBIDDEN_BOOK.name));
+    assert('MARKET_MATERIALS NE contient PAS "Parchemin de Mini Boss" (jamais échangeable)', !names.includes(MINIBOSS_PARCHEMIN.name));
+  }
+  function testMinibossGroupBonusTableExact() {
+    // table EXACTE fournie par l'utilisateur (voir plan) -- pas une formule linéaire
+    const expected = { 1:1, 2:1.1, 3:1.2, 4:1.5, 5:2 };
+    Object.entries(expected).forEach(([n, mult]) => {
+      assert(`minibossGroupBonusMult(${n}) === ×${mult}`, minibossGroupBonusMult(+n) === mult, `got=${minibossGroupBonusMult(+n)}`);
+    });
+    assert('minibossGroupBonusMult plafonne à 5 joueurs (6 -> même bonus que 5)', minibossGroupBonusMult(6) === minibossGroupBonusMult(5));
+  }
+  function testMinibossFinalMultRoleAndGroupSize() {
+    // invocateur ×2.0, participant ×0.8 (retour de revue de maquette), multiplié par le bonus de
+    // groupe EXACT -- vérifié pour les 2 rôles × 5 tailles de groupe (matrice complète, pas un seul point).
+    for (let n = 1; n <= 5; n++) {
+      const bonus = minibossGroupBonusMult(n);
+      assert(`minibossFinalMult(true, ${n}) = 2.0 × bonus`, Math.abs(minibossFinalMult(true, n) - 2.0*bonus) < 1e-9);
+      assert(`minibossFinalMult(false, ${n}) = 0.8 × bonus`, Math.abs(minibossFinalMult(false, n) - 0.8*bonus) < 1e-9);
+    }
+    assert("L'invocateur reçoit toujours plus qu'un participant à taille de groupe égale", minibossFinalMult(true, 3) > minibossFinalMult(false, 3));
+  }
+  function testMinibossMaxHpTableByGroupSize() {
+    const expected = [0, 100000, 160000, 220000, 280000, 340000];
+    for (let n = 1; n <= 5; n++) {
+      assert(`minibossMaxHp(${n}) === ${expected[n]}`, minibossMaxHp(n) === expected[n], `got=${minibossMaxHp(n)}`);
+    }
+    assert('minibossMaxHp croît avec la taille du groupe (jamais moins de PV à plus de joueurs)', minibossMaxHp(5) > minibossMaxHp(1));
+    assert('minibossMaxHp plafonne à 5 joueurs', minibossMaxHp(9) === minibossMaxHp(5));
+  }
+  function testMinibossGearPctClampedAndMonotonic() {
+    assert('minibossGearPct(0) === 0', minibossGearPct(0) === 0);
+    assert('minibossGearPct négatif clampé à 0', minibossGearPct(-50) === 0);
+    const ref = minibossGearRefAp();
+    assert('minibossGearPct(refAp) === 100', minibossGearPct(ref) === 100, `got=${minibossGearPct(ref)}`);
+    assert('minibossGearPct au-delà du plafond reste clampé à 100', minibossGearPct(ref*3) === 100);
+    assert('minibossGearPct croît avec l\'AP', minibossGearPct(ref*0.75) > minibossGearPct(ref*0.25));
+  }
+  // plafond MAX du run = stock du membre le plus PAUVRE, jamais le mieux fourni (retour explicite
+  // de l'utilisateur : "un bouton MAX toujours selon le joueur qui en a le moins")
+  function testMinibossMaxRunLengthCappedByPoorestMember() {
+    assert('minibossMaxRunLength([14,2,6]) === 2 (le plus pauvre, pas le plus riche)', minibossMaxRunLength([14,2,6]) === 2);
+    assert('minibossMaxRunLength([]) === 0 (aucun membre)', minibossMaxRunLength([]) === 0);
+    assert('minibossMaxRunLength([5,5,5]) === 5 (stocks égaux)', minibossMaxRunLength([5,5,5]) === 5);
+  }
+  function testMinibossReputationScoreFormula() {
+    assert('minibossReputationScore(0,0) === 5 (aucun run joué, pas de mauvaise note par défaut)', minibossReputationScore(0,0) === 5);
+    assert('minibossReputationScore(39,3) === 4.6 (arrondi à 1 décimale)', minibossReputationScore(39,3) === 4.6, `got=${minibossReputationScore(39,3)}`);
+    assert('minibossReputationScore(1,4) === 1.0 (majorité d\'incidents -> note basse)', minibossReputationScore(1,4) === 1.0, `got=${minibossReputationScore(1,4)}`);
+    assert('minibossReputationScore(10,0) === 5 (aucun incident)', minibossReputationScore(10,0) === 5);
+  }
+  // câblage de l'onglet header (voir plan §5) -- ACTIVITY_TABS contient bien l'entrée, et
+  // showActivityPage('miniboss') ne lève pas et met à jour currentActivity (miroir du test déjà
+  // existant pour Compagnon, testCompanionTabShowsNewBadgeInsteadOfLock, même esprit).
+  function testMinibossActivityTabWiredCorrectly() {
+    const tab = ACTIVITY_TABS.find(t => t.id === 'miniboss');
+    assert("ACTIVITY_TABS contient l'entrée 'miniboss'", !!tab);
+    if (!tab) return;
+    assert("l'onglet Mini Boss n'est pas verrouillé", tab.locked === false);
+    const savedActivity = currentActivity;
+    let threw = false;
+    try { showActivityPage('miniboss'); } catch (e) { threw = true; }
+    assert("showActivityPage('miniboss') ne lève aucune exception", !threw);
+    assert("showActivityPage('miniboss') met à jour currentActivity à 'miniboss'", currentActivity === 'miniboss', `currentActivity=${currentActivity}`);
+    // referme proprement et restaure l'état pour ne pas polluer les tests suivants
+    if (minibossState.active) { minibossState.active = false; cancelAnimationFrame(minibossState.raf); }
+    const mbr = document.getElementById('minibossRoom'); if (mbr) mbr.classList.remove('open');
+    showActivityPage('zone');
+    currentActivity = savedActivity;
+  }
+  // craftMiniBossParchemin() : mêmes garde-fous qu'un test de craft classique -- insuffisant sans
+  // ingrédients, réussi une fois les 5 Livres interdits réunis dans une case libre dédiée (voir
+  // CLAUDE.md §11 "piège corrigé le 2026-07-19" -- ne jamais supposer une case libre sur le compte
+  // de test, réserver/restaurer un slot dédié).
+  function testCraftMiniBossParcheminNeedsFiveBooks() {
+    const slot = INV_SIZE - 3; // slot dédié, distinct de celui déjà réservé par d'autres tests (INV_SIZE-2)
+    const savedSlot = INV[slot];
+    const savedParchSlot = invSlotByKey(MINIBOSS_PARCHEMIN.key);
+    const savedParch = savedParchSlot !== -1 ? { ...INV[savedParchSlot] } : null;
+    try {
+      INV[slot] = null;
+      assert('craftMiniBossParchemin() échoue sans les 5 Livres interdits', craftMiniBossParchemin() === false);
+      INV[slot] = { name:MINIBOSS_FORBIDDEN_BOOK.name, kind:MINIBOSS_FORBIDDEN_BOOK.kind, icon:MINIBOSS_FORBIDDEN_BOOK.icon, color:MINIBOSS_FORBIDDEN_BOOK.color, key:MINIBOSS_FORBIDDEN_BOOK.key, qty:5, stackable:true, weight:0.1, val:0 };
+      const before = minibossParcheminQty();
+      const ok = craftMiniBossParchemin();
+      assert('craftMiniBossParchemin() réussit avec 5 Livres interdits en sac', ok === true);
+      assert('craftMiniBossParchemin() consomme les 5 Livres interdits', (INV[slot] === null || INV[slot].qty === 0) || invQtyByKey(MINIBOSS_FORBIDDEN_BOOK.key) === 0);
+      assert('craftMiniBossParchemin() donne bien +1 Parchemin de Mini Boss', minibossParcheminQty() === before + 1, `before=${before} after=${minibossParcheminQty()}`);
+    } finally {
+      INV[slot] = savedSlot;
+      if (savedParchSlot !== -1) INV[savedParchSlot] = savedParch; // restaure l'ancien stock exact
+      else { const i = invSlotByKey(MINIBOSS_PARCHEMIN.key); if (i !== -1) INV[i] = null; } // pas de Parchemin avant le test -> on retire celui créé
+    }
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -6215,6 +6330,17 @@
     testCardLayoutReorderSwapsWithNeighborAndNoopsAtEdges();
     testCardLayoutReorderToInsertsBeforeOrAfterTarget();
     testCardLayoutSetActiveTabIgnoresUnknownTab();
+    testMinibossRecipeAndDropRates();
+    testForbiddenBookDropsInEveryZone();
+    testForbiddenBookSellableParcheminIsNot();
+    testMinibossGroupBonusTableExact();
+    testMinibossFinalMultRoleAndGroupSize();
+    testMinibossMaxHpTableByGroupSize();
+    testMinibossGearPctClampedAndMonotonic();
+    testMinibossMaxRunLengthCappedByPoorestMember();
+    testMinibossReputationScoreFormula();
+    testMinibossActivityTabWiredCorrectly();
+    testCraftMiniBossParcheminNeedsFiveBooks();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

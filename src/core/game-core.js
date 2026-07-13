@@ -109,6 +109,10 @@ const S = {
   // bossLastKillWeek = { [bossId]: 'YYYY-Www' de la dernière semaine où CE boss a été tué } -- le
   // bonus "+50% première victoire de la semaine" ne compare qu'à CE boss, pas tous les boss confondus.
   bossPity: {}, bossLastKillWeek: {},
+  // Mini Boss (2026-07-13, src/combat/miniboss.js) : compteurs de réputation locaux (groupes créés,
+  // runs rejoints, quittes seul/déconnexion/vote, runs sans/avec incident) -- voir
+  // minibossReputationScore()/minibossReputationSeverityScore() (combat/miniboss-data.js).
+  minibossRep: { groupsCreated:0, runsJoined:0, soloQuits:0, disconnects:0, votes:0, runsClean:0, runsIncident:0 },
   penMastery: {}, // Compendium spécial "Maîtrise PEN" (2026-07-08) : { [itemName]: true } dès que cet objet a atteint PEN au moins une fois (voir markPenMastery)
   // Sceau du Conclave des Marchands (2026-07-13, trésor multi-région, voir CONCLAVE_SEAL_FRAGMENTS
   // world/region-tiers-data.js + progression/treasure-craft.js craftConclaveSeal) : flag permanent
@@ -2431,6 +2435,10 @@ function applySaveState(data) {
   // boss avec pity", identique à un vrai nouveau joueur -- aucune donnée existante à corriger.
   S.bossPity = S.bossPity || {};
   S.bossLastKillWeek = S.bossLastKillWeek || {};
+  // Mini Boss (2026-07-13) : compteurs de réputation locaux — feature entièrement nouvelle, aucune
+  // donnée existante ne change de sens (CLAUDE.md §13 ne s'applique pas), un objet vide suffit comme
+  // filet défensif (voir src/combat/miniboss.js, minibossRepCounters()).
+  S.minibossRep = S.minibossRep || { groupsCreated:0, runsJoined:0, soloQuits:0, disconnects:0, votes:0, runsClean:0, runsIncident:0 };
   Object.keys(EQUIP).forEach(k => EQUIP[k] = data.EQUIP[k] ?? null);
   for (let i = 0; i < INV_SIZE; i++) INV[i] = data.INV[i] ?? null;
   // sac "Compendium" (2026-07-08) : absent des sauvegardes antérieures à cette version, ?? null

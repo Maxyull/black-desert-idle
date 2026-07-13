@@ -16,6 +16,19 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V438', d:'13/07/2026 18:15', name:{fr:'Nouvel onglet Mini Boss : Livre interdit → Parchemin, groupe jusqu\'à 5, gear%', en:'New Mini Boss tab: Forbidden Book → Scroll, group up to 5, gear%'}, fr:[
+      {t:'new', sub:'combat', tx:'Nouvel onglet "Mini Boss" dans le header, à côté de Zone/Boss/Compagnon/PvP : un boss invocable en consommant un Parchemin, seul ou en groupe (jusqu\'à 5 joueurs).'},
+      {t:'new', sub:'craft', tx:'Nouveau matériau "Livre interdit" (drop 0,80% dans toutes les zones, comme la Pierre de Cron), vendable au marché. 5 Livres interdits se combinent à Velia en 1 Parchemin de Mini Boss (non échangeable).'},
+      {t:'new', sub:'combat', tx:'Les PV du boss augmentent avec la taille du groupe, mais chaque participant tape selon son "gear%" (visible dans le groupe) — un joueur moins équipé ralentit réellement le combat.'},
+      {t:'new', sub:'loot', tx:'Partage du loot : l\'invocateur reçoit ×2.0, les autres participants ×0.8, multiplié par un bonus de groupe qui grimpe jusqu\'à ×2 à 5 joueurs.'},
+      {t:'new', sub:'gameplay', tx:'Choix du nombre de combats à enchaîner (10/25/50/100, curseur libre, bouton MAX plafonné par le membre du groupe qui a le moins de Parchemins), règles de sortie (quitter seul/déconnexion 5 min/vote collectif) et score de réputation par joueur.'},
+    ], en:[
+      {t:'new', sub:'combat', tx:'New "Mini Boss" tab in the header, next to Zone/Boss/Companion/PvP: a summonable boss consuming a Scroll, solo or in a group (up to 5 players).'},
+      {t:'new', sub:'craft', tx:'New "Forbidden Book" material (0.80% drop in every zone, like Cron Stone), sellable on the market. 5 Forbidden Books combine at Velia into 1 Mini Boss Scroll (not tradeable).'},
+      {t:'new', sub:'combat', tx:'Boss HP grows with group size, but each participant\'s damage is weighted by their "gear%" (visible within the group) — a less-geared player really does slow the fight down.'},
+      {t:'new', sub:'loot', tx:'Loot split: the summoner gets ×2.0, other participants ×0.8, multiplied by a group bonus that climbs up to ×2 at 5 players.'},
+      {t:'new', sub:'gameplay', tx:'Choose how many fights to chain (10/25/50/100, free slider, MAX button capped by the group member with the fewest Scrolls), exit rules (solo leave/5-min disconnect/collective vote) and a per-player reputation score.'},
+    ] },
   { v:'V437', d:'13/07/2026 18:00', name:{fr:'Compendium : les objets PEN coincés dans le sac protégé sont enfin libérés', en:'Compendium: PEN items stuck in the protected bag are finally freed'}, fr:[
       {t:'fix', sub:'equipements', tx:'Bug trouvé (rapporté explicitement) : un objet ayant atteint PEN restait parfois protégé dans le Compendium POUR TOUJOURS si le sac principal était plein au moment précis de l\'éviction — rien ne relançait ensuite la libération pour cet objet. Corrigé : à chaque chargement, tous les objets déjà maîtrisés PEN mais encore protégés sont réexaminés, et libérés dès qu\'une place se libère dans le sac.'},
     ], en:[

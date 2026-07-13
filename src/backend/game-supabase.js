@@ -992,7 +992,13 @@ cv.addEventListener('click', e => {
   }
 });
 $a('bossLobbyClose').onclick = () => showActivityPage('zone');
-window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); });
+// Mini Boss (2026-07-13, combat/miniboss.js) : mêmes conventions que Boss juste au-dessus --
+// quitter un combat en cours = quitte seul (perte du loot, voir minibossSoloLeave), fermer le
+// lobby = retour à la Zone (farm).
+$a('minibossLobbyClose').onclick = () => showActivityPage('zone');
+$a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossSoloLeave(); };
+$a('minibossVoteStopBtn').onclick = () => { if (minibossState.active) minibossToggleVoteStop(); };
+window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); if (minibossState.active) resizeMinibossCanvas(); });
 updateNextBossMini();
 setInterval(updateNextBossMini, 1000);
 

@@ -248,6 +248,10 @@ function updateNextBossMini() {
 const ACTIVITY_TABS = [
   { id:'zone', icon:'⚔️', name:{fr:'Zone',en:'Zone'},       locked:false },
   { id:'boss', icon:'🐍', name:{fr:'Boss',en:'Boss'},       locked:false },
+  // Mini Boss (2026-07-13, port du plan validé — voir combat/miniboss.js/miniboss-data.js) : juste
+  // après Boss, avant Compagnon (position proposée en maquette, jamais contestée en revue) --
+  // isNew tant que la feature est toute fraîche, même convention que Compagnon ci-dessous.
+  { id:'miniboss', icon:'📜', name:{fr:'Mini Boss',en:'Mini Boss'}, locked:false, isNew:true },
   // Compagnon juste après Boss (2026-07-10, demande explicite : "compagnon a droite de boss") --
   // badge "NEW" (2026-07-20, demande explicite : "met NEW sur compagnon a la place du cadenas")
   // dans le même emplacement bulle que .actTabLock/.actTabBossHp, tant que le module reste en
@@ -331,12 +335,19 @@ function showActivityPage(id) {
     currentActivity = 'boss';
     setFarmViewVisible(false);
     if (!bossState.active) openBossLobby();
+  } else if (id === 'miniboss') {
+    // Mini Boss (2026-07-13, combat/miniboss.js) : miroir exact de la branche 'boss' ci-dessus,
+    // réutilise setFarmViewVisible() tel quel — voir plan §5.
+    currentActivity = 'miniboss';
+    setFarmViewVisible(false);
+    if (!minibossState.active) openMiniBossLobby();
   } else if (id === 'pet') {
     currentActivity = 'pet';
     openCompanionsModule();
   } else { // zone = retour au farm
     currentActivity = 'zone';
     if (!bossState.active) $('bossRoom').classList.remove('open');
+    if (!minibossState.active) { const mbr = $a('minibossRoom'); if (mbr) mbr.classList.remove('open'); }
     setFarmViewVisible(true);
   }
   renderActivityTabs();

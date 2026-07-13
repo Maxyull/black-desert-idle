@@ -114,6 +114,12 @@ const MARKET_MATERIALS = [
   { name:'Pierre Noire',       icon:ICO_MAT_NOIRE,      color:'#7aa35e' },
   { name:'Pierre concentrée',  icon:ICO_MAT_CONCENTREE, color:'#6ea3c9' },
   { name:'Pierre de Caphras',  icon:ICO_MAT_CAPHRAS,    color:'#c9a55a' },
+  // Livre interdit (Mini Boss, 2026-07-13) : vendable au marché — retour explicite de revue de
+  // maquette ("Livre interdit vendable au marché, PAS le Parchemin"). marketCatalog() ne construit
+  // une entrée matériau QUE depuis cette liste blanche (pas "tout kind:'material' est vendable") —
+  // le Parchemin de Mini Boss (kind:'craft', voir miniboss-data.js) n'y figure jamais, donc jamais
+  // listable, sans logique d'exclusion supplémentaire à écrire.
+  { name:'Livre interdit',     icon:'📕',                color:'#6a4a8a' },
 ];
 // taxe de vente Marché : 35% (2026-07-18, demande explicite : "35% au market") -- prélevée côté
 // serveur sur le VENDEUR (market_match_item, voir migration 20260718130000_market_sales_tax_35pct.sql)
