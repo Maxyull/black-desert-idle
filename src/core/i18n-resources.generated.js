@@ -513,6 +513,10 @@ const I18N_RESOURCES = {
     "combat": {
       "combat.miniboss.you_label": "Toi",
       "combat.miniboss.creature_name": "Serviteur du Grimoire",
+      "combat.miniboss.creature_lore": "« Chaque page arrachée au Livre interdit murmure encore le nom de son gardien. »",
+      "combat.miniboss.ladder_tagline": "⚡ Plus vous êtes nombreux, plus vite ça va — et plus le loot est généreux !",
+      "combat.miniboss.ladder_next_tier": "Invite <b>{{need}}</b> joueur(s) de plus pour passer à <b>+{{pct}}%</b> !",
+      "combat.miniboss.ladder_maxed": "🏆 Groupe complet — bonus maximum atteint !",
       "combat.miniboss.parchemin_in_bag": "Parchemin(s) en sac",
       "combat.miniboss.not_tradeable": "Non échangeable — lié au compte",
       "combat.miniboss.summon_button": "Invoquer",
@@ -1508,6 +1512,10 @@ const I18N_RESOURCES = {
     "combat": {
       "combat.miniboss.you_label": "You",
       "combat.miniboss.creature_name": "Grimoire Servant",
+      "combat.miniboss.creature_lore": "\"Every page torn from the Forbidden Book still whispers its keeper's name.\"",
+      "combat.miniboss.ladder_tagline": "⚡ The more of you there are, the faster it goes — and the richer the loot!",
+      "combat.miniboss.ladder_next_tier": "Invite <b>{{need}}</b> more player(s) to reach <b>+{{pct}}%</b>!",
+      "combat.miniboss.ladder_maxed": "🏆 Full group — maximum bonus reached!",
       "combat.miniboss.parchemin_in_bag": "Scroll(s) in bag",
       "combat.miniboss.not_tradeable": "Not tradeable — account bound",
       "combat.miniboss.summon_button": "Summon",
