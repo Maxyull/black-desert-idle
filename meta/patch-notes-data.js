@@ -5,10 +5,17 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
-  { v:'V418', d:'24/07/2026 05:00', name:{fr:'Header : raccourcis Classement/Marché/Notes de version/Discord/Soutenir/Admin/Déconnexion', en:'Header: Leaderboard/Market/Patch notes/Discord/Support/Admin/Log out shortcuts'}, fr:[
+  { v:'V419', d:'24/07/2026 05:00', name:{fr:'Header : raccourcis Classement/Marché/Notes de version/Discord/Soutenir/Admin/Déconnexion', en:'Header: Leaderboard/Market/Patch notes/Discord/Support/Admin/Log out shortcuts'}, fr:[
       {t:'new', sub:'interface', tx:'Le bandeau du haut affiche désormais des icônes de raccourci vers le Classement, le Marché (BETA), les Notes de version, le Discord, la page Soutenir, et — pour les comptes admin — le panneau Admin et la Déconnexion. Le bouton Mon compte affiche maintenant ton pseudo à côté de l\'icône. Les boutons équivalents de la barre latérale restent en place, ce sont de simples raccourcis en plus.'},
     ], en:[
       {t:'new', sub:'interface', tx:'The top bar now shows shortcut icons for the Leaderboard, the Market (BETA), Patch notes, Discord, the Support page, and — for admin accounts — the Admin panel and Log out. The My account button now shows your nickname next to the icon. The equivalent sidebar buttons stay in place, these are just extra shortcuts.'},
+    ] },
+  { v:'V418', d:'24/07/2026 05:00', name:{fr:'Bandit Gahaz (Repaire Bandits Gahaz) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Gahaz Bandit (Gahaz Bandits\' Den): new dedicated silhouette, no longer shows a wolf'}, fr:[
+      {t:'fix', sub:'interface', tx:'Repaire Bandits Gahaz (zone 8, juste après le Poste Helm) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé.'},
+      {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour le Bandit Gahaz : pillard du désert trapu et brutal, turban rayé de rouge à long pan frangé qui flotte, torse nu musclé et cicatrisé visible sous un gilet sans manches ouvert, large ceinture tissée à pochettes, tibias bandés, et une hachette courte tenue basse.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'Gahaz Bandits\' Den (zone 8, right after Helm Outpost) incorrectly showed a wolf instead of its own monster — this zone never had a dedicated silhouette and fell back to the generic wolf one (zone 1). Fixed.'},
+      {t:'new', sub:'interface', tx:'New original silhouette for the Gahaz Bandit: a stocky, brutish desert raider with a red-striped turban and a long flowing frayed tail, a scarred muscular bare chest visible under an open sleeveless vest, a wide woven belt with hanging pouches, bandaged shins, and a short hand-axe held low.'},
     ] },
   { v:'V417', d:'24/07/2026 04:00', name:{fr:'Classement : bouton retour depuis le stuff d\'un joueur', en:'Leaderboard: back button from a player\'s gear'}, fr:[
       {t:'new', sub:'interface', tx:'Ouvrir le stuff d\'un joueur depuis le classement affiche désormais un bouton "← Retour au classement" en haut du panneau, pour revenir directement au classement au lieu de devoir tout fermer.'},

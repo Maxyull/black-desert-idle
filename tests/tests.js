@@ -2381,6 +2381,33 @@
     cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
     assert('drawHelmIso ne lève jamais d\'exception (alpha/normal, échelle/charge/sens/hors-écran)', !threw, errMsg);
   }
+  // Garde protège contre tout retour d'exception pour le Bandit Gahaz (zone "Repaire Bandits
+  // Gahaz", zone 8) -- ajouté le 2026-07-13 pour corriger le bug où zoneIdx 8 tombait dans le
+  // fallback drawWolfIso générique (loup affiché à tort). Contrairement à Mineur/Helm, ce monstre
+  // n'a pas de variante w.alpha dédiée (le scale générique suffit) -- on teste quand même les 2
+  // valeurs d'alpha pour garantir qu'aucune branche future n'y introduit une régression.
+  function testDrawGahazIsoNeverThrows() {
+    if (typeof drawGahazIso === 'undefined' || typeof cam === 'undefined' || typeof P === 'undefined') return;
+    const savedCamX = cam.x, savedCamY = cam.y, savedPx = P.x, savedPy = P.y;
+    cam.x = 0; cam.y = 0; P.x = 100; P.y = 0;
+    let threw = false, errMsg = '';
+    try {
+      [true, false].forEach(alpha => {
+        [0, 0.85, 1.5].forEach(scale => {
+          [0, 0.5, 1].forEach(lunge => {
+            [-1, 1].forEach(px => {
+              P.x = px;
+              drawGahazIso(0, 0, { scale, lunge, phase: 0, tone:'#607a45', alpha }, 0.3);
+            });
+          });
+        });
+      });
+      drawGahazIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#607a45', alpha:true }, 0); // hors écran -> sortie anticipée
+      drawGahazIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#607a45', alpha:false }, 0); // idem, branche normale
+    } catch (e) { threw = true; errMsg = e.message; }
+    cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
+    assert('drawGahazIso ne lève jamais d\'exception (échelle/charge/sens/hors-écran, alpha inclus)', !threw, errMsg);
+  }
   // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
   // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
   // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
@@ -5085,6 +5112,7 @@
     testDrawSausanIsoNeverThrows();
     testDrawMineurIsoNeverThrows();
     testDrawHelmIsoNeverThrows();
+    testDrawGahazIsoNeverThrows();
     testMigratePenMasteryV308MarksExistingPenItems();
     testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
     testMigratePenMasteryV308EvictsCompendiumRetroactively();
