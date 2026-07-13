@@ -6154,6 +6154,18 @@
     }
   }
 
+  // ---------- boutons +/- taille UI/jeu (2026-07-13, mockup validé) ----------
+  function testNextUiScaleLevelStepsAndClampsAtBothEnds() {
+    assert('nextUiScaleLevel(medium,+1) -> large', nextUiScaleLevel('medium', 1) === 'large');
+    assert('nextUiScaleLevel(medium,-1) -> small', nextUiScaleLevel('medium', -1) === 'small');
+    assert('nextUiScaleLevel(small,-1) reste small (clampé)', nextUiScaleLevel('small', -1) === 'small');
+    assert('nextUiScaleLevel(large,+1) reste large (clampé)', nextUiScaleLevel('large', 1) === 'large');
+    assert('nextUiScaleLevel(small,+1) -> medium', nextUiScaleLevel('small', 1) === 'medium');
+    assert('nextUiScaleLevel(large,-1) -> medium', nextUiScaleLevel('large', -1) === 'medium');
+    // valeur inconnue/corrompue (ex: vieux localStorage) -> retombe sur 'medium' comme base, pas de throw
+    assert('nextUiScaleLevel(valeur inconnue,+1) part de medium -> large', nextUiScaleLevel('xxx', 1) === 'large');
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -6483,6 +6495,7 @@
     testMinibossReputationScoreFormula();
     testMinibossActivityTabWiredCorrectly();
     testCraftMiniBossParcheminNeedsFiveBooks();
+    testNextUiScaleLevelStepsAndClampsAtBothEnds();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
