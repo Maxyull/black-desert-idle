@@ -120,6 +120,31 @@ function cardLayoutNest(state, sourceId, targetId) {
   return st;
 }
 
+/** Échange une carte/groupe top-level avec son voisin immédiat dans order (dir -1 = gauche, +1 = droite) --
+ *  alternative aux flèches sans glisser-déposer (2026-07-13, retour utilisateur). No-op en bout de liste. */
+function cardLayoutReorder(state, id, dir) {
+  if (!state.order.includes(id)) return state;
+  const st = JSON.parse(JSON.stringify(state));
+  const i = st.order.indexOf(id);
+  const j = i + dir;
+  if (j < 0 || j >= st.order.length) return st;
+  [st.order[i], st.order[j]] = [st.order[j], st.order[i]];
+  return st;
+}
+
+/** Déplace une carte/groupe top-level juste avant ou après une autre carte top-level dans order --
+ *  glisser-déposer ENTRE deux cartes (2026-07-13, distinct de cardLayoutNest qui imbrique EN onglets). */
+function cardLayoutReorderTo(state, sourceId, targetId, before) {
+  if (sourceId === targetId) return state;
+  if (!state.order.includes(sourceId) || !state.order.includes(targetId)) return state;
+  const st = JSON.parse(JSON.stringify(state));
+  st.order = st.order.filter(id => id !== sourceId);
+  let targetIdx = st.order.indexOf(targetId);
+  if (!before) targetIdx += 1;
+  st.order.splice(targetIdx, 0, sourceId);
+  return st;
+}
+
 function cardLayoutSetActiveTab(state, hostId, tabId) {
   const group = state.groups[hostId];
   if (!group) return state;
@@ -154,20 +179,56 @@ function cardLayoutResetToStandalone(cardEl) {
   if (h3) {
     const handle = h3.querySelector(':scope > .cardDragHandle');
     if (handle) handle.remove();
+    const arrows = h3.querySelector(':scope > .cardMoveArrows');
+    if (arrows) arrows.remove();
+    const textWrap = h3.querySelector(':scope > .cardTitleText');
+    if (textWrap) {
+      while (textWrap.firstChild) h3.appendChild(textWrap.firstChild);
+      textWrap.remove();
+    }
   }
 }
 
-function cardLayoutAddHandleToH3(cardEl) {
+/** Boutons ◀▶ pour déplacer une carte/groupe top-level d'une position dans order, sans glisser-déposer
+ *  (2026-07-13, retour utilisateur : "passer une carte ou un groupe de cartes d'un côté ou un autre").
+ *  Grisé/désactivé en bout de liste plutôt que masqué (repère visuel stable, pas de layout qui saute). */
+function cardLayoutBuildMoveArrows(id, isFirst, isLast) {
+  const wrap = document.createElement('span');
+  wrap.className = 'cardMoveArrows';
+  [['-1', '◀', isFirst, 'core.card_layout.move_left'], ['1', '▶', isLast, 'core.card_layout.move_right']].forEach(([dir, glyph, disabled, i18nKey]) => {
+    const btn = document.createElement('button');
+    btn.className = 'cardMoveBtn';
+    btn.dataset.cardMoveId = id;
+    btn.dataset.cardMoveDir = dir;
+    btn.textContent = glyph;
+    btn.disabled = disabled;
+    btn.title = (typeof i18next !== 'undefined') ? i18next.t('core:' + i18nKey) : '';
+    wrap.appendChild(btn);
+  });
+  return wrap;
+}
+
+function cardLayoutAddHandleToH3(cardEl, isFirst, isLast) {
   const h3 = cardEl.querySelector(':scope > h3');
   if (!h3 || h3.querySelector(':scope > .cardDragHandle')) return;
+  // le texte d'origine du titre est déplacé dans son propre span pour pouvoir le tronquer sur
+  // 1 ligne (ellipsis) SANS emporter la poignée/les flèches avec lui (2026-07-13, retour
+  // utilisateur "le titre de la carte tienne sur 1 ligne").
+  const textWrap = document.createElement('span');
+  textWrap.className = 'cardTitleText';
+  while (h3.firstChild) textWrap.appendChild(h3.firstChild);
+
   const handle = document.createElement('span');
   handle.className = 'cardDragHandle';
   handle.textContent = '⠿ ';
   handle.title = (typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.drag_handle') : '';
-  h3.insertBefore(handle, h3.firstChild);
+
+  h3.appendChild(handle);
+  h3.appendChild(textWrap);
+  h3.appendChild(cardLayoutBuildMoveArrows(cardEl.id, isFirst, isLast));
 }
 
-function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
+function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId, isFirst, isLast) {
   hostEl.classList.add('cardTabbed');
 
   const tabBar = document.createElement('div');
@@ -206,6 +267,8 @@ function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
     tabBar.appendChild(group);
   });
 
+  tabBar.appendChild(cardLayoutBuildMoveArrows(hostId, isFirst, isLast));
+
   hostEl.insertBefore(tabBar, hostEl.firstChild);
 
   const body = document.createElement('div');
@@ -240,15 +303,16 @@ function renderCardLayout(state) {
     if (el) cardLayoutResetToStandalone(el);
   });
   const mobile = (typeof isMobileViewport === 'function') ? isMobileViewport() : false;
-  state.order.forEach(id => {
+  state.order.forEach((id, i) => {
     const el = document.getElementById(id);
     if (!el) return;
     panel.appendChild(el);
+    const isFirst = i === 0, isLast = i === state.order.length - 1;
     const guests = state.groups[id];
     if (guests && guests.length) {
-      cardLayoutBuildTabbedHost(el, id, guests, state.active[id] || id);
+      cardLayoutBuildTabbedHost(el, id, guests, state.active[id] || id, mobile || isFirst, mobile || isLast);
     } else if (!mobile) {
-      cardLayoutAddHandleToH3(el);
+      cardLayoutAddHandleToH3(el, isFirst, isLast);
     }
     el.draggable = !mobile;
   });
@@ -262,7 +326,19 @@ function cardLayoutUpdate(mutator) {
 }
 
 function cardLayoutClearDropTargets() {
-  document.querySelectorAll('#panel .card.cardDropTarget').forEach(el => el.classList.remove('cardDropTarget'));
+  document.querySelectorAll('#panel .card.cardDropTarget, #panel .card.cardDropBefore, #panel .card.cardDropAfter')
+    .forEach(el => el.classList.remove('cardDropTarget', 'cardDropBefore', 'cardDropAfter'));
+}
+
+/** Zone de dépose sous le curseur pour une carte cible : bords (~28% chaque côté) = déposer ENTRE
+ *  deux cartes (réordonne, cardLayoutReorderTo), centre = déposer SUR la carte (imbrique en
+ *  onglets, cardLayoutNest) -- 2026-07-13, retour utilisateur "glisser déposer entre 2 cartes". */
+function cardLayoutDropZoneFor(cardEl, clientX) {
+  const rect = cardEl.getBoundingClientRect();
+  const ratio = (clientX - rect.left) / rect.width;
+  if (ratio < 0.28) return 'before';
+  if (ratio > 0.72) return 'after';
+  return 'nest';
 }
 
 /** Recharge/rejette l'état selon le seuil mobile courant et redessine -- appelée au démarrage et
@@ -303,22 +379,28 @@ function initCardLayout() {
     if (!card || !cardLayoutDragSourceId || card.id === cardLayoutDragSourceId) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
+    const zone = cardLayoutDropZoneFor(card, e.clientX);
     cardLayoutClearDropTargets();
-    card.classList.add('cardDropTarget');
+    card.classList.add(zone === 'before' ? 'cardDropBefore' : zone === 'after' ? 'cardDropAfter' : 'cardDropTarget');
   });
   panel.addEventListener('dragleave', e => {
     const card = e.target.closest && e.target.closest('#panel > .card');
-    if (card && !card.contains(e.relatedTarget)) card.classList.remove('cardDropTarget');
+    if (card && !card.contains(e.relatedTarget)) card.classList.remove('cardDropTarget', 'cardDropBefore', 'cardDropAfter');
   });
   panel.addEventListener('drop', e => {
     const card = e.target.closest && e.target.closest('#panel > .card');
-    cardLayoutClearDropTargets();
-    if (!card || !cardLayoutDragSourceId || card.id === cardLayoutDragSourceId) { cardLayoutDragSourceId = null; return; }
+    if (!card || !cardLayoutDragSourceId || card.id === cardLayoutDragSourceId) { cardLayoutClearDropTargets(); cardLayoutDragSourceId = null; return; }
     e.preventDefault();
+    const zone = cardLayoutDropZoneFor(card, e.clientX);
+    cardLayoutClearDropTargets();
     const sourceId = cardLayoutDragSourceId;
     const targetId = card.id;
     cardLayoutDragSourceId = null;
-    cardLayoutUpdate(st => cardLayoutNest(st, sourceId, targetId));
+    if (zone === 'nest') {
+      cardLayoutUpdate(st => cardLayoutNest(st, sourceId, targetId));
+    } else {
+      cardLayoutUpdate(st => cardLayoutReorderTo(st, sourceId, targetId, zone === 'before'));
+    }
   });
   panel.addEventListener('dragend', () => { cardLayoutDragSourceId = null; cardLayoutClearDropTargets(); });
 
@@ -333,6 +415,12 @@ function initCardLayout() {
     if (detachBtn) {
       const hostId = detachBtn.dataset.cardDetachHost, tabId = detachBtn.dataset.cardDetachTab;
       cardLayoutUpdate(st => cardLayoutDetach(st, hostId, tabId));
+      return;
+    }
+    const moveBtn = e.target.closest && e.target.closest('.cardMoveBtn');
+    if (moveBtn && !moveBtn.disabled) {
+      const id = moveBtn.dataset.cardMoveId, dir = Number(moveBtn.dataset.cardMoveDir);
+      cardLayoutUpdate(st => cardLayoutReorder(st, id, dir));
     }
   });
 }

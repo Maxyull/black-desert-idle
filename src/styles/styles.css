@@ -3614,6 +3614,20 @@
     cursor:grab; margin-right:6px; color:var(--gold-dim); font-size:inherit; line-height:inherit; user-select:none;
   }
   .card h3 .cardDragHandle:active { cursor:grabbing; }
+  /* titre sur 1 seule ligne, tronqué proprement (ellipsis) plutôt que de pouvoir passer sur 2
+     lignes -- 2026-07-13, retour utilisateur. h3 devient flex : la poignée/les flèches gardent
+     leur taille (flex:none), seul .cardTitleText (le texte d'origine, isolé par
+     cardLayoutAddHandleToH3) rétrécit et tronque -- sinon un ellipsis posé directement sur h3
+     aurait aussi bien pu avaler la poignée ou les flèches selon l'ordre des enfants. */
+  .card h3 { display:flex; align-items:center; }
+  .cardTitleText { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cardMoveArrows { flex:none; display:inline-flex; margin-left:auto; padding-left:6px; }
+  .cardMoveBtn {
+    background:transparent; border:none; color:var(--ink-dim); font-size:9px; line-height:1;
+    padding:2px 3px; cursor:pointer;
+  }
+  .cardMoveBtn:hover:not(:disabled) { color:var(--gold); transform:none; }
+  .cardMoveBtn:disabled { color:var(--dbBorder); cursor:default; opacity:.4; }
   .card.cardTabbed > h3 { display:none; }
   /* Tous les noms d'onglets côte à côte tout en haut, chaque INVITÉ avec sa propre croix
      juste à côté de son nom pour le démerger individuellement (2026-07-13, retour utilisateur --
@@ -3630,6 +3644,7 @@
   .cardTabBtn {
     background:transparent; border:none; border-bottom:2px solid transparent; color:var(--ink-dim);
     font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 4px 4px; cursor:pointer;
+    white-space:nowrap;
   }
   .cardTabBtn:hover { color:var(--gold); transform:none; }
   .cardTabBtn.active { color:var(--gold); border-bottom-color:var(--gold); }
@@ -3639,6 +3654,12 @@
   }
   .cardDetachBtn:hover { color:var(--gold); transform:none; }
   .card.cardDropTarget { border:2px dashed var(--gold); }
+  /* Dépose ENTRE deux cartes (réordonne, cardLayoutReorderTo) -- distinct de cardDropTarget
+     (dépose SUR une carte, imbrique en onglets) : liseré sur le bord gauche/droit visé plutôt
+     qu'un contour complet, pour bien distinguer les 2 gestes au survol (2026-07-13, retour
+     utilisateur "glisser déposer entre 2 cartes"). */
+  .card.cardDropBefore { box-shadow: -3px 0 0 var(--gold) inset; }
+  .card.cardDropAfter { box-shadow: 3px 0 0 var(--gold) inset; }
   .card.cardNested { border:none; padding:0; background:transparent; margin:0; }
   .card.cardNested > h3 { display:none; }
   .cardHostBody, .card.cardNested { min-width:0; }

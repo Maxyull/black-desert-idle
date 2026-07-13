@@ -5689,6 +5689,44 @@
     assert('cardLayoutDetach(host, tabId) ignore une tentative de détacher l\'hôte lui-même', cardLayoutDetach(st, 'equipCard', 'equipCard').groups.equipCard.length === 2);
   }
 
+  function testCardLayoutReorderSwapsWithNeighborAndNoopsAtEdges() {
+    // flèches ◀▶ (2026-07-13, retour utilisateur : "passer une carte ou un groupe de cartes
+    // d'un côté ou un autre") -- fonction pure, échange avec le voisin immédiat, no-op en bout
+    // de liste (les boutons sont désactivés côté UI, mais la fonction doit rester sûre seule).
+    if (typeof cardLayoutReorder !== 'function') return;
+    const base = cardLayoutDefaultState(); // ['statsCard','zonesCard','lootCard','equipCard','invCard','optCard']
+    const moved = cardLayoutReorder(base, 'zonesCard', -1);
+    assert('cardLayoutReorder(-1) échange avec le voisin de gauche', JSON.stringify(moved.order.slice(0, 2)) === JSON.stringify(['zonesCard', 'statsCard']));
+    const movedRight = cardLayoutReorder(base, 'zonesCard', 1);
+    assert('cardLayoutReorder(+1) échange avec le voisin de droite', JSON.stringify(movedRight.order.slice(0, 3)) === JSON.stringify(['statsCard', 'lootCard', 'zonesCard']));
+    const noopLeft = cardLayoutReorder(base, 'statsCard', -1);
+    assert('cardLayoutReorder(-1) sur le 1er élément est un no-op', JSON.stringify(noopLeft.order) === JSON.stringify(base.order));
+    const noopRight = cardLayoutReorder(base, 'optCard', 1);
+    assert('cardLayoutReorder(+1) sur le dernier élément est un no-op', JSON.stringify(noopRight.order) === JSON.stringify(base.order));
+    // déplace le GROUPE entier (hostId représente tout le groupe fusionné dans order) --
+    // vérifie que ses guests suivent implicitement (ils ne sont pas dans order, seul l'hôte l'est).
+    const grouped = cardLayoutNest(base, 'statsCard', 'equipCard'); // hôte equipCard, guest statsCard
+    const groupMoved = cardLayoutReorder(grouped, 'equipCard', -1);
+    assert('cardLayoutReorder() déplace le groupe entier (via son hostId)', groupMoved.order.indexOf('equipCard') < grouped.order.indexOf('equipCard'));
+    assert('cardLayoutReorder() sur un hostId ne touche pas ses guests (restent hors order)', !groupMoved.order.includes('statsCard') && groupMoved.groups.equipCard.includes('statsCard'));
+  }
+
+  function testCardLayoutReorderToInsertsBeforeOrAfterTarget() {
+    // glisser-déposer ENTRE deux cartes (2026-07-13, retour utilisateur) -- distinct de
+    // cardLayoutNest (dépose SUR une carte, imbrique en onglets) : déplace sourceId juste avant
+    // ou après targetId dans order, sans toucher aux groups/active de personne.
+    if (typeof cardLayoutReorderTo !== 'function') return;
+    const base = cardLayoutDefaultState();
+    const before = cardLayoutReorderTo(base, 'optCard', 'statsCard', true);
+    assert('cardLayoutReorderTo(before=true) insère juste avant la cible', before.order[0] === 'optCard' && before.order[1] === 'statsCard');
+    const after = cardLayoutReorderTo(base, 'statsCard', 'lootCard', false);
+    assert('cardLayoutReorderTo(before=false) insère juste après la cible', after.order[1] === 'lootCard' && after.order[2] === 'statsCard');
+    assert('cardLayoutReorderTo() ne perd ni ne duplique aucune carte', JSON.stringify(after.order.slice().sort()) === JSON.stringify(CARD_LAYOUT_IDS.slice().sort()));
+    const clean = sanitizeCardLayoutState(after);
+    assert('cardLayoutReorderTo() produit un état qui reste valide après sanitize', JSON.stringify(clean.order) === JSON.stringify(after.order));
+    assert('cardLayoutReorderTo() ignore sourceId === targetId (no-op)', cardLayoutReorderTo(base, 'statsCard', 'statsCard', true) === base);
+  }
+
   function testCardLayoutSetActiveTabIgnoresUnknownTab() {
     if (typeof cardLayoutSetActiveTab !== 'function') return;
     const base = cardLayoutNest(cardLayoutDefaultState(), 'statsCard', 'equipCard');
@@ -6096,6 +6134,8 @@
     testCardLayoutNestFlattensSourceThatWasItselfAHost();
     testCardLayoutDetachRestoresStandaloneCardRightAfterHost();
     testCardLayoutDetachTargetsOneSpecificGuestAmongSeveral();
+    testCardLayoutReorderSwapsWithNeighborAndNoopsAtEdges();
+    testCardLayoutReorderToInsertsBeforeOrAfterTarget();
     testCardLayoutSetActiveTabIgnoresUnknownTab();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;

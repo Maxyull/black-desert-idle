@@ -16,6 +16,15 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V435', d:'13/07/2026 17:30', name:{fr:'Dashboard Zone : flèches pour déplacer les cartes, glisser-déposer entre 2 cartes, titre sur 1 ligne', en:'Zone dashboard: arrows to move cards, drag between 2 cards, single-line title'}, fr:[
+      {t:'new', sub:'interface', tx:'Chaque carte du dashboard Zone (ou groupe de cartes fusionnées) a désormais 2 flèches ◀▶ pour la déplacer d\'une position, sans avoir à glisser-déposer.'},
+      {t:'new', sub:'interface', tx:'Glisser une carte sur le bord gauche/droit d\'une autre la réordonne à cette position (au lieu de les fusionner en onglets) — glisser sur le centre de la carte continue de fusionner comme avant.'},
+      {t:'change', sub:'interface', tx:'Le titre d\'une carte tient désormais sur une seule ligne (tronqué proprement si trop long) au lieu de pouvoir passer sur 2 lignes.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Each Zone dashboard card (or group of merged cards) now has 2 ◀▶ arrows to move it one position over, without having to drag and drop.'},
+      {t:'new', sub:'interface', tx:'Dragging a card onto the left/right edge of another one reorders it to that position (instead of merging into tabs) — dragging onto the center of a card still merges as before.'},
+      {t:'change', sub:'interface', tx:'A card\'s title now stays on a single line (cleanly truncated if too long) instead of possibly wrapping onto 2 lines.'},
+    ] },
   { v:'V434', d:'13/07/2026 17:15', name:{fr:'Sceau du Conclave : loot de zone + cartes fusionnées, un nom = une croix', en:'Conclave Seal: zone loot list + merged cards, one name = one X'}, fr:[
       {t:'fix', sub:'interface', tx:'Le fragment "Sceau du Port Ancestral" (Sceau du Conclave des Marchands) était bien tirable au combat mais n\'apparaissait pas dans le panneau "Loot de cette zone" — corrigé, affiché avec sa vraie chance de drop.'},
       {t:'change', sub:'interface', tx:'Cartes du dashboard Zone fusionnées entre elles : chaque nom d\'onglet a désormais sa propre petite croix pour le démerger individuellement, au lieu d\'une seule croix qui ne détachait que l\'onglet affiché.'},
