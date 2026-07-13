@@ -26,7 +26,7 @@ function ST(i){
   if(i===0) renderGameView();
   if(i===6) startHardinage();
   if(i===7) renderAchievements();
-  if(i===8) renderPvp();
+  if(i===8){ renderPvp(); if(typeof refreshPvpTournamentState==='function') refreshPvpTournamentState(); }
   if(i===9) renderMyStatsAndLeaderboard();
   if(i===11 && typeof renderMarketTab==='function') renderMarketTab();
   // écran de test viewer 3D GLB (2026-07-10) : n'initialise le contexte WebGL qu'à l'ouverture

@@ -372,6 +372,12 @@
         <div style="font-size:10.5px;color:var(--cream2);margin-top:2px">Les vrais combats joueur-contre-joueur nécessitent un serveur (matchmaking + résolution) pas encore construit. En attendant, voici le classement de tes familiers par puissance — la base sur laquelle le futur PvP s'appuiera.</div>
       </div>
     </div>
+    <!-- Tournoi PvP quotidien asynchrone (2026-07-13, demande explicite) : inscription en continu,
+         fermeture 21h Europe/Paris, résolution automatique côté serveur (pg_cron), replay le
+         lendemain -- voir src/companions/pvp-tournament.js et
+         supabase/migrations/20260722090000_companion_pvp_tournament.sql. Toujours PAS de combat
+         temps réel joueur-contre-joueur (bandeau ci-dessus inchangé). -->
+    <div id="pvp-tournament-card"></div>
     <div>
       <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:10px">⚔️ Classement (puissance GS, toutes sections confondues)</div>
       <div id="pvp-ranking"></div>
@@ -445,6 +451,11 @@
     <div id="pet3d-canvas-wrap" style="width:420px;max-width:80vw;height:360px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden"></div>
   </div>
 </div>
+<!-- bracket complet du tournoi PvP d'hier (2026-07-13, demande explicite) -- voir
+     openPvpBracketModalIfAny(), pvp-tournament.js -->
+<div class="modal-bg" id="pvp-bracket-modal">
+  <div class="modal"><button class="mcl" onclick="CM('pvp-bracket-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px">📋 Bracket du tournoi</div><div id="pvp-bracket-modal-body" style="max-height:60vh;overflow-y:auto"></div></div>
+</div>
 <div class="modal-bg" id="market-modal">
   <div class="modal"><button class="mcl" onclick="CM('market-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="market-modal-title">Marché</div><div id="market-modal-body"></div></div>
 </div>
@@ -474,7 +485,7 @@
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
 <script src="tier.js?v=12"></script>
 <script src="roster.js?v=9"></script>
-<script src="hatch.js?v=20"></script>
+<script src="hatch.js?v=21"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=8"></script>
 <script src="sections.js?v=17"></script>
@@ -505,6 +516,10 @@
      déjà déclarés plus haut, appelée uniquement via ST(8) -- ordre non strictement requis (aucune
      lecture au chargement immédiat), placé ici par lisibilité (juste avant main.js). -->
 <script src="pvp.js?v=8"></script>
+<!-- tournoi PvP quotidien asynchrone (2026-07-13, demande explicite) : lit PETS/normGS/rc/toast/
+     OM/CM déjà déclarés plus haut, appelée uniquement via ST(8)/registerForPvpTournament() --
+     placé juste après pvp.js (classement LOCAL, même famille de tab), avant leaderboard.js. -->
+<script src="pvp-tournament.js?v=1"></script>
 <!-- tes stats + classement cross-joueurs (2026-07-20, demande explicite) : lit
      PETS/totalHatched/silverSpent/fusionCount/PET_CATALOG/ACHIEVEMENTS/completedAchievements déjà
      déclarés plus haut, appelée uniquement via ST(9) -- ordre non strictement requis, placé ici par

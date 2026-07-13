@@ -578,6 +578,82 @@ par Supabase le temps de la transaction.
   ajout de règles génériques thémées (`companions.css`) + couleur du bouton toggle (`.tog::after`)
   passée de `#fff` à `var(--cream)`.
 
+**Tournoi PvP quotidien, asynchrone (2026-07-13, demande explicite confirmée via AskUserQuestion :
+"je crée et applique maintenant une vraie migration Supabase en PRODUCTION pour le tournoi PvP")** :
+remplace le simple bandeau "bientôt disponible" de `pvp.js` (classement LOCAL par puissance,
+toujours gardé, base du futur matchmaking) par un vrai tournoi à élimination directe, résolu
+automatiquement côté serveur. Toujours PAS de combat temps réel joueur-contre-joueur (aucun
+serveur autoritaire pour ça) — l'équipe engagée est un **snapshot figé au moment de
+l'inscription** (tous les pets `p.terrain===true`, voir `deployPet()`, `sections.js`), les pets
+restent 100% locaux (économie fermée, voir plus haut).
+
+- **Fichier** : `pvp-tournament.js` (nouveau, charge juste après `pvp.js`, tab 8 `#p8`) —
+  fonctions pures testables (`deriveCombatStats(pet)`, `computeTeamPower(deployedPets)`,
+  `buildBracket(entrants, seed)`, `resolveBracket(bracket, seed)`) séparées de l'I/O réseau
+  (`registerForPvpTournament()`, `refreshPvpTournamentState()`, via
+  `window.parent.getSbClient()`/`getCurrentUserForSync()`, jamais `window.parent.sb` directement —
+  même pattern que `sync.js`/`market.js`).
+- **4 stats de combat dérivées** (Attaque/Défense/Vitesse/Esquive%), calculées à la volée depuis
+  `normGS()`/`.tier`/`.rar` déjà existants (aucune nouvelle donnée stockée par pet) — formule
+  documentée en tête de `deriveCombatStats()` dans le fichier. Puissance d'équipe =
+  **moyenne** (pas la somme) des puissances individuelles des pets déployés, pour qu'une équipe à
+  8 pets ne domine pas mécaniquement une équipe à 1 pet très fort.
+- **Inscription** : ouverte en continu, ferme chaque jour à **21h Europe/Paris** — après cette
+  heure, une inscription vise automatiquement le jour SUIVANT. Une réinscription avant la
+  fermeture remplace le snapshot précédent (dernière équipe engagée avant 21h qui compte).
+- **Schéma Supabase** (`supabase/migrations/20260722090000_companion_pvp_tournament.sql` +
+  `20260722091500_companion_pvp_tournament_lockdown.sql`) : tables `companion_pvp_registrations`
+  (équipe privée, RLS `user_id = auth.uid()`) et `companion_pvp_tournaments` (bracket/vainqueur,
+  lecture publique une fois résolu — un tournoi doit être consultable par tous ses participants,
+  bracket complet). RPC `register_pvp_team(team, team_power)` (valide la FORME des données
+  envoyées, ne peut PAS recalculer l'équipe elle-même — les pets sont en `localStorage`, pas en
+  base) et `pvp_registrant_count(day)` (compte public, jamais le détail des équipes avant
+  résolution).
+- **Résolution automatique — choix pg_cron + plpgsql plutôt qu'Edge Function + cron HTTP** :
+  `pg_cron` était disponible sur ce projet (jamais installé avant cette migration, voir
+  `list_extensions`) — préféré à une Edge Function pour 2 raisons : (1) la résolution est un
+  calcul pur base de données (lire les inscriptions, construire un bracket, tirer des combats
+  pondérés, écrire le résultat), aucun besoin d'un saut réseau externe ; (2) Postgres connaît
+  nativement le fuseau `Europe/Paris` (DST géré tout seul par la base tz), alors qu'un cron Edge
+  Function en UTC fixe aurait exigé un recalage manuel 2x/an à l'heure d'été/hiver.
+  `resolve_pvp_tournament_if_due()` (appelée toutes les 5 min par pg_cron) compare l'heure Paris
+  courante à l'heure de fermeture (jour + 21h) et résout tout tournoi `'open'` en retard.
+  **Défense en profondeur** : la même RPC reste appelable par tout client authentifié — si jamais
+  pg_cron ne tournait pas, le premier client connecté après 21h déclenche quand même la
+  résolution. **Anti-double-résolution** : `run_pvp_tournament(day)` bascule `'open'→'resolving'`
+  via un `UPDATE...WHERE status='open'` atomique (une seule transaction plpgsql) avant de calculer
+  quoi que ce soit — deux appelants concurrents ne peuvent jamais résoudre le même jour deux fois.
+- **Bracket** : taille = puissance de 2 la plus proche du nombre d'inscrits, byes (`null`) en fin
+  de liste après un ordre pseudo-mélangé par `md5(day || user_id)` (déterministe, pas besoin d'un
+  vrai RNG externe pour l'ordre). Chaque combat (`pvp_simulate_match()`, SQL) tire un gagnant
+  pondéré par l'écart relatif de puissance, borné `[0.05, 0.95]` — jamais un pur coin-flip, jamais
+  100% déterministe non plus. Le bracket entier (rounds + résultats) est stocké en `jsonb`, donc
+  rejouable tel quel en "replay" le lendemain sans recalcul.
+- **`buildBracket()`/`resolveBracket()` (JS) ne sont PAS l'autorité** : la vraie résolution tourne
+  entièrement côté SQL (`run_pvp_tournament()`) — les fonctions JS équivalentes servent de
+  spécification testable en pur JS (et un éventuel aperçu client futur), documentées comme
+  n'étant pas tenues de produire un tirage identique bit-à-bit au serveur. Seul le résultat stocké
+  côté serveur fait foi pour le vrai tournoi.
+- **Sécurité** : `get_advisors` a signalé après la première migration que les 4 RPC restaient
+  exécutables par le rôle `anon` (Postgres accorde `EXECUTE` à `PUBLIC` par défaut sur toute
+  fonction nouvellement créée — même piège déjà rencontré pour `delete_my_account`, voir
+  `20260713220100_delete_my_account_revoke_anon.sql`) — corrigé dans la migration de verrouillage
+  (`revoke ... from public/anon`, `grant ... to authenticated` explicite) + recréation de
+  `pvp_simulate_match()` avec `search_path` fixé (avertissement "role mutable search_path").
+- **UI** (`#pvp-tournament-card`, tab PvP `#p8`, sous le bandeau "bientôt disponible" existant du
+  vrai PvP synchrone) : compte à rebours vers 21h Paris (dérivé de `Intl.DateTimeFormat` en
+  `timeZone:'Europe/Paris'`, même robustesse DST que côté serveur, sans dépendance externe), carte
+  "Ton équipe engagée" (liste des pets déployés + puissance live + rappel explicite que l'équipe
+  est figée au moment de l'inscription), carte "Tournoi d'hier" (vainqueur + mon parcours
+  round-par-round + bouton "Voir le bracket complet", `#pvp-bracket-modal`).
+- Tests : `tests/companions.spec.js` (`deriveCombatStats/computeTeamPower are pure...`,
+  `buildBracket pads an odd entrant count with byes...`, `PvP tab shows the tournament countdown
+  card...`, `register_pvp_team RPC call never throws...`) — la RPC réelle ne peut pas être exercée
+  de bout en bout dans ce contexte de test (`signInForTest()` fabrique un utilisateur LOCAL, pas
+  une vraie session Supabase, voir plus haut) : les fonctions pures et le rendu client (état
+  injecté directement) sont testés séparément de l'appel réseau lui-même (vérifié seulement
+  "ne lève jamais d'exception non gérée", même politique que `syncCompanionStatsToServer`).
+
 ## Fichiers
 
 - `companions.html` — page hôte de l'iframe : header, tabs, tous les panneaux, les 2
@@ -619,6 +695,10 @@ par Supabase le temps de la transaction.
 18. `achievements.js` — définitions des achievements, score de prestige.
 19. `pvp.js` — onglet PvP (classement LOCAL par puissance, bandeau verrouillé). Charge
     après `tier.js`/`roster.js` par lisibilité, aucune contrainte d'ordre réelle (appelée via `ST(8)`).
+19b. `pvp-tournament.js` (2026-07-13) — tournoi PvP quotidien asynchrone (voir plus haut) : calcul
+    pur (stats de combat/puissance d'équipe/bracket) + I/O réseau (`register_pvp_team`,
+    `pvp_registrant_count`, via `window.parent.getSbClient()`) + rendu de `#pvp-tournament-card`
+    (même tab `#p8` que `pvp.js`, juste après par lisibilité, aucune contrainte d'ordre réelle).
 20. `leaderboard.js` (2026-07-20, refonte "Classement Public" 2026-07-21) — onglet "Tes
     stats" + Classement (tab 9, `ST(9)`), distinct du classement PvP LOCAL ci-dessus : "Tes stats"
     (100% local, œufs ouverts/argent dépensé/fusions/index/Score Prestige) + un vrai classement
