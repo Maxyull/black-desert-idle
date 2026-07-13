@@ -2,11 +2,9 @@
 -- multi-joueurs, contrairement à live_boss (singleton, id=1) plusieurs groupes de 5 joueurs max
 -- peuvent combattre en parallèle — nécessite une vraie table de sessions, pas une seule ligne.
 --
--- NON APPLIQUÉE à cette date (2026-07-22) : écrite pour revue, l'application se fait séparément
--- avec confirmation explicite de l'utilisateur (convention déjà établie sur ce repo, voir la
--- migration offline_catchup de la session précédente). Le client (src/combat/miniboss.js) appelle
--- déjà ces RPC de façon opportuniste (try/catch, dégrade en simulation locale déterministe tant
--- que cette migration n'est pas appliquée) — voir le commentaire en tête de miniboss.js.
+-- APPLIQUÉE le 2026-07-13 (confirmation explicite de l'utilisateur). Le client
+-- (src/combat/miniboss.js) appelle ces RPC de façon opportuniste (try/catch) et dégrade en
+-- simulation locale déterministe en cas d'échec réseau — voir le commentaire en tête de miniboss.js.
 
 -- ==================== TABLES ====================
 
