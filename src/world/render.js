@@ -2018,6 +2018,128 @@ function drawBashimIso(wx,wy,w,t) {
   }
   ctx.restore();
 }
+// Pirate d'Iliya (zone "Île d'Iliya", zone index 13, palier Serendia — Mid) — créature ORIGINALE :
+// pirate maudit spectral, ambiance "Cursed Pirate Ships" de Black Desert Online (l'aire proche
+// d'Iliya Island a des navires pirates maudits dans le vrai jeu) — ambiance seulement, aucun asset
+// réel repris. Corps semi-translucide (hexToRgba, même technique que le buste fumant de
+// drawManesIso) sous un manteau de capitaine détrempé et déchiré au bas dentelé, tricorne incrusté
+// de corail/berniques, quelques marques/fissures maudites vert luisant sur le torse et le visage
+// (intensité liée à w.lunge, même principe discret que les veines de drawTrollIso), un crochet à
+// la place d'une main enroulé d'algues qui pendent, pieds/bas de jambe osseux nus qui s'estompent
+// légèrement vers le sol (fantôme "solide", pas un pur esprit comme drawManesIso — ne se dissout
+// pas complètement). Palette bleu-vert/gris-vert pâle (voir tones de zones-data.js),
+// volontairement distincte de la palette tan/cuir chaude du Pirate vivant du Repaire des Pirates
+// (zone 2, drawPirateIso) — différenciation délibérée entre les deux zones "pirate" (mockup
+// approuvé "Option B, variante spectrale"). Pas de variante w.alpha dédiée (comme
+// Rhutum/Shultz/Sausan/Pirate/Gahaz) — w.scale déjà plus grand suffit pour un pack alpha.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Pirate d'Iliya maudit/spectral en isométrique (zone "Île d'Iliya"). */
+function drawIliyaIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.22)'; // ombre atténuée -- silhouette spectrale
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,11*w.scale,4.2,0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const tone = w.tone; // teinte de zone (bleu-vert/gris-vert pâle)
+  const trot = Math.sin(t*4.4+w.phase)*1.2; // démarche traînante, plus lente qu'un pirate vivant
+  const curseGlow = w.lunge>.3 ? 'rgba(140,255,140,.85)' : 'rgba(100,210,110,.5)'; // marques maudites, plus vives pendant le lunge (même principe que les veines de drawTrollIso)
+  if (w.lunge > .3) { ctx.strokeStyle='rgba(120,220,140,.45)'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.ellipse(0,-16,14,10,0,0,7); ctx.stroke(); }
+  // pieds/bas de jambe osseux nus, translucides, qui s'estompent légèrement vers le sol
+  [-1,1].forEach(dir => {
+    ctx.strokeStyle = hexToRgba(tone,.55); ctx.lineWidth=2.6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(dir*4.4,-9); ctx.lineTo(dir*5.6+trot*.4*dir,2+trot*.4*dir); ctx.stroke();
+    ctx.fillStyle = hexToRgba('#d8e8e0',.4); // os pâle, plus clair que la jambe
+    ctx.beginPath(); ctx.ellipse(dir*6+trot*.4*dir,3+trot*.4*dir,1.6,0.9,0,0,7); ctx.fill();
+    ctx.fillStyle = hexToRgba(tone,.14); // volute de dissolution au sol (fondu, pas des bottes)
+    ctx.beginPath(); ctx.ellipse(dir*5.4+trot*.4*dir,4.4,2.2,1.4,0,0,7); ctx.fill();
+  });
+  // manteau de capitaine détrempé -- corps principal, translucide, bas dentelé/déchiré
+  ctx.fillStyle = hexToRgba(tone,.6);
+  ctx.beginPath();
+  ctx.moveTo(-8.6,-25); ctx.lineTo(-8,-9);
+  ctx.lineTo(-5.6,-3); ctx.lineTo(-3,-9); ctx.lineTo(-0.6,-2); ctx.lineTo(2,-9); ctx.lineTo(4.6,-3); ctx.lineTo(7,-9);
+  ctx.lineTo(8.6,-25);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(10,30,26,.4)'; ctx.lineWidth=.8; ctx.stroke();
+  // reflet clair du tissu détrempé (haut du torse)
+  ctx.fillStyle = hexToRgba('#eaffef',.14);
+  ctx.beginPath(); ctx.moveTo(-8.6,-25); ctx.lineTo(-8,-16); ctx.lineTo(8,-16); ctx.lineTo(8.6,-25); ctx.closePath(); ctx.fill();
+  // pans du manteau ouverts sur les côtés (silhouette de manteau long, pas juste un gilet)
+  ctx.fillStyle = hexToRgba(tone,.42);
+  ctx.beginPath(); ctx.moveTo(-8.6,-22); ctx.quadraticCurveTo(-13,-10,-10,1); ctx.lineTo(-7.4,-2); ctx.quadraticCurveTo(-9,-11,-6.6,-21); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(8.6,-22); ctx.quadraticCurveTo(13,-10,10,1); ctx.lineTo(7.4,-2); ctx.quadraticCurveTo(9,-11,6.6,-21); ctx.closePath(); ctx.fill();
+  // marques/fissures maudites vert luisant sur le torse
+  ctx.strokeStyle = curseGlow; ctx.lineWidth = w.lunge>.3?1.1:.75; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(-3,-22); ctx.lineTo(-1,-17); ctx.lineTo(-3.4,-13);
+  ctx.moveTo(2,-21); ctx.lineTo(3.4,-16); ctx.lineTo(1.6,-11);
+  ctx.stroke();
+  // épaulettes du manteau
+  ctx.fillStyle = hexToRgba(tone,.65);
+  ctx.beginPath(); ctx.ellipse(-7.6,-24.5,2.4,2,0,0,7); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(7.6,-24.5,2.4,2,0,0,7); ctx.fill();
+  // bras + crochet enroulé d'algues (main d'attaque)
+  ctx.strokeStyle = hexToRgba(tone,.6); ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(-8,-22); ctx.lineTo(-11,-13); ctx.stroke();
+  ctx.fillStyle = hexToRgba(tone,.68);
+  ctx.beginPath(); ctx.ellipse(-11.4,-11.4,2,2.4,0,0,7); ctx.fill();
+  ctx.strokeStyle = hexToRgba(tone,.6); ctx.lineWidth=3.2; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(8,-22); ctx.lineTo(11+lungeAmt*.4,-13); ctx.stroke();
+  // crochet métallique
+  ctx.strokeStyle='rgba(150,160,160,.85)'; ctx.lineWidth=1.8; ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(11+lungeAmt*.4,-13); ctx.quadraticCurveTo(15+lungeAmt*.5,-13,15.6+lungeAmt*.5,-9);
+  ctx.quadraticCurveTo(15.8+lungeAmt*.5,-6,13+lungeAmt*.4,-6.4);
+  ctx.stroke();
+  // algues enroulées autour du crochet (brins fins qui pendent)
+  ctx.strokeStyle='rgba(70,140,80,.7)'; ctx.lineWidth=.8;
+  ctx.beginPath(); ctx.moveTo(12+lungeAmt*.4,-12); ctx.quadraticCurveTo(10+lungeAmt*.4,-8,11.4+lungeAmt*.4,-4); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(13.6+lungeAmt*.4,-10.6); ctx.quadraticCurveTo(12.6+lungeAmt*.4,-6,14+lungeAmt*.4,-2.4); ctx.stroke();
+  // tête -- crâne pâle translucide
+  ctx.fillStyle = hexToRgba('#dcece6',.68);
+  ctx.beginPath(); ctx.arc(0,-29,4.2,0,7); ctx.fill();
+  // marques maudites vert luisant sur le visage
+  ctx.strokeStyle = curseGlow; ctx.lineWidth = w.lunge>.3?1:.7;
+  ctx.beginPath(); ctx.moveTo(-2.6,-31.4); ctx.lineTo(-1.2,-28); ctx.moveTo(2.2,-31); ctx.lineTo(1.2,-27.4); ctx.stroke();
+  // yeux -- lueur verte sourde, discrète (mob normal, pas de boss)
+  ctx.fillStyle = w.lunge>.3 ? 'rgba(150,255,150,.9)' : 'rgba(110,215,120,.65)';
+  ctx.beginPath(); ctx.arc(-1.6,-29.4,.7,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(1.6,-29.4,.7,0,7); ctx.fill();
+  // col relevé du manteau, déchiré
+  ctx.fillStyle = hexToRgba(tone,.55);
+  ctx.beginPath();
+  ctx.moveTo(-4.6,-25.6); ctx.lineTo(-6.4,-30.6); ctx.lineTo(-3,-27.4);
+  ctx.lineTo(0,-31); ctx.lineTo(3,-27.4); ctx.lineTo(6.4,-30.6); ctx.lineTo(4.6,-25.6);
+  ctx.closePath(); ctx.fill();
+  // tricorne incrusté de corail/berniques
+  ctx.fillStyle = hexToRgba('#5a6c62',.72);
+  ctx.beginPath();
+  ctx.moveTo(-8,-31.4); ctx.quadraticCurveTo(-2,-36.4,0,-33.6);
+  ctx.quadraticCurveTo(2,-36.4,8,-31.4);
+  ctx.quadraticCurveTo(3,-34.6,0,-34.2);
+  ctx.quadraticCurveTo(-3,-34.6,-8,-31.4);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(10,20,18,.4)'; ctx.lineWidth=.7; ctx.stroke();
+  // texture corail/bernique sur le bord du chapeau (petites bosses)
+  ctx.fillStyle='rgba(200,140,120,.55)';
+  [[-5.6,-31.6],[-2,-33.2],[2.4,-33.4],[6,-31.8]].forEach(([bx,by]) => {
+    ctx.beginPath(); ctx.arc(bx,by,.9,0,7); ctx.fill();
+  });
+  ctx.fillStyle='rgba(150,180,160,.5)';
+  ctx.beginPath(); ctx.arc(-3.6,-32.4,.6,0,7); ctx.fill();
+  ctx.beginPath(); ctx.arc(4.2,-32.6,.6,0,7); ctx.fill();
+  // contour net global (silhouette lisible, rendu doux/spectral)
+  ctx.strokeStyle='rgba(10,30,26,.4)'; ctx.lineWidth=.9;
+  ctx.beginPath();
+  ctx.moveTo(-8.6,-25); ctx.lineTo(-8,-9); ctx.lineTo(-5.6,-3); ctx.lineTo(-3,-9); ctx.lineTo(-0.6,-2); ctx.lineTo(2,-9); ctx.lineTo(4.6,-3); ctx.lineTo(7,-9); ctx.lineTo(8.6,-25);
+  ctx.stroke();
+  ctx.restore();
+}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -2183,6 +2305,24 @@ function drawZoneMobIcon() {
     ctx2.fillStyle='#1a1712'; // petits yeux
     ctx2.beginPath(); ctx2.arc(-2,0,1,0,7); ctx2.fill();
     ctx2.beginPath(); ctx2.arc(2,0,1,0,7); ctx2.fill();
+  } else if (zi === 13) { // Pirate d'Iliya (buste translucide maudit + tricorne incrusté de corail + lueur verte)
+    ctx2.fillStyle = hexToRgba(tone,.6); // buste translucide, teinte bleu-vert de zone
+    ctx2.beginPath(); ctx2.arc(0,1,7,0,7); ctx2.fill();
+    ctx2.fillStyle = hexToRgba('#dcece6',.7); // crâne pâle
+    ctx2.beginPath(); ctx2.arc(0,-2,5,0,7); ctx2.fill();
+    ctx2.fillStyle='rgba(110,215,120,.7)'; // lueur verte maudite dans les yeux
+    ctx2.beginPath(); ctx2.arc(-1.8,-2.4,.9,0,7); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(1.8,-2.4,.9,0,7); ctx2.fill();
+    ctx2.fillStyle='#5a6c62'; // tricorne
+    ctx2.beginPath();
+    ctx2.moveTo(-7,-4.6); ctx2.quadraticCurveTo(-2,-10,0,-7.4);
+    ctx2.quadraticCurveTo(2,-10,7,-4.6);
+    ctx2.quadraticCurveTo(3,-7.6,0,-7.2);
+    ctx2.quadraticCurveTo(-3,-7.6,-7,-4.6);
+    ctx2.closePath(); ctx2.fill();
+    ctx2.fillStyle='rgba(200,140,120,.6)'; // touches de corail sur le bord du chapeau
+    ctx2.beginPath(); ctx2.arc(-4.6,-4.8,.8,0,7); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(4.8,-4.8,.8,0,7); ctx2.fill();
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -2215,6 +2355,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 10) return drawUluanIso(wx,wy,w,t);
   if (zoneIdx === 11) return drawManesIso(wx,wy,w,t);
   if (zoneIdx === 12) return drawTrollIso(wx,wy,w,t);
+  if (zoneIdx === 13) return drawIliyaIso(wx,wy,w,t);
   if (zoneIdx === 14) return drawBashimIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
