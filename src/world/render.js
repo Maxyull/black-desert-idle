@@ -1830,6 +1830,185 @@ function drawTrollIso(wx,wy,w,t) {
   }
   ctx.restore();
 }
+// Soldat de Bashim (zone "Base de Bashim") — créature ORIGINALE : bestiaire satyre/faune, guerrier
+// bipède à jambes caprines digitigrades entièrement fourrées jusqu'à de petits sabots fendus (PAS
+// de bottes/pieds humains -- la différence de silhouette clé face à tous les autres monstres
+// humanoïdes du jeu), cornes de bouc fines et recourbées, torse nu tanné, harnais de cuir en
+// bandoulière sur le torse, petits bijoux d'os/dent au cou, massue en bois tenue à la hanche.
+// Variante w.alpha ("Kurd", boss, mockup Option C approuvé) : carrure nettement plus massive
+// (torse/membres bien plus larges, pas seulement w.scale), fourrure des jambes plus sombre/dense,
+// peintures tribales en courbes/spirales sur le torse (accents décoratifs, teinte rougeâtre/ocre),
+// massue à pointes plus lourde et élaborée, braquée devant le corps (silhouette "à deux mains",
+// plus imposante que la massue tenue à la hanche de la variante normale). Ambiance BDO ("Bashim",
+// bestiaire caprin ; caste "Kurd" -> massues à pointes) -- ambiance seulement, aucun asset réel
+// repris, même convention que les autres monstres de ce fichier (voir en-tête drawGahazIso).
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Soldat de Bashim (ou son variant boss "Kurd") en isométrique. */
+function drawBashimIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,(w.alpha?15:11)*w.scale,w.alpha?6:4.6,0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const tone = w.tone; // fourrure des jambes, pilotée par la zone (tan/olive normal, plus sombre pour l'alpha via z.alphaTone)
+  const skin = '#b8926a'; // torse/tête nus, tannés -- contraste voulu avec la fourrure des jambes
+  if (w.alpha) {
+    // ---- "Kurd" (boss) : carrure massive, fourrure sombre/dense, peintures tribales, massue à pointes ----
+    const lumber = Math.sin(t*1.8+w.phase)*2; // démarche lourde, plus lente que le soldat normal
+    if (w.lunge > .3) { ctx.strokeStyle='rgba(210,140,60,.5)'; ctx.lineWidth=2.4;
+      ctx.beginPath(); ctx.ellipse(0,-22,20,15,0,0,7); ctx.stroke(); }
+    ctx.translate(0,lumber);
+    // jambes caprines épaisses, fourrure sombre et dense -- digitigrades : la "cheville" plie vers
+    // l'arrière avant le sabot, contrairement à une jambe humaine
+    ctx.strokeStyle = tone; ctx.lineWidth=8; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(-9,-20); ctx.quadraticCurveTo(-12,-10,-9,-4); ctx.quadraticCurveTo(-7,2,-9,6);
+    ctx.moveTo(9,-20); ctx.quadraticCurveTo(12,-10,9,-4); ctx.quadraticCurveTo(7,2,9,6);
+    ctx.stroke();
+    // touffes de fourrure le long des jambes (silhouette hirsute, pas une masse lisse -- même
+    // technique que les touffes de crinière de drawWolfIso / les cicatrices de drawGahazIso)
+    ctx.strokeStyle='rgba(0,0,0,.32)'; ctx.lineWidth=1.2; ctx.lineCap='round';
+    [[-13,-14],[-13,-6],[-11,1],[13,-14],[13,-6],[11,1]].forEach(([x,y]) => {
+      const dx = x<0?-2.6:2.6;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+dx,y+2.6); ctx.stroke();
+    });
+    // petits sabots fendus (silhouette clé : PAS de bottes/pieds humains)
+    ctx.fillStyle='#1c1710';
+    ctx.beginPath(); ctx.ellipse(-9,7.6,3.2,1.9,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(9,7.6,3.2,1.9,0,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=.8;
+    ctx.beginPath(); ctx.moveTo(-9,6.2); ctx.lineTo(-9,9); ctx.moveTo(9,6.2); ctx.lineTo(9,9); ctx.stroke();
+    // torse nu large et épais (carrure de boss, nettement plus massive que la variante normale --
+    // pas seulement une histoire de w.scale)
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.moveTo(-14,-19); ctx.lineTo(-12,-38); ctx.lineTo(12,-38); ctx.lineTo(14,-19); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.9; ctx.stroke();
+    // peintures tribales en courbes/spirales sur le torse -- accents décoratifs contrastés,
+    // jamais une grande forme (même esprit que les fissures/veines de drawTrollIso)
+    ctx.strokeStyle='rgba(190,70,40,.8)'; ctx.lineWidth=1.3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-8,-34); ctx.quadraticCurveTo(-3,-30,-7,-25); ctx.quadraticCurveTo(-10,-22,-6,-19); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(8,-34); ctx.quadraticCurveTo(3,-30,7,-25); ctx.quadraticCurveTo(10,-22,6,-19); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-2,-36); ctx.lineTo(2,-27); ctx.stroke();
+    // harnais de cuir en bandoulière (traverse le torse, silhouette commune aux 2 variantes)
+    ctx.strokeStyle='#2c2014'; ctx.lineWidth=3; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-11,-37); ctx.lineTo(11,-21); ctx.stroke();
+    // bras épais
+    ctx.strokeStyle = skin; ctx.lineWidth=6.6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-13,-34); ctx.quadraticCurveTo(-20,-20,-16-lungeAmt*.3,-2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(13,-34); ctx.quadraticCurveTo(20,-20,16+lungeAmt*.5,-2); ctx.stroke();
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.ellipse(-16.4-lungeAmt*.3,0,3.4,3.8,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(16.4+lungeAmt*.5,0,3.4,3.8,0,0,7); ctx.fill();
+    // massue à pointes, plus lourde/élaborée que celle du soldat normal, braquée devant le corps à
+    // deux mains (silhouette nettement plus imposante que la massue tenue à la hanche)
+    ctx.save(); ctx.translate(0,-6); ctx.rotate(w.lunge>.3?-.15:.05);
+    ctx.fillStyle='#4a3722';
+    ctx.beginPath(); ctx.moveTo(-4.4,14); ctx.lineTo(-5.6,-13); ctx.quadraticCurveTo(0,-19,5.6,-13); ctx.lineTo(4.4,14); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.8; ctx.stroke();
+    ctx.fillStyle='#8a8a92'; // pointes métalliques
+    [[-4.4,-9],[0,-16],[4.4,-9],[-3,-2],[3,-2]].forEach(([x,y]) => {
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-1.6,y-3.6); ctx.lineTo(x+1.6,y-3.6); ctx.closePath(); ctx.fill();
+    });
+    ctx.restore();
+    // tête + cornes recourbées épaisses (boss = cornes plus imposantes que la variante normale)
+    const headX = 0, headY = -40.4;
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.arc(headX,headY,5.6,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.7; ctx.stroke();
+    ctx.fillStyle='#d8cba0';
+    [-1,1].forEach(dir => {
+      ctx.beginPath();
+      ctx.moveTo(headX+dir*3,headY-4.4);
+      ctx.quadraticCurveTo(headX+dir*8,headY-10,headX+dir*4,headY-16);
+      ctx.quadraticCurveTo(headX+dir*5.4,headY-9,headX+dir*1.2,headY-4.8);
+      ctx.closePath(); ctx.fill();
+    });
+    ctx.fillStyle='#1a1712';
+    ctx.beginPath(); ctx.arc(headX-2.4,headY,1,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(headX+2.4,headY,1,0,7); ctx.fill();
+    // contour net global (silhouette lisible, même logique que le contour du loup)
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(-14,-19); ctx.lineTo(-12,-38); ctx.lineTo(12,-38); ctx.lineTo(14,-19); ctx.closePath();
+    ctx.stroke();
+  } else {
+    // ---- Soldat de Bashim (mob normal) : jambes caprines fourrées, cornes fines, harnais, bijoux d'os ----
+    const trot = Math.sin(t*5+w.phase)*1.4; // démarche de soldat, même rythme que drawGahazIso
+    if (w.lunge > .3) { ctx.strokeStyle='rgba(200,120,60,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(0,-17,14,10,0,0,7); ctx.stroke(); }
+    // jambes caprines fourrées, digitigrades (la "cheville" plie vers l'arrière avant le sabot)
+    ctx.strokeStyle = tone; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(-6,-16); ctx.quadraticCurveTo(-8,-8,-6,-3); ctx.quadraticCurveTo(-4.6,2,-6,4+trot*.4);
+    ctx.moveTo(6,-16); ctx.quadraticCurveTo(8,-8,6,-3); ctx.quadraticCurveTo(4.6,2,6,4-trot*.4);
+    ctx.stroke();
+    // touffes de fourrure le long des jambes -- réparties sur TOUTE la longueur (cuisse ET
+    // mollet), toute la jambe doit lire comme fourrée, pas juste une "jupe" de fourrure en haut
+    // (demande explicite du mockup approuvé)
+    ctx.strokeStyle='rgba(0,0,0,.28)'; ctx.lineWidth=.9; ctx.lineCap='round';
+    [[-7.6,-13],[-8,-9],[-7,-5],[-6.2,-1],[7.6,-13],[8,-9],[7,-5],[6.2,-1]].forEach(([x,y]) => {
+      const dx = x<0?-1.8:1.8;
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x+dx,y+2); ctx.stroke();
+    });
+    // petits sabots fendus (silhouette clé : PAS de bottes/pieds humains)
+    ctx.fillStyle='#241d16';
+    ctx.beginPath(); ctx.ellipse(-6,4.6+trot*.4,2.2,1.3,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(6,4.6-trot*.4,2.2,1.3,0,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.55)'; ctx.lineWidth=.6;
+    ctx.beginPath(); ctx.moveTo(-6,3.6+trot*.4); ctx.lineTo(-6,5.6+trot*.4); ctx.moveTo(6,3.6-trot*.4); ctx.lineTo(6,5.6-trot*.4); ctx.stroke();
+    // torse nu tanné
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.moveTo(-8,-15); ctx.lineTo(-7,-29); ctx.lineTo(7,-29); ctx.lineTo(8,-15); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.7; ctx.stroke();
+    // harnais de cuir en bandoulière (un seul brin diagonal, silhouette commune aux 2 variantes)
+    ctx.strokeStyle='#3a2a18'; ctx.lineWidth=2; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-6,-28); ctx.lineTo(6,-16); ctx.stroke();
+    // petits bijoux d'os/dent au cou (absents de la variante alpha)
+    ctx.fillStyle='#e0d8bc';
+    [[-2.6,-27.6],[0,-27],[2.6,-27.6]].forEach(([x,y]) => {
+      ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x-0.8,y+2); ctx.lineTo(x+0.8,y+2); ctx.closePath(); ctx.fill();
+    });
+    // bras
+    ctx.strokeStyle = skin; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-7,-26); ctx.quadraticCurveTo(-12,-15,-9-lungeAmt*.3,-3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(7,-26); ctx.quadraticCurveTo(12,-15,9+lungeAmt*.5,-3); ctx.stroke();
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.ellipse(-9.4-lungeAmt*.3,-1.4,2.6,3,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(9.4+lungeAmt*.5,-1.4,2.6,3,0,0,7); ctx.fill();
+    // massue en bois tenue à la hanche, plus légère/simple que celle du boss
+    ctx.save(); ctx.translate(10+lungeAmt*.5,-2); ctx.rotate(.35);
+    ctx.fillStyle='#5a4020';
+    ctx.beginPath(); ctx.moveTo(-2.6,9); ctx.lineTo(-3.2,-8); ctx.quadraticCurveTo(0,-11.4,3.2,-8); ctx.lineTo(2.6,9); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+    ctx.restore();
+    // tête + cornes fines recourbées
+    const headX = 0, headY = -31.4;
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.arc(headX,headY,4.6,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+    ctx.fillStyle='#d8cba0';
+    [-1,1].forEach(dir => {
+      ctx.beginPath();
+      ctx.moveTo(headX+dir*2.4,headY-3.6);
+      ctx.quadraticCurveTo(headX+dir*5.6,headY-8,headX+dir*2.6,headY-12.4);
+      ctx.quadraticCurveTo(headX+dir*3.6,headY-7,headX+dir*0.8,headY-4);
+      ctx.closePath(); ctx.fill();
+    });
+    ctx.fillStyle='#1a1712';
+    ctx.beginPath(); ctx.arc(headX-2,headY,0.9,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(headX+2,headY,0.9,0,7); ctx.fill();
+    // contour net global (silhouette lisible, même logique que le contour du loup)
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(-8,-15); ctx.lineTo(-7,-29); ctx.lineTo(7,-29); ctx.lineTo(8,-15); ctx.closePath();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -1979,6 +2158,22 @@ function drawZoneMobIcon() {
     ctx2.fillStyle='#1a1712'; // petits yeux globuleux
     ctx2.beginPath(); ctx2.arc(-1.2,-8.4,.5,0,7); ctx2.fill();
     ctx2.beginPath(); ctx2.arc(1.2,-8.4,.5,0,7); ctx2.fill();
+  } else if (zi === 14) { // Soldat de Bashim (tête caprine : cornes recourbées + col fourré)
+    ctx2.fillStyle=tone; // col fourré
+    ctx2.beginPath(); ctx2.arc(0,3,7.4,0,7); ctx2.fill();
+    ctx2.fillStyle='#b8926a'; // visage nu tanné
+    ctx2.beginPath(); ctx2.arc(0,0,5.6,0,7); ctx2.fill();
+    ctx2.fillStyle='#d8cba0'; // cornes fines recourbées
+    [-1,1].forEach(dir => {
+      ctx2.beginPath();
+      ctx2.moveTo(dir*2.4,-4.4);
+      ctx2.quadraticCurveTo(dir*6.4,-8.6,dir*3,-12.6);
+      ctx2.quadraticCurveTo(dir*4.2,-7.6,dir*0.8,-4.8);
+      ctx2.closePath(); ctx2.fill();
+    });
+    ctx2.fillStyle='#1a1712'; // petits yeux
+    ctx2.beginPath(); ctx2.arc(-2,0,1,0,7); ctx2.fill();
+    ctx2.beginPath(); ctx2.arc(2,0,1,0,7); ctx2.fill();
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -1993,9 +2188,10 @@ function drawZoneMobIcon() {
 // (zone index 6, avec sa variante boss blindée), "Poste Helm" (zone index 7, avec sa variante
 // boss "Golem" à la silhouette radicalement différente), "Repaire Bandits Gahaz" (zone index 8)
 // "Sanctuaire Elric" (zone index 9, avec sa variante boss "idole vivante") et "Ruines de Kratuga"
-// (zone index 10, gardien de pierre Uluan) et "Planque des Mânes" (zone index 11, Esprit des
-// Mânes spectral, avec sa variante boss plus massive) ont la leur, les autres zones gardent la
-// silhouette générique
+// (zone index 10, gardien de pierre Uluan), "Planque des Mânes" (zone index 11, Esprit des
+// Mânes spectral, avec sa variante boss plus massive), "Ruines de Trent" (zone index 12, Troll
+// des Ruines) et "Base de Bashim" (zone index 14, Soldat de Bashim caprin, avec sa variante boss
+// "Kurd" plus massive) ont la leur, les autres zones gardent la silhouette générique
 /** @param {number} wx @param {number} wy @param {object} w @param {number} t. Aiguille vers le draw*Iso du monstre correspondant à la zone active. */
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
@@ -2010,6 +2206,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 10) return drawUluanIso(wx,wy,w,t);
   if (zoneIdx === 11) return drawManesIso(wx,wy,w,t);
   if (zoneIdx === 12) return drawTrollIso(wx,wy,w,t);
+  if (zoneIdx === 14) return drawBashimIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 

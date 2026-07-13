@@ -2514,6 +2514,31 @@
     cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
     assert('drawTrollIso ne lève jamais d\'exception (alpha/normal, échelle/charge/sens/hors-écran)', !threw, errMsg);
   }
+  // Zone 14 "Base de Bashim" (Soldat de Bashim, avec sa variante boss "Kurd") — même garde-fou que
+  // les autres draw*Iso : jamais d'exception quelle que soit la combinaison alpha/échelle/charge/
+  // sens/hors-écran (voir testDrawTrollIsoNeverThrows/testDrawElricIsoNeverThrows, même pattern).
+  function testDrawBashimIsoNeverThrows() {
+    if (typeof drawBashimIso === 'undefined' || typeof cam === 'undefined' || typeof P === 'undefined') return;
+    const savedCamX = cam.x, savedCamY = cam.y, savedPx = P.x, savedPy = P.y;
+    cam.x = 0; cam.y = 0; P.x = 100; P.y = 0;
+    let threw = false, errMsg = '';
+    try {
+      [true, false].forEach(alpha => {
+        [0, 0.85, 1.5].forEach(scale => {
+          [0, 0.5, 1].forEach(lunge => {
+            [-1, 1].forEach(px => {
+              P.x = px;
+              drawBashimIso(0, 0, { scale, lunge, phase: 0, tone:'#8a8a68', alpha }, 0.3);
+            });
+          });
+        });
+      });
+      drawBashimIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#8a8a68', alpha:true }, 0); // hors écran -> sortie anticipée
+      drawBashimIso(99999, 99999, { scale:1, lunge:0, phase:0, tone:'#8a8a68', alpha:false }, 0); // idem, branche normale
+    } catch (e) { threw = true; errMsg = e.message; }
+    cam.x = savedCamX; cam.y = savedCamY; P.x = savedPx; P.y = savedPy;
+    assert('drawBashimIso ne lève jamais d\'exception (alpha/normal, échelle/charge/sens/hors-écran)', !threw, errMsg);
+  }
   // "Regarde le compendium retroactivement des objet PEN" (2026-07-08, bug trouvé : un joueur avec
   // un objet déjà à PEN AVANT l'ajout de la Maîtrise PEN ne le voyait jamais compté) -- vérifie que
   // migratePenMasteryV308 scanne bien équipement/sac/Compendium et marque tout objet déjà au max.
@@ -5479,6 +5504,7 @@
     testDrawUluanIsoNeverThrows();
     testDrawManesIsoNeverThrows();
     testDrawTrollIsoNeverThrows();
+    testDrawBashimIsoNeverThrows();
     testMigratePenMasteryV308MarksExistingPenItems();
     testEvictMasteredFromCompendiumBagOnAnyCopyReachingPen();
     testMigratePenMasteryV308EvictsCompendiumRetroactively();
