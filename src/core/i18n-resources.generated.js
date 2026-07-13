@@ -719,6 +719,9 @@ const I18N_RESOURCES = {
       "market.cancel_btn": "Annuler",
       "market.choose_tier_label": "Choisir le niv. d'optimisation",
       "market.closed_for_maintenance": "🏛️ Le Marché est actuellement fermé pour maintenance. Réessaie plus tard.",
+      "market.conclave_seal.avg_price_label": "📜 Prix moyen (10 dernières ventes) : {{price}} 🪙",
+      "market.conclave_seal.avg_price_loading": "📜 Prix moyen…",
+      "market.conclave_seal.avg_price_none": "📜 Prix moyen : aucune vente récente",
       "market.col_orders": "Commandes",
       "market.col_price": "Prix",
       "market.col_stock": "En stock",
@@ -925,7 +928,12 @@ const I18N_RESOURCES = {
       "progression.treasure_craft.panel_title": "🔧 Combiner",
       "progression.treasure_craft.secret_box_label": "Coffret secret",
       "progression.treasure_craft.secret_combo_hint": "1 Trésor de Velia + 1 Trésor de Heidel + 1 Trésor de Calpheon → silver (Heidel/Calpheon pas encore débloqués)",
-      "progression.treasure_craft.upcoming_tier_hint": "Bientôt disponible — palier {{tier}} pas encore ouvert"
+      "progression.treasure_craft.upcoming_tier_hint": "Bientôt disponible — palier {{tier}} pas encore ouvert",
+      "progression.treasure_craft.conclave_seal_label": "Sceau du Conclave des Marchands",
+      "progression.treasure_craft.conclave_seal_hint": "Assemble les 5 Sceaux de Guilde (un par région) — Heidel/Calpheon/Valencia/Edana pas encore débloqués, seul le Sceau du Port Ancestral (Velia) est obtenable aujourd'hui",
+      "progression.treasure_craft.conclave_seal_active_label": "Sceau du Conclave assemblé ✅",
+      "progression.treasure_craft.conclave_seal_active_hint": "Taxe de vente -5%, frais de mise en vente -3%, gain net +8%, passif régional actif — voir le panneau Marché",
+      "progression.treasure_craft.conclave_seal_assembled": "Sceau du Conclave des Marchands assemblé !"
     },
     "social": {
       "social.chat_day_today": "Aujourd'hui",
@@ -1660,6 +1668,9 @@ const I18N_RESOURCES = {
       "market.cancel_btn": "Cancel",
       "market.choose_tier_label": "Choose enhancement level",
       "market.closed_for_maintenance": "🏛️ The Market is currently closed for maintenance. Try again later.",
+      "market.conclave_seal.avg_price_label": "📜 Average price (last 10 sales): {{price}} 🪙",
+      "market.conclave_seal.avg_price_loading": "📜 Average price…",
+      "market.conclave_seal.avg_price_none": "📜 Average price: no recent sales",
       "market.col_orders": "Orders",
       "market.col_price": "Price",
       "market.col_stock": "In stock",
@@ -1866,7 +1877,12 @@ const I18N_RESOURCES = {
       "progression.treasure_craft.panel_title": "🔧 Combine",
       "progression.treasure_craft.secret_box_label": "Secret box",
       "progression.treasure_craft.secret_combo_hint": "1 Velia Treasure + 1 Heidel Treasure + 1 Calpheon Treasure → silver (Heidel/Calpheon not unlocked yet)",
-      "progression.treasure_craft.upcoming_tier_hint": "Coming soon — {{tier}} tier not yet open"
+      "progression.treasure_craft.upcoming_tier_hint": "Coming soon — {{tier}} tier not yet open",
+      "progression.treasure_craft.conclave_seal_label": "Merchants' Conclave Seal",
+      "progression.treasure_craft.conclave_seal_hint": "Assemble the 5 Guild Seals (one per region) — Heidel/Calpheon/Valencia/Edana not unlocked yet, only the Ancestral Harbor Seal (Velia) is obtainable today",
+      "progression.treasure_craft.conclave_seal_active_label": "Conclave Seal assembled ✅",
+      "progression.treasure_craft.conclave_seal_active_hint": "Sell tax -5%, listing fee -3%, net gain +8%, regional passive active — see the Market panel",
+      "progression.treasure_craft.conclave_seal_assembled": "Merchants' Conclave Seal assembled!"
     },
     "social": {
       "social.chat_day_today": "Today",
