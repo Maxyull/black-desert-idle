@@ -511,6 +511,10 @@ const I18N_RESOURCES = {
     "combat": {
       "combat.miniboss.you_label": "Toi",
       "combat.miniboss.creature_name": "Serviteur du Grimoire",
+      "combat.miniboss.creature_lore": "« Chaque page arrachée au Livre interdit murmure encore le nom de son gardien. »",
+      "combat.miniboss.ladder_tagline": "⚡ Plus vous êtes nombreux, plus vite ça va — et plus le loot est généreux !",
+      "combat.miniboss.ladder_next_tier": "Invite <b>{{need}}</b> joueur(s) de plus pour passer à <b>+{{pct}}%</b> !",
+      "combat.miniboss.ladder_maxed": "🏆 Groupe complet — bonus maximum atteint !",
       "combat.miniboss.parchemin_in_bag": "Parchemin(s) en sac",
       "combat.miniboss.not_tradeable": "Non échangeable — lié au compte",
       "combat.miniboss.summon_button": "Invoquer",
@@ -1506,6 +1510,10 @@ const I18N_RESOURCES = {
     "combat": {
       "combat.miniboss.you_label": "You",
       "combat.miniboss.creature_name": "Grimoire Servant",
+      "combat.miniboss.creature_lore": "\"Every page torn from the Forbidden Book still whispers its keeper's name.\"",
+      "combat.miniboss.ladder_tagline": "⚡ The more of you there are, the faster it goes — and the richer the loot!",
+      "combat.miniboss.ladder_next_tier": "Invite <b>{{need}}</b> more player(s) to reach <b>+{{pct}}%</b>!",
+      "combat.miniboss.ladder_maxed": "🏆 Full group — maximum bonus reached!",
       "combat.miniboss.parchemin_in_bag": "Scroll(s) in bag",
       "combat.miniboss.not_tradeable": "Not tradeable — account bound",
       "combat.miniboss.summon_button": "Summon",
@@ -8181,9 +8189,20 @@ function renderMiniBossLobbyHtml() {
       `<span class="minibossPartyReady ${ok?'ready':''}">${ok?'✅':'❌'} ${have}/${minibossRunLength}</span>` +
       `</div>`;
   }).join('');
-  return `<div class="card minibossSummonCard">
+  const nextTierHint = n >= MINIBOSS_MAX_GROUP_SIZE
+    ? i18next.t('combat:combat.miniboss.ladder_maxed')
+    : i18next.t('combat:combat.miniboss.ladder_next_tier', { need: MINIBOSS_MAX_GROUP_SIZE-n, pct: Math.round((MINIBOSS_GROUP_BONUS[n+1]-1)*100) });
+  return `<div class="card minibossLobbyBonusCard">
+      ${minibossBonusLadderHtml(n)}
+      <div class="minibossBonusTagline">${i18next.t('combat:combat.miniboss.ladder_tagline')}</div>
+      <div class="minibossBonusHint">${nextTierHint}</div>
+    </div>
+    <div class="minibossLobbyGrid">
+    <div class="minibossLobbyMain">
+    <div class="card minibossSummonCard">
       <div class="minibossSummonIcon">👻</div>
       <div class="minibossSummonName">${i18next.t('combat:combat.miniboss.creature_name')}</div>
+      <div class="minibossSummonLore">${i18next.t('combat:combat.miniboss.creature_lore')}</div>
       <div class="minibossParcheminRow">
         <span class="minibossParcheminIcon">${MINIBOSS_PARCHEMIN.icon}</span>
         <div><div class="minibossParcheminQty">${parchQty} <small>${i18next.t('combat:combat.miniboss.parchemin_in_bag')}</small></div>
@@ -8204,7 +8223,6 @@ function renderMiniBossLobbyHtml() {
     </div>
     <div class="card minibossGroupCard">
       <h3>${i18next.t('combat:combat.miniboss.group_state_title')} (${n}/${MINIBOSS_MAX_GROUP_SIZE})</h3>
-      ${minibossBonusLadderHtml(n)}
       <div class="minibossRunLengthRow">
         <span>${i18next.t('combat:combat.miniboss.fights_to_chain')}</span>
         <div class="minibossRunChips">${chipsHtml}</div>
@@ -8226,6 +8244,8 @@ function renderMiniBossLobbyHtml() {
       <button class="minibossReadyBtn" id="minibossSummonBtn2" ${summonBtnDisabled?'disabled':''}>✅ ${i18next.t('combat:combat.miniboss.engage_button', { n: minibossRunLength })}</button>
       <div class="minibossMaxHint">${maxRun>0?i18next.t('combat:combat.miniboss.max_hint', { n: maxRun }):''}</div>
     </div>
+    </div>
+    <div class="minibossLobbySide">
     <div class="card minibossChatCard">
       <div class="minibossChatTabs">
         <button class="minibossChatTab on" data-chat="recruit">💬 ${i18next.t('combat:combat.miniboss.chat_recruit')}</button>
@@ -8250,6 +8270,8 @@ function renderMiniBossLobbyHtml() {
           <button class="minibossSendBtn" id="minibossGroupSend">${i18next.t('combat:combat.miniboss.send_button')}</button>
         </div>
       </div>
+    </div>
+    </div>
     </div>`;
 }
 
