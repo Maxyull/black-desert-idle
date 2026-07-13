@@ -1144,6 +1144,184 @@ function drawGahazIso(wx,wy,w,t) {
   ctx.closePath(); ctx.fill();
   ctx.restore();
 }
+// Sectateur d'Elric (zone "Sanctuaire Elric", 1ère zone du palier bleu/Mediah, juste après Repaire
+// Bandits Gahaz) — créature ORIGINALE : cultiste voûté portant un masque rituel en bois sculpté
+// (anguleux, style totem, visage stylisé "en colère" — pas un vrai visage), robe en lambeaux
+// mousse/brun déchiquetée, bâton noueux tenu debout avec un petit charme en os suspendu par un
+// lien, ceinture de corde à talismans en disque, peau grisâtre-verte visible sur les mains,
+// posture voûtée/penchée en avant. Ambiance cultiste/sectaire de BDO — aucun asset réel repris,
+// juste l'ambiance (même convention que les autres monstres de ce fichier). Variante w.alpha
+// ("idole vivante", mockup approuvé) : silhouette bien plus massive, intégralement enveloppée de
+// racines/écorce en couches, grosse tête-idole en bois aux yeux creux luisants de vert (intensité
+// liée à w.lunge, même principe que la bande incandescente du Golem de drawHelmIso), mains
+// terminées par des griffes de bois noueux, 2-3 talismans/os qui flottent près des épaules en
+// dérivant lentement (via t/w.phase, même esprit que les orbes d'éveil orbitants de
+// classes/sorcier/sorcier-render.js) et de faibles feux follets verts translucides aux pieds.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Sectateur d'Elric (ou son idole boss) en isométrique. */
+function drawElricIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,(w.alpha?16:12)*w.scale,w.alpha?6:5,0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const tone = w.tone; // teinte de zone (mauve clair normal / mauve sombre pour l'idole alpha, voir z.alphaTone)
+  if (w.alpha) {
+    // ---- Idole vivante : masse enveloppée de racines/écorce, tête-idole aux yeux luisants ----
+    const bob = Math.sin(t*1.6+w.phase)*1.3; // flotte/dérive légèrement plutôt qu'une vraie démarche
+    if (w.lunge > .3) { ctx.strokeStyle='rgba(120,220,140,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(0,-18,18,14,0,0,7); ctx.stroke(); }
+    ctx.translate(0,bob);
+    // jambes/base épaisses (silhouette humanoïde mais massive, contrairement au Golem sans membres)
+    ctx.strokeStyle='#2c2a1e'; ctx.lineWidth=6.4; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(-6,-10); ctx.lineTo(-7,3);
+    ctx.moveTo(6,-10); ctx.lineTo(7,3);
+    ctx.stroke();
+    // torse massif, enveloppé de couches de racines/écorce
+    ctx.fillStyle = tone;
+    ctx.beginPath(); ctx.moveTo(-13,-10); ctx.lineTo(-11,-30); ctx.lineTo(11,-30); ctx.lineTo(13,-10); ctx.closePath(); ctx.fill();
+    // lanières d'écorce superposées (texture, même technique que les lignes de plaques de drawHelmIso)
+    ctx.strokeStyle='rgba(20,14,10,.4)'; ctx.lineWidth=1.1;
+    ctx.beginPath();
+    ctx.moveTo(-12,-24); ctx.lineTo(12,-24);
+    ctx.moveTo(-12.5,-18); ctx.lineTo(12.5,-18);
+    ctx.moveTo(-11.5,-12); ctx.lineTo(11.5,-12);
+    ctx.stroke();
+    // racines noueuses qui débordent du contour (quelques mèches irrégulières de chaque côté)
+    ctx.strokeStyle='#3a3220'; ctx.lineWidth=1.6; ctx.lineCap='round';
+    [[-13,-26,-17,-21],[-13,-16,-18,-13],[13,-27,18,-22],[13,-15,19,-11]].forEach(([x1,y1,x2,y2]) => {
+      ctx.beginPath(); ctx.moveTo(x1,y1); ctx.quadraticCurveTo((x1+x2)/2,(y1+y2)/2-2,x2,y2); ctx.stroke();
+    });
+    // bras épais + mains griffues en bois noueux (quelques traits angulaires au bout des doigts)
+    ctx.strokeStyle = tone; ctx.lineWidth=5; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(11,-27); ctx.lineTo(17+lungeAmt*.5,-15); ctx.stroke();
+    ctx.strokeStyle='#4a4230'; ctx.lineWidth=1.4;
+    [[-2,-2],[0,-3.6],[2.4,-2]].forEach(([dx,dy]) => {
+      ctx.beginPath(); ctx.moveTo(17+lungeAmt*.5,-15); ctx.lineTo(17+lungeAmt*.5+dx*1.6,-15+dy*1.6-2); ctx.stroke();
+    });
+    // tête-idole : masque en bois massif
+    ctx.fillStyle = '#4a3a26';
+    ctx.beginPath();
+    ctx.moveTo(0,-42); ctx.lineTo(8,-34); ctx.lineTo(6,-24); ctx.lineTo(-6,-24); ctx.lineTo(-8,-34);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=1; ctx.stroke();
+    // yeux creux luisants de vert -- intensité/couleur liées à w.lunge (même principe que la bande
+    // incandescente du Golem de drawHelmIso / la peinture de guerre de drawRhutumIso)
+    const glow = w.lunge>.3 ? '#7cffa0' : '#4caf72';
+    if (w.lunge>.3) {
+      ctx.fillStyle='rgba(120,255,160,.3)';
+      ctx.beginPath(); ctx.ellipse(-3,-31,2.6,2.2,0,0,7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(3,-31,2.6,2.2,0,0,7); ctx.fill();
+    }
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.ellipse(-3,-31,1.5,1.2,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(3,-31,1.5,1.2,0,0,7); ctx.fill();
+    // gravures sur le sommet du masque
+    ctx.strokeStyle='rgba(255,220,160,.3)'; ctx.lineWidth=.7;
+    ctx.beginPath(); ctx.moveTo(-4,-27); ctx.lineTo(4,-27); ctx.moveTo(-3,-24.5); ctx.lineTo(3,-24.5); ctx.stroke();
+    // talismans/os flottants près des épaules (2-3, dérive lente via t/w.phase -- même esprit que
+    // les orbes d'éveil orbitants de sorcier-render.js, mais ici en ellipses pâles statiques d'os)
+    for (let i=0;i<3;i++) {
+      const ang = t*0.7 + w.phase + i*(Math.PI*2/3);
+      const ox = Math.cos(ang)*11, oy = Math.sin(ang)*3.5 - 24 + Math.sin(t*1.2+i)*1.2;
+      ctx.fillStyle='rgba(216,207,174,.85)';
+      ctx.beginPath(); ctx.ellipse(ox,oy,1.5,1.9,ang*.3,0,7); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.4; ctx.stroke();
+    }
+    // feux follets verts aux pieds (formes molles translucides, opacité faible)
+    ctx.fillStyle='rgba(110,220,130,.18)';
+    ctx.beginPath(); ctx.ellipse(-5,1+Math.sin(t*2+w.phase)*.8,4,2.4,0,0,7); ctx.fill();
+    ctx.fillStyle='rgba(110,220,130,.13)';
+    ctx.beginPath(); ctx.ellipse(5,2+Math.sin(t*2.4+w.phase+1)*.8,3.4,2,0,0,7); ctx.fill();
+    // contour net global (silhouette lisible, même logique que le contour du loup)
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-13,-10); ctx.lineTo(-11,-30); ctx.lineTo(11,-30); ctx.lineTo(13,-10); ctx.closePath(); ctx.stroke();
+  } else {
+    // ---- Sectateur d'Elric (mob normal), voûté, masque rituel et robe en lambeaux ----
+    const trot = Math.sin(t*4.6+w.phase)*1.2; // démarche traînante, voûtée
+    if (w.lunge > .3) { ctx.strokeStyle='rgba(140,110,190,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(1,-15,13,10,0,0,7); ctx.stroke(); }
+    const robe = '#4a4f34'; // robe mousse/brun en lambeaux (couleur fixe, ambiance forêt/rituel)
+    const skin = '#7c8a72'; // peau tannée grisâtre-verte visible sur les mains
+    // jambes fines sous la robe
+    ctx.strokeStyle='#332f22'; ctx.lineWidth=3.6; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(-4,-8); ctx.lineTo(-5,2+trot*.4);
+    ctx.moveTo(4,-8); ctx.lineTo(5,2-trot*.4);
+    ctx.stroke();
+    // pieds sombres
+    ctx.fillStyle='#241f18';
+    ctx.beginPath(); ctx.ellipse(-5.2,2.6+trot*.4,1.7,1,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(5.2,2.6-trot*.4,1.7,1,0,0,7); ctx.fill();
+    // robe : torse voûté, légèrement penché en avant (posture stoop -- silhouette décalée vers +x
+    // au sommet, tassée) -- comme les autres tuniques de ce fichier, ourlet en lambeaux ci-dessous
+    ctx.fillStyle = robe;
+    ctx.beginPath(); ctx.moveTo(-8,-8); ctx.lineTo(-6,-25); ctx.lineTo(7,-24); ctx.lineTo(8,-8); ctx.closePath(); ctx.fill();
+    // ourlet en lambeaux déchiquetés (même technique que le pagne de drawRhutumIso)
+    ctx.beginPath();
+    ctx.moveTo(-8,-8); ctx.lineTo(-8,-1); ctx.lineTo(-5,-7); ctx.lineTo(-2,-1); ctx.lineTo(1,-7);
+    ctx.lineTo(4,-1); ctx.lineTo(8,-8);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+    // ceinture de corde + 1-2 talismans en disque suspendus
+    ctx.strokeStyle='#5a4a30'; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(-7,-9.6); ctx.lineTo(7,-9); ctx.stroke();
+    ctx.fillStyle='#d8cfae';
+    ctx.beginPath(); ctx.ellipse(-2,-5.4,1.3,1.7,0,0,7); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.4; ctx.stroke();
+    ctx.fillStyle='#d8cfae';
+    ctx.beginPath(); ctx.ellipse(2.6,-5,1.1,1.4,0,0,7); ctx.fill();
+    ctx.stroke();
+    // sangle diagonale -- teinte de zone (même principe que la sangle de drawRhutumIso)
+    ctx.strokeStyle = tone; ctx.lineWidth=2.4;
+    ctx.beginPath(); ctx.moveTo(-6,-23); ctx.lineTo(6,-10); ctx.stroke();
+    // bras (manche de robe) + main visible (peau grisâtre-verte) tenant le bâton
+    ctx.strokeStyle = robe; ctx.lineWidth=3.4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(6,-21); ctx.lineTo(10+lungeAmt*.4,-13); ctx.stroke();
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.ellipse(10+lungeAmt*.4,-13,2,2.3,0,0,7); ctx.fill();
+    // bâton noueux tenu debout, charme en os suspendu au sommet par un lien
+    ctx.strokeStyle='#5a4530'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(9+lungeAmt*.4,-6); ctx.lineTo(12+lungeAmt*.3,-34); ctx.stroke();
+    ctx.strokeStyle='#3a2e1e'; ctx.lineWidth=.9;
+    ctx.beginPath();
+    ctx.moveTo(10+lungeAmt*.4,-16); ctx.lineTo(11.4+lungeAmt*.35,-15);
+    ctx.moveTo(10.3+lungeAmt*.4,-24); ctx.lineTo(11.7+lungeAmt*.35,-23.2);
+    ctx.stroke();
+    ctx.strokeStyle='rgba(200,190,160,.7)'; ctx.lineWidth=.6;
+    ctx.beginPath(); ctx.moveTo(12+lungeAmt*.3,-34); ctx.lineTo(13.2+lungeAmt*.3,-30); ctx.stroke();
+    ctx.fillStyle='#e0d8c0';
+    ctx.beginPath(); ctx.ellipse(13.4+lungeAmt*.3,-28.4,1.5,1.9,0,0,7); ctx.fill();
+    ctx.fillStyle='rgba(20,16,10,.7)';
+    ctx.beginPath(); ctx.arc(12.9+lungeAmt*.3,-28.8,.45,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(13.9+lungeAmt*.3,-28.8,.45,0,7); ctx.fill();
+    // tête voûtée penchée en avant, couverte par le masque rituel en bois
+    const headX = 2, headY = -27; // décalage +x / vers le bas -- posture voûtée
+    ctx.fillStyle = skin;
+    ctx.beginPath(); ctx.arc(headX,headY,3.6,0,7); ctx.fill();
+    // masque en bois sculpté, anguleux, style totem -- visage stylisé "en colère", pas un vrai visage
+    ctx.fillStyle = '#5c4830';
+    ctx.beginPath();
+    ctx.moveTo(headX,headY-8); ctx.lineTo(headX+5.4,headY-2); ctx.lineTo(headX+4,headY+4); ctx.lineTo(headX-4,headY+4); ctx.lineTo(headX-5.4,headY-2);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.lineWidth=.8; ctx.stroke();
+    // traits sculptés : sourcils obliques renfrognés, arête du nez, entaille de bouche
+    ctx.strokeStyle='#241d14'; ctx.lineWidth=.9; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(headX-3.6,headY-1.4); ctx.lineTo(headX-1,headY-3); ctx.moveTo(headX+3.6,headY-1.4); ctx.lineTo(headX+1,headY-3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(headX,headY-2); ctx.lineTo(headX,headY+1.6); ctx.stroke();
+    ctx.fillStyle='rgba(10,8,6,.85)';
+    ctx.beginPath(); ctx.moveTo(headX-1.6,headY+2.2); ctx.lineTo(headX+1.6,headY+2.2); ctx.lineTo(headX,headY+3.6); ctx.closePath(); ctx.fill();
+    // bord sombre de capuche/robe autour du masque
+    ctx.strokeStyle='rgba(20,18,12,.5)'; ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.arc(headX,headY-1,6.2,Math.PI*0.15,Math.PI*0.85); ctx.stroke();
+  }
+  ctx.restore();
+}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -1248,6 +1426,16 @@ function drawZoneMobIcon() {
     ctx2.beginPath();
     ctx2.moveTo(5,-2); ctx2.quadraticCurveTo(10,3,7,9); ctx2.lineTo(4.6,7.6); ctx2.quadraticCurveTo(6.4,3,3.6,-1);
     ctx2.closePath(); ctx2.fill();
+  } else if (zi === 9) { // Sectateur d'Elric (masque rituel en bois anguleux + capuche de robe)
+    ctx2.fillStyle=tone; // capuche/robe visible autour du masque
+    ctx2.beginPath(); ctx2.arc(0,1,7,0,7); ctx2.fill();
+    ctx2.fillStyle='#5c4830'; // masque en bois sculpté, anguleux, style totem
+    ctx2.beginPath();
+    ctx2.moveTo(0,-7); ctx2.lineTo(5,-1); ctx2.lineTo(3.6,4); ctx2.lineTo(-3.6,4); ctx2.lineTo(-5,-1);
+    ctx2.closePath(); ctx2.fill();
+    ctx2.strokeStyle='#241d14'; ctx2.lineWidth=.9; // sourcils obliques renfrognés + arête du nez
+    ctx2.beginPath(); ctx2.moveTo(-3.2,1.4); ctx2.lineTo(-1,0); ctx2.moveTo(3.2,1.4); ctx2.lineTo(1,0); ctx2.stroke();
+    ctx2.beginPath(); ctx2.moveTo(0,0); ctx2.lineTo(0,2.6); ctx2.stroke();
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -1260,8 +1448,9 @@ function drawZoneMobIcon() {
 // Protty" (zone index 1), "Repaire des Pirates" (zone index 2), "Camp Rhutum" (zone index 3),
 // "Ferme Shultz" (zone index 4), "Colonie Sausan" (zone index 5), "Mine de Fer Abandonnée"
 // (zone index 6, avec sa variante boss blindée), "Poste Helm" (zone index 7, avec sa variante
-// boss "Golem" à la silhouette radicalement différente) et "Repaire Bandits Gahaz" (zone index 8)
-// ont la leur, les autres zones gardent la silhouette générique
+// boss "Golem" à la silhouette radicalement différente), "Repaire Bandits Gahaz" (zone index 8)
+// et "Sanctuaire Elric" (zone index 9, avec sa variante boss "idole vivante") ont la leur, les
+// autres zones gardent la silhouette générique
 /** @param {number} wx @param {number} wy @param {object} w @param {number} t. Aiguille vers le draw*Iso du monstre correspondant à la zone active. */
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
@@ -1272,6 +1461,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 6) return drawMineurIso(wx,wy,w,t);
   if (zoneIdx === 7) return drawHelmIso(wx,wy,w,t);
   if (zoneIdx === 8) return drawGahazIso(wx,wy,w,t);
+  if (zoneIdx === 9) return drawElricIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
