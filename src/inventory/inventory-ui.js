@@ -762,9 +762,11 @@ function showItemMenu(px, py, data) {
     toOpt: i18next.t('inventory:inventory.action_to_opt'),
     sell1: n => i18next.t('inventory:inventory.action_sell_one', { n }),
     sellAll: n => i18next.t('inventory:inventory.action_sell_all', { n }),
+    sellMarket: i18next.t('inventory:inventory.action_sell_market'),
     drop: i18next.t('inventory:inventory.action_drop'),
     confirmSell1: n => i18next.t('inventory:inventory.confirm_sell_one', { n }),
     confirmSellAll: n => i18next.t('inventory:inventory.confirm_sell_all', { n }),
+    confirmDrop: name => i18next.t('inventory:inventory.confirm_drop', { name: tr(name) }),
   };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
@@ -782,6 +784,16 @@ function showItemMenu(px, py, data) {
       addPopBtn(pop, L.sell1(fmt(s.val)), () => { if (confirm(L.confirmSell1(fmt(s.val)))) sellOne(data.invIndex); });
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
+    // accès direct au Marché commun pré-rempli sur CET objet (2026-07-24, demande explicite :
+    // "un bouton Vendre qui ouvre un accès direct au marché commun pour cet item précis") — distinct
+    // de sell1/sellAll ci-dessus (vente instantanée au vendeur, valeur fixe s.val) : ouvre le VRAI
+    // marché joueur-à-joueur, écran de vente déjà présélectionné sur cet objet précis (voir
+    // market.js:openMarketSellFor). Pas de confirm() ici — le formulaire de vente du marché
+    // (prix à saisir + bouton "Publier l'offre") est déjà l'étape de confirmation, une 2e serait
+    // redondante (voir CLAUDE.md, section Marché). Le "trash" n'a pas d'entrée au catalogue Marché
+    // (aucune source de vente joueur-à-joueur pour ce kind), seul sell1/sellAll s'applique à lui.
+    if (s.kind === 'material' || s.kind === 'gear' || s.kind === 'jackpot')
+      addPopBtn(pop, L.sellMarket, () => { openMarketSellFor(s); });
     // coffre de ville : slider de quantité (2026-07-13, demande explicite : "ajouter un slider a
     // choix de nombre lorsqu'on pose en banque") -- remplace l'ancien dépôt fixe à 1 unité pour
     // tout objet stackable en pile >1 ; un objet unique (qty===1, ou non stackable comme le gear)
@@ -806,7 +818,12 @@ function showItemMenu(px, py, data) {
         if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
       });
     }
-    addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
+    // "Jeter" détruit définitivement le slot -- confirmation obligatoire (2026-07-24, demande
+    // explicite : action irréversible en un seul clic interdite pour les 3 actions du menu objet).
+    // Même pattern confirm() déjà utilisé juste au-dessus pour sell1/sellAll (pas le pattern
+    // "retaper le pseudo" d'openAccountPanel, réservé à la suppression de compte, bien plus lourd
+    // de conséquences qu'un seul objet du sac).
+    addPopBtn(pop, L.drop, () => { if (confirm(L.confirmDrop(s.name))) dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
     // objet du Compendium (sac protégé) — "Équiper" (equipFromCompendium, inchangé) ET "Mettre en
     // optimisation" séparés (2026-07-17, demande explicite : "on peut optimiser les item du
@@ -815,6 +832,11 @@ function showItemMenu(px, py, data) {
     // Compendium, jusqu'à PEN (voir attemptEnhance, qui l'évacue vers le sac une fois PEN atteint).
     addPopBtn(pop, L.equip, () => { equipFromCompendium(data.compIndex); });
     addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'compendium', key:data.compIndex }; });
+    // PAS de Jeter/Vendre ici (demande explicite, 2026-07-24) : un objet du sac protégé Compendium a
+    // une fonction spéciale (zoneFullyCollected exige les 4 objets précis de la zone, voir
+    // CLAUDE.md "Compendium / Maîtrise PEN") -- le détruire ou le vendre romprait silencieusement la
+    // collection. Tooltip explicite plutôt qu'un bouton qui échouerait sans rien dire.
+    pop.insertAdjacentHTML('beforeend', `<div class="ipDesc ipCompProtectedHint">${i18next.t('inventory:inventory.compendium_protected_hint')}</div>`);
   }
   pop.style.display = 'block';
   const r = pop.getBoundingClientRect();

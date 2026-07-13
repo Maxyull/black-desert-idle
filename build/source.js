@@ -623,6 +623,7 @@ const I18N_RESOURCES = {
       "inventory.action_drop": "Jeter",
       "inventory.action_equip": "Équiper",
       "inventory.action_sell_all": "Vendre tout ({{n}})",
+      "inventory.action_sell_market": "🏛️ Vendre au marché",
       "inventory.action_sell_one": "Vendre 1 ({{n}})",
       "inventory.action_store_in_chest": "📦 Ranger au coffre (1)",
       "inventory.action_to_opt": "Mettre en optimisation",
@@ -639,6 +640,8 @@ const I18N_RESOURCES = {
       "inventory.chest_zoom_enlarge": "🔍 Agrandir (5/ligne)",
       "inventory.chest_zoom_shrink": "🔎 Réduire (8/ligne)",
       "inventory.compendium_equip_and_optimize": "Équiper et optimiser",
+      "inventory.compendium_protected_hint": "📖 Objet protégé par le Compendium — ne peut être ni jeté ni vendu (nécessaire pour la collection de la zone).",
+      "inventory.confirm_drop": "Jeter définitivement {{name}} ? Cette action est irréversible.",
       "inventory.confirm_sell_all": "Vendre tout le tas pour {{n}} silver ?",
       "inventory.confirm_sell_one": "Vendre 1 objet pour {{n}} silver ?",
       "inventory.eq_sum_ap_prefix": "PA ",
@@ -1567,6 +1570,7 @@ const I18N_RESOURCES = {
       "inventory.action_drop": "Drop",
       "inventory.action_equip": "Equip",
       "inventory.action_sell_all": "Sell all ({{n}})",
+      "inventory.action_sell_market": "🏛️ Sell on the market",
       "inventory.action_sell_one": "Sell 1 ({{n}})",
       "inventory.action_store_in_chest": "📦 Store in chest (1)",
       "inventory.action_to_opt": "Load into enhancement",
@@ -1583,6 +1587,8 @@ const I18N_RESOURCES = {
       "inventory.chest_zoom_enlarge": "🔍 Enlarge (5/row)",
       "inventory.chest_zoom_shrink": "🔎 Shrink (8/row)",
       "inventory.compendium_equip_and_optimize": "Equip and optimize",
+      "inventory.compendium_protected_hint": "📖 Compendium-protected item — cannot be dropped or sold (needed for the zone's collection).",
+      "inventory.confirm_drop": "Permanently drop {{name}}? This cannot be undone.",
       "inventory.confirm_sell_all": "Sell the whole stack for {{n}} silver?",
       "inventory.confirm_sell_one": "Sell 1 item for {{n}} silver?",
       "inventory.eq_sum_ap_prefix": "AP ",
@@ -9214,9 +9220,11 @@ function showItemMenu(px, py, data) {
     toOpt: i18next.t('inventory:inventory.action_to_opt'),
     sell1: n => i18next.t('inventory:inventory.action_sell_one', { n }),
     sellAll: n => i18next.t('inventory:inventory.action_sell_all', { n }),
+    sellMarket: i18next.t('inventory:inventory.action_sell_market'),
     drop: i18next.t('inventory:inventory.action_drop'),
     confirmSell1: n => i18next.t('inventory:inventory.confirm_sell_one', { n }),
     confirmSellAll: n => i18next.t('inventory:inventory.confirm_sell_all', { n }),
+    confirmDrop: name => i18next.t('inventory:inventory.confirm_drop', { name: tr(name) }),
   };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
@@ -9233,6 +9241,9 @@ function showItemMenu(px, py, data) {
       addPopBtn(pop, L.sell1(fmt(s.val)), () => { if (confirm(L.confirmSell1(fmt(s.val)))) sellOne(data.invIndex); });
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
+    
+    if (s.kind === 'material' || s.kind === 'gear' || s.kind === 'jackpot')
+      addPopBtn(pop, L.sellMarket, () => { openMarketSellFor(s); });
     
     if (s.stackable && s.qty > 1) {
       pop.insertAdjacentHTML('beforeend', `<div class="ipChestDeposit">
@@ -9254,11 +9265,14 @@ function showItemMenu(px, py, data) {
         if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
       });
     }
-    addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
+    
+    addPopBtn(pop, L.drop, () => { if (confirm(L.confirmDrop(s.name))) dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
     
     addPopBtn(pop, L.equip, () => { equipFromCompendium(data.compIndex); });
     addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'compendium', key:data.compIndex }; });
+    
+    pop.insertAdjacentHTML('beforeend', `<div class="ipDesc ipCompProtectedHint">${i18next.t('inventory:inventory.compendium_protected_hint')}</div>`);
   }
   pop.style.display = 'block';
   const r = pop.getBoundingClientRect();
@@ -17641,6 +17655,35 @@ $a('btnMarket').onclick = async () => {
   if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('market');
 };
 $a('closeMarket').onclick = () => $a('marketOverlay').classList.remove('open');
+
+async function openMarketSellFor(item) {
+  if (!marketRequireAuth()) return;
+  if (!(typeof isAdmin === 'function' && isAdmin())) {
+    try {
+      const { data } = await sb.rpc('get_market_open');
+      if (data === false) { alert(i18next.t('market:market.closed_for_maintenance')); return; }
+    } catch(e) {}
+  }
+  $a('marketOverlay').classList.add('open');
+  cmActiveCat = 'all'; cmDrilldownName = null;
+  await refreshCommonMarket();
+  const kind = item.kind, enhLv = item.enhLv || 0;
+  const g = cmGroupForExactItem(item.name, kind, enhLv);
+  cmSelectedKey = cmItemKey(kind, item.name, enhLv);
+  renderCmListingsList();
+  renderCmDetailPanel(g);
+  const offerBtn = $a('cmSellOfferBtn');
+  const offerForm = $a('cmSellOfferForm');
+  if (offerBtn && offerForm && !offerForm.classList.contains('open')) offerBtn.click();
+  if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('market');
+}
+
+function cmGroupForExactItem(name, kind, enhLv) {
+  const items = cmListings.filter(l => l.item_name === name && l.item_kind === kind &&
+    ((l.item_snapshot && l.item_snapshot.enhLv) || 0) === (enhLv || 0));
+  const best = items.length ? items.reduce((a,b) => a.price < b.price ? a : b) : null;
+  return { name, kind, lv: enhLv, best, items };
+}
 let marketMouseDownOnBackdrop = false;
 $a('marketOverlay').addEventListener('mousedown', e => { marketMouseDownOnBackdrop = (e.target.id === 'marketOverlay'); });
 $a('marketOverlay').addEventListener('click', e => { if (e.target.id === 'marketOverlay' && marketMouseDownOnBackdrop) $a('marketOverlay').classList.remove('open'); });

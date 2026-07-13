@@ -5293,6 +5293,103 @@
     assert('cardLayoutSetActiveTab() accepte de revenir sur l\'onglet hôte', switched.active.equipCard === 'equipCard');
   }
 
+  // ---------- Menu objet inventaire : Jeter/Vendre au marché/protection Compendium (2026-07-24) ----------
+  // Bouton "Jeter" du menu objet -- vérifie EN CONDITIONS RÉELLES (showItemMenu + confirm() mocké,
+  // pas juste une inspection statique) qu'annuler la confirmation ne modifie PAS INV, et que
+  // confirmer détruit bien le slot -- suit le modèle demandé pour toute action irréversible d'objet.
+  function testDropConfirmCancelDoesNotModifyInvButConfirmDoes() {
+    if (typeof showItemMenu !== 'function' || typeof dropItem !== 'function') return;
+    const idx = INV_SIZE - 2;
+    const saved = INV[idx];
+    const savedConfirm = window.confirm;
+    try {
+      INV[idx] = { name:'Objet de test jeter', kind:'trash', qty:1, val:5, stackable:true, key:'t_drop_test' };
+      showItemMenu(0, 0, { invIndex: idx, ...INV[idx] });
+      const dropLabel = i18next.t('inventory:inventory.action_drop');
+      let btn = [...$('itemPop').querySelectorAll('button')].find(b => b.textContent === dropLabel);
+      assert('showItemMenu affiche bien un bouton "Jeter"', !!btn);
+      if (!btn) return;
+      window.confirm = () => false;
+      btn.click();
+      assert('Annuler la confirmation de "Jeter" NE modifie PAS INV', !!INV[idx] && INV[idx].key === 't_drop_test', `INV[idx]=${JSON.stringify(INV[idx])}`);
+      // reconstruit le popup pour le 2e essai (le clic précédent a déjà appelé hideItemPop())
+      showItemMenu(0, 0, { invIndex: idx, ...INV[idx] });
+      btn = [...$('itemPop').querySelectorAll('button')].find(b => b.textContent === dropLabel);
+      window.confirm = () => true;
+      btn.click();
+      assert('Confirmer "Jeter" détruit bien le slot INV', INV[idx] === null, `INV[idx]=${JSON.stringify(INV[idx])}`);
+    } finally {
+      window.confirm = savedConfirm;
+      INV[idx] = saved;
+      hideItemPop();
+    }
+  }
+  // "🏛️ Vendre au marché" doit apparaître seulement pour les kinds qui ont une entrée au catalogue
+  // Marché (material/gear/jackpot) -- le trash n'a AUCUNE source de vente joueur-à-joueur, seul
+  // sell1/sellAll (vente instantanée au vendeur) s'y applique.
+  function testSellMarketButtonGatedByKindNotTrash() {
+    if (typeof showItemMenu !== 'function') return;
+    const idx = INV_SIZE - 3;
+    const saved = INV[idx];
+    const marketLabel = i18next.t('inventory:inventory.action_sell_market');
+    try {
+      INV[idx] = { name:'Objet de test trash', kind:'trash', qty:1, val:5, stackable:true, key:'t_trash_test' };
+      showItemMenu(0, 0, { invIndex: idx, ...INV[idx] });
+      let btn = [...$('itemPop').querySelectorAll('button')].find(b => b.textContent === marketLabel);
+      assert('Le trash n\'a PAS de bouton "Vendre au marché" (aucune entrée catalogue Marché pour ce kind)', !btn);
+
+      INV[idx] = { name:'Pierre de Novice', kind:'material', qty:5, stackable:true, val:1, key:'t_mat_test' };
+      showItemMenu(0, 0, { invIndex: idx, ...INV[idx] });
+      btn = [...$('itemPop').querySelectorAll('button')].find(b => b.textContent === marketLabel);
+      assert('Un matériau a bien un bouton "Vendre au marché"', !!btn);
+    } finally { INV[idx] = saved; hideItemPop(); }
+  }
+  // Objet du sac protégé Compendium : jamais de Jeter/Vendre (romprait silencieusement la collection
+  // de zone, voir zoneFullyCollected) -- tooltip explicite affiché à la place.
+  function testCompendiumItemMenuHasNoDropOrMarketSellButtons() {
+    if (typeof showItemMenu !== 'function' || typeof COMPENDIUM_BAG === 'undefined') return;
+    const idx = INV_SIZE - 4;
+    const saved = COMPENDIUM_BAG[idx];
+    try {
+      COMPENDIUM_BAG[idx] = { name:'Objet de test compendium', kind:'gear', slot:'helmet', ap:0, dp:5, hp:0, enhLv:0, key:'t_comp_test' };
+      showItemMenu(0, 0, { compIndex: idx, ...COMPENDIUM_BAG[idx] });
+      const pop = $('itemPop');
+      const dropLabel = i18next.t('inventory:inventory.action_drop');
+      const marketLabel = i18next.t('inventory:inventory.action_sell_market');
+      const buttons = [...pop.querySelectorAll('button')].map(b => b.textContent);
+      assert('Un objet du Compendium n\'a jamais de bouton "Jeter"', !buttons.includes(dropLabel));
+      assert('Un objet du Compendium n\'a jamais de bouton "Vendre au marché"', !buttons.includes(marketLabel));
+      assert('Un objet du Compendium affiche l\'explication de protection', pop.innerHTML.includes(i18next.t('inventory:inventory.compendium_protected_hint')));
+    } finally { COMPENDIUM_BAG[idx] = saved; hideItemPop(); }
+  }
+  // openMarketSellFor (market.js) doit présélectionner l'objet EXACT (même niveau d'enchant), jamais
+  // juste le meilleur prix tous niveaux confondus -- vérifié via cmGroupForExactItem sur un jeu de
+  // listings fictif avec 2 niveaux différents du même objet.
+  function testCmGroupForExactItemMatchesOnlyTheRequestedEnhLv() {
+    if (typeof cmGroupForExactItem !== 'function') return;
+    const savedListings = cmListings;
+    try {
+      cmListings = [
+        { item_name:'Bâton Naru', item_kind:'gear', price:1000, item_snapshot:{ enhLv:5 } },
+        { item_name:'Bâton Naru', item_kind:'gear', price:500,  item_snapshot:{ enhLv:12 } },
+        { item_name:'Bâton Naru', item_kind:'gear', price:800,  item_snapshot:{ enhLv:12 } },
+      ];
+      const g = cmGroupForExactItem('Bâton Naru', 'gear', 12);
+      assert('cmGroupForExactItem cible le bon niveau d\'enchant (12), pas le meilleur prix tous niveaux confondus', g.best && g.best.price === 500, `best=${JSON.stringify(g.best)}`);
+      const gAbsent = cmGroupForExactItem('Bâton Naru', 'gear', 7);
+      assert('cmGroupForExactItem renvoie best=null si aucune vente au niveau demandé', gAbsent.best === null);
+    } finally { cmListings = savedListings; }
+  }
+  // Garde-fou statique : le bouton "Vendre au marché" du menu objet appelle bien openMarketSellFor
+  // (pas un doublon de sellOne/sellStack) -- confirme que l'action instantanée existante n'a pas été
+  // remplacée par erreur, seulement complétée.
+  function testSellMarketButtonCallsOpenMarketSellFor() {
+    if (typeof showItemMenu !== 'function') return;
+    const src = showItemMenu.toString();
+    assert('showItemMenu() appelle openMarketSellFor(s) pour le bouton "Vendre au marché"', src.includes('openMarketSellFor(s)'));
+    assert('showItemMenu() garde sell1/sellAll (vente instantanée) intacts en plus du marché', src.includes('sellOne(data.invIndex)') && src.includes('sellStack(data.invIndex)'));
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -5563,6 +5660,11 @@
     testUpdateLoginStreakResetsOnGapOfTwoOrMoreDays();
     testUpdateLoginStreakNoOpSameDayReplayed();
     testDeleteAccountConfirmGatedByExactPseudoMatch();
+    testDropConfirmCancelDoesNotModifyInvButConfirmDoes();
+    testSellMarketButtonGatedByKindNotTrash();
+    testCompendiumItemMenuHasNoDropOrMarketSellButtons();
+    testCmGroupForExactItemMatchesOnlyTheRequestedEnhLv();
+    testSellMarketButtonCallsOpenMarketSellFor();
     testCardLayoutSanitizeAcceptsDefaultState();
     testCardLayoutSanitizeRejectsCorruptState();
     testCardLayoutSanitizeKeepsValidNestedGroup();
