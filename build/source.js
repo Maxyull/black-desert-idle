@@ -15729,8 +15729,26 @@ try {
   if (UI_SCALE_LEVELS.includes(savedScale)) uiScaleLevel = savedScale;
 } catch(e) {}
 
+function updateUiScaleLayoutTrack() {
+  const layout = $a('gameLayout');
+  if (!layout) return;
+  const factor = UI_SCALE_FACTORS[uiScaleLevel];
+  if (factor === 1 || isMobileViewport()) {
+    layout.style.removeProperty('--ui-center-track');
+    return;
+  }
+  const sideMenu = $a('sideMenu'), sideRight = $a('sideRight');
+  if (!sideMenu || !sideRight) return;
+  const gap = 14; 
+  const baseCenterWidth = layout.clientWidth - sideMenu.getBoundingClientRect().width
+    - sideRight.getBoundingClientRect().width - gap * 2;
+  if (baseCenterWidth <= 0) { layout.style.removeProperty('--ui-center-track'); return; }
+  layout.style.setProperty('--ui-center-track', `${Math.round(baseCenterWidth * factor)}px`);
+}
+
 function applyUiScale() {
-  $a('wrap').style.transform = `scale(${UI_SCALE_FACTORS[uiScaleLevel]})`;
+  $a('wrap').style.zoom = UI_SCALE_FACTORS[uiScaleLevel];
+  updateUiScaleLayoutTrack();
   $a('btnUiScaleDown').classList.toggle('uiScaleBtnDisabled', uiScaleLevel === UI_SCALE_LEVELS[0]);
   $a('btnUiScaleUp').classList.toggle('uiScaleBtnDisabled', uiScaleLevel === UI_SCALE_LEVELS[UI_SCALE_LEVELS.length - 1]);
 }
@@ -15739,6 +15757,8 @@ function setUiScaleLevel(direction) {
   try { localStorage.setItem('velia-idle-ui-scale', uiScaleLevel); } catch(e) {}
   applyUiScale();
 }
+
+window.addEventListener('resize', () => { if (uiScaleLevel !== 'medium') updateUiScaleLayoutTrack(); });
 $a('btnUiScaleDown').onclick = () => setUiScaleLevel(-1);
 $a('btnUiScaleUp').onclick = () => setUiScaleLevel(1);
 applyUiScale();

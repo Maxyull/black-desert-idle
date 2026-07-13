@@ -2838,12 +2838,20 @@
     width:100%; max-width:none; margin:0; box-sizing:border-box;
   }
   #activitiesBar { margin-bottom:10px; }
+  /* --ui-center-track (défaut 1fr) : posée dynamiquement par updateUiScaleLayoutTrack()
+     (game-supabase.js) quand un palier de taille UI non-medium est actif -- voir le correctif
+     "agrandissement juste en hauteur" documenté en détail près de #btnUiScaleDown/Up plus bas
+     dans ce fichier. Remplace la valeur 1fr littérale dans les 4 variantes de grid-template-
+     columns ci-dessous (base + 3 combinaisons :has(...collapsed)) : #wrap (item de grille
+     width:auto) est "stretché" à la taille EXACTE de sa piste quelle que soit sa propre échelle
+     CSS (zoom/transform) -- sans piste plus grande, aucun agrandissement de largeur n'est
+     jamais visible, seulement la hauteur (poussée normale du flux). */
   .layout {
-    display:grid; grid-template-columns:210px 1fr 300px; gap:14px; align-items:start;
+    display:grid; grid-template-columns:210px var(--ui-center-track,1fr) 300px; gap:14px; align-items:start;
   }
   /* #wrap contenait auparavant #activitiesBar (retiré ci-dessus) ET portait sa propre
      largeur fixe (1240px, voir règle plus haut dans ce fichier) -- devenu simple item
-     de grille (.game-main conceptuel), sa largeur doit suivre la colonne 1fr, pas
+     de grille (.game-main conceptuel), sa largeur doit suivre la colonne centrale, pas
      rester figée à 1240px (qui débordait sa nouvelle colonne, bien plus étroite). */
   .layout #wrap { width:auto; max-width:none; }
   /* #sideMenu.onRight (préférence gauche/droite, voir menuSide dans game-supabase.js) :
@@ -2856,12 +2864,12 @@
      colonne (210px fixe), pas sa propre largeur CSS : replier le menu ne libérait donc plus
      d'espace. :has() permet de rétrécir la piste elle-même sans toucher au JS existant
      (sideMenuCollapsed/#btnCollapseMenu, game-supabase.js) qui ne togglait que la classe. */
-  .layout:has(#sideMenu.collapsed) { grid-template-columns:56px 1fr 300px; }
+  .layout:has(#sideMenu.collapsed) { grid-template-columns:56px var(--ui-center-track,1fr) 300px; }
   /* repli de la colonne droite (2026-07-13, demande explicite) : même piège documenté CLAUDE.md
      §32 pour :has(#sideMenu.collapsed) -- chaque combinaison doit être déclarée explicitement,
      :has() ne se combine pas "tout seul" avec une autre règle :has() de spécificité différente. */
-  .layout:has(#sideRight.collapsed) { grid-template-columns:210px 1fr 56px; }
-  .layout:has(#sideMenu.collapsed):has(#sideRight.collapsed) { grid-template-columns:56px 1fr 56px; }
+  .layout:has(#sideRight.collapsed) { grid-template-columns:210px var(--ui-center-track,1fr) 56px; }
+  .layout:has(#sideMenu.collapsed):has(#sideRight.collapsed) { grid-template-columns:56px var(--ui-center-track,1fr) 56px; }
   .side-right {
     display:flex; flex-direction:column; gap:10px;
     position:sticky; top:14px;
@@ -3847,13 +3855,24 @@
   .card.cardNested { border:none; padding:0; background:transparent; margin:0; }
   .card.cardNested > h3 { display:none; }
 
-  /* ===== boutons +/- taille UI/jeu, sur les bords de #gameFrame (2026-07-13, mockup validé) =====
+  /* ===== boutons +/- taille UI/jeu, sur les bords de #gameFrame (2026-07-13, mockup validé ;
+     correctif 2026-07-14 : transform:scale() -> zoom, voir applyUiScale() game-supabase.js) =====
      Quasi invisibles au repos (~15% opacity, cercle doré fin) -- pleine opacité + petit libellé
      sous le bouton au survol, transition courte cohérente avec le reste de la feuille (.15-.2s,
      voir #btnCollapseMenu/.ncDel plus haut). #wrap (colonne centrale : #gameFrame+#panel+
-     #bossRoom/#minibossRoom) reçoit le transform:scale() correspondant, voir applyUiScale()
-     (game-supabase.js) -- ne touche jamais à la résolution interne du canvas #cv. */
-  #wrap { transition:transform .2s ease; transform-origin:center top; }
+     #bossRoom/#minibossRoom) reçoit le `zoom` correspondant, voir applyUiScale()
+     (game-supabase.js) -- ne touche jamais à la résolution interne du canvas #cv.
+     Correctif "agrandissement juste en hauteur" (retour utilisateur) : #wrap est un item de la
+     grille 3 colonnes `.layout` (§ plus haut, #sideMenu | #wrap | .side-right) avec width:auto,
+     donc sa largeur RENDUE suivait la piste 1fr de la grille, pas sa propre taille --
+     transform:scale() est un pur effet de peinture qui ne déclenche jamais de reflow, la piste
+     ne recalculait donc jamais sa taille et le surplus de largeur finissait sous les panneaux
+     latéraux opaques (invisible). `zoom` déclenche un vrai reflow : la piste 1fr grandit avec le
+     contenu zoomé, largeur ET hauteur deviennent visibles (vérifié par capture d'écran
+     avant/après + getBoundingClientRect à ~1300px et ~1800px de large, voir Playwright). Pas de
+     transition CSS sur `zoom` : le support de `transition:zoom` est encore inégal selon les
+     moteurs -- le saut de palier reste instantané (comme avant pour la position des boutons),
+     préférable à une transition qui ne s'anime pas partout. */
   /* préfixées #gameFrame (comme #gameBar button:hover/#metaBar button:hover plus haut) : la règle
      générique `button{margin-top:4px;padding:6px 9px}` / `button:hover:not(:disabled){transform:
      translateY(-1px)}` (spécificité 0,0,2,1 pour la version :hover) est plus spécifique qu'une
