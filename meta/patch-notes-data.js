@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V414', d:'24/07/2026 01:00', name:{fr:'Correctif : Gearscore incohérent au classement pour un stuff identique', en:'Fix: inconsistent Gearscore on the leaderboard for identical gear'}, fr:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'Le Gearscore affiché au classement pouvait différer entre 2 joueurs ayant pourtant un stuff strictement identique aujourd\'hui : il était enregistré comme un record séparé de PA/PD, capturé à un instant différent de leur propre progression. Il est désormais toujours calculé comme la moyenne des records PA/PD affichés juste à côté — recalculé rétroactivement pour tous au prochain chargement.'},
+    ], en:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'The leaderboard Gearscore could differ between 2 players with strictly identical gear today: it was recorded as a record separate from AP/DP, captured at a different point in their own progression. It\'s now always computed as the average of the AP/DP records shown right next to it — recalculated retroactively for everyone on next load.'},
+    ] },
   { v:'V413', d:'24/07/2026 00:00', name:{fr:'Contremaître (Mine de Fer Abandonnée) : fissures de lave, bottes, 2e épaulière et masse agrandie', en:'Foreman (Abandoned Iron Mine): lava cracks, boots, 2nd pauldron and bigger mace'}, fr:[
       {t:'change', sub:'interface', tx:'Le contremaître blindé (boss de pack de la Mine de Fer Abandonnée, juste après la Colonie Sausan) affiche désormais 2 fissures incandescentes façon lave sur le torse, des bottes aux pieds, une 2e épaulière cloutée sur l\'épaule opposée (bordée de 4 petites pointes, comme celle déjà présente côté arme), un gantelet au poignet qui tient la masse, une fente d\'oeil du casque rectangulaire avec un point lumineux orange (au lieu d\'une simple ombre), et une masse bien plus grosse hérissée de 6 pointes tout autour (au lieu de 3 d\'un seul côté). Le mineur normal (non-boss) de cette zone est inchangé. Comportement de combat inchangé.'},
     ], en:[

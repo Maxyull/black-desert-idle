@@ -307,3 +307,19 @@ function migrateMergeStackableDuplicatesV407() {
   mergeStackableDuplicateStacks(INV);
   mergeStackableDuplicateStacks(VELIA_CHEST);
 }
+
+// migration 2026-07-13 (bug trouvé : "les premiers qui sont full stuff n'ont pas le même GS") --
+// S.bestGearscore était tracké comme un 3e record indépendant de S.bestAp/S.bestDp (voir hud(),
+// core/game-core.js), pouvant avoir capturé son pic à un instant différent de LEUR pic respectif --
+// un compte déjà en jeu depuis longtemps a donc pu accumuler un bestGearscore incohérent avec
+// (bestAp+bestDp)/2, même après le correctif de hud() (qui ne s'applique qu'AU PROCHAIN pic battu,
+// jamais rétroactivement à un vieux record déjà figé). Recalcule bestGearscore une bonne fois pour
+// toutes depuis bestAp/bestDp déjà enregistrés, puis synchronise immédiatement le classement --
+// même idiome que migrateGearLeaderboardRecordFixV405 ci-dessus (record à vie recalculé,
+// exception ponctuelle à la règle habituelle qui l'interdirait autrement, ici sans risque de
+// régression puisque (bestAp+bestDp)/2 ne peut que rapprocher bestGearscore de sa vraie valeur).
+/** Migration rétroactive V414 : recalcule S.bestGearscore = (S.bestAp+S.bestDp)/2 (dérivé, cohérent par construction avec hud() désormais) puis synchronise immédiatement le classement (syncPlayerStats()). */
+function migrateGearscoreDerivedFixV414() {
+  S.bestGearscore = ((S.bestAp||0) + (S.bestDp||0)) / 2;
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
+}

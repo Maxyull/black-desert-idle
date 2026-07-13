@@ -3625,10 +3625,11 @@ function refreshStatsOnly() {
     if (xpPerHourNow > (S.bestXpPerHour||0)) S.bestXpPerHour = xpPerHourNow;
   }
   
-  const gsNow = GS(), apNow = apEff(), dpNow = totalDP();
-  if (gsNow > (S.bestGearscore||0)) S.bestGearscore = gsNow;
+  const apNow = apEff(), dpNow = totalDP();
   if (apNow > (S.bestAp||0)) S.bestAp = apNow;
   if (dpNow > (S.bestDp||0)) S.bestDp = dpNow;
+  
+  S.bestGearscore = (S.bestAp + S.bestDp) / 2;
   const zb = $('zoneBadge');
   if (atVelia) {
     zb.className = 'b-green'; zb.textContent = i18next.t('core:core.zone.peaceful_badge');
@@ -3867,6 +3868,7 @@ function applySaveState(data) {
   if (!S.migratedGearLeaderboardRecordFixV405) { migrateGearLeaderboardRecordFixV405(); S.migratedGearLeaderboardRecordFixV405 = true; }
   if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
   if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
+  if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); 
   S.xpNext = xpNeededFor(S.lvl); 
@@ -10251,6 +10253,11 @@ function mergeStackableDuplicateStacks(arr) {
 function migrateMergeStackableDuplicatesV407() {
   mergeStackableDuplicateStacks(INV);
   mergeStackableDuplicateStacks(VELIA_CHEST);
+}
+
+function migrateGearscoreDerivedFixV414() {
+  S.bestGearscore = ((S.bestAp||0) + (S.bestDp||0)) / 2;
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
 
 // ==== src/admin/enh-debug-tools.js ====

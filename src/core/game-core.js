@@ -1847,14 +1847,22 @@ function refreshStatsOnly() {
     const xpPerHourNow = xpGain/(mins/60);
     if (xpPerHourNow > (S.bestXpPerHour||0)) S.bestXpPerHour = xpPerHourNow;
   }
-  // records Gearscore/PA/PD à vie (voir S.bestGearscore ci-dessus) -- simple max courant, pas
-  // besoin du garde-fou "2 minutes" de bestKpm/bestSilverPerHour : ce ne sont pas des taux
-  // bruités sur une fenêtre courte, juste l'état d'équipement actuel, jamais faussé par un petit
-  // échantillon de temps.
-  const gsNow = GS(), apNow = apEff(), dpNow = totalDP();
-  if (gsNow > (S.bestGearscore||0)) S.bestGearscore = gsNow;
+  // records PA/PD à vie (voir S.bestAp/S.bestDp ci-dessus) -- simple max courant, pas besoin du
+  // garde-fou "2 minutes" de bestKpm/bestSilverPerHour : ce ne sont pas des taux bruités sur une
+  // fenêtre courte, juste l'état d'équipement actuel, jamais faussé par un petit échantillon de temps.
+  const apNow = apEff(), dpNow = totalDP();
   if (apNow > (S.bestAp||0)) S.bestAp = apNow;
   if (dpNow > (S.bestDp||0)) S.bestDp = dpNow;
+  // bestGearscore DÉRIVÉ de bestAp/bestDp (2026-07-13, bug trouvé : "les premiers qui sont full
+  // stuff n'ont pas le même GS") -- avant, gsNow = GS() était tracké comme un 3e record INDÉPENDANT
+  // (`if (gsNow > bestGearscore) ...`), pouvant capturer son pic à un instant différent de celui où
+  // bestAp/bestDp ont atteint LEUR pic respectif (ex: PA au plus haut avec une arme pas encore
+  // remplacée, PD au plus haut atteint plus tard avec une meilleure armure) -- bestGearscore
+  // dérivait alors silencieusement de (bestAp+bestDp)/2, affichant un GS incohérent avec les PA/PD
+  // juste à côté au classement, même pour un stuff aujourd'hui strictement identique entre 2
+  // joueurs. Dérivé ici : reste monotone (bestAp/bestDp ne redescendent jamais) tout en garantissant
+  // bestGearscore === (bestAp+bestDp)/2 à tout instant.
+  S.bestGearscore = (S.bestAp + S.bestDp) / 2;
   const zb = $('zoneBadge');
   if (atVelia) {
     zb.className = 'b-green'; zb.textContent = i18next.t('core:core.zone.peaceful_badge');
@@ -2204,6 +2212,7 @@ function applySaveState(data) {
   if (!S.migratedGearLeaderboardRecordFixV405) { migrateGearLeaderboardRecordFixV405(); S.migratedGearLeaderboardRecordFixV405 = true; }
   if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
   if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
+  if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO

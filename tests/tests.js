@@ -3349,6 +3349,29 @@
     assert('veliaChestStore(n) : le coffre reçoit exactement la quantité choisie (6)', VELIA_CHEST[0] && VELIA_CHEST[0].qty === 6, `got=${VELIA_CHEST[0] && VELIA_CHEST[0].qty}`);
     INV[INV_SIZE-1] = s.inv; VELIA_CHEST[0] = s.chest0;
   }
+  // "les premiers qui sont full stuff n'ont pas le même GS" (2026-07-13) : bestGearscore était
+  // tracké comme un 3e record indépendant de bestAp/bestDp (voir hud()) -- peut désormais dériver
+  // vers l'incohérence si les 2 records montent à des instants différents. Vérifie que hud() dérive
+  // bien bestGearscore = (bestAp+bestDp)/2 à chaque tick, jamais un pic indépendant.
+  function testHudDerivesGearscoreFromBestApDp() {
+    const s = { bestAp: S.bestAp, bestDp: S.bestDp, bestGearscore: S.bestGearscore };
+    S.bestAp = 100; S.bestDp = 50; S.bestGearscore = 999999; // record historique volontairement incohérent
+    hud();
+    assert('hud() dérive bestGearscore = (bestAp+bestDp)/2, jamais un pic indépendant',
+      S.bestGearscore === (S.bestAp + S.bestDp) / 2, `got=${S.bestGearscore}, bestAp=${S.bestAp}, bestDp=${S.bestDp}`);
+    S.bestAp = s.bestAp; S.bestDp = s.bestDp; S.bestGearscore = s.bestGearscore;
+  }
+  // migration rétroactive : un vieux compte peut avoir un bestGearscore déjà incohérent AVANT le
+  // correctif de hud() ci-dessus (figé pour toujours sinon, hud() ne recalcule qu'au PROCHAIN pic
+  // battu) -- migrateGearscoreDerivedFixV414 doit le rattraper une bonne fois pour toutes.
+  function testGearscoreDerivedFixV414RetroactivelyCorrectsStaleRecord() {
+    const s = { bestAp: S.bestAp, bestDp: S.bestDp, bestGearscore: S.bestGearscore };
+    S.bestAp = 300; S.bestDp = 200; S.bestGearscore = 999999; // vieux record incohérent, jamais rattrapé par hud() seul
+    migrateGearscoreDerivedFixV414();
+    assert('Rescale V414 : bestGearscore recalculé depuis bestAp/bestDp déjà enregistrés',
+      S.bestGearscore === 250, `got=${S.bestGearscore}`);
+    S.bestAp = s.bestAp; S.bestDp = s.bestDp; S.bestGearscore = s.bestGearscore;
+  }
   // "le nom de la zone doit être mis à jour et rester en place" (2026-07-11) : après un chargement
   // de sauvegarde sur une zone différente de la zone 0, #ztName restait bloqué sur le placeholder
   // HTML statique -- seuls travelTo()/goToVelia() le mettaient à jour, jamais applySaveState().
@@ -5035,6 +5058,8 @@
     testGearLeaderboardRecordFixV405RecomputesEvenDownward();
     testMergeStackableDuplicatesV407MergesSameNamePiles();
     testVeliaChestStorePartialQuantityFromSlider();
+    testHudDerivesGearscoreFromBestApDp();
+    testGearscoreDerivedFixV414RetroactivelyCorrectsStaleRecord();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();
