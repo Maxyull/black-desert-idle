@@ -1739,6 +1739,77 @@
   // "* 0.8"). Ne peut pas vérifier le SQL directement depuis ce fichier client -- documente et
   // fige la valeur attendue pour qu'un futur changement du taux SQL sans toucher ce fichier soit
   // repéré au moins côté rappel (voir le commentaire au-dessus de MARKET_SELL_TAX_RATE).
+  // Sceau du Conclave des Marchands (2026-07-13/22, port de mockup, voir CLAUDE.md pour le detail
+  // de la spec). Reserve 2 slots INV libres explicitement (memes precautions que
+  // testCompendiumEvictsItemOnceItReachesPen, voir commentaire ci-dessus/CLAUDE.md section 11).
+  function testConclaveSealOnlyVeliaFragmentUnlocked() {
+    if (typeof CONCLAVE_SEAL_FRAGMENTS === 'undefined') return;
+    const veliaFrag = CONCLAVE_SEAL_FRAGMENTS.find(f => f.tierId === 'early');
+    assert('Fragment de Velia marqué débloqué', conclaveSealFragmentUnlocked(veliaFrag.tierId));
+    ['mid','end','end2','end3'].forEach(tierId => {
+      assert(`Fragment ${tierId} marqué verrouillé (région pas encore sortie)`, !conclaveSealFragmentUnlocked(tierId));
+    });
+  }
+  function testConclaveSealAssembleFailsWithoutAllFiveFragments() {
+    if (typeof craftConclaveSeal === 'undefined') return;
+    const savedHasSeal = S.hasConclaveMarchandsSeal, savedRegions = S.conclaveSealRegions;
+    // sans manipuler INV: l'inventaire du compte de test ne contient normalement aucun des 5
+    // fragments (item très rare, jamais ajouté par un autre test) -- vérifie juste l'échec attendu
+    S.hasConclaveMarchandsSeal = false; S.conclaveSealRegions = [];
+    const ok = craftConclaveSeal();
+    assert('Assemblage échoue sans les 5 fragments (seul Velia obtenable aujourd\'hui)', ok === false);
+    assert('S.hasConclaveMarchandsSeal reste false', S.hasConclaveMarchandsSeal === false);
+    S.hasConclaveMarchandsSeal = savedHasSeal; S.conclaveSealRegions = savedRegions;
+  }
+  function testConclaveSealAssembleSucceedsWithAllFiveFragmentsSimulated() {
+    if (typeof craftConclaveSeal === 'undefined') return;
+    // simule la possession des 5 fragments (y compris les 4 verrouillés -- vérifie que
+    // craftConclaveSeal() ne se soucie que de l'INVENTAIRE, pas du statut locked, cohérent avec le
+    // fait qu'un admin/debug pourrait un jour les forcer ; le VRAI blocage vient du drop table, testé séparément).
+    const savedHasSeal = S.hasConclaveMarchandsSeal, savedRegions = S.conclaveSealRegions;
+    S.hasConclaveMarchandsSeal = false; S.conclaveSealRegions = [];
+    const freeIdxs = [];
+    for (let i = 0; i < INV_SIZE && freeIdxs.length < 5; i++) if (INV[i] === null) freeIdxs.push(i);
+    if (freeIdxs.length === 5) {
+      const savedSlots = freeIdxs.map(i => INV[i]);
+      CONCLAVE_SEAL_FRAGMENTS.forEach((f, i) => {
+        INV[freeIdxs[i]] = { key:f.key, name:f.name, kind:'treasure', icon:f.icon, color:f.color, qty:1, stackable:false, weight:0.05, val:1 };
+      });
+      const ok = craftConclaveSeal();
+      assert('Assemblage réussit avec les 5 fragments', ok === true);
+      assert('S.hasConclaveMarchandsSeal devient true', S.hasConclaveMarchandsSeal === true);
+      assert('S.conclaveSealRegions enregistre les 5 régions', S.conclaveSealRegions.length === 5);
+      assert('Les 5 fragments sont consommés (retirés du sac)', freeIdxs.every(i => INV[i] === null));
+      const ok2 = craftConclaveSeal();
+      assert('Ré-assemblage refusé (unique par compte)', ok2 === false);
+      freeIdxs.forEach((i, idx) => INV[i] = savedSlots[idx]);
+    }
+    S.hasConclaveMarchandsSeal = savedHasSeal; S.conclaveSealRegions = savedRegions;
+  }
+  function testConclaveSealMarketEffectsGatedByAssembly() {
+    if (typeof conclaveSealEffectiveSellKeepFraction === 'undefined') return;
+    const savedHasSeal = S.hasConclaveMarchandsSeal, savedRegions = S.conclaveSealRegions;
+    S.hasConclaveMarchandsSeal = false; S.conclaveSealRegions = [];
+    assert('Sans Sceau : fraction conservée = 1-taxe (0.65)', Math.abs(conclaveSealEffectiveSellKeepFraction() - 0.65) < 1e-9);
+    assert('Sans Sceau : passif régional nul', conclaveSealRegionalBonusPct('early') === 0);
+    S.hasConclaveMarchandsSeal = true; S.conclaveSealRegions = ['early'];
+    const kept = conclaveSealEffectiveSellKeepFraction();
+    assert('Avec Sceau : fraction conservée augmente (0.7884 attendu)', Math.abs(kept - 0.7884) < 1e-6, `got=${kept}`);
+    assert('Avec Sceau : passif régional +2% sur Velia (région possédée)', Math.abs(conclaveSealRegionalBonusPct('early') - 0.02) < 1e-9);
+    assert('Avec Sceau : passif régional nul sur une région NON possédée', conclaveSealRegionalBonusPct('mid') === 0);
+    S.hasConclaveMarchandsSeal = savedHasSeal; S.conclaveSealRegions = savedRegions;
+  }
+  // passif générique, pas câblé en dur sur Velia (CLAUDE.md, demande explicite) -- vérifie que la
+  // fonction lit bien S.conclaveSealRegions dynamiquement plutôt qu'un id fixe.
+  function testConclaveSealRegionalPassiveIsGenericNotHardcodedToVelia() {
+    if (typeof conclaveSealRegionalBonusPct === 'undefined') return;
+    const savedHasSeal = S.hasConclaveMarchandsSeal, savedRegions = S.conclaveSealRegions;
+    S.hasConclaveMarchandsSeal = true; S.conclaveSealRegions = ['mid','end2'];
+    assert('Passif suit S.conclaveSealRegions (mid)', conclaveSealRegionalBonusPct('mid') === 0.02);
+    assert('Passif suit S.conclaveSealRegions (end2)', conclaveSealRegionalBonusPct('end2') === 0.02);
+    assert('Passif nul sur une région absente de la liste (early)', conclaveSealRegionalBonusPct('early') === 0);
+    S.hasConclaveMarchandsSeal = savedHasSeal; S.conclaveSealRegions = savedRegions;
+  }
   function testMarketSellTaxRateMatchesServerFactor() {
     if (typeof MARKET_SELL_TAX_RATE === 'undefined') return; // pas de DOM/module marché chargé
     assert('MARKET_SELL_TAX_RATE vaut bien 35% (0.65 côté SQL)', MARKET_SELL_TAX_RATE === 0.35, `got=${MARKET_SELL_TAX_RATE}`);
@@ -5741,6 +5812,11 @@
     testJewelryHasMatNameForEnhancement();
     testInvOptTargetDoesNotEquip();
     testCompendiumEvictsItemOnceItReachesPen();
+    testConclaveSealOnlyVeliaFragmentUnlocked();
+    testConclaveSealAssembleFailsWithoutAllFiveFragments();
+    testConclaveSealAssembleSucceedsWithAllFiveFragmentsSimulated();
+    testConclaveSealMarketEffectsGatedByAssembly();
+    testConclaveSealRegionalPassiveIsGenericNotHardcodedToVelia();
     testMarketSellTaxRateMatchesServerFactor();
     testMarketPaneIsFlexColumnSoInnerColumnsScrollIndependently();
     testMarketCatalogUsesOnlyRealGameNames();

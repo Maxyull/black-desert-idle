@@ -182,6 +182,16 @@ function rollDrops(wp, alpha, lm) {
     // habituel juste en dessous, ce n'est pas un revenu de trash mais un prix de vente fixe)
     ...VELIA_TREASURE.map(t => ({ name:t.name, val:referenceGearVal()*(t.key==='treasure_bout_velia'?10:10000), ch:t.ch, kind:'treasure', color:t.color, key:t.key, icon:t.icon, stackable:true, weight:0.05,
       pickupQty: t.key==='treasure_bout_velia' ? 1+Math.floor(Math.random()*3) : 1 })),
+    // Sceau du Conclave des Marchands — fragment de Velia (2026-07-13) : SEUL fragment obtenable
+    // aujourd'hui (les 4 autres régions restent verrouillées, voir conclaveSealFragmentUnlocked),
+    // drop rare identique dans TOUTES les zones du jeu (même principe que VELIA_TREASURE juste
+    // au-dessus, pas de scaling par zone). Chance calibrée entre "Bout du trésor de Velia" (0.17%,
+    // fréquent) et "Trésor de Velia" (0.0005%, quasi jamais) : cet objet débloque un bonus Marché
+    // permanent et cumulatif avec un futur assemblage, un cran plus rare qu'un bijou de zone
+    // classique (~0.1-0.6%) mais pas aussi exceptionnel que le Trésor complet.
+    ...CONCLAVE_SEAL_FRAGMENTS.filter(f => conclaveSealFragmentUnlocked(f.tierId)).map(f => ({
+      name:f.name, val:referenceGearVal()*50, ch:.00004, kind:'treasure', color:f.color, key:f.key, icon:f.icon, stackable:false, weight:0.05, pickupQty:1,
+    })),
     // Pierre de Cron : taux FIXE (voir CRON_STONE.ch), identique dans TOUTES les zones du jeu
     // (indépendante du palier de stuff). 1 à 3 unités par drop (pickupQty).
     { name:CRON_STONE.name, val:0, ch:CRON_STONE.ch, kind:'material', color:CRON_STONE.color, key:CRON_STONE.key,
