@@ -3096,6 +3096,7 @@
   .minibossGbpRow b.ideal { color:var(--green2); }
   .minibossGbpRow b.real { color:var(--gold2); }
   .minibossGbpWarn { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:9.5px; color:var(--red2); line-height:1.5; }
+  .minibossGbpHint { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:9.5px; color:var(--cream3); line-height:1.5; }
   .minibossPartyList { padding:10px 16px 0; display:flex; flex-direction:column; gap:6px; }
   .minibossPartyRow { display:flex; align-items:center; gap:10px; font-size:11px; }
   .minibossPartyRow.mine { color:var(--arcane2); font-weight:600; }
@@ -3134,6 +3135,21 @@
   .minibossRepCardDivider { border-top:1px dashed var(--dbBorder2); margin-top:4px; padding-top:5px; }
   .minibossGearBadge { font-size:9px; font-family:'JetBrains Mono',monospace; background:var(--s2); padding:1px 5px; border-radius:8px; }
   .minibossChatText { color:var(--cream); flex:1; min-width:0; }
+  /* invitation directe depuis le chat de recrutement (mockup : .mbInviteBanner/.mbInviteMeBtn) --
+     retour utilisateur d'origine : "il y a un chat pour ça... ils peuvent s'inviter depuis le
+     chat" -- absent du premier portage (seul l'annuaire "Groupes" permettait de rejoindre). */
+  .minibossInviteMeBtn { flex-shrink:0; width:auto; margin-top:0; font-family:'Cinzel',serif; font-size:9.5px; padding:3px 9px; border-radius:5px; border:1px solid var(--arcane-dim); background:transparent; color:var(--arcane2); cursor:pointer; }
+  .minibossInviteMeBtn:hover { background:rgba(155,127,214,.14); }
+  .minibossInviteBanner {
+    display:none; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+    margin:10px 12px 0; padding:9px 12px; border-radius:8px; background:rgba(155,127,214,.12);
+    border:1px solid var(--arcane); font-size:11px; color:var(--arcane2);
+  }
+  .minibossInviteBanner.show { display:flex; }
+  .minibossInviteActions { display:flex; gap:6px; flex-shrink:0; }
+  #minibossInviteAcceptBtn, #minibossInviteIgnoreBtn { width:auto; margin-top:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; cursor:pointer; }
+  #minibossInviteAcceptBtn { border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); }
+  #minibossInviteIgnoreBtn { border:1px solid var(--dbBorder2); background:transparent; color:var(--cream3); }
   .minibossChatInputRow { display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--dbBorder); }
   .minibossChatInput { flex:1; background:var(--s2); border:1px solid var(--dbBorder2); border-radius:6px; padding:8px 10px; color:var(--cream); font-size:11.5px; }
   .minibossSendBtn { width:auto; margin-top:0; flex-shrink:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }

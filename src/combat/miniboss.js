@@ -66,6 +66,7 @@ let minibossRunLength = MINIBOSS_RUN_CHIPS[0];
 let minibossRecruitLog = []; // messages du chat de recrutement (éphémère, pas persisté)
 let minibossGroupLog = []; // messages du chat de groupe (éphémère)
 let minibossPendingJoinReq = null; // { fromUid, fromPseudo } — demande reçue, en attente de résolution (groupe en combat)
+let minibossPendingInvite = null; // { fromPseudo, groupId, groupSize } — invitation reçue via le chat de recrutement, en attente de résolution
 
 /** Compteurs de réputation locaux (voir minibossReputationScore, miniboss-data.js). @returns {object} S.minibossRep, jamais null. */
 function minibossRepCounters() { S.minibossRep = S.minibossRep || { groupsCreated:0, runsJoined:0, soloQuits:0, disconnects:0, votes:0, runsClean:0, runsIncident:0 }; return S.minibossRep; }
@@ -91,6 +92,11 @@ function joinMinibossLobbyChannel() {
     if (!payload) return;
     if (payload.groupId) { if (payload.groupId === (minibossGroupId||currentUser.id)) { minibossGroupLog.push(payload); renderMinibossGroupChatLog(); } }
     else { minibossRecruitLog.push(payload); renderMinibossRecruitChatLog(); }
+  });
+  ch.on('broadcast', { event:'invite' }, ({ payload }) => {
+    if (!payload || payload.toPseudo !== (myPseudo||'?')) return;
+    minibossPendingInvite = payload;
+    minibossShowInviteBanner(payload);
   });
   ch.on('broadcast', { event:'join_request' }, ({ payload }) => {
     if (!payload || payload.groupId !== (minibossGroupId||currentUser.id)) return;
@@ -197,6 +203,13 @@ function renderMiniBossLobbyHtml() {
   const n = Math.max(1, party.length);
   const gearPcts = party.map(p => p.gearPct||0);
   const avgGear = Math.round(gearPcts.reduce((a,b)=>a+b,0) / n);
+  // maillon faible identifié explicitement (mockup, "Mise à jour 22/23") -- seulement pertinent
+  // à plusieurs, et seulement si l'écart au reste du groupe est notable (>10 points), pas pour un
+  // groupe homogène où pointer du doigt le "pire" serait juste du bruit.
+  const weakest = n > 1 ? party.reduce((min, p) => (p.gearPct||0) < (min.gearPct||0) ? p : min, party[0]) : null;
+  const weakestHint = (weakest && (avgGear - (weakest.gearPct||0)) > 10)
+    ? i18next.t('combat:combat.miniboss.weakest_link_hint', { pseudo: weakest.mine ? i18next.t('combat:combat.miniboss.you_label') : escapeHtml(weakest.pseudo), pct: weakest.gearPct||0 })
+    : '';
   const stocks = party.map(p => p.mine ? parchQty : (p.parchemin||0));
   const maxRun = minibossMaxRunLength(stocks) || 0;
   if (minibossRunLength > Math.max(1, ...stocks, MINIBOSS_RUN_CHIPS[0])) minibossRunLength = MINIBOSS_RUN_CHIPS[0];
@@ -276,6 +289,7 @@ function renderMiniBossLobbyHtml() {
         <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.time_per_fight_real', { pct: avgGear })}</span><b class="real">${minibossFmtDuration(realTimePerFight)}</b></div>
         <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.parchemin_required', { n: minibossRunLength })}</span><b>${minibossRunLength}</b></div>
         <div class="minibossGbpRow"><span>${i18next.t('combat:combat.miniboss.total_time_estimate')}</span><b class="real">${minibossFmtDuration(realTimePerFight*minibossRunLength)}</b></div>
+        ${weakestHint ? `<div class="minibossGbpHint">${weakestHint}</div>` : ''}
         ${realTimePerFight > 600 ? `<div class="minibossGbpWarn">${i18next.t('combat:combat.miniboss.gear_too_low_warning')}</div>` : ''}
       </div>
       <div class="minibossPartyList">${partyRows}</div>
@@ -291,6 +305,13 @@ function renderMiniBossLobbyHtml() {
         <button class="minibossChatTab" data-chat="group">🔒 ${i18next.t('combat:combat.miniboss.chat_group')} <span class="minibossChatCount">${n}/${MINIBOSS_MAX_GROUP_SIZE}</span></button>
       </div>
       <div class="minibossChatPane on" id="minibossChatPane-recruit">
+        <div class="minibossInviteBanner" id="minibossInviteBanner">
+          <span id="minibossInviteBannerBody"></span>
+          <div class="minibossInviteActions">
+            <button id="minibossInviteAcceptBtn">${i18next.t('combat:combat.miniboss.invite_accept_btn')}</button>
+            <button id="minibossInviteIgnoreBtn">${i18next.t('combat:combat.miniboss.invite_ignore_btn')}</button>
+          </div>
+        </div>
         <div class="minibossChatLog" id="minibossRecruitLog"></div>
         <div class="minibossChatInputRow">
           <input class="minibossChatInput" id="minibossRecruitInput" placeholder="${i18next.t('combat:combat.miniboss.chat_placeholder')}" ${sb&&currentUser?'':'disabled'}>
@@ -348,6 +369,16 @@ function wireMiniBossLobby() {
   if (groupSend) groupSend.onclick = () => minibossSendChat('group');
   const groupInput = $a('minibossGroupInput');
   if (groupInput) groupInput.onkeydown = e => { if (e.key==='Enter') minibossSendChat('group'); };
+  // "Inviter" à côté de chaque message du chat de recrutement (mockup : .mbInviteMeBtn) --
+  // délégation sur le conteneur car le log est reconstruit à chaque nouveau message reçu
+  // (renderMinibossRecruitChatLog), pas seulement au wiring initial du lobby.
+  const recruitLog = $a('minibossRecruitLog');
+  if (recruitLog) recruitLog.onclick = e => {
+    const btn = e.target.closest('.minibossInviteMeBtn');
+    if (btn) minibossInviteToChat(btn.dataset.pseudo);
+  };
+  const inviteAccept = $a('minibossInviteAcceptBtn'); if (inviteAccept) inviteAccept.onclick = () => minibossResolveInvite(true);
+  const inviteIgnore = $a('minibossInviteIgnoreBtn'); if (inviteIgnore) inviteIgnore.onclick = () => minibossResolveInvite(false);
 }
 /** @param {number} n - nombre de combats choisi (chip/slider/MAX). Applique et rafraîchit le lobby SANS tout re-render (juste les champs concernés, pattern léger). */
 function minibossApplyRunLength(n) {
@@ -391,11 +422,16 @@ function minibossRepBadgeHtml(c) {
 /** Reconstruit le log du chat de recrutement (public). */
 function renderMinibossRecruitChatLog() {
   const el = $a('minibossRecruitLog'); if (!el) return;
-  el.innerHTML = minibossRecruitLog.slice(-50).map(m =>
-    `<div class="minibossChatMsg"><span class="minibossChatPseudo">${escapeHtml(m.pseudo)}</span>` +
-    minibossRepBadgeHtml(m.repCounters) +
-    `<span class="minibossGearBadge">⚔️${m.gearPct||0}%</span>` +
-    `<span class="minibossChatText">${escapeHtml(m.text)}</span></div>`).join('') || `<div class="admHint">${i18next.t('combat:combat.miniboss.chat_empty')}</div>`;
+  const hasRoom = minibossMyParty().length < MINIBOSS_MAX_GROUP_SIZE;
+  const myName = myPseudo || '?';
+  el.innerHTML = minibossRecruitLog.slice(-50).map(m => {
+    const inviteBtn = (m.pseudo !== myName && hasRoom)
+      ? `<button class="minibossInviteMeBtn" data-pseudo="${escapeHtml(m.pseudo)}">${i18next.t('combat:combat.miniboss.invite_button')}</button>` : '';
+    return `<div class="minibossChatMsg"><span class="minibossChatPseudo">${escapeHtml(m.pseudo)}</span>` +
+      minibossRepBadgeHtml(m.repCounters) +
+      `<span class="minibossGearBadge">⚔️${m.gearPct||0}%</span>` +
+      `<span class="minibossChatText">${escapeHtml(m.text)}</span>${inviteBtn}</div>`;
+  }).join('') || `<div class="admHint">${i18next.t('combat:combat.miniboss.chat_empty')}</div>`;
   el.scrollTop = el.scrollHeight;
 }
 /** Reconstruit le(s) log(s) du chat de groupe (privé, filtré par groupId) -- met à jour la version lobby (#minibossGroupLog) ET la version arène (#minibossArenaGroupLog) si présentes, les deux affichent le même flux partagé. */
@@ -433,6 +469,26 @@ function minibossJoinGroup(groupId, fighting) {
   if (!minibossLobbyChannel || !currentUser) return;
   try { minibossLobbyChannel.send({ type:'broadcast', event:'join_request', payload:{ groupId, fromUid:currentUser.id, fromPseudo: myPseudo||'?' } }); } catch (e) {}
   pushNotif('📨', i18next.t('combat:combat.miniboss.request_sent_title'), i18next.t('combat:combat.miniboss.request_sent_body'), 'info');
+}
+/** Invite un joueur vu dans le chat de recrutement à rejoindre MON groupe (mockup : bouton "Inviter" à côté de chaque message, actif seulement si j'ai déjà une place libre — voir renderMinibossRecruitChatLog). */
+function minibossInviteToChat(toPseudo) {
+  if (!minibossLobbyChannel || !currentUser || !toPseudo) return;
+  const groupId = minibossGroupId || currentUser.id;
+  try { minibossLobbyChannel.send({ type:'broadcast', event:'invite', payload:{ toPseudo, fromPseudo: myPseudo||'?', groupId, groupSize: minibossMyParty().length } }); } catch (e) {}
+  pushNotif('📨', i18next.t('combat:combat.miniboss.invite_sent_title'), i18next.t('combat:combat.miniboss.invite_sent_body', { pseudo: toPseudo }), 'info');
+}
+/** @param {{fromPseudo:string, groupId:string, groupSize:number}} invite. Affiche le bandeau d'invitation reçue en tête du chat de recrutement (mockup : .mbInviteBanner). */
+function minibossShowInviteBanner(invite) {
+  const banner = $a('minibossInviteBanner'); if (!banner) return;
+  $a('minibossInviteBannerBody').innerHTML = i18next.t('combat:combat.miniboss.invite_banner_body', { pseudo: escapeHtml(invite.fromPseudo), n: invite.groupSize, max: MINIBOSS_MAX_GROUP_SIZE });
+  banner.classList.add('show');
+}
+/** @param {boolean} accepted. Résout l'invitation reçue en attente (minibossPendingInvite) -- accepter rejoint directement (décision unilatérale de l'invité, pas d'approbation supplémentaire côté groupe). */
+function minibossResolveInvite(accepted) {
+  const banner = $a('minibossInviteBanner'); if (banner) banner.classList.remove('show');
+  const invite = minibossPendingInvite; minibossPendingInvite = null;
+  if (!invite) return;
+  if (accepted) minibossJoinGroup(invite.groupId, false);
 }
 /** @param {{fromUid:string, fromPseudo:string, groupId:string}} req. Affiche le pop-up "demande de rejoindre" (uniquement chez l'invocateur du groupe visé). */
 function minibossShowJoinRequestPopup(req) {
