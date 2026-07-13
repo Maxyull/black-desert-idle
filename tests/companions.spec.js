@@ -33,23 +33,7 @@ test.describe.configure({ retries: 2 });
 async function dismissTutorialIfPresent(page) {
   const skipBtn = page.locator('#tutSkipBtn');
   if (await skipBtn.isVisible().catch(() => false)) {
-    // timeout court et volontairement avalé (2026-07-14, correctif flakiness CI) : #tutorialOverlay
-    // (z-index 900, styles.css) peut redevenir "visible" au sens CSS pendant qu'un tutoriel
-    // d'objet (ex: ITEM_TUTORIALS.trash, notifications-quests.js, se déclenche au 1er ramassage
-    // d'un trash de zone) se met en file en arrière-plan -- SANS jamais être cliquable si
-    // #companionsOverlay (z-index 950, boss.js:openCompanionsModule) est déjà ouvert par-dessus :
-    // le clic reste alors bloqué en boucle de retry Playwright ("iframe #companionsFrame subtree
-    // intercepts pointer events") de façon PERMANENTE, pas juste temporaire, tant que le module
-    // Compagnon reste ouvert. Sans timeout explicite ici, .click() héritait du timeout GLOBAL du
-    // test (60s, playwright.config.js) et grillait tout le budget du test sur ce dismiss "best
-    // effort" avant même de tenter le VRAI clic visé par dismissTutorialsAndClick() -- lequel,
-    // lui, cible un élément DANS l'iframe (donc au-dessus, jamais bloqué) et aurait immédiatement
-    // réussi. Repro 100% fiable en local en ajoutant un délai avant l'appel (le temps qu'un tick
-    // du jeu en arrière-plan déclenche le tutoriel trash) ; en CI, plus lent, ce délai s'écoule
-    // presque à chaque run, d'où l'échec DÉTERMINISTE constaté là-bas (voir runs CI 29284709491
-    // et suivants) contre un succès quasi systématique en local. Un timeout court + un échec avalé
-    // rendent ce dismiss réellement "best effort" comme voulu, sans jamais bloquer la suite.
-    await skipBtn.click({ timeout: 1500 }).catch(() => {});
+    await skipBtn.click();
   }
 }
 

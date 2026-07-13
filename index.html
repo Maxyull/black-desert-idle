@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=616">
+<link rel="stylesheet" href="build/styles.min.css?v=609">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -535,7 +535,6 @@
       <div id="minibossLobbyBody"></div>
     </div>
     <div id="minibossArena">
-      <div id="minibossPauseMsg" class="minibossPauseMsg"></div>
       <div id="minibossTopBar">
         <div id="minibossName"></div>
         <div id="minibossHpBarWrap"><div id="minibossHpBar"></div><span id="minibossHpTxt"></span></div>
@@ -548,27 +547,10 @@
       </div>
       <div id="minibossVoteStopPanel" class="minibossVoteStopPanel">
         <div id="minibossVoteStopHead"></div>
-        <div id="minibossVoteStopList" class="minibossVoteStopList"></div>
-      </div>
-      <div id="minibossSoloLeaveConfirm" class="minibossSoloLeaveConfirm">
-        <span id="minibossSoloLeaveConfirmMsg"></span>
-        <div class="minibossSoloLeaveConfirmActions">
-          <button id="minibossSoloLeaveConfirmBtn"></button>
-          <button id="minibossSoloLeaveCancelBtn"></button>
-        </div>
       </div>
       <canvas id="minibossCv" width="1280" height="720"></canvas>
       <div id="minibossTopPanel"><h4>👥 <span id="minibossRosterTitle"></span></h4><div id="minibossRosterList"></div></div>
       <div id="minibossPlayerHpWrap"><div id="minibossPlayerHp"></div><span id="minibossPlayerHpTxt"></span></div>
-      <div id="minibossArenaLadder" class="card minibossArenaLadderCard"></div>
-      <div class="card minibossArenaChatCard">
-        <h3><span id="minibossArenaChatTitle"></span><span id="minibossArenaChatCount" class="minibossArenaChatCount"></span></h3>
-        <div id="minibossArenaGroupLog" class="minibossChatLog"></div>
-        <div class="minibossChatInputRow">
-          <input id="minibossArenaGroupInput" class="minibossChatInput">
-          <button id="minibossArenaGroupSend" class="minibossSendBtn"></button>
-        </div>
-      </div>
       <div id="minibossResult"></div>
     </div>
   </div>
@@ -587,18 +569,6 @@
 
   <div id="gameFrame">
     <canvas id="cv" width="1240" height="440"></canvas>
-    <!-- boutons +/- taille UI/jeu (2026-07-13, mockup validé) : quasi invisibles au repos, pleine
-         opacité + petit libellé au survol -- voir applyUiScale()/setUiScaleLevel() (game-supabase.js)
-         et .uiScaleBtn (styles.css). Insets 14px gauche/droite = même convention que #lootTicker/
-         #hpPotWrap sur ce même cadre ; centrés verticalement (#gameFrame est position:relative). -->
-    <button id="btnUiScaleDown" class="uiScaleBtn" title="Réduire" data-i18n-title="uiScaleDown">
-      <span class="uiScaleBtnIcon">−</span>
-      <span class="uiScaleBtnLabel" data-i18n="uiScaleDown">Réduire</span>
-    </button>
-    <button id="btnUiScaleUp" class="uiScaleBtn" title="Agrandir" data-i18n-title="uiScaleUp">
-      <span class="uiScaleBtnIcon">+</span>
-      <span class="uiScaleBtnLabel" data-i18n="uiScaleUp">Agrandir</span>
-    </button>
     <canvas id="zoneMobIcon" width="34" height="34"></canvas>
     <div id="zoneTitle"><small id="ztTier">Balenos — Early</small><span id="ztName">Camp des Loups</span><br><span id="zoneBadge" class="b-green">ZONE ADAPTÉE</span><br><span id="ztReq"></span><br><span id="ztCompendium"></span></div>
     <div id="aiState">IA : <span id="stateName">SearchPack</span> · <span id="aiSkill">—</span></div>
@@ -939,11 +909,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=616"></script>
+<script src="meta/patch-notes-data.js?v=608"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=616"></script>
+<script src="build/source.min.js?v=609"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le

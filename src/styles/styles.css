@@ -2838,20 +2838,12 @@
     width:100%; max-width:none; margin:0; box-sizing:border-box;
   }
   #activitiesBar { margin-bottom:10px; }
-  /* --ui-center-track (défaut 1fr) : posée dynamiquement par updateUiScaleLayoutTrack()
-     (game-supabase.js) quand un palier de taille UI non-medium est actif -- voir le correctif
-     "agrandissement juste en hauteur" documenté en détail près de #btnUiScaleDown/Up plus bas
-     dans ce fichier. Remplace la valeur 1fr littérale dans les 4 variantes de grid-template-
-     columns ci-dessous (base + 3 combinaisons :has(...collapsed)) : #wrap (item de grille
-     width:auto) est "stretché" à la taille EXACTE de sa piste quelle que soit sa propre échelle
-     CSS (zoom/transform) -- sans piste plus grande, aucun agrandissement de largeur n'est
-     jamais visible, seulement la hauteur (poussée normale du flux). */
   .layout {
-    display:grid; grid-template-columns:210px var(--ui-center-track,1fr) 300px; gap:14px; align-items:start;
+    display:grid; grid-template-columns:210px 1fr 300px; gap:14px; align-items:start;
   }
   /* #wrap contenait auparavant #activitiesBar (retiré ci-dessus) ET portait sa propre
      largeur fixe (1240px, voir règle plus haut dans ce fichier) -- devenu simple item
-     de grille (.game-main conceptuel), sa largeur doit suivre la colonne centrale, pas
+     de grille (.game-main conceptuel), sa largeur doit suivre la colonne 1fr, pas
      rester figée à 1240px (qui débordait sa nouvelle colonne, bien plus étroite). */
   .layout #wrap { width:auto; max-width:none; }
   /* #sideMenu.onRight (préférence gauche/droite, voir menuSide dans game-supabase.js) :
@@ -2864,12 +2856,12 @@
      colonne (210px fixe), pas sa propre largeur CSS : replier le menu ne libérait donc plus
      d'espace. :has() permet de rétrécir la piste elle-même sans toucher au JS existant
      (sideMenuCollapsed/#btnCollapseMenu, game-supabase.js) qui ne togglait que la classe. */
-  .layout:has(#sideMenu.collapsed) { grid-template-columns:56px var(--ui-center-track,1fr) 300px; }
+  .layout:has(#sideMenu.collapsed) { grid-template-columns:56px 1fr 300px; }
   /* repli de la colonne droite (2026-07-13, demande explicite) : même piège documenté CLAUDE.md
      §32 pour :has(#sideMenu.collapsed) -- chaque combinaison doit être déclarée explicitement,
      :has() ne se combine pas "tout seul" avec une autre règle :has() de spécificité différente. */
-  .layout:has(#sideRight.collapsed) { grid-template-columns:210px var(--ui-center-track,1fr) 56px; }
-  .layout:has(#sideMenu.collapsed):has(#sideRight.collapsed) { grid-template-columns:56px var(--ui-center-track,1fr) 56px; }
+  .layout:has(#sideRight.collapsed) { grid-template-columns:210px 1fr 56px; }
+  .layout:has(#sideMenu.collapsed):has(#sideRight.collapsed) { grid-template-columns:56px 1fr 56px; }
   .side-right {
     display:flex; flex-direction:column; gap:10px;
     position:sticky; top:14px;
@@ -3000,37 +2992,19 @@
   #minibossRoom.lobby #minibossLobby { display:flex; }
   #minibossRoom.lobby #minibossArena { display:none; }
   #minibossRoom.fight #minibossLobby { display:none; }
-  /* overflow-y:auto (2026-07-14, ajout ladder+chat sous le canvas -- voir revue de maquette) :
-     le canvas garde un min-height fixe, le reste (échelle de bonus "en direct" + chat de groupe
-     persistant, absents du premier portage) devient accessible par scroll sous la zone de combat
-     plutôt que de comprimer le canvas. #minibossResult reste correct en position:absolute/inset:0
-     -- overflow:auto ne change pas la hauteur de la boîte elle-même, seulement son contenu. */
-  #minibossArena { display:flex; flex-direction:column; height:100%; position:relative; overflow-y:auto; }
+  #minibossArena { display:flex; flex-direction:column; height:100%; position:relative; }
   #minibossLobbyHead {
     display:flex; align-items:center; justify-content:space-between; padding:12px 18px;
     background:linear-gradient(180deg,var(--arcane-dim),#1b1626); border-bottom:1px solid var(--arcane);
   }
-  #minibossLobbyHead h2 { font-family:'Cinzel',serif; font-size:16px; margin:0; color:var(--arcane2); }
+  #minibossLobbyHead h2 { font-size:16px; margin:0; color:var(--arcane2); }
   #minibossLobbyClose { width:auto; margin:0; padding:4px 10px; font-size:16px; background:none; border:none; color:var(--cream3); }
   #minibossLobbyBody { padding:16px 18px; display:flex; flex-direction:column; gap:14px; }
   #minibossLobbyBody .card { background:var(--s1); border:1px solid var(--dbBorder); border-radius:11px; }
   #minibossLobbyBody .card h3 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--cream2); padding:12px 16px; margin:0; border-bottom:1px solid var(--dbBorder); }
-  /* mise en page 2 colonnes (fidèle à la maquette, 29 itérations) : la carte de bonus de groupe
-     est un bandeau PLEINE LARGEUR au-dessus (mise en évidence, pas noyée dans une carte parmi
-     d'autres), puis un grille invocation/craft/groupe (gauche) + chat en BARRE LATÉRALE (droite,
-     340px) -- contrairement à un simple empilement vertical, le chat reste visible en permanence
-     à côté du reste sans avoir à scroller toute la page. */
-  .minibossLobbyBonusCard { padding:14px 16px; }
-  .minibossBonusTagline { font-size:10.5px; color:var(--gold2); margin-top:10px; }
-  .minibossBonusHint { margin-top:8px; padding-top:8px; border-top:1px dashed var(--dbBorder2); font-size:10.5px; color:var(--cream3); }
-  .minibossBonusHint b { color:var(--gold2); }
-  .minibossLobbyGrid { display:grid; grid-template-columns:1fr 340px; gap:14px; align-items:start; }
-  .minibossLobbyMain, .minibossLobbySide { display:flex; flex-direction:column; gap:14px; }
-  @media (max-width:1024px) { .minibossLobbyGrid { grid-template-columns:1fr; } }
   .minibossSummonCard { padding:20px; text-align:center; }
   .minibossSummonIcon { font-size:44px; filter:drop-shadow(0 0 16px rgba(155,127,214,.4)); }
-  .minibossSummonName { font-family:'Cinzel',serif; font-size:17px; color:var(--arcane2); margin:6px 0 4px; }
-  .minibossSummonLore { font-family:'Cinzel',serif; font-style:italic; font-size:10.5px; color:var(--cream3); max-width:340px; margin:0 auto 14px; line-height:1.5; }
+  .minibossSummonName { font-size:15px; color:var(--arcane2); margin:4px 0 10px; }
   .minibossParcheminRow { display:flex; align-items:center; gap:12px; justify-content:center; background:var(--s2); border:1px solid var(--dbBorder); border-radius:9px; padding:12px 16px; margin-bottom:12px; }
   .minibossParcheminIcon { font-size:26px; }
   .minibossParcheminQty { font-size:18px; color:var(--gold2); font-weight:600; text-align:left; }
@@ -3038,7 +3012,7 @@
   .minibossTradeTag { font-size:9.5px; color:var(--red2); text-align:left; }
   .minibossTradeTagSellable { font-size:9.5px; color:var(--green2); margin-left:8px; }
   .minibossSummonBtn, .minibossReadyBtn {
-    font-family:'Cinzel',serif; font-size:12.5px; font-weight:600; padding:11px 20px; border-radius:8px; border:1px solid var(--arcane);
+    font-size:13px; font-weight:600; padding:11px 20px; border-radius:8px; border:1px solid var(--arcane);
     background:linear-gradient(135deg,#2a1f45,var(--arcane-dim)); color:var(--arcane2); cursor:pointer; width:100%;
   }
   .minibossSummonBtn:disabled, .minibossReadyBtn:disabled { opacity:.4; cursor:not-allowed; background:transparent; color:var(--cream3); border-color:var(--dbBorder2); }
@@ -3050,12 +3024,9 @@
   .minibossCraftBar { height:7px; background:var(--s2); border-radius:4px; overflow:hidden; }
   .minibossCraftBarFill { height:100%; background:linear-gradient(90deg,var(--arcane-dim),var(--arcane)); }
   .minibossCraftCount { font-size:10px; color:var(--cream3); margin-top:4px; }
-  .minibossCraftBtn { width:auto; flex-shrink:0; font-family:'Cinzel',serif; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:7px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream3); cursor:not-allowed; }
+  .minibossCraftBtn { width:auto; flex-shrink:0; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:7px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream3); cursor:not-allowed; }
   .minibossCraftBtn.ready { border-color:var(--gold); color:var(--gold2); cursor:pointer; }
   .minibossBonusLadder { padding:10px 16px; }
-  .minibossBonusLadderHead { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; }
-  .minibossBonusLadderTitle { font-family:'Cinzel',serif; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--cream2); }
-  .minibossBonusLadderCurrent { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--arcane2); font-weight:600; }
   .minibossBonusLadderTrack { display:flex; gap:6px; }
   .minibossBonusStep { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 2px; border-radius:6px; background:var(--s2); border:1px solid var(--dbBorder2); }
   .minibossBonusStep.reached { border-color:var(--arcane-dim); }
@@ -3065,38 +3036,19 @@
   .minibossBonusStepMult { font-size:11px; color:var(--cream2); font-weight:600; }
   .minibossBonusStep.current .minibossBonusStepMult { color:var(--arcane2); }
   .minibossBonusStep.jackpot.current .minibossBonusStepMult { color:var(--gold2); }
-  .minibossBonusStepPct { font-size:8px; color:var(--cream3); }
-  .minibossBonusStepHp { font-size:7.5px; color:var(--red2); opacity:.75; }
-  .minibossBonusStepTime { font-size:7.5px; color:var(--cream3); opacity:.75; }
-  .minibossBonusStep.current .minibossBonusStepTime { color:var(--arcane2); opacity:.9; }
   .minibossGroupCard h3 { display:flex; align-items:center; justify-content:space-between; }
-  /* icône d'info + carte des règles de sortie (quitter/déco/vote) au survol -- CSS pur, comme la
-     maquette (.runRulesInfo/.runRulesCard) -- absent du premier portage, rajouté. */
-  .minibossRulesInfo { position:relative; display:inline-flex; margin-left:6px; cursor:help; }
-  .minibossRulesIcon { width:15px; height:15px; border-radius:50%; border:1px solid var(--dbBorder2); color:var(--cream3); font-size:9.5px; display:flex; align-items:center; justify-content:center; }
-  .minibossRulesCard {
-    display:none; position:absolute; z-index:20; top:20px; left:0; width:260px; padding:12px 14px;
-    background:#141225; border:1px solid var(--dbBorder2); border-radius:9px; box-shadow:0 8px 24px rgba(0,0,0,.5);
-    font-family:'Inter',sans-serif; font-size:10.5px; color:var(--cream2); line-height:1.6; text-align:left; font-weight:400; text-transform:none;
-  }
-  .minibossRulesInfo:hover .minibossRulesCard { display:block; }
-  .minibossRulesCard b { color:var(--cream); }
-  .minibossRule { margin-bottom:7px; }
-  .minibossRule:last-child { margin-bottom:0; }
   .minibossRunLengthRow { display:flex; align-items:center; gap:10px; padding:12px 16px 4px; flex-wrap:wrap; }
   .minibossRunChips { display:flex; gap:6px; flex-wrap:wrap; }
-  .minibossRunChip { width:auto; margin-top:0; font-size:11px; padding:5px 12px; border-radius:14px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
+  .minibossRunChip { width:auto; flex-shrink:0; font-size:11px; padding:5px 12px; border-radius:14px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
   .minibossRunChip.on { border-color:var(--arcane); color:var(--arcane2); background:rgba(155,127,214,.16); font-weight:600; }
   .minibossRunCustom { display:flex; align-items:center; gap:10px; padding:2px 16px 10px; }
   .minibossRunCustom input[type=range] { flex:1; accent-color:var(--arcane); }
   #minibossRunSliderVal { font-size:11px; color:var(--arcane2); width:30px; text-align:right; }
-  .minibossMaxBtn { width:auto; margin-top:0; font-size:10px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
+  .minibossMaxBtn { width:auto; font-size:10px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
   .minibossGroupPreview { margin:6px 16px 0; padding:10px 12px; border-radius:7px; background:rgba(224,96,96,.06); border:1px solid var(--red-dim,#5a1818); }
   .minibossGbpRow { display:flex; justify-content:space-between; font-size:10.5px; color:var(--cream2); padding:2px 0; }
   .minibossGbpRow b.ideal { color:var(--green2); }
   .minibossGbpRow b.real { color:var(--gold2); }
-  .minibossGbpWarn { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:9.5px; color:var(--red2); line-height:1.5; }
-  .minibossGbpHint { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:9.5px; color:var(--cream3); line-height:1.5; }
   .minibossPartyList { padding:10px 16px 0; display:flex; flex-direction:column; gap:6px; }
   .minibossPartyRow { display:flex; align-items:center; gap:10px; font-size:11px; }
   .minibossPartyRow.mine { color:var(--arcane2); font-weight:600; }
@@ -3107,7 +3059,7 @@
   .minibossMaxHint { padding:6px 16px 12px; font-size:9.5px; color:var(--cream3); }
   .minibossChatCard { display:flex; flex-direction:column; }
   .minibossChatTabs { display:flex; gap:6px; padding:10px 12px 0; }
-  .minibossChatTab { width:auto; margin-top:0; flex:1; min-width:0; font-family:'Cinzel',serif; font-size:9.5px; font-weight:600; padding:8px 6px; border-radius:7px 7px 0 0; border:1px solid var(--dbBorder); border-bottom:none; background:transparent; color:var(--cream3); cursor:pointer; }
+  .minibossChatTab { flex:1; font-size:10px; font-weight:600; padding:8px 6px; border-radius:7px 7px 0 0; border:1px solid var(--dbBorder); border-bottom:none; background:transparent; color:var(--cream3); cursor:pointer; }
   .minibossChatTab.on { color:var(--arcane2); background:var(--s2); border-color:var(--dbBorder2); }
   .minibossChatCount { font-size:9.5px; background:var(--arcane-dim); color:var(--arcane2); padding:1px 6px; border-radius:8px; margin-left:4px; }
   .minibossChatPane { display:none; flex-direction:column; border-top:1px solid var(--dbBorder); min-height:260px; }
@@ -3115,44 +3067,12 @@
   .minibossChatLog, .minibossGroupsList { flex:1; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:7px; max-height:260px; }
   .minibossChatMsg { font-size:12px; display:flex; align-items:baseline; gap:5px; flex-wrap:wrap; }
   .minibossChatPseudo { font-weight:bold; color:var(--arcane2); }
-  /* badge de réputation + carte détaillée au survol (7 stats brutes), CSS pur -- retour de revue
-     de maquette : le premier portage n'affichait qu'un badge plat sans détail. */
-  .minibossRepBadge { position:relative; display:inline-flex; align-items:center; cursor:help; font-size:9px; font-family:'JetBrains Mono',monospace; padding:1px 5px; border-radius:8px; }
-  .minibossRepBadge.good { background:rgba(112,216,144,.12); color:var(--green2); }
-  .minibossRepBadge.ok { background:rgba(232,200,128,.12); color:var(--gold2); }
-  .minibossRepBadge.bad { background:rgba(224,96,96,.12); color:var(--red2); }
-  .minibossRepCard {
-    display:none; position:absolute; z-index:20; top:16px; left:0; width:190px; padding:10px 12px;
-    background:#141225; border:1px solid var(--dbBorder2); border-radius:9px; box-shadow:0 8px 24px rgba(0,0,0,.5);
-    font-family:'Inter',sans-serif; font-size:10px; color:var(--cream2); text-align:left; font-weight:400;
-  }
-  .minibossRepBadge:hover .minibossRepCard { display:block; }
-  .minibossRepCardTitle { font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--cream3); margin-bottom:5px; padding-bottom:5px; border-bottom:1px solid var(--dbBorder); }
-  .minibossRepCardRow { display:flex; justify-content:space-between; padding:2px 0; }
-  .minibossRepCardRow b { font-family:'JetBrains Mono',monospace; color:var(--cream); }
-  .minibossRepCardRow.good b { color:var(--green2); }
-  .minibossRepCardRow.bad b { color:var(--red2); }
-  .minibossRepCardDivider { border-top:1px dashed var(--dbBorder2); margin-top:4px; padding-top:5px; }
+  .minibossRepBadge { font-size:9px; font-family:'JetBrains Mono',monospace; background:rgba(112,216,144,.12); color:var(--green2); padding:1px 5px; border-radius:8px; }
   .minibossGearBadge { font-size:9px; font-family:'JetBrains Mono',monospace; background:var(--s2); padding:1px 5px; border-radius:8px; }
   .minibossChatText { color:var(--cream); flex:1; min-width:0; }
-  /* invitation directe depuis le chat de recrutement (mockup : .mbInviteBanner/.mbInviteMeBtn) --
-     retour utilisateur d'origine : "il y a un chat pour ça... ils peuvent s'inviter depuis le
-     chat" -- absent du premier portage (seul l'annuaire "Groupes" permettait de rejoindre). */
-  .minibossInviteMeBtn { flex-shrink:0; width:auto; margin-top:0; font-family:'Cinzel',serif; font-size:9.5px; padding:3px 9px; border-radius:5px; border:1px solid var(--arcane-dim); background:transparent; color:var(--arcane2); cursor:pointer; }
-  .minibossInviteMeBtn:hover { background:rgba(155,127,214,.14); }
-  .minibossInviteBanner {
-    display:none; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
-    margin:10px 12px 0; padding:9px 12px; border-radius:8px; background:rgba(155,127,214,.12);
-    border:1px solid var(--arcane); font-size:11px; color:var(--arcane2);
-  }
-  .minibossInviteBanner.show { display:flex; }
-  .minibossInviteActions { display:flex; gap:6px; flex-shrink:0; }
-  #minibossInviteAcceptBtn, #minibossInviteIgnoreBtn { width:auto; margin-top:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; cursor:pointer; }
-  #minibossInviteAcceptBtn { border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); }
-  #minibossInviteIgnoreBtn { border:1px solid var(--dbBorder2); background:transparent; color:var(--cream3); }
   .minibossChatInputRow { display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--dbBorder); }
   .minibossChatInput { flex:1; background:var(--s2); border:1px solid var(--dbBorder2); border-radius:6px; padding:8px 10px; color:var(--cream); font-size:11.5px; }
-  .minibossSendBtn { width:auto; margin-top:0; flex-shrink:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
+  .minibossSendBtn { width:auto; flex-shrink:0; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
   .minibossGroupChatHead { flex-shrink:0; padding:10px 12px; font-size:11.5px; color:var(--cream2); border-bottom:1px solid var(--dbBorder); background:rgba(155,127,214,.06); }
   .minibossGroupRow { border:1px solid var(--dbBorder2); border-radius:9px; padding:10px 12px; background:var(--s2); display:flex; flex-direction:column; gap:6px; }
   .minibossGroupRowHead { display:flex; align-items:center; gap:8px; }
@@ -3162,47 +3082,22 @@
   .minibossGroupRowStatus.fighting { background:rgba(224,96,96,.14); color:var(--red2); }
   .minibossGroupRowSize { font-size:10px; color:var(--arcane2); }
   .minibossGroupRowMeta { font-size:9.5px; color:var(--cream3); }
-  .minibossGroupJoinBtn { width:auto; margin-top:0; align-self:flex-start; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); cursor:pointer; }
+  .minibossGroupJoinBtn { width:auto; flex-shrink:0; align-self:flex-start; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); cursor:pointer; }
 
   /* ===== arène Mini Boss ===== */
-  /* bandeau "reste sur cet onglet" -- retour explicite de l'utilisateur ("pouvoir activer le
-     mode en continue obliger detre fenetre ouverte pas de mode hors ligne !"), absent du
-     premier portage -- distinct du #minibossTopBar (mockup : .stayOpenWarn séparé de .arenaTop). */
-  .minibossPauseMsg { padding:8px 16px; font-size:11px; color:var(--red2); background:rgba(224,96,96,.08); border-bottom:1px solid var(--red-dim,#5a1818); }
   #minibossTopBar { display:flex; align-items:center; gap:10px; padding:10px 16px; background:rgba(0,0,0,.5); border-bottom:1px solid var(--arcane); flex-wrap:wrap; }
-  #minibossName { font-family:'Cinzel',serif; font-size:15px; font-weight:bold; color:var(--arcane2); flex-shrink:0; }
+  #minibossName { font-size:15px; font-weight:bold; color:var(--arcane2); flex-shrink:0; }
   #minibossHpBarWrap { flex:1; min-width:120px; height:20px; background:#14101f; border:1px solid var(--arcane-dim); border-radius:4px; position:relative; overflow:hidden; }
   #minibossHpBar { height:100%; width:100%; background:linear-gradient(90deg,#5a3a80,var(--arcane) 60%,var(--arcane2)); transition:width .2s linear; }
   #minibossHpTxt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:10.5px; font-weight:600; color:#fff; text-shadow:0 1px 2px #000; }
   #minibossTimer { font-size:14px; font-weight:bold; color:var(--gold2); flex-shrink:0; }
   #minibossRunProgress { font-size:10.5px; color:var(--cream2); flex-shrink:0; }
   #minibossExitActions { display:flex; gap:6px; flex-shrink:0; }
-  #minibossVoteStopBtn, #minibossSoloLeaveBtn { width:auto; margin:0; padding:4px 10px; font-size:13px; font-family:'Cinzel',serif; background:none; border:1px solid var(--dbBorder2); color:var(--cream2); border-radius:6px; }
+  #minibossVoteStopBtn, #minibossSoloLeaveBtn { width:auto; margin:0; padding:4px 10px; font-size:13px; background:none; border:1px solid var(--dbBorder2); color:var(--cream2); border-radius:6px; }
   #minibossSoloLeaveBtn { border-color:var(--red2); color:var(--red2); }
   .minibossVoteStopPanel { display:none; margin:0 16px 8px; padding:8px 12px; border-radius:7px; background:rgba(232,200,128,.08); border:1px solid var(--gold-dim); font-size:10.5px; color:var(--gold2); }
   .minibossVoteStopPanel.show { display:block; }
-  .minibossVoteStopList { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
-  .minibossVoteChip { font-size:9.5px; padding:3px 8px; border-radius:12px; background:var(--s2); border:1px solid var(--dbBorder2); color:var(--cream2); }
-  .minibossVoteChip.yes { border-color:var(--green2); color:var(--green2); }
-  .minibossVoteChip.pending { color:var(--cream3); }
-  /* confirmation avant "quitter seul" -- perte sèche du loot, ne doit jamais être accidentelle
-     (absent du premier portage : le clic quittait directement sans confirmation). */
-  .minibossSoloLeaveConfirm { display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin:0 16px 8px; padding:8px 12px; border-radius:7px; background:rgba(224,96,96,.12); border:1px solid var(--red2); font-size:10.5px; color:var(--red2); }
-  .minibossSoloLeaveConfirm.show { display:flex; }
-  .minibossSoloLeaveConfirmActions { display:flex; gap:8px; flex-shrink:0; }
-  #minibossSoloLeaveConfirmBtn, #minibossSoloLeaveCancelBtn { width:auto; margin-top:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:6px 13px; border-radius:6px; cursor:pointer; }
-  #minibossSoloLeaveConfirmBtn { border:1px solid var(--red2); background:var(--red2); color:#1a0808; }
-  #minibossSoloLeaveCancelBtn { border:1px solid var(--dbBorder2); background:transparent; color:var(--cream2); }
-  #minibossCv { flex:1; width:100%; min-height:240px; display:block; }
-  /* échelle de bonus "en direct" + chat de groupe persistant pendant le combat (mockup :
-     .bonusLadder répété + .arenaSide, absents du premier portage -- seul le panneau roster en
-     overlay existait). Cartes pleine largeur sous le canvas (pas de #minibossTopPanel-style
-     overlay ici, l'espace disponible varie trop selon la taille d'écran pour un 2e overlay). */
-  .minibossArenaLadderCard { flex-shrink:0; margin:10px 16px 0; }
-  .minibossArenaChatCard { flex-shrink:0; margin:10px 16px 16px; display:flex; flex-direction:column; height:220px; }
-  .minibossArenaChatCard h3 { display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
-  .minibossArenaChatCount { font-family:'JetBrains Mono',monospace; font-size:9.5px; color:var(--arcane2); text-transform:none; letter-spacing:0; }
-  .minibossArenaChatCard .minibossChatLog { flex:1; min-height:0; }
+  #minibossCv { flex:1; width:100%; min-height:0; display:block; }
   #minibossTopPanel { position:absolute; top:70px; right:14px; width:200px; background:rgba(16,16,30,.9); border:1px solid var(--dbBorder2); border-radius:8px; padding:10px; }
   #minibossTopPanel h4 { margin:0 0 6px; font-size:10.5px; color:var(--arcane2); }
   .minibossRosterRow { display:flex; align-items:center; gap:6px; font-size:10px; padding:2px 0; }
@@ -3213,7 +3108,7 @@
   #minibossPlayerHpTxt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9.5px; color:#fff; text-shadow:0 1px 1px #000; }
   #minibossResult { display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:12px; background:rgba(0,0,0,.72); text-align:center; padding:20px; }
   #minibossResult.show { display:flex; }
-  #minibossResult .brTitle { font-family:'Cinzel',serif; font-size:24px; font-weight:bold; letter-spacing:2px; color:var(--arcane2); }
+  #minibossResult .brTitle { font-size:24px; font-weight:bold; letter-spacing:2px; color:var(--arcane2); }
   #minibossResult .brRewards { font-size:13px; color:var(--cream2); }
   #minibossResult .minibossRewardMath { font-size:15px; color:var(--cream2); font-family:'JetBrains Mono',monospace; }
   #minibossResult .minibossRewardMath b { color:var(--gold2); }
@@ -3222,10 +3117,10 @@
   .minibossJoinReqBackdrop { display:none; position:fixed; inset:0; z-index:960; background:rgba(5,5,10,.72); align-items:center; justify-content:center; }
   .minibossJoinReqBackdrop.show { display:flex; }
   .minibossJoinReqModal { width:340px; background:#141225; border:1px solid var(--arcane); border-radius:12px; padding:18px; }
-  .minibossJoinReqTitle { font-family:'Cinzel',serif; font-size:13px; color:var(--arcane2); margin-bottom:10px; }
+  .minibossJoinReqTitle { font-size:13px; color:var(--arcane2); margin-bottom:10px; }
   #minibossJoinReqBody { font-size:12px; color:var(--cream2); margin-bottom:14px; }
   .minibossJoinReqActions { display:flex; gap:10px; }
-  .minibossJoinReqAccept, .minibossJoinReqRefuse { width:auto; margin-top:0; flex:1; font-family:'Cinzel',serif; font-size:11px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer; }
+  .minibossJoinReqAccept, .minibossJoinReqRefuse { flex:1; font-size:11px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer; }
   .minibossJoinReqAccept { border:1px solid var(--green2); background:rgba(112,216,144,.14); color:var(--green2); }
   .minibossJoinReqRefuse { border:1px solid var(--dbBorder2); background:transparent; color:var(--cream2); }
   @media (max-width:1024px) {
@@ -3930,59 +3825,4 @@
   .card.cardDropAfter { box-shadow: 3px 0 0 var(--gold) inset; }
   .card.cardNested { border:none; padding:0; background:transparent; margin:0; }
   .card.cardNested > h3 { display:none; }
-
-  /* ===== boutons +/- taille UI/jeu, sur les bords de #gameFrame (2026-07-13, mockup validé ;
-     correctif 2026-07-14 : transform:scale() -> zoom, voir applyUiScale() game-supabase.js) =====
-     Quasi invisibles au repos (~15% opacity, cercle doré fin) -- pleine opacité + petit libellé
-     sous le bouton au survol, transition courte cohérente avec le reste de la feuille (.15-.2s,
-     voir #btnCollapseMenu/.ncDel plus haut). #wrap (colonne centrale : #gameFrame+#panel+
-     #bossRoom/#minibossRoom) reçoit le `zoom` correspondant, voir applyUiScale()
-     (game-supabase.js) -- ne touche jamais à la résolution interne du canvas #cv.
-     Correctif "agrandissement juste en hauteur" (retour utilisateur) : #wrap est un item de la
-     grille 3 colonnes `.layout` (§ plus haut, #sideMenu | #wrap | .side-right) avec width:auto,
-     donc sa largeur RENDUE suivait la piste 1fr de la grille, pas sa propre taille --
-     transform:scale() est un pur effet de peinture qui ne déclenche jamais de reflow, la piste
-     ne recalculait donc jamais sa taille et le surplus de largeur finissait sous les panneaux
-     latéraux opaques (invisible). `zoom` déclenche un vrai reflow : la piste 1fr grandit avec le
-     contenu zoomé, largeur ET hauteur deviennent visibles (vérifié par capture d'écran
-     avant/après + getBoundingClientRect à ~1300px et ~1800px de large, voir Playwright). Pas de
-     transition CSS sur `zoom` : le support de `transition:zoom` est encore inégal selon les
-     moteurs -- le saut de palier reste instantané (comme avant pour la position des boutons),
-     préférable à une transition qui ne s'anime pas partout. */
-  /* préfixées #gameFrame (comme #gameBar button:hover/#metaBar button:hover plus haut) : la règle
-     générique `button{margin-top:4px;padding:6px 9px}` / `button:hover:not(:disabled){transform:
-     translateY(-1px)}` (spécificité 0,0,2,1 pour la version :hover) est plus spécifique qu'une
-     simple classe .uiScaleBtn(:hover) seule (0,0,2,0) -- sans ce préfixe elle gagnait la cascade et
-     décalait le cercle de 4px (margin-top) + cassait le centrage vertical au survol (transform
-     réécrit à translateY(-1px) au lieu de translateY(-50%)), repéré en comparant getComputedStyle
-     avant/après ce fix. */
-  #gameFrame .uiScaleBtn {
-    position:absolute; top:50%; margin:0; padding:0;
-    transform:translateY(-50%);
-    width:34px; height:34px; border-radius:50%;
-    background:rgba(10,9,14,.55); border:1.5px solid var(--gold-dim); color:var(--gold);
-    font-size:18px; line-height:1; display:flex; align-items:center; justify-content:center;
-    cursor:pointer; opacity:.15; transition:opacity .18s ease, border-color .18s ease, color .18s ease;
-    z-index:15;
-  }
-  .uiScaleBtnIcon { pointer-events:none; }
-  #btnUiScaleDown { left:14px; }
-  #btnUiScaleUp { right:14px; }
-  #gameFrame .uiScaleBtn:hover, #gameFrame .uiScaleBtn:focus-visible {
-    opacity:1; border-color:var(--gold); transform:translateY(-50%);
-  }
-  /* palier déjà atteint (small/large) : le clic reste un no-op (nextUiScaleLevel clampe), le survol
-     le montre visuellement -- ton neutre --dbBorder2 au lieu du gold, pas de libellé plein. */
-  #gameFrame .uiScaleBtn.uiScaleBtnDisabled:hover { opacity:.4; border-color:var(--dbBorder2); color:var(--dbBorder2); }
-  .uiScaleBtnLabel {
-    position:absolute; top:calc(100% + 4px); left:50%; transform:translateX(-50%);
-    font-size:9px; letter-spacing:.5px; text-transform:uppercase; color:var(--gold);
-    white-space:nowrap; opacity:0; transition:opacity .18s ease; pointer-events:none;
-    text-shadow:0 1px 2px #000;
-  }
-  #gameFrame .uiScaleBtn:hover .uiScaleBtnLabel, #gameFrame .uiScaleBtn:focus-visible .uiScaleBtnLabel { opacity:1; }
-  @media (max-width:600px) {
-    .uiScaleBtn { width:26px; height:26px; font-size:14px; }
-    .uiScaleBtnLabel { font-size:8px; }
-  }
   .cardHostBody, .card.cardNested { min-width:0; }
