@@ -247,7 +247,15 @@ function renderMiniBossLobbyHtml() {
       </div>
     </div>
     <div class="card minibossGroupCard">
-      <h3>${i18next.t('combat:combat.miniboss.group_state_title')} (${n}/${MINIBOSS_MAX_GROUP_SIZE})</h3>
+      <h3>${i18next.t('combat:combat.miniboss.group_state_title')} (${n}/${MINIBOSS_MAX_GROUP_SIZE})
+        <span class="minibossRulesInfo"><span class="minibossRulesIcon">?</span>
+          <div class="minibossRulesCard">
+            <div class="minibossRule">${i18next.t('combat:combat.miniboss.rule_solo_leave')}</div>
+            <div class="minibossRule">${i18next.t('combat:combat.miniboss.rule_disconnect')}</div>
+            <div class="minibossRule">${i18next.t('combat:combat.miniboss.rule_vote')}</div>
+          </div>
+        </span>
+      </h3>
       <div class="minibossRunLengthRow">
         <span>${i18next.t('combat:combat.miniboss.fights_to_chain')}</span>
         <div class="minibossRunChips">${chipsHtml}</div>
@@ -471,6 +479,12 @@ function startMiniBossFightLocal(payload, isSummoner) {
   $('minibossRoom').classList.remove('lobby'); $('minibossRoom').classList.add('open','fight');
   $('minibossResult').classList.remove('show');
   $('minibossName').textContent = i18next.t('combat:combat.miniboss.creature_name');
+  const pauseEl = $a('minibossPauseMsg'); if (pauseEl) pauseEl.textContent = i18next.t('combat:combat.miniboss.pause_warning');
+  const voteBtn = $a('minibossVoteStopBtn'); if (voteBtn) voteBtn.textContent = i18next.t('combat:combat.miniboss.vote_stop_btn');
+  const leaveBtn = $a('minibossSoloLeaveBtn'); if (leaveBtn) leaveBtn.textContent = i18next.t('combat:combat.miniboss.solo_leave_btn');
+  const confirmMsg = $a('minibossSoloLeaveConfirmMsg'); if (confirmMsg) confirmMsg.textContent = i18next.t('combat:combat.miniboss.solo_leave_confirm_msg');
+  const confirmBtn = $a('minibossSoloLeaveConfirmBtn'); if (confirmBtn) confirmBtn.textContent = i18next.t('combat:combat.miniboss.solo_leave_confirm_btn');
+  const cancelBtn = $a('minibossSoloLeaveCancelBtn'); if (cancelBtn) cancelBtn.textContent = i18next.t('combat:combat.miniboss.solo_leave_cancel_btn');
   resizeMinibossCanvas();
   renderMinibossRoster();
   minibossState.raf = requestAnimationFrame(miniBossLoop);
@@ -570,8 +584,16 @@ function startMiniBossFightAgainInRun() {
   minibossState.runIndex = keepIdx;
 }
 /** Quitte seul le combat/run en cours (§ "Règles de fin de run") : perd tout le loot de ce combat, le Parchemin déjà engagé n'est PAS remboursé. */
+/** Affiche/cache la confirmation "quitter seul" (perte sèche du loot, ne doit jamais être accidentelle — voir mockup, retour de revue). N'exécute PAS minibossSoloLeave() directement. */
+function minibossToggleSoloLeaveConfirm() {
+  const panel = $a('minibossSoloLeaveConfirm'); if (!panel) return;
+  const votePanel = $a('minibossVoteStopPanel'); if (votePanel) votePanel.classList.remove('show');
+  panel.classList.toggle('show');
+}
+/** Quitte réellement le combat en solo (appelé UNIQUEMENT après confirmation, voir minibossToggleSoloLeaveConfirm) — perd tout le loot, le Parchemin déjà engagé n'est pas remboursé. */
 function minibossSoloLeave() {
   if (!minibossState.active) return;
+  const panel = $a('minibossSoloLeaveConfirm'); if (panel) panel.classList.remove('show');
   cancelAnimationFrame(minibossState.raf);
   minibossState.active = false; minibossState.ended = true;
   minibossRepCounters().soloQuits++; minibossRepCounters().runsIncident++;
@@ -581,6 +603,7 @@ function minibossSoloLeave() {
 /** Bascule l'affichage du panneau de vote collectif pour arrêter le combat/run en cours. */
 function minibossToggleVoteStop() {
   const panel = $a('minibossVoteStopPanel'); if (!panel) return;
+  const leaveConfirm = $a('minibossSoloLeaveConfirm'); if (leaveConfirm) leaveConfirm.classList.remove('show');
   panel.classList.toggle('show');
   if (panel.classList.contains('show')) {
     minibossRepCounters().votes++;
