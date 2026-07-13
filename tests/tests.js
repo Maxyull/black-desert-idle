@@ -2871,12 +2871,37 @@
     if (typeof computeSlidingSilverPerHour !== 'function') return;
     const now = Date.now();
     const currentBest = 60000;
-    // pic isolé (ex: juste après une reconnexion) : un seul gros échantillon récent qui, extrapolé
-    // sur sa fenêtre courte, dépasse le record de +50%
-    const buffer = [ { t: now-5000, silver: currentBest*1.5*(5/3600) } ];
+    // pic à +50% mais RÉPARTI sur un étalement suffisant (>=90s, SILVER_RATE_MIN_SPAN_MS) pour
+    // isoler spécifiquement le garde-fou anti-pic 30% (pas le garde-fou "bourrasque trop courte"
+    // ci-dessous, testé séparément) -- sinon ce test ne prouverait plus rien sur la déviation.
+    const targetRate = currentBest * 1.5;
+    const span = 100000; // 100s, > SILVER_RATE_MIN_SPAN_MS (90s)
+    const totalOverSpan = targetRate * (span/3600000);
+    const buffer = [ { t: now-span, silver: totalOverSpan*0.5 }, { t: now-1000, silver: totalOverSpan*0.5 } ];
     const { ratePerHour, eligible } = computeSlidingSilverPerHour(buffer, now, currentBest);
-    assert('Le pic isolé calcule bien un taux nettement au-dessus du record (+~50%)', ratePerHour > currentBest*1.3, `rate=${ratePerHour}`);
-    assert('Le pic isolé n\'est PAS éligible au nouveau record (écart >30% avec la moyenne déjà établie)', eligible === false);
+    assert('Le pic calcule bien un taux nettement au-dessus du record (+~50%)', ratePerHour > currentBest*1.3, `rate=${ratePerHour}`);
+    assert('Le pic n\'est PAS éligible au nouveau record (écart >30% avec la moyenne déjà établie)', eligible === false);
+  }
+  function testComputeSlidingSilverPerHourRejectsShortBurstRightAfterConnection() {
+    // bug réel corrigé le 2026-07-13 (retour utilisateur : "pas des moyenne seulement au
+    // connexion quand y'a beaucoup de mob") : silverRateBuffer est transitoire (vidé au reload),
+    // donc juste après une reconnexion une bourrasque de kills sur quelques secondes (zone dense)
+    // extrapolait un taux énorme -- ET échappait au garde-fou anti-pic si currentBest valait
+    // encore 0 (aucun record établi, cas trivial "toujours éligible"). Le nouveau garde-fou
+    // SILVER_RATE_MIN_SPAN_MS doit rejeter ce cas MÊME à currentBest=0.
+    if (typeof computeSlidingSilverPerHour !== 'function') return;
+    const now = Date.now();
+    // 5s de bourrasque, silver raisonnable sur 5s mais qui donnerait un taux astronomique extrapolé sur 1h
+    const buffer = [ { t: now-5000, silver: 200 } ];
+    const { eligible: eligibleNoRecord } = computeSlidingSilverPerHour(buffer, now, 0);
+    assert('Bourrasque de 5s : PAS éligible au record même sans record préexistant (currentBest=0)', eligibleNoRecord === false);
+    const { eligible: eligibleWithRecord } = computeSlidingSilverPerHour(buffer, now, 60000);
+    assert('Bourrasque de 5s : PAS éligible non plus avec un record déjà établi', eligibleWithRecord === false);
+    // un étalement pile au-dessus du seuil (SILVER_RATE_MIN_SPAN_MS) redevient éligible (si le
+    // taux lui-même reste raisonnable) -- vérifie que le garde-fou est bien un SEUIL, pas un blocage total
+    const okBuffer = [ { t: now-(SILVER_RATE_MIN_SPAN_MS+5000), silver: 50 }, { t: now-1000, silver: 50 } ];
+    const { eligible: eligibleLongEnough } = computeSlidingSilverPerHour(okBuffer, now, 0);
+    assert('Un étalement au-dessus du seuil minimum redevient éligible', eligibleLongEnough === true);
   }
   function testComputeSlidingSilverPerHourAcceptsProgressiveIncreaseAsRecord() {
     if (typeof computeSlidingSilverPerHour !== 'function') return;
@@ -3762,6 +3787,18 @@
     assert('Rescale V414 : bestGearscore recalculé depuis bestAp/bestDp déjà enregistrés',
       S.bestGearscore === 250, `got=${S.bestGearscore}`);
     S.bestAp = s.bestAp; S.bestDp = s.bestDp; S.bestGearscore = s.bestGearscore;
+  }
+  // "il faut remettre a 0 ce classement" (2026-07-13) : records bestSilverPerHour existants
+  // potentiellement gonflés par le bug windowMs corrigé le même jour (bourrasque au reconnexion,
+  // voir SILVER_RATE_MIN_SPAN_MS) -- remise à zéro explicite, pas de recalcul possible (aucune
+  // autre source ne permet de reconstituer le "vrai" taux historique).
+  function testSilverPerHourResetV436ZeroesStaleRecord() {
+    if (typeof migrateSilverPerHourResetV436 !== 'function') return;
+    const before = S.bestSilverPerHour;
+    S.bestSilverPerHour = 999999999; // vieux record potentiellement gonflé par le bug corrigé
+    migrateSilverPerHourResetV436();
+    assert('Reset V436 : bestSilverPerHour remis à 0, quelle que soit sa valeur précédente', S.bestSilverPerHour === 0, `got=${S.bestSilverPerHour}`);
+    S.bestSilverPerHour = before;
   }
   // "le nom de la zone doit être mis à jour et rester en place" (2026-07-11) : après un chargement
   // de sauvegarde sur une zone différente de la zone 0, #ztName restait bloqué sur le placeholder
@@ -5979,6 +6016,7 @@
     testVeliaChestStorePartialQuantityFromSlider();
     testHudDerivesGearscoreFromBestApDp();
     testGearscoreDerivedFixV414RetroactivelyCorrectsStaleRecord();
+    testSilverPerHourResetV436ZeroesStaleRecord();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();
@@ -6055,6 +6093,7 @@
     testOfflineCatchupLootSkipsGracefullyWhenBagFull();
     testComputeSlidingSilverPerHourStableRateWithinWindow();
     testComputeSlidingSilverPerHourIgnoresIsolatedSpikeForRecord();
+    testComputeSlidingSilverPerHourRejectsShortBurstRightAfterConnection();
     testComputeSlidingSilverPerHourAcceptsProgressiveIncreaseAsRecord();
     testShowAwayLootSummaryTriggersOnXpOnlyGain();
     testReconnectModalTierChipsWrapOnSameRowInsteadOfStacking();

@@ -16,6 +16,13 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V436', d:'13/07/2026 17:45', name:{fr:'Classement : silver/h remis à 0, plus de faux record à la connexion', en:'Leaderboard: silver/h reset to 0, no more fake record on connection'}, fr:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'Bug trouvé (rapporté explicitement) : juste après une reconnexion, une bourrasque de kills sur une zone dense en mobs pouvait s\'extrapoler en un taux astronomique et devenir le record de silver/h à vie, sans aucun garde-fou si aucun record n\'était encore établi. Corrigé : un taux ne peut plus jamais devenir un record s\'il ne repose pas sur au moins 90 secondes d\'échantillons réels (au lieu de s\'appuyer sur l\'étalement réel, parfois de quelques secondes seulement).'},
+      {t:'change', sub:'equipements', tx:'Tous les records de silver/h existants ont été remis à 0 (possiblement gonflés par ce bug) — ils se rebâtissent naturellement avec la formule corrigée dès la prochaine bonne session.'},
+    ], en:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'Bug found (explicitly reported): right after reconnecting, a burst of kills in a mob-dense zone could extrapolate into an astronomical rate and become the lifetime silver/h record, with no safeguard if no record was established yet. Fixed: a rate can no longer ever become a record unless it\'s based on at least 90 seconds of real samples (instead of relying on the real span, sometimes just a few seconds).'},
+      {t:'change', sub:'equipements', tx:'All existing silver/h records were reset to 0 (potentially inflated by this bug) — they rebuild naturally with the corrected formula starting from the next good session.'},
+    ] },
   { v:'V435', d:'13/07/2026 17:30', name:{fr:'Dashboard Zone : flèches pour déplacer les cartes, glisser-déposer entre 2 cartes, titre sur 1 ligne', en:'Zone dashboard: arrows to move cards, drag between 2 cards, single-line title'}, fr:[
       {t:'new', sub:'interface', tx:'Chaque carte du dashboard Zone (ou groupe de cartes fusionnées) a désormais 2 flèches ◀▶ pour la déplacer d\'une position, sans avoir à glisser-déposer.'},
       {t:'new', sub:'interface', tx:'Glisser une carte sur le bord gauche/droit d\'une autre la réordonne à cette position (au lieu de les fusionner en onglets) — glisser sur le centre de la carte continue de fusionner comme avant.'},

@@ -2616,6 +2616,8 @@ const S = {
 
 const SILVER_RATE_WINDOW_MS = 180000; 
 const SILVER_RATE_MAX_DEVIATION = 0.30; 
+
+const SILVER_RATE_MIN_SPAN_MS = SILVER_RATE_WINDOW_MS / 2; 
 let silverRateBuffer = []; 
 
 function computeSlidingSilverPerHour(buffer, now, currentBest) {
@@ -2625,8 +2627,8 @@ function computeSlidingSilverPerHour(buffer, now, currentBest) {
   const windowMs = Math.max(now - oldestT, 1000); 
   const total = pruned.reduce((sum, s) => sum + s.silver, 0);
   const ratePerHour = total / (windowMs / 3600000);
-  let eligible = true;
-  if (currentBest > 0) {
+  let eligible = windowMs >= SILVER_RATE_MIN_SPAN_MS; 
+  if (eligible && currentBest > 0) {
     const deviation = (ratePerHour - currentBest) / currentBest;
     if (deviation > SILVER_RATE_MAX_DEVIATION) eligible = false; 
   }
@@ -4093,6 +4095,7 @@ function applySaveState(data) {
   if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
   if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
   if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
+  if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); 
   S.xpNext = xpNeededFor(S.lvl); 
@@ -10561,6 +10564,11 @@ function migrateMergeStackableDuplicatesV407() {
 
 function migrateGearscoreDerivedFixV414() {
   S.bestGearscore = ((S.bestAp||0) + (S.bestDp||0)) / 2;
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
+}
+
+function migrateSilverPerHourResetV436() {
+  S.bestSilverPerHour = 0;
   if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
 

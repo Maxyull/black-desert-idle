@@ -211,6 +211,18 @@ const S = {
 // session minimum" (voir hud()) reste EN PLUS de tout ceci, pas remplacé (double protection).
 const SILVER_RATE_WINDOW_MS = 180000; // 3 min
 const SILVER_RATE_MAX_DEVIATION = 0.30; // 30%
+// SILVER_RATE_MIN_SPAN_MS (2026-07-13, retour utilisateur : "ne mettre que les bonnes moyennes,
+// pas des moyennes seulement à la connexion quand y'a beaucoup de mob") -- bug réel trouvé :
+// windowMs (ci-dessous) s'appuyait sur l'ÉTALEMENT RÉEL des échantillons retenus, pas sur
+// SILVER_RATE_WINDOW_MS lui-même. silverRateBuffer est transitoire (vidé à chaque reload) : juste
+// après une reconnexion, une bourrasque de kills sur quelques secondes (zone dense en mobs)
+// produisait un windowMs minuscule -- extrapolé sur 1h, un total de silver raisonnable sur 5s
+// devenait un taux astronomique. Pire, si le joueur n'avait encore aucun record établi
+// (currentBest=0), le garde-fou "30% du record" ne pouvait rien filtrer (case triviale). Fix :
+// un taux n'est éligible que si l'étalement RÉEL des échantillons couvre au moins la moitié de
+// SILVER_RATE_WINDOW_MS -- une bourrasque de quelques secondes reste visible en LIVE ($('shRate'))
+// mais ne peut plus jamais devenir le record à vie, peu importe currentBest.
+const SILVER_RATE_MIN_SPAN_MS = SILVER_RATE_WINDOW_MS / 2; // 90s
 let silverRateBuffer = []; // [{t:ms epoch, silver:delta}] -- transient (pas sauvegardé), vidé au reload
 /**
  * Fonction PURE : calcule le silver/h projeté à partir d'un buffer d'échantillons {t,silver}
@@ -228,10 +240,10 @@ function computeSlidingSilverPerHour(buffer, now, currentBest) {
   const windowMs = Math.max(now - oldestT, 1000); // évite une quasi-division par 0 sur un tout premier échantillon
   const total = pruned.reduce((sum, s) => sum + s.silver, 0);
   const ratePerHour = total / (windowMs / 3600000);
-  let eligible = true;
-  if (currentBest > 0) {
+  let eligible = windowMs >= SILVER_RATE_MIN_SPAN_MS; // bourrasque trop courte (ex: à la connexion) -- jamais éligible
+  if (eligible && currentBest > 0) {
     const deviation = (ratePerHour - currentBest) / currentBest;
-    if (deviation > SILVER_RATE_MAX_DEVIATION) eligible = false; // pic isolé (ex: reconnexion) -- ignoré pour le record
+    if (deviation > SILVER_RATE_MAX_DEVIATION) eligible = false; // pic isolé -- ignoré pour le record
   }
   return { ratePerHour, eligible };
 }
@@ -2440,6 +2452,7 @@ function applySaveState(data) {
   if (!S.migratedPenMasteryV308) { migratePenMasteryV308(); S.migratedPenMasteryV308 = true; }
   if (!S.migratedMergeStackableDuplicatesV407) { migrateMergeStackableDuplicatesV407(); S.migratedMergeStackableDuplicatesV407 = true; }
   if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
+  if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
   zoneIdx = data.zoneIdx || 0;
   S.maxZoneIdx = Math.max(S.maxZoneIdx||0, zoneIdx); // rattrape les vieilles sauvegardes sans ce champ
   S.xpNext = xpNeededFor(S.lvl); // migre les anciennes sauvegardes (ancienne courbe ×1.35) vers la vraie table BDO

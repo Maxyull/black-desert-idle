@@ -323,3 +323,20 @@ function migrateGearscoreDerivedFixV414() {
   S.bestGearscore = ((S.bestAp||0) + (S.bestDp||0)) / 2;
   if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
+
+// migrateSilverPerHourResetV436 (2026-07-13, demande explicite : "il faut remettre a 0 ce
+// classement et ne mettre que les bonne moyenne pas des moeynne seulement au connexion quand y'a
+// beaucoup de mob") -- des records bestSilverPerHour existants ont pu être gonflés par le bug
+// windowMs corrigé le même jour (voir computeSlidingSilverPerHour/SILVER_RATE_MIN_SPAN_MS,
+// game-core.js) : une bourrasque de kills juste après une reconnexion pouvait s'extrapoler en un
+// taux astronomique et devenir le record à vie sans aucun garde-fou (surtout si currentBest
+// valait encore 0). Contrairement au reste des migrations "record dérivé" de ce fichier (qui
+// RECALCULENT depuis une autre source fiable), il n'existe ici aucune autre source pour
+// reconstituer le "vrai" taux historique -- remise à zéro demandée explicitement plutôt qu'une
+// tentative de recalcul a posteriori. Le joueur rebâtit son record avec la formule corrigée dès
+// sa prochaine bonne session.
+/** Migration rétroactive V436 : remet S.bestSilverPerHour à 0 (records potentiellement gonflés par un bug corrigé le même jour) puis synchronise immédiatement le classement (syncPlayerStats()). */
+function migrateSilverPerHourResetV436() {
+  S.bestSilverPerHour = 0;
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
+}
