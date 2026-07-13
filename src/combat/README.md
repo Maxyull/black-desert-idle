@@ -37,6 +37,35 @@ comportement de l'IA.
 - `ai-mode.js` — les 2 sélecteurs de comportement IA : mode de combat
   (défensif/équilibré/overgeared) et mode de farm (loot/xp). Charge après `core/game-core.js`.
 - `vfx.js` — particules visuelles des sorts (météore, glace, éclair...).
+- `miniboss-data.js` (2026-07-13) — constantes pures de la feature Mini Boss : recette du craft
+  (`MINIBOSS_PARCHEMIN_RECIPE`, 5 Livres interdits → 1 Parchemin), multiplicateurs de rôle
+  (`MINIBOSS_SUMMONER_MULT`=2.0/`MINIBOSS_JOINER_MULT`=0.8), table EXACTE du bonus de groupe
+  (`MINIBOSS_GROUP_BONUS`=[1,1,1.1,1.2,1.5,2]), PV du boss par taille de groupe
+  (`MINIBOSS_HP_BY_SIZE`), gear% (`minibossGearPct`/`minibossGearRefAp`, plafond DYNAMIQUE = le
+  `reqAP` le plus élevé parmi `ZONES`, pas un chiffre codé en dur), plafond MAX de run
+  (`minibossMaxRunLength`), score de réputation (`minibossReputationScore` = ratio simple affiché,
+  `minibossReputationSeverityScore` = formule pondérée, diagnostic interne uniquement). Charge
+  après `boss-render.js` (constantes pures, aucune dépendance au chargement immédiat).
+- `miniboss.js` (2026-07-13) — logique + wiring de l'onglet Mini Boss : craft
+  (`craftMiniBossParchemin`, fonction DÉDIÉE, ne touche pas `progression/treasure-craft.js`),
+  lobby (`openMiniBossLobby`/`renderMiniBossLobbyHtml`/`wireMiniBossLobby` — carte Parchemin,
+  craft, "État du groupe" avec chips/slider/MAX, chat à 3 onglets Recrutement/Groupes/Mon groupe),
+  formation de groupe et chat via **Supabase Realtime Presence/Broadcast** sur un canal unique
+  `miniboss_lobby` (aucune table requise pour cette partie), combat (`startMiniBossFight`/
+  `miniBossLoop`/`endMiniBossFight`, boucle **rAF uniquement, aucun filet `setInterval`** — même
+  garantie "pas de mode hors ligne" que `bossLoop()`), règles de sortie (`minibossSoloLeave`/
+  `minibossToggleVoteStop`), demande de rejoindre un groupe en combat (`minibossJoinGroup`/
+  `minibossShowJoinRequestPopup`/`minibossCancelFightForNewMember`). **Compromis de scope assumé**
+  (voir commentaire en tête de fichier) : tant que la migration Supabase (`supabase/migrations/
+  20260722110000_miniboss_sessions.sql`) n'est pas appliquée, les RPC serveur sont appelées de
+  façon opportuniste (try/catch) mais le jeu tourne entièrement en simulation locale déterministe
+  (PV/DPS/loot calculés côté client depuis le gear% de chaque participant, `minibossEstimatedDps`) —
+  jamais bloquant, jamais d'exception non gérée. Charge après `boss.js` (lit `playerBossDps`/
+  `_skillDpsSum`/`setFarmViewVisible`/`renderActivityTabs`/`ACTIVITY_TABS`/`currentActivity` au
+  moment de l'appel, pas au chargement immédiat) et après `miniboss-data.js`.
+- `miniboss-render.js` (2026-07-13) — rendu canvas de la salle Mini Boss (`drawMinibossRoom`),
+  miroir simplifié de `boss-render.js` (groupe plafonné à 5, pas de piliers/spots dédiés). Charge
+  après `miniboss.js` (`miniBossLoop()` l'appelle).
 
 **Header du jeu (`ACTIVITY_TABS`/`renderActivityTabs()`, dans `boss.js`)** : liste des onglets
 d'activité (Zone/Boss/Compagnon/PvP/Pêche/Mine...). Chaque onglet a soit `locked:true` (affiche
