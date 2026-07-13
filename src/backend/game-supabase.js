@@ -176,6 +176,8 @@ function updateUserBar() {
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
   $a('btnLogout').style.display = isGuest() ? 'none' : '';
   $a('adminBox').style.display = isAdmin() ? '' : 'none';
+  // raccourci header (2026-07-13) : montré/caché en même temps que #adminBox, même condition isAdmin()
+  const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
   const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminResetEnhBtn = $a('btnAdminResetEnh'); if (adminResetEnhBtn) adminResetEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminEnhStepRow = $a('adminEnhStepRow'); if (adminEnhStepRow) adminEnhStepRow.style.display = isAdmin() ? '' : 'none';
@@ -193,6 +195,9 @@ function updatePseudoDisplay() {
   if (!el) return;
   if (isGuest()) el.textContent = i18next.t('backend:backend.auth.guest_badge');
   else el.textContent = (currentUser && myPseudo) ? myPseudo : '';
+  // raccourci header (2026-07-13) : même texte, à côté de l'icône compte du header
+  const topbarEl = $a('userPseudoTopbar');
+  if (topbarEl) topbarEl.textContent = el.textContent;
 }
 
 // upgrade d'une session invité en compte réel (garde le même user_id → la sauvegarde suit),
@@ -885,6 +890,18 @@ function closeDonationPanel() {
   if (overlay) overlay.style.display = 'none';
 }
 $a('btnDonation').onclick = openDonationPanel;
+// raccourcis header (2026-07-13, mockup validé, voir CLAUDE.md) : chaque bouton topbar déclenche
+// un .click() sur son équivalent sidebar -- réutilise EXACTEMENT la même fonction (Classement/
+// Marché/Notes de version/Soutenir/Admin/Déconnexion), aucune logique dupliquée. $a(...) est
+// résolu au moment du clic, donc aucune contrainte d'ordre de script : #btnMarket (market.js) et
+// #btnAdmin (admin-panel.js) n'ont pas encore leur .onclick assigné au moment où CE script
+// s'exécute (ils chargent après game-supabase.js), mais c'est sans importance ici.
+$a('btnLeaderboardTopbar').onclick = () => $a('btnLeaderboard').click();
+$a('btnMarketTopbar').onclick = () => $a('btnMarket').click();
+$a('btnPatchTopbar').onclick = () => $a('btnPatch').click();
+$a('btnDonationTopbar').onclick = () => $a('btnDonation').click();
+$a('btnAdminTopbar').onclick = () => $a('btnAdmin').click();
+$a('btnLogoutTopbar').onclick = () => $a('btnLogout').click();
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 // bascule Inventaire/Assemblage dans la carte Inventaire (2026-07-06, demande explicite : "on va
@@ -1301,6 +1318,16 @@ const I18N = {
   btnResetAllQuests: { fr:'⚠️ Réinitialiser les quêtes de tous', en:'⚠️ Reset everyone\'s quests' },
   btnAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   adminBoxTitle: { fr:'🛠️ Admin', en:'🛠️ Admin' },
+  // tooltips des raccourcis header (2026-07-13, mockup validé, voir CLAUDE.md) -- data-i18n-title,
+  // texte court sans emoji (contrairement aux clés ci-dessus, réutilisées pour les labels sidebar).
+  tbLeaderboard: { fr:'Classement', en:'Leaderboard' },
+  tbMarket: { fr:'Marché (BETA)', en:'Market (BETA)' },
+  tbPatch: { fr:'Notes de version', en:'Patch notes' },
+  tbDiscord: { fr:'Discord', en:'Discord' },
+  tbDonation: { fr:'Soutenir', en:'Support' },
+  tbAccount: { fr:'Mon compte', en:'My account' },
+  tbAdmin: { fr:'Admin', en:'Admin' },
+  tbLogout: { fr:'Déconnexion', en:'Log out' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
@@ -1413,6 +1440,12 @@ function applyI18n() {
   document.querySelectorAll('[data-i18n-ph]').forEach(el => {
     const key = el.getAttribute('data-i18n-ph');
     if (I18N[key]) el.setAttribute('placeholder', I18N[key][LANG]);
+  });
+  // data-i18n-title (2026-07-13, raccourcis header) -- même dictionnaire I18N, applique le
+  // texte traduit à l'attribut title (tooltip natif) plutôt qu'au textContent.
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const key = el.getAttribute('data-i18n-title');
+    if (I18N[key]) el.setAttribute('title', I18N[key][LANG]);
   });
   $a('langThumb').classList.toggle('en', LANG === 'en');
   document.querySelectorAll('.langOpt').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
@@ -2127,6 +2160,11 @@ function updatePatchBadge() {
   const badge = $a('patchBadge');
   if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
   $a('btnPatch').classList.toggle('hasNew', n > 0);
+  // raccourci header (2026-07-13) : même compteur, badge superposé sur #btnPatchTopbar
+  const badgeTopbar = $a('patchBadgeTopbar');
+  if (badgeTopbar) { badgeTopbar.textContent = n; badgeTopbar.classList.toggle('show', n > 0); }
+  const btnPatchTopbar = $a('btnPatchTopbar');
+  if (btnPatchTopbar) btnPatchTopbar.classList.toggle('hasNew', n > 0);
   // bandeau DANS le panneau des notes de version (2026-07-06, demande explicite : "enleve la
   // pastille en haut de l'ecran... mets-la dans notes de version directement pour appel au scroll
   // vers le haut") -- remplace l'ancienne pastille flottante sur toute la page, qui chevauchait le

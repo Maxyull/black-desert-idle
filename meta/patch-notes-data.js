@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V418', d:'24/07/2026 05:00', name:{fr:'Header : raccourcis Classement/Marché/Notes de version/Discord/Soutenir/Admin/Déconnexion', en:'Header: Leaderboard/Market/Patch notes/Discord/Support/Admin/Log out shortcuts'}, fr:[
+      {t:'new', sub:'interface', tx:'Le bandeau du haut affiche désormais des icônes de raccourci vers le Classement, le Marché (BETA), les Notes de version, le Discord, la page Soutenir, et — pour les comptes admin — le panneau Admin et la Déconnexion. Le bouton Mon compte affiche maintenant ton pseudo à côté de l\'icône. Les boutons équivalents de la barre latérale restent en place, ce sont de simples raccourcis en plus.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The top bar now shows shortcut icons for the Leaderboard, the Market (BETA), Patch notes, Discord, the Support page, and — for admin accounts — the Admin panel and Log out. The My account button now shows your nickname next to the icon. The equivalent sidebar buttons stay in place, these are just extra shortcuts.'},
+    ] },
   { v:'V417', d:'24/07/2026 04:00', name:{fr:'Classement : bouton retour depuis le stuff d\'un joueur', en:'Leaderboard: back button from a player\'s gear'}, fr:[
       {t:'new', sub:'interface', tx:'Ouvrir le stuff d\'un joueur depuis le classement affiche désormais un bouton "← Retour au classement" en haut du panneau, pour revenir directement au classement au lieu de devoir tout fermer.'},
     ], en:[

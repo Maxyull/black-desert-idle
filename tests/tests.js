@@ -2818,6 +2818,39 @@
     });
     assert('Chaque sous-catégorie utilisée dans PATCH_NOTES a un libellé dans PATCH_SUBCATS et PATCH_SUBCATS_EN', missing.length === 0, missing.join(', '));
   }
+  // raccourcis header (2026-07-13, mockup validé, voir CLAUDE.md) : garde-fou statique -- chaque
+  // nouveau bouton du header existe avec un title non vide, et #btnAdminTopbar est caché par
+  // défaut (montré seulement pour un compte admin, voir updateUserBar() dans game-supabase.js).
+  function testHeaderShortcutButtonsExistWithTitleAndAdminHidden() {
+    const ids = ['btnLeaderboardTopbar', 'btnMarketTopbar', 'btnPatchTopbar', 'btnDiscordTopbar',
+      'btnDonationTopbar', 'btnAccountTopbar', 'btnAdminTopbar', 'btnLogoutTopbar'];
+    for (const id of ids) {
+      const el = $(id);
+      assert(`#${id} existe dans le header`, !!el, id);
+      if (el) assert(`#${id} a un title non vide`, !!(el.getAttribute('title') || '').trim(), el.getAttribute('title'));
+    }
+    const adminBtn = $('btnAdminTopbar');
+    if (adminBtn) assert('#btnAdminTopbar est caché par défaut (pas isAdmin())', adminBtn.style.display === 'none', adminBtn.style.display);
+  }
+  // même bouton, même fonction : chaque raccourci header doit déclencher un .click() sur son
+  // équivalent sidebar plutôt qu'une logique dupliquée (voir CLAUDE.md, "raccourcis header").
+  function testHeaderShortcutButtonsDelegateToSidebarClick() {
+    const pairs = [
+      ['btnLeaderboardTopbar', 'btnLeaderboard'], ['btnMarketTopbar', 'btnMarket'],
+      ['btnPatchTopbar', 'btnPatch'], ['btnDonationTopbar', 'btnDonation'],
+      ['btnAdminTopbar', 'btnAdmin'], ['btnLogoutTopbar', 'btnLogout'],
+    ];
+    for (const [topbarId, sidebarId] of pairs) {
+      const topbarBtn = $(topbarId), sidebarBtn = $(sidebarId);
+      if (!topbarBtn || !sidebarBtn) continue;
+      let clicked = false;
+      const savedOnclick = sidebarBtn.onclick;
+      sidebarBtn.onclick = () => { clicked = true; };
+      topbarBtn.onclick();
+      sidebarBtn.onclick = savedOnclick;
+      assert(`#${topbarId} déclenche un clic sur #${sidebarId}`, clicked, topbarId);
+    }
+  }
   // publication de note de version sur Discord (2026-07-20, demande explicite : "ajoute la
   // publication de patchnote directement sur discord") -- formatPatchNoteForDiscord() est PURE
   // (aucun réseau/DOM), testable directement sur une vraie entrée de PATCH_NOTES.
@@ -5070,6 +5103,8 @@
     testSorcierRenderLoadsBeforeSyncStartupCallers();
     testPatchNotesDatesFormatAndOrder();
     testEveryPatchSubHasALabel();
+    testHeaderShortcutButtonsExistWithTitleAndAdminHidden();
+    testHeaderShortcutButtonsDelegateToSidebarClick();
     testFormatPatchNoteForDiscord();
     testRpcFireAndForgetCallsNeverUseBareCatch();
     testAdminHourlyReadsRealPlaytimeColumns();
