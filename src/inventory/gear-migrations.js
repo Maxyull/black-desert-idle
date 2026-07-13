@@ -351,3 +351,9 @@ function migrateBestKpmResetV439() {
   S.bestKpm = 0;
   if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
+
+/** Migration rétroactive V440 : remet S.bestXpPerHour à 0 (même correctif fenêtre glissante que V436/V439, record potentiellement gonflé par le même bug) puis synchronise immédiatement le classement (syncPlayerStats()). */
+function migrateBestXpPerHourResetV440() {
+  S.bestXpPerHour = 0;
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
+}

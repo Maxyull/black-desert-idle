@@ -296,6 +296,47 @@ function pruneKpmRateBuffer(now) {
   while (kpmRateBuffer.length && (now - kpmRateBuffer[0].t) > KPM_RATE_WINDOW_MS) kpmRateBuffer.shift();
 }
 
+// ==================== XP/h en fenêtre glissante (même correctif que silver/h et kpm, 2026-07-13) ====================
+// S.bestXpPerHour était calculé sur (S.xpEarned-S.xpEarnedAtLoad)/(minutes de SESSION ENTIÈRE) --
+// même famille de bug : un gros paquet d'XP juste après une reconnexion pouvait gonfler durablement
+// la moyenne avant qu'elle ne se lisse. Demande explicite (2026-07-13, suite du fix kpm) : même
+// traitement que SILVER_RATE_*/KPM_RATE_* (fenêtre glissante 3 min, garde-fou étalement minimum
+// 90s, garde-fou anti-pic 30%), constantes/buffer séparés par choix (pas de fusion, éviter tout
+// risque de régression sur silver/kpm déjà testés).
+const XP_RATE_WINDOW_MS = 180000; // 3 min
+const XP_RATE_MAX_DEVIATION = 0.30; // 30%
+const XP_RATE_MIN_SPAN_MS = XP_RATE_WINDOW_MS / 2; // 90s
+let xpRateBuffer = []; // [{t:ms epoch, xp:delta}] -- transient (pas sauvegardé), vidé au reload, 1 échantillon par gainXp(n>0)
+/**
+ * Fonction PURE : calcule le xp/h projeté à partir d'un buffer d'échantillons {t,xp} et détermine
+ * si ce taux est éligible à devenir le nouveau record (comparé à currentBest, S.bestXpPerHour).
+ * Même formule/mêmes garde-fous que computeSlidingSilverPerHour (voir son commentaire), sur de
+ * l'XP au lieu de silver.
+ * @param {{t:number,xp:number}[]} buffer - échantillons horodatés (ms epoch), jamais muté.
+ * @param {number} now - horodatage de référence (ms epoch), typiquement Date.now().
+ * @param {number} currentBest - record déjà établi (S.bestXpPerHour), 0 si aucun encore.
+ * @returns {{ratePerHour:number, eligible:boolean}} taux projeté sur la fenêtre + éligibilité record.
+ */
+function computeSlidingXpPerHour(buffer, now, currentBest) {
+  const pruned = (buffer||[]).filter(s => (now - s.t) <= XP_RATE_WINDOW_MS && (now - s.t) >= 0);
+  if (pruned.length === 0) return { ratePerHour: 0, eligible: false };
+  const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
+  const windowMs = Math.max(now - oldestT, 1000);
+  const total = pruned.reduce((sum, s) => sum + s.xp, 0);
+  const ratePerHour = total / (windowMs / 3600000);
+  let eligible = windowMs >= XP_RATE_MIN_SPAN_MS;
+  if (eligible && currentBest > 0) {
+    const deviation = (ratePerHour - currentBest) / currentBest;
+    if (deviation > XP_RATE_MAX_DEVIATION) eligible = false;
+  }
+  return { ratePerHour, eligible };
+}
+/** Purge xpRateBuffer (mutation en place) des échantillons plus vieux que XP_RATE_WINDOW_MS. */
+function pruneXpRateBuffer(now) {
+  now = now || Date.now();
+  while (xpRateBuffer.length && (now - xpRateBuffer[0].t) > XP_RATE_WINDOW_MS) xpRateBuffer.shift();
+}
+
 // point d'entrée UNIQUE pour toute variation de silver côté client (2026-07-10, demande explicite :
 // "toute modification de silver doit être écrit dans ce registre... je dois pouvoir traquer le
 // moindre silver") -- centralise S.silver/S.silverEarned ET la journalisation (voir
@@ -2125,15 +2166,15 @@ function refreshStatsOnly() {
   $('shRate').textContent = mins>.1
     ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
     : '— silver/min';
-  // record perso xp/h À VIE (2026-07-12, rattrapage hors-ligne XP) -- même formule/même garde-fou
-  // "2 minutes" que bestSilverPerHour juste au-dessus (évite qu'un gros pack XP juste après le
-  // chargement extrapole un pic irréaliste en xp/h). S.xpEarned est le compteur cumulatif À VIE
+  // record perso xp/h À VIE -- même fenêtre glissante 3min + anti-pic 30% que silver/h et kpm
+  // (2026-07-13, même correctif appliqué aux 3 records). S.xpEarned est le compteur cumulatif À VIE
   // (ne redescend JAMAIS, contrairement à S.xp qui se remet à 0 à chaque niveau -- voir gainXp) ;
-  // xpEarnedAtLoad est la baseline de session, posée/reposée dans applySaveState().
-  const xpGain = S.xpEarned-(S.xpEarnedAtLoad||0);
+  // xpEarnedAtLoad est la baseline de session, posée/reposée dans applySaveState(), gardée pour
+  // l'affichage live (pas pour le calcul du record, désormais fondé sur xpRateBuffer).
+  pruneXpRateBuffer();
   if (mins > 2) {
-    const xpPerHourNow = xpGain/(mins/60);
-    if (xpPerHourNow > (S.bestXpPerHour||0)) S.bestXpPerHour = xpPerHourNow;
+    const { ratePerHour: xpPerHourNow, eligible } = computeSlidingXpPerHour(xpRateBuffer, Date.now(), S.bestXpPerHour||0);
+    if (eligible && xpPerHourNow > (S.bestXpPerHour||0)) S.bestXpPerHour = xpPerHourNow;
   }
   // records PA/PD à vie (voir S.bestAp/S.bestDp ci-dessus) -- simple max courant, pas besoin du
   // garde-fou "2 minutes" de bestKpm/bestSilverPerHour : ce ne sont pas des taux bruités sur une
@@ -2505,6 +2546,7 @@ function applySaveState(data) {
   if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
   if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
   if (!S.migratedBestKpmResetV439) { migrateBestKpmResetV439(); S.migratedBestKpmResetV439 = true; }
+  if (!S.migratedBestXpPerHourResetV440) { migrateBestXpPerHourResetV440(); S.migratedBestXpPerHourResetV440 = true; }
   // Rattrapage NON gaté (2026-07-13, bug rapporté : "j'ai des items protégé compendium dans mon
   // sac tuvala qui sont deja pen compendium") -- evictMasteredFromCompendiumBag() n'est rejouée
   // que lors d'un NOUVEL enchantement PEN, ou une seule fois via migratePenMasteryV308 (gatée,

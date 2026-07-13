@@ -430,6 +430,7 @@ function gainXp(n) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
   if (n > 0) S.xpEarned = (S.xpEarned||0) + n;
+  if (n > 0) xpRateBuffer.push({ t: Date.now(), xp: n }); // fenêtre glissante bestXpPerHour (voir computeSlidingXpPerHour, game-core.js)
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;

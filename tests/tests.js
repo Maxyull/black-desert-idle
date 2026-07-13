@@ -3012,35 +3012,97 @@
     assert('Reset V439 : bestKpm remis à 0, quelle que soit sa valeur précédente', S.bestKpm === 0, `got=${S.bestKpm}`);
     S.bestKpm = before;
   }
+  // même fenêtre glissante que computeSlidingSilverPerHour/computeSlidingKpm, version xp/h (2026-07-13)
+  function testComputeSlidingXpPerHourStableRateWithinWindow() {
+    if (typeof computeSlidingXpPerHour !== 'function') return;
+    const now = Date.now();
+    const buffer = [ { t: now-170000, xp:500 }, { t: now-90000, xp:500 }, { t: now-10000, xp:500 } ];
+    const { ratePerHour, eligible } = computeSlidingXpPerHour(buffer, now, 0);
+    assert('Taux xp/h calculé sur la fenêtre glissante à partir de gains réguliers', ratePerHour > 0, `rate=${ratePerHour}`);
+    assert('Éligible au record en l\'absence de record préexistant (currentBest=0)', eligible === true);
+  }
+  function testComputeSlidingXpPerHourIgnoresIsolatedSpikeForRecord() {
+    if (typeof computeSlidingXpPerHour !== 'function') return;
+    const now = Date.now();
+    const currentBest = 10000;
+    const targetRate = currentBest * 1.5;
+    const span = 100000; // 100s, > XP_RATE_MIN_SPAN_MS (90s)
+    const totalOverSpan = targetRate * (span/3600000);
+    const buffer = [ { t: now-span, xp: totalOverSpan*0.5 }, { t: now-1000, xp: totalOverSpan*0.5 } ];
+    const { ratePerHour, eligible } = computeSlidingXpPerHour(buffer, now, currentBest);
+    assert('Le pic calcule bien un taux nettement au-dessus du record (+~50%)', ratePerHour > currentBest*1.3, `rate=${ratePerHour}`);
+    assert('Le pic n\'est PAS éligible au nouveau record (écart >30% avec la moyenne déjà établie)', eligible === false);
+  }
+  function testComputeSlidingXpPerHourRejectsShortBurstRightAfterConnection() {
+    if (typeof computeSlidingXpPerHour !== 'function') return;
+    const now = Date.now();
+    const buffer = [ { t: now-5000, xp: 50000 } ]; // gros pack XP en 5s -> énorme si extrapolé sur 1h
+    const { eligible: eligibleNoRecord } = computeSlidingXpPerHour(buffer, now, 0);
+    assert('Bourrasque de 5s : PAS éligible au record même sans record préexistant (currentBest=0)', eligibleNoRecord === false);
+    const { eligible: eligibleWithRecord } = computeSlidingXpPerHour(buffer, now, 10000);
+    assert('Bourrasque de 5s : PAS éligible non plus avec un record déjà établi', eligibleWithRecord === false);
+    const okBuffer = [ { t: now-(XP_RATE_MIN_SPAN_MS+5000), xp: 3000 }, { t: now-1000, xp: 3000 } ];
+    const { eligible: eligibleLongEnough } = computeSlidingXpPerHour(okBuffer, now, 0);
+    assert('Un étalement au-dessus du seuil minimum redevient éligible', eligibleLongEnough === true);
+  }
+  function testComputeSlidingXpPerHourAcceptsProgressiveIncreaseAsRecord() {
+    if (typeof computeSlidingXpPerHour !== 'function') return;
+    const now = Date.now();
+    const currentBest = 10000;
+    const targetRate = currentBest * 1.2; // +20%, sous le seuil de 30%
+    const totalOverWindow = targetRate * (XP_RATE_WINDOW_MS/3600000);
+    const buffer = [];
+    for (let i=0;i<6;i++) buffer.push({ t: now - XP_RATE_WINDOW_MS + i*(XP_RATE_WINDOW_MS/6) + 1000, xp: totalOverWindow/6 });
+    const { ratePerHour, eligible } = computeSlidingXpPerHour(buffer, now, currentBest);
+    assert('Taux calculé proche de +20% du record actuel', Math.abs(ratePerHour - targetRate)/targetRate < 0.15, `rate=${ratePerHour}, target=${targetRate}`);
+    assert('Une hausse progressive sous le seuil anti-pic (30%) devient bien éligible au nouveau record', eligible === true);
+  }
+  // même migration que testBestKpmResetV439ZeroesStaleRecord, version bestXpPerHour (2026-07-13)
+  function testBestXpPerHourResetV440ZeroesStaleRecord() {
+    if (typeof migrateBestXpPerHourResetV440 !== 'function') return;
+    const before = S.bestXpPerHour;
+    S.bestXpPerHour = 999999999; // vieux record potentiellement gonflé par le bug corrigé
+    migrateBestXpPerHourResetV440();
+    assert('Reset V440 : bestXpPerHour remis à 0, quelle que soit sa valeur précédente', S.bestXpPerHour === 0, `got=${S.bestXpPerHour}`);
+    S.bestXpPerHour = before;
+  }
   // même garde-fou que testBestSilverPerHourNeverDecreasesAndRequiresTwoMinutes, version XP
-  // (2026-07-12, rattrapage hors-ligne XP) -- bestXpPerHour ne doit jamais redescendre (monotone),
-  // et seulement après 2 min de session (protège contre un pic extrapolé juste après un chargement,
-  // même précaution que bestSilverPerHour/bestKpm).
+  // (2026-07-13, même fenêtre glissante 3min + anti-pic 30% appliquée à bestXpPerHour) -- record
+  // ne redescend jamais (monotone), et seulement après 2 min de session ET un étalement réel
+  // d'échantillons >= XP_RATE_MIN_SPAN_MS (protège contre un pic extrapolé juste après reconnexion).
   function testBestXpPerHourNeverDecreasesAndRequiresTwoMinutes() {
-    const s = { bestXpPerHour: S.bestXpPerHour, xpEarned: S.xpEarned, xpEarnedAtLoad: S.xpEarnedAtLoad, startTime: S.startTime };
-    // simule une session de 30s avec un gros gain XP -> ne doit PAS mettre à jour le record (mins<2)
-    S.bestXpPerHour = 1000;
-    S.xpEarnedAtLoad = 0;
-    S.xpEarned = 50000; // extrapolé sur 30s -> pic irréaliste en xp/h
-    S.startTime = performance.now() - 30*1000;
-    hud();
-    assert('Un gros gain XP sur <2min de session ne modifie PAS le record (protège contre les pics)',
-      S.bestXpPerHour === 1000, `bestXpPerHour=${S.bestXpPerHour}`);
-    // simule une session de 3 min avec un rythme réellement plus élevé -> le record doit monter
-    S.xpEarned = 100000;
-    S.startTime = performance.now() - 3*60*1000;
-    hud();
-    assert('Un rythme XP soutenu sur >2min de session met bien à jour le record (record monte)',
-      S.bestXpPerHour > 1000, `bestXpPerHour=${S.bestXpPerHour}`);
-    const afterFirstUpdate = S.bestXpPerHour;
-    // un rythme plus FAIBLE ensuite ne doit jamais faire REDESCENDRE le record (monotone)
-    S.xpEarnedAtLoad = 99000; S.xpEarned = 99100;
-    S.startTime = performance.now() - 3*60*1000;
-    hud();
-    assert('Le record xp/h ne redescend jamais (monotone, comme bestSilverPerHour/bestKpm)', S.bestXpPerHour === afterFirstUpdate,
-      `avant=${afterFirstUpdate} apres=${S.bestXpPerHour}`);
-    S.bestXpPerHour = s.bestXpPerHour; S.xpEarned = s.xpEarned;
-    S.xpEarnedAtLoad = s.xpEarnedAtLoad; S.startTime = s.startTime;
+    const s = { bestXpPerHour: S.bestXpPerHour, startTime: S.startTime };
+    const savedBuffer = xpRateBuffer;
+    try {
+      // simule une session de 30s avec un gros gain -> ne doit PAS mettre à jour le record (mins<2)
+      S.bestXpPerHour = 1000;
+      S.startTime = performance.now() - 30*1000;
+      xpRateBuffer = [{ t: Date.now()-20000, xp: 50000 }];
+      hud();
+      assert('Un gros gain XP sur <2min de session ne modifie PAS le record (protège contre les pics)',
+        S.bestXpPerHour === 1000, `bestXpPerHour=${S.bestXpPerHour}`);
+      // simule une session de 3 min avec un rythme réellement plus élevé, RÉPARTI sur toute la
+      // fenêtre glissante (pas un pic isolé) -> le record doit monter (~+10%, sous le seuil anti-pic)
+      S.startTime = performance.now() - 3*60*1000;
+      const now = Date.now();
+      const targetRate = 1100; // record actuel (1000) +10%
+      const totalOverWindow = targetRate * (XP_RATE_WINDOW_MS/3600000);
+      xpRateBuffer = [];
+      for (let i=0;i<6;i++) xpRateBuffer.push({ t: now - XP_RATE_WINDOW_MS + i*(XP_RATE_WINDOW_MS/6) + 1000, xp: totalOverWindow/6 });
+      hud();
+      assert('Un rythme XP soutenu (progressif, pas un pic) sur >2min de session met bien à jour le record (record monte)',
+        S.bestXpPerHour > 1000, `bestXpPerHour=${S.bestXpPerHour}`);
+      const afterFirstUpdate = S.bestXpPerHour;
+      // un rythme plus FAIBLE ensuite ne doit jamais faire REDESCENDRE le record (monotone)
+      xpRateBuffer = [{ t: now-10000, xp: 10 }];
+      S.startTime = performance.now() - 3*60*1000;
+      hud();
+      assert('Le record xp/h ne redescend jamais (monotone, comme bestSilverPerHour/bestKpm)', S.bestXpPerHour === afterFirstUpdate,
+        `avant=${afterFirstUpdate} apres=${S.bestXpPerHour}`);
+    } finally {
+      S.bestXpPerHour = s.bestXpPerHour; S.startTime = s.startTime;
+      xpRateBuffer = savedBuffer;
+    }
   }
   // "afficher valeur/min puis meilleure valeur/heure" (2026-07-18) -- #shRate doit afficher un
   // format ".../min" (jamais "/h" pour la valeur instantanée, source du bug de pic irréaliste)
@@ -6126,6 +6188,7 @@
     testGearscoreDerivedFixV414RetroactivelyCorrectsStaleRecord();
     testSilverPerHourResetV436ZeroesStaleRecord();
     testBestKpmResetV439ZeroesStaleRecord();
+    testBestXpPerHourResetV440ZeroesStaleRecord();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();
@@ -6204,6 +6267,14 @@
     testComputeSlidingSilverPerHourIgnoresIsolatedSpikeForRecord();
     testComputeSlidingSilverPerHourRejectsShortBurstRightAfterConnection();
     testComputeSlidingSilverPerHourAcceptsProgressiveIncreaseAsRecord();
+    testComputeSlidingKpmStableRateWithinWindow();
+    testComputeSlidingKpmIgnoresIsolatedSpikeForRecord();
+    testComputeSlidingKpmRejectsShortBurstRightAfterConnection();
+    testComputeSlidingKpmAcceptsProgressiveIncreaseAsRecord();
+    testComputeSlidingXpPerHourStableRateWithinWindow();
+    testComputeSlidingXpPerHourIgnoresIsolatedSpikeForRecord();
+    testComputeSlidingXpPerHourRejectsShortBurstRightAfterConnection();
+    testComputeSlidingXpPerHourAcceptsProgressiveIncreaseAsRecord();
     testShowAwayLootSummaryTriggersOnXpOnlyGain();
     testReconnectModalTierChipsWrapOnSameRowInsteadOfStacking();
     testAwayLevelSnapshotCapturedOnHide();

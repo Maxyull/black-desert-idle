@@ -2665,6 +2665,31 @@ function pruneKpmRateBuffer(now) {
   while (kpmRateBuffer.length && (now - kpmRateBuffer[0].t) > KPM_RATE_WINDOW_MS) kpmRateBuffer.shift();
 }
 
+const XP_RATE_WINDOW_MS = 180000; 
+const XP_RATE_MAX_DEVIATION = 0.30; 
+const XP_RATE_MIN_SPAN_MS = XP_RATE_WINDOW_MS / 2; 
+let xpRateBuffer = []; 
+
+function computeSlidingXpPerHour(buffer, now, currentBest) {
+  const pruned = (buffer||[]).filter(s => (now - s.t) <= XP_RATE_WINDOW_MS && (now - s.t) >= 0);
+  if (pruned.length === 0) return { ratePerHour: 0, eligible: false };
+  const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
+  const windowMs = Math.max(now - oldestT, 1000);
+  const total = pruned.reduce((sum, s) => sum + s.xp, 0);
+  const ratePerHour = total / (windowMs / 3600000);
+  let eligible = windowMs >= XP_RATE_MIN_SPAN_MS;
+  if (eligible && currentBest > 0) {
+    const deviation = (ratePerHour - currentBest) / currentBest;
+    if (deviation > XP_RATE_MAX_DEVIATION) eligible = false;
+  }
+  return { ratePerHour, eligible };
+}
+
+function pruneXpRateBuffer(now) {
+  now = now || Date.now();
+  while (xpRateBuffer.length && (now - xpRateBuffer[0].t) > XP_RATE_WINDOW_MS) xpRateBuffer.shift();
+}
+
 function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
@@ -3873,10 +3898,10 @@ function refreshStatsOnly() {
     ? fmt(Math.round(silverPerMinNow))+' silver/min'+(S.bestSilverPerHour ? ' · record '+fmt(Math.round(S.bestSilverPerHour))+'/h' : '')
     : '— silver/min';
   
-  const xpGain = S.xpEarned-(S.xpEarnedAtLoad||0);
+  pruneXpRateBuffer();
   if (mins > 2) {
-    const xpPerHourNow = xpGain/(mins/60);
-    if (xpPerHourNow > (S.bestXpPerHour||0)) S.bestXpPerHour = xpPerHourNow;
+    const { ratePerHour: xpPerHourNow, eligible } = computeSlidingXpPerHour(xpRateBuffer, Date.now(), S.bestXpPerHour||0);
+    if (eligible && xpPerHourNow > (S.bestXpPerHour||0)) S.bestXpPerHour = xpPerHourNow;
   }
   
   const apNow = apEff(), dpNow = totalDP();
@@ -4127,6 +4152,7 @@ function applySaveState(data) {
   if (!S.migratedGearscoreDerivedFixV414) { migrateGearscoreDerivedFixV414(); S.migratedGearscoreDerivedFixV414 = true; }
   if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
   if (!S.migratedBestKpmResetV439) { migrateBestKpmResetV439(); S.migratedBestKpmResetV439 = true; }
+  if (!S.migratedBestXpPerHourResetV440) { migrateBestXpPerHourResetV440(); S.migratedBestXpPerHourResetV440 = true; }
   
   new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
   zoneIdx = data.zoneIdx || 0;
@@ -6133,6 +6159,7 @@ function gainXp(n) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
   if (n > 0) S.xpEarned = (S.xpEarned||0) + n;
+  if (n > 0) xpRateBuffer.push({ t: Date.now(), xp: n }); 
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;
@@ -10607,6 +10634,11 @@ function migrateSilverPerHourResetV436() {
 
 function migrateBestKpmResetV439() {
   S.bestKpm = 0;
+  if (typeof syncPlayerStats === 'function') syncPlayerStats();
+}
+
+function migrateBestXpPerHourResetV440() {
+  S.bestXpPerHour = 0;
   if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
 

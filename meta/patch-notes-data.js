@@ -16,6 +16,13 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V440', d:'13/07/2026 18:45', name:{fr:'Classement : xp/h corrigé même bug que silver/h et kills/min, remis à 0', en:'Leaderboard: xp/h fixed same bug as silver/h and kills/min, reset to 0'}, fr:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'Même bug que le silver/h (V436) et les kills/min (V439), version xp/h : un gros paquet d\'XP juste après une reconnexion pouvait s\'extrapoler en un taux astronomique et devenir le record xp/h à vie. Corrigé avec la même formule : fenêtre glissante de 3 minutes, taux ignoré s\'il repose sur moins de 90 secondes d\'échantillons réels, et un pic isolé de plus de 30% au-dessus du record actuel n\'est plus jamais accepté comme nouveau record.'},
+      {t:'change', sub:'equipements', tx:'Tous les records d\'xp/h existants ont été remis à 0 (possiblement gonflés par ce bug) — ils se rebâtissent naturellement avec la formule corrigée.'},
+    ], en:[
+      {t:'fix', sub:'equipements', severity:'major', tx:'Same bug as silver/h (V436) and kills/min (V439), xp/h version: a big XP burst right after reconnecting could extrapolate into an astronomical rate and become the lifetime xp/h record. Fixed with the same formula: 3-minute sliding window, rate ignored unless based on at least 90 seconds of real samples, and an isolated spike more than 30% above the current record is never accepted as a new record.'},
+      {t:'change', sub:'equipements', tx:'All existing xp/h records were reset to 0 (potentially inflated by this bug) — they rebuild naturally with the corrected formula.'},
+    ] },
   { v:'V439', d:'13/07/2026 18:30', name:{fr:'Classement : kills/min corrigé même bug que silver/h, remis à 0', en:'Leaderboard: kills/min fixed same bug as silver/h, reset to 0'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Même bug que le silver/h (V436), version kills/min : une bourrasque de kills juste après une reconnexion pouvait s\'extrapoler en un taux astronomique et devenir le record kills/min à vie. Corrigé avec la même formule : fenêtre glissante de 3 minutes, taux ignoré s\'il repose sur moins de 90 secondes d\'échantillons réels, et un pic isolé de plus de 30% au-dessus du record actuel n\'est plus jamais accepté comme nouveau record.'},
       {t:'change', sub:'equipements', tx:'Tous les records de kills/min existants ont été remis à 0 (possiblement gonflés par ce bug) — ils se rebâtissent naturellement avec la formule corrigée.'},
