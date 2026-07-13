@@ -16,6 +16,11 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V438', d:'13/07/2026 18:15', name:{fr:'Dashboard Zone : nouvelle carte Admin, regroupe les outils de debug', en:'Zone dashboard: new Admin card, groups debug tools'}, fr:[
+      {t:'new', sub:'interface', tx:'Les outils de debug admin (optimisation max, rétrograder, +1/-1 rang, équiper un palier) sont regroupés dans une nouvelle carte dédiée "🛠️ Admin", visible uniquement pour un compte admin — auparavant mélangés dans la carte Inventaire.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Admin debug tools (max optimization, downgrade, +1/-1 rank, equip a tier) are now grouped into a new dedicated "🛠️ Admin" card, visible only for an admin account — previously mixed into the Inventory card.'},
+    ] },
   { v:'V437', d:'13/07/2026 18:00', name:{fr:'Compendium : les objets PEN coincés dans le sac protégé sont enfin libérés', en:'Compendium: PEN items stuck in the protected bag are finally freed'}, fr:[
       {t:'fix', sub:'equipements', tx:'Bug trouvé (rapporté explicitement) : un objet ayant atteint PEN restait parfois protégé dans le Compendium POUR TOUJOURS si le sac principal était plein au moment précis de l\'éviction — rien ne relançait ensuite la libération pour cet objet. Corrigé : à chaque chargement, tous les objets déjà maîtrisés PEN mais encore protégés sont réexaminés, et libérés dès qu\'une place se libère dans le sac.'},
     ], en:[

@@ -13168,7 +13168,7 @@ setInterval(() => { try { localStorage.setItem('velia-idle-save', JSON.stringify
 requestAnimationFrame(loop);
 
 // ==== src/core/card-layout.js ====
-const CARD_LAYOUT_IDS = ['statsCard', 'zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'];
+const CARD_LAYOUT_IDS = ['statsCard', 'zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard', 'adminCard'];
 const CARD_LAYOUT_STORAGE_KEY = 'velia-idle-card-layout';
 
 function cardLayoutDefaultState() {
@@ -13668,10 +13668,8 @@ function updateUserBar() {
   
   $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
-  const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
-  const adminResetEnhBtn = $a('btnAdminResetEnh'); if (adminResetEnhBtn) adminResetEnhBtn.style.display = isAdmin() ? '' : 'none';
-  const adminEnhStepRow = $a('adminEnhStepRow'); if (adminEnhStepRow) adminEnhStepRow.style.display = isAdmin() ? '' : 'none';
-  const adminTierRow = $a('adminTierRow'); if (adminTierRow) adminTierRow.style.display = isAdmin() ? '' : 'none';
+  
+  const adminCard = $a('adminCard'); if (adminCard) adminCard.classList.toggle('isAdminVisible', isAdmin());
   
   const uuidRow = $a('uuidRow');
   if (uuidRow) uuidRow.style.display = currentUser ? 'flex' : 'none';
@@ -14790,6 +14788,8 @@ const I18N = {
   optAutoModeCron: { fr:"Jusqu'à épuisement des Pierres de Cron", en:'Until out of Cron Stones' },
   btnConvertCaphras: { fr:'Convertir (5:1)', en:'Convert (5:1)' },
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
+  cardAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
+  admGroupEquip: { fr:'Équipement', en:'Equipment' },
 };
 
 function applyI18n() {

@@ -3622,6 +3622,11 @@
   .card h3 { display:flex; align-items:center; }
   .cardTitleText { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .cardMoveArrows { flex:none; display:inline-flex; margin-left:auto; padding-left:6px; }
+  /* carte Admin (2026-07-13) : masquée via CLASSE (jamais inline style, voir index.dev.html)
+     -- bordure dorée distinctive, mêmes tokens que le reste du dashboard. */
+  .adminOnlyCard { display:none; border-color:var(--gold); }
+  .adminOnlyCard.isAdminVisible { display:block; }
+  .admGroupLabel { font-size:9px; text-transform:uppercase; letter-spacing:.05em; color:var(--ink-dim); margin:6px 0 4px; }
   .cardMoveBtn {
     background:transparent; border:none; color:var(--ink-dim); font-size:9px; line-height:1;
     padding:2px 3px; cursor:pointer;
