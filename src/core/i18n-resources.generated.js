@@ -485,7 +485,8 @@ const I18N_RESOURCES = {
       "backend.wiki.nav_tuto": "Tutoriel",
       "backend.wiki.search_no_results": "Aucun résultat pour",
       "backend.wiki.search_placeholder": "Rechercher…",
-      "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant"
+      "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant",
+      "backend.gear.back_to_leaderboard_button": "← Retour au classement"
     },
     "combat": {
       "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
@@ -1398,7 +1399,8 @@ const I18N_RESOURCES = {
       "backend.wiki.nav_tuto": "Tutorial",
       "backend.wiki.search_no_results": "No results for",
       "backend.wiki.search_placeholder": "Search…",
-      "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait"
+      "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait",
+      "backend.gear.back_to_leaderboard_button": "← Back to leaderboard"
     },
     "combat": {
       "combat.ai_mode.balanced_title": "Balanced AI: alternates attack and caution based on the fight",

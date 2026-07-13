@@ -699,11 +699,21 @@ async function showPlayerGear(userId, displayName) {
   if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${escapeHtml(error.message)}</div>`; return; }
   // bouton "Copier UUID" réservé à l'admin — demande explicite du 2026-07-05
   const copyBtn = isAdmin() ? `<button id="btnCopyGearUuid" style="margin-bottom:8px">📋 ${i18next.t('backend:backend.gear.copy_uuid_button')}</button>` : '';
-  $a('infoBody').innerHTML = copyBtn +
+  // "Retour au classement" (2026-07-13, demande explicite : "ça ne revient pas au classement du
+  // tout") -- showPlayerGear() n'est atteignable QUE depuis le classement (wirePlayerNameLinks(),
+  // voir leaderboard-panel.js), qui remplace tout #infoBody sans jamais garder trace de son propre
+  // contenu -- avant, seul le ✕ (fermeture complète du panneau générique #infoOverlay, partagé
+  // avec Wiki/Compendium/Succès/Patch notes) était disponible, obligeant à rouvrir le classement
+  // depuis zéro (perte de la catégorie/recherche/page en cours). Rouvre directement le classement
+  // au lieu de fermer, comme un vrai "précédent" plutôt qu'un simple bouton de fermeture.
+  const backBtn = `<button id="btnBackToLeaderboard" style="margin-bottom:8px">${i18next.t('backend:backend.gear.back_to_leaderboard_button')}</button>`;
+  $a('infoBody').innerHTML = backBtn + copyBtn +
     `<div id="pdWeapons">${readonlyPdSlotsHtml(data, PD_BOTTOM)}</div>` +
     `<div id="paperdoll"><div class="pdCol">${readonlyPdSlotsHtml(data, PD_LEFT)}</div>` +
     `<div class="pdCenter"></div><div class="pdCol">${readonlyPdSlotsHtml(data, PD_RIGHT)}</div></div>` +
     readonlyGearListHtml(data);
+  const backBtnEl = $a('btnBackToLeaderboard');
+  if (backBtnEl) backBtnEl.onclick = () => { if (typeof openLeaderboard2 === 'function') openLeaderboard2(); };
   if (isAdmin()) {
     $a('btnCopyGearUuid').onclick = async () => {
       try { await navigator.clipboard.writeText(userId); } catch(e) {}

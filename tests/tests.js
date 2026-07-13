@@ -2679,6 +2679,17 @@
         /escapeHtml\(\(modErr\|\|testErr\)\.message\)/.test(src));
     }
   }
+  // "ça ne revient pas au classement du tout" (2026-07-13) : showPlayerGear() n'est atteignable
+  // QUE depuis le classement (wirePlayerNameLinks(), voir leaderboard-panel.js) -- avant, seul le
+  // ✕ générique (ferme tout #infoOverlay) était disponible pour en sortir, perdant la
+  // catégorie/recherche/page en cours. Garde-fou statique : vérifie que showPlayerGear() pose bien
+  // un bouton qui rouvre le classement (openLeaderboard2()), pas juste une fermeture complète.
+  function testShowPlayerGearHasBackToLeaderboardButton() {
+    if (typeof showPlayerGear !== 'function') return;
+    const src = showPlayerGear.toString();
+    assert('showPlayerGear() pose un bouton #btnBackToLeaderboard', src.includes('btnBackToLeaderboard'), `src=${src.slice(0,300)}`);
+    assert('showPlayerGear() câble ce bouton vers openLeaderboard2()', src.includes('openLeaderboard2()'));
+  }
   // issue GitHub #4, finding M1 : le script Supabase JS était chargé en version flottante ("@2")
   // sans intégrité (SRI) -- un CDN ou un paquet npm compromis aurait pu exécuter du JS arbitraire
   // avec les pleins privilèges de la page. Vérifie directement sur le DOM déjà chargé (pas de
@@ -5053,6 +5064,7 @@
     testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
     testUpdateCountdownStartsAt15sAndIsCleanedUp();
     testErrorMessagesAreEscapedBeforeInnerHtml();
+    testShowPlayerGearHasBackToLeaderboardButton();
     testSupabaseScriptIsPinnedWithIntegrity();
     testNoLegacyHardcodedBorderHexOutsideAdminOrDeadCascade();
     testSorcierRenderLoadsBeforeSyncStartupCallers();

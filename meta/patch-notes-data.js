@@ -5,6 +5,11 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V417', d:'24/07/2026 04:00', name:{fr:'Classement : bouton retour depuis le stuff d\'un joueur', en:'Leaderboard: back button from a player\'s gear'}, fr:[
+      {t:'new', sub:'interface', tx:'Ouvrir le stuff d\'un joueur depuis le classement affiche désormais un bouton "← Retour au classement" en haut du panneau, pour revenir directement au classement au lieu de devoir tout fermer.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Opening a player\'s gear from the leaderboard now shows a "← Back to leaderboard" button at the top of the panel, to return directly to the leaderboard instead of having to close everything.'},
+    ] },
   { v:'V416', d:'24/07/2026 03:00', name:{fr:'Marché commun : contrôles prix/quantité et panneau redimensionnés', en:'Common Market: resized price/quantity controls and panel'}, fr:[
       {t:'change', sub:'interface', tx:'Popup "Acheter" : les boutons MAX/MIN et -/+ sont plus discrets, le champ de prix/quantité est désormais plus grand et mis en valeur avec une bordure dorée. La ligne "Quantité achetée" adopte l\'ordre bouton moins / champ / bouton plus, plus intuitif pour ajuster une quantité.'},
       {t:'change', sub:'interface', tx:'Le panneau du Marché commun est légèrement plus large, sa hauteur ne laisse plus de grand vide en bas, et la liste d\'objets affiche 2 lignes de plus sans scroller. Texte un peu plus grand sur les libellés/valeurs principaux du panneau.'},

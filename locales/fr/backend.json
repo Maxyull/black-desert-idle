@@ -163,5 +163,6 @@
   "backend.wiki.nav_tuto": "Tutoriel",
   "backend.wiki.search_no_results": "Aucun résultat pour",
   "backend.wiki.search_placeholder": "Rechercher…",
-  "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant"
+  "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant",
+  "backend.gear.back_to_leaderboard_button": "← Retour au classement"
 }

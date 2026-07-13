@@ -483,7 +483,8 @@ const I18N_RESOURCES = {
       "backend.wiki.nav_tuto": "Tutoriel",
       "backend.wiki.search_no_results": "Aucun résultat pour",
       "backend.wiki.search_placeholder": "Rechercher…",
-      "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant"
+      "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant",
+      "backend.gear.back_to_leaderboard_button": "← Retour au classement"
     },
     "combat": {
       "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
@@ -1396,7 +1397,8 @@ const I18N_RESOURCES = {
       "backend.wiki.nav_tuto": "Tutorial",
       "backend.wiki.search_no_results": "No results for",
       "backend.wiki.search_placeholder": "Search…",
-      "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait"
+      "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait",
+      "backend.gear.back_to_leaderboard_button": "← Back to leaderboard"
     },
     "combat": {
       "combat.ai_mode.balanced_title": "Balanced AI: alternates attack and caution based on the fight",
@@ -12175,11 +12177,15 @@ async function showPlayerGear(userId, displayName) {
   if (error) { $a('infoBody').innerHTML = `<div class="admEmpty">${escapeHtml(error.message)}</div>`; return; }
   
   const copyBtn = isAdmin() ? `<button id="btnCopyGearUuid" style="margin-bottom:8px">📋 ${i18next.t('backend:backend.gear.copy_uuid_button')}</button>` : '';
-  $a('infoBody').innerHTML = copyBtn +
+  
+  const backBtn = `<button id="btnBackToLeaderboard" style="margin-bottom:8px">${i18next.t('backend:backend.gear.back_to_leaderboard_button')}</button>`;
+  $a('infoBody').innerHTML = backBtn + copyBtn +
     `<div id="pdWeapons">${readonlyPdSlotsHtml(data, PD_BOTTOM)}</div>` +
     `<div id="paperdoll"><div class="pdCol">${readonlyPdSlotsHtml(data, PD_LEFT)}</div>` +
     `<div class="pdCenter"></div><div class="pdCol">${readonlyPdSlotsHtml(data, PD_RIGHT)}</div></div>` +
     readonlyGearListHtml(data);
+  const backBtnEl = $a('btnBackToLeaderboard');
+  if (backBtnEl) backBtnEl.onclick = () => { if (typeof openLeaderboard2 === 'function') openLeaderboard2(); };
   if (isAdmin()) {
     $a('btnCopyGearUuid').onclick = async () => {
       try { await navigator.clipboard.writeText(userId); } catch(e) {}
