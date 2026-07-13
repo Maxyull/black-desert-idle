@@ -901,6 +901,138 @@ function drawMineurIso(wx,wy,w,t) {
   }
   ctx.restore();
 }
+// Soldat Helm (zone "Poste Helm", juste après la Mine de Fer Abandonnée) — créatures ORIGINALES,
+// demande explicite du 2026-07-13 avec captures de référence (garde à casque en dôme/fente
+// oculaire/crête hérissée, plaques d'armure superposées façon coquille, ceinture large à boucle
+// en losange, jupe en lambeaux) — aucun asset réel repris, juste l'ambiance :
+//  - mob normal : soldat trapu et brutal en plaques superposées, casque en dôme fermé (aucun
+//    visage visible, seulement une fente d'oeil sombre)
+//  - boss de pack (w.alpha, mockup approuvé "Golem") : silhouette RADICALEMENT différente de
+//    tous les autres monstres du jeu (tous humanoïdes jusqu'ici) -- masse ovoïde flottante faite
+//    de plaques radiales bronze/pierre façon pomme de pin/oursin, gravures runiques décoratives,
+//    bande incandescente à l'équateur dont l'intensité suit w.lunge (même logique que la peinture
+//    de guerre de drawRhutumIso) -- AUCUN bras/jambe/tête distincts.
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Soldat Helm (ou son variant boss "Golem" si w.alpha) en isométrique (zone "Poste Helm"). */
+function drawHelmIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.3)';
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,(w.alpha?15:11)*w.scale,(w.alpha?6:4.5),0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const tone = w.tone;
+  if (w.alpha) {
+    // ---- Golem : masse ovoïde de plaques radiales, ni membres ni tête (mockup approuvé) ----
+    const bob = Math.sin(t*2+w.phase)*1.6; // lévite/flotte au lieu de marcher
+    if (w.lunge > .3) { ctx.strokeStyle='rgba(232,160,60,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(0,-18+bob,19,15,0,0,7); ctx.stroke(); }
+    ctx.translate(0,bob);
+    // masse de base (silhouette générale ovoïde, pierre/bronze -- teinte de zone comme les autres monstres)
+    ctx.fillStyle = tone;
+    ctx.beginPath(); ctx.ellipse(0,-18,15,13,0,0,7); ctx.fill();
+    // plaques radiales superposées (pétales façon pomme de pin/oursin) débordant du contour de base
+    for (let i=0;i<8;i++) {
+      const ang = (i/8)*Math.PI*2 + 0.2;
+      ctx.save(); ctx.translate(0,-18); ctx.rotate(ang);
+      ctx.fillStyle = i%2===0 ? 'rgba(0,0,0,.12)' : 'rgba(255,255,255,.09)';
+      ctx.beginPath();
+      ctx.moveTo(0,-3);
+      ctx.quadraticCurveTo(5,-8, 3,-15);
+      ctx.quadraticCurveTo(0,-18.5, -3,-15);
+      ctx.quadraticCurveTo(-5,-8, 0,-3);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.7; ctx.stroke();
+      // gravures runiques décoratives -- quelques traits simples par plaque, pas du texte littéral
+      ctx.strokeStyle='rgba(255,220,160,.4)'; ctx.lineWidth=.6;
+      ctx.beginPath(); ctx.moveTo(-1.3,-10); ctx.lineTo(1.1,-10.7); ctx.moveTo(-0.8,-13.2); ctx.lineTo(0.9,-12.8); ctx.stroke();
+      ctx.restore();
+    }
+    // bande incandescente à l'équateur -- couleur/intensité liées à w.lunge (même principe que la
+    // peinture de guerre de drawRhutumIso), plus vive et halo supplémentaire pendant le lunge
+    const glow = w.lunge>.3 ? '#ffb347' : '#c8791e';
+    if (w.lunge>.3) { ctx.strokeStyle='rgba(255,170,60,.35)'; ctx.lineWidth=5;
+      ctx.beginPath(); ctx.ellipse(0,-18,15.4,4.4,0,0,7); ctx.stroke(); }
+    ctx.strokeStyle = glow; ctx.lineWidth = w.lunge>.3?2.6:1.7;
+    ctx.beginPath(); ctx.ellipse(0,-18,15.4,4.4,0,0,7); ctx.stroke();
+    // contour net global (silhouette lisible, même logique que le contour du loup)
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(0,-18,15,13,0,0,7); ctx.stroke();
+  } else {
+    // ---- Soldat Helm (mob normal), trapu et brutal ----
+    const trot = Math.sin(t*5+w.phase)*1.3; // démarche lourde, blindée
+    if (w.lunge > .3) { ctx.strokeStyle='rgba(150,120,200,.5)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.ellipse(0,-15,15,11,0,0,7); ctx.stroke(); }
+    const plate = tone;
+    // jambes épaisses, courtes (silhouette trapue, pas lanky)
+    ctx.strokeStyle='#26222e'; ctx.lineWidth=4.6; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(-5,-8); ctx.lineTo(-6,2+trot*.4);
+    ctx.moveTo(5,-8); ctx.lineTo(6,2-trot*.4);
+    ctx.stroke();
+    // bottes plaquées
+    ctx.fillStyle='#1c1a22';
+    ctx.beginPath(); ctx.ellipse(-6.2,2.6+trot*.4,2,1.2,0,0,7); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(6.2,2.6-trot*.4,2,1.2,0,0,7); ctx.fill();
+    // jupe en lambeaux (tissu déchiqueté, ourlet en dents de scie) sous l'armure -- même technique
+    // que le pagne de drawRhutumIso/l'ourlet de veste de drawPirateIso
+    ctx.fillStyle='#3a3040';
+    ctx.beginPath();
+    ctx.moveTo(-8,-9); ctx.lineTo(-8,-2); ctx.lineTo(-5,-7); ctx.lineTo(-2,-1); ctx.lineTo(0,-7);
+    ctx.lineTo(2,-1); ctx.lineTo(5,-7); ctx.lineTo(8,-2); ctx.lineTo(8,-9);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.3)'; ctx.lineWidth=.6; ctx.stroke();
+    // ceinture large + boucle en losange (motif diamant des références)
+    ctx.fillStyle='#4a3a28';
+    ctx.fillRect(-8.4,-10.6,16.8,2.2);
+    ctx.save(); ctx.translate(0,-9.5); ctx.rotate(Math.PI/4);
+    ctx.fillStyle='#c9a55a'; ctx.fillRect(-1.6,-1.6,3.2,3.2);
+    ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.lineWidth=.4; ctx.strokeRect(-1.6,-1.6,3.2,3.2);
+    ctx.restore();
+    // torse trapu et large (plastron)
+    ctx.fillStyle = plate;
+    ctx.beginPath(); ctx.moveTo(-10,-10); ctx.lineTo(-9,-25); ctx.lineTo(9,-25); ctx.lineTo(10,-10); ctx.closePath(); ctx.fill();
+    // lignes de plaques ventrales superposées (lamellaire)
+    ctx.strokeStyle='rgba(0,0,0,.25)'; ctx.lineWidth=.9;
+    ctx.beginPath();
+    ctx.moveTo(-9,-19); ctx.lineTo(9,-19);
+    ctx.moveTo(-9,-15); ctx.lineTo(9,-15);
+    ctx.moveTo(-9,-22); ctx.lineTo(9,-22);
+    ctx.stroke();
+    // épaulières en coquilles superposées (2-3 formes chevauchantes par épaule, chaque côté --
+    // même esprit que les pointes d'épaulières de drawMineurIso, mais en plaques rondes, pas hérissées)
+    [-9,9].forEach(sx => {
+      const dir = sx<0?-1:1;
+      ctx.fillStyle = plate;
+      ctx.beginPath(); ctx.ellipse(sx,-24,4.6,3.6,0,0,7); ctx.fill();
+      ctx.fillStyle='rgba(0,0,0,.16)';
+      ctx.beginPath(); ctx.ellipse(sx+dir*1.6,-22.6,3.6,3,0,0,7); ctx.fill();
+      ctx.fillStyle = plate;
+      ctx.beginPath(); ctx.ellipse(sx+dir*2.8,-21.4,2.6,2.2,0,0,7); ctx.fill();
+    });
+    // bras + arme (avance en attaque)
+    ctx.strokeStyle='#8a8390'; ctx.lineWidth=4; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(9,-22); ctx.lineTo(14+lungeAmt*.5,-13); ctx.stroke();
+    ctx.strokeStyle='#5a5460'; ctx.lineWidth=2.6;
+    ctx.beginPath(); ctx.moveTo(14+lungeAmt*.5,-13); ctx.lineTo(21+lungeAmt*.7,-16); ctx.stroke();
+    // tête intégralement casquée -- dôme en fer fermé, AUCUN visage visible, seule une fente
+    // d'oeil sombre marque le devant
+    ctx.fillStyle = plate;
+    ctx.beginPath(); ctx.arc(0,-29,5.4,0,7); ctx.fill();
+    ctx.fillStyle='rgba(8,6,10,.92)';
+    ctx.fillRect(-3.6,-29.6,7.2,1.5);
+    // crête hérissée/pointes sur le sommet du casque
+    ctx.fillStyle='#3a3440';
+    for (let i=-1; i<=1; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i*2.6,-33.8); ctx.lineTo(i*2.6-1,-40-Math.abs(i)*1.8); ctx.lineTo(i*2.6+1,-33.8); ctx.closePath(); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -981,6 +1113,16 @@ function drawZoneMobIcon() {
     ctx2.fillStyle='#c8503a';
     ctx2.beginPath(); ctx2.arc(-1.8,-2.4,1,0,7); ctx2.fill();
     ctx2.beginPath(); ctx2.arc(1.8,-2.4,1,0,7); ctx2.fill();
+  } else if (zi === 7) { // Soldat Helm (casque en dôme fermé, fente d'oeil, crête hérissée)
+    ctx2.fillStyle=tone;
+    ctx2.beginPath(); ctx2.arc(0,1,7,0,7); ctx2.fill();
+    ctx2.fillStyle='rgba(8,6,10,.92)';
+    ctx2.fillRect(-4.6,0.4,9.2,2);
+    ctx2.fillStyle='#3a3440';
+    for (let i=-1; i<=1; i++) {
+      ctx2.beginPath();
+      ctx2.moveTo(i*3.2,-6); ctx2.lineTo(i*3.2-1.2,-13-Math.abs(i)*2); ctx2.lineTo(i*3.2+1.2,-6); ctx2.closePath(); ctx2.fill();
+    }
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -991,8 +1133,9 @@ function drawZoneMobIcon() {
 }
 // dispatcher : chaque zone peut avoir sa propre silhouette de monstre — pour l'instant "Ruines de
 // Protty" (zone index 1), "Repaire des Pirates" (zone index 2), "Camp Rhutum" (zone index 3),
-// "Ferme Shultz" (zone index 4), "Colonie Sausan" (zone index 5) et "Mine de Fer Abandonnée"
-// (zone index 6, avec sa variante boss blindée) ont la leur, les autres zones gardent la
+// "Ferme Shultz" (zone index 4), "Colonie Sausan" (zone index 5), "Mine de Fer Abandonnée"
+// (zone index 6, avec sa variante boss blindée) et "Poste Helm" (zone index 7, avec sa variante
+// boss "Golem" à la silhouette radicalement différente) ont la leur, les autres zones gardent la
 // silhouette générique
 /** @param {number} wx @param {number} wy @param {object} w @param {number} t. Aiguille vers le draw*Iso du monstre correspondant à la zone active. */
 function drawMonsterIso(wx,wy,w,t) {
@@ -1002,6 +1145,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 4) return drawShultzIso(wx,wy,w,t);
   if (zoneIdx === 5) return drawSausanIso(wx,wy,w,t);
   if (zoneIdx === 6) return drawMineurIso(wx,wy,w,t);
+  if (zoneIdx === 7) return drawHelmIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
