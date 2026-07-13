@@ -1443,6 +1443,202 @@ function drawUluanIso(wx,wy,w,t) {
   ctx.beginPath(); ctx.moveTo(-12,-10); ctx.lineTo(-11,-28); ctx.lineTo(11,-28); ctx.lineTo(12,-10); ctx.closePath(); ctx.stroke();
   ctx.restore();
 }
+// Esprit des Mânes (zone "Planque des Mânes", juste après Ruines de Kratuga, dernière zone
+// Mediah — Early avant Forêt de Polly) — créature ORIGINALE : esprit spectral, ambiance
+// "Manes" de Black Desert Online (bêtes-hybrides à crinière écarlate bien réelles et vivantes
+// chez BDO) réinterprétée en pur esprit fantomatique pour coller au nom français de la zone
+// ("Esprit des Mânes") — ambiance seulement, aucun asset réel repris. Tête féline à crinière de
+// flammes écarlate/orange (quelques langues de feu ondulantes via `manesway`, pas une masse
+// pleine — même esprit que la cape de drawShultzIso / le pan de turban de drawGahazIso, mais
+// stylisée en flammes), corps fumant bleu-blanc translucide (fillStyle via hexToRgba, voir
+// classes/sorcier/sorcier-render.js — chargé avant ce fichier, §7 du CLAUDE.md) qui se dissout
+// en volutes vers les pieds (jambes non solides, pas de bottes), lueur de braise au torse dont
+// l'intensité suit w.lunge (même principe que la bande incandescente du Golem de drawHelmIso /
+// les yeux verts de drawElricIso) :
+//  - mob normal (mockup "Mix C") : silhouette svelte d'archer/lancier spectral, arc fumant
+//    translucide (corde à peine visible), mains griffues, lueur de braise contenue
+//  - boss de pack (w.alpha, mockup "Mix B") : silhouette nettement plus massive/musclée (carrure
+//    élargie, même logique de gabarit que drawMineurIso alpha vs normal), fléau fumant à chaîne
+//    (tête lestée cloutée cerclée de braises), fissures de braise convergeant sur le torse plus
+//    marquées
+/** @param {number} wx @param {number} wy - position monde. @param {object} w - instance de monstre. @param {number} t - timestamp. Dessine un Esprit des Mânes (ou son variant boss plus massif si w.alpha) en isométrique (zone "Planque des Mânes"). */
+function drawManesIso(wx,wy,w,t) {
+  const c = toScreen(wx,wy);
+  if (c.sx<-60||c.sx>W+60||c.sy<-60||c.sy>H+60) return;
+  const facingRight = isoX(P.x-wx,P.y-wy) >= 0;
+  const lungeAmt = w.lunge > 0 ? Math.sin((0.55-w.lunge)/0.55*Math.PI)*10 : 0;
+  ctx.fillStyle='rgba(0,0,0,.2)'; // ombre plus faible qu'un mob solide -- silhouette spectrale
+  ctx.beginPath(); ctx.ellipse(c.sx,c.sy+3,(w.alpha?15:11)*w.scale,(w.alpha?5.5:4.2),0,0,7); ctx.fill();
+  ctx.save();
+  ctx.translate(c.sx+(facingRight?lungeAmt:-lungeAmt), c.sy-lungeAmt*.3);
+  if (!facingRight) ctx.scale(-1,1);
+  ctx.scale(w.scale,w.scale);
+  const tone = w.tone; // teinte de zone (bleu-gris pâle, voir tones de zones-data.js)
+  const bob = Math.sin(t*(w.alpha?1.7:2.1)+w.phase)*1.6; // flotte, ne marche pas -- pur esprit
+  ctx.translate(0,bob);
+  const emberGlow = w.lunge>.3 ? '#ffb04a' : '#e8752a'; // braise, plus vive pendant le lunge
+  const manesway = Math.sin(t*3+w.phase)*2; // crinière ondule, même principe que `sway` de drawGahazIso
+  if (w.alpha) {
+    // ---- brute spectrale bouffie, fléau fumant (mockup "Mix B") ----
+    // jambes en volutes translucides qui s'amincissent vers le bas (pas de pieds solides)
+    [-1,1].forEach(dir => {
+      const legSway = Math.sin(t*1.6+w.phase+dir)*1.4;
+      ctx.fillStyle = hexToRgba(tone,.38);
+      ctx.beginPath();
+      ctx.moveTo(dir*7,-9);
+      ctx.quadraticCurveTo(dir*8+legSway*.5,-2,dir*5+legSway,3);
+      ctx.quadraticCurveTo(dir*3+legSway*.5,-3,dir*2,-9);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = hexToRgba(tone,.16);
+      ctx.beginPath(); ctx.ellipse(dir*4+legSway,5,2.8,2,0,0,7); ctx.fill();
+    });
+    // torse massif et musclé, fumant bleu-blanc translucide -- carrure large (mockup "Mix B",
+    // nettement plus bouffie que la variante normale, même logique de gabarit que drawMineurIso
+    // alpha vs normal). Opacité relevée le 2026-07-13 (vérif capture d'écran réelle) -- la teinte
+    // de zone est déjà proche de la teinte du sol (ambiance spectrale voulue), un fill trop
+    // translucide se fondait dans le décor et devenait illisible en jeu.
+    ctx.fillStyle = hexToRgba(tone,.62);
+    ctx.beginPath(); ctx.moveTo(-8,-9); ctx.lineTo(-15,-28); ctx.lineTo(15,-28); ctx.lineTo(8,-9); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = hexToRgba('#ffffff',.12);
+    ctx.beginPath(); ctx.moveTo(-8,-9); ctx.lineTo(-12,-24); ctx.lineTo(12,-24); ctx.lineTo(8,-9); ctx.closePath(); ctx.fill();
+    // deltoïdes saillants des deux côtés
+    [-15,15].forEach(sx => {
+      ctx.fillStyle = hexToRgba(tone,.55);
+      ctx.beginPath(); ctx.ellipse(sx,-27,4.4,4.8,0,0,7); ctx.fill();
+    });
+    // fissures de braise convergeant sur le torse (plus marquées que la variante normale)
+    ctx.strokeStyle=emberGlow; ctx.lineWidth=1.1; ctx.lineCap='round';
+    ctx.beginPath();
+    ctx.moveTo(-9,-26); ctx.quadraticCurveTo(-4,-21,0,-17);
+    ctx.moveTo(9,-27); ctx.quadraticCurveTo(4,-22,0,-17);
+    ctx.moveTo(0,-9); ctx.lineTo(0,-17);
+    ctx.stroke();
+    // lueur de braise au torse -- coeur vif + halo, intensité liée à w.lunge
+    if (w.lunge>.3) { ctx.fillStyle='rgba(255,170,70,.32)'; ctx.beginPath(); ctx.ellipse(0,-17,5.4,5.4,0,0,7); ctx.fill(); }
+    ctx.fillStyle = hexToRgba(emberGlow,.55);
+    ctx.beginPath(); ctx.ellipse(0,-17,3.2,3.2,0,0,7); ctx.fill();
+    ctx.fillStyle = emberGlow;
+    ctx.beginPath(); ctx.arc(0,-17,1.6,0,7); ctx.fill();
+    // bras épais + fléau fumant à chaîne (tête lestée cloutée cerclée de braises)
+    ctx.strokeStyle = hexToRgba(tone,.6); ctx.lineWidth=4.6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(14,-26); ctx.lineTo(19+lungeAmt*.5,-17); ctx.stroke();
+    ctx.strokeStyle = hexToRgba('#cfe0ff',.5); ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(19+lungeAmt*.5,-17); ctx.quadraticCurveTo(23+lungeAmt*.7,-13,21+lungeAmt*.6,-8); ctx.stroke();
+    ctx.strokeStyle = hexToRgba('#cfe0ff',.6); ctx.lineWidth=1.1;
+    [[20.4,-14],[21.2,-10.6]].forEach(([cx,cy]) => {
+      ctx.beginPath(); ctx.ellipse(cx,cy,1.3,1,0.4,0,7); ctx.stroke();
+    });
+    ctx.fillStyle='#4a4550';
+    ctx.beginPath(); ctx.arc(21+lungeAmt*.6,-5,3.4,0,7); ctx.fill();
+    ctx.fillStyle='#2c2830';
+    for (let i=0;i<6;i++) {
+      const ang=(i/6)*Math.PI*2;
+      ctx.save(); ctx.translate(21+lungeAmt*.6,-5); ctx.rotate(ang);
+      ctx.beginPath(); ctx.moveTo(-.9,-3.4); ctx.lineTo(0,-6.2); ctx.lineTo(.9,-3.4); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+    ctx.strokeStyle = emberGlow; ctx.lineWidth=.9;
+    ctx.beginPath(); ctx.arc(21+lungeAmt*.6,-5,3.8,0,7); ctx.stroke();
+    // avant-bras libre + main griffue (reliée à l'épaule, ne flotte pas dans le vide)
+    ctx.strokeStyle = hexToRgba(tone,.6); ctx.lineWidth=4.2; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-14,-26); ctx.lineTo(-16,-16); ctx.stroke();
+    ctx.fillStyle = hexToRgba(tone,.7);
+    ctx.beginPath(); ctx.ellipse(-16,-13,2.4,2.8,0,0,7); ctx.fill();
+    // tête féline spectrale, plus large que la variante normale
+    ctx.fillStyle = hexToRgba(tone,.7);
+    ctx.beginPath(); ctx.arc(0,-31,4.6,0,7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-3.6,-34.4); ctx.lineTo(-5.6,-39.4); ctx.lineTo(-1.8,-36); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(3.6,-34.4); ctx.lineTo(5.6,-39.4); ctx.lineTo(1.8,-36); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(3,-29.4,2.2,1.6,0,0,7); ctx.fill();
+    ctx.fillStyle='rgba(255,180,90,.7)';
+    ctx.beginPath(); ctx.arc(-1.6,-31.4,.6,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(1.8,-31.6,.6,0,7); ctx.fill();
+    // crinière de flamme, plus large que la variante normale
+    ctx.fillStyle = hexToRgba('#c8402a',.7);
+    ctx.beginPath();
+    ctx.moveTo(-3,-34); ctx.quadraticCurveTo(-10+manesway*.6,-38,-7+manesway,-48);
+    ctx.quadraticCurveTo(-4,-41,0,-34); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = hexToRgba('#e8752a',.75);
+    ctx.beginPath();
+    ctx.moveTo(0,-35); ctx.quadraticCurveTo(-1+manesway*.4,-42,1+manesway*.7,-51);
+    ctx.quadraticCurveTo(2.4,-42,2.4,-35); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = hexToRgba('#ff9a4a',.7);
+    ctx.beginPath();
+    ctx.moveTo(3,-34); ctx.quadraticCurveTo(9+manesway*.5,-38,8+manesway,-48);
+    ctx.quadraticCurveTo(5,-41,1,-34); ctx.closePath(); ctx.fill();
+    // contour net global (silhouette lisible, mais rendu doux/spectral, pas un noir plein --
+    // opacité relevée le 2026-07-13 en même temps que le fill, même raison)
+    ctx.strokeStyle='rgba(10,20,40,.4)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(-8,-9); ctx.lineTo(-15,-28); ctx.lineTo(15,-28); ctx.lineTo(8,-9); ctx.closePath(); ctx.stroke();
+  } else {
+    // ---- archer/lancier spectral svelte (mockup "Mix C") ----
+    [-1,1].forEach(dir => {
+      const legSway = Math.sin(t*2+w.phase+dir)*1.1;
+      ctx.fillStyle = hexToRgba(tone,.38);
+      ctx.beginPath();
+      ctx.moveTo(dir*4,-8);
+      ctx.quadraticCurveTo(dir*5+legSway*.5,-2,dir*3+legSway,3);
+      ctx.quadraticCurveTo(dir*1.4+legSway*.5,-3,dir*1,-8);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = hexToRgba(tone,.16);
+      ctx.beginPath(); ctx.ellipse(dir*2+legSway,5,2,1.6,0,0,7); ctx.fill();
+    });
+    // torse svelte et athlétique, fumant bleu-blanc translucide -- opacité relevée le 2026-07-13
+    // (vérif capture d'écran réelle, même raison que la variante alpha ci-dessus)
+    ctx.fillStyle = hexToRgba(tone,.62);
+    ctx.beginPath(); ctx.moveTo(-5,-8); ctx.lineTo(-6,-25); ctx.lineTo(6,-25); ctx.lineTo(5,-8); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = hexToRgba('#ffffff',.11);
+    ctx.beginPath(); ctx.moveTo(-5,-8); ctx.lineTo(-5.6,-19); ctx.lineTo(5.6,-19); ctx.lineTo(5,-8); ctx.closePath(); ctx.fill();
+    // lueur de braise au torse -- contenue, plus petite que la variante alpha
+    if (w.lunge>.3) { ctx.fillStyle='rgba(255,170,70,.28)'; ctx.beginPath(); ctx.ellipse(0,-15,3.6,3.6,0,0,7); ctx.fill(); }
+    ctx.fillStyle = hexToRgba(emberGlow,.5);
+    ctx.beginPath(); ctx.ellipse(0,-15,2,2,0,0,7); ctx.fill();
+    ctx.fillStyle = emberGlow;
+    ctx.beginPath(); ctx.arc(0,-15,1,0,7); ctx.fill();
+    // arc fumant translucide tenu près du corps + corde à peine visible
+    ctx.strokeStyle = hexToRgba('#cfe0ff',.35); ctx.lineWidth=1.4;
+    ctx.beginPath(); ctx.moveTo(-7,-24); ctx.quadraticCurveTo(-12,-16,-7,-8); ctx.stroke();
+    ctx.strokeStyle = hexToRgba('#cfe0ff',.16); ctx.lineWidth=.6;
+    ctx.beginPath(); ctx.moveTo(-7,-24); ctx.lineTo(-7,-8); ctx.stroke();
+    // bras + main griffue tenant l'arc
+    ctx.strokeStyle = hexToRgba(tone,.6); ctx.lineWidth=2.6; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(-5,-21); ctx.lineTo(-7,-13); ctx.stroke();
+    ctx.strokeStyle = hexToRgba(tone,.6); ctx.lineWidth=2.8; ctx.lineCap='round';
+    ctx.beginPath(); ctx.moveTo(5,-21); ctx.lineTo(9+lungeAmt*.4,-14); ctx.stroke();
+    // griffes acérées à la main d'attaque (petit éventail de pointes)
+    ctx.fillStyle = hexToRgba(tone,.75);
+    [[-1.2,0],[0,-1.6],[1.2,0]].forEach(([dx,dy]) => {
+      const hx=9+lungeAmt*.4, hy=-14;
+      ctx.beginPath(); ctx.moveTo(hx+dx-.5,hy+dy); ctx.lineTo(hx+dx,hy+dy-2); ctx.lineTo(hx+dx+.5,hy+dy); ctx.closePath(); ctx.fill();
+    });
+    // tête féline spectrale svelte
+    ctx.fillStyle = hexToRgba(tone,.7);
+    ctx.beginPath(); ctx.arc(0,-28,3.6,0,7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(-2.8,-30.8); ctx.lineTo(-4.4,-34.8); ctx.lineTo(-1.4,-32); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(2.8,-30.8); ctx.lineTo(4.4,-34.8); ctx.lineTo(1.4,-32); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(2.4,-26.6,1.7,1.2,0,0,7); ctx.fill();
+    ctx.fillStyle='rgba(255,180,90,.7)';
+    ctx.beginPath(); ctx.arc(-1.3,-28.4,.5,0,7); ctx.fill();
+    ctx.beginPath(); ctx.arc(1.5,-28.6,.5,0,7); ctx.fill();
+    // crinière de flamme, plus contenue que la variante alpha
+    ctx.fillStyle = hexToRgba('#c8402a',.7);
+    ctx.beginPath();
+    ctx.moveTo(-2,-31); ctx.quadraticCurveTo(-7+manesway*.5,-34,-5+manesway*.8,-41);
+    ctx.quadraticCurveTo(-3,-36,0,-31); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = hexToRgba('#e8752a',.75);
+    ctx.beginPath();
+    ctx.moveTo(0,-32); ctx.quadraticCurveTo(-1+manesway*.3,-37,1+manesway*.6,-44);
+    ctx.quadraticCurveTo(2,-37,2,-32); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = hexToRgba('#ff9a4a',.7);
+    ctx.beginPath();
+    ctx.moveTo(2,-31); ctx.quadraticCurveTo(6+manesway*.4,-34,5+manesway*.8,-41);
+    ctx.quadraticCurveTo(3,-36,1,-31); ctx.closePath(); ctx.fill();
+    // contour net global, doux/spectral -- opacité relevée le 2026-07-13, même raison que ci-dessus
+    ctx.strokeStyle='rgba(10,20,40,.38)'; ctx.lineWidth=.8;
+    ctx.beginPath(); ctx.moveTo(-5,-8); ctx.lineTo(-6,-25); ctx.lineTo(6,-25); ctx.lineTo(5,-8); ctx.closePath(); ctx.stroke();
+  }
+  ctx.restore();
+}
 // petite icône (buste simplifié, statique) du monstre de la zone en cours, affichée en haut à
 // gauche de l'écran de jeu — demande explicite du 2026-07-07. Volontairement un dessin à PART des
 // silhouettes iso animées ci-dessus (même logique que les icônes d'équipement, déjà des SVG à part
@@ -1566,6 +1762,17 @@ function drawZoneMobIcon() {
     ctx2.fillStyle='#a8302a'; // fentes oculaires rougeoyantes
     ctx2.beginPath(); ctx2.ellipse(-2.6,0,1.3,1,0,0,7); ctx2.fill();
     ctx2.beginPath(); ctx2.ellipse(2.6,0,1.3,1,0,0,7); ctx2.fill();
+  } else if (zi === 11) { // Esprit des Mânes (buste spectral translucide + crinière de flammes)
+    ctx2.fillStyle = hexToRgba(tone,.6); // buste translucide bleu-blanc
+    ctx2.beginPath(); ctx2.arc(0,1,7,0,7); ctx2.fill();
+    ctx2.fillStyle='#c8402a'; // langue de flamme gauche
+    ctx2.beginPath(); ctx2.moveTo(-2,-6); ctx2.quadraticCurveTo(-8,-9,-5,-15); ctx2.quadraticCurveTo(-2,-10,0,-6); ctx2.closePath(); ctx2.fill();
+    ctx2.fillStyle='#e8752a'; // langue de flamme centrale
+    ctx2.beginPath(); ctx2.moveTo(0,-7); ctx2.quadraticCurveTo(-1,-12,1,-17); ctx2.quadraticCurveTo(3,-11,2,-6); ctx2.closePath(); ctx2.fill();
+    ctx2.fillStyle='#ff9a4a'; // langue de flamme droite
+    ctx2.beginPath(); ctx2.moveTo(2,-6); ctx2.quadraticCurveTo(8,-9,5,-15); ctx2.quadraticCurveTo(2,-10,0,-6); ctx2.closePath(); ctx2.fill();
+    ctx2.fillStyle='#e8752a'; // petite lueur de braise au buste
+    ctx2.beginPath(); ctx2.arc(0,3,1.3,0,7); ctx2.fill();
   } else { // silhouette générique (loup) — zones sans modèle dédié pour l'instant
     ctx2.fillStyle='#8a8f96';
     ctx2.beginPath(); ctx2.moveTo(-6,4); ctx2.lineTo(-8,-6); ctx2.lineTo(-3,-2); ctx2.lineTo(0,-8); ctx2.lineTo(3,-2); ctx2.lineTo(8,-6); ctx2.lineTo(6,4); ctx2.closePath(); ctx2.fill();
@@ -1580,8 +1787,9 @@ function drawZoneMobIcon() {
 // (zone index 6, avec sa variante boss blindée), "Poste Helm" (zone index 7, avec sa variante
 // boss "Golem" à la silhouette radicalement différente), "Repaire Bandits Gahaz" (zone index 8)
 // "Sanctuaire Elric" (zone index 9, avec sa variante boss "idole vivante") et "Ruines de Kratuga"
-// (zone index 10, gardien de pierre Uluan) ont la leur, les autres zones gardent la silhouette
-// générique
+// (zone index 10, gardien de pierre Uluan) et "Planque des Mânes" (zone index 11, Esprit des
+// Mânes spectral, avec sa variante boss plus massive) ont la leur, les autres zones gardent la
+// silhouette générique
 /** @param {number} wx @param {number} wy @param {object} w @param {number} t. Aiguille vers le draw*Iso du monstre correspondant à la zone active. */
 function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 1) return drawProttyIso(wx,wy,w,t);
@@ -1594,6 +1802,7 @@ function drawMonsterIso(wx,wy,w,t) {
   if (zoneIdx === 8) return drawGahazIso(wx,wy,w,t);
   if (zoneIdx === 9) return drawElricIso(wx,wy,w,t);
   if (zoneIdx === 10) return drawUluanIso(wx,wy,w,t);
+  if (zoneIdx === 11) return drawManesIso(wx,wy,w,t);
   return drawWolfIso(wx,wy,w,t);
 }
 
