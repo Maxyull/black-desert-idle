@@ -3569,3 +3569,39 @@
     .acctGrid2 { grid-template-columns:1fr; }
     .acctIdentity { flex-wrap:wrap; }
   }
+
+  /* Cartes du dashboard Zone déplaçables/imbricables par glisser-déposer (2026-07-13, mockup
+     validé -- voir src/core/card-layout.js). Poignée dans le h3 pour une carte autonome, dans
+     .cardTabBar une fois la carte devenue hôte d'un groupe d'onglets. Desktop uniquement (drag
+     HTML5 natif désactivé au toucher, voir card-layout.js/isMobileViewport()). */
+  /* font-size héritée du h3 (pas une valeur fixe plus grande) -- une poignée avec une police
+     supérieure aux 9.5px de .card h3 grandit légèrement la hauteur de ligne du titre, ce qui
+     décale syncFarmCardHeights() (core/game-core.js, mesure RÉELLE de #statsCard) de quelques
+     pixels ; repéré via un test de régression qui convergeait alors pile sur l'ancien fixe
+     260px -- coïncidence numérique, mais évitée en gardant le h3 à sa hauteur d'origine. */
+  .card h3 .cardDragHandle {
+    cursor:grab; margin-right:6px; color:var(--gold-dim); font-size:inherit; line-height:inherit; user-select:none;
+  }
+  .card h3 .cardDragHandle:active { cursor:grabbing; }
+  .card.cardTabbed > h3 { display:none; }
+  .cardTabBar {
+    display:flex; align-items:center; gap:3px; margin-bottom:6px; padding-bottom:4px;
+    border-bottom:1px solid #2c2a31; flex-wrap:wrap;
+  }
+  .cardTabBar .cardDragHandle { cursor:grab; margin-right:3px; color:var(--gold-dim); font-size:11px; user-select:none; }
+  .cardTabBar .cardDragHandle:active { cursor:grabbing; }
+  .cardTabBtn {
+    background:transparent; border:none; border-bottom:2px solid transparent; color:var(--ink-dim);
+    font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 4px 4px; cursor:pointer;
+  }
+  .cardTabBtn:hover { color:var(--gold); transform:none; }
+  .cardTabBtn.active { color:var(--gold); border-bottom-color:var(--gold); }
+  .cardDetachBtn {
+    margin-left:auto; background:transparent; border:none; color:var(--ink-dim); font-size:9.5px;
+    padding:2px 4px; cursor:pointer; white-space:nowrap;
+  }
+  .cardDetachBtn:hover { color:var(--gold); transform:none; }
+  .card.cardDropTarget { border:2px dashed var(--gold); }
+  .card.cardNested { border:none; padding:0; background:transparent; margin:0; }
+  .card.cardNested > h3 { display:none; }
+  .cardHostBody, .card.cardNested { min-width:0; }

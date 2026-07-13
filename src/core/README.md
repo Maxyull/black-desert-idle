@@ -12,6 +12,25 @@ Le noyau du jeu : état global, boucle principale, rendu HUD, FSM de combat, sau
   avant `gear-icons.js` : `I18N_RESOURCES` doit déjà être là, et des fonctions comme `hud()`
   peuvent appeler `i18next.t()` de façon synchrone très tôt au chargement (même piège que celui
   documenté en section 8 de `CLAUDE.md`).
+- `card-layout.js` (2026-07-13, mockup validé) — cartes du dashboard Zone (`#panel` :
+  `#statsCard`/`#zonesCard`/`#lootCard`/`#equipCard`/`#invCard`/`#optCard`) déplaçables par
+  glisser-déposer HTML5 natif (aucune librairie, `CLAUDE.md` §7) et imbricables en onglets (glisser
+  une carte sur une autre → elle devient un onglet de la carte cible, bouton "↗ Détacher" pour
+  re-séparer). État logique `{order, groups, active}` — voir `sanitizeCardLayoutState()` (fonction
+  pure, testée sans DOM) — persisté dans `localStorage['velia-idle-card-layout']` (préférence
+  d'affichage locale, PAS dans `S`/`getSaveState()`). `renderCardLayout()` ne clone jamais un
+  conteneur de carte, seulement `appendChild` (déplace le nœud existant) — les fonctions qui
+  peuplent chaque carte (`renderStatsPane`, `buildZoneList`, `refreshInvUI`...) continuent de
+  cibler le même id, peu importe où la carte se trouve physiquement dans le DOM. Charge APRÈS
+  `world/render.js` (`index.dev.html`) — désactivé sous le seuil `isMobileViewport()` (~1024px) :
+  pas de poignée, pas de `draggable`, disposition sauvegardée ignorée (repli sur l'ordre par
+  défaut), re-synchronisé au redimensionnement. Tests :
+  `testCardLayoutSanitizeAcceptsDefaultState`, `testCardLayoutSanitizeRejectsCorruptState`,
+  `testCardLayoutSanitizeKeepsValidNestedGroup`, `testCardLayoutSanitizeFixesInvalidActiveTab`,
+  `testCardLayoutNestMovesGuestUnderTargetAndSetsItActive`,
+  `testCardLayoutNestFlattensSourceThatWasItselfAHost`,
+  `testCardLayoutDetachRestoresStandaloneCardRightAfterHost`,
+  `testCardLayoutSetActiveTabIgnoresUnknownTab` (`tests/tests.js`).
 
 C'est le fichier central duquel dépendent presque tous les autres — il doit charger après
 les fichiers de données pures (`world/zones-data.js`, `world/gear-tiers-data.js`,

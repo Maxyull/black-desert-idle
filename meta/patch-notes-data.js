@@ -5,6 +5,15 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V422', d:'24/07/2026 09:00', name:{fr:'Cartes du dashboard Zone déplaçables et imbricables en onglets', en:'Zone dashboard cards are now draggable and can be nested into tabs'}, fr:[
+      {t:'new', sub:'interface', tx:'Les cartes du dashboard Zone (Statistiques, Zones de farm, Loot, Équipement, Inventaire, Optimisation) sont désormais déplaçables par glisser-déposer via la poignée ⠿ en haut à gauche de chaque titre.'},
+      {t:'new', sub:'interface', tx:'Glisser une carte sur une autre la transforme en onglet de la carte cible (bouton "↗ Détacher" pour les re-séparer). La disposition choisie est mémorisée sur cet appareil.'},
+      {t:'change', sub:'interface', tx:'Fonctionnalité desktop uniquement — sur mobile/tablette, les cartes gardent leur ordre normal, sans poignée.', plat:'mobile'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Zone dashboard cards (Stats, Farm zones, Loot, Equipment, Inventory, Optimization) can now be dragged via the ⠿ handle at the top-left of each title.'},
+      {t:'new', sub:'interface', tx:'Dragging a card onto another turns it into a tab of the target card (an "↗ Detach" button separates them again). The chosen layout is remembered on this device.'},
+      {t:'change', sub:'interface', tx:'Desktop-only feature — on mobile/tablet, cards keep their normal order, no handle shown.', plat:'mobile'},
+    ] },
   { v:'V420', d:'24/07/2026 07:00', name:{fr:'Panneau "Mon compte" refondu en cartes + streak de connexion + suppression de compte', en:'"My account" panel redesigned into cards + login streak + account deletion'}, fr:[
       {t:'new', sub:'interface', tx:'Le panneau "Mon compte" est entièrement réorganisé en cartes : identité (pseudo + badge de palier), Progression (niveau/gearscore/meilleur silver-h/membre depuis + rang au classement Gearscore, cliquable), Connexion (dernière connexion/temps de jeu total/streak), puis Pseudo, Sécurité, Comptes liés et Parrainage.'},
       {t:'new', sub:'compte', tx:'Nouveau : streak de connexion 🔥 — un jour consécutif de connexion l\'augmente, un jour manqué le remet à 1. Affiché dans la carte Connexion.'},

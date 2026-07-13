@@ -1,5 +1,7 @@
 {
   "core.away.title": "Pendant ton absence",
+  "core.card_layout.detach": "Détacher",
+  "core.card_layout.drag_handle": "Glisse-moi pour réorganiser",
   "core.combat.dodge": "Esquivé !",
   "core.death.got_back_up": "⚠ Tu t'es relevé — tu as changé de zone pendant le K.O.",
   "core.death.killed_by_monsters": "⚠ Les monstres t'ont tué ! Choisis une zone plus adaptée à ton niveau ou améliore ton stuff.",

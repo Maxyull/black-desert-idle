@@ -5083,6 +5083,110 @@
       src.includes('sb.auth.signOut()'));
   }
 
+  // Cartes du dashboard Zone déplaçables/imbricables (2026-07-13, src/core/card-layout.js) --
+  // sanitizeCardLayoutState() et les mutateurs (nest/detach/setActiveTab) sont des fonctions
+  // pures, testables sans DOM.
+  function testCardLayoutSanitizeAcceptsDefaultState() {
+    if (typeof sanitizeCardLayoutState !== 'function') return;
+    const def = cardLayoutDefaultState();
+    const clean = sanitizeCardLayoutState(def);
+    assert('sanitizeCardLayoutState() renvoie tel quel un état par défaut valide', JSON.stringify(clean.order) === JSON.stringify(def.order));
+    assert('sanitizeCardLayoutState() garde groups vide pour l\'état par défaut', Object.keys(clean.groups).length === 0);
+  }
+
+  // Piège réel à prévenir : un id de carte retiré/renommé plus tard, ou une disposition corrompue
+  // à la main dans localStorage, ne doit JAMAIS faire planter le chargement -- repli sur la
+  // disposition par défaut (section 26 checklist "migration rétroactive"/"garde-fou").
+  function testCardLayoutSanitizeRejectsCorruptState() {
+    if (typeof sanitizeCardLayoutState !== 'function') return;
+    const casesThatMustFallBackToDefault = [
+      null,
+      undefined,
+      42,
+      'not an object',
+      {},
+      { order: ['statsCard', 'zonesCard', 'unknownRemovedCard', 'lootCard', 'equipCard', 'invCard', 'optCard'] }, // id inconnu
+      { order: ['statsCard', 'statsCard', 'zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'] }, // doublon
+      { order: ['statsCard', 'zonesCard', 'lootCard', 'equipCard', 'invCard'] }, // couverture incomplète (optCard manquant)
+      { order: ['statsCard', 'zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'], groups: { statsCard: ['statsCard'] } }, // host === guest
+      { order: ['statsCard', 'zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'], groups: { unknownHost: ['zonesCard'] } }, // host pas top-level
+      { order: ['statsCard', 'lootCard', 'equipCard', 'invCard', 'optCard'], groups: { statsCard: ['zonesCard'], zonesCard: ['optCard'] } }, // guest utilisé comme host (2 niveaux)
+    ];
+    casesThatMustFallBackToDefault.forEach((raw, i) => {
+      const clean = sanitizeCardLayoutState(raw);
+      assert(`sanitizeCardLayoutState() replie sur la disposition par défaut pour le cas corrompu #${i}`,
+        JSON.stringify(clean.order.slice().sort()) === JSON.stringify(CARD_LAYOUT_IDS.slice().sort()) && Object.keys(clean.groups).length === 0,
+        JSON.stringify(raw));
+    });
+  }
+
+  function testCardLayoutSanitizeKeepsValidNestedGroup() {
+    if (typeof sanitizeCardLayoutState !== 'function') return;
+    const raw = {
+      order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'],
+      groups: { equipCard: ['statsCard'] },
+      active: { equipCard: 'statsCard' },
+    };
+    const clean = sanitizeCardLayoutState(raw);
+    assert('sanitizeCardLayoutState() garde un groupe valide (statsCard imbriquée dans equipCard)', clean.groups.equipCard && clean.groups.equipCard[0] === 'statsCard');
+    assert('sanitizeCardLayoutState() garde l\'onglet actif valide', clean.active.equipCard === 'statsCard');
+    assert('sanitizeCardLayoutState() ne duplique pas statsCard dans order (elle est imbriquée)', !clean.order.includes('statsCard'));
+  }
+
+  function testCardLayoutSanitizeFixesInvalidActiveTab() {
+    if (typeof sanitizeCardLayoutState !== 'function') return;
+    const raw = {
+      order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'],
+      groups: { equipCard: ['statsCard'] },
+      active: { equipCard: 'lootCard' }, // lootCard n'est ni equipCard ni statsCard -- invalide pour ce groupe
+    };
+    const clean = sanitizeCardLayoutState(raw);
+    assert('sanitizeCardLayoutState() replie un onglet actif invalide sur l\'hôte lui-même', clean.active.equipCard === 'equipCard');
+  }
+
+  function testCardLayoutNestMovesGuestUnderTargetAndSetsItActive() {
+    if (typeof cardLayoutNest !== 'function') return;
+    const base = cardLayoutDefaultState();
+    const next = cardLayoutNest(base, 'statsCard', 'equipCard');
+    assert('cardLayoutNest() retire la carte source de order (elle devient un onglet)', !next.order.includes('statsCard'));
+    assert('cardLayoutNest() garde la carte cible dans order', next.order.includes('equipCard'));
+    assert('cardLayoutNest() ajoute la carte source aux guests de la cible', (next.groups.equipCard || []).includes('statsCard'));
+    assert('cardLayoutNest() rend la carte glissée active dans son nouveau groupe', next.active.equipCard === 'statsCard');
+  }
+
+  function testCardLayoutNestFlattensSourceThatWasItselfAHost() {
+    if (typeof cardLayoutNest !== 'function') return;
+    // statsCard est déjà imbriquée dans zonesCard -- si zonesCard (l'hôte) est à son tour glissée
+    // sur equipCard, on ne doit JAMAIS créer une imbrication à 2 niveaux : statsCard doit finir
+    // comme onglet direct d'equipCard, au même niveau que zonesCard.
+    const base = { order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'], groups: { zonesCard: ['statsCard'] }, active: { zonesCard: 'zonesCard' } };
+    const next = cardLayoutNest(base, 'zonesCard', 'equipCard');
+    const clean = sanitizeCardLayoutState(next);
+    assert('cardLayoutNest() aplati une imbrication à 2 niveaux : zonesCard et statsCard finissent tous deux onglets d\'equipCard',
+      clean.groups.equipCard && clean.groups.equipCard.includes('zonesCard') && clean.groups.equipCard.includes('statsCard'));
+    assert('cardLayoutNest() ne laisse plus de groupe orphelin sous zonesCard', !clean.groups.zonesCard);
+  }
+
+  function testCardLayoutDetachRestoresStandaloneCardRightAfterHost() {
+    if (typeof cardLayoutDetach !== 'function') return;
+    const base = cardLayoutNest(cardLayoutDefaultState(), 'statsCard', 'equipCard');
+    const detached = cardLayoutDetach(base, 'equipCard');
+    assert('cardLayoutDetach() retire le groupe une fois vide', !detached.groups.equipCard);
+    assert('cardLayoutDetach() replace la carte détachée dans order', detached.order.includes('statsCard'));
+    assert('cardLayoutDetach() replace la carte détachée juste après son ancien hôte', detached.order.indexOf('statsCard') === detached.order.indexOf('equipCard') + 1);
+    const clean = sanitizeCardLayoutState(detached);
+    assert('cardLayoutDetach() produit un état qui reste valide après sanitize', JSON.stringify(clean.order.slice().sort()) === JSON.stringify(CARD_LAYOUT_IDS.slice().sort()));
+  }
+
+  function testCardLayoutSetActiveTabIgnoresUnknownTab() {
+    if (typeof cardLayoutSetActiveTab !== 'function') return;
+    const base = cardLayoutNest(cardLayoutDefaultState(), 'statsCard', 'equipCard');
+    const same = cardLayoutSetActiveTab(base, 'equipCard', 'lootCard'); // lootCard n'est pas un onglet de ce groupe
+    assert('cardLayoutSetActiveTab() ignore un tabId qui n\'appartient pas au groupe', same.active.equipCard === base.active.equipCard);
+    const switched = cardLayoutSetActiveTab(base, 'equipCard', 'equipCard');
+    assert('cardLayoutSetActiveTab() accepte de revenir sur l\'onglet hôte', switched.active.equipCard === 'equipCard');
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -5349,6 +5453,14 @@
     testUpdateLoginStreakResetsOnGapOfTwoOrMoreDays();
     testUpdateLoginStreakNoOpSameDayReplayed();
     testDeleteAccountConfirmGatedByExactPseudoMatch();
+    testCardLayoutSanitizeAcceptsDefaultState();
+    testCardLayoutSanitizeRejectsCorruptState();
+    testCardLayoutSanitizeKeepsValidNestedGroup();
+    testCardLayoutSanitizeFixesInvalidActiveTab();
+    testCardLayoutNestMovesGuestUnderTargetAndSetsItActive();
+    testCardLayoutNestFlattensSourceThatWasItselfAHost();
+    testCardLayoutDetachRestoresStandaloneCardRightAfterHost();
+    testCardLayoutSetActiveTabIgnoresUnknownTab();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
