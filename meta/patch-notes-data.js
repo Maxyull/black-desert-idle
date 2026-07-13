@@ -16,6 +16,11 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V446', d:'14/07/2026 02:30', name:{fr:'Rattrapage hors ligne : désormais crédité aussi serveur, même jeu totalement fermé', en:'Offline catch-up: now also credited server-side, even with the game fully closed'}, fr:[
+      {t:'new', sub:'economie', tx:'Le rattrapage hors ligne (silver, XP, matériaux/craft de zone) est désormais aussi crédité côté serveur, une fois par heure, tant que le compte existe — plus besoin de rouvrir le jeu pour en profiter, sans durée limite. Le rattrapage affiché au retour (plafonné à 24h) continue de fonctionner normalement en complément et ne recompte jamais une période déjà créditée par le serveur.'},
+    ], en:[
+      {t:'new', sub:'economie', tx:'Offline catch-up (silver, XP, zone materials/craft) is now also credited server-side, once per hour, for as long as the account exists — no need to reopen the game to benefit, with no time limit. The catch-up shown on reconnect (capped at 24h) still works normally alongside it and never re-counts a period already credited server-side.'},
+    ] },
   { v:'V445', d:'14/07/2026 00:45', name:{fr:'Correctif boutons +/- taille UI/jeu : la largeur grandissait aussi, pas que la hauteur', en:'+/- UI/game size buttons fix: width now grows too, not just height'}, fr:[
       {t:'fix', sub:'interface', tx:'Les boutons +/- de taille UI/jeu (V444) n\'agrandissaient visiblement que la hauteur du cadre de jeu — la largeur grandissait bien "sous le capot" (transform:scale()) mais restait cachée derrière les panneaux latéraux (menu à gauche, widgets à droite) à cause de la grille 3 colonnes du jeu, qui ne recalculait jamais sa piste centrale pour un simple effet visuel. Remplacé par un vrai redimensionnement (zoom + piste de grille recalculée dynamiquement) : largeur ET hauteur grandissent maintenant réellement et visiblement, sans être masquées.'},
     ], en:[

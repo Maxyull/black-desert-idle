@@ -435,17 +435,35 @@ let awayLevelBefore = 1, awayPercentBefore = 0;
 // §12) reste le filet de sécurité si un taux était anormalement élevé.
 const OFFLINE_CATCHUP_CAP_HOURS = 24;
 const OFFLINE_CATCHUP_MIN_HOURS = 0.05; // ~3 min
+// "Phase 2" (2026-07-14, demande explicite du owner, "illimité tant que le compte existe") : un
+// cron SERVEUR horaire (credit_offline_progress_hourly(), voir
+// supabase/migrations/20260722120000_offline_progress_hourly_cron.sql) crédite désormais aussi ce
+// même rattrapage (silver/XP/loot) pendant que le navigateur est complètement fermé, sans plafond
+// de durée -- ce bloc ci-dessous (Phase 1, 100% client) reste inchangé dans son fonctionnement,
+// mais doit maintenant éviter de RECOMPTER des heures déjà créditées côté serveur. Le serveur écrit
+// un horodatage `last_server_credit_at` (nouvelle colonne game_saves, séparée de save_data --
+// jamais écrasée par un upsert client qui ne fournit que {user_id, save_data}), synchronisé vers le
+// client par loadCloudSave() (backend/game-supabase.js, qui l'attache à `data.lastServerCreditAt`
+// avant d'appeler applySaveState). computeOfflineElapsedHours() utilise désormais le PLUS RÉCENT de
+// data.savedAt et data.lastServerCreditAt comme point de départ -- si le cron serveur vient de
+// créditer une heure, Phase 1 ne recompte que le temps écoulé DEPUIS ce crédit serveur, jamais
+// depuis le dernier vrai enregistrement client.
 /**
  * Nombre d'heures RÉELLEMENT écoulées hors-ligne, plafonné/filtré par les mêmes seuils que tout le
  * rattrapage hors-ligne (silver/XP/loot) -- factorisé ici pour que les 3 rattrapages partagent
  * EXACTEMENT la même fenêtre de temps (pas de plafond séparé à inventer par flux, voir CLAUDE.md
- * §34 et la demande explicite du 2026-07-13 pour le loot).
- * @param {object} data - sauvegarde chargée, lit data.savedAt.
+ * §34 et la demande explicite du 2026-07-13 pour le loot). Voir aussi le commentaire juste au-dessus
+ * (Phase 2, 2026-07-14) : la baseline est le PLUS RÉCENT de data.savedAt et
+ * data.lastServerCreditAt, pour ne jamais recompter un gap déjà crédité par le cron serveur.
+ * @param {object} data - sauvegarde chargée, lit data.savedAt et data.lastServerCreditAt.
  * @returns {number} heures écoulées (0 à OFFLINE_CATCHUP_CAP_HOURS), 0 si absent/négatif/sous OFFLINE_CATCHUP_MIN_HOURS.
  */
 function computeOfflineElapsedHours(data) {
   if (!data || !data.savedAt) return 0;
-  const elapsedMs = Date.now() - Date.parse(data.savedAt);
+  const savedAtMs = Date.parse(data.savedAt);
+  const serverCreditMs = data.lastServerCreditAt ? Date.parse(data.lastServerCreditAt) : NaN;
+  const baselineMs = (!isNaN(serverCreditMs) && serverCreditMs > savedAtMs) ? serverCreditMs : savedAtMs;
+  const elapsedMs = Date.now() - baselineMs;
   if (!(elapsedMs > 0)) return 0;
   const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
   if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
