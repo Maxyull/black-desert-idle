@@ -522,6 +522,9 @@ const I18N_RESOURCES = {
       "combat.miniboss.book_sellable": "Livre interdit vendable au marché",
       "combat.miniboss.craft_button": "Combiner",
       "combat.miniboss.group_state_title": "👥 État du groupe",
+      "combat.miniboss.rule_solo_leave": "🚪 <b>Tu quittes seul</b> : tu perds tout le loot de ce combat, ton Parchemin déjà engagé est joué quand même (pas remboursé).",
+      "combat.miniboss.rule_disconnect": "📡 <b>Déconnexion</b> : le combat entier se fige (aucun dégât ne progresse) pendant 5 min. Si tout le monde est reconnecté avant la fin : reprise normale. Sinon : personne n'a de loot, mais tout le monde récupère son Parchemin.",
+      "combat.miniboss.rule_vote": "🗳️ <b>Vote collectif pour abandonner</b> : chacun garde son loot déjà gagné, et tout le monde récupère son Parchemin si le boss n'est pas encore mort.",
       "combat.miniboss.fights_to_chain": "🔁 Combats à enchaîner",
       "combat.miniboss.boss_hp_for_group": "PV du boss pour ce groupe",
       "combat.miniboss.time_per_fight_ideal": "⚔️ Temps/combat à gear complet (100%)",
@@ -552,9 +555,15 @@ const I18N_RESOURCES = {
       "combat.miniboss.fight_cancelled_body": "Un nouveau membre rejoint le groupe — retour à la formation, aucun loot ni Parchemin perdu.",
       "combat.miniboss.victory_title": "✦ GRIMOIRE REFERMÉ",
       "combat.miniboss.fight_progress": "🔁 Combat {{i}}/{{n}}",
+      "combat.miniboss.pause_warning": "⏸️ Farm de Zone en pause pendant ce run — reste sur cet onglet, pas de mode hors-ligne.",
       "combat.miniboss.roster_title": "Participants — {{n}}/{{max}}",
       "combat.miniboss.marble_bonus": "✨ Marbre du Dieu déchu obtenu !",
       "combat.miniboss.vote_stop_head": "🗳️ Vote pour abandonner ce combat en cours",
+      "combat.miniboss.solo_leave_btn": "🚪 Quitter seul",
+      "combat.miniboss.vote_stop_btn": "🗳️ Voter pour arrêter",
+      "combat.miniboss.solo_leave_confirm_msg": "⚠️ Tu vas perdre tout le loot de ce combat — ton Parchemin déjà engagé est joué quand même (pas remboursé). Confirmer ?",
+      "combat.miniboss.solo_leave_confirm_btn": "Oui, quitter",
+      "combat.miniboss.solo_leave_cancel_btn": "Annuler",
       "combat.miniboss.chat_empty": "Aucun message pour l'instant.",
       "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
       "combat.ai_mode.defensive_title": "IA défensive : esquive et soigne en priorité, quitte à moins attaquer",
@@ -1521,6 +1530,9 @@ const I18N_RESOURCES = {
       "combat.miniboss.book_sellable": "Forbidden Book sellable on the market",
       "combat.miniboss.craft_button": "Combine",
       "combat.miniboss.group_state_title": "👥 Group status",
+      "combat.miniboss.rule_solo_leave": "🚪 <b>You leave alone</b>: you lose all loot from this fight, your already-committed Scroll is spent anyway (not refunded).",
+      "combat.miniboss.rule_disconnect": "📡 <b>Disconnect</b>: the whole fight freezes (no damage progresses) for 5 min. If everyone reconnects in time: fight resumes normally. Otherwise: nobody gets loot, but everyone gets their Scroll back.",
+      "combat.miniboss.rule_vote": "🗳️ <b>Collective vote to abandon</b>: everyone keeps loot already earned, and everyone gets their Scroll back if the boss isn't dead yet.",
       "combat.miniboss.fights_to_chain": "🔁 Fights to chain",
       "combat.miniboss.boss_hp_for_group": "Boss HP for this group",
       "combat.miniboss.time_per_fight_ideal": "⚔️ Time/fight at full gear (100%)",
@@ -1551,9 +1563,15 @@ const I18N_RESOURCES = {
       "combat.miniboss.fight_cancelled_body": "A new member is joining the group — back to forming, no loot or Scroll lost.",
       "combat.miniboss.victory_title": "✦ GRIMOIRE CLOSED",
       "combat.miniboss.fight_progress": "🔁 Fight {{i}}/{{n}}",
+      "combat.miniboss.pause_warning": "⏸️ Zone farming paused during this run — stay on this tab, no offline mode.",
       "combat.miniboss.roster_title": "Participants — {{n}}/{{max}}",
       "combat.miniboss.marble_bonus": "✨ Fallen God's Marble obtained!",
       "combat.miniboss.vote_stop_head": "🗳️ Vote to abandon this ongoing fight",
+      "combat.miniboss.solo_leave_btn": "🚪 Leave alone",
+      "combat.miniboss.vote_stop_btn": "🗳️ Vote to stop",
+      "combat.miniboss.solo_leave_confirm_msg": "⚠️ You're about to lose all loot from this fight — your already-committed Scroll is spent anyway (not refunded). Confirm?",
+      "combat.miniboss.solo_leave_confirm_btn": "Yes, leave",
+      "combat.miniboss.solo_leave_cancel_btn": "Cancel",
       "combat.miniboss.chat_empty": "No messages yet.",
       "combat.ai_mode.balanced_title": "Balanced AI: alternates attack and caution based on the fight",
       "combat.ai_mode.defensive_title": "Defensive AI: prioritizes dodging/healing over attacking",
@@ -8222,7 +8240,15 @@ function renderMiniBossLobbyHtml() {
       </div>
     </div>
     <div class="card minibossGroupCard">
-      <h3>${i18next.t('combat:combat.miniboss.group_state_title')} (${n}/${MINIBOSS_MAX_GROUP_SIZE})</h3>
+      <h3>${i18next.t('combat:combat.miniboss.group_state_title')} (${n}/${MINIBOSS_MAX_GROUP_SIZE})
+        <span class="minibossRulesInfo"><span class="minibossRulesIcon">?</span>
+          <div class="minibossRulesCard">
+            <div class="minibossRule">${i18next.t('combat:combat.miniboss.rule_solo_leave')}</div>
+            <div class="minibossRule">${i18next.t('combat:combat.miniboss.rule_disconnect')}</div>
+            <div class="minibossRule">${i18next.t('combat:combat.miniboss.rule_vote')}</div>
+          </div>
+        </span>
+      </h3>
       <div class="minibossRunLengthRow">
         <span>${i18next.t('combat:combat.miniboss.fights_to_chain')}</span>
         <div class="minibossRunChips">${chipsHtml}</div>
@@ -8438,6 +8464,12 @@ function startMiniBossFightLocal(payload, isSummoner) {
   $('minibossRoom').classList.remove('lobby'); $('minibossRoom').classList.add('open','fight');
   $('minibossResult').classList.remove('show');
   $('minibossName').textContent = i18next.t('combat:combat.miniboss.creature_name');
+  const pauseEl = $a('minibossPauseMsg'); if (pauseEl) pauseEl.textContent = i18next.t('combat:combat.miniboss.pause_warning');
+  const voteBtn = $a('minibossVoteStopBtn'); if (voteBtn) voteBtn.textContent = i18next.t('combat:combat.miniboss.vote_stop_btn');
+  const leaveBtn = $a('minibossSoloLeaveBtn'); if (leaveBtn) leaveBtn.textContent = i18next.t('combat:combat.miniboss.solo_leave_btn');
+  const confirmMsg = $a('minibossSoloLeaveConfirmMsg'); if (confirmMsg) confirmMsg.textContent = i18next.t('combat:combat.miniboss.solo_leave_confirm_msg');
+  const confirmBtn = $a('minibossSoloLeaveConfirmBtn'); if (confirmBtn) confirmBtn.textContent = i18next.t('combat:combat.miniboss.solo_leave_confirm_btn');
+  const cancelBtn = $a('minibossSoloLeaveCancelBtn'); if (cancelBtn) cancelBtn.textContent = i18next.t('combat:combat.miniboss.solo_leave_cancel_btn');
   resizeMinibossCanvas();
   renderMinibossRoster();
   minibossState.raf = requestAnimationFrame(miniBossLoop);
@@ -8531,8 +8563,15 @@ function startMiniBossFightAgainInRun() {
   minibossState.runIndex = keepIdx;
 }
 
+function minibossToggleSoloLeaveConfirm() {
+  const panel = $a('minibossSoloLeaveConfirm'); if (!panel) return;
+  const votePanel = $a('minibossVoteStopPanel'); if (votePanel) votePanel.classList.remove('show');
+  panel.classList.toggle('show');
+}
+
 function minibossSoloLeave() {
   if (!minibossState.active) return;
+  const panel = $a('minibossSoloLeaveConfirm'); if (panel) panel.classList.remove('show');
   cancelAnimationFrame(minibossState.raf);
   minibossState.active = false; minibossState.ended = true;
   minibossRepCounters().soloQuits++; minibossRepCounters().runsIncident++;
@@ -8542,6 +8581,7 @@ function minibossSoloLeave() {
 
 function minibossToggleVoteStop() {
   const panel = $a('minibossVoteStopPanel'); if (!panel) return;
+  const leaveConfirm = $a('minibossSoloLeaveConfirm'); if (leaveConfirm) leaveConfirm.classList.remove('show');
   panel.classList.toggle('show');
   if (panel.classList.contains('show')) {
     minibossRepCounters().votes++;
@@ -15120,8 +15160,10 @@ cv.addEventListener('click', e => {
 $a('bossLobbyClose').onclick = () => showActivityPage('zone');
 
 $a('minibossLobbyClose').onclick = () => showActivityPage('zone');
-$a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossSoloLeave(); };
+$a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossToggleSoloLeaveConfirm(); };
 $a('minibossVoteStopBtn').onclick = () => { if (minibossState.active) minibossToggleVoteStop(); };
+$a('minibossSoloLeaveConfirmBtn').onclick = () => minibossSoloLeave();
+$a('minibossSoloLeaveCancelBtn').onclick = () => minibossToggleSoloLeaveConfirm();
 window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); if (minibossState.active) resizeMinibossCanvas(); });
 updateNextBossMini();
 setInterval(updateNextBossMini, 1000);

@@ -3037,7 +3037,7 @@
   .minibossCraftBar { height:7px; background:var(--s2); border-radius:4px; overflow:hidden; }
   .minibossCraftBarFill { height:100%; background:linear-gradient(90deg,var(--arcane-dim),var(--arcane)); }
   .minibossCraftCount { font-size:10px; color:var(--cream3); margin-top:4px; }
-  .minibossCraftBtn { flex-shrink:0; font-family:'Cinzel',serif; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:7px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream3); cursor:not-allowed; }
+  .minibossCraftBtn { width:auto; flex-shrink:0; font-family:'Cinzel',serif; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:7px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream3); cursor:not-allowed; }
   .minibossCraftBtn.ready { border-color:var(--gold); color:var(--gold2); cursor:pointer; }
   .minibossBonusLadder { padding:10px 16px; }
   .minibossBonusLadderHead { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; }
@@ -3057,14 +3057,27 @@
   .minibossBonusStepTime { font-size:7.5px; color:var(--cream3); opacity:.75; }
   .minibossBonusStep.current .minibossBonusStepTime { color:var(--arcane2); opacity:.9; }
   .minibossGroupCard h3 { display:flex; align-items:center; justify-content:space-between; }
+  /* icône d'info + carte des règles de sortie (quitter/déco/vote) au survol -- CSS pur, comme la
+     maquette (.runRulesInfo/.runRulesCard) -- absent du premier portage, rajouté. */
+  .minibossRulesInfo { position:relative; display:inline-flex; margin-left:6px; cursor:help; }
+  .minibossRulesIcon { width:15px; height:15px; border-radius:50%; border:1px solid var(--dbBorder2); color:var(--cream3); font-size:9.5px; display:flex; align-items:center; justify-content:center; }
+  .minibossRulesCard {
+    display:none; position:absolute; z-index:20; top:20px; left:0; width:260px; padding:12px 14px;
+    background:#141225; border:1px solid var(--dbBorder2); border-radius:9px; box-shadow:0 8px 24px rgba(0,0,0,.5);
+    font-family:'Inter',sans-serif; font-size:10.5px; color:var(--cream2); line-height:1.6; text-align:left; font-weight:400; text-transform:none;
+  }
+  .minibossRulesInfo:hover .minibossRulesCard { display:block; }
+  .minibossRulesCard b { color:var(--cream); }
+  .minibossRule { margin-bottom:7px; }
+  .minibossRule:last-child { margin-bottom:0; }
   .minibossRunLengthRow { display:flex; align-items:center; gap:10px; padding:12px 16px 4px; flex-wrap:wrap; }
   .minibossRunChips { display:flex; gap:6px; flex-wrap:wrap; }
-  .minibossRunChip { font-size:11px; padding:5px 12px; border-radius:14px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
+  .minibossRunChip { width:auto; margin-top:0; font-size:11px; padding:5px 12px; border-radius:14px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
   .minibossRunChip.on { border-color:var(--arcane); color:var(--arcane2); background:rgba(155,127,214,.16); font-weight:600; }
   .minibossRunCustom { display:flex; align-items:center; gap:10px; padding:2px 16px 10px; }
   .minibossRunCustom input[type=range] { flex:1; accent-color:var(--arcane); }
   #minibossRunSliderVal { font-size:11px; color:var(--arcane2); width:30px; text-align:right; }
-  .minibossMaxBtn { font-size:10px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
+  .minibossMaxBtn { width:auto; margin-top:0; font-size:10px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
   .minibossGroupPreview { margin:6px 16px 0; padding:10px 12px; border-radius:7px; background:rgba(224,96,96,.06); border:1px solid var(--red-dim,#5a1818); }
   .minibossGbpRow { display:flex; justify-content:space-between; font-size:10.5px; color:var(--cream2); padding:2px 0; }
   .minibossGbpRow b.ideal { color:var(--green2); }
@@ -3080,7 +3093,7 @@
   .minibossMaxHint { padding:6px 16px 12px; font-size:9.5px; color:var(--cream3); }
   .minibossChatCard { display:flex; flex-direction:column; }
   .minibossChatTabs { display:flex; gap:6px; padding:10px 12px 0; }
-  .minibossChatTab { flex:1; font-family:'Cinzel',serif; font-size:9.5px; font-weight:600; padding:8px 6px; border-radius:7px 7px 0 0; border:1px solid var(--dbBorder); border-bottom:none; background:transparent; color:var(--cream3); cursor:pointer; }
+  .minibossChatTab { width:auto; margin-top:0; flex:1; min-width:0; font-family:'Cinzel',serif; font-size:9.5px; font-weight:600; padding:8px 6px; border-radius:7px 7px 0 0; border:1px solid var(--dbBorder); border-bottom:none; background:transparent; color:var(--cream3); cursor:pointer; }
   .minibossChatTab.on { color:var(--arcane2); background:var(--s2); border-color:var(--dbBorder2); }
   .minibossChatCount { font-size:9.5px; background:var(--arcane-dim); color:var(--arcane2); padding:1px 6px; border-radius:8px; margin-left:4px; }
   .minibossChatPane { display:none; flex-direction:column; border-top:1px solid var(--dbBorder); min-height:260px; }
@@ -3093,7 +3106,7 @@
   .minibossChatText { color:var(--cream); flex:1; min-width:0; }
   .minibossChatInputRow { display:flex; gap:8px; padding:10px 12px; border-top:1px solid var(--dbBorder); }
   .minibossChatInput { flex:1; background:var(--s2); border:1px solid var(--dbBorder2); border-radius:6px; padding:8px 10px; color:var(--cream); font-size:11.5px; }
-  .minibossSendBtn { flex-shrink:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
+  .minibossSendBtn { width:auto; margin-top:0; flex-shrink:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:8px 14px; border-radius:6px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
   .minibossGroupChatHead { flex-shrink:0; padding:10px 12px; font-size:11.5px; color:var(--cream2); border-bottom:1px solid var(--dbBorder); background:rgba(155,127,214,.06); }
   .minibossGroupRow { border:1px solid var(--dbBorder2); border-radius:9px; padding:10px 12px; background:var(--s2); display:flex; flex-direction:column; gap:6px; }
   .minibossGroupRowHead { display:flex; align-items:center; gap:8px; }
@@ -3103,9 +3116,13 @@
   .minibossGroupRowStatus.fighting { background:rgba(224,96,96,.14); color:var(--red2); }
   .minibossGroupRowSize { font-size:10px; color:var(--arcane2); }
   .minibossGroupRowMeta { font-size:9.5px; color:var(--cream3); }
-  .minibossGroupJoinBtn { align-self:flex-start; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); cursor:pointer; }
+  .minibossGroupJoinBtn { width:auto; margin-top:0; align-self:flex-start; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); cursor:pointer; }
 
   /* ===== arène Mini Boss ===== */
+  /* bandeau "reste sur cet onglet" -- retour explicite de l'utilisateur ("pouvoir activer le
+     mode en continue obliger detre fenetre ouverte pas de mode hors ligne !"), absent du
+     premier portage -- distinct du #minibossTopBar (mockup : .stayOpenWarn séparé de .arenaTop). */
+  .minibossPauseMsg { padding:8px 16px; font-size:11px; color:var(--red2); background:rgba(224,96,96,.08); border-bottom:1px solid var(--red-dim,#5a1818); }
   #minibossTopBar { display:flex; align-items:center; gap:10px; padding:10px 16px; background:rgba(0,0,0,.5); border-bottom:1px solid var(--arcane); flex-wrap:wrap; }
   #minibossName { font-family:'Cinzel',serif; font-size:15px; font-weight:bold; color:var(--arcane2); flex-shrink:0; }
   #minibossHpBarWrap { flex:1; min-width:120px; height:20px; background:#14101f; border:1px solid var(--arcane-dim); border-radius:4px; position:relative; overflow:hidden; }
@@ -3118,6 +3135,14 @@
   #minibossSoloLeaveBtn { border-color:var(--red2); color:var(--red2); }
   .minibossVoteStopPanel { display:none; margin:0 16px 8px; padding:8px 12px; border-radius:7px; background:rgba(232,200,128,.08); border:1px solid var(--gold-dim); font-size:10.5px; color:var(--gold2); }
   .minibossVoteStopPanel.show { display:block; }
+  /* confirmation avant "quitter seul" -- perte sèche du loot, ne doit jamais être accidentelle
+     (absent du premier portage : le clic quittait directement sans confirmation). */
+  .minibossSoloLeaveConfirm { display:none; align-items:center; justify-content:space-between; gap:14px; flex-wrap:wrap; margin:0 16px 8px; padding:8px 12px; border-radius:7px; background:rgba(224,96,96,.12); border:1px solid var(--red2); font-size:10.5px; color:var(--red2); }
+  .minibossSoloLeaveConfirm.show { display:flex; }
+  .minibossSoloLeaveConfirmActions { display:flex; gap:8px; flex-shrink:0; }
+  #minibossSoloLeaveConfirmBtn, #minibossSoloLeaveCancelBtn { width:auto; margin-top:0; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:6px 13px; border-radius:6px; cursor:pointer; }
+  #minibossSoloLeaveConfirmBtn { border:1px solid var(--red2); background:var(--red2); color:#1a0808; }
+  #minibossSoloLeaveCancelBtn { border:1px solid var(--dbBorder2); background:transparent; color:var(--cream2); }
   #minibossCv { flex:1; width:100%; min-height:0; display:block; }
   #minibossTopPanel { position:absolute; top:70px; right:14px; width:200px; background:rgba(16,16,30,.9); border:1px solid var(--dbBorder2); border-radius:8px; padding:10px; }
   #minibossTopPanel h4 { margin:0 0 6px; font-size:10.5px; color:var(--arcane2); }
@@ -3141,7 +3166,7 @@
   .minibossJoinReqTitle { font-family:'Cinzel',serif; font-size:13px; color:var(--arcane2); margin-bottom:10px; }
   #minibossJoinReqBody { font-size:12px; color:var(--cream2); margin-bottom:14px; }
   .minibossJoinReqActions { display:flex; gap:10px; }
-  .minibossJoinReqAccept, .minibossJoinReqRefuse { flex:1; font-family:'Cinzel',serif; font-size:11px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer; }
+  .minibossJoinReqAccept, .minibossJoinReqRefuse { width:auto; margin-top:0; flex:1; font-family:'Cinzel',serif; font-size:11px; font-weight:600; padding:9px; border-radius:7px; cursor:pointer; }
   .minibossJoinReqAccept { border:1px solid var(--green2); background:rgba(112,216,144,.14); color:var(--green2); }
   .minibossJoinReqRefuse { border:1px solid var(--dbBorder2); background:transparent; color:var(--cream2); }
   @media (max-width:1024px) {

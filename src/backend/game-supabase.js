@@ -994,11 +994,14 @@ cv.addEventListener('click', e => {
 });
 $a('bossLobbyClose').onclick = () => showActivityPage('zone');
 // Mini Boss (2026-07-13, combat/miniboss.js) : mêmes conventions que Boss juste au-dessus --
-// quitter un combat en cours = quitte seul (perte du loot, voir minibossSoloLeave), fermer le
-// lobby = retour à la Zone (farm).
+// quitter un combat en cours = quitte seul (perte du loot, voir minibossSoloLeave) -- affiche
+// D'ABORD une confirmation (minibossToggleSoloLeaveConfirm), jamais direct (perte sèche de loot,
+// ne doit jamais être accidentelle, voir revue de maquette) ; fermer le lobby = retour à la Zone.
 $a('minibossLobbyClose').onclick = () => showActivityPage('zone');
-$a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossSoloLeave(); };
+$a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossToggleSoloLeaveConfirm(); };
 $a('minibossVoteStopBtn').onclick = () => { if (minibossState.active) minibossToggleVoteStop(); };
+$a('minibossSoloLeaveConfirmBtn').onclick = () => minibossSoloLeave();
+$a('minibossSoloLeaveCancelBtn').onclick = () => minibossToggleSoloLeaveConfirm();
 window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); if (minibossState.active) resizeMinibossCanvas(); });
 updateNextBossMini();
 setInterval(updateNextBossMini, 1000);
