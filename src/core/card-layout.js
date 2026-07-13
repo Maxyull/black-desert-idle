@@ -14,7 +14,10 @@
 // Un "hostId" est l'id d'une carte qui a reçu au moins un "guest" par glisser-déposer -- son
 // propre h3 est alors masqué au profit d'une barre d'onglets (.cardTabBar) qui liste host + guests.
 
-const CARD_LAYOUT_IDS = ['statsCard', 'zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'];
+// adminCard (2026-07-13) : 7e carte, toujours dans le DOM pour tous (invisible non-admin via
+// .adminOnlyCard/isAdminVisible, jamais retirée du DOM) -- reste dans CARD_LAYOUT_IDS pour tout
+// le monde, déplaçable/fusionnable seulement pour un admin (les autres ne la voient jamais).
+const CARD_LAYOUT_IDS = ['statsCard', 'zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard', 'adminCard'];
 const CARD_LAYOUT_STORAGE_KEY = 'velia-idle-card-layout';
 
 /** Disposition par défaut : les 6 cartes séparées, dans leur ordre HTML d'origine. */

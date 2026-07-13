@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=603">
+<link rel="stylesheet" href="build/styles.min.css?v=604">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -719,28 +719,6 @@
              .zoneTierLock partout ailleurs -->
         <button id="btnEquipSellCompendium" class="fullWidthAction lockedFeatureBtn" disabled title="Bientôt disponible"><span class="zoneTierLock">🔒</span><span data-i18n="btnEquipSellCompendium">⚡ Équiper → 🗑️ Vendre → 📖 Compendium</span></button>
         <div id="equipBestMsg"></div>
-        <!-- outil de debug réservé à l'admin (2026-07-14, demande explicite : "juste pour admin")
-             -- masqué par défaut, affiché uniquement si isAdmin() (voir updateUserBar) -->
-        <button id="btnAdminMaxEnh" class="fullWidthAction" style="display:none" title="Passe chaque pièce actuellement équipée à l'enchantement maximum (PEN) -- outil de test admin, aucun effet sur les succès/logs">🛠️ [Admin] Équipement → Optimisation max</button>
-        <button id="btnAdminResetEnh" class="fullWidthAction" style="display:none" title="Rétrograde chaque pièce actuellement équipée à +0 -- outil de test admin, aucun effet sur les succès/logs">🛠️ [Admin] Équipement → Tout rétrograder (+0)</button>
-        <div id="adminEnhStepRow" class="invTools" style="display:none">
-          <button id="btnAdminEnhDown1" title="Rétrograde chaque pièce actuellement équipée d'1 rang -- outil de test admin, aucun effet sur les succès/logs">🛠️ -1 rang</button>
-          <button id="btnAdminEnhUp1" title="Augmente chaque pièce actuellement équipée d'1 rang -- outil de test admin, aucun effet sur les succès/logs">🛠️ +1 rang</button>
-        </div>
-        <!-- outil de debug admin (2026-07-18, demande explicite : "bouton admin changer tout le
-             stuff d'un coup de tiers Bleu a vert et y mettre tout les tiers") -- remplace
-             INSTANTANÉMENT les 7 pièces d'armure/armes + les 6 bijoux équipés par un set complet
-             (+0) du palier choisi, à +0. Même filet de sécurité isAdmin() que les outils
-             d'enchantement ci-dessus, masqué par défaut. -->
-        <div id="adminTierRow" class="invTools" style="display:none">
-          <select id="admTierSelect">
-            <option value="grey">Gris — Naru</option>
-            <option value="white">Blanc — Tuvala</option>
-            <option value="green">Vert — Yuria</option>
-            <option value="blue" selected>Bleu — Grunil</option>
-          </select>
-          <button id="btnAdminEquipTier" title="Remplace tout l'équipement (armes+armure+bijoux) par un set complet du palier choisi, à +0 -- outil de test admin">🛠️ [Admin] Équiper ce palier</button>
-        </div>
         <div id="invGrid"></div>
         <div class="invFoot">
           <div class="frow"><span data-i18n="lblWeight">Poids</span> <div class="bar wbar"><div id="wBar"></div></div> <span id="wTxt">0 LT</span></div>
@@ -813,6 +791,38 @@
       <div id="optAutoGainTxt"></div>
       <div id="optResult"></div>
     </div>
+
+    <!-- carte Admin (2026-07-13, demande explicite : "créer une nouvelle carte admin ou mettre
+         toute les commandes admin") -- regroupe les outils de debug auparavant mélangés dans la
+         carte Inventaire (#invCard). Masquée par défaut, affichée uniquement si isAdmin() (voir
+         updateUserBar(), game-supabase.js) -- même filet de sécurité que les boutons individuels
+         qu'elle remplace, consolidé en un seul toggle sur la carte entière. 7e carte du dashboard,
+         ajoutée à CARD_LAYOUT_IDS (src/core/card-layout.js) : déplaçable/fusionnable comme les 6
+         autres pour un admin, invisible (donc jamais draggable) pour tout le monde d'autre. -->
+    <!-- masquée via la classe .adminOnlyCard (CSS), jamais style="display" en dur : card-layout.js
+         (cardLayoutResetToStandalone) réinitialise l'inline style="" de CHAQUE carte à chaque
+         rendu (glisser-déposer, flèches, changement d'onglet) -- un simple toggle inline se
+         ferait donc écraser à la prochaine réorganisation. Le toggle isAdmin() (updateUserBar(),
+         game-supabase.js) agit sur une CLASSE (.isAdminVisible), jamais sur l'inline style. -->
+    <div class="card adminOnlyCard" id="adminCard">
+      <h3><span data-i18n="cardAdmin">🛠️ Admin</span></h3>
+      <div class="admGroupLabel" data-i18n="admGroupEquip">Équipement</div>
+      <button id="btnAdminMaxEnh" class="fullWidthAction" title="Passe chaque pièce actuellement équipée à l'enchantement maximum (PEN) -- outil de test admin, aucun effet sur les succès/logs">🛠️ [Admin] Équipement → Optimisation max</button>
+      <button id="btnAdminResetEnh" class="fullWidthAction" title="Rétrograde chaque pièce actuellement équipée à +0 -- outil de test admin, aucun effet sur les succès/logs">🛠️ [Admin] Équipement → Tout rétrograder (+0)</button>
+      <div id="adminEnhStepRow" class="invTools">
+        <button id="btnAdminEnhDown1" title="Rétrograde chaque pièce actuellement équipée d'1 rang -- outil de test admin, aucun effet sur les succès/logs">🛠️ -1 rang</button>
+        <button id="btnAdminEnhUp1" title="Augmente chaque pièce actuellement équipée d'1 rang -- outil de test admin, aucun effet sur les succès/logs">🛠️ +1 rang</button>
+      </div>
+      <div id="adminTierRow" class="invTools">
+        <select id="admTierSelect">
+          <option value="grey">Gris — Naru</option>
+          <option value="white">Blanc — Tuvala</option>
+          <option value="green">Vert — Yuria</option>
+          <option value="blue" selected>Bleu — Grunil</option>
+        </select>
+        <button id="btnAdminEquipTier" title="Remplace tout l'équipement (armes+armure+bijoux) par un set complet du palier choisi, à +0 -- outil de test admin">🛠️ [Admin] Équiper ce palier</button>
+      </div>
+    </div>
   </div>
   </div>
 
@@ -855,11 +865,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=603"></script>
+<script src="meta/patch-notes-data.js?v=604"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=603"></script>
+<script src="build/source.min.js?v=604"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le

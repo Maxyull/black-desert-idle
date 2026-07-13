@@ -5694,7 +5694,7 @@
   function testCardLayoutSanitizeKeepsValidNestedGroup() {
     if (typeof sanitizeCardLayoutState !== 'function') return;
     const raw = {
-      order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'],
+      order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard', 'adminCard'],
       groups: { equipCard: ['statsCard'] },
       active: { equipCard: 'statsCard' },
     };
@@ -5707,7 +5707,7 @@
   function testCardLayoutSanitizeFixesInvalidActiveTab() {
     if (typeof sanitizeCardLayoutState !== 'function') return;
     const raw = {
-      order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'],
+      order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard', 'adminCard'],
       groups: { equipCard: ['statsCard'] },
       active: { equipCard: 'lootCard' }, // lootCard n'est ni equipCard ni statsCard -- invalide pour ce groupe
     };
@@ -5730,7 +5730,7 @@
     // statsCard est déjà imbriquée dans zonesCard -- si zonesCard (l'hôte) est à son tour glissée
     // sur equipCard, on ne doit JAMAIS créer une imbrication à 2 niveaux : statsCard doit finir
     // comme onglet direct d'equipCard, au même niveau que zonesCard.
-    const base = { order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard'], groups: { zonesCard: ['statsCard'] }, active: { zonesCard: 'zonesCard' } };
+    const base = { order: ['zonesCard', 'lootCard', 'equipCard', 'invCard', 'optCard', 'adminCard'], groups: { zonesCard: ['statsCard'] }, active: { zonesCard: 'zonesCard' } };
     const next = cardLayoutNest(base, 'zonesCard', 'equipCard');
     const clean = sanitizeCardLayoutState(next);
     assert('cardLayoutNest() aplati une imbrication à 2 niveaux : zonesCard et statsCard finissent tous deux onglets d\'equipCard',
@@ -5769,14 +5769,14 @@
     // d'un côté ou un autre") -- fonction pure, échange avec le voisin immédiat, no-op en bout
     // de liste (les boutons sont désactivés côté UI, mais la fonction doit rester sûre seule).
     if (typeof cardLayoutReorder !== 'function') return;
-    const base = cardLayoutDefaultState(); // ['statsCard','zonesCard','lootCard','equipCard','invCard','optCard']
+    const base = cardLayoutDefaultState(); // ['statsCard','zonesCard','lootCard','equipCard','invCard','optCard','adminCard']
     const moved = cardLayoutReorder(base, 'zonesCard', -1);
     assert('cardLayoutReorder(-1) échange avec le voisin de gauche', JSON.stringify(moved.order.slice(0, 2)) === JSON.stringify(['zonesCard', 'statsCard']));
     const movedRight = cardLayoutReorder(base, 'zonesCard', 1);
     assert('cardLayoutReorder(+1) échange avec le voisin de droite', JSON.stringify(movedRight.order.slice(0, 3)) === JSON.stringify(['statsCard', 'lootCard', 'zonesCard']));
     const noopLeft = cardLayoutReorder(base, 'statsCard', -1);
     assert('cardLayoutReorder(-1) sur le 1er élément est un no-op', JSON.stringify(noopLeft.order) === JSON.stringify(base.order));
-    const noopRight = cardLayoutReorder(base, 'optCard', 1);
+    const noopRight = cardLayoutReorder(base, 'adminCard', 1);
     assert('cardLayoutReorder(+1) sur le dernier élément est un no-op', JSON.stringify(noopRight.order) === JSON.stringify(base.order));
     // déplace le GROUPE entier (hostId représente tout le groupe fusionné dans order) --
     // vérifie que ses guests suivent implicitement (ils ne sont pas dans order, seul l'hôte l'est).
@@ -5784,6 +5784,17 @@
     const groupMoved = cardLayoutReorder(grouped, 'equipCard', -1);
     assert('cardLayoutReorder() déplace le groupe entier (via son hostId)', groupMoved.order.indexOf('equipCard') < grouped.order.indexOf('equipCard'));
     assert('cardLayoutReorder() sur un hostId ne touche pas ses guests (restent hors order)', !groupMoved.order.includes('statsCard') && groupMoved.groups.equipCard.includes('statsCard'));
+  }
+
+  // carte Admin (2026-07-13, demande explicite : "créer une nouvelle carte admin ou mettre toute
+  // les commandes admin") -- garde-fou statique : masquée via CLASSE (jamais inline style), sinon
+  // card-layout.js (cardLayoutResetToStandalone, réinitialise style="" à chaque rendu) l'écraserait
+  // au 1er glisser-déposer/changement d'onglet et l'afficherait à un non-admin.
+  function testAdminCardHiddenByClassNotInlineStyle() {
+    const el = $('adminCard'); if (!el) return;
+    assert('#adminCard n\'a pas d\'inline style="display" en dur (sinon écrasé par card-layout.js)', !el.style.display);
+    assert('#adminCard porte la classe .adminOnlyCard (masquage CSS)', el.classList.contains('adminOnlyCard'));
+    assert('adminCard fait partie de CARD_LAYOUT_IDS (7e carte, déplaçable pour un admin)', CARD_LAYOUT_IDS.includes('adminCard'));
   }
 
   function testCardLayoutReorderToInsertsBeforeOrAfterTarget() {
@@ -6213,6 +6224,7 @@
     testCardLayoutDetachRestoresStandaloneCardRightAfterHost();
     testCardLayoutDetachTargetsOneSpecificGuestAmongSeveral();
     testCardLayoutReorderSwapsWithNeighborAndNoopsAtEdges();
+    testAdminCardHiddenByClassNotInlineStyle();
     testCardLayoutReorderToInsertsBeforeOrAfterTarget();
     testCardLayoutSetActiveTabIgnoresUnknownTab();
     const failed = results.filter(r => !r.pass);

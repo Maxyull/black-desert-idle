@@ -178,10 +178,11 @@ function updateUserBar() {
   // #btnAdminTopbar sont désormais les SEULS éléments à afficher/masquer.
   $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
-  const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
-  const adminResetEnhBtn = $a('btnAdminResetEnh'); if (adminResetEnhBtn) adminResetEnhBtn.style.display = isAdmin() ? '' : 'none';
-  const adminEnhStepRow = $a('adminEnhStepRow'); if (adminEnhStepRow) adminEnhStepRow.style.display = isAdmin() ? '' : 'none';
-  const adminTierRow = $a('adminTierRow'); if (adminTierRow) adminTierRow.style.display = isAdmin() ? '' : 'none';
+  // carte Admin (2026-07-13, regroupe btnAdminMaxEnh/btnAdminResetEnh/adminEnhStepRow/adminTierRow,
+  // auparavant 4 toggles séparés dans la carte Inventaire) -- un seul toggle sur la carte entière,
+  // via une CLASSE (pas l'inline style : card-layout.js réinitialise style="" de chaque carte à
+  // chaque rendu, un inline display:none se ferait écraser à la prochaine réorganisation).
+  const adminCard = $a('adminCard'); if (adminCard) adminCard.classList.toggle('isAdminVisible', isAdmin());
   // UUID copiable (utile pour l'ajout de modérateurs) — affiché pour tout compte connecté
   const uuidRow = $a('uuidRow');
   if (uuidRow) uuidRow.style.display = currentUser ? 'flex' : 'none';
@@ -1555,6 +1556,8 @@ const I18N = {
   optAutoModeCron: { fr:"Jusqu'à épuisement des Pierres de Cron", en:'Until out of Cron Stones' },
   btnConvertCaphras: { fr:'Convertir (5:1)', en:'Convert (5:1)' },
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
+  cardAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
+  admGroupEquip: { fr:'Équipement', en:'Equipment' },
 };
 /** Applique le dictionnaire I18N statique (data-i18n/data-i18n-ph) à tout le DOM, synchronise l'UI de langue et redessine inventaire/HUD avec les noms traduits. */
 function applyI18n() {
