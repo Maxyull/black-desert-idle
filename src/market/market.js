@@ -16,7 +16,9 @@ function marketRequireAuth() {
 // market_lockdown_and_cancel_all) fait aussi foi côté RPC (market_place_order refuse tout nouvel
 // ordre si fermé) ; ce blocage client évite juste d'ouvrir le panneau pour rien et explique
 // pourquoi. L'admin garde toujours l'accès (même logique staff-only que le serveur).
-$a('btnMarket').onclick = async () => {
+// 2026-07-13 : #btnMarket (sidebar) retiré, doublon du header -- #btnMarketTopbar est désormais
+// le SEUL déclencheur.
+$a('btnMarketTopbar').onclick = async () => {
   if (!marketRequireAuth()) return;
   if (!(typeof isAdmin === 'function' && isAdmin())) {
     try {
@@ -36,7 +38,7 @@ $a('btnMarket').onclick = async () => {
 $a('closeMarket').onclick = () => $a('marketOverlay').classList.remove('open');
 // accès direct au Marché depuis le menu contextuel d'un objet du sac (2026-07-24, demande
 // explicite : "un bouton Vendre qui ouvre un accès direct au marché commun pour cet item précis")
-// -- réutilise EXACTEMENT le même garde-fou (auth + fermeture d'urgence) que $a('btnMarket').onclick
+// -- réutilise EXACTEMENT le même garde-fou (auth + fermeture d'urgence) que $a('btnMarketTopbar').onclick
 // ci-dessus, ouvre le panneau, PUIS sélectionne directement l'objet et déploie son formulaire de
 // vente (voir wireCmOfferForms/cmSellOfferForm plus bas), au lieu de laisser le joueur le
 // rechercher lui-même dans le catalogue. Catégorie 'all' pour ne pas avoir à deviner la bonne

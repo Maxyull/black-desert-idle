@@ -9,6 +9,25 @@
 // le commit courant et HEAD~1 -- si identique, rien de neuf à annoncer (le fichier a pu changer
 // pour une autre raison, ex: correction de typo sur une ancienne entrée), le script sort sans
 // rien poster. Idempotent : ne spamme jamais deux fois la même version.
+//
+// Retry sur rate-limit Discord (2026-07-13, bug confirmé via `gh run view 29227544180 --log-failed` :
+// 502 discord_failed avec {"message":"You are being rate limited.","retry_after":0.3,"global":false},
+// script sans retry -> throw + exit 1 immédiat -> annonce V416 perdue silencieusement, jamais
+// repostée automatiquement). Décision produit (2026-07-13, même session) : V416 n'a PAS été
+// republiée manuellement -- plusieurs versions ont été poussées depuis, republier une annonce
+// obsolète après coup n'apporterait rien. Le bouton admin manuel qui aurait permis ça
+// (publishPatchNoteToDiscord/renderAdminPatchNotesDiscord, src/admin/admin-panel.js) a d'ailleurs
+// été RETIRÉ dans la foulée : ce script CI (avec son retry) est désormais le SEUL chemin
+// d'annonce Discord des patch notes, plus aucun chemin manuel.
+//
+// Couverture tests : ce script est un script Node standalone lancé par CI (.github/workflows/
+// ci.yml), jamais chargé par index.dev.html -- ni tests/tests.js (window.runRegressionTests(),
+// navigateur) ni tests/*.spec.js (Playwright, pilote le jeu réel) ne peuvent l'exercer, ce sont
+// deux pipelines différents (voir CLAUDE.md §11). Pas de test unitaire Node dédié ajouté ici :
+// un garde-fou statique par inspection de `.toString()`/regex sur ce fichier n'apporterait rien
+// de plus que la relecture directe du code ci-dessous (fonction courte, un seul point d'entrée
+// réseau) -- documenté plutôt que forcé, conformément à CLAUDE.md §11 ("documenter pourquoi ce
+// n'est pas testable dans ce pipeline plutôt que de forcer un test inadapté").
 const fs = require('fs');
 const { execSync } = require('child_process');
 
@@ -30,6 +49,52 @@ function buildDescription(entry) {
   return full.length > 2000 ? full.slice(0, 1997) + '…' : full;
 }
 
+const MAX_ATTEMPTS = 3;
+const FALLBACK_BACKOFF_SEC = [2, 4, 8]; // utilisé si le corps de réponse n'a pas de retry_after exploitable
+
+function sleep(seconds) {
+  return new Promise(resolve => setTimeout(resolve, Math.max(0, seconds) * 1000));
+}
+
+/**
+ * POST vers discord-log avec retry sur rate-limit (429/502 + retry_after dans le corps JSON).
+ * Jusqu'à MAX_ATTEMPTS tentatives. Renvoie la Response finale (ok ou pas) -- l'appelant décide
+ * du sort (exit 1) si toutes les tentatives ont échoué.
+ */
+async function postToDiscordLogWithRetry(payload) {
+  let lastRes = null;
+  let lastText = '';
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    const res = await fetch(DISCORD_LOG_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+      body: JSON.stringify(payload),
+    });
+    if (res.ok) return res;
+
+    lastRes = res;
+    lastText = await res.text().catch(() => '');
+
+    const isRateLimitStatus = res.status === 429 || res.status === 502;
+    let retryAfter = null;
+    try {
+      const parsed = JSON.parse(lastText);
+      if (typeof parsed.retry_after === 'number') retryAfter = parsed.retry_after;
+    } catch (e) {
+      // corps non-JSON ou pas de retry_after -- repli sur le backoff fixe
+    }
+
+    const shouldRetry = (isRateLimitStatus || retryAfter !== null) && attempt < MAX_ATTEMPTS;
+    if (!shouldRetry) break;
+
+    const waitSec = retryAfter !== null ? retryAfter : FALLBACK_BACKOFF_SEC[attempt - 1];
+    console.log(`discord-log a échoué (${res.status}), tentative ${attempt}/${MAX_ATTEMPTS}, retry dans ${waitSec}s: ${lastText}`);
+    await sleep(waitSec);
+  }
+  // reconstruit un objet "réponse" minimal pour l'appelant (dernier échec, texte déjà lu)
+  return { ok: false, status: lastRes ? lastRes.status : 0, _text: lastText };
+}
+
 async function main() {
   const current = fs.readFileSync('meta/patch-notes-data.js', 'utf8');
   const currentLatest = extractLatestEntry(current);
@@ -47,19 +112,15 @@ async function main() {
     return;
   }
 
-  const res = await fetch(DISCORD_LOG_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
-    body: JSON.stringify({
-      title: `📜 Notes de version — ${currentLatest.v}`,
-      description: buildDescription(currentLatest),
-      color: 0xd4a955,
-    }),
+  const res = await postToDiscordLogWithRetry({
+    title: `📜 Notes de version — ${currentLatest.v}`,
+    description: buildDescription(currentLatest),
+    color: 0xd4a955,
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`discord-log a échoué (${res.status}): ${text}`);
+    const text = res._text !== undefined ? res._text : await res.text().catch(() => '');
+    throw new Error(`discord-log a échoué après ${MAX_ATTEMPTS} tentatives (${res.status}): ${text}`);
   }
   console.log(`Annonce Discord envoyée pour ${currentLatest.v}.`);
 }

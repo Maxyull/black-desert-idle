@@ -2965,45 +2965,31 @@
     const adminBtn = $('btnAdminTopbar');
     if (adminBtn) assert('#btnAdminTopbar est caché par défaut (pas isAdmin())', adminBtn.style.display === 'none', adminBtn.style.display);
   }
-  // même bouton, même fonction : chaque raccourci header doit déclencher un .click() sur son
-  // équivalent sidebar plutôt qu'une logique dupliquée (voir CLAUDE.md, "raccourcis header").
+  // ex-test "délégation .click() vers la sidebar" (2026-07-13) RÉÉCRIT le même jour : les
+  // boutons sidebar doublons (#btnLeaderboard/#btnMarket/#btnPatch/#btnDonation/#btnAdmin/
+  // #btnLogout, #adminBox, #patchBadge) ont été RETIRÉS (demande explicite : "retire les
+  // doublons") -- chaque bouton Topbar est désormais câblé DIRECTEMENT sur sa fonction réelle
+  // (plus de proxy .click() vers un sidebar qui n'existe plus). Ce test vérifie (1) que chaque
+  // raccourci header a bien un .onclick assigné (pas orphelin), et (2) garde-fou anti-retour :
+  // aucun des anciens ids sidebar ne doit réapparaître dans le DOM.
   function testHeaderShortcutButtonsDelegateToSidebarClick() {
-    const pairs = [
-      ['btnLeaderboardTopbar', 'btnLeaderboard'], ['btnMarketTopbar', 'btnMarket'],
-      ['btnPatchTopbar', 'btnPatch'], ['btnDonationTopbar', 'btnDonation'],
-      ['btnAdminTopbar', 'btnAdmin'], ['btnLogoutTopbar', 'btnLogout'],
-    ];
-    for (const [topbarId, sidebarId] of pairs) {
-      const topbarBtn = $(topbarId), sidebarBtn = $(sidebarId);
-      if (!topbarBtn || !sidebarBtn) continue;
-      let clicked = false;
-      const savedOnclick = sidebarBtn.onclick;
-      sidebarBtn.onclick = () => { clicked = true; };
-      topbarBtn.onclick();
-      sidebarBtn.onclick = savedOnclick;
-      assert(`#${topbarId} déclenche un clic sur #${sidebarId}`, clicked, topbarId);
+    const topbarIds = ['btnLeaderboardTopbar', 'btnMarketTopbar', 'btnPatchTopbar',
+      'btnDonationTopbar', 'btnAdminTopbar', 'btnLogoutTopbar'];
+    for (const id of topbarIds) {
+      const btn = $(id);
+      if (!btn) continue;
+      assert(`#${id} a un .onclick assigné (pas de logique orpheline)`, typeof btn.onclick === 'function', id);
+    }
+    const removedSidebarIds = ['btnLeaderboard', 'btnMarket', 'btnDiscord', 'btnPatch',
+      'btnDonation', 'btnAccount', 'btnAdmin', 'btnLogout', 'adminBox', 'patchBadge'];
+    for (const id of removedSidebarIds) {
+      assert(`#${id} (ancien doublon sidebar) n'existe plus dans le DOM`, !document.getElementById(id), id);
     }
   }
-  // publication de note de version sur Discord (2026-07-20, demande explicite : "ajoute la
-  // publication de patchnote directement sur discord") -- formatPatchNoteForDiscord() est PURE
-  // (aucun réseau/DOM), testable directement sur une vraie entrée de PATCH_NOTES.
-  function testFormatPatchNoteForDiscord() {
-    if (typeof formatPatchNoteForDiscord === 'undefined' || typeof PATCH_NOTES === 'undefined') return;
-    const note = PATCH_NOTES[0];
-    const { title, description } = formatPatchNoteForDiscord(note, 'fr');
-    assert('Le titre Discord contient le numéro de version', title.indexOf(note.v) !== -1, title);
-    assert('Le titre Discord contient le nom fr de la note', title.indexOf(note.name.fr) !== -1, title);
-    assert('La description Discord contient une ligne par entrée fr', description.split('\n').length === note.fr.length, description);
-    const icons = { new:'🆕', change:'🔄', fix:'🛠️', exploit:'🔒' };
-    note.fr.forEach(line => {
-      const icon = icons[line.t] || '•';
-      assert(`La ligne "${line.tx.slice(0,30)}..." garde son icône ${icon} et son texte`, description.indexOf(`${icon} ${line.tx}`) !== -1);
-    });
-    // cas limite : version inconnue -> repli sur l'anglais géré par formatPatchNoteForDiscord lui-même
-    const enOnly = { v:'V0', name:{en:'Test only'}, en:[{t:'new', tx:'English only line'}] };
-    const enResult = formatPatchNoteForDiscord(enOnly, 'en');
-    assert('Repli correct sur les lignes en quand lang="en"', enResult.description.indexOf('English only line') !== -1, enResult.description);
-  }
+  // ex-test "publication de note de version sur Discord" (2026-07-20) RETIRÉ le 2026-07-13 en
+  // même temps que formatPatchNoteForDiscord/publishPatchNoteToDiscord (src/admin/admin-panel.js)
+  // -- plus de bouton admin manuel, l'annonce Discord passe uniquement par
+  // scripts/announce-patch-note.js (CI, avec retry sur rate-limit désormais).
   // garde-fou (2026-07-20, "toujours aucunes stats declosion... verifie si tout est connecté a
   // supabase") : bug rencontré 3 FOIS dans ce repo (log_playtime_ping le 2026-07-08,
   // mark_item_tutorial_seen ×2 et sync_companion_stats le 2026-07-20) -- le builder Postgrest
@@ -5499,7 +5485,6 @@
     testEveryPatchSubHasALabel();
     testHeaderShortcutButtonsExistWithTitleAndAdminHidden();
     testHeaderShortcutButtonsDelegateToSidebarClick();
-    testFormatPatchNoteForDiscord();
     testRpcFireAndForgetCallsNeverUseBareCatch();
     testAdminHourlyReadsRealPlaytimeColumns();
     testPopupCloseOnlyReopensAdminPanelIfStillOpen();

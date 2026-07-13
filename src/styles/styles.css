@@ -1028,13 +1028,13 @@
     position:sticky; top:14px; z-index:40;
     display:flex; flex-direction:column; gap:10px; width:210px;
   }
-  #gameBar, #userBar, #metaBar, #econBar, #communityBar {
+  #gameBar, #userBar, #metaBar, #communityBar {
     display:flex; flex-direction:column; gap:7px;
     background:rgba(10,9,12,.88); border:1px solid #2c2a33; padding:10px;
   }
   #userBar { display:none; }
   #userBar.show { display:flex; }
-  #gameBar button, #userBar button, #metaBar button, #econBar button, #communityBar button {
+  #gameBar button, #userBar button, #metaBar button, #communityBar button {
     width:100%; margin:0; padding:11px 14px; font-size:13.5px; text-align:left;
   }
   /* convention UNIQUE pour tout bouton verrouillé "bientôt disponible" (2026-07-16, demande
@@ -1211,7 +1211,7 @@
      DÉFAUT sur mobile (isMobileViewport(), jamais vérifié avant la Phase 5) : Économie et
      Communauté restaient visibles alors que Progression/Compte disparaissaient, incohérent. */
   #sideMenu.collapsed #gameBar, #sideMenu.collapsed #userBar, #sideMenu.collapsed #metaBar,
-  #sideMenu.collapsed #econBar, #sideMenu.collapsed #communityBar,
+  #sideMenu.collapsed #communityBar,
   #sideMenu.collapsed .sideGroupLabel, #sideMenu.collapsed #onlineStatsBox,
   #sideMenu.collapsed #clientVersion { display:none; }
   /* replié : la largeur fixe de 210px ne se réduisait jamais (seuls les ENFANTS étaient masqués),
@@ -2758,6 +2758,10 @@
   .topbar .icon-btn-svg .tbBadge.show { display:inline-flex; }
   .topbar #btnAdminTopbar { background:#2a1f10; border-color:#e8a355; }
   .topbar #btnLogoutTopbar { border-color:#3a1f1f; }
+  /* 2026-07-13 : #btnPatch (sidebar) retiré, son halo ".hasNew"/patchHalo (règle historique
+     plus haut dans ce fichier) doit survivre sur le SEUL bouton restant, #btnPatchTopbar --
+     déjà mis à jour en JS (updatePatchBadge(), game-supabase.js), juste le style manquait ici. */
+  .topbar #btnPatchTopbar.hasNew { border-color:var(--gold); animation:patchHalo 1.6s infinite; }
   .topbar .tbAccountBtn { width:auto; padding:0 10px; font-size:14px; }
   .topbar .tbAccountBtn #userPseudoTopbar { font-size:11px; color:var(--cream2); white-space:nowrap; }
 
@@ -2853,6 +2857,11 @@
      d'espace. :has() permet de rétrécir la piste elle-même sans toucher au JS existant
      (sideMenuCollapsed/#btnCollapseMenu, game-supabase.js) qui ne togglait que la classe. */
   .layout:has(#sideMenu.collapsed) { grid-template-columns:56px 1fr 300px; }
+  /* repli de la colonne droite (2026-07-13, demande explicite) : même piège documenté CLAUDE.md
+     §32 pour :has(#sideMenu.collapsed) -- chaque combinaison doit être déclarée explicitement,
+     :has() ne se combine pas "tout seul" avec une autre règle :has() de spécificité différente. */
+  .layout:has(#sideRight.collapsed) { grid-template-columns:210px 1fr 56px; }
+  .layout:has(#sideMenu.collapsed):has(#sideRight.collapsed) { grid-template-columns:56px 1fr 56px; }
   .side-right {
     display:flex; flex-direction:column; gap:10px;
     position:sticky; top:14px;
@@ -2860,6 +2869,15 @@
   #rightWidgets { position:static; display:flex; flex-direction:column; gap:8px; max-width:none; align-items:stretch; }
   .floatWidget { width:auto; }
   #chatWidget { position:static; width:auto; bottom:auto; right:auto; }
+  /* replié : ne garde que les en-têtes de widget (icône+titre tronqué), cache le détail (qwBody/
+     chatBody) -- même intention que le repli gauche (§32) mais côté contenu plutôt que boutons
+     de menu, ce dossier n'a pas de structure icône/label séparée à toggler individuellement. */
+  .side-right.collapsed .qwBody, .side-right.collapsed #chatBody { display:none; }
+  .side-right.collapsed .qwFoldBtn { display:none; }
+  .side-right.collapsed .qwHeaderRow { padding:8px 4px; }
+  .side-right.collapsed .qwTitle {
+    display:block; max-width:44px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;
+  }
 
   /* #bossRoom{height:calc(100vh - 62px)} (règle plus haut dans ce fichier) supposait
      l'ancien header (juste #activitiesBar, ~62px) -- le nouveau chrome (.topbar +
@@ -2877,9 +2895,14 @@
        explicitement, un menu replié AVANT de passer sous 1024px gardait la grille desktop
        à 3 pistes compressées (56px/qq px/300px) au lieu d'empiler, repéré en testant à
        390px avec un menu replié persistant (localStorage). */
-    .layout, .layout:has(#sideMenu.collapsed) { grid-template-columns:1fr; }
+    .layout, .layout:has(#sideMenu.collapsed), .layout:has(#sideRight.collapsed),
+    .layout:has(#sideMenu.collapsed):has(#sideRight.collapsed) { grid-template-columns:1fr; }
     #sideMenu, .side-right { position:static; width:100%; max-width:none; }
     #sideMenu.onRight, #sideMenu.onRight ~ .side-right { order:0; }
+    /* replié à largeur mobile (1 seule colonne) : le contenu détaillé reste caché (même règle
+       que desktop, .side-right.collapsed .qwBody/#chatBody ci-dessus), mais le titre n'a plus
+       besoin d'être tronqué -- toute la largeur de l'écran est disponible. */
+    .side-right.collapsed .qwTitle { max-width:none; }
   }
 
   /* =====================================================================
@@ -3105,7 +3128,7 @@
      sont des sliders, pas des boutons -- #metaBar button restait déjà une
      règle historique sans effet), gardé dans la liste pour la symétrie avec
      la règle existante plutôt que la casser. */
-  #gameBar, #userBar, #metaBar, #econBar, #communityBar {
+  #gameBar, #userBar, #metaBar, #communityBar {
     background:var(--s1); border-color:var(--dbBorder); border-radius:11px;
   }
   /* #gameBar/#metaBar avaient une règle historique (background rgba(10,9,12,.6);
@@ -3117,11 +3140,11 @@
      via la règle juste au-dessus, pas sur chaque bouton) et survol aligné sur
      .actTab:hover/.topbar .icon-btn:hover (bordure --dbBorder2, texte --ink)
      au lieu de l'ancien survol doré plein. */
-  #gameBar button, #userBar button, #metaBar button, #econBar button, #communityBar button {
+  #gameBar button, #userBar button, #metaBar button, #communityBar button {
     font-family:'Inter',sans-serif; background:transparent; border:1px solid transparent;
     color:var(--cream2); border-radius:8px; transition:border-color .15s,color .15s,background .15s;
   }
-  #gameBar button:hover, #userBar button:hover, #metaBar button:hover, #econBar button:hover,
+  #gameBar button:hover, #userBar button:hover, #metaBar button:hover,
   #communityBar button:hover {
     border-color:var(--dbBorder2); color:var(--ink); background:rgba(255,255,255,.02);
   }
@@ -3146,6 +3169,14 @@
     color:var(--cream2); border-radius:6px;
   }
   #btnCollapseMenu:hover { border-color:var(--dbBorder2); color:var(--ink); }
+  /* bouton de repli colonne droite (2026-07-13) : même traitement visuel que #btnCollapseMenu,
+     positionné en 1er enfant de .side-right (aligné à droite, symétrique du bouton gauche). */
+  #btnCollapseRight {
+    width:28px; height:28px; padding:0; display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-family:'Inter',sans-serif; background:var(--s2); border:1px solid var(--dbBorder);
+    color:var(--cream2); border-radius:6px; align-self:flex-end;
+  }
+  #btnCollapseRight:hover { border-color:var(--dbBorder2); color:var(--ink); }
 
   /* badges de la sidebar : même police que les autres badges déjà migrés
      (#notifBadge dans .topbar, Phase 1) -- uniquement la police, couleurs/

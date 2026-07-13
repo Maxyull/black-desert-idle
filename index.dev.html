@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="src/styles/styles.css?v=593"><!-- refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-redesign.html fourni par     l'utilisateur, voir CLAUDE.md) : Cinzel déjà référencé dans styles.css mais jamais chargé     jusqu'ici (retombait en serif silencieusement) -- Inter/JetBrains Mono nouvellement introduits     par ce portage, mêmes polices que le mockup --><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></head><body>
+<link rel="stylesheet" href="src/styles/styles.css?v=594"><!-- refonte visuelle "Zone" (2026-07-11, port fidèle de bdi-dashboard-redesign.html fourni par     l'utilisateur, voir CLAUDE.md) : Cinzel déjà référencé dans styles.css mais jamais chargé     jusqu'ici (retombait en serif silencieusement) -- Inter/JetBrains Mono nouvellement introduits     par ce portage, mêmes polices que le mockup --><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></head><body>
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -435,7 +435,14 @@
 
     <!-- refonte visuelle Phase 2 : #gameBar/#userBar/#metaBar regroupés en 4 groupes façon
          mockup (Progression/Économie/Communauté/Compte), via .sideGroup/.sideGroupLabel --
-         ids/boutons/badges/data-i18n INCHANGÉS. -->
+         ids/boutons/badges/data-i18n INCHANGÉS.
+         2026-07-13 (demande explicite : "retire les doublons entre la sidebar et le header") :
+         #btnLeaderboard/#btnMarket/#btnDiscord/#btnPatch(+#patchBadge)/#btnDonation/#btnAccount/
+         #btnAdmin(+#adminBox)/#btnLogout RETIRÉS -- équivalents header (.topbar-right,
+         #btnXxxTopbar) déjà présents depuis V419, gardés comme SEUL déclencheur (voir
+         game-supabase.js/market.js/admin-panel.js, plus de proxy .click()). Le groupe "Économie"
+         (#econBar) ne contenait QUE #btnMarket : entièrement retiré (groupe vide sinon) --
+         voir styles.css pour le nettoyage des sélecteurs qui le référençaient. -->
     <div class="sideGroup">
       <div class="sideGroupLabel" data-i18n="sideGroupProgression">Progression</div>
       <div id="gameBar">
@@ -444,29 +451,13 @@
         <button id="btnCompendium"><span data-i18n="btnCompendium">📖 Compendium</span><span class="contentNewBadge" id="newBadgeCompendium">1</span></button>
         <button id="btnCodex"><span data-i18n="btnCodex">📚 Codex</span><span class="contentNewBadge" id="newBadgeCodex">1</span></button>
         <button id="btnAchievements"><span data-i18n="btnAchievements">🏅 Succès</span><span class="contentNewBadge" id="newBadgeAchievements">1</span></button>
-        <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
-      </div>
-    </div>
-
-    <div class="sideGroup">
-      <div class="sideGroupLabel" data-i18n="sideGroupEconomie">Économie</div>
-      <div id="econBar">
-        <button id="btnMarket" title="BETA — en construction, encore peu fonctionnel"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
       </div>
     </div>
 
     <div class="sideGroup">
       <div class="sideGroupLabel" data-i18n="sideGroupCommunaute">Communauté</div>
       <div id="communityBar">
-        <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
         <button id="btnWiki"><span data-i18n="btnWiki">📖 Wiki</span><span class="contentNewBadge" id="newBadgeWiki">1</span></button>
-        <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge" aria-live="polite"></span></button>
-        <!-- Donation (2026-07-16, demande explicite : "ajoute un bouton Donation bloque cadenas") --
-             déverrouillée le 2026-07-21 (demande explicite : "ouvre soutenir et on y met les page de
-             donation dedans") : ouvre donation/index.html (page autonome déjà réelle, lien PayPal.me
-             configuré, déplacée dans son propre dossier puis renommée donation.html -> index.html le
-             2026-07-21 pour une URL propre, voir openDonationPanel() (game-supabase.js)) -->
-        <button id="btnDonation" data-i18n="btnDonation">💖 Soutenir</button>
       </div>
     </div>
 
@@ -478,12 +469,7 @@
           <span id="userPseudo"></span>
           <span id="userEmail"></span>
         </div>
-        <button id="btnAccount" data-i18n="btnAccount">👤 Mon compte</button>
         <button id="btnLinkAccount" data-i18n="btnLinkAccount" style="display:none">🔗 Lier un compte</button>
-        <div id="adminBox" style="display:none">
-          <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
-        </div>
-        <button id="btnLogout" data-i18n="btnLogout">🚪 Déconnexion</button>
         <span id="saveStatus"></span>
         <div id="uuidRow" style="display:none">
           <button id="btnCopyUuid" title="Cliquer pour copier ton UUID">
@@ -831,8 +817,18 @@
   </div>
 
   <aside class="side-right" id="sideRight">
+    <!-- repli de toute la colonne droite (2026-07-13, demande explicite) : même mécanisme que
+         #btnCollapseMenu (game-supabase.js) pour la sidebar gauche -- toggle .collapsed sur
+         #sideRight, préférence persistée en localStorage (velia-idle-right-collapsed). Sens de
+         flèche inversé par rapport au bouton gauche (▶ replier / ◀ déplier, la colonne est à
+         droite donc "replier" pousse vers la droite). -->
+    <button id="btnCollapseRight" title="Replier/déplier les widgets">▶</button>
     <div id="rightWidgets">
       <div id="questWidget" class="floatWidget"></div>
+      <!-- widget "Temps de jeu" (2026-07-13, demande explicite, mockup validé) -- réutilise les
+           mêmes classes qwHeaderRow/qwBody/qwRow/qwLbl/qwTimer que #questWidget (aucune nouvelle
+           classe CSS nécessaire), rendu par renderPlaytimeWidget() (notifications-quests.js). -->
+      <div id="playtimeWidget" class="floatWidget"></div>
       <div id="questTrackerWidget" class="floatWidget" style="display:none"></div>
     </div>
 
@@ -859,138 +855,138 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="src/core/i18n-resources.generated.js?v=593"></script>
+<script src="src/core/i18n-resources.generated.js?v=594"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
-<script src="src/core/i18n-init.js?v=593"></script>
+<script src="src/core/i18n-init.js?v=594"></script>
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- module autonome, DOIT charger EN PREMIER : GEAR_TIERS
      (world/gear-tiers-data.js) lit ICO_MAT_* immédiatement au chargement -->
-<script src="src/inventory/gear-icons.js?v=593"></script>
+<script src="src/inventory/gear-icons.js?v=594"></script>
 <!-- données pures ZONES[] -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers) --
      DOIT charger AVANT game-core.js : resetWorld() (appelé au top-level de game-core.js) lit ZONES
      dès le premier chargement du script -->
-<script src="src/world/zones-data.js?v=593"></script>
+<script src="src/world/zones-data.js?v=594"></script>
 <!-- paliers de stuff (GEAR_TIERS, GEAR_ROLE...) -- extrait de game-core.js le 2026-07-08
      (réorganisation par dossiers) -- DOIT charger APRÈS inventory/gear-icons.js (lit ICO_MAT_*
      immédiatement) et AVANT game-core.js -->
-<script src="src/world/gear-tiers-data.js?v=593"></script>
+<script src="src/world/gear-tiers-data.js?v=594"></script>
 <!-- table d'XP par niveau, paliers de régions, potions de vie -- extraits de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- pure donnée, aucune dépendance, chargés AVANT
      game-core.js -->
-<script src="src/progression/level-xp-data.js?v=593"></script>
-<script src="src/world/region-tiers-data.js?v=593"></script>
-<script src="src/combat/potions-data.js?v=593"></script>
+<script src="src/progression/level-xp-data.js?v=594"></script>
+<script src="src/world/region-tiers-data.js?v=594"></script>
+<script src="src/combat/potions-data.js?v=594"></script>
 <!-- classe Sorcier : sorts (SKILLS) -- extrait de game-core.js le 2026-07-08 (réorganisation par
      dossiers, prépare l'ajout futur d'autres classes jouables) -- DOIT charger AVANT
      game-core.js : la boucle qui construit la barre de sorts lit SKILLS immédiatement -->
-<script src="src/classes/sorcier/skills-data.js?v=593"></script>
-<script src="src/core/game-core.js?v=593"></script>
+<script src="src/classes/sorcier/skills-data.js?v=594"></script>
+<script src="src/core/game-core.js?v=594"></script>
 <!-- classe Sorcier : rendu du personnage (drawWitchIso, witchBodyOn...) -- extrait de     world/render.js le 2026-07-08 (réorganisation par dossiers) -- DOIT charger juste APRÈS     core/game-core.js (toScreen/ctx/P) et AVANT inventory/inventory-ui.js ET world/render.js :     tous deux appellent witchBodyOn de façon SYNCHRONE au chargement (render.js appelle hud()     -> refreshInvUI() -> renderEquipment() -> drawPreviewChar() -> drawWitchOn() ->     witchBodyOn() avant même requestAnimationFrame(loop) -- bug réel constaté le 2026-07-08 :
      avec sorcier-render.js chargé après render.js, ce premier hud() lançait un ReferenceError
      qui empêchait purement et simplement requestAnimationFrame(loop) de s'exécuter, gelant tout
      le jeu dès le chargement) -->
-<script src="src/classes/sorcier/sorcier-render.js?v=593"></script>
+<script src="src/classes/sorcier/sorcier-render.js?v=594"></script>
 <!-- définitions des succès -- extrait de game-core.js le 2026-07-08 (réorganisation par dossiers)
      -- DOIT charger APRÈS core/game-core.js : target:ZONES.length/PRI_IDX/ENH_NAMES.length-1 sont
      évalués immédiatement au chargement -->
-<script src="src/progression/achievements-data.js?v=593"></script>
+<script src="src/progression/achievements-data.js?v=594"></script>
 <!-- Trésor de Velia (craft) -- extrait de game-core.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS core/game-core.js (utilise INV/addSilver/Z()/GEAR_ROLE...) -->
-<script src="src/progression/treasure-craft.js?v=593"></script>
+<script src="src/progression/treasure-craft.js?v=594"></script>
 <!-- notifications, succès (UI), courrier, compendium, quêtes -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- DOIT charger APRÈS core/game-core.js,
      progression/achievements-data.js et progression/treasure-craft.js -->
-<script src="src/progression/notifications-quests.js?v=593"></script>
+<script src="src/progression/notifications-quests.js?v=594"></script>
 <!-- modes IA (combat défensif/équilibré/overgeared + farm loot/xp) -- extrait de     progression/notifications-quests.js le 2026-07-08 (réorganisation par dossiers, correction :     ce n'est pas de la progression, c'est du comportement de combat/farm) -- charge APRÈS
      core/game-core.js -->
-<script src="src/combat/ai-mode.js?v=593"></script>
+<script src="src/combat/ai-mode.js?v=594"></script>
 <!-- génération du loot & gain d'XP -- extrait de game-core.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS core/game-core.js et progression/notifications-quests.js
      (gainXp appelle pushNotif) -->
-<script src="src/combat/loot-rolls.js?v=593"></script>
+<script src="src/combat/loot-rolls.js?v=594"></script>
 <!-- VFX (particules de sorts) -- extrait de game-core.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS core/game-core.js -->
-<script src="src/combat/vfx.js?v=593"></script>
+<script src="src/combat/vfx.js?v=594"></script>
 <!-- utilisation des potions (cout dynamique + UI sélecteur) -- extrait de game-core.js le
      2026-07-08 (réorganisation par dossiers) -- DOIT charger APRÈS core/game-core.js et
      combat/potions-data.js -->
-<script src="src/combat/potions-logic.js?v=593"></script>
+<script src="src/combat/potions-logic.js?v=594"></script>
 <!-- World Boss (Kzarka/Vell : lobby, combat, rendu de la salle) -- extrait de game-core.js le
      2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà définies à ce stade
      ($, S, EQUIP, effHpMax, ZONES...) et le canvas #bossCv déjà présent dans le DOM -->
-<script src="src/combat/boss.js?v=593"></script>
+<script src="src/combat/boss.js?v=594"></script>
 <!-- rendu canvas de la salle de boss -- extrait de boss.js le 2026-07-08 (réorganisation par
      dossiers) -- DOIT charger APRÈS boss.js (bossLoop() appelle drawBossRoom()) -->
-<script src="src/combat/boss-render.js?v=593"></script>
+<script src="src/combat/boss-render.js?v=594"></script>
 <!-- roue de récompense rare du boss, en React (2026-07-19, demande explicite : "je veux une roue     react et que tout soit aligné" -- remplace l'ancienne roue CSS conic-gradient/bwIcon, dont les     icônes en translate(0,-70px) débordaient du cercle visuel, cause du rendu "tordu" signalé) --     SEUL fichier du projet à utiliser React (React.createElement pur, aucun JSX/bundler, voir
      CLAUDE.md pour l'exception documentée) -- DOIT charger APRÈS boss.js (lit BOSS_NEAR_MISS_CHANCE/
      BOSS_NEAR_MISS_MARGIN_DEG au moment de l'appel, pas au chargement) et APRÈS les balises CDN
      React/ReactDOM en <head> -->
-<script src="src/combat/boss-wheel-react.js?v=593"></script>
+<script src="src/combat/boss-wheel-react.js?v=594"></script>
 <!-- modal de reconnexion, en React (2026-07-10, demande explicite : port de reconnect-modal.jsx,     "nouvelle exception react") -- 2e fichier du projet à utiliser React (React.createElement pur,     aucun JSX/bundler, voir CLAUDE.md pour l'exception documentée). Ne lit GEAR_TIERS/LANG/myPseudo     qu'à l'intérieur de fonctions (au moment de l'appel, jamais au chargement immédiat), donc
      l'ordre par rapport à ces fichiers n'est pas strict techniquement -- placé après boss-wheel-
      react.js par cohérence (les 2 seuls fichiers React du projet groupés), et après les balises CDN
      React/ReactDOM en <head> (nécessaire, celles-là). -->
-<script src="src/core/reconnect-modal-react.js?v=593"></script>
+<script src="src/core/reconnect-modal-react.js?v=594"></script>
 <!-- Compendium, en React (2026-07-10, demande explicite : port de compendium-grimoire.jsx, "garde     les couleurs") -- 3e fichier du projet à utiliser React (React.createElement pur, aucun JSX/
      bundler, voir CLAUDE.md pour l'exception documentée). Ne lit ZONE_TIERS/GEAR_TIERS/ZONES/S/
      BOSS_ROSTER qu'à l'intérieur de fonctions (au moment de l'ouverture, jamais au chargement
      immédiat) -- placé après les 2 autres fichiers React par cohérence, pas par nécessité stricte. -->
-<script src="src/progression/compendium-react.js?v=593"></script>
+<script src="src/progression/compendium-react.js?v=594"></script>
 <!-- Notes de version, en React (2026-07-10, demande explicite : port de patch-notes-system.jsx +     patch-notes-pipeline.md, "comme la maquette") -- 4e fichier du projet à utiliser React     (React.createElement pur, aucun JSX/bundler, voir CLAUDE.md pour l'exception documentée).     Remplace ENTIÈREMENT l'affichage de renderPatchNotesPanel()/renderPatchEntryHtml()
      (backend/game-supabase.js, gardées comme repli si React est indisponible) -- karma/
      commentaires/recherche/filtre/vue-controverse, données réelles (PATCH_NOTES, PATCH_CATS,
      readPatches/computePatchPages...) lues à l'intérieur de fonctions uniquement. -->
-<script src="src/progression/patch-notes-engage-react.js?v=593"></script>
+<script src="src/progression/patch-notes-engage-react.js?v=594"></script>
 <!-- inventaire/équipement -- UI (paperdoll, grille, enchantement, auto-opti) -- extrait de     game-core.js le 2026-07-14 -- DOIT charger AVANT render.js : le démarrage du jeu (à la fin de     render.js) appelle hud(), qui appelle refreshInvUI()/hasNeglectedUpgradeInBag(), tous deux
      définis ici -->
-<script src="src/inventory/inventory-ui.js?v=593"></script>
+<script src="src/inventory/inventory-ui.js?v=594"></script>
 <!-- migrations rétroactives du stuff -- extrait de inventory-ui.js le 2026-07-08 (réorganisation
      par dossiers) -- appelées depuis applySaveState() (core/game-core.js), en exécution
      uniquement -- charge APRÈS inventory-ui.js -->
-<script src="src/inventory/gear-migrations.js?v=593"></script>
+<script src="src/inventory/gear-migrations.js?v=594"></script>
 <!-- outils debug admin d'enchantement (max/reset/±1 rang sur tout l'équipement) -- extrait de
      inventory-ui.js le 2026-07-08 (réorganisation par dossiers) -- DOIT charger APRÈS
      inventory-ui.js (refreshEquipSlot/renderOptimization/drawPreviewChar) -->
-<script src="src/admin/enh-debug-tools.js?v=593"></script>
+<script src="src/admin/enh-debug-tools.js?v=594"></script>
 <!-- rendu canvas (scène, sprites, particules) -- extrait de game-core.js le 2026-07-14 -- charge     APRÈS game-core.js/boss.js/inventory-ui.js : hud() (dans game-core.js) appelle     drawZoneMobIcon() (défini ici), donc ce fichier DOIT charger avant le tout premier hud(). C'est     pourquoi le démarrage du jeu (renderInvCatTabs/hud/requestAnimationFrame(loop), avant à la toute
      fin de game-core.js) a été déplacé à la fin de CE fichier -- requestAnimationFrame(loop) doit
      rester le tout dernier appel synchrone du chargement, sinon la boucle de jeu ne démarre jamais -->
-<script src="src/world/render.js?v=593"></script>
+<script src="src/world/render.js?v=594"></script>
 <!-- disposition des cartes du dashboard Zone (#panel), glisser-déposer + imbrication en onglets
      (2026-07-13, mockup validé) -- placé APRÈS render.js pour ne jamais retarder
      requestAnimationFrame(loop) (dernier appel synchrone attendu dans render.js) ; pas de
      dépendance stricte au-delà de isMobileViewport() (game-core.js, chargé bien avant) et
      i18next (configuré dès i18n-init.js, ligne ~865) -->
-<script src="src/core/card-layout.js?v=593"></script>
+<script src="src/core/card-layout.js?v=594"></script>
 <!-- données pures PATCH_NOTES (~2000 lignes, extraites de game-supabase.js le 2026-07-14 pour
      alléger le fichier) -- DOIT charger avant game-supabase.js, qui lit PATCH_NOTES[0].v au
      top-level dès son chargement (voir CURRENT_VERSION) -->
-<script src="meta/patch-notes-data.js?v=593"></script>
-<script src="src/backend/game-supabase.js?v=593"></script>
+<script src="meta/patch-notes-data.js?v=594"></script>
+<script src="src/backend/game-supabase.js?v=594"></script>
 <!-- panneau Wiki plein écran (2026-07-11, port à l'identique du mockup fourni, voir CLAUDE.md §30)
      -- charge APRÈS game-supabase.js : lit WIKI_SECTIONS/renderCodexHtml/renderTutoPageHtml/
      PATCH_NOTES au moment de l'ouverture (jamais au chargement immédiat), donc l'ordre exact avec
      admin-panel.js/chat.js qui suivent n'a pas d'importance -->
-<script src="src/backend/wiki-panel.js?v=593"></script>
+<script src="src/backend/wiki-panel.js?v=594"></script>
 <!-- panneau Classement (jeu principal) enrichi (2026-07-11, même traitement que le Classement     Public Compagnons — podium/onglets/recherche/pagination) -- charge APRÈS game-supabase.js :     lit $a/sb/currentUser/marketRequireAuth/tr/fmt/escapeHtml/openInfo/wirePlayerNameLinks au
      moment de l'ouverture, jamais au chargement immédiat -->
-<script src="src/backend/leaderboard-panel.js?v=593"></script>
+<script src="src/backend/leaderboard-panel.js?v=594"></script>
 <!-- panneau Admin (reset demo/quêtes/comptes, screenshot joueur, analytics) -- extrait de
      game-supabase.js le 2026-07-14 -- charge APRÈS lui : n'utilise que des fonctions/consts déjà
      définies à ce stade ($a, isAdmin, sb, currentUser...) -->
-<script src="src/admin/admin-panel.js?v=593"></script>
+<script src="src/admin/admin-panel.js?v=594"></script>
 <!-- charge APRÈS admin-panel.js (lit ADMIN_SECTIONS au chargement immédiat via .splice()) --
      voir src/admin/admin-economy.js -->
-<script src="src/admin/admin-economy.js?v=593"></script>
+<script src="src/admin/admin-economy.js?v=594"></script>
 <!-- chat (mondial/trade/annonce + mentions @joueur) -- extrait de game-supabase.js le 2026-07-14 --
      charge APRÈS lui : appelle immédiatement fetchChatMessages/pollChatUnread (setInterval au
      top-level), qui ont besoin de $a/sb/currentUser déjà définis -->
-<script src="src/social/chat.js?v=593"></script>
+<script src="src/social/chat.js?v=594"></script>
 <!-- marché (Hôtel des ventes + Marché commun v2, carnet d'ordres) -- extrait de game-supabase.js
      le 2026-07-14 -- charge APRÈS lui : wiring $a('btnMarket').onclick etc au top-level -->
-<script src="src/market/market.js?v=593"></script>
+<script src="src/market/market.js?v=594"></script>
 <!-- suite de tests de régression, jamais lancée automatiquement — voir runRegressionTests() dans
      tests.js (demande explicite du 2026-07-08 : "test unitaire + test de régression systématique") -->
-<script src="tests/tests.js?v=593"></script></body></html>
+<script src="tests/tests.js?v=594"></script></body></html>
