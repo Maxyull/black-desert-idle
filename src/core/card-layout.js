@@ -170,6 +170,11 @@ function cardLayoutAddHandleToH3(cardEl) {
 
 function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
   hostEl.classList.add('cardTabbed');
+
+  const activeLabel = document.createElement('h3');
+  activeLabel.className = 'cardActiveTitle';
+  activeLabel.textContent = cardLayoutTitleLabel(document.getElementById(activeId));
+
   const tabBar = document.createElement('div');
   tabBar.className = 'cardTabBar';
 
@@ -192,10 +197,12 @@ function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
   const detachBtn = document.createElement('button');
   detachBtn.className = 'cardDetachBtn';
   detachBtn.dataset.cardDetachHost = hostId;
-  detachBtn.textContent = '↗ ' + ((typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.detach') : '');
+  detachBtn.textContent = '✕';
+  detachBtn.title = (typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.detach') : '';
   tabBar.appendChild(detachBtn);
 
   hostEl.insertBefore(tabBar, hostEl.firstChild);
+  hostEl.insertBefore(activeLabel, tabBar);
 
   const body = document.createElement('div');
   body.className = 'cardHostBody';
