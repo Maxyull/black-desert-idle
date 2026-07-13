@@ -114,7 +114,18 @@ function baseRarityDraw(a, b){
   if(rarGap===0) return {rarGap, outcomes:[{rar:a.rar, pct:100}]};
   const lo=Math.min(a.rar,b.rar), hi=Math.max(a.rar,b.rar);
   // Dégressif : écart 1 ≈ 58/42, écart 5 (max) = 90/10 — la rareté BASSE est favorisée
-  const pctHigher = Math.max(10, 50 - rarGap*8);
+  const pctHigherGapBased = Math.max(10, 50 - rarGap*8);
+  // Chevauchement progressif (2026-07-13, demande explicite) : en plus de l'écart brut de rareté
+  // ci-dessus, un parent de rareté BASSE déjà bien roulé (proche du GS moyen T1 attendu pour la
+  // rareté supérieure, voir avgGSForRarityAtTier1()/progressiveTierProbability(), tier.js) a de
+  // meilleures chances de tomber sur l'issue haute -- pas un cutoff net, une rampe linéaire sur une
+  // bande de ±10% autour de ce seuil. Moyenné avec le facteur d'écart existant pour ne jamais
+  // s'écarter trop loin de l'équilibrage déjà en place (le lo/hi de baseRarityDraw() reste inchangé).
+  const loParent = a.rar===lo ? a : b;
+  const nextThreshold = avgGSForRarityAtTier1(lo+1);
+  const band = nextThreshold*0.10;
+  const progressivePct = progressiveTierProbability(normGS(loParent), nextThreshold, band)*100;
+  const pctHigher = Math.max(10, Math.min(90, (pctHigherGapBased+progressivePct)/2));
   return {rarGap, outcomes:[{rar:lo, pct:100-pctHigher},{rar:hi, pct:pctHigher}]};
 }
 

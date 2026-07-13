@@ -196,6 +196,24 @@ function openEggChoice(slotIdx){
 }
 
 /**
+ * Rappel compact des probabilités par rareté de l'œuf utilisé (2026-07-13, demande explicite :
+ * "afficher % chance par palier à l'éclosion" -- les % étaient déjà visibles AVANT le clic
+ * (openEggChoice()/eggRow() ci-dessus, sélection de l'œuf), mais disparaissaient ensuite : l'écran
+ * de reveal (doHatch()) n'affichait plus jamais quelles étaient les chances de CET œuf précis une
+ * fois le tirage fait. Réutilise egg.odds déjà calculé (aucune logique de calcul dupliquée ici).
+ * @param {object} eggType - un des EGG_TYPES/TARGETED_EGG_DEFS, lit .odds[] et .id/.name/.ico.
+ * @returns {string} HTML d'un petit tableau de rappel des odds par rareté.
+ */
+function renderEggOddsRecap(eggType){
+  return `<div style="border-top:1px solid var(--border);margin-top:4px;padding-top:8px">
+    <div style="font-size:9px;color:var(--cream3);text-align:center;margin-bottom:5px">${eggType.ico} Chances de ${eggType.name} :</div>
+    <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">
+      ${eggType.odds.map((o,ri)=>`<span style="font-size:9px;color:${RARITIES[ri].hex};${eggType.targeted&&ri===eggType.targetRar?'font-weight:700;text-decoration:underline':''}">${RARITIES[ri].name.slice(0,3)} ${o}%</span>`).join('<span style="color:var(--cream3)">·</span>')}
+    </div>
+  </div>`;
+}
+
+/**
  * Tirage partagé — utilisé par l'éclosion via slot ET l'achat instantané. Tire une rareté selon
  * la table d'odds de l'œuf, applique le pity (garantit un Ancestral après PITY_THRESHOLD hatchs
  * sans en obtenir), puis choisit une espèce dont la rareté catalogue est à ±1 de la rareté tirée
@@ -271,6 +289,7 @@ function doHatch(slotIdx, eggTypeId){
       <span style="font-size:10px;color:var(--cream2)">${pct}% du max ${rn(rar)}</span>
     </div>
     <div style="margin-bottom:8px">${renderTierBlock(np)}${renderStatBars(np)}</div>
+    ${renderEggOddsRecap(eggType)}
     <div style="display:flex;gap:7px;margin-top:12px">
       <button class="btn btn-gold" onclick="disposeHatchReveal3d();window._np.terrain=false;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🥚','${cat.name} ajouté !')">Garder</button>
       <button class="btn btn-ghost" onclick="disposeHatchReveal3d();PETS.forEach(p=>{if(p.cat.sec===window._np.cat.sec)p.terrain=false});window._np.terrain=true;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🌿','${cat.name} déployé !')">Déployer</button>
@@ -371,7 +390,8 @@ function showBulkHatchModal(eggType, results, tally, anyPity){
           <div style="font-size:8px;color:${rc(p.rar)};margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.cat.name}</div>
         </div>`).join('')}
     </div>
-    <button class="btn btn-gold" style="width:100%" onclick="closeHatchModal()">Continuer</button>
+    ${renderEggOddsRecap(eggType)}
+    <button class="btn btn-gold" style="width:100%;margin-top:10px" onclick="closeHatchModal()">Continuer</button>
   `;
   // pas de reveal 3D ici volontairement (2026-07-10) : jusqu'à 10 pets affichés EN MÊME TEMPS dans
   // cette grille -- un contexte WebGL par carte dépasserait vite la limite du navigateur (~16, même

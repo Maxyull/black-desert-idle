@@ -13,12 +13,17 @@ function renderSecNav(){
   }).join('');
 }
 
-let expandedResPets = new Set(); // ids des pets de réserve actuellement dépliés
+// Cartes de réserve DÉPLIÉES par défaut (2026-07-13, demande explicite) -- avant ce changement,
+// expandedResPets suivait les ids explicitement dépliés (vide par défaut = tout replié). Inversé :
+// collapsedResPets suit maintenant les ids explicitement REPLIÉS (vide par défaut = tout déplié),
+// même mécanisme de Set, juste la polarité par défaut qui change. toggleResPetExpand() garde son
+// nom (appelé depuis le HTML généré ci-dessous) pour ne pas casser d'onclick existants.
+let collapsedResPets = new Set(); // ids des pets de réserve explicitement repliés par le joueur
 
-/** @param {number} id - id du pet en réserve. Bascule l'état déplié/replié de sa carte compacte et rafraîchit le panneau. */
+/** @param {number} id - id du pet en réserve. Bascule l'état déplié/replié de sa carte (dépliée par défaut) et rafraîchit le panneau. */
 function toggleResPetExpand(id){
-  if(expandedResPets.has(id)) expandedResPets.delete(id);
-  else expandedResPets.add(id);
+  if(collapsedResPets.has(id)) collapsedResPets.delete(id);
+  else collapsedResPets.add(id);
   renderSecDetail();
 }
 
@@ -62,7 +67,7 @@ function renderSecDetail(){
           ?`<div id="ts-cv3d-anchor" style="width:140px;height:140px"></div>`
           :`<canvas id="ts-cv" width="140" height="140" style="width:140px;height:140px;image-rendering:pixelated"></canvas>`}
         <span style="position:absolute;top:8px;left:8px;font-family:'Cinzel',serif;font-size:10px;color:var(--gold);background:rgba(0,0,0,.5);border-radius:4px;padding:1px 6px">T${tp.tier||1}</span>
-        <span class="gs-badge ${gsCls(gsPct(tp))}" style="position:absolute;top:8px;right:8px">GS ${normGS(tp)}</span>
+        <span class="gs-badge ${gsCls(gsPct(tp))}" style="position:absolute;top:8px;right:8px;color:${rc(tp.rar)};border-color:${rc(tp.rar)}">GS ${normGS(tp)}</span>
       </div>
       <div class="pcard-name">
         <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--cream)">${tp.cat.name}</div>
@@ -111,7 +116,7 @@ function renderSecDetail(){
       </div>
       <div style="padding:4px;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:4px;overflow-y:auto;max-height:70vh">
         ${sortedReserves.map(p=>{
-          const expanded = expandedResPets.has(p.id);
+          const expanded = !collapsedResPets.has(p.id);
           const sec=secById(p.cat.sec);
           // carte compacte en 2 lignes (2026-07-20, "afficher les pet en reserve a droite... pour
           // laisser placer a des nouvelle carte en reserve de loger a coter") -- la grille auto-fill
@@ -125,7 +130,7 @@ function renderSecDetail(){
                 <span style="font-size:7px;color:var(--cream3);transform:rotate(${expanded?'90deg':'0deg'});transition:transform .15s;flex-shrink:0">▶</span>
               </div>
               <div style="display:flex;align-items:center;gap:3px;margin-top:3px;flex-wrap:wrap">
-                <span class="gs-badge ${gsCls(gsPct(p))}" style="font-size:6px;padding:0 2px">GS ${normGS(p)}</span>
+                <span class="gs-badge ${gsCls(gsPct(p))}" style="font-size:6px;padding:0 2px;color:${rc(p.rar)};border-color:${rc(p.rar)}">GS ${normGS(p)}</span>
                 <span style="font-size:6px;color:var(--gold);font-family:'Cinzel',serif">T${p.tier||1}</span>
                 <span style="font-size:6px;color:${rc(p.rar)}">${rn(p.rar)}</span>
                 <span style="font-size:8px;color:var(--cream3)" title="${sec?.name||''}">${sec?.ico||''}</span>

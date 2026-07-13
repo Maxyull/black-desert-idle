@@ -67,6 +67,13 @@ body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;widt
 .search-box{background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:4px 9px;font-size:11px;color:var(--cream);outline:none;width:140px}
 .search-box::placeholder{color:var(--cream3)}
 .search-box:focus{border-color:var(--border2)}
+/* Fond blanc résiduel (2026-07-13, demande explicite : "retirer tout fond blanc résiduel... et
+   utiliser les couleurs du thème") -- aucune règle ne stylait les <input type="number"/"text">
+   natifs (market.js en utilise plusieurs -- quantité, silver minimum), donc le navigateur
+   appliquait son fond blanc par défaut par-dessus le thème sombre du module. */
+input[type="number"],input[type="text"]{background:var(--s2);border:1px solid var(--border);border-radius:5px;padding:3px 7px;font-size:11px;color:var(--cream);outline:none;font-family:'JetBrains Mono',monospace}
+input[type="number"]:focus,input[type="text"]:focus{border-color:var(--border2)}
+input[type="checkbox"]{accent-color:var(--gold)}
 .pet-grid{overflow-y:auto;padding:10px 14px;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;align-content:start}
 /* PET CARD */
 .pet-card{background:var(--s2);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:border-color .12s,box-shadow .12s;position:relative;display:flex;flex-direction:column}
@@ -147,7 +154,7 @@ body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;widt
 .food-row{background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:7px 9px;display:flex;align-items:center;gap:7px;cursor:pointer;transition:border-color .12s}
 .food-row:hover{border-color:var(--border2)}.food-row.sel{border-color:var(--gold)}
 .tog{width:30px;height:16px;background:var(--border);border-radius:8px;cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0}
-.tog.on{background:var(--green)}.tog::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#fff;transition:left .2s}.tog.on::after{left:16px}
+.tog.on{background:var(--green)}.tog::after{content:'';position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--cream);transition:left .2s}.tog.on::after{left:16px}
 /* MODAL */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
 .modal-bg.open{display:flex}

@@ -197,7 +197,7 @@ function renderGrid(){
           <span class="cmcDot" style="background:${rc(p.rar)}"></span>
           <span class="cmcTier">T${p.tier||1}</span>
           <span class="cmcSec">${sec?.ico}</span>
-          <span class="gs-badge ${gsCls(pct)}">GS ${gs}</span>
+          <span class="gs-badge ${gsCls(pct)}" style="color:${rc(p.rar)};border-color:${rc(p.rar)}">GS ${gs}</span>
         </div>` : `
         <div class="card-meta">
           <span style="color:${rc(p.rar)};font-size:9px">${rn(p.rar)}</span>
@@ -208,7 +208,7 @@ function renderGrid(){
           <span>${p.cat.typ}</span>
         </div>
         <div class="card-gs-row">
-          <span class="gs-badge ${gsCls(pct)}" style="font-size:9px;padding:1px 5px">GS ${gs}</span>
+          <span class="gs-badge ${gsCls(pct)}" style="font-size:9px;padding:1px 5px;color:${rc(p.rar)};border-color:${rc(p.rar)}">GS ${gs}</span>
           <div class="gs-bar"><div class="gs-bar-fill" style="width:${pct}%;background:${rc(p.rar)}"></div></div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cream3)">${pct}%</span>
         </div>`}
