@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=591">
+<link rel="stylesheet" href="build/styles.min.css?v=594">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -435,7 +435,14 @@
 
     <!-- refonte visuelle Phase 2 : #gameBar/#userBar/#metaBar regroupés en 4 groupes façon
          mockup (Progression/Économie/Communauté/Compte), via .sideGroup/.sideGroupLabel --
-         ids/boutons/badges/data-i18n INCHANGÉS. -->
+         ids/boutons/badges/data-i18n INCHANGÉS.
+         2026-07-13 (demande explicite : "retire les doublons entre la sidebar et le header") :
+         #btnLeaderboard/#btnMarket/#btnDiscord/#btnPatch(+#patchBadge)/#btnDonation/#btnAccount/
+         #btnAdmin(+#adminBox)/#btnLogout RETIRÉS -- équivalents header (.topbar-right,
+         #btnXxxTopbar) déjà présents depuis V419, gardés comme SEUL déclencheur (voir
+         game-supabase.js/market.js/admin-panel.js, plus de proxy .click()). Le groupe "Économie"
+         (#econBar) ne contenait QUE #btnMarket : entièrement retiré (groupe vide sinon) --
+         voir styles.css pour le nettoyage des sélecteurs qui le référençaient. -->
     <div class="sideGroup">
       <div class="sideGroupLabel" data-i18n="sideGroupProgression">Progression</div>
       <div id="gameBar">
@@ -444,29 +451,13 @@
         <button id="btnCompendium"><span data-i18n="btnCompendium">📖 Compendium</span><span class="contentNewBadge" id="newBadgeCompendium">1</span></button>
         <button id="btnCodex"><span data-i18n="btnCodex">📚 Codex</span><span class="contentNewBadge" id="newBadgeCodex">1</span></button>
         <button id="btnAchievements"><span data-i18n="btnAchievements">🏅 Succès</span><span class="contentNewBadge" id="newBadgeAchievements">1</span></button>
-        <button id="btnLeaderboard" data-i18n="btnLeaderboard">🏆 Classement</button>
-      </div>
-    </div>
-
-    <div class="sideGroup">
-      <div class="sideGroupLabel" data-i18n="sideGroupEconomie">Économie</div>
-      <div id="econBar">
-        <button id="btnMarket" title="BETA — en construction, encore peu fonctionnel"><span data-i18n="btnMarketLbl">🏛️ Marché</span><span class="betaTag">BETA</span></button>
       </div>
     </div>
 
     <div class="sideGroup">
       <div class="sideGroupLabel" data-i18n="sideGroupCommunaute">Communauté</div>
       <div id="communityBar">
-        <a id="btnDiscord" href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">💬 Discord</a>
         <button id="btnWiki"><span data-i18n="btnWiki">📖 Wiki</span><span class="contentNewBadge" id="newBadgeWiki">1</span></button>
-        <button id="btnPatch"><span data-i18n="btnPatch">📜 Notes de version</span><span id="patchBadge" aria-live="polite"></span></button>
-        <!-- Donation (2026-07-16, demande explicite : "ajoute un bouton Donation bloque cadenas") --
-             déverrouillée le 2026-07-21 (demande explicite : "ouvre soutenir et on y met les page de
-             donation dedans") : ouvre donation/index.html (page autonome déjà réelle, lien PayPal.me
-             configuré, déplacée dans son propre dossier puis renommée donation.html -> index.html le
-             2026-07-21 pour une URL propre, voir openDonationPanel() (game-supabase.js)) -->
-        <button id="btnDonation" data-i18n="btnDonation">💖 Soutenir</button>
       </div>
     </div>
 
@@ -478,12 +469,7 @@
           <span id="userPseudo"></span>
           <span id="userEmail"></span>
         </div>
-        <button id="btnAccount" data-i18n="btnAccount">👤 Mon compte</button>
         <button id="btnLinkAccount" data-i18n="btnLinkAccount" style="display:none">🔗 Lier un compte</button>
-        <div id="adminBox" style="display:none">
-          <button id="btnAdmin" data-i18n="btnAdmin">🛠️ Admin</button>
-        </div>
-        <button id="btnLogout" data-i18n="btnLogout">🚪 Déconnexion</button>
         <span id="saveStatus"></span>
         <div id="uuidRow" style="display:none">
           <button id="btnCopyUuid" title="Cliquer pour copier ton UUID">
@@ -859,11 +845,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=591"></script>
+<script src="meta/patch-notes-data.js?v=594"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=591"></script>
+<script src="build/source.min.js?v=594"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le

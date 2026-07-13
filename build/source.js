@@ -215,14 +215,8 @@ const I18N_RESOURCES = {
       "admin.patchnotes.no_pending_reports": "Aucun signalement en attente.",
       "admin.patchnotes.no_removed_comments": "Aucun commentaire retiré.",
       "admin.patchnotes.pending_reports_title": "Signalements en attente",
-      "admin.patchnotes.publish_btn": "Publier sur Discord",
-      "admin.patchnotes.publish_hint": "La dernière version est sélectionnée par défaut. Chaque ligne garde son icône (🆕 nouveauté, 🔄 changement, 🛠️ correctif, 🔒 faille corrigée).",
-      "admin.patchnotes.publish_sub": "Poste le contenu de la note choisie dans le salon Discord \"log général\" (même webhook que les autres actions admin).",
-      "admin.patchnotes.publish_title": "Publier une note de version sur Discord",
-      "admin.patchnotes.published_toast": "Note publiée sur Discord ✓",
       "admin.patchnotes.removed_comments_title": "Commentaires retirés (restaurables)",
       "admin.patchnotes.restore_btn": "Restaurer",
-      "admin.patchnotes.version_label": "📜 Version :",
       "admin.players.ap_title": "PA (Puissance d'Attaque)",
       "admin.players.best_kpm_title": "Record personnel de kills/min (à vie)",
       "admin.players.dp_title": "PD (Puissance de Défense)",
@@ -623,6 +617,7 @@ const I18N_RESOURCES = {
       "inventory.action_drop": "Jeter",
       "inventory.action_equip": "Équiper",
       "inventory.action_sell_all": "Vendre tout ({{n}})",
+      "inventory.action_sell_market": "🏛️ Vendre au marché",
       "inventory.action_sell_one": "Vendre 1 ({{n}})",
       "inventory.action_store_in_chest": "📦 Ranger au coffre (1)",
       "inventory.action_to_opt": "Mettre en optimisation",
@@ -639,6 +634,8 @@ const I18N_RESOURCES = {
       "inventory.chest_zoom_enlarge": "🔍 Agrandir (5/ligne)",
       "inventory.chest_zoom_shrink": "🔎 Réduire (8/ligne)",
       "inventory.compendium_equip_and_optimize": "Équiper et optimiser",
+      "inventory.compendium_protected_hint": "📖 Objet protégé par le Compendium — ne peut être ni jeté ni vendu (nécessaire pour la collection de la zone).",
+      "inventory.confirm_drop": "Jeter définitivement {{name}} ? Cette action est irréversible.",
       "inventory.confirm_sell_all": "Vendre tout le tas pour {{n}} silver ?",
       "inventory.confirm_sell_one": "Vendre 1 objet pour {{n}} silver ?",
       "inventory.eq_sum_ap_prefix": "PA ",
@@ -1159,14 +1156,8 @@ const I18N_RESOURCES = {
       "admin.patchnotes.no_pending_reports": "No pending reports.",
       "admin.patchnotes.no_removed_comments": "No removed comments.",
       "admin.patchnotes.pending_reports_title": "Pending reports",
-      "admin.patchnotes.publish_btn": "Publish to Discord",
-      "admin.patchnotes.publish_hint": "Latest version selected by default. Each line keeps its icon (🆕 new, 🔄 change, 🛠️ fix, 🔒 patched exploit).",
-      "admin.patchnotes.publish_sub": "Posts the chosen note into the \"general log\" Discord channel (same webhook as other admin actions).",
-      "admin.patchnotes.publish_title": "Publish a patch note to Discord",
-      "admin.patchnotes.published_toast": "Note published to Discord ✓",
       "admin.patchnotes.removed_comments_title": "Removed comments (restorable)",
       "admin.patchnotes.restore_btn": "Restore",
-      "admin.patchnotes.version_label": "📜 Version:",
       "admin.players.ap_title": "AP (Attack Power)",
       "admin.players.best_kpm_title": "Personal kills/min record (lifetime)",
       "admin.players.dp_title": "DP (Defense Power)",
@@ -1567,6 +1558,7 @@ const I18N_RESOURCES = {
       "inventory.action_drop": "Drop",
       "inventory.action_equip": "Equip",
       "inventory.action_sell_all": "Sell all ({{n}})",
+      "inventory.action_sell_market": "🏛️ Sell on the market",
       "inventory.action_sell_one": "Sell 1 ({{n}})",
       "inventory.action_store_in_chest": "📦 Store in chest (1)",
       "inventory.action_to_opt": "Load into enhancement",
@@ -1583,6 +1575,8 @@ const I18N_RESOURCES = {
       "inventory.chest_zoom_enlarge": "🔍 Enlarge (5/row)",
       "inventory.chest_zoom_shrink": "🔎 Shrink (8/row)",
       "inventory.compendium_equip_and_optimize": "Equip and optimize",
+      "inventory.compendium_protected_hint": "📖 Compendium-protected item — cannot be dropped or sold (needed for the zone's collection).",
+      "inventory.confirm_drop": "Permanently drop {{name}}? This cannot be undone.",
       "inventory.confirm_sell_all": "Sell the whole stack for {{n}} silver?",
       "inventory.confirm_sell_one": "Sell 1 item for {{n}} silver?",
       "inventory.eq_sum_ap_prefix": "AP ",
@@ -9214,9 +9208,11 @@ function showItemMenu(px, py, data) {
     toOpt: i18next.t('inventory:inventory.action_to_opt'),
     sell1: n => i18next.t('inventory:inventory.action_sell_one', { n }),
     sellAll: n => i18next.t('inventory:inventory.action_sell_all', { n }),
+    sellMarket: i18next.t('inventory:inventory.action_sell_market'),
     drop: i18next.t('inventory:inventory.action_drop'),
     confirmSell1: n => i18next.t('inventory:inventory.confirm_sell_one', { n }),
     confirmSellAll: n => i18next.t('inventory:inventory.confirm_sell_all', { n }),
+    confirmDrop: name => i18next.t('inventory:inventory.confirm_drop', { name: tr(name) }),
   };
   if (data.equipped) {
     addPopBtn(pop, L.unequip, () => { unequip(data.slotId); });
@@ -9233,6 +9229,9 @@ function showItemMenu(px, py, data) {
       addPopBtn(pop, L.sell1(fmt(s.val)), () => { if (confirm(L.confirmSell1(fmt(s.val)))) sellOne(data.invIndex); });
     if ((s.kind === 'trash' || s.kind === 'material') && s.qty > 1)
       addPopBtn(pop, L.sellAll(fmt(s.val*s.qty)), () => { if (confirm(L.confirmSellAll(fmt(s.val*s.qty)))) sellStack(data.invIndex); });
+    
+    if (s.kind === 'material' || s.kind === 'gear' || s.kind === 'jackpot')
+      addPopBtn(pop, L.sellMarket, () => { openMarketSellFor(s); });
     
     if (s.stackable && s.qty > 1) {
       pop.insertAdjacentHTML('beforeend', `<div class="ipChestDeposit">
@@ -9254,11 +9253,14 @@ function showItemMenu(px, py, data) {
         if (!veliaChestStore(data.invIndex, 1)) floatTxt(P.x, P.y, 100, i18next.t('inventory:inventory.chest_full'), { hurt:true });
       });
     }
-    addPopBtn(pop, L.drop, () => { dropItem(data.invIndex); });
+    
+    addPopBtn(pop, L.drop, () => { if (confirm(L.confirmDrop(s.name))) dropItem(data.invIndex); });
   } else if (data.compIndex != null) {
     
     addPopBtn(pop, L.equip, () => { equipFromCompendium(data.compIndex); });
     addPopBtn(pop, L.toOpt, () => { optTarget = { loc:'compendium', key:data.compIndex }; });
+    
+    pop.insertAdjacentHTML('beforeend', `<div class="ipDesc ipCompProtectedHint">${i18next.t('inventory:inventory.compendium_protected_hint')}</div>`);
   }
   pop.style.display = 'block';
   const r = pop.getBoundingClientRect();
@@ -12274,6 +12276,11 @@ function cardLayoutAddHandleToH3(cardEl) {
 
 function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
   hostEl.classList.add('cardTabbed');
+
+  const activeLabel = document.createElement('h3');
+  activeLabel.className = 'cardActiveTitle';
+  activeLabel.textContent = cardLayoutTitleLabel(document.getElementById(activeId));
+
   const tabBar = document.createElement('div');
   tabBar.className = 'cardTabBar';
 
@@ -12296,10 +12303,12 @@ function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
   const detachBtn = document.createElement('button');
   detachBtn.className = 'cardDetachBtn';
   detachBtn.dataset.cardDetachHost = hostId;
-  detachBtn.textContent = '↗ ' + ((typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.detach') : '');
+  detachBtn.textContent = '✕';
+  detachBtn.title = (typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.detach') : '';
   tabBar.appendChild(detachBtn);
 
   hostEl.insertBefore(tabBar, hostEl.firstChild);
+  hostEl.insertBefore(activeLabel, tabBar);
 
   const body = document.createElement('div');
   body.className = 'cardHostBody';
@@ -12543,9 +12552,8 @@ function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
   $a('userEmail').textContent = ''; 
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
-  $a('btnLogout').style.display = isGuest() ? 'none' : '';
-  $a('adminBox').style.display = isAdmin() ? '' : 'none';
   
+  $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
   const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminResetEnhBtn = $a('btnAdminResetEnh'); if (adminResetEnhBtn) adminResetEnhBtn.style.display = isAdmin() ? '' : 'none';
@@ -13066,7 +13074,7 @@ async function showPlayerInventoryWindow(userId, displayName) {
   renderInvPane();
 }
 
-$a('btnLeaderboard').onclick = () => openLeaderboard2();
+$a('btnLeaderboardTopbar').onclick = () => openLeaderboard2();
 $a('btnNotifCenter').onclick = openNotifCenter;
 updateNotifBadge();
 $a('btnAchievements').onclick = openAchievements;
@@ -13102,14 +13110,9 @@ function closeDonationPanel() {
   const overlay = $a('donationOverlay');
   if (overlay) overlay.style.display = 'none';
 }
-$a('btnDonation').onclick = openDonationPanel;
 
-$a('btnLeaderboardTopbar').onclick = () => $a('btnLeaderboard').click();
-$a('btnMarketTopbar').onclick = () => $a('btnMarket').click();
-$a('btnPatchTopbar').onclick = () => $a('btnPatch').click();
-$a('btnDonationTopbar').onclick = () => $a('btnDonation').click();
-$a('btnAdminTopbar').onclick = () => $a('btnAdmin').click();
-$a('btnLogoutTopbar').onclick = () => $a('btnLogout').click();
+$a('btnDonationTopbar').onclick = openDonationPanel;
+
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 
@@ -13491,7 +13494,6 @@ async function openAccountPanel() {
     setTimeout(async () => { await sb.auth.signOut(); location.reload(); }, 1500);
   };
 }
-$a('btnAccount').onclick = openAccountPanel;
 
 let cloudSaveInterval = null;
 
@@ -13518,7 +13520,8 @@ $a('btnSignInGoogle').onclick = doSignInGoogle;
 $a('btnSignInGithub').onclick = doSignInGithub;
 $a('btnSignInTwitter').onclick = doSignInTwitter;
 $a('btnClearCacheAuth').onclick = clearGameCache;
-$a('btnLogout').onclick = doLogout;
+
+$a('btnLogoutTopbar').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {
   if (!currentUser) return;
   try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
@@ -14040,7 +14043,7 @@ const TUTORIAL_STEPS = [
     text:{fr:'Voici où apparaissent les quêtes que tu suis, avec leur progression en direct — pratique pour ne rien oublier.', en:'This is where the quests you track appear, with live progress — handy so you never forget them.'},
     before: () => { tutTrackerWasOn = S.questTrackerOn; if (!S.questTrackerOn) { S.questTrackerOn = true; tutTrackerForced = true; renderQuestTrackerWidget(); } },
     after: () => { if (tutTrackerForced) { S.questTrackerOn = tutTrackerWasOn; tutTrackerForced = false; renderQuestTrackerWidget(); } } },
-  { target:'#btnLeaderboard', placement:'bottom',
+  { target:'#btnLeaderboardTopbar', placement:'bottom',
     title:{fr:'Le classement',en:'The leaderboard'},
     text:{fr:'Compare ton silver, ton gearscore et ta meilleure zone atteinte à celles des autres joueurs.', en:'Compare your silver, gearscore and best zone reached to other players.'} },
   { target:'#btnAchievements', placement:'bottom',
@@ -14049,16 +14052,16 @@ const TUTORIAL_STEPS = [
   { target:'#btnMailbox', placement:'bottom',
     title:{fr:'Le courrier',en:'The mailbox'},
     text:{fr:'200 Loyalties t\'y attendent chaque jour — elles s\'y empilent en permanence et ne se perdent jamais.', en:'200 Loyalties wait for you here every day — they stack up permanently and never get lost.'} },
-  { target:'#btnPatch', placement:'bottom',
+  { target:'#btnPatchTopbar', placement:'bottom',
     title:{fr:'Les notes de version',en:'Patch notes'},
     text:{fr:'Retrouve ici tout ce qui change à chaque mise à jour du jeu.', en:'Find everything that changes with each game update here.'} },
-  { target:'#btnMarket', placement:'bottom',
+  { target:'#btnMarketTopbar', placement:'bottom',
     title:{fr:'Le marché (BETA)',en:'The market (BETA)'},
     text:{fr:'Achète et vends du gear et des matériaux avec les autres joueurs. Cette fonctionnalité est encore en BETA, des ajustements sont à prévoir.', en:'Buy and sell gear and materials with other players. This feature is still in BETA, adjustments are to be expected.'} },
   { target:'#chatWidget', placement:'left',
     title:{fr:'Discute avec les autres joueurs',en:'Chat with other players'},
     text:{fr:'Mondial, Trade, Annonces... échange avec la communauté directement depuis le jeu.', en:'World, Trade, Announcements... chat with the community right from the game.'} },
-  { target:'#btnLogout', placement:'bottom',
+  { target:'#btnLogoutTopbar', placement:'bottom',
     title:{fr:'La déconnexion',en:'Logging out'},
     text:{fr:'Ta progression est sauvegardée automatiquement dans le cloud — tu peux te déconnecter puis te reconnecter sans rien perdre.', en:'Your progress is saved automatically in the cloud — you can log out and log back in without losing anything.'} },
   { target:'#uuidRow', placement:'bottom',
@@ -14271,9 +14274,6 @@ function computePatchPages() {
 
 function updatePatchBadge() {
   const n = unreadPatchCount();
-  const badge = $a('patchBadge');
-  if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
-  $a('btnPatch').classList.toggle('hasNew', n > 0);
   
   const badgeTopbar = $a('patchBadgeTopbar');
   if (badgeTopbar) { badgeTopbar.textContent = n; badgeTopbar.classList.toggle('show', n > 0); }
@@ -14462,7 +14462,7 @@ function renderPatchNotesPanel() {
   });
 }
 
-$a('btnPatch').onclick = () => {
+$a('btnPatchTopbar').onclick = () => {
   if (typeof openPatchNotesReact === 'function' && $a('patchNotesModalRoot')) openPatchNotesReact();
   else renderPatchNotesPanel();
 };
@@ -15184,7 +15184,6 @@ const ADMIN_SECTIONS = [
     { id:'tutorials', icon:'🎓', label:{fr:'Tutoriels d\'objets',en:'Item tutorials'}, render:renderAdminItemTutorials },
     { id:'onboarding', icon:'🧭', label:{fr:'Onboarding',en:'Onboarding'}, render:renderAdminOnboarding },
     { id:'companions', icon:'🐾', label:{fr:'Compagnons',en:'Companions'}, render:renderAdminCompanions },
-    { id:'patchnotes', icon:'📜', label:{fr:'Notes de version → Discord',en:'Patch notes → Discord'}, render:renderAdminPatchNotesDiscord },
     { id:'patchnotesmod', icon:'🚩', label:{fr:'Notes de version : modération',en:'Patch notes: moderation'}, render:renderAdminPatchNotesModeration },
   ]},
   { cat:'me', label:{fr:'Compte (Moi)',en:'Account (Me)'}, items:[
@@ -16206,48 +16205,6 @@ function renderAdminBoss(el) {
   };
 }
 
-const PATCH_NOTE_DISCORD_TYPE_ICON = { new:'🆕', change:'🔄', fix:'🛠️', exploit:'🔒' };
-
-function formatPatchNoteForDiscord(note, lang) {
-  lang = (note[lang] ? lang : null) || 'fr';
-  const name = (note.name && (note.name[lang] || note.name.fr)) || note.v;
-  const lines = (note[lang] || note.fr || []).map(l => `${PATCH_NOTE_DISCORD_TYPE_ICON[l.t] || '•'} ${l.tx}`);
-  return {
-    title: `📜 Mise à jour ${note.v} — ${name}`,
-    description: lines.join('\n') || (lang==='fr' ? '(note vide)' : '(empty note)'),
-  };
-}
-
-async function publishPatchNoteToDiscord(version) {
-  if (!isAdmin()) return false;
-  const note = PATCH_NOTES.find(n => n.v === version) || PATCH_NOTES[0];
-  if (!note) return false;
-  const { title, description } = formatPatchNoteForDiscord(note, 'fr');
-  await logToDiscord(title, description, 0xc9a55a);
-  return true;
-}
-
-function renderAdminPatchNotesDiscord(el) {
-  const options = PATCH_NOTES.slice(0, 20).map(n => `<option value="${n.v}">${n.v} — ${n.name.fr}</option>`).join('');
-  el.innerHTML = `
-    <div class="admSection riskSafe">
-      <div class="admSectionTitle">📜 ${i18next.t('admin:admin.patchnotes.publish_title')}</div>
-      <div class="admSectionSub">${i18next.t('admin:admin.patchnotes.publish_sub')}</div>
-      <div class="admBossSpawn">
-        <span>${i18next.t('admin:admin.patchnotes.version_label')}</span>
-        <select id="admPatchNoteSelect">${options}</select>
-        <button id="btnAdmPublishPatchNote">🚀 ${i18next.t('admin:admin.patchnotes.publish_btn')}</button>
-      </div>
-      <div class="admHint">${i18next.t('admin:admin.patchnotes.publish_hint')}</div>
-    </div>`;
-  $a('btnAdmPublishPatchNote').onclick = async () => {
-    if (!isAdmin()) return;
-    const version = $a('admPatchNoteSelect').value;
-    const ok = await publishPatchNoteToDiscord(version);
-    floatTxt(P.x, P.y, 100, ok ? i18next.t('admin:admin.patchnotes.published_toast') : i18next.t('admin:admin.common.failed'), { gold:ok, hurt:!ok });
-  };
-}
-
 function renderAdminPatchNotesModeration(el) {
   el.innerHTML = `
     <div class="admSection">
@@ -16438,7 +16395,8 @@ async function openAdminPanel() {
   overlay.classList.add('open');
   openAdminSection('overview', 'dashboard');
 }
-$a('btnAdmin').onclick = openAdminPanel;
+
+$a('btnAdminTopbar').onclick = openAdminPanel;
 
 function openTesterPanel() {
   if (!myIsTester) return;
@@ -17251,7 +17209,7 @@ function marketRequireAuth() {
   return true;
 }
 
-$a('btnMarket').onclick = async () => {
+$a('btnMarketTopbar').onclick = async () => {
   if (!marketRequireAuth()) return;
   if (!(typeof isAdmin === 'function' && isAdmin())) {
     try {
@@ -17268,6 +17226,35 @@ $a('btnMarket').onclick = async () => {
   if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('market');
 };
 $a('closeMarket').onclick = () => $a('marketOverlay').classList.remove('open');
+
+async function openMarketSellFor(item) {
+  if (!marketRequireAuth()) return;
+  if (!(typeof isAdmin === 'function' && isAdmin())) {
+    try {
+      const { data } = await sb.rpc('get_market_open');
+      if (data === false) { alert(i18next.t('market:market.closed_for_maintenance')); return; }
+    } catch(e) {}
+  }
+  $a('marketOverlay').classList.add('open');
+  cmActiveCat = 'all'; cmDrilldownName = null;
+  await refreshCommonMarket();
+  const kind = item.kind, enhLv = item.enhLv || 0;
+  const g = cmGroupForExactItem(item.name, kind, enhLv);
+  cmSelectedKey = cmItemKey(kind, item.name, enhLv);
+  renderCmListingsList();
+  renderCmDetailPanel(g);
+  const offerBtn = $a('cmSellOfferBtn');
+  const offerForm = $a('cmSellOfferForm');
+  if (offerBtn && offerForm && !offerForm.classList.contains('open')) offerBtn.click();
+  if (typeof maybeQueueTutorialById === 'function') maybeQueueTutorialById('market');
+}
+
+function cmGroupForExactItem(name, kind, enhLv) {
+  const items = cmListings.filter(l => l.item_name === name && l.item_kind === kind &&
+    ((l.item_snapshot && l.item_snapshot.enhLv) || 0) === (enhLv || 0));
+  const best = items.length ? items.reduce((a,b) => a.price < b.price ? a : b) : null;
+  return { name, kind, lv: enhLv, best, items };
+}
 let marketMouseDownOnBackdrop = false;
 $a('marketOverlay').addEventListener('mousedown', e => { marketMouseDownOnBackdrop = (e.target.id === 'marketOverlay'); });
 $a('marketOverlay').addEventListener('click', e => { if (e.target.id === 'marketOverlay' && marketMouseDownOnBackdrop) $a('marketOverlay').classList.remove('open'); });

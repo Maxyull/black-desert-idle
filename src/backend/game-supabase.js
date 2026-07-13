@@ -174,9 +174,9 @@ function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
   $a('userEmail').textContent = ''; // email retiré de l'affichage (demande du 2026-07-04)
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
-  $a('btnLogout').style.display = isGuest() ? 'none' : '';
-  $a('adminBox').style.display = isAdmin() ? '' : 'none';
-  // raccourci header (2026-07-13) : montré/caché en même temps que #adminBox, même condition isAdmin()
+  // 2026-07-13 : #btnLogout/#adminBox (sidebar) retirés, doublons du header -- #btnLogoutTopbar/
+  // #btnAdminTopbar sont désormais les SEULS éléments à afficher/masquer.
+  $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
   const adminMaxEnhBtn = $a('btnAdminMaxEnh'); if (adminMaxEnhBtn) adminMaxEnhBtn.style.display = isAdmin() ? '' : 'none';
   const adminResetEnhBtn = $a('btnAdminResetEnh'); if (adminResetEnhBtn) adminResetEnhBtn.style.display = isAdmin() ? '' : 'none';
@@ -838,7 +838,9 @@ async function showPlayerInventoryWindow(userId, displayName) {
 }
 
 // Chat (mondial/trade/annonce + mentions @joueur) -> voir chat.js (charge APRES ce fichier, voir index.html)
-$a('btnLeaderboard').onclick = () => openLeaderboard2();
+// 2026-07-13 : #btnLeaderboard (sidebar) retiré, doublon du raccourci header -- #btnLeaderboardTopbar
+// est désormais le SEUL déclencheur.
+$a('btnLeaderboardTopbar').onclick = () => openLeaderboard2();
 $a('btnNotifCenter').onclick = openNotifCenter;
 updateNotifBadge();
 $a('btnAchievements').onclick = openAchievements;
@@ -890,19 +892,15 @@ function closeDonationPanel() {
   const overlay = $a('donationOverlay');
   if (overlay) overlay.style.display = 'none';
 }
-$a('btnDonation').onclick = openDonationPanel;
-// raccourcis header (2026-07-13, mockup validé, voir CLAUDE.md) : chaque bouton topbar déclenche
-// un .click() sur son équivalent sidebar -- réutilise EXACTEMENT la même fonction (Classement/
-// Marché/Notes de version/Soutenir/Admin/Déconnexion), aucune logique dupliquée. $a(...) est
-// résolu au moment du clic, donc aucune contrainte d'ordre de script : #btnMarket (market.js) et
-// #btnAdmin (admin-panel.js) n'ont pas encore leur .onclick assigné au moment où CE script
-// s'exécute (ils chargent après game-supabase.js), mais c'est sans importance ici.
-$a('btnLeaderboardTopbar').onclick = () => $a('btnLeaderboard').click();
-$a('btnMarketTopbar').onclick = () => $a('btnMarket').click();
-$a('btnPatchTopbar').onclick = () => $a('btnPatch').click();
-$a('btnDonationTopbar').onclick = () => $a('btnDonation').click();
-$a('btnAdminTopbar').onclick = () => $a('btnAdmin').click();
-$a('btnLogoutTopbar').onclick = () => $a('btnLogout').click();
+// 2026-07-13 : #btnDonation (sidebar) retiré, doublon du raccourci header -- #btnDonationTopbar
+// est désormais le SEUL déclencheur.
+$a('btnDonationTopbar').onclick = openDonationPanel;
+// ex-raccourcis header par proxy .click() (2026-07-13, mockup validé, voir CLAUDE.md) RETIRÉS le
+// même jour : #btnLeaderboard/#btnMarket/#btnPatch/#btnDonation/#btnAdmin/#btnLogout (sidebar)
+// n'existent plus (doublons retirés) -- chaque bouton Topbar est câblé DIRECTEMENT sur sa
+// fonction réelle à l'endroit où celle-ci est définie (voir #btnMarketTopbar dans market.js,
+// #btnAdminTopbar dans admin-panel.js, #btnPatchTopbar/#btnLeaderboardTopbar/#btnDonationTopbar/
+// #btnLogoutTopbar dans ce fichier), plus aucune logique de proxy/délégation.
 $a('btnDailyQuests').onclick = openDailyQuests;
 $a('btnMailbox').onclick = openMailbox;
 // bascule Inventaire/Assemblage dans la carte Inventaire (2026-07-06, demande explicite : "on va
@@ -1353,7 +1351,8 @@ async function openAccountPanel() {
     setTimeout(async () => { await sb.auth.signOut(); location.reload(); }, 1500);
   };
 }
-$a('btnAccount').onclick = openAccountPanel;
+// 2026-07-13 : #btnAccount (sidebar) retiré, doublon du header -- #btnAccountTopbar est câblé
+// directement en HTML (onclick="openAccountPanel()", index.dev.html), pas besoin de le refaire ici.
 
 let cloudSaveInterval = null;
 /** Démarre l'autosave cloud périodique (30s) et sur fermeture de page, remplace tout intervalle déjà actif. */
@@ -1384,7 +1383,9 @@ $a('btnSignInGoogle').onclick = doSignInGoogle;
 $a('btnSignInGithub').onclick = doSignInGithub;
 $a('btnSignInTwitter').onclick = doSignInTwitter;
 $a('btnClearCacheAuth').onclick = clearGameCache;
-$a('btnLogout').onclick = doLogout;
+// 2026-07-13 : #btnLogout (sidebar) retiré, doublon du header -- #btnLogoutTopbar est désormais
+// le SEUL déclencheur.
+$a('btnLogoutTopbar').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {
   if (!currentUser) return;
   try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
@@ -1618,6 +1619,29 @@ $a('btnCollapseMenu').onclick = () => {
   applyMenuCollapse();
 };
 applyMenuCollapse();
+
+// ---------- replier/déplier la colonne de widgets flottants à droite, persisté ----------
+// même mécanisme exact que sideMenuCollapsed/#btnCollapseMenu juste au-dessus (2026-07-13,
+// demande explicite) -- toggle .collapsed sur #sideRight, .layout:has(#sideRight.collapsed)
+// (styles.css) rétrécit la piste de grille correspondante.
+let sideRightCollapsed = isMobileViewport();
+try {
+  const savedRight = localStorage.getItem('velia-idle-right-collapsed');
+  if (savedRight !== null) sideRightCollapsed = savedRight === '1';
+} catch(e) {}
+/** Applique l'état replié/déplié (persisté) de la colonne de widgets droite au DOM. */
+function applyRightCollapse() {
+  $a('sideRight').classList.toggle('collapsed', sideRightCollapsed);
+  // sens de flèche inversé par rapport au bouton gauche (▶ replier / ◀ déplier) -- la colonne
+  // est à droite, donc "replier" pousse le contenu vers la droite.
+  $a('btnCollapseRight').textContent = sideRightCollapsed ? '◀' : '▶';
+}
+$a('btnCollapseRight').onclick = () => {
+  sideRightCollapsed = !sideRightCollapsed;
+  try { localStorage.setItem('velia-idle-right-collapsed', sideRightCollapsed ? '1' : '0'); } catch(e) {}
+  applyRightCollapse();
+};
+applyRightCollapse();
 
 // (NAME_EN et tr() sont maintenant déclarés en haut du script)
 
@@ -1988,7 +2012,7 @@ const TUTORIAL_STEPS = [
     text:{fr:'Voici où apparaissent les quêtes que tu suis, avec leur progression en direct — pratique pour ne rien oublier.', en:'This is where the quests you track appear, with live progress — handy so you never forget them.'},
     before: () => { tutTrackerWasOn = S.questTrackerOn; if (!S.questTrackerOn) { S.questTrackerOn = true; tutTrackerForced = true; renderQuestTrackerWidget(); } },
     after: () => { if (tutTrackerForced) { S.questTrackerOn = tutTrackerWasOn; tutTrackerForced = false; renderQuestTrackerWidget(); } } },
-  { target:'#btnLeaderboard', placement:'bottom',
+  { target:'#btnLeaderboardTopbar', placement:'bottom',
     title:{fr:'Le classement',en:'The leaderboard'},
     text:{fr:'Compare ton silver, ton gearscore et ta meilleure zone atteinte à celles des autres joueurs.', en:'Compare your silver, gearscore and best zone reached to other players.'} },
   { target:'#btnAchievements', placement:'bottom',
@@ -1997,16 +2021,16 @@ const TUTORIAL_STEPS = [
   { target:'#btnMailbox', placement:'bottom',
     title:{fr:'Le courrier',en:'The mailbox'},
     text:{fr:'200 Loyalties t\'y attendent chaque jour — elles s\'y empilent en permanence et ne se perdent jamais.', en:'200 Loyalties wait for you here every day — they stack up permanently and never get lost.'} },
-  { target:'#btnPatch', placement:'bottom',
+  { target:'#btnPatchTopbar', placement:'bottom',
     title:{fr:'Les notes de version',en:'Patch notes'},
     text:{fr:'Retrouve ici tout ce qui change à chaque mise à jour du jeu.', en:'Find everything that changes with each game update here.'} },
-  { target:'#btnMarket', placement:'bottom',
+  { target:'#btnMarketTopbar', placement:'bottom',
     title:{fr:'Le marché (BETA)',en:'The market (BETA)'},
     text:{fr:'Achète et vends du gear et des matériaux avec les autres joueurs. Cette fonctionnalité est encore en BETA, des ajustements sont à prévoir.', en:'Buy and sell gear and materials with other players. This feature is still in BETA, adjustments are to be expected.'} },
   { target:'#chatWidget', placement:'left',
     title:{fr:'Discute avec les autres joueurs',en:'Chat with other players'},
     text:{fr:'Mondial, Trade, Annonces... échange avec la communauté directement depuis le jeu.', en:'World, Trade, Announcements... chat with the community right from the game.'} },
-  { target:'#btnLogout', placement:'bottom',
+  { target:'#btnLogoutTopbar', placement:'bottom',
     title:{fr:'La déconnexion',en:'Logging out'},
     text:{fr:'Ta progression est sauvegardée automatiquement dans le cloud — tu peux te déconnecter puis te reconnecter sans rien perdre.', en:'Your progress is saved automatically in the cloud — you can log out and log back in without losing anything.'} },
   { target:'#uuidRow', placement:'bottom',
@@ -2281,9 +2305,8 @@ function computePatchPages() {
 /** Met à jour la pastille de patch notes non lues (bouton + bandeau interne au panneau, visible seulement si le panneau est ouvert). */
 function updatePatchBadge() {
   const n = unreadPatchCount();
-  const badge = $a('patchBadge');
-  if (badge) { badge.textContent = n; badge.classList.toggle('show', n > 0); }
-  $a('btnPatch').classList.toggle('hasNew', n > 0);
+  // 2026-07-13 : #patchBadge/#btnPatch (sidebar) retirés, doublons du header -- seuls
+  // #patchBadgeTopbar/#btnPatchTopbar restent (ci-dessous).
   // raccourci header (2026-07-13) : même compteur, badge superposé sur #btnPatchTopbar
   const badgeTopbar = $a('patchBadgeTopbar');
   if (badgeTopbar) { badgeTopbar.textContent = n; badgeTopbar.classList.toggle('show', n > 0); }
@@ -2512,7 +2535,9 @@ function renderPatchNotesPanel() {
 // 4e exception React, voir CLAUDE.md §7) -- karma/commentaires/recherche/filtres/vue controverse,
 // même palette que la maquette fournie. renderPatchNotesPanel() (ci-dessus) reste le repli HTML si
 // React est indisponible, comme pour le Compendium/le modal de reconnexion.
-$a('btnPatch').onclick = () => {
+// 2026-07-13 : #btnPatch (sidebar) retiré, doublon du raccourci header -- #btnPatchTopbar est
+// désormais le SEUL déclencheur, câblé directement sur le panneau (plus de proxy .click()).
+$a('btnPatchTopbar').onclick = () => {
   if (typeof openPatchNotesReact === 'function' && $a('patchNotesModalRoot')) openPatchNotesReact();
   else renderPatchNotesPanel();
 };
