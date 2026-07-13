@@ -3485,3 +3485,87 @@
     .ncSearchRow { padding:8px 12px 0; }
     .ncList { padding:8px 12px; }
   }
+
+  /* =====================================================================
+     Refonte panneau "Mon compte" (2026-07-13, mockup validé par l'utilisateur
+     dans la session de conception, voir CLAUDE.md section mockups). Palette
+     OFFICIELLE (CLAUDE.md §29) utilisée ici EN DUR -- volontairement PAS les
+     tokens --s1/--dbBorder/--gold2 de la refonte Zone/Boss (CLAUDE.md §32-33,
+     thème doré Cinzel distinct) : le mockup validé pour CE panneau utilise
+     explicitement la palette §29 (fonds #0e1422/#131a29, bordures #263049,
+     accents #d4a955/#6fdc6f/#e8c876/#c0503c). #infoBox (coque partagée avec
+     Wiki/Compendium/Succès) reste inchangé -- ces classes sont scopées au
+     contenu du panneau Compte uniquement, additif, aucune règle existante
+     retirée. */
+  .acctIdentity { display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .acctAvatar {
+    width:48px; height:48px; border-radius:50%; background:#131a29; border:1px solid #263049;
+    display:flex; align-items:center; justify-content:center; font-size:22px; flex-shrink:0;
+  }
+  .acctIdentityInfo { min-width:0; }
+  .acctNameRow { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .acctName { font-size:15px; font-weight:bold; color:#f0e8d0; }
+  .acctTierBadge {
+    font-size:10px; font-weight:bold; padding:2px 8px; border-radius:20px;
+    background:color-mix(in srgb, var(--tierColor,#d4a955) 20%, transparent);
+    border:1px solid var(--tierColor,#d4a955); color:var(--tierColor,#d4a955);
+    text-transform:uppercase; letter-spacing:.05em;
+  }
+  .acctEmail { font-size:11px; color:#8a95b3; margin-top:2px; }
+
+  .acctCard {
+    background:#131a29; border:1px solid #263049; border-radius:10px;
+    padding:12px 14px; margin-bottom:12px;
+  }
+  .acctCard h3 {
+    font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:#d4a955;
+    margin:0 0 10px; font-family:inherit;
+  }
+  .acctCard input[type="text"] {
+    background:#0e1422; border:1px solid #263049; color:#c7d0e6; border-radius:6px;
+    padding:7px 10px; font-size:12px; width:100%; box-sizing:border-box;
+  }
+  .acctCard input[type="text"]:focus { outline:none; border-color:#d4a955; }
+  .acctCard button { border-radius:6px; }
+
+  .acctGrid { display:grid; gap:10px; }
+  .acctGrid4 { grid-template-columns:repeat(4,1fr); }
+  .acctGrid3 { grid-template-columns:repeat(3,1fr); }
+  .acctGrid2 { grid-template-columns:repeat(2,1fr); }
+  .acctStat { display:flex; flex-direction:column; gap:3px; min-width:0; }
+  .acctStatLabel { font-size:9.5px; color:#8a95b3; text-transform:uppercase; letter-spacing:.04em; }
+  .acctStatVal { font-size:15px; font-weight:bold; color:#c7d0e6; }
+  .acctStatValSm { font-size:12px; }
+
+  .acctDivider { border-top:1px solid #1c2436; margin:12px 0; }
+  .acctRankRow {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    font-size:12px; color:#c7d0e6; cursor:pointer; padding:6px 8px; border-radius:6px;
+  }
+  .acctRankRow:hover { background:#0e1422; }
+  .acctRankVal { color:#d4a955; font-weight:bold; }
+
+  .acctLinkRow {
+    display:flex; align-items:center; justify-content:space-between; gap:8px;
+    background:#0e1422; border:1px solid #1c2436; border-radius:8px; padding:8px 10px; font-size:11.5px;
+  }
+  .acctLinkRow > span:first-child { color:#c7d0e6; }
+  .acctLinkRow .mHint { margin:0; font-size:10.5px; color:#6fdc6f; }
+
+  .acctDangerBtn {
+    background:transparent; border:1px solid #c0503c; color:#e08070;
+  }
+  .acctDangerBtn:hover { background:rgba(192,80,60,.14); }
+  .acctDangerBtn:disabled { opacity:.4; cursor:not-allowed; }
+  .acctDangerBox {
+    margin-top:10px; background:#1a1010; border:1px solid #c0503c; border-radius:8px; padding:12px;
+  }
+  .acctDangerWarning { color:#e08070; font-weight:bold; font-size:12px; margin:0 0 8px; }
+  .acctDangerBtnRow { display:flex; gap:8px; margin-top:8px; }
+  .acctDangerBtnRow button { flex:1; }
+
+  @media (max-width:600px) {
+    .acctGrid4, .acctGrid3 { grid-template-columns:repeat(2,1fr); }
+    .acctGrid2 { grid-template-columns:1fr; }
+    .acctIdentity { flex-wrap:wrap; }
+  }

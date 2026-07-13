@@ -419,6 +419,7 @@ async function onAuthedInner(user) {
   refreshMyTesterStatus();
   refreshLiveLootRates(); // charge un éventuel override admin des taux de loot (game_config)
   await loadCloudSave();
+  if (typeof updateLoginStreak === 'function') updateLoginStreak(); // S.lastActiveDay/S.loginStreak (game-core.js) — APRÈS le chargement de la sauvegarde, pas avant
   startAutoCloudSave();
   heartbeatPresence();
   refreshOnlineCounter();
@@ -1122,7 +1123,22 @@ refreshRegisteredCounter();
 setInterval(refreshRegisteredCounter, 5 * 60000);
 
 // ---------- panneau "Mon compte" : identité + parrainage (comptes vérifiés uniquement) ----------
-/** Ouvre le panneau "Mon compte" (pseudo, liaison Discord/Google/GitHub/Twitter, code de parrainage + liste des filleuls). Version simplifiée (cache navigateur uniquement) pour un invité. */
+/** @param {string} iso - date ISO. @returns {string} date formatée dans la locale du jeu (backend.common.date_locale), '—' si absente/invalide. */
+function acctFmtDate(iso) {
+  if (!iso) return '—';
+  const t = Date.parse(iso);
+  if (Number.isNaN(t)) return '—';
+  return new Date(t).toLocaleDateString(i18next.t('backend:backend.common.date_locale'), { year:'numeric', month:'long', day:'numeric' });
+}
+/** Calcule le rang du joueur courant dans la catégorie Gearscore du classement public (réutilise lb2ComputeYourRankInfo, même fetch que openLeaderboard2()). @returns {?{rank:number,total:number}} null si non classé/erreur réseau. */
+async function acctFetchGsRank() {
+  try {
+    const { data, error } = await sb.from('player_stats').select('*').limit(500);
+    if (error || !data) return null;
+    return lb2ComputeYourRankInfo(data, 'gs', currentUser.id);
+  } catch(e) { return null; }
+}
+/** Ouvre le panneau "Mon compte" refonte en cartes (identité/palier, progression, rang, connexion+streak, pseudo, sécurité, comptes liés, parrainage, maintenance/suppression). Version simplifiée (cache navigateur uniquement) pour un invité. */
 async function openAccountPanel() {
   if (!sb || !currentUser) return;
   if (isGuest()) {
@@ -1150,55 +1166,124 @@ async function openAccountPanel() {
   const hasGoogle = !!providerIdentity(currentUser, 'google');
   const hasGithub = !!providerIdentity(currentUser, 'github');
   const hasTwitter = !!providerIdentity(currentUser, 'twitter');
+  const hasEmailAuth = !!providerIdentity(currentUser, 'email'); // §6 du brief : bloc Sécurité (mot de passe) seulement pour un compte email+mdp, pas un compte 100% OAuth
+
+  const tier = (typeof gearTierForZone === 'function') ? gearTierForZone(zoneIdx) : null;
+  const tierLabel = tier ? (tier.label[LANG] || tier.label.fr) : '';
 
   const html = `
-    <div class="admSummary">${i18next.t('backend:backend.account.summary_label')} : <b>${currentUser.email || '—'}</b></div>
+    <div class="acctIdentity">
+      <div class="acctAvatar">👤</div>
+      <div class="acctIdentityInfo">
+        <div class="acctNameRow">
+          <span class="acctName">${escapeHtml(myPseudo || '?')}</span>
+          ${tier ? `<span class="acctTierBadge" style="--tierColor:${tier.color}">⬥ ${escapeHtml(tierLabel)}</span>` : ''}
+        </div>
+        <div class="acctEmail">${escapeHtml(currentUser.email || '—')}</div>
+      </div>
+    </div>
 
-    <h3>${i18next.t('backend:backend.account.nickname_title')}</h3>
-    <p class="mHint">${i18next.t('backend:backend.account.nickname_hint')}</p>
-    <input type="text" id="pseudoInput" value="${myPseudo || ''}" maxlength="20">
-    <button id="btnSavePseudo">${i18next.t('backend:backend.account.save_button')}</button>
-    <div id="pseudoMsg"></div>
+    <div class="acctCard">
+      <h3>📈 ${i18next.t('backend:backend.account.progression_title')}</h3>
+      <div class="acctGrid acctGrid4">
+        <div class="acctStat"><span class="acctStatLabel">${i18next.t('backend:backend.account.level_label')}</span><span class="acctStatVal">${S.lvl}</span></div>
+        <div class="acctStat"><span class="acctStatLabel">${i18next.t('backend:backend.account.gearscore_label')}</span><span class="acctStatVal">${Math.round(S.bestGearscore||0)}</span></div>
+        <div class="acctStat"><span class="acctStatLabel">${i18next.t('backend:backend.account.best_silver_hour_label')}</span><span class="acctStatVal">${fmt(S.bestSilverPerHour||0)}/h</span></div>
+        <div class="acctStat"><span class="acctStatLabel">${i18next.t('backend:backend.account.member_since_label')}</span><span class="acctStatVal acctStatValSm">${acctFmtDate(currentUser.created_at)}</span></div>
+      </div>
+      <div class="acctDivider"></div>
+      <div class="acctRankRow" id="acctRankRow">🏆 ${i18next.t('backend:backend.account.rank_gs_label')} <span id="acctRankVal" class="acctRankVal">${i18next.t('backend:backend.account.rank_loading')}</span></div>
+    </div>
 
-    <h3>💬 Discord</h3>
-    ${hasDiscord
-      ? `<p class="mHint">${i18next.t('backend:backend.account.discord_connected')}</p>`
-      : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${i18next.t('backend:backend.account.discord_connect_button')}</button>`}
+    <div class="acctCard">
+      <h3>🔌 ${i18next.t('backend:backend.account.connection_title')}</h3>
+      <div class="acctGrid acctGrid3">
+        <div class="acctStat"><span class="acctStatLabel">${i18next.t('backend:backend.account.last_login_label')}</span><span class="acctStatVal acctStatValSm">${acctFmtDate(currentUser.last_sign_in_at)}</span></div>
+        <div class="acctStat"><span class="acctStatLabel">${i18next.t('backend:backend.account.playtime_total_label')}</span><span class="acctStatVal">${fmtHours(S.playtimeSec||0)}</span></div>
+        <div class="acctStat"><span class="acctStatLabel">${i18next.t('backend:backend.account.streak_label')}</span><span class="acctStatVal">🔥 ${i18next.t('backend:backend.account.streak_days', { count: S.loginStreak||0 })}</span></div>
+      </div>
+    </div>
 
-    <h3>🔵 Google</h3>
-    ${hasGoogle
-      ? `<p class="mHint">${i18next.t('backend:backend.account.google_connected')}</p>`
-      : `<button id="btnLinkGoogle" class="googleBtn">🔵 ${i18next.t('backend:backend.account.google_connect_button')}</button>`}
+    <div class="acctCard">
+      <h3>${i18next.t('backend:backend.account.nickname_title')}</h3>
+      <p class="mHint">${i18next.t('backend:backend.account.nickname_hint')}</p>
+      <input type="text" id="pseudoInput" value="${myPseudo || ''}" maxlength="20">
+      <button id="btnSavePseudo">${i18next.t('backend:backend.account.save_button')}</button>
+      <div id="pseudoMsg"></div>
+    </div>
 
-    <h3>🐙 GitHub</h3>
-    ${hasGithub
-      ? `<p class="mHint">${i18next.t('backend:backend.account.github_connected')}</p>`
-      : `<button id="btnLinkGithub" class="githubBtn">🐙 ${i18next.t('backend:backend.account.github_connect_button')}</button>`}
+    ${hasEmailAuth ? `
+    <div class="acctCard">
+      <h3>🔒 ${i18next.t('backend:backend.account.security_title')}</h3>
+      <p class="mHint">${i18next.t('backend:backend.account.change_password_hint')}</p>
+      <button id="btnChangePassword">🔒 ${i18next.t('backend:backend.account.change_password_button')}</button>
+      <div id="changePasswordMsg"></div>
+    </div>` : ''}
 
-    <h3>🐦 Twitter/X</h3>
-    ${hasTwitter
-      ? `<p class="mHint">${i18next.t('backend:backend.account.twitter_connected')}</p>`
-      : `<button id="btnLinkTwitter" class="twitterBtn">🐦 ${i18next.t('backend:backend.account.twitter_connect_button')}</button>`}
+    <div class="acctCard">
+      <h3>${i18next.t('backend:backend.account.linked_accounts_title')}</h3>
+      <div class="acctGrid acctGrid2">
+        <div class="acctLinkRow">
+          <span>💬 Discord</span>
+          ${hasDiscord
+            ? `<span class="mHint">${i18next.t('backend:backend.account.discord_connected')}</span>`
+            : `<button id="btnLinkDiscord" class="discordBtn">🎮 ${i18next.t('backend:backend.account.discord_connect_button')}</button>`}
+        </div>
+        <div class="acctLinkRow">
+          <span>🔵 Google</span>
+          ${hasGoogle
+            ? `<span class="mHint">${i18next.t('backend:backend.account.google_connected')}</span>`
+            : `<button id="btnLinkGoogle" class="googleBtn">🔵 ${i18next.t('backend:backend.account.google_connect_button')}</button>`}
+        </div>
+        <div class="acctLinkRow">
+          <span>🐙 GitHub</span>
+          ${hasGithub
+            ? `<span class="mHint">${i18next.t('backend:backend.account.github_connected')}</span>`
+            : `<button id="btnLinkGithub" class="githubBtn">🐙 ${i18next.t('backend:backend.account.github_connect_button')}</button>`}
+        </div>
+        <div class="acctLinkRow">
+          <span>🐦 Twitter/X</span>
+          ${hasTwitter
+            ? `<span class="mHint">${i18next.t('backend:backend.account.twitter_connected')}</span>`
+            : `<button id="btnLinkTwitter" class="twitterBtn">🐦 ${i18next.t('backend:backend.account.twitter_connect_button')}</button>`}
+        </div>
+      </div>
+    </div>
 
-    <h3>${i18next.t('backend:backend.account.referrals_title')}</h3>
-    <div id="refCodeBox">${code}</div>
-    <button id="btnCopyRefCode">${i18next.t('backend:backend.account.copy_code_button')}</button>
-    <div class="admSummary" style="margin-top:14px">${i18next.t('backend:backend.account.has_code_prompt')}</div>
-    <input type="text" id="refCodeInput" placeholder="${i18next.t('backend:backend.account.referral_code_placeholder')}" maxlength="12">
-    <button id="btnApplyRefCode">${i18next.t('backend:backend.account.apply_button')}</button>
-    <div id="refMsg"></div>
-    <ul class="refRules">${rules.map(r => `<li>${r}</li>`).join('')}</ul>
+    <div class="acctCard">
+      <h3>${i18next.t('backend:backend.account.referrals_title')}</h3>
+      <div id="refCodeBox">${code}</div>
+      <button id="btnCopyRefCode">${i18next.t('backend:backend.account.copy_code_button')}</button>
+      <div class="admSummary" style="margin-top:14px">${i18next.t('backend:backend.account.has_code_prompt')}</div>
+      <input type="text" id="refCodeInput" placeholder="${i18next.t('backend:backend.account.referral_code_placeholder')}" maxlength="12">
+      <button id="btnApplyRefCode">${i18next.t('backend:backend.account.apply_button')}</button>
+      <div id="refMsg"></div>
+      <ul class="refRules">${rules.map(r => `<li>${r}</li>`).join('')}</ul>
 
-    <h3>${i18next.t('backend:backend.account.your_referrals_title')} (<span style="color:var(--gold)">${count}</span>)</h3>
-    <table class="admTable">
-      <thead><tr><th>${i18next.t('backend:backend.common.player_label')}</th><th>${i18next.t('backend:backend.account.level_label')}</th><th>GS</th><th>Silver</th></tr></thead>
-      <tbody>${refRows}</tbody>
-    </table>
+      <h3>${i18next.t('backend:backend.account.your_referrals_title')} (<span style="color:var(--gold)">${count}</span>)</h3>
+      <table class="admTable">
+        <thead><tr><th>${i18next.t('backend:backend.common.player_label')}</th><th>${i18next.t('backend:backend.account.level_label')}</th><th>GS</th><th>Silver</th></tr></thead>
+        <tbody>${refRows}</tbody>
+      </table>
+    </div>
 
-    <h3>🧹 ${i18next.t('backend:backend.account.cache_title')}</h3>
-    <p class="mHint">${i18next.t('backend:backend.account.cache_hint')}</p>
-    <button id="btnClearCache">🧹 ${i18next.t('backend:backend.account.cache_clear_button')}</button>
-
+    <div class="acctCard">
+      <h3>🧹 ${i18next.t('backend:backend.account.maintenance_title')}</h3>
+      <p class="mHint">${i18next.t('backend:backend.account.cache_hint')}</p>
+      <button id="btnClearCache">🧹 ${i18next.t('backend:backend.account.cache_clear_button')}</button>
+      <div class="acctDivider"></div>
+      <button id="btnDeleteAccount" class="acctDangerBtn">🗑️ ${i18next.t('backend:backend.account.delete_account_button')}</button>
+      <div id="acctDeleteConfirmBox" class="acctDangerBox" style="display:none">
+        <p class="acctDangerWarning">⚠️ ${i18next.t('backend:backend.account.delete_account_warning')}</p>
+        <p class="mHint">${i18next.t('backend:backend.account.delete_account_confirm_prompt', { pseudo: escapeHtml(myPseudo || '') })}</p>
+        <input type="text" id="acctDeleteConfirmInput" placeholder="${escapeHtml(i18next.t('backend:backend.account.delete_account_confirm_placeholder'))}">
+        <div class="acctDangerBtnRow">
+          <button id="btnDeleteAccountCancel">${i18next.t('backend:backend.account.delete_account_cancel_button')}</button>
+          <button id="btnDeleteAccountConfirm" class="acctDangerBtn" disabled>${i18next.t('backend:backend.account.delete_account_confirm_button')}</button>
+        </div>
+        <div id="acctDeleteMsg"></div>
+      </div>
+    </div>
   `;
   openInfo(i18next.t('backend:backend.account.panel_title'), html);
   $a('btnClearCache').onclick = clearGameCache;
@@ -1227,6 +1312,45 @@ async function openAccountPanel() {
     const { error } = await sb.rpc('apply_referral_code', { p_code: val });
     if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
     msg.textContent = i18next.t('backend:backend.account.code_applied'); msg.className = 'ok';
+  };
+
+  // rang Gearscore (2026-07-13, carte Progression) — requête réseau supplémentaire, chargée après
+  // coup pour ne jamais bloquer l'ouverture du panneau ; échec réseau/pas encore de ligne
+  // player_stats -> affiche '—' sans planter (même tolérance que le reste de ce panneau).
+  $a('acctRankRow').onclick = () => { lb2Cat = 'gs'; openLeaderboard2(); };
+  acctFetchGsRank().then(info => {
+    const el = $a('acctRankVal');
+    if (!el) return; // panneau refermé entre-temps
+    el.textContent = info ? i18next.t('backend:backend.account.rank_of', { rank: info.rank, total: info.total }) : i18next.t('backend:backend.account.rank_unranked');
+  });
+
+  if (hasEmailAuth) {
+    $a('btnChangePassword').onclick = async () => {
+      const msg = $a('changePasswordMsg');
+      msg.textContent = i18next.t('backend:backend.auth.sending'); msg.className = '';
+      const { error } = await sb.auth.resetPasswordForEmail(currentUser.email, { redirectTo: location.href });
+      if (error) { msg.textContent = error.message; msg.className = 'fail'; return; }
+      msg.textContent = i18next.t('backend:backend.account.change_password_sent'); msg.className = 'ok';
+    };
+  }
+
+  // suppression de compte (2026-07-13, demande explicite, voir supabase/migrations/*_delete_my_account.sql)
+  // — le pseudo retapé doit correspondre EXACTEMENT à myPseudo pour activer le bouton final.
+  const delBox = $a('acctDeleteConfirmBox');
+  const delInput = $a('acctDeleteConfirmInput');
+  const delBtn = $a('btnDeleteAccountConfirm');
+  $a('btnDeleteAccount').onclick = () => { delBox.style.display = 'block'; delInput.value = ''; delBtn.disabled = true; delInput.focus(); };
+  $a('btnDeleteAccountCancel').onclick = () => { delBox.style.display = 'none'; };
+  delInput.addEventListener('input', () => { delBtn.disabled = delInput.value !== (myPseudo || ''); });
+  delBtn.onclick = async () => {
+    if (delInput.value !== (myPseudo || '')) return;
+    const msg = $a('acctDeleteMsg');
+    delBtn.disabled = true;
+    msg.textContent = i18next.t('backend:backend.account.delete_account_deleting'); msg.className = '';
+    const { error } = await sb.rpc('delete_my_account');
+    if (error) { msg.textContent = error.message; msg.className = 'fail'; delBtn.disabled = false; return; }
+    msg.textContent = i18next.t('backend:backend.account.delete_account_success'); msg.className = 'ok';
+    setTimeout(async () => { await sb.auth.signOut(); location.reload(); }, 1500);
   };
 }
 $a('btnAccount').onclick = openAccountPanel;

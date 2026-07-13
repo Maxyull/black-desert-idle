@@ -5028,6 +5028,61 @@
       Math.abs(rightEdge.sx - 796) < 0.01, `sx=${rightEdge.sx}`);
   }
 
+  // Streak de connexion (2026-07-13, panneau "Mon compte" -- voir CLAUDE.md section dédiée) :
+  // updateLoginStreak() (core/game-core.js) compare S.lastActiveDay au jour civil local courant.
+  // 3 cas couverts : jours consécutifs -> +1, gap de 2+ jours -> reset à 1, même jour rejoué deux
+  // fois dans la même session -> pas de double incrément (idempotent).
+  function testUpdateLoginStreakIncrementsOnConsecutiveDays() {
+    if (typeof updateLoginStreak !== 'function' || typeof localDayKey !== 'function') return;
+    const savedStreak = S.loginStreak, savedDay = S.lastActiveDay;
+    try {
+      const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+      S.loginStreak = 4; S.lastActiveDay = localDayKey(yesterday);
+      updateLoginStreak();
+      assert('updateLoginStreak() incrémente le streak quand lastActiveDay = hier', S.loginStreak === 5, `loginStreak=${S.loginStreak}`);
+      assert('updateLoginStreak() met lastActiveDay à aujourd\'hui après incrément', S.lastActiveDay === localDayKey(), `lastActiveDay=${S.lastActiveDay}`);
+    } finally { S.loginStreak = savedStreak; S.lastActiveDay = savedDay; }
+  }
+  function testUpdateLoginStreakResetsOnGapOfTwoOrMoreDays() {
+    if (typeof updateLoginStreak !== 'function' || typeof localDayKey !== 'function') return;
+    const savedStreak = S.loginStreak, savedDay = S.lastActiveDay;
+    try {
+      const threeDaysAgo = new Date(); threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+      S.loginStreak = 12; S.lastActiveDay = localDayKey(threeDaysAgo);
+      updateLoginStreak();
+      assert('updateLoginStreak() remet le streak à 1 après un gap de 2+ jours (pas d\'accumulation frauduleuse)', S.loginStreak === 1, `loginStreak=${S.loginStreak}`);
+      // jamais connecté avant (lastActiveDay=null) -- même résultat : streak=1, pas une exception
+      S.loginStreak = 0; S.lastActiveDay = null;
+      updateLoginStreak();
+      assert('updateLoginStreak() démarre à 1 pour une toute première connexion (lastActiveDay null)', S.loginStreak === 1, `loginStreak=${S.loginStreak}`);
+    } finally { S.loginStreak = savedStreak; S.lastActiveDay = savedDay; }
+  }
+  function testUpdateLoginStreakNoOpSameDayReplayed() {
+    if (typeof updateLoginStreak !== 'function' || typeof localDayKey !== 'function') return;
+    const savedStreak = S.loginStreak, savedDay = S.lastActiveDay;
+    try {
+      S.loginStreak = 7; S.lastActiveDay = localDayKey();
+      updateLoginStreak();
+      updateLoginStreak(); // rejoué deux fois le même jour civil (ex: reload de page)
+      assert('updateLoginStreak() ne s\'incrémente pas deux fois le même jour', S.loginStreak === 7, `loginStreak=${S.loginStreak}`);
+    } finally { S.loginStreak = savedStreak; S.lastActiveDay = savedDay; }
+  }
+  // Garde-fou statique (2026-07-13) : delete_my_account() -- pas de compte de test Supabase dédié
+  // dans cette suite (voir CLAUDE.md section tests), donc pas de vrai appel réseau ici. Vérifie que
+  // le flux client (openAccountPanel) n'active le bouton de suppression finale QUE si le pseudo
+  // retapé correspond EXACTEMENT, même modèle que les autres garde-fous statiques du fichier
+  // (inspection du code source .toString() plutôt qu'un appel réseau réel).
+  function testDeleteAccountConfirmGatedByExactPseudoMatch() {
+    if (typeof openAccountPanel !== 'function') return;
+    const src = openAccountPanel.toString();
+    assert('openAccountPanel() n\'active le bouton de suppression finale que si le pseudo retapé correspond EXACTEMENT à myPseudo',
+      src.includes("delInput.value !== (myPseudo || '')"), `src contient le gate attendu ? ${src.includes("delBtn.disabled")}`);
+    assert('openAccountPanel() appelle bien la RPC delete_my_account (jamais un DELETE direct côté client)',
+      src.includes("sb.rpc('delete_my_account')"));
+    assert('openAccountPanel() déconnecte le client (signOut) après une suppression réussie',
+      src.includes('sb.auth.signOut()'));
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -5290,6 +5345,10 @@
     testCanvasResolutionNeverChangedByMobileCrop();
     testMapCanvasClickToWorldDesktopUniformScale();
     testMapCanvasClickToWorldMobileCoverCrop();
+    testUpdateLoginStreakIncrementsOnConsecutiveDays();
+    testUpdateLoginStreakResetsOnGapOfTwoOrMoreDays();
+    testUpdateLoginStreakNoOpSameDayReplayed();
+    testDeleteAccountConfirmGatedByExactPseudoMatch();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

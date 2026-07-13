@@ -5,7 +5,18 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
-  { v:'V419', d:'24/07/2026 05:00', name:{fr:'Header : raccourcis Classement/Marché/Notes de version/Discord/Soutenir/Admin/Déconnexion', en:'Header: Leaderboard/Market/Patch notes/Discord/Support/Admin/Log out shortcuts'}, fr:[
+  { v:'V420', d:'24/07/2026 07:00', name:{fr:'Panneau "Mon compte" refondu en cartes + streak de connexion + suppression de compte', en:'"My account" panel redesigned into cards + login streak + account deletion'}, fr:[
+      {t:'new', sub:'interface', tx:'Le panneau "Mon compte" est entièrement réorganisé en cartes : identité (pseudo + badge de palier), Progression (niveau/gearscore/meilleur silver-h/membre depuis + rang au classement Gearscore, cliquable), Connexion (dernière connexion/temps de jeu total/streak), puis Pseudo, Sécurité, Comptes liés et Parrainage.'},
+      {t:'new', sub:'compte', tx:'Nouveau : streak de connexion 🔥 — un jour consécutif de connexion l\'augmente, un jour manqué le remet à 1. Affiché dans la carte Connexion.'},
+      {t:'new', sub:'compte', tx:'Nouveau bouton "Changer le mot de passe" (carte Sécurité, visible uniquement pour un compte email/mot de passe) — envoie un email de réinitialisation.'},
+      {t:'new', sub:'securite', tx:'Nouveau : suppression de compte depuis la carte Maintenance. Action irréversible, protégée par une confirmation où il faut retaper son pseudo exact. Supprime toutes les données de jeu liées au compte (sauvegarde, statistiques, classement, historique...) ; le compte Auth lui-même n\'est pas supprimé techniquement (limitation actuelle), mais ne conserve plus aucune progression — équivalent à repartir de zéro.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The "My account" panel is fully reorganized into cards: identity (nickname + tier badge), Progression (level/gearscore/best silver-per-hour/member since + Gearscore leaderboard rank, clickable), Connection (last login/total playtime/streak), then Nickname, Security, Linked accounts and Referral.'},
+      {t:'new', sub:'compte', tx:'New: login streak 🔥 — a consecutive day logged in increases it, a missed day resets it to 1. Shown in the Connection card.'},
+      {t:'new', sub:'compte', tx:'New "Change password" button (Security card, only shown for an email/password account) — sends a password reset email.'},
+      {t:'new', sub:'securite', tx:'New: account deletion from the Maintenance card. Irreversible action, protected by a confirmation requiring your exact nickname to be retyped. Deletes all game data linked to the account (save, stats, leaderboard, history...) ; the Auth account itself is not technically deleted (current limitation), but keeps no progression — equivalent to starting from scratch.'},
+    ] },
+  { v:'V419', d:'24/07/2026 06:00', name:{fr:'Header : raccourcis Classement/Marché/Notes de version/Discord/Soutenir/Admin/Déconnexion', en:'Header: Leaderboard/Market/Patch notes/Discord/Support/Admin/Log out shortcuts'}, fr:[
       {t:'new', sub:'interface', tx:'Le bandeau du haut affiche désormais des icônes de raccourci vers le Classement, le Marché (BETA), les Notes de version, le Discord, la page Soutenir, et — pour les comptes admin — le panneau Admin et la Déconnexion. Le bouton Mon compte affiche maintenant ton pseudo à côté de l\'icône. Les boutons équivalents de la barre latérale restent en place, ce sont de simples raccourcis en plus.'},
     ], en:[
       {t:'new', sub:'interface', tx:'The top bar now shows shortcut icons for the Leaderboard, the Market (BETA), Patch notes, Discord, the Support page, and — for admin accounts — the Admin panel and Log out. The My account button now shows your nickname next to the icon. The equivalent sidebar buttons stay in place, these are just extra shortcuts.'},

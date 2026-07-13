@@ -163,6 +163,12 @@ const S = {
   // jour uniquement dans showAwayLootSummaryIfAny() au moment de fermer une session.
   bestAfkSessionSilver: 0,
   maxZoneIdx: 0, playtimeSec: 0, lootByItem: {},
+  // streak de connexion (2026-07-13, demande explicite -- implémenté pour de vrai dans le panneau
+  // "Mon compte", écrase l'ancien commentaire "hors périmètre" qui figeait streak:0 en dur dans
+  // showAwayLootSummaryIfAny()) : loginStreak = jours consécutifs, lastActiveDay = dernier jour
+  // (YYYY-MM-DD, heure locale) où le streak a été compté. Mis à jour par updateLoginStreak(),
+  // appelée depuis onAuthedInner() (game-supabase.js) après le chargement de la sauvegarde cloud.
+  loginStreak: 0, lastActiveDay: null,
   enhAttempts: 0, travelCount: 0, jackpotCount: 0, gearDropCount: 0, enhSuccess: 0,
   achUnlocked: {}, dq: null, wq: null, questTrackerOn: false,
   loyalty: 0, lastLoyaltyDate: null, mailbox: [],
@@ -301,6 +307,35 @@ function computeOfflineCatchupXp(data) {
   if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
   return Math.round(rate * hours);
 }
+/** @returns {string} date du jour en heure LOCALE, format YYYY-MM-DD (pas UTC -- toISOString() déciderait le changement de jour au mauvais moment pour la plupart des fuseaux). */
+function localDayKey(d) {
+  d = d || new Date();
+  const y = d.getFullYear(), m = String(d.getMonth()+1).padStart(2,'0'), day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+/**
+ * Streak de connexion (2026-07-13, demande explicite, implémenté pour de vrai dans le panneau
+ * "Mon compte" -- voir CLAUDE.md section dédiée). Taux plat par jour civil LOCAL, pas de fenêtre
+ * glissante de 24h : comparer S.lastActiveDay au jour d'aujourd'hui.
+ *   - même jour -> ne rien faire (déjà compté aujourd'hui)
+ *   - hier -> streak+1
+ *   - gap de 2+ jours, ou jamais connecté (lastActiveDay null) -> streak remis à 1
+ * Appelée depuis onAuthedInner() (game-supabase.js), après le chargement de la sauvegarde cloud
+ * (S.lastActiveDay doit déjà refléter la sauvegarde restaurée, pas l'état par défaut).
+ * Pure sur son entrée sauf l'écriture dans S (mêmes conventions que le reste du fichier).
+ */
+function updateLoginStreak() {
+  const today = localDayKey();
+  if (S.lastActiveDay === today) return; // déjà compté aujourd'hui
+  if (S.lastActiveDay) {
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    if (S.lastActiveDay === localDayKey(y)) S.loginStreak = (S.loginStreak || 0) + 1;
+    else S.loginStreak = 1; // gap de 2+ jours
+  } else {
+    S.loginStreak = 1; // première connexion jamais comptée
+  }
+  S.lastActiveDay = today;
+}
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) {
     awaySilverGained = 0; awayLootCounts = {}; awayXpGained = 0;
@@ -344,7 +379,7 @@ function showAwayLootSummaryIfAny() {
 
   openReconnectModal({
     pseudo: (typeof myPseudo !== 'undefined' && myPseudo) || i18next.t('core:core.default_pseudo'),
-    streak: 0, streakGoal: 7, // streak de connexion : hors périmètre du jeu principal (voir module Compagnons pour l'équivalent existant)
+    streak: S.loginStreak || 0, streakGoal: 7, // streak de connexion réelle (voir updateLoginStreak() plus haut, S.loginStreak)
     awayLabel: reconnectDurationLabel(new Date(awaySessionStartedAt || Date.now()), new Date()),
     silver: awaySilverGained, xp: awayXpGained,
     levelBefore: awayLevelBefore, percentBefore: awayPercentBefore,
