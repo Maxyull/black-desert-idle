@@ -5,6 +5,13 @@
 // plat:'mobile' (2026-07-05) : marque une ligne qui ne concerne QUE tablette/téléphone, affichée
 // avec un 2e badge à côté du type — absent = concerne toutes les plateformes.
 const PATCH_NOTES = [
+  { v:'V415', d:'24/07/2026 02:00', name:{fr:'Marché commun : contrôles prix/quantité et panneau redimensionnés', en:'Common Market: resized price/quantity controls and panel'}, fr:[
+      {t:'change', sub:'interface', tx:'Popup "Acheter" : les boutons MAX/MIN et -/+ sont plus discrets, le champ de prix/quantité est désormais plus grand et mis en valeur avec une bordure dorée. La ligne "Quantité achetée" adopte l\'ordre bouton moins / champ / bouton plus, plus intuitif pour ajuster une quantité.'},
+      {t:'change', sub:'interface', tx:'Le panneau du Marché commun est légèrement plus large, sa hauteur ne laisse plus de grand vide en bas, et la liste d\'objets affiche 2 lignes de plus sans scroller. Texte un peu plus grand sur les libellés/valeurs principaux du panneau.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'"Buy" popup: the MAX/MIN and -/+ buttons are more subtle, the price/quantity field is now bigger and highlighted with a gold border. The "Quantity bought" row now uses the minus button / field / plus button order, more intuitive for adjusting a quantity.'},
+      {t:'change', sub:'interface', tx:'The Common Market panel is slightly wider, its height no longer leaves a big empty gap at the bottom, and the item list shows 2 more rows without scrolling. Slightly bigger text on the panel\'s main labels/values.'},
+    ] },
   { v:'V414', d:'24/07/2026 01:00', name:{fr:'Correctif : Gearscore incohérent au classement pour un stuff identique', en:'Fix: inconsistent Gearscore on the leaderboard for identical gear'}, fr:[
       {t:'fix', sub:'equipements', severity:'major', tx:'Le Gearscore affiché au classement pouvait différer entre 2 joueurs ayant pourtant un stuff strictement identique aujourd\'hui : il était enregistré comme un record séparé de PA/PD, capturé à un instant différent de leur propre progression. Il est désormais toujours calculé comme la moyenne des records PA/PD affichés juste à côté — recalculé rétroactivement pour tous au prochain chargement.'},
     ], en:[

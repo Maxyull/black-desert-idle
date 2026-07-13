@@ -1312,7 +1312,15 @@
        1280px/90vh reste confortable jusqu'à ~1440-1920px sans dépasser (max-width:96vw absorbe le
        reste sur écran plus étroit) ; voir .cmMarketLayout juste plus bas pour l'ajustement
        proportionnel du plafond "5 items" en conséquence. */
-    width:1280px; max-width:96vw; height:90vh; display:flex; flex-direction:column;
+    /* recalibré le 2026-07-24 (mockup validé, "super") : 90vh en hauteur FIXE laissait un grand
+       vide sous .cmMarketLayout (plafonné à 420px) -- le panneau était nettement plus haut que son
+       contenu réel. Repassé en px pour matcher header (~48px) + wallet bar (~46px) + filtres
+       (~44px) + .cmMarketLayout agrandi (540px, +120px = "2 lignes .cmListCard" -- voir juste plus
+       bas) + paddings/marges .marketPane (28px) -- toujours une hauteur FIXE (même principe que le
+       commentaire ci-dessus : "aucun choix ne dois faire changer la taille de la page"), juste
+       recalculée pour ne plus laisser de vide. Largeur relevée de +80px (1280->1360px, ~6%,
+       demande "un peu plus large"). */
+    width:1360px; max-width:96vw; height:706px; max-height:92vh; display:flex; flex-direction:column;
     /* reskin coque (2026-07-22, complément demandé) : mêmes tokens que le reste de la refonte
        marché (--s1/--dbBorder, coins arrondis) au lieu de l'ancien --panel/--gold-dim sans radius,
        cohérent avec .cmBuyModal/.cmBrowseLayout déjà sur ces tokens -- additif, aucune règle
@@ -1386,7 +1394,10 @@
      grand avec toujours seulement 5 lignes visibles laissait un vide disproportionné en dessous.
      420px (~7 .cmListCard) reste un cadre fixe et scrollable, juste redimensionné dans les mêmes
      proportions que le panneau. */
-  .cmMarketLayout { display:grid; grid-template-columns:1fr 250px; gap:14px; flex:1; min-height:0; max-height:420px; }
+  /* relevé le 2026-07-24 (mockup validé, "super", demande "2 items de plus") : +120px (~2
+     .cmListCard de 58-60px chacune, carte 50px + gap 8-10px) -- 420px -> 540px. #marketBox
+     recalculé en conséquence juste plus haut pour ne laisser aucun vide sous ce cadre. */
+  .cmMarketLayout { display:grid; grid-template-columns:1fr 250px; gap:14px; flex:1; min-height:0; max-height:540px; }
   .cmMain { min-width:0; display:flex; flex-direction:column; min-height:0; }
   .cmSidebar { border-left:1px solid var(--dbBorder); padding-left:14px; display:flex; flex-direction:column; min-height:0; }
   .cmSidebarHdr { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--cream2); margin-bottom:8px; }
@@ -1401,7 +1412,11 @@
   .cmRow { display:flex; align-items:center; gap:8px; padding:8px 9px;
     background:var(--s2); border:1px solid var(--dbBorder); border-radius:6px; font-size:11px; }
   .cmInfo { flex:1; min-width:0; }
-  .cmInfo .mName { font-size:11px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  /* texte agrandi ~1-2px (2026-07-24, demande explicite "grandit le texte", mockup validé) sur
+     les libellés/valeurs les plus notables du panneau (.mName/.cmListName/.cmBmLbl/.cmBmName/
+     .cmDetailPanel...) -- .cmCompareTable (colonne .cmDetailPanel 230px) volontairement PAS
+     touché, risque de déborder une grille déjà étroite (.cmBrowseLayout: 140px/1fr/230px). */
+  .cmInfo .mName { font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .cmInfo .cmOwned { color:var(--cream3); font-size:9.5px; margin-top:2px; }
   .cmCancelOrder { width:auto; margin:0; background:transparent; border:1px solid var(--red2); color:var(--red2);
     border-radius:6px; padding:4px 9px; font-size:9.5px; }
@@ -1441,17 +1456,17 @@
   .cmListIcon { width:32px; height:32px; border-radius:6px; background:var(--s3); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0; }
   .cmListIcon svg { width:22px; height:22px; }
   .cmListInfo { flex:1; min-width:0; }
-  .cmListName { font-size:11.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .cmListSub { font-size:9.5px; color:var(--cream3); margin-top:1px; }
+  .cmListName { font-size:12.5px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cmListSub { font-size:10.5px; color:var(--cream3); margin-top:1px; }
   .cmListPrice { text-align:right; flex-shrink:0; }
-  .cmListPrice .price { font-family:'JetBrains Mono',monospace; font-size:11.5px; color:var(--gold2); white-space:nowrap; }
+  .cmListPrice .price { font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--gold2); white-space:nowrap; }
 
   .cmDetailIcon { width:52px; height:52px; border:2px solid var(--gold); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 8px; color:var(--gold2); }
   .cmDetailIcon svg { width:34px; height:34px; }
-  .cmDetailTitle { font-family:'Cinzel',serif; font-size:13px; color:var(--gold2); margin-bottom:3px; }
-  .cmDetailSub { font-size:10px; color:var(--cream3); margin-bottom:10px; }
+  .cmDetailTitle { font-family:'Cinzel',serif; font-size:14px; color:var(--gold2); margin-bottom:3px; }
+  .cmDetailSub { font-size:11px; color:var(--cream3); margin-bottom:10px; }
   .cmDetailStats { margin-bottom:10px; }
-  .cmDetailStats .srow { display:flex; justify-content:space-between; font-size:11px; padding:4px 0; border-bottom:1px solid var(--dbBorder); }
+  .cmDetailStats .srow { display:flex; justify-content:space-between; font-size:12px; padding:4px 0; border-bottom:1px solid var(--dbBorder); }
   .cmDetailStats .srow b { color:var(--gold2); }
   .cmDetailSub.cmCompareTitle { margin:10px 0 4px; text-align:left; }
   .cmCompareTable { width:100%; font-size:10px; border-collapse:collapse; margin-bottom:10px; }
@@ -1504,20 +1519,29 @@
   .cmBmItemRow { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
   .cmBmIcon { width:38px; height:38px; border-radius:7px; background:var(--s2); border:1px solid var(--gold-dim); display:flex; align-items:center; justify-content:center; font-size:18px; }
   .cmBmIcon svg { width:26px; height:26px; }
-  .cmBmName { font-size:13px; color:var(--gold2); flex:1; }
+  .cmBmName { font-size:14px; color:var(--gold2); flex:1; }
   .cmBmStatsGrid { display:grid; grid-template-columns:repeat(auto-fit,minmax(90px,1fr)); gap:10px 16px; margin-bottom:10px; }
-  .cmBmStat .cmBmLbl { font-size:9px; color:var(--cream3); text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px; }
-  .cmBmStat .cmBmStatVal { font-family:'JetBrains Mono',monospace; font-size:12.5px; color:var(--cream2); }
+  .cmBmStat .cmBmLbl { font-size:10px; color:var(--cream3); text-transform:uppercase; letter-spacing:.03em; margin-bottom:2px; }
+  .cmBmStat .cmBmStatVal { font-family:'JetBrains Mono',monospace; font-size:13.5px; color:var(--cream2); }
   .cmBmChartWrap canvas { width:100%; height:110px; background:var(--s2); border:1px solid var(--dbBorder); border-radius:8px; margin-bottom:14px; display:block; }
-  .cmBmLbl { font-size:9.5px; color:var(--cream3); text-transform:uppercase; letter-spacing:.03em; margin-bottom:3px; }
-  .cmBmVal { font-family:'JetBrains Mono',monospace; font-size:13px; color:var(--gold2); }
+  .cmBmLbl { font-size:10.5px; color:var(--cream3); text-transform:uppercase; letter-spacing:.03em; margin-bottom:3px; }
+  .cmBmVal { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--gold2); }
   .cmBmLowerGrid { display:grid; grid-template-columns:7fr 3fr; gap:20px; margin-bottom:14px; }
   .cmBmLowerLeft { background:var(--s2); border:1px solid var(--dbBorder); border-radius:9px; padding:12px 14px; display:flex; flex-direction:column; }
   .cmBmSep { height:1px; background:var(--dbBorder); margin:10px 0; }
   .cmBmLowerRight { display:flex; flex-direction:column; gap:12px; min-width:0; }
   .cmBmPriceRow, .cmBmStepRow { display:flex; gap:4px; align-items:stretch; }
-  .cmBmPriceRow input, .cmBmStepRow input { flex:1; min-width:0; background:var(--s2); border:1px solid var(--dbBorder); border-radius:6px; color:var(--cream2); padding:7px 8px; font-size:11px; font-family:'JetBrains Mono',monospace; }
-  .cmBmPriceRow button, .cmBmStepRow button { background:var(--s3); border:1px solid var(--dbBorder); border-radius:6px; color:var(--cream2); font-size:10px; padding:0 8px; cursor:pointer; font-family:'Inter',sans-serif; }
+  /* champ chiffre agrandi/mis en valeur (2026-07-24, demande explicite : mockup validé "super") --
+     bordure/texte dorés au lieu du gris --cream2, pour que le prix/la quantité saute aux yeux
+     plutôt que les boutons MAX/MIN/-/+ à côté. .cmBmStepRow input recentré (stepper -/+ autour). */
+  .cmBmPriceRow input, .cmBmStepRow input { flex:1; min-width:0; background:var(--s2); border:1px solid var(--gold); border-radius:6px; color:var(--gold2); padding:9px 10px; font-size:15px; font-weight:bold; font-family:'JetBrains Mono',monospace; }
+  .cmBmStepRow input { text-align:center; }
+  /* MAX/MIN (ligne prix) rétrécis -- juste un raccourci secondaire, ne doit plus rivaliser avec le
+     champ prix agrandi ci-dessus. */
+  .cmBmPriceRow button { background:var(--s3); border:1px solid var(--dbBorder); border-radius:6px; color:var(--cream2); font-size:9px; padding:0 6px; cursor:pointer; font-family:'Inter',sans-serif; }
+  /* -/+ (quantité/palier) gardés plus larges que MAX/MIN : un seul caractère, doivent rester
+     facilement cliquables même rétrécis par rapport à l'ancienne taille commune. */
+  .cmBmStepRow button { background:var(--s3); border:1px solid var(--dbBorder); border-radius:6px; color:var(--cream2); font-size:13px; padding:0 10px; cursor:pointer; font-family:'Inter',sans-serif; }
   .cmBmTierVal { flex:1; background:var(--s2); border:1px solid var(--dbBorder); border-radius:6px; color:var(--gold2); padding:7px 8px; font-size:11px; text-align:center; font-family:'Cinzel',serif; }
   .cmBmCostBig { font-family:'JetBrains Mono',monospace; font-size:20px; color:var(--gold2); text-align:right; }
   .cmBmAfterRow { display:flex; justify-content:space-between; font-size:10.5px; color:var(--cream2); }
