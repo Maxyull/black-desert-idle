@@ -3615,17 +3615,18 @@
   }
   .card h3 .cardDragHandle:active { cursor:grabbing; }
   .card.cardTabbed > h3 { display:none; }
-  /* Nom de la carte active affiché tout en haut, au-dessus de la barre d'onglets (2026-07-13,
-     retour utilisateur : les petits onglets seuls ne suffisaient pas comme titre) -- un vrai h3,
-     hérite donc déjà du style .card h3 (Cinzel/cream2), juste la bordure retirée pour ne pas
-     doubler celle de .cardTabBar juste en dessous. */
-  .cardActiveTitle { border-bottom:none; margin-bottom:2px; padding-bottom:0; }
+  /* Tous les noms d'onglets côte à côte tout en haut, chaque INVITÉ avec sa propre croix
+     juste à côté de son nom pour le démerger individuellement (2026-07-13, retour utilisateur --
+     remplace l'ancien titre unique + croix globale : plusieurs cartes fusionnées doivent montrer
+     tous leurs noms en même temps, pas seulement celui de l'onglet actif). L'hôte (ancre du
+     groupe) n'a pas de croix, un groupe ne peut pas se détacher de lui-même. */
   .cardTabBar {
     display:flex; align-items:center; gap:3px; margin-bottom:6px; padding-bottom:4px;
     border-bottom:1px solid #2c2a31; flex-wrap:wrap;
   }
   .cardTabBar .cardDragHandle { cursor:grab; margin-right:3px; color:var(--gold-dim); font-size:11px; user-select:none; }
   .cardTabBar .cardDragHandle:active { cursor:grabbing; }
+  .cardTabGroup { display:inline-flex; align-items:center; }
   .cardTabBtn {
     background:transparent; border:none; border-bottom:2px solid transparent; color:var(--ink-dim);
     font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; padding:2px 4px 4px; cursor:pointer;
@@ -3633,8 +3634,8 @@
   .cardTabBtn:hover { color:var(--gold); transform:none; }
   .cardTabBtn.active { color:var(--gold); border-bottom-color:var(--gold); }
   .cardDetachBtn {
-    margin-left:auto; background:transparent; border:none; color:var(--ink-dim); font-size:12px;
-    line-height:1; padding:2px 4px; cursor:pointer; white-space:nowrap;
+    background:transparent; border:none; color:var(--ink-dim); font-size:9px;
+    line-height:1; padding:2px 4px 2px 0; cursor:pointer; white-space:nowrap;
   }
   .cardDetachBtn:hover { color:var(--gold); transform:none; }
   .card.cardDropTarget { border:2px dashed var(--gold); }

@@ -702,6 +702,7 @@ const I18N_RESOURCES = {
       "inventory.velia_loot_banner": "🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :",
       "inventory.velia_peaceful_zone": "Velia — zone paisible",
       "inventory.velia_treasure_label": "Trésor de Velia",
+      "inventory.conclave_seal_label": "Sceau du Conclave des Marchands",
       "inventory.where_to_farm_label": "📍 Où farmer : ",
       "inventory.action_store_in_chest_qty": "📦 Ranger {{n}} au coffre"
     },
@@ -1651,6 +1652,7 @@ const I18N_RESOURCES = {
       "inventory.velia_loot_banner": "🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:",
       "inventory.velia_peaceful_zone": "Velia — peaceful zone",
       "inventory.velia_treasure_label": "Velia Treasure",
+      "inventory.conclave_seal_label": "Merchants' Conclave Seal",
       "inventory.where_to_farm_label": "📍 Where to farm: ",
       "inventory.action_store_in_chest_qty": "📦 Store {{n}} in chest"
     },
@@ -2430,6 +2432,8 @@ const CONCLAVE_SEAL_FRAGMENTS = [
   { tierId:'end2',  key:'conclave_seal_valencia', name:'Sceau du Désert Ardent',        icon:'📜', color:'#d47a4a' },
   { tierId:'end3',  key:'conclave_seal_edana',    name:'Sceau de l\'Œil d\'Ynix',        icon:'📜', color:'#c0503c' }, 
 ];
+
+const CONCLAVE_SEAL_DROP_CH = .00004;
 const CONCLAVE_SEAL_LORE = {
   fr: 'Cinq sceaux, cinq cités, cinq serments. Le Conclave des Marchands ne se réunit qu\'une fois par génération — et celui qui porte leurs cinq sceaux réunis est reconnu par chaque guilde du continent. Les douaniers s\'inclinent. Les taxes disparaissent. L\'argent coule.',
   en: 'Five seals, five cities, five oaths. The Merchants\' Conclave gathers only once a generation — and whoever bears all five seals united is recognized by every guild on the continent. Customs officers bow. Taxes vanish. Silver flows.',
@@ -5913,7 +5917,7 @@ function rollDrops(wp, alpha, lm) {
       pickupQty: t.key==='treasure_bout_velia' ? 1+Math.floor(Math.random()*3) : 1 })),
     
     ...CONCLAVE_SEAL_FRAGMENTS.filter(f => conclaveSealFragmentUnlocked(f.tierId)).map(f => ({
-      name:f.name, val:referenceGearVal()*50, ch:.00004, kind:'treasure', color:f.color, key:f.key, icon:f.icon, stackable:false, weight:0.05, pickupQty:1,
+      name:f.name, val:referenceGearVal()*50, ch:CONCLAVE_SEAL_DROP_CH, kind:'treasure', color:f.color, key:f.key, icon:f.icon, stackable:false, weight:0.05, pickupQty:1,
     })),
     
     { name:CRON_STONE.name, val:0, ch:CRON_STONE.ch, kind:'material', color:CRON_STONE.color, key:CRON_STONE.key,
@@ -10299,8 +10303,17 @@ function renderLootTable(previewIdx) {
       <div class="lootPct">${fmtTinyPct(t.ch)}</div>
       ${lootAutoSellLockHtml()}
     </div>`).join('');
+  
+  const sealRowsHtml = CONCLAVE_SEAL_FRAGMENTS.filter(f => conclaveSealFragmentUnlocked(f.tierId)).map(f => `
+    <div class="lootRow">
+      <div class="lootIcon k-treasure" style="color:${f.color};border-color:${f.color}">${f.icon}</div>
+      <div class="lootInfo"><div class="ln" style="color:${f.color}">${tr(f.name)}</div></div>
+      <div class="lootPct">${fmtTinyPct(CONCLAVE_SEAL_DROP_CH)}</div>
+      ${lootAutoSellLockHtml()}
+    </div>`).join('');
   $('lootTable').innerHTML = mainRowsHtml +
-    `<div class="lootCatHead">🗺️ ${i18next.t('inventory:inventory.velia_treasure_label')}</div>` + treasureRowsHtml;
+    `<div class="lootCatHead">🗺️ ${i18next.t('inventory:inventory.velia_treasure_label')}</div>` + treasureRowsHtml +
+    (sealRowsHtml ? `<div class="lootCatHead">📜 ${i18next.t('inventory:inventory.conclave_seal_label')}</div>` + sealRowsHtml : '');
 }
 
 function dropItem(i) {
@@ -13203,13 +13216,12 @@ function saveCardLayoutState(state) {
   try { localStorage.setItem(CARD_LAYOUT_STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
 }
 
-function cardLayoutDetach(state, hostId) {
+function cardLayoutDetach(state, hostId, tabId) {
   const st = JSON.parse(JSON.stringify(state));
   const group = st.groups[hostId];
   if (!group || !group.length) return st;
-  let toDetach = st.active[hostId] || hostId;
-  if (toDetach === hostId) toDetach = group[0];
-  if (!group.includes(toDetach)) return st;
+  const toDetach = tabId != null ? tabId : group[0];
+  if (toDetach === hostId || !group.includes(toDetach)) return st;
   st.groups[hostId] = group.filter(g => g !== toDetach);
   const hostIdx = st.order.indexOf(hostId);
   st.order.splice(hostIdx + 1, 0, toDetach);
@@ -13285,10 +13297,6 @@ function cardLayoutAddHandleToH3(cardEl) {
 function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
   hostEl.classList.add('cardTabbed');
 
-  const activeLabel = document.createElement('h3');
-  activeLabel.className = 'cardActiveTitle';
-  activeLabel.textContent = cardLayoutTitleLabel(document.getElementById(activeId));
-
   const tabBar = document.createElement('div');
   tabBar.className = 'cardTabBar';
 
@@ -13300,23 +13308,30 @@ function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
 
   [hostId].concat(guestIds).forEach(tabId => {
     const el = document.getElementById(tabId);
+    const group = document.createElement('span');
+    group.className = 'cardTabGroup';
+
     const btn = document.createElement('button');
     btn.className = 'cardTabBtn' + (tabId === activeId ? ' active' : '');
     btn.dataset.cardTabHost = hostId;
     btn.dataset.cardTabId = tabId;
     btn.textContent = cardLayoutTitleLabel(el);
-    tabBar.appendChild(btn);
+    group.appendChild(btn);
+
+    if (tabId !== hostId) {
+      const detachBtn = document.createElement('button');
+      detachBtn.className = 'cardDetachBtn';
+      detachBtn.dataset.cardDetachHost = hostId;
+      detachBtn.dataset.cardDetachTab = tabId;
+      detachBtn.textContent = '✕';
+      detachBtn.title = (typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.detach') : '';
+      group.appendChild(detachBtn);
+    }
+
+    tabBar.appendChild(group);
   });
 
-  const detachBtn = document.createElement('button');
-  detachBtn.className = 'cardDetachBtn';
-  detachBtn.dataset.cardDetachHost = hostId;
-  detachBtn.textContent = '✕';
-  detachBtn.title = (typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.detach') : '';
-  tabBar.appendChild(detachBtn);
-
   hostEl.insertBefore(tabBar, hostEl.firstChild);
-  hostEl.insertBefore(activeLabel, tabBar);
 
   const body = document.createElement('div');
   body.className = 'cardHostBody';
@@ -13430,8 +13445,8 @@ function initCardLayout() {
     }
     const detachBtn = e.target.closest && e.target.closest('.cardDetachBtn');
     if (detachBtn) {
-      const hostId = detachBtn.dataset.cardDetachHost;
-      cardLayoutUpdate(st => cardLayoutDetach(st, hostId));
+      const hostId = detachBtn.dataset.cardDetachHost, tabId = detachBtn.dataset.cardDetachTab;
+      cardLayoutUpdate(st => cardLayoutDetach(st, hostId, tabId));
     }
   });
 }

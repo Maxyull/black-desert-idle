@@ -84,14 +84,13 @@ function saveCardLayoutState(state) {
   try { localStorage.setItem(CARD_LAYOUT_STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
 }
 
-/** Détache le tab actif d'un groupe (ou le 1er guest si le tab actif est l'hôte lui-même). */
-function cardLayoutDetach(state, hostId) {
+/** Détache un guest précis d'un groupe (croix individuelle à côté de son nom d'onglet -- jamais l'hôte lui-même, qui reste l'ancre du groupe). */
+function cardLayoutDetach(state, hostId, tabId) {
   const st = JSON.parse(JSON.stringify(state));
   const group = st.groups[hostId];
   if (!group || !group.length) return st;
-  let toDetach = st.active[hostId] || hostId;
-  if (toDetach === hostId) toDetach = group[0];
-  if (!group.includes(toDetach)) return st;
+  const toDetach = tabId != null ? tabId : group[0];
+  if (toDetach === hostId || !group.includes(toDetach)) return st;
   st.groups[hostId] = group.filter(g => g !== toDetach);
   const hostIdx = st.order.indexOf(hostId);
   st.order.splice(hostIdx + 1, 0, toDetach);
@@ -171,10 +170,6 @@ function cardLayoutAddHandleToH3(cardEl) {
 function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
   hostEl.classList.add('cardTabbed');
 
-  const activeLabel = document.createElement('h3');
-  activeLabel.className = 'cardActiveTitle';
-  activeLabel.textContent = cardLayoutTitleLabel(document.getElementById(activeId));
-
   const tabBar = document.createElement('div');
   tabBar.className = 'cardTabBar';
 
@@ -186,23 +181,32 @@ function cardLayoutBuildTabbedHost(hostEl, hostId, guestIds, activeId) {
 
   [hostId].concat(guestIds).forEach(tabId => {
     const el = document.getElementById(tabId);
+    const group = document.createElement('span');
+    group.className = 'cardTabGroup';
+
     const btn = document.createElement('button');
     btn.className = 'cardTabBtn' + (tabId === activeId ? ' active' : '');
     btn.dataset.cardTabHost = hostId;
     btn.dataset.cardTabId = tabId;
     btn.textContent = cardLayoutTitleLabel(el);
-    tabBar.appendChild(btn);
+    group.appendChild(btn);
+
+    // le nom hôte reste l'ancre du groupe (jamais de croix dessus) -- seuls les invités,
+    // détachables individuellement, ont leur propre croix juste à côté de leur nom.
+    if (tabId !== hostId) {
+      const detachBtn = document.createElement('button');
+      detachBtn.className = 'cardDetachBtn';
+      detachBtn.dataset.cardDetachHost = hostId;
+      detachBtn.dataset.cardDetachTab = tabId;
+      detachBtn.textContent = '✕';
+      detachBtn.title = (typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.detach') : '';
+      group.appendChild(detachBtn);
+    }
+
+    tabBar.appendChild(group);
   });
 
-  const detachBtn = document.createElement('button');
-  detachBtn.className = 'cardDetachBtn';
-  detachBtn.dataset.cardDetachHost = hostId;
-  detachBtn.textContent = '✕';
-  detachBtn.title = (typeof i18next !== 'undefined') ? i18next.t('core:core.card_layout.detach') : '';
-  tabBar.appendChild(detachBtn);
-
   hostEl.insertBefore(tabBar, hostEl.firstChild);
-  hostEl.insertBefore(activeLabel, tabBar);
 
   const body = document.createElement('div');
   body.className = 'cardHostBody';
@@ -327,8 +331,8 @@ function initCardLayout() {
     }
     const detachBtn = e.target.closest && e.target.closest('.cardDetachBtn');
     if (detachBtn) {
-      const hostId = detachBtn.dataset.cardDetachHost;
-      cardLayoutUpdate(st => cardLayoutDetach(st, hostId));
+      const hostId = detachBtn.dataset.cardDetachHost, tabId = detachBtn.dataset.cardDetachTab;
+      cardLayoutUpdate(st => cardLayoutDetach(st, hostId, tabId));
     }
   });
 }

@@ -704,6 +704,7 @@ const I18N_RESOURCES = {
       "inventory.velia_loot_banner": "🕊️ Zone paisible : aucun monstre, aucun loot possible ici. Aperçu condensé de ce que chaque zone de Velia peut looter — clique une zone pour voir le détail complet :",
       "inventory.velia_peaceful_zone": "Velia — zone paisible",
       "inventory.velia_treasure_label": "Trésor de Velia",
+      "inventory.conclave_seal_label": "Sceau du Conclave des Marchands",
       "inventory.where_to_farm_label": "📍 Où farmer : ",
       "inventory.action_store_in_chest_qty": "📦 Ranger {{n}} au coffre"
     },
@@ -1653,6 +1654,7 @@ const I18N_RESOURCES = {
       "inventory.velia_loot_banner": "🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:",
       "inventory.velia_peaceful_zone": "Velia — peaceful zone",
       "inventory.velia_treasure_label": "Velia Treasure",
+      "inventory.conclave_seal_label": "Merchants' Conclave Seal",
       "inventory.where_to_farm_label": "📍 Where to farm: ",
       "inventory.action_store_in_chest_qty": "📦 Store {{n}} in chest"
     },

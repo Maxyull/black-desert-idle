@@ -38,6 +38,10 @@ const CONCLAVE_SEAL_FRAGMENTS = [
   { tierId:'end2',  key:'conclave_seal_valencia', name:'Sceau du Désert Ardent',        icon:'📜', color:'#d47a4a' },
   { tierId:'end3',  key:'conclave_seal_edana',    name:'Sceau de l\'Œil d\'Ynix',        icon:'📜', color:'#c0503c' }, // "Eldia" du document original corrigé en "Edana" (vrai nom de région, voir ZONE_TIERS)
 ];
+// Chance de drop, IDENTIQUE dans toutes les zones du jeu (même principe que VELIA_TREASURE) --
+// source unique lue à la fois par loot-rolls.js (tirage réel) et inventory-ui.js (affichage
+// "Loot de cette zone"), pour ne jamais laisser les deux dériver l'un de l'autre.
+const CONCLAVE_SEAL_DROP_CH = .00004;
 const CONCLAVE_SEAL_LORE = {
   fr: 'Cinq sceaux, cinq cités, cinq serments. Le Conclave des Marchands ne se réunit qu\'une fois par génération — et celui qui porte leurs cinq sceaux réunis est reconnu par chaque guilde du continent. Les douaniers s\'inclinent. Les taxes disparaissent. L\'argent coule.',
   en: 'Five seals, five cities, five oaths. The Merchants\' Conclave gathers only once a generation — and whoever bears all five seals united is recognized by every guild on the continent. Customs officers bow. Taxes vanish. Silver flows.',
