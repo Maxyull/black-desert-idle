@@ -16,6 +16,16 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V445', d:'14/07/2026 00:45', name:{fr:'Correctif boutons +/- taille UI/jeu : la largeur grandissait aussi, pas que la hauteur', en:'+/- UI/game size buttons fix: width now grows too, not just height'}, fr:[
+      {t:'fix', sub:'interface', tx:'Les boutons +/- de taille UI/jeu (V444) n\'agrandissaient visiblement que la hauteur du cadre de jeu — la largeur grandissait bien "sous le capot" (transform:scale()) mais restait cachée derrière les panneaux latéraux (menu à gauche, widgets à droite) à cause de la grille 3 colonnes du jeu, qui ne recalculait jamais sa piste centrale pour un simple effet visuel. Remplacé par un vrai redimensionnement (zoom + piste de grille recalculée dynamiquement) : largeur ET hauteur grandissent maintenant réellement et visiblement, sans être masquées.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The +/- UI/game size buttons (V444) only visibly grew the game frame\'s height — the width was actually growing too "under the hood" (transform:scale()) but stayed hidden behind the side panels (menu on the left, widgets on the right) because of the game\'s 3-column grid layout, which never recalculated its center track for a purely visual effect. Replaced with a real resize (zoom + a dynamically recalculated grid track): both width and height now genuinely and visibly grow, without being hidden.'},
+    ] },
+  { v:'V444', d:'13/07/2026 21:45', name:{fr:'Boutons +/- de taille UI/jeu sur les bords du cadre de jeu', en:'+/- UI/game size buttons on the game frame edges'}, fr:[
+      {t:'new', sub:'interface', tx:'2 boutons "−"/"+" quasi invisibles au repos sur les bords gauche/droit du cadre de jeu, pleinement visibles (avec un petit libellé) au survol — 3 paliers de taille (Petit/Moyen/Grand) pour toute la présentation du jeu (cadre + panneau de stats), préférence mémorisée entre les sessions. Ne change jamais la résolution interne du canvas, uniquement un agrandissement/rétrécissement visuel.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'2 nearly invisible "−"/"+" buttons on the left/right edges of the game frame, fully visible (with a small label) on hover — 3 size steps (Small/Medium/Large) for the whole game presentation (frame + stats panel), preference remembered across sessions. Never changes the canvas\'s internal resolution, purely a visual grow/shrink.'},
+    ] },
   { v:'V443', d:'13/07/2026 21:15', name:{fr:'Correctif Mini Boss : boutons illisibles (carte Craft, chips de combat, chat)', en:'Mini Boss fix: unreadable buttons (Craft card, fight chips, chat)'}, fr:[
       {t:'fix', sub:'interface', tx:'Dans l\'onglet Mini Boss, la carte "Craft à Velia", les chips de nombre de combats (x1/x1.1/x1.2/x1.3/x2), le bouton "MAX", le bouton d\'envoi du chat et le bouton "Rejoindre" de l\'annuaire Groupes s\'affichaient sans aucun style (texte brut empilé mot par mot, bouton illisible) — une règle générique `button{width:100%}` du thème écrasait leur largeur puisqu\'ils n\'avaient pas de `width` explicite pour la contrer. Corrigé sur les 5 boutons concernés.'},
     ], en:[

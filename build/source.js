@@ -15642,6 +15642,9 @@ const I18N = {
   tbAccount: { fr:'Mon compte', en:'My account' },
   tbAdmin: { fr:'Admin', en:'Admin' },
   tbLogout: { fr:'Déconnexion', en:'Log out' },
+  
+  uiScaleDown: { fr:'Réduire', en:'Shrink' },
+  uiScaleUp: { fr:'Agrandir', en:'Grow' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
@@ -15819,6 +15822,56 @@ $a('btnCollapseRight').onclick = () => {
   applyRightCollapse();
 };
 applyRightCollapse();
+
+const UI_SCALE_LEVELS = ['small', 'medium', 'large'];
+const UI_SCALE_FACTORS = { small:.85, medium:1, large:1.15 };
+
+function nextUiScaleLevel(current, direction) {
+  const idx = UI_SCALE_LEVELS.indexOf(current);
+  const from = idx === -1 ? UI_SCALE_LEVELS.indexOf('medium') : idx;
+  const to = Math.max(0, Math.min(UI_SCALE_LEVELS.length - 1, from + direction));
+  return UI_SCALE_LEVELS[to];
+}
+
+let uiScaleLevel = 'medium';
+try {
+  const savedScale = localStorage.getItem('velia-idle-ui-scale');
+  if (UI_SCALE_LEVELS.includes(savedScale)) uiScaleLevel = savedScale;
+} catch(e) {}
+
+function updateUiScaleLayoutTrack() {
+  const layout = $a('gameLayout');
+  if (!layout) return;
+  const factor = UI_SCALE_FACTORS[uiScaleLevel];
+  if (factor === 1 || isMobileViewport()) {
+    layout.style.removeProperty('--ui-center-track');
+    return;
+  }
+  const sideMenu = $a('sideMenu'), sideRight = $a('sideRight');
+  if (!sideMenu || !sideRight) return;
+  const gap = 14; 
+  const baseCenterWidth = layout.clientWidth - sideMenu.getBoundingClientRect().width
+    - sideRight.getBoundingClientRect().width - gap * 2;
+  if (baseCenterWidth <= 0) { layout.style.removeProperty('--ui-center-track'); return; }
+  layout.style.setProperty('--ui-center-track', `${Math.round(baseCenterWidth * factor)}px`);
+}
+
+function applyUiScale() {
+  $a('wrap').style.zoom = UI_SCALE_FACTORS[uiScaleLevel];
+  updateUiScaleLayoutTrack();
+  $a('btnUiScaleDown').classList.toggle('uiScaleBtnDisabled', uiScaleLevel === UI_SCALE_LEVELS[0]);
+  $a('btnUiScaleUp').classList.toggle('uiScaleBtnDisabled', uiScaleLevel === UI_SCALE_LEVELS[UI_SCALE_LEVELS.length - 1]);
+}
+function setUiScaleLevel(direction) {
+  uiScaleLevel = nextUiScaleLevel(uiScaleLevel, direction);
+  try { localStorage.setItem('velia-idle-ui-scale', uiScaleLevel); } catch(e) {}
+  applyUiScale();
+}
+
+window.addEventListener('resize', () => { if (uiScaleLevel !== 'medium') updateUiScaleLayoutTrack(); });
+$a('btnUiScaleDown').onclick = () => setUiScaleLevel(-1);
+$a('btnUiScaleUp').onclick = () => setUiScaleLevel(1);
+applyUiScale();
 
 const CURRENT_VERSION = PATCH_NOTES[0].v;
 $a('clientVersionNum').textContent = CURRENT_VERSION;
