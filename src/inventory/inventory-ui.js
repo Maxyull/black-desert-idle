@@ -1905,8 +1905,21 @@ function renderLootTable(previewIdx) {
       <div class="lootPct">${fmtTinyPct(t.ch)}</div>
       ${lootAutoSellLockHtml()}
     </div>`).join('');
+  // Sceau du Conclave des Marchands (2026-07-13) : oublié de renderLootTable() lors du premier
+  // portage -- présent dans le vrai tirage (loot-rolls.js) mais jamais affiché ici, rapporté
+  // explicitement par l'utilisateur ("je le vois pas dans loot de cette zone"). Même chance dans
+  // toutes les zones (CONCLAVE_SEAL_DROP_CH, source unique partagée avec loot-rolls.js), un seul
+  // fragment obtenable aujourd'hui (les 4 autres régions restent verrouillées).
+  const sealRowsHtml = CONCLAVE_SEAL_FRAGMENTS.filter(f => conclaveSealFragmentUnlocked(f.tierId)).map(f => `
+    <div class="lootRow">
+      <div class="lootIcon k-treasure" style="color:${f.color};border-color:${f.color}">${f.icon}</div>
+      <div class="lootInfo"><div class="ln" style="color:${f.color}">${tr(f.name)}</div></div>
+      <div class="lootPct">${fmtTinyPct(CONCLAVE_SEAL_DROP_CH)}</div>
+      ${lootAutoSellLockHtml()}
+    </div>`).join('');
   $('lootTable').innerHTML = mainRowsHtml +
-    `<div class="lootCatHead">🗺️ ${i18next.t('inventory:inventory.velia_treasure_label')}</div>` + treasureRowsHtml;
+    `<div class="lootCatHead">🗺️ ${i18next.t('inventory:inventory.velia_treasure_label')}</div>` + treasureRowsHtml +
+    (sealRowsHtml ? `<div class="lootCatHead">📜 ${i18next.t('inventory:inventory.conclave_seal_label')}</div>` + sealRowsHtml : '');
 }
 /** @param {number} i - index dans INV. Jette définitivement le slot (déscelle forcedMatKey si c'était le matériau épinglé). */
 function dropItem(i) {

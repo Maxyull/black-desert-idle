@@ -16,6 +16,13 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V434', d:'13/07/2026 17:15', name:{fr:'Sceau du Conclave : loot de zone + cartes fusionnées, un nom = une croix', en:'Conclave Seal: zone loot list + merged cards, one name = one X'}, fr:[
+      {t:'fix', sub:'interface', tx:'Le fragment "Sceau du Port Ancestral" (Sceau du Conclave des Marchands) était bien tirable au combat mais n\'apparaissait pas dans le panneau "Loot de cette zone" — corrigé, affiché avec sa vraie chance de drop.'},
+      {t:'change', sub:'interface', tx:'Cartes du dashboard Zone fusionnées entre elles : chaque nom d\'onglet a désormais sa propre petite croix pour le démerger individuellement, au lieu d\'une seule croix qui ne détachait que l\'onglet affiché.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The "Ancestral Harbor Seal" fragment (Merchants\' Conclave Seal) could already drop in combat but never showed up in the "Loot in this zone" panel — fixed, now displayed with its real drop chance.'},
+      {t:'change', sub:'interface', tx:'Merged Zone dashboard cards: each tab name now has its own small X to detach it individually, instead of a single X that only detached the currently active tab.'},
+    ] },
   { v:'V433', d:'13/07/2026 17:00', name:{fr:'Troll de Polly (Forêt de Polly) : nouvelle silhouette dédiée — TOUTES les zones ont désormais leur monstre propre', en:'Polly Troll (Polly\'s Forest): new dedicated silhouette — EVERY zone now has its own monster'}, fr:[
       {t:'fix', sub:'interface', tx:'Forêt de Polly (zone 15, dernière zone de farm du jeu, palier bleu) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé, sur la silhouette animée comme sur la petite icône de zone.'},
       {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour le Troll de Polly : un ancien troll corrompu par la forêt, posture voûtée plus prononcée que le Troll des Ruines (zone 12), torse drapé de lierre épais sur une peau d\'écorce sombre, couronne de petits champignons luisants bleu-teal sur la tête et les épaules, mains-griffes racinaires noueuses, volutes de spores vertes au sol, et une massue en branches fusionnées plus lourde/imposante. Palette vert-brun sombre, délibérément distincte du Troll des Ruines malgré l\'archétype "troll" partagé.'},

@@ -87,6 +87,7 @@
   "inventory.velia_loot_banner": "🕊️ Peaceful zone: no monsters, no loot possible here. Condensed preview of what each Velia zone can loot — click a zone to see the full detail:",
   "inventory.velia_peaceful_zone": "Velia — peaceful zone",
   "inventory.velia_treasure_label": "Velia Treasure",
+  "inventory.conclave_seal_label": "Merchants' Conclave Seal",
   "inventory.where_to_farm_label": "📍 Where to farm: ",
   "inventory.action_store_in_chest_qty": "📦 Store {{n}} in chest"
 }

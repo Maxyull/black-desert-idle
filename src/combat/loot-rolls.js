@@ -190,7 +190,7 @@ function rollDrops(wp, alpha, lm) {
     // permanent et cumulatif avec un futur assemblage, un cran plus rare qu'un bijou de zone
     // classique (~0.1-0.6%) mais pas aussi exceptionnel que le Trésor complet.
     ...CONCLAVE_SEAL_FRAGMENTS.filter(f => conclaveSealFragmentUnlocked(f.tierId)).map(f => ({
-      name:f.name, val:referenceGearVal()*50, ch:.00004, kind:'treasure', color:f.color, key:f.key, icon:f.icon, stackable:false, weight:0.05, pickupQty:1,
+      name:f.name, val:referenceGearVal()*50, ch:CONCLAVE_SEAL_DROP_CH, kind:'treasure', color:f.color, key:f.key, icon:f.icon, stackable:false, weight:0.05, pickupQty:1,
     })),
     // Pierre de Cron : taux FIXE (voir CRON_STONE.ch), identique dans TOUTES les zones du jeu
     // (indépendante du palier de stuff). 1 à 3 unités par drop (pickupQty).

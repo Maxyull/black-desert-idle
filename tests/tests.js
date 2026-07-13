@@ -5674,6 +5674,21 @@
     assert('cardLayoutDetach() produit un état qui reste valide après sanitize', JSON.stringify(clean.order.slice().sort()) === JSON.stringify(CARD_LAYOUT_IDS.slice().sort()));
   }
 
+  function testCardLayoutDetachTargetsOneSpecificGuestAmongSeveral() {
+    // retour utilisateur (2026-07-13) : une croix par nom d'onglet, pas une seule croix globale
+    // qui ne détachait que l'onglet ACTIF -- vérifie qu'on peut viser un guest précis même si ce
+    // n'est pas celui affiché, et que les autres guests du même groupe restent intacts.
+    if (typeof cardLayoutDetach !== 'function') return;
+    let st = cardLayoutNest(cardLayoutDefaultState(), 'statsCard', 'equipCard');
+    st = cardLayoutNest(st, 'invCard', 'equipCard'); // groupe: hôte equipCard, guests [statsCard, invCard]
+    st = cardLayoutSetActiveTab(st, 'equipCard', 'statsCard'); // onglet AFFICHÉ = statsCard
+    const detached = cardLayoutDetach(st, 'equipCard', 'invCard'); // mais on démerge invCard, pas l'actif
+    assert('cardLayoutDetach(host, tabId) retire uniquement le guest ciblé', !detached.groups.equipCard.includes('invCard'));
+    assert('cardLayoutDetach(host, tabId) laisse les autres guests du groupe intacts', detached.groups.equipCard.includes('statsCard'));
+    assert('cardLayoutDetach(host, tabId) replace le guest ciblé dans order', detached.order.includes('invCard'));
+    assert('cardLayoutDetach(host, tabId) ignore une tentative de détacher l\'hôte lui-même', cardLayoutDetach(st, 'equipCard', 'equipCard').groups.equipCard.length === 2);
+  }
+
   function testCardLayoutSetActiveTabIgnoresUnknownTab() {
     if (typeof cardLayoutSetActiveTab !== 'function') return;
     const base = cardLayoutNest(cardLayoutDefaultState(), 'statsCard', 'equipCard');
@@ -6080,6 +6095,7 @@
     testCardLayoutNestMovesGuestUnderTargetAndSetsItActive();
     testCardLayoutNestFlattensSourceThatWasItselfAHost();
     testCardLayoutDetachRestoresStandaloneCardRightAfterHost();
+    testCardLayoutDetachTargetsOneSpecificGuestAmongSeveral();
     testCardLayoutSetActiveTabIgnoresUnknownTab();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
