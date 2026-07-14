@@ -201,16 +201,51 @@ revoke execute on function public.offline_credit_add_item(jsonb,text,numeric,tex
 --    date (un trigger ne s'applique que sur écriture, jamais rétroactivement) : les 3 taux sont
 --    RE-bornés ici, en lecture, aux mêmes valeurs que le filet déjà existant sur player_stats
 --    (clamp_player_stats(), schema_snapshot_functions.sql) : silver_per_hour ≤ 5×10⁹, best_kpm ≤ 500.
---    Aucune borne équivalente n'existait nulle part pour un "xp/h" -- bornée ici à 2×10⁸/h, dérivée
---    du pire cas légitime déjà possible avec les AUTRES bornes ci-dessus : 500 kills/min (borne
---    best_kpm) × 60 × 560 xp (mob le plus généreux du jeu, Forêt de Polly, zones-data.js) ≈
---    16,8×10⁶ xp/h, marge ×~12 pour absorber une future zone plus généreuse sans re-migration.
+--    Aucune borne équivalente n'existait nulle part pour un "xp/h" -- RE-DÉRIVÉE le 2026-07-14
+--    (2e passe, demande explicite du owner de justifier ce chiffre plus rigoureusement plutôt que
+--    de le laisser en simple estimation) à partir du pire cas légitime EXACT déjà permis par les 2
+--    AUTRES bornes ci-dessus, qui sont elles des constantes de jeu dures (pas des estimations) :
+--    500 kills/min (borne best_kpm, elle-même déjà un plafond anti-triche existant) × 60 × 560 xp
+--    (mob le plus généreux du jeu à ce jour, Forêt de Polly, ZONES[15].xp dans zones-data.js) =
+--    16 800 000 xp/h exactement -- borne fixée à 25 000 000 (×1.5 de marge, pas ×12 comme dans la
+--    1ère version de cette migration) pour absorber un léger flou d'arrondi sans pour autant
+--    accepter un ordre de grandeur au-delà de ce qu'aucun joueur légitime ne peut atteindre tant que
+--    best_kpm reste ≤ 500. Si une future zone dépasse xp:560 (nouveau contenu endgame), cette borne
+--    (et le commentaire ci-dessus) devront être recalculés dans une NOUVELLE migration -- une borne
+--    trop stricte ne fait au pire que sous-créditer un taux légitime très élevé (jamais un risque de
+--    sur-crédit), donc pas de test de régression dédié ici contrairement à la table de loot
+--    (offline_credit_zone_loot) qui, elle, PEUT sur-créditer si désynchronisée.
 -- 2) Le crédit final passe par un UPDATE normal sur game_saves -> le trigger clamp_game_save_trigger
 --    (BEFORE UPDATE, déjà en place) s'applique automatiquement à CET UPDATE comme à n'importe quel
 --    autre, sans aucune logique dupliquée ici -- double filet silver/lvl déjà garanti.
 -- 3) Garde temporelle anti double-crédit : si last_server_credit_at date de moins de 55 minutes,
 --    la ligne est ignorée pour cette exécution (protège contre un ré-appel manuel rapproché pendant
 --    un test, ou un chevauchement improbable de 2 exécutions pg_cron).
+-- 4) GARDE D'ÉLIGIBILITÉ COMPTE (2026-07-14, décision explicite du owner après revue du rapport de
+--    la 1ère version de cette migration -- flag "vecteur d'abus multi-comptes") : un compte n'est
+--    crédité par ce cron QUE s'il a ≥3 jours d'ancienneté RÉELLE (auth.users.created_at, source de
+--    vérité serveur pour la date de création -- jamais falsifiable côté client, contrairement à
+--    n'importe quel champ de save_data) ET ≥2h de temps de jeu RÉEL cumulé (player_stats.playtime_sec
+--    -- la valeur qui alimente le widget "Temps de jeu / Total" du panneau "Mon compte", voir
+--    S.playtimeSec/game-supabase.js:651/game-supabase.js:1220 -- valeur existante réutilisée telle
+--    quelle, aucun nouveau champ inventé). Objectif explicite : rendre la création massive de
+--    comptes jetables juste pour laisser tourner ce cron sans jamais y rejouer non rentable (un
+--    compte doit avoir existé 3 jours ET avoir été réellement joué 2h avant de commencer à recevoir
+--    quoi que ce soit). Pas de rattrapage rétroactif au moment où un compte franchit le seuil (demande
+--    explicite : "explicitement PAS voulu") -- un compte ignoré ne reçoit simplement rien tant qu'il
+--    n'est pas éligible, puis reprend le crédit horaire normal de 1h à partir de son prochain passage
+--    du cron, jamais un gros crédit d'un coup couvrant le temps déjà écoulé.
+--    ⚠️ LIMITE CONNUE ⚠️ : player_stats.playtime_sec est écrit par un upsert CLIENT DIRECT
+--    (syncPlayerStats(), game-supabase.js) sur la ligne du joueur -- RLS ne vérifie que la propriété,
+--    pas le contenu -- seul clamp_player_stats() le borne, à `âge_du_compte_en_secondes + 86400`
+--    (schema_snapshot_functions.sql). Un compte flambant neuf peut donc en théorie s'auto-déclarer
+--    jusqu'à ~24h de playtime_sec dès sa création (bien au-delà des 7200s/2h requis ici), rendant la
+--    garde de playtime seule contournable par un simple appel réseau au moment de l'inscription --
+--    seule la garde d'ancienneté (auth.users.created_at, jamais falsifiable) reste un vrai filet dans
+--    ce scénario : un compte doit malgré tout attendre 3 jours réels avant le premier crédit, même
+--    avec un playtime_sec falsifié dès l'inscription. Réutilise sciemment le champ EXISTANT demandé
+--    par le owner plutôt que d'en inventer un plus robuste (ex: playtime_pings, écrit via RPC,
+--    potentiellement moins falsifiable) -- signalé ici pour une décision future si jugé nécessaire.
 create or replace function public.credit_offline_progress_hourly()
 returns void
 language plpgsql
@@ -235,7 +270,9 @@ declare
   ];
   v_max_silver_per_hour constant numeric := 5000000000;  -- = clamp_player_stats().silver_per_hour
   v_max_kpm constant numeric := 500;                      -- = clamp_player_stats().best_kpm
-  v_max_xp_per_hour constant numeric := 200000000;        -- dérivé, voir commentaire ci-dessus
+  v_max_xp_per_hour constant numeric := 25000000;         -- = 500(best_kpm)×60×560(max xp/mob réel)×1.5 marge, voir commentaire ci-dessus
+  v_min_account_age constant interval := interval '3 days';   -- garde d'éligibilité, point 4 ci-dessus
+  v_min_playtime_sec constant numeric := 7200;                -- 2h, garde d'éligibilité, point 4 ci-dessus
   rec record;
   v_save jsonb;
   v_s jsonb;
@@ -256,12 +293,33 @@ declare
   v_iter int;
 begin
   for rec in
-    select user_id, save_data, last_server_credit_at
-    from public.game_saves
-    where save_data is not null and save_data <> '{}'::jsonb
+    select
+      gs.user_id, gs.save_data, gs.last_server_credit_at,
+      u.created_at as account_created_at,
+      -- LEFT JOIN : un compte invité (isGuest(), jamais synchronisé vers player_stats -- voir
+      -- syncPlayerStats(), game-supabase.js) ou tout juste créé n'a pas encore de ligne player_stats
+      -- -- coalesce à 0 fait échouer la garde de playtime pour ces comptes (fail-safe voulu : pas de
+      -- donnée connue = pas de crédit, jamais l'inverse).
+      coalesce(ps.playtime_sec, 0) as playtime_sec
+    from public.game_saves gs
+    left join auth.users u on u.id = gs.user_id
+    left join public.player_stats ps on ps.user_id = gs.user_id
+    where gs.save_data is not null and gs.save_data <> '{}'::jsonb
   loop
     -- garde anti double-crédit (voir point 3 ci-dessus) : jamais 2 crédits < 55 min d'intervalle
     if rec.last_server_credit_at is not null and rec.last_server_credit_at > now() - interval '55 minutes' then
+      continue;
+    end if;
+
+    -- garde d'éligibilité (voir point 4 ci-dessus) : ancienneté RÉELLE du compte (auth.users.created_at,
+    -- jamais falsifiable côté client) ET temps de jeu cumulé RÉEL (player_stats.playtime_sec) --
+    -- account_created_at null (ligne auth.users introuvable -- ne devrait jamais arriver en pratique
+    -- puisqu'une ligne game_saves n'existe que pour un auth.uid() authentifié réel, mais fail-safe
+    -- si jamais) est traité comme "pas encore éligible", jamais comme "éligible par défaut".
+    if rec.account_created_at is null or rec.account_created_at > now() - v_min_account_age then
+      continue;
+    end if;
+    if rec.playtime_sec < v_min_playtime_sec then
       continue;
     end if;
 
@@ -351,6 +409,17 @@ begin
       -- 'offline_catchup' déjà whitelisté par silver_ledger_category_check (voir
       -- 20260721220000_silver_ledger_offline_catchup_category.sql) -- même catégorie que le
       -- rattrapage Phase 1 client, distinguée seulement par la note ci-dessous dans l'audit.
+      --
+      -- ⚠️ CROISSANCE NON BORNÉE CONNUE (flag #2 du rapport de la 1ère version de cette migration,
+      -- décision du owner : pas d'action requise maintenant, juste garder ce commentaire pour une
+      -- future tâche d'archivage) : cette ligne ajoute désormais 1 ligne silver_ledger PAR COMPTE
+      -- ÉLIGIBLE ET ACTIF (bestSilverPerHour>0) CHAQUE HEURE, indéfiniment, en plus des écritures
+      -- déjà générées côté client (flushSilverLedger(), game-supabase.js -- table déjà connue pour
+      -- grossir vite, voir le commentaire "silver_ledger grossissait d'environ 480k lignes/jour"
+      -- dans ce même fichier). Aucune purge/archivage n'existe aujourd'hui pour silver_ledger -- si
+      -- ce volume devient un problème de coût/perf de stockage, une tâche dédiée (ex: pg_cron
+      -- d'archivage/agrégation des lignes > N jours vers une table de résumé, ou TTL) devra être
+      -- créée séparément. Pas dans le périmètre de cette migration.
       insert into public.silver_ledger(user_id, delta, category, note)
         values (rec.user_id, v_silver_gain, 'offline_catchup', 'Rattrapage hors ligne serveur (cron horaire)');
     end if;
