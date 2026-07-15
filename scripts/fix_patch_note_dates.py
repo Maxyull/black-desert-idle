@@ -3,63 +3,83 @@
 Corrige les dates fictives de meta/patch-notes-data.js (champ `d:`) en les remplaçant par la
 VRAIE date du commit git qui a introduit chaque entrée (identifiée par son `v:'VNNN'`).
 
-Script one-off (2026-07-13, voir CLAUDE.md/session courante) -- pas destiné à tourner en continu,
-gardé dans scripts/ pour traçabilité/relecture, pas branché au workflow normal (build.py etc).
+Script one-off (2026-07-13, revu 2026-07-15 -- voir CLAUDE.md/session courante) -- pas destiné à
+tourner en continu, gardé dans scripts/ pour traçabilité/relecture, pas branché au workflow
+normal (build.py etc).
 
-Méthode : parcourt l'historique git du fichier (`git log --follow`, du plus ancien au plus
-récent -- --follow est nécessaire car le fichier a été déplacé lors de la réorg `src/` de V301,
-un `git log` simple ne remonte que 127 commits au lieu des ~386 réels), et pour chaque commit
-regarde les lignes AJOUTÉES (diff `+`) qui matchent `v:'VNNN'` -- la première fois qu'une version
-apparaît dans une ligne ajoutée, on retient l'horodatage de CE commit (committer date, %cI) comme
-date réelle de l'entrée. Les éditions ultérieures (typo, etc.) n'écrasent pas cette date.
+Méthode (v2, 2026-07-15) : parcourt UNIQUEMENT le tronc de `main` (`git log --first-parent`,
+du plus ancien au plus récent), c'est-à-dire les commits qui sont réellement devenus visibles
+sur `main` -- soit un commit direct, soit un commit de MERGE. Pour chaque commit du tronc, le
+diff est fait contre son PREMIER parent (`git diff h^1 h`) : pour un commit normal ça équivaut
+au diff habituel, mais pour un commit de merge ça capture d'un coup TOUT ce que la branche
+mergée a apporté, et attribue donc correctement la date du MERGE (le moment où l'entrée devient
+réellement partie de `main`) plutôt que la date du commit d'origine sur la branche de feature.
+La première fois qu'une version `v:'VNNN'` apparaît dans une ligne AJOUTÉE de ce diff, on retient
+l'horodatage de CE commit de tronc (committer date, %cI) comme date réelle de l'entrée.
 
-Sortie : réécrit meta/patch-notes-data.js en remplaçant chaque `d:'DD/MM/YYYY HH:mm'` par la
-date réelle trouvée. Versions sans commit d'introduction identifiable (repli) : date laissée
-inchangée, listée en sortie pour audit manuel.
+Bug corrigé par cette v2 : la v1 parcourait TOUT l'historique atteignable (union
+`--follow` + `--full-history`), y compris les commits internes aux branches de feature -- une
+fois une branche mergée, ses commits internes deviennent aussi "atteignables depuis main", donc
+la v1 leur attribuait à tort la date d'écriture originale sur la branche plutôt que la date du
+merge (constaté sur V447 : commit de branche `2026-07-14T02:21`, mais réellement mergé sur main
+et visible des joueurs seulement le `2026-07-15T11:55`, un écart de 33h+).
+
+`--first-parent` est combiné à `--follow` (nécessaire car le fichier a été déplacé lors de la
+réorg `src/` de V301) -- contrairement à la combinaison `--follow`+`--full-history` ou
+`--follow`+`--reverse` (toutes deux cassées, cf. historique de ce script), `--first-parent`+
+`--follow` fonctionne correctement sur ce repo (vérifié empiriquement : retrouve bien le commit
+de merge `21bc40b` avec sa date réelle pour V447).
+
+Le contenu du fichier est lu via `git show <ref>:<path>` (PAS le fichier de travail sur disque)
+-- ce repo tourne avec plusieurs agents en parallèle sur le même checkout (voir CLAUDE.md §24),
+le fichier de travail peut contenir des changements non commités d'une autre session en cours ;
+lire depuis la référence git garantit qu'on corrige uniquement l'historique réellement commité.
+
+Sortie : par défaut, écrit le résultat sur stdout (jamais sur le fichier de travail directement,
+justement à cause du risque de collision avec une autre session -- voir ci-dessus). Passer
+`--write` pour écrire directement sur `meta/patch-notes-data.js` (à ne faire que si on a vérifié
+qu'aucune autre session n'a de changement non commité en cours sur ce fichier). Versions sans
+commit d'introduction identifiable (repli) : date laissée inchangée, listées en sortie (stderr)
+pour audit manuel.
 """
+import argparse
 import re
 import subprocess
 import sys
 from datetime import datetime, timezone
 
+sys.stdout.reconfigure(encoding='utf-8')
+sys.stderr.reconfigure(encoding='utf-8')
+
 def run(cmd):
     return subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='replace')
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('ref', nargs='?', default='origin/main',
+                         help='Référence git à partir de laquelle lire le contenu ET parcourir '
+                              'le tronc --first-parent (def: origin/main).')
+    parser.add_argument('--write', action='store_true',
+                         help='Écrit directement sur meta/patch-notes-data.js. Par défaut : '
+                              'affiche sur stdout uniquement (ne touche jamais au fichier de '
+                              'travail sans ce flag explicite).')
+    args = parser.parse_args()
+    start_ref = args.ref
     path = 'meta/patch-notes-data.js'
 
-    # 1. Liste des commits touchant le fichier, du PLUS ANCIEN au plus récent.
-    # NB: `--follow` combiné à `--reverse` est cassé (bug git connu -- ne retourne qu'1 commit sur
-    # ce repo/cette version de git, vérifié empiriquement) -- on récupère donc en ordre normal
-    # (plus récent en premier) puis on inverse nous-mêmes en Python.
-    # NB2 : on part de `origin/main`, PAS `HEAD` -- ce repo tourne avec plusieurs agents en
-    # parallèle sur le même checkout (voir CLAUDE.md §24), HEAD local peut être en retard sur
-    # origin/main (une branche divergente/pas encore fast-forward) et manquerait alors les commits
-    # les plus récents ayant introduit les toutes dernières entrées.
-    # NB3 : deux requêtes UNIES plutôt qu'une seule, aucune des deux seule ne suffit --
-    #   `--follow` seul survit au renommage/déplacement (réorg V301) mais son historique par
-    #   défaut SIMPLIFIE et masque des commits de MERGE qui n'introduisent un changement que via
-    #   résolution de conflit (repéré sur V426 : ajouté dans un commit de merge résolvant une
-    #   collision de numérotation, invisible avec `--follow` seul, y compris avec
-    #   `--full-history` en plus -- `--follow`+`--full-history` ensemble semble aussi cassé sur ce
-    #   repo, même famille de bug que `--follow`+`--reverse`) ;
-    #   `--full-history` seul (sans `--follow`) voit bien ces merges mais perdrait l'historique
-    #   d'avant un renommage s'il y en avait eu un after coup.
-    # Union des deux + tri par date de commit (au lieu de faire confiance à l'ordre de `git log`,
-    # potentiellement incohérent entre les deux requêtes une fois fusionnées).
-    start_ref = sys.argv[1] if len(sys.argv) > 1 else 'origin/main'
-    res_follow = run(['git', 'log', '--follow', '--format=%H', start_ref, '--', path])
-    res_full = run(['git', 'log', '--full-history', '--format=%H', start_ref, '--', path])
-    commit_set = set()
-    for res in (res_follow, res_full):
-        commit_set.update(h for h in res.stdout.strip().split('\n') if h)
+    # 1. Liste des commits du TRONC de main touchant le fichier, du plus ancien au plus récent.
+    # `--first-parent` + `--reverse` n'a pas le bug connu de `--follow`+`--reverse` (testé sur ce
+    # repo), mais on retrie quand même nous-mêmes par date pour rester cohérent avec la logique
+    # ci-dessous qui a besoin de la date de chaque commit de toute façon.
+    res = run(['git', 'log', '--first-parent', '--follow', '--format=%H', start_ref, '--', path])
+    commits_raw = [h for h in res.stdout.strip().split('\n') if h]
     dated_commits = []
-    for h in commit_set:
+    for h in commits_raw:
         iso = run(['git', 'show', '-s', '--format=%cI', h]).stdout.strip()
         dated_commits.append((iso, h))
     dated_commits.sort()  # ISO8601 trie lexicographiquement = chronologique
     commits = [h for _, h in dated_commits]
-    print(f'{len(commits)} commits trouvés dans l\'historique du fichier (union --follow + --full-history).', file=sys.stderr)
+    print(f'{len(commits)} commits trouvés sur le tronc --first-parent de {start_ref}.', file=sys.stderr)
 
     version_commit_date = {}  # 'V420' -> ISO commit date string
     version_re = re.compile(r"v:'(V\d+)'")
@@ -89,9 +109,9 @@ def main():
 
     print(f'{len(version_commit_date)} versions avec une date de commit trouvée.', file=sys.stderr)
 
-    # 3. Relire le fichier courant, extraire la liste des v: présents (dans l'ordre du tableau).
-    with open(path, encoding='utf-8') as f:
-        content = f.read()
+    # 3. Lire le CONTENU depuis la référence git (pas le fichier de travail, voir docstring),
+    #    extraire la liste des v: présents (dans l'ordre du tableau).
+    content = run(['git', 'show', f'{start_ref}:{path}']).stdout
 
     entry_re = re.compile(r"\{ v:'(V\d+)', d:'(\d{2}/\d{2}/\d{4} \d{2}:\d{2})'")
     entries = entry_re.findall(content)
@@ -119,10 +139,15 @@ def main():
 
     new_content = entry_re.sub(repl, content)
 
-    with open(path, 'w', encoding='utf-8', newline='\n') as f:
-        f.write(new_content)
+    if args.write:
+        with open(path, 'w', encoding='utf-8', newline='\n') as f:
+            f.write(new_content)
+        print(f'{replaced} dates remplacées, écrites sur {path}.', file=sys.stderr)
+    else:
+        print(f'{replaced} dates remplacées (mode aperçu, rien écrit -- relancer avec --write '
+              f'pour appliquer).', file=sys.stderr)
+        sys.stdout.write(new_content)
 
-    print(f'{replaced} dates remplacées.', file=sys.stderr)
     if missing:
         print(f'{len(missing)} versions SANS date de commit trouvée (inchangées) : {missing}', file=sys.stderr)
 
