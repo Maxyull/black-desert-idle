@@ -357,3 +357,19 @@ function migrateBestXpPerHourResetV440() {
   S.bestXpPerHour = 0;
   if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
+
+// migrateRateRecordsResetV454 (2026-07-16, demande explicite : "revoir comment est calculé
+// silver/h kpm et faire qqch de mieux et juste pour tout le monde") -- le CLASSEMENT silver/h et
+// kills/min est désormais calculé côté serveur sur des heures PLEINES (voir
+// supabase/migrations/20260722150000_player_hour_rates_fair_leaderboard.sql), plus jamais depuis
+// ces records locaux. Les S.bestSilverPerHour/S.bestKpm restants sont des pics de 3 min
+// extrapolés (jusqu'à ~20× une vraie heure) : encore utilisés LOCALEMENT (affichage "record" du
+// HUD/panneau Historique, et surtout TAUX du rattrapage hors-ligne, computeOfflineCatchupSilver)
+// -- les garder gonflés aurait payé le rattrapage hors-ligne à un taux irréaliste. Remise à zéro,
+// même décision que V436/V439 : le record local se rebâtit dès la prochaine session avec la
+// formule corrigée (déblocage anti-pic V452).
+/** Migration rétroactive V454 : remet S.bestSilverPerHour et S.bestKpm à 0 (le classement est désormais serveur, ces valeurs locales gonflées ne servaient plus qu'au HUD et au taux du rattrapage hors-ligne). */
+function migrateRateRecordsResetV454() {
+  S.bestSilverPerHour = 0;
+  S.bestKpm = 0;
+}

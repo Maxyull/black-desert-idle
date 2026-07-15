@@ -41,10 +41,17 @@ function LB2_CATS_() {
       val:r=>Number(r.gearscore||0), fmt:r=>`${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})` },
     zone:     { icon:'🗺️', label:i18next.t('backend:backend.leaderboard.cat_zone_label'), tip:i18next.t('backend:backend.leaderboard.cat_zone_tip'),
       val:r=>Number(r.best_zone_index||0), fmt:r=>tr(r.best_zone_name||'—') },
+    // silver/h et kills/min : calculés CÔTÉ SERVEUR depuis V454 (meilleure heure PLEINE, même
+    // formule pour tout le monde -- voir compute_player_hour_rates(), migrations 20260722150000/
+    // 20260722150500). Classé par la colonne "7 derniers jours" (vivante : redescend si on ne
+    // farme plus) ; le record à vie (ratchet serveur, même sémantique heure pleine) est affiché à
+    // côté ("les deux colonnes", choix explicite de l'utilisateur).
     sh:       { icon:'⏱️', label:i18next.t('backend:backend.leaderboard.cat_sh_label'), tip:i18next.t('backend:backend.leaderboard.cat_sh_tip'),
-      val:r=>Number(r.silver_per_hour||0), fmt:r=>`${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}` },
+      val:r=>Number(r.silver_per_hour_week||0),
+      fmt:r=>`${fmt(r.silver_per_hour_week||0)}/h ${i18next.t('backend:backend.leaderboard.rate_week_suffix')} · ${i18next.t('backend:backend.leaderboard.rate_life_prefix')} ${fmt(r.silver_per_hour||0)}/h` },
     kpm:      { icon:'🏹', label:i18next.t('backend:backend.leaderboard.cat_kpm_label'), tip:i18next.t('backend:backend.leaderboard.cat_kpm_tip'),
-      val:r=>Number(r.best_kpm||0), fmt:r=>`${(r.best_kpm||0).toFixed(1)}/min · ${tr(r.best_zone_name||'—')}` },
+      val:r=>Number(r.best_kpm_week||0),
+      fmt:r=>`${Number(r.best_kpm_week||0).toFixed(1)}/min ${i18next.t('backend:backend.leaderboard.rate_week_suffix')} · ${i18next.t('backend:backend.leaderboard.rate_life_prefix')} ${Number(r.best_kpm||0).toFixed(1)}/min` },
     item:     { icon:'🎯', label:i18next.t('backend:backend.leaderboard.cat_item_label'), tip:i18next.t('backend:backend.leaderboard.cat_item_tip'),
       val:r=>Number(r.best_item_count||0), fmt:r=>`${tr(r.best_item_name||'—')} (${fmt(r.best_item_count||0)})`, filter:r=>!!r.best_item_name },
     treasure: { icon:'🗺️', label:i18next.t('backend:backend.leaderboard.cat_treasure_label'), tip:i18next.t('backend:backend.leaderboard.cat_treasure_tip'),

@@ -421,9 +421,11 @@ const I18N_RESOURCES = {
       "backend.leaderboard.cat_item_label": "Meilleur objet",
       "backend.leaderboard.cat_item_tip": "Objet le plus accumulé (quantité totale ramassée à vie).",
       "backend.leaderboard.cat_kpm_label": "Kills/min",
-      "backend.leaderboard.cat_kpm_tip": "Record de kills par minute, avec la zone associée.",
+      "backend.leaderboard.cat_kpm_tip": "Meilleure heure pleine de kills des 7 derniers jours (calculée par le serveur, même formule pour tous), avec le record à vie à côté.",
       "backend.leaderboard.cat_sh_label": "Silver/heure",
-      "backend.leaderboard.cat_sh_tip": "Meilleur taux de farm (silver/heure) jamais atteint, avec la zone associée.",
+      "backend.leaderboard.cat_sh_tip": "Meilleure heure pleine de farm des 7 derniers jours (calculée par le serveur, même formule pour tous), avec le record à vie à côté.",
+      "backend.leaderboard.rate_week_suffix": "(7 j)",
+      "backend.leaderboard.rate_life_prefix": "à vie",
       "backend.leaderboard.cat_silver_label": "Silver",
       "backend.leaderboard.cat_silver_tip": "Silver total gagné à vie (S.silverEarned).",
       "backend.leaderboard.cat_treasure_label": "Trésors",
@@ -1466,9 +1468,11 @@ const I18N_RESOURCES = {
       "backend.leaderboard.cat_item_label": "Best item",
       "backend.leaderboard.cat_item_tip": "Most stockpiled item (total lifetime quantity picked up).",
       "backend.leaderboard.cat_kpm_label": "Kills/min",
-      "backend.leaderboard.cat_kpm_tip": "Kills-per-minute record, with the associated zone.",
+      "backend.leaderboard.cat_kpm_tip": "Best full hour of kills over the last 7 days (computed by the server, same formula for everyone), with the lifetime record next to it.",
       "backend.leaderboard.cat_sh_label": "Silver/hour",
-      "backend.leaderboard.cat_sh_tip": "Best farming rate (silver/hour) ever reached, with the associated zone.",
+      "backend.leaderboard.cat_sh_tip": "Best full farming hour over the last 7 days (computed by the server, same formula for everyone), with the lifetime record next to it.",
+      "backend.leaderboard.rate_week_suffix": "(7 d)",
+      "backend.leaderboard.rate_life_prefix": "lifetime",
       "backend.leaderboard.cat_silver_label": "Silver",
       "backend.leaderboard.cat_silver_tip": "Lifetime total silver earned.",
       "backend.leaderboard.cat_treasure_label": "Treasures",
@@ -4386,6 +4390,7 @@ function applySaveState(data) {
   if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
   if (!S.migratedBestKpmResetV439) { migrateBestKpmResetV439(); S.migratedBestKpmResetV439 = true; }
   if (!S.migratedBestXpPerHourResetV440) { migrateBestXpPerHourResetV440(); S.migratedBestXpPerHourResetV440 = true; }
+  if (!S.migratedRateRecordsResetV454) { migrateRateRecordsResetV454(); S.migratedRateRecordsResetV454 = true; }
   
   new Set(COMPENDIUM_BAG.filter(Boolean).map(it => it.name)).forEach(evictMasteredFromCompendiumBag);
   zoneIdx = data.zoneIdx || 0;
@@ -11749,6 +11754,11 @@ function migrateBestXpPerHourResetV440() {
   if (typeof syncPlayerStats === 'function') syncPlayerStats();
 }
 
+function migrateRateRecordsResetV454() {
+  S.bestSilverPerHour = 0;
+  S.bestKpm = 0;
+}
+
 // ==== src/admin/enh-debug-tools.js ====
 function adminMaxEnhAllEquipped() {
   const maxLvl = ENH_NAMES.length - 1;
@@ -15200,13 +15210,11 @@ async function syncPlayerStats() {
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
-      silver_per_hour: Math.round(S.bestSilverPerHour||0),
       playtime_sec: Math.round(S.playtimeSec),
       best_item_name: best ? best.name : '',
       best_item_count: best ? best.count : 0,
       treasure_count: treasureCount,
       loyalty: Math.round(S.loyalty||0),
-      best_kpm: Math.round((S.bestKpm||0)*10)/10,
       
       compendium_pct: typeof compendiumOverallPct === 'function' ? compendiumOverallPct() : 0,
       updated_at: new Date().toISOString(),
@@ -17289,10 +17297,13 @@ function LB2_CATS_() {
       val:r=>Number(r.gearscore||0), fmt:r=>`${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})` },
     zone:     { icon:'🗺️', label:i18next.t('backend:backend.leaderboard.cat_zone_label'), tip:i18next.t('backend:backend.leaderboard.cat_zone_tip'),
       val:r=>Number(r.best_zone_index||0), fmt:r=>tr(r.best_zone_name||'—') },
+    
     sh:       { icon:'⏱️', label:i18next.t('backend:backend.leaderboard.cat_sh_label'), tip:i18next.t('backend:backend.leaderboard.cat_sh_tip'),
-      val:r=>Number(r.silver_per_hour||0), fmt:r=>`${fmt(r.silver_per_hour||0)}/h · ${tr(r.best_zone_name||'—')}` },
+      val:r=>Number(r.silver_per_hour_week||0),
+      fmt:r=>`${fmt(r.silver_per_hour_week||0)}/h ${i18next.t('backend:backend.leaderboard.rate_week_suffix')} · ${i18next.t('backend:backend.leaderboard.rate_life_prefix')} ${fmt(r.silver_per_hour||0)}/h` },
     kpm:      { icon:'🏹', label:i18next.t('backend:backend.leaderboard.cat_kpm_label'), tip:i18next.t('backend:backend.leaderboard.cat_kpm_tip'),
-      val:r=>Number(r.best_kpm||0), fmt:r=>`${(r.best_kpm||0).toFixed(1)}/min · ${tr(r.best_zone_name||'—')}` },
+      val:r=>Number(r.best_kpm_week||0),
+      fmt:r=>`${Number(r.best_kpm_week||0).toFixed(1)}/min ${i18next.t('backend:backend.leaderboard.rate_week_suffix')} · ${i18next.t('backend:backend.leaderboard.rate_life_prefix')} ${Number(r.best_kpm||0).toFixed(1)}/min` },
     item:     { icon:'🎯', label:i18next.t('backend:backend.leaderboard.cat_item_label'), tip:i18next.t('backend:backend.leaderboard.cat_item_tip'),
       val:r=>Number(r.best_item_count||0), fmt:r=>`${tr(r.best_item_name||'—')} (${fmt(r.best_item_count||0)})`, filter:r=>!!r.best_item_name },
     treasure: { icon:'🗺️', label:i18next.t('backend:backend.leaderboard.cat_treasure_label'), tip:i18next.t('backend:backend.leaderboard.cat_treasure_tip'),
