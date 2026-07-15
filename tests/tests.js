@@ -6379,6 +6379,62 @@
     }
   }
 
+  // ---------- Rattrapage arrière-plan + déblocage des records (2026-07-15, "bloqué à 500 silver/min") ----------
+  // advanceSim doit rattraper le temps réel écoulé en SOUS-PAS de 2s max (le throttling "intensive"
+  // de Chrome limite le setInterval de secours à 1 réveil/min onglet caché : l'ancien clamp unique
+  // à 2s jetait 58s sur 60 -> farm à 1/30 du rythme). Stubs sur les ticks internes pour compter les
+  // sous-pas sans dérouler la vraie simulation ; `last` (baseline module de advanceSim) est
+  // accessible/restaurable depuis ce script (même scope global partagé, cf. le test sessionLocked).
+  function testAdvanceSimCatchesUpHiddenTimeInSubSteps() {
+    if (typeof advanceSim !== 'function' || typeof simTickOnce !== 'function') return;
+    const savedFsm = fsm, savedWolves = wolvesTick, savedDrops = dropsTick, savedParticles = particlesTick, savedSpawn = spawnPackNear, savedLast = last;
+    let calls = 0, totalDt = 0, maxStep = 0;
+    try {
+      fsm = dt => { calls++; totalDt += dt; maxStep = Math.max(maxStep, dt); };
+      wolvesTick = () => {}; dropsTick = () => {}; particlesTick = () => {}; spawnPackNear = () => {};
+      const t0 = performance.now();
+      advanceSim(t0); // synchronise la baseline `last`
+      calls = 0; totalDt = 0; maxStep = 0;
+      advanceSim(t0 + 60000); // simule le réveil du setInterval après 60s d'onglet caché (throttling Chrome)
+      assert('advanceSim rattrape la totalité des ~60s cachées (plus jamais 2s sur 60)', Math.abs(totalDt - 60) < 0.01, `totalDt=${totalDt}`);
+      assert('advanceSim découpe le rattrapage en sous-pas de 2s max (physique/FSM préservées)', maxStep <= 2 && calls === 30, `calls=${calls} maxStep=${maxStep}`);
+      calls = 0; totalDt = 0;
+      advanceSim(t0 + 60000 + 16); // frame rAF normale onglet visible : un seul sous-pas, comme avant
+      assert('advanceSim onglet visible : un seul sous-pas par frame, comportement inchangé', calls === 1 && totalDt < 0.5, `calls=${calls} totalDt=${totalDt}`);
+      calls = 0; totalDt = 0;
+      advanceSim(t0 + 60016 + 7200000); // mise en veille OS de 2h : borné à BG_CATCHUP_MAX_SEC, jamais un gel de l'onglet
+      assert('advanceSim borne un trou géant (veille OS) à BG_CATCHUP_MAX_SEC', Math.abs(totalDt - BG_CATCHUP_MAX_SEC) < 0.01, `totalDt=${totalDt}`);
+    } finally {
+      fsm = savedFsm; wolvesTick = savedWolves; dropsTick = savedDrops; particlesTick = savedParticles; spawnPackNear = savedSpawn; last = savedLast;
+    }
+  }
+  // Déblocage des records (silver/h, kpm, xp/h) : un rythme SOUTENU bien au-delà de +30% du record
+  // (des dizaines de petits gains répartis sur toute la fenêtre -- le profil réel du farm de trash)
+  // doit désormais devenir éligible (taux recalculé sans le plus gros échantillon), là où l'ancien
+  // rejet pur figeait le record pour toujours (constaté en prod : record 6 800/h, farm réel ~50×).
+  // Le pic ISOLÉ reste rejeté -- déjà couvert par testComputeSliding*IgnoresIsolatedSpikeForRecord.
+  function testComputeSlidingRatesUnfreezeRecordOnSustainedHigherRate() {
+    if (typeof computeSlidingSilverPerHour !== 'function') return;
+    const now = Date.now();
+    // silver : record figé à 6 800/h, farm réel ~900 000/h réparti en 60 petits gains sur 3 min
+    const silverBest = 6800, silverReal = 900000;
+    const silverBuf = [];
+    for (let i = 0; i < 60; i++) silverBuf.push({ t: now - SILVER_RATE_WINDOW_MS + 1000 + i * ((SILVER_RATE_WINDOW_MS - 2000) / 59), silver: silverReal * (SILVER_RATE_WINDOW_MS / 3600000) / 60 });
+    const sv = computeSlidingSilverPerHour(silverBuf, now, silverBest);
+    assert('silver/h : un rythme soutenu ~130× le record devient éligible (record débloqué)', sv.eligible === true, JSON.stringify(sv));
+    assert('silver/h : le taux candidat reste proche du vrai rythme (à peine rogné du plus gros échantillon)', sv.ratePerHour > silverReal * 0.9, `rate=${sv.ratePerHour}`);
+    // kpm : même profil (1 échantillon par kill)
+    const kpmBuf = [];
+    for (let i = 0; i < 90; i++) kpmBuf.push({ t: now - KPM_RATE_WINDOW_MS + 1000 + i * ((KPM_RATE_WINDOW_MS - 2000) / 89), kills: 1 });
+    const kv = computeSlidingKpm(kpmBuf, now, 10); // ~30 kills/min réels contre un record de 10
+    assert('kpm : un rythme soutenu à 3× le record devient éligible (record débloqué)', kv.eligible === true && kv.ratePerMin > 25, JSON.stringify(kv));
+    // xp/h : même profil que silver
+    const xpBuf = [];
+    for (let i = 0; i < 60; i++) xpBuf.push({ t: now - XP_RATE_WINDOW_MS + 1000 + i * ((XP_RATE_WINDOW_MS - 2000) / 59), xp: 100 });
+    const xv = computeSlidingXpPerHour(xpBuf, now, 1000);
+    assert('xp/h : un rythme soutenu bien au-delà de +30% devient éligible (record débloqué)', xv.eligible === true, JSON.stringify(xv));
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -6717,6 +6773,8 @@
     testBuildSilverPointsFillGapsWithZeros();
     testAddSilverFeedsMinuteHistoryOnlyForLoot();
     testSilverHistPanelOpensOfflineAndCloses();
+    testAdvanceSimCatchesUpHiddenTimeInSubSteps();
+    testComputeSlidingRatesUnfreezeRecordOnSustainedHigherRate();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
