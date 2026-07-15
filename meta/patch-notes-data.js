@@ -16,6 +16,11 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V449', d:'15/07/2026 12:00', name:{fr:'Notes de version : titre de chaque version affiché en gras', en:'Patch notes: each version title now shown in bold'}, fr:[
+      {t:'change', sub:'interface', tx:'Dans le panneau des notes de version, le titre de chaque version s\'affiche désormais en gras (au lieu d\'un petit texte en italique atténué), pour mieux ressortir au-dessus de la liste des changements.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'In the patch notes panel, each version\'s title is now shown in bold (instead of small dimmed italic text), so it stands out better above the list of changes.'},
+    ] },
   { v:'V448', d:'14/07/2026 03:30', name:{fr:'Mini Boss : arène et écran de victoire refaits + correctif important', en:'Mini Boss: arena and victory screen reworked + important fix'}, fr:[
       {t:'fix', sub:'combat', severity:'major', tx:'Correctif important : gagner un combat de Mini Boss faisait planter l\'écran de victoire (il ne s\'affichait jamais et le run ne s\'enchaînait pas). Le combat est désormais jouable de bout en bout — victoire, récompenses et enchaînement des combats fonctionnent.'},
       {t:'change', sub:'combat', tx:'Arène refaite : la zone de combat est plus compacte (fini l\'immense vide sous le boss), et la liste des participants passe d\'une petite bulle dans le coin à une vraie carte à côté du chat de groupe.'},
