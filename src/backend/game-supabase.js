@@ -614,17 +614,18 @@ async function saveToCloud() {
 }
 
 // ---------- classement : snapshot périodique des stats publiques dans player_stats ----------
-/** Pousse les records À VIE du joueur (silver/GS/AP/DP/kpm/zone/silver-par-heure/trésors/loyalty/compendium) dans player_stats — jamais l'état courant/instantané, pour un classement qui ne régresse jamais. Réservé aux comptes vérifiés. */
+/** Pousse les records À VIE du joueur (silver/GS/AP/DP/zone/trésors/loyalty/compendium) dans player_stats — jamais l'état courant/instantané, pour un classement qui ne régresse jamais. silver_per_hour/best_kpm (et leurs variantes _week) ne sont PLUS envoyés : colonnes calculées et possédées par le SERVEUR depuis V454. Réservé aux comptes vérifiés. */
 async function syncPlayerStats() {
   if (!sb || !currentUser || isGuest()) return; // classement réservé aux comptes vérifiés
-  // "silver par heure" (2026-07-12, demande explicite : "compté exclusivement par les silver
-  // recolté grace au token vendu") -- reflète le rythme de FARM réel, pas un gros coup de chance
-  // ponctuel (succès/quête/boss/marché) qui gonflerait artificiellement ce classement.
-  // Envoie désormais le RECORD PERSO à vie (S.bestSilverPerHour, voir hud() dans game-core.js) au
-  // lieu d'un recalcul à chaque sync (2026-07-18, demande explicite : "le classement... toujours
-  // le meilleur affiché... pas de synchro") -- l'ancien calcul reflétait juste le rythme instantané
-  // de LA session en cours au moment du sync (pouvait redescendre d'une sync à l'autre, incohérent
-  // avec best_kpm/best_zone_index ci-dessous qui sont déjà des records monotones).
+  // silver_per_hour / best_kpm / silver_per_hour_week / best_kpm_week : RETIRÉS du payload le
+  // 2026-07-16 (V454, demande explicite : "revoir comment est calculé silver/h kpm et faire qqch
+  // de mieux et juste pour tout le monde") -- ces colonnes sont désormais calculées CÔTÉ SERVEUR
+  // par compute_player_hour_rates() (cron horaire pg_cron) depuis silver_ledger (gains 'loot') et
+  // farm_events (qty de trash = kills, le trash droppant exactement 1× par kill) : la MÊME formule
+  // "meilleure heure PLEINE" pour tout le monde, plus jamais un pic client de 3 min extrapolé. Un
+  // trigger (protect_server_rate_columns) ignore de toute façon toute écriture client sur ces 4
+  // colonnes -- même un vieux client jamais rechargé ne peut plus les pousser. Voir
+  // supabase/migrations/20260722150000_player_hour_rates_fair_leaderboard.sql (+ 20260722150500).
   const best = bestFarmedItem();
   // total de morceaux du "Trésor de Velia" ramassés À VIE — sert au classement dédié "🗺️ Trésors"
   const treasureCount = treasureTotal(S);
@@ -647,13 +648,11 @@ async function syncPlayerStats() {
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
-      silver_per_hour: Math.round(S.bestSilverPerHour||0),
       playtime_sec: Math.round(S.playtimeSec),
       best_item_name: best ? best.name : '',
       best_item_count: best ? best.count : 0,
       treasure_count: treasureCount,
       loyalty: Math.round(S.loyalty||0),
-      best_kpm: Math.round((S.bestKpm||0)*10)/10,
       // % de complétion GLOBALE du Compendium -- zones+boss+PEN (2026-07-10, demande explicite :
       // "ajoute au panneau admin ce qui manque"), voir compendiumOverallPct() (core/game-core.js).
       // Jamais recalculé côté serveur : zones/boss/PEN ne font QUE monter (jamais de retrait), donc

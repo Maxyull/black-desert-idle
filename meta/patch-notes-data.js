@@ -19,6 +19,15 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V454', d:'16/07/2026 02:00', name:{fr:'Classement silver/h et kills/min refondu : calcul serveur, juste pour tous', en:'Silver/h and kills/min leaderboard reworked: server-computed, fair for everyone'}, fr:[
+      {t:'change', sub:'economie', tx:'Le silver/heure et les kills/min du classement sont désormais calculés par le SERVEUR sur des heures PLEINES de farm réel — la même formule pour tout le monde. Fini le record basé sur un pic chanceux de 3 minutes extrapolé en taux horaire (jusqu\'à ~20× une vraie heure).'},
+      {t:'new', sub:'economie', tx:'Deux valeurs affichées côte à côte dans le classement : ta meilleure heure des 7 derniers jours (elle redescend si tu arrêtes de farmer — un classement vivant) et ton record à vie (même formule "heure pleine", il ne fait que monter).'},
+      {t:'change', sub:'anticheat', tx:'Les anciens records (posés sous d\'anciennes économies plus généreuses ou par des pics extrapolés) sont remis à zéro — tout le monde repart sur la même base, recalculée depuis les 3 derniers jours de jeu réel. Ces colonnes sont désormais protégées côté serveur : aucun client ne peut plus les écrire.'},
+    ], en:[
+      {t:'change', sub:'economie', tx:'The leaderboard\'s silver/hour and kills/min are now computed by the SERVER over FULL hours of real farming — the same formula for everyone. No more records based on a lucky 3-minute spike extrapolated to an hourly rate (up to ~20× a real hour).'},
+      {t:'new', sub:'economie', tx:'Two values shown side by side in the leaderboard: your best hour of the last 7 days (it drops back down if you stop farming — a living leaderboard) and your lifetime record (same "full hour" formula, it only goes up).'},
+      {t:'change', sub:'anticheat', tx:'Old records (set under older, more generous economies or through extrapolated spikes) are reset to zero — everyone restarts on the same footing, recomputed from the last 3 days of real play. These columns are now server-protected: no client can write them anymore.'},
+    ] },
   { v:'V453', d:'16/07/2026 01:00', name:{fr:'Historique de silver : survol à la souris + courbe de solde', en:'Silver history: mouse hover + balance curve'}, fr:[
       {t:'new', sub:'interface', tx:'Les graphiques du panneau Historique de silver sont désormais survolables : passe la souris sur une barre ou un point de courbe pour voir l\'heure exacte et la valeur précise dans une petite infobulle.'},
       {t:'new', sub:'interface', tx:'Nouvelle courbe "Solde — 24 dernières heures" dans le même panneau : l\'évolution de ton silver total heure par heure (gains ET dépenses), reconstituée depuis le registre. La pastille 💰 silver de la barre du haut ouvre elle aussi le panneau, comme la pastille silver/min.'},

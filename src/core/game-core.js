@@ -2652,6 +2652,7 @@ function applySaveState(data) {
   if (!S.migratedSilverPerHourResetV436) { migrateSilverPerHourResetV436(); S.migratedSilverPerHourResetV436 = true; }
   if (!S.migratedBestKpmResetV439) { migrateBestKpmResetV439(); S.migratedBestKpmResetV439 = true; }
   if (!S.migratedBestXpPerHourResetV440) { migrateBestXpPerHourResetV440(); S.migratedBestXpPerHourResetV440 = true; }
+  if (!S.migratedRateRecordsResetV454) { migrateRateRecordsResetV454(); S.migratedRateRecordsResetV454 = true; }
   // Rattrapage NON gaté (2026-07-13, bug rapporté : "j'ai des items protégé compendium dans mon
   // sac tuvala qui sont deja pen compendium") -- evictMasteredFromCompendiumBag() n'est rejouée
   // que lors d'un NOUVEL enchantement PEN, ou une seule fois via migratePenMasteryV308 (gatée,

@@ -6495,6 +6495,43 @@
     }
   }
 
+  // ---------- Classement silver/h + kpm côté serveur (V454) ----------
+  // même pattern que testSilverPerHourResetV436ZeroesStaleRecord : les records locaux (pics 3 min
+  // extrapolés) sont remis à 0 -- ils ne servent plus qu'au HUD et au taux du rattrapage
+  // hors-ligne, le classement est désormais calculé serveur (compute_player_hour_rates).
+  function testRateRecordsResetV454ZeroesLocalRecords() {
+    if (typeof migrateRateRecordsResetV454 !== 'function') return;
+    const beforeSh = S.bestSilverPerHour, beforeKpm = S.bestKpm;
+    S.bestSilverPerHour = 2052326; S.bestKpm = 337; // vraies valeurs gonflées constatées en prod
+    migrateRateRecordsResetV454();
+    assert('Reset V454 : bestSilverPerHour ET bestKpm remis à 0', S.bestSilverPerHour === 0 && S.bestKpm === 0, `sh=${S.bestSilverPerHour} kpm=${S.bestKpm}`);
+    S.bestSilverPerHour = beforeSh; S.bestKpm = beforeKpm;
+  }
+  // syncPlayerStats ne doit PLUS pousser silver_per_hour/best_kpm (colonnes serveur, un trigger
+  // les ignore de toute façon -- mais le client ne doit même plus essayer). Garde-fou statique,
+  // même famille que testSaveToCloudGuardsSessionLockAndOffline.
+  function testSyncPlayerStatsNoLongerPushesServerOwnedRateColumns() {
+    if (typeof syncPlayerStats !== 'function') return;
+    const src = syncPlayerStats.toString();
+    assert('syncPlayerStats ne pousse plus silver_per_hour (colonne serveur V454)', !/silver_per_hour\s*:/.test(src));
+    assert('syncPlayerStats ne pousse plus best_kpm (colonne serveur V454)', !/best_kpm\s*:/.test(src));
+  }
+  // catégories sh/kpm du classement : classées par la colonne "7 derniers jours" (vivante) et
+  // affichant AUSSI le record à vie ("les deux colonnes", choix explicite).
+  function testLb2RateCatsRankByWeekAndShowBothValues() {
+    if (typeof LB2_CATS_ !== 'function') return;
+    const cats = LB2_CATS_();
+    const row = { silver_per_hour_week: 970992, silver_per_hour: 1200000, best_kpm_week: 153.9, best_kpm: 200 };
+    assert('cat sh : classée par silver_per_hour_week (pas le record à vie)', cats.sh.val(row) === 970992, `val=${cats.sh.val(row)}`);
+    const shTxt = cats.sh.fmt(row);
+    assert('cat sh : affiche la meilleure heure (7 j) ET le record à vie', shTxt.includes(fmt(970992)) && shTxt.includes(fmt(1200000)), shTxt);
+    assert('cat kpm : classée par best_kpm_week', cats.kpm.val(row) === 153.9, `val=${cats.kpm.val(row)}`);
+    const kpmTxt = cats.kpm.fmt(row);
+    assert('cat kpm : affiche la meilleure heure (7 j) ET le record à vie', kpmTxt.includes('153.9') && kpmTxt.includes('200.0'), kpmTxt);
+    // lignes sans les nouvelles colonnes (vieux cache) : jamais d'exception, valeur 0
+    assert('cat sh/kpm : ligne sans colonnes _week -> 0, pas d\'exception', cats.sh.val({}) === 0 && cats.kpm.val({}) === 0);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -6837,6 +6874,9 @@
     testComputeSlidingRatesUnfreezeRecordOnSustainedHigherRate();
     testSilverBalanceAndHoverHelpers();
     testSilverHistChartTooltipShowsOnHover();
+    testRateRecordsResetV454ZeroesLocalRecords();
+    testSyncPlayerStatsNoLongerPushesServerOwnedRateColumns();
+    testLb2RateCatsRankByWeekAndShowBothValues();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
