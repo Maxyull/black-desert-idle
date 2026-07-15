@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V455', d:'16/07/2026 03:00', name:{fr:'Rattrapage hors-ligne payé au taux serveur équitable', en:'Offline catch-up paid at the fair server rate'}, fr:[
+      {t:'change', sub:'economie', tx:'Les gains hors-ligne (navigateur fermé — au retour ET via le crédit serveur horaire) sont désormais payés au taux calculé par le serveur : ta meilleure heure PLEINE de farm réelle (la même valeur que le classement). Fini les gains hors-ligne basés sur un vieux record local gonflé — et plus de creux à zéro après la remise à plat des records (V454).'},
+      {t:'fix', sub:'economie', tx:'Le farm sur un autre onglet n\'est pas concerné : il tourne déjà au vrai rythme en continu depuis la V452.'},
+    ], en:[
+      {t:'change', sub:'economie', tx:'Offline gains (browser closed — on return AND via the hourly server credit) are now paid at the server-computed rate: your best FULL hour of real farming (the same value as the leaderboard). No more offline gains based on an old inflated local record — and no more zero-gap after the records reset (V454).'},
+      {t:'fix', sub:'economie', tx:'Farming in another tab is unaffected: it already runs at full speed continuously since V452.'},
+    ] },
   { v:'V454', d:'16/07/2026 02:00', name:{fr:'Classement silver/h et kills/min refondu : calcul serveur, juste pour tous', en:'Silver/h and kills/min leaderboard reworked: server-computed, fair for everyone'}, fr:[
       {t:'change', sub:'economie', tx:'Le silver/heure et les kills/min du classement sont désormais calculés par le SERVEUR sur des heures PLEINES de farm réel — la même formule pour tout le monde. Fini le record basé sur un pic chanceux de 3 minutes extrapolé en taux horaire (jusqu\'à ~20× une vraie heure).'},
       {t:'new', sub:'economie', tx:'Deux valeurs affichées côte à côte dans le classement : ta meilleure heure des 7 derniers jours (elle redescend si tu arrêtes de farmer — un classement vivant) et ton record à vie (même formule "heure pleine", il ne fait que monter).'},
