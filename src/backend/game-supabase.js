@@ -994,11 +994,18 @@ cv.addEventListener('click', e => {
 });
 $a('bossLobbyClose').onclick = () => showActivityPage('zone');
 // Mini Boss (2026-07-13, combat/miniboss.js) : mêmes conventions que Boss juste au-dessus --
-// quitter un combat en cours = quitte seul (perte du loot, voir minibossSoloLeave), fermer le
-// lobby = retour à la Zone (farm).
+// quitter un combat en cours = quitte seul (perte du loot, voir minibossSoloLeave) -- affiche
+// D'ABORD une confirmation (minibossToggleSoloLeaveConfirm), jamais direct (perte sèche de loot,
+// ne doit jamais être accidentelle, voir revue de maquette) ; fermer le lobby = retour à la Zone.
 $a('minibossLobbyClose').onclick = () => showActivityPage('zone');
-$a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossSoloLeave(); };
+$a('minibossSoloLeaveBtn').onclick = () => { if (minibossState.active) minibossToggleSoloLeaveConfirm(); };
 $a('minibossVoteStopBtn').onclick = () => { if (minibossState.active) minibossToggleVoteStop(); };
+$a('minibossSoloLeaveConfirmBtn').onclick = () => minibossSoloLeave();
+$a('minibossSoloLeaveCancelBtn').onclick = () => minibossToggleSoloLeaveConfirm();
+// chat de groupe persistant pendant le combat (2026-07-14, ajout suite à revue de maquette --
+// même flux partagé minibossGroupLog que le chat de groupe du lobby, voir renderMinibossGroupChatLog).
+$a('minibossArenaGroupSend').onclick = () => minibossSendChat('group', $a('minibossArenaGroupInput'));
+$a('minibossArenaGroupInput').onkeydown = e => { if (e.key==='Enter') minibossSendChat('group', $a('minibossArenaGroupInput')); };
 window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas(); if (minibossState.active) resizeMinibossCanvas(); });
 updateNextBossMini();
 setInterval(updateNextBossMini, 1000);
@@ -1460,6 +1467,11 @@ const I18N = {
   tbAccount: { fr:'Mon compte', en:'My account' },
   tbAdmin: { fr:'Admin', en:'Admin' },
   tbLogout: { fr:'Déconnexion', en:'Log out' },
+  // boutons +/- taille UI/jeu sur les bords de #gameFrame (2026-07-13, mockup validé) -- même
+  // texte utilisé pour le title natif (data-i18n-title) ET le petit libellé qui apparaît sous le
+  // bouton au survol (data-i18n).
+  uiScaleDown: { fr:'Réduire', en:'Shrink' },
+  uiScaleUp: { fr:'Agrandir', en:'Grow' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
@@ -1651,6 +1663,115 @@ $a('btnCollapseRight').onclick = () => {
   applyRightCollapse();
 };
 applyRightCollapse();
+
+// ---------- taille de l'UI/jeu (Petit/Moyen/Grand), persistée ----------
+// mockup validé par l'utilisateur (2026-07-13) : 2 boutons +/- quasi invisibles au repos sur les
+// bords de #gameFrame (voir #btnUiScaleDown/#btnUiScaleUp, index.dev.html, styles .uiScaleBtn dans
+// styles.css). Le scale s'applique sur #wrap (colonne centrale : #gameFrame + #panel + #bossRoom/
+// #minibossRoom) via un simple transform CSS -- ne touche JAMAIS à la résolution interne du canvas
+// #cv (1240x440), voir CLAUDE.md règle critique #4 et §14 (ne pas changer la résolution canvas).
+const UI_SCALE_LEVELS = ['small', 'medium', 'large'];
+const UI_SCALE_FACTORS = { small:.85, medium:1, large:1.15 };
+
+/**
+ * Calcule le prochain palier de taille UI à partir du palier courant et d'une direction
+ * (+1 = "+", -1 = "-"), clampé aux deux bouts (no-op si déjà à small/large). Fonction pure,
+ * isolée pour être testable sans DOM -- voir tests/tests.js.
+ */
+function nextUiScaleLevel(current, direction) {
+  const idx = UI_SCALE_LEVELS.indexOf(current);
+  const from = idx === -1 ? UI_SCALE_LEVELS.indexOf('medium') : idx;
+  const to = Math.max(0, Math.min(UI_SCALE_LEVELS.length - 1, from + direction));
+  return UI_SCALE_LEVELS[to];
+}
+
+let uiScaleLevel = 'medium';
+try {
+  const savedScale = localStorage.getItem('velia-idle-ui-scale');
+  if (UI_SCALE_LEVELS.includes(savedScale)) uiScaleLevel = savedScale;
+} catch(e) {}
+/**
+ * Recalcule et pose la variable CSS --ui-center-track sur .layout (#gameLayout), qui pilote la
+ * largeur de la piste centrale de la grille 3 colonnes (#sideMenu | #wrap | .side-right, voir
+ * `.layout { grid-template-columns:210px var(--ui-center-track,1fr) 300px; }` dans styles.css et
+ * ses 3 variantes :has(...collapsed) -- valeur par défaut `1fr` = comportement identique à avant
+ * ce correctif tant que la variable n'est pas posée.
+ *
+ * Pourquoi : #wrap est un item de grille avec width:auto, donc "stretché" par défaut à la taille
+ * EXACTE de sa piste -- un simple `zoom` (ou l'ancien `transform:scale()`) sur #wrap ne fait
+ * jamais grandir sa largeur RENDUE au-delà de cette piste (vérifié empiriquement : la largeur de
+ * #wrap.getBoundingClientRect() ne bougeait pas du tout sous zoom seul, contrairement à la
+ * hauteur qui suit normalement le flux de page). Il faut donc faire grandir/rétrécir la piste
+ * elle-même, pas seulement son contenu.
+ *
+ * La largeur "de base" (palier medium) de la piste centrale n'est PAS un nombre fixe : elle
+ * dépend de la largeur de vue (fenêtre) ET de l'état replié/déployé de #sideMenu/.side-right
+ * (voir :has(#sideMenu.collapsed) etc plus haut dans ce fichier). On la calcule donc en LISANT
+ * la largeur réelle courante de #sideMenu et .side-right (qui, eux, ne sont jamais mis à
+ * l'échelle -- leur taille reste fiable comme référence) plutôt qu'en la codant en dur.
+ *
+ * Sur mobile (isMobileViewport(), <=1024px), .layout passe en 1 seule colonne (grid-template-
+ * columns:1fr, media query dédiée) qui n'utilise PAS cette variable -- rien à faire, on efface
+ * simplement toute valeur posée pour ne rien laisser traîner si la fenêtre est redimensionnée
+ * en dessous du seuil pendant qu'un palier non-medium était actif.
+ */
+function updateUiScaleLayoutTrack() {
+  const layout = $a('gameLayout');
+  if (!layout) return;
+  const factor = UI_SCALE_FACTORS[uiScaleLevel];
+  if (factor === 1 || isMobileViewport()) {
+    layout.style.removeProperty('--ui-center-track');
+    return;
+  }
+  const sideMenu = $a('sideMenu'), sideRight = $a('sideRight');
+  if (!sideMenu || !sideRight) return;
+  const gap = 14; // .layout { gap:14px } -- 2 gaps encadrent la colonne centrale
+  const baseCenterWidth = layout.clientWidth - sideMenu.getBoundingClientRect().width
+    - sideRight.getBoundingClientRect().width - gap * 2;
+  if (baseCenterWidth <= 0) { layout.style.removeProperty('--ui-center-track'); return; }
+  layout.style.setProperty('--ui-center-track', `${Math.round(baseCenterWidth * factor)}px`);
+}
+/**
+ * Applique le palier de taille UI courant (persisté) au DOM : CSS `zoom` sur #wrap (PAS
+ * transform:scale()) + ajustement de la piste centrale de la grille via
+ * updateUiScaleLayoutTrack() (voir sa doc juste au-dessus pour le détail du "pourquoi").
+ *
+ * Historique du bug (retour utilisateur "l'agrandissement c'est juste en hauteur") : #wrap est
+ * un item de la grille 3 colonnes `.layout` (#sideMenu | #wrap | .side-right, voir styles.css)
+ * avec width:auto -- sa largeur rendue suivait donc la piste 1fr de la grille, jamais sa propre
+ * règle CSS. `transform:scale()` est un pur effet visuel de peinture : il ne déclenche AUCUN
+ * reflow, donc la grille ne recalculait jamais la taille de la piste, et le surplus de largeur
+ * finissait sous les panneaux latéraux opaques (#sideMenu/.side-right) -- l'agrandissement se
+ * voyait seulement en hauteur (poussée normale du flux de page), jamais en largeur (invisible,
+ * caché). `zoom` déclenche un vrai reflow (contrairement à transform) : le CONTENU de #wrap se
+ * met à l'échelle correctement, mais #wrap restait quand même stretché à sa piste (vérifié
+ * empiriquement : la largeur ne bougeait toujours pas d'1px). D'où le 2e volet du correctif :
+ * la piste elle-même doit grandir (updateUiScaleLayoutTrack()) pour que #wrap ait de la place où
+ * grandir. Vérifié par capture d'écran avant/après + getBoundingClientRect à ~1300px et ~1800px
+ * de large (voir Playwright) : la largeur ET la hauteur visibles grandissent bien maintenant,
+ * sans être masquées par les colonnes latérales.
+ */
+function applyUiScale() {
+  $a('wrap').style.zoom = UI_SCALE_FACTORS[uiScaleLevel];
+  updateUiScaleLayoutTrack();
+  $a('btnUiScaleDown').classList.toggle('uiScaleBtnDisabled', uiScaleLevel === UI_SCALE_LEVELS[0]);
+  $a('btnUiScaleUp').classList.toggle('uiScaleBtnDisabled', uiScaleLevel === UI_SCALE_LEVELS[UI_SCALE_LEVELS.length - 1]);
+}
+function setUiScaleLevel(direction) {
+  uiScaleLevel = nextUiScaleLevel(uiScaleLevel, direction);
+  try { localStorage.setItem('velia-idle-ui-scale', uiScaleLevel); } catch(e) {}
+  applyUiScale();
+}
+// redimensionnement de fenêtre : la piste centrale (voir updateUiScaleLayoutTrack) dépend de la
+// largeur de vue courante -- sans ce listener, un palier non-medium posé avant un resize
+// (fenêtre agrandie/rétrécie, ou repli #sideMenu/.side-right qui change aussi leur largeur)
+// resterait figé sur l'ancienne valeur en px, se désynchronisant de la grille réelle. Même
+// pattern que les autres listeners resize existants (voir resizeBossCanvas plus haut,
+// syncFarmCardHeights game-core.js) : pas de debounce, ces recalculs sont bon marché.
+window.addEventListener('resize', () => { if (uiScaleLevel !== 'medium') updateUiScaleLayoutTrack(); });
+$a('btnUiScaleDown').onclick = () => setUiScaleLevel(-1);
+$a('btnUiScaleUp').onclick = () => setUiScaleLevel(1);
+applyUiScale();
 
 // (NAME_EN et tr() sont maintenant déclarés en haut du script)
 
