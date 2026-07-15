@@ -8983,10 +8983,36 @@ function rcGearGradeColor(grade) {
   return t ? t.color : RECONNECT_V.cream2;
 }
 
+function RcHistoryDetail(p) {
+  const sh = p.session;
+  const leveled = sh.levelAfter > sh.levelBefore;
+  const items = Array.isArray(sh.items) ? sh.items : [];
+  const lbl = { fontSize: 8, letterSpacing: '.12em', textTransform: 'uppercase', color: RECONNECT_V.cream3, marginBottom: 3 };
+  return h('div', { style: { padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10 } },
+    h('div', { style: { display: 'flex', gap: 20, flexWrap: 'wrap' } },
+      h('div', null,
+        h('p', { style: { ...RC_INTER, ...lbl } }, 'Niveau'),
+        h('p', { style: { ...RC_MONO, fontSize: 12, color: RECONNECT_V.cream, fontVariantNumeric: 'tabular-nums' } }, 'Niv. ' + sh.levelBefore + ' → ' + sh.levelAfter,
+          leveled ? h('span', { style: { ...RC_MONO, fontSize: 9, marginLeft: 6, padding: '0 4px', borderRadius: 3, color: RECONNECT_V.bg, background: RECONNECT_V.gold2 } }, '+' + (sh.levelAfter - sh.levelBefore)) : null)),
+      h('div', null,
+        h('p', { style: { ...RC_INTER, ...lbl } }, 'XP'),
+        h('p', { style: { ...RC_MONO, fontSize: 12, color: RECONNECT_V.blue2, fontVariantNumeric: 'tabular-nums' } }, '+' + (sh.xp || 0).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US')))),
+    h('div', null,
+      h('p', { style: { ...RC_INTER, ...lbl } }, (LANG === 'fr' ? 'Objets' : 'Items') + ' (' + items.length + ')'),
+      items.length > 0
+        ? h('div', { style: { display: 'flex', flexDirection: 'column', gap: 4 } },
+            items.map((it, j) => h('div', { key: j, style: { display: 'flex', alignItems: 'center', gap: 8 } },
+              h('span', { style: { width: 7, height: 7, borderRadius: 999, flexShrink: 0, background: it.color || RECONNECT_V.cream2 } }),
+              h('span', { style: { ...RC_INTER, fontSize: 11, color: RECONNECT_V.cream, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, it.name),
+              it.qty > 1 ? h('span', { style: { ...RC_MONO, fontSize: 9, marginLeft: 'auto', color: RECONNECT_V.cream3 } }, '×' + it.qty) : null)))
+        : h('p', { style: { ...RC_INTER, fontSize: 10, fontStyle: 'italic', color: RECONNECT_V.cream3 } }, LANG === 'fr' ? 'Aucun objet trouvé cette session.' : 'No item found this session.')));
+}
+
 function ReconnectModal(props) {
   const d = props.data;
   const [open, setOpen] = React.useState(true);
   const [tierFilter, setTierFilter] = React.useState('Tous');
+  const [expandedId, setExpandedId] = React.useState(null);
   const silverCount = rcCountUp(d.silver, 1400);
   const xpCount = rcCountUp(d.xp, 1100);
   const leveledUp = d.levelNow > d.levelBefore;
@@ -9008,6 +9034,9 @@ function ReconnectModal(props) {
       .rcHistScroll::-webkit-scrollbar { width:4px; }
       .rcHistScroll::-webkit-scrollbar-thumb { background:${RECONNECT_V.border}; border-radius:2px; }
       .rcBtn:focus-visible { outline: 2px solid ${RECONNECT_V.gold}; outline-offset: 2px; }
+      .rcHistRow { transition: background .15s ease; }
+      .rcHistRow:hover { background: ${RECONNECT_V.s3}; }
+      .rcHistRow:focus-visible { outline: 2px solid ${RECONNECT_V.gold}; outline-offset: -2px; }
       /* même piège que patch-notes-engage-react.js : la règle globale "button { width:100%;
          margin-top:4px; ... }" (src/styles/styles.css) s'applique aussi ici -- les chips de
          palier (Tous/Mid/End/...) n'avaient pas de width explicite. */
@@ -9089,19 +9118,33 @@ function ReconnectModal(props) {
               ? h(RcEmptyRow, { text: 'Chargement…' })
               : h('div', { className: 'rcHistScroll', style: { maxHeight: 220, overflowY: 'auto' } },
                   h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
-                    filteredHistory.length > 0 ? filteredHistory.map((sh, i) => h('div', {
-                        key: sh.id, className: 'rcFadeSlide',
-                        style: { animationDelay: (i * 60) + 'ms', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, borderRadius: 9, padding: '10px 12px', background: RECONNECT_V.s1, border: `1px solid ${sh.current ? RECONNECT_V.gold : RECONNECT_V.border}`, boxShadow: sh.current ? `0 0 10px ${RECONNECT_V.goldDim}55` : 'none' } },
-                      h('div', { style: { minWidth: 0 } },
-                        h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
-                          h('span', { style: { ...RC_INTER, fontSize: 13, fontWeight: 500, color: RECONNECT_V.cream, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, sh.zone),
-                          h('span', { style: { ...RC_CINZEL, fontSize: 9, padding: '2px 6px', borderRadius: 4, flexShrink: 0, color: rcGearGradeColor(sh.gearGrade), border: `1px solid ${rcGearGradeColor(sh.gearGrade)}55` } }, rcGearGradeLabel(sh.gearGrade)),
-                          sh.current ? h('span', { style: { ...RC_INTER, fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, color: RECONNECT_V.bg, background: RECONNECT_V.gold } },
-                            h('span', { className: 'rcPulseDot', style: { width: 4, height: 4, borderRadius: 999, background: RECONNECT_V.bg } }), 'ACTUEL') : null),
-                        h('p', { style: { ...RC_INTER, fontSize: 11, marginTop: 2, color: RECONNECT_V.cream3 } }, sh.date + ' • ' + sh.duration)),
-                      h('div', { style: { textAlign: 'right', flexShrink: 0 } },
-                        h('p', { style: { ...RC_MONO, fontSize: 12, color: RECONNECT_V.gold2, fontVariantNumeric: 'tabular-nums' } }, '+' + sh.silver.toLocaleString('fr-FR')),
-                        sh.drop ? h('p', { style: { fontSize: 10, marginTop: 2, color: RECONNECT_V.cream2 } }, '⚔ ' + sh.drop) : h('p', { style: { fontSize: 10, marginTop: 2, color: RECONNECT_V.border2 } }, '—'))))
+                    filteredHistory.length > 0 ? filteredHistory.map((sh, i) => {
+                      const isExpanded = expandedId === sh.id;
+                      const toggle = () => setExpandedId(isExpanded ? null : sh.id);
+                      return h('div', {
+                          key: sh.id, className: 'rcFadeSlide',
+                          style: { animationDelay: (i * 60) + 'ms', borderRadius: 9, overflow: 'hidden', background: RECONNECT_V.s1, border: `1px solid ${sh.current ? RECONNECT_V.gold : RECONNECT_V.border}`, boxShadow: sh.current ? `0 0 10px ${RECONNECT_V.goldDim}55` : 'none' } },
+                        h('div', {
+                            className: 'rcHistRow', role: 'button', tabIndex: 0, 'aria-expanded': isExpanded,
+                            title: isExpanded ? 'Masquer le détail' : 'Voir le détail de la session',
+                            onClick: toggle,
+                            onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } },
+                            style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 12px', cursor: 'pointer' } },
+                          h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 } },
+                            
+                            h('span', { 'aria-hidden': true, style: { ...RC_MONO, fontSize: 10, flexShrink: 0, color: RECONNECT_V.cream3, transition: 'transform .18s ease', transform: isExpanded ? 'rotate(90deg)' : 'none' } }, '▸'),
+                            h('div', { style: { minWidth: 0 } },
+                              h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
+                                h('span', { style: { ...RC_INTER, fontSize: 13, fontWeight: 500, color: RECONNECT_V.cream, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, sh.zone),
+                                h('span', { style: { ...RC_CINZEL, fontSize: 9, padding: '2px 6px', borderRadius: 4, flexShrink: 0, color: rcGearGradeColor(sh.gearGrade), border: `1px solid ${rcGearGradeColor(sh.gearGrade)}55` } }, rcGearGradeLabel(sh.gearGrade)),
+                                sh.current ? h('span', { style: { ...RC_INTER, fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, color: RECONNECT_V.bg, background: RECONNECT_V.gold } },
+                                  h('span', { className: 'rcPulseDot', style: { width: 4, height: 4, borderRadius: 999, background: RECONNECT_V.bg } }), 'ACTUEL') : null),
+                              h('p', { style: { ...RC_INTER, fontSize: 11, marginTop: 2, color: RECONNECT_V.cream3 } }, sh.date + ' • ' + sh.duration))),
+                          h('div', { style: { textAlign: 'right', flexShrink: 0 } },
+                            h('p', { style: { ...RC_MONO, fontSize: 12, color: RECONNECT_V.gold2, fontVariantNumeric: 'tabular-nums' } }, '+' + sh.silver.toLocaleString('fr-FR')),
+                            sh.drop ? h('p', { style: { fontSize: 10, marginTop: 2, color: RECONNECT_V.cream2 } }, '⚔ ' + sh.drop) : h('p', { style: { fontSize: 10, marginTop: 2, color: RECONNECT_V.border2 } }, '—'))),
+                        isExpanded ? h('div', { style: { borderTop: `1px solid ${RECONNECT_V.border}`, background: RECONNECT_V.bg } }, h(RcHistoryDetail, { session: sh })) : null);
+                    })
                     : h(RcEmptyRow, { text: d.history.length === 0 ? 'Première connexion — ton historique se remplira au fil de tes sessions.' : 'Aucune session pour ce palier.' })))),
 
         h('div', { style: { padding: '16px 28px 28px' } },
@@ -9148,6 +9191,11 @@ async function reconnectModalLoadHistory() {
       duration: reconnectDurationLabel(new Date(r.started_at), new Date(r.ended_at)),
       silver: r.silver_gained || 0,
       drop: r.best_drop_name || null,
+      
+      xp: r.xp_gained || 0,
+      levelBefore: r.level_before || 1,
+      levelAfter: r.level_after || 1,
+      items: Array.isArray(r.items) ? r.items : [],
       current: false,
     }));
     if (history[0]) history[0].current = true;

@@ -118,24 +118,47 @@ def main():
     print(f'{len(entries)} entrées avec un champ d: dans le fichier actuel.', file=sys.stderr)
 
     missing = []
-    def fmt(iso):
-        # git %cI = ISO8601 avec offset, ex 2026-07-13T08:42:44+02:00 -- on garde l'heure locale du
-        # commit telle quelle (pas de conversion UTC, cohérent avec la convention existante qui
-        # semble déjà être une heure "locale" arbitraire, pas un vrai fuseau affiché au joueur).
-        dt = datetime.fromisoformat(iso)
-        return dt.strftime('%d/%m/%Y %H:%M')
+    def to_minute(iso):
+        # git %cI = ISO8601 avec offset, ex 2026-07-13T08:42:44+02:00 -- on garde l'heure LOCALE du
+        # commit telle quelle (pas de conversion UTC : cohérent avec la convention d'affichage, une
+        # heure "locale" arbitraire jamais présentée comme un vrai fuseau au joueur), tronquée à la
+        # minute (précision affichée + précision comparée par le test de tri des patch notes).
+        return datetime.fromisoformat(iso).replace(tzinfo=None, second=0, microsecond=0)
+    def parse_display(d):
+        return datetime.strptime(d, '%d/%m/%Y %H:%M')
 
+    # Clamp de monotonie : PATCH_NOTES est affiché dans l'ordre du tableau (numéro de version
+    # décroissant, plus récent en haut) et un test de régression exige que les dates ne "remontent"
+    # jamais en descendant. Or les vraies dates de merge ne suivent PAS toujours l'ordre des numéros :
+    # deux branches de feature peuvent être mergées sur main dans le désordre (ex: V421 mergé ~11 min
+    # APRÈS V422 alors que 421 < 422). Sans correction, l'entrée du bas aurait une date plus récente
+    # que celle du dessus -> incohérent à l'affichage ET casse le test. On parcourt donc les entrées
+    # dans l'ordre du tableau (re.sub traite de haut en bas = plus récent d'abord) en gardant la date
+    # de l'entrée précédente ; toute entrée dont la vraie date dépasse la précédente est ramenée à
+    # cette précédente (nudge minimal, quelques minutes sur une paire same-day, jamais un décalage
+    # visible au jour près). Les entrées sans date trouvée alimentent quand même la chaîne (via leur
+    # date affichée existante) pour rester cohérentes.
     replaced = 0
+    clamped = []
+    state = {'prev': None}
     def repl(m):
         nonlocal replaced
         v, old_d = m.group(1), m.group(2)
         iso = version_commit_date.get(v)
         if iso is None:
             missing.append(v)
+            try:
+                state['prev'] = parse_display(old_d)
+            except ValueError:
+                pass
             return m.group(0)
-        new_d = fmt(iso)
+        dt = to_minute(iso)
+        if state['prev'] is not None and dt > state['prev']:
+            clamped.append(f'{v} ({dt.strftime("%d/%m/%Y %H:%M")} -> {state["prev"].strftime("%d/%m/%Y %H:%M")})')
+            dt = state['prev']
+        state['prev'] = dt
         replaced += 1
-        return f"{{ v:'{v}', d:'{new_d}'"
+        return f"{{ v:'{v}', d:'{dt.strftime('%d/%m/%Y %H:%M')}'"
 
     new_content = entry_re.sub(repl, content)
 
@@ -148,6 +171,8 @@ def main():
               f'pour appliquer).', file=sys.stderr)
         sys.stdout.write(new_content)
 
+    if clamped:
+        print(f'{len(clamped)} date(s) ramenée(s) pour préserver l\'ordre du tableau (merge dans le désordre des numéros) : {clamped}', file=sys.stderr)
     if missing:
         print(f'{len(missing)} versions SANS date de commit trouvée (inchangées) : {missing}', file=sys.stderr)
 

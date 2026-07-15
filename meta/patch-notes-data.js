@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V450', d:'15/07/2026 14:15', name:{fr:'Historique hors-ligne : clique une session passée pour voir son détail', en:'Offline history: click a past session to see its detail'}, fr:[
+      {t:'new', sub:'interface', tx:'Dans le récap "Bon retour" (au retour d\'une absence), chaque session de l\'historique est désormais cliquable : elle se déplie pour révéler son détail — niveau avant→après, XP gagnée et objets ramassés pendant cette session-là. Le résumé (silver, durée, meilleur drop) reste affiché replié, on ouvre uniquement les sessions qui nous intéressent.'},
+      {t:'fix', sub:'interface', tx:'Dates des notes de version corrigées : elles reflètent désormais le moment réel où chaque version est arrivée en ligne (y compris quand elle est arrivée via une fusion de branche, parfois plusieurs heures après avoir été préparée), au lieu d\'une date parfois trop ancienne.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'In the "Welcome back" recap (when you return after being away), each session in the history is now clickable: it expands to reveal its detail — level before→after, XP gained, and items collected during that specific session. The summary (silver, duration, best drop) stays visible while collapsed, so you only open the sessions you care about.'},
+      {t:'fix', sub:'interface', tx:'Patch note dates fixed: they now reflect the real moment each version went live (including when it arrived via a branch merge, sometimes several hours after being prepared), instead of a sometimes-too-early date.'},
+    ] },
   { v:'V449', d:'15/07/2026 13:08', name:{fr:'Notes de version : titre de chaque version affiché en gras', en:'Patch notes: each version title now shown in bold'}, fr:[
       {t:'change', sub:'interface', tx:'Dans le panneau des notes de version, le titre de chaque version s\'affiche désormais en gras (au lieu d\'un petit texte en italique atténué), pour mieux ressortir au-dessus de la liste des changements.'},
     ], en:[
@@ -229,7 +236,7 @@ const PATCH_NOTES = [
       {t:'fix', sub:'interface', tx:'Kratuga Ruins (zone 10, the 2nd zone of the blue gear tier, right after Elric Sanctuary) incorrectly showed a wolf instead of its own monster — this zone never had a dedicated silhouette and fell back to the generic wolf one (zone 1). Fixed, both on the animated silhouette and the small zone icon.'},
       {t:'new', sub:'interface', tx:'New original silhouette for the Uluan: a stocky, brutish stone guardian of the ancient ruins, layered stone-slab plates on the torso and shoulders, a crested stone-block helm head with two glowing red eye-slits, rusted metal chains wrapped around its forearms, fine cracks in the weathered stone, and thick pillar-like legs.'},
     ] },
-  { v:'V421', d:'13/07/2026 09:31', name:{fr:'Sectateur d\'Elric (Sanctuaire Elric) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Elric Cultist (Elric Sanctuary): new dedicated silhouette, no longer shows a wolf'}, fr:[
+  { v:'V421', d:'13/07/2026 09:20', name:{fr:'Sectateur d\'Elric (Sanctuaire Elric) : nouvelle silhouette dédiée, ne montre plus un loup', en:'Elric Cultist (Elric Sanctuary): new dedicated silhouette, no longer shows a wolf'}, fr:[
       {t:'fix', sub:'interface', tx:'Sanctuaire Elric (zone 9, 1ère zone du palier bleu, juste après le Repaire Bandits Gahaz) affichait par erreur un loup au lieu de son propre monstre — cette zone n\'avait jamais eu de silhouette dédiée et retombait sur celle générique du loup (zone 1). Corrigé, sur la silhouette animée comme sur la petite icône de zone.'},
       {t:'new', sub:'interface', tx:'Nouvelle silhouette originale pour le Sectateur d\'Elric : cultiste voûté portant un masque rituel en bois sculpté, robe en lambeaux mousse/brun, bâton noueux avec un petit charme en os suspendu, et une ceinture de corde à talismans. Sa variante boss ("idole vivante") est bien plus massive, enveloppée de racines et d\'écorce, avec une tête-idole aux yeux luisants de vert, des mains griffues en bois, des talismans flottants près des épaules et de faibles feux follets verts aux pieds.'},
     ], en:[

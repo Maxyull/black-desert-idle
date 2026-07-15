@@ -4337,6 +4337,30 @@
       awaySilverGained = savedAwaySilver; awayLootCounts = savedAwayLoot;
     }
   }
+  // détail dépliable de l'historique hors-ligne (2026-07-15, demande explicite : "pouvoir voir
+  // l'historique du mode hors ligne ... quand on clique sur l'histo") -- chaque session passée est
+  // cliquable dans le modal de reconnexion pour révéler son détail (niveau avant→après, XP, objets).
+  // Teste le composant RcHistoryDetail isolément (rendu synchrone via flushSync dans un noeud
+  // détaché) : le clic->dépliage lui-même (état React expandedId) est couvert par un test Playwright.
+  function testReconnectHistoryDetailRendersSessionBreakdown() {
+    if (typeof RcHistoryDetail !== 'function' || typeof React === 'undefined' || typeof ReactDOM === 'undefined') return;
+    const container = document.createElement('div');
+    const root = ReactDOM.createRoot(container);
+    try {
+      const session = { levelBefore: 40, levelAfter: 42, xp: 12345,
+        items: [{ name: 'ObjetHistoTest', color: '#8ab4f8', qty: 7 }] };
+      ReactDOM.flushSync(() => root.render(React.createElement(RcHistoryDetail, { session })));
+      const html = container.innerHTML;
+      assert('RcHistoryDetail affiche le niveau avant→après de la session', html.includes('40') && html.includes('42'), html.slice(0, 200));
+      assert('RcHistoryDetail affiche l\'XP gagnée pendant la session', html.includes('345'), html.slice(0, 200));
+      assert('RcHistoryDetail liste les objets ramassés pendant la session', html.includes('ObjetHistoTest'), html.slice(0, 200));
+      // session sans objet : message "aucun objet", pas de liste fantôme
+      ReactDOM.flushSync(() => root.render(React.createElement(RcHistoryDetail, { session: { levelBefore: 5, levelAfter: 5, xp: 0, items: [] } })));
+      assert('RcHistoryDetail affiche un message quand aucun objet n\'a été trouvé', /aucun objet|no item/i.test(container.innerHTML), container.innerHTML.slice(0, 200));
+    } finally {
+      root.unmount();
+    }
+  }
   // "vérifie les info de la table de loot (couleurs cadre)" (2026-07-10) : la ligne dépliée du
   // bijou (kind jackpot) doit être colorée à la couleur du palier, comme les lignes gear/matériau
   // et comme la ligne condensée (zoneLootCompactRowHtml) — bug trouvé en vérification : "jackpot"
@@ -6513,6 +6537,7 @@
     testComputeOfflineCatchupLootReturnsEmptyWithoutKpmOrSavedAt();
     testApplySaveStateOfflineCatchupCreditsLootIntoInv();
     testOfflineCatchupLootSkipsGracefullyWhenBagFull();
+    testReconnectHistoryDetailRendersSessionBreakdown();
     testComputeSlidingSilverPerHourStableRateWithinWindow();
     testComputeSlidingSilverPerHourIgnoresIsolatedSpikeForRecord();
     testComputeSlidingSilverPerHourRejectsShortBurstRightAfterConnection();
