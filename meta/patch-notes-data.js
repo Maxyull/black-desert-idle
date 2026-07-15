@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V451', d:'15/07/2026 23:30', name:{fr:'Historique de silver : un graphique au clic sur silver/min', en:'Silver history: a chart when clicking silver/min'}, fr:[
+      {t:'new', sub:'interface', tx:'La pastille "silver/min" de la barre du haut est désormais cliquable : un petit panneau s\'ouvre avec ta moyenne de session, ton record à vie, un graphique minute par minute des 60 dernières minutes de farm (revenu du trash) et l\'historique du silver gagné heure par heure sur les dernières 24 h.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The "silver/min" pill in the top bar is now clickable: a small panel opens with your session average, your lifetime record, a minute-by-minute chart of your last 60 minutes of farming (trash income) and the history of silver gained hour by hour over the last 24 hours.'},
+    ] },
   { v:'V450', d:'15/07/2026 14:15', name:{fr:'Historique hors-ligne : clique une session passée pour voir son détail', en:'Offline history: click a past session to see its detail'}, fr:[
       {t:'new', sub:'interface', tx:'Dans le récap "Bon retour" (au retour d\'une absence), chaque session de l\'historique est désormais cliquable : elle se déplie pour révéler son détail — niveau avant→après, XP gagnée et objets ramassés pendant cette session-là. Le résumé (silver, durée, meilleur drop) reste affiché replié, on ouvre uniquement les sessions qui nous intéressent.'},
       {t:'fix', sub:'interface', tx:'Dates des notes de version corrigées : elles reflètent désormais le moment réel où chaque version est arrivée en ligne (y compris quand elle est arrivée via une fusion de branche, parfois plusieurs heures après avoir été préparée), au lieu d\'une date parfois trop ancienne.'},
