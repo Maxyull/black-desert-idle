@@ -16,6 +16,17 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V448', d:'14/07/2026 03:30', name:{fr:'Mini Boss : arène et écran de victoire refaits + correctif important', en:'Mini Boss: arena and victory screen reworked + important fix'}, fr:[
+      {t:'fix', sub:'combat', severity:'major', tx:'Correctif important : gagner un combat de Mini Boss faisait planter l\'écran de victoire (il ne s\'affichait jamais et le run ne s\'enchaînait pas). Le combat est désormais jouable de bout en bout — victoire, récompenses et enchaînement des combats fonctionnent.'},
+      {t:'change', sub:'combat', tx:'Arène refaite : la zone de combat est plus compacte (fini l\'immense vide sous le boss), et la liste des participants passe d\'une petite bulle dans le coin à une vraie carte à côté du chat de groupe.'},
+      {t:'change', sub:'combat', tx:'Écran de victoire refait : les récompenses de l\'invocateur (×2.0) et d\'un participant (×0.8) sont affichées côte à côte pour bien voir l\'écart, avec le détail du calcul base × rôle × bonus de groupe. La liste des participants montre aussi la part de dégâts de chacun (selon son gear%).'},
+      {t:'change', sub:'interface', tx:'Textes du lobby Mini Boss agrandis (échelle de bonus, état du groupe, craft) — c\'était trop petit à lire.'},
+    ], en:[
+      {t:'fix', sub:'combat', severity:'major', tx:'Important fix: winning a Mini Boss fight crashed the victory screen (it never showed and the run wouldn\'t chain). The fight is now playable end to end — victory, rewards and fight-chaining all work.'},
+      {t:'change', sub:'combat', tx:'Reworked arena: the fight area is more compact (no more huge empty space under the boss), and the participant list moved from a small corner bubble to a proper card next to the group chat.'},
+      {t:'change', sub:'combat', tx:'Reworked victory screen: the summoner (×2.0) and a participant (×0.8) rewards are shown side by side so the gap is clear, with the full base × role × group-bonus breakdown. The participant list also shows each player\'s damage share (based on their gear%).'},
+      {t:'change', sub:'interface', tx:'Enlarged the Mini Boss lobby text (bonus scale, group status, craft) — it was too small to read.'},
+    ] },
   { v:'V447', d:'14/07/2026 02:30', name:{fr:'Rattrapage hors ligne : désormais crédité aussi serveur, même jeu totalement fermé', en:'Offline catch-up: now also credited server-side, even with the game fully closed'}, fr:[
       {t:'new', sub:'economie', tx:'Le rattrapage hors ligne (silver, XP, matériaux/craft de zone) est désormais aussi crédité côté serveur, une fois par heure, tant que le compte existe — plus besoin de rouvrir le jeu pour en profiter, sans durée limite. Le rattrapage affiché au retour (plafonné à 24h) continue de fonctionner normalement en complément et ne recompte jamais une période déjà créditée par le serveur.'},
       {t:'change', sub:'economie', tx:'Réservé aux comptes d\'au moins 3 jours ET ayant déjà cumulé 2h de temps de jeu réel — un compte tout juste créé commence à recevoir ce rattrapage serveur seulement une fois ces 2 seuils franchis, sans rattrapage rétroactif du temps déjà écoulé avant.'},
