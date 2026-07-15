@@ -2886,7 +2886,10 @@ const OFFLINE_CATCHUP_MIN_HOURS = 0.05;
 
 function computeOfflineElapsedHours(data) {
   if (!data || !data.savedAt) return 0;
-  const elapsedMs = Date.now() - Date.parse(data.savedAt);
+  const savedAtMs = Date.parse(data.savedAt);
+  const serverCreditMs = data.lastServerCreditAt ? Date.parse(data.lastServerCreditAt) : NaN;
+  const baselineMs = (!isNaN(serverCreditMs) && serverCreditMs > savedAtMs) ? serverCreditMs : savedAtMs;
+  const elapsedMs = Date.now() - baselineMs;
   if (!(elapsedMs > 0)) return 0;
   const hours = Math.min(elapsedMs / 3600000, OFFLINE_CATCHUP_CAP_HOURS);
   if (hours < OFFLINE_CATCHUP_MIN_HOURS) return 0;
@@ -14957,9 +14960,10 @@ async function loadCloudSave() {
       return;
     }
   }
-  const { data, error } = await sb.from('game_saves').select('save_data').eq('user_id', currentUser.id).single();
+  
+  const { data, error } = await sb.from('game_saves').select('save_data, last_server_credit_at').eq('user_id', currentUser.id).single();
   if (data && data.save_data && Object.keys(data.save_data).length) {
-    applySaveState(data.save_data);
+    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at });
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
   } else {
     $a('saveStatus').textContent = 'Nouveau personnage';

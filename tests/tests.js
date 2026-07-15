@@ -4066,6 +4066,97 @@
     const oneMinuteAgo = new Date(Date.now() - 60*1000).toISOString();
     assert('Absence sous OFFLINE_CATCHUP_MIN_HOURS (~3 min) -> []', computeOfflineCatchupLoot({ savedAt: oneMinuteAgo, zoneIdx:0, S:{ bestKpm:10 } }).length === 0);
   }
+  // "Phase 2" du rattrapage hors-ligne (2026-07-14) : un cron SERVEUR horaire
+  // (credit_offline_progress_hourly(), supabase/migrations/20260722120000_offline_progress_hourly_cron.sql)
+  // crédite désormais aussi silver/XP/loot pendant que le navigateur est fermé, sans plafond de
+  // durée. Pour ne jamais recompter côté client un intervalle déjà crédité côté serveur,
+  // computeOfflineElapsedHours() doit utiliser le PLUS RÉCENT de data.savedAt et
+  // data.lastServerCreditAt comme point de départ -- ce test vérifie les 3 cas : sans
+  // lastServerCreditAt (comportement Phase 1 inchangé), avec un lastServerCreditAt PLUS RÉCENT que
+  // savedAt (le serveur a crédité après le dernier vrai enregistrement -- doit gagner), et avec un
+  // lastServerCreditAt PLUS ANCIEN que savedAt (le client a rejoué/sauvegardé depuis -- savedAt doit
+  // gagner, ne jamais reculer la baseline).
+  function testComputeOfflineElapsedHoursUsesMoreRecentOfSavedAtAndServerCredit() {
+    if (typeof computeOfflineElapsedHours !== 'function') return;
+    const threeHoursAgo = new Date(Date.now() - 3*3600*1000).toISOString();
+    const oneHourAgo = new Date(Date.now() - 1*3600*1000).toISOString();
+    const fiveHoursAgo = new Date(Date.now() - 5*3600*1000).toISOString();
+    // sans lastServerCreditAt (sauvegardes antérieures à Phase 2, ou champ absent) -> comportement
+    // Phase 1 inchangé, basé uniquement sur savedAt.
+    const hoursNoServerCredit = computeOfflineElapsedHours({ savedAt: threeHoursAgo });
+    assert('Sans lastServerCreditAt -> basé uniquement sur savedAt (~3h)',
+      Math.abs(hoursNoServerCredit - 3) <= 0.01, `hours=${hoursNoServerCredit}`);
+    // lastServerCreditAt PLUS RÉCENT que savedAt (cron passé après le dernier vrai enregistrement)
+    // -> la baseline doit être lastServerCreditAt (~1h), pas savedAt (~3h) : sinon Phase 1
+    // recompterait les 2h déjà créditées par le cron serveur.
+    const hoursServerCreditMoreRecent = computeOfflineElapsedHours({ savedAt: threeHoursAgo, lastServerCreditAt: oneHourAgo });
+    assert('lastServerCreditAt plus récent que savedAt -> baseline = lastServerCreditAt (~1h, pas ~3h)',
+      Math.abs(hoursServerCreditMoreRecent - 1) <= 0.01, `hours=${hoursServerCreditMoreRecent}`);
+    // lastServerCreditAt PLUS ANCIEN que savedAt (le client a rejoué/sauvegardé depuis le dernier
+    // crédit serveur) -> la baseline reste savedAt (~1h), ne doit JAMAIS reculer vers un horodatage
+    // plus ancien que le dernier enregistrement client réel.
+    const hoursServerCreditOlder = computeOfflineElapsedHours({ savedAt: oneHourAgo, lastServerCreditAt: fiveHoursAgo });
+    assert('lastServerCreditAt plus ancien que savedAt -> baseline reste savedAt (~1h, jamais recule)',
+      Math.abs(hoursServerCreditOlder - 1) <= 0.01, `hours=${hoursServerCreditOlder}`);
+    // lastServerCreditAt invalide/vide -> ignoré proprement, pas de throw, repli sur savedAt.
+    const hoursServerCreditEmpty = computeOfflineElapsedHours({ savedAt: threeHoursAgo, lastServerCreditAt: null });
+    assert('lastServerCreditAt null -> ignoré, repli sur savedAt (~3h), pas de throw',
+      Math.abs(hoursServerCreditEmpty - 3) <= 0.01, `hours=${hoursServerCreditEmpty}`);
+  }
+  // Garde-fou anti-désynchronisation pour la table SQL dupliquée `offline_credit_zone_loot`
+  // (supabase/migrations/20260722120000_offline_progress_hourly_cron.sql) : cette table transcrit
+  // MANUELLEMENT les chances de drop / valeurs / noms de ZONES[].loot.mat/.craft (world/zones-data.js)
+  // + GEAR_TIERS[].material (world/gear-tiers-data.js, via gearTierForZone()), car credit_offline_
+  // progress_hourly() (le cron serveur qui simule computeOfflineCatchupLoot() pour 1h) ne peut pas
+  // lire ce fichier JS directement (pas de bundler/module ici, voir CLAUDE.md §7 -- et aucune Edge
+  // Function n'existe encore dans ce repo pour servir de pont). Si zones-data.js ou
+  // gear-tiers-data.js sont un jour rééquilibrés SANS mettre à jour cette table SQL, le cron serveur
+  // créditerait un montant différent de ce que Phase 1 (côté client) calculerait pour la même heure
+  // -- ce test compare la snapshot figée ci-dessous (= exactement le contenu de la migration SQL) à
+  // ZONES/GEAR_TIERS RÉELS à l'exécution, et échoue dès qu'ils divergent : un échec ici est le signal
+  // explicite qu'une NOUVELLE migration SQL (jamais modifier celle déjà appliquée, CLAUDE.md §12) est
+  // due pour resynchroniser offline_credit_zone_loot.
+  function testOfflineCreditZoneLootTableMatchesClientZonesData() {
+    if (typeof ZONES === 'undefined' || typeof gearTierForZone !== 'function') return;
+    // snapshot exacte des valeurs INSERT de 20260722120000_offline_progress_hourly_cron.sql
+    const SQL_SNAPSHOT = [
+      { zone_idx:0,  mat_name:'Pierre de Novice',  mat_color:'#b8b8b8', mat_val:1,  mat_ch:0.55,  craft_name:"Poussière d'esprit ancien", craft_ch:0.03 },
+      { zone_idx:1,  mat_name:'Pierre de Novice',  mat_color:'#b8b8b8', mat_val:1,  mat_ch:0.48,  craft_name:"Poussière d'esprit ancien", craft_ch:0.026 },
+      { zone_idx:2,  mat_name:'Pierre de Novice',  mat_color:'#b8b8b8', mat_val:1,  mat_ch:0.4,   craft_name:"Poussière d'esprit ancien", craft_ch:0.022 },
+      { zone_idx:3,  mat_name:'Pierre du Temps',   mat_color:'#cfd8dc', mat_val:1,  mat_ch:0.32,  craft_name:"Poussière d'esprit ancien", craft_ch:0.018 },
+      { zone_idx:4,  mat_name:'Pierre du Temps',   mat_color:'#cfd8dc', mat_val:1,  mat_ch:0.26,  craft_name:"Poussière d'esprit ancien", craft_ch:0.015 },
+      { zone_idx:5,  mat_name:'Pierre du Temps',   mat_color:'#cfd8dc', mat_val:4,  mat_ch:0.2,   craft_name:"Poussière d'esprit ancien", craft_ch:0.012 },
+      { zone_idx:6,  mat_name:'Pierre Noire',      mat_color:'#7aa35e', mat_val:11, mat_ch:0.15,  craft_name:'Fragment de mémoire',       craft_ch:0.009 },
+      { zone_idx:7,  mat_name:'Pierre Noire',      mat_color:'#7aa35e', mat_val:11, mat_ch:0.11,  craft_name:'Fragment de mémoire',       craft_ch:0.007 },
+      { zone_idx:8,  mat_name:'Pierre Noire',      mat_color:'#7aa35e', mat_val:9,  mat_ch:0.08,  craft_name:'Fragment de mémoire',       craft_ch:0.005 },
+      { zone_idx:9,  mat_name:'Pierre concentrée', mat_color:'#6ea3c9', mat_val:7,  mat_ch:0.12,  craft_name:'Marbre du Dieu déchu',      craft_ch:0.0035 },
+      { zone_idx:10, mat_name:'Pierre concentrée', mat_color:'#6ea3c9', mat_val:6,  mat_ch:0.09,  craft_name:'Marbre du Dieu déchu',      craft_ch:0.0025 },
+      { zone_idx:11, mat_name:'Pierre concentrée', mat_color:'#6ea3c9', mat_val:5,  mat_ch:0.07,  craft_name:'Marbre du Dieu déchu',      craft_ch:0.0018 },
+      { zone_idx:12, mat_name:'Pierre de Novice',  mat_color:'#b8b8b8', mat_val:1,  mat_ch:0.34,  craft_name:"Poussière d'esprit ancien", craft_ch:0.019 },
+      { zone_idx:13, mat_name:'Pierre du Temps',   mat_color:'#cfd8dc', mat_val:5,  mat_ch:0.14,  craft_name:"Poussière d'esprit ancien", craft_ch:0.009 },
+      { zone_idx:14, mat_name:'Pierre Noire',      mat_color:'#7aa35e', mat_val:8,  mat_ch:0.058, craft_name:'Fragment de mémoire',       craft_ch:0.003 },
+      { zone_idx:15, mat_name:'Pierre concentrée', mat_color:'#6ea3c9', mat_val:4,  mat_ch:0.055, craft_name:'Marbre du Dieu déchu',      craft_ch:0.0013 },
+    ];
+    assert('offline_credit_zone_loot couvre exactement les 16 zones actuelles de ZONES',
+      SQL_SNAPSHOT.length === ZONES.length, `SQL=${SQL_SNAPSHOT.length}, ZONES=${ZONES.length}`);
+    for (const row of SQL_SNAPSHOT) {
+      const z = ZONES[row.zone_idx];
+      if (!z) continue; // déjà signalé par l'assertion de longueur ci-dessus
+      const tier = gearTierForZone(row.zone_idx);
+      assert(`Zone ${row.zone_idx} (${z.name}) : mat_name synchronisé (tier.material.name)`,
+        tier.material.name === row.mat_name, `attendu=${row.mat_name}, réel=${tier.material.name}`);
+      assert(`Zone ${row.zone_idx} (${z.name}) : mat_color synchronisé (tier.material.color)`,
+        tier.material.color === row.mat_color, `attendu=${row.mat_color}, réel=${tier.material.color}`);
+      assert(`Zone ${row.zone_idx} (${z.name}) : mat_val synchronisé (ZONES[].loot.mat.val)`,
+        z.loot.mat.val === row.mat_val, `attendu=${row.mat_val}, réel=${z.loot.mat.val}`);
+      assert(`Zone ${row.zone_idx} (${z.name}) : mat_ch synchronisé (ZONES[].loot.mat.ch)`,
+        Math.abs(z.loot.mat.ch - row.mat_ch) < 1e-9, `attendu=${row.mat_ch}, réel=${z.loot.mat.ch}`);
+      assert(`Zone ${row.zone_idx} (${z.name}) : craft_name synchronisé (ZONES[].loot.craft.name)`,
+        z.loot.craft.name === row.craft_name, `attendu=${row.craft_name}, réel=${z.loot.craft.name}`);
+      assert(`Zone ${row.zone_idx} (${z.name}) : craft_ch synchronisé (ZONES[].loot.craft.ch)`,
+        Math.abs(z.loot.craft.ch - row.craft_ch) < 1e-9, `attendu=${row.craft_ch}, réel=${z.loot.craft.ch}`);
+    }
+  }
   // vérifie l'intégration bout-en-bout : applySaveState() sur une sauvegarde dont savedAt est
   // ancien doit créditer le silver de rattrapage ET déclencher le modal "Bon retour" (auparavant :
   // rien ne s'affichait, awaySilverGained/awayLootCounts restaient à 0 après un vrai rechargement
@@ -6349,6 +6440,8 @@
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();
+    testComputeOfflineElapsedHoursUsesMoreRecentOfSavedAtAndServerCredit();
+    testOfflineCreditZoneLootTableMatchesClientZonesData();
     testLootTableJackpotRowHasColor();
     testAddSilverUpdatesStateCorrectly();
     testSellOnePriorityEquipCompendiumSell();

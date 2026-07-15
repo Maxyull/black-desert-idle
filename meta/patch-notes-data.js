@@ -16,6 +16,13 @@
 // conflit, ex: V426 renuméroté depuis une collision). Les entrées SANS champ `d:` (avant V53,
 // introduction du suivi de dates) restent volontairement sans date plutôt que d'en inventer une.
 const PATCH_NOTES = [
+  { v:'V447', d:'14/07/2026 02:30', name:{fr:'Rattrapage hors ligne : désormais crédité aussi serveur, même jeu totalement fermé', en:'Offline catch-up: now also credited server-side, even with the game fully closed'}, fr:[
+      {t:'new', sub:'economie', tx:'Le rattrapage hors ligne (silver, XP, matériaux/craft de zone) est désormais aussi crédité côté serveur, une fois par heure, tant que le compte existe — plus besoin de rouvrir le jeu pour en profiter, sans durée limite. Le rattrapage affiché au retour (plafonné à 24h) continue de fonctionner normalement en complément et ne recompte jamais une période déjà créditée par le serveur.'},
+      {t:'change', sub:'economie', tx:'Réservé aux comptes d\'au moins 3 jours ET ayant déjà cumulé 2h de temps de jeu réel — un compte tout juste créé commence à recevoir ce rattrapage serveur seulement une fois ces 2 seuils franchis, sans rattrapage rétroactif du temps déjà écoulé avant.'},
+    ], en:[
+      {t:'new', sub:'economie', tx:'Offline catch-up (silver, XP, zone materials/craft) is now also credited server-side, once per hour, for as long as the account exists — no need to reopen the game to benefit, with no time limit. The catch-up shown on reconnect (capped at 24h) still works normally alongside it and never re-counts a period already credited server-side.'},
+      {t:'change', sub:'economie', tx:'Restricted to accounts at least 3 days old AND with at least 2h of cumulative real playtime already logged — a brand-new account only starts receiving this server-side catch-up once both thresholds are crossed, with no retroactive credit for time already elapsed before that.'},
+    ] },
   { v:'V446', d:'14/07/2026 02:15', name:{fr:'Mini Boss : refonte du lobby fidèle à la maquette + mécanisme d\'invitation', en:'Mini Boss: mockup-faithful lobby overhaul + invite mechanism'}, fr:[
       {t:'change', sub:'interface', tx:'Le lobby Mini Boss passe en grille 2 colonnes (contenu à gauche, chat en barre latérale fixe à droite) avec l\'échelle de bonus de groupe en bandeau pleine largeur au-dessus, comme la maquette validée — auparavant tout était empilé en une seule colonne verticale.'},
       {t:'new', sub:'interface', tx:'Texte d\'ambiance sous le nom du boss, police Cinzel sur les titres/boutons, indice explicite du "maillon faible" du groupe (le membre au gear% le plus bas quand l\'écart dépasse 10 points).'},

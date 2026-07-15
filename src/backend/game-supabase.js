@@ -497,9 +497,15 @@ async function loadCloudSave() {
       return;
     }
   }
-  const { data, error } = await sb.from('game_saves').select('save_data').eq('user_id', currentUser.id).single();
+  // last_server_credit_at (2026-07-14, Phase 2 du rattrapage hors-ligne -- voir
+  // supabase/migrations/20260722120000_offline_progress_hourly_cron.sql et le commentaire au-dessus
+  // de computeOfflineElapsedHours(), core/game-core.js) : colonne séparée de save_data, écrite par
+  // le cron serveur horaire, jamais par le client. Attachée à l'objet transmis à applySaveState()
+  // (pas dans save_data lui-même, qui reste tel quel) pour que Phase 1 sache jusqu'où le serveur a
+  // déjà crédité et ne recompte jamais ce même intervalle.
+  const { data, error } = await sb.from('game_saves').select('save_data, last_server_credit_at').eq('user_id', currentUser.id).single();
   if (data && data.save_data && Object.keys(data.save_data).length) {
-    applySaveState(data.save_data);
+    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at });
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
   } else {
     $a('saveStatus').textContent = 'Nouveau personnage';
