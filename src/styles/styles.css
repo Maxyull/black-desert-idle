@@ -3018,15 +3018,15 @@
   #minibossLobbyClose { width:auto; margin:0; padding:4px 10px; font-size:16px; background:none; border:none; color:var(--cream3); }
   #minibossLobbyBody { padding:16px 18px; display:flex; flex-direction:column; gap:14px; }
   #minibossLobbyBody .card { background:var(--s1); border:1px solid var(--dbBorder); border-radius:11px; }
-  #minibossLobbyBody .card h3 { font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--cream2); padding:12px 16px; margin:0; border-bottom:1px solid var(--dbBorder); }
+  #minibossLobbyBody .card h3 { font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--cream2); padding:12px 16px; margin:0; border-bottom:1px solid var(--dbBorder); }
   /* mise en page 2 colonnes (fidèle à la maquette, 29 itérations) : la carte de bonus de groupe
      est un bandeau PLEINE LARGEUR au-dessus (mise en évidence, pas noyée dans une carte parmi
      d'autres), puis un grille invocation/craft/groupe (gauche) + chat en BARRE LATÉRALE (droite,
      340px) -- contrairement à un simple empilement vertical, le chat reste visible en permanence
      à côté du reste sans avoir à scroller toute la page. */
   .minibossLobbyBonusCard { padding:14px 16px; }
-  .minibossBonusTagline { font-size:10.5px; color:var(--gold2); margin-top:10px; }
-  .minibossBonusHint { margin-top:8px; padding-top:8px; border-top:1px dashed var(--dbBorder2); font-size:10.5px; color:var(--cream3); }
+  .minibossBonusTagline { font-size:12px; color:var(--gold2); margin-top:10px; }
+  .minibossBonusHint { margin-top:8px; padding-top:8px; border-top:1px dashed var(--dbBorder2); font-size:12px; color:var(--cream3); }
   .minibossBonusHint b { color:var(--gold2); }
   .minibossLobbyGrid { display:grid; grid-template-columns:1fr 340px; gap:14px; align-items:start; }
   .minibossLobbyMain, .minibossLobbySide { display:flex; flex-direction:column; gap:14px; }
@@ -3034,11 +3034,11 @@
   .minibossSummonCard { padding:20px; text-align:center; }
   .minibossSummonIcon { font-size:44px; filter:drop-shadow(0 0 16px rgba(155,127,214,.4)); }
   .minibossSummonName { font-family:'Cinzel',serif; font-size:17px; color:var(--arcane2); margin:6px 0 4px; }
-  .minibossSummonLore { font-family:'Cinzel',serif; font-style:italic; font-size:10.5px; color:var(--cream3); max-width:340px; margin:0 auto 14px; line-height:1.5; }
+  .minibossSummonLore { font-family:'Cinzel',serif; font-style:italic; font-size:12px; color:var(--cream3); max-width:340px; margin:0 auto 14px; line-height:1.5; }
   .minibossParcheminRow { display:flex; align-items:center; gap:12px; justify-content:center; background:var(--s2); border:1px solid var(--dbBorder); border-radius:9px; padding:12px 16px; margin-bottom:12px; }
   .minibossParcheminIcon { font-size:26px; }
   .minibossParcheminQty { font-size:18px; color:var(--gold2); font-weight:600; text-align:left; }
-  .minibossParcheminQty small { font-size:10.5px; color:var(--cream3); font-weight:400; }
+  .minibossParcheminQty small { font-size:11.5px; color:var(--cream3); font-weight:400; }
   .minibossTradeTag { font-size:9.5px; color:var(--red2); text-align:left; }
   .minibossTradeTagSellable { font-size:9.5px; color:var(--green2); margin-left:8px; }
   .minibossSummonBtn, .minibossReadyBtn {
@@ -3050,15 +3050,15 @@
   .minibossCraftRow { display:flex; align-items:center; gap:12px; }
   .minibossCraftIcon { font-size:24px; flex-shrink:0; }
   .minibossCraftBody { flex:1; min-width:0; }
-  .minibossCraftLbl { font-size:11px; color:var(--cream2); margin-bottom:6px; }
+  .minibossCraftLbl { font-size:12.5px; color:var(--cream2); margin-bottom:6px; }
   .minibossCraftBar { height:7px; background:var(--s2); border-radius:4px; overflow:hidden; }
   .minibossCraftBarFill { height:100%; background:linear-gradient(90deg,var(--arcane-dim),var(--arcane)); }
-  .minibossCraftCount { font-size:10px; color:var(--cream3); margin-top:4px; }
+  .minibossCraftCount { font-size:11.5px; color:var(--cream3); margin-top:4px; }
   .minibossCraftBtn { width:auto; flex-shrink:0; font-family:'Cinzel',serif; font-size:10.5px; font-weight:600; padding:8px 14px; border-radius:7px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream3); cursor:not-allowed; }
   .minibossCraftBtn.ready { border-color:var(--gold); color:var(--gold2); cursor:pointer; }
   .minibossBonusLadder { padding:10px 16px; }
   .minibossBonusLadderHead { display:flex; align-items:baseline; justify-content:space-between; margin-bottom:8px; }
-  .minibossBonusLadderTitle { font-family:'Cinzel',serif; font-size:10px; letter-spacing:.06em; text-transform:uppercase; color:var(--cream2); }
+  .minibossBonusLadderTitle { font-family:'Cinzel',serif; font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--cream2); }
   .minibossBonusLadderCurrent { font-family:'JetBrains Mono',monospace; font-size:14px; color:var(--arcane2); font-weight:600; }
   .minibossBonusLadderTrack { display:flex; gap:6px; }
   .minibossBonusStep { flex:1; display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 2px; border-radius:6px; background:var(--s2); border:1px solid var(--dbBorder2); }
@@ -3070,9 +3070,9 @@
      perdant l'effet "current step" le plus visible de la maquette (échelle de bonus = élément le
      plus mis en avant de toute la revue, cf Mise à jour 5-7). */
   .minibossBonusStepN {
-    width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center;
     background:var(--s1); border:1.5px solid var(--dbBorder2); font-family:'JetBrains Mono',monospace;
-    font-size:9.5px; color:var(--cream3); transition:all .2s; margin-bottom:1px;
+    font-size:11px; color:var(--cream3); transition:all .2s; margin-bottom:1px;
   }
   .minibossBonusStep.reached .minibossBonusStepN { border-color:var(--arcane-dim); color:var(--cream2); background:#201a30; }
   .minibossBonusStep.current .minibossBonusStepN {
@@ -3084,12 +3084,12 @@
     color:var(--gold2); background:linear-gradient(135deg,var(--arcane-dim),var(--gold-dim));
     box-shadow:0 0 0 3px rgba(232,200,128,.18), 0 0 12px rgba(232,200,128,.55);
   }
-  .minibossBonusStepMult { font-size:11px; color:var(--cream2); font-weight:600; }
+  .minibossBonusStepMult { font-size:12.5px; color:var(--cream2); font-weight:600; }
   .minibossBonusStep.current .minibossBonusStepMult { color:var(--arcane2); }
   .minibossBonusStep.jackpot.current .minibossBonusStepMult { color:var(--gold2); }
-  .minibossBonusStepPct { font-size:8px; color:var(--cream3); }
-  .minibossBonusStepHp { font-size:7.5px; color:var(--red2); opacity:.75; }
-  .minibossBonusStepTime { font-size:7.5px; color:var(--cream3); opacity:.75; }
+  .minibossBonusStepPct { font-size:10px; color:var(--cream3); }
+  .minibossBonusStepHp { font-size:9.5px; color:var(--red2); opacity:.75; }
+  .minibossBonusStepTime { font-size:9.5px; color:var(--cream3); opacity:.75; }
   .minibossBonusStep.current .minibossBonusStepTime { color:var(--arcane2); opacity:.9; }
   .minibossGroupCard h3 { display:flex; align-items:center; justify-content:space-between; }
   /* icône d'info + carte des règles de sortie (quitter/déco/vote) au survol -- CSS pur, comme la
@@ -3107,41 +3107,41 @@
   .minibossRule:last-child { margin-bottom:0; }
   .minibossRunLengthRow { display:flex; align-items:center; gap:10px; padding:12px 16px 4px; flex-wrap:wrap; }
   .minibossRunChips { display:flex; gap:6px; flex-wrap:wrap; }
-  .minibossRunChip { width:auto; margin-top:0; font-size:11px; padding:5px 12px; border-radius:14px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
+  .minibossRunChip { width:auto; margin-top:0; font-size:12.5px; padding:5px 12px; border-radius:14px; border:1px solid var(--dbBorder2); background:var(--s2); color:var(--cream2); cursor:pointer; }
   .minibossRunChip.on { border-color:var(--arcane); color:var(--arcane2); background:rgba(155,127,214,.16); font-weight:600; }
   .minibossRunCustom { display:flex; align-items:center; gap:10px; padding:2px 16px 10px; }
   .minibossRunCustom input[type=range] { flex:1; accent-color:var(--arcane); }
-  #minibossRunSliderVal { font-size:11px; color:var(--arcane2); width:30px; text-align:right; }
-  .minibossMaxBtn { width:auto; margin-top:0; font-size:10px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
+  #minibossRunSliderVal { font-size:12.5px; color:var(--arcane2); width:30px; text-align:right; }
+  .minibossMaxBtn { width:auto; margin-top:0; font-size:11.5px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
   .minibossMaxBtn:hover { background:rgba(232,200,128,.22); }
   .minibossGroupPreview { margin:6px 16px 0; padding:10px 12px; border-radius:7px; background:rgba(224,96,96,.06); border:1px solid var(--red-dim,#5a1818); }
-  .minibossGbpRow { display:flex; justify-content:space-between; font-size:10.5px; color:var(--cream2); padding:2px 0; }
+  .minibossGbpRow { display:flex; justify-content:space-between; font-size:12px; color:var(--cream2); padding:2px 0; }
   .minibossGbpRow b.ideal { color:var(--green2); }
   .minibossGbpRow b.real { color:var(--gold2); }
-  .minibossGbpWarn { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:9.5px; color:var(--red2); line-height:1.5; }
-  .minibossGbpHint { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:9.5px; color:var(--cream3); line-height:1.5; }
+  .minibossGbpWarn { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:11px; color:var(--red2); line-height:1.5; }
+  .minibossGbpHint { margin-top:6px; padding-top:6px; border-top:1px dashed var(--dbBorder2); font-size:11px; color:var(--cream3); line-height:1.5; }
   .minibossPartyList { padding:10px 16px 0; display:flex; flex-direction:column; gap:6px; }
-  .minibossPartyRow { display:flex; align-items:center; gap:10px; font-size:11px; }
+  .minibossPartyRow { display:flex; align-items:center; gap:10px; font-size:12.5px; }
   .minibossPartyRow.mine { color:var(--arcane2); font-weight:600; }
   .minibossPartyName { flex:1; }
   .minibossPartyGear.good { color:var(--green2); } .minibossPartyGear.ok { color:var(--gold2); } .minibossPartyGear.low { color:var(--red2); }
   .minibossPartyReady { color:var(--cream3); }
   .minibossPartyReady.ready { color:var(--green2); }
-  .minibossMaxHint { padding:6px 16px 12px; font-size:9.5px; color:var(--cream3); }
+  .minibossMaxHint { padding:6px 16px 12px; font-size:11px; color:var(--cream3); }
   .minibossChatCard { display:flex; flex-direction:column; }
   .minibossChatTabs { display:flex; gap:6px; padding:10px 12px 0; }
-  .minibossChatTab { width:auto; margin-top:0; flex:1; min-width:0; font-family:'Cinzel',serif; font-size:9.5px; font-weight:600; padding:8px 6px; border-radius:7px 7px 0 0; border:1px solid var(--dbBorder); border-bottom:none; background:transparent; color:var(--cream3); cursor:pointer; }
+  .minibossChatTab { width:auto; margin-top:0; flex:1; min-width:0; font-family:'Cinzel',serif; font-size:10.5px; font-weight:600; padding:8px 6px; border-radius:7px 7px 0 0; border:1px solid var(--dbBorder); border-bottom:none; background:transparent; color:var(--cream3); cursor:pointer; }
   .minibossChatTab.on { color:var(--arcane2); background:var(--s2); border-color:var(--dbBorder2); }
   .minibossChatCount { font-size:9.5px; background:var(--arcane-dim); color:var(--arcane2); padding:1px 6px; border-radius:8px; margin-left:4px; }
   .minibossChatPane { display:none; flex-direction:column; border-top:1px solid var(--dbBorder); min-height:260px; }
   .minibossChatPane.on { display:flex; }
   .minibossChatLog, .minibossGroupsList { flex:1; overflow-y:auto; padding:10px 12px; display:flex; flex-direction:column; gap:7px; max-height:260px; }
-  .minibossChatMsg { font-size:12px; display:flex; align-items:baseline; gap:5px; flex-wrap:wrap; }
+  .minibossChatMsg { font-size:12.5px; display:flex; align-items:baseline; gap:5px; flex-wrap:wrap; }
   .minibossChatMsg.mine { opacity:.85; }
   .minibossChatPseudo { font-weight:bold; color:var(--arcane2); }
   /* badge de réputation + carte détaillée au survol (7 stats brutes), CSS pur -- retour de revue
      de maquette : le premier portage n'affichait qu'un badge plat sans détail. */
-  .minibossRepBadge { position:relative; display:inline-flex; align-items:center; cursor:help; font-size:9px; font-family:'JetBrains Mono',monospace; padding:1px 5px; border-radius:8px; }
+  .minibossRepBadge { position:relative; display:inline-flex; align-items:center; cursor:help; font-size:10px; font-family:'JetBrains Mono',monospace; padding:1px 5px; border-radius:8px; }
   .minibossRepBadge.good { background:rgba(112,216,144,.12); color:var(--green2); }
   .minibossRepBadge.ok { background:rgba(232,200,128,.12); color:var(--gold2); }
   .minibossRepBadge.bad { background:rgba(224,96,96,.12); color:var(--red2); }
@@ -3157,7 +3157,7 @@
   .minibossRepCardRow.good b { color:var(--green2); }
   .minibossRepCardRow.bad b { color:var(--red2); }
   .minibossRepCardDivider { border-top:1px dashed var(--dbBorder2); margin-top:4px; padding-top:5px; }
-  .minibossGearBadge { font-size:9px; font-family:'JetBrains Mono',monospace; background:var(--s2); padding:1px 5px; border-radius:8px; }
+  .minibossGearBadge { font-size:10px; font-family:'JetBrains Mono',monospace; background:var(--s2); padding:1px 5px; border-radius:8px; }
   .minibossChatText { color:var(--cream); flex:1; min-width:0; }
   /* invitation directe depuis le chat de recrutement (mockup : .mbInviteBanner/.mbInviteMeBtn) --
      retour utilisateur d'origine : "il y a un chat pour ça... ils peuvent s'inviter depuis le
