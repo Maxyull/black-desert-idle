@@ -3057,6 +3057,29 @@
     assert('Taux calculé proche de +20% du record actuel', Math.abs(ratePerHour - targetRate)/targetRate < 0.15, `rate=${ratePerHour}, target=${targetRate}`);
     assert('Une hausse progressive sous le seuil anti-pic (30%) devient bien éligible au nouveau record', eligible === true);
   }
+  // "rattrapage de +9 milliards d'XP" (2026-07-14, bug signalé par un joueur) : gainXp() alimentait
+  // xpRateBuffer pour TOUT appel, y compris le rattrapage hors-ligne lui-même (game-core.js,
+  // applySaveState) -- un gros rattrapage gonflait donc bestXpPerHour, servant de taux au PROCHAIN
+  // rattrapage, qui l'inflatait encore plus (boucle auto-amplifiée à chaque reconnexion espacée).
+  // Corrigé par un 2e paramètre trackRate (défaut true, passé à false par le rattrapage) -- même
+  // principe que le garde category==='loot' déjà en place sur addSilver()/silverRateBuffer.
+  function testGainXpTrackRateFalseNeverFeedsXpRateBuffer() {
+    if (typeof gainXp !== 'function' || typeof xpRateBuffer === 'undefined') return;
+    const savedBuffer = xpRateBuffer;
+    const savedXp = S.xp, savedLvl = S.lvl, savedXpNext = S.xpNext, savedXpEarned = S.xpEarned;
+    try {
+      xpRateBuffer = [];
+      gainXp(1000000, false); // simule un gros rattrapage hors-ligne
+      assert('gainXp(n, false) (rattrapage) n\'ajoute AUCUN échantillon à xpRateBuffer',
+        xpRateBuffer.length === 0, `length=${xpRateBuffer.length}`);
+      gainXp(50); // appel normal (gameplay), trackRate par défaut = true
+      assert('gainXp(n) sans 2e argument (gameplay normal) alimente bien xpRateBuffer comme avant',
+        xpRateBuffer.length === 1 && xpRateBuffer[0].xp === 50, `buffer=${JSON.stringify(xpRateBuffer)}`);
+    } finally {
+      xpRateBuffer = savedBuffer;
+      S.xp = savedXp; S.lvl = savedLvl; S.xpNext = savedXpNext; S.xpEarned = savedXpEarned;
+    }
+  }
   // même migration que testBestKpmResetV439ZeroesStaleRecord, version bestXpPerHour (2026-07-13)
   function testBestXpPerHourResetV440ZeroesStaleRecord() {
     if (typeof migrateBestXpPerHourResetV440 !== 'function') return;
@@ -6304,6 +6327,7 @@
     testSilverPerHourResetV436ZeroesStaleRecord();
     testBestKpmResetV439ZeroesStaleRecord();
     testBestXpPerHourResetV440ZeroesStaleRecord();
+    testGainXpTrackRateFalseNeverFeedsXpRateBuffer();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();
     testComputeOfflineCatchupXpCapsAndThresholds();

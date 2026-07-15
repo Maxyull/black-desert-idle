@@ -2592,7 +2592,11 @@ function applySaveState(data) {
       // gainXp() réutilisée telle quelle (pas de logique de niveau dupliquée ici) : gère déjà la
       // cascade de passages de niveau (while, un gros rattrapage peut faire monter plusieurs
       // niveaux d'un coup), le +8 HP max/niveau, les notifications/logs Discord "Niveau supérieur".
-      gainXp(offlineXpGain);
+      // trackRate=false (2026-07-14, bug corrigé : rattrapage de +9 milliards d'XP signalé par un
+      // joueur) -- sans ça, ce gros paquet d'XP alimentait xpRateBuffer comme un gain de gameplay
+      // normal, gonflant bestXpPerHour, qui servait de taux au PROCHAIN rattrapage -- boucle qui
+      // s'auto-amplifiait à chaque reconnexion espacée. Voir le commentaire de gainXp() (loot-rolls.js).
+      gainXp(offlineXpGain, false);
       // re-baseline APRÈS avoir crédité l'XP hors-ligne (comme tokenSilverEarned qui n'est PAS
       // incrémenté par addSilver('offline_catchup',...)) : sinon ce rattrapage compterait comme un
       // gain de LA SESSION EN COURS et fausserait/inflaterait le prochain calcul de bestXpPerHour.

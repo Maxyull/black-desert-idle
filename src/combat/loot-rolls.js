@@ -431,13 +431,26 @@ function flashXpGain() {
  * ne redescend jamais contrairement à S.xp -- alimente bestXpPerHour/le rattrapage hors-ligne XP,
  * voir hud()/computeOfflineCatchupXp dans core/game-core.js).
  * @param {number} n - XP gagnée (peut être 0 ou négative selon l'appelant, seul n>0 déclenche le flash visuel).
+ * @param {boolean} [trackRate=true] - si false, n'alimente PAS xpRateBuffer (voir bug ci-dessous) --
+ *   toujours true pour un gain de gameplay normal (combat), passé à false par le rattrapage
+ *   hors-ligne (core/game-core.js, applySaveState).
  * @returns {void} mute S.xp/S.lvl/S.xpNext/S.hpMax/P.hp/S.xpEarned en place.
  */
-function gainXp(n) {
+function gainXp(n, trackRate = true) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
   if (n > 0) S.xpEarned = (S.xpEarned||0) + n;
-  if (n > 0) xpRateBuffer.push({ t: Date.now(), xp: n }); // fenêtre glissante bestXpPerHour (voir computeSlidingXpPerHour, game-core.js)
+  // BUG trouvé le 2026-07-14 (signalé par un joueur : rattrapage de +9 milliards d'XP) : cette ligne
+  // alimentait xpRateBuffer pour TOUT appel de gainXp(), y compris le rattrapage hors-ligne lui-même
+  // (game-core.js:2595, gainXp(offlineXpGain)) -- alors qu'addSilver() (game-core.js:358) a TOUJOURS
+  // exclu category!=='loot' de silverRateBuffer pour exactement cette raison (voir son commentaire).
+  // Un gros rattrapage gonflait donc bestXpPerHour, qui servait de taux au PROCHAIN rattrapage,
+  // l'inflatant encore plus -- boucle qui s'auto-amplifie à chaque reconnexion espacée. xpEarnedAtLoad
+  // (re-baseliné juste après l'appel côté game-core.js) protégeait bien S.xpEarned/le PROCHAIN calcul
+  // de fenêtre depuis ce compteur, mais pas ce push direct dans le buffer -- 2 mécanismes distincts,
+  // le 2e n'avait jamais été couvert. trackRate=false (passé explicitement par le rattrapage) ferme
+  // ce trou, même principe que le garde category==='loot' déjà en place pour le silver.
+  if (n > 0 && trackRate) xpRateBuffer.push({ t: Date.now(), xp: n }); // fenêtre glissante bestXpPerHour (voir computeSlidingXpPerHour, game-core.js)
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;
