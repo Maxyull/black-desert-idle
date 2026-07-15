@@ -155,6 +155,8 @@
   "backend.silver_hist.session_hint": "Trash income picked up on the ground, minute by minute.",
   "backend.silver_hist.day_title": "Last 24 hours",
   "backend.silver_hist.day_hint": "Silver gained per hour, all sources combined.",
+  "backend.silver_hist.balance_title": "Balance — last 24 hours",
+  "backend.silver_hist.balance_hint": "Your total silver over time, hour by hour (reconstructed from the ledger).",
   "backend.silver_hist.totals": "Total: {{total}} · peak: {{peak}}",
   "backend.silver_hist.loading": "Loading…",
   "backend.silver_hist.offline": "History unavailable offline — the session chart is still available.",

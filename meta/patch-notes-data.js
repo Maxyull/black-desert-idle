@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V453', d:'16/07/2026 01:00', name:{fr:'Historique de silver : survol à la souris + courbe de solde', en:'Silver history: mouse hover + balance curve'}, fr:[
+      {t:'new', sub:'interface', tx:'Les graphiques du panneau Historique de silver sont désormais survolables : passe la souris sur une barre ou un point de courbe pour voir l\'heure exacte et la valeur précise dans une petite infobulle.'},
+      {t:'new', sub:'interface', tx:'Nouvelle courbe "Solde — 24 dernières heures" dans le même panneau : l\'évolution de ton silver total heure par heure (gains ET dépenses), reconstituée depuis le registre. La pastille 💰 silver de la barre du haut ouvre elle aussi le panneau, comme la pastille silver/min.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The Silver history panel charts are now hoverable: move your mouse over a bar or curve point to see the exact time and precise value in a small tooltip.'},
+      {t:'new', sub:'interface', tx:'New "Balance — last 24 hours" curve in the same panel: your total silver over time hour by hour (gains AND spending), reconstructed from the ledger. The 💰 silver pill in the top bar now opens the panel too, just like the silver/min pill.'},
+    ] },
   { v:'V452', d:'16/07/2026 00:10', name:{fr:'Farm en arrière-plan au vrai rythme + records débloqués', en:'Background farming at full speed + records unfrozen'}, fr:[
       {t:'fix', sub:'gameplay', tx:'Le farm en arrière-plan tourne enfin au vrai rythme. Le navigateur ne réveille le jeu qu\'une fois par minute quand l\'onglet est caché depuis plus de 5 minutes, et le jeu ne simulait alors que 2 secondes sur 60 — soit ~1/30 du rythme normal (le fameux "bloqué à 500 silver/min"). Le temps écoulé est désormais rattrapé en entier à chaque réveil : onglet caché ou non, tu farmes au même rythme.'},
       {t:'fix', sub:'gameplay', tx:'Records silver/h, kills/min et XP/h débloqués : le garde-fou anti-pic rejetait tout taux dépassant ton record de plus de 30% — si ton vrai rythme avait beaucoup progressé (nouveau stuff, rééquilibrage de loot), chaque mesure était rejetée comme un "pic" et le record restait figé pour toujours. Un rythme soutenu débloque maintenant le record ; un pic isolé (grosse vente ponctuelle) reste ignoré comme avant.'},
