@@ -504,8 +504,21 @@ async function loadCloudSave() {
   // (pas dans save_data lui-même, qui reste tel quel) pour que Phase 1 sache jusqu'où le serveur a
   // déjà crédité et ne recompte jamais ce même intervalle.
   const { data, error } = await sb.from('game_saves').select('save_data, last_server_credit_at').eq('user_id', currentUser.id).single();
+  // serverRates (2026-07-16, V455) : taux ÉQUITABLES calculés côté serveur (meilleure heure PLEINE,
+  // colonnes player_stats possédées par le serveur depuis V454 -- voir compute_player_hour_rates(),
+  // supabase/migrations/20260722150000). Attachés à l'objet transmis à applySaveState() (comme
+  // lastServerCreditAt ci-dessus) pour que le rattrapage hors-ligne Phase 1
+  // (computeOfflineCatchupSilver/Loot, core/game-core.js) paie au taux serveur plutôt qu'au record
+  // local S.bestSilverPerHour/bestKpm (remis à 0 par V454, et historiquement gonflé -- pics de
+  // 3 min extrapolés). Best-effort : si cette lecture échoue (réseau), serverRates reste absent et
+  // Phase 1 retombe sur le record local comme avant -- jamais bloquant.
+  let serverRates = null;
+  try {
+    const { data: ps } = await sb.from('player_stats').select('silver_per_hour, best_kpm').eq('user_id', currentUser.id).single();
+    if (ps) serverRates = { silverPerHour: Number(ps.silver_per_hour) || 0, kpm: Number(ps.best_kpm) || 0 };
+  } catch (e) { /* lecture best-effort, repli sur le record local */ }
   if (data && data.save_data && Object.keys(data.save_data).length) {
-    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at });
+    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at, serverRates });
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
   } else {
     $a('saveStatus').textContent = 'Nouveau personnage';

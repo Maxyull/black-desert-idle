@@ -537,7 +537,15 @@ function computeOfflineElapsedHours(data) {
  * @returns {number} silver à créditer, 0 si aucun taux connu ou absence sous OFFLINE_CATCHUP_MIN_HOURS.
  */
 function computeOfflineCatchupSilver(data) {
-  const rate = (data && data.S && data.S.bestSilverPerHour) || 0;
+  // taux ÉQUITABLE serveur d'abord (V455, 2026-07-16) : data.serverRates.silverPerHour =
+  // player_stats.silver_per_hour (meilleure heure PLEINE, colonne possédée par le serveur depuis
+  // V454, attachée par loadCloudSave -- game-supabase.js). PRÉSENT (même à 0) il fait foi : un
+  // compte sans heure de farm honnête enregistrée ne touche rien, au lieu de payer au vieux record
+  // local gonflé (pic de 3 min extrapolé). ABSENT (lecture réseau échouée / sauvegarde locale
+  // hors-ligne) : repli sur le record local, comportement historique -- jamais bloquant.
+  const rate = (data && data.serverRates && isFinite(data.serverRates.silverPerHour))
+    ? data.serverRates.silverPerHour
+    : ((data && data.S && data.S.bestSilverPerHour) || 0);
   if (rate <= 0) return 0;
   const hours = computeOfflineElapsedHours(data);
   if (hours <= 0) return 0;
@@ -576,7 +584,11 @@ function computeOfflineCatchupXp(data) {
  *   liste d'objets à créditer (qty déjà arrondie à l'entier, jamais 0), [] si rien d'estimable.
  */
 function computeOfflineCatchupLoot(data) {
-  const kpm = (data && data.S && data.S.bestKpm) || 0;
+  // même bascule taux serveur/repli local que computeOfflineCatchupSilver (V455, voir son
+  // commentaire) : data.serverRates.kpm = player_stats.best_kpm (kills d'une heure pleine / 60).
+  const kpm = (data && data.serverRates && isFinite(data.serverRates.kpm))
+    ? data.serverRates.kpm
+    : ((data && data.S && data.S.bestKpm) || 0);
   if (kpm <= 0) return [];
   const hours = computeOfflineElapsedHours(data);
   if (hours <= 0) return [];

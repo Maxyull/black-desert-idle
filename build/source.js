@@ -2964,7 +2964,10 @@ function computeOfflineElapsedHours(data) {
 }
 
 function computeOfflineCatchupSilver(data) {
-  const rate = (data && data.S && data.S.bestSilverPerHour) || 0;
+  
+  const rate = (data && data.serverRates && isFinite(data.serverRates.silverPerHour))
+    ? data.serverRates.silverPerHour
+    : ((data && data.S && data.S.bestSilverPerHour) || 0);
   if (rate <= 0) return 0;
   const hours = computeOfflineElapsedHours(data);
   if (hours <= 0) return 0;
@@ -2980,7 +2983,10 @@ function computeOfflineCatchupXp(data) {
 }
 
 function computeOfflineCatchupLoot(data) {
-  const kpm = (data && data.S && data.S.bestKpm) || 0;
+  
+  const kpm = (data && data.serverRates && isFinite(data.serverRates.kpm))
+    ? data.serverRates.kpm
+    : ((data && data.S && data.S.bestKpm) || 0);
   if (kpm <= 0) return [];
   const hours = computeOfflineElapsedHours(data);
   if (hours <= 0) return [];
@@ -15108,8 +15114,14 @@ async function loadCloudSave() {
   }
   
   const { data, error } = await sb.from('game_saves').select('save_data, last_server_credit_at').eq('user_id', currentUser.id).single();
+  
+  let serverRates = null;
+  try {
+    const { data: ps } = await sb.from('player_stats').select('silver_per_hour, best_kpm').eq('user_id', currentUser.id).single();
+    if (ps) serverRates = { silverPerHour: Number(ps.silver_per_hour) || 0, kpm: Number(ps.best_kpm) || 0 };
+  } catch (e) {  }
   if (data && data.save_data && Object.keys(data.save_data).length) {
-    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at });
+    applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at, serverRates });
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
   } else {
     $a('saveStatus').textContent = 'Nouveau personnage';
