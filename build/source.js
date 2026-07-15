@@ -581,6 +581,10 @@ const I18N_RESOURCES = {
       "combat.miniboss.weakest_link_hint": "{{pseudo}} ({{pct}}% gear) est le maillon faible du groupe — c'est lui/elle qui tire le temps réel vers le haut.",
       "combat.miniboss.arena_group_context": " · groupe {{n}}/5 (gear moyen {{pct}}%) · ⏱ {{time}}/combat",
       "combat.miniboss.run_length_meta": "run de {{n}} prévu",
+      "combat.miniboss.role_summoner": "Invocateur",
+      "combat.miniboss.role_joiner": "Participant",
+      "combat.miniboss.roster_damage": "{{pct}}% dégâts",
+      "combat.miniboss.result_sub": "Serviteur du Grimoire vaincu · {{n}} participant(s) · {{time}}",
       "combat.miniboss.chat_empty": "Aucun message pour l'instant.",
       "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
       "combat.ai_mode.defensive_title": "IA défensive : esquive et soigne en priorité, quitte à moins attaquer",
@@ -1606,6 +1610,10 @@ const I18N_RESOURCES = {
       "combat.miniboss.weakest_link_hint": "{{pseudo}} ({{pct}}% gear) is the group's weak link — they're the one pulling the real time up.",
       "combat.miniboss.arena_group_context": " · group {{n}}/5 (avg gear {{pct}}%) · ⏱ {{time}}/fight",
       "combat.miniboss.run_length_meta": "run of {{n}} planned",
+      "combat.miniboss.role_summoner": "Summoner",
+      "combat.miniboss.role_joiner": "Participant",
+      "combat.miniboss.roster_damage": "{{pct}}% dmg",
+      "combat.miniboss.result_sub": "Grimoire Servant defeated · {{n}} participant(s) · {{time}}",
       "combat.miniboss.chat_empty": "No messages yet.",
       "combat.ai_mode.balanced_title": "Balanced AI: alternates attack and caution based on the fight",
       "combat.ai_mode.defensive_title": "Defensive AI: prioritizes dodging/healing over attacking",
@@ -4319,7 +4327,7 @@ function applySaveState(data) {
     if (offlineSilverGain > 0) addSilver(offlineSilverGain, 'offline_catchup', 'Rattrapage hors ligne');
     if (offlineXpGain > 0) {
       
-      gainXp(offlineXpGain);
+      gainXp(offlineXpGain, false);
       
       S.xpEarnedAtLoad = S.xpEarned || 0;
     }
@@ -6308,11 +6316,12 @@ function flashXpGain() {
   flashXpGain._t = setTimeout(() => el.classList.remove('xpFlash'), 500);
 }
 
-function gainXp(n) {
+function gainXp(n, trackRate = true) {
   if (n > 0) flashXpGain();
   if (n > 0 && document.hidden) awayXpGained += n;
   if (n > 0) S.xpEarned = (S.xpEarned||0) + n;
-  if (n > 0) xpRateBuffer.push({ t: Date.now(), xp: n }); 
+  
+  if (n > 0 && trackRate) xpRateBuffer.push({ t: Date.now(), xp: n }); 
   S.xp += n;
   while (S.xp >= S.xpNext) {
     S.xp -= S.xpNext; S.lvl++;
@@ -8557,7 +8566,7 @@ function startMiniBossFight() {
   minibossTrackPresence('fighting');
   startMiniBossFightLocal(payload, true);
   
-  if (sb) sb.rpc('miniboss_start', { p_run_length: minibossRunLength }).catch(() => {});
+  if (sb) Promise.resolve(sb.rpc('miniboss_start', { p_run_length: minibossRunLength })).catch(() => {});
 }
 
 function startMiniBossFightLocal(payload, isSummoner) {
@@ -8598,10 +8607,16 @@ function startMiniBossFightLocal(payload, isSummoner) {
 function renderMinibossRoster() {
   const titleEl = $a('minibossRosterTitle'); if (titleEl) titleEl.textContent = i18next.t('combat:combat.miniboss.roster_title', { n: minibossState.party.length, max: MINIBOSS_MAX_GROUP_SIZE });
   const listEl = $a('minibossRosterList'); if (!listEl) return;
-  listEl.innerHTML = minibossState.party.map(p => {
+  
+  const dps = minibossState.party.map(p => minibossEstimatedDps(p.gearPct||0));
+  const totalDps = Math.max(1, dps.reduce((a,b)=>a+b,0));
+  listEl.innerHTML = minibossState.party.map((p, i) => {
     const gearCls = p.gearPct>=85?'good':p.gearPct>=60?'ok':'low';
-    return `<div class="minibossRosterRow"><span class="minibossRosterRole ${p.role}">${p.role==='summoner'?'👑':'🙂'}</span>` +
-      `<span class="minibossRosterName">${escapeHtml(p.pseudo||'?')}</span><span class="minibossRosterGear ${gearCls}">⚔️${p.gearPct||0}%</span></div>`;
+    const roleLbl = p.role==='summoner' ? i18next.t('combat:combat.miniboss.role_summoner') : i18next.t('combat:combat.miniboss.role_joiner');
+    const dmgPct = Math.round(dps[i]/totalDps*100);
+    return `<div class="minibossRosterRow"><span class="minibossRosterRole ${p.role}">${roleLbl}</span>` +
+      `<span class="minibossRosterName">${escapeHtml(p.pseudo||'?')} <span class="minibossRosterGear ${gearCls}">⚔️${p.gearPct||0}%</span></span>` +
+      `<span class="minibossRosterDmg">${i18next.t('combat:combat.miniboss.roster_damage', { pct: dmgPct })}</span></div>`;
   }).join('');
 }
 
@@ -8611,7 +8626,8 @@ function miniBossLoop(now) {
   minibossState.hp = Math.max(0, minibossState.maxHp - minibossState.groupDps * elapsed);
   drawMinibossRoom(now);
   const hpEl = $a('minibossHpTxt');
-  if (hpEl) hpEl.textContent = fmt(Math.round(minibossState.hp)) + ' / ' + fmt(minibossState.maxHp);
+  
+  if (hpEl) { const pct = Math.max(0, minibossState.hp/minibossState.maxHp*100); hpEl.textContent = pct.toFixed(1) + '% · ' + fmt(Math.round(minibossState.hp)) + ' / ' + fmt(minibossState.maxHp); }
   const hpBar = $a('minibossHpBar');
   if (hpBar) hpBar.style.width = Math.max(0, minibossState.hp/minibossState.maxHp*100) + '%';
   const timerEl = $a('minibossTimer');
@@ -8620,7 +8636,7 @@ function miniBossLoop(now) {
   if (progressEl) progressEl.textContent = i18next.t('combat:combat.miniboss.fight_progress', { i: minibossState.runIndex, n: minibossState.runLength }) + (minibossState.progressContext || '');
   const pHpBar = $a('minibossPlayerHp'), pHpTxt = $a('minibossPlayerHpTxt');
   if (pHpBar) pHpBar.style.width = Math.max(0, minibossState.playerHp/minibossState.playerHpMax*100) + '%';
-  if (pHpTxt) pHpTxt.textContent = Math.round(minibossState.playerHp) + ' / ' + Math.round(minibossState.playerHpMax);
+  if (pHpTxt) pHpTxt.textContent = Math.round(minibossState.playerHp) + ' / ' + Math.round(minibossState.playerHpMax) + ' PV';
   if (minibossState.hp <= 0) { endMiniBossFight(true); return; }
   minibossState.raf = requestAnimationFrame(miniBossLoop);
 }
@@ -8656,7 +8672,7 @@ async function endMiniBossFight(win) {
       `<div class="brRewards">+${caphrasQty} × ${tr(CAPHRAS_NAME)} · +${fragQty} × ${tr('Fragment de mémoire')}</div>${marbleHtml}` + minibossBonusLadderHtml(n);
     minibossRepCounters().runsClean++;
     refreshStatsOnly(); hud();
-    if (sb) sb.rpc('miniboss_claim', { p_session_id: null }).catch(() => {});
+    if (sb) Promise.resolve(sb.rpc('miniboss_claim', { p_session_id: null })).catch(() => {}); 
     
     if (minibossState.isSummoner && minibossState.runIndex < minibossState.runLength && minibossParcheminQty() > 0) {
       minibossState.runIndex++;
@@ -8665,7 +8681,11 @@ async function endMiniBossFight(win) {
     }
   }
   minibossTrackPresence('forming');
-  $('minibossResult').innerHTML = `<div class="brTitle ${win?'win':''}">${win?i18next.t('combat:combat.miniboss.victory_title'):i18next.t('combat:combat.boss.fight_left_title')}</div>${rewardsHtml}` +
+  
+  const durSec = Math.max(0, Math.round((performance.now() - (minibossState.startedAt||performance.now()))/1000));
+  const subHtml = win ? `<div class="minibossResultSub">${i18next.t('combat:combat.miniboss.result_sub', { n, time: minibossFmtDuration(durSec) })}</div>` : '';
+  const roleHtml = win ? `<div class="minibossResultRole ${minibossState.isSummoner?'summoner':'joiner'}">${minibossState.isSummoner?'👑 '+i18next.t('combat:combat.miniboss.role_summoner'):i18next.t('combat:combat.miniboss.role_joiner')}</div>` : '';
+  $('minibossResult').innerHTML = `<div class="brTitle ${win?'win':''}">${win?i18next.t('combat:combat.miniboss.victory_title'):i18next.t('combat:combat.boss.fight_left_title')}</div>${subHtml}${roleHtml}${rewardsHtml}` +
     `<button id="minibossCloseBtn">🚪 ${i18next.t('combat:combat.boss.leave_button')}</button>`;
   $('minibossResult').classList.add('show');
   $a('minibossCloseBtn').onclick = () => { $('minibossResult').classList.remove('show'); currentActivity='miniboss'; $('minibossRoom').classList.remove('open'); setFarmViewVisible(true); renderActivityTabs(); openMiniBossLobby(); };
