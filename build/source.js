@@ -2810,11 +2810,17 @@ function computeSlidingSilverPerHour(buffer, now, currentBest) {
   const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
   const windowMs = Math.max(now - oldestT, 1000); 
   const total = pruned.reduce((sum, s) => sum + s.silver, 0);
-  const ratePerHour = total / (windowMs / 3600000);
+  let ratePerHour = total / (windowMs / 3600000);
   let eligible = windowMs >= SILVER_RATE_MIN_SPAN_MS; 
   if (eligible && currentBest > 0) {
     const deviation = (ratePerHour - currentBest) / currentBest;
-    if (deviation > SILVER_RATE_MAX_DEVIATION) eligible = false; 
+    if (deviation > SILVER_RATE_MAX_DEVIATION) {
+      
+      const biggest = pruned.reduce((max, s) => Math.max(max, s.silver), 0);
+      const trimmedRate = (total - biggest) / (windowMs / 3600000);
+      if (trimmedRate > currentBest) ratePerHour = trimmedRate;
+      else eligible = false; 
+    }
   }
   return { ratePerHour, eligible };
 }
@@ -2846,11 +2852,17 @@ function computeSlidingKpm(buffer, now, currentBest) {
   const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
   const windowMs = Math.max(now - oldestT, 1000);
   const total = pruned.reduce((sum, s) => sum + s.kills, 0);
-  const ratePerMin = total / (windowMs / 60000);
+  let ratePerMin = total / (windowMs / 60000);
   let eligible = windowMs >= KPM_RATE_MIN_SPAN_MS;
   if (eligible && currentBest > 0) {
     const deviation = (ratePerMin - currentBest) / currentBest;
-    if (deviation > KPM_RATE_MAX_DEVIATION) eligible = false;
+    if (deviation > KPM_RATE_MAX_DEVIATION) {
+      
+      const biggest = pruned.reduce((max, s) => Math.max(max, s.kills), 0);
+      const trimmedRate = (total - biggest) / (windowMs / 60000);
+      if (trimmedRate > currentBest) ratePerMin = trimmedRate;
+      else eligible = false;
+    }
   }
   return { ratePerMin, eligible };
 }
@@ -2871,11 +2883,17 @@ function computeSlidingXpPerHour(buffer, now, currentBest) {
   const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
   const windowMs = Math.max(now - oldestT, 1000);
   const total = pruned.reduce((sum, s) => sum + s.xp, 0);
-  const ratePerHour = total / (windowMs / 3600000);
+  let ratePerHour = total / (windowMs / 3600000);
   let eligible = windowMs >= XP_RATE_MIN_SPAN_MS;
   if (eligible && currentBest > 0) {
     const deviation = (ratePerHour - currentBest) / currentBest;
-    if (deviation > XP_RATE_MAX_DEVIATION) eligible = false;
+    if (deviation > XP_RATE_MAX_DEVIATION) {
+      
+      const biggest = pruned.reduce((max, s) => Math.max(max, s.xp), 0);
+      const trimmedRate = (total - biggest) / (windowMs / 3600000);
+      if (trimmedRate > currentBest) ratePerHour = trimmedRate;
+      else eligible = false;
+    }
   }
   return { ratePerHour, eligible };
 }
@@ -4263,13 +4281,22 @@ function renderCastBar() {
 
 let last = performance.now();
 
+const BG_CATCHUP_MAX_SEC = 90; 
 function advanceSim(now) {
-  const dt = Math.min(2, (now-last)/1000); last = now;
-  if (dt <= 0) return;
+  let elapsed = (now-last)/1000; last = now;
+  if (elapsed <= 0) return;
+  elapsed = Math.min(elapsed, BG_CATCHUP_MAX_SEC);
   
   if (typeof sessionLocked !== 'undefined' && sessionLocked) return;
   
   if (bossState.active) return;
+  while (elapsed > 0) {
+    const dt = Math.min(2, elapsed); elapsed -= dt;
+    simTickOnce(dt);
+  }
+}
+
+function simTickOnce(dt) {
   
   if (!atVelia && packs.filter(p=>!p.dead).length < targetPackCount()) spawnPackNear();
   

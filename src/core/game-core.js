@@ -243,11 +243,26 @@ function computeSlidingSilverPerHour(buffer, now, currentBest) {
   const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
   const windowMs = Math.max(now - oldestT, 1000); // évite une quasi-division par 0 sur un tout premier échantillon
   const total = pruned.reduce((sum, s) => sum + s.silver, 0);
-  const ratePerHour = total / (windowMs / 3600000);
+  let ratePerHour = total / (windowMs / 3600000);
   let eligible = windowMs >= SILVER_RATE_MIN_SPAN_MS; // bourrasque trop courte (ex: à la connexion) -- jamais éligible
   if (eligible && currentBest > 0) {
     const deviation = (ratePerHour - currentBest) / currentBest;
-    if (deviation > SILVER_RATE_MAX_DEVIATION) eligible = false; // pic isolé -- ignoré pour le record
+    if (deviation > SILVER_RATE_MAX_DEVIATION) {
+      // BUG corrigé le 2026-07-15 ("record silver/h infranchissable") : l'ancien rejet PUR de tout
+      // taux >130% du record rendait le record définitivement figé dès que le vrai rythme de farm
+      // dépassait l'ancien record de plus de 30% (ex: après un gros rééquilibrage de loot ou un
+      // saut de zone) -- CHAQUE échantillon était alors rejeté comme "pic", pour toujours (constaté
+      // en prod : record gelé à 6 800/h avec un farm réel ~50× plus haut). Nouveau comportement :
+      // on recalcule le taux SANS le plus gros échantillon de la fenêtre. Un vrai pic isolé (une
+      // grosse vente/un trésor unique) s'effondre à ce retrait -> toujours rejeté, comme avant. Un
+      // rythme soutenu (des centaines de petits gains de trash) n'y perd presque rien -> le taux
+      // "sans pic" devient le candidat record. Même principe appliqué à computeSlidingKpm/
+      // computeSlidingXpPerHour ci-dessous.
+      const biggest = pruned.reduce((max, s) => Math.max(max, s.silver), 0);
+      const trimmedRate = (total - biggest) / (windowMs / 3600000);
+      if (trimmedRate > currentBest) ratePerHour = trimmedRate;
+      else eligible = false; // le taux s'effondre sans son pic -- c'était bien un pic isolé
+    }
   }
   return { ratePerHour, eligible };
 }
@@ -312,11 +327,19 @@ function computeSlidingKpm(buffer, now, currentBest) {
   const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
   const windowMs = Math.max(now - oldestT, 1000);
   const total = pruned.reduce((sum, s) => sum + s.kills, 0);
-  const ratePerMin = total / (windowMs / 60000);
+  let ratePerMin = total / (windowMs / 60000);
   let eligible = windowMs >= KPM_RATE_MIN_SPAN_MS;
   if (eligible && currentBest > 0) {
     const deviation = (ratePerMin - currentBest) / currentBest;
-    if (deviation > KPM_RATE_MAX_DEVIATION) eligible = false;
+    if (deviation > KPM_RATE_MAX_DEVIATION) {
+      // même correctif "record infranchissable" que computeSlidingSilverPerHour (2026-07-15, voir
+      // son commentaire) : taux recalculé sans le plus gros échantillon -- un pic isolé s'effondre
+      // (rejeté comme avant), un rythme soutenu au-dessus de +30% débloque enfin le record.
+      const biggest = pruned.reduce((max, s) => Math.max(max, s.kills), 0);
+      const trimmedRate = (total - biggest) / (windowMs / 60000);
+      if (trimmedRate > currentBest) ratePerMin = trimmedRate;
+      else eligible = false;
+    }
   }
   return { ratePerMin, eligible };
 }
@@ -353,11 +376,19 @@ function computeSlidingXpPerHour(buffer, now, currentBest) {
   const oldestT = pruned.reduce((min, s) => Math.min(min, s.t), now);
   const windowMs = Math.max(now - oldestT, 1000);
   const total = pruned.reduce((sum, s) => sum + s.xp, 0);
-  const ratePerHour = total / (windowMs / 3600000);
+  let ratePerHour = total / (windowMs / 3600000);
   let eligible = windowMs >= XP_RATE_MIN_SPAN_MS;
   if (eligible && currentBest > 0) {
     const deviation = (ratePerHour - currentBest) / currentBest;
-    if (deviation > XP_RATE_MAX_DEVIATION) eligible = false;
+    if (deviation > XP_RATE_MAX_DEVIATION) {
+      // même correctif "record infranchissable" que computeSlidingSilverPerHour (2026-07-15, voir
+      // son commentaire) : taux recalculé sans le plus gros échantillon -- un pic isolé s'effondre
+      // (rejeté comme avant), un rythme soutenu au-dessus de +30% débloque enfin le record.
+      const biggest = pruned.reduce((max, s) => Math.max(max, s.xp), 0);
+      const trimmedRate = (total - biggest) / (windowMs / 3600000);
+      if (trimmedRate > currentBest) ratePerHour = trimmedRate;
+      else eligible = false;
+    }
   }
   return { ratePerHour, eligible };
 }
@@ -2473,9 +2504,21 @@ let last = performance.now();
  * navigateur) — c'est ce qui permet au farm de continuer en arrière-plan.
  * @param {number} now - horodatage performance.now() de cet appel.
  */
+// BUG corrigé le 2026-07-15 ("bloqué à 500 silver/min") : l'ancien advanceSim clampait le temps
+// écoulé à 2s et JETAIT tout le reste. Or Chrome applique son "intensive throttling" après ~5 min
+// d'onglet caché : le setInterval de secours (tout en bas) ne se déclenche plus qu'UNE fois par
+// minute, quoi qu'on code -- chaque réveil ne simulait donc que 2s sur 60s réelles = 1/30 du
+// rythme normal (constaté en prod : ~500 silver/min en arrière-plan contre ~15 000 en actif).
+// Nouveau comportement : le temps écoulé est rattrapé en SOUS-PAS de 2s maximum chacun (le clamp
+// de 2s protège la physique/FSM, il reste inchangé PAR PAS), borné à BG_CATCHUP_MAX_SEC par appel
+// pour ne jamais geler l'onglet sur un cas dégénéré (mise en veille OS de plusieurs heures -- ce
+// cas-là reste couvert par le rattrapage hors-ligne au rechargement, voir §34/computeOfflineCatchup*).
+// Onglet visible : elapsed ~16ms -> un seul sous-pas, strictement identique à avant.
+const BG_CATCHUP_MAX_SEC = 90; // > 60s = le pire intervalle du throttling Chrome, aucun temps perdu onglet caché
 function advanceSim(now) {
-  const dt = Math.min(2, (now-last)/1000); last = now;
-  if (dt <= 0) return;
+  let elapsed = (now-last)/1000; last = now;
+  if (elapsed <= 0) return;
+  elapsed = Math.min(elapsed, BG_CATCHUP_MAX_SEC);
   // verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
   // and multidevice") -- sessionLocked posé par checkPlayerSession() (game-supabase.js) dès qu'une
   // AUTRE session a pris le relais sur ce compte. Bloque ICI (avant tout effet de bord : spawn,
@@ -2485,6 +2528,13 @@ function advanceSim(now) {
   // pendant un combat de boss (plein écran), on met le farm en pause : la salle de boss couvre
   // tout l'écran, inutile de continuer à simuler la zone de farm derrière
   if (bossState.active) return;
+  while (elapsed > 0) {
+    const dt = Math.min(2, elapsed); elapsed -= dt;
+    simTickOnce(dt);
+  }
+}
+/** Un sous-pas de simulation (dt ≤ 2s garanti par advanceSim) : respawn des packs manquants, purge corpses/floats, FSM/combat/loot/particules, suivi caméra. Ne JAMAIS l'appeler directement -- toujours passer par advanceSim (gates sessionLocked/boss + découpage en sous-pas). @param {number} dt - secondes simulées pour ce pas. */
+function simTickOnce(dt) {
   // BUG trouvé le 2026-07-07 : cette respawn continue n'était jamais gardée par atVelia — Velia
   // partait bien à 0 pack (resetWorld), mais dès la frame suivante ce respawn en ajoutait jusqu'à
   // en avoir 6, remplissant en boucle la "zone paisible" de monstres. Confirmé par le joueur.
