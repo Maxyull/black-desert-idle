@@ -3061,7 +3061,25 @@
   .minibossBonusStep.reached { border-color:var(--arcane-dim); }
   .minibossBonusStep.current { border-color:var(--arcane); background:rgba(155,127,214,.14); }
   .minibossBonusStep.jackpot.current { border-color:var(--gold); background:rgba(232,200,128,.14); }
-  .minibossBonusStepN { font-size:9px; color:var(--cream3); }
+  /* pastille circulaire pour le numéro de palier, avec halo/agrandissement sur le palier courant
+     (mockup : .bonusStepDot) -- le premier portage affichait juste un chiffre en petit texte plat,
+     perdant l'effet "current step" le plus visible de la maquette (échelle de bonus = élément le
+     plus mis en avant de toute la revue, cf Mise à jour 5-7). */
+  .minibossBonusStepN {
+    width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    background:var(--s1); border:1.5px solid var(--dbBorder2); font-family:'JetBrains Mono',monospace;
+    font-size:9.5px; color:var(--cream3); transition:all .2s; margin-bottom:1px;
+  }
+  .minibossBonusStep.reached .minibossBonusStepN { border-color:var(--arcane-dim); color:var(--cream2); background:#201a30; }
+  .minibossBonusStep.current .minibossBonusStepN {
+    border-color:var(--arcane); color:var(--arcane2); background:var(--arcane-dim);
+    box-shadow:0 0 0 3px rgba(155,127,214,.16), 0 0 10px rgba(155,127,214,.5); transform:scale(1.15);
+  }
+  .minibossBonusStep.jackpot .minibossBonusStepN { border-color:var(--gold); }
+  .minibossBonusStep.jackpot.current .minibossBonusStepN {
+    color:var(--gold2); background:linear-gradient(135deg,var(--arcane-dim),var(--gold-dim));
+    box-shadow:0 0 0 3px rgba(232,200,128,.18), 0 0 12px rgba(232,200,128,.55);
+  }
   .minibossBonusStepMult { font-size:11px; color:var(--cream2); font-weight:600; }
   .minibossBonusStep.current .minibossBonusStepMult { color:var(--arcane2); }
   .minibossBonusStep.jackpot.current .minibossBonusStepMult { color:var(--gold2); }
@@ -3091,6 +3109,7 @@
   .minibossRunCustom input[type=range] { flex:1; accent-color:var(--arcane); }
   #minibossRunSliderVal { font-size:11px; color:var(--arcane2); width:30px; text-align:right; }
   .minibossMaxBtn { width:auto; margin-top:0; font-size:10px; font-weight:600; padding:5px 12px; border-radius:14px; border:1px solid var(--gold); background:rgba(232,200,128,.12); color:var(--gold2); cursor:pointer; flex-shrink:0; }
+  .minibossMaxBtn:hover { background:rgba(232,200,128,.22); }
   .minibossGroupPreview { margin:6px 16px 0; padding:10px 12px; border-radius:7px; background:rgba(224,96,96,.06); border:1px solid var(--red-dim,#5a1818); }
   .minibossGbpRow { display:flex; justify-content:space-between; font-size:10.5px; color:var(--cream2); padding:2px 0; }
   .minibossGbpRow b.ideal { color:var(--green2); }
@@ -3164,6 +3183,7 @@
   .minibossGroupRowSize { font-size:10px; color:var(--arcane2); }
   .minibossGroupRowMeta { font-size:9.5px; color:var(--cream3); }
   .minibossGroupJoinBtn { width:auto; margin-top:0; align-self:flex-start; font-family:'Cinzel',serif; font-size:10px; font-weight:600; padding:5px 11px; border-radius:6px; border:1px solid var(--arcane); background:var(--arcane-dim); color:var(--arcane2); cursor:pointer; }
+  .minibossGroupJoinBtn:hover { background:rgba(155,127,214,.28); }
 
   /* ===== arène Mini Boss ===== */
   /* bandeau "reste sur cet onglet" -- retour explicite de l'utilisateur ("pouvoir activer le
@@ -3179,7 +3199,9 @@
   #minibossRunProgress { font-size:10.5px; color:var(--cream2); flex-shrink:0; }
   #minibossExitActions { display:flex; gap:6px; flex-shrink:0; }
   #minibossVoteStopBtn, #minibossSoloLeaveBtn { width:auto; margin:0; padding:4px 10px; font-size:13px; font-family:'Cinzel',serif; background:none; border:1px solid var(--dbBorder2); color:var(--cream2); border-radius:6px; }
+  #minibossVoteStopBtn:hover { border-color:var(--gold-dim); color:var(--gold2); }
   #minibossSoloLeaveBtn { border-color:var(--red2); color:var(--red2); }
+  #minibossSoloLeaveBtn:hover { background:rgba(224,96,96,.14); }
   .minibossVoteStopPanel { display:none; margin:0 16px 8px; padding:8px 12px; border-radius:7px; background:rgba(232,200,128,.08); border:1px solid var(--gold-dim); font-size:10.5px; color:var(--gold2); }
   .minibossVoteStopPanel.show { display:block; }
   .minibossVoteStopList { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
