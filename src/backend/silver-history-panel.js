@@ -68,6 +68,98 @@ function buildSilverHourPoints(rows, now) {
   return points;
 }
 
+/**
+ * Fonction PURE : reconstruit l'évolution du SOLDE de silver heure par heure à REBOURS depuis le
+ * solde actuel (S.silver) et les nets horaires du registre (gained - spent, RPC my_silver_history).
+ * Le solde de fin de l'heure courante = solde actuel ; chaque heure plus ancienne retire le net de
+ * l'heure qui la suit. Lignes malformées ignorées, jamais d'exception.
+ * @param {object[]} rows - lignes RPC {bucket: ISO string, gained, spent}.
+ * @param {number} now - horodatage ms epoch de référence (Date.now()).
+ * @param {number} currentSilver - solde actuel du joueur (S.silver).
+ * @returns {{label:string, value:number}[]} exactement SILVER_HIST_DAY_HOURS points, du plus ancien au plus récent.
+ */
+function buildSilverBalancePoints(rows, now, currentSilver) {
+  const nowHour = Math.floor(now / 3600000) * 3600000;
+  const netByT = {};
+  (rows || []).forEach(r => {
+    const t = new Date(r.bucket).getTime();
+    if (!isFinite(t)) return;
+    netByT[Math.floor(t / 3600000) * 3600000] = (Number(r.gained) || 0) - (Number(r.spent) || 0);
+  });
+  const out = new Array(SILVER_HIST_DAY_HOURS);
+  let bal = Number(currentSilver) || 0;
+  for (let i = SILVER_HIST_DAY_HOURS - 1; i >= 0; i--) {
+    const t = nowHour - (SILVER_HIST_DAY_HOURS - 1 - i) * 3600000;
+    out[i] = { label: String(new Date(t).getHours()).padStart(2, '0') + 'h', value: bal };
+    bal -= netByT[t] || 0;
+  }
+  return out;
+}
+
+/**
+ * Fonction PURE : courbe en ligne + aire (mêmes conventions 400x90 que buildBarSeriesSvg,
+ * admin-economy.js) pour une série déjà triée chronologiquement -- utilisée pour le SOLDE (des
+ * barres n'ont pas de sens pour un solde qui varie peu d'une heure à l'autre). Tableau vide ->
+ * juste l'axe, jamais d'exception.
+ * @param {{label:string, value:number}[]} points @param {string} color @returns {string} SVG.
+ */
+function buildLineSeriesSvg(points, color) {
+  const w = 400, h = 90, padT = 6, padB = 16, padX = 5;
+  const axis = `<line x1="${padX}" y1="${h - padB}" x2="${w - padX}" y2="${h - padB}" stroke="#2c2a33" stroke-width="1"></line>`;
+  if (!points || points.length < 2) return `<svg class="admBarSeriesSvg" viewBox="0 0 ${w} ${h}" style="width:100%;max-width:420px;height:90px;display:block">${axis}</svg>`;
+  const vals = points.map(p => p.value);
+  const min = Math.min(...vals), span = Math.max(1, Math.max(...vals) - min);
+  const stepX = (w - 2 * padX) / (points.length - 1);
+  const xy = points.map((p, i) => [padX + i * stepX, h - padB - ((p.value - min) / span) * (h - padT - padB)]);
+  const poly = xy.map(c => `${c[0].toFixed(1)},${c[1].toFixed(1)}`).join(' ');
+  const area = `M${padX},${h - padB} L${poly.split(' ').join(' L')} L${(w - padX).toFixed(1)},${h - padB} Z`;
+  return `<svg class="admBarSeriesSvg" viewBox="0 0 ${w} ${h}" style="width:100%;max-width:420px;height:90px;display:block">` +
+    `<path d="${area}" fill="${color}" opacity="0.15"></path>` +
+    `<polyline points="${poly}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>` +
+    axis + `</svg>`;
+}
+
+/**
+ * Fonction PURE : index du point survolé à partir de l'abscisse en coordonnées viewBox (0-400).
+ * Barres : slot plein (floor) ; ligne : point le plus PROCHE (round). Toujours borné à [0, n-1].
+ * @param {number} xRel - abscisse souris ramenée au viewBox 400 de large.
+ * @param {number} n - nombre de points de la série.
+ * @param {boolean} isLine - vrai pour une courbe (buildLineSeriesSvg), faux pour des barres.
+ * @returns {number} index dans la série.
+ */
+function chartIndexFromX(xRel, n, isLine) {
+  if (!n || n <= 1) return 0;
+  const usable = 390; // 400 - 2*5 de marge, même géométrie que buildBarSeriesSvg/buildLineSeriesSvg
+  const raw = isLine ? Math.round((xRel - 5) / usable * (n - 1)) : Math.floor((xRel - 5) / (usable / n));
+  return Math.max(0, Math.min(n - 1, raw));
+}
+
+/**
+ * Câble le survol souris d'un graphique du panneau : petit tooltip "label · valeur" qui suit la
+ * souris au-dessus du graphe (demande explicite : "un petit graph ou on peut mettre la souris").
+ * @param {Element} container - conteneur .shpChart (position:relative) contenant le <svg>.
+ * @param {{label:string, value:number}[]} points - série affichée, même ordre que le SVG.
+ * @param {{suffix?:string, isLine?:boolean}} [opts] - suffixe d'unité du tooltip + type de graphe.
+ */
+function wireChartHover(container, points, opts) {
+  opts = opts || {};
+  const svg = container && container.querySelector('svg');
+  if (!svg || !points || !points.length) return;
+  let tip = container.querySelector('.shpTip');
+  if (!tip) { tip = document.createElement('div'); tip.className = 'shpTip'; container.appendChild(tip); }
+  svg.style.cursor = 'crosshair';
+  svg.addEventListener('mousemove', e => {
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    const xRel = (e.clientX - r.left) / r.width * 400;
+    const p = points[chartIndexFromX(xRel, points.length, !!opts.isLine)];
+    tip.textContent = p.label + ' · ' + fmt(Math.round(p.value)) + (opts.suffix || '');
+    tip.style.display = 'block';
+    tip.style.left = Math.max(0, Math.min((e.clientX - r.left) + 10, container.clientWidth - tip.offsetWidth - 2)) + 'px';
+  });
+  svg.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+}
+
 /** @param {{value:number}[]} points @param {string} perUnitSuffix - suffixe du pic ('/min', '/h'). @returns {string} ligne "Total : X · pic : Y/unité" (clé i18n backend.silver_hist.totals). */
 function silverHistTotalsLine(points, perUnitSuffix) {
   const total = points.reduce((a, p) => a + p.value, 0);
@@ -82,13 +174,12 @@ function closeSilverHistPanel() {
   document.removeEventListener('mousedown', silverHistOutsideClick, true);
   document.removeEventListener('keydown', silverHistEscKey, true);
 }
-/** Ferme le panneau si le clic est en dehors du panneau ET de la pastille #shRate (qui gère déjà son propre toggle). */
+/** Ferme le panneau si le clic est en dehors du panneau ET des pastilles #shRate/#silverPill (qui gèrent déjà leur propre toggle -- sans cette exclusion, le mousedown fermerait puis le click rouvrirait). */
 function silverHistOutsideClick(e) {
   const el = $a('silverHistPanel');
   if (!el) return;
   if (el.contains(e.target)) return;
-  const pill = $a('shRate');
-  if (pill && pill.contains(e.target)) return;
+  if ([$a('shRate'), $a('silverPill')].some(pill => pill && pill.contains(e.target))) return;
   closeSilverHistPanel();
 }
 /** Ferme le panneau sur Échap. */
@@ -121,11 +212,14 @@ function openSilverHistPanel() {
     `<span>${i18next.t('backend:backend.silver_hist.record_label')} : <b>${record}</b></span></div>` +
     `<div class="shpSection">${i18next.t('backend:backend.silver_hist.session_title')}</div><div class="shpHint">${i18next.t('backend:backend.silver_hist.session_hint')}</div>` +
     (sessionHasData
-      ? `<div class="shpChart">${buildBarSeriesSvg(sessionPoints, green)}</div><div class="shpTotals">${silverHistTotalsLine(sessionPoints, '/min')}</div>`
+      ? `<div class="shpChart" id="shpSessionChart">${buildBarSeriesSvg(sessionPoints, green)}</div><div class="shpTotals">${silverHistTotalsLine(sessionPoints, '/min')}</div>`
       : `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.empty_session')}</div>`) +
     `<div class="shpSection">${i18next.t('backend:backend.silver_hist.day_title')}</div><div class="shpHint">${i18next.t('backend:backend.silver_hist.day_hint')}</div>` +
-    `<div class="shpChart" id="shpDayChart"><div class="shpEmpty">${i18next.t('backend:backend.silver_hist.loading')}</div></div>`;
+    `<div class="shpChart" id="shpDayChart"><div class="shpEmpty">${i18next.t('backend:backend.silver_hist.loading')}</div></div>` +
+    `<div class="shpSection">${i18next.t('backend:backend.silver_hist.balance_title')}</div><div class="shpHint">${i18next.t('backend:backend.silver_hist.balance_hint')}</div>` +
+    `<div class="shpChart" id="shpBalanceChart"><div class="shpEmpty">${i18next.t('backend:backend.silver_hist.loading')}</div></div>`;
   document.body.appendChild(el);
+  if (sessionHasData) wireChartHover($a('shpSessionChart'), sessionPoints, { suffix: ' silver' });
   // position : sous la pastille, aligné à gauche mais jamais hors écran (même clamp que les
   // popups d'inventory-ui.js) -- en ≤600px le CSS force pleine largeur, ce left est alors ignoré.
   const r = pill.getBoundingClientRect();
@@ -137,24 +231,34 @@ function openSilverHistPanel() {
   loadSilverHistDayChart();
 }
 
-/** Charge le graphique 24 h dans #shpDayChart (RPC my_silver_history) -- best-effort : message hors ligne/erreur à la place du graphique si indisponible, jamais d'exception. */
+/** Charge les graphiques 24 h dans #shpDayChart (silver gagné/h, barres) et #shpBalanceChart (évolution du solde, courbe) depuis UN SEUL appel à la RPC my_silver_history -- best-effort : message hors ligne/erreur à la place des graphiques si indisponible, jamais d'exception. */
 async function loadSilverHistDayChart() {
-  const slot = $a('shpDayChart');
+  const slot = $a('shpDayChart'), balSlot = $a('shpBalanceChart');
   if (!slot) return;
+  const showBoth = html => { slot.innerHTML = html; if (balSlot) balSlot.innerHTML = html; };
   if (typeof sb === 'undefined' || !sb || !currentUser || (typeof isOffline !== 'undefined' && isOffline)) {
-    slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.offline')}</div>`;
+    showBoth(`<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.offline')}</div>`);
     return;
   }
   try {
     const { data, error } = await sb.rpc('my_silver_history', { p_hours: SILVER_HIST_DAY_HOURS });
     if (error) throw error;
     if (!$a('shpDayChart')) return; // panneau refermé pendant le chargement
-    const points = buildSilverHourPoints(data, Date.now());
-    if (!points.some(p => p.value > 0)) { slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.empty_day')}</div>`; return; }
+    const now = Date.now();
+    const points = buildSilverHourPoints(data, now);
     const gold = getComputedStyle(document.documentElement).getPropertyValue('--gold2').trim() || '#d4a955';
-    slot.innerHTML = buildBarSeriesSvg(points, gold) + `<div class="shpTotals">${silverHistTotalsLine(points, '/h')}</div>`;
+    if (!points.some(p => p.value > 0)) slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.empty_day')}</div>`;
+    else {
+      slot.innerHTML = buildBarSeriesSvg(points, gold) + `<div class="shpTotals">${silverHistTotalsLine(points, '/h')}</div>`;
+      wireChartHover(slot, points, { suffix: ' silver' });
+    }
+    if (balSlot) {
+      const balPoints = buildSilverBalancePoints(data, now, S.silver);
+      balSlot.innerHTML = buildLineSeriesSvg(balPoints, gold);
+      wireChartHover(balSlot, balPoints, { suffix: ' silver', isLine: true });
+    }
   } catch (e) {
-    if ($a('shpDayChart')) slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.error')}</div>`;
+    if ($a('shpDayChart')) showBoth(`<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.error')}</div>`);
   }
 }
 
@@ -164,12 +268,15 @@ function toggleSilverHistPanel() {
   else openSilverHistPanel();
 }
 
-// câblage au chargement immédiat : #shRate est dans le DOM statique du topbar (index.dev.html),
-// bien avant cette balise <script> -- $a suffit, pas besoin d'attendre un DOMContentLoaded.
-// hud() ne réécrit que le textContent de la pastille (jamais l'élément lui-même), le listener survit.
+// câblage au chargement immédiat : #shRate/#silverPill sont dans le DOM statique du topbar
+// (index.dev.html), bien avant cette balise <script> -- $a suffit, pas besoin d'attendre un
+// DOMContentLoaded. hud() ne réécrit que le textContent des pastilles (jamais les éléments
+// eux-mêmes), les listeners survivent. Les DEUX pastilles ouvrent le même panneau (demande
+// explicite : "histo sur silver pour silver et silver/min").
 (function wireSilverHistPill() {
-  const pill = $a('shRate');
-  if (!pill) return;
-  pill.classList.add('clickable');
-  pill.addEventListener('click', toggleSilverHistPanel);
+  [$a('shRate'), $a('silverPill')].forEach(pill => {
+    if (!pill) return;
+    pill.classList.add('clickable');
+    pill.addEventListener('click', toggleSilverHistPanel);
+  });
 })();

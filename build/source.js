@@ -469,6 +469,8 @@ const I18N_RESOURCES = {
       "backend.silver_hist.session_hint": "Revenu du trash ramassé au sol, minute par minute.",
       "backend.silver_hist.day_title": "24 dernières heures",
       "backend.silver_hist.day_hint": "Silver gagné par heure, toutes sources confondues.",
+      "backend.silver_hist.balance_title": "Solde — 24 dernières heures",
+      "backend.silver_hist.balance_hint": "Évolution de ton silver total, heure par heure (reconstituée depuis le registre).",
       "backend.silver_hist.totals": "Total : {{total}} · pic : {{peak}}",
       "backend.silver_hist.loading": "Chargement…",
       "backend.silver_hist.offline": "Historique indisponible hors ligne — le graphique de session reste disponible.",
@@ -1512,6 +1514,8 @@ const I18N_RESOURCES = {
       "backend.silver_hist.session_hint": "Trash income picked up on the ground, minute by minute.",
       "backend.silver_hist.day_title": "Last 24 hours",
       "backend.silver_hist.day_hint": "Silver gained per hour, all sources combined.",
+      "backend.silver_hist.balance_title": "Balance — last 24 hours",
+      "backend.silver_hist.balance_hint": "Your total silver over time, hour by hour (reconstructed from the ledger).",
       "backend.silver_hist.totals": "Total: {{total}} · peak: {{peak}}",
       "backend.silver_hist.loading": "Loading…",
       "backend.silver_hist.offline": "History unavailable offline — the session chart is still available.",
@@ -17538,6 +17542,66 @@ function buildSilverHourPoints(rows, now) {
   return points;
 }
 
+function buildSilverBalancePoints(rows, now, currentSilver) {
+  const nowHour = Math.floor(now / 3600000) * 3600000;
+  const netByT = {};
+  (rows || []).forEach(r => {
+    const t = new Date(r.bucket).getTime();
+    if (!isFinite(t)) return;
+    netByT[Math.floor(t / 3600000) * 3600000] = (Number(r.gained) || 0) - (Number(r.spent) || 0);
+  });
+  const out = new Array(SILVER_HIST_DAY_HOURS);
+  let bal = Number(currentSilver) || 0;
+  for (let i = SILVER_HIST_DAY_HOURS - 1; i >= 0; i--) {
+    const t = nowHour - (SILVER_HIST_DAY_HOURS - 1 - i) * 3600000;
+    out[i] = { label: String(new Date(t).getHours()).padStart(2, '0') + 'h', value: bal };
+    bal -= netByT[t] || 0;
+  }
+  return out;
+}
+
+function buildLineSeriesSvg(points, color) {
+  const w = 400, h = 90, padT = 6, padB = 16, padX = 5;
+  const axis = `<line x1="${padX}" y1="${h - padB}" x2="${w - padX}" y2="${h - padB}" stroke="#2c2a33" stroke-width="1"></line>`;
+  if (!points || points.length < 2) return `<svg class="admBarSeriesSvg" viewBox="0 0 ${w} ${h}" style="width:100%;max-width:420px;height:90px;display:block">${axis}</svg>`;
+  const vals = points.map(p => p.value);
+  const min = Math.min(...vals), span = Math.max(1, Math.max(...vals) - min);
+  const stepX = (w - 2 * padX) / (points.length - 1);
+  const xy = points.map((p, i) => [padX + i * stepX, h - padB - ((p.value - min) / span) * (h - padT - padB)]);
+  const poly = xy.map(c => `${c[0].toFixed(1)},${c[1].toFixed(1)}`).join(' ');
+  const area = `M${padX},${h - padB} L${poly.split(' ').join(' L')} L${(w - padX).toFixed(1)},${h - padB} Z`;
+  return `<svg class="admBarSeriesSvg" viewBox="0 0 ${w} ${h}" style="width:100%;max-width:420px;height:90px;display:block">` +
+    `<path d="${area}" fill="${color}" opacity="0.15"></path>` +
+    `<polyline points="${poly}" fill="none" stroke="${color}" stroke-width="1.6"></polyline>` +
+    axis + `</svg>`;
+}
+
+function chartIndexFromX(xRel, n, isLine) {
+  if (!n || n <= 1) return 0;
+  const usable = 390; 
+  const raw = isLine ? Math.round((xRel - 5) / usable * (n - 1)) : Math.floor((xRel - 5) / (usable / n));
+  return Math.max(0, Math.min(n - 1, raw));
+}
+
+function wireChartHover(container, points, opts) {
+  opts = opts || {};
+  const svg = container && container.querySelector('svg');
+  if (!svg || !points || !points.length) return;
+  let tip = container.querySelector('.shpTip');
+  if (!tip) { tip = document.createElement('div'); tip.className = 'shpTip'; container.appendChild(tip); }
+  svg.style.cursor = 'crosshair';
+  svg.addEventListener('mousemove', e => {
+    const r = svg.getBoundingClientRect();
+    if (!r.width) return;
+    const xRel = (e.clientX - r.left) / r.width * 400;
+    const p = points[chartIndexFromX(xRel, points.length, !!opts.isLine)];
+    tip.textContent = p.label + ' · ' + fmt(Math.round(p.value)) + (opts.suffix || '');
+    tip.style.display = 'block';
+    tip.style.left = Math.max(0, Math.min((e.clientX - r.left) + 10, container.clientWidth - tip.offsetWidth - 2)) + 'px';
+  });
+  svg.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+}
+
 function silverHistTotalsLine(points, perUnitSuffix) {
   const total = points.reduce((a, p) => a + p.value, 0);
   const peak = points.reduce((a, p) => Math.max(a, p.value), 0);
@@ -17555,8 +17619,7 @@ function silverHistOutsideClick(e) {
   const el = $a('silverHistPanel');
   if (!el) return;
   if (el.contains(e.target)) return;
-  const pill = $a('shRate');
-  if (pill && pill.contains(e.target)) return;
+  if ([$a('shRate'), $a('silverPill')].some(pill => pill && pill.contains(e.target))) return;
   closeSilverHistPanel();
 }
 
@@ -17584,11 +17647,14 @@ function openSilverHistPanel() {
     `<span>${i18next.t('backend:backend.silver_hist.record_label')} : <b>${record}</b></span></div>` +
     `<div class="shpSection">${i18next.t('backend:backend.silver_hist.session_title')}</div><div class="shpHint">${i18next.t('backend:backend.silver_hist.session_hint')}</div>` +
     (sessionHasData
-      ? `<div class="shpChart">${buildBarSeriesSvg(sessionPoints, green)}</div><div class="shpTotals">${silverHistTotalsLine(sessionPoints, '/min')}</div>`
+      ? `<div class="shpChart" id="shpSessionChart">${buildBarSeriesSvg(sessionPoints, green)}</div><div class="shpTotals">${silverHistTotalsLine(sessionPoints, '/min')}</div>`
       : `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.empty_session')}</div>`) +
     `<div class="shpSection">${i18next.t('backend:backend.silver_hist.day_title')}</div><div class="shpHint">${i18next.t('backend:backend.silver_hist.day_hint')}</div>` +
-    `<div class="shpChart" id="shpDayChart"><div class="shpEmpty">${i18next.t('backend:backend.silver_hist.loading')}</div></div>`;
+    `<div class="shpChart" id="shpDayChart"><div class="shpEmpty">${i18next.t('backend:backend.silver_hist.loading')}</div></div>` +
+    `<div class="shpSection">${i18next.t('backend:backend.silver_hist.balance_title')}</div><div class="shpHint">${i18next.t('backend:backend.silver_hist.balance_hint')}</div>` +
+    `<div class="shpChart" id="shpBalanceChart"><div class="shpEmpty">${i18next.t('backend:backend.silver_hist.loading')}</div></div>`;
   document.body.appendChild(el);
+  if (sessionHasData) wireChartHover($a('shpSessionChart'), sessionPoints, { suffix: ' silver' });
   
   const r = pill.getBoundingClientRect();
   el.style.top = Math.round(r.bottom + 6) + 'px';
@@ -17600,22 +17666,32 @@ function openSilverHistPanel() {
 }
 
 async function loadSilverHistDayChart() {
-  const slot = $a('shpDayChart');
+  const slot = $a('shpDayChart'), balSlot = $a('shpBalanceChart');
   if (!slot) return;
+  const showBoth = html => { slot.innerHTML = html; if (balSlot) balSlot.innerHTML = html; };
   if (typeof sb === 'undefined' || !sb || !currentUser || (typeof isOffline !== 'undefined' && isOffline)) {
-    slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.offline')}</div>`;
+    showBoth(`<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.offline')}</div>`);
     return;
   }
   try {
     const { data, error } = await sb.rpc('my_silver_history', { p_hours: SILVER_HIST_DAY_HOURS });
     if (error) throw error;
     if (!$a('shpDayChart')) return; 
-    const points = buildSilverHourPoints(data, Date.now());
-    if (!points.some(p => p.value > 0)) { slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.empty_day')}</div>`; return; }
+    const now = Date.now();
+    const points = buildSilverHourPoints(data, now);
     const gold = getComputedStyle(document.documentElement).getPropertyValue('--gold2').trim() || '#d4a955';
-    slot.innerHTML = buildBarSeriesSvg(points, gold) + `<div class="shpTotals">${silverHistTotalsLine(points, '/h')}</div>`;
+    if (!points.some(p => p.value > 0)) slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.empty_day')}</div>`;
+    else {
+      slot.innerHTML = buildBarSeriesSvg(points, gold) + `<div class="shpTotals">${silverHistTotalsLine(points, '/h')}</div>`;
+      wireChartHover(slot, points, { suffix: ' silver' });
+    }
+    if (balSlot) {
+      const balPoints = buildSilverBalancePoints(data, now, S.silver);
+      balSlot.innerHTML = buildLineSeriesSvg(balPoints, gold);
+      wireChartHover(balSlot, balPoints, { suffix: ' silver', isLine: true });
+    }
   } catch (e) {
-    if ($a('shpDayChart')) slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.error')}</div>`;
+    if ($a('shpDayChart')) showBoth(`<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.error')}</div>`);
   }
 }
 
@@ -17625,10 +17701,11 @@ function toggleSilverHistPanel() {
 }
 
 (function wireSilverHistPill() {
-  const pill = $a('shRate');
-  if (!pill) return;
-  pill.classList.add('clickable');
-  pill.addEventListener('click', toggleSilverHistPanel);
+  [$a('shRate'), $a('silverPill')].forEach(pill => {
+    if (!pill) return;
+    pill.classList.add('clickable');
+    pill.addEventListener('click', toggleSilverHistPanel);
+  });
 })();
 
 // ==== src/admin/admin-panel.js ====

@@ -6435,6 +6435,66 @@
     assert('xp/h : un rythme soutenu bien au-delà de +30% devient éligible (record débloqué)', xv.eligible === true, JSON.stringify(xv));
   }
 
+  // ---------- Survol des graphiques + courbe de solde (V453) ----------
+  // chartIndexFromX/buildSilverBalancePoints/buildLineSeriesSvg : fonctions pures du panneau
+  // Historique de silver (backend/silver-history-panel.js).
+  function testSilverBalanceAndHoverHelpers() {
+    if (typeof chartIndexFromX !== 'function') return;
+    // bornes : jamais hors [0, n-1], même avec une souris hors du tracé
+    assert('chartIndexFromX borne à gauche', chartIndexFromX(-50, 60, false) === 0);
+    assert('chartIndexFromX borne à droite', chartIndexFromX(500, 60, false) === 59);
+    // barres : slot plein (floor) ; ligne : point le plus proche (round)
+    assert('chartIndexFromX barres : slot plein', chartIndexFromX(5 + (390 / 60) * 10 + 1, 60, false) === 10);
+    assert('chartIndexFromX ligne : point le plus proche', chartIndexFromX(5 + (390 / 23) * 11, 24, true) === 11);
+    // reconstruction du solde à REBOURS depuis le solde actuel
+    const now = Date.now();
+    const nowHour = Math.floor(now / 3600000) * 3600000;
+    const rows = [
+      { bucket: new Date(nowHour).toISOString(), gained: 100, spent: 40 },        // net +60 (heure courante)
+      { bucket: new Date(nowHour - 3600000).toISOString(), gained: 10, spent: 0 }, // net +10 (heure précédente)
+      { bucket: 'garbage', gained: 999 },                                          // ignorée sans exception
+    ];
+    const pts = buildSilverBalancePoints(rows, now, 1000);
+    assert('buildSilverBalancePoints retourne 24 points, solde actuel en dernier', pts.length === 24 && pts[23].value === 1000, JSON.stringify(pts.slice(-1)));
+    assert('buildSilverBalancePoints déroule le solde à rebours (net de chaque heure retiré)', pts[22].value === 940 && pts[21].value === 930 && pts[0].value === 930, `h-1=${pts[22].value} h-2=${pts[21].value}`);
+    // courbe : vide/1 point -> juste l'axe, jamais d'exception ; série normale -> polyline présente
+    assert('buildLineSeriesSvg tableau vide : juste l\'axe, pas d\'exception', typeof buildLineSeriesSvg([], '#fff') === 'string' && !buildLineSeriesSvg([], '#fff').includes('polyline'));
+    assert('buildLineSeriesSvg série normale : courbe présente', buildLineSeriesSvg(pts, '#fff').includes('polyline'));
+  }
+  // survol réel : mousemove sur le graphe de session (panneau ouvert hors ligne) -> tooltip
+  // visible avec "label · valeur". Restaure buffers/état comme testAddSilverFeedsMinuteHistoryOnlyForLoot.
+  function testSilverHistChartTooltipShowsOnHover() {
+    if (typeof toggleSilverHistPanel !== 'function') return;
+    const savedOffline = isOffline;
+    const savedHist = silverMinuteHistory.map(b => ({ ...b }));
+    try {
+      isOffline = true;
+      pushSilverMinuteSample(silverMinuteHistory, 500, Date.now()); // garantit un graphe de session non vide
+      toggleSilverHistPanel();
+      const cont = document.getElementById('shpSessionChart');
+      const svg = cont && cont.querySelector('svg');
+      assert('le graphe de session est présent avec des données', !!svg);
+      if (svg) {
+        const r = svg.getBoundingClientRect();
+        svg.dispatchEvent(new MouseEvent('mousemove', { clientX: r.left + r.width - 2, clientY: r.top + 10, bubbles: true }));
+        const tip = cont.querySelector('.shpTip');
+        assert('mousemove sur le graphe : tooltip visible', tip && tip.style.display === 'block');
+        // pas de valeur exacte : le jeu farme en live pendant les tests, la minute courante peut
+        // déjà contenir d'autres gains en plus des 500 injectés -- on vérifie le FORMAT du tooltip
+        assert('le tooltip affiche "label · valeur silver"', tip && /^\d{2}:\d{2} · .+ silver$/.test(tip.textContent), tip && tip.textContent);
+        svg.dispatchEvent(new MouseEvent('mouseleave', { bubbles: true }));
+        assert('mouseleave : tooltip masqué', tip && tip.style.display === 'none');
+      }
+      // la pastille silver (💰) ouvre le même panneau que silver/min
+      assert('la pastille #silverPill est câblée elle aussi', document.getElementById('silverPill').classList.contains('clickable'));
+      toggleSilverHistPanel();
+    } finally {
+      isOffline = savedOffline;
+      silverMinuteHistory.length = 0; savedHist.forEach(b => silverMinuteHistory.push(b));
+      const leftover = document.getElementById('silverHistPanel'); if (leftover) leftover.remove();
+    }
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -6775,6 +6835,8 @@
     testSilverHistPanelOpensOfflineAndCloses();
     testAdvanceSimCatchesUpHiddenTimeInSubSteps();
     testComputeSlidingRatesUnfreezeRecordOnSustainedHigherRate();
+    testSilverBalanceAndHoverHelpers();
+    testSilverHistChartTooltipShowsOnHover();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
