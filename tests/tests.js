@@ -6133,6 +6133,24 @@
     assert('minibossReputationScore(1,4) === 1.0 (majorité d\'incidents -> note basse)', minibossReputationScore(1,4) === 1.0, `got=${minibossReputationScore(1,4)}`);
     assert('minibossReputationScore(10,0) === 5 (aucun incident)', minibossReputationScore(10,0) === 5);
   }
+  // garde-fou anti-régression du bug corrigé le 2026-07-14 : sb.rpc() renvoie un thenable Supabase
+  // (PostgrestBuilder) qui a .then mais PAS .catch -- `sb.rpc(...).catch(...)` lançait un TypeError
+  // et faisait planter startMiniBossFight/endMiniBossFight (l'écran de victoire ne s'affichait
+  // jamais, le run ne s'enchaînait pas). Le correctif enveloppe l'appel dans Promise.resolve().
+  // Ce test inspecte le .toString() des 2 fonctions (même esprit que les autres tests d'inspection
+  // statique du projet) : si un appel sb.rpc(...).catch existe, il DOIT être précédé de Promise.resolve.
+  function testMinibossRpcCallsWrappedInPromiseResolve() {
+    [['startMiniBossFight', startMiniBossFight], ['endMiniBossFight', endMiniBossFight]].forEach(([name, fn]) => {
+      const src = fn.toString();
+      const hasRpcCatch = /sb\.rpc\([^)]*\)\)?\.catch/.test(src);
+      const hasPromiseResolve = /Promise\.resolve\(\s*sb\.rpc/.test(src);
+      if (hasRpcCatch) {
+        assert(`${name}: tout sb.rpc(...).catch est enveloppé dans Promise.resolve() (thenable Supabase sans .catch)`, hasPromiseResolve, 'sb.rpc(...).catch sans Promise.resolve() -> TypeError en prod');
+      } else {
+        assert(`${name}: aucun sb.rpc(...).catch nu (ou migré vers Promise.resolve/await)`, true);
+      }
+    });
+  }
   // câblage de l'onglet header (voir plan §5) -- ACTIVITY_TABS contient bien l'entrée, et
   // showActivityPage('miniboss') ne lève pas et met à jour currentActivity (miroir du test déjà
   // existant pour Compagnon, testCompanionTabShowsNewBadgeInsteadOfLock, même esprit).
@@ -6505,6 +6523,7 @@
     testMinibossGearPctClampedAndMonotonic();
     testMinibossMaxRunLengthCappedByPoorestMember();
     testMinibossReputationScoreFormula();
+    testMinibossRpcCallsWrappedInPromiseResolve();
     testMinibossActivityTabWiredCorrectly();
     testCraftMiniBossParcheminNeedsFiveBooks();
     const failed = results.filter(r => !r.pass);

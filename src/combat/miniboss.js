@@ -536,7 +536,10 @@ function startMiniBossFight() {
   startMiniBossFightLocal(payload, true);
   // best-effort : tente de créer une VRAIE session serveur (RPC), sans jamais bloquer le jeu si
   // la migration n'est pas encore appliquée (voir compromis de scope en tête de fichier).
-  if (sb) sb.rpc('miniboss_start', { p_run_length: minibossRunLength }).catch(() => {});
+  // Promise.resolve() : sb.rpc() renvoie un thenable Supabase (PostgrestBuilder) qui a .then mais
+  // PAS .catch -- `sb.rpc(...).catch(...)` lançait TypeError et faisait planter la fin de combat
+  // (bug réel, corrigé 2026-07-14) ; Promise.resolve adopte le thenable en vraie Promise.
+  if (sb) Promise.resolve(sb.rpc('miniboss_start', { p_run_length: minibossRunLength })).catch(() => {});
 }
 /**
  * Démarre localement la simulation d'un combat (déterministe : mêmes PV/DPS cumulé connus par
@@ -585,10 +588,17 @@ function startMiniBossFightLocal(payload, isSummoner) {
 function renderMinibossRoster() {
   const titleEl = $a('minibossRosterTitle'); if (titleEl) titleEl.textContent = i18next.t('combat:combat.miniboss.roster_title', { n: minibossState.party.length, max: MINIBOSS_MAX_GROUP_SIZE });
   const listEl = $a('minibossRosterList'); if (!listEl) return;
-  listEl.innerHTML = minibossState.party.map(p => {
+  // part de dégâts de chaque joueur = son DPS estimé / DPS cumulé du groupe (rend concret le
+  // "gear% = tu tapes plus ou moins fort", mockup : .rosterDmg "X% dégâts").
+  const dps = minibossState.party.map(p => minibossEstimatedDps(p.gearPct||0));
+  const totalDps = Math.max(1, dps.reduce((a,b)=>a+b,0));
+  listEl.innerHTML = minibossState.party.map((p, i) => {
     const gearCls = p.gearPct>=85?'good':p.gearPct>=60?'ok':'low';
-    return `<div class="minibossRosterRow"><span class="minibossRosterRole ${p.role}">${p.role==='summoner'?'👑':'🙂'}</span>` +
-      `<span class="minibossRosterName">${escapeHtml(p.pseudo||'?')}</span><span class="minibossRosterGear ${gearCls}">⚔️${p.gearPct||0}%</span></div>`;
+    const roleLbl = p.role==='summoner' ? i18next.t('combat:combat.miniboss.role_summoner') : i18next.t('combat:combat.miniboss.role_joiner');
+    const dmgPct = Math.round(dps[i]/totalDps*100);
+    return `<div class="minibossRosterRow"><span class="minibossRosterRole ${p.role}">${roleLbl}</span>` +
+      `<span class="minibossRosterName">${escapeHtml(p.pseudo||'?')} <span class="minibossRosterGear ${gearCls}">⚔️${p.gearPct||0}%</span></span>` +
+      `<span class="minibossRosterDmg">${i18next.t('combat:combat.miniboss.roster_damage', { pct: dmgPct })}</span></div>`;
   }).join('');
 }
 /**
@@ -603,7 +613,9 @@ function miniBossLoop(now) {
   minibossState.hp = Math.max(0, minibossState.maxHp - minibossState.groupDps * elapsed);
   drawMinibossRoom(now);
   const hpEl = $a('minibossHpTxt');
-  if (hpEl) hpEl.textContent = fmt(Math.round(minibossState.hp)) + ' / ' + fmt(minibossState.maxHp);
+  // % en tête puis current/max (mockup : "62.0% · 136 400 / 220 000") -- le premier portage
+  // n'affichait que current/max sans le pourcentage.
+  if (hpEl) { const pct = Math.max(0, minibossState.hp/minibossState.maxHp*100); hpEl.textContent = pct.toFixed(1) + '% · ' + fmt(Math.round(minibossState.hp)) + ' / ' + fmt(minibossState.maxHp); }
   const hpBar = $a('minibossHpBar');
   if (hpBar) hpBar.style.width = Math.max(0, minibossState.hp/minibossState.maxHp*100) + '%';
   const timerEl = $a('minibossTimer');
@@ -612,7 +624,7 @@ function miniBossLoop(now) {
   if (progressEl) progressEl.textContent = i18next.t('combat:combat.miniboss.fight_progress', { i: minibossState.runIndex, n: minibossState.runLength }) + (minibossState.progressContext || '');
   const pHpBar = $a('minibossPlayerHp'), pHpTxt = $a('minibossPlayerHpTxt');
   if (pHpBar) pHpBar.style.width = Math.max(0, minibossState.playerHp/minibossState.playerHpMax*100) + '%';
-  if (pHpTxt) pHpTxt.textContent = Math.round(minibossState.playerHp) + ' / ' + Math.round(minibossState.playerHpMax);
+  if (pHpTxt) pHpTxt.textContent = Math.round(minibossState.playerHp) + ' / ' + Math.round(minibossState.playerHpMax) + ' PV';
   if (minibossState.hp <= 0) { endMiniBossFight(true); return; }
   minibossState.raf = requestAnimationFrame(miniBossLoop);
 }
@@ -648,7 +660,7 @@ async function endMiniBossFight(win) {
       `<div class="brRewards">+${caphrasQty} × ${tr(CAPHRAS_NAME)} · +${fragQty} × ${tr('Fragment de mémoire')}</div>${marbleHtml}` + minibossBonusLadderHtml(n);
     minibossRepCounters().runsClean++;
     refreshStatsOnly(); hud();
-    if (sb) sb.rpc('miniboss_claim', { p_session_id: null }).catch(() => {});
+    if (sb) Promise.resolve(sb.rpc('miniboss_claim', { p_session_id: null })).catch(() => {}); // voir note Promise.resolve dans startMiniBossFight
     // enchaîne le prochain combat du run (mêmes règles, même groupe) tant qu'il en reste et que le
     // stock de Parchemins le permet -- l'invocateur relance pour le groupe.
     if (minibossState.isSummoner && minibossState.runIndex < minibossState.runLength && minibossParcheminQty() > 0) {
@@ -658,7 +670,12 @@ async function endMiniBossFight(win) {
     }
   }
   minibossTrackPresence('forming');
-  $('minibossResult').innerHTML = `<div class="brTitle ${win?'win':''}">${win?i18next.t('combat:combat.miniboss.victory_title'):i18next.t('combat:combat.boss.fight_left_title')}</div>${rewardsHtml}` +
+  // sous-titre "boss vaincu · N participant(s) · Xs" + rôle (mockup : .resultSub / .splitRole) --
+  // le premier portage n'affichait ni la durée/participants ni le rôle appliqué.
+  const durSec = Math.max(0, Math.round((performance.now() - (minibossState.startedAt||performance.now()))/1000));
+  const subHtml = win ? `<div class="minibossResultSub">${i18next.t('combat:combat.miniboss.result_sub', { n, time: minibossFmtDuration(durSec) })}</div>` : '';
+  const roleHtml = win ? `<div class="minibossResultRole ${minibossState.isSummoner?'summoner':'joiner'}">${minibossState.isSummoner?'👑 '+i18next.t('combat:combat.miniboss.role_summoner'):i18next.t('combat:combat.miniboss.role_joiner')}</div>` : '';
+  $('minibossResult').innerHTML = `<div class="brTitle ${win?'win':''}">${win?i18next.t('combat:combat.miniboss.victory_title'):i18next.t('combat:combat.boss.fight_left_title')}</div>${subHtml}${roleHtml}${rewardsHtml}` +
     `<button id="minibossCloseBtn">🚪 ${i18next.t('combat:combat.boss.leave_button')}</button>`;
   $('minibossResult').classList.add('show');
   $a('minibossCloseBtn').onclick = () => { $('minibossResult').classList.remove('show'); currentActivity='miniboss'; $('minibossRoom').classList.remove('open'); setFarmViewVisible(true); renderActivityTabs(); openMiniBossLobby(); };

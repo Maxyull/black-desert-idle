@@ -3229,14 +3229,25 @@
   #minibossTopPanel { position:absolute; top:70px; right:14px; width:200px; background:rgba(16,16,30,.9); border:1px solid var(--dbBorder2); border-radius:8px; padding:10px; }
   #minibossTopPanel h4 { margin:0 0 6px; font-size:10.5px; color:var(--arcane2); }
   .minibossRosterRow { display:flex; align-items:center; gap:6px; font-size:10px; padding:2px 0; }
+  /* pastille de rôle textuelle (Invocateur/Participant) + part de dégâts par joueur (mockup :
+     .rosterRole/.rosterDmg) -- le premier portage n'avait qu'un emoji de rôle et pas de dégâts. */
+  .minibossRosterRole { flex-shrink:0; font-size:8px; text-transform:uppercase; letter-spacing:.05em; padding:2px 6px; border-radius:9px; text-align:center; }
+  .minibossRosterRole.summoner { background:rgba(155,127,214,.18); color:var(--arcane2); }
+  .minibossRosterRole.joiner { background:rgba(201,165,90,.12); color:var(--cream2); }
   .minibossRosterName { flex:1; color:var(--cream2); }
+  .minibossRosterGear { font-size:9px; margin-left:4px; }
   .minibossRosterGear.good { color:var(--green2); } .minibossRosterGear.ok { color:var(--gold2); } .minibossRosterGear.low { color:var(--red2); }
+  .minibossRosterDmg { flex-shrink:0; font-family:'JetBrains Mono',monospace; font-size:9px; color:var(--cream3); }
   #minibossPlayerHpWrap { position:relative; height:14px; margin:0 16px 10px; background:#0d0c11; border:1px solid #333; border-radius:3px; overflow:hidden; }
   #minibossPlayerHp { height:100%; width:100%; background:linear-gradient(90deg,#5a8a3a,#8fc98a); transition:width .15s linear; }
   #minibossPlayerHpTxt { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:9.5px; color:#fff; text-shadow:0 1px 1px #000; }
   #minibossResult { display:none; position:absolute; inset:0; align-items:center; justify-content:center; flex-direction:column; gap:12px; background:rgba(0,0,0,.72); text-align:center; padding:20px; }
   #minibossResult.show { display:flex; }
   #minibossResult .brTitle { font-family:'Cinzel',serif; font-size:24px; font-weight:bold; letter-spacing:2px; color:var(--arcane2); }
+  .minibossResultSub { font-size:11px; color:var(--cream3); }
+  .minibossResultRole { font-family:'Cinzel',serif; font-size:10px; text-transform:uppercase; letter-spacing:.06em; padding:3px 10px; border-radius:12px; }
+  .minibossResultRole.summoner { background:rgba(155,127,214,.18); color:var(--arcane2); }
+  .minibossResultRole.joiner { background:rgba(201,165,90,.12); color:var(--cream2); }
   #minibossResult .brRewards { font-size:13px; color:var(--cream2); }
   #minibossResult .minibossRewardMath { font-size:15px; color:var(--cream2); font-family:'JetBrains Mono',monospace; }
   #minibossResult .minibossRewardMath b { color:var(--gold2); }
