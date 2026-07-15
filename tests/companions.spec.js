@@ -33,7 +33,13 @@ test.describe.configure({ retries: 2 });
 async function dismissTutorialIfPresent(page) {
   const skipBtn = page.locator('#tutSkipBtn');
   if (await skipBtn.isVisible().catch(() => false)) {
-    await skipBtn.click();
+    // clic borné + best-effort (2026-07-15) : en CI (plus lent), le jeu déclenche parfois en fond
+    // un tutoriel d'objet (ITEM_TUTORIALS "trash de zone") dont #tutSkipBtn est CSS-visible mais
+    // reste sous un autre overlay (z-index) donc jamais cliquable. Un `.click()` SANS timeout
+    // attendait alors l'actionnabilité jusqu'au timeout de test global (60s) et faisait échouer
+    // tout le test avant même le vrai clic ciblé (dismissTutorialsAndClick, déjà borné à 8s). On
+    // tolère l'échec ici : la boucle de retry appelante retentera le dismiss + le clic ciblé.
+    await skipBtn.click({ timeout: 1500 }).catch(() => {});
   }
 }
 
