@@ -286,7 +286,10 @@ function PneVersionBlock(props) {
       absIdx === 0 ? pneH('span', { style: { fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, textTransform: 'uppercase', background: '#4a3a20', color: '#e8c876' } }, i18next.t('progression:progression.patch_notes.latest_badge'))
         : isNew ? pneH('span', { className: 'pnePulseDot', style: { width: 6, height: 6, borderRadius: 999, background: PNE_V.gold2 }, title: i18next.t('progression:progression.patch_notes.new_badge_title') }) : null,
       pneH('span', { style: { fontSize: 10, color: PNE_V.muted2, marginLeft: 'auto' } }, rows.length + i18next.t('progression:progression.patch_notes.changes_count_suffix'))),
-    p.name ? pneH('p', { style: { fontSize: 11, fontStyle: 'italic', color: PNE_V.italic, margin: '0 0 8px' } }, p.name[LANG]) : null,
+    // titre global de la version, sous l'en-tête (V+date), au-dessus des cartes (demande explicite
+    // 2026-07-15 : "garde le titre global en dessous de la version" en gras) -- passé de petit
+    // italique muet à un vrai titre gras proéminent (crème), le corps des lignes reste inchangé.
+    p.name ? pneH('p', { style: { fontSize: 14, fontWeight: 700, color: PNE_V.cream, margin: '0 0 8px' } }, p.name[LANG]) : null,
     pneH('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
       rows.map(row => pneH(PneEntryCard, { key: row.entryId, row, controversial: props.controversyView && (patchKarmaCache[row.entryId] || 0) < 0 }))));
 }

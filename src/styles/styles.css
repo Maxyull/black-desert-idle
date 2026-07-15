@@ -1822,7 +1822,7 @@
     padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,.06);
   }
   #infoBody .patchVer { color:var(--gold); font-weight:bold; font-size:15px; letter-spacing:.5px; }
-  #infoBody .patchName { font-size:12.5px; font-style:italic; color:var(--ink); opacity:.85; }
+  #infoBody .patchName { font-size:14px; font-weight:bold; color:var(--ink); }
   #infoBody .patchDate { margin-left:auto; font-size:10px; color:var(--ink-dim); font-variant-numeric:tabular-nums; }
   #infoBody .patchEntry li {
     display:flex; flex-direction:column; gap:5px; margin-bottom:9px; line-height:1.55;
