@@ -155,6 +155,8 @@
   "backend.silver_hist.session_hint": "Revenu du trash ramassé au sol, minute par minute.",
   "backend.silver_hist.day_title": "24 dernières heures",
   "backend.silver_hist.day_hint": "Silver gagné par heure, toutes sources confondues.",
+  "backend.silver_hist.balance_title": "Solde — 24 dernières heures",
+  "backend.silver_hist.balance_hint": "Évolution de ton silver total, heure par heure (reconstituée depuis le registre).",
   "backend.silver_hist.totals": "Total : {{total}} · pic : {{peak}}",
   "backend.silver_hist.loading": "Chargement…",
   "backend.silver_hist.offline": "Historique indisponible hors ligne — le graphique de session reste disponible.",

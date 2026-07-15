@@ -2729,6 +2729,13 @@
   #silverHistPanel .shpHint { font-size:10.5px; color:var(--cream3); margin:1px 0 5px; }
   #silverHistPanel .shpTotals { font-size:10.5px; color:var(--cream2); font-family:'JetBrains Mono',monospace; margin-top:3px; }
   #silverHistPanel .shpEmpty { font-size:11px; color:var(--cream3); padding:8px 0; }
+  /* tooltip de survol des graphiques (V453) -- positionné en JS (wireChartHover), jamais cliquable */
+  #silverHistPanel .shpChart { position:relative; }
+  #silverHistPanel .shpTip {
+    display:none; position:absolute; top:0; pointer-events:none; white-space:nowrap; z-index:2;
+    background:var(--s2); border:1px solid var(--dbBorder2); border-radius:5px; padding:2px 7px;
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--ink);
+  }
   /* mobile : pleine largeur sous le topbar, le left calculé en JS est neutralisé par !important
      (même approche que les popups fixes existants, voir CLAUDE.md §14) */
   @media (max-width:600px) {
