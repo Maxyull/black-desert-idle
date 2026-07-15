@@ -462,6 +462,19 @@ const I18N_RESOURCES = {
       "backend.patch_notes.subcategory_label": "Sous-catégorie",
       "backend.patch_notes.unread_banner": "note(s) de version non lue(s) — clique pour remonter",
       "backend.presence.guests_suffix": "invités",
+      "backend.silver_hist.title": "💰 Historique de silver",
+      "backend.silver_hist.live_label": "Session en cours",
+      "backend.silver_hist.record_label": "Record à vie",
+      "backend.silver_hist.session_title": "60 dernières minutes (session)",
+      "backend.silver_hist.session_hint": "Revenu du trash ramassé au sol, minute par minute.",
+      "backend.silver_hist.day_title": "24 dernières heures",
+      "backend.silver_hist.day_hint": "Silver gagné par heure, toutes sources confondues.",
+      "backend.silver_hist.totals": "Total : {{total}} · pic : {{peak}}",
+      "backend.silver_hist.loading": "Chargement…",
+      "backend.silver_hist.offline": "Historique indisponible hors ligne — le graphique de session reste disponible.",
+      "backend.silver_hist.error": "Impossible de charger l'historique pour le moment.",
+      "backend.silver_hist.empty_session": "Aucun silver ramassé pour l'instant cette session.",
+      "backend.silver_hist.empty_day": "Aucun silver gagné sur les dernières 24 h.",
       "backend.tuto_page.intro": "Le tutoriel te fait visiter Velia, la ville paisible, et t'explique les bases du jeu (zones, sorts automatiques, statistiques, quêtes, chat). Tu peux le relancer ici quand tu veux.",
       "backend.tuto_page.replay_button": "▶ Relancer le tutoriel",
       "backend.tutorial.finish": "Terminer",
@@ -1492,6 +1505,19 @@ const I18N_RESOURCES = {
       "backend.patch_notes.subcategory_label": "Subcategory",
       "backend.patch_notes.unread_banner": "unread patch note(s) — click to jump to newest",
       "backend.presence.guests_suffix": "guests",
+      "backend.silver_hist.title": "💰 Silver history",
+      "backend.silver_hist.live_label": "Current session",
+      "backend.silver_hist.record_label": "Lifetime record",
+      "backend.silver_hist.session_title": "Last 60 minutes (session)",
+      "backend.silver_hist.session_hint": "Trash income picked up on the ground, minute by minute.",
+      "backend.silver_hist.day_title": "Last 24 hours",
+      "backend.silver_hist.day_hint": "Silver gained per hour, all sources combined.",
+      "backend.silver_hist.totals": "Total: {{total}} · peak: {{peak}}",
+      "backend.silver_hist.loading": "Loading…",
+      "backend.silver_hist.offline": "History unavailable offline — the session chart is still available.",
+      "backend.silver_hist.error": "Unable to load the history right now.",
+      "backend.silver_hist.empty_session": "No silver picked up yet this session.",
+      "backend.silver_hist.empty_day": "No silver gained over the last 24 hours.",
       "backend.tuto_page.intro": "The tutorial walks you through Velia, the peaceful town, and explains the basics of the game (zones, automatic skills, stats, quests, chat). You can replay it here anytime.",
       "backend.tuto_page.replay_button": "▶ Replay the tutorial",
       "backend.tutorial.finish": "Finish",
@@ -2798,6 +2824,17 @@ function pruneSilverRateBuffer(now) {
   while (silverRateBuffer.length && (now - silverRateBuffer[0].t) > SILVER_RATE_WINDOW_MS) silverRateBuffer.shift();
 }
 
+const SILVER_HIST_WINDOW_MS = 3600000; 
+let silverMinuteHistory = []; 
+
+function pushSilverMinuteSample(hist, delta, now) {
+  const t = Math.floor(now / 60000) * 60000;
+  const lastB = hist[hist.length - 1];
+  if (lastB && lastB.t === t) lastB.silver += delta;
+  else hist.push({ t, silver: delta });
+  while (hist.length && (now - hist[0].t) > SILVER_HIST_WINDOW_MS) hist.shift();
+}
+
 const KPM_RATE_WINDOW_MS = 180000; 
 const KPM_RATE_MAX_DEVIATION = 0.30; 
 const KPM_RATE_MIN_SPAN_MS = KPM_RATE_WINDOW_MS / 2; 
@@ -2858,6 +2895,8 @@ function addSilver(delta, category, note) {
     S.tokenSilverEarned = (S.tokenSilverEarned||0) + delta;
     
     silverRateBuffer.push({ t: Date.now(), silver: delta });
+    
+    pushSilverMinuteSample(silverMinuteHistory, delta, Date.now());
   }
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }
@@ -17438,6 +17477,132 @@ function lb2WirePager(totalPages) {
   if (prev) prev.onclick = () => { lb2Page--; lb2RenderBody(); };
   if (next) next.onclick = () => { lb2Page++; lb2RenderBody(); };
 }
+
+// ==== src/backend/silver-history-panel.js ====
+const SILVER_HIST_SESSION_MINUTES = 60;
+const SILVER_HIST_DAY_HOURS = 24;
+
+function buildSilverMinutePoints(hist, now) {
+  const nowMin = Math.floor(now / 60000) * 60000;
+  const byT = {};
+  (hist || []).forEach(b => { byT[b.t] = (byT[b.t] || 0) + b.silver; });
+  const points = [];
+  for (let i = SILVER_HIST_SESSION_MINUTES - 1; i >= 0; i--) {
+    const t = nowMin - i * 60000;
+    const d = new Date(t);
+    points.push({ label: String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'), value: byT[t] || 0 });
+  }
+  return points;
+}
+
+function buildSilverHourPoints(rows, now) {
+  const nowHour = Math.floor(now / 3600000) * 3600000;
+  const byT = {};
+  (rows || []).forEach(r => {
+    const t = new Date(r.bucket).getTime();
+    if (!isFinite(t)) return;
+    byT[Math.floor(t / 3600000) * 3600000] = Number(r.gained) || 0;
+  });
+  const points = [];
+  for (let i = SILVER_HIST_DAY_HOURS - 1; i >= 0; i--) {
+    const t = nowHour - i * 3600000;
+    points.push({ label: String(new Date(t).getHours()).padStart(2, '0') + 'h', value: byT[t] || 0 });
+  }
+  return points;
+}
+
+function silverHistTotalsLine(points, perUnitSuffix) {
+  const total = points.reduce((a, p) => a + p.value, 0);
+  const peak = points.reduce((a, p) => Math.max(a, p.value), 0);
+  return i18next.t('backend:backend.silver_hist.totals', { total: fmt(Math.round(total)), peak: fmt(Math.round(peak)) + perUnitSuffix });
+}
+
+function closeSilverHistPanel() {
+  const el = $a('silverHistPanel');
+  if (el) el.remove();
+  document.removeEventListener('mousedown', silverHistOutsideClick, true);
+  document.removeEventListener('keydown', silverHistEscKey, true);
+}
+
+function silverHistOutsideClick(e) {
+  const el = $a('silverHistPanel');
+  if (!el) return;
+  if (el.contains(e.target)) return;
+  const pill = $a('shRate');
+  if (pill && pill.contains(e.target)) return;
+  closeSilverHistPanel();
+}
+
+function silverHistEscKey(e) { if (e.key === 'Escape') closeSilverHistPanel(); }
+
+function openSilverHistPanel() {
+  closeSilverHistPanel();
+  const pill = $a('shRate');
+  if (!pill) return;
+  
+  const mins = (performance.now() - S.startTime) / 60000;
+  const tokenGain = S.tokenSilverEarned - (S.tokenSilverEarnedAtLoad || 0);
+  const liveRate = mins > .1 ? fmt(Math.round(tokenGain / mins)) : '—';
+  const record = S.bestSilverPerHour ? fmt(Math.round(S.bestSilverPerHour)) + '/h' : '—';
+
+  const sessionPoints = buildSilverMinutePoints(silverMinuteHistory, Date.now());
+  const sessionHasData = sessionPoints.some(p => p.value > 0);
+  const green = getComputedStyle(document.documentElement).getPropertyValue('--green2').trim() || '#6fdc6f';
+
+  const el = document.createElement('div');
+  el.id = 'silverHistPanel';
+  el.innerHTML =
+    `<div class="shpHead"><b>${i18next.t('backend:backend.silver_hist.title')}</b><button class="shpClose" type="button">✕</button></div>` +
+    `<div class="shpLive"><span>${i18next.t('backend:backend.silver_hist.live_label')} : <b>${liveRate}</b> silver/min</span>` +
+    `<span>${i18next.t('backend:backend.silver_hist.record_label')} : <b>${record}</b></span></div>` +
+    `<div class="shpSection">${i18next.t('backend:backend.silver_hist.session_title')}</div><div class="shpHint">${i18next.t('backend:backend.silver_hist.session_hint')}</div>` +
+    (sessionHasData
+      ? `<div class="shpChart">${buildBarSeriesSvg(sessionPoints, green)}</div><div class="shpTotals">${silverHistTotalsLine(sessionPoints, '/min')}</div>`
+      : `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.empty_session')}</div>`) +
+    `<div class="shpSection">${i18next.t('backend:backend.silver_hist.day_title')}</div><div class="shpHint">${i18next.t('backend:backend.silver_hist.day_hint')}</div>` +
+    `<div class="shpChart" id="shpDayChart"><div class="shpEmpty">${i18next.t('backend:backend.silver_hist.loading')}</div></div>`;
+  document.body.appendChild(el);
+  
+  const r = pill.getBoundingClientRect();
+  el.style.top = Math.round(r.bottom + 6) + 'px';
+  el.style.left = Math.round(Math.max(8, Math.min(r.left, window.innerWidth - el.offsetWidth - 8))) + 'px';
+  el.querySelector('.shpClose').onclick = closeSilverHistPanel;
+  document.addEventListener('mousedown', silverHistOutsideClick, true);
+  document.addEventListener('keydown', silverHistEscKey, true);
+  loadSilverHistDayChart();
+}
+
+async function loadSilverHistDayChart() {
+  const slot = $a('shpDayChart');
+  if (!slot) return;
+  if (typeof sb === 'undefined' || !sb || !currentUser || (typeof isOffline !== 'undefined' && isOffline)) {
+    slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.offline')}</div>`;
+    return;
+  }
+  try {
+    const { data, error } = await sb.rpc('my_silver_history', { p_hours: SILVER_HIST_DAY_HOURS });
+    if (error) throw error;
+    if (!$a('shpDayChart')) return; 
+    const points = buildSilverHourPoints(data, Date.now());
+    if (!points.some(p => p.value > 0)) { slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.empty_day')}</div>`; return; }
+    const gold = getComputedStyle(document.documentElement).getPropertyValue('--gold2').trim() || '#d4a955';
+    slot.innerHTML = buildBarSeriesSvg(points, gold) + `<div class="shpTotals">${silverHistTotalsLine(points, '/h')}</div>`;
+  } catch (e) {
+    if ($a('shpDayChart')) slot.innerHTML = `<div class="shpEmpty">${i18next.t('backend:backend.silver_hist.error')}</div>`;
+  }
+}
+
+function toggleSilverHistPanel() {
+  if ($a('silverHistPanel')) closeSilverHistPanel();
+  else openSilverHistPanel();
+}
+
+(function wireSilverHistPill() {
+  const pill = $a('shRate');
+  if (!pill) return;
+  pill.classList.add('clickable');
+  pill.addEventListener('click', toggleSilverHistPanel);
+})();
 
 // ==== src/admin/admin-panel.js ====
 function canBanUuid(targetUuid, myUuid) {

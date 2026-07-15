@@ -2711,6 +2711,29 @@
   }
   .topbar .pill strong { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; color:var(--gold2); }
   .topbar .pill#shRate { font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:500; color:var(--green2); }
+  /* ---------- Panneau Historique de silver (clic sur la pastille #shRate, V451) ---------- */
+  .topbar .pill.clickable { cursor:pointer; }
+  .topbar .pill.clickable:hover { border-color:var(--gold2); }
+  #silverHistPanel {
+    position:fixed; z-index:950; width:460px; max-width:calc(100vw - 16px);
+    background:var(--s1); border:1px solid var(--dbBorder); border-radius:10px;
+    padding:12px 14px; box-shadow:0 8px 28px rgba(0,0,0,.5); font-family:'Inter',sans-serif;
+  }
+  #silverHistPanel .shpHead { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+  #silverHistPanel .shpHead b { color:var(--ink); font-size:13px; }
+  #silverHistPanel .shpClose { background:none; border:none; color:var(--cream3); cursor:pointer; font-size:13px; padding:2px 4px; }
+  #silverHistPanel .shpClose:hover { color:var(--ink); }
+  #silverHistPanel .shpLive { display:flex; gap:14px; flex-wrap:wrap; font-size:11.5px; color:var(--cream2); margin-bottom:4px; }
+  #silverHistPanel .shpLive b { color:var(--green2); font-family:'JetBrains Mono',monospace; font-weight:500; }
+  #silverHistPanel .shpSection { margin-top:10px; font-size:11.5px; font-weight:600; color:var(--gold2); }
+  #silverHistPanel .shpHint { font-size:10.5px; color:var(--cream3); margin:1px 0 5px; }
+  #silverHistPanel .shpTotals { font-size:10.5px; color:var(--cream2); font-family:'JetBrains Mono',monospace; margin-top:3px; }
+  #silverHistPanel .shpEmpty { font-size:11px; color:var(--cream3); padding:8px 0; }
+  /* mobile : pleine largeur sous le topbar, le left calculé en JS est neutralisé par !important
+     (même approche que les popups fixes existants, voir CLAUDE.md §14) */
+  @media (max-width:600px) {
+    #silverHistPanel { left:8px !important; right:8px; width:auto; }
+  }
   .topbar .topbar-right { flex-shrink:0; margin-left:auto; display:flex; align-items:center; gap:10px; }
   .topbar #nextBossMini {
     flex-shrink:0; background:rgba(192,64,64,.08); border:1px solid #3a1818; border-radius:20px;

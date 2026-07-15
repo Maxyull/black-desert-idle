@@ -257,6 +257,32 @@ function pruneSilverRateBuffer(now) {
   while (silverRateBuffer.length && (now - silverRateBuffer[0].t) > SILVER_RATE_WINDOW_MS) silverRateBuffer.shift();
 }
 
+// ==================== Historique silver par minute (2026-07-15, demande explicite : "un petit
+// graphique lorsqu'on clique sur silver/min record /h et historique de silver") ====================
+// Buckets d'1 minute du revenu de trash (catégorie 'loot' UNIQUEMENT, même source que
+// silverRateBuffer/tokenSilverEarned -- voir addSilver), gardés SILVER_HIST_WINDOW_MS. Transitoire
+// (jamais sauvegardé, vidé au reload) : couvre la session en cours ; l'historique inter-sessions
+// vient de la RPC my_silver_history (agrégats horaires du silver_ledger, voir
+// backend/silver-history-panel.js). Alimente le petit panneau ouvert au clic sur la pastille
+// #shRate du topbar.
+const SILVER_HIST_WINDOW_MS = 3600000; // 60 min
+let silverMinuteHistory = []; // [{t:ms epoch arrondi à la minute, silver:total}] -- transient
+/**
+ * Accumule un gain de trash dans le bucket minute courant (mutation en place du tableau passé) et
+ * purge les buckets plus vieux que SILVER_HIST_WINDOW_MS. Fonction PURE vis-à-vis du DOM/réseau :
+ * ne dépend que de ses arguments, testable sans navigateur.
+ * @param {{t:number,silver:number}[]} hist - buffer de buckets minute (silverMinuteHistory).
+ * @param {number} delta - silver gagné (positif).
+ * @param {number} now - horodatage ms epoch (Date.now()).
+ */
+function pushSilverMinuteSample(hist, delta, now) {
+  const t = Math.floor(now / 60000) * 60000;
+  const lastB = hist[hist.length - 1];
+  if (lastB && lastB.t === t) lastB.silver += delta;
+  else hist.push({ t, silver: delta });
+  while (hist.length && (now - hist[0].t) > SILVER_HIST_WINDOW_MS) hist.shift();
+}
+
 // ==================== Kills/min en fenêtre glissante (même correctif que silver/h, 2026-07-13) ====================
 // S.bestKpm était calculé sur (S.kills-S.killsAtLoad)/(minutes de SESSION ENTIÈRE) -- même famille
 // de bug que l'ancien bestSilverPerHour (fenêtre qui grandit en continu, un pic ponctuel de kills
@@ -371,6 +397,9 @@ function addSilver(delta, category, note) {
     // fenêtre glissante 3 min pour le record silver/h à vie (voir computeSlidingSilverPerHour
     // ci-dessus) -- même source que tokenSilverEarned, pas les gains ponctuels quête/succès/boss.
     silverRateBuffer.push({ t: Date.now(), silver: delta });
+    // buckets minute pour le graphique de session du panneau Historique de silver (clic sur
+    // la pastille #shRate du topbar) -- voir pushSilverMinuteSample plus haut.
+    pushSilverMinuteSample(silverMinuteHistory, delta, Date.now());
   }
   if (typeof queueSilverLedger === 'function') queueSilverLedger(delta, category, note);
 }

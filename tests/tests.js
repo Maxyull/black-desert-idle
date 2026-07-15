@@ -6310,6 +6310,75 @@
     }
   }
 
+  // ---------- Panneau Historique de silver (V451, clic sur la pastille #shRate) ----------
+  // pushSilverMinuteSample : fonction pure (game-core.js) -- cumul dans le bucket minute courant,
+  // nouveau bucket à la minute suivante, purge au-delà de SILVER_HIST_WINDOW_MS.
+  function testPushSilverMinuteSampleBucketsAndPrunes() {
+    const hist = [];
+    const base = Math.floor(Date.now() / 60000) * 60000;
+    pushSilverMinuteSample(hist, 100, base + 1000);
+    pushSilverMinuteSample(hist, 50, base + 30000); // même minute -> cumul
+    assert('pushSilverMinuteSample cumule dans le bucket minute courant', hist.length === 1 && hist[0].silver === 150, JSON.stringify(hist));
+    pushSilverMinuteSample(hist, 25, base + 61000); // minute suivante -> nouveau bucket
+    assert('pushSilverMinuteSample ouvre un nouveau bucket à la minute suivante', hist.length === 2 && hist[1].silver === 25, JSON.stringify(hist));
+    // un ajout bien plus tard purge tous les buckets sortis de la fenêtre de 60 min
+    pushSilverMinuteSample(hist, 10, base + SILVER_HIST_WINDOW_MS + 61000);
+    assert('pushSilverMinuteSample purge les buckets plus vieux que la fenêtre', hist.length === 1 && hist[0].silver === 10, JSON.stringify(hist));
+  }
+  // buildSilverMinutePoints/buildSilverHourPoints : séries CONTIGUËS (les trous de farm doivent
+  // se VOIR comme des 0, jamais se compresser), lignes RPC malformées ignorées sans exception.
+  function testBuildSilverPointsFillGapsWithZeros() {
+    const now = Date.now();
+    const nowMin = Math.floor(now / 60000) * 60000;
+    const pts = buildSilverMinutePoints([{ t: nowMin, silver: 300 }, { t: nowMin - 5 * 60000, silver: 120 }], now);
+    assert('buildSilverMinutePoints retourne exactement 60 points', pts.length === SILVER_HIST_SESSION_MINUTES, `len=${pts.length}`);
+    assert('buildSilverMinutePoints place la minute courante en dernier', pts[pts.length - 1].value === 300, JSON.stringify(pts.slice(-2)));
+    assert('buildSilverMinutePoints comble les trous avec des 0', pts.reduce((a, p) => a + p.value, 0) === 420 && pts[pts.length - 6].value === 120, `sum=${pts.reduce((a, p) => a + p.value, 0)}`);
+    const nowHour = Math.floor(now / 3600000) * 3600000;
+    const hp = buildSilverHourPoints([{ bucket: new Date(nowHour).toISOString(), gained: '500', spent: '20' }, { bucket: 'garbage', gained: 99 }], now);
+    assert('buildSilverHourPoints retourne exactement 24 points', hp.length === SILVER_HIST_DAY_HOURS, `len=${hp.length}`);
+    assert('buildSilverHourPoints ignore les lignes malformées et ne garde que gained', hp[hp.length - 1].value === 500 && hp.reduce((a, p) => a + p.value, 0) === 500, JSON.stringify(hp.slice(-2)));
+  }
+  // addSilver ne doit alimenter silverMinuteHistory QUE pour la catégorie 'loot' (même règle que
+  // silverRateBuffer/tokenSilverEarned : le revenu de trash, pas les gains ponctuels quête/boss).
+  function testAddSilverFeedsMinuteHistoryOnlyForLoot() {
+    const savedSilver = S.silver, savedEarned = S.silverEarned, savedToken = S.tokenSilverEarned;
+    const savedHist = silverMinuteHistory.map(b => ({ ...b }));
+    const savedRate = silverRateBuffer.map(s => ({ ...s }));
+    try {
+      const sumBefore = silverMinuteHistory.reduce((a, b) => a + b.silver, 0);
+      addSilver(7, 'quest', 'test hist');
+      assert("addSilver catégorie 'quest' n'alimente PAS silverMinuteHistory", silverMinuteHistory.reduce((a, b) => a + b.silver, 0) === sumBefore);
+      addSilver(7, 'loot', 'test hist');
+      assert("addSilver catégorie 'loot' alimente silverMinuteHistory", silverMinuteHistory.reduce((a, b) => a + b.silver, 0) === sumBefore + 7);
+    } finally {
+      S.silver = savedSilver; S.silverEarned = savedEarned; S.tokenSilverEarned = savedToken;
+      silverMinuteHistory.length = 0; savedHist.forEach(b => silverMinuteHistory.push(b));
+      silverRateBuffer.length = 0; savedRate.forEach(s => silverRateBuffer.push(s));
+    }
+  }
+  // ouverture/fermeture du panneau en mode HORS LIGNE (politique CLAUDE.md §11 : tout ce qui touche
+  // au réseau doit dégrader proprement) -- la branche hors ligne de loadSilverHistDayChart est
+  // synchrone (avant le moindre await), le message doit donc être déjà dans le DOM après le toggle.
+  function testSilverHistPanelOpensOfflineAndCloses() {
+    const savedOffline = isOffline;
+    try {
+      isOffline = true; // force le chemin hors ligne : la RPC ne doit jamais partir
+      const pill = document.getElementById('shRate');
+      assert('la pastille #shRate est câblée (classe clickable posée au chargement)', pill && pill.classList.contains('clickable'));
+      toggleSilverHistPanel();
+      const panel = document.getElementById('silverHistPanel');
+      assert("toggle : le panneau Historique de silver s'ouvre", !!panel);
+      assert('hors ligne : le graphique 24 h est remplacé par le message dédié, sans exception',
+        panel && panel.innerHTML.includes(i18next.t('backend:backend.silver_hist.offline')));
+      toggleSilverHistPanel();
+      assert('re-toggle : le panneau se referme', !document.getElementById('silverHistPanel'));
+    } finally {
+      isOffline = savedOffline;
+      const leftover = document.getElementById('silverHistPanel'); if (leftover) leftover.remove();
+    }
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -6644,6 +6713,10 @@
     testMinibossRpcCallsWrappedInPromiseResolve();
     testMinibossActivityTabWiredCorrectly();
     testCraftMiniBossParcheminNeedsFiveBooks();
+    testPushSilverMinuteSampleBucketsAndPrunes();
+    testBuildSilverPointsFillGapsWithZeros();
+    testAddSilverFeedsMinuteHistoryOnlyForLoot();
+    testSilverHistPanelOpensOfflineAndCloses();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
