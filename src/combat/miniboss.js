@@ -656,8 +656,26 @@ async function endMiniBossFight(win) {
       marbleHtml = `<div class="brRewards admHint" style="color:var(--gold)">✨ ${i18next.t('combat:combat.miniboss.marble_bonus')}</div>`;
     }
     logToDiscord('📜 Mini Boss', `**${myPseudo||'Joueur'}** vainc ${i18next.t('combat:combat.miniboss.creature_name')} (${minibossState.isSummoner?'invocateur':'participant'}, ${n} joueur(s)) — +${fmt(reward)} 🪙`, 0x9b7fd6);
-    rewardsHtml = `<div class="minibossRewardMath">${fmt(base)} × ${minibossState.isSummoner?MINIBOSS_SUMMONER_MULT:MINIBOSS_JOINER_MULT} × ${minibossGroupBonusMult(n)} = <b>${fmt(reward)}</b> 🪙</div>` +
-      `<div class="brRewards">+${caphrasQty} × ${tr(CAPHRAS_NAME)} · +${fragQty} × ${tr('Fragment de mémoire')}</div>${marbleHtml}` + minibossBonusLadderHtml(n);
+    // 2 cartes côte à côte (mockup : .splitGrid summonerCard/joinerCard) : TA récompense (rôle réel,
+    // loot réel) + une carte comparative pour l'AUTRE rôle (multiplicateur + silver seulement, pas
+    // de loot inventé -- on ne connaît pas les tirages de l'autre joueur). Rend visible "l'invocateur
+    // gagne plus" même quand on joue solo/en tant que participant.
+    const groupBonus = minibossGroupBonusMult(n);
+    const myMult = minibossState.isSummoner ? MINIBOSS_SUMMONER_MULT : MINIBOSS_JOINER_MULT;
+    const otherIsSummoner = !minibossState.isSummoner;
+    const otherMult = otherIsSummoner ? MINIBOSS_SUMMONER_MULT : MINIBOSS_JOINER_MULT;
+    const otherReward = Math.round(base * otherMult * groupBonus);
+    const myCard = `<div class="minibossSplitCard ${minibossState.isSummoner?'summoner':'joiner'} mine">` +
+      `<div class="minibossSplitRole">${minibossState.isSummoner?'👑 '+i18next.t('combat:combat.miniboss.role_summoner'):i18next.t('combat:combat.miniboss.role_joiner')} <span class="minibossSplitYou">(${i18next.t('combat:combat.miniboss.you_label')})</span></div>` +
+      `<div class="minibossRewardMath">${fmt(base)} × ${myMult} × ${groupBonus} = <b>${fmt(reward)}</b> 🪙</div>` +
+      `<div class="brRewards">+${caphrasQty} × ${tr(CAPHRAS_NAME)} · +${fragQty} × ${tr('Fragment de mémoire')}</div>${marbleHtml}</div>`;
+    const otherCard = `<div class="minibossSplitCard ${otherIsSummoner?'summoner':'joiner'}">` +
+      `<div class="minibossSplitRole">${otherIsSummoner?'👑 '+i18next.t('combat:combat.miniboss.role_summoner'):i18next.t('combat:combat.miniboss.role_joiner')}</div>` +
+      `<div class="minibossRewardMath">${fmt(base)} × ${otherMult} × ${groupBonus} = <b>${fmt(otherReward)}</b> 🪙</div>` +
+      `<div class="minibossSplitHint">${i18next.t('combat:combat.miniboss.other_role_hint')}</div></div>`;
+    // invocateur à gauche, participant à droite, quel que soit mon rôle (ordre stable comme la maquette)
+    const splitHtml = `<div class="minibossSplitGrid">${minibossState.isSummoner?myCard+otherCard:otherCard+myCard}</div>`;
+    rewardsHtml = splitHtml + minibossBonusLadderHtml(n);
     minibossRepCounters().runsClean++;
     refreshStatsOnly(); hud();
     if (sb) Promise.resolve(sb.rpc('miniboss_claim', { p_session_id: null })).catch(() => {}); // voir note Promise.resolve dans startMiniBossFight
@@ -674,9 +692,9 @@ async function endMiniBossFight(win) {
   // le premier portage n'affichait ni la durée/participants ni le rôle appliqué.
   const durSec = Math.max(0, Math.round((performance.now() - (minibossState.startedAt||performance.now()))/1000));
   const subHtml = win ? `<div class="minibossResultSub">${i18next.t('combat:combat.miniboss.result_sub', { n, time: minibossFmtDuration(durSec) })}</div>` : '';
-  const roleHtml = win ? `<div class="minibossResultRole ${minibossState.isSummoner?'summoner':'joiner'}">${minibossState.isSummoner?'👑 '+i18next.t('combat:combat.miniboss.role_summoner'):i18next.t('combat:combat.miniboss.role_joiner')}</div>` : '';
-  $('minibossResult').innerHTML = `<div class="brTitle ${win?'win':''}">${win?i18next.t('combat:combat.miniboss.victory_title'):i18next.t('combat:combat.boss.fight_left_title')}</div>${subHtml}${roleHtml}${rewardsHtml}` +
-    `<button id="minibossCloseBtn">🚪 ${i18next.t('combat:combat.boss.leave_button')}</button>`;
+  // rôle désormais porté par les cartes du split (minibossSplitRole) -- plus de ligne rôle séparée.
+  $('minibossResult').innerHTML = `<div class="brTitle ${win?'win':''}">${win?i18next.t('combat:combat.miniboss.victory_title'):i18next.t('combat:combat.boss.fight_left_title')}</div>${subHtml}${rewardsHtml}` +
+    `<button id="minibossCloseBtn">${i18next.t('combat:combat.boss.leave_button')}</button>`;
   $('minibossResult').classList.add('show');
   $a('minibossCloseBtn').onclick = () => { $('minibossResult').classList.remove('show'); currentActivity='miniboss'; $('minibossRoom').classList.remove('open'); setFarmViewVisible(true); renderActivityTabs(); openMiniBossLobby(); };
 }
