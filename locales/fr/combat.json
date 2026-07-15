@@ -75,6 +75,7 @@
   "combat.miniboss.role_joiner": "Participant",
   "combat.miniboss.roster_damage": "{{pct}}% dégâts",
   "combat.miniboss.result_sub": "Serviteur du Grimoire vaincu · {{n}} participant(s) · {{time}}",
+  "combat.miniboss.other_role_hint": "à titre indicatif (loot propre à chaque joueur)",
   "combat.miniboss.chat_empty": "Aucun message pour l'instant.",
   "combat.ai_mode.balanced_title": "IA équilibrée : alterne attaque et prudence selon la situation",
   "combat.ai_mode.defensive_title": "IA défensive : esquive et soigne en priorité, quitte à moins attaquer",
