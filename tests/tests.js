@@ -6532,6 +6532,33 @@
     assert('cat sh/kpm : ligne sans colonnes _week -> 0, pas d\'exception', cats.sh.val({}) === 0 && cats.kpm.val({}) === 0);
   }
 
+  // ---------- Rattrapage hors-ligne au taux serveur (V455) ----------
+  // computeOfflineCatchupSilver/Loot doivent préférer data.serverRates (player_stats, colonnes
+  // "meilleure heure pleine" possédées par le serveur, attachées par loadCloudSave) au record
+  // local S.bestSilverPerHour/bestKpm -- PRÉSENT (même à 0) le taux serveur fait foi ; ABSENT
+  // (lecture réseau échouée), repli sur le record local (comportement historique, couvert par
+  // testComputeOfflineCatchupSilverCapsAndThresholds qui ne passe jamais de serverRates).
+  function testOfflineCatchupPrefersServerRatesOverLocalRecord() {
+    if (typeof computeOfflineCatchupSilver !== 'function') return;
+    const twoHoursAgo = new Date(Date.now() - 2*3600*1000).toISOString();
+    // taux serveur présent : il fait foi, le record local gonflé est ignoré
+    const gainServer = computeOfflineCatchupSilver({ savedAt: twoHoursAgo, S:{ bestSilverPerHour: 2052326 }, serverRates:{ silverPerHour: 1000, kpm: 0 } });
+    assert('serverRates présent : payé au taux serveur, jamais au record local gonflé', Math.abs(gainServer - 2000) <= 2, `gain=${gainServer}`);
+    // taux serveur présent mais à 0 (aucune heure honnête enregistrée) : rien, même avec un record local
+    const gainZero = computeOfflineCatchupSilver({ savedAt: twoHoursAgo, S:{ bestSilverPerHour: 2052326 }, serverRates:{ silverPerHour: 0, kpm: 0 } });
+    assert('serverRates à 0 : aucun crédit, le record local ne compte plus', gainZero === 0, `gain=${gainZero}`);
+    // loot : même bascule sur serverRates.kpm
+    if (typeof computeOfflineCatchupLoot === 'function') {
+      const lootZero = computeOfflineCatchupLoot({ savedAt: twoHoursAgo, zoneIdx: 9, S:{ bestKpm: 300 }, serverRates:{ silverPerHour: 0, kpm: 0 } });
+      assert('loot : serverRates.kpm à 0 -> aucun loot malgré un bestKpm local', Array.isArray(lootZero) && lootZero.length === 0, JSON.stringify(lootZero));
+      const lootServer = computeOfflineCatchupLoot({ savedAt: twoHoursAgo, zoneIdx: 9, S:{ bestKpm: 0 }, serverRates:{ silverPerHour: 0, kpm: 60 } });
+      assert('loot : serverRates.kpm présent -> loot estimé même sans record local', Array.isArray(lootServer) && lootServer.length > 0, JSON.stringify(lootServer));
+    }
+    // repli : serverRates absent -> record local (comportement historique)
+    const gainFallback = computeOfflineCatchupSilver({ savedAt: twoHoursAgo, S:{ bestSilverPerHour: 3600 } });
+    assert('serverRates absent : repli sur le record local', Math.abs(gainFallback - 7200) <= 2, `gain=${gainFallback}`);
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -6877,6 +6904,7 @@
     testRateRecordsResetV454ZeroesLocalRecords();
     testSyncPlayerStatsNoLongerPushesServerOwnedRateColumns();
     testLb2RateCatsRankByWeekAndShowBothValues();
+    testOfflineCatchupPrefersServerRatesOverLocalRecord();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {
