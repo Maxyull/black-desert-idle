@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V452', d:'16/07/2026 00:10', name:{fr:'Farm en arrière-plan au vrai rythme + records débloqués', en:'Background farming at full speed + records unfrozen'}, fr:[
+      {t:'fix', sub:'gameplay', tx:'Le farm en arrière-plan tourne enfin au vrai rythme. Le navigateur ne réveille le jeu qu\'une fois par minute quand l\'onglet est caché depuis plus de 5 minutes, et le jeu ne simulait alors que 2 secondes sur 60 — soit ~1/30 du rythme normal (le fameux "bloqué à 500 silver/min"). Le temps écoulé est désormais rattrapé en entier à chaque réveil : onglet caché ou non, tu farmes au même rythme.'},
+      {t:'fix', sub:'gameplay', tx:'Records silver/h, kills/min et XP/h débloqués : le garde-fou anti-pic rejetait tout taux dépassant ton record de plus de 30% — si ton vrai rythme avait beaucoup progressé (nouveau stuff, rééquilibrage de loot), chaque mesure était rejetée comme un "pic" et le record restait figé pour toujours. Un rythme soutenu débloque maintenant le record ; un pic isolé (grosse vente ponctuelle) reste ignoré comme avant.'},
+    ], en:[
+      {t:'fix', sub:'gameplay', tx:'Background farming finally runs at full speed. The browser only wakes the game once per minute when the tab has been hidden for over 5 minutes, and the game then only simulated 2 seconds out of 60 — about 1/30th of the normal rate (the infamous "stuck at 500 silver/min"). Elapsed time is now fully caught up on every wake-up: hidden tab or not, you farm at the same rate.'},
+      {t:'fix', sub:'gameplay', tx:'Silver/h, kills/min and XP/h records unfrozen: the anti-spike guard rejected any rate exceeding your record by more than 30% — if your real pace had improved a lot (new gear, loot rebalance), every measurement was rejected as a "spike" and the record stayed frozen forever. A sustained pace now unlocks the record; an isolated spike (one-off big sale) is still ignored as before.'},
+    ] },
   { v:'V451', d:'15/07/2026 23:30', name:{fr:'Historique de silver : un graphique au clic sur silver/min', en:'Silver history: a chart when clicking silver/min'}, fr:[
       {t:'new', sub:'interface', tx:'La pastille "silver/min" de la barre du haut est désormais cliquable : un petit panneau s\'ouvre avec ta moyenne de session, ton record à vie, un graphique minute par minute des 60 dernières minutes de farm (revenu du trash) et l\'historique du silver gagné heure par heure sur les dernières 24 h.'},
     ], en:[
