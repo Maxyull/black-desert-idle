@@ -28,7 +28,7 @@ function marketSb(){ const w=marketHostWin(); return w && typeof w.getSbClient==
 /** @returns {object|null} utilisateur Supabase courant, récupéré via le jeu hôte. */
 function marketUser(){ const w=marketHostWin(); return w && typeof w.getCurrentUserForSync==='function' ? w.getCurrentUserForSync() : null; }
 /** @returns {string} pseudo affiché du joueur courant (repli 'Joueur' si indisponible). */
-function marketPseudo(){ const w=marketHostWin(); return w && typeof w.getMyPseudoForSync==='function' ? w.getMyPseudoForSync() : 'Joueur'; }
+function marketPseudo(){ const w=marketHostWin(); return w && typeof w.getMyPseudoForSync==='function' ? w.getMyPseudoForSync() : i18next.t('companions:companions.market.default_pseudo'); }
 /** @returns {boolean} true si le compte courant est un invité (Marché inaccessible aux invités). */
 function marketIsGuest(){ const w=marketHostWin(); return w && typeof w.isGuest==='function' ? w.isGuest() : false; }
 /** @returns {boolean} true si le Marché peut être utilisé (Supabase + user dispo, pas invité). */
@@ -50,7 +50,7 @@ function petFromSnapshot(snap){
     hunger:100, terrain:false, tier:snap.tier||1, tierXp:0, tierMult:snap.tierMult||rollTierMult(snap.tier||1) };
 }
 /** @param {*} e - erreur capturée (fetch/RPC Supabase). @returns {string} message d'erreur affichable, repli générique si absent. */
-function marketMkErr(e){ return (e && e.message) || 'Erreur réseau'; }
+function marketMkErr(e){ return (e && e.message) || i18next.t('companions:companions.common.network_error'); }
 
 // ═══ NAVIGATION ═════════════════════════════════════════════════════════════════════════════
 /** Rend la nav des sous-onglets Marché (browse/mine/history) et délègue au rendu du sous-onglet actif ; affiche un message de blocage si le Marché n'est pas accessible (invité/déconnecté). */
@@ -58,7 +58,7 @@ function renderMarketTab(){
   const nav = document.getElementById('market-nav');
   if(nav){
     nav.innerHTML = ['browse','mine','history'].map(t=>{
-      const lbl = t==='browse'?'🛒 Marché':t==='mine'?'📜 Mes contrats':'📚 Historique';
+      const lbl = t==='browse'?i18next.t('companions:companions.market.tab_browse'):t==='mine'?i18next.t('companions:companions.market.tab_mine'):i18next.t('companions:companions.market.tab_history');
       return `<button class="schip ${marketSubTab===t?'on':''}" onclick="setMarketSubTab('${t}')">${lbl}</button>`;
     }).join('');
   }
@@ -66,7 +66,7 @@ function renderMarketTab(){
   if(!body) return;
   if(!marketReady()){
     body.innerHTML = `<div style="padding:24px;text-align:center;font-size:12px;color:var(--cream3)">
-      ${marketIsGuest()?'Le Marché nécessite un compte (pas disponible en invité).':'Connecte-toi pour accéder au Marché.'}
+      ${marketIsGuest()?i18next.t('companions:companions.market.guest_blocked'):i18next.t('companions:companions.market.login_required')}
     </div>`;
     return;
   }
@@ -106,8 +106,8 @@ function paintMarketChips(root){
 async function renderMarketBrowse(){
   const body = document.getElementById('market-body');
   body.innerHTML = `<div style="padding:16px">
-    <button class="btn btn-gold" style="margin-bottom:12px" onclick="openCreateOfferModal()">➕ Proposer un de mes familiers</button>
-    <div id="market-browse-list" style="display:flex;flex-direction:column;gap:8px;font-size:11px;color:var(--cream3)">Chargement…</div>
+    <button class="btn btn-gold" style="margin-bottom:12px" onclick="openCreateOfferModal()">${i18next.t('companions:companions.market.propose_btn')}</button>
+    <div id="market-browse-list" style="display:flex;flex-direction:column;gap:8px;font-size:11px;color:var(--cream3)">${i18next.t('companions:companions.common.loading')}</div>
   </div>`;
   try{
     const sb = marketSb(); const me = marketUser();
@@ -117,18 +117,18 @@ async function renderMarketBrowse(){
   }catch(e){ marketOffers=[]; }
   const list = document.getElementById('market-browse-list');
   if(!list) return;
-  if(!marketOffers.length){ list.innerHTML = `<div style="padding:12px;text-align:center">Aucune offre ouverte pour l'instant.</div>`; return; }
+  if(!marketOffers.length){ list.innerHTML = `<div style="padding:12px;text-align:center">${i18next.t('companions:companions.market.no_open_offers')}</div>`; return; }
   list.innerHTML = marketOffers.map(o=>{
     const snap = o.pet_snapshot;
-    const wants = [o.accepts_pets?`${o.pet_qty} compagnon${o.pet_qty>1?'s':''}`:null, o.accepts_silver?`≥ ${(o.min_silver||0).toLocaleString('fr-FR')} Silver`:null].filter(Boolean).join(' et/ou ');
+    const wants = [o.accepts_pets?i18next.t('companions:companions.market.wants_pets', {count:o.pet_qty}):null, o.accepts_silver?`≥ ${(o.min_silver||0).toLocaleString(NUM_LOCALE)} Silver`:null].filter(Boolean).join(i18next.t('companions:companions.market.and_or'));
     return `<div style="display:flex;align-items:center;gap:12px;background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:10px 12px">
       ${petChipHtml(snap)}
       <div style="flex:1;font-size:10.5px;color:var(--cream2)">
-        <div>Proposé par <strong style="color:var(--gold)">${escapeMarket(o.owner_pseudo)}</strong></div>
-        <div style="color:var(--cream3);margin-top:2px">Demande : ${wants||'—'}</div>
-        <div style="color:var(--cream3);font-size:9px;margin-top:2px">Expire ${new Date(o.expires_at).toLocaleDateString('fr-FR')}</div>
+        <div>${i18next.t('companions:companions.market.offered_by_html', {name:escapeMarket(o.owner_pseudo)})}</div>
+        <div style="color:var(--cream3);margin-top:2px">${i18next.t('companions:companions.market.asking', {wants:wants||'—'})}</div>
+        <div style="color:var(--cream3);font-size:9px;margin-top:2px">${i18next.t('companions:companions.market.expires', {date:new Date(o.expires_at).toLocaleDateString(NUM_LOCALE)})}</div>
       </div>
-      <button class="btn btn-gold" style="font-size:10px" onclick="openCounterModal(${o.id})">Faire une offre</button>
+      <button class="btn btn-gold" style="font-size:10px" onclick="openCounterModal(${o.id})">${i18next.t('companions:companions.market.make_offer_btn')}</button>
     </div>`;
   }).join('');
   paintMarketChips(list);
@@ -138,7 +138,7 @@ async function renderMarketBrowse(){
 /** Charge et affiche mes offres publiées (avec contre-offres pendantes reçues) et mes contre-offres envoyées ailleurs. */
 async function renderMarketMine(){
   const body = document.getElementById('market-body');
-  body.innerHTML = `<div style="padding:16px;font-size:11px;color:var(--cream3)" id="market-mine-body">Chargement…</div>`;
+  body.innerHTML = `<div style="padding:16px;font-size:11px;color:var(--cream3)" id="market-mine-body">${i18next.t('companions:companions.common.loading')}</div>`;
   const el = document.getElementById('market-mine-body');
   try{
     const sb = marketSb(); const me = marketUser();
@@ -154,7 +154,7 @@ async function renderMarketMine(){
       const { data:cs } = await sb.from('pet_trade_counters').select('id, offer_id, from_pseudo, pets, silver').in('offer_id', openIds).eq('status','pending');
       (cs||[]).forEach(c=>{ (marketCountersByOffer[c.offer_id] = marketCountersByOffer[c.offer_id]||[]).push(c); });
     }
-  }catch(e){ el.innerHTML = `<div>Erreur : ${escapeMarket(marketMkErr(e))}</div>`; return; }
+  }catch(e){ el.innerHTML = `<div>${i18next.t('companions:companions.common.error_with_message', {message:escapeMarket(marketMkErr(e))})}</div>`; return; }
 
   const offersHtml = marketMyOffers.length ? marketMyOffers.map(o=>{
     const snap = o.pet_snapshot;
@@ -163,57 +163,58 @@ async function renderMarketMine(){
       <div style="display:flex;align-items:center;gap:12px">
         ${petChipHtml(snap)}
         <div style="flex:1;font-size:10.5px;color:var(--cream2)">
-          <div>Statut : <strong style="color:${o.status==='open'?'var(--green2)':'var(--cream3)'}">${marketStatusLabel(o.status)}</strong></div>
+          <div>${i18next.t('companions:companions.market.status_html', {color:o.status==='open'?'var(--green2)':'var(--cream3)', status:marketStatusLabel(o.status)})}</div>
         </div>
-        ${o.status==='open'?`<button class="btn btn-red" style="font-size:9px" onclick="cancelMyOffer(${o.id})">Retirer</button>`:''}
+        ${o.status==='open'?`<button class="btn btn-red" style="font-size:9px" onclick="cancelMyOffer(${o.id})">${i18next.t('companions:companions.market.withdraw_btn')}</button>`:''}
       </div>
       ${counters.length?`<div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
         ${counters.map(c=>`<div style="display:flex;align-items:center;gap:10px;background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:6px 9px">
           <div style="flex:1;font-size:10px;color:var(--cream2)">
-            <strong style="color:var(--gold)">${escapeMarket(c.from_pseudo)}</strong> propose :
-            ${(c.pets||[]).map(p=>p.name).join(', ')||''}${c.silver>0?` ${(c.pets||[]).length?'+':''} ${c.silver.toLocaleString('fr-FR')} Silver`:''}
+            ${i18next.t('companions:companions.market.counter_from_html', {name:escapeMarket(c.from_pseudo)})}
+            ${(c.pets||[]).map(p=>p.name).join(', ')||''}${c.silver>0?` ${(c.pets||[]).length?'+':''} ${c.silver.toLocaleString(NUM_LOCALE)} Silver`:''}
           </div>
-          <button class="btn btn-gold" style="font-size:9px" onclick="acceptMarketCounter(${c.id})">✓ Accepter</button>
-          <button class="btn btn-ghost" style="font-size:9px" onclick="declineMarketCounter(${c.id})">✕ Refuser</button>
+          <button class="btn btn-gold" style="font-size:9px" onclick="acceptMarketCounter(${c.id})">${i18next.t('companions:companions.market.accept_btn')}</button>
+          <button class="btn btn-ghost" style="font-size:9px" onclick="declineMarketCounter(${c.id})">${i18next.t('companions:companions.market.decline_btn')}</button>
         </div>`).join('')}
       </div>`:''}
     </div>`;
-  }).join('') : `<div style="color:var(--cream3);padding:8px 0">Aucune offre créée.</div>`;
+  }).join('') : `<div style="color:var(--cream3);padding:8px 0">${i18next.t('companions:companions.market.no_offers_created')}</div>`;
 
   const countersHtml = marketMyCounters.length ? marketMyCounters.map(c=>`
     <div style="display:flex;align-items:center;gap:10px;background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;margin-bottom:6px">
       <div style="flex:1;font-size:10.5px;color:var(--cream2)">
-        Contre-offre sur le contrat #${c.offer_id} — statut : <strong style="color:${c.status==='pending'?'var(--gold)':c.status==='accepted'?'var(--green2)':'var(--cream3)'}">${marketStatusLabel(c.status)}</strong>
+        ${i18next.t('companions:companions.market.counter_on_contract_html', {id:c.offer_id, color:c.status==='pending'?'var(--gold)':c.status==='accepted'?'var(--green2)':'var(--cream3)', status:marketStatusLabel(c.status)})}
       </div>
-      ${c.status==='pending'?`<button class="btn btn-ghost" style="font-size:9px" onclick="withdrawMyCounter(${c.id})">Retirer</button>`:''}
-    </div>`).join('') : `<div style="color:var(--cream3);padding:8px 0">Aucune contre-offre envoyée.</div>`;
+      ${c.status==='pending'?`<button class="btn btn-ghost" style="font-size:9px" onclick="withdrawMyCounter(${c.id})">${i18next.t('companions:companions.market.withdraw_btn')}</button>`:''}
+    </div>`).join('') : `<div style="color:var(--cream3);padding:8px 0">${i18next.t('companions:companions.market.no_counters_sent')}</div>`;
 
   el.innerHTML = `
-    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">Mes offres</div>
+    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">${i18next.t('companions:companions.market.my_offers_title')}</div>
     ${offersHtml}
-    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin:16px 0 8px">Mes contre-offres envoyées</div>
+    <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin:16px 0 8px">${i18next.t('companions:companions.market.my_counters_title')}</div>
     ${countersHtml}
   `;
   paintMarketChips(el);
 }
 /** @param {string} s - code de statut brut (offre ou contre-offre). @returns {string} libellé FR affichable, ou le code tel quel si inconnu. */
 function marketStatusLabel(s){
-  return {open:'Ouvert',closed:'Conclu',cancelled:'Retiré',expired:'Expiré',pending:'En attente',accepted:'Acceptée',declined:'Refusée',withdrawn:'Retirée',invalidated:'Invalidée'}[s]||s;
+  const key = 'companions.market.status_'+s;
+  return i18next.exists(COMPANIONS_NS_PREFIX+key) ? i18next.t(COMPANIONS_NS_PREFIX+key) : s;
 }
 
 // ═══ HISTORIQUE ═════════════════════════════════════════════════════════════════════════════════
 /** Charge et affiche l'historique des échanges conclus impliquant le joueur (vendeur ou acheteur), avec ce qui a été cédé/reçu. */
 async function renderMarketHistory(){
   const body = document.getElementById('market-body');
-  body.innerHTML = `<div style="padding:16px;font-size:11px;color:var(--cream3)" id="market-hist-body">Chargement…</div>`;
+  body.innerHTML = `<div style="padding:16px;font-size:11px;color:var(--cream3)" id="market-hist-body">${i18next.t('companions:companions.common.loading')}</div>`;
   const el = document.getElementById('market-hist-body');
   try{
     const sb = marketSb(); const me = marketUser();
     const { data, error } = await sb.from('pet_trade_history').select('seller_user_id, seller_gave, buyer_gave, completed_at').or(`seller_user_id.eq.${me.id},buyer_user_id.eq.${me.id}`).order('completed_at',{ascending:false}).limit(50);
     if(error) throw error;
     marketHistory = data||[];
-  }catch(e){ el.innerHTML = `<div>Erreur : ${escapeMarket(marketMkErr(e))}</div>`; return; }
-  if(!marketHistory.length){ el.innerHTML = `<div>Aucun échange conclu pour l'instant.</div>`; return; }
+  }catch(e){ el.innerHTML = `<div>${i18next.t('companions:companions.common.error_with_message', {message:escapeMarket(marketMkErr(e))})}</div>`; return; }
+  if(!marketHistory.length){ el.innerHTML = `<div>${i18next.t('companions:companions.market.no_history')}</div>`; return; }
   const me = marketUser();
   el.innerHTML = marketHistory.map(h=>{
     const iWasSeller = h.seller_user_id===me.id;
@@ -221,9 +222,9 @@ async function renderMarketHistory(){
     const got = iWasSeller ? (h.buyer_gave.pets||[]) : [h.seller_gave];
     const silverPart = iWasSeller ? 0 : (h.buyer_gave.silver||0);
     return `<div style="background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:10px 12px;margin-bottom:8px;font-size:10.5px;color:var(--cream2)">
-      <div style="color:var(--cream3);font-size:9px;margin-bottom:4px">${new Date(h.completed_at).toLocaleString('fr-FR')}</div>
-      <div>Cédé : ${gave.map(p=>p.name).join(', ')||'—'}</div>
-      <div>Reçu : ${got.map(p=>p.name).join(', ')||'—'}${silverPart>0?` + ${silverPart.toLocaleString('fr-FR')} Silver`:''}</div>
+      <div style="color:var(--cream3);font-size:9px;margin-bottom:4px">${new Date(h.completed_at).toLocaleString(NUM_LOCALE)}</div>
+      <div>${i18next.t('companions:companions.market.gave', {list:gave.map(p=>p.name).join(', ')||'—'})}</div>
+      <div>${i18next.t('companions:companions.market.got', {list:got.map(p=>p.name).join(', ')||'—'})}${silverPart>0?` + ${silverPart.toLocaleString(NUM_LOCALE)} Silver`:''}</div>
     </div>`;
   }).join('');
 }
@@ -241,7 +242,7 @@ function openCreateOfferModal(){
   marketCreatePetUid = null; marketCreateAcceptsPets = true; marketCreateAcceptsSilver = false;
   const offered = alreadyOfferedUids();
   const eligible = PETS.filter(p=>!offered.has(p.uid));
-  document.getElementById('market-modal-title').textContent = '➕ Nouvelle offre d\'échange';
+  document.getElementById('market-modal-title').textContent = i18next.t('companions:companions.market.create_title');
   // Sélecteur de familier EN DEHORS du formulaire des conditions (2026-07-13, demande explicite)
   // -- déjà une grille cliquable (pas un <select> natif), mais mêlée aux champs "conditions"
   // en dessous dans le même bloc visuel. Isolé ici dans son propre panneau bordé (fond --s2,
@@ -249,23 +250,23 @@ function openCreateOfferModal(){
   // lise comme une étape distincte (choisir QUI) avant le formulaire (choisir QUOI en échange).
   document.getElementById('market-modal-body').innerHTML = `
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:10px;margin-bottom:14px">
-      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">1. Choisis le familier à proposer</div>
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">${i18next.t('companions:companions.market.step1')}</div>
       <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;max-height:220px;overflow-y:auto" id="market-create-pet-list">
         ${eligible.length?eligible.map(p=>`<div class="market-pick" data-uid="${p.uid}" onclick="pickCreatePet('${p.uid}')" style="cursor:pointer;border:1px solid var(--border);border-radius:8px;padding:6px">
           ${petChipHtml(petSnapshotOf(p))}
-        </div>`).join(''):`<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">Tous tes familiers sont déjà en vente.</div>`}
+        </div>`).join(''):`<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">${i18next.t('companions:companions.market.all_on_sale')}</div>`}
       </div>
     </div>
     <div style="border-top:1px solid var(--border);padding-top:12px">
-      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">2. Conditions de l'offre</div>
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">${i18next.t('companions:companions.market.step2')}</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:11px;color:var(--cream2)">
-        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="market-accepts-pets" checked onchange="marketCreateAcceptsPets=this.checked"> Accepter en échange d'autres compagnons</label>
-        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="market-accepts-silver" onchange="marketCreateAcceptsSilver=this.checked"> Accepter en échange de Silver</label>
-        <label style="display:flex;align-items:center;gap:8px">Nombre de compagnons demandés : <input type="number" id="market-pet-qty" min="1" max="5" value="1" style="width:56px"></label>
-        <label style="display:flex;align-items:center;gap:8px">Silver minimum : <input type="number" id="market-min-silver" min="0" value="0" style="width:100px"></label>
+        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="market-accepts-pets" checked onchange="marketCreateAcceptsPets=this.checked"> ${i18next.t('companions:companions.market.accept_pets_label')}</label>
+        <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="market-accepts-silver" onchange="marketCreateAcceptsSilver=this.checked"> ${i18next.t('companions:companions.market.accept_silver_label')}</label>
+        <label style="display:flex;align-items:center;gap:8px">${i18next.t('companions:companions.market.pet_qty_label')} <input type="number" id="market-pet-qty" min="1" max="5" value="1" style="width:56px"></label>
+        <label style="display:flex;align-items:center;gap:8px">${i18next.t('companions:companions.market.min_silver_label')} <input type="number" id="market-min-silver" min="0" value="0" style="width:100px"></label>
       </div>
     </div>
-    <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="submitCreateOffer()">Publier l'offre</button>
+    <button class="btn btn-gold" style="width:100%;margin-top:14px" onclick="submitCreateOffer()">${i18next.t('companions:companions.market.publish_btn')}</button>
   `;
   paintMarketChips(document.getElementById('market-create-pet-list'));
   document.getElementById('market-modal').classList.add('open');
@@ -284,7 +285,7 @@ function pickCreatePet(uid){
 /** @param {number} petId - id local du pet à pré-sélectionner (voir commentaire ci-dessus pour le contexte). */
 function quickAddToMarket(petId){
   const pet = PETS.find(p=>p.id===petId); if(!pet) return;
-  if(alreadyOfferedUids().has(pet.uid)){ toast('❌','Déjà en vente.'); return; }
+  if(alreadyOfferedUids().has(pet.uid)){ toast('❌',i18next.t('companions:companions.market.already_on_sale')); return; }
   ST(11);
   setMarketSubTab('browse');
   openCreateOfferModal();
@@ -294,12 +295,12 @@ function quickAddToMarket(petId){
 }
 /** Valide le formulaire de création d'offre et publie l'offre via la RPC `create_pet_trade_offer`. */
 async function submitCreateOffer(){
-  if(!marketCreatePetUid){ toast('❌','Choisis un familier à proposer.'); return; }
+  if(!marketCreatePetUid){ toast('❌',i18next.t('companions:companions.market.choose_pet')); return; }
   const pet = PETS.find(p=>p.uid===marketCreatePetUid);
-  if(!pet){ toast('❌','Familier introuvable.'); return; }
+  if(!pet){ toast('❌',i18next.t('companions:companions.market.pet_not_found')); return; }
   const qty = Math.max(1, Math.min(5, +document.getElementById('market-pet-qty').value||1));
   const minSilver = Math.max(0, +document.getElementById('market-min-silver').value||0);
-  if(!marketCreateAcceptsPets && !marketCreateAcceptsSilver){ toast('❌','Accepte au moins compagnons ou Silver.'); return; }
+  if(!marketCreateAcceptsPets && !marketCreateAcceptsSilver){ toast('❌',i18next.t('companions:companions.market.accept_something')); return; }
   try{
     const sb = marketSb();
     const everOfSameSpecies = PETS.filter(p=>p.cat.name===pet.cat.name).length>0 ? [pet.cat.name] : [];
@@ -309,15 +310,15 @@ async function submitCreateOffer(){
       p_owner_has_ever: everOfSameSpecies, p_owner_pseudo: marketPseudo(),
     });
     if(error) throw error;
-    toast('🛒','Offre publiée !');
+    toast('🛒',i18next.t('companions:companions.market.published_toast'));
     document.getElementById('market-modal').classList.remove('open');
     setMarketSubTab('mine');
   }catch(e){ toast('❌', marketMkErr(e)); }
 }
 /** Retire une de mes offres ouvertes après confirmation (invalide toute contre-offre en attente). @param {number} offerId */
 async function cancelMyOffer(offerId){
-  if(!confirm('Retirer ce contrat ? Toute contre-offre en attente sera invalidée.')) return;
-  try{ const sb=marketSb(); const { error } = await sb.rpc('cancel_pet_trade_offer', { p_offer_id: offerId }); if(error) throw error; toast('🗑️','Contrat retiré.'); renderMarketMine(); }
+  if(!confirm(i18next.t('companions:companions.market.cancel_confirm'))) return;
+  try{ const sb=marketSb(); const { error } = await sb.rpc('cancel_pet_trade_offer', { p_offer_id: offerId }); if(error) throw error; toast('🗑️',i18next.t('companions:companions.market.contract_withdrawn')); renderMarketMine(); }
   catch(e){ toast('❌', marketMkErr(e)); }
 }
 
@@ -339,17 +340,17 @@ async function openCounterModal(offerId){
   if(!o) return;
   marketCounterOfferId = offerId; marketCounterPetUids = new Set(); marketCounterIncludeEver = false;
   marketOpponentOwnedSpecies = null;
-  document.getElementById('market-modal-title').textContent = '🤝 Faire une offre';
+  document.getElementById('market-modal-title').textContent = i18next.t('companions:companions.market.counter_title');
   document.getElementById('market-modal-body').innerHTML = `
     <div style="margin-bottom:10px">${petChipHtml(o.pet_snapshot)}</div>
     ${o.accepts_pets?`
-    <div style="font-size:10.5px;color:var(--cream3);margin-bottom:6px">Choisis jusqu'à ${o.pet_qty} familier(s) à proposer :</div>
+    <div style="font-size:10.5px;color:var(--cream3);margin-bottom:6px">${i18next.t('companions:companions.market.choose_up_to', {count:o.pet_qty})}</div>
     <label style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cream3);margin-bottom:6px">
-      <input type="checkbox" id="market-counter-ever" onchange="marketCounterIncludeEver=this.checked;renderCounterPetList(${offerId})"> Inclure les compagnons déjà obtenus (ne compteront pas comme découverte)
+      <input type="checkbox" id="market-counter-ever" onchange="marketCounterIncludeEver=this.checked;renderCounterPetList(${offerId})"> ${i18next.t('companions:companions.market.include_owned_label')}
     </label>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:6px;max-height:200px;overflow-y:auto;margin-bottom:12px" id="market-counter-pet-list"></div>`:''}
-    ${o.accepts_silver?`<label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--cream2);margin-bottom:12px">Silver proposé (min ${(o.min_silver||0).toLocaleString('fr-FR')}) : <input type="number" id="market-counter-silver" min="0" value="${o.min_silver||0}" style="width:120px"></label>`:''}
-    <button class="btn btn-gold" style="width:100%" onclick="submitCounter(${offerId})">Envoyer l'offre</button>
+    ${o.accepts_silver?`<label style="display:flex;align-items:center;gap:8px;font-size:11px;color:var(--cream2);margin-bottom:12px">${i18next.t('companions:companions.market.silver_offered_label', {min:(o.min_silver||0).toLocaleString(NUM_LOCALE)})} <input type="number" id="market-counter-silver" min="0" value="${o.min_silver||0}" style="width:120px"></label>`:''}
+    <button class="btn btn-gold" style="width:100%" onclick="submitCounter(${offerId})">${i18next.t('companions:companions.market.send_btn')}</button>
   `;
   if(o.accepts_pets){
     renderCounterPetList(offerId);
@@ -372,17 +373,17 @@ function renderCounterPetList(offerId){
   list.innerHTML = eligible.map(p=>{
     const isNewForOpponent = marketOpponentOwnedSpecies && !marketOpponentOwnedSpecies.has(p.cat.name);
     return `<div class="market-pick" data-uid="${p.uid}" onclick="toggleCounterPet('${p.uid}',${offerId})" style="cursor:pointer;position:relative;border:1px solid ${marketCounterPetUids.has(p.uid)?'var(--gold)':'var(--border)'};border-radius:8px;padding:6px">
-    ${isNewForOpponent?`<span style="position:absolute;top:2px;right:2px;background:var(--green2);color:var(--bg);font-size:8px;font-weight:700;border-radius:3px;padding:1px 4px;z-index:1" title="Ce joueur ne possède pas encore cette espèce">🆕</span>`:''}
+    ${isNewForOpponent?`<span style="position:absolute;top:2px;right:2px;background:var(--green2);color:var(--bg);font-size:8px;font-weight:700;border-radius:3px;padding:1px 4px;z-index:1" title="${i18next.t('companions:companions.market.new_for_owner_title')}">🆕</span>`:''}
     ${petChipHtml(petSnapshotOf(p))}
   </div>`;
-  }).join('') || `<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">Aucun familier disponible.</div>`;
+  }).join('') || `<div style="grid-column:1/-1;color:var(--cream3);font-size:10.5px">${i18next.t('companions:companions.market.none_available')}</div>`;
   paintMarketChips(list);
 }
 /** Ajoute/retire un pet de la sélection de contre-offre, en respectant le quota `pet_qty` de l'offre. @param {string} uid @param {number} offerId */
 function toggleCounterPet(uid, offerId){
   const o = marketOffers.find(x=>x.id===offerId);
   if(marketCounterPetUids.has(uid)) marketCounterPetUids.delete(uid);
-  else { if(o && marketCounterPetUids.size>=o.pet_qty){ toast('❌',`Maximum ${o.pet_qty} familier(s).`); return; } marketCounterPetUids.add(uid); }
+  else { if(o && marketCounterPetUids.size>=o.pet_qty){ toast('❌',i18next.t('companions:companions.market.max_pets', {count:o.pet_qty})); return; } marketCounterPetUids.add(uid); }
   renderCounterPetList(offerId);
 }
 /** Valide et envoie la contre-offre (pets sélectionnés + silver) via la RPC `submit_pet_trade_counter`. @param {number} offerId */
@@ -391,34 +392,34 @@ async function submitCounter(offerId){
   const pets = Array.from(marketCounterPetUids).map(uid=>petSnapshotOf(PETS.find(p=>p.uid===uid))).filter(Boolean);
   const silverEl = document.getElementById('market-counter-silver');
   const silver = silverEl ? Math.max(0, +silverEl.value||0) : 0;
-  if(!pets.length && silver<=0){ toast('❌','Propose au moins un familier ou du Silver.'); return; }
+  if(!pets.length && silver<=0){ toast('❌',i18next.t('companions:companions.market.propose_something')); return; }
   try{
     const sb = marketSb();
     const { error } = await sb.rpc('submit_pet_trade_counter', { p_offer_id: offerId, p_pets: pets, p_silver: silver, p_from_pseudo: marketPseudo() });
     if(error) throw error;
-    toast('🤝','Offre envoyée !');
+    toast('🤝',i18next.t('companions:companions.market.offer_sent'));
     document.getElementById('market-modal').classList.remove('open');
     renderMarketBrowse();
   }catch(e){ toast('❌', marketMkErr(e)); }
 }
 /** Retire une contre-offre que j'ai envoyée, tant qu'elle est encore pending. @param {number} counterId */
 async function withdrawMyCounter(counterId){
-  try{ const sb=marketSb(); const { error } = await sb.rpc('withdraw_pet_trade_counter', { p_counter_id: counterId }); if(error) throw error; toast('🗑️','Contre-offre retirée.'); renderMarketMine(); }
+  try{ const sb=marketSb(); const { error } = await sb.rpc('withdraw_pet_trade_counter', { p_counter_id: counterId }); if(error) throw error; toast('🗑️',i18next.t('companions:companions.market.counter_withdrawn')); renderMarketMine(); }
   catch(e){ toast('❌', marketMkErr(e)); }
 }
 /** Refuse une contre-offre reçue sur une de mes offres. @param {number} counterId */
 async function declineMarketCounter(counterId){
-  try{ const sb=marketSb(); const { error } = await sb.rpc('decline_pet_trade_counter', { p_counter_id: counterId }); if(error) throw error; toast('✕','Contre-offre refusée.'); renderMarketMine(); updateMarketBadge(); }
+  try{ const sb=marketSb(); const { error } = await sb.rpc('decline_pet_trade_counter', { p_counter_id: counterId }); if(error) throw error; toast('✕',i18next.t('companions:companions.market.counter_declined')); renderMarketMine(); updateMarketBadge(); }
   catch(e){ toast('❌', marketMkErr(e)); }
 }
 /** Accepte une contre-offre après confirmation : conclut l'échange côté serveur (atomique) puis réclame la livraison locale. @param {number} counterId */
 async function acceptMarketCounter(counterId){
-  if(!confirm('Accepter cette offre ? L\'échange sera définitif.')) return;
+  if(!confirm(i18next.t('companions:companions.market.accept_confirm'))) return;
   try{
     const sb = marketSb();
     const { error } = await sb.rpc('accept_pet_trade_counter', { p_counter_id: counterId });
     if(error) throw error;
-    toast('✨','Échange conclu !');
+    toast('✨',i18next.t('companions:companions.market.trade_done'));
     await claimMarketDeliveries();
     updateMarketBadge();
     renderMarketMine();
@@ -449,7 +450,7 @@ async function claimMarketDeliveries(){
     }
     if(gained.length || data.some(d=>d.silver>0)){
       const silverGained = data.reduce((s,d)=>s+(d.silver||0),0);
-      toast('📦', `Livraison d'échange reçue : ${gained.join(', ')}${silverGained>0?` + ${silverGained.toLocaleString('fr-FR')} Silver`:''}`);
+      toast('📦', i18next.t('companions:companions.market.delivery_toast', {list:gained.join(', ')})+(silverGained>0?` + ${silverGained.toLocaleString(NUM_LOCALE)} Silver`:''));
       saveGame(); renderAll();
     }
   }catch(e){}

@@ -3,6 +3,9 @@
 // achievements les plus exigeants/risqués (affichés avec un tag distinct, voir renderAchievements).
 // N'ajoute PAS de nouvelle mécanique de jeu -- juste une catégorisation des achievements existants
 // les plus difficiles + 1 nouvel achievement (fusion_downgrade) qui récompense un vrai PARI perdu.
+// i18n (2026-07-16) : les champs name/desc ci-dessous sont le FR canonique de RÉFÉRENCE, mais
+// l'affichage passe par achName()/achDesc() (clés companions.achievements.<id>_name/_desc,
+// locales/{fr,en}/companions.json) -- modifier un libellé = modifier les JSON, pas ces champs.
 const ACHIEVEMENTS = [
   {id:'first_pet',    ico:'🥚', name:'Premier familier',      desc:'Éclos ton premier familier',                        reward:500,   check:()=>PETS.length>=1},
   {id:'collector_10',  ico:'📦', name:'Collectionneur',        desc:'Possède 10 familiers en même temps',                reward:2000,  check:()=>PETS.length>=10},
@@ -23,6 +26,11 @@ const ACHIEVEMENTS = [
   {id:'fusion_downgrade', ico:'🎰', name:'Pari perdu',          desc:'Fusionne un Légendaire/Ancestral et obtiens un résultat de rareté inférieure', reward:10000, check:()=>fusionLostHighRarityCount>=1, hard:true},
 ];
 
+/** @param {object} a - entrée ACHIEVEMENTS. @returns {string} nom traduit (clé companions.achievements.<id>_name). */
+function achName(a){ return i18next.t(COMPANIONS_NS_PREFIX+'companions.achievements.'+a.id+'_name'); }
+/** @param {object} a - entrée ACHIEVEMENTS. @returns {string} description traduite (clé companions.achievements.<id>_desc). */
+function achDesc(a){ return i18next.t(COMPANIONS_NS_PREFIX+'companions.achievements.'+a.id+'_desc'); }
+
 /** Vérifie tous les ACHIEVEMENTS non encore complétés, débloque ceux dont check() passe (verse la récompense en SILVER), affiche un toast/log et rafraîchit le badge + le panneau s'il est ouvert. */
 function checkAchievements(){
   let newlyCompleted=[];
@@ -36,8 +44,8 @@ function checkAchievements(){
   if(newlyCompleted.length){
     updateSilverDisplay();
     newlyCompleted.forEach(a=>{
-      toast('🏆', `Achievement débloqué : ${a.ico} ${a.name} (+${a.reward.toLocaleString('fr-FR')} Silver)`);
-      addGameLog(`🏆 <span style="color:var(--gold2)">Achievement : ${a.name}</span> — +${a.reward.toLocaleString('fr-FR')} Silver`);
+      toast('🏆', i18next.t('companions:companions.achievements.unlocked_toast', {icon:a.ico, name:achName(a), reward:a.reward.toLocaleString(NUM_LOCALE)}));
+      addGameLog(i18next.t('companions:companions.achievements.unlocked_log_html', {name:achName(a), reward:a.reward.toLocaleString(NUM_LOCALE)}));
     });
     const badge = document.getElementById('tb7');
     if(badge) badge.textContent = `${completedAchievements.size}/${ACHIEVEMENTS.length}`;
@@ -58,16 +66,16 @@ function prestigeScore(){
 /** Reconstruit la grille du panneau Succès (compteur, score de prestige, une tuile par ACHIEVEMENTS avec état débloqué/verrouillé). */
 function renderAchievements(){
   document.getElementById('ach-count').textContent = `${completedAchievements.size} / ${ACHIEVEMENTS.length}`;
-  document.getElementById('prestige-score').textContent = prestigeScore().toLocaleString('fr-FR');
+  document.getElementById('prestige-score').textContent = prestigeScore().toLocaleString(NUM_LOCALE);
   const el = document.getElementById('achievements-grid');
   el.innerHTML = ACHIEVEMENTS.map(a=>{
     const done = completedAchievements.has(a.id);
     return `<div style="background:${done?'rgba(200,169,110,.08)':'var(--s2)'};border:1px solid ${done?'var(--gold-dim)':'var(--border)'};border-radius:9px;padding:11px 13px;display:flex;align-items:center;gap:11px;${done?'':'opacity:.65'}">
       <span style="font-size:26px;${done?'':'filter:grayscale(1);opacity:.5'}">${a.ico}</span>
       <div style="flex:1">
-        <div style="font-family:'Cinzel',serif;font-size:12px;color:${done?'var(--gold2)':'var(--cream)'};display:flex;align-items:center;gap:6px">${a.name}${a.hard?'<span style="font-size:8px;color:var(--red2);border:1px solid var(--red);border-radius:3px;padding:0 4px;font-family:Inter,sans-serif;letter-spacing:.04em">🔥 DIFFICILE</span>':''}</div>
-        <div style="font-size:10px;color:var(--cream2);margin-top:1px">${a.desc}</div>
-        <div style="font-size:9px;color:${done?'var(--green2)':'var(--cream3)'};margin-top:3px">${done?'✓ Débloqué':'Verrouillé'} · +${a.reward.toLocaleString('fr-FR')} Silver</div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:${done?'var(--gold2)':'var(--cream)'};display:flex;align-items:center;gap:6px">${achName(a)}${a.hard?'<span style="font-size:8px;color:var(--red2);border:1px solid var(--red);border-radius:3px;padding:0 4px;font-family:Inter,sans-serif;letter-spacing:.04em">'+i18next.t('companions:companions.achievements.hard_badge')+'</span>':''}</div>
+        <div style="font-size:10px;color:var(--cream2);margin-top:1px">${achDesc(a)}</div>
+        <div style="font-size:9px;color:${done?'var(--green2)':'var(--cream3)'};margin-top:3px">${done?i18next.t('companions:companions.achievements.unlocked'):i18next.t('companions:companions.achievements.locked')} · +${a.reward.toLocaleString(NUM_LOCALE)} Silver</div>
       </div>
     </div>`;
   }).join('');

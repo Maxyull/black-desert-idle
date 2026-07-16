@@ -9,12 +9,12 @@
 const ONBOARDING_STORAGE_KEY = 'velia_idle_pets_onboarding_seen_v1';
 
 const ONBOARDING_STEPS = [
-  { ico:'🐾', title:'Bienvenue dans le module Compagnons', body:'Élève des familiers qui travaillent pour toi en tâche de fond — même quand tu n\'es pas sur cet onglet. Ce guide rapide te montre la boucle de base.' },
-  { ico:'🥚', title:'Éclosion', body:'Un œuf gratuit se prépare automatiquement (voir le compte à rebours en haut). Ouvre-le dans l\'onglet Éclosion pour obtenir un familier de rareté aléatoire, de Commun à Ancestral.' },
-  { ico:'🗺️', title:'Sections', body:'Chaque section (Minage, Bûcheron, Combat...) accepte UN SEUL familier déployé à la fois. Une fois déployé, il loot en continu — même quand tu es sur un autre onglet.' },
-  { ico:'📦', title:'Collection & Fusion', body:'Retrouve tous tes familiers dans Collection. Fusionnes-en deux pour obtenir un résultat plus fort (meilleures stats, palier +1 garanti) — la vraie façon de progresser sur le long terme.' },
-  { ico:'🍖', title:'Nourrir', body:'Un familier déployé perd faim avec le temps et arrête de looter s\'il est affamé. Nourris-le manuellement ou active l\'auto-nourrissage dans l\'onglet Nourrir.' },
-  { ico:'🔄', title:'Marché', body:'Échange tes familiers avec d\'autres joueurs contre d\'autres familiers ou du Silver — un vrai échange serveur, distinct de ta sauvegarde locale.' },
+  { ico:'🐾', title:i18next.t('companions:companions.onboarding.step_welcome_title'), body:i18next.t('companions:companions.onboarding.step_welcome_body') },
+  { ico:'🥚', title:i18next.t('companions:companions.onboarding.step_hatch_title'), body:i18next.t('companions:companions.onboarding.step_hatch_body') },
+  { ico:'🗺️', title:i18next.t('companions:companions.onboarding.step_sections_title'), body:i18next.t('companions:companions.onboarding.step_sections_body') },
+  { ico:'📦', title:i18next.t('companions:companions.onboarding.step_collection_title'), body:i18next.t('companions:companions.onboarding.step_collection_body') },
+  { ico:'🍖', title:i18next.t('companions:companions.onboarding.step_feed_title'), body:i18next.t('companions:companions.onboarding.step_feed_body') },
+  { ico:'🔄', title:i18next.t('companions:companions.onboarding.step_market_title'), body:i18next.t('companions:companions.onboarding.step_market_body') },
 ];
 
 let onbIdx = 0;
@@ -35,9 +35,9 @@ function renderOnboarding(){
       ${ONBOARDING_STEPS.map((_,i)=>`<span style="width:4px;height:4px;border-radius:999px;background:${i===onbIdx?'var(--gold-dim)':'var(--border)'}"></span>`).join('')}
     </div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-ghost" style="flex:1" onclick="onbSkip()">Passer</button>
-      ${onbIdx>0?`<button class="btn btn-ghost" style="flex:1" onclick="onbPrev()">◀ Précédent</button>`:''}
-      <button class="btn btn-gold" style="flex:1" onclick="${isLast?'onbFinish()':'onbNext()'}">${isLast?'C\'est parti !':'Suivant ▶'}</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="onbSkip()">${i18next.t('companions:companions.onboarding.skip_btn')}</button>
+      ${onbIdx>0?`<button class="btn btn-ghost" style="flex:1" onclick="onbPrev()">${i18next.t('companions:companions.onboarding.prev_btn')}</button>`:''}
+      <button class="btn btn-gold" style="flex:1" onclick="${isLast?'onbFinish()':'onbNext()'}">${isLast?i18next.t('companions:companions.onboarding.finish_btn'):i18next.t('companions:companions.onboarding.next_btn')}</button>
     </div>`;
 }
 /** Avance d'une étape d'onboarding (clampé au dernier pas). */

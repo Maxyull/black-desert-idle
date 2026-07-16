@@ -237,19 +237,19 @@ let pvpTournamentState = { day: null, registrantCount: 0, myRegistered: false, m
 
 /** Inscrit l'équipe actuellement déployée au prochain tournoi (RPC register_pvp_team). @returns {Promise<void>} */
 async function registerForPvpTournament() {
-  if (!pvpTournamentReady()) { toast('⚠️', pvpIsGuest() ? 'Le tournoi nécessite un compte (pas disponible en invité).' : 'Connecte-toi pour t\'inscrire.'); return; }
+  if (!pvpTournamentReady()) { toast('⚠️', pvpIsGuest() ? i18next.t('companions:companions.pvp.tournament_needs_account') : i18next.t('companions:companions.pvp.tournament_login')); return; }
   const deployed = currentlyDeployedPets();
-  if (!deployed.length) { toast('⚠️', 'Déploie au moins un familier sur le terrain avant de t\'inscrire.'); return; }
+  if (!deployed.length) { toast('⚠️', i18next.t('companions:companions.pvp.deploy_before_register')); return; }
   const team = buildTeamSnapshot(deployed);
   const power = computeTeamPower(deployed);
   try {
     const sb = pvpSb();
     const { data, error } = await sb.rpc('register_pvp_team', { p_team: team, p_team_power: power });
     if (error) throw error;
-    toast('⚔️', `Équipe inscrite pour le tournoi du ${data.day} !`);
+    toast('⚔️', i18next.t('companions:companions.pvp.registered_toast', {day:data.day}));
     await refreshPvpTournamentState();
   } catch (e) {
-    toast('⚠️', 'Inscription échouée : ' + ((e && e.message) || 'erreur réseau'));
+    toast('⚠️', i18next.t('companions:companions.pvp.register_failed', {error:((e && e.message) || i18next.t('companions:companions.common.network_error'))}));
   }
 }
 
@@ -317,7 +317,7 @@ function renderPvpTournamentCard() {
   if (pvpCountdownInterval) { clearInterval(pvpCountdownInterval); pvpCountdownInterval = null; }
 
   if (!pvpTournamentReady()) {
-    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:16px;text-align:center">${pvpIsGuest() ? 'Le tournoi nécessite un compte (pas disponible en invité).' : 'Connecte-toi pour rejoindre le tournoi.'}</div>`;
+    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:16px;text-align:center">${pvpIsGuest() ? i18next.t('companions:companions.pvp.tournament_needs_account') : i18next.t('companions:companions.pvp.tournament_join_login')}</div>`;
     return;
   }
 
@@ -330,36 +330,36 @@ function renderPvpTournamentCard() {
 
   el.innerHTML = `
     <div style="background:var(--s2);border:1px solid var(--gold-dim);border-radius:10px;padding:14px 16px;margin-bottom:12px">
-      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);margin-bottom:6px">🏆 Tournoi du jour</div>
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold);margin-bottom:6px">${i18next.t('companions:companions.pvp.today_title')}</div>
       <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
         <div style="font-family:'JetBrains Mono',monospace;font-size:20px;color:var(--gold2)" id="pvp-countdown">--:--:--</div>
-        <div style="font-size:10px;color:var(--cream3)">avant fermeture des inscriptions (21h, heure de Paris)</div>
-        <div style="margin-left:auto;font-size:11px;color:var(--cream2)">👥 <strong id="pvp-registrant-count">${pvpTournamentState.registrantCount}</strong> dresseur(s) inscrit(s)</div>
+        <div style="font-size:10px;color:var(--cream3)">${i18next.t('companions:companions.pvp.before_close')}</div>
+        <div style="margin-left:auto;font-size:11px;color:var(--cream2)">${i18next.t('companions:companions.pvp.registrant_count_html', {count:pvpTournamentState.registrantCount})}</div>
       </div>
     </div>
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px">
-      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--cream2);margin-bottom:6px">🌿 Ton équipe engagée</div>
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--cream2);margin-bottom:6px">${i18next.t('companions:companions.pvp.team_title')}</div>
       ${deployed.length ? `
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
           ${deployed.map(p => `<span style="font-size:10px;color:${rc(p.rar)};background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:2px 7px">${p.cat.name}</span>`).join('')}
         </div>
-        <div style="font-size:11px;color:var(--cream2)">Puissance d'équipe actuelle : <strong style="color:var(--gold2)">${livePower}</strong></div>
-      ` : `<div style="font-size:11px;color:var(--cream3)">Aucun familier déployé -- va dans l'onglet Sections pour en déployer au moins un.</div>`}
+        <div style="font-size:11px;color:var(--cream2)">${i18next.t('companions:companions.pvp.team_power_html', {power:livePower})}</div>
+      ` : `<div style="font-size:11px;color:var(--cream3)">${i18next.t('companions:companions.pvp.no_deployed')}</div>`}
       ${pvpTournamentState.myRegistered
-        ? `<div style="font-size:10.5px;color:var(--green2);margin-top:8px">✓ Inscrit pour le tournoi du ${pvpTournamentState.day} (puissance figée : ${pvpTournamentState.myTeamPower}). Se réinscrire remplace cette équipe tant que les inscriptions restent ouvertes.</div>`
-        : `<div style="font-size:9.5px;color:var(--cream3);margin-top:8px">L'équipe engagée au tournoi est figée au moment de l'inscription -- un changement de déploiement après coup n'est pas repris tant que tu ne te réinscris pas.</div>`}
-      <button class="btn btn-gold" style="margin-top:10px" onclick="registerForPvpTournament()" ${deployed.length ? '' : 'disabled'}>${pvpTournamentState.myRegistered ? '🔄 Réinscrire mon équipe' : '⚔️ Inscrire mon équipe'}</button>
+        ? `<div style="font-size:10.5px;color:var(--green2);margin-top:8px">${i18next.t('companions:companions.pvp.registered_note', {day:pvpTournamentState.day, power:pvpTournamentState.myTeamPower})}</div>`
+        : `<div style="font-size:9.5px;color:var(--cream3);margin-top:8px">${i18next.t('companions:companions.pvp.snapshot_note')}</div>`}
+      <button class="btn btn-gold" style="margin-top:10px" onclick="registerForPvpTournament()" ${deployed.length ? '' : 'disabled'}>${pvpTournamentState.myRegistered ? i18next.t('companions:companions.pvp.reregister_btn') : i18next.t('companions:companions.pvp.register_btn')}</button>
     </div>
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
-      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--cream2);margin-bottom:6px">📜 Tournoi d'hier</div>
-      ${!y ? `<div style="font-size:11px;color:var(--cream3)">Aucun tournoi hier.</div>`
-        : y.status !== 'resolved' ? `<div style="font-size:11px;color:var(--cream3)">Pas encore résolu.</div>`
-        : (y.bracket.size === 0) ? `<div style="font-size:11px;color:var(--cream3)">Personne ne s'était inscrit hier.</div>`
-        : `<div style="font-size:11px;color:var(--cream2);margin-bottom:6px">🥇 Vainqueur : <strong style="color:var(--gold2)">${y.winner_pseudo || '?'}</strong> (${y.registrant_count} inscrit(s))</div>
-          ${myWasEntrant ? `<div style="font-size:10.5px;color:var(--cream2);margin-bottom:8px">Ton parcours :
-            ${myRuns.map(r => `<div style="padding:3px 0">Round ${r.round} vs ${r.opponentPseudo}${r.bye ? ' (bye)' : ''} — ${r.won ? '<span style="color:var(--green2)">Victoire</span>' : '<span style="color:var(--red2)">Défaite</span>'}${r.delta !== null ? ` (Δ puissance ${r.delta >= 0 ? '+' : ''}${r.delta})` : ''}</div>`).join('') || '<div>Pas de combat enregistré.</div>'}
-          </div>` : `<div style="font-size:10px;color:var(--cream3);margin-bottom:8px">Tu n'étais pas inscrit hier.</div>`}
-          <button class="btn btn-ghost" onclick="openPvpBracketModalIfAny()">📋 Voir le bracket complet</button>`}
+      <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--cream2);margin-bottom:6px">${i18next.t('companions:companions.pvp.yesterday_title')}</div>
+      ${!y ? `<div style="font-size:11px;color:var(--cream3)">${i18next.t('companions:companions.pvp.none_yesterday')}</div>`
+        : y.status !== 'resolved' ? `<div style="font-size:11px;color:var(--cream3)">${i18next.t('companions:companions.pvp.not_resolved')}</div>`
+        : (y.bracket.size === 0) ? `<div style="font-size:11px;color:var(--cream3)">${i18next.t('companions:companions.pvp.nobody_registered')}</div>`
+        : `<div style="font-size:11px;color:var(--cream2);margin-bottom:6px">${i18next.t('companions:companions.pvp.winner_html', {name:y.winner_pseudo || '?', count:y.registrant_count})}</div>
+          ${myWasEntrant ? `<div style="font-size:10.5px;color:var(--cream2);margin-bottom:8px">${i18next.t('companions:companions.pvp.your_run')}
+            ${myRuns.map(r => `<div style="padding:3px 0">${i18next.t('companions:companions.pvp.round_vs', {round:r.round, opponent:r.opponentPseudo})}${r.bye ? ' (bye)' : ''} — ${r.won ? '<span style="color:var(--green2)">'+i18next.t('companions:companions.pvp.victory')+'</span>' : '<span style="color:var(--red2)">'+i18next.t('companions:companions.pvp.defeat')+'</span>'}${r.delta !== null ? ` ${i18next.t('companions:companions.pvp.delta_power', {delta:`${r.delta >= 0 ? '+' : ''}${r.delta}`})}` : ''}</div>`).join('') || '<div>'+i18next.t('companions:companions.pvp.no_fight')+'</div>'}
+          </div>` : `<div style="font-size:10px;color:var(--cream3);margin-bottom:8px">${i18next.t('companions:companions.pvp.not_entered')}</div>`}
+          <button class="btn btn-ghost" onclick="openPvpBracketModalIfAny()">${i18next.t('companions:companions.pvp.view_bracket_btn')}</button>`}
     </div>
   `;
 
@@ -372,9 +372,9 @@ function renderPvpTournamentCard() {
 function openPvpBracketModalIfAny() {
   const y = pvpTournamentState.yesterday;
   const body = document.getElementById('pvp-bracket-modal-body');
-  if (!y || y.status !== 'resolved' || !y.bracket || !y.bracket.rounds || !body) { toast('⚠️', 'Aucun bracket à afficher.'); return; }
+  if (!y || y.status !== 'resolved' || !y.bracket || !y.bracket.rounds || !body) { toast('⚠️', i18next.t('companions:companions.pvp.no_bracket')); return; }
   body.innerHTML = `
-    <div style="font-size:11px;color:var(--cream2);margin-bottom:10px">🥇 Vainqueur : <strong style="color:var(--gold2)">${y.winner_pseudo || '?'}</strong> — ${y.registrant_count} inscrit(s)</div>
+    <div style="font-size:11px;color:var(--cream2);margin-bottom:10px">${i18next.t('companions:companions.pvp.bracket_winner_html', {name:y.winner_pseudo || '?', count:y.registrant_count})}</div>
     ${y.bracket.rounds.map((round, ri) => `
       <div style="margin-bottom:8px">
         <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold);margin-bottom:4px">Round ${ri + 1}</div>

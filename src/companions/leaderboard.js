@@ -22,10 +22,10 @@
 //   à l'écran plutôt que fidèle à l'esprit "identique" du mockup.
 
 const LB_CATS = {
-  prestige: { label:'Score Prestige', tip:'Achievements ×250 + GS cumulé (+20/tier par familier) + fusions ×15 + Caphras ×10 + percées ×100 + argent dépensé /100 — exactement le Score Prestige affiché dans l\'onglet Succès.' },
-  gs:       { label:'Gearscore Max',  tip:'Le Gearscore le plus élevé (normGS, échelle sur 1000) parmi tous les familiers actuellement possédés.' },
-  fusion:   { label:'Fusions',        tip:'Nombre total de fusions de familiers réalisées depuis la création du compte.' },
-  ach:      { label:'Achievements',   tip:'Nombre d\'achievements débloqués sur le total disponible.' },
+  prestige: { label:i18next.t('companions:companions.leaderboard.cat_prestige'), tip:i18next.t('companions:companions.leaderboard.cat_prestige_tip') },
+  gs:       { label:i18next.t('companions:companions.leaderboard.cat_gs'),       tip:i18next.t('companions:companions.leaderboard.cat_gs_tip') },
+  fusion:   { label:i18next.t('companions:companions.leaderboard.cat_fusion'),   tip:i18next.t('companions:companions.leaderboard.cat_fusion_tip') },
+  ach:      { label:i18next.t('companions:companions.leaderboard.cat_ach'),      tip:i18next.t('companions:companions.leaderboard.cat_ach_tip') },
 };
 const LB_PAGE_SIZE = 15;
 let lbRows = null; // cache de la réponse RPC (rafraîchie à chaque ouverture de l'onglet, pas à chaque interaction)
@@ -48,15 +48,15 @@ function renderMyStatsGrid(){
   if(!el) return;
   const indexProgress = companionIndexProgress(PETS);
   const tiles = [
-    { ico:'🥚', lbl:'Œufs ouverts', val: fmtN(totalHatched||0) },
-    { ico:'💰', lbl:'Argent dépensé', val: fmtN(silverSpent||0) },
-    { ico:'🔗', lbl:'Fusions', val: fmtN(fusionCount||0) },
-    { ico:'🌟', lbl:'Percées', val: fmtN(breakthroughCount||0) },
+    { ico:'🥚', lbl:i18next.t('companions:companions.leaderboard.tile_eggs'), val: fmtN(totalHatched||0) },
+    { ico:'💰', lbl:i18next.t('companions:companions.leaderboard.tile_spent'), val: fmtN(silverSpent||0) },
+    { ico:'🔗', lbl:i18next.t('companions:companions.leaderboard.tile_fusions'), val: fmtN(fusionCount||0) },
+    { ico:'🌟', lbl:i18next.t('companions:companions.leaderboard.tile_breakthroughs'), val: fmtN(breakthroughCount||0) },
     // 2026-07-20, "Completion 48pet * 5 tier" -- espèce×tier distincts possédés / 240 (voir
     // companionIndexProgress()/COMPANION_INDEX_MAX, catalog.js)
-    { ico:'📖', lbl:'Complétion Index', val: `${indexProgress}/${COMPANION_INDEX_MAX}` },
-    { ico:'🏆', lbl:'Succès', val: `${completedAchievements.size}/${ACHIEVEMENTS.length}` },
-    { ico:'👑', lbl:'Score Prestige', val: fmtN(typeof prestigeScore==='function' ? prestigeScore() : 0) },
+    { ico:'📖', lbl:i18next.t('companions:companions.leaderboard.tile_index'), val: `${indexProgress}/${COMPANION_INDEX_MAX}` },
+    { ico:'🏆', lbl:i18next.t('companions:companions.leaderboard.tile_achievements'), val: `${completedAchievements.size}/${ACHIEVEMENTS.length}` },
+    { ico:'👑', lbl:i18next.t('companions:companions.leaderboard.tile_prestige'), val: fmtN(typeof prestigeScore==='function' ? prestigeScore() : 0) },
   ];
   el.innerHTML = tiles.map(t=>`
     <div style="background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:9px 12px">
@@ -65,7 +65,7 @@ function renderMyStatsGrid(){
     </div>`).join('');
 }
 /** @param {number} n - nombre brut. @returns {string} nombre formaté avec séparateurs de milliers FR. */
-function fmtN(n){ return n.toLocaleString('fr-FR'); }
+function fmtN(n){ return n.toLocaleString(NUM_LOCALE); }
 /** @param {object} row - ligne du classement (résultat RPC). @param {string} cat - clé de LB_CATS. @returns {number} valeur du joueur pour cette catégorie. */
 function lbScoreOf(row, cat){ return cat==='prestige' ? Number(row.prestige_score||0) : cat==='gs' ? (row.gs_max||0) : cat==='fusion' ? (row.fusion_count||0) : (row.achievements_count||0); }
 /** @param {string} cat - clé de LB_CATS. @returns {object[]} copie de lbRows triée par lbScoreOf décroissant. */
@@ -78,23 +78,23 @@ async function fetchAndRenderCompanionLeaderboard(){
   const el = document.getElementById('companion-leaderboard');
   if(!el) return;
   lbError = null;
-  el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:12px">Chargement…</div>`;
+  el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:12px">${i18next.t('companions:companions.common.loading')}</div>`;
   document.getElementById('lb-podium') && (document.getElementById('lb-podium').innerHTML = '');
   try{
     const hostWin = window.parent;
-    if(!hostWin || hostWin===window){ lbError = "Indisponible hors du jeu."; renderLeaderboardUi(); return; }
+    if(!hostWin || hostWin===window){ lbError = i18next.t('companions:companions.leaderboard.unavailable_outside'); renderLeaderboardUi(); return; }
     const sb = typeof hostWin.getSbClient==='function' ? hostWin.getSbClient() : null;
     const currentUser = typeof hostWin.getCurrentUserForSync==='function' ? hostWin.getCurrentUserForSync() : null;
     const isGuestFn = hostWin.isGuest;
-    if(!sb || !currentUser){ lbError = "Connecte-toi pour voir le classement."; renderLeaderboardUi(); return; }
-    if(typeof isGuestFn==='function' && isGuestFn()){ lbError = "Le classement n'est pas disponible en compte invité."; renderLeaderboardUi(); return; }
+    if(!sb || !currentUser){ lbError = i18next.t('companions:companions.leaderboard.login_required'); renderLeaderboardUi(); return; }
+    if(typeof isGuestFn==='function' && isGuestFn()){ lbError = i18next.t('companions:companions.leaderboard.guest_blocked'); renderLeaderboardUi(); return; }
     lbMyUserId = currentUser.id;
     const { data, error } = await sb.rpc('companion_leaderboard');
-    if(error){ lbError = `Erreur : ${escapeHtmlLb(error.message)}`; renderLeaderboardUi(); return; }
+    if(error){ lbError = i18next.t('companions:companions.common.error_with_message', {message:escapeHtmlLb(error.message)}); renderLeaderboardUi(); return; }
     lbRows = data || [];
     renderLeaderboardUi();
   }catch(e){
-    lbError = "Classement indisponible pour l'instant.";
+    lbError = i18next.t('companions:companions.leaderboard.unavailable');
     renderLeaderboardUi();
   }
 }
@@ -112,7 +112,7 @@ function renderLeaderboardUi(){
     return;
   }
   if(!lbRows || !lbRows.length){
-    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:12px">Personne n'est encore synchronisé — ouvre ce module au moins une fois (synchro toutes les 60s) pour apparaître ici.</div>`;
+    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:12px">${i18next.t('companions:companions.leaderboard.nobody_synced')}</div>`;
     if(podiumEl) podiumEl.innerHTML = '';
     if(controlsEl) controlsEl.innerHTML = '';
     return;
@@ -129,18 +129,18 @@ function renderLeaderboardUi(){
     list = list.filter(r => (r.display_name||'').toLowerCase().includes(t));
   }
   if(!list.length){
-    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:12px">Aucun joueur ne correspond à cette recherche.</div>`;
+    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:12px">${i18next.t('companions:companions.leaderboard.no_match')}</div>`;
     return;
   }
   if(lbShowMeOnly){
     const myRank = rankMap.get(lbMyUserId);
     if(!myRank){
-      el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:12px">Synchronise-toi d'abord (ouvre ce module, attends jusqu'à 60s) pour voir ta position.</div>`;
+      el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:12px">${i18next.t('companions:companions.leaderboard.sync_first')}</div>`;
       return;
     }
     const idx = myRank - 1;
     const windowSlice = fullSorted.slice(Math.max(0, idx-3), idx+4);
-    el.innerHTML = lbRowsHtml(windowSlice, rankMap) + `<div style="font-size:10px;color:var(--cream3);text-align:center;padding:8px 0">Voisinage de ton rang (#${myRank})</div>`;
+    el.innerHTML = lbRowsHtml(windowSlice, rankMap) + `<div style="font-size:10px;color:var(--cream3);text-align:center;padding:8px 0">${i18next.t('companions:companions.leaderboard.rank_neighborhood', {rank:myRank})}</div>`;
     return;
   }
   const totalPages = Math.max(1, Math.ceil(list.length / LB_PAGE_SIZE));
@@ -153,11 +153,11 @@ function renderLeaderboardUi(){
 /** @returns {string} HTML des contrôles du classement (recherche, chips de catégorie, toggle "Ma position"). */
 function lbControlsHtml(){
   return `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-    <input class="search-box" id="lb-search" placeholder="Rechercher un joueur…" value="${escapeHtmlLb(lbSearch)}" style="width:180px">
+    <input class="search-box" id="lb-search" placeholder="${i18next.t('companions:companions.leaderboard.search_placeholder')}" value="${escapeHtmlLb(lbSearch)}" style="width:180px">
     <div style="display:flex;gap:6px">
       ${Object.entries(LB_CATS).map(([k,c])=>`<button class="chip ${k===lbCategory?'on':''}" data-lbcat="${k}">${escapeHtmlLb(c.label)}</button>`).join('')}
     </div>
-    <button class="schip ${lbShowMeOnly?'on':''}" id="lb-me-toggle" style="margin-left:auto">📍 Ma position</button>
+    <button class="schip ${lbShowMeOnly?'on':''}" id="lb-me-toggle" style="margin-left:auto">${i18next.t('companions:companions.leaderboard.me_toggle')}</button>
   </div>`;
 }
 /** Câble les événements des contrôles du classement (recherche, chips de catégorie, toggle "Ma position"). */
@@ -183,12 +183,12 @@ function lbPodiumHtml(top3){
       const isMe = r.user_id === lbMyUserId;
       return `<div style="order:${rank===1?2:rank===2?1:3};background:var(--s3);border:1px solid ${rank===1?'var(--gold-dim)':'var(--border)'};border-radius:10px;padding:${rank===1?'18px 10px 12px':'12px 10px'};text-align:center;${isMe?'outline:1px solid var(--gold)':''}">
         <div style="font-family:'Cinzel',serif;font-size:${rank===1?'20px':'16px'};color:${rank===1?'var(--gold2)':'var(--cream2)'}">${lbMedal(rank)} #${rank}</div>
-        <div style="font-size:11px;color:var(--cream);margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtmlLb(r.display_name||'?')}${isMe?' <span style="color:var(--gold2)">(toi)</span>':''}</div>
+        <div style="font-size:11px;color:var(--cream);margin:4px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtmlLb(r.display_name||'?')}${isMe?' <span style="color:var(--gold2)">'+i18next.t('companions:companions.leaderboard.you_suffix')+'</span>':''}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--gold2)">${fmtN(lbScoreOf(r,lbCategory))}</div>
       </div>`;
     }).join('')}
   </div>
-  <div style="font-size:9px;color:var(--cream3);margin:-8px 0 12px;display:flex;align-items:center;gap:4px" title="${escapeHtmlLb(cat.tip)}">ⓘ ${escapeHtmlLb(cat.label)} — survole pour le détail du calcul</div>`;
+  <div style="font-size:9px;color:var(--cream3);margin:-8px 0 12px;display:flex;align-items:center;gap:4px" title="${escapeHtmlLb(cat.tip)}">ⓘ ${escapeHtmlLb(cat.label)} — ${i18next.t('companions:companions.leaderboard.hover_hint')}</div>`;
 }
 
 /** @param {object[]} rows - lignes à afficher (déjà paginées/filtrées). @param {Map} rankMap - user_id -> rang dans le classement complet. @returns {string} HTML de la table du classement. */
@@ -197,17 +197,17 @@ function lbRowsHtml(rows, rankMap){
   return `<table style="width:100%;border-collapse:collapse;font-size:11px">
     <thead><tr>
       <th style="text-align:left;padding:5px 8px;color:var(--cream3);border-bottom:1px solid var(--border)">#</th>
-      <th style="text-align:left;padding:5px 8px;color:var(--cream3);border-bottom:1px solid var(--border)">Joueur</th>
+      <th style="text-align:left;padding:5px 8px;color:var(--cream3);border-bottom:1px solid var(--border)">${i18next.t('companions:companions.leaderboard.col_player')}</th>
       <th style="text-align:right;padding:5px 8px;color:var(--cream3);border-bottom:1px solid var(--border)">${escapeHtmlLb(cat.label)}</th>
-      <th style="text-align:right;padding:5px 8px;color:var(--cream3);border-bottom:1px solid var(--border)">📦 Familiers</th>
-      <th style="text-align:right;padding:5px 8px;color:var(--cream3);border-bottom:1px solid var(--border)">📖 Index</th>
+      <th style="text-align:right;padding:5px 8px;color:var(--cream3);border-bottom:1px solid var(--border)">${i18next.t('companions:companions.leaderboard.col_pets')}</th>
+      <th style="text-align:right;padding:5px 8px;color:var(--cream3);border-bottom:1px solid var(--border)">${i18next.t('companions:companions.leaderboard.col_index')}</th>
     </tr></thead>
     <tbody>${rows.map(r=>{
       const rank = rankMap.get(r.user_id);
       const isYou = r.user_id === lbMyUserId;
       return `<tr style="${isYou?'background:rgba(212,169,85,.1)':''}">
         <td style="padding:5px 8px;border-bottom:1px solid var(--border);color:${rank<=3?'var(--gold)':'var(--cream2)'}">${lbMedal(rank)||('#'+rank)}</td>
-        <td style="padding:5px 8px;border-bottom:1px solid var(--border);color:${isYou?'var(--gold)':'var(--cream)'}">${escapeHtmlLb(r.display_name||'?')}${isYou?' (toi)':''}</td>
+        <td style="padding:5px 8px;border-bottom:1px solid var(--border);color:${isYou?'var(--gold)':'var(--cream)'}">${escapeHtmlLb(r.display_name||'?')}${isYou?' '+i18next.t('companions:companions.leaderboard.you_suffix'):''}</td>
         <td style="text-align:right;padding:5px 8px;border-bottom:1px solid var(--border);color:var(--gold2);font-family:'JetBrains Mono',monospace">${fmtN(lbScoreOf(r,lbCategory))}</td>
         <td style="text-align:right;padding:5px 8px;border-bottom:1px solid var(--border)">${fmtN(r.pet_count||0)}</td>
         <td style="text-align:right;padding:5px 8px;border-bottom:1px solid var(--border)">${r.unique_species_count||0}/${COMPANION_INDEX_MAX}</td>
@@ -219,9 +219,9 @@ function lbRowsHtml(rows, rankMap){
 function lbPagerHtml(totalPages){
   if(totalPages<=1) return '';
   return `<div style="display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 0">
-    <button class="schip" id="lb-prev" ${lbPage<=1?'disabled':''}>‹ Précédent</button>
+    <button class="schip" id="lb-prev" ${lbPage<=1?'disabled':''}>${i18next.t('companions:companions.leaderboard.prev_btn')}</button>
     <span style="font-size:10px;color:var(--cream3)">Page ${lbPage} / ${totalPages}</span>
-    <button class="schip" id="lb-next" ${lbPage>=totalPages?'disabled':''}>Suivant ›</button>
+    <button class="schip" id="lb-next" ${lbPage>=totalPages?'disabled':''}>${i18next.t('companions:companions.leaderboard.next_btn')}</button>
   </div>`;
 }
 /** @param {number} totalPages - nombre total de pages. Câble les boutons Précédent/Suivant du pager. */

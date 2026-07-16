@@ -32,7 +32,7 @@ function renderFeed(){
           <div class="fhbar"><div class="fhfill" style="width:${p.hunger}%;background:${hc(p.hunger)}"></div></div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cream2)">${Math.round(p.hunger)}</span>
         </div>
-        <div style="font-size:9px;color:${p.hunger<30?'var(--red2)':p.terrain?'var(--green2)':'var(--cream3)'};margin-top:1px">${p.hunger<30?'⚠️ Affamé':p.terrain?'● Terrain':'○ Réserve'}</div>
+        <div style="font-size:9px;color:${p.hunger<30?'var(--red2)':p.terrain?'var(--green2)':'var(--cream3)'};margin-top:1px">${p.hunger<30?i18next.t('companions:companions.feed.starving'):p.terrain?i18next.t('companions:companions.feed.on_field'):i18next.t('companions:companions.feed.in_reserve')}</div>
       </div>
       <button class="btn btn-gold" style="font-size:9px;padding:3px 7px" onclick="feedOne(${p.id})">🍖</button>
     </div>`).join('');
@@ -50,7 +50,7 @@ function renderFeed(){
 
   const foodListEl = document.getElementById('food-list');
   if(!foodItems.length){
-    foodListEl.innerHTML = `<div style="font-size:10px;color:var(--cream3);padding:8px">Aucune nourriture — déploie des pets dans Sections pour qu'ils loot de quoi nourrir tout le monde.</div>`;
+    foodListEl.innerHTML = `<div style="font-size:10px;color:var(--cream3);padding:8px">${i18next.t('companions:companions.feed.no_food_hint')}</div>`;
   } else {
     // Sélection par défaut : premier objet dispo si rien n'est choisi ou si le choix précédent est épuisé
     if(!selFoodName || !INVENTORY[selFoodName] || INVENTORY[selFoodName].qty<=0 || specialResourceNames.has(selFoodName)){
@@ -59,7 +59,7 @@ function renderFeed(){
     foodListEl.innerHTML = foodItems.map(([name,d])=>`
       <div class="food-row ${selFoodName===name?'sel':''}" onclick="selFoodName='${name.replace(/'/g,"\\'")}';renderFeed()">
         <span style="font-size:18px">${d.icon}</span>
-        <div style="flex:1"><div style="font-size:11px;color:var(--cream)">${name}</div><div style="font-size:9px;color:var(--green2)">+${d.feed} faim</div></div>
+        <div style="flex:1"><div style="font-size:11px;color:var(--cream)">${itemLabel(name)}</div><div style="font-size:9px;color:var(--green2)">${i18next.t('companions:companions.feed.hunger_gain', {feed:d.feed})}</div></div>
         <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream2)">×${d.qty}</span>
       </div>`).join('');
   }
@@ -68,12 +68,12 @@ function renderFeed(){
   const resEl = document.getElementById('resource-list');
   if(resEl){
     if(!resourceItems.length){
-      resEl.innerHTML = `<div style="font-size:9px;color:var(--cream3)">Aucune ressource spéciale pour l'instant.</div>`;
+      resEl.innerHTML = `<div style="font-size:9px;color:var(--cream3)">${i18next.t('companions:companions.feed.no_special_resources')}</div>`;
     } else {
       resEl.innerHTML = resourceItems.map(([name,d])=>`
         <div style="display:flex;align-items:center;gap:7px;padding:5px 8px;background:var(--s3);border:1px solid var(--border);border-radius:6px;opacity:.85">
           <span style="font-size:15px">${d.icon}</span>
-          <span style="flex:1;font-size:10px;color:var(--cream2)">${name}</span>
+          <span style="flex:1;font-size:10px;color:var(--cream2)">${itemLabel(name)}</span>
           <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--r3)">×${d.qty}</span>
         </div>`).join('');
     }
@@ -84,7 +84,7 @@ function renderFeed(){
 function feedOne(id){
   const p=PETS.find(pp=>pp.id===id);if(!p)return;
   if(!selFoodName || !INVENTORY[selFoodName] || INVENTORY[selFoodName].qty<=0){
-    toast('❌','Aucune nourriture disponible — va looter dans Sections');
+    toast('❌',i18next.t('companions:companions.feed.no_food_toast'));
     return;
   }
   const food = INVENTORY[selFoodName];
@@ -111,6 +111,6 @@ function feedAll(){
   renderFeed();
   renderCollInventory();
   if(document.getElementById('p5')?.classList.contains('active')) renderGameInventory();
-  if(fed>0) toast('🍖',`${fed} familier(s) nourri(s) !`);
-  else toast('❌','Aucune nourriture disponible — va looter dans Sections');
+  if(fed>0) toast('🍖',i18next.t('companions:companions.feed.fed_toast', {count:fed}));
+  else toast('❌',i18next.t('companions:companions.feed.no_food_toast'));
 }

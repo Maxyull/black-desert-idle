@@ -16,7 +16,7 @@ function updateFusionUI(){
     const el=document.getElementById('fs'+i);const pid=fusionSlots[i];
     if(pid!==null){
       const p=PETS.find(pp=>pp.id===pid);
-      if(!p){el.innerHTML='<span style="font-size:20px;color:var(--border2)">＋</span><span style="font-size:9px;color:var(--cream3)">Sélectionner</span>';el.classList.remove('filled');return;}
+      if(!p){el.innerHTML='<span style="font-size:20px;color:var(--border2)">＋</span><span style="font-size:9px;color:var(--cream3)">'+i18next.t('companions:companions.fusion.select_slot')+'</span>';el.classList.remove('filled');return;}
       const pct=gsPct(p);
       el.innerHTML=`<canvas id="fs-cv${i}" width="44" height="44" style="width:44px;height:44px;image-rendering:pixelated"></canvas>
         <span style="font-size:9px;color:var(--cream);text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.cat.name}</span>
@@ -24,7 +24,7 @@ function updateFusionUI(){
       el.classList.add('filled');
       setTimeout(()=>{const c=document.getElementById('fs-cv'+i);if(c)drawPixelArt(c,p.cat.art,44,rc(p.rar),p.tier||1);},30);
     } else {
-      el.innerHTML='<span style="font-size:20px;color:var(--border2)">＋</span><span style="font-size:9px;color:var(--cream3)">Sélectionner</span>';
+      el.innerHTML='<span style="font-size:20px;color:var(--border2)">＋</span><span style="font-size:9px;color:var(--cream3)">'+i18next.t('companions:companions.fusion.select_slot')+'</span>';
       el.classList.remove('filled');
     }
   });
@@ -45,16 +45,16 @@ function updateFusionUI(){
     prev.innerHTML=`
       <div style="font-size:10px;font-family:'Cinzel',serif;letter-spacing:.06em;color:var(--cream2);margin-bottom:7px">
         Section — ${sameSec
-          ? `<span style="color:var(--green2)">✓ Même section (${secById(a.cat.sec)?.name})</span>`
-          : `<span style="color:var(--blue2)">🎲 50/50 entre ${secById(a.cat.sec)?.name} et ${secById(b.cat.sec)?.name}</span>`}
+          ? `<span style="color:var(--green2)">${i18next.t('companions:companions.fusion.section_same', {section:secName(secById(a.cat.sec))})}</span>`
+          : `<span style="color:var(--blue2)">${i18next.t('companions:companions.fusion.section_5050', {a:secName(secById(a.cat.sec)), b:secName(secById(b.cat.sec))})}</span>`}
       </div>
       <div class="fp-hdr"><span>Stat</span><span style="text-align:center">${a.cat.name.split(' ')[0]}</span><span style="text-align:center">${b.cat.name.split(' ')[0]}</span><span style="text-align:right;color:var(--green2)">→</span></div>
-      ${secForStats?secForStats.sk.map((k,i)=>{
+      ${secForStats?secForStats.sk.map((k,i)=>{ const kLbl=skillName(secForStats,i);
         const active=i<BONUS_COUNT[bestRar];
         const va=a.stats[i]||0,vb=b.stats[i]||0,vr=Math.max(va,vb);
         const wa=va>=vb;
         return`<div class="fp-row">
-          <span style="font-size:10px;color:${active?'var(--cream2)':'var(--cream3)'}">${active?'':'🔒 '}${k}</span>
+          <span style="font-size:10px;color:${active?'var(--cream2)':'var(--cream3)'}">${active?'':'🔒 '}${kLbl}</span>
           <span class="fp-v" style="color:${active?wa?'var(--green2)':'var(--cream3)':'var(--cream3)'}">${active?va:'—'}</span>
           <span class="fp-v" style="color:${active?!wa?'var(--green2)':'var(--cream3)':'var(--cream3)'}">${active?vb:'—'}</span>
           <span class="fp-v" style="text-align:right;color:${active?rc(bestRar):'var(--cream3)'};font-weight:500">${active?vr:'—'}</span>
@@ -62,23 +62,23 @@ function updateFusionUI(){
       }).join(''):''}
       <div style="border-top:1px solid var(--border);margin-top:7px;padding-top:7px;display:flex;align-items:center;gap:7px">
         <span class="gs-badge ${gsCls(Math.round(resultGS/10))}">GS ${resultGS}</span>
-        <span style="font-size:10px;color:${gain>=0?'var(--green2)':'var(--red2)'}">${gain>=0?'+':''}${gain} vs meilleur parent</span>
+        <span style="font-size:10px;color:${gain>=0?'var(--green2)':'var(--red2)'}">${i18next.t('companions:companions.fusion.vs_best_parent', {delta:`${gain>=0?'+':''}${gain}`})}</span>
       </div>
       <div style="border-top:1px solid var(--border);margin-top:7px;padding-top:7px;font-size:10px;color:var(--cream2)">
         ${(()=>{
           const odds = computeFusionOdds(a,b);
           const rarLines = odds.rarGap>0
-            ? `<div>🎲 Rareté de base : ${odds.baseRarityOutcomes.map(o=>`${rn(o.rar)} ${o.pct.toFixed(0)}%`).join(' · ')}</div>`
+            ? `<div>${i18next.t('companions:companions.fusion.base_rarity_line_html', {outcomes:odds.baseRarityOutcomes.map(o=>`${rn(o.rar)} ${o.pct.toFixed(0)}%`).join(' · ')})}</div>`
             : '';
-          const rarFinalLine = `<div>🎯 Rareté finale : ${odds.rarOutcomes.map(o=>`${o.pct.toFixed(1)}% ${rn(o.rar)}`).join(' · ')}</div>`;
-          const tierLine = `<div>📈 Tier (si rareté inchangée) : ${odds.tierOutcomes.map(o=>`${o.pct.toFixed(1)}% T${o.t}`).join(' · ')}</div>`;
-          const gapNote = odds.tierGap>0 ? `<div style="color:var(--cream3);font-size:9px">Écart de ${odds.tierGap} tier${odds.tierGap>1?'s':''} → chances ×${odds.gapFactor.toFixed(2)}</div>` : '';
-          return rarLines + rarFinalLine + tierLine + gapNote + `<div>🌟 Si rareté augmente → <b style="color:var(--r5)">Tier reset à T1</b> (toujours)</div>`;
+          const rarFinalLine = `<div>${i18next.t('companions:companions.fusion.final_rarity_line_html', {outcomes:odds.rarOutcomes.map(o=>`${o.pct.toFixed(1)}% ${rn(o.rar)}`).join(' · ')})}</div>`;
+          const tierLine = `<div>${i18next.t('companions:companions.fusion.tier_line_html', {outcomes:odds.tierOutcomes.map(o=>`${o.pct.toFixed(1)}% T${o.t}`).join(' · ')})}</div>`;
+          const gapNote = odds.tierGap>0 ? `<div style="color:var(--cream3);font-size:9px">${i18next.t('companions:companions.fusion.gap_note', {gap:odds.tierGap, factor:odds.gapFactor.toFixed(2)})}</div>` : '';
+          return rarLines + rarFinalLine + tierLine + gapNote + `<div>${i18next.t('companions:companions.fusion.rarity_up_reset_html')}</div>`;
         })()}
       </div>`;
     btn.disabled=false;
   } else {
-    prev.innerHTML='<div style="font-size:10px;color:var(--cream3)">Sélectionne 2 pets — même section ou non, la fusion fonctionne toujours.</div>';
+    prev.innerHTML='<div style="font-size:10px;color:var(--cream3)">'+i18next.t('companions:companions.fusion.preview_placeholder')+'</div>';
     btn.disabled=true;
   }
 }
@@ -218,7 +218,7 @@ function openFusionPreviewModal(){
   const odds = computeFusionOdds(a,b);
   const {baseRarityOutcomes, baseTier, tierGap, gapFactor, rarGap, rarOutcomes, tierOutcomes} = odds;
 
-  document.getElementById('fusion-modal-title').textContent = '⚗️ Aperçu de fusion';
+  document.getElementById('fusion-modal-title').textContent = i18next.t('companions:companions.fusion.preview_title');
   document.getElementById('fusion-modal-body').innerHTML = `
     <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:16px">
       <div style="text-align:center">
@@ -236,49 +236,49 @@ function openFusionPreviewModal(){
 
     <div style="text-align:center;margin-bottom:10px;padding:6px 10px;border-radius:6px;background:${tierGap===0?'rgba(68,176,96,.1)':tierGap<=2?'rgba(232,184,75,.1)':'rgba(224,80,80,.1)'};border:1px solid ${tierGap===0?'var(--green2)':tierGap<=2?'var(--gold2)':'var(--r5)'}">
       <span style="font-size:10px;color:${tierGap===0?'var(--green2)':tierGap<=2?'var(--gold2)':'var(--r5)'}">
-        ${tierGap===0?'✓ Tiers identiques — chances optimales':`⚠️ Écart de ${tierGap} tier${tierGap>1?'s':''} — chances réduites à ×${gapFactor.toFixed(2)}`}
+        ${tierGap===0?i18next.t('companions:companions.fusion.tiers_identical'):i18next.t('companions:companions.fusion.tier_gap_warning', {gap:tierGap, factor:gapFactor.toFixed(2)})}
       </span>
     </div>
 
     <div style="background:var(--s3);border:1.5px solid var(--cream2);border-radius:8px;padding:10px 12px;margin-bottom:10px">
       <div style="margin-bottom:7px">
-        <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--cream2)">📍 Section${sameSec?' — même section, pas de tirage':' — même rareté, mais pas même catégorie'}</span>
+        <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--cream2)">${sameSec?i18next.t('companions:companions.fusion.section_header_same'):i18next.t('companions:companions.fusion.section_header_diff')}</span>
       </div>
       ${sameSec
-        ? `<div style="font-size:11px;color:var(--green2)">✓ 100% — ${secById(a.cat.sec)?.name} (même section, pas de tirage nécessaire)</div>`
+        ? `<div style="font-size:11px;color:var(--green2)">${i18next.t('companions:companions.fusion.section_100', {section:secName(secById(a.cat.sec))})}</div>`
         : `<div style="display:flex;flex-direction:column;gap:4px">
-             <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--cream2);width:120px">${secById(a.cat.sec)?.ico} ${secById(a.cat.sec)?.name}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:var(--cream2)"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3)">50%</span></div>
-             <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--cream2);width:120px">${secById(b.cat.sec)?.ico} ${secById(b.cat.sec)?.name}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:var(--cream2)"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3)">50%</span></div>
+             <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--cream2);width:120px">${secById(a.cat.sec)?.ico} ${secName(secById(a.cat.sec))}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:var(--cream2)"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3)">50%</span></div>
+             <div style="display:flex;align-items:center;gap:8px"><span style="font-size:11px;color:var(--cream2);width:120px">${secById(b.cat.sec)?.ico} ${secName(secById(b.cat.sec))}</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:50%;height:100%;background:var(--cream2)"></div></div><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3)">50%</span></div>
            </div>`}
     </div>
 
     <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:10px">
-      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--cream2);margin-bottom:7px">📈 Tier possible</div>
-      <div style="font-size:9px;color:var(--cream3);margin-bottom:6px">Si la rareté ne bouge pas (${rarOutcomes[0].pct.toFixed(1)}%) :</div>
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--cream2);margin-bottom:7px">${i18next.t('companions:companions.fusion.tier_possible_title')}</div>
+      <div style="font-size:9px;color:var(--cream3);margin-bottom:6px">${i18next.t('companions:companions.fusion.if_rarity_same', {pct:rarOutcomes[0].pct.toFixed(1)})}</div>
       ${tierOutcomes.map(o=>`
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
           <span style="font-family:'Cinzel',serif;font-size:11px;color:var(--gold);width:40px">T${o.t}</span>
           <div style="flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden"><div style="width:${o.pct}%;height:100%;background:var(--gold)"></div></div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cream3);width:35px;text-align:right">${o.pct.toFixed(1)}%</span>
         </div>`).join('')}
-      <div style="font-size:9px;color:var(--r5);margin-top:6px">Si la rareté augmente (${(100-rarOutcomes[0].pct).toFixed(1)}%) : Tier reset systématique à T1</div>
+      <div style="font-size:9px;color:var(--r5);margin-top:6px">${i18next.t('companions:companions.fusion.if_rarity_up_reset', {pct:(100-rarOutcomes[0].pct).toFixed(1)})}</div>
     </div>
 
     ${rarGap>0?`
     <div style="background:var(--s3);border:1px solid var(--r3);border-radius:8px;padding:10px 12px;margin-bottom:10px">
-      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--r3);margin-bottom:7px">⚠️ ATTENTION — Tu vas peut-être redescendre en rareté</div>
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--r3);margin-bottom:7px">${i18next.t('companions:companions.fusion.downgrade_warning_title')}</div>
       ${baseRarityOutcomes.map(o=>`
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
           <span style="font-size:11px;color:${rc(o.rar)};width:90px">${rn(o.rar)}</span>
           <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${o.pct}%;height:100%;background:${rc(o.rar)}"></div></div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3);width:35px;text-align:right">${o.pct.toFixed(0)}%</span>
         </div>`).join('')}
-      <div style="font-size:9px;color:var(--cream3);margin-top:4px">Écart de ${rarGap} rareté${rarGap>1?'s':''} — plus l'écart est grand, plus le tirage favorise la rareté basse.</div>
+      <div style="font-size:9px;color:var(--cream3);margin-top:4px">${i18next.t('companions:companions.fusion.downgrade_note', {gap:rarGap})}</div>
     </div>`:''}
 
     <div style="background:var(--s3);border:1.5px solid var(--gold);border-radius:8px;padding:10px 12px;margin-bottom:10px">
       <div style="margin-bottom:7px">
-        <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--gold)">🎁 BONUS — Passage en rareté supérieure${rarGap>0?' (après tirage de base + escalade)':''}</span>
+        <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.06em;color:var(--gold)">${rarGap>0?i18next.t('companions:companions.fusion.bonus_title_with_gap'):i18next.t('companions:companions.fusion.bonus_title')}</span>
       </div>
       ${rarOutcomes.map(o=>`
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
@@ -286,19 +286,19 @@ function openFusionPreviewModal(){
           <div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:${o.pct}%;height:100%;background:${rc(o.rar)}"></div></div>
           <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream3);width:35px;text-align:right">${o.pct.toFixed(1)}%</span>
         </div>`).join('')}
-      <div style="font-size:9px;color:var(--cream3);margin-top:4px">Plus les Tiers des 2 parents sont proches, meilleures sont les chances d'amélioration.</div>
+      <div style="font-size:9px;color:var(--cream3);margin-top:4px">${i18next.t('companions:companions.fusion.bonus_note')}</div>
     </div>
 
     <div style="background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:14px">
-      <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.06em;color:var(--cream2);margin-bottom:6px">📖 Légende</div>
+      <div style="font-family:'Cinzel',serif;font-size:9px;letter-spacing:.06em;color:var(--cream2);margin-bottom:6px">${i18next.t('companions:companions.fusion.legend_title')}</div>
       <div style="font-size:9px;color:var(--cream3);line-height:1.6">
-        <b style="color:var(--cream2)">Section</b> = ${SECTIONS.map(s=>s.ico+' '+s.name).join(', ')}<br>
-        <b style="color:var(--cream2)">Rang (Tier)</b> = T1, T2, T3, T4, T5 — niveau de puissance indépendant de la rareté<br>
-        <b style="color:var(--cream2)">Rareté</b> = ${RARITIES.map(r=>`<span style="color:${r.hex}">${r.name}</span>`).join(', ')}
+        ${i18next.t('companions:companions.fusion.legend_sections_html', {list:SECTIONS.map(s=>s.ico+' '+secName(s)).join(', ')})}<br>
+        ${i18next.t('companions:companions.fusion.legend_tier_html')}<br>
+        ${i18next.t('companions:companions.fusion.legend_rarity_html', {list:RARITIES.map(r=>`<span style="color:${r.hex}">${rn(r.id)}</span>`).join(', ')})}
       </div>
     </div>
 
-    <button class="btn btn-gold" style="width:100%" onclick="confirmFusionExecute(${a.id},${b.id})">⚗️ Confirmer la fusion</button>
+    <button class="btn btn-gold" style="width:100%" onclick="confirmFusionExecute(${a.id},${b.id})">${i18next.t('companions:companions.fusion.confirm_btn')}</button>
   `;
   OM('fusion-modal');
   setTimeout(()=>{
@@ -404,7 +404,7 @@ function deltaArrow(delta){
  * @param {string} resultSec - section du résultat.
  */
 function showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec){
-  document.getElementById('fusion-modal-title').textContent = rarityIncreased ? '🌟 Percée de rareté !' : '⚗️ Fusion réussie !';
+  document.getElementById('fusion-modal-title').textContent = rarityIncreased ? i18next.t('companions:companions.fusion.result_breakthrough_title') : i18next.t('companions:companions.fusion.result_success_title');
 
   const gs = normGS(merged), pct = gsPct(merged);
   const sec = secById(merged.cat.sec);
@@ -434,22 +434,22 @@ function showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec
       </div>
     </div>
 
-    ${!sameSec?`<div style="text-align:center;font-size:10px;color:var(--blue2);margin-bottom:8px">🎲 Sections différentes → tirage 50/50 → <b>${sec?.name}</b> obtenu</div>`:''}
+    ${!sameSec?`<div style="text-align:center;font-size:10px;color:var(--blue2);margin-bottom:8px">${i18next.t('companions:companions.fusion.diff_sections_result_html', {section:secName(sec)})}</div>`:''}
 
-    <div style="text-align:center;font-size:9px;color:${rc(merged.rar)};letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px">${merged.cat.orig.toUpperCase()} · ${merged.cat.typ}</div>
+    <div style="text-align:center;font-size:9px;color:${rc(merged.rar)};letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px">${merged.cat.orig.toUpperCase()} · ${typeLabel(merged.cat.typ)}</div>
     <div style="text-align:center;font-family:'Cinzel',serif;font-size:19px;color:var(--cream);margin-bottom:2px">${merged.cat.name}</div>
-    <div style="text-align:center;font-size:11px;color:var(--cream2);margin-bottom:10px">${sec?.ico} ${sec?.name} · ${rn(merged.rar)}</div>
+    <div style="text-align:center;font-size:11px;color:var(--cream2);margin-bottom:10px">${sec?.ico} ${secName(sec)} · ${rn(merged.rar)}</div>
 
-    ${rarityIncreased?`<div style="text-align:center;background:rgba(224,80,80,.1);border:1px solid var(--r5);border-radius:7px;padding:8px;margin-bottom:12px;font-size:11px;color:var(--r5)">🌟 Percée rarissime ! Rareté augmentée — Tier réinitialisé à T1</div>`:''}
+    ${rarityIncreased?`<div style="text-align:center;background:rgba(224,80,80,.1);border:1px solid var(--r5);border-radius:7px;padding:8px;margin-bottom:12px;font-size:11px;color:var(--r5)">${i18next.t('companions:companions.fusion.breakthrough_banner')}</div>`:''}
 
     <div style="display:flex;justify-content:center;gap:8px;margin-bottom:8px">
       <span class="gs-badge ${gsCls(pct)}">GS ${gs} / 1000</span>
-      <span style="font-size:10px;color:var(--cream2)">${pct}% du max ${rn(merged.rar)}</span>
+      <span style="font-size:10px;color:var(--cream2)">${i18next.t('companions:companions.hatch.gs_of_max', {pct:pct, rarity:rn(merged.rar)})}</span>
     </div>
 
     <div style="background:var(--s3);border:1px solid var(--border);border-radius:8px;padding:9px 12px;margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:11px;color:var(--cream2)">🏅 Rang (Tier)</span>
+        <span style="font-size:11px;color:var(--cream2)">${i18next.t('companions:companions.fusion.rank_label')}</span>
         <span style="font-size:12px;color:${tierArrow.color};font-weight:600">T${bestParentTier} ➡️ T${merged.tier} ${tierArrow.ico}</span>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between">
@@ -461,8 +461,8 @@ function showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec
 
     <div style="margin-bottom:8px">${renderTierBlock(merged)}${renderStatBars(merged)}</div>
     <div style="display:flex;gap:8px;margin-top:8px">
-      <button class="btn btn-ghost" style="flex:1" onclick="CM('fusion-modal')">Fermer</button>
-      <button class="btn btn-gold" style="flex:1" onclick="CM('fusion-modal');ST(3)">Voir dans la Collection</button>
+      <button class="btn btn-ghost" style="flex:1" onclick="CM('fusion-modal')">${i18next.t('companions:companions.fusion.close_btn')}</button>
+      <button class="btn btn-gold" style="flex:1" onclick="CM('fusion-modal');ST(3)">${i18next.t('companions:companions.fusion.view_in_collection')}</button>
     </div>
   `;
   // La fenêtre reste ouverte (déjà affichée depuis l'étape aperçu) — on ne fait que remplacer son contenu.
@@ -473,6 +473,6 @@ function showFusionResultModal(a, b, merged, rarityIncreased, sameSec, resultSec
     const cm=document.getElementById('fr-merged'); if(cm) drawPixelArt(cm, merged.cat.art, 70, rc(merged.rar), merged.tier||1);
   }, 40);
 
-  if(rarityIncreased) toast('🌟',`PERCÉE ! ${merged.cat.name} → ${rn(merged.rar)} (Tier reset à T1) · Score ${bestParentGS}➡️${gs}${gsArrow.ico}`);
-  else toast('⚗️',`${merged.cat.name} → T${bestParentTier}➡️T${merged.tier}${tierArrow.ico} · Score ${bestParentGS}➡️${gs}${gsArrow.ico}`);
+  if(rarityIncreased) toast('🌟',i18next.t('companions:companions.fusion.breakthrough_toast', {name:merged.cat.name, rarity:rn(merged.rar), from:bestParentGS, to:gs, arrow:gsArrow.ico}));
+  else toast('⚗️',i18next.t('companions:companions.fusion.result_toast', {name:merged.cat.name, fromTier:bestParentTier, toTier:merged.tier, tierArrow:tierArrow.ico, from:bestParentGS, to:gs, arrow:gsArrow.ico}));
 }

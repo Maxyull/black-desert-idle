@@ -33,51 +33,51 @@
      TEST_BALANCE_DIVISOR (voir economy.js) pour permettre de tester vite -- jamais les
      vraies valeurs finales. Toujours visible, pas de bouton pour le masquer : le but est un rappel
      permanent tant que le module reste en phase de test, pas un message qu'on ferme une fois. -->
-<div id="wipBanner" style="background:linear-gradient(90deg,#3a1808,#4a2408);border-bottom:1px solid var(--red);padding:6px 16px;font-size:10.5px;color:#ffcf9e;text-align:center;flex-shrink:0">
+<div id="wipBanner" data-i18n="companions.shell.wip_banner" style="background:linear-gradient(90deg,#3a1808,#4a2408);border-bottom:1px solid var(--red);padding:6px 16px;font-size:10.5px;color:#ffcf9e;text-align:center;flex-shrink:0">
   ⚠️ Module en test — rien n'est relié au jeu principal, tous les prix/temps sont divisés par 1000 à 1 000 000 pour tester vite. Merci de tester un maximum et de faire un retour !
 </div>
 <div class="hdr">
   <span class="hdr-logo">Black Desert Idle</span>
   <span style="color:var(--border2)">›</span>
-  <span style="font-size:11px;color:var(--cream2)">COMPAGNON</span>
+  <span style="font-size:11px;color:var(--cream2)" data-i18n="companions.header.breadcrumb">COMPAGNON</span>
   <!-- bouton de fermeture DANS le module (2026-07-20, demande explicite : "bouton de fermeture
        fenetre a coté de familier") -- s'ajoute au bouton "Fermer" déjà présent dans la barre au-
        dessus de l'iframe (src/combat/boss.js:openCompanionsModule), qui reste inchangé. Appelle le
        même closeCompanionsModule() de la page hôte via window.parent (iframe same-origin, voir
        sync.js pour le même pattern d'accès à window.parent). -->
-  <button id="hdrCloseBtn" onclick="if(window.parent&&window.parent.closeCompanionsModule)window.parent.closeCompanionsModule();" title="Fermer" style="font-family:'Cinzel',serif;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--cream2);cursor:pointer">✕</button>
+  <button id="hdrCloseBtn" onclick="if(window.parent&&window.parent.closeCompanionsModule)window.parent.closeCompanionsModule();" title="Fermer" data-i18n-title="companions.header.close_title" style="font-family:'Cinzel',serif;font-size:11px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:transparent;color:var(--cream2);cursor:pointer">✕</button>
   <!-- badge fusion top1/2/3 centré (2026-07-20, demande explicite) : reflète EXACTEMENT le même
        indicateur que les badges 🥇🥈🥉 des cartes de la Collection (voir collection.js,
        isTop1/isTop2/isTop3) -- visible UNIQUEMENT pendant une sélection de fusion (1 pet choisi,
        2e slot vide), mis à jour par updateHeaderFusionBadge() (appelée depuis renderGrid()). -->
   <div id="hdr-fusion-badge" style="display:none;margin:0 auto;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream2);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 12px;white-space:nowrap"></div>
   <div class="hdr-right">
-    <div class="hdr-pill">💎 Collecte <strong id="h-col">—</strong></div>
+    <div class="hdr-pill">💎 <span data-i18n="companions.header.pill_collect">Collecte</span> <strong id="h-col">—</strong></div>
     <div class="hdr-pill">⚔️ PA <strong id="h-pa">—</strong></div>
     <div class="hdr-pill">✨ EXP <strong id="h-exp">—</strong></div>
     <div class="hdr-pill">💰 <strong id="h-silver">55 000</strong></div>
     <div class="hdr-pill">🥚 <strong id="h-egg">05:42:18</strong></div>
-    <div class="hdr-pill" title="Connexions consécutives">🔥 <strong id="h-streak">0/7</strong></div>
-    <button style="font-family:'Cinzel',serif;font-size:9px;padding:5px 10px;border-radius:5px;border:1px solid var(--red);background:transparent;color:var(--red2);cursor:pointer" onclick="resetSave()" title="Efface la sauvegarde et recharge le roster de départ">🗑️ Reset</button>
+    <div class="hdr-pill" title="Connexions consécutives" data-i18n-title="companions.header.streak_title">🔥 <strong id="h-streak">0/7</strong></div>
+    <button style="font-family:'Cinzel',serif;font-size:9px;padding:5px 10px;border-radius:5px;border:1px solid var(--red);background:transparent;color:var(--red2);cursor:pointer" onclick="resetSave()" title="Efface la sauvegarde et recharge le roster de départ" data-i18n-title="companions.header.reset_title">🗑️ Reset</button>
   </div>
 </div>
 <div class="tabs">
-  <div class="tab active" onclick="ST(0)">🎮 Jeu</div>
-  <div class="tab" onclick="ST(1)">🥚 Éclosion <span class="tbadge" id="tb0">1 prêt</span></div>
-  <div class="tab" onclick="ST(2)">🗺️ Sections <span class="tbadge">8</span></div>
-  <div class="tab" onclick="ST(3)">📦 Collection <span class="tbadge" id="tb2">0</span></div>
-  <div class="tab" onclick="ST(4)">🍖 Nourrir <span class="tbadge" id="tb3">✓</span></div>
-  <div class="tab" onclick="ST(5)">📖 Index <span class="tbadge">48</span></div>
-  <div class="tab" onclick="ST(6)">🌿 Hardinage</div>
-  <div class="tab" onclick="ST(7)">🏆 Progression <span class="tbadge" id="tb7">0/17</span></div>
+  <div class="tab active" onclick="ST(0)">🎮 <span data-i18n="companions.tabs.game">Jeu</span></div>
+  <div class="tab" onclick="ST(1)">🥚 <span data-i18n="companions.tabs.hatch">Éclosion</span> <span class="tbadge" id="tb0">1 prêt</span></div>
+  <div class="tab" onclick="ST(2)">🗺️ <span data-i18n="companions.tabs.sections">Sections</span> <span class="tbadge">8</span></div>
+  <div class="tab" onclick="ST(3)">📦 <span data-i18n="companions.tabs.collection">Collection</span> <span class="tbadge" id="tb2">0</span></div>
+  <div class="tab" onclick="ST(4)">🍖 <span data-i18n="companions.tabs.feed">Nourrir</span> <span class="tbadge" id="tb3">✓</span></div>
+  <div class="tab" onclick="ST(5)">📖 <span data-i18n="companions.tabs.index">Index</span> <span class="tbadge">48</span></div>
+  <div class="tab" onclick="ST(6)">🌿 <span data-i18n="companions.tabs.hardinage">Hardinage</span></div>
+  <div class="tab" onclick="ST(7)">🏆 <span data-i18n="companions.tabs.progression">Progression</span> <span class="tbadge" id="tb7">0/17</span></div>
   <!-- 2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction de la
        categorie" -- vrai PvP joueur-contre-joueur pas encore livré (nécessite un serveur
        autoritaire, voir pvp.js), mais le classement local par puissance (GS) l'est. -->
-  <div class="tab" onclick="ST(8)">⚔️ PvP <span class="tbadge">🔒</span></div>
+  <div class="tab" onclick="ST(8)">⚔️ <span data-i18n="companions.tabs.pvp">PvP</span> <span class="tbadge">🔒</span></div>
   <!-- 2026-07-20, demande explicite : "ajouter classement, oeuf ouvert, argent depensé..." --
        classement CROSS-JOUEURS réel (companion_leaderboard(), Supabase), distinct du classement
        LOCAL de tes propres pets déjà présent dans l'onglet PvP ci-dessus. -->
-  <div class="tab" onclick="ST(9)">🏆 Classement</div>
+  <div class="tab" onclick="ST(9)">🏆 <span data-i18n="companions.tabs.leaderboard">Classement</span></div>
   <!-- bug corrigé (2026-07-21, rapporté explicitement : "lorsque je suis au market c'est le
        viewer 3D qui montre actif et vis a versa") -- ST() surligne l'onglet actif par POSITION
        DOM (`document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j))`),
@@ -90,11 +90,11 @@
   <!-- 2026-07-10, demande explicite : "on va integrer des model gbl" -- écran de test isolé pour
        valider le pipeline Three.js/GLB avant tout remplacement des icônes 2D existantes (roster,
        collection, incubation...). Charge un unique modèle de test depuis Supabase Storage. -->
-  <div class="tab" onclick="ST(10)">🧊 Viewer 3D <span class="tbadge">TEST</span></div>
+  <div class="tab" onclick="ST(10)">🧊 <span data-i18n="companions.tabs.viewer3d">Viewer 3D</span> <span class="tbadge">TEST</span></div>
   <!-- 2026-07-10, demande explicite : "vrai backend d'échange" -- marché réel de compagnons entre
        joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
        sync). Voir market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
-  <div class="tab" onclick="ST(11)">🔄 Marché <span class="tbadge" id="tb-market"></span></div>
+  <div class="tab" onclick="ST(11)">🔄 <span data-i18n="companions.tabs.market">Marché</span> <span class="tbadge" id="tb-market"></span></div>
 </div>
 <div class="content">
 
@@ -104,11 +104,11 @@
 
     <!-- Scène : personnage + pets à côté -->
     <div style="background:linear-gradient(180deg,var(--s3),var(--bg));border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;min-height:200px;display:flex;align-items:flex-end;justify-content:center;gap:24px">
-      <div style="position:absolute;top:12px;left:16px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">🌲 Zone actuelle — Forêt de Hexe</div>
+      <div style="position:absolute;top:12px;left:16px;font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.game.zone_banner">🌲 Zone actuelle — Forêt de Hexe</div>
       <!-- Perso -->
       <div style="display:flex;flex-direction:column;align-items:center;gap:6px">
         <div style="width:64px;height:90px;background:var(--s2);border:2px solid var(--gold-dim);border-radius:10px 10px 4px 4px;display:flex;align-items:center;justify-content:center;font-size:34px">🧙</div>
-        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold)">Aria (Toi)</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold)" data-i18n="companions.game.player_you">Aria (Toi)</div>
       </div>
       <!-- Pets actifs à côté -->
       <div id="game-companions" style="display:flex;gap:14px;align-items:flex-end"></div>
@@ -116,23 +116,23 @@
 
     <!-- Stats en direct issues des pets -->
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
-      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:10px">📊 Bonus actifs sur ton personnage</div>
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:10px" data-i18n="companions.game.active_bonuses_title">📊 Bonus actifs sur ton personnage</div>
       <div id="game-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px"></div>
     </div>
 
     <!-- Inventaire réel alimenté par le hardinage -->
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">🎒 Inventaire (loot des pets)</div>
+        <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.game.inventory_title">🎒 Inventaire (loot des pets)</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">💰 <span id="game-silver-inline">55 000</span></div>
       </div>
       <div id="game-inventory-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px"></div>
-      <div style="font-size:9px;color:var(--cream3);margin-top:8px">Les pets actifs génèrent automatiquement ce loot en tâche de fond, même hors de l'onglet Hardinage.</div>
+      <div style="font-size:9px;color:var(--cream3);margin-top:8px" data-i18n="companions.game.inventory_hint">Les pets actifs génèrent automatiquement ce loot en tâche de fond, même hors de l'onglet Hardinage.</div>
     </div>
 
     <!-- Journal condensé -->
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
-      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">📜 Activité récente</div>
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px" data-i18n="companions.game.recent_activity_title">📜 Activité récente</div>
       <div id="game-log" style="display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto"></div>
     </div>
 
@@ -144,25 +144,25 @@
   <div class="hatch-wrap">
     <div class="hatch-top">
       <div>
-        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">Incubation</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px" data-i18n="companions.hatch.incubation_title">Incubation</div>
         <div style="display:flex;gap:8px" id="incub-slots"></div>
       </div>
     </div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border);background:var(--s1)">
-      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:3px">📊 Chances par type d'œuf</div>
-      <div style="font-size:10px;color:var(--cream3);margin-bottom:10px">Base : 1 œuf gratuit / 6h (~4 par jour). Les % entre parenthèses = chance d'obtenir ≥1 pet de cette rareté sur la période cible.</div>
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:3px" data-i18n="companions.hatch.odds_title">📊 Chances par type d'œuf</div>
+      <div style="font-size:10px;color:var(--cream3);margin-bottom:10px" data-i18n="companions.hatch.odds_hint">Base : 1 œuf gratuit / 6h (~4 par jour). Les % entre parenthèses = chance d'obtenir ≥1 pet de cette rareté sur la période cible.</div>
       <!-- 2026-07-20, demande explicite : rappel que les boutons x1/x5/x10 (achat instantané, sous
            chaque nom d'oeuf ci-dessous) sont un outil de TEST -- pas la mécanique finale prévue -->
-      <div style="font-size:9.5px;color:var(--gold2);margin-bottom:10px">🧪 Les boutons ×1/×5/×10 (achat instantané) sont un raccourci de TEST — ils seront retirés d'ici la fin des tests.</div>
+      <div style="font-size:9.5px;color:var(--gold2);margin-bottom:10px" data-i18n="companions.hatch.test_buttons_hint">🧪 Les boutons ×1/×5/×10 (achat instantané) sont un raccourci de TEST — ils seront retirés d'ici la fin des tests.</div>
       <div id="egg-odds-table" style="overflow-x:auto"></div>
     </div>
     <div style="padding:14px 16px;border-bottom:1px solid var(--border)">
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:12px;max-width:340px">
-        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px">Bonus par rareté</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px" data-i18n="companions.hatch.rarity_bonus_title">Bonus par rareté</div>
         <div id="rarity-table"></div>
       </div>
     </div>
-    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);padding:10px 16px 6px">Familiers obtenus</div>
+    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);padding:10px 16px 6px" data-i18n="companions.hatch.obtained_title">Familiers obtenus</div>
     <div class="hist-grid" id="hist-grid"></div>
   </div>
 </div>
@@ -181,10 +181,10 @@
            "repasser les filtre a droite de la barre de recherche") -- même ligne que
            .coll-controls, plus une rangée séparée au-dessus. -->
       <div class="coll-controls">
-        <span class="coll-title">Collection</span>
+        <span class="coll-title" data-i18n="companions.collection.title">Collection</span>
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gold);background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 12px">💰 <span id="coll-silver">55 000</span></span>
-        <input class="search-box" id="search-box" placeholder="🔍 Rechercher…" oninput="renderGrid()">
-        <div class="chip" onclick="clearAllFilters()" title="Effacer tous les filtres" style="color:var(--red2);font-weight:700">✕</div>
+        <input class="search-box" id="search-box" placeholder="🔍 Rechercher…" data-i18n-placeholder="companions.collection.search_placeholder" oninput="renderGrid()">
+        <div class="chip" onclick="clearAllFilters()" title="Effacer tous les filtres" data-i18n-title="companions.collection.clear_filters_title" style="color:var(--red2);font-weight:700">✕</div>
         <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
         <div style="display:flex;gap:3px;flex-wrap:wrap" id="sec-filter-chips"></div>
         <div style="width:1px;height:20px;background:var(--border);flex-shrink:0"></div>
@@ -193,18 +193,18 @@
         <div style="display:flex;gap:3px;flex-wrap:wrap" id="tier-filter-chips"></div>
         <div style="margin-left:auto;display:flex;gap:3px;align-items:center">
           <button class="schip on" id="sort-gs"  onclick="setSort('gs',this)">GS↓</button>
-          <button class="schip" id="sort-rar" onclick="setSort('rar',this)">Rareté</button>
-          <button class="schip" id="sort-tier" onclick="setSort('tier',this)">Tier</button>
-          <button class="schip" id="sort-nom" onclick="setSort('nom',this)">Nom</button>
-          <button class="schip" id="sort-sec" onclick="setSort('sec',this)">Section</button>
-          <button class="schip" id="sort-typ" onclick="setSort('typ',this)">Type</button>
+          <button class="schip" id="sort-rar" onclick="setSort('rar',this)" data-i18n="companions.collection.sort_rarity">Rareté</button>
+          <button class="schip" id="sort-tier" onclick="setSort('tier',this)" data-i18n="companions.collection.sort_tier">Tier</button>
+          <button class="schip" id="sort-nom" onclick="setSort('nom',this)" data-i18n="companions.collection.sort_name">Nom</button>
+          <button class="schip" id="sort-sec" onclick="setSort('sec',this)" data-i18n="companions.collection.sort_section">Section</button>
+          <button class="schip" id="sort-typ" onclick="setSort('typ',this)" data-i18n="companions.collection.sort_type">Type</button>
           <!-- colonnes par ligne (2026-07-20, demande explicite : "ajout d'un bouton choix combien
                par ligne 5 a 9") -- remplace l'ancien zoom à 3 crans (largeur mini approximative,
                setCollZoom()) par un choix EXACT du nombre de colonnes (repeat(N,1fr), voir
                setCollColsPerRow(), collection.js). Préférence d'affichage pure,
                en mémoire seulement, jamais dans la sauvegarde. -->
           <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
-          <span style="font-size:9px;color:var(--cream3)">Colonnes</span>
+          <span style="font-size:9px;color:var(--cream3)" data-i18n="companions.collection.columns_label">Colonnes</span>
           <div style="display:flex;gap:2px" id="coll-cols-chips"></div>
           <!-- pagination on/off (2026-07-20, demande explicite : "turn on of pagination") -- OFF
                par défaut (grille scrollable classique, .pet-grid a déjà overflow-y:auto) ; ON
@@ -212,52 +212,52 @@
                toggleCollPagination()/collPageDelta(), collection.js — le pager lui-même
                est rendu directement dans renderGrid()). -->
           <div style="width:1px;height:16px;background:var(--border);margin:0 2px"></div>
-          <button class="schip" id="pagination-toggle" onclick="toggleCollPagination()" title="Basculer entre défilement continu et pages">📄 Pagination : OFF</button>
+          <button class="schip" id="pagination-toggle" onclick="toggleCollPagination()" title="Basculer entre défilement continu et pages" data-i18n-title="companions.collection.pagination_toggle_title" data-i18n="companions.collection.pagination_off">📄 Pagination : OFF</button>
         </div>
       </div>
       <!-- légende des badges de fusion (2026-07-20, demande explicite) : explique 🥇🥈🥉, visibles
            uniquement pendant une sélection de fusion (voir isTop1/isTop2/isTop3, collection.js) -->
       <div style="padding:4px 16px;font-size:9px;color:var(--cream3);display:flex;gap:14px;flex-wrap:wrap;border-bottom:1px solid var(--border)">
-        <span>🥇 TOP1 = même rareté + section + tier (meilleur candidat)</span>
-        <span>🥈 TOP2 = même rareté + tier, section différente</span>
-        <span>🥉 TOP3 = même rareté seulement</span>
-        <span style="color:var(--cream3)">— badges affichés pendant la sélection d'un pet à fusionner</span>
+        <span data-i18n="companions.collection.legend_top1">🥇 TOP1 = même rareté + section + tier (meilleur candidat)</span>
+        <span data-i18n="companions.collection.legend_top2">🥈 TOP2 = même rareté + tier, section différente</span>
+        <span data-i18n="companions.collection.legend_top3">🥉 TOP3 = même rareté seulement</span>
+        <span style="color:var(--cream3)" data-i18n="companions.collection.legend_note">— badges affichés pendant la sélection d'un pet à fusionner</span>
       </div>
       <div class="pet-grid" id="pet-grid"></div>
       <div id="coll-pager" style="display:none;align-items:center;justify-content:center;gap:10px;padding:8px;border-top:1px solid var(--border)">
-        <button class="schip" onclick="collPageDelta(-1)">◀ Précédent</button>
+        <button class="schip" onclick="collPageDelta(-1)" data-i18n="companions.collection.prev_btn">◀ Précédent</button>
         <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cream2)" id="coll-pager-label"></span>
-        <button class="schip" onclick="collPageDelta(1)">Suivant ▶</button>
+        <button class="schip" onclick="collPageDelta(1)" data-i18n="companions.collection.next_btn">Suivant ▶</button>
       </div>
     </div>
     <div class="fusion-panel">
       <div style="background:var(--s2);border:1px solid var(--gold-dim);border-radius:9px;padding:10px 12px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;color:var(--gold)">🎒 Inventaire (loot des pets)</div>
+          <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;color:var(--gold)" data-i18n="companions.game.inventory_title">🎒 Inventaire (loot des pets)</div>
           <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">💰 <span id="coll-silver-2">55 000</span></div>
         </div>
         <div id="coll-inventory-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:5px;max-height:160px;overflow-y:auto"></div>
-        <div style="font-size:8px;color:var(--cream3);margin-top:6px">Généré automatiquement par les pets sur le terrain, même hors de cet onglet.</div>
+        <div style="font-size:8px;color:var(--cream3);margin-top:6px" data-i18n="companions.fusion.inventory_hint">Généré automatiquement par les pets sur le terrain, même hors de cet onglet.</div>
       </div>
-      <div class="fus-title">⚗️ Fusion</div>
+      <div class="fus-title" data-i18n="companions.fusion.panel_title">⚗️ Fusion</div>
       <div class="fslots">
-        <div class="fslot" id="fs0" onclick="clearFS(0)"><span style="font-size:20px;color:var(--border2)">＋</span><span style="font-size:9px;color:var(--cream3)">Sélectionner</span></div>
+        <div class="fslot" id="fs0" onclick="clearFS(0)"><span style="font-size:20px;color:var(--border2)">＋</span><span style="font-size:9px;color:var(--cream3)" data-i18n="companions.fusion.select_slot">Sélectionner</span></div>
         <div style="text-align:center;color:var(--border2);font-size:16px">＋</div>
-        <div class="fslot" id="fs1" onclick="clearFS(1)"><span style="font-size:20px;color:var(--border2)">＋</span><span style="font-size:9px;color:var(--cream3)">Sélectionner</span></div>
+        <div class="fslot" id="fs1" onclick="clearFS(1)"><span style="font-size:20px;color:var(--border2)">＋</span><span style="font-size:9px;color:var(--cream3)" data-i18n="companions.fusion.select_slot">Sélectionner</span></div>
       </div>
-      <div class="fus-preview" id="fus-preview"><div style="font-size:10px;color:var(--cream3)">Sélectionne 2 pets — même section ou non, la fusion fonctionne toujours.</div></div>
-      <button class="btn btn-gold" id="fus-btn" onclick="openFusionPreviewModal()" disabled>⚗️ Fusionner</button>
+      <div class="fus-preview" id="fus-preview"><div style="font-size:10px;color:var(--cream3)" data-i18n="companions.fusion.preview_placeholder">Sélectionne 2 pets — même section ou non, la fusion fonctionne toujours.</div></div>
+      <button class="btn btn-gold" id="fus-btn" onclick="openFusionPreviewModal()" disabled data-i18n="companions.fusion.fuse_btn">⚗️ Fusionner</button>
       <div style="background:var(--s2);border:1px solid var(--border);border-radius:8px;padding:10px 12px">
-        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;color:var(--cream2);margin-bottom:6px">Règles</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;color:var(--cream2);margin-bottom:6px" data-i18n="companions.fusion.rules_title">Règles</div>
         <div style="font-size:10px;color:var(--cream2);display:flex;flex-direction:column;gap:4px">
-          <div>📍 Section → même section garantie, sinon 50/50</div>
-          <div>📈 Stats → meilleur de chaque</div>
-          <div>🎲 Rareté → 75% pareil, jusqu'à 90/10 si écart de rareté</div>
-          <div>⚗️ Tier → +1 garanti, plus si Tiers proches</div>
-          <div style="color:var(--cream3);font-size:9px;margin-top:4px">Objectif : GS 1000 — toutes stats au max Ancestral.</div>
+          <div data-i18n="companions.fusion.rule_section">📍 Section → même section garantie, sinon 50/50</div>
+          <div data-i18n="companions.fusion.rule_stats">📈 Stats → meilleur de chaque</div>
+          <div data-i18n="companions.fusion.rule_rarity">🎲 Rareté → 75% pareil, jusqu'à 90/10 si écart de rareté</div>
+          <div data-i18n="companions.fusion.rule_tier">⚗️ Tier → +1 garanti, plus si Tiers proches</div>
+          <div style="color:var(--cream3);font-size:9px;margin-top:4px" data-i18n="companions.fusion.rule_goal">Objectif : GS 1000 — toutes stats au max Ancestral.</div>
         </div>
       </div>
-      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;color:var(--cream2)">Historique</div>
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;color:var(--cream2)" data-i18n="companions.fusion.history_title">Historique</div>
       <div id="fus-log" style="display:flex;flex-direction:column;gap:3px;max-height:120px;overflow-y:auto"></div>
     </div>
   </div>
@@ -267,18 +267,18 @@
   <div class="feed-wrap">
     <div class="feed-list" id="feed-list"></div>
     <div class="feed-side">
-      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2)">Nourriture</div>
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.feed.food_title">Nourriture</div>
       <div id="food-list"></div>
-      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);margin-top:4px">Ressources <span style="font-size:8px;color:var(--cream3);text-transform:none;letter-spacing:0">(non nourrissables)</span></div>
+      <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);margin-top:4px"><span data-i18n="companions.feed.resources_title">Ressources</span> <span style="font-size:8px;color:var(--cream3);text-transform:none;letter-spacing:0" data-i18n="companions.feed.resources_note">(non nourrissables)</span></div>
       <div id="resource-list" style="display:flex;flex-direction:column;gap:5px"></div>
       <div style="background:rgba(200,169,110,.06);border:1px solid var(--gold-dim);border-radius:8px;padding:10px">
-        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold);margin-bottom:7px">⚙️ Auto-Nourrissage</div>
-        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:5px"><span style="color:var(--cream2)">Activer</span><button class="tog on" id="autotog" onclick="toggleAutoFeed(this)"></button></div>
-        <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span style="color:var(--cream2)">Nourrisseuse</span><span style="color:var(--green2)">🧝 Aria</span></div>
-        <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--cream2)">Seuil</span><span style="font-family:'JetBrains Mono',monospace">≤ 30%</span></div>
-        <div style="font-size:9px;color:var(--cream3);margin-top:5px">Aria nourrit automatiquement avec le loot le moins précieux disponible.</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--gold);margin-bottom:7px" data-i18n="companions.feed.autofeed_title">⚙️ Auto-Nourrissage</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-bottom:5px"><span style="color:var(--cream2)" data-i18n="companions.feed.enable_label">Activer</span><button class="tog on" id="autotog" onclick="toggleAutoFeed(this)"></button></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px"><span style="color:var(--cream2)" data-i18n="companions.feed.feeder_label">Nourrisseuse</span><span style="color:var(--green2)">🧝 Aria</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:10px"><span style="color:var(--cream2)" data-i18n="companions.feed.threshold_label">Seuil</span><span style="font-family:'JetBrains Mono',monospace">≤ 30%</span></div>
+        <div style="font-size:9px;color:var(--cream3);margin-top:5px" data-i18n="companions.feed.autofeed_hint">Aria nourrit automatiquement avec le loot le moins précieux disponible.</div>
       </div>
-      <button class="btn btn-gold" onclick="feedAll()" style="width:100%">🍖 Nourrir tous</button>
+      <button class="btn btn-gold" onclick="feedAll()" style="width:100%" data-i18n="companions.feed.feed_all_btn">🍖 Nourrir tous</button>
     </div>
   </div>
 </div>
@@ -288,14 +288,14 @@
   <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:20px">
 
     <div>
-      <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:4px">📖 Index — Rareté × Tier</div>
-      <div style="font-size:11px;color:var(--cream2);margin-bottom:12px">GS théorique max (sur 1000) à chaque combinaison. Zones grisées = déjà couvertes par une rareté inférieure à tier supérieur — c'est là que le chevauchement se joue.</div>
+      <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:4px" data-i18n="companions.index.title">📖 Index — Rareté × Tier</div>
+      <div style="font-size:11px;color:var(--cream2);margin-bottom:12px" data-i18n="companions.index.desc">GS théorique max (sur 1000) à chaque combinaison. Zones grisées = déjà couvertes par une rareté inférieure à tier supérieur — c'est là que le chevauchement se joue.</div>
       <div id="index-matrix" style="overflow-x:auto"></div>
     </div>
 
     <div>
-      <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:4px">🐾 Catalogue complet des familiers</div>
-      <div style="font-size:11px;color:var(--cream2);margin-bottom:10px">Les 48 familiers connus, chacun affiché à ses 5 paliers de Tier (T1→T5) avec sa plage de GS possible. "✓ Ce tier" indique le palier auquel tu possèdes réellement ce pet.</div>
+      <div style="font-family:'Cinzel',serif;font-size:14px;color:var(--gold);margin-bottom:4px" data-i18n="companions.index.catalog_title">🐾 Catalogue complet des familiers</div>
+      <div style="font-size:11px;color:var(--cream2);margin-bottom:10px" data-i18n="companions.index.catalog_desc">Les 48 familiers connus, chacun affiché à ses 5 paliers de Tier (T1→T5) avec sa plage de GS possible. "✓ Ce tier" indique le palier auquel tu possèdes réellement ce pet.</div>
       <div style="display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap" id="index-filter-chips"></div>
       <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap" id="index-tier-chips"></div>
       <div style="overflow-x:auto">
@@ -312,22 +312,22 @@
     <div style="position:relative;overflow:hidden;background:var(--bg)" id="hard-field-wrap">
       <canvas id="hard-field-canvas" style="position:absolute;inset:0;width:100%;height:100%"></canvas>
       <div id="hard-drop-layer" style="position:absolute;inset:0;pointer-events:none"></div>
-      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(11,15,26,.85);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:.06em;white-space:nowrap">
+      <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);background:rgba(11,15,26,.85);border:1px solid var(--border);border-radius:20px;padding:4px 14px;font-family:'Cinzel',serif;font-size:11px;color:var(--gold);letter-spacing:.06em;white-space:nowrap" data-i18n="companions.hardinage.banner">
         🌿 Forêt de Hexe — pets actifs en action
       </div>
     </div>
     <div style="border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--s1)">
       <div style="padding:9px 13px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-        <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2)">Drops en direct</span>
-        <span style="font-size:10px;color:var(--cream3);cursor:pointer" onclick="document.getElementById('hard-log-body').innerHTML=''">Effacer</span>
+        <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.hardinage.live_drops">Drops en direct</span>
+        <span style="font-size:10px;color:var(--cream3);cursor:pointer" onclick="document.getElementById('hard-log-body').innerHTML=''" data-i18n="companions.hardinage.clear">Effacer</span>
       </div>
       <div id="hard-log-body" style="flex:1;overflow-y:auto;padding:7px 10px;display:flex;flex-direction:column;gap:3px"></div>
       <div style="border-top:1px solid var(--border);padding:10px 13px;flex-shrink:0">
-        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:7px">Session</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:7px" data-i18n="companions.hardinage.session_title">Session</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px" id="hard-session-grid"></div>
       </div>
       <div style="border-top:1px solid var(--border);padding:10px 13px;flex-shrink:0;max-height:160px;overflow-y:auto">
-        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:7px">% de loot par pet actif</div>
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2);margin-bottom:7px" data-i18n="companions.hardinage.odds_title">% de loot par pet actif</div>
         <div id="hard-odds-panel" style="display:flex;flex-direction:column;gap:6px"></div>
       </div>
     </div>
@@ -341,9 +341,9 @@
     <div style="background:linear-gradient(135deg,var(--gold-dim),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:18px 22px;display:flex;align-items:center;gap:20px">
       <div style="font-size:40px">🏆</div>
       <div style="flex:1">
-        <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">Score de Prestige</div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.progression.prestige_title">Score de Prestige</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:32px;color:var(--gold2);font-weight:600" id="prestige-score">0</div>
-        <div style="font-size:10px;color:var(--cream3)">Score personnel cumulé — prêt à devenir un vrai classement une fois connecté à un serveur.</div>
+        <div style="font-size:10px;color:var(--cream3)" data-i18n="companions.progression.prestige_hint">Score personnel cumulé — prêt à devenir un vrai classement une fois connecté à un serveur.</div>
       </div>
       <div style="text-align:right">
         <div style="font-size:10px;color:var(--cream2)">Achievements</div>
@@ -368,8 +368,8 @@
     <div style="background:linear-gradient(135deg,rgba(192,80,60,.18),var(--s3));border:1px solid var(--red);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
       <span style="font-size:26px">🔒</span>
       <div>
-        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--red2)">PvP — Bientôt disponible</div>
-        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px">Les vrais combats joueur-contre-joueur nécessitent un serveur (matchmaking + résolution) pas encore construit. En attendant, voici le classement de tes familiers par puissance — la base sur laquelle le futur PvP s'appuiera.</div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--red2)" data-i18n="companions.pvp.locked_title">PvP — Bientôt disponible</div>
+        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px" data-i18n="companions.pvp.locked_desc">Les vrais combats joueur-contre-joueur nécessitent un serveur (matchmaking + résolution) pas encore construit. En attendant, voici le classement de tes familiers par puissance — la base sur laquelle le futur PvP s'appuiera.</div>
       </div>
     </div>
     <!-- Tournoi PvP quotidien asynchrone (2026-07-13, demande explicite) : inscription en continu,
@@ -379,7 +379,7 @@
          temps réel joueur-contre-joueur (bandeau ci-dessus inchangé). -->
     <div id="pvp-tournament-card"></div>
     <div>
-      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:10px">⚔️ Classement (puissance GS, toutes sections confondues)</div>
+      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:10px" data-i18n="companions.pvp.ranking_title">⚔️ Classement (puissance GS, toutes sections confondues)</div>
       <div id="pvp-ranking"></div>
     </div>
   </div>
@@ -392,12 +392,12 @@
 <div class="panel" id="p9">
   <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
     <div>
-      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:10px">📊 Tes stats</div>
+      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:10px" data-i18n="companions.leaderboard.my_stats_title">📊 Tes stats</div>
       <div id="my-stats-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px"></div>
     </div>
     <div>
-      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:6px">🏆 Classement Public (tous les joueurs)</div>
-      <div style="font-size:10px;color:var(--cream3);margin-bottom:10px">Nécessite d'avoir ouvert ce module au moins une fois (les stats se synchronisent toutes les 60s).</div>
+      <div style="font-family:'Cinzel',serif;font-size:13px;color:var(--gold);margin-bottom:6px" data-i18n="companions.leaderboard.public_title">🏆 Classement Public (tous les joueurs)</div>
+      <div style="font-size:10px;color:var(--cream3);margin-bottom:10px" data-i18n="companions.leaderboard.public_hint">Nécessite d'avoir ouvert ce module au moins une fois (les stats se synchronisent toutes les 60s).</div>
       <div id="lb-podium"></div>
       <div id="lb-controls"></div>
       <div id="companion-leaderboard"></div>
@@ -411,13 +411,13 @@
     <div style="background:linear-gradient(135deg,rgba(212,169,85,.14),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
       <span style="font-size:26px">🧪</span>
       <div>
-        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold)">Viewer 3D — écran de test</div>
-        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px">Valide le pipeline de chargement des modèles .glb (Three.js) avant tout remplacement des icônes 2D existantes. Un seul modèle chargé pour l'instant, depuis Supabase Storage.</div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold)" data-i18n="companions.viewer3d.tab_title">Viewer 3D — écran de test</div>
+        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px" data-i18n="companions.viewer3d.desc">Valide le pipeline de chargement des modèles .glb (Three.js) avant tout remplacement des icônes 2D existantes. Un seul modèle chargé pour l'instant, depuis Supabase Storage.</div>
       </div>
     </div>
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">Statut</span>
-      <span id="viewer3d-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">En attente…</span>
+      <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.viewer3d.status_label">Statut</span>
+      <span id="viewer3d-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)" data-i18n="companions.viewer3d.waiting">En attente…</span>
     </div>
     <div id="viewer3d-canvas-wrap" style="width:100%;height:440px;background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden"></div>
   </div>
@@ -426,7 +426,7 @@
 <!-- TAB 11 MARCHÉ (2026-07-10, demande explicite : "vrai backend d'échange") -->
 <div class="panel" id="p11">
   <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px">
-    <div style="background:linear-gradient(135deg,rgba(212,169,85,.14),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:12px 16px;font-size:10.5px;color:var(--cream2)">
+    <div style="background:linear-gradient(135deg,rgba(212,169,85,.14),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:12px 16px;font-size:10.5px;color:var(--cream2)" data-i18n="companions.market.banner">
       🔄 Échange réel entre joueurs — un familier mis en vente ici quitte ta sauvegarde locale le temps de la transaction, tout est vérifié côté serveur.
     </div>
     <div style="display:flex;gap:6px" id="market-nav"></div>
@@ -435,7 +435,7 @@
 </div>
 </div>
 <div class="modal-bg" id="hatch-modal">
-  <div class="modal"><button class="mcl" onclick="closeHatchModal()">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px">✨ Familier éclos !</div><div id="hatch-body"></div></div>
+  <div class="modal"><button class="mcl" onclick="closeHatchModal()">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" data-i18n="companions.hatch.hatched_title">✨ Familier éclos !</div><div id="hatch-body"></div></div>
 </div>
 <!-- modale "Voir en 3D" (2026-07-10, "envoyer le premier test .glb") : réutilise le pipeline
      Three.js déjà validé par l'écran de test (p10), câblée sur companionModelUrlFor() /
@@ -443,10 +443,10 @@
      le terrain (sections.js), seulement si un modèle existe réellement pour ce pet/tier. -->
 <div class="modal-bg" id="pet3d-modal">
   <div class="modal"><button class="mcl" onclick="close3dPreviewModal()">✕</button>
-    <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:10px" id="pet3d-modal-title">🧊 Aperçu 3D</div>
+    <div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:10px" id="pet3d-modal-title" data-i18n="companions.viewer3d.preview_title">🧊 Aperçu 3D</div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
-      <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)">Statut</span>
-      <span id="pet3d-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)">En attente…</span>
+      <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.viewer3d.status_label">Statut</span>
+      <span id="pet3d-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)" data-i18n="companions.viewer3d.waiting">En attente…</span>
     </div>
     <div id="pet3d-canvas-wrap" style="width:420px;max-width:80vw;height:360px;background:var(--bg);border:1px solid var(--border);border-radius:10px;overflow:hidden"></div>
   </div>
@@ -454,13 +454,13 @@
 <!-- bracket complet du tournoi PvP d'hier (2026-07-13, demande explicite) -- voir
      openPvpBracketModalIfAny(), pvp-tournament.js -->
 <div class="modal-bg" id="pvp-bracket-modal">
-  <div class="modal"><button class="mcl" onclick="CM('pvp-bracket-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px">📋 Bracket du tournoi</div><div id="pvp-bracket-modal-body" style="max-height:60vh;overflow-y:auto"></div></div>
+  <div class="modal"><button class="mcl" onclick="CM('pvp-bracket-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" data-i18n="companions.pvp.bracket_modal_title">📋 Bracket du tournoi</div><div id="pvp-bracket-modal-body" style="max-height:60vh;overflow-y:auto"></div></div>
 </div>
 <div class="modal-bg" id="market-modal">
-  <div class="modal"><button class="mcl" onclick="CM('market-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="market-modal-title">Marché</div><div id="market-modal-body"></div></div>
+  <div class="modal"><button class="mcl" onclick="CM('market-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="market-modal-title" data-i18n="companions.market.modal_title_default">Marché</div><div id="market-modal-body"></div></div>
 </div>
 <div class="modal-bg" id="fusion-modal">
-  <div class="modal"><button class="mcl" onclick="CM('fusion-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="fusion-modal-title">⚗️ Fusion</div><div id="fusion-modal-body"></div></div>
+  <div class="modal"><button class="mcl" onclick="CM('fusion-modal')">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" id="fusion-modal-title" data-i18n="companions.fusion.panel_title">⚗️ Fusion</div><div id="fusion-modal-body"></div></div>
 </div>
 <!-- onboarding (2026-07-11, demande explicite) -- voir onboarding.js, affiché une seule fois par
      navigateur (localStorage dédié, indépendant de la sauvegarde de progression) -->
@@ -479,23 +479,34 @@
 <!-- renommés le 2026-07-21 (retrait du préfixe companions. -- kebab-case simple, cohérent avec les
      9 autres dossiers de src/, voir CLAUDE.md §15 -- renommage progressif "petit à petit", ce lot
      est le premier des ~22 fichiers du module, voir repo-audit-todo.md point 1) -->
+<!-- i18n du module (2026-07-16, retour utilisateur : "compagnon pas anglais") -- PROPRE instance
+     i18next (docs/I18N_PLAN.md §3 "Cas à part : module Compagnons", CLAUDE.md §28/§31), même URL
+     UMD/SRI jsdelivr qu'index.dev.html (déjà en cache navigateur). i18n-resources.generated.js
+     est GÉNÉRÉ par scripts/gen-locales.js (source : locales/{fr,en}/companions.json, ne jamais
+     l'éditer à la main). i18n.js lit la langue via localStorage['velia-idle-lang'] (same-origin,
+     partagé avec le jeu principal) et DOIT charger avant tout fichier qui appelle i18next.t()
+     (economy.js appelle costLabelFor() au chargement immédiat). -->
+<script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
+  integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
+<script src="i18n-resources.generated.js?v=1"></script>
+<script src="i18n.js?v=1"></script>
 <script src="pixelart.js?v=7"></script>
 <script src="catalog.js?v=8"></script>
-<script src="economy.js?v=15"></script>
+<script src="economy.js?v=16"></script>
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
-<script src="tier.js?v=12"></script>
+<script src="tier.js?v=13"></script>
 <script src="roster.js?v=9"></script>
-<script src="hatch.js?v=21"></script>
+<script src="hatch.js?v=22"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
-<script src="pet-panel.js?v=8"></script>
-<script src="sections.js?v=17"></script>
-<script src="collection.js?v=14"></script>
+<script src="pet-panel.js?v=9"></script>
+<script src="sections.js?v=18"></script>
+<script src="collection.js?v=15"></script>
 <!-- renommés le 2026-07-21 (lot 4/~8, même renommage progressif que ci-dessus) -->
-<script src="fusion.js?v=11"></script>
-<script src="feed.js?v=9"></script>
-<script src="ticks.js?v=12"></script>
+<script src="fusion.js?v=12"></script>
+<script src="feed.js?v=10"></script>
+<script src="ticks.js?v=13"></script>
 <!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
-<script src="save.js?v=17"></script>
+<script src="save.js?v=18"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
@@ -505,37 +516,37 @@
      appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
      strictement requis vis-à-vis de ces globals (aucune lecture immédiate), placé ici par
      lisibilité juste après le sync admin (même famille : accès à window.parent.getSbClient()). -->
-<script src="market.js?v=7"></script>
+<script src="market.js?v=8"></script>
 <!-- renommés le 2026-07-21 (lot 6/~8, même renommage progressif que ci-dessus) -->
-<script src="index.js?v=9"></script>
-<script src="game-view.js?v=8"></script>
-<script src="hardinage.js?v=9"></script>
+<script src="index.js?v=10"></script>
+<script src="game-view.js?v=9"></script>
+<script src="hardinage.js?v=10"></script>
 <!-- renommés le 2026-07-21 (lot 7/~8, même renommage progressif que ci-dessus) -->
-<script src="achievements.js?v=8"></script>
+<script src="achievements.js?v=9"></script>
 <!-- classement PvP (2026-07-20, demande explicite) : lit PETS/normGS/rc/rn/secById/gsCls/gsPct
      déjà déclarés plus haut, appelée uniquement via ST(8) -- ordre non strictement requis (aucune
      lecture au chargement immédiat), placé ici par lisibilité (juste avant main.js). -->
-<script src="pvp.js?v=8"></script>
+<script src="pvp.js?v=9"></script>
 <!-- tournoi PvP quotidien asynchrone (2026-07-13, demande explicite) : lit PETS/normGS/rc/toast/
      OM/CM déjà déclarés plus haut, appelée uniquement via ST(8)/registerForPvpTournament() --
      placé juste après pvp.js (classement LOCAL, même famille de tab), avant leaderboard.js. -->
-<script src="pvp-tournament.js?v=1"></script>
+<script src="pvp-tournament.js?v=2"></script>
 <!-- tes stats + classement cross-joueurs (2026-07-20, demande explicite) : lit
      PETS/totalHatched/silverSpent/fusionCount/PET_CATALOG/ACHIEVEMENTS/completedAchievements déjà
      déclarés plus haut, appelée uniquement via ST(9) -- ordre non strictement requis, placé ici par
      lisibilité (même famille que pvp.js juste au-dessus). -->
-<script src="leaderboard.js?v=5"></script>
+<script src="leaderboard.js?v=6"></script>
 <!-- écran de test viewer 3D GLB (2026-07-10) : script classique, lit window.THREE/GLTFLoader/
      OrbitControls posés par vendor/three/three-bridge.js (module, résolu de façon asynchrone —
      voir l'event 'three-ready' géré dans ce fichier). Ordre non strictement requis vis-à-vis des
      autres scripts classiques (aucune lecture immédiate d'un global déclaré ailleurs), placé ici
      par lisibilité, juste avant main.js. -->
 <!-- renommés le 2026-07-21 (lot 8/8, dernier lot du renommage progressif -- voir CLAUDE.md §15) -->
-<script src="viewer3d.js?v=6"></script>
+<script src="viewer3d.js?v=7"></script>
 <!-- onboarding (2026-07-11, demande explicite) : n'a besoin que de OM()/CM() (hatch.js, déjà
      chargé) et de localStorage -- ordre non strictement requis, placé juste avant main.js qui
      l'appelle (maybeShowOnboarding()) après le premier renderAll(). -->
-<script src="onboarding.js?v=3"></script>
-<script src="main.js?v=10"></script>
+<script src="onboarding.js?v=4"></script>
+<script src="main.js?v=11"></script>
 </body>
 </html>

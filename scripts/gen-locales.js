@@ -14,6 +14,12 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const LOCALES_DIR = path.join(ROOT, 'locales');
 const OUT_PATH = path.join(ROOT, 'src', 'core', 'i18n-resources.generated.js');
+// Module Compagnons (CLAUDE.md §28/§31, I18N_PLAN.md §3) : iframe isolee, jamais bundlee --
+// son namespace `companions` est genere dans un fichier SEPARE charge par companions.html
+// (propre instance i18next), et EXCLU des ressources du jeu principal pour ne pas gonfler le
+// bundle avec des cles que le jeu principal n'utilise jamais.
+const COMPANIONS_NS = 'companions';
+const COMPANIONS_OUT_PATH = path.join(ROOT, 'src', 'companions', 'i18n-resources.generated.js');
 
 const LANGS = ['fr', 'en'];
 
@@ -59,7 +65,16 @@ function main() {
     process.exit(1);
   }
 
-  const ns = domainSets[LANGS[0]];
+  // separe le namespace du module Compagnons (voir COMPANIONS_OUT_PATH plus haut)
+  const companionsResources = {};
+  for (const lang of LANGS) {
+    if (resources[lang][COMPANIONS_NS]) {
+      companionsResources[lang] = { [COMPANIONS_NS]: resources[lang][COMPANIONS_NS] };
+      delete resources[lang][COMPANIONS_NS];
+    }
+  }
+
+  const ns = domainSets[LANGS[0]].filter(d => d !== COMPANIONS_NS);
   const header = [
     '// FICHIER GENERE -- ne pas editer a la main.',
     '// Source : /locales/{fr,en}/*.json -- editer ces JSON puis relancer `node scripts/gen-locales.js`',
@@ -71,8 +86,22 @@ function main() {
 
   fs.mkdirSync(path.dirname(OUT_PATH), { recursive: true });
   fs.writeFileSync(OUT_PATH, header, 'utf8');
+  if (Object.keys(companionsResources).length === LANGS.length) {
+    const companionsHeader = [
+      '// FICHIER GENERE -- ne pas editer a la main.',
+      '// Source : /locales/{fr,en}/companions.json -- editer ces JSON puis relancer',
+      '// `node scripts/gen-locales.js` (appele automatiquement par `python scripts/build.py`).',
+      '// Charge par companions.html AVANT i18n.js (propre instance i18next du module, jamais',
+      '// partagee avec le jeu principal -- voir CLAUDE.md §28/§31, I18N_PLAN.md §3).',
+      'const COMPANIONS_I18N_RESOURCES = ' + JSON.stringify(companionsResources, null, 2) + ';',
+      ''
+    ].join('\n');
+    fs.writeFileSync(COMPANIONS_OUT_PATH, companionsHeader, 'utf8');
+  }
   const totalKeys = LANGS.reduce((sum, lang) => sum + Object.values(resources[lang]).reduce((s, d) => s + Object.keys(d).length, 0), 0);
+  const companionsKeys = LANGS.reduce((sum, lang) => sum + Object.keys((companionsResources[lang] || {})[COMPANIONS_NS] || {}).length, 0);
   console.log(`i18n-resources.generated.js genere : ${ns.length} domaines, ${totalKeys} cles au total (${LANGS.join('/')}).`);
+  console.log(`src/companions/i18n-resources.generated.js genere : ${companionsKeys} cles (${LANGS.join('/')}).`);
 }
 
 main();

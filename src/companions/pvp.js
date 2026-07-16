@@ -32,7 +32,7 @@ function renderPvp() {
   if (!el) return;
   const ranked = computePvpRanking(PETS);
   if (!ranked.length) {
-    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:16px;text-align:center">Aucun familier pour l'instant — éclos-en un pour apparaître dans ce classement.</div>`;
+    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);padding:16px;text-align:center">${i18next.t('companions:companions.pvp.no_pets')}</div>`;
     return;
   }
   const medal = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':`#${i+1}`;
@@ -43,7 +43,7 @@ function renderPvp() {
       <canvas id="pvp-cv${p.id}" width="30" height="30" style="width:30px;height:30px;image-rendering:pixelated;flex-shrink:0"></canvas>
       <div style="flex:1;min-width:0">
         <div style="font-size:11px;color:var(--cream);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.cat.name}</div>
-        <div style="font-size:9px;color:${rc(p.rar)}">${rn(p.rar)} · T${p.tier||1} · ${sec?.ico||''} ${sec?.name||''}</div>
+        <div style="font-size:9px;color:${rc(p.rar)}">${rn(p.rar)} · T${p.tier||1} · ${sec?.ico||''} ${secName(sec)}</div>
       </div>
       <span class="gs-badge ${gsCls(gsPct(p))}">GS ${pvpPower(p)}</span>
     </div>`;
