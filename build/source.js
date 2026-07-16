@@ -3066,7 +3066,8 @@ function showAwayLootSummaryIfAny() {
   }
   const items = Object.entries(awayLootCounts)
     .sort((a,b) => b[1].qty - a[1].qty)
-    .map(([name, v]) => ({ name, qty: v.qty, color: v.color, val: v.val, kind: v.kind }));
+    
+    .map(([name, v]) => ({ name: tr(name), qty: v.qty, color: v.color, val: v.val, kind: v.kind }));
   let bestDrop = null;
   for (const it of items) if (it.kind !== 'trash' && (!bestDrop || it.val > bestDrop.val)) bestDrop = it;
   const grade = (typeof GEAR_TIERS !== 'undefined' && GEAR_TIERS.find(g => g.zones.includes(zoneIdx))?.grade) || 'grey';
@@ -6302,7 +6303,7 @@ function dropsTick(dt) {
         addSilver(l.silver, 'loot', it.name);
         l.taken = true; S.lootCount++;
         lootLine(it, l.silver, 'trashLoot');
-        floatTxt(l.x,l.y,40,it.name,{silver:true});
+        floatTxt(l.x,l.y,40,tr(it.name),{silver:true});
         particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
         queueFarmEvent(it.kind, it.name, 1, l.silver);
         const zoneWasDone = zoneFullyCollected(zoneIdx); 
@@ -6338,27 +6339,27 @@ function dropsTick(dt) {
         S.jackpotCount = (S.jackpotCount||0) + 1;
         
         lootLine(it, 0, 'jackpot');
-        floatTxt(l.x,l.y,55,'★ '+it.name,{lvl:true});
+        floatTxt(l.x,l.y,55,'★ '+tr(it.name),{lvl:true});
         
         logToDiscord('💍 Bijou rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'gear') {
         S.gearDropCount = (S.gearDropCount||0) + 1;
         lootLine(it, 0, 'jackpot');
-        floatTxt(l.x,l.y,55,'⚔ '+it.name,{lvl:true});
+        floatTxt(l.x,l.y,55,'⚔ '+tr(it.name),{lvl:true});
         logToDiscord('⚔️ Équipement rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,40,it.name,{blue:true});
+        floatTxt(l.x,l.y,40,tr(it.name),{blue:true});
         
         if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
       } else if (it.kind === 'treasure') {
         lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,50,'🗺️ '+it.name,{lvl:true});
+        floatTxt(l.x,l.y,50,'🗺️ '+tr(it.name),{lvl:true});
         
         logToDiscord('🗺️ Trésor de Velia', `**${myPseudo||'Joueur'}** trouve ${it.name} (${fmtTinyPct(it.ch)} de chance)`, 0xe8c96a);
       } else {
         lootLine(it, 0, it.kind === 'material' ? 'matLoot' : '');
-        floatTxt(l.x,l.y,40,it.name,{silver:true});
+        floatTxt(l.x,l.y,40,tr(it.name),{silver:true});
         
         if (it.name === CRON_STONE.name && !cronTutoSeen) {
           cronTutoSeen = true;

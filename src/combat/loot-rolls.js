@@ -263,7 +263,7 @@ function dropsTick(dt) {
         addSilver(l.silver, 'loot', it.name);
         l.taken = true; S.lootCount++;
         lootLine(it, l.silver, 'trashLoot');
-        floatTxt(l.x,l.y,40,it.name,{silver:true});
+        floatTxt(l.x,l.y,40,tr(it.name),{silver:true});
         particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
         queueFarmEvent(it.kind, it.name, 1, l.silver);
         const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
@@ -304,7 +304,7 @@ function dropsTick(dt) {
         // le prix sur les item autre que token met juste la quantité") -- avant, le ticker montrait
         // "(+1234)" pour n'importe quel objet vendable au ramassage, pas seulement le trash
         lootLine(it, 0, 'jackpot');
-        floatTxt(l.x,l.y,55,'★ '+it.name,{lvl:true});
+        floatTxt(l.x,l.y,55,'★ '+tr(it.name),{lvl:true});
         // le centre de notifications ne garde que les infos importantes (succès, boss, niveau) —
         // les trouvailles de loot restent visibles dans le loot ticker, pas besoin de les dupliquer
         // ici (demande explicite du 2026-07-06)
@@ -312,11 +312,11 @@ function dropsTick(dt) {
       } else if (it.kind === 'gear') {
         S.gearDropCount = (S.gearDropCount||0) + 1;
         lootLine(it, 0, 'jackpot');
-        floatTxt(l.x,l.y,55,'⚔ '+it.name,{lvl:true});
+        floatTxt(l.x,l.y,55,'⚔ '+tr(it.name),{lvl:true});
         logToDiscord('⚔️ Équipement rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,40,it.name,{blue:true});
+        floatTxt(l.x,l.y,40,tr(it.name),{blue:true});
         // tutoriel d'objet au premier ramassage (2026-07-19) : Poussière d'esprit ancien/Fragment de
         // mémoire/Marbre du Dieu déchu -- voir ITEM_TUTORIALS/maybeQueueItemTutorial (progression/
         // notifications-quests.js). Fonction pure de décision, gère elle-même le flag "déjà vu" et
@@ -324,12 +324,12 @@ function dropsTick(dt) {
         if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
       } else if (it.kind === 'treasure') {
         lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,50,'🗺️ '+it.name,{lvl:true});
+        floatTxt(l.x,l.y,50,'🗺️ '+tr(it.name),{lvl:true});
         // les trésors sont TRÈS rares (jusqu'à 0.00001% de chance) — vaut bien un log "pour le fun"
         logToDiscord('🗺️ Trésor de Velia', `**${myPseudo||'Joueur'}** trouve ${it.name} (${fmtTinyPct(it.ch)} de chance)`, 0xe8c96a);
       } else {
         lootLine(it, 0, it.kind === 'material' ? 'matLoot' : '');
-        floatTxt(l.x,l.y,40,it.name,{silver:true});
+        floatTxt(l.x,l.y,40,tr(it.name),{silver:true});
         // tout premier ramassage d'une Pierre de Cron (2026-07-09, demande explicite) : petit
         // tutoriel expliquant son rôle (protège contre une rétrogradation, activable/désactivable
         // en cliquant dessus) — voir CRON_TUTORIAL_STEPS/startCronTutorial (game-supabase.js)

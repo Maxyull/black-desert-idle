@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V461', d:'16/07/2026 21:00', name:{fr:'Anglais : noms de loot flottants + résumé de reconnexion traduits', en:'English: floating loot names + reconnect summary translated'}, fr:[
+      {t:'fix', sub:'interface', tx:'En anglais, le texte flottant qui s\'affiche quand un objet est ramassé (sur la carte, au-dessus du personnage) restait en français ("Viande de loup", "Bourse de pirate"...) — corrigé, il utilise désormais la traduction comme le reste.'},
+      {t:'fix', sub:'interface', tx:'Le résumé de reconnexion (objets trouvés pendant l\'absence) affichait aussi les noms d\'objets en français en mode anglais — corrigé.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'In English, the floating text shown when an item is picked up (on the map, above the character) stayed in French ("Viande de loup", "Bourse de pirate"...) — fixed, it now uses the translation like everything else.'},
+      {t:'fix', sub:'interface', tx:'The reconnect summary (items found while away) also showed item names in French in English mode — fixed.'},
+    ] },
   { v:'V460', d:'16/07/2026 20:20', name:{fr:'Anglais : "Communauté"/"Compte" traduits + badge DÉMO retiré', en:'English: "Community"/"Account" translated + DEMO badge removed'}, fr:[
       {t:'fix', sub:'interface', tx:'En anglais, les titres de sections "Communauté" et "Compte" du menu de gauche restaient affichés en français (aucune traduction n\'était définie) — corrigé en "Community" / "Account".'},
       {t:'change', sub:'interface', tx:'Le badge "DÉMO" affiché à côté du pseudo a été retiré.'},

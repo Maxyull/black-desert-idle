@@ -698,7 +698,10 @@ function showAwayLootSummaryIfAny() {
   }
   const items = Object.entries(awayLootCounts)
     .sort((a,b) => b[1].qty - a[1].qty)
-    .map(([name, v]) => ({ name, qty: v.qty, color: v.color, val: v.val, kind: v.kind }));
+    // tr() à l'affichage (2026-07-16) : les clés awayLootCounts sont les noms FR bruts -- le modal
+    // de reconnexion montrait "Viande de loup" en mode EN. bestDropName ci-dessous passe aussi par
+    // tr() pour que la comparaison it.name === bestDropName (isBest) reste cohérente.
+    .map(([name, v]) => ({ name: tr(name), qty: v.qty, color: v.color, val: v.val, kind: v.kind }));
   let bestDrop = null;
   for (const it of items) if (it.kind !== 'trash' && (!bestDrop || it.val > bestDrop.val)) bestDrop = it;
   const grade = (typeof GEAR_TIERS !== 'undefined' && GEAR_TIERS.find(g => g.zones.includes(zoneIdx))?.grade) || 'grey';
