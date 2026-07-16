@@ -2155,7 +2155,6 @@
   .qwBody { margin-top:6px; }
   .qwRow { display:flex; justify-content:space-between; align-items:center; gap:10px; margin:2px 0; }
   .qwLbl { color:var(--ink-dim); }
-  .qwSep { margin:6px 0 3px; padding-top:5px; border-top:1px solid #2c2a33; font-size:9px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); }
   .qwTimer { color:var(--gold); font-variant-numeric:tabular-nums; }
   .qwNext { display:flex; align-items:center; gap:7px; margin-top:6px; padding-top:6px; border-top:1px solid #2c2a33; }
   .qwNextIcon { font-size:16px; }

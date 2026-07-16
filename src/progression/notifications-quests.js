@@ -1004,8 +1004,8 @@ try { const v = localStorage.getItem('velia-idle-trackerwidget-folded'); if (v !
 function toggleResetFold() { resetWidgetFolded = !resetWidgetFolded; try { localStorage.setItem('velia-idle-resetwidget-folded', resetWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestWidget(); }
 /** Replie/déplie l'encart de suivi des quêtes (persisté en localStorage) et le re-rend. */
 function toggleTrackerFold() { trackerWidgetFolded = !trackerWidgetFolded; try { localStorage.setItem('velia-idle-trackerwidget-folded', trackerWidgetFolded ? '1' : '0'); } catch(e) {} renderQuestTrackerWidget(); }
-// encart permanent en haut à droite : timers de reset, prochain succès à débloquer, temps de jeu
-/** Rend l'encart permanent en haut à droite (#questWidget) : timers de reset journalier/hebdo, temps de jeu, prochain succès. No-op replié (juste l'en-tête) si resetWidgetFolded. */
+// encart permanent en haut à droite : timers de reset, prochain succès à débloquer
+/** Rend l'encart permanent en haut à droite (#questWidget) : timers de reset journalier/hebdo, prochain succès. No-op replié (juste l'en-tête) si resetWidgetFolded. */
 function renderQuestWidget() {
   const el = $('questWidget'); if (!el) return;
   ensureQuests('daily'); ensureQuests('weekly');
@@ -1013,15 +1013,13 @@ function renderQuestWidget() {
     `<button class="qwFoldBtn" onclick="toggleResetFold()">${resetWidgetFolded?'▸':'▾'}</button></div>`;
   if (resetWidgetFolded) { el.innerHTML = header; return; }
   const next = nextAchievement();
-  const todayPlaytime = S.playtimeSec - (S.dq && S.dq.base ? S.dq.base.playtime : 0);
   const dailyTip = i18next.t('progression:progression.quests.daily_tip');
   const weeklyTip = i18next.t('progression:progression.quests.weekly_tip');
+  // le temps de jeu (Total/Aujourd'hui) vit dans le widget dédié #playtimeWidget
+  // (renderPlaytimeWidget) depuis 2026-07-13 -- plus de section playtime ici
   el.innerHTML = header + `<div class="qwBody">` +
     `<div class="qwRow" title="${dailyTip}"><span class="qwLbl">${i18next.t('progression:progression.quests.widget_daily_label')}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
     `<div class="qwRow" title="${weeklyTip}"><span class="qwLbl">${i18next.t('progression:progression.quests.widget_weekly_label')}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
-    `<div class="qwSep">${i18next.t('progression:progression.quests.playtime_label')}</div>` +
-    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.total_label')}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
-    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.today_label')}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
     (next
       ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
         `<div class="qwNextName">${next.a.name[LANG]}</div>` +

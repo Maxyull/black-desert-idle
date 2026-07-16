@@ -5778,15 +5778,12 @@ function renderQuestWidget() {
     `<button class="qwFoldBtn" onclick="toggleResetFold()">${resetWidgetFolded?'▸':'▾'}</button></div>`;
   if (resetWidgetFolded) { el.innerHTML = header; return; }
   const next = nextAchievement();
-  const todayPlaytime = S.playtimeSec - (S.dq && S.dq.base ? S.dq.base.playtime : 0);
   const dailyTip = i18next.t('progression:progression.quests.daily_tip');
   const weeklyTip = i18next.t('progression:progression.quests.weekly_tip');
+  
   el.innerHTML = header + `<div class="qwBody">` +
     `<div class="qwRow" title="${dailyTip}"><span class="qwLbl">${i18next.t('progression:progression.quests.widget_daily_label')}</span><span class="qwTimer">${fmtDuration(msToNextDailyReset())}</span></div>` +
     `<div class="qwRow" title="${weeklyTip}"><span class="qwLbl">${i18next.t('progression:progression.quests.widget_weekly_label')}</span><span class="qwTimer">${fmtDuration(msToNextWeeklyReset())}</span></div>` +
-    `<div class="qwSep">${i18next.t('progression:progression.quests.playtime_label')}</div>` +
-    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.total_label')}</span><span class="qwTimer">${fmtHours(S.playtimeSec)}</span></div>` +
-    `<div class="qwRow"><span class="qwLbl">${i18next.t('progression:progression.quests.today_label')}</span><span class="qwTimer">${fmtHours(todayPlaytime)}</span></div>` +
     (next
       ? `<div class="qwNext"><div class="qwNextIcon">${next.a.icon}</div><div class="qwNextInfo">` +
         `<div class="qwNextName">${next.a.name[LANG]}</div>` +
