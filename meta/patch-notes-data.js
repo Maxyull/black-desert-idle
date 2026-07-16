@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V456', d:'16/07/2026 04:30', name:{fr:'Correctif taille "Petit" : le panneau de droite se collait plus au bord', en:'"Small" size fix: the right panel no longer hugged the edge'}, fr:[
+      {t:'fix', sub:'interface', tx:'Au palier de taille UI "Petit", le panneau de droite (Suivi, Temps de jeu, Quêtes suivies, Chat) flottait au milieu de l\'écran en laissant un grand vide à sa droite, au lieu d\'être collé au bord. Corrigé : le menu de gauche reste à gauche, le panneau de droite se colle au bord droit, et la zone de jeu se centre entre les deux.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'At the "Small" UI size step, the right panel (Tracker, Playtime, Tracked quests, Chat) floated in the middle of the screen leaving a large gap to its right, instead of hugging the edge. Fixed: the left menu stays left, the right panel sticks to the right edge, and the game area centers between the two.'},
+    ] },
   { v:'V455', d:'16/07/2026 03:00', name:{fr:'Rattrapage hors-ligne payé au taux serveur équitable', en:'Offline catch-up paid at the fair server rate'}, fr:[
       {t:'change', sub:'economie', tx:'Les gains hors-ligne (navigateur fermé — au retour ET via le crédit serveur horaire) sont désormais payés au taux calculé par le serveur : ta meilleure heure PLEINE de farm réelle (la même valeur que le classement). Fini les gains hors-ligne basés sur un vieux record local gonflé — et plus de creux à zéro après la remise à plat des records (V454).'},
       {t:'fix', sub:'economie', tx:'Le farm sur un autre onglet n\'est pas concerné : il tourne déjà au vrai rythme en continu depuis la V452.'},

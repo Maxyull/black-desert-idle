@@ -2878,6 +2878,15 @@
      jamais visible, seulement la hauteur (poussée normale du flux). */
   .layout {
     display:grid; grid-template-columns:210px var(--ui-center-track,1fr) 300px; gap:14px; align-items:start;
+    /* justify-content (2026-07-15, retour utilisateur "menu de droite doit être à droite") : quand
+       la piste centrale est FIXÉE en px par le palier de taille UI "Petit" (--ui-center-track =
+       largeur_dispo × 0.85, voir updateUiScaleLayoutTrack, game-supabase.js), la somme des 3
+       colonnes devient plus petite que la grille (width:100%) -- par défaut (justify-content:
+       start) tout l'espace restant s'accumule APRÈS la 3e colonne, décollant .side-right du bord
+       droit. space-between garde #sideMenu collé à gauche et .side-right collé à droite, le
+       surplus se répartit symétriquement autour de la colonne centrale (jeu centré). Sans effet
+       quand les pistes remplissent déjà tout (palier Moyen, 1fr) ou débordent (palier Grand). */
+    justify-content:space-between;
   }
   /* #wrap contenait auparavant #activitiesBar (retiré ci-dessus) ET portait sa propre
      largeur fixe (1240px, voir règle plus haut dans ce fichier) -- devenu simple item
