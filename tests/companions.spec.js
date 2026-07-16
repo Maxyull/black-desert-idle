@@ -2284,3 +2284,53 @@ test('register_pvp_team RPC call never throws an unhandled exception when the ac
   });
   expect(pageErrors).toEqual([]); // aucune exception JS non gérée, même si la RPC échoue réseau
 });
+
+// i18n du module (2026-07-16, retour utilisateur : "compagnon pas anglais") -- le module a sa
+// PROPRE instance i18next (namespace locales/{fr,en}/companions.json, voir src/companions/i18n.js
+// et docs/I18N_PLAN.md §3 "Cas à part : module Compagnons"), et lit la langue depuis
+// localStorage['velia-idle-lang'] (iframe same-origin, localStorage partagé avec le jeu
+// principal) AU CHARGEMENT de l'iframe. Le défaut reste 'fr' (tous les autres tests de ce
+// fichier tournent en français et doivent rester verts) -- ce test force 'en' AVANT le premier
+// clic sur l'onglet Compagnon (l'iframe n'existe pas encore, elle bootera donc en anglais) et
+// vérifie que le shell statique (onglets, bandeau test), les rendus JS (modale de choix d'œuf)
+// et le flux d'éclosion complet s'affichent en anglais -- et qu'aucune clé brute
+// "companions.xxx" ne fuit à l'écran.
+test('companion module renders in English when velia-idle-lang=en (own i18next instance)', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await page.evaluate(() => { try { localStorage.setItem('velia-idle-lang', 'en'); } catch (e) {} });
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+
+  // shell statique traduit par applyCompanionsI18n() (data-i18n, i18n.js)
+  await expect(frame.locator('#wipBanner')).toContainText('Module under testing');
+  await expect(frame.locator('.tabs .tab', { hasText: 'Hatchery' })).toBeVisible();
+  await expect(frame.locator('.tabs .tab', { hasText: 'Feed' })).toBeVisible();
+  await expect(frame.locator('.tabs .tab', { hasText: 'Leaderboard' })).toBeVisible();
+
+  // flux d'éclosion complet en anglais (rendus JS : renderHatch/openEggChoice/doHatch)
+  await frame.locator('.tabs .tab', { hasText: 'Hatchery' }).click();
+  await frame.locator('.isl.ready button', { hasText: 'Hatch' }).click();
+  await expect(frame.locator('#hatch-modal')).toHaveClass(/open/);
+  await expect(frame.locator('#hatch-modal')).toContainText('Choose your egg');
+  await frame.locator('#hatch-body .btn', { hasText: 'Use' }).first().click();
+  await frame.locator('#hatch-body .btn', { hasText: 'Keep' }).click();
+  await expect(frame.locator('#hatch-modal')).not.toHaveClass(/open/);
+
+  await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
+  await expect(frame.locator('.pet-card')).toHaveCount(1);
+
+  // règles de fusion (panneau statique de la Collection) traduites
+  await expect(frame.locator('.fusion-panel')).toContainText('Rules');
+
+  // jamais de clé brute "companions.xxx" affichée au joueur (fallbackLng/en complet)
+  const bodyText = await frame.locator('body').innerText();
+  expect(bodyText).not.toMatch(/companions\.[a-z_]+\./);
+
+  expect(pageErrors).toEqual([]);
+});

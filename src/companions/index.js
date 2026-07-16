@@ -4,8 +4,8 @@ let indexFilterTier='all';
 
 /** @param {number} rar - rareté visée (0-5). Affiche un toast avec les odds de chaque type d'œuf pour cette rareté. */
 function suggestEggFor(rar){
-  const lines = EGG_TYPES.map(e=>`${e.ico} ${e.name} : ${e.odds[rar]}%`).join(' · ');
-  toast('🥚', `Pour viser ${RARITIES[rar].name} — ${lines}`);
+  const lines = EGG_TYPES.map(e=>`${e.ico} ${eggName(e)} : ${e.odds[rar]}%`).join(' · ');
+  toast('🥚', i18next.t('companions:companions.index.suggest_toast', {rarity:rn(rar), lines:lines}));
 }
 
 /** Reconstruit l'onglet Index (matrice rareté×tier, chips de filtre, table du catalogue). */
@@ -30,14 +30,14 @@ function renderIndexMatrix(){
 
   let html = `<table style="border-collapse:collapse;font-size:10.5px;min-width:680px">
     <thead><tr>
-      <th style="padding:6px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border)">Rareté \\ Tier</th>
+      <th style="padding:6px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border)">${i18next.t('companions:companions.index.matrix_col_header')}</th>
       ${[1,2,3,4,5].map(t=>`<th style="padding:6px 10px;color:var(--gold);border-bottom:1px solid var(--border);font-family:'Cinzel',serif">T${t}<div style="font-size:8px;color:var(--cream3);font-weight:400">×${TIER_MULT_RANGE[t-1][0].toFixed(2)}–${TIER_MULT_RANGE[t-1][1].toFixed(2)}</div></th>`).join('')}
     </tr></thead><tbody>`;
 
   RARITIES.forEach((r,rar)=>{
     const ownedTier = bestTierOwnedByRar[rar]; // meilleur tier déjà possédé pour cette rareté (undefined si aucun)
     html += `<tr>
-      <td style="padding:6px 10px;color:${r.hex};font-family:'Cinzel',serif;border-bottom:1px solid var(--border)">${r.name}</td>
+      <td style="padding:6px 10px;color:${r.hex};font-family:'Cinzel',serif;border-bottom:1px solid var(--border)">${rn(rar)}</td>
       ${[1,2,3,4,5].map(tier=>{
         const gsMin = Math.round(minGS(rar,tier)/absMax*1000);
         const gsMax = Math.round(maxGS(rar,tier)/absMax*1000);
@@ -48,12 +48,12 @@ function renderIndexMatrix(){
         // Statut d'action pour cette cellule précise
         let bg='transparent', txtCol='var(--cream2)', action=null, cursor='default', onclick='';
         if(ownedTier===tier){
-          bg='rgba(68,176,96,.16)'; txtCol='var(--green2)'; action='✓ Possédé';
+          bg='rgba(68,176,96,.16)'; txtCol='var(--green2)'; action=i18next.t('companions:companions.index.owned');
         } else if(ownedTier!==undefined && tier===ownedTier+1){
-          bg='rgba(232,184,75,.14)'; txtCol='var(--gold2)'; action='🍖 Nourrir pour monter';
+          bg='rgba(232,184,75,.14)'; txtCol='var(--gold2)'; action=i18next.t('companions:companions.index.feed_to_climb');
           cursor='pointer'; onclick=`onclick="ST(4)"`;
         } else if(ownedTier===undefined && tier===1){
-          bg='rgba(123,157,191,.14)'; txtCol='var(--blue2)'; action='🥚 À éclore';
+          bg='rgba(123,157,191,.14)'; txtCol='var(--blue2)'; action=i18next.t('companions:companions.index.to_hatch');
           cursor='pointer'; onclick=`onclick="ST(1);suggestEggFor(${rar})"`;
         } else if(overlaps){
           bg='rgba(68,176,96,.06)';
@@ -70,12 +70,12 @@ function renderIndexMatrix(){
 
   html += `</tbody></table>
     <div style="display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;padding:10px 12px;background:var(--s2);border:1px solid var(--border);border-radius:8px">
-      <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--cream2);letter-spacing:.06em;text-transform:uppercase;width:100%;margin-bottom:2px">Légende</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cream2)"><span style="width:12px;height:12px;border-radius:3px;background:rgba(68,176,96,.16);border:1px solid var(--green2);display:inline-block"></span>✓ Possédé — ton meilleur pet de cette rareté est ici</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cream2)"><span style="width:12px;height:12px;border-radius:3px;background:rgba(232,184,75,.14);border:1px solid var(--gold2);display:inline-block"></span>🍖 Nourrir — palier suivant atteignable en montant le tier</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cream2)"><span style="width:12px;height:12px;border-radius:3px;background:rgba(123,157,191,.14);border:1px solid var(--blue2);display:inline-block"></span>🥚 À éclore — tu n'as encore aucun pet de cette rareté</div>
-      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--green2)"><span style="width:12px;height:12px;border-radius:3px;background:rgba(68,176,96,.06);border:1px solid var(--border);display:inline-block"></span>▲ Chevauchement — dépasse déjà la moyenne T1 de la rareté au-dessus</div>
-      <div style="font-size:9px;color:var(--cream3);width:100%;margin-top:2px">Clique une case bleue "À éclore" pour voir quel œuf choisir selon la rareté visée.</div>
+      <div style="font-family:'Cinzel',serif;font-size:10px;color:var(--cream2);letter-spacing:.06em;text-transform:uppercase;width:100%;margin-bottom:2px">${i18next.t('companions:companions.index.legend_title')}</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cream2)"><span style="width:12px;height:12px;border-radius:3px;background:rgba(68,176,96,.16);border:1px solid var(--green2);display:inline-block"></span>${i18next.t('companions:companions.index.legend_owned')}</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cream2)"><span style="width:12px;height:12px;border-radius:3px;background:rgba(232,184,75,.14);border:1px solid var(--gold2);display:inline-block"></span>${i18next.t('companions:companions.index.legend_feed')}</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--cream2)"><span style="width:12px;height:12px;border-radius:3px;background:rgba(123,157,191,.14);border:1px solid var(--blue2);display:inline-block"></span>${i18next.t('companions:companions.index.legend_hatch')}</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:10px;color:var(--green2)"><span style="width:12px;height:12px;border-radius:3px;background:rgba(68,176,96,.06);border:1px solid var(--border);display:inline-block"></span>${i18next.t('companions:companions.index.legend_overlap')}</div>
+      <div style="font-size:9px;color:var(--cream3);width:100%;margin-top:2px">${i18next.t('companions:companions.index.legend_hint')}</div>
     </div>`;
   document.getElementById('index-matrix').innerHTML = html;
 }
@@ -83,13 +83,13 @@ function renderIndexMatrix(){
 /** Reconstruit les chips de filtre section/tier de l'onglet Index (indexFilterSec/indexFilterTier). */
 function renderIndexFilterChips(){
   document.getElementById('index-filter-chips').innerHTML =
-    [['all','Tous'],...SECTIONS.map(s=>[s.id,s.ico+' '+s.name])].map(([id,lbl])=>
+    [['all',i18next.t('companions:companions.index.filter_all')],...SECTIONS.map(s=>[s.id,s.ico+' '+secName(s)])].map(([id,lbl])=>
       `<div class="chip ${indexFilterSec===id?'on':''}" onclick="indexFilterSec='${id}';renderIndexFilterChips();renderIndexPetTable()">${lbl}</div>`
     ).join('');
   const tierChipsEl = document.getElementById('index-tier-chips');
   if(tierChipsEl){
     tierChipsEl.innerHTML =
-      [['all','Tous les Tiers'],...[1,2,3,4,5].map(t=>[String(t),'T'+t])].map(([id,lbl])=>
+      [['all',i18next.t('companions:companions.index.filter_all_tiers')],...[1,2,3,4,5].map(t=>[String(t),'T'+t])].map(([id,lbl])=>
         `<div class="chip ${indexFilterTier===id?'on':''}" onclick="indexFilterTier='${id}';renderIndexFilterChips();renderIndexPetTable()">${lbl}</div>`
       ).join('');
   }
@@ -114,14 +114,14 @@ function renderIndexPetTable(){
   const tiersToShow = indexFilterTier==='all' ? [1,2,3,4,5] : [+indexFilterTier];
 
   let html = `<thead><tr>
-    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">Nom & évolution par Tier</th>
-    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">Type</th>
-    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">Section & Buffs</th>
-    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">Rareté</th>
-    <th style="padding:8px 10px;text-align:center;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">Tier</th>
-    <th style="padding:8px 10px;text-align:center;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">Plage GS</th>
-    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">Origine</th>
-    <th style="padding:8px 10px;text-align:center;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">Statut</th>
+    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">${i18next.t('companions:companions.index.col_name')}</th>
+    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">${i18next.t('companions:companions.index.col_type')}</th>
+    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">${i18next.t('companions:companions.index.col_section')}</th>
+    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">${i18next.t('companions:companions.index.col_rarity')}</th>
+    <th style="padding:8px 10px;text-align:center;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">${i18next.t('companions:companions.index.col_tier')}</th>
+    <th style="padding:8px 10px;text-align:center;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">${i18next.t('companions:companions.index.col_gs')}</th>
+    <th style="padding:8px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">${i18next.t('companions:companions.index.col_origin')}</th>
+    <th style="padding:8px 10px;text-align:center;color:var(--cream2);border-bottom:1px solid var(--border);font-size:12px">${i18next.t('companions:companions.index.col_status')}</th>
   </tr></thead><tbody>`;
 
   const previewsToRender = []; // {canvasId, artKey, rarColor, tier, owned}
@@ -154,10 +154,10 @@ function renderIndexPetTable(){
 
     // Buffs de la section : tags des stats actives pour cette rareté, avec plage min-max + valeur réelle si possédé
     const bonusCount = BONUS_COUNT[c.rar];
-    const buffTags = sec ? sec.sk.slice(0,bonusCount).map((k,i)=>{
+    const buffTags = sec ? sec.sk.slice(0,bonusCount).map((k,i)=>{ const kLbl=skillName(sec,i);
       const [lo,hi] = STAT_RANGES[c.rar][i];
       const val = owned ? (owned.stats[i]||0) : null;
-      return `<span style="display:inline-block;background:var(--s3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:10px;color:${owned?'var(--green2)':'var(--cream2)'};margin:2px 3px 0 0">${k}
+      return `<span style="display:inline-block;background:var(--s3);border:1px solid var(--border);border-radius:4px;padding:2px 7px;font-size:10px;color:${owned?'var(--green2)':'var(--cream2)'};margin:2px 3px 0 0">${kLbl}
         <span style="font-family:'JetBrains Mono',monospace;color:var(--cream3)">[${lo}–${hi}]</span>
         ${val!==null?` <b style="font-family:'JetBrains Mono',monospace;color:var(--gold2)">+${val}</b>`:''}</span>`;
     }).join('') : '';
@@ -170,13 +170,13 @@ function renderIndexPetTable(){
       const rowBg = isFirstRowOfGroup ? '' : 'background:rgba(255,255,255,0.015)';
       const nameCell = isFirstRowOfGroup
         ? `<td rowspan="${tiersToShow.length}" style="padding:10px;border-bottom:2px solid var(--border);vertical-align:top">
-             <div style="font-size:19px;font-weight:700;color:${owned?'var(--cream)':'var(--cream3)'};margin-bottom:8px">${c.name}${owned?'':' <span style="font-size:11px;font-weight:400">(inconnu)</span>'}</div>
+             <div style="font-size:19px;font-weight:700;color:${owned?'var(--cream)':'var(--cream3)'};margin-bottom:8px">${c.name}${owned?'':' <span style="font-size:11px;font-weight:400">'+i18next.t('companions:companions.index.unknown_suffix')+'</span>'}</div>
              <div style="display:flex;gap:10px">${evoRow}</div>
            </td>`
         : '';
-      const typeCell = isFirstRowOfGroup ? `<td rowspan="${tiersToShow.length}" style="padding:8px 10px;color:var(--cream2);border-bottom:2px solid var(--border);vertical-align:top;font-size:12px">${c.typ}</td>` : '';
+      const typeCell = isFirstRowOfGroup ? `<td rowspan="${tiersToShow.length}" style="padding:8px 10px;color:var(--cream2);border-bottom:2px solid var(--border);vertical-align:top;font-size:12px">${typeLabel(c.typ)}</td>` : '';
       const secCell = isFirstRowOfGroup ? `<td rowspan="${tiersToShow.length}" style="padding:8px 10px;color:var(--cream2);border-bottom:2px solid var(--border);vertical-align:top;font-size:12px;max-width:220px">
-          <div style="margin-bottom:4px">${sec?.ico||''} ${sec?.name||''}</div>
+          <div style="margin-bottom:4px">${sec?.ico||''} ${secName(sec)}</div>
           <div style="display:flex;flex-wrap:wrap">${buffTags}</div>
         </td>` : '';
       const rarCell = isFirstRowOfGroup ? `<td rowspan="${tiersToShow.length}" style="padding:8px 10px;color:${rc(displayRar)};border-bottom:2px solid var(--border);vertical-align:top;font-size:13px;font-weight:600">${rn(displayRar)}</td>` : '';
@@ -189,7 +189,7 @@ function renderIndexPetTable(){
         <td style="padding:6px 10px;text-align:center;border-bottom:${borderStyle}"><span style="font-family:'Cinzel',serif;font-size:13px;color:${isOwnedAtThisTier?'var(--gold)':'var(--cream3)'}">T${t}</span></td>
         <td style="padding:6px 10px;text-align:center;border-bottom:${borderStyle};font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--cream2)">${gsMin}–${gsMax}</td>
         ${origCell}
-        <td style="padding:6px 10px;text-align:center;border-bottom:${borderStyle}">${isOwnedAtThisTier?'<span style="color:var(--green2);font-size:11px;font-weight:600">✓ Ce tier</span>':(owned?'<span style="color:var(--cream3);font-size:10px">autre tier</span>':'<span style="color:var(--cream3);font-size:10px">—</span>')}</td>
+        <td style="padding:6px 10px;text-align:center;border-bottom:${borderStyle}">${isOwnedAtThisTier?'<span style="color:var(--green2);font-size:11px;font-weight:600">'+i18next.t('companions:companions.index.this_tier')+'</span>':(owned?'<span style="color:var(--cream3);font-size:10px">'+i18next.t('companions:companions.index.other_tier')+'</span>':'<span style="color:var(--cream3);font-size:10px">—</span>')}</td>
       </tr>`;
     });
   });

@@ -135,11 +135,11 @@ function applyOfflineProgress(savedAt){
 
   if(totalSilver>0 || tierUps.length){
     SILVER += totalSilver;
-    const itemsText = Object.entries(itemsGained).map(([n,q])=>`${q}× ${n}`).join(', ');
+    const itemsText = Object.entries(itemsGained).map(([n,q])=>`${q}× ${itemLabel(n)}`).join(', ');
     const hLabel = hours>=1 ? `${hours.toFixed(1)}h` : `${Math.round(hours*60)}min`;
     const tierText = tierUps.length ? ` — ${tierUps.map(t=>`${t.name} T${t.from}➡️T${t.to}`).join(', ')}` : '';
-    toast('🎁', `Retour après ${hLabel} — +${totalSilver.toLocaleString('fr-FR')} Silver, ${itemsText}${tierText}`);
-    addGameLog(`🎁 Rattrapage hors-ligne (${hLabel}) : +${totalSilver.toLocaleString('fr-FR')} Silver, ${itemsText}${tierText}`);
+    toast('🎁', i18next.t('companions:companions.save.offline_toast', {duration:hLabel, silver:totalSilver.toLocaleString(NUM_LOCALE), items:itemsText, tiers:tierText}));
+    addGameLog(i18next.t('companions:companions.save.offline_log_html', {duration:hLabel, silver:totalSilver.toLocaleString(NUM_LOCALE), items:itemsText, tiers:tierText}));
   }
   saveGame(); // persiste immédiatement le rattrapage (silver/items/hunger/tier/slots), avant l'autosave 5s
   if(document.getElementById('p0')?.classList.contains('active')) renderHatch();
@@ -182,7 +182,7 @@ function trimRosterToCapIfNeeded(){
   const removedCount = PETS.length - (deployed.length + Math.min(keepOthersCount, others.length));
   PETS = [...deployed, ...others.slice(0, keepOthersCount)];
   if(removedCount>0 && typeof toast==='function'){
-    toast('📦', `${removedCount} familier${removedCount>1?'s':''} en trop supprimé${removedCount>1?'s':''} (plafond ${PET_ROSTER_CAP}) — les moins bien roulés retirés en premier`);
+    toast('📦', i18next.t('companions:companions.save.trim_toast', {count:removedCount, cap:PET_ROSTER_CAP}));
   }
 }
 // migration rétroactive (2026-07-10, marché d'échange) -- tout pet créé avant l'ajout de `uid`
@@ -274,7 +274,7 @@ setInterval(saveGame, 5000); // autosave toutes les 5s
 // partie du jeu principal n'expose ce genre de bouton.
 /** Efface la sauvegarde locale (avec confirmation) et recharge la page (roster de départ, 0 pet). */
 function resetSave(){
-  if(!confirm('Effacer la sauvegarde et recharger le roster de départ (0 pet) ?\n\nTa progression actuelle sera définitivement perdue.')) return;
+  if(!confirm(i18next.t('companions:companions.save.reset_confirm'))) return;
   localStorage.removeItem('velia_idle_pets_save');
   location.reload();
 }

@@ -19,6 +19,35 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
 - Chargement paresseux garanti : tant que le joueur n'a pas cliqué sur l'onglet, aucun de
   ces fichiers n'est téléchargé ni exécuté.
 
+**i18n (2026-07-16, retour utilisateur : "compagnon pas anglais")** : le module a sa **propre**
+instance i18next (docs/I18N_PLAN.md §3 "Cas à part : module Compagnons", CLAUDE.md §28/§31),
+namespace unique `companions` (`locales/{fr,en}/companions.json`, ~460 clés/langue) :
+- `companions.html` charge le même i18next UMD/SRI jsdelivr qu'`index.dev.html` (déjà en cache
+  navigateur), puis `i18n-resources.generated.js` (GÉNÉRÉ par `scripts/gen-locales.js` — qui
+  exclut ce namespace des ressources du jeu principal — ne jamais l'éditer à la main), puis
+  `i18n.js` (init + helpers), AVANT tout autre script du module (`economy.js` appelle
+  `costLabelFor()` → `t()` au chargement immédiat).
+- Langue lue UNE FOIS au chargement de l'iframe via `localStorage['velia-idle-lang']`
+  (same-origin, partagé avec le jeu principal) — l'iframe étant créée puis réutilisée
+  (`boss.js:openCompanionsModule`), un changement de langue est pris en compte au prochain
+  rechargement de page. `NUM_LOCALE` (i18n.js) remplace les `'fr-FR'` codés en dur.
+- Shell statique de `companions.html` : attributs `data-i18n`/`data-i18n-title`/
+  `data-i18n-placeholder` appliqués par `applyCompanionsI18n()` (i18n.js) — le HTML garde le FR
+  par défaut, la clé fait foi.
+- **Les données de `catalog.js` gardent leurs libellés FR canoniques** (raretés, sections,
+  compétences, objets, œufs, types) : les noms d'objets sont aussi des CLÉS de sauvegarde
+  (`INVENTORY` indexé par nom dans `velia_idle_pets_save`) — les traduire dans les données
+  splitterait les stacks des sauvegardes existantes. Traduction à l'AFFICHAGE uniquement via les
+  helpers d'i18n.js (`rn()` dans tier.js, `secName()`, `skillName()`, `itemLabel()`,
+  `typeLabel()`, `eggName()`) — même esprit que `tr()`/`NAME_EN` côté jeu principal. Repli =
+  libellé FR si la clé manque, jamais une clé brute à l'écran.
+- Les champs `name`/`desc` d'`ACHIEVEMENTS` (achievements.js) restent le FR de référence mais
+  l'affichage passe par `achName()`/`achDesc()` (clés `companions.achievements.<id>_name/_desc`).
+- `scripts/check-missing-translations.js` couvre ce namespace automatiquement (parité fr/en,
+  variables d'interpolation, usages `i18next.t('companions:…')` littéraux de `src/companions/`).
+- Test : `tests/companions.spec.js` ("companion module renders in English when
+  velia-idle-lang=en") — les autres tests du fichier restent en fr (défaut inchangé).
+
 **Migration rétroactive du roster (2026-07-19, demande explicite : "supprime les 48 pet pour tout
 le monde")** : le roster de départ est passé à 0 pet le 2026-07-10 (`roster.js`), mais
 les sauvegardes locales déjà existantes gardaient leur roster antérieur — `localStorage` n'est

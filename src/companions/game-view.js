@@ -14,7 +14,7 @@ function renderGameCompanions(){
   if(!el) return;
   const active = PETS.filter(p=>p.terrain);
   if(!active.length){
-    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);align-self:center">Aucun familier actif — déploie-en un depuis l'onglet Sections.</div>`;
+    el.innerHTML = `<div style="font-size:11px;color:var(--cream3);align-self:center">${i18next.t('companions:companions.game.no_active_pets')}</div>`;
     return;
   }
   el.innerHTML = active.map(p=>`
@@ -36,13 +36,13 @@ function renderGameStats(){
   el.innerHTML = SECTIONS.map(s=>{
     const p = terrainPet(s.id);
     if(!p) return `<div style="background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:8px 10px;opacity:.4">
-      <div style="font-size:10px;color:var(--cream3)">${s.ico} ${s.name}</div>
-      <div style="font-size:9px;color:var(--cream3)">— aucun pet —</div>
+      <div style="font-size:10px;color:var(--cream3)">${s.ico} ${secName(s)}</div>
+      <div style="font-size:9px;color:var(--cream3)">${i18next.t('companions:companions.game.stat_no_pet')}</div>
     </div>`;
     const mult = tierMultOf(p);
     const val = ((p.stats[0]||0)*mult).toFixed(1);
     return `<div style="background:var(--s3);border:1px solid var(--border);border-radius:7px;padding:8px 10px">
-      <div style="font-size:10px;color:var(--cream2)">${s.ico} ${s.name}</div>
+      <div style="font-size:10px;color:var(--cream2)">${s.ico} ${secName(s)}</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--green2)">+${val}</div>
       <div style="font-size:8px;color:var(--cream3)">${p.cat.name} · T${p.tier||1} (${tierMultPct(p)}%)</div>
     </div>`;
@@ -55,14 +55,14 @@ function renderGameInventory(){
   if(!el) return;
   const items = Object.entries(INVENTORY);
   if(!items.length){
-    el.innerHTML = `<div style="font-size:11px;color:var(--cream3)">Inventaire vide — déploie des pets pour qu'ils commencent à looter.</div>`;
+    el.innerHTML = `<div style="font-size:11px;color:var(--cream3)">${i18next.t('companions:companions.game.inventory_empty')}</div>`;
     return;
   }
   el.innerHTML = items.map(([name,data])=>`
     <div style="background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;display:flex;align-items:center;gap:6px">
       <span style="font-size:16px">${data.icon}</span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:9px;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
+        <div style="font-size:9px;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${itemLabel(name)}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--gold)">×${data.qty}</div>
       </div>
     </div>`).join('');
@@ -75,14 +75,14 @@ function renderCollInventory(){
   if(!el) return;
   const items = Object.entries(INVENTORY);
   if(!items.length){
-    el.innerHTML = `<div style="font-size:10px;color:var(--cream3);grid-column:1/-1">Inventaire vide.</div>`;
+    el.innerHTML = `<div style="font-size:10px;color:var(--cream3);grid-column:1/-1">${i18next.t('companions:companions.game.inventory_empty_short')}</div>`;
     return;
   }
   el.innerHTML = items.map(([name,data])=>`
-    <div style="background:var(--s3);border:1px solid var(--border);border-radius:5px;padding:5px 6px;display:flex;align-items:center;gap:5px" title="${name}">
+    <div style="background:var(--s3);border:1px solid var(--border);border-radius:5px;padding:5px 6px;display:flex;align-items:center;gap:5px" title="${itemLabel(name)}">
       <span style="font-size:13px">${data.icon}</span>
       <div style="flex:1;min-width:0">
-        <div style="font-size:8px;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${name}</div>
+        <div style="font-size:8px;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${itemLabel(name)}</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--gold)">×${data.qty}</div>
       </div>
     </div>`).join('');
@@ -94,7 +94,7 @@ function renderGameLog(){
   const el = document.getElementById('game-log');
   if(!el) return;
   if(!GAME_LOG.length){
-    el.innerHTML = `<div style="font-size:10px;color:var(--cream3)">Aucune activité pour l'instant.</div>`;
+    el.innerHTML = `<div style="font-size:10px;color:var(--cream3)">${i18next.t('companions:companions.game.no_activity')}</div>`;
     return;
   }
   el.innerHTML = GAME_LOG.slice(0,20).map(l=>`

@@ -101,7 +101,7 @@ function createThreeViewer(wrap, onStatus) {
   loop();
 
   function loadModel(url) {
-    if (onStatus) onStatus('Chargement du modèle…');
+    if (onStatus) onStatus(i18next.t('companions:companions.viewer3d.loading'));
     const loader = new window.GLTFLoader();
     const startedAt = performance.now();
     loader.load(
@@ -116,16 +116,16 @@ function createThreeViewer(wrap, onStatus) {
         gltf.scene.position.sub(center);
         scene.add(gltf.scene);
         const ms = Math.round(performance.now() - startedAt);
-        if (onStatus) onStatus('Chargé en ' + ms + ' ms — ' + url.split('/').pop());
+        if (onStatus) onStatus(i18next.t('companions:companions.viewer3d.loaded_in', {ms:ms, file:url.split('/').pop()}));
       },
       xhr => {
         if (xhr.lengthComputable && onStatus) {
           const pct = Math.round((xhr.loaded / xhr.total) * 100);
-          onStatus('Téléchargement… ' + pct + '% (' + Math.round(xhr.loaded / 1e6) + ' Mo)');
+          onStatus(i18next.t('companions:companions.viewer3d.downloading', {pct:pct, mb:Math.round(xhr.loaded / 1e6)}));
         }
       },
       err => {
-        if (onStatus) onStatus('Erreur de chargement — voir console (' + (err && err.message ? err.message : 'inconnue') + ')');
+        if (onStatus) onStatus(i18next.t('companions:companions.viewer3d.load_error', {message:(err && err.message ? err.message : i18next.t('companions:companions.viewer3d.unknown_error'))}));
         console.error('[viewer3d] échec chargement GLB', url, err);
       }
     );

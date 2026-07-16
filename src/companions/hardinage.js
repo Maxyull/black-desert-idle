@@ -35,7 +35,7 @@ function initHardFieldPets(){
 function renderHardOdds(){
   const el = document.getElementById('hard-odds-panel');
   if(!el) return;
-  if(!hardFieldPets.length){ el.innerHTML = `<div style="font-size:9px;color:var(--cream3)">Aucun pet actif — déploie-en dans Sections.</div>`; return; }
+  if(!hardFieldPets.length){ el.innerHTML = `<div style="font-size:9px;color:var(--cream3)">${i18next.t('companions:companions.hardinage.no_active_pets')}</div>`; return; }
   el.innerHTML = hardFieldPets.map(fp=>{
     const p = fp.pet;
     const sec = secById(p.cat.sec);
@@ -47,9 +47,9 @@ function renderHardOdds(){
     return `<div style="font-size:9px;color:var(--cream2)">
       <div style="display:flex;align-items:center;gap:5px;margin-bottom:2px"><span>${sec.ico}</span><span style="color:var(--cream)">${p.cat.name}</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;padding-left:2px">
-        <span title="${sec.drops[0].n}">${sec.drops[0].e} ${commonPct.toFixed(1)}%</span>
-        <span title="${sec.drops[1].n}" style="color:var(--blue2)">${sec.drops[1].e} ${uncommonPct.toFixed(1)}%</span>
-        <span title="${sec.drops[2].n}" style="color:var(--r3)">${sec.drops[2].e} ${rarePct.toFixed(1)}%</span>
+        <span title="${itemLabel(sec.drops[0].n)}">${sec.drops[0].e} ${commonPct.toFixed(1)}%</span>
+        <span title="${itemLabel(sec.drops[1].n)}" style="color:var(--blue2)">${sec.drops[1].e} ${uncommonPct.toFixed(1)}%</span>
+        <span title="${itemLabel(sec.drops[2].n)}" style="color:var(--r3)">${sec.drops[2].e} ${rarePct.toFixed(1)}%</span>
       </div>
     </div>`;
   }).join('');
@@ -186,7 +186,7 @@ function addHardLog(pet, drop, colorKey){
   const col = colorKey==='gold' ? 'var(--gold2)' : colorKey==='r3' ? 'var(--r3)' : 'var(--cream2)';
   const el = document.createElement('div');
   el.style.cssText = 'display:flex;align-items:center;gap:7px;padding:4px 7px;border-radius:4px;background:var(--s2);font-size:10px';
-  el.innerHTML = `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cream3)">${t}</span><span style="font-size:13px">${drop.e}</span><span style="flex:1;color:${col}">${drop.n}</span><span style="font-size:9px;color:var(--cream3)">${pet.cat.name.split(' ')[0]}</span>`;
+  el.innerHTML = `<span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cream3)">${t}</span><span style="font-size:13px">${drop.e}</span><span style="flex:1;color:${col}">${itemLabel(drop.n)}</span><span style="font-size:9px;color:var(--cream3)">${pet.cat.name.split(' ')[0]}</span>`;
   lb.insertBefore(el, lb.firstChild);
   while(lb.children.length>60) lb.removeChild(lb.lastChild);
 }
@@ -196,8 +196,8 @@ function renderHardSession(){
   const el = document.getElementById('hard-session-grid');
   if(!el) return;
   el.innerHTML = `
-    <div style="font-size:10px;color:var(--cream2)">Items<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cream)">${hardSession.items}</span></div>
-    <div style="font-size:10px;color:var(--cream2)">Silver<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold)">${hardSession.silver.toLocaleString('fr-FR')}</span></div>
-    <div style="font-size:10px;color:var(--cream2)">Rares<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--r3)">${hardSession.rare}</span></div>
-    <div style="font-size:10px;color:var(--cream2)">Actifs<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green2)">${hardFieldPets.length}</span></div>`;
+    <div style="font-size:10px;color:var(--cream2)">${i18next.t('companions:companions.hardinage.stat_items')}<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--cream)">${hardSession.items}</span></div>
+    <div style="font-size:10px;color:var(--cream2)">${i18next.t('companions:companions.hardinage.stat_silver')}<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--gold)">${hardSession.silver.toLocaleString(NUM_LOCALE)}</span></div>
+    <div style="font-size:10px;color:var(--cream2)">${i18next.t('companions:companions.hardinage.stat_rare')}<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--r3)">${hardSession.rare}</span></div>
+    <div style="font-size:10px;color:var(--cream2)">${i18next.t('companions:companions.hardinage.stat_active')}<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--green2)">${hardFieldPets.length}</span></div>`;
 }

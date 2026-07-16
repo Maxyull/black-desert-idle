@@ -19,6 +19,15 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V459', d:'16/07/2026 06:00', name:{fr:'Le module Compagnon parle enfin anglais', en:'The Companion module finally speaks English'}, fr:[
+      {t:'fix', sub:'compagnon', tx:'En mode anglais, tout l\'onglet Compagnon restait en français : les 12 onglets, le bandeau de test, l\'éclosion, la collection, la fusion (règles, aperçu, résultats), le nourrissage, l\'index, le hardinage, les succès, le PvP/tournoi, le classement, le marché d\'échange et le viewer 3D sont désormais entièrement traduits (~460 textes). La langue suit celle du jeu principal au chargement du module.'},
+      {t:'change', sub:'compagnon', tx:'Les noms des objets lootés par les familiers (Minerai de fer, Pierre de Caphras, Cœur de Kzarka...), les raretés, les sections et les compétences sont traduits à l\'affichage — les sauvegardes existantes restent intactes, rien à refaire.'},
+      {t:'fix', sub:'compagnon', tx:'Les nombres (Silver, scores) s\'affichent maintenant au format de la langue choisie (1 234 567 en français, 1,234,567 en anglais) dans tout le module.'},
+    ], en:[
+      {t:'fix', sub:'compagnon', tx:'In English mode, the whole Companion tab stayed in French: the 12 tabs, the test banner, hatching, the collection, fusion (rules, preview, results), feeding, the index, Hardinage, achievements, PvP/tournament, the leaderboard, the trading market and the 3D viewer are now fully translated (~460 texts). The language follows the main game\'s when the module loads.'},
+      {t:'change', sub:'compagnon', tx:'Names of items looted by companions (Iron Ore, Caphras Stone, Heart of Kzarka...), rarities, sections and skills are translated on display — existing saves stay intact, nothing to redo.'},
+      {t:'fix', sub:'compagnon', tx:'Numbers (Silver, scores) now display in the chosen language\'s format (1 234 567 in French, 1,234,567 in English) across the whole module.'},
+    ] },
   { v:'V458', d:'16/07/2026 05:00', name:{fr:'Courrier : nom "Points de fidélité" corrigé + Temps de jeu affiché en double', en:'Mailbox: "Points de fidélité" name fixed + Playtime shown twice'}, fr:[
       {t:'fix', sub:'interface', tx:'Sur les comptes créés avant le renommage "Points de fidélité" → "Loyalties", le courrier affichait encore l\'ancien nom français pour toujours (y compris en mode anglais) : la livraison quotidienne fusionnait les quantités sans jamais mettre à jour le nom enregistré dans la sauvegarde. Corrigé — l\'affichage est réparé immédiatement et la donnée se répare d\'elle-même au prochain octroi quotidien.'},
       {t:'fix', sub:'interface', tx:'Le temps de jeu (Total / Aujourd\'hui) s\'affichait deux fois dans la colonne de droite : une fois dans l\'encart Suivi et une fois dans son propre widget. L\'encart Suivi ne le montre plus, seul le widget dédié reste.'},

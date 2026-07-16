@@ -11,7 +11,7 @@ function updateHeader(){
 }
 /** Met à jour tous les affichages du solde SILVER (header + panneaux Collection/Jeu) avec la même valeur formatée. */
 function updateSilverDisplay(){
-  const val = SILVER.toLocaleString('fr-FR');
+  const val = SILVER.toLocaleString(NUM_LOCALE);
   ['h-silver','game-silver-inline','coll-silver','coll-silver-2'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.textContent = val;
@@ -25,7 +25,7 @@ setInterval(()=>{
   if(eggTimer>0)eggTimer--;else eggTimer=21600;
   document.getElementById('h-egg').textContent=fmtT(eggTimer);
   const rdy=incubSlots.filter(s=>s.ready).length;
-  document.getElementById('tb0').textContent=rdy?rdy+' prêt':'En cours';
+  document.getElementById('tb0').textContent=rdy?i18next.t('companions:companions.tabs.hatch_badge_ready', {count:rdy}):i18next.t('companions:companions.tabs.hatch_badge_in_progress');
   // bug corrigé (2026-07-20) : renderHatch() ne tournait qu'à l'ouverture de l'onglet (ST()) ou
   // après une éclosion -- le compte à rebours affiché restait figé et le bouton "Éclore" pouvait
   // ne jamais apparaître si le slot passait "prêt" pendant que l'onglet était déjà ouvert. Même
@@ -92,10 +92,10 @@ setInterval(()=>{
         const newCat = speciesForSectionAndRarity(p.cat.sec, p.rar);
         if(newCat) p.cat = newCat;
         breakthroughCount++;
-        toast('🌟', `${oldName} PERCE À TRAVERS ET DEVIENT ${p.cat.name} ! Rareté → ${RARITIES[p.rar].name} (retour à Tier 1)`);
-        addGameLog(`🌟 <span style="color:${rc(p.rar)}">${oldName} devient ${p.cat.name}, atteint ${RARITIES[p.rar].name} par un coup de chance rarissime !</span> (Tier réinitialisé à 1)`);
+        toast('🌟', i18next.t('companions:companions.ticks.breakthrough_toast', {oldName:oldName, newName:p.cat.name, rarity:rn(p.rar)}));
+        addGameLog(i18next.t('companions:companions.ticks.breakthrough_log_html', {color:rc(p.rar), oldName:oldName, newName:p.cat.name, rarity:rn(p.rar)}));
       } else {
-        toast('⬆️',`${p.cat.name} atteint Tier ${p.tier} ! (×${p.tierMult.toFixed(3)}, ${tierMultPct(p)}% de la plage)`);
+        toast('⬆️',i18next.t('companions:companions.ticks.tier_up_toast', {name:p.cat.name, tier:p.tier, mult:p.tierMult.toFixed(3), pct:tierMultPct(p)}));
       }
 
       // bug corrigé (2026-07-21, rapporté explicitement : "dans l'index il est noté comme
@@ -125,10 +125,10 @@ setInterval(()=>{
     if(drop.silver){
       const amt = Math.floor(5+Math.random()*15);
       SILVER += amt;
-      addGameLog(`${p.cat.name} a trouvé <span style="color:var(--gold)">+${amt} Silver</span>`);
+      addGameLog(i18next.t('companions:companions.log.pet_found_silver_html', {name:p.cat.name, amount:amt}));
     } else {
       addToInventory(drop.n, drop.e, 1, drop.feed);
-      if(drop.v>=200) addGameLog(`${p.cat.name} a trouvé <span style="color:var(--r3)">${drop.e} ${drop.n}</span> !`);
+      if(drop.v>=200) addGameLog(i18next.t('companions:companions.log.pet_found_excl_html', {name:p.cat.name, color:'var(--r3)', item:`${drop.e} ${itemLabel(drop.n)}`}));
     }
     if(document.getElementById('p5')?.classList.contains('active')){
       renderGameInventory(); renderGameLog(); updateSilverDisplay();
@@ -152,20 +152,20 @@ setInterval(()=>{
         if(boss){
           addToInventory(boss.n, boss.e, 1, 0);
           bossItemFound = true;
-          addGameLog(`🌟 <span style="color:var(--r5)">${p.cat.name} a trouvé ${boss.e} ${boss.n} !!</span> ÉVÉNEMENT RARISSIME`);
-          toast('🌟',`${boss.e} ${boss.n} trouvé par ${p.cat.name} !`);
+          addGameLog(i18next.t('companions:companions.ticks.boss_item_log_html', {name:p.cat.name, item:`${boss.e} ${itemLabel(boss.n)}`}));
+          toast('🌟',i18next.t('companions:companions.ticks.boss_item_toast', {item:`${boss.e} ${itemLabel(boss.n)}`, name:p.cat.name}));
         }
       }
       // Caphras — taux croissant avec le Tier (zone difficile)
       if(Math.random() < CAPHRAS_BASE_RATE*tf){
         addToInventory(CAPHRAS_ITEM.n, CAPHRAS_ITEM.e, 1, CAPHRAS_ITEM.feed);
-        addGameLog(`${p.cat.name} a trouvé <span style="color:var(--r3)">${CAPHRAS_ITEM.e} ${CAPHRAS_ITEM.n}</span>`);
+        addGameLog(i18next.t('companions:companions.log.pet_found_html', {name:p.cat.name, color:'var(--r3)', item:`${CAPHRAS_ITEM.e} ${itemLabel(CAPHRAS_ITEM.n)}`}));
       }
       // Pierres de Dopi — 3 paliers, taux croissant avec le Tier, décroissant avec la force de la pierre
       DOPI_ITEMS.forEach(dopi=>{
         if(Math.random() < dopi.baseRate*tf){
           addToInventory(dopi.n, dopi.e, 1, dopi.feed);
-          addGameLog(`${p.cat.name} a trouvé <span style="color:var(--r2)">${dopi.e} ${dopi.n}</span>`);
+          addGameLog(i18next.t('companions:companions.log.pet_found_html', {name:p.cat.name, color:'var(--r2)', item:`${dopi.e} ${itemLabel(dopi.n)}`}));
         }
       });
     });

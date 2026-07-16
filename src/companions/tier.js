@@ -135,17 +135,17 @@ function comparisonBadge(pet){
   const nextRarAvg = avgGSForRarityAtTier1(pet.rar+1);
   const myGS = normGS(pet);
   if(myGS >= nextRarAvg){
-    return {beats:true, text:`🔺 Dépasse ${RARITIES[pet.rar+1].name} T1 moyen`, delta: myGS-nextRarAvg};
+    return {beats:true, text:i18next.t('companions:companions.tier.beats_next', {rarity:rn(pet.rar+1)}), delta: myGS-nextRarAvg};
   } else {
-    return {beats:false, text:`🔻 Sous ${RARITIES[pet.rar+1].name} T1 moyen`, delta: myGS-nextRarAvg};
+    return {beats:false, text:i18next.t('companions:companions.tier.below_next', {rarity:rn(pet.rar+1)}), delta: myGS-nextRarAvg};
   }
 }
 /** @param {number} pct - pourcentage de GS (0-100, voir gsPct()). @returns {string} classe CSS de couleur associée au palier de qualité. */
 function gsCls(pct){return pct>=90?'gs-max':pct>=65?'gs-high':pct>=35?'gs-med':'gs-low';}
 /** @param {number} r - index de rareté. @returns {string} couleur hex associée. */
 function rc(r){return RARITIES[r].hex;}
-/** @param {number} r - index de rareté. @returns {string} nom affichable de la rareté. */
-function rn(r){return RARITIES[r].name;}
+/** @param {number} r - index de rareté. @returns {string} nom affichable de la rareté (traduit, voir i18n.js -- RARITIES[r].name reste le FR canonique des données). */
+function rn(r){return i18next.t(COMPANIONS_NS_PREFIX+'companions.rarity.'+r);}
 /** @param {string} id - id de section. @returns {object|undefined} définition de section correspondante dans SECTIONS. */
 function secById(id){return SECTIONS.find(s=>s.id===id);}
 /** @param {object} p - familier. @returns {string} id de section de son espèce. */

@@ -48,7 +48,7 @@ function toggleCollPagination(){
   collPaginationOn = !collPaginationOn;
   collPage = 0;
   const btn = document.getElementById('pagination-toggle');
-  if(btn) btn.textContent = collPaginationOn ? '📄 Pagination : ON' : '📄 Pagination : OFF';
+  if(btn) btn.textContent = collPaginationOn ? i18next.t('companions:companions.collection.pagination_on') : i18next.t('companions:companions.collection.pagination_off');
   renderGrid();
 }
 /** @param {number} delta - +1/-1. Change de page (clampé à 0 en bas, le clamp haut se fait dans renderGrid selon le nombre de résultats filtrés). */
@@ -70,7 +70,7 @@ function updateHeaderFusionBadge(counts){
   if(counts.top1) parts.push(`🥇×${counts.top1}`);
   if(counts.top2) parts.push(`🥈×${counts.top2}`);
   if(counts.top3) parts.push(`🥉×${counts.top3}`);
-  el.textContent = parts.length ? `Candidats fusion : ${parts.join(' ')}` : 'Aucun candidat de fusion trouvé';
+  el.textContent = parts.length ? i18next.t('companions:companions.collection.fusion_candidates', {parts:parts.join(' ')}) : i18next.t('companions:companions.collection.no_fusion_candidates');
   el.style.display = '';
 }
 
@@ -79,7 +79,7 @@ function renderFilters(){
   document.getElementById('sec-filter-chips').innerHTML=
     SECTIONS.map(s=>`<div class="chip ${filterSec.has(s.id)?'on':''}" onclick="toggleFilter(filterSec,'${s.id}')">${s.ico}</div>`).join('');
   document.getElementById('rar-filter-chips').innerHTML=
-    RARITIES.map(r=>`<div class="chip ${filterRar.has(String(r.id))?'on':''}" onclick="toggleFilter(filterRar,'${r.id}')"><span style="color:${r.hex}">${r.name.split(' ')[0]}</span></div>`).join('');
+    RARITIES.map(r=>`<div class="chip ${filterRar.has(String(r.id))?'on':''}" onclick="toggleFilter(filterRar,'${r.id}')"><span style="color:${r.hex}">${rn(r.id).split(' ')[0]}</span></div>`).join('');
   const tierChipsEl = document.getElementById('tier-filter-chips');
   if(tierChipsEl){
     tierChipsEl.innerHTML =
@@ -123,7 +123,7 @@ function renderGrid(){
   if(pagerEl){
     pagerEl.style.display = collPaginationOn ? 'flex' : 'none';
     const lbl = document.getElementById('coll-pager-label');
-    if(lbl) lbl.textContent = `Page ${collPage+1} / ${pageCount} (${list.length} familiers)`;
+    if(lbl) lbl.textContent = i18next.t('companions:companions.collection.page_label', {page:collPage+1, total:pageCount, count:list.length});
   }
   renderCollColsChips();
 
@@ -185,7 +185,7 @@ function renderGrid(){
       ${isTop1?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--gold);color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(200,169,110,.5);white-space:nowrap">🥇 TOP1</div>`:''}
       ${isTop2?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#b8bcc4;color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(184,188,196,.5);white-space:nowrap">🥈 TOP2</div>`:''}
       ${isTop3?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:#cd7f32;color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(205,127,50,.5);white-space:nowrap">🥉 TOP3</div>`:''}
-      ${bothSelected&&isF?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--green2);color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(68,176,96,.5);white-space:nowrap">✓ Choisi</div>`:''}
+      ${bothSelected&&isF?`<div style="position:absolute;top:6px;left:50%;transform:translateX(-50%);background:var(--green2);color:var(--bg);font-size:12px;font-family:'Cinzel',serif;font-weight:700;padding:3px 12px;border-radius:5px;z-index:2;box-shadow:0 2px 8px rgba(68,176,96,.5);white-space:nowrap">${i18next.t('companions:companions.collection.chosen_badge')}</div>`:''}
       <div class="card-art">
         <canvas id="ca${p.id}" width="56" height="56" style="width:56px;height:56px;image-rendering:pixelated"></canvas>
         ${p.terrain?'<div class="terrain-dot"></div>':''}
@@ -193,7 +193,7 @@ function renderGrid(){
       <div class="card-body">
         <div class="card-name">${p.cat.name}</div>
         ${collColsPerRow>=COLL_COLS_COMPACT_FROM ? `
-        <div class="card-meta-compact" title="${rn(p.rar)} · T${p.tier||1} (${tierMultPct(p)}%) · ${sec?.name} · ${p.cat.typ}">
+        <div class="card-meta-compact" title="${rn(p.rar)} · T${p.tier||1} (${tierMultPct(p)}%) · ${secName(sec)} · ${typeLabel(p.cat.typ)}">
           <span class="cmcDot" style="background:${rc(p.rar)}"></span>
           <span class="cmcTier">T${p.tier||1}</span>
           <span class="cmcSec">${sec?.ico}</span>
@@ -201,11 +201,11 @@ function renderGrid(){
         </div>` : `
         <div class="card-meta">
           <span style="color:${rc(p.rar)};font-size:9px">${rn(p.rar)}</span>
-          <span style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold)" title="Multiplicateur ×${tierMultOf(p).toFixed(3)}">T${p.tier||1} <span style="color:var(--cream3)">(${tierMultPct(p)}%)</span></span>
+          <span style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold)" title="${i18next.t('companions:companions.collection.mult_title', {mult:tierMultOf(p).toFixed(3)})}">T${p.tier||1} <span style="color:var(--cream3)">(${tierMultPct(p)}%)</span></span>
           <span style="color:var(--cream3)">·</span>
-          <span>${sec?.ico} ${sec?.name}</span>
+          <span>${sec?.ico} ${secName(sec)}</span>
           <span style="color:var(--cream3)">·</span>
-          <span>${p.cat.typ}</span>
+          <span>${typeLabel(p.cat.typ)}</span>
         </div>
         <div class="card-gs-row">
           <span class="gs-badge ${gsCls(pct)}" style="font-size:9px;padding:1px 5px;color:${rc(p.rar)};border-color:${rc(p.rar)}">GS ${gs}</span>
@@ -213,13 +213,13 @@ function renderGrid(){
           <span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cream3)">${pct}%</span>
         </div>`}
         ${(()=>{const cmp=comparisonBadge(p);return cmp?`<div style="font-size:9px;color:${cmp.beats?'var(--green2)':'var(--red2)'};margin-top:2px">${cmp.text}</div>`:'';})()}
-        ${isBest&&!p.terrain?'<div style="font-size:9px;color:var(--gold);margin-top:1px">⭐ Meilleur de la section</div>':''}
+        ${isBest&&!p.terrain?'<div style="font-size:9px;color:var(--gold);margin-top:1px">'+i18next.t('companions:companions.collection.best_of_section')+'</div>':''}
         <div class="card-actions">
           ${p.terrain
-            ?`<button class="btn btn-red" style="font-size:9px;padding:3px 7px;flex:1" onclick="event.stopPropagation();PETS.find(pp=>pp.id===${p.id}).terrain=false;renderAll()">Retirer</button>`
-            :`<button class="btn btn-gold" style="font-size:9px;padding:3px 7px;flex:1" onclick="event.stopPropagation();deployPet(${p.id})">Déployer</button>`}
-          ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(p)?`<button class="btn btn-ghost" style="font-size:9px;padding:3px 7px" title="Voir en 3D" onclick="event.stopPropagation();open3dPreviewModal(PETS.find(pp=>pp.id===${p.id}))">🧊</button>`:''}
-          ${typeof quickAddToMarket==='function'?`<button class="btn btn-ghost" style="font-size:9px;padding:3px 7px" title="Ajouter au marché" onclick="event.stopPropagation();quickAddToMarket(${p.id})">🔄</button>`:''}
+            ?`<button class="btn btn-red" style="font-size:9px;padding:3px 7px;flex:1" onclick="event.stopPropagation();PETS.find(pp=>pp.id===${p.id}).terrain=false;renderAll()">${i18next.t('companions:companions.collection.remove_btn')}</button>`
+            :`<button class="btn btn-gold" style="font-size:9px;padding:3px 7px;flex:1" onclick="event.stopPropagation();deployPet(${p.id})">${i18next.t('companions:companions.hatch.deploy_btn')}</button>`}
+          ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(p)?`<button class="btn btn-ghost" style="font-size:9px;padding:3px 7px" title="${i18next.t('companions:companions.collection.view_3d_title')}" onclick="event.stopPropagation();open3dPreviewModal(PETS.find(pp=>pp.id===${p.id}))">🧊</button>`:''}
+          ${typeof quickAddToMarket==='function'?`<button class="btn btn-ghost" style="font-size:9px;padding:3px 7px" title="${i18next.t('companions:companions.collection.add_to_market_title')}" onclick="event.stopPropagation();quickAddToMarket(${p.id})">🔄</button>`:''}
           <button class="btn ${isF?'btn-red':'btn-ghost'}" style="font-size:9px;padding:3px 7px" onclick="event.stopPropagation();addToFusion(${p.id})">${isF?'✕FS':'⚗️'}</button>
         </div>
       </div>

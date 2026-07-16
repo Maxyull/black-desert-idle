@@ -3,7 +3,7 @@
 // data.js), plutôt qu'un compteur séparé propre à ce module : ce dossier ne peut pas charger
 // meta/patch-notes-data.js (scope global distinct, iframe isolée), donc pas de lecture automatique
 // possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
-const COMPANION_MODULE_VERSION = 'V377';
+const COMPANION_MODULE_VERSION = 'V459';
 
 // ═══ BALANCE DE TEST (2026-07-10, demande explicite) ═══
 // Tous les coûts Silver et timers (incubation, œuf gratuit) sont divisés par ce facteur pour
@@ -15,7 +15,7 @@ function scaleCost(v){ return v>0 ? Math.max(1, Math.round(v/TEST_BALANCE_DIVISO
 /** @param {number} v - durée réelle en secondes. @returns {number} durée réduite par TEST_BALANCE_DIVISOR (min 1s). */
 function scaleTimer(v){ return Math.max(1, Math.round(v/TEST_BALANCE_DIVISOR)); }
 /** @param {number} v - coût (déjà réduit par scaleCost). @returns {string} libellé affiché ("Gratuit" si 0). */
-function costLabelFor(v){ return v>0 ? `${v.toLocaleString('fr-FR')} Silver` : 'Gratuit'; }
+function costLabelFor(v){ return v>0 ? `${v.toLocaleString(NUM_LOCALE)} Silver` : i18next.t('companions:companions.economy.free'); }
 
 // ═══ TYPES D'ŒUFS — coût qui explose pour un gain d'odds marginal ═══
 // Cadence de référence : 1 œuf gratuit / 6h = 4/jour.
@@ -141,10 +141,10 @@ const STREAK_REWARDS = [
   {silver:5,  bonus:null},
   {silver:8,  bonus:null},
   {silver:12, bonus:null},
-  {silver:18, bonus:'Œuf Argenté gratuit'},
+  {silver:18, bonus:'silver_egg'}, // clé companions.streak.bonus_silver_egg (i18n), plus un libellé affiché tel quel
   {silver:25, bonus:null},
   {silver:35, bonus:null},
-  {silver:60, bonus:'Œuf Doré gratuit'},
+  {silver:60, bonus:'gold_egg'}, // clé companions.streak.bonus_gold_egg
 ];
 
 /** @returns {string} date du jour au format 'YYYY-MM-DD' (fuseau local). */
@@ -176,15 +176,16 @@ function checkDailyStreak(){
   SILVER += reward.silver;
   updateSilverDisplay();
 
-  let msg = `🔥 Streak Jour ${loginStreak}/7 — +${reward.silver} Silver`;
+  let msg = i18next.t('companions:companions.streak.toast', {day:loginStreak, silver:reward.silver});
+  const bonusLabel = reward.bonus ? i18next.t(COMPANIONS_NS_PREFIX+'companions.streak.bonus_'+reward.bonus) : '';
   if(reward.bonus){
     // Bonus spécial : œuf gratuit accordé directement dans la réserve d'incubation si un slot est libre
     const freeSlotIdx = incubSlots.findIndex(s=>!s.locked && !s.ready);
     if(freeSlotIdx>=0){ incubSlots[freeSlotIdx].tl=0; incubSlots[freeSlotIdx].ready=true; }
-    msg += ` + ${reward.bonus} !`;
+    msg += ` + ${bonusLabel} !`;
   }
   toast('🔥', msg);
-  addGameLog(`🔥 <span style="color:var(--gold2)">Connexion Jour ${loginStreak}/7</span> — +${reward.silver} Silver${reward.bonus?' + '+reward.bonus:''}`);
+  addGameLog(i18next.t('companions:companions.streak.log_html', {day:loginStreak, silver:reward.silver})+(reward.bonus?' + '+bonusLabel:''));
 }
 
 // ═══ INVENTAIRE & JOURNAL — alimentés par les pets sur le terrain ═══
