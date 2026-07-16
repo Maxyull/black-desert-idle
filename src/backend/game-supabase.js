@@ -1616,6 +1616,16 @@ function applyI18n() {
   document.querySelectorAll('.authLangBtn').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
   document.documentElement.lang = LANG;
   refreshInvUI(); // redessine loot table / stats mode / badges avec les noms traduits
+  // reconstruit la disposition des cartes (2026-07-16, retour utilisateur : les barres d'onglets
+  // des cartes fusionnées -- ex "STATISTIQUES | ÉQUIPEMENT" -- restaient dans l'ancienne langue) :
+  // les libellés d'onglets sont des COPIES du texte du h3 prises au moment de la construction
+  // (cardLayoutCardTitle, card-layout.js), pas des éléments data-i18n vivants -- le passage
+  // data-i18n ci-dessus met à jour les h3 sources, ce re-render recopie ensuite le texte traduit.
+  if (typeof renderCardLayout === 'function' && typeof cardLayoutState !== 'undefined') renderCardLayout(cardLayoutState);
+  // titre de zone du canvas (2026-07-16, même passe i18n) : tr() y est bien appliqué mais la
+  // fonction n'était rappelée qu'au changement de zone -- le titre gardait l'ancienne langue
+  // jusqu'au prochain voyage (visible au premier chargement et à chaque bascule FR/EN).
+  if (typeof updateZoneTitleText === 'function') updateZoneTitleText();
   hudFast();
 }
 $a('langToggle').onclick = () => {

@@ -381,15 +381,18 @@ function accSlotFor(it) {
  */
 function lootLine(item, val, cls) {
   const t = $('lootTicker');
+  // tr() à l'affichage uniquement (2026-07-16, retour utilisateur : le ticker montrait "Mousse de
+  // Polly"/"Pierre concentrée" en français en mode EN) -- la clé de fusion ×N (lastLootEntry.name)
+  // reste le nom BRUT, indépendant de la langue.
   if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.el.isConnected) {
     lastLootEntry.count++;
     lastLootEntry.val += val;
-    lastLootEntry.el.innerHTML = `${escapeHtml(item.name)} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
+    lastLootEntry.el.innerHTML = `${escapeHtml(tr(item.name))} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
     return;
   }
   const div = document.createElement('div');
   if (cls) div.className = cls;
-  div.innerHTML = val > 0 ? `${escapeHtml(item.name)} (🪙+${fmt(val)})` : escapeHtml(item.name);
+  div.innerHTML = val > 0 ? `${escapeHtml(tr(item.name))} (🪙+${fmt(val)})` : escapeHtml(tr(item.name));
   t.appendChild(div); // + flex-direction:column en CSS → apparaît en bas, pousse les anciennes vers le haut
   while (t.children.length > 15) t.removeChild(t.firstChild);
   lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div };

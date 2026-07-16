@@ -2736,6 +2736,23 @@ const NAME_EN = {
   
   'Boucle Naru':'Naru Earring', 'Boucle Tuvala':'Tuvala Earring', 'Boucle Asula':'Asula Earring', "Tungrad's Earring":"Tungrad's Earring",
   
+  'Bâton Naru':'Naru Staff', 'Éveil Naru':'Naru Awakening', 'Dague Naru':'Naru Dagger',
+  'Casque Naru':'Naru Helmet', 'Armure Naru':'Naru Armor', 'Gants Naru':'Naru Gloves', 'Bottes Naru':'Naru Boots',
+  'Bâton Tuvala':'Tuvala Staff', 'Éveil Tuvala':'Tuvala Awakening', 'Dague Tuvala':'Tuvala Dagger',
+  'Casque Tuvala':'Tuvala Helmet', 'Armure Tuvala':'Tuvala Armor', 'Gants Tuvala':'Tuvala Gloves', 'Bottes Tuvala':'Tuvala Boots',
+  'Bâton Yuria':'Yuria Staff', 'Éveil Yuria':'Yuria Awakening', 'Dague Yuria':'Yuria Dagger',
+  'Casque Yuria':'Yuria Helmet', 'Plastron Yuria':'Yuria Armor', 'Gants Yuria':'Yuria Gloves', 'Bottes Yuria':'Yuria Boots',
+  'Bâton Grunil':'Grunil Staff', 'Éveil Grunil':'Grunil Awakening', 'Dague Grunil':'Grunil Dagger',
+  'Casque Grunil':'Grunil Helmet', 'Plastron Grunil':'Grunil Armor', 'Gants Grunil':'Grunil Gloves', 'Bottes Grunil':'Grunil Boots',
+  
+  'Pierre de Novice':'Novice Stone', 'Pierre du Temps':'Time Stone', 'Pierre Noire':'Black Stone',
+  'Pierre concentrée':'Concentrated Stone', 'Pierre de Cron':'Cron Stone',
+  
+  'Bout du trésor de Velia':'Velia Treasure Piece', 'Trésor de Velia':'Velia Treasure',
+  'Livre interdit':'Forbidden Book', 'Parchemin de Mini Boss':'Mini Boss Scroll',
+  
+  "Orkinrad's Belt":"Orkinrad's Belt", "Serap's Necklace":"Serap's Necklace",
+  
   'Grunil / Yuria':'Grunil / Yuria', 'Boss (Kzarka, Bheg, Urugon…)':'Boss (Kzarka, Bheg, Urugon…)',
   
   'ZONE DANGEREUSE':'DANGEROUS ZONE', 'ZONE DIFFICILE':'HARD ZONE', 'ZONE ADAPTÉE':'SUITABLE ZONE',
@@ -6371,15 +6388,16 @@ function accSlotFor(it) {
 
 function lootLine(item, val, cls) {
   const t = $('lootTicker');
+  
   if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.el.isConnected) {
     lastLootEntry.count++;
     lastLootEntry.val += val;
-    lastLootEntry.el.innerHTML = `${escapeHtml(item.name)} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
+    lastLootEntry.el.innerHTML = `${escapeHtml(tr(item.name))} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
     return;
   }
   const div = document.createElement('div');
   if (cls) div.className = cls;
-  div.innerHTML = val > 0 ? `${escapeHtml(item.name)} (🪙+${fmt(val)})` : escapeHtml(item.name);
+  div.innerHTML = val > 0 ? `${escapeHtml(tr(item.name))} (🪙+${fmt(val)})` : escapeHtml(tr(item.name));
   t.appendChild(div); 
   while (t.children.length > 15) t.removeChild(t.firstChild);
   lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div };
@@ -16019,6 +16037,10 @@ function applyI18n() {
   document.querySelectorAll('.authLangBtn').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
   document.documentElement.lang = LANG;
   refreshInvUI(); 
+  
+  if (typeof renderCardLayout === 'function' && typeof cardLayoutState !== 'undefined') renderCardLayout(cardLayoutState);
+  
+  if (typeof updateZoneTitleText === 'function') updateZoneTitleText();
   hudFast();
 }
 $a('langToggle').onclick = () => {

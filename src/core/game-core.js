@@ -72,6 +72,29 @@ const NAME_EN = {
   // boucles d'oreille (2026-07-05) : complètent la rotation de bijoux de chaque palier (il ne
   // manquait que ce slot — voir ACC_SLOTS earring1/earring2, jusque-là jamais alimenté en jeu)
   'Boucle Naru':'Naru Earring', 'Boucle Tuvala':'Tuvala Earring', 'Boucle Asula':'Asula Earring', "Tungrad's Earring":"Tungrad's Earring",
+  // pièces d'équipement des 4 paliers (2026-07-16, retour utilisateur : "il y a encore des
+  // traductions anglais/français pas faites" -- audit complet des données vs cette map, 38 noms
+  // n'avaient AUCUNE entrée : tout le stuff Naru/Tuvala/Yuria/Grunil restait en français en mode
+  // EN partout où tr() est déjà appliqué, ex: carte Loot, paperdoll, Optimisation)
+  'Bâton Naru':'Naru Staff', 'Éveil Naru':'Naru Awakening', 'Dague Naru':'Naru Dagger',
+  'Casque Naru':'Naru Helmet', 'Armure Naru':'Naru Armor', 'Gants Naru':'Naru Gloves', 'Bottes Naru':'Naru Boots',
+  'Bâton Tuvala':'Tuvala Staff', 'Éveil Tuvala':'Tuvala Awakening', 'Dague Tuvala':'Tuvala Dagger',
+  'Casque Tuvala':'Tuvala Helmet', 'Armure Tuvala':'Tuvala Armor', 'Gants Tuvala':'Tuvala Gloves', 'Bottes Tuvala':'Tuvala Boots',
+  'Bâton Yuria':'Yuria Staff', 'Éveil Yuria':'Yuria Awakening', 'Dague Yuria':'Yuria Dagger',
+  'Casque Yuria':'Yuria Helmet', 'Plastron Yuria':'Yuria Armor', 'Gants Yuria':'Yuria Gloves', 'Bottes Yuria':'Yuria Boots',
+  'Bâton Grunil':'Grunil Staff', 'Éveil Grunil':'Grunil Awakening', 'Dague Grunil':'Grunil Dagger',
+  'Casque Grunil':'Grunil Helmet', 'Plastron Grunil':'Grunil Armor', 'Gants Grunil':'Grunil Gloves', 'Bottes Grunil':'Grunil Boots',
+  // matériaux d'optimisation par palier + Cron (même audit) -- NB : 'Pierre noire' (minuscule)
+  // existe déjà plus haut, 'Pierre Noire' (majuscule) est la casse réellement utilisée par
+  // gear-tiers-data.js/market.js, les deux variantes circulent
+  'Pierre de Novice':'Novice Stone', 'Pierre du Temps':'Time Stone', 'Pierre Noire':'Black Stone',
+  'Pierre concentrée':'Concentrated Stone', 'Pierre de Cron':'Cron Stone',
+  // Trésor de Velia + Mini Boss (même audit)
+  'Bout du trésor de Velia':'Velia Treasure Piece', 'Trésor de Velia':'Velia Treasure',
+  'Livre interdit':'Forbidden Book', 'Parchemin de Mini Boss':'Mini Boss Scroll',
+  // jackpots déjà nommés en anglais dans les données : entrées identité, pour que la règle
+  // "tout nom affichable a une entrée NAME_EN" soit uniforme (voir le test de dérive dans tests.js)
+  "Orkinrad's Belt":"Orkinrad's Belt", "Serap's Necklace":"Serap's Necklace",
   // gear sets
   'Grunil / Yuria':'Grunil / Yuria', 'Boss (Kzarka, Bheg, Urugon…)':'Boss (Kzarka, Bheg, Urugon…)',
   // badges de zone

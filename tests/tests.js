@@ -3057,6 +3057,50 @@
     assert('Taux calculé proche de +20% du record actuel', Math.abs(ratePerHour - targetRate)/targetRate < 0.15, `rate=${ratePerHour}, target=${targetRate}`);
     assert('Une hausse progressive sous le seuil anti-pic (30%) devient bien éligible au nouveau record', eligible === true);
   }
+  // garde-fou de dérive i18n (2026-07-16, retour utilisateur : "il y a encore des traductions
+  // anglais/français pas faites") : audit des données vs NAME_EN, 38 noms (tout le stuff
+  // Naru/Tuvala/Yuria/Grunil, les pierres de palier, Cron, le Trésor de Velia, le Livre interdit)
+  // n'avaient AUCUNE entrée -- tr() les laissait en français en mode EN partout. Ce test fige la
+  // règle : TOUT nom affichable défini dans les données (stuff, matériau, zone, mob, loot,
+  // objets Mini Boss, liste blanche du marché) doit avoir une entrée NAME_EN (identité acceptée
+  // pour les noms déjà anglais, ex "Orkinrad's Belt").
+  function testDisplayNamesAllHaveNameEnEntry() {
+    if (typeof NAME_EN === 'undefined') return;
+    const missing = new Set();
+    const need = n => { if (n && !(n in NAME_EN)) missing.add(n); };
+    (typeof GEAR_TIERS !== 'undefined' ? GEAR_TIERS : []).forEach(t => {
+      Object.values(t.sets || {}).forEach(need);
+      if (t.material) need(t.material.name);
+    });
+    (typeof ZONES !== 'undefined' ? ZONES : []).forEach(z => {
+      need(z.name); need(z.mob);
+      Object.values(z.loot || {}).forEach(v => { if (v && typeof v === 'object' && v.name) need(v.name); });
+    });
+    (typeof MARKET_MATERIALS !== 'undefined' ? MARKET_MATERIALS : []).forEach(m => need(m.name));
+    if (typeof MINIBOSS_FORBIDDEN_BOOK !== 'undefined') need(MINIBOSS_FORBIDDEN_BOOK.name);
+    if (typeof MINIBOSS_PARCHEMIN !== 'undefined') need(MINIBOSS_PARCHEMIN.name);
+    assert('Tout nom affichable des données (stuff/matériaux/zones/mobs/loot/marché/Mini Boss) a une entrée NAME_EN (mode anglais)',
+      missing.size === 0, [...missing].join(', '));
+  }
+  // ticker de loot : les noms passent par tr() à l'affichage (2026-07-16, même retour utilisateur --
+  // le ticker montrait "Mousse de Polly" en mode EN alors que la carte Loot traduisait bien) ; la
+  // clé de fusion ×N reste le nom BRUT (indépendant de la langue).
+  function testLootTickerTranslatesNamesInEnglishMode() {
+    if (typeof lootLine !== 'function' || typeof NAME_EN === 'undefined') return;
+    const t = document.getElementById('lootTicker'); if (!t) return;
+    const savedLang = LANG, savedEntry = lastLootEntry, savedHtml = t.innerHTML;
+    try {
+      LANG = 'en'; lastLootEntry = null;
+      lootLine({ name: 'Mousse de Polly' }, 0, '');
+      assert('lootLine() affiche le nom TRADUIT en mode EN (Polly Moss, pas Mousse de Polly)',
+        t.lastChild && t.lastChild.textContent.includes('Polly Moss'), t.lastChild && t.lastChild.textContent);
+      lootLine({ name: 'Mousse de Polly' }, 0, '');
+      assert('lootLine() fusionne bien ×2 sur le nom brut malgré l\'affichage traduit',
+        t.lastChild && t.lastChild.textContent.includes('×2'), t.lastChild && t.lastChild.textContent);
+    } finally {
+      LANG = savedLang; lastLootEntry = savedEntry; t.innerHTML = savedHtml;
+    }
+  }
   // "rattrapage de +9 milliards d'XP" (2026-07-14, bug signalé par un joueur) : gainXp() alimentait
   // xpRateBuffer pour TOUT appel, y compris le rattrapage hors-ligne lui-même (game-core.js,
   // applySaveState) -- un gros rattrapage gonflait donc bestXpPerHour, servant de taux au PROCHAIN
@@ -6709,6 +6753,8 @@
     testSilverPerHourResetV436ZeroesStaleRecord();
     testBestKpmResetV439ZeroesStaleRecord();
     testBestXpPerHourResetV440ZeroesStaleRecord();
+    testDisplayNamesAllHaveNameEnEntry();
+    testLootTickerTranslatesNamesInEnglishMode();
     testGainXpTrackRateFalseNeverFeedsXpRateBuffer();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();

@@ -19,6 +19,15 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V457', d:'16/07/2026 04:50', name:{fr:'Mode anglais : 38 noms d\'objets restés en français enfin traduits', en:'English mode: 38 item names stuck in French finally translated'}, fr:[
+      {t:'fix', sub:'interface', tx:'En mode anglais, tout l\'équipement des 4 paliers (Bâton/Éveil/Dague/Casque/Armure/Gants/Bottes Naru, Tuvala, Yuria et Grunil), les pierres d\'optimisation de palier (Pierre de Novice, du Temps, Noire, concentrée), la Pierre de Cron, le Trésor de Velia et le Livre interdit s\'affichaient toujours en français — 38 noms n\'avaient tout simplement pas de traduction. Tous traduits, avec un garde-fou automatique pour qu\'aucun futur objet ne puisse plus être oublié.'},
+      {t:'fix', sub:'interface', tx:'Le fil de loot (à droite du jeu) affichait les noms d\'objets en français même en mode anglais (ex: "Mousse de Polly" au lieu de "Polly Moss"). Il utilise désormais les noms traduits, comme le reste de l\'interface.'},
+      {t:'fix', sub:'interface', tx:'Les onglets des cartes fusionnées (ex: "Statistiques | Équipement") et le nom de la zone au-dessus du jeu gardaient l\'ancienne langue après un changement FR/EN, jusqu\'au prochain déplacement ou réagencement. Ils se mettent à jour immédiatement maintenant.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'In English mode, all gear from the 4 tiers (Staff/Awakening/Dagger/Helmet/Armor/Gloves/Boots for Naru, Tuvala, Yuria and Grunil), the tier enhancement stones (Novice, Time, Black, Concentrated Stone), the Cron Stone, the Velia Treasure and the Forbidden Book still displayed in French — 38 names simply had no translation. All translated, with an automatic guard so no future item can be missed again.'},
+      {t:'fix', sub:'interface', tx:'The loot feed (right of the game) showed item names in French even in English mode (e.g. "Mousse de Polly" instead of "Polly Moss"). It now uses translated names, like the rest of the interface.'},
+      {t:'fix', sub:'interface', tx:'Merged card tabs (e.g. "Stats | Equipment") and the zone name above the game kept the previous language after switching FR/EN, until the next travel or layout change. They now update immediately.'},
+    ] },
   { v:'V456', d:'16/07/2026 04:30', name:{fr:'Correctif taille "Petit" : le panneau de droite se collait plus au bord', en:'"Small" size fix: the right panel no longer hugged the edge'}, fr:[
       {t:'fix', sub:'interface', tx:'Au palier de taille UI "Petit", le panneau de droite (Suivi, Temps de jeu, Quêtes suivies, Chat) flottait au milieu de l\'écran en laissant un grand vide à sa droite, au lieu d\'être collé au bord. Corrigé : le menu de gauche reste à gauche, le panneau de droite se colle au bord droit, et la zone de jeu se centre entre les deux.'},
     ], en:[
