@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V462', d:'16/07/2026 21:40', name:{fr:'Anglais : le modal "Bon retour" (reconnexion) entièrement traduit', en:'English: the "Welcome back" reconnect modal fully translated'}, fr:[
+      {t:'fix', sub:'interface', tx:'Le modal de reconnexion affiché au retour d\'une absence ("Bon retour") était entièrement en français même en mode anglais (titre, progression de niveau, récap silver/XP, record personnel, objets trouvés, historique des sessions, bouton "Récupérer le butin"...). Tout est désormais traduit, et les nombres suivent le format de la langue choisie.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The reconnect modal shown when you come back from being away ("Welcome back") was entirely in French even in English mode (title, level progression, silver/XP recap, personal record, items found, session history, "Collect loot" button...). It\'s now fully translated, and numbers follow the chosen language\'s format.'},
+    ] },
   { v:'V461', d:'16/07/2026 21:00', name:{fr:'Anglais : noms de loot flottants + résumé de reconnexion traduits', en:'English: floating loot names + reconnect summary translated'}, fr:[
       {t:'fix', sub:'interface', tx:'En anglais, le texte flottant qui s\'affiche quand un objet est ramassé (sur la carte, au-dessus du personnage) restait en français ("Viande de loup", "Bourse de pirate"...) — corrigé, il utilise désormais la traduction comme le reste.'},
       {t:'fix', sub:'interface', tx:'Le résumé de reconnexion (objets trouvés pendant l\'absence) affichait aussi les noms d\'objets en français en mode anglais — corrigé.'},
