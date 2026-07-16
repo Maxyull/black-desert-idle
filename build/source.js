@@ -9030,6 +9030,9 @@ const RC_INTER = { fontFamily: "'Inter', sans-serif" };
 const RC_MONO = { fontFamily: "'JetBrains Mono', monospace" };
 const h = React.createElement;
 
+const rcT = (fr, en) => (typeof LANG !== 'undefined' && LANG === 'en') ? en : fr;
+const rcLocale = () => (typeof LANG !== 'undefined' && LANG === 'en') ? 'en-US' : 'fr-FR';
+
 function rcCountUp(target, durationMs) {
   const [value, setValue] = React.useState(0);
   React.useEffect(() => {
@@ -9060,7 +9063,7 @@ function RcLevelBar(p) {
       h('span', { style: { ...RC_INTER, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: RECONNECT_V.cream3 } }, p.label),
       h('span', { style: { ...RC_MONO, fontSize: 11, color: p.active ? RECONNECT_V.gold2 : RECONNECT_V.cream2 } }, animatedPercent + '%')),
     h('div', { style: { display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 6 } },
-      h('span', { style: { ...RC_INTER, fontSize: 9, color: RECONNECT_V.cream3 } }, 'Niv.'),
+      h('span', { style: { ...RC_INTER, fontSize: 9, color: RECONNECT_V.cream3 } }, rcT('Niv.', 'Lv.')),
       h('span', { style: { ...RC_CINZEL, fontSize: 16, lineHeight: 1, fontWeight: 600, color: p.active ? RECONNECT_V.gold : RECONNECT_V.cream, fontVariantNumeric: 'tabular-nums' } }, animatedLevel),
       p.active && p.delta > 0 ? h('span', { style: { ...RC_MONO, fontSize: 9, padding: '0 4px', borderRadius: 3, color: RECONNECT_V.bg, background: RECONNECT_V.gold2 } }, '+' + p.delta) : null),
     h('div', { style: { height: 3, borderRadius: 999, overflow: 'hidden', background: RECONNECT_V.border } },
@@ -9090,8 +9093,8 @@ function RcHistoryDetail(p) {
   return h('div', { style: { padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10 } },
     h('div', { style: { display: 'flex', gap: 20, flexWrap: 'wrap' } },
       h('div', null,
-        h('p', { style: { ...RC_INTER, ...lbl } }, 'Niveau'),
-        h('p', { style: { ...RC_MONO, fontSize: 12, color: RECONNECT_V.cream, fontVariantNumeric: 'tabular-nums' } }, 'Niv. ' + sh.levelBefore + ' → ' + sh.levelAfter,
+        h('p', { style: { ...RC_INTER, ...lbl } }, rcT('Niveau', 'Level')),
+        h('p', { style: { ...RC_MONO, fontSize: 12, color: RECONNECT_V.cream, fontVariantNumeric: 'tabular-nums' } }, rcT('Niv. ', 'Lv. ') + sh.levelBefore + ' → ' + sh.levelAfter,
           leveled ? h('span', { style: { ...RC_MONO, fontSize: 9, marginLeft: 6, padding: '0 4px', borderRadius: 3, color: RECONNECT_V.bg, background: RECONNECT_V.gold2 } }, '+' + (sh.levelAfter - sh.levelBefore)) : null)),
       h('div', null,
         h('p', { style: { ...RC_INTER, ...lbl } }, 'XP'),
@@ -9145,32 +9148,32 @@ function ReconnectModal(props) {
       h('div', { style: { borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,.6)', overflow: 'hidden', background: RECONNECT_V.s2, border: `1px solid ${RECONNECT_V.border2}` } },
         
         h('div', { style: { position: 'relative', padding: '28px 28px 24px', borderBottom: `1px solid ${RECONNECT_V.border}` } },
-          h('button', { className: 'rcBtn', onClick: () => setOpen(false), 'aria-label': 'Fermer', style: { position: 'absolute', top: 16, right: 16, fontSize: 16, color: RECONNECT_V.cream2, background: 'transparent', border: 'none', cursor: 'pointer' } }, '✕'),
-          d.streak > 0 ? h('div', { title: 'Connexions consécutives', style: { position: 'absolute', top: 16, right: 48, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 999, background: RECONNECT_V.s3, border: `1px solid ${RECONNECT_V.border}` } },
+          h('button', { className: 'rcBtn', onClick: () => setOpen(false), 'aria-label': rcT('Fermer', 'Close'), style: { position: 'absolute', top: 16, right: 16, fontSize: 16, color: RECONNECT_V.cream2, background: 'transparent', border: 'none', cursor: 'pointer' } }, '✕'),
+          d.streak > 0 ? h('div', { title: rcT('Connexions consécutives', 'Consecutive logins'), style: { position: 'absolute', top: 16, right: 48, display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px', borderRadius: 999, background: RECONNECT_V.s3, border: `1px solid ${RECONNECT_V.border}` } },
             h('span', null, '🔥'),
             h('span', { style: { ...RC_MONO, fontSize: 10, color: RECONNECT_V.cream2, fontVariantNumeric: 'tabular-nums' } }, d.streak + '/' + d.streakGoal)) : null,
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 } },
             h('span', { style: { fontSize: 20 } }, '⏳'),
-            h('p', { style: { ...RC_INTER, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: RECONNECT_V.cream3 } }, 'Session hors ligne terminée')),
-          h('h1', { style: { ...RC_CINZEL, fontSize: 24, fontWeight: 600, color: RECONNECT_V.gold, margin: '0 0 2px' } }, 'Bon retour'),
+            h('p', { style: { ...RC_INTER, fontSize: 11, letterSpacing: '0.2em', textTransform: 'uppercase', color: RECONNECT_V.cream3 } }, rcT('Session hors ligne terminée', 'Offline session complete'))),
+          h('h1', { style: { ...RC_CINZEL, fontSize: 24, fontWeight: 600, color: RECONNECT_V.gold, margin: '0 0 2px' } }, rcT('Bon retour', 'Welcome back')),
           h('p', { style: { ...RC_CINZEL, fontSize: 13, fontWeight: 600, color: RECONNECT_V.cream, margin: '0 0 8px' } }, d.pseudo),
-          h('p', { style: { ...RC_INTER, fontSize: 14, color: RECONNECT_V.cream2, margin: 0 } }, 'Absent pendant : ',
+          h('p', { style: { ...RC_INTER, fontSize: 14, color: RECONNECT_V.cream2, margin: 0 } }, rcT('Absent pendant : ', 'Away for: '),
             h('span', { style: { color: RECONNECT_V.gold2, fontWeight: 500 } }, d.awayLabel))),
 
         h('div', { style: { padding: '16px 28px 20px', borderBottom: `1px solid ${RECONNECT_V.border}`, background: RECONNECT_V.s1 } },
           h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 } },
-            h('p', { style: { ...RC_INTER, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: RECONNECT_V.cream3 } }, 'Progression de niveau'),
-            leveledUp ? h('span', { className: 'rcLevelGlow', style: { ...RC_INTER, fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 999, color: RECONNECT_V.gold2, border: `1px solid ${RECONNECT_V.goldDim}` } }, '⭐ Niveau supérieur !') : null),
+            h('p', { style: { ...RC_INTER, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', color: RECONNECT_V.cream3 } }, rcT('Progression de niveau', 'Level progression')),
+            leveledUp ? h('span', { className: 'rcLevelGlow', style: { ...RC_INTER, fontSize: 9, fontWeight: 600, padding: '2px 8px', borderRadius: 999, color: RECONNECT_V.gold2, border: `1px solid ${RECONNECT_V.goldDim}` } }, rcT('⭐ Niveau supérieur !', '⭐ Level up!')) : null),
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 12 } },
-            h(RcLevelBar, { label: 'Avant', level: d.levelBefore, percent: d.percentBefore, active: false, delay: 0 }),
+            h(RcLevelBar, { label: rcT('Avant', 'Before'), level: d.levelBefore, percent: d.percentBefore, active: false, delay: 0 }),
             h('span', { style: { color: RECONNECT_V.cream3, flexShrink: 0, marginTop: 12 } }, '➜'),
-            h(RcLevelBar, { label: 'Maintenant', level: d.levelNow, percent: d.percentNow, active: leveledUp, delta: d.levelNow - d.levelBefore, delay: 300 }))),
+            h(RcLevelBar, { label: rcT('Maintenant', 'Now'), level: d.levelNow, percent: d.percentNow, active: leveledUp, delta: d.levelNow - d.levelBefore, delay: 300 }))),
 
         h('div', { style: { padding: '24px 28px', display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, borderBottom: `1px solid ${RECONNECT_V.border}` } },
           [
-            { ic: '🪙', color: RECONNECT_V.gold2, value: silverCount.toLocaleString('fr-FR'), label: 'Silver' },
-            { ic: '✨', color: RECONNECT_V.blue2, value: '+' + xpCount.toLocaleString('fr-FR'), label: 'XP' },
-            { ic: '📦', color: RECONNECT_V.cream, value: d.items.length, label: 'Objets trouvés' },
+            { ic: '🪙', color: RECONNECT_V.gold2, value: silverCount.toLocaleString(rcLocale()), label: 'Silver' },
+            { ic: '✨', color: RECONNECT_V.blue2, value: '+' + xpCount.toLocaleString(rcLocale()), label: 'XP' },
+            { ic: '📦', color: RECONNECT_V.cream, value: d.items.length, label: rcT('Objets trouvés', 'Items found') },
           ].map((s, i) => h('div', { key: i, className: 'rcFadeSlide', style: { animationDelay: (i * 90) + 'ms', borderRadius: 7, padding: '12px', textAlign: 'center', background: RECONNECT_V.s3, border: `1px solid ${RECONNECT_V.border}` } },
             h('div', { style: { fontSize: 16, marginBottom: 8 } }, s.ic),
             h('p', { style: { ...RC_MONO, fontSize: 15, color: RECONNECT_V.cream, fontVariantNumeric: 'tabular-nums' } }, s.value),
@@ -9178,11 +9181,11 @@ function ReconnectModal(props) {
 
         h('div', { style: { padding: '16px 28px 4px', display: 'flex', alignItems: 'center', gap: 8 } },
           d.silver > d.personalRecordSilver
-            ? h(React.Fragment, null, h('span', null, '🏆'), h('p', { style: { ...RC_INTER, fontSize: 11, color: RECONNECT_V.gold2 } }, 'Nouveau record personnel de Silver !'))
-            : h('p', { style: { ...RC_INTER, fontSize: 11, color: RECONNECT_V.cream3 } }, 'Record personnel : ' + d.personalRecordSilver.toLocaleString('fr-FR') + ' Silver')),
+            ? h(React.Fragment, null, h('span', null, '🏆'), h('p', { style: { ...RC_INTER, fontSize: 11, color: RECONNECT_V.gold2 } }, rcT('Nouveau record personnel de Silver !', 'New personal Silver record!')))
+            : h('p', { style: { ...RC_INTER, fontSize: 11, color: RECONNECT_V.cream3 } }, rcT('Record personnel : ', 'Personal record: ') + d.personalRecordSilver.toLocaleString(rcLocale()) + ' Silver')),
 
         h('div', { style: { padding: '20px 28px 0' } },
-          h('p', { style: { ...RC_INTER, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8, color: RECONNECT_V.cream3 } }, `Objets trouvés (${d.items.length})`),
+          h('p', { style: { ...RC_INTER, fontSize: 9, letterSpacing: '0.14em', textTransform: 'uppercase', marginBottom: 8, color: RECONNECT_V.cream3 } }, `${rcT('Objets trouvés', 'Items found')} (${d.items.length})`),
           h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
             d.items.length > 0 ? d.items.map((it, i) => {
               const isBest = it.name === d.bestDropName;
@@ -9191,12 +9194,12 @@ function ReconnectModal(props) {
                 h('span', { style: { ...RC_INTER, fontSize: 12, color: RECONNECT_V.cream, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, it.name),
                 isBest ? h('span', { style: { flexShrink: 0 } }, '⭐') : null,
                 it.qty > 1 ? h('span', { style: { ...RC_MONO, fontSize: 10, marginLeft: 'auto', color: RECONNECT_V.cream3 } }, '×' + it.qty) : null);
-            }) : h(RcEmptyRow, { text: 'Aucun objet trouvé pendant cette session — retente ta chance !' }))),
+            }) : h(RcEmptyRow, { text: rcT('Aucun objet trouvé pendant cette session — retente ta chance !', 'No items found this session — better luck next time!') }))),
 
         h('div', { style: { padding: '20px 28px 8px' } },
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, flexWrap: 'wrap' } },
             h('span', { style: { color: RECONNECT_V.cream3 } }, '📜'),
-            h('h2', { style: { ...RC_INTER, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: RECONNECT_V.cream3, margin: 0 } }, 'Historique des sessions'),
+            h('h2', { style: { ...RC_INTER, fontSize: 11, letterSpacing: '0.18em', textTransform: 'uppercase', color: RECONNECT_V.cream3, margin: 0 } }, rcT('Historique des sessions', 'Session history')),
             
             h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto', flexWrap: 'wrap' } },
               grades.map(g => h('div', { key: g, style: { display: 'flex', alignItems: 'center', gap: 3 } },
@@ -9206,15 +9209,15 @@ function ReconnectModal(props) {
             ['Tous', ...grades].map(grade => {
               const on = tierFilter === grade;
               const color = grade === 'Tous' ? RECONNECT_V.cream2 : rcGearGradeColor(grade);
-              const label = grade === 'Tous' ? 'Tous' : rcGearGradeLabel(grade);
+              const label = grade === 'Tous' ? rcT('Tous', 'All') : rcGearGradeLabel(grade);
               return h('button', { key: grade, className: 'rcBtn', onClick: () => setTierFilter(grade), style: { ...RC_CINZEL, fontSize: 9, padding: '4px 8px', borderRadius: 999, cursor: 'pointer', border: `1px solid ${on ? color : RECONNECT_V.border}`, color: on ? color : RECONNECT_V.cream3, background: on ? color + '1a' : 'transparent' } }, label);
             })),
           d.historyError
             ? h('div', { style: { borderRadius: 7, padding: '12px', textAlign: 'center', background: RECONNECT_V.s1, border: `1px solid ${RECONNECT_V.red}55` } },
-                h('p', { style: { ...RC_INTER, fontSize: 11, color: RECONNECT_V.red2, marginBottom: 8 } }, "Impossible de charger l'historique."),
+                h('p', { style: { ...RC_INTER, fontSize: 11, color: RECONNECT_V.red2, marginBottom: 8 } }, rcT("Impossible de charger l'historique.", 'Could not load history.')),
                 h('button', { className: 'rcBtn', onClick: props.onRetryHistory, style: { ...RC_CINZEL, fontSize: 11, padding: '5px 14px', borderRadius: 5, background: 'transparent', border: `1px solid ${RECONNECT_V.red}`, color: RECONNECT_V.red2, cursor: 'pointer' } }, 'Réessayer'))
             : d.historyLoading
-              ? h(RcEmptyRow, { text: 'Chargement…' })
+              ? h(RcEmptyRow, { text: rcT('Chargement…', 'Loading…') })
               : h('div', { className: 'rcHistScroll', style: { maxHeight: 220, overflowY: 'auto' } },
                   h('div', { style: { display: 'flex', flexDirection: 'column', gap: 6 } },
                     filteredHistory.length > 0 ? filteredHistory.map((sh, i) => {
@@ -9225,7 +9228,7 @@ function ReconnectModal(props) {
                           style: { animationDelay: (i * 60) + 'ms', borderRadius: 9, overflow: 'hidden', background: RECONNECT_V.s1, border: `1px solid ${sh.current ? RECONNECT_V.gold : RECONNECT_V.border}`, boxShadow: sh.current ? `0 0 10px ${RECONNECT_V.goldDim}55` : 'none' } },
                         h('div', {
                             className: 'rcHistRow', role: 'button', tabIndex: 0, 'aria-expanded': isExpanded,
-                            title: isExpanded ? 'Masquer le détail' : 'Voir le détail de la session',
+                            title: isExpanded ? rcT('Masquer le détail', 'Hide details') : rcT('Voir le détail de la session', 'View session details'),
                             onClick: toggle,
                             onKeyDown: (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } },
                             style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 12px', cursor: 'pointer' } },
@@ -9237,20 +9240,20 @@ function ReconnectModal(props) {
                                 h('span', { style: { ...RC_INTER, fontSize: 13, fontWeight: 500, color: RECONNECT_V.cream, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } }, sh.zone),
                                 h('span', { style: { ...RC_CINZEL, fontSize: 9, padding: '2px 6px', borderRadius: 4, flexShrink: 0, color: rcGearGradeColor(sh.gearGrade), border: `1px solid ${rcGearGradeColor(sh.gearGrade)}55` } }, rcGearGradeLabel(sh.gearGrade)),
                                 sh.current ? h('span', { style: { ...RC_INTER, fontSize: 8, fontWeight: 600, padding: '2px 6px', borderRadius: 999, flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4, color: RECONNECT_V.bg, background: RECONNECT_V.gold } },
-                                  h('span', { className: 'rcPulseDot', style: { width: 4, height: 4, borderRadius: 999, background: RECONNECT_V.bg } }), 'ACTUEL') : null),
+                                  h('span', { className: 'rcPulseDot', style: { width: 4, height: 4, borderRadius: 999, background: RECONNECT_V.bg } }), rcT('ACTUEL', 'CURRENT')) : null),
                               h('p', { style: { ...RC_INTER, fontSize: 11, marginTop: 2, color: RECONNECT_V.cream3 } }, sh.date + ' • ' + sh.duration))),
                           h('div', { style: { textAlign: 'right', flexShrink: 0 } },
-                            h('p', { style: { ...RC_MONO, fontSize: 12, color: RECONNECT_V.gold2, fontVariantNumeric: 'tabular-nums' } }, '+' + sh.silver.toLocaleString('fr-FR')),
+                            h('p', { style: { ...RC_MONO, fontSize: 12, color: RECONNECT_V.gold2, fontVariantNumeric: 'tabular-nums' } }, '+' + sh.silver.toLocaleString(rcLocale())),
                             sh.drop ? h('p', { style: { fontSize: 10, marginTop: 2, color: RECONNECT_V.cream2 } }, '⚔ ' + sh.drop) : h('p', { style: { fontSize: 10, marginTop: 2, color: RECONNECT_V.border2 } }, '—'))),
                         isExpanded ? h('div', { style: { borderTop: `1px solid ${RECONNECT_V.border}`, background: RECONNECT_V.bg } }, h(RcHistoryDetail, { session: sh })) : null);
                     })
-                    : h(RcEmptyRow, { text: d.history.length === 0 ? 'Première connexion — ton historique se remplira au fil de tes sessions.' : 'Aucune session pour ce palier.' })))),
+                    : h(RcEmptyRow, { text: d.history.length === 0 ? rcT('Première connexion — ton historique se remplira au fil de tes sessions.', 'First login — your history will fill up as you play.') : rcT('Aucune session pour ce palier.', 'No session for this tier.') })))),
 
         h('div', { style: { padding: '16px 28px 28px' } },
           h('button', {
             className: 'rcBtn', onClick: () => setOpen(false),
             style: { ...RC_CINZEL, width: '100%', padding: '12px', borderRadius: 5, fontSize: 14, fontWeight: 600, letterSpacing: '.02em', cursor: 'pointer', background: `linear-gradient(135deg, ${RECONNECT_V.goldDim}, ${RECONNECT_V.gold})`, color: RECONNECT_V.bg, border: `1px solid ${RECONNECT_V.gold}` },
-          }, 'Récupérer le butin')))));
+          }, rcT('Récupérer le butin', 'Collect loot'))))));
 }
 
 let reconnectModalRoot = null;
