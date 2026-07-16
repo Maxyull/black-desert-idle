@@ -92,6 +92,8 @@ const NAME_EN = {
   // Trésor de Velia + Mini Boss (même audit)
   'Bout du trésor de Velia':'Velia Treasure Piece', 'Trésor de Velia':'Velia Treasure',
   'Livre interdit':'Forbidden Book', 'Parchemin de Mini Boss':'Mini Boss Scroll',
+  // récompenses rares de boss mondiaux (2026-07-16) : affichées via tr() dans le lobby/calendrier boss
+  'Pierre de sang de Kzarka':'Kzarka Bloodstone', 'Coeur de Vell':'Heart of Vell',
   // jackpots déjà nommés en anglais dans les données : entrées identité, pour que la règle
   // "tout nom affichable a une entrée NAME_EN" soit uniforme (voir le test de dérive dans tests.js)
   "Orkinrad's Belt":"Orkinrad's Belt", "Serap's Necklace":"Serap's Necklace",

@@ -1599,6 +1599,11 @@ const I18N = {
   sideGroupProgression: { fr:'Progression', en:'Progression' },
   sideGroupCommunaute: { fr:'Communauté', en:'Community' },
   sideGroupCompte: { fr:'Compte', en:'Account' },
+  // recherche + tri du Marché (2026-07-16) : restaient en français en mode EN (placeholder/options).
+  cmSearchPh: { fr:'🔎 Rechercher un objet...', en:'🔎 Search for an item...' },
+  cmSortPriceAsc: { fr:'Prix ↑', en:'Price ↑' },
+  cmSortPriceDesc: { fr:'Prix ↓', en:'Price ↓' },
+  cmSortRecent: { fr:'Plus récents', en:'Most recent' },
 };
 /** Applique le dictionnaire I18N statique (data-i18n/data-i18n-ph) à tout le DOM, synchronise l'UI de langue et redessine inventaire/HUD avec les noms traduits. */
 function applyI18n() {

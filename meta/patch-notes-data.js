@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V465', d:'16/07/2026 22:30', name:{fr:'Anglais : récompenses de boss + recherche/tri du Marché traduits', en:'English: boss rewards + Market search/sort translated'}, fr:[
+      {t:'fix', sub:'interface', tx:'En anglais, la récompense rare des boss mondiaux (Pierre de sang de Kzarka → Kzarka Bloodstone, Cœur de Vell → Heart of Vell) restait en français dans le lobby/calendrier et à l\'ouverture des récompenses — corrigé.'},
+      {t:'fix', sub:'interface', tx:'Le champ de recherche du Marché ("Rechercher un objet...") et les options de tri (Prix ↑/↓, Plus récents) restaient en français en mode anglais — corrigé.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'In English, the world bosses\' rare reward (Kzarka Bloodstone, Heart of Vell) stayed in French in the lobby/calendar and reward reveal — fixed.'},
+      {t:'fix', sub:'interface', tx:'The Market search field ("Search for an item...") and sort options (Price ↑/↓, Most recent) stayed in French in English mode — fixed.'},
+    ] },
   { v:'V464', d:'16/07/2026 22:15', name:{fr:'Interface : écart supprimé entre les menus latéraux et le jeu', en:'UI: gap removed between the side menus and the game'}, fr:[
       {t:'change', sub:'interface', tx:'L\'espace entre les menus de gauche/droite et la zone de jeu au centre a été supprimé — la zone de jeu récupère cette largeur.'},
     ], en:[

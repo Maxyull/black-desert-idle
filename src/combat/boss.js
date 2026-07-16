@@ -955,7 +955,7 @@ function bossPityBarHtml(bossId) {
 function bossRewardRulesHtml() {
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
-    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${i18next.t('combat:combat.boss.chance_label')} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
+    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${i18next.t('combat:combat.boss.chance_label')} : <b style="color:${b.rareLoot.color}">${tr(b.rareLoot.name)}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
     : '';
   // Kzarka (2026-07-16, demande explicite) : podium à récompenses FIXES (silver + Caphras/Fragment
   // de mémoire), voir KZARKA_REWARD_TIERS/endBossFight -- Vell garde le podium générique basé sur
@@ -1092,8 +1092,8 @@ function wireBossRewardReveal(items) {
         mountBossWheelReact(container, { rareLoot: it.rareLoot, won: it.won, instant: !!instant });
       }
       resEl.innerHTML = it.won
-        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${i18next.t('combat:combat.boss.wheel_obtained')} : ${it.rareLoot.name} !</span>`
-        : i18next.t('combat:combat.boss.wheel_not_this_time', { icon: it.rareLoot.icon, name: it.rareLoot.name });
+        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${i18next.t('combat:combat.boss.wheel_obtained')} : ${tr(it.rareLoot.name)} !</span>`
+        : i18next.t('combat:combat.boss.wheel_not_this_time', { icon: it.rareLoot.icon, name: tr(it.rareLoot.name) });
     }
     finishIfAllDone();
   }

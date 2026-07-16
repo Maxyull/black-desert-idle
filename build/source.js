@@ -2753,6 +2753,8 @@ const NAME_EN = {
   'Bout du trésor de Velia':'Velia Treasure Piece', 'Trésor de Velia':'Velia Treasure',
   'Livre interdit':'Forbidden Book', 'Parchemin de Mini Boss':'Mini Boss Scroll',
   
+  'Pierre de sang de Kzarka':'Kzarka Bloodstone', 'Coeur de Vell':'Heart of Vell',
+  
   "Orkinrad's Belt":"Orkinrad's Belt", "Serap's Necklace":"Serap's Necklace",
   
   'Grunil / Yuria':'Grunil / Yuria', 'Boss (Kzarka, Bheg, Urugon…)':'Boss (Kzarka, Bheg, Urugon…)',
@@ -7374,7 +7376,7 @@ function bossPityBarHtml(bossId) {
 function bossRewardRulesHtml() {
   const b = BOSS_ROSTER[bossRewardPreviewBoss];
   const rareLine = b.rareLoot
-    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${i18next.t('combat:combat.boss.chance_label')} : <b style="color:${b.rareLoot.color}">${b.rareLoot.name}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
+    ? `<div class="bossRewardExtra">✨ +${Math.round(b.rareLoot.ch*100)}% ${i18next.t('combat:combat.boss.chance_label')} : <b style="color:${b.rareLoot.color}">${tr(b.rareLoot.name)}</b></div>${bossPityBarHtml(bossRewardPreviewBoss)}`
     : '';
   
   let baseHtml, podiumHtml;
@@ -7476,8 +7478,8 @@ function wireBossRewardReveal(items) {
         mountBossWheelReact(container, { rareLoot: it.rareLoot, won: it.won, instant: !!instant });
       }
       resEl.innerHTML = it.won
-        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${i18next.t('combat:combat.boss.wheel_obtained')} : ${it.rareLoot.name} !</span>`
-        : i18next.t('combat:combat.boss.wheel_not_this_time', { icon: it.rareLoot.icon, name: it.rareLoot.name });
+        ? `<span style="color:${it.rareLoot.color}">${it.rareLoot.icon} ${i18next.t('combat:combat.boss.wheel_obtained')} : ${tr(it.rareLoot.name)} !</span>`
+        : i18next.t('combat:combat.boss.wheel_not_this_time', { icon: it.rareLoot.icon, name: tr(it.rareLoot.name) });
     }
     finishIfAllDone();
   }
@@ -16045,6 +16047,11 @@ const I18N = {
   sideGroupProgression: { fr:'Progression', en:'Progression' },
   sideGroupCommunaute: { fr:'Communauté', en:'Community' },
   sideGroupCompte: { fr:'Compte', en:'Account' },
+  
+  cmSearchPh: { fr:'🔎 Rechercher un objet...', en:'🔎 Search for an item...' },
+  cmSortPriceAsc: { fr:'Prix ↑', en:'Price ↑' },
+  cmSortPriceDesc: { fr:'Prix ↓', en:'Price ↓' },
+  cmSortRecent: { fr:'Plus récents', en:'Most recent' },
 };
 
 function applyI18n() {
