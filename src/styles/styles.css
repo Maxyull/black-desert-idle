@@ -2883,7 +2883,9 @@
      CSS (zoom/transform) -- sans piste plus grande, aucun agrandissement de largeur n'est
      jamais visible, seulement la hauteur (poussée normale du flux). */
   .layout {
-    display:grid; grid-template-columns:210px var(--ui-center-track,1fr) 300px; gap:14px; align-items:start;
+    /* gap:0 (2026-07-16, demande explicite "supprime l'écart entre les menus et le jeu au milieu") :
+       les colonnes latérales touchent la colonne centrale, le jeu récupère la largeur des 2×14px. */
+    display:grid; grid-template-columns:210px var(--ui-center-track,1fr) 300px; gap:0; align-items:start;
     /* justify-content (2026-07-15, retour utilisateur "menu de droite doit être à droite") : quand
        la piste centrale est FIXÉE en px par le palier de taille UI "Petit" (--ui-center-track =
        largeur_dispo × 0.85, voir updateUiScaleLayoutTrack, game-supabase.js), la somme des 3

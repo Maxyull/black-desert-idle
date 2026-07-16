@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V464', d:'16/07/2026 22:15', name:{fr:'Interface : écart supprimé entre les menus latéraux et le jeu', en:'UI: gap removed between the side menus and the game'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'espace entre les menus de gauche/droite et la zone de jeu au centre a été supprimé — la zone de jeu récupère cette largeur.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The gap between the left/right side menus and the central game area has been removed — the game area reclaims that width.'},
+    ] },
   { v:'V463', d:'16/07/2026 22:00', name:{fr:'Quêtes : bouton "Tout réclamer" + module Compagnon suit le slider de langue', en:'Quests: "Claim all" button + Companion module follows the language slider'}, fr:[
       {t:'new', sub:'interface', tx:'Un bouton "✅ Tout réclamer" apparaît en haut du panneau Quêtes dès qu\'au moins une quête (de l\'onglet affiché) est prête : un seul clic encaisse toutes les récompenses d\'un coup, au lieu de cliquer quête par quête.'},
       {t:'fix', sub:'interface', tx:'Le module Compagnon suit maintenant en direct le changement de langue FR/EN du jeu : il se remet à jour dès qu\'on bascule le slider (avant, il fallait recharger la page car son onglet gardait la langue d\'ouverture).'},
