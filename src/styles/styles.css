@@ -2169,6 +2169,13 @@
   .qwScopeLbl:first-child { margin-top:0; }
   .qwEmpty { font-size:10.5px; color:var(--ink-dim); font-style:italic; margin-top:4px; }
   #btnToggleTracker { margin-bottom:8px; }
+  /* "Tout réclamer" (2026-07-16) : bouton pleine largeur doré sous le bouton Suivre, visible
+     uniquement quand au moins une quête du scope affiché est prête à réclamer. */
+  .questClaimAllBtn {
+    width:100%; margin-bottom:8px; background:var(--gold); color:#1a1712; border:none; border-radius:4px;
+    padding:7px 10px; font-size:12px; font-weight:bold; cursor:pointer;
+  }
+  .questClaimAllBtn:hover { background:#e0bc72; }
 
   /* ===== chat (mondial/trade/annonce) — bas à droite, thème sombre/or comme le reste ===== */
   #chatWidget {

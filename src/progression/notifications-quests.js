@@ -856,6 +856,23 @@ function claimQuest(scope, i) {
   renderQuestTrackerWidget();
   if (questsPanelOpen) openDailyQuests();
 }
+/** Réclame en une fois TOUTES les quêtes prêtes (objectif atteint, non réclamées) du scope donné.
+ * S'appuie sur claimQuest() pour la garde d'idempotence (q.claimed), puis rafraîchit les UI UNE
+ * seule fois à la fin (claimQuest rafraîchit à chaque appel, mais un seul render final suffit ici). */
+function claimAllQuests(scope) {
+  ensureQuests(scope);
+  const st = S[QUEST_SCOPES[scope].stateKey];
+  let claimed = 0;
+  st.quests.forEach((q, i) => {
+    if (!q.claimed && questProgress(scope, q) >= q.target) {
+      q.claimed = true; addSilver(q.reward, 'quest', q.kind); claimed++;
+    }
+  });
+  if (!claimed) return;
+  refreshStatsOnly(); updateQuestBadge();
+  renderQuestTrackerWidget();
+  if (questsPanelOpen) openDailyQuests();
+}
 /** Assure les tirages journalier/hebdo puis rafraîchit #questBadge avec le nombre de quêtes prêtes à réclamer (des deux scopes). */
 function updateQuestBadge() {
   ensureQuests('daily'); ensureQuests('weekly');
@@ -934,7 +951,13 @@ function renderDailyQuestsHtml() {
     return `<button class="catTab qScopeTab${scope===questPanelScope?' active':''}" data-scope="${scope}">${icon} ${label} ${badge}</button>`;
   };
   const note = questPanelScope==='daily' ? dailyNote : weeklyNote;
-  return `<button id="btnToggleTracker" onclick="toggleQuestTracker()">${trackLabel}</button>` +
+  // bouton "Tout réclamer" : n'apparaît que si le scope affiché a au moins une quête prête à
+  // réclamer (claimAllQuests ci-dessus fait tout le travail + rafraîchit le panneau).
+  const claimableNow = questScopeCounts(questPanelScope).claimable;
+  const claimAllBtn = claimableNow > 0
+    ? `<button id="btnClaimAllQuests" class="questClaimAllBtn" onclick="claimAllQuests('${questPanelScope}')">${i18next.t('progression:progression.quests.claim_all_button', { count: claimableNow })}</button>`
+    : '';
+  return `<button id="btnToggleTracker" onclick="toggleQuestTracker()">${trackLabel}</button>` + claimAllBtn +
     `<div class="catTabs">` +
       tabBtn('daily', '📅', i18next.t('progression:progression.quests.tab_daily')) +
       tabBtn('weekly', '🗓️', i18next.t('progression:progression.quests.tab_weekly')) +

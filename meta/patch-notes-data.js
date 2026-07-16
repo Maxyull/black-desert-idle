@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V463', d:'16/07/2026 22:00', name:{fr:'Quêtes : bouton "Tout réclamer" + module Compagnon suit le slider de langue', en:'Quests: "Claim all" button + Companion module follows the language slider'}, fr:[
+      {t:'new', sub:'interface', tx:'Un bouton "✅ Tout réclamer" apparaît en haut du panneau Quêtes dès qu\'au moins une quête (de l\'onglet affiché) est prête : un seul clic encaisse toutes les récompenses d\'un coup, au lieu de cliquer quête par quête.'},
+      {t:'fix', sub:'interface', tx:'Le module Compagnon suit maintenant en direct le changement de langue FR/EN du jeu : il se remet à jour dès qu\'on bascule le slider (avant, il fallait recharger la page car son onglet gardait la langue d\'ouverture).'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'A "✅ Claim all" button now appears at the top of the Quests panel as soon as at least one quest (in the shown tab) is ready: a single click collects every reward at once, instead of claiming quest by quest.'},
+      {t:'fix', sub:'interface', tx:'The Companion module now follows the game\'s FR/EN language change live: it refreshes as soon as you flip the slider (before, you had to reload the page since its tab kept the language it opened in).'},
+    ] },
   { v:'V462', d:'16/07/2026 21:40', name:{fr:'Anglais : le modal "Bon retour" (reconnexion) entièrement traduit', en:'English: the "Welcome back" reconnect modal fully translated'}, fr:[
       {t:'fix', sub:'interface', tx:'Le modal de reconnexion affiché au retour d\'une absence ("Bon retour") était entièrement en français même en mode anglais (titre, progression de niveau, récap silver/XP, record personnel, objets trouvés, historique des sessions, bouton "Récupérer le butin"...). Tout est désormais traduit, et les nombres suivent le format de la langue choisie.'},
     ], en:[

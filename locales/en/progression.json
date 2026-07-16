@@ -129,6 +129,7 @@
   "progression.quests.all_achievements_done": "🏅 You've finished all achievements!",
   "progression.quests.all_claimed": "Everything is claimed!",
   "progression.quests.claim_button": "Claim",
+  "progression.quests.claim_all_button": "✅ Claim all ({{count}})",
   "progression.quests.claimed": "Claimed ✓",
   "progression.quests.daily_reset_note": "Resets every day at midnight (local time)",
   "progression.quests.daily_tip": "Time left before daily quests reset",

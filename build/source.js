@@ -999,6 +999,7 @@ const I18N_RESOURCES = {
       "progression.quests.all_achievements_done": "🏅 Vous avez fini les succès !",
       "progression.quests.all_claimed": "Tout est réclamé !",
       "progression.quests.claim_button": "Réclamer",
+      "progression.quests.claim_all_button": "✅ Tout réclamer ({{count}})",
       "progression.quests.claimed": "Réclamé ✓",
       "progression.quests.daily_reset_note": "Se réinitialise chaque jour à minuit (heure locale)",
       "progression.quests.daily_tip": "Temps restant avant la remise à zéro des quêtes journalières",
@@ -2046,6 +2047,7 @@ const I18N_RESOURCES = {
       "progression.quests.all_achievements_done": "🏅 You've finished all achievements!",
       "progression.quests.all_claimed": "Everything is claimed!",
       "progression.quests.claim_button": "Claim",
+      "progression.quests.claim_all_button": "✅ Claim all ({{count}})",
       "progression.quests.claimed": "Claimed ✓",
       "progression.quests.daily_reset_note": "Resets every day at midnight (local time)",
       "progression.quests.daily_tip": "Time left before daily quests reset",
@@ -5630,6 +5632,21 @@ function claimQuest(scope, i) {
   if (questsPanelOpen) openDailyQuests();
 }
 
+function claimAllQuests(scope) {
+  ensureQuests(scope);
+  const st = S[QUEST_SCOPES[scope].stateKey];
+  let claimed = 0;
+  st.quests.forEach((q, i) => {
+    if (!q.claimed && questProgress(scope, q) >= q.target) {
+      q.claimed = true; addSilver(q.reward, 'quest', q.kind); claimed++;
+    }
+  });
+  if (!claimed) return;
+  refreshStatsOnly(); updateQuestBadge();
+  renderQuestTrackerWidget();
+  if (questsPanelOpen) openDailyQuests();
+}
+
 function updateQuestBadge() {
   ensureQuests('daily'); ensureQuests('weekly');
   let n = 0;
@@ -5702,7 +5719,12 @@ function renderDailyQuestsHtml() {
     return `<button class="catTab qScopeTab${scope===questPanelScope?' active':''}" data-scope="${scope}">${icon} ${label} ${badge}</button>`;
   };
   const note = questPanelScope==='daily' ? dailyNote : weeklyNote;
-  return `<button id="btnToggleTracker" onclick="toggleQuestTracker()">${trackLabel}</button>` +
+  
+  const claimableNow = questScopeCounts(questPanelScope).claimable;
+  const claimAllBtn = claimableNow > 0
+    ? `<button id="btnClaimAllQuests" class="questClaimAllBtn" onclick="claimAllQuests('${questPanelScope}')">${i18next.t('progression:progression.quests.claim_all_button', { count: claimableNow })}</button>`
+    : '';
+  return `<button id="btnToggleTracker" onclick="toggleQuestTracker()">${trackLabel}</button>` + claimAllBtn +
     `<div class="catTabs">` +
       tabBtn('daily', '📅', i18next.t('progression:progression.quests.tab_daily')) +
       tabBtn('weekly', '🗓️', i18next.t('progression:progression.quests.tab_weekly')) +
@@ -16048,6 +16070,9 @@ function applyI18n() {
   if (typeof renderCardLayout === 'function' && typeof cardLayoutState !== 'undefined') renderCardLayout(cardLayoutState);
   
   if (typeof updateZoneTitleText === 'function') updateZoneTitleText();
+  
+  const companionsFrame = document.getElementById('companionsFrame');
+  if (companionsFrame) { try { companionsFrame.contentWindow.location.reload(); } catch (e) { companionsFrame.src = companionsFrame.src; } }
   hudFast();
 }
 $a('langToggle').onclick = () => {

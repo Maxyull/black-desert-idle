@@ -1631,6 +1631,14 @@ function applyI18n() {
   // fonction n'était rappelée qu'au changement de zone -- le titre gardait l'ancienne langue
   // jusqu'au prochain voyage (visible au premier chargement et à chaque bascule FR/EN).
   if (typeof updateZoneTitleText === 'function') updateZoneTitleText();
+  // module Compagnon (2026-07-16, retour utilisateur : "lie la traduction compagnon au slider") :
+  // l'iframe lit localStorage['velia-idle-lang'] UNE FOIS à sa création (voir src/companions/i18n.js)
+  // puis est réutilisée -- une bascule FR/EN en jeu ne se répercutait donc qu'au prochain reload.
+  // localStorage est déjà écrit par les handlers de langue AVANT cet appel : on recharge l'iframe
+  // pour qu'elle réinitialise son i18next dans la nouvelle langue. Reload seulement si elle existe
+  // déjà (jamais de création anticipée -- le module reste chargé à la demande, au 1er clic).
+  const companionsFrame = document.getElementById('companionsFrame');
+  if (companionsFrame) { try { companionsFrame.contentWindow.location.reload(); } catch (e) { companionsFrame.src = companionsFrame.src; } }
   hudFast();
 }
 $a('langToggle').onclick = () => {
