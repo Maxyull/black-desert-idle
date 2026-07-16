@@ -383,7 +383,11 @@ function showAchToast(a) {
 /** @param {string} key - identifiant stable (fusionne dans une entrée existante). @param {string} name @param {string} icon @param {number} qty. Empile dans S.mailbox, jamais plein/perdu (contrairement au sac). */
 function mailboxAdd(key, name, icon, qty) {
   const existing = S.mailbox.find(m => m.key === key);
-  if (existing) existing.qty += qty;
+  // rafraîchit aussi name/icon en fusionnant (2026-07-16, retour utilisateur : "point de fidélité
+  // français aussi dans la mailbox") -- l'entrée 'loyalty' avait été renommée "Points de
+  // fidélité" -> "Loyalties" (V~213) mais une sauvegarde d'AVANT le renommage gardait l'ancien
+  // nom pour toujours : la fusion par clé n'écrasait que qty, jamais le nom stocké.
+  if (existing) { existing.qty += qty; existing.name = name; existing.icon = icon; }
   else S.mailbox.push({ key, name, icon, qty });
 }
 /** @param {string} icon @param {string} name @param {number} qty. Affiche un toast éphémère (4,5s) de réception de courrier dans #achToastStack (même style que showAchToast). */
@@ -451,9 +455,13 @@ function renderMailboxHtml() {
   if (!S.mailbox.length || !S.mailbox.some(m => m.qty > 0)) {
     return stockRow + `<div class="admEmpty">${i18next.t('progression:progression.mailbox.empty')}</div>`;
   }
+  // m.key==='loyalty' : nom canonique affiché quel que soit le nom STOCKÉ dans la sauvegarde --
+  // les sauvegardes d'avant le renommage V~213 contiennent encore "Points de fidélité" (voir le
+  // commentaire dans mailboxAdd) ; la fusion quotidienne remet la donnée à jour, ceci corrige
+  // l'affichage immédiatement sans attendre le prochain octroi.
   return stockRow + S.mailbox.filter(m => m.qty > 0).map(m => `<div class="achRow">` +
     `<div class="achIcon">${m.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${m.name}</div></div>` +
+    `<div class="achInfo"><div class="achName">${m.key === 'loyalty' ? 'Loyalties' : m.name}</div></div>` +
     `<div class="achReward">×${fmt(m.qty)}</div>` +
     (m.key === 'loyalty' ? `<button class="mailClaimBtn" data-key="${m.key}">${i18next.t('progression:progression.mailbox.claim_button')}</button>` : '') +
     `</div>`).join('') +

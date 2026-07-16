@@ -3082,6 +3082,26 @@
     assert('Tout nom affichable des données (stuff/matériaux/zones/mobs/loot/marché/Mini Boss) a une entrée NAME_EN (mode anglais)',
       missing.size === 0, [...missing].join(', '));
   }
+  // courrier : l'entrée 'loyalty' d'une VIEILLE sauvegarde gardait "Points de fidélité" pour
+  // toujours (2026-07-16, retour utilisateur : "point de fidélité français aussi dans la mailbox")
+  // -- l'objet a été renommé "Loyalties" en V~213 mais mailboxAdd() ne fusionnait que qty, jamais
+  // le nom stocké. Double correctif : rendu canonique immédiat + rafraîchissement du nom à la fusion.
+  function testMailboxLoyaltyEntryShowsCanonicalNameEvenFromOldSave() {
+    if (typeof renderMailboxHtml !== 'function' || typeof mailboxAdd !== 'function') return;
+    const savedMailbox = S.mailbox;
+    try {
+      // sauvegarde d'avant le renommage V~213 : l'ancien nom français est persisté
+      S.mailbox = [{ key: 'loyalty', name: 'Points de fidélité', icon: '🏅', qty: 400 }];
+      const html = renderMailboxHtml();
+      assert('Le courrier affiche "Loyalties" même si la sauvegarde contient l\'ancien nom "Points de fidélité"',
+        html.includes('Loyalties') && !html.includes('Points de fidélité'), html.slice(0, 300));
+      mailboxAdd('loyalty', 'Loyalties', '🏅', 200);
+      assert('mailboxAdd() fusionne la quantité ET rafraîchit le nom stocké (la donnée s\'auto-répare au prochain octroi)',
+        S.mailbox[0].qty === 600 && S.mailbox[0].name === 'Loyalties', JSON.stringify(S.mailbox[0]));
+    } finally {
+      S.mailbox = savedMailbox;
+    }
+  }
   // ticker de loot : les noms passent par tr() à l'affichage (2026-07-16, même retour utilisateur --
   // le ticker montrait "Mousse de Polly" en mode EN alors que la carte Loot traduisait bien) ; la
   // clé de fusion ×N reste le nom BRUT (indépendant de la langue).
@@ -6755,6 +6775,7 @@
     testBestXpPerHourResetV440ZeroesStaleRecord();
     testDisplayNamesAllHaveNameEnEntry();
     testLootTickerTranslatesNamesInEnglishMode();
+    testMailboxLoyaltyEntryShowsCanonicalNameEvenFromOldSave();
     testGainXpTrackRateFalseNeverFeedsXpRateBuffer();
     testApplySaveStateUpdatesZoneTitleText();
     testComputeOfflineCatchupSilverCapsAndThresholds();

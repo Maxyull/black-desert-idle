@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V458', d:'16/07/2026 05:00', name:{fr:'Courrier : nom "Points de fidélité" corrigé + Temps de jeu affiché en double', en:'Mailbox: "Points de fidélité" name fixed + Playtime shown twice'}, fr:[
+      {t:'fix', sub:'interface', tx:'Sur les comptes créés avant le renommage "Points de fidélité" → "Loyalties", le courrier affichait encore l\'ancien nom français pour toujours (y compris en mode anglais) : la livraison quotidienne fusionnait les quantités sans jamais mettre à jour le nom enregistré dans la sauvegarde. Corrigé — l\'affichage est réparé immédiatement et la donnée se répare d\'elle-même au prochain octroi quotidien.'},
+      {t:'fix', sub:'interface', tx:'Le temps de jeu (Total / Aujourd\'hui) s\'affichait deux fois dans la colonne de droite : une fois dans l\'encart Suivi et une fois dans son propre widget. L\'encart Suivi ne le montre plus, seul le widget dédié reste.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'On accounts created before the "Points de fidélité" → "Loyalties" rename, the mailbox still showed the old French name forever (including in English mode): the daily delivery merged quantities without ever updating the name stored in the save. Fixed — the display is corrected immediately and the data heals itself at the next daily grant.'},
+      {t:'fix', sub:'interface', tx:'Playtime (Total / Today) was shown twice in the right column: once in the Tracker widget and once in its own widget. The Tracker no longer shows it, only the dedicated widget remains.'},
+    ] },
   { v:'V457', d:'16/07/2026 04:50', name:{fr:'Mode anglais : 38 noms d\'objets restés en français enfin traduits', en:'English mode: 38 item names stuck in French finally translated'}, fr:[
       {t:'fix', sub:'interface', tx:'En mode anglais, tout l\'équipement des 4 paliers (Bâton/Éveil/Dague/Casque/Armure/Gants/Bottes Naru, Tuvala, Yuria et Grunil), les pierres d\'optimisation de palier (Pierre de Novice, du Temps, Noire, concentrée), la Pierre de Cron, le Trésor de Velia et le Livre interdit s\'affichaient toujours en français — 38 noms n\'avaient tout simplement pas de traduction. Tous traduits, avec un garde-fou automatique pour qu\'aucun futur objet ne puisse plus être oublié.'},
       {t:'fix', sub:'interface', tx:'Le fil de loot (à droite du jeu) affichait les noms d\'objets en français même en mode anglais (ex: "Mousse de Polly" au lieu de "Polly Moss"). Il utilise désormais les noms traduits, comme le reste de l\'interface.'},

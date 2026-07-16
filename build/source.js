@@ -5231,7 +5231,8 @@ function showAchToast(a) {
 
 function mailboxAdd(key, name, icon, qty) {
   const existing = S.mailbox.find(m => m.key === key);
-  if (existing) existing.qty += qty;
+  
+  if (existing) { existing.qty += qty; existing.name = name; existing.icon = icon; }
   else S.mailbox.push({ key, name, icon, qty });
 }
 
@@ -5287,9 +5288,10 @@ function renderMailboxHtml() {
   if (!S.mailbox.length || !S.mailbox.some(m => m.qty > 0)) {
     return stockRow + `<div class="admEmpty">${i18next.t('progression:progression.mailbox.empty')}</div>`;
   }
+  
   return stockRow + S.mailbox.filter(m => m.qty > 0).map(m => `<div class="achRow">` +
     `<div class="achIcon">${m.icon}</div>` +
-    `<div class="achInfo"><div class="achName">${m.name}</div></div>` +
+    `<div class="achInfo"><div class="achName">${m.key === 'loyalty' ? 'Loyalties' : m.name}</div></div>` +
     `<div class="achReward">×${fmt(m.qty)}</div>` +
     (m.key === 'loyalty' ? `<button class="mailClaimBtn" data-key="${m.key}">${i18next.t('progression:progression.mailbox.claim_button')}</button>` : '') +
     `</div>`).join('') +
