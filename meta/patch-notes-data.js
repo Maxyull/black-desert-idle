@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V460', d:'16/07/2026 20:20', name:{fr:'Anglais : "Communauté"/"Compte" traduits + badge DÉMO retiré', en:'English: "Community"/"Account" translated + DEMO badge removed'}, fr:[
+      {t:'fix', sub:'interface', tx:'En anglais, les titres de sections "Communauté" et "Compte" du menu de gauche restaient affichés en français (aucune traduction n\'était définie) — corrigé en "Community" / "Account".'},
+      {t:'change', sub:'interface', tx:'Le badge "DÉMO" affiché à côté du pseudo a été retiré.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'In English, the left menu section titles "Communauté" and "Compte" still showed in French (no translation was defined) — fixed to "Community" / "Account".'},
+      {t:'change', sub:'interface', tx:'The "DEMO" badge shown next to the username has been removed.'},
+    ] },
   { v:'V459', d:'16/07/2026 06:00', name:{fr:'Le module Compagnon parle enfin anglais', en:'The Companion module finally speaks English'}, fr:[
       {t:'fix', sub:'compagnon', tx:'En mode anglais, tout l\'onglet Compagnon restait en français : les 12 onglets, le bandeau de test, l\'éclosion, la collection, la fusion (règles, aperçu, résultats), le nourrissage, l\'index, le hardinage, les succès, le PvP/tournoi, le classement, le marché d\'échange et le viewer 3D sont désormais entièrement traduits (~460 textes). La langue suit celle du jeu principal au chargement du module.'},
       {t:'change', sub:'compagnon', tx:'Les noms des objets lootés par les familiers (Minerai de fer, Pierre de Caphras, Cœur de Kzarka...), les raretés, les sections et les compétences sont traduits à l\'affichage — les sauvegardes existantes restent intactes, rien à refaire.'},

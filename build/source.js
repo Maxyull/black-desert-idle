@@ -16015,6 +16015,10 @@ const I18N = {
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
   cardAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   admGroupEquip: { fr:'Équipement', en:'Equipment' },
+  
+  sideGroupProgression: { fr:'Progression', en:'Progression' },
+  sideGroupCommunaute: { fr:'Communauté', en:'Community' },
+  sideGroupCompte: { fr:'Compte', en:'Account' },
 };
 
 function applyI18n() {

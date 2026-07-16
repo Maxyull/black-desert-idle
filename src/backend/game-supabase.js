@@ -1594,6 +1594,11 @@ const I18N = {
   naderrLbl: { fr:'Bandeau de Naderr', en:"Naderr's Band" },
   cardAdmin: { fr:'🛠️ Admin', en:'🛠️ Admin' },
   admGroupEquip: { fr:'Équipement', en:'Equipment' },
+  // titres de groupes de la sidebar (2026-07-16) : sans entrée i18n, applyI18n() laissait le texte
+  // HTML brut (français) même en anglais -- "Communauté"/"Compte" restaient en FR dans l'UI EN.
+  sideGroupProgression: { fr:'Progression', en:'Progression' },
+  sideGroupCommunaute: { fr:'Communauté', en:'Community' },
+  sideGroupCompte: { fr:'Compte', en:'Account' },
 };
 /** Applique le dictionnaire I18N statique (data-i18n/data-i18n-ph) à tout le DOM, synchronise l'UI de langue et redessine inventaire/HUD avec les noms traduits. */
 function applyI18n() {
