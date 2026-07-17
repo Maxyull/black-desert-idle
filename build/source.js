@@ -389,6 +389,18 @@ const I18N_RESOURCES = {
       "backend.auth.guest_mode_title": "Tu joues en mode invité",
       "backend.auth.reset_email_sent": "Email envoyé — vérifie ta boîte mail pour réinitialiser ton mot de passe.",
       "backend.auth.sending": "Envoi en cours…",
+      "backend.auth.err_config": "Supabase n'est pas configuré.",
+      "backend.auth.err_login_fields": "Pseudo/email et mot de passe requis.",
+      "backend.auth.err_signup_fields": "Email, mot de passe (6 caractères min.) et pseudo sont tous requis.",
+      "backend.auth.err_signup_needs_email": "L'inscription nécessite une vraie adresse email (pas seulement un pseudo).",
+      "backend.auth.err_pseudo_not_found": "Aucun compte trouvé pour ce pseudo.",
+      "backend.auth.signing_in": "Connexion…",
+      "backend.auth.creating_account": "Création du compte…",
+      "backend.auth.account_linked": "Compte lié ! Ta progression est conservée.",
+      "backend.auth.account_created_confirm": "Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi.",
+      "backend.auth.set_new_password": "Choisis un nouveau mot de passe, puis enregistre.",
+      "backend.auth.save_new_password": "Enregistrer le nouveau mot de passe",
+      "backend.auth.password_updated": "Mot de passe mis à jour ! Connexion…",
       "backend.codex.all_zones": "Toutes zones",
       "backend.codex.craft_component_desc": "Composant de craft endgame",
       "backend.codex.material_desc": "Matériau d'optimisation",
@@ -1438,6 +1450,18 @@ const I18N_RESOURCES = {
       "backend.auth.guest_mode_title": "You're playing as a guest",
       "backend.auth.reset_email_sent": "Email sent — check your inbox to reset your password.",
       "backend.auth.sending": "Sending…",
+      "backend.auth.err_config": "Supabase is not configured.",
+      "backend.auth.err_login_fields": "Username/email and password are required.",
+      "backend.auth.err_signup_fields": "Email, a 6+ character password and a username are all required.",
+      "backend.auth.err_signup_needs_email": "Sign-up needs a real email address (not just a username).",
+      "backend.auth.err_pseudo_not_found": "No account found for that username.",
+      "backend.auth.signing_in": "Signing in…",
+      "backend.auth.creating_account": "Creating account…",
+      "backend.auth.account_linked": "Account linked! Your progress is kept.",
+      "backend.auth.account_created_confirm": "Account created! Check your inbox to confirm, then sign in.",
+      "backend.auth.set_new_password": "Choose a new password, then save.",
+      "backend.auth.save_new_password": "Save new password",
+      "backend.auth.password_updated": "Password updated! Signing you in…",
       "backend.codex.all_zones": "All zones",
       "backend.codex.craft_component_desc": "Endgame crafting component",
       "backend.codex.material_desc": "Enhancement material",
@@ -14950,46 +14974,90 @@ function updatePseudoDisplay() {
 }
 
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
+const _authT = (k, o) => i18next.t('backend:backend.auth.' + k, o);
+
+async function resolveLoginEmail(identifier) {
+  if (!identifier) return null;
+  if (identifier.includes('@')) return identifier;
+  if (!sb) return null;
+  try {
+    const { data, error } = await sb.rpc('email_for_login', { p_identifier: identifier });
+    if (error || !data) return null;
+    return data;
+  } catch (e) { return null; }
+}
 
 async function doSignUp() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  if (!sb) { authShow(_authT('err_config'), true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
   const pseudo = $a('authPseudo').value.trim();
-  if (!email || pass.length < 6) { authShow('Email requis + mot de passe 6 caractères min.', true); return; }
-  authShow('Création du compte...');
-  if (pseudo) { try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {} }
+  
+  if (!email || pass.length < 6 || !pseudo) { authShow(_authT('err_signup_fields'), true); return; }
+  if (!email.includes('@')) { authShow(_authT('err_signup_needs_email'), true); return; }
+  authShow(_authT('creating_account'));
+  try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {}
   if (isGuest()) {
     
     const { data, error } = await sb.auth.updateUser({ email, password: pass }, { emailRedirectTo: location.href });
     if (error) { authShow(error.message, true); return; }
     onAuthed(data.user);
-    authShow('Compte lié ! Ta progression est conservée.');
+    authShow(_authT('account_linked'));
     return;
   }
   const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href } });
   if (error) { authShow(error.message, true); return; }
   if (data.session) { onAuthed(data.session.user); }
-  else authShow('Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi.');
+  else authShow(_authT('account_created_confirm'));
 }
 
 async function doSignIn() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
-  if (!email || !pass) { authShow('Email et mot de passe requis.', true); return; }
-  authShow('Connexion...');
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim(), pass = $a('authPass').value;
+  if (!identifier || !pass) { authShow(_authT('err_login_fields'), true); return; }
+  authShow(_authT('signing_in'));
+  const email = await resolveLoginEmail(identifier);
+  if (!email) { authShow(_authT('err_pseudo_not_found'), true); return; }
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) { authShow(error.message, true); return; }
   onAuthed(data.user);
 }
 
 async function doForgotPassword() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  const email = $a('authEmail').value.trim();
-  if (!email) { authShow(i18next.t('backend:backend.auth.email_first'), true); return; }
-  authShow(i18next.t('backend:backend.auth.sending'));
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim();
+  if (!identifier) { authShow(_authT('email_first'), true); return; }
+  authShow(_authT('sending'));
+  const email = await resolveLoginEmail(identifier);
+  if (!email) { authShow(_authT('err_pseudo_not_found'), true); return; }
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href });
   if (error) { authShow(error.message, true); return; }
-  authShow(i18next.t('backend:backend.auth.reset_email_sent'));
+  authShow(_authT('reset_email_sent'));
+}
+
+let inPasswordRecovery = false;
+function showPasswordRecoveryUI() {
+  showAuthOverlay(true);
+  
+  ['authEmail','authPseudo','btnSignUp','btnForgotPass','btnSignInDiscord','authSocialRow','btnClearCacheAuth']
+    .forEach(id => { const el = $a(id); if (el) el.style.display = 'none'; });
+  const pass = $a('authPass'); if (pass) { pass.value = ''; pass.style.display = ''; pass.placeholder = _authT('set_new_password'); }
+  const btn = $a('btnSignIn');
+  if (btn) { btn.textContent = _authT('save_new_password'); btn.onclick = doSaveNewPassword; }
+  authShow(_authT('set_new_password'));
+  document.querySelectorAll('.lastUsedBadge').forEach(b => b.remove());
+}
+
+async function doSaveNewPassword() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const pass = $a('authPass').value;
+  if (pass.length < 6) { authShow(_authT('err_signup_fields'), true); return; }
+  authShow(_authT('sending'));
+  const { data, error } = await sb.auth.updateUser({ password: pass });
+  if (error) { authShow(error.message, true); return; }
+  inPasswordRecovery = false;
+  authShow(_authT('password_updated'));
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} 
+  if (data && data.user) onAuthed(data.user);
 }
 
 async function doLogout() {
@@ -15075,6 +15143,13 @@ async function joinDiscordGuild(providerToken, user) {
 }
 if (sb) {
   sb.auth.onAuthStateChange((event, session) => {
+    
+    if (event === 'PASSWORD_RECOVERY' || (typeof location !== 'undefined' && location.hash.includes('type=recovery'))) {
+      inPasswordRecovery = true;
+      showPasswordRecoveryUI();
+      return;
+    }
+    if (inPasswordRecovery) return; 
     if (event === 'SIGNED_IN' && session?.provider_token) {
       joinDiscordGuild(session.provider_token, session.user);
     }
@@ -15900,6 +15975,8 @@ $a('btnForgotPass').onclick = doForgotPassword;
 document.querySelectorAll('.authLangBtn').forEach(b => {
   b.onclick = () => {
     LANG = b.dataset.lang;
+    
+    if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG);
     try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
     applyI18n();
   };
@@ -15977,6 +16054,7 @@ const I18N = {
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
+  authIdentifierPh: { fr:'Pseudo ou email', en:'Username or email' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },

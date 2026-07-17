@@ -234,51 +234,102 @@ function updatePseudoDisplay() {
 // (aucune session active à ce moment-là pour appeler set_pseudo tout de suite) -- appliqué au
 // prochain onAuthed() réussi, voir refreshMyPseudo()
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
-/** Crée un compte email/mot de passe, ou upgrade la session invité courante en compte réel (garde le même user_id, la sauvegarde suit). Mémorise le pseudo choisi (PENDING_PSEUDO_KEY) le temps de confirmer l'email. */
+const _authT = (k, o) => i18next.t('backend:backend.auth.' + k, o);
+// Résolution "pseudo OU email" -> email (2026-07-16, demande explicite : connexion et mot de passe
+// perdu acceptent le pseudo OU l'email). Si l'identifiant contient '@', c'est déjà un email (aucun
+// appel serveur). Sinon on interroge le RPC public email_for_login(p_identifier) qui mappe
+// profiles.pseudo -> auth.users.email (voir supabase/migrations/..._email_for_login.sql). Repli
+// silencieux : si le RPC n'existe pas encore (migration non appliquée) ou ne trouve rien, renvoie
+// null -> l'appelant affiche err_pseudo_not_found.
+async function resolveLoginEmail(identifier) {
+  if (!identifier) return null;
+  if (identifier.includes('@')) return identifier;
+  if (!sb) return null;
+  try {
+    const { data, error } = await sb.rpc('email_for_login', { p_identifier: identifier });
+    if (error || !data) return null;
+    return data;
+  } catch (e) { return null; }
+}
+/** Crée un compte email/mot de passe (email + pseudo + mot de passe TOUS requis), ou upgrade la session invité courante en compte réel (garde le même user_id, la sauvegarde suit). Mémorise le pseudo choisi (PENDING_PSEUDO_KEY) le temps de confirmer l'email. */
 async function doSignUp() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  if (!sb) { authShow(_authT('err_config'), true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
   const pseudo = $a('authPseudo').value.trim();
-  if (!email || pass.length < 6) { authShow('Email requis + mot de passe 6 caractères min.', true); return; }
-  authShow('Création du compte...');
-  if (pseudo) { try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {} }
+  // inscription = les 3 infos requises (2026-07-16, demande explicite)
+  if (!email || pass.length < 6 || !pseudo) { authShow(_authT('err_signup_fields'), true); return; }
+  if (!email.includes('@')) { authShow(_authT('err_signup_needs_email'), true); return; }
+  authShow(_authT('creating_account'));
+  try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {}
   if (isGuest()) {
     // sans emailRedirectTo (2026-07-10, bug trouvé en vérification : "verifie que les redirection
     // vers le jeu se font bien après inscription"), le lien de confirmation d'email utilisait le
     // "Site URL" par défaut configuré côté dashboard Supabase au lieu de la page réellement visitée
     // — source probable de l'erreur 404 signalée après inscription si ce réglage était périmé.
-    // Même correctif que doForgotPassword/doSignInDiscord, qui passaient déjà redirectTo.
     const { data, error } = await sb.auth.updateUser({ email, password: pass }, { emailRedirectTo: location.href });
     if (error) { authShow(error.message, true); return; }
     onAuthed(data.user);
-    authShow('Compte lié ! Ta progression est conservée.');
+    authShow(_authT('account_linked'));
     return;
   }
   const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href } });
   if (error) { authShow(error.message, true); return; }
   if (data.session) { onAuthed(data.session.user); }
-  else authShow('Compte créé ! Vérifie ta boîte mail pour confirmer, puis connecte-toi.');
+  else authShow(_authT('account_created_confirm'));
 }
-/** Connexion par email/mot de passe. */
+/** Connexion par pseudo OU email + mot de passe (2026-07-16, demande explicite). */
 async function doSignIn() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
-  if (!email || !pass) { authShow('Email et mot de passe requis.', true); return; }
-  authShow('Connexion...');
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim(), pass = $a('authPass').value;
+  if (!identifier || !pass) { authShow(_authT('err_login_fields'), true); return; }
+  authShow(_authT('signing_in'));
+  const email = await resolveLoginEmail(identifier);
+  if (!email) { authShow(_authT('err_pseudo_not_found'), true); return; }
   const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
   if (error) { authShow(error.message, true); return; }
   onAuthed(data.user);
 }
-// envoie un email de réinitialisation de mot de passe — demande explicite du 2026-07-05
-/** Envoie un email de réinitialisation de mot de passe. */
+// envoie un email de réinitialisation de mot de passe — demande explicite du 2026-07-05,
+// accepte pseudo OU email depuis le 2026-07-16 (voir resolveLoginEmail).
+/** Envoie un email de réinitialisation de mot de passe (identifiant = pseudo OU email). */
 async function doForgotPassword() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  const email = $a('authEmail').value.trim();
-  if (!email) { authShow(i18next.t('backend:backend.auth.email_first'), true); return; }
-  authShow(i18next.t('backend:backend.auth.sending'));
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim();
+  if (!identifier) { authShow(_authT('email_first'), true); return; }
+  authShow(_authT('sending'));
+  const email = await resolveLoginEmail(identifier);
+  if (!email) { authShow(_authT('err_pseudo_not_found'), true); return; }
   const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href });
   if (error) { authShow(error.message, true); return; }
-  authShow(i18next.t('backend:backend.auth.reset_email_sent'));
+  authShow(_authT('reset_email_sent'));
+}
+// 2e moitié du flux "mot de passe oublié" (2026-07-16) : après le clic sur le lien du mail, on
+// affiche l'écran de connexion en mode "nouveau mot de passe" -- seul le champ mot de passe reste,
+// et le bouton principal enregistre le nouveau mot de passe (sb.auth.updateUser) avant de connecter.
+let inPasswordRecovery = false;
+function showPasswordRecoveryUI() {
+  showAuthOverlay(true);
+  // ne garde que le champ mot de passe + le bouton d'enregistrement
+  ['authEmail','authPseudo','btnSignUp','btnForgotPass','btnSignInDiscord','authSocialRow','btnClearCacheAuth']
+    .forEach(id => { const el = $a(id); if (el) el.style.display = 'none'; });
+  const pass = $a('authPass'); if (pass) { pass.value = ''; pass.style.display = ''; pass.placeholder = _authT('set_new_password'); }
+  const btn = $a('btnSignIn');
+  if (btn) { btn.textContent = _authT('save_new_password'); btn.onclick = doSaveNewPassword; }
+  authShow(_authT('set_new_password'));
+  document.querySelectorAll('.lastUsedBadge').forEach(b => b.remove());
+}
+/** Enregistre le nouveau mot de passe (session de récupération active) puis connecte le joueur. */
+async function doSaveNewPassword() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const pass = $a('authPass').value;
+  if (pass.length < 6) { authShow(_authT('err_signup_fields'), true); return; }
+  authShow(_authT('sending'));
+  const { data, error } = await sb.auth.updateUser({ password: pass });
+  if (error) { authShow(error.message, true); return; }
+  inPasswordRecovery = false;
+  authShow(_authT('password_updated'));
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} // retire #type=recovery
+  if (data && data.user) onAuthed(data.user);
 }
 /** Déconnecte puis relance immédiatement une session invité (jamais de mur bloquant). */
 async function doLogout() {
@@ -384,6 +435,19 @@ async function joinDiscordGuild(providerToken, user) {
 }
 if (sb) {
   sb.auth.onAuthStateChange((event, session) => {
+    // flux "mot de passe oublié" complet (2026-07-16) : quand le joueur clique le lien du mail de
+    // réinitialisation, Supabase revient sur la page et émet PASSWORD_RECOVERY (une session
+    // temporaire est établie -> SIGNED_IN peut aussi se déclencher). Sans ce garde, on le
+    // connectait direct sans jamais lui demander de nouveau mot de passe. On affiche donc l'écran
+    // "choisis un nouveau mot de passe" et on BLOQUE le onAuthed automatique tant qu'il n'a pas
+    // enregistré (inPasswordRecovery). Détection aussi via le hash de l'URL (type=recovery) au cas
+    // où l'event arrive avant l'abonnement.
+    if (event === 'PASSWORD_RECOVERY' || (typeof location !== 'undefined' && location.hash.includes('type=recovery'))) {
+      inPasswordRecovery = true;
+      showPasswordRecoveryUI();
+      return;
+    }
+    if (inPasswordRecovery) return; // ne pas connecter automatiquement pendant la récupération
     if (event === 'SIGNED_IN' && session?.provider_token) {
       joinDiscordGuild(session.provider_token, session.user);
     }
@@ -1435,6 +1499,10 @@ $a('btnForgotPass').onclick = doForgotPassword;
 document.querySelectorAll('.authLangBtn').forEach(b => {
   b.onclick = () => {
     LANG = b.dataset.lang;
+    // slider auth lié à i18next comme #langToggle (2026-07-16, "tous les sliders doivent être liés") :
+    // sans changeLanguage(), les messages i18next.t() de l'écran de connexion restaient dans l'ancienne
+    // langue.
+    if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG);
     try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
     applyI18n();
   };
@@ -1524,6 +1592,7 @@ const I18N = {
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
   authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
+  authIdentifierPh: { fr:'Pseudo ou email', en:'Username or email' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },

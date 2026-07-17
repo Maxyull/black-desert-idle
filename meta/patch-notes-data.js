@@ -19,6 +19,17 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V468', d:'16/07/2026 23:20', name:{fr:'Connexion : pseudo OU email, inscription complète, mot de passe oublié réparé, tout traduit', en:'Login: username OR email, full sign-up, fixed password reset, all translated'}, fr:[
+      {t:'new', sub:'interface', tx:'Tu peux désormais te connecter (et demander un mot de passe oublié) avec ton PSEUDO ou ton email — plus besoin de retenir l\'email exact.'},
+      {t:'change', sub:'interface', tx:'L\'inscription demande maintenant les 3 infos (email + pseudo + mot de passe) pour éviter les comptes sans pseudo.'},
+      {t:'fix', sub:'interface', tx:'Le "mot de passe oublié" est enfin complet : après avoir cliqué le lien du mail, un écran te demande de choisir un nouveau mot de passe (avant, ça te reconnectait sans jamais te laisser le changer).'},
+      {t:'fix', sub:'interface', tx:'Les messages de l\'écran de connexion (erreurs, statut) suivent maintenant la langue choisie, et le sélecteur de langue de cet écran met bien tout à jour (il était désynchronisé).'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'You can now sign in (and request a password reset) with your USERNAME or your email — no need to remember the exact email.'},
+      {t:'change', sub:'interface', tx:'Sign-up now requires all 3 fields (email + username + password) to avoid accounts with no username.'},
+      {t:'fix', sub:'interface', tx:'"Forgot password" is finally complete: after clicking the email link, a screen asks you to choose a new password (before, it just logged you back in without letting you change it).'},
+      {t:'fix', sub:'interface', tx:'The login screen messages (errors, status) now follow the chosen language, and that screen\'s language selector properly updates everything (it was out of sync).'},
+    ] },
   { v:'V467', d:'16/07/2026 23:00', name:{fr:'Connexion : badge "Dernière fois" sur la dernière méthode utilisée', en:'Login: "Last used" badge on your last sign-in method'}, fr:[
       {t:'new', sub:'interface', tx:'L\'écran de connexion affiche désormais un petit badge "Dernière fois" sur le bouton de la méthode que tu as utilisée en dernier (email, Discord, Google, GitHub ou Twitter/X) — repère visuel à la Google pour te reconnecter plus vite. Info gardée localement sur ton appareil uniquement.'},
     ], en:[
