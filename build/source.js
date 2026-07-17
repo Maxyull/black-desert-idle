@@ -15312,7 +15312,8 @@ async function onAuthedInner(user) {
   if (typeof updateLoginStreak === 'function') updateLoginStreak(); 
   startAutoCloudSave();
   heartbeatPresence();
-  refreshOnlineCounter();
+  
+  refreshPresenceSnapshot();
   refreshLiveBoss(); 
   
   if (isGuest()) {
@@ -15808,6 +15809,36 @@ async function refreshAdminZone() {
   } catch(e) {}
 }
 
+async function refreshPresenceSnapshot() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.rpc('get_presence_snapshot', { p_window_seconds: 90 });
+    if (error || !data) return;
+
+    if (data.online) {
+      const { total, guests } = data.online;
+      $a('onlineTotal').textContent = total;
+      $a('onlineGuests').textContent = guests > 0
+        ? ` (${guests} ${i18next.t('backend:backend.presence.guests_suffix')})` : '';
+    }
+
+    zonePlayerCounts = {};
+    (data.zones || []).forEach(r => { zonePlayerCounts[r.zone_idx] = r.cnt; });
+    if (typeof updateZonePlayerCountBadges === 'function') updateZonePlayerCountBadges();
+
+    const next = (data.admin_zone === null || data.admin_zone === undefined) ? null : Number(data.admin_zone);
+    if (next !== adminZoneIdx) {
+      adminZoneIdx = next;
+      if (typeof buildZoneList === 'function') buildZoneList();
+    }
+
+    if (atVelia) {
+      veliaPlayers = data.velia || [];
+      if (typeof updateVeliaPlayersTicker === 'function') updateVeliaPlayersTicker();
+    }
+  } catch(e) {}
+}
+
 async function recordAfkSession(payload) {
   if (!sb || !currentUser) return;
   try {
@@ -15853,13 +15884,11 @@ async function refreshRegisteredCounter() {
     $a('registeredTotal').textContent = data;
   } catch(e) {}
 }
-setInterval(heartbeatPresence, 20000);
-setInterval(refreshOnlineCounter, 20000);
-setInterval(refreshZonePlayerCounts, 20000);
-setInterval(refreshAdminZone, 20000);
-refreshAdminZone();
-setInterval(refreshVeliaPlayers, 20000);
-setInterval(refreshLiveBoss, 20000);
+
+setInterval(heartbeatPresence, 20000);        
+setInterval(refreshPresenceSnapshot, 20000);  
+refreshPresenceSnapshot();                    
+setInterval(refreshLiveBoss, 20000);          
 refreshRegisteredCounter();
 setInterval(refreshRegisteredCounter, 5 * 60000);
 
