@@ -57,6 +57,97 @@ Voir `ZONES` dans `index.html`. Paliers de stuff : Naru / Tuvala / Yuria / Gruni
 - Tenebraum
 - Château Zephyros (Zephyrus Shadow Knights)
 
+## Palier 5 (Jaune — Heidel) : chiffrage du mur endgame (2026-07-22)
+
+> ⚠️ Notes de conception chiffrées, **rien n'est décidé ni implémenté**. Les mesures viennent de la
+> prod et de simulations sur le code réel ; les propositions sont à trancher.
+
+### Le constat : le mur n'est pas l'AP, c'est le PD
+
+Mesuré en prod le 2026-07-22 (6 joueurs actifs, tous exactement à GS 424 = full PEN Grunil) :
+
+| | Forêt de Polly (zone 15, la dernière) | Joueur endgame |
+|---|---|---|
+| AP | reqAP **320** | **697,4** → ratio **×2,18** |
+| PD | reqDP **170** | **149,7** → ratio **×0,88** |
+
+`bottleneck() = min(apRatio, dpRatio)` = **0,88** → badge « ZONE DIFFICILE », et
+`lootMult(0.88) = 0.75`. **Le meilleur joueur farme la dernière zone avec 25 % de loot en moins,
+en permanence.** Ce n'est pas « il a fini le jeu » : il est bloqué sous un plafond de PD.
+
+Cause structurelle : le stuff produit un ratio AP:PD de **4,7:1**, les zones en demandent **1,9:1**.
+L'AP scale avec les paliers, le PD non. **Ajouter une zone à reqAP 500 ne changerait rien** (les
+joueurs ont déjà 697 d'AP) — il faut d'abord débloquer le PD.
+
+### Conséquence : le palier Jaune doit être un palier de DÉFENSE
+
+Ça tombe bien, c'est canonique BDO **et déjà prévu** dans ce fichier (voir les armes Jaune/Heidel,
+qui listent Kzarka) : le stuff de boss est 1 arme + 4 pièces défensives.
+
+| Pièce | Source | Stat |
+|---|---|---|
+| Kzarka (bâton) | World Boss Kzarka | AP |
+| Gants de Bheg / Casque de Giath / Armure Dim Tree / Bottes d'Urugon | boss | **PD** |
+
+Cible indicative : PEN boss gear ≈ **AP 880 / PD 360** → ratio 2,4:1, aligné sur la demande des
+zones. **Chiffres de départ dérivés des ratios actuels, non validés.**
+
+### Ce que ça réutilise (rien à construire)
+- **Kzarka (quotidien) et Vell (hebdo) existent déjà** : PV partagés, arène commune.
+- Change la boucle : le stuff ne tombe plus dans la zone farmée, mais **aux World Bosses** →
+  raison de se connecter à heure fixe (rétention) + seul moment collectif du jeu.
+- **Puits à silver** : Naïka a 219M et rien à en faire. Les pierres étant échangeables au marché,
+  ceux qui ratent les boss achètent à ceux qui en ont trop.
+
+### Chiffrage : coût 0 → PEN d'UNE pièce
+
+Simulation Monte-Carlo, 20 000 objets, avec les **vraies fonctions du jeu** (`enhChance`,
+`addItemFailstack`, `ENH_CHANCE_FLAT`, `ENH_FS_INC`, failstack par objet/palier, rétrogradation
++8→+15 et PRI→PEN). Hypothèse : **1 pierre par tentative** (succès ou échec).
+
+| | Moyenne | Médiane | P90 | Pire cas |
+|---|---|---|---|---|
+| **Sans Cron** | **747** pierres | 755 | 897 | 1110 |
+| **Avec Cron** | **103** pierres | 102 | 133 | 208 |
+
+→ **Le Cron divise le coût par 7,3.** Sans lui, chaque échec au-dessus de +8 rétrograde et on
+repaie des paliers déjà acquis. **La vraie variable de tuning est le Cron, pas le taux de drop.**
+
+Coût Cron : ~82 utilisations/pièce. À un coût de palier 5 (en prolongeant le 1/2/3/4 de
+`CRON_STONE_COST_BY_TIER` — **entrée à créer**) → ~410 Cron. Naïka en farme ~184/h (9234 kills/h
+× 1 % × 2 unités) → **2,2 h. Le Cron ne sera jamais le goulot.**
+
+### Chiffrage : durée pour 1 arme (5 pierres/Kzarka)
+
+Planning Kzarka existant : 12h45 / 19h45 / 23h45 quotidien + 15h45 le week-end = **23 spawns/sem**.
+**~21 Kzarka** suffisent pour l'arme (27 au P90, 42 au pire), avec Cron.
+
+| Présence | Avec Cron | Sans Cron |
+|---|---|---|
+| Tous les Kzarka (23/sem) | **6,3 j** (P90 8,1 j) | 6,5 sem |
+| ~2/jour (14/sem) | **10,3 j** (P90 13,3 j) | 10,7 sem |
+| 1/jour (7/sem) | **2,9 sem** (P90 3,8 sem) | 21 sem |
+
+Set complet (5 pièces) à présence pleine : **~5 semaines**. Rythme de saison correct.
+
+### Points à trancher
+- **Le Cron est-il assumé comme mécanique à connaître, ou rendu automatique à ce palier ?** ×7 sur
+  la durée : celui qui ignore la case à cocher paie 6,5 semaines au lieu de 6 jours.
+- **3 rendez-vous/jour dont un à 23h45, dans un jeu IDLE.** L'écart 6 j ↔ 2,9 sem n'est pas un
+  écart de skill ni de chance, c'est un écart de **disponibilité**. Le marché est la parade (les
+  pierres s'achètent), mais c'est un choix de design à assumer.
+- « 5 pierres garanties » suppose un drop fixe. Un bonus au rang de dégâts creuserait l'écart en
+  faveur des plus gros farmers.
+
+### Ordre suggéré
+1. **Stuff de boss seul** (5 pièces, drop Kzarka/Vell + Pierre de sang). Aucune zone nouvelle,
+   aucun asset. Débloque le mur PD et redonne un objectif dès le jour 1. **Teste l'hypothèse
+   « le mur, c'est le PD » avant de dessiner 4 zones** : si Naïka repasse de 0,88 à ~1,3 sur Polly
+   et que son loot remonte de +33 %, le diagnostic est confirmé.
+2. **Heidel**, 4 zones (pattern établi : 4 zones/palier, cf. `[9,10,11,15]`). N'a de sens
+   qu'**après** le PD débloqué.
+3. Compendium / PEN Mastery étendus au palier Jaune (systèmes existants, quasi gratuit).
+
 ## Économie progressive par région (2026-07-07)
 Silver/h moyen visé (à un rythme de référence de 15 kills/min, stuff adapté à la zone, plafond
 haut = zone la plus difficile de la région avec un stuff bien optimisé) :
@@ -498,5 +589,7 @@ Pas besoin de trancher maintenant — à laisser en TBD et itérer une fois les 
 - [ ] Avertissement explicite avant toute tentative à risque de casse
 
 ### Phase 5 — Équilibrage & tests
-- [ ] Simulateur de temps moyen jusqu'à PEN par zone
+- [x] Simulateur de temps moyen jusqu'à PEN — **fait le 2026-07-22** (Monte-Carlo 20 000 objets sur
+      les vraies fonctions du jeu). Résultat : **747 pierres sans Cron / 103 avec** pour 0→PEN.
+      Chiffres complets et durées par présence : voir « Palier 5 (Jaune — Heidel) » plus haut.
 - [ ] Ajustement des probabilités pour éviter un mur de progression trop dur ou trop facile
