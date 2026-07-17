@@ -2721,6 +2721,8 @@ function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth
 
 function isMobileViewport() { return window.innerWidth <= 1024; }
 
+const BALANCE_VERSION = 405;
+
 function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
@@ -15364,6 +15366,8 @@ async function syncPlayerStats() {
       gearscore: Math.round(S.bestGearscore||0),
       ap: Math.round((S.bestAp||0)*10)/10,
       dp: Math.round((S.bestDp||0)*10)/10,
+      
+      balance_version: typeof BALANCE_VERSION === 'number' ? BALANCE_VERSION : 0,
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
@@ -17530,8 +17534,10 @@ function LB2_CATS_() {
   return {
     silver:   { icon:'💰', label:i18next.t('backend:backend.leaderboard.cat_silver_label'), tip:i18next.t('backend:backend.leaderboard.cat_silver_tip'),
       val:r=>Number(r.silver||0), fmt:r=>fmt(r.silver||0) },
+    
     gs:       { icon:'⚔️', label:i18next.t('backend:backend.leaderboard.cat_gs_label'), tip:i18next.t('backend:backend.leaderboard.cat_gs_tip'),
-      val:r=>Number(r.gearscore||0), fmt:r=>`${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})` },
+      val:r=>Number(r.gearscore||0), fmt:r=>`${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})`,
+      filter:r=>Number(r.balance_version||0) >= BALANCE_VERSION },
     zone:     { icon:'🗺️', label:i18next.t('backend:backend.leaderboard.cat_zone_label'), tip:i18next.t('backend:backend.leaderboard.cat_zone_tip'),
       val:r=>Number(r.best_zone_index||0), fmt:r=>tr(r.best_zone_name||'—') },
     

@@ -2113,6 +2113,25 @@
     assert('lb2ComputeYourRankInfo renvoie null si le joueur n\'a pas encore de record synchronisé', missing === null);
     assert('lb2ComputeYourRankInfo renvoie null sans userId (invité/déconnecté)', lb2ComputeYourRankInfo(rows, 'silver', null) === null);
   }
+  // Classement GS : écarte les records figés sous un équilibrage antérieur (bestAp/bestDp ne
+  // redescendent jamais + migration de recalcul CÔTÉ CLIENT => un joueur parti avant un nerf garde
+  // un record d'avant-nerf intouchable). Cas réel du 2026-07-22 : GS 435 en tête alors que le max
+  // atteignable est 424. Voir BALANCE_VERSION (game-core.js) et LB2_CATS_().gs.filter.
+  function testLb2GsLadderExcludesStaleBalanceRecords() {
+    if (typeof lb2Sorted !== 'function' || typeof BALANCE_VERSION !== 'number') return;
+    const actif  = { user_id:'bv-actif',  gearscore:424, ap:697.4, dp:149.7, silver:100, balance_version:BALANCE_VERSION };
+    const fossile= { user_id:'bv-fossile',gearscore:435, ap:697.4, dp:171.7, silver:200, balance_version:BALANCE_VERSION - 1 };
+    const jamais = { user_id:'bv-jamais', gearscore:430, ap:697.4, dp:162.6, silver:300 }; // colonne absente (ligne d'avant la migration)
+    const gs = lb2Sorted('gs', [actif, fossile, jamais]);
+    assert('Classement GS : le record figé sous un ancien équilibrage est écarté (pas de score fantôme en tête)',
+      gs.length === 1 && gs[0].user_id === 'bv-actif', `gs=${gs.map(r=>r.user_id).join(',')}`);
+    assert('Classement GS : une ligne sans balance_version (jamais resynchronisée) est écartée aussi',
+      !gs.some(r => r.user_id === 'bv-jamais'));
+    // le joueur reste classé normalement là où l'équilibrage du stuff n'entre pas en jeu
+    const silver = lb2Sorted('silver', [actif, fossile, jamais]);
+    assert('Le joueur écarté du GS reste classé au silver (l\'équilibrage du stuff n\'affecte que le GS)',
+      silver.length === 3 && silver[0].user_id === 'bv-jamais', `silver=${silver.map(r=>r.user_id).join(',')}`);
+  }
   // seuil "top" utilisé par lb2RenderBody() pour décider d'afficher la barre "Ta position" --
   // garde-fou pour qu'un futur changement du seuil soit un choix explicite, pas un oubli.
   function testLb2YourRankBarThresholdIsTop20() {
@@ -6907,6 +6926,7 @@
     testRecentlyUnlockedAchievementsIgnoresNonNumericTimestamps();
     testLb2CompendiumCategoryUsesRealPct();
     testLb2ComputeYourRankInfoFindsRealRankOutsideTop20();
+    testLb2GsLadderExcludesStaleBalanceRecords();
     testLb2YourRankBarThresholdIsTop20();
     testLb2GuestGateReusesMarketCopyAndRealLinkButton();
     testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert();

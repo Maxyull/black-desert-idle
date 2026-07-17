@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V471', d:'17/07/2026 08:30', name:{fr:'Classement GS : fin des scores fantômes d\'avant rééquilibrage', en:'GS leaderboard: no more pre-rebalance ghost scores'}, fr:[
+      {t:'fix', sub:'interface', tx:'Le classement Gearscore pouvait afficher en tête un score plus élevé que le maximum réellement atteignable (435 alors que le plafond est 424). Cause : les records PA/PD ne redescendent jamais, et leur recalcul après un rééquilibrage ne s\'applique qu\'à la connexion du joueur — un joueur parti avant un nerf gardait donc éternellement son record d\'avant-nerf. Le classement GS n\'affiche désormais que les records calculés sous l\'équilibrage courant ; une ligne masquée réapparaît d\'elle-même dès que le joueur se reconnecte. Les autres classements (silver, zone, silver/h) ne sont pas concernés.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'The Gearscore leaderboard could show a top score higher than what is actually reachable (435 when the cap is 424). Cause: lifetime AP/DP records never go down, and the recalculation that follows a rebalance only runs when a player logs in — so a player who quit before a nerf kept their pre-nerf record forever. The GS ladder now only shows records computed under the current balance; a hidden row comes back on its own as soon as that player logs in again. Other ladders (silver, zone, silver/h) are unaffected.'},
+    ] },
   { v:'V470', d:'17/07/2026 00:15', name:{fr:'Nouvelle page "Confiance & Sécurité" + politique de confidentialité', en:'New "Trust & Security" page + privacy policy'}, fr:[
       {t:'new', sub:'interface', tx:'Un bouton "🛡️ Confiance & Sécurité" (menu Communauté) ouvre une page qui explique en clair : quelles données on collecte, comment on les protège, et — en toute honnêteté — ce qui est vraiment vérifié côté serveur vs calculé côté client (donc le classement, informel). Politique de confidentialité (PRIVACY.md) et de divulgation (SECURITY.md) ajoutées au dépôt.'},
     ], en:[
