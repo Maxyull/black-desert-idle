@@ -37,8 +37,16 @@ function LB2_CATS_() {
   return {
     silver:   { icon:'💰', label:i18next.t('backend:backend.leaderboard.cat_silver_label'), tip:i18next.t('backend:backend.leaderboard.cat_silver_tip'),
       val:r=>Number(r.silver||0), fmt:r=>fmt(r.silver||0) },
+    // filter : n'affiche que les records calculés sous l'équilibrage COURANT. bestAp/bestDp ne
+    // redescendent jamais, et leur recalcul (V405) est une migration CLIENT : un joueur parti avant
+    // un nerf garde un record d'avant-nerf, incorrigeable côté serveur, qui trône au-dessus des
+    // joueurs actifs (cas réel du 2026-07-22 : GS 435 figé alors que le max atteignable est 424).
+    // Sa ligne réapparaît d'elle-même dès qu'il revient (migration + réestampillage à la synchro).
+    // Seule cette catégorie est concernée : silver/zone/silver-h ne dépendent pas de l'équilibrage
+    // du stuff, le joueur reste donc classé normalement ailleurs. Voir BALANCE_VERSION (game-core).
     gs:       { icon:'⚔️', label:i18next.t('backend:backend.leaderboard.cat_gs_label'), tip:i18next.t('backend:backend.leaderboard.cat_gs_tip'),
-      val:r=>Number(r.gearscore||0), fmt:r=>`${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})` },
+      val:r=>Number(r.gearscore||0), fmt:r=>`${Math.round(r.gearscore||0)} (${(r.ap||0).toFixed(1)}/${(r.dp||0).toFixed(1)})`,
+      filter:r=>Number(r.balance_version||0) >= BALANCE_VERSION },
     zone:     { icon:'🗺️', label:i18next.t('backend:backend.leaderboard.cat_zone_label'), tip:i18next.t('backend:backend.leaderboard.cat_zone_tip'),
       val:r=>Number(r.best_zone_index||0), fmt:r=>tr(r.best_zone_name||'—') },
     // silver/h et kills/min : calculés CÔTÉ SERVEUR depuis V454 (meilleure heure PLEINE, même
