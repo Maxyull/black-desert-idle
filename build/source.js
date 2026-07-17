@@ -16014,6 +16014,7 @@ const I18N = {
   sessionLockResume: { fr:'Reprendre ici', en:'Resume here' },
   offlineBannerMsg: { fr:'Hors ligne — ta progression est sauvegardée localement, synchronisation dès le retour du réseau.', en:'Offline — your progress is saved locally, syncing as soon as the network is back.' },
   btnWiki: { fr:'📖 Wiki', en:'📖 Wiki' },
+  btnTrust: { fr:'🛡️ Confiance & Sécurité', en:'🛡️ Trust & Security' },
   btnNotifCenter: { fr:'🔔 Notifications', en:'🔔 Notifications' },
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },
   btnMarketLbl: { fr:'🏛️ Marché commun', en:'🏛️ Common Market' },
@@ -16549,6 +16550,65 @@ $a('btnCodex').onclick = () => {
 };
 
 $a('btnWiki').onclick = () => openWikiPanel();
+
+const REPO_URL = 'https://github.com/Maxyull/black-desert-idle';
+function renderTrustSecurityHtml() {
+  const fr = LANG !== 'en';
+  const li = (a, b) => `<li>${fr ? a : b}</li>`;
+  const h = (a, b) => `<h3 style="color:var(--gold);margin:14px 0 6px">${fr ? a : b}</h3>`;
+  return `<div class="trustPanel" style="text-align:left;line-height:1.55;font-size:13px">` +
+    `<p>${fr
+      ? "Ce jeu est <b>open source</b> : tout le code est public et vérifiable. Voici, en clair, ce qu'on collecte, comment on protège tes données, et ce qui est réellement contrôlé côté serveur."
+      : "This game is <b>open source</b>: all the code is public and auditable. Here's, in plain terms, what we collect, how we protect your data, and what is actually verified server-side."}</p>` +
+
+    h("🗂️ Tes données", "🗂️ Your data") +
+    `<ul style="margin:0;padding-left:18px">` +
+    li("<b>Email</b> — connexion uniquement. Jamais montré aux autres, jamais renvoyé au navigateur.",
+       "<b>Email</b> — for login only. Never shown to others, never sent back to the browser.") +
+    li("<b>Pseudo</b> — public (chat, classement, marché).",
+       "<b>Username</b> — public (chat, leaderboard, market).") +
+    li("<b>Sauvegarde</b> — ta progression, synchronisée dans le cloud.",
+       "<b>Save</b> — your progress, synced to the cloud.") +
+    li("<b>Logs d'erreur</b> — techniques, pour corriger les bugs. Pas d'IP stockée.",
+       "<b>Error logs</b> — technical, to fix bugs. No IP stored.") +
+    `</ul>` +
+    `<p style="font-size:12px;color:var(--ink-dim)">${fr
+      ? "Pas de pub, pas de revente, pas de traqueur tiers. Détails complets : "
+      : "No ads, no reselling, no third-party trackers. Full details: "}` +
+      `<a href="${REPO_URL}/blob/main/PRIVACY.md" target="_blank" rel="noopener noreferrer">PRIVACY.md</a>.</p>` +
+
+    h("🔒 Comment on protège", "🔒 How we protect it") +
+    `<ul style="margin:0;padding-left:18px">` +
+    li("Autorisation vérifiée <b>côté serveur</b> (RLS + fonctions gardées).",
+       "Authorization verified <b>server-side</b> (RLS + guarded functions).") +
+    li("Aucun secret dans le code client (seule la clé publique l'est).",
+       "No secret in the client code (only the public key is exposed).") +
+    li("Contenu des joueurs échappé avant affichage (anti-XSS).",
+       "Player content escaped before display (anti-XSS).") +
+    li("Scans automatiques (CodeQL, gitleaks) + HTTPS forcé.",
+       "Automated scans (CodeQL, gitleaks) + enforced HTTPS.") +
+    `</ul>` +
+
+    h("⚖️ Validé serveur vs à l'honneur", "⚖️ Server-verified vs trust-based") +
+    `<p style="font-size:12px">${fr
+      ? "Par honnêteté : le jeu tourne dans ton navigateur, donc certaines valeurs sont calculées côté client et <b>ne peuvent pas être garanties anti-triche</b>."
+      : "For honesty: the game runs in your browser, so some values are computed client-side and <b>cannot be guaranteed cheat-proof</b>."}</p>` +
+    `<ul style="margin:0;padding-left:18px">` +
+    li("✅ <b>Vérifié serveur</b> : connexion, sanctions, marché (transactions atomiques), échanges de compagnons, modération.",
+       "✅ <b>Server-verified</b>: login, bans, market (atomic transactions), companion trades, moderation.") +
+    li("⚠️ <b>À l'honneur (client)</b> : progression solo (or, XP, loot) et donc les classements. Un joueur déterminé peut forger des valeurs — le classement est <b>informel</b>.",
+       "⚠️ <b>Trust-based (client)</b>: solo progression (silver, XP, loot) and therefore leaderboards. A determined player can forge values — the leaderboard is <b>informal</b>.") +
+    `</ul>` +
+
+    h("🔎 Auditer / Signaler", "🔎 Audit / Report") +
+    `<p style="font-size:12px">` +
+    `<a href="${REPO_URL}" target="_blank" rel="noopener noreferrer">${fr ? "Lis le code" : "Read the code"}</a> · ` +
+    `<a href="${REPO_URL}/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">SECURITY.md</a> · ` +
+    `<a href="https://discord.gg/fEubtqMjtP" target="_blank" rel="noopener noreferrer">Discord</a>` +
+    `</p>` +
+  `</div>`;
+}
+$a('btnTrust').onclick = () => openInfo(LANG !== 'en' ? '🛡️ Confiance & Sécurité' : '🛡️ Trust & Security', renderTrustSecurityHtml());
 
 let tutTrackerWasOn = false, tutTrackerForced = false;
 let tutPotWasOpen = false;

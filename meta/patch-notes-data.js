@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V470', d:'17/07/2026 00:15', name:{fr:'Nouvelle page "Confiance & Sécurité" + politique de confidentialité', en:'New "Trust & Security" page + privacy policy'}, fr:[
+      {t:'new', sub:'interface', tx:'Un bouton "🛡️ Confiance & Sécurité" (menu Communauté) ouvre une page qui explique en clair : quelles données on collecte, comment on les protège, et — en toute honnêteté — ce qui est vraiment vérifié côté serveur vs calculé côté client (donc le classement, informel). Politique de confidentialité (PRIVACY.md) et de divulgation (SECURITY.md) ajoutées au dépôt.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'A "🛡️ Trust & Security" button (Community menu) opens a page explaining in plain terms: what data we collect, how we protect it, and — honestly — what is actually verified server-side vs computed client-side (so the leaderboard is informal). A privacy policy (PRIVACY.md) and disclosure policy (SECURITY.md) were added to the repo.'},
+    ] },
   { v:'V469', d:'16/07/2026 23:45', name:{fr:'Sécurité : connexion/reset par pseudo passés côté serveur (aucune fuite d\'email)', en:'Security: username login/reset moved server-side (no email leak)'}, fr:[
       {t:'change', sub:'interface', tx:'La connexion et la réinitialisation par pseudo passent désormais par une fonction serveur : ton adresse email n\'est jamais renvoyée au navigateur, et impossible de retrouver l\'email d\'un joueur à partir de son pseudo. Aucun changement visible pour toi — juste plus sûr.'},
     ], en:[
