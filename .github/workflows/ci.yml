@@ -40,6 +40,13 @@ jobs:
       - name: Verify i18n keys (FR/EN parity)
         run: npm run check-i18n
 
+      # audit perf P2 (2026-07-22) : l'image Open Graph avait DEJA ete recompressee par le passe,
+      # puis un commit suivant a remis une version lourde (1051 Ko) sans que personne ne le voie --
+      # Discord/Twitter la retelechargent a chaque partage de lien. Une correction annulable en
+      # silence n'en est pas une : ce check fait echouer la CI si un asset og-* redepasse 400 Ko.
+      - name: Verify shared asset weight (Open Graph)
+        run: npm run check-assets
+
       # audit repo-audit-todo.md point 14 : tests/regression.spec.js (index.dev.html +
       # window.runRegressionTests()), tests/prod.spec.js (bundle minifie) et
       # tests/companions.spec.js (module isole) n'etaient jamais lances qu'en local
