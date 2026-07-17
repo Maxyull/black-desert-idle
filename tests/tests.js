@@ -2154,6 +2154,31 @@
     assert('Inscription : le champ email n\'accepte pas un pseudo (placeholder dédié)',
       AUTH_MODES.signup.idPh === 'authEmailPh' && AUTH_MODES.signin.idPh === 'authIdentifierPh');
   }
+  // Butin rare groupé avant envoi Discord (2026-07-22) : à l'endgame les drops "rares" tombent
+  // ~3x/min (154 kills/min × 2%), soit ~2300 messages/jour pour un SEUL joueur (chiffre relevé en
+  // prod) -- un message par drop saturait le salon et, vers ~20 joueurs, la limite du webhook.
+  function testBuildLootDiscordSummaryGroupsByItem() {
+    if (typeof buildLootDiscordSummary !== 'function') return;
+    assert('Récap butin : tampon vide -> rien à poster (pas de message inutile)',
+      buildLootDiscordSummary({}, 'Naïka') === null);
+    const s = buildLootDiscordSummary({ 'gear Bâton Grunil': 4, 'gear Dague Grunil': 1, 'jackpot Anneau X': 2 }, 'Naïka');
+    assert('Récap butin : un seul message pour N drops', !!s && typeof s.desc === 'string');
+    assert('Récap butin : le pseudo est présent', s.desc.includes('Naïka'));
+    assert('Récap butin : total équipements agrégé (4+1=5)', /\*\*5\*\* équipements rares/.test(s.desc), s.desc);
+    assert('Récap butin : total bijoux agrégé', /\*\*2\*\* bijoux rares/.test(s.desc), s.desc);
+    assert('Récap butin : quantité par objet (×4)', s.desc.includes('Bâton Grunil ×4'), s.desc);
+    assert('Récap butin : pas de "×1" superflu pour un objet unique',
+      s.desc.includes('Dague Grunil') && !s.desc.includes('Dague Grunil ×1'), s.desc);
+    assert('Récap butin : les plus nombreux en premier',
+      s.desc.indexOf('Bâton Grunil') < s.desc.indexOf('Dague Grunil'), s.desc);
+    // au-delà de DISCORD_LOOT_MAX_NAMES : "et N autres" (l'embed Discord est borné à 2000 caractères)
+    const many = {}; for (let i = 0; i < 12; i++) many['gear Objet' + i] = 1;
+    const big = buildLootDiscordSummary(many, 'X');
+    assert('Récap butin : la liste de noms est bornée (et N autres)', /et 4 autres/.test(big.desc), big.desc);
+    // un seul type présent ne doit pas produire de ligne vide pour l'autre
+    const only = buildLootDiscordSummary({ 'jackpot Anneau X': 1 }, 'X');
+    assert('Récap butin : aucune ligne "équipements" si aucun équipement', !only.desc.includes('équipement'), only.desc);
+  }
   // seuil "top" utilisé par lb2RenderBody() pour décider d'afficher la barre "Ta position" --
   // garde-fou pour qu'un futur changement du seuil soit un choix explicite, pas un oubli.
   function testLb2YourRankBarThresholdIsTop20() {
@@ -6948,6 +6973,7 @@
     testRecentlyUnlockedAchievementsIgnoresNonNumericTimestamps();
     testLb2CompendiumCategoryUsesRealPct();
     testLb2ComputeYourRankInfoFindsRealRankOutsideTop20();
+    testBuildLootDiscordSummaryGroupsByItem();
     testLb2GsLadderExcludesStaleBalanceRecords();
     testAuthModesWellFormed();
     testLb2YourRankBarThresholdIsTop20();
