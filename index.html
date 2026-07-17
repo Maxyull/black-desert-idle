@@ -57,18 +57,26 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0b0f1a">
 <!-- Open Graph / Twitter Card (2026-07-21, repo-audit-todo.md point 8) : sans ca, un lien partage
-     sur Discord/Twitter n'affichait que l'URL brute -- assets/og-preview.png genere via Meshy
-     (nano-banana, cout 3 credits, prompt/generation approuves par l'utilisateur), 1344x768, proche
-     du ratio recommande 1200x630. -->
+     sur Discord/Twitter n'affichait que l'URL brute -- image generee via Meshy (nano-banana,
+     prompt/generation approuves par l'utilisateur), 1200x630, le ratio recommande.
+     JPEG et non PNG depuis le 2026-07-22 (audit perf P2) : le PNG RGB pesait 1051 Ko, retelecharge
+     par Discord/Twitter a CHAQUE partage de lien. Le meme visuel en JPEG q90 progressif fait
+     141 Ko -- 87% de moins, sans difference visible sur une illustration. Une recompression avait
+     deja ete faite par le passe puis annulee par un commit suivant : un garde-fou CI refuse
+     desormais tout asset og-* > 400 Ko (voir .github/workflows/ci.yml) pour que ca ne se
+     reproduise pas une 3e fois. -->
 <meta property="og:type" content="website">
 <meta property="og:title" content="Black Desert Idle">
 <meta property="og:description" content="Jeu idle/incremental gratuit inspire de Black Desert Online -- combat automatique, enchantement, marche entre joueurs, boss mondial, classement.">
-<meta property="og:image" content="https://maxyull.github.io/black-desert-idle/assets/og-preview.png">
+<meta property="og:image" content="https://maxyull.github.io/black-desert-idle/assets/og-preview.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta property="og:url" content="https://maxyull.github.io/black-desert-idle/">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Black Desert Idle">
 <meta name="twitter:description" content="Jeu idle/incremental gratuit inspire de Black Desert Online -- combat automatique, enchantement, marche entre joueurs, boss mondial, classement.">
-<meta name="twitter:image" content="https://maxyull.github.io/black-desert-idle/assets/og-preview.png">
+<meta name="twitter:image" content="https://maxyull.github.io/black-desert-idle/assets/og-preview.jpg">
 <!-- preconnect CDN (2026-07-21, repo-audit-todo.md point 15) : ouvre la connexion TCP/TLS vers
      jsdelivr en avance, avant le premier <script src> qui en depend (Supabase/React/i18next
      ci-dessous) -- gain de quelques centaines de ms sur le premier chargement. -->
@@ -96,7 +104,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=665">
+<link rel="stylesheet" href="build/styles.min.css?v=666">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -983,11 +991,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=665"></script>
+<script src="meta/patch-notes-data.js?v=666"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=665"></script>
+<script src="build/source.min.js?v=666"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le

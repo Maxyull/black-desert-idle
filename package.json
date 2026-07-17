@@ -11,11 +11,15 @@
     "test:headed": "playwright test --headed",
     "test:ui": "playwright test --ui",
     "test:report": "playwright show-report",
-    "serve": "python3 -m http.server 8000"
+    "serve": "python3 -m http.server 8000",
+    "check-assets": "node scripts/check-asset-weight.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.55.0",
     "csso-cli": "^4.0.2",
     "terser": "^5.49.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
