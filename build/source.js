@@ -14976,7 +14976,9 @@ function updatePseudoDisplay() {
 }
 
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
-const _authT = (k, o) => i18next.t('backend:backend.auth.' + k, o);
+
+const _AUTH_NS = 'backend:' + 'backend.auth.';
+const _authT = (k, o) => i18next.t(_AUTH_NS + k, o);
 
 async function doSignUp() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
