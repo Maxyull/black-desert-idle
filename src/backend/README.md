@@ -110,3 +110,22 @@ chaque sync — jamais utilisé par un classement avant ce jour).
   (déjà câblé plus haut dans ce fichier) plutôt que de dupliquer le flux de liaison de compte.
   `openLeaderboard2()` ne bloque avec l'`alert()` historique que si `!sb || !currentUser` (aucune
   session du tout, cas rare) — jamais pour un simple compte invité.
+
+## 2e vague de découpe (2026-07-22)
+
+`game-supabase.js` restait à 1 751 lignes après P5 (toujours au-dessus de la limite CLAUDE.md). Trois
+domaines bornés en sont sortis, ramenant le fichier à **807 lignes** (auth, cloud save, verrou de
+session, offline, télémétrie — le vrai noyau Supabase) :
+
+| Fichier | Rôle | Ordre de chargement |
+|---|---|---|
+| `presence.js` | joueurs en ligne / zones / Velia / admin + télémétrie AFK | après game-supabase (refs runtime) |
+| `account-panel.js` | panneau "Mon compte" (identité, parrainage) | après game-supabase (câblé par onclick= HTML) |
+| `auth.js` | auth multi-provider + magic link + recovery **+ le point d'entrée de l'appli** | **en dernier** |
+
+> **`auth.js` charge en dernier, et ce n'est pas négociable.** Il contient l'IIFE de démarrage
+> (`sb.auth.getSession()` → `onAuthed` / `startGuestOrShowAuth`) et le câblage des boutons qui lit
+> `AUTH_MODES` **au chargement**. S'il remontait avant un fichier qui appelle une fonction auth au
+> chargement, ça casserait en silence côté dev (le bundle prod, lui, concatène tout — cf. le bug
+> `btnClearCacheAuth` de P5). Un test (`testGameSupabaseSplitKeepsOriginalScriptOrder`) verrouille
+> le fait qu'`auth.js` reste le dernier `<script src="src/...">`.

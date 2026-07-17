@@ -15010,357 +15010,6 @@ function renderLastUsedBadge() {
   btn.appendChild(badge);
 }
 
-const AUTH_MODES = {
-  signin:   { fields:['authEmail','authPass'],              idPh:'authIdentifierPh', submitKey:'btnSignIn',       run:() => doSignIn() },
-  signup:   { fields:['authEmail','authPseudo','authPass'], idPh:'authEmailPh',      submitKey:'btnSignUp',       run:() => doSignUp() },
-  forgot:   { fields:['authEmail'],                         idPh:'authIdentifierPh', submitKey:'btnForgotSubmit', run:() => doForgotPassword() },
-  magic:    { fields:['authEmail'],                         idPh:'authIdentifierPh', submitKey:'btnMagicSubmit',  run:() => doMagicLink() },
-  recovery: { fields:['authPass'],                          idPh:'authIdentifierPh', submitKey:'btnSaveNewPass',  run:() => doSaveNewPassword() },
-};
-let authMode = 'choice';
-
-function setAuthMode(mode) {
-  authMode = AUTH_MODES[mode] ? mode : 'choice';
-  const cfg = AUTH_MODES[authMode];
-  const choice = $a('authChoice'), form = $a('authForm');
-  if (choice) choice.classList.toggle('hidden', authMode !== 'choice');
-  if (form) form.classList.toggle('hidden', authMode === 'choice');
-  authShow(''); 
-  if (authMode === 'choice') { renderLastUsedBadge(); return; }
-  ['authEmail','authPseudo','authPass'].forEach(id => {
-    const el = $a(id); if (!el) return;
-    const on = cfg.fields.includes(id);
-    el.style.display = on ? '' : 'none';
-    if (on) el.value = ''; 
-  });
-  const email = $a('authEmail');
-  if (email) email.placeholder = (I18N[cfg.idPh] && I18N[cfg.idPh][LANG]) || email.placeholder;
-  
-  const pass = $a('authPass');
-  if (pass) {
-    pass.autocomplete = (authMode === 'signin') ? 'current-password' : 'new-password';
-    pass.placeholder = (authMode === 'recovery')
-      ? _authT('set_new_password')
-      : ((I18N.authPassPh && I18N.authPassPh[LANG]) || pass.placeholder);
-  }
-  const submit = $a('btnAuthSubmit');
-  if (submit) {
-    submit.textContent = (I18N[cfg.submitKey] && I18N[cfg.submitKey][LANG]) || submit.textContent;
-    submit.setAttribute('data-i18n', cfg.submitKey); 
-  }
-  
-  const back = $a('btnAuthBack'); if (back) back.style.display = (authMode === 'recovery') ? 'none' : '';
-  const first = $a(cfg.fields[0]); if (first) try { first.focus(); } catch (e) {}
-}
-function showAuthOverlay(show) {
-  $a('authOverlay').classList.toggle('hidden', !show);
-  
-  if (show) { if (!inPasswordRecovery) setAuthMode('choice'); renderLastUsedBadge(); }
-  
-  const close = $a('closeAuth');
-  if (close) close.classList.toggle('hidden', !(show && currentUser && !inPasswordRecovery));
-}
-
-function updateUserBar() {
-  $a('userBar').classList.toggle('show', !!currentUser);
-  $a('userEmail').textContent = ''; 
-  $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
-  showGuestSunsetBannerIfGuest(); 
-  
-  $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
-  const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
-  
-  const adminCard = $a('adminCard'); if (adminCard) adminCard.classList.toggle('isAdminVisible', isAdmin());
-  
-  const uuidRow = $a('uuidRow');
-  if (uuidRow) uuidRow.style.display = currentUser ? 'flex' : 'none';
-  updatePseudoDisplay();
-  if (typeof updateChatInputVisibility === 'function') { updateChatInputVisibility(); fetchChatMessages(); }
-}
-
-function updatePseudoDisplay() {
-  const el = $a('userPseudo');
-  if (!el) return;
-  if (isGuest()) el.textContent = i18next.t('backend:backend.auth.guest_badge');
-  else el.textContent = (currentUser && myPseudo) ? myPseudo : '';
-  
-  const topbarEl = $a('userPseudoTopbar');
-  if (topbarEl) topbarEl.textContent = el.textContent;
-}
-
-const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
-
-const _AUTH_NS = 'backend:' + 'backend.auth.';
-const _authT = (k, o) => i18next.t(_AUTH_NS + k, o);
-
-async function doSignUp() {
-  if (!sb) { authShow(_authT('err_config'), true); return; }
-  const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
-  const pseudo = $a('authPseudo').value.trim();
-  
-  if (!email || pass.length < 8 || !pseudo) { authShow(_authT('err_signup_fields'), true); return; }
-  if (!email.includes('@')) { authShow(_authT('err_signup_needs_email'), true); return; }
-  authShow(_authT('creating_account'));
-  try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {}
-  if (isGuest()) {
-    
-    const { data, error } = await sb.auth.updateUser({ email, password: pass }, { emailRedirectTo: location.href });
-    if (error) { authShow(error.message, true); return; }
-    onAuthed(data.user);
-    authShow(_authT('account_linked'));
-    return;
-  }
-  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href } });
-  if (error) { authShow(error.message, true); return; }
-  if (data.session) { onAuthed(data.session.user); }
-  else authShow(_authT('account_created_confirm'));
-}
-
-async function doSignIn() {
-  if (!sb) { authShow(_authT('err_config'), true); return; }
-  const identifier = $a('authEmail').value.trim(), pass = $a('authPass').value;
-  if (!identifier || !pass) { authShow(_authT('err_login_fields'), true); return; }
-  authShow(_authT('signing_in'));
-  let res;
-  try { res = await sb.functions.invoke('auth-by-identifier', { body: { action: 'login', identifier, password: pass } }); }
-  catch (e) { authShow(_authT('err_invalid_credentials'), true); return; }
-  const data = res && res.data;
-  if (data && data.error === 'rate_limited') { authShow(_authT('err_rate_limited'), true); return; }
-  if (!data || data.error || !data.access_token) { authShow(_authT('err_invalid_credentials'), true); return; }
-  
-  const { error } = await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
-  if (error) { authShow(error.message, true); return; }
-}
-
-async function doForgotPassword() {
-  if (!sb) { authShow(_authT('err_config'), true); return; }
-  const identifier = $a('authEmail').value.trim();
-  if (!identifier) { authShow(_authT('email_first'), true); return; }
-  authShow(_authT('sending'));
-  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'reset', identifier, redirect_to: location.href } }); }
-  catch (e) {  }
-  authShow(_authT('reset_email_sent'));
-}
-
-async function doMagicLink() {
-  if (!sb) { authShow(_authT('err_config'), true); return; }
-  const identifier = $a('authEmail').value.trim();
-  if (!identifier) { authShow(_authT('email_first'), true); return; }
-  authShow(_authT('sending'));
-  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'magic', identifier, redirect_to: location.href } }); }
-  catch (e) {  }
-  authShow(_authT('magic_link_sent'));
-}
-
-let inPasswordRecovery = false;
-function showPasswordRecoveryUI() {
-  showAuthOverlay(true);
-  
-  setAuthMode('recovery');
-  authShow(_authT('set_new_password'));
-  document.querySelectorAll('.lastUsedBadge').forEach(b => b.remove());
-}
-
-async function doSaveNewPassword() {
-  if (!sb) { authShow(_authT('err_config'), true); return; }
-  const pass = $a('authPass').value;
-  if (pass.length < 8) { authShow(_authT('err_signup_fields'), true); return; }
-  authShow(_authT('sending'));
-  const { data, error } = await sb.auth.updateUser({ password: pass });
-  if (error) { authShow(error.message, true); return; }
-  inPasswordRecovery = false;
-  authShow(_authT('password_updated'));
-  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} 
-  if (data && data.user) onAuthed(data.user);
-}
-
-async function doLogout() {
-  if (sb) await sb.auth.signOut();
-  currentUser = null;
-  saveReady = false; 
-  
-  if (sb) { location.reload(); return; }
-  await startGuestOrShowAuth(); 
-}
-
-async function doSignInDiscord() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  await sb.auth.signInWithOAuth({
-    provider: 'discord',
-    options: { scopes: 'identify guilds.join', redirectTo: location.href },
-  });
-}
-
-async function linkDiscordAccount() {
-  if (!sb || !currentUser) return;
-  const { error } = await sb.auth.linkIdentity({
-    provider: 'discord',
-    options: { scopes: 'identify guilds.join', redirectTo: location.href },
-  });
-  if (error) alert('Erreur : ' + error.message);
-}
-
-async function doSignInGoogle() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href } });
-}
-
-async function doSignInGithub() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: location.href } });
-}
-
-async function doSignInTwitter() {
-  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
-  await sb.auth.signInWithOAuth({ provider: 'twitter', options: { redirectTo: location.href } });
-}
-
-async function linkGoogleAccount() {
-  if (!sb || !currentUser) return;
-  const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.href } });
-  if (error) alert('Erreur : ' + error.message);
-}
-
-async function linkGithubAccount() {
-  if (!sb || !currentUser) return;
-  const { error } = await sb.auth.linkIdentity({ provider: 'github', options: { redirectTo: location.href } });
-  if (error) alert('Erreur : ' + error.message);
-}
-
-async function linkTwitterAccount() {
-  if (!sb || !currentUser) return;
-  const { error } = await sb.auth.linkIdentity({ provider: 'twitter', options: { redirectTo: location.href } });
-  if (error) alert('Erreur : ' + error.message);
-}
-
-function providerIdentity(user, provider) {
-  return user?.identities?.find(i => i.provider === provider) || null;
-}
-
-function discordIdentity(user) {
-  return user?.identities?.find(i => i.provider === 'discord') || null;
-}
-
-function discordUsername(user) {
-  const id = discordIdentity(user);
-  const d = id?.identity_data || {};
-  return d.custom_claims?.global_name || d.full_name || d.name || d.user_name || null;
-}
-
-async function joinDiscordGuild(providerToken, user) {
-  const id = discordIdentity(user);
-  if (!providerToken || !id || !BOT_API_URL || BOT_API_URL.includes('TON-')) return;
-  try {
-    await fetch(BOT_API_URL + '/join-guild', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': BOT_API_SECRET },
-      body: JSON.stringify({ discordUserId: id.id, accessToken: providerToken }),
-    });
-  } catch (e) {  }
-}
-if (sb) {
-  sb.auth.onAuthStateChange((event, session) => {
-    
-    if (event === 'PASSWORD_RECOVERY' || (typeof location !== 'undefined' && location.hash.includes('type=recovery'))) {
-      inPasswordRecovery = true;
-      showPasswordRecoveryUI();
-      return;
-    }
-    if (inPasswordRecovery) return; 
-    if (event === 'SIGNED_IN' && session?.provider_token) {
-      joinDiscordGuild(session.provider_token, session.user);
-    }
-    
-    if (event === 'SIGNED_IN' && session?.user && !session.user.is_anonymous
-        && (!currentUser || currentUser.id !== session.user.id)) {
-      onAuthed(session.user);
-    }
-  });
-}
-
-let onAuthedRunning = false;
-
-async function onAuthed(user) {
-  if (onAuthedRunning) return; 
-  onAuthedRunning = true;
-  try {
-    await onAuthedInner(user);
-  } finally {
-    onAuthedRunning = false;
-  }
-}
-
-async function onAuthedInner(user) {
-  currentUser = user;
-  
-  rememberLastLoginMethod((user && user.app_metadata && user.app_metadata.provider) || 'email');
-  
-  if (!isGuest()) {
-    try {
-      const { data: banStatus } = await sb.rpc('get_my_ban_status');
-      const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
-      if (isBanned(row)) {
-        const until = new Date(row.banned_until).toLocaleString(i18next.t('backend:backend.common.date_locale'));
-        const reason = row.ban_reason || i18next.t('backend:backend.auth.ban_reason_unspecified');
-        authShow(i18next.t('backend:backend.auth.ban_suspended', { until, reason }), true);
-        await sb.auth.signOut();
-        currentUser = null;
-        showAuthOverlay(true);
-        return;
-      }
-    } catch (e) {}
-  }
-  showAuthOverlay(false);
-  updateUserBar();
-  claimPlayerSession(); 
-  if (isOffline) showOfflineBanner();
-  await refreshMyPseudo();
-  refreshMyModStatus();
-  refreshMyTesterStatus();
-  refreshLiveLootRates(); 
-  await loadCloudSave();
-  if (typeof updateLoginStreak === 'function') updateLoginStreak(); 
-  startAutoCloudSave();
-  heartbeatPresence();
-  
-  refreshPresenceSnapshot();
-  refreshLiveBoss(); 
-  
-  if (isGuest()) {
-    setTimeout(() => {
-      pushNotif('🎭', i18next.t('backend:backend.auth.guest_mode_title'),
-        i18next.t('backend:backend.auth.guest_mode_body'),
-        'info');
-    }, 3000);
-  }
-}
-
-async function refreshMyPseudo() {
-  myPseudo = null;
-  if (!sb || !currentUser || isGuest()) return;
-  try {
-    const { data } = await sb.from('profiles').select('pseudo').eq('user_id', currentUser.id).maybeSingle();
-    myPseudo = data?.pseudo || discordUsername(currentUser) || (currentUser.email || '?').split('@')[0];
-  } catch (e) { myPseudo = discordUsername(currentUser) || (currentUser.email || '?').split('@')[0]; }
-  
-  let pending = null;
-  try { pending = localStorage.getItem(PENDING_PSEUDO_KEY); } catch(e) {}
-  if (pending) {
-    try { localStorage.removeItem(PENDING_PSEUDO_KEY); } catch(e) {}
-    try {
-      const { error } = await sb.rpc('set_pseudo', { p_pseudo: pending });
-      if (!error) myPseudo = pending;
-    } catch (e) {}
-  }
-  updatePseudoDisplay();
-}
-
-async function startGuestOrShowAuth() {
-  if (!sb) { showAuthOverlay(false); updateUserBar(); return; } 
-  showAuthOverlay(true);
-  authShow('');
-}
-
 let tutorialAutoShown = false; 
 
 const WELCOME_SILVER = 80;
@@ -15779,6 +15428,17 @@ window.addEventListener('resize', () => { if (bossState.active) resizeBossCanvas
 updateNextBossMini();
 setInterval(updateNextBossMini, 1000);
 
+let cloudSaveInterval = null;
+
+function startAutoCloudSave() {
+  if (cloudSaveInterval) clearInterval(cloudSaveInterval);
+  cloudSaveInterval = setInterval(saveToCloud, 30000);
+  window.addEventListener('beforeunload', saveToCloud);
+}
+
+setInterval(async () => { if (sb && currentUser && !document.hidden) { try { await sb.rpc('log_playtime_ping'); } catch(e) {} } }, 60000);
+
+// ==== src/backend/presence.js ====
 async function heartbeatPresence() {
   if (!sb || !currentUser) return;
   try { await sb.rpc('heartbeat_presence', { p_is_guest: isGuest(), p_zone_idx: atVelia ? -1 : zoneIdx }); } catch(e) {}
@@ -15902,6 +15562,7 @@ setInterval(refreshLiveBoss, 20000);
 refreshRegisteredCounter();
 setInterval(refreshRegisteredCounter, 5 * 60000);
 
+// ==== src/backend/account-panel.js ====
 function acctFmtDate(iso) {
   if (!iso) return '—';
   const t = Date.parse(iso);
@@ -16126,71 +15787,6 @@ async function openAccountPanel() {
     setTimeout(async () => { await sb.auth.signOut(); location.reload(); }, 1500);
   };
 }
-
-let cloudSaveInterval = null;
-
-function startAutoCloudSave() {
-  if (cloudSaveInterval) clearInterval(cloudSaveInterval);
-  cloudSaveInterval = setInterval(saveToCloud, 30000);
-  window.addEventListener('beforeunload', saveToCloud);
-}
-
-setInterval(async () => { if (sb && currentUser && !document.hidden) { try { await sb.rpc('log_playtime_ping'); } catch(e) {} } }, 60000);
-
-$a('btnSignIn').onclick = () => setAuthMode('signin');
-$a('btnSignUp').onclick = () => setAuthMode('signup');
-$a('btnForgotPass').onclick = () => setAuthMode('forgot');
-$a('btnMagicLink').onclick = () => setAuthMode('magic');
-$a('btnAuthBack').onclick = () => setAuthMode('choice');
-$a('btnAuthSubmit').onclick = () => { const m = AUTH_MODES[authMode]; if (m) m.run(); };
-
-['authEmail','authPseudo','authPass'].forEach(id => {
-  const el = $a(id);
-  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const m = AUTH_MODES[authMode]; if (m) m.run(); } });
-});
-document.querySelectorAll('.authLangBtn').forEach(b => {
-  b.onclick = () => {
-    LANG = b.dataset.lang;
-    
-    if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG);
-    try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
-    applyI18n();
-  };
-});
-$a('btnSignInDiscord').onclick = doSignInDiscord;
-$a('btnSignInGoogle').onclick = doSignInGoogle;
-$a('btnSignInGithub').onclick = doSignInGithub;
-$a('btnSignInTwitter').onclick = doSignInTwitter;
-
-$a('btnClearCacheAuth').onclick = () => clearGameCache();
-
-$a('btnLogoutTopbar').onclick = doLogout;
-$a('btnCopyUuid').onclick = async () => {
-  if (!currentUser) return;
-  try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
-  const hint = $a('uuidCopyHint'); if (!hint) return;
-  hint.innerHTML = i18next.t('backend:backend.account.uuid_copied_msg');
-  setTimeout(() => { hint.innerHTML = '📋 ' + i18next.t('backend:backend.account.copy_label') + ' UUID'; }, 1200);
-};
-$a('btnLinkAccount').onclick = () => {
-  
-  $a('authSub').textContent = i18next.t('backend:backend.account.link_account_prompt');
-  showAuthOverlay(true);
-};
-
-{ const _ca = $a('closeAuth'); if (_ca) _ca.onclick = () => showAuthOverlay(false); }
-let authMouseDownOnBackdrop = false;
-$a('authOverlay').addEventListener('mousedown', e => { authMouseDownOnBackdrop = (e.target.id === 'authOverlay'); });
-$a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOverlay' && authMouseDownOnBackdrop && currentUser) showAuthOverlay(false); });
-$a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
-
-(async () => {
-  
-  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; grantWelcomeSilver(); return; }
-  const { data } = await sb.auth.getSession();
-  if (data.session) onAuthed(data.session.user);
-  else await startGuestOrShowAuth();
-})();
 
 // ==== src/core/i18n-legacy.js ====
 const I18N = {
@@ -20983,3 +20579,410 @@ A11Y_MODALS.forEach(m => {
     }
   }).observe(el, { attributes: true, attributeFilter: ['class'] });
 });
+
+// ==== src/backend/auth.js ====
+const AUTH_MODES = {
+  signin:   { fields:['authEmail','authPass'],              idPh:'authIdentifierPh', submitKey:'btnSignIn',       run:() => doSignIn() },
+  signup:   { fields:['authEmail','authPseudo','authPass'], idPh:'authEmailPh',      submitKey:'btnSignUp',       run:() => doSignUp() },
+  forgot:   { fields:['authEmail'],                         idPh:'authIdentifierPh', submitKey:'btnForgotSubmit', run:() => doForgotPassword() },
+  magic:    { fields:['authEmail'],                         idPh:'authIdentifierPh', submitKey:'btnMagicSubmit',  run:() => doMagicLink() },
+  recovery: { fields:['authPass'],                          idPh:'authIdentifierPh', submitKey:'btnSaveNewPass',  run:() => doSaveNewPassword() },
+};
+let authMode = 'choice';
+
+function setAuthMode(mode) {
+  authMode = AUTH_MODES[mode] ? mode : 'choice';
+  const cfg = AUTH_MODES[authMode];
+  const choice = $a('authChoice'), form = $a('authForm');
+  if (choice) choice.classList.toggle('hidden', authMode !== 'choice');
+  if (form) form.classList.toggle('hidden', authMode === 'choice');
+  authShow(''); 
+  if (authMode === 'choice') { renderLastUsedBadge(); return; }
+  ['authEmail','authPseudo','authPass'].forEach(id => {
+    const el = $a(id); if (!el) return;
+    const on = cfg.fields.includes(id);
+    el.style.display = on ? '' : 'none';
+    if (on) el.value = ''; 
+  });
+  const email = $a('authEmail');
+  if (email) email.placeholder = (I18N[cfg.idPh] && I18N[cfg.idPh][LANG]) || email.placeholder;
+  
+  const pass = $a('authPass');
+  if (pass) {
+    pass.autocomplete = (authMode === 'signin') ? 'current-password' : 'new-password';
+    pass.placeholder = (authMode === 'recovery')
+      ? _authT('set_new_password')
+      : ((I18N.authPassPh && I18N.authPassPh[LANG]) || pass.placeholder);
+  }
+  const submit = $a('btnAuthSubmit');
+  if (submit) {
+    submit.textContent = (I18N[cfg.submitKey] && I18N[cfg.submitKey][LANG]) || submit.textContent;
+    submit.setAttribute('data-i18n', cfg.submitKey); 
+  }
+  
+  const back = $a('btnAuthBack'); if (back) back.style.display = (authMode === 'recovery') ? 'none' : '';
+  const first = $a(cfg.fields[0]); if (first) try { first.focus(); } catch (e) {}
+}
+function showAuthOverlay(show) {
+  $a('authOverlay').classList.toggle('hidden', !show);
+  
+  if (show) { if (!inPasswordRecovery) setAuthMode('choice'); renderLastUsedBadge(); }
+  
+  const close = $a('closeAuth');
+  if (close) close.classList.toggle('hidden', !(show && currentUser && !inPasswordRecovery));
+}
+
+function updateUserBar() {
+  $a('userBar').classList.toggle('show', !!currentUser);
+  $a('userEmail').textContent = ''; 
+  $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
+  showGuestSunsetBannerIfGuest(); 
+  
+  $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
+  const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
+  
+  const adminCard = $a('adminCard'); if (adminCard) adminCard.classList.toggle('isAdminVisible', isAdmin());
+  
+  const uuidRow = $a('uuidRow');
+  if (uuidRow) uuidRow.style.display = currentUser ? 'flex' : 'none';
+  updatePseudoDisplay();
+  if (typeof updateChatInputVisibility === 'function') { updateChatInputVisibility(); fetchChatMessages(); }
+}
+
+function updatePseudoDisplay() {
+  const el = $a('userPseudo');
+  if (!el) return;
+  if (isGuest()) el.textContent = i18next.t('backend:backend.auth.guest_badge');
+  else el.textContent = (currentUser && myPseudo) ? myPseudo : '';
+  
+  const topbarEl = $a('userPseudoTopbar');
+  if (topbarEl) topbarEl.textContent = el.textContent;
+}
+
+const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
+
+const _AUTH_NS = 'backend:' + 'backend.auth.';
+const _authT = (k, o) => i18next.t(_AUTH_NS + k, o);
+
+async function doSignUp() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
+  const pseudo = $a('authPseudo').value.trim();
+  
+  if (!email || pass.length < 8 || !pseudo) { authShow(_authT('err_signup_fields'), true); return; }
+  if (!email.includes('@')) { authShow(_authT('err_signup_needs_email'), true); return; }
+  authShow(_authT('creating_account'));
+  try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {}
+  if (isGuest()) {
+    
+    const { data, error } = await sb.auth.updateUser({ email, password: pass }, { emailRedirectTo: location.href });
+    if (error) { authShow(error.message, true); return; }
+    onAuthed(data.user);
+    authShow(_authT('account_linked'));
+    return;
+  }
+  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.href } });
+  if (error) { authShow(error.message, true); return; }
+  if (data.session) { onAuthed(data.session.user); }
+  else authShow(_authT('account_created_confirm'));
+}
+
+async function doSignIn() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim(), pass = $a('authPass').value;
+  if (!identifier || !pass) { authShow(_authT('err_login_fields'), true); return; }
+  authShow(_authT('signing_in'));
+  let res;
+  try { res = await sb.functions.invoke('auth-by-identifier', { body: { action: 'login', identifier, password: pass } }); }
+  catch (e) { authShow(_authT('err_invalid_credentials'), true); return; }
+  const data = res && res.data;
+  if (data && data.error === 'rate_limited') { authShow(_authT('err_rate_limited'), true); return; }
+  if (!data || data.error || !data.access_token) { authShow(_authT('err_invalid_credentials'), true); return; }
+  
+  const { error } = await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
+  if (error) { authShow(error.message, true); return; }
+}
+
+async function doForgotPassword() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim();
+  if (!identifier) { authShow(_authT('email_first'), true); return; }
+  authShow(_authT('sending'));
+  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'reset', identifier, redirect_to: location.href } }); }
+  catch (e) {  }
+  authShow(_authT('reset_email_sent'));
+}
+
+async function doMagicLink() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim();
+  if (!identifier) { authShow(_authT('email_first'), true); return; }
+  authShow(_authT('sending'));
+  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'magic', identifier, redirect_to: location.href } }); }
+  catch (e) {  }
+  authShow(_authT('magic_link_sent'));
+}
+
+let inPasswordRecovery = false;
+function showPasswordRecoveryUI() {
+  showAuthOverlay(true);
+  
+  setAuthMode('recovery');
+  authShow(_authT('set_new_password'));
+  document.querySelectorAll('.lastUsedBadge').forEach(b => b.remove());
+}
+
+async function doSaveNewPassword() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const pass = $a('authPass').value;
+  if (pass.length < 8) { authShow(_authT('err_signup_fields'), true); return; }
+  authShow(_authT('sending'));
+  const { data, error } = await sb.auth.updateUser({ password: pass });
+  if (error) { authShow(error.message, true); return; }
+  inPasswordRecovery = false;
+  authShow(_authT('password_updated'));
+  try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} 
+  if (data && data.user) onAuthed(data.user);
+}
+
+async function doLogout() {
+  if (sb) await sb.auth.signOut();
+  currentUser = null;
+  saveReady = false; 
+  
+  if (sb) { location.reload(); return; }
+  await startGuestOrShowAuth(); 
+}
+
+async function doSignInDiscord() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({
+    provider: 'discord',
+    options: { scopes: 'identify guilds.join', redirectTo: location.href },
+  });
+}
+
+async function linkDiscordAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({
+    provider: 'discord',
+    options: { scopes: 'identify guilds.join', redirectTo: location.href },
+  });
+  if (error) alert('Erreur : ' + error.message);
+}
+
+async function doSignInGoogle() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.href } });
+}
+
+async function doSignInGithub() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: location.href } });
+}
+
+async function doSignInTwitter() {
+  if (!sb) { authShow('Supabase non configuré — voir SUPABASE_URL en haut du script.', true); return; }
+  await sb.auth.signInWithOAuth({ provider: 'twitter', options: { redirectTo: location.href } });
+}
+
+async function linkGoogleAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'google', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+
+async function linkGithubAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'github', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+
+async function linkTwitterAccount() {
+  if (!sb || !currentUser) return;
+  const { error } = await sb.auth.linkIdentity({ provider: 'twitter', options: { redirectTo: location.href } });
+  if (error) alert('Erreur : ' + error.message);
+}
+
+function providerIdentity(user, provider) {
+  return user?.identities?.find(i => i.provider === provider) || null;
+}
+
+function discordIdentity(user) {
+  return user?.identities?.find(i => i.provider === 'discord') || null;
+}
+
+function discordUsername(user) {
+  const id = discordIdentity(user);
+  const d = id?.identity_data || {};
+  return d.custom_claims?.global_name || d.full_name || d.name || d.user_name || null;
+}
+
+async function joinDiscordGuild(providerToken, user) {
+  const id = discordIdentity(user);
+  if (!providerToken || !id || !BOT_API_URL || BOT_API_URL.includes('TON-')) return;
+  try {
+    await fetch(BOT_API_URL + '/join-guild', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Internal-Secret': BOT_API_SECRET },
+      body: JSON.stringify({ discordUserId: id.id, accessToken: providerToken }),
+    });
+  } catch (e) {  }
+}
+if (sb) {
+  sb.auth.onAuthStateChange((event, session) => {
+    
+    if (event === 'PASSWORD_RECOVERY' || (typeof location !== 'undefined' && location.hash.includes('type=recovery'))) {
+      inPasswordRecovery = true;
+      showPasswordRecoveryUI();
+      return;
+    }
+    if (inPasswordRecovery) return; 
+    if (event === 'SIGNED_IN' && session?.provider_token) {
+      joinDiscordGuild(session.provider_token, session.user);
+    }
+    
+    if (event === 'SIGNED_IN' && session?.user && !session.user.is_anonymous
+        && (!currentUser || currentUser.id !== session.user.id)) {
+      onAuthed(session.user);
+    }
+  });
+}
+
+let onAuthedRunning = false;
+
+async function onAuthed(user) {
+  if (onAuthedRunning) return; 
+  onAuthedRunning = true;
+  try {
+    await onAuthedInner(user);
+  } finally {
+    onAuthedRunning = false;
+  }
+}
+
+async function onAuthedInner(user) {
+  currentUser = user;
+  
+  rememberLastLoginMethod((user && user.app_metadata && user.app_metadata.provider) || 'email');
+  
+  if (!isGuest()) {
+    try {
+      const { data: banStatus } = await sb.rpc('get_my_ban_status');
+      const row = Array.isArray(banStatus) ? banStatus[0] : banStatus;
+      if (isBanned(row)) {
+        const until = new Date(row.banned_until).toLocaleString(i18next.t('backend:backend.common.date_locale'));
+        const reason = row.ban_reason || i18next.t('backend:backend.auth.ban_reason_unspecified');
+        authShow(i18next.t('backend:backend.auth.ban_suspended', { until, reason }), true);
+        await sb.auth.signOut();
+        currentUser = null;
+        showAuthOverlay(true);
+        return;
+      }
+    } catch (e) {}
+  }
+  showAuthOverlay(false);
+  updateUserBar();
+  claimPlayerSession(); 
+  if (isOffline) showOfflineBanner();
+  await refreshMyPseudo();
+  refreshMyModStatus();
+  refreshMyTesterStatus();
+  refreshLiveLootRates(); 
+  await loadCloudSave();
+  if (typeof updateLoginStreak === 'function') updateLoginStreak(); 
+  startAutoCloudSave();
+  heartbeatPresence();
+  
+  refreshPresenceSnapshot();
+  refreshLiveBoss(); 
+  
+  if (isGuest()) {
+    setTimeout(() => {
+      pushNotif('🎭', i18next.t('backend:backend.auth.guest_mode_title'),
+        i18next.t('backend:backend.auth.guest_mode_body'),
+        'info');
+    }, 3000);
+  }
+}
+
+async function refreshMyPseudo() {
+  myPseudo = null;
+  if (!sb || !currentUser || isGuest()) return;
+  try {
+    const { data } = await sb.from('profiles').select('pseudo').eq('user_id', currentUser.id).maybeSingle();
+    myPseudo = data?.pseudo || discordUsername(currentUser) || (currentUser.email || '?').split('@')[0];
+  } catch (e) { myPseudo = discordUsername(currentUser) || (currentUser.email || '?').split('@')[0]; }
+  
+  let pending = null;
+  try { pending = localStorage.getItem(PENDING_PSEUDO_KEY); } catch(e) {}
+  if (pending) {
+    try { localStorage.removeItem(PENDING_PSEUDO_KEY); } catch(e) {}
+    try {
+      const { error } = await sb.rpc('set_pseudo', { p_pseudo: pending });
+      if (!error) myPseudo = pending;
+    } catch (e) {}
+  }
+  updatePseudoDisplay();
+}
+
+async function startGuestOrShowAuth() {
+  if (!sb) { showAuthOverlay(false); updateUserBar(); return; } 
+  showAuthOverlay(true);
+  authShow('');
+}
+
+$a('btnSignIn').onclick = () => setAuthMode('signin');
+$a('btnSignUp').onclick = () => setAuthMode('signup');
+$a('btnForgotPass').onclick = () => setAuthMode('forgot');
+$a('btnMagicLink').onclick = () => setAuthMode('magic');
+$a('btnAuthBack').onclick = () => setAuthMode('choice');
+$a('btnAuthSubmit').onclick = () => { const m = AUTH_MODES[authMode]; if (m) m.run(); };
+
+['authEmail','authPseudo','authPass'].forEach(id => {
+  const el = $a(id);
+  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const m = AUTH_MODES[authMode]; if (m) m.run(); } });
+});
+document.querySelectorAll('.authLangBtn').forEach(b => {
+  b.onclick = () => {
+    LANG = b.dataset.lang;
+    
+    if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG);
+    try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
+    applyI18n();
+  };
+});
+$a('btnSignInDiscord').onclick = doSignInDiscord;
+$a('btnSignInGoogle').onclick = doSignInGoogle;
+$a('btnSignInGithub').onclick = doSignInGithub;
+$a('btnSignInTwitter').onclick = doSignInTwitter;
+
+$a('btnClearCacheAuth').onclick = () => clearGameCache();
+
+$a('btnLogoutTopbar').onclick = doLogout;
+$a('btnCopyUuid').onclick = async () => {
+  if (!currentUser) return;
+  try { await navigator.clipboard.writeText(currentUser.id); } catch(e) {}
+  const hint = $a('uuidCopyHint'); if (!hint) return;
+  hint.innerHTML = i18next.t('backend:backend.account.uuid_copied_msg');
+  setTimeout(() => { hint.innerHTML = '📋 ' + i18next.t('backend:backend.account.copy_label') + ' UUID'; }, 1200);
+};
+$a('btnLinkAccount').onclick = () => {
+  
+  $a('authSub').textContent = i18next.t('backend:backend.account.link_account_prompt');
+  showAuthOverlay(true);
+};
+
+{ const _ca = $a('closeAuth'); if (_ca) _ca.onclick = () => showAuthOverlay(false); }
+let authMouseDownOnBackdrop = false;
+$a('authOverlay').addEventListener('mousedown', e => { authMouseDownOnBackdrop = (e.target.id === 'authOverlay'); });
+$a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOverlay' && authMouseDownOnBackdrop && currentUser) showAuthOverlay(false); });
+$a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
+
+(async () => {
+  
+  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; grantWelcomeSilver(); return; }
+  const { data } = await sb.auth.getSession();
+  if (data.session) onAuthed(data.session.user);
+  else await startGuestOrShowAuth();
+})();

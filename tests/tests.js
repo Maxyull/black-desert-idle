@@ -3545,15 +3545,24 @@
     if (typeof document === 'undefined') return; // hors-contexte navigateur
     const srcIndexOf = needle => Array.from(document.scripts).findIndex(s => s.src.includes(needle));
     // l'ordre EXACT qu'occupaient ces blocs dans game-supabase.js avant le découpage
+    // Ordre RÉEL des <script> dans index.dev.html (chaîne : chacun après le précédent).
+    // 2e vague de découpe (2026-07-22) : presence + account chargent juste après game-supabase
+    // (refs runtime seulement, pas de dépendance de chargement avec les fichiers P5). auth.js charge
+    // en DERNIER car il porte le point d'entrée de l'appli (IIFE getSession → onAuthed) et lit
+    // AUTH_MODES au chargement — s'il remontait avant un fichier qui appelle une fonction auth au
+    // chargement, ça casserait (bug btnClearCacheAuth de P5).
     const ORDER = [
       'meta/patch-notes-data.js',      // définit PATCH_NOTES
       'backend/game-supabase.js',
+      'backend/presence.js',
+      'backend/account-panel.js',
       'core/i18n-legacy.js',
       'core/ui-layout.js',
       'backend/client-health.js',      // lit PATCH_NOTES[0].v AU CHARGEMENT
       'backend/wiki-codex.js',
       'progression/tutorials.js',
       'backend/patch-notes-panel.js',
+      'backend/auth.js',               // DERNIER (point d'entrée + lit AUTH_MODES au chargement)
     ];
     const idx = ORDER.map(srcIndexOf);
     ORDER.forEach((f, i) => assert(`${f} est bien chargé (balise trouvée dans le DOM)`, idx[i] !== -1));
@@ -3566,6 +3575,12 @@
     // sortie de test si quelqu'un le casse
     assert('client-health.js charge APRÈS meta/patch-notes-data.js (il y lit PATCH_NOTES[0].v au chargement)',
       srcIndexOf('meta/patch-notes-data.js') < srcIndexOf('backend/client-health.js'));
+    // auth.js porte le point d'entrée (IIFE getSession → onAuthed) : il doit tourner quand TOUT est
+    // défini. Concrètement, c'est le dernier <script src="src/..."> (tests.js est à part).
+    const srcTags = Array.from(document.scripts).filter(sc => /\/src\//.test(sc.src) && !/tests\.js/.test(sc.src));
+    const lastSrc = srcTags[srcTags.length - 1];
+    assert("backend/auth.js est le tout dernier script applicatif (point d'entrée de l'appli)",
+      !!lastSrc && lastSrc.src.includes('backend/auth.js'), `dernier=${lastSrc && lastSrc.src}`);
   }
   // Bug REEL commis pendant le découpage P5, attrapé par les tests avant le merge — et le piège est
   // assez vicieux pour mériter son propre garde-fou.
