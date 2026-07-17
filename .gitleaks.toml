@@ -3,6 +3,27 @@
 [extend]
 useDefault = true
 
+# ---------------------------------------------------------------------------
+# Règle custom : URL de webhook Discord.
+# Les règles par défaut de gitleaks couvrent les TOKENS Discord (bot / client secret) mais PAS
+# les URLs de webhook (https://discord.com/api/webhooks/<id>/<token>). Or c'est exactement la
+# fuite déjà survenue sur ce projet (issue #2 : webhook "cheat" en clair dans une migration SQL
+# publique) — le scanner passait au vert dessus. Cette règle ferme le trou : tout webhook
+# committé fait désormais échouer la CI.
+# Les webhooks légitimes vivent dans les secrets Supabase (DISCORD_*_WEBHOOK), jamais ici.
+# ---------------------------------------------------------------------------
+[[rules]]
+id = "discord-webhook-url"
+description = "URL de webhook Discord (doit vivre dans un secret, jamais dans le dépôt)"
+regex = '''https?://(?:canary\.|ptb\.)?discord(?:app)?\.com/api/webhooks/[0-9]{17,20}/[A-Za-z0-9_-]{60,}'''
+tags = ["discord", "webhook", "secret"]
+
+[rules.allowlist]
+description = "Ancien webhook 'cheat' (issue #2) : RÉVOQUÉ/régénéré le 2026-07-05, donc mort. Il subsiste dans l'historique git (jamais réécrit) — l'ignorer évite un échec CI permanent sur un secret déjà neutralisé, sans masquer un futur webhook committé."
+regexes = [
+  '''discord\.com/api/webhooks/1522867574340059266/''',
+]
+
 [allowlist]
 description = "Valeurs publiques par design (non secrètes)"
 # Clé Supabase PUBLIABLE (anon) : conçue pour être exposée côté client, protégée par RLS.
