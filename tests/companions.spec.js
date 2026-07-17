@@ -15,7 +15,21 @@ test.use({ viewport: { width: 1440, height: 900 } });
 // #authOverlay, voir startGuestOrShowAuth()) sans que ce soit lié au code du jeu. Retries
 // locaux pour absorber cette flakiness externe sans la masquer (un échec après 3 tentatives
 // reste un vrai signal).
-test.describe.configure({ retries: 2 });
+// mode:'parallel' ajouté le 2026-07-22 (audit repo P7). Playwright répartit les FICHIERS entre
+// workers, jamais les tests d'un même fichier : ce fichier pèse 86 % du temps de la suite (122 s
+// sur 141 s) et restait donc seul sur un worker, quel que soit le réglage `workers`. Augmenter
+// workers sans ce mode ne gagnait que 9 s ; avec, la suite passe de 141 s à 82 s.
+//
+// C'est sûr ici parce que les 54 tests sont réellement indépendants : chacun fait son propre
+// page.goto() et ne partage aucun état avec les autres. Vérifié avant de l'activer, pas supposé.
+//
+// LE VRAI RISQUE EST JUSTE AU-DESSUS, et c'est pour ça que workers reste à 2 (voir
+// playwright.config.js) : chaque test attend une VRAIE connexion anonyme Supabase. Paralléliser
+// multiplie les auth concurrentes -- à 4 workers, la suite devient plus lente ET échoue, ce qui
+// ressemble beaucoup à cette limite-là. À 2 workers : 3 runs complets verts (80/83/83 s).
+// Si cette suite redevient instable en CI, la première chose à soupçonner est le nombre d'auth
+// concurrentes, pas le code du jeu.
+test.describe.configure({ retries: 2, mode: 'parallel' });
 
 // src/companions/ n'est jamais bundlé (scripts/build.py ne lit que les <script src="src/...">
 // de index.dev.html) : ce module charge dans un iframe isolé, uniquement au premier clic sur
