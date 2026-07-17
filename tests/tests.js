@@ -2170,6 +2170,25 @@
       assert('advanceSim ne simule RIEN tant que saveReady est faux (aucun silver)', (S.silver || 0) === silver0);
     } finally { saveReady = was; }
   }
+  // Croix de fermeture CONDITIONNELLE de l'écran d'auth (2026-07-22) : un invité qui ouvre cet
+  // écran ("Lier un compte" / bandeau de fin de vie) a une partie qui tourne derrière et doit
+  // pouvoir y revenir ; sans session, l'écran reste un mur sans échappatoire (retrait du
+  // 2026-07-16). Garde-fou : ré-afficher la croix inconditionnellement recasserait le mur.
+  function testCloseAuthOnlyWithSession() {
+    if (typeof showAuthOverlay !== 'function' || !$a('closeAuth')) return;
+    const savedUser = currentUser, savedRec = inPasswordRecovery;
+    const shown = () => getComputedStyle($a('closeAuth')).display !== 'none';
+    try {
+      currentUser = null; inPasswordRecovery = false; showAuthOverlay(true);
+      assert('Écran d\'auth sans session : pas de croix (le mur doit rester un mur)', !shown());
+      currentUser = { id: 'test-guest' }; showAuthOverlay(true);
+      assert('Écran d\'auth avec session (invité) : la croix permet de revenir au jeu', shown());
+      inPasswordRecovery = true; showAuthOverlay(true);
+      assert('Récupération de mot de passe : pas de croix (le joueur doit aller au bout)', !shown());
+    } finally {
+      inPasswordRecovery = savedRec; currentUser = savedUser; showAuthOverlay(false);
+    }
+  }
   // Butin rare groupé avant envoi Discord (2026-07-22) : à l'endgame les drops "rares" tombent
   // ~3x/min (154 kills/min × 2%), soit ~2300 messages/jour pour un SEUL joueur (chiffre relevé en
   // prod) -- un message par drop saturait le salon et, vers ~20 joueurs, la limite du webhook.
@@ -6999,6 +7018,7 @@
     testLb2CompendiumCategoryUsesRealPct();
     testLb2ComputeYourRankInfoFindsRealRankOutsideTop20();
     testBuildLootDiscordSummaryGroupsByItem();
+    testCloseAuthOnlyWithSession();
     testAdvanceSimDoesNothingBeforeSaveReady();
     testLb2GsLadderExcludesStaleBalanceRecords();
     testAuthModesWellFormed();
