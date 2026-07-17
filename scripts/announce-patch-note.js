@@ -65,9 +65,15 @@ async function postToDiscordLogWithRetry(payload) {
   let lastRes = null;
   let lastText = '';
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+    // x-announce-secret : verrouille les cibles publiques patch_fr/patch_en côté fonction
+    // discord-log (durcissement audit #9). Fourni via l'env ANNOUNCE_SECRET (secret CI/local),
+    // jamais en dur. Absent -> header vide : la fonction reste ouverte tant que son propre
+    // ANNOUNCE_SECRET n'est pas posé (bascule progressive).
+    const headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+    if (process.env.ANNOUNCE_SECRET) headers['x-announce-secret'] = process.env.ANNOUNCE_SECRET;
     const res = await fetch(DISCORD_LOG_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+      headers,
       body: JSON.stringify(payload),
     });
     if (res.ok) return res;
