@@ -1,7 +1,11 @@
 # ⚔️ Black Desert Idle
 
 [![CI](https://github.com/Maxyull/black-desert-idle/actions/workflows/ci.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/Maxyull/black-desert-idle/actions/workflows/codeql.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/codeql.yml)
+[![gitleaks](https://github.com/Maxyull/black-desert-idle/actions/workflows/gitleaks.yml/badge.svg)](https://github.com/Maxyull/black-desert-idle/actions/workflows/gitleaks.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Security Policy](https://img.shields.io/badge/security-policy-brightgreen.svg)](SECURITY.md)
+[![Open source — audit the code](https://img.shields.io/badge/open%20source-audit%20the%20code-blue.svg)](https://github.com/Maxyull/black-desert-idle)
 
 Un jeu idle/incrémental dans le navigateur, inspiré de **Black Desert Online** — combat automatique,
 progression par zones, enchantement d'équipement, et une vraie couche multijoueur (comptes, sauvegarde
