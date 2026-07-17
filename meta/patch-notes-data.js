@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V475', d:'17/07/2026 11:15', name:{fr:'Le mode invité disparaît le 15/08/2026', en:'Guest mode is going away on 2026-08-15'}, fr:[
+      {t:'change', sub:'comptes', tx:'Le mode invité est retiré le 15/08/2026. Plus aucun compte invité n\'est créé depuis un moment, mais si tu joues encore avec un ancien, un bandeau rouge s\'affiche désormais en haut de l\'écran : clique dessus pour lier un compte et conserver ta progression. Passé cette date, les sauvegardes invité seront définitivement supprimées. Un compte invité n\'ayant ni email ni pseudo, ce bandeau est le seul moyen de te prévenir — il ne se ferme pas.'},
+    ], en:[
+      {t:'change', sub:'comptes', tx:'Guest mode is being removed on 2026-08-15. No guest account has been created for a while, but if you still play on an old one, a red banner now shows at the top of the screen: click it to link an account and keep your progress. After that date, guest saves will be permanently deleted. Since a guest account has no email and no nickname, this banner is the only way to reach you — it cannot be dismissed.'},
+    ] },
   { v:'V474', d:'17/07/2026 10:30', name:{fr:'Correctif : plus de niveau fantôme ni de faux résumé hors-ligne à la création de compte', en:'Fix: no more phantom level or fake offline summary on account creation'}, fr:[
       {t:'fix', sub:'connexion', tx:'Le jeu tournait en fond DERRIÈRE l\'écran de connexion : 6 secondes passées sur le formulaire suffisaient à passer du niveau 1 au niveau 5. Ce personnage fantôme n\'était jamais remis à zéro à la création du compte — on démarrait donc avec un niveau déjà établi, et l\'onglet masqué (le temps d\'aller chercher son mail de confirmation) déclenchait un résumé « hors-ligne » alors qu\'on n\'avait même pas encore de compte. La simulation ne démarre plus tant que la sauvegarde n\'est pas connue : un nouveau compte commence bien au niveau 1.'},
       {t:'fix', sub:'connexion', tx:'Se déconnecter puis créer un NOUVEAU compte dans la foulée faisait hériter le compte neuf de toute la progression du précédent. La déconnexion repart désormais d\'un état vierge.'},

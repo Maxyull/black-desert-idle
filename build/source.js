@@ -15052,6 +15052,7 @@ function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
   $a('userEmail').textContent = ''; 
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
+  showGuestSunsetBannerIfGuest(); 
   
   $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
   const adminTopbarBtn = $a('btnAdminTopbar'); if (adminTopbarBtn) adminTopbarBtn.style.display = isAdmin() ? '' : 'none';
@@ -15421,6 +15422,16 @@ async function flushOfflineSaveIfNeeded() {
   const { error } = await sb.from('game_saves').upsert({ user_id: currentUser.id, save_data: cached.save_data });
   if (!error) { pendingOfflineSync = false; clearLocalOfflineCache(); }
 }
+
+const GUEST_SUNSET_DATE = '2026-08-15'; 
+
+function showGuestSunsetBannerIfGuest() {
+  const el = $a('guestSunsetBanner');
+  if (!el) return;
+  el.classList.toggle('hidden', !isGuest());
+  el.onclick = () => { const b = $a('btnLinkAccount'); if (b) b.click(); };
+}
+
 function showOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.remove('hidden'); }
 function hideOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.add('hidden'); }
 window.addEventListener('offline', () => { isOffline = true; showOfflineBanner(); });
@@ -16153,6 +16164,11 @@ const I18N = {
   authMobileBadge: { fr:'📱 BETA — Compatible mobile & tablette', en:'📱 BETA — Mobile & tablet compatible' },
   authSub: { fr:'Connecte-toi avec un vrai compte pour accéder au Marché et au Classement', en:'Sign in with a real account to access the Market and Leaderboard' },
   btnLinkAccount: { fr:'🔗 Lier un compte', en:'🔗 Link account' },
+  
+  guestSunsetMsg: {
+    fr: 'Le mode invité disparaît le 15/08/2026 — ta progression sera perdue. Clique ici pour lier un compte et la garder.',
+    en: 'Guest mode is going away on 2026-08-15 — your progress will be lost. Click here to link an account and keep it.',
+  },
   btnAccount: { fr:'👤 Mon compte', en:'👤 My account' },
   onlineLbl: { fr:'en ligne', en:'online' },
   registeredLbl: { fr:'inscrits', en:'registered' },

@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=662">
+<link rel="stylesheet" href="build/styles.min.css?v=663">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -108,6 +108,14 @@
      coupure réseau (save locale, voir saveToLocalOfflineCache(), game-supabase.js), synchronisée
      dès le retour en ligne. -->
 <div id="offlineBanner" class="hidden">🔌 <span data-i18n="offlineBannerMsg">Hors ligne — ta progression est sauvegardée localement, synchronisation dès le retour du réseau.</span></div>
+<!-- Dépréciation du mode invité (2026-07-22) : plus AUCUN invité n'est créé depuis le 2026-07-10
+     (startGuestOrShowAuth n'appelle plus signInAnonymously), mais 127 sessions anonymes existent
+     encore en base, dont une à 30 h de jeu / niveau 32. Leur session vit dans le localStorage de
+     LEUR navigateur : la seule façon de les prévenir est ce bandeau, à leur retour. Cliquable (il
+     ouvre directement la liaison de compte) et volontairement non masquable : c'est la dernière
+     chance de sauver leur progression avant le retrait du mode invité (voir GUEST_SUNSET_DATE,
+     game-supabase.js). À SUPPRIMER avec tout le reste du code invité à cette date. -->
+<div id="guestSunsetBanner" class="hidden">⚠️ <span data-i18n="guestSunsetMsg">Le mode invité disparaît bientôt — clique ici pour lier un compte et garder ta progression.</span></div>
 <div id="sessionLockOverlay" class="hidden">
   <div id="sessionLockBox">
     <div id="sessionLockIcon">⏸️</div>
@@ -968,11 +976,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=662"></script>
+<script src="meta/patch-notes-data.js?v=663"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=662"></script>
+<script src="build/source.min.js?v=663"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le

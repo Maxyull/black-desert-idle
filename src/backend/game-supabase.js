@@ -257,6 +257,7 @@ function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
   $a('userEmail').textContent = ''; // email retiré de l'affichage (demande du 2026-07-04)
   $a('btnLinkAccount').style.display = isGuest() ? '' : 'none';
+  showGuestSunsetBannerIfGuest(); // bandeau de fin de vie du mode invité (à retirer le GUEST_SUNSET_DATE)
   // 2026-07-13 : #btnLogout/#adminBox (sidebar) retirés, doublons du header -- #btnLogoutTopbar/
   // #btnAdminTopbar sont désormais les SEULS éléments à afficher/masquer.
   $a('btnLogoutTopbar').style.display = isGuest() ? 'none' : '';
@@ -749,6 +750,29 @@ async function flushOfflineSaveIfNeeded() {
   const { error } = await sb.from('game_saves').upsert({ user_id: currentUser.id, save_data: cached.save_data });
   if (!error) { pendingOfflineSync = false; clearLocalOfflineCache(); }
 }
+// ============ DÉPRÉCIATION DU MODE INVITÉ — tout ce bloc est à supprimer le GUEST_SUNSET_DATE ============
+// Constat du 2026-07-22 : plus AUCUN invité n'est créé depuis le 2026-07-10 (startGuestOrShowAuth
+// n'appelle plus signInAnonymously) -- le mode invité est déjà mort côté création. Mais 127 sessions
+// anonymes subsistent en base, dont 43 avec sauvegarde et UNE à 30 h de jeu / niveau 32 / 10,3M
+// silver (plus aucune activité depuis le 2026-07-11).
+//
+// Ces comptes n'ont ni email ni pseudo : impossible de prévenir qui que ce soit. Leur session vit
+// dans le localStorage de LEUR navigateur, donc la seule fenêtre pour les avertir est leur retour
+// sur le jeu -- d'où ce bandeau. Sans lui, retirer le code invité leur supprimerait silencieusement
+// leur unique porte de sortie (bouton "Lier un compte" + conversion invité->compte réel, doSignUp).
+//
+// À FAIRE À CETTE DATE : supprimer tout le code invité (isGuest, btnLinkAccount, la branche
+// isGuest() de doSignUp, les clés backend.auth.guest_*, ce bandeau + son HTML/CSS) puis purger les
+// comptes anonymes restants. Voir l'issue de suivi GitHub.
+const GUEST_SUNSET_DATE = '2026-08-15'; // 4 semaines de sursis à compter du 2026-07-17
+/** Affiche le bandeau de dernière chance aux comptes invités (mode invité en fin de vie) — cliquer ouvre la liaison de compte. No-op pour un compte réel. */
+function showGuestSunsetBannerIfGuest() {
+  const el = $a('guestSunsetBanner');
+  if (!el) return;
+  el.classList.toggle('hidden', !isGuest());
+  el.onclick = () => { const b = $a('btnLinkAccount'); if (b) b.click(); };
+}
+// ============ fin du bloc à supprimer ============
 function showOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.remove('hidden'); }
 function hideOfflineBanner() { const el = $a('offlineBanner'); if (el) el.classList.add('hidden'); }
 window.addEventListener('offline', () => { isOffline = true; showOfflineBanner(); });
@@ -1670,6 +1694,14 @@ const I18N = {
   authMobileBadge: { fr:'📱 BETA — Compatible mobile & tablette', en:'📱 BETA — Mobile & tablet compatible' },
   authSub: { fr:'Connecte-toi avec un vrai compte pour accéder au Marché et au Classement', en:'Sign in with a real account to access the Market and Leaderboard' },
   btnLinkAccount: { fr:'🔗 Lier un compte', en:'🔗 Link account' },
+  // Fin de vie du mode invité (2026-07-22) — à supprimer avec le reste, voir GUEST_SUNSET_DATE.
+  // Date explicite plutôt qu'un vague "bientôt" : c'est la seule information qui permet à un invité
+  // de savoir combien de temps il lui reste pour sauver sa progression.
+  // (pas de ⚠️ ici : il est déjà dans le HTML du bandeau, comme le 🔌 de #offlineBanner)
+  guestSunsetMsg: {
+    fr: 'Le mode invité disparaît le 15/08/2026 — ta progression sera perdue. Clique ici pour lier un compte et la garder.',
+    en: 'Guest mode is going away on 2026-08-15 — your progress will be lost. Click here to link an account and keep it.',
+  },
   btnAccount: { fr:'👤 Mon compte', en:'👤 My account' },
   onlineLbl: { fr:'en ligne', en:'online' },
   registeredLbl: { fr:'inscrits', en:'registered' },
