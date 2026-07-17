@@ -1097,6 +1097,22 @@ function wireBossRewardReveal(items) {
     }
     finishIfAllDone();
   }
+  // Mouvement réduit (2026-07-22, audit repo P6) : c'est LE gros mouvement du jeu qui ne soit pas
+  // du gameplay. La roue fait 5 tours complets sur elle-même et les dés défilent en "casino"
+  // décélérant — exactement le déclencheur vestibulaire classique, et purement décoratif.
+  //
+  // AUCUNE INFORMATION N'EST PERDUE, et c'est ce qui rend ce court-circuit légitime plutôt que
+  // mutilant : l'issue est déjà tirée dans endBossFight (voir le commentaire dans revealOne) — la
+  // roue ne fait QUE choisir et animer l'angle d'atterrissage, jamais le résultat. Le joueur voit
+  // exactement les mêmes récompenses, sans l'attente ni le mouvement. C'est le chemin du bouton
+  // "Passer", déjà écrit et déjà testé, pas une deuxième implémentation à maintenir en parallèle.
+  //
+  // Sortie anticipée sûre : révéler tout met done[] à true partout, donc finishIfAllDone() masque
+  // "Passer" et affiche "Fermer" — le bouton qu'on ne câble pas ensuite est déjà caché.
+  if (typeof prefersReducedMotion === 'function' && prefersReducedMotion()) {
+    items.forEach((_, i) => revealOne(i, { instant: true }));
+    return;
+  }
   items.forEach((it, i) => {
     const startDelay = i*BOSS_REVEAL_STAGGER_MS;
     if (it.kind === 'dice' && it.rollValue !== undefined) {

@@ -3490,6 +3490,45 @@
     assert('sorcier-render.js charge AVANT inventory-ui.js (drawPreviewChar y appelle witchBodyOn)',
       sorcierIdx < invUiIdx, `sorcierIdx=${sorcierIdx}, invUiIdx=${invUiIdx}`);
   }
+  // Mouvement réduit (2026-07-22, audit repo P6). `prefers-reduced-motion: reduce` est un réglage
+  // SYSTÈME : impossible de le forcer depuis la page. On teste donc ce qu'on peut tester sans lui
+  // — le contrat de la fonction et l'absence de cache — et la vraie vérification sous émulation
+  // (Playwright `reducedMotion:'reduce'`) est faite à part.
+  function testPrefersReducedMotionHelper() {
+    assert('prefersReducedMotion() existe', typeof prefersReducedMotion === 'function');
+    if (typeof prefersReducedMotion !== 'function') return;
+    assert('prefersReducedMotion() renvoie un booléen (jamais undefined/null)',
+      typeof prefersReducedMotion() === 'boolean', `recu=${typeof prefersReducedMotion()}`);
+    // Anti-cache : le réglage système se change à chaud (Windows le bascule sans rechargement).
+    // Si quelqu'un "optimise" un jour en mettant le résultat dans une const au chargement, le jeu
+    // ignorerait le changement jusqu'au prochain F5. On vérifie que matchMedia est bien réinterrogé
+    // à CHAQUE appel, en le remplaçant temporairement.
+    const real = window.matchMedia;
+    try {
+      let calls = 0;
+      window.matchMedia = () => { calls++; return { matches: calls > 1 }; };
+      const first = prefersReducedMotion(), second = prefersReducedMotion();
+      assert('prefersReducedMotion() relit matchMedia à chaque appel (pas de cache au chargement)',
+        calls === 2 && first === false && second === true, `calls=${calls}, first=${first}, second=${second}`);
+    } finally { window.matchMedia = real; }
+  }
+  // Le court-circuit de la révélation de boss ne doit JAMAIS toucher au résultat : l'issue est
+  // tirée dans endBossFight, la roue ne fait qu'animer l'angle. Garde-fou statique : si quelqu'un
+  // déplace un jour le tirage DANS le chemin animé, le mode mouvement réduit changerait le loot
+  // -- une inégalité de traitement silencieuse entre joueurs.
+  function testReducedMotionBossRevealOnlySkipsAnimationNotOutcome() {
+    if (typeof wireBossRewardReveal !== 'function') return;
+    const src = wireBossRewardReveal.toString();
+    assert('wireBossRewardReveal() consulte bien prefersReducedMotion()',
+      src.includes('prefersReducedMotion'));
+    assert('le mouvement réduit passe par le chemin `instant` déjà existant (celui du bouton Passer), pas par une 2e implémentation',
+      /prefersReducedMotion\(\)\s*\)\s*\{[\s\S]{0,160}instant:\s*true/.test(src), `src=${src.slice(0, 60)}`);
+    // rollDiceValue(instant) et la roue lisent it.rollValue / it.won -- déjà tirés en amont.
+    // Si `Math.random` apparaissait dans le chemin de révélation autrement que pour le DÉFILEMENT
+    // décoratif des dés, ce serait le signe que l'issue se décide ici.
+    assert('revealOne ne tire aucun résultat (il ne fait que rendre it.rollValue / it.won déjà décidés)',
+      !/function revealOne[\s\S]{0,400}Math\.random/.test(src));
+  }
   // Découpage de game-supabase.js le 2026-07-22 (audit repo P5) : 3 124 lignes -> 1 744, les
   // 1 380 autres transplantées dans 6 fichiers. Aucune ligne n'a été réécrite (le bundle produit
   // est resté identique à l'octet près) -- le SEUL risque de ce découpage est donc l'ordre de
@@ -6936,6 +6975,8 @@
     testSorcierRenderLoadsBeforeSyncStartupCallers();
     testGameSupabaseSplitKeepsOriginalScriptOrder();
     testCrossFileButtonHandlersAreDeferred();
+    testPrefersReducedMotionHelper();
+    testReducedMotionBossRevealOnlySkipsAnimationNotOutcome();
     testPatchNotesDatesFormatAndOrder();
     testEveryPatchSubHasALabel();
     testHeaderShortcutButtonsExistWithTitleAndAdminHidden();
