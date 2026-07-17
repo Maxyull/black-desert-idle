@@ -70,6 +70,7 @@
   "backend.auth.ban_suspended": "Compte suspendu jusqu'au {{until}} — Motif : {{reason}}",
   "backend.auth.email_first": "Entre ton email d'abord, puis clique à nouveau.",
   "backend.auth.guest_badge": "🎭 Invité",
+  "backend.auth.last_used": "Dernière fois",
   "backend.auth.guest_mode_body": "Ta progression n'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur \"🔗 Lier un compte\" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.",
   "backend.auth.guest_mode_title": "Tu joues en mode invité",
   "backend.auth.reset_email_sent": "Email envoyé — vérifie ta boîte mail pour réinitialiser ton mot de passe.",

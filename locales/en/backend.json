@@ -70,6 +70,7 @@
   "backend.auth.ban_suspended": "Account suspended until {{until}} — Reason: {{reason}}",
   "backend.auth.email_first": "Enter your email first, then click again.",
   "backend.auth.guest_badge": "🎭 Guest",
+  "backend.auth.last_used": "Last used",
   "backend.auth.guest_mode_body": "Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click \"🔗 Link account\" to create an account (your current progress is kept) or sign back into an existing one.",
   "backend.auth.guest_mode_title": "You're playing as a guest",
   "backend.auth.reset_email_sent": "Email sent — check your inbox to reset your password.",

@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V467', d:'16/07/2026 23:00', name:{fr:'Connexion : badge "Dernière fois" sur la dernière méthode utilisée', en:'Login: "Last used" badge on your last sign-in method'}, fr:[
+      {t:'new', sub:'interface', tx:'L\'écran de connexion affiche désormais un petit badge "Dernière fois" sur le bouton de la méthode que tu as utilisée en dernier (email, Discord, Google, GitHub ou Twitter/X) — repère visuel à la Google pour te reconnecter plus vite. Info gardée localement sur ton appareil uniquement.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'The login screen now shows a small "Last used" badge on the button of the method you last signed in with (email, Discord, Google, GitHub or Twitter/X) — a Google-style hint to log back in faster. Stored locally on your device only.'},
+    ] },
   { v:'V466', d:'16/07/2026 22:45', name:{fr:'Connexion : croix de fermeture retirée de l\'écran de compte', en:'Login: close button removed from the account screen'}, fr:[
       {t:'change', sub:'interface', tx:'La croix (✕) de l\'écran de connexion/création de compte a été retirée : la fermer laissait un jeu vide sans moyen simple de revenir à la connexion (les invités étant désactivés).'},
     ], en:[

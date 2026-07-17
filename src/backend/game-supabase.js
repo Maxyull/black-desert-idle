@@ -168,7 +168,34 @@ function authShow(msg, isError) {
   $a('authError').textContent = isError ? msg : '';
   $a('authStatus').textContent = isError ? '' : (msg || '');
 }
-function showAuthOverlay(show) { $a('authOverlay').classList.toggle('hidden', !show); }
+// "Dernière fois" (2026-07-16, demande explicite) : mémorise la méthode de connexion réellement
+// utilisée (provider Supabase : email/discord/google/github/twitter) et affiche un petit badge
+// "Last used" sur le bouton correspondant à l'ouverture de l'écran de connexion — repère visuel
+// à la Google. Purement local (localStorage), aucune donnée serveur.
+const LAST_LOGIN_KEY = 'velia-idle-last-login-method';
+const LAST_LOGIN_BTN = { email:'btnSignIn', discord:'btnSignInDiscord', google:'btnSignInGoogle', github:'btnSignInGithub', twitter:'btnSignInTwitter' };
+/** Mémorise la méthode de connexion utilisée (provider Supabase). */
+function rememberLastLoginMethod(provider) {
+  if (!provider || !LAST_LOGIN_BTN[provider]) return;
+  try { localStorage.setItem(LAST_LOGIN_KEY, provider); } catch (e) {}
+}
+/** Ajoute (ou retire) le badge "Dernière fois" sur le bouton de la dernière méthode utilisée. */
+function renderLastUsedBadge() {
+  document.querySelectorAll('.lastUsedBadge').forEach(b => b.remove());
+  let method = null;
+  try { method = localStorage.getItem(LAST_LOGIN_KEY); } catch (e) {}
+  const btnId = method && LAST_LOGIN_BTN[method];
+  const btn = btnId && $a(btnId);
+  if (!btn) return;
+  const badge = document.createElement('span');
+  badge.className = 'lastUsedBadge';
+  badge.textContent = (typeof i18next !== 'undefined' ? i18next.t('backend:backend.auth.last_used') : 'Last used');
+  btn.appendChild(badge);
+}
+function showAuthOverlay(show) {
+  $a('authOverlay').classList.toggle('hidden', !show);
+  if (show) renderLastUsedBadge();
+}
 /** Affiche/masque la barre utilisateur et ses boutons (lier compte/déconnexion/admin) selon l'état de connexion. */
 function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
@@ -394,6 +421,8 @@ async function onAuthed(user) {
  */
 async function onAuthedInner(user) {
   currentUser = user;
+  // mémorise la méthode de connexion réellement utilisée (badge "Dernière fois" au prochain écran)
+  rememberLastLoginMethod((user && user.app_metadata && user.app_metadata.provider) || 'email');
   // check de bannissement (2026-07-18) : bloque l'accès avant tout autre effet de la connexion
   // (chargement de sauvegarde, présence en ligne...) si le compte est banni.
   if (!isGuest()) {

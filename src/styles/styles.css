@@ -981,6 +981,16 @@
     position:absolute; top:8px; right:8px; width:auto; margin:0; padding:4px 9px;
     background:none; border:none; font-size:16px; color:var(--ink-dim);
   }
+  /* badge "Dernière fois" (2026-07-16) : pastille dorée en coin haut-droit du bouton de la
+     dernière méthode de connexion utilisée (voir renderLastUsedBadge, game-supabase.js). Les
+     boutons d'auth doivent être position:relative pour l'ancrer. */
+  #authBox button { position:relative; }
+  .lastUsedBadge {
+    position:absolute; top:-8px; right:8px; padding:1px 7px; border-radius:999px;
+    background:var(--gold); color:#1a1712; font-size:9.5px; font-weight:bold;
+    letter-spacing:.02em; text-transform:uppercase; box-shadow:0 2px 6px rgba(0,0,0,.45);
+    pointer-events:none; white-space:nowrap;
+  }
   #authBox h1 { font-size:20px; letter-spacing:2px; color:var(--gold); margin-bottom:4px; }
   /* badge "compatible mobile/tablette" sur l'écran de connexion/création de compte (2026-07-05,
      demande explicite) — annonce la nouvelle adaptation mobile (V152-V157) dès l'arrivée sur le

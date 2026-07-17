@@ -384,6 +384,7 @@ const I18N_RESOURCES = {
       "backend.auth.ban_suspended": "Compte suspendu jusqu'au {{until}} — Motif : {{reason}}",
       "backend.auth.email_first": "Entre ton email d'abord, puis clique à nouveau.",
       "backend.auth.guest_badge": "🎭 Invité",
+      "backend.auth.last_used": "Dernière fois",
       "backend.auth.guest_mode_body": "Ta progression n'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur \"🔗 Lier un compte\" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.",
       "backend.auth.guest_mode_title": "Tu joues en mode invité",
       "backend.auth.reset_email_sent": "Email envoyé — vérifie ta boîte mail pour réinitialiser ton mot de passe.",
@@ -1432,6 +1433,7 @@ const I18N_RESOURCES = {
       "backend.auth.ban_suspended": "Account suspended until {{until}} — Reason: {{reason}}",
       "backend.auth.email_first": "Enter your email first, then click again.",
       "backend.auth.guest_badge": "🎭 Guest",
+      "backend.auth.last_used": "Last used",
       "backend.auth.guest_mode_body": "Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click \"🔗 Link account\" to create an account (your current progress is kept) or sign back into an existing one.",
       "backend.auth.guest_mode_title": "You're playing as a guest",
       "backend.auth.reset_email_sent": "Email sent — check your inbox to reset your password.",
@@ -14895,7 +14897,31 @@ function authShow(msg, isError) {
   $a('authError').textContent = isError ? msg : '';
   $a('authStatus').textContent = isError ? '' : (msg || '');
 }
-function showAuthOverlay(show) { $a('authOverlay').classList.toggle('hidden', !show); }
+
+const LAST_LOGIN_KEY = 'velia-idle-last-login-method';
+const LAST_LOGIN_BTN = { email:'btnSignIn', discord:'btnSignInDiscord', google:'btnSignInGoogle', github:'btnSignInGithub', twitter:'btnSignInTwitter' };
+
+function rememberLastLoginMethod(provider) {
+  if (!provider || !LAST_LOGIN_BTN[provider]) return;
+  try { localStorage.setItem(LAST_LOGIN_KEY, provider); } catch (e) {}
+}
+
+function renderLastUsedBadge() {
+  document.querySelectorAll('.lastUsedBadge').forEach(b => b.remove());
+  let method = null;
+  try { method = localStorage.getItem(LAST_LOGIN_KEY); } catch (e) {}
+  const btnId = method && LAST_LOGIN_BTN[method];
+  const btn = btnId && $a(btnId);
+  if (!btn) return;
+  const badge = document.createElement('span');
+  badge.className = 'lastUsedBadge';
+  badge.textContent = (typeof i18next !== 'undefined' ? i18next.t('backend:backend.auth.last_used') : 'Last used');
+  btn.appendChild(badge);
+}
+function showAuthOverlay(show) {
+  $a('authOverlay').classList.toggle('hidden', !show);
+  if (show) renderLastUsedBadge();
+}
 
 function updateUserBar() {
   $a('userBar').classList.toggle('show', !!currentUser);
@@ -15074,6 +15100,8 @@ async function onAuthed(user) {
 
 async function onAuthedInner(user) {
   currentUser = user;
+  
+  rememberLastLoginMethod((user && user.app_metadata && user.app_metadata.provider) || 'email');
   
   if (!isGuest()) {
     try {
