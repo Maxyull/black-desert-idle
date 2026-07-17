@@ -81,6 +81,7 @@
   "backend.auth.err_signup_needs_email": "L'inscription nécessite une vraie adresse email (pas seulement un pseudo).",
   "backend.auth.err_pseudo_not_found": "Aucun compte trouvé pour ce pseudo.",
   "backend.auth.err_invalid_credentials": "Pseudo/email ou mot de passe incorrect.",
+  "backend.auth.err_rate_limited": "Trop de tentatives. Réessaie dans quelques minutes.",
   "backend.auth.signing_in": "Connexion…",
   "backend.auth.creating_account": "Création du compte…",
   "backend.auth.account_linked": "Compte lié ! Ta progression est conservée.",

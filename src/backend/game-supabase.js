@@ -278,6 +278,7 @@ async function doSignIn() {
   try { res = await sb.functions.invoke('auth-by-identifier', { body: { action: 'login', identifier, password: pass } }); }
   catch (e) { authShow(_authT('err_invalid_credentials'), true); return; }
   const data = res && res.data;
+  if (data && data.error === 'rate_limited') { authShow(_authT('err_rate_limited'), true); return; }
   if (!data || data.error || !data.access_token) { authShow(_authT('err_invalid_credentials'), true); return; }
   // pose la session à partir des tokens ; SIGNED_IN (onAuthStateChange) déclenchera onAuthed()
   const { error } = await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });

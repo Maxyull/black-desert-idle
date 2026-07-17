@@ -395,6 +395,7 @@ const I18N_RESOURCES = {
       "backend.auth.err_signup_needs_email": "L'inscription nécessite une vraie adresse email (pas seulement un pseudo).",
       "backend.auth.err_pseudo_not_found": "Aucun compte trouvé pour ce pseudo.",
       "backend.auth.err_invalid_credentials": "Pseudo/email ou mot de passe incorrect.",
+      "backend.auth.err_rate_limited": "Trop de tentatives. Réessaie dans quelques minutes.",
       "backend.auth.signing_in": "Connexion…",
       "backend.auth.creating_account": "Création du compte…",
       "backend.auth.account_linked": "Compte lié ! Ta progression est conservée.",
@@ -1457,6 +1458,7 @@ const I18N_RESOURCES = {
       "backend.auth.err_signup_needs_email": "Sign-up needs a real email address (not just a username).",
       "backend.auth.err_pseudo_not_found": "No account found for that username.",
       "backend.auth.err_invalid_credentials": "Wrong username/email or password.",
+      "backend.auth.err_rate_limited": "Too many attempts. Try again in a few minutes.",
       "backend.auth.signing_in": "Signing in…",
       "backend.auth.creating_account": "Creating account…",
       "backend.auth.account_linked": "Account linked! Your progress is kept.",
@@ -15012,6 +15014,7 @@ async function doSignIn() {
   try { res = await sb.functions.invoke('auth-by-identifier', { body: { action: 'login', identifier, password: pass } }); }
   catch (e) { authShow(_authT('err_invalid_credentials'), true); return; }
   const data = res && res.data;
+  if (data && data.error === 'rate_limited') { authShow(_authT('err_rate_limited'), true); return; }
   if (!data || data.error || !data.access_token) { authShow(_authT('err_invalid_credentials'), true); return; }
   
   const { error } = await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });

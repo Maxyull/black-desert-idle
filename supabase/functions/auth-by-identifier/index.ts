@@ -25,6 +25,29 @@ const cors = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...cors, "Content-Type": "application/json" } });
 
+// IP client (Edge Runtime derrière proxy) : x-forwarded-for = "client, proxy1, ...".
+function clientIp(req: Request): string {
+  const xff = req.headers.get("x-forwarded-for") || "";
+  const first = xff.split(",")[0].trim();
+  return first || req.headers.get("x-real-ip") || "unknown";
+}
+
+// Appelle le RPC rate_limit_hit (service_role only). Renvoie true si AUTORISÉ, false si quota
+// dépassé. En cas d'erreur réseau/DB on "fail-open" (true) : la sécurité du login ne dépend pas
+// du limiteur, qui n'est qu'une protection anti-bruteforce best-effort.
+async function rateOk(key: string, max: number, windowSeconds: number): Promise<boolean> {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/rpc/rate_limit_hit`, {
+      method: "POST",
+      headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ p_key: key, p_max: max, p_window_seconds: windowSeconds }),
+    });
+    if (!r.ok) return true;
+    const allowed = await r.json();
+    return allowed !== false;
+  } catch { return true; }
+}
+
 // pseudo|email -> email, via le RPC email_for_login (grant service_role uniquement).
 async function resolveEmail(identifier: string): Promise<string | null> {
   const id = (identifier || "").trim();
@@ -46,8 +69,16 @@ Deno.serve(async (req: Request) => {
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "bad_json" }, 400); }
   const action = body.action;
+  const ip = clientIp(req);
+  const idKey = String(body.identifier || "").trim().toLowerCase().slice(0, 120);
 
   if (action === "login") {
+    // Anti-bruteforce : par IP (rafale) ET par identifiant ciblé. Message générique.
+    const ipOk = await rateOk(`login:ip:${ip}`, 10, 300);        // 10 tentatives / 5 min par IP
+    const idOk = await rateOk(`login:id:${idKey}`, 5, 900);      // 5 tentatives / 15 min par compte
+    // 200 (pas 429) : le SDK supabase range les corps non-2xx dans `error` et non `data`,
+    // or le client lit data.error — on reste donc en 200 comme la réponse "invalid".
+    if (!ipOk || !idOk) return json({ error: "rate_limited" });
     const email = await resolveEmail(String(body.identifier || ""));
     // message générique : ne révèle pas si c'est le pseudo/email OU le mot de passe qui est faux
     if (!email) return json({ error: "invalid" });
@@ -62,6 +93,20 @@ Deno.serve(async (req: Request) => {
   }
 
   if (action === "reset") {
+    // Anti-abus d'envoi d'emails : par IP ET par identifiant. On reste "ok" côté réponse pour
+    // ne pas révéler l'existence du compte, mais on n'envoie plus rien au-delà du quota.
+    const ipOk = await rateOk(`reset:ip:${ip}`, 5, 900);         // 5 / 15 min par IP
+    const idOk = await rateOk(`reset:id:${idKey}`, 3, 3600);     // 3 / heure par compte
+    if (!ipOk || !idOk) return json({ ok: true });
+    // purge best-effort ~1x/h : le seau horaire "gc:<h>" n'autorise qu'un seul passage par heure.
+    rateOk("gc:" + Math.floor(Date.now() / 3.6e6), 1, 3600).then((first) => {
+      if (!first) return;
+      fetch(`${SUPABASE_URL}/rest/v1/rpc/rate_limit_gc`, {
+        method: "POST",
+        headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, "Content-Type": "application/json" },
+        body: "{}",
+      }).catch(() => {});
+    });
     const email = await resolveEmail(String(body.identifier || ""));
     if (email) {
       const redirect = typeof body.redirect_to === "string" ? body.redirect_to : SUPABASE_URL;

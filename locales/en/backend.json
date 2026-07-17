@@ -81,6 +81,7 @@
   "backend.auth.err_signup_needs_email": "Sign-up needs a real email address (not just a username).",
   "backend.auth.err_pseudo_not_found": "No account found for that username.",
   "backend.auth.err_invalid_credentials": "Wrong username/email or password.",
+  "backend.auth.err_rate_limited": "Too many attempts. Try again in a few minutes.",
   "backend.auth.signing_in": "Signing in…",
   "backend.auth.creating_account": "Creating account…",
   "backend.auth.account_linked": "Account linked! Your progress is kept.",
