@@ -2713,9 +2713,18 @@ function render(t) {
 renderInvCatTabs();
 hud();
 setInterval(hud, 1000);
-setInterval(() => { if (!document.hidden) S.playtimeSec++; }, 1000); // temps de jeu cumulé (onglet actif uniquement)
-setTimeout(()=>{ addSilver(80, 'welcome'); hud(); }, 1200);
+// Rien ici ne doit tourner tant que la sauvegarde n'est pas connue (2026-07-22, demande explicite :
+// "pas de jeu qui tourne en arrière alors qu'on n'a pas créé de compte") -- même garde saveReady
+// que advanceSim (game-core.js). Sans elle, le temps passé sur l'ÉCRAN DE CONNEXION était compté
+// comme du temps de jeu, et une sauvegarde fantôme (personnage par défaut de quelqu'un qui n'a pas
+// encore de compte) était écrite toutes les 15 s.
+setInterval(() => { if (!document.hidden && saveReady) S.playtimeSec++; }, 1000); // temps de jeu cumulé (onglet actif uniquement)
+// Le +80 "silver de bienvenue" est passé à la CRÉATION DU PERSONNAGE (grantWelcomeSilver(), voir
+// loadCloudSave/backend/game-supabase.js) le 2026-07-22 : ici, il était crédité 1,2 s après le
+// chargement de la page, donc à tout visiteur AVANT même qu'il ait un compte -- et pour un joueur
+// existant il n'était masqué que par le hasard du timing (applySaveState l'écrasait s'il arrivait
+// après, sinon le joueur gagnait 80 silver à chaque connexion).
 // sauvegarde automatique locale (fallback hors-ligne, coexiste avec Supabase)
-setInterval(() => { try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {} }, 15000);
+setInterval(() => { if (!saveReady) return; try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {} }, 15000);
 requestAnimationFrame(loop);
 
