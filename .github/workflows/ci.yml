@@ -54,4 +54,8 @@ jobs:
       # derniere version a change) -- pas besoin de filtrer sur les fichiers modifies ici.
       - name: Announce new patch note on Discord
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        # ANNOUNCE_SECRET (secret repo) : verrouille les cibles publiques patch_fr/patch_en cote
+        # Edge Function discord-log (durcissement audit #9) -- sans lui, l'annonce est refusee (403).
+        env:
+          ANNOUNCE_SECRET: ${{ secrets.ANNOUNCE_SECRET }}
         run: node scripts/announce-patch-note.js
