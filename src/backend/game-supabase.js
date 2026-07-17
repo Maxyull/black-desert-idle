@@ -392,11 +392,20 @@ async function doSaveNewPassword() {
   try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} // retire #type=recovery
   if (data && data.user) onAuthed(data.user);
 }
-/** Déconnecte puis relance immédiatement une session invité (jamais de mur bloquant). */
+/** Déconnecte puis revient à l'écran de connexion sur un état vierge (voir le reload ci-dessous). */
 async function doLogout() {
   if (sb) await sb.auth.signOut();
   currentUser = null;
-  await startGuestOrShowAuth(); // jamais de mur bloquant : on repart direct sur une session invité
+  saveReady = false; // stoppe la simulation tout de suite (voir la garde dans advanceSim)
+  // Recharge la page plutôt que de seulement réafficher l'écran de connexion (2026-07-22, trouvé
+  // en corrigeant "on arrive avec un lvl déjà établi") : S est un `const` mutable jamais remis à
+  // zéro, et loadCloudSave() n'appelle applySaveState() QUE si une sauvegarde EXISTE. Sans ce
+  // rechargement, créer un NOUVEAU compte juste après une déconnexion faisait hériter le compte
+  // neuf de toute la progression du précédent -- rien ne venait écraser S. Le reload garantit un
+  // état vierge sans réinitialiser S champ par champ (~150 clés), et l'écran de connexion revient
+  // de toute façon au démarrage via startGuestOrShowAuth() : comportement identique pour le joueur.
+  if (sb) { location.reload(); return; }
+  await startGuestOrShowAuth(); // mode local sans Supabase : pas de reload possible/utile
 }
 
 // connexion (ou liaison, si déjà invité/connecté) via Discord — demande le scope
@@ -634,6 +643,22 @@ async function startGuestOrShowAuth() {
 
 let tutorialAutoShown = false; // évite de relancer le tuto auto plusieurs fois si loadCloudSave est rappelé
 /** Charge la sauvegarde (cache local offline en priorité si hors-ligne, sinon Supabase game_saves), lance le tutoriel pour un nouveau personnage et marque les patch notes antérieures comme déjà lues. */
+// Cadeau de bienvenue (2026-07-22) : était un `setTimeout(() => addSilver(80,'welcome'), 1200)` au
+// chargement de la page (render.js) -- donc crédité à tout VISITEUR, avant même qu'il ait un compte
+// ("pas de jeu qui tourne en arrière alors qu'on n'a pas créé de compte"). Pire : pour un joueur
+// existant, il n'était neutralisé que par le hasard du timing -- applySaveState() l'écrasait s'il
+// arrivait après les 1,2 s, mais sur un chargement rapide (cache/réseau court) il pouvait passer
+// APRÈS et offrir 80 silver à CHAQUE connexion. Désormais accordé une seule fois, à la création du
+// personnage (branche "aucune sauvegarde cloud" de loadCloudSave) ou en mode local sans Supabase.
+const WELCOME_SILVER = 80;
+let welcomeSilverGranted = false;
+/** Accorde le cadeau de bienvenue une seule fois par session (garde-fou : onAuthed a déjà été appelé 2x par le passé, ce qui doublait ce gain — voir onAuthStateChange). */
+function grantWelcomeSilver() {
+  if (welcomeSilverGranted) return;
+  welcomeSilverGranted = true;
+  addSilver(WELCOME_SILVER, 'welcome');
+  if (typeof hud === 'function') hud();
+}
 async function loadCloudSave() {
   if (!sb || !currentUser) return;
   $a('saveStatus').textContent = 'Chargement...';
@@ -678,6 +703,7 @@ async function loadCloudSave() {
     $a('saveStatus').textContent = 'Nouveau personnage';
     // aucune sauvegarde cloud trouvée = personnage tout juste créé : on l'accueille à Velia et on
     // lance le tutoriel (petite pause pour laisser l'UI/le HUD finir de s'initialiser)
+    grantWelcomeSilver(); // cadeau de bienvenue : ICI, et seulement ici (voir la fonction)
     if (!tutorialAutoShown) { tutorialAutoShown = true; setTimeout(startTutorial, 500); }
     // un nouveau joueur n'a pas à voir de notification sur les notes de version D'AVANT sa
     // création de compte (demande explicite du 2026-07-08) -- sans ça, unreadPatchCount()
@@ -1615,7 +1641,10 @@ $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignI
 
 // au chargement : session déjà active ? sinon on démarre en invité (jamais de mur bloquant)
 (async () => {
-  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; return; } // Supabase pas configuré → jeu jouable directement (mode local)
+  // Supabase pas configuré → jeu jouable directement (mode local). grantWelcomeSilver() ici aussi :
+  // ce mode ne passe jamais par loadCloudSave(), il aurait donc perdu le cadeau de bienvenue en
+  // même temps que le setTimeout de render.js (2026-07-22).
+  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; grantWelcomeSilver(); return; }
   const { data } = await sb.auth.getSession();
   if (data.session) onAuthed(data.session.user);
   else await startGuestOrShowAuth();
