@@ -14480,10 +14480,10 @@ function render(t) {
 renderInvCatTabs();
 hud();
 setInterval(hud, 1000);
-setInterval(() => { if (!document.hidden) S.playtimeSec++; }, 1000); 
-setTimeout(()=>{ addSilver(80, 'welcome'); hud(); }, 1200);
 
-setInterval(() => { try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {} }, 15000);
+setInterval(() => { if (!document.hidden && saveReady) S.playtimeSec++; }, 1000); 
+
+setInterval(() => { if (!saveReady) return; try { localStorage.setItem('velia-idle-save', JSON.stringify(getSaveState())); } catch(e) {} }, 15000);
 requestAnimationFrame(loop);
 
 // ==== src/core/card-layout.js ====
@@ -15348,6 +15348,15 @@ async function startGuestOrShowAuth() {
 
 let tutorialAutoShown = false; 
 
+const WELCOME_SILVER = 80;
+let welcomeSilverGranted = false;
+
+function grantWelcomeSilver() {
+  if (welcomeSilverGranted) return;
+  welcomeSilverGranted = true;
+  addSilver(WELCOME_SILVER, 'welcome');
+  if (typeof hud === 'function') hud();
+}
 async function loadCloudSave() {
   if (!sb || !currentUser) return;
   $a('saveStatus').textContent = 'Chargement...';
@@ -15377,6 +15386,7 @@ async function loadCloudSave() {
   } else {
     $a('saveStatus').textContent = 'Nouveau personnage';
     
+    grantWelcomeSilver(); 
     if (!tutorialAutoShown) { tutorialAutoShown = true; setTimeout(startTutorial, 500); }
     
     if (typeof PATCH_NOTES !== 'undefined' && PATCH_NOTES.length) {
@@ -16121,7 +16131,8 @@ $a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOver
 $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignIn(); });
 
 (async () => {
-  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; return; } 
+  
+  if (!sb) { showAuthOverlay(false); updateUserBar(); authShow(''); saveReady = true; grantWelcomeSilver(); return; }
   const { data } = await sb.auth.getSession();
   if (data.session) onAuthed(data.session.user);
   else await startGuestOrShowAuth();
