@@ -20893,3 +20893,93 @@ function renderCmMyOrdersList() {
     };
   });
 }
+
+// ==== src/core/modal-a11y.js ====
+const A11Y_MODALS = [
+  { id:'tutorialOverlay',    z:900, openWhen:'open',   closeBtn:'tutSkipBtn' },
+  { id:'sessionLockOverlay', z:150, openWhen:'hidden', invert:true, closeBtn:null }, 
+  { id:'adminOverlay',       z:150, openWhen:'open',   closeBtn:'closeAdmin' },
+  { id:'patchImgOverlay',    z:105, openWhen:'open',   closeBtn:'closePatchImg' },
+  { id:'authOverlay',        z:100, openWhen:'hidden', invert:true, closeBtn:'closeAuth' }, 
+  { id:'infoOverlay',        z:95,  openWhen:'open',   closeBtn:'closeInfo' },
+  { id:'marketOverlay',      z:90,  openWhen:'open',   closeBtn:'closeMarket' },
+  { id:'resetNoticeOverlay', z:80,  openWhen:'show',   closeBtn:'resetNoticeClose' },
+];
+
+function a11yModalIsOpen(m) {
+  const el = document.getElementById(m.id);
+  if (!el) return false;
+  const has = el.classList.contains(m.openWhen);
+  return m.invert ? !has : has;
+}
+
+function a11yTopModal() {
+  return A11Y_MODALS.find(a11yModalIsOpen) || null;
+}
+
+function a11yVisibleCloseBtn(m) {
+  if (!m.closeBtn) return null;
+  const b = document.getElementById(m.closeBtn);
+  
+  if (!b || b.offsetParent === null) return null;
+  return b;
+}
+
+const a11yFocusOrigin = new Map();
+
+function a11yFocusables(root) {
+  if (!root) return [];
+  return Array.from(root.querySelectorAll(
+    'button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), a[href], [tabindex]:not([tabindex="-1"])'
+  )).filter(el => el.offsetParent !== null);
+}
+
+function a11yTrapTab(e, root) {
+  const items = a11yFocusables(root);
+  if (!items.length) return;
+  const first = items[0], last = items[items.length - 1];
+  
+  if (!root.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape' && e.key !== 'Tab') return;
+  const m = a11yTopModal();
+  if (!m) return;
+  const root = document.getElementById(m.id);
+  if (e.key === 'Tab') { a11yTrapTab(e, root); return; }
+  const btn = a11yVisibleCloseBtn(m);
+  if (!btn) return; 
+  e.preventDefault();
+  btn.click(); 
+}, true);
+
+A11Y_MODALS.forEach(m => {
+  const el = document.getElementById(m.id);
+  if (!el) return;
+  
+  el.setAttribute('role', 'dialog');
+  el.setAttribute('aria-modal', 'true');
+  let wasOpen = a11yModalIsOpen(m);
+  new MutationObserver(() => {
+    const open = a11yModalIsOpen(m);
+    if (open === wasOpen) return;
+    wasOpen = open;
+    if (open) {
+      a11yFocusOrigin.set(m.id, document.activeElement);
+      
+      requestAnimationFrame(() => {
+        if (!a11yModalIsOpen(m)) return;
+        const items = a11yFocusables(el);
+        if (items.length) try { items[0].focus(); } catch (err) {}
+      });
+    } else {
+      const origin = a11yFocusOrigin.get(m.id);
+      a11yFocusOrigin.delete(m.id);
+      
+      if (origin && origin.isConnected && typeof origin.focus === 'function') try { origin.focus(); } catch (err) {}
+    }
+  }).observe(el, { attributes: true, attributeFilter: ['class'] });
+});
