@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V466', d:'16/07/2026 22:45', name:{fr:'Connexion : croix de fermeture retirée de l\'écran de compte', en:'Login: close button removed from the account screen'}, fr:[
+      {t:'change', sub:'interface', tx:'La croix (✕) de l\'écran de connexion/création de compte a été retirée : la fermer laissait un jeu vide sans moyen simple de revenir à la connexion (les invités étant désactivés).'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The close (✕) button on the login/account-creation screen has been removed: closing it left an empty game with no easy way back to login (guests are disabled).'},
+    ] },
   { v:'V465', d:'16/07/2026 22:30', name:{fr:'Anglais : récompenses de boss + recherche/tri du Marché traduits', en:'English: boss rewards + Market search/sort translated'}, fr:[
       {t:'fix', sub:'interface', tx:'En anglais, la récompense rare des boss mondiaux (Pierre de sang de Kzarka → Kzarka Bloodstone, Cœur de Vell → Heart of Vell) restait en français dans le lobby/calendrier et à l\'ouverture des récompenses — corrigé.'},
       {t:'fix', sub:'interface', tx:'Le champ de recherche du Marché ("Rechercher un objet...") et les options de tri (Prix ↑/↓, Plus récents) restaient en français en mode anglais — corrigé.'},

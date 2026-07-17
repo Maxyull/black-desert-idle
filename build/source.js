@@ -15895,7 +15895,8 @@ $a('btnLinkAccount').onclick = () => {
   $a('authSub').textContent = i18next.t('backend:backend.account.link_account_prompt');
   showAuthOverlay(true);
 };
-$a('closeAuth').onclick = () => showAuthOverlay(false);
+
+{ const _ca = $a('closeAuth'); if (_ca) _ca.onclick = () => showAuthOverlay(false); }
 let authMouseDownOnBackdrop = false;
 $a('authOverlay').addEventListener('mousedown', e => { authMouseDownOnBackdrop = (e.target.id === 'authOverlay'); });
 $a('authOverlay').addEventListener('click', e => { if (e.target.id === 'authOverlay' && authMouseDownOnBackdrop && currentUser) showAuthOverlay(false); });
