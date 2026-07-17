@@ -1,0 +1,25 @@
+name: gitleaks
+
+# Scan de secrets (repo + historique). Gratuit pour repo public / compte perso.
+# Config + allowlist : .gitleaks.toml (la clé publiable Supabase y est autorisée).
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 5 * * 1' # hebdo
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # historique complet : un secret leaké dans un vieux commit reste exploitable
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
