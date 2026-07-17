@@ -251,6 +251,17 @@ function showAuthOverlay(show) {
   // rouvre TOUJOURS sur l'écran de choix (sauf récupération de mot de passe, pilotée à part) :
   // sinon on retomberait sur les champs du flux précédent, à contre-emploi du "aucun champ".
   if (show) { if (!inPasswordRecovery) setAuthMode('choice'); renderLastUsedBadge(); }
+  // Croix de fermeture CONDITIONNELLE (2026-07-22) : uniquement quand une session existe déjà,
+  // c.-à-d. un invité qui a ouvert cet écran volontairement ("Lier un compte" ou le bandeau de fin
+  // de vie du mode invité) et qui change d'avis -- sa partie tourne derrière, il doit pouvoir y
+  // revenir. Sans elle, un simple clic sur le bandeau (en haut, cliquable, non masquable) coupait
+  // l'invité de son propre jeu, sans autre issue que créer un compte ou recharger la page.
+  // Sans session, l'écran reste un mur sans échappatoire : c'est la raison du retrait du
+  // 2026-07-16 (fermer laissait le joueur devant un jeu vide sans retour possible), et elle reste
+  // valable. Jamais pendant une récupération de mot de passe : la session existe, mais le joueur
+  // DOIT aller au bout du choix de son nouveau mot de passe.
+  const close = $a('closeAuth');
+  if (close) close.classList.toggle('hidden', !(show && currentUser && !inPasswordRecovery));
 }
 /** Affiche/masque la barre utilisateur et ses boutons (lier compte/déconnexion/admin) selon l'état de connexion. */
 function updateUserBar() {

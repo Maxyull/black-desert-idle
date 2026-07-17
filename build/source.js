@@ -15046,6 +15046,9 @@ function showAuthOverlay(show) {
   $a('authOverlay').classList.toggle('hidden', !show);
   
   if (show) { if (!inPasswordRecovery) setAuthMode('choice'); renderLastUsedBadge(); }
+  
+  const close = $a('closeAuth');
+  if (close) close.classList.toggle('hidden', !(show && currentUser && !inPasswordRecovery));
 }
 
 function updateUserBar() {
