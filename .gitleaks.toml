@@ -1,0 +1,16 @@
+# Config gitleaks — hérite des règles par défaut, avec une allowlist pour les valeurs
+# volontairement publiques du projet.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valeurs publiques par design (non secrètes)"
+# Clé Supabase PUBLIABLE (anon) : conçue pour être exposée côté client, protégée par RLS.
+# Ce n'est PAS un secret (contrairement à la service_role key, jamais committée).
+regexes = [
+  '''sb_publishable_[A-Za-z0-9_-]+''',
+]
+# URL publique du projet Supabase (identifiant de projet, non secret).
+paths = [
+  '''\.gitleaks\.toml''',
+]
