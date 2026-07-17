@@ -16151,7 +16151,8 @@ $a('btnSignInDiscord').onclick = doSignInDiscord;
 $a('btnSignInGoogle').onclick = doSignInGoogle;
 $a('btnSignInGithub').onclick = doSignInGithub;
 $a('btnSignInTwitter').onclick = doSignInTwitter;
-$a('btnClearCacheAuth').onclick = clearGameCache;
+
+$a('btnClearCacheAuth').onclick = () => clearGameCache();
 
 $a('btnLogoutTopbar').onclick = doLogout;
 $a('btnCopyUuid').onclick = async () => {

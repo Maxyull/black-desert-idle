@@ -1705,7 +1705,14 @@ $a('btnSignInDiscord').onclick = doSignInDiscord;
 $a('btnSignInGoogle').onclick = doSignInGoogle;
 $a('btnSignInGithub').onclick = doSignInGithub;
 $a('btnSignInTwitter').onclick = doSignInTwitter;
-$a('btnClearCacheAuth').onclick = clearGameCache;
+// La flèche n'est pas cosmétique (2026-07-22, découpage P5) : clearGameCache() vit maintenant dans
+// backend/client-health.js, chargé APRÈS ce fichier. Les autres boutons juste au-dessus référencent
+// des fonctions de CE fichier, donc `= doSignInDiscord` marche ; ici `= clearGameCache` lisait la
+// variable AU CHARGEMENT, avant que le script qui la déclare n'ait tourné -> ReferenceError, qui
+// tuait au passage tout le reste du fichier (btnLogoutTopbar juste en dessous n'était plus câblé).
+// Le hoisting des `function` est PAR SCRIPT, pas global : en dev les 7 fichiers s'exécutent
+// séparément. La flèche repousse la résolution au clic, quand tous les scripts ont tourné.
+$a('btnClearCacheAuth').onclick = () => clearGameCache();
 // 2026-07-13 : #btnLogout (sidebar) retiré, doublon du header -- #btnLogoutTopbar est désormais
 // le SEUL déclencheur.
 $a('btnLogoutTopbar').onclick = doLogout;

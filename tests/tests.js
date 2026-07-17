@@ -3528,6 +3528,37 @@
     assert('client-health.js charge APRÈS meta/patch-notes-data.js (il y lit PATCH_NOTES[0].v au chargement)',
       srcIndexOf('meta/patch-notes-data.js') < srcIndexOf('backend/client-health.js'));
   }
+  // Bug REEL commis pendant le découpage P5, attrapé par les tests avant le merge — et le piège est
+  // assez vicieux pour mériter son propre garde-fou.
+  //
+  // `$a('btnClearCacheAuth').onclick = clearGameCache;` vivait dans game-supabase.js, juste à côté
+  // de ses frères (`= doSignInDiscord`, etc). Après le découpage, clearGameCache() est parti dans
+  // client-health.js, chargé APRÈS. Or cette ligne LIT la variable au chargement -> ReferenceError,
+  // qui tuait tout le reste du fichier : #btnLogoutTopbar, #btnCopyUuid et les écouteurs de
+  // l'overlay d'auth n'étaient plus câblés du tout.
+  //
+  // CE QUI REND LE PIÈGE VICIEUX : en PROD tout est concaténé dans un seul scope, où les `function`
+  // sont hoistées globalement — le bundle marchait parfaitement. Le hoisting est PAR SCRIPT : seul
+  // index.dev.html cassait. Un "le build passe" ou même "le bundle est identique à l'octet près"
+  // ne prouve donc RIEN sur ce mode de défaillance. Seul le vrai chargement en dev le voit.
+  //
+  // La correction est `= () => clearGameCache()` : la flèche repousse la résolution au clic. Ce
+  // test vérifie que les boutons cross-fichier gardent cette forme différée.
+  function testCrossFileButtonHandlersAreDeferred() {
+    if (typeof document === 'undefined') return;
+    const btn = document.getElementById('btnClearCacheAuth');
+    assert('#btnClearCacheAuth existe', !!btn);
+    if (!btn) return;
+    assert('#btnClearCacheAuth a bien un handler (il n\'a pas été tué par un ReferenceError au chargement)',
+      typeof btn.onclick === 'function');
+    // le symptôme d'origine : la ReferenceError coupait le fichier, donc TOUT ce qui suivait la
+    // ligne fautive perdait son câblage. On vérifie les victimes collatérales, pas juste la cause.
+    ['btnLogoutTopbar', 'btnCopyUuid'].forEach(id => {
+      const el = document.getElementById(id);
+      assert(`#${id} a encore son handler (câblé APRÈS btnClearCacheAuth dans game-supabase.js)`,
+        !el || typeof el.onclick === 'function');
+    });
+  }
   // check systématique (2026-07-08, demande explicite : "revois les dates des patchnote / ajoute
   // check systematique") -- trouvé en vérifiant manuellement : plusieurs versions récentes
   // (V283-V299) avaient été datées 15-16/07/2026 alors que l'horloge réelle (Supabase + timestamps
@@ -6904,6 +6935,7 @@
     testNoLegacyHardcodedBorderHexOutsideAdminOrDeadCascade();
     testSorcierRenderLoadsBeforeSyncStartupCallers();
     testGameSupabaseSplitKeepsOriginalScriptOrder();
+    testCrossFileButtonHandlersAreDeferred();
     testPatchNotesDatesFormatAndOrder();
     testEveryPatchSubHasALabel();
     testHeaderShortcutButtonsExistWithTitleAndAdminHidden();
