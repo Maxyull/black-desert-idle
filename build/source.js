@@ -16525,19 +16525,18 @@ async function checkForUpdate() {
   if (updateToastShown) return;
   try {
     
-    const res = await fetch('./meta/patch-notes-data.js?_=' + Date.now(), { cache: 'no-store' });
-    const text = await res.text();
-    const m = text.match(/const PATCH_NOTES = \[\s*\{\s*v:\s*'([^']+)'/);
-    if (m && m[1] !== CURRENT_VERSION) {
+    const res = await fetch('./meta/patch-notes-version.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return; 
+    const latest = (await res.json()).v;
+    if (latest && latest !== CURRENT_VERSION) {
       updateToastShown = true;
-      $a('updToastVer').textContent = '(' + m[1] + ')';
+      $a('updToastVer').textContent = '(' + latest + ')';
       $a('updateToast').classList.add('show');
       startUpdateCountdown();
     }
   } catch (e) {}
 }
 $a('btnReloadUpdate').onclick = () => { if (updateCountdownTimer) clearInterval(updateCountdownTimer); location.reload(); };
-// vide le cache du navigateur pour les fichiers du jeu (utile si une maj ne s'affiche pas
 
 async function clearGameCache() {
   try {

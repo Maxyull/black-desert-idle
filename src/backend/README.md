@@ -38,7 +38,11 @@ multi navigateur and multidevice" + "Mode hors ligne")** :
 
 - `game-supabase.js` — client Supabase, auth (email + Discord), chargement/sauvegarde de la
   partie, `syncPlayerStats()` (classement), `checkForUpdate()` (détecte une nouvelle version
-  en fetchant `meta/patch-notes-data.js`), dictionnaire i18n (`I18N`). Charge après
+  en fetchant `meta/patch-notes-version.json` — ~14 octets, généré au build depuis
+  `PATCH_NOTES[0].v` par `scripts/build.py`. Il téléchargeait `meta/patch-notes-data.js` en
+  entier jusqu'au 2026-07-22 : ~184 Ko gzippé, `no-store` donc sans cache ni 304, toutes les
+  60 s, pour en extraire 5 caractères par regex — soit ~11 Mo/h et par joueur), dictionnaire
+  i18n (`I18N`). Charge après
   `meta/patch-notes-data.js` (lit `PATCH_NOTES[0].v` immédiatement pour `CURRENT_VERSION`).
   Moteur de tutoriel générique (`startTutorial`/`endTutorial`/`TUTORIAL_STEPS`) : depuis le
   2026-07-19 (demande explicite, stats admin sur l'onboarding), `startTutorial(steps,

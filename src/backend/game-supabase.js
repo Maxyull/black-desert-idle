@@ -2198,20 +2198,27 @@ function startUpdateCountdown() {
     render();
   }, 1000);
 }
-/** Refetch meta/patch-notes-data.js et compare sa version à CURRENT_VERSION — affiche le toast de mise à jour une seule fois si différente, démarre le compte à rebours de rechargement auto. */
+/** Refetch meta/patch-notes-version.json et compare sa version à CURRENT_VERSION — affiche le toast de mise à jour une seule fois si différente, démarre le compte à rebours de rechargement auto. */
 async function checkForUpdate() {
   if (updateToastShown) return;
   try {
-    // PATCH_NOTES vit dans meta/patch-notes-data.js depuis le 2026-07-14 (découpage de
-    // game-supabase.js), déplacé dans meta/ le 2026-07-08 (réorganisation par dossiers) -- ce
-    // check doit fetch CE fichier, pas game-supabase.js (qui ne contient plus le tableau), sinon
-    // la regex ne matche plus jamais et le toast ne s'affiche plus
-    const res = await fetch('./meta/patch-notes-data.js?_=' + Date.now(), { cache: 'no-store' });
-    const text = await res.text();
-    const m = text.match(/const PATCH_NOTES = \[\s*\{\s*v:\s*'([^']+)'/);
-    if (m && m[1] !== CURRENT_VERSION) {
+    // Ce check tourne toutes les 60 s + à chaque retour d'onglet et de focus (voir plus bas), et
+    // il ne veut qu'UNE chose : le numéro de la version en ligne. Il téléchargeait pour ça
+    // meta/patch-notes-data.js EN ENTIER (591 Ko, ~184 Ko gzippé) puis en extrayait 5 caractères
+    // par regex -- et `cache: 'no-store'` interdisait au navigateur de le mettre en cache ou de
+    // répondre 304, donc le fichier repartait vraiment sur le fil à chaque appel : ~11 Mo/h et
+    // par joueur. meta/patch-notes-version.json ne contient que {"v":"..."} (~15 octets), généré
+    // au build depuis PATCH_NOTES[0].v (scripts/build.py, gen_patch_version) -- même valeur,
+    // même source de vérité, ~12 000× moins de données.
+    // `no-store` est CONSERVÉ, et c'est volontaire : ce fichier doit refléter le déploiement à la
+    // seconde près, un cache le rendrait inutile. C'est bien la TAILLE qui était le problème, pas
+    // le fait de ne pas cacher.
+    const res = await fetch('./meta/patch-notes-version.json?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) return; // 404 pendant un déploiement partiel : on retentera dans 60 s
+    const latest = (await res.json()).v;
+    if (latest && latest !== CURRENT_VERSION) {
       updateToastShown = true;
-      $a('updToastVer').textContent = '(' + m[1] + ')';
+      $a('updToastVer').textContent = '(' + latest + ')';
       $a('updateToast').classList.add('show');
       startUpdateCountdown();
     }

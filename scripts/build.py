@@ -45,6 +45,8 @@ BUNDLE_PATH = BUILD_DIR / "source.js"
 MINIFIED_BUNDLE_PATH = BUILD_DIR / "source.min.js"
 CSS_PATH = ROOT / "src" / "styles" / "styles.css"
 MINIFIED_CSS_PATH = BUILD_DIR / "styles.min.css"
+PATCH_DATA_PATH = ROOT / "meta" / "patch-notes-data.js"
+PATCH_VERSION_PATH = ROOT / "meta" / "patch-notes-version.json"
 
 # fichiers explicitement exclus du bundle prod meme s'ils apparaissent dans index.dev.html
 EXCLUDED_SUBSTRINGS = ("tests/tests.js", "meta/patch-notes-data.js", "supabase-js")
@@ -267,12 +269,39 @@ def gen_locales():
         sys.exit(exc.returncode)
 
 
+def gen_patch_version():
+    """Ecrit meta/patch-notes-version.json = {"v": "<version la plus recente>"} (2026-07-22,
+    audit perf P4).
+
+    POURQUOI : checkForUpdate() (game-supabase.js) tourne toutes les 60 s, plus a chaque retour
+    d'onglet et de focus, pour repondre a UNE question -- "une nouvelle version est-elle en
+    ligne ?". Il telechargeait meta/patch-notes-data.js EN ENTIER pour ca (591 Ko, ~184 Ko une
+    fois gzippe), avec `cache: 'no-store'` -- donc sans cache navigateur et sans 304 possible :
+    le fichier repartait vraiment sur le fil a chaque appel. Soit ~11 Mo/h et par joueur, pour
+    lire une chaine de 5 caracteres par regex. Ce fichier-ci ne contient que cette chaine.
+
+    Genere plutot qu'ecrit a la main : la version vit dans PATCH_NOTES[0].v, et deux sources de
+    verite pour la meme valeur divergent tot ou tard (ici la consequence serait silencieuse et
+    penible a diagnostiquer -- un toast de mise a jour qui ne s'affiche plus jamais, ou qui
+    s'affiche en boucle sur une version deja chargee). check_build_freshness.py suit ce fichier,
+    donc la CI echoue si quelqu'un edite les patch notes sans relancer le build."""
+    src = PATCH_DATA_PATH.read_text(encoding="utf-8")
+    m = re.search(r"const PATCH_NOTES = \[\s*\{\s*v:\s*'([^']+)'", src)
+    if not m:
+        print(f"ERREUR: version introuvable dans {PATCH_DATA_PATH.name} (structure changee ?)", file=sys.stderr)
+        sys.exit(1)
+    # meme forme JSON que ce que checkForUpdate() attend ; \n final pour rester diff-friendly
+    PATCH_VERSION_PATH.write_text('{"v":"%s"}\n' % m.group(1), encoding="utf-8")
+    print(f"meta/{PATCH_VERSION_PATH.name} : {m.group(1)}")
+
+
 def main():
     if not DEV_HTML.exists():
         print(f"ERREUR: {DEV_HTML} introuvable", file=sys.stderr)
         sys.exit(1)
 
     gen_locales()
+    gen_patch_version()
 
     dev_html = DEV_HTML.read_text(encoding="utf-8")
     files = extract_script_order(dev_html)

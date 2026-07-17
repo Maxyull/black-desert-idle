@@ -3344,14 +3344,32 @@
   // fetch game-supabase.js pour y chercher PATCH_NOTES via regex -- ça a cassé la notification en
   // silence quand PATCH_NOTES a été déplacé dans patch-notes-data.js (découpage de
   // game-supabase.js), sans qu'aucun test ne le détecte. Garde-fou statique (pas besoin de vrai
-  // fetch réseau) : vérifie que la fonction cible bien le fichier qui contient RÉELLEMENT
-  // PATCH_NOTES aujourd'hui, pour attraper immédiatement un futur déplacement oublié.
-  function testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes() {
+  // fetch réseau) : vérifie que la fonction cible bien le fichier qui porte RÉELLEMENT le numéro
+  // de version aujourd'hui, pour attraper immédiatement un futur déplacement oublié.
+  //
+  // 2026-07-22 (audit perf P4) : cette cible a changé une 2e fois. checkForUpdate() ne télécharge
+  // plus patch-notes-data.js en entier (591 Ko, ~184 Ko gzippé) pour en extraire 5 caractères par
+  // regex, toutes les 60 s et sans cache -- il lit meta/patch-notes-version.json (~14 octets),
+  // généré au build depuis PATCH_NOTES[0].v. L'invariant gardé ici est le MÊME qu'en 2026-07-14
+  // ("cible le fichier qui porte la version"), seule la cible bouge -- l'ancien fichier est
+  // désormais lui aussi une réponse FAUSSE, au même titre que game-supabase.js.
+  //
+  // Ce test ne peut pas vérifier que la VALEUR des deux fichiers concorde (le harnais est
+  // synchrone, pas de fetch possible) : cette dérive-là est gardée côté CI par
+  // scripts/check_build_freshness.py, qui suit meta/patch-notes-version.json.
+  function testCheckForUpdateFetchesFileThatActuallyCarriesTheVersion() {
     const src = checkForUpdate.toString();
-    assert('checkForUpdate() fetch bien meta/patch-notes-data.js (le fichier qui définit réellement PATCH_NOTES)',
-      src.includes("'./meta/patch-notes-data.js"), `src=${src.slice(0,200)}`);
+    assert('checkForUpdate() fetch bien meta/patch-notes-version.json (le fichier qui porte réellement la version)',
+      src.includes("'./meta/patch-notes-version.json"), `src=${src.slice(0,200)}`);
+    assert('checkForUpdate() ne fetch plus meta/patch-notes-data.js (591 Ko sans cache toutes les 60 s pour 5 caractères)',
+      !src.includes("'./meta/patch-notes-data.js"));
     assert('checkForUpdate() ne fetch plus game-supabase.js (ne contient plus PATCH_NOTES depuis le découpage)',
       !src.includes("'./game-supabase.js"));
+    // le no-store est le POINT de ce check (détecter un déploiement à la seconde près) -- si
+    // quelqu'un l'enlève un jour "pour économiser", le toast ne sortira plus jamais qu'au bout
+    // de max-age. C'était la taille le problème, jamais le fait de ne pas cacher.
+    assert('checkForUpdate() garde cache:no-store (sinon la détection de déploiement ne sert plus à rien)',
+      src.includes("no-store"));
   }
   // "afficher un compteur 15 secondes et recharger la page tout en continuant ce que fais le
   // joueur" (2026-07-13) -- vérifie que checkForUpdate() démarre bien le compte à rebours à la
@@ -6840,7 +6858,7 @@
     testShRateDisplaysPerMinuteNotPerHour();
     testAdminEquipFullTierSetCoversAllFourTiers();
     testChestZoomToggleWorks();
-    testCheckForUpdateFetchesFileThatActuallyContainsPatchNotes();
+    testCheckForUpdateFetchesFileThatActuallyCarriesTheVersion();
     testUpdateCountdownStartsAt15sAndIsCleanedUp();
     testErrorMessagesAreEscapedBeforeInnerHtml();
     testShowPlayerGearHasBackToLeaderboardButton();
