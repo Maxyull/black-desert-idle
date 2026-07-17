@@ -973,6 +973,19 @@
     font-size:11px; padding:5px 10px;
   }
   #offlineBanner.hidden { display:none; }
+  /* Bandeau de dépréciation du mode invité (2026-07-22) -- mêmes conventions que #offlineBanner
+     ci-dessus, mais CLIQUABLE (ouvre la liaison de compte) et en rouge : c'est la dernière chance
+     pour un invité de sauver sa progression. Décalé sous #offlineBanner (top:22px) pour rester
+     lisible si les deux s'affichent en même temps (invité + coupure réseau).
+     À SUPPRIMER avec le reste du code invité (voir GUEST_SUNSET_DATE, game-supabase.js). */
+  #guestSunsetBanner {
+    position:fixed; top:0; left:0; right:0; z-index:121; text-align:center; cursor:pointer;
+    background:#40160f; border-bottom:1px solid #e0603c; color:#ffd6c4;
+    font-size:11px; padding:5px 10px; font-weight:600;
+  }
+  #guestSunsetBanner:hover { background:#5a1f16; }
+  #guestSunsetBanner.hidden { display:none; }
+  #offlineBanner:not(.hidden) ~ #guestSunsetBanner { top:22px; }
   #authBox {
     position:relative; width:320px; max-width:92vw; background:var(--panel); border:1px solid var(--gold-dim);
     padding:28px 26px; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,.7);
