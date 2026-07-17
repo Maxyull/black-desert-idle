@@ -1258,11 +1258,31 @@
     background:rgba(29,155,240,.18) !important; border:1px solid #1D9BF0 !important; color:#bfe4ff !important;
   }
   .twitterBtn:hover { background:rgba(29,155,240,.32) !important; }
-  /* rangée à 3 colonnes pour Google/GitHub/Twitter (2026-07-20, demande explicite : "laisser
-     discord en gros et mettre dessous divisé en 3 les 3 autre") -- Discord (.discordBtn ci-dessus)
-     reste seul, pleine largeur, hors de cette rangée. */
-  #authSocialRow { display:flex; gap:6px; margin-top:4px; }
-  #authSocialRow button { flex:1; width:auto; padding:9px 4px; font-size:11.5px; text-align:center; margin-top:0; }
+  /* Rangée des 4 providers en ICÔNES (2026-07-22, demande explicite : "Mettre les icones discord/
+     google/github/twitter") -- remplace la rangée à 3 colonnes + le CTA Discord pleine largeur du
+     2026-07-20 : les 4 providers sont désormais à égalité, sur une seule ligne. Les couleurs de
+     marque (.discordBtn/.googleBtn/... ci-dessus) sont conservées. */
+  #authSocialRow { display:flex; gap:8px; margin-top:4px; justify-content:center; }
+  .oauthIconBtn {
+    flex:1; width:auto; margin-top:0; padding:10px 0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .oauthIconBtn svg { width:20px; height:20px; display:block; pointer-events:none; }
+  /* Google garde ses 4 couleurs de marque (fill explicite dans le SVG) ; les autres logos sont
+     monochromes et suivent la couleur du bouton via currentColor. */
+  .oauthIconBtn:hover { transform:translateY(-1px); }
+  /* le badge "Dernière fois" est positionné en absolu sur le bouton (voir .lastUsedBadge) : sans
+     position:relative ici, il se placerait par rapport à #authBox et non par rapport à l'icône. */
+  .oauthIconBtn { position:relative; }
+  /* Séparateur "ou" entre les intentions (email) et les providers, sur l'écran de choix. */
+  .authSep {
+    display:flex; align-items:center; gap:8px; margin:10px 0 6px;
+    color:#6f6a7a; font-size:11px; text-transform:uppercase; letter-spacing:1px;
+  }
+  .authSep::before, .authSep::after { content:''; flex:1; height:1px; background:#2c2a33; }
+  /* Écran d'auth à modes : #authChoice et #authForm s'excluent (setAuthMode), .hidden suffit. */
+  #authChoice, #authForm { display:flex; flex-direction:column; }
+  #authChoice.hidden, #authForm.hidden { display:none; }
 
   /* slider position du menu (gauche/droite) */
   #menuSideToggle {

@@ -68,7 +68,7 @@
   "backend.account.your_referrals_title": "👥 Your referrals",
   "backend.auth.ban_reason_unspecified": "unspecified",
   "backend.auth.ban_suspended": "Account suspended until {{until}} — Reason: {{reason}}",
-  "backend.auth.email_first": "Enter your email first, then click again.",
+  "backend.auth.email_first": "Enter your username or email first, then click again.",
   "backend.auth.guest_badge": "🎭 Guest",
   "backend.auth.last_used": "Last used",
   "backend.auth.guest_mode_body": "Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click \"🔗 Link account\" to create an account (your current progress is kept) or sign back into an existing one.",
@@ -224,5 +224,6 @@
   "backend.wiki.search_no_results": "No results for",
   "backend.wiki.search_placeholder": "Search…",
   "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait",
-  "backend.gear.back_to_leaderboard_button": "← Back to leaderboard"
+  "backend.gear.back_to_leaderboard_button": "← Back to leaderboard",
+  "backend.auth.magic_link_sent": "If an account matches, a login link has just been emailed — check your inbox."
 }

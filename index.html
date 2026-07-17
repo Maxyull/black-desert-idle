@@ -96,7 +96,7 @@
      4 fichiers React existants) -- meme convention d'integrite figee que Supabase/React ci-dessus -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<link rel="stylesheet" href="build/styles.min.css?v=658">
+<link rel="stylesheet" href="build/styles.min.css?v=659">
 
 <!-- verrou multi-session (2026-07-10, demande explicite : "Interdire multionglet, multi navigateur
      and multidevice") -- affiché quand check_player_session() (game-supabase.js, appelée au même
@@ -127,21 +127,43 @@
     <div id="authMobileBadge" data-i18n="authMobileBadge">📱 BETA — Compatible mobile &amp; tablette</div>
     <p class="authSub" id="authSub" data-i18n="authSub">Connecte-toi avec un vrai compte pour accéder au Marché et au Classement</p>
     <p class="demoNote" data-i18n="demoNoteAuth">🎮 Ceci est une démo de test — ta progression peut être réinitialisée à tout moment.</p>
-    <input type="text" id="authEmail" placeholder="Pseudo ou email" data-i18n-ph="authIdentifierPh" autocomplete="username">
-    <input type="password" id="authPass" placeholder="Mot de passe" autocomplete="current-password" data-i18n-ph="authPassPh">
-    <input type="text" id="authPseudo" placeholder="Pseudo (pour la création de compte)" data-i18n-ph="authPseudoPh" maxlength="20" autocomplete="nickname">
     <div id="authError"></div>
-    <button id="btnSignIn" data-i18n="btnSignIn">Se connecter</button>
-    <button id="btnSignUp" class="ghost" data-i18n="btnSignUp">Créer un compte</button>
-    <button id="btnForgotPass" class="ghost" data-i18n="btnForgotPass">Mot de passe oublié ?</button>
-    <button id="btnSignInDiscord" class="discordBtn" data-i18n="btnSignInDiscord">Se connecter avec Discord</button>
-    <!-- 2026-07-20, demande explicite : "laisser discord en gros et mettre dessous divisé en 3 les
-         3 autre" -- Discord reste le CTA principal (pleine largeur), les 3 autres providers passent
-         en rangée secondaire à 3 colonnes égales, jamais chacun sur sa propre ligne pleine largeur. -->
-    <div id="authSocialRow">
-      <button id="btnSignInGoogle" class="googleBtn" data-i18n="btnSignInGoogle">Google</button>
-      <button id="btnSignInGithub" class="githubBtn" data-i18n="btnSignInGithub">GitHub</button>
-      <button id="btnSignInTwitter" class="twitterBtn" data-i18n="btnSignInTwitter">Twitter/X</button>
+    <!-- Écran d'auth à MODES (2026-07-22, demande explicite : "page de connexion aucun champ /
+         se co/créer compte/mdp perdu / puis ouvrir les champs selon le choix").
+         #authChoice = état initial, AUCUN champ : on choisit d'abord une intention. #authForm
+         n'ouvre que les champs de l'intention choisie (voir setAuthMode(), game-supabase.js) --
+         c'est setAuthMode qui pilote l'affichage, jamais du display:none dispersé dans le code. -->
+    <div id="authChoice">
+      <button id="btnSignIn" data-i18n="btnSignIn">Se connecter</button>
+      <button id="btnSignUp" class="ghost" data-i18n="btnSignUp">Créer un compte</button>
+      <button id="btnForgotPass" class="ghost" data-i18n="btnForgotPass">Mot de passe oublié ?</button>
+      <button id="btnMagicLink" class="ghost" data-i18n="btnMagicLink">✨ Lien magique (sans mot de passe)</button>
+      <div class="authSep"><span data-i18n="authSepOr">ou</span></div>
+      <!-- 4 providers en icônes (2026-07-22, demande explicite : "Mettre les icones discord/
+           google/github/twitter") -- rangée uniforme, remplace le CTA Discord pleine largeur du
+           2026-07-20. SVG inline : le CSP/offline interdit tout logo distant. aria-label porte le
+           nom du provider (l'icône seule n'est pas lisible par un lecteur d'écran). -->
+      <div id="authSocialRow">
+        <button id="btnSignInDiscord" class="oauthIconBtn discordBtn" aria-label="Discord" title="Discord">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M20.317 4.369A19.79 19.79 0 0 0 15.432 3c-.21.375-.455.88-.624 1.283a18.27 18.27 0 0 0-5.487 0A12.6 12.6 0 0 0 8.69 3a19.74 19.74 0 0 0-4.885 1.372C.72 8.977-.114 13.47.302 17.9a19.9 19.9 0 0 0 6.006 3.04c.485-.66.917-1.362 1.29-2.1a12.9 12.9 0 0 1-2.03-.978c.171-.126.338-.257.499-.392a14.2 14.2 0 0 0 12.07 0c.163.135.33.266.5.392-.648.383-1.33.71-2.033.978.372.738.804 1.44 1.29 2.1a19.86 19.86 0 0 0 6.01-3.04c.489-5.14-.836-9.59-3.487-13.53ZM8.02 15.2c-1.183 0-2.157-1.086-2.157-2.42 0-1.334.955-2.42 2.157-2.42 1.21 0 2.176 1.095 2.157 2.42 0 1.334-.955 2.42-2.157 2.42Zm7.96 0c-1.183 0-2.157-1.086-2.157-2.42 0-1.334.955-2.42 2.157-2.42 1.21 0 2.176 1.095 2.157 2.42 0 1.334-.947 2.42-2.157 2.42Z"/></svg>
+        </button>
+        <button id="btnSignInGoogle" class="oauthIconBtn googleBtn" aria-label="Google" title="Google">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.06 12.25c0-.85-.08-1.67-.22-2.45H12v4.63h6.2a5.3 5.3 0 0 1-2.3 3.48v2.89h3.72c2.18-2 3.44-4.96 3.44-8.55Z"/><path fill="#34A853" d="M12 23.5c3.11 0 5.72-1.03 7.62-2.8l-3.72-2.88c-1.03.69-2.35 1.1-3.9 1.1-3 0-5.54-2.03-6.45-4.75H1.7v2.98A11.5 11.5 0 0 0 12 23.5Z"/><path fill="#FBBC05" d="M5.55 14.17a6.9 6.9 0 0 1 0-4.34V6.85H1.7a11.5 11.5 0 0 0 0 10.3l3.85-2.98Z"/><path fill="#EA4335" d="M12 4.92c1.69 0 3.21.58 4.4 1.72l3.3-3.3C17.71 1.44 15.1.5 12 .5A11.5 11.5 0 0 0 1.7 6.85l3.85 2.98C6.46 7.11 9 4.92 12 4.92Z"/></svg>
+        </button>
+        <button id="btnSignInGithub" class="oauthIconBtn githubBtn" aria-label="GitHub" title="GitHub">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.29 1.19-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11 11 0 0 1 5.8 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.24 2.76.12 3.05.74.8 1.18 1.83 1.18 3.09 0 4.42-2.69 5.4-5.25 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>
+        </button>
+        <button id="btnSignInTwitter" class="oauthIconBtn twitterBtn" aria-label="Twitter/X" title="Twitter/X">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M18.24 2.25h3.31l-7.23 8.26 8.5 11.24h-6.65l-5.21-6.82-5.97 6.82H1.68l7.73-8.84L1.25 2.25h6.82l4.71 6.23 5.46-6.23Zm-1.16 17.52h1.83L7.01 4.13H5.04l12.04 15.64Z"/></svg>
+        </button>
+      </div>
+    </div>
+    <div id="authForm" class="hidden">
+      <input type="text" id="authEmail" placeholder="Pseudo ou email" data-i18n-ph="authIdentifierPh" autocomplete="username">
+      <input type="text" id="authPseudo" placeholder="Pseudo" data-i18n-ph="authPseudoPh" maxlength="20" autocomplete="nickname">
+      <input type="password" id="authPass" placeholder="Mot de passe" autocomplete="current-password" data-i18n-ph="authPassPh">
+      <button id="btnAuthSubmit" data-i18n="btnSignIn">Se connecter</button>
+      <button id="btnAuthBack" class="ghost" data-i18n="btnAuthBack">← Retour</button>
     </div>
     <div id="authStatus"></div>
     <button id="btnClearCacheAuth" class="ghost" data-i18n="btnClearCacheAuth">🧹 Vider le cache du jeu</button>
@@ -946,11 +968,11 @@
 <!-- ressources i18next generees (2026-07-11, voir I18N_PLAN.md §5) -- I18N_RESOURCES/I18N_NAMESPACES,
      compile depuis /locales/{fr,en}/*.json par scripts/gen-locales.js, jamais edite a la main
      (meme regle que build/source.js). DOIT charger avant i18n-init.js (juste en dessous). -->
-<script src="meta/patch-notes-data.js?v=658"></script>
+<script src="meta/patch-notes-data.js?v=659"></script>
 <!-- build de production : bundle concatene, commentaires retires, puis minifie
      par Terser (build/source.min.js) -- genere par scripts/build.py depuis
      index.dev.html, jamais edite a la main -->
-<script src="build/source.min.js?v=658"></script>
+<script src="build/source.min.js?v=659"></script>
 <!-- init i18next (2026-07-11, voir I18N_PLAN.md §5) -- DOIT charger EN PREMIER, avant TOUT fichier     susceptible d'appeler i18next.t() -- y compris via une fonction invoquee de façon synchrone     tres tot au chargement (hud(), meme piege que celui documente en CLAUDE.md §8). Lit LANG depuis
      localStorage de façon independante de core/game-core.js (voir commentaire en tete du fichier). -->
 <!-- icônes SVG (équipement/bijoux/matériaux/Pierre de Cron) -- extrait de game-core.js le

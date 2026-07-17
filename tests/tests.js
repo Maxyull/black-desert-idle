@@ -2132,6 +2132,28 @@
     assert('Le joueur écarté du GS reste classé au silver (l\'équilibrage du stuff n\'affecte que le GS)',
       silver.length === 3 && silver[0].user_id === 'bv-jamais', `silver=${silver.map(r=>r.user_id).join(',')}`);
   }
+  // Écran d'auth à modes (2026-07-22) : AUTH_MODES est la seule source de vérité "quels champs pour
+  // quelle intention". Garde-fou contre un flux ajouté sans champ, ou un champ oublié.
+  function testAuthModesWellFormed() {
+    if (typeof AUTH_MODES === 'undefined') return;
+    const inputs = ['authEmail','authPseudo','authPass'];
+    Object.keys(AUTH_MODES).forEach(k => {
+      const m = AUTH_MODES[k];
+      assert(`AUTH_MODES.${k} ouvre au moins un champ`, Array.isArray(m.fields) && m.fields.length > 0);
+      assert(`AUTH_MODES.${k} n'ouvre que des champs réels`, m.fields.every(f => inputs.includes(f)), m.fields.join(','));
+      assert(`AUTH_MODES.${k} a un handler de validation`, typeof m.run === 'function');
+      assert(`AUTH_MODES.${k} a un libellé de bouton traduit FR/EN`,
+        !!(I18N[m.submitKey] && I18N[m.submitKey].fr && I18N[m.submitKey].en), m.submitKey);
+    });
+    // le contrat demandé : connexion = identifiant+mdp, inscription = les 3, oubli/magic = identifiant seul
+    assert('Connexion : identifiant + mot de passe', AUTH_MODES.signin.fields.join(',') === 'authEmail,authPass');
+    assert('Inscription : email + pseudo + mot de passe (les 3)', AUTH_MODES.signup.fields.join(',') === 'authEmail,authPseudo,authPass');
+    assert('Mot de passe oublié : identifiant seul', AUTH_MODES.forgot.fields.join(',') === 'authEmail');
+    assert('Lien magique : identifiant seul', AUTH_MODES.magic.fields.join(',') === 'authEmail');
+    // l'inscription exige un vrai email : elle ne doit PAS proposer "pseudo ou email"
+    assert('Inscription : le champ email n\'accepte pas un pseudo (placeholder dédié)',
+      AUTH_MODES.signup.idPh === 'authEmailPh' && AUTH_MODES.signin.idPh === 'authIdentifierPh');
+  }
   // seuil "top" utilisé par lb2RenderBody() pour décider d'afficher la barre "Ta position" --
   // garde-fou pour qu'un futur changement du seuil soit un choix explicite, pas un oubli.
   function testLb2YourRankBarThresholdIsTop20() {
@@ -6927,6 +6949,7 @@
     testLb2CompendiumCategoryUsesRealPct();
     testLb2ComputeYourRankInfoFindsRealRankOutsideTop20();
     testLb2GsLadderExcludesStaleBalanceRecords();
+    testAuthModesWellFormed();
     testLb2YourRankBarThresholdIsTop20();
     testLb2GuestGateReusesMarketCopyAndRealLinkButton();
     testOpenLeaderboard2ShowsStyledGuestGateNotRawAlert();
