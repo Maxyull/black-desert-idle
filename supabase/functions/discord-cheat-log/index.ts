@@ -42,11 +42,14 @@ Deno.serve(async (req: Request) => {
     });
 
     if (!res.ok) {
-      const txt = await res.text();
-      return new Response(JSON.stringify({ error: "discord_failed", detail: txt }), { status: 502, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
+      // Detail garde cote serveur (logs), jamais renvoye au client : peut contenir des infos
+      // internes (webhook, trace) -- alerte CodeQL js/stack-trace-exposure, audit #9.
+      console.error("discord_failed", res.status, await res.text());
+      return new Response(JSON.stringify({ error: "discord_failed" }), { status: 502, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
     }
     return new Response(JSON.stringify({ ok: true }), { headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 400, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
+    console.error("discord-cheat-log error", e);
+    return new Response(JSON.stringify({ error: "bad_request" }), { status: 400, headers: { "Content-Type": "application/json", ...CORS_HEADERS } });
   }
 });

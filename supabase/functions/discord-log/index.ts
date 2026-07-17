@@ -89,11 +89,15 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify({ embeds: [embed] }),
     });
     if (!res.ok) {
-      const txt = await res.text();
-      return json({ error: "discord_failed", detail: txt }, 502);
+      // Le détail de l'erreur Discord (et l'exception ci-dessous) reste dans les logs serveur et
+      // n'est JAMAIS renvoyé au client : il peut contenir des infos internes (URL du webhook,
+      // trace) -- alerte CodeQL js/stack-trace-exposure, audit #9.
+      console.error("discord_failed", targetKey, res.status, await res.text());
+      return json({ error: "discord_failed" }, 502);
     }
     return json({ ok: true, target: targetKey });
   } catch (e) {
-    return json({ error: String(e) }, 400);
+    console.error("discord-log error", e);
+    return json({ error: "bad_request" }, 400);
   }
 });
