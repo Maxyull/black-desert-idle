@@ -598,7 +598,10 @@ async function onAuthedInner(user) {
   if (typeof updateLoginStreak === 'function') updateLoginStreak(); // S.lastActiveDay/S.loginStreak (game-core.js) — APRÈS le chargement de la sauvegarde, pas avant
   startAutoCloudSave();
   heartbeatPresence();
-  refreshOnlineCounter();
+  // P1 (2026-07-22) : le snapshot ramène online + zones + admin + velia en une requête -- avant, ce
+  // n'était que refreshOnlineCounter() ici, les 3 autres attendaient leur premier tick (20 s).
+  // L'affichage initial est donc plus complet ET moins coûteux qu'avant.
+  refreshPresenceSnapshot();
   refreshLiveBoss(); // affiche tout de suite un éventuel boss global déjà en cours
   // rappel proactif pour un invité (2026-07-10, demande explicite : "verifie que l'invité a bien
   // des notifications qui l'invitent à se connecter pour ne pas perdre son avancée") -- jusqu'ici
@@ -1310,6 +1313,59 @@ async function refreshAdminZone() {
     }
   } catch(e) {}
 }
+// ==================== REFRESH DE PRÉSENCE GROUPÉ (audit perf P1, 2026-07-22) ====================
+// Les 4 fonctions ci-dessus (online / zones / admin / velia) tournaient chacune sur son propre
+// setInterval de 20 s, alors qu'elles lisent TOUTES la même table `presence` avec la même fenêtre
+// (90 s) : 4 allers-retours réseau distincts pour une seule et même donnée. Avec N joueurs actifs,
+// ça faisait N × 4 requêtes toutes les 20 s -- le premier poste d'egress Supabase du projet.
+//
+// get_presence_snapshot (migration 20260722240000) fait la lecture UNE fois côté serveur et renvoie
+// les 4 morceaux en un JSON. Cette fonction les redispatche vers exactement les mêmes cibles d'UI :
+// la logique d'affichage n'est pas réécrite, juste déplacée. Parité vérifiée sur les données de
+// prod avant bascule (snapshot == les 4 RPC, champ par champ).
+//
+// Ce qui reste séparé, et pourquoi :
+//   * heartbeatPresence  -> c'est une ÉCRITURE, rien à grouper avec des lectures.
+//   * refreshLiveBoss    -> autre table, et sa logique de reprise lui est propre (boss.js) : la
+//                           fusionner fragiliserait son retry pour économiser une requête.
+//   * refreshVeliaPlayers -> conservée telle quelle : elle est encore appelée à l'ENTRÉE EN VILLE
+//                           (game-core.js), un rafraîchissement ciblé immédiat qui n'a rien à voir
+//                           avec le tick périodique. Seul son setInterval disparaît.
+// Les 4 RPC serveur restent également en place (get_online_counts sert à admin-panel.js).
+/** Refresh de présence groupé (audit P1) : un seul RPC get_presence_snapshot au lieu des 4 appels séparés (online/zones/admin/velia), redispatché vers les mêmes cibles d'UI. */
+async function refreshPresenceSnapshot() {
+  if (!sb) return;
+  try {
+    const { data, error } = await sb.rpc('get_presence_snapshot', { p_window_seconds: 90 });
+    if (error || !data) return;
+
+    // --- online (ex-refreshOnlineCounter) ---
+    if (data.online) {
+      const { total, guests } = data.online;
+      $a('onlineTotal').textContent = total;
+      $a('onlineGuests').textContent = guests > 0
+        ? ` (${guests} ${i18next.t('backend:backend.presence.guests_suffix')})` : '';
+    }
+
+    // --- zones (ex-refreshZonePlayerCounts) ---
+    zonePlayerCounts = {};
+    (data.zones || []).forEach(r => { zonePlayerCounts[r.zone_idx] = r.cnt; });
+    if (typeof updateZonePlayerCountBadges === 'function') updateZonePlayerCountBadges();
+
+    // --- admin_zone (ex-refreshAdminZone) : ne reconstruit la liste QUE si la valeur change ---
+    const next = (data.admin_zone === null || data.admin_zone === undefined) ? null : Number(data.admin_zone);
+    if (next !== adminZoneIdx) {
+      adminZoneIdx = next;
+      if (typeof buildZoneList === 'function') buildZoneList();
+    }
+
+    // --- velia (ex-refreshVeliaPlayers) : même garde `atVelia` que l'originale ---
+    if (atVelia) {
+      veliaPlayers = data.velia || [];
+      if (typeof updateVeliaPlayersTicker === 'function') updateVeliaPlayersTicker();
+    }
+  } catch(e) {}
+}
 // Modal de reconnexion (2026-07-10) : enregistre une session AFK/hors-ligne terminée (fire-and-
 // forget, l'affichage du modal ne doit jamais dépendre du succès de cet appel) + lit l'historique
 // perso pour l'onglet "Historique des sessions" (voir src/core/reconnect-modal-react.js).
@@ -1361,13 +1417,13 @@ async function refreshRegisteredCounter() {
     $a('registeredTotal').textContent = data;
   } catch(e) {}
 }
-setInterval(heartbeatPresence, 20000);
-setInterval(refreshOnlineCounter, 20000);
-setInterval(refreshZonePlayerCounts, 20000);
-setInterval(refreshAdminZone, 20000);
-refreshAdminZone();
-setInterval(refreshVeliaPlayers, 20000);
-setInterval(refreshLiveBoss, 20000);
+// Ticks périodiques (audit perf P1, 2026-07-22) : on est passé de 6 à 3 intervalles. Les 4 lectures
+// de présence (online/zones/admin/velia) lisaient la même table avec la même fenêtre en 4 requêtes
+// distinctes -> un seul get_presence_snapshot les remplace (voir refreshPresenceSnapshot).
+setInterval(heartbeatPresence, 20000);        // ÉCRITURE : rien à grouper avec des lectures
+setInterval(refreshPresenceSnapshot, 20000);  // P1 : online + zones + admin + velia en 1 RPC
+refreshPresenceSnapshot();                    // 1er rendu immédiat (remplace l'ancien refreshAdminZone())
+setInterval(refreshLiveBoss, 20000);          // autre table + retry propre (boss.js) : reste séparé
 refreshRegisteredCounter();
 setInterval(refreshRegisteredCounter, 5 * 60000);
 
