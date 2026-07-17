@@ -77,7 +77,7 @@
   "backend.auth.sending": "Sending…",
   "backend.auth.err_config": "Supabase is not configured.",
   "backend.auth.err_login_fields": "Username/email and password are required.",
-  "backend.auth.err_signup_fields": "Email, a 6+ character password and a username are all required.",
+  "backend.auth.err_signup_fields": "Email, an 8+ character password and a username are all required.",
   "backend.auth.err_signup_needs_email": "Sign-up needs a real email address (not just a username).",
   "backend.auth.err_pseudo_not_found": "No account found for that username.",
   "backend.auth.err_invalid_credentials": "Wrong username/email or password.",
