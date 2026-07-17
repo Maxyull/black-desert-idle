@@ -1,0 +1,8 @@
+name: "CodeQL config — Black Desert Idle"
+
+# build/source.js et build/source.min.js sont GÉNÉRÉS par scripts/build.py à partir de src/ :
+# les scanner duplique chaque alerte (une fois dans src/, une fois dans le bundle) et double le
+# bruit sans rien apprendre. On analyse la source, pas son artefact.
+paths-ignore:
+  - build
+  - node_modules

@@ -25,8 +25,13 @@ jobs:
         uses: github/codeql-action/init@b7351df727350dca84cb9d725d57dcf5bc82ba26 # v3
         with:
           languages: javascript-typescript
-          # security-and-quality inclut plus de règles que le défaut (security-extended possible aussi)
-          queries: security-and-quality
+          # security-extended (et non security-and-quality) : le pack "quality" est du linting
+          # (variables inutilisees, arguments superflus, expressions mortes...) qui representait
+          # ~34 des 46 alertes et enterrait les vraies alertes de securite sous du bruit jamais
+          # trie. security-extended garde/ajoute les regles de SECURITE sans le linting.
+          queries: security-extended
+          # exclut build/ (bundle genere, duplique chaque alerte de src/) -- voir le fichier
+          config-file: ./.github/codeql/codeql-config.yml
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@b7351df727350dca84cb9d725d57dcf5bc82ba26 # v3
