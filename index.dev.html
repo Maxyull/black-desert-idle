@@ -1111,6 +1111,18 @@
      top-level dès son chargement (voir CURRENT_VERSION) -->
 <script src="meta/patch-notes-data.js?v=668"></script>
 <script src="src/backend/game-supabase.js?v=668"></script>
+<!-- Les 6 fichiers ci-dessous ont ete extraits de game-supabase.js le 2026-07-22 (audit P5) et
+     sont declares ICI, dans cet ordre precis, parce que c'est l'ordre exact qu'ils occupaient
+     dans le fichier d'origine. Pas de modules ES dans ce projet : un seul scope global, et un
+     const/let de haut niveau lu au chargement explose si l'ordre bouge (CLAUDE.md SS6). Ne pas
+     reordonner "pour ranger par dossier" -- c'est cet ordre qui est le contrat, pas la
+     hierarchie des dossiers. client-health.js lit PATCH_NOTES[0].v au chargement. -->
+<script src="src/core/i18n-legacy.js?v=668"></script>
+<script src="src/core/ui-layout.js?v=668"></script>
+<script src="src/backend/client-health.js?v=668"></script>
+<script src="src/backend/wiki-codex.js?v=668"></script>
+<script src="src/progression/tutorials.js?v=668"></script>
+<script src="src/backend/patch-notes-panel.js?v=668"></script>
 <!-- panneau Wiki plein écran (2026-07-11, port à l'identique du mockup fourni, voir CLAUDE.md §30)
      -- charge APRÈS game-supabase.js : lit WIKI_SECTIONS/renderCodexHtml/renderTutoPageHtml/
      PATCH_NOTES au moment de l'ouverture (jamais au chargement immédiat), donc l'ordre exact avec

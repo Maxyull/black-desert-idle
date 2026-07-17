@@ -16181,6 +16181,7 @@ $a('authPass').addEventListener('keydown', e => { if (e.key === 'Enter') doSignI
   else await startGuestOrShowAuth();
 })();
 
+// ==== src/core/i18n-legacy.js ====
 const I18N = {
   sessionLockTitle: { fr:'Jeu en pause', en:'Game paused' },
   sessionLockMsg: { fr:'Une autre session est active sur ce compte (autre onglet, navigateur ou appareil). Un seul endroit à la fois peut jouer.', en:'Another session is active on this account (another tab, browser or device). Only one place can play at a time.' },
@@ -16377,6 +16378,7 @@ $a('langToggle').onclick = () => {
   applyI18n();
 };
 
+// ==== src/core/ui-layout.js ====
 let menuSide = 'left';
 try { menuSide = localStorage.getItem('velia-idle-menuside') || 'left'; } catch(e) {}
 
@@ -16477,6 +16479,7 @@ $a('btnUiScaleDown').onclick = () => setUiScaleLevel(-1);
 $a('btnUiScaleUp').onclick = () => setUiScaleLevel(1);
 applyUiScale();
 
+// ==== src/backend/client-health.js ====
 const CURRENT_VERSION = PATCH_NOTES[0].v;
 $a('clientVersionNum').textContent = CURRENT_VERSION;
 
@@ -16554,8 +16557,9 @@ async function clearGameCache() {
 setInterval(checkForUpdate, 60 * 1000); 
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkForUpdate(); });
 window.addEventListener('focus', checkForUpdate);
-setTimeout(checkForUpdate, 15000); 
+setTimeout(checkForUpdate, 15000);
 
+// ==== src/backend/wiki-codex.js ====
 const WIKI_SECTIONS = [
   { id:'combat', icon:'⚔️', label:{fr:'Combat & Zones',en:'Combat & Zones'},
     fr:`<h3>PA / PD par zone (comme dans le vrai jeu)</h3>
@@ -16795,6 +16799,7 @@ function renderTrustSecurityHtml() {
 }
 $a('btnTrust').onclick = () => openInfo(LANG !== 'en' ? '🛡️ Confiance & Sécurité' : '🛡️ Trust & Security', renderTrustSecurityHtml());
 
+// ==== src/progression/tutorials.js ====
 let tutTrackerWasOn = false, tutTrackerForced = false;
 let tutPotWasOpen = false;
 const TUTORIAL_STEPS = [
@@ -17039,6 +17044,7 @@ $a('tutPrevBtn').onclick = () => {
   tutorialStepIdx--; showTutorialStep();
 };
 
+// ==== src/backend/patch-notes-panel.js ====
 let patchPageStart = 0;
 try { patchPageStart = parseInt(localStorage.getItem('velia-patch-page')||'0', 10) || 0; } catch(e) {}
 

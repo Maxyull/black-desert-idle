@@ -3490,6 +3490,44 @@
     assert('sorcier-render.js charge AVANT inventory-ui.js (drawPreviewChar y appelle witchBodyOn)',
       sorcierIdx < invUiIdx, `sorcierIdx=${sorcierIdx}, invUiIdx=${invUiIdx}`);
   }
+  // Découpage de game-supabase.js le 2026-07-22 (audit repo P5) : 3 124 lignes -> 1 744, les
+  // 1 380 autres transplantées dans 6 fichiers. Aucune ligne n'a été réécrite (le bundle produit
+  // est resté identique à l'octet près) -- le SEUL risque de ce découpage est donc l'ordre de
+  // chargement, pas le code lui-même. Ce projet n'a pas de modules ES : tous les scripts partagent
+  // un unique scope global, et un `const`/`let` de haut niveau lu au chargement explose si l'ordre
+  // bouge (CLAUDE.md §6, et c'est exactement le bug qu'a coûté sorcier-render.js ci-dessus).
+  //
+  // Le piège concret ici : ces 6 fichiers vivent dans core/, backend/ et progression/, mais sont
+  // TOUS déclarés après backend/game-supabase.js. Ça a l'air désordonné, donc quelqu'un voudra un
+  // jour les "ranger par dossier" -- et `const CURRENT_VERSION = PATCH_NOTES[0].v` (client-health.js,
+  // évalué AU CHARGEMENT) exploserait. Ce test rend cet ordre exécutable au lieu d'être une
+  // convention écrite dans un README que personne ne relit.
+  function testGameSupabaseSplitKeepsOriginalScriptOrder() {
+    if (typeof document === 'undefined') return; // hors-contexte navigateur
+    const srcIndexOf = needle => Array.from(document.scripts).findIndex(s => s.src.includes(needle));
+    // l'ordre EXACT qu'occupaient ces blocs dans game-supabase.js avant le découpage
+    const ORDER = [
+      'meta/patch-notes-data.js',      // définit PATCH_NOTES
+      'backend/game-supabase.js',
+      'core/i18n-legacy.js',
+      'core/ui-layout.js',
+      'backend/client-health.js',      // lit PATCH_NOTES[0].v AU CHARGEMENT
+      'backend/wiki-codex.js',
+      'progression/tutorials.js',
+      'backend/patch-notes-panel.js',
+    ];
+    const idx = ORDER.map(srcIndexOf);
+    ORDER.forEach((f, i) => assert(`${f} est bien chargé (balise trouvée dans le DOM)`, idx[i] !== -1));
+    if (idx.some(i => i === -1)) return;
+    for (let i = 1; i < ORDER.length; i++) {
+      assert(`${ORDER[i]} charge APRÈS ${ORDER[i-1]} (ordre d'origine dans game-supabase.js)`,
+        idx[i-1] < idx[i], `${ORDER[i-1]}=${idx[i-1]}, ${ORDER[i]}=${idx[i]}`);
+    }
+    // l'invariant le plus dur du lot, assert à part pour qu'il soit nommé explicitement dans la
+    // sortie de test si quelqu'un le casse
+    assert('client-health.js charge APRÈS meta/patch-notes-data.js (il y lit PATCH_NOTES[0].v au chargement)',
+      srcIndexOf('meta/patch-notes-data.js') < srcIndexOf('backend/client-health.js'));
+  }
   // check systématique (2026-07-08, demande explicite : "revois les dates des patchnote / ajoute
   // check systematique") -- trouvé en vérifiant manuellement : plusieurs versions récentes
   // (V283-V299) avaient été datées 15-16/07/2026 alors que l'horloge réelle (Supabase + timestamps
@@ -6865,6 +6903,7 @@
     testSupabaseScriptIsPinnedWithIntegrity();
     testNoLegacyHardcodedBorderHexOutsideAdminOrDeadCascade();
     testSorcierRenderLoadsBeforeSyncStartupCallers();
+    testGameSupabaseSplitKeepsOriginalScriptOrder();
     testPatchNotesDatesFormatAndOrder();
     testEveryPatchSubHasALabel();
     testHeaderShortcutButtonsExistWithTitleAndAdminHidden();
