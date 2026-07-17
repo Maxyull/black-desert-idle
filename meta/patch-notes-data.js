@@ -19,6 +19,15 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V472', d:'17/07/2026 09:15', name:{fr:'Écran de connexion repensé + connexion sans mot de passe', en:'Redesigned sign-in screen + passwordless login'}, fr:[
+      {t:'change', sub:'interface', tx:'L\'écran de connexion n\'affiche plus aucun champ à l\'ouverture : on choisit d\'abord ce qu\'on veut faire (se connecter, créer un compte, mot de passe oublié, lien magique), et seuls les champs de ce choix apparaissent. Fini les 3 champs affichés en permanence dont 2 inutiles selon le cas.'},
+      {t:'new', sub:'connexion', tx:'✨ Lien magique : connecte-toi sans mot de passe. Entre ton pseudo OU ton email, reçois un lien par email, clique — c\'est tout. Ne crée jamais de compte : si l\'identifiant est inconnu, rien n\'est envoyé.'},
+      {t:'change', sub:'interface', tx:'Discord, Google, GitHub et Twitter/X passent en icônes sur une seule ligne, à égalité, au lieu d\'un gros bouton Discord suivi d\'une rangée de 3.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The sign-in screen no longer shows any field on open: you first pick what you want to do (sign in, create an account, forgot password, magic link), and only that flow\'s fields appear. No more 3 permanent fields with 2 of them irrelevant.'},
+      {t:'new', sub:'connexion', tx:'✨ Magic link: sign in without a password. Enter your username OR email, get a link by email, click it — done. It never creates an account: if the identifier is unknown, nothing is sent.'},
+      {t:'change', sub:'interface', tx:'Discord, Google, GitHub and Twitter/X are now icons on a single row, all equal, instead of one large Discord button followed by a row of 3.'},
+    ] },
   { v:'V471', d:'17/07/2026 08:30', name:{fr:'Classement GS : fin des scores fantômes d\'avant rééquilibrage', en:'GS leaderboard: no more pre-rebalance ghost scores'}, fr:[
       {t:'fix', sub:'interface', tx:'Le classement Gearscore pouvait afficher en tête un score plus élevé que le maximum réellement atteignable (435 alors que le plafond est 424). Cause : les records PA/PD ne redescendent jamais, et leur recalcul après un rééquilibrage ne s\'applique qu\'à la connexion du joueur — un joueur parti avant un nerf gardait donc éternellement son record d\'avant-nerf. Le classement GS n\'affiche désormais que les records calculés sous l\'équilibrage courant ; une ligne masquée réapparaît d\'elle-même dès que le joueur se reconnecte. Les autres classements (silver, zone, silver/h) ne sont pas concernés.'},
     ], en:[

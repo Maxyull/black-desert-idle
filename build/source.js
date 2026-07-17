@@ -382,7 +382,7 @@ const I18N_RESOURCES = {
       "backend.account.your_referrals_title": "👥 Tes filleuls",
       "backend.auth.ban_reason_unspecified": "non précisé",
       "backend.auth.ban_suspended": "Compte suspendu jusqu'au {{until}} — Motif : {{reason}}",
-      "backend.auth.email_first": "Entre ton email d'abord, puis clique à nouveau.",
+      "backend.auth.email_first": "Entre ton pseudo ou ton email d'abord, puis clique à nouveau.",
       "backend.auth.guest_badge": "🎭 Invité",
       "backend.auth.last_used": "Dernière fois",
       "backend.auth.guest_mode_body": "Ta progression n'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur \"🔗 Lier un compte\" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.",
@@ -538,7 +538,8 @@ const I18N_RESOURCES = {
       "backend.wiki.search_no_results": "Aucun résultat pour",
       "backend.wiki.search_placeholder": "Rechercher…",
       "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant",
-      "backend.gear.back_to_leaderboard_button": "← Retour au classement"
+      "backend.gear.back_to_leaderboard_button": "← Retour au classement",
+      "backend.auth.magic_link_sent": "Si un compte correspond, un lien de connexion vient d'être envoyé par email — vérifie ta boîte mail."
     },
     "combat": {
       "combat.miniboss.you_label": "Toi",
@@ -1445,7 +1446,7 @@ const I18N_RESOURCES = {
       "backend.account.your_referrals_title": "👥 Your referrals",
       "backend.auth.ban_reason_unspecified": "unspecified",
       "backend.auth.ban_suspended": "Account suspended until {{until}} — Reason: {{reason}}",
-      "backend.auth.email_first": "Enter your email first, then click again.",
+      "backend.auth.email_first": "Enter your username or email first, then click again.",
       "backend.auth.guest_badge": "🎭 Guest",
       "backend.auth.last_used": "Last used",
       "backend.auth.guest_mode_body": "Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click \"🔗 Link account\" to create an account (your current progress is kept) or sign back into an existing one.",
@@ -1601,7 +1602,8 @@ const I18N_RESOURCES = {
       "backend.wiki.search_no_results": "No results for",
       "backend.wiki.search_placeholder": "Search…",
       "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait",
-      "backend.gear.back_to_leaderboard_button": "← Back to leaderboard"
+      "backend.gear.back_to_leaderboard_button": "← Back to leaderboard",
+      "backend.auth.magic_link_sent": "If an account matches, a login link has just been emailed — check your inbox."
     },
     "combat": {
       "combat.miniboss.you_label": "You",
@@ -14948,9 +14950,53 @@ function renderLastUsedBadge() {
   badge.textContent = (typeof i18next !== 'undefined' ? i18next.t('backend:backend.auth.last_used') : 'Last used');
   btn.appendChild(badge);
 }
+
+const AUTH_MODES = {
+  signin:   { fields:['authEmail','authPass'],              idPh:'authIdentifierPh', submitKey:'btnSignIn',       run:() => doSignIn() },
+  signup:   { fields:['authEmail','authPseudo','authPass'], idPh:'authEmailPh',      submitKey:'btnSignUp',       run:() => doSignUp() },
+  forgot:   { fields:['authEmail'],                         idPh:'authIdentifierPh', submitKey:'btnForgotSubmit', run:() => doForgotPassword() },
+  magic:    { fields:['authEmail'],                         idPh:'authIdentifierPh', submitKey:'btnMagicSubmit',  run:() => doMagicLink() },
+  recovery: { fields:['authPass'],                          idPh:'authIdentifierPh', submitKey:'btnSaveNewPass',  run:() => doSaveNewPassword() },
+};
+let authMode = 'choice';
+
+function setAuthMode(mode) {
+  authMode = AUTH_MODES[mode] ? mode : 'choice';
+  const cfg = AUTH_MODES[authMode];
+  const choice = $a('authChoice'), form = $a('authForm');
+  if (choice) choice.classList.toggle('hidden', authMode !== 'choice');
+  if (form) form.classList.toggle('hidden', authMode === 'choice');
+  authShow(''); 
+  if (authMode === 'choice') { renderLastUsedBadge(); return; }
+  ['authEmail','authPseudo','authPass'].forEach(id => {
+    const el = $a(id); if (!el) return;
+    const on = cfg.fields.includes(id);
+    el.style.display = on ? '' : 'none';
+    if (on) el.value = ''; 
+  });
+  const email = $a('authEmail');
+  if (email) email.placeholder = (I18N[cfg.idPh] && I18N[cfg.idPh][LANG]) || email.placeholder;
+  
+  const pass = $a('authPass');
+  if (pass) {
+    pass.autocomplete = (authMode === 'signin') ? 'current-password' : 'new-password';
+    pass.placeholder = (authMode === 'recovery')
+      ? _authT('set_new_password')
+      : ((I18N.authPassPh && I18N.authPassPh[LANG]) || pass.placeholder);
+  }
+  const submit = $a('btnAuthSubmit');
+  if (submit) {
+    submit.textContent = (I18N[cfg.submitKey] && I18N[cfg.submitKey][LANG]) || submit.textContent;
+    submit.setAttribute('data-i18n', cfg.submitKey); 
+  }
+  
+  const back = $a('btnAuthBack'); if (back) back.style.display = (authMode === 'recovery') ? 'none' : '';
+  const first = $a(cfg.fields[0]); if (first) try { first.focus(); } catch (e) {}
+}
 function showAuthOverlay(show) {
   $a('authOverlay').classList.toggle('hidden', !show);
-  if (show) renderLastUsedBadge();
+  
+  if (show) { if (!inPasswordRecovery) setAuthMode('choice'); renderLastUsedBadge(); }
 }
 
 function updateUserBar() {
@@ -15033,15 +15079,21 @@ async function doForgotPassword() {
   authShow(_authT('reset_email_sent'));
 }
 
+async function doMagicLink() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim();
+  if (!identifier) { authShow(_authT('email_first'), true); return; }
+  authShow(_authT('sending'));
+  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'magic', identifier, redirect_to: location.href } }); }
+  catch (e) {  }
+  authShow(_authT('magic_link_sent'));
+}
+
 let inPasswordRecovery = false;
 function showPasswordRecoveryUI() {
   showAuthOverlay(true);
   
-  ['authEmail','authPseudo','btnSignUp','btnForgotPass','btnSignInDiscord','authSocialRow','btnClearCacheAuth']
-    .forEach(id => { const el = $a(id); if (el) el.style.display = 'none'; });
-  const pass = $a('authPass'); if (pass) { pass.value = ''; pass.style.display = ''; pass.placeholder = _authT('set_new_password'); }
-  const btn = $a('btnSignIn');
-  if (btn) { btn.textContent = _authT('save_new_password'); btn.onclick = doSaveNewPassword; }
+  setAuthMode('recovery');
   authShow(_authT('set_new_password'));
   document.querySelectorAll('.lastUsedBadge').forEach(b => b.remove());
 }
@@ -15970,9 +16022,17 @@ function startAutoCloudSave() {
 
 setInterval(async () => { if (sb && currentUser && !document.hidden) { try { await sb.rpc('log_playtime_ping'); } catch(e) {} } }, 60000);
 
-$a('btnSignIn').onclick = doSignIn;
-$a('btnSignUp').onclick = doSignUp;
-$a('btnForgotPass').onclick = doForgotPassword;
+$a('btnSignIn').onclick = () => setAuthMode('signin');
+$a('btnSignUp').onclick = () => setAuthMode('signup');
+$a('btnForgotPass').onclick = () => setAuthMode('forgot');
+$a('btnMagicLink').onclick = () => setAuthMode('magic');
+$a('btnAuthBack').onclick = () => setAuthMode('choice');
+$a('btnAuthSubmit').onclick = () => { const m = AUTH_MODES[authMode]; if (m) m.run(); };
+
+['authEmail','authPseudo','authPass'].forEach(id => {
+  const el = $a(id);
+  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const m = AUTH_MODES[authMode]; if (m) m.run(); } });
+});
 document.querySelectorAll('.authLangBtn').forEach(b => {
   b.onclick = () => {
     LANG = b.dataset.lang;
@@ -16055,11 +16115,19 @@ const I18N = {
   uiScaleUp: { fr:'Agrandir', en:'Grow' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
-  authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
+  authPseudoPh: { fr:'Pseudo', en:'Nickname' },
   authIdentifierPh: { fr:'Pseudo ou email', en:'Username or email' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
+  
+  btnMagicLink: { fr:'✨ Lien magique (sans mot de passe)', en:'✨ Magic link (no password)' },
+  btnAuthBack: { fr:'← Retour', en:'← Back' },
+  btnForgotSubmit: { fr:'Envoyer le lien de réinitialisation', en:'Send reset link' },
+  btnMagicSubmit: { fr:'Recevoir le lien de connexion', en:'Send login link' },
+  btnSaveNewPass: { fr:'Enregistrer le mot de passe', en:'Save password' },
+  authSepOr: { fr:'ou', en:'or' },
+  authEmailPh: { fr:'Email', en:'Email' },
   btnSignInDiscord: { fr:'Se connecter avec Discord', en:'Sign in with Discord' },
   btnSignInGoogle: { fr:'Google', en:'Google' },
   btnSignInGithub: { fr:'GitHub', en:'GitHub' },

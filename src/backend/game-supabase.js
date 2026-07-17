@@ -192,9 +192,65 @@ function renderLastUsedBadge() {
   badge.textContent = (typeof i18next !== 'undefined' ? i18next.t('backend:backend.auth.last_used') : 'Last used');
   btn.appendChild(badge);
 }
+// ==================== ÉCRAN D'AUTH À MODES ====================
+// (2026-07-22, demande explicite : "page de connexion aucun champ / se co/créer compte/mdp perdu /
+// puis ouvrir les champs selon le choix"). L'écran s'ouvre SANS aucun champ : on choisit d'abord
+// une intention (#authChoice), et seuls les champs de cette intention s'affichent (#authForm).
+//
+// AUTH_MODES est la SEULE source de vérité de "quels champs pour quelle intention" : ajouter un
+// flux = ajouter une entrée ici, pas du display:none disséminé (c'est ce que faisait l'ancien
+// showPasswordRecoveryUI, qui masquait 7 ids à la main -- il passe par 'recovery' ci-dessous).
+// - fields : champs visibles, dans l'ordre du DOM (les autres sont masqués)
+// - idPh   : placeholder de #authEmail -- 'identifier' (pseudo OU email) sauf à l'inscription qui
+//            exige un VRAI email (on ne peut pas créer de compte à partir d'un pseudo seul)
+// - submit : clé i18n du bouton principal + handler
+const AUTH_MODES = {
+  signin:   { fields:['authEmail','authPass'],              idPh:'authIdentifierPh', submitKey:'btnSignIn',       run:() => doSignIn() },
+  signup:   { fields:['authEmail','authPseudo','authPass'], idPh:'authEmailPh',      submitKey:'btnSignUp',       run:() => doSignUp() },
+  forgot:   { fields:['authEmail'],                         idPh:'authIdentifierPh', submitKey:'btnForgotSubmit', run:() => doForgotPassword() },
+  magic:    { fields:['authEmail'],                         idPh:'authIdentifierPh', submitKey:'btnMagicSubmit',  run:() => doMagicLink() },
+  recovery: { fields:['authPass'],                          idPh:'authIdentifierPh', submitKey:'btnSaveNewPass',  run:() => doSaveNewPassword() },
+};
+let authMode = 'choice';
+/** @param {string} mode - 'choice' | clé de AUTH_MODES. Ouvre l'écran d'auth sur cette intention : 'choice' n'affiche AUCUN champ (juste les intentions + providers), les autres n'ouvrent que leurs propres champs. Seule fonction autorisée à afficher/masquer les champs d'auth. */
+function setAuthMode(mode) {
+  authMode = AUTH_MODES[mode] ? mode : 'choice';
+  const cfg = AUTH_MODES[authMode];
+  const choice = $a('authChoice'), form = $a('authForm');
+  if (choice) choice.classList.toggle('hidden', authMode !== 'choice');
+  if (form) form.classList.toggle('hidden', authMode === 'choice');
+  authShow(''); // repart d'un écran propre : pas d'erreur du mode précédent qui traîne
+  if (authMode === 'choice') { renderLastUsedBadge(); return; }
+  ['authEmail','authPseudo','authPass'].forEach(id => {
+    const el = $a(id); if (!el) return;
+    const on = cfg.fields.includes(id);
+    el.style.display = on ? '' : 'none';
+    if (on) el.value = ''; // jamais de valeur héritée d'un autre flux (ex: mdp saisi puis retour)
+  });
+  const email = $a('authEmail');
+  if (email) email.placeholder = (I18N[cfg.idPh] && I18N[cfg.idPh][LANG]) || email.placeholder;
+  // mot de passe : "nouveau" en création/récupération, "courant" à la connexion (autofill correct)
+  const pass = $a('authPass');
+  if (pass) {
+    pass.autocomplete = (authMode === 'signin') ? 'current-password' : 'new-password';
+    pass.placeholder = (authMode === 'recovery')
+      ? _authT('set_new_password')
+      : ((I18N.authPassPh && I18N.authPassPh[LANG]) || pass.placeholder);
+  }
+  const submit = $a('btnAuthSubmit');
+  if (submit) {
+    submit.textContent = (I18N[cfg.submitKey] && I18N[cfg.submitKey][LANG]) || submit.textContent;
+    submit.setAttribute('data-i18n', cfg.submitKey); // suit le slider FR/EN comme tout le reste
+  }
+  // le retour n'a pas de sens en récupération (session de reset active, pas d'autre flux possible)
+  const back = $a('btnAuthBack'); if (back) back.style.display = (authMode === 'recovery') ? 'none' : '';
+  const first = $a(cfg.fields[0]); if (first) try { first.focus(); } catch (e) {}
+}
 function showAuthOverlay(show) {
   $a('authOverlay').classList.toggle('hidden', !show);
-  if (show) renderLastUsedBadge();
+  // rouvre TOUJOURS sur l'écran de choix (sauf récupération de mot de passe, pilotée à part) :
+  // sinon on retomberait sur les champs du flux précédent, à contre-emploi du "aucun champ".
+  if (show) { if (!inPasswordRecovery) setAuthMode('choice'); renderLastUsedBadge(); }
 }
 /** Affiche/masque la barre utilisateur et ses boutons (lier compte/déconnexion/admin) selon l'état de connexion. */
 function updateUserBar() {
@@ -296,18 +352,30 @@ async function doForgotPassword() {
   catch (e) { /* on affiche quand même le message générique ci-dessous (ne révèle pas l'existence) */ }
   authShow(_authT('reset_email_sent'));
 }
+// Lien magique (2026-07-22, demande explicite : "magic link = mail ou pseudo") : connexion sans
+// mot de passe. Même Edge Function que login/reset -- la résolution pseudo -> email reste côté
+// serveur (l'email n'est JAMAIS renvoyé au client) et la réponse est toujours générique, pour ne
+// pas transformer ce flux en oracle "ce pseudo existe-t-il ?". Ne crée jamais de compte
+// (create_user:false côté fonction) : un lien magique sur un pseudo inconnu ne doit pas inscrire.
+/** Envoie un lien de connexion sans mot de passe (identifiant = pseudo OU email). */
+async function doMagicLink() {
+  if (!sb) { authShow(_authT('err_config'), true); return; }
+  const identifier = $a('authEmail').value.trim();
+  if (!identifier) { authShow(_authT('email_first'), true); return; }
+  authShow(_authT('sending'));
+  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'magic', identifier, redirect_to: location.href } }); }
+  catch (e) { /* message générique quand même : ne révèle pas l'existence du compte */ }
+  authShow(_authT('magic_link_sent'));
+}
 // 2e moitié du flux "mot de passe oublié" (2026-07-16) : après le clic sur le lien du mail, on
 // affiche l'écran de connexion en mode "nouveau mot de passe" -- seul le champ mot de passe reste,
 // et le bouton principal enregistre le nouveau mot de passe (sb.auth.updateUser) avant de connecter.
 let inPasswordRecovery = false;
 function showPasswordRecoveryUI() {
   showAuthOverlay(true);
-  // ne garde que le champ mot de passe + le bouton d'enregistrement
-  ['authEmail','authPseudo','btnSignUp','btnForgotPass','btnSignInDiscord','authSocialRow','btnClearCacheAuth']
-    .forEach(id => { const el = $a(id); if (el) el.style.display = 'none'; });
-  const pass = $a('authPass'); if (pass) { pass.value = ''; pass.style.display = ''; pass.placeholder = _authT('set_new_password'); }
-  const btn = $a('btnSignIn');
-  if (btn) { btn.textContent = _authT('save_new_password'); btn.onclick = doSaveNewPassword; }
+  // 'recovery' est un mode comme les autres depuis la refonte à modes (2026-07-22) : plus besoin de
+  // masquer 7 ids à la main ici, AUTH_MODES.recovery décrit déjà "seul le champ mot de passe".
+  setAuthMode('recovery');
   authShow(_authT('set_new_password'));
   document.querySelectorAll('.lastUsedBadge').forEach(b => b.remove());
 }
@@ -1490,9 +1558,21 @@ function startAutoCloudSave() {
 // is not a function"), une exception non interceptée toutes les 60s
 setInterval(async () => { if (sb && currentUser && !document.hidden) { try { await sb.rpc('log_playtime_ping'); } catch(e) {} } }, 60000);
 
-$a('btnSignIn').onclick = doSignIn;
-$a('btnSignUp').onclick = doSignUp;
-$a('btnForgotPass').onclick = doForgotPassword;
+// Écran d'auth à modes (2026-07-22) : les boutons de #authChoice n'AGISSENT plus, ils ouvrent le
+// flux correspondant (aucun champ tant qu'on n'a pas choisi). C'est #btnAuthSubmit qui exécute,
+// en déléguant à AUTH_MODES[authMode].run -- un seul point d'entrée, pas un handler par bouton.
+$a('btnSignIn').onclick = () => setAuthMode('signin');
+$a('btnSignUp').onclick = () => setAuthMode('signup');
+$a('btnForgotPass').onclick = () => setAuthMode('forgot');
+$a('btnMagicLink').onclick = () => setAuthMode('magic');
+$a('btnAuthBack').onclick = () => setAuthMode('choice');
+$a('btnAuthSubmit').onclick = () => { const m = AUTH_MODES[authMode]; if (m) m.run(); };
+// Entrée = valider le flux courant (réflexe attendu sur un écran de connexion, et le seul moyen
+// de soumettre au clavier depuis un champ).
+['authEmail','authPseudo','authPass'].forEach(id => {
+  const el = $a(id);
+  if (el) el.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); const m = AUTH_MODES[authMode]; if (m) m.run(); } });
+});
 document.querySelectorAll('.authLangBtn').forEach(b => {
   b.onclick = () => {
     LANG = b.dataset.lang;
@@ -1589,11 +1669,20 @@ const I18N = {
   uiScaleUp: { fr:'Agrandir', en:'Grow' },
   footerText: { fr:"Projet de fan gratuit, non officiel et fourni tel quel, sans garantie ni responsabilité (bugs, pertes de progression, interruptions...) — utilisation à tes risques. Noms/styles inspirés de Black Desert (propriété de Pearl Abyss le cas échéant) ; visuels 100% originaux, aucune affiliation.", en:"Free, unofficial fan project provided as-is, with no warranty or liability (bugs, progress loss, downtime...) — use at your own risk. Names/styles inspired by Black Desert (Pearl Abyss's property where applicable); visuals are 100% original, no affiliation." },
   authPassPh: { fr:'Mot de passe', en:'Password' },
-  authPseudoPh: { fr:'Pseudo (pour la création de compte)', en:'Nickname (for account creation)' },
+  authPseudoPh: { fr:'Pseudo', en:'Nickname' },
   authIdentifierPh: { fr:'Pseudo ou email', en:'Username or email' },
   btnSignIn: { fr:'Se connecter', en:'Sign in' },
   btnSignUp: { fr:'Créer un compte', en:'Create account' },
   btnForgotPass: { fr:'Mot de passe oublié ?', en:'Forgot password?' },
+  // écran d'auth à modes (2026-07-22) : libellés des intentions + du bouton de validation, qui
+  // change selon le flux ouvert (voir AUTH_MODES.submitKey).
+  btnMagicLink: { fr:'✨ Lien magique (sans mot de passe)', en:'✨ Magic link (no password)' },
+  btnAuthBack: { fr:'← Retour', en:'← Back' },
+  btnForgotSubmit: { fr:'Envoyer le lien de réinitialisation', en:'Send reset link' },
+  btnMagicSubmit: { fr:'Recevoir le lien de connexion', en:'Send login link' },
+  btnSaveNewPass: { fr:'Enregistrer le mot de passe', en:'Save password' },
+  authSepOr: { fr:'ou', en:'or' },
+  authEmailPh: { fr:'Email', en:'Email' },
   btnSignInDiscord: { fr:'Se connecter avec Discord', en:'Sign in with Discord' },
   btnSignInGoogle: { fr:'Google', en:'Google' },
   btnSignInGithub: { fr:'GitHub', en:'GitHub' },

@@ -384,7 +384,7 @@ const I18N_RESOURCES = {
       "backend.account.your_referrals_title": "👥 Tes filleuls",
       "backend.auth.ban_reason_unspecified": "non précisé",
       "backend.auth.ban_suspended": "Compte suspendu jusqu'au {{until}} — Motif : {{reason}}",
-      "backend.auth.email_first": "Entre ton email d'abord, puis clique à nouveau.",
+      "backend.auth.email_first": "Entre ton pseudo ou ton email d'abord, puis clique à nouveau.",
       "backend.auth.guest_badge": "🎭 Invité",
       "backend.auth.last_used": "Dernière fois",
       "backend.auth.guest_mode_body": "Ta progression n'est sauvegardée que sur cet appareil/navigateur — elle serait perdue en cas de changement ou de nettoyage du cache. Clique sur \"🔗 Lier un compte\" pour créer un compte (ta progression actuelle sera conservée) ou te reconnecter à un compte existant.",
@@ -540,7 +540,8 @@ const I18N_RESOURCES = {
       "backend.wiki.search_no_results": "Aucun résultat pour",
       "backend.wiki.search_placeholder": "Rechercher…",
       "backend.update.auto_reload_countdown": "Rechargement automatique dans {{count}}s — continue de jouer en attendant",
-      "backend.gear.back_to_leaderboard_button": "← Retour au classement"
+      "backend.gear.back_to_leaderboard_button": "← Retour au classement",
+      "backend.auth.magic_link_sent": "Si un compte correspond, un lien de connexion vient d'être envoyé par email — vérifie ta boîte mail."
     },
     "combat": {
       "combat.miniboss.you_label": "Toi",
@@ -1447,7 +1448,7 @@ const I18N_RESOURCES = {
       "backend.account.your_referrals_title": "👥 Your referrals",
       "backend.auth.ban_reason_unspecified": "unspecified",
       "backend.auth.ban_suspended": "Account suspended until {{until}} — Reason: {{reason}}",
-      "backend.auth.email_first": "Enter your email first, then click again.",
+      "backend.auth.email_first": "Enter your username or email first, then click again.",
       "backend.auth.guest_badge": "🎭 Guest",
       "backend.auth.last_used": "Last used",
       "backend.auth.guest_mode_body": "Your progress is only saved on this device/browser — it would be lost if you switch or clear your cache. Click \"🔗 Link account\" to create an account (your current progress is kept) or sign back into an existing one.",
@@ -1603,7 +1604,8 @@ const I18N_RESOURCES = {
       "backend.wiki.search_no_results": "No results for",
       "backend.wiki.search_placeholder": "Search…",
       "backend.update.auto_reload_countdown": "Reloading automatically in {{count}}s — keep playing while you wait",
-      "backend.gear.back_to_leaderboard_button": "← Back to leaderboard"
+      "backend.gear.back_to_leaderboard_button": "← Back to leaderboard",
+      "backend.auth.magic_link_sent": "If an account matches, a login link has just been emailed — check your inbox."
     },
     "combat": {
       "combat.miniboss.you_label": "You",

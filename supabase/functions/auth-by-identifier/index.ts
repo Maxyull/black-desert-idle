@@ -7,6 +7,8 @@
 // Actions (POST JSON) :
 //   { action:'login', identifier, password }        -> { access_token, refresh_token } ou { error }
 //   { action:'reset', identifier, redirect_to }     -> { ok:true } (toujours, ne révèle pas l'existence)
+//   { action:'magic', identifier, redirect_to }     -> { ok:true } (idem : lien de connexion sans
+//                                                       mot de passe, 2026-07-22)
 //
 // verify_jwt = false : l'écran de connexion n'est pas authentifié. La fonction n'expose aucune
 // donnée sensible : login renvoie uniquement les tokens de session de l'utilisateur qui s'authentifie
@@ -90,6 +92,33 @@ Deno.serve(async (req: Request) => {
     const data = await r.json().catch(() => ({}));
     if (!r.ok || !data.access_token) return json({ error: "invalid" });
     return json({ access_token: data.access_token, refresh_token: data.refresh_token });
+  }
+
+  // Lien magique (2026-07-22) : connexion sans mot de passe par pseudo OU email. Mêmes garanties
+  // que 'reset' -- résolution pseudo->email ici (l'email ne sort jamais), réponse toujours { ok }
+  // pour ne pas faire de ce flux un oracle d'existence de compte, et rate-limit identique (un lien
+  // magique EST un email envoyé : même surface d'abus que reset).
+  // create_user:false (nom REST de shouldCreateUser côté SDK) : un lien magique sur un identifiant
+  // inconnu ne doit JAMAIS inscrire quelqu'un (sinon n'importe qui crée des comptes en boucle avec
+  // des emails arbitraires).
+  if (action === "magic") {
+    const ipOk = await rateOk(`magic:ip:${ip}`, 5, 900);       // 5 / 15 min par IP
+    const idOk = await rateOk(`magic:id:${idKey}`, 3, 3600);   // 3 / heure par compte
+    if (!ipOk || !idOk) return json({ ok: true });
+    const email = await resolveEmail(String(body.identifier || ""));
+    if (email) {
+      const redirect = typeof body.redirect_to === "string" ? body.redirect_to : SUPABASE_URL;
+      const r = await fetch(`${SUPABASE_URL}/auth/v1/otp?redirect_to=${encodeURIComponent(redirect)}`, {
+        method: "POST",
+        headers: { apikey: ANON, "Content-Type": "application/json" },
+        body: JSON.stringify({ email, create_user: false }),
+      }).catch(() => null);
+      // La réponse au client reste volontairement générique (anti-énumération), donc un magic link
+      // DÉSACTIVÉ côté Supabase échouerait en silence total. On trace donc l'échec côté serveur :
+      // sans ça, un flux cassé serait indétectable. Le détail ne sort jamais vers le client.
+      if (!r || !r.ok) console.error("magic_otp_failed", r ? r.status : "network", r ? await r.text().catch(() => "") : "");
+    }
+    return json({ ok: true }); // toujours ok, ne révèle pas l'existence du compte
   }
 
   if (action === "reset") {
