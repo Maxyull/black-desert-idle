@@ -22,6 +22,26 @@ function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth
 // petit écran (voir les media queries ci-dessus) — un simple seuil de largeur de viewport suffit
 // (pas besoin de sniffer le user-agent, le responsive suit déjà la taille réelle de la fenêtre)
 function isMobileViewport() { return window.innerWidth <= 1024; }
+// ==================== VERSION D'ÉQUILIBRAGE (records de classement) ====================
+// À BUMPER à chaque rééquilibrage qui invalide les records À VIE (bestAp/bestDp/bestGearscore),
+// c.-à-d. dès qu'une migration rétroactive du type V403/V405 recalcule ces records à la baisse.
+//
+// Pourquoi : bestAp/bestDp ne redescendent JAMAIS (voir hud()), et les migrations qui les
+// recalculent sont CÔTÉ CLIENT — elles ne tournent qu'à la connexion du joueur. Un joueur qui
+// arrête de jouer avant un nerf garde donc éternellement son record d'avant-nerf dans
+// player_stats, au-dessus de tous les joueurs actifs. Impossible à corriger côté serveur : il ne
+// connaît pas la formule PA/PD, et la dupliquer en SQL garantirait qu'elle diverge au prochain
+// rééquilibrage — exactement le bug qu'a corrigé V403 ("changements de reqDP jamais répercutés").
+// Cas réel ayant motivé ceci (2026-07-22) : un joueur inactif depuis le 09/07 (donc jamais passé
+// par V405, livrée le 12/07) trônait en tête du classement GS avec 435 — son PD d'avant le nerf
+// V403 — alors que le maximum atteignable est 424. De l'extérieur, ça ressemble à de la triche.
+//
+// La valeur est estampillée sur player_stats.balance_version à chaque synchro : le classement GS
+// ignore les lignes estampillées d'une version antérieure (voir LB2_CATS_().gs.filter,
+// backend/leaderboard-panel.js), et la ligne se corrige d'elle-même dès que le joueur revient
+// (la migration tourne, puis la synchro réestampille). Aucune formule de jeu dupliquée serveur.
+// 405 = migrateGearLeaderboardRecordFixV405, dernier recalcul de records en date.
+const BALANCE_VERSION = 405;
 // échappe pseudo/message avant insertion via innerHTML — ce sont des chaînes saisies par
 // d'autres joueurs, jamais dignes de confiance (évite une injection XSS stockée dans le chat)
 /** @param {*} s - texte à insérer via innerHTML (pseudo/message d'un autre joueur, jamais fiable). @returns {string} texte avec &<>"' échappés (empêche une injection XSS stockée). */

@@ -744,6 +744,10 @@ async function syncPlayerStats() {
       gearscore: Math.round(S.bestGearscore||0),
       ap: Math.round((S.bestAp||0)*10)/10,
       dp: Math.round((S.bestDp||0)*10)/10,
+      // estampille l'équilibrage sous lequel ces records à vie ont été calculés : le classement GS
+      // écarte les lignes d'une version antérieure (record d'avant-nerf figé par un joueur parti
+      // avant la migration de recalcul). Voir BALANCE_VERSION, core/game-core.js.
+      balance_version: typeof BALANCE_VERSION === 'number' ? BALANCE_VERSION : 0,
       lvl: S.lvl,
       best_zone_index: S.maxZoneIdx,
       best_zone_name: ZONES[S.maxZoneIdx] ? ZONES[S.maxZoneIdx].name : '',
