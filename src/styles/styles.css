@@ -994,6 +994,13 @@
     position:absolute; top:8px; right:8px; width:auto; margin:0; padding:4px 9px;
     background:none; border:none; font-size:16px; color:var(--ink-dim);
   }
+  /* Ce projet n'a PAS de règle .hidden globale : chaque élément déclare la sienne (voir
+     #authOverlay.hidden, #offlineBanner.hidden...). Sans cette ligne, class="hidden" sur #closeAuth
+     serait sans effet. Le sélecteur #closeAuth.hidden (spécificité 110) doit aussi l'emporter sur
+     le "#closeAuth { display:flex }" de la media query mobile (spécificité 100), sinon la croix
+     resterait visible sur mobile même sans session -- les media queries n'ajoutent pas de
+     spécificité, c'est donc bien 110 > 100 qui tranche, quel que soit l'ordre des règles. */
+  #closeAuth.hidden { display:none; }
   /* badge "Dernière fois" (2026-07-16) : pastille dorée en coin haut-droit du bouton de la
      dernière méthode de connexion utilisée (voir renderLastUsedBadge, game-supabase.js). Les
      boutons d'auth doivent être position:relative pour l'ancrer. */
