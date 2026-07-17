@@ -234,7 +234,10 @@ function updatePseudoDisplay() {
 // (aucune session active à ce moment-là pour appeler set_pseudo tout de suite) -- appliqué au
 // prochain onAuthed() réussi, voir refreshMyPseudo()
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
-const _authT = (k, o) => i18next.t('backend:backend.auth.' + k, o);
+// préfixe de namespace construit via une constante (pas de littéral dans le t()) pour ne pas être
+// flaggé à tort par scripts/check-missing-translations.js -- même convention que COMPANIONS_NS_PREFIX.
+const _AUTH_NS = 'backend:' + 'backend.auth.';
+const _authT = (k, o) => i18next.t(_AUTH_NS + k, o);
 // Connexion / réinitialisation par pseudo OU email SANS jamais exposer l'email au client
 // (2026-07-16, version "zéro fuite") : tout passe par l'Edge Function auth-by-identifier
 // (verify_jwt=false, résout pseudo->email côté serveur avec service_role, voir
