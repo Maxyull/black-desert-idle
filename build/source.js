@@ -394,6 +394,7 @@ const I18N_RESOURCES = {
       "backend.auth.err_signup_fields": "Email, mot de passe (6 caractères min.) et pseudo sont tous requis.",
       "backend.auth.err_signup_needs_email": "L'inscription nécessite une vraie adresse email (pas seulement un pseudo).",
       "backend.auth.err_pseudo_not_found": "Aucun compte trouvé pour ce pseudo.",
+      "backend.auth.err_invalid_credentials": "Pseudo/email ou mot de passe incorrect.",
       "backend.auth.signing_in": "Connexion…",
       "backend.auth.creating_account": "Création du compte…",
       "backend.auth.account_linked": "Compte lié ! Ta progression est conservée.",
@@ -1455,6 +1456,7 @@ const I18N_RESOURCES = {
       "backend.auth.err_signup_fields": "Email, a 6+ character password and a username are all required.",
       "backend.auth.err_signup_needs_email": "Sign-up needs a real email address (not just a username).",
       "backend.auth.err_pseudo_not_found": "No account found for that username.",
+      "backend.auth.err_invalid_credentials": "Wrong username/email or password.",
       "backend.auth.signing_in": "Signing in…",
       "backend.auth.creating_account": "Creating account…",
       "backend.auth.account_linked": "Account linked! Your progress is kept.",
@@ -14976,17 +14978,6 @@ function updatePseudoDisplay() {
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
 const _authT = (k, o) => i18next.t('backend:backend.auth.' + k, o);
 
-async function resolveLoginEmail(identifier) {
-  if (!identifier) return null;
-  if (identifier.includes('@')) return identifier;
-  if (!sb) return null;
-  try {
-    const { data, error } = await sb.rpc('email_for_login', { p_identifier: identifier });
-    if (error || !data) return null;
-    return data;
-  } catch (e) { return null; }
-}
-
 async function doSignUp() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
@@ -15015,11 +15006,14 @@ async function doSignIn() {
   const identifier = $a('authEmail').value.trim(), pass = $a('authPass').value;
   if (!identifier || !pass) { authShow(_authT('err_login_fields'), true); return; }
   authShow(_authT('signing_in'));
-  const email = await resolveLoginEmail(identifier);
-  if (!email) { authShow(_authT('err_pseudo_not_found'), true); return; }
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  let res;
+  try { res = await sb.functions.invoke('auth-by-identifier', { body: { action: 'login', identifier, password: pass } }); }
+  catch (e) { authShow(_authT('err_invalid_credentials'), true); return; }
+  const data = res && res.data;
+  if (!data || data.error || !data.access_token) { authShow(_authT('err_invalid_credentials'), true); return; }
+  
+  const { error } = await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
   if (error) { authShow(error.message, true); return; }
-  onAuthed(data.user);
 }
 
 async function doForgotPassword() {
@@ -15027,10 +15021,8 @@ async function doForgotPassword() {
   const identifier = $a('authEmail').value.trim();
   if (!identifier) { authShow(_authT('email_first'), true); return; }
   authShow(_authT('sending'));
-  const email = await resolveLoginEmail(identifier);
-  if (!email) { authShow(_authT('err_pseudo_not_found'), true); return; }
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href });
-  if (error) { authShow(error.message, true); return; }
+  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'reset', identifier, redirect_to: location.href } }); }
+  catch (e) {  }
   authShow(_authT('reset_email_sent'));
 }
 

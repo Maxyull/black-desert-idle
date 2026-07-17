@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V469', d:'16/07/2026 23:45', name:{fr:'Sécurité : connexion/reset par pseudo passés côté serveur (aucune fuite d\'email)', en:'Security: username login/reset moved server-side (no email leak)'}, fr:[
+      {t:'change', sub:'interface', tx:'La connexion et la réinitialisation par pseudo passent désormais par une fonction serveur : ton adresse email n\'est jamais renvoyée au navigateur, et impossible de retrouver l\'email d\'un joueur à partir de son pseudo. Aucun changement visible pour toi — juste plus sûr.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'Username login and password reset now go through a server function: your email address is never sent back to the browser, and nobody can look up a player\'s email from their username. Nothing changes for you — just safer.'},
+    ] },
   { v:'V468', d:'16/07/2026 23:20', name:{fr:'Connexion : pseudo OU email, inscription complète, mot de passe oublié réparé, tout traduit', en:'Login: username OR email, full sign-up, fixed password reset, all translated'}, fr:[
       {t:'new', sub:'interface', tx:'Tu peux désormais te connecter (et demander un mot de passe oublié) avec ton PSEUDO ou ton email — plus besoin de retenir l\'email exact.'},
       {t:'change', sub:'interface', tx:'L\'inscription demande maintenant les 3 infos (email + pseudo + mot de passe) pour éviter les comptes sans pseudo.'},

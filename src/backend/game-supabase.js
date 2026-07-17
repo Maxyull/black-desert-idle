@@ -235,22 +235,10 @@ function updatePseudoDisplay() {
 // prochain onAuthed() réussi, voir refreshMyPseudo()
 const PENDING_PSEUDO_KEY = 'velia-idle-pending-pseudo';
 const _authT = (k, o) => i18next.t('backend:backend.auth.' + k, o);
-// Résolution "pseudo OU email" -> email (2026-07-16, demande explicite : connexion et mot de passe
-// perdu acceptent le pseudo OU l'email). Si l'identifiant contient '@', c'est déjà un email (aucun
-// appel serveur). Sinon on interroge le RPC public email_for_login(p_identifier) qui mappe
-// profiles.pseudo -> auth.users.email (voir supabase/migrations/..._email_for_login.sql). Repli
-// silencieux : si le RPC n'existe pas encore (migration non appliquée) ou ne trouve rien, renvoie
-// null -> l'appelant affiche err_pseudo_not_found.
-async function resolveLoginEmail(identifier) {
-  if (!identifier) return null;
-  if (identifier.includes('@')) return identifier;
-  if (!sb) return null;
-  try {
-    const { data, error } = await sb.rpc('email_for_login', { p_identifier: identifier });
-    if (error || !data) return null;
-    return data;
-  } catch (e) { return null; }
-}
+// Connexion / réinitialisation par pseudo OU email SANS jamais exposer l'email au client
+// (2026-07-16, version "zéro fuite") : tout passe par l'Edge Function auth-by-identifier
+// (verify_jwt=false, résout pseudo->email côté serveur avec service_role, voir
+// supabase/functions/auth-by-identifier/index.ts). Le client ne reçoit jamais d'email en clair.
 /** Crée un compte email/mot de passe (email + pseudo + mot de passe TOUS requis), ou upgrade la session invité courante en compte réel (garde le même user_id, la sauvegarde suit). Mémorise le pseudo choisi (PENDING_PSEUDO_KEY) le temps de confirmer l'email. */
 async function doSignUp() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
@@ -277,30 +265,31 @@ async function doSignUp() {
   if (data.session) { onAuthed(data.session.user); }
   else authShow(_authT('account_created_confirm'));
 }
-/** Connexion par pseudo OU email + mot de passe (2026-07-16, demande explicite). */
+/** Connexion par pseudo OU email + mot de passe, via l'Edge Function (email jamais exposé). */
 async function doSignIn() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
   const identifier = $a('authEmail').value.trim(), pass = $a('authPass').value;
   if (!identifier || !pass) { authShow(_authT('err_login_fields'), true); return; }
   authShow(_authT('signing_in'));
-  const email = await resolveLoginEmail(identifier);
-  if (!email) { authShow(_authT('err_pseudo_not_found'), true); return; }
-  const { data, error } = await sb.auth.signInWithPassword({ email, password: pass });
+  let res;
+  try { res = await sb.functions.invoke('auth-by-identifier', { body: { action: 'login', identifier, password: pass } }); }
+  catch (e) { authShow(_authT('err_invalid_credentials'), true); return; }
+  const data = res && res.data;
+  if (!data || data.error || !data.access_token) { authShow(_authT('err_invalid_credentials'), true); return; }
+  // pose la session à partir des tokens ; SIGNED_IN (onAuthStateChange) déclenchera onAuthed()
+  const { error } = await sb.auth.setSession({ access_token: data.access_token, refresh_token: data.refresh_token });
   if (error) { authShow(error.message, true); return; }
-  onAuthed(data.user);
 }
-// envoie un email de réinitialisation de mot de passe — demande explicite du 2026-07-05,
-// accepte pseudo OU email depuis le 2026-07-16 (voir resolveLoginEmail).
+// réinitialisation de mot de passe (identifiant = pseudo OU email) via l'Edge Function : l'email
+// n'est jamais renvoyé au client, et la réponse est toujours "envoyé" (ne révèle pas l'existence).
 /** Envoie un email de réinitialisation de mot de passe (identifiant = pseudo OU email). */
 async function doForgotPassword() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
   const identifier = $a('authEmail').value.trim();
   if (!identifier) { authShow(_authT('email_first'), true); return; }
   authShow(_authT('sending'));
-  const email = await resolveLoginEmail(identifier);
-  if (!email) { authShow(_authT('err_pseudo_not_found'), true); return; }
-  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.href });
-  if (error) { authShow(error.message, true); return; }
+  try { await sb.functions.invoke('auth-by-identifier', { body: { action: 'reset', identifier, redirect_to: location.href } }); }
+  catch (e) { /* on affiche quand même le message générique ci-dessous (ne révèle pas l'existence) */ }
   authShow(_authT('reset_email_sent'));
 }
 // 2e moitié du flux "mot de passe oublié" (2026-07-16) : après le clic sur le lien du mail, on
