@@ -90,3 +90,17 @@ longue. Contrairement au Trésor de Velia (`TREASURE_STACK_CAP`/`enforceTreasure
 `progression/treasure-craft.js`, qui auto-vend l'excédent), les matériaux/craft normaux n'ont pas
 de filet équivalent — relever le plafond plutôt qu'ajouter un mécanisme de vente auto (décision
 explicite). Test : `testInvAddMergesPastOldMaxStackThreshold` (`tests/tests.js`).
+
+## Deux fichiers extraits de `backend/game-supabase.js` le 2026-07-22 (audit repo P5)
+
+- `i18n-legacy.js` — le dictionnaire `I18N` historique + `applyI18n()` + la bascule de langue.
+  **A ne pas confondre** avec `i18n-init.js` / `i18n-resources.generated.js` (i18next, alimente par
+  `/locales`, la solution actuelle) : les deux coexistent, voir `docs/I18N_PLAN.md`.
+- `ui-layout.js` — cote du menu lateral, repli des panneaux gauche/droite, echelle d'UI
+  (`UI_SCALE_LEVELS`, `applyUiScale`). Preferences locales (localStorage), zero reseau : ca n'avait
+  rien a faire dans le fichier Supabase.
+
+> Ces deux fichiers sont declares dans `index.dev.html` **juste apres `game-supabase.js`**, malgre
+> leur dossier `core/`, parce que c'est la place exacte qu'occupaient ces blocs dans le fichier
+> d'origine. L'ordre des `<script>` est le contrat (un seul scope global, pas de modules ES) --
+> ne pas les remonter "pour ranger avec les autres core/". Voir `backend/README.md`.
