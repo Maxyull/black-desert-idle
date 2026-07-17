@@ -391,7 +391,7 @@ const I18N_RESOURCES = {
       "backend.auth.sending": "Envoi en cours…",
       "backend.auth.err_config": "Supabase n'est pas configuré.",
       "backend.auth.err_login_fields": "Pseudo/email et mot de passe requis.",
-      "backend.auth.err_signup_fields": "Email, mot de passe (6 caractères min.) et pseudo sont tous requis.",
+      "backend.auth.err_signup_fields": "Email, mot de passe (8 caractères min.) et pseudo sont tous requis.",
       "backend.auth.err_signup_needs_email": "L'inscription nécessite une vraie adresse email (pas seulement un pseudo).",
       "backend.auth.err_pseudo_not_found": "Aucun compte trouvé pour ce pseudo.",
       "backend.auth.err_invalid_credentials": "Pseudo/email ou mot de passe incorrect.",
@@ -1453,7 +1453,7 @@ const I18N_RESOURCES = {
       "backend.auth.sending": "Sending…",
       "backend.auth.err_config": "Supabase is not configured.",
       "backend.auth.err_login_fields": "Username/email and password are required.",
-      "backend.auth.err_signup_fields": "Email, a 6+ character password and a username are all required.",
+      "backend.auth.err_signup_fields": "Email, an 8+ character password and a username are all required.",
       "backend.auth.err_signup_needs_email": "Sign-up needs a real email address (not just a username).",
       "backend.auth.err_pseudo_not_found": "No account found for that username.",
       "backend.auth.err_invalid_credentials": "Wrong username/email or password.",
@@ -14985,7 +14985,7 @@ async function doSignUp() {
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
   const pseudo = $a('authPseudo').value.trim();
   
-  if (!email || pass.length < 6 || !pseudo) { authShow(_authT('err_signup_fields'), true); return; }
+  if (!email || pass.length < 8 || !pseudo) { authShow(_authT('err_signup_fields'), true); return; }
   if (!email.includes('@')) { authShow(_authT('err_signup_needs_email'), true); return; }
   authShow(_authT('creating_account'));
   try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {}
@@ -15044,7 +15044,7 @@ function showPasswordRecoveryUI() {
 async function doSaveNewPassword() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
   const pass = $a('authPass').value;
-  if (pass.length < 6) { authShow(_authT('err_signup_fields'), true); return; }
+  if (pass.length < 8) { authShow(_authT('err_signup_fields'), true); return; }
   authShow(_authT('sending'));
   const { data, error } = await sb.auth.updateUser({ password: pass });
   if (error) { authShow(error.message, true); return; }

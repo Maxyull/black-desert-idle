@@ -248,7 +248,7 @@ async function doSignUp() {
   const email = $a('authEmail').value.trim(), pass = $a('authPass').value;
   const pseudo = $a('authPseudo').value.trim();
   // inscription = les 3 infos requises (2026-07-16, demande explicite)
-  if (!email || pass.length < 6 || !pseudo) { authShow(_authT('err_signup_fields'), true); return; }
+  if (!email || pass.length < 8 || !pseudo) { authShow(_authT('err_signup_fields'), true); return; }
   if (!email.includes('@')) { authShow(_authT('err_signup_needs_email'), true); return; }
   authShow(_authT('creating_account'));
   try { localStorage.setItem(PENDING_PSEUDO_KEY, pseudo); } catch(e) {}
@@ -314,7 +314,7 @@ function showPasswordRecoveryUI() {
 async function doSaveNewPassword() {
   if (!sb) { authShow(_authT('err_config'), true); return; }
   const pass = $a('authPass').value;
-  if (pass.length < 6) { authShow(_authT('err_signup_fields'), true); return; }
+  if (pass.length < 8) { authShow(_authT('err_signup_fields'), true); return; }
   authShow(_authT('sending'));
   const { data, error } = await sb.auth.updateUser({ password: pass });
   if (error) { authShow(error.message, true); return; }

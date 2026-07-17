@@ -77,7 +77,7 @@
   "backend.auth.sending": "Envoi en cours…",
   "backend.auth.err_config": "Supabase n'est pas configuré.",
   "backend.auth.err_login_fields": "Pseudo/email et mot de passe requis.",
-  "backend.auth.err_signup_fields": "Email, mot de passe (6 caractères min.) et pseudo sont tous requis.",
+  "backend.auth.err_signup_fields": "Email, mot de passe (8 caractères min.) et pseudo sont tous requis.",
   "backend.auth.err_signup_needs_email": "L'inscription nécessite une vraie adresse email (pas seulement un pseudo).",
   "backend.auth.err_pseudo_not_found": "Aucun compte trouvé pour ce pseudo.",
   "backend.auth.err_invalid_credentials": "Pseudo/email ou mot de passe incorrect.",
