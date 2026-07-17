@@ -273,6 +273,13 @@
   }
 
   /* ===== PROGRESS BAR ===== */
+  /* Cette page n'avait pas de classe .hidden (elle était 100% statique). Déclarée ici parce que
+     les blocs "dons collectés" et "donateurs" sont désormais MASQUÉS par défaut et ne s'affichent
+     que si donation_public_summary() renvoie des données réelles -- voir le script en bas de page.
+     !important : garde-fou pour qu'un futur `display` ajouté sur .progress-block/.donors ne
+     ré-affiche pas silencieusement un bloc censé rester caché faute de données. */
+  .hidden { display: none !important; }
+
   .progress-block {
     margin-bottom: 64px;
   }
@@ -427,15 +434,21 @@
     <div class="cta-note">Via PayPal · montant libre · aucune contrepartie in-game</div>
   </div>
 
-  <div class="progress-block">
+  <!-- Barre de progression alimentée par les VRAIS dons (2026-07-22). Elle affichait auparavant
+       "180 $ collectés / 72% des coûts couverts", valeurs de maquette sans aucune source : un
+       argument social qui pousse au don, sur une page qui revendique "Transparence totale" juste
+       en dessous. Elle est désormais remplie par donation_public_summary() (Supabase) et reste
+       MASQUÉE tant qu'aucun don réel n'est enregistré -- jamais de chiffre fabriqué, jamais de
+       "0 $ collectés" décourageant non plus : on n'affiche rien. -->
+  <div class="progress-block hidden" id="progressBlock">
     <div class="progress-labels">
-      <span class="current">180 $ collectés</span>
+      <span class="current" id="donCollected"></span>
       <span class="goal">objectif : 250 $ / mois</span>
     </div>
     <div class="progress-track">
-      <div class="progress-fill" style="width: 72%;"></div>
+      <div class="progress-fill" id="donFill" style="width: 0%;"></div>
     </div>
-    <div class="progress-caption">72% des coûts de ce mois-ci couverts — merci !</div>
+    <div class="progress-caption" id="donCaption"></div>
   </div>
 
   <div class="why">
@@ -487,18 +500,10 @@
       <div class="ledger-cost">25 $ / mois</div>
     </div>
 
-    <div class="ledger-row" style="border-bottom: none; flex-direction: column; align-items: stretch;">
-      <div class="ledger-desc" style="margin-bottom: 6px;">Tendance sur 4 mois</div>
-      <div class="trend">
-        <div class="trend-bar" style="height: 60%;"></div>
-        <div class="trend-bar" style="height: 68%;"></div>
-        <div class="trend-bar" style="height: 75%;"></div>
-        <div class="trend-bar current" style="height: 100%;"></div>
-      </div>
-      <div class="trend-labels">
-        <span>Avr</span><span>Mai</span><span>Juin</span><span>Juil</span>
-      </div>
-    </div>
+    <!-- "Tendance sur 4 mois" (barres 60/68/75/100%, Avr->Juil) retirée le 2026-07-22 : c'était une
+         courbe de maquette, aucun historique de coûts n'est conservé nulle part. Afficher une
+         tendance inventée sur une page qui revendique "Transparence totale" n'a pas de sens. À
+         réintroduire le jour où les coûts mensuels seront réellement historisés. -->
 
     <div class="ledger-total">
       <div class="label">Total</div>
@@ -513,16 +518,14 @@
     décider ensemble comment cet excédent est utilisé.
   </div>
 
-  <div class="donors">
+  <!-- Liste des donateurs (2026-07-22) : listait 5 pseudos INVENTÉS (Kaelthorne, Wyrmshade,
+       Nocturia, Aelindra, Draukin) + "12 autres" -- des personnes qui n'existent pas, sous une
+       légende promettant leur accord. Remplie désormais par donation_public_summary(), qui ne
+       renvoie QUE les pseudos ayant explicitement consenti (is_public), et masquée s'il n'y en a
+       aucun. -->
+  <div class="donors hidden" id="donorsBlock">
     <div class="section-title">Merci à eux</div>
-    <div class="donor-list">
-      <span class="donor-chip top">Kaelthorne</span>
-      <span class="donor-chip">Wyrmshade</span>
-      <span class="donor-chip">Nocturia</span>
-      <span class="donor-chip">Aelindra</span>
-      <span class="donor-chip">Draukin</span>
-      <span class="donor-chip">+ 12 autres</span>
-    </div>
+    <div class="donor-list" id="donorList"></div>
     <div class="donors-caption">Pseudos affichés uniquement avec l'accord du donateur</div>
   </div>
 
@@ -535,5 +538,52 @@
   </div>
 
 </div>
+
+<!-- Dons RÉELS (2026-07-22) : cette page était entièrement statique et affichait des valeurs de
+     maquette ("180 $ collectés", "72% des coûts couverts", 5 donateurs nommés + "12 autres") --
+     toutes inventées, sur une page qui sollicite de l'argent et revendique "Transparence totale".
+     Elle lit désormais donation_public_summary() (Supabase), qui ne renvoie que des AGRÉGATS et
+     les pseudos ayant explicitement consenti : aucun montant individuel n'est exposé, la table
+     donations elle-même est en deny-all RLS.
+     Règle d'or : en cas de zéro don, d'erreur réseau ou de SDK indisponible, on n'affiche RIEN --
+     jamais de repli sur un chiffre inventé. -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.0/dist/umd/supabase.js"></script>
+<script>
+(async () => {
+  // clé PUBLIABLE (anon) : déjà exposée côté client du jeu, protégée par RLS -- pas un secret.
+  const SUPABASE_URL = 'https://mkwwvzbjtyawpcyrnybk.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_c7HLxbeBLe01rirZVg-XPA_TClYulIJ';
+  const GOAL_USD = 250; // total des coûts mensuels affichés dans le tableau ci-dessus
+  try {
+    if (!window.supabase) return; // CDN indisponible : on laisse les blocs masqués
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const { data, error } = await sb.rpc('donation_public_summary');
+    if (error || !data) return;
+
+    const total = Number(data.month_total_usd) || 0;
+    if (total > 0) {
+      const pct = Math.min(100, Math.round(total / GOAL_USD * 100));
+      document.getElementById('donCollected').textContent = Math.round(total) + ' $ collectés';
+      document.getElementById('donFill').style.width = pct + '%';
+      document.getElementById('donCaption').textContent =
+        pct >= 100 ? 'Les coûts de ce mois-ci sont couverts — merci !'
+                   : pct + '% des coûts de ce mois-ci couverts — merci !';
+      document.getElementById('progressBlock').classList.remove('hidden');
+    }
+
+    const donors = Array.isArray(data.public_donors) ? data.public_donors : [];
+    if (donors.length) {
+      const list = document.getElementById('donorList');
+      donors.forEach((name, i) => {
+        const chip = document.createElement('span');
+        chip.className = 'donor-chip' + (i === 0 ? ' top' : '');
+        chip.textContent = name; // textContent : jamais innerHTML, le pseudo vient de la base
+        list.appendChild(chip);
+      });
+      document.getElementById('donorsBlock').classList.remove('hidden');
+    }
+  } catch (e) { /* silencieux : mieux vaut ne rien afficher qu'un chiffre faux */ }
+})();
+</script>
 </body>
 </html>
