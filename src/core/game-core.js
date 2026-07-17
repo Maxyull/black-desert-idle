@@ -22,6 +22,27 @@ function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth
 // petit écran (voir les media queries ci-dessus) — un simple seuil de largeur de viewport suffit
 // (pas besoin de sniffer le user-agent, le responsive suit déjà la taille réelle de la fenêtre)
 function isMobileViewport() { return window.innerWidth <= 1024; }
+// ==================== MOUVEMENT RÉDUIT (accessibilité) ====================
+// `prefers-reduced-motion: reduce` est le réglage SYSTÈME (Windows "Afficher les animations",
+// macOS "Réduire les animations", équivalents Android/iOS) par lequel quelqu'un signale qu'un
+// mouvement à l'écran lui pose un vrai problème : troubles vestibulaires, migraines,
+// hypersensibilité. Ce n'est pas une préférence esthétique, et ça ne se demande pas dans un
+// menu du jeu — le système a déjà la réponse.
+//
+// CE QU'ON NE FAIT PAS : couper le jeu. C'est un jeu d'action animé, le perso se déplace et
+// combat en canvas ; supprimer ça n'accessibilise rien, ça retire le jeu. La cible, c'est le
+// mouvement DÉCORATIF (pulsations, halos, rebonds) et surtout le mouvement AMPLE — une roue qui
+// fait 5 tours sur elle-même est exactement le déclencheur vestibulaire classique.
+//
+// LU À CHAUD À CHAQUE APPEL, jamais mis en cache : le réglage système se change en cours de
+// session (Windows le bascule à chaud), et un cache au chargement l'ignorerait jusqu'au prochain
+// rechargement de la page. matchMedia est retesté à chaque appel plutôt que gardé en variable
+// pour rester trivialement correct hors navigateur (tests sans DOM).
+/** @returns {boolean} true si le système demande un mouvement réduit (prefers-reduced-motion: reduce). Lu à chaud à chaque appel, jamais mis en cache. */
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 // ==================== VERSION D'ÉQUILIBRAGE (records de classement) ====================
 // À BUMPER à chaque rééquilibrage qui invalide les records À VIE (bestAp/bestDp/bestGearscore),
 // c.-à-d. dès qu'une migration rétroactive du type V403/V405 recalcule ces records à la baisse.

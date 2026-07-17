@@ -2723,6 +2723,11 @@ function uiTextScale() { return Math.min(3.2, Math.max(1, 1240 / (cv.clientWidth
 
 function isMobileViewport() { return window.innerWidth <= 1024; }
 
+function prefersReducedMotion() {
+  return typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 const BALANCE_VERSION = 405;
 
 function escapeHtml(s) {
@@ -7565,6 +7570,11 @@ function wireBossRewardReveal(items) {
         : i18next.t('combat:combat.boss.wheel_not_this_time', { icon: it.rareLoot.icon, name: tr(it.rareLoot.name) });
     }
     finishIfAllDone();
+  }
+  
+  if (typeof prefersReducedMotion === 'function' && prefersReducedMotion()) {
+    items.forEach((_, i) => revealOne(i, { instant: true }));
+    return;
   }
   items.forEach((it, i) => {
     const startDelay = i*BOSS_REVEAL_STAGGER_MS;

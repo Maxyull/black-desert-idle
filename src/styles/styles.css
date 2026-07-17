@@ -503,7 +503,35 @@
   .b-blue { color:var(--r-blue); border-color:var(--r-blue); }
   .b-grey { color:var(--r-grey); border-color:var(--r-grey); }
 
-  @media (prefers-reduced-motion:reduce){ .shake{animation:none;} button{transition:none;} }
+  /* MOUVEMENT RÉDUIT (accessibilité, 2026-07-22, audit repo P6).
+     Avant, cette règle ne couvrait QUE .shake et les transitions de <button> -- soit 2 cas sur
+     30 déclarations `animation:` et 34 `transition:`. Quelqu'un qui a coché "réduire les
+     animations" dans son système continuait donc à recevoir 19 keyframes : halos qui pulsent,
+     onglets qui clignotent, dés qui rebondissent, encadrés de tutoriel qui font du yo-yo.
+     Le sélecteur universel les prend toutes d'un coup, y compris celles qu'on ajoutera demain
+     sans y penser -- c'est précisément l'intérêt par rapport à une liste à maintenir.
+
+     POURQUOI .01ms ET PAS `animation:none` : `none` empêche l'animation de jouer, donc les
+     événements `animationend` ne partent JAMAIS -- tout code qui attend la fin d'une animation
+     pour nettoyer resterait bloqué. Une durée quasi nulle joue l'animation, la termine
+     immédiatement et déclenche l'événement : même résultat visuel, aucun effet de bord.
+
+     VÉRIFIÉ AVANT D'ÉCRIRE CETTE RÈGLE : aucune des 19 keyframes ne se termine à `opacity:0`, et
+     aucune n'utilise `animation-fill-mode:forwards`. Chaque élément animé atterrit donc sur un
+     état final VISIBLE. C'était le vrai risque : une info qui apparaît en fondu puis disparaît en
+     fondu se serait volatilisée instantanément, rendant le jeu MOINS accessible.
+
+     Le mouvement du canvas (perso, combat) n'est pas touché : c'est le jeu, pas de la décoration.
+     Le mouvement ample piloté en JS (roue de boss, roulement des dés) est court-circuité via
+     prefersReducedMotion() -- voir core/game-core.js et combat/boss.js. */
+  @media (prefers-reduced-motion:reduce){
+    *, *::before, *::after {
+      animation-duration:.01ms !important;
+      animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
+      scroll-behavior:auto !important;
+    }
+  }
   @media (max-width:860px){ #panel{grid-template-columns:1fr 1fr;} }
 
   /* sélecteur à bulles Équipement/Cristal (2026-07-15, demande explicite : "un nouveau slider a
