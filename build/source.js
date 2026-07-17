@@ -5009,6 +5009,53 @@ async function logToDiscord(title, description, color) {
   } catch (e) {}
 }
 
+const DISCORD_LOOT_FLUSH_MS = 300000; 
+const DISCORD_LOOT_MAX_NAMES = 8;     
+let discordLootBuf = Object.create(null); 
+let discordLootTimer = null;
+
+function queueLootDiscord(kind, name) {
+  const key = kind + ' ' + name;
+  discordLootBuf[key] = (discordLootBuf[key] || 0) + 1;
+  
+  if (!discordLootTimer) discordLootTimer = setTimeout(flushLootDiscord, DISCORD_LOOT_FLUSH_MS);
+}
+
+function buildLootDiscordSummary(buf, pseudo) {
+  const groups = { gear: [], jackpot: [] };
+  Object.keys(buf).forEach(k => {
+    const i = k.indexOf(' ');
+    const kind = k.slice(0, i), name = k.slice(i + 1);
+    if (groups[kind]) groups[kind].push({ name, n: buf[k] });
+  });
+  const nGear = groups.gear.reduce((s, e) => s + e.n, 0);
+  const nJack = groups.jackpot.reduce((s, e) => s + e.n, 0);
+  if (!nGear && !nJack) return null;
+  const line = (arr) => {
+    arr.sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)); 
+    const shown = arr.slice(0, DISCORD_LOOT_MAX_NAMES)
+      .map(e => e.n > 1 ? `${e.name} ×${e.n}` : e.name).join(', ');
+    const rest = arr.length - DISCORD_LOOT_MAX_NAMES;
+    return rest > 0 ? `${shown} et ${rest} autre${rest > 1 ? 's' : ''}` : shown;
+  };
+  const parts = [];
+  if (nGear) parts.push(`⚔️ **${nGear}** équipement${nGear > 1 ? 's' : ''} rare${nGear > 1 ? 's' : ''} : ${line(groups.gear)}`);
+  if (nJack) parts.push(`💍 **${nJack}** bijou${nJack > 1 ? 'x' : ''} rare${nJack > 1 ? 's' : ''} : ${line(groups.jackpot)}`);
+  return {
+    title: '✨ Butin rare',
+    desc: `**${pseudo || 'Joueur'}** — ${Math.round(DISCORD_LOOT_FLUSH_MS / 60000)} dernières minutes\n` + parts.join('\n'),
+    color: 0xb48ce8,
+  };
+}
+
+function flushLootDiscord() {
+  discordLootTimer = null;
+  const buf = discordLootBuf;
+  discordLootBuf = Object.create(null); 
+  const s = buildLootDiscordSummary(buf, typeof myPseudo !== 'undefined' ? myPseudo : null);
+  if (s) logToDiscord(s.title, s.desc, s.color);
+}
+
 function updateNotifBadge() {
   const badge = $a('notifBadge'); if (!badge) return;
   notifUnread = computeNotifUnreadCount(); 
@@ -6399,12 +6446,12 @@ function dropsTick(dt) {
         lootLine(it, 0, 'jackpot');
         floatTxt(l.x,l.y,55,'★ '+tr(it.name),{lvl:true});
         
-        logToDiscord('💍 Bijou rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
+        queueLootDiscord('jackpot', it.name);
       } else if (it.kind === 'gear') {
         S.gearDropCount = (S.gearDropCount||0) + 1;
         lootLine(it, 0, 'jackpot');
         floatTxt(l.x,l.y,55,'⚔ '+tr(it.name),{lvl:true});
-        logToDiscord('⚔️ Équipement rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
+        queueLootDiscord('gear', it.name);
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,40,tr(it.name),{blue:true});

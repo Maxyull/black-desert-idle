@@ -100,6 +100,62 @@ async function logToDiscord(title, description, color) {
     });
   } catch (e) {}
 }
+// ==================== BUTIN RARE : GROUPÉ AVANT ENVOI DISCORD ====================
+// (2026-07-22) Avant, CHAQUE drop d'équipement/bijou rare postait son propre message. Or le taux de
+// drop suit la vitesse de kill : à l'endgame (154 kills/min relevés en prod) "rare" = ~3 messages
+// par MINUTE, soit ~2300/jour pour un SEUL joueur (chiffre constaté). Conséquences : le salon
+// devient illisible, et vers ~20 joueurs actifs on dépasserait la limite du webhook Discord
+// (~30 msg/min) qui se mettrait à jeter des messages -- y compris les événements rares qui comptent.
+//
+// On agrège donc par NOM d'objet sur une fenêtre, et on envoie UN récapitulatif. Seuls les drops à
+// volume (équipements/bijoux) passent par ici : trésors, boss, PEN, succès, niveaux restent envoyés
+// à l'unité (rares par nature, et c'est précisément ce qu'on veut voir en direct).
+const DISCORD_LOOT_FLUSH_MS = 300000; // 5 min : assez pour agréger, assez court pour rester vivant
+const DISCORD_LOOT_MAX_NAMES = 8;     // au-delà : "et N autres" (l'embed Discord est borné à 2000 car.)
+let discordLootBuf = Object.create(null); // { "gear Bâton Grunil": 3, ... }
+let discordLootTimer = null;
+/** @param {'gear'|'jackpot'} kind @param {string} name - nom canonique FR de l'objet. Empile un drop rare pour un envoi Discord GROUPÉ (voir DISCORD_LOOT_FLUSH_MS) au lieu d'un message par drop. */
+function queueLootDiscord(kind, name) {
+  const key = kind + ' ' + name;
+  discordLootBuf[key] = (discordLootBuf[key] || 0) + 1;
+  // fenêtre démarrée au PREMIER drop : aucun timer ne tourne dans le vide quand personne ne farme
+  if (!discordLootTimer) discordLootTimer = setTimeout(flushLootDiscord, DISCORD_LOOT_FLUSH_MS);
+}
+/** @param {object} buf - tampon {"<kind> <nom>": count}. @param {string} pseudo @returns {{title:string, desc:string, color:number}|null} récap prêt à poster, null si tampon vide. Fonction PURE (testable sans DOM ni réseau). */
+function buildLootDiscordSummary(buf, pseudo) {
+  const groups = { gear: [], jackpot: [] };
+  Object.keys(buf).forEach(k => {
+    const i = k.indexOf(' ');
+    const kind = k.slice(0, i), name = k.slice(i + 1);
+    if (groups[kind]) groups[kind].push({ name, n: buf[k] });
+  });
+  const nGear = groups.gear.reduce((s, e) => s + e.n, 0);
+  const nJack = groups.jackpot.reduce((s, e) => s + e.n, 0);
+  if (!nGear && !nJack) return null;
+  const line = (arr) => {
+    arr.sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)); // les plus nombreux d'abord
+    const shown = arr.slice(0, DISCORD_LOOT_MAX_NAMES)
+      .map(e => e.n > 1 ? `${e.name} ×${e.n}` : e.name).join(', ');
+    const rest = arr.length - DISCORD_LOOT_MAX_NAMES;
+    return rest > 0 ? `${shown} et ${rest} autre${rest > 1 ? 's' : ''}` : shown;
+  };
+  const parts = [];
+  if (nGear) parts.push(`⚔️ **${nGear}** équipement${nGear > 1 ? 's' : ''} rare${nGear > 1 ? 's' : ''} : ${line(groups.gear)}`);
+  if (nJack) parts.push(`💍 **${nJack}** bijou${nJack > 1 ? 'x' : ''} rare${nJack > 1 ? 's' : ''} : ${line(groups.jackpot)}`);
+  return {
+    title: '✨ Butin rare',
+    desc: `**${pseudo || 'Joueur'}** — ${Math.round(DISCORD_LOOT_FLUSH_MS / 60000)} dernières minutes\n` + parts.join('\n'),
+    color: 0xb48ce8,
+  };
+}
+/** Vide le tampon de butin rare et poste UN récapitulatif groupé. No-op si le tampon est vide. */
+function flushLootDiscord() {
+  discordLootTimer = null;
+  const buf = discordLootBuf;
+  discordLootBuf = Object.create(null); // remis à zéro AVANT l'envoi (async) : aucun drop perdu entre-temps
+  const s = buildLootDiscordSummary(buf, typeof myPseudo !== 'undefined' ? myPseudo : null);
+  if (s) logToDiscord(s.title, s.desc, s.color);
+}
 /** Rafraîchit la pastille du bouton cloche (compte non-lu, plafonné à "9+") et le halo doré si notifUnread > 0. */
 function updateNotifBadge() {
   const badge = $a('notifBadge'); if (!badge) return;

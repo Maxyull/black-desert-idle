@@ -308,12 +308,14 @@ function dropsTick(dt) {
         // le centre de notifications ne garde que les infos importantes (succès, boss, niveau) —
         // les trouvailles de loot restent visibles dans le loot ticker, pas besoin de les dupliquer
         // ici (demande explicite du 2026-07-06)
-        logToDiscord('💍 Bijou rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
+        // GROUPÉ depuis le 2026-07-22 (au lieu d'un message Discord par drop) : à l'endgame ces
+        // drops tombent ~3x/minute -- voir queueLootDiscord (progression/notifications-quests.js).
+        queueLootDiscord('jackpot', it.name);
       } else if (it.kind === 'gear') {
         S.gearDropCount = (S.gearDropCount||0) + 1;
         lootLine(it, 0, 'jackpot');
         floatTxt(l.x,l.y,55,'⚔ '+tr(it.name),{lvl:true});
-        logToDiscord('⚔️ Équipement rare trouvé', `**${myPseudo||'Joueur'}** a trouvé ${it.name}`, 0xb48ce8);
+        queueLootDiscord('gear', it.name);
       } else if (it.kind === 'craft') {
         lootLine(it, 0, 'rare');
         floatTxt(l.x,l.y,40,tr(it.name),{blue:true});

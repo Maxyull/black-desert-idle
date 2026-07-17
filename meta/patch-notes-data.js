@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V473', d:'17/07/2026 09:45', name:{fr:'Salon Discord : le butin rare est désormais groupé', en:'Discord feed: rare loot is now grouped'}, fr:[
+      {t:'change', sub:'interface', tx:'Le salon Discord postait un message pour CHAQUE équipement ou bijou rare trouvé. À l\'endgame le taux de drop suit la vitesse de kill : environ 3 messages par minute, soit ~2300 par jour pour un seul joueur — le salon en devenait illisible. Ces trouvailles sont maintenant regroupées en un seul récapitulatif toutes les 5 minutes ("36 équipements rares : Bâton Grunil ×9, …"). Les événements réellement rares (trésors, boss, PEN, succès, niveaux, records) restent annoncés à l\'unité, en direct. Rien ne change en jeu : le loot ticker affiche toujours chaque trouvaille immédiatement.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Discord feed posted a message for EVERY rare gear or jewel found. At endgame drop rate follows kill speed: about 3 messages per minute, roughly 2,300 a day for a single player — the channel became unreadable. These finds are now grouped into a single summary every 5 minutes ("36 rare gear pieces: Grunil Staff ×9, …"). Genuinely rare events (treasures, bosses, PEN, achievements, levels, records) are still announced individually, live. Nothing changes in-game: the loot ticker still shows every find instantly.'},
+    ] },
   { v:'V472', d:'17/07/2026 09:15', name:{fr:'Écran de connexion repensé + connexion sans mot de passe', en:'Redesigned sign-in screen + passwordless login'}, fr:[
       {t:'change', sub:'interface', tx:'L\'écran de connexion n\'affiche plus aucun champ à l\'ouverture : on choisit d\'abord ce qu\'on veut faire (se connecter, créer un compte, mot de passe oublié, lien magique), et seuls les champs de ce choix apparaissent. Fini les 3 champs affichés en permanence dont 2 inutiles selon le cas.'},
       {t:'new', sub:'connexion', tx:'✨ Lien magique : connecte-toi sans mot de passe. Entre ton pseudo OU ton email, reçois un lien par email, clique — c\'est tout. Ne crée jamais de compte : si l\'identifiant est inconnu, rien n\'est envoyé.'},
