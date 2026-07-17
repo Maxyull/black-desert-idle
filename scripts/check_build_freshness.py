@@ -15,7 +15,12 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-TRACKED = ["build/source.js", "build/source.min.js", "index.html", "src/core/i18n-resources.generated.js"]
+TRACKED = ["build/source.js", "build/source.min.js", "index.html", "src/core/i18n-resources.generated.js",
+           # meta/patch-notes-version.json est genere depuis PATCH_NOTES[0].v (audit perf P4) : le
+           # suivre ici est ce qui empeche les deux sources de diverger. Une derive serait
+           # silencieuse -- le jeu tourne normalement, mais le toast "nouvelle version" ne sort
+           # plus jamais (ou sort en boucle sur une version deja chargee).
+           "meta/patch-notes-version.json"]
 
 
 def main():
