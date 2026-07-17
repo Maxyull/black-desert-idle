@@ -392,11 +392,20 @@ async function doSaveNewPassword() {
   try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {} // retire #type=recovery
   if (data && data.user) onAuthed(data.user);
 }
-/** Déconnecte puis relance immédiatement une session invité (jamais de mur bloquant). */
+/** Déconnecte puis revient à l'écran de connexion sur un état vierge (voir le reload ci-dessous). */
 async function doLogout() {
   if (sb) await sb.auth.signOut();
   currentUser = null;
-  await startGuestOrShowAuth(); // jamais de mur bloquant : on repart direct sur une session invité
+  saveReady = false; // stoppe la simulation tout de suite (voir la garde dans advanceSim)
+  // Recharge la page plutôt que de seulement réafficher l'écran de connexion (2026-07-22, trouvé
+  // en corrigeant "on arrive avec un lvl déjà établi") : S est un `const` mutable jamais remis à
+  // zéro, et loadCloudSave() n'appelle applySaveState() QUE si une sauvegarde EXISTE. Sans ce
+  // rechargement, créer un NOUVEAU compte juste après une déconnexion faisait hériter le compte
+  // neuf de toute la progression du précédent -- rien ne venait écraser S. Le reload garantit un
+  // état vierge sans réinitialiser S champ par champ (~150 clés), et l'écran de connexion revient
+  // de toute façon au démarrage via startGuestOrShowAuth() : comportement identique pour le joueur.
+  if (sb) { location.reload(); return; }
+  await startGuestOrShowAuth(); // mode local sans Supabase : pas de reload possible/utile
 }
 
 // connexion (ou liaison, si déjà invité/connecté) via Discord — demande le scope

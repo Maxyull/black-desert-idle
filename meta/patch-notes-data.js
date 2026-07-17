@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V474', d:'17/07/2026 10:30', name:{fr:'Correctif : plus de niveau fantôme ni de faux résumé hors-ligne à la création de compte', en:'Fix: no more phantom level or fake offline summary on account creation'}, fr:[
+      {t:'fix', sub:'connexion', tx:'Le jeu tournait en fond DERRIÈRE l\'écran de connexion : 6 secondes passées sur le formulaire suffisaient à passer du niveau 1 au niveau 5. Ce personnage fantôme n\'était jamais remis à zéro à la création du compte — on démarrait donc avec un niveau déjà établi, et l\'onglet masqué (le temps d\'aller chercher son mail de confirmation) déclenchait un résumé « hors-ligne » alors qu\'on n\'avait même pas encore de compte. La simulation ne démarre plus tant que la sauvegarde n\'est pas connue : un nouveau compte commence bien au niveau 1.'},
+      {t:'fix', sub:'connexion', tx:'Se déconnecter puis créer un NOUVEAU compte dans la foulée faisait hériter le compte neuf de toute la progression du précédent. La déconnexion repart désormais d\'un état vierge.'},
+    ], en:[
+      {t:'fix', sub:'connexion', tx:'The game kept running BEHIND the sign-in screen: 6 seconds on the form was enough to go from level 1 to level 5. That phantom character was never reset on account creation — so you started with a level already established, and hiding the tab (to go fetch your confirmation email) triggered an "offline" summary before you even had an account. The simulation no longer starts until your save state is known: a new account now properly starts at level 1.'},
+      {t:'fix', sub:'connexion', tx:'Signing out then creating a NEW account right away made the fresh account inherit all of the previous account\'s progress. Signing out now starts from a clean state.'},
+    ] },
   { v:'V473', d:'17/07/2026 09:45', name:{fr:'Salon Discord : le butin rare est désormais groupé', en:'Discord feed: rare loot is now grouped'}, fr:[
       {t:'change', sub:'interface', tx:'Le salon Discord postait un message pour CHAQUE équipement ou bijou rare trouvé. À l\'endgame le taux de drop suit la vitesse de kill : environ 3 messages par minute, soit ~2300 par jour pour un seul joueur — le salon en devenait illisible. Ces trouvailles sont maintenant regroupées en un seul récapitulatif toutes les 5 minutes ("36 équipements rares : Bâton Grunil ×9, …"). Les événements réellement rares (trésors, boss, PEN, succès, niveaux, records) restent annoncés à l\'unité, en direct. Rien ne change en jeu : le loot ticker affiche toujours chaque trouvaille immédiatement.'},
     ], en:[

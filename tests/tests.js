@@ -2154,6 +2154,22 @@
     assert('Inscription : le champ email n\'accepte pas un pseudo (placeholder dédié)',
       AUTH_MODES.signup.idPh === 'authEmailPh' && AUTH_MODES.signin.idPh === 'authIdentifierPh');
   }
+  // Aucune simulation tant que l'état de sauvegarde n'est pas connu (2026-07-22, bug remonté :
+  // "on arrive avec un lvl déjà établi" + notif hors-ligne sans compte). Mesuré avant correction :
+  // 6 s devant l'écran de connexion faisaient passer niveau 1 -> 5. Garde-fou contre le retour du
+  // bug si quelqu'un réordonne les gardes de advanceSim.
+  function testAdvanceSimDoesNothingBeforeSaveReady() {
+    if (typeof advanceSim !== 'function' || typeof saveReady === 'undefined') return;
+    const was = saveReady, lvl0 = S.lvl, kills0 = S.kills || 0, silver0 = S.silver || 0;
+    try {
+      saveReady = false;
+      // 60 s simulées d'un coup : sans la garde, largement de quoi tuer/looter/monter de niveau
+      advanceSim(performance.now() + 60000);
+      assert('advanceSim ne simule RIEN tant que saveReady est faux (niveau inchangé)', S.lvl === lvl0, `lvl ${lvl0} -> ${S.lvl}`);
+      assert('advanceSim ne simule RIEN tant que saveReady est faux (aucun kill)', (S.kills || 0) === kills0);
+      assert('advanceSim ne simule RIEN tant que saveReady est faux (aucun silver)', (S.silver || 0) === silver0);
+    } finally { saveReady = was; }
+  }
   // Butin rare groupé avant envoi Discord (2026-07-22) : à l'endgame les drops "rares" tombent
   // ~3x/min (154 kills/min × 2%), soit ~2300 messages/jour pour un SEUL joueur (chiffre relevé en
   // prod) -- un message par drop saturait le salon et, vers ~20 joueurs, la limite du webhook.
@@ -4908,8 +4924,12 @@
   // targetPackCount()/zoneIdx, plus fragile).
   function testAdvanceSimSkipsAllEffectsWhenSessionLocked() {
     if (typeof advanceSim !== 'function' || typeof sessionLocked === 'undefined') return;
-    const savedLocked = sessionLocked, savedCamX = cam.x, savedPx = P.x, savedLast = last;
+    const savedLocked = sessionLocked, savedCamX = cam.x, savedPx = P.x, savedLast = last, savedReady = saveReady;
     try {
+      // saveReady forcé à true : ce test porte sur le verrou MULTI-SESSION, pas sur la garde
+      // "aucune simulation tant que la sauvegarde n'est pas connue" (advanceSim, 2026-07-22), qui
+      // sortirait avant et rendrait les assertions vertes pour la mauvaise raison.
+      saveReady = true;
       P.x = 500; cam.x = 0; sessionLocked = true;
       advanceSim(performance.now() + 50);
       assert('advanceSim() ne bouge pas la caméra tant que sessionLocked est vrai (verrou multi-session)', cam.x === 0, `cam.x=${cam.x}`);
@@ -4917,7 +4937,7 @@
       advanceSim(performance.now() + 150);
       assert('advanceSim() reprend normalement une fois sessionLocked repassé à false', cam.x > 0, `cam.x=${cam.x}`);
     } finally {
-      sessionLocked = savedLocked; cam.x = savedCamX; P.x = savedPx; last = savedLast;
+      sessionLocked = savedLocked; cam.x = savedCamX; P.x = savedPx; last = savedLast; saveReady = savedReady;
     }
   }
 
@@ -6519,7 +6539,12 @@
     if (typeof advanceSim !== 'function' || typeof simTickOnce !== 'function') return;
     const savedFsm = fsm, savedWolves = wolvesTick, savedDrops = dropsTick, savedParticles = particlesTick, savedSpawn = spawnPackNear, savedLast = last;
     let calls = 0, totalDt = 0, maxStep = 0;
+    const savedReady = saveReady;
     try {
+      // saveReady forcé à true : ce test porte sur le DÉCOUPAGE en sous-pas du rattrapage, pas sur
+      // la garde "aucune simulation tant que la sauvegarde n'est pas connue" (advanceSim,
+      // 2026-07-22), qui sortirait avant et laisserait totalDt=0.
+      saveReady = true;
       fsm = dt => { calls++; totalDt += dt; maxStep = Math.max(maxStep, dt); };
       wolvesTick = () => {}; dropsTick = () => {}; particlesTick = () => {}; spawnPackNear = () => {};
       const t0 = performance.now();
@@ -6535,7 +6560,7 @@
       advanceSim(t0 + 60016 + 7200000); // mise en veille OS de 2h : borné à BG_CATCHUP_MAX_SEC, jamais un gel de l'onglet
       assert('advanceSim borne un trou géant (veille OS) à BG_CATCHUP_MAX_SEC', Math.abs(totalDt - BG_CATCHUP_MAX_SEC) < 0.01, `totalDt=${totalDt}`);
     } finally {
-      fsm = savedFsm; wolvesTick = savedWolves; dropsTick = savedDrops; particlesTick = savedParticles; spawnPackNear = savedSpawn; last = savedLast;
+      fsm = savedFsm; wolvesTick = savedWolves; dropsTick = savedDrops; particlesTick = savedParticles; spawnPackNear = savedSpawn; last = savedLast; saveReady = savedReady;
     }
   }
   // Déblocage des records (silver/h, kpm, xp/h) : un rythme SOUTENU bien au-delà de +30% du record
@@ -6974,6 +6999,7 @@
     testLb2CompendiumCategoryUsesRealPct();
     testLb2ComputeYourRankInfoFindsRealRankOutsideTop20();
     testBuildLootDiscordSummaryGroupsByItem();
+    testAdvanceSimDoesNothingBeforeSaveReady();
     testLb2GsLadderExcludesStaleBalanceRecords();
     testAuthModesWellFormed();
     testLb2YourRankBarThresholdIsTop20();

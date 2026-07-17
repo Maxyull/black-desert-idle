@@ -4359,6 +4359,8 @@ function advanceSim(now) {
   
   if (typeof sessionLocked !== 'undefined' && sessionLocked) return;
   
+  if (!saveReady) return;
+  
   if (bossState.active) return;
   while (elapsed > 0) {
     const dt = Math.min(2, elapsed); elapsed -= dt;
@@ -15161,6 +15163,9 @@ async function doSaveNewPassword() {
 async function doLogout() {
   if (sb) await sb.auth.signOut();
   currentUser = null;
+  saveReady = false; 
+  
+  if (sb) { location.reload(); return; }
   await startGuestOrShowAuth(); 
 }
 

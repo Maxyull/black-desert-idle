@@ -2585,6 +2585,17 @@ function advanceSim(now) {
   // fsm, drops...) plutôt qu'au niveau du rAF/setInterval qui l'appellent, pour couvrir les deux
   // chemins d'un coup (onglet visible ET filet de secours en arrière-plan, voir plus bas).
   if (typeof sessionLocked !== 'undefined' && sessionLocked) return;
+  // Ne JAMAIS simuler tant que l'état de sauvegarde n'est pas connu (2026-07-22, bug remonté :
+  // "lors de création de compte on peut recevoir notif hors ligne alors que pas de compte, aussi
+  // on arrive avec un lvl déjà établi"). Sans cette garde, la simulation tournait DERRIÈRE l'écran
+  // de connexion : 6 s sur le formulaire suffisaient à passer niveau 1 -> 5 (mesuré), et l'onglet
+  // masqué pendant qu'on va chercher le mail de confirmation remplissait awayLootCounts -> résumé
+  // "hors-ligne" affiché à quelqu'un qui n'a même pas encore de compte. Comme loadCloudSave()
+  // n'appelle applySaveState() QUE si une sauvegarde existe, ce S pollué survivait tel quel à la
+  // création du compte : le joueur démarrait avec le niveau accumulé devant l'écran de connexion.
+  // saveReady est posé par loadCloudSave() (sauvegarde chargée OU absence confirmée = nouveau
+  // personnage) et par le mode local sans Supabase -- même idiome que ensureLoyaltyGrant().
+  if (!saveReady) return;
   // pendant un combat de boss (plein écran), on met le farm en pause : la salle de boss couvre
   // tout l'écran, inutile de continuer à simuler la zone de farm derrière
   if (bossState.active) return;
