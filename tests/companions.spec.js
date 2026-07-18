@@ -148,17 +148,16 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
   await expect(frame.locator('.pet-card')).toHaveCount(0);
 
-  // onglet Éclosion : le premier slot est prêt au démarrage, l'ouverture de la modale de choix
-  // d'œuf fonctionne, et éclore l'œuf gratuit peuple bien la collection
+  // onglet Éclosion : le premier slot est prêt au démarrage. Nouveau flux (2026-07-18, demande
+  // explicite : "quand on appuie sur Éclore on doit afficher l'éclosion, pas quel œuf acheter") --
+  // "Éclore" lance DIRECTEMENT l'éclosion avec l'œuf gratuit (plus de modale de choix d'œuf ; le
+  // choix d'un œuf premium est déplacé sur le petit bouton ✨).
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
   await frame.locator('.isl.ready button', { hasText: 'Éclore' }).click();
   await expect(frame.locator('#hatch-modal')).toHaveClass(/open/);
-  await expect(frame.locator('#hatch-body .btn')).not.toHaveCount(0);
-
-  await frame.locator('#hatch-body .btn', { hasText: 'Utiliser' }).first().click();
-  // nouveau flux (2026-07-18) : le pet est gardé d'office dès le tirage, une roulette de rareté
-  // (~1.9s) précède le reveal, et le bouton "Garder" a disparu (garde automatique). Playwright
-  // auto-attend l'apparition du bouton "Continuer" du reveal -> absorbe la durée de la roulette.
+  // le pet est gardé d'office dès le tirage, une roulette de rareté (~1.9s) précède le reveal, et
+  // le bouton "Garder" a disparu (garde automatique). Playwright auto-attend l'apparition du bouton
+  // "Continuer" du reveal -> absorbe la durée de la roulette. Pas de "Utiliser" : plus de choix d'œuf.
   await frame.locator('#hatch-body .btn', { hasText: 'Continuer' }).click();
   await expect(frame.locator('#hatch-modal')).not.toHaveClass(/open/);
 
@@ -619,6 +618,35 @@ test('eggs roll a starting tier from tierOdds (well-formed, honored by rollAndCr
   await expect(frame.locator('#tier-odds-table')).toContainText('T5');
   await expect(frame.locator('#tier-odds-table')).toContainText('0.02%'); // Basique T5 (valeur unique)
   await expect(frame.locator('#tier-odds-table')).toContainText('0.3%');  // Doré T5 (valeur unique)
+
+  expect(pageErrors).toEqual([]);
+});
+
+// onglet Tutoriel (2026-07-18, demande explicite : "fais un tutoriel de comment se passe le menu
+// compagnon dans un onglet tutoriel") -- guide illustré (icônes) + concis, rendu par renderTutorial().
+test('the Tutorial tab renders an illustrated, concise guide of the companion menu', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await frame.locator('.tabs .tab', { hasText: 'Tutoriel' }).click();
+
+  const content = frame.locator('#tutorial-content');
+  await expect(content).toBeVisible();
+  await expect(content).toContainText('Comment marche le menu Compagnon'); // titre
+  await expect(content).toContainText('Éclosion');
+  await expect(content).toContainText('Collection');
+  await expect(content).toContainText('Hardinage');
+  // une carte par étape (TUTORIAL_STEPS = 9) -- pas de clé i18next brute affichée
+  const stepCount = await frame.locator('body').evaluate(() => (typeof TUTORIAL_STEPS !== 'undefined' ? TUTORIAL_STEPS.length : 0));
+  expect(stepCount).toBe(9);
+  const bodyText = await content.innerText();
+  expect(bodyText).not.toMatch(/companions\.tutorial\./);
 
   expect(pageErrors).toEqual([]);
 });
@@ -2482,9 +2510,10 @@ test('companion module renders in English when velia-idle-lang=en (own i18next i
   await expect(frame.locator('.tabs .tab', { hasText: 'Feed' })).toBeVisible();
   await expect(frame.locator('.tabs .tab', { hasText: 'Leaderboard' })).toBeVisible();
 
-  // flux d'éclosion complet en anglais (rendus JS : renderHatch/openEggChoice/doHatch)
+  // flux d'éclosion PREMIUM en anglais (rendus JS : renderHatch/openEggChoice/doHatch) -- le petit
+  // bouton ✨ ouvre le choix d'œuf (le bouton "Hatch" principal, lui, éclot directement l'œuf gratuit).
   await frame.locator('.tabs .tab', { hasText: 'Hatchery' }).click();
-  await frame.locator('.isl.ready button', { hasText: 'Hatch' }).click();
+  await frame.locator('.isl.ready button', { hasText: '✨' }).click();
   await expect(frame.locator('#hatch-modal')).toHaveClass(/open/);
   await expect(frame.locator('#hatch-modal')).toContainText('Choose your egg');
   await frame.locator('#hatch-body .btn', { hasText: 'Use' }).first().click();
