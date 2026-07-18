@@ -19,10 +19,12 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
-  { v:'V478', d:'18/07/2026 17:00', name:{fr:'Compagnon : prix des œufs revus et achat multiple retiré', en:'Companions: egg prices revised and multi-buy removed'}, fr:[
+  { v:'V478', d:'18/07/2026 17:00', name:{fr:'Compagnon : prix des œufs, achat multiple retiré, tier à l\'éclosion', en:'Companions: egg prices, multi-buy removed, hatch tiers'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Un œuf peut désormais faire éclore un familier DIRECTEMENT à un tier supérieur (T1 à T5), sans attendre l\'XP — et un meilleur œuf améliore nettement ces chances. Ça reste un jackpot : Basique donne un T5 à 0,02 %, Platine à 1 %. Un nouveau tableau « Chances de tier à l\'éclosion » est affiché dans l\'onglet Éclosion, à côté des chances de rareté.'},
       {t:'change', sub:'compagnon', tx:'Nouveaux prix des œufs, calés sur le silver du jeu (partagé) : Basique gratuit, Argenté 500 000, Doré 5 000 000, Platine 50 000 000. Chaque palier vaut ×10 le précédent, pour un vrai choix entre attendre l\'œuf gratuit et payer pour de meilleures chances.'},
       {t:'change', sub:'compagnon', tx:'L\'achat instantané ×1/×5/×10 (raccourci de test) est retiré. On obtient un œuf en éclosant un créneau d\'incubation prêt (bouton « Éclore », qui laisse choisir l\'œuf à payer), ou via « Éclore tout ». Le tableau des chances par œuf reste affiché, à titre informatif.'},
     ], en:[
+      {t:'new', sub:'compagnon', tx:'An egg can now hatch a companion DIRECTLY at a higher tier (T1 to T5), without waiting for XP — and a better egg markedly improves those chances. It stays a jackpot: Basic gives a T5 at 0.02%, Platinum at 1%. A new "Hatch tier chances" table is shown in the Hatchery tab, next to the rarity odds.'},
       {t:'change', sub:'compagnon', tx:'New egg prices, aligned with the (shared) game silver: Basic free, Silver 500,000, Gold 5,000,000, Platinum 50,000,000. Each tier costs ×10 the previous one, for a real choice between waiting for the free egg and paying for better odds.'},
       {t:'change', sub:'compagnon', tx:'The instant ×1/×5/×10 buy (a test shortcut) is removed. You get an egg by hatching a ready incubation slot (the "Hatch" button, which lets you choose which egg to pay for), or via "Hatch all". The per-egg odds table is still shown, for reference.'},
     ] },

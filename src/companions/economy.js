@@ -38,11 +38,16 @@ function costLabelFor(v){ return v>0 ? `${v.toLocaleString(NUM_LOCALE)} Silver` 
 // Prix (2026-07-18, demande explicite "changer le prix des œufs", palier ×100 plus cher) : le silver
 // est désormais celui du JEU (pool partagé, bien plus abondant), les prix montent en conséquence --
 // Gratuit / 500 000 / 5 000 000 / 50 000 000 (échelle ×10 conservée entre paliers).
+// tierOdds (2026-07-18, demande explicite : "chance d'éclore un tier 1 à 5 selon l'œuf") : chance
+// d'éclore DIRECTEMENT à un tier T1→T5 (5 valeurs, somment à 100), distinctes des odds de rareté.
+// Avant, tout pet éclosait en T1 (le tier ne se gagnait qu'à l'XP). Distribution "conservatrice"
+// (choix explicite) : T1 reste la norme, les hauts tiers à l'éclosion sont un vrai jackpot qui
+// s'améliore nettement avec la qualité de l'œuf (Platine T5 = 1 % vs Basique 0,02 %).
 const EGG_TYPES=[
-  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),        costLabel:costLabelFor(scaleCost(0)),        odds:[60,30, 7, 2,0.8,0.2]},
-  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(500000),   costLabel:costLabelFor(scaleCost(500000)),   odds:[45,33,14, 5, 2,  1]},
-  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(5000000),  costLabel:costLabelFor(scaleCost(5000000)),  odds:[30,32,22,10, 4,  2]},
-  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(50000000), costLabel:costLabelFor(scaleCost(50000000)), odds:[15,28,28,18, 8,  3]},
+  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),        costLabel:costLabelFor(scaleCost(0)),        odds:[60,30, 7, 2,0.8,0.2], tierOdds:[97, 2.5, 0.4, 0.08, 0.02]},
+  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(500000),   costLabel:costLabelFor(scaleCost(500000)),   odds:[45,33,14, 5, 2,  1], tierOdds:[90, 8,   1.5, 0.4,  0.1 ]},
+  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(5000000),  costLabel:costLabelFor(scaleCost(5000000)),  odds:[30,32,22,10, 4,  2], tierOdds:[78, 16,  4.5, 1.2,  0.3 ]},
+  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(50000000), costLabel:costLabelFor(scaleCost(50000000)), odds:[15,28,28,18, 8,  3], tierOdds:[60, 25,  10,  4,    1   ]},
 ];
 
 // Pool de silver PARTAGÉ avec le jeu (2026-07-18, demande explicite : "silver bidirectionnel, on
