@@ -126,6 +126,27 @@ function renderHatch(){
 
   tableHtml += `</tbody></table>`;
   document.getElementById('egg-odds-table').innerHTML = tableHtml;
+  // Chances de TIER à l'éclosion (T1→T5 × œuf) -- 2026-07-18, demande explicite : "chance d'éclore
+  // un tier 1 à 5 selon l'œuf". Même mise en page que la table de rareté, alimentée par tierOdds.
+  const tierEl = document.getElementById('tier-odds-table');
+  if(tierEl){
+    let tierTableHtml = `<table style="border-collapse:collapse;font-size:11px;min-width:520px">
+      <thead><tr>
+        <th style="padding:6px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border)">${i18next.t('companions:companions.hatch.col_tier')}</th>
+        ${EGG_TYPES.map(e=>`<th style="padding:6px 10px;color:var(--gold);border-bottom:1px solid var(--border);font-family:'Cinzel',serif;font-size:10px">${e.ico} ${eggName(e)}</th>`).join('')}
+      </tr></thead><tbody>`;
+    for(let t=0;t<5;t++){
+      tierTableHtml += `<tr>
+        <td style="padding:6px 10px;font-family:'Cinzel',serif;border-bottom:1px solid var(--border);color:${t>=3?'var(--gold)':'var(--cream2)'}">T${t+1}</td>
+        ${EGG_TYPES.map(egg=>{
+          const pct = (egg.tierOdds && egg.tierOdds[t]!=null) ? egg.tierOdds[t] : (t===0?100:0);
+          return `<td style="padding:6px 10px;text-align:center;font-family:'JetBrains Mono',monospace;border-bottom:1px solid var(--border);color:var(--cream)">${pct}%</td>`;
+        }).join('')}
+      </tr>`;
+    }
+    tierTableHtml += `</tbody></table>`;
+    tierEl.innerHTML = tierTableHtml;
+  }
   // Rarity bonus
   document.getElementById('rarity-table').innerHTML=RARITIES.map((r,i)=>`<div style="display:flex;align-items:center;gap:5px;margin-bottom:5px"><span style="font-size:9px;color:${r.hex};width:72px">${rn(i)}</span><div style="display:flex;gap:2px">${Array(5).fill(0).map((_,si)=>`<div style="width:10px;height:10px;border-radius:2px;background:${si<BONUS_COUNT[i]?r.hex:'var(--border)'}"></div>`).join('')}</div><span style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--cream3)">${BONUS_COUNT[i]}</span></div>`).join('');
   // History
@@ -235,10 +256,17 @@ function rollAndCreatePet(eggType){
   const candidates=PET_CATALOG.filter(c=>Math.abs(c.rar-rar)<=1);
   const cat=candidates[Math.floor(Math.random()*candidates.length)];
   const stats=mkStats(rar);
+  // tier de départ tiré selon l'œuf (2026-07-18, demande explicite : "chance d'éclore un tier 1 à 5
+  // selon l'œuf") -- même tirage pondéré que la rareté ci-dessus, sur eggType.tierOdds (5 valeurs
+  // T1→T5 sommant à 100). Repli T1 si l'œuf n'a pas de tierOdds (robustesse). Le tierMult est tiré
+  // dans la plage du tier obtenu (rollTierMult), pas forcément T1.
+  const tOdds=eggType.tierOdds;
+  let startTier=1;
+  if(tOdds){ const tr=Math.random()*100; let tc=0; for(let i=0;i<tOdds.length;i++){ tc+=tOdds[i]; if(tr<=tc){ startTier=i+1; break; } } }
   // uid stable cross-compte (2026-07-10, marché d'échange) -- distinct de `id` (local, jamais
   // envoyé au serveur) : c'est la clé qui identifie ce pet précis dans pet_trade_offers/deliveries,
   // doit survivre à un transfert d'un compte à l'autre (voir migratePetUidV1, save.js).
-  const np={id:petId++,uid:crypto.randomUUID(),cat,rar,stats,hunger:100,terrain:false,tier:1,tierXp:0,tierMult:rollTierMult(1)};
+  const np={id:petId++,uid:crypto.randomUUID(),cat,rar,stats,hunger:100,terrain:false,tier:startTier,tierXp:0,tierMult:rollTierMult(startTier)};
   return {pet:np, pityTriggered};
 }
 

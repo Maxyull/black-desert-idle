@@ -577,6 +577,52 @@ test('hatching is blocked once the collection reaches the 96-pet cap, silver is 
   expect(pageErrors).toEqual([]);
 });
 
+// chance d'éclore un tier selon l'œuf (2026-07-18, demande explicite : "ajoute la chance d'éclore un
+// tier 1 à 5 selon l'œuf") -- avant, tout éclosait en T1. Chaque œuf a maintenant un tierOdds (5
+// valeurs T1→T5 sommant à 100), rollAndCreatePet en tire le tier de départ, et un tableau l'affiche.
+test('eggs roll a starting tier from tierOdds (well-formed, honored by rollAndCreatePet) and it is shown in the Hatchery', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
+
+  const result = await frame.locator('body').evaluate(() => {
+    // 1) tierOdds bien formées : 5 valeurs par œuf, sommant à 100 (tolérance flottante)
+    const wellFormed = EGG_TYPES.every(e => Array.isArray(e.tierOdds) && e.tierOdds.length === 5
+      && Math.abs(e.tierOdds.reduce((a, b) => a + b, 0) - 100) < 1e-6);
+
+    // 2) rollAndCreatePet honore tierOdds. Math.random=0.999 -> dernier bucket de chaque tirage
+    //    pondéré -> Platine éclot au tier MAX (T5) ; 0.001 -> premier bucket -> T1.
+    const platinum = EGG_TYPES.find(e => e.id === 'platinum');
+    const orig = Math.random;
+    Math.random = () => 0.999;
+    const hi = rollAndCreatePet(platinum).pet.tier;
+    Math.random = () => 0.001;
+    const lo = rollAndCreatePet(platinum).pet.tier;
+    Math.random = orig;
+
+    return { wellFormed, hi, lo };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.wellFormed).toBe(true);
+  expect(result.hi).toBe(5); // tirage max -> T5
+  expect(result.lo).toBe(1); // tirage min -> T1
+
+  // 3) le tableau des chances de tier est rendu, avec une ligne par tier et les bonnes valeurs
+  await expect(frame.locator('#tier-odds-table')).toBeVisible();
+  await expect(frame.locator('#tier-odds-table')).toContainText('T5');
+  await expect(frame.locator('#tier-odds-table')).toContainText('0.02%'); // Basique T5 (valeur unique)
+  await expect(frame.locator('#tier-odds-table')).toContainText('0.3%');  // Doré T5 (valeur unique)
+
+  expect(pageErrors).toEqual([]);
+});
+
 // échelle de slots (2026-07-18, demande explicite : "5 slots, 2 gratuits puis 1M/10M/100M") --
 // 5 slots FIXES : 2 gratuits + 3 déblocables dans l'ORDRE contre 1M/10M/100M. Vérifie que chaque
 // déblocage débite le bon montant (via spendSilver, donc silverSpent), passe le slot en prêt, et
