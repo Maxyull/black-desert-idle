@@ -784,6 +784,43 @@ test('companion silver is the shared game pool: a spend debits the game and an e
   expect(result.mirror).toBe(result.gameAfterEarn);                     // le miroir local suit le jeu
 });
 
+// récompenses PvP journalières (2026-07-18, demande explicite : "met des recompense pour le pvp
+// journalier top 1 2 3 puis le reste") -- le rang + le montant sont autoritaires côté serveur
+// (claim_pvp_rewards), le crédit se fait sur le silver DU JEU (pool partagé) côté client. On mocke
+// la RPC pour vérifier le chemin réclamation -> crédit sans dépendre d'un vrai tournoi résolu.
+test('claimPvpRewards credits the shared game silver with the server-authoritative reward', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await frame.locator('.tabs .tab', { hasText: 'PvP' }).click();
+
+  await setSharedSilver(frame, 1000);
+  const result = await frame.locator('body').evaluate(async () => {
+    const host = window.parent;
+    const origGetSb = host.getSbClient;
+    // client Supabase hôte mocké : claim_pvp_rewards renvoie un gain de rang 1 (5M).
+    host.getSbClient = () => ({
+      rpc: (name) => (name === 'claim_pvp_rewards'
+        ? Promise.resolve({ data: [{ day: '2026-07-18', rank: 1, silver: 5000000 }], error: null })
+        : Promise.resolve({ data: null, error: null })),
+    });
+    const before = host.getGameSilverForCompanion();
+    await claimPvpRewards();
+    const after = host.getGameSilverForCompanion();
+    host.getSbClient = origGetSb;
+    return { before, after };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.before).toBe(1000);
+  expect(result.after).toBe(5_001_000); // +5M crédités sur le silver DU JEU
+});
+
 // carte terrain en 3D (2026-07-10, demande explicite) -- pour les espèces avec un modèle GLB,
 // updateTerrainViewer3d() doit RÉUTILISER le contexte WebGL déjà créé sur un re-render du même pet
 // (ticks.js appelle renderSecDetail() chaque seconde tant que l'onglet Sections est

@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V481', d:'18/07/2026 20:00', name:{fr:'Compagnon : récompenses du tournoi PvP + classement remis à zéro', en:'Companions: PvP tournament rewards + leaderboard reset'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Le tournoi PvP quotidien rapporte maintenant du Silver aux mieux classés : 🥇 5 000 000, 🥈 2 000 000, 🥉 1 000 000, et 250 000 pour tous les autres participants classés. Le classement du tournoi vient du bracket (nombre de combats gagnés), départagé par la puissance d\'équipe. Les gains sont crédités automatiquement sur ton silver (partagé avec le jeu) à l\'ouverture de l\'onglet PvP.'},
+      {t:'change', sub:'compagnon', tx:'Le classement Compagnon (cross-joueurs) est remis à zéro pour repartir proprement sur la nouvelle économie post-refonte. Chacun réapparaît au classement dès que ses stats se resynchronisent, avec ses valeurs actuelles.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'The daily PvP tournament now pays Silver to the top-ranked: 🥇 5,000,000, 🥈 2,000,000, 🥉 1,000,000, and 250,000 for every other ranked entrant. Tournament ranking comes from the bracket (matches won), tie-broken by team power. Rewards are credited automatically to your (shared) silver when you open the PvP tab.'},
+      {t:'change', sub:'compagnon', tx:'The (cross-player) Companion leaderboard is reset to start fresh on the reworked economy. Everyone reappears on the leaderboard as soon as their stats re-sync, with their current values.'},
+    ] },
   { v:'V480', d:'18/07/2026 19:00', name:{fr:'Compagnon : PvP ouvert, Viewer 3D retiré, taux mieux rangés', en:'Companions: PvP opened, 3D viewer removed, tidier rates'}, fr:[
       {t:'change', sub:'compagnon', tx:'L\'onglet PvP est ouvert et mis en avant : le tournoi quotidien (inscription libre, résolution automatique à 21h) est bel et bien jouable et rapporte du silver aux mieux classés. Fini le cadenas « Bientôt disponible » — seuls les combats temps-réel en direct restent pour plus tard.'},
       {t:'change', sub:'compagnon', tx:'L\'onglet « Viewer 3D » (un écran de test) est retiré. L\'aperçu 3D d\'un familier reste accessible depuis sa fiche sur le terrain.'},
