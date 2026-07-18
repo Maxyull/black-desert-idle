@@ -1354,9 +1354,16 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   const result = await frame.locator('body').evaluate(() => {
+    // Parents à la rareté MAXIMALE (5) pour rendre le test déterministe : l'invariant "le Tier ne peut
+    // que monter ou rester" (aucune flèche rouge) n'est vrai QUE hors "breakthrough" de rareté --
+    // executeFusion() remet volontairement le Tier à 1 quand la rareté BONDIT (fusion.js §3). À la
+    // rareté max, rollFusionRarity() ne peut plus augmenter la rareté (newRar=min(5,5+k)=5, donc
+    // rarityIncreased=false), donc on teste bien la branche "montée de Tier" : baseTier=max(2,2)+1=3
+    // + un éventuel extra. (Avec des parents de rareté basse, le breakthrough aléatoire remettait le
+    // Tier à 1 ~1 fois sur 3 -> test flaky, corrigé ici.)
     const cat = PET_CATALOG.find(c => c.rar === 0);
-    const a = { id: petId++, cat, rar: 0, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
-    const b = { id: petId++, cat, rar: 0, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
+    const a = { id: petId++, cat, rar: 5, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
+    const b = { id: petId++, cat, rar: 5, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
     PETS.push(a, b);
     fusionSlots = [a.id, b.id];
     executeFusion(a, b);
@@ -1364,7 +1371,7 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
     return { html: document.getElementById('fusion-modal-body').innerHTML, mergedTier: merged.tier };
   });
   expect(pageErrors).toEqual([]);
-  expect(result.mergedTier).toBeGreaterThan(2); // baseTier = max(2,2)+1 = 3 minimum
+  expect(result.mergedTier).toBeGreaterThan(2); // baseTier = max(2,2)+1 = 3 minimum (rareté max => pas de reset à T1)
   expect(result.html).not.toContain('var(--red2);font-weight:600">T'); // jamais de flèche rouge sur le Tier
 });
 
