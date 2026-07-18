@@ -64,7 +64,7 @@ function renderGameInventory(){
     // simplement pas de bouton.
     const unit = typeof sellValueOf==='function' ? sellValueOf(name) : 0;
     const sellBtn = unit>0
-      ? `<button onclick="sellItem('${name.replace(/'/g,"\\'")}')" title="${i18next.t('companions:companions.sell.sell_stack_title', {silver:(unit*data.qty).toLocaleString(NUM_LOCALE)})}" style="font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid var(--gold);background:transparent;color:var(--gold2);cursor:pointer;flex-shrink:0">💰${unit.toLocaleString(NUM_LOCALE)}</button>`
+      ? `<button onclick="sellItem('${name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}')" title="${i18next.t('companions:companions.sell.sell_stack_title', {silver:(unit*data.qty).toLocaleString(NUM_LOCALE)})}" style="font-size:9px;padding:2px 6px;border-radius:4px;border:1px solid var(--gold);background:transparent;color:var(--gold2);cursor:pointer;flex-shrink:0">💰${unit.toLocaleString(NUM_LOCALE)}</button>`
       : '';
     return `<div style="background:var(--s3);border:1px solid var(--border);border-radius:6px;padding:6px 8px;display:flex;align-items:center;gap:6px">
       <span style="font-size:16px">${data.icon}</span>

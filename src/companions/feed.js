@@ -57,7 +57,7 @@ function renderFeed(){
       selFoodName = foodItems[0][0];
     }
     foodListEl.innerHTML = foodItems.map(([name,d])=>`
-      <div class="food-row ${selFoodName===name?'sel':''}" onclick="selFoodName='${name.replace(/'/g,"\\'")}';renderFeed()">
+      <div class="food-row ${selFoodName===name?'sel':''}" onclick="selFoodName='${name.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}';renderFeed()">
         <span style="font-size:18px">${d.icon}</span>
         <div style="flex:1"><div style="font-size:11px;color:var(--cream)">${itemLabel(name)}</div><div style="font-size:9px;color:var(--green2)">${i18next.t('companions:companions.feed.hunger_gain', {feed:d.feed})}</div></div>
         <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cream2)">×${d.qty}</span>
