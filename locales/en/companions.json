@@ -211,7 +211,6 @@
   "companions.hatch.standard_eggs": "Standard eggs",
   "companions.hatch.target_label": "target: {{period}}",
   "companions.hatch.targeted_eggs": "🎯 Targeted eggs — boosts one rarity, the others drop",
-  "companions.hatch.test_buttons_hint": "⚡ The ×1/×5/×10 buttons hatch instantly by paying the egg price ×N, without waiting for the timer.",
   "companions.hatch.use_btn": "Use",
   "companions.header.breadcrumb": "COMPANION",
   "companions.header.close_title": "Close",

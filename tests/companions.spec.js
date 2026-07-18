@@ -463,8 +463,8 @@ test('module version is displayed bottom-left, reusing the shared VNNN numbering
 });
 
 // Plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets prévoir 4
-// depaçable pour recuperer des pet venant d'un trade") -- doHatch()/bulkHatch() doivent refuser
-// tout nouvel hatch une fois PETS.length >= PET_ROSTER_CAP (96), AVANT de dépenser le silver.
+// depaçable pour recuperer des pet venant d'un trade") -- doHatch() doit refuser tout nouvel hatch
+// une fois PETS.length >= PET_ROSTER_CAP (96), AVANT de dépenser le silver.
 // Complétion Index 48×5=240 (2026-07-20, demande explicite : "Completion 48pet * 5 tier pour
 // l'index et classement") -- companionIndexProgress() doit compter des combos ESPÈCE×TIER
 // distincts, PAS juste des espèces : 2 pets de la MÊME espèce au MÊME tier ne comptent qu'une
@@ -562,16 +562,17 @@ test('hatching is blocked once the collection reaches the 96-pet cap, silver is 
       const cat = PET_CATALOG[PETS.length % PET_CATALOG.length];
       PETS.push({ id: petId++, cat, rar: 1, stats: [5,4,3,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 });
     }
+    incubSlots[0] = { free:true, tl:0, tot:1, ready:true }; // un slot prêt à éclore
     const roomBefore = petRosterRoomLeft();
     const countBefore = PETS.length;
     const spentBefore = silverSpent; // mesure la dépense via le compteur (indépendant du pont)
-    bulkHatch('basic', 1); // 1er type d'œuf standard, peu importe lequel
+    doHatch(0, 'silver'); // œuf PAYANT (500k) : s'il n'était pas gaté par le plafond, il débiterait
     return { roomBefore, countBefore, countAfter: PETS.length, spentDelta: silverSpent - spentBefore };
   });
   expect(result.roomBefore).toBe(0);
   expect(result.countBefore).toBe(96);
-  expect(result.countAfter).toBe(96); // bulkHatch() n'a RIEN ajouté, refusé par le plafond
-  expect(result.spentDelta).toBe(0); // et n'a jamais débité le silver
+  expect(result.countAfter).toBe(96); // doHatch() n'a RIEN ajouté, refusé par le plafond
+  expect(result.spentDelta).toBe(0); // et n'a jamais débité le silver (refus AVANT dépense)
 
   expect(pageErrors).toEqual([]);
 });
@@ -1011,9 +1012,12 @@ test('header shows title, close button, and collection legend/sort/zoom controls
   const gridColsAfter = await frame.locator('#pet-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns);
   expect(gridColsAfter).not.toBe(gridColsBefore);
 
-  // hint "éclosion instantanée payante" près des boutons ×1/×5/×10 (reformulé au passage en prod)
+  // onglet Éclosion : le tableau des odds est purement informatif -- l'achat multiple ×1/×5/×10
+  // (bulkHatch) et son disclaimer ont été RETIRÉS (2026-07-18, "enlever l'achat multiple").
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
-  await expect(frame.locator('text=éclosent instantanément')).toBeVisible();
+  await expect(frame.locator('#egg-odds-table')).toBeVisible();
+  await expect(frame.locator('#egg-odds-table button')).toHaveCount(0); // plus aucun bouton d'achat ×N dans le tableau
+  await expect(frame.locator('text=éclosent instantanément')).toHaveCount(0);
 
   expect(pageErrors).toEqual([]);
 });

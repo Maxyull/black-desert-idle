@@ -103,12 +103,6 @@ function renderHatch(){
     <thead><tr>
       <th style="padding:6px 10px;text-align:left;color:var(--cream2);border-bottom:1px solid var(--border)">${i18next.t('companions:companions.hatch.col_rarity')}</th>
       ${EGG_TYPES.map(e=>`<th style="padding:6px 10px;color:var(--gold);border-bottom:1px solid var(--border);font-family:'Cinzel',serif;font-size:10px">
-        <div style="display:flex;gap:3px;justify-content:center;margin-bottom:4px">
-          ${[1,5,10].map(q=>{
-            const total=e.cost*q, affordable=SILVER>=total;
-            return `<button class="btn ${q===1?'btn-ghost':'btn-gold'}" style="font-size:8px;padding:2px 6px;${affordable?'':'opacity:.35;pointer-events:none'}" onclick="bulkHatch('${e.id}',${q})" title="${total.toLocaleString(NUM_LOCALE)} Silver">×${q}</button>`;
-          }).join('')}
-        </div>
         ${e.ico} ${eggName(e)}<div style="font-size:8px;color:var(--cream3);font-weight:400">${e.costLabel}</div>
       </th>`).join('')}
     </tr></thead><tbody>`;
@@ -434,46 +428,11 @@ document.addEventListener('keydown', e=>{
 });
 { const _hbg=document.getElementById('hatch-modal'); if(_hbg) _hbg.addEventListener('click', e=>{ if(e.target===_hbg) closeHatchModal(); }); }
 
-// ═══ ÉCLOSION INSTANTANÉE — ×1/×5/×10, indépendant des créneaux d'incubation ═══
-/**
- * Éclosion instantanée ×N (indépendante des slots d'incubation) : exige la place pour TOUT le lot
- * avant de dépenser quoi que ce soit (soit le lot entier passe, soit rien), débite le coût total,
- * tire chaque pet, affiche un résumé et log l'activité.
- * @param {string} eggTypeId - id de EGG_TYPES choisi.
- * @param {number} qty - quantité (1/5/10).
- */
-function bulkHatch(eggTypeId, qty){
-  // plafond de collection (2026-07-20, demande explicite) -- exige la place pour TOUT le lot avant
-  // de dépenser quoi que ce soit, pas un remboursement partiel après coup (plus simple, plus clair
-  // pour le joueur : soit le lot entier passe, soit rien).
-  const room = petRosterRoomLeft();
-  if(room<=0){ toast('📦',i18next.t('companions:companions.hatch.collection_full', {cap:PET_ROSTER_CAP})); return; }
-  if(room<qty){ toast('📦',i18next.t('companions:companions.hatch.not_enough_room', {room:room, qty:qty})); return; }
-  const eggType = EGG_TYPES.find(e=>e.id===eggTypeId) || EGG_TYPES[0];
-  const totalCost = eggType.cost * qty;
-  if(SILVER < totalCost){ toast('❌',i18next.t('companions:companions.hatch.insufficient_silver_amount', {amount:totalCost.toLocaleString(NUM_LOCALE)})); return; }
-  spendSilver(totalCost);
-  updateSilverDisplay();
-
-  const results = [];
-  let anyPity = false;
-  for(let i=0;i<qty;i++){
-    const {pet, pityTriggered} = rollAndCreatePet(eggType);
-    PETS.push(pet);
-    results.push(pet);
-    if(pityTriggered) anyPity = true;
-  }
-
-  // Résumé par rareté
-  const tally = [0,0,0,0,0,0];
-  results.forEach(p=>tally[p.rar]++);
-  const summaryParts = RARITIES.map((r,i)=>tally[i]>0?`<span style="color:${r.hex}">${tally[i]}× ${rn(i)}</span>`:null).filter(Boolean).join(' · ');
-
-  renderAll();
-  showBulkHatchModal(eggType, results, tally, anyPity);
-  addGameLog(i18next.t('companions:companions.hatch.bulk_log', {qty:qty, egg:eggName(eggType), summary:summaryParts}));
-}
-
+// ═══ RÉSUMÉ D'ÉCLOSION EN LOT ═══ (utilisé par « Éclore tout », hatchAll) ═══════════════════════
+// L'ancienne éclosion instantanée payante ×1/×5/×10 (bulkHatch) a été SUPPRIMÉE (2026-07-18,
+// demande explicite : "enlever l'achat multiple") -- on n'obtient plus un œuf qu'en éclosant un
+// slot d'incubation prêt (doHatch/openEggChoice) ou via « Éclore tout ». showBulkHatchModal reste,
+// réutilisée par hatchAll() pour afficher le récap d'un lot de slots éclos d'un coup.
 /**
  * Affiche la modale de résumé d'une éclosion en masse (pas de reveal 3D volontairement — jusqu'à
  * 10 pets affichés en même temps dépasserait la limite de contextes WebGL du navigateur).
