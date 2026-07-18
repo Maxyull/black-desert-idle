@@ -145,7 +145,7 @@ function triggerHardDrop(){
 
   if(drop.silver){
     const amt = Math.floor(5+Math.random()*15);
-    SILVER += amt;
+    earnSilver(amt, 'compagnon:hardinage');
     hardSession.silver += amt;
     addHardLog(p, {e:'💰',n:`+${amt} Silver`}, 'gold');
     spawnHardFloat(fp, '💰');

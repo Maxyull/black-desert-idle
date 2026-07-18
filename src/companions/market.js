@@ -445,7 +445,7 @@ async function claimMarketDeliveries(){
         const np = petFromSnapshot(snap);
         PETS.push(np); gained.push(np.cat.name);
       });
-      if(d.silver>0){ SILVER += d.silver; }
+      if(d.silver>0){ earnSilver(d.silver, 'compagnon:marche'); }
       await sb.rpc('claim_pet_trade_delivery', { p_delivery_id: d.id });
     }
     if(gained.length || data.some(d=>d.silver>0)){

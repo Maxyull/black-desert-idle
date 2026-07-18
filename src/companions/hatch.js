@@ -53,28 +53,27 @@ function fmtT(s){if(s<=0)return i18next.t('companions:companions.common.ready');
 // (incubSlots[2].locked, voir roster.js) n'avait AUCUN onclick, et le bouton "➕ slot
 // premium" ne faisait qu'un toast() factice sans jamais rien acheter. Les deux appellent
 // maintenant spendSilver() (economy.js) puis déclenchent une vraie action.
-const UNLOCK_SLOT_COST = 500, EXTRA_SLOT_COST = 1000; // avant scaleCost(), voir TEST_BALANCE_DIVISOR
-// plafond de slots d'incubation (2026-07-10, demande explicite : "borner incubation a 8") --
-// jusqu'ici buyExtraIncubSlot() poussait dans incubSlots sans aucune limite, un joueur pouvait en
-// acheter à l'infini.
-const MAX_INCUB_SLOTS = 8;
-/** @param {number} i - index du slot verrouillé. Débloque le slot d'incubation contre UNLOCK_SLOT_COST, no-op si silver insuffisant. */
+// ÉCHELLE DE SLOTS (2026-07-18, demande explicite : "5 slots, 2 gratuits puis 1M/10M/100M") --
+// 5 slots FIXES (roster.js), les 2 premiers gratuits d'emblée, les 3 suivants déblocables dans
+// l'ORDRE contre un coût qui décuple à chaque palier. Plus de "buyExtraIncubSlot" (l'ancien modèle
+// poussait des slots à l'infini jusqu'à un plafond de 8) : le tableau incubSlots contient déjà les
+// 5 slots, les verrouillés se débloquent sur place via unlockIncubSlot().
+const FREE_INCUB_SLOTS = 2;
+const SLOT_UNLOCK_COSTS = [1000000, 10000000, 100000000]; // slots 3/4/5 (index 2/3/4), avant scaleCost()
+const MAX_INCUB_SLOTS = FREE_INCUB_SLOTS + SLOT_UNLOCK_COSTS.length; // 5
+/** @param {number} i - index du slot verrouillé (>= FREE_INCUB_SLOTS). @returns {number} coût de déblocage réel (1M/10M/100M selon l'index, passé par scaleCost). */
+function slotUnlockCost(i){
+  const raw = SLOT_UNLOCK_COSTS[i - FREE_INCUB_SLOTS] ?? SLOT_UNLOCK_COSTS[SLOT_UNLOCK_COSTS.length-1];
+  return scaleCost(raw);
+}
+/** @param {number} i - index du slot verrouillé. Débloque le slot contre slotUnlockCost(i) ; ladder séquentiel (le slot précédent doit déjà être débloqué), no-op si silver insuffisant. */
 function unlockIncubSlot(i){
-  const cost = scaleCost(UNLOCK_SLOT_COST);
+  if(i>FREE_INCUB_SLOTS && incubSlots[i-1] && incubSlots[i-1].locked) return; // ladder : débloquer dans l'ordre
+  const cost = slotUnlockCost(i);
   if(SILVER < cost){ toast('❌',i18next.t('companions:companions.hatch.insufficient_silver')); return; }
   spendSilver(cost);
   incubSlots[i] = { free:false, tl:0, tot:scaleTimer(21600), ready:true };
   toast('🔓',i18next.t('companions:companions.hatch.slot_unlocked'));
-  renderHatch();
-}
-/** Achète un slot d'incubation supplémentaire contre EXTRA_SLOT_COST, plafonné à MAX_INCUB_SLOTS. No-op si plafond atteint ou silver insuffisant. */
-function buyExtraIncubSlot(){
-  if(incubSlots.length >= MAX_INCUB_SLOTS){ toast('❌',i18next.t('companions:companions.hatch.slot_cap_reached', {max:MAX_INCUB_SLOTS})); return; }
-  const cost = scaleCost(EXTRA_SLOT_COST);
-  if(SILVER < cost){ toast('❌',i18next.t('companions:companions.hatch.insufficient_silver')); return; }
-  spendSilver(cost);
-  incubSlots.push({ free:false, tl:0, tot:scaleTimer(21600), ready:true });
-  toast('➕',i18next.t('companions:companions.hatch.new_slot_bought'));
   renderHatch();
 }
 /** Reconstruit l'onglet Éclosion : slots d'incubation (verrouillé/en cours/prêt), grille comparative des odds par rareté×type d'œuf, bonus de rareté, historique des 10 derniers pets obtenus. */
@@ -86,21 +85,17 @@ function renderHatch(){
   // Slots
   document.getElementById('incub-slots').innerHTML=incubSlots.map((sl,i)=>{
     if(sl.locked){
-      const cost=scaleCost(UNLOCK_SLOT_COST), affordable=SILVER>=cost;
-      return`<div class="isl locked" style="cursor:${affordable?'pointer':'not-allowed'};opacity:${affordable?1:.6}" onclick="unlockIncubSlot(${i})"><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(cost)}</div></div>`;
+      // ladder : seul le PROCHAIN slot verrouillé (le précédent déjà débloqué) est cliquable ; les
+      // suivants restent grisés et montrent leur prix (1M/10M/100M) sans être achetables d'avance.
+      const cost=slotUnlockCost(i);
+      const isNext = i===FREE_INCUB_SLOTS || (incubSlots[i-1] && !incubSlots[i-1].locked);
+      const affordable = isNext && SILVER>=cost;
+      return`<div class="isl locked" style="cursor:${affordable?'pointer':'not-allowed'};opacity:${isNext?(affordable?1:.6):.4}" ${isNext?`onclick="unlockIncubSlot(${i})"`:''}><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(cost)}</div></div>`;
     }
     if(sl.ready)return`<div class="isl ready"><div style="position:relative"><span style="font-size:28px">🥚</span><div style="position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(111,220,111,.4),transparent);animation:eglaur 1s ease-in-out infinite"></div></div>${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<div class="itimer done">${i18next.t('companions:companions.hatch.ready_badge')}</div><button style="font-family:Cinzel,serif;font-size:9px;padding:4px 10px;border-radius:4px;border:1px solid var(--gold);background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:var(--bg);cursor:pointer" onclick="openEggChoice(${i})">${i18next.t('companions:companions.hatch.hatch_btn')}</button></div>`;
     const pct=Math.round((1-sl.tl/sl.tot)*100);
     return`<div class="isl">${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<span style="font-size:28px">🥚</span><div class="itimer">${fmtT(sl.tl)}</div><div class="iprog"><div class="iprog-fill" style="width:${pct}%"></div></div></div>`;
-  }).join('')+(()=>{
-    // plafond 8 (2026-07-10, demande explicite) : plus de bouton "+" une fois le plafond atteint,
-    // remplacé par un état figé qui explique pourquoi.
-    if(incubSlots.length >= MAX_INCUB_SLOTS){
-      return `<div class="isl locked" style="cursor:not-allowed;opacity:.5"><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">${i18next.t('companions:companions.hatch.max_slots_label', {max:MAX_INCUB_SLOTS})}</div></div>`;
-    }
-    const cost=scaleCost(EXTRA_SLOT_COST), affordable=SILVER>=cost;
-    return `<div class="isl" style="cursor:${affordable?'pointer':'not-allowed'};opacity:${affordable?.85:.5}" onclick="buyExtraIncubSlot()"><span style="font-size:28px">➕</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(cost)}</div></div>`;
-  })();
+  }).join('');
   // Odds
   // Grille comparative : Rareté × Type d'œuf
   const PERIOD_DAYS = {2:7, 3:14, 4:21, 5:30}; // Rare→semaine, Épique→2sem, Légendaire→3sem, Ancestral→mois

@@ -85,6 +85,22 @@ async function signInForTest(page) {
   await page.evaluate(() => { try { localStorage.setItem('velia_idle_pets_onboarding_seen_v1', '1'); } catch (e) {} });
 }
 
+// pool partagé (2026-07-18) : le silver du module Compagnon vient du JEU (hôte, via
+// window.parent.addGameSilverForCompanion). Le miroir local SILVER est resync depuis l'hôte à
+// chaque affichage, donc l'écrire directement ne tient pas -- ce helper force le solde CÔTÉ JEU
+// pour piloter l'accessibilité dans les tests white-box. Repli sur SILVER local hors iframe.
+// À appeler APRÈS l'ouverture du module (hôte prêt). La mesure des dépenses passe par le compteur
+// silverSpent (indépendant du pont), jamais par un delta de SILVER (miroir, non fiable).
+async function setSharedSilver(frame, amount) {
+  await frame.locator('body').evaluate((_el, target) => {
+    const h = window.parent;
+    if (h && typeof h.addGameSilverForCompanion === 'function') {
+      h.addGameSilverForCompanion(target - (h.getGameSilverForCompanion() || 0), 'test:setup');
+    } else { SILVER = target; }
+    if (typeof syncSilverFromHost === 'function') syncSilverFromHost();
+  }, amount);
+}
+
 // clique en tolérant qu'un tutoriel (onboarding, ou un tutoriel d'objet/action déclenché par le
 // jeu qui continue de tourner en arrière-plan pendant les assertions précédentes -- ex: le
 // tutoriel "trash de zone", voir ITEM_TUTORIALS, progression/notifications-quests.js) rouvre
@@ -539,36 +555,32 @@ test('hatching is blocked once the collection reaches the 96-pet cap, silver is 
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
+  await setSharedSilver(frame, 999_999_999); // silver côté jeu large : le blocage doit venir du plafond, pas du silver
   const result = await frame.locator('body').evaluate(() => {
     // remplit la collection jusqu'au plafond
     while (PETS.length < PET_ROSTER_CAP) {
       const cat = PET_CATALOG[PETS.length % PET_CATALOG.length];
       PETS.push({ id: petId++, cat, rar: 1, stats: [5,4,3,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 });
     }
-    const savedSilver = SILVER;
-    SILVER = 999999999; // jamais bloqué par manque de silver, seulement par le plafond
     const roomBefore = petRosterRoomLeft();
     const countBefore = PETS.length;
+    const spentBefore = silverSpent; // mesure la dépense via le compteur (indépendant du pont)
     bulkHatch('basic', 1); // 1er type d'œuf standard, peu importe lequel
-    const countAfter = PETS.length;
-    const silverAfter = SILVER;
-    SILVER = savedSilver; // restaure (pas de vraie sauvegarde dans ce contexte de test de toute façon)
-    return { roomBefore, countBefore, countAfter, silverSpent: 999999999 - silverAfter };
+    return { roomBefore, countBefore, countAfter: PETS.length, spentDelta: silverSpent - spentBefore };
   });
   expect(result.roomBefore).toBe(0);
   expect(result.countBefore).toBe(96);
   expect(result.countAfter).toBe(96); // bulkHatch() n'a RIEN ajouté, refusé par le plafond
-  expect(result.silverSpent).toBe(0); // et n'a jamais débité le silver
+  expect(result.spentDelta).toBe(0); // et n'a jamais débité le silver
 
   expect(pageErrors).toEqual([]);
 });
 
-// garde-fou (2026-07-20, rapporté explicitement : "impossible d'acheter les slots d'oeuf") --
-// DEUX boutons d'achat de slot d'incubation étaient des impasses : le slot verrouillé
-// (incubSlots[2].locked) n'avait AUCUN onclick, et le bouton "➕ slot premium" ne faisait qu'un
-// toast() factice sans jamais rien acheter. Vérifie que les deux débitent réellement SILVER
-// (via spendSilver(), donc silverSpent aussi) et changent l'état réel des slots.
-test('both egg-slot purchase buttons (unlock the 3rd slot, buy an extra slot) actually spend silver and change slot state', async ({ page }) => {
+// échelle de slots (2026-07-18, demande explicite : "5 slots, 2 gratuits puis 1M/10M/100M") --
+// 5 slots FIXES : 2 gratuits + 3 déblocables dans l'ORDRE contre 1M/10M/100M. Vérifie que chaque
+// déblocage débite le bon montant (via spendSilver, donc silverSpent), passe le slot en prêt, et
+// que le ladder empêche de sauter un palier (débloquer un slot dont le précédent est verrouillé).
+test('incubation slots unlock in order for 1M/10M/100M, spending the exact cost each time (ladder)', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -580,44 +592,78 @@ test('both egg-slot purchase buttons (unlock the 3rd slot, buy an extra slot) ac
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
+  await setSharedSilver(frame, 200_000_000); // assez pour les 3 paliers (1M + 10M + 100M) côté jeu
   const result = await frame.locator('body').evaluate(() => {
-    SILVER = 1_000_000; // largement assez pour les 2 achats
+    const startLen = incubSlots.length;
+    const freeSlots = FREE_INCUB_SLOTS;
+    const wasLocked2 = !!(incubSlots[2] && incubSlots[2].locked);
+    const costs = [slotUnlockCost(2), slotUnlockCost(3), slotUnlockCost(4)];
+
+    // ladder : débloquer le slot 4 (index 3) AVANT le slot 3 (index 2) doit être un no-op complet
+    const spentBeforeSkip = silverSpent;
+    unlockIncubSlot(3);
+    const skipBlocked = silverSpent === spentBeforeSkip && !!(incubSlots[3] && incubSlots[3].locked);
+
+    const s0 = silverSpent; unlockIncubSlot(2); // 1M
+    const afterSlot3 = { spent: silverSpent - s0, stillLocked: !!(incubSlots[2] && incubSlots[2].locked), ready: !!(incubSlots[2] && incubSlots[2].ready) };
+
+    const s1 = silverSpent; unlockIncubSlot(3); // 10M
+    const afterSlot4 = { spent: silverSpent - s1, stillLocked: !!(incubSlots[3] && incubSlots[3].locked) };
+
+    return { startLen, freeSlots, wasLocked2, costs, skipBlocked, afterSlot3, afterSlot4 };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.startLen).toBe(5);      // 5 slots fixes
+  expect(result.freeSlots).toBe(2);     // les 2 premiers gratuits
+  expect(result.wasLocked2).toBe(true); // le 3e slot part verrouillé
+  expect(result.costs).toEqual([1_000_000, 10_000_000, 100_000_000]);
+  expect(result.skipBlocked).toBe(true); // ladder : impossible de sauter un palier
+  expect(result.afterSlot3.spent).toBe(1_000_000);
+  expect(result.afterSlot3.stillLocked).toBe(false);
+  expect(result.afterSlot3.ready).toBe(true);
+  expect(result.afterSlot4.spent).toBe(10_000_000);
+  expect(result.afterSlot4.stillLocked).toBe(false);
+
+  // le DOM reflète l'état : après avoir débloqué 2 slots verrouillés, il n'en reste qu'un (100M).
+  const lockedLeft = await frame.locator('#incub-slots .isl.locked').count();
+  expect(lockedLeft).toBe(1);
+  expect(pageErrors).toEqual([]);
+});
+
+// plafond de slots (2026-07-18, demande explicite : "5 slots") -- le tableau incubSlots contient
+// exactement 5 slots, jamais plus (plus de "buyExtraIncubSlot" qui poussait à l'infini). Vérifie
+// qu'un déblocage silver insuffisant est un no-op, et que MAX_INCUB_SLOTS vaut bien 5.
+test('incubation is capped at 5 fixed slots and an unaffordable unlock spends nothing', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
+
+  await setSharedSilver(frame, 10); // très en dessous du coût du 3e slot (1M), côté jeu
+  const result = await frame.locator('body').evaluate(() => {
+    const max = MAX_INCUB_SLOTS, len = incubSlots.length;
     const spentBefore = silverSpent;
-    const slotsBefore = incubSlots.length;
-    const wasLocked = incubSlots[2] && incubSlots[2].locked === true;
-
-    unlockIncubSlot(2);
-    const afterUnlock = { silverSpent, stillLocked: !!(incubSlots[2] && incubSlots[2].locked), ready: incubSlots[2] && incubSlots[2].ready };
-
-    buyExtraIncubSlot();
-    const afterExtra = { silverSpent, slotCount: incubSlots.length };
-
-    return { wasLocked, spentBefore, slotsBefore, afterUnlock, afterExtra };
+    unlockIncubSlot(2); // doit échouer (silver insuffisant) sans rien débiter
+    return { max, len, spentBefore, spentAfter: silverSpent, stillLocked: !!(incubSlots[2] && incubSlots[2].locked) };
   });
   expect(pageErrors).toEqual([]);
-  expect(result.wasLocked).toBe(true); // précondition : le roster de départ a bien un 3e slot verrouillé
-  expect(result.afterUnlock.silverSpent).toBeGreaterThan(result.spentBefore);
-  expect(result.afterUnlock.stillLocked).toBe(false);
-  expect(result.afterUnlock.ready).toBe(true);
-  expect(result.afterExtra.silverSpent).toBeGreaterThan(result.afterUnlock.silverSpent);
-  expect(result.afterExtra.slotCount).toBe(result.slotsBefore + 1);
-
-  // le DOM reflète bien le nouvel état (pas juste les variables JS) : le bouton "➕" doit toujours
-  // exister après l'achat (on peut en acheter un autre), et il ne doit plus rester de slot .locked.
-  const domState = await frame.locator('body').evaluate(() => ({
-    lockedCount: document.querySelectorAll('#incub-slots .isl.locked').length,
-    hasExtraButton: !!document.querySelector('#incub-slots .isl span'),
-  }));
-  expect(domState.lockedCount).toBe(0);
-  expect(domState.hasExtraButton).toBe(true);
-  expect(pageErrors).toEqual([]);
+  expect(result.max).toBe(5);
+  expect(result.len).toBe(5);
+  expect(result.spentAfter).toBe(result.spentBefore); // aucun débit sur achat impossible
+  expect(result.stillLocked).toBe(true);
 });
 
-// plafond de slots d'incubation (2026-07-10, demande explicite : "borner incubation a 8") --
-// buyExtraIncubSlot() poussait dans incubSlots sans aucune limite auparavant. Vérifie que le
-// plafond bloque bien l'achat ET le débit de silver une fois atteint (pas juste visuel), et que
-// le bouton "➕" est remplacé par un état figé dans le DOM.
-test('incubation slot purchases are capped at 8, both server-side (silver never spent past the cap) and in the DOM', async ({ page }) => {
+// pont silver pool partagé (2026-07-18, demande explicite : "silver bidirectionnel, on lie
+// compagnon avec le jeu") -- le module Compagnon ne tient plus une bourse séparée : dépenser débite
+// le silver DU JEU (S.silver via addSilver, catégorie 'companion'), gagner le crédite, et le miroir
+// local SILVER suit le solde du jeu. Vérifie les deux sens (bidirectionnel) sur le vrai pont.
+test('companion silver is the shared game pool: a spend debits the game and an earn credits it (bridge)', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -629,25 +675,22 @@ test('incubation slot purchases are capped at 8, both server-side (silver never 
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
+  await setSharedSilver(frame, 5_000_000);
   const result = await frame.locator('body').evaluate(() => {
-    SILVER = 10_000_000;
-    // pousse déjà au plafond (partant du roster de départ, 3 slots) pour isoler le comportement
-    // AU plafond sans dépendre du nombre d'achats nécessaires pour l'atteindre.
-    while (incubSlots.length < MAX_INCUB_SLOTS) incubSlots.push({ free: false, tl: 0, tot: 1, ready: true });
-    renderHatch();
-    const spentAtCap = silverSpent, countAtCap = incubSlots.length;
-    buyExtraIncubSlot(); // doit être un no-op complet
-    return {
-      countAtCap, spentAtCap,
-      countAfter: incubSlots.length, spentAfter: silverSpent,
-      lockedPlaceholder: document.querySelectorAll('#incub-slots .isl.locked').length,
-    };
+    const host = window.parent;
+    const bridgeOn = typeof host.getGameSilverForCompanion === 'function';
+    const gameBefore = host.getGameSilverForCompanion();
+    unlockIncubSlot(2);                 // dépense : débloque le 3e slot (1M) -> débit du silver DU JEU
+    const gameAfterSpend = host.getGameSilverForCompanion();
+    earnSilver(777, 'test:earn');       // gain compagnon -> crédit du silver DU JEU
+    const gameAfterEarn = host.getGameSilverForCompanion();
+    return { bridgeOn, gameBefore, gameAfterSpend, gameAfterEarn, mirror: SILVER };
   });
   expect(pageErrors).toEqual([]);
-  expect(result.countAtCap).toBe(8);
-  expect(result.countAfter).toBe(8); // aucun slot ajouté au-delà du plafond
-  expect(result.spentAfter).toBe(result.spentAtCap); // et aucun silver dépensé pour rien
-  expect(result.lockedPlaceholder).toBeGreaterThan(0); // le "+" est remplacé par un état figé
+  expect(result.bridgeOn).toBe(true);                                   // le pont hôte est bien exposé
+  expect(result.gameAfterSpend).toBe(result.gameBefore - 1_000_000);    // dépense compagnon = débit jeu
+  expect(result.gameAfterEarn).toBe(result.gameAfterSpend + 777);       // gain compagnon = crédit jeu
+  expect(result.mirror).toBe(result.gameAfterEarn);                     // le miroir local suit le jeu
 });
 
 // carte terrain en 3D (2026-07-10, demande explicite) -- pour les espèces avec un modèle GLB,
@@ -747,10 +790,10 @@ test('companion "Tes stats" tab shows real eggs-opened/money-spent counters and 
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // dépense réelle : achète un œuf pour que "Œufs ouverts"/"Argent dépensé" ne soient pas juste 0 par défaut
+  await setSharedSilver(frame, 10_000_000); // silver côté jeu suffisant pour n'importe quel œuf
   const before = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG[0];
     const eggType = EGG_TYPES[0];
-    SILVER = eggType.cost + 1000; // assez pour payer
     doHatch(0, eggType.id);
     return { totalHatched, silverSpent, eggCost: eggType.cost };
   });
@@ -835,6 +878,9 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
       eggTimer: 0, petId: 4, hatchCountSincePity: 0, fusionCount: 2, caphrasUpgradeCount: 0,
       bossItemFound: false, breakthroughCount: 0, totalHatched: 3, eggTypesUsed: [],
       completedAchievements: [], pityEverTriggered: false, loginStreak: 1, lastLoginDate: null,
+      // déjà passé le wipe économie prod (isole ce test sur la SEULE migration roster : sinon le
+      // wipe remettrait fusionCount à 0 et l'assertion fusionKept échouerait -- voir le test dédié).
+      petsEconomyWipeV1: true,
       savedAt: Date.now(),
       // pas de petsRosterResetV1 -- exactement l'état d'une sauvegarde jamais migrée
     }));
@@ -852,15 +898,16 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
   // de loadGame(), voir save.js) jusqu'à ce qu'il devienne true.
   await expect.poll(() => frame.locator('body').evaluate(() => petsRosterResetV1)).toBe(true);
   const afterMigration = await frame.locator('body').evaluate(() => ({
-    petsLen: PETS.length, flag: petsRosterResetV1, silverKept: SILVER, fusionKept: fusionCount,
+    petsLen: PETS.length, flag: petsRosterResetV1, fusionKept: fusionCount,
+    silver: SILVER, gameSilver: (window.parent.getGameSilverForCompanion ? window.parent.getGameSilverForCompanion() : null),
   }));
   expect(afterMigration.petsLen).toBe(0);
   expect(afterMigration.flag).toBe(true);
-  // >= et non === : checkDailyStreak() (appelé juste après la migration dans loadGame()) peut
-  // accorder un bonus de connexion sur ce même chargement (lastLoginDate:null dans la fixture) --
-  // ce qui compte ici est que le silver n'a pas été REMIS À ZÉRO par la migration, pas sa valeur exacte.
-  expect(afterMigration.silverKept).toBeGreaterThanOrEqual(12345);
   expect(afterMigration.fusionKept).toBe(2);
+  // pool partagé (2026-07-18) : le silver ne vient PLUS de la sauvegarde compagnon (12345 ignoré) --
+  // c'est le silver DU JEU qui fait autorité (pont). Le miroir local doit refléter le solde du jeu.
+  expect(typeof afterMigration.gameSilver).toBe('number');
+  expect(afterMigration.silver).toBe(afterMigration.gameSilver);
 
   // la migration a persisté (saveGame() appelé immédiatement dans loadGame()) -- lire directement
   // localStorage confirme que le flag est bien écrit, pas seulement en mémoire
@@ -872,9 +919,63 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
   expect(pageErrors).toEqual([]);
 });
 
+// migration wipe économie prod (2026-07-18, demande explicite : "au moment du merge on supprimera
+// tout et les compagnons vont farm plus") -- une sauvegarde d'AVANT le passage en prod (pets/
+// inventaire/slots de la phase de test, hoards) doit être remise à zéro UNE SEULE FOIS, en gardant
+// les succès déjà obtenus (pas de re-versement de silver réel) et sans jamais se répéter.
+test('prod economy wipe clears pets/inventory/slots once, keeps earned achievements, and never repeats', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.addInitScript(() => {
+    localStorage.setItem('velia_idle_pets_save', JSON.stringify({
+      PETS: [{ id: 1 }, { id: 2 }], SILVER: 99999,
+      INVENTORY: { 'Minerai de fer': { icon: '⛏️', qty: 74000, feed: 0 } },
+      incubSlots: [{ free: true, tl: 0, tot: 1, ready: true }], eggTimer: 0, petId: 3,
+      totalHatched: 42, fusionCount: 5, completedAchievements: ['first_hatch'],
+      petsRosterResetV1: true, petsRosterCapV1: true, petsUidV1: true, petsSpeciesRarityV1: true,
+      savedAt: Date.now(),
+      // pas de petsEconomyWipeV1 -- exactement une sauvegarde d'avant le passage en prod
+    }));
+  });
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await expect.poll(() => frame.locator('body').evaluate(() => petsEconomyWipeV1)).toBe(true);
+
+  const after = await frame.locator('body').evaluate(() => ({
+    petsLen: PETS.length,
+    invKeys: Object.keys(INVENTORY).length,
+    slotCount: incubSlots.length,
+    lockedCount: incubSlots.filter(s => s.locked).length,
+    totalHatched, fusionCount,
+    achievementsKept: completedAchievements.has('first_hatch'),
+    flag: petsEconomyWipeV1,
+  }));
+  expect(after.petsLen).toBe(0);             // roster de test effacé
+  expect(after.invKeys).toBe(0);             // hoards d'inventaire effacés
+  expect(after.slotCount).toBe(5);           // slots remis au modèle prod (5 fixes)
+  expect(after.lockedCount).toBe(3);         // 2 gratuits + 3 verrouillés
+  expect(after.totalHatched).toBe(0);        // compteurs de tirage remis à zéro
+  expect(after.fusionCount).toBe(0);
+  expect(after.achievementsKept).toBe(true); // succès déjà obtenus PRÉSERVÉS (pas de re-versement)
+  expect(after.flag).toBe(true);
+
+  // persisté -> ne se répète jamais
+  const persisted = await frame.locator('body').evaluate(() =>
+    JSON.parse(localStorage.getItem('velia_idle_pets_save')));
+  expect(persisted.petsEconomyWipeV1).toBe(true);
+  expect(persisted.PETS).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
 // 2026-07-20, demande explicite (bandeau/titre/bouton fermer/légende/tri/zoom) : couvre la
 // présence de chaque élément UI ajouté, pas leur comportement détaillé (déjà couvert ailleurs).
-test('header shows WIP banner, new title, close button, and collection legend/sort/zoom controls', async ({ page }) => {
+test('header shows title, close button, and collection legend/sort/zoom controls (no WIP banner in prod)', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -885,9 +986,8 @@ test('header shows WIP banner, new title, close button, and collection legend/so
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
-  // bandeau "test en cours" (2026-07-20) -- toujours visible, pas de bouton pour le masquer
-  await expect(frame.locator('#wipBanner')).toBeVisible();
-  await expect(frame.locator('#wipBanner')).toContainText('test');
+  // bandeau "test en cours" RETIRÉ au passage en prod (2026-07-18) -- ne doit plus exister
+  await expect(frame.locator('#wipBanner')).toHaveCount(0);
 
   // bouton de fermeture DANS le module, à côté de "FAMILIERS" -- appelle bien closeCompanionsModule
   // de la page hôte (vérifié via l'overlay principal qui se cache après le clic)
@@ -911,9 +1011,9 @@ test('header shows WIP banner, new title, close button, and collection legend/so
   const gridColsAfter = await frame.locator('#pet-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns);
   expect(gridColsAfter).not.toBe(gridColsBefore);
 
-  // disclaimer "achat instantané de test" près des boutons ×1/×5/×10
+  // hint "éclosion instantanée payante" près des boutons ×1/×5/×10 (reformulé au passage en prod)
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
-  await expect(frame.locator('text=raccourci de TEST')).toBeVisible();
+  await expect(frame.locator('text=éclosent instantanément')).toBeVisible();
 
   expect(pageErrors).toEqual([]);
 });
@@ -1833,9 +1933,9 @@ test('hatch reveal screen shows the odds recap of the egg that was used', async 
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
+  await setSharedSilver(frame, 10_000_000); // silver côté jeu suffisant (pool partagé)
   const result = await frame.locator('body').evaluate(async () => {
     const eggType = EGG_TYPES[0];
-    SILVER = eggType.cost + 1000;
     doHatch(0, eggType.id);
     // nouveau flux (2026-07-18) : doHatch affiche d'abord la roulette de rareté (~1.9s) PUIS le
     // reveal (showHatchPetReveal, qui contient le récap des odds). On attend la fin de la roulette.
@@ -2328,7 +2428,6 @@ test('companion module renders in English when velia-idle-lang=en (own i18next i
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // shell statique traduit par applyCompanionsI18n() (data-i18n, i18n.js)
-  await expect(frame.locator('#wipBanner')).toContainText('Module under testing');
   await expect(frame.locator('.tabs .tab', { hasText: 'Hatchery' })).toBeVisible();
   await expect(frame.locator('.tabs .tab', { hasText: 'Feed' })).toBeVisible();
   await expect(frame.locator('.tabs .tab', { hasText: 'Leaderboard' })).toBeVisible();

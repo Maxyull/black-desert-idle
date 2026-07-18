@@ -253,11 +253,9 @@ const ACTIVITY_TABS = [
   // isNew tant que la feature est toute fraîche, même convention que Compagnon ci-dessous.
   { id:'miniboss', icon:'📜', name:{fr:'Mini Boss',en:'Mini Boss'}, locked:false, isNew:true },
   // Compagnon juste après Boss (2026-07-10, demande explicite : "compagnon a droite de boss") --
-  // badge "NEW" (2026-07-20, demande explicite : "met NEW sur compagnon a la place du cadenas")
-  // dans le même emplacement bulle que .actTabLock/.actTabBossHp, tant que le module reste en
-  // phase de test (voir #wipBanner, companions.html) -- à retirer manuellement (isNew:false) le
-  // jour où le module sort de test, pas de logique de péremption automatique.
-  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:true },
+  // le module est sorti de sa phase de test (2026-07-18, "on passe en prod et on lie compagnon avec
+  // le jeu") : badge "NEW" retiré (isNew:false) comme prévu, silver désormais partagé avec le jeu.
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:false },
   // PvP (2026-07-20, demande explicite : "header : PVP bloqué") -- teaser verrouillé, même
   // convention que les autres activités pas encore implémentées ci-dessous. Distinct du classement
   // "PvP" DÉJÀ jouable dans le module Compagnon (onglet ⚔️ PvP, pvp.js) qui, lui, classe

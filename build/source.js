@@ -6942,7 +6942,7 @@ const ACTIVITY_TABS = [
   
   { id:'miniboss', icon:'📜', name:{fr:'Mini Boss',en:'Mini Boss'}, locked:false, isNew:true },
   
-  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:true },
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:false },
   
   { id:'pvp', icon:'🗡️', name:{fr:'PvP',en:'PvP'}, locked:true },
   { id:'fish', icon:'🎣', name:{fr:'Pêche',en:'Fishing'},   locked:true },
@@ -14943,6 +14943,14 @@ function getSbClient() { return sb; }
 function getCurrentUserForSync() { return currentUser; }
 
 function getMyPseudoForSync() { return myPseudo || (currentUser && (currentUser.email || '?').split('@')[0]) || 'Joueur'; }
+
+function getGameSilverForCompanion() { return (typeof S !== 'undefined' && S && typeof S.silver === 'number') ? S.silver : null; }
+
+function addGameSilverForCompanion(delta, note) {
+  if (typeof addSilver !== 'function' || typeof S === 'undefined' || !S) return null;
+  if (delta) addSilver(delta, 'companion', note || 'compagnon');
+  return S.silver;
+}
 
 let farmEventQueue = new Map();
 
