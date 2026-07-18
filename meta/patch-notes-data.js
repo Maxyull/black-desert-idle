@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V484', d:'19/07/2026 10:00', name:{fr:'Compagnon : tutoriel illustré', en:'Companions: illustrated tutorial'}, fr:[
+      {t:'change', sub:'compagnon', tx:'L\'onglet « Tutoriel » du menu Compagnon est refait en un grand schéma illustré plein écran : les icônes des onglets sont reliées par des flèches pour montrer la boucle de jeu (Éclosion → Collection → Sections → Jeu → Nourrir, puis on recommence), avec juste un mot ou deux par étape. Les autres onglets (Index, Hardinage, Progression, PvP, Marché) sont présentés à part, et les astuces restent en bas. Beaucoup plus clair d\'un coup d\'œil qu\'avant.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'The Companion menu\'s "Tutorial" tab is rebuilt as a large full-screen illustrated diagram: the tab icons are connected by arrows to show the gameplay loop (Hatch → Collection → Sections → Game → Feed, then it starts again), with just a word or two per step. The other tabs (Index, Foraging, Progression, PvP, Market) are shown separately, and the tips stay at the bottom. Much clearer at a glance than before.'},
+    ] },
   { v:'V482', d:'19/07/2026 09:00', name:{fr:'Compagnon : choix de l\'œuf au départ, éclosion animée, mise en page Éclosion', en:'Companions: choose egg on start, animated hatch, Hatchery layout'}, fr:[
       {t:'change', sub:'compagnon', tx:'Nouveau fonctionnement des créneaux d\'incubation : après une éclosion, le créneau devient VIDE — tu choisis alors quel œuf y mettre (basique gratuit ou un œuf premium), tu paies à ce moment, et le minuteur de 6h démarre avec les chances de CET œuf. Fini l\'œuf basique remis d\'office : tu gardes la main sur chaque incubation.'},
       {t:'change', sub:'compagnon', tx:'L\'éclosion met mieux en valeur le résultat : le Tier et la rareté du familier obtenu s\'affichent en gros, dans la couleur de rareté, avec une petite animation d\'apparition.'},
