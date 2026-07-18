@@ -89,7 +89,9 @@ function renderFilters(){
 
 /** Reconstruit la grille Collection : filtre/trie PETS, pagine si activé, calcule les indices de fusion (TOP1/TOP2/TOP3 selon rareté/section/tier communs au 1er pet sélectionné) et rend chaque carte. */
 function renderGrid(){
-  document.getElementById('tb2').textContent=PETS.length;
+  // badge d'onglet Collection : masqué à 0 (2026-07-19, "menu trop de chiffre pour rien") -- n'affiche
+  // le compte que lorsqu'il porte une information (au moins 1 familier en collection).
+  const tb2=document.getElementById('tb2'); if(tb2){ tb2.textContent=PETS.length; tb2.style.display=PETS.length?'':'none'; }
   const gridEl = document.getElementById('pet-grid');
   if(gridEl) gridEl.style.gridTemplateColumns = `repeat(${collColsPerRow},minmax(90px,1fr))`;
   const q=document.getElementById('search-box')?.value.toLowerCase()||'';
@@ -194,14 +196,13 @@ function renderGrid(){
         <div class="card-name">${p.cat.name}</div>
         ${collColsPerRow>=COLL_COLS_COMPACT_FROM ? `
         <div class="card-meta-compact" title="${rn(p.rar)} · T${p.tier||1} (${tierMultPct(p)}%) · ${secName(sec)} · ${typeLabel(p.cat.typ)}">
-          <span class="cmcDot" style="background:${rc(p.rar)}"></span>
-          <span class="cmcTier">T${p.tier||1}</span>
+          ${tierRarPill(p,'sm')}
           <span class="cmcSec">${sec?.ico}</span>
           <span class="gs-badge ${gsCls(pct)}" style="color:${rc(p.rar)};border-color:${rc(p.rar)}">GS ${gs}</span>
         </div>` : `
         <div class="card-meta">
-          <span style="color:${rc(p.rar)};font-size:9px">${rn(p.rar)}</span>
-          <span style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold)" title="${i18next.t('companions:companions.collection.mult_title', {mult:tierMultOf(p).toFixed(3)})}">T${p.tier||1} <span style="color:var(--cream3)">(${tierMultPct(p)}%)</span></span>
+          ${tierRarPill(p)}
+          <span style="font-family:'Cinzel',serif;font-size:9px;color:var(--gold)" title="${i18next.t('companions:companions.collection.mult_title', {mult:tierMultOf(p).toFixed(3)})}">${tierMultPct(p)}%</span>
           <span style="color:var(--cream3)">·</span>
           <span>${sec?.ico} ${secName(sec)}</span>
           <span style="color:var(--cream3)">·</span>

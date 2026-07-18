@@ -28,9 +28,12 @@ function renderIndex(){
 function renderIndexRates(){
   const el = document.getElementById('index-rates');
   if(!el) return;
-  const th = 'padding:6px 10px;border-bottom:1px solid var(--border)';
-  const td = 'padding:6px 10px;border-bottom:1px solid var(--border)';
-  const subtitle = t => `<div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--cream2);margin:14px 0 6px">${t}</div>`;
+  // tables resserrées (2026-07-19, demande explicite : "taux de loot par section à droite, faut que
+  // ça tienne sur une page") -- paddings/polices réduits + colonnes plus étroites pour que les DEUX
+  // tableaux (éclosion / hardinage) tiennent côte à côte sur un écran sans débordement vertical.
+  const th = 'padding:3px 7px;border-bottom:1px solid var(--border)';
+  const td = 'padding:3px 7px;border-bottom:1px solid var(--border)';
+  const subtitle = t => `<div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--cream2);margin:8px 0 4px">${t}</div>`;
 
   // 1) Éclosion : rareté × type d'œuf. Chaque cellule montre l'odd d'UN tirage ET, entre
   //    parenthèses, l'"index %" = chance d'obtenir ≥1 pet de cette rareté sur la période cible
@@ -38,7 +41,7 @@ function renderIndexRates(){
   //    1-(1-p)^n avec n = jours_cible × 4 œufs/jour -- EXACTEMENT celle de l'onglet Éclosion
   //    (renderHatch, PERIOD_DAYS), jamais dupliquée autrement.
   const PERIOD_DAYS = {2:7, 3:14, 4:21, 5:30};
-  const hatch = `<table style="border-collapse:collapse;font-size:11px;min-width:520px">
+  const hatch = `<table style="border-collapse:collapse;font-size:10px;min-width:360px">
     <thead><tr>
       <th style="${th};text-align:left;color:var(--cream2)">${i18next.t('companions:companions.hatch.col_rarity')}</th>
       ${EGG_TYPES.map(e=>`<th style="${th};color:var(--gold);font-family:'Cinzel',serif;font-size:10px">${e.ico} ${eggName(e)}</th>`).join('')}
@@ -58,7 +61,7 @@ function renderIndexRates(){
   // 2) Hardinage : taux de loot de BASE par section (gsFactor=1 -> rare 2%, peu commun 16%, commun 82%,
   //    exactement les seuils de triggerHardDrop() : roll<2 => rare ; roll<18 => peu commun ; sinon commun)
   const baseRare = 2, baseUncommon = 16, baseCommon = 82;
-  const hard = `<table style="border-collapse:collapse;font-size:11px;min-width:520px">
+  const hard = `<table style="border-collapse:collapse;font-size:10px;min-width:360px">
     <thead><tr>
       <th style="${th};text-align:left;color:var(--cream2)">${i18next.t('companions:companions.index.col_section')}</th>
       <th style="${th};color:var(--cream2)">${i18next.t('companions:companions.index.col_common')}</th>
@@ -82,8 +85,8 @@ function renderIndexRates(){
   // droite des autres") -- les deux tableaux (éclosion / hardinage) étaient empilés verticalement,
   // laissant beaucoup d'espace vide à droite. On les met en flex : côte à côte quand la largeur le
   // permet, repli en colonne sur écran étroit. Chaque tableau garde son propre défilement horizontal.
-  const col = (sub, tbl) => `<div style="flex:1 1 480px;min-width:0">${sub}<div style="overflow-x:auto">${tbl}</div></div>`;
-  el.innerHTML = `<div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+  const col = (sub, tbl) => `<div style="flex:1 1 360px;min-width:0">${sub}<div style="overflow-x:auto">${tbl}</div></div>`;
+  el.innerHTML = `<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
     ${col(subtitle(i18next.t('companions:companions.index.hatch_odds_subtitle')), hatch)}
     ${col(subtitle(i18next.t('companions:companions.index.hard_rates_subtitle')), hard)}
   </div>`;

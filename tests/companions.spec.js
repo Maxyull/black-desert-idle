@@ -240,7 +240,9 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
       hasCompact: !!compact,
       hasVerboseMeta: !!card.querySelector('.card-meta'),
       overflowsCard: compact ? compact.scrollWidth > compact.clientWidth : null,
-      hasTierDot: compact ? !!compact.querySelector('.cmcDot') : false,
+      // badge Tier+rareté unifié (2026-07-19) : .tr-pill remplace l'ancien .cmcDot/.cmcTier, avec un
+      // segment Tier (.trT) et un segment rareté (.trR) tous deux présents.
+      hasTierRarPill: compact ? !!(compact.querySelector('.tr-pill .trT') && compact.querySelector('.tr-pill .trR')) : false,
       hasSectionIcon: compact ? !!compact.querySelector('.cmcSec') : false,
       hasGsBadge: compact ? !!compact.querySelector('.gs-badge') : false,
     };
@@ -253,7 +255,7 @@ test('collection cards show a compact tier/rarity/section/GS summary that never 
   expect(result.hasCompact).toBe(true);
   expect(result.hasVerboseMeta).toBe(false); // pas les deux affichages à la fois
   expect(result.overflowsCard).toBe(false);
-  expect(result.hasTierDot).toBe(true);
+  expect(result.hasTierRarPill).toBe(true);
   expect(result.hasSectionIcon).toBe(true);
   expect(result.hasGsBadge).toBe(true);
 
