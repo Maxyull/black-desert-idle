@@ -678,8 +678,10 @@ test('eggs roll a starting tier from tierOdds (well-formed, honored by rollAndCr
   expect(pageErrors).toEqual([]);
 });
 
-// onglet Tutoriel (2026-07-18, demande explicite : "fais un tutoriel de comment se passe le menu
-// compagnon dans un onglet tutoriel") -- guide illustré (icônes) + concis, rendu par renderTutorial().
+// onglet Tutoriel (2026-07-19, demande explicite : "fais un tuto qui prend tout l'écran avec des
+// images qui pointent vers d'autres images avec un peu de texte") -- refondu en DIAGRAMME illustré
+// plein écran : boucle de gameplay (Éclosion → Collection → Sections → Jeu → Nourrir) reliée par
+// des flèches SVG, satellites (Index/Hardinage/Progression/PvP/Marché), rendu par renderTutorial().
 test('the Tutorial tab renders an illustrated, concise guide of the companion menu', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -698,9 +700,19 @@ test('the Tutorial tab renders an illustrated, concise guide of the companion me
   await expect(content).toContainText('Éclosion');
   await expect(content).toContainText('Collection');
   await expect(content).toContainText('Hardinage');
-  // une carte par étape (TUTORIAL_STEPS = 9) -- pas de clé i18next brute affichée
+
+  // le diagramme est bien rendu : la boucle principale, ses 5 nœuds illustrés et les flèches
+  // (SVG) qui les relient, plus les onglets satellites présentés à part.
+  await expect(content.locator('.tuto-loop')).toBeVisible();
+  await expect(content.locator('.tuto-node')).toHaveCount(5);       // Éclosion→Collection→Sections→Jeu→Nourrir
+  await expect(content.locator('.tuto-arrow svg')).toHaveCount(4);  // 4 flèches entre les 5 nœuds
+  await expect(content.locator('.tuto-tool')).toHaveCount(5);       // Index/Hardinage/Progression/PvP/Marché
+
+  // une entrée par onglet couvert (TUTORIAL_STEPS = 5 boucle + 5 satellites = 10)
   const stepCount = await frame.locator('body').evaluate(() => (typeof TUTORIAL_STEPS !== 'undefined' ? TUTORIAL_STEPS.length : 0));
-  expect(stepCount).toBe(9);
+  expect(stepCount).toBe(10);
+
+  // aucune clé i18next brute ne fuit (ni "companions.tutorial." ni des labels de flèche non traduits)
   const bodyText = await content.innerText();
   expect(bodyText).not.toMatch(/companions\.tutorial\./);
 
@@ -1342,9 +1354,16 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   const result = await frame.locator('body').evaluate(() => {
+    // Parents à la rareté MAXIMALE (5) pour rendre le test déterministe : l'invariant "le Tier ne peut
+    // que monter ou rester" (aucune flèche rouge) n'est vrai QUE hors "breakthrough" de rareté --
+    // executeFusion() remet volontairement le Tier à 1 quand la rareté BONDIT (fusion.js §3). À la
+    // rareté max, rollFusionRarity() ne peut plus augmenter la rareté (newRar=min(5,5+k)=5, donc
+    // rarityIncreased=false), donc on teste bien la branche "montée de Tier" : baseTier=max(2,2)+1=3
+    // + un éventuel extra. (Avec des parents de rareté basse, le breakthrough aléatoire remettait le
+    // Tier à 1 ~1 fois sur 3 -> test flaky, corrigé ici.)
     const cat = PET_CATALOG.find(c => c.rar === 0);
-    const a = { id: petId++, cat, rar: 0, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
-    const b = { id: petId++, cat, rar: 0, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
+    const a = { id: petId++, cat, rar: 5, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
+    const b = { id: petId++, cat, rar: 5, stats: [5, 0, 0, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
     PETS.push(a, b);
     fusionSlots = [a.id, b.id];
     executeFusion(a, b);
@@ -1352,7 +1371,7 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
     return { html: document.getElementById('fusion-modal-body').innerHTML, mergedTier: merged.tier };
   });
   expect(pageErrors).toEqual([]);
-  expect(result.mergedTier).toBeGreaterThan(2); // baseTier = max(2,2)+1 = 3 minimum
+  expect(result.mergedTier).toBeGreaterThan(2); // baseTier = max(2,2)+1 = 3 minimum (rareté max => pas de reset à T1)
   expect(result.html).not.toContain('var(--red2);font-weight:600">T'); // jamais de flèche rouge sur le Tier
 });
 

@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V484', d:'19/07/2026 10:00', name:{fr:'Compagnon : tutoriel illustré', en:'Companions: illustrated tutorial'}, fr:[
+      {t:'change', sub:'compagnon', tx:'L\'onglet « Tutoriel » du menu Compagnon est refait en un grand schéma illustré plein écran : les icônes des onglets sont reliées par des flèches pour montrer la boucle de jeu (Éclosion → Collection → Sections → Jeu → Nourrir, puis on recommence), avec juste un mot ou deux par étape. Les autres onglets (Index, Hardinage, Progression, PvP, Marché) sont présentés à part, et les astuces restent en bas. Beaucoup plus clair d\'un coup d\'œil qu\'avant.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'The Companion menu\'s "Tutorial" tab is rebuilt as a large full-screen illustrated diagram: the tab icons are connected by arrows to show the gameplay loop (Hatch → Collection → Sections → Game → Feed, then it starts again), with just a word or two per step. The other tabs (Index, Foraging, Progression, PvP, Market) are shown separately, and the tips stay at the bottom. Much clearer at a glance than before.'},
+    ] },
   { v:'V483', d:'19/07/2026 10:00', name:{fr:'Compagnon : menu plus lisible, Tier+rareté sur toutes les fiches', en:'Companions: cleaner menu, Tier+rarity on every card'}, fr:[
       {t:'change', sub:'compagnon', tx:'Badge Tier + rareté unifié et mis en valeur sur TOUTES les fiches de familier (collection, sections, réserve, historique d\'éclosion) : le Tier ressort dans une pastille pleine, la rareté est colorée à sa couleur. Fini les affichages différents d\'un écran à l\'autre.'},
       {t:'change', sub:'compagnon', tx:'Menu Compagnon allégé : suppression des compteurs décoratifs qui n\'apportaient rien (le « 8 » des Sections, le « 48 » de l\'Index). Les pastilles restantes ne s\'affichent que lorsqu\'elles signalent quelque chose (une éclosion prête, des familiers en collection).'},
