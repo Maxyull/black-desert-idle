@@ -12,7 +12,7 @@ function saveGame(){
       eggTypesUsed: Array.from(eggTypesUsed),
       completedAchievements: Array.from(completedAchievements),
       pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1, petsRosterCapV1, petsUidV1,
-      petsSpeciesRarityV1, autoFeedEnabled,
+      petsSpeciesRarityV1, petsEconomyWipeV1, autoFeedEnabled,
       savedAt: Date.now()
     };
     localStorage.setItem('velia_idle_pets_save', JSON.stringify(state));
@@ -77,9 +77,11 @@ function applyOfflineProgress(savedAt){
   const tierUps=[]; // {name, from, to} -- pour le résumé, jamais de toast individuel (pas de spam au retour)
   activePets.forEach(p=>{
     const sec=secById(p.cat.sec); if(!sec||!sec.drops) return;
-    totalSilver += Math.round(OFFLINE_SILVER_PER_HOUR*hours);
+    // rendement ×FARM_YIELD_MULT, identique au tick live (ticks.js) pour ne jamais désynchroniser
+    // le hors-ligne et le temps réel (2026-07-18, "les compagnons farment au moins 5x plus").
+    totalSilver += Math.round(OFFLINE_SILVER_PER_HOUR*hours) * FARM_YIELD_MULT;
     const commonDrop = sec.drops[0];
-    const qty = Math.round(OFFLINE_COMMON_ITEMS_PER_HOUR*hours);
+    const qty = Math.round(OFFLINE_COMMON_ITEMS_PER_HOUR*hours) * FARM_YIELD_MULT;
     if(qty>0){
       addToInventory(commonDrop.n, commonDrop.e, qty, commonDrop.feed);
       itemsGained[commonDrop.n] = (itemsGained[commonDrop.n]||0)+qty;
@@ -91,13 +93,13 @@ function applyOfflineProgress(savedAt){
     // calculs.
     const specialTicks = seconds/2;
     const tf = zoneTierFactor(p);
-    const caphrasQty = Math.round(CAPHRAS_BASE_RATE*tf*specialTicks);
+    const caphrasQty = Math.round(CAPHRAS_BASE_RATE*tf*specialTicks) * FARM_YIELD_MULT;
     if(caphrasQty>0){
       addToInventory(CAPHRAS_ITEM.n, CAPHRAS_ITEM.e, caphrasQty, CAPHRAS_ITEM.feed);
       itemsGained[CAPHRAS_ITEM.n] = (itemsGained[CAPHRAS_ITEM.n]||0)+caphrasQty;
     }
     DOPI_ITEMS.forEach(dopi=>{
-      const qtyD = Math.round(dopi.baseRate*tf*specialTicks);
+      const qtyD = Math.round(dopi.baseRate*tf*specialTicks) * FARM_YIELD_MULT;
       if(qtyD>0){
         addToInventory(dopi.n, dopi.e, qtyD, dopi.feed);
         itemsGained[dopi.n] = (itemsGained[dopi.n]||0)+qtyD;
@@ -134,7 +136,7 @@ function applyOfflineProgress(savedAt){
   });
 
   if(totalSilver>0 || tierUps.length){
-    SILVER += totalSilver;
+    earnSilver(totalSilver, 'compagnon:hors-ligne');
     const itemsText = Object.entries(itemsGained).map(([n,q])=>`${q}× ${itemLabel(n)}`).join(', ');
     const hLabel = hours>=1 ? `${hours.toFixed(1)}h` : `${Math.round(hours*60)}min`;
     const tierText = tierUps.length ? ` — ${tierUps.map(t=>`${t.name} T${t.from}➡️T${t.to}`).join(', ')}` : '';
@@ -210,13 +212,30 @@ function migratePetSpeciesRarityV1(){
     if(newCat) p.cat = newCat;
   });
 }
-/** @returns {boolean} charge l'état sauvegardé (localStorage), applique les migrations rétroactives une seule fois chacune (flags petsRosterResetV1/petsRosterCapV1/petsUidV1/petsSpeciesRarityV1), rattrape le hors-ligne. false si aucune sauvegarde ou erreur (nouveau joueur). */
+// migration rétroactive (2026-07-18, demande explicite : "au moment du merge on supprimera tout et
+// les compagnons vont farm plus") -- passage en prod. Remet à zéro la BASE DE FARM (pets, inventaire,
+// slots, compteurs de tirage/percée) pour repartir propre sur la nouvelle économie (vraies valeurs,
+// farm ×5). Volontairement PRÉSERVÉS : le silver (= celui du JEU, pool partagé, jamais la bourse du
+// module) et completedAchievements (récompenses déjà versées -- les réinitialiser re-verserait du
+// silver réel via checkAchievements). Gatée par petsEconomyWipeV1, un seul passage par joueur.
+/** Migration rétroactive : remet à zéro pets/inventaire/slots/compteurs de tirage pour le passage en prod, sans toucher au silver (jeu) ni aux succès déjà obtenus. */
+function wipeEconomyForProdV1(){
+  PETS = [];
+  INVENTORY = {};
+  incubSlots = freshIncubSlots();
+  eggTimer = scaleTimer(5*3600+42*60+18);
+  hatchCountSincePity = 0; pityEverTriggered = false; totalHatched = 0;
+  breakthroughCount = 0; fusionCount = 0; caphrasUpgradeCount = 0;
+  fusionLostHighRarityCount = 0; bossItemFound = false; eggTypesUsed = new Set();
+  selFoodName = null;
+}
+/** @returns {boolean} charge l'état sauvegardé (localStorage), applique les migrations rétroactives une seule fois chacune (flags petsRosterResetV1/petsRosterCapV1/petsUidV1/petsSpeciesRarityV1/petsEconomyWipeV1), rattrape le hors-ligne. false si aucune sauvegarde ou erreur (nouveau joueur). */
 function loadGame(){
   try{
     const raw = localStorage.getItem('velia_idle_pets_save');
     // nouveau joueur (aucune sauvegarde) : PETS=[] déjà par défaut (roster.js), rien à
     // migrer -- marque directement le flag pour ne jamais redéclencher la migration plus tard.
-    if(!raw){ petsRosterResetV1 = true; return false; }
+    if(!raw){ petsRosterResetV1 = true; petsEconomyWipeV1 = true; return false; }
     const state = JSON.parse(raw);
     // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
     // monde") -- voir petsRosterResetV1 (economy.js). Vide le roster UNE SEULE FOIS
@@ -224,6 +243,9 @@ function loadGame(){
     const needsRosterReset = !state.petsRosterResetV1;
     PETS = needsRosterReset ? [] : (state.PETS || PETS);
     SILVER = state.SILVER ?? SILVER;
+    // pool partagé (2026-07-18) : si l'hôte est présent, le silver du JEU fait autorité -- le miroir
+    // local sauvegardé est écrasé par le solde réel du jeu. Repli sur la valeur locale sinon.
+    syncSilverFromHost();
     silverSpent = state.silverSpent || 0;
     INVENTORY = state.INVENTORY || {};
     incubSlots = state.incubSlots || incubSlots;
@@ -262,7 +284,14 @@ function loadGame(){
     const needsSpeciesRarity = !state.petsSpeciesRarityV1;
     if(needsSpeciesRarity) migratePetSpeciesRarityV1();
     petsSpeciesRarityV1 = true;
-    if(needsRosterReset || needsRosterCap || needsPetUid || needsSpeciesRarity) saveGame(); // persiste immédiatement (roster modifié + flag), avant l'autosave 5s
+    // passage en prod (2026-07-18) : remet à zéro la base de farm une seule fois, voir
+    // wipeEconomyForProdV1(). En dernier car il ANNULE les migrations de roster ci-dessus (PETS=[]) --
+    // c'est voulu : on repart totalement propre, les migrations restent utiles pour un save qui a
+    // DÉJÀ passé le wipe (ex. futur re-chargement où seule une autre migration manquerait).
+    const needsEconomyWipe = !state.petsEconomyWipeV1;
+    if(needsEconomyWipe) wipeEconomyForProdV1();
+    petsEconomyWipeV1 = true;
+    if(needsRosterReset || needsRosterCap || needsPetUid || needsSpeciesRarity || needsEconomyWipe) saveGame(); // persiste immédiatement (état modifié + flags), avant l'autosave 5s
     applyOfflineProgress(state.savedAt);
     checkDailyStreak();
     return true;

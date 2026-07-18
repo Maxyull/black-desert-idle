@@ -9,8 +9,9 @@ function updateHeader(){
   if(streakEl) streakEl.textContent=`${loginStreak}/7`;
   updateSilverDisplay();
 }
-/** Met à jour tous les affichages du solde SILVER (header + panneaux Collection/Jeu) avec la même valeur formatée. */
+/** Met à jour tous les affichages du solde SILVER (header + panneaux Collection/Jeu). Resync d'abord le miroir depuis le silver du jeu (pool partagé) pour que l'affichage ET les vérifs d'accessibilité restent à jour. */
 function updateSilverDisplay(){
+  syncSilverFromHost();
   const val = SILVER.toLocaleString(NUM_LOCALE);
   ['h-silver','game-silver-inline','coll-silver','coll-silver-2'].forEach(id=>{
     const el=document.getElementById(id);
@@ -133,11 +134,11 @@ setInterval(()=>{
     else if(roll < 18*gsFactor) drop = sec.drops[1]; // peu commun
     else drop = sec.drops[0];                        // commun
     if(drop.silver){
-      const amt = Math.floor(5+Math.random()*15);
-      SILVER += amt;
+      const amt = Math.floor(5+Math.random()*15) * FARM_YIELD_MULT;
+      earnSilver(amt, 'compagnon:loot');
       addGameLog(i18next.t('companions:companions.log.pet_found_silver_html', {name:p.cat.name, amount:amt}));
     } else {
-      addToInventory(drop.n, drop.e, 1, drop.feed);
+      addToInventory(drop.n, drop.e, FARM_YIELD_MULT, drop.feed);
       if(drop.v>=200) addGameLog(i18next.t('companions:companions.log.pet_found_excl_html', {name:p.cat.name, color:'var(--r3)', item:`${drop.e} ${itemLabel(drop.n)}`}));
     }
     if(document.getElementById('p5')?.classList.contains('active')){
@@ -168,13 +169,13 @@ setInterval(()=>{
       }
       // Caphras — taux croissant avec le Tier (zone difficile)
       if(Math.random() < CAPHRAS_BASE_RATE*tf){
-        addToInventory(CAPHRAS_ITEM.n, CAPHRAS_ITEM.e, 1, CAPHRAS_ITEM.feed);
+        addToInventory(CAPHRAS_ITEM.n, CAPHRAS_ITEM.e, FARM_YIELD_MULT, CAPHRAS_ITEM.feed);
         addGameLog(i18next.t('companions:companions.log.pet_found_html', {name:p.cat.name, color:'var(--r3)', item:`${CAPHRAS_ITEM.e} ${itemLabel(CAPHRAS_ITEM.n)}`}));
       }
       // Pierres de Dopi — 3 paliers, taux croissant avec le Tier, décroissant avec la force de la pierre
       DOPI_ITEMS.forEach(dopi=>{
         if(Math.random() < dopi.baseRate*tf){
-          addToInventory(dopi.n, dopi.e, 1, dopi.feed);
+          addToInventory(dopi.n, dopi.e, FARM_YIELD_MULT, dopi.feed);
           addGameLog(i18next.t('companions:companions.log.pet_found_html', {name:p.cat.name, color:'var(--r2)', item:`${dopi.e} ${itemLabel(dopi.n)}`}));
         }
       });

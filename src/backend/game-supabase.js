@@ -103,6 +103,21 @@ function getCurrentUserForSync() { return currentUser; }
 /** @returns {string} pseudo affiché du joueur courant, accessible depuis les iframes same-origin (marché Compagnons). */
 function getMyPseudoForSync() { return myPseudo || (currentUser && (currentUser.email || '?').split('@')[0]) || 'Joueur'; }
 
+// ═══ PONT SILVER Compagnon ↔ jeu (2026-07-18, demande explicite : "silver bidirectionnel, on lie
+// compagnon avec le jeu") ═══ Le module Compagnon (iframe same-origin) partage le MÊME silver que
+// le jeu : il lit S.silver et applique ses gains/dépenses via le point d'entrée UNIQUE addSilver
+// (catégorie 'companion' -> tracé dans l'onglet admin Silver comme toute autre source). Mêmes
+// accesseurs `function` que ci-dessus (attachés à window, lisent S/addSilver au moment de l'appel
+// -- game-core.js partage le même scope top-level de script classique).
+/** @returns {?number} solde silver du jeu (S.silver), lu par l'iframe Compagnon (pool partagé) ; null si S pas prêt. */
+function getGameSilverForCompanion() { return (typeof S !== 'undefined' && S && typeof S.silver === 'number') ? S.silver : null; }
+/** Applique une variation de silver depuis le Compagnon via addSilver (catégorie 'companion', pool partagé). @param {number} delta - +gain / -dépense. @param {string} [note] - contexte libre pour le registre. @returns {?number} nouveau solde, ou null si indisponible. */
+function addGameSilverForCompanion(delta, note) {
+  if (typeof addSilver !== 'function' || typeof S === 'undefined' || !S) return null;
+  if (delta) addSilver(delta, 'companion', note || 'compagnon');
+  return S.silver;
+}
+
 // ---------- journal de farm (pour les stats admin) : queue légère, envoyée par lots ----------
 // Agrégée en mémoire (clé = objet+zone) plutôt qu'une ligne par ramassage individuel : le combat
 // automatique loot plusieurs fois par seconde, une ligne par pickup faisait exploser farm_events

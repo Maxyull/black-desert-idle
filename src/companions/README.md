@@ -12,10 +12,16 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
   scope global du jeu principal (tout `src/*.js` du bundle partage un seul `window`).
 - Il a son propre système de couleurs (`:root` avec `--gold`, `--bg`...) qui écraserait les
   variables CSS du jeu si elles étaient chargées dans le même document.
-- Économie fermée (2026-07-19, demande explicite) : Silver/inventaire de ce module sont
-  totalement indépendants de ceux du jeu principal — pas de risque de double-comptage.
-- Sauvegarde 100% locale (`localStorage['velia_idle_pets_save']`, clé dédiée) — pas de
-  compte Supabase pour ce module en v1.
+- **Silver : pool PARTAGÉ avec le jeu** (2026-07-18, demande explicite : "silver bidirectionnel,
+  on lie compagnon avec le jeu") — depuis le passage en prod, le module ne tient plus une bourse
+  fermée : il partage le silver du jeu (`S.silver`). Dépenser/gagner ici débite/crédite le jeu via
+  son point d'entrée UNIQUE `addSilver(delta, 'companion', …)`, exposé à l'iframe par les accesseurs
+  `getGameSilverForCompanion()` / `addGameSilverForCompanion()` (`game-supabase.js`, lus via
+  `window.parent`). Côté module, `SILVER` n'est plus qu'un MIROIR resync depuis l'hôte
+  (`silverHost()`/`syncSilverFromHost()`, `economy.js`), avec repli local si l'hôte est absent
+  (standalone/tests). L'INVENTAIRE, lui, reste local au module.
+- Sauvegarde locale (`localStorage['velia_idle_pets_save']`, clé dédiée) pour les pets/inventaire/
+  slots — pas de compte Supabase propre ; le silver, lui, vit dans la sauvegarde du jeu (pool partagé).
 - Chargement paresseux garanti : tant que le joueur n'a pas cliqué sur l'onglet, aucun de
   ces fichiers n'est téléchargé ni exécuté.
 
@@ -137,8 +143,8 @@ incrémenté dans `rollAndCreatePet()`, `hatch.js`) — distinct de
 `hatchCountSincePity` qui se remet à 0 à chaque pity déclenché.
 
 **Passe UI/QoL + bug d'éclosion (2026-07-20, demande explicite)** :
-- Bandeau `#wipBanner` (toujours visible, `companions.html`) rappelant que le module est en test
-  (`TEST_BALANCE_DIVISOR`, voir CLAUDE.md §28) et que rien n'est relié au jeu principal.
+- ~~Bandeau `#wipBanner`~~ retiré au passage en prod (2026-07-18) : le module n'est plus isolé
+  (`TEST_BALANCE_DIVISOR = 1`, silver partagé avec le jeu — voir « Passage en prod » plus bas).
 - Titre du header changé en "Black Desert Idle Compagnon" ; bouton de fermeture `#hdrCloseBtn`
   ajouté DANS le module à côté de "FAMILIERS" (en plus du bouton "Fermer" déjà injecté par
   `combat/boss.js:openCompanionsModule` au-dessus de l'iframe) — appelle
@@ -275,13 +281,13 @@ le panneau admin réapparaissait de force en pleine session Compagnon. Corrigé 
 si `#adminOverlay` a encore la classe `open` au moment de la fermeture de la popup. Voir
 `backend/README.md` pour le détail technique complet.
 
-**Achat des slots d'œuf corrigé (2026-07-20, rapporté explicitement : "impossible d'acheter les
-slots d'oeuf")** : `hatch.js` avait DEUX impasses — le slot verrouillé de départ
-(`incubSlots[2].locked`, voir `roster.js`) n'avait AUCUN `onclick`, et le bouton "➕ slot
-premium" ne faisait qu'un `toast()` factice sans jamais rien acheter. `unlockIncubSlot(i)`/
-`buyExtraIncubSlot()` (nouveau, `hatch.js`) appellent réellement `spendSilver()` puis
-mettent à jour l'état réel des slots (`incubSlots[i]`/`.push(...)`) — le slot débloqué/acheté
-démarre `ready:true` (gratification immédiate, pas un nouveau minuteur à attendre).
+**Slots d'incubation : 5 fixes, 2 gratuits puis 1M/10M/100M (2026-07-18, demande explicite :
+"5 slots, 2 gratuits puis 1M/10M/100M")** : `roster.js` déclare 5 slots (2 gratuits, 3
+verrouillés). `unlockIncubSlot(i)` (`hatch.js`) débloque un slot verrouillé contre
+`slotUnlockCost(i)` (1M/10M/100M selon l'index, `SLOT_UNLOCK_COSTS`), en LADDER séquentiel : seul
+le prochain slot (dont le précédent est déjà débloqué) est cliquable. Le slot débloqué démarre
+`ready:true` (gratification immédiate). L'ancien modèle "➕ slot premium" (`buyExtraIncubSlot`,
+push illimité jusqu'à 8) est SUPPRIMÉ — le tableau contient déjà les 5 slots.
 
 **Breadcrumb du header (2026-07-20, demande explicite : "supprime familier")** : le fil d'Ariane
 "Black Desert Idle Compagnon › FAMILIERS" affichait encore l'ancien mot "Familiers" — remplacé par

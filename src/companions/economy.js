@@ -3,13 +3,19 @@
 // data.js), plutôt qu'un compteur séparé propre à ce module : ce dossier ne peut pas charger
 // meta/patch-notes-data.js (scope global distinct, iframe isolée), donc pas de lecture automatique
 // possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
-const COMPANION_MODULE_VERSION = 'V459';
+const COMPANION_MODULE_VERSION = 'V477';
 
-// ═══ BALANCE DE TEST (2026-07-10, demande explicite) ═══
-// Tous les coûts Silver et timers (incubation, œuf gratuit) sont divisés par ce facteur pour
-// tester rapidement les flux -- repasser TEST_BALANCE_DIVISOR à 1 pour revenir aux vraies
-// valeurs (aucune autre ligne à toucher, tout est dérivé de cette seule constante).
-const TEST_BALANCE_DIVISOR = 1000;
+// ═══ BALANCE ═══ (2026-07-18, demande explicite : "remets le divisor à 1, on passe en prod")
+// Les coûts Silver et timers passent en VRAIES valeurs (divisor = 1). scaleCost()/scaleTimer()
+// deviennent l'identité mais restent en place comme hook de test : repasser TEST_BALANCE_DIVISOR
+// à 1000 rétablit le mode "test rapide" sans toucher aucune autre ligne.
+const TEST_BALANCE_DIVISOR = 1;
+// ═══ RENDEMENT DE FARM ═══ (2026-07-18, demande explicite : "les compagnons vont farm au moins 5x
+// plus") -- multiplie le RENDEMENT de chaque loot (quantités d'objets et silver), sans toucher aux
+// probabilités : 1 drop reste 1 drop, mais rapporte FARM_YIELD_MULT fois plus. Référencé au SEUL
+// point de rendement dans ticks.js (tick live) ET save.js (rattrapage hors-ligne) pour ne jamais
+// désynchroniser les deux calculs. Exclut l'item de Boss (jackpot rarissime, jamais multiplié).
+const FARM_YIELD_MULT = 5;
 /** @param {number} v - coût réel en silver. @returns {number} coût réduit par TEST_BALANCE_DIVISOR (min 1 si v>0, 0 si gratuit). */
 function scaleCost(v){ return v>0 ? Math.max(1, Math.round(v/TEST_BALANCE_DIVISOR)) : 0; }
 /** @param {number} v - durée réelle en secondes. @returns {number} durée réduite par TEST_BALANCE_DIVISOR (min 1s). */
@@ -36,15 +42,49 @@ const EGG_TYPES=[
   {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(500000), costLabel:costLabelFor(scaleCost(500000)), odds:[15,28,28,18, 8,  3]},
 ];
 
-// Économie fermée (2026-07-19, demande explicite) : ce Silver/inventaire est propre
-// au module Compagnons, totalement indépendant du Silver/inventaire du jeu principal.
-let SILVER = 55000; // solde de départ pour tester les tiers d'œufs
-// compteur À VIE (2026-07-20, demande explicite : "argent depensé") -- jamais remis à 0, contraire
-// à SILVER qui peut monter et descendre. Incrémenté à chaque dépense réelle (achat d'œuf,
-// hatch.js) -- voir sumSpent() plus bas pour le seul point d'entrée d'incrément.
+// Pool de silver PARTAGÉ avec le jeu (2026-07-18, demande explicite : "silver bidirectionnel, on
+// lie compagnon avec le jeu") -- le module Compagnon ne tient plus une bourse fermée : il partage
+// le silver du jeu principal (S.silver). SILVER ci-dessous n'est plus qu'un MIROIR local, resync
+// depuis l'hôte à chaque affichage (voir silverHost/syncSilverFromHost). La valeur 55000 ne sert
+// que de repli quand l'hôte est absent (module ouvert en standalone / tests hors iframe).
+let SILVER = 55000;
+// compteur À VIE (2026-07-20, demande explicite : "argent depensé") -- jamais remis à 0. Incrémenté
+// à chaque dépense réelle (achat d'œuf/slot), indépendant du pont (mesure l'activité du module).
 let silverSpent = 0;
-/** @param {number} amount - montant à dépenser. Débite SILVER et incrémente silverSpent (compteur à vie, jamais remis à 0). */
-function spendSilver(amount){ SILVER -= amount; silverSpent += amount; }
+
+// ═══ PONT SILVER (pool partagé) ═══ Accès au silver du jeu via window.parent (iframe same-origin)
+// et les accesseurs `function` de l'hôte (getGameSilverForCompanion/addGameSilverForCompanion,
+// game-supabase.js). Toute dépense/gain passe par addSilver côté jeu (catégorie 'companion',
+// tracée dans l'onglet admin Silver). Repli silencieux sur le SILVER local si l'hôte est absent.
+/** @returns {?Window} fenêtre hôte si le pont est disponible (accesseurs présents ET solde lisible), sinon null. */
+function silverHost(){
+  try{
+    const w = window.parent;
+    if(w && w!==window && typeof w.getGameSilverForCompanion==='function' && typeof w.addGameSilverForCompanion==='function'){
+      if(typeof w.getGameSilverForCompanion()==='number') return w;
+    }
+  }catch(e){}
+  return null;
+}
+/** Resynchronise le miroir SILVER local depuis le silver du jeu quand le pont est actif (no-op en repli local). */
+function syncSilverFromHost(){
+  const w = silverHost();
+  if(w) SILVER = w.getGameSilverForCompanion();
+}
+/** @param {number} amount - montant à dépenser (>0). Débite le silver PARTAGÉ (jeu via addSilver, sinon miroir local) et incrémente silverSpent (compteur à vie). */
+function spendSilver(amount){
+  const w = silverHost();
+  if(w){ w.addGameSilverForCompanion(-amount, 'compagnon:achat'); SILVER = w.getGameSilverForCompanion(); }
+  else { SILVER -= amount; }
+  silverSpent += amount;
+}
+/** @param {number} amount - montant gagné (>0). @param {string} [note] - contexte pour le registre admin. Crédite le silver PARTAGÉ (jeu via addSilver, sinon miroir local). */
+function earnSilver(amount, note){
+  if(!amount) return;
+  const w = silverHost();
+  if(w){ w.addGameSilverForCompanion(amount, note||'compagnon'); SILVER = w.getGameSilverForCompanion(); }
+  else { SILVER += amount; }
+}
 
 // ═══ PITY COUNTER ═══ Garantit un Ancestral après trop d'éclosions sans en avoir eu
 // (protection contre la malchance extrême — sans ça, en pur RNG, un joueur pourrait
@@ -77,6 +117,14 @@ let petsUidV1 = false;
 // section, rareté = p.rar réel -- structure 1 espèce par section×rareté, voir catalog.js) pour
 // tout pet déjà "percé" avant ce correctif.
 let petsSpeciesRarityV1 = false;
+// migration rétroactive (2026-07-18, demande explicite : "au moment du merge on supprimera tout et
+// les compagnons vont farm plus") -- passage en prod (vraies valeurs, farm ×5, silver PARTAGÉ avec
+// le jeu) : on repart d'une base de farm PROPRE pour que les hoards de la phase de test (inventaires
+// de dizaines de milliers, rosters/slots de test) ne polluent pas la nouvelle économie. Réinitialise
+// UNE SEULE FOIS pets/inventaire/slots/compteurs de tirage (voir wipeEconomyForProdV1(), save.js).
+// NE TOUCHE PAS : le silver (désormais celui du JEU, pool partagé -- pas la bourse du module) ni
+// completedAchievements (récompenses déjà versées -- éviter tout re-versement de silver réel).
+let petsEconomyWipeV1 = false;
 // compteur À VIE (2026-07-19, demande explicite : stats admin) -- distinct de
 // hatchCountSincePity (remis à 0 à chaque pity déclenché) : jamais réinitialisé, incrémenté
 // une seule fois par tirage réel dans rollAndCreatePet() (hatch.js), peu importe le
@@ -138,7 +186,7 @@ function checkDailyStreak(){
 
   const idx = loginStreak-1;
   const reward = STREAK_REWARDS[idx];
-  SILVER += reward.silver;
+  earnSilver(reward.silver, 'compagnon:streak');
   updateSilverDisplay();
 
   let msg = i18next.t('companions:companions.streak.toast', {day:loginStreak, silver:reward.silver});
@@ -192,7 +240,7 @@ function sellItem(name){
   const it = INVENTORY[name]; if(!it) return;
   const val = sellValueOf(name); if(val<=0) return;
   const gain = val * it.qty;
-  SILVER += gain;
+  earnSilver(gain, 'compagnon:vente');
   delete INVENTORY[name];
   toast('💰', i18next.t('companions:companions.sell.sold_one', {qty:it.qty, name:itemLabel(name), silver:gain.toLocaleString(NUM_LOCALE)}));
   updateSilverDisplay(); renderGameInventory(); if(typeof renderCollInventory==='function') renderCollInventory();
@@ -209,7 +257,7 @@ function sellAllCommon(){
     delete INVENTORY[name];
   });
   if(count<=0){ toast('📦', i18next.t('companions:companions.sell.nothing_common')); return; }
-  SILVER += total;
+  earnSilver(total, 'compagnon:vente');
   toast('💰', i18next.t('companions:companions.sell.sold_all', {count:count.toLocaleString(NUM_LOCALE), silver:total.toLocaleString(NUM_LOCALE)}));
   updateSilverDisplay(); renderGameInventory(); if(typeof renderCollInventory==='function') renderCollInventory();
 }
