@@ -41,23 +41,28 @@ const SECTIONS=[
 // plus le Tier est haut, plus il trouve de Caphras/Dopi. Les items de Boss
 // restent extrêmement rares quel que soit le Tier (1×10⁻⁸ par tick de 2s,
 // espérance ≈ 1.26/an avec 8 pets actifs — voir calcul dans la conversation).
-const CAPHRAS_ITEM = {e:'🔺', n:'Pierre de Caphras', feed:22};
+// `v` = valeur de revente en silver (2026-07-18) : jusqu'ici les ressources spéciales n'avaient
+// AUCUN `v` -- Caphras est consommé à l'atelier, mais Dopi et items de Boss étaient du LOOT MORT
+// (jamais consommés, exclus du nourrissage). Leur donner une valeur de revente les rend utiles
+// (voir sellItem(), economy.js). Caphras : valeur modeste (reste plus intéressant à garder pour
+// l'atelier). Dopi : échelonné par rareté. Items de Boss : jackpot (1 sur des millions au drop).
+const CAPHRAS_ITEM = {e:'🔺', n:'Pierre de Caphras', feed:22, v:150};
 const DOPI_ITEMS = [
-  {e:'💊', n:'Pierre de Dopi (Faible)',  feed:14, baseRate:0.006},
-  {e:'💊', n:'Pierre de Dopi (Moyenne)', feed:26, baseRate:0.0018},
-  {e:'💊', n:'Pierre de Dopi (Forte)',   feed:45, baseRate:0.0003},
+  {e:'💊', n:'Pierre de Dopi (Faible)',  feed:14, baseRate:0.006,  v:60},
+  {e:'💊', n:'Pierre de Dopi (Moyenne)', feed:26, baseRate:0.0018, v:220},
+  {e:'💊', n:'Pierre de Dopi (Forte)',   feed:45, baseRate:0.0003, v:900},
 ];
 const CAPHRAS_BASE_RATE = 0.003; // 0.3% par tick de 2s au Tier 1
 
 const BOSS_ITEMS = {
-  loot:     {e:'👑', n:'Cœur de Kzarka'},
-  xp:       {e:'📕', n:"Tome Interdit d'Ordo"},
-  minage:   {e:'⚫', n:'Noyau de Terre Primordiale'},
-  bucheron: {e:'🌰', n:"Graine de l'Arbre-Monde"},
-  peche:    {e:'🐚', n:'Écaille de Léviathan Ancien'},
-  farming:  {e:'✨', n:'Semence Divine'},
-  alchimie: {e:'🧿', n:'Élixir de Kutum'},
-  combat:   {e:'💀', n:'Crâne de Nouver'},
+  loot:     {e:'👑', n:'Cœur de Kzarka',                v:100000},
+  xp:       {e:'📕', n:"Tome Interdit d'Ordo",          v:100000},
+  minage:   {e:'⚫', n:'Noyau de Terre Primordiale',    v:100000},
+  bucheron: {e:'🌰', n:"Graine de l'Arbre-Monde",       v:100000},
+  peche:    {e:'🐚', n:'Écaille de Léviathan Ancien',   v:100000},
+  farming:  {e:'✨', n:'Semence Divine',                v:100000},
+  alchimie: {e:'🧿', n:'Élixir de Kutum',               v:100000},
+  combat:   {e:'💀', n:'Crâne de Nouver',               v:100000},
 };
 const BOSS_ITEM_RATE = 1e-8; // 0.000001% par tick de 2s, flat (indépendant du tier)
 

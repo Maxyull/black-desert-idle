@@ -198,6 +198,57 @@ function addToInventory(itemName, icon, qty, feed){
   INVENTORY[itemName].qty += qty;
   if(feed!==undefined) INVENTORY[itemName].feed = feed; // garde la valeur nutritive à jour
 }
+// ═══ VENTE (2026-07-18) — donne un usage à TOUT le loot ═══════════
+// Avant, le champ `v` des drops ne servait QU'au seuil "rare" du log (v>=200). Il devient la valeur
+// de revente en silver. Résout deux problèmes d'un coup : le loot mort (Dopi ~74k, items de Boss --
+// jamais consommés) et la surabondance de nourriture (commun par dizaines de milliers, l'auto-feed
+// n'en consomme presque rien). L'excédent se convertit en silver au lieu de s'entasser sans fin.
+// Construit UNE FOIS au chargement depuis les mêmes définitions que les drops (catalog.js, chargé
+// avant ce fichier) -- aucune valeur dupliquée à la main.
+const ITEM_SELL_VALUES = (()=>{
+  const m = {};
+  SECTIONS.forEach(sec => sec.drops.forEach(d => { if(!d.silver) m[d.n] = d.v; }));
+  m[CAPHRAS_ITEM.n] = CAPHRAS_ITEM.v;
+  DOPI_ITEMS.forEach(d => { m[d.n] = d.v; });
+  Object.values(BOSS_ITEMS).forEach(b => { m[b.n] = b.v; });
+  return m;
+})();
+// ressources spéciales : vendables à l'unité (choix du joueur), mais JAMAIS balayées par le bouton
+// "tout vendre le commun" -- même esprit que l'exclusion de l'auto-nourrissage (feed.js/ticks.js),
+// pour ne pas dumper par accident du Caphras (matériau d'atelier) ou un item de Boss (jackpot).
+const SELL_SPECIAL_NAMES = new Set([CAPHRAS_ITEM.n, ...DOPI_ITEMS.map(d=>d.n), ...Object.values(BOSS_ITEMS).map(b=>b.n)]);
+const SELL_COMMON_THRESHOLD = 200; // "commun" = valeur unitaire < 200 (le seuil déjà utilisé pour le log rare)
+
+/** @param {string} name @returns {number} valeur de revente unitaire en silver (0 si non vendable). */
+function sellValueOf(name){ return ITEM_SELL_VALUES[name] || 0; }
+
+/** @param {string} name. Vend TOUTE la pile d'un objet : crédite sellValueOf×qty en silver, retire l'objet de l'inventaire. No-op si absent/non vendable. */
+function sellItem(name){
+  const it = INVENTORY[name]; if(!it) return;
+  const val = sellValueOf(name); if(val<=0) return;
+  const gain = val * it.qty;
+  SILVER += gain;
+  delete INVENTORY[name];
+  toast('💰', i18next.t('companions:companions.sell.sold_one', {qty:it.qty, name:itemLabel(name), silver:gain.toLocaleString(NUM_LOCALE)}));
+  updateSilverDisplay(); renderGameInventory(); if(typeof renderCollInventory==='function') renderCollInventory();
+}
+
+/** Vend d'un coup tout le loot COMMUN (valeur unitaire < SELL_COMMON_THRESHOLD), en gardant intacts les rares ET les ressources spéciales (Caphras/Dopi/Boss). */
+function sellAllCommon(){
+  let total = 0, count = 0;
+  Object.entries(INVENTORY).forEach(([name, it]) => {
+    if(SELL_SPECIAL_NAMES.has(name)) return;
+    const val = sellValueOf(name);
+    if(val<=0 || val>=SELL_COMMON_THRESHOLD) return; // garde le rare (v>=200) et le non-vendable
+    total += val * it.qty; count += it.qty;
+    delete INVENTORY[name];
+  });
+  if(count<=0){ toast('📦', i18next.t('companions:companions.sell.nothing_common')); return; }
+  SILVER += total;
+  toast('💰', i18next.t('companions:companions.sell.sold_all', {count:count.toLocaleString(NUM_LOCALE), silver:total.toLocaleString(NUM_LOCALE)}));
+  updateSilverDisplay(); renderGameInventory(); if(typeof renderCollInventory==='function') renderCollInventory();
+}
+
 /** @param {string} text - HTML de la ligne. Ajoute une entrée horodatée en tête de GAME_LOG (plafonné à 40 entrées). */
 function addGameLog(text){
   const now=new Date();
