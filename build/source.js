@@ -6942,7 +6942,7 @@ const ACTIVITY_TABS = [
   
   { id:'miniboss', icon:'📜', name:{fr:'Mini Boss',en:'Mini Boss'}, locked:false, isNew:true },
   
-  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:true },
+  { id:'pet', icon:'🐾', name:{fr:'Compagnon',en:'Companion'}, locked:false, isNew:false },
   
   { id:'pvp', icon:'🗡️', name:{fr:'PvP',en:'PvP'}, locked:true },
   { id:'fish', icon:'🎣', name:{fr:'Pêche',en:'Fishing'},   locked:true },

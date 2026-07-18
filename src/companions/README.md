@@ -137,8 +137,8 @@ incrémenté dans `rollAndCreatePet()`, `hatch.js`) — distinct de
 `hatchCountSincePity` qui se remet à 0 à chaque pity déclenché.
 
 **Passe UI/QoL + bug d'éclosion (2026-07-20, demande explicite)** :
-- Bandeau `#wipBanner` (toujours visible, `companions.html`) rappelant que le module est en test
-  (`TEST_BALANCE_DIVISOR`, voir CLAUDE.md §28) et que rien n'est relié au jeu principal.
+- ~~Bandeau `#wipBanner`~~ retiré au passage en prod (2026-07-18) : le module n'est plus isolé
+  (`TEST_BALANCE_DIVISOR = 1`, silver partagé avec le jeu — voir « Passage en prod » plus bas).
 - Titre du header changé en "Black Desert Idle Compagnon" ; bouton de fermeture `#hdrCloseBtn`
   ajouté DANS le module à côté de "FAMILIERS" (en plus du bouton "Fermer" déjà injecté par
   `combat/boss.js:openCompanionsModule` au-dessus de l'iframe) — appelle
@@ -275,13 +275,13 @@ le panneau admin réapparaissait de force en pleine session Compagnon. Corrigé 
 si `#adminOverlay` a encore la classe `open` au moment de la fermeture de la popup. Voir
 `backend/README.md` pour le détail technique complet.
 
-**Achat des slots d'œuf corrigé (2026-07-20, rapporté explicitement : "impossible d'acheter les
-slots d'oeuf")** : `hatch.js` avait DEUX impasses — le slot verrouillé de départ
-(`incubSlots[2].locked`, voir `roster.js`) n'avait AUCUN `onclick`, et le bouton "➕ slot
-premium" ne faisait qu'un `toast()` factice sans jamais rien acheter. `unlockIncubSlot(i)`/
-`buyExtraIncubSlot()` (nouveau, `hatch.js`) appellent réellement `spendSilver()` puis
-mettent à jour l'état réel des slots (`incubSlots[i]`/`.push(...)`) — le slot débloqué/acheté
-démarre `ready:true` (gratification immédiate, pas un nouveau minuteur à attendre).
+**Slots d'incubation : 5 fixes, 2 gratuits puis 1M/10M/100M (2026-07-18, demande explicite :
+"5 slots, 2 gratuits puis 1M/10M/100M")** : `roster.js` déclare 5 slots (2 gratuits, 3
+verrouillés). `unlockIncubSlot(i)` (`hatch.js`) débloque un slot verrouillé contre
+`slotUnlockCost(i)` (1M/10M/100M selon l'index, `SLOT_UNLOCK_COSTS`), en LADDER séquentiel : seul
+le prochain slot (dont le précédent est déjà débloqué) est cliquable. Le slot débloqué démarre
+`ready:true` (gratification immédiate). L'ancien modèle "➕ slot premium" (`buyExtraIncubSlot`,
+push illimité jusqu'à 8) est SUPPRIMÉ — le tableau contient déjà les 5 slots.
 
 **Breadcrumb du header (2026-07-20, demande explicite : "supprime familier")** : le fil d'Ariane
 "Black Desert Idle Compagnon › FAMILIERS" affichait encore l'ancien mot "Familiers" — remplacé par

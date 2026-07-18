@@ -77,9 +77,11 @@ function applyOfflineProgress(savedAt){
   const tierUps=[]; // {name, from, to} -- pour le résumé, jamais de toast individuel (pas de spam au retour)
   activePets.forEach(p=>{
     const sec=secById(p.cat.sec); if(!sec||!sec.drops) return;
-    totalSilver += Math.round(OFFLINE_SILVER_PER_HOUR*hours);
+    // rendement ×FARM_YIELD_MULT, identique au tick live (ticks.js) pour ne jamais désynchroniser
+    // le hors-ligne et le temps réel (2026-07-18, "les compagnons farment au moins 5x plus").
+    totalSilver += Math.round(OFFLINE_SILVER_PER_HOUR*hours) * FARM_YIELD_MULT;
     const commonDrop = sec.drops[0];
-    const qty = Math.round(OFFLINE_COMMON_ITEMS_PER_HOUR*hours);
+    const qty = Math.round(OFFLINE_COMMON_ITEMS_PER_HOUR*hours) * FARM_YIELD_MULT;
     if(qty>0){
       addToInventory(commonDrop.n, commonDrop.e, qty, commonDrop.feed);
       itemsGained[commonDrop.n] = (itemsGained[commonDrop.n]||0)+qty;
@@ -91,13 +93,13 @@ function applyOfflineProgress(savedAt){
     // calculs.
     const specialTicks = seconds/2;
     const tf = zoneTierFactor(p);
-    const caphrasQty = Math.round(CAPHRAS_BASE_RATE*tf*specialTicks);
+    const caphrasQty = Math.round(CAPHRAS_BASE_RATE*tf*specialTicks) * FARM_YIELD_MULT;
     if(caphrasQty>0){
       addToInventory(CAPHRAS_ITEM.n, CAPHRAS_ITEM.e, caphrasQty, CAPHRAS_ITEM.feed);
       itemsGained[CAPHRAS_ITEM.n] = (itemsGained[CAPHRAS_ITEM.n]||0)+caphrasQty;
     }
     DOPI_ITEMS.forEach(dopi=>{
-      const qtyD = Math.round(dopi.baseRate*tf*specialTicks);
+      const qtyD = Math.round(dopi.baseRate*tf*specialTicks) * FARM_YIELD_MULT;
       if(qtyD>0){
         addToInventory(dopi.n, dopi.e, qtyD, dopi.feed);
         itemsGained[dopi.n] = (itemsGained[dopi.n]||0)+qtyD;

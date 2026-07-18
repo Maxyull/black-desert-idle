@@ -563,12 +563,11 @@ test('hatching is blocked once the collection reaches the 96-pet cap, silver is 
   expect(pageErrors).toEqual([]);
 });
 
-// garde-fou (2026-07-20, rapporté explicitement : "impossible d'acheter les slots d'oeuf") --
-// DEUX boutons d'achat de slot d'incubation étaient des impasses : le slot verrouillé
-// (incubSlots[2].locked) n'avait AUCUN onclick, et le bouton "➕ slot premium" ne faisait qu'un
-// toast() factice sans jamais rien acheter. Vérifie que les deux débitent réellement SILVER
-// (via spendSilver(), donc silverSpent aussi) et changent l'état réel des slots.
-test('both egg-slot purchase buttons (unlock the 3rd slot, buy an extra slot) actually spend silver and change slot state', async ({ page }) => {
+// échelle de slots (2026-07-18, demande explicite : "5 slots, 2 gratuits puis 1M/10M/100M") --
+// 5 slots FIXES : 2 gratuits + 3 déblocables dans l'ORDRE contre 1M/10M/100M. Vérifie que chaque
+// déblocage débite le bon montant (via spendSilver, donc silverSpent), passe le slot en prêt, et
+// que le ladder empêche de sauter un palier (débloquer un slot dont le précédent est verrouillé).
+test('incubation slots unlock in order for 1M/10M/100M, spending the exact cost each time (ladder)', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -581,43 +580,47 @@ test('both egg-slot purchase buttons (unlock the 3rd slot, buy an extra slot) ac
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   const result = await frame.locator('body').evaluate(() => {
-    SILVER = 1_000_000; // largement assez pour les 2 achats
-    const spentBefore = silverSpent;
-    const slotsBefore = incubSlots.length;
-    const wasLocked = incubSlots[2] && incubSlots[2].locked === true;
+    SILVER = 200_000_000; // assez pour les 3 paliers (1M + 10M + 100M)
+    const startLen = incubSlots.length;
+    const freeSlots = FREE_INCUB_SLOTS;
+    const wasLocked2 = !!(incubSlots[2] && incubSlots[2].locked);
+    const costs = [slotUnlockCost(2), slotUnlockCost(3), slotUnlockCost(4)];
 
-    unlockIncubSlot(2);
-    const afterUnlock = { silverSpent, stillLocked: !!(incubSlots[2] && incubSlots[2].locked), ready: incubSlots[2] && incubSlots[2].ready };
+    // ladder : débloquer le slot 4 (index 3) AVANT le slot 3 (index 2) doit être un no-op complet
+    const spentBeforeSkip = silverSpent;
+    unlockIncubSlot(3);
+    const skipBlocked = silverSpent === spentBeforeSkip && !!(incubSlots[3] && incubSlots[3].locked);
 
-    buyExtraIncubSlot();
-    const afterExtra = { silverSpent, slotCount: incubSlots.length };
+    const s0 = silverSpent; unlockIncubSlot(2); // 1M
+    const afterSlot3 = { spent: silverSpent - s0, stillLocked: !!(incubSlots[2] && incubSlots[2].locked), ready: !!(incubSlots[2] && incubSlots[2].ready) };
 
-    return { wasLocked, spentBefore, slotsBefore, afterUnlock, afterExtra };
+    const s1 = silverSpent; unlockIncubSlot(3); // 10M
+    const afterSlot4 = { spent: silverSpent - s1, stillLocked: !!(incubSlots[3] && incubSlots[3].locked) };
+
+    return { startLen, freeSlots, wasLocked2, costs, skipBlocked, afterSlot3, afterSlot4 };
   });
   expect(pageErrors).toEqual([]);
-  expect(result.wasLocked).toBe(true); // précondition : le roster de départ a bien un 3e slot verrouillé
-  expect(result.afterUnlock.silverSpent).toBeGreaterThan(result.spentBefore);
-  expect(result.afterUnlock.stillLocked).toBe(false);
-  expect(result.afterUnlock.ready).toBe(true);
-  expect(result.afterExtra.silverSpent).toBeGreaterThan(result.afterUnlock.silverSpent);
-  expect(result.afterExtra.slotCount).toBe(result.slotsBefore + 1);
+  expect(result.startLen).toBe(5);      // 5 slots fixes
+  expect(result.freeSlots).toBe(2);     // les 2 premiers gratuits
+  expect(result.wasLocked2).toBe(true); // le 3e slot part verrouillé
+  expect(result.costs).toEqual([1_000_000, 10_000_000, 100_000_000]);
+  expect(result.skipBlocked).toBe(true); // ladder : impossible de sauter un palier
+  expect(result.afterSlot3.spent).toBe(1_000_000);
+  expect(result.afterSlot3.stillLocked).toBe(false);
+  expect(result.afterSlot3.ready).toBe(true);
+  expect(result.afterSlot4.spent).toBe(10_000_000);
+  expect(result.afterSlot4.stillLocked).toBe(false);
 
-  // le DOM reflète bien le nouvel état (pas juste les variables JS) : le bouton "➕" doit toujours
-  // exister après l'achat (on peut en acheter un autre), et il ne doit plus rester de slot .locked.
-  const domState = await frame.locator('body').evaluate(() => ({
-    lockedCount: document.querySelectorAll('#incub-slots .isl.locked').length,
-    hasExtraButton: !!document.querySelector('#incub-slots .isl span'),
-  }));
-  expect(domState.lockedCount).toBe(0);
-  expect(domState.hasExtraButton).toBe(true);
+  // le DOM reflète l'état : après avoir débloqué 2 slots verrouillés, il n'en reste qu'un (100M).
+  const lockedLeft = await frame.locator('#incub-slots .isl.locked').count();
+  expect(lockedLeft).toBe(1);
   expect(pageErrors).toEqual([]);
 });
 
-// plafond de slots d'incubation (2026-07-10, demande explicite : "borner incubation a 8") --
-// buyExtraIncubSlot() poussait dans incubSlots sans aucune limite auparavant. Vérifie que le
-// plafond bloque bien l'achat ET le débit de silver une fois atteint (pas juste visuel), et que
-// le bouton "➕" est remplacé par un état figé dans le DOM.
-test('incubation slot purchases are capped at 8, both server-side (silver never spent past the cap) and in the DOM', async ({ page }) => {
+// plafond de slots (2026-07-18, demande explicite : "5 slots") -- le tableau incubSlots contient
+// exactement 5 slots, jamais plus (plus de "buyExtraIncubSlot" qui poussait à l'infini). Vérifie
+// qu'un déblocage silver insuffisant est un no-op, et que MAX_INCUB_SLOTS vaut bien 5.
+test('incubation is capped at 5 fixed slots and an unaffordable unlock spends nothing', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -630,24 +633,17 @@ test('incubation slot purchases are capped at 8, both server-side (silver never 
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
 
   const result = await frame.locator('body').evaluate(() => {
-    SILVER = 10_000_000;
-    // pousse déjà au plafond (partant du roster de départ, 3 slots) pour isoler le comportement
-    // AU plafond sans dépendre du nombre d'achats nécessaires pour l'atteindre.
-    while (incubSlots.length < MAX_INCUB_SLOTS) incubSlots.push({ free: false, tl: 0, tot: 1, ready: true });
-    renderHatch();
-    const spentAtCap = silverSpent, countAtCap = incubSlots.length;
-    buyExtraIncubSlot(); // doit être un no-op complet
-    return {
-      countAtCap, spentAtCap,
-      countAfter: incubSlots.length, spentAfter: silverSpent,
-      lockedPlaceholder: document.querySelectorAll('#incub-slots .isl.locked').length,
-    };
+    const max = MAX_INCUB_SLOTS, len = incubSlots.length;
+    SILVER = 10; // très en dessous du coût du 3e slot (1M)
+    const spentBefore = silverSpent;
+    unlockIncubSlot(2); // doit échouer (silver insuffisant) sans rien débiter
+    return { max, len, spentBefore, spentAfter: silverSpent, stillLocked: !!(incubSlots[2] && incubSlots[2].locked) };
   });
   expect(pageErrors).toEqual([]);
-  expect(result.countAtCap).toBe(8);
-  expect(result.countAfter).toBe(8); // aucun slot ajouté au-delà du plafond
-  expect(result.spentAfter).toBe(result.spentAtCap); // et aucun silver dépensé pour rien
-  expect(result.lockedPlaceholder).toBeGreaterThan(0); // le "+" est remplacé par un état figé
+  expect(result.max).toBe(5);
+  expect(result.len).toBe(5);
+  expect(result.spentAfter).toBe(result.spentBefore); // aucun débit sur achat impossible
+  expect(result.stillLocked).toBe(true);
 });
 
 // carte terrain en 3D (2026-07-10, demande explicite) -- pour les espèces avec un modèle GLB,
@@ -874,7 +870,7 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
 
 // 2026-07-20, demande explicite (bandeau/titre/bouton fermer/légende/tri/zoom) : couvre la
 // présence de chaque élément UI ajouté, pas leur comportement détaillé (déjà couvert ailleurs).
-test('header shows WIP banner, new title, close button, and collection legend/sort/zoom controls', async ({ page }) => {
+test('header shows title, close button, and collection legend/sort/zoom controls (no WIP banner in prod)', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -885,9 +881,8 @@ test('header shows WIP banner, new title, close button, and collection legend/so
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
-  // bandeau "test en cours" (2026-07-20) -- toujours visible, pas de bouton pour le masquer
-  await expect(frame.locator('#wipBanner')).toBeVisible();
-  await expect(frame.locator('#wipBanner')).toContainText('test');
+  // bandeau "test en cours" RETIRÉ au passage en prod (2026-07-18) -- ne doit plus exister
+  await expect(frame.locator('#wipBanner')).toHaveCount(0);
 
   // bouton de fermeture DANS le module, à côté de "FAMILIERS" -- appelle bien closeCompanionsModule
   // de la page hôte (vérifié via l'overlay principal qui se cache après le clic)
@@ -911,9 +906,9 @@ test('header shows WIP banner, new title, close button, and collection legend/so
   const gridColsAfter = await frame.locator('#pet-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns);
   expect(gridColsAfter).not.toBe(gridColsBefore);
 
-  // disclaimer "achat instantané de test" près des boutons ×1/×5/×10
+  // hint "éclosion instantanée payante" près des boutons ×1/×5/×10 (reformulé au passage en prod)
   await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
-  await expect(frame.locator('text=raccourci de TEST')).toBeVisible();
+  await expect(frame.locator('text=éclosent instantanément')).toBeVisible();
 
   expect(pageErrors).toEqual([]);
 });
@@ -2328,7 +2323,6 @@ test('companion module renders in English when velia-idle-lang=en (own i18next i
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // shell statique traduit par applyCompanionsI18n() (data-i18n, i18n.js)
-  await expect(frame.locator('#wipBanner')).toContainText('Module under testing');
   await expect(frame.locator('.tabs .tab', { hasText: 'Hatchery' })).toBeVisible();
   await expect(frame.locator('.tabs .tab', { hasText: 'Feed' })).toBeVisible();
   await expect(frame.locator('.tabs .tab', { hasText: 'Leaderboard' })).toBeVisible();
