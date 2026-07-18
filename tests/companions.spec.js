@@ -577,19 +577,57 @@ test('hatching is blocked once the collection reaches the 96-pet cap, silver is 
       const cat = PET_CATALOG[PETS.length % PET_CATALOG.length];
       PETS.push({ id: petId++, cat, rar: 1, stats: [5,4,3,0,0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 });
     }
-    incubSlots[0] = { free:true, tl:0, tot:1, ready:true }; // un slot prêt à éclore
+    // slot prêt avec son œuf (nouveau modèle 2026-07-18 : l'œuf est choisi/payé au démarrage, doHatch
+    // ne prend plus que l'index et lit slot.eggId ; il ne dépense plus rien).
+    incubSlots[0] = { free:true, eggId:'silver', tl:0, tot:1, ready:true };
     const roomBefore = petRosterRoomLeft();
     const countBefore = PETS.length;
-    const spentBefore = silverSpent; // mesure la dépense via le compteur (indépendant du pont)
-    doHatch(0, 'silver'); // œuf PAYANT (500k) : s'il n'était pas gaté par le plafond, il débiterait
-    return { roomBefore, countBefore, countAfter: PETS.length, spentDelta: silverSpent - spentBefore };
+    doHatch(0); // doit être refusé par le plafond (roster plein) -> aucun pet ajouté
+    return { roomBefore, countBefore, countAfter: PETS.length, stillReady: !!incubSlots[0].ready };
   });
   expect(result.roomBefore).toBe(0);
   expect(result.countBefore).toBe(96);
-  expect(result.countAfter).toBe(96); // doHatch() n'a RIEN ajouté, refusé par le plafond
-  expect(result.spentDelta).toBe(0); // et n'a jamais débité le silver (refus AVANT dépense)
+  expect(result.countAfter).toBe(96);   // doHatch() n'a RIEN ajouté, refusé par le plafond
+  expect(result.stillReady).toBe(true); // le slot reste prêt (rien consommé, l'œuf déjà payé au départ)
 
   expect(pageErrors).toEqual([]);
+});
+
+// nouveau flux d'incubation (2026-07-18, demande explicite : "le slot devient vide et il faut le
+// remplir et le timer reprend après le choix") : choix + paiement de l'œuf au DÉMARRAGE, minuteur de
+// 6h, puis l'éclosion vide le slot (plus d'œuf basique remis d'office).
+test('incubation: choose+pay egg on start, timer runs, and the slot goes empty after hatching', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await frame.locator('.tabs .tab', { hasText: 'Éclosion' }).click();
+
+  await setSharedSilver(frame, 10_000_000);
+  const result = await frame.locator('body').evaluate(() => {
+    incubSlots[0] = { free: true, empty: true };
+    const spent0 = silverSpent;
+    startIncubation(0, 'silver');                 // paie 500k + démarre l'incubation 6h
+    const afterStart = { eggId: incubSlots[0].eggId, ready: !!incubSlots[0].ready, tl: incubSlots[0].tl, spent: silverSpent - spent0 };
+
+    incubSlots[0].ready = true;                   // simule la fin du minuteur
+    const countBefore = PETS.length;
+    doHatch(0);                                   // éclot -> slot vide
+    return { afterStart, countBefore, countAfter: PETS.length, slotEmptyAfter: !!incubSlots[0].empty, slotHasEgg: !!incubSlots[0].eggId };
+  });
+  expect(pageErrors).toEqual([]);
+  expect(result.afterStart.eggId).toBe('silver');   // l'œuf choisi est posé sur le slot
+  expect(result.afterStart.ready).toBe(false);      // il incube (pas prêt tout de suite)
+  expect(result.afterStart.tl).toBeGreaterThan(0);  // minuteur démarré
+  expect(result.afterStart.spent).toBe(500000);     // payé AU DÉMARRAGE (coût de l'œuf argenté)
+  expect(result.countAfter).toBe(result.countBefore + 1); // l'éclosion a bien ajouté 1 pet
+  expect(result.slotEmptyAfter).toBe(true);         // slot VIDE après éclosion
+  expect(result.slotHasEgg).toBe(false);            // plus d'œuf remis d'office
 });
 
 // chance d'éclore un tier selon l'œuf (2026-07-18, demande explicite : "ajoute la chance d'éclore un
@@ -920,13 +958,17 @@ test('companion "Tes stats" tab shows real eggs-opened/money-spent counters and 
   // dépense réelle : achète un œuf pour que "Œufs ouverts"/"Argent dépensé" ne soient pas juste 0 par défaut
   await setSharedSilver(frame, 10_000_000); // silver côté jeu suffisant pour n'importe quel œuf
   const before = await frame.locator('body').evaluate(() => {
-    const cat = PET_CATALOG[0];
-    const eggType = EGG_TYPES[0];
-    doHatch(0, eggType.id);
+    // nouveau flux (2026-07-18) : on paie l'œuf au DÉMARRAGE de l'incubation (startIncubation), puis
+    // on éclot (doHatch). Œuf payant (silver, 500k) pour que "Argent dépensé" ne soit pas 0.
+    const eggType = EGG_TYPES.find(e => e.id === 'silver');
+    incubSlots[0] = { free: true, empty: true };
+    startIncubation(0, eggType.id);  // silverSpent += 500k + incubation démarrée
+    incubSlots[0].ready = true;      // force prêt pour éclore immédiatement
+    doHatch(0);                      // totalHatched++
     return { totalHatched, silverSpent, eggCost: eggType.cost };
   });
   expect(before.totalHatched).toBeGreaterThan(0);
-  expect(before.silverSpent).toBe(before.eggCost);
+  expect(before.silverSpent).toBe(before.eggCost); // dépense = coût de l'œuf (payé au démarrage)
 
   // doHatch() ouvre #hatch-modal (choix Garder/Déployer) -- le fermer avant de cliquer l'onglet,
   // sinon il intercepte le clic (modal-bg plein écran).
@@ -2034,9 +2076,11 @@ test('hatch reveal screen shows the odds recap of the egg that was used', async 
   await setSharedSilver(frame, 10_000_000); // silver côté jeu suffisant (pool partagé)
   const result = await frame.locator('body').evaluate(async () => {
     const eggType = EGG_TYPES[0];
-    doHatch(0, eggType.id);
-    // nouveau flux (2026-07-18) : doHatch affiche d'abord la roulette de rareté (~1.9s) PUIS le
-    // reveal (showHatchPetReveal, qui contient le récap des odds). On attend la fin de la roulette.
+    // nouveau modèle (2026-07-18) : l'œuf est sur le slot ; doHatch(index) lit slot.eggId.
+    incubSlots[0] = { free: true, eggId: eggType.id, tl: 0, tot: 1, ready: true };
+    doHatch(0);
+    // doHatch affiche d'abord la roulette de rareté (~1.9s) PUIS le reveal (showHatchPetReveal, qui
+    // contient le récap des odds). On attend la fin de la roulette.
     await new Promise(r => setTimeout(r, 2200));
     const bodyHtml = document.getElementById('hatch-body').innerHTML;
     return { bodyHtml, firstOdd: eggType.odds[0], eggName: eggType.name };
@@ -2530,15 +2574,12 @@ test('companion module renders in English when velia-idle-lang=en (own i18next i
   await expect(frame.locator('.tabs .tab', { hasText: 'Feed' })).toBeVisible();
   await expect(frame.locator('.tabs .tab', { hasText: 'Leaderboard' })).toBeVisible();
 
-  // flux d'éclosion PREMIUM en anglais (rendus JS : renderHatch/openEggChoice/doHatch) -- le petit
-  // bouton ✨ ouvre le choix d'œuf (le bouton "Hatch" principal, lui, éclot directement l'œuf gratuit).
+  // flux d'éclosion en anglais (rendus JS : renderHatch/doHatch/reveal) -- le slot de départ est prêt
+  // avec un œuf basique ; "Hatch" l'éclot directement (le choix d'œuf est désormais au DÉMARRAGE
+  // d'une incubation, sur un slot vide). Garde d'office + roulette, on ferme via "Continue".
   await frame.locator('.tabs .tab', { hasText: 'Hatchery' }).click();
-  await frame.locator('.isl.ready button', { hasText: '✨' }).click();
+  await frame.locator('.isl.ready button', { hasText: 'Hatch' }).click();
   await expect(frame.locator('#hatch-modal')).toHaveClass(/open/);
-  await expect(frame.locator('#hatch-modal')).toContainText('Choose your egg');
-  await frame.locator('#hatch-body .btn', { hasText: 'Use' }).first().click();
-  // nouveau flux (2026-07-18) : garde d'office + roulette de rareté avant le reveal ; "Keep" a
-  // disparu, on ferme via "Continue" (Playwright auto-attend -> absorbe la roulette).
   await frame.locator('#hatch-body .btn', { hasText: 'Continue' }).click();
   await expect(frame.locator('#hatch-modal')).not.toHaveClass(/open/);
 

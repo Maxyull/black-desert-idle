@@ -17,11 +17,20 @@ function petRosterRoomLeft(){ return Math.max(0, PET_ROSTER_CAP - PETS.length); 
 // 2 slots gratuits d'emblée (le 1er déjà prêt, le 2e en cours), puis 3 slots verrouillés dont le
 // coût de déblocage (1M/10M/100M) est dérivé de l'index dans hatch.js (SLOT_UNLOCK_COSTS). Timers
 // en vraies valeurs : 21600s = 6h de base (voir TEST_BALANCE_DIVISOR=1, economy.js).
-/** @returns {Array} un tableau NEUF de 5 slots d'incubation par défaut (2 gratuits + 3 verrouillés) -- utilisé comme état initial ET par la migration de remise à zéro (save.js). */
+// Modèle de slot (2026-07-18, demande explicite : "après éclosion le slot devient vide, il faut le
+// remplir et le timer reprend après le choix") : un slot d'incubation porte l'œuf CHOISI (eggId) --
+// le joueur choisit l'œuf AU DÉPART (paiement à ce moment), le minuteur de 6h démarre, puis
+// l'éclosion tire selon les chances de CET œuf. Après éclosion, le slot repasse `empty` : il faut
+// re-choisir un œuf pour relancer une incubation (plus d'œuf basique remis d'office). États :
+//   {locked}                              -- verrouillé (déblocage payant, ladder)
+//   {free, empty:true}                    -- vide, à remplir (openEggChoice -> startIncubation)
+//   {free, eggId, tl, tot, ready:false}   -- en cours (minuteur)
+//   {free, eggId, ready:true}             -- prêt à éclore (doHatch)
+/** @returns {Array} un tableau NEUF de 5 slots d'incubation par défaut (2 gratuits + 3 verrouillés) -- utilisé comme état initial ET par la migration de remise à zéro (save.js). Les 2 slots gratuits partent avec un œuf basique (1 prêt, 1 en cours) pour un démarrage vivant ; ils passent `empty` après leur 1re éclosion (le joueur choisit alors le prochain œuf). */
 function freshIncubSlots(){
   return [
-    {free:true,  tl:0,                 tot:scaleTimer(21600), ready:true},
-    {free:true,  tl:scaleTimer(13800), tot:scaleTimer(21600), ready:false},
+    {free:true,  eggId:'basic', tl:0,                 tot:scaleTimer(21600), ready:true},
+    {free:true,  eggId:'basic', tl:scaleTimer(13800), tot:scaleTimer(21600), ready:false},
     {free:false, tl:null, tot:null, locked:true},
     {free:false, tl:null, tot:null, locked:true},
     {free:false, tl:null, tot:null, locked:true},
