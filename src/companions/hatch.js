@@ -79,6 +79,10 @@ function buyExtraIncubSlot(){
 }
 /** Reconstruit l'onglet Éclosion : slots d'incubation (verrouillé/en cours/prêt), grille comparative des odds par rareté×type d'œuf, bonus de rareté, historique des 10 derniers pets obtenus. */
 function renderHatch(){
+  // "Éclore tout" (2026-07-18) : visible seulement quand AU MOINS 2 slots sont prêts (pour 1 seul,
+  // le bouton "Éclore" du slot suffit et laisse choisir l'œuf ; "tout" utilise l'œuf Basique).
+  const hatchAllBtn = document.getElementById('hatch-all-btn');
+  if(hatchAllBtn) hatchAllBtn.style.display = incubSlots.filter(s=>s.ready).length >= 2 ? '' : 'none';
   // Slots
   document.getElementById('incub-slots').innerHTML=incubSlots.map((sl,i)=>{
     if(sl.locked){
@@ -250,9 +254,48 @@ function rollAndCreatePet(eggType){
 }
 
 /**
- * Éclosion via un slot d'incubation : bloque si sac plein/silver insuffisant, débite le coût,
- * tire le pet (rollAndCreatePet), affiche la modale de reveal (3D si modèle GLB disponible,
- * sinon pixel-art) avec choix Garder/Déployer, relance le timer du slot.
+ * Roulette de rareté (2026-07-18, demande explicite : "roulette sur la rareté" à l'éclosion).
+ * "Machine à sous" : défile les 6 raretés (rapide -> lent), décélère et s'ARRÊTE sur `finalRar`.
+ * Pas de canvas/roue (le module n'a pas le composant React du jeu principal) : une rangée de chips,
+ * on déplace une surbrillance. Purement visuel -- la rareté est DÉJÀ tirée (rollAndCreatePet),
+ * cette animation ne fait que la révéler, comme la roue de boss du jeu principal.
+ * @param {HTMLElement} container @param {number} finalRar - rareté sur laquelle s'arrêter (0-5).
+ * @param {Function} onDone - appelé une fois posé sur finalRar.
+ */
+function spinRarityRoulette(container, finalRar, onDone){
+  container.innerHTML = `<div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin:18px 0">
+    ${RARITIES.map((r,i)=>`<div class="roul-cell" data-i="${i}" style="padding:7px 12px;border-radius:7px;border:2px solid transparent;font-family:'Cinzel',serif;font-size:11px;color:${r.hex};opacity:.3;transition:opacity .08s,transform .08s">${rn(i)}</div>`).join('')}
+  </div>`;
+  const cells = [...container.querySelectorAll('.roul-cell')];
+  const N = RARITIES.length;
+  const DURATION = 1900; // ms — durée totale, fixe
+  const TRAVEL = 3*N + finalRar; // ~3 tours puis atterrit sur finalRar
+  const start = performance.now();
+  function highlight(idx){
+    cells.forEach((c,k)=>{ const on=k===idx; c.style.opacity=on?'1':'.3'; c.style.borderColor=on?RARITIES[k].hex:'transparent'; c.style.transform=on?'scale(1.12)':'none'; });
+  }
+  // DÉCOUPLAGE (2026-07-18) : le VISUEL (défilement + décélération) est une boucle rAF best-effort,
+  // mais le DÉCLENCHEUR du reveal est un SEUL setTimeout fiable (DURATION). Ainsi le reveal apparaît
+  // TOUJOURS après DURATION même si les frames rAF sont throttlées/pausées (onglet non focus,
+  // contexte headless...) -- l'animation ne doit jamais pouvoir "coincer" le joueur sur une roue qui
+  // tourne. La garde offsetParent (modale fermée via Échap/clic) empêche le reveal de ré-ouvrir.
+  function frame(now){
+    if(!container.offsetParent) return; // modale fermée -> stoppe le visuel
+    const t = Math.min(1, (now-start)/DURATION);
+    if(t>=1){ highlight(finalRar); return; }
+    highlight(Math.floor((1-Math.pow(1-t,3))*TRAVEL) % N);
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+  setTimeout(()=>{ if(container.offsetParent){ highlight(finalRar); if(onDone) onDone(); } }, DURATION);
+}
+
+/**
+ * Éclosion via un slot d'incubation. NOUVEAU FLUX (2026-07-18, demande explicite) : le pet est
+ * AJOUTÉ AU ROSTER IMMÉDIATEMENT (terrain=false, en réserve) dès le tirage -- Échap/clic/✕ ne le
+ * perdent plus jamais (avant, fermer sans cliquer Garder/Déployer perdait le pet ET le silver). On
+ * montre d'abord la roulette de rareté, puis le reveal (3D si modèle GLB, sinon pixel-art) avec un
+ * bouton Déployer optionnel ; la fermeture ramène à la liste des slots.
  * @param {number} slotIdx - index du slot d'incubation prêt.
  * @param {string} eggTypeId - id de EGG_TYPES choisi.
  */
@@ -266,15 +309,33 @@ function doHatch(slotIdx, eggTypeId){
   updateSilverDisplay();
 
   const {pet:np, pityTriggered} = rollAndCreatePet(eggType);
-  const rar = np.rar, cat = np.cat;
-  const sec=secById(cat.sec);
-  const gs=normGS(np),pct=gsPct(np);
+  np.terrain = false;
+  PETS.push(np); // gardé d'office : plus jamais perdu à la fermeture
+  incubSlots[slotIdx].ready=false; incubSlots[slotIdx].tl=scaleTimer(21600);
+  window._np = np;
+
   const titleEl2 = document.querySelector('#hatch-modal .modal > div[style*="Cinzel"]');
   if(titleEl2) titleEl2.textContent = pityTriggered ? i18next.t('companions:companions.hatch.pity_title') : i18next.t('companions:companions.hatch.hatched_title');
-  // reveal 3D (2026-07-10, demande explicite : "les 2 premières" idées listées -- "reveal à
-  // l'éclosion") : les 12 espèces avec un modèle GLB (companionModelUrlFor) l'affichent en direct
-  // à la place du pixel art, comme moment fort. Fallback pixel art inchangé pour les 36 autres.
+
+  // 1) roulette de rareté, puis 2) reveal du pet
+  const body = document.getElementById('hatch-body');
+  body.innerHTML = '';
+  OM('hatch-modal');
+  spinRarityRoulette(body, np.rar, () => showHatchPetReveal(np, eggType));
+  renderHatch();
+}
+
+/**
+ * Reveal d'UN pet après la roulette (extrait de doHatch pour être réutilisable). Le pet est déjà
+ * dans PETS (gardé) -- ce reveal ne fait qu'afficher + proposer le déploiement.
+ * @param {object} np - le pet tiré (déjà poussé dans PETS). @param {object} eggType - œuf utilisé.
+ */
+function showHatchPetReveal(np, eggType){
+  const rar = np.rar, cat = np.cat;
+  const sec = secById(cat.sec);
+  const gs = normGS(np), pct = gsPct(np);
   const modelUrl = typeof companionModelUrlFor==='function' ? companionModelUrlFor(np) : null;
+  const petIdx = PETS.indexOf(np);
   document.getElementById('hatch-body').innerHTML=`
     <div style="text-align:center;margin-bottom:12px">
       ${modelUrl
@@ -290,12 +351,11 @@ function doHatch(slotIdx, eggTypeId){
     </div>
     <div style="margin-bottom:8px">${renderTierBlock(np)}${renderStatBars(np)}</div>
     ${renderEggOddsRecap(eggType)}
-    <div style="display:flex;gap:7px;margin-top:12px">
-      <button class="btn btn-gold" onclick="disposeHatchReveal3d();window._np.terrain=false;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🥚','${i18next.t('companions:companions.hatch.added_toast', {name:cat.name})}')">${i18next.t('companions:companions.hatch.keep_btn')}</button>
-      <button class="btn btn-ghost" onclick="disposeHatchReveal3d();PETS.forEach(p=>{if(p.cat.sec===window._np.cat.sec)p.terrain=false});window._np.terrain=true;PETS.push(window._np);incubSlots[${slotIdx}].ready=false;incubSlots[${slotIdx}].tl=scaleTimer(21600);renderAll();CM('hatch-modal');toast('🌿','${i18next.t('companions:companions.hatch.deployed_toast', {name:cat.name})}')">${i18next.t('companions:companions.hatch.deploy_btn')}</button>
+    <div style="font-size:9px;color:var(--green2);text-align:center;margin-top:8px">${i18next.t('companions:companions.hatch.kept_hint')}</div>
+    <div style="display:flex;gap:7px;margin-top:10px">
+      <button class="btn btn-ghost" style="flex:1" onclick="deployHatchedPet(${petIdx})">🌿 ${i18next.t('companions:companions.hatch.deploy_btn')}</button>
+      <button class="btn btn-gold" style="flex:1" onclick="closeHatchModal()">${i18next.t('companions:companions.hatch.continue_btn')}</button>
     </div>`;
-  window._np=np;
-  OM('hatch-modal');
   if(modelUrl){
     const mount=()=>{
       const anchor=document.getElementById('hcv3d-anchor'); if(!anchor) return;
@@ -309,8 +369,51 @@ function doHatch(slotIdx, eggTypeId){
   } else {
     setTimeout(()=>{const c=document.getElementById('hcv');if(c)drawPixelArt(c,cat.art,80,rc(rar),np.tier||1);},40);
   }
-  incubSlots[slotIdx].ready=false;incubSlots[slotIdx].tl=scaleTimer(21600);
-  renderHatch();
+}
+
+/** @param {number} petIdx - index dans PETS du pet fraîchement éclos. Le déploie sur le terrain (retire les autres pets de sa section du terrain), ferme la modale. */
+function deployHatchedPet(petIdx){
+  const np = PETS[petIdx]; if(!np) { closeHatchModal(); return; }
+  PETS.forEach(p=>{ if(p.cat.sec===np.cat.sec) p.terrain=false; });
+  np.terrain = true;
+  disposeHatchReveal3d(); renderAll(); CM('hatch-modal');
+  toast('🌿', i18next.t('companions:companions.hatch.deployed_toast', {name:np.cat.name}));
+}
+
+/**
+ * "Éclore tout" (2026-07-18, demande explicite) : éclot d'un coup TOUS les slots prêts, chacun avec
+ * l'œuf Basique gratuit. Les pets sont ajoutés au roster immédiatement (gardés), puis une roulette
+ * de rareté joue avant de révéler tout le lot d'un coup (grille, réutilise showBulkHatchModal).
+ * Respecte le plafond de collection : n'éclot que ce qui rentre.
+ */
+function hatchAll(){
+  const readyIdx = incubSlots.map((sl,i)=>sl.ready?i:-1).filter(i=>i>=0);
+  if(!readyIdx.length){ toast('🥚', i18next.t('companions:companions.hatch.nothing_ready')); return; }
+  const room = petRosterRoomLeft();
+  if(room<=0){ toast('📦', i18next.t('companions:companions.hatch.collection_full', {cap:PET_ROSTER_CAP})); return; }
+  const eggType = EGG_TYPES[0]; // Basique (gratuit)
+  const toHatch = readyIdx.slice(0, room);
+  const results = [];
+  let anyPity = false;
+  toHatch.forEach(i=>{
+    const {pet, pityTriggered} = rollAndCreatePet(eggType);
+    pet.terrain = false;
+    PETS.push(pet);
+    results.push(pet);
+    if(pityTriggered) anyPity = true;
+    incubSlots[i].ready=false; incubSlots[i].tl=scaleTimer(21600);
+  });
+  const tally=[0,0,0,0,0,0]; results.forEach(p=>tally[p.rar]++);
+  // roulette globale (s'arrête sur la MEILLEURE rareté du lot, effet "jackpot"), puis grille
+  const best = Math.max(...results.map(p=>p.rar));
+  const titleEl = document.querySelector('#hatch-modal .modal > div[style*="Cinzel"]');
+  if(titleEl) titleEl.textContent = anyPity ? i18next.t('companions:companions.hatch.bulk_title_pity', {count:results.length}) : i18next.t('companions:companions.hatch.bulk_title_done', {count:results.length});
+  const body = document.getElementById('hatch-body');
+  body.innerHTML = '';
+  OM('hatch-modal');
+  spinRarityRoulette(body, best, () => showBulkHatchModal(eggType, results, tally, anyPity));
+  renderAll();
+  addGameLog(i18next.t('companions:companions.hatch.bulk_log', {qty:results.length, egg:eggName(eggType), summary:RARITIES.map((r,i)=>tally[i]>0?`<span style="color:${r.hex}">${tally[i]}× ${rn(i)}</span>`:null).filter(Boolean).join(' · ')}));
 }
 // viewer 3D de la modale de reveal -- une seule éclosion à la fois (pas de tick qui réappelle
 // doHatch en boucle contrairement à renderSecDetail, donc pas besoin du cache par clé de
@@ -327,6 +430,14 @@ function closeHatchModal(){
   disposeHatchReveal3d();
   CM('hatch-modal');
 }
+// Fermeture Échap + clic sur le fond (2026-07-18, demande explicite : "echap ou clique on retourne
+// sur liste des oeuf"). Sûr : le pet est ajouté à PETS DÈS le tirage (doHatch/hatchAll), fermer ne
+// perd donc jamais rien -- contrairement à l'ancien flux où fermer sans cliquer Garder perdait le
+// pet et le silver.
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && document.getElementById('hatch-modal')?.classList.contains('open')) closeHatchModal();
+});
+{ const _hbg=document.getElementById('hatch-modal'); if(_hbg) _hbg.addEventListener('click', e=>{ if(e.target===_hbg) closeHatchModal(); }); }
 
 // ═══ ÉCLOSION INSTANTANÉE — ×1/×5/×10, indépendant des créneaux d'incubation ═══
 /**
