@@ -286,7 +286,7 @@ function pickCreatePet(uid){
 function quickAddToMarket(petId){
   const pet = PETS.find(p=>p.id===petId); if(!pet) return;
   if(alreadyOfferedUids().has(pet.uid)){ toast('❌',i18next.t('companions:companions.market.already_on_sale')); return; }
-  ST(11);
+  ST(10); // onglet Marché (index 10 depuis le retrait du Viewer 3D, 2026-07-18)
   setMarketSubTab('browse');
   openCreateOfferModal();
   pickCreatePet(pet.uid);

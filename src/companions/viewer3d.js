@@ -151,8 +151,11 @@ function createThreeViewer(wrap, onStatus) {
   return { loadModel, dispose };
 }
 
-// ---------- écran de test (onglet dédié, un seul modèle fixe) ----------
-let viewer3dState = null; // { dispose } — créé au premier ST(10)
+// ---------- ancien écran de test (onglet retiré le 2026-07-18) ----------
+// initViewer3dIfNeeded()/disposeViewer3dIfActive() ne sont plus appelés (l'onglet "Viewer 3D" a été
+// supprimé) ; conservés inertes pour ne pas casser d'éventuels appels, le rendu 3D d'un pet passe
+// désormais UNIQUEMENT par open3dPreviewModal() ci-dessous.
+let viewer3dState = null; // { dispose } — plus utilisé (onglet de test retiré)
 
 /** Initialise l'écran de test Viewer 3D (un seul modèle fixe, VIEWER3D_TEST_MODEL) au premier affichage de l'onglet, attend Three.js si pas encore chargé. No-op si déjà initialisé. */
 function initViewer3dIfNeeded() {

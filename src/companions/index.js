@@ -78,8 +78,15 @@ function renderIndexRates(){
     </tbody></table>
     <div style="font-size:9px;color:var(--cream3);margin-top:6px">${i18next.t('companions:companions.index.hard_rates_hint')}</div>`;
 
-  el.innerHTML = subtitle(i18next.t('companions:companions.index.hatch_odds_subtitle')) + hatch
-    + subtitle(i18next.t('companions:companions.index.hard_rates_subtitle')) + hard;
+  // Mise en page CÔTE À CÔTE (2026-07-18, demande explicite : "taux de loot hardinage doit tenir à
+  // droite des autres") -- les deux tableaux (éclosion / hardinage) étaient empilés verticalement,
+  // laissant beaucoup d'espace vide à droite. On les met en flex : côte à côte quand la largeur le
+  // permet, repli en colonne sur écran étroit. Chaque tableau garde son propre défilement horizontal.
+  const col = (sub, tbl) => `<div style="flex:1 1 480px;min-width:0">${sub}<div style="overflow-x:auto">${tbl}</div></div>`;
+  el.innerHTML = `<div style="display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start">
+    ${col(subtitle(i18next.t('companions:companions.index.hatch_odds_subtitle')), hatch)}
+    ${col(subtitle(i18next.t('companions:companions.index.hard_rates_subtitle')), hard)}
+  </div>`;
 }
 
 /** Reconstruit la matrice rareté×tier (plage de GS normalisée sur l'absolu Ancestral T5, statut possédé/à nourrir/à éclore par case) + légende. */
