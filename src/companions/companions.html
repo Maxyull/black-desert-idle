@@ -147,7 +147,10 @@
   <div class="hatch-wrap">
     <div class="hatch-top">
       <div>
-        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2);margin-bottom:8px" data-i18n="companions.hatch.incubation_title">Incubation</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.hatch.incubation_title">Incubation</div>
+          <button id="hatch-all-btn" onclick="hatchAll()" style="display:none;font-family:'Cinzel',serif;font-size:9px;padding:3px 10px;border-radius:5px;border:1px solid var(--green2);background:rgba(68,176,96,.12);color:var(--green2);cursor:pointer" data-i18n="companions.hatch.hatch_all_btn">🥚 Éclore tout</button>
+        </div>
         <div style="display:flex;gap:8px" id="incub-slots"></div>
       </div>
     </div>
@@ -497,7 +500,7 @@
      (economy.js appelle costLabelFor() au chargement immédiat). -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<script src="i18n-resources.generated.js?v=3"></script>
+<script src="i18n-resources.generated.js?v=4"></script>
 <script src="i18n.js?v=1"></script>
 <script src="pixelart.js?v=7"></script>
 <script src="catalog.js?v=9"></script>
@@ -505,7 +508,7 @@
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
 <script src="tier.js?v=13"></script>
 <script src="roster.js?v=9"></script>
-<script src="hatch.js?v=22"></script>
+<script src="hatch.js?v=26"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=9"></script>
 <script src="sections.js?v=18"></script>
