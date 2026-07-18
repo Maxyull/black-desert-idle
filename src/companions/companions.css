@@ -49,6 +49,13 @@ body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;widt
 .pvp-tab:not(.active) .tbadge{animation:pvppulse 1.8s ease-in-out infinite}
 @keyframes pvppulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
 @media (prefers-reduced-motion:reduce){.pvp-tab .tbadge{animation:none}}
+/* reveal d'éclosion (2026-07-18, "bien afficher sur quoi on s'est arrêté avec des animations") :
+   entrée en pop de la fiche + badge Tier+Rareté pulsé. Neutralisés en "mouvement réduit". */
+.hatchPop{animation:hatchpop .5s cubic-bezier(.2,1.1,.3,1) both}
+@keyframes hatchpop{0%{transform:scale(.82);opacity:0}55%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+.tierRarBadge{animation:tierrarpulse 1.4s ease-in-out .1s 2}
+@keyframes tierrarpulse{0%,100%{transform:scale(1)}50%{transform:scale(1.09)}}
+@media (prefers-reduced-motion:reduce){.hatchPop{animation:none}.tierRarBadge{animation:none}}
 .content{flex:1;overflow:hidden;display:flex;flex-direction:column}
 .panel{display:none;flex:1;overflow:hidden}.panel.active{display:flex}
 .btn{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:.06em;padding:7px 14px;border-radius:5px;cursor:pointer;border:1px solid;transition:all .15s;white-space:nowrap}

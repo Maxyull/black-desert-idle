@@ -95,9 +95,13 @@ function renderHatch(){
       const affordable = isNext && SILVER>=cost;
       return`<div class="isl locked" style="cursor:${affordable?'pointer':'not-allowed'};opacity:${isNext?(affordable?1:.6):.4}" ${isNext?`onclick="unlockIncubSlot(${i})"`:''}><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(cost)}</div></div>`;
     }
-    if(sl.ready)return`<div class="isl ready"><div style="position:relative"><span style="font-size:28px">🥚</span><div style="position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(111,220,111,.4),transparent);animation:eglaur 1s ease-in-out infinite"></div></div>${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<div class="itimer done">${i18next.t('companions:companions.hatch.ready_badge')}</div><div style="display:flex;gap:4px;align-items:center;justify-content:center;margin-top:2px"><button style="font-family:Cinzel,serif;font-size:9px;padding:4px 10px;border-radius:4px;border:1px solid var(--gold);background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:var(--bg);cursor:pointer" onclick="doHatch(${i},'basic')">${i18next.t('companions:companions.hatch.hatch_btn')}</button><button title="${i18next.t('companions:companions.hatch.premium_egg_title')}" style="font-size:11px;padding:3px 6px;border-radius:4px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold2);cursor:pointer" onclick="openEggChoice(${i})">✨</button></div></div>`;
+    // slot VIDE (2026-07-18) : après une éclosion, le slot ne se remplit plus tout seul -- le joueur
+    // choisit l'œuf à y mettre (openEggChoice -> startIncubation, paiement + minuteur au départ).
+    if(sl.empty)return`<div class="isl" style="cursor:pointer;justify-content:center" onclick="openEggChoice(${i})"><span style="font-size:28px;opacity:.5">➕</span>${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<div style="font-size:8px;color:var(--gold2)">${i18next.t('companions:companions.hatch.choose_egg_btn')}</div></div>`;
+    const eggIco = (EGG_TYPES.find(e=>e.id===sl.eggId) || EGG_TYPES[0]).ico;
+    if(sl.ready)return`<div class="isl ready"><div style="position:relative"><span style="font-size:28px">${eggIco}</span><div style="position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(111,220,111,.4),transparent);animation:eglaur 1s ease-in-out infinite"></div></div>${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<div class="itimer done">${i18next.t('companions:companions.hatch.ready_badge')}</div><button style="font-family:Cinzel,serif;font-size:9px;padding:4px 12px;border-radius:4px;border:1px solid var(--gold);background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:var(--bg);cursor:pointer;margin-top:2px" onclick="doHatch(${i})">${i18next.t('companions:companions.hatch.hatch_btn')}</button></div>`;
     const pct=Math.round((1-sl.tl/sl.tot)*100);
-    return`<div class="isl">${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<span style="font-size:28px">🥚</span><div class="itimer">${fmtT(sl.tl)}</div><div class="iprog"><div class="iprog-fill" style="width:${pct}%"></div></div></div>`;
+    return`<div class="isl">${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<span style="font-size:28px">${eggIco}</span><div class="itimer">${fmtT(sl.tl)}</div><div class="iprog"><div class="iprog-fill" style="width:${pct}%"></div></div></div>`;
   }).join('');
   // Odds
   // Grille comparative : Rareté × Type d'œuf
@@ -193,7 +197,7 @@ function openEggChoice(slotIdx){
           ${egg.odds.map((o,ri)=>`<span style="font-size:8px;color:${RARITIES[ri].hex};${egg.targeted&&ri===egg.targetRar?'font-weight:700;text-decoration:underline':''}">${rn(ri).slice(0,3)} ${o}%</span>`).join('<span style="color:var(--cream3)">·</span>')}
         </div>
       </div>
-      <button class="btn ${egg.cost===0?'btn-ghost':'btn-gold'}" style="font-size:10px" ${affordable?'':'disabled'} onclick="doHatch(${slotIdx},'${egg.id}')">${egg.cost===0?i18next.t('companions:companions.hatch.use_btn'):i18next.t('companions:companions.hatch.buy_btn')}</button>
+      <button class="btn ${egg.cost===0?'btn-ghost':'btn-gold'}" style="font-size:10px" ${affordable?'':'disabled'} onclick="startIncubation(${slotIdx},'${egg.id}')">${egg.cost===0?i18next.t('companions:companions.hatch.use_btn'):i18next.t('companions:companions.hatch.buy_btn')}</button>
     </div>`;
   }
 
@@ -319,19 +323,35 @@ function spinRarityRoulette(container, finalRar, onDone){
  * @param {number} slotIdx - index du slot d'incubation prêt.
  * @param {string} eggTypeId - id de EGG_TYPES choisi.
  */
-function doHatch(slotIdx, eggTypeId){
-  // plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets") --
-  // bloque AVANT de dépenser le silver, pas après (voir petRosterRoomLeft(), roster.js)
-  if(petRosterRoomLeft()<=0){ toast('📦',i18next.t('companions:companions.hatch.collection_full', {cap:PET_ROSTER_CAP})); return; }
-  const eggType = EGG_TYPES.find(e=>e.id===eggTypeId) || EGG_TYPES[0];
+/** @param {number} slotIdx - index d'un slot VIDE. @param {string} eggId - œuf choisi. Paie le coût de l'œuf et démarre l'incubation (minuteur de 6h) avec cet œuf ; no-op si silver insuffisant ou slot non vide. */
+function startIncubation(slotIdx, eggId){
+  const sl = incubSlots[slotIdx];
+  if(!sl || sl.locked || !sl.empty) return;
+  const eggType = EGG_TYPES.find(e=>e.id===eggId) || EGG_TYPES[0];
   if(SILVER < eggType.cost){ toast('❌',i18next.t('companions:companions.hatch.insufficient_silver')); return; }
   spendSilver(eggType.cost);
   updateSilverDisplay();
+  incubSlots[slotIdx] = { free: sl.free, eggId: eggType.id, tl: scaleTimer(21600), tot: scaleTimer(21600), ready: false };
+  eggTypesUsed.add(eggType.id);
+  closeHatchModal();
+  renderHatch();
+}
+
+function doHatch(slotIdx){
+  const sl = incubSlots[slotIdx];
+  if(!sl || !sl.ready) return;
+  // plafond de collection (2026-07-20, demande explicite : "Borner collection a 96 pets") -- si plein,
+  // le slot RESTE prêt (rien n'est consommé : l'œuf a déjà été payé au démarrage de l'incubation).
+  if(petRosterRoomLeft()<=0){ toast('📦',i18next.t('companions:companions.hatch.collection_full', {cap:PET_ROSTER_CAP})); return; }
+  const eggType = EGG_TYPES.find(e=>e.id===sl.eggId) || EGG_TYPES[0];
+  // plus de spendSilver ici : l'œuf a été payé à startIncubation() (2026-07-18, "paiement au départ").
 
   const {pet:np, pityTriggered} = rollAndCreatePet(eggType);
   np.terrain = false;
   PETS.push(np); // gardé d'office : plus jamais perdu à la fermeture
-  incubSlots[slotIdx].ready=false; incubSlots[slotIdx].tl=scaleTimer(21600);
+  // après éclosion le slot devient VIDE (plus d'œuf basique remis d'office, 2026-07-18) : le joueur
+  // devra re-choisir un œuf pour relancer une incubation.
+  incubSlots[slotIdx] = { free: sl.free, empty: true };
   window._np = np;
 
   const titleEl2 = document.querySelector('#hatch-modal .modal > div[style*="Cinzel"]');
@@ -363,8 +383,13 @@ function showHatchPetReveal(np, eggType){
         : `<canvas id="hcv" width="80" height="80" style="width:80px;height:80px;image-rendering:pixelated"></canvas>`}
     </div>
     <div style="text-align:center;font-size:9px;color:${rc(rar)};letter-spacing:.1em;text-transform:uppercase;margin-bottom:2px">${cat.orig.toUpperCase()} · ${typeLabel(cat.typ)} · ${eggType.ico} ${eggName(eggType)}</div>
-    <div style="text-align:center;font-family:'Cinzel',serif;font-size:19px;color:var(--cream);margin-bottom:2px">${cat.name}</div>
-    <div style="text-align:center;font-size:11px;color:var(--cream2);margin-bottom:10px">${sec?.ico} ${secName(sec)} · ${rn(rar)}</div>
+    <div style="text-align:center;font-family:'Cinzel',serif;font-size:19px;color:var(--cream);margin-bottom:4px">${cat.name}</div>
+    <!-- Tier + Rareté MIS EN ÉVIDENCE (2026-07-18, "bien afficher Tier+rareté" + "sur quoi on s'est
+         arrêté... avec des animations") : gros badge dans la couleur de rareté, pulsé à l'apparition. -->
+    <div style="text-align:center;margin-bottom:8px">
+      <span class="tierRarBadge" style="display:inline-block;font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:${rc(rar)};background:${rc(rar)}1a;border:1.5px solid ${rc(rar)};border-radius:20px;padding:4px 16px">T${np.tier||1} · ${rn(rar)}</span>
+    </div>
+    <div style="text-align:center;font-size:10.5px;color:var(--cream2);margin-bottom:10px">${sec?.ico} ${secName(sec)}</div>
     <div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px">
       <span class="gs-badge ${gsCls(pct)}">GS ${gs} / 1000</span>
       <span style="font-size:10px;color:var(--cream2)">${i18next.t('companions:companions.hatch.gs_of_max', {pct:pct, rarity:rn(rar)})}</span>
@@ -376,6 +401,10 @@ function showHatchPetReveal(np, eggType){
       <button class="btn btn-ghost" style="flex:1" onclick="deployHatchedPet(${petIdx})">🌿 ${i18next.t('companions:companions.hatch.deploy_btn')}</button>
       <button class="btn btn-gold" style="flex:1" onclick="closeHatchModal()">${i18next.t('companions:companions.hatch.continue_btn')}</button>
     </div>`;
+  // animation d'entrée de la fiche (2026-07-18) : retrigger la classe .hatchPop (pop + fondu) pour
+  // "bien afficher sur quoi on s'est arrêté" avec un effet visuel marqué à chaque reveal.
+  const hbEl=document.getElementById('hatch-body');
+  if(hbEl){ hbEl.classList.remove('hatchPop'); void hbEl.offsetWidth; hbEl.classList.add('hatchPop'); }
   if(modelUrl){
     const mount=()=>{
       const anchor=document.getElementById('hcv3d-anchor'); if(!anchor) return;
@@ -411,17 +440,20 @@ function hatchAll(){
   if(!readyIdx.length){ toast('🥚', i18next.t('companions:companions.hatch.nothing_ready')); return; }
   const room = petRosterRoomLeft();
   if(room<=0){ toast('📦', i18next.t('companions:companions.hatch.collection_full', {cap:PET_ROSTER_CAP})); return; }
-  const eggType = EGG_TYPES[0]; // Basique (gratuit)
   const toHatch = readyIdx.slice(0, room);
+  // œuf d'affichage pour le récap (le lot peut mêler plusieurs œufs) : celui du 1er slot éclos.
+  const eggType = EGG_TYPES.find(e=>e.id===incubSlots[toHatch[0]].eggId) || EGG_TYPES[0];
   const results = [];
   let anyPity = false;
   toHatch.forEach(i=>{
-    const {pet, pityTriggered} = rollAndCreatePet(eggType);
+    // chaque slot éclot avec SON œuf (déjà payé au démarrage), pas un basique imposé.
+    const et = EGG_TYPES.find(e=>e.id===incubSlots[i].eggId) || EGG_TYPES[0];
+    const {pet, pityTriggered} = rollAndCreatePet(et);
     pet.terrain = false;
     PETS.push(pet);
     results.push(pet);
     if(pityTriggered) anyPity = true;
-    incubSlots[i].ready=false; incubSlots[i].tl=scaleTimer(21600);
+    incubSlots[i] = { free: incubSlots[i].free, empty: true }; // vide après éclosion (2026-07-18)
   });
   const tally=[0,0,0,0,0,0]; results.forEach(p=>tally[p.rar]++);
   // roulette globale (s'arrête sur la MEILLEURE rareté du lot, effet "jackpot"), puis grille
