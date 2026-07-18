@@ -136,7 +136,7 @@ function applyOfflineProgress(savedAt){
   });
 
   if(totalSilver>0 || tierUps.length){
-    SILVER += totalSilver;
+    earnSilver(totalSilver, 'compagnon:hors-ligne');
     const itemsText = Object.entries(itemsGained).map(([n,q])=>`${q}× ${itemLabel(n)}`).join(', ');
     const hLabel = hours>=1 ? `${hours.toFixed(1)}h` : `${Math.round(hours*60)}min`;
     const tierText = tierUps.length ? ` — ${tierUps.map(t=>`${t.name} T${t.from}➡️T${t.to}`).join(', ')}` : '';
@@ -226,6 +226,9 @@ function loadGame(){
     const needsRosterReset = !state.petsRosterResetV1;
     PETS = needsRosterReset ? [] : (state.PETS || PETS);
     SILVER = state.SILVER ?? SILVER;
+    // pool partagé (2026-07-18) : si l'hôte est présent, le silver du JEU fait autorité -- le miroir
+    // local sauvegardé est écrasé par le solde réel du jeu. Repli sur la valeur locale sinon.
+    syncSilverFromHost();
     silverSpent = state.silverSpent || 0;
     INVENTORY = state.INVENTORY || {};
     incubSlots = state.incubSlots || incubSlots;

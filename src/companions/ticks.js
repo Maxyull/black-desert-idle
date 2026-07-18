@@ -9,8 +9,9 @@ function updateHeader(){
   if(streakEl) streakEl.textContent=`${loginStreak}/7`;
   updateSilverDisplay();
 }
-/** Met à jour tous les affichages du solde SILVER (header + panneaux Collection/Jeu) avec la même valeur formatée. */
+/** Met à jour tous les affichages du solde SILVER (header + panneaux Collection/Jeu). Resync d'abord le miroir depuis le silver du jeu (pool partagé) pour que l'affichage ET les vérifs d'accessibilité restent à jour. */
 function updateSilverDisplay(){
+  syncSilverFromHost();
   const val = SILVER.toLocaleString(NUM_LOCALE);
   ['h-silver','game-silver-inline','coll-silver','coll-silver-2'].forEach(id=>{
     const el=document.getElementById(id);
@@ -134,7 +135,7 @@ setInterval(()=>{
     else drop = sec.drops[0];                        // commun
     if(drop.silver){
       const amt = Math.floor(5+Math.random()*15) * FARM_YIELD_MULT;
-      SILVER += amt;
+      earnSilver(amt, 'compagnon:loot');
       addGameLog(i18next.t('companions:companions.log.pet_found_silver_html', {name:p.cat.name, amount:amt}));
     } else {
       addToInventory(drop.n, drop.e, FARM_YIELD_MULT, drop.feed);

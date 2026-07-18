@@ -14944,6 +14944,14 @@ function getCurrentUserForSync() { return currentUser; }
 
 function getMyPseudoForSync() { return myPseudo || (currentUser && (currentUser.email || '?').split('@')[0]) || 'Joueur'; }
 
+function getGameSilverForCompanion() { return (typeof S !== 'undefined' && S && typeof S.silver === 'number') ? S.silver : null; }
+
+function addGameSilverForCompanion(delta, note) {
+  if (typeof addSilver !== 'function' || typeof S === 'undefined' || !S) return null;
+  if (delta) addSilver(delta, 'companion', note || 'compagnon');
+  return S.silver;
+}
+
 let farmEventQueue = new Map();
 
 function queueFarmEvent(kind, name, qty, silverVal) {

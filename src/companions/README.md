@@ -12,10 +12,16 @@ Pourquoi un iframe plutôt qu'une intégration directe au bundle :
   scope global du jeu principal (tout `src/*.js` du bundle partage un seul `window`).
 - Il a son propre système de couleurs (`:root` avec `--gold`, `--bg`...) qui écraserait les
   variables CSS du jeu si elles étaient chargées dans le même document.
-- Économie fermée (2026-07-19, demande explicite) : Silver/inventaire de ce module sont
-  totalement indépendants de ceux du jeu principal — pas de risque de double-comptage.
-- Sauvegarde 100% locale (`localStorage['velia_idle_pets_save']`, clé dédiée) — pas de
-  compte Supabase pour ce module en v1.
+- **Silver : pool PARTAGÉ avec le jeu** (2026-07-18, demande explicite : "silver bidirectionnel,
+  on lie compagnon avec le jeu") — depuis le passage en prod, le module ne tient plus une bourse
+  fermée : il partage le silver du jeu (`S.silver`). Dépenser/gagner ici débite/crédite le jeu via
+  son point d'entrée UNIQUE `addSilver(delta, 'companion', …)`, exposé à l'iframe par les accesseurs
+  `getGameSilverForCompanion()` / `addGameSilverForCompanion()` (`game-supabase.js`, lus via
+  `window.parent`). Côté module, `SILVER` n'est plus qu'un MIROIR resync depuis l'hôte
+  (`silverHost()`/`syncSilverFromHost()`, `economy.js`), avec repli local si l'hôte est absent
+  (standalone/tests). L'INVENTAIRE, lui, reste local au module.
+- Sauvegarde locale (`localStorage['velia_idle_pets_save']`, clé dédiée) pour les pets/inventaire/
+  slots — pas de compte Supabase propre ; le silver, lui, vit dans la sauvegarde du jeu (pool partagé).
 - Chargement paresseux garanti : tant que le joueur n'a pas cliqué sur l'onglet, aucun de
   ces fichiers n'est téléchargé ni exécuté.
 

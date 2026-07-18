@@ -37,7 +37,7 @@ function checkAchievements(){
   ACHIEVEMENTS.forEach(a=>{
     if(!completedAchievements.has(a.id) && a.check()){
       completedAchievements.add(a.id);
-      SILVER += a.reward;
+      earnSilver(a.reward, 'compagnon:succes');
       newlyCompleted.push(a);
     }
   });
