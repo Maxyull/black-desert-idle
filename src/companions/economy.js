@@ -3,7 +3,7 @@
 // data.js), plutôt qu'un compteur séparé propre à ce module : ce dossier ne peut pas charger
 // meta/patch-notes-data.js (scope global distinct, iframe isolée), donc pas de lecture automatique
 // possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
-const COMPANION_MODULE_VERSION = 'V483';
+const COMPANION_MODULE_VERSION = 'V484';
 
 // ═══ BALANCE ═══ (2026-07-18, demande explicite : "remets le divisor à 1, on passe en prod")
 // Les coûts Silver et timers passent en VRAIES valeurs (divisor = 1). scaleCost()/scaleTimer()

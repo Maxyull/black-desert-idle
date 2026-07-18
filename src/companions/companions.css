@@ -198,3 +198,47 @@ input[type="checkbox"]{accent-color:var(--gold)}
 @keyframes tout{to{opacity:0;transform:translateX(12px)}}
 @keyframes eglaur{0%,100%{opacity:.25;transform:scale(1)}50%{opacity:.55;transform:scale(1.08)}}
 @keyframes hfloat{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-55px) scale(.5)}}
+/* TUTORIEL — diagramme illustré plein écran (2026-07-19, demande explicite : "fais un tuto qui
+   prend tout l'écran avec des images qui pointent vers d'autres images avec un peu de texte").
+   Les icônes d'onglets servent d'illustrations (même langage visuel que le module) ; la boucle de
+   farm est reliée par des flèches SVG inline (colorées via les tokens --gold*). Texte minimal,
+   piloté par i18n (tutorial.js). Colonne verticale + flèches pivotées sous 840px (pas de scroll
+   horizontal). Animation neutralisée en "mouvement réduit". */
+.tuto-wrap{max-width:940px;margin:0 auto;min-height:100%;display:flex;flex-direction:column;gap:20px}
+.tuto-h1{font-family:'Cinzel',serif;font-size:20px;color:var(--gold);letter-spacing:.02em;margin-bottom:6px}
+.tuto-intro{font-size:12px;color:var(--cream2);line-height:1.55;max-width:660px}
+.tuto-block{background:var(--s1);border:1px solid var(--border);border-radius:16px;padding:18px 20px}
+.tuto-block.loop{border-color:var(--gold-dim);background:linear-gradient(180deg,rgba(212,169,85,.05),transparent)}
+.tuto-sec-title{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:16px}
+.tuto-loop{display:flex;flex-wrap:nowrap;align-items:flex-start;justify-content:center;gap:4px}
+.tuto-node{display:flex;flex-direction:column;align-items:center;text-align:center;width:114px;gap:6px;flex-shrink:0}
+.tuto-ico{width:60px;height:60px;border-radius:16px;background:var(--s3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.tuto-node.hl .tuto-ico{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold-dim),0 6px 18px rgba(212,169,85,.18)}
+.tuto-nname{font-family:'Cinzel',serif;font-size:12px;color:var(--cream)}
+.tuto-ntag{font-size:10px;color:var(--cream3);line-height:1.35}
+.tuto-arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding-top:15px;min-width:50px;flex-shrink:0}
+.tuto-arrow .lbl{font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--gold2);font-family:'Cinzel',serif;white-space:nowrap}
+.tuto-arrow svg{display:block}
+.tuto-loopback{margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:10.5px;color:var(--cream2);border-top:1px dashed var(--border);padding-top:13px;text-align:center}
+.tuto-loopback .lp-ico{font-size:16px;color:var(--gold2);flex-shrink:0}
+.tuto-tools{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px}
+.tuto-tool{display:flex;gap:12px;align-items:flex-start;background:var(--s2);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.tuto-tool .t-ico{flex-shrink:0;width:44px;height:44px;border-radius:11px;background:var(--s3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:23px}
+.tuto-tool .t-name{font-family:'Cinzel',serif;font-size:12px;color:var(--cream);margin-bottom:3px}
+.tuto-tool .t-desc{font-size:10.5px;color:var(--cream2);line-height:1.45}
+.tuto-tips{margin-top:auto;background:var(--s1);border:1px solid var(--gold-dim);border-radius:14px;padding:14px 18px}
+.tuto-tips .tp-title{font-family:'Cinzel',serif;font-size:12px;color:var(--gold2);margin-bottom:6px}
+.tuto-tips .tp-body{font-size:11px;color:var(--cream2);line-height:1.6}
+.tuto-node.hl{animation:tutopulse 3.4s ease-in-out infinite}
+.tuto-node.hl:nth-child(3){animation-delay:.5s}
+.tuto-node.hl:nth-child(5){animation-delay:1s}
+.tuto-node.hl:nth-child(7){animation-delay:1.5s}
+.tuto-node.hl:nth-child(9){animation-delay:2s}
+@keyframes tutopulse{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+/* étroit : boucle en colonne, flèches pivotées vers le bas (le SVG horizontal devient vertical) */
+@media (max-width:840px){
+  .tuto-loop{flex-direction:column;align-items:center}
+  .tuto-arrow{padding-top:0}
+  .tuto-arrow svg{transform:rotate(90deg)}
+}
+@media (prefers-reduced-motion:reduce){.tuto-node.hl{animation:none}}
