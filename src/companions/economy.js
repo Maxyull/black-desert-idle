@@ -117,6 +117,14 @@ let petsUidV1 = false;
 // section, rareté = p.rar réel -- structure 1 espèce par section×rareté, voir catalog.js) pour
 // tout pet déjà "percé" avant ce correctif.
 let petsSpeciesRarityV1 = false;
+// migration rétroactive (2026-07-18, demande explicite : "au moment du merge on supprimera tout et
+// les compagnons vont farm plus") -- passage en prod (vraies valeurs, farm ×5, silver PARTAGÉ avec
+// le jeu) : on repart d'une base de farm PROPRE pour que les hoards de la phase de test (inventaires
+// de dizaines de milliers, rosters/slots de test) ne polluent pas la nouvelle économie. Réinitialise
+// UNE SEULE FOIS pets/inventaire/slots/compteurs de tirage (voir wipeEconomyForProdV1(), save.js).
+// NE TOUCHE PAS : le silver (désormais celui du JEU, pool partagé -- pas la bourse du module) ni
+// completedAchievements (récompenses déjà versées -- éviter tout re-versement de silver réel).
+let petsEconomyWipeV1 = false;
 // compteur À VIE (2026-07-19, demande explicite : stats admin) -- distinct de
 // hatchCountSincePity (remis à 0 à chaque pity déclenché) : jamais réinitialisé, incrémenté
 // une seule fois par tirage réel dans rollAndCreatePet() (hatch.js), peu importe le

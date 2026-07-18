@@ -12,7 +12,7 @@ function saveGame(){
       eggTypesUsed: Array.from(eggTypesUsed),
       completedAchievements: Array.from(completedAchievements),
       pityEverTriggered, loginStreak, lastLoginDate, petsRosterResetV1, petsRosterCapV1, petsUidV1,
-      petsSpeciesRarityV1, autoFeedEnabled,
+      petsSpeciesRarityV1, petsEconomyWipeV1, autoFeedEnabled,
       savedAt: Date.now()
     };
     localStorage.setItem('velia_idle_pets_save', JSON.stringify(state));
@@ -212,13 +212,30 @@ function migratePetSpeciesRarityV1(){
     if(newCat) p.cat = newCat;
   });
 }
-/** @returns {boolean} charge l'état sauvegardé (localStorage), applique les migrations rétroactives une seule fois chacune (flags petsRosterResetV1/petsRosterCapV1/petsUidV1/petsSpeciesRarityV1), rattrape le hors-ligne. false si aucune sauvegarde ou erreur (nouveau joueur). */
+// migration rétroactive (2026-07-18, demande explicite : "au moment du merge on supprimera tout et
+// les compagnons vont farm plus") -- passage en prod. Remet à zéro la BASE DE FARM (pets, inventaire,
+// slots, compteurs de tirage/percée) pour repartir propre sur la nouvelle économie (vraies valeurs,
+// farm ×5). Volontairement PRÉSERVÉS : le silver (= celui du JEU, pool partagé, jamais la bourse du
+// module) et completedAchievements (récompenses déjà versées -- les réinitialiser re-verserait du
+// silver réel via checkAchievements). Gatée par petsEconomyWipeV1, un seul passage par joueur.
+/** Migration rétroactive : remet à zéro pets/inventaire/slots/compteurs de tirage pour le passage en prod, sans toucher au silver (jeu) ni aux succès déjà obtenus. */
+function wipeEconomyForProdV1(){
+  PETS = [];
+  INVENTORY = {};
+  incubSlots = freshIncubSlots();
+  eggTimer = scaleTimer(5*3600+42*60+18);
+  hatchCountSincePity = 0; pityEverTriggered = false; totalHatched = 0;
+  breakthroughCount = 0; fusionCount = 0; caphrasUpgradeCount = 0;
+  fusionLostHighRarityCount = 0; bossItemFound = false; eggTypesUsed = new Set();
+  selFoodName = null;
+}
+/** @returns {boolean} charge l'état sauvegardé (localStorage), applique les migrations rétroactives une seule fois chacune (flags petsRosterResetV1/petsRosterCapV1/petsUidV1/petsSpeciesRarityV1/petsEconomyWipeV1), rattrape le hors-ligne. false si aucune sauvegarde ou erreur (nouveau joueur). */
 function loadGame(){
   try{
     const raw = localStorage.getItem('velia_idle_pets_save');
     // nouveau joueur (aucune sauvegarde) : PETS=[] déjà par défaut (roster.js), rien à
     // migrer -- marque directement le flag pour ne jamais redéclencher la migration plus tard.
-    if(!raw){ petsRosterResetV1 = true; return false; }
+    if(!raw){ petsRosterResetV1 = true; petsEconomyWipeV1 = true; return false; }
     const state = JSON.parse(raw);
     // migration rétroactive (2026-07-19, demande explicite : "supprime les 48 pet pour tout le
     // monde") -- voir petsRosterResetV1 (economy.js). Vide le roster UNE SEULE FOIS
@@ -267,7 +284,14 @@ function loadGame(){
     const needsSpeciesRarity = !state.petsSpeciesRarityV1;
     if(needsSpeciesRarity) migratePetSpeciesRarityV1();
     petsSpeciesRarityV1 = true;
-    if(needsRosterReset || needsRosterCap || needsPetUid || needsSpeciesRarity) saveGame(); // persiste immédiatement (roster modifié + flag), avant l'autosave 5s
+    // passage en prod (2026-07-18) : remet à zéro la base de farm une seule fois, voir
+    // wipeEconomyForProdV1(). En dernier car il ANNULE les migrations de roster ci-dessus (PETS=[]) --
+    // c'est voulu : on repart totalement propre, les migrations restent utiles pour un save qui a
+    // DÉJÀ passé le wipe (ex. futur re-chargement où seule une autre migration manquerait).
+    const needsEconomyWipe = !state.petsEconomyWipeV1;
+    if(needsEconomyWipe) wipeEconomyForProdV1();
+    petsEconomyWipeV1 = true;
+    if(needsRosterReset || needsRosterCap || needsPetUid || needsSpeciesRarity || needsEconomyWipe) saveGame(); // persiste immédiatement (état modifié + flags), avant l'autosave 5s
     applyOfflineProgress(state.savedAt);
     checkDailyStreak();
     return true;
