@@ -17,13 +17,17 @@ function petRosterRoomLeft(){ return Math.max(0, PET_ROSTER_CAP - PETS.length); 
 // 2 slots gratuits d'emblée (le 1er déjà prêt, le 2e en cours), puis 3 slots verrouillés dont le
 // coût de déblocage (1M/10M/100M) est dérivé de l'index dans hatch.js (SLOT_UNLOCK_COSTS). Timers
 // en vraies valeurs : 21600s = 6h de base (voir TEST_BALANCE_DIVISOR=1, economy.js).
-let incubSlots=[
-  {free:true,  tl:0,                 tot:scaleTimer(21600), ready:true},
-  {free:true,  tl:scaleTimer(13800), tot:scaleTimer(21600), ready:false},
-  {free:false, tl:null, tot:null, locked:true},
-  {free:false, tl:null, tot:null, locked:true},
-  {free:false, tl:null, tot:null, locked:true},
-];
+/** @returns {Array} un tableau NEUF de 5 slots d'incubation par défaut (2 gratuits + 3 verrouillés) -- utilisé comme état initial ET par la migration de remise à zéro (save.js). */
+function freshIncubSlots(){
+  return [
+    {free:true,  tl:0,                 tot:scaleTimer(21600), ready:true},
+    {free:true,  tl:scaleTimer(13800), tot:scaleTimer(21600), ready:false},
+    {free:false, tl:null, tot:null, locked:true},
+    {free:false, tl:null, tot:null, locked:true},
+    {free:false, tl:null, tot:null, locked:true},
+  ];
+}
+let incubSlots=freshIncubSlots();
 let fusionSlots=[null,null];
 let activeSecIdx=0;
 let sortMode='gs',sortDir=-1;

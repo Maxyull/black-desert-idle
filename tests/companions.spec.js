@@ -878,6 +878,9 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
       eggTimer: 0, petId: 4, hatchCountSincePity: 0, fusionCount: 2, caphrasUpgradeCount: 0,
       bossItemFound: false, breakthroughCount: 0, totalHatched: 3, eggTypesUsed: [],
       completedAchievements: [], pityEverTriggered: false, loginStreak: 1, lastLoginDate: null,
+      // déjà passé le wipe économie prod (isole ce test sur la SEULE migration roster : sinon le
+      // wipe remettrait fusionCount à 0 et l'assertion fusionKept échouerait -- voir le test dédié).
+      petsEconomyWipeV1: true,
       savedAt: Date.now(),
       // pas de petsRosterResetV1 -- exactement l'état d'une sauvegarde jamais migrée
     }));
@@ -913,6 +916,60 @@ test('retroactive migration clears a pre-existing roster and never repeats', asy
   expect(persisted.petsRosterResetV1).toBe(true);
   expect(persisted.PETS).toEqual([]);
 
+  expect(pageErrors).toEqual([]);
+});
+
+// migration wipe économie prod (2026-07-18, demande explicite : "au moment du merge on supprimera
+// tout et les compagnons vont farm plus") -- une sauvegarde d'AVANT le passage en prod (pets/
+// inventaire/slots de la phase de test, hoards) doit être remise à zéro UNE SEULE FOIS, en gardant
+// les succès déjà obtenus (pas de re-versement de silver réel) et sans jamais se répéter.
+test('prod economy wipe clears pets/inventory/slots once, keeps earned achievements, and never repeats', async ({ page }) => {
+  const pageErrors = [];
+  page.on('pageerror', error => pageErrors.push(error.message));
+
+  await page.addInitScript(() => {
+    localStorage.setItem('velia_idle_pets_save', JSON.stringify({
+      PETS: [{ id: 1 }, { id: 2 }], SILVER: 99999,
+      INVENTORY: { 'Minerai de fer': { icon: '⛏️', qty: 74000, feed: 0 } },
+      incubSlots: [{ free: true, tl: 0, tot: 1, ready: true }], eggTimer: 0, petId: 3,
+      totalHatched: 42, fusionCount: 5, completedAchievements: ['first_hatch'],
+      petsRosterResetV1: true, petsRosterCapV1: true, petsUidV1: true, petsSpeciesRarityV1: true,
+      savedAt: Date.now(),
+      // pas de petsEconomyWipeV1 -- exactement une sauvegarde d'avant le passage en prod
+    }));
+  });
+
+  await page.goto('/index.dev.html', { waitUntil: 'load' });
+  await signInForTest(page);
+  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
+
+  const frame = page.frameLocator('#companionsFrame');
+  await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
+  await expect.poll(() => frame.locator('body').evaluate(() => petsEconomyWipeV1)).toBe(true);
+
+  const after = await frame.locator('body').evaluate(() => ({
+    petsLen: PETS.length,
+    invKeys: Object.keys(INVENTORY).length,
+    slotCount: incubSlots.length,
+    lockedCount: incubSlots.filter(s => s.locked).length,
+    totalHatched, fusionCount,
+    achievementsKept: completedAchievements.has('first_hatch'),
+    flag: petsEconomyWipeV1,
+  }));
+  expect(after.petsLen).toBe(0);             // roster de test effacé
+  expect(after.invKeys).toBe(0);             // hoards d'inventaire effacés
+  expect(after.slotCount).toBe(5);           // slots remis au modèle prod (5 fixes)
+  expect(after.lockedCount).toBe(3);         // 2 gratuits + 3 verrouillés
+  expect(after.totalHatched).toBe(0);        // compteurs de tirage remis à zéro
+  expect(after.fusionCount).toBe(0);
+  expect(after.achievementsKept).toBe(true); // succès déjà obtenus PRÉSERVÉS (pas de re-versement)
+  expect(after.flag).toBe(true);
+
+  // persisté -> ne se répète jamais
+  const persisted = await frame.locator('body').evaluate(() =>
+    JSON.parse(localStorage.getItem('velia_idle_pets_save')));
+  expect(persisted.petsEconomyWipeV1).toBe(true);
+  expect(persisted.PETS).toEqual([]);
   expect(pageErrors).toEqual([]);
 });
 
