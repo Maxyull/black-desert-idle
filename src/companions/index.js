@@ -8,11 +8,67 @@ function suggestEggFor(rar){
   toast('🥚', i18next.t('companions:companions.index.suggest_toast', {rarity:rn(rar), lines:lines}));
 }
 
-/** Reconstruit l'onglet Index (matrice rareté×tier, chips de filtre, table du catalogue). */
+/** Reconstruit l'onglet Index (matrice rareté×tier, TOUS les taux, chips de filtre, table du catalogue). */
 function renderIndex(){
   renderIndexMatrix();
+  renderIndexRates();
   renderIndexFilterChips();
   renderIndexPetTable();
+}
+
+/**
+ * Centralise TOUS les taux du module dans l'Index (2026-07-18, demande explicite : "dans l'index tu
+ * met tout les taux") : les chances d'éclosion par rareté (déjà dans l'onglet Éclosion via
+ * renderHatch) ET les taux de loot du Hardinage par section (déjà dans l'onglet Hardinage via
+ * renderHardOdds, mais par pet actif). Ici c'est la vue de RÉFÉRENCE, indépendante de ce qu'on
+ * possède : odds d'œuf brutes + taux de loot de BASE (gsFactor=1, soit un GS de 0). Réutilise
+ * EXACTEMENT les mêmes sources (EGG_TYPES.odds, SECTIONS[].drops) et les mêmes seuils que
+ * triggerHardDrop()/renderHardOdds() -- aucune logique de tirage dupliquée, juste affichée.
+ */
+function renderIndexRates(){
+  const el = document.getElementById('index-rates');
+  if(!el) return;
+  const th = 'padding:6px 10px;border-bottom:1px solid var(--border)';
+  const td = 'padding:6px 10px;border-bottom:1px solid var(--border)';
+  const subtitle = t => `<div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--cream2);margin:14px 0 6px">${t}</div>`;
+
+  // 1) Éclosion : rareté × type d'œuf (mêmes valeurs que la grille de l'onglet Éclosion)
+  const hatch = `<table style="border-collapse:collapse;font-size:11px;min-width:520px">
+    <thead><tr>
+      <th style="${th};text-align:left;color:var(--cream2)">${i18next.t('companions:companions.hatch.col_rarity')}</th>
+      ${EGG_TYPES.map(e=>`<th style="${th};color:var(--gold);font-family:'Cinzel',serif;font-size:10px">${e.ico} ${eggName(e)}</th>`).join('')}
+    </tr></thead><tbody>
+      ${RARITIES.map((r,ri)=>`<tr>
+        <td style="${td};color:${r.hex};font-family:'Cinzel',serif">${rn(ri)}</td>
+        ${EGG_TYPES.map(e=>`<td style="${td};text-align:center;font-family:'JetBrains Mono',monospace;color:var(--cream)">${e.odds[ri]}%</td>`).join('')}
+      </tr>`).join('')}
+    </tbody></table>`;
+
+  // 2) Hardinage : taux de loot de BASE par section (gsFactor=1 -> rare 2%, peu commun 16%, commun 82%,
+  //    exactement les seuils de triggerHardDrop() : roll<2 => rare ; roll<18 => peu commun ; sinon commun)
+  const baseRare = 2, baseUncommon = 16, baseCommon = 82;
+  const hard = `<table style="border-collapse:collapse;font-size:11px;min-width:520px">
+    <thead><tr>
+      <th style="${th};text-align:left;color:var(--cream2)">${i18next.t('companions:companions.index.col_section')}</th>
+      <th style="${th};color:var(--cream2)">${i18next.t('companions:companions.index.col_common')}</th>
+      <th style="${th};color:var(--blue2)">${i18next.t('companions:companions.index.col_uncommon')}</th>
+      <th style="${th};color:var(--r3)">${i18next.t('companions:companions.index.col_rare')}</th>
+    </tr></thead><tbody>
+      ${SECTIONS.map(sec=>{
+        const d = sec.drops;
+        const cell = (drop, pct, col) => `<td style="${td};text-align:center;color:${col}"><div style="font-size:13px">${drop.e}</div><div style="font-size:8px;color:var(--cream3)">${itemLabel(drop.n)}</div><div style="font-family:'JetBrains Mono',monospace">${pct}%</div></td>`;
+        return `<tr>
+          <td style="${td};color:var(--cream);white-space:nowrap">${sec.ico} ${secName(sec)}</td>
+          ${cell(d[0], baseCommon, 'var(--cream)')}
+          ${cell(d[1], baseUncommon, 'var(--blue2)')}
+          ${cell(d[2], baseRare, 'var(--r3)')}
+        </tr>`;
+      }).join('')}
+    </tbody></table>
+    <div style="font-size:9px;color:var(--cream3);margin-top:6px">${i18next.t('companions:companions.index.hard_rates_hint')}</div>`;
+
+  el.innerHTML = subtitle(i18next.t('companions:companions.index.hatch_odds_subtitle')) + hatch
+    + subtitle(i18next.t('companions:companions.index.hard_rates_subtitle')) + hard;
 }
 
 /** Reconstruit la matrice rareté×tier (plage de GS normalisée sur l'absolu Ancestral T5, statut possédé/à nourrir/à éclore par case) + légende. */
