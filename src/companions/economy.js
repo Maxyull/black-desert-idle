@@ -3,7 +3,7 @@
 // data.js), plutôt qu'un compteur séparé propre à ce module : ce dossier ne peut pas charger
 // meta/patch-notes-data.js (scope global distinct, iframe isolée), donc pas de lecture automatique
 // possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
-const COMPANION_MODULE_VERSION = 'V477';
+const COMPANION_MODULE_VERSION = 'V478';
 
 // ═══ BALANCE ═══ (2026-07-18, demande explicite : "remets le divisor à 1, on passe en prod")
 // Les coûts Silver et timers passent en VRAIES valeurs (divisor = 1). scaleCost()/scaleTimer()
@@ -35,11 +35,14 @@ function costLabelFor(v){ return v>0 ? `${v.toLocaleString(NUM_LOCALE)} Silver` 
 // façon monotone. Ancestral : 0,2 % → 3 % (×15 au dernier palier). Prix ×10 par palier. Chaque œuf
 // a enfin une identité. Les 4 œufs "ciblés" sont SUPPRIMÉS (redondants et à récompense inversée).
 // Chaque ligne d'odds somme bien à 100.
+// Prix (2026-07-18, demande explicite "changer le prix des œufs", palier ×100 plus cher) : le silver
+// est désormais celui du JEU (pool partagé, bien plus abondant), les prix montent en conséquence --
+// Gratuit / 500 000 / 5 000 000 / 50 000 000 (échelle ×10 conservée entre paliers).
 const EGG_TYPES=[
-  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),      costLabel:costLabelFor(scaleCost(0)),      odds:[60,30, 7, 2,0.8,0.2]},
-  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(5000),   costLabel:costLabelFor(scaleCost(5000)),   odds:[45,33,14, 5, 2,  1]},
-  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(50000),  costLabel:costLabelFor(scaleCost(50000)),  odds:[30,32,22,10, 4,  2]},
-  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(500000), costLabel:costLabelFor(scaleCost(500000)), odds:[15,28,28,18, 8,  3]},
+  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),        costLabel:costLabelFor(scaleCost(0)),        odds:[60,30, 7, 2,0.8,0.2]},
+  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(500000),   costLabel:costLabelFor(scaleCost(500000)),   odds:[45,33,14, 5, 2,  1]},
+  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(5000000),  costLabel:costLabelFor(scaleCost(5000000)),  odds:[30,32,22,10, 4,  2]},
+  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(50000000), costLabel:costLabelFor(scaleCost(50000000)), odds:[15,28,28,18, 8,  3]},
 ];
 
 // Pool de silver PARTAGÉ avec le jeu (2026-07-18, demande explicite : "silver bidirectionnel, on

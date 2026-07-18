@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V478', d:'18/07/2026 17:00', name:{fr:'Compagnon : prix des œufs revus et achat multiple retiré', en:'Companions: egg prices revised and multi-buy removed'}, fr:[
+      {t:'change', sub:'compagnon', tx:'Nouveaux prix des œufs, calés sur le silver du jeu (partagé) : Basique gratuit, Argenté 500 000, Doré 5 000 000, Platine 50 000 000. Chaque palier vaut ×10 le précédent, pour un vrai choix entre attendre l\'œuf gratuit et payer pour de meilleures chances.'},
+      {t:'change', sub:'compagnon', tx:'L\'achat instantané ×1/×5/×10 (raccourci de test) est retiré. On obtient un œuf en éclosant un créneau d\'incubation prêt (bouton « Éclore », qui laisse choisir l\'œuf à payer), ou via « Éclore tout ». Le tableau des chances par œuf reste affiché, à titre informatif.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'New egg prices, aligned with the (shared) game silver: Basic free, Silver 500,000, Gold 5,000,000, Platinum 50,000,000. Each tier costs ×10 the previous one, for a real choice between waiting for the free egg and paying for better odds.'},
+      {t:'change', sub:'compagnon', tx:'The instant ×1/×5/×10 buy (a test shortcut) is removed. You get an egg by hatching a ready incubation slot (the "Hatch" button, which lets you choose which egg to pay for), or via "Hatch all". The per-egg odds table is still shown, for reference.'},
+    ] },
   { v:'V477', d:'18/07/2026 16:00', name:{fr:'Compagnon passe en prod : silver lié au jeu, vraies valeurs, farm ×5', en:'Companions go live: silver linked to the game, real values, ×5 farming'}, fr:[
       {t:'change', sub:'compagnon', tx:'Le module Compagnon n\'est plus « en test » : son silver est désormais LE MÊME que celui du jeu principal. Acheter un œuf ou un slot d\'incubation débite ton silver de jeu ; le butin et les ventes de tes compagnons le créditent. Tout est tracé comme n\'importe quelle autre source (catégorie « compagnon »). Fini la bourse séparée : ce que tes compagnons rapportent sert à tout le reste, et inversement.'},
       {t:'change', sub:'compagnon', tx:'Les prix et les temps passent en vraies valeurs (finies les valeurs de test divisées). L\'incubation d\'un œuf dure 6 h. Les slots d\'incubation sont désormais 5 au total : 2 gratuits d\'emblée, puis 3 à débloquer dans l\'ordre pour 1 M, 10 M et 100 M de silver.'},
