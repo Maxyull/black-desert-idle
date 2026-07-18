@@ -90,6 +90,10 @@
        joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
        sync). Voir market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
   <div class="tab" onclick="ST(11)">🔄 <span data-i18n="companions.tabs.market">Marché</span> <span class="tbadge" id="tb-market"></span></div>
+  <!-- onglet Tutoriel (2026-07-18, demande explicite : "fais un tutoriel de comment se passe le
+       menu compagnon dans un onglet tutoriel") -- guide illustré (icônes) + concis, rendu par
+       renderTutorial() (tutorial.js) sur ST(12). Ajouté en DERNIER (index d'onglet 12). -->
+  <div class="tab" onclick="ST(12)">📘 <span data-i18n="companions.tabs.tutorial">Tutoriel</span></div>
 </div>
 <div class="content">
 
@@ -446,6 +450,12 @@
     <div id="market-body"></div>
   </div>
 </div>
+<!-- TAB 12 — TUTORIEL (guide illustré du menu compagnon, rendu par renderTutorial(), tutorial.js) -->
+<div class="panel" id="p12">
+  <div style="flex:1;overflow-y:auto;padding:20px 24px">
+    <div id="tutorial-content"></div>
+  </div>
+</div>
 </div>
 <div class="modal-bg" id="hatch-modal">
   <div class="modal"><button class="mcl" onclick="closeHatchModal()">✕</button><div style="font-family:'Cinzel',serif;font-size:15px;color:var(--gold);margin-bottom:12px" data-i18n="companions.hatch.hatched_title">✨ Familier éclos !</div><div id="hatch-body"></div></div>
@@ -505,11 +515,11 @@
 <script src="i18n.js?v=1"></script>
 <script src="pixelart.js?v=7"></script>
 <script src="catalog.js?v=9"></script>
-<script src="economy.js?v=25"></script>
+<script src="economy.js?v=26"></script>
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
 <script src="tier.js?v=13"></script>
 <script src="roster.js?v=12"></script>
-<script src="hatch.js?v=30"></script>
+<script src="hatch.js?v=31"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=9"></script>
 <script src="sections.js?v=18"></script>
@@ -519,7 +529,7 @@
 <script src="feed.js?v=11"></script>
 <script src="ticks.js?v=16"></script>
 <!-- renommés le 2026-07-21 (lot 5/~8, même renommage progressif que ci-dessus) -->
-<script src="save.js?v=22"></script>
+<script src="save.js?v=23"></script>
 <!-- sync des compteurs admin vers Supabase (2026-07-19, demande explicite) : charge APRÈS
      save.js/hatch.js/economy.js (lit PETS/SILVER/totalHatched/... au moment de l'appel, pas au
      chargement -- ordre non strictement requis, juste plus lisible ici) -->
@@ -534,6 +544,8 @@
 <script src="index.js?v=12"></script>
 <script src="game-view.js?v=11"></script>
 <script src="hardinage.js?v=11"></script>
+<!-- onglet Tutoriel (2026-07-18, demande explicite) : renderTutorial() (appelé par ST(12), hatch.js). -->
+<script src="tutorial.js?v=1"></script>
 <!-- renommés le 2026-07-21 (lot 7/~8, même renommage progressif que ci-dessus) -->
 <script src="achievements.js?v=10"></script>
 <!-- classement PvP (2026-07-20, demande explicite) : lit PETS/normGS/rc/rn/secById/gsCls/gsPct
