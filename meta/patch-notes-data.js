@@ -19,6 +19,15 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V480', d:'18/07/2026 19:00', name:{fr:'Compagnon : PvP ouvert, Viewer 3D retiré, taux mieux rangés', en:'Companions: PvP opened, 3D viewer removed, tidier rates'}, fr:[
+      {t:'change', sub:'compagnon', tx:'L\'onglet PvP est ouvert et mis en avant : le tournoi quotidien (inscription libre, résolution automatique à 21h) est bel et bien jouable et rapporte du silver aux mieux classés. Fini le cadenas « Bientôt disponible » — seuls les combats temps-réel en direct restent pour plus tard.'},
+      {t:'change', sub:'compagnon', tx:'L\'onglet « Viewer 3D » (un écran de test) est retiré. L\'aperçu 3D d\'un familier reste accessible depuis sa fiche sur le terrain.'},
+      {t:'change', sub:'compagnon', tx:'Dans l\'Index, le tableau des taux de loot du Hardinage se place maintenant à droite des chances d\'éclosion (au lieu d\'en dessous) quand la largeur le permet — moins de vide, tout se lit d\'un coup d\'œil.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'The PvP tab is open and highlighted: the daily tournament (free entry, auto-resolved at 9pm) is fully playable and pays silver to the top-ranked. No more "Coming soon" lock — only live real-time fights are still to come.'},
+      {t:'change', sub:'compagnon', tx:'The "3D viewer" tab (a test screen) is removed. A companion\'s 3D preview is still available from its field card.'},
+      {t:'change', sub:'compagnon', tx:'In the Index, the Foraging loot-rate table now sits to the right of the hatch odds (instead of below) when width allows — less empty space, everything readable at a glance.'},
+    ] },
   { v:'V479', d:'18/07/2026 18:00', name:{fr:'Compagnon : onglet Tutoriel, éclosion directe, timer corrigé', en:'Companions: Tutorial tab, direct hatch, timer fix'}, fr:[
       {t:'new', sub:'compagnon', tx:'Nouvel onglet « Tutoriel » : un guide illustré et concis de chaque menu du module (Jeu, Éclosion, Sections, Collection, Nourrir, Index, Hardinage, Progression, PvP/Classement) plus quelques astuces.'},
       {t:'change', sub:'compagnon', tx:'Le bouton « Éclore » lance maintenant DIRECTEMENT l\'éclosion (roulette + reveal) avec l\'œuf gratuit, au lieu d\'ouvrir la liste « quel œuf acheter ». Le petit bouton ✨ à côté ouvre le choix d\'un œuf premium quand tu veux payer pour de meilleures chances.'},

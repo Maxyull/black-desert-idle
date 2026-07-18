@@ -42,6 +42,13 @@ body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;widt
 .tab:hover{color:var(--cream2)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .tbadge{background:var(--gold-dim);color:var(--gold2);font-size:9px;padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace}
 .tbadge.alert{background:rgba(192,80,60,.22);color:var(--red2)}
+/* onglet PvP mis en valeur (2026-07-18, "met en valeur l'onglet pvp") : accent doré permanent +
+   badge 🏆 pulsé (le tournoi quotidien est jouable). Animation neutralisée en "mouvement réduit". */
+.pvp-tab{color:var(--gold2)}
+.pvp-tab .tbadge{background:var(--gold);color:var(--bg)}
+.pvp-tab:not(.active) .tbadge{animation:pvppulse 1.8s ease-in-out infinite}
+@keyframes pvppulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+@media (prefers-reduced-motion:reduce){.pvp-tab .tbadge{animation:none}}
 .content{flex:1;overflow:hidden;display:flex;flex-direction:column}
 .panel{display:none;flex:1;overflow:hidden}.panel.active{display:flex}
 .btn{font-family:'Cinzel',serif;font-size:10px;font-weight:600;letter-spacing:.06em;padding:7px 14px;border-radius:5px;cursor:pointer;border:1px solid;transition:all .15s;white-space:nowrap}

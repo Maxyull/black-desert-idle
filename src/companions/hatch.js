@@ -2,7 +2,10 @@
 /** @param {number} i - index d'onglet (0-11). Bascule l'onglet actif et déclenche le render/dispose lazy propre à chaque onglet (viewers 3D montés/libérés uniquement quand leur onglet est visible). */
 function ST(i){
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
-  ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10','p11','p12'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
+  // onglet Viewer 3D (ancien p10) RETIRÉ (2026-07-18, demande explicite : "enleve le viewer 3D") --
+  // c'était un écran de test du pipeline GLB ; le rendu 3D reste dispo via le preview d'un pet
+  // (open3dPreviewModal, viewer3d.js). Marché passe à l'index 10, Tutoriel à 11.
+  ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p11','p12'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
   // bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut
   // pas acheter les oeufs") -- ST(1) (onglet Éclosion) n'appelait jamais renderHatch() : le tick
   // (ticks.js) décrémente bien sl.tl/passe sl.ready à true en mémoire chaque seconde,
@@ -28,12 +31,11 @@ function ST(i){
   if(i===7) renderAchievements();
   if(i===8){ renderPvp(); if(typeof refreshPvpTournamentState==='function') refreshPvpTournamentState(); }
   if(i===9) renderMyStatsAndLeaderboard();
-  if(i===11 && typeof renderMarketTab==='function') renderMarketTab();
-  if(i===12 && typeof renderTutorial==='function') renderTutorial();
-  // écran de test viewer 3D GLB (2026-07-10) : n'initialise le contexte WebGL qu'à l'ouverture
-  // réelle de l'onglet, le libère à la fermeture (évite de garder un renderer actif en arrière-plan
-  // pendant que le joueur navigue ailleurs dans le module)
-  if(i===10) initViewer3dIfNeeded(); else if(typeof disposeViewer3dIfActive==='function') disposeViewer3dIfActive();
+  if(i===10 && typeof renderMarketTab==='function') renderMarketTab();
+  if(i===11 && typeof renderTutorial==='function') renderTutorial();
+  // onglet de test Viewer 3D retiré (2026-07-18) -- plus d'init/dispose du renderer de test ici.
+  // Le rendu 3D d'un pet passe désormais uniquement par sa modale de preview (open3dPreviewModal,
+  // viewer3d.js), qui gère son propre cycle de vie WebGL.
   // carte terrain en 3D (2026-07-10) : même principe -- libère le contexte WebGL dès qu'on quitte
   // l'onglet Sections (i===2), voir updateTerrainViewer3d()/disposeTerrainViewer3dIfActive()
   // (sections.js).

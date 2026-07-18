@@ -117,6 +117,22 @@ async function dismissTutorialsAndClick(page, locator, attempts = 5) {
   }
 }
 
+// Fiabilité (2026-07-18) : le jeu principal tourne en fond pendant ces tests et déclenche parfois un
+// tutoriel d'OBJET (ITEM_TUTORIALS, ex. "Pierre de Cron") dont l'overlay hôte plein écran bloque
+// tout clic DANS l'iframe Compagnon -> timeouts intermittents, sans rapport avec le module testé.
+// On neutralise ces tutoriels de façon id-agnostique AVANT tout script de page : getItem renvoie
+// "déjà vu" ('1') pour n'importe quelle clé velia-idle-item-tuto-seen-* (voir itemTutoStorageKey /
+// isItemTutorialSeen, notifications-quests.js), donc maybeShowItemTutorial() n'en ouvre jamais.
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    const origGet = Storage.prototype.getItem;
+    Storage.prototype.getItem = function (k) {
+      if (typeof k === 'string' && k.startsWith('velia-idle-item-tuto-seen-')) return '1';
+      return origGet.call(this, k);
+    };
+  });
+});
+
 test('companion module opens in an isolated iframe, renders, and closes cleanly', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -1263,7 +1279,7 @@ test('fusion of two identical pets never shows a red arrow on tier (tier can onl
 // categorie" + "header : PVP bloqué") -- vrai PvP joueur-contre-joueur pas encore livré (bandeau
 // verrouillé, voir pvp.js), mais le classement local par puissance (GS) fonctionne
 // réellement -- vérifie les deux : l'UI verrouillée ET le tri correct du classement.
-test('PvP tab shows a locked banner and a real GS-sorted ranking of owned pets', async ({ page }) => {
+test('PvP tab shows the daily-tournament banner and a real GS-sorted ranking of owned pets', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -1273,7 +1289,8 @@ test('PvP tab shows a locked banner and a real GS-sorted ranking of owned pets',
 
   const frame = page.frameLocator('#companionsFrame');
   await frame.locator('.tabs .tab', { hasText: 'PvP' }).click();
-  await expect(frame.locator('text=PvP — Bientôt disponible')).toBeVisible();
+  // bannière ré-encadrée (2026-07-18, "ouvrir pvp") : le tournoi quotidien est jouable, plus de "🔒 Bientôt".
+  await expect(frame.locator('text=PvP — Tournoi quotidien')).toBeVisible();
 
   // injecte 3 pets de puissances connues et vérifie que computePvpRanking() les trie du plus fort
   // au plus faible (pure, testable sans dépendre du tirage aléatoire de rollAndCreatePet)
@@ -1289,47 +1306,8 @@ test('PvP tab shows a locked banner and a real GS-sorted ranking of owned pets',
   expect(pageErrors).toEqual([]);
 });
 
-// Viewer 3D GLB (2026-07-10, demande explicite : "on va integrer des model gbl") -- écran de test
-// isolé qui charge Three.js vendorisé en local (vendor/three/, jamais de CDN, voir README.md) via
-// un pont module->global (vendor/three/three-bridge.js, event 'three-ready') puis un .glb hébergé
-// sur Supabase Storage (bucket public "companion-models", voir supabase/migrations/
-// 20260710072116_companion_models_bucket.sql). Ce test couvre le PIPELINE (THREE chargé, canvas
-// WebGL créé, statut mis à jour), pas le contenu du modèle lui-même -- le fichier de test
-// (loot/black_mask_cat_T5.glb) est uploadé manuellement via le Dashboard Supabase (pas dans ce
-// repo, ~31 Mo), donc peut être absent selon l'environnement ; un 404 réseau est un échec de
-// CHARGEMENT géré proprement (message d'erreur affiché), jamais une exception JS -- distinction
-// vérifiée explicitement ci-dessous.
-test('3D viewer tab loads Three.js locally (no CDN) and creates a WebGL canvas without throwing', async ({ page }) => {
-  const pageErrors = [];
-  page.on('pageerror', error => pageErrors.push(error.message));
-
-  await page.goto('/index.dev.html', { waitUntil: 'load' });
-  await signInForTest(page);
-  await dismissTutorialsAndClick(page, page.locator('.actTab[data-id="pet"]'));
-
-  const frame = page.frameLocator('#companionsFrame');
-  await frame.locator('.tabs .tab', { hasText: 'Viewer 3D' }).click();
-  await expect(frame.locator('#viewer3d-canvas-wrap')).toBeVisible();
-
-  // three-bridge.js est un <script type="module">, chargé de façon asynchrone -- on attend
-  // l'event 'three-ready' déjà géré par viewer3d.js (initViewer3dIfNeeded réessaie
-  // via window.addEventListener('three-ready', ...) s'il tourne avant que le bridge soit prêt).
-  await expect
-    .poll(() => frame.locator('body').evaluate(() => typeof window.THREE), { timeout: 15_000 })
-    .toBe('object');
-
-  // un <canvas> WebGL doit apparaître dans le conteneur dédié une fois le renderer créé
-  await expect(frame.locator('#viewer3d-canvas-wrap canvas')).toHaveCount(1, { timeout: 10_000 });
-
-  // le statut doit sortir de l'état initial ("En attente…"), que le .glb charge ou échoue
-  // (404 si le fichier de test n'a pas encore été uploadé dans ce bucket dans cet environnement)
-  await expect
-    .poll(() => frame.locator('#viewer3d-status').textContent(), { timeout: 15_000 })
-    .not.toBe('En attente…');
-
-  // jamais d'exception JS non gérée, même si le chargement réseau du .glb échoue (404)
-  expect(pageErrors).toEqual([]);
-});
+// (onglet de test "Viewer 3D" retiré le 2026-07-18 -- "enleve le viewer 3D" ; le pipeline GLB
+// Three.js reste couvert par le test de la modale de preview d'un pet, ci-dessous.)
 
 // Intégration réelle du 1er modèle GLB (2026-07-10, demande explicite : "envoyer le premier test
 // .glb") -- le bouton "🧊 Voir en 3D" (panneau du pet déployé sur le terrain,
@@ -1819,13 +1797,11 @@ test('a pet that breaks through in rarity shows the SAME current rarity in Index
   expect(pageErrors).toEqual([]);
 });
 
-// bug corrigé (2026-07-21, rapporté explicitement : "lorsque je suis au market c'est le viewer 3D
-// qui montre actif et vis a versa") -- ST() surligne l'onglet actif par POSITION DOM parmi les
-// .tab, pas par l'argument i passé à onclick="ST(i)" -- les onglets Marché (onclick=ST(11)) et
-// Viewer 3D (onclick=ST(10)) étaient déclarés dans l'ordre INVERSE de leurs propres indices,
-// donc cliquer l'un surlignait l'autre (le CONTENU affiché restait correct, seul le surlignage
-// de l'onglet cliqué était faux). Corrigé en réordonnant les <div class="tab"> dans companions.html.
-test('clicking Marché highlights the Marché tab (not Viewer 3D), and vice versa', async ({ page }) => {
+// bug corrigé (2026-07-21) -- ST() surligne l'onglet actif par POSITION DOM parmi les .tab, pas
+// par l'argument i passé à onclick="ST(i)". Garde-fou maintenu après le retrait du Viewer 3D
+// (2026-07-18) : les 2 DERNIERS onglets (Marché onclick=ST(10) -> panel p11, Tutoriel ST(11) ->
+// p12) doivent chacun se surligner correctement et activer LEUR panel, jamais celui de l'autre.
+test('clicking Marché then Tutoriel highlights the right tab and panel (DOM-position based)', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
 
@@ -1838,13 +1814,13 @@ test('clicking Marché highlights the Marché tab (not Viewer 3D), and vice vers
 
   await frame.locator('.tabs .tab', { hasText: 'Marché' }).click();
   await expect(frame.locator('.tabs .tab', { hasText: 'Marché' })).toHaveClass(/active/);
-  await expect(frame.locator('.tabs .tab', { hasText: 'Viewer 3D' })).not.toHaveClass(/active/);
-  await expect(frame.locator('#p11')).toHaveClass(/active/);
+  await expect(frame.locator('.tabs .tab', { hasText: 'Tutoriel' })).not.toHaveClass(/active/);
+  await expect(frame.locator('#p11')).toHaveClass(/active/); // Marché = panel p11
 
-  await frame.locator('.tabs .tab', { hasText: 'Viewer 3D' }).click();
-  await expect(frame.locator('.tabs .tab', { hasText: 'Viewer 3D' })).toHaveClass(/active/);
+  await frame.locator('.tabs .tab', { hasText: 'Tutoriel' }).click();
+  await expect(frame.locator('.tabs .tab', { hasText: 'Tutoriel' })).toHaveClass(/active/);
   await expect(frame.locator('.tabs .tab', { hasText: 'Marché' })).not.toHaveClass(/active/);
-  await expect(frame.locator('#p10')).toHaveClass(/active/);
+  await expect(frame.locator('#p12')).toHaveClass(/active/); // Tutoriel = panel p12
 
   expect(pageErrors).toEqual([]);
 });
@@ -1871,7 +1847,14 @@ test('quickAddToMarket switches to the Marché tab and preselects the clicked pe
     return pet.id;
   });
 
-  await frame.locator(`#card${petId} button[title="Ajouter au marché"]`).click();
+  // un tutoriel d'objet du jeu principal (ITEM_TUTORIALS) peut s'ouvrir en fond par-dessus l'iframe
+  // et bloquer le clic (overlay hôte z-index) -- on ferme tout tutoriel puis on retente le clic.
+  const marketBtn = frame.locator(`#card${petId} button[title="Ajouter au marché"]`);
+  await expect(marketBtn).toBeVisible();
+  for (let i = 0; i < 5; i++) {
+    await dismissTutorialIfPresent(page);
+    try { await marketBtn.click({ timeout: 3000 }); break; } catch (e) { if (i === 4) throw e; }
+  }
 
   await expect(frame.locator('.tabs .tab', { hasText: 'Marché' })).toHaveClass(/active/);
   await expect(frame.locator('#market-modal')).toHaveClass(/open/);
