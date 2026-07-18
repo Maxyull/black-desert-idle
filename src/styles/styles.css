@@ -4164,3 +4164,17 @@
     .uiScaleBtnLabel { font-size:8px; }
   }
   .cardHostBody, .card.cardNested { min-width:0; }
+
+  /* Mobile shell: the top navigation is wider than a phone by design. Keep both rails scrollable
+     inside their own boxes instead of letting their min-content width enlarge the whole document. */
+  @media (max-width:600px) {
+    html, body { max-width:100%; overflow-x:clip; }
+    .topbar { width:100%; min-width:0; padding:8px; overflow:hidden; }
+    .topbar .topbar-right {
+      flex:1 1 100%; width:100%; min-width:0; margin-left:0;
+      justify-content:flex-start; overflow-x:auto; overflow-y:visible; padding:4px 4px 7px;
+      scrollbar-width:thin;
+    }
+    #activitiesBar { width:100%; min-width:0; max-width:100%; overflow:hidden; }
+    #activityTabs { width:100%; min-width:0; max-width:100%; }
+  }
