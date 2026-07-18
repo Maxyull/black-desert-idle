@@ -274,7 +274,39 @@ async function refreshPvpTournamentState() {
     const { data: y } = await sb.from('companion_pvp_tournaments').select('*').eq('day', yesterday).maybeSingle();
     pvpTournamentState.yesterday = y || null;
   } catch (e) { pvpTournamentState.yesterday = null; }
+  await claimPvpRewards();
   renderPvpTournamentCard();
+}
+
+/**
+ * Réclame les récompenses PvP non encore réclamées (RPC claim_pvp_rewards, montant/rang autoritaires
+ * côté serveur) et crédite le total sur le silver DU JEU (pool partagé, via earnSilver -> addSilver
+ * hôte). Le serveur marque les gains 'claimed' de façon atomique : aucun double versement possible.
+ * Fire-and-forget : ne bloque jamais l'affichage de la carte.
+ * @returns {Promise<void>}
+ */
+async function claimPvpRewards() {
+  if (!pvpTournamentReady()) return;
+  const sb = pvpSb();
+  try {
+    const { data, error } = await sb.rpc('claim_pvp_rewards');
+    if (error || !Array.isArray(data) || data.length === 0) return;
+    const total = data.reduce((s, r) => s + Number(r.silver || 0), 0);
+    if (total > 0 && typeof earnSilver === 'function') earnSilver(total, 'compagnon:pvp');
+    const best = data.reduce((b, r) => (r.rank < b ? r.rank : b), 99);
+    const medal = best === 1 ? '🥇' : best === 2 ? '🥈' : best === 3 ? '🥉' : '🏅';
+    if (typeof toast === 'function') {
+      toast(medal, i18next.t('companions:companions.pvp.reward_toast', {
+        silver: total.toLocaleString(NUM_LOCALE), count: data.length,
+      }));
+    }
+    if (typeof addGameLog === 'function') {
+      addGameLog(i18next.t('companions:companions.pvp.reward_log', {
+        silver: total.toLocaleString(NUM_LOCALE), count: data.length,
+      }));
+    }
+    if (typeof updateSilverDisplay === 'function') updateSilverDisplay();
+  } catch (e) { /* best-effort, jamais bloquant */ }
 }
 
 // ═══ UI ═══════════════════════════════════════════════════════════════════════════════════════
@@ -336,6 +368,7 @@ function renderPvpTournamentCard() {
         <div style="font-size:10px;color:var(--cream3)">${i18next.t('companions:companions.pvp.before_close')}</div>
         <div style="margin-left:auto;font-size:11px;color:var(--cream2)">${i18next.t('companions:companions.pvp.registrant_count_html', {count:pvpTournamentState.registrantCount})}</div>
       </div>
+      <div style="font-size:9.5px;color:var(--gold2);margin-top:8px">${i18next.t('companions:companions.pvp.reward_tiers')}</div>
     </div>
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:12px">
       <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--cream2);margin-bottom:6px">${i18next.t('companions:companions.pvp.team_title')}</div>
