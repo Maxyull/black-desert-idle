@@ -14,7 +14,7 @@
      chaque modification d'un fichier companions.*, sinon un joueur qui revient garde les
      anciens fichiers en cache indéfiniment (contrairement au bundle principal, versionné via
      index.dev.html) -->
-<link rel="stylesheet" href="companions.css?v=15">
+<link rel="stylesheet" href="companions.css?v=16">
 <!-- three.js vendorisé en local, jamais de CDN (2026-07-10, viewer 3D compagnons GLB) --
      three.module.min.js/GLTFLoader.js/OrbitControls.js sont des modules ES (import/export imposé
      par la lib), l'importmap ci-dessous résout le spécificateur nu "three" ; vendor/three/three-
@@ -65,35 +65,24 @@
   <div class="tab" onclick="ST(5)">📖 <span data-i18n="companions.tabs.index">Index</span> <span class="tbadge">48</span></div>
   <div class="tab" onclick="ST(6)">🌿 <span data-i18n="companions.tabs.hardinage">Hardinage</span></div>
   <div class="tab" onclick="ST(7)">🏆 <span data-i18n="companions.tabs.progression">Progression</span> <span class="tbadge" id="tb7">0/17</span></div>
-  <!-- 2026-07-20, demande explicite : "categorie pvp, classement de toutes les fonction de la
-       categorie" -- vrai PvP joueur-contre-joueur pas encore livré (nécessite un serveur
-       autoritaire, voir pvp.js), mais le classement local par puissance (GS) l'est. -->
-  <div class="tab" onclick="ST(8)">⚔️ <span data-i18n="companions.tabs.pvp">PvP</span> <span class="tbadge">🔒</span></div>
+  <!-- PvP OUVERT + mis en valeur (2026-07-18, demande explicite : "met en valeur l'onglet pvp",
+       "ouvrir pvp") -- le tournoi PvP QUOTIDIEN (pvp-tournament.js, résolution serveur pg_cron) est
+       bel et bien jouable ; on retire le badge 🔒 (remplacé par 🏆) et on met l'onglet en valeur
+       via la classe .pvp-tab (accent doré animé, companions.css). Les combats temps-réel restent
+       futurs (bannière du panneau, adoucie). -->
+  <div class="tab pvp-tab" onclick="ST(8)">⚔️ <span data-i18n="companions.tabs.pvp">PvP</span> <span class="tbadge" id="tb-pvp">🏆</span></div>
   <!-- 2026-07-20, demande explicite : "ajouter classement, oeuf ouvert, argent depensé..." --
        classement CROSS-JOUEURS réel (companion_leaderboard(), Supabase), distinct du classement
        LOCAL de tes propres pets déjà présent dans l'onglet PvP ci-dessus. -->
   <div class="tab" onclick="ST(9)">🏆 <span data-i18n="companions.tabs.leaderboard">Classement</span></div>
-  <!-- bug corrigé (2026-07-21, rapporté explicitement : "lorsque je suis au market c'est le
-       viewer 3D qui montre actif et vis a versa") -- ST() surligne l'onglet actif par POSITION
-       DOM (`document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j))`),
-       PAS par l'argument passé à onclick="ST(i)". Marché (onclick=ST(11)) et Viewer 3D
-       (onclick=ST(10)) étaient déclarés dans l'ordre INVERSE de leurs propres indices --
-       Marché en position DOM 10 mais i=11, Viewer 3D en position DOM 11 mais i=10 -- donc
-       cliquer Marché surlignait l'onglet Viewer 3D (et vice versa) alors que le contenu affiché
-       (panels p10/p11, indexés par tableau, pas par position DOM) restait correct. Fix : ordre DOM
-       remis dans le même ordre que les indices ST(), comme tous les autres onglets. -->
-  <!-- 2026-07-10, demande explicite : "on va integrer des model gbl" -- écran de test isolé pour
-       valider le pipeline Three.js/GLB avant tout remplacement des icônes 2D existantes (roster,
-       collection, incubation...). Charge un unique modèle de test depuis Supabase Storage. -->
-  <div class="tab" onclick="ST(10)">🧊 <span data-i18n="companions.tabs.viewer3d">Viewer 3D</span> <span class="tbadge">TEST</span></div>
-  <!-- 2026-07-10, demande explicite : "vrai backend d'échange" -- marché réel de compagnons entre
-       joueurs, seul onglet qui touche VRAIMENT un pet côté serveur (pas juste des compteurs de
-       sync). Voir market.js + supabase/migrations/20260710150000_companion_pet_trade_market.sql -->
-  <div class="tab" onclick="ST(11)">🔄 <span data-i18n="companions.tabs.market">Marché</span> <span class="tbadge" id="tb-market"></span></div>
-  <!-- onglet Tutoriel (2026-07-18, demande explicite : "fais un tutoriel de comment se passe le
-       menu compagnon dans un onglet tutoriel") -- guide illustré (icônes) + concis, rendu par
-       renderTutorial() (tutorial.js) sur ST(12). Ajouté en DERNIER (index d'onglet 12). -->
-  <div class="tab" onclick="ST(12)">📘 <span data-i18n="companions.tabs.tutorial">Tutoriel</span></div>
+  <!-- ordre DOM = index ST() pour TOUS les onglets (ST() surligne par POSITION DOM). Onglet de test
+       Viewer 3D retiré (2026-07-18, "enleve le viewer 3D") -- Marché passe à ST(10), Tutoriel à
+       ST(11). Le marché est le seul onglet qui touche VRAIMENT un pet côté serveur (market.js +
+       migration companion_pet_trade_market.sql). -->
+  <div class="tab" onclick="ST(10)">🔄 <span data-i18n="companions.tabs.market">Marché</span> <span class="tbadge" id="tb-market"></span></div>
+  <!-- onglet Tutoriel (2026-07-18) : guide illustré (icônes) + concis, rendu par renderTutorial()
+       (tutorial.js) sur ST(11). -->
+  <div class="tab" onclick="ST(11)">📘 <span data-i18n="companions.tabs.tutorial">Tutoriel</span></div>
 </div>
 <div class="content">
 
@@ -382,11 +371,11 @@
      familiers par puissance (GS) l'est déjà, base du futur matchmaking. -->
 <div class="panel" id="p8">
   <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
-    <div style="background:linear-gradient(135deg,rgba(192,80,60,.18),var(--s3));border:1px solid var(--red);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
-      <span style="font-size:26px">🔒</span>
+    <div style="background:linear-gradient(135deg,rgba(212,169,85,.16),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
+      <span style="font-size:26px">🏆</span>
       <div>
-        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--red2)" data-i18n="companions.pvp.locked_title">PvP — Bientôt disponible</div>
-        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px" data-i18n="companions.pvp.locked_desc">Les vrais combats joueur-contre-joueur nécessitent un serveur (matchmaking + résolution) pas encore construit. En attendant, voici le classement de tes familiers par puissance — la base sur laquelle le futur PvP s'appuiera.</div>
+        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold)" data-i18n="companions.pvp.locked_title">PvP — Tournoi quotidien</div>
+        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px" data-i18n="companions.pvp.locked_desc">Affronte les autres joueurs chaque jour : inscris tes familiers, le classement se résout automatiquement à 21h (Europe/Paris) et rapporte du silver aux mieux classés. Les combats temps-réel en direct viendront plus tard.</div>
       </div>
     </div>
     <!-- Tournoi PvP quotidien asynchrone (2026-07-13, demande explicite) : inscription en continu,
@@ -422,25 +411,10 @@
   </div>
 </div>
 
-<!-- TAB 10 VIEWER 3D (TEST) -->
-<div class="panel" id="p10">
-  <div style="flex:1;overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:16px">
-    <div style="background:linear-gradient(135deg,rgba(212,169,85,.14),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px">
-      <span style="font-size:26px">🧪</span>
-      <div>
-        <div style="font-family:'Cinzel',serif;font-size:12px;color:var(--gold)" data-i18n="companions.viewer3d.tab_title">Viewer 3D — écran de test</div>
-        <div style="font-size:10.5px;color:var(--cream2);margin-top:2px" data-i18n="companions.viewer3d.desc">Valide le pipeline de chargement des modèles .glb (Three.js) avant tout remplacement des icônes 2D existantes. Un seul modèle chargé pour l'instant, depuis Supabase Storage.</div>
-      </div>
-    </div>
-    <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px">
-      <span style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.viewer3d.status_label">Statut</span>
-      <span id="viewer3d-status" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold2)" data-i18n="companions.viewer3d.waiting">En attente…</span>
-    </div>
-    <div id="viewer3d-canvas-wrap" style="width:100%;height:440px;background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden"></div>
-  </div>
-</div>
+<!-- onglet de test Viewer 3D (ancien p10) RETIRÉ (2026-07-18, "enleve le viewer 3D"). Le rendu 3D
+     d'un pet reste dispo via sa modale de preview (open3dPreviewModal, viewer3d.js). -->
 
-<!-- TAB 11 MARCHÉ (2026-07-10, demande explicite : "vrai backend d'échange") -->
+<!-- TAB 10 MARCHÉ (2026-07-10, demande explicite : "vrai backend d'échange") -->
 <div class="panel" id="p11">
   <div style="flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px">
     <div style="background:linear-gradient(135deg,rgba(212,169,85,.14),var(--s3));border:1px solid var(--gold-dim);border-radius:12px;padding:12px 16px;font-size:10.5px;color:var(--cream2)" data-i18n="companions.market.banner">
@@ -515,11 +489,11 @@
 <script src="i18n.js?v=1"></script>
 <script src="pixelart.js?v=7"></script>
 <script src="catalog.js?v=9"></script>
-<script src="economy.js?v=26"></script>
+<script src="economy.js?v=27"></script>
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
 <script src="tier.js?v=13"></script>
 <script src="roster.js?v=12"></script>
-<script src="hatch.js?v=31"></script>
+<script src="hatch.js?v=32"></script>
 <!-- renommés le 2026-07-21 (lot 3/~8, même renommage progressif que ci-dessus) -->
 <script src="pet-panel.js?v=9"></script>
 <script src="sections.js?v=18"></script>
@@ -536,12 +510,12 @@
 <script src="sync.js?v=15"></script>
 <!-- marché d'échange réel (2026-07-10, demande explicite) : lit PETS/petId/PET_CATALOG/RARITIES/
      rc/rn/tierMultOf/rollTierMult/drawPixelArt/toast/CM/petRosterRoomLeft déjà déclarés plus haut,
-     appelée uniquement via ST(11) + un poll périodique (livraisons/notifications) -- ordre non
+     appelée uniquement via ST(10) + un poll périodique (livraisons/notifications) -- ordre non
      strictement requis vis-à-vis de ces globals (aucune lecture immédiate), placé ici par
      lisibilité juste après le sync admin (même famille : accès à window.parent.getSbClient()). -->
-<script src="market.js?v=9"></script>
+<script src="market.js?v=10"></script>
 <!-- renommés le 2026-07-21 (lot 6/~8, même renommage progressif que ci-dessus) -->
-<script src="index.js?v=12"></script>
+<script src="index.js?v=13"></script>
 <script src="game-view.js?v=11"></script>
 <script src="hardinage.js?v=11"></script>
 <!-- onglet Tutoriel (2026-07-18, demande explicite) : renderTutorial() (appelé par ST(12), hatch.js). -->
@@ -561,13 +535,13 @@
      déclarés plus haut, appelée uniquement via ST(9) -- ordre non strictement requis, placé ici par
      lisibilité (même famille que pvp.js juste au-dessus). -->
 <script src="leaderboard.js?v=6"></script>
-<!-- écran de test viewer 3D GLB (2026-07-10) : script classique, lit window.THREE/GLTFLoader/
-     OrbitControls posés par vendor/three/three-bridge.js (module, résolu de façon asynchrone —
-     voir l'event 'three-ready' géré dans ce fichier). Ordre non strictement requis vis-à-vis des
-     autres scripts classiques (aucune lecture immédiate d'un global déclaré ailleurs), placé ici
-     par lisibilité, juste avant main.js. -->
+<!-- viewer 3D GLB (2026-07-10) : script classique, lit window.THREE/GLTFLoader/OrbitControls posés
+     par vendor/three/three-bridge.js (module, résolu de façon asynchrone — voir l'event
+     'three-ready'). L'onglet de test a été retiré (2026-07-18) ; ce fichier reste nécessaire pour
+     la modale de preview 3D d'un pet (open3dPreviewModal). Ordre non strictement requis. -->
+<script src="viewer3d.js?v=8"></script>
 <!-- renommés le 2026-07-21 (lot 8/8, dernier lot du renommage progressif -- voir CLAUDE.md §15) -->
-<script src="viewer3d.js?v=7"></script>
+
 <!-- onboarding (2026-07-11, demande explicite) : n'a besoin que de OM()/CM() (hatch.js, déjà
      chargé) et de localStorage -- ordre non strictement requis, placé juste avant main.js qui
      l'appelle (maybeShowOnboarding()) après le premier renderAll(). -->
