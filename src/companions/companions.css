@@ -42,6 +42,21 @@ body{background:var(--bg);color:var(--cream);font-family:'Inter',sans-serif;widt
 .tab:hover{color:var(--cream2)}.tab.active{color:var(--gold);border-bottom-color:var(--gold)}
 .tbadge{background:var(--gold-dim);color:var(--gold2);font-size:9px;padding:1px 5px;border-radius:3px;font-family:'JetBrains Mono',monospace}
 .tbadge.alert{background:rgba(192,80,60,.22);color:var(--red2)}
+/* badge "X prêt" de l'onglet Éclosion, mis en valeur en vert (2026-07-19, "menu trop de chiffre pour
+   rien, plus lisible") : n'apparaît QUE quand une éclosion est disponible (masqué sinon via ticks.js) --
+   c'est le seul badge d'onglet qui signale une action à faire, on le rend donc actionnable/visible. */
+.tbadge.ready{background:rgba(68,176,96,.22);color:var(--green2);font-weight:700}
+/* Badge Tier+Rareté unifié (2026-07-19, "mettre en évidence le tier + afficher Tier+rareté sur toutes
+   les fiches") -- voir tierRarPill() (tier.js). Segment Tier plein pour ressortir, Rareté colorée. */
+.tr-pill{display:inline-flex;align-items:stretch;border:1px solid var(--trc);border-radius:5px;overflow:hidden;font-size:9px;line-height:1;vertical-align:middle;white-space:nowrap}
+.tr-pill .trT{font-family:'Cinzel',serif;font-weight:700;background:var(--gold);color:var(--bg);padding:2px 5px;letter-spacing:.02em}
+.tr-pill .trR{color:var(--trc);background:color-mix(in srgb, var(--trc) 15%, transparent);padding:2px 6px;font-weight:600}
+.tr-pill.tr-sm{font-size:7px;border-radius:4px}
+.tr-pill.tr-sm .trT{padding:1px 3px}
+.tr-pill.tr-sm .trR{padding:1px 4px}
+/* tiers élevés : chip Tier accentué (dégradé doré + halo) pour mieux ressortir sur les hauts paliers */
+.tr-pill.tr-t4 .trT,.tr-pill.tr-t5 .trT{background:linear-gradient(135deg,var(--gold),var(--gold2))}
+.tr-pill.tr-t5{box-shadow:0 0 0 1px var(--gold),0 0 8px rgba(200,169,110,.35)}
 /* onglet PvP mis en valeur (2026-07-18, "met en valeur l'onglet pvp") : accent doré permanent +
    badge 🏆 pulsé (le tournoi quotidien est jouable). Animation neutralisée en "mouvement réduit". */
 .pvp-tab{color:var(--gold2)}

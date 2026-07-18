@@ -36,7 +36,14 @@ setInterval(()=>{
   if(eggTimer>0)eggTimer--;else eggTimer=21600;
   document.getElementById('h-egg').textContent=fmtT(eggTimer);
   const rdy=incubSlots.filter(s=>s.ready).length;
-  document.getElementById('tb0').textContent=rdy?i18next.t('companions:companions.tabs.hatch_badge_ready', {count:rdy}):i18next.t('companions:companions.tabs.hatch_badge_in_progress');
+  // badge d'onglet Éclosion (2026-07-19, "menu trop de chiffre pour rien, plus lisible") : n'apparaît
+  // QUE quand au moins une éclosion est prête (pastille verte actionnable) ; masqué le reste du temps
+  // plutôt que d'afficher un "en cours" permanent qui n'apporte aucune info.
+  const tb0=document.getElementById('tb0');
+  if(tb0){
+    if(rdy){ tb0.textContent=i18next.t('companions:companions.tabs.hatch_badge_ready', {count:rdy}); tb0.className='tbadge ready'; tb0.style.display=''; }
+    else { tb0.style.display='none'; }
+  }
   // bug corrigé (2026-07-20) : renderHatch() ne tournait qu'à l'ouverture de l'onglet (ST()) ou
   // après une éclosion -- le compte à rebours affiché restait figé et le bouton "Éclore" pouvait
   // ne jamais apparaître si le slot passait "prêt" pendant que l'onglet était déjà ouvert. Même
