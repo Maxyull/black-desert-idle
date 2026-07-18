@@ -1,0 +1,12 @@
+-- Remise à zéro du classement Compagnon (2026-07-18, demande explicite : "classement remis a 0
+-- compagnon", confirmée destructive via AskUserQuestion).
+--
+-- Le classement (companion_leaderboard(), migration 20260720140000) lit la table companion_stats
+-- (une ligne par joueur, poussée par syncCompanionStatsToServer côté client). On repart d'une base
+-- vide : chaque joueur re-synchronise ses stats au prochain chargement du module, avec les valeurs
+-- POST-WIPE (pets/inventaire remis à zéro au passage en prod, voir petsEconomyWipeV1) -- le
+-- classement se reconstruit donc proprement sur la nouvelle économie.
+--
+-- DELETE (pas TRUNCATE) : respecte RLS/triggers éventuels et reste anodin si la table est déjà vide
+-- (cas d'un environnement fraîchement déployé où cette migration serait rejouée).
+delete from public.companion_stats;
