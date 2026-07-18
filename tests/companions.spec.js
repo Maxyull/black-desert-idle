@@ -676,8 +676,10 @@ test('eggs roll a starting tier from tierOdds (well-formed, honored by rollAndCr
   expect(pageErrors).toEqual([]);
 });
 
-// onglet Tutoriel (2026-07-18, demande explicite : "fais un tutoriel de comment se passe le menu
-// compagnon dans un onglet tutoriel") -- guide illustré (icônes) + concis, rendu par renderTutorial().
+// onglet Tutoriel (2026-07-19, demande explicite : "fais un tuto qui prend tout l'écran avec des
+// images qui pointent vers d'autres images avec un peu de texte") -- refondu en DIAGRAMME illustré
+// plein écran : boucle de gameplay (Éclosion → Collection → Sections → Jeu → Nourrir) reliée par
+// des flèches SVG, satellites (Index/Hardinage/Progression/PvP/Marché), rendu par renderTutorial().
 test('the Tutorial tab renders an illustrated, concise guide of the companion menu', async ({ page }) => {
   const pageErrors = [];
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -696,9 +698,19 @@ test('the Tutorial tab renders an illustrated, concise guide of the companion me
   await expect(content).toContainText('Éclosion');
   await expect(content).toContainText('Collection');
   await expect(content).toContainText('Hardinage');
-  // une carte par étape (TUTORIAL_STEPS = 9) -- pas de clé i18next brute affichée
+
+  // le diagramme est bien rendu : la boucle principale, ses 5 nœuds illustrés et les flèches
+  // (SVG) qui les relient, plus les onglets satellites présentés à part.
+  await expect(content.locator('.tuto-loop')).toBeVisible();
+  await expect(content.locator('.tuto-node')).toHaveCount(5);       // Éclosion→Collection→Sections→Jeu→Nourrir
+  await expect(content.locator('.tuto-arrow svg')).toHaveCount(4);  // 4 flèches entre les 5 nœuds
+  await expect(content.locator('.tuto-tool')).toHaveCount(5);       // Index/Hardinage/Progression/PvP/Marché
+
+  // une entrée par onglet couvert (TUTORIAL_STEPS = 5 boucle + 5 satellites = 10)
   const stepCount = await frame.locator('body').evaluate(() => (typeof TUTORIAL_STEPS !== 'undefined' ? TUTORIAL_STEPS.length : 0));
-  expect(stepCount).toBe(9);
+  expect(stepCount).toBe(10);
+
+  // aucune clé i18next brute ne fuit (ni "companions.tutorial." ni des labels de flèche non traduits)
   const bodyText = await content.innerText();
   expect(bodyText).not.toMatch(/companions\.tutorial\./);
 
