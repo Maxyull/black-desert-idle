@@ -20,6 +20,16 @@ function updateSilverDisplay(){
 
 // ═══ TICKS ═══════════════════════════════════════════════════════
 setInterval(()=>{
+  // Onglet caché : NE RIEN faire avancer ici (2026-07-18, bug de double-comptage rapporté). Le
+  // rattrapage hors-ligne "fenêtre ouverte" (applyOfflineProgress sur visibilitychange, save.js)
+  // rattrape DÉJÀ toute la durée cachée au retour. Or les navigateurs ne suspendent pas ce
+  // setInterval quand l'onglet passe simplement en arrière-plan : ils le brident (plein régime les
+  // ~5 premières minutes, puis ~1/min). Sans ce garde, le temps caché était donc compté DEUX fois
+  // -- une par les ticks bridés, une par le rattrapage complet. Même politique que le jeu principal
+  // (advanceSim / playtime gatés sur document.hidden). Les 2 chemins deviennent mutuellement
+  // exclusifs : le tick pour le temps VISIBLE, applyOfflineProgress pour le temps CACHÉ.
+  // (Le garde <3min d'applyOfflineProgress absorbe les changements d'onglet courts, sans manque.)
+  if(document.hidden) return;
   PETS.forEach(p=>{if(p.terrain&&p.hunger>0)p.hunger=Math.max(0,p.hunger-.1);});
   incubSlots.forEach(sl=>{if(!sl.locked&&!sl.ready&&sl.tl>0){sl.tl--;if(sl.tl<=0)sl.ready=true;}});
   if(eggTimer>0)eggTimer--;else eggTimer=21600;
