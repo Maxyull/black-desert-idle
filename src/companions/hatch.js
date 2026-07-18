@@ -192,10 +192,10 @@ function openEggChoice(slotIdx){
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px">
       ${standardEggs.map((egg)=>eggRow(egg)).join('')}
     </div>
-    <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue2);margin-bottom:6px">${i18next.t('companions:companions.hatch.targeted_eggs')}</div>
+    ${targetedEggs.length ? `<div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--blue2);margin-bottom:6px">${i18next.t('companions:companions.hatch.targeted_eggs')}</div>
     <div style="display:flex;flex-direction:column;gap:8px">
       ${targetedEggs.map((egg)=>eggRow(egg)).join('')}
-    </div>`;
+    </div>` : ''}`;
   OM('hatch-modal');
 }
 

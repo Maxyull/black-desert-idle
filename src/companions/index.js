@@ -32,16 +32,27 @@ function renderIndexRates(){
   const td = 'padding:6px 10px;border-bottom:1px solid var(--border)';
   const subtitle = t => `<div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--cream2);margin:14px 0 6px">${t}</div>`;
 
-  // 1) Éclosion : rareté × type d'œuf (mêmes valeurs que la grille de l'onglet Éclosion)
+  // 1) Éclosion : rareté × type d'œuf. Chaque cellule montre l'odd d'UN tirage ET, entre
+  //    parenthèses, l'"index %" = chance d'obtenir ≥1 pet de cette rareté sur la période cible
+  //    (2026-07-18, demande explicite : "ajoute index % sur les tiers d'éclosion"). Formule
+  //    1-(1-p)^n avec n = jours_cible × 4 œufs/jour -- EXACTEMENT celle de l'onglet Éclosion
+  //    (renderHatch, PERIOD_DAYS), jamais dupliquée autrement.
+  const PERIOD_DAYS = {2:7, 3:14, 4:21, 5:30};
   const hatch = `<table style="border-collapse:collapse;font-size:11px;min-width:520px">
     <thead><tr>
       <th style="${th};text-align:left;color:var(--cream2)">${i18next.t('companions:companions.hatch.col_rarity')}</th>
       ${EGG_TYPES.map(e=>`<th style="${th};color:var(--gold);font-family:'Cinzel',serif;font-size:10px">${e.ico} ${eggName(e)}</th>`).join('')}
     </tr></thead><tbody>
-      ${RARITIES.map((r,ri)=>`<tr>
-        <td style="${td};color:${r.hex};font-family:'Cinzel',serif">${rn(ri)}</td>
-        ${EGG_TYPES.map(e=>`<td style="${td};text-align:center;font-family:'JetBrains Mono',monospace;color:var(--cream)">${e.odds[ri]}%</td>`).join('')}
-      </tr>`).join('')}
+      ${RARITIES.map((r,ri)=>{
+        const period = PERIOD_DAYS[ri];
+        return `<tr>
+        <td style="${td};color:${r.hex};font-family:'Cinzel',serif">${rn(ri)}${period?`<div style="font-size:8px;color:var(--cream3)">${i18next.t('companions:companions.hatch.target_label', {period:i18next.t(COMPANIONS_NS_PREFIX+'companions.hatch.period_'+(period===7?'1w':period===14?'2w':period===21?'3w':'1m'))})}</div>`:''}</td>
+        ${EGG_TYPES.map(e=>{
+          const pct = e.odds[ri];
+          const idx = period ? `<div style="font-size:8px;color:var(--green2)">(${((1-Math.pow(1-pct/100, period*4))*100).toFixed(0)}%)</div>` : '';
+          return `<td style="${td};text-align:center;font-family:'JetBrains Mono',monospace;color:var(--cream)">${pct}%${idx}</td>`;
+        }).join('')}
+      </tr>`;}).join('')}
     </tbody></table>`;
 
   // 2) Hardinage : taux de loot de BASE par section (gsFactor=1 -> rare 2%, peu commun 16%, commun 82%,
