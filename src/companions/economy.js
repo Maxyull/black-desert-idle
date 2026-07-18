@@ -19,57 +19,22 @@ function costLabelFor(v){ return v>0 ? `${v.toLocaleString(NUM_LOCALE)} Silver` 
 
 // ═══ TYPES D'ŒUFS — coût qui explose pour un gain d'odds marginal ═══
 // Cadence de référence : 1 œuf gratuit / 6h = 4/jour.
-// Odds calibrées pour offrir ~62-70% de chance d'obtenir au moins 1 pet de cette
-// rareté sur la période cible, via la formule 1-(1-p)^n :
-//   Rare       → 1 par semaine   (n=28  tirages) → p≈3.57%
-//   Épique     → 1 par 2 semaines(n=56  tirages) → p≈1.79%
-//   Légendaire → 1 par 3 semaines(n=84  tirages) → p≈1.19%
-//   Ancestral  → 1 par mois      (n=120 tirages) → p≈0.83%
+// ÉCHELLE DE QUALITÉ (2026-07-18, refonte "trouve une logique cohérente, quitte à supprimer des
+// œufs") : les anciens œufs (Basique→Platine) ne différaient quasi pas -- payer 40 000 vs gratuit
+// ne faisait passer le Rare que de 3,57 % à 4,68 %. Et 4 œufs "ciblés" boostaient d'autant MOINS
+// qu'ils coûtaient cher (Ancestral +1,2 % pour 150 000). Aucune raison de payer.
+//
+// Nouvelle logique, simple et lisible : 4 paliers, et à CHAQUE palier la masse se décale nettement
+// vers le haut -- le Commun s'effondre (60 → 15 %) pendant que TOUTES les hautes raretés montent de
+// façon monotone. Ancestral : 0,2 % → 3 % (×15 au dernier palier). Prix ×10 par palier. Chaque œuf
+// a enfin une identité. Les 4 œufs "ciblés" sont SUPPRIMÉS (redondants et à récompense inversée).
+// Chaque ligne d'odds somme bien à 100.
 const EGG_TYPES=[
-  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),     costLabel:costLabelFor(scaleCost(0)), odds:[55.57,37.05,3.57,1.79,1.19,0.83]},
-  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(800),   costLabel:costLabelFor(scaleCost(800)),   odds:[54.78,36.52,3.96,2.04,1.45,1.25]},
-  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(8000),  costLabel:costLabelFor(scaleCost(8000)), odds:[53.49,35.66,4.43,2.56,1.89,1.97]},
-  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(40000), costLabel:costLabelFor(scaleCost(40000)),odds:[51.80,34.54,4.68,3.33,2.74,2.91]},
+  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),      costLabel:costLabelFor(scaleCost(0)),      odds:[60,30, 7, 2,0.8,0.2]},
+  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(5000),   costLabel:costLabelFor(scaleCost(5000)),   odds:[45,33,14, 5, 2,  1]},
+  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(50000),  costLabel:costLabelFor(scaleCost(50000)),  odds:[30,32,22,10, 4,  2]},
+  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(500000), costLabel:costLabelFor(scaleCost(500000)), odds:[15,28,28,18, 8,  3]},
 ];
-
-// ═══ ŒUFS CIBLÉS PAR RARETÉ ═══════════════════════════════════════
-// Idée : booster franchement la ligne d'UNE rareté choisie. Comme le total doit
-// toujours faire 100%, toutes les AUTRES lignes descendent mécaniquement et
-// proportionnellement entre elles (redistribution, pas juste un ajout).
-// makeTargetedOdds(rar, targetPct) : la rareté visée devient targetPct%, le
-// reste (100-targetPct) est réparti entre les 5 autres raretés en conservant
-// leur PROPORTION relative d'origine (celle de l'Œuf Basique).
-/** @param {number} targetRar - index de rareté à booster. @param {number} targetPct - % visé pour cette rareté. @returns {number[]} 6 odds sommant à 100 : targetPct à targetRar, le reste redistribué proportionnellement aux odds de l'Œuf Basique. */
-function makeTargetedOdds(targetRar, targetPct){
-  const base = EGG_TYPES[0].odds; // proportions de référence = Œuf Basique
-  const sumOthersBase = 100 - base[targetRar];
-  const remaining = 100 - targetPct;
-  return base.map((v,i)=>{
-    if(i===targetRar) return targetPct;
-    return +(v * (remaining/sumOthersBase)).toFixed(2);
-  });
-}
-
-// Coût croissant avec la puissance de la rareté ciblée + le boost obtenu
-const TARGETED_EGG_DEFS = [
-  {rar:2, targetPct:14,  cost:6000},   // Rare
-  {rar:3, targetPct:7,   cost:20000},  // Épique
-  {rar:4, targetPct:3.5, cost:60000},  // Légendaire
-  {rar:5, targetPct:2,   cost:150000}, // Ancestral
-];
-TARGETED_EGG_DEFS.forEach(def=>{
-  const cost = scaleCost(def.cost);
-  EGG_TYPES.push({
-    id:'target_'+def.rar,
-    name:`Œuf ${RARITIES[def.rar].name}`,
-    ico:'🎯',
-    cost,
-    costLabel:costLabelFor(cost),
-    odds:makeTargetedOdds(def.rar, def.targetPct),
-    targeted:true,
-    targetRar:def.rar,
-  });
-});
 
 // Économie fermée (2026-07-19, demande explicite) : ce Silver/inventaire est propre
 // au module Compagnons, totalement indépendant du Silver/inventaire du jeu principal.
