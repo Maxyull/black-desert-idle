@@ -66,7 +66,7 @@ function renderSecDetail(){
         ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(tp)
           ?`<div id="ts-cv3d-anchor" style="width:140px;height:140px"></div>`
           :`<canvas id="ts-cv" width="140" height="140" style="width:140px;height:140px;image-rendering:pixelated"></canvas>`}
-        <span style="position:absolute;top:8px;left:8px;font-family:'Cinzel',serif;font-size:10px;color:var(--gold);background:rgba(0,0,0,.5);border-radius:4px;padding:1px 6px">T${tp.tier||1}</span>
+        <span style="position:absolute;top:8px;left:8px;z-index:2">${tierRarPill(tp)}</span>
         <span class="gs-badge ${gsCls(gsPct(tp))}" style="position:absolute;top:8px;right:8px;color:${rc(tp.rar)};border-color:${rc(tp.rar)}">GS ${normGS(tp)}</span>
       </div>
       <div class="pcard-name">
@@ -131,8 +131,7 @@ function renderSecDetail(){
               </div>
               <div style="display:flex;align-items:center;gap:3px;margin-top:3px;flex-wrap:wrap">
                 <span class="gs-badge ${gsCls(gsPct(p))}" style="font-size:6px;padding:0 2px;color:${rc(p.rar)};border-color:${rc(p.rar)}">GS ${normGS(p)}</span>
-                <span style="font-size:6px;color:var(--gold);font-family:'Cinzel',serif">T${p.tier||1}</span>
-                <span style="font-size:6px;color:${rc(p.rar)}">${rn(p.rar)}</span>
+                ${tierRarPill(p,'sm')}
                 <span style="font-size:8px;color:var(--cream3)" title="${secName(sec)}">${sec?.ico||''}</span>
                 <div style="margin-left:auto;display:flex;gap:2px">
                   ${typeof companionModelUrlFor==='function'&&companionModelUrlFor(p)?`<button style="font-size:6px;padding:1px 3px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--cream2);cursor:pointer;flex-shrink:0" title="${i18next.t('companions:companions.collection.view_3d_title')}" onclick="event.stopPropagation();open3dPreviewModal(PETS.find(pp=>pp.id===${p.id}))">🧊</button>`:''}

@@ -146,6 +146,20 @@ function gsCls(pct){return pct>=90?'gs-max':pct>=65?'gs-high':pct>=35?'gs-med':'
 function rc(r){return RARITIES[r].hex;}
 /** @param {number} r - index de rareté. @returns {string} nom affichable de la rareté (traduit, voir i18n.js -- RARITIES[r].name reste le FR canonique des données). */
 function rn(r){return i18next.t(COMPANIONS_NS_PREFIX+'companions.rarity.'+r);}
+/**
+ * Badge unifié Tier + Rareté, mis en évidence (2026-07-19, demande explicite : "sur toutes les
+ * cartes de compagnon mettre en évidence le tier" + "bien afficher Tier+rareté sur toutes les
+ * fiches"). Réutilisé partout où l'on affiche une fiche de familier -- collection (compact & large),
+ * carte terrain, réserve, historique d'éclosion -- pour un rendu COHÉRENT plutôt qu'un T/rareté
+ * bricolé différemment à chaque endroit. Le segment Tier est un chip plein (ressort visuellement,
+ * accentué aux tiers 4-5) ; le segment Rareté est coloré à la couleur de rareté.
+ * @param {object} p - familier (lit p.tier, p.rar). @param {'sm'} [size] - 'sm' pour les cartes denses.
+ * @returns {string} HTML d'un `<span class="tr-pill">`.
+ */
+function tierRarPill(p, size){
+  const t = p.tier||1, col = rc(p.rar);
+  return `<span class="tr-pill${size==='sm'?' tr-sm':''} tr-t${t}" style="--trc:${col}" title="T${t} · ${rn(p.rar)}"><span class="trT">T${t}</span><span class="trR">${rn(p.rar)}</span></span>`;
+}
 /** @param {string} id - id de section. @returns {object|undefined} définition de section correspondante dans SECTIONS. */
 function secById(id){return SECTIONS.find(s=>s.id===id);}
 /** @param {object} p - familier. @returns {string} id de section de son espèce. */

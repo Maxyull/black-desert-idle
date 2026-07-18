@@ -163,7 +163,7 @@ function renderHatch(){
       <canvas id="hh${p.id}" width="40" height="40" style="width:40px;height:40px;image-rendering:pixelated;flex-shrink:0"></canvas>
       <div style="flex:1;min-width:0">
         <div style="font-size:11px;font-weight:500;color:var(--cream);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.cat.name}</div>
-        <div style="font-size:9px;color:${rc(p.rar)};margin-top:1px">${rn(p.rar)}</div>
+        <div style="margin-top:2px">${tierRarPill(p,'sm')}</div>
         <div style="display:flex;align-items:center;gap:4px;margin-top:3px">
           <span class="gs-badge ${gsCls(pct)}" style="font-size:9px;padding:1px 5px">GS ${gs}</span>
           <span style="font-size:9px;color:var(--cream2)">${secById(p.cat.sec)?.ico}</span>
