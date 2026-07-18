@@ -19,6 +19,15 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V483', d:'19/07/2026 10:00', name:{fr:'Compagnon : menu plus lisible, Tier+rareté sur toutes les fiches', en:'Companions: cleaner menu, Tier+rarity on every card'}, fr:[
+      {t:'change', sub:'compagnon', tx:'Badge Tier + rareté unifié et mis en valeur sur TOUTES les fiches de familier (collection, sections, réserve, historique d\'éclosion) : le Tier ressort dans une pastille pleine, la rareté est colorée à sa couleur. Fini les affichages différents d\'un écran à l\'autre.'},
+      {t:'change', sub:'compagnon', tx:'Menu Compagnon allégé : suppression des compteurs décoratifs qui n\'apportaient rien (le « 8 » des Sections, le « 48 » de l\'Index). Les pastilles restantes ne s\'affichent que lorsqu\'elles signalent quelque chose (une éclosion prête, des familiers en collection).'},
+      {t:'change', sub:'compagnon', tx:'Onglet Index : les tableaux de taux (éclosion et Hardinage par section) sont resserrés pour tenir côte à côte sur un seul écran, sans défilement.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'Unified, highlighted Tier + rarity badge on EVERY companion card (collection, sections, reserve, hatch history): the Tier stands out in a solid chip, the rarity is shown in its color. No more inconsistent displays from one screen to the next.'},
+      {t:'change', sub:'compagnon', tx:'Lighter Companions menu: removed the decorative counters that added nothing (the "8" on Sections, the "48" on Index). The remaining badges only show when they signal something (a ready hatch, companions in collection).'},
+      {t:'change', sub:'compagnon', tx:'Index tab: the rate tables (hatch odds and Hardinage per section) are tightened to fit side by side on a single screen, no scrolling.'},
+    ] },
   { v:'V482', d:'19/07/2026 09:00', name:{fr:'Compagnon : choix de l\'œuf au départ, éclosion animée, mise en page Éclosion', en:'Companions: choose egg on start, animated hatch, Hatchery layout'}, fr:[
       {t:'change', sub:'compagnon', tx:'Nouveau fonctionnement des créneaux d\'incubation : après une éclosion, le créneau devient VIDE — tu choisis alors quel œuf y mettre (basique gratuit ou un œuf premium), tu paies à ce moment, et le minuteur de 6h démarre avec les chances de CET œuf. Fini l\'œuf basique remis d\'office : tu gardes la main sur chaque incubation.'},
       {t:'change', sub:'compagnon', tx:'L\'éclosion met mieux en valeur le résultat : le Tier et la rareté du familier obtenu s\'affichent en gros, dans la couleur de rareté, avec une petite animation d\'apparition.'},
