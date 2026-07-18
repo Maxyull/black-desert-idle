@@ -57,7 +57,7 @@ function applyOfflineProgress(savedAt){
 
   // ═══ Slots d'incubation + compteur d'œuf gratuit ═══ (indépendant des pets déployés)
   incubSlots.forEach(sl=>{
-    if(sl.locked||sl.ready||sl.tl<=0) return;
+    if(sl.locked||sl.empty||sl.ready||sl.tl<=0) return; // slot vide (2026-07-18) : rien à faire avancer
     // arrondi : `seconds` (hours*3600) est fractionnaire -- sans Math.round, sl.tl garderait des
     // décimales que fmtT afficherait telles quelles (ex. "03:10:47.71999999999", bug rapporté).
     sl.tl = Math.max(0, Math.round(sl.tl-seconds));

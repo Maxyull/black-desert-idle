@@ -19,6 +19,17 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V482', d:'19/07/2026 09:00', name:{fr:'Compagnon : choix de l\'œuf au départ, éclosion animée, mise en page Éclosion', en:'Companions: choose egg on start, animated hatch, Hatchery layout'}, fr:[
+      {t:'change', sub:'compagnon', tx:'Nouveau fonctionnement des créneaux d\'incubation : après une éclosion, le créneau devient VIDE — tu choisis alors quel œuf y mettre (basique gratuit ou un œuf premium), tu paies à ce moment, et le minuteur de 6h démarre avec les chances de CET œuf. Fini l\'œuf basique remis d\'office : tu gardes la main sur chaque incubation.'},
+      {t:'change', sub:'compagnon', tx:'L\'éclosion met mieux en valeur le résultat : le Tier et la rareté du familier obtenu s\'affichent en gros, dans la couleur de rareté, avec une petite animation d\'apparition.'},
+      {t:'change', sub:'compagnon', tx:'Onglet Éclosion : le tableau des chances de tier est désormais à DROITE des chances par type d\'œuf (au lieu d\'en dessous), pour tout comparer d\'un coup d\'œil.'},
+      {t:'fix', sub:'compagnon', tx:'Correctif de cache : certains changements récents du menu Compagnon (retrait du Viewer 3D, mise en avant du PvP, taux du Hardinage rangés) n\'atteignaient pas ton navigateur, resté sur une version en cache. C\'est corrigé — tu vois maintenant la dernière version.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'New incubation-slot behavior: after a hatch, the slot becomes EMPTY — you then choose which egg to put in it (free basic or a premium egg), pay at that moment, and the 6h timer starts with THAT egg\'s odds. No more basic egg put back automatically: you stay in control of each incubation.'},
+      {t:'change', sub:'compagnon', tx:'Hatching now showcases the result better: the hatched companion\'s Tier and rarity are shown large, in the rarity color, with a small pop-in animation.'},
+      {t:'change', sub:'compagnon', tx:'Hatchery tab: the tier-odds table is now to the RIGHT of the per-egg odds (instead of below), so you can compare everything at a glance.'},
+      {t:'fix', sub:'compagnon', tx:'Cache fix: some recent Companion menu changes (3D viewer removed, PvP highlighted, Foraging rates tidied) weren\'t reaching your browser, stuck on a cached version. Fixed — you now see the latest version.'},
+    ] },
   { v:'V481', d:'18/07/2026 20:00', name:{fr:'Compagnon : récompenses du tournoi PvP + classement remis à zéro', en:'Companions: PvP tournament rewards + leaderboard reset'}, fr:[
       {t:'new', sub:'compagnon', tx:'Le tournoi PvP quotidien rapporte maintenant du Silver aux mieux classés : 🥇 5 000 000, 🥈 2 000 000, 🥉 1 000 000, et 250 000 pour tous les autres participants classés. Le classement du tournoi vient du bracket (nombre de combats gagnés), départagé par la puissance d\'équipe. Les gains sont crédités automatiquement sur ton silver (partagé avec le jeu) à l\'ouverture de l\'onglet PvP.'},
       {t:'change', sub:'compagnon', tx:'Le classement Compagnon (cross-joueurs) est remis à zéro pour repartir proprement sur la nouvelle économie post-refonte. Chacun réapparaît au classement dès que ses stats se resynchronisent, avec ses valeurs actuelles.'},
