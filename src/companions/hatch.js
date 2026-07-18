@@ -2,7 +2,7 @@
 /** @param {number} i - index d'onglet (0-11). Bascule l'onglet actif et déclenche le render/dispose lazy propre à chaque onglet (viewers 3D montés/libérés uniquement quand leur onglet est visible). */
 function ST(i){
   document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',i===j));
-  ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10','p11'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
+  ['p5','p0','p1','p2','p3','p4','p6','p7','p8','p9','p10','p11','p12'].forEach((id,j)=>{const el=document.getElementById(id);if(el)el.classList.toggle('active',i===j);});
   // bug corrigé (2026-07-20, rapporté explicitement : "timer qui se met pas a jour, on ne peut
   // pas acheter les oeufs") -- ST(1) (onglet Éclosion) n'appelait jamais renderHatch() : le tick
   // (ticks.js) décrémente bien sl.tl/passe sl.ready à true en mémoire chaque seconde,
@@ -29,6 +29,7 @@ function ST(i){
   if(i===8){ renderPvp(); if(typeof refreshPvpTournamentState==='function') refreshPvpTournamentState(); }
   if(i===9) renderMyStatsAndLeaderboard();
   if(i===11 && typeof renderMarketTab==='function') renderMarketTab();
+  if(i===12 && typeof renderTutorial==='function') renderTutorial();
   // écran de test viewer 3D GLB (2026-07-10) : n'initialise le contexte WebGL qu'à l'ouverture
   // réelle de l'onglet, le libère à la fermeture (évite de garder un renderer actif en arrière-plan
   // pendant que le joueur navigue ailleurs dans le module)
@@ -45,7 +46,7 @@ function OM(id){document.getElementById(id).classList.add('open');}
 /** Ferme une modale (retire la classe 'open'). @param {string} id - id DOM de la modale. */
 function CM(id){document.getElementById(id).classList.remove('open');}
 /** @param {number} s - secondes restantes. @returns {string} 'PRÊT' si ≤0, sinon durée formatée HH:MM:SS. */
-function fmtT(s){if(s<=0)return i18next.t('companions:companions.common.ready');return`${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
+function fmtT(s){if(s<=0)return i18next.t('companions:companions.common.ready');s=Math.floor(s);return`${String(Math.floor(s/3600)).padStart(2,'0')}:${String(Math.floor(s%3600/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;}
 
 // ═══ HATCH ═══════════════════════════════════════════════════════
 // achat/déblocage de slot d'incubation (2026-07-20, bug rapporté explicitement : "impossible
@@ -92,7 +93,7 @@ function renderHatch(){
       const affordable = isNext && SILVER>=cost;
       return`<div class="isl locked" style="cursor:${affordable?'pointer':'not-allowed'};opacity:${isNext?(affordable?1:.6):.4}" ${isNext?`onclick="unlockIncubSlot(${i})"`:''}><span style="font-size:28px">🔒</span><div style="font-size:8px;color:var(--cream3)">${costLabelFor(cost)}</div></div>`;
     }
-    if(sl.ready)return`<div class="isl ready"><div style="position:relative"><span style="font-size:28px">🥚</span><div style="position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(111,220,111,.4),transparent);animation:eglaur 1s ease-in-out infinite"></div></div>${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<div class="itimer done">${i18next.t('companions:companions.hatch.ready_badge')}</div><button style="font-family:Cinzel,serif;font-size:9px;padding:4px 10px;border-radius:4px;border:1px solid var(--gold);background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:var(--bg);cursor:pointer" onclick="openEggChoice(${i})">${i18next.t('companions:companions.hatch.hatch_btn')}</button></div>`;
+    if(sl.ready)return`<div class="isl ready"><div style="position:relative"><span style="font-size:28px">🥚</span><div style="position:absolute;inset:-6px;border-radius:50%;background:radial-gradient(circle,rgba(111,220,111,.4),transparent);animation:eglaur 1s ease-in-out infinite"></div></div>${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<div class="itimer done">${i18next.t('companions:companions.hatch.ready_badge')}</div><div style="display:flex;gap:4px;align-items:center;justify-content:center;margin-top:2px"><button style="font-family:Cinzel,serif;font-size:9px;padding:4px 10px;border-radius:4px;border:1px solid var(--gold);background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:var(--bg);cursor:pointer" onclick="doHatch(${i},'basic')">${i18next.t('companions:companions.hatch.hatch_btn')}</button><button title="${i18next.t('companions:companions.hatch.premium_egg_title')}" style="font-size:11px;padding:3px 6px;border-radius:4px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold2);cursor:pointer" onclick="openEggChoice(${i})">✨</button></div></div>`;
     const pct=Math.round((1-sl.tl/sl.tot)*100);
     return`<div class="isl">${sl.free?'<span style="font-size:8px;color:var(--green2);background:rgba(111,220,111,.1);border:1px solid rgba(111,220,111,.3);border-radius:3px;padding:1px 4px">'+i18next.t('companions:companions.hatch.free_badge')+'</span>':''}<span style="font-size:28px">🥚</span><div class="itimer">${fmtT(sl.tl)}</div><div class="iprog"><div class="iprog-fill" style="width:${pct}%"></div></div></div>`;
   }).join('');

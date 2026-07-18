@@ -19,6 +19,15 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V479', d:'18/07/2026 18:00', name:{fr:'Compagnon : onglet Tutoriel, éclosion directe, timer corrigé', en:'Companions: Tutorial tab, direct hatch, timer fix'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Nouvel onglet « Tutoriel » : un guide illustré et concis de chaque menu du module (Jeu, Éclosion, Sections, Collection, Nourrir, Index, Hardinage, Progression, PvP/Classement) plus quelques astuces.'},
+      {t:'change', sub:'compagnon', tx:'Le bouton « Éclore » lance maintenant DIRECTEMENT l\'éclosion (roulette + reveal) avec l\'œuf gratuit, au lieu d\'ouvrir la liste « quel œuf acheter ». Le petit bouton ✨ à côté ouvre le choix d\'un œuf premium quand tu veux payer pour de meilleures chances.'},
+      {t:'fix', sub:'compagnon', tx:'Le compte à rebours d\'incubation affichait parfois des décimales à rallonge (ex. « 03:10:47.71999999999 ») après un retour d\'absence. Il affiche de nouveau un temps propre HH:MM:SS.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'New "Tutorial" tab: an illustrated, concise guide to every menu in the module (Game, Hatchery, Sections, Collection, Feed, Index, Foraging, Progression, PvP/Leaderboard) plus a few tips.'},
+      {t:'change', sub:'compagnon', tx:'The "Hatch" button now DIRECTLY starts the hatching (roulette + reveal) with the free egg, instead of opening the "which egg to buy" list. The small ✨ button next to it opens the premium-egg picker when you want to pay for better odds.'},
+      {t:'fix', sub:'compagnon', tx:'The incubation countdown sometimes showed a long trail of decimals (e.g. "03:10:47.71999999999") after returning from being away. It shows a clean HH:MM:SS time again.'},
+    ] },
   { v:'V478', d:'18/07/2026 17:00', name:{fr:'Compagnon : prix des œufs, achat multiple retiré, tier à l\'éclosion', en:'Companions: egg prices, multi-buy removed, hatch tiers'}, fr:[
       {t:'new', sub:'compagnon', tx:'Un œuf peut désormais faire éclore un familier DIRECTEMENT à un tier supérieur (T1 à T5), sans attendre l\'XP — et un meilleur œuf améliore nettement ces chances. Ça reste un jackpot : Basique donne un T5 à 0,02 %, Platine à 1 %. Un nouveau tableau « Chances de tier à l\'éclosion » est affiché dans l\'onglet Éclosion, à côté des chances de rareté.'},
       {t:'change', sub:'compagnon', tx:'Nouveaux prix des œufs, calés sur le silver du jeu (partagé) : Basique gratuit, Argenté 500 000, Doré 5 000 000, Platine 50 000 000. Chaque palier vaut ×10 le précédent, pour un vrai choix entre attendre l\'œuf gratuit et payer pour de meilleures chances.'},

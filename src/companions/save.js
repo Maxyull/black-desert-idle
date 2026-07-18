@@ -58,7 +58,9 @@ function applyOfflineProgress(savedAt){
   // ═══ Slots d'incubation + compteur d'œuf gratuit ═══ (indépendant des pets déployés)
   incubSlots.forEach(sl=>{
     if(sl.locked||sl.ready||sl.tl<=0) return;
-    sl.tl = Math.max(0, sl.tl-seconds);
+    // arrondi : `seconds` (hours*3600) est fractionnaire -- sans Math.round, sl.tl garderait des
+    // décimales que fmtT afficherait telles quelles (ex. "03:10:47.71999999999", bug rapporté).
+    sl.tl = Math.max(0, Math.round(sl.tl-seconds));
     if(sl.tl<=0) sl.ready=true;
   });
   if(typeof eggTimer==='number'){
@@ -67,6 +69,7 @@ function applyOfflineProgress(savedAt){
       if(eggTimer>remaining){ eggTimer-=remaining; remaining=0; }
       else { remaining-=eggTimer; eggTimer=21600; } // même reset que ticks.js
     }
+    eggTimer = Math.round(eggTimer); // même raison que sl.tl ci-dessus (pas de décimales résiduelles)
   }
 
   const activePets = PETS.filter(p=>p.terrain);
