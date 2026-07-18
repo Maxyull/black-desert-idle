@@ -42,15 +42,49 @@ const EGG_TYPES=[
   {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(500000), costLabel:costLabelFor(scaleCost(500000)), odds:[15,28,28,18, 8,  3]},
 ];
 
-// Économie fermée (2026-07-19, demande explicite) : ce Silver/inventaire est propre
-// au module Compagnons, totalement indépendant du Silver/inventaire du jeu principal.
-let SILVER = 55000; // solde de départ pour tester les tiers d'œufs
-// compteur À VIE (2026-07-20, demande explicite : "argent depensé") -- jamais remis à 0, contraire
-// à SILVER qui peut monter et descendre. Incrémenté à chaque dépense réelle (achat d'œuf,
-// hatch.js) -- voir sumSpent() plus bas pour le seul point d'entrée d'incrément.
+// Pool de silver PARTAGÉ avec le jeu (2026-07-18, demande explicite : "silver bidirectionnel, on
+// lie compagnon avec le jeu") -- le module Compagnon ne tient plus une bourse fermée : il partage
+// le silver du jeu principal (S.silver). SILVER ci-dessous n'est plus qu'un MIROIR local, resync
+// depuis l'hôte à chaque affichage (voir silverHost/syncSilverFromHost). La valeur 55000 ne sert
+// que de repli quand l'hôte est absent (module ouvert en standalone / tests hors iframe).
+let SILVER = 55000;
+// compteur À VIE (2026-07-20, demande explicite : "argent depensé") -- jamais remis à 0. Incrémenté
+// à chaque dépense réelle (achat d'œuf/slot), indépendant du pont (mesure l'activité du module).
 let silverSpent = 0;
-/** @param {number} amount - montant à dépenser. Débite SILVER et incrémente silverSpent (compteur à vie, jamais remis à 0). */
-function spendSilver(amount){ SILVER -= amount; silverSpent += amount; }
+
+// ═══ PONT SILVER (pool partagé) ═══ Accès au silver du jeu via window.parent (iframe same-origin)
+// et les accesseurs `function` de l'hôte (getGameSilverForCompanion/addGameSilverForCompanion,
+// game-supabase.js). Toute dépense/gain passe par addSilver côté jeu (catégorie 'companion',
+// tracée dans l'onglet admin Silver). Repli silencieux sur le SILVER local si l'hôte est absent.
+/** @returns {?Window} fenêtre hôte si le pont est disponible (accesseurs présents ET solde lisible), sinon null. */
+function silverHost(){
+  try{
+    const w = window.parent;
+    if(w && w!==window && typeof w.getGameSilverForCompanion==='function' && typeof w.addGameSilverForCompanion==='function'){
+      if(typeof w.getGameSilverForCompanion()==='number') return w;
+    }
+  }catch(e){}
+  return null;
+}
+/** Resynchronise le miroir SILVER local depuis le silver du jeu quand le pont est actif (no-op en repli local). */
+function syncSilverFromHost(){
+  const w = silverHost();
+  if(w) SILVER = w.getGameSilverForCompanion();
+}
+/** @param {number} amount - montant à dépenser (>0). Débite le silver PARTAGÉ (jeu via addSilver, sinon miroir local) et incrémente silverSpent (compteur à vie). */
+function spendSilver(amount){
+  const w = silverHost();
+  if(w){ w.addGameSilverForCompanion(-amount, 'compagnon:achat'); SILVER = w.getGameSilverForCompanion(); }
+  else { SILVER -= amount; }
+  silverSpent += amount;
+}
+/** @param {number} amount - montant gagné (>0). @param {string} [note] - contexte pour le registre admin. Crédite le silver PARTAGÉ (jeu via addSilver, sinon miroir local). */
+function earnSilver(amount, note){
+  if(!amount) return;
+  const w = silverHost();
+  if(w){ w.addGameSilverForCompanion(amount, note||'compagnon'); SILVER = w.getGameSilverForCompanion(); }
+  else { SILVER += amount; }
+}
 
 // ═══ PITY COUNTER ═══ Garantit un Ancestral après trop d'éclosions sans en avoir eu
 // (protection contre la malchance extrême — sans ça, en pur RNG, un joueur pourrait
@@ -144,7 +178,7 @@ function checkDailyStreak(){
 
   const idx = loginStreak-1;
   const reward = STREAK_REWARDS[idx];
-  SILVER += reward.silver;
+  earnSilver(reward.silver, 'compagnon:streak');
   updateSilverDisplay();
 
   let msg = i18next.t('companions:companions.streak.toast', {day:loginStreak, silver:reward.silver});
@@ -198,7 +232,7 @@ function sellItem(name){
   const it = INVENTORY[name]; if(!it) return;
   const val = sellValueOf(name); if(val<=0) return;
   const gain = val * it.qty;
-  SILVER += gain;
+  earnSilver(gain, 'compagnon:vente');
   delete INVENTORY[name];
   toast('💰', i18next.t('companions:companions.sell.sold_one', {qty:it.qty, name:itemLabel(name), silver:gain.toLocaleString(NUM_LOCALE)}));
   updateSilverDisplay(); renderGameInventory(); if(typeof renderCollInventory==='function') renderCollInventory();
@@ -215,7 +249,7 @@ function sellAllCommon(){
     delete INVENTORY[name];
   });
   if(count<=0){ toast('📦', i18next.t('companions:companions.sell.nothing_common')); return; }
-  SILVER += total;
+  earnSilver(total, 'compagnon:vente');
   toast('💰', i18next.t('companions:companions.sell.sold_all', {count:count.toLocaleString(NUM_LOCALE), silver:total.toLocaleString(NUM_LOCALE)}));
   updateSilverDisplay(); renderGameInventory(); if(typeof renderCollInventory==='function') renderCollInventory();
 }
