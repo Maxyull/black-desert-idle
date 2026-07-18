@@ -124,7 +124,10 @@
     <div style="background:var(--s2);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
         <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--cream2)" data-i18n="companions.game.inventory_title">🎒 Inventaire (loot des pets)</div>
-        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">💰 <span id="game-silver-inline">55 000</span></div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <button onclick="sellAllCommon()" style="font-family:'Cinzel',serif;font-size:9px;padding:4px 10px;border-radius:5px;border:1px solid var(--gold);background:linear-gradient(135deg,var(--gold-dim),var(--gold));color:var(--bg);cursor:pointer" title="Vend tout le loot commun, garde le rare et les ressources spéciales" data-i18n-title="companions.sell.sell_all_title" data-i18n="companions.sell.sell_all_btn">💰 Vendre le commun</button>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--gold)">💰 <span id="game-silver-inline">55 000</span></div>
+        </div>
       </div>
       <div id="game-inventory-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px"></div>
       <div style="font-size:9px;color:var(--cream3);margin-top:8px" data-i18n="companions.game.inventory_hint">Les pets actifs génèrent automatiquement ce loot en tâche de fond, même hors de l'onglet Hardinage.</div>
@@ -494,11 +497,11 @@
      (economy.js appelle costLabelFor() au chargement immédiat). -->
 <script src="https://cdn.jsdelivr.net/npm/i18next@23.16.8/dist/umd/i18next.min.js"
   integrity="sha256-8ufeZ+OD1zpd7HaeCCnONAbj6eqvYdJpF4eIr9egYSA=" crossorigin="anonymous"></script>
-<script src="i18n-resources.generated.js?v=2"></script>
+<script src="i18n-resources.generated.js?v=3"></script>
 <script src="i18n.js?v=1"></script>
 <script src="pixelart.js?v=7"></script>
-<script src="catalog.js?v=8"></script>
-<script src="economy.js?v=16"></script>
+<script src="catalog.js?v=9"></script>
+<script src="economy.js?v=17"></script>
 <!-- renommés le 2026-07-21 (lot 2/~8, même renommage progressif que ci-dessus) -->
 <script src="tier.js?v=13"></script>
 <script src="roster.js?v=9"></script>
@@ -525,7 +528,7 @@
 <script src="market.js?v=8"></script>
 <!-- renommés le 2026-07-21 (lot 6/~8, même renommage progressif que ci-dessus) -->
 <script src="index.js?v=11"></script>
-<script src="game-view.js?v=9"></script>
+<script src="game-view.js?v=10"></script>
 <script src="hardinage.js?v=10"></script>
 <!-- renommés le 2026-07-21 (lot 7/~8, même renommage progressif que ci-dessus) -->
 <script src="achievements.js?v=9"></script>
