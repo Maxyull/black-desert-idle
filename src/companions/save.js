@@ -157,8 +157,11 @@ function applyOfflineProgress(savedAt){
 // (showAwayLootSummaryIfAny() sur visibilitychange, core/game-core.js) : marque le moment où
 // l'onglet passe caché, applique le rattrapage au retour visible. applyOfflineProgress() a déjà
 // son propre garde-fou (hours<0.05 ~3min) qui absorbe les changements d'onglet courts sans rien
-// déclencher -- pas de risque de double-comptage avec le tick temps réel (ticks.js), qui de toute
-// façon ne tourne plus une fois l'onglet vraiment suspendu (veille système).
+// déclencher. Pas de double-comptage avec le tick temps réel (ticks.js) : depuis le 2026-07-18, ce
+// tick fait `if(document.hidden) return;` en tête -- il n'avance donc RIEN pendant que l'onglet est
+// caché, et applyOfflineProgress rattrape seul (et une seule fois) toute la durée cachée. Avant ce
+// garde, un onglet simplement en arrière-plan (pas en veille système) laissait le navigateur brider
+// mais PAS arrêter le setInterval : le temps caché était compté deux fois.
 let lastVisibleTs = Date.now();
 document.addEventListener('visibilitychange', () => {
   if(document.hidden){
