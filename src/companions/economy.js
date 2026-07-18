@@ -3,7 +3,7 @@
 // data.js), plutôt qu'un compteur séparé propre à ce module : ce dossier ne peut pas charger
 // meta/patch-notes-data.js (scope global distinct, iframe isolée), donc pas de lecture automatique
 // possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
-const COMPANION_MODULE_VERSION = 'V481';
+const COMPANION_MODULE_VERSION = 'V482';
 
 // ═══ BALANCE ═══ (2026-07-18, demande explicite : "remets le divisor à 1, on passe en prod")
 // Les coûts Silver et timers passent en VRAIES valeurs (divisor = 1). scaleCost()/scaleTimer()
@@ -200,9 +200,10 @@ function checkDailyStreak(){
   let msg = i18next.t('companions:companions.streak.toast', {day:loginStreak, silver:reward.silver});
   const bonusLabel = reward.bonus ? i18next.t(COMPANIONS_NS_PREFIX+'companions.streak.bonus_'+reward.bonus) : '';
   if(reward.bonus){
-    // Bonus spécial : œuf gratuit accordé directement dans la réserve d'incubation si un slot est libre
-    const freeSlotIdx = incubSlots.findIndex(s=>!s.locked && !s.ready);
-    if(freeSlotIdx>=0){ incubSlots[freeSlotIdx].tl=0; incubSlots[freeSlotIdx].ready=true; }
+    // Bonus spécial : œuf basique gratuit accordé PRÊT dans un slot VIDE (2026-07-18, nouveau flux --
+    // les slots ne se remplissent plus tout seuls ; le bonus remplit un slot vide, éclosion immédiate).
+    const freeSlotIdx = incubSlots.findIndex(s=>s.empty);
+    if(freeSlotIdx>=0){ incubSlots[freeSlotIdx] = { free: incubSlots[freeSlotIdx].free, eggId:'basic', tl:0, tot:scaleTimer(21600), ready:true }; }
     msg += ` + ${bonusLabel} !`;
   }
   toast('🔥', msg);
