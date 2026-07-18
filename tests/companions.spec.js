@@ -140,7 +140,10 @@ test('companion module opens in an isolated iframe, renders, and closes cleanly'
   await expect(frame.locator('#hatch-body .btn')).not.toHaveCount(0);
 
   await frame.locator('#hatch-body .btn', { hasText: 'Utiliser' }).first().click();
-  await frame.locator('#hatch-body .btn', { hasText: 'Garder' }).click();
+  // nouveau flux (2026-07-18) : le pet est gardé d'office dès le tirage, une roulette de rareté
+  // (~1.9s) précède le reveal, et le bouton "Garder" a disparu (garde automatique). Playwright
+  // auto-attend l'apparition du bouton "Continuer" du reveal -> absorbe la durée de la roulette.
+  await frame.locator('#hatch-body .btn', { hasText: 'Continuer' }).click();
   await expect(frame.locator('#hatch-modal')).not.toHaveClass(/open/);
 
   await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();
@@ -1830,10 +1833,13 @@ test('hatch reveal screen shows the odds recap of the egg that was used', async 
   const frame = page.frameLocator('#companionsFrame');
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
-  const result = await frame.locator('body').evaluate(() => {
+  const result = await frame.locator('body').evaluate(async () => {
     const eggType = EGG_TYPES[0];
     SILVER = eggType.cost + 1000;
     doHatch(0, eggType.id);
+    // nouveau flux (2026-07-18) : doHatch affiche d'abord la roulette de rareté (~1.9s) PUIS le
+    // reveal (showHatchPetReveal, qui contient le récap des odds). On attend la fin de la roulette.
+    await new Promise(r => setTimeout(r, 2200));
     const bodyHtml = document.getElementById('hatch-body').innerHTML;
     return { bodyHtml, firstOdd: eggType.odds[0], eggName: eggType.name };
   });
@@ -2333,7 +2339,9 @@ test('companion module renders in English when velia-idle-lang=en (own i18next i
   await expect(frame.locator('#hatch-modal')).toHaveClass(/open/);
   await expect(frame.locator('#hatch-modal')).toContainText('Choose your egg');
   await frame.locator('#hatch-body .btn', { hasText: 'Use' }).first().click();
-  await frame.locator('#hatch-body .btn', { hasText: 'Keep' }).click();
+  // nouveau flux (2026-07-18) : garde d'office + roulette de rareté avant le reveal ; "Keep" a
+  // disparu, on ferme via "Continue" (Playwright auto-attend -> absorbe la roulette).
+  await frame.locator('#hatch-body .btn', { hasText: 'Continue' }).click();
   await expect(frame.locator('#hatch-modal')).not.toHaveClass(/open/);
 
   await frame.locator('.tabs .tab', { hasText: 'Collection' }).click();

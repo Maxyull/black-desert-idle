@@ -19,57 +19,22 @@ function costLabelFor(v){ return v>0 ? `${v.toLocaleString(NUM_LOCALE)} Silver` 
 
 // ═══ TYPES D'ŒUFS — coût qui explose pour un gain d'odds marginal ═══
 // Cadence de référence : 1 œuf gratuit / 6h = 4/jour.
-// Odds calibrées pour offrir ~62-70% de chance d'obtenir au moins 1 pet de cette
-// rareté sur la période cible, via la formule 1-(1-p)^n :
-//   Rare       → 1 par semaine   (n=28  tirages) → p≈3.57%
-//   Épique     → 1 par 2 semaines(n=56  tirages) → p≈1.79%
-//   Légendaire → 1 par 3 semaines(n=84  tirages) → p≈1.19%
-//   Ancestral  → 1 par mois      (n=120 tirages) → p≈0.83%
+// ÉCHELLE DE QUALITÉ (2026-07-18, refonte "trouve une logique cohérente, quitte à supprimer des
+// œufs") : les anciens œufs (Basique→Platine) ne différaient quasi pas -- payer 40 000 vs gratuit
+// ne faisait passer le Rare que de 3,57 % à 4,68 %. Et 4 œufs "ciblés" boostaient d'autant MOINS
+// qu'ils coûtaient cher (Ancestral +1,2 % pour 150 000). Aucune raison de payer.
+//
+// Nouvelle logique, simple et lisible : 4 paliers, et à CHAQUE palier la masse se décale nettement
+// vers le haut -- le Commun s'effondre (60 → 15 %) pendant que TOUTES les hautes raretés montent de
+// façon monotone. Ancestral : 0,2 % → 3 % (×15 au dernier palier). Prix ×10 par palier. Chaque œuf
+// a enfin une identité. Les 4 œufs "ciblés" sont SUPPRIMÉS (redondants et à récompense inversée).
+// Chaque ligne d'odds somme bien à 100.
 const EGG_TYPES=[
-  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),     costLabel:costLabelFor(scaleCost(0)), odds:[55.57,37.05,3.57,1.79,1.19,0.83]},
-  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(800),   costLabel:costLabelFor(scaleCost(800)),   odds:[54.78,36.52,3.96,2.04,1.45,1.25]},
-  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(8000),  costLabel:costLabelFor(scaleCost(8000)), odds:[53.49,35.66,4.43,2.56,1.89,1.97]},
-  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(40000), costLabel:costLabelFor(scaleCost(40000)),odds:[51.80,34.54,4.68,3.33,2.74,2.91]},
+  {id:'basic',   name:'Œuf Basique', ico:'🥚', cost:scaleCost(0),      costLabel:costLabelFor(scaleCost(0)),      odds:[60,30, 7, 2,0.8,0.2]},
+  {id:'silver',  name:'Œuf Argenté', ico:'🥈', cost:scaleCost(5000),   costLabel:costLabelFor(scaleCost(5000)),   odds:[45,33,14, 5, 2,  1]},
+  {id:'gold',    name:'Œuf Doré',    ico:'🥇', cost:scaleCost(50000),  costLabel:costLabelFor(scaleCost(50000)),  odds:[30,32,22,10, 4,  2]},
+  {id:'platinum',name:'Œuf Platine', ico:'💠', cost:scaleCost(500000), costLabel:costLabelFor(scaleCost(500000)), odds:[15,28,28,18, 8,  3]},
 ];
-
-// ═══ ŒUFS CIBLÉS PAR RARETÉ ═══════════════════════════════════════
-// Idée : booster franchement la ligne d'UNE rareté choisie. Comme le total doit
-// toujours faire 100%, toutes les AUTRES lignes descendent mécaniquement et
-// proportionnellement entre elles (redistribution, pas juste un ajout).
-// makeTargetedOdds(rar, targetPct) : la rareté visée devient targetPct%, le
-// reste (100-targetPct) est réparti entre les 5 autres raretés en conservant
-// leur PROPORTION relative d'origine (celle de l'Œuf Basique).
-/** @param {number} targetRar - index de rareté à booster. @param {number} targetPct - % visé pour cette rareté. @returns {number[]} 6 odds sommant à 100 : targetPct à targetRar, le reste redistribué proportionnellement aux odds de l'Œuf Basique. */
-function makeTargetedOdds(targetRar, targetPct){
-  const base = EGG_TYPES[0].odds; // proportions de référence = Œuf Basique
-  const sumOthersBase = 100 - base[targetRar];
-  const remaining = 100 - targetPct;
-  return base.map((v,i)=>{
-    if(i===targetRar) return targetPct;
-    return +(v * (remaining/sumOthersBase)).toFixed(2);
-  });
-}
-
-// Coût croissant avec la puissance de la rareté ciblée + le boost obtenu
-const TARGETED_EGG_DEFS = [
-  {rar:2, targetPct:14,  cost:6000},   // Rare
-  {rar:3, targetPct:7,   cost:20000},  // Épique
-  {rar:4, targetPct:3.5, cost:60000},  // Légendaire
-  {rar:5, targetPct:2,   cost:150000}, // Ancestral
-];
-TARGETED_EGG_DEFS.forEach(def=>{
-  const cost = scaleCost(def.cost);
-  EGG_TYPES.push({
-    id:'target_'+def.rar,
-    name:`Œuf ${RARITIES[def.rar].name}`,
-    ico:'🎯',
-    cost,
-    costLabel:costLabelFor(cost),
-    odds:makeTargetedOdds(def.rar, def.targetPct),
-    targeted:true,
-    targetRar:def.rar,
-  });
-});
 
 // Économie fermée (2026-07-19, demande explicite) : ce Silver/inventaire est propre
 // au module Compagnons, totalement indépendant du Silver/inventaire du jeu principal.
@@ -198,6 +163,57 @@ function addToInventory(itemName, icon, qty, feed){
   INVENTORY[itemName].qty += qty;
   if(feed!==undefined) INVENTORY[itemName].feed = feed; // garde la valeur nutritive à jour
 }
+// ═══ VENTE (2026-07-18) — donne un usage à TOUT le loot ═══════════
+// Avant, le champ `v` des drops ne servait QU'au seuil "rare" du log (v>=200). Il devient la valeur
+// de revente en silver. Résout deux problèmes d'un coup : le loot mort (Dopi ~74k, items de Boss --
+// jamais consommés) et la surabondance de nourriture (commun par dizaines de milliers, l'auto-feed
+// n'en consomme presque rien). L'excédent se convertit en silver au lieu de s'entasser sans fin.
+// Construit UNE FOIS au chargement depuis les mêmes définitions que les drops (catalog.js, chargé
+// avant ce fichier) -- aucune valeur dupliquée à la main.
+const ITEM_SELL_VALUES = (()=>{
+  const m = {};
+  SECTIONS.forEach(sec => sec.drops.forEach(d => { if(!d.silver) m[d.n] = d.v; }));
+  m[CAPHRAS_ITEM.n] = CAPHRAS_ITEM.v;
+  DOPI_ITEMS.forEach(d => { m[d.n] = d.v; });
+  Object.values(BOSS_ITEMS).forEach(b => { m[b.n] = b.v; });
+  return m;
+})();
+// ressources spéciales : vendables à l'unité (choix du joueur), mais JAMAIS balayées par le bouton
+// "tout vendre le commun" -- même esprit que l'exclusion de l'auto-nourrissage (feed.js/ticks.js),
+// pour ne pas dumper par accident du Caphras (matériau d'atelier) ou un item de Boss (jackpot).
+const SELL_SPECIAL_NAMES = new Set([CAPHRAS_ITEM.n, ...DOPI_ITEMS.map(d=>d.n), ...Object.values(BOSS_ITEMS).map(b=>b.n)]);
+const SELL_COMMON_THRESHOLD = 200; // "commun" = valeur unitaire < 200 (le seuil déjà utilisé pour le log rare)
+
+/** @param {string} name @returns {number} valeur de revente unitaire en silver (0 si non vendable). */
+function sellValueOf(name){ return ITEM_SELL_VALUES[name] || 0; }
+
+/** @param {string} name. Vend TOUTE la pile d'un objet : crédite sellValueOf×qty en silver, retire l'objet de l'inventaire. No-op si absent/non vendable. */
+function sellItem(name){
+  const it = INVENTORY[name]; if(!it) return;
+  const val = sellValueOf(name); if(val<=0) return;
+  const gain = val * it.qty;
+  SILVER += gain;
+  delete INVENTORY[name];
+  toast('💰', i18next.t('companions:companions.sell.sold_one', {qty:it.qty, name:itemLabel(name), silver:gain.toLocaleString(NUM_LOCALE)}));
+  updateSilverDisplay(); renderGameInventory(); if(typeof renderCollInventory==='function') renderCollInventory();
+}
+
+/** Vend d'un coup tout le loot COMMUN (valeur unitaire < SELL_COMMON_THRESHOLD), en gardant intacts les rares ET les ressources spéciales (Caphras/Dopi/Boss). */
+function sellAllCommon(){
+  let total = 0, count = 0;
+  Object.entries(INVENTORY).forEach(([name, it]) => {
+    if(SELL_SPECIAL_NAMES.has(name)) return;
+    const val = sellValueOf(name);
+    if(val<=0 || val>=SELL_COMMON_THRESHOLD) return; // garde le rare (v>=200) et le non-vendable
+    total += val * it.qty; count += it.qty;
+    delete INVENTORY[name];
+  });
+  if(count<=0){ toast('📦', i18next.t('companions:companions.sell.nothing_common')); return; }
+  SILVER += total;
+  toast('💰', i18next.t('companions:companions.sell.sold_all', {count:count.toLocaleString(NUM_LOCALE), silver:total.toLocaleString(NUM_LOCALE)}));
+  updateSilverDisplay(); renderGameInventory(); if(typeof renderCollInventory==='function') renderCollInventory();
+}
+
 /** @param {string} text - HTML de la ligne. Ajoute une entrée horodatée en tête de GAME_LOG (plafonné à 40 entrées). */
 function addGameLog(text){
   const now=new Date();
