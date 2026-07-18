@@ -568,20 +568,20 @@
     clone.querySelector('.actTabLock').remove();
     assert('Le libellé (hors badge cadenas) ne contient plus le cadenas', !clone.querySelector('.actTabLabel').textContent.includes('🔒'));
   }
-  // badge "NEW" sur l'onglet Compagnon (2026-07-20, demande explicite : "met NEW sur compagnon a
-  // la place du cadenas") -- Compagnon n'est pas verrouillé (locked:false), donc n'a jamais eu de
-  // .actTabLock ; le badge "NEW"/"NOUVEAU" doit apparaître à sa place dans le même emplacement
-  // bulle (.actTabNew), et jamais un cadenas sur un onglet débloqué.
+  // badge "NEW" RETIRÉ au passage en prod (2026-07-18, "on passe en prod et on lie compagnon avec
+  // le jeu") -- Compagnon est sorti de sa phase de test : plus de badge "NEW"/"NOUVEAU"
+  // (.actTabNew), et toujours pas de cadenas (locked:false, débloqué). Garde-fou anti-régression :
+  // ni NEW ni cadenas sur cet onglet en prod.
   function testCompanionTabShowsNewBadgeInsteadOfLock() {
     if (!$('activityTabs') || typeof renderActivityTabs !== 'function' || typeof ACTIVITY_TABS === 'undefined') return;
     const pet = ACTIVITY_TABS.find(t => t.id === 'pet');
     if (!pet) return;
-    assert('ACTIVITY_TABS.pet est marqué isNew (sinon ce test est obsolète)', !!pet.isNew);
+    assert('ACTIVITY_TABS.pet n\'est plus marqué isNew (sorti de test, prod)', !pet.isNew);
     renderActivityTabs();
     const btn = [...$('activityTabs').querySelectorAll('.actTab')].find(b => b.dataset.id === 'pet');
     assert('Onglet Compagnon trouvé dans le header', !!btn);
     if (!btn) return;
-    assert('Onglet Compagnon affiche un badge "NEW"', !!btn.querySelector('.actTabNew'));
+    assert('Onglet Compagnon n\'affiche plus de badge "NEW" (prod)', !btn.querySelector('.actTabNew'));
     assert('Onglet Compagnon n\'affiche jamais de cadenas (débloqué)', !btn.querySelector('.actTabLock'));
   }
   // débordement des badges cadenas/PV/NEW du header corrigé (2026-07-20, rapporté explicitement :

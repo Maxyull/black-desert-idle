@@ -5,11 +5,17 @@
 // possible -- à bumper à la main ici à chaque patch note qui touche sub:'compagnon'.
 const COMPANION_MODULE_VERSION = 'V459';
 
-// ═══ BALANCE DE TEST (2026-07-10, demande explicite) ═══
-// Tous les coûts Silver et timers (incubation, œuf gratuit) sont divisés par ce facteur pour
-// tester rapidement les flux -- repasser TEST_BALANCE_DIVISOR à 1 pour revenir aux vraies
-// valeurs (aucune autre ligne à toucher, tout est dérivé de cette seule constante).
-const TEST_BALANCE_DIVISOR = 1000;
+// ═══ BALANCE ═══ (2026-07-18, demande explicite : "remets le divisor à 1, on passe en prod")
+// Les coûts Silver et timers passent en VRAIES valeurs (divisor = 1). scaleCost()/scaleTimer()
+// deviennent l'identité mais restent en place comme hook de test : repasser TEST_BALANCE_DIVISOR
+// à 1000 rétablit le mode "test rapide" sans toucher aucune autre ligne.
+const TEST_BALANCE_DIVISOR = 1;
+// ═══ RENDEMENT DE FARM ═══ (2026-07-18, demande explicite : "les compagnons vont farm au moins 5x
+// plus") -- multiplie le RENDEMENT de chaque loot (quantités d'objets et silver), sans toucher aux
+// probabilités : 1 drop reste 1 drop, mais rapporte FARM_YIELD_MULT fois plus. Référencé au SEUL
+// point de rendement dans ticks.js (tick live) ET save.js (rattrapage hors-ligne) pour ne jamais
+// désynchroniser les deux calculs. Exclut l'item de Boss (jackpot rarissime, jamais multiplié).
+const FARM_YIELD_MULT = 5;
 /** @param {number} v - coût réel en silver. @returns {number} coût réduit par TEST_BALANCE_DIVISOR (min 1 si v>0, 0 si gratuit). */
 function scaleCost(v){ return v>0 ? Math.max(1, Math.round(v/TEST_BALANCE_DIVISOR)) : 0; }
 /** @param {number} v - durée réelle en secondes. @returns {number} durée réduite par TEST_BALANCE_DIVISOR (min 1s). */
