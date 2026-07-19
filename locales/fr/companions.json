@@ -39,6 +39,7 @@
   "companions.achievements.unlocked_log_html": "🏆 <span style=\"color:var(--gold2)\">Achievement : {{name}}</span> — +{{reward}} Silver",
   "companions.achievements.unlocked_toast": "Achievement débloqué : {{icon}} {{name}} (+{{reward}} Silver)",
   "companions.caphras.hint": "{{cost}} pierres → +{{boost}} permanent sur une stat (plafond {{cap}}% du max).",
+  "companions.pet.combat_looter_note": "Ramasse le loot au sol en combat (le déployé est prioritaire)",
   "companions.caphras.not_enough": "Pas assez de Pierres de Caphras",
   "companions.caphras.stat_capped": "Stat déjà au plafond de Caphras",
   "companions.caphras.stock_label": "Stock : {{count}}",
