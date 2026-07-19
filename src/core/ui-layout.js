@@ -206,7 +206,10 @@ function toggleRightDock(widgetId) {
   dock.classList.remove('collapsed'); // neutralise l'ancien état replié éventuellement restauré au chargement
   const alreadyShown = dock.style.display === 'block' && dock.dataset.dockActive === widgetId;
   if (alreadyShown) { dock.style.display = 'none'; dock.dataset.dockActive = ''; updateDockBtnActive(null); return; }
-  RIGHT_DOCK_WIDGETS.forEach(id => { const w = $a(id); if (w) w.style.display = (id === widgetId) ? '' : 'none'; });
+  // masque les widgets non actifs via une classe `!important` plutôt que style.display : le rendu de
+  // certains widgets (ex. #questTrackerWidget) re-force son propre display à chaque tick, ce qui
+  // écrasait un simple style.display='none' -> le widget "fuyait" dans tous les panneaux (retour joueur).
+  RIGHT_DOCK_WIDGETS.forEach(id => { const w = $a(id); if (w) w.classList.toggle('dockHidden', id !== widgetId); });
   dock.dataset.dockActive = widgetId;
   dock.style.display = 'block';
   // ancre juste sous la barre d'activités (hauteur variable -> mesurée à l'ouverture)
