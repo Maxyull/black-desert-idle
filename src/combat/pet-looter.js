@@ -19,19 +19,25 @@
 // ctx, bossState), AVANT/indifféremment de world/render.js (appels au runtime seulement). Les
 // intégrations (simTickOnce, drawEntities) sont gardées par typeof pour tolérer l'ordre de charge.
 
-const PET_LOOT_RANGE = 520;      // rayon de recherche d'un drop autour du familier
-const PET_PICKUP_RADIUS = 26;    // distance à laquelle il ramasse effectivement
-const PET_SPEED = 170;           // vitesse de déplacement (unités/s)
 const PET_FOLLOW_DIST = 70;      // distance de flânerie autour du perso au repos
 const PET_SNAP_DIST = 900;       // au-delà (téléport / changement de zone), on téléporte le pet près du perso
+// valeurs de repli (pet sans stats lisibles) -- normalement remplacées par les stats du pet Collecte
+const PET_BASE_SPEED = 170, PET_BASE_RANGE = 520, PET_BASE_PICKUP = 26;
 // couleurs de rareté du module Compagnon (companions.css --r0..--r5) -- petite touche d'identité
 const PET_RARITY_HEX = ['#888888','#44b060','#4488cc','#9944cc','#cc8820','#cc3030'];
 
-let Pet = { x:0, y:0, faceX:1, bob:0, active:false, color:'#cc8820', target:null, spawned:false, checkT:0 };
+// speed/range/pickupR sont pilotés par les stats du pet Collecte actif (voir refreshPetLooterActivation)
+let Pet = { x:0, y:0, faceX:1, bob:0, active:false, color:'#cc8820', target:null, spawned:false, checkT:0,
+            speed:PET_BASE_SPEED, range:PET_BASE_RANGE, pickupR:PET_BASE_PICKUP };
 
 /**
- * Relit (au plus toutes les 2 s) l'état du module Compagnon pour savoir si un familier ramasseur est
- * actif et de quelle couleur (rareté du compagnon le plus rare possédé). 100 % local, même origine.
+ * Relit (au plus toutes les 2 s) l'état du module Compagnon pour désigner le familier RAMASSEUR et
+ * calibrer son comportement (2026-07-19, précision : "les pet looter ont des stats, c'est les pet
+ * collecte"). Le ramasseur est un pet de la catégorie « Collecte » (cat.sec==='loot') -- priorité au
+ * pet DÉPLOYÉ sur le terrain Collecte, sinon le meilleur Collecte possédé. Ses stats pilotent :
+ *   stats[0] = « Vitesse collecte » → vitesse de déplacement ; stats[1] = « Rayon » → portée de
+ * recherche + de ramassage (voir catalog.js, section 'loot'.sk). Échelle × tierMult (tier.js). Sans
+ * aucun pet Collecte, pas de ramasseur en combat. 100 % local, même origine que l'iframe.
  * @param {number} dt - delta-temps de la frame (s).
  */
 function refreshPetLooterActivation(dt) {
@@ -43,11 +49,20 @@ function refreshPetLooterActivation(dt) {
     if (!raw) { Pet.active = false; return; }
     const st = JSON.parse(raw);
     const pets = Array.isArray(st.PETS) ? st.PETS : [];
-    Pet.active = pets.length > 0;
-    if (Pet.active) {
-      const bestRar = pets.reduce((m,p)=>Math.max(m, p.rar||0), 0);
-      Pet.color = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, bestRar)] || '#cc8820';
-    }
+    // uniquement les pets de la catégorie Collecte : eux seuls ont des stats de ramassage utiles
+    const collectors = pets.filter(p => p && p.cat && p.cat.sec === 'loot' && Array.isArray(p.stats));
+    if (!collectors.length) { Pet.active = false; return; }
+    // « puissance de collecte » = (vitesse + rayon) × tierMult ; le pet déployé passe devant
+    const power = p => (((p.stats[0]||0) + (p.stats[1]||0)) * (p.tierMult || 1)) + (p.terrain ? 1e6 : 0);
+    const best = collectors.reduce((a,b) => power(b) > power(a) ? b : a);
+    const mult = best.tierMult || 1;
+    const vit = best.stats[0] || 0;   // Vitesse collecte
+    const ray = best.stats[1] || 0;   // Rayon
+    Pet.active  = true;
+    Pet.color   = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, best.rar||0)] || '#cc8820';
+    Pet.speed   = 150 + vit * mult * 1.2;
+    Pet.range   = 360 + ray * mult * 6;
+    Pet.pickupR = 22  + ray * mult * 0.4;
   } catch(e) { Pet.active = false; }
 }
 
@@ -66,18 +81,18 @@ function petLootTick(dt) {
   }
   Pet.bob += dt*6;
 
-  // cible : le drop au sol le plus proche encore disponible dans le rayon de recherche
+  // cible : le drop au sol le plus proche encore disponible dans le rayon de recherche (stat Rayon)
   if (!Pet.target || Pet.target.taken) {
-    Pet.target = drops.filter(l => !l.taken && dist(Pet.x,Pet.y,l.x,l.y) < PET_LOOT_RANGE)
+    Pet.target = drops.filter(l => !l.taken && dist(Pet.x,Pet.y,l.x,l.y) < Pet.range)
                       .sort((a,b)=>dist(Pet.x,Pet.y,a.x,a.y)-dist(Pet.x,Pet.y,b.x,b.y))[0] || null;
   }
   const tgt = Pet.target;
   let tx, ty, sp;
-  if (tgt) { tx = tgt.x; ty = tgt.y; sp = PET_SPEED; }
+  if (tgt) { tx = tgt.x; ty = tgt.y; sp = Pet.speed; }          // stat Vitesse collecte
   else {
     // au repos : flâne à distance fixe autour du perso (garde sa direction actuelle)
     const ang = Math.atan2(Pet.y - P.y, Pet.x - P.x);
-    tx = P.x + Math.cos(ang)*PET_FOLLOW_DIST; ty = P.y + Math.sin(ang)*PET_FOLLOW_DIST; sp = PET_SPEED*0.8;
+    tx = P.x + Math.cos(ang)*PET_FOLLOW_DIST; ty = P.y + Math.sin(ang)*PET_FOLLOW_DIST; sp = Pet.speed*0.8;
   }
   const d = dist(Pet.x, Pet.y, tx, ty);
   if (d > 1) {
@@ -85,8 +100,8 @@ function petLootTick(dt) {
     Pet.x += vx*sp*dt; Pet.y += vy*sp*dt;
     Pet.faceX = vx >= 0 ? 1 : -1;
   }
-  // ramassage à portée : même chemin que le perso, marqué familier
-  if (tgt && dist(Pet.x,Pet.y,tgt.x,tgt.y) < PET_PICKUP_RADIUS) {
+  // ramassage à portée (stat Rayon) : même chemin que le perso, marqué familier
+  if (tgt && dist(Pet.x,Pet.y,tgt.x,tgt.y) < Pet.pickupR) {
     collectDrop(tgt, true);
     Pet.target = null;
   }

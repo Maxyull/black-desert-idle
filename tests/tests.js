@@ -6887,13 +6887,16 @@
     const dropsSnapshot = drops.slice();
     const silver0 = S.silver;
 
-    // (1) activation
-    localStorage.setItem('velia_idle_pets_save', JSON.stringify({ PETS: [{ rar: 3 }] }));
+    // (1) activation : un pet de catégorie Collecte (cat.sec==='loot') active le ramasseur et cale
+    //     sa vitesse/portée sur ses stats (stats[0]=Vitesse collecte, stats[1]=Rayon).
+    localStorage.setItem('velia_idle_pets_save', JSON.stringify({ PETS: [{ rar: 3, cat: { sec: 'loot' }, stats: [20, 10, 0, 0, 0], tierMult: 1.2, terrain: true }] }));
     Pet.checkT = 0; refreshPetLooterActivation(0);
-    assert('Familier ramasseur actif dès 1 compagnon', Pet.active === true, `active=${Pet.active}`);
-    localStorage.setItem('velia_idle_pets_save', JSON.stringify({ PETS: [] }));
+    assert('Familier ramasseur actif avec un pet Collecte', Pet.active === true, `active=${Pet.active}`);
+    assert('Vitesse/portée pilotées par les stats Collecte', Pet.speed > 175 && Pet.range > 400, `speed=${Pet.speed} range=${Pet.range}`);
+    // un pet NON-Collecte (Combat) ne crée PAS de ramasseur -- ses stats ne sont pas des stats de collecte
+    localStorage.setItem('velia_idle_pets_save', JSON.stringify({ PETS: [{ rar: 5, cat: { sec: 'combat' }, stats: [50, 30, 20, 10, 5], tierMult: 1.6 }] }));
     Pet.checkT = 0; refreshPetLooterActivation(0);
-    assert('Familier ramasseur inactif sans compagnon', Pet.active === false, `active=${Pet.active}`);
+    assert('Familier ramasseur inactif sans pet Collecte', Pet.active === false, `active=${Pet.active}`);
 
     // (2) collectDrop(pet) : trash -> silver + taken, marqué 🐾
     const drop = { x: 0, y: 0, item: { name: 'ZZ_PETLOOT_TRASH', kind: 'trash', color: '#8fbf6f' }, taken: false, silver: 777, age: 0, pop: 0 };
