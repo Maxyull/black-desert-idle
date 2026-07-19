@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V485', d:'19/07/2026 11:00', name:{fr:'Familier ramasseur en combat', en:'Loot-collecting companion in combat'}, fr:[
+      {t:'new', sub:'compagnon', tx:'Ton familier te suit maintenant en combat et ramasse le loot tombé au sol par les monstres ! Il file vers les objets et les récupère en parallèle de ton perso — pratique surtout en mode XP, où ton perso ignore le loot au sol. Tout arrive dans le même sac que d\'habitude, avec une petite patte 🐾 dans le ticker de loot pour montrer que c\'est le familier qui l\'a récupéré. Actif dès que tu possèdes au moins un compagnon.'},
+    ], en:[
+      {t:'new', sub:'compagnon', tx:'Your companion now follows you in combat and picks up the loot dropped on the ground by monsters! It darts to items and grabs them alongside your character — especially handy in XP mode, where your character ignores ground loot. Everything lands in the same bag as usual, with a small paw 🐾 in the loot ticker to show the companion collected it. Active as soon as you own at least one companion.'},
+    ] },
   { v:'V484', d:'19/07/2026 10:00', name:{fr:'Compagnon : tutoriel illustré', en:'Companions: illustrated tutorial'}, fr:[
       {t:'change', sub:'compagnon', tx:'L\'onglet « Tutoriel » du menu Compagnon est refait en un grand schéma illustré plein écran : les icônes des onglets sont reliées par des flèches pour montrer la boucle de jeu (Éclosion → Collection → Sections → Jeu → Nourrir, puis on recommence), avec juste un mot ou deux par étape. Les autres onglets (Index, Hardinage, Progression, PvP, Marché) sont présentés à part, et les astuces restent en bas. Beaucoup plus clair d\'un coup d\'œil qu\'avant.'},
     ], en:[

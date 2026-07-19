@@ -6874,6 +6874,51 @@
     assert('serverRates absent : repli sur le record local', Math.abs(gainFallback - 7200) <= 2, `gain=${gainFallback}`);
   }
 
+  // Familier ramasseur (2026-07-19) : (1) actif dès 1 compagnon possédé, inactif sinon ; (2)
+  // collectDrop(l, byPet) ramasse par le MÊME chemin que le perso (silver/taken) et marque
+  // l'affichage d'une patte 🐾 ; (3) le ramassage perso (byPet=false) n'a PAS de patte. Voir
+  // src/combat/pet-looter.js et collectDrop/lootLine (src/combat/loot-rolls.js).
+  function testPetLooterActivationAndTaggedCollect() {
+    if (typeof Pet === 'undefined' || typeof collectDrop !== 'function' || typeof refreshPetLooterActivation !== 'function') {
+      assert('Familier ramasseur : globals présents', false, 'Pet/collectDrop/refreshPetLooterActivation manquants');
+      return;
+    }
+    const petSaveBefore = localStorage.getItem('velia_idle_pets_save');
+    const dropsSnapshot = drops.slice();
+    const silver0 = S.silver;
+
+    // (1) activation
+    localStorage.setItem('velia_idle_pets_save', JSON.stringify({ PETS: [{ rar: 3 }] }));
+    Pet.checkT = 0; refreshPetLooterActivation(0);
+    assert('Familier ramasseur actif dès 1 compagnon', Pet.active === true, `active=${Pet.active}`);
+    localStorage.setItem('velia_idle_pets_save', JSON.stringify({ PETS: [] }));
+    Pet.checkT = 0; refreshPetLooterActivation(0);
+    assert('Familier ramasseur inactif sans compagnon', Pet.active === false, `active=${Pet.active}`);
+
+    // (2) collectDrop(pet) : trash -> silver + taken, marqué 🐾
+    const drop = { x: 0, y: 0, item: { name: 'ZZ_PETLOOT_TRASH', kind: 'trash', color: '#8fbf6f' }, taken: false, silver: 777, age: 0, pop: 0 };
+    drops.push(drop);
+    const ok = collectDrop(drop, true);
+    assert('collectDrop(pet) ramasse le trash au sol', ok === true && drop.taken === true, `ok=${ok} taken=${drop.taken}`);
+    assert('collectDrop(pet) crédite le silver (même chemin que le perso)', S.silver === silver0 + 777, `Δ=${S.silver - silver0}`);
+    const petTicker = document.getElementById('lootTicker');
+    const petLine = petTicker && petTicker.lastElementChild ? petTicker.lastElementChild.innerHTML : '';
+    assert('Ligne de loot du familier marquée 🐾', petLine.indexOf('🐾') !== -1, petLine);
+
+    // (3) ramassage perso : PAS de patte
+    const dp = { x: 0, y: 0, item: { name: 'ZZ_PETLOOT_PLAYERTRASH', kind: 'trash', color: '#8fbf6f' }, taken: false, silver: 1, age: 0, pop: 0 };
+    drops.push(dp);
+    collectDrop(dp, false);
+    const playerTicker = document.getElementById('lootTicker');
+    const playerLine = playerTicker && playerTicker.lastElementChild ? playerTicker.lastElementChild.innerHTML : '';
+    assert('Ligne de loot du perso SANS patte', playerLine.indexOf('🐾') === -1, playerLine);
+
+    // restauration
+    drops.length = 0; dropsSnapshot.forEach(d => drops.push(d));
+    if (petSaveBefore === null) localStorage.removeItem('velia_idle_pets_save'); else localStorage.setItem('velia_idle_pets_save', petSaveBefore);
+    Pet.checkT = 0; Pet.active = false;
+  }
+
   window.runRegressionTests = function() {
     results.length = 0;
     testSessionLockBoxUsesZoneRedesignTokens();
@@ -7232,6 +7277,7 @@
     testSyncPlayerStatsNoLongerPushesServerOwnedRateColumns();
     testLb2RateCatsRankByWeekAndShowBothValues();
     testOfflineCatchupPrefersServerRatesOverLocalRecord();
+    testPetLooterActivationAndTaggedCollect();
     const failed = results.filter(r => !r.pass);
     const summary = `${results.length - failed.length}/${results.length} OK`;
     if (failed.length) {

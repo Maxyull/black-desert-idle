@@ -4384,6 +4384,8 @@ function simTickOnce(dt) {
   fsm(dt);
   wolvesTick(dt);
   dropsTick(dt);
+  
+  if (typeof petLootTick === 'function') petLootTick(dt);
   particlesTick(dt);
 
   cam.x += (P.x-cam.x)*Math.min(1,dt*4);
@@ -6408,84 +6410,86 @@ function dropsTick(dt) {
   for (const l of drops) {
     if (l.taken) continue;
     l.age += dt; l.pop = Math.max(0,l.pop-dt);
-    if (P.faint <= 0 && dist(P.x,P.y,l.x,l.y) < S.lootRadius) {
-      const it = l.item;
-
-      if (it.kind === 'trash') {
-        addSilver(l.silver, 'loot', it.name);
-        l.taken = true; S.lootCount++;
-        lootLine(it, l.silver, 'trashLoot');
-        floatTxt(l.x,l.y,40,tr(it.name),{silver:true});
-        particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
-        queueFarmEvent(it.kind, it.name, 1, l.silver);
-        const zoneWasDone = zoneFullyCollected(zoneIdx); 
-        trackLoot(it.name, it.color, l.silver, it.kind);
-        checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
-        
-        if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
-        continue;
-      }
-
-      const isOptimizable = it.kind === 'gear' || it.kind === 'jackpot';
-      const obj = {
-        
-        key: it.key, name: it.name, kind: it.kind, icon: it.icon, color: it.color,
-        qty: it.pickupQty || 1, stackable: it.stackable, weight: it.weight,
-        val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, dodge: it.dodge||0, enhLv: it.enhLv||0,
-        optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
-        slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
-        matName: it.matName, 
-      };
-      const ok = invAdd(obj);
-      if (!ok) { 
-        showInvFullWarning();
-        continue;
-      }
-      l.taken = true;
-      S.lootCount++;
-      queueFarmEvent(it.kind, it.name, 1, l.silver);
-      const zoneWasDone = zoneFullyCollected(zoneIdx); 
-      trackLoot(it.name, it.color, l.silver, it.kind);
-      checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
-      if (it.kind === 'jackpot') {
-        S.jackpotCount = (S.jackpotCount||0) + 1;
-        
-        lootLine(it, 0, 'jackpot');
-        floatTxt(l.x,l.y,55,'★ '+tr(it.name),{lvl:true});
-        
-        queueLootDiscord('jackpot', it.name);
-      } else if (it.kind === 'gear') {
-        S.gearDropCount = (S.gearDropCount||0) + 1;
-        lootLine(it, 0, 'jackpot');
-        floatTxt(l.x,l.y,55,'⚔ '+tr(it.name),{lvl:true});
-        queueLootDiscord('gear', it.name);
-      } else if (it.kind === 'craft') {
-        lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,40,tr(it.name),{blue:true});
-        
-        if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
-      } else if (it.kind === 'treasure') {
-        lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,50,'🗺️ '+tr(it.name),{lvl:true});
-        
-        logToDiscord('🗺️ Trésor de Velia', `**${myPseudo||'Joueur'}** trouve ${it.name} (${fmtTinyPct(it.ch)} de chance)`, 0xe8c96a);
-      } else {
-        lootLine(it, 0, it.kind === 'material' ? 'matLoot' : '');
-        floatTxt(l.x,l.y,40,tr(it.name),{silver:true});
-        
-        if (it.name === CRON_STONE.name && !cronTutoSeen) {
-          cronTutoSeen = true;
-          try { localStorage.setItem('velia-idle-cron-tuto-seen', '1'); } catch(e) {}
-          setTimeout(startCronTutorial, 400);
-        }
-        
-        else if (it.kind === 'material' && typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
-      }
-      particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
-      if (invPanelOpen) renderInventory();
-    }
+    
+    if (P.faint <= 0 && dist(P.x,P.y,l.x,l.y) < S.lootRadius) collectDrop(l, false);
   }
   drops = drops.filter(l => !l.taken && l.age < DESPAWN);
+}
+
+function collectDrop(l, byPet) {
+  const it = l.item;
+  const paw = byPet ? '🐾 ' : '';
+
+  if (it.kind === 'trash') {
+    addSilver(l.silver, 'loot', it.name);
+    l.taken = true; S.lootCount++;
+    lootLine(it, l.silver, 'trashLoot', byPet);
+    floatTxt(l.x,l.y,40,paw+tr(it.name),{silver:true});
+    particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
+    queueFarmEvent(it.kind, it.name, 1, l.silver);
+    const zoneWasDone = zoneFullyCollected(zoneIdx); 
+    trackLoot(it.name, it.color, l.silver, it.kind);
+    checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
+    
+    if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
+    return true;
+  }
+
+  const isOptimizable = it.kind === 'gear' || it.kind === 'jackpot';
+  const obj = {
+    
+    key: it.key, name: it.name, kind: it.kind, icon: it.icon, color: it.color,
+    qty: it.pickupQty || 1, stackable: it.stackable, weight: it.weight,
+    val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, dodge: it.dodge||0, enhLv: it.enhLv||0,
+    optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
+    slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
+    matName: it.matName, 
+  };
+  
+  if (!invAdd(obj)) { showInvFullWarning(); return false; }
+  l.taken = true;
+  S.lootCount++;
+  queueFarmEvent(it.kind, it.name, 1, l.silver);
+  const zoneWasDone = zoneFullyCollected(zoneIdx); 
+  trackLoot(it.name, it.color, l.silver, it.kind);
+  checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
+  if (it.kind === 'jackpot') {
+    S.jackpotCount = (S.jackpotCount||0) + 1;
+    
+    lootLine(it, 0, 'jackpot', byPet);
+    floatTxt(l.x,l.y,55,paw+'★ '+tr(it.name),{lvl:true});
+    
+    queueLootDiscord('jackpot', it.name);
+  } else if (it.kind === 'gear') {
+    S.gearDropCount = (S.gearDropCount||0) + 1;
+    lootLine(it, 0, 'jackpot', byPet);
+    floatTxt(l.x,l.y,55,paw+'⚔ '+tr(it.name),{lvl:true});
+    queueLootDiscord('gear', it.name);
+  } else if (it.kind === 'craft') {
+    lootLine(it, 0, 'rare', byPet);
+    floatTxt(l.x,l.y,40,paw+tr(it.name),{blue:true});
+    
+    if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
+  } else if (it.kind === 'treasure') {
+    lootLine(it, 0, 'rare', byPet);
+    floatTxt(l.x,l.y,50,paw+'🗺️ '+tr(it.name),{lvl:true});
+    
+    logToDiscord('🗺️ Trésor de Velia', `**${myPseudo||'Joueur'}** trouve ${it.name} (${fmtTinyPct(it.ch)} de chance)`, 0xe8c96a);
+  } else {
+    lootLine(it, 0, it.kind === 'material' ? 'matLoot' : '', byPet);
+    floatTxt(l.x,l.y,40,paw+tr(it.name),{silver:true});
+    
+    if (it.name === CRON_STONE.name && !cronTutoSeen) {
+      cronTutoSeen = true;
+      try { localStorage.setItem('velia-idle-cron-tuto-seen', '1'); } catch(e) {}
+      setTimeout(startCronTutorial, 400);
+    }
+    
+    else if (it.kind === 'material' && typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
+  }
+  particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
+  if (invPanelOpen) renderInventory();
+  return true;
 }
 
 function accSlotFor(it) {
@@ -6498,21 +6502,23 @@ function accSlotFor(it) {
   return 'ring'; 
 }
 
-function lootLine(item, val, cls) {
+function lootLine(item, val, cls, byPet) {
   const t = $('lootTicker');
   
-  if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.el.isConnected) {
+  const paw = byPet ? '🐾 ' : '';
+  
+  if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.byPet === !!byPet && lastLootEntry.el.isConnected) {
     lastLootEntry.count++;
     lastLootEntry.val += val;
-    lastLootEntry.el.innerHTML = `${escapeHtml(tr(item.name))} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
+    lastLootEntry.el.innerHTML = `${paw}${escapeHtml(tr(item.name))} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
     return;
   }
   const div = document.createElement('div');
   if (cls) div.className = cls;
-  div.innerHTML = val > 0 ? `${escapeHtml(tr(item.name))} (🪙+${fmt(val)})` : escapeHtml(tr(item.name));
+  div.innerHTML = val > 0 ? `${paw}${escapeHtml(tr(item.name))} (🪙+${fmt(val)})` : `${paw}${escapeHtml(tr(item.name))}`;
   t.appendChild(div); 
   while (t.children.length > 15) t.removeChild(t.firstChild);
-  lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div };
+  lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div, byPet: !!byPet };
 }
 
 function xpNeededFor(lvl) { return LEVEL_XP_TABLE[Math.min(lvl, LEVEL_XP_TABLE.length-1)]; }
@@ -6553,6 +6559,93 @@ function gainXp(n, trackRate = true) {
 }
 
 function floatTxt(x,y,z,txt,o={}){ floats.push({x,y,z,txt,life:o.lvl?1.6:1,...o}); }
+
+// ==== src/combat/pet-looter.js ====
+const PET_LOOT_RANGE = 520;      
+const PET_PICKUP_RADIUS = 26;    
+const PET_SPEED = 170;           
+const PET_FOLLOW_DIST = 70;      
+const PET_SNAP_DIST = 900;       
+
+const PET_RARITY_HEX = ['#888888','#44b060','#4488cc','#9944cc','#cc8820','#cc3030'];
+
+let Pet = { x:0, y:0, faceX:1, bob:0, active:false, color:'#cc8820', target:null, spawned:false, checkT:0 };
+
+function refreshPetLooterActivation(dt) {
+  Pet.checkT -= dt;
+  if (Pet.checkT > 0) return;
+  Pet.checkT = 2;
+  try {
+    const raw = localStorage.getItem('velia_idle_pets_save');
+    if (!raw) { Pet.active = false; return; }
+    const st = JSON.parse(raw);
+    const pets = Array.isArray(st.PETS) ? st.PETS : [];
+    Pet.active = pets.length > 0;
+    if (Pet.active) {
+      const bestRar = pets.reduce((m,p)=>Math.max(m, p.rar||0), 0);
+      Pet.color = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, bestRar)] || '#cc8820';
+    }
+  } catch(e) { Pet.active = false; }
+}
+
+function petLootTick(dt) {
+  refreshPetLooterActivation(dt);
+  if (!Pet.active || bossState.active) return;
+  
+  if (!Pet.spawned || dist(Pet.x, Pet.y, P.x, P.y) > PET_SNAP_DIST) {
+    Pet.x = P.x - PET_FOLLOW_DIST; Pet.y = P.y; Pet.spawned = true; Pet.target = null;
+  }
+  Pet.bob += dt*6;
+
+  if (!Pet.target || Pet.target.taken) {
+    Pet.target = drops.filter(l => !l.taken && dist(Pet.x,Pet.y,l.x,l.y) < PET_LOOT_RANGE)
+                      .sort((a,b)=>dist(Pet.x,Pet.y,a.x,a.y)-dist(Pet.x,Pet.y,b.x,b.y))[0] || null;
+  }
+  const tgt = Pet.target;
+  let tx, ty, sp;
+  if (tgt) { tx = tgt.x; ty = tgt.y; sp = PET_SPEED; }
+  else {
+    
+    const ang = Math.atan2(Pet.y - P.y, Pet.x - P.x);
+    tx = P.x + Math.cos(ang)*PET_FOLLOW_DIST; ty = P.y + Math.sin(ang)*PET_FOLLOW_DIST; sp = PET_SPEED*0.8;
+  }
+  const d = dist(Pet.x, Pet.y, tx, ty);
+  if (d > 1) {
+    const vx = (tx-Pet.x)/d, vy = (ty-Pet.y)/d;
+    Pet.x += vx*sp*dt; Pet.y += vy*sp*dt;
+    Pet.faceX = vx >= 0 ? 1 : -1;
+  }
+  
+  if (tgt && dist(Pet.x,Pet.y,tgt.x,tgt.y) < PET_PICKUP_RADIUS) {
+    collectDrop(tgt, true);
+    Pet.target = null;
+  }
+}
+
+function drawPetLooterIso(t) {
+  if (!Pet.active || !Pet.spawned) return;
+  const c = toScreen(Pet.x, Pet.y);
+  const bob = Math.sin(Pet.bob)*2;
+  ctx.save();
+  
+  ctx.fillStyle = 'rgba(0,0,0,.28)';
+  ctx.beginPath(); ctx.ellipse(c.sx, c.sy+2, 9, 4, 0, 0, 7); ctx.fill();
+  
+  ctx.fillStyle = Pet.color;
+  ctx.beginPath(); ctx.arc(c.sx, c.sy-7+bob, 7, 0, 7); ctx.fill();
+  
+  ctx.beginPath();
+  ctx.moveTo(c.sx-6, c.sy-12+bob); ctx.lineTo(c.sx-3, c.sy-18+bob); ctx.lineTo(c.sx-1, c.sy-12+bob);
+  ctx.moveTo(c.sx+6, c.sy-12+bob); ctx.lineTo(c.sx+3, c.sy-18+bob); ctx.lineTo(c.sx+1, c.sy-12+bob);
+  ctx.fill();
+  
+  ctx.fillStyle = 'rgba(0,0,0,.6)';
+  ctx.beginPath();
+  ctx.arc(c.sx - 2.6 + Pet.faceX*0.8, c.sy-8+bob, 1.1, 0, 7);
+  ctx.arc(c.sx + 2.6 + Pet.faceX*0.8, c.sy-8+bob, 1.1, 0, 7);
+  ctx.fill();
+  ctx.restore();
+}
 
 // ==== src/combat/vfx.js ====
 function spawnVfx(sk,p) {
@@ -12141,6 +12234,8 @@ function drawEntities(t) {
     });
   });
   items.push({ depth:P.x+P.y, fn:()=>drawWitchIso(t) });
+  
+  if (typeof Pet !== 'undefined' && Pet.active && Pet.spawned) items.push({ depth:Pet.x+Pet.y, fn:()=>drawPetLooterIso(t) });
   particles.forEach(q => items.push({ depth:(q.x??P.x)+(q.y??P.y)+30, fn:()=>drawParticle(q) }));
   items.sort((a,b)=>a.depth-b.depth);
   items.forEach(i=>i.fn());

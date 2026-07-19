@@ -96,6 +96,9 @@ function drawEntities(t) {
     });
   });
   items.push({ depth:P.x+P.y, fn:()=>drawWitchIso(t) });
+  // familier ramasseur (pet-looter.js) : entité triée en profondeur comme les autres, dessinée
+  // seulement s'il est actif (le joueur possède au moins un compagnon).
+  if (typeof Pet !== 'undefined' && Pet.active && Pet.spawned) items.push({ depth:Pet.x+Pet.y, fn:()=>drawPetLooterIso(t) });
   particles.forEach(q => items.push({ depth:(q.x??P.x)+(q.y??P.y)+30, fn:()=>drawParticle(q) }));
   items.sort((a,b)=>a.depth-b.depth);
   items.forEach(i=>i.fn());

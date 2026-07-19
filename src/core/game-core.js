@@ -2642,6 +2642,9 @@ function simTickOnce(dt) {
   fsm(dt);
   wolvesTick(dt);
   dropsTick(dt);
+  // familier ramasseur (pet-looter.js, charge APRÈS ce fichier) : ramasse le loot au sol en parallèle
+  // du perso -- gardé par typeof pour tolérer l'ordre de chargement au tout premier tick.
+  if (typeof petLootTick === 'function') petLootTick(dt);
   particlesTick(dt);
 
   cam.x += (P.x-cam.x)*Math.min(1,dt*4);
