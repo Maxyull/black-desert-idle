@@ -39,6 +39,7 @@
   "companions.achievements.unlocked_log_html": "🏆 <span style=\"color:var(--gold2)\">Achievement: {{name}}</span> — +{{reward}} Silver",
   "companions.achievements.unlocked_toast": "Achievement unlocked: {{icon}} {{name}} (+{{reward}} Silver)",
   "companions.caphras.hint": "{{cost}} stones → +{{boost}} permanent on one stat (cap {{cap}}% of the max).",
+  "companions.pet.combat_looter_note": "Picks up ground loot in combat (the deployed one takes priority)",
   "companions.caphras.not_enough": "Not enough Caphras Stones",
   "companions.caphras.stat_capped": "Stat already at the Caphras cap",
   "companions.caphras.stock_label": "Stock: {{count}}",

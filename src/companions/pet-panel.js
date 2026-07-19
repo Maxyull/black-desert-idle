@@ -2,7 +2,13 @@
 /** @param {object} pet - familier. @returns {string} HTML des barres de stat de sa section (verrouillées au-delà de BONUS_COUNT[pet.rar], bonus Caphras affiché à part). */
 function renderStatBars(pet){
   const sec=secById(pet.cat.sec);if(!sec)return'';
-  return`<div style="display:flex;flex-direction:column;gap:0">${sec.sk.map((k,i)=>{
+  // mention "familier ramasseur" (2026-07-19) : uniquement sur les fiches de pets Collecte -- ce sont
+  // les seuls à auto-looter le sol en combat (pet-looter.js), et ce sont justement ces stats-là
+  // (Vitesse collecte / Rayon / Chance double / Qualité loot / Loot bonus) qui pilotent le ramassage.
+  const looterNote = sec.id==='loot'
+    ? `<div style="display:flex;align-items:center;gap:5px;font-size:9px;color:var(--gold2);background:var(--gold-dim);border-radius:5px;padding:3px 7px;margin-bottom:6px">🐾 ${i18next.t('companions:companions.pet.combat_looter_note')}</div>`
+    : '';
+  return`<div style="display:flex;flex-direction:column;gap:0">${looterNote}${sec.sk.map((k,i)=>{
     const active=i<BONUS_COUNT[pet.rar];
     const val=pet.stats[i]||0;
     const caphras=(pet.caphrasBonus||[])[i]||0;

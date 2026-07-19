@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V486', d:'19/07/2026 12:00', name:{fr:'Fiche familier : mention ramasseur', en:'Companion card: looter note'}, fr:[
+      {t:'change', sub:'compagnon', tx:'La fiche d\'un familier de type Collecte affiche désormais une petite mention 🐾 « Ramasse le loot au sol en combat » au-dessus de ses stats, pour rappeler que ce sont bien ces familiers-là (et leurs stats) qui ramassent le butin pendant que tu combats.'},
+    ], en:[
+      {t:'change', sub:'compagnon', tx:'A Gathering companion\'s card now shows a small 🐾 "Picks up ground loot in combat" note above its stats, as a reminder that these companions (and their stats) are the ones collecting loot while you fight.'},
+    ] },
   { v:'V485', d:'19/07/2026 11:00', name:{fr:'Familier ramasseur en combat', en:'Loot-collecting companion in combat'}, fr:[
       {t:'new', sub:'compagnon', tx:'Ton familier de Collecte te suit maintenant en combat et ramasse le loot tombé au sol par les monstres ! Il file vers les objets et les récupère en parallèle de ton perso — pratique surtout en mode XP, où ton perso ignore le loot au sol. Tout arrive dans le même sac que d\'habitude, avec une petite patte 🐾 dans le ticker de loot pour montrer que c\'est le familier qui l\'a récupéré. Ce sont les familiers de type Collecte qui font le boulot : leurs 5 stats comptent — « Vitesse collecte » (vitesse du familier) et « Rayon » (portée de ramassage), et sur le loot qu\'il récupère : « Loot bonus » (+% de silver sur le trash), « Chance double » (chance de doubler un butin — silver ou pile de matériaux, jamais l\'équipement) et « Qualité loot » (+% sur la valeur de revente des objets). Le familier déployé sur le terrain Collecte est prioritaire.'},
     ], en:[
