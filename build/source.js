@@ -125,6 +125,18 @@ const I18N_RESOURCES = {
       "admin.dashboard.unavailable": "Indisponible",
       "admin.dashboard.wealth_reasonable_note": "Répartition raisonnable",
       "admin.dashboard.wealth_skewed_note": "Richesse très concentrée (moyenne ≫ médiane)",
+      "admin.donations.col_amount": "Montant",
+      "admin.donations.col_date": "Date",
+      "admin.donations.col_donor": "Donateur",
+      "admin.donations.col_public": "Public",
+      "admin.donations.col_source": "Source",
+      "admin.donations.none": "Aucun don enregistré.",
+      "admin.donations.sub": "Dons reçus. Seuls les dons marqués publics apparaissent sur la page Donation.",
+      "admin.donations.tile_count": "Dons",
+      "admin.donations.tile_last": "Dernier",
+      "admin.donations.tile_public": "Publics",
+      "admin.donations.tile_total_usd": "Total",
+      "admin.donations.title": "Donations",
       "admin.economy.avg_per_player": "📊 Moyenne / joueur",
       "admin.economy.failed_prefix": "Échec — ",
       "admin.economy.failed_short": "Échec",
@@ -203,6 +215,22 @@ const I18N_RESOURCES = {
       "admin.enh_debug.step_down_count": "{{count}} pièce(s) rétrogradée(s) d'1 rang",
       "admin.enh_debug.step_up_count": "{{count}} pièce(s) augmentée(s) d'1 rang",
       "admin.enh_debug.tier_not_found": "Palier introuvable",
+      "admin.errors.col_count": "Occurrences",
+      "admin.errors.col_date": "Date",
+      "admin.errors.col_last": "Dernière",
+      "admin.errors.col_message": "Message",
+      "admin.errors.col_url": "URL",
+      "admin.errors.col_version": "Version",
+      "admin.errors.col_versions": "Versions",
+      "admin.errors.none": "Aucune erreur sur la période.",
+      "admin.errors.recent_sub": "Les 30 plus récentes, toutes versions confondues.",
+      "admin.errors.recent_title": "Dernières erreurs",
+      "admin.errors.sub": "Exceptions remontées par le jeu (14 derniers jours). Triées par occurrences : le haut de la liste est ce qu'il faut corriger en premier.",
+      "admin.errors.tile_days_with_errors": "Jours concernés",
+      "admin.errors.tile_distinct_messages": "Messages distincts",
+      "admin.errors.tile_last": "Dernière",
+      "admin.errors.tile_total_14d": "Erreurs (14 j)",
+      "admin.errors.title": "Erreurs client",
       "admin.loot.active_version": "Version active :",
       "admin.loot.table_gear": "Armure/Arme",
       "admin.loot.table_jewel": "Bijou",
@@ -211,12 +239,41 @@ const I18N_RESOURCES = {
       "admin.loot.v2_btn": "V2 — taux fixe par palier",
       "admin.loot.v2_table_title": "📋 Table V2",
       "admin.loot.version_hint": "V1 : chaque zone a son propre taux (décroissant zone après zone, voir GEAR_CHANCE). V2 : un seul taux par palier, appliqué à ses 4 zones. Change instantanément, réversible à tout moment, aucune donnée perdue.",
+      "admin.miniboss.col_date": "Date",
+      "admin.miniboss.col_hp": "PV",
+      "admin.miniboss.col_participants": "Participants",
+      "admin.miniboss.col_run": "Manche",
+      "admin.miniboss.col_status": "État",
+      "admin.miniboss.col_summoner": "Invocateur",
+      "admin.miniboss.none": "Aucune session Mini Boss pour l'instant.",
+      "admin.miniboss.sub": "Sessions de groupe, participants et dégâts cumulés.",
+      "admin.miniboss.tile_active": "En cours",
+      "admin.miniboss.tile_damage": "Dégâts cumulés",
+      "admin.miniboss.tile_last": "Dernière session",
+      "admin.miniboss.tile_players": "Joueurs distincts",
+      "admin.miniboss.tile_sessions": "Sessions",
+      "admin.miniboss.title": "Mini Boss",
       "admin.patchnotes.auto_hidden_label": "Auto-masqué (signalements)",
       "admin.patchnotes.no_pending_reports": "Aucun signalement en attente.",
       "admin.patchnotes.no_removed_comments": "Aucun commentaire retiré.",
       "admin.patchnotes.pending_reports_title": "Signalements en attente",
       "admin.patchnotes.removed_comments_title": "Commentaires retirés (restaurables)",
       "admin.patchnotes.restore_btn": "Restaurer",
+      "admin.pettrade.col_date": "Date",
+      "admin.pettrade.col_min_silver": "Silver min.",
+      "admin.pettrade.col_owner": "Propriétaire",
+      "admin.pettrade.col_status": "État",
+      "admin.pettrade.col_wants": "Demande",
+      "admin.pettrade.none": "Aucune offre pour l'instant.",
+      "admin.pettrade.sub": "Troc de familiers entre joueurs (distinct du marché d'objets du jeu).",
+      "admin.pettrade.tile_offers": "Offres totales",
+      "admin.pettrade.tile_open": "Offres ouvertes",
+      "admin.pettrade.tile_pending": "Livraisons en attente",
+      "admin.pettrade.tile_traders": "Joueurs impliqués",
+      "admin.pettrade.tile_trades": "Échanges conclus",
+      "admin.pettrade.title": "Marché Compagnon",
+      "admin.pettrade.wants_pets": "familiers",
+      "admin.pettrade.wants_silver": "silver",
       "admin.players.ap_title": "PA (Puissance d'Attaque)",
       "admin.players.best_kpm_title": "Record personnel de kills/min (à vie)",
       "admin.players.dp_title": "PD (Puissance de Défense)",
@@ -234,6 +291,30 @@ const I18N_RESOURCES = {
       "admin.players.target_title": "Un joueur précis — par UUID",
       "admin.players.uuid_copied": "UUID copié ✓",
       "admin.players.uuid_placeholder": "UUID du joueur",
+      "admin.pvp.col_day": "Jour",
+      "admin.pvp.col_registrants": "Inscrits",
+      "admin.pvp.col_resolved": "Résolu le",
+      "admin.pvp.col_status": "État",
+      "admin.pvp.col_winner": "Vainqueur",
+      "admin.pvp.none": "Aucun tournoi pour l'instant.",
+      "admin.pvp.reward_gap": "Des tournois sont résolus mais aucune récompense n'a été enregistrée — à vérifier côté résolution.",
+      "admin.pvp.sub": "Tournoi quotidien : inscriptions, résolutions et récompenses.",
+      "admin.pvp.tile_players": "Joueurs distincts",
+      "admin.pvp.tile_registrations": "Inscriptions",
+      "admin.pvp.tile_resolved": "Résolus",
+      "admin.pvp.tile_rewards": "Récompenses",
+      "admin.pvp.tile_silver": "Silver distribué",
+      "admin.pvp.tile_tournaments": "Tournois",
+      "admin.pvp.title": "PvP Compagnon",
+      "admin.ratelimit.col_bucket": "Seau",
+      "admin.ratelimit.col_hits": "Déclenchements",
+      "admin.ratelimit.col_window": "Début de fenêtre",
+      "admin.ratelimit.none": "Aucun seau actif.",
+      "admin.ratelimit.sub": "Compteurs anti-abus les plus récents. Le préfixe du seau indique le type d'action limitée.",
+      "admin.ratelimit.tile_buckets": "Seaux actifs",
+      "admin.ratelimit.tile_hits": "Déclenchements",
+      "admin.ratelimit.tile_kinds": "Types d'action",
+      "admin.ratelimit.title": "Limitation de débit",
       "admin.reconnect.avg_per_session": "Moyenne / session",
       "admin.reconnect.logged_sessions": "Sessions journalisées",
       "admin.reconnect.no_session_yet": "Aucune session pour le moment.",
@@ -1189,6 +1270,18 @@ const I18N_RESOURCES = {
       "admin.dashboard.unavailable": "Unavailable",
       "admin.dashboard.wealth_reasonable_note": "Reasonable spread",
       "admin.dashboard.wealth_skewed_note": "Wealth highly concentrated (mean ≫ median)",
+      "admin.donations.col_amount": "Amount",
+      "admin.donations.col_date": "Date",
+      "admin.donations.col_donor": "Donor",
+      "admin.donations.col_public": "Public",
+      "admin.donations.col_source": "Source",
+      "admin.donations.none": "No donation recorded.",
+      "admin.donations.sub": "Donations received. Only those marked public appear on the Donation page.",
+      "admin.donations.tile_count": "Donations",
+      "admin.donations.tile_last": "Latest",
+      "admin.donations.tile_public": "Public",
+      "admin.donations.tile_total_usd": "Total",
+      "admin.donations.title": "Donations",
       "admin.economy.avg_per_player": "📊 Average / player",
       "admin.economy.failed_prefix": "Failed — ",
       "admin.economy.failed_short": "Failed",
@@ -1267,6 +1360,22 @@ const I18N_RESOURCES = {
       "admin.enh_debug.step_down_count": "{{count}} piece(s) downgraded by 1 rank",
       "admin.enh_debug.step_up_count": "{{count}} piece(s) upgraded by 1 rank",
       "admin.enh_debug.tier_not_found": "Tier not found",
+      "admin.errors.col_count": "Occurrences",
+      "admin.errors.col_date": "Date",
+      "admin.errors.col_last": "Latest",
+      "admin.errors.col_message": "Message",
+      "admin.errors.col_url": "URL",
+      "admin.errors.col_version": "Version",
+      "admin.errors.col_versions": "Versions",
+      "admin.errors.none": "No error over the period.",
+      "admin.errors.recent_sub": "The 30 most recent, across all versions.",
+      "admin.errors.recent_title": "Latest errors",
+      "admin.errors.sub": "Exceptions reported by the game (last 14 days). Sorted by occurrences: the top of the list is what to fix first.",
+      "admin.errors.tile_days_with_errors": "Days affected",
+      "admin.errors.tile_distinct_messages": "Distinct messages",
+      "admin.errors.tile_last": "Latest",
+      "admin.errors.tile_total_14d": "Errors (14d)",
+      "admin.errors.title": "Client errors",
       "admin.loot.active_version": "Active version:",
       "admin.loot.table_gear": "Armor/Weapon",
       "admin.loot.table_jewel": "Jewel",
@@ -1275,12 +1384,41 @@ const I18N_RESOURCES = {
       "admin.loot.v2_btn": "V2 — flat per-tier rate",
       "admin.loot.v2_table_title": "📋 V2 table",
       "admin.loot.version_hint": "V1: each zone has its own rate (decreasing zone after zone, see GEAR_CHANCE). V2: a single rate per tier, applied to its 4 zones. Switches instantly, reversible anytime, no data lost.",
+      "admin.miniboss.col_date": "Date",
+      "admin.miniboss.col_hp": "HP",
+      "admin.miniboss.col_participants": "Participants",
+      "admin.miniboss.col_run": "Run",
+      "admin.miniboss.col_status": "Status",
+      "admin.miniboss.col_summoner": "Summoner",
+      "admin.miniboss.none": "No Mini Boss session yet.",
+      "admin.miniboss.sub": "Group sessions, participants and cumulated damage.",
+      "admin.miniboss.tile_active": "Active",
+      "admin.miniboss.tile_damage": "Total damage",
+      "admin.miniboss.tile_last": "Last session",
+      "admin.miniboss.tile_players": "Distinct players",
+      "admin.miniboss.tile_sessions": "Sessions",
+      "admin.miniboss.title": "Mini Boss",
       "admin.patchnotes.auto_hidden_label": "Auto-hidden (reports)",
       "admin.patchnotes.no_pending_reports": "No pending reports.",
       "admin.patchnotes.no_removed_comments": "No removed comments.",
       "admin.patchnotes.pending_reports_title": "Pending reports",
       "admin.patchnotes.removed_comments_title": "Removed comments (restorable)",
       "admin.patchnotes.restore_btn": "Restore",
+      "admin.pettrade.col_date": "Date",
+      "admin.pettrade.col_min_silver": "Min. silver",
+      "admin.pettrade.col_owner": "Owner",
+      "admin.pettrade.col_status": "Status",
+      "admin.pettrade.col_wants": "Wants",
+      "admin.pettrade.none": "No offer yet.",
+      "admin.pettrade.sub": "Player-to-player pet trading (distinct from the in-game item market).",
+      "admin.pettrade.tile_offers": "Total offers",
+      "admin.pettrade.tile_open": "Open offers",
+      "admin.pettrade.tile_pending": "Pending deliveries",
+      "admin.pettrade.tile_traders": "Players involved",
+      "admin.pettrade.tile_trades": "Completed trades",
+      "admin.pettrade.title": "Companion market",
+      "admin.pettrade.wants_pets": "pets",
+      "admin.pettrade.wants_silver": "silver",
       "admin.players.ap_title": "AP (Attack Power)",
       "admin.players.best_kpm_title": "Personal kills/min record (lifetime)",
       "admin.players.dp_title": "DP (Defense Power)",
@@ -1298,6 +1436,30 @@ const I18N_RESOURCES = {
       "admin.players.target_title": "A specific player — by UUID",
       "admin.players.uuid_copied": "UUID copied ✓",
       "admin.players.uuid_placeholder": "Player UUID",
+      "admin.pvp.col_day": "Day",
+      "admin.pvp.col_registrants": "Registrants",
+      "admin.pvp.col_resolved": "Resolved at",
+      "admin.pvp.col_status": "Status",
+      "admin.pvp.col_winner": "Winner",
+      "admin.pvp.none": "No tournament yet.",
+      "admin.pvp.reward_gap": "Tournaments are resolved but no reward was recorded — worth checking the resolution step.",
+      "admin.pvp.sub": "Daily tournament: registrations, resolutions and rewards.",
+      "admin.pvp.tile_players": "Distinct players",
+      "admin.pvp.tile_registrations": "Registrations",
+      "admin.pvp.tile_resolved": "Resolved",
+      "admin.pvp.tile_rewards": "Rewards",
+      "admin.pvp.tile_silver": "Silver awarded",
+      "admin.pvp.tile_tournaments": "Tournaments",
+      "admin.pvp.title": "Companion PvP",
+      "admin.ratelimit.col_bucket": "Bucket",
+      "admin.ratelimit.col_hits": "Hits",
+      "admin.ratelimit.col_window": "Window start",
+      "admin.ratelimit.none": "No active bucket.",
+      "admin.ratelimit.sub": "Most recent anti-abuse counters. The bucket prefix tells which action is being limited.",
+      "admin.ratelimit.tile_buckets": "Active buckets",
+      "admin.ratelimit.tile_hits": "Hits",
+      "admin.ratelimit.tile_kinds": "Action kinds",
+      "admin.ratelimit.title": "Rate limiting",
       "admin.reconnect.avg_per_session": "Avg / session",
       "admin.reconnect.logged_sessions": "Logged sessions",
       "admin.reconnect.no_session_yet": "No session yet.",
@@ -19754,6 +19916,304 @@ const adminOverviewGroup = ADMIN_SECTIONS.find(g => g.cat === 'overview');
 if (adminOverviewGroup) adminOverviewGroup.items.push(
   { id:'signups', icon:'🆕', label:{fr:'Inscriptions',en:'Signups'}, render:renderAdminSignups }
 );
+
+// ==== src/admin/admin-monitoring.js ====
+function admMonNum(n) { return Number(n || 0).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US'); }
+
+function admMonDate(iso) { return iso ? new Date(iso).toLocaleString(LANG === 'fr' ? 'fr-FR' : 'en-US') : '—'; }
+
+function admMonSkeleton(title, sub, bodyId) {
+  return `<div class="admSection">
+    <div class="admSectionTitle">${title}</div>
+    <div class="admSectionSub">${sub}</div>
+    <div id="${bodyId}"><div class="admEmpty">${i18next.t('admin:admin.common.loading')}</div></div>
+  </div>`;
+}
+
+function admMonFail(el, error) {
+  if (el) el.innerHTML = `<div class="admHint">${escapeHtml(error && error.message ? error.message : 'no data')}</div>`;
+}
+
+function admMonTiles(tiles) {
+  return `<div class="admStatTiles">${tiles.map(t =>
+    `<div class="admStatTile"><div class="astLbl">${t.lbl}</div><div class="astVal">${t.val}</div></div>`).join('')}</div>`;
+}
+
+function renderAdminClientErrors(el) {
+  el.innerHTML =
+    admMonSkeleton('🐞 ' + i18next.t('admin:admin.errors.title'), i18next.t('admin:admin.errors.sub'), 'admErrTop') +
+    admMonSkeleton('📋 ' + i18next.t('admin:admin.errors.recent_title'), i18next.t('admin:admin.errors.recent_sub'), 'admErrRecent');
+  refreshAdminClientErrors();
+}
+
+async function refreshAdminClientErrors() {
+  if (!isAdmin() || !sb) return;
+  const topEl = $a('admErrTop'), recentEl = $a('admErrRecent');
+  const [sum, top, recent] = await Promise.all([
+    sb.rpc('admin_client_errors_summary', { p_days: 14 }),
+    sb.rpc('admin_client_errors_top', { p_days: 14, p_limit: 15 }),
+    sb.rpc('admin_client_errors_recent', { p_limit: 30 }),
+  ]);
+  if (topEl) {
+    if (top.error) { admMonFail(topEl, top.error); }
+    else {
+      const rows = top.data || [], days = sum.data || [];
+      const total = days.reduce((a, d) => a + Number(d.errors || 0), 0);
+      const colors = typeof currentAdminAccentColors === 'function' ? currentAdminAccentColors() : { accent:'#c9a55a' };
+      const chart = typeof buildBarSeriesSvg === 'function'
+        ? buildBarSeriesSvg(days.map(d => ({ label:d.day, value:Number(d.errors||0) })), colors.danger || '#c96a5a') : '';
+      topEl.innerHTML = admMonTiles([
+        { lbl:'🐞 ' + i18next.t('admin:admin.errors.tile_total_14d'), val: admMonNum(total) },
+        { lbl:'📅 ' + i18next.t('admin:admin.errors.tile_days_with_errors'), val: admMonNum(days.length) },
+        { lbl:'🔁 ' + i18next.t('admin:admin.errors.tile_distinct_messages'), val: admMonNum(rows.length) },
+        { lbl:'🕒 ' + i18next.t('admin:admin.errors.tile_last'), val: admMonDate(rows.length ? rows[0].last_seen : null) },
+      ]) + chart + (rows.length === 0
+        ? `<div class="admEmpty">${i18next.t('admin:admin.errors.none')}</div>`
+        : `<table class="admTable"><thead><tr>
+            <th>${i18next.t('admin:admin.errors.col_message')}</th>
+            <th>${i18next.t('admin:admin.errors.col_count')}</th>
+            <th>${i18next.t('admin:admin.errors.col_versions')}</th>
+            <th>${i18next.t('admin:admin.errors.col_last')}</th>
+          </tr></thead><tbody>${rows.map(r => `<tr>
+            <td style="font-family:monospace;font-size:10.5px">${escapeHtml(r.message || '—')}</td>
+            <td>${admMonNum(r.occurrences)}</td>
+            <td style="font-size:10px;color:var(--ink-dim)">${escapeHtml(r.versions || '—')}</td>
+            <td style="font-size:10px">${admMonDate(r.last_seen)}</td>
+          </tr>`).join('')}</tbody></table>`);
+    }
+  }
+  if (recentEl) {
+    if (recent.error) { admMonFail(recentEl, recent.error); }
+    else {
+      const rows = recent.data || [];
+      recentEl.innerHTML = rows.length === 0
+        ? `<div class="admEmpty">${i18next.t('admin:admin.errors.none')}</div>`
+        : `<table class="admTable"><thead><tr>
+            <th>${i18next.t('admin:admin.errors.col_date')}</th>
+            <th>${i18next.t('admin:admin.errors.col_message')}</th>
+            <th>${i18next.t('admin:admin.errors.col_version')}</th>
+            <th>${i18next.t('admin:admin.errors.col_url')}</th>
+          </tr></thead><tbody>${rows.map(r => `<tr>
+            <td style="font-size:10px;white-space:nowrap">${admMonDate(r.created_at)}</td>
+            <td style="font-family:monospace;font-size:10.5px">${escapeHtml(r.message || '—')}</td>
+            <td style="font-size:10px">${escapeHtml(r.game_version || '—')}</td>
+            <td style="font-size:10px;color:var(--ink-dim)">${escapeHtml((r.url || '—').slice(0, 60))}</td>
+          </tr>`).join('')}</tbody></table>`;
+    }
+  }
+}
+
+function renderAdminRateLimit(el) {
+  el.innerHTML = admMonSkeleton('🛡️ ' + i18next.t('admin:admin.ratelimit.title'), i18next.t('admin:admin.ratelimit.sub'), 'admRateLimitBody');
+  refreshAdminRateLimit();
+}
+
+async function refreshAdminRateLimit() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admRateLimitBody');
+  const { data, error } = await sb.rpc('admin_auth_rate_limit', { p_limit: 60 });
+  if (error) return admMonFail(el, error);
+  const rows = data || [];
+  const totalHits = rows.reduce((a, r) => a + Number(r.hits || 0), 0);
+  
+  const kinds = new Set(rows.map(r => String(r.bucket || '').split(':')[0]).filter(Boolean));
+  el.innerHTML = admMonTiles([
+    { lbl:'🧺 ' + i18next.t('admin:admin.ratelimit.tile_buckets'), val: admMonNum(rows.length) },
+    { lbl:'📈 ' + i18next.t('admin:admin.ratelimit.tile_hits'), val: admMonNum(totalHits) },
+    { lbl:'🏷️ ' + i18next.t('admin:admin.ratelimit.tile_kinds'), val: admMonNum(kinds.size) },
+  ]) + (rows.length === 0
+    ? `<div class="admEmpty">${i18next.t('admin:admin.ratelimit.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.ratelimit.col_bucket')}</th>
+        <th>${i18next.t('admin:admin.ratelimit.col_hits')}</th>
+        <th>${i18next.t('admin:admin.ratelimit.col_window')}</th>
+      </tr></thead><tbody>${rows.map(r => `<tr>
+        <td style="font-family:monospace;font-size:10.5px">${escapeHtml(r.bucket || '—')}</td>
+        <td>${admMonNum(r.hits)}</td>
+        <td style="font-size:10px">${admMonDate(r.window_start)}</td>
+      </tr>`).join('')}</tbody></table>`);
+}
+
+function renderAdminMiniboss(el) {
+  el.innerHTML = admMonSkeleton('📜 ' + i18next.t('admin:admin.miniboss.title'), i18next.t('admin:admin.miniboss.sub'), 'admMinibossBody');
+  refreshAdminMiniboss();
+}
+
+async function refreshAdminMiniboss() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admMinibossBody');
+  const [stats, recent] = await Promise.all([
+    sb.rpc('admin_miniboss_stats'),
+    sb.rpc('admin_miniboss_recent', { p_limit: 20 }),
+  ]);
+  if (stats.error) return admMonFail(el, stats.error);
+  const s = (stats.data && stats.data[0]) || {};
+  const rows = recent.data || [];
+  el.innerHTML = admMonTiles([
+    { lbl:'📜 ' + i18next.t('admin:admin.miniboss.tile_sessions'), val: admMonNum(s.sessions_total) },
+    { lbl:'🟢 ' + i18next.t('admin:admin.miniboss.tile_active'), val: admMonNum(s.sessions_active) },
+    { lbl:'👥 ' + i18next.t('admin:admin.miniboss.tile_players'), val: admMonNum(s.distinct_players) },
+    { lbl:'💥 ' + i18next.t('admin:admin.miniboss.tile_damage'), val: admMonNum(Math.round(s.total_damage || 0)) },
+    { lbl:'🕒 ' + i18next.t('admin:admin.miniboss.tile_last'), val: admMonDate(s.last_session) },
+  ]) + (rows.length === 0
+    ? `<div class="admEmpty">${i18next.t('admin:admin.miniboss.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.miniboss.col_summoner')}</th>
+        <th>${i18next.t('admin:admin.miniboss.col_status')}</th>
+        <th>${i18next.t('admin:admin.miniboss.col_hp')}</th>
+        <th>${i18next.t('admin:admin.miniboss.col_participants')}</th>
+        <th>${i18next.t('admin:admin.miniboss.col_run')}</th>
+        <th>${i18next.t('admin:admin.miniboss.col_date')}</th>
+      </tr></thead><tbody>${rows.map(r => `<tr>
+        <td>${escapeHtml(r.summoner_pseudo || '—')}</td>
+        <td>${escapeHtml(r.status || '—')}</td>
+        <td>${admMonNum(Math.round(r.hp || 0))} / ${admMonNum(Math.round(r.max_hp || 0))}</td>
+        <td>${admMonNum(r.participant_count)}</td>
+        <td>${admMonNum(r.run_index)} / ${admMonNum(r.run_length)}</td>
+        <td style="font-size:10px">${admMonDate(r.created_at)}</td>
+      </tr>`).join('')}</tbody></table>`);
+}
+
+function renderAdminPvp(el) {
+  el.innerHTML = admMonSkeleton('⚔️ ' + i18next.t('admin:admin.pvp.title'), i18next.t('admin:admin.pvp.sub'), 'admPvpBody');
+  refreshAdminPvp();
+}
+
+async function refreshAdminPvp() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admPvpBody');
+  const [stats, recent] = await Promise.all([
+    sb.rpc('admin_pvp_stats'),
+    sb.rpc('admin_pvp_recent', { p_limit: 20 }),
+  ]);
+  if (stats.error) return admMonFail(el, stats.error);
+  const s = (stats.data && stats.data[0]) || {};
+  const rows = recent.data || [];
+  
+  const rewardGap = Number(s.tournaments_resolved || 0) > 0 && Number(s.rewards_total || 0) === 0;
+  el.innerHTML = admMonTiles([
+    { lbl:'🏆 ' + i18next.t('admin:admin.pvp.tile_tournaments'), val: admMonNum(s.tournaments_total) },
+    { lbl:'✅ ' + i18next.t('admin:admin.pvp.tile_resolved'), val: admMonNum(s.tournaments_resolved) },
+    { lbl:'📝 ' + i18next.t('admin:admin.pvp.tile_registrations'), val: admMonNum(s.registrations_total) },
+    { lbl:'👥 ' + i18next.t('admin:admin.pvp.tile_players'), val: admMonNum(s.distinct_players) },
+    { lbl:'🎁 ' + i18next.t('admin:admin.pvp.tile_rewards'), val: admMonNum(s.rewards_total) },
+    { lbl:'💰 ' + i18next.t('admin:admin.pvp.tile_silver'), val: admMonNum(s.silver_awarded) },
+  ]) + (rewardGap ? `<div class="admAlertBox">⚠️ ${i18next.t('admin:admin.pvp.reward_gap')}</div>` : '')
+    + (rows.length === 0
+    ? `<div class="admEmpty">${i18next.t('admin:admin.pvp.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.pvp.col_day')}</th>
+        <th>${i18next.t('admin:admin.pvp.col_status')}</th>
+        <th>${i18next.t('admin:admin.pvp.col_registrants')}</th>
+        <th>${i18next.t('admin:admin.pvp.col_winner')}</th>
+        <th>${i18next.t('admin:admin.pvp.col_resolved')}</th>
+      </tr></thead><tbody>${rows.map(r => `<tr>
+        <td>${escapeHtml(r.day || '—')}</td>
+        <td>${escapeHtml(r.status || '—')}</td>
+        <td>${admMonNum(r.registrant_count)}</td>
+        <td>${escapeHtml(r.winner_pseudo || '—')}</td>
+        <td style="font-size:10px">${admMonDate(r.resolved_at)}</td>
+      </tr>`).join('')}</tbody></table>`);
+}
+
+function renderAdminPetTrade(el) {
+  el.innerHTML = admMonSkeleton('🔄 ' + i18next.t('admin:admin.pettrade.title'), i18next.t('admin:admin.pettrade.sub'), 'admPetTradeBody');
+  refreshAdminPetTrade();
+}
+
+async function refreshAdminPetTrade() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admPetTradeBody');
+  const [stats, recent] = await Promise.all([
+    sb.rpc('admin_pet_trade_stats'),
+    sb.rpc('admin_pet_trade_recent', { p_limit: 20 }),
+  ]);
+  if (stats.error) return admMonFail(el, stats.error);
+  const s = (stats.data && stats.data[0]) || {};
+  const rows = recent.data || [];
+  el.innerHTML = admMonTiles([
+    { lbl:'📦 ' + i18next.t('admin:admin.pettrade.tile_offers'), val: admMonNum(s.offers_total) },
+    { lbl:'🟢 ' + i18next.t('admin:admin.pettrade.tile_open'), val: admMonNum(s.offers_open) },
+    { lbl:'🤝 ' + i18next.t('admin:admin.pettrade.tile_trades'), val: admMonNum(s.trades_total) },
+    { lbl:'📮 ' + i18next.t('admin:admin.pettrade.tile_pending'), val: admMonNum(s.deliveries_pending) },
+    { lbl:'👥 ' + i18next.t('admin:admin.pettrade.tile_traders'), val: admMonNum(s.distinct_traders) },
+  ]) + (rows.length === 0
+    ? `<div class="admEmpty">${i18next.t('admin:admin.pettrade.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.pettrade.col_owner')}</th>
+        <th>${i18next.t('admin:admin.pettrade.col_status')}</th>
+        <th>${i18next.t('admin:admin.pettrade.col_wants')}</th>
+        <th>${i18next.t('admin:admin.pettrade.col_min_silver')}</th>
+        <th>${i18next.t('admin:admin.pettrade.col_date')}</th>
+      </tr></thead><tbody>${rows.map(r => {
+        const wants = [r.accepts_pets ? `${i18next.t('admin:admin.pettrade.wants_pets')} ×${admMonNum(r.pet_qty)}` : '',
+                       r.accepts_silver ? i18next.t('admin:admin.pettrade.wants_silver') : ''].filter(Boolean).join(' + ');
+        return `<tr>
+        <td>${escapeHtml(r.owner_pseudo || '—')}</td>
+        <td>${escapeHtml(r.status || '—')}</td>
+        <td style="font-size:10.5px">${escapeHtml(wants || '—')}</td>
+        <td>${admMonNum(r.min_silver)}</td>
+        <td style="font-size:10px">${admMonDate(r.created_at)}</td>
+      </tr>`; }).join('')}</tbody></table>`);
+}
+
+function renderAdminDonations(el) {
+  el.innerHTML = admMonSkeleton('💝 ' + i18next.t('admin:admin.donations.title'), i18next.t('admin:admin.donations.sub'), 'admDonationsBody');
+  refreshAdminDonations();
+}
+
+async function refreshAdminDonations() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admDonationsBody');
+  const { data, error } = await sb.rpc('admin_list_donations', { p_limit: 100 });
+  if (error) return admMonFail(el, error);
+  const rows = data || [];
+  const totalUsd = rows.reduce((a, r) => a + Number(r.amount_usd || 0), 0);
+  const publicCount = rows.filter(r => r.is_public).length;
+  el.innerHTML = admMonTiles([
+    { lbl:'💵 ' + i18next.t('admin:admin.donations.tile_total_usd'), val: '$' + totalUsd.toFixed(2) },
+    { lbl:'🎁 ' + i18next.t('admin:admin.donations.tile_count'), val: admMonNum(rows.length) },
+    { lbl:'👁️ ' + i18next.t('admin:admin.donations.tile_public'), val: admMonNum(publicCount) },
+    { lbl:'🕒 ' + i18next.t('admin:admin.donations.tile_last'), val: admMonDate(rows.length ? (rows[0].received_at || rows[0].created_at) : null) },
+  ]) + (rows.length === 0
+    ? `<div class="admEmpty">${i18next.t('admin:admin.donations.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.donations.col_date')}</th>
+        <th>${i18next.t('admin:admin.donations.col_amount')}</th>
+        <th>${i18next.t('admin:admin.donations.col_donor')}</th>
+        <th>${i18next.t('admin:admin.donations.col_source')}</th>
+        <th>${i18next.t('admin:admin.donations.col_public')}</th>
+      </tr></thead><tbody>${rows.map(r => `<tr>
+        <td style="font-size:10px">${admMonDate(r.received_at || r.created_at)}</td>
+        <td>$${Number(r.amount_usd || 0).toFixed(2)}${r.currency && r.currency !== 'USD' ? ` <span style="font-size:9px;color:var(--ink-dim)">(${escapeHtml(r.currency)} ${admMonNum(r.amount_original)})</span>` : ''}</td>
+        <td>${escapeHtml(r.donor_label || '—')}</td>
+        <td style="font-size:10px">${escapeHtml(r.source || '—')}</td>
+        <td>${r.is_public ? '✅' : '—'}</td>
+      </tr>`).join('')}</tbody></table>`);
+}
+
+ADMIN_SECTIONS.push({ cat:'monitoring', label:{fr:'Supervision',en:'Monitoring'}, items:[
+  { id:'errors', icon:'🐞', label:{fr:'Erreurs client',en:'Client errors'}, render:renderAdminClientErrors },
+  { id:'ratelimit', icon:'🛡️', label:{fr:'Limitation de débit',en:'Rate limiting'}, render:renderAdminRateLimit },
+]});
+
+function admAttachSection(cat, id, render) {
+  const group = ADMIN_SECTIONS.find(g => g.cat === cat);
+  if (!group) return;
+  const item = group.items.find(i => i.id === id);
+  if (item) { delete item.planned; item.render = render; }
+}
+
+const admContentGroup = ADMIN_SECTIONS.find(g => g.cat === 'content');
+if (admContentGroup) admContentGroup.items.push(
+  { id:'miniboss', icon:'📜', label:{fr:'Mini Boss',en:'Mini Boss'}, render:renderAdminMiniboss }
+);
+const admEconomyGroup = ADMIN_SECTIONS.find(g => g.cat === 'economy');
+if (admEconomyGroup) admEconomyGroup.items.push(
+  { id:'pettrade', icon:'🔄', label:{fr:'Marché Compagnon',en:'Companion market'}, render:renderAdminPetTrade }
+);
+admAttachSection('players', 'pvp', renderAdminPvp);
+admAttachSection('economy', 'donations', renderAdminDonations);
 
 // ==== src/social/chat.js ====
 const CHAT_CHANNELS = [
