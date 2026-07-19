@@ -255,103 +255,112 @@ function dropsTick(dt) {
   for (const l of drops) {
     if (l.taken) continue;
     l.age += dt; l.pop = Math.max(0,l.pop-dt);
-    if (P.faint <= 0 && dist(P.x,P.y,l.x,l.y) < S.lootRadius) {
-      const it = l.item;
-
-      // le trash est du silver pur : toujours ramassé, ne prend jamais de place dans le sac
-      if (it.kind === 'trash') {
-        addSilver(l.silver, 'loot', it.name);
-        l.taken = true; S.lootCount++;
-        lootLine(it, l.silver, 'trashLoot');
-        floatTxt(l.x,l.y,40,tr(it.name),{silver:true});
-        particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
-        queueFarmEvent(it.kind, it.name, 1, l.silver);
-        const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
-        trackLoot(it.name, it.color, l.silver, it.kind);
-        checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
-        // tutoriel d'objet au tout premier trash ramassé, toutes zones confondues (2026-07-19) --
-        // voir ITEM_TUTORIALS.trash/maybeQueueItemTutorial (progression/notifications-quests.js)
-        if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
-        continue;
-      }
-
-      // construit l'objet inventaire (matériau/bijou/gear/craft — ceux-là prennent une place)
-      const isOptimizable = it.kind === 'gear' || it.kind === 'jackpot';
-      const obj = {
-        // le bijou porte déjà sa propre icône (générée selon son palier au moment du drop, voir
-        // rollDrops) — ne plus l'écraser par l'ancienne icône générique JACKPOT_ICON
-        key: it.key, name: it.name, kind: it.kind, icon: it.icon, color: it.color,
-        qty: it.pickupQty || 1, stackable: it.stackable, weight: it.weight,
-        val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, dodge: it.dodge||0, enhLv: it.enhLv||0,
-        optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
-        slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
-        matName: it.matName, // palier de stuff (Naru/Tuvala/Yuria/Grunil) → quel matériau l'optimise
-      };
-      const ok = invAdd(obj);
-      if (!ok) { // inventaire plein → l'objet reste au sol (le joueur continue de farmer normalement)
-        showInvFullWarning();
-        continue;
-      }
-      l.taken = true;
-      S.lootCount++;
-      queueFarmEvent(it.kind, it.name, 1, l.silver);
-      const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
-      trackLoot(it.name, it.color, l.silver, it.kind);
-      checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
-      if (it.kind === 'jackpot') {
-        S.jackpotCount = (S.jackpotCount||0) + 1;
-        // prix affiché uniquement pour le trash/token (2026-07-15, demande explicite : "affiche pas
-        // le prix sur les item autre que token met juste la quantité") -- avant, le ticker montrait
-        // "(+1234)" pour n'importe quel objet vendable au ramassage, pas seulement le trash
-        lootLine(it, 0, 'jackpot');
-        floatTxt(l.x,l.y,55,'★ '+tr(it.name),{lvl:true});
-        // le centre de notifications ne garde que les infos importantes (succès, boss, niveau) —
-        // les trouvailles de loot restent visibles dans le loot ticker, pas besoin de les dupliquer
-        // ici (demande explicite du 2026-07-06)
-        // GROUPÉ depuis le 2026-07-22 (au lieu d'un message Discord par drop) : à l'endgame ces
-        // drops tombent ~3x/minute -- voir queueLootDiscord (progression/notifications-quests.js).
-        queueLootDiscord('jackpot', it.name);
-      } else if (it.kind === 'gear') {
-        S.gearDropCount = (S.gearDropCount||0) + 1;
-        lootLine(it, 0, 'jackpot');
-        floatTxt(l.x,l.y,55,'⚔ '+tr(it.name),{lvl:true});
-        queueLootDiscord('gear', it.name);
-      } else if (it.kind === 'craft') {
-        lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,40,tr(it.name),{blue:true});
-        // tutoriel d'objet au premier ramassage (2026-07-19) : Poussière d'esprit ancien/Fragment de
-        // mémoire/Marbre du Dieu déchu -- voir ITEM_TUTORIALS/maybeQueueItemTutorial (progression/
-        // notifications-quests.js). Fonction pure de décision, gère elle-même le flag "déjà vu" et
-        // la file d'attente -- rien à vérifier ici, simple point d'accroche au ramassage.
-        if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
-      } else if (it.kind === 'treasure') {
-        lootLine(it, 0, 'rare');
-        floatTxt(l.x,l.y,50,'🗺️ '+tr(it.name),{lvl:true});
-        // les trésors sont TRÈS rares (jusqu'à 0.00001% de chance) — vaut bien un log "pour le fun"
-        logToDiscord('🗺️ Trésor de Velia', `**${myPseudo||'Joueur'}** trouve ${it.name} (${fmtTinyPct(it.ch)} de chance)`, 0xe8c96a);
-      } else {
-        lootLine(it, 0, it.kind === 'material' ? 'matLoot' : '');
-        floatTxt(l.x,l.y,40,tr(it.name),{silver:true});
-        // tout premier ramassage d'une Pierre de Cron (2026-07-09, demande explicite) : petit
-        // tutoriel expliquant son rôle (protège contre une rétrogradation, activable/désactivable
-        // en cliquant dessus) — voir CRON_TUTORIAL_STEPS/startCronTutorial (game-supabase.js)
-        if (it.name === CRON_STONE.name && !cronTutoSeen) {
-          cronTutoSeen = true;
-          try { localStorage.setItem('velia-idle-cron-tuto-seen', '1'); } catch(e) {}
-          setTimeout(startCronTutorial, 400);
-        }
-        // tutoriel d'objet au premier ramassage (2026-07-19) : Pierre de Novice/du Temps/Noire/
-        // concentrée (les 4 matériaux d'optimisation par palier, kind:'material') -- voir
-        // ITEM_TUTORIALS/maybeQueueItemTutorial (progression/notifications-quests.js). N'a aucun
-        // effet sur la Pierre de Cron (pas dans ITEM_TUTORIAL_BY_NAME, déjà son propre tutoriel
-        // ci-dessus) ni sur les autres objets non enregistrés dans ITEM_TUTORIALS.
-        else if (it.kind === 'material' && typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
-      }
-      particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
-      if (invPanelOpen) renderInventory();
-    }
+    // ramassage par le JOUEUR : à portée de sa position. Le familier ramasseur (pet-looter.js)
+    // ramasse de son côté via collectDrop(l, true), sur sa propre position -- même chemin.
+    if (P.faint <= 0 && dist(P.x,P.y,l.x,l.y) < S.lootRadius) collectDrop(l, false);
   }
   drops = drops.filter(l => !l.taken && l.age < DESPAWN);
+}
+/**
+ * Collecte UN drop au sol (par le joueur OU par le familier ramasseur) : trash → silver direct,
+ * reste → invAdd (l'objet reste au sol si le sac est plein). MÊME chemin inventaire/loot/tutoriels/
+ * Discord pour les deux sources -- seul l'affichage (loot ticker + float) est marqué d'une patte 🐾
+ * quand c'est le familier qui ramasse (2026-07-19, demande explicite : "le familier récupère ce que
+ * le perso laisse tomber, au même endroit que le perso, avec une petite icône pour montrer que c'est
+ * le pet"). Extrait de dropsTick pour être appelable par pet-looter.js.
+ * @param {object} l - drop au sol (lit l.item/l.silver/l.x/l.y ; écrit l.taken).
+ * @param {boolean} [byPet] - true si ramassé par le familier (marqueur 🐾 sur l'affichage).
+ * @returns {boolean} true si effectivement ramassé, false sinon (sac plein).
+ */
+function collectDrop(l, byPet) {
+  const it = l.item;
+  const paw = byPet ? '🐾 ' : '';
+  // bonus de loot du familier Collecte (stats Chance double / Qualité loot / Loot bonus), appliqués
+  // UNIQUEMENT quand c'est le familier qui ramasse -- zéro impact sur le ramassage du perso.
+  const pb = (byPet && typeof petLootBonuses === 'function') ? petLootBonuses() : { dbl:0, quality:0, bonus:0 };
+
+  // le trash est du silver pur : toujours ramassé, ne prend jamais de place dans le sac
+  if (it.kind === 'trash') {
+    // Loot bonus (+% silver) puis Chance double (×2) -- seulement pour le familier (pb=0 sinon)
+    let sv = l.silver;
+    if (byPet) { sv = Math.round(sv * (1 + pb.bonus)); if (Math.random() < pb.dbl) sv *= 2; }
+    addSilver(sv, 'loot', it.name);
+    l.taken = true; S.lootCount++;
+    lootLine(it, sv, 'trashLoot', byPet);
+    floatTxt(l.x,l.y,40,paw+tr(it.name),{silver:true});
+    particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
+    queueFarmEvent(it.kind, it.name, 1, sv);
+    const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
+    trackLoot(it.name, it.color, sv, it.kind);
+    checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
+    // tutoriel d'objet au tout premier trash ramassé (voir ITEM_TUTORIALS.trash)
+    if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
+    return true;
+  }
+
+  // construit l'objet inventaire (matériau/bijou/gear/craft — ceux-là prennent une place)
+  const isOptimizable = it.kind === 'gear' || it.kind === 'jackpot';
+  const obj = {
+    // le bijou porte déjà sa propre icône (générée selon son palier au moment du drop, voir rollDrops)
+    key: it.key, name: it.name, kind: it.kind, icon: it.icon, color: it.color,
+    qty: it.pickupQty || 1, stackable: it.stackable, weight: it.weight,
+    val: l.silver, ap: it.ap||0, dp: it.dp||0, hp: it.hp||0, dodge: it.dodge||0, enhLv: it.enhLv||0,
+    optimizable: isOptimizable, fsByLevel: isOptimizable ? {} : undefined,
+    slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
+    matName: it.matName, // palier de stuff (Naru/Tuvala/Yuria/Grunil) → quel matériau l'optimise
+  };
+  // bonus du familier Collecte sur les objets qu'IL ramasse : Qualité loot = +% valeur de revente ;
+  // Chance double = double la quantité d'un STACK seulement (jamais l'équipement/bijou non stackable,
+  // pour ne pas dupliquer de stuff). pb=0 pour le ramassage du perso -> aucun effet.
+  if (byPet) {
+    obj.val = Math.round(obj.val * (1 + pb.quality));
+    if (obj.stackable && Math.random() < pb.dbl) obj.qty = (obj.qty || 1) * 2;
+  }
+  // inventaire plein → l'objet reste au sol (le joueur/pet continue de farmer normalement)
+  if (!invAdd(obj)) { showInvFullWarning(); return false; }
+  l.taken = true;
+  S.lootCount++;
+  queueFarmEvent(it.kind, it.name, 1, l.silver);
+  const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
+  trackLoot(it.name, it.color, l.silver, it.kind);
+  checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
+  if (it.kind === 'jackpot') {
+    S.jackpotCount = (S.jackpotCount||0) + 1;
+    // prix affiché uniquement pour le trash/token (2026-07-15) -- ici juste le nom + ×N
+    lootLine(it, 0, 'jackpot', byPet);
+    floatTxt(l.x,l.y,55,paw+'★ '+tr(it.name),{lvl:true});
+    // GROUPÉ (queueLootDiscord) : à l'endgame ces drops tombent ~3x/minute
+    queueLootDiscord('jackpot', it.name);
+  } else if (it.kind === 'gear') {
+    S.gearDropCount = (S.gearDropCount||0) + 1;
+    lootLine(it, 0, 'jackpot', byPet);
+    floatTxt(l.x,l.y,55,paw+'⚔ '+tr(it.name),{lvl:true});
+    queueLootDiscord('gear', it.name);
+  } else if (it.kind === 'craft') {
+    lootLine(it, 0, 'rare', byPet);
+    floatTxt(l.x,l.y,40,paw+tr(it.name),{blue:true});
+    // tutoriel d'objet au premier ramassage (Poussière d'esprit ancien/Fragment de mémoire/Marbre)
+    if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
+  } else if (it.kind === 'treasure') {
+    lootLine(it, 0, 'rare', byPet);
+    floatTxt(l.x,l.y,50,paw+'🗺️ '+tr(it.name),{lvl:true});
+    // les trésors sont TRÈS rares (jusqu'à 0.00001% de chance) — vaut bien un log "pour le fun"
+    logToDiscord('🗺️ Trésor de Velia', `**${myPseudo||'Joueur'}** trouve ${it.name} (${fmtTinyPct(it.ch)} de chance)`, 0xe8c96a);
+  } else {
+    lootLine(it, 0, it.kind === 'material' ? 'matLoot' : '', byPet);
+    floatTxt(l.x,l.y,40,paw+tr(it.name),{silver:true});
+    // tout premier ramassage d'une Pierre de Cron (2026-07-09) : petit tutoriel dédié
+    if (it.name === CRON_STONE.name && !cronTutoSeen) {
+      cronTutoSeen = true;
+      try { localStorage.setItem('velia-idle-cron-tuto-seen', '1'); } catch(e) {}
+      setTimeout(startCronTutorial, 400);
+    }
+    // tutoriel d'objet au premier ramassage des 4 matériaux d'optimisation (kind:'material')
+    else if (it.kind === 'material' && typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
+  }
+  particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
+  if (invPanelOpen) renderInventory();
+  return true;
 }
 
 // attribue un slot d'accessoire probable selon le nom
@@ -381,23 +390,27 @@ function accSlotFor(it) {
  * @param {number} val - silver à afficher (0 = pas de prix affiché, juste le nom/quantité).
  * @param {string} cls - classe CSS de la ligne (style par kind de loot).
  */
-function lootLine(item, val, cls) {
+function lootLine(item, val, cls, byPet) {
   const t = $('lootTicker');
+  // patte 🐾 préfixée quand c'est le familier ramasseur qui a récupéré l'objet (2026-07-19). Incluse
+  // dans la clé de fusion ×N (byPet) pour ne PAS fusionner une ligne joueur et une ligne pet du même
+  // objet -- l'icône resterait sinon incohérente d'un ramassage à l'autre.
+  const paw = byPet ? '🐾 ' : '';
   // tr() à l'affichage uniquement (2026-07-16, retour utilisateur : le ticker montrait "Mousse de
   // Polly"/"Pierre concentrée" en français en mode EN) -- la clé de fusion ×N (lastLootEntry.name)
   // reste le nom BRUT, indépendant de la langue.
-  if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.el.isConnected) {
+  if (lastLootEntry && lastLootEntry.name === item.name && lastLootEntry.cls === (cls||'') && lastLootEntry.byPet === !!byPet && lastLootEntry.el.isConnected) {
     lastLootEntry.count++;
     lastLootEntry.val += val;
-    lastLootEntry.el.innerHTML = `${escapeHtml(tr(item.name))} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
+    lastLootEntry.el.innerHTML = `${paw}${escapeHtml(tr(item.name))} ×${lastLootEntry.count}` + (lastLootEntry.val > 0 ? ` (🪙+${fmt(lastLootEntry.val)})` : '');
     return;
   }
   const div = document.createElement('div');
   if (cls) div.className = cls;
-  div.innerHTML = val > 0 ? `${escapeHtml(tr(item.name))} (🪙+${fmt(val)})` : escapeHtml(tr(item.name));
+  div.innerHTML = val > 0 ? `${paw}${escapeHtml(tr(item.name))} (🪙+${fmt(val)})` : `${paw}${escapeHtml(tr(item.name))}`;
   t.appendChild(div); // + flex-direction:column en CSS → apparaît en bas, pousse les anciennes vers le haut
   while (t.children.length > 15) t.removeChild(t.firstChild);
-  lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div };
+  lastLootEntry = { name:item.name, cls: cls||'', count:1, val, el:div, byPet: !!byPet };
 }
 
 // LEVEL_XP_TABLE desormais dans progression/level-xp-data.js (extrait le 2026-07-08,
