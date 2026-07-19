@@ -268,15 +268,67 @@ function toggleSilverHistPanel() {
   else openSilverHistPanel();
 }
 
+// ==================== RÉPARTITION DU SILVER PAR SOURCE (tooltip) ====================
+// 2026-07-19, demande explicite : "silver/min et silver séparés en tooltip, je veux une liste écrite
+// des silver avec libellé". La pastille silver TOTAL (#silverPill) montre au survol une liste écrite
+// du silver gagné par catégorie (S.silverByCategory, alimenté par addSilver -- game-core.js), tandis
+// que la pastille silver/min (#shRate) garde son panneau d'historique (graphique). Les deux sont donc
+// désormais SÉPARÉS (avant, les deux ouvraient le même panneau).
+const SILVER_CAT_LABELS = {
+  loot:            { fr:'🗡️ Butin au sol',  en:'🗡️ Ground loot' },
+  sell:            { fr:'💰 Ventes',         en:'💰 Sales' },
+  quest:           { fr:'🗒️ Quêtes',         en:'🗒️ Quests' },
+  boss:            { fr:'🐍 Boss',           en:'🐍 Bosses' },
+  achievement:     { fr:'🏅 Succès',         en:'🏅 Achievements' },
+  companion:       { fr:'🐾 Compagnon',      en:'🐾 Companion' },
+  potion:          { fr:'🧪 Potions',        en:'🧪 Potions' },
+  welcome:         { fr:'🎁 Bienvenue',      en:'🎁 Welcome' },
+  offline_catchup: { fr:'💤 Hors ligne',     en:'💤 Offline' },
+  admin_test:      { fr:'🛠️ Test admin',     en:'🛠️ Admin test' },
+  autre:           { fr:'❓ Autre',          en:'❓ Other' },
+};
+/** @returns {string} HTML de la liste écrite "silver gagné par source" (triée décroissant + total), depuis S.silverByCategory. */
+function buildSilverBreakdownHtml() {
+  const en = (typeof LANG !== 'undefined' && LANG === 'en');
+  const by = (typeof S !== 'undefined' && S.silverByCategory) || {};
+  const entries = Object.entries(by).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const title = en ? 'Silver earned — by source' : 'Silver gagné — par source';
+  if (!entries.length) return `<div class="silverBdTitle">${title}</div><div class="silverBdEmpty">${en ? 'No silver earned yet' : 'Aucun silver gagné pour l\'instant'}</div>`;
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  const rows = entries.map(([cat, v]) => {
+    const l = SILVER_CAT_LABELS[cat];
+    const lbl = l ? (en ? l.en : l.fr) : cat;
+    const pct = total > 0 ? Math.round(v / total * 100) : 0;
+    return `<div class="silverBdRow"><span class="silverBdLbl">${lbl}</span><span class="silverBdVal">${fmt(v)}</span><span class="silverBdPct">${pct}%</span></div>`;
+  }).join('');
+  return `<div class="silverBdTitle">${title}</div>${rows}<div class="silverBdTotal"><span>Total</span><span>${fmt(total)}</span></div>`;
+}
+/** Affiche le tooltip de répartition sous la pastille silver. */
+function showSilverBreakdownTip() {
+  let tip = $a('silverBreakdownTip');
+  if (!tip) { tip = document.createElement('div'); tip.id = 'silverBreakdownTip'; document.body.appendChild(tip); }
+  tip.innerHTML = buildSilverBreakdownHtml();
+  const pill = $a('silverPill'); if (!pill) return;
+  const r = pill.getBoundingClientRect();
+  tip.style.display = 'block';
+  tip.style.left = Math.round(Math.max(6, r.left)) + 'px';
+  tip.style.top = Math.round(r.bottom + 6) + 'px';
+}
+/** Masque le tooltip de répartition. */
+function hideSilverBreakdownTip() { const tip = $a('silverBreakdownTip'); if (tip) tip.style.display = 'none'; }
+
 // câblage au chargement immédiat : #shRate/#silverPill sont dans le DOM statique du topbar
-// (index.dev.html), bien avant cette balise <script> -- $a suffit, pas besoin d'attendre un
-// DOMContentLoaded. hud() ne réécrit que le textContent des pastilles (jamais les éléments
-// eux-mêmes), les listeners survivent. Les DEUX pastilles ouvrent le même panneau (demande
-// explicite : "histo sur silver pour silver et silver/min").
-(function wireSilverHistPill() {
-  [$a('shRate'), $a('silverPill')].forEach(pill => {
-    if (!pill) return;
-    pill.classList.add('clickable');
-    pill.addEventListener('click', toggleSilverHistPanel);
-  });
+// (index.dev.html). hud() ne réécrit que le textContent des pastilles (jamais les éléments eux-mêmes),
+// les listeners survivent.
+(function wireSilverPills() {
+  // silver/min (#shRate) : historique (graphique) au clic -- inchangé
+  const rate = $a('shRate');
+  if (rate) { rate.classList.add('clickable'); rate.addEventListener('click', toggleSilverHistPanel); }
+  // silver TOTAL (#silverPill) : tooltip "répartition par source" (liste écrite) au survol -- SÉPARÉ
+  const total = $a('silverPill');
+  if (total) {
+    total.classList.add('clickable');
+    total.addEventListener('mouseenter', showSilverBreakdownTip);
+    total.addEventListener('mouseleave', hideSilverBreakdownTip);
+  }
 })();

@@ -482,6 +482,15 @@ function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
   if (delta > 0) S.silverEarned += delta;
+  // répartition du silver GAGNÉ par catégorie (2026-07-19, demande explicite : "liste écrite des
+  // silver avec libellé") -- accumulateur à vie affiché dans le tooltip de la pastille silver du
+  // topbar (voir SILVER_CAT_LABELS/buildSilverBreakdownHtml, silver-history-panel.js). Persisté
+  // automatiquement (getSaveState sauve S en entier). 'compagnon' (typo historique) normalisé.
+  if (delta > 0) {
+    if (!S.silverByCategory) S.silverByCategory = {};
+    const cat = category === 'compagnon' ? 'companion' : (category || 'autre');
+    S.silverByCategory[cat] = (S.silverByCategory[cat] || 0) + delta;
+  }
   if (delta > 0 && document.hidden) awaySilverGained += delta;
   // "silver par heure" (2026-07-12, demande explicite : "compté exclusivement par les silver
   // recolté grace au token vendu") -- S.silverEarned (au-dessus) reste un compteur GLOBAL À VIE

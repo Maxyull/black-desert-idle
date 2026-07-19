@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V490', d:'19/07/2026 16:00', name:{fr:'Silver : répartition par source', en:'Silver: breakdown by source'}, fr:[
+      {t:'new', sub:'interface', tx:'Survole la pastille de silver (💰) en haut : un tooltip affiche désormais la LISTE écrite de ton silver gagné par source, avec libellé et pourcentage (butin au sol, ventes, quêtes, boss, compagnon, succès…). La pastille silver/min garde son historique séparé au clic.'},
+    ], en:[
+      {t:'new', sub:'interface', tx:'Hover the silver pill (💰) at the top: a tooltip now shows the written LIST of your earned silver by source, with label and percentage (ground loot, sales, quests, bosses, companion, achievements…). The silver/min pill keeps its separate history on click.'},
+    ] },
   { v:'V489', d:'19/07/2026 15:00', name:{fr:'Correctif : espace vide à droite du jeu', en:'Fix: empty gap to the right of the game'}, fr:[
       {t:'fix', sub:'interface', tx:'Correction d\'un espace vide qui apparaissait à droite du jeu (entre la zone de jeu et la colonne de droite) quand la taille d\'interface était réglée sur « Petit ». Le jeu occupe désormais bien toute la largeur à toutes les tailles d\'UI.'},
     ], en:[
