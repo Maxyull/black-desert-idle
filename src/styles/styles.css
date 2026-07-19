@@ -1126,9 +1126,9 @@
   #adminBox { margin-top:2px; }
   /* rafraîchi le 2026-07-07 : cartes avec ombre légère + léger survol, pour bien séparer visuellement
      chaque bloc d'action dans un panneau qui contient désormais beaucoup de sections */
-  .admSection { margin-bottom:16px; padding:11px 12px 11px 13px; border:1px solid #2c2a33; border-left-width:3px;
-    border-radius:6px; background:rgba(255,255,255,.025); box-shadow:0 2px 6px rgba(0,0,0,.22); transition:background .15s; }
-  .admSection:hover { background:rgba(255,255,255,.04); }
+  .admSection { margin-bottom:14px; padding:13px 14px; border:1px solid var(--adm-border,#263049); border-left-width:3px;
+    border-radius:9px; background:var(--adm-surface,#0e1422); transition:border-color .15s ease; }
+  .admSection:hover { border-color:var(--adm-border-2,#3a4665); }
   /* code couleur par niveau de risque, pour repérer d'un coup d'oeil ce qui est réversible/perso
      vs ce qui touche TOUS les joueurs — demande explicite du 2026-07-06 (panneau "plus compréhensible") */
   .admSection.riskSafe { border-left-color:#5a8fc8; }
@@ -1137,8 +1137,9 @@
   .admRiskLegend { display:flex; flex-wrap:wrap; gap:14px; font-size:10.5px; color:var(--ink-dim); margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid #2c2a33; }
   .admRiskLegend span { display:flex; align-items:center; gap:5px; }
   .admRiskLegend i { display:inline-block; width:8px; height:8px; border-radius:50%; }
-  .admSectionTitle { font-size:12px; font-weight:bold; letter-spacing:.5px; color:var(--gold); margin-bottom:3px; }
-  .admSectionSub { font-size:10.5px; color:var(--ink-dim); margin-bottom:9px; line-height:1.4; }
+  /* le titre passe en texte courant : quand CHAQUE titre était doré, plus rien ne ressortait */
+  .admSectionTitle { font-size:12.5px; font-weight:600; letter-spacing:.02em; color:var(--adm-text,#c7d0e6); margin-bottom:3px; }
+  .admSectionSub { font-size:10.5px; color:var(--adm-muted,#6b7699); margin-bottom:11px; line-height:1.45; max-width:78ch; }
   .admSection .admActions { border-bottom:none; padding-bottom:0; margin-bottom:8px; }
   .admSection .admBossSpawn { border-bottom:none; padding-bottom:0; margin-bottom:0; }
   .admHint { font-size:10px; color:var(--ink-dim); font-style:italic; }
@@ -1154,22 +1155,35 @@
      via les pastilles .admSwatchBtn en haut à gauche du panneau (2026-07-20, voir plus bas dans ce
      fichier), persistées en localStorage (préférence purement locale à l'admin, ne touche jamais
      l'état de sauvegarde joueur S/INV/EQUIP). */
-  .admThemeRoot[data-adm-theme="emerald"] {
-    --gold:#34D399; --gold-dim:#1f7a5c; --panel:#111827; --panel-2:#1a2236;
-    --ink:#E2E8F0; --ink-dim:#64748B; --danger:#EF4444;
+  /* Refonte visuelle du panneau admin (2026-07-19, demande explicite : "refonte bien") -- le
+     panneau était la dernière grande surface encore sur l'ancienne DA tout-dorée, alors que le jeu
+     est passé à la DA froide (voir la refonte du Compendium). Deux problèmes traités :
+     1) le fond chaud/doré ne correspondait plus au reste du jeu -> socle froid commun ci-dessous ;
+     2) le doré était utilisé sur TOUT (tuiles, valeurs, titres, bordures, en-têtes de tableau),
+        ce qui supprimait toute hiérarchie -> il redevient un ACCENT (nav active, chiffre clé),
+        le texte courant passe en --adm-text/--adm-text-2, les libellés en --adm-muted.
+     Les variables --gold/--danger restent pilotées par le slider de thème : les 5 palettes
+     continuent de fonctionner, elles ne changent plus que l'ACCENT sur un socle constant.
+     Les couleurs sémantiques (bon/attention/critique) sont volontairement SÉPARÉES de l'accent :
+     un indicateur "critique" ne doit pas changer de sens quand on change de thème. */
+  .admThemeRoot {
+    --adm-bg:#0b0f1a; --adm-surface:#0e1422; --adm-surface-2:#131a29; --adm-surface-3:#182034;
+    --adm-border:#263049; --adm-border-2:#3a4665;
+    --adm-text:#c7d0e6; --adm-text-2:#9aa4c0; --adm-muted:#6b7699;
+    --adm-good:#5ec98a; --adm-warn:#d9a441; --adm-crit:#d4685f;
+    --panel:var(--adm-surface); --panel-2:var(--adm-surface-2);
+    --ink:var(--adm-text); --ink-dim:var(--adm-muted);
   }
-  .admThemeRoot[data-adm-theme="ruby"] {
-    --gold:#e05a6e; --gold-dim:#a83f52; --panel:#1a1216; --panel-2:#241a1f;
-    --ink:#f0e2e5; --ink-dim:#a5878e; --danger:#e0715a;
-  }
-  .admThemeRoot[data-adm-theme="royal"] {
-    --gold:#5a8fc8; --gold-dim:#3d6592; --panel:#0f1420; --panel-2:#182030;
-    --ink:#dce4f0; --ink-dim:#8492a8; --danger:#e0715a;
-  }
-  .admThemeRoot[data-adm-theme="violet"] {
-    --gold:#a578d8; --gold-dim:#75549c; --panel:#150f1e; --panel-2:#211729;
-    --ink:#ece2f5; --ink-dim:#96859e; --danger:#e0715a;
-  }
+  /* thème par défaut : accent doré réharmonisé avec la DA froide (#d4a955 au lieu de #c9a55a) */
+  .admThemeRoot[data-adm-theme="gold"] { --gold:#d4a955; --gold-dim:#6d5628; }
+  /* les 4 palettes alternatives ne redéfinissent plus le FOND (--panel/--ink) : elles ne changent
+     que l'accent, sur le socle froid commun défini plus haut. Avant, chacune emportait son propre
+     fond (chaud pour ruby, violacé pour violet...), ce qui donnait 5 panneaux d'aspect très
+     différent ; désormais le slider fait ce qu'on attend d'un slider d'accent. */
+  .admThemeRoot[data-adm-theme="emerald"] { --gold:#34d399; --gold-dim:#1f7a5c; }
+  .admThemeRoot[data-adm-theme="ruby"]    { --gold:#e05a6e; --gold-dim:#a83f52; }
+  .admThemeRoot[data-adm-theme="royal"]   { --gold:#5a8fc8; --gold-dim:#3d6592; }
+  .admThemeRoot[data-adm-theme="violet"]  { --gold:#a578d8; --gold-dim:#75549c; }
   /* pastilles de palette en haut à gauche (2026-07-20, demande explicite : "palette de couleurs e
      mettre en haut a gauche") -- remplace l'ancien slider .admThemeSlider (Système>Palette),
      vivent désormais dans .admNavHead, voir renderAdminThemeSwatchesHtml()/wireAdminThemeSwatches()
@@ -1185,17 +1199,23 @@
   /* barre de recherche de la sidebar (2026-07-20, demande explicite : "ajoute moi une barre de
      recherceh") -- juste sous .admNavHead, filtre les items via wireAdminSidebarSearch(). */
   .admNavSearch {
-    width:100%; margin:0 0 8px; padding:6px 9px; font-size:11.5px;
-    background:#0d0c11; border:1px solid #333; color:var(--ink); border-radius:5px;
+    width:100%; margin:0 0 8px; padding:7px 10px; font-size:11.5px;
+    background:var(--adm-bg,#0b0f1a); border:1px solid var(--adm-border,#263049);
+    color:var(--adm-text,#c7d0e6); border-radius:7px; outline:none;
   }
-  .admNavSearch::placeholder { color:var(--ink-dim); }
+  .admNavSearch:focus { border-color:var(--gold); }
+  .admNavSearch::placeholder { color:var(--adm-muted,#6b7699); }
   /* alertes économiques (2026-07-20, demande explicite : "des alerte sil y a trop de quelque
      chose et qu'il faut créer un puit rapidement") -- computeEconAlerts()/buildEconAlertsHtml()
      dans admin-economy.js, purement informatif (aucune action automatique déclenchée). */
   .admAlerts { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
+  /* couleur SÉMANTIQUE (--adm-crit), volontairement indépendante de l'accent du thème : une alerte
+     doit garder le même sens quelle que soit la palette choisie. Filet à gauche pour la repérer
+     dans un flux de cartes sans crier plus fort que le contenu. */
   .admAlertBox {
-    background:rgba(224,90,110,.12); border:1px solid var(--danger); color:#e8a89f;
-    border-radius:5px; padding:9px 12px; font-size:11.5px; line-height:1.5;
+    background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049);
+    border-left:3px solid var(--adm-crit,#d4685f); color:var(--adm-text,#c7d0e6);
+    border-radius:8px; padding:10px 13px; font-size:11.5px; line-height:1.5;
   }
   /* règles de récompense World Boss, agrandies (2026-07-15, demande explicite : "recompense,
      affiche en plus gros en dessous des horaires de boss") -- carte dédiée au lieu d'un simple
@@ -1738,31 +1758,34 @@
      tutoriel joueur, mais on garde la même hiérarchie par précaution. Le jeu (canvas/HUD) continue
      de tourner derrière, comme les autres overlays -- aucune pause de la boucle. */
   #adminOverlay {
-    position:fixed; inset:0; background:#0b0a0e; z-index:150;
-    display:none;
+    position:fixed; inset:0; background:var(--adm-bg,#0b0f1a); z-index:150;
+    display:none; font-variant-numeric:tabular-nums;
   }
   #adminOverlay.open { display:flex; }
   #adminSidebar {
-    width:230px; flex-shrink:0; height:100%; overflow-y:auto;
-    background:var(--panel); border-right:1px solid var(--gold-dim); padding:8px;
+    width:236px; flex-shrink:0; height:100%; overflow-y:auto;
+    background:var(--adm-surface,#0e1422); border-right:1px solid var(--adm-border,#263049);
+    padding:10px 8px;
   }
   .admNavHead {
     display:flex; align-items:center; justify-content:space-between; gap:8px;
-    padding:8px 6px 12px; border-bottom:1px solid #2c2a33; margin-bottom:8px;
+    padding:6px 6px 12px; border-bottom:1px solid var(--adm-border,#263049); margin-bottom:8px;
   }
-  .admNavTitle { font-size:13px; font-weight:bold; letter-spacing:.5px; color:var(--gold); }
+  .admNavTitle { font-size:12.5px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--adm-text,#c7d0e6); }
   #closeAdmin { width:auto; margin:0; padding:2px 8px; background:none; border:none; font-size:15px; color:var(--ink-dim); }
   .admNavCatLabel {
-    font-size:9px; font-weight:bold; letter-spacing:.15em; text-transform:uppercase;
-    color:var(--ink-dim); opacity:.7; padding:10px 8px 3px;
+    font-size:8.5px; font-weight:700; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--adm-muted,#6b7699); padding:12px 8px 4px;
   }
   .admNavItem {
-    display:flex; align-items:center; gap:8px; padding:7px 9px; border-radius:5px; cursor:pointer;
-    font-size:12px; color:var(--ink-dim); margin-bottom:1px; border-left:2px solid transparent;
+    display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:6px; cursor:pointer;
+    font-size:12px; color:var(--adm-text-2,#9aa4c0); margin-bottom:1px;
+    border-left:2px solid transparent; transition:background .12s ease, color .12s ease;
   }
-  .admNavItem:hover { background:rgba(255,255,255,.04); color:var(--ink); }
+  .admNavItem:hover { background:var(--adm-surface-2,#131a29); color:var(--adm-text,#c7d0e6); }
+  /* l'accent ne sert QU'ICI dans la nav : un seul repère visuel fort pour "où je suis" */
   .admNavItem.active {
-    background:rgba(201,165,90,.1); color:var(--gold); border-left-color:var(--gold);
+    background:var(--adm-surface-3,#182034); color:var(--gold); border-left-color:var(--gold); font-weight:600;
   }
   .admNavItem .admNavIcon { width:16px; text-align:center; flex-shrink:0; }
   .admNavItem.planned { opacity:.55; }
@@ -1770,14 +1793,16 @@
     margin-left:auto; font-size:8.5px; padding:1px 5px; border-radius:99px; flex-shrink:0;
     background:rgba(255,255,255,.06); color:var(--ink-dim);
   }
-  #adminMain { flex:1; min-width:0; display:flex; flex-direction:column; height:100%; }
+  #adminMain { flex:1; min-width:0; display:flex; flex-direction:column; height:100%; background:var(--adm-bg,#0b0f1a); }
+  /* l'en-tête était un dégradé bleu-gris (#26313a→#1b232a) sans rapport avec la palette du jeu :
+     remplacé par un aplat de la même famille que la sidebar, la séparation se fait à la bordure */
   #adminMainHead {
-    display:flex; align-items:center; gap:10px; padding:12px 20px;
-    background:linear-gradient(180deg,#26313a,#1b232a); border-bottom:1px solid var(--gold-dim);
-    font-size:14px; letter-spacing:.5px; color:var(--ink); flex-shrink:0;
+    display:flex; align-items:center; gap:10px; padding:13px 22px;
+    background:var(--adm-surface,#0e1422); border-bottom:1px solid var(--adm-border,#263049);
+    font-size:13.5px; font-weight:600; letter-spacing:.02em; color:var(--adm-text,#c7d0e6); flex-shrink:0;
   }
-  #adminMainBody { flex:1; overflow-y:auto; padding:18px 22px; font-size:12.5px; line-height:1.6; color:var(--ink); }
-  #adminMainBody h3 { color:var(--gold); font-size:13px; letter-spacing:.5px; margin:16px 0 6px; }
+  #adminMainBody { flex:1; overflow-y:auto; padding:20px 22px; font-size:12.5px; line-height:1.6; color:var(--adm-text,#c7d0e6); }
+  #adminMainBody h3 { color:var(--adm-text,#c7d0e6); font-size:12.5px; font-weight:600; letter-spacing:.04em; margin:18px 0 7px; }
   #adminMainBody h3:first-child { margin-top:0; }
   .admPlannedPane { text-align:center; padding:40px 20px; color:var(--ink-dim); }
   .admPlannedPane .admPlannedIcon { font-size:32px; margin-bottom:10px; }
@@ -1969,8 +1994,12 @@
   .admPieLegend .lgLbl { color:var(--ink-dim); overflow:hidden; text-overflow:ellipsis; }
   .admPieLegend .lgVal { margin-left:auto; color:var(--ink); flex-shrink:0; padding-left:6px; }
   .admBarSeriesSvg { max-width:420px; }
-  .admTable { width:100%; border-collapse:collapse; font-size:11px; margin-bottom:4px; }
-  .admTable th { text-align:left; color:var(--ink-dim); font-weight:normal; font-size:9.5px;
+  /* tableaux : en-tête collant (les listes de joueurs/erreurs dépassent l'écran), chiffres alignés
+     en tabular-nums, survol de ligne lisible sur le socle froid */
+  .admTable { width:100%; border-collapse:collapse; font-size:11px; margin-bottom:4px; font-variant-numeric:tabular-nums; }
+  .admTable thead th { position:sticky; top:0; z-index:1; background:var(--adm-surface,#0e1422); }
+  .admTable tbody tr:hover { background:var(--adm-surface-2,#131a29); }
+  .admTable th { text-align:left; color:var(--adm-muted,#6b7699); font-weight:600; font-size:9.5px;
     letter-spacing:.5px; text-transform:uppercase; padding:4px 6px; border-bottom:1px solid #2c2a33; }
   .admTable td { padding:4px 6px; border-bottom:1px solid #201f26; color:var(--ink); }
   .admTable tr.admTop td { color:var(--gold); font-weight:bold; }
@@ -2079,24 +2108,40 @@
   }
   .compTutoBtn:hover { background:rgba(201,165,90,.22); }
   /* graphique économie (moyenne/total de silver) côté admin */
-  .admStatTiles { display:flex; gap:10px; margin-bottom:12px; }
-  .admStatTile { flex:1; background:rgba(201,165,90,.06); border:1px solid var(--gold-dim); border-radius:5px; padding:9px 12px; }
-  .admStatTile .astLbl { font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:3px; }
-  .admStatTile .astVal { font-size:17px; color:var(--gold); font-weight:bold; }
+  /* tuiles de stats : passent en grille (elles débordaient en flex dès 5-6 tuiles, ex. PvP) et
+     perdent le fond doré -- le chiffre porte l'information, pas la boîte. */
+  .admStatTiles { display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:9px; margin-bottom:14px; }
+  .admStatTile {
+    background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049);
+    border-radius:8px; padding:10px 12px; min-width:0;
+  }
+  .admStatTile .astLbl {
+    font-size:9px; letter-spacing:.11em; text-transform:uppercase; color:var(--adm-muted,#6b7699);
+    margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  }
+  .admStatTile .astVal {
+    font-size:19px; line-height:1.15; color:var(--adm-text,#c7d0e6); font-weight:600;
+    font-variant-numeric:tabular-nums; overflow-wrap:anywhere;
+  }
   /* Dashboard consolidé (2026-07-20, demande explicite : "ajoute toutes les graphique de tout les
      panel dans dashboard avec des voyant vert rouge pour plus dinfos") -- grille de cartes
      cliquables, une par section du panneau admin, chacune avec son mini graphique (réutilise les
      mêmes builders que la section complète) + un voyant 🟢/🔴 de synthèse. Clique -> ouvre la
      section complète (openAdminSection). */
-  .admDashGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; }
+  .admDashGrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(268px, 1fr)); gap:12px; }
   .admDashCard {
-    background:rgba(255,255,255,.03); border:1px solid #2c2a33; border-radius:7px; padding:10px 12px;
-    cursor:pointer; transition:background .15s, border-color .15s; display:flex; flex-direction:column; gap:6px;
+    background:var(--adm-surface,#0e1422); border:1px solid var(--adm-border,#263049); border-radius:9px;
+    padding:12px 13px; cursor:pointer; display:flex; flex-direction:column; gap:7px;
+    transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease;
   }
-  .admDashCard:hover { background:rgba(201,165,90,.07); border-color:var(--gold-dim); }
+  /* ces cartes sont cliquables (elles ouvrent la section) : le survol doit le montrer clairement */
+  .admDashCard:hover {
+    border-color:var(--adm-border-2,#3a4665); transform:translateY(-1px);
+    box-shadow:0 4px 14px rgba(0,0,0,.35);
+  }
   .admDashCardHead { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-  .admDashCardTitle { font-family:'Cinzel',serif; font-size:11px; letter-spacing:.03em; color:var(--ink); }
-  .admDashLight { font-size:13px; line-height:1; flex-shrink:0; }
+  .admDashCardTitle { font-size:11.5px; font-weight:600; letter-spacing:.02em; color:var(--adm-text,#c7d0e6); }
+  .admDashLight { font-size:12px; line-height:1; flex-shrink:0; }
   .admDashCardBody { min-height:70px; display:flex; align-items:center; justify-content:center; }
   .admDashCardBody .admPieBlock { max-width:100%; }
   .admDashCardBody svg { max-width:100%; }
