@@ -6916,6 +6916,30 @@
     const playerLine = playerTicker && playerTicker.lastElementChild ? playerTicker.lastElementChild.innerHTML : '';
     assert('Ligne de loot du perso SANS patte', playerLine.indexOf('🐾') === -1, playerLine);
 
+    // (4) bonus de loot du familier : Loot bonus (+% silver) + Chance double (×2), UNIQUEMENT côté pet.
+    //     stats[4]=20 -> lootBonus=min(.5,20/100)=0.20 ; stats[2]=50 -> dblChance=min(.6,50/100)=0.50
+    localStorage.setItem('velia_idle_pets_save', JSON.stringify({ PETS: [{ rar: 5, cat: { sec: 'loot' }, stats: [30, 20, 50, 0, 20], tierMult: 1.0, terrain: true }] }));
+    Pet.checkT = 0; refreshPetLooterActivation(0);
+    const origRandom = Math.random;
+    try {
+      Math.random = () => 0.99; // > dblChance -> pas de double, on isole le loot bonus
+      const sB = S.silver;
+      const dA = { x: 0, y: 0, item: { name: 'ZZ_BONUS_TRASH', kind: 'trash', color: '#8fbf6f' }, taken: false, silver: 1000, age: 0, pop: 0 };
+      drops.push(dA); collectDrop(dA, true);
+      assert('Loot bonus du familier : +20% sur le silver trash', S.silver === sB + 1200, `Δ=${S.silver - sB}`);
+      Math.random = () => 0.0; // < dblChance -> double
+      const sC = S.silver;
+      const dB = { x: 0, y: 0, item: { name: 'ZZ_BONUS_TRASH2', kind: 'trash', color: '#8fbf6f' }, taken: false, silver: 1000, age: 0, pop: 0 };
+      drops.push(dB); collectDrop(dB, true);
+      assert('Chance double du familier : silver trash ×2 (après +20%)', S.silver === sC + 2400, `Δ=${S.silver - sC}`);
+      // le perso ne profite JAMAIS des bonus du familier
+      Math.random = () => 0.0;
+      const sD = S.silver;
+      const dP = { x: 0, y: 0, item: { name: 'ZZ_BONUS_PLAYER', kind: 'trash', color: '#8fbf6f' }, taken: false, silver: 1000, age: 0, pop: 0 };
+      drops.push(dP); collectDrop(dP, false);
+      assert('Le perso ne profite pas des bonus du familier', S.silver === sD + 1000, `Δ=${S.silver - sD}`);
+    } finally { Math.random = origRandom; }
+
     // restauration
     drops.length = 0; dropsSnapshot.forEach(d => drops.push(d));
     if (petSaveBefore === null) localStorage.removeItem('velia_idle_pets_save'); else localStorage.setItem('velia_idle_pets_save', petSaveBefore);

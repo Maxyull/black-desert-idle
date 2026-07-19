@@ -26,9 +26,22 @@ const PET_BASE_SPEED = 170, PET_BASE_RANGE = 520, PET_BASE_PICKUP = 26;
 // couleurs de rareté du module Compagnon (companions.css --r0..--r5) -- petite touche d'identité
 const PET_RARITY_HEX = ['#888888','#44b060','#4488cc','#9944cc','#cc8820','#cc3030'];
 
-// speed/range/pickupR sont pilotés par les stats du pet Collecte actif (voir refreshPetLooterActivation)
+// speed/range/pickupR + dblChance/quality/lootBonus sont pilotés par les stats du pet Collecte actif
+// (voir refreshPetLooterActivation). dblChance/quality/lootBonus sont consommés par collectDrop
+// (loot-rolls.js) UNIQUEMENT sur le loot ramassé par le familier (via petLootBonuses()).
 let Pet = { x:0, y:0, faceX:1, bob:0, active:false, color:'#cc8820', target:null, spawned:false, checkT:0,
-            speed:PET_BASE_SPEED, range:PET_BASE_RANGE, pickupR:PET_BASE_PICKUP };
+            speed:PET_BASE_SPEED, range:PET_BASE_RANGE, pickupR:PET_BASE_PICKUP,
+            dblChance:0, quality:0, lootBonus:0 };
+
+/**
+ * Bonus de loot du familier ramasseur (issus des stats du pet Collecte), consommés par collectDrop
+ * quand c'est le familier qui ramasse. Tous plafonnés. @returns {{dbl:number, quality:number, bonus:number}}
+ *   dbl = proba de doubler (silver trash / qty d'un stack) ; quality = +% valeur de revente ;
+ *   bonus = +% de silver sur le trash.
+ */
+function petLootBonuses() {
+  return { dbl: Pet.dblChance || 0, quality: Pet.quality || 0, bonus: Pet.lootBonus || 0 };
+}
 
 /**
  * Relit (au plus toutes les 2 s) l'état du module Compagnon pour désigner le familier RAMASSEUR et
@@ -58,11 +71,18 @@ function refreshPetLooterActivation(dt) {
     const mult = best.tierMult || 1;
     const vit = best.stats[0] || 0;   // Vitesse collecte
     const ray = best.stats[1] || 0;   // Rayon
-    Pet.active  = true;
-    Pet.color   = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, best.rar||0)] || '#cc8820';
-    Pet.speed   = 150 + vit * mult * 1.2;
-    Pet.range   = 360 + ray * mult * 6;
-    Pet.pickupR = 22  + ray * mult * 0.4;
+    const dbl = best.stats[2] || 0;   // Chance double
+    const qua = best.stats[3] || 0;   // Qualité loot
+    const bon = best.stats[4] || 0;   // Loot bonus
+    Pet.active    = true;
+    Pet.color     = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, best.rar||0)] || '#cc8820';
+    Pet.speed     = 150 + vit * mult * 1.2;
+    Pet.range     = 360 + ray * mult * 6;
+    Pet.pickupR   = 22  + ray * mult * 0.4;
+    // bonus de loot (plafonnés) -- appliqués seulement au loot ramassé par le familier (collectDrop)
+    Pet.dblChance = Math.min(0.60, dbl * mult / 100); // proba de doubler (silver trash / qty stack)
+    Pet.quality   = Math.min(0.50, qua * mult / 100); // +% valeur de revente
+    Pet.lootBonus = Math.min(0.50, bon * mult / 100); // +% silver sur le trash
   } catch(e) { Pet.active = false; }
 }
 

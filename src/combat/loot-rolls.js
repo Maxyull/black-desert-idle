@@ -275,17 +275,23 @@ function dropsTick(dt) {
 function collectDrop(l, byPet) {
   const it = l.item;
   const paw = byPet ? '🐾 ' : '';
+  // bonus de loot du familier Collecte (stats Chance double / Qualité loot / Loot bonus), appliqués
+  // UNIQUEMENT quand c'est le familier qui ramasse -- zéro impact sur le ramassage du perso.
+  const pb = (byPet && typeof petLootBonuses === 'function') ? petLootBonuses() : { dbl:0, quality:0, bonus:0 };
 
   // le trash est du silver pur : toujours ramassé, ne prend jamais de place dans le sac
   if (it.kind === 'trash') {
-    addSilver(l.silver, 'loot', it.name);
+    // Loot bonus (+% silver) puis Chance double (×2) -- seulement pour le familier (pb=0 sinon)
+    let sv = l.silver;
+    if (byPet) { sv = Math.round(sv * (1 + pb.bonus)); if (Math.random() < pb.dbl) sv *= 2; }
+    addSilver(sv, 'loot', it.name);
     l.taken = true; S.lootCount++;
-    lootLine(it, l.silver, 'trashLoot', byPet);
+    lootLine(it, sv, 'trashLoot', byPet);
     floatTxt(l.x,l.y,40,paw+tr(it.name),{silver:true});
     particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
-    queueFarmEvent(it.kind, it.name, 1, l.silver);
+    queueFarmEvent(it.kind, it.name, 1, sv);
     const zoneWasDone = zoneFullyCollected(zoneIdx); // Compendium : avant ramassage
-    trackLoot(it.name, it.color, l.silver, it.kind);
+    trackLoot(it.name, it.color, sv, it.kind);
     checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
     // tutoriel d'objet au tout premier trash ramassé (voir ITEM_TUTORIALS.trash)
     if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
@@ -303,6 +309,13 @@ function collectDrop(l, byPet) {
     slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
     matName: it.matName, // palier de stuff (Naru/Tuvala/Yuria/Grunil) → quel matériau l'optimise
   };
+  // bonus du familier Collecte sur les objets qu'IL ramasse : Qualité loot = +% valeur de revente ;
+  // Chance double = double la quantité d'un STACK seulement (jamais l'équipement/bijou non stackable,
+  // pour ne pas dupliquer de stuff). pb=0 pour le ramassage du perso -> aucun effet.
+  if (byPet) {
+    obj.val = Math.round(obj.val * (1 + pb.quality));
+    if (obj.stackable && Math.random() < pb.dbl) obj.qty = (obj.qty || 1) * 2;
+  }
   // inventaire plein → l'objet reste au sol (le joueur/pet continue de farmer normalement)
   if (!invAdd(obj)) { showInvFullWarning(); return false; }
   l.taken = true;

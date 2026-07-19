@@ -6419,16 +6419,21 @@ function dropsTick(dt) {
 function collectDrop(l, byPet) {
   const it = l.item;
   const paw = byPet ? '🐾 ' : '';
+  
+  const pb = (byPet && typeof petLootBonuses === 'function') ? petLootBonuses() : { dbl:0, quality:0, bonus:0 };
 
   if (it.kind === 'trash') {
-    addSilver(l.silver, 'loot', it.name);
+    
+    let sv = l.silver;
+    if (byPet) { sv = Math.round(sv * (1 + pb.bonus)); if (Math.random() < pb.dbl) sv *= 2; }
+    addSilver(sv, 'loot', it.name);
     l.taken = true; S.lootCount++;
-    lootLine(it, l.silver, 'trashLoot', byPet);
+    lootLine(it, sv, 'trashLoot', byPet);
     floatTxt(l.x,l.y,40,paw+tr(it.name),{silver:true});
     particles.push({ type:'pickup', x:l.x, y:l.y, life:.35, max:.35, color:it.color });
-    queueFarmEvent(it.kind, it.name, 1, l.silver);
+    queueFarmEvent(it.kind, it.name, 1, sv);
     const zoneWasDone = zoneFullyCollected(zoneIdx); 
-    trackLoot(it.name, it.color, l.silver, it.kind);
+    trackLoot(it.name, it.color, sv, it.kind);
     checkZoneCompendiumUnlock(zoneIdx, zoneWasDone);
     
     if (typeof maybeQueueItemTutorial === 'function') maybeQueueItemTutorial(it.name);
@@ -6445,6 +6450,11 @@ function collectDrop(l, byPet) {
     slot: it.kind==='jackpot' ? accSlotFor(it) : it.kind==='gear' ? it.slot : null,
     matName: it.matName, 
   };
+  
+  if (byPet) {
+    obj.val = Math.round(obj.val * (1 + pb.quality));
+    if (obj.stackable && Math.random() < pb.dbl) obj.qty = (obj.qty || 1) * 2;
+  }
   
   if (!invAdd(obj)) { showInvFullWarning(); return false; }
   l.taken = true;
@@ -6569,7 +6579,12 @@ const PET_BASE_SPEED = 170, PET_BASE_RANGE = 520, PET_BASE_PICKUP = 26;
 const PET_RARITY_HEX = ['#888888','#44b060','#4488cc','#9944cc','#cc8820','#cc3030'];
 
 let Pet = { x:0, y:0, faceX:1, bob:0, active:false, color:'#cc8820', target:null, spawned:false, checkT:0,
-            speed:PET_BASE_SPEED, range:PET_BASE_RANGE, pickupR:PET_BASE_PICKUP };
+            speed:PET_BASE_SPEED, range:PET_BASE_RANGE, pickupR:PET_BASE_PICKUP,
+            dblChance:0, quality:0, lootBonus:0 };
+
+function petLootBonuses() {
+  return { dbl: Pet.dblChance || 0, quality: Pet.quality || 0, bonus: Pet.lootBonus || 0 };
+}
 
 function refreshPetLooterActivation(dt) {
   Pet.checkT -= dt;
@@ -6589,11 +6604,18 @@ function refreshPetLooterActivation(dt) {
     const mult = best.tierMult || 1;
     const vit = best.stats[0] || 0;   
     const ray = best.stats[1] || 0;   
-    Pet.active  = true;
-    Pet.color   = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, best.rar||0)] || '#cc8820';
-    Pet.speed   = 150 + vit * mult * 1.2;
-    Pet.range   = 360 + ray * mult * 6;
-    Pet.pickupR = 22  + ray * mult * 0.4;
+    const dbl = best.stats[2] || 0;   
+    const qua = best.stats[3] || 0;   
+    const bon = best.stats[4] || 0;   
+    Pet.active    = true;
+    Pet.color     = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, best.rar||0)] || '#cc8820';
+    Pet.speed     = 150 + vit * mult * 1.2;
+    Pet.range     = 360 + ray * mult * 6;
+    Pet.pickupR   = 22  + ray * mult * 0.4;
+    
+    Pet.dblChance = Math.min(0.60, dbl * mult / 100); 
+    Pet.quality   = Math.min(0.50, qua * mult / 100); 
+    Pet.lootBonus = Math.min(0.50, bon * mult / 100); 
   } catch(e) { Pet.active = false; }
 }
 
