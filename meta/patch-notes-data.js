@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V493', d:'19/07/2026 19:00', name:{fr:'Compendium : nouvelle DA + fermeture Échap/clic', en:'Compendium: new look + Escape/click to close'}, fr:[
+      {t:'change', sub:'interface', tx:'Le Compendium adopte la nouvelle direction artistique (mêmes couleurs froides que le reste du jeu, au lieu de l\'ancien thème doré). Il se ferme aussi avec Échap ou en cliquant en dehors de la fenêtre, et la croix de fermeture est bien calée en haut à droite. Alignement de l\'en-tête corrigé.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The Compendium adopts the new art direction (same cool colors as the rest of the game, instead of the old golden theme). It also closes with Escape or by clicking outside the window, and the close cross is properly pinned top-right. Header alignment fixed.'},
+    ] },
   { v:'V492', d:'19/07/2026 18:00', name:{fr:'Colonne de droite → panneaux ancrés à droite', en:'Right column → right-anchored panels'}, fr:[
       {t:'change', sub:'interface', tx:'La colonne de droite (Suivi, Temps de jeu, Quêtes suivies, Chat) est retirée : le jeu occupe maintenant TOUTE la largeur. Ces éléments sont devenus des boutons dans la barre sous le header (à côté de Zone/Boss) : un clic ouvre le panneau correspondant, ancré à droite. Re-cliquer le referme.'},
     ], en:[
