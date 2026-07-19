@@ -16215,7 +16215,8 @@ function updateUiScaleLayoutTrack() {
   const layout = $a('gameLayout');
   if (!layout) return;
   const factor = UI_SCALE_FACTORS[uiScaleLevel];
-  if (factor === 1 || isMobileViewport()) {
+  
+  if (factor <= 1 || isMobileViewport()) {
     layout.style.removeProperty('--ui-center-track');
     return;
   }

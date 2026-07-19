@@ -125,7 +125,14 @@ function updateUiScaleLayoutTrack() {
   const layout = $a('gameLayout');
   if (!layout) return;
   const factor = UI_SCALE_FACTORS[uiScaleLevel];
-  if (factor === 1 || isMobileViewport()) {
+  // factor <= 1 (2026-07-19) : NE PAS fixer la piste centrale. Depuis que la sidebar gauche est
+  // masquée (menus déplacés dans le header), la grille .layout n'a que 2 colonnes (jeu | droite) avec
+  // justify-content:space-between. Rétrécir la piste centrale sous la largeur dispo (échelle "small",
+  // factor 0.85) faisait accumuler tout le surplus ENTRE le jeu et la colonne de droite -> "trou béant
+  // à droite" (retour joueur). On laisse alors la piste à 1fr (remplit) ; le zoom sur #wrap suffit à
+  // réduire le contenu sans créer de trou. On ne fixe la piste QUE pour l'AGRANDIR (factor > 1, "large"),
+  // cas où #wrap a réellement besoin de plus de place que la largeur dispo.
+  if (factor <= 1 || isMobileViewport()) {
     layout.style.removeProperty('--ui-center-track');
     return;
   }
