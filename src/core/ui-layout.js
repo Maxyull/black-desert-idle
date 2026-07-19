@@ -186,6 +186,35 @@ $a('btnUiScaleDown').onclick = () => setUiScaleLevel(-1);
 $a('btnUiScaleUp').onclick = () => setUiScaleLevel(1);
 applyUiScale();
 
+// ═══ DOCK FLOTTANT À DROITE (2026-07-19, demande explicite : "vire la colonne de droite, mets-la
+// sous le header au même endroit que les menus zone/boss, en panneaux lockés à droite") ═══
+// La colonne de droite (#sideRight) n'est plus une colonne de grille mais un dock fixe ancré à droite,
+// masqué par défaut. Chaque bouton de #rightDockBar (barre d'activités) ouvre UN widget à la fois dans
+// le dock : Suivi (#questWidget), Temps de jeu (#playtimeWidget), Quêtes suivies (#questTrackerWidget),
+// Chat (#chatWidget). Les widgets restent câblés/rendus par id (déplacés, jamais dupliqués) ; on ne fait
+// que basculer leur affichage. Re-cliquer le bouton actif referme le dock.
+const RIGHT_DOCK_WIDGETS = ['questWidget', 'playtimeWidget', 'questTrackerWidget', 'chatWidget'];
+const RIGHT_DOCK_BTN = { questWidget:'dockBtnSuivi', playtimeWidget:'dockBtnPlaytime', questTrackerWidget:'dockBtnQuests', chatWidget:'dockBtnChat' };
+/** Met en évidence le bouton de dock actif (ou aucun si btnId null). */
+function updateDockBtnActive(btnId) {
+  Object.values(RIGHT_DOCK_BTN).forEach(id => { const b = $a(id); if (b) b.classList.toggle('dockBtnActive', id === btnId); });
+}
+/** @param {string} widgetId - un des RIGHT_DOCK_WIDGETS. Ouvre ce widget dans le dock ancré à droite (masque les autres), ou referme le dock si ce widget est déjà affiché. */
+function toggleRightDock(widgetId) {
+  const dock = $a('sideRight');
+  if (!dock || RIGHT_DOCK_WIDGETS.indexOf(widgetId) === -1) return;
+  dock.classList.remove('collapsed'); // neutralise l'ancien état replié éventuellement restauré au chargement
+  const alreadyShown = dock.style.display === 'block' && dock.dataset.dockActive === widgetId;
+  if (alreadyShown) { dock.style.display = 'none'; dock.dataset.dockActive = ''; updateDockBtnActive(null); return; }
+  RIGHT_DOCK_WIDGETS.forEach(id => { const w = $a(id); if (w) w.style.display = (id === widgetId) ? '' : 'none'; });
+  dock.dataset.dockActive = widgetId;
+  dock.style.display = 'block';
+  // ancre juste sous la barre d'activités (hauteur variable -> mesurée à l'ouverture)
+  const bar = $a('activitiesBar');
+  dock.style.top = (bar ? Math.round(bar.getBoundingClientRect().bottom + 6) : 120) + 'px';
+  updateDockBtnActive(RIGHT_DOCK_BTN[widgetId]);
+}
+
 // (NAME_EN et tr() sont maintenant déclarés en haut du script)
 
 // PATCH_NOTES est desormais defini dans patch-notes-data.js (charge AVANT ce fichier, voir index.html)

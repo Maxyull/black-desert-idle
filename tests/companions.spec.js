@@ -1299,15 +1299,16 @@ test('fusion result modal shows a green up arrow on gain and a red down arrow on
   await expect(frame.locator('.hdr-logo')).toHaveText('Black Desert Idle');
 
   // Le tier grimpe toujours d'au moins 1 cran par rapport au meilleur parent (baseTier =
-  // max(tiers)+1, jamais moins), donc le sens du Tier est déterministe -> ⬆️ vert garanti.
-  // Le Score (GS) dépend en revanche d'un tirage de multiplicateur de tier (rollTierMult) —
-  // pas déterministe -> le test déduit le sens ATTENDU depuis les vraies valeurs renvoyées par
-  // le jeu (plutôt que de figer une direction), pour rester robuste au hasard tout en vérifiant
-  // que le HTML affiche exactement la flèche/couleur cohérente avec ce résultat réel.
+  // max(tiers)+1) -> ⬆️ vert garanti. MAIS ce n'est vrai QUE hors "breakthrough" de rareté :
+  // executeFusion() remet le Tier à 1 quand la rareté BONDIT (fusion.js §3), ce qui arrivait ~1 fois
+  // sur 3 avec des parents de rareté basse -> test flaky (mergedTier=1). On force donc des parents à la
+  // rareté MAX (5) : rollFusionRarity() ne peut plus augmenter la rareté, donc pas de reset, le Tier
+  // monte de façon déterministe. Le Score (GS) reste aléatoire (rollTierMult) -> le test déduit son
+  // sens ATTENDU depuis les vraies valeurs renvoyées, pour rester robuste tout en vérifiant le HTML.
   const result = await frame.locator('body').evaluate(() => {
     const cat = PET_CATALOG.find(c => c.rar === 1);
-    const a = { id: petId++, cat, rar: 1, stats: [10, 10, 10, 0, 0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
-    const b = { id: petId++, cat, rar: 1, stats: [12, 12, 12, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
+    const a = { id: petId++, cat, rar: 5, stats: [10, 10, 10, 0, 0], hunger: 100, terrain: false, tier: 1, tierXp: 0, tierMult: 1 };
+    const b = { id: petId++, cat, rar: 5, stats: [12, 12, 12, 0, 0], hunger: 100, terrain: false, tier: 2, tierXp: 0, tierMult: 1 };
     const bestParentTier = Math.max(a.tier, b.tier);
     const bestParentGS = Math.max(normGS(a), normGS(b));
     PETS.push(a, b);

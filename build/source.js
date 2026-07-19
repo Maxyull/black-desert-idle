@@ -15964,6 +15964,10 @@ const I18N = {
   btnWiki: { fr:'📖 Wiki', en:'📖 Wiki' },
   btnTrust: { fr:'🛡️ Confiance & Sécurité', en:'🛡️ Trust & Security' },
   btnNotifCenter: { fr:'🔔 Notifications', en:'🔔 Notifications' },
+  dockSuivi: { fr:'Suivi', en:'Tracking' },
+  dockPlaytime: { fr:'Temps de jeu', en:'Playtime' },
+  dockQuests: { fr:'Quêtes suivies', en:'Tracked quests' },
+  dockChat: { fr:'Chat', en:'Chat' },
   btnPatch: { fr:'📜 Notes de version', en:'📜 Patch Notes' },
   btnMarketLbl: { fr:'🏛️ Marché commun', en:'🏛️ Common Market' },
   marketConstructionBanner: { fr:'🚧 BETA — Marché en construction, encore peu fonctionnel : bugs et changements à prévoir', en:'🚧 BETA — Market under construction, still not very functional: expect bugs and changes' },
@@ -16253,6 +16257,28 @@ window.addEventListener('resize', () => { if (uiScaleLevel !== 'medium') updateU
 $a('btnUiScaleDown').onclick = () => setUiScaleLevel(-1);
 $a('btnUiScaleUp').onclick = () => setUiScaleLevel(1);
 applyUiScale();
+
+const RIGHT_DOCK_WIDGETS = ['questWidget', 'playtimeWidget', 'questTrackerWidget', 'chatWidget'];
+const RIGHT_DOCK_BTN = { questWidget:'dockBtnSuivi', playtimeWidget:'dockBtnPlaytime', questTrackerWidget:'dockBtnQuests', chatWidget:'dockBtnChat' };
+
+function updateDockBtnActive(btnId) {
+  Object.values(RIGHT_DOCK_BTN).forEach(id => { const b = $a(id); if (b) b.classList.toggle('dockBtnActive', id === btnId); });
+}
+
+function toggleRightDock(widgetId) {
+  const dock = $a('sideRight');
+  if (!dock || RIGHT_DOCK_WIDGETS.indexOf(widgetId) === -1) return;
+  dock.classList.remove('collapsed'); 
+  const alreadyShown = dock.style.display === 'block' && dock.dataset.dockActive === widgetId;
+  if (alreadyShown) { dock.style.display = 'none'; dock.dataset.dockActive = ''; updateDockBtnActive(null); return; }
+  RIGHT_DOCK_WIDGETS.forEach(id => { const w = $a(id); if (w) w.style.display = (id === widgetId) ? '' : 'none'; });
+  dock.dataset.dockActive = widgetId;
+  dock.style.display = 'block';
+  
+  const bar = $a('activitiesBar');
+  dock.style.top = (bar ? Math.round(bar.getBoundingClientRect().bottom + 6) : 120) + 'px';
+  updateDockBtnActive(RIGHT_DOCK_BTN[widgetId]);
+}
 
 // ==== src/backend/client-health.js ====
 const CURRENT_VERSION = PATCH_NOTES[0].v;

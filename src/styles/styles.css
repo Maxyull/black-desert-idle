@@ -4186,8 +4186,30 @@
    grille .layout passe à 2 colonnes -> le jeu récupère toute la largeur à gauche.
    ════════════════════════════════════════════════════════════════════════════════ */
 #sideMenu { display:none !important; }
-.layout { grid-template-columns: var(--ui-center-track,1fr) 300px !important; }
-.layout:has(#sideRight.collapsed) { grid-template-columns: var(--ui-center-track,1fr) 56px !important; }
+/* colonne de droite retirée de la grille (2026-07-19) : #sideRight devient un dock flottant ancré à
+   droite (voir plus bas), la grille .layout n'a plus qu'UNE colonne -> jeu 100% pleine largeur. */
+.layout { grid-template-columns: var(--ui-center-track,1fr) !important; }
+.layout:has(#sideRight.collapsed) { grid-template-columns: var(--ui-center-track,1fr) !important; }
+
+/* barre de boutons de la colonne de droite, à droite de la barre d'activités (zone/boss) */
+#activitiesBar { display:flex; align-items:center; }
+#rightDockBar { display:flex; align-items:center; gap:4px; margin-left:auto; padding-right:6px; flex-shrink:0; }
+#rightDockBar button { width:auto; margin:0; padding:6px 10px; font-size:12.5px; white-space:nowrap; background:transparent; border:1px solid transparent; color:#c7d0e6; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+#rightDockBar button:hover { background:rgba(255,255,255,.06); border-color:#2c2a33; }
+#rightDockBar button.dockBtnActive { background:rgba(212,169,85,.16); border-color:#4a3f28; color:#e8a355; }
+
+/* dock flottant ANCRÉ À DROITE (2026-07-19, "en panneaux lockés à droite") : #sideRight n'est plus une
+   colonne mais un panneau fixe à droite, masqué par défaut, montrant UN widget à la fois (toggleRightDock). */
+#btnCollapseRight { display:none !important; }
+#sideRight {
+  position:fixed !important; right:8px; width:340px; max-width:calc(100vw - 16px);
+  max-height:calc(100vh - 160px); overflow-y:auto; z-index:60; display:none;
+  background:rgba(10,9,12,.96); border:1px solid #2c2a33; border-radius:10px; padding:8px;
+  box-shadow:0 12px 40px rgba(0,0,0,.5); scrollbar-width:thin;
+}
+#sideRight::-webkit-scrollbar { width:8px; }
+#sideRight::-webkit-scrollbar-thumb { background:#2c2a33; border-radius:4px; }
+#sideRight.collapsed { display:none; }  /* neutralise l'ancien état replié (obsolète) */
 
 /* barre de nav dans le header (Quêtes/Courrier/Compendium/Codex/Succès/Wiki) -- défile si trop étroit */
 #topbarNav { display:flex; align-items:center; gap:3px; flex:1 1 auto; min-width:0; overflow-x:auto; margin:0 6px; scrollbar-width:thin; }

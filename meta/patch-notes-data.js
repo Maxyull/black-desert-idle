@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V492', d:'19/07/2026 18:00', name:{fr:'Colonne de droite → panneaux ancrés à droite', en:'Right column → right-anchored panels'}, fr:[
+      {t:'change', sub:'interface', tx:'La colonne de droite (Suivi, Temps de jeu, Quêtes suivies, Chat) est retirée : le jeu occupe maintenant TOUTE la largeur. Ces éléments sont devenus des boutons dans la barre sous le header (à côté de Zone/Boss) : un clic ouvre le panneau correspondant, ancré à droite. Re-cliquer le referme.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The right column (Tracking, Playtime, Tracked quests, Chat) is removed: the game now uses the FULL width. Those items became buttons in the bar under the header (next to Zone/Boss): one click opens the matching panel, anchored to the right. Clicking again closes it.'},
+    ] },
   { v:'V491', d:'19/07/2026 17:00', name:{fr:'Silver par source : historique complet', en:'Silver by source: full history'}, fr:[
       {t:'change', sub:'interface', tx:'La répartition du silver par source (tooltip de la pastille 💰) inclut désormais TOUT ton historique, rétro-catégorisé depuis le registre serveur — plus seulement les gains depuis la dernière mise à jour. Le total se recale à chaque connexion.'},
     ], en:[
