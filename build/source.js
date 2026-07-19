@@ -6561,15 +6561,15 @@ function gainXp(n, trackRate = true) {
 function floatTxt(x,y,z,txt,o={}){ floats.push({x,y,z,txt,life:o.lvl?1.6:1,...o}); }
 
 // ==== src/combat/pet-looter.js ====
-const PET_LOOT_RANGE = 520;      
-const PET_PICKUP_RADIUS = 26;    
-const PET_SPEED = 170;           
 const PET_FOLLOW_DIST = 70;      
 const PET_SNAP_DIST = 900;       
 
+const PET_BASE_SPEED = 170, PET_BASE_RANGE = 520, PET_BASE_PICKUP = 26;
+
 const PET_RARITY_HEX = ['#888888','#44b060','#4488cc','#9944cc','#cc8820','#cc3030'];
 
-let Pet = { x:0, y:0, faceX:1, bob:0, active:false, color:'#cc8820', target:null, spawned:false, checkT:0 };
+let Pet = { x:0, y:0, faceX:1, bob:0, active:false, color:'#cc8820', target:null, spawned:false, checkT:0,
+            speed:PET_BASE_SPEED, range:PET_BASE_RANGE, pickupR:PET_BASE_PICKUP };
 
 function refreshPetLooterActivation(dt) {
   Pet.checkT -= dt;
@@ -6580,11 +6580,20 @@ function refreshPetLooterActivation(dt) {
     if (!raw) { Pet.active = false; return; }
     const st = JSON.parse(raw);
     const pets = Array.isArray(st.PETS) ? st.PETS : [];
-    Pet.active = pets.length > 0;
-    if (Pet.active) {
-      const bestRar = pets.reduce((m,p)=>Math.max(m, p.rar||0), 0);
-      Pet.color = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, bestRar)] || '#cc8820';
-    }
+    
+    const collectors = pets.filter(p => p && p.cat && p.cat.sec === 'loot' && Array.isArray(p.stats));
+    if (!collectors.length) { Pet.active = false; return; }
+    
+    const power = p => (((p.stats[0]||0) + (p.stats[1]||0)) * (p.tierMult || 1)) + (p.terrain ? 1e6 : 0);
+    const best = collectors.reduce((a,b) => power(b) > power(a) ? b : a);
+    const mult = best.tierMult || 1;
+    const vit = best.stats[0] || 0;   
+    const ray = best.stats[1] || 0;   
+    Pet.active  = true;
+    Pet.color   = PET_RARITY_HEX[Math.min(PET_RARITY_HEX.length-1, best.rar||0)] || '#cc8820';
+    Pet.speed   = 150 + vit * mult * 1.2;
+    Pet.range   = 360 + ray * mult * 6;
+    Pet.pickupR = 22  + ray * mult * 0.4;
   } catch(e) { Pet.active = false; }
 }
 
@@ -6598,16 +6607,16 @@ function petLootTick(dt) {
   Pet.bob += dt*6;
 
   if (!Pet.target || Pet.target.taken) {
-    Pet.target = drops.filter(l => !l.taken && dist(Pet.x,Pet.y,l.x,l.y) < PET_LOOT_RANGE)
+    Pet.target = drops.filter(l => !l.taken && dist(Pet.x,Pet.y,l.x,l.y) < Pet.range)
                       .sort((a,b)=>dist(Pet.x,Pet.y,a.x,a.y)-dist(Pet.x,Pet.y,b.x,b.y))[0] || null;
   }
   const tgt = Pet.target;
   let tx, ty, sp;
-  if (tgt) { tx = tgt.x; ty = tgt.y; sp = PET_SPEED; }
+  if (tgt) { tx = tgt.x; ty = tgt.y; sp = Pet.speed; }          
   else {
     
     const ang = Math.atan2(Pet.y - P.y, Pet.x - P.x);
-    tx = P.x + Math.cos(ang)*PET_FOLLOW_DIST; ty = P.y + Math.sin(ang)*PET_FOLLOW_DIST; sp = PET_SPEED*0.8;
+    tx = P.x + Math.cos(ang)*PET_FOLLOW_DIST; ty = P.y + Math.sin(ang)*PET_FOLLOW_DIST; sp = Pet.speed*0.8;
   }
   const d = dist(Pet.x, Pet.y, tx, ty);
   if (d > 1) {
@@ -6616,7 +6625,7 @@ function petLootTick(dt) {
     Pet.faceX = vx >= 0 ? 1 : -1;
   }
   
-  if (tgt && dist(Pet.x,Pet.y,tgt.x,tgt.y) < PET_PICKUP_RADIUS) {
+  if (tgt && dist(Pet.x,Pet.y,tgt.x,tgt.y) < Pet.pickupR) {
     collectDrop(tgt, true);
     Pet.target = null;
   }
