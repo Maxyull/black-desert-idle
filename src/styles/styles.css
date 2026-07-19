@@ -4178,3 +4178,34 @@
     #activitiesBar { width:100%; min-width:0; max-width:100%; overflow:hidden; }
     #activityTabs { width:100%; min-width:0; max-width:100%; }
   }
+
+/* ════════════════════════════════════════════════════════════════════════════════
+   MENUS DE GAUCHE DÉPLACÉS DANS LE HEADER (2026-07-19, demande explicite)
+   La sidebar #sideMenu est masquée (ses éléments câblés par id restent dans le DOM, invisibles) ;
+   les boutons de nav + le toggle de langue vivent dans le header (#topbarNav / .topbar-right), et la
+   grille .layout passe à 2 colonnes -> le jeu récupère toute la largeur à gauche.
+   ════════════════════════════════════════════════════════════════════════════════ */
+#sideMenu { display:none !important; }
+.layout { grid-template-columns: var(--ui-center-track,1fr) 300px !important; }
+.layout:has(#sideRight.collapsed) { grid-template-columns: var(--ui-center-track,1fr) 56px !important; }
+
+/* barre de nav dans le header (Quêtes/Courrier/Compendium/Codex/Succès/Wiki) -- défile si trop étroit */
+#topbarNav { display:flex; align-items:center; gap:3px; flex:1 1 auto; min-width:0; overflow-x:auto; margin:0 6px; scrollbar-width:thin; }
+#topbarNav::-webkit-scrollbar { height:4px; }
+#topbarNav::-webkit-scrollbar-thumb { background:#2c2a33; border-radius:2px; }
+#topbarNav button { width:auto; margin:0; padding:6px 9px; font-size:12.5px; white-space:nowrap; position:relative; background:transparent; border:1px solid transparent; color:#c7d0e6; border-radius:6px; cursor:pointer; display:inline-flex; align-items:center; gap:4px; }
+#topbarNav button:hover { background:rgba(255,255,255,.06); border-color:#2c2a33; }
+
+/* toggle de langue compact dans le header (override du style sidebar 100%/38px) */
+.topbar #langToggle { width:auto; height:28px; border-radius:6px; }
+.topbar #langToggle .langOpt { padding:0 8px; font-size:10px; }
+
+/* boutons "langue préférée" du panneau Mon compte (override du button{width:100%} global) */
+.acctLangBtn { width:auto; margin:0; padding:4px 10px; font-size:11px; }
+
+/* #6 : scrollbar aux couleurs du thème sur le panneau "Mon compte" (coque modale #infoBox partagée) */
+#infoBox { scrollbar-width:thin; scrollbar-color:rgba(212,169,85,.5) transparent; }
+#infoBox::-webkit-scrollbar { width:9px; }
+#infoBox::-webkit-scrollbar-track { background:transparent; }
+#infoBox::-webkit-scrollbar-thumb { background:rgba(212,169,85,.45); border-radius:5px; }
+#infoBox::-webkit-scrollbar-thumb:hover { background:rgba(212,169,85,.75); }

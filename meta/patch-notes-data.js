@@ -19,6 +19,13 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V488', d:'19/07/2026 14:00', name:{fr:'Menus dans le header, jeu plein écran', en:'Menus in the header, full-width game'}, fr:[
+      {t:'change', sub:'interface', tx:'Refonte de la mise en page : les menus de gauche (Quêtes, Courrier, Compendium, Codex, Succès, Wiki) et le sélecteur de langue passent dans le bandeau du haut. La colonne de gauche disparaît et le jeu occupe désormais toute la largeur à gauche, collé à la colonne de droite.'},
+      {t:'change', sub:'interface', tx:'« Mon compte » (👤) accueille de nouvelles infos venues de l\'ancienne colonne de gauche : joueurs en ligne / inscrits, langue préférée, et un accès à « Confiance & Sécurité ». Sa barre de défilement est aussi mise aux couleurs du thème.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'Layout overhaul: the left-side menus (Quests, Mail, Compendium, Codex, Achievements, Wiki) and the language selector move into the top bar. The left column is gone and the game now uses the full width on the left, flush against the right column.'},
+      {t:'change', sub:'interface', tx:'"My account" (👤) gains info from the old left column: players online / registered, preferred language, and access to "Trust & Security". Its scrollbar is also themed.'},
+    ] },
   { v:'V487', d:'19/07/2026 13:00', name:{fr:'Modal de retour + langue Compagnon', en:'Welcome-back modal + Companion language'}, fr:[
       {t:'change', sub:'interface', tx:'Le modal « Bon retour » (résumé d\'absence) se ferme désormais avec Échap ou en cliquant en dehors de la fenêtre, en plus de la croix.'},
       {t:'new', sub:'compagnon', tx:'Un sélecteur de langue FR / EN est ajouté dans l\'en-tête du menu Compagnon.'},
