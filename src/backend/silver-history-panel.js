@@ -317,6 +317,25 @@ function showSilverBreakdownTip() {
 /** Masque le tooltip de répartition. */
 function hideSilverBreakdownTip() { const tip = $a('silverBreakdownTip'); if (tip) tip.style.display = 'none'; }
 
+// rétro-catégorisation depuis le ledger (2026-07-19, demande explicite : "rétro-catégorise les gains
+// passés depuis le ledger") : le silver_ledger serveur contient TOUT l'historique par catégorie. Au
+// chargement, on remplace l'accumulateur local S.silverByCategory par les totaux du ledger (source de
+// vérité, y compris les sessions d'avant V490 où l'accumulateur n'existait pas encore). Les gains live
+// À VENIR s'ajoutent par-dessus (addSilver). Best-effort : une seule fois par session, jamais bloquant,
+// silencieux hors ligne / invité / erreur RPC. Appelé depuis loadCloudSave (game-supabase.js).
+let silverByCategoryBackfilled = false;
+async function backfillSilverByCategory() {
+  if (silverByCategoryBackfilled || !sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+  silverByCategoryBackfilled = true;
+  try {
+    const { data, error } = await sb.rpc('my_silver_by_category');
+    if (error || !Array.isArray(data)) return;
+    const map = {};
+    data.forEach(r => { if (r && r.category && Number(r.gained) > 0) map[r.category] = Number(r.gained); });
+    if (typeof S !== 'undefined') S.silverByCategory = map;
+  } catch (e) { /* best-effort, la répartition se remplira via les gains live */ }
+}
+
 // câblage au chargement immédiat : #shRate/#silverPill sont dans le DOM statique du topbar
 // (index.dev.html). hud() ne réécrit que le textContent des pastilles (jamais les éléments eux-mêmes),
 // les listeners survivent.

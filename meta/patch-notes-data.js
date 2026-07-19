@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V491', d:'19/07/2026 17:00', name:{fr:'Silver par source : historique complet', en:'Silver by source: full history'}, fr:[
+      {t:'change', sub:'interface', tx:'La répartition du silver par source (tooltip de la pastille 💰) inclut désormais TOUT ton historique, rétro-catégorisé depuis le registre serveur — plus seulement les gains depuis la dernière mise à jour. Le total se recale à chaque connexion.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The silver-by-source breakdown (💰 pill tooltip) now includes your ENTIRE history, back-categorized from the server ledger — not just gains since the last update. The totals refresh on each login.'},
+    ] },
   { v:'V490', d:'19/07/2026 16:00', name:{fr:'Silver : répartition par source', en:'Silver: breakdown by source'}, fr:[
       {t:'new', sub:'interface', tx:'Survole la pastille de silver (💰) en haut : un tooltip affiche désormais la LISTE écrite de ton silver gagné par source, avec libellé et pourcentage (butin au sol, ventes, quêtes, boss, compagnon, succès…). La pastille silver/min garde son historique séparé au clic.'},
     ], en:[
