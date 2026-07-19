@@ -4210,6 +4210,9 @@
 #sideRight::-webkit-scrollbar { width:8px; }
 #sideRight::-webkit-scrollbar-thumb { background:#2c2a33; border-radius:4px; }
 #sideRight.collapsed { display:none; }  /* neutralise l'ancien état replié (obsolète) */
+/* masque un widget non actif dans le dock -- !important pour gagner sur le rendu qui re-force son
+   display à chaque tick (#questTrackerWidget notamment), sinon il apparaît dans TOUS les panneaux. */
+#sideRight .dockHidden { display:none !important; }
 
 /* barre de nav dans le header (Quêtes/Courrier/Compendium/Codex/Succès/Wiki) -- défile si trop étroit */
 #topbarNav { display:flex; align-items:center; gap:3px; flex:1 1 auto; min-width:0; overflow-x:auto; margin:0 6px; scrollbar-width:thin; }

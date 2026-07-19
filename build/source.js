@@ -16271,7 +16271,8 @@ function toggleRightDock(widgetId) {
   dock.classList.remove('collapsed'); 
   const alreadyShown = dock.style.display === 'block' && dock.dataset.dockActive === widgetId;
   if (alreadyShown) { dock.style.display = 'none'; dock.dataset.dockActive = ''; updateDockBtnActive(null); return; }
-  RIGHT_DOCK_WIDGETS.forEach(id => { const w = $a(id); if (w) w.style.display = (id === widgetId) ? '' : 'none'; });
+  
+  RIGHT_DOCK_WIDGETS.forEach(id => { const w = $a(id); if (w) w.classList.toggle('dockHidden', id !== widgetId); });
   dock.dataset.dockActive = widgetId;
   dock.style.display = 'block';
   
