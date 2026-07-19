@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V489', d:'19/07/2026 15:00', name:{fr:'Correctif : espace vide à droite du jeu', en:'Fix: empty gap to the right of the game'}, fr:[
+      {t:'fix', sub:'interface', tx:'Correction d\'un espace vide qui apparaissait à droite du jeu (entre la zone de jeu et la colonne de droite) quand la taille d\'interface était réglée sur « Petit ». Le jeu occupe désormais bien toute la largeur à toutes les tailles d\'UI.'},
+    ], en:[
+      {t:'fix', sub:'interface', tx:'Fixed an empty gap that appeared to the right of the game (between the play area and the right column) when the UI size was set to "Small". The game now fills the full width at every UI size.'},
+    ] },
   { v:'V488', d:'19/07/2026 14:00', name:{fr:'Menus dans le header, jeu plein écran', en:'Menus in the header, full-width game'}, fr:[
       {t:'change', sub:'interface', tx:'Refonte de la mise en page : les menus de gauche (Quêtes, Courrier, Compendium, Codex, Succès, Wiki) et le sélecteur de langue passent dans le bandeau du haut. La colonne de gauche disparaît et le jeu occupe désormais toute la largeur à gauche, collé à la colonne de droite.'},
       {t:'change', sub:'interface', tx:'« Mon compte » (👤) accueille de nouvelles infos venues de l\'ancienne colonne de gauche : joueurs en ligne / inscrits, langue préférée, et un accès à « Confiance & Sécurité ». Sa barre de défilement est aussi mise aux couleurs du thème.'},
