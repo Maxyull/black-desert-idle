@@ -7162,7 +7162,7 @@ function openCompanionsModule() {
     cont.id = 'companionsInline'; 
     const frame = document.createElement('iframe');
     frame.id = 'companionsFrame';
-    frame.src = 'src/companions/companions.html?v=20'; 
+    frame.src = 'src/companions/companions.html?v=21'; 
     cont.appendChild(frame);
     ($a('wrap') || document.body).appendChild(cont);
   }
@@ -16138,7 +16138,6 @@ function applyI18n() {
     const key = el.getAttribute('data-i18n-title');
     if (I18N[key]) el.setAttribute('title', I18N[key][LANG]);
   });
-  $a('langThumb').classList.toggle('en', LANG === 'en');
   document.querySelectorAll('.langOpt').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
   document.querySelectorAll('.authLangBtn').forEach(el => el.classList.toggle('active', el.dataset.lang === LANG));
   document.documentElement.lang = LANG;
@@ -16152,12 +16151,17 @@ function applyI18n() {
   if (companionsFrame) { try { companionsFrame.contentWindow.location.reload(); } catch (e) { companionsFrame.src = companionsFrame.src; } }
   hudFast();
 }
-$a('langToggle').onclick = () => {
-  LANG = LANG === 'fr' ? 'en' : 'fr';
+
+function setGameLang(lng) {
+  if ((lng !== 'fr' && lng !== 'en') || lng === LANG) return;
+  LANG = lng;
   if (typeof i18next !== 'undefined') i18next.changeLanguage(LANG); 
   try { localStorage.setItem('velia-idle-lang', LANG); } catch(e) {}
   applyI18n();
-};
+}
+document.querySelectorAll('#langToggle .langOpt').forEach(el => {
+  el.onclick = (e) => { e.stopPropagation(); setGameLang(el.dataset.lang); };
+});
 
 // ==== src/core/ui-layout.js ====
 let menuSide = 'left';

@@ -19,6 +19,11 @@
 // (avant V53, introduction du suivi de dates) restent volontairement sans date plutôt que d'en
 // inventer une.
 const PATCH_NOTES = [
+  { v:'V495', d:'19/07/2026 21:00', name:{fr:'Langue : un seul sélecteur FR/EN dans le header', en:'Language: a single FR/EN selector in the header'}, fr:[
+      {t:'change', sub:'interface', tx:'Le sélecteur de langue FR/EN du header adopte le look en pilule segmentée (le même que celui qui était dans le menu Compagnon), et cliquer FR ou EN sélectionne directement cette langue. Le sélecteur en double du menu Compagnon est retiré : on change désormais la langue à un seul endroit (le header), plus cohérent — le changement se répercute aussi sur le module Compagnon.'},
+    ], en:[
+      {t:'change', sub:'interface', tx:'The header FR/EN language selector adopts the segmented-pill look (the same one that was in the Companion menu), and clicking FR or EN now directly selects that language. The duplicate selector in the Companion menu is removed: language now changes in one place (the header), which is more coherent — the change also applies to the Companion module.'},
+    ] },
   { v:'V494', d:'19/07/2026 20:00', name:{fr:'Compagnon : affiché comme les autres menus', en:'Companion: shown like the other menus'}, fr:[
       {t:'change', sub:'interface', tx:'Le menu Compagnon ne s\'ouvre plus dans sa propre fenêtre plein écran par-dessus le jeu : il s\'affiche désormais dans la zone de jeu, juste sous le header, exactement comme les onglets Zone et Boss. Le header et la barre d\'activités restent visibles ; on change de vue simplement en cliquant un autre onglet (plus de croix de fermeture séparée).'},
     ], en:[
