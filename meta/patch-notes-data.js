@@ -20,10 +20,10 @@
 // inventer une.
 const PATCH_NOTES = [
   { v:'V487', d:'19/07/2026 13:00', name:{fr:'Modal de retour + langue Compagnon', en:'Welcome-back modal + Companion language'}, fr:[
-      {t:'change', sub:'ui', tx:'Le modal « Bon retour » (résumé d\'absence) se ferme désormais avec Échap ou en cliquant en dehors de la fenêtre, en plus de la croix.'},
+      {t:'change', sub:'interface', tx:'Le modal « Bon retour » (résumé d\'absence) se ferme désormais avec Échap ou en cliquant en dehors de la fenêtre, en plus de la croix.'},
       {t:'new', sub:'compagnon', tx:'Un sélecteur de langue FR / EN est ajouté dans l\'en-tête du menu Compagnon.'},
     ], en:[
-      {t:'change', sub:'ui', tx:'The "Welcome back" modal (offline summary) now closes with Escape or by clicking outside the window, in addition to the close button.'},
+      {t:'change', sub:'interface', tx:'The "Welcome back" modal (offline summary) now closes with Escape or by clicking outside the window, in addition to the close button.'},
       {t:'new', sub:'compagnon', tx:'An FR / EN language selector is added to the Companion menu header.'},
     ] },
   { v:'V486', d:'19/07/2026 12:00', name:{fr:'Fiche familier : mention ramasseur', en:'Companion card: looter note'}, fr:[
