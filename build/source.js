@@ -315,6 +315,19 @@ const I18N_RESOURCES = {
       "admin.ratelimit.tile_hits": "Déclenchements",
       "admin.ratelimit.tile_kinds": "Types d'action",
       "admin.ratelimit.title": "Limitation de débit",
+      "admin.rates.col_hour": "Heure",
+      "admin.rates.col_kills": "Kills/h",
+      "admin.rates.col_player": "Joueur",
+      "admin.rates.col_silver": "Silver/h",
+      "admin.rates.none": "Aucune cadence enregistrée.",
+      "admin.rates.sub": "Silver et kills par heure, triés du plus élevé au plus bas : une valeur aberrante remonte d'elle-même en haut de la liste.",
+      "admin.rates.tile_avg_silver": "Moyenne silver/h",
+      "admin.rates.tile_hours": "Heures suivies",
+      "admin.rates.tile_locks": "Verrous de session",
+      "admin.rates.tile_max_kills": "Pic kills/h",
+      "admin.rates.tile_max_silver": "Pic silver/h",
+      "admin.rates.tile_players": "Joueurs suivis",
+      "admin.rates.title": "Cadence joueurs (anti-triche)",
       "admin.reconnect.avg_per_session": "Moyenne / session",
       "admin.reconnect.logged_sessions": "Sessions journalisées",
       "admin.reconnect.no_session_yet": "Aucune session pour le moment.",
@@ -1460,6 +1473,19 @@ const I18N_RESOURCES = {
       "admin.ratelimit.tile_hits": "Hits",
       "admin.ratelimit.tile_kinds": "Action kinds",
       "admin.ratelimit.title": "Rate limiting",
+      "admin.rates.col_hour": "Hour",
+      "admin.rates.col_kills": "Kills/h",
+      "admin.rates.col_player": "Player",
+      "admin.rates.col_silver": "Silver/h",
+      "admin.rates.none": "No rate recorded.",
+      "admin.rates.sub": "Silver and kills per hour, sorted highest first: an outlier rises to the top on its own.",
+      "admin.rates.tile_avg_silver": "Average silver/h",
+      "admin.rates.tile_hours": "Hours tracked",
+      "admin.rates.tile_locks": "Session locks",
+      "admin.rates.tile_max_kills": "Peak kills/h",
+      "admin.rates.tile_max_silver": "Peak silver/h",
+      "admin.rates.tile_players": "Players tracked",
+      "admin.rates.title": "Player rates (anti-cheat)",
       "admin.reconnect.avg_per_session": "Avg / session",
       "admin.reconnect.logged_sessions": "Logged sessions",
       "admin.reconnect.no_session_yet": "No session yet.",
@@ -20194,9 +20220,47 @@ async function refreshAdminDonations() {
       </tr>`).join('')}</tbody></table>`);
 }
 
+function renderAdminPlayerRates(el) {
+  el.innerHTML = admMonSkeleton('📊 ' + i18next.t('admin:admin.rates.title'), i18next.t('admin:admin.rates.sub'), 'admRatesBody');
+  refreshAdminPlayerRates();
+}
+
+async function refreshAdminPlayerRates() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admRatesBody');
+  const [stats, top] = await Promise.all([
+    sb.rpc('admin_player_rates_summary'),
+    sb.rpc('admin_player_rates', { p_limit: 30 }),
+  ]);
+  if (stats.error) return admMonFail(el, stats.error);
+  const s = (stats.data && stats.data[0]) || {};
+  const rows = top.data || [];
+  el.innerHTML = admMonTiles([
+    { lbl:'⏱️ ' + i18next.t('admin:admin.rates.tile_hours'), val: admMonNum(s.hours_tracked) },
+    { lbl:'👥 ' + i18next.t('admin:admin.rates.tile_players'), val: admMonNum(s.players_tracked) },
+    { lbl:'💰 ' + i18next.t('admin:admin.rates.tile_max_silver'), val: admMonNum(s.max_silver_per_hour) },
+    { lbl:'📉 ' + i18next.t('admin:admin.rates.tile_avg_silver'), val: admMonNum(s.avg_silver_per_hour) },
+    { lbl:'⚔️ ' + i18next.t('admin:admin.rates.tile_max_kills'), val: admMonNum(s.max_kills_per_hour) },
+    { lbl:'🔒 ' + i18next.t('admin:admin.rates.tile_locks'), val: admMonNum(s.active_session_locks) },
+  ]) + (rows.length === 0
+    ? `<div class="admEmpty">${i18next.t('admin:admin.rates.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.rates.col_player')}</th>
+        <th>${i18next.t('admin:admin.rates.col_hour')}</th>
+        <th>${i18next.t('admin:admin.rates.col_silver')}</th>
+        <th>${i18next.t('admin:admin.rates.col_kills')}</th>
+      </tr></thead><tbody>${rows.map(r => `<tr>
+        <td>${escapeHtml(r.display_name || '—')}</td>
+        <td style="font-size:10px">${admMonDate(r.hour)}</td>
+        <td>${admMonNum(r.loot_silver)}</td>
+        <td>${admMonNum(r.kills)}</td>
+      </tr>`).join('')}</tbody></table>`);
+}
+
 ADMIN_SECTIONS.push({ cat:'monitoring', label:{fr:'Supervision',en:'Monitoring'}, items:[
   { id:'errors', icon:'🐞', label:{fr:'Erreurs client',en:'Client errors'}, render:renderAdminClientErrors },
   { id:'ratelimit', icon:'🛡️', label:{fr:'Limitation de débit',en:'Rate limiting'}, render:renderAdminRateLimit },
+  { id:'rates', icon:'📊', label:{fr:'Cadence joueurs',en:'Player rates'}, render:renderAdminPlayerRates },
 ]});
 
 function admAttachSection(cat, id, render) {

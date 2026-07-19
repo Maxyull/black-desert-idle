@@ -314,12 +314,56 @@ async function refreshAdminDonations() {
       </tr>`).join('')}</tbody></table>`);
 }
 
+// ---------- Cadence des joueurs (anti-triche) ----------
+// player_hour_rates est alimentée par compute_player_hour_rates() et protégée en écriture
+// (protect_server_rate_columns) : c'est la table qui sert à repérer une progression impossible.
+// Elle n'avait aucune surface admin -- on tri par silver/h décroissant, donc les valeurs
+// aberrantes remontent d'elles-mêmes en haut de liste.
+/** @param {HTMLElement} el. Section anti-triche : cadences horaires (silver/kills) les plus élevées + verrous de session actifs. */
+function renderAdminPlayerRates(el) {
+  el.innerHTML = admMonSkeleton('📊 ' + i18next.t('admin:admin.rates.title'), i18next.t('admin:admin.rates.sub'), 'admRatesBody');
+  refreshAdminPlayerRates();
+}
+/** Charge et rend les cadences horaires (admin_player_rates_summary + admin_player_rates). */
+async function refreshAdminPlayerRates() {
+  if (!isAdmin() || !sb) return;
+  const el = $a('admRatesBody');
+  const [stats, top] = await Promise.all([
+    sb.rpc('admin_player_rates_summary'),
+    sb.rpc('admin_player_rates', { p_limit: 30 }),
+  ]);
+  if (stats.error) return admMonFail(el, stats.error);
+  const s = (stats.data && stats.data[0]) || {};
+  const rows = top.data || [];
+  el.innerHTML = admMonTiles([
+    { lbl:'⏱️ ' + i18next.t('admin:admin.rates.tile_hours'), val: admMonNum(s.hours_tracked) },
+    { lbl:'👥 ' + i18next.t('admin:admin.rates.tile_players'), val: admMonNum(s.players_tracked) },
+    { lbl:'💰 ' + i18next.t('admin:admin.rates.tile_max_silver'), val: admMonNum(s.max_silver_per_hour) },
+    { lbl:'📉 ' + i18next.t('admin:admin.rates.tile_avg_silver'), val: admMonNum(s.avg_silver_per_hour) },
+    { lbl:'⚔️ ' + i18next.t('admin:admin.rates.tile_max_kills'), val: admMonNum(s.max_kills_per_hour) },
+    { lbl:'🔒 ' + i18next.t('admin:admin.rates.tile_locks'), val: admMonNum(s.active_session_locks) },
+  ]) + (rows.length === 0
+    ? `<div class="admEmpty">${i18next.t('admin:admin.rates.none')}</div>`
+    : `<table class="admTable"><thead><tr>
+        <th>${i18next.t('admin:admin.rates.col_player')}</th>
+        <th>${i18next.t('admin:admin.rates.col_hour')}</th>
+        <th>${i18next.t('admin:admin.rates.col_silver')}</th>
+        <th>${i18next.t('admin:admin.rates.col_kills')}</th>
+      </tr></thead><tbody>${rows.map(r => `<tr>
+        <td>${escapeHtml(r.display_name || '—')}</td>
+        <td style="font-size:10px">${admMonDate(r.hour)}</td>
+        <td>${admMonNum(r.loot_silver)}</td>
+        <td>${admMonNum(r.kills)}</td>
+      </tr>`).join('')}</tbody></table>`);
+}
+
 // ---------- enregistrement dans le registre du shell ----------
 // Nouvelle catégorie "Supervision" (erreurs + anti-abus) : ces deux sections ne parlent ni de
 // joueurs ni d'économie ni de contenu, elles surveillent la SANTÉ TECHNIQUE du jeu.
 ADMIN_SECTIONS.push({ cat:'monitoring', label:{fr:'Supervision',en:'Monitoring'}, items:[
   { id:'errors', icon:'🐞', label:{fr:'Erreurs client',en:'Client errors'}, render:renderAdminClientErrors },
   { id:'ratelimit', icon:'🛡️', label:{fr:'Limitation de débit',en:'Rate limiting'}, render:renderAdminRateLimit },
+  { id:'rates', icon:'📊', label:{fr:'Cadence joueurs',en:'Player rates'}, render:renderAdminPlayerRates },
 ]});
 
 /** @param {string} cat @param {string} id @param {Function} render. Remplace un item "planned" (ou en ajoute un) par une vraie section câblée -- no-op silencieux si la catégorie est absente. */
