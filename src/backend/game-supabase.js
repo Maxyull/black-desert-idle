@@ -266,6 +266,9 @@ async function loadCloudSave() {
   if (data && data.save_data && Object.keys(data.save_data).length) {
     applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at, serverRates });
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
+    // rétro-catégorise le silver par source depuis le ledger serveur (best-effort, async, une fois) --
+    // remplace S.silverByCategory par l'historique complet (voir backfillSilverByCategory, silver-history-panel.js)
+    if (typeof backfillSilverByCategory === 'function') backfillSilverByCategory();
   } else {
     $a('saveStatus').textContent = 'Nouveau personnage';
     // aucune sauvegarde cloud trouvée = personnage tout juste créé : on l'accueille à Velia et on

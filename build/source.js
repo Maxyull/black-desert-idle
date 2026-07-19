@@ -15193,6 +15193,8 @@ async function loadCloudSave() {
   if (data && data.save_data && Object.keys(data.save_data).length) {
     applySaveState({ ...data.save_data, lastServerCreditAt: data.last_server_credit_at, serverRates });
     $a('saveStatus').textContent = 'Sauvegarde chargée ✓';
+    
+    if (typeof backfillSilverByCategory === 'function') backfillSilverByCategory();
   } else {
     $a('saveStatus').textContent = 'Nouveau personnage';
     
@@ -17953,6 +17955,19 @@ function showSilverBreakdownTip() {
 }
 
 function hideSilverBreakdownTip() { const tip = $a('silverBreakdownTip'); if (tip) tip.style.display = 'none'; }
+
+let silverByCategoryBackfilled = false;
+async function backfillSilverByCategory() {
+  if (silverByCategoryBackfilled || !sb || !currentUser || (typeof isGuest === 'function' && isGuest())) return;
+  silverByCategoryBackfilled = true;
+  try {
+    const { data, error } = await sb.rpc('my_silver_by_category');
+    if (error || !Array.isArray(data)) return;
+    const map = {};
+    data.forEach(r => { if (r && r.category && Number(r.gained) > 0) map[r.category] = Number(r.gained); });
+    if (typeof S !== 'undefined') S.silverByCategory = map;
+  } catch (e) {  }
+}
 
 (function wireSilverPills() {
   
