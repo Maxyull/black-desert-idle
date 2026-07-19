@@ -2975,6 +2975,12 @@ function addSilver(delta, category, note) {
   if (!delta) return;
   S.silver += delta;
   if (delta > 0) S.silverEarned += delta;
+  
+  if (delta > 0) {
+    if (!S.silverByCategory) S.silverByCategory = {};
+    const cat = category === 'compagnon' ? 'companion' : (category || 'autre');
+    S.silverByCategory[cat] = (S.silverByCategory[cat] || 0) + delta;
+  }
   if (delta > 0 && document.hidden) awaySilverGained += delta;
   
   if (delta > 0 && category === 'loot') {
@@ -17905,12 +17911,60 @@ function toggleSilverHistPanel() {
   else openSilverHistPanel();
 }
 
-(function wireSilverHistPill() {
-  [$a('shRate'), $a('silverPill')].forEach(pill => {
-    if (!pill) return;
-    pill.classList.add('clickable');
-    pill.addEventListener('click', toggleSilverHistPanel);
-  });
+const SILVER_CAT_LABELS = {
+  loot:            { fr:'🗡️ Butin au sol',  en:'🗡️ Ground loot' },
+  sell:            { fr:'💰 Ventes',         en:'💰 Sales' },
+  quest:           { fr:'🗒️ Quêtes',         en:'🗒️ Quests' },
+  boss:            { fr:'🐍 Boss',           en:'🐍 Bosses' },
+  achievement:     { fr:'🏅 Succès',         en:'🏅 Achievements' },
+  companion:       { fr:'🐾 Compagnon',      en:'🐾 Companion' },
+  potion:          { fr:'🧪 Potions',        en:'🧪 Potions' },
+  welcome:         { fr:'🎁 Bienvenue',      en:'🎁 Welcome' },
+  offline_catchup: { fr:'💤 Hors ligne',     en:'💤 Offline' },
+  admin_test:      { fr:'🛠️ Test admin',     en:'🛠️ Admin test' },
+  autre:           { fr:'❓ Autre',          en:'❓ Other' },
+};
+
+function buildSilverBreakdownHtml() {
+  const en = (typeof LANG !== 'undefined' && LANG === 'en');
+  const by = (typeof S !== 'undefined' && S.silverByCategory) || {};
+  const entries = Object.entries(by).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const title = en ? 'Silver earned — by source' : 'Silver gagné — par source';
+  if (!entries.length) return `<div class="silverBdTitle">${title}</div><div class="silverBdEmpty">${en ? 'No silver earned yet' : 'Aucun silver gagné pour l\'instant'}</div>`;
+  const total = entries.reduce((s, [, v]) => s + v, 0);
+  const rows = entries.map(([cat, v]) => {
+    const l = SILVER_CAT_LABELS[cat];
+    const lbl = l ? (en ? l.en : l.fr) : cat;
+    const pct = total > 0 ? Math.round(v / total * 100) : 0;
+    return `<div class="silverBdRow"><span class="silverBdLbl">${lbl}</span><span class="silverBdVal">${fmt(v)}</span><span class="silverBdPct">${pct}%</span></div>`;
+  }).join('');
+  return `<div class="silverBdTitle">${title}</div>${rows}<div class="silverBdTotal"><span>Total</span><span>${fmt(total)}</span></div>`;
+}
+
+function showSilverBreakdownTip() {
+  let tip = $a('silverBreakdownTip');
+  if (!tip) { tip = document.createElement('div'); tip.id = 'silverBreakdownTip'; document.body.appendChild(tip); }
+  tip.innerHTML = buildSilverBreakdownHtml();
+  const pill = $a('silverPill'); if (!pill) return;
+  const r = pill.getBoundingClientRect();
+  tip.style.display = 'block';
+  tip.style.left = Math.round(Math.max(6, r.left)) + 'px';
+  tip.style.top = Math.round(r.bottom + 6) + 'px';
+}
+
+function hideSilverBreakdownTip() { const tip = $a('silverBreakdownTip'); if (tip) tip.style.display = 'none'; }
+
+(function wireSilverPills() {
+  
+  const rate = $a('shRate');
+  if (rate) { rate.classList.add('clickable'); rate.addEventListener('click', toggleSilverHistPanel); }
+  
+  const total = $a('silverPill');
+  if (total) {
+    total.classList.add('clickable');
+    total.addEventListener('mouseenter', showSilverBreakdownTip);
+    total.addEventListener('mouseleave', hideSilverBreakdownTip);
+  }
 })();
 
 // ==== src/admin/admin-panel.js ====
